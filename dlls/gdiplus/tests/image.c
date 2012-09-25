@@ -3988,7 +3988,6 @@ static void test_gif_properties(void)
 
     status = GdipGetPropertyCount(image, &prop_count);
     expect(Ok, status);
-todo_wine
     ok(prop_count == sizeof(td)/sizeof(td[0]) || broken(prop_count == 1) /* before win7 */,
        "expected property count %u, got %u\n", (UINT)(sizeof(td)/sizeof(td[0])), prop_count);
 

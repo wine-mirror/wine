@@ -3275,6 +3275,62 @@ static PropertyItem *get_gif_background(IWICMetadataReader *reader)
     return background;
 }
 
+static PropertyItem *get_gif_palette(IWICBitmapDecoder *decoder, IWICMetadataReader *reader)
+{
+    static const WCHAR global_flagW[] = { 'G','l','o','b','a','l','C','o','l','o','r','T','a','b','l','e','F','l','a','g',0 };
+    HRESULT hr;
+    IWICImagingFactory *factory;
+    IWICPalette *palette;
+    UINT count = 0;
+    WICColor colors[256];
+
+    if (!get_bool_property(reader, &GUID_MetadataFormatLSD, global_flagW))
+        return NULL;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IWICImagingFactory, (void **)&factory);
+    if (hr != S_OK) return NULL;
+
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    if (hr == S_OK)
+    {
+        hr = IWICBitmapDecoder_CopyPalette(decoder, palette);
+        if (hr == S_OK)
+            IWICPalette_GetColors(palette, 256, colors, &count);
+
+        IWICPalette_Release(palette);
+    }
+
+    IWICImagingFactory_Release(factory);
+
+    if (count)
+    {
+        PropertyItem *pal;
+        UINT i;
+        BYTE *rgb;
+
+        pal = GdipAlloc(sizeof(*pal) + count * 3);
+        if (!pal) return NULL;
+        pal->type = PropertyTagTypeByte;
+        pal->id = PropertyTagGlobalPalette;
+        pal->value = pal + 1;
+        pal->length = count * 3;
+
+        rgb = pal->value;
+
+        for (i = 0; i < count; i++)
+        {
+            rgb[i*3] = (colors[i] >> 16) & 0xff;
+            rgb[i*3 + 1] = (colors[i] >> 8) & 0xff;
+            rgb[i*3 + 2] = colors[i] & 0xff;
+        }
+
+        return pal;
+    }
+
+    return NULL;
+}
+
 static PropertyItem *get_gif_transparent_idx(IWICMetadataReader *reader)
 {
     static const WCHAR transparency_flagW[] = { 'T','r','a','n','s','p','a','r','e','n','c','y','F','l','a','g',0 };
@@ -3337,7 +3393,7 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
     IWICMetadataReader *reader;
     UINT frame_count, block_count, i;
     PropertyItem *delay = NULL, *comment = NULL, *background = NULL;
-    PropertyItem *transparent_idx = NULL, *loop = NULL;
+    PropertyItem *transparent_idx = NULL, *loop = NULL, *palette = NULL;
 
     IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
     if (frame_count > 1)
@@ -3387,6 +3443,9 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
                     if (!background)
                         background = get_gif_background(reader);
 
+                    if (!palette)
+                        palette = get_gif_palette(decoder, reader);
+
                     IWICMetadataReader_Release(reader);
                 }
             }
@@ -3410,11 +3469,13 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
     if (delay) add_property(bitmap, delay);
     if (comment) add_property(bitmap, comment);
     if (loop) add_property(bitmap, loop);
+    if (palette) add_property(bitmap, palette);
     if (background) add_property(bitmap, background);
 
     GdipFree(delay);
     GdipFree(comment);
     GdipFree(loop);
+    GdipFree(palette);
     GdipFree(background);
 
     /* Win7 gdiplus always returns transparent color index from frame 0 */
