@@ -1708,6 +1708,13 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
     LPVOID lpReserved,
     DWORD dwFlags)
 {
+    LPURLCACHE_HEADER pHeader;
+    struct _HASH_ENTRY * pHashEntry;
+    const CACHEFILE_ENTRY * pEntry;
+    const URL_CACHEFILE_ENTRY * pUrlEntry;
+    URLCACHECONTAINER * pContainer;
+    DWORD error;
+
     TRACE("(%s, %p, %p, %p, %p, %p, %x)\n",
         debugstr_a(lpszUrl), 
         lpCacheEntryInfo,
@@ -1731,29 +1738,8 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
     }
-    return GetUrlCacheEntryInfoA(lpszUrl, lpCacheEntryInfo, lpdwCacheEntryInfoBufSize);
-}
 
-/***********************************************************************
- *           GetUrlCacheEntryInfoA (WININET.@)
- *
- */
-BOOL WINAPI GetUrlCacheEntryInfoA(
-    IN LPCSTR lpszUrlName,
-    IN LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntryInfo,
-    IN OUT LPDWORD lpdwCacheEntryInfoBufferSize
-)
-{
-    LPURLCACHE_HEADER pHeader;
-    struct _HASH_ENTRY * pHashEntry;
-    const CACHEFILE_ENTRY * pEntry;
-    const URL_CACHEFILE_ENTRY * pUrlEntry;
-    URLCACHECONTAINER * pContainer;
-    DWORD error;
-
-    TRACE("(%s, %p, %p)\n", debugstr_a(lpszUrlName), lpCacheEntryInfo, lpdwCacheEntryInfoBufferSize);
-
-    error = URLCacheContainers_FindContainerA(lpszUrlName, &pContainer);
+    error = URLCacheContainers_FindContainerA(lpszUrl, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         SetLastError(error);
@@ -1770,10 +1756,10 @@ BOOL WINAPI GetUrlCacheEntryInfoA(
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
 
-    if (!URLCache_FindHash(pHeader, lpszUrlName, &pHashEntry))
+    if (!URLCache_FindHash(pHeader, lpszUrl, &pHashEntry))
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
-        WARN("entry %s not found!\n", debugstr_a(lpszUrlName));
+        WARN("entry %s not found!\n", debugstr_a(lpszUrl));
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
     }
@@ -1792,16 +1778,16 @@ BOOL WINAPI GetUrlCacheEntryInfoA(
     if (pUrlEntry->dwOffsetHeaderInfo)
         TRACE("Header info: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo));
 
-    if (lpdwCacheEntryInfoBufferSize)
+    if (lpdwCacheEntryInfoBufSize)
     {
         if (!lpCacheEntryInfo)
-            *lpdwCacheEntryInfoBufferSize = 0;
+            *lpdwCacheEntryInfoBufSize = 0;
 
         error = URLCache_CopyEntry(
             pContainer,
             pHeader,
             lpCacheEntryInfo,
-            lpdwCacheEntryInfoBufferSize,
+            lpdwCacheEntryInfoBufSize,
             pUrlEntry,
             FALSE /* ANSI */);
         if (error != ERROR_SUCCESS)
@@ -1816,6 +1802,20 @@ BOOL WINAPI GetUrlCacheEntryInfoA(
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
     return TRUE;
+}
+
+/***********************************************************************
+ *           GetUrlCacheEntryInfoA (WININET.@)
+ *
+ */
+BOOL WINAPI GetUrlCacheEntryInfoA(
+    IN LPCSTR lpszUrlName,
+    IN LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntryInfo,
+    IN OUT LPDWORD lpdwCacheEntryInfoBufferSize
+)
+{
+    return GetUrlCacheEntryInfoExA(lpszUrlName, lpCacheEntryInfo,
+            lpdwCacheEntryInfoBufferSize, NULL, NULL, NULL, 0);
 }
 
 /***********************************************************************
