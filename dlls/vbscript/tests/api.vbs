@@ -179,4 +179,8 @@ Call ok(Len(1) = 1, "Len(1) = " & Len(1))
 Call ok(isNull(Len(null)), "Len(null) = " & Len(null))
 Call ok(Len(empty) = 0, "Len(empty) = " & Len(empty))
 
+Call ok(Space(1) = " ", "Space(1) = " & Space(1) & """")
+Call ok(Space(0) = "", "Space(0) = " & Space(0) & """")
+Call ok(Space(5) = "     ", "Space(5) = " & Space(5) & """")
+
 Call reportSuccess()
