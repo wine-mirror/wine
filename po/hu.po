@@ -142,7 +142,7 @@ msgstr "&Telepítés"
 #: comctl32.rc:68 comdlg32.rc:165 comdlg32.rc:187 comdlg32.rc:205
 #: comdlg32.rc:227 comdlg32.rc:257 comdlg32.rc:300 comdlg32.rc:322
 #: comdlg32.rc:342 comdlg32.rc:354 comdlg32.rc:393 comdlg32.rc:447
-#: comdlg32.rc:471 comdlg32.rc:489 credui.rc:50 cryptui.rc:261 cryptui.rc:273
+#: comdlg32.rc:472 comdlg32.rc:490 credui.rc:50 cryptui.rc:261 cryptui.rc:273
 #: cryptui.rc:363 dinput.rc:44 ieframe.rc:94 inetcpl.rc:78 localui.rc:42
 #: localui.rc:55 mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56
 #: msvfw32.rc:34 oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39
@@ -360,8 +360,8 @@ msgid "R&eset"
 msgstr "Alaph&elyzet"
 
 #: comctl32.rc:83 comdlg32.rc:166 comdlg32.rc:188 comdlg32.rc:259
-#: comdlg32.rc:323 comdlg32.rc:343 comdlg32.rc:355 comdlg32.rc:472
-#: comdlg32.rc:490 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
+#: comdlg32.rc:323 comdlg32.rc:343 comdlg32.rc:355 comdlg32.rc:473
+#: comdlg32.rc:491 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
 #: clock.rc:41 notepad.rc:57 notepad.rc:116 oleview.rc:69 progman.rc:52
 #: progman.rc:105 progman.rc:123 progman.rc:141 progman.rc:157 progman.rc:181
 #: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:79
@@ -415,7 +415,7 @@ msgstr "Ma:"
 msgid "Go to today"
 msgstr "Ugrás mára"
 
-#: comdlg32.rc:151 comdlg32.rc:164 comdlg32.rc:453 comdlg32.rc:478
+#: comdlg32.rc:151 comdlg32.rc:164 comdlg32.rc:453 comdlg32.rc:479
 #: shell32.rc:164 oleview.rc:99
 msgid "Open"
 msgstr "Megnyitás"
@@ -796,23 +796,23 @@ msgstr "H&ely:"
 msgid "File &name:"
 msgstr "Fájl&név:"
 
-#: comdlg32.rc:465
+#: comdlg32.rc:466
 msgid "Files of &type:"
 msgstr "Fájl&típus:"
 
-#: comdlg32.rc:468
+#: comdlg32.rc:469
 msgid "Open as &read-only"
 msgstr "Me&gnyitás csak olvashatóként"
 
-#: comdlg32.rc:470 comdlg32.rc:488 shdoclc.rc:124 shell32.rc:96
+#: comdlg32.rc:471 comdlg32.rc:489 shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
 msgstr "&Megnyitás"
 
-#: comdlg32.rc:481
+#: comdlg32.rc:482
 msgid "File name:"
 msgstr "Fájlnév:"
 
-#: comdlg32.rc:484
+#: comdlg32.rc:485
 msgid "Files of type:"
 msgstr "Fájl&típus:"
 
