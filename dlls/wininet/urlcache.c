@@ -1835,6 +1835,23 @@ BOOL WINAPI GetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
   LPINTERNET_CACHE_ENTRY_INFOW lpCacheEntryInfo,
   LPDWORD lpdwCacheEntryInfoBufferSize)
 {
+    return GetUrlCacheEntryInfoExW(lpszUrl, lpCacheEntryInfo,
+            lpdwCacheEntryInfoBufferSize, NULL, NULL, NULL, 0);
+}
+
+/***********************************************************************
+ *           GetUrlCacheEntryInfoExW (WININET.@)
+ *
+ */
+BOOL WINAPI GetUrlCacheEntryInfoExW(
+    LPCWSTR lpszUrl,
+    LPINTERNET_CACHE_ENTRY_INFOW lpCacheEntryInfo,
+    LPDWORD lpdwCacheEntryInfoBufSize,
+    LPWSTR lpszReserved,
+    LPDWORD lpdwReserved,
+    LPVOID lpReserved,
+    DWORD dwFlags)
+{
     LPURLCACHE_HEADER pHeader;
     struct _HASH_ENTRY * pHashEntry;
     const CACHEFILE_ENTRY * pEntry;
@@ -1842,7 +1859,32 @@ BOOL WINAPI GetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
     URLCACHECONTAINER * pContainer;
     DWORD error;
 
-    TRACE("(%s, %p, %p)\n", debugstr_w(lpszUrl), lpCacheEntryInfo, lpdwCacheEntryInfoBufferSize);
+    TRACE("(%s, %p, %p, %p, %p, %p, %x)\n",
+        debugstr_w(lpszUrl),
+        lpCacheEntryInfo,
+        lpdwCacheEntryInfoBufSize,
+        lpszReserved,
+        lpdwReserved,
+        lpReserved,
+        dwFlags);
+
+    /* Ignore GET_INSTALLED_ENTRY flag in unicode version of function */
+    dwFlags &= ~GET_INSTALLED_ENTRY;
+
+    if ((lpszReserved != NULL) ||
+        (lpdwReserved != NULL) ||
+        (lpReserved != NULL))
+    {
+        ERR("Reserved value was not 0\n");
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (dwFlags != 0)
+    {
+        FIXME("Undocumented flag(s): %x\n", dwFlags);
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return FALSE;
+    }
 
     error = URLCacheContainers_FindContainerW(lpszUrl, &pContainer);
     if (error != ERROR_SUCCESS)
@@ -1882,18 +1924,18 @@ BOOL WINAPI GetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
     TRACE("Found URL: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetUrl));
     TRACE("Header info: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo));
 
-    if (lpdwCacheEntryInfoBufferSize)
+    if (lpdwCacheEntryInfoBufSize)
     {
         if (!lpCacheEntryInfo)
-            *lpdwCacheEntryInfoBufferSize = 0;
+            *lpdwCacheEntryInfoBufSize = 0;
 
         error = URLCache_CopyEntry(
-            pContainer,
-            pHeader,
-            (LPINTERNET_CACHE_ENTRY_INFOA)lpCacheEntryInfo,
-            lpdwCacheEntryInfoBufferSize,
-            pUrlEntry,
-            TRUE /* UNICODE */);
+                pContainer,
+                pHeader,
+                (LPINTERNET_CACHE_ENTRY_INFOA)lpCacheEntryInfo,
+                lpdwCacheEntryInfoBufSize,
+                pUrlEntry,
+                TRUE /* UNICODE */);
         if (error != ERROR_SUCCESS)
         {
             URLCacheContainer_UnlockIndex(pContainer, pHeader);
@@ -1906,45 +1948,6 @@ BOOL WINAPI GetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
     return TRUE;
-}
-
-/***********************************************************************
- *           GetUrlCacheEntryInfoExW (WININET.@)
- *
- */
-BOOL WINAPI GetUrlCacheEntryInfoExW(
-    LPCWSTR lpszUrl,
-    LPINTERNET_CACHE_ENTRY_INFOW lpCacheEntryInfo,
-    LPDWORD lpdwCacheEntryInfoBufSize,
-    LPWSTR lpszReserved,
-    LPDWORD lpdwReserved,
-    LPVOID lpReserved,
-    DWORD dwFlags)
-{
-    TRACE("(%s, %p, %p, %p, %p, %p, %x)\n",
-        debugstr_w(lpszUrl), 
-        lpCacheEntryInfo,
-        lpdwCacheEntryInfoBufSize,
-        lpszReserved,
-        lpdwReserved,
-        lpReserved,
-        dwFlags);
-
-    if ((lpszReserved != NULL) ||
-        (lpdwReserved != NULL) ||
-        (lpReserved != NULL))
-    {
-        ERR("Reserved value was not 0\n");
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    if (dwFlags != 0)
-    {
-        FIXME("Undocumented flag(s): %x\n", dwFlags);
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
-    }
-    return GetUrlCacheEntryInfoW(lpszUrl, lpCacheEntryInfo, lpdwCacheEntryInfoBufSize);
 }
 
 /***********************************************************************
