@@ -4823,7 +4823,7 @@ static void test_defaults(IHTMLDocument2 *doc)
     str = NULL;
     hres = IHTMLDocument2_get_charset(doc, &str);
     ok(hres == S_OK, "get_charset failed: %08x\n", hres);
-    ok(str && *str, "charset is empty"); /* FIXME: better tests */
+    ok(str && *str, "charset is empty\n"); /* FIXME: better tests */
     SysFreeString(str);
 
     test_window(doc);
