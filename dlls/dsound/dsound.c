@@ -1080,12 +1080,9 @@ HRESULT DirectSoundDevice_AddBuffer(
  * Remove secondary buffer from buffer list.
  * Gets exclusive access to buffer for writing.
  */
-HRESULT DirectSoundDevice_RemoveBuffer(
-    DirectSoundDevice * device,
-    IDirectSoundBufferImpl * pDSB)
+void DirectSoundDevice_RemoveBuffer(DirectSoundDevice * device, IDirectSoundBufferImpl * pDSB)
 {
     int i;
-    HRESULT hr = DS_OK;
 
     TRACE("(%p, %p)\n", device, pDSB);
 
@@ -1108,6 +1105,4 @@ HRESULT DirectSoundDevice_RemoveBuffer(
     TRACE("buffer count is now %d\n", device->nrofbuffers);
 
     RtlReleaseResource(&(device->buffer_list_lock));
-
-    return hr;
 }

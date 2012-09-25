@@ -118,9 +118,7 @@ HRESULT DirectSoundDevice_Initialize(
 HRESULT DirectSoundDevice_AddBuffer(
     DirectSoundDevice * device,
     IDirectSoundBufferImpl * pDSB) DECLSPEC_HIDDEN;
-HRESULT DirectSoundDevice_RemoveBuffer(
-    DirectSoundDevice * device,
-    IDirectSoundBufferImpl * pDSB) DECLSPEC_HIDDEN;
+void DirectSoundDevice_RemoveBuffer(DirectSoundDevice * device, IDirectSoundBufferImpl * pDSB) DECLSPEC_HIDDEN;
 HRESULT DirectSoundDevice_CreateSoundBuffer(
     DirectSoundDevice * device,
     LPCDSBUFFERDESC dsbd,
