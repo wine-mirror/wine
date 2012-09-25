@@ -72,8 +72,6 @@ struct d3d10_effect_object
 {
     struct d3d10_effect_pass *pass;
     enum d3d10_effect_object_type type;
-    DWORD index;
-    void *data;
     union
     {
         ID3D10VertexShader *vs;
@@ -168,6 +166,9 @@ struct d3d10_effect_pass
     struct d3d10_effect_object *objects;
     struct d3d10_effect_variable *annotations;
 
+    D3D10_PASS_SHADER_DESC vs;
+    D3D10_PASS_SHADER_DESC ps;
+    D3D10_PASS_SHADER_DESC gs;
     UINT stencil_ref;
     UINT sample_mask;
     float blend_factor[4];
