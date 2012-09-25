@@ -197,6 +197,15 @@ echo ^hell^o, world
 echo hell^o, world
 echo hell^^o, world
 echo hell^^^o, world
+echo hello^
+world
+echo hello^
+
+world
+echo hello^
+
+
+echo finished
 mkdir foobar
 echo baz> foobar\baz
 type foobar\baz
