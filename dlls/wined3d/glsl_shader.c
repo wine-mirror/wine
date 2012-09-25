@@ -1615,7 +1615,36 @@ static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *i
 
     shader_glsl_get_register_name(&wined3d_src->reg, glsl_src->reg_name, &is_color, ins);
     shader_glsl_get_swizzle(wined3d_src, is_color, mask, swizzle_str);
-    shader_glsl_gen_modifier(wined3d_src->modifiers, glsl_src->reg_name, swizzle_str, glsl_src->param_str);
+
+    if (wined3d_src->reg.type == WINED3DSPR_IMMCONST)
+    {
+        shader_glsl_gen_modifier(wined3d_src->modifiers, glsl_src->reg_name, swizzle_str, glsl_src->param_str);
+    }
+    else
+    {
+        char param_str[200];
+
+        shader_glsl_gen_modifier(wined3d_src->modifiers, glsl_src->reg_name, swizzle_str, param_str);
+
+        switch (wined3d_src->reg.data_type)
+        {
+            case WINED3D_DATA_FLOAT:
+                sprintf(glsl_src->param_str, "%s", param_str);
+                break;
+            case WINED3D_DATA_INT:
+                sprintf(glsl_src->param_str, "floatBitsToInt(%s)", param_str);
+                break;
+            case WINED3D_DATA_RESOURCE:
+            case WINED3D_DATA_SAMPLER:
+            case WINED3D_DATA_UINT:
+                sprintf(glsl_src->param_str, "floatBitsToUint(%s)", param_str);
+                break;
+            default:
+                FIXME("Unhandled data type %#x.\n", wined3d_src->reg.data_type);
+                sprintf(glsl_src->param_str, "%s", param_str);
+                break;
+        }
+    }
 }
 
 /* From a given parameter token, generate the corresponding GLSL string.
@@ -1640,8 +1669,31 @@ static DWORD shader_glsl_append_dst_ext(struct wined3d_shader_buffer *buffer,
     struct glsl_dst_param glsl_dst;
     DWORD mask;
 
-    mask = shader_glsl_add_dst_param(ins, dst, &glsl_dst);
-    if (mask) shader_addline(buffer, "%s%s = %s(", glsl_dst.reg_name, glsl_dst.mask_str, shift_glsl_tab[dst->shift]);
+    if ((mask = shader_glsl_add_dst_param(ins, dst, &glsl_dst)))
+    {
+        switch (dst->reg.data_type)
+        {
+            case WINED3D_DATA_FLOAT:
+                shader_addline(buffer, "%s%s = %s(",
+                        glsl_dst.reg_name, glsl_dst.mask_str, shift_glsl_tab[dst->shift]);
+                break;
+            case WINED3D_DATA_INT:
+                shader_addline(buffer, "%s%s = %sintBitsToFloat(",
+                        glsl_dst.reg_name, glsl_dst.mask_str, shift_glsl_tab[dst->shift]);
+                break;
+            case WINED3D_DATA_RESOURCE:
+            case WINED3D_DATA_SAMPLER:
+            case WINED3D_DATA_UINT:
+                shader_addline(buffer, "%s%s = %suintBitsToFloat(",
+                        glsl_dst.reg_name, glsl_dst.mask_str, shift_glsl_tab[dst->shift]);
+                break;
+            default:
+                FIXME("Unhandled data type %#x.\n", dst->reg.data_type);
+                shader_addline(buffer, "%s%s = %s(",
+                        glsl_dst.reg_name, glsl_dst.mask_str, shift_glsl_tab[dst->shift]);
+                break;
+        }
+    }
 
     return mask;
 }
@@ -4069,21 +4121,16 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
 
     shader_addline(buffer, "#version 120\n");
 
+    if (gl_info->supported[ARB_SHADER_BIT_ENCODING])
+        shader_addline(buffer, "#extension GL_ARB_shader_bit_encoding : enable\n");
     if (gl_info->supported[ARB_SHADER_TEXTURE_LOD])
-    {
         shader_addline(buffer, "#extension GL_ARB_shader_texture_lod : enable\n");
-    }
+    /* The spec says that it doesn't have to be explicitly enabled, but the
+     * nvidia drivers write a warning if we don't do so. */
     if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
-    {
-        /* The spec says that it doesn't have to be explicitly enabled, but the nvidia
-         * drivers write a warning if we don't do so
-         */
         shader_addline(buffer, "#extension GL_ARB_texture_rectangle : enable\n");
-    }
     if (gl_info->supported[EXT_GPU_SHADER4])
-    {
         shader_addline(buffer, "#extension GL_EXT_gpu_shader4 : enable\n");
-    }
 
     /* Base Declarations */
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
@@ -4166,6 +4213,8 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
 
     shader_addline(buffer, "#version 120\n");
 
+    if (gl_info->supported[ARB_SHADER_BIT_ENCODING])
+        shader_addline(buffer, "#extension GL_ARB_shader_bit_encoding : enable\n");
     if (gl_info->supported[EXT_GPU_SHADER4])
         shader_addline(buffer, "#extension GL_EXT_gpu_shader4 : enable\n");
 
@@ -4996,8 +5045,8 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
 {
     UINT shader_model;
 
-    if (gl_info->supported[EXT_GPU_SHADER4] && gl_info->supported[ARB_GEOMETRY_SHADER4]
-            && gl_info->glsl_version >= MAKEDWORD_VERSION(1, 50))
+    if (gl_info->supported[EXT_GPU_SHADER4] && gl_info->supported[ARB_SHADER_BIT_ENCODING]
+            && gl_info->supported[ARB_GEOMETRY_SHADER4] && gl_info->glsl_version >= MAKEDWORD_VERSION(1, 50))
         shader_model = 4;
     /* ARB_shader_texture_lod or EXT_gpu_shader4 is required for the SM3
      * texldd and texldl instructions. */
