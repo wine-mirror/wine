@@ -1914,6 +1914,68 @@ todo_wine {
     }
 }
 
+static void test_IMLangConvertCharset(IMultiLanguage *ml)
+{
+    IMLangConvertCharset *convert;
+    WCHAR strW[] = {'a','b','c','d',0};
+    UINT cp, src_size, dst_size;
+    char strA[] = "abcd";
+    WCHAR buffW[20];
+    HRESULT hr;
+
+    hr = IMultiLanguage_CreateConvertCharset(ml, CP_ACP, CP_UTF8, 0, &convert);
+todo_wine
+    ok(hr == S_FALSE, "expected S_FALSE got 0x%08x\n", hr);
+
+    hr = IMLangConvertCharset_GetSourceCodePage(convert, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    cp = CP_UTF8;
+    hr = IMLangConvertCharset_GetSourceCodePage(convert, &cp);
+    ok(hr == S_OK, "expected S_OK got 0x%08x\n", hr);
+    ok(cp == CP_ACP, "got %d\n", cp);
+
+    hr = IMLangConvertCharset_GetDestinationCodePage(convert, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    cp = CP_ACP;
+    hr = IMLangConvertCharset_GetDestinationCodePage(convert, &cp);
+    ok(hr == S_OK, "expected S_OK got 0x%08x\n", hr);
+    ok(cp == CP_UTF8, "got %d\n", cp);
+
+    /* DoConversionToUnicode */
+    hr = IMLangConvertCharset_Initialize(convert, CP_UTF8, CP_UNICODE, 0);
+    ok(hr == S_OK, "expected S_OK got 0x%08x\n", hr);
+
+    hr = IMLangConvertCharset_DoConversionToUnicode(convert, NULL, NULL, NULL, NULL);
+    ok(hr == E_FAIL || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
+
+    src_size = -1;
+    dst_size = 20;
+    buffW[0] = 0;
+    buffW[4] = 4;
+    hr = IMLangConvertCharset_DoConversionToUnicode(convert, strA, &src_size, buffW, &dst_size);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!memcmp(buffW, strW, 4*sizeof(WCHAR)), "got converted string %s\n", wine_dbgstr_wn(buffW, dst_size));
+    ok(dst_size == 4, "got %d\n", dst_size);
+    ok(buffW[4] == 4, "got %d\n", buffW[4]);
+    ok(src_size == 4, "got %d\n", src_size);
+
+    src_size = -1;
+    dst_size = 0;
+    buffW[0] = 1;
+    hr = IMLangConvertCharset_DoConversionToUnicode(convert, strA, &src_size, buffW, &dst_size);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(buffW[0] == 1, "got %d\n", buffW[0]);
+    ok(dst_size == 4, "got %d\n", dst_size);
+    ok(src_size == 4, "got %d\n", src_size);
+
+    hr = IMLangConvertCharset_Initialize(convert, CP_UNICODE, CP_UNICODE, 0);
+    ok(hr == S_OK, "expected S_OK got 0x%08x\n", hr);
+
+    IMLangConvertCharset_Release(convert);
+}
+
 START_TEST(mlang)
 {
     IMultiLanguage  *iML = NULL;
@@ -1940,6 +2002,7 @@ START_TEST(mlang)
     if (ret != S_OK || !iML) return;
 
     test_GetNumberOfCodePageInfo((IMultiLanguage2 *)iML);
+    test_IMLangConvertCharset(iML);
     IMultiLanguage_Release(iML);
 
 

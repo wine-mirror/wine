@@ -3635,6 +3635,7 @@ static HRESULT WINAPI MLangConvertCharset_GetSourceCodePage(IMLangConvertCharset
 
     TRACE("(%p)->(%p)\n", This, src_cp);
 
+    if (!src_cp) return E_INVALIDARG;
     *src_cp = This->src_cp;
     return S_OK;
 }
@@ -3645,6 +3646,7 @@ static HRESULT WINAPI MLangConvertCharset_GetDestinationCodePage(IMLangConvertCh
 
     TRACE("(%p)->(%p)\n", This, dst_cp);
 
+    if (!dst_cp) return E_INVALIDARG;
     *dst_cp = This->dst_cp;
     return S_OK;
 }
@@ -3668,8 +3670,8 @@ static HRESULT WINAPI MLangConvertCharset_DoConversionToUnicode(IMLangConvertCha
     UINT *src_size, WCHAR *dest, UINT *dest_size)
 {
     struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
-    FIXME("(%p)->(%p %p %p %p): stub\n", This, src, src_size, dest, dest_size);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %p %p %p)\n", This, src, src_size, dest, dest_size);
+    return ConvertINetMultiByteToUnicode(NULL, This->src_cp, src, (INT*)src_size, dest, (INT*)dest_size);
 }
 
 static HRESULT WINAPI MLangConvertCharset_DoConversionFromUnicode(IMLangConvertCharset *iface,
