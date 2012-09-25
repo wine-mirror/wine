@@ -2070,6 +2070,10 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
                 }
                 break;
 
+      case '^': if (!inQuotes) curPos++;
+                curCopyTo[(*curLen)++] = *curPos;
+                break;
+
       case '&': if (!inQuotes) {
                   lastWasRedirect = FALSE;
 

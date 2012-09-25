@@ -123,7 +123,7 @@ bar2
 'a', '~`+', '.{}!+b'
 'a', 'b', ''
 '"a;b"', '', ''
-@todo_wine@'a', 'b', ''
+'a', 'b', ''
 'a[b]{c}(d)e', '', ''
 'a', '', ''
 second line
@@ -197,25 +197,25 @@ A
 B
 C
 ------------ Testing circumflex escape character ------------
-@todo_wine@hello, world
-@todo_wine@hello, world
-@todo_wine@hell^o, world
-@todo_wine@hell^o, world
+hello, world
+hello, world
+hell^o, world
+hell^o, world
 baz
-@todo_wine@baz
-@todo_wine@foo | echo bar
-@todo_wine@foo & echo bar
-@todo_wine@bak &
+baz
+foo | echo bar
+foo & echo bar
+bak &
 baz@space@
 0@or_broken@1
-@todo_wine@foo > foo
-@todo_wine@<
-@todo_wine@ffoof
-@todo_wine@FOO=bar | baz
-@todo_wine@0
-@todo_wine@FOO=bar ^| baz
-@todo_wine@bar | baz
-@todo_wine@0
+foo > foo
+<
+ffoof
+FOO=bar | baz
+0
+FOO=bar ^| baz
+bar | baz
+0
 ------------ Testing 'set' ------------
 1
 0
