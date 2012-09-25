@@ -3195,13 +3195,81 @@ static PropertyItem *get_gif_comment(IWICMetadataReader *reader)
     return comment;
 }
 
-static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT active_frame)
+static LONG get_gif_frame_delay(IWICBitmapFrameDecode *frame)
 {
+    static const WCHAR delayW[] = { 'D','e','l','a','y',0 };
     HRESULT hr;
     IWICMetadataBlockReader *block_reader;
     IWICMetadataReader *reader;
     UINT block_count, i;
-    PropertyItem *comment = NULL;
+    PropertyItem *delay;
+    LONG value = 0;
+
+    hr = IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void **)&block_reader);
+    if (hr == S_OK)
+    {
+        hr = IWICMetadataBlockReader_GetCount(block_reader, &block_count);
+        if (hr == S_OK)
+        {
+            for (i = 0; i < block_count; i++)
+            {
+                hr = IWICMetadataBlockReader_GetReaderByIndex(block_reader, i, &reader);
+                if (hr == S_OK)
+                {
+                    delay = get_property(reader, &GUID_MetadataFormatGCE, delayW);
+                    if (delay)
+                    {
+                        if (delay->type == PropertyTagTypeShort && delay->length == 2)
+                            value = *(SHORT *)delay->value;
+
+                        GdipFree(delay);
+                    }
+                    IWICMetadataReader_Release(reader);
+                }
+            }
+        }
+        IWICMetadataBlockReader_Release(block_reader);
+    }
+
+    return value;
+}
+
+static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT active_frame)
+{
+    HRESULT hr;
+    IWICBitmapFrameDecode *frame;
+    IWICMetadataBlockReader *block_reader;
+    IWICMetadataReader *reader;
+    UINT frame_count, block_count, i;
+    PropertyItem *delay = NULL, *comment = NULL;
+
+    IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
+    if (frame_count > 1)
+    {
+        delay = GdipAlloc(sizeof(*delay) + frame_count * sizeof(LONG));
+        if (delay)
+        {
+            LONG *value;
+
+            delay->type = PropertyTagTypeLong;
+            delay->id = PropertyTagFrameDelay;
+            delay->length = frame_count * sizeof(LONG);
+            delay->value = delay + 1;
+
+            value = delay->value;
+
+            for (i = 0; i < frame_count; i++)
+            {
+                hr = IWICBitmapDecoder_GetFrame(decoder, i, &frame);
+                if (hr == S_OK)
+                {
+                    value[i] = get_gif_frame_delay(frame);
+                    IWICBitmapFrameDecode_Release(frame);
+                }
+                else value[i] = 0;
+            }
+        }
+    }
 
     hr = IWICBitmapDecoder_QueryInterface(decoder, &IID_IWICMetadataBlockReader, (void **)&block_reader);
     if (hr == S_OK)
@@ -3224,8 +3292,10 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
         IWICMetadataBlockReader_Release(block_reader);
     }
 
+    if (delay) add_property(bitmap, delay);
     if (comment) add_property(bitmap, comment);
 
+    GdipFree(delay);
     GdipFree(comment);
 }
 
