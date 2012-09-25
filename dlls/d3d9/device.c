@@ -2564,16 +2564,15 @@ static HRESULT WINAPI d3d9_device_SetPixelShader(IDirect3DDevice9Ex *iface, IDir
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct d3d9_pixelshader *shader_obj = unsafe_impl_from_IDirect3DPixelShader9(shader);
-    HRESULT hr;
 
     TRACE("iface %p, shader %p.\n", iface, shader);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_set_pixel_shader(device->wined3d_device,
+    wined3d_device_set_pixel_shader(device->wined3d_device,
             shader_obj ? shader_obj->wined3d_shader : NULL);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_GetPixelShader(IDirect3DDevice9Ex *iface, IDirect3DPixelShader9 **shader)

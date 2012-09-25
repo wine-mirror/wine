@@ -2831,39 +2831,33 @@ void device_update_tex_unit_map(struct wined3d_device *device)
         device_map_vsamplers(device, ps, gl_info);
 }
 
-HRESULT CDECL wined3d_device_set_pixel_shader(struct wined3d_device *device, struct wined3d_shader *shader)
+void CDECL wined3d_device_set_pixel_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
     struct wined3d_shader *prev = device->updateStateBlock->state.pixel_shader;
 
     TRACE("device %p, shader %p.\n", device, shader);
-
-    device->updateStateBlock->state.pixel_shader = shader;
-    device->updateStateBlock->changed.pixelShader = TRUE;
-
-    if (device->isRecordingState)
-    {
-        if (shader)
-            wined3d_shader_incref(shader);
-        if (prev)
-            wined3d_shader_decref(prev);
-        TRACE("Recording... not performing anything.\n");
-        return WINED3D_OK;
-    }
-
-    if (shader == prev)
-    {
-        TRACE("Application is setting the old shader over, nothing to do.\n");
-        return WINED3D_OK;
-    }
 
     if (shader)
         wined3d_shader_incref(shader);
     if (prev)
         wined3d_shader_decref(prev);
 
-    device_invalidate_state(device, STATE_PIXELSHADER);
+    device->updateStateBlock->state.pixel_shader = shader;
+    device->updateStateBlock->changed.pixelShader = TRUE;
 
-    return WINED3D_OK;
+    if (device->isRecordingState)
+    {
+        TRACE("Recording... not performing anything.\n");
+        return;
+    }
+
+    if (shader == prev)
+    {
+        TRACE("Application is setting the old shader over, nothing to do.\n");
+        return;
+    }
+
+    device_invalidate_state(device, STATE_PIXELSHADER);
 }
 
 struct wined3d_shader * CDECL wined3d_device_get_pixel_shader(const struct wined3d_device *device)
