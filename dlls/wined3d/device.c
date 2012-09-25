@@ -2862,16 +2862,9 @@ void CDECL wined3d_device_set_pixel_shader(struct wined3d_device *device, struct
 
 struct wined3d_shader * CDECL wined3d_device_get_pixel_shader(const struct wined3d_device *device)
 {
-    struct wined3d_shader *shader;
-
     TRACE("device %p.\n", device);
 
-    shader = device->stateBlock->state.pixel_shader;
-    if (shader)
-        wined3d_shader_incref(shader);
-
-    TRACE("Returning %p.\n", shader);
-    return shader;
+    return device->stateBlock->state.pixel_shader;
 }
 
 HRESULT CDECL wined3d_device_set_ps_consts_b(struct wined3d_device *device,

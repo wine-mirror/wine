@@ -2463,7 +2463,6 @@ static HRESULT WINAPI d3d8_device_GetPixelShader(IDirect3DDevice8 *iface, DWORD 
     {
         struct d3d8_pixel_shader *d3d8_shader;
         d3d8_shader = wined3d_shader_get_parent(object);
-        wined3d_shader_decref(object);
         *shader = d3d8_shader->handle;
     }
     else
@@ -2481,7 +2480,6 @@ static HRESULT WINAPI d3d8_device_DeletePixelShader(IDirect3DDevice8 *iface, DWO
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct d3d8_pixel_shader *shader_impl;
-    struct wined3d_shader *cur;
 
     TRACE("iface %p, shader %#x.\n", iface, shader);
 
@@ -2494,12 +2492,8 @@ static HRESULT WINAPI d3d8_device_DeletePixelShader(IDirect3DDevice8 *iface, DWO
         return D3DERR_INVALIDCALL;
     }
 
-    if ((cur = wined3d_device_get_pixel_shader(device->wined3d_device)))
-    {
-        if (cur == shader_impl->wined3d_shader)
-            IDirect3DDevice8_SetPixelShader(iface, 0);
-        wined3d_shader_decref(cur);
-    }
+    if (wined3d_device_get_pixel_shader(device->wined3d_device) == shader_impl->wined3d_shader)
+        IDirect3DDevice8_SetPixelShader(iface, 0);
 
     wined3d_mutex_unlock();
 

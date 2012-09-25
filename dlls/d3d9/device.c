@@ -2586,13 +2586,11 @@ static HRESULT WINAPI d3d9_device_GetPixelShader(IDirect3DDevice9Ex *iface, IDir
     if (!shader) return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    wined3d_shader = wined3d_device_get_pixel_shader(device->wined3d_device);
-    if (wined3d_shader)
+    if ((wined3d_shader = wined3d_device_get_pixel_shader(device->wined3d_device)))
     {
         shader_impl = wined3d_shader_get_parent(wined3d_shader);
         *shader = &shader_impl->IDirect3DPixelShader9_iface;
         IDirect3DPixelShader9_AddRef(*shader);
-        wined3d_shader_decref(wined3d_shader);
     }
     else
     {
