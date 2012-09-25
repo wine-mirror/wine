@@ -2128,10 +2128,11 @@ static HRESULT WINAPI fnIMultiLanguage_GetCharsetInfo(
 
 static HRESULT WINAPI fnIMultiLanguage_IsConvertible(
     IMultiLanguage* iface,
-    DWORD dwSrcEncoding,
-    DWORD dwDstEncoding)
+    DWORD src_enc,
+    DWORD dst_enc)
 {
-    return IsConvertINetStringAvailable(dwSrcEncoding, dwDstEncoding);
+    MLang_impl *This = impl_from_IMultiLanguage( iface );
+    return IMultiLanguage3_IsConvertible(&This->IMultiLanguage3_iface, src_enc, dst_enc);
 }
 
 static HRESULT WINAPI fnIMultiLanguage_ConvertString(
