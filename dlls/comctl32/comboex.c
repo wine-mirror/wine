@@ -2308,7 +2308,8 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return COMBOEX_WindowPosChanging (infoPtr, (WINDOWPOS *)lParam);
 
         case WM_SETFOCUS:
-            SetFocus(infoPtr->hwndCombo);
+            if (infoPtr->hwndEdit) SetFocus( infoPtr->hwndEdit );
+            else SetFocus( infoPtr->hwndCombo );
             return 0;
 
         case WM_SYSCOLORCHANGE:
