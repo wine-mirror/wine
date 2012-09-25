@@ -1433,88 +1433,6 @@ typedef struct tagMLang_impl
     DWORD total_cp, total_scripts;
 } MLang_impl;
 
-static ULONG MLang_AddRef( MLang_impl* This)
-{
-    return InterlockedIncrement(&This->ref);
-}
-
-static ULONG MLang_Release( MLang_impl* This )
-{
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("%p ref = %d\n", This, ref);
-    if (ref == 0)
-    {
-        TRACE("Destroying %p\n", This);
-	HeapFree(GetProcessHeap(), 0, This);
-        UnlockModule();
-    }
-
-    return ref;
-}
-
-static HRESULT MLang_QueryInterface(
-        MLang_impl* This,
-        REFIID riid,
-        void** ppvObject)
-{
-    TRACE("%p -> %s\n", This, debugstr_guid(riid) );
-
-    if (IsEqualGUID(riid, &IID_IUnknown)
-	|| IsEqualGUID(riid, &IID_IMLangCodePages)
-	|| IsEqualGUID(riid, &IID_IMLangFontLink))
-    {
-	MLang_AddRef(This);
-        TRACE("Returning IID_IMLangFontLink %p ref = %d\n", This, This->ref);
-	*ppvObject = &This->IMLangFontLink_iface;
-	return S_OK;
-    }
-
-    if (IsEqualGUID(riid, &IID_IMLangFontLink2))
-    {
-	MLang_AddRef(This);
-        TRACE("Returning IID_IMLangFontLink2 %p ref = %d\n", This, This->ref);
-	*ppvObject = &This->IMLangFontLink2_iface;
-	return S_OK;
-    }
-
-    if (IsEqualGUID(riid, &IID_IMultiLanguage) )
-    {
-	MLang_AddRef(This);
-        TRACE("Returning IID_IMultiLanguage %p ref = %d\n", This, This->ref);
-	*ppvObject = &This->IMultiLanguage_iface;
-	return S_OK;
-    }
-
-    if (IsEqualGUID(riid, &IID_IMultiLanguage2) )
-    {
-	MLang_AddRef(This);
-	*ppvObject = &This->IMultiLanguage3_iface;
-        TRACE("Returning IID_IMultiLanguage2 %p ref = %d\n", This, This->ref);
-	return S_OK;
-    }
-
-    if (IsEqualGUID(riid, &IID_IMultiLanguage3) )
-    {
-	MLang_AddRef(This);
-	*ppvObject = &This->IMultiLanguage3_iface;
-        TRACE("Returning IID_IMultiLanguage3 %p ref = %d\n", This, This->ref);
-	return S_OK;
-    }
-
-    if (IsEqualGUID(riid, &IID_IMLangLineBreakConsole))
-    {
-	MLang_AddRef(This);
-        TRACE("Returning IID_IMLangLineBreakConsole %p ref = %d\n", This, This->ref);
-	*ppvObject = &This->IMLangLineBreakConsole_iface;
-	return S_OK;
-    }
-
-
-    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
-    return E_NOINTERFACE;
-}
-
 /******************************************************************************/
 
 typedef struct tagEnumCodePage_impl
@@ -1891,21 +1809,21 @@ static HRESULT WINAPI fnIMLangFontLink_QueryInterface(
         void** ppvObject)
 {
     MLang_impl *This = impl_from_IMLangFontLink( iface );
-    return MLang_QueryInterface( This, riid, ppvObject );
+    return IMultiLanguage3_QueryInterface( &This->IMultiLanguage3_iface, riid, ppvObject );
 }
 
 static ULONG WINAPI fnIMLangFontLink_AddRef(
         IMLangFontLink* iface)
 {
     MLang_impl *This = impl_from_IMLangFontLink( iface );
-    return MLang_AddRef( This );
+    return IMultiLanguage3_AddRef( &This->IMultiLanguage3_iface );
 }
 
 static ULONG WINAPI fnIMLangFontLink_Release(
         IMLangFontLink* iface)
 {
     MLang_impl *This = impl_from_IMLangFontLink( iface );
-    return MLang_Release( This );
+    return IMultiLanguage3_Release( &This->IMultiLanguage3_iface );
 }
 
 static HRESULT WINAPI fnIMLangFontLink_GetCharCodePages(
@@ -2126,22 +2044,22 @@ static inline MLang_impl *impl_from_IMultiLanguage( IMultiLanguage *iface )
 static HRESULT WINAPI fnIMultiLanguage_QueryInterface(
     IMultiLanguage* iface,
     REFIID riid,
-    void** ppvObject)
+    void** obj)
 {
     MLang_impl *This = impl_from_IMultiLanguage( iface );
-    return MLang_QueryInterface( This, riid, ppvObject );
+    return IMultiLanguage3_QueryInterface(&This->IMultiLanguage3_iface, riid, obj);
 }
 
 static ULONG WINAPI fnIMultiLanguage_AddRef( IMultiLanguage* iface )
 {
     MLang_impl *This = impl_from_IMultiLanguage( iface );
-    return IMLangFontLink_AddRef( &This->IMLangFontLink_iface );
+    return IMultiLanguage3_AddRef(&This->IMultiLanguage3_iface);
 }
 
 static ULONG WINAPI fnIMultiLanguage_Release( IMultiLanguage* iface )
 {
     MLang_impl *This = impl_from_IMultiLanguage( iface );
-    return IMLangFontLink_Release( &This->IMLangFontLink_iface );
+    return IMultiLanguage3_Release(&This->IMultiLanguage3_iface);
 }
 
 static HRESULT WINAPI fnIMultiLanguage_GetNumberOfCodePageInfo(
@@ -2627,22 +2545,65 @@ static inline MLang_impl *impl_from_IMultiLanguage3( IMultiLanguage3 *iface )
 static HRESULT WINAPI fnIMultiLanguage2_QueryInterface(
     IMultiLanguage3* iface,
     REFIID riid,
-    void** ppvObject)
+    void** obj)
 {
     MLang_impl *This = impl_from_IMultiLanguage3( iface );
-    return MLang_QueryInterface( This, riid, ppvObject );
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IMultiLanguage))
+    {
+        *obj = &This->IMultiLanguage_iface;
+    }
+    else if (IsEqualGUID(riid, &IID_IMLangCodePages) ||
+             IsEqualGUID(riid, &IID_IMLangFontLink))
+    {
+        *obj = &This->IMLangFontLink_iface;
+    }
+    else if (IsEqualGUID(riid, &IID_IMLangFontLink2))
+    {
+        *obj = &This->IMLangFontLink2_iface;
+    }
+    else if (IsEqualGUID(riid, &IID_IMultiLanguage2) ||
+             IsEqualGUID(riid, &IID_IMultiLanguage3))
+    {
+        *obj = &This->IMultiLanguage3_iface;
+    }
+    else if (IsEqualGUID(riid, &IID_IMLangLineBreakConsole))
+    {
+        *obj = &This->IMLangLineBreakConsole_iface;
+    }
+    else
+    {
+        WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), obj);
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IMultiLanguage3_AddRef(iface);
+    return S_OK;
 }
 
 static ULONG WINAPI fnIMultiLanguage2_AddRef( IMultiLanguage3* iface )
 {
     MLang_impl *This = impl_from_IMultiLanguage3( iface );
-    return MLang_AddRef( This );
+    return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI fnIMultiLanguage2_Release( IMultiLanguage3* iface )
 {
     MLang_impl *This = impl_from_IMultiLanguage3( iface );
-    return MLang_Release( This );
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+    if (ref == 0)
+    {
+	HeapFree(GetProcessHeap(), 0, This);
+        UnlockModule();
+    }
+
+    return ref;
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_GetNumberOfCodePageInfo(
@@ -3297,19 +3258,19 @@ static HRESULT WINAPI fnIMLangFontLink2_QueryInterface(
     void** ppvObject)
 {
     MLang_impl *This = impl_from_IMLangFontLink2( iface );
-    return MLang_QueryInterface( This, riid, ppvObject );
+    return IMultiLanguage3_QueryInterface( &This->IMultiLanguage3_iface, riid, ppvObject );
 }
 
 static ULONG WINAPI fnIMLangFontLink2_AddRef( IMLangFontLink2* iface )
 {
     MLang_impl *This = impl_from_IMLangFontLink2( iface );
-    return MLang_AddRef( This );
+    return IMultiLanguage3_AddRef( &This->IMultiLanguage3_iface );
 }
 
 static ULONG WINAPI fnIMLangFontLink2_Release( IMLangFontLink2* iface )
 {
     MLang_impl *This = impl_from_IMLangFontLink2( iface );
-    return MLang_Release( This );
+    return IMultiLanguage3_Release( &This->IMultiLanguage3_iface );
 }
 
 static HRESULT WINAPI fnIMLangFontLink2_GetCharCodePages( IMLangFontLink2* This,
@@ -3486,21 +3447,21 @@ static HRESULT WINAPI fnIMLangLineBreakConsole_QueryInterface(
     void** ppvObject)
 {
     MLang_impl *This = impl_from_IMLangLineBreakConsole( iface );
-    return MLang_QueryInterface( This, riid, ppvObject );
+    return IMultiLanguage3_QueryInterface( &This->IMultiLanguage3_iface, riid, ppvObject );
 }
 
 static ULONG WINAPI fnIMLangLineBreakConsole_AddRef(
     IMLangLineBreakConsole* iface )
 {
     MLang_impl *This = impl_from_IMLangLineBreakConsole( iface );
-    return MLang_AddRef( This );
+    return IMultiLanguage3_AddRef( &This->IMultiLanguage3_iface );
 }
 
 static ULONG WINAPI fnIMLangLineBreakConsole_Release(
     IMLangLineBreakConsole* iface )
 {
     MLang_impl *This = impl_from_IMLangLineBreakConsole( iface );
-    return MLang_Release( This );
+    return IMultiLanguage3_Release( &This->IMultiLanguage3_iface );
 }
 
 static HRESULT WINAPI fnIMLangLineBreakConsole_BreakLineML(
@@ -3721,7 +3682,7 @@ static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     mlang->total_scripts = sizeof(mlang_data)/sizeof(mlang_data[0]) - 1;
 
     mlang->ref = 1;
-    *ppObj = mlang;
+    *ppObj = &mlang->IMultiLanguage_iface;
     TRACE("returning %p\n", mlang);
 
     LockModule();
