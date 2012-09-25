@@ -3100,8 +3100,133 @@ GpStatus WINGDIPAPI GdipLoadImageFromFileICM(GDIPCONST WCHAR* filename,GpImage *
     return GdipLoadImageFromFile(filename, image);
 }
 
-static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT frame)
+static void add_property(GpBitmap *bitmap, PropertyItem *item)
 {
+    UINT prop_size, prop_count;
+    PropertyItem *prop_item;
+
+    if (bitmap->prop_item == NULL)
+    {
+        prop_size = prop_count = 0;
+        prop_item = GdipAlloc(item->length + sizeof(PropertyItem));
+        if (!prop_item) return;
+    }
+    else
+    {
+        UINT i;
+        char *item_value;
+
+        GdipGetPropertySize((GpImage *)bitmap, &prop_size, &prop_count);
+
+        prop_item = GdipAlloc(prop_size + item->length + sizeof(PropertyItem));
+        if (!prop_item) return;
+        memcpy(prop_item, bitmap->prop_item, sizeof(PropertyItem) * bitmap->prop_count);
+        prop_size -= sizeof(PropertyItem) * bitmap->prop_count;
+        memcpy(prop_item + prop_count + 1, bitmap->prop_item + prop_count, prop_size);
+
+        item_value = (char *)(prop_item + prop_count + 1);
+
+        for (i = 0; i < prop_count; i++)
+        {
+            prop_item[i].value = item_value;
+            item_value += prop_item[i].length;
+        }
+    }
+
+    prop_item[prop_count].id = item->id;
+    prop_item[prop_count].type = item->type;
+    prop_item[prop_count].length = item->length;
+    prop_item[prop_count].value = (char *)(prop_item + prop_count + 1) + prop_size;
+    memcpy(prop_item[prop_count].value, item->value, item->length);
+
+    GdipFree(bitmap->prop_item);
+    bitmap->prop_item = prop_item;
+    bitmap->prop_count++;
+}
+
+static PropertyItem *get_property(IWICMetadataReader *reader, const GUID *guid, const WCHAR *prop_name)
+{
+    HRESULT hr;
+    GUID format;
+    PROPVARIANT id, value;
+    PropertyItem *item = NULL;
+
+    IWICMetadataReader_GetMetadataFormat(reader, &format);
+    if (!IsEqualGUID(&format, guid)) return NULL;
+
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+
+    id.vt = VT_LPWSTR;
+    id.u.pwszVal = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(prop_name) + 1) * sizeof(WCHAR));
+    if (!id.u.pwszVal) return NULL;
+    lstrcpyW(id.u.pwszVal, prop_name);
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
+    if (hr == S_OK)
+    {
+        UINT item_size = propvariant_size(&value);
+        if (item_size)
+        {
+            item_size += sizeof(*item);
+            item = GdipAlloc(item_size);
+            if (propvariant_to_item(&value, item, item_size, 0) != Ok)
+            {
+                GdipFree(item);
+                item = NULL;
+            }
+        }
+    }
+
+    PropVariantClear(&id);
+    PropVariantClear(&value);
+
+    return item;
+}
+
+static PropertyItem *get_gif_comment(IWICMetadataReader *reader)
+{
+    static const WCHAR textentryW[] = { 'T','e','x','t','E','n','t','r','y',0 };
+    PropertyItem *comment;
+
+    comment = get_property(reader, &GUID_MetadataFormatGifComment, textentryW);
+    if (comment)
+        comment->id = PropertyTagExifUserComment;
+
+    return comment;
+}
+
+static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT active_frame)
+{
+    HRESULT hr;
+    IWICMetadataBlockReader *block_reader;
+    IWICMetadataReader *reader;
+    UINT block_count, i;
+    PropertyItem *comment = NULL;
+
+    hr = IWICBitmapDecoder_QueryInterface(decoder, &IID_IWICMetadataBlockReader, (void **)&block_reader);
+    if (hr == S_OK)
+    {
+        hr = IWICMetadataBlockReader_GetCount(block_reader, &block_count);
+        if (hr == S_OK)
+        {
+            for (i = 0; i < block_count; i++)
+            {
+                hr = IWICMetadataBlockReader_GetReaderByIndex(block_reader, i, &reader);
+                if (hr == S_OK)
+                {
+                    if (!comment)
+                        comment = get_gif_comment(reader);
+
+                    IWICMetadataReader_Release(reader);
+                }
+            }
+        }
+        IWICMetadataBlockReader_Release(block_reader);
+    }
+
+    if (comment) add_property(bitmap, comment);
+
+    GdipFree(comment);
 }
 
 typedef void (*metadata_reader_func)(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT frame);
