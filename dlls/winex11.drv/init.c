@@ -128,7 +128,7 @@ static BOOL X11DRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
 
     if (!physDev) return FALSE;
 
-    physDev->depth         = screen_depth;
+    physDev->depth         = default_visual.depth;
     physDev->color_shifts  = &X11DRV_PALETTE_default_shifts;
     SetRect( &physDev->dc_rect, 0, 0, virtual_screen_rect.right - virtual_screen_rect.left,
              virtual_screen_rect.bottom - virtual_screen_rect.top );
@@ -236,7 +236,7 @@ static INT X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
         /* MSDN: Number of entries in the device's color table, if the device has
          * a color depth of no more than 8 bits per pixel.For devices with greater
          * color depths, -1 is returned. */
-        return (screen_depth > 8) ? -1 : (1 << screen_depth);
+        return (default_visual.depth > 8) ? -1 : (1 << default_visual.depth);
     case PDEVICESIZE:
         return sizeof(X11DRV_PDEVICE);
     case CURVECAPS:

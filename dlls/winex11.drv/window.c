@@ -316,13 +316,14 @@ static int get_window_attributes( struct x11drv_win_data *data, XSetWindowAttrib
     attr->bit_gravity       = NorthWestGravity;
     attr->win_gravity       = StaticGravity;
     attr->backing_store     = NotUseful;
+    attr->border_pixel      = 0;
     attr->event_mask        = (ExposureMask | PointerMotionMask |
                                ButtonPressMask | ButtonReleaseMask | EnterWindowMask |
                                KeyPressMask | KeyReleaseMask | FocusChangeMask |
                                KeymapStateMask | StructureNotifyMask);
     if (data->managed) attr->event_mask |= PropertyChangeMask;
 
-    return (CWOverrideRedirect | CWSaveUnder | CWColormap |
+    return (CWOverrideRedirect | CWSaveUnder | CWColormap | CWBorderPixel |
             CWEventMask | CWBitGravity | CWBackingStore);
 }
 
@@ -530,7 +531,7 @@ static BOOL create_icon_pixmaps( HDC hdc, const ICONINFO *icon, Pixmap *icon_ret
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
-    XVisualInfo vis;
+    XVisualInfo vis = default_visual;
     struct gdi_image_bits bits;
     Pixmap color_pixmap = 0, mask_pixmap = 0;
     int i, lines;
@@ -545,13 +546,6 @@ static BOOL create_icon_pixmaps( HDC hdc, const ICONINFO *icon, Pixmap *icon_ret
     if (!(bits.ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto failed;
     if (!GetDIBits( hdc, icon->hbmColor, 0, lines, bits.ptr, info, DIB_RGB_COLORS )) goto failed;
 
-    vis.visual     = visual;
-    vis.depth      = screen_depth;
-    vis.visualid   = visual->visualid;
-    vis.class      = visual->class;
-    vis.red_mask   = visual->red_mask;
-    vis.green_mask = visual->green_mask;
-    vis.blue_mask  = visual->blue_mask;
     color_pixmap = create_pixmap_from_image( hdc, &vis, info, &bits, DIB_RGB_COLORS );
     HeapFree( GetProcessHeap(), 0, bits.ptr );
     bits.ptr = NULL;
@@ -941,8 +935,8 @@ void update_user_time( Time time )
 {
     if (!user_time_window)
     {
-        Window win = XCreateWindow( gdi_display, root_window, -1, -1, 1, 1, 0, 0, InputOnly,
-                                    DefaultVisual(gdi_display,DefaultScreen(gdi_display)), 0, NULL );
+        Window win = XCreateWindow( gdi_display, root_window, -1, -1, 1, 1, 0, CopyFromParent,
+                                    InputOnly, CopyFromParent, 0, NULL );
         if (InterlockedCompareExchangePointer( (void **)&user_time_window, (void *)win, 0 ))
             XDestroyWindow( gdi_display, win );
         TRACE( "user time window %lx\n", user_time_window );
@@ -1384,8 +1378,8 @@ static void create_whole_window( struct x11drv_win_data *data )
     data->whole_window = XCreateWindow( data->display, root_window,
                                         data->whole_rect.left - virtual_screen_rect.left,
                                         data->whole_rect.top - virtual_screen_rect.top,
-                                        cx, cy, 0, screen_depth, InputOutput,
-                                        visual, mask, &attr );
+                                        cx, cy, 0, default_visual.depth, InputOutput,
+                                        default_visual.visual, mask, &attr );
     if (!data->whole_window) goto done;
 
     set_initial_wm_hints( data->display, data->whole_window );
@@ -1633,7 +1627,8 @@ BOOL CDECL X11DRV_CreateWindow( HWND hwnd )
         attr.override_redirect = TRUE;
         attr.event_mask = StructureNotifyMask | FocusChangeMask;
         data->clip_window = XCreateWindow( data->display, root_window, 0, 0, 1, 1, 0, 0,
-                                           InputOnly, visual, CWOverrideRedirect | CWEventMask, &attr );
+                                           InputOnly, default_visual.visual,
+                                           CWOverrideRedirect | CWEventMask, &attr );
         XFlush( data->display );
         SetPropA( hwnd, clip_window_prop, (HANDLE)data->clip_window );
     }
@@ -2014,7 +2009,6 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
 {
     struct x11drv_win_data *data = get_win_data( hwnd );
     RECT surface_rect;
-    XVisualInfo vis;
     DWORD flags;
     COLORREF key;
     BOOL layered = GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED;
@@ -2056,17 +2050,10 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
     }
     else if (!(swp_flags & SWP_SHOWWINDOW) && !(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)) goto done;
 
-    memset( &vis, 0, sizeof(vis) );
-    vis.visual     = visual;
-    vis.visualid   = visual->visualid;
-    vis.depth      = screen_depth;
-    vis.red_mask   = visual->red_mask;
-    vis.green_mask = visual->green_mask;
-    vis.blue_mask  = visual->blue_mask;
     if (!layered || !GetLayeredWindowAttributes( hwnd, &key, NULL, &flags ) || !(flags & LWA_COLORKEY))
         key = CLR_INVALID;
 
-    *surface = create_surface( data->whole_window, &vis, &surface_rect, key );
+    *surface = create_surface( data->whole_window, &default_visual, &surface_rect, key );
 
 done:
     release_win_data( data );

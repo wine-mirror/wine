@@ -347,14 +347,13 @@ static inline size_t get_property_size( int format, unsigned long count )
     return count * (format / 8);
 }
 
-extern Visual *visual DECLSPEC_HIDDEN;
+extern XVisualInfo default_visual DECLSPEC_HIDDEN;
 extern XPixmapFormatValues **pixmap_formats DECLSPEC_HIDDEN;
 extern Window root_window DECLSPEC_HIDDEN;
 extern int clipping_cursor DECLSPEC_HIDDEN;
 extern unsigned int screen_width DECLSPEC_HIDDEN;
 extern unsigned int screen_height DECLSPEC_HIDDEN;
 extern unsigned int screen_bpp DECLSPEC_HIDDEN;
-extern unsigned int screen_depth DECLSPEC_HIDDEN;
 extern RECT virtual_screen_rect DECLSPEC_HIDDEN;
 extern int use_xkb DECLSPEC_HIDDEN;
 extern int usexrandr DECLSPEC_HIDDEN;

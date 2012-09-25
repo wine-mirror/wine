@@ -1195,7 +1195,7 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
     X11DRV_PDEVICE *physdev = get_x11drv_dev( dev );
     DWORD ret;
     XImage *image;
-    XVisualInfo vis;
+    XVisualInfo vis = default_visual;
     struct gdi_image_bits dst_bits;
     const XPixmapFormatValues *format;
     const BYTE *opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
@@ -1217,7 +1217,7 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
     if (!bits) return ERROR_SUCCESS;  /* just querying the format */
     if ((src->width != dst->width) || (src->height != dst->height)) return ERROR_TRANSFORM_NOT_SUPPORTED;
 
-    image = XCreateImage( gdi_display, visual, vis.depth, ZPixmap, 0, NULL,
+    image = XCreateImage( gdi_display, vis.visual, vis.depth, ZPixmap, 0, NULL,
                           info->bmiHeader.biWidth, src->visrect.bottom - src->visrect.top, 32, 0 );
     if (!image) return ERROR_OUTOFMEMORY;
 
@@ -1286,7 +1286,7 @@ DWORD X11DRV_GetImage( PHYSDEV dev, BITMAPINFO *info,
     X11DRV_PDEVICE *physdev = get_x11drv_dev( dev );
     DWORD ret = ERROR_SUCCESS;
     XImage *image;
-    XVisualInfo vis;
+    XVisualInfo vis = default_visual;
     UINT align, x, y, width, height;
     struct gdi_image_bits src_bits;
     const XPixmapFormatValues *format;
@@ -1403,7 +1403,7 @@ static DWORD put_pixmap_image( Pixmap pixmap, const XVisualInfo *vis,
     coords.height = abs( info->bmiHeader.biHeight );
     SetRect( &coords.visrect, 0, 0, coords.width, coords.height );
 
-    image = XCreateImage( gdi_display, visual, vis->depth, ZPixmap, 0, NULL,
+    image = XCreateImage( gdi_display, vis->visual, vis->depth, ZPixmap, 0, NULL,
                           coords.width, coords.height, 32, 0 );
     if (!image) return ERROR_OUTOFMEMORY;
 
@@ -1870,7 +1870,7 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
 
     surface->bits.free = free_heap_bits;
 
-    surface->image = XCreateImage( gdi_display, visual, vis->depth, ZPixmap, 0, NULL,
+    surface->image = XCreateImage( gdi_display, vis->visual, vis->depth, ZPixmap, 0, NULL,
                                    width, height, 32, 0 );
     if (!surface->image) goto failed;
     surface->gc = XCreateGC( gdi_display, window, 0, NULL );

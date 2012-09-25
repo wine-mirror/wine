@@ -149,9 +149,9 @@ int X11DRV_PALETTE_Init(void)
     for( mask = 1; !((white & mask)^(black & mask)); mask <<= 1 )
 	 monoPlane++;
     X11DRV_PALETTE_PaletteFlags = (white & mask) ? X11DRV_PALETTE_WHITESET : 0;
-    palette_size = visual->map_entries;
+    palette_size = default_visual.colormap_size;
 
-    switch(visual->class)
+    switch(default_visual.class)
     {
     case DirectColor:
 	X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_VIRTUAL;
@@ -162,7 +162,7 @@ int X11DRV_PALETTE_Init(void)
 	    XSetWindowAttributes win_attr;
 
 	    X11DRV_PALETTE_PaletteXColormap = XCreateColormap( gdi_display, root_window,
-                                                               visual, AllocAll );
+                                                               default_visual.visual, AllocAll );
 	    if (X11DRV_PALETTE_PaletteXColormap)
 	    {
 	        X11DRV_PALETTE_PaletteFlags |= (X11DRV_PALETTE_PRIVATE | X11DRV_PALETTE_WHITESET);
@@ -179,15 +179,15 @@ int X11DRV_PALETTE_Init(void)
 	    }
 	} else {
 	  X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
-							    visual, AllocNone);
+							    default_visual.visual, AllocNone);
 	}
         break;
 
     case StaticGray:
         X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
-                                                          visual, AllocNone);
+                                                          default_visual.visual, AllocNone);
 	X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
-        X11DRV_PALETTE_Graymax = (1 << screen_depth)-1;
+        X11DRV_PALETTE_Graymax = (1 << default_visual.depth)-1;
         break;
 
     case TrueColor:
@@ -204,21 +204,21 @@ int X11DRV_PALETTE_Init(void)
 	        monoPlane++;
     	    X11DRV_PALETTE_PaletteFlags = (white & mask) ? X11DRV_PALETTE_WHITESET : 0;
             X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
-                                                              visual, AllocNone);
+                                                              default_visual.visual, AllocNone);
 	}
         else
         {
             X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
-                                                              visual, AllocNone);
+                                                              default_visual.visual, AllocNone);
             X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
-            X11DRV_PALETTE_ComputeColorShifts(&X11DRV_PALETTE_default_shifts, visual->red_mask, visual->green_mask, visual->blue_mask);
+            X11DRV_PALETTE_ComputeColorShifts(&X11DRV_PALETTE_default_shifts, default_visual.red_mask, default_visual.green_mask, default_visual.blue_mask);
         }
         XFree(depths);
         break;
       }
     }
 
-    TRACE(" visual class %i (%i)\n",  visual->class, monoPlane);
+    TRACE(" visual class %i (%i)\n",  default_visual.class, monoPlane);
 
     GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, NB_RESERVED_COLORS, sys_pal_template );
 
@@ -242,7 +242,7 @@ int X11DRV_PALETTE_Init(void)
             X11DRV_PALETTE_FormatSystemPalette();
 
         X11DRV_PALETTE_FillDefaultColors( sys_pal_template );
-        palette_size = visual->map_entries;
+        palette_size = default_visual.colormap_size;
     }
 
     return palette_size;
@@ -424,7 +424,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 	          bp = BlackPixel(gdi_display, DefaultScreen(gdi_display));
 	          wp = WhitePixel(gdi_display, DefaultScreen(gdi_display));
 
-	          max = (0xffffffff)>>(32 - screen_depth);
+	          max = 0xffffffff >> (32 - default_visual.depth);
 	          if( max > 256 )
 	          {
 	  	      step = max/256;
@@ -528,7 +528,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 	   * to maintain compatibility
 	   */
 	  palette_size = 256;
-	  TRACE("Virtual colorspace - screendepth %i\n", screen_depth);
+	  TRACE("Virtual colorspace - screendepth %i\n", default_visual.depth);
 	}
    else palette_size = NB_RESERVED_COLORS;	/* system palette only - however we can alloc a bunch
 			                 * of colors and map to them */
@@ -556,7 +556,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 
    /* setup system palette entry <-> pixel mappings and fill in 20 fixed entries */
 
-   if (screen_depth <= 8)
+   if (default_visual.depth <= 8)
    {
        X11DRV_PALETTE_XPixelToPalette = HeapAlloc( GetProcessHeap(), 0, 256 * sizeof(int) );
        if(X11DRV_PALETTE_XPixelToPalette == NULL) {
@@ -786,7 +786,7 @@ COLORREF X11DRV_PALETTE_ToLogical(X11DRV_PDEVICE *physDev, int pixel)
 
     /* check if we can bypass X */
 
-    if ((screen_depth <= 8) && (pixel < 256) &&
+    if ((default_visual.depth <= 8) && (pixel < 256) &&
         !(X11DRV_PALETTE_PaletteFlags & (X11DRV_PALETTE_VIRTUAL | X11DRV_PALETTE_FIXED)) ) {
         COLORREF ret;
         EnterCriticalSection( &palette_cs );

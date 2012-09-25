@@ -983,7 +983,7 @@ static void init_pixel_formats( Display *display )
                  * As of the introduction of composition managers at least Nvidia now also offers ARGB visuals
                  * with a depth of 32 in addition to the default 24 bit. In order to prevent BadMatch errors we only
                  * list formats with the same depth. */
-                if(visinfo->depth != screen_depth)
+                if(visinfo->depth != default_visual.depth)
                 {
                     XFree(visinfo);
                     continue;
@@ -1233,7 +1233,7 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
         if (parent)
             gl->drawable = XCreateWindow( gdi_display, parent, gl->rect.left, gl->rect.top,
                                           gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top,
-                                          0, screen_depth, InputOutput, gl->visual->visual,
+                                          0, default_visual.depth, InputOutput, gl->visual->visual,
                                           CWBitGravity | CWWinGravity | CWBackingStore | CWColormap,
                                           &attrib );
         if (gl->drawable)
@@ -1249,8 +1249,8 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
         attrib.override_redirect = True;
         if (!dummy_parent)
         {
-            dummy_parent = XCreateWindow( gdi_display, root_window, -1, -1, 1, 1, 0, screen_depth,
-                                         InputOutput, visual, CWOverrideRedirect, &attrib );
+            dummy_parent = XCreateWindow( gdi_display, root_window, -1, -1, 1, 1, 0, default_visual.depth,
+                                         InputOutput, default_visual.visual, CWOverrideRedirect, &attrib );
             XMapWindow( gdi_display, dummy_parent );
         }
         gl->colormap = XCreateColormap(gdi_display, dummy_parent, gl->visual->visual,

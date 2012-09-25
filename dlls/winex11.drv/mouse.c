@@ -930,7 +930,7 @@ static Cursor create_xlib_monochrome_cursor( HDC hdc, const ICONINFOEXW *icon, i
     unsigned char *mask_bits = NULL;
     GC gc;
     XColor fg, bg;
-    XVisualInfo vis;
+    XVisualInfo vis = default_visual;
     Pixmap src_pixmap, bits_pixmap, mask_pixmap;
     struct gdi_image_bits bits;
     Cursor cursor = 0;
@@ -1018,7 +1018,7 @@ static Cursor create_xlib_color_cursor( HDC hdc, const ICONINFOEXW *icon, int wi
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     XColor fg, bg;
     Cursor cursor = None;
-    XVisualInfo vis;
+    XVisualInfo vis = default_visual;
     Pixmap xor_pixmap, mask_pixmap;
     struct gdi_image_bits bits;
     unsigned int *color_bits = NULL, *ptr;

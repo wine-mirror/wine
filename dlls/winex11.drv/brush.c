@@ -115,7 +115,7 @@ static Pixmap BRUSH_DitherColor( COLORREF color, int depth)
     XLockDisplay( gdi_display );
     if (!ditherImage)
     {
-        ditherImage = XCreateImage( gdi_display, visual, depth, ZPixmap, 0,
+        ditherImage = XCreateImage( gdi_display, default_visual.visual, depth, ZPixmap, 0,
                                     NULL, MATRIX_SIZE, MATRIX_SIZE, 32, 0 );
         if (!ditherImage)
         {
@@ -182,7 +182,7 @@ static Pixmap BRUSH_DitherMono( COLORREF color )
 static void BRUSH_SelectSolidBrush( X11DRV_PDEVICE *physDev, COLORREF color )
 {
     COLORREF colorRGB = X11DRV_PALETTE_GetColor( physDev, color );
-    if ((physDev->depth > 1) && (screen_depth <= 8) && !X11DRV_IsSolidColor( color ))
+    if ((physDev->depth > 1) && (default_visual.depth <= 8) && !X11DRV_IsSolidColor( color ))
     {
 	  /* Dithered brush */
 	physDev->brush.pixmap = BRUSH_DitherColor( colorRGB, physDev->depth );
@@ -206,22 +206,11 @@ static void BRUSH_SelectSolidBrush( X11DRV_PDEVICE *physDev, COLORREF color )
 
 static BOOL select_pattern_brush( X11DRV_PDEVICE *physdev, const struct brush_pattern *pattern )
 {
-    XVisualInfo vis;
+    XVisualInfo vis = default_visual;
     Pixmap pixmap;
     const BITMAPINFO *info = pattern->info;
 
-    memset( &vis, 0, sizeof(vis) );
-    vis.visual     = visual;
-    vis.visualid   = visual->visualid;
-
-    if (physdev->depth > 1 && info->bmiHeader.biBitCount > 1)
-    {
-        vis.depth      = screen_depth;
-        vis.red_mask   = visual->red_mask;
-        vis.green_mask = visual->green_mask;
-        vis.blue_mask  = visual->blue_mask;
-    }
-    else vis.depth = 1;
+    if (physdev->depth == 1 || info->bmiHeader.biBitCount == 1) vis.depth = 1;
 
     pixmap = create_pixmap_from_image( physdev->dev.hdc, &vis, info, &pattern->bits, pattern->usage );
     if (!pixmap) return FALSE;

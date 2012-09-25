@@ -259,13 +259,8 @@ static Window thread_selection_wnd(void)
 
     if (!w)
     {
-        XSetWindowAttributes attr;
-
-        attr.event_mask = (ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask |
-                       ButtonPressMask | ButtonReleaseMask | EnterWindowMask | PropertyChangeMask);
-
-        w = XCreateWindow(thread_data->display, root_window, 0, 0, 1, 1, 0, screen_depth,
-                          InputOutput, CopyFromParent, CWEventMask, &attr);
+        w = XCreateWindow(thread_data->display, root_window, 0, 0, 1, 1, 0, CopyFromParent,
+                          InputOnly, CopyFromParent, 0, NULL);
         if (w)
             thread_data->selection_wnd = w;
         else
@@ -1319,7 +1314,7 @@ static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *display, Window w, Atom p
 
     if (X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &lpdata, &cbytes))
     {
-        XVisualInfo vis;
+        XVisualInfo vis = default_visual;
         char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
         BITMAPINFO *info = (BITMAPINFO *)buffer;
         struct gdi_image_bits bits;
@@ -1338,18 +1333,7 @@ static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *display, Window w, Atom p
         TRACE("\tPixmap properties: width=%d, height=%d, depth=%d\n",
               width, height, depth);
 
-        memset( &vis, 0, sizeof(vis) );
-        vis.depth = depth;
-        if (depth == screen_depth)
-        {
-            vis.visual     = visual;
-            vis.visualid   = visual->visualid;
-            vis.class      = visual->class;
-            vis.red_mask   = visual->red_mask;
-            vis.green_mask = visual->green_mask;
-            vis.blue_mask  = visual->blue_mask;
-        }
-        else switch (pixmap_formats[depth]->bits_per_pixel)
+        if (depth != vis.depth) switch (pixmap_formats[depth]->bits_per_pixel)
         {
         case 1:
         case 4:
@@ -1757,24 +1741,14 @@ static HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Display *display, Window requestor
     if (!lpdata->drvData) /* If not already rendered */
     {
         Pixmap pixmap;
-        XVisualInfo vis;
         LPBITMAPINFO pbmi;
         struct gdi_image_bits bits;
-
-        memset( &vis, 0, sizeof(vis) );
-        vis.visual     = visual;
-        vis.depth      = screen_depth;
-        vis.visualid   = visual->visualid;
-        vis.class      = visual->class;
-        vis.red_mask   = visual->red_mask;
-        vis.green_mask = visual->green_mask;
-        vis.blue_mask  = visual->blue_mask;
 
         pbmi = GlobalLock( lpdata->hData );
         bits.ptr = (LPBYTE)pbmi + bitmap_info_size( pbmi, DIB_RGB_COLORS );
         bits.free = NULL;
         bits.is_copy = FALSE;
-        pixmap = create_pixmap_from_image( 0, &vis, pbmi, &bits, DIB_RGB_COLORS );
+        pixmap = create_pixmap_from_image( 0, &default_visual, pbmi, &bits, DIB_RGB_COLORS );
         GlobalUnlock( lpdata->hData );
         lpdata->drvData = pixmap;
     }

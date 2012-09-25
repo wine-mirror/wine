@@ -56,13 +56,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 WINE_DECLARE_DEBUG_CHANNEL(synchronous);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-static Screen *screen;
-Visual *visual;
+XVisualInfo default_visual = { 0 };
 XPixmapFormatValues **pixmap_formats;
 unsigned int screen_width;
 unsigned int screen_height;
 unsigned int screen_bpp;
-unsigned int screen_depth;
 RECT virtual_screen_rect;
 Window root_window;
 int usexvidmode = 1;
@@ -386,9 +384,8 @@ static void setup_options(void)
     if (!get_config_key( hkey, appkey, "GrabFullscreen", buffer, sizeof(buffer) ))
         grab_fullscreen = IS_OPTION_TRUE( buffer[0] );
 
-    screen_depth = 0;
     if (!get_config_key( hkey, appkey, "ScreenDepth", buffer, sizeof(buffer) ))
-        screen_depth = atoi(buffer);
+        default_visual.depth = atoi(buffer);
 
     if (!get_config_key( hkey, appkey, "ClientSideGraphics", buffer, sizeof(buffer) ))
         client_side_graphics = IS_OPTION_TRUE( buffer[0] );
@@ -483,6 +480,36 @@ sym_not_found:
 }
 #endif /* defined(SONAME_LIBXCOMPOSITE) */
 
+static void init_visuals( Display *display, int screen )
+{
+    int count;
+    XVisualInfo *info;
+
+    default_visual.screen = screen;
+    if (default_visual.depth)  /* depth specified */
+    {
+        info = XGetVisualInfo( display, VisualScreenMask | VisualDepthMask, &default_visual, &count );
+        if (info)
+        {
+            default_visual = *info;
+            XFree( info );
+        }
+        else WARN( "no visual found for depth %d\n", default_visual.depth );
+    }
+
+    if (!default_visual.visual)
+    {
+        default_visual.depth         = DefaultDepth( display, screen );
+        default_visual.visual        = DefaultVisual( display, screen );
+        default_visual.visualid      = default_visual.visual->visualid;
+        default_visual.class         = default_visual.visual->class;
+        default_visual.red_mask      = default_visual.visual->red_mask;
+        default_visual.green_mask    = default_visual.visual->green_mask;
+        default_visual.blue_mask     = default_visual.visual->blue_mask;
+        default_visual.colormap_size = default_visual.visual->map_entries;
+        default_visual.bits_per_rgb  = default_visual.visual->bits_per_rgb;
+    }
+}
 
 /***********************************************************************
  *           X11DRV process initialisation routine
@@ -514,30 +541,13 @@ static BOOL process_attach(void)
     if (!(display = XOpenDisplay( NULL ))) return FALSE;
 
     fcntl( ConnectionNumber(display), F_SETFD, 1 ); /* set close on exec flag */
-    screen = DefaultScreenOfDisplay( display );
-    visual = DefaultVisual( display, DefaultScreen(display) );
     root_window = DefaultRootWindow( display );
     gdi_display = display;
     old_error_handler = XSetErrorHandler( error_handler );
 
-    /* Initialize screen depth */
-
-    if (screen_depth)  /* depth specified */
-    {
-        int depth_count, i;
-        int *depth_list = XListDepths(display, DefaultScreen(display), &depth_count);
-        for (i = 0; i < depth_count; i++)
-            if (depth_list[i] == screen_depth) break;
-        XFree( depth_list );
-        if (i >= depth_count)
-        {
-            WARN( "invalid depth %d, using default\n", screen_depth );
-            screen_depth = 0;
-        }
-    }
-    if (!screen_depth) screen_depth = DefaultDepthOfScreen( screen );
     init_pixmap_formats( display );
-    screen_bpp = pixmap_formats[screen_depth]->bits_per_pixel;
+    init_visuals( display, DefaultScreen( display ));
+    screen_bpp = pixmap_formats[default_visual.depth]->bits_per_pixel;
 
     XInternAtoms( display, (char **)atom_names, NB_XATOMS - FIRST_XATOM, False, X11DRV_Atoms );
 
@@ -547,7 +557,8 @@ static BOOL process_attach(void)
 
     if (TRACE_ON(synchronous)) XSynchronize( display, True );
 
-    xinerama_init( WidthOfScreen(screen), HeightOfScreen(screen) );
+    xinerama_init( DisplayWidth( display, default_visual.screen ),
+                   DisplayHeight( display, default_visual.screen ));
     X11DRV_Settings_Init();
 
     /* initialize XVidMode */

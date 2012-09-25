@@ -288,19 +288,13 @@ static BOOL get_xrender_template(const WineXRenderFormatTemplate *fmt, XRenderPi
 
 static BOOL is_wxrformat_compatible_with_default_visual(const WineXRenderFormatTemplate *fmt)
 {
-    if(fmt->depth != screen_depth)
-        return FALSE;
-    if( (fmt->redMask << fmt->red) != visual->red_mask)
-        return FALSE;
-    if( (fmt->greenMask << fmt->green) != visual->green_mask)
-        return FALSE;
-    if( (fmt->blueMask << fmt->blue) != visual->blue_mask)
-        return FALSE;
+    if(fmt->depth != default_visual.depth) return FALSE;
+    if( (fmt->redMask << fmt->red) != default_visual.red_mask) return FALSE;
+    if( (fmt->greenMask << fmt->green) != default_visual.green_mask) return FALSE;
+    if( (fmt->blueMask << fmt->blue) != default_visual.blue_mask) return FALSE;
 
     /* We never select a default ARGB visual */
-    if(fmt->alphaMask)
-        return FALSE;
-
+    if(fmt->alphaMask) return FALSE;
     return TRUE;
 }
 
@@ -315,18 +309,18 @@ static int load_xrender_formats(void)
 
         if(is_wxrformat_compatible_with_default_visual(&wxr_formats_template[i]))
         {
-            pict_formats[i] = pXRenderFindVisualFormat(gdi_display, visual);
+            pict_formats[i] = pXRenderFindVisualFormat(gdi_display, default_visual.visual);
             if (!pict_formats[i])
             {
                 /* Xrender doesn't like DirectColor visuals, try to find a TrueColor one instead */
-                if (visual->class == DirectColor)
+                if (default_visual.class == DirectColor)
                 {
                     XVisualInfo info;
-                    if (XMatchVisualInfo( gdi_display, DefaultScreen(gdi_display),
-                                          screen_depth, TrueColor, &info ))
+                    if (XMatchVisualInfo( gdi_display, default_visual.screen,
+                                          default_visual.depth, TrueColor, &info ))
                     {
                         pict_formats[i] = pXRenderFindVisualFormat(gdi_display, info.visual);
-                        if (pict_formats[i]) visual = info.visual;
+                        if (pict_formats[i]) default_visual = info;
                     }
                 }
             }
@@ -395,7 +389,7 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
         return NULL;
     }
 
-    if (!visual->red_mask || !visual->green_mask || !visual->blue_mask)
+    if (!default_visual.red_mask || !default_visual.green_mask || !default_visual.blue_mask)
     {
         WARN("one or more of the colour masks are 0, disabling XRENDER. Try running in 16-bit mode or higher.\n");
         return NULL;
@@ -435,7 +429,7 @@ sym_not_found:
     }
     glyphsetCache[i-1].next = -1;
 
-    if(screen_depth <= 8 || !client_side_antialias_with_render) antialias = 0;
+    if(default_visual.depth <= 8 || !client_side_antialias_with_render) antialias = 0;
 
     return &xrender_funcs;
 }
@@ -1798,7 +1792,7 @@ static DWORD create_image_pixmap( BITMAPINFO *info, const struct gdi_image_bits 
     GC gc;
     XImage *image;
 
-    image = XCreateImage( gdi_display, visual, depth, ZPixmap, 0, NULL,
+    image = XCreateImage( gdi_display, default_visual.visual, depth, ZPixmap, 0, NULL,
                           info->bmiHeader.biWidth, height, 32, 0 );
     if (!image) return ERROR_OUTOFMEMORY;
 
@@ -2330,14 +2324,13 @@ static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct b
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
     Pixmap pixmap;
-    XVisualInfo vis;
+    XVisualInfo vis = default_visual;
     XRenderPictFormat *format = physdev->pict_format;
 
     if (!pattern) goto x11drv_fallback;
     if (pattern->info->bmiHeader.biBitCount == 1) goto x11drv_fallback;
     if (physdev->format == WXR_FORMAT_MONO) goto x11drv_fallback;
 
-    memset( &vis, 0, sizeof(vis) );
     vis.depth      = format->depth;
     vis.red_mask   = format->direct.redMask   << format->direct.red;
     vis.green_mask = format->direct.greenMask << format->direct.green;

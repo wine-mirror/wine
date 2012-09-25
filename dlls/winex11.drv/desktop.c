@@ -143,14 +143,14 @@ Window CDECL X11DRV_create_desktop( UINT width, UINT height )
                           PointerMotionMask | ButtonPressMask | ButtonReleaseMask | FocusChangeMask;
     win_attr.cursor = XCreateFontCursor( display, XC_top_left_arrow );
 
-    if (visual != DefaultVisual( display, DefaultScreen(display) ))
+    if (default_visual.visual != DefaultVisual( display, DefaultScreen(display) ))
         win_attr.colormap = XCreateColormap( display, DefaultRootWindow(display),
-                                             visual, AllocNone );
+                                             default_visual.visual, AllocNone );
     else
         win_attr.colormap = None;
 
     win = XCreateWindow( display, DefaultRootWindow(display),
-                         0, 0, width, height, 0, screen_depth, InputOutput, visual,
+                         0, 0, width, height, 0, default_visual.depth, InputOutput, default_visual.visual,
                          CWEventMask | CWCursor | CWColormap, &win_attr );
     if (win != None && width == screen_width && height == screen_height)
     {
