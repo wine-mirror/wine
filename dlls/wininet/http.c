@@ -640,7 +640,7 @@ static void HTTP_FixURL(http_request_t *request)
         }
     }
 
-    if(CSTR_EQUAL != CompareStringW( LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
+    if(CSTR_EQUAL != CompareStringW( LOCALE_INVARIANT, NORM_IGNORECASE,
                        request->path, strlenW(request->path), szHttp, strlenW(szHttp) )
        && request->path[0] != '/') /* not an absolute path ?? --> fix it !! */
     {
