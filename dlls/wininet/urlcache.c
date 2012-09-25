@@ -81,6 +81,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 #define HASHTABLE_FLAG_BITS     6
 
 #define PENDING_DELETE_CACHE_ENTRY  0x00400000
+#define INSTALLED_CACHE_ENTRY       0x10000000
+#define GET_INSTALLED_ENTRY         0x200
 #define CACHE_CONTAINER_NO_SUBDIR   0xFE
 
 #define CACHE_HEADER_DATA_ROOT_LEAK_OFFSET 0x16
@@ -1732,7 +1734,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (dwFlags != 0)
+    if (dwFlags & ~GET_INSTALLED_ENTRY)
     {
         FIXME("Undocumented flag(s): %x\n", dwFlags);
         SetLastError(ERROR_FILE_NOT_FOUND);
@@ -1777,6 +1779,13 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
     TRACE("Found URL: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetUrl));
     if (pUrlEntry->dwOffsetHeaderInfo)
         TRACE("Header info: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo));
+
+    if((dwFlags & GET_INSTALLED_ENTRY) && !(pUrlEntry->CacheEntryType & INSTALLED_CACHE_ENTRY))
+    {
+        URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
 
     if (lpdwCacheEntryInfoBufSize)
     {
