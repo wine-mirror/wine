@@ -3222,6 +3222,47 @@ static PropertyItem *get_gif_comment(IWICMetadataReader *reader)
     return comment;
 }
 
+static PropertyItem *get_gif_loopcount(IWICMetadataReader *reader)
+{
+    static const WCHAR applicationW[] = { 'A','p','p','l','i','c','a','t','i','o','n',0 };
+    static const WCHAR dataW[] = { 'D','a','t','a',0 };
+    PropertyItem *appext = NULL, *appdata = NULL, *loop = NULL;
+
+    appext = get_property(reader, &GUID_MetadataFormatAPE, applicationW);
+    if (appext)
+    {
+        if (appext->type == PropertyTagTypeByte && appext->length == 11 &&
+            (!memcmp(appext->value, "NETSCAPE2.0", 11) || !memcmp(appext->value, "ANIMEXTS1.0", 11)))
+        {
+            appdata = get_property(reader, &GUID_MetadataFormatAPE, dataW);
+            if (appdata)
+            {
+                if (appdata->type == PropertyTagTypeByte && appdata->length == 4)
+                {
+                    BYTE *data = appdata->value;
+                    if (data[0] == 3 && data[1] == 1)
+                    {
+                        loop = GdipAlloc(sizeof(*loop) + sizeof(SHORT));
+                        if (loop)
+                        {
+                            loop->type = PropertyTagTypeShort;
+                            loop->id = PropertyTagLoopCount;
+                            loop->length = sizeof(SHORT);
+                            loop->value = loop + 1;
+                            *(SHORT *)loop->value = data[2] | (data[3] << 8);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    GdipFree(appext);
+    GdipFree(appdata);
+
+    return loop;
+}
+
 static PropertyItem *get_gif_background(IWICMetadataReader *reader)
 {
     static const WCHAR backgroundW[] = { 'B','a','c','k','g','r','o','u','n','d','C','o','l','o','r','I','n','d','e','x',0 };
@@ -3296,7 +3337,7 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
     IWICMetadataReader *reader;
     UINT frame_count, block_count, i;
     PropertyItem *delay = NULL, *comment = NULL, *background = NULL;
-    PropertyItem *transparent_idx = NULL;
+    PropertyItem *transparent_idx = NULL, *loop = NULL;
 
     IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
     if (frame_count > 1)
@@ -3340,6 +3381,9 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
                     if (!comment)
                         comment = get_gif_comment(reader);
 
+                    if (frame_count > 1 && !loop)
+                        loop = get_gif_loopcount(reader);
+
                     if (!background)
                         background = get_gif_background(reader);
 
@@ -3350,12 +3394,27 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
         IWICMetadataBlockReader_Release(block_reader);
     }
 
+    if (frame_count > 1 && !loop)
+    {
+        loop = GdipAlloc(sizeof(*loop) + sizeof(SHORT));
+        if (loop)
+        {
+            loop->type = PropertyTagTypeShort;
+            loop->id = PropertyTagLoopCount;
+            loop->length = sizeof(SHORT);
+            loop->value = loop + 1;
+            *(SHORT *)loop->value = 1;
+        }
+    }
+
     if (delay) add_property(bitmap, delay);
     if (comment) add_property(bitmap, comment);
+    if (loop) add_property(bitmap, loop);
     if (background) add_property(bitmap, background);
 
     GdipFree(delay);
     GdipFree(comment);
+    GdipFree(loop);
     GdipFree(background);
 
     /* Win7 gdiplus always returns transparent color index from frame 0 */
