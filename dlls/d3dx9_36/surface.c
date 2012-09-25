@@ -473,7 +473,7 @@ static HRESULT save_dds_surface_to_memory(ID3DXBuffer **dst_buffer, IDirect3DSur
     header = ID3DXBuffer_GetBufferPointer(buffer);
     pixels = (BYTE *)(header + 1);
 
-    memset(header, 0, sizeof(header));
+    memset(header, 0, sizeof(*header));
     header->signature = MAKEFOURCC('D','D','S',' ');
     header->size = sizeof(*header);
     header->flags = DDS_CAPS | DDS_HEIGHT | DDS_WIDTH | DDS_PITCH | DDS_PIXELFORMAT | DDS_MIPMAPCOUNT;
