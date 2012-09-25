@@ -2599,6 +2599,7 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
     }
     case GLOBAL_ELEMENTVAR:
         switch(flags) {
+        case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
         case DISPATCH_PROPERTYGET: {
             IHTMLElement *elem;
 

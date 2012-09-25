@@ -33,6 +33,7 @@ Sub runTest()
     Call ok(counter = 6, "counter = " & counter)
     Call ok(isNull(document.onkeyup), "document.onkeyup is not null")
     Call ok(document.formname.tagName = "FORM", "document.form.tagName = " & document.formname.tagName)
+    Call ok(formname.tagName = "FORM", "form.tagName = " & formname.tagName)
     Call external.reportSuccess()
 End Sub
 </script>
