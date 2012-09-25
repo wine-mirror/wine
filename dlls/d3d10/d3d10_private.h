@@ -49,6 +49,9 @@ void d3d10_rb_free(void *ptr) DECLSPEC_HIDDEN;
 
 enum d3d10_effect_object_type
 {
+    D3D10_EOT_RASTERIZER_STATE = 0x0,
+    D3D10_EOT_DEPTH_STENCIL_STATE = 0x1,
+    D3D10_EOT_BLEND_STATE = 0x2,
     D3D10_EOT_VERTEXSHADER = 0x6,
     D3D10_EOT_PIXELSHADER = 0x7,
     D3D10_EOT_GEOMETRYSHADER = 0x8,
@@ -71,6 +74,12 @@ struct d3d10_effect_object
     enum d3d10_effect_object_type type;
     DWORD index;
     void *data;
+    union
+    {
+        ID3D10VertexShader *vs;
+        ID3D10PixelShader *ps;
+        ID3D10GeometryShader *gs;
+    } object;
 };
 
 struct d3d10_effect_shader_signature
