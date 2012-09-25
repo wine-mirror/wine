@@ -51,7 +51,7 @@ word@space@
 @pwd@>echo word@space@@space@@space@
 word@space@@space@
 
-@todo_wine@@pwd@>echo word@space@
+@pwd@>echo word@space@
 word
 
 @pwd@>echo@tab@word@space@
@@ -63,7 +63,7 @@ word@space@@tab@
 @pwd@>echo@tab@word@tab@@space@@space@
 word@tab@@space@
 
-@todo_wine@@pwd@>echo word@space@
+@pwd@>echo word@space@
 word
 
 @pwd@>echo@space@@tab@word@space@
@@ -76,6 +76,9 @@ word
 @tab@word
 
 @pwd@>echo @tab@ on @space@@space@
+noecho1
+noecho2
+echo3
 ------------ Testing 'echo' [OFF] ------------
 word
 'singlequotedword'
@@ -280,6 +283,8 @@ e@or_broken@qwerty
 r@or_broken@qwerty
 ------------ Testing variable substitution ------------
 --- in FOR variables
+"A B"
+C
 "A B"
 C
 'A B'@or_broken@''

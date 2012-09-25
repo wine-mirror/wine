@@ -30,6 +30,9 @@ echo @tab@ on @space@
 
 @echo off
 echo off@tab@@space@
+@echo noecho1
+ @echo noecho2
+@@@@@echo echo3
 echo ------------ Testing 'echo' [OFF] ------------
 echo word
 echo 'singlequotedword'
@@ -324,6 +327,8 @@ set VAR=
 echo ------------ Testing variable substitution ------------
 echo --- in FOR variables
 for %%i in ("A B" C) do echo %%i
+rem check works when prefix with @
+@for %%i in ("A B" C) do echo %%i
 rem quotes removal
 for %%i in ("A B" C) do echo '%%~i'
 rem fully qualified path

@@ -1819,26 +1819,33 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
 
     /* Replace env vars if in a batch context */
     if (context) handleExpansion(extraSpace, FALSE, NULL, NULL);
+
+    /* Skip preceeding whitespace */
+    while (*curPos == ' ' || *curPos == '\t') curPos++;
+
     /* Show prompt before batch line IF echo is on and in batch program */
-    if (context && echo_mode && extraSpace[0] && (extraSpace[0] != '@')) {
+    if (context && echo_mode && *curPos && (*curPos != '@')) {
       static const WCHAR echoDot[] = {'e','c','h','o','.'};
       static const WCHAR echoCol[] = {'e','c','h','o',':'};
       const DWORD len = sizeof(echoDot)/sizeof(echoDot[0]);
-      DWORD curr_size = strlenW(extraSpace);
+      DWORD curr_size = strlenW(curPos);
       DWORD min_len = (curr_size < len ? curr_size : len);
       WCMD_show_prompt();
-      WCMD_output_asis(extraSpace);
+      WCMD_output_asis(curPos);
       /* I don't know why Windows puts a space here but it does */
       /* Except for lines starting with 'echo.' or 'echo:'. Ask MS why */
       if (CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                         extraSpace, min_len, echoDot, len) != CSTR_EQUAL
+                         curPos, min_len, echoDot, len) != CSTR_EQUAL
           && CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                         extraSpace, min_len, echoCol, len) != CSTR_EQUAL)
+                         curPos, min_len, echoCol, len) != CSTR_EQUAL)
       {
           WCMD_output_asis(spaceW);
       }
       WCMD_output_asis(newlineW);
     }
+
+    /* Skip repeated 'no echo' characters */
+    while (*curPos == '@') curPos++;
 
     /* Start with an empty string, copying to the command string */
     curStringLen = 0;
