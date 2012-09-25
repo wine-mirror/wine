@@ -2788,7 +2788,6 @@ static void test_image_properties(void)
     td[] =
     {
         { pngimage, sizeof(pngimage), ImageTypeBitmap, 4, ~0, 1, 20, 0x5110, 0x132 },
-        { gifimage, sizeof(gifimage), ImageTypeBitmap, 1, 4, 4, 0, 0x5100, 0 },
         { jpgimage, sizeof(jpgimage), ImageTypeBitmap, 2, ~0, 128, 0, 0x5090, 0x5091 },
         { tiffimage, sizeof(tiffimage), ImageTypeBitmap, 16, 0, 4, 0, 0xfe, 0 },
         { bmpimage, sizeof(bmpimage), ImageTypeBitmap, 0, 0, 0, 0, 0, 0 },
@@ -2821,8 +2820,7 @@ static void test_image_properties(void)
 
         status = GdipGetPropertyCount(image, &prop_count);
         ok(status == Ok, "%u: GdipGetPropertyCount error %d\n", i, status);
-        if (td[i].image_data == pngimage || td[i].image_data == gifimage ||
-            td[i].image_data == jpgimage)
+        if (td[i].image_data == pngimage || td[i].image_data == jpgimage)
         todo_wine
         ok(td[i].prop_count == prop_count || td[i].prop_count2 == prop_count,
            " %u: expected property count %u or %u, got %u\n",
