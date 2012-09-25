@@ -348,7 +348,7 @@ static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','s','y','s','-','d','e','
 #define SORT_DIGITSASNUMBERS       0x00000008
 #define LINGUISTIC_IGNORECASE      0x00000010
 #define LINGUISTIC_IGNOREDIACRITIC 0x00000020
-#define SORT_STRINGSORT            0x00001000
+#define SORT_STRINGSORT            0x00001000 /* Take punctuation into account */
 #define NORM_IGNOREKANATYPE        0x00010000
 #define NORM_IGNOREWIDTH           0x00020000
 #define NORM_LINGUISTIC_CASING     0x08000000
@@ -394,8 +394,6 @@ static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','s','y','s','-','d','e','
 #define LCMAP_UPPERCASE  0x00000200	/* Make upper-case */
 #define LCMAP_SORTKEY    0x00000400	/* Create a sort key */
 #define LCMAP_BYTEREV    0x00000800	/* Reverse the result */
-
-#define SORT_STRINGSORT  0x00001000	/* Take punctuation into account */
 
 #define LCMAP_HIRAGANA   0x00100000	/* Transform Japanese katakana into hiragana */
 #define LCMAP_KATAKANA   0x00200000	/* Transform Japanese hiragana into katakana */
