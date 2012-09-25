@@ -903,6 +903,9 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpms
     hres = IOleClientSite_QueryInterface(pActiveSite, &IID_IOleInPlaceSiteEx, (void**)&ip_site);
     ok(hres == S_OK, "Could not get IOleInPlaceSiteEx iface: %08x\n", hres);
 
+    hres = IOleInPlaceSiteEx_CanInPlaceActivate(ip_site);
+    ok(hres == S_OK, "CanInPlaceActivate failed: %08x\n", hres);
+
     SET_EXPECT(InPlaceObject_GetWindow);
     no_redraw = 0xdeadbeef;
     hres = IOleInPlaceSiteEx_OnInPlaceActivateEx(ip_site, &no_redraw, 0);
