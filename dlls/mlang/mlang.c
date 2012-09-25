@@ -2098,10 +2098,11 @@ static HRESULT WINAPI fnIMultiLanguage_GetCodePageInfo(
 
 static HRESULT WINAPI fnIMultiLanguage_GetFamilyCodePage(
     IMultiLanguage* iface,
-    UINT uiCodePage,
-    UINT* puiFamilyCodePage)
+    UINT cp,
+    UINT* family_cp)
 {
-    return GetFamilyCodePage(uiCodePage, puiFamilyCodePage);
+    MLang_impl *This = impl_from_IMultiLanguage( iface );
+    return IMultiLanguage3_GetFamilyCodePage(&This->IMultiLanguage3_iface, cp, family_cp);
 }
 
 static HRESULT WINAPI fnIMultiLanguage_EnumCodePages(
