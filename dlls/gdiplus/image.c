@@ -3195,6 +3195,18 @@ static PropertyItem *get_gif_comment(IWICMetadataReader *reader)
     return comment;
 }
 
+static PropertyItem *get_gif_background(IWICMetadataReader *reader)
+{
+    static const WCHAR backgroundW[] = { 'B','a','c','k','g','r','o','u','n','d','C','o','l','o','r','I','n','d','e','x',0 };
+    PropertyItem *background;
+
+    background = get_property(reader, &GUID_MetadataFormatLSD, backgroundW);
+    if (background)
+        background->id = PropertyTagIndexBackground;
+
+    return background;
+}
+
 static LONG get_gif_frame_delay(IWICBitmapFrameDecode *frame)
 {
     static const WCHAR delayW[] = { 'D','e','l','a','y',0 };
@@ -3241,7 +3253,7 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
     IWICMetadataBlockReader *block_reader;
     IWICMetadataReader *reader;
     UINT frame_count, block_count, i;
-    PropertyItem *delay = NULL, *comment = NULL;
+    PropertyItem *delay = NULL, *comment = NULL, *background = NULL;
 
     IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
     if (frame_count > 1)
@@ -3285,6 +3297,9 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
                     if (!comment)
                         comment = get_gif_comment(reader);
 
+                    if (!background)
+                        background = get_gif_background(reader);
+
                     IWICMetadataReader_Release(reader);
                 }
             }
@@ -3294,9 +3309,11 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
 
     if (delay) add_property(bitmap, delay);
     if (comment) add_property(bitmap, comment);
+    if (background) add_property(bitmap, background);
 
     GdipFree(delay);
     GdipFree(comment);
+    GdipFree(background);
 }
 
 typedef void (*metadata_reader_func)(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT frame);
