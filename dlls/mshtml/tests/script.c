@@ -2084,6 +2084,22 @@ static void test_default_arg_conv(IHTMLWindow2 *window)
     IDispatchEx_Release(dispex);
 }
 
+static void test_ui(void)
+{
+    IActiveScriptSiteUIControl *ui_control;
+    SCRIPTUICHANDLING uic_handling = 10;
+    HRESULT hres;
+
+    hres = IActiveScriptSite_QueryInterface(site, &IID_IActiveScriptSiteUIControl, (void**)&ui_control);
+    ok(hres == S_OK, "Could not get IActiveScriptSiteUIControl: %08x\n", hres);
+
+    hres = IActiveScriptSiteUIControl_GetUIBehavior(ui_control, SCRIPTUICITEM_MSGBOX, &uic_handling);
+    ok(hres == S_OK, "GetUIBehavior failed: %08x\n", hres);
+    ok(uic_handling == SCRIPTUICHANDLING_ALLOW, "uic_handling = %d\n", uic_handling);
+
+    IActiveScriptSiteUIControl_Release(ui_control);
+}
+
 static void test_script_run(void)
 {
     IDispatchEx *document, *dispex;
@@ -2308,6 +2324,7 @@ static void test_script_run(void)
     test_global_id();
 
     test_security();
+    test_ui();
 }
 
 static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *iface,
