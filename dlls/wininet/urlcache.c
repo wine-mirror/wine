@@ -1657,7 +1657,7 @@ static BOOL URLCache_DeleteCacheDirectory(LPCWSTR lpszPath)
     shfos.wFunc = FO_DELETE;
     shfos.pFrom = path;
     shfos.pTo = NULL;
-    shfos.fFlags = 0;
+    shfos.fFlags = FOF_NOCONFIRMATION;
     shfos.fAnyOperationsAborted = FALSE;
     ret = SHFileOperationW(&shfos);
     if (ret)
