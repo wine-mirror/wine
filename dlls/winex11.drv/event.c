@@ -833,6 +833,8 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
         data->surface->funcs->lock( data->surface );
         add_bounds_rect( data->surface->funcs->get_bounds( data->surface ), &rect );
         data->surface->funcs->unlock( data->surface );
+        if (data->vis.visualid != default_visual.visualid)
+            data->surface->funcs->flush( data->surface );
     }
 
     if (event->window != root_window)

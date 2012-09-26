@@ -57,6 +57,7 @@ WINE_DECLARE_DEBUG_CHANNEL(synchronous);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 XVisualInfo default_visual = { 0 };
+XVisualInfo argb_visual = { 0 };
 Colormap default_colormap = None;
 XPixmapFormatValues **pixmap_formats;
 unsigned int screen_width;
@@ -510,8 +511,24 @@ static void init_visuals( Display *display, int screen )
         default_visual.colormap_size = default_visual.visual->map_entries;
         default_visual.bits_per_rgb  = default_visual.visual->bits_per_rgb;
     }
-    default_colormap = XCreateColormap( gdi_display, root_window, default_visual.visual, AllocNone );
-    TRACE( "default visual %lx class %u\n", default_visual.visualid, default_visual.class );
+    default_colormap = XCreateColormap( display, root_window, default_visual.visual, AllocNone );
+
+    argb_visual.screen     = screen;
+    argb_visual.class      = TrueColor;
+    argb_visual.depth      = 32;
+    argb_visual.red_mask   = 0xff0000;
+    argb_visual.green_mask = 0x00ff00;
+    argb_visual.blue_mask  = 0x0000ff;
+
+    if ((info = XGetVisualInfo( display, VisualScreenMask | VisualDepthMask | VisualClassMask |
+                                VisualRedMaskMask | VisualGreenMaskMask | VisualBlueMaskMask,
+                                &argb_visual, &count )))
+    {
+        argb_visual = *info;
+        XFree( info );
+    }
+    TRACE( "default visual %lx class %u argb %lx\n",
+           default_visual.visualid, default_visual.class, argb_visual.visualid );
 }
 
 /***********************************************************************

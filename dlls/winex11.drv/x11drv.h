@@ -345,6 +345,7 @@ static inline size_t get_property_size( int format, unsigned long count )
 }
 
 extern XVisualInfo default_visual DECLSPEC_HIDDEN;
+extern XVisualInfo argb_visual DECLSPEC_HIDDEN;
 extern Colormap default_colormap DECLSPEC_HIDDEN;
 extern XPixmapFormatValues **pixmap_formats DECLSPEC_HIDDEN;
 extern Window root_window DECLSPEC_HIDDEN;
@@ -569,6 +570,7 @@ extern Window init_clip_window(void) DECLSPEC_HIDDEN;
 extern void update_user_time( Time time ) DECLSPEC_HIDDEN;
 extern void update_net_wm_states( struct x11drv_win_data *data ) DECLSPEC_HIDDEN;
 extern void make_window_embedded( HWND hwnd ) DECLSPEC_HIDDEN;
+extern void set_window_visual( struct x11drv_win_data *data, const XVisualInfo *vis ) DECLSPEC_HIDDEN;
 extern void change_systray_owner( Display *display, Window systray_window ) DECLSPEC_HIDDEN;
 extern void update_systray_balloon_position(void) DECLSPEC_HIDDEN;
 extern HWND create_foreign_window( Display *display, Window window ) DECLSPEC_HIDDEN;

@@ -1083,6 +1083,8 @@ static void map_window( HWND hwnd, DWORD new_style )
             sync_window_style( data );
             XMapWindow( data->display, data->whole_window );
             XFlush( data->display );
+            if (data->surface && data->vis.visualid != default_visual.visualid)
+                data->surface->funcs->flush( data->surface );
         }
         else set_xembed_flags( data, XEMBED_MAPPED );
 
@@ -1457,6 +1459,22 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
 }
 
 
+/**********************************************************************
+ *		set_window_visual
+ *
+ * Change the visual by destroying and recreating the X window if needed.
+ */
+void set_window_visual( struct x11drv_win_data *data, const XVisualInfo *vis )
+{
+    if (data->vis.visualid == vis->visualid) return;
+    destroy_whole_window( data, FALSE );
+    if (data->surface) window_surface_release( data->surface );
+    data->surface = NULL;
+    data->vis = *vis;
+    create_whole_window( data );
+}
+
+
 /*****************************************************************
  *		SetWindowText   (X11DRV.@)
  */
@@ -1490,6 +1508,7 @@ void CDECL X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
 
     if (offset == GWL_EXSTYLE && (changed & WS_EX_LAYERED)) /* changing WS_EX_LAYERED resets attributes */
     {
+        set_window_visual( data, &default_visual );
         sync_window_opacity( data->display, data->whole_window, 0, 0, 0 );
         if (data->surface) set_surface_color_key( data->surface, CLR_INVALID );
     }
@@ -2096,9 +2115,12 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
     data->window_rect = *rectWindow;
     data->whole_rect  = *visible_rect;
     data->client_rect = *rectClient;
-    if (surface) window_surface_add_ref( surface );
-    if (data->surface) window_surface_release( data->surface );
-    data->surface = surface;
+    if (data->vis.visualid == default_visual.visualid)
+    {
+        if (surface) window_surface_add_ref( surface );
+        if (data->surface) window_surface_release( data->surface );
+        data->surface = surface;
+    }
 
     TRACE( "win %p window %s client %s style %08x flags %08x\n",
            hwnd, wine_dbgstr_rect(rectWindow), wine_dbgstr_rect(rectClient), new_style, swp_flags );
@@ -2204,6 +2226,9 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
     }
 
     XFlush( data->display );  /* make sure changes are done before we start painting again */
+    if (data->surface && data->vis.visualid != default_visual.visualid)
+        data->surface->funcs->flush( data->surface );
+
 done:
     release_win_data( data );
 }
@@ -2337,40 +2362,64 @@ void CDECL X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alph
 BOOL CDECL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
                                        const RECT *window_rect )
 {
-    BYTE alpha = 0xff;
+    struct window_surface *surface;
+    struct x11drv_win_data *data;
+    BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
+    COLORREF color_key = (info->dwFlags & ULW_COLORKEY) ? info->crKey : CLR_INVALID;
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *bmi = (BITMAPINFO *)buffer;
+    void *src_bits, *dst_bits;
+    RECT rect;
+    HDC hdc = 0;
+    HBITMAP dib;
+    BOOL ret = FALSE;
 
-    if (info->hdcSrc)
+    if (!(data = get_win_data( hwnd ))) return FALSE;
+
+    set_window_visual( data, &argb_visual );
+
+    rect = *window_rect;
+    OffsetRect( &rect, -window_rect->left, -window_rect->top );
+
+    surface = data->surface;
+    if (!surface || memcmp( &surface->rect, &rect, sizeof(RECT) ))
     {
-        HDC hdc = GetWindowDC( hwnd );
-
-        if (hdc)
-        {
-            int x = 0, y = 0;
-            RECT rect;
-
-            GetWindowRect( hwnd, &rect );
-            OffsetRect( &rect, -rect.left, -rect.top);
-            if (info->pptSrc)
-            {
-                x = info->pptSrc->x;
-                y = info->pptSrc->y;
-            }
-
-            if (!info->prcDirty || (info->prcDirty && IntersectRect(&rect, &rect, info->prcDirty)))
-            {
-                TRACE( "copying window %p pos %d,%d\n", hwnd, x, y );
-                BitBlt( hdc, rect.left, rect.top, rect.right, rect.bottom,
-                        info->hdcSrc, rect.left + x, rect.top + y, SRCCOPY );
-            }
-            ReleaseDC( hwnd, hdc );
-        }
+        data->surface = create_surface( data->whole_window, &data->vis, &rect, color_key );
+        if (surface) window_surface_release( surface );
+        surface = data->surface;
     }
+    else set_surface_color_key( surface, color_key );
 
-    if (info->pblend && !(info->dwFlags & ULW_OPAQUE)) alpha = info->pblend->SourceConstantAlpha;
-    TRACE( "setting window %p alpha %u\n", hwnd, alpha );
-    X11DRV_SetLayeredWindowAttributes( hwnd, info->crKey, alpha,
-                                       info->dwFlags & (LWA_ALPHA | LWA_COLORKEY) );
-    return TRUE;
+    release_win_data( data );
+
+    if (!surface) return FALSE;
+    if (!info->hdcSrc) return TRUE;
+    if (info->prcDirty && !IntersectRect( &rect, &rect, info->prcDirty )) return TRUE;
+
+    dst_bits = surface->funcs->get_info( surface, bmi );
+
+    if (!(dib = CreateDIBSection( info->hdcDst, bmi, DIB_RGB_COLORS, &src_bits, NULL, 0 ))) goto done;
+    if (!(hdc = CreateCompatibleDC( 0 ))) goto done;
+
+    SelectObject( hdc, dib );
+    if (!(ret = GdiAlphaBlend( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+                               info->hdcSrc,
+                               rect.left + (info->pptSrc ? info->pptSrc->x : 0),
+                               rect.top + (info->pptSrc ? info->pptSrc->y : 0),
+                               rect.right - rect.left, rect.bottom - rect.top,
+                               (info->dwFlags & ULW_ALPHA) ? *info->pblend : blend )))
+        goto done;
+
+    surface->funcs->lock( surface );
+    memcpy( dst_bits, src_bits, bmi->bmiHeader.biSizeImage );
+    add_bounds_rect( surface->funcs->get_bounds( surface ), &rect );
+    surface->funcs->unlock( surface );
+    surface->funcs->flush( surface );
+
+done:
+    if (hdc) DeleteDC( hdc );
+    if (dib) DeleteObject( dib );
+    return ret;
 }
 
 
