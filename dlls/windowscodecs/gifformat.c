@@ -661,7 +661,7 @@ static ULONG WINAPI GifFrameDecode_Release(IWICBitmapFrameDecode *iface)
 
     if (ref == 0)
     {
-        IUnknown_Release((IUnknown*)This->parent);
+        IWICBitmapDecoder_Release(&This->parent->IWICBitmapDecoder_iface);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
