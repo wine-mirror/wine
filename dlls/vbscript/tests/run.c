@@ -73,6 +73,9 @@ extern const CLSID CLSID_VBScript;
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CLEAR_CALLED(func) \
+    expect_ ## func = called_ ## func = FALSE
+
 DEFINE_EXPECT(global_success_d);
 DEFINE_EXPECT(global_success_i);
 DEFINE_EXPECT(global_vbvar_d);
@@ -87,6 +90,9 @@ DEFINE_EXPECT(global_propargput1_d);
 DEFINE_EXPECT(global_propargput1_i);
 DEFINE_EXPECT(collectionobj_newenum_i);
 DEFINE_EXPECT(Next);
+DEFINE_EXPECT(GetWindow);
+DEFINE_EXPECT(GetUIBehavior);
+DEFINE_EXPECT(EnableModeless);
 
 #define DISPID_GLOBAL_REPORTSUCCESS 1000
 #define DISPID_GLOBAL_TRACE         1001
@@ -112,9 +118,10 @@ DEFINE_EXPECT(Next);
 static const WCHAR testW[] = {'t','e','s','t',0};
 static const WCHAR emptyW[] = {0};
 
-static BOOL strict_dispid_check, is_english;
+static BOOL strict_dispid_check, is_english, allow_ui;
 static const char *test_name = "(null)";
 static int test_counter;
+static SCRIPTUICHANDLING uic_handling = SCRIPTUICHANDLING_NOUIERROR;
 
 static BSTR a2bstr(const char *str)
 {
@@ -1178,6 +1185,86 @@ static IDispatchExVtbl GlobalVtbl = {
 
 static IDispatchEx Global = { &GlobalVtbl };
 
+static HRESULT WINAPI ActiveScriptSiteWindow_QueryInterface(IActiveScriptSiteWindow *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ActiveScriptSiteWindow_AddRef(IActiveScriptSiteWindow *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ActiveScriptSiteWindow_Release(IActiveScriptSiteWindow *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ActiveScriptSiteWindow_GetWindow(IActiveScriptSiteWindow *iface, HWND *phwnd)
+{
+    if(!allow_ui)
+        CHECK_EXPECT(GetWindow);
+    *phwnd = NULL;
+    return S_OK;
+}
+
+static HRESULT WINAPI ActiveScriptSiteWindow_EnableModeless(IActiveScriptSiteWindow *iface, BOOL fEnable)
+{
+    if(allow_ui)
+        return S_OK;
+
+    CHECK_EXPECT(EnableModeless);
+    ok(!fEnable, "fEnable = %x\n", fEnable);
+    return E_FAIL;
+}
+
+static const IActiveScriptSiteWindowVtbl ActiveScriptSiteWindowVtbl = {
+    ActiveScriptSiteWindow_QueryInterface,
+    ActiveScriptSiteWindow_AddRef,
+    ActiveScriptSiteWindow_Release,
+    ActiveScriptSiteWindow_GetWindow,
+    ActiveScriptSiteWindow_EnableModeless
+};
+
+static IActiveScriptSiteWindow ActiveScriptSiteWindow = { &ActiveScriptSiteWindowVtbl };
+
+static HRESULT WINAPI ActiveScriptSiteUIControl_QueryInterface(IActiveScriptSiteUIControl *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ActiveScriptSiteUIControl_AddRef(IActiveScriptSiteUIControl *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ActiveScriptSiteUIControl_Release(IActiveScriptSiteUIControl *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ActiveScriptSiteUIControl_GetUIBehavior(IActiveScriptSiteUIControl *iface, SCRIPTUICITEM UicItem,
+        SCRIPTUICHANDLING *pUicHandling)
+{
+    if(!allow_ui) {
+        CHECK_EXPECT(GetUIBehavior);
+        ok(UicItem == SCRIPTUICITEM_MSGBOX, "UidItem = %d\n", UicItem);
+    }
+    *pUicHandling = uic_handling;
+    return S_OK;
+}
+
+static const IActiveScriptSiteUIControlVtbl ActiveScriptSiteUIControlVtbl = {
+    ActiveScriptSiteUIControl_QueryInterface,
+    ActiveScriptSiteUIControl_AddRef,
+    ActiveScriptSiteUIControl_Release,
+    ActiveScriptSiteUIControl_GetUIBehavior
+};
+
+static IActiveScriptSiteUIControl ActiveScriptSiteUIControl = { &ActiveScriptSiteUIControlVtbl };
+
 static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -1186,6 +1273,10 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
         *ppv = iface;
     else if(IsEqualGUID(&IID_IActiveScriptSite, riid))
         *ppv = iface;
+    else if(IsEqualGUID(&IID_IActiveScriptSiteWindow, riid))
+        *ppv = &ActiveScriptSiteWindow;
+    else if(IsEqualGUID(&IID_IActiveScriptSiteUIControl, riid))
+        *ppv = &ActiveScriptSiteUIControl;
     else
         return E_NOINTERFACE;
 
@@ -1376,6 +1467,17 @@ static void parse_script_af(DWORD flags, const char *src)
     ok(hres == S_OK, "parse_script failed: %08x\n", hres);
 }
 
+static HRESULT parse_script_ar(const char *src)
+{
+    BSTR tmp;
+    HRESULT hres;
+
+    tmp = a2bstr(src);
+    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, tmp);
+    SysFreeString(tmp);
+    return hres;
+}
+
 static void parse_script_a(const char *src)
 {
     parse_script_af(SCRIPTITEM_GLOBALMEMBERS, src);
@@ -1486,6 +1588,51 @@ static void test_gc(void)
 
     IActiveScript_Release(engine);
     IActiveScriptParse_Release(parser);
+}
+
+static void test_msgbox(void)
+{
+    HRESULT hres;
+
+    uic_handling = SCRIPTUICHANDLING_NOUIDEFAULT;
+
+    SET_EXPECT(GetUIBehavior);
+    SET_EXPECT(GetWindow);
+    SET_EXPECT(EnableModeless);
+    hres = parse_script_ar("MsgBox \"testing...\"");
+    CLEAR_CALLED(GetUIBehavior);
+    CLEAR_CALLED(GetWindow);
+    CLEAR_CALLED(EnableModeless);
+    if(FAILED(hres)) {
+        win_skip("Skipping MsgBox tests, broken (probably too old) vbscript\n");
+        return;
+    }
+
+    SET_EXPECT(GetUIBehavior);
+    parse_script_a("dim r\n r=MsgBox(\"testing...\")\n Call ok(r=0, \"r=\"&r)");
+    CHECK_CALLED(GetUIBehavior);
+
+    SET_EXPECT(GetUIBehavior);
+    parse_script_a("MsgBox 10");
+    CHECK_CALLED(GetUIBehavior);
+
+    uic_handling = SCRIPTUICHANDLING_ALLOW;
+
+    SET_EXPECT(GetUIBehavior);
+    SET_EXPECT(GetWindow);
+    SET_EXPECT(EnableModeless);
+    hres = parse_script_ar("MsgBox \"testing...\"");
+    ok(FAILED(hres), "script not failed\n");
+    CHECK_CALLED(GetUIBehavior);
+    CHECK_CALLED(GetWindow);
+    CHECK_CALLED(EnableModeless);
+
+    uic_handling = SCRIPTUICHANDLING_NOUIERROR;
+
+    SET_EXPECT(GetUIBehavior);
+    hres = parse_script_ar("MsgBox \"testing...\"");
+    ok(FAILED(hres), "script not failed\n");
+    CHECK_CALLED(GetUIBehavior);
 }
 
 static HRESULT test_global_vars_ref(BOOL use_close)
@@ -1736,6 +1883,7 @@ static void run_tests(void)
 
     test_procedures();
     test_gc();
+    test_msgbox();
 }
 
 static BOOL check_vbscript(void)
@@ -1767,6 +1915,8 @@ START_TEST(run)
     if(!check_vbscript()) {
         win_skip("Broken engine, probably too old\n");
     }else if(argc > 2) {
+        allow_ui = TRUE;
+        uic_handling = SCRIPTUICHANDLING_ALLOW;
         run_from_file(argv[2]);
     }else {
         run_tests();
