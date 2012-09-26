@@ -22,6 +22,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 
 #define WINED3D_SM4_INSTRUCTION_MODIFIER        (1 << 31)
 
@@ -554,6 +555,16 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
     opcode_token = *(*ptr)++;
     opcode = opcode_token & WINED3D_SM4_OPCODE_MASK;
     len = ((opcode_token & WINED3D_SM4_INSTRUCTION_LENGTH_MASK) >> WINED3D_SM4_INSTRUCTION_LENGTH_SHIFT) - 1;
+
+    if (TRACE_ON(d3d_bytecode))
+    {
+        TRACE_(d3d_bytecode)("[ %08x ", opcode_token);
+        for (i = 0; i < len; ++i)
+        {
+            TRACE_(d3d_bytecode)("%08x ", (*ptr)[i]);
+        }
+        TRACE_(d3d_bytecode)("]\n");
+    }
 
     if (!(opcode_info = get_opcode_info(opcode)))
     {
