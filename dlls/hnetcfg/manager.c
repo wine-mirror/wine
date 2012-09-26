@@ -96,8 +96,9 @@ static HRESULT WINAPI fw_manager_GetTypeInfoCount(
 {
     fw_manager *This = impl_from_INetFwMgr( iface );
 
-    FIXME("%p %p\n", This, pctinfo);
-    return E_NOTIMPL;
+    TRACE("%p %p\n", This, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI fw_manager_GetTypeInfo(
@@ -108,8 +109,8 @@ static HRESULT WINAPI fw_manager_GetTypeInfo(
 {
     fw_manager *This = impl_from_INetFwMgr( iface );
 
-    FIXME("%p %u %u %p\n", This, iTInfo, lcid, ppTInfo);
-    return E_NOTIMPL;
+    TRACE("%p %u %u %p\n", This, iTInfo, lcid, ppTInfo);
+    return get_typeinfo( INetFwMgr_tid, ppTInfo );
 }
 
 static HRESULT WINAPI fw_manager_GetIDsOfNames(
@@ -121,9 +122,18 @@ static HRESULT WINAPI fw_manager_GetIDsOfNames(
     DISPID *rgDispId )
 {
     fw_manager *This = impl_from_INetFwMgr( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
 
-    FIXME("%p %s %p %u %u %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
-    return E_NOTIMPL;
+    TRACE("%p %s %p %u %u %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+
+    hr = get_typeinfo( INetFwMgr_tid, &typeinfo );
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames( typeinfo, rgszNames, cNames, rgDispId );
+        ITypeInfo_Release( typeinfo );
+    }
+    return hr;
 }
 
 static HRESULT WINAPI fw_manager_Invoke(
@@ -138,10 +148,20 @@ static HRESULT WINAPI fw_manager_Invoke(
     UINT *puArgErr )
 {
     fw_manager *This = impl_from_INetFwMgr( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
 
-    FIXME("%p %d %s %d %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p %d %s %d %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-    return E_NOTIMPL;
+
+    hr = get_typeinfo( INetFwMgr_tid, &typeinfo );
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke( typeinfo, &This->INetFwMgr_iface, dispIdMember,
+                               wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr );
+        ITypeInfo_Release( typeinfo );
+    }
+    return hr;
 }
 
 static HRESULT WINAPI fw_manager_get_LocalPolicy(

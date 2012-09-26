@@ -106,7 +106,10 @@ static ITypeInfo *typeinfo[last_tid];
 static REFIID tid_id[] =
 {
     &IID_INetFwAuthorizedApplication,
-    &IID_INetFwAuthorizedApplications
+    &IID_INetFwAuthorizedApplications,
+    &IID_INetFwMgr,
+    &IID_INetFwPolicy,
+    &IID_INetFwProfile
 };
 
 HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
