@@ -597,6 +597,13 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
                 continue;
             }
 
+            if (type->type == HLSL_CLASS_STRUCT)
+            {
+                FIXME("Struct var with an initializer.\n");
+                free_instr_list(v->initializer);
+                d3dcompiler_free(v);
+                continue;
+            }
             if (type->type > HLSL_CLASS_LAST_NUMERIC)
             {
                 FIXME("Initializers for non scalar/struct variables not supported yet.\n");
@@ -628,6 +635,79 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
     }
     d3dcompiler_free(var_list);
     return statements_list;
+}
+
+static BOOL add_struct_field(struct list *fields, struct hlsl_struct_field *field)
+{
+    struct hlsl_struct_field *f;
+
+    LIST_FOR_EACH_ENTRY(f, fields, struct hlsl_struct_field, entry)
+    {
+        if (!strcmp(f->name, field->name))
+            return FALSE;
+    }
+    list_add_tail(fields, &field->entry);
+    return TRUE;
+}
+
+static struct list *gen_struct_fields(struct hlsl_type *type, DWORD modifiers, struct list *fields)
+{
+    struct parse_variable_def *v, *v_next;
+    struct hlsl_struct_field *field;
+    struct list *list;
+
+    list = d3dcompiler_alloc(sizeof(*list));
+    if (!list)
+    {
+        ERR("Out of memory.\n");
+        return NULL;
+    }
+    list_init(list);
+    LIST_FOR_EACH_ENTRY_SAFE(v, v_next, fields, struct parse_variable_def, entry)
+    {
+        debug_dump_decl(type, 0, v->name, v->loc.line);
+        field = d3dcompiler_alloc(sizeof(*field));
+        if (!field)
+        {
+            ERR("Out of memory.\n");
+            d3dcompiler_free(v);
+            return list;
+        }
+        field->type = type;
+        field->name = v->name;
+        field->modifiers = modifiers;
+        field->semantic = v->semantic;
+        if (v->initializer)
+        {
+            hlsl_report_message(v->loc.file, v->loc.line, v->loc.col, HLSL_LEVEL_ERROR,
+                    "struct field with an initializer.\n");
+            free_instr_list(v->initializer);
+        }
+        list_add_tail(list, &field->entry);
+        d3dcompiler_free(v);
+    }
+    d3dcompiler_free(fields);
+    return list;
+}
+
+static struct hlsl_type *new_struct_type(const char *name, DWORD modifiers, struct list *fields)
+{
+    struct hlsl_type *type = d3dcompiler_alloc(sizeof(*type));
+
+    if (!type)
+    {
+        ERR("Out of memory.\n");
+        return NULL;
+    }
+    type->type = HLSL_CLASS_STRUCT;
+    type->name = name;
+    type->dimx = type->dimy = 1;
+    type->modifiers = modifiers;
+    type->e.elements = fields;
+
+    list_add_tail(&hlsl_ctx.types, &type->entry);
+
+    return type;
 }
 
 static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct list *list,
@@ -809,12 +889,17 @@ static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct lis
 %type <type> type
 %type <list> declaration_statement
 %type <list> declaration
+%type <list> struct_declaration
+%type <type> struct_spec
+%type <type> named_struct_spec
+%type <type> unnamed_struct_spec
 %type <list> type_specs
 %type <variable_def> type_spec
 %type <list> complex_initializer
 %type <list> initializer_expr_list
 %type <instr> initializer_expr
 %type <modifiers> var_modifiers
+%type <list> field
 %type <list> parameters
 %type <list> param_list
 %type <instr> expr
@@ -828,10 +913,12 @@ static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct lis
 %type <list> loop_statement
 %type <function> func_declaration
 %type <function> func_prototype
+%type <list> fields_list
 %type <parameter> parameter
 %type <name> semantic
 %type <variable_def> variable_def
 %type <list> variables_def
+%type <list> variables_def_optional
 %type <if_body> if_body
 %type <instr> primary_expr
 %type <instr> postfix_expr
@@ -889,9 +976,98 @@ preproc_directive:        PRE_LINE STRING
                                 }
                             }
 
+struct_declaration:       struct_spec variables_def_optional ';'
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@3);
+                                if (!$2)
+                                {
+                                    if (!$1->name)
+                                    {
+                                        hlsl_report_message(loc.file, loc.line, loc.col,
+                                                HLSL_LEVEL_ERROR, "anonymous struct declaration with no variables");
+                                    }
+                                    check_type_modifiers($1->modifiers, &loc);
+                                }
+                                $$ = declare_vars($1, 0, $2);
+                            }
+
+struct_spec:              named_struct_spec
+                        | unnamed_struct_spec
+
+named_struct_spec:        var_modifiers KW_STRUCT any_identifier '{' fields_list '}'
+                            {
+                                BOOL ret;
+                                struct source_location loc;
+
+                                TRACE("Structure %s declaration.\n", debugstr_a($3));
+                                set_location(&loc, &@1);
+                                check_invalid_matrix_modifiers($1, &loc);
+                                $$ = new_struct_type($3, $1, $5);
+
+                                if (get_variable(hlsl_ctx.cur_scope, $3))
+                                {
+                                    hlsl_report_message(hlsl_ctx.source_file, @3.first_line, @3.first_column,
+                                            HLSL_LEVEL_ERROR, "redefinition of '%s'", $3);
+                                    return 1;
+                                }
+
+                                ret = add_type_to_scope(hlsl_ctx.cur_scope, $$);
+                                if (!ret)
+                                {
+                                    hlsl_report_message(hlsl_ctx.source_file, @3.first_line, @3.first_column,
+                                            HLSL_LEVEL_ERROR, "redefinition of struct '%s'", $3);
+                                    return 1;
+                                }
+                            }
+
+unnamed_struct_spec:      var_modifiers KW_STRUCT '{' fields_list '}'
+                            {
+                                struct source_location loc;
+
+                                TRACE("Anonymous structure declaration.\n");
+                                set_location(&loc, &@1);
+                                check_invalid_matrix_modifiers($1, &loc);
+                                $$ = new_struct_type(NULL, $1, $4);
+                            }
+
 any_identifier:           VAR_IDENTIFIER
                         | TYPE_IDENTIFIER
                         | NEW_IDENTIFIER
+
+fields_list:              /* Empty */
+                            {
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                list_init($$);
+                            }
+                        | fields_list field
+                            {
+                                BOOL ret;
+                                struct hlsl_struct_field *field, *next;
+
+                                $$ = $1;
+                                LIST_FOR_EACH_ENTRY_SAFE(field, next, $2, struct hlsl_struct_field, entry)
+                                {
+                                    ret = add_struct_field($$, field);
+                                    if (ret == FALSE)
+                                    {
+                                        hlsl_report_message(hlsl_ctx.source_file, @2.first_line, @2.first_column,
+                                                HLSL_LEVEL_ERROR, "redefinition of '%s'", field->name);
+                                        d3dcompiler_free(field);
+                                    }
+                                }
+                                d3dcompiler_free($2);
+                            }
+
+field:                    var_modifiers type variables_def ';'
+                            {
+                                $$ = gen_struct_fields($2, $1, $3);
+                            }
+                        | unnamed_struct_spec variables_def ';'
+                            {
+                                $$ = gen_struct_fields($1, 0, $2);
+                            }
 
 func_declaration:         func_prototype compound_statement
                             {
@@ -1123,9 +1299,7 @@ base_type:                KW_VOID
                             }
 
 declaration_statement:    declaration
-                            {
-                                $$ = $1;
-                            }
+                        | struct_declaration
                         | typedef
                             {
                                 $$ = d3dcompiler_alloc(sizeof(*$$));
@@ -1169,6 +1343,15 @@ type_spec:                any_identifier array
 declaration:              var_modifiers type variables_def ';'
                             {
                                 $$ = declare_vars($2, $1, $3);
+                            }
+
+variables_def_optional:   /* Empty */
+                            {
+                                $$ = NULL;
+                            }
+                        | variables_def
+                            {
+                                $$ = $1;
                             }
 
 variables_def:            variable_def
