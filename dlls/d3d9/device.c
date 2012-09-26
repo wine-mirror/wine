@@ -1752,7 +1752,6 @@ static HRESULT WINAPI d3d9_device_GetTextureStageState(IDirect3DDevice9Ex *iface
         DWORD stage, D3DTEXTURESTAGESTATETYPE state, DWORD *value)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
 
     TRACE("iface %p, stage %u, state %#x, value %p.\n", iface, stage, state, value);
 
@@ -1763,10 +1762,10 @@ static HRESULT WINAPI d3d9_device_GetTextureStageState(IDirect3DDevice9Ex *iface
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_texture_stage_state(device->wined3d_device, stage, tss_lookup[state], value);
+    *value = wined3d_device_get_texture_stage_state(device->wined3d_device, stage, tss_lookup[state]);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_SetTextureStageState(IDirect3DDevice9Ex *iface,

@@ -2401,12 +2401,12 @@ static HRESULT WINAPI d3d_device3_GetRenderState(IDirect3DDevice3 *iface,
 
             device->legacyTextureBlending = TRUE;
 
-            wined3d_device_get_texture_stage_state(device->wined3d_device, 0, WINED3D_TSS_COLOR_OP, &colorop);
-            wined3d_device_get_texture_stage_state(device->wined3d_device, 0, WINED3D_TSS_COLOR_ARG1, &colorarg1);
-            wined3d_device_get_texture_stage_state(device->wined3d_device, 0, WINED3D_TSS_COLOR_ARG2, &colorarg2);
-            wined3d_device_get_texture_stage_state(device->wined3d_device, 0, WINED3D_TSS_ALPHA_OP, &alphaop);
-            wined3d_device_get_texture_stage_state(device->wined3d_device, 0, WINED3D_TSS_ALPHA_ARG1, &alphaarg1);
-            wined3d_device_get_texture_stage_state(device->wined3d_device, 0, WINED3D_TSS_ALPHA_ARG2, &alphaarg2);
+            colorop = wined3d_device_get_texture_stage_state(device->wined3d_device, 0, WINED3D_TSS_COLOR_OP);
+            colorarg1 = wined3d_device_get_texture_stage_state(device->wined3d_device, 0, WINED3D_TSS_COLOR_ARG1);
+            colorarg2 = wined3d_device_get_texture_stage_state(device->wined3d_device, 0, WINED3D_TSS_COLOR_ARG2);
+            alphaop = wined3d_device_get_texture_stage_state(device->wined3d_device, 0, WINED3D_TSS_ALPHA_OP);
+            alphaarg1 = wined3d_device_get_texture_stage_state(device->wined3d_device, 0, WINED3D_TSS_ALPHA_ARG1);
+            alphaarg2 = wined3d_device_get_texture_stage_state(device->wined3d_device, 0, WINED3D_TSS_ALPHA_ARG2);
 
             if (colorop == WINED3D_TOP_SELECT_ARG1 && colorarg1 == WINED3DTA_TEXTURE
                     && alphaop == WINED3D_TOP_SELECT_ARG1 && alphaarg1 == WINED3DTA_TEXTURE)
@@ -4543,7 +4543,6 @@ static HRESULT d3d_device7_GetTextureStageState(IDirect3DDevice7 *iface,
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
     const struct tss_lookup *l;
-    HRESULT hr = D3D_OK;
 
     TRACE("iface %p, stage %u, state %#x, value %p.\n",
             iface, stage, state, value);
@@ -4623,12 +4622,12 @@ static HRESULT d3d_device7_GetTextureStageState(IDirect3DDevice7 *iface,
     }
     else
     {
-        hr = wined3d_device_get_texture_stage_state(device->wined3d_device, stage, l->state, value);
+        *value = wined3d_device_get_texture_stage_state(device->wined3d_device, stage, l->state);
     }
 
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d_device7_GetTextureStageState_FPUSetup(IDirect3DDevice7 *iface,

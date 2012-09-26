@@ -2160,8 +2160,8 @@ struct wined3d_swapchain * __cdecl wined3d_device_get_swapchain(const struct win
 UINT __cdecl wined3d_device_get_swapchain_count(const struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_texture(const struct wined3d_device *device,
         UINT stage, struct wined3d_texture **texture);
-HRESULT __cdecl wined3d_device_get_texture_stage_state(const struct wined3d_device *device,
-        UINT stage, enum wined3d_texture_stage_state state, DWORD *value);
+DWORD __cdecl wined3d_device_get_texture_stage_state(const struct wined3d_device *device,
+        UINT stage, enum wined3d_texture_stage_state state);
 void __cdecl wined3d_device_get_transform(const struct wined3d_device *device,
         enum wined3d_transform_state state, struct wined3d_matrix *matrix);
 struct wined3d_vertex_declaration * __cdecl wined3d_device_get_vertex_declaration(const struct wined3d_device *device);

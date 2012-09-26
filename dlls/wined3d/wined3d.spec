@@ -86,7 +86,7 @@
 @ cdecl wined3d_device_get_swapchain(ptr long)
 @ cdecl wined3d_device_get_swapchain_count(ptr)
 @ cdecl wined3d_device_get_texture(ptr long ptr)
-@ cdecl wined3d_device_get_texture_stage_state(ptr long long ptr)
+@ cdecl wined3d_device_get_texture_stage_state(ptr long long)
 @ cdecl wined3d_device_get_transform(ptr long ptr)
 @ cdecl wined3d_device_get_vertex_declaration(ptr)
 @ cdecl wined3d_device_get_vertex_shader(ptr)

@@ -3435,22 +3435,19 @@ void CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *device,
     device_invalidate_state(device, STATE_TEXTURESTAGE(stage, state));
 }
 
-HRESULT CDECL wined3d_device_get_texture_stage_state(const struct wined3d_device *device,
-        UINT stage, enum wined3d_texture_stage_state state, DWORD *value)
+DWORD CDECL wined3d_device_get_texture_stage_state(const struct wined3d_device *device,
+        UINT stage, enum wined3d_texture_stage_state state)
 {
-    TRACE("device %p, stage %u, state %s, value %p.\n",
-            device, stage, debug_d3dtexturestate(state), value);
+    TRACE("device %p, stage %u, state %s.\n",
+            device, stage, debug_d3dtexturestate(state));
 
     if (state > WINED3D_HIGHEST_TEXTURE_STATE)
     {
         WARN("Invalid state %#x passed.\n", state);
-        return WINED3D_OK;
+        return 0;
     }
 
-    *value = device->updateStateBlock->state.texture_states[stage][state];
-    TRACE("Returning %#x.\n", *value);
-
-    return WINED3D_OK;
+    return device->updateStateBlock->state.texture_states[stage][state];
 }
 
 HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
