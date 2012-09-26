@@ -3627,8 +3627,8 @@ static HRESULT WINAPI MLangConvertCharset_DoConversionFromUnicode(IMLangConvertC
     WCHAR *src, UINT *src_size, CHAR *dest, UINT *dest_size)
 {
     struct convert_charset *This = impl_from_IMLangConvertCharset(iface);
-    FIXME("(%p)->(%p %p %p %p): stub\n", This, src, src_size, dest, dest_size);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %p %p %p)\n", This, src, src_size, dest, dest_size);
+    return ConvertINetUnicodeToMultiByte(NULL, This->dst_cp, src, (INT*)src_size, dest, (INT*)dest_size);
 }
 
 static const IMLangConvertCharsetVtbl MLangConvertCharsetVtbl =
