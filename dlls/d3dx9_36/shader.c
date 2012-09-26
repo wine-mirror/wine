@@ -671,15 +671,6 @@ static inline int is_vertex_shader(DWORD version)
     return (version & 0xFFFF0000) == 0xFFFE0000;
 }
 
-static DWORD calc_bytes(D3DXCONSTANT_DESC *desc)
-{
-    if (desc->RegisterSet != D3DXRS_FLOAT4 && desc->RegisterSet != D3DXRS_SAMPLER)
-        FIXME("Don't know how to calculate Bytes for constants of type %s\n",
-                debug_d3dxparameter_registerset(desc->RegisterSet));
-
-    return 4 * desc->Elements * desc->Rows * desc->Columns;
-}
-
 static inline struct ctab_constant *constant_from_handle(D3DXHANDLE handle)
 {
     return (struct ctab_constant *)handle;
@@ -1656,7 +1647,7 @@ static HRESULT parse_ctab_constant_type(const char *ctab, DWORD typeoffset, stru
     }
 
     constant->desc.RegisterCount = max(0, min(max - index, size));
-    constant->desc.Bytes = calc_bytes(&constant->desc);
+    constant->desc.Bytes = 4 * constant->desc.Elements * type->Rows * type->Columns;
 
     return D3D_OK;
 
