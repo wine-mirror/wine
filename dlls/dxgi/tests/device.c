@@ -292,6 +292,140 @@ static void test_output(IDXGIDevice *device)
     IDXGIAdapter_Release(adapter);
 }
 
+struct refresh_rates
+{
+    UINT numerator;
+    UINT denominator;
+    BOOL numerator_should_pass;
+    BOOL denominator_should_pass;
+};
+
+static void test_createswapchain(IDXGIDevice *device)
+{
+    IUnknown *obj;
+    IDXGIAdapter *adapter;
+    IDXGIFactory *factory;
+    IDXGISwapChain *swapchain;
+    DXGI_SWAP_CHAIN_DESC creation_desc, result_desc;
+    HRESULT hr;
+    WNDCLASS wc = {0};
+    UINT i;
+
+    const struct refresh_rates refresh_list[] =
+    {
+        {60, 60, FALSE, FALSE},
+        {60,  0,  TRUE, FALSE},
+        {60,  1,  TRUE,  TRUE},
+        { 0, 60,  TRUE, FALSE},
+        { 0,  0,  TRUE, FALSE},
+    };
+
+
+    wc.lpfnWndProc = DefWindowProc;
+    wc.lpszClassName = "dxgi_test_wc";
+
+    RegisterClass(&wc);
+
+    creation_desc.OutputWindow = 0;
+    creation_desc.BufferDesc.Width = 800;
+    creation_desc.BufferDesc.Height = 600;
+    creation_desc.BufferDesc.RefreshRate.Numerator = 60;
+    creation_desc.BufferDesc.RefreshRate.Denominator = 60;
+    creation_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    creation_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    creation_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    creation_desc.SampleDesc.Count = 1;
+    creation_desc.SampleDesc.Quality = 0;
+    creation_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    creation_desc.BufferCount = 1;
+    creation_desc.OutputWindow = CreateWindow("dxgi_test_wc", "dxgi_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    creation_desc.Windowed = TRUE;
+    creation_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    creation_desc.Flags = 0;
+
+    hr = IDXGIDevice_QueryInterface(device, &IID_IUnknown, (void **)&obj);
+    ok(SUCCEEDED(hr), "IDXGIDevice does not implement IUnknown\n");
+
+    hr = IDXGIDevice_GetAdapter(device, &adapter);
+    ok(SUCCEEDED(hr), "GetAdapter failed, hr %#x.\n", hr);
+
+    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
+    ok(SUCCEEDED(hr), "GetParent failed, hr %#x.\n", hr);
+
+    hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
+    ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+
+    hr = IDXGISwapChain_GetDesc(swapchain, NULL);
+    ok(hr == E_INVALIDARG, "GetDesc unexpectedly returned %#x.\n", hr);
+
+    IDXGISwapChain_Release(swapchain);
+
+    for (i = 0; i < sizeof(refresh_list)/sizeof(refresh_list[0]); i++)
+    {
+        creation_desc.BufferDesc.RefreshRate.Numerator = refresh_list[i].numerator;
+        creation_desc.BufferDesc.RefreshRate.Denominator = refresh_list[i].denominator;
+
+        hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
+        ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+
+        hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
+        ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+
+        if (refresh_list[i].numerator_should_pass)
+            ok(result_desc.BufferDesc.RefreshRate.Numerator == refresh_list[i].numerator,
+                "Numerator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Numerator);
+        else
+            todo_wine ok(result_desc.BufferDesc.RefreshRate.Numerator == refresh_list[i].numerator,
+                "Numerator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Numerator);
+
+        if (refresh_list[i].denominator_should_pass)
+            ok(result_desc.BufferDesc.RefreshRate.Denominator == refresh_list[i].denominator,
+                    "Denominator %u is %u.\n", i ,result_desc.BufferDesc.RefreshRate.Denominator);
+        else
+            todo_wine ok(result_desc.BufferDesc.RefreshRate.Denominator == refresh_list[i].denominator,
+                    "Denominator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Denominator);
+
+        IDXGISwapChain_Release(swapchain);
+    }
+
+    creation_desc.Windowed = FALSE;
+
+    for (i = 0; i < sizeof(refresh_list)/sizeof(refresh_list[0]); i++)
+    {
+        creation_desc.BufferDesc.RefreshRate.Numerator = refresh_list[i].numerator;
+        creation_desc.BufferDesc.RefreshRate.Denominator = refresh_list[i].denominator;
+
+        hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
+        ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+
+        hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
+        ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+
+        if (refresh_list[i].numerator_should_pass)
+            ok(result_desc.BufferDesc.RefreshRate.Numerator == refresh_list[i].numerator,
+                    "Numerator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Numerator);
+        else
+            todo_wine ok(result_desc.BufferDesc.RefreshRate.Numerator == refresh_list[i].numerator,
+                    "Numerator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Numerator);
+
+        if (refresh_list[i].denominator_should_pass)
+            ok(result_desc.BufferDesc.RefreshRate.Denominator == refresh_list[i].denominator,
+                    "Denominator %u is %u.\n", i ,result_desc.BufferDesc.RefreshRate.Denominator);
+        else
+            todo_wine ok(result_desc.BufferDesc.RefreshRate.Denominator == refresh_list[i].denominator,
+                    "Denominator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Denominator);
+
+        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+        todo_wine ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+
+        IDXGISwapChain_Release(swapchain);
+    }
+
+    IDXGIFactory_Release(factory);
+    IDXGIAdapter_Release(adapter);
+    IUnknown_Release(obj);
+}
+
 START_TEST(device)
 {
     HMODULE d3d10core = LoadLibraryA("d3d10core.dll");
@@ -317,6 +451,7 @@ START_TEST(device)
     test_create_surface(device);
     test_parents(device);
     test_output(device);
+    test_createswapchain(device);
 
     refcount = IDXGIDevice_Release(device);
     ok(!refcount, "Device has %u references left\n", refcount);

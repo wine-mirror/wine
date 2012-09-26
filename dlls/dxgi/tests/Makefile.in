@@ -1,5 +1,5 @@
 TESTDLL   = dxgi.dll
-IMPORTS   = dxgi
+IMPORTS   = dxgi user32
 
 C_SRCS = \
 	device.c
