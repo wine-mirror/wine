@@ -488,10 +488,10 @@ static DWORD MIDI_mciReadMThd(WINE_MCIMIDI* wmm, DWORD dwOffset)
 	return MCIERR_INVALID_FILE;
     }
 
-    if (wmm->nTracks & 0x8000) {
-	/* this shouldn't be a problem... */
-	WARN("Ouch !! Implementation limitation to 32k tracks per MIDI file is overflowed\n");
-	wmm->nTracks = 0x7FFF;
+    if (wmm->nTracks > 0x80) {
+	/* wTrackNr is 7 bits only */
+	FIXME("Truncating MIDI file with %u tracks\n", wmm->nTracks);
+	wmm->nTracks = 0x80;
     }
 
     if ((wmm->tracks = HeapAlloc(GetProcessHeap(), 0, sizeof(MCI_MIDITRACK) * wmm->nTracks)) == NULL) {
