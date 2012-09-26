@@ -502,6 +502,134 @@ static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const cha
     return NULL;
 }
 
+static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, struct list *var_list)
+{
+    struct hlsl_type *type;
+    struct parse_variable_def *v, *v_next;
+    struct hlsl_ir_var *var;
+    struct hlsl_ir_node *assignment;
+    BOOL ret, local = TRUE;
+    struct list *statements_list = d3dcompiler_alloc(sizeof(*statements_list));
+
+    if (!statements_list)
+    {
+        ERR("Out of memory.\n");
+        LIST_FOR_EACH_ENTRY_SAFE(v, v_next, var_list, struct parse_variable_def, entry)
+            d3dcompiler_free(v);
+        d3dcompiler_free(var_list);
+        return NULL;
+    }
+    list_init(statements_list);
+
+    if (!var_list)
+        return statements_list;
+
+    LIST_FOR_EACH_ENTRY_SAFE(v, v_next, var_list, struct parse_variable_def, entry)
+    {
+        var = d3dcompiler_alloc(sizeof(*var));
+        if (!var)
+        {
+            ERR("Out of memory.\n");
+            d3dcompiler_free(v);
+            continue;
+        }
+        var->node.type = HLSL_IR_VAR;
+        if (v->array_size)
+            type = new_array_type(basic_type, v->array_size);
+        else
+            type = basic_type;
+        var->node.data_type = type;
+        var->node.loc = v->loc;
+        var->name = v->name;
+        var->modifiers = modifiers;
+        var->semantic = v->semantic;
+        debug_dump_decl(type, modifiers, v->name, v->loc.line);
+
+        if (hlsl_ctx.cur_scope == hlsl_ctx.globals)
+        {
+            var->modifiers |= HLSL_STORAGE_UNIFORM;
+            local = FALSE;
+        }
+
+        if (var->modifiers & HLSL_MODIFIER_CONST && !v->initializer)
+        {
+            hlsl_report_message(v->loc.file, v->loc.line, v->loc.col,
+                    HLSL_LEVEL_ERROR, "const variable without initializer");
+            free_declaration(var);
+            d3dcompiler_free(v);
+            continue;
+        }
+
+        ret = declare_variable(var, local);
+        if (!ret)
+        {
+            free_declaration(var);
+            d3dcompiler_free(v);
+            continue;
+        }
+        TRACE("Declared variable %s.\n", var->name);
+
+        if (v->initializer)
+        {
+            unsigned int size = initializer_size(v->initializer);
+            struct hlsl_ir_node *node;
+
+            TRACE("Variable with initializer.\n");
+            if (type->type <= HLSL_CLASS_LAST_NUMERIC
+                    && type->dimx * type->dimy != size && size != 1)
+            {
+                if (size < type->dimx * type->dimy)
+                {
+                    hlsl_report_message(v->loc.file, v->loc.line, v->loc.col, HLSL_LEVEL_ERROR,
+                            "'%s' initializer does not match", v->name);
+                    free_instr_list(v->initializer);
+                    d3dcompiler_free(v);
+                    continue;
+                }
+            }
+            if ((type->type == HLSL_CLASS_STRUCT || type->type == HLSL_CLASS_ARRAY)
+                    && components_count_type(type) != size)
+            {
+                hlsl_report_message(v->loc.file, v->loc.line, v->loc.col, HLSL_LEVEL_ERROR,
+                        "'%s' initializer does not match", v->name);
+                free_instr_list(v->initializer);
+                d3dcompiler_free(v);
+                continue;
+            }
+
+            if (type->type > HLSL_CLASS_LAST_NUMERIC)
+            {
+                FIXME("Initializers for non scalar/struct variables not supported yet.\n");
+                free_instr_list(v->initializer);
+                d3dcompiler_free(v);
+                continue;
+            }
+            if (v->array_size > 0)
+            {
+                FIXME("Initializing arrays is not supported yet.\n");
+                free_instr_list(v->initializer);
+                d3dcompiler_free(v);
+                continue;
+            }
+            if (list_count(v->initializer) > 1)
+            {
+                FIXME("Complex initializers are not supported yet.\n");
+                free_instr_list(v->initializer);
+                d3dcompiler_free(v);
+                continue;
+            }
+            node = LIST_ENTRY(list_head(v->initializer), struct hlsl_ir_node, entry);
+            assignment = make_assignment(&var->node, ASSIGN_OP_ASSIGN,
+                    BWRITERSP_WRITEMASK_ALL, node);
+            list_add_tail(statements_list, &assignment->entry);
+            d3dcompiler_free(v->initializer);
+        }
+        d3dcompiler_free(v);
+    }
+    d3dcompiler_free(var_list);
+    return statements_list;
+}
+
 static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct list *list,
         struct source_location *loc)
 {
@@ -1040,112 +1168,7 @@ type_spec:                any_identifier array
 
 declaration:              var_modifiers type variables_def ';'
                             {
-                                struct hlsl_type *type;
-                                struct parse_variable_def *v, *v_next;
-                                struct hlsl_ir_var *var;
-                                struct hlsl_ir_node *assignment;
-                                BOOL ret, local = TRUE;
-
-                                $$ = d3dcompiler_alloc(sizeof(*$$));
-                                list_init($$);
-                                LIST_FOR_EACH_ENTRY_SAFE(v, v_next, $3, struct parse_variable_def, entry)
-                                {
-                                    debug_dump_decl($2, $1, v->name, hlsl_ctx.line_no);
-                                    var = d3dcompiler_alloc(sizeof(*var));
-                                    var->node.type = HLSL_IR_VAR;
-                                    if (v->array_size)
-                                        type = new_array_type($2, v->array_size);
-                                    else
-                                        type = $2;
-                                    var->node.data_type = type;
-                                    var->node.loc = v->loc;
-                                    var->name = v->name;
-                                    var->modifiers = $1;
-                                    var->semantic = v->semantic;
-
-                                    if (hlsl_ctx.cur_scope == hlsl_ctx.globals)
-                                    {
-                                        var->modifiers |= HLSL_STORAGE_UNIFORM;
-                                        local = FALSE;
-                                    }
-
-                                    if (var->modifiers & HLSL_MODIFIER_CONST && !v->initializer)
-                                    {
-                                        hlsl_report_message(v->loc.file, v->loc.line, v->loc.col,
-                                                HLSL_LEVEL_ERROR, "const variable without initializer");
-                                        free_declaration(var);
-                                        d3dcompiler_free(v);
-                                        continue;
-                                    }
-
-                                    ret = declare_variable(var, local);
-                                    if (!ret)
-                                        free_declaration(var);
-                                    else
-                                        TRACE("Declared variable %s.\n", var->name);
-
-                                    if (v->initializer)
-                                    {
-                                        unsigned int size = initializer_size(v->initializer);
-                                        struct hlsl_ir_node *node;
-
-                                        TRACE("Variable with initializer\n");
-                                        if (type->type <= HLSL_CLASS_LAST_NUMERIC
-                                            && type->dimx * type->dimy != size
-                                            && size != 1)
-                                        {
-                                            if (size < type->dimx * type->dimy)
-                                            {
-                                                hlsl_report_message(v->loc.file,
-                                                        v->loc.line, v->loc.col, HLSL_LEVEL_ERROR,
-                                                        "'%s' initializer does not match", v->name);
-                                                free_instr_list(v->initializer);
-                                                d3dcompiler_free(v);
-                                                continue;
-                                            }
-                                        }
-
-                                        if ((type->type == HLSL_CLASS_STRUCT || type->type == HLSL_CLASS_ARRAY)
-                                            && components_count_type(type) != size)
-                                        {
-                                            hlsl_report_message(v->loc.file,
-                                                    v->loc.line, v->loc.col, HLSL_LEVEL_ERROR,
-                                                    "'%s' initializer does not match", v->name);
-                                            free_instr_list(v->initializer);
-                                            d3dcompiler_free(v);
-                                            continue;
-                                        }
-
-                                        if (type->type > HLSL_CLASS_LAST_NUMERIC)
-                                        {
-                                            FIXME("Initializers for non scalar/struct variables not supported yet\n");
-                                            free_instr_list(v->initializer);
-                                            d3dcompiler_free(v);
-                                            continue;
-                                        }
-                                        if (v->array_size > 0)
-                                        {
-                                            FIXME("Initializing arrays is not supported yet\n");
-                                            free_instr_list(v->initializer);
-                                            d3dcompiler_free(v);
-                                            continue;
-                                        }
-
-                                        if (list_count(v->initializer) > 1)
-                                        {
-                                            FIXME("Complex initializers are not supported yet.\n");
-                                            free_instr_list(v->initializer);
-                                            d3dcompiler_free(v);
-                                            continue;
-                                        }
-                                        node = LIST_ENTRY(list_head(v->initializer), struct hlsl_ir_node, entry);
-                                        assignment = make_assignment(&var->node, ASSIGN_OP_ASSIGN,
-                                                BWRITERSP_WRITEMASK_ALL, node);
-                                        list_add_tail($$, &assignment->entry);
-                                    }
-                                    d3dcompiler_free(v);
-                                }
-                                d3dcompiler_free($3);
+                                $$ = declare_vars($2, $1, $3);
                             }
 
 variables_def:            variable_def
