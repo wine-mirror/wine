@@ -17,6 +17,7 @@
  */
 
 #include <assert.h>
+#include <math.h>
 
 #include "vbscript.h"
 #include "vbscript_defs.h"
@@ -98,6 +99,16 @@ static HRESULT return_int(VARIANT *res, int val)
     return S_OK;
 }
 
+static inline HRESULT return_double(VARIANT *res, double val)
+{
+    if(res) {
+        V_VT(res) = VT_R8;
+        V_R8(res) = val;
+    }
+
+    return S_OK;
+}
+
 static inline HRESULT return_null(VARIANT *res)
 {
     if(res)
@@ -116,6 +127,40 @@ static HRESULT to_int(VARIANT *v, int *ret)
         break;
     default:
         FIXME("not supported %s\n", debugstr_variant(v));
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+static HRESULT to_double(VARIANT *v, double *ret)
+{
+    switch(V_VT(v)) {
+    case VT_I2:
+        *ret = V_I2(v);
+        break;
+    case VT_I4:
+        *ret = V_I4(v);
+        break;
+    case VT_R4:
+        *ret = V_R4(v);
+        break;
+    case VT_R8:
+        *ret = V_R8(v);
+        break;
+    case VT_BSTR: {
+        VARIANT dst;
+        HRESULT hres;
+
+        V_VT(&dst) = VT_EMPTY;
+        hres = VariantChangeType(&dst, v, VARIANT_LOCALBOOL, VT_R8);
+        if(FAILED(hres))
+            return hres;
+        *ret = V_R8(&dst);
+        break;
+    }
+    default:
+        FIXME("arg %s not supported\n", debugstr_variant(v));
         return E_NOTIMPL;
     }
 
@@ -1110,8 +1155,30 @@ static HRESULT Global_MonthName(vbdisp_t *This, VARIANT *arg, unsigned args_cnt,
 
 static HRESULT Global_Round(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    double n;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    if(!res)
+        return S_OK;
+
+    switch(V_VT(arg)) {
+    case VT_I2:
+    case VT_I4:
+    case VT_BOOL:
+        *res = *arg;
+        return S_OK;
+    case VT_R8:
+        n = V_R8(arg);
+        break;
+    default:
+        hres = to_double(arg, &n);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return return_double(res, round(n));
 }
 
 static HRESULT Global_Escape(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

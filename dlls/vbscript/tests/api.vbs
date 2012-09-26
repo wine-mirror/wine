@@ -183,4 +183,19 @@ Call ok(Space(1) = " ", "Space(1) = " & Space(1) & """")
 Call ok(Space(0) = "", "Space(0) = " & Space(0) & """")
 Call ok(Space(5) = "     ", "Space(5) = " & Space(5) & """")
 
+Sub TestRound(val, exval, vt)
+    Call ok(Round(val) = exval, "Round(" & val & ") = " & Round(val))
+    Call ok(getVT(Round(val)) = vt, "getVT(Round(" & val & ")) = " & getVT(Round(val)))
+End Sub
+
+TestRound 3, 3, "VT_I2"
+TestRound 3.3, 3, "VT_R8"
+TestRound 3.8, 4, "VT_R8"
+TestRound 3.5, 4, "VT_R8"
+TestRound -3.3, -3, "VT_R8"
+TestRound -3.5, -4, "VT_R8"
+TestRound "2", 2, "VT_R8"
+TestRound true, true, "VT_BOOL"
+TestRound false, false, "VT_BOOL"
+
 Call reportSuccess()
