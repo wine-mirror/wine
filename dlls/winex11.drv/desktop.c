@@ -190,8 +190,7 @@ static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam 
 
         changes.x = data->whole_rect.left - virtual_screen_rect.left;
         changes.y = data->whole_rect.top - virtual_screen_rect.top;
-        XReconfigureWMWindow( data->display, data->whole_window,
-                              DefaultScreen(data->display), mask, &changes );
+        XReconfigureWMWindow( data->display, data->whole_window, data->vis.screen, mask, &changes );
     }
     release_win_data( data );
     if (hwnd == GetForegroundWindow()) clip_fullscreen_window( hwnd, TRUE );

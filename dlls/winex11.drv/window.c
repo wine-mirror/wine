@@ -312,7 +312,7 @@ static void get_x11_rect_offset( struct x11drv_win_data *data, RECT *rect )
 static int get_window_attributes( struct x11drv_win_data *data, XSetWindowAttributes *attr )
 {
     attr->override_redirect = !data->managed;
-    attr->colormap          = default_colormap;
+    attr->colormap          = data->colormap ? data->colormap : default_colormap;
     attr->save_under        = ((GetClassLongW( data->hwnd, GCL_STYLE ) & CS_SAVEBITS) != 0);
     attr->bit_gravity       = NorthWestGravity;
     attr->win_gravity       = StaticGravity;
@@ -1110,7 +1110,7 @@ static void unmap_window( HWND hwnd )
 
         if (data->embedded) set_xembed_flags( data, 0 );
         else if (!data->managed) XUnmapWindow( data->display, data->whole_window );
-        else XWithdrawWindow( data->display, data->whole_window, DefaultScreen(data->display) );
+        else XWithdrawWindow( data->display, data->whole_window, data->vis.screen );
 
         data->mapped = FALSE;
         data->net_wm_state = 0;
@@ -1132,7 +1132,7 @@ void make_window_embedded( HWND hwnd )
     if (data->mapped)
     {
         if (data->managed) XUnmapWindow( data->display, data->whole_window );
-        else XWithdrawWindow( data->display, data->whole_window, DefaultScreen(data->display) );
+        else XWithdrawWindow( data->display, data->whole_window, data->vis.screen );
         data->net_wm_state = 0;
     }
     data->embedded = TRUE;
@@ -1244,8 +1244,7 @@ static void sync_window_position( struct x11drv_win_data *data,
     set_size_hints( data, style );
     set_mwm_hints( data, style, ex_style );
     data->configure_serial = NextRequest( data->display );
-    XReconfigureWMWindow( data->display, data->whole_window,
-                          DefaultScreen(data->display), mask, &changes );
+    XReconfigureWMWindow( data->display, data->whole_window, data->vis.screen, mask, &changes );
 #ifdef HAVE_LIBXSHAPE
     if (IsRectEmpty( old_window_rect ) != IsRectEmpty( &data->window_rect ))
         sync_window_region( data, (HRGN)1 );
@@ -1367,6 +1366,9 @@ static void create_whole_window( struct x11drv_win_data *data )
     }
     data->shaped = (win_rgn != 0);
 
+    if (data->vis.visualid != default_visual.visualid)
+        data->colormap = XCreateColormap( data->display, root_window, data->vis.visual, AllocNone );
+
     mask = get_window_attributes( data, &attr );
 
     data->whole_rect = data->window_rect;
@@ -1379,8 +1381,8 @@ static void create_whole_window( struct x11drv_win_data *data )
     data->whole_window = XCreateWindow( data->display, root_window,
                                         data->whole_rect.left - virtual_screen_rect.left,
                                         data->whole_rect.top - virtual_screen_rect.top,
-                                        cx, cy, 0, default_visual.depth, InputOutput,
-                                        default_visual.visual, mask, &attr );
+                                        cx, cy, 0, data->vis.depth, InputOutput,
+                                        data->vis.visual, mask, &attr );
     if (!data->whole_window) goto done;
 
     set_initial_wm_hints( data->display, data->whole_window );
@@ -1435,7 +1437,9 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
     TRACE( "win %p xwin %lx\n", data->hwnd, data->whole_window );
     XDeleteContext( data->display, data->whole_window, winContext );
     if (!already_destroyed) XDestroyWindow( data->display, data->whole_window );
+    if (data->colormap) XFreeColormap( data->display, data->colormap );
     data->whole_window = 0;
+    data->colormap = 0;
     data->wm_state = WithdrawnState;
     data->net_wm_state = 0;
     data->mapped = FALSE;
@@ -1542,6 +1546,7 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
     if ((data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data))))
     {
         data->display = display;
+        data->vis = default_visual;
         data->hwnd = hwnd;
         EnterCriticalSection( &win_data_section );
         XSaveContext( gdi_display, (XID)hwnd, win_data_context, (char *)data );
@@ -2034,6 +2039,7 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
 
     if (!data->whole_window) goto done;
     if (swp_flags & SWP_HIDEWINDOW) goto done;
+    if (data->vis.visualid != default_visual.visualid) goto done;
 
     if (*surface) window_surface_release( *surface );
     *surface = NULL;  /* indicate that we want to draw directly to the window */
@@ -2059,7 +2065,7 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
     if (!layered || !GetLayeredWindowAttributes( hwnd, &key, NULL, &flags ) || !(flags & LWA_COLORKEY))
         key = CLR_INVALID;
 
-    *surface = create_surface( data->whole_window, &default_visual, &surface_rect, key );
+    *surface = create_surface( data->whole_window, &data->vis, &surface_rect, key );
 
 done:
     release_win_data( data );
@@ -2185,7 +2191,7 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
             data->iconic = (new_style & WS_MINIMIZE) != 0;
             TRACE( "changing win %p iconic state to %u\n", data->hwnd, data->iconic );
             if (data->iconic)
-                XIconifyWindow( data->display, data->whole_window, DefaultScreen(data->display) );
+                XIconifyWindow( data->display, data->whole_window, data->vis.screen );
             else if (is_window_rect_mapped( rectWindow ))
                 XMapWindow( data->display, data->whole_window );
             update_net_wm_states( data );

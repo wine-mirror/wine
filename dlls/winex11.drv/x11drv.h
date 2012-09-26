@@ -530,6 +530,8 @@ enum x11drv_net_wm_state
 struct x11drv_win_data
 {
     Display    *display;        /* display connection for the thread owning the window */
+    XVisualInfo vis;            /* X visual used by this window */
+    Colormap    colormap;       /* colormap if non-default visual */
     HWND        hwnd;           /* hwnd that this private data belongs to */
     Window      whole_window;   /* X window for the complete window */
     RECT        window_rect;    /* USER window rectangle relative to parent */
