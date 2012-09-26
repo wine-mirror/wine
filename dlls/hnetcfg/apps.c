@@ -286,7 +286,7 @@ static HRESULT WINAPI fw_app_put_Scope(
     fw_app *This = impl_from_INetFwAuthorizedApplication( iface );
 
     FIXME("%p, %u\n", This, scope);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI fw_app_get_RemoteAddresses(
