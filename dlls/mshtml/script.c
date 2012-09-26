@@ -469,15 +469,21 @@ static ULONG WINAPI ActiveScriptSiteWindow_Release(IActiveScriptSiteWindow *ifac
 static HRESULT WINAPI ActiveScriptSiteWindow_GetWindow(IActiveScriptSiteWindow *iface, HWND *phwnd)
 {
     ScriptHost *This = impl_from_IActiveScriptSiteWindow(iface);
-    FIXME("(%p)->(%p)\n", This, phwnd);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, phwnd);
+
+    if(!This->window || !This->window->base.outer_window || !This->window->base.outer_window->doc_obj)
+        return E_UNEXPECTED;
+
+    *phwnd = This->window->base.outer_window->doc_obj->hwnd;
+    return S_OK;
 }
 
 static HRESULT WINAPI ActiveScriptSiteWindow_EnableModeless(IActiveScriptSiteWindow *iface, BOOL fEnable)
 {
     ScriptHost *This = impl_from_IActiveScriptSiteWindow(iface);
     FIXME("(%p)->(%x)\n", This, fEnable);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IActiveScriptSiteWindowVtbl ActiveScriptSiteWindowVtbl = {
