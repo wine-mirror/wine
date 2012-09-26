@@ -2107,6 +2107,68 @@ static int WINAPI WS2_WSARecvMsg( SOCKET s, LPWSAMSG msg, LPDWORD lpNumberOfByte
 }
 
 /***********************************************************************
+ *               interface_bind         (INTERNAL)
+ *
+ * Take bind() calls on any name corresponding to a local network adapter and restrict the given socket to
+ * operating only on the specified interface.  This restriction consists of two components:
+ *  1) An outgoing packet restriction suggesting the egress interface for all packets.
+ *  2) An incoming packet restriction dropping packets not meant for the interface.
+ * If the function succeeds in placing these restrictions (returns TRUE) then the name for the bind() may
+ * safely be changed to INADDR_ANY, permitting the transmission and receipt of broadcast packets on the
+ * socket. This behavior is only relevant to UDP sockets and is needed for applications that expect to be able
+ * to receive broadcast packets on a socket that is bound to a specific network interface.
+ */
+static BOOL interface_bind( SOCKET s, int fd, struct sockaddr *addr )
+{
+    struct sockaddr_in *in_sock = (struct sockaddr_in *) addr;
+    unsigned int sock_type = 0, optlen = sizeof(sock_type);
+    PIP_ADAPTER_INFO adapters = NULL, adapter;
+    BOOL ret = FALSE;
+    DWORD adap_size;
+    int enable = 1;
+
+    if (in_sock->sin_addr.s_addr == htonl(WS_INADDR_ANY))
+        return FALSE; /* Not binding to specific interface, uses default route */
+    if (getsockopt(fd, SOL_SOCKET, SO_TYPE, &sock_type, &optlen) == -1 || sock_type != SOCK_DGRAM)
+        return FALSE; /* Special interface binding is only necessary for UDP datagrams. */
+    if (GetAdaptersInfo(NULL, &adap_size) != ERROR_BUFFER_OVERFLOW)
+        goto cleanup;
+    adapters = HeapAlloc(GetProcessHeap(), 0, adap_size);
+    if (adapters == NULL || GetAdaptersInfo(adapters, &adap_size) != NO_ERROR)
+        goto cleanup;
+    /* Search the IPv4 adapter list for the appropriate binding interface */
+    for (adapter = adapters; adapter != NULL; adapter = adapter->Next)
+    {
+        in_addr_t adapter_addr = (in_addr_t) inet_addr(adapter->IpAddressList.IpAddress.String);
+
+        if (in_sock->sin_addr.s_addr == adapter_addr)
+        {
+#if defined(IP_BOUND_IF)
+            /* IP_BOUND_IF sets both the incoming and outgoing restriction at once */
+            if (setsockopt(fd, IPPROTO_IP, IP_BOUND_IF, &adapter->Index, sizeof(adapter->Index)) != 0)
+                goto cleanup;
+            ret = TRUE;
+#else
+            FIXME("Broadcast packets on interface-bound sockets are not currently supported on this platform, "
+                  "receiving broadcast packets will not work on socket %04lx.\n", s);
+#endif
+            break;
+        }
+    }
+    /* Will soon be switching to INADDR_ANY: permit address reuse */
+    if (ret && setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) == 0)
+        TRACE("Socket %04lx bound to interface index %d\n", s, adapter->Index);
+    else
+        ret = FALSE;
+
+cleanup:
+    if(!ret)
+        ERR("Failed to bind to interface, receiving broadcast packets will not work on socket %04lx.\n", s);
+    HeapFree(GetProcessHeap(), 0, adapters);
+    return ret;
+}
+
+/***********************************************************************
  *		bind			(WS2_32.2)
  */
 int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
@@ -2157,6 +2219,8 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
                              "INADDR_ANY instead.\n");
                         in4->sin_addr.s_addr = htonl(WS_INADDR_ANY);
                     }
+                    else if (interface_bind(s, fd, &uaddr.addr))
+                        in4->sin_addr.s_addr = htonl(WS_INADDR_ANY);
                 }
                 if (bind(fd, &uaddr.addr, uaddrlen) < 0)
                 {
