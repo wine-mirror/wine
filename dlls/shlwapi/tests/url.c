@@ -450,7 +450,8 @@ static const struct {
     {	"file://e:/b/c",				FALSE,	TRUE	},
     {	"http:partial",					FALSE,	FALSE	},
     {	"mailto://www.winehq.org/test.html",		TRUE,	FALSE	},
-    {	"file:partial",					FALSE,	TRUE	}
+    {	"file:partial",					FALSE,	TRUE	},
+    {	"File:partial",					FALSE,	TRUE	},
 };
 
 /* ########################### */

@@ -1864,7 +1864,8 @@ BOOL WINAPI UrlIsA(LPCSTR pszUrl, URLIS Urlis)
 	return FALSE;
 
     case URLIS_FILEURL:
-        return !StrCmpNA("file:", pszUrl, 5);
+        return (CompareStringA(LOCALE_INVARIANT, NORM_IGNORECASE, pszUrl, 5,
+                               "file:", 5) == CSTR_EQUAL);
 
     case URLIS_DIRECTORY:
         last = pszUrl + strlen(pszUrl) - 1;
@@ -1889,7 +1890,7 @@ BOOL WINAPI UrlIsA(LPCSTR pszUrl, URLIS Urlis)
  */
 BOOL WINAPI UrlIsW(LPCWSTR pszUrl, URLIS Urlis)
 {
-    static const WCHAR stemp[] = { 'f','i','l','e',':',0 };
+    static const WCHAR file_colon[] = { 'f','i','l','e',':',0 };
     PARSEDURLW base;
     DWORD res1;
     LPCWSTR last;
@@ -1917,7 +1918,8 @@ BOOL WINAPI UrlIsW(LPCWSTR pszUrl, URLIS Urlis)
 	return FALSE;
 
     case URLIS_FILEURL:
-        return !strncmpW(stemp, pszUrl, 5);
+        return (CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, pszUrl, 5,
+                               file_colon, 5) == CSTR_EQUAL);
 
     case URLIS_DIRECTORY:
         last = pszUrl + strlenW(pszUrl) - 1;
