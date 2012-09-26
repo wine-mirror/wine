@@ -2692,9 +2692,9 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
         return FALSE;
     }
 
-    /* unlike GetCharABCWidthsFloatW, this one is supposed to fail on non-TrueType fonts */
+    /* unlike GetCharABCWidthsFloatW, this one is supposed to fail on non-scalable fonts */
     dev = GET_DC_PHYSDEV( dc, pGetTextMetrics );
-    if (!dev->funcs->pGetTextMetrics( dev, &tm ) || !(tm.tmPitchAndFamily & TMPF_TRUETYPE))
+    if (!dev->funcs->pGetTextMetrics( dev, &tm ) || !(tm.tmPitchAndFamily & TMPF_VECTOR))
     {
         release_dc_ptr( dc );
         return FALSE;
