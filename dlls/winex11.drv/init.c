@@ -334,6 +334,9 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                     const struct x11drv_escape_set_drawable *data = in_data;
                     physDev->dc_rect = data->dc_rect;
                     physDev->drawable = data->drawable;
+                    XFreeGC( gdi_display, physDev->gc );
+                    physDev->gc = XCreateGC( gdi_display, physDev->drawable, 0, NULL );
+                    XSetGraphicsExposures( gdi_display, physDev->gc, False );
                     XSetSubwindowMode( gdi_display, physDev->gc, data->mode );
                     TRACE( "SET_DRAWABLE hdc %p drawable %lx dc_rect %s\n",
                            dev->hdc, physDev->drawable, wine_dbgstr_rect(&physDev->dc_rect) );
