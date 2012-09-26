@@ -1338,23 +1338,20 @@ D3DXQUATERNION* WINAPI D3DXQuaternionMultiply(D3DXQUATERNION *pout, CONST D3DXQU
     return pout;
 }
 
-D3DXQUATERNION* WINAPI D3DXQuaternionNormalize(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)
+D3DXQUATERNION * WINAPI D3DXQuaternionNormalize(D3DXQUATERNION *out, const D3DXQUATERNION *q)
 {
-    D3DXQUATERNION out;
     FLOAT norm;
 
-    TRACE("(%p, %p)\n", pout, pq);
+    TRACE("out %p, q %p\n", out, q);
 
-    norm = D3DXQuaternionLength(pq);
+    norm = D3DXQuaternionLength(q);
 
-    out.x = pq->x / norm;
-    out.y = pq->y / norm;
-    out.z = pq->z / norm;
-    out.w = pq->w / norm;
+    out->x = q->x / norm;
+    out->y = q->y / norm;
+    out->z = q->z / norm;
+    out->w = q->w / norm;
 
-    *pout=out;
-
-    return pout;
+    return out;
 }
 
 D3DXQUATERNION * WINAPI D3DXQuaternionRotationAxis(D3DXQUATERNION *out, const D3DXVECTOR3 *v, FLOAT angle)
