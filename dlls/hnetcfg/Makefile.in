@@ -11,5 +11,6 @@ C_SRCS = \
 	service.c
 
 IDL_R_SRCS = hnetcfg.idl
+IDL_TLB_SRCS = hnetcfg_tlb.idl
 
 @MAKE_DLL_RULES@
