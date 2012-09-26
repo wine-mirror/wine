@@ -502,6 +502,61 @@ static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const cha
     return NULL;
 }
 
+static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var, struct list *initializer)
+{
+    struct hlsl_type *type = var->node.data_type;
+    struct hlsl_ir_node *node;
+    struct hlsl_struct_field *field;
+    struct list *cur_node;
+    struct hlsl_ir_node *assignment;
+    struct hlsl_ir_deref *deref;
+
+    if (initializer_size(initializer) != components_count_type(type))
+    {
+        hlsl_report_message(var->node.loc.file, var->node.loc.line, var->node.loc.col, HLSL_LEVEL_ERROR,
+                "structure initializer mismatch");
+        free_instr_list(initializer);
+        return;
+    }
+    cur_node = list_head(initializer);
+    assert(cur_node);
+    node = LIST_ENTRY(cur_node, struct hlsl_ir_node, entry);
+    LIST_FOR_EACH_ENTRY(field, type->e.elements, struct hlsl_struct_field, entry)
+    {
+        if (!cur_node)
+        {
+            d3dcompiler_free(initializer);
+            return;
+        }
+        if (components_count_type(field->type) == components_count_type(node->data_type))
+        {
+            deref = new_record_deref(&var->node, field);
+            if (!deref)
+            {
+                ERR("Out of memory.\n");
+                break;
+            }
+            deref->node.loc = node->loc;
+            assignment = make_assignment(&deref->node, ASSIGN_OP_ASSIGN, BWRITERSP_WRITEMASK_ALL, node);
+            list_add_tail(list, &assignment->entry);
+        }
+        else
+            FIXME("Initializing with \"mismatched\" fields is not supported yet.\n");
+        cur_node = list_next(initializer, cur_node);
+        node = LIST_ENTRY(cur_node, struct hlsl_ir_node, entry);
+    }
+
+    /* Free initializer elements in excess. */
+    while (cur_node)
+    {
+        struct list *next = list_next(initializer, cur_node);
+        free_instr(node);
+        cur_node = next;
+        node = LIST_ENTRY(cur_node, struct hlsl_ir_node, entry);
+    }
+    d3dcompiler_free(initializer);
+}
+
 static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, struct list *var_list)
 {
     struct hlsl_type *type;
@@ -599,8 +654,7 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
 
             if (type->type == HLSL_CLASS_STRUCT)
             {
-                FIXME("Struct var with an initializer.\n");
-                free_instr_list(v->initializer);
+                struct_var_initializer(statements_list, var, v->initializer);
                 d3dcompiler_free(v);
                 continue;
             }

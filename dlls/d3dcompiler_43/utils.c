@@ -1556,6 +1556,23 @@ struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var)
     return deref;
 }
 
+struct hlsl_ir_deref *new_record_deref(struct hlsl_ir_node *record, struct hlsl_struct_field *field)
+{
+    struct hlsl_ir_deref *deref = d3dcompiler_alloc(sizeof(*deref));
+
+    if (!deref)
+    {
+        ERR("Out of memory.\n");
+        return NULL;
+    }
+    deref->node.type = HLSL_IR_DEREF;
+    deref->node.data_type = field->type;
+    deref->type = HLSL_IR_DEREF_RECORD;
+    deref->v.record.record = record;
+    deref->v.record.field = field;
+    return deref;
+}
+
 static enum hlsl_ir_expr_op op_from_assignment(enum parse_assign_op op)
 {
     static const enum hlsl_ir_expr_op ops[] =
