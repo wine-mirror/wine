@@ -17,5 +17,5 @@
  */
 
 #include <uiautomationcore.h>
-/* #include <uiautomationclient.h> */
+#include <uiautomationclient.h>
 /* #include <uiautomationcoreapi.h> */
