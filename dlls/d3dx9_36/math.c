@@ -2466,38 +2466,33 @@ FLOAT* WINAPI D3DXSHRotate(FLOAT *out, UINT order, CONST D3DXMATRIX *matrix, CON
     return out;
 }
 
-FLOAT* WINAPI D3DXSHRotateZ(FLOAT *out, UINT order, FLOAT angle, CONST FLOAT *in)
+FLOAT * WINAPI D3DXSHRotateZ(FLOAT *out, UINT order, FLOAT angle, CONST FLOAT *in)
 {
     FLOAT c1a, c2a, c3a, c4a, c5a, s1a, s2a, s3a, s4a, s5a;
 
-    TRACE("%p, %u, %f, %p)\n", out, order, angle, in);
+    TRACE("out %p, order %u, angle %f, in %p\n", out, order, angle, in);
 
-    c1a = cos( angle );
-    c2a = cos( 2.0f * angle );
-    c3a = cos( 3.0f * angle );
-    c4a = cos( 4.0f * angle );
-    c5a = cos( 5.0f * angle );
-    s1a = sin( angle );
-    s2a = sin( 2.0f * angle );
-    s3a = sin( 3.0f * angle );
-    s4a = sin( 4.0f * angle );
-    s5a = sin( 5.0f * angle );
-
+    c1a = cosf(angle);
+    s1a = sinf(angle);
     out[0] = in[0];
     out[1] = c1a * in[1] + s1a * in[3];
     out[2] = in[2];
-    out[3] =  c1a * in[3] - s1a * in[1];
-    if ( order <= D3DXSH_MINORDER )
+    out[3] = c1a * in[3] - s1a * in[1];
+    if (order <= D3DXSH_MINORDER)
         return out;
 
+    c2a = cosf(2.0f * angle);
+    s2a = sinf(2.0f * angle);
     out[4] = c2a * in[4] + s2a * in[8];
     out[5] = c1a * in[5] + s1a * in[7];
     out[6] = in[6];
     out[7] = c1a * in[7] - s1a * in[5];
     out[8] = c2a * in[8] - s2a * in[4];
-    if ( order == 3 )
+    if (order == 3)
         return out;
 
+    c3a = cosf(3.0f * angle);
+    s3a = sinf(3.0f * angle);
     out[9] = c3a * in[9] + s3a * in[15];
     out[10] = c2a * in[10] + s2a * in[14];
     out[11] = c1a * in[11] + s1a * in[13];
@@ -2505,9 +2500,11 @@ FLOAT* WINAPI D3DXSHRotateZ(FLOAT *out, UINT order, FLOAT angle, CONST FLOAT *in
     out[13] = c1a * in[13] - s1a * in[11];
     out[14] = c2a * in[14] - s2a * in[10];
     out[15] = c3a * in[15] - s3a * in[9];
-    if ( order == 4 )
+    if (order == 4)
         return out;
 
+    c4a = cosf(4.0f * angle);
+    s4a = sinf(4.0f * angle);
     out[16] = c4a * in[16] + s4a * in[24];
     out[17] = c3a * in[17] + s3a * in[23];
     out[18] = c2a * in[18] + s2a * in[22];
@@ -2517,9 +2514,11 @@ FLOAT* WINAPI D3DXSHRotateZ(FLOAT *out, UINT order, FLOAT angle, CONST FLOAT *in
     out[22] = c2a * in[22] - s2a * in[18];
     out[23] = c3a * in[23] - s3a * in[17];
     out[24] = c4a * in[24] - s4a * in[16];
-    if ( order == 5 )
+    if (order == 5)
         return out;
 
+    c5a = cosf(5.0f * angle);
+    s5a = sinf(5.0f * angle);
     out[25] = c5a * in[25] + s5a * in[35];
     out[26] = c4a * in[26] + s4a * in[34];
     out[27] = c3a * in[27] + s3a * in[33];
