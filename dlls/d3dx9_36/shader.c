@@ -1644,6 +1644,27 @@ static HRESULT parse_ctab_constant_type(const char *ctab, DWORD typeoffset, stru
 
         /* offset in bytes => offsetdiff * components(4) * sizeof(DWORD) */
         if (offset) *offset += offsetdiff * 4 * 4;
+
+        /* int and bool registerset have different sizes */
+        if (regset == D3DXRS_INT4 || regset == D3DXRS_BOOL)
+        {
+            switch (type->Class)
+            {
+                case D3DXPC_SCALAR:
+                case D3DXPC_VECTOR:
+                    size = type->Columns;
+                    break;
+
+                case D3DXPC_MATRIX_ROWS:
+                case D3DXPC_MATRIX_COLUMNS:
+                    size = 4 * type->Columns;
+                    break;
+
+                default:
+                    FIXME("Unhandled type class %s\n", debug_d3dxparameter_class(type->Class));
+                    break;
+            }
+        }
     }
 
     constant->desc.RegisterCount = max(0, min(max - index, size));
