@@ -1772,7 +1772,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
         return FALSE;
     }
     if (dwFlags & ~GET_INSTALLED_ENTRY)
-        FIXME("ignorring unsupported flags: %x", dwFlags);
+        FIXME("ignoring unsupported flags: %x\n", dwFlags);
 
     error = URLCacheContainers_FindContainerA(lpszUrl, &pContainer);
     if (error != ERROR_SUCCESS)
@@ -1913,7 +1913,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExW(
         return FALSE;
     }
     if (dwFlags)
-        FIXME("ignorring unsupported flags: %x", dwFlags);
+        FIXME("ignoring unsupported flags: %x\n", dwFlags);
 
     error = URLCacheContainers_FindContainerW(lpszUrl, &pContainer);
     if (error != ERROR_SUCCESS)
