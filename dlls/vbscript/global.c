@@ -35,6 +35,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
     {0x10200490,0xfa38,0x11d0,{0xac,0x0e,0x00,0xa0,0xc9,0xf,0xff,0xc0}};
 
+static const WCHAR emptyW[] = {0};
+static const WCHAR vbscriptW[] = {'V','B','S','c','r','i','p','t',0};
+
 static IInternetHostSecurityManager *get_sec_mgr(script_ctx_t *ctx)
 {
     IInternetHostSecurityManager *secmgr;
@@ -270,6 +273,60 @@ static IUnknown *create_object(script_ctx_t *ctx, const WCHAR *progid)
     }
 
     return obj;
+}
+
+static HRESULT show_msgbox(script_ctx_t *ctx, BSTR prompt, VARIANT *res)
+{
+    SCRIPTUICHANDLING uic_handling = SCRIPTUICHANDLING_ALLOW;
+    IActiveScriptSiteUIControl *ui_control;
+    IActiveScriptSiteWindow *acts_window;
+    const WCHAR *title;
+    HWND hwnd = NULL;
+    int ret;
+    HRESULT hres;
+
+    hres = IActiveScriptSite_QueryInterface(ctx->site, &IID_IActiveScriptSiteUIControl, (void**)&ui_control);
+    if(SUCCEEDED(hres)) {
+        hres = IActiveScriptSiteUIControl_GetUIBehavior(ui_control, SCRIPTUICITEM_MSGBOX, &uic_handling);
+        IActiveScriptSiteUIControl_Release(ui_control);
+        if(FAILED(hres))
+            uic_handling = SCRIPTUICHANDLING_ALLOW;
+    }
+
+    switch(uic_handling) {
+    case SCRIPTUICHANDLING_ALLOW:
+        break;
+    case SCRIPTUICHANDLING_NOUIDEFAULT:
+        return return_short(res, 0);
+    default:
+        FIXME("blocked\n");
+        return E_FAIL;
+    }
+
+    title = (ctx->safeopt & INTERFACE_USES_SECURITY_MANAGER) ? vbscriptW : emptyW;
+
+    hres = IActiveScriptSite_QueryInterface(ctx->site, &IID_IActiveScriptSiteWindow, (void**)&acts_window);
+    if(FAILED(hres)) {
+        FIXME("No IActiveScriptSiteWindow\n");
+        return hres;
+    }
+
+    hres = IActiveScriptSiteWindow_GetWindow(acts_window, &hwnd);
+    if(SUCCEEDED(hres)) {
+        hres = IActiveScriptSiteWindow_EnableModeless(acts_window, FALSE);
+        if(SUCCEEDED(hres)) {
+            ret = MessageBoxW(hwnd, prompt, title, MB_OK);
+            hres = IActiveScriptSiteWindow_EnableModeless(acts_window, TRUE);
+        }
+    }
+
+    IActiveScriptSiteWindow_Release(acts_window);
+    if(FAILED(hres)) {
+        FIXME("failed: %08x\n", hres);
+        return hres;
+    }
+
+    return return_short(res, ret);
 }
 
 static HRESULT Global_CCur(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -986,8 +1043,23 @@ static HRESULT Global_InputBox(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, 
 
 static HRESULT Global_MsgBox(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR prompt;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(args_cnt != 1) {
+        FIXME("unsupported arg_cnt %d\n", args_cnt);
+        return E_NOTIMPL;
+    }
+
+    hres = to_string(arg, &prompt);
+    if(FAILED(hres))
+        return hres;
+
+    hres = show_msgbox(This->desc->ctx, prompt, res);
+    SysFreeString(prompt);
+    return hres;
 }
 
 static HRESULT Global_CreateObject(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
