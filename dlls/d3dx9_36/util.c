@@ -271,63 +271,62 @@ const char *debug_d3dxparameter_registerset(D3DXREGISTER_SET r)
 #undef WINE_D3DX_TO_STR
 
 /* parameter type conversion helpers */
-static BOOL get_bool(LPCVOID data)
+static BOOL get_bool(D3DXPARAMETER_TYPE type, LPCVOID data)
 {
-    return (*(DWORD *)data) != 0;
+    switch (type)
+    {
+        case D3DXPT_FLOAT:
+        case D3DXPT_INT:
+        case D3DXPT_BOOL:
+            return *(DWORD *)data != 0;
+
+        case D3DXPT_VOID:
+            return *(BOOL *)data;
+
+        default:
+            FIXME("Unhandled type %s.\n", debug_d3dxparameter_type(type));
+            return FALSE;
+    }
 }
 
 static INT get_int(D3DXPARAMETER_TYPE type, LPCVOID data)
 {
-    INT i;
-
     switch (type)
     {
         case D3DXPT_FLOAT:
-            i = *(FLOAT *)data;
-            break;
+            return *(FLOAT *)data;
 
         case D3DXPT_INT:
-            i = *(INT *)data;
-            break;
+        case D3DXPT_VOID:
+            return *(INT *)data;
 
         case D3DXPT_BOOL:
-            i = get_bool(data);
-            break;
+            return get_bool(type, data);
 
         default:
-            i = 0;
-            FIXME("Unhandled type %s. This should not happen!\n", debug_d3dxparameter_type(type));
-            break;
+            FIXME("Unhandled type %s.\n", debug_d3dxparameter_type(type));
+            return 0;
     }
-
-    return i;
 }
 
 static FLOAT get_float(D3DXPARAMETER_TYPE type, LPCVOID data)
 {
-    FLOAT f;
-
     switch (type)
     {
         case D3DXPT_FLOAT:
-            f = *(FLOAT *)data;
-            break;
+        case D3DXPT_VOID:
+            return *(FLOAT *)data;
 
         case D3DXPT_INT:
-            f = *(INT *)data;
-            break;
+            return *(INT *)data;
 
         case D3DXPT_BOOL:
-            f = get_bool(data);
-            break;
+            return get_bool(type, data);
 
         default:
-            f = 0.0f;
-            FIXME("Unhandled type %s. This should not happen!\n", debug_d3dxparameter_type(type));
-            break;
+            FIXME("Unhandled type %s.\n", debug_d3dxparameter_type(type));
+            return 0.0f;
     }
-
-    return f;
 }
 
 void set_number(LPVOID outdata, D3DXPARAMETER_TYPE outtype, LPCVOID indata, D3DXPARAMETER_TYPE intype)
@@ -347,7 +346,7 @@ void set_number(LPVOID outdata, D3DXPARAMETER_TYPE outtype, LPCVOID indata, D3DX
             break;
 
         case D3DXPT_BOOL:
-            *(BOOL *)outdata = get_bool(indata);
+            *(BOOL *)outdata = get_bool(intype, indata);
             break;
 
         case D3DXPT_INT:
@@ -355,8 +354,8 @@ void set_number(LPVOID outdata, D3DXPARAMETER_TYPE outtype, LPCVOID indata, D3DX
             break;
 
         default:
-            FIXME("Unhandled type %s. This should not happen!\n", debug_d3dxparameter_type(outtype));
-            *(INT *)outdata = 0;
+            FIXME("Unhandled type %s.\n", debug_d3dxparameter_type(outtype));
+            *(DWORD *)outdata = 0;
             break;
     }
 }
