@@ -2560,7 +2560,7 @@ static void test_D3DXSHEvalDirectionalLight(void)
                 else
                     expected = test[l].red_out[startindex + j];
                 ok(relative_error(expected, red_out[j]) < admitted_error,
-                  "Red: case %u, order %u: expected[%u] = %f, received %f \n", l, order, j, expected, red_out[j]);
+                  "Red: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, red_out[j]);
 
                 if ( green_out )
                 {
@@ -2569,7 +2569,7 @@ static void test_D3DXSHEvalDirectionalLight(void)
                     else
                         expected = test[l].green_out[startindex + j];
                     ok(relative_error(expected, green_out[j]) < admitted_error,
-                      "Green: case %u, order %u: expected[%u] = %f, received %f \n", l, order, j, expected, green_out[j]);
+                      "Green: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, green_out[j]);
                 }
 
                 if ( blue_out )
@@ -2579,7 +2579,7 @@ static void test_D3DXSHEvalDirectionalLight(void)
                     else
                         expected = test[l].blue_out[startindex + j];
                     ok(relative_error(expected, blue_out[j]) < admitted_error,
-                      "Blue: case %u, order %u: expected[%u] = %f, received %f \n", l, order, j, expected, blue_out[j]);
+                      "Blue: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, blue_out[j]);
                 }
             }
 
