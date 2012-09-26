@@ -1641,7 +1641,6 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
             {
                 const struct d3d10_effect_state_storage_info *storage_info;
                 unsigned int count = max(v->type->element_count, 1);
-                unsigned char *desc;
 
                 if (!(storage_info = get_storage_info(v->type->basetype)))
                 {
@@ -1650,25 +1649,32 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
                     return E_FAIL;
                 }
 
-                if (!(desc = HeapAlloc(GetProcessHeap(), 0, count * storage_info->size)))
-                {
-                    ERR("Failed to allocate backing store memory.\n");
-                    return E_OUTOFMEMORY;
-                }
-
                 for (i = 0; i < count; ++i)
                 {
-                    memcpy(&desc[i * storage_info->size], storage_info->default_state, storage_info->size);
+                    struct d3d10_effect_variable *var;
+                    unsigned char *desc;
 
-                    if (!parse_fx10_state_group(ptr, data, v->type->basetype, &desc[i * storage_info->size]))
+                    if (v->type->element_count)
+                        var = &v->elements[i];
+                    else
+                        var = v;
+
+                    if (!(desc = HeapAlloc(GetProcessHeap(), 0, storage_info->size)))
+                    {
+                        ERR("Failed to allocate backing store memory.\n");
+                        return E_OUTOFMEMORY;
+                    }
+
+                    memcpy(desc, storage_info->default_state, storage_info->size);
+                    if (!parse_fx10_state_group(ptr, data, var->type->basetype, desc))
                     {
                         ERR("Failed to read property list.\n");
                         HeapFree(GetProcessHeap(), 0, desc);
                         return E_FAIL;
                     }
-                }
 
-                v->data = desc;
+                    var->data = desc;
+                }
             }
             break;
 
@@ -6016,13 +6022,16 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_blend_variable_GetBackingStore(ID3
 
     TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
 
-    if (index >= max(v->type->element_count, 1))
+    if (v->type->element_count)
+        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
+
+    if (v->type->basetype != D3D10_SVT_BLEND)
     {
-        WARN("Invalid index %u.\n", index);
+        WARN("Variable is not a blend state.\n");
         return E_FAIL;
     }
 
-    *desc = ((D3D10_BLEND_DESC *)v->data)[index];
+    *desc = *(D3D10_BLEND_DESC *)v->data;
 
     return S_OK;
 }
@@ -6231,13 +6240,16 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_depth_stencil_variable_GetBackingS
 
     TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
 
-    if (index >= max(v->type->element_count, 1))
+    if (v->type->element_count)
+        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
+
+    if (v->type->basetype != D3D10_SVT_DEPTHSTENCIL)
     {
-        WARN("Invalid index %u.\n", index);
+        WARN("Variable is not a depth stencil state.\n");
         return E_FAIL;
     }
 
-    *desc = ((D3D10_DEPTH_STENCIL_DESC *)v->data)[index];
+    *desc = *(D3D10_DEPTH_STENCIL_DESC *)v->data;
 
     return S_OK;
 }
@@ -6446,13 +6458,16 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_rasterizer_variable_GetBackingStor
 
     TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
 
-    if (index >= max(v->type->element_count, 1))
+    if (v->type->element_count)
+        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
+
+    if (v->type->basetype != D3D10_SVT_RASTERIZER)
     {
-        WARN("Invalid index %u.\n", index);
+        WARN("Variable is not a rasterizer state.\n");
         return E_FAIL;
     }
 
-    *desc = ((D3D10_RASTERIZER_DESC *)v->data)[index];
+    *desc = *(D3D10_RASTERIZER_DESC *)v->data;
 
     return S_OK;
 }
@@ -6661,13 +6676,16 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_sampler_variable_GetBackingStore(I
 
     TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
 
-    if (index >= max(v->type->element_count, 1))
+    if (v->type->element_count)
+        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
+
+    if (v->type->basetype != D3D10_SVT_SAMPLER)
     {
-        WARN("Invalid index %u.\n", index);
+        WARN("Variable is not a sampler state.\n");
         return E_FAIL;
     }
 
-    *desc = ((D3D10_SAMPLER_DESC *)v->data)[index];
+    *desc = *(D3D10_SAMPLER_DESC *)v->data;
 
     return S_OK;
 }
