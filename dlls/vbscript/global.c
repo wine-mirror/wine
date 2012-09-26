@@ -125,6 +125,15 @@ static HRESULT to_int(VARIANT *v, int *ret)
     case VT_I4:
         *ret = V_I4(v);
         break;
+    case VT_R8: {
+        double n = round(V_R8(v));
+        if(!is_int32(n)) {
+            FIXME("%lf is out of int range\n", n);
+            return E_FAIL;
+        }
+        *ret = n;
+        break;
+    }
     default:
         FIXME("not supported %s\n", debugstr_variant(v));
         return E_NOTIMPL;

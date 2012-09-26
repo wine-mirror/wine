@@ -124,6 +124,15 @@ Call ok(isNull(x), "InStr returned " & x)
 x = InStr(2, null, "abcd")
 Call ok(isNull(x), "InStr returned " & x)
 
+x = InStr(1.3, "abcd", "bc")
+Call ok(x = 2, "InStr returned " & x)
+
+x = InStr(2.3, "abcd", "bc")
+Call ok(x = 2, "InStr returned " & x)
+
+x = InStr(2.6, "abcd", "bc")
+Call ok(x = 0, "InStr returned " & x)
+
 Sub TestMid(str, start, len, ex)
     x = Mid(str, start, len)
     Call ok(x = ex, "Mid(" & str & ", " & start & ", " & len & ") = " & x & " expected " & ex)
@@ -182,6 +191,9 @@ Call ok(Len(empty) = 0, "Len(empty) = " & Len(empty))
 Call ok(Space(1) = " ", "Space(1) = " & Space(1) & """")
 Call ok(Space(0) = "", "Space(0) = " & Space(0) & """")
 Call ok(Space(5) = "     ", "Space(5) = " & Space(5) & """")
+Call ok(Space(5.2) = "     ", "Space(5.2) = " & Space(5.2) & """")
+Call ok(Space(5.8) = "      ", "Space(5.8) = " & Space(5.8) & """")
+Call ok(Space(5.5) = "      ", "Space(5.5) = " & Space(5.5) & """")
 
 Sub TestRound(val, exval, vt)
     Call ok(Round(val) = exval, "Round(" & val & ") = " & Round(val))

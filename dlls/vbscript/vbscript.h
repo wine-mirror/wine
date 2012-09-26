@@ -343,6 +343,19 @@ TID_LIST
 
 HRESULT get_typeinfo(tid_t,ITypeInfo**) DECLSPEC_HIDDEN;
 
+#ifndef INT32_MIN
+#define INT32_MIN (-2147483647-1)
+#endif
+
+#ifndef INT32_MAX
+#define INT32_MAX (2147483647)
+#endif
+
+static inline BOOL is_int32(double d)
+{
+    return INT32_MIN <= d && d <= INT32_MAX && (double)(int)d == d;
+}
+
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
 const char *debugstr_variant(const VARIANT*) DECLSPEC_HIDDEN;
