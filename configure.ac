@@ -443,6 +443,7 @@ AC_CHECK_HEADERS(\
 	link.h \
 	linux/cdrom.h \
 	linux/compiler.h \
+	linux/filter.h \
 	linux/hdreg.h \
 	linux/input.h \
 	linux/ioctl.h \

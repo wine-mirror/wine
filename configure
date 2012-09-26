@@ -5848,6 +5848,7 @@ for ac_header in \
 	link.h \
 	linux/cdrom.h \
 	linux/compiler.h \
+	linux/filter.h \
 	linux/hdreg.h \
 	linux/input.h \
 	linux/ioctl.h \

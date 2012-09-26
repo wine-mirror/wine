@@ -92,6 +92,9 @@
 #ifdef HAVE_NET_IF_H
 # include <net/if.h>
 #endif
+#ifdef HAVE_LINUX_FILTER_H
+# include <linux/filter.h>
+#endif
 
 #ifdef HAVE_NETIPX_IPX_H
 # include <netipx/ipx.h>
@@ -167,6 +170,27 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+#if defined(IP_UNICAST_IF) && defined(SO_ATTACH_FILTER)
+# define LINUX_BOUND_IF
+struct interface_filter {
+    struct sock_filter iface_memaddr;
+    struct sock_filter iface_rule;
+    struct sock_filter return_keep;
+    struct sock_filter return_dump;
+};
+# define FILTER_JUMP_DUMP(here)  (u_char)(offsetof(struct interface_filter, return_dump) \
+                                 -offsetof(struct interface_filter, here)-sizeof(struct sock_filter)) \
+                                 /sizeof(struct sock_filter)
+# define FILTER_JUMP_KEEP(here)  (u_char)(offsetof(struct interface_filter, return_keep) \
+                                 -offsetof(struct interface_filter, here)-sizeof(struct sock_filter)) \
+                                 /sizeof(struct sock_filter)
+static struct interface_filter generic_interface_filter = {
+    BPF_STMT(BPF_LD+BPF_W+BPF_ABS, SKF_AD_OFF+SKF_AD_IFINDEX),
+    BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0xdeadbeef, FILTER_JUMP_KEEP(iface_rule), FILTER_JUMP_DUMP(iface_rule)),
+    BPF_STMT(BPF_RET+BPF_K, (u_int)-1), /* keep packet */
+    BPF_STMT(BPF_RET+BPF_K, 0)          /* dump packet */
+};
+#endif /* LINUX_BOUND_IF */
 
 /*
  * The actual definition of WSASendTo, wrapped in a different function name
@@ -2147,6 +2171,20 @@ static BOOL interface_bind( SOCKET s, int fd, struct sockaddr *addr )
             /* IP_BOUND_IF sets both the incoming and outgoing restriction at once */
             if (setsockopt(fd, IPPROTO_IP, IP_BOUND_IF, &adapter->Index, sizeof(adapter->Index)) != 0)
                 goto cleanup;
+            ret = TRUE;
+#elif defined(LINUX_BOUND_IF)
+            in_addr_t ifindex = (in_addr_t) htonl(adapter->Index);
+            struct interface_filter specific_interface_filter;
+            struct sock_fprog filter_prog;
+
+            if (setsockopt(fd, IPPROTO_IP, IP_UNICAST_IF, &ifindex, sizeof(ifindex)) != 0)
+                goto cleanup; /* Failed to suggest egress interface */
+            memcpy(&specific_interface_filter, &generic_interface_filter, sizeof(generic_interface_filter));
+            specific_interface_filter.iface_rule.k = adapter->Index;
+            filter_prog.len = sizeof(generic_interface_filter)/sizeof(struct sock_filter);
+            filter_prog.filter = (struct sock_filter *) &specific_interface_filter;
+            if (setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog, sizeof(filter_prog)) != 0)
+                goto cleanup; /* Failed to specify incoming packet filter */
             ret = TRUE;
 #else
             FIXME("Broadcast packets on interface-bound sockets are not currently supported on this platform, "
