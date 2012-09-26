@@ -311,7 +311,7 @@ static void get_x11_rect_offset( struct x11drv_win_data *data, RECT *rect )
 static int get_window_attributes( struct x11drv_win_data *data, XSetWindowAttributes *attr )
 {
     attr->override_redirect = !data->managed;
-    attr->colormap          = X11DRV_PALETTE_PaletteXColormap;
+    attr->colormap          = default_colormap;
     attr->save_under        = ((GetClassLongW( data->hwnd, GCL_STYLE ) & CS_SAVEBITS) != 0);
     attr->bit_gravity       = NorthWestGravity;
     attr->win_gravity       = StaticGravity;

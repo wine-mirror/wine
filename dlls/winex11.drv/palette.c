@@ -56,7 +56,6 @@ static int COLOR_gapStart = 256;
 static int COLOR_gapEnd = -1;
 static int COLOR_gapFilled = 0;
 
-Colormap X11DRV_PALETTE_PaletteXColormap = 0;
 UINT16   X11DRV_PALETTE_PaletteFlags     = 0;
 
 /* initialize to zero to handle abortive X11DRV_PALETTE_VIRTUAL visuals */
@@ -161,9 +160,10 @@ int X11DRV_PALETTE_Init(void)
 	{
 	    XSetWindowAttributes win_attr;
 
-	    X11DRV_PALETTE_PaletteXColormap = XCreateColormap( gdi_display, root_window,
-                                                               default_visual.visual, AllocAll );
-	    if (X11DRV_PALETTE_PaletteXColormap)
+            XFreeColormap( gdi_display, default_colormap );
+	    default_colormap = XCreateColormap( gdi_display, root_window,
+                                                default_visual.visual, AllocAll );
+	    if (default_colormap)
 	    {
 	        X11DRV_PALETTE_PaletteFlags |= (X11DRV_PALETTE_PRIVATE | X11DRV_PALETTE_WHITESET);
 
@@ -173,19 +173,14 @@ int X11DRV_PALETTE_Init(void)
 
 	        if( root_window != DefaultRootWindow(gdi_display) )
 	        {
-		    win_attr.colormap = X11DRV_PALETTE_PaletteXColormap;
+		    win_attr.colormap = default_colormap;
 		    XChangeWindowAttributes( gdi_display, root_window, CWColormap, &win_attr );
 		}
 	    }
-	} else {
-	  X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
-							    default_visual.visual, AllocNone);
 	}
         break;
 
     case StaticGray:
-        X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
-                                                          default_visual.visual, AllocNone);
 	X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
         X11DRV_PALETTE_Graymax = (1 << default_visual.depth)-1;
         break;
@@ -203,13 +198,9 @@ int X11DRV_PALETTE_Init(void)
 	    for( white = palette_size - 1; !(white & 1); white >>= 1 )
 	        monoPlane++;
     	    X11DRV_PALETTE_PaletteFlags = (white & mask) ? X11DRV_PALETTE_WHITESET : 0;
-            X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
-                                                              default_visual.visual, AllocNone);
 	}
         else
         {
-            X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
-                                                              default_visual.visual, AllocNone);
             X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
             X11DRV_PALETTE_ComputeColorShifts(&X11DRV_PALETTE_default_shifts, default_visual.red_mask, default_visual.green_mask, default_visual.blue_mask);
         }
@@ -217,8 +208,6 @@ int X11DRV_PALETTE_Init(void)
         break;
       }
     }
-
-    TRACE(" visual class %i (%i)\n",  default_visual.class, monoPlane);
 
     GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, NB_RESERVED_COLORS, sys_pal_template );
 
@@ -349,7 +338,7 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap( const PALETTEENTRY *sys_pal_template
 
        color.flags = DoRed | DoGreen | DoBlue;
        color.pixel = i;
-       XStoreColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
+       XStoreColor(gdi_display, default_colormap, &color);
 
        /* Set EGA mapping if color is from the first or last eight */
 
@@ -396,7 +385,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
        defaultColors[i].pixel = (long) i;
    XQueryColors(gdi_display, defaultCM, &defaultColors[0], copy_default_colors);
    for (i = 0; i < copy_default_colors; i++)
-       XAllocColor( gdi_display, X11DRV_PALETTE_PaletteXColormap, &defaultColors[i] );
+       XAllocColor( gdi_display, default_colormap, &defaultColors[i] );
 
    if (alloc_system_colors > 256) alloc_system_colors = 256;
    else if (alloc_system_colors < 20) alloc_system_colors = 20;
@@ -413,7 +402,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
         color.blue  = sys_pal_template[i].peBlue * 65535 / 255;
         color.flags = DoRed | DoGreen | DoBlue;
 
-        if (!XAllocColor( gdi_display, X11DRV_PALETTE_PaletteXColormap, &color ))
+        if (!XAllocColor( gdi_display, default_colormap, &color ))
         {
 	     XColor	best, c;
 
@@ -442,7 +431,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 	     best.pixel = best.red = best.green = best.blue = 0;
 	     for( c.pixel = 0, diff = 0x7fffffff; c.pixel < max; c.pixel += step )
 	     {
-		XQueryColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &c);
+		XQueryColor(gdi_display, default_colormap, &c);
 		r = (c.red - color.red)>>8;
 		g = (c.green - color.green)>>8;
 		b = (c.blue - color.blue)>>8;
@@ -450,7 +439,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 		if( r < diff ) { best = c; diff = r; }
 	     }
 
-	     if( XAllocColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &best) )
+	     if( XAllocColor(gdi_display, default_colormap, &best) )
 		 color.pixel = best.pixel;
 	     else color.pixel = (i < NB_RESERVED_COLORS/2)? bp : wp;
         }
@@ -492,12 +481,12 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
           {
              c_val = (c_max + c_min)/2 + (c_max + c_min)%2;
 
-             if( !XAllocColorCells(gdi_display, X11DRV_PALETTE_PaletteXColormap, False,
+             if( !XAllocColorCells(gdi_display, default_colormap, False,
                                    plane_masks, 0, pixDynMapping, c_val) )
                  c_max = c_val - 1;
              else
                {
-                 XFreeColors(gdi_display, X11DRV_PALETTE_PaletteXColormap, pixDynMapping, c_val, 0);
+                 XFreeColors(gdi_display, default_colormap, pixDynMapping, c_val, 0);
                  c_min = c_val;
                }
           }
@@ -508,7 +497,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 	c_min = (c_min/2) + (c_min/2);		/* need even set for split palette */
 
 	if( c_min > 0 )
-	  if( !XAllocColorCells(gdi_display, X11DRV_PALETTE_PaletteXColormap, False,
+	  if( !XAllocColorCells(gdi_display, default_colormap, False,
                                 plane_masks, 0, pixDynMapping, c_min) )
 	    {
 	      WARN("Inexplicable failure during colorcell allocation.\n");
@@ -674,7 +663,7 @@ static void X11DRV_PALETTE_FillDefaultColors( const PALETTEENTRY *sys_pal_templa
 	   color.green = COLOR_sysPal[idx].peGreen << 8;
 	   color.blue =  COLOR_sysPal[idx].peBlue << 8;
 	   color.flags = DoRed | DoGreen | DoBlue;
-	   XStoreColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
+	   XStoreColor(gdi_display, default_colormap, &color);
 	 }
 	 idx = X11DRV_PALETTE_freeList[idx];
       }
@@ -694,11 +683,11 @@ static void X11DRV_PALETTE_FillDefaultColors( const PALETTEENTRY *sys_pal_templa
 	{
 	  xc.pixel = i;
 
-	  XQueryColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &xc);
+	  XQueryColor(gdi_display, default_colormap, &xc);
 	  r = xc.red>>8; g = xc.green>>8; b = xc.blue>>8;
 
 	  if( xc.pixel < 256 && X11DRV_PALETTE_CheckSysColor( sys_pal_template, RGB(r, g, b)) &&
-	      XAllocColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &xc) )
+	      XAllocColor(gdi_display, default_colormap, &xc) )
 	  {
 	     X11DRV_PALETTE_XPixelToPalette[xc.pixel] = idx;
 	     X11DRV_PALETTE_PaletteToXPixel[idx] = xc.pixel;
@@ -796,7 +785,7 @@ COLORREF X11DRV_PALETTE_ToLogical(X11DRV_PDEVICE *physDev, int pixel)
     }
 
     color.pixel = pixel;
-    XQueryColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
+    XQueryColor(gdi_display, default_colormap, &color);
     return RGB(color.red >> 8, color.green >> 8, color.blue >> 8);
 }
 
@@ -1210,7 +1199,7 @@ UINT X11DRV_RealizePalette( PHYSDEV dev, HPALETTE hpal, BOOL primary )
                     color.green = entries[i].peGreen << 8;
                     color.blue = entries[i].peBlue << 8;
                     color.flags = DoRed | DoGreen | DoBlue;
-                    XStoreColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
+                    XStoreColor(gdi_display, default_colormap, &color);
 
                     COLOR_sysPal[index] = entries[i];
                     COLOR_sysPal[index].peFlags = flag;

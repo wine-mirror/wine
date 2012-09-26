@@ -245,7 +245,6 @@ extern Display *gdi_display DECLSPEC_HIDDEN;  /* display to use for all GDI func
 #define X11DRV_PALETTE_PRIVATE  0x1000 /* private colormap, identity mapping */
 #define X11DRV_PALETTE_WHITESET 0x2000
 
-extern Colormap X11DRV_PALETTE_PaletteXColormap DECLSPEC_HIDDEN;
 extern UINT16 X11DRV_PALETTE_PaletteFlags DECLSPEC_HIDDEN;
 
 extern int *X11DRV_PALETTE_PaletteToXPixel DECLSPEC_HIDDEN;
@@ -348,6 +347,7 @@ static inline size_t get_property_size( int format, unsigned long count )
 }
 
 extern XVisualInfo default_visual DECLSPEC_HIDDEN;
+extern Colormap default_colormap DECLSPEC_HIDDEN;
 extern XPixmapFormatValues **pixmap_formats DECLSPEC_HIDDEN;
 extern Window root_window DECLSPEC_HIDDEN;
 extern int clipping_cursor DECLSPEC_HIDDEN;
