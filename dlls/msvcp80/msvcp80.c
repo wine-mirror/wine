@@ -104,7 +104,7 @@ static MSVCP_size_t (CDECL *pnumpunct_short__Getcat)(const struct locale_facet**
 
 static BOOL init_funcs(void)
 {
-    HMODULE hmod = GetModuleHandleA("msvcp90.dll");
+    HMODULE hmod = LoadLibraryA("msvcp90.dll");
     if(!hmod)
         return FALSE;
 
