@@ -60,6 +60,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
+static const char urlcache_ver_prefix[] = "WINE URLCache Ver ";
+static const char urlcache_ver[] = "0.2012001";
+
 #define ENTRY_START_OFFSET      0x4000
 #define DIR_LENGTH              8
 #define MAX_DIR_NO              0x20
@@ -337,7 +340,8 @@ static DWORD URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer, DWORD b
                     HASH_CACHEFILE_ENTRY *pHashEntry;
 
 		    /* First set some constants and defaults in the header */
-		    strcpy(pHeader->szSignature, "WINE URLCache Ver 0.2005001");
+                    memcpy(pHeader->szSignature, urlcache_ver_prefix, sizeof(urlcache_ver_prefix)-1);
+                    memcpy(pHeader->szSignature+sizeof(urlcache_ver_prefix)-1, urlcache_ver, sizeof(urlcache_ver)-1);
 		    pHeader->dwFileSize = new_file_size;
 		    pHeader->dwIndexCapacityInBlocks = blocks_no;
 		    /* 127MB - taken from default for Windows 2000 */
@@ -457,8 +461,41 @@ static DWORD URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer, DWORD b
     URLCache_PathToObjectName(wszFilePath, '_');
     pContainer->hMapping = OpenFileMappingW(FILE_MAP_WRITE, FALSE, wszFilePath);
     if (!pContainer->hMapping)
+    {
         pContainer->hMapping = CreateFileMappingW(hFile, NULL, PAGE_READWRITE, 0, 0, wszFilePath);
-    CloseHandle(hFile);
+        CloseHandle(hFile);
+
+        /* Validate cache index file on first open */
+        if (pContainer->hMapping && blocks_no==MIN_BLOCK_NO)
+        {
+            URLCACHE_HEADER *pHeader = MapViewOfFile(pContainer->hMapping, FILE_MAP_WRITE, 0, 0, 0);
+            if (!pHeader)
+            {
+                ERR("MapViewOfFile failed (error is %d)\n", GetLastError());
+                CloseHandle(pContainer->hMapping);
+                pContainer->hMapping = NULL;
+                ReleaseMutex(pContainer->hMutex);
+                return GetLastError();
+            }
+
+            if (!memcmp(pHeader->szSignature, urlcache_ver_prefix, sizeof(urlcache_ver_prefix)-1) &&
+                    memcmp(pHeader->szSignature+sizeof(urlcache_ver_prefix)-1, urlcache_ver, sizeof(urlcache_ver)-1))
+            {
+                TRACE("detected wrong version of cache: %s, expected %s\n", pHeader->szSignature, urlcache_ver);
+                UnmapViewOfFile(pHeader);
+
+                FreeUrlCacheSpaceW(pContainer->path, 100, 0);
+            }
+            else
+            {
+                UnmapViewOfFile(pHeader);
+            }
+        }
+    }
+    else
+    {
+        CloseHandle(hFile);
+    }
     if (!pContainer->hMapping)
     {
         ERR("Couldn't create file mapping (error is %d)\n", GetLastError());
