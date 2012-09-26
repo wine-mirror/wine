@@ -22,7 +22,6 @@
 
 #include <stdlib.h>
 
-#include "wine/winbase16.h"
 #include "x11drv.h"
 #include "wine/debug.h"
 
