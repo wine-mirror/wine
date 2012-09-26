@@ -174,6 +174,25 @@ static const char *debug_gl_shader_type(GLenum type)
     }
 }
 
+static const char *shader_glsl_get_prefix(enum wined3d_shader_type type)
+{
+    switch (type)
+    {
+        case WINED3D_SHADER_TYPE_VERTEX:
+            return "vs";
+
+        case WINED3D_SHADER_TYPE_GEOMETRY:
+            return "gs";
+
+        case WINED3D_SHADER_TYPE_PIXEL:
+            return "ps";
+
+        default:
+            FIXME("Unhandled shader type %#x.\n", type);
+            return "unknown";
+    }
+}
+
 /* Extract a line from the info log.
  * Note that this modifies the source string. */
 static char *get_info_log_line(char **ptr)
@@ -330,11 +349,12 @@ static void shader_glsl_load_psamplers(const struct wined3d_gl_info *gl_info,
         const DWORD *tex_unit_map, GLhandleARB programId)
 {
     GLint name_loc;
-    int i;
     char sampler_name[20];
+    unsigned int i;
 
-    for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
-        snprintf(sampler_name, sizeof(sampler_name), "Psampler%d", i);
+    for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
+    {
+        snprintf(sampler_name, sizeof(sampler_name), "ps_sampler%u", i);
         name_loc = GL_EXTCALL(glGetUniformLocationARB(programId, sampler_name));
         if (name_loc != -1) {
             DWORD mapped_unit = tex_unit_map[i];
@@ -356,10 +376,11 @@ static void shader_glsl_load_vsamplers(const struct wined3d_gl_info *gl_info,
 {
     GLint name_loc;
     char sampler_name[20];
-    int i;
+    unsigned int i;
 
-    for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i) {
-        snprintf(sampler_name, sizeof(sampler_name), "Vsampler%d", i);
+    for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i)
+    {
+        snprintf(sampler_name, sizeof(sampler_name), "vs_sampler%u", i);
         name_loc = GL_EXTCALL(glGetUniformLocationARB(programId, sampler_name));
         if (name_loc != -1) {
             DWORD mapped_unit = tex_unit_map[MAX_FRAGMENT_SAMPLERS + i];
@@ -584,30 +605,11 @@ static void shader_glsl_load_constantsB(const struct wined3d_shader *shader, con
 {
     GLint tmp_loc;
     unsigned int i;
-    char tmp_name[8];
+    char tmp_name[10];
     const char *prefix;
     struct list* ptr;
 
-    switch (shader->reg_maps.shader_version.type)
-    {
-        case WINED3D_SHADER_TYPE_VERTEX:
-            prefix = "VB";
-            break;
-
-        case WINED3D_SHADER_TYPE_GEOMETRY:
-            prefix = "GB";
-            break;
-
-        case WINED3D_SHADER_TYPE_PIXEL:
-            prefix = "PB";
-            break;
-
-        default:
-            FIXME("Unknown shader type %#x.\n",
-                    shader->reg_maps.shader_version.type);
-            prefix = "UB";
-            break;
-    }
+    prefix = shader_glsl_get_prefix(shader->reg_maps.shader_version.type);
 
     /* TODO: Benchmark and see if it would be beneficial to store the
      * locations of the constants to avoid looking up each time */
@@ -619,7 +621,7 @@ static void shader_glsl_load_constantsB(const struct wined3d_shader *shader, con
 
         /* TODO: Benchmark and see if it would be beneficial to store the
          * locations of the constants to avoid looking up each time */
-        snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, i);
+        snprintf(tmp_name, sizeof(tmp_name), "%s_b[%i]", prefix, i);
         tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
         if (tmp_loc != -1)
         {
@@ -639,7 +641,7 @@ static void shader_glsl_load_constantsB(const struct wined3d_shader *shader, con
 
         TRACE_(d3d_constants)("Loading local constants %i: %i\n", idx, values[0]);
 
-        snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, idx);
+        snprintf(tmp_name, sizeof(tmp_name), "%s_b[%i]", prefix, idx);
         tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
         if (tmp_loc != -1) {
             /* We found this uniform name in the program - go ahead and send the data */
@@ -900,11 +902,12 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     const struct wined3d_fb_state *fb = &shader->device->fb;
     unsigned int i, extra_constants_needed = 0;
     const struct wined3d_shader_lconst *lconst;
+    const char *prefix;
     DWORD map;
 
     /* There are some minor differences between pixel and vertex shaders */
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
-    char prefix = pshader ? 'P' : 'V';
+    prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
 
     /* Prototype the subroutines */
     for (i = 0, map = reg_maps->labels; map; map >>= 1, ++i)
@@ -979,17 +982,17 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             }
         }
         max_constantsF = min(shader->limits.constant_float, max_constantsF);
-        shader_addline(buffer, "uniform vec4 %cC[%u];\n", prefix, max_constantsF);
+        shader_addline(buffer, "uniform vec4 %s_c[%u];\n", prefix, max_constantsF);
     }
 
     /* Always declare the full set of constants, the compiler can remove the
      * unused ones because d3d doesn't (yet) support indirect int and bool
      * constant addressing. This avoids problems if the app uses e.g. i0 and i9. */
     if (shader->limits.constant_int > 0 && reg_maps->integer_constants)
-        shader_addline(buffer, "uniform ivec4 %cI[%u];\n", prefix, shader->limits.constant_int);
+        shader_addline(buffer, "uniform ivec4 %s_i[%u];\n", prefix, shader->limits.constant_int);
 
     if (shader->limits.constant_bool > 0 && reg_maps->boolean_constants)
-        shader_addline(buffer, "uniform bool %cB[%u];\n", prefix, shader->limits.constant_bool);
+        shader_addline(buffer, "uniform bool %s_b[%u];\n", prefix, shader->limits.constant_bool);
 
     if (!pshader)
     {
@@ -1054,37 +1057,37 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             {
                 case WINED3DSTT_1D:
                     if (pshader && ps_args->shadow & (1 << i))
-                        shader_addline(buffer, "uniform sampler1DShadow %csampler%u;\n", prefix, i);
+                        shader_addline(buffer, "uniform sampler1DShadow %s_sampler%u;\n", prefix, i);
                     else
-                        shader_addline(buffer, "uniform sampler1D %csampler%u;\n", prefix, i);
+                        shader_addline(buffer, "uniform sampler1D %s_sampler%u;\n", prefix, i);
                     break;
                 case WINED3DSTT_2D:
                     texture = state->textures[i];
                     if (pshader && ps_args->shadow & (1 << i))
                     {
                         if (texture && texture->target == GL_TEXTURE_RECTANGLE_ARB)
-                            shader_addline(buffer, "uniform sampler2DRectShadow %csampler%u;\n", prefix, i);
+                            shader_addline(buffer, "uniform sampler2DRectShadow %s_sampler%u;\n", prefix, i);
                         else
-                            shader_addline(buffer, "uniform sampler2DShadow %csampler%u;\n", prefix, i);
+                            shader_addline(buffer, "uniform sampler2DShadow %s_sampler%u;\n", prefix, i);
                     }
                     else
                     {
                         if (texture && texture->target == GL_TEXTURE_RECTANGLE_ARB)
-                            shader_addline(buffer, "uniform sampler2DRect %csampler%u;\n", prefix, i);
+                            shader_addline(buffer, "uniform sampler2DRect %s_sampler%u;\n", prefix, i);
                         else
-                            shader_addline(buffer, "uniform sampler2D %csampler%u;\n", prefix, i);
+                            shader_addline(buffer, "uniform sampler2D %s_sampler%u;\n", prefix, i);
                     }
                     break;
                 case WINED3DSTT_CUBE:
                     if (pshader && ps_args->shadow & (1 << i)) FIXME("Unsupported Cube shadow sampler.\n");
-                    shader_addline(buffer, "uniform samplerCube %csampler%u;\n", prefix, i);
+                    shader_addline(buffer, "uniform samplerCube %s_sampler%u;\n", prefix, i);
                     break;
                 case WINED3DSTT_VOLUME:
                     if (pshader && ps_args->shadow & (1 << i)) FIXME("Unsupported 3D shadow sampler.\n");
-                    shader_addline(buffer, "uniform sampler3D %csampler%u;\n", prefix, i);
+                    shader_addline(buffer, "uniform sampler3D %s_sampler%u;\n", prefix, i);
                     break;
                 default:
-                    shader_addline(buffer, "uniform unsupported_sampler %csampler%u;\n", prefix, i);
+                    shader_addline(buffer, "uniform unsupported_sampler %s_sampler%u;\n", prefix, i);
                     FIXME("Unrecognized sampler type: %#x\n", reg_maps->sampler_type[i]);
                     break;
             }
@@ -1121,7 +1124,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         }
 
         fixup->num_consts = (cur + 1) >> 1;
-        shader_addline(buffer, "uniform vec4 %csamplerNP2Fixup[%u];\n", prefix, fixup->num_consts);
+        shader_addline(buffer, "uniform vec4 %s_samplerNP2Fixup[%u];\n", prefix, fixup->num_consts);
     }
 
     /* Declare address variables */
@@ -1189,7 +1192,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     {
         LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
         {
-            shader_addline(buffer, "uniform vec4 %cLC%u;\n", prefix, lconst->idx);
+            shader_addline(buffer, "uniform vec4 %s_lc%u;\n", prefix, lconst->idx);
         }
     }
 
@@ -1308,6 +1311,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
+    const char *prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
 
     *is_color = FALSE;
 
@@ -1386,34 +1390,32 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
 
         case WINED3DSPR_CONST:
             {
-                const char prefix = pshader ? 'P' : 'V';
-
                 /* Relative addressing */
                 if (reg->rel_addr)
                 {
                     struct glsl_src_param rel_param;
                     shader_glsl_add_src_param(ins, reg->rel_addr, WINED3DSP_WRITEMASK_0, &rel_param);
-                    if (reg->idx) sprintf(register_name, "%cC[%s + %u]", prefix, rel_param.param_str, reg->idx);
-                    else sprintf(register_name, "%cC[%s]", prefix, rel_param.param_str);
+                    if (reg->idx)
+                        sprintf(register_name, "%s_c[%s + %u]", prefix, rel_param.param_str, reg->idx);
+                    else
+                        sprintf(register_name, "%s_c[%s]", prefix, rel_param.param_str);
                 }
                 else
                 {
                     if (shader_constant_is_local(shader, reg->idx))
-                        sprintf(register_name, "%cLC%u", prefix, reg->idx);
+                        sprintf(register_name, "%s_lc%u", prefix, reg->idx);
                     else
-                        sprintf(register_name, "%cC[%u]", prefix, reg->idx);
+                        sprintf(register_name, "%s_c[%u]", prefix, reg->idx);
                 }
             }
             break;
 
         case WINED3DSPR_CONSTINT:
-            if (pshader) sprintf(register_name, "PI[%u]", reg->idx);
-            else sprintf(register_name, "VI[%u]", reg->idx);
+            sprintf(register_name, "%s_i[%u]", prefix, reg->idx);
             break;
 
         case WINED3DSPR_CONSTBOOL:
-            if (pshader) sprintf(register_name, "PB[%u]", reg->idx);
-            else sprintf(register_name, "VB[%u]", reg->idx);
+            sprintf(register_name, "%s_b[%u]", prefix, reg->idx);
             break;
 
         case WINED3DSPR_TEXTURE: /* case WINED3DSPR_ADDR: */
@@ -1426,8 +1428,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             break;
 
         case WINED3DSPR_SAMPLER:
-            if (pshader) sprintf(register_name, "Psampler%u", reg->idx);
-            else sprintf(register_name, "Vsampler%u", reg->idx);
+            sprintf(register_name, "%s_sampler%u", prefix, reg->idx);
             break;
 
         case WINED3DSPR_COLOROUT:
@@ -2115,7 +2116,7 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
     {
         const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
         fixup = priv->cur_ps_args->color_fixup[sampler];
-        sampler_base = "Psampler";
+        sampler_base = "ps_sampler";
 
         if(priv->cur_ps_args->np2_fixup & (1 << sampler)) {
             if(bias) {
@@ -2124,8 +2125,10 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
                 np2_fixup = TRUE;
             }
         }
-    } else {
-        sampler_base = "Vsampler";
+    }
+    else
+    {
+        sampler_base = "vs_sampler";
         fixup = COLOR_FIXUP_IDENTITY; /* FIXME: Vshader color fixup */
     }
 
@@ -2144,7 +2147,7 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
             const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
             const unsigned char idx = priv->cur_np2fixup_info->idx[sampler];
 
-            shader_addline(ins->ctx->buffer, " * PsamplerNP2Fixup[%u].%s)%s);\n", idx >> 1,
+            shader_addline(ins->ctx->buffer, " * ps_samplerNP2Fixup[%u].%s)%s);\n", idx >> 1,
                            (idx % 2) ? "zw" : "xy", dst_swizzle);
         } else if(dx && dy) {
             shader_addline(ins->ctx->buffer, ", %s, %s)%s);\n", dx, dy, dst_swizzle);
@@ -4085,17 +4088,17 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
 
 /* GL locking is done by the caller */
 static void hardcode_local_constants(const struct wined3d_shader *shader,
-        const struct wined3d_gl_info *gl_info, GLhandleARB programId, char prefix)
+        const struct wined3d_gl_info *gl_info, GLhandleARB programId, const char *prefix)
 {
     const struct wined3d_shader_lconst *lconst;
     GLint tmp_loc;
     const float *value;
-    char glsl_name[8];
+    char glsl_name[10];
 
     LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
     {
         value = (const float *)lconst->value;
-        snprintf(glsl_name, sizeof(glsl_name), "%cLC%u", prefix, lconst->idx);
+        snprintf(glsl_name, sizeof(glsl_name), "%s_lc%u", prefix, lconst->idx);
         tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
         GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, value));
     }
@@ -4441,7 +4444,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     GLhandleARB programId                  = 0;
     GLhandleARB reorder_shader_id          = 0;
     unsigned int i;
-    char glsl_name[8];
+    char glsl_name[10];
     struct ps_compile_args ps_compile_args;
     struct vs_compile_args vs_compile_args;
 
@@ -4536,24 +4539,24 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
             sizeof(GLhandleARB) * gl_info->limits.glsl_vs_float_constants);
     for (i = 0; i < gl_info->limits.glsl_vs_float_constants; ++i)
     {
-        snprintf(glsl_name, sizeof(glsl_name), "VC[%i]", i);
+        snprintf(glsl_name, sizeof(glsl_name), "vs_c[%u]", i);
         entry->vuniformF_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
     for (i = 0; i < MAX_CONST_I; ++i)
     {
-        snprintf(glsl_name, sizeof(glsl_name), "VI[%i]", i);
+        snprintf(glsl_name, sizeof(glsl_name), "vs_i[%u]", i);
         entry->vuniformI_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
     entry->puniformF_locations = HeapAlloc(GetProcessHeap(), 0,
             sizeof(GLhandleARB) * gl_info->limits.glsl_ps_float_constants);
     for (i = 0; i < gl_info->limits.glsl_ps_float_constants; ++i)
     {
-        snprintf(glsl_name, sizeof(glsl_name), "PC[%i]", i);
+        snprintf(glsl_name, sizeof(glsl_name), "ps_c[%u]", i);
         entry->puniformF_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
     for (i = 0; i < MAX_CONST_I; ++i)
     {
-        snprintf(glsl_name, sizeof(glsl_name), "PI[%i]", i);
+        snprintf(glsl_name, sizeof(glsl_name), "ps_i[%u]", i);
         entry->puniformI_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
 
@@ -4569,12 +4572,12 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
             entry->luminanceoffset_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
         }
 
-        if (ps_compile_args.np2_fixup) {
-            if (entry->np2Fixup_info) {
-                entry->np2Fixup_location = GL_EXTCALL(glGetUniformLocationARB(programId, "PsamplerNP2Fixup"));
-            } else {
+        if (ps_compile_args.np2_fixup)
+        {
+            if (entry->np2Fixup_info)
+                entry->np2Fixup_location = GL_EXTCALL(glGetUniformLocationARB(programId, "ps_samplerNP2Fixup"));
+            else
                 FIXME("NP2 texcoord fixup needed for this pixelshader, but no fixup uniform found.\n");
-            }
         }
     }
 
@@ -4611,9 +4614,9 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
      * later
      */
     if (pshader && !pshader->load_local_constsF)
-        hardcode_local_constants(pshader, gl_info, programId, 'P');
+        hardcode_local_constants(pshader, gl_info, programId, "ps");
     if (vshader && !vshader->load_local_constsF)
-        hardcode_local_constants(vshader, gl_info, programId, 'V');
+        hardcode_local_constants(vshader, gl_info, programId, "vs");
 }
 
 /* GL locking is done by the caller */
