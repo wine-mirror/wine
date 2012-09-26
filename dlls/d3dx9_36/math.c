@@ -1357,18 +1357,20 @@ D3DXQUATERNION* WINAPI D3DXQuaternionNormalize(D3DXQUATERNION *pout, CONST D3DXQ
     return pout;
 }
 
-D3DXQUATERNION* WINAPI D3DXQuaternionRotationAxis(D3DXQUATERNION *pout, CONST D3DXVECTOR3 *pv, FLOAT angle)
+D3DXQUATERNION * WINAPI D3DXQuaternionRotationAxis(D3DXQUATERNION *out, const D3DXVECTOR3 *v, FLOAT angle)
 {
     D3DXVECTOR3 temp;
 
-    TRACE("(%p, %p, %f)\n", pout, pv, angle);
+    TRACE("out %p, v %p, angle %f\n", out, v, angle);
 
-    D3DXVec3Normalize(&temp, pv);
-    pout->x = sin( angle / 2.0f ) * temp.x;
-    pout->y = sin( angle / 2.0f ) * temp.y;
-    pout->z = sin( angle / 2.0f ) * temp.z;
-    pout->w = cos( angle / 2.0f );
-    return pout;
+    D3DXVec3Normalize(&temp, v);
+
+    out->x = sinf(angle / 2.0f) * temp.x;
+    out->y = sinf(angle / 2.0f) * temp.y;
+    out->z = sinf(angle / 2.0f) * temp.z;
+    out->w = cosf(angle / 2.0f);
+
+    return out;
 }
 
 D3DXQUATERNION* WINAPI D3DXQuaternionRotationMatrix(D3DXQUATERNION *pout, CONST D3DXMATRIX *pm)
