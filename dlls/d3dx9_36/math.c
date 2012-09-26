@@ -1435,32 +1435,35 @@ D3DXQUATERNION* WINAPI D3DXQuaternionRotationYawPitchRoll(D3DXQUATERNION *pout, 
     return pout;
 }
 
-D3DXQUATERNION* WINAPI D3DXQuaternionSlerp(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2, FLOAT t)
+D3DXQUATERNION * WINAPI D3DXQuaternionSlerp(D3DXQUATERNION *out, const D3DXQUATERNION *q1,
+        const D3DXQUATERNION *q2, FLOAT t)
 {
-    FLOAT dot, epsilon, temp, theta, u;
+    FLOAT dot, temp;
 
-    TRACE("(%p, %p, %p, %f)\n", pout, pq1, pq2, t);
+    TRACE("out %p, q1 %p, q2 %p, t %f\n", out, q1, q2, t);
 
-    epsilon = 1.0f;
     temp = 1.0f - t;
-    u = t;
-    dot = D3DXQuaternionDot(pq1, pq2);
-    if ( dot < 0.0f )
+    dot = D3DXQuaternionDot(q1, q2);
+    if (dot < 0.0f)
     {
-        epsilon = -1.0f;
+        t = -t;
         dot = -dot;
     }
-    if( 1.0f - dot > 0.001f )
+
+    if (1.0f - dot > 0.001f)
     {
-        theta = acos(dot);
-        temp  = sin(theta * temp) / sin(theta);
-        u = sin(theta * u) / sin(theta);
+        FLOAT theta = acosf(dot);
+
+        temp = sinf(theta * temp) / sinf(theta);
+        t = sinf(theta * t) / sinf(theta);
     }
-    pout->x = temp * pq1->x + epsilon * u * pq2->x;
-    pout->y = temp * pq1->y + epsilon * u * pq2->y;
-    pout->z = temp * pq1->z + epsilon * u * pq2->z;
-    pout->w = temp * pq1->w + epsilon * u * pq2->w;
-    return pout;
+
+    out->x = temp * q1->x + t * q2->x;
+    out->y = temp * q1->y + t * q2->y;
+    out->z = temp * q1->z + t * q2->z;
+    out->w = temp * q1->w + t * q2->w;
+
+    return out;
 }
 
 D3DXQUATERNION* WINAPI D3DXQuaternionSquad(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2, CONST D3DXQUATERNION *pq3, CONST D3DXQUATERNION *pq4, FLOAT t)
