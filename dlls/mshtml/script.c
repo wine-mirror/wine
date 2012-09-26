@@ -67,6 +67,7 @@ struct ScriptHost {
     IActiveScriptSite              IActiveScriptSite_iface;
     IActiveScriptSiteInterruptPoll IActiveScriptSiteInterruptPoll_iface;
     IActiveScriptSiteWindow        IActiveScriptSiteWindow_iface;
+    IActiveScriptSiteUIControl     IActiveScriptSiteUIControl_iface;
     IActiveScriptSiteDebug         IActiveScriptSiteDebug_iface;
     IServiceProvider               IServiceProvider_iface;
 
@@ -256,6 +257,9 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
     }else if(IsEqualGUID(&IID_IActiveScriptSiteWindow, riid)) {
         TRACE("(%p)->(IID_IActiveScriptSiteWindow %p)\n", This, ppv);
         *ppv = &This->IActiveScriptSiteWindow_iface;
+    }else if(IsEqualGUID(&IID_IActiveScriptSiteUIControl, riid)) {
+        TRACE("(%p)->(IID_IActiveScriptSiteUIControl %p)\n", This, ppv);
+        *ppv = &This->IActiveScriptSiteUIControl_iface;
     }else if(IsEqualGUID(&IID_IActiveScriptSiteDebug, riid)) {
         TRACE("(%p)->(IID_IActiveScriptSiteDebug %p)\n", This, ppv);
         *ppv = &This->IActiveScriptSiteDebug_iface;
@@ -494,6 +498,47 @@ static const IActiveScriptSiteWindowVtbl ActiveScriptSiteWindowVtbl = {
     ActiveScriptSiteWindow_EnableModeless
 };
 
+static inline ScriptHost *impl_from_IActiveScriptSiteUIControl(IActiveScriptSiteUIControl *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptHost, IActiveScriptSiteUIControl_iface);
+}
+
+static HRESULT WINAPI ActiveScriptSiteUIControl_QueryInterface(IActiveScriptSiteUIControl *iface, REFIID riid, void **ppv)
+{
+    ScriptHost *This = impl_from_IActiveScriptSiteUIControl(iface);
+    return IActiveScriptSite_QueryInterface(&This->IActiveScriptSite_iface, riid, ppv);
+}
+
+static ULONG WINAPI ActiveScriptSiteUIControl_AddRef(IActiveScriptSiteUIControl *iface)
+{
+    ScriptHost *This = impl_from_IActiveScriptSiteUIControl(iface);
+    return IActiveScriptSite_AddRef(&This->IActiveScriptSite_iface);
+}
+
+static ULONG WINAPI ActiveScriptSiteUIControl_Release(IActiveScriptSiteUIControl *iface)
+{
+    ScriptHost *This = impl_from_IActiveScriptSiteUIControl(iface);
+    return IActiveScriptSite_Release(&This->IActiveScriptSite_iface);
+}
+
+static HRESULT WINAPI ActiveScriptSiteUIControl_GetUIBehavior(IActiveScriptSiteUIControl *iface, SCRIPTUICITEM UicItem,
+        SCRIPTUICHANDLING *pUicHandling)
+{
+    ScriptHost *This = impl_from_IActiveScriptSiteUIControl(iface);
+
+    WARN("(%p)->(%d %p) semi-stub\n", This, UicItem, pUicHandling);
+
+    *pUicHandling = SCRIPTUICHANDLING_ALLOW;
+    return S_OK;
+}
+
+static const IActiveScriptSiteUIControlVtbl ActiveScriptSiteUIControlVtbl = {
+    ActiveScriptSiteUIControl_QueryInterface,
+    ActiveScriptSiteUIControl_AddRef,
+    ActiveScriptSiteUIControl_Release,
+    ActiveScriptSiteUIControl_GetUIBehavior
+};
+
 static inline ScriptHost *impl_from_IActiveScriptSiteDebug(IActiveScriptSiteDebug *iface)
 {
     return CONTAINING_RECORD(iface, ScriptHost, IActiveScriptSiteDebug_iface);
@@ -618,6 +663,7 @@ static ScriptHost *create_script_host(HTMLInnerWindow *window, const GUID *guid)
     ret->IActiveScriptSite_iface.lpVtbl = &ActiveScriptSiteVtbl;
     ret->IActiveScriptSiteInterruptPoll_iface.lpVtbl = &ActiveScriptSiteInterruptPollVtbl;
     ret->IActiveScriptSiteWindow_iface.lpVtbl = &ActiveScriptSiteWindowVtbl;
+    ret->IActiveScriptSiteUIControl_iface.lpVtbl = &ActiveScriptSiteUIControlVtbl;
     ret->IActiveScriptSiteDebug_iface.lpVtbl = &ActiveScriptSiteDebugVtbl;
     ret->IServiceProvider_iface.lpVtbl = &ASServiceProviderVtbl;
     ret->ref = 1;
