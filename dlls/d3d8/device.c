@@ -1691,7 +1691,6 @@ static HRESULT WINAPI d3d8_device_GetTexture(IDirect3DDevice8 *iface, DWORD stag
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct wined3d_texture *wined3d_texture;
     struct d3d8_texture *texture_impl;
-    HRESULT hr;
 
     TRACE("iface %p, stage %u, texture %p.\n", iface, stage, texture);
 
@@ -1699,21 +1698,11 @@ static HRESULT WINAPI d3d8_device_GetTexture(IDirect3DDevice8 *iface, DWORD stag
         return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_texture(device->wined3d_device, stage, &wined3d_texture);
-    if (FAILED(hr))
-    {
-        WARN("Failed to get texture for stage %u, hr %#x.\n", stage, hr);
-        wined3d_mutex_unlock();
-        *texture = NULL;
-        return hr;
-    }
-
-    if (wined3d_texture)
+    if ((wined3d_texture = wined3d_device_get_texture(device->wined3d_device, stage)))
     {
         texture_impl = wined3d_texture_get_parent(wined3d_texture);
         *texture = &texture_impl->IDirect3DBaseTexture8_iface;
         IDirect3DBaseTexture8_AddRef(*texture);
-        wined3d_texture_decref(wined3d_texture);
     }
     else
     {

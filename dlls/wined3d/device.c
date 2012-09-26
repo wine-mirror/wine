@@ -3556,10 +3556,9 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_texture(const struct wined3d_device *device,
-        UINT stage, struct wined3d_texture **texture)
+struct wined3d_texture * CDECL wined3d_device_get_texture(const struct wined3d_device *device, UINT stage)
 {
-    TRACE("device %p, stage %u, texture %p.\n", device, stage, texture);
+    TRACE("device %p, stage %u.\n", device, stage);
 
     if (stage >= WINED3DVERTEXTEXTURESAMPLER0 && stage <= WINED3DVERTEXTEXTURESAMPLER3)
         stage -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
@@ -3567,16 +3566,10 @@ HRESULT CDECL wined3d_device_get_texture(const struct wined3d_device *device,
     if (stage >= sizeof(device->stateBlock->state.textures) / sizeof(*device->stateBlock->state.textures))
     {
         WARN("Ignoring invalid stage %u.\n", stage);
-        return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
+        return NULL; /* Windows accepts overflowing this array ... we do not. */
     }
 
-    *texture = device->stateBlock->state.textures[stage];
-    if (*texture)
-        wined3d_texture_incref(*texture);
-
-    TRACE("Returning %p.\n", *texture);
-
-    return WINED3D_OK;
+    return device->stateBlock->state.textures[stage];
 }
 
 HRESULT CDECL wined3d_device_get_back_buffer(const struct wined3d_device *device, UINT swapchain_idx,
