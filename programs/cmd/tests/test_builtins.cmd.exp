@@ -630,7 +630,7 @@ c
 ------ eol option
 @todo_wine@ad
 @todo_wine@z@y
-@todo_wine@a|d
+a|d
 @todo_wine@no output
 @todo_wine@no output
 ------ delims option
@@ -639,7 +639,7 @@ c
 @todo_wine@a d
 @todo_wine@a
 @todo_wine@C r
-@todo_wine@foo bar baz
+foo bar baz
 @todo_wine@c:\
 ------ skip option
 @todo_wine@c

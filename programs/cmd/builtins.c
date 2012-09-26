@@ -1080,7 +1080,6 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   WCHAR *firstCmd;
   int thisDepth;
 
-  WCHAR *curPos = p;
   BOOL   expandDirs  = FALSE;
   BOOL   useNumbers  = FALSE;
   BOOL   doFileset   = FALSE;
@@ -1088,33 +1087,34 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   LONG   numbers[3] = {0,0,0}; /* Defaults to 0 in native */
   int    itemNum;
   CMD_LIST *thisCmdStart;
-
+  int    parameterNo = 0;
 
   /* Handle optional qualifiers (multiple are allowed) */
-  while (*curPos && *curPos == '/') {
-      WINE_TRACE("Processing qualifier at %s\n", wine_dbgstr_w(curPos));
-      curPos++;
-      switch (toupperW(*curPos)) {
-      case 'D': curPos++; expandDirs = TRUE; break;
-      case 'L': curPos++; useNumbers = TRUE; break;
+  WCHAR *thisArg = WCMD_parameter(p, parameterNo++, NULL, NULL, FALSE);
+  while (thisArg && *thisArg == '/') {
+      WINE_TRACE("Processing qualifier at %s\n", wine_dbgstr_w(thisArg));
+      thisArg++;
+      switch (toupperW(*thisArg)) {
+      case 'D': expandDirs = TRUE; break;
+      case 'L': useNumbers = TRUE; break;
 
       /* Recursive is special case - /R can have an optional path following it                */
       /* filenamesets are another special case - /F can have an optional options following it */
       case 'R':
       case 'F':
           {
-              BOOL isRecursive = (*curPos == 'R');
+              BOOL isRecursive = (*thisArg == 'R');
 
               if (!isRecursive)
                   doFileset = TRUE;
 
-              /* Skip whitespace */
-              curPos++;
-              while (*curPos && (*curPos==' ' || *curPos=='\t')) curPos++;
+              /* Retrieve next parameter to see if is path/options */
+              thisArg = WCMD_parameter(p, parameterNo, NULL, NULL, !isRecursive);
 
               /* Next parm is either qualifier, path/options or variable -
                  only care about it if it is the path/options              */
-              if (*curPos && *curPos != '/' && *curPos != '%') {
+              if (thisArg && *thisArg != '/' && *thisArg != '%') {
+                  parameterNo++;
                   if (isRecursive) WINE_FIXME("/R needs to handle supplied root\n");
                   else {
                       static unsigned int once;
@@ -1124,38 +1124,29 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
               break;
           }
       default:
-          WINE_FIXME("for qualifier '%c' unhandled\n", *curPos);
-          curPos++;
+          WINE_FIXME("for qualifier '%c' unhandled\n", *thisArg);
       }
 
-      /* Skip whitespace between qualifiers */
-      while (*curPos && (*curPos==' ' || *curPos=='\t')) curPos++;
+      /* Step to next token */
+      thisArg = WCMD_parameter(p, parameterNo++, NULL, NULL, FALSE);
   }
 
-  /* Skip whitespace before variable */
-  while (*curPos && (*curPos==' ' || *curPos=='\t')) curPos++;
-
   /* Ensure line continues with variable */
-  if (!*curPos || *curPos != '%') {
+  if (!*thisArg || *thisArg != '%') {
       WCMD_output_stderr (WCMD_LoadMessage(WCMD_SYNTAXERR));
       return;
   }
 
   /* Variable should follow */
-  i = 0;
-  while (curPos[i] && curPos[i]!=' ' && curPos[i]!='\t') i++;
-  memcpy(&variable[0], curPos, i*sizeof(WCHAR));
-  variable[i] = 0x00;
+  strcpyW(variable, thisArg);
   WINE_TRACE("Variable identified as %s\n", wine_dbgstr_w(variable));
-  curPos = &curPos[i];
-
-  /* Skip whitespace before IN */
-  while (*curPos && (*curPos==' ' || *curPos=='\t')) curPos++;
 
   /* Ensure line continues with IN */
-  if (!*curPos
-       || !WCMD_keyword_ws_found(inW, sizeof(inW)/sizeof(inW[0]), curPos)) {
-
+  thisArg = WCMD_parameter(p, parameterNo++, NULL, NULL, FALSE);
+  if (!thisArg
+       || !(CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                           thisArg, sizeof(inW)/sizeof(inW[0]), inW,
+                           sizeof(inW)/sizeof(inW[0])) == CSTR_EQUAL)) {
       WCMD_output_stderr (WCMD_LoadMessage(WCMD_SYNTAXERR));
       return;
   }
