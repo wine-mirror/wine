@@ -3343,7 +3343,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
     return hr;
 }
 
-HRESULT CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *device,
+void CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *device,
         UINT stage, enum wined3d_texture_stage_state state, DWORD value)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -3355,14 +3355,14 @@ HRESULT CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *devi
     if (state > WINED3D_HIGHEST_TEXTURE_STATE)
     {
         WARN("Invalid state %#x passed.\n", state);
-        return WINED3D_OK;
+        return;
     }
 
     if (stage >= gl_info->limits.texture_stages)
     {
         WARN("Attempting to set stage %u which is higher than the max stage %u, ignoring.\n",
                 stage, gl_info->limits.texture_stages - 1);
-        return WINED3D_OK;
+        return;
     }
 
     old_value = device->updateStateBlock->state.texture_states[stage][state];
@@ -3372,14 +3372,14 @@ HRESULT CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *devi
     if (device->isRecordingState)
     {
         TRACE("Recording... not performing anything.\n");
-        return WINED3D_OK;
+        return;
     }
 
     /* Checked after the assignments to allow proper stateblock recording. */
     if (old_value == value)
     {
         TRACE("Application is setting the old value over, nothing to do.\n");
-        return WINED3D_OK;
+        return;
     }
 
     if (stage > device->stateBlock->state.lowest_disabled_stage
@@ -3389,7 +3389,7 @@ HRESULT CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *devi
         /* Colorop change above lowest disabled stage? That won't change
          * anything in the GL setup. Changes in other states are important on
          * disabled stages too. */
-        return WINED3D_OK;
+        return;
     }
 
     if (state == WINED3D_TSS_COLOR_OP)
@@ -3433,8 +3433,6 @@ HRESULT CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *devi
     }
 
     device_invalidate_state(device, STATE_TEXTURESTAGE(stage, state));
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_get_texture_stage_state(const struct wined3d_device *device,
