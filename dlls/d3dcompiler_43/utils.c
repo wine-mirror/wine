@@ -2222,6 +2222,7 @@ void free_instr_list(struct list *list)
         return;
     LIST_FOR_EACH_ENTRY_SAFE(node, next_node, list, struct hlsl_ir_node, entry)
         free_instr(node);
+    d3dcompiler_free(list);
 }
 
 static void free_ir_constant(struct hlsl_ir_constant *constant)
@@ -2360,5 +2361,5 @@ void free_function(struct hlsl_ir_function_decl *func)
         d3dcompiler_free(param);
     d3dcompiler_free(func->parameters);
     free_instr_list(func->body);
-    d3dcompiler_free(func->body);
+    d3dcompiler_free(func);
 }
