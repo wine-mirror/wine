@@ -231,7 +231,7 @@ static const D3D10_SAMPLER_DESC default_sampler_desc =
 struct d3d10_effect_state_storage_info
 {
     D3D_SHADER_VARIABLE_TYPE id;
-    size_t size;
+    SIZE_T size;
     const void *default_state;
 };
 
@@ -1641,6 +1641,7 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
             {
                 const struct d3d10_effect_state_storage_info *storage_info;
                 unsigned int count = max(v->type->element_count, 1);
+                struct d3d10_effect_state_object_variable *s;
 
                 if (!(storage_info = get_storage_info(v->type->basetype)))
                 {
@@ -1649,31 +1650,36 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
                     return E_FAIL;
                 }
 
+                if (storage_info->size > sizeof(s->desc))
+                {
+                    ERR("Invalid storage size %#lx.\n", storage_info->size);
+                    return E_FAIL;
+                }
+
                 for (i = 0; i < count; ++i)
                 {
                     struct d3d10_effect_variable *var;
-                    unsigned char *desc;
 
                     if (v->type->element_count)
                         var = &v->elements[i];
                     else
                         var = v;
 
-                    if (!(desc = HeapAlloc(GetProcessHeap(), 0, storage_info->size)))
+                    if (!(s = HeapAlloc(GetProcessHeap(), 0, sizeof(*s))))
                     {
                         ERR("Failed to allocate backing store memory.\n");
                         return E_OUTOFMEMORY;
                     }
 
-                    memcpy(desc, storage_info->default_state, storage_info->size);
-                    if (!parse_fx10_state_group(ptr, data, var->type->basetype, desc))
+                    memcpy(&s->desc, storage_info->default_state, storage_info->size);
+                    if (!parse_fx10_state_group(ptr, data, var->type->basetype, &s->desc))
                     {
                         ERR("Failed to read property list.\n");
-                        HeapFree(GetProcessHeap(), 0, desc);
+                        HeapFree(GetProcessHeap(), 0, s);
                         return E_FAIL;
                     }
 
-                    var->data = desc;
+                    var->data = s;
                 }
             }
             break;
@@ -6019,6 +6025,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_blend_variable_GetBackingStore(ID3
         UINT index, D3D10_BLEND_DESC *desc)
 {
     struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)iface);
+    struct d3d10_effect_state_object_variable *s;
 
     TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
 
@@ -6031,7 +6038,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_blend_variable_GetBackingStore(ID3
         return E_FAIL;
     }
 
-    *desc = *(D3D10_BLEND_DESC *)v->data;
+    s = v->data;
+    *desc = s->desc.blend;
 
     return S_OK;
 }
@@ -6237,6 +6245,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_depth_stencil_variable_GetBackingS
         UINT index, D3D10_DEPTH_STENCIL_DESC *desc)
 {
     struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)iface);
+    struct d3d10_effect_state_object_variable *s;
 
     TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
 
@@ -6249,7 +6258,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_depth_stencil_variable_GetBackingS
         return E_FAIL;
     }
 
-    *desc = *(D3D10_DEPTH_STENCIL_DESC *)v->data;
+    s = v->data;
+    *desc = s->desc.depth_stencil;
 
     return S_OK;
 }
@@ -6455,6 +6465,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_rasterizer_variable_GetBackingStor
         UINT index, D3D10_RASTERIZER_DESC *desc)
 {
     struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)iface);
+    struct d3d10_effect_state_object_variable *s;
 
     TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
 
@@ -6467,7 +6478,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_rasterizer_variable_GetBackingStor
         return E_FAIL;
     }
 
-    *desc = *(D3D10_RASTERIZER_DESC *)v->data;
+    s = v->data;
+    *desc = s->desc.rasterizer;
 
     return S_OK;
 }
@@ -6673,6 +6685,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_sampler_variable_GetBackingStore(I
         UINT index, D3D10_SAMPLER_DESC *desc)
 {
     struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)iface);
+    struct d3d10_effect_state_object_variable *s;
 
     TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
 
@@ -6685,7 +6698,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_sampler_variable_GetBackingStore(I
         return E_FAIL;
     }
 
-    *desc = *(D3D10_SAMPLER_DESC *)v->data;
+    s = v->data;
+    *desc = s->desc.sampler;
 
     return S_OK;
 }

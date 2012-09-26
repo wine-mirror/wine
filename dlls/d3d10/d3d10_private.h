@@ -100,6 +100,17 @@ struct d3d10_effect_shader_variable
     } shader;
 };
 
+struct d3d10_effect_state_object_variable
+{
+    union
+    {
+        D3D10_RASTERIZER_DESC rasterizer;
+        D3D10_DEPTH_STENCIL_DESC depth_stencil;
+        D3D10_BLEND_DESC blend;
+        D3D10_SAMPLER_DESC sampler;
+    } desc;
+};
+
 /* ID3D10EffectType */
 struct d3d10_effect_type
 {
