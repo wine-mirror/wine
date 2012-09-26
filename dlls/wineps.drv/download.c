@@ -49,6 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
  */
 static void get_download_name(PHYSDEV dev, LPOUTLINETEXTMETRICA potm, char **str)
 {
+    static const char reserved_chars[] = " %/(){}[]<>\n\r\t\b\f";
     int len;
     char *p;
     DWORD size;
@@ -92,7 +93,7 @@ static void get_download_name(PHYSDEV dev, LPOUTLINETEXTMETRICA potm, char **str
                     memcpy(*str, strings + name_record->offset, name_record->length);
                     *(*str + name_record->length) = '\0';
                     HeapFree(GetProcessHeap(), 0, name);
-                    return;
+                    goto done;
                 }
                 if(name_record->platform_id == 3 && name_record->encoding_id == 1 &&
                    name_record->language_id == 0x409 && name_record->name_id == 6)
@@ -110,7 +111,7 @@ static void get_download_name(PHYSDEV dev, LPOUTLINETEXTMETRICA potm, char **str
                     WideCharToMultiByte(1252, 0, unicode, -1, *str, len, NULL, NULL);
                     HeapFree(GetProcessHeap(), 0, unicode);
                     HeapFree(GetProcessHeap(), 0, name);
-                    return;
+                    goto done;
                 }
             }
             TRACE("Unable to find PostScript name\n");
@@ -122,11 +123,8 @@ static void get_download_name(PHYSDEV dev, LPOUTLINETEXTMETRICA potm, char **str
     *str = HeapAlloc(GetProcessHeap(),0,len);
     strcpy(*str, (char*)potm + (ptrdiff_t)potm->otmpFaceName);
 
-    p = *str;
-    while((p = strchr(p, ' ')))
-        *p = '_';
-
-    return;
+done:
+    for (p = *str; *p; p++) if (strchr( reserved_chars, *p )) *p = '_';
 }
 
 /****************************************************************************
