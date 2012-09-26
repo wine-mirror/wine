@@ -243,7 +243,6 @@ extern Display *gdi_display DECLSPEC_HIDDEN;  /* display to use for all GDI func
 #define X11DRV_PALETTE_VIRTUAL  0x0002 /* no mapping needed - pixel == pixel color */
 
 #define X11DRV_PALETTE_PRIVATE  0x1000 /* private colormap, identity mapping */
-#define X11DRV_PALETTE_WHITESET 0x2000
 
 extern UINT16 X11DRV_PALETTE_PaletteFlags DECLSPEC_HIDDEN;
 
@@ -259,7 +258,6 @@ extern BOOL X11DRV_IsSolidColor(COLORREF color) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_PALETTE_ToLogical(X11DRV_PDEVICE *physDev, int pixel) DECLSPEC_HIDDEN;
 extern int X11DRV_PALETTE_ToPhysical(X11DRV_PDEVICE *physDev, COLORREF color) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_PALETTE_GetColor( X11DRV_PDEVICE *physDev, COLORREF color ) DECLSPEC_HIDDEN;
-extern int X11DRV_PALETTE_LookupPixel(ColorShifts *shifts, COLORREF color) DECLSPEC_HIDDEN;
 extern void X11DRV_PALETTE_ComputeColorShifts(ColorShifts *shifts, unsigned long redMask, unsigned long greenMask, unsigned long blueMask) DECLSPEC_HIDDEN;
 
 /* GDI escapes */

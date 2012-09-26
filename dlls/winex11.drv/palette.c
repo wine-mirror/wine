@@ -134,20 +134,12 @@ static void palette_set_mapping( HPALETTE hpal, int *mapping )
  */
 int X11DRV_PALETTE_Init(void)
 {
-    int	mask, white, black;
-    int monoPlane;
     int *mapping;
     PALETTEENTRY sys_pal_template[NB_RESERVED_COLORS];
 
     TRACE("initializing palette manager...\n");
 
     palette_context = XUniqueContext();
-    white = WhitePixel( gdi_display, DefaultScreen(gdi_display) );
-    black = BlackPixel( gdi_display, DefaultScreen(gdi_display) );
-    monoPlane = 1;
-    for( mask = 1; !((white & mask)^(black & mask)); mask <<= 1 )
-	 monoPlane++;
-    X11DRV_PALETTE_PaletteFlags = (white & mask) ? X11DRV_PALETTE_WHITESET : 0;
     palette_size = default_visual.colormap_size;
 
     switch(default_visual.class)
@@ -165,11 +157,7 @@ int X11DRV_PALETTE_Init(void)
                                                 default_visual.visual, AllocAll );
 	    if (default_colormap)
 	    {
-	        X11DRV_PALETTE_PaletteFlags |= (X11DRV_PALETTE_PRIVATE | X11DRV_PALETTE_WHITESET);
-
-		monoPlane = 1;
-		for( white = palette_size - 1; !(white & 1); white >>= 1 )
-		     monoPlane++;
+	        X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_PRIVATE;
 
 	        if( root_window != DefaultRootWindow(gdi_display) )
 	        {
@@ -187,29 +175,11 @@ int X11DRV_PALETTE_Init(void)
 
     case TrueColor:
 	X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_VIRTUAL;
-    case StaticColor: {
-    	int *depths,nrofdepths;
-	/* FIXME: hack to detect XFree32 XF_VGA16 ... We just have
-	 * depths 1 and 4
-	 */
-        depths = XListDepths(gdi_display,DefaultScreen(gdi_display),&nrofdepths);
-	if ((nrofdepths==2) && ((depths[0]==4) || depths[1]==4)) {
-	    monoPlane = 1;
-	    for( white = palette_size - 1; !(white & 1); white >>= 1 )
-	        monoPlane++;
-    	    X11DRV_PALETTE_PaletteFlags = (white & mask) ? X11DRV_PALETTE_WHITESET : 0;
-	}
-        else
-        {
-            X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
-            X11DRV_PALETTE_ComputeColorShifts(&X11DRV_PALETTE_default_shifts, default_visual.red_mask, default_visual.green_mask, default_visual.blue_mask);
-        }
-        XFree(depths);
+    case StaticColor:
+        X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
+        X11DRV_PALETTE_ComputeColorShifts(&X11DRV_PALETTE_default_shifts, default_visual.red_mask, default_visual.green_mask, default_visual.blue_mask);
         break;
-      }
     }
-
-    GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, NB_RESERVED_COLORS, sys_pal_template );
 
     if( X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL )
     {
@@ -217,6 +187,8 @@ int X11DRV_PALETTE_Init(void)
     }
     else
     {
+        GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, NB_RESERVED_COLORS, sys_pal_template );
+
         if ((mapping = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(int) * NB_RESERVED_COLORS )))
             palette_set_mapping( GetStockObject(DEFAULT_PALETTE), mapping );
 
@@ -743,12 +715,6 @@ COLORREF X11DRV_PALETTE_ToLogical(X11DRV_PDEVICE *physDev, int pixel)
 {
     XColor color;
 
-#if 0
-    /* truecolor visual */
-
-    if (screen_depth >= 24) return pixel;
-#endif
-
     /* check for hicolor visuals first */
 
     if ( (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_FIXED) && !X11DRV_PALETTE_Graymax )
@@ -969,7 +935,7 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 /***********************************************************************
  *           X11DRV_PALETTE_LookupPixel
  */
-int X11DRV_PALETTE_LookupPixel(ColorShifts *shifts, COLORREF color )
+static int X11DRV_PALETTE_LookupPixel(ColorShifts *shifts, COLORREF color )
 {
     unsigned char spec_type = color >> 24;
 
