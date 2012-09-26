@@ -4205,7 +4205,7 @@ HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_set_software_vertex_processing(struct wined3d_device *device, BOOL software)
+void CDECL wined3d_device_set_software_vertex_processing(struct wined3d_device *device, BOOL software)
 {
     static BOOL warned;
 
@@ -4218,8 +4218,6 @@ HRESULT CDECL wined3d_device_set_software_vertex_processing(struct wined3d_devic
     }
 
     device->softwareVertexProcessing = software;
-
-    return WINED3D_OK;
 }
 
 BOOL CDECL wined3d_device_get_software_vertex_processing(const struct wined3d_device *device)

@@ -1884,15 +1884,14 @@ static HRESULT WINAPI d3d9_device_GetScissorRect(IDirect3DDevice9Ex *iface, RECT
 static HRESULT WINAPI d3d9_device_SetSoftwareVertexProcessing(IDirect3DDevice9Ex *iface, BOOL software)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
 
     TRACE("iface %p, software %#x.\n", iface, software);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_set_software_vertex_processing(device->wined3d_device, software);
+    wined3d_device_set_software_vertex_processing(device->wined3d_device, software);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static BOOL WINAPI d3d9_device_GetSoftwareVertexProcessing(IDirect3DDevice9Ex *iface)
