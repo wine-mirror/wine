@@ -903,7 +903,7 @@ struct hlsl_ir_deref
         struct
         {
             struct hlsl_ir_node *record;
-            const char *field;
+            struct hlsl_struct_field *field;
         } record;
     } v;
 };

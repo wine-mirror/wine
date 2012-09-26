@@ -1912,7 +1912,7 @@ static void debug_dump_ir_deref(const struct hlsl_ir_deref *deref)
             break;
         case HLSL_IR_DEREF_RECORD:
             debug_dump_instr(deref->v.record.record);
-            TRACE(".%s", debugstr_a(deref->v.record.field));
+            TRACE(".%s", debugstr_a(deref->v.record.field->name));
             break;
     }
 }
@@ -2261,7 +2261,6 @@ static void free_ir_deref(struct hlsl_ir_deref *deref)
             break;
         case HLSL_IR_DEREF_RECORD:
             free_instr(deref->v.record.record);
-            d3dcompiler_free((void *)deref->v.record.field);
             break;
     }
     d3dcompiler_free(deref);
