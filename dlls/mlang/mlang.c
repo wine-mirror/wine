@@ -3568,6 +3568,7 @@ static HRESULT WINAPI MLangConvertCharset_Initialize(IMLangConvertCharset *iface
 
     TRACE("(%p)->(%u %u 0x%08x)\n", This, src_cp, dst_cp, prop);
 
+    prop &= ~MLCONVCHARF_USEDEFCHAR;
     if (prop)
         FIXME("property 0x%08x not supported\n", prop);
 
