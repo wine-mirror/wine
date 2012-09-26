@@ -1424,15 +1424,25 @@ D3DXQUATERNION* WINAPI D3DXQuaternionRotationMatrix(D3DXQUATERNION *pout, CONST 
     return pout;
 }
 
-D3DXQUATERNION* WINAPI D3DXQuaternionRotationYawPitchRoll(D3DXQUATERNION *pout, FLOAT yaw, FLOAT pitch, FLOAT roll)
+D3DXQUATERNION * WINAPI D3DXQuaternionRotationYawPitchRoll(D3DXQUATERNION *out, FLOAT yaw, FLOAT pitch, FLOAT roll)
 {
-    TRACE("(%p, %f, %f, %f)\n", pout, yaw, pitch, roll);
+    FLOAT syaw, cyaw, spitch, cpitch, sroll, croll;
 
-    pout->x = sin( yaw / 2.0f) * cos(pitch / 2.0f) * sin(roll / 2.0f) + cos(yaw / 2.0f) * sin(pitch / 2.0f) * cos(roll / 2.0f);
-    pout->y = sin( yaw / 2.0f) * cos(pitch / 2.0f) * cos(roll / 2.0f) - cos(yaw / 2.0f) * sin(pitch / 2.0f) * sin(roll / 2.0f);
-    pout->z = cos(yaw / 2.0f) * cos(pitch / 2.0f) * sin(roll / 2.0f) - sin( yaw / 2.0f) * sin(pitch / 2.0f) * cos(roll / 2.0f);
-    pout->w = cos( yaw / 2.0f) * cos(pitch / 2.0f) * cos(roll / 2.0f) + sin(yaw / 2.0f) * sin(pitch / 2.0f) * sin(roll / 2.0f);
-    return pout;
+    TRACE("out %p, yaw %f, pitch %f, roll %f\n", out, yaw, pitch, roll);
+
+    syaw = sinf(yaw / 2.0f);
+    cyaw = cosf(yaw / 2.0f);
+    spitch = sinf(pitch / 2.0f);
+    cpitch = cosf(pitch / 2.0f);
+    sroll = sinf(roll / 2.0f);
+    croll = cosf(roll / 2.0f);
+
+    out->x = syaw * cpitch * sroll + cyaw * spitch * croll;
+    out->y = syaw * cpitch * croll - cyaw * spitch * sroll;
+    out->z = cyaw * cpitch * sroll - syaw * spitch * croll;
+    out->w = cyaw * cpitch * croll + syaw * spitch * sroll;
+
+    return out;
 }
 
 D3DXQUATERNION * WINAPI D3DXQuaternionSlerp(D3DXQUATERNION *out, const D3DXQUATERNION *q1,
