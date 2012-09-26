@@ -2180,8 +2180,8 @@ static HRESULT WINAPI fnIMultiLanguage_ConvertStringFromUnicode(
 static HRESULT WINAPI fnIMultiLanguage_ConvertStringReset(
     IMultiLanguage* iface)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    MLang_impl *This = impl_from_IMultiLanguage( iface );
+    return IMultiLanguage3_ConvertStringReset(&This->IMultiLanguage3_iface);
 }
 
 static HRESULT WINAPI fnIMultiLanguage_GetRfc1766FromLcid(
