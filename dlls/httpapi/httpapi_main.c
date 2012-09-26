@@ -176,3 +176,12 @@ ULONG WINAPI HttpCreateHttpHandle( PHANDLE handle, ULONG reserved )
     FIXME( "(%p, %d): stub!\n", handle, reserved);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *        HttpAddUrl     (HTTPAPI.@)
+ */
+ULONG WINAPI HttpAddUrl( HANDLE handle, PCWSTR url, PVOID reserved )
+{
+    FIXME( "(%p, %s, %p): stub!\n", handle, debugstr_w(url), reserved );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
