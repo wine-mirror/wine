@@ -109,6 +109,10 @@ struct d3d10_effect_state_object_variable
         D3D10_BLEND_DESC blend;
         D3D10_SAMPLER_DESC sampler;
     } desc;
+    union
+    {
+        ID3D10BlendState *blend;
+    } object;
 };
 
 /* ID3D10EffectType */

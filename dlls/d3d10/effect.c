@@ -1561,6 +1561,32 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
     return S_OK;
 }
 
+static HRESULT create_state_object(struct d3d10_effect_variable *v)
+{
+    ID3D10Device *device = v->effect->device;
+    HRESULT hr;
+
+    switch (v->type->basetype)
+    {
+        case D3D10_SVT_BLEND:
+            if (FAILED(hr = ID3D10Device_CreateBlendState(device,
+                    &v->u.state.desc.blend, &v->u.state.object.blend)))
+                return hr;
+            break;
+
+        case D3D10_SVT_DEPTHSTENCIL:
+        case D3D10_SVT_RASTERIZER:
+        case D3D10_SVT_SAMPLER:
+            break;
+
+        default:
+            ERR("Unhandled variable type %s.\n", debug_d3d10_shader_variable_type(v->type->basetype));
+            return E_FAIL;
+    }
+
+    return S_OK;
+}
+
 static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const char **ptr, const char *data)
 {
     unsigned int i;
@@ -1660,6 +1686,9 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
                         ERR("Failed to read property list.\n");
                         return E_FAIL;
                     }
+
+                    if (FAILED(hr = create_state_object(v)))
+                        return hr;
                 }
             }
             break;
@@ -5984,9 +6013,25 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_blend_variable_GetRawValue(ID3D10E
 static HRESULT STDMETHODCALLTYPE d3d10_effect_blend_variable_GetBlendState(ID3D10EffectBlendVariable *iface,
         UINT index, ID3D10BlendState **blend_state)
 {
-    FIXME("iface %p, index %u, blend_state %p stub!\n", iface, index, blend_state);
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, blend_state %p.\n", iface, index, blend_state);
+
+    if (v->type->element_count)
+        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
+    else if (index)
+        return E_FAIL;
+
+    if (v->type->basetype != D3D10_SVT_BLEND)
+    {
+        WARN("Variable is not a blend state.\n");
+        return E_FAIL;
+    }
+
+    if ((*blend_state = v->u.state.object.blend))
+        ID3D10BlendState_AddRef(*blend_state);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_blend_variable_GetBackingStore(ID3D10EffectBlendVariable *iface,
