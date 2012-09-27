@@ -1878,7 +1878,7 @@ static HRESULT WINAPI fnIMLangFontLink_GetStrCodePages(
         DWORD cp;
         HRESULT ret;
 
-        ret = fnIMLangFontLink_GetCharCodePages(iface, pszSrc[i], &cp);
+        ret = IMLangFontLink_GetCharCodePages(iface, pszSrc[i], &cp);
         if (ret != S_OK) return E_FAIL;
 
         if (!cps) cps = cp;
