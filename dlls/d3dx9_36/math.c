@@ -1263,28 +1263,29 @@ D3DXQUATERNION* WINAPI D3DXQuaternionBaryCentric(D3DXQUATERNION *pout, CONST D3D
     return pout;
 }
 
-D3DXQUATERNION* WINAPI D3DXQuaternionExp(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)
+D3DXQUATERNION * WINAPI D3DXQuaternionExp(D3DXQUATERNION *out, const D3DXQUATERNION *q)
 {
     FLOAT norm;
 
-    TRACE("(%p, %p)\n", pout, pq);
+    TRACE("out %p, q %p\n", out, q);
 
-    norm = sqrt(pq->x * pq->x + pq->y * pq->y + pq->z * pq->z);
-    if (norm )
+    norm = sqrtf(q->x * q->x + q->y * q->y + q->z * q->z);
+    if (norm)
     {
-     pout->x = sin(norm) * pq->x / norm;
-     pout->y = sin(norm) * pq->y / norm;
-     pout->z = sin(norm) * pq->z / norm;
-     pout->w = cos(norm);
+        out->x = sinf(norm) * q->x / norm;
+        out->y = sinf(norm) * q->y / norm;
+        out->z = sinf(norm) * q->z / norm;
+        out->w = cosf(norm);
     }
     else
     {
-     pout->x = 0.0f;
-     pout->y = 0.0f;
-     pout->z = 0.0f;
-     pout->w = 1.0f;
+        out->x = 0.0f;
+        out->y = 0.0f;
+        out->z = 0.0f;
+        out->w = 1.0f;
     }
-    return pout;
+
+    return out;
 }
 
 D3DXQUATERNION* WINAPI D3DXQuaternionInverse(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)
