@@ -2429,7 +2429,7 @@ basic_filebuf_char* __thiscall basic_filebuf_char_close(basic_filebuf_char *this
     /* TODO: handle exceptions */
     if(!basic_filebuf_char__Endwrite(this))
         ret = NULL;
-    if(!fclose(this->file))
+    if(fclose(this->file))
         ret  = NULL;
 
     basic_filebuf_char__Init(this, NULL, INITFL_close);
@@ -3000,7 +3000,7 @@ basic_filebuf_wchar* __thiscall basic_filebuf_wchar_close(basic_filebuf_wchar *t
     /* TODO: handle exceptions */
     if(!basic_filebuf_wchar__Endwrite(this))
         ret = NULL;
-    if(!fclose(this->file))
+    if(fclose(this->file))
         ret  = NULL;
 
     basic_filebuf_wchar__Init(this, NULL, INITFL_close);
