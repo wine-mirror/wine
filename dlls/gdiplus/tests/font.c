@@ -767,24 +767,20 @@ static void test_font_substitution(void)
 
     lstrcpy(lf.lfFaceName, "ThisFontShouldNotExist");
     status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
-todo_wine
     expect(Ok, status);
     memset(&lf, 0xfe, sizeof(lf));
     status = GdipGetLogFontA(font, graphics, &lf);
     expect(Ok, status);
-todo_wine
     ok(!lstrcmp(lf.lfFaceName, "Arial"), "wrong face name %s\n", lf.lfFaceName);
     GdipDeleteFont(font);
 
     /* empty FaceName */
     lf.lfFaceName[0] = 0;
     status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
-todo_wine
     expect(Ok, status);
     memset(&lf, 0xfe, sizeof(lf));
     status = GdipGetLogFontA(font, graphics, &lf);
     expect(Ok, status);
-todo_wine
     ok(!lstrcmp(lf.lfFaceName, "Arial"), "wrong face name %s\n", lf.lfFaceName);
     GdipDeleteFont(font);
 
@@ -793,12 +789,14 @@ todo_wine
     lf.lfCharSet = 0;
     lstrcpy(lf.lfFaceName, "ThisFontShouldNotExist");
     status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
+todo_wine
     ok(status == NotTrueTypeFont || broken(status == FileNotFound), /* before XP */
        "expected NotTrueTypeFont, got %d\n", status);
 
     /* empty FaceName */
     lf.lfFaceName[0] = 0;
     status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
+todo_wine
     ok(status == NotTrueTypeFont || broken(status == FileNotFound), /* before XP */
        "expected NotTrueTypeFont, got %d\n", status);
 

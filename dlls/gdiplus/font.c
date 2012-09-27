@@ -205,6 +205,7 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
 {
     HFONT hfont, oldfont;
     OUTLINETEXTMETRICW otm;
+    WCHAR facename[LF_FACESIZE];
     GpStatus stat;
     int ret;
 
@@ -217,6 +218,7 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     oldfont = SelectObject(hdc, hfont);
     otm.otmSize = sizeof(otm);
     ret = GetOutlineTextMetricsW(hdc, otm.otmSize, &otm);
+    GetTextFaceW(hdc, LF_FACESIZE, facename);
     SelectObject(hdc, oldfont);
     DeleteObject(hfont);
 
@@ -229,7 +231,7 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     (*font)->emSize = otm.otmTextMetrics.tmAscent;
     (*font)->otm = otm;
 
-    stat = GdipCreateFontFamilyFromName(logfont->lfFaceName, NULL, &(*font)->family);
+    stat = GdipCreateFontFamilyFromName(facename, NULL, &(*font)->family);
     if (stat != Ok)
     {
         GdipFree(*font);
