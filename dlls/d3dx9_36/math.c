@@ -1305,23 +1305,23 @@ D3DXQUATERNION* WINAPI D3DXQuaternionInverse(D3DXQUATERNION *pout, CONST D3DXQUA
     return pout;
 }
 
-D3DXQUATERNION* WINAPI D3DXQuaternionLn(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)
+D3DXQUATERNION * WINAPI D3DXQuaternionLn(D3DXQUATERNION *out, const D3DXQUATERNION *q)
 {
     FLOAT t;
 
-    TRACE("(%p, %p)\n", pout, pq);
+    TRACE("out %p, q %p\n", out, q);
 
-    if ( (pq->w >= 1.0f) || (pq->w == -1.0f) )
+    if ((q->w >= 1.0f) || (q->w == -1.0f))
         t = 1.0f;
     else
-        t = acos( pq->w ) / sqrt( 1.0f - pq->w * pq->w );
+        t = acosf(q->w) / sqrtf(1.0f - q->w * q->w);
 
-    pout->x = t * pq->x;
-    pout->y = t * pq->y;
-    pout->z = t * pq->z;
-    pout->w = 0.0f;
+    out->x = t * q->x;
+    out->y = t * q->y;
+    out->z = t * q->z;
+    out->w = 0.0f;
 
-    return pout;
+    return out;
 }
 
 D3DXQUATERNION* WINAPI D3DXQuaternionMultiply(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2)
