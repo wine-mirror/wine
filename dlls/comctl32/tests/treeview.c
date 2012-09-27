@@ -1393,6 +1393,11 @@ static void test_expandnotify(void)
     ret = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
     expect(TRUE, ret);
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessageA(hTree, TVM_EXPAND, TVE_COLLAPSE, (LPARAM)hRoot);
+    todo_wine expect(FALSE, ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "no collapse notifications", FALSE);
+
     g_get_from_expand = TRUE;
     /* expand */
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -1481,7 +1486,7 @@ static void test_expandnotify(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     ret = SendMessageA(hTree, WM_KEYDOWN, VK_ADD, 0);
     expect(FALSE, ret);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_expand_empty_kb_seq, "expand node with no children", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_expand_empty_kb_seq, "expand node with no children", FALSE);
 
     DestroyWindow(hTree);
 }

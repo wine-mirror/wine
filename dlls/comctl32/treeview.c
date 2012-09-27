@@ -3237,10 +3237,10 @@ TREEVIEW_Collapse(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
 
     TRACE("TVE_COLLAPSE %p %s\n", item, TREEVIEW_ItemName(item));
 
-    if (!(item->state & TVIS_EXPANDED))
+    if (!TREEVIEW_HasChildren(infoPtr, item))
 	return FALSE;
 
-    if (bUser || !(item->state & TVIS_EXPANDEDONCE))
+    if (bUser)
 	TREEVIEW_SendExpanding(infoPtr, item, action);
 
     if (item->firstChild == NULL)
@@ -3248,7 +3248,7 @@ TREEVIEW_Collapse(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
 
     item->state &= ~TVIS_EXPANDED;
 
-    if (bUser || !(item->state & TVIS_EXPANDEDONCE))
+    if (bUser)
 	TREEVIEW_SendExpanded(infoPtr, item, action);
 
     bSetSelection = (infoPtr->selectedItem != NULL
@@ -3344,8 +3344,8 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
 
     TRACE("(%p, %p, partial=%d, %d\n", infoPtr, item, partial, user);
 
-    if (item->state & TVIS_EXPANDED)
-       return TRUE;
+    if (!TREEVIEW_HasChildren(infoPtr, item))
+	return FALSE;
 
     tmpItem = item; nextItem = NULL;
     while (tmpItem)
