@@ -3053,6 +3053,10 @@ msgstr "Simboliai"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
+#: gdi32.rc:42 wldap32.rc:107
+msgid "Other"
+msgstr "Kita"
+
 #: gphoto2.rc:27
 msgid "Files on Camera"
 msgstr "Failai kameroje"
@@ -9169,10 +9173,6 @@ msgstr "Rezultatai per dideli"
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
 msgstr "Įtakoja daugelį DSA"
-
-#: wldap32.rc:107
-msgid "Other"
-msgstr "Kita"
 
 #: wldap32.rc:108
 msgid "Server Down"

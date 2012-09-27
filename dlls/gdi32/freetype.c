@@ -5011,6 +5011,7 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset_list *l
     }
     else { /* charset is DEFAULT_CHARSET or invalid. */
         INT acp, i;
+        DWORD mask = 0;
 
         /* Set the current codepage's charset as the first element. */
         acp = GetACP();
@@ -5019,6 +5020,7 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset_list *l
             list->element[n].mask    = csi.fs.fsCsb[0];
             list->element[n].charset = csi.ciCharset;
             load_script_name( ffs(csi.fs.fsCsb[0]) - 1, list->element[n].name );
+            mask |= csi.fs.fsCsb[0];
             n++;
         }
 
@@ -5027,7 +5029,7 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset_list *l
             FONTSIGNATURE fs;
             fs.fsCsb[0] = 1L << i;
             fs.fsCsb[1] = 0;
-            if (n > 0 && fs.fsCsb[0] == list->element[0].mask)
+            if (fs.fsCsb[0] & mask)
                 continue; /* skip, already added. */
             if (!TranslateCharsetInfo(fs.fsCsb, &csi, TCI_SRCFONTSIG))
                 continue; /* skip, this is an invalid fsCsb bit. */
@@ -5035,6 +5037,16 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset_list *l
             list->element[n].mask    = fs.fsCsb[0];
             list->element[n].charset = csi.ciCharset;
             load_script_name( i, list->element[n].name );
+            mask |= fs.fsCsb[0];
+            n++;
+        }
+
+        /* add catch all mask for remaining bits */
+        if (~mask)
+        {
+            list->element[n].mask    = ~mask;
+            list->element[n].charset = DEFAULT_CHARSET;
+            load_script_name( IDS_OTHER - IDS_FIRST_SCRIPT, list->element[n].name );
             n++;
         }
     }
@@ -5186,11 +5198,15 @@ static BOOL enum_face_charsets(const Family *family, Face *face, struct enum_cha
     for(i = 0; i < list->total; i++) {
         if(!face->scalable && face->fs.fsCsb[0] == 0) { /* OEM bitmap */
             elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = OEM_CHARSET;
-            load_script_name( IDS_OEM_DOS, elf.elfScript );
+            load_script_name( IDS_OEM_DOS - IDS_FIRST_SCRIPT, elf.elfScript );
             i = list->total; /* break out of loop after enumeration */
-        } else if(!(face->fs.fsCsb[0] & list->element[i].mask))
-            continue;
-        else {
+        }
+        else
+        {
+            if(!(face->fs.fsCsb[0] & list->element[i].mask)) continue;
+            /* use the DEFAULT_CHARSET case only if no other charset is present */
+            if (list->element[i].charset == DEFAULT_CHARSET &&
+                (face->fs.fsCsb[0] & ~list->element[i].mask)) continue;
             elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = list->element[i].charset;
             strcpyW(elf.elfScript, list->element[i].name);
             if (!elf.elfScript[0])

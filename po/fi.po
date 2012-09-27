@@ -3042,6 +3042,10 @@ msgstr "Symbolit"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
+#: gdi32.rc:42 wldap32.rc:107
+msgid "Other"
+msgstr "Muu"
+
 #: gphoto2.rc:27
 msgid "Files on Camera"
 msgstr "Tiedostot kamerassa"
@@ -9129,10 +9133,6 @@ msgstr "Tulokset liian suuret"
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
 msgstr "Vaikuttaa usean DSA:han"
-
-#: wldap32.rc:107
-msgid "Other"
-msgstr "Muu"
 
 #: wldap32.rc:108
 msgid "Server Down"

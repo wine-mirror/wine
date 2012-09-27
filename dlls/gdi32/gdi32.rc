@@ -39,6 +39,7 @@ STRINGTABLE
   IDS_HANGUL_JOHAB      "Hangul(Johab)"
   IDS_SYMBOL            "Symbol"
   IDS_OEM_DOS           "OEM/DOS"
+  IDS_OTHER             "Other"
 }
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL

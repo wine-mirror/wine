@@ -37,3 +37,4 @@
 #define IDS_HANGUL_JOHAB     (IDS_FIRST_SCRIPT + 21)
 #define IDS_SYMBOL           (IDS_FIRST_SCRIPT + 31)
 #define IDS_OEM_DOS          (IDS_FIRST_SCRIPT + 32)
+#define IDS_OTHER            (IDS_FIRST_SCRIPT + 33)

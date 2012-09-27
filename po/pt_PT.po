@@ -3087,6 +3087,10 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
+#: gdi32.rc:42 wldap32.rc:107
+msgid "Other"
+msgstr "Outro"
+
 #: gphoto2.rc:27
 msgid "Files on Camera"
 msgstr "Ficheiros na Câmara"
@@ -9203,10 +9207,6 @@ msgstr "Resultados Muito Grandes"
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
 msgstr "Afecta Múltiplos DSAs"
-
-#: wldap32.rc:107
-msgid "Other"
-msgstr "Outro"
 
 #: wldap32.rc:108
 msgid "Server Down"

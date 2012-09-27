@@ -3058,6 +3058,10 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
+#: gdi32.rc:42 wldap32.rc:107
+msgid "Other"
+msgstr "Altul"
+
 #: gphoto2.rc:27
 msgid "Files on Camera"
 msgstr "Fișiere în aparatul foto"
@@ -9454,10 +9458,6 @@ msgstr "Rezultate prea mari"
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
 msgstr "Afectează mai multe DSA"
-
-#: wldap32.rc:107
-msgid "Other"
-msgstr "Altul"
 
 #: wldap32.rc:108
 msgid "Server Down"

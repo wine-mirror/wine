@@ -3098,6 +3098,10 @@ msgstr "Symbol"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
+#: gdi32.rc:42 wldap32.rc:107
+msgid "Other"
+msgstr "Anders"
+
 #: gphoto2.rc:27
 msgid "Files on Camera"
 msgstr "Bestanden op de camera"
@@ -9299,10 +9303,6 @@ msgstr "Resultaten te groot"
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
 msgstr "Betreft meerdere DSA's"
-
-#: wldap32.rc:107
-msgid "Other"
-msgstr "Anders"
 
 #: wldap32.rc:108
 msgid "Server Down"

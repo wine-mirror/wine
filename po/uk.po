@@ -3068,6 +3068,10 @@ msgstr "Символ"
 msgid "OEM/DOS"
 msgstr ""
 
+#: gdi32.rc:42 wldap32.rc:107
+msgid "Other"
+msgstr "Інший"
+
 #: gphoto2.rc:27
 msgid "Files on Camera"
 msgstr "Файли в камері"
@@ -9209,10 +9213,6 @@ msgstr "Результати завеликі"
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
 msgstr "Впливає на декілька DSA"
-
-#: wldap32.rc:107
-msgid "Other"
-msgstr "Інший"
 
 #: wldap32.rc:108
 msgid "Server Down"

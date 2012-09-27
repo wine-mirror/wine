@@ -3131,6 +3131,10 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
+#: gdi32.rc:42 wldap32.rc:107
+msgid "Other"
+msgstr "Ostalo"
+
 #: gphoto2.rc:27
 msgid "Files on Camera"
 msgstr "Datoteke na kameri"
@@ -9452,10 +9456,6 @@ msgstr "Rezultati su preveliki"
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
 msgstr "Utiče na višestruke algoritme"
-
-#: wldap32.rc:107
-msgid "Other"
-msgstr "Ostalo"
 
 #: wldap32.rc:108
 msgid "Server Down"

@@ -3075,6 +3075,10 @@ msgstr "Szimbólum"
 msgid "OEM/DOS"
 msgstr "OEM/DO"
 
+#: gdi32.rc:42 wldap32.rc:107
+msgid "Other"
+msgstr "Egyéb"
+
 #: gphoto2.rc:27
 msgid "Files on Camera"
 msgstr "Fényképezőgépen lévő fájlok"
@@ -9179,10 +9183,6 @@ msgstr "Eredmény túl nagy"
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
 msgstr "Több DSA-ra van hatással"
-
-#: wldap32.rc:107
-msgid "Other"
-msgstr "Egyéb"
 
 #: wldap32.rc:108
 msgid "Server Down"

@@ -3039,6 +3039,10 @@ msgstr "기호"
 msgid "OEM/DOS"
 msgstr "OEM/도"
 
+#: gdi32.rc:42 wldap32.rc:107
+msgid "Other"
+msgstr "다른 문제"
+
 #: gphoto2.rc:27
 msgid "Files on Camera"
 msgstr "카메라에 있는 파"
@@ -9115,10 +9119,6 @@ msgstr "결과가 너무 큽니다"
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
 msgstr "다양한 DSAs이 작용합니다"
-
-#: wldap32.rc:107
-msgid "Other"
-msgstr "다른 문제"
 
 #: wldap32.rc:108
 msgid "Server Down"

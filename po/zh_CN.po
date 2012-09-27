@@ -2979,6 +2979,10 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
+#: gdi32.rc:42 wldap32.rc:107
+msgid "Other"
+msgstr ""
+
 #: gphoto2.rc:27
 msgid "Files on Camera"
 msgstr "照相机中的文件"
@@ -8944,10 +8948,6 @@ msgstr ""
 
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
-msgstr ""
-
-#: wldap32.rc:107
-msgid "Other"
 msgstr ""
 
 #: wldap32.rc:108

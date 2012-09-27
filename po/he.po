@@ -3050,6 +3050,10 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
+#: gdi32.rc:42 wldap32.rc:107
+msgid "Other"
+msgstr "אחר"
+
 #: gphoto2.rc:27
 msgid "Files on Camera"
 msgstr "קבצים במצלמה"
@@ -9289,10 +9293,6 @@ msgstr "התוצאות גדולות מדי"
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
 msgstr "משפיע על מספר DSA"
-
-#: wldap32.rc:107
-msgid "Other"
-msgstr "אחר"
 
 #: wldap32.rc:108
 msgid "Server Down"

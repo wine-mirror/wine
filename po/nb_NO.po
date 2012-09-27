@@ -3156,6 +3156,10 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
+#: gdi32.rc:42 wldap32.rc:107
+msgid "Other"
+msgstr "Annen"
+
 #: gphoto2.rc:27
 msgid "Files on Camera"
 msgstr "Filer på kamera"
@@ -9446,10 +9450,6 @@ msgstr "Resultatene er for store"
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
 msgstr "Berører flere DSA'er"
-
-#: wldap32.rc:107
-msgid "Other"
-msgstr "Annen"
 
 #: wldap32.rc:108
 msgid "Server Down"

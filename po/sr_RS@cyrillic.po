@@ -3050,6 +3050,10 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
+#: gdi32.rc:42 wldap32.rc:107
+msgid "Other"
+msgstr "Остало"
+
 #: gphoto2.rc:27
 msgid "Files on Camera"
 msgstr "Датотеке на камери"
@@ -9352,10 +9356,6 @@ msgstr "Резултати су превелики"
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
 msgstr "Утиче на вишеструке алгоритме"
-
-#: wldap32.rc:107
-msgid "Other"
-msgstr "Остало"
 
 #: wldap32.rc:108
 msgid "Server Down"

@@ -3075,6 +3075,10 @@ msgstr "Symbol"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
+#: gdi32.rc:42 wldap32.rc:107
+msgid "Other"
+msgstr "Otro"
+
 #: gphoto2.rc:27
 msgid "Files on Camera"
 msgstr "Archivos de la cámara"
@@ -9256,10 +9260,6 @@ msgstr "Resultados demasiado largos"
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
 msgstr "Afecta a múltiples DSAs"
-
-#: wldap32.rc:107
-msgid "Other"
-msgstr "Otro"
 
 #: wldap32.rc:108
 msgid "Server Down"
