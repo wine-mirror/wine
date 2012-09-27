@@ -726,6 +726,129 @@ rem del tmp
 rem for /d %%i in (*) do echo %%i>> tmp
 rem sort < tmp
 rem del tmp
+echo > baz\bazbaz
+goto :TestForR
+
+:SetExpected
+del temp.bat 2>nul
+call :WriteLine set found=N
+for /l %%i in (1,1,%expectedresults%) do (
+  call :WriteLine if "%%%%expectedresults.%%i%%%%"=="%%%%1" set found=Y
+  call :WriteLine if "%%%%found%%%%"=="Y" set expectedresults.%%i=
+  call :WriteLine if "%%%%found%%%%"=="Y" goto :eof
+)
+call :WriteLine echo Got unexpected result: "%%%%1"
+goto :eof
+
+:WriteLine
+echo %*>> temp.bat
+goto :EOF
+
+:ValidateExpected
+del temp.bat 2>nul
+for /l %%i in (1,1,%expectedresults%) do  call :WriteLine if not "%%%%expectedresults.%%i%%%%"=="" echo Found missing result: "%%%%expectedresults.%%i%%%%"
+call temp.bat
+del temp.bat 2>nul
+goto :eof
+
+:TestForR
+rem %CD% does not tork on NT4 so use the following workaround
+for /d %%i in (.) do set CURDIR=%%~dpnxi
+
+echo --- for /R
+echo Plain directory enumeration
+set expectedresults=4
+set expectedresults.1=%CURDIR%\.
+set expectedresults.2=%CURDIR%\bar\.
+set expectedresults.3=%CURDIR%\baz\.
+set expectedresults.4=%CURDIR%\foo\.
+call :SetExpected
+for /R %%i in (.) do call temp.bat %%i
+call :ValidateExpected
+
+echo Plain directory enumeration from provided root
+set expectedresults=4
+set expectedresults.1=%CURDIR%\.
+set expectedresults.2=%CURDIR%\bar\.
+set expectedresults.3=%CURDIR%\baz\.
+set expectedresults.4=%CURDIR%\foo\.
+if "%CD%"=="" goto :SkipBrokenNT4
+call :SetExpected
+for /R "%CURDIR%" %%i in (.) do call temp.bat %%i
+call :ValidateExpected
+:SkipBrokenNT4
+
+echo File enumeration
+set expectedresults=2
+set expectedresults.1=%CURDIR%\baz\bazbaz
+set expectedresults.2=%CURDIR%\bazbaz
+call :SetExpected
+for /R %%i in (baz*) do call temp.bat %%i
+call :ValidateExpected
+
+echo File enumeration from provided root
+set expectedresults=2
+set expectedresults.1=%CURDIR%\baz\bazbaz
+set expectedresults.2=%CURDIR%\bazbaz
+call :SetExpected
+for /R %%i in (baz*) do call temp.bat %%i
+call :ValidateExpected
+
+echo Mixed enumeration
+set expectedresults=6
+set expectedresults.1=%CURDIR%\.
+set expectedresults.2=%CURDIR%\bar\.
+set expectedresults.3=%CURDIR%\baz\.
+set expectedresults.4=%CURDIR%\baz\bazbaz
+set expectedresults.5=%CURDIR%\bazbaz
+set expectedresults.6=%CURDIR%\foo\.
+call :SetExpected
+for /R %%i in (. baz*) do call temp.bat %%i
+call :ValidateExpected
+
+echo Mixed enumeration from provided root
+set expectedresults=6
+set expectedresults.1=%CURDIR%\.
+set expectedresults.2=%CURDIR%\bar\.
+set expectedresults.3=%CURDIR%\baz\.
+set expectedresults.4=%CURDIR%\baz\bazbaz
+set expectedresults.5=%CURDIR%\bazbaz
+set expectedresults.6=%CURDIR%\foo\.
+call :SetExpected
+for /R %%i in (. baz*) do call temp.bat %%i
+call :ValidateExpected
+
+echo With duplicates enumeration
+set expectedresults=12
+set expectedresults.1=%CURDIR%\bar\bazbaz
+set expectedresults.2=%CURDIR%\bar\fred
+set expectedresults.3=%CURDIR%\baz\bazbaz
+set expectedresults.4=%CURDIR%\baz\bazbaz
+set expectedresults.5=%CURDIR%\baz\bazbaz
+set expectedresults.6=%CURDIR%\baz\fred
+set expectedresults.7=%CURDIR%\bazbaz
+set expectedresults.8=%CURDIR%\bazbaz
+set expectedresults.9=%CURDIR%\bazbaz
+set expectedresults.10=%CURDIR%\foo\bazbaz
+set expectedresults.11=%CURDIR%\foo\fred
+set expectedresults.12=%CURDIR%\fred
+call :SetExpected
+for /R %%i in (baz* bazbaz fred ba*) do call temp.bat %%i
+call :ValidateExpected
+
+echo Strip missing wildcards, keep unwildcarded names
+set expectedresults=6
+set expectedresults.1=%CURDIR%\bar\jim
+set expectedresults.2=%CURDIR%\baz\bazbaz
+set expectedresults.3=%CURDIR%\baz\jim
+set expectedresults.4=%CURDIR%\bazbaz
+set expectedresults.5=%CURDIR%\foo\jim
+set expectedresults.6=%CURDIR%\jim
+call :SetExpected
+for /R %%i in (baz* fred* jim) do call temp.bat %%i
+call :ValidateExpected
+
+echo for /R passed
 cd .. & rd /s/Q foobar
 echo --- for /L
 rem Some cases loop forever writing 0s, like e.g. (1,0,1), (1,a,3) or (a,b,c); those can't be tested here

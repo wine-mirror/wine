@@ -1079,10 +1079,13 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   WCHAR variable[4];
   WCHAR *firstCmd;
   int thisDepth;
+  WCHAR optionsRoot[MAX_PATH];
+  DIRECTORY_STACK *dirsToWalk = NULL;
 
   BOOL   expandDirs  = FALSE;
   BOOL   useNumbers  = FALSE;
   BOOL   doFileset   = FALSE;
+  BOOL   doRecurse   = FALSE;
   BOOL   doExecuted  = FALSE;  /* Has the 'do' part been executed */
   LONG   numbers[3] = {0,0,0}; /* Defaults to 0 in native */
   int    itemNum;
@@ -1091,6 +1094,8 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
   /* Handle optional qualifiers (multiple are allowed) */
   WCHAR *thisArg = WCMD_parameter(p, parameterNo++, NULL, NULL, FALSE);
+
+  optionsRoot[0] = 0;
   while (thisArg && *thisArg == '/') {
       WINE_TRACE("Processing qualifier at %s\n", wine_dbgstr_w(thisArg));
       thisArg++;
@@ -1103,20 +1108,23 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
       case 'R':
       case 'F':
           {
-              BOOL isRecursive = (*thisArg == 'R');
+              /* When recursing directories, use current directory as the starting point unless
+                 subsequently overridden */
+              doRecurse = (toupperW(*thisArg) == 'R');
+              if (doRecurse) GetCurrentDirectoryW(sizeof(optionsRoot)/sizeof(WCHAR), optionsRoot);
 
-              if (!isRecursive)
-                  doFileset = TRUE;
+              doFileset = (toupperW(*thisArg) == 'F');
 
-              /* Retrieve next parameter to see if is path/options */
-              thisArg = WCMD_parameter(p, parameterNo, NULL, NULL, !isRecursive);
+              /* Retrieve next parameter to see if is root/options (raw form required
+                 with for /f, or unquoted in for /r)                                  */
+              thisArg = WCMD_parameter(p, parameterNo, NULL, NULL, doFileset);
 
               /* Next parm is either qualifier, path/options or variable -
                  only care about it if it is the path/options              */
               if (thisArg && *thisArg != '/' && *thisArg != '%') {
                   parameterNo++;
-                  if (isRecursive) WINE_FIXME("/R needs to handle supplied root\n");
-                  else {
+                  strcpyW(optionsRoot, thisArg);
+                  if (!doRecurse) {
                       static unsigned int once;
                       if (!once++) WINE_FIXME("/F needs to handle options\n");
                   }
@@ -1135,6 +1143,17 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   if (!*thisArg || *thisArg != '%') {
       WCMD_output_stderr (WCMD_LoadMessage(WCMD_SYNTAXERR));
       return;
+  }
+
+  /* Set up the list of directories to recurse if we are going to */
+  if (doRecurse) {
+       /* Allocate memory, add to list */
+       dirsToWalk = HeapAlloc(GetProcessHeap(), 0, sizeof(DIRECTORY_STACK));
+       dirsToWalk->next = NULL;
+       dirsToWalk->dirName = HeapAlloc(GetProcessHeap(),0,
+                                       (strlenW(optionsRoot) + 1) * sizeof(WCHAR));
+       strcpyW(dirsToWalk->dirName, optionsRoot);
+       WINE_TRACE("Starting with root directory %s\n", wine_dbgstr_w(dirsToWalk->dirName));
   }
 
   /* Variable should follow */
@@ -1178,198 +1197,277 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
       return;
   }
 
-  /* Save away the starting position for the commands (and offset for the
-     first one                                                           */
-  cmdStart = *cmdList;
   cmdEnd   = *cmdList;
-  firstCmd = (*cmdList)->command + 3; /* Skip 'do ' */
-  itemNum  = 0;
 
-  thisSet = setStart;
-  /* Loop through all set entries */
-  while (thisSet &&
-         thisSet->command != NULL &&
-         thisSet->bracketDepth >= thisDepth) {
+  /* Loop repeatedly per-directory we are potentially walking, when in for /r
+     mode, or once for the rest of the time.                                  */
+  do {
+    WCHAR fullitem[MAX_PATH];
+    static const WCHAR slashstarW[] = {'\\','*','\0'};
 
-    /* Loop through all entries on the same line */
-    WCHAR *item;
-    WCHAR *itemStart;
+    /* Save away the starting position for the commands (and offset for the
+       first one)                                                           */
+    cmdStart = *cmdList;
+    firstCmd = (*cmdList)->command + 3; /* Skip 'do ' */
+    itemNum  = 0;
 
-    WINE_TRACE("Processing for set %p\n", thisSet);
-    i = 0;
-    while (*(item = WCMD_parameter (thisSet->command, i, &itemStart, NULL, TRUE))) {
+    /* If we are recursing directories (ie /R), add all sub directories now, then
+       prefix the root when searching for the item */
+    if (dirsToWalk) {
+      DIRECTORY_STACK *remainingDirs = dirsToWalk;
 
-      /*
-       * If the parameter within the set has a wildcard then search for matching files
-       * otherwise do a literal substitution.
-       */
-      static const WCHAR wildcards[] = {'*','?','\0'};
-      thisCmdStart = cmdStart;
-
-      itemNum++;
-      WINE_TRACE("Processing for item %d '%s'\n", itemNum, wine_dbgstr_w(item));
-
-      if (!useNumbers && !doFileset) {
-          if (strpbrkW (item, wildcards)) {
-            hff = FindFirstFileW(item, &fd);
-            if (hff != INVALID_HANDLE_VALUE) {
-              do {
-                BOOL isDirectory = FALSE;
-
-                if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) isDirectory = TRUE;
-
-                /* Handle as files or dirs appropriately, but ignore . and .. */
-                if (isDirectory == expandDirs &&
-                    (strcmpW(fd.cFileName, dotdotW) != 0) &&
-                    (strcmpW(fd.cFileName, dotW) != 0))
-                {
-                  thisCmdStart = cmdStart;
-                  WINE_TRACE("Processing FOR filename %s\n", wine_dbgstr_w(fd.cFileName));
-                  doExecuted = TRUE;
-                  WCMD_part_execute (&thisCmdStart, firstCmd, variable,
-                                               fd.cFileName, FALSE, TRUE);
-                }
-
-              } while (FindNextFileW(hff, &fd) != 0);
-              FindClose (hff);
-            }
-          } else {
-            doExecuted = TRUE;
-            WCMD_part_execute(&thisCmdStart, firstCmd, variable, item, FALSE, TRUE);
+      /* Build a generic search and add all directories on the list of directories
+         still to walk                                                             */
+      strcpyW(fullitem, dirsToWalk->dirName);
+      strcatW(fullitem, slashstarW);
+      hff = FindFirstFileW(fullitem, &fd);
+      if (hff != INVALID_HANDLE_VALUE) {
+        do {
+          WINE_TRACE("Looking for subdirectories\n");
+          if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+              (strcmpW(fd.cFileName, dotdotW) != 0) &&
+              (strcmpW(fd.cFileName, dotW) != 0))
+          {
+            /* Allocate memory, add to list */
+            DIRECTORY_STACK *toWalk = HeapAlloc(GetProcessHeap(), 0, sizeof(DIRECTORY_STACK));
+            WINE_TRACE("(%p->%p)\n", remainingDirs, remainingDirs->next);
+            toWalk->next = remainingDirs->next;
+            remainingDirs->next = toWalk;
+            remainingDirs = toWalk;
+            toWalk->dirName = HeapAlloc(GetProcessHeap(), 0,
+                                        sizeof(WCHAR) *
+                                        (strlenW(dirsToWalk->dirName) + 2 + strlenW(fd.cFileName)));
+            strcpyW(toWalk->dirName, dirsToWalk->dirName);
+            strcatW(toWalk->dirName, slashW);
+            strcatW(toWalk->dirName, fd.cFileName);
+            WINE_TRACE("Added to stack %s (%p->%p)\n", wine_dbgstr_w(toWalk->dirName),
+                       toWalk, toWalk->next);
           }
-
-      } else if (useNumbers) {
-          /* Convert the first 3 numbers to signed longs and save */
-          if (itemNum <=3) numbers[itemNum-1] = atolW(item);
-          /* else ignore them! */
-
-      /* Filesets - either a list of files, or a command to run and parse the output */
-      } else if (doFileset && *itemStart != '"') {
-
-          HANDLE input;
-          WCHAR temp_file[MAX_PATH];
-
-          WINE_TRACE("Processing for filespec from item %d '%s'\n", itemNum,
-                     wine_dbgstr_w(item));
-
-          /* If backquote or single quote, we need to launch that command
-             and parse the results - use a temporary file                 */
-          if (*itemStart == '`' || *itemStart == '\'') {
-
-              WCHAR temp_path[MAX_PATH], temp_cmd[MAXSTRING];
-              static const WCHAR redirOut[] = {'>','%','s','\0'};
-              static const WCHAR cmdW[]     = {'C','M','D','\0'};
-
-              /* Remove trailing character */
-              itemStart[strlenW(itemStart)-1] = 0x00;
-
-              /* Get temp filename */
-              GetTempPathW(sizeof(temp_path)/sizeof(WCHAR), temp_path);
-              GetTempFileNameW(temp_path, cmdW, 0, temp_file);
-
-              /* Execute program and redirect output */
-              wsprintfW(temp_cmd, redirOut, (itemStart+1), temp_file);
-              WCMD_execute (itemStart, temp_cmd, NULL, NULL, NULL);
-
-              /* Open the file, read line by line and process */
-              input = CreateFileW(temp_file, GENERIC_READ, FILE_SHARE_READ,
-                                  NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-          } else {
-
-              /* Open the file, read line by line and process */
-              input = CreateFileW(item, GENERIC_READ, FILE_SHARE_READ,
-                                  NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-          }
-
-          /* Process the input file */
-          if (input == INVALID_HANDLE_VALUE) {
-            WCMD_print_error ();
-            WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), item);
-            errorlevel = 1;
-            return; /* FOR loop aborts at first failure here */
-
-          } else {
-
-            WCHAR buffer[MAXSTRING] = {'\0'};
-            WCHAR *where, *parm;
-
-            while (WCMD_fgets(buffer, sizeof(buffer)/sizeof(WCHAR), input)) {
-
-              /* Skip blank lines*/
-              parm = WCMD_parameter (buffer, 0, &where, NULL, FALSE);
-              WINE_TRACE("Parsed parameter: %s from %s\n", wine_dbgstr_w(parm),
-                         wine_dbgstr_w(buffer));
-
-              if (where) {
-                  /* FIXME: The following should be moved into its own routine and
-                     reused for the string literal parsing below                  */
-                  thisCmdStart = cmdStart;
-                  doExecuted = TRUE;
-                  WCMD_part_execute(&thisCmdStart, firstCmd, variable, parm, FALSE, TRUE);
-                  cmdEnd = thisCmdStart;
-              }
-
-              buffer[0] = 0x00;
-
-            }
-            CloseHandle (input);
-          }
-
-          /* Delete the temporary file */
-          if (*itemStart == '`' || *itemStart == '\'') {
-              DeleteFileW(temp_file);
-          }
-
-      /* Filesets - A string literal */
-      } else if (doFileset && *itemStart == '"') {
-          WCHAR buffer[MAXSTRING] = {'\0'};
-          WCHAR *where, *parm;
-
-          /* Skip blank lines, and re-extract parameter now string has quotes removed */
-          strcpyW(buffer, item);
-          parm = WCMD_parameter (buffer, 0, &where, NULL, FALSE);
-          WINE_TRACE("Parsed parameter: %s from %s\n", wine_dbgstr_w(parm),
-                       wine_dbgstr_w(buffer));
-
-          if (where) {
-              /* FIXME: The following should be moved into its own routine and
-                 reused for the string literal parsing below                  */
-              thisCmdStart = cmdStart;
-              doExecuted = TRUE;
-              WCMD_part_execute(&thisCmdStart, firstCmd, variable, parm, FALSE, TRUE);
-              cmdEnd = thisCmdStart;
-          }
+        } while (FindNextFileW(hff, &fd) != 0);
+        WINE_TRACE("Finished adding all subdirectories\n");
+        FindClose (hff);
       }
-
-      WINE_TRACE("Post-command, cmdEnd = %p\n", cmdEnd);
-      cmdEnd = thisCmdStart;
-      i++;
     }
 
-    /* Move onto the next set line */
-    thisSet = thisSet->nextcommand;
-  }
+    thisSet = setStart;
+    /* Loop through all set entries */
+    while (thisSet &&
+           thisSet->command != NULL &&
+           thisSet->bracketDepth >= thisDepth) {
 
-  /* If /L is provided, now run the for loop */
-  if (useNumbers) {
-      WCHAR thisNum[20];
-      static const WCHAR fmt[] = {'%','d','\0'};
+      /* Loop through all entries on the same line */
+      WCHAR *item;
+      WCHAR *itemStart;
 
-      WINE_TRACE("FOR /L provided range from %d to %d step %d\n",
-                 numbers[0], numbers[2], numbers[1]);
-      for (i=numbers[0];
-           (numbers[1]<0)? i>=numbers[2] : i<=numbers[2];
-           i=i + numbers[1]) {
+      WINE_TRACE("Processing for set %p\n", thisSet);
+      i = 0;
+      while (*(item = WCMD_parameter (thisSet->command, i, &itemStart, NULL, TRUE))) {
 
-          sprintfW(thisNum, fmt, i);
-          WINE_TRACE("Processing FOR number %s\n", wine_dbgstr_w(thisNum));
+        /*
+         * If the parameter within the set has a wildcard then search for matching files
+         * otherwise do a literal substitution.
+         */
+        static const WCHAR wildcards[] = {'*','?','\0'};
+        thisCmdStart = cmdStart;
 
-          thisCmdStart = cmdStart;
-          doExecuted = TRUE;
-          WCMD_part_execute(&thisCmdStart, firstCmd, variable, thisNum, FALSE, TRUE);
+        itemNum++;
+        WINE_TRACE("Processing for item %d '%s'\n", itemNum, wine_dbgstr_w(item));
+
+        if (!useNumbers && !doFileset) {
+            WCHAR fullitem[MAX_PATH];
+
+            /* Now build the item to use / search for in the specified directory,
+               as it is fully qualified in the /R case */
+            if (dirsToWalk) {
+              strcpyW(fullitem, dirsToWalk->dirName);
+              strcatW(fullitem, slashW);
+              strcatW(fullitem, item);
+            } else {
+              strcpyW(fullitem, item);
+            }
+
+            if (strpbrkW (fullitem, wildcards)) {
+
+              hff = FindFirstFileW(fullitem, &fd);
+              if (hff != INVALID_HANDLE_VALUE) {
+                do {
+                  BOOL isDirectory = FALSE;
+
+                  if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) isDirectory = TRUE;
+
+                  /* Handle as files or dirs appropriately, but ignore . and .. */
+                  if (isDirectory == expandDirs &&
+                      (strcmpW(fd.cFileName, dotdotW) != 0) &&
+                      (strcmpW(fd.cFileName, dotW) != 0))
+                  {
+                      thisCmdStart = cmdStart;
+                      WINE_TRACE("Processing FOR filename %s\n", wine_dbgstr_w(fd.cFileName));
+
+                      if (doRecurse) {
+                          strcpyW(fullitem, dirsToWalk->dirName);
+                          strcatW(fullitem, slashW);
+                          strcatW(fullitem, fd.cFileName);
+                      } else {
+                          strcpyW(fullitem, fd.cFileName);
+                      }
+                      doExecuted = TRUE;
+                      WCMD_part_execute (&thisCmdStart, firstCmd, variable,
+                                                   fullitem, FALSE, TRUE);
+                      cmdEnd = thisCmdStart;
+                  }
+                } while (FindNextFileW(hff, &fd) != 0);
+                FindClose (hff);
+              }
+            } else {
+              doExecuted = TRUE;
+              WCMD_part_execute(&thisCmdStart, firstCmd, variable, fullitem, FALSE, TRUE);
+              cmdEnd = thisCmdStart;
+            }
+
+        } else if (useNumbers) {
+            /* Convert the first 3 numbers to signed longs and save */
+            if (itemNum <=3) numbers[itemNum-1] = atolW(item);
+            /* else ignore them! */
+
+        /* Filesets - either a list of files, or a command to run and parse the output */
+        } else if (doFileset && *itemStart != '"') {
+
+            HANDLE input;
+            WCHAR temp_file[MAX_PATH];
+
+            WINE_TRACE("Processing for filespec from item %d '%s'\n", itemNum,
+                       wine_dbgstr_w(item));
+
+            /* If backquote or single quote, we need to launch that command
+               and parse the results - use a temporary file                 */
+            if (*itemStart == '`' || *itemStart == '\'') {
+
+                WCHAR temp_path[MAX_PATH], temp_cmd[MAXSTRING];
+                static const WCHAR redirOut[] = {'>','%','s','\0'};
+                static const WCHAR cmdW[]     = {'C','M','D','\0'};
+
+                /* Remove trailing character */
+                itemStart[strlenW(itemStart)-1] = 0x00;
+
+                /* Get temp filename */
+                GetTempPathW(sizeof(temp_path)/sizeof(WCHAR), temp_path);
+                GetTempFileNameW(temp_path, cmdW, 0, temp_file);
+
+                /* Execute program and redirect output */
+                wsprintfW(temp_cmd, redirOut, (itemStart+1), temp_file);
+                WCMD_execute (itemStart, temp_cmd, NULL, NULL, NULL);
+
+                /* Open the file, read line by line and process */
+                input = CreateFileW(temp_file, GENERIC_READ, FILE_SHARE_READ,
+                                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            } else {
+
+                /* Open the file, read line by line and process */
+                input = CreateFileW(item, GENERIC_READ, FILE_SHARE_READ,
+                                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            }
+
+            /* Process the input file */
+            if (input == INVALID_HANDLE_VALUE) {
+              WCMD_print_error ();
+              WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), item);
+              errorlevel = 1;
+              return; /* FOR loop aborts at first failure here */
+
+            } else {
+
+              WCHAR buffer[MAXSTRING];
+              WCHAR *where, *parm;
+
+              while (WCMD_fgets(buffer, sizeof(buffer)/sizeof(WCHAR), input)) {
+
+                /* Skip blank lines*/
+                parm = WCMD_parameter (buffer, 0, &where, NULL, FALSE);
+                WINE_TRACE("Parsed parameter: %s from %s\n", wine_dbgstr_w(parm),
+                           wine_dbgstr_w(buffer));
+
+                if (where) {
+                    /* FIXME: The following should be moved into its own routine and
+                       reused for the string literal parsing below                  */
+                    thisCmdStart = cmdStart;
+                    doExecuted = TRUE;
+                    WCMD_part_execute(&thisCmdStart, firstCmd, variable, parm, FALSE, TRUE);
+                    cmdEnd = thisCmdStart;
+                }
+
+                buffer[0] = 0;
+
+              }
+              CloseHandle (input);
+            }
+
+            /* Delete the temporary file */
+            if (*itemStart == '`' || *itemStart == '\'') {
+                DeleteFileW(temp_file);
+            }
+
+        /* Filesets - A string literal */
+        } else if (doFileset && *itemStart == '"') {
+            WCHAR buffer[MAXSTRING];
+            WCHAR *where, *parm;
+
+            /* Skip blank lines, and re-extract parameter now string has quotes removed */
+            strcpyW(buffer, item);
+            parm = WCMD_parameter (buffer, 0, &where, NULL, FALSE);
+            WINE_TRACE("Parsed parameter: %s from %s\n", wine_dbgstr_w(parm),
+                         wine_dbgstr_w(buffer));
+
+            if (where) {
+                /* FIXME: The following should be moved into its own routine and
+                   reused for the string literal parsing below                  */
+                thisCmdStart = cmdStart;
+                doExecuted = TRUE;
+                WCMD_part_execute(&thisCmdStart, firstCmd, variable, parm, FALSE, TRUE);
+                cmdEnd = thisCmdStart;
+            }
+        }
+
+        WINE_TRACE("Post-command, cmdEnd = %p\n", cmdEnd);
+        i++;
       }
-      cmdEnd = thisCmdStart;
-  }
+
+      /* Move onto the next set line */
+      thisSet = thisSet->nextcommand;
+    }
+
+    /* If /L is provided, now run the for loop */
+    if (useNumbers) {
+        WCHAR thisNum[20];
+        static const WCHAR fmt[] = {'%','d','\0'};
+
+        WINE_TRACE("FOR /L provided range from %d to %d step %d\n",
+                   numbers[0], numbers[2], numbers[1]);
+        for (i=numbers[0];
+             (numbers[1]<0)? i>=numbers[2] : i<=numbers[2];
+             i=i + numbers[1]) {
+
+            sprintfW(thisNum, fmt, i);
+            WINE_TRACE("Processing FOR number %s\n", wine_dbgstr_w(thisNum));
+
+            thisCmdStart = cmdStart;
+            doExecuted = TRUE;
+            WCMD_part_execute(&thisCmdStart, firstCmd, variable, thisNum, FALSE, TRUE);
+        }
+        cmdEnd = thisCmdStart;
+    }
+
+    /* If we are walking directories, move on to any which remain */
+    if (dirsToWalk != NULL) {
+      DIRECTORY_STACK *nextDir = dirsToWalk->next;
+      HeapFree(GetProcessHeap(), 0, dirsToWalk->dirName);
+      HeapFree(GetProcessHeap(), 0, dirsToWalk);
+      dirsToWalk = nextDir;
+      if (dirsToWalk) WINE_TRACE("Moving to next directorty to iterate: %s\n",
+                                 wine_dbgstr_w(dirsToWalk->dirName));
+      else WINE_TRACE("Finished all directories.\n");
+    }
+
+  } while (dirsToWalk != NULL);
 
   /* Now skip over the do part if we did not perform the for loop so far.
      We store in cmdEnd the next command after the do block, but we only
