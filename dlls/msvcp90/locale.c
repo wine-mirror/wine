@@ -3273,6 +3273,7 @@ int __thiscall codecvt_wchar_do_out(const codecvt_wchar *this, int *state,
             }
 
             (*from_next)++;
+            memcpy_s(*to_next, to_end-*to_next, buf, size);
             (*to_next) += size;
         }
     }
