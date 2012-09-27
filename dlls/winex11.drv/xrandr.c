@@ -57,6 +57,7 @@ MAKE_FUNCPTR(XRRGetScreenResources)
 MAKE_FUNCPTR(XRRSetCrtcConfig)
 static typeof(XRRGetScreenResources) *pXRRGetScreenResourcesCurrent;
 static RRMode *xrandr12_modes;
+static int primary_crtc;
 #endif
 
 #undef MAKE_FUNCPTR
@@ -273,14 +274,15 @@ static int xrandr12_get_current_mode(void)
         return 0;
     }
 
-    if (!resources->ncrtc || !(crtc_info = pXRRGetCrtcInfo( gdi_display, resources, resources->crtcs[0] )))
+    if (resources->ncrtc <= primary_crtc ||
+        !(crtc_info = pXRRGetCrtcInfo( gdi_display, resources, resources->crtcs[primary_crtc] )))
     {
         pXRRFreeScreenResources( resources );
         ERR("Failed to get CRTC info.\n");
         return 0;
     }
 
-    TRACE("CRTC 0: mode %#lx, %ux%u+%d+%d.\n", crtc_info->mode,
+    TRACE("CRTC %d: mode %#lx, %ux%u+%d+%d.\n", primary_crtc, crtc_info->mode,
           crtc_info->width, crtc_info->height, crtc_info->x, crtc_info->y);
 
     for (i = 0; i < xrandr_mode_count; ++i)
@@ -318,18 +320,20 @@ static LONG xrandr12_set_current_mode( int mode )
         return DISP_CHANGE_FAILED;
     }
 
-    if (!resources->ncrtc || !(crtc_info = pXRRGetCrtcInfo( gdi_display, resources, resources->crtcs[0] )))
+    if (resources->ncrtc <= primary_crtc ||
+        !(crtc_info = pXRRGetCrtcInfo( gdi_display, resources, resources->crtcs[primary_crtc] )))
     {
         pXRRFreeScreenResources( resources );
         ERR("Failed to get CRTC info.\n");
         return DISP_CHANGE_FAILED;
     }
 
-    TRACE("CRTC 0: mode %#lx, %ux%u+%d+%d.\n", crtc_info->mode,
+    TRACE("CRTC %d: mode %#lx, %ux%u+%d+%d.\n", primary_crtc, crtc_info->mode,
           crtc_info->width, crtc_info->height, crtc_info->x, crtc_info->y);
 
-    status = pXRRSetCrtcConfig( gdi_display, resources, resources->crtcs[0], CurrentTime, crtc_info->x,
-            crtc_info->y, xrandr12_modes[mode], crtc_info->rotation, crtc_info->outputs, crtc_info->noutput );
+    status = pXRRSetCrtcConfig( gdi_display, resources, resources->crtcs[primary_crtc],
+                                CurrentTime, crtc_info->x, crtc_info->y, xrandr12_modes[mode],
+                                crtc_info->rotation, crtc_info->outputs, crtc_info->noutput );
 
     pXRRFreeCrtcInfo( crtc_info );
     pXRRFreeScreenResources( resources );
@@ -342,6 +346,27 @@ static LONG xrandr12_set_current_mode( int mode )
 
     X11DRV_resize_desktop( dd_modes[mode].width, dd_modes[mode].height );
     return DISP_CHANGE_SUCCESSFUL;
+}
+
+static XRRCrtcInfo *xrandr12_get_primary_crtc_info( XRRScreenResources *resources, int *crtc_idx )
+{
+    XRRCrtcInfo *crtc_info;
+    int i;
+
+    for (i = 0; i < resources->ncrtc; ++i)
+    {
+        crtc_info = pXRRGetCrtcInfo( gdi_display, resources, resources->crtcs[i] );
+        if (!crtc_info || crtc_info->mode == None)
+        {
+            pXRRFreeCrtcInfo( crtc_info );
+            continue;
+        }
+
+        *crtc_idx = i;
+        return crtc_info;
+    }
+
+    return NULL;
 }
 
 static int xrandr12_init_modes(void)
@@ -368,14 +393,14 @@ static int xrandr12_init_modes(void)
         }
     }
 
-    if (!resources->ncrtc || !(crtc_info = pXRRGetCrtcInfo( gdi_display, resources, resources->crtcs[0] )))
+    if (!(crtc_info = xrandr12_get_primary_crtc_info( resources, &primary_crtc )))
     {
         pXRRFreeScreenResources( resources );
-        ERR("Failed to get CRTC info.\n");
+        ERR("Failed to get primary CRTC info.\n");
         return ret;
     }
 
-    TRACE("CRTC 0: mode %#lx, %ux%u+%d+%d.\n", crtc_info->mode,
+    TRACE("CRTC %d: mode %#lx, %ux%u+%d+%d.\n", primary_crtc, crtc_info->mode,
           crtc_info->width, crtc_info->height, crtc_info->x, crtc_info->y);
 
     if (!crtc_info->noutput || !(output_info = pXRRGetOutputInfo( gdi_display, resources, crtc_info->outputs[0] )))
