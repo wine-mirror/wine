@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wine/debug.h"
 
@@ -122,6 +123,7 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(SetWindowText);
         GET_USER_FUNC(ShowWindow);
         GET_USER_FUNC(SysCommand);
+        GET_USER_FUNC(UpdateLayeredWindow);
         GET_USER_FUNC(WindowMessage);
         GET_USER_FUNC(WindowPosChanging);
         GET_USER_FUNC(WindowPosChanged);
@@ -413,6 +415,12 @@ static LRESULT CDECL nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam
     return -1;
 }
 
+static BOOL CDECL nulldrv_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
+                                               const RECT *window_rect )
+{
+    return TRUE;
+}
+
 static LRESULT CDECL nulldrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     return 0;
@@ -489,6 +497,7 @@ static USER_DRIVER null_driver =
     nulldrv_SetWindowText,
     nulldrv_ShowWindow,
     nulldrv_SysCommand,
+    nulldrv_UpdateLayeredWindow,
     nulldrv_WindowMessage,
     nulldrv_WindowPosChanging,
     nulldrv_WindowPosChanged
@@ -757,6 +766,12 @@ static LRESULT CDECL loaderdrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lpar
     return load_driver()->pSysCommand( hwnd, wparam, lparam );
 }
 
+static BOOL CDECL loaderdrv_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
+                                                 const RECT *window_rect )
+{
+    return load_driver()->pUpdateLayeredWindow( hwnd, info, window_rect );
+}
+
 static LRESULT CDECL loaderdrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     return load_driver()->pWindowMessage( hwnd, msg, wparam, lparam );
@@ -837,6 +852,7 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_SetWindowText,
     loaderdrv_ShowWindow,
     loaderdrv_SysCommand,
+    loaderdrv_UpdateLayeredWindow,
     loaderdrv_WindowMessage,
     loaderdrv_WindowPosChanging,
     loaderdrv_WindowPosChanged

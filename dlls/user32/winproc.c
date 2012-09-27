@@ -28,6 +28,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "controls.h"
 #include "win.h"
 #include "user_private.h"

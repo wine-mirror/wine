@@ -70,6 +70,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "win.h"

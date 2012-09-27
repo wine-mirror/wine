@@ -111,6 +111,7 @@ typedef struct tagUSER_DRIVER {
     void   (CDECL *pSetWindowText)(HWND,LPCWSTR);
     UINT   (CDECL *pShowWindow)(HWND,INT,RECT*,UINT);
     LRESULT (CDECL *pSysCommand)(HWND,WPARAM,LPARAM);
+    BOOL    (CDECL *pUpdateLayeredWindow)(HWND,const UPDATELAYEREDWINDOWINFO *,const RECT *);
     LRESULT (CDECL *pWindowMessage)(HWND,UINT,WPARAM,LPARAM);
     void   (CDECL *pWindowPosChanging)(HWND,HWND,UINT,const RECT *,const RECT *,RECT *,struct window_surface**);
     void   (CDECL *pWindowPosChanged)(HWND,HWND,UINT,const RECT *,const RECT *,const RECT *,const RECT *,struct window_surface*);

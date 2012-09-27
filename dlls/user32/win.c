@@ -3648,7 +3648,6 @@ BOOL WINAPI UpdateLayeredWindowIndirect( HWND hwnd, const UPDATELAYEREDWINDOWINF
     DWORD flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW;
     RECT window_rect, client_rect;
     SIZE offset;
-    BYTE alpha = 0xff;
 
     if (!info ||
         info->cbSize != sizeof(*info) ||
@@ -3693,39 +3692,10 @@ BOOL WINAPI UpdateLayeredWindowIndirect( HWND hwnd, const UPDATELAYEREDWINDOWINF
 
     TRACE( "window %p win %s client %s\n", hwnd,
            wine_dbgstr_rect(&window_rect), wine_dbgstr_rect(&client_rect) );
+
+    if (!USER_Driver->pUpdateLayeredWindow( hwnd, info, &window_rect )) return FALSE;
+
     set_window_pos( hwnd, 0, flags, &window_rect, &client_rect, NULL );
-
-    if (info->hdcSrc)
-    {
-        HDC hdc = GetWindowDC( hwnd );
-
-        if (hdc)
-        {
-            int x = 0, y = 0;
-            RECT rect;
-
-            GetWindowRect( hwnd, &rect );
-            OffsetRect( &rect, -rect.left, -rect.top);
-            if (info->pptSrc)
-            {
-                x = info->pptSrc->x;
-                y = info->pptSrc->y;
-            }
-
-            if (!info->prcDirty || (info->prcDirty && IntersectRect(&rect, &rect, info->prcDirty)))
-            {
-                TRACE( "copying window %p pos %d,%d\n", hwnd, x, y );
-                BitBlt( hdc, rect.left, rect.top, rect.right, rect.bottom,
-                        info->hdcSrc, rect.left + x, rect.top + y, SRCCOPY );
-            }
-            ReleaseDC( hwnd, hdc );
-        }
-    }
-
-    if (info->pblend && !(info->dwFlags & ULW_OPAQUE)) alpha = info->pblend->SourceConstantAlpha;
-    TRACE( "setting window %p alpha %u\n", hwnd, alpha );
-    USER_Driver->pSetLayeredWindowAttributes( hwnd, info->crKey, alpha,
-                                              info->dwFlags & (LWA_ALPHA | LWA_COLORKEY) );
     return TRUE;
 }
 
