@@ -3583,50 +3583,55 @@ BOOL WINAPI GetLayeredWindowAttributes( HWND hwnd, COLORREF *key, BYTE *alpha, D
  */
 BOOL WINAPI UpdateLayeredWindowIndirect( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info )
 {
+    DWORD flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW;
+    RECT window_rect, client_rect;
+    SIZE offset;
     BYTE alpha = 0xff;
 
-    if (!(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED) ||
+    if (!info ||
+        info->cbSize != sizeof(*info) ||
+        info->dwFlags & ~(ULW_COLORKEY | ULW_ALPHA | ULW_OPAQUE | ULW_EX_NORESIZE) ||
+        !(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED) ||
         GetLayeredWindowAttributes( hwnd, NULL, NULL, NULL ))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
-    if (!(info->dwFlags & ULW_EX_NORESIZE) && (info->pptDst || info->psize))
+    WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
+
+    if (info->pptDst)
     {
-        DWORD flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE;
-        RECT window_rect, client_rect;
-        SIZE offset;
-
-        WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
-
-        if (info->pptDst)
-        {
-            offset.cx = info->pptDst->x - window_rect.left;
-            offset.cy = info->pptDst->y - window_rect.top;
-            OffsetRect( &client_rect, offset.cx, offset.cy );
-            OffsetRect( &window_rect, offset.cx, offset.cy );
-            flags &= ~SWP_NOMOVE;
-        }
-        if (info->psize)
-        {
-            if (info->psize->cx <= 0 || info->psize->cy <= 0)
-            {
-                SetLastError( ERROR_INVALID_PARAMETER );
-                return FALSE;
-            }
-            offset.cx = info->psize->cx - (window_rect.right - window_rect.left);
-            offset.cy = info->psize->cy - (window_rect.bottom - window_rect.top);
-            client_rect.right  += offset.cx;
-            client_rect.bottom += offset.cy;
-            window_rect.right  += offset.cx;
-            window_rect.bottom += offset.cy;
-            flags &= ~SWP_NOSIZE;
-        }
-        TRACE( "moving window %p win %s client %s\n", hwnd,
-               wine_dbgstr_rect(&window_rect), wine_dbgstr_rect(&client_rect) );
-        set_window_pos( hwnd, 0, flags, &window_rect, &client_rect, NULL );
+        offset.cx = info->pptDst->x - window_rect.left;
+        offset.cy = info->pptDst->y - window_rect.top;
+        OffsetRect( &client_rect, offset.cx, offset.cy );
+        OffsetRect( &window_rect, offset.cx, offset.cy );
+        flags &= ~SWP_NOMOVE;
     }
+    if (info->psize)
+    {
+        offset.cx = info->psize->cx - (window_rect.right - window_rect.left);
+        offset.cy = info->psize->cy - (window_rect.bottom - window_rect.top);
+        if (info->psize->cx <= 0 || info->psize->cy <= 0)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
+        if ((info->dwFlags & ULW_EX_NORESIZE) && (offset.cx || offset.cy))
+        {
+            SetLastError( ERROR_INCORRECT_SIZE );
+            return FALSE;
+        }
+        client_rect.right  += offset.cx;
+        client_rect.bottom += offset.cy;
+        window_rect.right  += offset.cx;
+        window_rect.bottom += offset.cy;
+        flags &= ~SWP_NOSIZE;
+    }
+
+    TRACE( "window %p win %s client %s\n", hwnd,
+           wine_dbgstr_rect(&window_rect), wine_dbgstr_rect(&client_rect) );
+    set_window_pos( hwnd, 0, flags, &window_rect, &client_rect, NULL );
 
     if (info->hdcSrc)
     {
@@ -3668,10 +3673,15 @@ BOOL WINAPI UpdateLayeredWindowIndirect( HWND hwnd, const UPDATELAYEREDWINDOWINF
  */
 BOOL WINAPI UpdateLayeredWindow( HWND hwnd, HDC hdcDst, POINT *pptDst, SIZE *psize,
                                  HDC hdcSrc, POINT *pptSrc, COLORREF crKey, BLENDFUNCTION *pblend,
-                                 DWORD dwFlags)
+                                 DWORD flags)
 {
     UPDATELAYEREDWINDOWINFO info;
 
+    if (flags & ULW_EX_NORESIZE)  /* only valid for UpdateLayeredWindowIndirect */
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
     info.cbSize   = sizeof(info);
     info.hdcDst   = hdcDst;
     info.pptDst   = pptDst;
@@ -3680,7 +3690,7 @@ BOOL WINAPI UpdateLayeredWindow( HWND hwnd, HDC hdcDst, POINT *pptDst, SIZE *psi
     info.pptSrc   = pptSrc;
     info.crKey    = crKey;
     info.pblend   = pblend;
-    info.dwFlags  = dwFlags;
+    info.dwFlags  = flags;
     info.prcDirty = NULL;
     return UpdateLayeredWindowIndirect( hwnd, &info );
 }

@@ -50,6 +50,7 @@ static UINT (WINAPI *pGetWindowModuleFileNameA)(HWND,LPSTR,UINT);
 static BOOL (WINAPI *pGetLayeredWindowAttributes)(HWND,COLORREF*,BYTE*,DWORD*);
 static BOOL (WINAPI *pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD);
 static BOOL (WINAPI *pUpdateLayeredWindow)(HWND,HDC,POINT*,SIZE*,HDC,POINT*,COLORREF,BLENDFUNCTION*,DWORD);
+static BOOL (WINAPI *pUpdateLayeredWindowIndirect)(HWND,const UPDATELAYEREDWINDOWINFO*);
 static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
 static HMONITOR (WINAPI *pMonitorFromPoint)(POINT,DWORD);
 static int  (WINAPI *pGetWindowRgnBox)(HWND,LPRECT);
@@ -6074,6 +6075,47 @@ static void test_layered_window(void)
     ok( !ret, "GetLayeredWindowAttributes should fail on layered but not initialized window\n" );
     ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc, &pt, 0, NULL, ULW_OPAQUE );
     ok( ret, "UpdateLayeredWindow should succeed on layered window\n" );
+    ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc, &pt, 0, NULL, ULW_OPAQUE | ULW_EX_NORESIZE );
+    ok( !ret, "UpdateLayeredWindow should fail with ex flag\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    if (pUpdateLayeredWindowIndirect)
+    {
+        UPDATELAYEREDWINDOWINFO info;
+        info.cbSize   = sizeof(info);
+        info.hdcDst   = 0;
+        info.pptDst   = NULL;
+        info.psize    = &sz;
+        info.hdcSrc   = hdc;
+        info.pptSrc   = &pt;
+        info.crKey    = 0;
+        info.pblend   = NULL;
+        info.dwFlags  = ULW_OPAQUE | ULW_EX_NORESIZE;
+        info.prcDirty = NULL;
+        ret = pUpdateLayeredWindowIndirect( hwnd, &info );
+        ok( ret, "UpdateLayeredWindowIndirect should succeed on layered window\n" );
+        sz.cx--;
+        ret = pUpdateLayeredWindowIndirect( hwnd, &info );
+        ok( !ret, "UpdateLayeredWindowIndirect should fail\n" );
+        ok( GetLastError() == ERROR_INCORRECT_SIZE || broken(GetLastError() == ERROR_MR_MID_NOT_FOUND),
+            "wrong error %u\n", GetLastError() );
+        info.dwFlags  = ULW_OPAQUE;
+        ret = pUpdateLayeredWindowIndirect( hwnd, &info );
+        ok( ret, "UpdateLayeredWindowIndirect should succeed on layered window\n" );
+        sz.cx++;
+        info.dwFlags  = ULW_OPAQUE | 0xf00;
+        ret = pUpdateLayeredWindowIndirect( hwnd, &info );
+        ok( !ret, "UpdateLayeredWindowIndirect should fail\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        info.cbSize--;
+        info.dwFlags  = ULW_OPAQUE;
+        ret = pUpdateLayeredWindowIndirect( hwnd, &info );
+        ok( !ret, "UpdateLayeredWindowIndirect should fail\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        ret = pUpdateLayeredWindowIndirect( hwnd, NULL );
+        ok( !ret, "UpdateLayeredWindowIndirect should fail\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    }
+
     ret = pSetLayeredWindowAttributes( hwnd, 0x654321, 22, LWA_COLORKEY | LWA_ALPHA );
     ok( ret, "SetLayeredWindowAttributes should succeed on layered window\n" );
     ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
@@ -7072,6 +7114,7 @@ START_TEST(win)
     pGetLayeredWindowAttributes = (void *)GetProcAddress( user32, "GetLayeredWindowAttributes" );
     pSetLayeredWindowAttributes = (void *)GetProcAddress( user32, "SetLayeredWindowAttributes" );
     pUpdateLayeredWindow = (void *)GetProcAddress( user32, "UpdateLayeredWindow" );
+    pUpdateLayeredWindowIndirect = (void *)GetProcAddress( user32, "UpdateLayeredWindowIndirect" );
     pGetMonitorInfoA = (void *)GetProcAddress( user32,  "GetMonitorInfoA" );
     pMonitorFromPoint = (void *)GetProcAddress( user32,  "MonitorFromPoint" );
     pGetWindowRgnBox = (void *)GetProcAddress( user32, "GetWindowRgnBox" );

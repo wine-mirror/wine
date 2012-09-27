@@ -871,6 +871,15 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #define ERROR_REQUIRES_INTERACTIVE_WINDOWSTATION           1459
 #define ERROR_TIMEOUT                                      1460
 #define ERROR_INVALID_MONITOR_HANDLE                       1461
+#define ERROR_INCORRECT_SIZE                               1462
+#define ERROR_SYMLINK_CLASS_DISABLED                       1463
+#define ERROR_SYMLINK_NOT_SUPPORTED                        1464
+#define ERROR_XML_PARSE_ERROR                              1465
+#define ERROR_XMLDSIG_ERROR                                1466
+#define ERROR_RESTART_APPLICATION                          1467
+#define ERROR_WRONG_COMPARTMENT                            1468
+#define ERROR_AUTHIP_FAILURE                               1469
+#define ERROR_NO_NVRAM_RESOURCES                           1470
 #define ERROR_EVENTLOG_FILE_CORRUPT                        1500
 #define ERROR_EVENTLOG_CANT_START                          1501
 #define ERROR_LOG_FILE_FULL                                1502
