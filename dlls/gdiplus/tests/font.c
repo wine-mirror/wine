@@ -746,7 +746,6 @@ static void test_font_substitution(void)
     memset(&lf, 0xfe, sizeof(lf));
     status = GdipGetLogFontA(font, graphics, &lf);
     expect(Ok, status);
-todo_wine
     ok(!lstrcmp(lf.lfFaceName, "Microsoft Sans Serif") ||
        !lstrcmp(lf.lfFaceName, "Tahoma"), "wrong face name %s\n", lf.lfFaceName);
     GdipDeleteFont(font);
@@ -758,7 +757,6 @@ todo_wine
     memset(&lf, 0xfe, sizeof(lf));
     status = GdipGetLogFontA(font, graphics, &lf);
     expect(Ok, status);
-todo_wine
     ok(!lstrcmp(lf.lfFaceName, "Microsoft Sans Serif") ||
        !lstrcmp(lf.lfFaceName, "Tahoma"), "wrong face name %s\n", lf.lfFaceName);
     GdipDeleteFont(font);
