@@ -598,6 +598,8 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
                 ptr->Next = &pAdapterInfo[ndx + 1];
               else
                 ptr->Next = NULL;
+
+              ptr->DhcpEnabled = TRUE;
             }
             ret = NO_ERROR;
           }
@@ -2008,9 +2010,7 @@ DWORD WINAPI GetUniDirectionalAdapterInfo(PIP_UNIDIRECTIONAL_ADAPTER_ADDRESS pIP
  */
 DWORD WINAPI IpReleaseAddress(PIP_ADAPTER_INDEX_MAP AdapterInfo)
 {
-  TRACE("AdapterInfo %p\n", AdapterInfo);
-  /* not a stub, never going to support this (and I never mark an adapter as
-     DHCP enabled, see GetAdaptersInfo, so this should never get called) */
+  FIXME("Stub AdapterInfo %p\n", AdapterInfo);
   return ERROR_NOT_SUPPORTED;
 }
 
@@ -2036,9 +2036,7 @@ DWORD WINAPI IpReleaseAddress(PIP_ADAPTER_INDEX_MAP AdapterInfo)
  */
 DWORD WINAPI IpRenewAddress(PIP_ADAPTER_INDEX_MAP AdapterInfo)
 {
-  TRACE("AdapterInfo %p\n", AdapterInfo);
-  /* not a stub, never going to support this (and I never mark an adapter as
-     DHCP enabled, see GetAdaptersInfo, so this should never get called) */
+  FIXME("Stub AdapterInfo %p\n", AdapterInfo);
   return ERROR_NOT_SUPPORTED;
 }
 
