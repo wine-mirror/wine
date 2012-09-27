@@ -104,17 +104,6 @@ static void test_logfont(void)
 
     memset(&lfa, 0, sizeof(LOGFONTA));
     memset(&lfa2, 0xff, sizeof(LOGFONTA));
-
-    lstrcpyA(lfa.lfFaceName, "Nonexistent font");
-    stat = GdipCreateFontFromLogfontA(hdc, &lfa, &font);
-    ok(stat == NotTrueTypeFont || broken(stat == FileNotFound), /* before XP */
-       "expected NotTrueTypeFont, got %d\n", stat);
-
-    /* empty FaceName */
-    lfa.lfFaceName[0] = 0;
-    stat = GdipCreateFontFromLogfontA(hdc, &lfa, &font);
-    expect(NotTrueTypeFont, stat);
-
     lstrcpyA(lfa.lfFaceName, "Tahoma");
 
     stat = GdipCreateFontFromLogfontA(hdc, &lfa, &font);
@@ -727,6 +716,98 @@ static void test_font_metrics(void)
     DeleteDC(hdc);
 }
 
+static void test_font_substitution(void)
+{
+    WCHAR ms_shell_dlg[LF_FACESIZE];
+    HDC hdc;
+    HFONT hfont;
+    LOGFONT lf;
+    GpStatus status;
+    GpGraphics *graphics;
+    GpFont *font;
+    GpFontFamily *family;
+    int ret;
+
+    hdc = CreateCompatibleDC(0);
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    hfont = GetStockObject(DEFAULT_GUI_FONT);
+    ok(hfont != 0, "GetStockObject(DEFAULT_GUI_FONT) failed\n");
+
+    memset(&lf, 0xfe, sizeof(lf));
+    ret = GetObject(hfont, sizeof(lf), &lf);
+    ok(ret == sizeof(lf), "GetObject failed\n");
+    ok(!lstrcmp(lf.lfFaceName, "MS Shell Dlg"), "wrong face name %s\n", lf.lfFaceName);
+    MultiByteToWideChar(CP_ACP, 0, lf.lfFaceName, -1, ms_shell_dlg, LF_FACESIZE);
+
+    status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
+    expect(Ok, status);
+    memset(&lf, 0xfe, sizeof(lf));
+    status = GdipGetLogFontA(font, graphics, &lf);
+    expect(Ok, status);
+todo_wine
+    ok(!lstrcmp(lf.lfFaceName, "Microsoft Sans Serif") ||
+       !lstrcmp(lf.lfFaceName, "Tahoma"), "wrong face name %s\n", lf.lfFaceName);
+    GdipDeleteFont(font);
+
+    status = GdipCreateFontFamilyFromName(ms_shell_dlg, NULL, &family);
+    expect(Ok, status);
+    status = GdipCreateFont(family, 12, FontStyleRegular, UnitPoint, &font);
+    expect(Ok, status);
+    memset(&lf, 0xfe, sizeof(lf));
+    status = GdipGetLogFontA(font, graphics, &lf);
+    expect(Ok, status);
+todo_wine
+    ok(!lstrcmp(lf.lfFaceName, "Microsoft Sans Serif") ||
+       !lstrcmp(lf.lfFaceName, "Tahoma"), "wrong face name %s\n", lf.lfFaceName);
+    GdipDeleteFont(font);
+    GdipDeleteFontFamily(family);
+
+    status = GdipCreateFontFamilyFromName(nonexistent, NULL, &family);
+    ok(status == FontFamilyNotFound, "expected FontFamilyNotFound, got %d\n", status);
+
+    lstrcpy(lf.lfFaceName, "ThisFontShouldNotExist");
+    status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
+todo_wine
+    expect(Ok, status);
+    memset(&lf, 0xfe, sizeof(lf));
+    status = GdipGetLogFontA(font, graphics, &lf);
+    expect(Ok, status);
+todo_wine
+    ok(!lstrcmp(lf.lfFaceName, "Arial"), "wrong face name %s\n", lf.lfFaceName);
+    GdipDeleteFont(font);
+
+    /* empty FaceName */
+    lf.lfFaceName[0] = 0;
+    status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
+todo_wine
+    expect(Ok, status);
+    memset(&lf, 0xfe, sizeof(lf));
+    status = GdipGetLogFontA(font, graphics, &lf);
+    expect(Ok, status);
+todo_wine
+    ok(!lstrcmp(lf.lfFaceName, "Arial"), "wrong face name %s\n", lf.lfFaceName);
+    GdipDeleteFont(font);
+
+    /* zeroing out lfWeight and lfCharSet leads to font creation failure */
+    lf.lfWeight = 0;
+    lf.lfCharSet = 0;
+    lstrcpy(lf.lfFaceName, "ThisFontShouldNotExist");
+    status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
+    ok(status == NotTrueTypeFont || broken(status == FileNotFound), /* before XP */
+       "expected NotTrueTypeFont, got %d\n", status);
+
+    /* empty FaceName */
+    lf.lfFaceName[0] = 0;
+    status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
+    ok(status == NotTrueTypeFont || broken(status == FileNotFound), /* before XP */
+       "expected NotTrueTypeFont, got %d\n", status);
+
+    GdipDeleteGraphics(graphics);
+    DeleteDC(hdc);
+}
+
 START_TEST(font)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -739,6 +820,7 @@ START_TEST(font)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_font_substitution();
     test_font_metrics();
     test_createfont();
     test_logfont();
