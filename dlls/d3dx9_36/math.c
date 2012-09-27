@@ -1370,57 +1370,60 @@ D3DXQUATERNION * WINAPI D3DXQuaternionRotationAxis(D3DXQUATERNION *out, const D3
     return out;
 }
 
-D3DXQUATERNION* WINAPI D3DXQuaternionRotationMatrix(D3DXQUATERNION *pout, CONST D3DXMATRIX *pm)
+D3DXQUATERNION * WINAPI D3DXQuaternionRotationMatrix(D3DXQUATERNION *out, const D3DXMATRIX *m)
 {
-    int i, maxi;
-    FLOAT maxdiag, S, trace;
+    FLOAT s, trace;
 
-    TRACE("(%p, %p)\n", pout, pm);
+    TRACE("out %p, m %p\n", out, m);
 
-    trace = pm->u.m[0][0] + pm->u.m[1][1] + pm->u.m[2][2] + 1.0f;
-    if ( trace > 1.0f)
+    trace = m->u.m[0][0] + m->u.m[1][1] + m->u.m[2][2] + 1.0f;
+    if (trace > 1.0f)
     {
-     pout->x = ( pm->u.m[1][2] - pm->u.m[2][1] ) / ( 2.0f * sqrt(trace) );
-     pout->y = ( pm->u.m[2][0] - pm->u.m[0][2] ) / ( 2.0f * sqrt(trace) );
-     pout->z = ( pm->u.m[0][1] - pm->u.m[1][0] ) / ( 2.0f * sqrt(trace) );
-     pout->w = sqrt(trace) / 2.0f;
-     return pout;
-     }
-    maxi = 0;
-    maxdiag = pm->u.m[0][0];
-    for (i=1; i<3; i++)
-    {
-     if ( pm->u.m[i][i] > maxdiag )
-     {
-      maxi = i;
-      maxdiag = pm->u.m[i][i];
-     }
+        s = 2.0f * sqrtf(trace);
+        out->x = (m->u.m[1][2] - m->u.m[2][1]) / s;
+        out->y = (m->u.m[2][0] - m->u.m[0][2]) / s;
+        out->z = (m->u.m[0][1] - m->u.m[1][0]) / s;
+        out->w = 0.25f * s;
     }
-    switch( maxi )
+    else
     {
-     case 0:
-       S = 2.0f * sqrt(1.0f + pm->u.m[0][0] - pm->u.m[1][1] - pm->u.m[2][2]);
-       pout->x = 0.25f * S;
-       pout->y = ( pm->u.m[0][1] + pm->u.m[1][0] ) / S;
-       pout->z = ( pm->u.m[0][2] + pm->u.m[2][0] ) / S;
-       pout->w = ( pm->u.m[1][2] - pm->u.m[2][1] ) / S;
-     break;
-     case 1:
-       S = 2.0f * sqrt(1.0f + pm->u.m[1][1] - pm->u.m[0][0] - pm->u.m[2][2]);
-       pout->x = ( pm->u.m[0][1] + pm->u.m[1][0] ) / S;
-       pout->y = 0.25f * S;
-       pout->z = ( pm->u.m[1][2] + pm->u.m[2][1] ) / S;
-       pout->w = ( pm->u.m[2][0] - pm->u.m[0][2] ) / S;
-     break;
-     case 2:
-       S = 2.0f * sqrt(1.0f + pm->u.m[2][2] - pm->u.m[0][0] - pm->u.m[1][1]);
-       pout->x = ( pm->u.m[0][2] + pm->u.m[2][0] ) / S;
-       pout->y = ( pm->u.m[1][2] + pm->u.m[2][1] ) / S;
-       pout->z = 0.25f * S;
-       pout->w = ( pm->u.m[0][1] - pm->u.m[1][0] ) / S;
-     break;
+        int i, maxi = 0;
+
+        for (i = 1; i < 3; i++)
+        {
+            if (m->u.m[i][i] > m->u.m[maxi][maxi])
+                maxi = i;
+        }
+
+        switch (maxi)
+        {
+            case 0:
+                s = 2.0f * sqrtf(1.0f + m->u.m[0][0] - m->u.m[1][1] - m->u.m[2][2]);
+                out->x = 0.25f * s;
+                out->y = (m->u.m[0][1] + m->u.m[1][0]) / s;
+                out->z = (m->u.m[0][2] + m->u.m[2][0]) / s;
+                out->w = (m->u.m[1][2] - m->u.m[2][1]) / s;
+                break;
+
+            case 1:
+                s = 2.0f * sqrtf(1.0f + m->u.m[1][1] - m->u.m[0][0] - m->u.m[2][2]);
+                out->x = (m->u.m[0][1] + m->u.m[1][0]) / s;
+                out->y = 0.25f * s;
+                out->z = (m->u.m[1][2] + m->u.m[2][1]) / s;
+                out->w = (m->u.m[2][0] - m->u.m[0][2]) / s;
+                break;
+
+            case 2:
+                s = 2.0f * sqrtf(1.0f + m->u.m[2][2] - m->u.m[0][0] - m->u.m[1][1]);
+                out->x = (m->u.m[0][2] + m->u.m[2][0]) / s;
+                out->y = (m->u.m[1][2] + m->u.m[2][1]) / s;
+                out->z = 0.25f * s;
+                out->w = (m->u.m[0][1] - m->u.m[1][0]) / s;
+                break;
+        }
     }
-    return pout;
+
+    return out;
 }
 
 D3DXQUATERNION * WINAPI D3DXQuaternionRotationYawPitchRoll(D3DXQUATERNION *out, FLOAT yaw, FLOAT pitch, FLOAT roll)
