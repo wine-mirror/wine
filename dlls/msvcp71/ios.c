@@ -7212,29 +7212,31 @@ MSVCP_bool __thiscall basic_istream_char__Ipfx(basic_istream_char *this, MSVCP_b
 
     TRACE("(%p %d)\n", this, noskip);
 
+    if(ios_base_good(&base->base)) {
+        if(basic_ios_char_tie_get(base))
+            basic_ostream_char_flush(basic_ios_char_tie_get(base));
+
+        if(!noskip && (ios_base_flags_get(&base->base) & FMTFLAG_skipws)) {
+            basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+            const ctype_char *ctype = ctype_char_use_facet(base->strbuf->loc);
+            int ch;
+
+            for(ch = basic_streambuf_char_sgetc(strbuf); ;
+                    ch = basic_streambuf_char_snextc(strbuf)) {
+                if(ch == EOF) {
+                    basic_ios_char_setstate(base, IOSTATE_eofbit);
+                    break;
+                }
+
+                if(!ctype_char_is_ch(ctype, _SPACE|_BLANK, ch))
+                    break;
+            }
+        }
+    }
+
     if(!ios_base_good(&base->base)) {
         basic_ios_char_setstate(base, IOSTATE_failbit);
         return FALSE;
-    }
-
-    if(basic_ios_char_tie_get(base))
-        basic_ostream_char_flush(basic_ios_char_tie_get(base));
-
-    if(!noskip && (ios_base_flags_get(&base->base) & FMTFLAG_skipws)) {
-        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
-        const ctype_char *ctype = ctype_char_use_facet(base->strbuf->loc);
-        int ch;
-
-        for(ch = basic_streambuf_char_sgetc(strbuf); ;
-                ch = basic_streambuf_char_snextc(strbuf)) {
-            if(ch == EOF) {
-                basic_ios_char_setstate(base, IOSTATE_eofbit);
-                return FALSE;
-            }
-
-            if(!ctype_char_is_ch(ctype, _SPACE|_BLANK, ch))
-                break;
-        }
     }
 
     return TRUE;
@@ -8441,31 +8443,32 @@ MSVCP_bool __thiscall basic_istream_wchar__Ipfx(basic_istream_wchar *this, MSVCP
 
     TRACE("(%p %d)\n", this, noskip);
 
+    if(ios_base_good(&base->base)) {
+        if(basic_ios_wchar_tie_get(base))
+            basic_ostream_wchar_flush(basic_ios_wchar_tie_get(base));
+
+        if(!noskip && (ios_base_flags_get(&base->base) & FMTFLAG_skipws)) {
+            basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
+            const ctype_wchar *ctype = ctype_wchar_use_facet(base->strbuf->loc);
+            int ch;
+
+            for(ch = basic_streambuf_wchar_sgetc(strbuf); ;
+                    ch = basic_streambuf_wchar_snextc(strbuf)) {
+                if(ch == WEOF) {
+                    basic_ios_wchar_setstate(base, IOSTATE_eofbit);
+                    break;
+                }
+
+                if(!ctype_wchar_is_ch(ctype, _SPACE|_BLANK, ch))
+                    break;
+            }
+        }
+    }
+
     if(!ios_base_good(&base->base)) {
         basic_ios_wchar_setstate(base, IOSTATE_failbit);
         return FALSE;
     }
-
-    if(basic_ios_wchar_tie_get(base))
-        basic_ostream_wchar_flush(basic_ios_wchar_tie_get(base));
-
-    if(!noskip && (ios_base_flags_get(&base->base) & FMTFLAG_skipws)) {
-        basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        const ctype_wchar *ctype = ctype_wchar_use_facet(base->strbuf->loc);
-        int ch;
-
-        for(ch = basic_streambuf_wchar_sgetc(strbuf); ;
-                ch = basic_streambuf_wchar_snextc(strbuf)) {
-            if(ch == WEOF) {
-                basic_ios_wchar_setstate(base, IOSTATE_eofbit);
-                return FALSE;
-            }
-
-            if(!ctype_wchar_is_ch(ctype, _SPACE|_BLANK, ch))
-                break;
-        }
-    }
-
     return TRUE;
 }
 

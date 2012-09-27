@@ -354,10 +354,12 @@ static void (*__thiscall p_basic_stringstream_wchar_vbase_dtor)(basic_stringstre
 static basic_istream_char* (*__thiscall p_basic_istream_char_read_uint64)(basic_istream_char*, unsigned __int64*);
 static basic_istream_char* (*__thiscall p_basic_istream_char_read_double)(basic_istream_char*, double*);
 static int (*__thiscall p_basic_istream_char_get)(basic_istream_char*);
+static MSVCP_bool (*__thiscall p_basic_istream_char_ipfx)(basic_istream_char*, MSVCP_bool);
 
 static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_read_uint64)(basic_istream_wchar*, unsigned __int64*);
 static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_read_double)(basic_istream_wchar*, double *);
 static int (*__thiscall p_basic_istream_wchar_get)(basic_istream_wchar*);
+static MSVCP_bool (*__thiscall p_basic_istream_wchar_ipfx)(basic_istream_wchar*, MSVCP_bool);
 
 /* ostream */
 static basic_ostream_char* (*__thiscall p_basic_ostream_char_print_double)(basic_ostream_char*, double);
@@ -372,6 +374,7 @@ static locale*  (*__thiscall p_basic_ios_wchar_imbue)(basic_ios_wchar*, locale*,
 /* ios_base */
 static IOSB_iostate  (*__thiscall p_ios_base_rdstate)(const ios_base*);
 static IOSB_fmtflags (*__thiscall p_ios_base_setf_mask)(ios_base*, IOSB_fmtflags, IOSB_fmtflags);
+static void          (*__thiscall p_ios_base_unsetf)(ios_base*, IOSB_fmtflags);
 static streamsize    (*__thiscall p_ios_base_precision_set)(ios_base*, streamsize);
 
 /* locale */
@@ -513,6 +516,8 @@ static BOOL init(void)
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAN@Z");
         SET(p_basic_istream_char_get,
             "?get@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAHXZ");
+        SET(p_basic_istream_char_ipfx,
+            "?ipfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAA_N_N@Z");
 
         SET(p_basic_istream_wchar_read_uint64,
             "??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@AEA_K@Z");
@@ -520,6 +525,8 @@ static BOOL init(void)
             "??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@AEAN@Z");
         SET(p_basic_istream_wchar_get,
             "?get@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAGXZ");
+        SET(p_basic_istream_wchar_ipfx,
+            "?ipfx@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAA_N_N@Z");
 
         SET(p_basic_ostream_char_print_double,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@N@Z");
@@ -531,6 +538,8 @@ static BOOL init(void)
             "?rdstate@ios_base@std@@QEBAHXZ");
         SET(p_ios_base_setf_mask,
             "?setf@ios_base@std@@QEAAHHH@Z");
+        SET(p_ios_base_unsetf,
+            "?unsetf@ios_base@std@@QEAAXH@Z");
         SET(p_ios_base_precision_set,
             "?precision@ios_base@std@@QEAA_J_J@Z");
 
@@ -583,6 +592,8 @@ static BOOL init(void)
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAN@Z");
         SET(p_basic_istream_char_get,
             "?get@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEHXZ");
+        SET(p_basic_istream_char_ipfx,
+            "?ipfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QAE_N_N@Z");
 
         SET(p_basic_istream_wchar_read_uint64,
             "??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@AA_K@Z");
@@ -590,6 +601,8 @@ static BOOL init(void)
             "??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@AAN@Z");
         SET(p_basic_istream_wchar_get,
             "?get@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEGXZ");
+        SET(p_basic_istream_wchar_ipfx,
+            "?ipfx@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAE_N_N@Z");
 
         SET(p_basic_ostream_char_print_double,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@N@Z");
@@ -601,6 +614,8 @@ static BOOL init(void)
             "?rdstate@ios_base@std@@QBEHXZ");
         SET(p_ios_base_setf_mask,
             "?setf@ios_base@std@@QAEHHH@Z");
+        SET(p_ios_base_unsetf,
+            "?unsetf@ios_base@std@@QAEXH@Z");
         SET(p_ios_base_precision_set,
             "?precision@ios_base@std@@QAEHH@Z");
 
@@ -732,11 +747,7 @@ static void test_num_get_get_uint64(void)
         state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &ss.basic_ios.base);
         next  = (int)call_func1(p_basic_istream_char_get, &ss.base.base1);
 
-        if(strlen(tests[i].str) == 0) {
-            /* a later patch to istream<>::_Ipfx will handle empty string */
-            todo_wine ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
-        } else
-            ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+        ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
         ok(tests[i].val   == val,   "wrong val, expected = %llu found %llu\n", (unsigned long long)tests[i].val, (unsigned long long)val);
         ok(tests[i].next  == next,  "wrong next, expected = %c (%i) found = %c (%i)\n", tests[i].next, tests[i].next, next, next);
 
@@ -762,11 +773,7 @@ static void test_num_get_get_uint64(void)
         state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &wss.basic_ios.base);
         nextus = (unsigned short)(int)call_func1(p_basic_istream_wchar_get, &wss.base.base1);
 
-        if(strlen(tests[i].str) == 0) {
-            /* a later patch to istream<>::_Ipfx will handle empty string */
-            todo_wine ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
-        } else
-            ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+        ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
         ok(tests[i].val == val, "wrong val, expected = %llu found %llu\n", (unsigned long long)tests[i].val, (unsigned long long)val);
         testus = tests[i].next == EOF ? WEOF : (unsigned short)tests[i].next;
         ok(testus == nextus, "wrong next, expected = %c (%i) found = %c (%i)\n", testus, testus, nextus, nextus);
@@ -881,11 +888,7 @@ static void test_num_get_get_double(void)
         state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &ss.basic_ios.base);
         next  = (int)call_func1(p_basic_istream_char_get, &ss.base.base1);
 
-        if(strlen(tests[i].str) == 0) {
-            /* a later patch to istream<>::_Ipfx will handle empty string */
-            todo_wine ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
-        } else
-            ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+        ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
         ok(tests[i].val   == val,   "wrong val, expected = %g found %g\n", tests[i].val, val);
         ok(tests[i].next  == next,  "wrong next, expected = %c (%i) found = %c (%i)\n", tests[i].next, tests[i].next, next, next);
 
@@ -910,11 +913,7 @@ static void test_num_get_get_double(void)
         state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &wss.basic_ios.base);
         nextus = (unsigned short)(int)call_func1(p_basic_istream_wchar_get, &wss.base.base1);
 
-        if(strlen(tests[i].str) == 0) {
-            /* a later patch to istream<>::_Ipfx will handle empty string */
-            todo_wine ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
-        } else
-            ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+        ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
         ok(tests[i].val == val, "wrong val, expected = %g found %g\n", tests[i].val, val);
         testus = tests[i].next == EOF ? WEOF : (unsigned short)tests[i].next;
         ok(testus == nextus, "wrong next, expected = %c (%i) found = %c (%i)\n", testus, testus, nextus, nextus);
@@ -1047,6 +1046,84 @@ static void test_num_put_put_double(void)
     }
 }
 
+
+static void test_istream_ipfx(void)
+{
+    unsigned short testus, nextus;
+    basic_stringstream_wchar wss;
+    basic_stringstream_char ss;
+    basic_string_wchar wstr;
+    basic_string_char str;
+    IOSB_iostate state;
+    wchar_t wide[64];
+    int i, ret, next;
+
+    /* makes tables narrower */
+    const IOSB_iostate IOSTATE_faileof = IOSTATE_failbit|IOSTATE_eofbit;
+
+    struct _test_istream_ipfx {
+        const char  *str;
+        int          unset_skipws;
+        int          noskip;
+        int          ret;
+        IOSB_iostate state;
+        int          next;
+    } tests[] = {
+        /* string       unset  noskip return state            next char */
+        { "",           FALSE, FALSE, FALSE, IOSTATE_faileof, EOF  }, /* empty string */
+        { "   ",        FALSE, FALSE, FALSE, IOSTATE_faileof, EOF  }, /* just ws */
+        { "\t \n \f ",  FALSE, FALSE, FALSE, IOSTATE_faileof, EOF  }, /* different ws */
+        { "simple",     FALSE, FALSE, TRUE,  IOSTATE_goodbit, 's'  },
+        { "  simple",   FALSE, FALSE, TRUE,  IOSTATE_goodbit, 's'  },
+        { "  simple",   TRUE,  FALSE, TRUE,  IOSTATE_goodbit, ' '  }, /* unset skipws */
+        { "  simple",   FALSE, TRUE,  TRUE,  IOSTATE_goodbit, ' '  }, /* ipfx(true) */
+        { "  simple",   TRUE,  TRUE,  TRUE,  IOSTATE_goodbit, ' '  }, /* both */
+        { "\n\t ws",    FALSE, FALSE, TRUE,  IOSTATE_goodbit, 'w'  },
+        { "\n\t ws",    TRUE,  FALSE, TRUE,  IOSTATE_goodbit, '\n' },
+    };
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        /* char version */
+        call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
+        call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
+
+        /* set format and precision only if specified, so we can try defaults */
+        if(tests[i].unset_skipws)
+            call_func2(p_ios_base_unsetf, &ss.basic_ios.base, TRUE);
+
+        ret   = (int)call_func2(p_basic_istream_char_ipfx, &ss.base.base1, tests[i].noskip);
+        state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &ss.basic_ios.base);
+        next  = (int)call_func1(p_basic_istream_char_get, &ss.base.base1);
+
+        ok(tests[i].ret   == ret,   "wrong return, expected = %i found = %i\n", tests[i].ret, ret);
+        ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+        ok(tests[i].next  == next,  "wrong next, expected = %c (%i) found = %c (%i)\n", tests[i].next, tests[i].next, next, next);
+
+        call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+
+        /* wchar_t version */
+        AtoW(wide, tests[i].str, strlen(tests[i].str));
+        call_func2(p_basic_string_wchar_ctor_cstr, &wstr, wide);
+        call_func4(p_basic_stringstream_wchar_ctor_str, &wss, &wstr, OPENMODE_out|OPENMODE_in, TRUE);
+
+        /* set format and precision only if specified, so we can try defaults */
+        if(tests[i].unset_skipws)
+            call_func2(p_ios_base_unsetf, &wss.basic_ios.base, TRUE);
+
+        ret    = (int)call_func2(p_basic_istream_wchar_ipfx, &wss.base.base1, tests[i].noskip);
+        state  = (IOSB_iostate)call_func1(p_ios_base_rdstate, &wss.basic_ios.base);
+        nextus = (unsigned short)(int)call_func1(p_basic_istream_wchar_get, &wss.base.base1);
+
+        ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+        ok(tests[i].ret == ret, "wrong return, expected = %i found = %i\n", tests[i].ret, ret);
+        testus = tests[i].next == EOF ? WEOF : (unsigned short)tests[i].next;
+        ok(testus == nextus, "wrong next, expected = %c (%i) found = %c (%i)\n", testus, testus, nextus, nextus);
+
+        call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
+    }
+}
+
+
 START_TEST(ios)
 {
     if(!init())
@@ -1055,6 +1132,7 @@ START_TEST(ios)
     test_num_get_get_uint64();
     test_num_get_get_double();
     test_num_put_put_double();
+    test_istream_ipfx();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 }
