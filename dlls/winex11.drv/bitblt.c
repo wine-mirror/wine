@@ -1545,6 +1545,7 @@ struct x11drv_window_surface
     XImage               *image;
     RECT                  bounds;
     BOOL                  is_r8g8b8;
+    BOOL                  is_argb;
     COLORREF              color_key;
     struct gdi_image_bits bits;
     CRITICAL_SECTION      crit;
@@ -1598,7 +1599,7 @@ static void update_surface_region( struct x11drv_window_surface *surface )
     int x, y, start, width;
     HRGN rgn;
 
-    if (surface->color_key == CLR_INVALID)
+    if (!surface->is_argb && surface->color_key == CLR_INVALID)
     {
         XShapeCombineMask( gdi_display, surface->window, ShapeBounding, 0, 0, None, ShapeSet );
         return;
@@ -1662,17 +1663,38 @@ static void update_surface_region( struct x11drv_window_surface *surface )
     case 32:
     {
         DWORD *bits = surface->bits.ptr;
-        UINT mask = info->bmiHeader.biCompression == BI_RGB ? 0xffffff : (masks[0] | masks[1] | masks[2]);
 
-        for (y = surface->header.rect.top; y < surface->header.rect.bottom; y++, bits += width)
+        if (info->bmiHeader.biCompression == BI_RGB)
         {
-            x = 0;
-            while (x < width)
+            for (y = surface->header.rect.top; y < surface->header.rect.bottom; y++, bits += width)
             {
-                while (x < width && (bits[x] & mask) == surface->color_key) x++;
-                start = x;
-                while (x < width && (bits[x] & mask) != surface->color_key) x++;
-                add_row( rgn, data, surface->header.rect.left + start, y, x - start );
+                x = 0;
+                while (x < width)
+                {
+                    while (x < width &&
+                           ((bits[x] & 0xffffff) == surface->color_key ||
+                            (surface->is_argb && !(bits[x] & 0xff000000)))) x++;
+                    start = x;
+                    while (x < width &&
+                           ((bits[x] & 0xffffff) != surface->color_key ||
+                            !(surface->is_argb && !(bits[x] & 0xff000000)))) x++;
+                    add_row( rgn, data, surface->header.rect.left + start, y, x - start );
+                }
+            }
+        }
+        else
+        {
+            UINT mask = masks[0] | masks[1] | masks[2];
+            for (y = surface->header.rect.top; y < surface->header.rect.bottom; y++, bits += width)
+            {
+                x = 0;
+                while (x < width)
+                {
+                    while (x < width && (bits[x] & mask) == surface->color_key) x++;
+                    start = x;
+                    while (x < width && (bits[x] & mask) != surface->color_key) x++;
+                    add_row( rgn, data, surface->header.rect.left + start, y, x - start );
+                }
             }
         }
         break;
@@ -1782,7 +1804,7 @@ static void x11drv_surface_flush( struct window_surface *window_surface )
                surface, coords.width, coords.height,
                wine_dbgstr_rect( &surface->bounds ), surface->bits.ptr );
 
-        if (surface->color_key != CLR_INVALID) update_surface_region( surface );
+        if (surface->is_argb || surface->color_key != CLR_INVALID) update_surface_region( surface );
 
         if (surface->image->bits_per_pixel == 4 || surface->image->bits_per_pixel == 8)
             mapping = X11DRV_PALETTE_PaletteToXPixel;
@@ -1836,7 +1858,7 @@ static const struct window_surface_funcs x11drv_surface_funcs =
  *           create_surface
  */
 struct window_surface *create_surface( Window window, const XVisualInfo *vis, const RECT *rect,
-                                       COLORREF color_key )
+                                       COLORREF color_key, BOOL use_alpha )
 {
     const XPixmapFormatValues *format = pixmap_formats[vis->depth];
     struct x11drv_window_surface *surface;
@@ -1862,6 +1884,7 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
     surface->header.ref   = 1;
     surface->window = window;
     surface->is_r8g8b8 = is_r8g8b8( vis );
+    surface->is_argb = (use_alpha && vis->depth == 32 && surface->info.bmiHeader.biCompression == BI_RGB);
     set_color_key( surface, color_key );
     reset_bounds( &surface->bounds );
     if (!(surface->bits.ptr  = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,

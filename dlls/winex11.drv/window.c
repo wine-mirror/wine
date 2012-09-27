@@ -2084,7 +2084,7 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
     if (!layered || !GetLayeredWindowAttributes( hwnd, &key, NULL, &flags ) || !(flags & LWA_COLORKEY))
         key = CLR_INVALID;
 
-    *surface = create_surface( data->whole_window, &data->vis, &surface_rect, key );
+    *surface = create_surface( data->whole_window, &data->vis, &surface_rect, key, FALSE );
 
 done:
     release_win_data( data );
@@ -2384,7 +2384,8 @@ BOOL CDECL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO 
     surface = data->surface;
     if (!surface || memcmp( &surface->rect, &rect, sizeof(RECT) ))
     {
-        data->surface = create_surface( data->whole_window, &data->vis, &rect, color_key );
+        data->surface = create_surface( data->whole_window, &data->vis, &rect,
+                                        color_key, !data->embedded );
         if (surface) window_surface_release( surface );
         surface = data->surface;
     }
