@@ -404,8 +404,8 @@ enum wined3d_shader_rel_op
 #define MAX_REG_ADDR 1
 #define MAX_REG_TEMP 32
 #define MAX_REG_TEXCRD 8
-#define MAX_REG_INPUT 12
-#define MAX_REG_OUTPUT 12
+#define MAX_REG_INPUT 32
+#define MAX_REG_OUTPUT 32
 #define MAX_CONST_I 16
 #define MAX_CONST_B 16
 
@@ -563,8 +563,8 @@ struct wined3d_shader_reg_maps
     DWORD temporary;                        /* MAX_REG_TEMP, 32 */
     DWORD *constf;                          /* pixel, vertex */
     DWORD texcoord_mask[MAX_REG_TEXCRD];    /* vertex < 3.0 */
-    WORD input_registers;                   /* max(MAX_REG_INPUT, MAX_ATTRIBS), 16 */
-    WORD output_registers;                  /* MAX_REG_OUTPUT, 12 */
+    DWORD input_registers;                  /* max(MAX_REG_INPUT, MAX_ATTRIBS), 32 */
+    DWORD output_registers;                 /* MAX_REG_OUTPUT, 32 */
     WORD integer_constants;                 /* MAX_CONST_I, 16 */
     WORD boolean_constants;                 /* MAX_CONST_B, 16 */
     WORD local_int_consts;                  /* MAX_CONST_I, 16 */

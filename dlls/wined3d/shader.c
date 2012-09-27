@@ -1779,10 +1779,6 @@ static void vertexshader_set_limits(struct wined3d_shader *shader)
             shader->limits.constant_float = min(256, device->d3d_vshader_constantF);
             break;
 
-        case WINED3D_SHADER_VERSION(4, 0):
-            FIXME("Using 3.0 limits for 4.0 shader.\n");
-            /* Fall through. */
-
         case WINED3D_SHADER_VERSION(3, 0):
             shader->limits.temporary = 32;
             shader->limits.constant_bool = 32;
@@ -1797,6 +1793,19 @@ static void vertexshader_set_limits(struct wined3d_shader *shader)
              * wined3d-advertised maximum. Clamp the constant limit for <= 3.0
              * shaders to 256. */
             shader->limits.constant_float = min(256, device->d3d_vshader_constantF);
+            break;
+
+        case WINED3D_SHADER_VERSION(4, 0):
+            shader->limits.temporary = 32; /* FIXME: 4096 */
+            shader->limits.sampler = 16; /* FIXME: 128 resources, 16 sampler states */
+            shader->limits.constant_int = 0;
+            shader->limits.constant_float = 0;
+            shader->limits.constant_bool = 0;
+            shader->limits.address = 1;
+            shader->limits.packed_output = 16;
+            shader->limits.packed_input = 0;
+            shader->limits.attributes = 16;
+            shader->limits.label = 16;
             break;
 
         default:
@@ -1864,6 +1873,35 @@ static HRESULT vertexshader_init(struct wined3d_shader *shader, struct wined3d_d
     return WINED3D_OK;
 }
 
+static void geometryshader_set_limits(struct wined3d_shader *shader)
+{
+    DWORD shader_version = WINED3D_SHADER_VERSION(shader->reg_maps.shader_version.major,
+            shader->reg_maps.shader_version.minor);
+
+    switch (shader_version)
+    {
+        case WINED3D_SHADER_VERSION(4, 0):
+            shader->limits.temporary = 32; /* FIXME: 4096 */
+            shader->limits.texcoord = 0;
+            shader->limits.sampler = 16; /* FIXME: 128 resources, 16 sampler states */
+            shader->limits.constant_int = 0;
+            shader->limits.constant_float = 0;
+            shader->limits.constant_bool = 0;
+            shader->limits.address = 1;
+            shader->limits.packed_output = 32;
+            shader->limits.packed_input = 16;
+            shader->limits.attributes = 0;
+            shader->limits.label = 16;
+            break;
+
+        default:
+            memset(&shader->limits, 0, sizeof(shader->limits));
+            FIXME("Unhandled geometry shader version \"%u.%u\".\n",
+                    shader->reg_maps.shader_version.major,
+                    shader->reg_maps.shader_version.minor);
+    }
+}
+
 static HRESULT geometryshader_init(struct wined3d_shader *shader, struct wined3d_device *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops, unsigned int max_version)
@@ -1879,6 +1917,8 @@ static HRESULT geometryshader_init(struct wined3d_shader *shader, struct wined3d
         shader_cleanup(shader);
         return hr;
     }
+
+    geometryshader_set_limits(shader);
 
     shader->load_local_constsF = FALSE;
 
@@ -2092,10 +2132,6 @@ static void pixelshader_set_limits(struct wined3d_shader *shader)
             shader->limits.label = 16;
             break;
 
-        case WINED3D_SHADER_VERSION(4, 0):
-            FIXME("Using 3.0 limits for 4.0 shader.\n");
-            /* Fall through. */
-
         case WINED3D_SHADER_VERSION(3, 0):
             shader->limits.temporary = 32;
             shader->limits.constant_float = 224;
@@ -2105,6 +2141,18 @@ static void pixelshader_set_limits(struct wined3d_shader *shader)
             shader->limits.sampler = 16;
             shader->limits.packed_input = 12;
             shader->limits.label = 16; /* FIXME: 2048 */
+            break;
+
+        case WINED3D_SHADER_VERSION(4, 0):
+            shader->limits.temporary = 32; /* FIXME: 4096 */
+            shader->limits.texcoord = 0;
+            shader->limits.sampler = 16; /* FIXME: 128 resources, 16 sampler states */
+            shader->limits.constant_int = 0;
+            shader->limits.constant_float = 0;
+            shader->limits.constant_bool = 0;
+            shader->limits.address = 1;
+            shader->limits.packed_input = 32;
+            shader->limits.label = 16;
             break;
 
         default:
