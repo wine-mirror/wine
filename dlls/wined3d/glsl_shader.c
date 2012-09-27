@@ -1147,17 +1147,17 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         UINT in_count = min(vec4_varyings(reg_maps->shader_version.major, gl_info), shader->limits.packed_input);
 
         if (use_vs(state))
-            shader_addline(buffer, "varying vec4 IN[%u];\n", in_count);
+            shader_addline(buffer, "varying vec4 %s_in[%u];\n", prefix, in_count);
         else
             /* TODO: Write a replacement shader for the fixed function vertex pipeline, so this isn't needed.
              * For fixed function vertex processing + 3.0 pixel shader we need a separate function in the
              * pixel shader that reads the fixed function color into the packed input registers. */
-            shader_addline(buffer, "vec4 IN[%u];\n", in_count);
+            shader_addline(buffer, "vec4 %s_in[%u];\n", prefix, in_count);
     }
 
     /* Declare output register temporaries */
     if (shader->limits.packed_output)
-        shader_addline(buffer, "vec4 OUT[%u];\n", shader->limits.packed_output);
+        shader_addline(buffer, "vec4 %s_out[%u];\n", prefix, shader->limits.packed_output);
 
     /* Declare temporary variables */
     for (i = 0, map = reg_maps->temporary; map; map >>= 1, ++i)
@@ -1170,7 +1170,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     {
         for (i = 0, map = reg_maps->input_registers; map; map >>= 1, ++i)
         {
-            if (map & 1) shader_addline(buffer, "attribute vec4 attrib%i;\n", i);
+            if (map & 1) shader_addline(buffer, "attribute vec4 %s_in%u;\n", prefix, i);
         }
     }
 
@@ -1305,7 +1305,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
         char *register_name, BOOL *is_color, const struct wined3d_shader_instruction *ins)
 {
     /* oPos, oFog and oPts in D3D */
-    static const char * const hwrastout_reg_names[] = {"OUT[10]", "OUT[11].x", "OUT[11].y"};
+    static const char * const hwrastout_reg_names[] = {"vs_out[10]", "vs_out[11].x", "vs_out[11].y"};
 
     const struct wined3d_shader *shader = ins->ctx->shader;
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
@@ -1327,7 +1327,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             {
                 struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
                 if (priv->cur_vs_args->swizzle_map & (1 << reg->idx)) *is_color = TRUE;
-                sprintf(register_name, "attrib%u", reg->idx);
+                sprintf(register_name, "%s_in%u", prefix, reg->idx);
                 break;
             }
 
@@ -1350,26 +1350,26 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                         if (shader->u.ps.declared_in_count > in_count)
                         {
                             sprintf(register_name,
-                                    "((%s + %u) > %d ? (%s + %u) > %d ? gl_SecondaryColor : gl_Color : IN[%s + %u])",
+                                    "((%s + %u) > %u ? (%s + %u) > %u ? gl_SecondaryColor : gl_Color : %s_in[%s + %u])",
                                     rel_param.param_str, idx, in_count - 1, rel_param.param_str, idx, in_count,
-                                    rel_param.param_str, idx);
+                                    prefix, rel_param.param_str, idx);
                         }
                         else
                         {
-                            sprintf(register_name, "IN[%s + %u]", rel_param.param_str, idx);
+                            sprintf(register_name, "%s_in[%s + %u]", prefix, rel_param.param_str, idx);
                         }
                     }
                     else
                     {
                         if (shader->u.ps.declared_in_count > in_count)
                         {
-                            sprintf(register_name, "((%s) > %d ? (%s) > %d ? gl_SecondaryColor : gl_Color : IN[%s])",
+                            sprintf(register_name, "((%s) > %u ? (%s) > %u ? gl_SecondaryColor : gl_Color : %s_in[%s])",
                                     rel_param.param_str, in_count - 1, rel_param.param_str, in_count,
-                                    rel_param.param_str);
+                                    prefix, rel_param.param_str);
                         }
                         else
                         {
-                            sprintf(register_name, "IN[%s]", rel_param.param_str);
+                            sprintf(register_name, "%s_in[%s]", prefix, rel_param.param_str);
                         }
                     }
                 }
@@ -1377,7 +1377,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                 {
                     if (idx == in_count) sprintf(register_name, "gl_Color");
                     else if (idx == in_count + 1) sprintf(register_name, "gl_SecondaryColor");
-                    else sprintf(register_name, "IN[%u]", idx);
+                    else sprintf(register_name, "%s_in[%u]", prefix, idx);
                 }
             }
             else
@@ -1447,13 +1447,13 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             break;
 
         case WINED3DSPR_ATTROUT:
-            if (!reg->idx) sprintf(register_name, "OUT[8]");
-            else sprintf(register_name, "OUT[9]");
+            if (!reg->idx) sprintf(register_name, "%s_out[8]", prefix);
+            else sprintf(register_name, "%s_out[9]", prefix);
             break;
 
         case WINED3DSPR_TEXCRDOUT:
             /* Vertex shaders >= 3.0: WINED3DSPR_OUTPUT */
-            sprintf(register_name, "OUT[%u]", reg->idx);
+            sprintf(register_name, "%s_out[%u]", prefix, reg->idx);
             break;
 
         case WINED3DSPR_MISCTYPE:
@@ -3803,27 +3803,27 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
         if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
         {
             if (semantic_idx < 8 && vertexprocessing == pretransformed)
-                shader_addline(buffer, "IN[%u]%s = gl_TexCoord[%u]%s;\n",
+                shader_addline(buffer, "ps_in[%u]%s = gl_TexCoord[%u]%s;\n",
                         shader->u.ps.input_reg_map[i], reg_mask, semantic_idx, reg_mask);
             else
-                shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
+                shader_addline(buffer, "ps_in[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
                         shader->u.ps.input_reg_map[i], reg_mask, reg_mask);
         }
         else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR))
         {
             if (!semantic_idx)
-                shader_addline(buffer, "IN[%u]%s = vec4(gl_Color)%s;\n",
+                shader_addline(buffer, "ps_in[%u]%s = vec4(gl_Color)%s;\n",
                         shader->u.ps.input_reg_map[i], reg_mask, reg_mask);
             else if (semantic_idx == 1)
-                shader_addline(buffer, "IN[%u]%s = vec4(gl_SecondaryColor)%s;\n",
+                shader_addline(buffer, "ps_in[%u]%s = vec4(gl_SecondaryColor)%s;\n",
                         shader->u.ps.input_reg_map[i], reg_mask, reg_mask);
             else
-                shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
+                shader_addline(buffer, "ps_in[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
                         shader->u.ps.input_reg_map[i], reg_mask, reg_mask);
         }
         else
         {
-            shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
+            shader_addline(buffer, "ps_in[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
                     shader->u.ps.input_reg_map[i], reg_mask, reg_mask);
         }
     }
@@ -3917,13 +3917,12 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer,
             continue;
         }
 
-        if (in_idx == in_count) {
+        if (in_idx == in_count)
             sprintf(destination, "gl_FrontColor");
-        } else if (in_idx == in_count + 1) {
+        else if (in_idx == in_count + 1)
             sprintf(destination, "gl_FrontSecondaryColor");
-        } else {
-            sprintf(destination, "IN[%u]", in_idx);
-        }
+        else
+            sprintf(destination, "ps_in[%u]", in_idx);
 
         semantic_name_in = input_signature[i].semantic_name;
         semantic_idx_in = input_signature[i].semantic_idx;
@@ -3943,7 +3942,7 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer,
             set[in_idx] = mask;
             shader_glsl_write_mask_to_str(mask, reg_mask);
 
-            shader_addline(buffer, "%s%s = OUT[%u]%s;\n",
+            shader_addline(buffer, "%s%s = vs_out[%u]%s;\n",
                     destination, reg_mask, j, reg_mask);
         }
     }
@@ -3964,9 +3963,12 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer,
         if (!(set[i] & WINED3DSP_WRITEMASK_3)) reg_mask[size++] = 'w';
         reg_mask[size] = '\0';
 
-        if (i == in_count) sprintf(destination, "gl_FrontColor");
-        else if (i == in_count + 1) sprintf(destination, "gl_FrontSecondaryColor");
-        else sprintf(destination, "IN[%u]", i);
+        if (i == in_count)
+            sprintf(destination, "gl_FrontColor");
+        else if (i == in_count + 1)
+            sprintf(destination, "gl_FrontSecondaryColor");
+        else
+            sprintf(destination, "ps_in[%u]", i);
 
         if (size == 1) shader_addline(buffer, "%s.%s = 0.0;\n", destination, reg_mask);
         else shader_addline(buffer, "%s.%s = vec%u(0.0);\n", destination, reg_mask, size);
@@ -3995,7 +3997,7 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
 
     if (ps_major < 3)
     {
-        shader_addline(buffer, "void order_ps_input(in vec4 OUT[%u]) {\n", MAX_REG_OUTPUT);
+        shader_addline(buffer, "void order_ps_input(in vec4 vs_out[%u])\n{\n", MAX_REG_OUTPUT);
 
         for (i = 0; map; map >>= 1, ++i)
         {
@@ -4011,15 +4013,15 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
             if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR))
             {
                 if (!semantic_idx)
-                    shader_addline(buffer, "gl_FrontColor%s = OUT[%u]%s;\n",
+                    shader_addline(buffer, "gl_FrontColor%s = vs_out[%u]%s;\n",
                             reg_mask, i, reg_mask);
                 else if (semantic_idx == 1)
-                    shader_addline(buffer, "gl_FrontSecondaryColor%s = OUT[%u]%s;\n",
+                    shader_addline(buffer, "gl_FrontSecondaryColor%s = vs_out[%u]%s;\n",
                             reg_mask, i, reg_mask);
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION))
             {
-                shader_addline(buffer, "gl_Position%s = OUT[%u]%s;\n",
+                shader_addline(buffer, "gl_Position%s = vs_out[%u]%s;\n",
                         reg_mask, i, reg_mask);
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
@@ -4029,7 +4031,7 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
                     if (!(gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W) || ps_major > 0)
                         write_mask |= WINED3DSP_WRITEMASK_3;
 
-                    shader_addline(buffer, "gl_TexCoord[%u]%s = OUT[%u]%s;\n",
+                    shader_addline(buffer, "gl_TexCoord[%u]%s = vs_out[%u]%s;\n",
                             semantic_idx, reg_mask, i, reg_mask);
                     if (!(write_mask & WINED3DSP_WRITEMASK_3))
                         shader_addline(buffer, "gl_TexCoord[%u].w = 1.0;\n", semantic_idx);
@@ -4037,11 +4039,11 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_PSIZE))
             {
-                shader_addline(buffer, "gl_PointSize = OUT[%u].%c;\n", i, reg_mask[1]);
+                shader_addline(buffer, "gl_PointSize = vs_out[%u].%c;\n", i, reg_mask[1]);
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_FOG))
             {
-                shader_addline(buffer, "gl_FogFragCoord = clamp(OUT[%u].%c, 0.0, 1.0);\n", i, reg_mask[1]);
+                shader_addline(buffer, "gl_FogFragCoord = clamp(vs_out[%u].%c, 0.0, 1.0);\n", i, reg_mask[1]);
             }
         }
         shader_addline(buffer, "}\n");
@@ -4050,8 +4052,8 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
     {
         UINT in_count = min(vec4_varyings(ps_major, gl_info), ps->limits.packed_input);
         /* This one is tricky: a 3.0 pixel shader reads from a 3.0 vertex shader */
-        shader_addline(buffer, "varying vec4 IN[%u];\n", in_count);
-        shader_addline(buffer, "void order_ps_input(in vec4 OUT[%u]) {\n", MAX_REG_OUTPUT);
+        shader_addline(buffer, "varying vec4 ps_in[%u];\n", in_count);
+        shader_addline(buffer, "void order_ps_input(in vec4 vs_out[%u])\n{\n", MAX_REG_OUTPUT);
 
         /* First, sort out position and point size. Those are not passed to the pixel shader */
         for (i = 0; map; map >>= 1, ++i)
@@ -4063,12 +4065,12 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
 
             if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION))
             {
-                shader_addline(buffer, "gl_Position%s = OUT[%u]%s;\n",
+                shader_addline(buffer, "gl_Position%s = vs_out[%u]%s;\n",
                         reg_mask, i, reg_mask);
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_PSIZE))
             {
-                shader_addline(buffer, "gl_PointSize = OUT[%u].%c;\n", i, reg_mask[1]);
+                shader_addline(buffer, "gl_PointSize = vs_out[%u].%c;\n", i, reg_mask[1]);
             }
         }
 
@@ -4231,7 +4233,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     shader_generate_main(shader, buffer, reg_maps, function, &priv_ctx);
 
     /* Unpack outputs */
-    shader_addline(buffer, "order_ps_input(OUT);\n");
+    shader_addline(buffer, "order_ps_input(vs_out);\n");
 
     /* The D3DRS_FOGTABLEMODE render state defines if the shader-generated fog coord is used
      * or if the fragment depth is used. If the fragment depth is used(FOGTABLEMODE != NONE),
@@ -4510,7 +4512,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
         {
             if (!(map & 1)) continue;
 
-            snprintf(tmp_name, sizeof(tmp_name), "attrib%u", i);
+            snprintf(tmp_name, sizeof(tmp_name), "vs_in%u", i);
             GL_EXTCALL(glBindAttribLocationARB(programId, i, tmp_name));
         }
         checkGLcall("glBindAttribLocationARB");
