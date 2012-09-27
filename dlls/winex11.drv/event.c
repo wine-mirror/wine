@@ -998,6 +998,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     HWND parent;
     BOOL root_coords;
     int cx, cy, x = event->x, y = event->y;
+    DWORD style;
 
     if (!hwnd) return;
     if (!(data = get_win_data( hwnd ))) return;
@@ -1061,9 +1062,10 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
                hwnd, data->window_rect.right - data->window_rect.left,
                data->window_rect.bottom - data->window_rect.top, cx, cy );
 
-    if (is_net_wm_state_maximized( event->display, data ))
+    style = GetWindowLongW( data->hwnd, GWL_STYLE );
+    if ((style & WS_CAPTION) == WS_CAPTION && is_net_wm_state_maximized( event->display, data ))
     {
-        if (!IsZoomed( data->hwnd ))
+        if (!(style & WS_MAXIMIZE))
         {
             TRACE( "win %p/%lx is maximized\n", data->hwnd, data->whole_window );
             release_win_data( data );
@@ -1073,7 +1075,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     }
     else
     {
-        if (IsZoomed( data->hwnd ))
+        if (style & WS_MAXIMIZE)
         {
             TRACE( "window %p/%lx is no longer maximized\n", data->hwnd, data->whole_window );
             release_win_data( data );
@@ -1198,7 +1200,7 @@ static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL updat
     if (data->iconic && data->wm_state == NormalState)  /* restore window */
     {
         data->iconic = FALSE;
-        if (is_net_wm_state_maximized( event->display, data ))
+        if ((style & WS_CAPTION) == WS_CAPTION && is_net_wm_state_maximized( event->display, data ))
         {
             if ((style & WS_MAXIMIZEBOX) && !(style & WS_DISABLED))
             {
