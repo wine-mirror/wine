@@ -396,8 +396,15 @@ PVOID WINAPI IoAllocateErrorLogEntry( PVOID IoObject, UCHAR EntrySize )
  */
 PMDL WINAPI IoAllocateMdl( PVOID VirtualAddress, ULONG Length, BOOLEAN SecondaryBuffer, BOOLEAN ChargeQuota, PIRP Irp )
 {
-    FIXME( "stub: %p, %u, %i, %i, %p\n", VirtualAddress, Length, SecondaryBuffer, ChargeQuota, Irp );
-    return NULL;
+    PMDL mdl;
+
+    FIXME("partial stub: %p, %u, %i, %i, %p\n", VirtualAddress, Length, SecondaryBuffer, ChargeQuota, Irp);
+
+    mdl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MDL));
+    if (!mdl)
+        return NULL;
+
+    return mdl;
 }
 
 
