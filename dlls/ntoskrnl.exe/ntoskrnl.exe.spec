@@ -371,7 +371,7 @@
 @ stub IoFreeController
 @ stub IoFreeErrorLogEntry
 @ stdcall IoFreeIrp(ptr)
-@ stub IoFreeMdl
+@ stdcall IoFreeMdl(ptr)
 @ stub IoFreeWorkItem
 @ stub IoGetAttachedDevice
 @ stub IoGetAttachedDeviceReference

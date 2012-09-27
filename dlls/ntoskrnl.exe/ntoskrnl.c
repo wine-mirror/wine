@@ -409,6 +409,17 @@ PMDL WINAPI IoAllocateMdl( PVOID VirtualAddress, ULONG Length, BOOLEAN Secondary
 
 
 /***********************************************************************
+ *           IoFreeMdl  (NTOSKRNL.EXE.@)
+ */
+VOID WINAPI IoFreeMdl(PMDL mdl)
+{
+    FIXME("partial stub: %p\n", mdl);
+
+    HeapFree(GetProcessHeap(), 0, mdl);
+}
+
+
+/***********************************************************************
  *           IoAllocateWorkItem  (NTOSKRNL.EXE.@)
  */
 PIO_WORKITEM WINAPI IoAllocateWorkItem( PDEVICE_OBJECT DeviceObject )
