@@ -223,6 +223,13 @@ if isEnglishLang then
     Call ok(WeekDayName(1, true, 2) = "Mon", "WeekDayName(1, true, 2) = " & WeekDayName(1, true, 2))
     Call ok(WeekDayName(1, true, 7) = "Sat", "WeekDayName(1, true, 7) = " & WeekDayName(1, true, 7))
     Call ok(WeekDayName(1, true, 7.1) = "Sat", "WeekDayName(1, true, 7.1) = " & WeekDayName(1, true, 7.1))
+
+    Call ok(MonthName(1) = "January", "MonthName(1) = " & MonthName(1))
+    Call ok(MonthName(12) = "December", "MonthName(12) = " & MonthName(12))
+    Call ok(MonthName(1, 0) = "January", "MonthName(1, 0) = " & MonthName(1, 0))
+    Call ok(MonthName(12, false) = "December", "MonthName(12, false) = " & MonthName(12, false))
+    Call ok(MonthName(1, 10) = "Jan", "MonthName(1, 10) = " & MonthName(1, 10))
+    Call ok(MonthName(12, true) = "Dec", "MonthName(12, true) = " & MonthName(12, true))
 end if
 
 Call reportSuccess()

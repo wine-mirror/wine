@@ -1271,8 +1271,29 @@ static HRESULT Global_WeekdayName(vbdisp_t *This, VARIANT *arg, unsigned args_cn
 
 static HRESULT Global_MonthName(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    int month, abbrev = 0;
+    BSTR ret;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    assert(args_cnt == 1 || args_cnt == 2);
+
+    hres = to_int(arg+args_cnt-1, &month);
+    if(FAILED(hres))
+        return hres;
+
+    if(args_cnt == 2) {
+        hres = to_int(arg, &abbrev);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    hres = VarMonthName(month, abbrev, 0, &ret);
+    if(FAILED(hres))
+        return hres;
+
+    return return_bstr(res, ret);
 }
 
 static HRESULT Global_Round(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
