@@ -355,11 +355,13 @@ static basic_istream_char* (*__thiscall p_basic_istream_char_read_uint64)(basic_
 static basic_istream_char* (*__thiscall p_basic_istream_char_read_double)(basic_istream_char*, double*);
 static int (*__thiscall p_basic_istream_char_get)(basic_istream_char*);
 static MSVCP_bool (*__thiscall p_basic_istream_char_ipfx)(basic_istream_char*, MSVCP_bool);
+static basic_istream_char* (*__thiscall p_basic_istream_char_ignore)(basic_istream_char*, streamsize, int);
 
 static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_read_uint64)(basic_istream_wchar*, unsigned __int64*);
 static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_read_double)(basic_istream_wchar*, double *);
 static int (*__thiscall p_basic_istream_wchar_get)(basic_istream_wchar*);
 static MSVCP_bool (*__thiscall p_basic_istream_wchar_ipfx)(basic_istream_wchar*, MSVCP_bool);
+static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_ignore)(basic_istream_wchar*, streamsize, unsigned short);
 
 /* ostream */
 static basic_ostream_char* (*__thiscall p_basic_ostream_char_print_double)(basic_ostream_char*, double);
@@ -518,6 +520,8 @@ static BOOL init(void)
             "?get@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAHXZ");
         SET(p_basic_istream_char_ipfx,
             "?ipfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAA_N_N@Z");
+        SET(p_basic_istream_char_ignore,
+            "?ignore@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV12@_JH@Z");
 
         SET(p_basic_istream_wchar_read_uint64,
             "??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@AEA_K@Z");
@@ -527,6 +531,8 @@ static BOOL init(void)
             "?get@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAGXZ");
         SET(p_basic_istream_wchar_ipfx,
             "?ipfx@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAA_N_N@Z");
+        SET(p_basic_istream_wchar_ignore,
+            "?ignore@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV12@_JG@Z");
 
         SET(p_basic_ostream_char_print_double,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@N@Z");
@@ -594,6 +600,8 @@ static BOOL init(void)
             "?get@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEHXZ");
         SET(p_basic_istream_char_ipfx,
             "?ipfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QAE_N_N@Z");
+        SET(p_basic_istream_char_ignore,
+            "?ignore@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV12@HH@Z");
 
         SET(p_basic_istream_wchar_read_uint64,
             "??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@AA_K@Z");
@@ -603,6 +611,8 @@ static BOOL init(void)
             "?get@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEGXZ");
         SET(p_basic_istream_wchar_ipfx,
             "?ipfx@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAE_N_N@Z");
+        SET(p_basic_istream_wchar_ignore,
+            "?ignore@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEAAV12@HG@Z");
 
         SET(p_basic_ostream_char_print_double,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@N@Z");
@@ -1124,6 +1134,74 @@ static void test_istream_ipfx(void)
 }
 
 
+static void test_istream_ignore(void)
+{
+    unsigned short testus, nextus;
+    basic_stringstream_wchar wss;
+    basic_stringstream_char ss;
+    basic_string_wchar wstr;
+    basic_string_char str;
+    IOSB_iostate state;
+    wchar_t wide[64];
+    int i, next;
+
+    struct _test_istream_ignore {
+        const char  *str;
+        streamsize   count;
+        int          delim;
+        IOSB_iostate state;
+        int          next;
+    } tests[] = {
+        /* string       count delim state            next */
+        { "",           0,    '\n', IOSTATE_goodbit, EOF }, /* empty string */
+
+        /* different counts */
+        { "ABCDEF",     2,    '\n', IOSTATE_goodbit, 'C' }, /* easy case */
+        { "ABCDEF",     42,   '\n', IOSTATE_eofbit,  EOF }, /* ignore too much */
+        { "ABCDEF",    -2,    '\n', IOSTATE_goodbit, 'A' }, /* negative count */
+        { "ABCDEF",     6,    '\n', IOSTATE_goodbit, EOF }, /* is eof not set at end */
+        { "ABCDEF",     7,    '\n', IOSTATE_eofbit,  EOF }, /* eof is set just after end */
+
+        /* different delimiters */
+        { "ABCDEF",       42, '\0', IOSTATE_eofbit,  EOF }, /* null as delim */
+        { "ABC DEF GHI",  0,  ' ',  IOSTATE_goodbit, 'A' },
+        { "ABC DEF GHI",  42, ' ',  IOSTATE_goodbit, 'D' },
+        { "ABC DEF\tGHI", 42, '\t', IOSTATE_goodbit, 'G' },
+        { "ABC ",         42, ' ',  IOSTATE_goodbit, EOF }, /* delim at end */
+    };
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        /* char version */
+        call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
+        call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
+
+        call_func3(p_basic_istream_char_ignore, &ss.base.base1, tests[i].count, tests[i].delim);
+        state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &ss.basic_ios.base);
+        next  = (int)call_func1(p_basic_istream_char_get, &ss.base.base1);
+
+        ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+        ok(tests[i].next  == next,  "wrong next, expected = %c (%i) found = %c (%i)\n", tests[i].next, tests[i].next, next, next);
+
+        call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+
+        /* wchar_t version */
+        AtoW(wide, tests[i].str, strlen(tests[i].str));
+        call_func2(p_basic_string_wchar_ctor_cstr, &wstr, wide);
+        call_func4(p_basic_stringstream_wchar_ctor_str, &wss, &wstr, OPENMODE_out|OPENMODE_in, TRUE);
+
+        call_func3(p_basic_istream_wchar_ignore, &wss.base.base1, tests[i].count, tests[i].delim);
+        state  = (IOSB_iostate)call_func1(p_ios_base_rdstate, &wss.basic_ios.base);
+        nextus = (unsigned short)(int)call_func1(p_basic_istream_wchar_get, &wss.base.base1);
+
+        ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+        testus = tests[i].next == EOF ? WEOF : (unsigned short)tests[i].next;
+        ok(testus == nextus, "wrong next, expected = %c (%i) found = %c (%i)\n", testus, testus, nextus, nextus);
+
+        call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
+    }
+}
+
+
 START_TEST(ios)
 {
     if(!init())
@@ -1133,6 +1211,7 @@ START_TEST(ios)
     test_num_get_get_double();
     test_num_put_put_double();
     test_istream_ipfx();
+    test_istream_ignore();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 }

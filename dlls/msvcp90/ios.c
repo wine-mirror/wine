@@ -7500,7 +7500,8 @@ DEFINE_THISCALL_WRAPPER(basic_istream_char_ignore, 12)
 basic_istream_char* __thiscall basic_istream_char_ignore(basic_istream_char *this, streamsize count, int delim)
 {
     basic_ios_char *base = basic_istream_char_get_basic_ios(this);
-    int ch = delim;
+    int ch = (unsigned char)delim;
+    unsigned int state;
 
     TRACE("(%p %ld %d)\n", this, count, delim);
 
@@ -7508,22 +7509,28 @@ basic_istream_char* __thiscall basic_istream_char_ignore(basic_istream_char *thi
 
     if(basic_istream_char_sentry_create(this, TRUE)) {
         basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
+        state = IOSTATE_goodbit;
 
         while(count > 0) {
             ch = basic_streambuf_char_sbumpc(strbuf);
 
-            if(ch==EOF || ch==delim)
+            if(ch==EOF) {
+                state = IOSTATE_eofbit;
+                break;
+            }
+
+            if(ch==(unsigned char)delim)
                 break;
 
             this->count++;
             if(count != INT_MAX)
                 count--;
         }
-    }
+    }else
+        state = IOSTATE_failbit;
     basic_istream_char_sentry_destroy(this);
 
-    if(ch == EOF)
-        basic_ios_char_setstate(base, IOSTATE_eofbit);
+    basic_ios_char_setstate(base, state);
     return this;
 }
 
@@ -8759,6 +8766,7 @@ basic_istream_wchar* __thiscall basic_istream_wchar_ignore(basic_istream_wchar *
 {
     basic_ios_wchar *base = basic_istream_wchar_get_basic_ios(this);
     unsigned short ch = delim;
+    unsigned int state;
 
     TRACE("(%p %ld %d)\n", this, count, delim);
 
@@ -8766,22 +8774,28 @@ basic_istream_wchar* __thiscall basic_istream_wchar_ignore(basic_istream_wchar *
 
     if(basic_istream_wchar_sentry_create(this, TRUE)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
+        state = IOSTATE_goodbit;
 
         while(count > 0) {
             ch = basic_streambuf_wchar_sbumpc(strbuf);
 
-            if(ch==WEOF || ch==delim)
+            if(ch==WEOF) {
+                state = IOSTATE_eofbit;
+                break;
+            }
+
+            if(ch==delim)
                 break;
 
             this->count++;
             if(count != INT_MAX)
                 count--;
         }
-    }
+    }else
+        state = IOSTATE_failbit;
     basic_istream_wchar_sentry_destroy(this);
 
-    if(ch == WEOF)
-        basic_ios_wchar_setstate(base, IOSTATE_eofbit);
+    basic_ios_wchar_setstate(base, state);
     return this;
 }
 
