@@ -18,4 +18,4 @@
 
 #include <uiautomationcore.h>
 #include <uiautomationclient.h>
-/* #include <uiautomationcoreapi.h> */
+#include <uiautomationcoreapi.h>

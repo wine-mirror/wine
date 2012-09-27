@@ -521,6 +521,7 @@ SRCDIR_INCLUDES = \
 	twain.h \
 	udpmib.h \
 	uiautomation.h \
+	uiautomationcoreapi.h \
 	userenv.h \
 	usp10.h \
 	uuids.h \
