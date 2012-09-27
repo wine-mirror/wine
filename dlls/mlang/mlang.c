@@ -2166,15 +2166,16 @@ static HRESULT WINAPI fnIMultiLanguage_ConvertStringToUnicode(
 
 static HRESULT WINAPI fnIMultiLanguage_ConvertStringFromUnicode(
     IMultiLanguage* iface,
-    DWORD* pdwMode,
-    DWORD dwEncoding,
-    WCHAR* pSrcStr,
-    UINT* pcSrcSize,
-    CHAR* pDstStr,
-    UINT* pcDstSize)
+    DWORD* mode,
+    DWORD encoding,
+    WCHAR* src,
+    UINT* src_size,
+    CHAR* dest,
+    UINT* dest_size)
 {
-    return ConvertINetUnicodeToMultiByte(pdwMode, dwEncoding,
-        pSrcStr, (LPINT)pcSrcSize, pDstStr, (LPINT)pcDstSize);
+    MLang_impl *This = impl_from_IMultiLanguage(iface);
+    return IMultiLanguage3_ConvertStringFromUnicode(&This->IMultiLanguage3_iface,
+        mode, encoding, src, src_size, dest, dest_size);
 }
 
 static HRESULT WINAPI fnIMultiLanguage_ConvertStringReset(
