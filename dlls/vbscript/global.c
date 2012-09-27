@@ -63,7 +63,7 @@ static IInternetHostSecurityManager *get_sec_mgr(script_ctx_t *ctx)
     return ctx->secmgr = secmgr;
 }
 
-static HRESULT return_bstr(VARIANT *res, const WCHAR *str)
+static HRESULT return_string(VARIANT *res, const WCHAR *str)
 {
     BSTR ret;
 
@@ -76,6 +76,17 @@ static HRESULT return_bstr(VARIANT *res, const WCHAR *str)
 
     V_VT(res) = VT_BSTR;
     V_BSTR(res) = ret;
+    return S_OK;
+}
+
+static HRESULT return_bstr(VARIANT *res, BSTR str)
+{
+    if(res) {
+        V_VT(res) = VT_BSTR;
+        V_BSTR(res) = str;
+    }else {
+        SysFreeString(str);
+    }
     return S_OK;
 }
 
@@ -137,6 +148,9 @@ static HRESULT to_int(VARIANT *v, int *ret)
         *ret = n;
         break;
     }
+    case VT_BOOL:
+        *ret = V_BOOL(v) ? -1 : 0;
+        break;
     default:
         FIXME("not supported %s\n", debugstr_variant(v));
         return E_NOTIMPL;
@@ -427,7 +441,7 @@ static HRESULT Global_Hex(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
         *ptr = '0';
     }
 
-    return return_bstr(res, ptr);
+    return return_string(res, ptr);
 }
 
 static HRESULT Global_Oct(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -1224,8 +1238,35 @@ static HRESULT Global_FormatDateTime(vbdisp_t *This, VARIANT *arg, unsigned args
 
 static HRESULT Global_WeekdayName(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    int weekday, first_day = 0, abbrev = 0;
+    BSTR ret;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    assert(1 <= args_cnt && args_cnt <= 3);
+
+    hres = to_int(arg+args_cnt-1, &weekday);
+    if(FAILED(hres))
+        return hres;
+
+    if(args_cnt > 1) {
+        hres = to_int(arg+args_cnt-2, &abbrev);
+        if(FAILED(hres))
+            return hres;
+
+        if(args_cnt == 3) {
+            hres = to_int(arg, &first_day);
+            if(FAILED(hres))
+                return hres;
+        }
+    }
+
+    hres = VarWeekdayName(weekday, abbrev, first_day, 0, &ret);
+    if(FAILED(hres))
+        return hres;
+
+    return return_bstr(res, ret);
 }
 
 static HRESULT Global_MonthName(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -1988,7 +2029,7 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_FORMATCURRENCY,            Global_FormatCurrency, 0, 1, 5},
     {DISPID_GLOBAL_FORMATPERCENT,             Global_FormatPercent, 0, 1, 5},
     {DISPID_GLOBAL_FORMATDATETIME,            Global_FormatDateTime, 0, 1, 2},
-    {DISPID_GLOBAL_WEEKDAYNAME,               Global_WeekdayName, 0, 3},
+    {DISPID_GLOBAL_WEEKDAYNAME,               Global_WeekdayName, 0, 1, 3},
     {DISPID_GLOBAL_MONTHNAME,                 Global_MonthName, 0, 1, 2},
     {DISPID_GLOBAL_ROUND,                     Global_Round, 0, 1, 2},
     {DISPID_GLOBAL_ESCAPE,                    Global_Escape, 0, 1},

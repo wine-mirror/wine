@@ -190,6 +190,7 @@ Call ok(Len(empty) = 0, "Len(empty) = " & Len(empty))
 
 Call ok(Space(1) = " ", "Space(1) = " & Space(1) & """")
 Call ok(Space(0) = "", "Space(0) = " & Space(0) & """")
+Call ok(Space(false) = "", "Space(false) = " & Space(false) & """")
 Call ok(Space(5) = "     ", "Space(5) = " & Space(5) & """")
 Call ok(Space(5.2) = "     ", "Space(5.2) = " & Space(5.2) & """")
 Call ok(Space(5.8) = "      ", "Space(5.8) = " & Space(5.8) & """")
@@ -209,5 +210,19 @@ TestRound -3.5, -4, "VT_R8"
 TestRound "2", 2, "VT_R8"
 TestRound true, true, "VT_BOOL"
 TestRound false, false, "VT_BOOL"
+
+if isEnglishLang then
+    Call ok(WeekDayName(1) = "Sunday", "WeekDayName(1) = " & WeekDayName(1))
+    Call ok(WeekDayName(3) = "Tuesday", "WeekDayName(3) = " & WeekDayName(3))
+    Call ok(WeekDayName(7) = "Saturday", "WeekDayName(7) = " & WeekDayName(7))
+    Call ok(WeekDayName(1.1) = "Sunday", "WeekDayName(1.1) = " & WeekDayName(1.1))
+    Call ok(WeekDayName(1, false) = "Sunday", "WeekDayName(1, false) = " & WeekDayName(1, false))
+    Call ok(WeekDayName(1, true) = "Sun", "WeekDayName(1, true) = " & WeekDayName(1, true))
+    Call ok(WeekDayName(1, 10) = "Sun", "WeekDayName(1, 10) = " & WeekDayName(1, 10))
+    Call ok(WeekDayName(1, true, 0) = "Sun", "WeekDayName(1, true, 0) = " & WeekDayName(1, true, 0))
+    Call ok(WeekDayName(1, true, 2) = "Mon", "WeekDayName(1, true, 2) = " & WeekDayName(1, true, 2))
+    Call ok(WeekDayName(1, true, 7) = "Sat", "WeekDayName(1, true, 7) = " & WeekDayName(1, true, 7))
+    Call ok(WeekDayName(1, true, 7.1) = "Sat", "WeekDayName(1, true, 7.1) = " & WeekDayName(1, true, 7.1))
+end if
 
 Call reportSuccess()
