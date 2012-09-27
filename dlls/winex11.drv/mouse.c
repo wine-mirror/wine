@@ -1265,11 +1265,7 @@ BOOL CDECL X11DRV_GetCursorPos(LPPOINT pos)
  */
 BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
 {
-    if (!clip)
-    {
-        ungrab_clipping_window();
-        return TRUE;
-    }
+    if (!clip) clip = &virtual_screen_rect;
 
     if (GetWindowThreadProcessId( GetDesktopWindow(), NULL ) == GetCurrentThreadId())
         return TRUE;  /* don't clip in the desktop process */
