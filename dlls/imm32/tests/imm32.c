@@ -618,6 +618,43 @@ static void test_ImmGetDescription(void)
     UnloadKeyboardLayout(hkl);
 }
 
+static void test_ImmDefaultHwnd(void)
+{
+    HIMC imc1, imc2, imc3;
+    HWND def1, def3;
+    HWND hwnd;
+
+    hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "Wine imm32.dll test",
+                          WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+                          240, 120, NULL, NULL, GetModuleHandle(0), NULL);
+
+    ShowWindow(hwnd, SW_SHOWNORMAL);
+
+    imc1 = ImmGetContext(hwnd);
+    if (!imc1)
+    {
+        win_skip("IME support not implemented\n");
+        return;
+    }
+
+    def1 = ImmGetDefaultIMEWnd(hwnd);
+
+    imc2 = ImmCreateContext();
+    ImmSetOpenStatus(imc2, TRUE);
+
+    imc3 = ImmGetContext(hwnd);
+    def3 = ImmGetDefaultIMEWnd(hwnd);
+
+    ok(def3 == def1, "Default IME window should not change\n");
+    ok(imc1 == imc3, "IME context should not change\n");
+    ImmSetOpenStatus(imc2, FALSE);
+
+    ImmReleaseContext(hwnd, imc1);
+    ImmReleaseContext(hwnd, imc3);
+    ImmDestroyContext(imc2);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(imm32) {
     if (init())
     {
@@ -630,6 +667,7 @@ START_TEST(imm32) {
         test_ImmIsUIMessage();
         test_ImmGetContext();
         test_ImmGetDescription();
+        test_ImmDefaultHwnd();
     }
     cleanup();
 }
