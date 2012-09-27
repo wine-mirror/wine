@@ -2195,25 +2195,11 @@ static HRESULT WINAPI fnIMultiLanguage_GetRfc1766FromLcid(
 
 static HRESULT WINAPI fnIMultiLanguage_GetLcidFromRfc1766(
     IMultiLanguage* iface,
-    LCID* pLocale,
-    BSTR bstrRfc1766)
+    LCID* locale,
+    BSTR rfc1766)
 {
-    HRESULT hr;
-    IEnumRfc1766 *rfc1766;
-
-    TRACE("%p %p %s\n", iface, pLocale, debugstr_w(bstrRfc1766));
-
-    if (!pLocale || !bstrRfc1766)
-        return E_INVALIDARG;
-
-    hr = IMultiLanguage_EnumRfc1766(iface, &rfc1766);
-    if (FAILED(hr))
-        return hr;
-
-    hr = lcid_from_rfc1766(rfc1766, pLocale, bstrRfc1766);
-
-    IEnumRfc1766_Release(rfc1766);
-    return hr;
+    MLang_impl *This = impl_from_IMultiLanguage(iface);
+    return IMultiLanguage3_GetLcidFromRfc1766(&This->IMultiLanguage3_iface, locale, rfc1766);
 }
 
 /******************************************************************************/
