@@ -117,7 +117,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
  *  n     [I] # of the parameter to return, counted from 0
  *  start [O] Optional. Pointer to the first char of param n in s
  *  end   [O] Optional. Pointer to the last char of param n in s
- *  raw   [I] True to return the parameter in raw format (quotes maintainted)
+ *  raw   [I] True to return the parameter in raw format (quotes maintained)
  *            False returns the parameter with quotes stripped
  *
  * RETURNS
@@ -152,7 +152,7 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end, BOOL raw)
             p++;
         if (*p == '\0') return param;
 
-        /* If we have reached the token number we want, remember the beginning of it if it */
+        /* If we have reached the token number we want, remember the beginning of it */
         if (start != NULL && curParamNb == n) *start = p;
 
         /* Return the whole word up to the next delimiter, handling quotes in the middle

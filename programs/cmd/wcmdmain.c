@@ -1852,7 +1852,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     curRedirsLen = 0;
     curCopyTo    = curString;
     curLen       = &curStringLen;
-    lastWasRedirect = FALSE;  /* Required for eg spaces between > and filename */
+    lastWasRedirect = FALSE;  /* Required e.g. for spaces between > and filename */
 
     /* Parse every character on the line being processed */
     while (*curPos != 0x00) {
@@ -1864,7 +1864,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
                  lastWasWhiteSpace, onlyWhiteSpace);
       */
 
-      /* Prevent overflow caused by the caret escape char*/
+      /* Prevent overflow caused by the caret escape char */
       if (*curLen >= MAXSTRING) {
         WINE_ERR("Overflow detected in command\n");
         return NULL;
@@ -2202,7 +2202,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
           if (!WCMD_fgets(extraData, MAXSTRING, readFrom))
             break;
 
-          /* Edge case for carets - a completely blank line (ie was just
+          /* Edge case for carets - a completely blank line (i.e. was just
              CRLF) is oddly added as an LF but then more data is received (but
              only once more!) */
           if (lastWasCaret) {
