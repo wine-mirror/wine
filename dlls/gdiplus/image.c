@@ -3531,6 +3531,8 @@ static GpStatus decode_image_wic(IStream *stream, GDIPCONST CLSID *clsid,
     WICRect wrc;
     HRESULT initresult;
 
+    TRACE("%p,%s,%u,%p\n", stream, wine_dbgstr_guid(clsid), active_frame, image);
+
     initresult = CoInitialize(NULL);
 
     hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER,
@@ -3669,6 +3671,7 @@ end:
         }
         /* Pin the source stream */
         IStream_AddRef(stream);
+        TRACE("=> %p\n", *image);
     }
 
     return status;
@@ -3827,7 +3830,6 @@ GpStatus WINGDIPAPI GdipImageSelectActiveFrame(GpImage *image, GDIPCONST GUID *d
     LARGE_INTEGER seek;
     HRESULT hr;
     const struct image_codec *codec = NULL;
-    IStream *stream;
     GpImage *new_image;
 
     TRACE("(%p,%s,%u)\n", image, debugstr_guid(dimensionID), frame);
@@ -3836,7 +3838,10 @@ GpStatus WINGDIPAPI GdipImageSelectActiveFrame(GpImage *image, GDIPCONST GUID *d
         return InvalidParameter;
 
     if (frame >= image->frame_count)
+    {
+        WARN("requested frame %u, but image has only %u\n", frame, image->frame_count);
         return InvalidParameter;
+    }
 
     if (image->type != ImageTypeBitmap && image->type != ImageTypeMetafile)
     {
@@ -3853,37 +3858,22 @@ GpStatus WINGDIPAPI GdipImageSelectActiveFrame(GpImage *image, GDIPCONST GUID *d
         return Ok;
     }
 
-    hr = IStream_Clone(image->stream, &stream);
-    if (FAILED(hr))
-    {
-        STATSTG statstg;
-
-        hr = IStream_Stat(image->stream, &statstg, STATFLAG_NOOPEN);
-        if (FAILED(hr)) return hresult_to_status(hr);
-
-        stat = GdipCreateStreamOnFile(statstg.pwcsName, GENERIC_READ, &stream);
-        if (stat != Ok) return stat;
-    }
-
     /* choose an appropriate image decoder */
-    stat = get_decoder_info(stream, &codec);
+    stat = get_decoder_info(image->stream, &codec);
     if (stat != Ok)
     {
-        IStream_Release(stream);
+        WARN("can't find decoder info\n");
         return stat;
     }
 
     /* seek to the start of the stream */
     seek.QuadPart = 0;
-    hr = IStream_Seek(stream, seek, STREAM_SEEK_SET, NULL);
+    hr = IStream_Seek(image->stream, seek, STREAM_SEEK_SET, NULL);
     if (FAILED(hr))
-    {
-        IStream_Release(stream);
         return hresult_to_status(hr);
-    }
 
     /* call on the image decoder to do the real work */
-    stat = codec->decode_func(stream, &codec->info.Clsid, frame, &new_image);
+    stat = codec->decode_func(image->stream, &codec->info.Clsid, frame, &new_image);
 
     if (stat == Ok)
     {
@@ -3898,7 +3888,6 @@ GpStatus WINGDIPAPI GdipImageSelectActiveFrame(GpImage *image, GDIPCONST GUID *d
         return Ok;
     }
 
-    IStream_Release(stream);
     return stat;
 }
 
