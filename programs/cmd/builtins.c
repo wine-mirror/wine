@@ -2241,9 +2241,8 @@ static int WCMD_compare( const void *a, const void *b )
 {
     int r;
     const WCHAR * const *str_a = a, * const *str_b = b;
-    static const WCHAR eqW[]   = {'=','\0'};
     r = CompareStringW( LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-	  *str_a, strcspnW(*str_a, eqW), *str_b, strcspnW(*str_b, eqW) );
+	  *str_a, strcspnW(*str_a, equalW), *str_b, strcspnW(*str_b, equalW) );
     if( r == CSTR_LESS_THAN ) return -1;
     if( r == CSTR_GREATER_THAN ) return 1;
     return 0;
