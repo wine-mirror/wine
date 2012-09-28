@@ -359,19 +359,21 @@ static void (*__thiscall p_basic_stringstream_wchar_vbase_dtor)(basic_stringstre
 /* istream */
 static basic_istream_char* (*__thiscall p_basic_istream_char_read_uint64)(basic_istream_char*, unsigned __int64*);
 static basic_istream_char* (*__thiscall p_basic_istream_char_read_double)(basic_istream_char*, double*);
-static int (*__thiscall p_basic_istream_char_get)(basic_istream_char*);
-static MSVCP_bool (*__thiscall p_basic_istream_char_ipfx)(basic_istream_char*, MSVCP_bool);
+static int                 (*__thiscall p_basic_istream_char_get)(basic_istream_char*);
+static MSVCP_bool          (*__thiscall p_basic_istream_char_ipfx)(basic_istream_char*, MSVCP_bool);
 static basic_istream_char* (*__thiscall p_basic_istream_char_ignore)(basic_istream_char*, streamsize, int);
 static basic_istream_char* (*__thiscall p_basic_istream_char_seekg)(basic_istream_char*, streamoff, int);
 static basic_istream_char* (*__thiscall p_basic_istream_char_seekg_fpos)(basic_istream_char*, fpos_int);
+static int                 (*__thiscall p_basic_istream_char_peek)(basic_istream_char*);
 
 static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_read_uint64)(basic_istream_wchar*, unsigned __int64*);
 static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_read_double)(basic_istream_wchar*, double *);
-static int (*__thiscall p_basic_istream_wchar_get)(basic_istream_wchar*);
-static MSVCP_bool (*__thiscall p_basic_istream_wchar_ipfx)(basic_istream_wchar*, MSVCP_bool);
+static int                  (*__thiscall p_basic_istream_wchar_get)(basic_istream_wchar*);
+static MSVCP_bool           (*__thiscall p_basic_istream_wchar_ipfx)(basic_istream_wchar*, MSVCP_bool);
 static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_ignore)(basic_istream_wchar*, streamsize, unsigned short);
 static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_seekg)(basic_istream_wchar*, streamoff, int);
 static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_seekg_fpos)(basic_istream_wchar*, fpos_int);
+static unsigned short       (*__thiscall p_basic_istream_wchar_peek)(basic_istream_wchar*);
 
 /* ostream */
 static basic_ostream_char* (*__thiscall p_basic_ostream_char_print_double)(basic_ostream_char*, double);
@@ -540,7 +542,8 @@ static BOOL init(void)
             "?seekg@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV12@_JH@Z");
         SET(p_basic_istream_char_seekg_fpos,
             "?seekg@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV12@V?$fpos@H@2@@Z");
-
+        SET(p_basic_istream_char_peek,
+            "?peek@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAHXZ");
 
         SET(p_basic_istream_wchar_read_uint64,
             "??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@AEA_K@Z");
@@ -556,6 +559,8 @@ static BOOL init(void)
             "?seekg@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV12@_JH@Z");
         SET(p_basic_istream_wchar_seekg_fpos,
             "?seekg@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV12@V?$fpos@H@2@@Z");
+        SET(p_basic_istream_wchar_peek,
+            "?peek@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAGXZ");
 
         SET(p_basic_ostream_char_print_double,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@N@Z");
@@ -629,6 +634,8 @@ static BOOL init(void)
             "?seekg@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV12@JH@Z");
         SET(p_basic_istream_char_seekg_fpos,
             "?seekg@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV12@V?$fpos@H@2@@Z");
+        SET(p_basic_istream_char_peek,
+            "?peek@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEHXZ");
 
         SET(p_basic_istream_wchar_read_uint64,
             "??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@AA_K@Z");
@@ -644,6 +651,8 @@ static BOOL init(void)
             "?seekg@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEAAV12@JH@Z");
         SET(p_basic_istream_wchar_seekg_fpos,
             "?seekg@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEAAV12@V?$fpos@H@2@@Z");
+        SET(p_basic_istream_wchar_peek,
+            "?peek@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEGXZ");
 
         SET(p_basic_ostream_char_print_double,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@N@Z");
@@ -1358,6 +1367,61 @@ static void test_istream_seekg_fpos(void)
 }
 
 
+static void test_istream_peek(void)
+{
+    unsigned short testus, nextus, peekus;
+    basic_stringstream_wchar wss;
+    basic_stringstream_char ss;
+    basic_string_wchar wstr;
+    basic_string_char str;
+    IOSB_iostate state;
+    int i, next, peek;
+    wchar_t wide[64];
+
+    struct _test_istream_peek {
+        const char  *str;
+        int          peek;
+        int          next;
+        IOSB_iostate state;
+    } tests[] = {
+        { "",       EOF, EOF, IOSTATE_eofbit  },
+        { "ABCDEF", 'A', 'A', IOSTATE_goodbit },
+    };
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        /* char version */
+        call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
+        call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
+
+        peek  = (int)call_func1(p_basic_istream_char_peek, &ss.base.base1);
+        state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &ss.basic_ios.base);
+        next  = (int)call_func1(p_basic_istream_char_get, &ss.base.base1);
+
+        ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+        ok(tests[i].next  == next,  "wrong next, expected = %c (%i) found = %c (%i)\n", tests[i].next, tests[i].next, next, next);
+        ok(peek == next, "wrong peek, expected %c (%i) found = %c (%i)\n", peek, peek, next, next);
+
+        call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+
+        /* wchar_t version */
+        AtoW(wide, tests[i].str, strlen(tests[i].str));
+        call_func2(p_basic_string_wchar_ctor_cstr, &wstr, wide);
+        call_func4(p_basic_stringstream_wchar_ctor_str, &wss, &wstr, OPENMODE_out|OPENMODE_in, TRUE);
+
+        peekus = (unsigned short)(int)call_func1(p_basic_istream_wchar_peek, &wss.base.base1);
+        state  = (IOSB_iostate)call_func1(p_ios_base_rdstate, &wss.basic_ios.base);
+        nextus = (unsigned short)(int)call_func1(p_basic_istream_wchar_get, &wss.base.base1);
+
+        ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+        testus = tests[i].next == EOF ? WEOF : (unsigned short)tests[i].next;
+        ok(testus == nextus, "wrong next, expected = %c (%i) found = %c (%i)\n", testus, testus, nextus, nextus);
+        ok(peekus == nextus, "wrong peek, expected %c (%i) found = %c (%i)\n", peekus, peekus, nextus, nextus);
+
+        call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
+    }
+}
+
+
 START_TEST(ios)
 {
     if(!init())
@@ -1370,6 +1434,7 @@ START_TEST(ios)
     test_istream_ignore();
     test_istream_seekg();
     test_istream_seekg_fpos();
+    test_istream_peek();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 }
