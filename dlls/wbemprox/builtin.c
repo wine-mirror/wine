@@ -100,6 +100,8 @@ static const WCHAR prop_directionW[] =
     {'D','i','r','e','c','t','i','o','n',0};
 static const WCHAR prop_displaynameW[] =
     {'D','i','s','p','l','a','y','N','a','m','e',0};
+static const WCHAR prop_domainW[] =
+    {'D','o','m','a','i','n',0};
 static const WCHAR prop_domainroleW[] =
     {'D','o','m','a','i','n','R','o','l','e',0};
 static const WCHAR prop_drivetypeW[] =
@@ -209,6 +211,7 @@ static const struct column col_bios[] =
 static const struct column col_compsys[] =
 {
     { prop_descriptionW,          CIM_STRING },
+    { prop_domainW,               CIM_STRING },
     { prop_domainroleW,           CIM_UINT16 },
     { prop_manufacturerW,         CIM_STRING },
     { prop_modelW,                CIM_STRING },
@@ -317,6 +320,8 @@ static const WCHAR bios_versionW[] =
     {'W','I','N','E',' ',' ',' ','-',' ','1',0};
 static const WCHAR compsys_descriptionW[] =
     {'A','T','/','A','T',' ','C','O','M','P','A','T','I','B','L','E',0};
+static const WCHAR compsys_domainW[] =
+    {'W','O','R','K','G','R','O','U','P',0};
 static const WCHAR compsys_manufacturerW[] =
     {'T','h','e',' ','W','i','n','e',' ','P','r','o','j','e','c','t',0};
 static const WCHAR compsys_modelW[] =
@@ -355,6 +360,7 @@ struct record_bios
 struct record_computersystem
 {
     const WCHAR *description;
+    const WCHAR *domain;
     UINT16       domainrole;
     const WCHAR *manufacturer;
     const WCHAR *model;
@@ -533,6 +539,7 @@ static void fill_compsys( struct table *table )
 
     rec = (struct record_computersystem *)table->data;
     rec->description            = compsys_descriptionW;
+    rec->domain                 = compsys_domainW;
     rec->domainrole             = 0; /* standalone workstation */
     rec->manufacturer           = compsys_manufacturerW;
     rec->model                  = compsys_modelW;
