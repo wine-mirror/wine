@@ -126,57 +126,42 @@ D3DXMATRIX* WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *pout, FLOAT scalin
     return pout;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixAffineTransformation2D(D3DXMATRIX *pout, FLOAT scaling, CONST D3DXVECTOR2 *protationcenter, FLOAT rotation, CONST D3DXVECTOR2 *ptranslation)
+D3DXMATRIX * WINAPI D3DXMatrixAffineTransformation2D(D3DXMATRIX *out, FLOAT scaling,
+        const D3DXVECTOR2 *rotationcenter, FLOAT rotation, const D3DXVECTOR2 *translation)
 {
-    D3DXMATRIX m1, m2, m3, m4, m5;
-    D3DXQUATERNION rot;
-    D3DXVECTOR3 rot_center, trans;
+    FLOAT tmp1, tmp2, s;
 
-    TRACE("(%p, %f, %p, %f, %p)\n", pout, scaling, protationcenter, rotation, ptranslation);
+    TRACE("out %p, scaling %f, rotationcenter %p, rotation %f, translation %p\n",
+            out, scaling, rotationcenter, rotation, translation);
 
-    rot.w=cos(rotation/2.0f);
-    rot.x=0.0f;
-    rot.y=0.0f;
-    rot.z=sin(rotation/2.0f);
+    s = sinf(rotation / 2.0f);
+    tmp1 = 1.0f - 2.0f * s * s;
+    tmp2 = 2.0 * s * cosf(rotation / 2.0f);
 
-    if ( protationcenter )
-    {
-        rot_center.x=protationcenter->x;
-        rot_center.y=protationcenter->y;
-        rot_center.z=0.0f;
-    }
-    else
-    {
-        rot_center.x=0.0f;
-        rot_center.y=0.0f;
-        rot_center.z=0.0f;
-    }
+    D3DXMatrixIdentity(out);
+    out->u.m[0][0] = scaling * tmp1;
+    out->u.m[0][1] = scaling * tmp2;
+    out->u.m[1][0] = -scaling * tmp2;
+    out->u.m[1][1] = scaling * tmp1;
 
-    if ( ptranslation )
+    if (rotationcenter)
     {
-        trans.x=ptranslation->x;
-        trans.y=ptranslation->y;
-        trans.z=0.0f;
-    }
-    else
-    {
-        trans.x=0.0f;
-        trans.y=0.0f;
-        trans.z=0.0f;
+        FLOAT x, y;
+
+        x = rotationcenter->x;
+        y = rotationcenter->y;
+
+        out->u.m[3][0] = y * tmp2 - x * tmp1 + x;
+        out->u.m[3][1] = -x * tmp2 - y * tmp1 + y;
     }
 
-    D3DXMatrixScaling(&m1, scaling, scaling, 1.0f);
-    D3DXMatrixTranslation(&m2, -rot_center.x, -rot_center.y, -rot_center.z);
-    D3DXMatrixTranslation(&m4, rot_center.x, rot_center.y, rot_center.z);
-    D3DXMatrixRotationQuaternion(&m3, &rot);
-    D3DXMatrixTranslation(&m5, trans.x, trans.y, trans.z);
+    if (translation)
+    {
+        out->u.m[3][0] += translation->x;
+        out->u.m[3][1] += translation->y;
+    }
 
-    D3DXMatrixMultiply(&m1, &m1, &m2);
-    D3DXMatrixMultiply(&m1, &m1, &m3);
-    D3DXMatrixMultiply(&m1, &m1, &m4);
-    D3DXMatrixMultiply(pout, &m1, &m5);
-
-    return pout;
+    return out;
 }
 
 HRESULT WINAPI D3DXMatrixDecompose(D3DXVECTOR3 *poutscale, D3DXQUATERNION *poutrotation, D3DXVECTOR3 *pouttranslation, CONST D3DXMATRIX *pm)
