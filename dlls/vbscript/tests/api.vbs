@@ -196,6 +196,15 @@ Call ok(Space(5.2) = "     ", "Space(5.2) = " & Space(5.2) & """")
 Call ok(Space(5.8) = "      ", "Space(5.8) = " & Space(5.8) & """")
 Call ok(Space(5.5) = "      ", "Space(5.5) = " & Space(5.5) & """")
 
+Sub TestStrReverse(str, ex)
+    Call ok(StrReverse(str) = ex, "StrReverse(" & str & ") = " & StrReverse(str))
+End Sub
+
+TestStrReverse "test", "tset"
+TestStrReverse "", ""
+TestStrReverse 123, "321"
+if isEnglishLang then TestStrReverse true, "eurT"
+
 Sub TestRound(val, exval, vt)
     Call ok(Round(val) = exval, "Round(" & val & ") = " & Round(val))
     Call ok(getVT(Round(val)) = vt, "getVT(Round(" & val & ")) = " & getVT(Round(val)))

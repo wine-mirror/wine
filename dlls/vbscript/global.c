@@ -1187,8 +1187,25 @@ static HRESULT Global_Replace(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, V
 
 static HRESULT Global_StrReverse(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    WCHAR *ptr1, *ptr2, ch;
+    BSTR ret;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    hres = to_string(arg, &ret);
+    if(FAILED(hres))
+        return hres;
+
+    ptr1 = ret;
+    ptr2 = ret + SysStringLen(ret)-1;
+    while(ptr1 < ptr2) {
+        ch = *ptr1;
+        *ptr1++ = *ptr2;
+        *ptr2-- = ch;
+    }
+
+    return return_bstr(res, ret);
 }
 
 static HRESULT Global_InStrRev(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
