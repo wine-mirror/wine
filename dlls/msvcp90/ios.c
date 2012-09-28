@@ -3803,6 +3803,7 @@ fpos_int* __thiscall basic_stringbuf_char_seekoff(basic_stringbuf_char *this,
         this->seekhigh = cur_w;
 
     ret->off = 0;
+    ret->pos = 0;
     ret->state = 0;
 
     beg = basic_streambuf_char_eback(&this->base);
@@ -3841,7 +3842,7 @@ fpos_int* __thiscall basic_stringbuf_char_seekoff(basic_stringbuf_char *this,
         off = -1;
     }
 
-    ret->pos = off;
+    ret->off = off;
     return ret;
 }
 
@@ -4213,6 +4214,7 @@ fpos_int* __thiscall basic_stringbuf_wchar_seekoff(basic_stringbuf_wchar *this,
         this->seekhigh = cur_w;
 
     ret->off = 0;
+    ret->pos = 0;
     ret->state = 0;
 
     beg = basic_streambuf_wchar_eback(&this->base);
@@ -4251,7 +4253,7 @@ fpos_int* __thiscall basic_stringbuf_wchar_seekoff(basic_stringbuf_wchar *this,
         off = -1;
     }
 
-    ret->pos = off;
+    ret->off = off;
     return ret;
 }
 
