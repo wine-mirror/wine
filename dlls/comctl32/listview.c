@@ -11619,9 +11619,6 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       {
           if (notify_measureitem(infoPtr)) LISTVIEW_InvalidateList(infoPtr);
       }
-
-	  LISTVIEW_UpdateSize(infoPtr);
-	  LISTVIEW_UpdateScroll(infoPtr);
       }
       return DefWindowProcW(hwnd, uMsg, wParam, lParam);
 
