@@ -81,13 +81,14 @@ FLOAT WINAPI D3DXFresnelTerm(FLOAT costheta, FLOAT refractionindex)
 {
     FLOAT a, d, g, result;
 
-    TRACE("(%f, %f)\n", costheta, refractionindex);
+    TRACE("costheta %f, refractionindex %f)\n", costheta, refractionindex);
 
-    g = sqrt(refractionindex * refractionindex + costheta * costheta - 1.0f);
+    g = sqrtf(refractionindex * refractionindex + costheta * costheta - 1.0f);
     a = g + costheta;
     d = g - costheta;
-    result = ( costheta * a - 1.0f ) * ( costheta * a - 1.0f ) / ( ( costheta * d + 1.0f ) * ( costheta * d + 1.0f ) ) + 1.0f;
-    result = result * 0.5f * d * d / ( a * a );
+    result = (costheta * a - 1.0f) * (costheta * a - 1.0f) / ((costheta * d + 1.0f) * (costheta * d + 1.0f)) + 1.0f;
+    result *= 0.5f * d * d / (a * a);
+
     return result;
 }
 
