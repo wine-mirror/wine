@@ -94,36 +94,73 @@ FLOAT WINAPI D3DXFresnelTerm(FLOAT costheta, FLOAT refractionindex)
 
 /*_________________D3DXMatrix____________________*/
 
-D3DXMATRIX* WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *pout, FLOAT scaling, CONST D3DXVECTOR3 *rotationcenter, CONST D3DXQUATERNION *rotation, CONST D3DXVECTOR3 *translation)
+D3DXMATRIX * WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *out, FLOAT scaling, const D3DXVECTOR3 *rotationcenter,
+        const D3DXQUATERNION *rotation, const D3DXVECTOR3 *translation)
 {
-    D3DXMATRIX m1, m2, m3, m4, m5;
+    TRACE("out %p, scaling %f, rotationcenter %p, rotation %p, translation %p\n",
+            out, scaling, rotationcenter, rotation, translation);
 
-    TRACE("(%p, %f, %p, %p, %p)\n", pout, scaling, rotationcenter, rotation, translation);
+    D3DXMatrixIdentity(out);
 
-    D3DXMatrixScaling(&m1, scaling, scaling, scaling);
-
-    if ( !rotationcenter )
+    if (rotation)
     {
-        D3DXMatrixIdentity(&m2);
-        D3DXMatrixIdentity(&m4);
+        FLOAT temp00, temp01, temp02, temp10, temp11, temp12, temp20, temp21, temp22;
+
+        temp00 = 1.0f - 2.0f * (rotation->y * rotation->y + rotation->z * rotation->z);
+        temp01 = 2.0f * (rotation->x * rotation->y + rotation->z * rotation->w);
+        temp02 = 2.0f * (rotation->x * rotation->z - rotation->y * rotation->w);
+        temp10 = 2.0f * (rotation->x * rotation->y - rotation->z * rotation->w);
+        temp11 = 1.0f - 2.0f * (rotation->x * rotation->x + rotation->z * rotation->z);
+        temp12 = 2.0f * (rotation->y * rotation->z + rotation->x * rotation->w);
+        temp20 = 2.0f * (rotation->x * rotation->z + rotation->y * rotation->w);
+        temp21 = 2.0f * (rotation->y * rotation->z - rotation->x * rotation->w);
+        temp22 = 1.0f - 2.0f * (rotation->x * rotation->x + rotation->y * rotation->y);
+
+        out->u.m[0][0] = scaling * temp00;
+        out->u.m[0][1] = scaling * temp01;
+        out->u.m[0][2] = scaling * temp02;
+        out->u.m[1][0] = scaling * temp10;
+        out->u.m[1][1] = scaling * temp11;
+        out->u.m[1][2] = scaling * temp12;
+        out->u.m[2][0] = scaling * temp20;
+        out->u.m[2][1] = scaling * temp21;
+        out->u.m[2][2] = scaling * temp22;
+
+        if (rotationcenter)
+        {
+            FLOAT x, y, z;
+
+            x = -rotationcenter->x;
+            y = -rotationcenter->y;
+            z = -rotationcenter->z;
+
+            out->u.m[3][0] = x * temp00 + y * temp10 + z * temp20;
+            out->u.m[3][1] = x * temp01 + y * temp11 + z * temp21;
+            out->u.m[3][2] = x * temp02 + y * temp12 + z * temp22;
+        }
     }
     else
     {
-        D3DXMatrixTranslation(&m2, -rotationcenter->x, -rotationcenter->y, -rotationcenter->z);
-        D3DXMatrixTranslation(&m4, rotationcenter->x, rotationcenter->y, rotationcenter->z);
+        out->u.m[0][0] = scaling;
+        out->u.m[1][1] = scaling;
+        out->u.m[2][2] = scaling;
     }
 
-    if ( !rotation ) D3DXMatrixIdentity(&m3);
-    else D3DXMatrixRotationQuaternion(&m3, rotation);
+    if (rotationcenter)
+    {
+        out->u.m[3][0] += rotationcenter->x;
+        out->u.m[3][1] += rotationcenter->y;
+        out->u.m[3][2] += rotationcenter->z;
+    }
 
-    if ( !translation ) D3DXMatrixIdentity(&m5);
-    else D3DXMatrixTranslation(&m5, translation->x, translation->y, translation->z);
+    if (translation)
+    {
+        out->u.m[3][0] += translation->x;
+        out->u.m[3][1] += translation->y;
+        out->u.m[3][2] += translation->z;
+    }
 
-    D3DXMatrixMultiply(&m1, &m1, &m2);
-    D3DXMatrixMultiply(&m1, &m1, &m3);
-    D3DXMatrixMultiply(&m1, &m1, &m4);
-    D3DXMatrixMultiply(pout, &m1, &m5);
-    return pout;
+    return out;
 }
 
 D3DXMATRIX * WINAPI D3DXMatrixAffineTransformation2D(D3DXMATRIX *out, FLOAT scaling,
