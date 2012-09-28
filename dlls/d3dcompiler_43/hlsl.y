@@ -1795,7 +1795,36 @@ postfix_expr:             primary_expr
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                if ($1->data_type->type <= HLSL_CLASS_LAST_NUMERIC)
+                                if ($1->data_type->type == HLSL_CLASS_STRUCT)
+                                {
+                                    struct hlsl_type *type = $1->data_type;
+                                    struct hlsl_struct_field *field;
+
+                                    $$ = NULL;
+                                    LIST_FOR_EACH_ENTRY(field, type->e.elements, struct hlsl_struct_field, entry)
+                                    {
+                                        if (!strcmp($3, field->name))
+                                        {
+                                            struct hlsl_ir_deref *deref = new_record_deref($1, field);
+
+                                            if (!deref)
+                                            {
+                                                ERR("Out of memory\n");
+                                                return -1;
+                                            }
+                                            deref->node.loc = loc;
+                                            $$ = &deref->node;
+                                            break;
+                                        }
+                                    }
+                                    if (!$$)
+                                    {
+                                        hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
+                                                "invalid subscript %s", debugstr_a($3));
+                                        return 1;
+                                    }
+                                }
+                                else if ($1->data_type->type <= HLSL_CLASS_LAST_NUMERIC)
                                 {
                                     struct hlsl_ir_swizzle *swizzle;
 
