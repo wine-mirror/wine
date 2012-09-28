@@ -2227,7 +2227,7 @@ static DWORD add_modifier(DWORD modifiers, DWORD mod, const struct YYLTYPE *loc)
 struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD minor,
         const char *entrypoint, char **messages)
 {
-    struct hlsl_ir_function_decl *function;
+    struct hlsl_ir_function_decl *function, *next_function;
     struct hlsl_scope *scope, *next_scope;
     struct hlsl_type *hlsl_type, *next_type;
     struct hlsl_ir_var *var, *next_var;
@@ -2284,7 +2284,7 @@ struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD mino
     d3dcompiler_free(hlsl_ctx.source_files);
 
     TRACE("Freeing functions IR.\n");
-    LIST_FOR_EACH_ENTRY(function, &hlsl_ctx.functions, struct hlsl_ir_function_decl, node.entry)
+    LIST_FOR_EACH_ENTRY_SAFE(function, next_function, &hlsl_ctx.functions, struct hlsl_ir_function_decl, node.entry)
         free_function(function);
 
     TRACE("Freeing variables.\n");

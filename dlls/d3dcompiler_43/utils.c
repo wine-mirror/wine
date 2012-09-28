@@ -2369,12 +2369,8 @@ void free_instr(struct hlsl_ir_node *node)
 
 void free_function(struct hlsl_ir_function_decl *func)
 {
-    struct hlsl_ir_var *param, *next_param;
-
     d3dcompiler_free((void *)func->name);
     d3dcompiler_free((void *)func->semantic);
-    LIST_FOR_EACH_ENTRY_SAFE(param, next_param, func->parameters, struct hlsl_ir_var, node.entry)
-        d3dcompiler_free(param);
     d3dcompiler_free(func->parameters);
     free_instr_list(func->body);
     d3dcompiler_free(func);
