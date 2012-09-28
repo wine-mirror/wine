@@ -579,8 +579,24 @@ static HRESULT WINAPI wbem_services_ExecMethod(
     IWbemClassObject **ppOutParams,
     IWbemCallResult **ppCallResult )
 {
-    FIXME("\n");
-    return WBEM_E_FAILED;
+    const struct table *table;
+    class_method *func;
+    struct path *path;
+    HRESULT hr;
+
+    TRACE("%p, %s, %s, %08x, %p, %p, %p, %p\n", iface, debugstr_w(strObjectPath),
+          debugstr_w(strMethodName), lFlags, pCtx, pInParams, ppOutParams, ppCallResult);
+
+    if (lFlags) FIXME("flags %08x not supported\n", lFlags);
+
+    if ((hr = parse_path( strObjectPath, &path )) != S_OK) return hr;
+
+    table = get_table( path->class );
+    free_path( path );
+    if (!table) return WBEM_E_NOT_FOUND;
+
+    if ((hr = get_method( table, strMethodName, &func )) != S_OK) return hr;
+    return func( pInParams, ppOutParams );
 }
 
 static HRESULT WINAPI wbem_services_ExecMethodAsync(

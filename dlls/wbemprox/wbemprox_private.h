@@ -162,6 +162,7 @@ HRESULT get_column_index( const struct table *, const WCHAR *, UINT * ) DECLSPEC
 HRESULT get_value( const struct table *, UINT, UINT, LONGLONG * ) DECLSPEC_HIDDEN;
 BSTR get_value_bstr( const struct table *, UINT, UINT ) DECLSPEC_HIDDEN;
 HRESULT set_value( const struct table *, UINT, UINT, LONGLONG, CIMTYPE ) DECLSPEC_HIDDEN;
+HRESULT get_method( const struct table *, const WCHAR *, class_method ** ) DECLSPEC_HIDDEN;
 HRESULT get_propval( const struct view *, UINT, const WCHAR *, VARIANT *,
                      CIMTYPE *, LONG * ) DECLSPEC_HIDDEN;
 HRESULT put_propval( const struct view *, UINT, const WCHAR *, VARIANT *, CIMTYPE ) DECLSPEC_HIDDEN;

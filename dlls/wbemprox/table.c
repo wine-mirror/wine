@@ -239,6 +239,29 @@ HRESULT set_value( const struct table *table, UINT row, UINT column, LONGLONG va
     return S_OK;
 }
 
+HRESULT get_method( const struct table *table, const WCHAR *name, class_method **func )
+{
+    UINT i, j;
+
+    for (i = 0; i < table->num_rows; i++)
+    {
+        for (j = 0; j < table->num_cols; j++)
+        {
+            if (table->columns[j].type & COL_FLAG_METHOD && !strcmpW( table->columns[j].name, name ))
+            {
+                HRESULT hr;
+                LONGLONG val;
+
+                if ((hr = get_value( table, i, j, &val )) != S_OK) return hr;
+                *func = (class_method *)(INT_PTR)val;
+                return S_OK;
+            }
+        }
+    }
+    return WBEM_E_INVALID_METHOD;
+
+}
+
 static void clear_table( struct table *table )
 {
     UINT i, j, type;
