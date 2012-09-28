@@ -551,24 +551,36 @@ D3DXMATRIX* WINAPI D3DXMatrixReflect(D3DXMATRIX *pout, CONST D3DXPLANE *pplane)
     return pout;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixRotationAxis(D3DXMATRIX *pout, CONST D3DXVECTOR3 *pv, FLOAT angle)
+D3DXMATRIX * WINAPI D3DXMatrixRotationAxis(D3DXMATRIX *out, const D3DXVECTOR3 *v, FLOAT angle)
 {
-    D3DXVECTOR3 v;
+    D3DXVECTOR3 nv;
+    FLOAT sangle, cangle, cdiff;
 
-    TRACE("(%p, %p, %f)\n", pout, pv, angle);
+    TRACE("out %p, v %p, angle %f\n", out, v, angle);
 
-    D3DXVec3Normalize(&v,pv);
-    D3DXMatrixIdentity(pout);
-    pout->u.m[0][0] = (1.0f - cos(angle)) * v.x * v.x + cos(angle);
-    pout->u.m[1][0] = (1.0f - cos(angle)) * v.x * v.y - sin(angle) * v.z;
-    pout->u.m[2][0] = (1.0f - cos(angle)) * v.x * v.z + sin(angle) * v.y;
-    pout->u.m[0][1] = (1.0f - cos(angle)) * v.y * v.x + sin(angle) * v.z;
-    pout->u.m[1][1] = (1.0f - cos(angle)) * v.y * v.y + cos(angle);
-    pout->u.m[2][1] = (1.0f - cos(angle)) * v.y * v.z - sin(angle) * v.x;
-    pout->u.m[0][2] = (1.0f - cos(angle)) * v.z * v.x - sin(angle) * v.y;
-    pout->u.m[1][2] = (1.0f - cos(angle)) * v.z * v.y + sin(angle) * v.x;
-    pout->u.m[2][2] = (1.0f - cos(angle)) * v.z * v.z + cos(angle);
-    return pout;
+    D3DXVec3Normalize(&nv, v);
+    sangle = sinf(angle);
+    cangle = cosf(angle);
+    cdiff = 1.0f - cangle;
+
+    out->u.m[0][0] = cdiff * nv.x * nv.x + cangle;
+    out->u.m[1][0] = cdiff * nv.x * nv.y - sangle * nv.z;
+    out->u.m[2][0] = cdiff * nv.x * nv.z + sangle * nv.y;
+    out->u.m[3][0] = 0.0f;
+    out->u.m[0][1] = cdiff * nv.y * nv.x + sangle * nv.z;
+    out->u.m[1][1] = cdiff * nv.y * nv.y + cangle;
+    out->u.m[2][1] = cdiff * nv.y * nv.z - sangle * nv.x;
+    out->u.m[3][1] = 0.0f;
+    out->u.m[0][2] = cdiff * nv.z * nv.x - sangle * nv.y;
+    out->u.m[1][2] = cdiff * nv.z * nv.y + sangle * nv.x;
+    out->u.m[2][2] = cdiff * nv.z * nv.z + cangle;
+    out->u.m[3][2] = 0.0f;
+    out->u.m[0][3] = 0.0f;
+    out->u.m[1][3] = 0.0f;
+    out->u.m[2][3] = 0.0f;
+    out->u.m[3][3] = 1.0f;
+
+    return out;
 }
 
 D3DXMATRIX* WINAPI D3DXMatrixRotationQuaternion(D3DXMATRIX *pout, CONST D3DXQUATERNION *pq)
