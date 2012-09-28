@@ -5,6 +5,7 @@ IMPORTS   = gdi32
 C_SRCS = \
 	font.c \
 	gdiinterop.c \
+	layout.c \
 	main.c
 
 @MAKE_DLL_RULES@

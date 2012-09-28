@@ -177,16 +177,20 @@ static HRESULT WINAPI dwritefactory_CreateTextLayout(IDWriteFactory *iface, WCHA
     UINT32 len, IDWriteTextFormat *format, FLOAT max_width, FLOAT max_height, IDWriteTextLayout **layout)
 {
     FIXME("(%s %u %p %f %f %p): stub\n", debugstr_w(string), len, format, max_width, max_height, layout);
-    return E_NOTIMPL;
+
+    if (!format) return E_INVALIDARG;
+    return create_textlayout(layout);
 }
 
 static HRESULT WINAPI dwritefactory_CreateGdiCompatibleTextLayout(IDWriteFactory *iface, WCHAR const* string,
     UINT32 len, IDWriteTextFormat *format, FLOAT layout_width, FLOAT layout_height, FLOAT pixels_per_dip,
     DWRITE_MATRIX const* transform, BOOL use_gdi_natural, IDWriteTextLayout **layout)
 {
-    FIXME("(%s:%u %p %f %f %f %p %d %p): stub\n", debugstr_wn(string, len), len, format, layout_width, layout_height,
+    FIXME("(%s:%u %p %f %f %f %p %d %p): semi-stub\n", debugstr_wn(string, len), len, format, layout_width, layout_height,
         pixels_per_dip, transform, use_gdi_natural, layout);
-    return E_NOTIMPL;
+
+    if (!format) return E_INVALIDARG;
+    return create_textlayout(layout);
 }
 
 static HRESULT WINAPI dwritefactory_CreateEllipsisTrimmingSign(IDWriteFactory *iface, IDWriteTextFormat *format,

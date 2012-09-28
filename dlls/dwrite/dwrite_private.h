@@ -26,5 +26,6 @@ static inline BOOL heap_free(void *mem)
     return HeapFree(GetProcessHeap(), 0, mem);
 }
 
-extern HRESULT create_gdiinterop(IDWriteGdiInterop**) DECLSPEC_HIDDEN;
 extern HRESULT create_font_from_logfont(const LOGFONTW*, IDWriteFont**) DECLSPEC_HIDDEN;
+extern HRESULT create_textlayout(IDWriteTextLayout**) DECLSPEC_HIDDEN;
+extern HRESULT create_gdiinterop(IDWriteGdiInterop**) DECLSPEC_HIDDEN;
