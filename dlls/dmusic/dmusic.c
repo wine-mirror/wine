@@ -395,10 +395,8 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
         hr = IDirectMusicSynth8_GetPortCaps(synth, &port->caps);
         IDirectMusicSynth8_Release(synth);
     }
-    else
-    {
+    if (FAILED(hr))
         nb_ports--;
-    }
 
     object->nb_system_ports = nb_ports;
 }
