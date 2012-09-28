@@ -1373,6 +1373,14 @@ typedef:                  KW_TYPEDEF var_modifiers type type_specs ';'
                                 if (!add_typedef($2, $3, $4, &loc))
                                     return 1;
                             }
+                        | KW_TYPEDEF struct_spec type_specs ';'
+                            {
+                                struct source_location loc;
+
+                                set_location(&loc, &@1);
+                                if (!add_typedef(0, $2, $3, &loc))
+                                    return 1;
+                            }
 
 type_specs:               type_spec
                             {
