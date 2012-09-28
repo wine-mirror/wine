@@ -1852,6 +1852,64 @@ postfix_expr:             primary_expr
                                     return 1;
                                 }
                             }
+                        | postfix_expr '[' expr ']'
+                            {
+                                /* This may be an array dereference or a vector/matrix
+                                 * subcomponent access.
+                                 * We store it as an array dereference in any case. */
+                                struct hlsl_ir_deref *deref = d3dcompiler_alloc(sizeof(*deref));
+                                struct hlsl_type *expr_type = $1->data_type;
+                                struct source_location loc;
+
+                                TRACE("Array dereference from type %s\n", debug_hlsl_type(expr_type));
+                                if (!deref)
+                                {
+                                    ERR("Out of memory\n");
+                                    return -1;
+                                }
+                                deref->node.type = HLSL_IR_DEREF;
+                                set_location(&loc, &@2);
+                                deref->node.loc = loc;
+                                if (expr_type->type == HLSL_CLASS_ARRAY)
+                                {
+                                    deref->node.data_type = expr_type->e.array.type;
+                                }
+                                else if (expr_type->type == HLSL_CLASS_MATRIX)
+                                {
+                                    deref->node.data_type = new_hlsl_type(NULL, HLSL_CLASS_VECTOR, expr_type->base_type, expr_type->dimx, 1);
+                                }
+                                else if (expr_type->type == HLSL_CLASS_VECTOR)
+                                {
+                                    deref->node.data_type = new_hlsl_type(NULL, HLSL_CLASS_SCALAR, expr_type->base_type, 1, 1);
+                                }
+                                else
+                                {
+                                    if (expr_type->type == HLSL_CLASS_SCALAR)
+                                        hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
+                                                "array-indexed expression is scalar");
+                                    else
+                                        hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
+                                                "expression is not array-indexable");
+                                    d3dcompiler_free(deref);
+                                    free_instr($1);
+                                    free_instr($3);
+                                    return 1;
+                                }
+                                if ($3->data_type->type != HLSL_CLASS_SCALAR)
+                                {
+                                    hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
+                                            "array index is not scalar");
+                                    d3dcompiler_free(deref);
+                                    free_instr($1);
+                                    free_instr($3);
+                                    return 1;
+                                }
+                                deref->type = HLSL_IR_DEREF_ARRAY;
+                                deref->v.array.array = $1;
+                                deref->v.array.index = $3;
+
+                                $$ = &deref->node;
+                            }
                           /* "var_modifiers" doesn't make sense in this case, but it's needed
                              in the grammar to avoid shift/reduce conflicts. */
                         | var_modifiers type '(' initializer_expr_list ')'
