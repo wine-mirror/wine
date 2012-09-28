@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "objbase.h"
 #include "wbemcli.h"
+#include "wbemprov.h"
 #include "rpcproxy.h"
 
 #include "wbemprox_private.h"
@@ -140,7 +141,8 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
 
     TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
 
-    if (IsEqualGUID( rclsid, &CLSID_WbemLocator ))
+    if (IsEqualGUID( rclsid, &CLSID_WbemLocator ) ||
+        IsEqualGUID( rclsid, &CLSID_WbemAdministrativeLocator ))
     {
        cf = &wbem_locator_cf.IClassFactory_iface;
     }

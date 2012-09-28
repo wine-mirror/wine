@@ -24,3 +24,10 @@
     uuid(4590f811-1d3a-11d0-891f-00aa004b2e24)
 ]
 coclass WbemLocator { interface IWbemLocator; }
+
+[
+    helpstring("WBEM Administrative Locator"),
+    threading(both),
+    uuid(cb8555cc-9128-11d1-ad9b-00c04fd8fdff)
+]
+coclass WbemAdministrativeLocator { interface IWbemLocator; }
