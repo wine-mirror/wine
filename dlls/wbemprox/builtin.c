@@ -172,6 +172,8 @@ static const WCHAR prop_totalphysicalmemoryW[] =
     {'T','o','t','a','l','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
 static const WCHAR prop_typeW[] =
     {'T','y','p','e',0};
+static const WCHAR prop_versionW[] =
+    {'V','e','r','s','i','o','n',0};
 
 static const WCHAR method_enumkeyW[] =
     {'E','n','u','m','K','e','y',0};
@@ -201,7 +203,8 @@ static const struct column col_bios[] =
     { prop_descriptionW,  CIM_STRING },
     { prop_manufacturerW, CIM_STRING },
     { prop_releasedateW,  CIM_DATETIME },
-    { prop_serialnumberW, CIM_STRING }
+    { prop_serialnumberW, CIM_STRING },
+    { prop_versionW,      CIM_STRING|COL_FLAG_KEY }
 };
 static const struct column col_compsys[] =
 {
@@ -310,6 +313,8 @@ static const WCHAR bios_releasedateW[] =
     {'2','0','1','2','0','6','0','8','0','0','0','0','0','0','.','0','0','0','0','0','0','+','0','0','0',0};
 static const WCHAR bios_serialnumberW[] =
     {'0',0};
+static const WCHAR bios_versionW[] =
+    {'W','I','N','E',' ',' ',' ','-',' ','1',0};
 static const WCHAR compsys_descriptionW[] =
     {'A','T','/','A','T',' ','C','O','M','P','A','T','I','B','L','E',0};
 static const WCHAR compsys_manufacturerW[] =
@@ -345,6 +350,7 @@ struct record_bios
     const WCHAR *manufacturer;
     const WCHAR *releasedate;
     const WCHAR *serialnumber;
+    const WCHAR *version;
 };
 struct record_computersystem
 {
@@ -457,7 +463,7 @@ static const struct record_baseboard data_baseboard[] =
 };
 static const struct record_bios data_bios[] =
 {
-    { bios_descriptionW, bios_manufacturerW, bios_releasedateW, bios_serialnumberW }
+    { bios_descriptionW, bios_manufacturerW, bios_releasedateW, bios_serialnumberW, bios_versionW }
 };
 static const struct record_params data_params[] =
 {
