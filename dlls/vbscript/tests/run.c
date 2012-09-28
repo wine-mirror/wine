@@ -173,6 +173,8 @@ static const char *vt2a(VARIANT *v)
         return "VT_I4";
     case VT_R8:
         return "VT_R8";
+    case VT_DATE:
+        return "VT_DATE";
     case VT_BSTR:
         return "VT_BSTR";
     case VT_DISPATCH:

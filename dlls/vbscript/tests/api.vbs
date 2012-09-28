@@ -232,4 +232,6 @@ if isEnglishLang then
     Call ok(MonthName(12, true) = "Dec", "MonthName(12, true) = " & MonthName(12, true))
 end if
 
+Call ok(getVT(Now()) = "VT_DATE", "getVT(Now()) = " & getVT(Now()))
+
 Call reportSuccess()

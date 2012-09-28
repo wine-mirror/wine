@@ -130,6 +130,15 @@ static inline HRESULT return_null(VARIANT *res)
     return S_OK;
 }
 
+static inline HRESULT return_date(VARIANT *res, double date)
+{
+    if(res) {
+        V_VT(res) = VT_DATE;
+        V_DATE(res) = date;
+    }
+    return S_OK;
+}
+
 static HRESULT to_int(VARIANT *v, int *ret)
 {
     switch(V_VT(v)) {
@@ -967,8 +976,14 @@ static HRESULT Global_Sgn(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
 
 static HRESULT Global_Now(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    SYSTEMTIME lt;
+    double date;
+
+    TRACE("\n");
+
+    GetLocalTime(&lt);
+    SystemTimeToVariantTime(&lt, &date);
+    return return_date(res, date);
 }
 
 static HRESULT Global_Date(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
