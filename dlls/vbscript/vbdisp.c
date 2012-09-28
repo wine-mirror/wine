@@ -157,7 +157,7 @@ static HRESULT invoke_builtin(vbdisp_t *This, const builtin_prop_t *prop, WORD f
         }
         break;
     case DISPATCH_PROPERTYPUT:
-        if(!(prop->flags & (BP_GET|BP_GETPUT))) {
+        if(!(prop->flags & BP_GETPUT)) {
             FIXME("property does not support DISPATCH_PROPERTYPUT\n");
             return E_FAIL;
         }
