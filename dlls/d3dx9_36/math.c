@@ -2306,16 +2306,16 @@ HRESULT WINAPI D3DXSHEvalDirectionalLight(UINT order, CONST D3DXVECTOR3 *dir, FL
     return D3D_OK;
 }
 
-FLOAT* WINAPI D3DXSHMultiply2(FLOAT *out, CONST FLOAT *a, CONST FLOAT *b)
+FLOAT * WINAPI D3DXSHMultiply2(FLOAT *out, const FLOAT *a, const FLOAT *b)
 {
     FLOAT ta, tb;
 
-    TRACE("(%p, %p, %p)\n", out, a, b);
+    TRACE("out %p, a %p, b %p\n", out, a, b);
 
     ta = 0.28209479f * a[0];
     tb = 0.28209479f * b[0];
 
-    out[0]= 0.28209479f * D3DXSHDot(2, a, b);
+    out[0] = 0.28209479f * D3DXSHDot(2, a, b);
     out[1] = ta * b[1] + tb * a[1];
     out[2] = ta * b[2] + tb * a[2];
     out[3] = ta * b[3] + tb * a[3];
@@ -2323,13 +2323,13 @@ FLOAT* WINAPI D3DXSHMultiply2(FLOAT *out, CONST FLOAT *a, CONST FLOAT *b)
     return out;
 }
 
-FLOAT* WINAPI D3DXSHMultiply3(FLOAT *out, CONST FLOAT *a, CONST FLOAT *b)
+FLOAT * WINAPI D3DXSHMultiply3(FLOAT *out, const FLOAT *a, const FLOAT *b)
 {
     FLOAT t, ta, tb;
 
-    TRACE("(%p, %p, %p)\n", out, a, b);
+    TRACE("out %p, a %p, b %p\n", out, a, b);
 
-    out[0]= 0.28209479f * a[0] * b[0];
+    out[0] = 0.28209479f * a[0] * b[0];
 
     ta = 0.28209479f * a[0] - 0.12615662f * a[6] - 0.21850968f * a[8];
     tb = 0.28209479f * b[0] - 0.12615662f * b[6] - 0.21850968f * b[8];
