@@ -253,16 +253,11 @@ static BOOL AppendFullPathURL(LPCWSTR file, LPWSTR buf, LPCWSTR index)
 BOOL NavigateToChm(HHInfo *info, LPCWSTR file, LPCWSTR index)
 {
     WCHAR buf[INTERNET_MAX_URL_LENGTH];
-    LPWSTR ptr;
 
     TRACE("%p %s %s\n", info, debugstr_w(file), debugstr_w(index));
 
     if ((!info->web_browser) || !AppendFullPathURL(file, buf, index))
         return FALSE;
-
-    /* FIXME: HACK */
-    if((ptr = strchrW(buf, '#')))
-       *ptr = 0;
 
     return SUCCEEDED(navigate_url(info, buf));
 }
