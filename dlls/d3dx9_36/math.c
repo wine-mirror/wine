@@ -1197,30 +1197,29 @@ D3DXVECTOR3* WINAPI D3DXPlaneIntersectLine(D3DXVECTOR3 *pout, CONST D3DXPLANE *p
     return pout;
 }
 
-D3DXPLANE* WINAPI D3DXPlaneNormalize(D3DXPLANE *pout, CONST D3DXPLANE *pp)
+D3DXPLANE * WINAPI D3DXPlaneNormalize(D3DXPLANE *out, const D3DXPLANE *p)
 {
-    D3DXPLANE out;
     FLOAT norm;
 
-    TRACE("(%p, %p)\n", pout, pp);
+    TRACE("out %p, p %p\n", out, p);
 
-    norm = sqrt(pp->a * pp->a + pp->b * pp->b + pp->c * pp->c);
-    if ( norm )
+    norm = sqrtf(p->a * p->a + p->b * p->b + p->c * p->c);
+    if (norm)
     {
-     out.a = pp->a / norm;
-     out.b = pp->b / norm;
-     out.c = pp->c / norm;
-     out.d = pp->d / norm;
+        out->a = p->a / norm;
+        out->b = p->b / norm;
+        out->c = p->c / norm;
+        out->d = p->d / norm;
     }
     else
     {
-     out.a = 0.0f;
-     out.b = 0.0f;
-     out.c = 0.0f;
-     out.d = 0.0f;
+        out->a = 0.0f;
+        out->b = 0.0f;
+        out->c = 0.0f;
+        out->d = 0.0f;
     }
-    *pout = out;
-    return pout;
+
+    return out;
 }
 
 D3DXPLANE* WINAPI D3DXPlaneTransform(D3DXPLANE *pout, CONST D3DXPLANE *pplane, CONST D3DXMATRIX *pm)
