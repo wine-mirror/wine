@@ -500,6 +500,8 @@ NTSTATUS WINAPI IoCreateDriver( UNICODE_STRING *name, PDRIVER_INITIALIZE init )
     DRIVER_EXTENSION *extension;
     NTSTATUS status;
 
+    TRACE("(%s, %p)\n", debugstr_us(name), init);
+
     if (!(driver = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                     sizeof(*driver) + sizeof(*extension) )))
         return STATUS_NO_MEMORY;
@@ -533,6 +535,8 @@ NTSTATUS WINAPI IoCreateDriver( UNICODE_STRING *name, PDRIVER_INITIALIZE init )
  */
 void WINAPI IoDeleteDriver( DRIVER_OBJECT *driver )
 {
+    TRACE("(%p)\n", driver);
+
     RtlFreeUnicodeString( &driver->DriverName );
     RtlFreeHeap( GetProcessHeap(), 0, driver );
 }
@@ -685,6 +689,7 @@ NTSTATUS WINAPI IoGetDeviceInterfaces( CONST GUID *InterfaceClassGuid,
 NTSTATUS  WINAPI IoGetDeviceObjectPointer( UNICODE_STRING *name, ACCESS_MASK access, PFILE_OBJECT *file, PDEVICE_OBJECT *device )
 {
     FIXME( "stub: %s %x %p %p\n", debugstr_us(name), access, file, device );
+
     return STATUS_NOT_IMPLEMENTED;
 }
 
