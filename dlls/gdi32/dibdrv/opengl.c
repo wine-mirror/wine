@@ -139,7 +139,7 @@ failed:
 /**********************************************************************
  *	     dibdrv_wglDescribePixelFormat
  */
-int dibdrv_wglDescribePixelFormat( HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr )
+static int dibdrv_wglDescribePixelFormat( HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr )
 {
     int ret = sizeof(pixel_formats) / sizeof(pixel_formats[0]);
 
@@ -289,7 +289,7 @@ static BOOL dibdrv_wglMakeCurrent( HDC hdc, struct wgl_context *context )
 /**********************************************************************
  *	     dibdrv_wglSetPixelFormat
  */
-BOOL dibdrv_wglSetPixelFormat( HDC hdc, int fmt, const PIXELFORMATDESCRIPTOR *descr )
+static BOOL dibdrv_wglSetPixelFormat( HDC hdc, int fmt, const PIXELFORMATDESCRIPTOR *descr )
 {
     if (fmt <= 0 || fmt > nb_formats) return FALSE;
     return GdiSetPixelFormat( hdc, fmt, descr );
