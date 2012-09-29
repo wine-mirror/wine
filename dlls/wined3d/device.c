@@ -3524,8 +3524,6 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
     {
         LONG bind_count = InterlockedDecrement(&prev->resource.bind_count);
 
-        wined3d_texture_decref(prev);
-
         if (!texture && stage < gl_info->limits.texture_stages)
         {
             device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3D_TSS_COLOR_OP));
@@ -3549,6 +3547,8 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
                 }
             }
         }
+
+        wined3d_texture_decref(prev);
     }
 
     device_invalidate_state(device, STATE_SAMPLER(stage));
