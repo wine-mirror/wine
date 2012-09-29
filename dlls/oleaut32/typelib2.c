@@ -4531,6 +4531,7 @@ static int ctl2_write_chunk(HANDLE hFile, const void *segment, int length)
 {
     DWORD dwWritten;
     if (!WriteFile(hFile, segment, length, &dwWritten, 0)) {
+        TRACE("Writefile(%p, %d) failed, lasterror %d\n", segment, length, GetLastError());
         CloseHandle(hFile);
         return 0;
     }
@@ -4581,7 +4582,7 @@ static int ctl2_finalize_segment(ICreateTypeLib2Impl *This, int filepos, int seg
     return This->typelib_segdir[segment].length;
 }
 
-static void ctl2_write_typeinfos(ICreateTypeLib2Impl *This, HANDLE hFile)
+static int ctl2_write_typeinfos(ICreateTypeLib2Impl *This, HANDLE hFile)
 {
     ICreateTypeInfo2Impl *typeinfo;
 
@@ -4592,21 +4593,27 @@ static void ctl2_write_typeinfos(ICreateTypeLib2Impl *This, HANDLE hFile)
 	if (!typeinfo->typedata) continue;
 
         iter = typeinfo->typedata->next;
-        ctl2_write_chunk(hFile, &iter->u.val, sizeof(int));
+        if (!ctl2_write_chunk(hFile, &iter->u.val, sizeof(int)))
+            return 0;
         for(iter=iter->next; iter!=typeinfo->typedata->next; iter=iter->next)
-            ctl2_write_chunk(hFile, iter->u.data, ctl2_get_record_size(iter));
+            if (!ctl2_write_chunk(hFile, iter->u.data, ctl2_get_record_size(iter)))
+                return 0;
 
         for(iter=typeinfo->typedata->next->next; iter!=typeinfo->typedata->next; iter=iter->next)
-            ctl2_write_chunk(hFile, &iter->indice, sizeof(int));
+            if (!ctl2_write_chunk(hFile, &iter->indice, sizeof(int)))
+                return 0;
 
         for(iter=typeinfo->typedata->next->next; iter!=typeinfo->typedata->next; iter=iter->next)
-            ctl2_write_chunk(hFile, &iter->name, sizeof(int));
+            if (!ctl2_write_chunk(hFile, &iter->name, sizeof(int)))
+                return 0;
 
         for(iter=typeinfo->typedata->next->next; iter!=typeinfo->typedata->next; iter=iter->next) {
-            ctl2_write_chunk(hFile, &offset, sizeof(int));
+            if (!ctl2_write_chunk(hFile, &offset, sizeof(int)))
+                return 0;
             offset += ctl2_get_record_size(iter);
         }
     }
+    return 1;
 }
 
 /******************************************************************************
@@ -4669,7 +4676,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 * iface)
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_CUSTDATA    )) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_CUSTDATAGUID)) return retval;
 
-    ctl2_write_typeinfos(This, hFile);
+    if (!ctl2_write_typeinfos(This, hFile)) return retval;
 
     if (!CloseHandle(hFile)) return retval;
 
