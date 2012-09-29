@@ -367,7 +367,7 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
         port->device = i;
         port->create = DMUSIC_CreateMidiOutPortImpl;
         midiOutGetDevCapsW(i, &caps_out, sizeof(caps_out));
-        strcpyW(port->caps.wszDescription, caps_in.szPname);
+        strcpyW(port->caps.wszDescription, caps_out.szPname);
         strcatW(port->caps.wszDescription, emulated);
         port->caps.dwFlags = DMUS_PC_SHAREABLE | DMUS_PC_EXTERNAL;
         port->caps.dwClass = DMUS_PC_OUTPUTCLASS;
