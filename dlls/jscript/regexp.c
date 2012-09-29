@@ -3448,7 +3448,7 @@ HRESULT regexp_match_next(script_ctx_t *ctx, jsdisp_t *dispex, DWORD rem_flags, 
     return hres;
 }
 
-HRESULT regexp_match(script_ctx_t *ctx, jsdisp_t *dispex, const WCHAR *str, DWORD len, BOOL gflag,
+static HRESULT regexp_match(script_ctx_t *ctx, jsdisp_t *dispex, const WCHAR *str, DWORD len, BOOL gflag,
         match_result_t **match_result, DWORD *result_cnt)
 {
     RegExpInstance *This = (RegExpInstance*)dispex;

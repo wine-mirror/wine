@@ -382,7 +382,6 @@ HRESULT create_jscaller(script_ctx_t*) DECLSPEC_HIDDEN;
 #define REM_NO_CTX_UPDATE  0x0004
 HRESULT regexp_match_next(script_ctx_t*,jsdisp_t*,DWORD,const WCHAR*,DWORD,const WCHAR**,match_result_t**,
         DWORD*,DWORD*,match_result_t*) DECLSPEC_HIDDEN;
-HRESULT regexp_match(script_ctx_t*,jsdisp_t*,const WCHAR*,DWORD,BOOL,match_result_t**,DWORD*) DECLSPEC_HIDDEN;
 HRESULT parse_regexp_flags(const WCHAR*,DWORD,DWORD*) DECLSPEC_HIDDEN;
 HRESULT regexp_string_match(script_ctx_t*,jsdisp_t*,BSTR,jsval_t*) DECLSPEC_HIDDEN;
 
