@@ -1462,6 +1462,16 @@ void WINAPI MmResetDriverPaging(PVOID AddrInSection)
     TRACE("%p\n", AddrInSection);
 }
 
+
+/***********************************************************************
+ *           MmUnlockPages  (NTOSKRNL.EXE.@)
+ */
+void MmUnlockPages(PMDLX MemoryDescriptorList)
+{
+    FIXME("(%p): stub\n", MemoryDescriptorList);
+}
+
+
 /***********************************************************************
  *           MmUnmapIoSpace   (NTOSKRNL.EXE.@)
  */
