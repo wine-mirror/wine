@@ -517,7 +517,7 @@ typedef PCUNZWCH        PCUNZTCH;
 typedef PZZWSTR         PZZTSTR;
 typedef PCZZWSTR        PCZZTSTR;
 typedef PUZZWSTR        PUZZTSTR;
-typedef PUCZZWSTR       PCUZZTSTR;
+typedef PCUZZWSTR       PCUZZTSTR;
 # else  /* UNICODE */
 # ifndef _TCHAR_DEFINED
 typedef CHAR            TCHAR,      *PTCHAR;
