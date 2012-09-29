@@ -994,7 +994,7 @@ static NTSTATUS MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved 
     NTSTATUS status = STATUS_SUCCESS;
     DLLENTRYPROC entry = wm->ldr.EntryPoint;
     void *module = wm->ldr.BaseAddress;
-    BOOL retv = TRUE;
+    BOOL retv = FALSE;
 
     /* Skip calls for modules loaded with special load flags */
 
