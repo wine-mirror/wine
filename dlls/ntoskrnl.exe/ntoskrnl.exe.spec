@@ -702,7 +702,7 @@
 @ stub MmMarkPhysicalMemoryAsGood
 @ stdcall MmPageEntireDriver(ptr)
 @ stub MmPrefetchPages
-@ stub MmProbeAndLockPages
+@ stdcall MmProbeAndLockPages(ptr long long)
 @ stub MmProbeAndLockProcessPages
 @ stub MmProbeAndLockSelectedPages
 @ stub MmProtectMdlSystemAddress

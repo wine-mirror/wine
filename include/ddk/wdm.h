@@ -966,6 +966,8 @@ typedef struct _MDL {
   ULONG  ByteOffset;
 } MDL, *PMDL;
 
+typedef MDL *PMDLX;
+
 typedef struct _KTIMER {
     DISPATCHER_HEADER Header;
     ULARGE_INTEGER DueTime;
@@ -1088,9 +1090,15 @@ typedef struct _IO_REMOVE_LOCK_DBG_BLOCK {
 } IO_REMOVE_LOCK_DBG_BLOCK;
 
 typedef struct _IO_REMOVE_LOCK {
-	IO_REMOVE_LOCK_COMMON_BLOCK Common;
-	IO_REMOVE_LOCK_DBG_BLOCK Dbg;
+    IO_REMOVE_LOCK_COMMON_BLOCK Common;
+    IO_REMOVE_LOCK_DBG_BLOCK Dbg;
 } IO_REMOVE_LOCK, *PIO_REMOVE_LOCK;
+
+typedef enum  {
+    IoReadAccess,
+    IoWriteAccess,
+    IoModifyAccess
+} LOCK_OPERATION;
 
 NTSTATUS WINAPI ObCloseHandle(IN HANDLE handle);
 

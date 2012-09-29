@@ -1454,6 +1454,16 @@ PVOID WINAPI MmPageEntireDriver(PVOID AddrInSection)
     return AddrInSection;
 }
 
+
+/***********************************************************************
+ *           MmProbeAndLockPages  (NTOSKRNL.EXE.@)
+ */
+void MmProbeAndLockPages(PMDLX MemoryDescriptorList, KPROCESSOR_MODE AccessMode, LOCK_OPERATION Operation)
+{
+    FIXME("(%p, %u, %u): stub\n", MemoryDescriptorList, AccessMode, Operation);
+}
+
+
 /***********************************************************************
  *           MmResetDriverPaging   (NTOSKRNL.EXE.@)
  */
