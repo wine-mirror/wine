@@ -690,7 +690,7 @@
 @ stub MmLockPagableSectionByHandle
 @ stdcall MmMapIoSpace(long long long long)
 @ stub MmMapLockedPages
-@ stub MmMapLockedPagesSpecifyCache
+@ stdcall MmMapLockedPagesSpecifyCache(ptr long long ptr long long)
 @ stub MmMapLockedPagesWithReservedMapping
 @ stub MmMapMemoryDumpMdl
 @ stub MmMapUserAddressesToPage

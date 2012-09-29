@@ -1051,14 +1051,20 @@ typedef struct _KUSER_SHARED_DATA {
 } KSHARED_USER_DATA, *PKSHARED_USER_DATA;
 
 typedef enum _MEMORY_CACHING_TYPE {
-  MmNonCached = 0,
-  MmCached = 1,
-  MmWriteCombined = 2,
-  MmHardwareCoherentCached = 3,
-  MmNonCachedUnordered = 4,
-  MmUSWCCached = 5,
-  MmMaximumCacheType = 6
+    MmNonCached = 0,
+    MmCached = 1,
+    MmWriteCombined = 2,
+    MmHardwareCoherentCached = 3,
+    MmNonCachedUnordered = 4,
+    MmUSWCCached = 5,
+    MmMaximumCacheType = 6
 } MEMORY_CACHING_TYPE;
+
+typedef enum _MM_PAGE_PRIORITY {
+    LowPagePriority,
+    NormalPagePriority = 16,
+    HighPagePriority = 32
+} MM_PAGE_PRIORITY;
 
 typedef enum _MM_SYSTEM_SIZE
 {

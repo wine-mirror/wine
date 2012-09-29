@@ -1445,6 +1445,19 @@ PVOID WINAPI MmMapIoSpace( PHYSICAL_ADDRESS PhysicalAddress, DWORD NumberOfBytes
     return NULL;
 }
 
+
+/***********************************************************************
+ *           MmMapLockedPagesSpecifyCache  (NTOSKRNL.EXE.@)
+ */
+PVOID MmMapLockedPagesSpecifyCache(PMDLX MemoryDescriptorList, KPROCESSOR_MODE AccessMode, MEMORY_CACHING_TYPE CacheType,
+                                   PVOID BaseAddress, ULONG BugCheckOnFailure, MM_PAGE_PRIORITY Priority)
+{
+    FIXME("(%p, %u, %u, %p, %u, %u): stub\n", MemoryDescriptorList, AccessMode, CacheType, BaseAddress, BugCheckOnFailure, Priority);
+
+    return NULL;
+}
+
+
 /***********************************************************************
  *           MmPageEntireDriver   (NTOSKRNL.EXE.@)
  */
