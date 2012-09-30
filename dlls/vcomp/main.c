@@ -41,6 +41,12 @@ int CDECL omp_get_max_threads(void)
     return 1;
 }
 
+int CDECL omp_get_nested(void)
+{
+    TRACE("stub\n");
+    return 0;
+}
+
 int CDECL omp_get_num_procs(void)
 {
     TRACE("stub\n");
@@ -62,6 +68,11 @@ double CDECL omp_get_wtime(void)
 void CDECL omp_set_dynamic(int val)
 {
     TRACE("(%d): stub\n", val);
+}
+
+void CDECL omp_set_nested(int nested)
+{
+    TRACE("(%d): stub\n", nested);
 }
 
 void CDECL omp_set_num_threads(int num_threads)

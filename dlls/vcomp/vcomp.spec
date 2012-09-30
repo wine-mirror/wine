@@ -92,7 +92,7 @@
 @ stub omp_destroy_nest_lock
 @ cdecl omp_get_dynamic()
 @ cdecl omp_get_max_threads()
-@ stub omp_get_nested
+@ cdecl omp_get_nested()
 @ cdecl omp_get_num_procs()
 @ cdecl omp_get_num_threads()
 @ stub omp_get_thread_num
@@ -104,7 +104,7 @@
 @ cdecl omp_set_dynamic(long)
 @ stub omp_set_lock
 @ stub omp_set_nest_lock
-@ stub omp_set_nested
+@ cdecl omp_set_nested(long)
 @ cdecl omp_set_num_threads(long)
 @ stub omp_test_lock
 @ stub omp_test_nest_lock
