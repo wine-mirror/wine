@@ -146,9 +146,10 @@ struct env_stack
   struct env_stack *next;
   union {
     int    stackdepth;       /* Only used for pushd and popd */
-    WCHAR   cwd;              /* Only used for set/endlocal   */
+    WCHAR   cwd;             /* Only used for set/endlocal   */
   } u;
   WCHAR *strings;
+  HANDLE batchhandle;        /* Used to ensure set/endlocals stay in scope */
 };
 
 /* Data structure to save setlocal and pushd information */

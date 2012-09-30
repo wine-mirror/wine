@@ -103,7 +103,7 @@ static const WCHAR parmY[] = {'/','Y','\0'};
 static const WCHAR parmNoY[] = {'/','-','Y','\0'};
 
 static HINSTANCE hinst;
-static struct env_stack *saved_environment;
+struct env_stack *saved_environment;
 static BOOL verify_mode = FALSE;
 
 /**************************************************************************
@@ -2087,6 +2087,9 @@ void WCMD_setlocal (const WCHAR *s) {
   struct env_stack *env_copy;
   WCHAR cwd[MAX_PATH];
 
+  /* setlocal does nothing outside of batch programs */
+  if (!context) return;
+
   /* DISABLEEXTENSIONS ignored */
 
   env_copy = LocalAlloc (LMEM_FIXED, sizeof (struct env_stack));
@@ -2097,10 +2100,10 @@ void WCMD_setlocal (const WCHAR *s) {
   }
 
   env = GetEnvironmentStringsW ();
-
   env_copy->strings = WCMD_dupenv (env);
   if (env_copy->strings)
   {
+    env_copy->batchhandle = context->h;
     env_copy->next = saved_environment;
     saved_environment = env_copy;
 
@@ -2127,7 +2130,12 @@ void WCMD_endlocal (void) {
   struct env_stack *temp;
   int len, n;
 
-  if (!saved_environment)
+  /* setlocal does nothing outside of batch programs */
+  if (!context) return;
+
+  /* setlocal needs a saved environment from within the same context (batch
+     program) as it was saved in                                            */
+  if (!saved_environment || saved_environment->batchhandle != context->h)
     return;
 
   /* pop the old environment from the stack */

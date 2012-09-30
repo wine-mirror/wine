@@ -22,6 +22,8 @@
 #include "wcmd.h"
 #include "wine/debug.h"
 
+extern struct env_stack *saved_environment;
+
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
 /****************************************************************************
@@ -92,6 +94,13 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
       toExecute = NULL;
   }
   CloseHandle (h);
+
+/*
+ *  If there are outstanding setlocal's to the current context, unwind them.
+ */
+  while (saved_environment && saved_environment->batchhandle == context->h) {
+      WCMD_endlocal();
+  }
 
 /*
  *	If invoked by a CALL, we return to the context of our caller. Otherwise return

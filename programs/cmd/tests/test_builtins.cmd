@@ -1659,27 +1659,163 @@ cmd /e:oN /C tmp.cmd
 
 rem FIXME: creating file before setting envvar value to prevent parsing-time evaluation (due to EnableDelayedExpansion not being implemented/available yet)
 echo --- setlocal with corresponding endlocal
+rem %CD% does not tork on NT4 so use the following workaround
+for /d %%i in (.) do set CURDIR=%%~dpnxi
 echo @echo off> test.cmd
 echo echo %%VAR%%>> test.cmd
 echo setlocal>> test.cmd
 echo set VAR=localval>> test.cmd
+echo md foobar2>> test.cmd
+echo cd foobar2>> test.cmd
 echo echo %%VAR%%>> test.cmd
+echo for /d %%%%i in (.) do echo %%%%~dpnxi>> test.cmd
 echo endlocal>> test.cmd
 echo echo %%VAR%%>> test.cmd
+echo for /d %%%%i in (.) do echo %%%%~dpnxi>> test.cmd
 set VAR=globalval
 call test.cmd
 echo %VAR%
+for /d %%i in (.) do echo %%~dpnxi
+cd /d %curdir%
+rd foobar2
 set VAR=
 echo --- setlocal with no corresponding endlocal
 echo @echo off> test.cmd
 echo echo %%VAR%%>> test.cmd
 echo setlocal>> test.cmd
 echo set VAR=localval>> test.cmd
+echo md foobar2>> test.cmd
+echo cd foobar2>> test.cmd
 echo echo %%VAR%%>> test.cmd
+echo for /d %%%%i in (.) do echo %%%%~dpnxi>> test.cmd
 set VAR=globalval
+rem %CD% does not tork on NT4 so use the following workaround
+for /d %%i in (.) do set CURDIR=%%~dpnxi
 call test.cmd
 echo %VAR%
+for /d %%i in (.) do echo %%~dpnxi
+cd /d %curdir%
+rd foobar2
 set VAR=
+echo --- setlocal within same batch program
+set var1=one
+set var2=
+set var3=
+rem %CD% does not tork on NT4 so use the following workaround
+for /d %%i in (.) do set CURDIR=%%~dpnxi
+setlocal
+set var2=two
+mkdir foobar2
+cd foobar2
+setlocal
+set var3=three
+if "%var1%"=="one" echo Var1 ok 1
+if "%var2%"=="two" echo Var2 ok 2
+if "%var3%"=="three" echo Var3 ok 3
+for /d %%i in (.) do set curdir2=%%~dpnxi
+if "%curdir2%"=="%curdir%\foobar2" echo Directory is ok 1
+endlocal
+if "%var1%"=="one" echo Var1 ok 1
+if "%var2%"=="two" echo Var2 ok 2
+if "%var3%"=="" echo Var3 ok 3
+for /d %%i in (.) do set curdir2=%%~dpnxi
+if "%curdir2%"=="%curdir%\foobar2" echo Directory is ok 2
+endlocal
+if "%var1%"=="one" echo Var1 ok 1
+if "%var2%"=="" echo Var2 ok 2
+if "%var3%"=="" echo Var3 ok 3
+for /d %%i in (.) do set curdir2=%%~dpnxi
+if "%curdir2%"=="%curdir%" echo Directory is ok 3
+rd foobar2 /s /q
+set var1=
+
+echo --- Mismatched set and end locals
+mkdir foodir2 2>nul
+mkdir foodir3 2>nul
+mkdir foodir4 2>nul
+rem %CD% does not tork on NT4 so use the following workaround
+for /d %%i in (.) do set curdir=%%~dpnxi
+
+echo @echo off> 2set1end.cmd
+echo echo %%VAR%%>> 2set1end.cmd
+echo setlocal>> 2set1end.cmd
+echo set VAR=2set1endvalue1>> 2set1end.cmd
+echo cd ..\foodir3>> 2set1end.cmd
+echo setlocal>> 2set1end.cmd
+echo set VAR=2set1endvalue2>> 2set1end.cmd
+echo cd ..\foodir4>> 2set1end.cmd
+echo endlocal>> 2set1end.cmd
+echo echo %%VAR%%>> 2set1end.cmd
+echo for /d %%%%i in (.) do echo %%%%~dpnxi>> 2set1end.cmd
+
+echo @echo off> 1set2end.cmd
+echo echo %%VAR%%>> 1set2end.cmd
+echo setlocal>> 1set2end.cmd
+echo set VAR=1set2endvalue1>> 1set2end.cmd
+echo cd ..\foodir3>> 1set2end.cmd
+echo endlocal>> 1set2end.cmd
+echo echo %%VAR%%>> 1set2end.cmd
+echo for /d %%%%i in (.) do echo %%%%~dpnxi>> 1set2end.cmd
+echo endlocal>> 1set2end.cmd
+echo echo %%VAR%%>> 1set2end.cmd
+echo for /d %%%%i in (.) do echo %%%%~dpnxi>> 1set2end.cmd
+
+echo --- Extra setlocal in called batch
+set VAR=value1
+rem -- setlocal1 == this batch, should never be used inside a called routine
+setlocal
+set var=value2
+cd foodir2
+call %curdir%\2set1end.cmd
+echo Finished:
+echo %VAR%
+for /d %%i in (.) do echo %%~dpnxi
+endlocal
+echo %VAR%
+for /d %%i in (.) do echo %%~dpnxi
+cd /d %curdir%
+
+echo --- Extra endlocal in called batch
+set VAR=value1
+rem -- setlocal1 == this batch, should never be used inside a called routine
+setlocal
+set var=value2
+cd foodir2
+call %curdir%\1set2end.cmd
+echo Finished:
+echo %VAR%
+for /d %%i in (.) do echo %%~dpnxi
+endlocal
+echo %VAR%
+for /d %%i in (.) do echo %%~dpnxi
+cd /d %curdir%
+
+echo --- endlocal in called function rather than batch pgm is ineffective
+@echo off
+set var=1
+set var2=1
+setlocal
+set var=2
+call :endlocalroutine
+echo %var%
+endlocal
+echo %var%
+goto :endlocalfinished
+:endlocalroutine
+echo %var%
+endlocal
+echo %var%
+setlocal
+set var2=2
+endlocal
+echo %var2%
+endlocal
+echo %var%
+echo %var2%
+goto :eof
+:endlocalfinished
+echo %var%
+
 cd .. & rd /q/s foobar
 
 echo ------------ Testing Errorlevel ------------
