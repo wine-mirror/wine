@@ -95,7 +95,7 @@
 @ cdecl omp_get_nested()
 @ cdecl omp_get_num_procs()
 @ cdecl omp_get_num_threads()
-@ stub omp_get_thread_num
+@ cdecl omp_get_thread_num()
 @ stub omp_get_wtick
 @ cdecl omp_get_wtime()
 @ stub omp_in_parallel
