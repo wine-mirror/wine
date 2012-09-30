@@ -94,7 +94,7 @@
 @ stub omp_get_max_threads
 @ stub omp_get_nested
 @ cdecl omp_get_num_procs()
-@ stub omp_get_num_threads
+@ cdecl omp_get_num_threads()
 @ stub omp_get_thread_num
 @ stub omp_get_wtick
 @ cdecl omp_get_wtime()

@@ -35,6 +35,12 @@ int CDECL omp_get_num_procs(void)
     return 1;
 }
 
+int CDECL omp_get_num_threads(void)
+{
+    TRACE("stub\n");
+    return 1;
+}
+
 /* Time in seconds since "some time in the past" */
 double CDECL omp_get_wtime(void)
 {
