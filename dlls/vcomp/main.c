@@ -47,6 +47,11 @@ double CDECL omp_get_wtime(void)
     return GetTickCount() / 1000.0;
 }
 
+void CDECL omp_set_num_threads(int num_threads)
+{
+    TRACE("(%d): stub\n", num_threads);
+}
+
 void CDECL _vcomp_set_num_threads(int num_threads)
 {
     TRACE("(%d): stub\n", num_threads);
