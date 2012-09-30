@@ -1828,30 +1828,11 @@ static ULONG WINAPI fnIMLangFontLink_Release(
 
 static HRESULT WINAPI fnIMLangFontLink_GetCharCodePages(
         IMLangFontLink* iface,
-        WCHAR chSrc,
-        DWORD* pdwCodePages)
+        WCHAR ch_src,
+        DWORD* codepages)
 {
-    int i;
-    CHAR buf;
-    BOOL used_dc;
-    DWORD codePages;
-
-    *pdwCodePages = 0;
-
-    for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
-    {
-        WideCharToMultiByte(mlang_data[i].family_codepage, WC_NO_BEST_FIT_CHARS,
-            &chSrc, 1, &buf, 1, NULL, &used_dc);
-
-        /* If default char is not used, current codepage include the given symbol */
-        if (!used_dc)
-        {
-            IMLangFontLink_CodePageToCodePages(iface,
-                mlang_data[i].family_codepage, &codePages);
-            *pdwCodePages |= codePages;
-        }
-    }
-    return S_OK;
+    MLang_impl *This = impl_from_IMLangFontLink( iface );
+    return IMLangFontLink2_GetCharCodePages(&This->IMLangFontLink2_iface, ch_src, codepages);
 }
 
 static HRESULT WINAPI fnIMLangFontLink_GetStrCodePages(
@@ -3180,11 +3161,35 @@ static ULONG WINAPI fnIMLangFontLink2_Release( IMLangFontLink2* iface )
     return IMultiLanguage3_Release( &This->IMultiLanguage3_iface );
 }
 
-static HRESULT WINAPI fnIMLangFontLink2_GetCharCodePages( IMLangFontLink2* This,
-        WCHAR chSrc, DWORD *pdwCodePages)
+static HRESULT WINAPI fnIMLangFontLink2_GetCharCodePages( IMLangFontLink2* iface,
+        WCHAR ch_src, DWORD *ret_codepages)
 {
-    FIXME("(%p)->%s %p\n",This, debugstr_wn(&chSrc,1),pdwCodePages);
-    return E_NOTIMPL;
+    MLang_impl *This = impl_from_IMLangFontLink2(iface);
+    int i;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_wn(&ch_src, 1), ret_codepages);
+
+    *ret_codepages = 0;
+
+    for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
+    {
+        BOOL used_dc;
+        CHAR buf;
+
+        WideCharToMultiByte(mlang_data[i].family_codepage, WC_NO_BEST_FIT_CHARS,
+            &ch_src, 1, &buf, 1, NULL, &used_dc);
+
+        /* If default char is not used, current codepage include the given symbol */
+        if (!used_dc)
+        {
+            DWORD codepages;
+
+            IMLangFontLink2_CodePageToCodePages(iface,
+                mlang_data[i].family_codepage, &codepages);
+            *ret_codepages |= codepages;
+        }
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI fnIMLangFontLink2_GetStrCodePages( IMLangFontLink2* This,
