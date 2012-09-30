@@ -2509,6 +2509,15 @@ int wmain (int argc, WCHAR *argvW[])
           WCMD_strip_quotes(cmd);
   }
 
+  /* Save cwd into appropriate env var (Must be before the /c processing */
+  GetCurrentDirectoryW(sizeof(string)/sizeof(WCHAR), string);
+  if (IsCharAlphaW(string[0]) && string[1] == ':') {
+    static const WCHAR fmt[] = {'=','%','c',':','\0'};
+    wsprintfW(envvar, fmt, string[0]);
+    SetEnvironmentVariableW(envvar, string);
+    WINE_TRACE("Set %s to %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(string));
+  }
+
   if (opt_c) {
       /* If we do a "cmd /c command", we don't want to allocate a new
        * console since the command returns immediately. Rather, we use
@@ -2600,15 +2609,6 @@ int wmain (int argc, WCHAR *argvW[])
           WCMD_color();
       }
 
-  }
-
-  /* Save cwd into appropriate env var */
-  GetCurrentDirectoryW(1024, string);
-  if (IsCharAlphaW(string[0]) && string[1] == ':') {
-    static const WCHAR fmt[] = {'=','%','c',':','\0'};
-    wsprintfW(envvar, fmt, string[0]);
-    SetEnvironmentVariableW(envvar, string);
-    WINE_TRACE("Set %s to %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(string));
   }
 
   if (opt_k) {
