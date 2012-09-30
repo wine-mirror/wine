@@ -1895,27 +1895,11 @@ static HRESULT WINAPI fnIMLangFontLink_GetStrCodePages(
 
 static HRESULT WINAPI fnIMLangFontLink_CodePageToCodePages(
         IMLangFontLink* iface,
-        UINT uCodePage,
-        DWORD* pdwCodePages)
+        UINT codepage,
+        DWORD* codepages)
 {
     MLang_impl *This = impl_from_IMLangFontLink( iface );
-    CHARSETINFO cs;
-    BOOL rc; 
-
-    TRACE("(%p) Seeking %u\n",This, uCodePage);
-
-    rc = TranslateCharsetInfo((DWORD*)(DWORD_PTR)uCodePage, &cs, TCI_SRCCODEPAGE);
-
-    if (rc)
-    {
-        *pdwCodePages = cs.fs.fsCsb[0];
-        TRACE("resulting CodePages 0x%x\n",*pdwCodePages);
-        return S_OK;
-    }
-
-    TRACE("CodePage Not Found\n");
-    *pdwCodePages = 0;
-    return E_FAIL;
+    return IMLangFontLink2_CodePageToCodePages(&This->IMLangFontLink2_iface, codepage, codepages);
 }
 
 static HRESULT WINAPI fnIMLangFontLink_CodePagesToCodePage(
@@ -3211,12 +3195,27 @@ static HRESULT WINAPI fnIMLangFontLink2_GetStrCodePages( IMLangFontLink2* This,
             pszSrc, cchSrc, dwPriorityCodePages, pdwCodePages, pcchCodePages);
 }
 
-static HRESULT WINAPI fnIMLangFontLink2_CodePageToCodePages(IMLangFontLink2* This,
-        UINT uCodePage,
-        DWORD *pdwCodePages)
+static HRESULT WINAPI fnIMLangFontLink2_CodePageToCodePages(IMLangFontLink2* iface,
+        UINT codepage,
+        DWORD *codepages)
 {
-    FIXME("(%p)->%i %p\n",This, uCodePage, pdwCodePages);
-    return E_NOTIMPL;
+    MLang_impl *This = impl_from_IMLangFontLink2(iface);
+    CHARSETINFO cs;
+    BOOL rc;
+
+    TRACE("(%p)->(%u %p)\n", This, codepage, codepages);
+
+    rc = TranslateCharsetInfo((DWORD*)(DWORD_PTR)codepage, &cs, TCI_SRCCODEPAGE);
+    if (rc)
+    {
+        *codepages = cs.fs.fsCsb[0];
+        TRACE("resulting codepages 0x%x\n", *codepages);
+        return S_OK;
+    }
+
+    TRACE("codepage not found\n");
+    *codepages = 0;
+    return E_FAIL;
 }
 
 static HRESULT WINAPI fnIMLangFontLink2_CodePagesToCodePage(IMLangFontLink2* iface,
