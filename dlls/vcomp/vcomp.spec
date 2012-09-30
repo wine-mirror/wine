@@ -91,7 +91,7 @@
 @ stub omp_destroy_lock
 @ stub omp_destroy_nest_lock
 @ stub omp_get_dynamic
-@ stub omp_get_max_threads
+@ cdecl omp_get_max_threads()
 @ stub omp_get_nested
 @ cdecl omp_get_num_procs()
 @ cdecl omp_get_num_threads()
