@@ -29,6 +29,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vcomp);
 
+int CDECL omp_get_dynamic(void)
+{
+    TRACE("stub\n");
+    return 0;
+}
+
 int CDECL omp_get_max_threads(void)
 {
     TRACE("stub\n");
@@ -51,6 +57,11 @@ int CDECL omp_get_num_threads(void)
 double CDECL omp_get_wtime(void)
 {
     return GetTickCount() / 1000.0;
+}
+
+void CDECL omp_set_dynamic(int val)
+{
+    TRACE("(%d): stub\n", val);
 }
 
 void CDECL omp_set_num_threads(int num_threads)

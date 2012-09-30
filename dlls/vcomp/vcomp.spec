@@ -90,7 +90,7 @@
 @ stub _vcomp_single_end
 @ stub omp_destroy_lock
 @ stub omp_destroy_nest_lock
-@ stub omp_get_dynamic
+@ cdecl omp_get_dynamic()
 @ cdecl omp_get_max_threads()
 @ stub omp_get_nested
 @ cdecl omp_get_num_procs()
@@ -101,7 +101,7 @@
 @ stub omp_in_parallel
 @ stub omp_init_lock
 @ stub omp_init_nest_lock
-@ stub omp_set_dynamic
+@ cdecl omp_set_dynamic(long)
 @ stub omp_set_lock
 @ stub omp_set_nest_lock
 @ stub omp_set_nested
