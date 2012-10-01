@@ -2017,9 +2017,13 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     }
     SERVER_END_REQ;
 
-    if (ret && (((swp_flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE) ||
-                (swp_flags & (SWP_HIDEWINDOW | SWP_SHOWWINDOW | SWP_STATECHANGED | SWP_FRAMECHANGED))))
-        invalidate_dce( win, &old_window_rect );
+    if (ret)
+    {
+        if (old_surface != new_surface ||
+            ((swp_flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE) ||
+            (swp_flags & (SWP_HIDEWINDOW | SWP_SHOWWINDOW | SWP_STATECHANGED | SWP_FRAMECHANGED)))
+            invalidate_dce( win, &old_window_rect );
+    }
 
     WIN_ReleasePtr( win );
 
