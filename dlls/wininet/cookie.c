@@ -678,6 +678,43 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
     return r;
 }
 
+
+/***********************************************************************
+ *           IsDomainLegalCookieDomainW (WININET.@)
+ */
+BOOL WINAPI IsDomainLegalCookieDomainW( LPCWSTR s1, LPCWSTR s2 )
+{
+    DWORD s1_len, s2_len;
+
+    FIXME("(%s, %s) semi-stub\n", debugstr_w(s1), debugstr_w(s2));
+
+    if (!s1 || !s2)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (s1[0] == '.' || !s1[0] || s2[0] == '.' || !s2[0])
+    {
+        SetLastError(ERROR_INVALID_NAME);
+        return FALSE;
+    }
+    if(!strchrW(s1, '.') || !strchrW(s2, '.'))
+        return FALSE;
+
+    s1_len = strlenW(s1);
+    s2_len = strlenW(s2);
+    if (s1_len > s2_len)
+        return FALSE;
+
+    if (strncmpiW(s1, s2+s2_len-s1_len, s1_len) || (s2_len>s1_len && s2[s2_len-s1_len-1]!='.'))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWSTR cookie_data)
 {
     cookie_domain *thisCookieDomain = NULL;
@@ -727,7 +764,26 @@ BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWSTR cooki
 
         if (strncmpiW(ptr, szDomain, 7) == 0)
         {
-            ptr+=strlenW(szDomain);
+            WCHAR *end_ptr;
+
+            ptr += sizeof(szDomain)/sizeof(szDomain[0])-1;
+            if(*ptr == '.')
+                ptr++;
+            end_ptr = strchrW(ptr, ';');
+            if(end_ptr)
+                *end_ptr = 0;
+
+            if(!IsDomainLegalCookieDomainW(ptr, domain))
+            {
+                if(value != data)
+                    heap_free(value);
+                heap_free(data);
+                return FALSE;
+            }
+
+            if(end_ptr)
+                *end_ptr = ';';
+
             domain = ptr;
             TRACE("Parsing new domain %s\n",debugstr_w(domain));
         }
@@ -1057,30 +1113,5 @@ BOOL WINAPI InternetSetPerSiteCookieDecisionA( LPCSTR pchHostName, DWORD dwDecis
 BOOL WINAPI InternetSetPerSiteCookieDecisionW( LPCWSTR pchHostName, DWORD dwDecision )
 {
     FIXME("(%s, 0x%08x) stub\n", debugstr_w(pchHostName), dwDecision);
-    return FALSE;
-}
-
-/***********************************************************************
- *           IsDomainLegalCookieDomainW (WININET.@)
- */
-BOOL WINAPI IsDomainLegalCookieDomainW( LPCWSTR s1, LPCWSTR s2 )
-{
-    const WCHAR *p;
-
-    FIXME("(%s, %s)\n", debugstr_w(s1), debugstr_w(s2));
-
-    if (!s1 || !s2)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    if (s1[0] == '.' || !s1[0] || s2[0] == '.' || !s2[0])
-    {
-        SetLastError(ERROR_INVALID_NAME);
-        return FALSE;
-    }
-    if (!(p = strchrW(s2, '.'))) return FALSE;
-    if (strchrW(p + 1, '.') && !strcmpW(p + 1, s1)) return TRUE;
-    else if (!strcmpW(s1, s2)) return TRUE;
     return FALSE;
 }
