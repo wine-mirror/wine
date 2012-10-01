@@ -415,12 +415,33 @@ PVOID WINAPI IoAllocateErrorLogEntry( PVOID IoObject, UCHAR EntrySize )
 PMDL WINAPI IoAllocateMdl( PVOID VirtualAddress, ULONG Length, BOOLEAN SecondaryBuffer, BOOLEAN ChargeQuota, PIRP Irp )
 {
     PMDL mdl;
+    ULONG_PTR address = (ULONG_PTR)VirtualAddress;
+    ULONG_PTR page_address;
+    SIZE_T nb_pages, mdl_size;
 
-    FIXME("partial stub: %p, %u, %i, %i, %p\n", VirtualAddress, Length, SecondaryBuffer, ChargeQuota, Irp);
+    TRACE("(%p, %u, %i, %i, %p)\n", VirtualAddress, Length, SecondaryBuffer, ChargeQuota, Irp);
 
-    mdl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MDL));
+    if (Irp)
+        FIXME("Attaching the MDL to an IRP is not yet supported\n");
+
+    if (ChargeQuota)
+        FIXME("Charge quota is not yet supported\n");
+
+    /* FIXME: We suppose that page size is 4096 */
+    page_address = address & ~(4096 - 1);
+    nb_pages = (((address + Length - 1) & ~(4096 - 1)) - page_address) / 4096 + 1;
+
+    mdl_size = sizeof(MDL) + nb_pages * sizeof(PVOID);
+
+    mdl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mdl_size);
     if (!mdl)
         return NULL;
+
+    mdl->Size = mdl_size;
+    mdl->Process = IoGetCurrentProcess();
+    mdl->StartVa = (PVOID)page_address;
+    mdl->ByteCount = Length;
+    mdl->ByteOffset = address - page_address;
 
     return mdl;
 }
