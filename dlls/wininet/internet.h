@@ -553,6 +553,7 @@ server_t *get_server(const WCHAR*,INTERNET_PORT,BOOL);
 
 BOOL init_urlcache(void) DECLSPEC_HIDDEN;
 void free_urlcache(void) DECLSPEC_HIDDEN;
+void free_cookie(void) DECLSPEC_HIDDEN;
 
 #define MAX_REPLY_LEN	 	0x5B4
 

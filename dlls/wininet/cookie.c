@@ -49,7 +49,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
 /* FIXME
- *     Cookies are NOT THREAD SAFE
  *     Cookies could use A LOT OF MEMORY. We need some kind of memory management here!
  */
 
@@ -78,6 +77,14 @@ struct _cookie_domain
     struct list cookie_list;
 };
 
+static CRITICAL_SECTION cookie_cs;
+static CRITICAL_SECTION_DEBUG cookie_cs_debug =
+{
+    0, 0, &cookie_cs,
+    { &cookie_cs_debug.ProcessLocksList, &cookie_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": cookie_cs") }
+};
+static CRITICAL_SECTION cookie_cs = { &cookie_cs_debug, -1, 0, 0, 0, 0 };
 static struct list domain_list = LIST_INIT(domain_list);
 
 static cookie *COOKIE_addCookie(cookie_domain *domain, LPCWSTR name, LPCWSTR data,
@@ -529,6 +536,8 @@ BOOL get_cookie(const WCHAR *host, const WCHAR *path, WCHAR *cookie_data, DWORD 
 
     GetSystemTimeAsFileTime(&tm);
 
+    EnterCriticalSection(&cookie_cs);
+
     load_persistent_cookie(host, path);
 
     LIST_FOR_EACH_ENTRY(domain, &domain_list, cookie_domain, entry) {
@@ -576,6 +585,8 @@ BOOL get_cookie(const WCHAR *host, const WCHAR *path, WCHAR *cookie_data, DWORD 
             cookie_count++;
         }
     }
+
+    LeaveCriticalSection(&cookie_cs);
 
     if (!domain_count) {
         TRACE("no cookies found for %s\n", debugstr_w(host));
@@ -825,6 +836,8 @@ BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWSTR cooki
         }
     }
 
+    EnterCriticalSection(&cookie_cs);
+
     load_persistent_cookie(domain, path);
 
     LIST_FOR_EACH(cursor, &domain_list)
@@ -843,6 +856,7 @@ BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWSTR cooki
         {
             heap_free(data);
             if (value != data) heap_free(value);
+            LeaveCriticalSection(&cookie_cs);
             return TRUE;
         }
     }
@@ -866,11 +880,19 @@ BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWSTR cooki
     {
         heap_free(data);
         if (value != data) heap_free(value);
+        LeaveCriticalSection(&cookie_cs);
         return FALSE;
     }
     heap_free(data);
     if (value != data) heap_free(value);
-    return !update_persistent || save_persistent_cookie(thisCookieDomain);
+
+    if (!update_persistent || save_persistent_cookie(thisCookieDomain))
+    {
+        LeaveCriticalSection(&cookie_cs);
+        return TRUE;
+    }
+    LeaveCriticalSection(&cookie_cs);
+    return FALSE;
 }
 
 /***********************************************************************
@@ -1114,4 +1136,9 @@ BOOL WINAPI InternetSetPerSiteCookieDecisionW( LPCWSTR pchHostName, DWORD dwDeci
 {
     FIXME("(%s, 0x%08x) stub\n", debugstr_w(pchHostName), dwDecision);
     return FALSE;
+}
+
+void free_cookie(void)
+{
+    DeleteCriticalSection(&cookie_cs);
 }

@@ -315,6 +315,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             collect_connections(COLLECT_CLEANUP);
             NETCON_unload();
             free_urlcache();
+            free_cookie();
 
             if (g_dwTlsErrIndex != TLS_OUT_OF_INDEXES)
             {
