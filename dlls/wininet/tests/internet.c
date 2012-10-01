@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 #include "windef.h"
 #include "winbase.h"
@@ -368,6 +369,7 @@ static void test_complicated_cookie(void)
   BOOL ret;
 
   CHAR buffer[1024];
+  CHAR user[256];
 
   ret = InternetSetCookie("http://www.example.com/bar",NULL,"A=B; domain=.example.com");
   ok(ret == TRUE,"InternetSetCookie failed\n");
@@ -471,6 +473,29 @@ static void test_complicated_cookie(void)
   ok(strstr(buffer,"K=L")!=NULL,"K=L missing\n");
   ok(strstr(buffer,"M=N")==NULL,"M=N present\n");
   ok(strstr(buffer,"O=P")==NULL,"O=P present\n");
+
+  /* test persistent cookies */
+  ret = InternetSetCookie("http://testing.example.com", NULL, "A=B; expires=Fri, 01-Jan-2038 00:00:00 GMT");
+  ok(ret, "InternetSetCookie failed with error %d\n", GetLastError());
+
+  len = sizeof(user);
+  ret = GetUserName(user, &len);
+  ok(ret, "GetUserName failed with error %d\n", GetLastError());
+  for(; len>0; len--)
+      user[len-1] = tolower(user[len-1]);
+
+  sprintf(buffer, "Cookie:%s@testing.example.com/", user);
+  ret = GetUrlCacheEntryInfo(buffer, NULL, &len);
+  ok(!ret, "GetUrlCacheEntryInfo succeeded\n");
+  ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetLastError() = %d\n", GetLastError());
+
+  /* remove persistent cookie */
+  ret = InternetSetCookie("http://testing.example.com", NULL, "A=B");
+  ok(ret, "InternetSetCookie failed with error %d\n", GetLastError());
+
+  ret = GetUrlCacheEntryInfo(buffer, NULL, &len);
+  ok(!ret, "GetUrlCacheEntryInfo succeeded\n");
+  ok(GetLastError() == ERROR_FILE_NOT_FOUND, "GetLastError() = %d\n", GetLastError());
 }
 
 static void test_cookie_url(void)
