@@ -3685,7 +3685,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH PeekMessageW( MSG *msg_out, HWND hwnd, UINT first,
 
     if (!peek_message( &msg, hwnd, first, last, flags, 0 ))
     {
-        if (!(flags & PM_NOYIELD)) wow_handlers.wait_message( 0, NULL, 0, 0, 0 );
+        if (flags & PM_NOYIELD) flush_window_surfaces( FALSE );
+        else wow_handlers.wait_message( 0, NULL, 0, 0, 0 );
         return FALSE;
     }
 
