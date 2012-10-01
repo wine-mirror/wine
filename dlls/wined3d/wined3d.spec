@@ -59,7 +59,7 @@
 @ cdecl wined3d_device_get_clip_plane(ptr long ptr)
 @ cdecl wined3d_device_get_clip_status(ptr ptr)
 @ cdecl wined3d_device_get_creation_parameters(ptr ptr)
-@ cdecl wined3d_device_get_depth_stencil(ptr ptr)
+@ cdecl wined3d_device_get_depth_stencil(ptr)
 @ cdecl wined3d_device_get_device_caps(ptr ptr)
 @ cdecl wined3d_device_get_display_mode(ptr long ptr ptr)
 @ cdecl wined3d_device_get_front_buffer_data(ptr long ptr)

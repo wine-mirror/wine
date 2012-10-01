@@ -4493,20 +4493,11 @@ struct wined3d_surface * CDECL wined3d_device_get_render_target(const struct win
     return device->fb.render_targets[render_target_idx];
 }
 
-HRESULT CDECL wined3d_device_get_depth_stencil(const struct wined3d_device *device,
-        struct wined3d_surface **depth_stencil)
+struct wined3d_surface * CDECL wined3d_device_get_depth_stencil(const struct wined3d_device *device)
 {
-    TRACE("device %p, depth_stencil %p.\n", device, depth_stencil);
+    TRACE("device %p.\n", device);
 
-    *depth_stencil = device->fb.depth_stencil;
-    TRACE("Returning depth/stencil surface %p.\n", *depth_stencil);
-
-    if (!*depth_stencil)
-        return WINED3DERR_NOTFOUND;
-
-    wined3d_surface_incref(*depth_stencil);
-
-    return WINED3D_OK;
+    return device->fb.depth_stencil;
 }
 
 HRESULT CDECL wined3d_device_set_render_target(struct wined3d_device *device,

@@ -1122,19 +1122,14 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
         }
     }
 
-    hr = wined3d_device_get_depth_stencil(device->wined3d_device, &original_ds);
-    if (hr == WINED3D_OK || hr == WINED3DERR_NOTFOUND)
+    original_ds = wined3d_device_get_depth_stencil(device->wined3d_device);
+    hr = wined3d_device_set_depth_stencil(device->wined3d_device, ds_impl ? ds_impl->wined3d_surface : NULL);
+    if (SUCCEEDED(hr) && render_target)
     {
-        hr = wined3d_device_set_depth_stencil(device->wined3d_device, ds_impl ? ds_impl->wined3d_surface : NULL);
-        if (SUCCEEDED(hr) && render_target)
-        {
-            hr = wined3d_device_set_render_target(device->wined3d_device, 0, rt_impl->wined3d_surface, TRUE);
-            if (FAILED(hr))
-                wined3d_device_set_depth_stencil(device->wined3d_device, original_ds);
-        }
+        hr = wined3d_device_set_render_target(device->wined3d_device, 0, rt_impl->wined3d_surface, TRUE);
+        if (FAILED(hr))
+            wined3d_device_set_depth_stencil(device->wined3d_device, original_ds);
     }
-    if (original_ds)
-        wined3d_surface_decref(original_ds);
 
     wined3d_mutex_unlock();
 
@@ -1177,7 +1172,7 @@ static HRESULT WINAPI d3d8_device_GetDepthStencilSurface(IDirect3DDevice8 *iface
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct wined3d_surface *wined3d_surface;
     struct d3d8_surface *surface_impl;
-    HRESULT hr;
+    HRESULT hr = D3D_OK;
 
     TRACE("iface %p, depth_stencil %p.\n", iface, depth_stencil);
 
@@ -1185,18 +1180,15 @@ static HRESULT WINAPI d3d8_device_GetDepthStencilSurface(IDirect3DDevice8 *iface
         return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_depth_stencil(device->wined3d_device, &wined3d_surface);
-    if (SUCCEEDED(hr))
+    if ((wined3d_surface = wined3d_device_get_depth_stencil(device->wined3d_device)))
     {
         surface_impl = wined3d_surface_get_parent(wined3d_surface);
         *depth_stencil = &surface_impl->IDirect3DSurface8_iface;
         IDirect3DSurface8_AddRef(*depth_stencil);
-        wined3d_surface_decref(wined3d_surface);
     }
     else
     {
-        if (hr != WINED3DERR_NOTFOUND)
-            ERR("Failed to get wined3d depth stencil, hr %#x.\n", hr);
+        hr = WINED3DERR_NOTFOUND;
         *depth_stencil = NULL;
     }
     wined3d_mutex_unlock();

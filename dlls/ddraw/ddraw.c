@@ -754,7 +754,7 @@ static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, BOOL win
 static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd, DWORD cooplevel)
 {
     struct ddraw *This = impl_from_IDirectDraw7(iface);
-    struct wined3d_surface *rt = NULL, *ds;
+    struct wined3d_surface *rt = NULL, *ds = NULL;
     struct wined3d_stateblock *stateblock;
     BOOL restore_state = FALSE;
     HWND window;
@@ -938,7 +938,8 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
             else if (rt)
                 wined3d_surface_incref(rt);
 
-            wined3d_device_get_depth_stencil(This->wined3d_device, &ds);
+            if ((ds = wined3d_device_get_depth_stencil(This->wined3d_device)))
+                wined3d_surface_incref(ds);
         }
 
         ddraw_destroy_swapchain(This);
