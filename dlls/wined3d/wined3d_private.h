@@ -374,8 +374,9 @@ enum wined3d_shader_dst_modifier
 };
 
 /* Undocumented opcode control to identify projective texture lookups in ps 2.0 and later */
-#define WINED3DSI_TEXLD_PROJECT 1
-#define WINED3DSI_TEXLD_BIAS    2
+#define WINED3DSI_TEXLD_PROJECT     0x1
+#define WINED3DSI_TEXLD_BIAS        0x2
+#define WINED3DSI_INDEXED_DYNAMIC   0x4
 
 enum wined3d_shader_rel_op
 {
@@ -439,6 +440,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_CRS,
     WINED3DSIH_CUT,
     WINED3DSIH_DCL,
+    WINED3DSIH_DCL_CONSTANT_BUFFER,
     WINED3DSIH_DCL_INPUT_PRIMITIVE,
     WINED3DSIH_DCL_OUTPUT_TOPOLOGY,
     WINED3DSIH_DCL_VERTICES_OUT,
@@ -670,6 +672,7 @@ struct wined3d_shader_instruction
     {
         struct wined3d_shader_semantic semantic;
         enum wined3d_primitive_type primitive_type;
+        struct wined3d_shader_src_param src;
         UINT count;
     } declaration;
 };

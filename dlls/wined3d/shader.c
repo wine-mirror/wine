@@ -50,6 +50,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_CRS                   */ "crs",
     /* WINED3DSIH_CUT                   */ "cut",
     /* WINED3DSIH_DCL                   */ "dcl",
+    /* WINED3DSIH_DCL_CONSTANT_BUFFER   */ "dcl_constantBuffer",
     /* WINED3DSIH_DCL_INPUT_PRIMITIVE   */ "dcl_inputPrimitive",
     /* WINED3DSIH_DCL_OUTPUT_TOPOLOGY   */ "dcl_outputTopology",
     /* WINED3DSIH_DCL_VERTICES_OUT      */ "dcl_maxOutputVertexCount",
@@ -1366,6 +1367,12 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             shader_dump_ins_modifiers(&ins.declaration.semantic.reg);
             TRACE(" ");
             shader_dump_dst_param(&ins.declaration.semantic.reg, &shader_version);
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_CONSTANT_BUFFER)
+        {
+            TRACE("%s ", shader_opcode_names[ins.handler_idx]);
+            shader_dump_src_param(&ins.declaration.src, &shader_version);
+            TRACE(", %s", ins.flags & WINED3DSI_INDEXED_DYNAMIC ? "dynamicIndexed" : "immediateIndexed");
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_INPUT_PRIMITIVE
                 || ins.handler_idx == WINED3DSIH_DCL_OUTPUT_TOPOLOGY)
