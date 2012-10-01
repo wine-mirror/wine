@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -42,6 +44,118 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
         break;
     }
     return TRUE;
+}
+
+struct renderingparams {
+    IDWriteRenderingParams IDWriteRenderingParams_iface;
+    LONG ref;
+};
+
+static inline struct renderingparams *impl_from_IDWriteRenderingParams(IDWriteRenderingParams *iface)
+{
+    return CONTAINING_RECORD(iface, struct renderingparams, IDWriteRenderingParams_iface);
+}
+
+static HRESULT WINAPI renderingparams_QueryInterface(IDWriteRenderingParams *iface, REFIID riid, void **obj)
+{
+    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteRenderingParams))
+    {
+        *obj = iface;
+        IDWriteRenderingParams_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI renderingparams_AddRef(IDWriteRenderingParams *iface)
+{
+    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI renderingparams_Release(IDWriteRenderingParams *iface)
+{
+    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref)
+        heap_free(This);
+
+    return S_OK;
+}
+
+static FLOAT WINAPI renderingparams_GetGamma(IDWriteRenderingParams *iface)
+{
+    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+    FIXME("(%p): stub\n", This);
+    return 128.0;
+}
+
+static FLOAT WINAPI renderingparams_GetEnhancedContrast(IDWriteRenderingParams *iface)
+{
+    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+    FIXME("(%p): stub\n", This);
+    return 0.0;
+}
+
+static FLOAT WINAPI renderingparams_GetClearTypeLevel(IDWriteRenderingParams *iface)
+{
+    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+    FIXME("(%p): stub\n", This);
+    return 0.0;
+}
+
+static DWRITE_PIXEL_GEOMETRY WINAPI renderingparams_GetPixelGeometry(IDWriteRenderingParams *iface)
+{
+    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+    FIXME("(%p): stub\n", This);
+    return DWRITE_PIXEL_GEOMETRY_FLAT;
+}
+
+static DWRITE_RENDERING_MODE WINAPI renderingparams_GetRenderingMode(IDWriteRenderingParams *iface)
+{
+    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+    FIXME("(%p): stub\n", This);
+    return DWRITE_RENDERING_MODE_DEFAULT;
+}
+
+static const struct IDWriteRenderingParamsVtbl renderingparamsvtbl = {
+    renderingparams_QueryInterface,
+    renderingparams_AddRef,
+    renderingparams_Release,
+    renderingparams_GetGamma,
+    renderingparams_GetEnhancedContrast,
+    renderingparams_GetClearTypeLevel,
+    renderingparams_GetPixelGeometry,
+    renderingparams_GetRenderingMode
+};
+
+static HRESULT create_renderingparams(IDWriteRenderingParams **params)
+{
+    struct renderingparams *This;
+
+    *params = NULL;
+
+    This = heap_alloc(sizeof(struct renderingparams));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->IDWriteRenderingParams_iface.lpVtbl = &renderingparamsvtbl;
+    This->ref = 1;
+
+    *params = &This->IDWriteRenderingParams_iface;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefactory_QueryInterface(IDWriteFactory *iface, REFIID riid, void **obj)
@@ -137,7 +251,7 @@ static HRESULT WINAPI dwritefactory_CreateCustomRenderingParams(IDWriteFactory *
     FLOAT cleartype_level, DWRITE_PIXEL_GEOMETRY geometry, DWRITE_RENDERING_MODE mode, IDWriteRenderingParams **params)
 {
     FIXME("(%f %f %f %d %d %p): stub\n", gamma, enhancedContrast, cleartype_level, geometry, mode, params);
-    return E_NOTIMPL;
+    return create_renderingparams(params);
 }
 
 static HRESULT WINAPI dwritefactory_RegisterFontFileLoader(IDWriteFactory *iface, IDWriteFontFileLoader *loader)
