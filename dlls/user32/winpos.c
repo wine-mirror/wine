@@ -1949,11 +1949,17 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
                      const RECT *window_rect, const RECT *client_rect, const RECT *valid_rects )
 {
     WND *win;
+    HWND parent = GetAncestor( hwnd, GA_PARENT );
     BOOL ret;
     int old_width;
     RECT visible_rect, old_visible_rect, old_window_rect;
     struct window_surface *old_surface, *new_surface = NULL;
 
+    if (!parent || parent == GetDesktopWindow())
+    {
+        new_surface = &dummy_surface;  /* provide a default surface for top-level windows */
+        window_surface_add_ref( new_surface );
+    }
     visible_rect = *window_rect;
     USER_Driver->pWindowPosChanging( hwnd, insert_after, swp_flags,
                                      window_rect, client_rect, &visible_rect, &new_surface );

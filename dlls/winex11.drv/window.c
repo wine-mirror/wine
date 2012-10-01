@@ -2030,9 +2030,14 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
     X11DRV_window_to_X_rect( data, visible_rect );
 
     /* create the window surface if necessary */
+
     if (!data->whole_window) goto done;
-    if (data->embedded) goto done;
     if (swp_flags & SWP_HIDEWINDOW) goto done;
+
+    if (*surface) window_surface_release( *surface );
+    *surface = NULL;  /* indicate that we want to draw directly to the window */
+
+    if (data->embedded) goto done;
     if (data->whole_window == root_window) goto done;
     if (has_gl_drawable( hwnd )) goto done;
     if (!client_side_graphics && !layered) goto done;
