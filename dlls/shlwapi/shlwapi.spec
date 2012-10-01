@@ -586,6 +586,7 @@
 @ stdcall PathCompactPathW(long wstr long)
 @ stdcall PathCreateFromUrlA(str ptr ptr long)
 @ stdcall PathCreateFromUrlW(wstr ptr ptr long)
+@ stdcall PathCreateFromUrlAlloc(wstr ptr long)
 @ stdcall PathFileExistsA (str)
 @ stdcall PathFileExistsW (wstr)
 @ stdcall PathFindExtensionA (str)

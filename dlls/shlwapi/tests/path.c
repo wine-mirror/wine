@@ -32,6 +32,7 @@ static HRESULT (WINAPI *pPathIsValidCharW)(WCHAR,DWORD);
 static LPWSTR  (WINAPI *pPathCombineW)(LPWSTR, LPCWSTR, LPCWSTR);
 static HRESULT (WINAPI *pPathCreateFromUrlA)(LPCSTR, LPSTR, LPDWORD, DWORD);
 static HRESULT (WINAPI *pPathCreateFromUrlW)(LPCWSTR, LPWSTR, LPDWORD, DWORD);
+static HRESULT (WINAPI *pPathCreateFromUrlAlloc)(LPCWSTR, LPWSTR*, DWORD);
 static BOOL    (WINAPI *pPathAppendA)(LPSTR, LPCSTR);
 
 /* ################ */
@@ -325,6 +326,18 @@ static void test_PathCreateFromUrl(void)
             FreeWideString(urlW);
             FreeWideString(pathW);
         }
+    }
+
+    if (pPathCreateFromUrlAlloc)
+    {
+        static const WCHAR fileW[] = {'f','i','l','e',':','/','/','f','o','o',0};
+        static const WCHAR fooW[] = {'\\','\\','f','o','o',0};
+
+        pathW = NULL;
+        ret = pPathCreateFromUrlAlloc(fileW, &pathW, 0);
+        ok(ret == S_OK, "got 0x%08x expected S_OK\n", ret);
+        ok(lstrcmpiW(pathW, fooW) == 0, "got %s expected %s\n", wine_dbgstr_w(pathW), wine_dbgstr_w(fooW));
+        HeapFree(GetProcessHeap(), 0, pathW);
     }
 }
 
@@ -1453,6 +1466,7 @@ START_TEST(path)
 
     pPathCreateFromUrlA = (void*)GetProcAddress(hShlwapi, "PathCreateFromUrlA");
     pPathCreateFromUrlW = (void*)GetProcAddress(hShlwapi, "PathCreateFromUrlW");
+    pPathCreateFromUrlAlloc = (void*)GetProcAddress(hShlwapi, "PathCreateFromUrlAlloc");
     pPathCombineW = (void*)GetProcAddress(hShlwapi, "PathCombineW");
     pPathIsValidCharA = (void*)GetProcAddress(hShlwapi, (LPSTR)455);
     pPathIsValidCharW = (void*)GetProcAddress(hShlwapi, (LPSTR)456);

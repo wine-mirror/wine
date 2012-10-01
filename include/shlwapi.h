@@ -372,16 +372,18 @@ int WINAPI PathCommonPrefixA(LPCSTR,LPCSTR,LPSTR);
 int WINAPI PathCommonPrefixW(LPCWSTR,LPCWSTR,LPWSTR);
 #define PathCommonPrefix WINELIB_NAME_AW(PathCommonPrefix)
 
-HRESULT WINAPI PathCreateFromUrlA(LPCSTR pszUrl, LPSTR pszPath, LPDWORD pcchPath, DWORD dwReserved);
-HRESULT WINAPI PathCreateFromUrlW(LPCWSTR pszUrl, LPWSTR pszPath, LPDWORD pcchPath, DWORD dwReserved);
+HRESULT WINAPI PathCreateFromUrlA(LPCSTR,LPSTR,LPDWORD,DWORD);
+HRESULT WINAPI PathCreateFromUrlW(LPCWSTR,LPWSTR,LPDWORD,DWORD);
 #define PathCreateFromUrl WINELIB_NAME_AW(PathCreateFromUrl)
+
+HRESULT WINAPI PathCreateFromUrlAlloc(LPCWSTR,LPWSTR*,DWORD);
 
 BOOL WINAPI PathFileExistsA(LPCSTR);
 BOOL WINAPI PathFileExistsW(LPCWSTR);
 #define PathFileExists WINELIB_NAME_AW(PathFileExists)
 
-BOOL WINAPI PathFileExistsAndAttributesA(LPCSTR lpszPath, DWORD *dwAttr);
-BOOL WINAPI PathFileExistsAndAttributesW(LPCWSTR lpszPath, DWORD *dwAttr);
+BOOL WINAPI PathFileExistsAndAttributesA(LPCSTR,DWORD*);
+BOOL WINAPI PathFileExistsAndAttributesW(LPCWSTR,DWORD*);
 #define PathFileExistsAndAttributes WINELIB_NAME_AW(PathFileExistsAndAttributes)
 
 LPSTR  WINAPI PathFindExtensionA(LPCSTR);
