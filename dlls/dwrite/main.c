@@ -256,8 +256,14 @@ static HRESULT WINAPI dwritefactory_CreateRenderingParams(IDWriteFactory *iface,
 static HRESULT WINAPI dwritefactory_CreateMonitorRenderingParams(IDWriteFactory *iface, HMONITOR monitor,
     IDWriteRenderingParams **params)
 {
-    FIXME("(%p %p): stub\n", monitor, params);
-    return E_NOTIMPL;
+    static int fixme_once = 0;
+
+    TRACE("(%p %p)\n", monitor, params);
+
+    if (!fixme_once++)
+        FIXME("(%p): monitor setting ignored\n", monitor);
+    return IDWriteFactory_CreateCustomRenderingParams(iface, 0.0, 0.0, 0.0, DWRITE_PIXEL_GEOMETRY_FLAT,
+        DWRITE_RENDERING_MODE_DEFAULT, params);
 }
 
 static HRESULT WINAPI dwritefactory_CreateCustomRenderingParams(IDWriteFactory *iface, FLOAT gamma, FLOAT enhancedContrast,
