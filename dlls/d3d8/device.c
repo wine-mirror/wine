@@ -1100,14 +1100,12 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
         /* If no render target is passed in check the size against the current RT */
         if (!render_target)
         {
-            hr = wined3d_device_get_render_target(device->wined3d_device, 0, &original_rt);
-            if (FAILED(hr) || !original_rt)
+            if (!(original_rt = wined3d_device_get_render_target(device->wined3d_device, 0)))
             {
                 wined3d_mutex_unlock();
-                return hr;
+                return D3DERR_NOTFOUND;
             }
             wined3d_resource = wined3d_surface_get_resource(original_rt);
-            wined3d_surface_decref(original_rt);
         }
         else
             wined3d_resource = wined3d_surface_get_resource(rt_impl->wined3d_surface);
@@ -1156,18 +1154,18 @@ static HRESULT WINAPI d3d8_device_GetRenderTarget(IDirect3DDevice8 *iface, IDire
         return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_render_target(device->wined3d_device, 0, &wined3d_surface);
-    if (SUCCEEDED(hr) && wined3d_surface)
+    if ((wined3d_surface = wined3d_device_get_render_target(device->wined3d_device, 0)))
     {
         surface_impl = wined3d_surface_get_parent(wined3d_surface);
         *render_target = &surface_impl->IDirect3DSurface8_iface;
         IDirect3DSurface8_AddRef(*render_target);
-        wined3d_surface_decref(wined3d_surface);
+        hr = D3D_OK;
     }
     else
     {
-        ERR("Failed to get wined3d render target, hr %#x.\n", hr);
+        ERR("Failed to get wined3d render target.\n");
         *render_target = NULL;
+        hr = D3DERR_NOTFOUND;
     }
     wined3d_mutex_unlock();
 

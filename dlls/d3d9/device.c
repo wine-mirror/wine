@@ -1190,7 +1190,7 @@ static HRESULT WINAPI d3d9_device_GetRenderTarget(IDirect3DDevice9Ex *iface, DWO
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct wined3d_surface *wined3d_surface;
     struct d3d9_surface *surface_impl;
-    HRESULT hr;
+    HRESULT hr = D3D_OK;
 
     TRACE("iface %p, idx %u, surface %p.\n", iface, idx, surface);
 
@@ -1204,18 +1204,15 @@ static HRESULT WINAPI d3d9_device_GetRenderTarget(IDirect3DDevice9Ex *iface, DWO
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_render_target(device->wined3d_device, idx, &wined3d_surface);
-    if (SUCCEEDED(hr))
+    if ((wined3d_surface = wined3d_device_get_render_target(device->wined3d_device, idx)))
     {
         surface_impl = wined3d_surface_get_parent(wined3d_surface);
         *surface = &surface_impl->IDirect3DSurface9_iface;
         IDirect3DSurface9_AddRef(*surface);
-        wined3d_surface_decref(wined3d_surface);
     }
     else
     {
-        if (hr != WINED3DERR_NOTFOUND)
-            WARN("Failed to get render target %u, hr %#x.\n", idx, hr);
+        hr = WINED3DERR_NOTFOUND;
         *surface = NULL;
     }
     wined3d_mutex_unlock();

@@ -2143,8 +2143,8 @@ HRESULT __cdecl wined3d_device_get_ps_consts_i(const struct wined3d_device *devi
 HRESULT __cdecl wined3d_device_get_raster_status(const struct wined3d_device *device,
         UINT swapchain_idx, struct wined3d_raster_status *raster_status);
 DWORD __cdecl wined3d_device_get_render_state(const struct wined3d_device *device, enum wined3d_render_state state);
-HRESULT __cdecl wined3d_device_get_render_target(const struct wined3d_device *device,
-        UINT render_target_idx, struct wined3d_surface **render_target);
+struct wined3d_surface * __cdecl wined3d_device_get_render_target(const struct wined3d_device *device,
+        UINT render_target_idx);
 DWORD __cdecl wined3d_device_get_sampler_state(const struct wined3d_device *device,
         UINT sampler_idx, enum wined3d_sampler_state state);
 void __cdecl wined3d_device_get_scissor_rect(const struct wined3d_device *device, RECT *rect);

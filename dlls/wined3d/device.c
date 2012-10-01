@@ -4479,27 +4479,18 @@ void CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
     if (FAILED(hr)) ERR("Color fill failed, hr %#x.\n", hr);
 }
 
-HRESULT CDECL wined3d_device_get_render_target(const struct wined3d_device *device,
-        UINT render_target_idx, struct wined3d_surface **render_target)
+struct wined3d_surface * CDECL wined3d_device_get_render_target(const struct wined3d_device *device,
+        UINT render_target_idx)
 {
-    TRACE("device %p, render_target_idx %u, render_target %p.\n",
-            device, render_target_idx, render_target);
+    TRACE("device %p, render_target_idx %u.\n", device, render_target_idx);
 
     if (render_target_idx >= device->adapter->gl_info.limits.buffers)
     {
         WARN("Only %u render targets are supported.\n", device->adapter->gl_info.limits.buffers);
-        return WINED3DERR_INVALIDCALL;
+        return NULL;
     }
 
-    *render_target = device->fb.render_targets[render_target_idx];
-    TRACE("Returning render target %p.\n", *render_target);
-
-    if (!*render_target)
-        return WINED3DERR_NOTFOUND;
-
-    wined3d_surface_incref(*render_target);
-
-    return WINED3D_OK;
+    return device->fb.render_targets[render_target_idx];
 }
 
 HRESULT CDECL wined3d_device_get_depth_stencil(const struct wined3d_device *device,
