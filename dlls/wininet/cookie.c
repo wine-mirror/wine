@@ -65,7 +65,9 @@ struct _cookie
 
     LPWSTR lpCookieName;
     LPWSTR lpCookieData;
+    DWORD flags;
     FILETIME expiry;
+    FILETIME create;
 };
 
 struct _cookie_domain
@@ -90,13 +92,24 @@ static void COOKIE_deleteDomain(cookie_domain *deadDomain);
 static cookie *COOKIE_addCookie(cookie_domain *domain, LPCWSTR name, LPCWSTR data, FILETIME expiry)
 {
     cookie *newCookie = heap_alloc(sizeof(cookie));
+    if (!newCookie)
+        return NULL;
 
-    list_init(&newCookie->entry);
-    newCookie->lpCookieName = NULL;
-    newCookie->lpCookieData = NULL;
-    newCookie->expiry = expiry;
     newCookie->lpCookieName = heap_strdupW(name);
     newCookie->lpCookieData = heap_strdupW(data);
+
+    if (!newCookie->lpCookieName || !newCookie->lpCookieData)
+    {
+        heap_free(newCookie->lpCookieName);
+        heap_free(newCookie->lpCookieData);
+        heap_free(newCookie);
+
+        return NULL;
+    }
+
+    newCookie->flags = 0; /* TODO */
+    newCookie->expiry = expiry;
+    GetSystemTimeAsFileTime(&newCookie->create);
 
     TRACE("added cookie %p (data is %s)\n", newCookie, debugstr_w(data) );
 
