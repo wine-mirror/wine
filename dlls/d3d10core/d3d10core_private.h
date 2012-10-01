@@ -44,6 +44,8 @@
 #define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
 #define TAG_SHDR MAKE_TAG('S', 'H', 'D', 'R')
 
+struct d3d10_device;
+
 struct d3d10_shader_info
 {
     const DWORD *shader_code;
@@ -67,21 +69,6 @@ void skip_dword_unknown(const char **ptr, unsigned int count) DECLSPEC_HIDDEN;
 
 HRESULT parse_dxbc(const char *data, SIZE_T data_size,
         HRESULT (*chunk_handler)(const char *data, DWORD data_size, DWORD tag, void *ctx), void *ctx) DECLSPEC_HIDDEN;
-
-/* IDirect3D10Device */
-struct d3d10_device
-{
-    IUnknown IUnknown_inner;
-    ID3D10Device ID3D10Device_iface;
-    IWineDXGIDeviceParent IWineDXGIDeviceParent_iface;
-    IUnknown *outer_unk;
-    LONG refcount;
-
-    struct wined3d_device_parent device_parent;
-    struct wined3d_device *wined3d_device;
-};
-
-void d3d10_device_init(struct d3d10_device *device, void *outer_unknown) DECLSPEC_HIDDEN;
 
 /* ID3D10Texture2D */
 struct d3d10_texture2d
@@ -248,6 +235,7 @@ struct d3d10_rasterizer_state
 };
 
 HRESULT d3d10_rasterizer_state_init(struct d3d10_rasterizer_state *state) DECLSPEC_HIDDEN;
+struct d3d10_rasterizer_state *unsafe_impl_from_ID3D10RasterizerState(ID3D10RasterizerState *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10SamplerState */
 struct d3d10_sampler_state
@@ -266,6 +254,23 @@ struct d3d10_query
 };
 
 HRESULT d3d10_query_init(struct d3d10_query *query) DECLSPEC_HIDDEN;
+
+/* IDirect3D10Device */
+struct d3d10_device
+{
+    IUnknown IUnknown_inner;
+    ID3D10Device ID3D10Device_iface;
+    IWineDXGIDeviceParent IWineDXGIDeviceParent_iface;
+    IUnknown *outer_unk;
+    LONG refcount;
+
+    struct wined3d_device_parent device_parent;
+    struct wined3d_device *wined3d_device;
+
+    struct d3d10_rasterizer_state *rasterizer_state;
+};
+
+void d3d10_device_init(struct d3d10_device *device, void *outer_unknown) DECLSPEC_HIDDEN;
 
 /* Layered device */
 enum dxgi_device_layer_id

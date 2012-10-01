@@ -342,7 +342,11 @@ static void STDMETHODCALLTYPE d3d10_device_DrawAuto(ID3D10Device *iface)
 
 static void STDMETHODCALLTYPE d3d10_device_RSSetState(ID3D10Device *iface, ID3D10RasterizerState *rasterizer_state)
 {
-    FIXME("iface %p, rasterizer_state %p stub!\n", iface, rasterizer_state);
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+
+    TRACE("iface %p, rasterizer_state %p.\n", iface, rasterizer_state);
+
+    device->rasterizer_state = unsafe_impl_from_ID3D10RasterizerState(rasterizer_state);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_RSSetViewports(ID3D10Device *iface,
