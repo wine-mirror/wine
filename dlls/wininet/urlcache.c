@@ -2351,7 +2351,7 @@ static void handle_full_cache(void)
     }
 }
 
-/* Enumerates entires in cache, allows cache unlocking between calls. */
+/* Enumerates entries in cache, allows cache unlocking between calls. */
 static BOOL urlcache_next_entry(URLCACHE_HEADER *header, DWORD *hash_table_off, DWORD *hash_table_entry,
         struct _HASH_ENTRY **hash_entry, CACHEFILE_ENTRY **entry)
 {
@@ -2456,7 +2456,7 @@ static int dword_cmp(const void *p1, const void *p2)
  *
  * PARAMETERS
  *   cache_path    [I] Which volume to free up from, or NULL if you don't care.
- *   size          [I] How much percent of cache space should be free.
+ *   size          [I] How many percents of the cache should be free.
  *   filter        [I] Which entries can't be deleted (CacheEntryType)
  *
  * RETURNS

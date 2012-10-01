@@ -1820,7 +1820,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     /* Replace env vars if in a batch context */
     if (context) handleExpansion(extraSpace, FALSE, NULL, NULL);
 
-    /* Skip preceeding whitespace */
+    /* Skip preceding whitespace */
     while (*curPos == ' ' || *curPos == '\t') curPos++;
 
     /* Show prompt before batch line IF echo is on and in batch program */

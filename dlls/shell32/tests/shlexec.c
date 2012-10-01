@@ -996,7 +996,7 @@ static void test_lpFile_parsed(void)
         rc > 32 ? "success" : "failure", rc, fileA
         );
 
-    /* quoted lpFile not works only on real win95 and nt4 */
+    /* quoted lpFile does not work on real win95 and nt4 */
     testfile = "\"%%TEMP%%\\%s\\simple.shlexec\"";
     sprintf(fileA, testfile, shorttmpdir);
     rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI, NULL, fileA, NULL, NULL);
