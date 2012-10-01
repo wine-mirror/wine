@@ -311,18 +311,20 @@ static HRESULT WINAPI d3d_texture1_QueryInterface(IDirect3DTexture *iface, REFII
     return ddraw_surface7_QueryInterface(&surface->IDirectDrawSurface7_iface, riid, object);
 }
 
-static void ddraw_surface_add_iface(struct ddraw_surface *This)
+static void ddraw_surface_add_iface(struct ddraw_surface *surface)
 {
-    ULONG iface_count = InterlockedIncrement(&This->iface_count);
-    TRACE("%p increasing iface count to %u.\n", This, iface_count);
+    ULONG iface_count = InterlockedIncrement(&surface->iface_count);
+    TRACE("%p increasing iface count to %u.\n", surface, iface_count);
 
     if (iface_count == 1)
     {
+        if (surface->ifaceToRelease)
+            IUnknown_AddRef(surface->ifaceToRelease);
         wined3d_mutex_lock();
-        if (This->wined3d_surface)
-            wined3d_surface_incref(This->wined3d_surface);
-        if (This->wined3d_texture)
-            wined3d_texture_incref(This->wined3d_texture);
+        if (surface->wined3d_surface)
+            wined3d_surface_incref(surface->wined3d_surface);
+        if (surface->wined3d_texture)
+            wined3d_texture_incref(surface->wined3d_texture);
         wined3d_mutex_unlock();
     }
 }
@@ -447,7 +449,6 @@ static ULONG WINAPI d3d_texture1_AddRef(IDirect3DTexture *iface)
 static void ddraw_surface_cleanup(struct ddraw_surface *surface)
 {
     struct ddraw_surface *surf;
-    IUnknown *ifaceToRelease;
     UINT i;
 
     TRACE("surface %p.\n", surface);
@@ -472,7 +473,6 @@ static void ddraw_surface_cleanup(struct ddraw_surface *surface)
 
     if (surface->device1)
         IUnknown_Release(&surface->device1->IUnknown_inner);
-    ifaceToRelease = surface->ifaceToRelease;
 
     if (surface->iface_count > 1)
     {
@@ -485,10 +485,6 @@ static void ddraw_surface_cleanup(struct ddraw_surface *surface)
 
     if (surface->wined3d_surface)
         wined3d_surface_decref(surface->wined3d_surface);
-
-    /* Reduce the ddraw refcount */
-    if (ifaceToRelease)
-        IUnknown_Release(ifaceToRelease);
 }
 
 ULONG ddraw_surface_release_iface(struct ddraw_surface *This)
@@ -498,6 +494,8 @@ ULONG ddraw_surface_release_iface(struct ddraw_surface *This)
 
     if (iface_count == 0)
     {
+        IUnknown *release_iface = This->ifaceToRelease;
+
         /* Complex attached surfaces are destroyed implicitly when the root is released */
         wined3d_mutex_lock();
         if(!This->is_complex_root)
@@ -511,6 +509,9 @@ ULONG ddraw_surface_release_iface(struct ddraw_surface *This)
         else
             ddraw_surface_cleanup(This);
         wined3d_mutex_unlock();
+
+        if (release_iface)
+            IUnknown_Release(release_iface);
     }
 
     return iface_count;
