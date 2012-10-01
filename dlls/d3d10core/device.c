@@ -580,7 +580,12 @@ static void STDMETHODCALLTYPE d3d10_device_SOGetTargets(ID3D10Device *iface,
 
 static void STDMETHODCALLTYPE d3d10_device_RSGetState(ID3D10Device *iface, ID3D10RasterizerState **rasterizer_state)
 {
-    FIXME("iface %p, rasterizer_state %p stub!\n", iface, rasterizer_state);
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+
+    TRACE("iface %p, rasterizer_state %p.\n", iface, rasterizer_state);
+
+    if ((*rasterizer_state = device->rasterizer_state ? &device->rasterizer_state->ID3D10RasterizerState_iface : NULL))
+        ID3D10RasterizerState_AddRef(*rasterizer_state);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_RSGetViewports(ID3D10Device *iface,
