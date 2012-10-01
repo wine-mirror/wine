@@ -2472,9 +2472,10 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
     }
     SERVER_END_REQ;
 
-    if (offset == GWL_STYLE && ((style.styleOld ^ style.styleNew) & WS_VISIBLE))
+    if ((offset == GWL_STYLE && ((style.styleOld ^ style.styleNew) & WS_VISIBLE)) ||
+        (offset == GWL_EXSTYLE && ((style.styleOld ^ style.styleNew) & WS_EX_LAYERED)))
     {
-        needs_show = !(wndPtr->flags & WIN_HIDDEN) && (style.styleNew & WS_VISIBLE);
+        needs_show = !(wndPtr->flags & WIN_HIDDEN) && (wndPtr->dwStyle & WS_VISIBLE);
         invalidate_dce( wndPtr, NULL );
     }
     WIN_ReleasePtr( wndPtr );
