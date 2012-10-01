@@ -24,6 +24,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 
 #include "initguid.h"
 #include "dwrite.h"
@@ -249,8 +250,14 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory *iface,
 
 static HRESULT WINAPI dwritefactory_CreateRenderingParams(IDWriteFactory *iface, IDWriteRenderingParams **params)
 {
-    FIXME("(%p): stub\n", params);
-    return E_NOTIMPL;
+    HMONITOR monitor;
+    POINT pt;
+
+    TRACE("(%p)\n", params);
+
+    pt.x = pt.y = 0;
+    monitor = MonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
+    return IDWriteFactory_CreateMonitorRenderingParams(iface, monitor, params);
 }
 
 static HRESULT WINAPI dwritefactory_CreateMonitorRenderingParams(IDWriteFactory *iface, HMONITOR monitor,

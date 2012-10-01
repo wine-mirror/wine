@@ -1,6 +1,6 @@
 MODULE    = dwrite.dll
 IMPORTLIB = dwrite
-IMPORTS   = gdi32
+IMPORTS   = user32 gdi32
 
 C_SRCS = \
 	font.c \
