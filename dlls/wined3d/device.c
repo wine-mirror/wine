@@ -5263,13 +5263,12 @@ HRESULT CDECL wined3d_device_set_dialog_box_mode(struct wined3d_device *device, 
 }
 
 
-HRESULT CDECL wined3d_device_get_creation_parameters(const struct wined3d_device *device,
+void CDECL wined3d_device_get_creation_parameters(const struct wined3d_device *device,
         struct wined3d_device_creation_parameters *parameters)
 {
     TRACE("device %p, parameters %p.\n", device, parameters);
 
     *parameters = device->create_parms;
-    return WINED3D_OK;
 }
 
 void CDECL wined3d_device_set_gamma_ramp(const struct wined3d_device *device,

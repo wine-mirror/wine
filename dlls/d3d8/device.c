@@ -479,16 +479,15 @@ static HRESULT WINAPI d3d8_device_GetCreationParameters(IDirect3DDevice8 *iface,
         D3DDEVICE_CREATION_PARAMETERS *parameters)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
 
     TRACE("iface %p, parameters %p.\n", iface, parameters);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_creation_parameters(device->wined3d_device,
+    wined3d_device_get_creation_parameters(device->wined3d_device,
             (struct wined3d_device_creation_parameters *)parameters);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_device_SetCursorProperties(IDirect3DDevice8 *iface,

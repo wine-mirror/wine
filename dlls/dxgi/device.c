@@ -141,19 +141,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetAdapter(IWineDXGIDevice *iface, 
 {
     struct dxgi_device *This = impl_from_IWineDXGIDevice(iface);
     struct wined3d_device_creation_parameters create_parameters;
-    HRESULT hr;
 
     TRACE("iface %p, adapter %p\n", iface, adapter);
 
     EnterCriticalSection(&dxgi_cs);
-
-    hr = wined3d_device_get_creation_parameters(This->wined3d_device, &create_parameters);
-    if (FAILED(hr))
-    {
-        LeaveCriticalSection(&dxgi_cs);
-        return hr;
-    }
-
+    wined3d_device_get_creation_parameters(This->wined3d_device, &create_parameters);
     LeaveCriticalSection(&dxgi_cs);
 
     return IWineDXGIFactory_EnumAdapters(This->factory, create_parameters.adapter_idx, adapter);
