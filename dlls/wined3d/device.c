@@ -4568,7 +4568,7 @@ HRESULT CDECL wined3d_device_set_render_target(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, struct wined3d_surface *depth_stencil)
+void CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, struct wined3d_surface *depth_stencil)
 {
     struct wined3d_surface *prev = device->fb.depth_stencil;
 
@@ -4578,7 +4578,7 @@ HRESULT CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, st
     if (prev == depth_stencil)
     {
         TRACE("Trying to do a NOP SetRenderTarget operation.\n");
-        return WINED3D_OK;
+        return;
     }
 
     if (prev)
@@ -4617,7 +4617,7 @@ HRESULT CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, st
 
     device_invalidate_state(device, STATE_FRAMEBUFFER);
 
-    return WINED3D_OK;
+    return;
 }
 
 HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device,

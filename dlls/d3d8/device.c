@@ -1085,7 +1085,7 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
     struct d3d8_surface *rt_impl = unsafe_impl_from_IDirect3DSurface8(render_target);
     struct d3d8_surface *ds_impl = unsafe_impl_from_IDirect3DSurface8(depth_stencil);
     struct wined3d_surface *original_ds = NULL;
-    HRESULT hr;
+    HRESULT hr = D3D_OK;
 
     TRACE("iface %p, render_target %p, depth_stencil %p.\n", iface, render_target, depth_stencil);
 
@@ -1123,8 +1123,8 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
     }
 
     original_ds = wined3d_device_get_depth_stencil(device->wined3d_device);
-    hr = wined3d_device_set_depth_stencil(device->wined3d_device, ds_impl ? ds_impl->wined3d_surface : NULL);
-    if (SUCCEEDED(hr) && render_target)
+    wined3d_device_set_depth_stencil(device->wined3d_device, ds_impl ? ds_impl->wined3d_surface : NULL);
+    if (render_target)
     {
         hr = wined3d_device_set_render_target(device->wined3d_device, 0, rt_impl->wined3d_surface, TRUE);
         if (FAILED(hr))

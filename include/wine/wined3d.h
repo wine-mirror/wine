@@ -2195,7 +2195,7 @@ void __cdecl wined3d_device_set_cursor_position(struct wined3d_device *device,
         int x_screen_space, int y_screen_space, DWORD flags);
 HRESULT __cdecl wined3d_device_set_cursor_properties(struct wined3d_device *device,
         UINT x_hotspot, UINT y_hotspot, struct wined3d_surface *cursor_surface);
-HRESULT __cdecl wined3d_device_set_depth_stencil(struct wined3d_device *device, struct wined3d_surface *depth_stencil);
+void __cdecl wined3d_device_set_depth_stencil(struct wined3d_device *device, struct wined3d_surface *depth_stencil);
 HRESULT __cdecl wined3d_device_set_dialog_box_mode(struct wined3d_device *device, BOOL enable_dialogs);
 void __cdecl wined3d_device_set_gamma_ramp(const struct wined3d_device *device,
         UINT swapchain_idx, DWORD flags, const struct wined3d_gamma_ramp *ramp);
