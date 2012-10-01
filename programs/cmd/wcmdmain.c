@@ -39,6 +39,7 @@ extern struct env_stack *pushd_directories;
 BATCH_CONTEXT *context = NULL;
 DWORD errorlevel;
 WCHAR quals[MAX_PATH], param1[MAXSTRING], param2[MAXSTRING];
+BOOL  interactive;
 
 int defaultColor = 7;
 BOOL echo_mode = TRUE;
@@ -2366,6 +2367,9 @@ int wmain (int argc, WCHAR *argvW[])
     WCMD_echo(eoff);
   }
 
+  /* Until we start to read from the keyboard, stay as non-interactive */
+  interactive = FALSE;
+
   if (opt_c || opt_k) {
       int     len,qcount;
       WCHAR** arg;
@@ -2625,7 +2629,8 @@ int wmain (int argc, WCHAR *argvW[])
  */
 
   SetEnvironmentVariableW(promptW, defaultpromptW);
-  WCMD_version ();
+  interactive = TRUE;
+  if (!opt_k) WCMD_version ();
   while (TRUE) {
 
     /* Read until EOF (which for std input is never, but if redirect

@@ -36,6 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
 extern int defaultColor;
 extern BOOL echo_mode;
+extern BOOL interactive;
 
 struct env_stack *pushd_directories;
 const WCHAR dotW[]    = {'.','\0'};
@@ -446,7 +447,7 @@ void WCMD_copy (void) {
   else {
     /* By default, we will force the overwrite in batch mode and ask for
      * confirmation in interactive mode. */
-    force = !!context;
+    force = !interactive;
 
     /* If COPYCMD is set, then we force the overwrite with /Y and ask for
      * confirmation with /-Y. If COPYCMD is neither of those, then we use the
