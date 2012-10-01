@@ -75,17 +75,16 @@ static void init_event(const char* child_file)
     hEvent=CreateEvent(NULL, FALSE, FALSE, event_name);
 }
 
-static void strcat_param(char* str, const char* param)
+static void strcat_param(char* str, const char* name, const char* param)
 {
-    if (param!=NULL)
+    if (param)
     {
-        strcat(str, "\"");
+        if (str[strlen(str)-1] == '"')
+            strcat(str, ", ");
+        strcat(str, name);
+        strcat(str, "=\"");
         strcat(str, param);
         strcat(str, "\"");
-    }
-    else
-    {
-        strcat(str, "null");
     }
 }
 
@@ -99,13 +98,10 @@ static INT_PTR shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, L
         rcEmpty = shell_execute("", file, parameters, directory);
 
     strcpy(shell_call, "ShellExecute(");
-    strcat_param(shell_call, operation);
-    strcat(shell_call, ", ");
-    strcat_param(shell_call, file);
-    strcat(shell_call, ", ");
-    strcat_param(shell_call, parameters);
-    strcat(shell_call, ", ");
-    strcat_param(shell_call, directory);
+    strcat_param(shell_call, "verb", operation);
+    strcat_param(shell_call, "file", file);
+    strcat_param(shell_call, "params", parameters);
+    strcat_param(shell_call, "dir", directory);
     strcat(shell_call, ")");
     if (winetest_debug > 1)
         trace("%s\n", shell_call);
@@ -162,13 +158,16 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
     INT_PTR rc;
 
     strcpy(shell_call, "ShellExecuteEx(");
-    strcat_param(shell_call, operation);
-    strcat(shell_call, ", ");
-    strcat_param(shell_call, file);
-    strcat(shell_call, ", ");
-    strcat_param(shell_call, parameters);
-    strcat(shell_call, ", ");
-    strcat_param(shell_call, directory);
+    if (mask)
+    {
+        char smask[11];
+        sprintf(smask, "0x%x", mask);
+        strcat_param(shell_call, "mask", smask);
+    }
+    strcat_param(shell_call, "verb", operation);
+    strcat_param(shell_call, "file", file);
+    strcat_param(shell_call, "params", parameters);
+    strcat_param(shell_call, "dir", directory);
     strcat(shell_call, ")");
     if (winetest_debug > 1)
         trace("%s\n", shell_call);
