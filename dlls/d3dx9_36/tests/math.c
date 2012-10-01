@@ -275,14 +275,37 @@ static void D3DXMatrixTest(void)
     U(expectedmat).m[1][0] = 519.760010f; U(expectedmat).m[1][1] = -352.440002f; U(expectedmat).m[1][2] = -277.679993f; U(expectedmat).m[1][3] = 0.0f;
     U(expectedmat).m[2][0] = 363.119995f; U(expectedmat).m[2][1] = -121.040001f; U(expectedmat).m[2][2] = -117.479996f; U(expectedmat).m[2][3] = 0.0f;
     U(expectedmat).m[3][0] = -1239.0f; U(expectedmat).m[3][1] = 667.0f; U(expectedmat).m[3][2] = 567.0f; U(expectedmat).m[3][3] = 1.0f;
-    D3DXMatrixAffineTransformation(&gotmat,3.56f,&at,&q,&axis);
+    D3DXMatrixAffineTransformation(&gotmat, 3.56f, &at, &q, &axis);
     expect_mat(&expectedmat, &gotmat);
-/* Test the NULL case */
-    U(expectedmat).m[0][0] = -459.239990f; U(expectedmat).m[0][1] = -576.719971f; U(expectedmat).m[0][2] = -263.440002f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 519.760010f; U(expectedmat).m[1][1] = -352.440002f; U(expectedmat).m[1][2] = -277.679993f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 363.119995f; U(expectedmat).m[2][1] = -121.040001f; U(expectedmat).m[2][2] = -117.479996f; U(expectedmat).m[2][3] = 0.0f;
+
+    /* Test the NULL case */
     U(expectedmat).m[3][0] = 1.0f; U(expectedmat).m[3][1] = -3.0f; U(expectedmat).m[3][2] = 7.0f; U(expectedmat).m[3][3] = 1.0f;
-    D3DXMatrixAffineTransformation(&gotmat,3.56f,NULL,&q,&axis);
+    D3DXMatrixAffineTransformation(&gotmat, 3.56f, NULL, &q, &axis);
+    expect_mat(&expectedmat, &gotmat);
+
+    U(expectedmat).m[3][0] = -1240.0f; U(expectedmat).m[3][1] = 670.0f; U(expectedmat).m[3][2] = 560.0f; U(expectedmat).m[3][3] = 1.0f;
+    D3DXMatrixAffineTransformation(&gotmat, 3.56f, &at, &q, NULL);
+    expect_mat(&expectedmat, &gotmat);
+
+    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 0.0f; U(expectedmat).m[3][3] = 1.0f;
+    D3DXMatrixAffineTransformation(&gotmat, 3.56f, NULL, &q, NULL);
+    expect_mat(&expectedmat, &gotmat);
+
+    U(expectedmat).m[0][0] = 3.56f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
+    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = 3.56f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
+    U(expectedmat).m[2][0] = 0.0f; U(expectedmat).m[2][1] = 0.0f; U(expectedmat).m[2][2] = 3.56f; U(expectedmat).m[2][3] = 0.0f;
+    U(expectedmat).m[3][0] = 1.0f; U(expectedmat).m[3][1] = -3.0f; U(expectedmat).m[3][2] = 7.0f; U(expectedmat).m[3][3] = 1.0f;
+    D3DXMatrixAffineTransformation(&gotmat, 3.56f, NULL, NULL, &axis);
+    expect_mat(&expectedmat, &gotmat);
+
+    D3DXMatrixAffineTransformation(&gotmat, 3.56f, &at, NULL, &axis);
+    expect_mat(&expectedmat, &gotmat);
+
+    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 0.0f; U(expectedmat).m[3][3] = 1.0f;
+    D3DXMatrixAffineTransformation(&gotmat, 3.56f, &at, NULL, NULL);
+    expect_mat(&expectedmat, &gotmat);
+
+    D3DXMatrixAffineTransformation(&gotmat, 3.56f, NULL, NULL, NULL);
     expect_mat(&expectedmat, &gotmat);
 
 /*____________D3DXMatrixfDeterminant_____________*/

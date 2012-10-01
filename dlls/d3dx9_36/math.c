@@ -81,7 +81,7 @@ FLOAT WINAPI D3DXFresnelTerm(FLOAT costheta, FLOAT refractionindex)
 {
     FLOAT a, d, g, result;
 
-    TRACE("costheta %f, refractionindex %f)\n", costheta, refractionindex);
+    TRACE("costheta %f, refractionindex %f\n", costheta, refractionindex);
 
     g = sqrtf(refractionindex * refractionindex + costheta * costheta - 1.0f);
     a = g + costheta;
@@ -101,6 +101,13 @@ D3DXMATRIX * WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *out, FLOAT scalin
             out, scaling, rotationcenter, rotation, translation);
 
     D3DXMatrixIdentity(out);
+
+    if (rotationcenter)
+    {
+        out->u.m[3][0] = -rotationcenter->x;
+        out->u.m[3][1] = -rotationcenter->y;
+        out->u.m[3][2] = -rotationcenter->z;
+    }
 
     if (rotation)
     {
@@ -130,9 +137,9 @@ D3DXMATRIX * WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *out, FLOAT scalin
         {
             FLOAT x, y, z;
 
-            x = -rotationcenter->x;
-            y = -rotationcenter->y;
-            z = -rotationcenter->z;
+            x = out->u.m[3][0];
+            y = out->u.m[3][1];
+            z = out->u.m[3][2];
 
             out->u.m[3][0] = x * temp00 + y * temp10 + z * temp20;
             out->u.m[3][1] = x * temp01 + y * temp11 + z * temp21;
