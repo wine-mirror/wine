@@ -4227,6 +4227,25 @@ static void _test_framebase_name(unsigned line, IHTMLElement *elem, const char *
     IHTMLFrameBase_Release(fbase);
 }
 
+#define test_framebase_put_name(a,b) _test_framebase_put_name(__LINE__,a,b)
+static void _test_framebase_put_name(unsigned line, IHTMLElement *elem, const char *name)
+{
+    IHTMLFrameBase *fbase;
+    HRESULT hres;
+    BSTR str;
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLFrameBase, (void**)&fbase);
+    ok(hres == S_OK, "Could not get IHTMLFrameBase interface: 0x%08x\n", hres);
+
+    str = name ? a2bstr(name) : NULL;
+    hres = IHTMLFrameBase_put_name(fbase, str);
+    ok_(__FILE__,line)(hres == S_OK, "put_name failed: %08x\n", hres);
+    SysFreeString(str);
+
+    _test_framebase_name(line, elem, name);
+    IHTMLFrameBase_Release(fbase);
+}
+
 static void test_framebase(IUnknown *unk)
 {
     IHTMLFrameBase *fbase;
@@ -6273,12 +6292,16 @@ static void test_frameset(IHTMLDocument2 *doc)
 
     test_framebase((IUnknown*)elem);
     test_framebase_name(elem, "nm1");
-
+    test_framebase_put_name(elem, "frame name");
+    test_framebase_put_name(elem, NULL);
+    test_framebase_put_name(elem, "nm1");
     IHTMLElement_Release(elem);
 
     /* get_name with no name attr */
     elem = get_doc_elem_by_id(doc, "fr3");
     test_framebase_name(elem, NULL);
+    test_framebase_put_name(elem, "frame name");
+    test_framebase_put_name(elem, NULL);
     IHTMLElement_Release(elem);
 
     IHTMLWindow2_Release(window);
