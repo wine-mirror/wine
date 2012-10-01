@@ -1150,13 +1150,18 @@ static DWORD MIDI_mciPlay(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_PLAY_PARMS lpP
 	MIDI_mciStop(wmm, MCI_WAIT, NULL);
 	wmm->dwPositionMS = dwStartMS;
     } /* else use existing player. */
-    wmm->dwEndMS = dwEndMS;
+    if (wmm->dwEndMS != dwEndMS) {
+	oldcb = InterlockedExchangePointer(&wmm->hCallback, NULL);
+	if (oldcb) mciDriverNotify(oldcb, wmm->wDevID, MCI_NOTIFY_ABORTED);
+	wmm->dwEndMS = dwEndMS;
+    }
 
     TRACE("Playing from %u to %u\n", dwStartMS, dwEndMS);
 
-    oldcb = InterlockedExchangePointer(&wmm->hCallback,
-	(dwFlags & MCI_NOTIFY) ? HWND_32(LOWORD(lpParms->dwCallback)) : NULL);
-    if (oldcb) mciDriverNotify(oldcb, wmm->wDevID, MCI_NOTIFY_ABORTED);
+    if ((dwFlags & MCI_NOTIFY) && lpParms) {
+	oldcb = InterlockedExchangePointer(&wmm->hCallback, HWND_32(LOWORD(lpParms->dwCallback)));
+	if (oldcb) mciDriverNotify(oldcb, wmm->wDevID, MCI_NOTIFY_SUPERSEDED);
+    }
 
     dwRet = ensurePlayerThread(wmm);
 
