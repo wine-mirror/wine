@@ -6023,7 +6023,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
                 for (row = 0, start = buf; row < height; row++)
                 {
                     for (col = 0, ptr = start; col < width; col++, ptr++)
-                        *ptr = (((int)*ptr) * max_level + 128) / 256;
+                        *ptr = (((int)*ptr) * (max_level + 1)) / 256;
                     start += pitch;
                 }
             }
