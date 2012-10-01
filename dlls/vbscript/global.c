@@ -676,10 +676,42 @@ static HRESULT Global_LeftB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Right(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Right(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR str, ret, conv_str = NULL;
+    int len, str_len;
+    HRESULT hres;
+
+    TRACE("(%s %s)\n", debugstr_variant(args+1), debugstr_variant(args));
+
+    if(V_VT(args+1) == VT_BSTR) {
+        str = V_BSTR(args+1);
+    }else {
+        hres = to_string(args+1, &conv_str);
+        if(FAILED(hres))
+            return hres;
+        str = conv_str;
+    }
+
+    hres = to_int(args, &len);
+    if(FAILED(hres))
+        return hres;
+
+    if(len < 0) {
+        FIXME("len = %d\n", len);
+        return E_FAIL;
+    }
+
+    str_len = SysStringLen(str);
+    if(len > str_len)
+        len = str_len;
+
+    ret = SysAllocStringLen(str+str_len-len, len);
+    SysFreeString(conv_str);
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    return return_bstr(res, ret);
 }
 
 static HRESULT Global_RightB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

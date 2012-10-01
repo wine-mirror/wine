@@ -215,6 +215,16 @@ TestLeft "test", 0, ""
 TestLeft 123, 2, "12"
 if isEnglishLang then TestLeft true, 2, "Tr"
 
+Sub TestRight(str, len, ex)
+    Call ok(Right(str, len) = ex, "Right(" & str & ", " & len & ") = " & Right(str, len))
+End Sub
+
+TestRight "test", 2, "st"
+TestRight "test", 5, "test"
+TestRight "test", 0, ""
+TestRight 123, 2, "23"
+if isEnglishLang then TestRight true, 2, "ue"
+
 Sub TestRound(val, exval, vt)
     Call ok(Round(val) = exval, "Round(" & val & ") = " & Round(val))
     Call ok(getVT(Round(val)) = vt, "getVT(Round(" & val & ")) = " & getVT(Round(val)))
