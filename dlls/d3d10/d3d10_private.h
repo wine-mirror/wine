@@ -111,6 +111,7 @@ struct d3d10_effect_state_object_variable
     } desc;
     union
     {
+        ID3D10DepthStencilState *depth_stencil;
         ID3D10BlendState *blend;
     } object;
 };

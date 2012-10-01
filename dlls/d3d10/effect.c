@@ -1568,13 +1568,18 @@ static HRESULT create_state_object(struct d3d10_effect_variable *v)
 
     switch (v->type->basetype)
     {
+        case D3D10_SVT_DEPTHSTENCIL:
+            if (FAILED(hr = ID3D10Device_CreateDepthStencilState(device,
+                    &v->u.state.desc.depth_stencil, &v->u.state.object.depth_stencil)))
+                return hr;
+            break;
+
         case D3D10_SVT_BLEND:
             if (FAILED(hr = ID3D10Device_CreateBlendState(device,
                     &v->u.state.desc.blend, &v->u.state.object.blend)))
                 return hr;
             break;
 
-        case D3D10_SVT_DEPTHSTENCIL:
         case D3D10_SVT_RASTERIZER:
         case D3D10_SVT_SAMPLER:
             break;
@@ -6247,9 +6252,25 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_depth_stencil_variable_GetRawValue
 static HRESULT STDMETHODCALLTYPE d3d10_effect_depth_stencil_variable_GetDepthStencilState(ID3D10EffectDepthStencilVariable *iface,
         UINT index, ID3D10DepthStencilState **depth_stencil_state)
 {
-    FIXME("iface %p, index %u, depth_stencil_state %p stub!\n", iface, index, depth_stencil_state);
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, depth_stencil_state %p.\n", iface, index, depth_stencil_state);
+
+    if (v->type->element_count)
+        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
+    else if (index)
+        return E_FAIL;
+
+    if (v->type->basetype != D3D10_SVT_DEPTHSTENCIL)
+    {
+        WARN("Variable is not a depth stencil state.\n");
+        return E_FAIL;
+    }
+
+    if ((*depth_stencil_state = v->u.state.object.depth_stencil))
+        ID3D10DepthStencilState_AddRef(*depth_stencil_state);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_depth_stencil_variable_GetBackingStore(ID3D10EffectDepthStencilVariable *iface,
