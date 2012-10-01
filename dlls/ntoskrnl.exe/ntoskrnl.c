@@ -1660,6 +1660,18 @@ BOOLEAN WINAPI PsGetVersion(ULONG *major, ULONG *minor, ULONG *build, UNICODE_ST
 
 
 /***********************************************************************
+ *           PsImpersonateClient   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI PsImpersonateClient(PETHREAD Thread, PACCESS_TOKEN Token, BOOLEAN CopyOnOpen,
+                                    BOOLEAN EffectiveOnly, SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
+{
+    FIXME("(%p, %p, %u, %u, %u): stub\n", Thread, Token, CopyOnOpen, EffectiveOnly, ImpersonationLevel);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
  *           PsSetCreateProcessNotifyRoutine   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI PsSetCreateProcessNotifyRoutine( PCREATE_PROCESS_NOTIFY_ROUTINE callback, BOOLEAN remove )
