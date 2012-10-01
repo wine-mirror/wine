@@ -1581,6 +1581,11 @@ static HRESULT create_state_object(struct d3d10_effect_variable *v)
             break;
 
         case D3D10_SVT_RASTERIZER:
+            if (FAILED(hr = ID3D10Device_CreateRasterizerState(device,
+                    &v->u.state.desc.rasterizer, &v->u.state.object.rasterizer)))
+                return hr;
+            break;
+
         case D3D10_SVT_SAMPLER:
             break;
 
@@ -6486,9 +6491,25 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_rasterizer_variable_GetRawValue(ID
 static HRESULT STDMETHODCALLTYPE d3d10_effect_rasterizer_variable_GetRasterizerState(ID3D10EffectRasterizerVariable *iface,
         UINT index, ID3D10RasterizerState **rasterizer_state)
 {
-    FIXME("iface %p, index %u, rasterizer_state %p stub!\n", iface, index, rasterizer_state);
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, rasterizer_state %p.\n", iface, index, rasterizer_state);
+
+    if (v->type->element_count)
+        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
+    else if (index)
+        return E_FAIL;
+
+    if (v->type->basetype != D3D10_SVT_RASTERIZER)
+    {
+        WARN("Variable is not a rasterizer state.\n");
+        return E_FAIL;
+    }
+
+    if ((*rasterizer_state = v->u.state.object.rasterizer))
+        ID3D10RasterizerState_AddRef(*rasterizer_state);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_rasterizer_variable_GetBackingStore(ID3D10EffectRasterizerVariable *iface,
