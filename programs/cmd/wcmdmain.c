@@ -2419,10 +2419,12 @@ int wmain (int argc, WCHAR *argvW[])
           }
       }
 
+      /* If there is not exactly 2 quote characters, then /S (old behaviour) is enabled */
       if (qcount!=2)
           opt_s = TRUE;
 
-      /* check argvW[0] for a space and invalid characters */
+      /* check argvW[0] for a space and invalid characters. There must not be any invalid
+       * characters, but there must be one or more whitespace                             */
       if (!opt_s) {
           opt_s = TRUE;
           p=*argvW;
@@ -2432,7 +2434,7 @@ int wmain (int argc, WCHAR *argvW[])
                   opt_s = TRUE;
                   break;
               }
-              if (*p==' ')
+              if (*p==' ' || *p=='\t')
                   opt_s = FALSE;
               p++;
           }
@@ -2506,6 +2508,71 @@ int wmain (int argc, WCHAR *argvW[])
       *p = '\0';
 
       WINE_TRACE("/c command line: '%s'\n", wine_dbgstr_w(cmd));
+
+      /* Finally, we only stay in new mode IF the first parameter is quoted and
+         is a valid executable, ie must exist, otherwise drop back to old mode  */
+      if (!opt_s) {
+        WCHAR *thisArg = WCMD_parameter(cmd, 0, NULL, NULL, FALSE);
+        static const WCHAR extEXEW[]    = {'.','e','x','e','\0'};
+        static const WCHAR extCOMW[]    = {'.','c','o','m','\0'};
+        BOOL found = FALSE;
+
+        /* If the supplied parameter has any directory information, look there */
+        WINE_TRACE("First parameter is '%s'\n", wine_dbgstr_w(thisArg));
+        if (strchrW(thisArg, '\\') != NULL) {
+
+          GetFullPathNameW(thisArg, sizeof(string)/sizeof(WCHAR), string, NULL);
+          WINE_TRACE("Full path name '%s'\n", wine_dbgstr_w(string));
+          p = string + strlenW(string);
+
+          /* Does file exist with this name? */
+          if (GetFileAttributesW(string) != INVALID_FILE_ATTRIBUTES) {
+            WINE_TRACE("Found file as '%s'\n", wine_dbgstr_w(string));
+            found = TRUE;
+          } else strcpyW(p, extEXEW);
+
+          /* Does file exist with .exe appended */
+          if (!found && GetFileAttributesW(string) != INVALID_FILE_ATTRIBUTES) {
+            WINE_TRACE("Found file as '%s'\n", wine_dbgstr_w(string));
+            found = TRUE;
+          } else strcpyW(p, extCOMW);
+
+          /* Does file exist with .com appended */
+          if (!found && GetFileAttributesW(string) != INVALID_FILE_ATTRIBUTES) {
+            WINE_TRACE("Found file as '%s'\n", wine_dbgstr_w(string));
+            found = TRUE;
+          }
+
+        /* Otherwise we now need to look in the path to see if we can find it */
+        } else {
+          p = thisArg + strlenW(thisArg);
+
+          /* Does file exist with this name? */
+          if (SearchPathW(NULL, thisArg, NULL, sizeof(string)/sizeof(WCHAR), string, NULL) != 0)  {
+            WINE_TRACE("Found on path as '%s'\n", wine_dbgstr_w(string));
+            found = TRUE;
+          }
+
+          /* Does file exist plus an extension of .exe? */
+          if (SearchPathW(NULL, thisArg, extEXEW, sizeof(string)/sizeof(WCHAR), string, NULL) != 0)  {
+            WINE_TRACE("Found on path as '%s'\n", wine_dbgstr_w(string));
+            found = TRUE;
+          }
+
+          /* Does file exist plus an extension of .com? */
+          if (SearchPathW(NULL, thisArg, extCOMW, sizeof(string)/sizeof(WCHAR), string, NULL) != 0)  {
+            WINE_TRACE("Found on path as '%s'\n", wine_dbgstr_w(string));
+            found = TRUE;
+          }
+        }
+
+        /* If not found, drop back to old behaviour */
+        if (!found) {
+          WINE_TRACE("Binary not found, dropping back to old behaviour\n");
+          opt_s = TRUE;
+        }
+
+      }
 
       /* strip first and last quote characters if opt_s; check for invalid
        * executable is done later */

@@ -910,6 +910,7 @@ value1
 ------------ cmd.exe command lines ------------
 --- Test 1
 Line1
+@todo_wine@"Line2"
 --- Test 2
 @todo_wine@Test quotes "&" work
 --- Test 3
@@ -929,11 +930,11 @@ Line1
 --- Test 10
 --- Test 11
 --- Test 12
-@todo_wine@passed1
+passed1
 --- Test 13
-@todo_wine@passed2@space@
+passed2@space@
 --- Test 14
-@todo_wine@foobar
+foobar
 --- Test 15
 No prompts or I would not get here1
 No prompts or I would not get here2

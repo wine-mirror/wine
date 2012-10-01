@@ -1829,6 +1829,7 @@ rem Basic test of command line. Note a section prefix per command
 rem to resync, as wine does not output anything in these cases yet.
 echo --- Test 1
 cmd.exe /c echo Line1
+cmd.exe /c echo "Line2"
 echo --- Test 2
 cmd.exe /c echo Test quotes "&" work
 echo --- Test 3
