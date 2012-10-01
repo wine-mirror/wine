@@ -366,6 +366,7 @@ static basic_istream_char* (*__thiscall p_basic_istream_char_seekg)(basic_istrea
 static basic_istream_char* (*__thiscall p_basic_istream_char_seekg_fpos)(basic_istream_char*, fpos_int);
 static int                 (*__thiscall p_basic_istream_char_peek)(basic_istream_char*);
 static fpos_int*           (*__thiscall p_basic_istream_char_tellg)(basic_istream_char*, fpos_int*);
+static basic_istream_char* (*__cdecl    p_basic_istream_char_getline_bstr_delim)(basic_istream_char*, basic_string_char*, char);
 
 static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_read_uint64)(basic_istream_wchar*, unsigned __int64*);
 static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_read_double)(basic_istream_wchar*, double *);
@@ -376,6 +377,7 @@ static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_seekg)(basic_istr
 static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_seekg_fpos)(basic_istream_wchar*, fpos_int);
 static unsigned short       (*__thiscall p_basic_istream_wchar_peek)(basic_istream_wchar*);
 static fpos_int*            (*__thiscall p_basic_istream_wchar_tellg)(basic_istream_wchar*, fpos_int*);
+static basic_istream_wchar* (*__cdecl    p_basic_istream_wchar_getline_bstr_delim)(basic_istream_wchar*, basic_string_wchar*, wchar_t);
 
 /* ostream */
 static basic_ostream_char* (*__thiscall p_basic_ostream_char_print_double)(basic_ostream_char*, double);
@@ -558,6 +560,8 @@ static BOOL init(void)
             "?peek@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAHXZ");
         SET(p_basic_istream_char_tellg,
             "?tellg@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@XZ");
+        SET(p_basic_istream_char_getline_bstr_delim,
+            "??$getline@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@D@Z");
 
         SET(p_basic_istream_wchar_read_uint64,
             "??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@AEA_K@Z");
@@ -577,6 +581,8 @@ static BOOL init(void)
             "?peek@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAGXZ");
         SET(p_basic_istream_wchar_tellg,
             "?tellg@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAA?AV?$fpos@H@2@XZ");
+        SET(p_basic_istream_wchar_getline_bstr_delim,
+            "??$getline@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@YAAEAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AEAV10@AEAV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@_W@Z");
 
         SET(p_basic_ostream_char_print_double,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@N@Z");
@@ -654,6 +660,8 @@ static BOOL init(void)
             "?peek@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEHXZ");
         SET(p_basic_istream_char_tellg,
             "?tellg@?$basic_istream@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@XZ");
+        SET(p_basic_istream_char_getline_bstr_delim,
+            "??$getline@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@D@Z");
 
         SET(p_basic_istream_wchar_read_uint64,
             "??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@AA_K@Z");
@@ -673,6 +681,8 @@ static BOOL init(void)
             "?peek@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEGXZ");
         SET(p_basic_istream_wchar_tellg,
             "?tellg@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAE?AV?$fpos@H@2@XZ");
+        SET(p_basic_istream_wchar_getline_bstr_delim,
+            "??$getline@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@YAAAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AAV10@AAV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@_W@Z");
 
         SET(p_basic_ostream_char_print_double,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@N@Z");
@@ -1107,7 +1117,7 @@ static void test_num_put_put_double(void)
         wstr = call_func1(p_basic_string_wchar_cstr, &pwstr);
 
         AtoW(wide, tests[i].str, strlen(tests[i].str));
-        ok(!lstrcmpW(wide, wstr), "wrong output, expected = %s found = %s\n", tests[i].str, str);
+        ok(!lstrcmpW(wide, wstr), "wrong output, expected = %s found = %s\n", tests[i].str, wine_dbgstr_w(wstr));
 
         if(tests[i].lcl)
             call_func1(p_locale_dtor, &lcl);
@@ -1170,6 +1180,7 @@ static void test_istream_ipfx(void)
         ok(tests[i].next  == next,  "wrong next, expected = %c (%i) found = %c (%i)\n", tests[i].next, tests[i].next, next, next);
 
         call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+        call_func1(p_basic_string_char_dtor, &str);
 
         /* wchar_t version */
         AtoW(wide, tests[i].str, strlen(tests[i].str));
@@ -1190,6 +1201,7 @@ static void test_istream_ipfx(void)
         ok(testus == nextus, "wrong next, expected = %c (%i) found = %c (%i)\n", testus, testus, nextus, nextus);
 
         call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
+        call_func1(p_basic_string_wchar_dtor, &wstr);
     }
 }
 
@@ -1243,6 +1255,7 @@ static void test_istream_ignore(void)
         ok(tests[i].next  == next,  "wrong next, expected = %c (%i) found = %c (%i)\n", tests[i].next, tests[i].next, next, next);
 
         call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+        call_func1(p_basic_string_char_dtor, &str);
 
         /* wchar_t version */
         AtoW(wide, tests[i].str, strlen(tests[i].str));
@@ -1258,6 +1271,7 @@ static void test_istream_ignore(void)
         ok(testus == nextus, "wrong next, expected = %c (%i) found = %c (%i)\n", testus, testus, nextus, nextus);
 
         call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
+        call_func1(p_basic_string_wchar_dtor, &wstr);
     }
 }
 
@@ -1305,6 +1319,7 @@ static void test_istream_seekg(void)
         ok(tests[i].next  == next,  "wrong next, expected = %c (%i) found = %c (%i)\n", tests[i].next, tests[i].next, next, next);
 
         call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+        call_func1(p_basic_string_char_dtor, &str);
 
         /* wchar_t version */
         AtoW(wide, tests[i].str, strlen(tests[i].str));
@@ -1320,6 +1335,7 @@ static void test_istream_seekg(void)
         ok(testus == nextus, "wrong next, expected = %c (%i) found = %c (%i)\n", testus, testus, nextus, nextus);
 
         call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
+        call_func1(p_basic_string_wchar_dtor, &wstr);
     }
 }
 
@@ -1365,6 +1381,7 @@ static void test_istream_seekg_fpos(void)
         ok(tests[i].next  == next,  "wrong next, expected = %c (%i) found = %c (%i)\n", tests[i].next, tests[i].next, next, next);
 
         call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+        call_func1(p_basic_string_char_dtor, &str);
 
         /* wchar_t version */
         AtoW(wide, tests[i].str, strlen(tests[i].str));
@@ -1383,6 +1400,7 @@ static void test_istream_seekg_fpos(void)
         ok(testus == nextus, "wrong next, expected = %c (%i) found = %c (%i)\n", testus, testus, nextus, nextus);
 
         call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
+        call_func1(p_basic_string_wchar_dtor, &wstr);
     }
 }
 
@@ -1422,6 +1440,7 @@ static void test_istream_peek(void)
         ok(peek == next, "wrong peek, expected %c (%i) found = %c (%i)\n", peek, peek, next, next);
 
         call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+        call_func1(p_basic_string_char_dtor, &str);
 
         /* wchar_t version */
         AtoW(wide, tests[i].str, strlen(tests[i].str));
@@ -1438,6 +1457,7 @@ static void test_istream_peek(void)
         ok(peekus == nextus, "wrong peek, expected %c (%i) found = %c (%i)\n", peekus, peekus, nextus, nextus);
 
         call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
+        call_func1(p_basic_string_wchar_dtor, &wstr);
     }
 }
 
@@ -1495,6 +1515,7 @@ static void test_istream_tellg(void)
         ok(tpos.state == 0, "wrong state, expected = 0 found = %d\n", tpos.state);
 
         call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+        call_func1(p_basic_string_char_dtor, &str);
 
         /* wchar_t version */
         AtoW(wide, tests[i].str, strlen(tests[i].str));
@@ -1521,6 +1542,94 @@ static void test_istream_tellg(void)
         ok(tpos.state == 0, "wrong state, expected = 0 found = %d\n", tpos.state);
 
         call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
+        call_func1(p_basic_string_wchar_dtor, &wstr);
+    }
+}
+
+
+static void test_istream_getline(void)
+{
+    basic_stringstream_wchar wss;
+    basic_stringstream_char ss;
+    basic_string_wchar wstr;
+    basic_string_char str;
+    IOSB_iostate state;
+    wchar_t wide[64];
+    int i;
+    const char *cstr;
+    const wchar_t *wcstr;
+
+    /* makes tables narrower */
+    const IOSB_iostate IOSTATE_faileof = IOSTATE_failbit|IOSTATE_eofbit;
+
+    struct _test_istream_getline {
+        const char  *str;
+        const char  *line;
+        int          delim;
+        IOSB_iostate state;
+        const char  *nextline;
+        int          nextdelim;
+        IOSB_iostate nextstate;
+    } tests[] = {
+        { "", "", '\n', IOSTATE_faileof, "", '\n', IOSTATE_faileof },
+
+        { "this\n",                 "this", '\n', IOSTATE_goodbit, "",   '\n', IOSTATE_faileof },
+        { "this\nis\nsome\ntext\n", "this", '\n', IOSTATE_goodbit, "is", '\n', IOSTATE_goodbit },
+
+        { "this is some text\n", "this", ' ',  IOSTATE_goodbit, "is",           ' ',  IOSTATE_goodbit },
+        { "this is some text\n", "this", ' ',  IOSTATE_goodbit, "is some text", '\n', IOSTATE_goodbit },
+
+        { "this is some text\n", "this is some text",   '\n', IOSTATE_goodbit, "",                    '\n', IOSTATE_faileof },
+        { "this is some text\n", "this is some text\n", '\0', IOSTATE_eofbit,  "this is some text\n", '\n', IOSTATE_faileof },
+    };
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        /* char version */
+        call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
+        call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
+
+        p_basic_istream_char_getline_bstr_delim(&ss.base.base1, &str, tests[i].delim);
+        state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &ss.basic_ios.base);
+        cstr  = call_func1(p_basic_string_char_cstr, &str);
+
+        ok(!strcmp(tests[i].line, cstr), "wrong line, expected = %s found = %s\n", tests[i].line, cstr);
+        ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+
+        /* next line */
+        p_basic_istream_char_getline_bstr_delim(&ss.base.base1, &str, tests[i].nextdelim);
+        state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &ss.basic_ios.base);
+        cstr  = call_func1(p_basic_string_char_cstr, &str);
+
+        ok(!strcmp(tests[i].nextline, cstr), "wrong next line, expected = %s found = %s\n", tests[i].nextline, cstr);
+        ok(tests[i].nextstate == state, "wrong next state, expected = %x found = %x\n", tests[i].nextstate, state);
+
+        call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+        call_func1(p_basic_string_char_dtor, &str);
+
+        /* wchar_t version */
+        AtoW(wide, tests[i].str, strlen(tests[i].str));
+        call_func2(p_basic_string_wchar_ctor_cstr, &wstr, wide);
+        call_func4(p_basic_stringstream_wchar_ctor_str, &wss, &wstr, OPENMODE_out|OPENMODE_in, TRUE);
+
+        p_basic_istream_wchar_getline_bstr_delim(&wss.base.base1, &wstr, tests[i].delim);
+        state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &wss.basic_ios.base);
+        wcstr = call_func1(p_basic_string_wchar_cstr, &wstr);
+
+        AtoW(wide, tests[i].line, strlen(tests[i].line));
+        ok(!lstrcmpW(wide, wcstr), "wrong line, expected = %s found = %s\n", tests[i].line, wine_dbgstr_w(wcstr));
+        ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+
+        /* next line */
+        p_basic_istream_wchar_getline_bstr_delim(&wss.base.base1, &wstr, tests[i].nextdelim);
+        state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &wss.basic_ios.base);
+        wcstr = call_func1(p_basic_string_wchar_cstr, &wstr);
+
+        AtoW(wide, tests[i].nextline, strlen(tests[i].nextline));
+        ok(!lstrcmpW(wide, wcstr), "wrong line, expected = %s found = %s\n", tests[i].nextline, wine_dbgstr_w(wcstr));
+        ok(tests[i].nextstate == state, "wrong state, expected = %x found = %x\n", tests[i].nextstate, state);
+
+        call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
+        call_func1(p_basic_string_wchar_dtor, &wstr);
     }
 }
 
@@ -1539,6 +1648,7 @@ START_TEST(ios)
     test_istream_seekg_fpos();
     test_istream_peek();
     test_istream_tellg();
+    test_istream_getline();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 }
