@@ -7737,25 +7737,23 @@ int __thiscall basic_istream_char_sync(basic_istream_char *this)
 DEFINE_THISCALL_WRAPPER(basic_istream_char_tellg, 8)
 fpos_int* __thiscall basic_istream_char_tellg(basic_istream_char *this, fpos_int *ret)
 {
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+
     TRACE("(%p %p)\n", this, ret);
 
-    if(basic_istream_char_sentry_create(this, TRUE)) {
-        basic_ios_char *base = basic_istream_char_get_basic_ios(this);
-        if(!ios_base_fail(&base->base)) {
-            basic_streambuf_char_pubseekoff(basic_ios_char_rdbuf_get(base),
-                    ret, 0, SEEKDIR_cur, OPENMODE_in);
-            basic_istream_char_sentry_destroy(this);
-
-            if(ret->off==-1 && ret->pos==0 && ret->state==0)
-                basic_ios_char_setstate(base, IOSTATE_failbit);
-            return ret;
-        }
+    if(ios_base_fail(&base->base)) {
+        ret->off = -1;
+        ret->pos = 0;
+        ret->state = 0;
+        return ret;
     }
-    basic_istream_char_sentry_destroy(this);
 
-    ret->off = -1;
-    ret->pos = 0;
-    ret->state = 0;
+    basic_streambuf_char_pubseekoff(basic_ios_char_rdbuf_get(base),
+            ret, 0, SEEKDIR_cur, OPENMODE_in);
+
+    if(ret->off==-1 && ret->pos==0 && ret->state==0)
+        basic_ios_char_setstate(base, IOSTATE_failbit);
+
     return ret;
 }
 
@@ -9019,25 +9017,22 @@ int __thiscall basic_istream_wchar_sync(basic_istream_wchar *this)
 DEFINE_THISCALL_WRAPPER(basic_istream_wchar_tellg, 8)
 fpos_int* __thiscall basic_istream_wchar_tellg(basic_istream_wchar *this, fpos_int *ret)
 {
+    basic_ios_wchar *base = basic_istream_wchar_get_basic_ios(this);
+
     TRACE("(%p %p)\n", this, ret);
 
-    if(basic_istream_wchar_sentry_create(this, TRUE)) {
-        basic_ios_wchar *base = basic_istream_wchar_get_basic_ios(this);
-        if(!ios_base_fail(&base->base)) {
-            basic_streambuf_wchar_pubseekoff(basic_ios_wchar_rdbuf_get(base),
-                    ret, 0, SEEKDIR_cur, OPENMODE_in);
-            basic_istream_wchar_sentry_destroy(this);
-
-            if(ret->off==-1 && ret->pos==0 && ret->state==0)
-                basic_ios_wchar_setstate(base, IOSTATE_failbit);
-            return ret;
-        }
+    if(ios_base_fail(&base->base)) {
+        ret->off = -1;
+        ret->pos = 0;
+        ret->state = 0;
+        return ret;
     }
-    basic_istream_wchar_sentry_destroy(this);
 
-    ret->off = -1;
-    ret->pos = 0;
-    ret->state = 0;
+    basic_streambuf_wchar_pubseekoff(basic_ios_wchar_rdbuf_get(base),
+            ret, 0, SEEKDIR_cur, OPENMODE_in);
+    if(ret->off==-1 && ret->pos==0 && ret->state==0)
+        basic_ios_wchar_setstate(base, IOSTATE_failbit);
+
     return ret;
 }
 
