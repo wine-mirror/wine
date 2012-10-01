@@ -191,12 +191,9 @@ static void reset_dce_attrs( struct dce *dce )
  */
 static void release_dce( struct dce *dce )
 {
-    RECT vis_rect;
-
     if (!dce->hwnd) return;  /* already released */
 
-    vis_rect = get_virtual_screen_rect();
-    __wine_set_visible_region( dce->hdc, 0, &vis_rect, &vis_rect, NULL );
+    __wine_set_visible_region( dce->hdc, 0, &dummy_surface.rect, &dummy_surface.rect, &dummy_surface );
     USER_Driver->pReleaseDC( dce->hwnd, dce->hdc );
 
     if (dce->clip_rgn) DeleteObject( dce->clip_rgn );
