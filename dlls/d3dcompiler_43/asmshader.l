@@ -32,7 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(asmshader);
 
 %option noyywrap
 %option prefix="asmshader_"
-%option noinput nounput
+%option noinput nounput never-interactive
 
 /* Swizzles and writemasks consist of a dot and up to 4 x, y, z or w characters,
  * or up to 4 a, r, g, b characters. There are different rules for swizzles and

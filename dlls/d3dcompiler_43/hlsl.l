@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(hlsl_parser);
 
 %}
 
-%option noyywrap nounput noinput
+%option noyywrap nounput noinput never-interactive
 %option prefix="hlsl_"
 
 %x pp pp_line pp_pragma pp_ignore
