@@ -2861,13 +2861,13 @@ BOOL WINAPI CreateUrlCacheEntryW(
     BYTE CacheDir;
     LONG lBufferSize;
     BOOL bFound = FALSE;
+    BOOL generate_name = FALSE;
     int count;
     DWORD error;
     HANDLE hFile;
     FILETIME ft;
 
     static const WCHAR szWWW[] = {'w','w','w',0};
-    static const WCHAR fmt[] = {'%','0','8','X','%','s',0};
 
     TRACE("(%s, 0x%08x, %s, %p, 0x%08x)\n",
         debugstr_w(lpszUrlName),
@@ -2879,7 +2879,7 @@ BOOL WINAPI CreateUrlCacheEntryW(
     if (dwReserved)
         FIXME("dwReserved 0x%08x\n", dwReserved);
 
-   lpszUrlEnd = lpszUrlName + strlenW(lpszUrlName);
+    lpszUrlEnd = lpszUrlName + strlenW(lpszUrlName);
     
     if (((lpszUrlEnd - lpszUrlName) > 1) && (*(lpszUrlEnd - 1) == '/' || *(lpszUrlEnd - 1) == '\\'))
         lpszUrlEnd--;
@@ -2917,13 +2917,13 @@ BOOL WINAPI CreateUrlCacheEntryW(
         while(len && szFile[--len] == '/') szFile[len] = '\0';
 
         /* FIXME: get rid of illegal characters like \, / and : */
+        TRACE("File name: %s\n", debugstr_a(szFile));
     }
     else
     {
-        FIXME("need to generate a random filename\n");
+        generate_name = TRUE;
+        szFile[0] = 0;
     }
-
-    TRACE("File name: %s\n", debugstr_a(szFile));
 
     error = URLCacheContainers_FindContainerW(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
@@ -2978,7 +2978,7 @@ BOOL WINAPI CreateUrlCacheEntryW(
         lstrcpyW(szExtension+1, lpszFileExtension);
     }
 
-    for (i = 0; i < 255; i++)
+    for (i = 0; i<255 && !generate_name; i++)
     {
         static const WCHAR szFormat[] = {'[','%','u',']','%','s',0};
         WCHAR *p;
@@ -3008,15 +3008,32 @@ BOOL WINAPI CreateUrlCacheEntryW(
         }
     }
 
+    /* Try to generate random name */
     GetSystemTimeAsFileTime(&ft);
-    wsprintfW(lpszFileNameNoPath + countnoextension, fmt, ft.dwLowDateTime, szExtension);
+    strcpyW(lpszFileNameNoPath+countnoextension+8, szExtension);
 
-    TRACE("Trying: %s\n", debugstr_w(lpszFileName));
-    hFile = CreateFileW(lpszFileName, GENERIC_READ, 0, NULL, CREATE_NEW, 0, NULL);
-    if (hFile != INVALID_HANDLE_VALUE)
+    for(i=0; i<255; i++)
     {
-        CloseHandle(hFile);
-        return TRUE;
+        int j;
+        ULONGLONG n = ft.dwHighDateTime;
+        n <<= 32;
+        n += ft.dwLowDateTime;
+        n ^= (ULONGLONG)i<<48;
+
+        for(j=0; j<8; j++)
+        {
+            int r = (n % 36);
+            n /= 37;
+            lpszFileNameNoPath[countnoextension+j] = (r < 10 ? '0' + r : 'A' + r - 10);
+        }
+
+        TRACE("Trying: %s\n", debugstr_w(lpszFileName));
+        hFile = CreateFileW(lpszFileName, GENERIC_READ, 0, NULL, CREATE_NEW, 0, NULL);
+        if (hFile != INVALID_HANDLE_VALUE)
+        {
+            CloseHandle(hFile);
+            return TRUE;
+        }
     }
 
     WARN("Could not find a unique filename\n");
