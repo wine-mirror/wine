@@ -205,6 +205,16 @@ TestStrReverse "", ""
 TestStrReverse 123, "321"
 if isEnglishLang then TestStrReverse true, "eurT"
 
+Sub TestLeft(str, len, ex)
+    Call ok(Left(str, len) = ex, "Left(" & str & ", " & len & ") = " & Left(str, len))
+End Sub
+
+TestLeft "test", 2, "te"
+TestLeft "test", 5, "test"
+TestLeft "test", 0, ""
+TestLeft 123, 2, "12"
+if isEnglishLang then TestLeft true, 2, "Tr"
+
 Sub TestRound(val, exval, vt)
     Call ok(Round(val) = exval, "Round(" & val & ") = " & Round(val))
     Call ok(getVT(Round(val)) = vt, "getVT(Round(" & val & ")) = " & getVT(Round(val)))
