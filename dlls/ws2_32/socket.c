@@ -2444,7 +2444,7 @@ int WINAPI WS_getsockname(SOCKET s, struct WS_sockaddr *name, int *namelen)
     int fd;
     int res;
 
-    TRACE("socket: %04lx, ptr %p, len %8x\n", s, name, *namelen);
+    TRACE("socket: %04lx, ptr %p, len %08x\n", s, name, namelen?*namelen:0);
 
     /* Check if what we've received is valid. Should we use IsBadReadPtr? */
     if( (name == NULL) || (namelen == NULL) )
