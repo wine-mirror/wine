@@ -1124,12 +1124,8 @@ static void unmap_window( HWND hwnd )
 /***********************************************************************
  *     make_window_embedded
  */
-void make_window_embedded( HWND hwnd )
+void make_window_embedded( struct x11drv_win_data *data )
 {
-    struct x11drv_win_data *data = get_win_data( hwnd );
-
-    if (!data) return;
-
     /* the window cannot be mapped before being embedded */
     if (data->mapped)
     {
@@ -1139,10 +1135,9 @@ void make_window_embedded( HWND hwnd )
     }
     data->embedded = TRUE;
     data->managed = TRUE;
-    SetPropA( hwnd, managed_prop, (HANDLE)1 );
+    SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
     sync_window_style( data );
     set_xembed_flags( data, data->mapped ? XEMBED_MAPPED : 0 );
-    release_win_data( data );
 }
 
 
@@ -2376,7 +2371,7 @@ BOOL CDECL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO 
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
 
-    set_window_visual( data, &argb_visual );
+    if (!data->embedded) set_window_visual( data, &argb_visual );
 
     rect = *window_rect;
     OffsetRect( &rect, -window_rect->left, -window_rect->top );
