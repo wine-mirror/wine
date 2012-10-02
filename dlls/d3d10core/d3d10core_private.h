@@ -226,6 +226,8 @@ struct d3d10_depthstencil_state
 };
 
 HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state) DECLSPEC_HIDDEN;
+struct d3d10_depthstencil_state *unsafe_impl_from_ID3D10DepthStencilState(
+        ID3D10DepthStencilState *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10RasterizerState */
 struct d3d10_rasterizer_state
@@ -267,6 +269,8 @@ struct d3d10_device
     struct wined3d_device_parent device_parent;
     struct wined3d_device *wined3d_device;
 
+    struct d3d10_depthstencil_state *depth_stencil_state;
+    UINT stencil_ref;
     struct d3d10_rasterizer_state *rasterizer_state;
 };
 

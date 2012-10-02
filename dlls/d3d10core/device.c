@@ -325,8 +325,13 @@ static void STDMETHODCALLTYPE d3d10_device_OMSetBlendState(ID3D10Device *iface,
 static void STDMETHODCALLTYPE d3d10_device_OMSetDepthStencilState(ID3D10Device *iface,
         ID3D10DepthStencilState *depth_stencil_state, UINT stencil_ref)
 {
-    FIXME("iface %p, depth_stencil_state %p, stencil_ref %u stub!\n",
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+
+    TRACE("iface %p, depth_stencil_state %p, stencil_ref %u.\n",
             iface, depth_stencil_state, stencil_ref);
+
+    device->depth_stencil_state = unsafe_impl_from_ID3D10DepthStencilState(depth_stencil_state);
+    device->stencil_ref = stencil_ref;
 }
 
 static void STDMETHODCALLTYPE d3d10_device_SOSetTargets(ID3D10Device *iface,
