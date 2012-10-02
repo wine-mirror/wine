@@ -348,9 +348,11 @@ static void (*__thiscall p_basic_stringstream_wchar_vbase_dtor)(basic_stringstre
 
 /* istream */
 static basic_istream_char* (*__thiscall p_basic_istream_char_read_uint64)(basic_istream_char*, unsigned __int64*);
+static basic_istream_char* (*__thiscall p_basic_istream_char_read_double)(basic_istream_char*, double*);
 static int (*__thiscall p_basic_istream_char_get)(basic_istream_char*);
 
 static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_read_uint64)(basic_istream_wchar*, unsigned __int64*);
+static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_read_double)(basic_istream_wchar*, double *);
 static int (*__thiscall p_basic_istream_wchar_get)(basic_istream_wchar*);
 
 /* basic_ios */
@@ -477,11 +479,15 @@ static BOOL init(void)
 
         SET(p_basic_istream_char_read_uint64,
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEA_K@Z");
+        SET(p_basic_istream_char_read_double,
+            "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAN@Z");
         SET(p_basic_istream_char_get,
             "?get@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAHXZ");
 
         SET(p_basic_istream_wchar_read_uint64,
             "??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@AEA_K@Z");
+        SET(p_basic_istream_wchar_read_double,
+            "??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@AEAN@Z");
         SET(p_basic_istream_wchar_get,
             "?get@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAGXZ");
 
@@ -523,11 +529,15 @@ static BOOL init(void)
 
         SET(p_basic_istream_char_read_uint64,
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AA_K@Z");
+        SET(p_basic_istream_char_read_double,
+            "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAN@Z");
         SET(p_basic_istream_char_get,
             "?get@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEHXZ");
 
         SET(p_basic_istream_wchar_read_uint64,
             "??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@AA_K@Z");
+        SET(p_basic_istream_wchar_read_double,
+            "??5?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@AAN@Z");
         SET(p_basic_istream_wchar_get,
             "?get@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEGXZ");
 
@@ -707,12 +717,162 @@ static void test_num_get_get_uint64(void)
     }
 }
 
+
+static void test_num_get_get_double(void)
+{
+    unsigned short testus, nextus;
+    basic_stringstream_wchar wss;
+    basic_stringstream_char ss;
+    basic_string_wchar wstr;
+    basic_string_char str;
+    IOSB_iostate state;
+    locale lcl, retlcl;
+    wchar_t wide[64];
+    int i, next;
+    double val;
+
+    /* makes tables narrower */
+    const IOSB_iostate IOSTATE_faileof = IOSTATE_failbit|IOSTATE_eofbit;
+
+    struct _test_num_get {
+        const char    *str;
+        const char    *lcl;
+        IOSB_iostate  state;
+        double        val;
+        int           next;
+    } tests[] = {
+        /* simple cases */
+        { "0",     NULL, IOSTATE_eofbit,  0.0,  EOF },
+        { "10",    NULL, IOSTATE_eofbit,  10.0, EOF },
+        { "+10",   NULL, IOSTATE_eofbit,  10.0, EOF },
+        { "-10",   NULL, IOSTATE_eofbit, -10.0, EOF },
+        { "+010",  NULL, IOSTATE_eofbit,  10.0, EOF }, /* leading zero */
+
+        /* test grouping - default/"C" has no grouping, named English/German locales do */
+        { "1,000", NULL,         IOSTATE_goodbit,  1.0,      ',' }, /* with comma */
+        { "1,000", "English",    IOSTATE_eofbit,   1000.0,   EOF },
+        { "1,000", "German",     IOSTATE_eofbit,   1.0,      EOF },
+
+        { "1.000", NULL,         IOSTATE_eofbit,   1.0,      EOF }, /* with period */
+        { "1.000", "English",    IOSTATE_eofbit,   1.0,      EOF },
+        { "1.000", "German",     IOSTATE_eofbit,   1000.0,   EOF },
+
+        { "1,234.",  NULL,       IOSTATE_goodbit,  1.0,      ',' },
+        { "1,234.",  "English",  IOSTATE_eofbit,   1234.0,   EOF }, /* trailing decimal */
+        { "1,234.",  "German",   IOSTATE_goodbit,  1.234,    '.' },
+        { "1,234.5", "English",  IOSTATE_eofbit,   1234.5,   EOF }, /* group + decimal */
+        { "1,234.5", "German",   IOSTATE_goodbit,  1.234,    '.' },
+
+        { "1,234,567,890", NULL,      IOSTATE_goodbit, 1.0,          ',' }, /* more groups */
+        { "1,234,567,890", "English", IOSTATE_eofbit,  1234567890.0, EOF },
+        { "1,234,567,890", "German",  IOSTATE_goodbit, 1.234,        ',' },
+        { "1.234.567.890", "German",  IOSTATE_eofbit,  1234567890.0, EOF },
+
+        /* extra digits and stuff */
+        { "00000.123456", NULL,  IOSTATE_eofbit,  0.123456, EOF },
+        { "0.1234560000", NULL,  IOSTATE_eofbit,  0.123456, EOF },
+        { "100aaaa",      NULL,  IOSTATE_goodbit, 100.0,    'a' },
+
+        /* exponent */
+        { "10e10",       NULL,      IOSTATE_eofbit,    10e10,      EOF }, /* lowercase e */
+        { "10E10",       NULL,      IOSTATE_eofbit,    10E10,      EOF }, /* uppercase E */
+        { "10e+10",      NULL,      IOSTATE_eofbit,    10e10,      EOF }, /* sign */
+        { "10e-10",      NULL,      IOSTATE_eofbit,    10e-10,     EOF },
+        { "10.e10",      NULL,      IOSTATE_eofbit,    10e10,      EOF }, /* trailing decimal before exponent */
+        { "-10.e-10",    NULL,      IOSTATE_eofbit,   -10e-10,     EOF },
+        { "-12.345e-10", NULL,      IOSTATE_eofbit,   -12.345e-10, EOF },
+        { "1,234e10",    NULL,      IOSTATE_goodbit,   1.0,        ',' },
+        { "1,234e10",    "English", IOSTATE_eofbit,    1234.0e10,  EOF },
+        { "1,234e10",    "German",  IOSTATE_eofbit,    1.234e10,   EOF },
+        { "1.0e999",     NULL,      IOSTATE_faileof,   42.0,       EOF }, /* too big   */
+        { "1.0e-999",    NULL,      IOSTATE_faileof,   42.0,       EOF }, /* too small */
+
+        /* bad form */
+        { "1,000,", NULL,       IOSTATE_goodbit, 1.0,   ',' }, /* trailing group */
+        { "1,000,", "English",  IOSTATE_faileof, 42.0,  EOF },
+        { "1.000.", "German",   IOSTATE_faileof, 42.0,  EOF },
+
+        { "1,,000", NULL,       IOSTATE_goodbit, 1.0,   ',' }, /* empty group */
+        { "1,,000", "English",  IOSTATE_failbit, 42.0,  EOF },
+        { "1..000", "German",   IOSTATE_failbit, 42.0,  EOF },
+
+        { "1.0,00", "English",  IOSTATE_goodbit, 1.0,   ',' },
+        { "1.0,00", "German",   IOSTATE_faileof, 42.0,  EOF },
+
+        { "1.0ee10", NULL,      IOSTATE_failbit, 42.0,  EOF }, /* dup exp */
+        { "1.0e1.0", NULL,      IOSTATE_goodbit, 10.0,  '.' }, /* decimal in exponent */
+        { "1.0e1,0", NULL,      IOSTATE_goodbit, 10.0,  ',' }, /* group in exponent */
+    };
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        /* char version */
+        call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
+        call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
+
+        if(tests[i].lcl) {
+            call_func3(p_locale_ctor_cstr, &lcl, tests[i].lcl, 0x3f /* FIXME: support categories */);
+            call_func3(p_basic_ios_char_imbue, &ss.basic_ios, &retlcl, &lcl);
+        }
+
+        val = 42.0;
+        call_func2(p_basic_istream_char_read_double, &ss.base.base1, &val);
+        state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &ss.basic_ios.base);
+        next  = (int)call_func1(p_basic_istream_char_get, &ss.base.base1);
+
+        if(strlen(tests[i].str) == 0) {
+            /* a later patch to istream<>::_Ipfx will handle empty string */
+            todo_wine ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+        } else
+            ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+        ok(tests[i].val   == val,   "wrong val, expected = %g found %g\n", tests[i].val, val);
+        ok(tests[i].next  == next,  "wrong next, expected = %c (%i) found = %c (%i)\n", tests[i].next, tests[i].next, next, next);
+
+        if(tests[i].lcl)
+            call_func1(p_locale_dtor, &lcl);
+
+        call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+        call_func1(p_basic_string_char_dtor, &str);
+
+        /* wchar_t version */
+        AtoW(wide, tests[i].str, strlen(tests[i].str));
+        call_func2(p_basic_string_wchar_ctor_cstr, &wstr, wide);
+        call_func4(p_basic_stringstream_wchar_ctor_str, &wss, &wstr, OPENMODE_out|OPENMODE_in, TRUE);
+
+        if(tests[i].lcl) {
+            call_func3(p_locale_ctor_cstr, &lcl, tests[i].lcl, 0x3f /* FIXME: support categories */);
+            call_func3(p_basic_ios_wchar_imbue, &wss.basic_ios, &retlcl, &lcl);
+        }
+
+        val = 42.0;
+        call_func2(p_basic_istream_wchar_read_double, &wss.base.base1, &val);
+        state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &wss.basic_ios.base);
+        nextus = (unsigned short)(int)call_func1(p_basic_istream_wchar_get, &wss.base.base1);
+
+        if(strlen(tests[i].str) == 0) {
+            /* a later patch to istream<>::_Ipfx will handle empty string */
+            todo_wine ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+        } else
+            ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
+        ok(tests[i].val == val, "wrong val, expected = %g found %g\n", tests[i].val, val);
+        testus = tests[i].next == EOF ? WEOF : (unsigned short)tests[i].next;
+        ok(testus == nextus, "wrong next, expected = %c (%i) found = %c (%i)\n", testus, testus, nextus, nextus);
+
+        if(tests[i].lcl)
+            call_func1(p_locale_dtor, &lcl);
+
+        call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
+        call_func1(p_basic_string_wchar_dtor, &wstr);
+    }
+}
+
+
 START_TEST(ios)
 {
     if(!init())
         return;
 
     test_num_get_get_uint64();
+    test_num_get_get_double();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 }

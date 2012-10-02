@@ -4408,11 +4408,12 @@ static int num_get__Getffld(const num_get *this, char *dest, istreambuf_iterator
         istreambuf_iterator_wchar *last, const locale *loc, numpunct_wchar *numpunct)
 {
     basic_string_char grouping_bstr;
+    basic_string_char groups_found;
     int i, groups_no = 0, cur_group = 0, exp = 0;
-    char *dest_beg = dest, *num_end = dest+25, *exp_end = dest+31, *groups = NULL;
+    char *dest_beg = dest, *num_end = dest+25, *exp_end = dest+31;
     wchar_t sep, digits[11], *digits_pos;
-    const char *grouping;
-    BOOL error = FALSE, got_digit = FALSE, dest_empty = TRUE;
+    const char *grouping, *groups;
+    BOOL error = FALSE, got_digit = FALSE, got_nonzero = FALSE;
 
     TRACE("(%p %p %p %p)\n", dest, first, last, loc);
 
@@ -4424,7 +4425,11 @@ static int num_get__Getffld(const num_get *this, char *dest, istreambuf_iterator
     grouping = MSVCP_basic_string_char_c_str(&grouping_bstr);
     sep = grouping[0] ? numpunct_wchar_thousands_sep(numpunct) : (wchar_t)0;
 
+    if(sep)
+        MSVCP_basic_string_char_ctor(&groups_found);
+
     istreambuf_iterator_wchar_val(first);
+    /* get sign */
     if(first->strbuf && first->val==mb_to_wc('-', &this->cvt)) {
         *dest++ = '-';
         istreambuf_iterator_wchar_inc(first);
@@ -4433,45 +4438,99 @@ static int num_get__Getffld(const num_get *this, char *dest, istreambuf_iterator
         istreambuf_iterator_wchar_inc(first);
     }
 
-    if(sep) {
-        groups_no = strlen(grouping)+2;
-        groups = calloc(groups_no, sizeof(char));
-    }
-
+    /* read possibly grouped numbers before decimal */
     for(; first->strbuf; istreambuf_iterator_wchar_inc(first)) {
         if(!(digits_pos = wcschr(digits, first->val))) {
             if(sep && first->val==sep) {
-                if(cur_group == groups_no+1) {
-                    if(groups[1] != groups[2]) {
-                        error = TRUE;
-                        break;
-                    }else {
-                        memmove(groups+1, groups+2, groups_no);
-                        groups[cur_group] = 0;
-                    }
-                }else {
-                    cur_group++;
-                }
+                if(!groups_no) break; /* empty group - stop parsing */
+                MSVCP_basic_string_char_append_ch(&groups_found, groups_no);
+                groups_no = 0;
+                ++cur_group;
             }else {
                 break;
             }
         }else {
-            got_digit = TRUE;
-            if(dest_empty && first->val == digits[0])
+            got_digit = TRUE; /* found a digit, zero or non-zero */
+            /* write digit to dest if not a leading zero (to not waste dest buffer) */
+            if(!got_nonzero && first->val == digits[0])
+            {
+                ++groups_no;
                 continue;
-            dest_empty = FALSE;
+            }
+            got_nonzero = TRUE;
             if(dest < num_end)
                 *dest++ = '0'+digits_pos-digits;
             else
-                exp++;
-            if(sep && groups[cur_group]<CHAR_MAX)
-                groups[cur_group]++;
+                exp++; /* too many digits, just multiply by 10 */
+            if(sep && groups_no<CHAR_MAX)
+                ++groups_no;
         }
     }
 
-    if(cur_group && !groups[cur_group])
+    /* if all leading zeroes, we didn't write anything so put a zero we check for a decimal */
+    if(got_digit && !got_nonzero)
+        *dest++ = '0';
+
+    /* get decimal, if any */
+    if(first->strbuf && first->val==numpunct_wchar_decimal_point(numpunct)) {
+        if(dest < num_end)
+            *dest++ = *localeconv()->decimal_point;
+        istreambuf_iterator_wchar_inc(first);
+    }
+
+    /* read non-grouped after decimal */
+    for(; first->strbuf; istreambuf_iterator_wchar_inc(first)) {
+        if(!(digits_pos = wcschr(digits, first->val)))
+            break;
+        else if(dest<num_end) {
+            got_digit = TRUE;
+            *dest++ = '0'+digits_pos-digits;
+        }
+    }
+
+    /* read exponent, if any */
+    if(first->strbuf && (first->val==mb_to_wc('e', &this->cvt) || first->val==mb_to_wc('E', &this->cvt))) {
+        *dest++ = 'e';
+        istreambuf_iterator_wchar_inc(first);
+
+        if(first->strbuf && first->val==mb_to_wc('-', &this->cvt)) {
+            *dest++ = '-';
+            istreambuf_iterator_wchar_inc(first);
+        }else if(first->strbuf && first->val==mb_to_wc('+', &this->cvt)) {
+            *dest++ = '+';
+            istreambuf_iterator_wchar_inc(first);
+        }
+
+        got_digit = got_nonzero = FALSE;
         error = TRUE;
-    else if(!cur_group)
+        /* skip any leading zeroes */
+        for(; first->strbuf && first->val==digits[0]; istreambuf_iterator_wchar_inc(first))
+            error = FALSE;
+
+        for(; first->strbuf && (digits_pos = wcschr(digits, first->val)); istreambuf_iterator_wchar_inc(first)) {
+            got_digit = got_nonzero = TRUE; /* leading zeroes would have been skipped, so first digit is non-zero */
+            error = FALSE;
+            if(dest<exp_end)
+                *dest++ = '0'+digits_pos-digits;
+        }
+
+        /* if just found zeroes for exponent, use that */
+        if(got_digit && !got_nonzero)
+        {
+            error = FALSE;
+            if(dest<exp_end)
+                *dest++ = '0';
+        }
+    }
+
+    if(sep && groups_no)
+        MSVCP_basic_string_char_append_ch(&groups_found, groups_no);
+
+    groups = MSVCP_basic_string_char_c_str(&groups_found);
+    if(cur_group && !groups[cur_group])
+    {
+        error = TRUE; /* trailing empty */
+    }else if(!cur_group) /* no groups, skip loop */
         cur_group--;
 
     for(; cur_group>=0 && !error; cur_group--) {
@@ -4488,75 +4547,13 @@ static int num_get__Getffld(const num_get *this, char *dest, istreambuf_iterator
         }
     }
     MSVCP_basic_string_char_dtor(&grouping_bstr);
-    free(groups);
+    if(sep)
+        MSVCP_basic_string_char_dtor(&groups_found);
 
     if(error) {
         *dest_beg = '\0';
         return 0;
-    }else if(dest_empty) {
-        *dest++ = '0';
     }
-
-    if(first->strbuf && first->val==numpunct_wchar_decimal_point(numpunct)) {
-        if(dest < num_end)
-            *dest++ = *localeconv()->decimal_point;
-        istreambuf_iterator_wchar_inc(first);
-
-        if(dest_empty) {
-            for(; first->strbuf && first->val==digits[0]; istreambuf_iterator_wchar_inc(first)) {
-                got_digit = TRUE;
-                exp--;
-            }
-
-            if(!first->strbuf || !wcschr(digits, first->val))
-                dest--;
-        }
-    }
-
-    for(; first->strbuf; istreambuf_iterator_wchar_inc(first)) {
-        if(!(digits_pos = wcschr(digits, first->val)))
-            break;
-        else if(dest<num_end) {
-            got_digit = TRUE;
-            *dest++ = '0'+digits_pos-digits;
-        }
-    }
-
-    if(!got_digit) {
-        *dest_beg = '\0';
-        return 0;
-    }
-
-    if(first->strbuf && (first->val==mb_to_wc('e', &this->cvt) || first->val==mb_to_wc('E', &this->cvt))) {
-        *dest++ = 'e';
-        istreambuf_iterator_wchar_inc(first);
-
-        if(first->strbuf && first->val==mb_to_wc('-', &this->cvt)) {
-            *dest++ = '-';
-            istreambuf_iterator_wchar_inc(first);
-        }else if(first->strbuf && first->val==mb_to_wc('+', &this->cvt)) {
-            *dest++ = '+';
-            istreambuf_iterator_wchar_inc(first);
-        }
-
-        error = dest_empty = TRUE;
-        for(; first->strbuf && first->val==digits[0]; istreambuf_iterator_wchar_inc(first))
-            error = FALSE;
-
-        for(; first->strbuf && (digits_pos = wcschr(digits, first->val)); istreambuf_iterator_wchar_inc(first)) {
-            error = dest_empty = FALSE;
-            if(dest<exp_end)
-                *dest++ = '0'+digits_pos-digits;
-        }
-
-        if(error) {
-            *dest_beg = '\0';
-            return 0;
-        }else if(dest_empty) {
-            *dest++ = '0';
-        }
-    }
-
     *dest++ = '\0';
     return exp;
 }
@@ -5532,10 +5529,11 @@ int __cdecl num_get_char__Getffld(const num_get *this, char *dest, istreambuf_it
 {
     numpunct_char *numpunct = numpunct_char_use_facet(loc);
     basic_string_char grouping_bstr;
+    basic_string_char groups_found;
     int groups_no = 0, cur_group = 0, exp = 0;
-    char *dest_beg = dest, *num_end = dest+25, *exp_end = dest+31, *groups = NULL, sep;
-    const char *grouping;
-    BOOL error = FALSE, got_digit = FALSE, dest_empty = TRUE;
+    char *dest_beg = dest, *num_end = dest+25, *exp_end = dest+31, sep;
+    const char *grouping, *groups;
+    BOOL error = FALSE, got_digit = FALSE, got_nonzero = FALSE;
 
     TRACE("(%p %p %p %p)\n", dest, first, last, loc);
 
@@ -5543,51 +5541,106 @@ int __cdecl num_get_char__Getffld(const num_get *this, char *dest, istreambuf_it
     grouping = MSVCP_basic_string_char_c_str(&grouping_bstr);
     sep = grouping[0] ? numpunct_char_thousands_sep(numpunct) : '\0';
 
+    if(sep)
+        MSVCP_basic_string_char_ctor(&groups_found);
+
     istreambuf_iterator_char_val(first);
+    /* get sign */
     if(first->strbuf && (first->val=='-' || first->val=='+')) {
         *dest++ = first->val;
         istreambuf_iterator_char_inc(first);
     }
 
-    if(sep) {
-        groups_no = strlen(grouping)+2;
-        groups = calloc(groups_no, sizeof(char));
-    }
-
+    /* read possibly grouped numbers before decimal */
     for(; first->strbuf; istreambuf_iterator_char_inc(first)) {
         if(first->val<'0' || first->val>'9') {
             if(sep && first->val==sep) {
-                if(cur_group == groups_no+1) {
-                    if(groups[1] != groups[2]) {
-                        error = TRUE;
-                        break;
-                    }else {
-                        memmove(groups+1, groups+2, groups_no);
-                        groups[cur_group] = 0;
-                    }
-                }else {
-                    cur_group++;
-                }
+                if(!groups_no) break; /* empty group - stop parsing */
+                MSVCP_basic_string_char_append_ch(&groups_found, groups_no);
+                groups_no = 0;
+                ++cur_group;
             }else {
                 break;
             }
         }else {
-            got_digit = TRUE;
-            if(dest_empty && first->val == '0')
+            got_digit = TRUE; /* found a digit, zero or non-zero */
+            /* write digit to dest if not a leading zero (to not waste dest buffer) */
+            if(!got_nonzero && first->val == '0')
+            {
+                ++groups_no;
                 continue;
-            dest_empty = FALSE;
+            }
+            got_nonzero = TRUE;
             if(dest < num_end)
                 *dest++ = first->val;
             else
-                exp++;
-            if(sep && groups[cur_group]<CHAR_MAX)
-                groups[cur_group]++;
+                exp++; /* too many digits, just multiply by 10 */
+            if(sep && groups_no<CHAR_MAX)
+                ++groups_no;
         }
     }
 
-    if(cur_group && !groups[cur_group])
+    /* if all leading zeroes, we didn't write anything so put a zero we check for a decimal */
+    if(got_digit && !got_nonzero)
+        *dest++ = '0';
+
+    /* get decimal, if any */
+    if(first->strbuf && first->val==numpunct_char_decimal_point(numpunct)) {
+        if(dest < num_end)
+            *dest++ = *localeconv()->decimal_point;
+        istreambuf_iterator_char_inc(first);
+    }
+
+    /* read non-grouped after decimal */
+    for(; first->strbuf; istreambuf_iterator_char_inc(first)) {
+        if(first->val<'0' || first->val>'9')
+            break;
+        else if(dest<num_end) {
+            got_digit = TRUE;
+            *dest++ = first->val;
+        }
+    }
+
+    /* read exponent, if any */
+    if(first->strbuf && (first->val=='e' || first->val=='E')) {
+        *dest++ = first->val;
+        istreambuf_iterator_char_inc(first);
+
+        if(first->strbuf && (first->val=='-' || first->val=='+')) {
+            *dest++ = first->val;
+            istreambuf_iterator_char_inc(first);
+        }
+
+        got_digit = got_nonzero = FALSE;
         error = TRUE;
-    else if(!cur_group)
+        /* skip any leading zeroes */
+        for(; first->strbuf && first->val=='0'; istreambuf_iterator_char_inc(first))
+            got_digit = TRUE;
+
+        for(; first->strbuf && first->val>='0' && first->val<='9'; istreambuf_iterator_char_inc(first)) {
+            got_digit = got_nonzero = TRUE; /* leading zeroes would have been skipped, so first digit is non-zero */
+            error = FALSE;
+            if(dest<exp_end)
+                *dest++ = first->val;
+        }
+
+        /* if just found zeroes for exponent, use that */
+        if(got_digit && !got_nonzero)
+        {
+            error = FALSE;
+            if(dest<exp_end)
+                *dest++ = '0';
+        }
+    }
+
+    if(sep && groups_no)
+        MSVCP_basic_string_char_append_ch(&groups_found, groups_no);
+
+    groups = MSVCP_basic_string_char_c_str(&groups_found);
+    if(cur_group && !groups[cur_group])
+    {
+        error = TRUE; /* trailing empty */
+    }else if(!cur_group) /* no groups, skip loop */
         cur_group--;
 
     for(; cur_group>=0 && !error; cur_group--) {
@@ -5604,72 +5657,13 @@ int __cdecl num_get_char__Getffld(const num_get *this, char *dest, istreambuf_it
         }
     }
     MSVCP_basic_string_char_dtor(&grouping_bstr);
-    free(groups);
+    if(sep)
+        MSVCP_basic_string_char_dtor(&groups_found);
 
     if(error) {
         *dest_beg = '\0';
         return 0;
-    }else if(dest_empty) {
-        *dest++ = '0';
     }
-
-    if(first->strbuf && first->val==numpunct_char_decimal_point(numpunct)) {
-        if(dest < num_end)
-            *dest++ = *localeconv()->decimal_point;
-        istreambuf_iterator_char_inc(first);
-
-        if(dest_empty) {
-            for(; first->strbuf && first->val=='0'; istreambuf_iterator_char_inc(first)) {
-                got_digit = TRUE;
-                exp--;
-            }
-
-            if(!first->strbuf || first->val<'1' || first->val>'9')
-                dest--;
-        }
-    }
-
-    for(; first->strbuf; istreambuf_iterator_char_inc(first)) {
-        if(first->val<'0' || first->val>'9')
-            break;
-        else if(dest<num_end) {
-            got_digit = TRUE;
-            *dest++ = first->val;
-        }
-    }
-
-    if(!got_digit) {
-        *dest_beg = '\0';
-        return 0;
-    }
-
-    if(first->strbuf && (first->val=='e' || first->val=='E')) {
-        *dest++ = first->val;
-        istreambuf_iterator_char_inc(first);
-
-        if(first->strbuf && (first->val=='-' || first->val=='+')) {
-            *dest++ = first->val;
-            istreambuf_iterator_char_inc(first);
-        }
-
-        error = dest_empty = TRUE;
-        for(; first->strbuf && first->val=='0'; istreambuf_iterator_char_inc(first))
-            error = FALSE;
-
-        for(; first->strbuf && first->val>='0' && first->val<='9'; istreambuf_iterator_char_inc(first)) {
-            error = dest_empty = FALSE;
-            if(dest<exp_end)
-                *dest++ = first->val;
-        }
-
-        if(error) {
-            *dest_beg = '\0';
-            return 0;
-        }else if(dest_empty) {
-            *dest++ = '0';
-        }
-    }
-
     *dest++ = '\0';
     return exp;
 }
