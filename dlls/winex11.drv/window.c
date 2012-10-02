@@ -2398,17 +2398,26 @@ BOOL CDECL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO 
     if (!(hdc = CreateCompatibleDC( 0 ))) goto done;
 
     SelectObject( hdc, dib );
-    if (!(ret = GdiAlphaBlend( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
-                               info->hdcSrc,
-                               rect.left + (info->pptSrc ? info->pptSrc->x : 0),
-                               rect.top + (info->pptSrc ? info->pptSrc->y : 0),
-                               rect.right - rect.left, rect.bottom - rect.top,
-                               (info->dwFlags & ULW_ALPHA) ? *info->pblend : blend )))
-        goto done;
 
     surface->funcs->lock( surface );
-    memcpy( dst_bits, src_bits, bmi->bmiHeader.biSizeImage );
-    add_bounds_rect( surface->funcs->get_bounds( surface ), &rect );
+
+    if (info->prcDirty)
+    {
+        memcpy( src_bits, dst_bits, bmi->bmiHeader.biSizeImage );
+        PatBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS );
+    }
+    ret = GdiAlphaBlend( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+                         info->hdcSrc,
+                         rect.left + (info->pptSrc ? info->pptSrc->x : 0),
+                         rect.top + (info->pptSrc ? info->pptSrc->y : 0),
+                         rect.right - rect.left, rect.bottom - rect.top,
+                         (info->dwFlags & ULW_ALPHA) ? *info->pblend : blend );
+    if (ret)
+    {
+        memcpy( dst_bits, src_bits, bmi->bmiHeader.biSizeImage );
+        add_bounds_rect( surface->funcs->get_bounds( surface ), &rect );
+    }
+
     surface->funcs->unlock( surface );
     surface->funcs->flush( surface );
 
