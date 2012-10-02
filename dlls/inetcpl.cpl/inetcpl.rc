@@ -129,3 +129,4 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
  
 /* @makedep: inetcpl.ico */
 ICO_MAIN ICON "inetcpl.ico"
+ICO_INTERNET ICON "inetcpl.ico"
