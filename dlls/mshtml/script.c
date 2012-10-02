@@ -731,34 +731,34 @@ static void parse_extern_script(ScriptHost *script_host, LPCWSTR src)
     heap_free(text);
 }
 
-static void parse_inline_script(ScriptHost *script_host, nsIDOMHTMLScriptElement *nsscript)
+static void parse_inline_script(ScriptHost *script_host, HTMLScriptElement *script_elem)
 {
     const PRUnichar *text;
     nsAString text_str;
     nsresult nsres;
 
     nsAString_Init(&text_str, NULL);
+    nsres = nsIDOMHTMLScriptElement_GetText(script_elem->nsscript, &text_str);
+    nsAString_GetData(&text_str, &text);
 
-    nsres = nsIDOMHTMLScriptElement_GetText(nsscript, &text_str);
-
-    if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&text_str, &text);
-        parse_text(script_host, text);
-    }else {
+    if(NS_FAILED(nsres)) {
         ERR("GetText failed: %08x\n", nsres);
+    }else if(*text) {
+        script_elem->parsed = TRUE;
+        parse_text(script_host, text);
     }
 
     nsAString_Finish(&text_str);
 }
 
-static void parse_script_elem(ScriptHost *script_host, nsIDOMHTMLScriptElement *nsscript)
+static void parse_script_elem(ScriptHost *script_host, HTMLScriptElement *script_elem)
 {
     nsAString src_str, event_str;
     const PRUnichar *src;
     nsresult nsres;
 
     nsAString_Init(&event_str, NULL);
-    nsres = nsIDOMHTMLScriptElement_GetEvent(nsscript, &event_str);
+    nsres = nsIDOMHTMLScriptElement_GetEvent(script_elem->nsscript, &event_str);
     if(NS_SUCCEEDED(nsres)) {
         const PRUnichar *event;
 
@@ -774,15 +774,17 @@ static void parse_script_elem(ScriptHost *script_host, nsIDOMHTMLScriptElement *
     nsAString_Finish(&event_str);
 
     nsAString_Init(&src_str, NULL);
-    nsres = nsIDOMHTMLScriptElement_GetSrc(nsscript, &src_str);
+    nsres = nsIDOMHTMLScriptElement_GetSrc(script_elem->nsscript, &src_str);
     nsAString_GetData(&src_str, &src);
 
-    if(NS_FAILED(nsres))
+    if(NS_FAILED(nsres)) {
         ERR("GetSrc failed: %08x\n", nsres);
-    else if(*src)
+    }else if(*src) {
+        script_elem->parsed = TRUE;
         parse_extern_script(script_host, src);
-    else
-        parse_inline_script(script_host, nsscript);
+    }else {
+        parse_inline_script(script_host, script_elem);
+    }
 
     nsAString_Finish(&src_str);
 }
@@ -887,12 +889,12 @@ static ScriptHost *get_script_host(HTMLInnerWindow *window, const GUID *guid)
     return create_script_host(window, guid);
 }
 
-void doc_insert_script(HTMLInnerWindow *window, nsIDOMHTMLScriptElement *nsscript)
+void doc_insert_script(HTMLInnerWindow *window, HTMLScriptElement *script_elem)
 {
     ScriptHost *script_host;
     GUID guid;
 
-    if(!get_script_guid(window, nsscript, &guid)) {
+    if(!get_script_guid(window, script_elem->nsscript, &guid)) {
         WARN("Could not find script GUID\n");
         return;
     }
@@ -908,7 +910,7 @@ void doc_insert_script(HTMLInnerWindow *window, nsIDOMHTMLScriptElement *nsscrip
         return;
 
     if(script_host->parse)
-        parse_script_elem(script_host, nsscript);
+        parse_script_elem(script_host, script_elem);
 }
 
 IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)

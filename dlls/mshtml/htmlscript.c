@@ -32,14 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
-    HTMLElement element;
-
-    IHTMLScriptElement IHTMLScriptElement_iface;
-
-    nsIDOMHTMLScriptElement *nsscript;
-} HTMLScriptElement;
-
 static inline HTMLScriptElement *impl_from_IHTMLScriptElement(IHTMLScriptElement *iface)
 {
     return CONTAINING_RECORD(iface, HTMLScriptElement, IHTMLScriptElement_iface);
@@ -326,6 +318,20 @@ static const NodeImplVtbl HTMLScriptElementImplVtbl = {
     NULL,
     HTMLScriptElement_get_readystate
 };
+
+HRESULT script_elem_from_nsscript(HTMLDocumentNode *doc, nsIDOMHTMLScriptElement *nsscript, HTMLScriptElement **ret)
+{
+    HTMLDOMNode *node;
+    HRESULT hres;
+
+    hres = get_node(doc, (nsIDOMNode*)nsscript, TRUE, &node);
+    if(FAILED(hres))
+        return hres;
+
+    assert(node->vtbl == &HTMLScriptElementImplVtbl);
+    *ret = impl_from_HTMLDOMNode(node);
+    return S_OK;
+}
 
 static const tid_t HTMLScriptElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
