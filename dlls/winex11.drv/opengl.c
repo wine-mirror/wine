@@ -1196,6 +1196,7 @@ static void free_gl_drawable( struct gl_drawable *gl )
  */
 BOOL set_win_format( HWND hwnd, XID fbconfig_id )
 {
+    HWND parent = GetAncestor( hwnd, GA_PARENT );
     XSetWindowAttributes attrib;
     struct gl_drawable *gl, *prev;
     int format;
@@ -1215,9 +1216,9 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
     gl->rect.right  = min( max( 1, gl->rect.right ), 65535 );
     gl->rect.bottom = min( max( 1, gl->rect.bottom ), 65535 );
 
-    if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())  /* top-level window */
+    if (parent == GetDesktopWindow())  /* top-level window */
     {
-        Window parent = X11DRV_get_whole_window( hwnd );
+        Window xparent = X11DRV_get_whole_window( hwnd );
 
         gl->type = DC_GL_WINDOW;
         gl->colormap = XCreateColormap( gdi_display, root_window, gl->visual->visual,
@@ -1230,8 +1231,8 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
         attrib.backing_store = NotUseful;
         /* put the initial rect outside of the window, it will be moved into place by SetWindowPos */
         OffsetRect( &gl->rect, gl->rect.right, gl->rect.bottom );
-        if (parent)
-            gl->drawable = XCreateWindow( gdi_display, parent, gl->rect.left, gl->rect.top,
+        if (xparent)
+            gl->drawable = XCreateWindow( gdi_display, xparent, gl->rect.left, gl->rect.top,
                                           gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top,
                                           0, default_visual.depth, InputOutput, gl->visual->visual,
                                           CWBitGravity | CWWinGravity | CWBackingStore | CWColormap,
@@ -1240,6 +1241,10 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
             XMapWindow( gdi_display, gl->drawable );
         else
             XFreeColormap( gdi_display, gl->colormap );
+    }
+    else if (!GetAncestor( parent, GA_PARENT ))
+    {
+        FIXME( "can't set format of HWND_MESSAGE window %p\n", hwnd );
     }
 #ifdef SONAME_LIBXCOMPOSITE
     else if(usexcomposite)
