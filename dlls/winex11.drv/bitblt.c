@@ -1676,8 +1676,8 @@ static void update_surface_region( struct x11drv_window_surface *surface )
                             (surface->is_argb && !(bits[x] & 0xff000000)))) x++;
                     start = x;
                     while (x < width &&
-                           ((bits[x] & 0xffffff) != surface->color_key ||
-                            !(surface->is_argb && !(bits[x] & 0xff000000)))) x++;
+                           !((bits[x] & 0xffffff) == surface->color_key ||
+                             (surface->is_argb && !(bits[x] & 0xff000000)))) x++;
                     add_row( rgn, data, surface->header.rect.left + start, y, x - start );
                 }
             }
