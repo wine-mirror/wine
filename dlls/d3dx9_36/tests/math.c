@@ -2818,10 +2818,10 @@ static void test_D3DXSHRotateZ(void)
             {
                 /* order = 0 or order = 1 behaves like order = D3DXSH_MINORDER */
                 square = ( order <= D3DXSH_MINORDER ) ? D3DXSH_MINORDER * D3DXSH_MINORDER : order * order;
-                expected = table[36 * j + i];
                 if ( i >= square || ( (order >= D3DXSH_MAXORDER) && ( i >= D3DXSH_MAXORDER * D3DXSH_MAXORDER ) ) )
                     expected = ( i + 1.0f ) * ( i + 1.0f );
-
+                else
+                    expected = table[36 * j + i];
                 ok(relative_error(out[i], expected) < admitted_error, "angle %f, order %u index %u, Expected %f, received %f\n", angle[j], order, i, expected, out[i]);
             }
         }
