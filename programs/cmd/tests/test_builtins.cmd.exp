@@ -910,23 +910,23 @@ value1
 ------------ cmd.exe command lines ------------
 --- Test 1
 Line1
-@todo_wine@"Line2"
+"Line2"
 --- Test 2
-@todo_wine@Test quotes "&" work
+Test quotes "&" work
 --- Test 3
-@todo_wine@"&"
+"&"
 --- Test 4
-@todo_wine@"<"
+"<"
 --- Test 5
-@todo_wine@">"
+">"
 --- Test 6
-@todo_wine@"\"
+"\"
 --- Test 7
-@todo_wine@"|"
+"|"
 --- Test 8
-@todo_wine@"`"
+"`"
 --- Test 9
-@todo_wine@"""
+"""
 --- Test 10
 --- Test 11
 --- Test 12
@@ -936,6 +936,10 @@ passed2@space@
 --- Test 14
 foobar
 --- Test 15
+No whitespace
+--- Test 16
+--- Test 17
+--- Test 18
 No prompts or I would not get here1
 No prompts or I would not get here2
 %hello1%

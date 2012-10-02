@@ -1861,7 +1861,12 @@ cmd.exe /c " echo passed2 "
 echo --- Test 14
 cmd.exe /c "dir /ad ..\fooba* /b"
 echo --- Test 15
-
+cmd.exe /cecho No whitespace
+echo --- Test 16
+cmd.exe /c
+echo --- Test 17
+cmd.exe /c@space@
+echo --- Test 18
 rem Ensure no interactive prompting when cmd.exe /c or /k
 echo file2 > file2
 cmd.exe /c copy file1 file2 >nul

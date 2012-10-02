@@ -2300,7 +2300,9 @@ void WCMD_free_commands(CMD_LIST *cmds) {
 int wmain (int argc, WCHAR *argvW[])
 {
   int     args;
-  WCHAR  *cmd;
+  WCHAR  *cmdLine = NULL;
+  WCHAR  *cmd     = NULL;
+  WCHAR  *argPos  = NULL;
   WCHAR string[1024];
   WCHAR envvar[4];
   BOOL opt_q;
@@ -2318,19 +2320,26 @@ int wmain (int argc, WCHAR *argvW[])
   LocalFree(cmd);
   cmd = NULL;
 
-  args  = argc;
+  /* Can't use argc/argv as it will have stripped quotes from parameters
+   * meaning cmd.exe /C echo "quoted string" is impossible
+   */
+  cmdLine = GetCommandLineW();
+  WINE_TRACE("Full commandline '%s'\n", wine_dbgstr_w(cmdLine));
+  args = 1;                /* start at first arg, skipping cmd.exe itself */
+
   opt_c = opt_k = opt_q = opt_s = FALSE;
-  while (args > 0)
+  WCMD_parameter(cmdLine, args, &argPos, NULL, TRUE);
+  while (argPos && argPos[0] != 0x00)
   {
       WCHAR c;
-      WINE_TRACE("Command line parm: '%s'\n", wine_dbgstr_w(*argvW));
-      if ((*argvW)[0]!='/' || (*argvW)[1]=='\0') {
-          argvW++;
-          args--;
+      WINE_TRACE("Command line parm: '%s'\n", wine_dbgstr_w(argPos));
+      if (argPos[0]!='/' || argPos[1]=='\0') {
+          args++;
+          WCMD_parameter(cmdLine, args, &argPos, NULL, TRUE);
           continue;
       }
 
-      c=(*argvW)[1];
+      c=argPos[1];
       if (tolowerW(c)=='c') {
           opt_c = TRUE;
       } else if (tolowerW(c)=='q') {
@@ -2343,19 +2352,20 @@ int wmain (int argc, WCHAR *argvW[])
           unicodeOutput = FALSE;
       } else if (tolowerW(c)=='u') {
           unicodeOutput = TRUE;
-      } else if (tolowerW(c)=='t' && (*argvW)[2]==':') {
-          opt_t=strtoulW(&(*argvW)[3], NULL, 16);
+      } else if (tolowerW(c)=='t' && argPos[2]==':') {
+          opt_t=strtoulW(&argPos[3], NULL, 16);
       } else if (tolowerW(c)=='x' || tolowerW(c)=='y') {
           /* Ignored for compatibility with Windows */
       }
 
-      if ((*argvW)[2]==0) {
-          argvW++;
-          args--;
+      if (argPos[2]==0 || argPos[2]==' ' || argPos[2]=='\t') {
+          args++;
+          WCMD_parameter(cmdLine, args, &argPos, NULL, TRUE);
       }
       else /* handle `cmd /cnotepad.exe` and `cmd /x/c ...` */
       {
-          *argvW+=2;
+          /* Do not step to next paramater, instead carry on parsing this one */
+          argPos+=2;
       }
 
       if (opt_c || opt_k) /* break out of parsing immediately after c or k */
@@ -2371,64 +2381,50 @@ int wmain (int argc, WCHAR *argvW[])
   interactive = FALSE;
 
   if (opt_c || opt_k) {
-      int     len,qcount;
-      WCHAR** arg;
-      int     argsLeft;
-      WCHAR*  p;
+      int     len;
+      WCHAR   *q1 = NULL,*q2 = NULL,*p;
+
+      /* Handle very edge case error scenarion, "cmd.exe /c" ie when there are no
+       * parameters after the /C or /K by pretending there was a single space     */
+      if (argPos == NULL) argPos = (WCHAR *)spaceW;
+
+      /* Build the command to execute - It is what is left in argPos */
+      len = strlenW(argPos);
+
+      /* Take a copy */
+      cmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+      if (!cmd)
+          exit(1);
+      strcpyW(cmd, argPos);
 
       /* opt_s left unflagged if the command starts with and contains exactly
        * one quoted string (exactly two quote characters). The quoted string
        * must be an executable name that has whitespace and must not have the
        * following characters: &<>()@^| */
 
-      /* Build the command to execute */
-      len = 0;
-      qcount = 0;
-      argsLeft = args;
-      for (arg = argvW; argsLeft>0; arg++,argsLeft--)
-      {
-          BOOL has_space = FALSE;
-          int bcount;
-          WCHAR* a;
-
-          bcount=0;
-          a=*arg;
-          if( !*a ) has_space = TRUE;
-          while (*a!='\0') {
-              if (*a=='\\') {
-                  bcount++;
-              } else {
-                  if (*a==' ' || *a=='\t') {
-                      has_space = TRUE;
-                  } else if (*a=='"') {
-                      /* doubling of '\' preceding a '"',
-                       * plus escaping of said '"'
-                       */
-                      len+=2*bcount+1;
-                      qcount++;
-                  }
-                  bcount=0;
-              }
-              a++;
-          }
-          len+=(a-*arg) + 1; /* for the separating space */
-          if (has_space)
-          {
-              len+=2; /* for the quotes */
-              qcount+=2;
-          }
+      if (!opt_s) {
+        /* 1. Confirm there is at least one quote */
+        q1 = strchrW(argPos, '"');
+        if (!q1) opt_s=1;
       }
 
-      /* If there is not exactly 2 quote characters, then /S (old behaviour) is enabled */
-      if (qcount!=2)
-          opt_s = TRUE;
+      if (!opt_s) {
+          /* 2. Confirm there is a second quote */
+          q2 = strchrW(q1+1, '"');
+          if (!q2) opt_s=1;
+      }
 
-      /* check argvW[0] for a space and invalid characters. There must not be any invalid
-       * characters, but there must be one or more whitespace                             */
+      if (!opt_s) {
+          /* 3. Ensure there are no more quotes */
+          if (strchrW(q2+1, '"')) opt_s=1;
+      }
+
+      /* check first parameter for a space and invalid characters. There must not be any
+       * invalid characters, but there must be one or more whitespace                    */
       if (!opt_s) {
           opt_s = TRUE;
-          p=*argvW;
-          while (*p!='\0') {
+          p=q1;
+          while (p!=q2) {
               if (*p=='&' || *p=='<' || *p=='>' || *p=='(' || *p==')'
                   || *p=='@' || *p=='^' || *p=='|') {
                   opt_s = TRUE;
@@ -2439,73 +2435,6 @@ int wmain (int argc, WCHAR *argvW[])
               p++;
           }
       }
-
-      cmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-      if (!cmd)
-          exit(1);
-
-      p = cmd;
-      argsLeft = args;
-      for (arg = argvW; argsLeft>0; arg++,argsLeft--)
-      {
-          BOOL has_space = FALSE, has_quote = FALSE;
-          WCHAR* a;
-
-          /* Check for quotes and spaces in this argument */
-          a=*arg;
-          if( !*a ) has_space = TRUE;
-          while (*a!='\0') {
-              if (*a==' ' || *a=='\t') {
-                  has_space = TRUE;
-                  if (has_quote)
-                      break;
-              } else if (*a=='"') {
-                  has_quote = TRUE;
-                  if (has_space)
-                      break;
-              }
-              a++;
-          }
-
-          /* Now transfer it to the command line */
-          if (has_space)
-              *p++='"';
-          if (has_quote) {
-              int bcount;
-              WCHAR* a;
-
-              bcount=0;
-              a=*arg;
-              while (*a!='\0') {
-                  if (*a=='\\') {
-                      *p++=*a;
-                      bcount++;
-                  } else {
-                      if (*a=='"') {
-                          int i;
-
-                          /* Double all the '\\' preceding this '"', plus one */
-                          for (i=0;i<=bcount;i++)
-                              *p++='\\';
-                          *p++='"';
-                      } else {
-                          *p++=*a;
-                      }
-                      bcount=0;
-                  }
-                  a++;
-              }
-          } else {
-              strcpyW(p,*arg);
-              p+=strlenW(*arg);
-          }
-          if (has_space)
-              *p++='"';
-          *p++=' ';
-      }
-      if (p > cmd)
-          p--;  /* remove last space */
-      *p = '\0';
 
       WINE_TRACE("/c command line: '%s'\n", wine_dbgstr_w(cmd));
 
