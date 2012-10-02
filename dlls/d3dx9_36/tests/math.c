@@ -2418,7 +2418,7 @@ static void test_D3DXSHAdd(void)
             ok(relative_error(in1[i] + in2[i], out[i]) < admitted_error,
                     "%u-%u: D3DXSHAdd() failed, got %f, expected %f\n", k, i, out[i], in1[i] + in2[i]);
         }
-        ok(out[count] == 0.0f, "%u-%u: D3DXSHAdd() failed, got %f, expected 0.0\n", k, k * k, out[count]);
+        ok(relative_error(out[count], 0.0f) < admitted_error, "%u-%u: D3DXSHAdd() failed, got %f, expected 0.0\n", k, k * k, out[count]);
     }
 }
 
