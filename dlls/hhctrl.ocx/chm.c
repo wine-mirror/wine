@@ -263,6 +263,13 @@ void MergeChmProperties(HH_WINTYPEW *src, HHInfo *info, BOOL override)
     if (unhandled_params)
         FIXME("Unsupported fsValidMembers fields: 0x%x\n", unhandled_params);
 
+    dst->fsValidMembers |= merge;
+    if (dst->cbStruct == 0)
+    {
+        /* If the structure has not been filled in yet then use all of the values */
+        dst->cbStruct = sizeof(HH_WINTYPEW);
+        merge = ~0;
+    }
     if (merge & HHWIN_PARAM_PROPERTIES) dst->fsWinProperties = src->fsWinProperties;
     if (merge & HHWIN_PARAM_STYLES) dst->dwStyles = src->dwStyles;
     if (merge & HHWIN_PARAM_EXSTYLES) dst->dwExStyles = src->dwExStyles;
@@ -276,7 +283,6 @@ void MergeChmProperties(HH_WINTYPEW *src, HHInfo *info, BOOL override)
     if (merge & HHWIN_PARAM_TABORDER) memcpy(&dst->tabOrder, &src->tabOrder, sizeof(src->tabOrder));
     if (merge & HHWIN_PARAM_HISTORY_COUNT) dst->cHistory = src->cHistory;
     if (merge & HHWIN_PARAM_CUR_TAB) dst->curNavType = src->curNavType;
-    dst->fsValidMembers |= merge;
 
     /*
      * Note: We assume that hwndHelp, hwndCaller, hwndToolBar, hwndNavigation, and hwndHTML cannot be
