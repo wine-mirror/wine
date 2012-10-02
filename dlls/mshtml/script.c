@@ -753,12 +753,27 @@ static void parse_inline_script(ScriptHost *script_host, nsIDOMHTMLScriptElement
 
 static void parse_script_elem(ScriptHost *script_host, nsIDOMHTMLScriptElement *nsscript)
 {
+    nsAString src_str, event_str;
     const PRUnichar *src;
-    nsAString src_str;
     nsresult nsres;
 
-    nsAString_Init(&src_str, NULL);
+    nsAString_Init(&event_str, NULL);
+    nsres = nsIDOMHTMLScriptElement_GetEvent(nsscript, &event_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *event;
 
+        nsAString_GetData(&event_str, &event);
+        if(*event) {
+            TRACE("deferring event %s script evaluation\n", debugstr_w(event));
+            nsAString_Finish(&event_str);
+            return;
+        }
+    }else {
+        ERR("GetAttribute(event) failed: %08x\n", nsres);
+    }
+    nsAString_Finish(&event_str);
+
+    nsAString_Init(&src_str, NULL);
     nsres = nsIDOMHTMLScriptElement_GetSrc(nsscript, &src_str);
     nsAString_GetData(&src_str, &src);
 
