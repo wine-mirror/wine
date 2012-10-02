@@ -533,6 +533,14 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                     break;
             }
         }
+        else if (ins.handler_idx == WINED3DSIH_DCL_CONSTANT_BUFFER)
+        {
+            struct wined3d_shader_register *reg = &ins.declaration.src.reg;
+            if (reg->idx >= WINED3D_MAX_CBS)
+                ERR("Invalid CB index %u.\n", reg->idx);
+            else
+                reg_maps->cb_sizes[reg->idx] = reg->array_idx;
+        }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {
             struct wined3d_shader_lconst *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(*lconst));

@@ -409,6 +409,7 @@ enum wined3d_shader_rel_op
 #define MAX_REG_OUTPUT 32
 #define MAX_CONST_I 16
 #define MAX_CONST_B 16
+#define WINED3D_MAX_CBS 15
 
 /* FIXME: This needs to go up to 2048 for
  * Shader model 3 according to msdn (and for software shaders) */
@@ -571,6 +572,7 @@ struct wined3d_shader_reg_maps
     WORD boolean_constants;                 /* MAX_CONST_B, 16 */
     WORD local_int_consts;                  /* MAX_CONST_I, 16 */
     WORD local_bool_consts;                 /* MAX_CONST_B, 16 */
+    UINT cb_sizes[WINED3D_MAX_CBS];
 
     enum wined3d_sampler_texture_type sampler_type[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
     BYTE bumpmat;                           /* MAX_TEXTURES, 8 */

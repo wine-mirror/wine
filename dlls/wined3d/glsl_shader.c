@@ -994,6 +994,12 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     if (shader->limits.constant_bool > 0 && reg_maps->boolean_constants)
         shader_addline(buffer, "uniform bool %s_b[%u];\n", prefix, shader->limits.constant_bool);
 
+    for (i = 0; i < WINED3D_MAX_CBS; ++i)
+    {
+        if (reg_maps->cb_sizes[i])
+            shader_addline(buffer, "uniform vec4 %s_cb%u[%u];\n", prefix, i, reg_maps->cb_sizes[i]);
+    }
+
     if (!pshader)
     {
         shader_addline(buffer, "uniform vec4 posFixup;\n");
@@ -1530,8 +1536,21 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             }
             break;
 
+        case WINED3DSPR_CONSTBUFFER:
+            if (reg->rel_addr)
+            {
+                struct glsl_src_param rel_param;
+                shader_glsl_add_src_param(ins, reg->rel_addr, WINED3DSP_WRITEMASK_0, &rel_param);
+                sprintf(register_name, "%s_cb%u[%s + %u]", prefix, reg->idx, rel_param.param_str, reg->array_idx);
+            }
+            else
+            {
+                sprintf(register_name, "%s_cb%u[%u]", prefix, reg->idx, reg->array_idx);
+            }
+            break;
+
         default:
-            FIXME("Unhandled register name Type(%d)\n", reg->type);
+            FIXME("Unhandled register type %#x.\n", reg->type);
             sprintf(register_name, "unrecognized_register");
             break;
     }
