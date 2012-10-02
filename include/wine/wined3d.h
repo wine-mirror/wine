@@ -2379,7 +2379,7 @@ HRESULT __cdecl wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
         const RGNDATA *dirty_region, DWORD flags);
 HRESULT __cdecl wined3d_swapchain_set_gamma_ramp(const struct wined3d_swapchain *swapchain,
         DWORD flags, const struct wined3d_gamma_ramp *ramp);
-HRESULT __cdecl wined3d_swapchain_set_window(struct wined3d_swapchain *swapchain, HWND window);
+void __cdecl wined3d_swapchain_set_window(struct wined3d_swapchain *swapchain, HWND window);
 
 HRESULT __cdecl wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
         UINT layer, const struct wined3d_box *dirty_region);

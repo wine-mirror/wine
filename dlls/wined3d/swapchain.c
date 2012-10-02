@@ -130,18 +130,16 @@ void * CDECL wined3d_swapchain_get_parent(const struct wined3d_swapchain *swapch
     return swapchain->parent;
 }
 
-HRESULT CDECL wined3d_swapchain_set_window(struct wined3d_swapchain *swapchain, HWND window)
+void CDECL wined3d_swapchain_set_window(struct wined3d_swapchain *swapchain, HWND window)
 {
     if (!window)
         window = swapchain->device_window;
     if (window == swapchain->win_handle)
-        return WINED3D_OK;
+        return;
 
     TRACE("Setting swapchain %p window from %p to %p.\n",
             swapchain, swapchain->win_handle, window);
     swapchain->win_handle = window;
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
