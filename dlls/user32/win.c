@@ -769,7 +769,7 @@ ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
         RECT window_rect, client_rect;
         WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
         set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
-                        SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW,
+                        SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW | SWP_SHOWWINDOW,
                         &window_rect, &client_rect, NULL );
     }
 
@@ -2492,7 +2492,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
             RECT window_rect, client_rect;
             WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
             set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
-                            SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW,
+                            SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW | SWP_SHOWWINDOW,
                             &window_rect, &client_rect, NULL );
         }
         SendMessageW( hwnd, WM_STYLECHANGED, offset, (LPARAM)&style );
