@@ -5275,11 +5275,12 @@ locale *__thiscall basic_ios_wchar_imbue(basic_ios_wchar *this, locale *ret, con
 {
     TRACE("(%p %p %p)\n", this, ret, loc);
 
-    if(this->strbuf)
-        return basic_streambuf_wchar_pubimbue(this->strbuf, ret, loc);
+    if(this->strbuf) {
+        basic_streambuf_wchar_pubimbue(this->strbuf, ret, loc);
+        locale_dtor(ret);
+    }
 
-    locale_copy_ctor(ret, loc);
-    return ret;
+    return ios_base_imbue(&this->base, ret, loc);
 }
 
 /* ?narrow@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBED_WD@Z */
