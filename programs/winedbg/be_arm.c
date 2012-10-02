@@ -634,11 +634,29 @@ static WORD thumb_disasm_movshift(WORD inst, ADDRESS64 *addr)
     return 0;
 }
 
-static UINT thumb2_disasm_branchlinked(UINT inst, ADDRESS64 *addr)
+static UINT thumb2_disasm_branch(UINT inst, ADDRESS64 *addr)
 {
-    UINT offset = (((inst & 0x07ff0000) >> 4) | ((inst & 0x000007ff) << 1)) + 4;
+    UINT S  = (inst >> 26) & 0x01;
+    UINT L  = (inst >> 14) & 0x01;
+    UINT I1 = !(((inst >> 13) & 0x01) ^ S);
+    UINT C  = !((inst >> 12) & 0x01);
+    UINT I2 = !(((inst >> 11) & 0x01) ^ S);
+    UINT offset = (inst & 0x000007ff) << 1;
 
-    dbg_printf("\n\tbl\t");
+    if (C)
+    {
+        offset |= I1 << 19 | I2 << 18 | (inst & 0x003f0000) >> 4;
+        offset += 4;
+        if (S) offset |= 0x0fff << 20;
+    }
+    else
+    {
+        offset |= I1 << 23 | I2 << 22 | (inst & 0x03ff0000) >> 4;
+        offset += 4;
+        if (S) offset |= 0xff << 24;
+    }
+
+    dbg_printf("\n\tb%s%s\t", L ? "l" : "", C ? tbl_cond[(inst >> 22) & 0x0f] : "");
     db_printsym(addr->Offset + offset);
     return 0;
 }
@@ -946,7 +964,7 @@ static const struct inst_thumb16 tbl_thumb16[] = {
 };
 
 static const struct inst_arm tbl_thumb32[] = {
-    { 0xf800f800, 0xf000f800, thumb2_disasm_branchlinked },
+    { 0xf800f000, 0xf0008000, thumb2_disasm_branch },
     { 0xffc0f0c0, 0xfa80f080, thumb2_disasm_misc },
     { 0xff80f000, 0xfa00f000, thumb2_disasm_dataprocessingreg },
     { 0xff8000c0, 0xfb000000, thumb2_disasm_mul },
