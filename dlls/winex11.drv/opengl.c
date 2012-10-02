@@ -181,16 +181,6 @@ enum dc_gl_type
     DC_GL_PBUFFER     /* pseudo memory DC using a PBuffer */
 };
 
-struct glx_physdev
-{
-    struct gdi_physdev             dev;
-    X11DRV_PDEVICE                *x11dev;
-    enum dc_gl_type                type;          /* type of GL device context */
-    const struct wgl_pixel_format *format;
-    Drawable                       drawable;
-    Pixmap                         pixmap;        /* pixmap for a DL_GL_PIXMAP_WIN drawable */
-};
-
 struct gl_drawable
 {
     enum dc_gl_type                type;         /* type of GL surface */
@@ -3078,200 +3068,6 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
     return TRUE;
 }
 
-static BOOL create_glx_dc( PHYSDEV *pdev )
-{
-    /* assume that only the main x11 device implements GetDeviceCaps */
-    X11DRV_PDEVICE *x11dev = get_x11drv_dev( GET_NEXT_PHYSDEV( *pdev, pGetDeviceCaps ));
-    struct glx_physdev *physdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physdev) );
-
-    if (!physdev) return FALSE;
-    physdev->x11dev = x11dev;
-    push_dc_driver( pdev, &physdev->dev, &glxdrv_funcs );
-    return TRUE;
-}
-
-/**********************************************************************
- *	     glxdrv_CreateDC
- */
-static BOOL glxdrv_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
-                             LPCWSTR output, const DEVMODEW* initData )
-{
-    return create_glx_dc( pdev );
-}
-
-/**********************************************************************
- *	     glxdrv_CreateCompatibleDC
- */
-static BOOL glxdrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
-{
-    if (orig)  /* chain to next driver first */
-    {
-        orig = GET_NEXT_PHYSDEV( orig, pCreateCompatibleDC );
-        if (!orig->funcs->pCreateCompatibleDC( orig, pdev )) return FALSE;
-    }
-    /* otherwise we have been called by x11drv */
-    return create_glx_dc( pdev );
-}
-
-/**********************************************************************
- *	     glxdrv_DeleteDC
- */
-static BOOL glxdrv_DeleteDC( PHYSDEV dev )
-{
-    struct glx_physdev *physdev = get_glxdrv_dev( dev );
-    HeapFree( GetProcessHeap(), 0, physdev );
-    return TRUE;
-}
-
-/**********************************************************************
- *           glxdrv_wine_get_wgl_driver
- */
-static struct opengl_funcs * glxdrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
-{
-    if (version != WINE_WGL_DRIVER_VERSION)
-    {
-        ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_WGL_DRIVER_VERSION );
-        return NULL;
-    }
-
-    if (has_opengl()) return &opengl_funcs;
-
-    dev = GET_NEXT_PHYSDEV( dev, wine_get_wgl_driver );
-    return dev->funcs->wine_get_wgl_driver( dev, version );
-}
-
-static const struct gdi_dc_funcs glxdrv_funcs =
-{
-    NULL,                               /* pAbortDoc */
-    NULL,                               /* pAbortPath */
-    NULL,                               /* pAlphaBlend */
-    NULL,                               /* pAngleArc */
-    NULL,                               /* pArc */
-    NULL,                               /* pArcTo */
-    NULL,                               /* pBeginPath */
-    NULL,                               /* pBlendImage */
-    NULL,                               /* pChord */
-    NULL,                               /* pCloseFigure */
-    glxdrv_CreateCompatibleDC,          /* pCreateCompatibleDC */
-    glxdrv_CreateDC,                    /* pCreateDC */
-    glxdrv_DeleteDC,                    /* pDeleteDC */
-    NULL,                               /* pDeleteObject */
-    NULL,                               /* pDeviceCapabilities */
-    NULL,                               /* pEllipse */
-    NULL,                               /* pEndDoc */
-    NULL,                               /* pEndPage */
-    NULL,                               /* pEndPath */
-    NULL,                               /* pEnumFonts */
-    NULL,                               /* pEnumICMProfiles */
-    NULL,                               /* pExcludeClipRect */
-    NULL,                               /* pExtDeviceMode */
-    NULL,                               /* pExtEscape */
-    NULL,                               /* pExtFloodFill */
-    NULL,                               /* pExtSelectClipRgn */
-    NULL,                               /* pExtTextOut */
-    NULL,                               /* pFillPath */
-    NULL,                               /* pFillRgn */
-    NULL,                               /* pFlattenPath */
-    NULL,                               /* pFontIsLinked */
-    NULL,                               /* pFrameRgn */
-    NULL,                               /* pGdiComment */
-    NULL,                               /* pGdiRealizationInfo */
-    NULL,                               /* pGetBoundsRect */
-    NULL,                               /* pGetCharABCWidths */
-    NULL,                               /* pGetCharABCWidthsI */
-    NULL,                               /* pGetCharWidth */
-    NULL,                               /* pGetDeviceCaps */
-    NULL,                               /* pGetDeviceGammaRamp */
-    NULL,                               /* pGetFontData */
-    NULL,                               /* pGetFontUnicodeRanges */
-    NULL,                               /* pGetGlyphIndices */
-    NULL,                               /* pGetGlyphOutline */
-    NULL,                               /* pGetICMProfile */
-    NULL,                               /* pGetImage */
-    NULL,                               /* pGetKerningPairs */
-    NULL,                               /* pGetNearestColor */
-    NULL,                               /* pGetOutlineTextMetrics */
-    NULL,                               /* pGetPixel */
-    NULL,                               /* pGetSystemPaletteEntries */
-    NULL,                               /* pGetTextCharsetInfo */
-    NULL,                               /* pGetTextExtentExPoint */
-    NULL,                               /* pGetTextExtentExPointI */
-    NULL,                               /* pGetTextFace */
-    NULL,                               /* pGetTextMetrics */
-    NULL,                               /* pGradientFill */
-    NULL,                               /* pIntersectClipRect */
-    NULL,                               /* pInvertRgn */
-    NULL,                               /* pLineTo */
-    NULL,                               /* pModifyWorldTransform */
-    NULL,                               /* pMoveTo */
-    NULL,                               /* pOffsetClipRgn */
-    NULL,                               /* pOffsetViewportOrg */
-    NULL,                               /* pOffsetWindowOrg */
-    NULL,                               /* pPaintRgn */
-    NULL,                               /* pPatBlt */
-    NULL,                               /* pPie */
-    NULL,                               /* pPolyBezier */
-    NULL,                               /* pPolyBezierTo */
-    NULL,                               /* pPolyDraw */
-    NULL,                               /* pPolyPolygon */
-    NULL,                               /* pPolyPolyline */
-    NULL,                               /* pPolygon */
-    NULL,                               /* pPolyline */
-    NULL,                               /* pPolylineTo */
-    NULL,                               /* pPutImage */
-    NULL,                               /* pRealizeDefaultPalette */
-    NULL,                               /* pRealizePalette */
-    NULL,                               /* pRectangle */
-    NULL,                               /* pResetDC */
-    NULL,                               /* pRestoreDC */
-    NULL,                               /* pRoundRect */
-    NULL,                               /* pSaveDC */
-    NULL,                               /* pScaleViewportExt */
-    NULL,                               /* pScaleWindowExt */
-    NULL,                               /* pSelectBitmap */
-    NULL,                               /* pSelectBrush */
-    NULL,                               /* pSelectClipPath */
-    NULL,                               /* pSelectFont */
-    NULL,                               /* pSelectPalette */
-    NULL,                               /* pSelectPen */
-    NULL,                               /* pSetArcDirection */
-    NULL,                               /* pSetBkColor */
-    NULL,                               /* pSetBkMode */
-    NULL,                               /* pSetBoundsRect */
-    NULL,                               /* pSetDCBrushColor */
-    NULL,                               /* pSetDCPenColor */
-    NULL,                               /* pSetDIBitsToDevice */
-    NULL,                               /* pSetDeviceClipping */
-    NULL,                               /* pSetDeviceGammaRamp */
-    NULL,                               /* pSetLayout */
-    NULL,                               /* pSetMapMode */
-    NULL,                               /* pSetMapperFlags */
-    NULL,                               /* pSetPixel */
-    NULL,                               /* pSetPolyFillMode */
-    NULL,                               /* pSetROP2 */
-    NULL,                               /* pSetRelAbs */
-    NULL,                               /* pSetStretchBltMode */
-    NULL,                               /* pSetTextAlign */
-    NULL,                               /* pSetTextCharacterExtra */
-    NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetTextJustification */
-    NULL,                               /* pSetViewportExt */
-    NULL,                               /* pSetViewportOrg */
-    NULL,                               /* pSetWindowExt */
-    NULL,                               /* pSetWindowOrg */
-    NULL,                               /* pSetWorldTransform */
-    NULL,                               /* pStartDoc */
-    NULL,                               /* pStartPage */
-    NULL,                               /* pStretchBlt */
-    NULL,                               /* pStretchDIBits */
-    NULL,                               /* pStrokeAndFillPath */
-    NULL,                               /* pStrokePath */
-    NULL,                               /* pUnrealizePalette */
-    NULL,                               /* pWidenPath */
-    glxdrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */
-    GDI_PRIORITY_GRAPHICS_DRV + 20      /* priority */
-};
-
 static struct opengl_funcs opengl_funcs =
 {
     {
@@ -3288,14 +3084,20 @@ static struct opengl_funcs opengl_funcs =
     }
 };
 
-const struct gdi_dc_funcs *get_glx_driver(void)
+struct opengl_funcs *get_glx_driver( UINT version )
 {
-    return &glxdrv_funcs;
+    if (version != WINE_WGL_DRIVER_VERSION)
+    {
+        ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_WGL_DRIVER_VERSION );
+        return NULL;
+    }
+    if (has_opengl()) return &opengl_funcs;
+    return NULL;
 }
 
 #else  /* no OpenGL includes */
 
-const struct gdi_dc_funcs *get_glx_driver(void)
+struct opengl_funcs *get_glx_driver( UINT version )
 {
     return NULL;
 }
