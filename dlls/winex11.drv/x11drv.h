@@ -291,6 +291,12 @@ struct x11drv_escape_get_drawable
     int                      pixel_format; /* internal GL pixel format */
 };
 
+struct x11drv_escape_flush_gl_drawable
+{
+    enum x11drv_escape_codes code;         /* escape code (X11DRV_FLUSH_GL_DRAWABLE) */
+    Drawable                 gl_drawable;  /* GL drawable */
+};
+
 /**************************************************************************
  * X11 USER driver
  */

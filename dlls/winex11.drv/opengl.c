@@ -1107,7 +1107,6 @@ static void mark_drawable_dirty(Drawable old, Drawable new)
 /* Given the current context, make sure its drawable is sync'd */
 static inline void sync_context(struct wgl_context *context)
 {
-    EnterCriticalSection( &context_section );
     if (context->refresh_drawables) {
         if (glxRequireVersion(3))
             pglXMakeContextCurrent(gdi_display, context->drawables[0],
@@ -1116,7 +1115,6 @@ static inline void sync_context(struct wgl_context *context)
             pglXMakeCurrent(gdi_display, context->drawables[0], context->ctx);
         context->refresh_drawables = FALSE;
     }
-    LeaveCriticalSection( &context_section );
 }
 
 static struct gl_drawable *get_gl_drawable( HWND hwnd, HDC hdc )
@@ -1818,53 +1816,73 @@ static BOOL glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *de
     return FALSE;
 }
 
-static void flush_gl_drawable( struct glx_physdev *physdev )
+static void flush_gl_drawable( struct glx_physdev *physdev, Drawable src )
 {
     RECT rect;
     int w = physdev->x11dev->dc_rect.right - physdev->x11dev->dc_rect.left;
     int h = physdev->x11dev->dc_rect.bottom - physdev->x11dev->dc_rect.top;
-    Drawable src = physdev->drawable;
 
     if (w <= 0 || h <= 0) return;
 
-    switch (physdev->type)
-    {
-    case DC_GL_PIXMAP_WIN:
-        src = physdev->pixmap;
-        /* fall through */
-    case DC_GL_CHILD_WIN:
-        /* The GL drawable may be lagged behind if we don't flush first, so
-         * flush the display make sure we copy up-to-date data */
-        XFlush(gdi_display);
-        XSetFunction(gdi_display, physdev->x11dev->gc, GXcopy);
-        XCopyArea(gdi_display, src, physdev->x11dev->drawable, physdev->x11dev->gc, 0, 0, w, h,
-                  physdev->x11dev->dc_rect.left, physdev->x11dev->dc_rect.top);
-        SetRect( &rect, 0, 0, w, h );
-        add_device_bounds( physdev->x11dev, &rect );
-    default:
-        break;
-    }
+    /* The GL drawable may be lagged behind if we don't flush first, so
+     * flush the display make sure we copy up-to-date data */
+    XFlush(gdi_display);
+    XSetFunction(gdi_display, physdev->x11dev->gc, GXcopy);
+    XCopyArea(gdi_display, src, physdev->x11dev->drawable, physdev->x11dev->gc, 0, 0, w, h,
+              physdev->x11dev->dc_rect.left, physdev->x11dev->dc_rect.top);
+    SetRect( &rect, 0, 0, w, h );
+    add_device_bounds( physdev->x11dev, &rect );
 }
 
 
 static void wglFinish(void)
 {
+    struct x11drv_escape_flush_gl_drawable escape;
+    struct gl_drawable *gl;
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
-    enum x11drv_escape_codes code = X11DRV_FLUSH_GL_DRAWABLE;
 
-    sync_context(ctx);
+    escape.code = X11DRV_FLUSH_GL_DRAWABLE;
+    escape.gl_drawable = 0;
+
+    if ((gl = get_gl_drawable( WindowFromDC( ctx->hdc ), 0 )))
+    {
+        switch (gl->type)
+        {
+        case DC_GL_PIXMAP_WIN: escape.gl_drawable = gl->pixmap; break;
+        case DC_GL_CHILD_WIN:  escape.gl_drawable = gl->drawable; break;
+        default: break;
+        }
+        sync_context(ctx);
+        release_gl_drawable( gl );
+    }
+
     pglFinish();
-    ExtEscape( ctx->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
+    if (escape.gl_drawable) ExtEscape( ctx->hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 
 static void wglFlush(void)
 {
+    struct x11drv_escape_flush_gl_drawable escape;
+    struct gl_drawable *gl;
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
-    enum x11drv_escape_codes code = X11DRV_FLUSH_GL_DRAWABLE;
 
-    sync_context(ctx);
+    escape.code = X11DRV_FLUSH_GL_DRAWABLE;
+    escape.gl_drawable = 0;
+
+    if ((gl = get_gl_drawable( WindowFromDC( ctx->hdc ), 0 )))
+    {
+        switch (gl->type)
+        {
+        case DC_GL_PIXMAP_WIN: escape.gl_drawable = gl->pixmap; break;
+        case DC_GL_CHILD_WIN:  escape.gl_drawable = gl->drawable; break;
+        default: break;
+        }
+        sync_context(ctx);
+        release_gl_drawable( gl );
+    }
+
     pglFlush();
-    ExtEscape( ctx->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
+    if (escape.gl_drawable) ExtEscape( ctx->hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 
 /***********************************************************************
@@ -3034,11 +3052,14 @@ static void X11DRV_WineGL_LoadExtensions(void)
  */
 static BOOL glxdrv_wglSwapBuffers( HDC hdc )
 {
-    enum x11drv_escape_codes code = X11DRV_FLUSH_GL_DRAWABLE;
+    struct x11drv_escape_flush_gl_drawable escape;
     struct gl_drawable *gl;
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
 
     TRACE("(%p)\n", hdc);
+
+    escape.code = X11DRV_FLUSH_GL_DRAWABLE;
+    escape.gl_drawable = 0;
 
     if (!(gl = get_gl_drawable( WindowFromDC( hdc ), hdc )))
     {
@@ -3050,6 +3071,7 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
     {
     case DC_GL_PIXMAP_WIN:
         if (ctx) sync_context( ctx );
+        escape.gl_drawable = gl->pixmap;
         if (pglXCopySubBufferMESA) {
             /* (glX)SwapBuffers has an implicit glFlush effect, however
              * GLX_MESA_copy_sub_buffer doesn't. Make sure GL is flushed before
@@ -3059,6 +3081,10 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
                                    gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top );
             break;
         }
+        pglXSwapBuffers(gdi_display, gl->drawable);
+        break;
+    case DC_GL_CHILD_WIN:
+        escape.gl_drawable = gl->drawable;
         /* fall through */
     default:
         pglXSwapBuffers(gdi_display, gl->drawable);
@@ -3067,8 +3093,7 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
 
     release_gl_drawable( gl );
 
-    ExtEscape( hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
-
+    if (escape.gl_drawable) ExtEscape( ctx->hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
     return TRUE;
 }
 
@@ -3165,7 +3190,11 @@ static INT glxdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
             }
             break;
         case X11DRV_FLUSH_GL_DRAWABLE:
-            flush_gl_drawable( physdev );
+            if (in_count >= sizeof(struct x11drv_escape_flush_gl_drawable))
+            {
+                const struct x11drv_escape_flush_gl_drawable *data = in_data;
+                flush_gl_drawable( physdev, data->gl_drawable );
+            }
             return TRUE;
         default:
             break;
