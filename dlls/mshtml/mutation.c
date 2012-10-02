@@ -287,6 +287,7 @@ static nsresult run_end_load(HTMLDocumentNode *This, nsISupports *arg1, nsISuppo
         parse_complete(This->basedoc.doc_obj);
     }
 
+    bind_event_scripts(This);
     set_ready_state(This->basedoc.window, READYSTATE_INTERACTIVE);
     return NS_OK;
 }

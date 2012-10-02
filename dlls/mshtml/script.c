@@ -19,6 +19,7 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -32,6 +33,8 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "pluginhost.h"
+#include "htmlevent.h"
 #include "binding.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
@@ -60,7 +63,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #endif
 
+static const WCHAR documentW[] = {'d','o','c','u','m','e','n','t',0};
 static const WCHAR windowW[] = {'w','i','n','d','o','w',0};
+static const WCHAR script_endW[] = {'<','/','S','C','R','I','P','T','>',0};
 static const WCHAR emptyW[] = {0};
 
 struct ScriptHost {
@@ -689,8 +694,6 @@ static void parse_text(ScriptHost *script_host, LPCWSTR text)
     VARIANT var;
     HRESULT hres;
 
-    static const WCHAR script_endW[] = {'<','/','S','C','R','I','P','T','>',0};
-
     TRACE("%s\n", debugstr_w(text));
 
     VariantInit(&var);
@@ -889,23 +892,29 @@ static ScriptHost *get_script_host(HTMLInnerWindow *window, const GUID *guid)
     return create_script_host(window, guid);
 }
 
-void doc_insert_script(HTMLInnerWindow *window, HTMLScriptElement *script_elem)
+static ScriptHost *get_elem_script_host(HTMLInnerWindow *window, HTMLScriptElement *script_elem)
 {
-    ScriptHost *script_host;
     GUID guid;
 
     if(!get_script_guid(window, script_elem->nsscript, &guid)) {
         WARN("Could not find script GUID\n");
-        return;
+        return NULL;
     }
 
     if(IsEqualGUID(&CLSID_JScript, &guid)
        && (!window->base.outer_window || window->base.outer_window->scriptmode != SCRIPTMODE_ACTIVESCRIPT)) {
         TRACE("Ignoring JScript\n");
-        return;
+        return NULL;
     }
 
-    script_host = get_script_host(window, &guid);
+    return get_script_host(window, &guid);
+}
+
+void doc_insert_script(HTMLInnerWindow *window, HTMLScriptElement *script_elem)
+{
+    ScriptHost *script_host;
+
+    script_host = get_elem_script_host(window, script_elem);
     if(!script_host)
         return;
 
@@ -1020,6 +1029,195 @@ IDispatch *get_script_disp(ScriptHost *script_host)
         return NULL;
 
     return disp;
+}
+
+static HTMLElement *find_event_target(HTMLDocumentNode *doc, HTMLScriptElement *script_elem)
+{
+    const PRUnichar *target_id;
+    nsAString target_id_str;
+    HTMLElement *elem;
+    nsresult nsres;
+    HRESULT hres;
+
+    nsAString_Init(&target_id_str, NULL);
+    nsres = nsIDOMHTMLScriptElement_GetHtmlFor(script_elem->nsscript, &target_id_str);
+    if(NS_FAILED(nsres)) {
+        ERR("GetScriptFor failed: %08x\n", nsres);
+        nsAString_Finish(&target_id_str);
+        return NULL;
+    }
+
+    nsAString_GetData(&target_id_str, &target_id);
+    if(!*target_id || !strcmpW(target_id, documentW) || !strcmpW(target_id, windowW)) {
+        FIXME("for %s not supported\n", debugstr_w(target_id));
+        elem = NULL;
+    }else {
+        hres = get_doc_elem_by_id(doc, target_id, &elem);
+        if(FAILED(hres))
+            elem = NULL;
+    }
+    nsAString_Finish(&target_id_str);
+
+    return elem;
+}
+
+static BOOL parse_event_str(WCHAR *event, const WCHAR **args)
+{
+    WCHAR *ptr;
+
+    for(ptr = event; isalnumW(*ptr); ptr++);
+    if(!*ptr) {
+        *args = NULL;
+        return TRUE;
+    }
+
+    if(*ptr != '(')
+        return FALSE;
+
+    *ptr++ = 0;
+    *args = ptr;
+    while(isalnumW(*ptr) || isspaceW(*ptr) || *ptr == ',')
+        ptr++;
+
+    if(*ptr++ != ')')
+        return FALSE;
+    *ptr++ = 0;
+    return !*ptr;
+}
+
+static IDispatch *parse_event_elem(HTMLDocumentNode *doc, HTMLScriptElement *script_elem, WCHAR **ret_event)
+{
+    ScriptHost *script_host;
+    WCHAR *event = NULL;
+    const WCHAR *args;
+    nsAString nsstr;
+    IDispatch *disp;
+    nsresult nsres;
+    HRESULT hres;
+
+    if(script_elem->parsed)
+        return NULL;
+
+    script_host = get_elem_script_host(doc->window, script_elem);
+    if(!script_host || !script_host->parse_proc)
+        return NULL;
+
+    nsAString_Init(&nsstr, NULL);
+    nsres = nsIDOMHTMLScriptElement_GetEvent(script_elem->nsscript, &nsstr);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *event_val;
+
+        nsAString_GetData(&nsstr, &event_val);
+        event = heap_strdupW(event_val);
+    }
+    nsAString_Finish(&nsstr);
+    if(!event)
+        return NULL;
+
+    if(!parse_event_str(event, &args)) {
+        WARN("parsing %s failed\n", debugstr_w(event));
+        heap_free(event);
+        return NULL;
+    }
+
+    nsAString_Init(&nsstr, NULL);
+    nsres = nsIDOMHTMLScriptElement_GetText(script_elem->nsscript, &nsstr);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *text;
+
+        nsAString_GetData(&nsstr, &text);
+        hres = IActiveScriptParseProcedure_ParseProcedureText(script_host->parse_proc, text, args,
+                emptyW, NULL, NULL, script_endW, 0, 0,
+                SCRIPTPROC_HOSTMANAGESSOURCE|SCRIPTPROC_IMPLICIT_THIS|SCRIPTPROC_IMPLICIT_PARENTS, &disp);
+        if(FAILED(hres))
+            disp = NULL;
+    }else {
+        ERR("GetText failed: %08x\n", nsres);
+        disp = NULL;
+    }
+    nsAString_Finish(&nsstr);
+    if(!disp) {
+        heap_free(event);
+        return NULL;
+    }
+
+    *ret_event = event;
+    return disp;
+}
+
+void bind_event_scripts(HTMLDocumentNode *doc)
+{
+    HTMLPluginContainer *plugin_container;
+    nsIDOMHTMLScriptElement *nsscript;
+    HTMLScriptElement *script_elem;
+    HTMLElement *event_target;
+    nsIDOMNodeList *node_list;
+    nsIDOMNode *script_node;
+    nsAString selector_str;
+    IDispatch *event_disp;
+    PRUint32 length, i;
+    WCHAR *event;
+    nsresult nsres;
+    HRESULT hres;
+
+    static const PRUnichar selectorW[] = {'s','c','r','i','p','t','[','e','v','e','n','t',']',0};
+
+    TRACE("%p\n", doc);
+
+    if(!doc->nsdoc)
+        return;
+
+    nsAString_InitDepend(&selector_str, selectorW);
+    nsres = nsIDOMNodeSelector_QuerySelectorAll(doc->nsnode_selector, &selector_str, &node_list);
+    nsAString_Finish(&selector_str);
+    if(NS_FAILED(nsres)) {
+        ERR("QuerySelectorAll failed: %08x\n", nsres);
+        return;
+    }
+
+    if(!node_list)
+        return;
+
+    nsres = nsIDOMNodeList_GetLength(node_list, &length);
+    assert(nsres == NS_OK);
+
+    for(i=0; i < length; i++) {
+        nsres = nsIDOMNodeList_Item(node_list, i, &script_node);
+        if(NS_FAILED(nsres) || !script_node) {
+            ERR("Item(%d) failed: %08x\n", i, nsres);
+            continue;
+        }
+
+        nsres = nsIDOMNode_QueryInterface(script_node, &IID_nsIDOMHTMLScriptElement, (void**)&nsscript);
+        assert(nsres == NS_OK);
+        nsIDOMNode_Release(script_node);
+
+        hres = script_elem_from_nsscript(doc, nsscript, &script_elem);
+        if(FAILED(hres))
+            continue;
+
+        event_disp = parse_event_elem(doc, script_elem, &event);
+        if(event_disp) {
+            event_target = find_event_target(doc, script_elem);
+            if(event_target) {
+                IHTMLElement_QueryInterface(&event_target->IHTMLElement_iface, &IID_HTMLPluginContainer, (void**)&plugin_container);
+
+                if(plugin_container)
+                    FIXME("ActiveX events not supported\n");
+                else
+                    bind_elem_event(doc, event_target, event, event_disp);
+
+                IHTMLElement_Release(&event_target->IHTMLElement_iface);
+            }
+
+            heap_free(event);
+            IDispatch_Release(event_disp);
+        }
+
+        IHTMLScriptElement_Release(&script_elem->IHTMLScriptElement_iface);
+    }
+
+    nsIDOMNodeList_Release(node_list);
 }
 
 BOOL find_global_prop(HTMLInnerWindow *window, BSTR name, DWORD flags, ScriptHost **ret_host, DISPID *ret_id)
