@@ -1816,25 +1816,6 @@ static BOOL glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *de
     return FALSE;
 }
 
-static void flush_gl_drawable( struct glx_physdev *physdev, Drawable src )
-{
-    RECT rect;
-    int w = physdev->x11dev->dc_rect.right - physdev->x11dev->dc_rect.left;
-    int h = physdev->x11dev->dc_rect.bottom - physdev->x11dev->dc_rect.top;
-
-    if (w <= 0 || h <= 0) return;
-
-    /* The GL drawable may be lagged behind if we don't flush first, so
-     * flush the display make sure we copy up-to-date data */
-    XFlush(gdi_display);
-    XSetFunction(gdi_display, physdev->x11dev->gc, GXcopy);
-    XCopyArea(gdi_display, src, physdev->x11dev->drawable, physdev->x11dev->gc, 0, 0, w, h,
-              physdev->x11dev->dc_rect.left, physdev->x11dev->dc_rect.top);
-    SetRect( &rect, 0, 0, w, h );
-    add_device_bounds( physdev->x11dev, &rect );
-}
-
-
 static void wglFinish(void)
 {
     struct x11drv_escape_flush_gl_drawable escape;
@@ -3143,67 +3124,6 @@ static BOOL glxdrv_DeleteDC( PHYSDEV dev )
 }
 
 /**********************************************************************
- *           glxdrv_ExtEscape
- */
-static INT glxdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_data,
-                             INT out_count, LPVOID out_data )
-{
-    struct glx_physdev *physdev = get_glxdrv_dev( dev );
-
-    dev = GET_NEXT_PHYSDEV( dev, pExtEscape );
-
-    if (escape == X11DRV_ESCAPE && in_data && in_count >= sizeof(enum x11drv_escape_codes))
-    {
-        switch (*(const enum x11drv_escape_codes *)in_data)
-        {
-        case X11DRV_SET_DRAWABLE:
-            if (in_count >= sizeof(struct x11drv_escape_set_drawable))
-            {
-                struct gl_drawable *gl;
-                const struct x11drv_escape_set_drawable *data = in_data;
-
-                if ((gl = get_gl_drawable( data->hwnd, dev->hdc )))
-                {
-                    physdev->format       = gl->format;
-                    physdev->type         = gl->type;
-                    physdev->drawable     = gl->drawable;
-                    physdev->pixmap       = gl->pixmap;
-                    release_gl_drawable( gl );
-                }
-                else
-                {
-                    physdev->format       = NULL;
-                    physdev->type         = DC_GL_NONE;
-                    physdev->drawable     = 0;
-                    physdev->pixmap       = 0;
-                }
-                TRACE( "SET_DRAWABLE hdc %p drawable %lx pf %p type %u\n",
-                       dev->hdc, physdev->drawable, physdev->format, physdev->type );
-            }
-            break;
-        case X11DRV_GET_DRAWABLE:
-            if (out_count >= sizeof(struct x11drv_escape_get_drawable))
-            {
-                struct x11drv_escape_get_drawable *data = out_data;
-                data->pixel_format = physdev->format ? physdev->format - pixel_formats + 1 : 0;
-                data->gl_drawable  = physdev->drawable;
-            }
-            break;
-        case X11DRV_FLUSH_GL_DRAWABLE:
-            if (in_count >= sizeof(struct x11drv_escape_flush_gl_drawable))
-            {
-                const struct x11drv_escape_flush_gl_drawable *data = in_data;
-                flush_gl_drawable( physdev, data->gl_drawable );
-            }
-            return TRUE;
-        default:
-            break;
-        }
-    }
-    return dev->funcs->pExtEscape( dev, escape, in_count, in_data, out_count, out_data );
-}
-
-/**********************************************************************
  *           glxdrv_wine_get_wgl_driver
  */
 static struct opengl_funcs * glxdrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
@@ -3245,7 +3165,7 @@ static const struct gdi_dc_funcs glxdrv_funcs =
     NULL,                               /* pEnumICMProfiles */
     NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */
-    glxdrv_ExtEscape,                   /* pExtEscape */
+    NULL,                               /* pExtEscape */
     NULL,                               /* pExtFloodFill */
     NULL,                               /* pExtSelectClipRgn */
     NULL,                               /* pExtTextOut */
