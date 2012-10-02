@@ -33,7 +33,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-static HTMLDOMNode *get_node_obj(HTMLDocumentNode*,IUnknown*);
+static HTMLDOMNode *get_node_obj(IHTMLDOMNode*);
 static HRESULT create_node(HTMLDocumentNode*,nsIDOMNode*,HTMLDOMNode**);
 
 typedef struct {
@@ -503,7 +503,7 @@ static HRESULT WINAPI HTMLDOMNode_insertBefore(IHTMLDOMNode *iface, IHTMLDOMNode
 
     TRACE("(%p)->(%p %s %p)\n", This, newChild, debugstr_variant(&refChild), node);
 
-    new_child = get_node_obj(This->doc, (IUnknown*)newChild);
+    new_child = get_node_obj(newChild);
     if(!new_child) {
         ERR("invalid newChild\n");
         return E_INVALIDARG;
@@ -513,9 +513,17 @@ static HRESULT WINAPI HTMLDOMNode_insertBefore(IHTMLDOMNode *iface, IHTMLDOMNode
     case VT_NULL:
         break;
     case VT_DISPATCH: {
+        IHTMLDOMNode *ref_iface;
+
         if(!V_DISPATCH(&refChild))
             break;
-        ref_node = get_node_obj(This->doc, (IUnknown*)V_DISPATCH(&refChild));
+
+        hres = IDispatch_QueryInterface(V_DISPATCH(&refChild), &IID_IHTMLDOMNode, (void**)&ref_iface);
+        if(FAILED(hres))
+            break;
+
+        ref_node = get_node_obj(ref_iface);
+        IHTMLDOMNode_Release(ref_iface);
         if(!ref_node) {
             ERR("unvalid node\n");
             hres = E_FAIL;
@@ -561,7 +569,7 @@ static HRESULT WINAPI HTMLDOMNode_removeChild(IHTMLDOMNode *iface, IHTMLDOMNode 
 
     TRACE("(%p)->(%p %p)\n", This, oldChild, node);
 
-    node_obj = get_node_obj(This->doc, (IUnknown*)oldChild);
+    node_obj = get_node_obj(oldChild);
     if(!node_obj)
         return E_FAIL;
 
@@ -593,11 +601,11 @@ static HRESULT WINAPI HTMLDOMNode_replaceChild(IHTMLDOMNode *iface, IHTMLDOMNode
 
     TRACE("(%p)->(%p %p %p)\n", This, newChild, oldChild, node);
 
-    node_new = get_node_obj(This->doc, (IUnknown*)newChild);
+    node_new = get_node_obj(newChild);
     if(!node_new)
         return E_FAIL;
 
-    node_old = get_node_obj(This->doc, (IUnknown*)oldChild);
+    node_old = get_node_obj(oldChild);
     if(!node_old) {
         node_release(node_new);
         return E_FAIL;
@@ -678,7 +686,7 @@ static HRESULT WINAPI HTMLDOMNode_appendChild(IHTMLDOMNode *iface, IHTMLDOMNode 
 
     TRACE("(%p)->(%p %p)\n", This, newChild, node);
 
-    node_obj = get_node_obj(This->doc, (IUnknown*)newChild);
+    node_obj = get_node_obj(newChild);
     if(!node_obj)
         return E_FAIL;
 
@@ -886,13 +894,16 @@ static const IHTMLDOMNodeVtbl HTMLDOMNodeVtbl = {
     HTMLDOMNode_get_nextSibling
 };
 
-static HTMLDOMNode *get_node_obj(HTMLDocumentNode *This, IUnknown *iface)
+static HTMLDOMNode *get_node_obj(IHTMLDOMNode *iface)
 {
-    IHTMLDOMNode *node;
-    HRESULT hres;
+    HTMLDOMNode *ret;
 
-    hres = IUnknown_QueryInterface(iface, &IID_IHTMLDOMNode, (void**)&node);
-    return hres == S_OK && node->lpVtbl == &HTMLDOMNodeVtbl ? impl_from_IHTMLDOMNode(node) : NULL;
+    if(iface->lpVtbl != &HTMLDOMNodeVtbl)
+        return NULL;
+
+    ret = impl_from_IHTMLDOMNode(iface);
+    node_addref(ret);
+    return ret;
 }
 
 static inline HTMLDOMNode *impl_from_IHTMLDOMNode2(IHTMLDOMNode2 *iface)
@@ -1192,7 +1203,7 @@ HRESULT get_node(HTMLDocumentNode *This, nsIDOMNode *nsnode, BOOL create, HTMLDO
     assert(nsres == NS_OK);
 
     if(unk) {
-        *ret = get_node_obj(This, (IUnknown*)unk);
+        *ret = get_node_obj((IHTMLDOMNode*)unk);
         return NS_OK;
     }
 
