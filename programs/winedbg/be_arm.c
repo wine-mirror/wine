@@ -97,6 +97,10 @@ static char const tbl_special_regs_t2[][12] = {
     "rsvd", "rsvd", "rsvd", "rsvd", "primask", "basepri", "basepri_max", "faultmask", "control"
 };
 
+static char const tbl_hints_t2[][6] = {
+    "nop", "yield", "wfe", "wfi", "sev"
+};
+
 static UINT db_get_inst(void* addr, int size)
 {
     UINT result = 0;
@@ -686,6 +690,28 @@ static UINT thumb2_disasm_srtrans(UINT inst, ADDRESS64 *addr)
     return inst;
 }
 
+static UINT thumb2_disasm_hint(UINT inst, ADDRESS64 *addr)
+{
+    WORD op1 = (inst >> 8) & 0x07;
+    WORD op2 = inst & 0xff;
+
+    if (op1) return inst;
+
+    if (op2 <= 4)
+    {
+        dbg_printf("\n\t%s", tbl_hints_t2[op2]);
+        return 0;
+    }
+
+    if (op2 & 0xf0)
+    {
+        dbg_printf("\n\tdbg\t#%u", get_nibble(inst, 0));
+        return 0;
+    }
+
+    return inst;
+}
+
 static UINT thumb2_disasm_misc(UINT inst, ADDRESS64 *addr)
 {
     WORD op1 = (inst >> 20) & 0x03;
@@ -989,8 +1015,10 @@ static const struct inst_thumb16 tbl_thumb16[] = {
 };
 
 static const struct inst_arm tbl_thumb32[] = {
-    { 0xf800f000, 0xf0008000, thumb2_disasm_branch },
-    { 0xff90f000, 0xf3808000, thumb2_disasm_srtrans },
+    { 0xfff0f000, 0xf3e08000, thumb2_disasm_srtrans },
+    { 0xfff0f000, 0xf3808000, thumb2_disasm_srtrans },
+    { 0xfff0d000, 0xf3a08000, thumb2_disasm_hint },
+    { 0xf8008000, 0xf0008000, thumb2_disasm_branch },
     { 0xffc0f0c0, 0xfa80f080, thumb2_disasm_misc },
     { 0xff80f000, 0xfa00f000, thumb2_disasm_dataprocessingreg },
     { 0xff8000c0, 0xfb000000, thumb2_disasm_mul },
@@ -1033,7 +1061,7 @@ void be_arm_disasm_one_insn(ADDRESS64 *addr, int display)
         size = ARM_INSN_SIZE;
         inst = db_get_inst( memory_to_linear_addr(addr), size );
         while (a_ptr->func) {
-            if ((inst & a_ptr->mask) ==  a_ptr->pattern) {
+            if ((inst & a_ptr->mask) == a_ptr->pattern) {
                     matched = 1;
                     break;
             }
@@ -1066,7 +1094,7 @@ void be_arm_disasm_one_insn(ADDRESS64 *addr, int display)
                 inst |= (tinst << 16);
 
                 while (t2_ptr->func) {
-                    if ((inst & t2_ptr->mask) ==  t2_ptr->pattern) {
+                    if ((inst & t2_ptr->mask) == t2_ptr->pattern) {
                             matched = 1;
                             break;
                     }
@@ -1089,7 +1117,7 @@ void be_arm_disasm_one_insn(ADDRESS64 *addr, int display)
 
         size = THUMB_INSN_SIZE;
         while (t_ptr->func) {
-            if ((tinst & t_ptr->mask) ==  t_ptr->pattern) {
+            if ((tinst & t_ptr->mask) == t_ptr->pattern) {
                     matched = 1;
                     break;
             }
