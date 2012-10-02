@@ -92,6 +92,11 @@ static char const tbl_width_t2[][2] = {
     "b", "h", "", "?"
 };
 
+static char const tbl_special_regs_t2[][12] = {
+    "apsr", "iapsr", "eapsr", "xpsr", "rsvd", "ipsr", "epsr", "iepsr", "msp", "psp", "rsvd", "rsvd",
+    "rsvd", "rsvd", "rsvd", "rsvd", "primask", "basepri", "basepri_max", "faultmask", "control"
+};
+
 static UINT db_get_inst(void* addr, int size)
 {
     UINT result = 0;
@@ -661,6 +666,26 @@ static UINT thumb2_disasm_branch(UINT inst, ADDRESS64 *addr)
     return 0;
 }
 
+static UINT thumb2_disasm_srtrans(UINT inst, ADDRESS64 *addr)
+{
+    UINT fromsr = (inst >> 21) & 0x03;
+    UINT sysreg = inst & 0xff;
+
+    if (fromsr == 3 && get_nibble(inst,4) == 0x0f && sysreg <= 20)
+    {
+        dbg_printf("\n\tmrs\t%s, %s", tbl_regs[get_nibble(inst, 2)], tbl_special_regs_t2[sysreg]);
+        return 0;
+    }
+
+    if (fromsr == 0 && sysreg <= 20)
+    {
+        dbg_printf("\n\tmsr\t%s, %s", tbl_special_regs_t2[sysreg], tbl_regs[get_nibble(inst, 4)]);
+        return 0;
+    }
+
+    return inst;
+}
+
 static UINT thumb2_disasm_misc(UINT inst, ADDRESS64 *addr)
 {
     WORD op1 = (inst >> 20) & 0x03;
@@ -965,6 +990,7 @@ static const struct inst_thumb16 tbl_thumb16[] = {
 
 static const struct inst_arm tbl_thumb32[] = {
     { 0xf800f000, 0xf0008000, thumb2_disasm_branch },
+    { 0xff90f000, 0xf3808000, thumb2_disasm_srtrans },
     { 0xffc0f0c0, 0xfa80f080, thumb2_disasm_misc },
     { 0xff80f000, 0xfa00f000, thumb2_disasm_dataprocessingreg },
     { 0xff8000c0, 0xfb000000, thumb2_disasm_mul },
