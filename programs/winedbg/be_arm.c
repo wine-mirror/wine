@@ -712,6 +712,31 @@ static UINT thumb2_disasm_hint(UINT inst, ADDRESS64 *addr)
     return inst;
 }
 
+static UINT thumb2_disasm_miscctrl(UINT inst, ADDRESS64 *addr)
+{
+    WORD op = (inst >> 4) & 0x0f;
+
+    switch (op)
+    {
+    case 2:
+        dbg_printf("\n\tclrex");
+        break;
+    case 4:
+        dbg_printf("\n\tdsb\t#%u", get_nibble(inst, 0));
+        break;
+    case 5:
+        dbg_printf("\n\tdmb\t#%u", get_nibble(inst, 0));
+        break;
+    case 6:
+        dbg_printf("\n\tisb\t#%u", get_nibble(inst, 0));
+        break;
+    default:
+        return inst;
+    }
+
+    return 0;
+}
+
 static UINT thumb2_disasm_misc(UINT inst, ADDRESS64 *addr)
 {
     WORD op1 = (inst >> 20) & 0x03;
@@ -1018,6 +1043,7 @@ static const struct inst_arm tbl_thumb32[] = {
     { 0xfff0f000, 0xf3e08000, thumb2_disasm_srtrans },
     { 0xfff0f000, 0xf3808000, thumb2_disasm_srtrans },
     { 0xfff0d000, 0xf3a08000, thumb2_disasm_hint },
+    { 0xfff0d000, 0xf3b08000, thumb2_disasm_miscctrl },
     { 0xf8008000, 0xf0008000, thumb2_disasm_branch },
     { 0xffc0f0c0, 0xfa80f080, thumb2_disasm_misc },
     { 0xff80f000, 0xfa00f000, thumb2_disasm_dataprocessingreg },
