@@ -1493,8 +1493,8 @@ PVOID WINAPI MmMapIoSpace( PHYSICAL_ADDRESS PhysicalAddress, DWORD NumberOfBytes
 /***********************************************************************
  *           MmMapLockedPagesSpecifyCache  (NTOSKRNL.EXE.@)
  */
-PVOID MmMapLockedPagesSpecifyCache(PMDLX MemoryDescriptorList, KPROCESSOR_MODE AccessMode, MEMORY_CACHING_TYPE CacheType,
-                                   PVOID BaseAddress, ULONG BugCheckOnFailure, MM_PAGE_PRIORITY Priority)
+PVOID WINAPI  MmMapLockedPagesSpecifyCache(PMDLX MemoryDescriptorList, KPROCESSOR_MODE AccessMode, MEMORY_CACHING_TYPE CacheType,
+                                           PVOID BaseAddress, ULONG BugCheckOnFailure, MM_PAGE_PRIORITY Priority)
 {
     FIXME("(%p, %u, %u, %p, %u, %u): stub\n", MemoryDescriptorList, AccessMode, CacheType, BaseAddress, BugCheckOnFailure, Priority);
 
@@ -1515,7 +1515,7 @@ PVOID WINAPI MmPageEntireDriver(PVOID AddrInSection)
 /***********************************************************************
  *           MmProbeAndLockPages  (NTOSKRNL.EXE.@)
  */
-void MmProbeAndLockPages(PMDLX MemoryDescriptorList, KPROCESSOR_MODE AccessMode, LOCK_OPERATION Operation)
+void WINAPI MmProbeAndLockPages(PMDLX MemoryDescriptorList, KPROCESSOR_MODE AccessMode, LOCK_OPERATION Operation)
 {
     FIXME("(%p, %u, %u): stub\n", MemoryDescriptorList, AccessMode, Operation);
 }
@@ -1533,7 +1533,7 @@ void WINAPI MmResetDriverPaging(PVOID AddrInSection)
 /***********************************************************************
  *           MmUnlockPages  (NTOSKRNL.EXE.@)
  */
-void MmUnlockPages(PMDLX MemoryDescriptorList)
+void WINAPI  MmUnlockPages(PMDLX MemoryDescriptorList)
 {
     FIXME("(%p): stub\n", MemoryDescriptorList);
 }
