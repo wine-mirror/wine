@@ -1,6 +1,8 @@
 <html>
 <head>
 <script>
+var testevent_divid2_called = false, cnt=0;
+
 function ok(b,m) {
     return external.ok(b, m);
 }
@@ -64,8 +66,23 @@ function ondataavailable_test() {
     ok(evobj.type === "dataavailable", "evobj.type = " + evobj.type);
 }
 
+function test_scriptfor() {
+    var div = document.getElementById("divid2");
+    ok("onclick" in div, "testevent not in div");
+    ok(typeof(div.onclick) === "function", "typeof(div.onclick) = " + typeof(div.onclick));
+    ok(testevent_divid2_called === false, "testevent_divid2_called = " + testevent_divid2_called);
+    div.click();
+    ok(testevent_divid2_called === true, "testevent_divid2_called = " + testevent_divid2_called);
+
+    ok(!("ontest" in div), "testevent in div");
+    ok(typeof(div.ontest) === "undefined", "typeof(div.ontest) = " + typeof(div.ontest));
+}
+
 function runTests() {
     try {
+        ok(cnt == 1, "cnt=" + cnt + " exception during loading?");
+
+        test_scriptfor();
         ondataavailable_test();
     }catch(e) {
         ok(false, "Got an exception: " + e.message);
@@ -77,5 +94,19 @@ function runTests() {
 </head>
 <body onload="runTests()">
 <div id="divid"></div>
+<div id="divid2"></div>
+<script event="onclick" for="divid2">
+    testevent_divid2_called = true;
+</script>
+<script event="ontest" for="divid2">
+    ok(false, "unexpected ontest");
+</script>
+<script>
+(function() {
+    var div = document.getElementById("divid2");
+    ok(div.onclick === null, "div.onclick = null");
+    cnt++;
+})();
+</script>
 </body>
 </html>
