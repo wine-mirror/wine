@@ -82,7 +82,7 @@
 @ cdecl wined3d_device_get_software_vertex_processing(ptr)
 @ cdecl wined3d_device_get_stream_source(ptr long ptr ptr ptr)
 @ cdecl wined3d_device_get_stream_source_freq(ptr long ptr)
-@ cdecl wined3d_device_get_surface_from_dc(ptr ptr ptr)
+@ cdecl wined3d_device_get_surface_from_dc(ptr ptr)
 @ cdecl wined3d_device_get_swapchain(ptr long)
 @ cdecl wined3d_device_get_swapchain_count(ptr)
 @ cdecl wined3d_device_get_texture(ptr long)

@@ -5417,15 +5417,14 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
     TRACE("Resource released.\n");
 }
 
-HRESULT CDECL wined3d_device_get_surface_from_dc(const struct wined3d_device *device,
-        HDC dc, struct wined3d_surface **surface)
+struct wined3d_surface * CDECL wined3d_device_get_surface_from_dc(const struct wined3d_device *device, HDC dc)
 {
     struct wined3d_resource *resource;
 
-    TRACE("device %p, dc %p, surface %p.\n", device, dc, surface);
+    TRACE("device %p, dc %p.\n", device, dc);
 
     if (!dc)
-        return WINED3DERR_INVALIDCALL;
+        return NULL;
 
     LIST_FOR_EACH_ENTRY(resource, &device->resources, struct wined3d_resource, resource_list_entry)
     {
@@ -5436,13 +5435,12 @@ HRESULT CDECL wined3d_device_get_surface_from_dc(const struct wined3d_device *de
             if (s->hDC == dc)
             {
                 TRACE("Found surface %p for dc %p.\n", s, dc);
-                *surface = s;
-                return WINED3D_OK;
+                return s;
             }
         }
     }
 
-    return WINED3DERR_INVALIDCALL;
+    return NULL;
 }
 
 HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,

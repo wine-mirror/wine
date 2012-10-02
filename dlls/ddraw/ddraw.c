@@ -2422,14 +2422,12 @@ static HRESULT WINAPI ddraw7_GetSurfaceFromDC(IDirectDraw7 *iface, HDC hdc,
     struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
     struct wined3d_surface *wined3d_surface;
     struct ddraw_surface *surface_impl;
-    HRESULT hr;
 
     TRACE("iface %p, dc %p, surface %p.\n", iface, hdc, Surface);
 
     if (!Surface) return E_INVALIDARG;
 
-    hr = wined3d_device_get_surface_from_dc(ddraw->wined3d_device, hdc, &wined3d_surface);
-    if (FAILED(hr))
+    if (!(wined3d_surface = wined3d_device_get_surface_from_dc(ddraw->wined3d_device, hdc)))
     {
         TRACE("No surface found for dc %p.\n", hdc);
         *Surface = NULL;
