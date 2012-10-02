@@ -2645,7 +2645,7 @@ static void test_D3DXSHMultiply3(void)
 {
     unsigned int i;
     FLOAT a[20], b[20], c[20];
-    /* D3DXSHMultiply only modifies the first 9 elements of the array */
+    /* D3DXSHMultiply3 only modifies the first 9 elements of the array */
     const FLOAT expected[20] =
     { 7.813913f, 2.256058f, 5.9484005f, 4.970894f, 2.899858f, 3.598946f,
       1.726572f, 5.573538f, 0.622063f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f,
@@ -2653,9 +2653,9 @@ static void test_D3DXSHMultiply3(void)
 
     for (i = 0; i < 20; i++)
     {
-        a[i] = 1.0f + (FLOAT)i/100.0f;
-        b[i] = 3.0f - (FLOAT)i/100.0f;
-        c[i] = (FLOAT)i;
+        a[i] = 1.0f + i / 100.0f;
+        b[i] = 3.0f - i / 100.0f;
+        c[i] = i;
     }
 
     D3DXSHMultiply3(c, a, b);
