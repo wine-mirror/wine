@@ -2663,6 +2663,55 @@ static void test_D3DXSHMultiply3(void)
         ok(relative_error(c[i], expected[i]) < admitted_error, "Expected[%d] = %f, received = %f\n", i, expected[i], c[i]);
 }
 
+static void test_D3DXSHMultiply4(void)
+{
+    unsigned int i;
+    FLOAT a[20], b[20], c[20];
+    /* D3DXSHMultiply4 only modifies the first 16 elements of the array */
+    const FLOAT expected[] =
+    { /* c, a, b */
+        14.182599f, 2.615703f, 12.828601f, 9.820596f, 3.039696f, 4.530442f,
+        5.820584f, 12.249846f, 2.194346f, 3.900152f, 5.416609f, 5.601813f,
+        0.959982f, 7.037550f, 3.625230f, 0.463601f, 16.0f, 17.0f, 18.0f, 19.0f,
+      /* c, c, b */
+        -211441.265625f, -2529.157715f, -10023.393555f, -441.277191f, -163.994385f,
+        -526.305115f, 29636.187500f, -3931.830811f, -13577.111328f, -3978.973877f,
+        -10330.341797f, -13779.787109f, -16685.109375f, -44981.375000f, -73269.742188f,
+        -95237.335938f, 16.0f, 17.0f, 18.0f, 19.0f,
+      /* c, c, c */
+        0.236682f, -0.717649f, -0.180500f, -0.077124f, 0.144831f, 0.573286f,
+        -0.337959f, 0.055694f, -0.442100f, 0.147702f, -0.055157f, 0.084337f,
+        0.179877f, 0.009099f, 0.232200f, 0.074142f, 1.6f, 1.7f, 1.8f, 1.9f, };
+
+    for (i = 0; i < 20; i++)
+    {
+        a[i] = 1.0f + i / 100.0f;
+        b[i] = 3.0f - i / 100.0f;
+        c[i] = i;
+    }
+
+    D3DXSHMultiply4(c, a, b);
+    for (i = 0; i < 20; i++)
+        ok(relative_error(c[i], expected[i]) < admitted_error, "Expected[%d] = %f, received = %f\n", i, expected[i], c[i]);
+
+    for (i = 0; i < 20; i++)
+    {
+        b[i] = 3.0f - i / 100.0f;
+        c[i] = i;
+    }
+
+    D3DXSHMultiply4(c, c, b);
+    for (i = 0; i < 20; i++)
+        ok(relative_error(c[i], expected[20 + i]) < admitted_error, "Expected[%d] = %f, received = %f\n", i, expected[20 + i], c[i]);
+
+    for (i = 0; i < 20; i++)
+        c[i] = 0.1f * i;
+
+    D3DXSHMultiply4(c, c, c);
+    for (i = 0; i < 20; i++)
+        ok(relative_error(c[i], expected[40 + i]) < admitted_error, "Expected[%d] = %f, received = %f\n", i, expected[40 + i], c[i]);
+}
+
 static void test_D3DXSHRotate(void)
 {
     D3DXMATRIX m[4];
@@ -2829,6 +2878,7 @@ START_TEST(math)
     test_D3DXSHEvalDirectionalLight();
     test_D3DXSHMultiply2();
     test_D3DXSHMultiply3();
+    test_D3DXSHMultiply4();
     test_D3DXSHRotate();
     test_D3DXSHRotateZ();
     test_D3DXSHScale();
