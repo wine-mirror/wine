@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -34,6 +35,79 @@
 #include "htmlevent.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
+
+static HRESULT get_doc_elem_by_id(HTMLDocumentNode *doc, const WCHAR *id, HTMLElement **ret)
+{
+    nsIDOMNodeList *nsnode_list;
+    nsIDOMElement *nselem;
+    nsIDOMNode *nsnode;
+    nsAString id_str;
+    nsresult nsres;
+    HRESULT hres;
+
+    if(!doc->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
+
+    nsAString_InitDepend(&id_str, id);
+    /* get element by id attribute */
+    nsres = nsIDOMHTMLDocument_GetElementById(doc->nsdoc, &id_str, &nselem);
+    if(FAILED(nsres)) {
+        ERR("GetElementById failed: %08x\n", nsres);
+        nsAString_Finish(&id_str);
+        return E_FAIL;
+    }
+
+    /* get first element by name attribute */
+    nsres = nsIDOMHTMLDocument_GetElementsByName(doc->nsdoc, &id_str, &nsnode_list);
+    nsAString_Finish(&id_str);
+    if(FAILED(nsres)) {
+        ERR("getElementsByName failed: %08x\n", nsres);
+        if(nselem)
+            nsIDOMElement_Release(nselem);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMNodeList_Item(nsnode_list, 0, &nsnode);
+    nsIDOMNodeList_Release(nsnode_list);
+    assert(nsres == NS_OK);
+
+    if(nsnode && nselem) {
+        PRUint16 pos;
+
+        nsres = nsIDOMNode_CompareDocumentPosition(nsnode, (nsIDOMNode*)nselem, &pos);
+        if(NS_FAILED(nsres)) {
+            FIXME("CompareDocumentPosition failed: 0x%08x\n", nsres);
+            nsIDOMNode_Release(nsnode);
+            nsIDOMElement_Release(nselem);
+            return E_FAIL;
+        }
+
+        TRACE("CompareDocumentPosition gave: 0x%x\n", pos);
+        if(!(pos & (DOCUMENT_POSITION_PRECEDING | DOCUMENT_POSITION_CONTAINS))) {
+            nsIDOMElement_Release(nselem);
+            nselem = NULL;
+        }
+    }
+
+    if(nsnode) {
+        if(!nselem) {
+            nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMElement, (void**)&nselem);
+            assert(nsres == NS_OK);
+        }
+        nsIDOMNode_Release(nsnode);
+    }
+
+    if(!nselem) {
+        *ret = NULL;
+        return S_OK;
+    }
+
+    hres = get_elem(doc, nselem, ret);
+    nsIDOMElement_Release(nselem);
+    return hres;
+}
 
 static inline HTMLDocument *impl_from_IHTMLDocument3(IHTMLDocument3 *iface)
 {
@@ -469,80 +543,19 @@ static HRESULT WINAPI HTMLDocument3_getElementById(IHTMLDocument3 *iface, BSTR v
                                                    IHTMLElement **pel)
 {
     HTMLDocument *This = impl_from_IHTMLDocument3(iface);
-    nsIDOMElement *nselem;
-    HTMLDOMNode *node;
-    nsIDOMNode *nsnode, *nsnode_by_id, *nsnode_by_name;
-    nsIDOMNodeList *nsnode_list;
-    nsAString id_str;
-    nsresult nsres;
+    HTMLElement *elem;
     HRESULT hres;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pel);
 
-    if(!This->doc_node->nsdoc) {
-        WARN("NULL nsdoc\n");
-        return E_UNEXPECTED;
-    }
-
-    nsAString_InitDepend(&id_str, v);
-    /* get element by id attribute */
-    nsres = nsIDOMHTMLDocument_GetElementById(This->doc_node->nsdoc, &id_str, &nselem);
-    if(FAILED(nsres)) {
-        ERR("GetElementById failed: %08x\n", nsres);
-        nsAString_Finish(&id_str);
-        return E_FAIL;
-    }
-    nsnode_by_id = (nsIDOMNode*)nselem;
-
-    /* get first element by name attribute */
-    nsres = nsIDOMHTMLDocument_GetElementsByName(This->doc_node->nsdoc, &id_str, &nsnode_list);
-    nsAString_Finish(&id_str);
-    if(FAILED(nsres)) {
-        ERR("getElementsByName failed: %08x\n", nsres);
-        if(nsnode_by_id)
-            nsIDOMNode_Release(nsnode_by_id);
-        return E_FAIL;
-    }
-    nsIDOMNodeList_Item(nsnode_list, 0, &nsnode_by_name);
-    nsIDOMNodeList_Release(nsnode_list);
-
-
-    if(nsnode_by_name && nsnode_by_id) {
-        PRUint16 pos;
-
-        nsres = nsIDOMNode_CompareDocumentPosition(nsnode_by_name, nsnode_by_id, &pos);
-        if(NS_FAILED(nsres)) {
-            FIXME("CompareDocumentPosition failed: 0x%08x\n", nsres);
-            nsIDOMNode_Release(nsnode_by_name);
-            nsIDOMNode_Release(nsnode_by_id);
-            return E_FAIL;
-        }
-
-        TRACE("CompareDocumentPosition gave: 0x%x\n", pos);
-        if(pos & (DOCUMENT_POSITION_PRECEDING | DOCUMENT_POSITION_CONTAINS)) {
-            nsnode = nsnode_by_id;
-            nsIDOMNode_Release(nsnode_by_name);
-        }else {
-            nsnode = nsnode_by_name;
-            nsIDOMNode_Release(nsnode_by_id);
-        }
-    }else
-        nsnode = nsnode_by_name ? nsnode_by_name : nsnode_by_id;
-
-    if(nsnode) {
-        hres = get_node(This->doc_node, nsnode, TRUE, &node);
-        nsIDOMNode_Release(nsnode);
-
-        if(SUCCEEDED(hres)) {
-            hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)pel);
-            node_release(node);
-        }
-    }else {
+    hres = get_doc_elem_by_id(This->doc_node, v, &elem);
+    if(FAILED(hres) || !elem) {
         *pel = NULL;
-        hres = S_OK;
+        return hres;
     }
 
-    return hres;
+    *pel = &elem->IHTMLElement_iface;
+    return S_OK;
 }
 
 

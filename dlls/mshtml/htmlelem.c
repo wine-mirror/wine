@@ -1864,6 +1864,19 @@ HRESULT HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_g
     return S_OK;
 }
 
+HRESULT get_elem(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **ret)
+{
+    HTMLDOMNode *node;
+    HRESULT hres;
+
+    hres = get_node(doc, (nsIDOMNode*)nselem, TRUE, &node);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = impl_from_HTMLDOMNode(node);
+    return S_OK;
+}
+
 /* interface IHTMLFiltersCollection */
 static HRESULT WINAPI HTMLFiltersCollection_QueryInterface(IHTMLFiltersCollection *iface, REFIID riid, void **ppv)
 {
