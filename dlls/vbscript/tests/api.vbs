@@ -254,6 +254,18 @@ Sub TestRound(val, exval, vt)
     Call ok(getVT(Round(val)) = vt, "getVT(Round(" & val & ")) = " & getVT(Round(val)))
 End Sub
 
+Sub TestRTrim(str, exstr)
+    Call ok(RTrim(str) = exstr, "RTrim(" & str & ") = " & RTrim(str))
+End Sub
+
+TestRTrim "   test    ", "   test"
+TestRTrim "test    ", "test"
+TestRTrim "   test", "   test"
+TestRTrim "test", "test"
+TestRTrim "", ""
+TestRTrim 123, "123"
+if isEnglishLang then TestRTrim true, "True"
+
 TestRound 3, 3, "VT_I2"
 TestRound 3.3, 3, "VT_R8"
 TestRound 3.8, 4, "VT_R8"
