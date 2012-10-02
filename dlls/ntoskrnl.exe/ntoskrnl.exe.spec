@@ -303,7 +303,7 @@
 @ stub InbvSetTextColor
 @ stub InbvSolidColorFill
 @ stub InitSafeBootMode
-@ stub IoAcquireCancelSpinLock
+@ stdcall IoAcquireCancelSpinLock(ptr)
 @ stub IoAcquireRemoveLockEx
 @ stub IoAcquireVpbSpinLock
 @ stub IoAdapterObjectType
@@ -432,7 +432,7 @@
 @ stub IoRegisterLastChanceShutdownNotification
 @ stub IoRegisterPlugPlayNotification
 @ stdcall IoRegisterShutdownNotification(ptr)
-@ stub IoReleaseCancelSpinLock
+@ stdcall IoReleaseCancelSpinLock(ptr)
 @ stub IoReleaseRemoveLockAndWaitEx
 @ stub IoReleaseRemoveLockEx
 @ stub IoReleaseVpbSpinLock
