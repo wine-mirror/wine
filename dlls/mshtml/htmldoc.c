@@ -2101,6 +2101,11 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
     while(!list_empty(&This->plugin_hosts))
         detach_plugin_host(LIST_ENTRY(list_head(&This->plugin_hosts), PluginHost, entry));
 
+    if(This->nsnode_selector) {
+        nsIDOMNodeSelector_Release(This->nsnode_selector);
+        This->nsnode_selector = NULL;
+    }
+
     if(This->nsdoc) {
         assert(!This->window);
         release_document_mutation(This);
@@ -2126,6 +2131,8 @@ static void HTMLDocumentNode_traverse(HTMLDOMNode *iface, nsCycleCollectionTrave
 {
     HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
 
+    if(This->nsnode_selector)
+        note_cc_edge((nsISupports*)This->nsnode_selector, "This->nsnode_selector", cb);
     if(This->nsdoc)
         note_cc_edge((nsISupports*)This->nsdoc, "This->nsdoc", cb);
 }
@@ -2133,6 +2140,11 @@ static void HTMLDocumentNode_traverse(HTMLDOMNode *iface, nsCycleCollectionTrave
 static void HTMLDocumentNode_unlink(HTMLDOMNode *iface)
 {
     HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsnode_selector) {
+        nsIDOMNodeSelector_Release(This->nsnode_selector);
+        This->nsnode_selector = NULL;
+    }
 
     if(This->nsdoc) {
         nsIDOMHTMLDocument *nsdoc = This->nsdoc;
@@ -2285,6 +2297,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
 HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_obj, HTMLInnerWindow *window, HTMLDocumentNode **ret)
 {
     HTMLDocumentNode *doc;
+    nsresult nsres;
 
     doc = alloc_doc_node(doc_obj, window);
     if(!doc)
@@ -2297,6 +2310,9 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
 
     nsIDOMHTMLDocument_AddRef(nsdoc);
     doc->nsdoc = nsdoc;
+
+    nsres = nsIDOMHTMLDocument_QueryInterface(nsdoc, &IID_nsIDOMNodeSelector, (void**)&doc->nsnode_selector);
+    assert(nsres == NS_OK);
 
     init_document_mutation(doc);
     doc_init_events(doc);

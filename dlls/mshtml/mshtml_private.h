@@ -689,6 +689,7 @@ struct HTMLDocumentNode {
     HTMLInnerWindow *window;
 
     nsIDOMHTMLDocument *nsdoc;
+    nsIDOMNodeSelector *nsnode_selector;
     BOOL content_ready;
     event_target_t *body_event_target;
 

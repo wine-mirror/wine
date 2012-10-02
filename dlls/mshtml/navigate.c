@@ -2004,19 +2004,13 @@ static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
      */
     selector = heap_alloc(sizeof(selector_formatW)+SysStringLen(frag)*sizeof(WCHAR));
     if(selector) {
-        nsIDOMNodeSelector *node_selector;
         nsIDOMElement *nselem = NULL;
         nsAString selector_str;
-
-        nsres = nsIDOMHTMLDocument_QueryInterface(window->base.inner_window->doc->nsdoc, &IID_nsIDOMNodeSelector,
-                (void**)&node_selector);
-        assert(nsres == NS_OK);
 
         sprintfW(selector, selector_formatW, frag);
         nsAString_InitDepend(&selector_str, selector);
         /* NOTE: Gecko doesn't set result to NULL if there is no match, so nselem must be initialized */
-        nsres = nsIDOMNodeSelector_QuerySelector(node_selector, &selector_str, &nselem);
-        nsIDOMNodeSelector_Release(node_selector);
+        nsres = nsIDOMNodeSelector_QuerySelector(window->base.inner_window->doc->nsnode_selector, &selector_str, &nselem);
         nsAString_Finish(&selector_str);
         heap_free(selector);
         if(NS_SUCCEEDED(nsres) && nselem) {
