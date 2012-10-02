@@ -261,6 +261,7 @@ static unsigned long get_mwm_decorations( struct x11drv_win_data *data,
     if (data->shaped) return 0;
 
     if (ex_style & WS_EX_TOOLWINDOW) return 0;
+    if (ex_style & WS_EX_LAYERED) return 0;
 
     if ((style & WS_CAPTION) == WS_CAPTION)
     {
