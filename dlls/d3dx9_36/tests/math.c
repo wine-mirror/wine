@@ -2406,7 +2406,7 @@ static void test_D3DXSHAdd(void)
      * All values will work, test from 0-7 [D3DXSH_MINORDER = 2, D3DXSH_MAXORDER = 6]
      * Exceptions will show up when out, in1 or in2 are NULL
      */
-    for (k = 0; k < 8; ++k)
+    for (k = 0; k <= D3DXSH_MAXORDER + 1; k++)
     {
         UINT count = k * k;
 
@@ -2425,18 +2425,18 @@ static void test_D3DXSHAdd(void)
 static void test_D3DXSHDot(void)
 {
     unsigned int i;
-    FLOAT a[64], b[64], got;
+    FLOAT a[49], b[49], got;
     CONST FLOAT expected[] =
-    { 0.5f, 0.5f, 25.0f, 262.5f, 1428.0f, 5362.0f, 15873.0f, 39812.0f, 88400.0f, };
+    { 0.5f, 0.5f, 25.0f, 262.5f, 1428.0f, 5362.0f, 15873.0f, 39812.0f, };
 
-    for (i = 0; i < 64; i++)
+    for (i = 0; i < 49; i++)
     {
         a[i] = (FLOAT)i + 1.0f;
         b[i] = (FLOAT)i + 0.5f;
     }
 
     /* D3DXSHDot computes by using order * order elements */
-    for (i = 0; i < 9; i++)
+    for (i = 0; i <= D3DXSH_MAXORDER + 1; i++)
     {
         got = D3DXSHDot(i, a, b);
         ok(relative_error(got, expected[i]) < admitted_error, "order %d: expected %f, received %f\n", i, expected[i], got);
@@ -2449,7 +2449,7 @@ static void test_D3DXSHEvalDirection(void)
 {
     unsigned int i, order;
     D3DXVECTOR3 d;
-    FLOAT a[100], expected[100], *received_ptr;
+    FLOAT a[49], expected[49], *received_ptr;
     CONST FLOAT table[36] =
     { 0.282095f, -0.977205f, 1.465808f, -0.488603f, 2.185097f, -6.555291f,
       8.200181f, -3.277646f, -1.638823f, 1.180087f, 17.343668f, -40.220032f,
@@ -2460,15 +2460,15 @@ static void test_D3DXSHEvalDirection(void)
 
     d.x = 1.0; d.y = 2.0f; d.z = 3.0f;
 
-    for(order = 0; order < 10; order++)
+    for (order = 0; order <= D3DXSH_MAXORDER + 1; order++)
     {
-        for(i = 0; i < 100; i++)
+        for (i = 0; i < 49; i++)
             a[i] = 1.5f + i;
 
         received_ptr = D3DXSHEvalDirection(a, order, &d);
         ok(received_ptr == a, "Expected %p, received %p\n", a, received_ptr);
 
-        for(i = 0; i < 100; i++)
+        for (i = 0; i < 49; i++)
         {
             /* if the order is < D3DXSH_MINORDER or order > D3DXSH_MAXORDER or the index of the element is greater than order * order - 1, D3DXSHEvalDirection does not modify the output */
             if ( (order < D3DXSH_MINORDER) || (order > D3DXSH_MAXORDER) || (i >= order * order) )
@@ -2781,7 +2781,7 @@ static void test_D3DXSHRotate(void)
 static void test_D3DXSHRotateZ(void)
 {
     unsigned int i, j, order, square;
-    FLOAT angle[] = { D3DX_PI / 3.0f, -D3DX_PI / 3.0f, 4.0f * D3DX_PI / 3.0f, }, expected, in[100], out[100], *received_ptr, table[] =
+    FLOAT angle[] = { D3DX_PI / 3.0f, -D3DX_PI / 3.0f, 4.0f * D3DX_PI / 3.0f, }, expected, in[49], out[49], *received_ptr, table[] =
     { /* Angle =  D3DX_PI / 3.0f */
       1.01f, 4.477762f, 3.010000f, 0.264289f, 5.297888f, 9.941864f, 7.010000f, -1.199813f,
       -8.843789f, -10.010002f, 7.494040f, 18.138016f, 13.010000, -3.395966f, -17.039942f,
@@ -2801,20 +2801,20 @@ static void test_D3DXSHRotateZ(void)
       -27.968143f, 24.009993f, 2.226105f, 18.180552f, -43.824543f, 28.010008f, 14.082489f,
       -42.726471f, 31.010000f, 9.984427f, -41.628399f, 34.009987f, 5.886366f, -40.530327, };
 
-    for (i = 0; i < 100; i++)
+    for (i = 0; i < 49; i++)
         in[i] = i + 1.01f;
 
     for (j = 0; j < 3; j++)
     {
-        for (order = 0; order < 10; order++)
+        for (order = 0; order <= D3DXSH_MAXORDER + 1; order++)
         {
-            for (i = 0; i < 100; i++)
+            for (i = 0; i < 49; i++)
                 out[i] = ( i + 1.0f ) * ( i + 1.0f );
 
             received_ptr = D3DXSHRotateZ(out, order, angle[j], in);
             ok(received_ptr == out, "angle %f, order %u, Expected %p, received %p\n", angle[j], order, out, received_ptr);
 
-            for (i = 0; i < 100; i++)
+            for (i = 0; i < 49; i++)
             {
                 /* order = 0 or order = 1 behaves like order = D3DXSH_MINORDER */
                 square = ( order <= D3DXSH_MINORDER ) ? D3DXSH_MINORDER * D3DXSH_MINORDER : order * order;
@@ -2831,20 +2831,20 @@ static void test_D3DXSHRotateZ(void)
 static void test_D3DXSHScale(void)
 {
     unsigned int i, order;
-    FLOAT a[100], b[100], expected, *received_array;
+    FLOAT a[49], b[49], expected, *received_array;
 
-    for (i = 0; i < 100; i++)
+    for (i = 0; i < 49; i++)
     {
         a[i] = i;
         b[i] = i;
     }
 
-    for (order = 0; order < 10; order++)
+    for (order = 0; order <= D3DXSH_MAXORDER + 1; order++)
     {
         received_array = D3DXSHScale(b, order, a, 5.0f);
         ok(received_array == b, "Expected %p, received %p\n", b, received_array);
 
-        for (i = 0; i < 100; i++)
+        for (i = 0; i < 49; i++)
         {
             if (i < order * order)
                 expected = 5.0f * a[i];
