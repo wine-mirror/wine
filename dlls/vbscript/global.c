@@ -864,8 +864,30 @@ static HRESULT Global_RTrim(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
 
 static HRESULT Global_Trim(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR str, conv_str = NULL;
+    WCHAR *begin_ptr, *end_ptr;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    if(V_VT(arg) == VT_BSTR) {
+        str = V_BSTR(arg);
+    }else {
+        hres = to_string(arg, &conv_str);
+        if(FAILED(hres))
+            return hres;
+        str = conv_str;
+    }
+
+    for(begin_ptr = str; *begin_ptr && isspaceW(*begin_ptr); begin_ptr++);
+    for(end_ptr = str+SysStringLen(str); end_ptr-1 > begin_ptr && isspaceW(*(end_ptr-1)); end_ptr--);
+
+    str = SysAllocStringLen(begin_ptr, end_ptr-begin_ptr);
+    SysFreeString(conv_str);
+    if(!str)
+        return E_OUTOFMEMORY;
+
+    return return_bstr(res, str);
 }
 
 static HRESULT Global_Space(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

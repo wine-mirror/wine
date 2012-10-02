@@ -225,6 +225,18 @@ TestRight "test", 0, ""
 TestRight 123, 2, "23"
 if isEnglishLang then TestRight true, 2, "ue"
 
+Sub TestTrim(str, exstr)
+    Call ok(Trim(str) = exstr, "Trim(" & str & ") = " & Trim(str))
+End Sub
+
+TestTrim "   test    ", "test"
+TestTrim "test    ", "test"
+TestTrim "   test", "test"
+TestTrim "test", "test"
+TestTrim "", ""
+TestTrim 123, "123"
+if isEnglishLang then TestTrim true, "True"
+
 Sub TestRound(val, exval, vt)
     Call ok(Round(val) = exval, "Round(" & val & ") = " & Round(val))
     Call ok(getVT(Round(val)) = vt, "getVT(Round(" & val & ")) = " & getVT(Round(val)))
