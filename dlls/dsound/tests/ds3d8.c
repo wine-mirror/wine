@@ -223,7 +223,9 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER * dsbo,
         rc=IDirectSoundBuffer_GetFormat(*dsbo,(WAVEFORMATEX*)&wfxe,size,NULL);
         wfx = wfxe.Format;
         ieee = IsEqualGUID(&wfxe.SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
-    }
+    } else
+        return;
+
     ok(rc==DS_OK,"IDirectSoundBuffer_GetFormat() failed: %08x\n", rc);
     if (rc==DS_OK && winetest_debug > 1) {
         trace("    Format: %s tag=0x%04x %dx%dx%d avg.B/s=%d align=%d\n",
