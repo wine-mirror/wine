@@ -402,11 +402,13 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
             {
                 if (GetLastError() != ERROR_BROKEN_PIPE)
                     ERR( "pipe read failed error %u\n", GetLastError() );
+                HeapFree( GetProcessHeap(), 0, data );
                 break;
             }
             if (count != data_size)
             {
                 ERR( "partial pipe read %u/%u\n", count, data_size );
+                HeapFree( GetProcessHeap(), 0, data );
                 break;
             }
         }
