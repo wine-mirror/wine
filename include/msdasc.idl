@@ -63,6 +63,7 @@ library MSDASC
 
     [
       uuid(2206CDB0-19C1-11D1-89E0-00C04FD7A829),
+      threading(both),
       progid("MSDASC.MSDAINITIALIZE.1"),
       vi_progid("MSDASC.MSDAINITIALIZE"),
     ]
