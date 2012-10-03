@@ -183,6 +183,39 @@ static UINT arm_disasm_swp(UINT inst, ADDRESS64 *addr)
     return 0;
 }
 
+static UINT arm_disasm_halfwordtrans(UINT inst, ADDRESS64 *addr)
+{
+    short halfword  = (inst >> 5)  & 0x01;
+    short sign      = (inst >> 6)  & 0x01;
+    short load      = (inst >> 20) & 0x01;
+    short writeback = (inst >> 21) & 0x01;
+    short immediate = (inst >> 22) & 0x01;
+    short direction = (inst >> 23) & 0x01;
+    short indexing  = (inst >> 24) & 0x01;
+    short offset    = ((inst >> 4) & 0xf0) + (inst & 0x0f);
+
+    if (!direction) offset *= -1;
+
+    dbg_printf("\n\t%s%s%s%s%s", load ? "ldr" : "str", sign ? "s" : "",
+               halfword ? "h" : (sign ? "b" : ""), writeback ? "t" : "", get_cond(inst));
+    dbg_printf("\t%s, ", tbl_regs[get_nibble(inst, 3)]);
+    if (indexing)
+    {
+        if (immediate)
+            dbg_printf("[%s, #%d]", tbl_regs[get_nibble(inst, 4)], offset);
+        else
+            dbg_printf("[%s, %s]", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+    }
+    else
+    {
+        if (immediate)
+            dbg_printf("[%s], #%d", tbl_regs[get_nibble(inst, 4)], offset);
+        else
+            dbg_printf("[%s], %s", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+    }
+    return 0;
+}
+
 static UINT arm_disasm_branchreg(UINT inst, ADDRESS64 *addr)
 {
     dbg_printf("\n\tb%s\t%s", get_cond(inst), tbl_regs[get_nibble(inst, 0)]);
@@ -317,39 +350,6 @@ static UINT arm_disasm_singletrans(UINT inst, ADDRESS64 *addr)
     return 0;
 }
 
-static UINT arm_disasm_halfwordtrans(UINT inst, ADDRESS64 *addr)
-{
-    short halfword  = (inst >> 5)  & 0x01;
-    short sign      = (inst >> 6)  & 0x01;
-    short load      = (inst >> 20) & 0x01;
-    short writeback = (inst >> 21) & 0x01;
-    short immediate = (inst >> 22) & 0x01;
-    short direction = (inst >> 23) & 0x01;
-    short indexing  = (inst >> 24) & 0x01;
-    short offset    = ((inst >> 4) & 0xf0) + (inst & 0x0f);
-
-    if (!direction) offset *= -1;
-
-    dbg_printf("\n\t%s%s%s%s%s", load ? "ldr" : "str", sign ? "s" : "",
-               halfword ? "h" : (sign ? "b" : ""), writeback ? "t" : "", get_cond(inst));
-    dbg_printf("\t%s, ", tbl_regs[get_nibble(inst, 3)]);
-    if (indexing)
-    {
-        if (immediate)
-            dbg_printf("[%s, #%d]", tbl_regs[get_nibble(inst, 4)], offset);
-        else
-            dbg_printf("[%s, %s]", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
-    }
-    else
-    {
-        if (immediate)
-            dbg_printf("[%s], #%d", tbl_regs[get_nibble(inst, 4)], offset);
-        else
-            dbg_printf("[%s], %s", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
-    }
-    return 0;
-}
-
 static UINT arm_disasm_blocktrans(UINT inst, ADDRESS64 *addr)
 {
     short load      = (inst >> 20) & 0x01;
@@ -379,8 +379,7 @@ static UINT arm_disasm_blocktrans(UINT inst, ADDRESS64 *addr)
 
 static UINT arm_disasm_swi(UINT inst, ADDRESS64 *addr)
 {
-    UINT comment = inst & 0x00ffffff;
-    dbg_printf("\n\tswi%s\t#%d", get_cond(inst), comment);
+    dbg_printf("\n\tswi%s\t#%d", get_cond(inst), inst & 0x00ffffff);
     return 0;
 }
 
@@ -518,6 +517,12 @@ static WORD thumb_disasm_blocktrans(WORD inst, ADDRESS64 *addr)
     return 0;
 }
 
+static WORD thumb_disasm_swi(WORD inst, ADDRESS64 *addr)
+{
+    dbg_printf("\n\tswi\t#%d", inst & 0x00ff);
+    return 0;
+}
+
 static WORD thumb_disasm_condbranch(WORD inst, ADDRESS64 *addr)
 {
     WORD offset = inst & 0x00ff;
@@ -544,19 +549,6 @@ static WORD thumb_disasm_loadadr(WORD inst, ADDRESS64 *addr)
     WORD offset = (inst & 0xff) << 2;
 
     dbg_printf("\n\tadd\t%s, %s, #%d", tbl_regs[(inst >> 8) & 0x07], src ? "sp" : "pc", offset);
-    return 0;
-}
-
-static WORD thumb_disasm_swi(WORD inst, ADDRESS64 *addr)
-{
-    WORD comment = inst & 0x00ff;
-    dbg_printf("\n\tswi\t#%d", comment);
-    return 0;
-}
-
-static WORD thumb_disasm_nop(WORD inst, ADDRESS64 *addr)
-{
-    dbg_printf("\n\tnop");
     return 0;
 }
 
@@ -621,6 +613,12 @@ static WORD thumb_disasm_immop(WORD inst, ADDRESS64 *addr)
     return 0;
 }
 
+static WORD thumb_disasm_nop(WORD inst, ADDRESS64 *addr)
+{
+    dbg_printf("\n\tnop");
+    return 0;
+}
+
 static WORD thumb_disasm_addsub(WORD inst, ADDRESS64 *addr)
 {
     WORD op = (inst >> 9) & 0x01;
@@ -640,33 +638,6 @@ static WORD thumb_disasm_movshift(WORD inst, ADDRESS64 *addr)
     WORD op = (inst >> 11) & 0x03;
     dbg_printf("\n\t%s\t%s, %s, #%u", tbl_shifts[op],
                tbl_regs[inst & 0x07], tbl_regs[(inst >> 3) & 0x07], (inst >> 6) & 0x1f);
-    return 0;
-}
-
-static UINT thumb2_disasm_branch(UINT inst, ADDRESS64 *addr)
-{
-    UINT S  = (inst >> 26) & 0x01;
-    UINT L  = (inst >> 14) & 0x01;
-    UINT I1 = !(((inst >> 13) & 0x01) ^ S);
-    UINT C  = !((inst >> 12) & 0x01);
-    UINT I2 = !(((inst >> 11) & 0x01) ^ S);
-    UINT offset = (inst & 0x000007ff) << 1;
-
-    if (C)
-    {
-        offset |= I1 << 19 | I2 << 18 | (inst & 0x003f0000) >> 4;
-        offset += 4;
-        if (S) offset |= 0x0fff << 20;
-    }
-    else
-    {
-        offset |= I1 << 23 | I2 << 22 | (inst & 0x03ff0000) >> 4;
-        offset += 4;
-        if (S) offset |= 0xff << 24;
-    }
-
-    dbg_printf("\n\tb%s%s\t", L ? "l" : "", C ? tbl_cond[(inst >> 22) & 0x0f] : "");
-    db_printsym(addr->Offset + offset);
     return 0;
 }
 
@@ -734,6 +705,31 @@ static UINT thumb2_disasm_miscctrl(UINT inst, ADDRESS64 *addr)
         return inst;
     }
 
+    return 0;
+}
+
+static UINT thumb2_disasm_branch(UINT inst, ADDRESS64 *addr)
+{
+    UINT S  = (inst >> 26) & 0x01;
+    UINT L  = (inst >> 14) & 0x01;
+    UINT I1 = !(((inst >> 13) & 0x01) ^ S);
+    UINT C  = !((inst >> 12) & 0x01);
+    UINT I2 = !(((inst >> 11) & 0x01) ^ S);
+    UINT offset = (inst & 0x000007ff) << 1;
+
+    if (C)
+    {
+        offset |= I1 << 19 | I2 << 18 | (inst & 0x003f0000) >> 4;
+        if (S) offset |= 0x0fff << 20;
+    }
+    else
+    {
+        offset |= I1 << 23 | I2 << 22 | (inst & 0x03ff0000) >> 4;
+        if (S) offset |= 0xff << 24;
+    }
+
+    dbg_printf("\n\tb%s%s\t", L ? "l" : "", C ? tbl_cond[(inst >> 22) & 0x0f] : "");
+    db_printsym(addr->Offset + offset + 4);
     return 0;
 }
 
@@ -1078,6 +1074,7 @@ static const struct inst_thumb16 tbl_thumb16[] = {
     { 0xfc00, 0x4000, thumb_disasm_aluop },
     { 0xf600, 0xb400, thumb_disasm_pushpop },
     { 0xf000, 0xc000, thumb_disasm_blocktrans },
+    { 0xff00, 0xdf00, thumb_disasm_swi },
     { 0xf000, 0xd000, thumb_disasm_condbranch },
     { 0xf800, 0xe000, thumb_disasm_uncondbranch },
     { 0xf000, 0xa000, thumb_disasm_loadadr },
@@ -1089,7 +1086,6 @@ static const struct inst_thumb16 tbl_thumb16[] = {
     { 0xf200, 0x5000, thumb_disasm_ldrreg },
     { 0xf200, 0x5200, thumb_disasm_ldrsreg },
     { 0xe000, 0x2000, thumb_disasm_immop },
-    { 0xff00, 0xdf00, thumb_disasm_swi },
     { 0xff00, 0xbf00, thumb_disasm_nop },
     { 0xf800, 0x1800, thumb_disasm_addsub },
     { 0xe000, 0x0000, thumb_disasm_movshift },
