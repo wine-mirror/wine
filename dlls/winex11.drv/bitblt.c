@@ -29,8 +29,17 @@
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
-#ifdef HAVE_LIBXSHAPE
+#ifdef HAVE_X11_EXTENSIONS_SHAPE_H
 #include <X11/extensions/shape.h>
+#endif
+#ifdef HAVE_X11_EXTENSIONS_XSHM_H
+# include <X11/extensions/XShm.h>
+# ifdef HAVE_SYS_SHM_H
+#  include <sys/shm.h>
+# endif
+# ifdef HAVE_SYS_IPC_H
+#  include <sys/ipc.h>
+# endif
 #endif
 
 #include "windef.h"
@@ -1557,6 +1566,9 @@ struct x11drv_window_surface
     BOOL                  is_argb;
     COLORREF              color_key;
     void                 *bits;
+#ifdef HAVE_LIBXXSHM
+    XShmSegmentInfo       shminfo;
+#endif
     CRITICAL_SECTION      crit;
     BITMAPINFO            info;   /* variable size, must be last */
 };
@@ -1750,6 +1762,50 @@ static void set_color_key( struct x11drv_window_surface *surface, COLORREF key )
                              get_color_component( GetBValue(key), masks[2] );
 }
 
+#ifdef HAVE_LIBXXSHM
+static int xshm_error_handler( Display *display, XErrorEvent *event, void *arg )
+{
+    return 1;  /* FIXME: should check event contents */
+}
+
+static XImage *create_shm_image( const XVisualInfo *vis, int width, int height, XShmSegmentInfo *shminfo )
+{
+    XImage *image;
+
+    shminfo->shmid = -1;
+    image = XShmCreateImage( gdi_display, vis->visual, vis->depth, ZPixmap, NULL, shminfo, width, height );
+    if (!image) return NULL;
+    if (image->bytes_per_line & 3) goto failed;  /* we need 32-bit alignment */
+
+    shminfo->shmid = shmget( IPC_PRIVATE, image->bytes_per_line * height, IPC_CREAT | 0700 );
+    if (shminfo->shmid == -1) goto failed;
+
+    shminfo->shmaddr = shmat( shminfo->shmid, 0, 0 );
+    if (shminfo->shmaddr != (char *)-1)
+    {
+        BOOL ok;
+
+        shminfo->readOnly = True;
+        X11DRV_expect_error( gdi_display, xshm_error_handler, NULL );
+        ok = (XShmAttach( gdi_display, shminfo ) != 0);
+        XSync( gdi_display, False );
+        if (!X11DRV_check_error() && ok)
+        {
+            image->data = shminfo->shmaddr;
+            shmctl( shminfo->shmid, IPC_RMID, 0 );
+            return image;
+        }
+        shmdt( shminfo->shmaddr );
+    }
+    shmctl( shminfo->shmid, IPC_RMID, 0 );
+    shminfo->shmid = -1;
+
+failed:
+    XDestroyImage( image );
+    return NULL;
+}
+#endif /* HAVE_LIBXXSHM */
+
 /***********************************************************************
  *           x11drv_surface_lock
  */
@@ -1830,6 +1886,19 @@ static void x11drv_surface_flush( struct window_surface *window_surface )
                                  surface->byteswap, mapping, ~0u );
         }
 
+#ifdef HAVE_LIBXXSHM
+        if (surface->shminfo.shmid != -1)
+        {
+            XShmPutImage( gdi_display, surface->window, surface->gc, surface->image,
+                          coords.visrect.left, coords.visrect.top,
+                          surface->header.rect.left + coords.visrect.left,
+                          surface->header.rect.top + coords.visrect.top,
+                          coords.visrect.right - coords.visrect.left,
+                          coords.visrect.bottom - coords.visrect.top, False );
+            XSync( gdi_display, False );
+        }
+        else
+#endif
         XPutImage( gdi_display, surface->window, surface->gc, surface->image,
                    coords.visrect.left, coords.visrect.top,
                    surface->header.rect.left + coords.visrect.left,
@@ -1853,6 +1922,14 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
     if (surface->image)
     {
         if (surface->image->data != surface->bits) HeapFree( GetProcessHeap(), 0, surface->bits );
+#ifdef HAVE_LIBXXSHM
+        if (surface->shminfo.shmid != -1)
+        {
+            XShmDetach( gdi_display, &surface->shminfo );
+            shmdt( surface->shminfo.shmaddr );
+        }
+        else
+#endif
         HeapFree( GetProcessHeap(), 0, surface->image->data );
         surface->image->data = NULL;
         XDestroyImage( surface->image );
@@ -1905,11 +1982,17 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
     set_color_key( surface, color_key );
     reset_bounds( &surface->bounds );
 
-    surface->image = XCreateImage( gdi_display, vis->visual, vis->depth, ZPixmap, 0, NULL,
-                                   width, height, 32, 0 );
-    if (!surface->image) goto failed;
-    surface->image->data = HeapAlloc( GetProcessHeap(), 0, surface->info.bmiHeader.biSizeImage );
-    if (!surface->image->data) goto failed;
+#ifdef HAVE_LIBXXSHM
+    surface->image = create_shm_image( vis, width, height, &surface->shminfo );
+    if (!surface->image)
+#endif
+    {
+        surface->image = XCreateImage( gdi_display, vis->visual, vis->depth, ZPixmap, 0, NULL,
+                                       width, height, 32, 0 );
+        if (!surface->image) goto failed;
+        surface->image->data = HeapAlloc( GetProcessHeap(), 0, surface->info.bmiHeader.biSizeImage );
+        if (!surface->image->data) goto failed;
+    }
 
     surface->gc = XCreateGC( gdi_display, window, 0, NULL );
     surface->byteswap = image_needs_byteswap( surface->image, is_r8g8b8(vis), format->bits_per_pixel );
@@ -1923,8 +2006,9 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
     }
     else surface->bits = surface->image->data;
 
-    TRACE( "created %p for %lx %s bits %p-%p\n", surface, window, wine_dbgstr_rect(rect),
-           surface->bits, (char *)surface->bits + surface->info.bmiHeader.biSizeImage );
+    TRACE( "created %p for %lx %s bits %p-%p image %p\n", surface, window, wine_dbgstr_rect(rect),
+           surface->bits, (char *)surface->bits + surface->info.bmiHeader.biSizeImage,
+           surface->image->data );
 
     return &surface->header;
 
