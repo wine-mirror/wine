@@ -1690,44 +1690,44 @@ static HRESULT Global_vbSystemModal(vbdisp_t *This, VARIANT *arg, unsigned args_
 
 static HRESULT Global_vbOK(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, IDOK);
 }
 
 static HRESULT Global_vbCancel(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, IDCANCEL);
 }
 
 static HRESULT Global_vbAbort(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, IDABORT);
 }
 
 static HRESULT Global_vbRetry(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, IDRETRY);
 }
 
 static HRESULT Global_vbIgnore(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, IDIGNORE);
 }
 
 static HRESULT Global_vbYes(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, IDYES);
 }
 
 static HRESULT Global_vbNo(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, IDNO);
 }
 
 static HRESULT Global_vbEmpty(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
