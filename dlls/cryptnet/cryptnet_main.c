@@ -731,21 +731,24 @@ static void CRYPT_CacheURL(LPCWSTR pszURL, const CRYPT_BLOB_ARRAY *pObject,
  DWORD dwRetrievalFlags, FILETIME expires)
 {
     WCHAR cacheFileName[MAX_PATH];
-    DWORD size = 0;
-    BOOL ret, create = FALSE;
+    HANDLE hCacheFile;
+    DWORD size = 0, entryType;
+    FILETIME ft;
 
     GetUrlCacheEntryInfoW(pszURL, NULL, &size);
     if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
     {
         INTERNET_CACHE_ENTRY_INFOW *info = CryptMemAlloc(size);
 
-        if (info)
+        if (!info)
         {
-            FILETIME ft;
+            ERR("out of memory\n");
+            return;
+        }
 
-            ret = GetUrlCacheEntryInfoW(pszURL, info, &size);
-            if (ret)
-                lstrcpyW(cacheFileName, info->lpszLocalFileName);
+        if (GetUrlCacheEntryInfoW(pszURL, info, &size))
+        {
+            lstrcpyW(cacheFileName, info->lpszLocalFileName);
             /* Check if the existing cache entry is up to date.  If it isn't,
              * remove the existing cache entry, and create a new one with the
              * new value.
@@ -753,51 +756,38 @@ static void CRYPT_CacheURL(LPCWSTR pszURL, const CRYPT_BLOB_ARRAY *pObject,
             GetSystemTimeAsFileTime(&ft);
             if (CompareFileTime(&info->ExpireTime, &ft) < 0)
             {
-                create = TRUE;
                 DeleteUrlCacheEntryW(pszURL);
+                CryptMemFree(info);
             }
-            CryptMemFree(info);
-        }
-        else
-            ret = FALSE;
-    }
-    else
-    {
-        ret = CreateUrlCacheEntryW(pszURL, pObject->rgBlob[0].cbData, NULL,
-         cacheFileName, 0);
-        create = TRUE;
-    }
-    if (ret)
-    {
-        DWORD entryType;
-        FILETIME ft = { 0 };
-
-        if (create)
-        {
-            HANDLE hCacheFile = CreateFileW(cacheFileName, GENERIC_WRITE, 0,
-             NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-            if (hCacheFile != INVALID_HANDLE_VALUE)
+            else
             {
-                DWORD bytesWritten;
-
-                WriteFile(hCacheFile, pObject->rgBlob[0].pbData,
-                 pObject->rgBlob[0].cbData, &bytesWritten, NULL);
-                CloseHandle(hCacheFile);
+                info->ExpireTime = expires;
+                SetUrlCacheEntryInfoW(pszURL, info, CACHE_ENTRY_EXPTIME_FC);
+                CryptMemFree(info);
+                return;
             }
-            else
-                ret = FALSE;
-        }
-        if (ret)
-        {
-            if (!(dwRetrievalFlags & CRYPT_STICKY_CACHE_RETRIEVAL))
-                entryType = NORMAL_CACHE_ENTRY;
-            else
-                entryType = STICKY_CACHE_ENTRY;
-            CommitUrlCacheEntryW(pszURL, cacheFileName, expires, ft, entryType,
-             NULL, 0, NULL, NULL);
         }
     }
+
+    if (!CreateUrlCacheEntryW(pszURL, pObject->rgBlob[0].cbData, NULL, cacheFileName, 0))
+        return;
+
+    hCacheFile = CreateFileW(cacheFileName, GENERIC_WRITE, 0,
+            NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if(hCacheFile == INVALID_HANDLE_VALUE)
+        return;
+
+    WriteFile(hCacheFile, pObject->rgBlob[0].pbData,
+            pObject->rgBlob[0].cbData, &size, NULL);
+    CloseHandle(hCacheFile);
+
+    if (!(dwRetrievalFlags & CRYPT_STICKY_CACHE_RETRIEVAL))
+        entryType = NORMAL_CACHE_ENTRY;
+    else
+        entryType = STICKY_CACHE_ENTRY;
+    memset(&ft, 0, sizeof(ft));
+    CommitUrlCacheEntryW(pszURL, cacheFileName, expires, ft, entryType,
+            NULL, 0, NULL, NULL);
 }
 
 static void CALLBACK CRYPT_InetStatusCallback(HINTERNET hInt,
