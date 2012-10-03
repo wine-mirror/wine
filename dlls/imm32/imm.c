@@ -2914,6 +2914,6 @@ static LRESULT WINAPI DefIME_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                    PostMessageW(immHkl->UIWnd,uMsg,wParam,lParam);
                 return TRUE;
             }
-            return FALSE;
+            return DefWindowProcW(hwnd, uMsg, wParam, lParam);
     }
 }
