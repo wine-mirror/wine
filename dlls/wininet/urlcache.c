@@ -3419,6 +3419,8 @@ BOOL WINAPI CommitUrlCacheEntryW(
 
     if (!lpHeaderInfo || (header_info = heap_strdupWtoA(lpHeaderInfo)))
     {
+        if(header_info)
+            len = strlen(header_info);
 	if (CommitUrlCacheEntryInternal(lpszUrlName, lpszLocalFileName, ExpireTime, LastModifiedTime,
 				CacheEntryType, (LPBYTE)header_info, len, lpszFileExtension, lpszOriginalUrl))
 	{
