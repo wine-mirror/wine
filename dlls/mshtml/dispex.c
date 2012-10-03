@@ -755,7 +755,7 @@ static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
             return E_INVALIDARG;
         /* fall through */
     case DISPATCH_METHOD:
-        if(This->dynamic_data && This->dynamic_data && This->dynamic_data->func_disps
+        if(This->dynamic_data && This->dynamic_data->func_disps
            && This->dynamic_data->func_disps[func->func_disp_idx].func_obj) {
             func_obj_entry_t *entry = This->dynamic_data->func_disps + func->func_disp_idx;
 
