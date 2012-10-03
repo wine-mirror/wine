@@ -154,7 +154,6 @@ static inline jsval_t jsval_number(double n)
             ret.u.s.tag = 0x7ff00000;
         }
     }
-    return ret;
 #else
     ret.type = JSV_NUMBER;
     ret.u.n = n;
