@@ -2888,12 +2888,18 @@ static LRESULT WINAPI DefIME_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
         case WM_CREATE:
         case WM_NCCREATE:
             return TRUE;
-        case WM_IME_COMPOSITION:
         case WM_IME_STARTCOMPOSITION:
         case WM_IME_ENDCOMPOSITION:
-        case WM_IME_SELECT:
-        case WM_IME_CONTROL:
+        case WM_IME_COMPOSITION:
+        case WM_IME_SETCONTEXT:
         case WM_IME_NOTIFY:
+        case WM_IME_CONTROL:
+        case WM_IME_COMPOSITIONFULL:
+        case WM_IME_SELECT:
+        case WM_IME_CHAR:
+        case WM_IME_REQUEST:
+        case WM_IME_KEYDOWN:
+        case WM_IME_KEYUP:
         {
            ImmHkl *immHkl = IMM_GetImmHkl(GetKeyboardLayout(0));
            if (immHkl->UIWnd)
@@ -2902,7 +2908,7 @@ static LRESULT WINAPI DefIME_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
         }
         default:
             if ((uMsg == WM_MSIME_RECONVERTOPTIONS) ||
-                (uMsg ==WM_MSIME_SERVICE) ||
+                (uMsg == WM_MSIME_SERVICE) ||
                 (uMsg == WM_MSIME_MOUSE) ||
                 (uMsg == WM_MSIME_RECONVERTREQUEST) ||
                 (uMsg == WM_MSIME_RECONVERT) ||
