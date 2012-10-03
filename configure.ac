@@ -97,6 +97,8 @@ AC_ARG_WITH(xrender,   AS_HELP_STRING([--without-xrender],[do not use the Xrende
             [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_Xrender_h=no; fi])
 AC_ARG_WITH(xshape,    AS_HELP_STRING([--without-xshape],[do not use the Xshape extension]),
             [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_shape_h=no; fi])
+AC_ARG_WITH(xshm,      AS_HELP_STRING([--without-xshm],[do not use XShm (shared memory extension)]),
+            [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_XShm_h=no; fi])
 AC_ARG_WITH(xslt,      AS_HELP_STRING([--without-xslt],[do not use XSLT]))
 AC_ARG_WITH(xxf86vm,   AS_HELP_STRING([--without-xxf86vm],[do not use XFree video mode extension]),
             [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_xf86vmode_h=no; ac_cv_header_X11_extensions_xf86vmproto_h=no; fi])
@@ -972,6 +974,7 @@ then
                       X11/extensions/shape.h \
                       X11/extensions/XInput.h \
                       X11/extensions/XInput2.h \
+                      X11/extensions/XShm.h \
                       X11/extensions/Xcomposite.h \
                       X11/extensions/Xinerama.h \
                       X11/extensions/Xrandr.h \
@@ -1015,6 +1018,16 @@ then
             WINE_NOTICE_WITH(xinput2,[test "$ac_cv_header_X11_extensions_XInput2_h" != "yes"],
                              [XInput2 headers not found, the XInput 2 extension won't be supported.])
         fi
+
+        dnl *** Check for X Shm extension
+        if test "$ac_cv_header_X11_extensions_XShm_h" = "yes"
+        then
+              AC_CHECK_LIB(Xext, XShmQueryExtension,
+              AC_DEFINE(HAVE_LIBXXSHM, 1, [Define if you have the X Shm extension]),,
+              $X_LIBS $XLIB $X_EXTRA_LIBS)
+        fi
+        WINE_NOTICE_WITH(xshm,[test "$ac_cv_lib_Xext_XShmQueryExtension" != "yes"],
+                         [XShm ${notice_platform}development files not found, X Shared Memory won't be supported.])
 
         dnl *** Check for X shape extension
         if test "$ac_cv_header_X11_extensions_shape_h" = "yes"

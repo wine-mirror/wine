@@ -838,6 +838,7 @@ with_xml
 with_xrandr
 with_xrender
 with_xshape
+with_xshm
 with_xslt
 with_xxf86vm
 with_zlib
@@ -1527,6 +1528,7 @@ Optional Packages:
   --without-xrandr        do not use Xrandr (resolution changes)
   --without-xrender       do not use the Xrender extension
   --without-xshape        do not use the Xshape extension
+  --without-xshm          do not use XShm (shared memory extension)
   --without-xslt          do not use XSLT
   --without-xxf86vm       do not use XFree video mode extension
   --without-zlib          do not use Zlib (data compression)
@@ -2774,6 +2776,12 @@ fi
 # Check whether --with-xshape was given.
 if test "${with_xshape+set}" = set; then :
   withval=$with_xshape; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_shape_h=no; fi
+fi
+
+
+# Check whether --with-xshm was given.
+if test "${with_xshm+set}" = set; then :
+  withval=$with_xshm; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_XShm_h=no; fi
 fi
 
 
@@ -8085,6 +8093,7 @@ fi
                       X11/extensions/shape.h \
                       X11/extensions/XInput.h \
                       X11/extensions/XInput2.h \
+                      X11/extensions/XShm.h \
                       X11/extensions/Xcomposite.h \
                       X11/extensions/Xinerama.h \
                       X11/extensions/Xrandr.h \
@@ -8291,6 +8300,60 @@ This is an error since --with-xinput2 was requested." "$LINENO" 5 ;;
 esac
 fi
         fi
+
+                if test "$ac_cv_header_X11_extensions_XShm_h" = "yes"
+        then
+              { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XShmQueryExtension in -lXext" >&5
+$as_echo_n "checking for XShmQueryExtension in -lXext... " >&6; }
+if ${ac_cv_lib_Xext_XShmQueryExtension+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lXext $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char XShmQueryExtension ();
+int
+main ()
+{
+return XShmQueryExtension ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_Xext_XShmQueryExtension=yes
+else
+  ac_cv_lib_Xext_XShmQueryExtension=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Xext_XShmQueryExtension" >&5
+$as_echo "$ac_cv_lib_Xext_XShmQueryExtension" >&6; }
+if test "x$ac_cv_lib_Xext_XShmQueryExtension" = xyes; then :
+
+$as_echo "#define HAVE_LIBXXSHM 1" >>confdefs.h
+
+fi
+
+        fi
+        if test "$ac_cv_lib_Xext_XShmQueryExtension" != "yes"; then :
+  case "x$with_xshm" in
+  x)   as_fn_append wine_notices "|XShm ${notice_platform}development files not found, X Shared Memory won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "XShm ${notice_platform}development files not found, X Shared Memory won't be supported.
+This is an error since --with-xshm was requested." "$LINENO" 5 ;;
+esac
+fi
 
                 if test "$ac_cv_header_X11_extensions_shape_h" = "yes"
         then
