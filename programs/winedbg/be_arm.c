@@ -963,6 +963,22 @@ static UINT thumb2_disasm_ldrword(UINT inst, ADDRESS64 *addr)
     return 0;
 }
 
+static UINT thumb2_disasm_coprocdat(UINT inst, ADDRESS64 *addr)
+{
+    WORD opc2 = (inst >> 5) & 0x07;
+
+    if (opc2)
+        dbg_printf("\n\tcdp%s\tp%u, #%u, cr%u, cr%u, cr%u, #%u", (inst & 0x10000000)?"2":"",
+                   get_nibble(inst, 2), get_nibble(inst, 5), get_nibble(inst, 3),
+                   get_nibble(inst, 4), get_nibble(inst, 0), opc2);
+    else
+        dbg_printf("\n\tcdp%s\tp%u, #%u, cr%u, cr%u, cr%u", (inst & 0x10000000)?"2":"",
+                   get_nibble(inst, 2), get_nibble(inst, 5), get_nibble(inst, 3),
+                   get_nibble(inst, 4), get_nibble(inst, 0));
+
+    return 0;
+}
+
 static UINT thumb2_disasm_coprocmov1(UINT inst, ADDRESS64 *addr)
 {
     WORD opc1 = (inst >> 21) & 0x07;
@@ -1052,6 +1068,7 @@ static const struct inst_arm tbl_thumb32[] = {
     { 0xff8000f0, 0xfb8000f0, thumb2_disasm_longmuldiv },
     { 0xff100000, 0xf8000000, thumb2_disasm_str },
     { 0xff700000, 0xf8500000, thumb2_disasm_ldrword },
+    { 0xef000010, 0xee000000, thumb2_disasm_coprocdat },
     { 0xef000010, 0xee000010, thumb2_disasm_coprocmov1 },
     { 0x00000000, 0x00000000, NULL }
 };
