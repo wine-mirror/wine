@@ -2511,7 +2511,7 @@ int WINAPI WS_getpeername(SOCKET s, struct WS_sockaddr *name, int *namelen)
     int fd;
     int res;
 
-    TRACE("socket: %04lx, ptr %p, len %08x\n", s, name, namelen?*namelen:0);
+    TRACE("socket: %04lx, ptr %p, len %08x\n", s, name, namelen ? *namelen : 0);
 
     fd = get_sock_fd( s, 0, NULL );
     res = SOCKET_ERROR;
@@ -2546,7 +2546,7 @@ int WINAPI WS_getsockname(SOCKET s, struct WS_sockaddr *name, int *namelen)
     int fd;
     int res;
 
-    TRACE("socket: %04lx, ptr %p, len %08x\n", s, name, namelen?*namelen:0);
+    TRACE("socket: %04lx, ptr %p, len %08x\n", s, name, namelen ? *namelen : 0);
 
     /* Check if what we've received is valid. Should we use IsBadReadPtr? */
     if( (name == NULL) || (namelen == NULL) )
@@ -4194,7 +4194,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
                 SetLastError(WSAEFAULT);
                 return SOCKET_ERROR;
             }
-            linger.l_onoff  = *((const int*)optval) ? 0: 1;
+            linger.l_onoff  = *(const int*)optval == 0;
             linger.l_linger = 0;
             level = SOL_SOCKET;
             optname = SO_LINGER;
@@ -6077,7 +6077,7 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
        {
                case CF_ACCEPT:
                        if (addr && addrlen)
-                           memcpy(addr, &src_addr, (*addrlen > size) ?  size : *addrlen );
+                           memcpy(addr, &src_addr, (*addrlen > size) ? size : *addrlen );
                        return cs;
                case CF_DEFER:
                        SERVER_START_REQ( set_socket_deferred )
