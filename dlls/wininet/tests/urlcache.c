@@ -41,6 +41,7 @@ static BOOL (WINAPI *pUnlockUrlCacheEntryFileA)(LPCSTR,DWORD);
 
 static char filenameA[MAX_PATH + 1];
 static char filenameA1[MAX_PATH + 1];
+static BOOL old_ie = FALSE;
 
 static void check_cache_entry_infoA(const char *returnedfrom, LPINTERNET_CACHE_ENTRY_INFO lpCacheEntryInfo)
 {
@@ -137,7 +138,7 @@ static void test_GetUrlCacheEntryInfoExA(void)
 
     /* Unicode version of function seems to ignore 0x200 flag */
     ret = GetUrlCacheEntryInfoExW(test_urlW, NULL, NULL, NULL, NULL, NULL, 0x200 /*GET_INSTALLED_ENTRY*/);
-    ok(ret, "GetUrlCacheEntryInfoExW failed with error %d\n", GetLastError());
+    ok(ret || broken(old_ie && !ret), "GetUrlCacheEntryInfoExW failed with error %d\n", GetLastError());
 
     ret = GetUrlCacheEntryInfoEx(test_url, lpCacheEntryInfo, &cbCacheEntryInfo, NULL, NULL, NULL, 0);
     ok(ret, "GetUrlCacheEntryInfoEx failed with error %d\n", GetLastError());
@@ -845,10 +846,10 @@ static void test_GetDiskInfoA(void)
     ret = GetDiskInfoA(path, NULL, NULL, NULL);
     error = GetLastError();
     ok(!ret ||
-       broken(ret), /* < IE7 */
+       broken(old_ie && ret), /* < IE7 */
        "GetDiskInfoA succeeded\n");
     ok(error == ERROR_PATH_NOT_FOUND ||
-       broken(error == 0xdeadbeef), /* < IE7 */
+       broken(old_ie && error == 0xdeadbeef), /* < IE7 */
        "got %u expected ERROR_PATH_NOT_FOUND\n", error);
 
     SetLastError(0xdeadbeef);
@@ -867,6 +868,8 @@ START_TEST(urlcache)
         win_skip("Too old IE (older than 6.0)\n");
         return;
     }
+    if(!GetProcAddress(hdll, "InternetGetSecurityInfoByURL")) /* < IE7 */
+        old_ie = TRUE;
 
     pDeleteUrlCacheEntryA = (void*)GetProcAddress(hdll, "DeleteUrlCacheEntryA");
     pUnlockUrlCacheEntryFileA = (void*)GetProcAddress(hdll, "UnlockUrlCacheEntryFileA");
