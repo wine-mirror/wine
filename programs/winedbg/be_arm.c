@@ -996,6 +996,15 @@ static UINT thumb2_disasm_coprocmov1(UINT inst, ADDRESS64 *addr)
     return 0;
 }
 
+static UINT thumb2_disasm_coprocmov2(UINT inst, ADDRESS64 *addr)
+{
+    dbg_printf("\n\t%s%s\tp%u, #%u, %s, %s, cr%u", (inst & 0x00100000)?"mrrc":"mcrr",
+               (inst & 0x10000000)?"2":"", get_nibble(inst, 2), get_nibble(inst, 1),
+               tbl_regs[get_nibble(inst, 3)], tbl_regs[get_nibble(inst, 4)], get_nibble(inst, 0));
+
+    return 0;
+}
+
 struct inst_arm
 {
         UINT mask;
@@ -1070,6 +1079,7 @@ static const struct inst_arm tbl_thumb32[] = {
     { 0xff700000, 0xf8500000, thumb2_disasm_ldrword },
     { 0xef000010, 0xee000000, thumb2_disasm_coprocdat },
     { 0xef000010, 0xee000010, thumb2_disasm_coprocmov1 },
+    { 0xefe00000, 0xec400000, thumb2_disasm_coprocmov2 },
     { 0x00000000, 0x00000000, NULL }
 };
 
