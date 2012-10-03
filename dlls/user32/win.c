@@ -3592,6 +3592,21 @@ BOOL WINAPI SwitchDesktop( HDESK hDesktop)
     return TRUE;
 }
 
+
+/***********************************************************************
+ *           __wine_set_pixel_format
+ */
+BOOL CDECL __wine_set_pixel_format( HWND hwnd, int format )
+{
+    RECT window_rect, client_rect;
+
+    WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
+    return set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
+                           SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW,
+                           &window_rect, &client_rect, NULL );
+}
+
+
 /*****************************************************************************
  *              SetLayeredWindowAttributes (USER32.@)
  */

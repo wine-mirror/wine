@@ -1286,6 +1286,8 @@ static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format )
         free_gl_drawable( prev );
     XSaveContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char *)gl );
     LeaveCriticalSection( &context_section );
+
+    __wine_set_pixel_format( hwnd, pixel_format_index( format ));
     return TRUE;
 }
 
