@@ -1553,10 +1553,10 @@ struct x11drv_window_surface
     GC                    gc;
     XImage               *image;
     RECT                  bounds;
-    BOOL                  is_r8g8b8;
+    BOOL                  byteswap;
     BOOL                  is_argb;
     COLORREF              color_key;
-    struct gdi_image_bits bits;
+    void                 *bits;
     CRITICAL_SECTION      crit;
     BITMAPINFO            info;   /* variable size, must be last */
 };
@@ -1626,7 +1626,7 @@ static void update_surface_region( struct x11drv_window_surface *surface )
     {
     case 16:
     {
-        WORD *bits = surface->bits.ptr;
+        WORD *bits = surface->bits;
         int stride = (width + 1) & ~1;
         UINT mask = masks[0] | masks[1] | masks[2];
 
@@ -1645,7 +1645,7 @@ static void update_surface_region( struct x11drv_window_surface *surface )
     }
     case 24:
     {
-        BYTE *bits = surface->bits.ptr;
+        BYTE *bits = surface->bits;
         int stride = (width * 3 + 3) & ~3;
 
         for (y = surface->header.rect.top; y < surface->header.rect.bottom; y++, bits += stride)
@@ -1671,7 +1671,7 @@ static void update_surface_region( struct x11drv_window_surface *surface )
     }
     case 32:
     {
-        DWORD *bits = surface->bits.ptr;
+        DWORD *bits = surface->bits;
 
         if (info->bmiHeader.biCompression == BI_RGB)
         {
@@ -1778,7 +1778,7 @@ static void *x11drv_surface_get_bitmap_info( struct window_surface *window_surfa
     struct x11drv_window_surface *surface = get_x11_surface( window_surface );
 
     memcpy( info, &surface->info, get_dib_info_size( &surface->info, DIB_RGB_COLORS ));
-    return surface->bits.ptr;
+    return surface->bits;
 }
 
 /***********************************************************************
@@ -1797,9 +1797,9 @@ static RECT *x11drv_surface_get_bounds( struct window_surface *window_surface )
 static void x11drv_surface_flush( struct window_surface *window_surface )
 {
     struct x11drv_window_surface *surface = get_x11_surface( window_surface );
+    unsigned char *src = surface->bits;
+    unsigned char *dst = (unsigned char *)surface->image->data;
     struct bitblt_coords coords;
-    struct gdi_image_bits dst_bits;
-    const int *mapping = NULL;
 
     window_surface->funcs->lock( window_surface );
     coords.x = 0;
@@ -1811,27 +1811,31 @@ static void x11drv_surface_flush( struct window_surface *window_surface )
     {
         TRACE( "flushing %p %dx%d bounds %s bits %p\n",
                surface, coords.width, coords.height,
-               wine_dbgstr_rect( &surface->bounds ), surface->bits.ptr );
+               wine_dbgstr_rect( &surface->bounds ), surface->bits );
 
         if (surface->is_argb || surface->color_key != CLR_INVALID) update_surface_region( surface );
 
-        if (surface->image->bits_per_pixel == 4 || surface->image->bits_per_pixel == 8)
-            mapping = X11DRV_PALETTE_PaletteToXPixel;
-
-        if (!copy_image_bits( &surface->info, surface->is_r8g8b8, surface->image,
-                              &surface->bits, &dst_bits, &coords, mapping, ~0u ))
+        if (src != dst)
         {
-            surface->image->data = dst_bits.ptr;
-            XPutImage( gdi_display, surface->window, surface->gc, surface->image,
-                       coords.visrect.left, 0,
-                       surface->header.rect.left + coords.visrect.left,
-                       surface->header.rect.top + coords.visrect.top,
-                       coords.visrect.right - coords.visrect.left,
-                       coords.visrect.bottom - coords.visrect.top );
-            surface->image->data = NULL;
+            const int *mapping = NULL;
+            int width_bytes = surface->image->bytes_per_line;
+
+            if (surface->image->bits_per_pixel == 4 || surface->image->bits_per_pixel == 8)
+                mapping = X11DRV_PALETTE_PaletteToXPixel;
+
+            src += coords.visrect.top * width_bytes;
+            dst += coords.visrect.top * width_bytes;
+            copy_image_byteswap( &surface->info, src, dst, width_bytes, width_bytes,
+                                 coords.visrect.bottom - coords.visrect.top,
+                                 surface->byteswap, mapping, ~0u );
         }
 
-        if (dst_bits.free) dst_bits.free( &dst_bits );
+        XPutImage( gdi_display, surface->window, surface->gc, surface->image,
+                   coords.visrect.left, coords.visrect.top,
+                   surface->header.rect.left + coords.visrect.left,
+                   surface->header.rect.top + coords.visrect.top,
+                   coords.visrect.right - coords.visrect.left,
+                   coords.visrect.bottom - coords.visrect.top );
     }
     reset_bounds( &surface->bounds );
     window_surface->funcs->unlock( window_surface );
@@ -1844,10 +1848,15 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
 {
     struct x11drv_window_surface *surface = get_x11_surface( window_surface );
 
-    TRACE( "freeing %p bits %p\n", surface, surface->bits.ptr );
+    TRACE( "freeing %p bits %p\n", surface, surface->bits );
     if (surface->gc) XFreeGC( gdi_display, surface->gc );
-    if (surface->image) XDestroyImage( surface->image );
-    if (surface->bits.free) surface->bits.free( &surface->bits );
+    if (surface->image)
+    {
+        if (surface->image->data != surface->bits) HeapFree( GetProcessHeap(), 0, surface->bits );
+        HeapFree( GetProcessHeap(), 0, surface->image->data );
+        surface->image->data = NULL;
+        XDestroyImage( surface->image );
+    }
     surface->crit.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &surface->crit );
     HeapFree( GetProcessHeap(), 0, surface );
@@ -1892,23 +1901,30 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
     surface->header.rect  = *rect;
     surface->header.ref   = 1;
     surface->window = window;
-    surface->is_r8g8b8 = is_r8g8b8( vis );
     surface->is_argb = (use_alpha && vis->depth == 32 && surface->info.bmiHeader.biCompression == BI_RGB);
     set_color_key( surface, color_key );
     reset_bounds( &surface->bounds );
-    if (!(surface->bits.ptr  = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                          surface->info.bmiHeader.biSizeImage )))
-        goto failed;
-
-    surface->bits.free = free_heap_bits;
 
     surface->image = XCreateImage( gdi_display, vis->visual, vis->depth, ZPixmap, 0, NULL,
                                    width, height, 32, 0 );
     if (!surface->image) goto failed;
+    surface->image->data = HeapAlloc( GetProcessHeap(), 0, surface->info.bmiHeader.biSizeImage );
+    if (!surface->image->data) goto failed;
+
     surface->gc = XCreateGC( gdi_display, window, 0, NULL );
+    surface->byteswap = image_needs_byteswap( surface->image, is_r8g8b8(vis), format->bits_per_pixel );
+
+    if (surface->byteswap || format->bits_per_pixel == 4 || format->bits_per_pixel == 8)
+    {
+        /* allocate separate surface bits if byte swapping or palette mapping is required */
+        if (!(surface->bits  = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                          surface->info.bmiHeader.biSizeImage )))
+            goto failed;
+    }
+    else surface->bits = surface->image->data;
 
     TRACE( "created %p for %lx %s bits %p-%p\n", surface, window, wine_dbgstr_rect(rect),
-           surface->bits.ptr, (char *)surface->bits.ptr + surface->info.bmiHeader.biSizeImage );
+           surface->bits, (char *)surface->bits + surface->info.bmiHeader.biSizeImage );
 
     return &surface->header;
 
