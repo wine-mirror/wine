@@ -4861,17 +4861,25 @@ BOOL WINAPI ConvertSecurityDescriptorToStringSecurityDescriptorW(PSECURITY_DESCR
 
     wstr = wptr = LocalAlloc(0, (len + 1)*sizeof(WCHAR));
     if (RequestedInformation & OWNER_SECURITY_INFORMATION)
-        if (!DumpOwner(SecurityDescriptor, &wptr, NULL))
+        if (!DumpOwner(SecurityDescriptor, &wptr, NULL)) {
+            LocalFree (wstr);
             return FALSE;
+        }
     if (RequestedInformation & GROUP_SECURITY_INFORMATION)
-        if (!DumpGroup(SecurityDescriptor, &wptr, NULL))
+        if (!DumpGroup(SecurityDescriptor, &wptr, NULL)) {
+            LocalFree (wstr);
             return FALSE;
+        }
     if (RequestedInformation & DACL_SECURITY_INFORMATION)
-        if (!DumpDacl(SecurityDescriptor, &wptr, NULL))
+        if (!DumpDacl(SecurityDescriptor, &wptr, NULL)) {
+            LocalFree (wstr);
             return FALSE;
+        }
     if (RequestedInformation & SACL_SECURITY_INFORMATION)
-        if (!DumpSacl(SecurityDescriptor, &wptr, NULL))
+        if (!DumpSacl(SecurityDescriptor, &wptr, NULL)) {
+            LocalFree (wstr);
             return FALSE;
+        }
     *wptr = 0;
 
     TRACE("ret: %s, %d\n", wine_dbgstr_w(wstr), len);
