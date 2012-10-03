@@ -227,7 +227,8 @@ void ReleaseSearch(HHInfo *info) DECLSPEC_HIDDEN;
 LPCWSTR skip_schema(LPCWSTR url) DECLSPEC_HIDDEN;
 void wintype_stringsA_free(struct wintype_stringsA *stringsA) DECLSPEC_HIDDEN;
 void wintype_stringsW_free(struct wintype_stringsW *stringsW) DECLSPEC_HIDDEN;
-WCHAR *decode_html(const char *html_fragment, int html_fragment_len, UINT code_page);
+WCHAR *decode_html(const char *html_fragment, int html_fragment_len, UINT code_page) DECLSPEC_HIDDEN;
+HHInfo *find_window(const WCHAR *window) DECLSPEC_HIDDEN;
 
 /* memory allocation functions */
 

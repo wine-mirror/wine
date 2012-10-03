@@ -1825,6 +1825,7 @@ void ReleaseHelpViewer(HHInfo *info)
 
 HHInfo *CreateHelpViewer(HHInfo *info, LPCWSTR filename, HWND caller)
 {
+    HHInfo *tmp_info;
     int i;
 
     if(!info)
@@ -1852,6 +1853,13 @@ HHInfo *CreateHelpViewer(HHInfo *info, LPCWSTR filename, HWND caller)
         return NULL;
     }
     info->WinType.hwndCaller = caller;
+
+    /* If the window is already open then load the file in that existing window */
+    if ((tmp_info = find_window(info->WinType.pszType)) && tmp_info != info)
+    {
+        ReleaseHelpViewer(info);
+        return CreateHelpViewer(tmp_info, filename, caller);
+    }
 
     if(!info->viewer_initialized && !CreateViewer(info)) {
         ReleaseHelpViewer(info);
@@ -1948,4 +1956,17 @@ WCHAR *decode_html(const char *html_fragment, int html_fragment_len, UINT code_p
     MultiByteToWideChar(code_page, 0, tmp, tmp_len, unicode_text, len);
     heap_free(tmp);
     return unicode_text;
+}
+
+/* Find the HTMLHelp structure for an existing window title */
+HHInfo *find_window(const WCHAR *window)
+{
+    HHInfo *info;
+
+    LIST_FOR_EACH_ENTRY(info, &window_list, HHInfo, entry)
+    {
+        if (strcmpW(info->WinType.pszType, window) == 0)
+            return info;
+    }
+    return NULL;
 }

@@ -146,18 +146,6 @@ static BOOL resolve_filename(const WCHAR *filename, WCHAR *fullname, DWORD bufle
     return (GetFileAttributesW(fullname) != INVALID_FILE_ATTRIBUTES);
 }
 
-static inline HHInfo *find_window(const WCHAR *window)
-{
-    HHInfo *info;
-
-    LIST_FOR_EACH_ENTRY(info, &window_list, HHInfo, entry)
-    {
-        if (strcmpW(info->WinType.pszType, window) == 0)
-            return info;
-    }
-    return NULL;
-}
-
 /******************************************************************
  *		HtmlHelpW (HHCTRL.OCX.15)
  */
