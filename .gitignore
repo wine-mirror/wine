@@ -72,6 +72,8 @@ dlls/msdaps/msdaps_p.c
 dlls/msdaps/row_server.h
 dlls/msdaps/row_server_p.c
 dlls/mshtml/nsiface.h
+dlls/mshtml/tests/test_tlb.h
+dlls/mshtml/tests/test_tlb.tlb
 dlls/msi/cond.tab.c
 dlls/msi/cond.tab.h
 dlls/msi/msiserver.h

@@ -36,6 +36,9 @@
 #include "mshtmdid.h"
 #include "mshtml_test.h"
 
+#include "initguid.h"
+#include "test_tlb.h"
+
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
 
@@ -59,6 +62,11 @@
         ok(called_ ## func, "expected " #func "\n"); \
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
+
+#define CLEAR_CALLED(func) \
+    expect_ ## func = called_ ## func = FALSE
+
+#undef GetClassInfo
 
 DEFINE_EXPECT(CreateInstance);
 DEFINE_EXPECT(FreezeEvents_TRUE);
@@ -91,6 +99,11 @@ DEFINE_EXPECT(wrapped_AddRef);
 DEFINE_EXPECT(wrapped_Release);
 DEFINE_EXPECT(wrapped_func);
 DEFINE_EXPECT(OnAmbientPropertyChange_UNKNOWN);
+DEFINE_EXPECT(GetTypeInfo);
+DEFINE_EXPECT(GetClassInfo);
+DEFINE_EXPECT(FindConnectionPoint);
+DEFINE_EXPECT(Advise);
+DEFINE_EXPECT(Unadvise);
 
 #define DISPID_SCRIPTPROP 1000
 
@@ -100,6 +113,7 @@ enum {
     TEST_DISPONLY
 };
 
+static ITypeInfo *actxtest_typeinfo, *class_typeinfo;
 static HWND container_hwnd, plugin_hwnd;
 static int plugin_behavior;
 static BOOL no_quickact;
@@ -118,6 +132,16 @@ static const char object_ax_str[] =
     "<param name=\"param_name\" value=\"param_value\">"
     "<param name=\"num_param\" value=\"3\">"
     "</object>"
+    "</body></html>";
+
+static const char event_binding_str[] =
+    "<html><head></head><body>"
+    "<object classid=\"clsid:" TESTACTIVEX_CLSID "\" width=\"300\" height=\"200\" id=\"objid\">"
+    "<param name=\"param_name\" value=\"param_value\">"
+    "<param name=\"num_param\" value=\"3\">"
+    "</object>"
+    "<script for=\"objid\" event=\"testfunc\">return 6;</script>"
+    "<script for=\"objid\" event=\"testfunc2(x,y)\">return x+2*y;</script>"
     "</body></html>";
 
 static REFIID pluginhost_iids[] = {
@@ -197,6 +221,7 @@ static BSTR a2bstr(const char *str)
 }
 
 static IOleClientSite *client_site;
+static IDispatch *sink_disp;
 static READYSTATE plugin_readystate = READYSTATE_UNINITIALIZED;
 
 static void set_plugin_readystate(READYSTATE state)
@@ -275,6 +300,85 @@ static void create_plugin_window(HWND parent, const RECT *rect)
             rect->right-rect->left, rect->bottom-rect->top, parent, NULL, NULL, NULL);
 }
 
+static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected QI call %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ConnectionPoint_AddRef(IConnectionPoint *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ConnectionPoint_Release(IConnectionPoint *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *iface, IID *pIID)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoint *iface,
+        IConnectionPointContainer **ppCPC)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *pUnkSink, DWORD *pdwCookie)
+{
+    IDispatchEx *dispex;
+    HRESULT hres;
+
+    CHECK_EXPECT(Advise);
+
+    hres = IUnknown_QueryInterface(pUnkSink, &IID_IDispatch, (void**)&sink_disp);
+    ok(hres == S_OK, "Could not get IDispatch iface: %08x\n", hres);
+
+    hres = IUnknown_QueryInterface(pUnkSink, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == E_NOINTERFACE, "QueryInterface(IID_IDispatchEx) returned: %08x\n", hres);
+
+    *pdwCookie = 0xdeadbeef;
+    return S_OK;
+}
+
+static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD dwCookie)
+{
+    CHECK_EXPECT(Unadvise);
+
+    ok(dwCookie == 0xdeadbeef, "dwCookie = %x\n", dwCookie);
+
+    if(sink_disp) {
+        IDispatch_Release(sink_disp);
+        sink_disp = NULL;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI ConnectionPoint_EnumConnections(IConnectionPoint *iface, IEnumConnections **ppEnum)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IConnectionPointVtbl ConnectionPointVtbl = {
+    ConnectionPoint_QueryInterface,
+    ConnectionPoint_AddRef,
+    ConnectionPoint_Release,
+    ConnectionPoint_GetConnectionInterface,
+    ConnectionPoint_GetConnectionPointContainer,
+    ConnectionPoint_Advise,
+    ConnectionPoint_Unadvise,
+    ConnectionPoint_EnumConnections
+};
+
+static IConnectionPoint ConnectionPoint = { &ConnectionPointVtbl };
+
 static HRESULT ax_qi(REFIID,void**);
 
 static HRESULT WINAPI OleControl_QueryInterface(IOleControl *iface, REFIID riid, void **ppv)
@@ -308,7 +412,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
 {
     switch(dispID) {
     case DISPID_UNKNOWN:
-        CHECK_EXPECT(OnAmbientPropertyChange_UNKNOWN);
+        CHECK_EXPECT2(OnAmbientPropertyChange_UNKNOWN);
         break;
     default:
         ok(0, "unexpected call %d\n", dispID);
@@ -592,8 +696,11 @@ static HRESULT WINAPI Dispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
 static HRESULT WINAPI Dispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID lcid,
         ITypeInfo **ppTInfo)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(GetTypeInfo);
+
+    ITypeInfo_AddRef(actxtest_typeinfo);
+    *ppTInfo = actxtest_typeinfo;
+    return S_OK;
 }
 
 static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
@@ -685,6 +792,87 @@ static const IDispatchVtbl DispatchVtbl = {
 };
 
 static IDispatch Dispatch = { &DispatchVtbl };
+
+static HRESULT WINAPI ProvideClassInfo_QueryInterface(IProvideClassInfo *iface, REFIID riid, void **ppv)
+{
+    return ax_qi(riid, ppv);
+}
+
+static ULONG WINAPI ProvideClassInfo_AddRef(IProvideClassInfo *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ProvideClassInfo_Release(IProvideClassInfo *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ProvideClassInfo_GetClassInfo(IProvideClassInfo *iface, ITypeInfo **ppTI)
+{
+    CHECK_EXPECT(GetClassInfo);
+
+    ITypeInfo_AddRef(class_typeinfo);
+    *ppTI = class_typeinfo;
+    return S_OK;
+}
+
+static const IProvideClassInfoVtbl ProvideClassInfoVtbl = {
+    ProvideClassInfo_QueryInterface,
+    ProvideClassInfo_AddRef,
+    ProvideClassInfo_Release,
+    ProvideClassInfo_GetClassInfo
+};
+
+static IProvideClassInfo ProvideClassInfo = { &ProvideClassInfoVtbl };
+
+static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface, REFIID riid, void **ppv)
+{
+    return ax_qi(riid, ppv);
+}
+
+static ULONG WINAPI ConnectionPointContainer_AddRef(IConnectionPointContainer *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ConnectionPointContainer_Release(IConnectionPointContainer *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionPointContainer *iface,
+        IEnumConnectionPoints **ppEnum)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPointContainer *iface,
+        REFIID riid, IConnectionPoint **ppCP)
+{
+    if(IsEqualGUID(riid, &IID_IPropertyNotifySink)) {
+        /* TODO */
+        trace("FindConnectionPoint(IID_IPropertyNotifySink)\n");
+        return CONNECT_E_NOCONNECTION;
+    }
+
+    CHECK_EXPECT(FindConnectionPoint);
+    ok(IsEqualGUID(riid, &DIID_DispActiveXTest), "riid = %s\n", debugstr_guid(riid));
+
+    *ppCP = &ConnectionPoint;
+    return S_OK;
+}
+
+static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl = {
+    ConnectionPointContainer_QueryInterface,
+    ConnectionPointContainer_AddRef,
+    ConnectionPointContainer_Release,
+    ConnectionPointContainer_EnumConnectionPoints,
+    ConnectionPointContainer_FindConnectionPoint
+};
+
+static IConnectionPointContainer ConnectionPointContainer = { &ConnectionPointContainerVtbl };
 
 static HRESULT WINAPI ViewObjectEx_QueryInterface(IViewObjectEx *iface, REFIID riid, void **ppv)
 {
@@ -1224,6 +1412,10 @@ static HRESULT ax_qi(REFIID riid, void **ppv)
         *ppv = no_quickact ? NULL : &PersistPropertyBag;
     }else if(IsEqualGUID(riid, &IID_IDispatch)) {
         *ppv = &Dispatch;
+    }else if(IsEqualGUID(riid, &IID_IProvideClassInfo)) {
+        *ppv = &ProvideClassInfo;
+    }else if(IsEqualGUID(riid, &IID_IConnectionPointContainer)) {
+        *ppv = plugin_behavior != TEST_DISPONLY ? &ConnectionPointContainer : NULL;
     }else if(IsEqualGUID(riid, &IID_IViewObject) || IsEqualGUID(riid, &IID_IViewObject2)
             || IsEqualGUID(riid, &IID_IViewObjectEx)) {
         *ppv = plugin_behavior == TEST_DISPONLY ? NULL : &ViewObjectEx;
@@ -2144,6 +2336,36 @@ static void init_test(int behavior)
     no_quickact = behavior == TEST_NOQUICKACT || behavior == TEST_DISPONLY;
 }
 
+static void test_event_call(void)
+{
+    VARIANT res, args[2];
+    DISPPARAMS dp = {args};
+    EXCEPINFO ei = {0};
+    HRESULT hres;
+
+    V_VT(&res) = VT_EMPTY;
+    hres = IDispatch_Invoke(sink_disp, 1, &IID_NULL, 0, DISPATCH_METHOD, &dp, &res, &ei, NULL);
+    ok(hres == S_OK, "Invoke failed: %08x\n", hres);
+    ok(V_VT(&res) == VT_I4 && V_I4(&res) == 6, "unexpected result\n");
+
+    V_VT(args) = VT_I4;
+    V_I4(args) = 2;
+    V_VT(args+1) = VT_I4;
+    V_I4(args+1) = 3;
+    dp.cArgs = 2;
+    V_VT(&res) = VT_EMPTY;
+    hres = IDispatch_Invoke(sink_disp, 2, &IID_NULL, 0, DISPATCH_METHOD, &dp, &res, &ei, NULL);
+    todo_wine { /* Needs jscript fixes */
+    ok(hres == S_OK, "Invoke failed: %08x\n", hres);
+    ok(V_VT(&res) == VT_I4 && V_I4(&res) == 7, "unexpected result: %d\n", V_I4(&res));
+    }
+
+    V_VT(&res) = VT_ERROR;
+    hres = IDispatch_Invoke(sink_disp, 10, &IID_NULL, 0, DISPATCH_METHOD, &dp, &res, &ei, NULL);
+    ok(hres == S_OK, "Invoke failed: %08x\n", hres);
+    ok(V_VT(&res) == VT_EMPTY, "V_VT(res) = %d\n", V_VT(&res));
+}
+
 static void test_flash_ax(void)
 {
     IHTMLDocument2 *doc;
@@ -2251,6 +2473,92 @@ static void test_noquickact_ax(void)
     CHECK_CALLED(SetClientSite_NULL);
 }
 
+static void test_event_binding(void)
+{
+    IHTMLDocument2 *doc;
+
+    init_test(TEST_FLASH);
+
+    /*
+     * We pump messages until both document is loaded and plugin instance is created.
+     * Pumping until document is loaded should be enough, but Gecko loads plugins
+     * asynchronously and until we'll work around it, we need this hack.
+     */
+    SET_EXPECT(CreateInstance);
+    SET_EXPECT(FreezeEvents_TRUE);
+    SET_EXPECT(QuickActivate);
+    SET_EXPECT(FreezeEvents_FALSE);
+    SET_EXPECT(IPersistPropertyBag_Load);
+    SET_EXPECT(Invoke_READYSTATE);
+    SET_EXPECT(SetExtent);
+    SET_EXPECT(GetExtent);
+    SET_EXPECT(DoVerb);
+
+    SET_EXPECT(GetClassInfo);
+    SET_EXPECT(OnAmbientPropertyChange_UNKNOWN);
+    SET_EXPECT(FindConnectionPoint);
+    SET_EXPECT(Advise);
+
+    doc = create_doc(event_binding_str, &called_CreateInstance);
+
+    CHECK_CALLED(CreateInstance);
+    todo_wine
+    CHECK_CALLED(FreezeEvents_TRUE);
+    CHECK_CALLED(QuickActivate);
+    todo_wine
+    CHECK_CALLED(FreezeEvents_FALSE);
+    CHECK_CALLED(IPersistPropertyBag_Load);
+    CHECK_CALLED(Invoke_READYSTATE);
+    todo_wine
+    CHECK_CALLED(SetExtent);
+    todo_wine
+    CHECK_CALLED(GetExtent);
+    CHECK_CALLED(DoVerb);
+
+    /* Set in DoVerb */
+    CHECK_CALLED(InPlaceObject_GetWindow);
+    CHECK_CALLED(SetObjectRects);
+
+    /* FIXME: to be removed once we have support for synchronous plugin loading (planned for Wine Gecko 1.8) */
+    if(!called_GetClassInfo) {
+        todo_wine ok(0, "GetClassInfo not called\n");
+
+        CLEAR_CALLED(GetClassInfo);
+        CLEAR_CALLED(OnAmbientPropertyChange_UNKNOWN);
+        CLEAR_CALLED(FindConnectionPoint);
+        CLEAR_CALLED(Advise);
+
+        SET_EXPECT(InPlaceDeactivate);
+        SET_EXPECT(Close);
+        SET_EXPECT(SetClientSite_NULL);
+        release_doc(doc);
+        CHECK_CALLED(InPlaceDeactivate);
+        CHECK_CALLED(Close);
+        CHECK_CALLED(SetClientSite_NULL);
+        return;
+    }
+
+    CHECK_CALLED(GetClassInfo);
+    todo_wine
+    CHECK_CALLED(OnAmbientPropertyChange_UNKNOWN);
+    CHECK_CALLED(FindConnectionPoint);
+    CHECK_CALLED(Advise);
+
+    test_event_call();
+
+    SET_EXPECT(InPlaceDeactivate);
+    SET_EXPECT(Close);
+    SET_EXPECT(SetClientSite_NULL);
+    SET_EXPECT(FindConnectionPoint);
+    SET_EXPECT(Unadvise);
+    release_doc(doc);
+    CHECK_CALLED(InPlaceDeactivate);
+    CHECK_CALLED(Close);
+    CHECK_CALLED(SetClientSite_NULL);
+    CHECK_CALLED(FindConnectionPoint);
+    CHECK_CALLED(Unadvise);
+}
+
 static void test_nooleobj_ax(void)
 {
     IHTMLDocument2 *doc;
@@ -2290,6 +2598,26 @@ static HWND create_container_window(void)
     return CreateWindowW(html_document_testW, html_document_testW,
             WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
             515, 530, NULL, NULL, NULL, NULL);
+}
+
+static void load_typelib(void)
+{
+    WCHAR path[MAX_PATH];
+    ITypeLib *typelib;
+    HRESULT hres;
+
+    GetModuleFileNameW(NULL, path, MAX_PATH);
+
+    hres = LoadTypeLib(path, &typelib);
+    ok(hres == S_OK, "LoadTypeLib failed: %08x\n", hres);
+
+    hres = ITypeLib_GetTypeInfoOfGuid(typelib, &DIID_DispActiveXTest, &actxtest_typeinfo);
+    ok(hres == S_OK, "GetTypeInfoOfGuid(DIID_DispActiveXTest) failed: %08x\n", hres);
+
+    hres = ITypeLib_GetTypeInfoOfGuid(typelib, &CLSID_ActiveXTest, &class_typeinfo);
+    ok(hres == S_OK, "GetTypeInfoOfGuid(CLSID_ActiveXTest) failed: %08x\n", hres);
+
+    ITypeLib_Release(typelib);
 }
 
 static BOOL init_key(const char *key_name, const char *def_value, BOOL init)
@@ -2377,6 +2705,7 @@ START_TEST(activex)
     }
 
     init_wrapped_iface();
+    load_typelib();
     container_hwnd = create_container_window();
     ShowWindow(container_hwnd, SW_SHOW);
 
@@ -2387,11 +2716,17 @@ START_TEST(activex)
         test_noquickact_ax();
         trace("Testing plugin with IDispatch iface only...\n");
         test_nooleobj_ax();
+        trace("Testing event object binding...\n");
+        test_event_binding();
         init_registry(FALSE);
     }else {
         skip("Could not register ActiveX\n");
     }
 
+    if(actxtest_typeinfo)
+        ITypeInfo_Release(actxtest_typeinfo);
+    if(class_typeinfo)
+        ITypeInfo_Release(class_typeinfo);
     DestroyWindow(container_hwnd);
     CoUninitialize();
 }

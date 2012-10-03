@@ -27,3 +27,6 @@ vbtest.html HTML "vbtest.html"
 
 /* @makedep: events.html */
 events.html HTML "events.html"
+
+/* @makedep: test_tlb.tlb */
+1 TYPELIB test_tlb.tlb
