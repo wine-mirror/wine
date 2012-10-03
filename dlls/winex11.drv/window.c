@@ -2371,7 +2371,7 @@ BOOL CDECL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO 
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
 
-    if (!data->embedded) set_window_visual( data, &argb_visual );
+    if (!data->embedded && argb_visual.visualid) set_window_visual( data, &argb_visual );
 
     rect = *window_rect;
     OffsetRect( &rect, -window_rect->left, -window_rect->top );
