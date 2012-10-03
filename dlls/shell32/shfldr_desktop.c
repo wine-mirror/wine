@@ -332,7 +332,7 @@ static BOOL CreateDesktopEnumList(IEnumIDListImpl *list, DWORD dwFlags)
     }
 
     /* enumerate the elements in %windir%\desktop */
-    SHGetSpecialFolderPathW(0, szPath, CSIDL_DESKTOPDIRECTORY, FALSE);
+    ret = ret && SHGetSpecialFolderPathW(0, szPath, CSIDL_DESKTOPDIRECTORY, FALSE);
     ret = ret && CreateFolderEnumList(list, szPath, dwFlags);
 
     return ret;
