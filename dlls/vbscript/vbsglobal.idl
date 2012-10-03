@@ -85,7 +85,7 @@ library VBScript_Global
         [id(DISPID_GLOBAL_VBYESNO), readonly]
         VARIANT vbYesNo;
 
-        [id(DISPID_GLOBAL_VBYESNOCANCEL), readonly]
+        [id(DISPID_GLOBAL_VBRETRYCANCEL), readonly]
         VARIANT vbRetryCancel;
 
         [id(DISPID_GLOBAL_VBCRITICAL), readonly]

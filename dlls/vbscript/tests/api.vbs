@@ -299,4 +299,17 @@ end if
 
 Call ok(getVT(Now()) = "VT_DATE", "getVT(Now()) = " & getVT(Now()))
 
+Call ok(vbOKOnly = 0, "vbOKOnly = " & vbOKOnly)
+Call ok(getVT(vbOKOnly) = "VT_I2", "getVT(vbOKOnly) = " & getVT(vbOKOnly))
+Call ok(vbOKCancel = 1, "vbOKCancel = " & vbOKCancel)
+Call ok(getVT(vbOKCancel) = "VT_I2", "getVT(vbOKCancel) = " & getVT(vbOKCancel))
+Call ok(vbAbortRetryIgnore = 2, "vbAbortRetryIgnore = " & vbAbortRetryIgnore)
+Call ok(getVT(vbAbortRetryIgnore) = "VT_I2", "getVT(vbAbortRetryIgnore) = " & getVT(vbAbortRetryIgnore))
+Call ok(vbYesNoCancel = 3, "vbYesNoCancel = " & vbYesNoCancel)
+Call ok(getVT(vbYesNoCancel) = "VT_I2", "getVT(vbYesNoCancel) = " & getVT(vbYesNoCancel))
+Call ok(vbYesNo = 4, "vbYesNo = " & vbYesNo)
+Call ok(getVT(vbYesNo) = "VT_I2", "getVT(vbYesNo) = " & getVT(vbYesNo))
+Call ok(vbRetryCancel = 5, "vbRetryCancel = " & vbRetryCancel)
+Call ok(getVT(vbRetryCancel) = "VT_I2", "getVT(vbRetryCancel) = " & getVT(vbRetryCancel))
+
 Call reportSuccess()

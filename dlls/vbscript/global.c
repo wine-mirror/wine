@@ -1594,38 +1594,38 @@ static HRESULT Global_vbFirstFullWeek(vbdisp_t *This, VARIANT *arg, unsigned arg
 
 static HRESULT Global_vbOKOnly(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, MB_OK);
 }
 
 static HRESULT Global_vbOKCancel(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, MB_OKCANCEL);
 }
 
 static HRESULT Global_vbAbortRetryIgnore(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, MB_ABORTRETRYIGNORE);
 }
 
 static HRESULT Global_vbYesNoCancel(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, MB_YESNOCANCEL);
 }
 
 static HRESULT Global_vbYesNo(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, MB_YESNO);
 }
 
 static HRESULT Global_vbRetryCancel(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, MB_RETRYCANCEL);
 }
 
 static HRESULT Global_vbCritical(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
