@@ -795,6 +795,30 @@ ULONG WINAPI StartTraceA( PTRACEHANDLE pSessionHandle, LPCSTR SessionName, PEVEN
 }
 
 /******************************************************************************
+ * StopTraceW [ADVAPI32.@]
+ *
+ * Stop an event trace session
+ *
+ */
+ULONG WINAPI StopTraceW( TRACEHANDLE session, LPCWSTR session_name, PEVENT_TRACE_PROPERTIES properties )
+{
+    FIXME("(%s, %s, %p) stub\n", wine_dbgstr_longlong(session), debugstr_w(session_name), properties);
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ * StopTraceA [ADVAPI32.@]
+ *
+ * See StopTraceW.
+ *
+ */
+ULONG WINAPI StopTraceA( TRACEHANDLE session, LPCSTR session_name, PEVENT_TRACE_PROPERTIES properties )
+{
+    FIXME("(%s, %s, %p) stub\n", wine_dbgstr_longlong(session), debugstr_a(session_name), properties);
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
  * TraceEvent [ADVAPI32.@]
  */
 ULONG WINAPI TraceEvent( TRACEHANDLE SessionHandle, PEVENT_TRACE_HEADER EventTrace )

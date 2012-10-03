@@ -727,8 +727,8 @@
 @ stdcall StartServiceW(long long ptr)
 @ stdcall StartTraceA(ptr str ptr)
 @ stdcall StartTraceW(ptr wstr ptr)
-# @ stub StopTraceA
-# @ stub StopTraceW
+@ stdcall StopTraceA(int64 str ptr)
+@ stdcall StopTraceW(int64 wstr ptr)
 @ stdcall SynchronizeWindows31FilesAndWindowsNTRegistry(long long long long)
 @ stdcall SystemFunction001(ptr ptr ptr)
 @ stdcall SystemFunction002(ptr ptr ptr)
