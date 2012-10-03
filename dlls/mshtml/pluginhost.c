@@ -19,6 +19,7 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -470,6 +471,349 @@ HRESULT invoke_plugin_prop(HTMLPluginContainer *plugin_container, DISPID id, LCI
             lcid, flags, params, res, ei, NULL);
 }
 
+typedef struct {
+    DISPID id;
+    IDispatch *disp;
+} sink_entry_t;
+
+struct PHEventSink {
+    IDispatch IDispatch_iface;
+
+    LONG ref;
+
+    PluginHost *host;
+    ITypeInfo *typeinfo;
+    GUID iid;
+    DWORD cookie;
+
+    sink_entry_t *handlers;
+    DWORD handlers_cnt;
+    DWORD handlers_size;
+};
+
+static sink_entry_t *find_sink_entry(PHEventSink *sink, DISPID id)
+{
+    sink_entry_t *iter;
+
+    for(iter = sink->handlers; iter < sink->handlers+sink->handlers_cnt; iter++) {
+        if(iter->id == id)
+            return iter;
+    }
+
+    return NULL;
+}
+
+static void add_sink_handler(PHEventSink *sink, DISPID id, IDispatch *disp)
+{
+    sink_entry_t *entry = find_sink_entry(sink, id);
+
+    if(entry) {
+        if(entry->disp)
+            IDispatch_Release(entry->disp);
+    }else {
+        if(!sink->handlers_size) {
+            sink->handlers = heap_alloc(4*sizeof(*sink->handlers));
+            if(!sink->handlers)
+                return;
+            sink->handlers_size = 4;
+        }else if(sink->handlers_cnt == sink->handlers_size) {
+            sink_entry_t *new_handlers;
+
+            new_handlers = heap_realloc(sink->handlers, 2*sink->handlers_size*sizeof(*sink->handlers));
+            if(!new_handlers)
+                return;
+            sink->handlers = new_handlers;
+            sink->handlers_size *= 2;
+        }
+        entry = sink->handlers + sink->handlers_cnt++;
+        entry->id = id;
+    }
+
+    IDispatch_AddRef(disp);
+    entry->disp = disp;
+}
+
+static inline PHEventSink *PHEventSink_from_IDispatch(IDispatch *iface)
+{
+    return CONTAINING_RECORD(iface, PHEventSink, IDispatch_iface);
+}
+
+static HRESULT WINAPI PHEventSink_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    PHEventSink *This = PHEventSink_from_IDispatch(iface);
+
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IDispatch_iface;
+    }else if(IsEqualGUID(riid, &IID_IDispatch)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = &This->IDispatch_iface;
+    }else {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI PHEventSink_AddRef(IDispatch *iface)
+{
+    PHEventSink *This = PHEventSink_from_IDispatch(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)\n", This);
+
+    return ref;
+}
+
+static ULONG WINAPI PHEventSink_Release(IDispatch *iface)
+{
+    PHEventSink *This = PHEventSink_from_IDispatch(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)\n", This);
+
+    if(!ref) {
+        unsigned i;
+
+        assert(!This->host);
+
+        for(i=0; i < This->handlers_cnt; i++) {
+            if(This->handlers[i].disp)
+                IDispatch_Release(This->handlers[i].disp);
+        }
+        heap_free(This->handlers);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI PHEventSink_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
+{
+    PHEventSink *This = PHEventSink_from_IDispatch(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHEventSink_GetTypeInfo(IDispatch *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    PHEventSink *This = PHEventSink_from_IDispatch(iface);
+    FIXME("(%p)->(%d %d %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHEventSink_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    PHEventSink *This = PHEventSink_from_IDispatch(iface);
+    FIXME("(%p)->(%s %p %u %d %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PHEventSink_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    PHEventSink *This = PHEventSink_from_IDispatch(iface);
+    IDispatchEx *dispex;
+    sink_entry_t *entry;
+    HRESULT hres;
+
+    TRACE("(%p)->(%d %s %d %x %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid), lcid, wFlags,
+          pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    if(!This->host) {
+        WARN("No host\n");
+        return E_UNEXPECTED;
+    }
+
+    entry = find_sink_entry(This, dispIdMember);
+    if(!entry || !entry->disp) {
+        WARN("No handler %d\n", dispIdMember);
+        if(pVarResult)
+            V_VT(pVarResult) = VT_EMPTY;
+        return S_OK;
+    }
+
+    hres = IDispatch_QueryInterface(entry->disp, &IID_IDispatchEx, (void**)&dispex);
+
+    TRACE("(%p) %d >>>\n", This, entry->id);
+    if(SUCCEEDED(hres)) {
+        hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, NULL);
+        IDispatchEx_Release(dispex);
+    }else {
+        hres = IDispatch_Invoke(entry->disp, DISPID_VALUE, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    }
+    if(SUCCEEDED(hres))
+        TRACE("(%p) %d <<<\n", This, entry->id);
+    else
+        WARN("(%p) %d <<< %08x\n", This, entry->id, hres);
+    return hres;
+}
+
+static const IDispatchVtbl PHCPDispatchVtbl = {
+    PHEventSink_QueryInterface,
+    PHEventSink_AddRef,
+    PHEventSink_Release,
+    PHEventSink_GetTypeInfoCount,
+    PHEventSink_GetTypeInfo,
+    PHEventSink_GetIDsOfNames,
+    PHEventSink_Invoke
+};
+
+static PHEventSink *create_event_sink(PluginHost *plugin_host, ITypeInfo *typeinfo)
+{
+    IConnectionPointContainer *cp_container;
+    PHEventSink *ret;
+    IConnectionPoint *cp;
+    TYPEATTR *typeattr;
+    GUID guid;
+    HRESULT hres;
+
+    hres = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
+    if(FAILED(hres))
+        return NULL;
+
+    guid = typeattr->guid;
+    ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
+
+    hres = IUnknown_QueryInterface(plugin_host->plugin_unk, &IID_IConnectionPointContainer, (void**)&cp_container);
+    if(FAILED(hres)) {
+        WARN("Could not get IConnectionPointContainer iface: %08x\n", hres);
+        return NULL;
+    }
+
+    hres = IConnectionPointContainer_FindConnectionPoint(cp_container, &guid, &cp);
+    IConnectionPointContainer_Release(cp_container);
+    if(FAILED(hres)) {
+        WARN("Could not find %s connection point\n", debugstr_guid(&guid));
+        return NULL;
+    }
+
+    ret = heap_alloc_zero(sizeof(*ret));
+    if(ret) {
+        ret->IDispatch_iface.lpVtbl = &PHCPDispatchVtbl;
+        ret->ref = 1;
+        ret->host = plugin_host;
+        ret->iid = guid;
+
+        ITypeInfo_AddRef(typeinfo);
+        ret->typeinfo = typeinfo;
+
+        hres = IConnectionPoint_Advise(cp, (IUnknown*)&ret->IDispatch_iface, &ret->cookie);
+    }else {
+        hres = E_OUTOFMEMORY;
+    }
+
+    IConnectionPoint_Release(cp);
+    if(FAILED(hres)) {
+        WARN("Advise failed: %08x\n", hres);
+        return NULL;
+    }
+
+    return ret;
+}
+
+static ITypeInfo *get_eventiface_info(HTMLPluginContainer *plugin_container, ITypeInfo *class_info)
+{
+    int impl_types, i, impl_flags;
+    ITypeInfo *ret = NULL;
+    TYPEATTR *typeattr;
+    HREFTYPE ref;
+    HRESULT hres;
+
+    hres = ITypeInfo_GetTypeAttr(class_info, &typeattr);
+    if(FAILED(hres))
+        return NULL;
+
+    if(typeattr->typekind != TKIND_COCLASS) {
+        WARN("not coclass\n");
+        ITypeInfo_ReleaseTypeAttr(class_info, typeattr);
+        return NULL;
+    }
+
+    impl_types = typeattr->cImplTypes;
+    ITypeInfo_ReleaseTypeAttr(class_info, typeattr);
+
+    for(i=0; i<impl_types; i++) {
+        hres = ITypeInfo_GetImplTypeFlags(class_info, i, &impl_flags);
+        if(FAILED(hres))
+            continue;
+
+        if((impl_flags & IMPLTYPEFLAG_FSOURCE)) {
+            if(!(impl_flags & IMPLTYPEFLAG_FDEFAULT)) {
+                FIXME("Handle non-default source iface\n");
+                continue;
+            }
+
+            hres = ITypeInfo_GetRefTypeOfImplType(class_info, i, &ref);
+            if(FAILED(hres))
+                continue;
+
+            hres = ITypeInfo_GetRefTypeInfo(class_info, ref, &ret);
+            if(FAILED(hres))
+                ret = NULL;
+        }
+    }
+
+    return ret;
+}
+
+void bind_activex_event(HTMLDocumentNode *doc, HTMLPluginContainer *plugin_container, WCHAR *event, IDispatch *disp)
+{
+    PluginHost *plugin_host = plugin_container->plugin_host;
+    ITypeInfo *class_info, *source_info;
+    DISPID id;
+    HRESULT hres;
+
+    TRACE("(%p %p %s %p)\n", doc, plugin_host, debugstr_w(event), disp);
+
+    if(!plugin_host || !plugin_host->plugin_unk) {
+        WARN("detached element %p\n", plugin_host);
+        return;
+    }
+
+    if(plugin_host->sink) {
+        source_info = plugin_host->sink->typeinfo;
+        ITypeInfo_AddRef(source_info);
+    }else {
+        IProvideClassInfo *provide_ci;
+
+        hres = IUnknown_QueryInterface(plugin_host->plugin_unk, &IID_IProvideClassInfo, (void**)&provide_ci);
+        if(FAILED(hres)) {
+            FIXME("No IProvideClassInfo, try GetTypeInfo?\n");
+            return;
+        }
+
+        hres = IProvideClassInfo_GetClassInfo(provide_ci, &class_info);
+        IProvideClassInfo_Release(provide_ci);
+        if(FAILED(hres) || !class_info) {
+            WARN("GetClassInfo failed: %08x\n", hres);
+            return;
+        }
+
+        source_info = get_eventiface_info(plugin_container, class_info);
+        ITypeInfo_Release(class_info);
+        if(!source_info)
+            return;
+    }
+
+    hres = ITypeInfo_GetIDsOfNames(source_info, &event, 1, &id);
+    if(FAILED(hres))
+        WARN("Could not get disp id: %08x\n", hres);
+    else if(!plugin_host->sink)
+        plugin_host->sink = create_event_sink(plugin_host, source_info);
+
+    ITypeInfo_Release(source_info);
+    if(FAILED(hres) || !plugin_host->sink)
+        return;
+
+    add_sink_handler(plugin_host->sink, id, disp);
+}
+
 static inline PluginHost *impl_from_IOleClientSite(IOleClientSite *iface)
 {
     return CONTAINING_RECORD(iface, PluginHost, IOleClientSite_iface);
@@ -547,6 +891,11 @@ static ULONG WINAPI PHClientSite_Release(IOleClientSite *iface)
             IDispatch_Release(This->disp);
         if(This->ip_object)
             IOleInPlaceObject_Release(This->ip_object);
+        if(This->sink) {
+            This->sink->host = NULL;
+            IDispatch_Release(&This->sink->IDispatch_iface);
+            This->sink = NULL;
+        }
         list_remove(&This->entry);
         if(This->element)
             This->element->plugin_host = NULL;
@@ -1299,6 +1648,27 @@ void detach_plugin_host(PluginHost *host)
             IOleObject_SetClientSite(ole_obj, NULL);
             IOleObject_Release(ole_obj);
         }
+    }
+
+    if(host->sink) {
+        IConnectionPointContainer *cp_container;
+        IConnectionPoint *cp;
+
+        assert(host->plugin_unk != NULL);
+
+        hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IConnectionPointContainer, (void**)&cp_container);
+        if(SUCCEEDED(hres)) {
+            hres = IConnectionPointContainer_FindConnectionPoint(cp_container, &host->sink->iid, &cp);
+            IConnectionPointContainer_Release(cp_container);
+            if(SUCCEEDED(hres)) {
+                IConnectionPoint_Unadvise(cp, host->sink->cookie);
+                IConnectionPoint_Release(cp);
+            }
+        }
+
+        host->sink->host = NULL;
+        IDispatch_Release(&host->sink->IDispatch_iface);
+        host->sink = NULL;
     }
 
     if(host->element) {

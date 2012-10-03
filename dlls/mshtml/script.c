@@ -1065,6 +1065,8 @@ static BOOL parse_event_str(WCHAR *event, const WCHAR **args)
 {
     WCHAR *ptr;
 
+    TRACE("%s\n", debugstr_w(event));
+
     for(ptr = event; isalnumW(*ptr); ptr++);
     if(!*ptr) {
         *args = NULL;
@@ -1079,8 +1081,9 @@ static BOOL parse_event_str(WCHAR *event, const WCHAR **args)
     while(isalnumW(*ptr) || isspaceW(*ptr) || *ptr == ',')
         ptr++;
 
-    if(*ptr++ != ')')
+    if(*ptr != ')')
         return FALSE;
+
     *ptr++ = 0;
     return !*ptr;
 }
@@ -1203,7 +1206,7 @@ void bind_event_scripts(HTMLDocumentNode *doc)
                 IHTMLElement_QueryInterface(&event_target->IHTMLElement_iface, &IID_HTMLPluginContainer, (void**)&plugin_container);
 
                 if(plugin_container)
-                    FIXME("ActiveX events not supported\n");
+                    bind_activex_event(doc, plugin_container, event, event_disp);
                 else
                     bind_elem_event(doc, event_target, event, event_disp);
 
