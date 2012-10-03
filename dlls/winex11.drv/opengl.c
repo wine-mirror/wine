@@ -1043,6 +1043,11 @@ static inline BOOL is_onscreen_pixel_format( int format )
     return format > 0 && format <= nb_onscreen_formats;
 }
 
+static inline int pixel_format_index( const struct wgl_pixel_format *format )
+{
+    return format - pixel_formats + 1;
+}
+
 /* GLX can advertise dozens of different pixelformats including offscreen and onscreen ones.
  * In our WGL implementation we only support a subset of these formats namely the format of
  * Wine's main visual and offscreen formats (if they are available).
@@ -1506,7 +1511,7 @@ static int glxdrv_wglGetPixelFormat( HDC hdc )
 
     if ((gl = get_gl_drawable( WindowFromDC( hdc ), hdc )))
     {
-        ret = gl->format - pixel_formats + 1;
+        ret = pixel_format_index( gl->format );
         /* Offscreen formats can't be used with traditional WGL calls.
          * As has been verified on Windows GetPixelFormat doesn't fail but returns iPixelFormat=1. */
         if (!is_onscreen_pixel_format( ret )) ret = 1;
@@ -1550,7 +1555,7 @@ static BOOL glxdrv_wglSetPixelFormat( HDC hdc, int iPixelFormat, const PIXELFORM
 
     if ((gl = get_gl_drawable( hwnd, hdc )))
     {
-        int prev = gl->format - pixel_formats + 1;
+        int prev = pixel_format_index( gl->format );
         release_gl_drawable( gl );
         return prev == iPixelFormat;  /* cannot change it if already set */
     }
