@@ -7798,8 +7798,11 @@ locale__Locimp* __thiscall locale__Locimp_copy_ctor(locale__Locimp *this, const 
             return NULL;
         }
         for(i=0; i<this->facet_cnt; i++)
+        {
+            this->facetvec[i] = copy->facetvec[i];
             if(this->facetvec[i])
                 locale_facet__Incref(this->facetvec[i]);
+        }
     }
     MSVCP_basic_string_char_copy_ctor(&this->name, &copy->name);
     _Lockit_dtor(&lock);
