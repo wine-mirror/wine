@@ -1825,13 +1825,12 @@ void ReleaseHelpViewer(HHInfo *info)
 
 HHInfo *CreateHelpViewer(HHInfo *info, LPCWSTR filename, HWND caller)
 {
-    BOOL add_to_window_list = FALSE;
     int i;
 
     if(!info)
     {
         info = heap_alloc_zero(sizeof(HHInfo));
-        add_to_window_list = TRUE;
+        list_add_tail(&window_list, &info->entry);
     }
 
     /* Set the invalid tab ID (-1) as the default value for all
@@ -1858,9 +1857,6 @@ HHInfo *CreateHelpViewer(HHInfo *info, LPCWSTR filename, HWND caller)
         ReleaseHelpViewer(info);
         return NULL;
     }
-
-    if(add_to_window_list)
-        list_add_tail(&window_list, &info->entry);
 
     return info;
 }
