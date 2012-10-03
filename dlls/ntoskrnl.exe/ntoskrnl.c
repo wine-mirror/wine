@@ -197,7 +197,7 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
     *out_size = (irp.IoStatus.u.Status >= 0) ? irp.IoStatus.Information : 0;
     if ((code & 3) == METHOD_BUFFERED)
     {
-        memcpy( out_buff, irp.AssociatedIrp.SystemBuffer, *out_size );
+        if (out_buff) memcpy( out_buff, irp.AssociatedIrp.SystemBuffer, *out_size );
         HeapFree( GetProcessHeap(), 0, irp.AssociatedIrp.SystemBuffer );
     }
     return irp.IoStatus.u.Status;
