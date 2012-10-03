@@ -1036,41 +1036,122 @@ static inline BOOL is_r8g8b8( const XVisualInfo *vis )
     return vis->depth == 24 && vis->red_mask == 0xff0000 && vis->blue_mask == 0x0000ff;
 }
 
-/* copy the image bits, fixing up alignment and byte swapping as necessary */
-DWORD copy_image_bits( BITMAPINFO *info, BOOL is_r8g8b8, XImage *image,
-                       const struct gdi_image_bits *src_bits, struct gdi_image_bits *dst_bits,
-                       struct bitblt_coords *coords, const int *mapping, unsigned int zeropad_mask )
+static inline BOOL image_needs_byteswap( XImage *image, BOOL is_r8g8b8, int bit_count )
 {
 #ifdef WORDS_BIGENDIAN
     static const int client_byte_order = MSBFirst;
 #else
     static const int client_byte_order = LSBFirst;
 #endif
-    BOOL need_byteswap;
-    int x, y, height = coords->visrect.bottom - coords->visrect.top;
-    int width_bytes = image->bytes_per_line;
-    int padding_pos;
-    unsigned char *src, *dst;
+
+    switch (bit_count)
+    {
+    case 1:  return image->bitmap_bit_order != MSBFirst;
+    case 4:  return image->byte_order != MSBFirst;
+    case 16:
+    case 32: return image->byte_order != client_byte_order;
+    case 24: return (image->byte_order == MSBFirst) ^ !is_r8g8b8;
+    default: return FALSE;
+    }
+}
+
+/* copy image bits with byte swapping and/or pixel mapping */
+static void copy_image_byteswap( BITMAPINFO *info, const unsigned char *src, unsigned char *dst,
+                                 int src_stride, int dst_stride, int height,
+                                 BOOL byteswap, const int *mapping, unsigned int zeropad_mask )
+{
+    int x, y, padding_pos = abs(dst_stride) / sizeof(unsigned int) - 1;
+
+    if (!byteswap && !mapping)  /* simply copy */
+    {
+        if (src != dst)
+        {
+            for (y = 0; y < height; y++, src += src_stride, dst += dst_stride)
+            {
+                memcpy( dst, src, src_stride );
+                ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
+            }
+        }
+        else if (zeropad_mask != ~0u)  /* only need to clear the padding */
+        {
+            for (y = 0; y < height; y++, dst += dst_stride)
+                ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
+        }
+        return;
+    }
 
     switch (info->bmiHeader.biBitCount)
     {
     case 1:
-        need_byteswap = (image->bitmap_bit_order != MSBFirst);
+        for (y = 0; y < height; y++, src += src_stride, dst += dst_stride)
+        {
+            for (x = 0; x < src_stride; x++) dst[x] = bit_swap[src[x]];
+            ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
+        }
         break;
     case 4:
-        need_byteswap = (image->byte_order != MSBFirst);
+        for (y = 0; y < height; y++, src += src_stride, dst += dst_stride)
+        {
+            if (mapping)
+            {
+                if (byteswap)
+                    for (x = 0; x < src_stride; x++)
+                        dst[x] = (mapping[src[x] & 0x0f] << 4) | mapping[src[x] >> 4];
+                else
+                    for (x = 0; x < src_stride; x++)
+                        dst[x] = mapping[src[x] & 0x0f] | (mapping[src[x] >> 4] << 4);
+            }
+            else
+                for (x = 0; x < src_stride; x++)
+                    dst[x] = (src[x] << 4) | (src[x] >> 4);
+            ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
+        }
+        break;
+    case 8:
+        for (y = 0; y < height; y++, src += src_stride, dst += dst_stride)
+        {
+            for (x = 0; x < src_stride; x++) dst[x] = mapping[src[x]];
+            ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
+        }
         break;
     case 16:
-    case 32:
-        need_byteswap = (image->byte_order != client_byte_order);
+        for (y = 0; y < height; y++, src += src_stride, dst += dst_stride)
+        {
+            for (x = 0; x < info->bmiHeader.biWidth; x++)
+                ((USHORT *)dst)[x] = RtlUshortByteSwap( ((const USHORT *)src)[x] );
+            ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
+        }
         break;
     case 24:
-        need_byteswap = (image->byte_order == MSBFirst) ^ !is_r8g8b8;
+        for (y = 0; y < height; y++, src += src_stride, dst += dst_stride)
+        {
+            for (x = 0; x < info->bmiHeader.biWidth; x++)
+            {
+                unsigned char tmp = src[3 * x];
+                dst[3 * x]     = src[3 * x + 2];
+                dst[3 * x + 1] = src[3 * x + 1];
+                dst[3 * x + 2] = tmp;
+            }
+            ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
+        }
         break;
-    default:
-        need_byteswap = FALSE;
+    case 32:
+        for (y = 0; y < height; y++, src += src_stride, dst += dst_stride)
+            for (x = 0; x < info->bmiHeader.biWidth; x++)
+                ((ULONG *)dst)[x] = RtlUlongByteSwap( ((const ULONG *)src)[x] );
         break;
     }
+}
+
+/* copy the image bits, fixing up alignment and byte swapping as necessary */
+DWORD copy_image_bits( BITMAPINFO *info, BOOL is_r8g8b8, XImage *image,
+                       const struct gdi_image_bits *src_bits, struct gdi_image_bits *dst_bits,
+                       struct bitblt_coords *coords, const int *mapping, unsigned int zeropad_mask )
+{
+    BOOL need_byteswap = image_needs_byteswap( image, is_r8g8b8, info->bmiHeader.biBitCount );
+    int height = coords->visrect.bottom - coords->visrect.top;
+    int width_bytes = image->bytes_per_line;
+    unsigned char *src, *dst;
 
     src = src_bits->ptr;
     if (info->bmiHeader.biHeight > 0)
@@ -1101,7 +1182,6 @@ DWORD copy_image_bits( BITMAPINFO *info, BOOL is_r8g8b8, XImage *image,
     }
 
     dst = dst_bits->ptr;
-    padding_pos = width_bytes/sizeof(unsigned int) - 1;
 
     if (info->bmiHeader.biHeight > 0)
     {
@@ -1109,79 +1189,8 @@ DWORD copy_image_bits( BITMAPINFO *info, BOOL is_r8g8b8, XImage *image,
         width_bytes = -width_bytes;
     }
 
-    if (need_byteswap || mapping)
-    {
-        switch (info->bmiHeader.biBitCount)
-        {
-        case 1:
-            for (y = 0; y < height; y++, src += image->bytes_per_line, dst += width_bytes)
-            {
-                for (x = 0; x < image->bytes_per_line; x++)
-                    dst[x] = bit_swap[src[x]];
-                ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
-            }
-            break;
-        case 4:
-            for (y = 0; y < height; y++, src += image->bytes_per_line, dst += width_bytes)
-            {
-                if (mapping)
-                    for (x = 0; x < image->bytes_per_line; x++)
-                        dst[x] = (mapping[src[x] & 0x0f] << 4) | mapping[src[x] >> 4];
-                else
-                    for (x = 0; x < image->bytes_per_line; x++)
-                        dst[x] = (src[x] << 4) | (src[x] >> 4);
-                ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
-            }
-            break;
-        case 8:
-            for (y = 0; y < height; y++, src += image->bytes_per_line, dst += width_bytes)
-            {
-                for (x = 0; x < image->bytes_per_line; x++)
-                    dst[x] = mapping[src[x]];
-                ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
-            }
-            break;
-        case 16:
-            for (y = 0; y < height; y++, src += image->bytes_per_line, dst += width_bytes)
-            {
-                for (x = 0; x < info->bmiHeader.biWidth; x++)
-                    ((USHORT *)dst)[x] = RtlUshortByteSwap( ((const USHORT *)src)[x] );
-                ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
-            }
-            break;
-        case 24:
-            for (y = 0; y < height; y++, src += image->bytes_per_line, dst += width_bytes)
-            {
-                for (x = 0; x < info->bmiHeader.biWidth; x++)
-                {
-                    unsigned char tmp = src[3 * x];
-                    dst[3 * x]     = src[3 * x + 2];
-                    dst[3 * x + 1] = src[3 * x + 1];
-                    dst[3 * x + 2] = tmp;
-                }
-                ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
-            }
-            break;
-        case 32:
-            for (y = 0; y < height; y++, src += image->bytes_per_line, dst += width_bytes)
-                for (x = 0; x < info->bmiHeader.biWidth; x++)
-                    ((ULONG *)dst)[x] = RtlUlongByteSwap( ((const ULONG *)src)[x] );
-            break;
-        }
-    }
-    else if (src != dst)
-    {
-        for (y = 0; y < height; y++, src += image->bytes_per_line, dst += width_bytes)
-        {
-            memcpy( dst, src, image->bytes_per_line );
-            ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
-        }
-    }
-    else  /* only need to clear the padding */
-    {
-        for (y = 0; y < height; y++, dst += width_bytes)
-            ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
-    }
+    copy_image_byteswap( info, src, dst, image->bytes_per_line, width_bytes, height,
+                         need_byteswap, mapping, zeropad_mask );
     return ERROR_SUCCESS;
 }
 
