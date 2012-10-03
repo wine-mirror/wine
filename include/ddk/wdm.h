@@ -1106,6 +1106,15 @@ typedef enum  {
     IoModifyAccess
 } LOCK_OPERATION;
 
+typedef struct _CALLBACK_OBJECT
+{
+    ULONG Signature;
+    KSPIN_LOCK Lock;
+    LIST_ENTRY RegisteredCallbacks;
+    BOOLEAN AllowMultipleCallbacks;
+    UCHAR reserved[3];
+} CALLBACK_OBJECT, *PCALLBACK_OBJECT;
+
 NTSTATUS WINAPI ObCloseHandle(IN HANDLE handle);
 
 #ifdef NONAMELESSUNION

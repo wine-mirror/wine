@@ -122,7 +122,7 @@
 @ stdcall ExAllocatePoolWithTag(long long long)
 @ stub ExAllocatePoolWithTagPriority
 @ stub ExConvertExclusiveToSharedLite
-@ stub ExCreateCallback
+@ stdcall ExCreateCallback(ptr ptr long long)
 @ stub ExDeleteNPagedLookasideList
 @ stub ExDeletePagedLookasideList
 @ stub ExDeleteResourceLite

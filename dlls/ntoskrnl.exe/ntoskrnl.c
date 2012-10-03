@@ -1105,6 +1105,18 @@ PVOID WINAPI ExAllocatePoolWithQuotaTag( POOL_TYPE type, SIZE_T size, ULONG tag 
 
 
 /***********************************************************************
+ *           ExCreateCallback   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ExCreateCallback(PCALLBACK_OBJECT *obj, POBJECT_ATTRIBUTES attr,
+                                 BOOLEAN create, BOOLEAN allow_multiple)
+{
+    FIXME("(%p, %p, %u, %u): stub\n", obj, attr, create, allow_multiple);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
  *           ExFreePool   (NTOSKRNL.EXE.@)
  */
 void WINAPI ExFreePool( void *ptr )
