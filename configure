@@ -15902,6 +15902,7 @@ wine_fn_config_program eject enable_eject install
 wine_fn_config_program expand enable_expand install
 wine_fn_config_program explorer enable_explorer install,po
 wine_fn_config_program extrac32 enable_extrac32 install
+wine_fn_config_program findstr enable_findstr install
 wine_fn_config_program hh enable_hh install
 wine_fn_config_program hostname enable_hostname install,po
 wine_fn_config_program icinfo enable_icinfo install
