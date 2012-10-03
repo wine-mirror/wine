@@ -517,7 +517,6 @@ extern DWORD EVENT_x11_time_to_win32_time(Time time) DECLSPEC_HIDDEN;
 enum x11drv_window_messages
 {
     WM_X11DRV_ACQUIRE_SELECTION = 0x80001000,
-    WM_X11DRV_SET_WIN_FORMAT,
     WM_X11DRV_SET_WIN_REGION,
     WM_X11DRV_RESIZE_DESKTOP,
     WM_X11DRV_SET_CURSOR,
@@ -568,7 +567,6 @@ extern void release_win_data( struct x11drv_win_data *data ) DECLSPEC_HIDDEN;
 extern Window X11DRV_get_whole_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern XIC X11DRV_get_ic( HWND hwnd ) DECLSPEC_HIDDEN;
 
-extern BOOL set_win_format( HWND hwnd, XID fbconfig_id ) DECLSPEC_HIDDEN;
 extern BOOL has_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_rect ) DECLSPEC_HIDDEN;
 extern void destroy_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;

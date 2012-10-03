@@ -1062,20 +1062,6 @@ static const struct wgl_pixel_format *get_pixel_format(Display *display, int iPi
     return NULL;
 }
 
-static int pixelformat_from_fbconfig_id(XID fbconfig_id)
-{
-    int i;
-
-    if (!fbconfig_id) return 0;
-
-    for (i = 0; i < nb_pixel_formats; i++)
-        if (pixel_formats[i].fmt_id == fbconfig_id) return i + 1;
-
-    /* This will happen on hwnds without a pixel format set; it's ok */
-    return 0;
-}
-
-
 /* Mark any allocated context using the glx drawable 'old' to use 'new' */
 static void mark_drawable_dirty(Drawable old, Drawable new)
 {
@@ -1182,18 +1168,15 @@ static void free_gl_drawable( struct gl_drawable *gl )
 /***********************************************************************
  *              set_win_format
  */
-BOOL set_win_format( HWND hwnd, XID fbconfig_id )
+static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format )
 {
     HWND parent = GetAncestor( hwnd, GA_PARENT );
     XSetWindowAttributes attrib;
     struct gl_drawable *gl, *prev;
-    int format;
-
-    if (!(format = pixelformat_from_fbconfig_id( fbconfig_id ))) return FALSE;
 
     gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) );
-    gl->format = &pixel_formats[format - 1];
-    gl->visual = pglXGetVisualFromFBConfig( gdi_display, gl->format->fbconfig );
+    gl->format = format;
+    gl->visual = pglXGetVisualFromFBConfig( gdi_display, format->fbconfig );
     if (!gl->visual)
     {
         HeapFree( GetProcessHeap(), 0, gl );
@@ -1289,7 +1272,7 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
         return FALSE;
     }
 
-    TRACE("Created GL drawable 0x%lx, using FBConfigID 0x%lx\n", gl->drawable, fbconfig_id);
+    TRACE("created GL drawable %lx for win %p format %x\n", gl->drawable, hwnd, format->fmt_id );
 
     XFlush( gdi_display );
 
@@ -1298,11 +1281,6 @@ BOOL set_win_format( HWND hwnd, XID fbconfig_id )
         free_gl_drawable( prev );
     XSaveContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char *)gl );
     LeaveCriticalSection( &context_section );
-
-    /* force DCE invalidation */
-    SetWindowPos( hwnd, 0, 0, 0, 0, 0,
-                  SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE | SWP_NOMOVE |
-                  SWP_NOREDRAW | SWP_DEFERERASE | SWP_NOSENDCHANGING | SWP_STATECHANGED);
     return TRUE;
 }
 
@@ -1577,12 +1555,6 @@ static BOOL glxdrv_wglSetPixelFormat( HDC hdc, int iPixelFormat, const PIXELFORM
         return prev == iPixelFormat;  /* cannot change it if already set */
     }
 
-    if(!SendMessageW(hwnd, WM_X11DRV_SET_WIN_FORMAT, fmt->fmt_id, 0)) {
-        ERR("Couldn't set format of the window, returning failure\n");
-        return FALSE;
-    }
-    /* physDev->current_pf will be set by the DCE update */
-
     if (TRACE_ON(wgl)) {
         int gl_test = 0;
 
@@ -1598,7 +1570,8 @@ static BOOL glxdrv_wglSetPixelFormat( HDC hdc, int iPixelFormat, const PIXELFORM
             TRACE(" - DRAWABLE_TYPE 0x%x\n", value);
         }
     }
-    return TRUE;
+
+    return set_win_format( hwnd, fmt );
 }
 
 /***********************************************************************
@@ -2879,8 +2852,7 @@ static BOOL X11DRV_wglSetPixelFormatWINE(HDC hdc, int format)
         return FALSE;
     }
 
-    return SendMessageW(hwnd, WM_X11DRV_SET_WIN_FORMAT, fmt->fmt_id, 0);
-    /* DC pixel format will be set by the DCE update */
+    return set_win_format( hwnd, fmt );
 }
 
 /**
@@ -3100,11 +3072,6 @@ struct opengl_funcs *get_glx_driver( UINT version )
 struct opengl_funcs *get_glx_driver( UINT version )
 {
     return NULL;
-}
-
-BOOL set_win_format( HWND hwnd, XID fbconfig_id )
-{
-    return FALSE;
 }
 
 BOOL has_gl_drawable( HWND hwnd )
