@@ -622,12 +622,19 @@ static BOOL SYSPARAMS_LoadRaw( LPCWSTR lpRegKey, LPCWSTR lpValName, LPBYTE lpBuf
     HKEY hKey;
 
     memset( lpBuf, 0, count );
-    if ((RegOpenKeyW( get_volatile_regkey(), lpRegKey, &hKey ) == ERROR_SUCCESS) ||
-        (RegOpenKeyW( HKEY_CURRENT_USER, lpRegKey, &hKey ) == ERROR_SUCCESS))
+
+    if (RegOpenKeyW( get_volatile_regkey(), lpRegKey, &hKey ) == ERROR_SUCCESS)
     {
-        ret = !RegQueryValueExW( hKey, lpValName, NULL, &type, lpBuf, &count);
+        ret = !RegQueryValueExW( hKey, lpValName, NULL, &type, lpBuf, &count );
         RegCloseKey( hKey );
     }
+
+    if (!ret && RegOpenKeyW( HKEY_CURRENT_USER, lpRegKey, &hKey ) == ERROR_SUCCESS)
+    {
+        ret = !RegQueryValueExW( hKey, lpValName, NULL, &type, lpBuf, &count );
+        RegCloseKey( hKey );
+    }
+
     return ret;
 }
 
