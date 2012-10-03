@@ -244,21 +244,33 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         return info->WinType.hwndHelp;
     }
     case HH_HELP_CONTEXT: {
-        HHInfo *info;
+        WCHAR *window = NULL;
+        HHInfo *info = NULL;
         LPWSTR url;
 
         if (!filename)
             return NULL;
 
-        if (!resolve_filename(filename, fullname, MAX_PATH, NULL, NULL))
+        if (!resolve_filename(filename, fullname, MAX_PATH, NULL, &window))
         {
             WARN("can't find %s\n", debugstr_w(filename));
             return 0;
         }
 
-        info = CreateHelpViewer(NULL, fullname, caller);
+        if (window)
+            info = find_window(window);
+
+        info = CreateHelpViewer(info, fullname, caller);
         if(!info)
+        {
+            heap_free(window);
             return NULL;
+        }
+
+        if(!info->WinType.pszType)
+            info->WinType.pszType = info->stringsW.pszType = window;
+        else
+            heap_free(window);
 
         url = FindContextAlias(info->pCHMInfo, data);
         if(!url)
