@@ -1005,6 +1005,38 @@ static UINT thumb2_disasm_coprocmov2(UINT inst, ADDRESS64 *addr)
     return 0;
 }
 
+static UINT thumb2_disasm_coprocdatatrans(UINT inst, ADDRESS64 *addr)
+{
+    WORD indexing  = (inst >> 24) & 0x01;
+    WORD direction = (inst >> 23) & 0x01;
+    WORD translen  = (inst >> 22) & 0x01;
+    WORD writeback = (inst >> 21) & 0x01;
+    WORD load      = (inst >> 20) & 0x01;
+    short offset    = (inst & 0xff) << 2;
+
+    if (!direction) offset *= -1;
+
+    dbg_printf("\n\t%s%s%s", load ? "ldc" : "stc", (inst & 0x10000000)?"2":"", translen ? "l" : "");
+    if (indexing)
+    {
+        if (load && get_nibble(inst, 4) == 15)
+        {
+            dbg_printf("\tp%u, cr%u, ", get_nibble(inst, 2), get_nibble(inst, 3));
+            db_printsym(addr->Offset + offset + 4);
+        }
+        else
+            dbg_printf("\tp%u, cr%u, [%s, #%d]%s", get_nibble(inst, 2), get_nibble(inst, 3), tbl_regs[get_nibble(inst, 4)], offset, writeback?"!":"");
+    }
+    else
+    {
+        if (writeback)
+            dbg_printf("\tp%u, cr%u, [%s], #%d", get_nibble(inst, 2), get_nibble(inst, 3), tbl_regs[get_nibble(inst, 4)], offset);
+        else
+            dbg_printf("\tp%u, cr%u, [%s], {%u}", get_nibble(inst, 2), get_nibble(inst, 3), tbl_regs[get_nibble(inst, 4)], inst & 0xff);
+    }
+    return 0;
+}
+
 struct inst_arm
 {
         UINT mask;
@@ -1080,6 +1112,7 @@ static const struct inst_arm tbl_thumb32[] = {
     { 0xef000010, 0xee000000, thumb2_disasm_coprocdat },
     { 0xef000010, 0xee000010, thumb2_disasm_coprocmov1 },
     { 0xefe00000, 0xec400000, thumb2_disasm_coprocmov2 },
+    { 0xee000000, 0xec000000, thumb2_disasm_coprocdatatrans },
     { 0x00000000, 0x00000000, NULL }
 };
 
