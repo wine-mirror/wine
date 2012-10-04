@@ -82,6 +82,7 @@ typedef struct {
   PSP_FILE_CALLBACK_A msghandler;
   PVOID context;
   CHAR most_recent_cabinet_name[MAX_PATH];
+  CHAR most_recent_target[MAX_PATH];
 } SC_HSC_A, *PSC_HSC_A;
 
 #define SC_HSC_W_MAGIC 0x0CABFEED
@@ -91,6 +92,7 @@ typedef struct {
   PSP_FILE_CALLBACK_W msghandler;
   PVOID context;
   WCHAR most_recent_cabinet_name[MAX_PATH];
+  WCHAR most_recent_target[MAX_PATH];
 } SC_HSC_W, *PSC_HSC_W;
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
@@ -337,6 +339,7 @@ static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
         SetLastError(ERROR_PATH_NOT_FOUND);
         return -1;
       }
+      strcpy( phsc->most_recent_target, fici.FullTargetName );
       return sc_cb_open(fici.FullTargetName, _O_BINARY | _O_CREAT | _O_WRONLY,  _S_IREAD | _S_IWRITE);
     } else {
       TRACE("  Callback skipped file.\n");
@@ -348,7 +351,7 @@ static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     TRACE("  Exec file? %s\n", (pfdin->cb) ? "Yes" : "No");
     TRACE("  File hndl: %d\n", pfdin->hf); */
     fp.Source = phsc->most_recent_cabinet_name;
-    fp.Target = pfdin->psz1;
+    fp.Target = phsc->most_recent_target;
     fp.Win32Error = 0;
     fp.Flags = 0;
     /* the following should be a fixme -- but it occurs too many times */
@@ -477,6 +480,7 @@ static INT_PTR CDECL sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
         SetLastError(ERROR_PATH_NOT_FOUND);
         return -1;
       }
+      strcpyW( phsc->most_recent_target, fici.FullTargetName );
       return sc_cb_open(charbuf, _O_BINARY | _O_CREAT | _O_WRONLY,  _S_IREAD | _S_IWRITE);
     } else {
       TRACE("  Callback skipped file.\n");
@@ -488,10 +492,7 @@ static INT_PTR CDECL sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     TRACE("  Exec file? %s\n", (pfdin->cb) ? "Yes" : "No");
     TRACE("  File hndl: %d\n", pfdin->hf); */
     fp.Source = phsc->most_recent_cabinet_name;
-    len = 1 + MultiByteToWideChar(CP_ACP, 0, pfdin->psz1, -1, buf, MAX_PATH);
-    if ((len > MAX_PATH) || (len <= 1))
-      buf[0] = '\0';
-    fp.Target = buf;
+    fp.Target = phsc->most_recent_target;
     fp.Win32Error = 0;
     fp.Flags = 0;
     /* a valid fixme -- but occurs too many times */
