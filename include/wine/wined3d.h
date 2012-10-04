@@ -2305,7 +2305,7 @@ HRESULT __cdecl wined3d_shader_set_local_constants_float(struct wined3d_shader *
         UINT start_idx, const float *src_data, UINT vector4f_count);
 
 HRESULT __cdecl wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock);
-HRESULT __cdecl wined3d_stateblock_capture(struct wined3d_stateblock *stateblock);
+void __cdecl wined3d_stateblock_capture(struct wined3d_stateblock *stateblock);
 HRESULT __cdecl wined3d_stateblock_create(struct wined3d_device *device,
         enum wined3d_stateblock_type type, struct wined3d_stateblock **stateblock);
 ULONG __cdecl wined3d_stateblock_decref(struct wined3d_stateblock *stateblock);

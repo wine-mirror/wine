@@ -611,7 +611,7 @@ static void wined3d_state_record_lights(struct wined3d_state *dst_state, const s
     }
 }
 
-HRESULT CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
+void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
 {
     const struct wined3d_state *src_state = &stateblock->device->stateBlock->state;
     unsigned int i;
@@ -897,8 +897,6 @@ HRESULT CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
     wined3d_state_record_lights(&stateblock->state, src_state);
 
     TRACE("Capture done.\n");
-
-    return WINED3D_OK;
 }
 
 static void apply_lights(struct wined3d_device *device, const struct wined3d_state *state)

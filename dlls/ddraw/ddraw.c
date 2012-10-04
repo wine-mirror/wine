@@ -924,14 +924,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
                 return hr;
             }
 
-            if (FAILED(hr = wined3d_stateblock_capture(stateblock)))
-            {
-                ERR("Failed to capture stateblock, hr %#x.\n", hr);
-                wined3d_stateblock_decref(stateblock);
-                wined3d_mutex_unlock();
-                return hr;
-            }
-
+            wined3d_stateblock_capture(stateblock);
             rt = wined3d_device_get_render_target(This->wined3d_device, 0);
             if (rt == This->wined3d_frontbuffer)
                 rt = NULL;

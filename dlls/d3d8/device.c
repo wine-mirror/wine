@@ -1557,7 +1557,6 @@ static HRESULT WINAPI d3d8_device_CaptureStateBlock(IDirect3DDevice8 *iface, DWO
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct wined3d_stateblock *stateblock;
-    HRESULT hr;
 
     TRACE("iface %p, token %#x.\n", iface, token);
 
@@ -1569,10 +1568,10 @@ static HRESULT WINAPI d3d8_device_CaptureStateBlock(IDirect3DDevice8 *iface, DWO
         wined3d_mutex_unlock();
         return D3DERR_INVALIDCALL;
     }
-    hr = wined3d_stateblock_capture(stateblock);
+    wined3d_stateblock_capture(stateblock);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_device_DeleteStateBlock(IDirect3DDevice8 *iface, DWORD token)
