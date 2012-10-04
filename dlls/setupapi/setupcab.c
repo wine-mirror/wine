@@ -356,9 +356,9 @@ static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     fp.Flags = 0;
     /* the following should be a fixme -- but it occurs too many times */
     WARN("Should set file date/time/attribs (and execute files?)\n");
-    err = phsc->msghandler(phsc->context, SPFILENOTIFY_FILEEXTRACTED, (UINT_PTR)&fp, 0);
     if (sc_cb_close(pfdin->hf))
       WARN("_close failed.\n");
+    err = phsc->msghandler(phsc->context, SPFILENOTIFY_FILEEXTRACTED, (UINT_PTR)&fp, 0);
     if (err) {
       SetLastError(err);
       return FALSE;
@@ -497,9 +497,9 @@ static INT_PTR CDECL sc_FNNOTIFY_W(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
     fp.Flags = 0;
     /* a valid fixme -- but occurs too many times */
     /* FIXME("Should set file date/time/attribs (and execute files?)\n"); */
-    err = phsc->msghandler(phsc->context, SPFILENOTIFY_FILEEXTRACTED, (UINT_PTR)&fp, 0);
     if (sc_cb_close(pfdin->hf))
       WARN("_close failed.\n");
+    err = phsc->msghandler(phsc->context, SPFILENOTIFY_FILEEXTRACTED, (UINT_PTR)&fp, 0);
     if (err) {
       SetLastError(err);
       return FALSE;
