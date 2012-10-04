@@ -903,107 +903,54 @@ static filename_tests_t noquotes_tests[]=
 
 static void test_lpFile_parsed(void)
 {
-    /* basename tmpdir */
-    const char* shorttmpdir;
-    const char *testfile;
     char fileA[MAX_PATH];
     INT_PTR rc;
 
-    GetTempPathA(sizeof(fileA), fileA);
-    shorttmpdir = tmpdir + strlen(fileA);
-
-    /* ensure tmpdir is in %TEMP%: GetTempPath() can succeed even if TEMP is undefined */
-    SetEnvironmentVariableA("TEMP", fileA);
-
     /* existing "drawback_file.noassoc" prevents finding "drawback_file.noassoc foo.shlexec" on wine */
-    testfile = "%s\\drawback_file.noassoc foo.shlexec";
-    sprintf(fileA, testfile, tmpdir);
+    sprintf(fileA, "%s\\drawback_file.noassoc foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
-    todo_wine {
-        ok(rc>32,
-            "expected success (33), got %s (%lu), lpFile: %s\n",
-            rc > 32 ? "success" : "failure", rc, fileA
-            );
-    }
+    todo_wine ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
 
     /* if quoted, existing "drawback_file.noassoc" not prevents finding "drawback_file.noassoc foo.shlexec" on wine */
-    testfile = "\"%s\\drawback_file.noassoc foo.shlexec\"";
-    sprintf(fileA, testfile, tmpdir);
+    sprintf(fileA, "\"%s\\drawback_file.noassoc foo.shlexec\"", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
-    ok(rc>32 || broken(rc == 2) /* Win95/NT4 */,
-        "expected success (33), got %s (%lu), lpFile: %s\n",
-        rc > 32 ? "success" : "failure", rc, fileA
-        );
+    ok(rc > 32 || broken(rc == SE_ERR_FNF) /* Win95/NT4 */,
+       "%s failed: rc=%lu\n", shell_call, rc);
 
-    /* error should be 2, not 31 */
-    testfile = "\"%s\\drawback_file.noassoc\" foo.shlexec";
-    sprintf(fileA, testfile, tmpdir);
+    /* error should be SE_ERR_FNF, not SE_ERR_NOASSOC */
+    sprintf(fileA, "\"%s\\drawback_file.noassoc\" foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
-    ok(rc==2,
-        "expected failure (2), got %s (%lu), lpFile: %s\n",
-        rc > 32 ? "success" : "failure", rc, fileA
-        );
+    ok(rc == SE_ERR_FNF, "%s succeeded: rc=%lu\n", shell_call, rc);
 
     /* ""command"" not works on wine (and real win9x and w2k) */
-    testfile = "\"\"%s\\simple.shlexec\"\"";
-    sprintf(fileA, testfile, tmpdir);
+    sprintf(fileA, "\"\"%s\\simple.shlexec\"\"", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
-    todo_wine {
-        ok(rc>32 || broken(rc == 2) /* Win9x/2000 */,
-            "expected success (33), got %s (%lu), lpFile: %s\n",
-            rc > 32 ? "success" : "failure", rc, fileA
-            );
-    }
+    todo_wine ok(rc > 32 || broken(rc == SE_ERR_FNF) /* Win9x/2000 */,
+                 "%s failed: rc=%lu\n", shell_call, rc);
 
     /* nonexisting "drawback_nonexist.noassoc" not prevents finding "drawback_nonexist.noassoc foo.shlexec" on wine */
-    testfile = "%s\\drawback_nonexist.noassoc foo.shlexec";
-    sprintf(fileA, testfile, tmpdir);
+    sprintf(fileA, "%s\\drawback_nonexist.noassoc foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
-    ok(rc>32,
-        "expected success (33), got %s (%lu), lpFile: %s\n",
-        rc > 32 ? "success" : "failure", rc, fileA
-        );
+    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
 
     /* is SEE_MASK_DOENVSUBST default flag? Should only be when XP emulates 9x (XP bug or real 95 or ME behavior ?) */
-    testfile = "%%TEMP%%\\%s\\simple.shlexec";
-    sprintf(fileA, testfile, shorttmpdir);
-    rc=shell_execute(NULL, fileA, NULL, NULL);
-    todo_wine {
-        ok(rc==2,
-            "expected failure (2), got %s (%lu), lpFile: %s\n",
-            rc > 32 ? "success" : "failure", rc, fileA
-            );
-    }
+    rc=shell_execute(NULL, "%TMPDIR%\\simple.shlexec", NULL, NULL);
+    todo_wine ok(rc == SE_ERR_FNF, "%s succeeded: rc=%lu\n", shell_call, rc);
 
     /* quoted */
-    testfile = "\"%%TEMP%%\\%s\\simple.shlexec\"";
-    sprintf(fileA, testfile, shorttmpdir);
-    rc=shell_execute(NULL, fileA, NULL, NULL);
-    todo_wine {
-        ok(rc==2,
-            "expected failure (2), got %s (%lu), lpFile: %s\n",
-            rc > 32 ? "success" : "failure", rc, fileA
-            );
-    }
+    rc=shell_execute(NULL, "\"%TMPDIR%\\simple.shlexec\"", NULL, NULL);
+    todo_wine ok(rc == SE_ERR_FNF, "%s succeeded: rc=%lu\n", shell_call, rc);
 
     /* test SEE_MASK_DOENVSUBST works */
-    testfile = "%%TEMP%%\\%s\\simple.shlexec";
-    sprintf(fileA, testfile, shorttmpdir);
-    rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI, NULL, fileA, NULL, NULL);
-    ok(rc>32,
-        "expected success (33), got %s (%lu), lpFile: %s\n",
-        rc > 32 ? "success" : "failure", rc, fileA
-        );
+    rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI,
+                        NULL, "%TMPDIR%\\simple.shlexec", NULL, NULL);
+    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
 
     /* quoted lpFile does not work on real win95 and nt4 */
-    testfile = "\"%%TEMP%%\\%s\\simple.shlexec\"";
-    sprintf(fileA, testfile, shorttmpdir);
-    rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI, NULL, fileA, NULL, NULL);
-    ok(rc>32 || broken(rc == 2) /* Win95/NT4 */,
-        "expected success (33), got %s (%lu), lpFile: %s\n",
-        rc > 32 ? "success" : "failure", rc, fileA
-        );
-
+    rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI,
+                        NULL, "\"%TMPDIR%\\simple.shlexec\"", NULL, NULL);
+    ok(rc > 32 || broken(rc == SE_ERR_FNF) /* Win95/NT4 */,
+       "%s failed: rc=%lu\n", shell_call, rc);
 }
 
 static void test_argify(void)
@@ -1015,10 +962,7 @@ static void test_argify(void)
 
     /* %2 */
     rc=shell_execute("NoQuotesParam2", fileA, "a b", NULL);
-    ok(rc>32,
-        "expected success (33), got %s (%lu), lpFile: %s\n",
-        rc > 32 ? "success" : "failure", rc, fileA
-        );
+    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
     if (rc>32)
     {
         okChildInt("argcA", 5);
@@ -1028,10 +972,7 @@ static void test_argify(void)
     /* %2 */
     /* '"a"""'   -> 'a"' */
     rc=shell_execute("NoQuotesParam2", fileA, "\"a:\"\"some string\"\"\"", NULL);
-    ok(rc>32,
-        "expected success (33), got %s (%lu), lpFile: %s\n",
-        rc > 32 ? "success" : "failure", rc, fileA
-        );
+    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
     if (rc>32)
     {
         okChildInt("argcA", 5);
@@ -1044,10 +985,7 @@ static void test_argify(void)
     /* backslash isn't escape char
      * '"a\""'   -> '"a\""' */
     rc=shell_execute("NoQuotesParam2", fileA, "\"a:\\\"some string\\\"\"", NULL);
-    ok(rc>32,
-        "expected success (33), got %s (%lu), lpFile: %s\n",
-        rc > 32 ? "success" : "failure", rc, fileA
-        );
+    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
     if (rc>32)
     {
         okChildInt("argcA", 5);
@@ -1059,10 +997,7 @@ static void test_argify(void)
     /* "%2" */
     /* \t isn't whitespace */
     rc=shell_execute("QuotedParam2", fileA, "a\tb c", NULL);
-    ok(rc>32,
-        "expected success (33), got %s (%lu), lpFile: %s\n",
-        rc > 32 ? "success" : "failure", rc, fileA
-        );
+    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
     if (rc>32)
     {
         okChildInt("argcA", 5);
@@ -1073,10 +1008,7 @@ static void test_argify(void)
 
     /* %* */
     rc=shell_execute("NoQuotesAllParams", fileA, "a b c d e f g h", NULL);
-    ok(rc>32,
-        "expected success (33), got %s (%lu), lpFile: %s\n",
-        rc > 32 ? "success" : "failure", rc, fileA
-        );
+    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
     if (rc>32)
     {
         todo_wine {
@@ -1088,10 +1020,7 @@ static void test_argify(void)
 
     /* %* can sometimes contain only whitespaces and no args */
     rc=shell_execute("QuotedAllParams", fileA, "   ", NULL);
-    ok(rc>32,
-        "expected success (33), got %s (%lu), lpFile: %s\n",
-        rc > 32 ? "success" : "failure", rc, fileA
-        );
+    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
     if (rc>32)
     {
         todo_wine {
@@ -1102,10 +1031,7 @@ static void test_argify(void)
 
     /* %~3 */
     rc=shell_execute("NoQuotesParams345etc", fileA, "a b c d e f g h", NULL);
-    ok(rc>32,
-        "expected success (33), got %s (%lu), lpFile: %s\n",
-        rc > 32 ? "success" : "failure", rc, fileA
-        );
+    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
     if (rc>32)
     {
         todo_wine {
@@ -1117,10 +1043,7 @@ static void test_argify(void)
 
     /* %~3 is rest of command line starting with whitespaces after 2nd arg */
     rc=shell_execute("QuotedParams345etc", fileA, "a    ", NULL);
-    ok(rc>32,
-        "expected success (33), got %s (%lu), lpFile: %s\n",
-        rc > 32 ? "success" : "failure", rc, fileA
-        );
+    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
     if (rc>32)
     {
         okChildInt("argcA", 5);
@@ -1178,7 +1101,7 @@ static void test_filename(void)
         if ((test->todo & 0x1)==0)
         {
             ok(rc==test->rc ||
-               broken(quotedfile && rc == 2), /* NT4 */
+               broken(quotedfile && rc == SE_ERR_FNF), /* NT4 */
                "%s failed: rc=%ld err=%u\n", shell_call,
                rc, GetLastError());
         }
@@ -2184,6 +2107,9 @@ static void init_test(void)
     DeleteFileA( tmpdir );
     rc = CreateDirectoryA( tmpdir, NULL );
     ok( rc, "failed to create %s err %u\n", tmpdir, GetLastError() );
+    /* Set %TMPDIR% for the tests */
+    SetEnvironmentVariableA("TMPDIR", tmpdir);
+
     rc = GetTempFileNameA(tmpdir, "wt", 0, child_file);
     assert(rc != 0);
     init_event(child_file);
