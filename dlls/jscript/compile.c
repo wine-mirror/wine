@@ -131,25 +131,45 @@ static WCHAR *compiler_alloc_string(bytecode_t *code, const WCHAR *str)
     return ret;
 }
 
-static BSTR compiler_alloc_bstr(compiler_ctx_t *ctx, const WCHAR *str)
+static BOOL ensure_bstr_slot(compiler_ctx_t *ctx)
 {
     if(!ctx->code->bstr_pool_size) {
         ctx->code->bstr_pool = heap_alloc(8 * sizeof(BSTR));
         if(!ctx->code->bstr_pool)
-            return NULL;
+            return FALSE;
         ctx->code->bstr_pool_size = 8;
     }else if(ctx->code->bstr_pool_size == ctx->code->bstr_cnt) {
         BSTR *new_pool;
 
         new_pool = heap_realloc(ctx->code->bstr_pool, ctx->code->bstr_pool_size*2*sizeof(BSTR));
         if(!new_pool)
-            return NULL;
+            return FALSE;
 
         ctx->code->bstr_pool = new_pool;
         ctx->code->bstr_pool_size *= 2;
     }
 
+    return TRUE;
+}
+
+static BSTR compiler_alloc_bstr(compiler_ctx_t *ctx, const WCHAR *str)
+{
+    if(!ensure_bstr_slot(ctx))
+        return NULL;
+
     ctx->code->bstr_pool[ctx->code->bstr_cnt] = SysAllocString(str);
+    if(!ctx->code->bstr_pool[ctx->code->bstr_cnt])
+        return NULL;
+
+    return ctx->code->bstr_pool[ctx->code->bstr_cnt++];
+}
+
+static BSTR compiler_alloc_bstr_len(compiler_ctx_t *ctx, const WCHAR *str, size_t len)
+{
+    if(!ensure_bstr_slot(ctx))
+        return NULL;
+
+    ctx->code->bstr_pool[ctx->code->bstr_cnt] = SysAllocStringLen(str, len);
     if(!ctx->code->bstr_pool[ctx->code->bstr_cnt])
         return NULL;
 
@@ -1885,8 +1905,78 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
     return S_OK;
 }
 
-HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimiter, BOOL from_eval, BOOL use_decode,
-        bytecode_t **ret)
+static HRESULT parse_arguments(compiler_ctx_t *ctx, const WCHAR *args, BSTR *arg_array, unsigned *args_size)
+{
+    const WCHAR *ptr = args, *ptr2;
+    unsigned arg_cnt = 0;
+
+    while(isspaceW(*ptr))
+        ptr++;
+    if(!*ptr) {
+        if(args_size)
+            *args_size = 0;
+        return S_OK;
+    }
+
+    while(1) {
+        if(!isalphaW(*ptr) && *ptr != '_') {
+            FIXME("expected alpha or '_': %s\n", debugstr_w(ptr));
+            return E_FAIL;
+        }
+
+        ptr2 = ptr;
+        while(isalnumW(*ptr) || *ptr == '_')
+            ptr++;
+
+        if(*ptr && *ptr != ',' && !isspaceW(*ptr)) {
+            FIXME("unexpected har %s\n", debugstr_w(ptr));
+            return E_FAIL;
+        }
+
+        if(arg_array) {
+            arg_array[arg_cnt] = compiler_alloc_bstr_len(ctx, ptr2, ptr-ptr2);
+            if(!arg_array[arg_cnt])
+                return E_OUTOFMEMORY;
+        }
+        arg_cnt++;
+
+        while(isspaceW(*ptr))
+            ptr++;
+        if(!*ptr)
+            break;
+        if(*ptr != ',') {
+            FIXME("expected ',': %s\n", debugstr_w(ptr));
+            return E_FAIL;
+        }
+
+        ptr++;
+        while(isspaceW(*ptr))
+            ptr++;
+    }
+
+    if(args_size)
+        *args_size = arg_cnt;
+    return S_OK;
+}
+
+static HRESULT compile_arguments(compiler_ctx_t *ctx, const WCHAR *args)
+{
+    HRESULT hres;
+
+    hres = parse_arguments(ctx, args, NULL, &ctx->code->global_code.param_cnt);
+    if(FAILED(hres))
+        return hres;
+
+    ctx->code->global_code.params = compiler_alloc(ctx->code,
+            ctx->code->global_code.param_cnt * sizeof(*ctx->code->global_code.params));
+    if(!ctx->code->global_code.params)
+        return E_OUTOFMEMORY;
+
+    return parse_arguments(ctx, args, ctx->code->global_code.params, NULL);
+}
+
+HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *args, const WCHAR *delimiter,
+        BOOL from_eval, BOOL use_decode, bytecode_t **ret)
 {
     compiler_ctx_t compiler = {0};
     HRESULT hres;
@@ -1894,6 +1984,12 @@ HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimi
     hres = init_code(&compiler, code);
     if(FAILED(hres))
         return hres;
+
+    if(args) {
+        hres = compile_arguments(&compiler, args);
+        if(FAILED(hres))
+            return hres;
+    }
 
     if(use_decode) {
         hres = decode_source(compiler.code->source);

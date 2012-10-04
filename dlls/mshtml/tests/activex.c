@@ -2355,10 +2355,8 @@ static void test_event_call(void)
     dp.cArgs = 2;
     V_VT(&res) = VT_EMPTY;
     hres = IDispatch_Invoke(sink_disp, 2, &IID_NULL, 0, DISPATCH_METHOD, &dp, &res, &ei, NULL);
-    todo_wine { /* Needs jscript fixes */
     ok(hres == S_OK, "Invoke failed: %08x\n", hres);
     ok(V_VT(&res) == VT_I4 && V_I4(&res) == 7, "unexpected result: %d\n", V_I4(&res));
-    }
 
     V_VT(&res) = VT_ERROR;
     hres = IDispatch_Invoke(sink_disp, 10, &IID_NULL, 0, DISPATCH_METHOD, &dp, &res, &ei, NULL);

@@ -1927,6 +1927,17 @@ static void test_parse_proc(void)
     dp.cArgs = 1;
     V_VT(args) = VT_EMPTY;
     invoke_procedure(NULL, "return arguments.length == 1;", &dp);
+
+    V_VT(args) = VT_BOOL;
+    V_BOOL(args) = VARIANT_TRUE;
+    invoke_procedure(" x ", "return x;", &dp);
+
+    dp.cArgs = 2;
+    V_VT(args) = VT_I4;
+    V_I4(args) = 2;
+    V_VT(args+1) = VT_I4;
+    V_I4(args+1) = 1;
+    invoke_procedure(" _x1 , y_2", "return _x1 === 1 && y_2 === 2;", &dp);
 }
 
 static void run_encoded_tests(void)

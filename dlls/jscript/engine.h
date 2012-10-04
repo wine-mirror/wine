@@ -178,7 +178,7 @@ typedef struct _bytecode_t {
     struct _bytecode_t *next;
 } bytecode_t;
 
-HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,BOOL,BOOL,bytecode_t**) DECLSPEC_HIDDEN;
+HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,const WCHAR*,BOOL,BOOL,bytecode_t**) DECLSPEC_HIDDEN;
 void release_bytecode(bytecode_t*) DECLSPEC_HIDDEN;
 
 static inline void bytecode_addref(bytecode_t *code)

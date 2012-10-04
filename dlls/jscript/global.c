@@ -370,7 +370,7 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     }
 
     TRACE("parsing %s\n", debugstr_jsval(argv[0]));
-    hres = compile_script(ctx, get_string(argv[0]), NULL, TRUE, FALSE, &code);
+    hres = compile_script(ctx, get_string(argv[0]), NULL, NULL, TRUE, FALSE, &code);
     if(FAILED(hres)) {
         WARN("parse (%s) failed: %08x\n", debugstr_jsval(argv[0]), hres);
         return throw_syntax_error(ctx, hres, NULL);
