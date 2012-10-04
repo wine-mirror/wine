@@ -51,6 +51,8 @@ static const WCHAR class_cdromdriveW[] =
     {'W','i','n','3','2','_','C','D','R','O','M','D','r','i','v','e',0};
 static const WCHAR class_compsysW[] =
     {'W','i','n','3','2','_','C','o','m','p','u','t','e','r','S','y','s','t','e','m',0};
+static const WCHAR class_diskdriveW[] =
+    {'W','i','n','3','2','_','D','i','s','k','D','r','i','v','e',0};
 static const WCHAR class_logicaldiskW[] =
     {'W','i','n','3','2','_','L','o','g','i','c','a','l','D','i','s','k',0};
 static const WCHAR class_networkadapterW[] =
@@ -225,6 +227,12 @@ static const struct column col_compsys[] =
     { prop_numprocessorsW,        CIM_UINT32, VT_I4 },
     { prop_totalphysicalmemoryW,  CIM_UINT64 }
 };
+static const struct column col_diskdrive[] =
+{
+    { prop_manufacturerW, CIM_STRING },
+    { prop_modelW,        CIM_STRING },
+    { prop_serialnumberW, CIM_STRING }
+};
 static const struct column col_logicaldisk[] =
 {
     { prop_deviceidW,   CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
@@ -334,6 +342,10 @@ static const WCHAR compsys_manufacturerW[] =
     {'T','h','e',' ','W','i','n','e',' ','P','r','o','j','e','c','t',0};
 static const WCHAR compsys_modelW[] =
     {'W','i','n','e',0};
+static const WCHAR diskdrive_modelW[] =
+    {'W','i','n','e',' ','D','i','s','k',' ','D','r','i','v','e',0};
+static const WCHAR diskdrive_manufacturerW[] =
+    {'(','S','t','a','n','d','a','r','d',' ','d','i','s','k',' ','d','r','i','v','e','s',')',0};
 static const WCHAR networkadapter_pnpdeviceidW[]=
     {'P','C','I','\\','V','E','N','_','8','0','8','6','&','D','E','V','_','1','0','0','E','&',
      'S','U','B','S','Y','S','_','0','0','1','E','8','0','8','6','&','R','E','V','_','0','2','\\',
@@ -379,6 +391,12 @@ struct record_computersystem
     UINT32       num_logical_processors;
     UINT32       num_processors;
     UINT64       total_physical_memory;
+};
+struct record_diskdrive
+{
+    const WCHAR *manufacturer;
+    const WCHAR *name;
+    const WCHAR *serialnumber;
 };
 struct record_logicaldisk
 {
@@ -486,6 +504,10 @@ static const struct record_bios data_bios[] =
 static const struct record_cdromdrive data_cdromdrive[] =
 {
     { cdromdrive_nameW }
+};
+static const struct record_diskdrive data_diskdrive[] =
+{
+    { diskdrive_manufacturerW, diskdrive_modelW }
 };
 static const struct record_params data_params[] =
 {
@@ -1132,6 +1154,7 @@ static struct table builtin_classes[] =
     { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), (BYTE *)data_bios },
     { class_cdromdriveW, SIZEOF(col_cdromdrive), col_cdromdrive, SIZEOF(data_cdromdrive), (BYTE *)data_cdromdrive },
     { class_compsysW, SIZEOF(col_compsys), col_compsys, 0, NULL, fill_compsys },
+    { class_diskdriveW, SIZEOF(col_diskdrive), col_diskdrive, SIZEOF(data_diskdrive), (BYTE *)data_diskdrive },
     { class_logicaldiskW, SIZEOF(col_logicaldisk), col_logicaldisk, 0, NULL, fill_logicaldisk },
     { class_networkadapterW, SIZEOF(col_networkadapter), col_networkadapter, 0, NULL, fill_networkadapter },
     { class_osW, SIZEOF(col_os), col_os, 0, NULL, fill_os },
