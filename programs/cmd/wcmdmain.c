@@ -1162,7 +1162,10 @@ void WCMD_run_program (WCHAR *command, BOOL called)
 
       /* Special case BAT and CMD */
       if (ext && (!strcmpiW(ext, batExt) || !strcmpiW(ext, cmdExt))) {
+        BOOL oldinteractive = interactive;
+        interactive = FALSE;
         WCMD_batch (thisDir, command, called, NULL, INVALID_HANDLE_VALUE);
+        interactive = oldinteractive;
         return;
       } else {
 
