@@ -74,6 +74,7 @@ extern const vtable_ptr MSVCP_out_of_range_vtable;
 extern const vtable_ptr MSVCP_invalid_argument_vtable;
 /* ??_7runtime_error@std@@6B@ */
 extern const vtable_ptr MSVCP_runtime_error_vtable;
+extern const vtable_ptr MSVCP_failure_vtable;
 
 static void MSVCP_type_info_dtor(type_info * _this)
 {
@@ -704,6 +705,76 @@ const char* __thiscall MSVCP_runtime_error_what(runtime_error *this)
     return MSVCP_basic_string_char_c_str(&this->str);
 }
 
+/* failure class data */
+typedef runtime_error failure;
+
+static failure* MSVCP_failure_ctor(
+        failure *this, const char *name)
+{
+    TRACE("%p %s\n", this, name);
+    MSVCP_runtime_error_ctor(this, name);
+    this->e.vtable = &MSVCP_failure_vtable;
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_failure_copy_ctor, 8)
+failure* __thiscall MSVCP_failure_copy_ctor(
+        failure *this, failure *rhs)
+{
+    TRACE("%p %p\n", this, rhs);
+    MSVCP_runtime_error_copy_ctor(this, rhs);
+    this->e.vtable = &MSVCP_failure_vtable;
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_failure_dtor, 4)
+void __thiscall MSVCP_failure_dtor(failure *this)
+{
+    TRACE("%p\n", this);
+    MSVCP_logic_error_dtor(this);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_failure_vector_dtor, 8)
+void* __thiscall MSVCP_failure_vector_dtor(
+        failure *this, unsigned int flags)
+{
+    TRACE("%p %x\n", this, flags);
+    return MSVCP_runtime_error_vector_dtor(this, flags);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_failure_what, 4)
+const char* __thiscall MSVCP_failure_what(failure *this)
+{
+    TRACE("%p\n", this);
+    return MSVCP_runtime_error_what(this);
+}
+
+DEFINE_RTTI_DATA2(failure, 0, &runtime_error_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AVfailure@std@@");
+
+static const cxx_type_info failure_cxx_type_info = {
+    0,
+    &failure_type_info,
+    { 0, -1, 0 },
+    sizeof(failure),
+    (cxx_copy_ctor)THISCALL(MSVCP_failure_copy_ctor)
+};
+
+static const cxx_type_info_table failure_cxx_type_table = {
+    3,
+    {
+        &failure_cxx_type_info,
+        &runtime_error_cxx_type_info,
+        &exception_cxx_type_info
+    }
+};
+
+static const cxx_exception_type failure_cxx_type = {
+    0,
+    (cxx_copy_ctor)THISCALL(MSVCP_failure_dtor),
+    NULL,
+    &failure_cxx_type_table
+};
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
@@ -737,6 +808,9 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(MSVCP_runtime_error_vector_dtor)
             VTABLE_ADD_FUNC(MSVCP_runtime_error_what)
             VTABLE_ADD_FUNC(MSVCP_exception__Doraise));
+    __ASM_VTABLE(failure,
+            VTABLE_ADD_FUNC(MSVCP_failure_vector_dtor)
+            VTABLE_ADD_FUNC(MSVCP_failure_what));
 #ifndef __GNUC__
 }
 #endif
@@ -745,6 +819,8 @@ void __asm_dummy_vtables(void) {
 void throw_exception(exception_type et, const char *str)
 {
     switch(et) {
+    case EXCEPTION_RERAISE:
+        _CxxThrowException(NULL, NULL);
     case EXCEPTION: {
         exception e;
         MSVCP_exception_ctor(&e, str);
@@ -780,6 +856,11 @@ void throw_exception(exception_type et, const char *str)
         MSVCP_runtime_error_ctor(&e, str);
         _CxxThrowException((exception*)&e, &runtime_error_cxx_type);
     }
+    case EXCEPTION_FAILURE: {
+        failure e;
+        MSVCP_failure_ctor(&e, str);
+        _CxxThrowException((exception*)&e, &failure_cxx_type);
+    }
     default:
         ERR("exception type not handled: %d\n", et);
     }
@@ -796,5 +877,6 @@ void init_exception(void *base)
     init_out_of_range_rtti(base);
     init_invalid_argument_rtti(base);
     init_runtime_error_rtti(base);
+    init_failure_rtti(base);
 #endif
 }
