@@ -903,55 +903,15 @@ static MCI_MIDITRACK*	MIDI_mciFindNextEvent(WINE_MCIMIDI* wmm, LPDWORD hiPulse)
 }
 
 /**************************************************************************
- * 				MIDI_mciPlay			[internal]
+ * 				MIDI_player			[internal]
  */
-static DWORD MIDI_mciPlay(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
+static DWORD MIDI_player(WINE_MCIMIDI* wmm, DWORD dwStartMS, DWORD dwEndMS, DWORD dwFlags)
 {
-    DWORD		dwStartMS, dwEndMS;
-    DWORD		dwRet = 0;
+    DWORD		dwRet;
     WORD		doPlay, nt;
     MCI_MIDITRACK*	mmt;
     DWORD		hiPulse;
-    HANDLE		oldcb;
-
-    TRACE("(%d, %08X, %p);\n", wmm->wDevID, dwFlags, lpParms);
-
-    if (wmm->hFile == 0) {
-	WARN("Can't play: no file %s!\n", debugstr_w(wmm->lpstrElementName));
-	return MCIERR_FILE_NOT_FOUND;
-    }
-
-    if (wmm->dwStatus != MCI_MODE_STOP) {
-	if (wmm->dwStatus == MCI_MODE_PAUSE) {
-	    /* FIXME: parameters (start/end) in lpParams may not be used */
-	    return MIDI_mciResume(wmm, dwFlags, (LPMCI_GENERIC_PARMS)lpParms);
-	}
-	WARN("Can't play: device is not stopped !\n");
-	return MCIERR_INTERNAL;
-    }
-
-    if (!(dwFlags & MCI_WAIT)) {
-	return MCI_SendCommandAsync(wmm->wDevID, MCI_PLAY, dwFlags, (DWORD_PTR)lpParms, sizeof(MCI_PLAY_PARMS));
-    }
-
-    if (lpParms && (dwFlags & MCI_FROM)) {
-	dwStartMS = MIDI_ConvertTimeFormatToMS(wmm, lpParms->dwFrom);
-    } else {
-	dwStartMS = wmm->dwPositionMS;
-    }
-
-    if (lpParms && (dwFlags & MCI_TO)) {
-	dwEndMS = MIDI_ConvertTimeFormatToMS(wmm, lpParms->dwTo);
-    } else {
-	dwEndMS = 0xFFFFFFFFul;
-    }
-
-    TRACE("Playing from %u to %u\n", dwStartMS, dwEndMS);
-
-    oldcb = InterlockedExchangePointer(&wmm->hCallback,
-	(dwFlags & MCI_NOTIFY) ? HWND_32(LOWORD(lpParms->dwCallback)) : NULL);
-    if (oldcb) mciDriverNotify(oldcb, wmm->wDevID, MCI_NOTIFY_ABORTED);
-    oldcb = NULL;
+    HANDLE		oldcb = NULL;
 
     /* init tracks */
     for (nt = 0; nt < wmm->nTracks; nt++) {
@@ -1180,6 +1140,55 @@ static DWORD MIDI_mciPlay(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_PLAY_PARMS lpP
     if (oldcb) mciDriverNotify(oldcb, wmm->wDevID,
 	dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
     return dwRet;
+}
+
+/**************************************************************************
+ * 				MIDI_mciPlay			[internal]
+ */
+static DWORD MIDI_mciPlay(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
+{
+    DWORD		dwStartMS, dwEndMS;
+    HANDLE		oldcb;
+
+    TRACE("(%d, %08X, %p);\n", wmm->wDevID, dwFlags, lpParms);
+
+    if (wmm->hFile == 0) {
+	WARN("Can't play: no file %s!\n", debugstr_w(wmm->lpstrElementName));
+	return MCIERR_FILE_NOT_FOUND;
+    }
+
+    if (wmm->dwStatus != MCI_MODE_STOP) {
+	if (wmm->dwStatus == MCI_MODE_PAUSE) {
+	    /* FIXME: parameters (start/end) in lpParams may not be used */
+	    return MIDI_mciResume(wmm, dwFlags, (LPMCI_GENERIC_PARMS)lpParms);
+	}
+	WARN("Can't play: device is not stopped !\n");
+	return MCIERR_INTERNAL;
+    }
+
+    if (!(dwFlags & MCI_WAIT)) {
+	return MCI_SendCommandAsync(wmm->wDevID, MCI_PLAY, dwFlags, (DWORD_PTR)lpParms, sizeof(MCI_PLAY_PARMS));
+    }
+
+    if (lpParms && (dwFlags & MCI_FROM)) {
+	dwStartMS = MIDI_ConvertTimeFormatToMS(wmm, lpParms->dwFrom);
+    } else {
+	dwStartMS = wmm->dwPositionMS;
+    }
+
+    if (lpParms && (dwFlags & MCI_TO)) {
+	dwEndMS = MIDI_ConvertTimeFormatToMS(wmm, lpParms->dwTo);
+    } else {
+	dwEndMS = 0xFFFFFFFFul;
+    }
+
+    TRACE("Playing from %u to %u\n", dwStartMS, dwEndMS);
+
+    oldcb = InterlockedExchangePointer(&wmm->hCallback,
+	(dwFlags & MCI_NOTIFY) ? HWND_32(LOWORD(lpParms->dwCallback)) : NULL);
+    if (oldcb) mciDriverNotify(oldcb, wmm->wDevID, MCI_NOTIFY_ABORTED);
+
+    return MIDI_player(wmm, dwStartMS, dwEndMS, dwFlags);
 }
 
 /**************************************************************************
