@@ -62,6 +62,7 @@ typedef struct tagWINE_MCIMIDI {
     HMIDI		hMidi;
     int			nUseCount;          	/* Incremented for each shared open          */
     HANDLE 		hCallback;         	/* Callback handle for pending notification  */
+    HANDLE		hThread;		/* Player thread                             */
     HMMIO		hFile;	            	/* mmio file handle open as Element          */
     LPWSTR		lpstrElementName;       /* Name of file (if any)                     */
     LPWSTR		lpstrCopyright;
@@ -77,78 +78,9 @@ typedef struct tagWINE_MCIMIDI {
     MCI_MIDITRACK*     	tracks;			/* Content of each track */
     DWORD		dwPulse;
     DWORD		dwPositionMS;
+    DWORD		dwEndMS;
     DWORD		dwStartTicks;
 } WINE_MCIMIDI;
-
-/* ===================================================================
- * ===================================================================
- * FIXME: should be using the new mmThreadXXXX functions from WINMM
- * instead of those
- * it would require to add a wine internal flag to mmThreadCreate
- * in order to pass a 32 bit function instead of a 16 bit
- * ===================================================================
- * =================================================================== */
-
-struct SCA {
-    UINT 	wDevID;
-    UINT 	wMsg;
-    DWORD_PTR   dwParam1;
-    DWORD_PTR   dwParam2;
-};
-
-/* EPP DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2); */
-
-/**************************************************************************
- * 				MCI_SCAStarter			[internal]
- */
-static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
-{
-    struct SCA* sca = arg;
-    DWORD       ret;
-
-    TRACE("In thread before async command (%08x,%u,%08lx,%08lx)\n",
-	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
-    ret = mciSendCommandA(sca->wDevID, sca->wMsg, sca->dwParam1 | MCI_WAIT, sca->dwParam2);
-    TRACE("In thread after async command (%08x,%u,%08lx,%08lx)\n",
-	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
-    HeapFree(GetProcessHeap(), 0, sca);
-    return ret;
-}
-
-/**************************************************************************
- * 				MCI_SendCommandAsync		[internal]
- */
-static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD_PTR dwParam1,
-				   DWORD_PTR dwParam2, UINT size)
-{
-    HANDLE handle;
-    struct SCA*	sca = HeapAlloc(GetProcessHeap(), 0, sizeof(struct SCA) + size);
-
-    if (sca == 0)
-	return MCIERR_OUT_OF_MEMORY;
-
-    sca->wDevID   = wDevID;
-    sca->wMsg     = wMsg;
-    sca->dwParam1 = dwParam1;
-
-    if (size && dwParam2) {
-	sca->dwParam2 = (DWORD_PTR)sca + sizeof(struct SCA);
-	/* copy structure passed by program in dwParam2 to be sure
-	 * we can still use it whatever the program does
-	 */
-	memcpy((LPVOID)sca->dwParam2, (LPVOID)dwParam2, size);
-    } else {
-	sca->dwParam2 = dwParam2;
-    }
-
-    if ((handle = CreateThread(NULL, 0, MCI_SCAStarter, sca, 0, NULL)) == 0) {
-	WARN("Couldn't allocate thread for async command handling, sending synchronously\n");
-	return MCI_SCAStarter(sca);
-    }
-    SetThreadPriority(handle, THREAD_PRIORITY_TIME_CRITICAL);
-    CloseHandle(handle);
-    return 0;
-}
 
 /*======================================================================*
  *                  	    MCI MIDI implementation			*
@@ -831,8 +763,8 @@ static DWORD MIDI_mciStop(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_GENERIC_PARMS 
 	if (oldstat == MCI_MODE_PAUSE)
 	    dwRet = midiOutReset((HMIDIOUT)wmm->hMidi);
 
-	while (wmm->dwStatus != MCI_MODE_STOP)
-	    Sleep(10);
+	if ((dwFlags & MCI_WAIT) && wmm->hThread)
+	    WaitForSingleObject(wmm->hThread, INFINITE);
     }
 
     /* sanity reset */
@@ -863,6 +795,7 @@ static DWORD MIDI_mciClose(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_GENERIC_PARMS
 	    wmm->hFile = 0;
 	    TRACE("hFile closed !\n");
 	}
+	if (wmm->hThread) CloseHandle(wmm->hThread);
 	HeapFree(GetProcessHeap(), 0, wmm->tracks);
 	HeapFree(GetProcessHeap(), 0, wmm->lpstrElementName);
 	HeapFree(GetProcessHeap(), 0, wmm->lpstrCopyright);
@@ -905,12 +838,12 @@ static MCI_MIDITRACK*	MIDI_mciFindNextEvent(WINE_MCIMIDI* wmm, LPDWORD hiPulse)
 /**************************************************************************
  * 				MIDI_player			[internal]
  */
-static DWORD MIDI_player(WINE_MCIMIDI* wmm, DWORD dwStartMS, DWORD dwEndMS, DWORD dwFlags)
+static DWORD MIDI_player(WINE_MCIMIDI* wmm, DWORD dwFlags)
 {
     DWORD		dwRet;
     WORD		doPlay, nt;
     MCI_MIDITRACK*	mmt;
-    DWORD		hiPulse;
+    DWORD		hiPulse, dwStartMS = wmm->dwPositionMS;
     HANDLE		oldcb = NULL;
 
     /* init tracks */
@@ -934,7 +867,6 @@ static DWORD MIDI_player(WINE_MCIMIDI* wmm, DWORD dwStartMS, DWORD dwEndMS, DWOR
 
     wmm->dwPulse = 0;
     wmm->dwTempo = 500000;
-    wmm->dwStatus = MCI_MODE_PLAY;
     wmm->dwPositionMS = 0;
     wmm->wStartedPlaying = FALSE;
 
@@ -944,7 +876,7 @@ static DWORD MIDI_player(WINE_MCIMIDI* wmm, DWORD dwStartMS, DWORD dwEndMS, DWOR
 	 */
 	while (((volatile WINE_MCIMIDI*)wmm)->dwStatus == MCI_MODE_PAUSE);
 
-	doPlay = (wmm->dwPositionMS >= dwStartMS && wmm->dwPositionMS <= dwEndMS);
+	doPlay = (wmm->dwPositionMS >= dwStartMS && wmm->dwPositionMS <= wmm->dwEndMS);
 
 	TRACE("wmm->dwStatus=%d, doPlay=%c\n", wmm->dwStatus, doPlay ? 'T' : 'F');
 
@@ -1142,12 +1074,54 @@ static DWORD MIDI_player(WINE_MCIMIDI* wmm, DWORD dwStartMS, DWORD dwEndMS, DWOR
     return dwRet;
 }
 
+static DWORD CALLBACK MIDI_Starter(void *ptr)
+{
+    WINE_MCIMIDI* wmm = ptr;
+    return MIDI_player(wmm, MCI_NOTIFY);
+}
+
+static DWORD ensurePlayerThread(WINE_MCIMIDI* wmm)
+{
+    if (1) {
+	DWORD dwRet;
+
+	switch (wmm->dwStatus) {
+	default:
+	    return MCIERR_NONAPPLICABLE_FUNCTION;
+	case MCI_MODE_PAUSE:
+	    return MIDI_mciResume(wmm, 0, NULL);
+	case MCI_MODE_PLAY:
+	    /* the player was not stopped, use it */
+	    return 0;
+	case MCI_MODE_STOP:
+	    break;
+	}
+	wmm->dwStatus = MCI_MODE_PLAY;
+	if (wmm->hThread) {
+	    WaitForSingleObject(wmm->hThread, INFINITE);
+	    CloseHandle(wmm->hThread);
+	    wmm->hThread = 0;
+	}
+	wmm->hThread = CreateThread(NULL, 0, MIDI_Starter, wmm, 0, NULL);
+	if (!wmm->hThread) {
+	    dwRet = MCIERR_OUT_OF_MEMORY;
+	} else {
+	    SetThreadPriority(wmm->hThread, THREAD_PRIORITY_TIME_CRITICAL);
+	    dwRet = 0;
+	}
+	if (dwRet)
+	    wmm->dwStatus = MCI_MODE_STOP;
+	return dwRet;
+    }
+}
+
 /**************************************************************************
  * 				MIDI_mciPlay			[internal]
  */
 static DWORD MIDI_mciPlay(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
     DWORD		dwStartMS, dwEndMS;
+    DWORD		dwRet;
     HANDLE		oldcb;
 
     TRACE("(%d, %08X, %p);\n", wmm->wDevID, dwFlags, lpParms);
@@ -1155,19 +1129,6 @@ static DWORD MIDI_mciPlay(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_PLAY_PARMS lpP
     if (wmm->hFile == 0) {
 	WARN("Can't play: no file %s!\n", debugstr_w(wmm->lpstrElementName));
 	return MCIERR_FILE_NOT_FOUND;
-    }
-
-    if (wmm->dwStatus != MCI_MODE_STOP) {
-	if (wmm->dwStatus == MCI_MODE_PAUSE) {
-	    /* FIXME: parameters (start/end) in lpParams may not be used */
-	    return MIDI_mciResume(wmm, dwFlags, (LPMCI_GENERIC_PARMS)lpParms);
-	}
-	WARN("Can't play: device is not stopped !\n");
-	return MCIERR_INTERNAL;
-    }
-
-    if (!(dwFlags & MCI_WAIT)) {
-	return MCI_SendCommandAsync(wmm->wDevID, MCI_PLAY, dwFlags, (DWORD_PTR)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
     if (lpParms && (dwFlags & MCI_TO)) {
@@ -1184,13 +1145,28 @@ static DWORD MIDI_mciPlay(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_PLAY_PARMS lpP
     if (dwEndMS < dwStartMS)
 	return MCIERR_OUTOFRANGE;
 
+    if (dwFlags & MCI_FROM) {
+	/* Stop with MCI_NOTIFY_ABORTED and set new position. */
+	MIDI_mciStop(wmm, MCI_WAIT, NULL);
+	wmm->dwPositionMS = dwStartMS;
+    } /* else use existing player. */
+    wmm->dwEndMS = dwEndMS;
+
     TRACE("Playing from %u to %u\n", dwStartMS, dwEndMS);
 
     oldcb = InterlockedExchangePointer(&wmm->hCallback,
 	(dwFlags & MCI_NOTIFY) ? HWND_32(LOWORD(lpParms->dwCallback)) : NULL);
     if (oldcb) mciDriverNotify(oldcb, wmm->wDevID, MCI_NOTIFY_ABORTED);
 
-    return MIDI_player(wmm, dwStartMS, dwEndMS, dwFlags);
+    dwRet = ensurePlayerThread(wmm);
+
+    if (!dwRet && (dwFlags & MCI_WAIT)) {
+	WaitForSingleObject(wmm->hThread, INFINITE);
+	GetExitCodeThread(wmm->hThread, &dwRet);
+	/* STATUS_PENDING cannot happen. It folds onto MCIERR_UNRECOGNIZED_KEYWORD */
+    }
+    /* The player thread performs notification at exit. */
+    return dwRet;
 }
 
 /**************************************************************************
