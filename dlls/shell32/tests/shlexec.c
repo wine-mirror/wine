@@ -953,6 +953,237 @@ static void test_lpFile_parsed(void)
        "%s failed: rc=%lu\n", shell_call, rc);
 }
 
+typedef struct
+{
+    const char* cmd;
+    const char* args[11];
+    int todo;
+} cmdline_tests_t;
+
+static const cmdline_tests_t cmdline_tests[] =
+{
+    {"exe arg1 arg2 \"arg three\" 'four five` six\\ $even)",
+     {"exe", "arg1", "arg2", "arg three", "'four", "five`", "six\\", "$even)", NULL}, 0},
+
+    {"exe arg=1 arg-2 three\tfour\rfour\nfour ",
+     {"exe", "arg=1", "arg-2", "three", "four\rfour\nfour", NULL}, 0},
+
+    {"exe arg\"one\" \"second\"arg thirdarg ",
+     {"exe", "argone", "secondarg", "thirdarg", NULL}, 0},
+
+    /* cmd's metacharacters have no special meaning */
+    {"exe \"one^\" \"arg\"&two three|four",
+     {"exe", "one^", "arg&two", "three|four", NULL}, 0},
+
+    /* Environment variables are not interpreted either */
+    {"exe %TMPDIR% %2",
+     {"exe", "%TMPDIR%", "%2", NULL}, 0},
+
+    /* If not followed by a quote, backslashes go through as is */
+    {"exe o\\ne t\\\\wo t\\\\\\ree f\\\\\\\\our ",
+     {"exe", "o\\ne", "t\\\\wo", "t\\\\\\ree", "f\\\\\\\\our", NULL}, 0},
+
+    {"exe \"o\\ne\" \"t\\\\wo\" \"t\\\\\\ree\" \"f\\\\\\\\our\" ",
+     {"exe", "o\\ne", "t\\\\wo", "t\\\\\\ree", "f\\\\\\\\our", NULL}, 0},
+
+    /* When followed by a quote their number is halved and the remainder
+     * escapes the quote
+     */
+    {"exe \\\"one \\\\\"two\" \\\\\\\"three \\\\\\\\\"four\" end",
+     {"exe", "\"one", "\\two", "\\\"three", "\\\\four", "end", NULL}, 0},
+
+    {"exe \"one\\\" still\" \"two\\\\\" \"three\\\\\\\" still\" \"four\\\\\\\\\" end",
+     {"exe", "one\" still", "two\\", "three\\\" still", "four\\\\", "end", NULL}, 0},
+
+    /* One can put a quote in an unquoted string by tripling it, that is in
+     * effect quoting it like so """ -> ". The general rule is as follows:
+     * 3n   quotes -> n quotes
+     * 3n+1 quotes -> n quotes plus start of a quoted string
+     * 3n+2 quotes -> n quotes (plus an empty string from the remaining pair)
+     * Nicely, when n is 0 we get the standard rules back.
+     */
+    {"exe two\"\"quotes next",
+     {"exe", "twoquotes", "next", NULL}, 0},
+
+    {"exe three\"\"\"quotes next",
+     {"exe", "three\"quotes", "next", NULL}, 0x21},
+
+    {"exe four\"\"\"\" quotes\" next 4%3=1",
+     {"exe", "four\" quotes", "next", "4%3=1", NULL}, 0x61},
+
+    {"exe five\"\"\"\"\"quotes next",
+     {"exe", "five\"quotes", "next", NULL}, 0x21},
+
+    {"exe six\"\"\"\"\"\"quotes next",
+     {"exe", "six\"\"quotes", "next", NULL}, 0x20},
+
+    {"exe seven\"\"\"\"\"\"\" quotes\" next 7%3=1",
+     {"exe", "seven\"\" quotes", "next", "7%3=1", NULL}, 0x20},
+
+    {"exe twelve\"\"\"\"\"\"\"\"\"\"\"\"quotes next",
+     {"exe", "twelve\"\"\"\"quotes", "next", NULL}, 0x20},
+
+    {"exe thirteen\"\"\"\"\"\"\"\"\"\"\"\"\" quotes\" next 13%3=1",
+     {"exe", "thirteen\"\"\"\" quotes", "next", "13%3=1", NULL}, 0x20},
+
+    /* Inside a quoted string the opening quote is added to the set of
+     * consecutive quotes to get the effective quotes count. This gives:
+     * 1+3n   quotes -> n quotes
+     * 1+3n+1 quotes -> n quotes plus closes the quoted string
+     * 1+3n+2 quotes -> n+1 quotes plus closes the quoted string
+     */
+    {"exe \"two\"\"quotes next",
+     {"exe", "two\"quotes", "next", NULL}, 0x21},
+
+    {"exe \"two\"\" next",
+     {"exe", "two\"", "next", NULL}, 0x21},
+
+    {"exe \"three\"\"\" quotes\" next 4%3=1",
+     {"exe", "three\" quotes", "next", "4%3=1", NULL}, 0x61},
+
+    {"exe \"four\"\"\"\"quotes next",
+     {"exe", "four\"quotes", "next", NULL}, 0x21},
+
+    {"exe \"five\"\"\"\"\"quotes next",
+     {"exe", "five\"\"quotes", "next", NULL}, 0x20},
+
+    {"exe \"six\"\"\"\"\"\" quotes\" next 7%3=1",
+     {"exe", "six\"\" quotes", "next", "7%3=1", NULL}, 0x20},
+
+    {"exe \"eleven\"\"\"\"\"\"\"\"\"\"\"quotes next",
+     {"exe", "eleven\"\"\"\"quotes", "next", NULL}, 0x20},
+
+    {"exe \"twelve\"\"\"\"\"\"\"\"\"\"\"\" quotes\" next 13%3=1",
+     {"exe", "twelve\"\"\"\" quotes", "next", "13%3=1", NULL}, 0x20},
+
+    /* The executable path has its own rules!!!
+     * - Backslashes have no special meaning.
+     * - If the first character is a quote, then the second quote ends the
+     *   executable path.
+     * - The previous rule holds even if the next character is not a space!
+     * - If the first character is not a quote, then quotes have no special
+     *   meaning either and the executable path stops at the first space.
+     * - The consecutive quotes rules don't apply either.
+     * - Even if there is no space between the executable path and the first
+     *   argument, the latter is parsed using the regular rules.
+     */
+    {"exe\"file\"path arg1",
+     {"exe\"file\"path", "arg1", NULL}, 0x30},
+
+    {"exe\"path\\ arg1",
+     {"exe\"path\\", "arg1", NULL}, 0x31},
+
+    {"\\\"exe \"arg one\"",
+     {"\\\"exe", "arg one", NULL}, 0x10},
+
+    {"\"spaced exe\" \"next arg\"",
+     {"spaced exe", "next arg", NULL}, 0},
+
+    {"\"exe\"arg\" one\" argtwo",
+     {"exe", "arg one", "argtwo", NULL}, 0x31},
+
+    {"\"spaced exe\\\"arg1 arg2",
+     {"spaced exe\\", "arg1", "arg2", NULL}, 0x11},
+
+    {"\"two\"\" arg1 ",
+     {"two", " arg1 ", NULL}, 0x21},
+
+    {"\"three\"\"\" arg2",
+     {"three", "", "arg2", NULL}, 0x61},
+
+    {"\"four\"\"\"\"arg1",
+     {"four", "\"arg1", NULL}, 0x21},
+
+    /* If the first character is a space then the executable path is empty */
+    {" \"arg\"one argtwo",
+     {"", "argone", "argtwo", NULL}, 0},
+
+    {NULL, {NULL}, 0}
+};
+
+static BOOL test_one_cmdline(const cmdline_tests_t* test)
+{
+    WCHAR cmdW[MAX_PATH], argW[MAX_PATH];
+    LPWSTR *cl2a;
+    int cl2a_count;
+    LPWSTR *argsW;
+    int i, count;
+
+    /* trace("----- cmd='%s'\n", test->cmd); */
+    MultiByteToWideChar(CP_ACP, 0, test->cmd, -1, cmdW, sizeof(cmdW)/sizeof(*cmdW));
+    argsW = cl2a = CommandLineToArgvW(cmdW, &cl2a_count);
+    if (argsW == NULL && cl2a_count == -1)
+    {
+        win_skip("CommandLineToArgvW not implemented, skipping\n");
+        return FALSE;
+    }
+
+    count = 0;
+    while (test->args[count])
+        count++;
+    if ((test->todo & 0x1) == 0)
+        ok(cl2a_count == count, "%s: expected %d arguments, but got %d\n", test->cmd, count, cl2a_count);
+    else todo_wine
+        ok(cl2a_count == count, "%s: expected %d arguments, but got %d\n", test->cmd, count, cl2a_count);
+
+    for (i = 0; i < cl2a_count - 1; i++)
+    {
+        if (test->args[i])
+        {
+            MultiByteToWideChar(CP_ACP, 0, test->args[i], -1, argW, sizeof(argW)/sizeof(*argW));
+            if ((test->todo & (1 << (i+4))) == 0)
+                ok(!lstrcmpW(*argsW, argW), "%s: arg[%d] expected %s but got %s\n", test->cmd, i, wine_dbgstr_w(argW), wine_dbgstr_w(*argsW));
+            else todo_wine
+                ok(!lstrcmpW(*argsW, argW), "%s: arg[%d] expected %s but got %s\n", test->cmd, i, wine_dbgstr_w(argW), wine_dbgstr_w(*argsW));
+        }
+        else if ((test->todo & 0x1) == 0)
+            ok(0, "%s: got extra arg[%d]=%s\n", test->cmd, i, wine_dbgstr_w(*argsW));
+        else todo_wine
+            ok(0, "%s: got extra arg[%d]=%s\n", test->cmd, i, wine_dbgstr_w(*argsW));
+        argsW++;
+    }
+    LocalFree(cl2a);
+    return TRUE;
+}
+
+static void test_commandline2argv(void)
+{
+    static const WCHAR exeW[] = {'e','x','e',0};
+    const cmdline_tests_t* test;
+    WCHAR strW[MAX_PATH];
+    LPWSTR *args;
+    int numargs;
+    DWORD le;
+
+    test = cmdline_tests;
+    while (test->cmd)
+    {
+        if (!test_one_cmdline(test))
+            return;
+        test++;
+    }
+
+    SetLastError(0xdeadbeef);
+    args = CommandLineToArgvW(exeW, NULL);
+    le = GetLastError();
+    ok(args == NULL && le == ERROR_INVALID_PARAMETER, "expected NULL with ERROR_INVALID_PARAMETER got %p with %u\n", args, le);
+
+    SetLastError(0xdeadbeef);
+    args = CommandLineToArgvW(NULL, NULL);
+    le = GetLastError();
+    ok(args == NULL && le == ERROR_INVALID_PARAMETER, "expected NULL with ERROR_INVALID_PARAMETER got %p with %u\n", args, le);
+
+    *strW = 0;
+    args = CommandLineToArgvW(strW, &numargs);
+    ok(numargs == 1, "expected 1 args, got %d\n", numargs);
+    if (numargs == 1)
+    {
+        GetModuleFileNameW(NULL, strW, sizeof(strW)/sizeof(*strW));
+        ok(!lstrcmpW(args[0], strW), "wrong path to the current executable: %s instead of %s\n", wine_dbgstr_w(args[0]), wine_dbgstr_w(strW));
+    }
+    if (args) LocalFree(args);
+}
+
 static void test_argify(void)
 {
     char fileA[MAX_PATH];
@@ -2210,99 +2441,6 @@ static void cleanup_test(void)
     CoUninitialize();
 }
 
-static void test_commandline(void)
-{
-    static const WCHAR one[] = {'o','n','e',0};
-    static const WCHAR two[] = {'t','w','o',0};
-    static const WCHAR three[] = {'t','h','r','e','e',0};
-    static const WCHAR four[] = {'f','o','u','r',0};
-
-    static const WCHAR fmt1[] = {'%','s',' ','%','s',' ','%','s',' ','%','s',0};
-    static const WCHAR fmt2[] = {' ','%','s',' ','%','s',' ','%','s',' ','%','s',0};
-    static const WCHAR fmt3[] = {'%','s','=','%','s',' ','%','s','=','\"','%','s','\"',0};
-    static const WCHAR fmt4[] = {'\"','%','s','\"',' ','\"','%','s',' ','%','s','\"',' ','%','s',0};
-    static const WCHAR fmt5[] = {'\\','\"','%','s','\"',' ','%','s','=','\"','%','s','\\','\"',' ','\"','%','s','\\','\"',0};
-    static const WCHAR fmt6[] = {0};
-
-    static const WCHAR chkfmt1[] = {'%','s','=','%','s',0};
-    static const WCHAR chkfmt2[] = {'%','s',' ','%','s',0};
-    static const WCHAR chkfmt3[] = {'\\','\"','%','s','\"',0};
-    static const WCHAR chkfmt4[] = {'%','s','=','%','s','\"',' ','%','s','\"',0};
-    WCHAR cmdline[255];
-    LPWSTR *args = (LPWSTR*)0xdeadcafe, pbuf;
-    INT numargs = -1;
-    size_t buflen;
-    DWORD lerror;
-
-    wsprintfW(cmdline,fmt1,one,two,three,four);
-    args=CommandLineToArgvW(cmdline,&numargs);
-    if (args == NULL && numargs == -1)
-    {
-        win_skip("CommandLineToArgvW not implemented, skipping\n");
-        return;
-    }
-    ok(numargs == 4, "expected 4 args, got %i\n",numargs);
-    ok(lstrcmpW(args[0],one)==0,"arg0 is not as expected\n");
-    ok(lstrcmpW(args[1],two)==0,"arg1 is not as expected\n");
-    ok(lstrcmpW(args[2],three)==0,"arg2 is not as expected\n");
-    ok(lstrcmpW(args[3],four)==0,"arg3 is not as expected\n");
-
-    SetLastError(0xdeadbeef);
-    args=CommandLineToArgvW(cmdline,NULL);
-    lerror=GetLastError();
-    ok(args == NULL && lerror == ERROR_INVALID_PARAMETER, "expected NULL with ERROR_INVALID_PARAMETER got %p with %u\n",args,lerror);
-    SetLastError(0xdeadbeef);
-    args=CommandLineToArgvW(NULL,NULL);
-    lerror=GetLastError();
-    ok(args == NULL && lerror == ERROR_INVALID_PARAMETER, "expected NULL with ERROR_INVALID_PARAMETER got %p with %u\n",args,lerror);
-
-    wsprintfW(cmdline,fmt2,one,two,three,four);
-    args=CommandLineToArgvW(cmdline,&numargs);
-    ok(numargs == 5, "expected 5 args, got %i\n",numargs);
-    ok(args[0][0]==0,"arg0 is not as expected\n");
-    ok(lstrcmpW(args[1],one)==0,"arg1 is not as expected\n");
-    ok(lstrcmpW(args[2],two)==0,"arg2 is not as expected\n");
-    ok(lstrcmpW(args[3],three)==0,"arg3 is not as expected\n");
-    ok(lstrcmpW(args[4],four)==0,"arg4 is not as expected\n");
-
-    wsprintfW(cmdline,fmt3,one,two,three,four);
-    args=CommandLineToArgvW(cmdline,&numargs);
-    ok(numargs == 2, "expected 2 args, got %i\n",numargs);
-    wsprintfW(cmdline,chkfmt1,one,two);
-    ok(lstrcmpW(args[0],cmdline)==0,"arg0 is not as expected\n");
-    wsprintfW(cmdline,chkfmt1,three,four);
-    ok(lstrcmpW(args[1],cmdline)==0,"arg1 is not as expected\n");
-
-    wsprintfW(cmdline,fmt4,one,two,three,four);
-    args=CommandLineToArgvW(cmdline,&numargs);
-    ok(numargs == 3, "expected 3 args, got %i\n",numargs);
-    ok(lstrcmpW(args[0],one)==0,"arg0 is not as expected\n");
-    wsprintfW(cmdline,chkfmt2,two,three);
-    ok(lstrcmpW(args[1],cmdline)==0,"arg1 is not as expected\n");
-    ok(lstrcmpW(args[2],four)==0,"arg2 is not as expected\n");
-
-    wsprintfW(cmdline,fmt5,one,two,three,four);
-    args=CommandLineToArgvW(cmdline,&numargs);
-    ok(numargs == 2, "expected 2 args, got %i\n",numargs);
-    wsprintfW(cmdline,chkfmt3,one);
-    todo_wine ok(lstrcmpW(args[0],cmdline)==0,"arg0 is not as expected\n");
-    wsprintfW(cmdline,chkfmt4,two,three,four);
-    todo_wine ok(lstrcmpW(args[1],cmdline)==0,"arg1 is not as expected\n");
-
-    wsprintfW(cmdline,fmt6);
-    args=CommandLineToArgvW(cmdline,&numargs);
-    ok(numargs == 1, "expected 1 args, got %i\n",numargs);
-    if (numargs == 1) {
-        buflen = max(lstrlenW(args[0])+1,256);
-        pbuf = HeapAlloc(GetProcessHeap(), 0, buflen*sizeof(pbuf[0]));
-        GetModuleFileNameW(NULL, pbuf, buflen);
-        pbuf[buflen-1] = 0;
-        /* check args[0] is module file name */
-        ok(lstrcmpW(args[0],pbuf)==0, "wrong path to the current executable\n");
-        HeapFree(GetProcessHeap(), 0, pbuf);
-    }
-}
-
 static void test_directory(void)
 {
     char path[MAX_PATH], newdir[MAX_PATH];
@@ -2346,6 +2484,7 @@ START_TEST(shlexec)
 
     init_test();
 
+    test_commandline2argv();
     test_argify();
     test_lpFile_parsed();
     test_filename();
@@ -2356,7 +2495,6 @@ START_TEST(shlexec)
     test_exes_long();
     test_dde();
     test_dde_default_app();
-    test_commandline();
     test_directory();
 
     cleanup_test();
