@@ -2184,8 +2184,7 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
  * Begin processing individual instruction opcodes
  ****************************************************************************/
 
-/* Generate GLSL arithmetic functions (dst = src1 + src2) */
-static void shader_glsl_arith(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_binop(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     struct glsl_src_param src0_param;
@@ -2196,8 +2195,9 @@ static void shader_glsl_arith(const struct wined3d_shader_instruction *ins)
     /* Determine the GLSL operator to use based on the opcode */
     switch (ins->handler_idx)
     {
-        case WINED3DSIH_MUL: op = '*'; break;
         case WINED3DSIH_ADD: op = '+'; break;
+        case WINED3DSIH_AND: op = '&'; break;
+        case WINED3DSIH_MUL: op = '*'; break;
         case WINED3DSIH_SUB: op = '-'; break;
         default:
             op = ' ';
@@ -5126,8 +5126,8 @@ static BOOL shader_glsl_color_fixup_supported(struct color_fixup_desc fixup)
 static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TABLE_SIZE] =
 {
     /* WINED3DSIH_ABS                   */ shader_glsl_map2gl,
-    /* WINED3DSIH_ADD                   */ shader_glsl_arith,
-    /* WINED3DSIH_AND                   */ NULL,
+    /* WINED3DSIH_ADD                   */ shader_glsl_binop,
+    /* WINED3DSIH_AND                   */ shader_glsl_binop,
     /* WINED3DSIH_BEM                   */ shader_glsl_bem,
     /* WINED3DSIH_BREAK                 */ shader_glsl_break,
     /* WINED3DSIH_BREAKC                */ shader_glsl_breakc,
@@ -5190,7 +5190,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_MOV                   */ shader_glsl_mov,
     /* WINED3DSIH_MOVA                  */ shader_glsl_mov,
     /* WINED3DSIH_MOVC                  */ NULL,
-    /* WINED3DSIH_MUL                   */ shader_glsl_arith,
+    /* WINED3DSIH_MUL                   */ shader_glsl_binop,
     /* WINED3DSIH_NOP                   */ shader_glsl_nop,
     /* WINED3DSIH_NRM                   */ shader_glsl_nrm,
     /* WINED3DSIH_PHASE                 */ shader_glsl_nop,
@@ -5209,7 +5209,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_SINCOS                */ shader_glsl_sincos,
     /* WINED3DSIH_SLT                   */ shader_glsl_compare,
     /* WINED3DSIH_SQRT                  */ NULL,
-    /* WINED3DSIH_SUB                   */ shader_glsl_arith,
+    /* WINED3DSIH_SUB                   */ shader_glsl_binop,
     /* WINED3DSIH_TEX                   */ shader_glsl_tex,
     /* WINED3DSIH_TEXBEM                */ shader_glsl_texbem,
     /* WINED3DSIH_TEXBEML               */ shader_glsl_texbem,
