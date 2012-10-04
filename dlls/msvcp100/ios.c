@@ -8193,39 +8193,39 @@ void init_io(void *base)
 
 void free_io(void)
 {
-    basic_istream_char_dtor(basic_istream_char_to_basic_ios(&cin.obj));
+    basic_istream_char_vbase_dtor(&cin.obj);
     basic_filebuf_char_dtor(&filebuf_char_stdin);
 
-    basic_istream_wchar_dtor(basic_istream_wchar_to_basic_ios(&ucin.obj));
+    basic_istream_wchar_vbase_dtor(&ucin.obj);
     basic_filebuf_wchar_dtor(&filebuf_short_stdin);
 
-    basic_istream_wchar_dtor(basic_istream_wchar_to_basic_ios(&wcin.obj));
+    basic_istream_wchar_vbase_dtor(&wcin.obj);
     basic_filebuf_wchar_dtor(&filebuf_wchar_stdin);
 
-    basic_ostream_char_dtor(basic_ostream_char_to_basic_ios(&cout.obj));
+    basic_ostream_char_vbase_dtor(&cout.obj);
     basic_filebuf_char_dtor(&filebuf_char_stdout);
 
-    basic_ostream_wchar_dtor(basic_ostream_wchar_to_basic_ios(&ucout.obj));
+    basic_ostream_wchar_vbase_dtor(&ucout.obj);
     basic_filebuf_wchar_dtor(&filebuf_short_stdout);
 
-    basic_ostream_wchar_dtor(basic_ostream_wchar_to_basic_ios(&wcout.obj));
+    basic_ostream_wchar_vbase_dtor(&wcout.obj);
     basic_filebuf_wchar_dtor(&filebuf_wchar_stdout);
 
-    basic_ostream_char_dtor(basic_ostream_char_to_basic_ios(&cerr.obj));
+    basic_ostream_char_vbase_dtor(&cerr.obj);
     basic_filebuf_char_dtor(&filebuf_char_stderr);
 
-    basic_ostream_wchar_dtor(basic_ostream_wchar_to_basic_ios(&ucerr.obj));
+    basic_ostream_wchar_vbase_dtor(&ucerr.obj);
     basic_filebuf_wchar_dtor(&filebuf_short_stderr);
 
-    basic_ostream_wchar_dtor(basic_ostream_wchar_to_basic_ios(&wcerr.obj));
+    basic_ostream_wchar_vbase_dtor(&wcerr.obj);
     basic_filebuf_wchar_dtor(&filebuf_wchar_stderr);
 
-    basic_ostream_char_dtor(basic_ostream_char_to_basic_ios(&clog.obj));
+    basic_ostream_char_vbase_dtor(&clog.obj);
     basic_filebuf_char_dtor(&filebuf_char_log);
 
-    basic_ostream_wchar_dtor(basic_ostream_wchar_to_basic_ios(&uclog.obj));
+    basic_ostream_wchar_vbase_dtor(&uclog.obj);
     basic_filebuf_wchar_dtor(&filebuf_short_log);
 
-    basic_ostream_wchar_dtor(basic_ostream_wchar_to_basic_ios(&wclog.obj));
+    basic_ostream_wchar_vbase_dtor(&wclog.obj);
     basic_filebuf_wchar_dtor(&filebuf_wchar_log);
 }
