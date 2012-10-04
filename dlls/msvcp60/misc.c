@@ -29,8 +29,7 @@
 
 /* ??0_Mutex@std@@QAE@XZ */
 /* ??0_Mutex@std@@QEAA@XZ */
-DEFINE_THISCALL_WRAPPER(mutex_ctor, 4)
-mutex* __thiscall mutex_ctor(mutex *this)
+mutex* mutex_ctor(mutex *this)
 {
     this->mutex = CreateMutexW(NULL, FALSE, NULL);
     return this;
@@ -38,24 +37,21 @@ mutex* __thiscall mutex_ctor(mutex *this)
 
 /* ??1_Mutex@std@@QAE@XZ */
 /* ??1_Mutex@std@@QEAA@XZ */
-DEFINE_THISCALL_WRAPPER(mutex_dtor, 4)
-void __thiscall mutex_dtor(mutex *this)
+void mutex_dtor(mutex *this)
 {
     CloseHandle(this->mutex);
 }
 
 /* ?_Lock@_Mutex@std@@QAEXXZ */
 /* ?_Lock@_Mutex@std@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(mutex_lock, 4)
-void __thiscall mutex_lock(mutex *this)
+void mutex_lock(mutex *this)
 {
     WaitForSingleObject(this->mutex, INFINITE);
 }
 
 /* ?_Unlock@_Mutex@std@@QAEXXZ */
 /* ?_Unlock@_Mutex@std@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(mutex_unlock, 4)
-void __thiscall mutex_unlock(mutex *this)
+void mutex_unlock(mutex *this)
 {
     ReleaseMutex(this->mutex);
 }
@@ -72,7 +68,7 @@ void free_lockit(void) {
     DeleteCriticalSection(&lockit_cs);
 }
 
-static _Lockit* __thiscall _Lockit_ctor_locktype(_Lockit *this, int locktype)
+_Lockit* __thiscall _Lockit_ctor_locktype(_Lockit *this, int locktype)
 {
     EnterCriticalSection(&lockit_cs);
     return this;
@@ -92,4 +88,32 @@ DEFINE_THISCALL_WRAPPER(_Lockit_dtor, 4)
 void __thiscall _Lockit_dtor(_Lockit *this)
 {
     LeaveCriticalSection(&lockit_cs);
+}
+
+/* wctype */
+unsigned short __cdecl wctype(const char *property)
+{
+    static const struct {
+        const char *name;
+        unsigned short mask;
+    } properties[] = {
+        { "alnum", _DIGIT|_ALPHA },
+        { "alpha", _ALPHA },
+        { "cntrl", _CONTROL },
+        { "digit", _DIGIT },
+        { "graph", _DIGIT|_PUNCT|_ALPHA },
+        { "lower", _LOWER },
+        { "print", _DIGIT|_PUNCT|_BLANK|_ALPHA },
+        { "punct", _PUNCT },
+        { "space", _SPACE },
+        { "upper", _UPPER },
+        { "xdigit", _HEX }
+    };
+    int i;
+
+    for(i=0; i<sizeof(properties)/sizeof(properties[0]); i++)
+        if(!strcmp(property, properties[i].name))
+            return properties[i].mask;
+
+    return 0;
 }

@@ -52,14 +52,11 @@ DEFINE_VTBL_WRAPPER(40);
 DEFINE_VTBL_WRAPPER(44);
 DEFINE_VTBL_WRAPPER(48);
 DEFINE_VTBL_WRAPPER(52);
-DEFINE_VTBL_WRAPPER(56);
-DEFINE_VTBL_WRAPPER(60);
 
 #endif
 
 void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
 void (__cdecl *MSVCRT_operator_delete)(void*);
-void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
 static void init_cxx_funcs(void)
 {
@@ -69,13 +66,11 @@ static void init_cxx_funcs(void)
     {
         MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPEAX_K@Z");
         MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPEAX@Z");
-        MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "?_set_new_handler@@YAP6AH_K@ZP6AH0@Z@Z");
     }
     else
     {
         MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPAXI@Z");
         MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPAX@Z");
-        MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z");
     }
 }
 
@@ -91,8 +86,12 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             init_cxx_funcs();
             init_lockit();
             init_exception(hinstDLL);
+            init_locale(hinstDLL);
+            init_io(hinstDLL);
             break;
         case DLL_PROCESS_DETACH:
+            free_io();
+            free_locale();
             free_lockit();
             break;
     }
