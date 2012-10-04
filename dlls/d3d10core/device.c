@@ -571,8 +571,15 @@ static void STDMETHODCALLTYPE d3d10_device_OMGetRenderTargets(ID3D10Device *ifac
 static void STDMETHODCALLTYPE d3d10_device_OMGetBlendState(ID3D10Device *iface,
         ID3D10BlendState **blend_state, FLOAT blend_factor[4], UINT *sample_mask)
 {
-    FIXME("iface %p, blend_state %p, blend_factor %p, sample_mask %p stub!\n",
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+
+    TRACE("iface %p, blend_state %p, blend_factor %p, sample_mask %p.\n",
             iface, blend_state, blend_factor, sample_mask);
+
+    if ((*blend_state = device->blend_state ? &device->blend_state->ID3D10BlendState_iface : NULL))
+        ID3D10BlendState_AddRef(*blend_state);
+    memcpy(blend_factor, device->blend_factor, 4 * sizeof(*blend_factor));
+    *sample_mask = device->sample_mask;
 }
 
 static void STDMETHODCALLTYPE d3d10_device_OMGetDepthStencilState(ID3D10Device *iface,
