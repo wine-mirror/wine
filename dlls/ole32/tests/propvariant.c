@@ -408,9 +408,102 @@ static void test_propertytovariant(void)
     PropVariantClear(&propvar);
 }
 
+static void test_varianttoproperty(void)
+{
+    HANDLE hole32;
+    PROPVARIANT propvar;
+    SERIALIZEDPROPERTYVALUE *propvalue, *own_propvalue;
+    SERIALIZEDPROPERTYVALUE* (__stdcall *pStgConvertVariantToProperty)(
+        const PROPVARIANT*,USHORT,SERIALIZEDPROPERTYVALUE*,ULONG*,PROPID,BOOLEAN,ULONG*);
+    ULONG len;
+    static const WCHAR test_string[] = {'t','e','s','t',0};
+    BSTR test_string_bstr;
+
+    hole32 = GetModuleHandleA("ole32");
+
+    pStgConvertVariantToProperty = (void*)GetProcAddress(hole32, "StgConvertVariantToProperty");
+
+    if (!pStgConvertVariantToProperty)
+    {
+        win_skip("StgConvertVariantToProperty not available\n");
+        return;
+    }
+
+    own_propvalue = HeapAlloc(GetProcessHeap(), 0, sizeof(SERIALIZEDPROPERTYVALUE) + 20);
+
+    PropVariantInit(&propvar);
+
+    propvar.vt = VT_I4;
+    U(propvar).lVal = 0xfeabcdef;
+
+    len = 0xdeadbeef;
+    propvalue = pStgConvertVariantToProperty(&propvar, CP_WINUNICODE, NULL, &len,
+        0, FALSE, 0);
+
+    ok(propvalue == NULL, "got nonnull propvalue\n");
+    todo_wine ok(len == 8, "unexpected length %d\n", len);
+
+    if (len == 0xdeadbeef)
+    {
+        return;
+    }
+
+    len = 20;
+    propvalue = pStgConvertVariantToProperty(&propvar, CP_WINUNICODE, own_propvalue, &len,
+        0, FALSE, 0);
+
+    ok(propvalue == own_propvalue, "unexpected propvalue %p\n", propvalue);
+    ok(len == 8, "unexpected length %d\n", len);
+    ok(!memcmp(propvalue, serialized_i4, 8), "got wrong data\n");
+
+    propvar.vt = VT_EMPTY;
+    len = 20;
+    own_propvalue->dwType = 0xdeadbeef;
+    propvalue = pStgConvertVariantToProperty(&propvar, CP_WINUNICODE, own_propvalue, &len,
+        0, FALSE, 0);
+
+    ok(propvalue == own_propvalue, "unexpected propvalue %p\n", propvalue);
+    ok(len == 0, "unexpected length %d\n", len);
+    ok(propvalue->dwType == 0xdeadbeef, "unexpected type %d\n", propvalue->dwType);
+
+    propvar.vt = VT_NULL;
+    len = 20;
+    propvalue = pStgConvertVariantToProperty(&propvar, CP_WINUNICODE, own_propvalue, &len,
+        0, FALSE, 0);
+
+    ok(propvalue == own_propvalue, "unexpected propvalue %p\n", propvalue);
+    ok(len == 4, "unexpected length %d\n", len);
+    ok(!memcmp(propvalue, serialized_null, 4), "got wrong data\n");
+
+    test_string_bstr = SysAllocString(test_string);
+
+    propvar.vt = VT_BSTR;
+    U(propvar).bstrVal = test_string_bstr;
+    len = 20;
+    propvalue = pStgConvertVariantToProperty(&propvar, CP_WINUNICODE, own_propvalue, &len,
+        0, FALSE, 0);
+
+    ok(propvalue == own_propvalue, "unexpected propvalue %p\n", propvalue);
+    ok(len == 20, "unexpected length %d\n", len);
+    ok(!memcmp(propvalue, serialized_bstr_wc, 20), "got wrong data\n");
+
+    len = 20;
+    propvalue = pStgConvertVariantToProperty(&propvar, CP_UTF8, own_propvalue, &len,
+        0, FALSE, 0);
+
+    ok(propvalue == own_propvalue, "unexpected propvalue %p\n", propvalue);
+    ok(len == 16, "unexpected length %d\n", len);
+    ok(!memcmp(propvalue, serialized_bstr_mb, 16), "got wrong data\n");
+
+    SysFreeString(test_string_bstr);
+
+    HeapFree(GetProcessHeap(), 0, own_propvalue);
+}
+
 START_TEST(propvariant)
 {
     test_validtypes();
     test_copy();
     test_propertytovariant();
+    test_varianttoproperty();
 }
