@@ -252,6 +252,7 @@ static const struct column col_networkadapter[] =
     { prop_deviceidW,            CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_interfaceindexW,      CIM_UINT32, VT_I4 },
     { prop_macaddressW,          CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_manufacturerW,        CIM_STRING },
     { prop_netconnectionstatusW, CIM_UINT16, VT_I4 },
     { prop_pnpdeviceidW,         CIM_STRING },
     { prop_speedW,               CIM_UINT64 }
@@ -424,6 +425,7 @@ struct record_networkadapter
     const WCHAR *device_id;
     INT32        interface_index;
     const WCHAR *mac_address;
+    const WCHAR *manufacturer;
     UINT16       netconnection_status;
     const WCHAR *pnpdevice_id;
     UINT64       speed;
@@ -741,6 +743,7 @@ static void fill_networkadapter( struct table *table )
         rec->device_id            = heap_strdupW( device_id );
         rec->interface_index      = aa->u.s.IfIndex;
         rec->mac_address          = get_mac_address( aa->PhysicalAddress, aa->PhysicalAddressLength );
+        rec->manufacturer         = compsys_manufacturerW;
         rec->netconnection_status = get_connection_status( aa->OperStatus );
         rec->pnpdevice_id         = networkadapter_pnpdeviceidW;
         rec->speed                = 1000000;
