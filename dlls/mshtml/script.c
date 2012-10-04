@@ -47,8 +47,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define IActiveScriptParse_Release IActiveScriptParse64_Release
 #define IActiveScriptParse_InitNew IActiveScriptParse64_InitNew
 #define IActiveScriptParse_ParseScriptText IActiveScriptParse64_ParseScriptText
-#define IActiveScriptParseProcedure_Release IActiveScriptParseProcedure64_Release
-#define IActiveScriptParseProcedure_ParseProcedureText IActiveScriptParseProcedure64_ParseProcedureText
+#define IActiveScriptParseProcedure2_Release IActiveScriptParseProcedure2_64_Release
+#define IActiveScriptParseProcedure2_ParseProcedureText IActiveScriptParseProcedure2_64_ParseProcedureText
 
 #else
 
@@ -58,8 +58,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define IActiveScriptParse_Release IActiveScriptParse32_Release
 #define IActiveScriptParse_InitNew IActiveScriptParse32_InitNew
 #define IActiveScriptParse_ParseScriptText IActiveScriptParse32_ParseScriptText
-#define IActiveScriptParseProcedure_Release IActiveScriptParseProcedure32_Release
-#define IActiveScriptParseProcedure_ParseProcedureText IActiveScriptParseProcedure32_ParseProcedureText
+#define IActiveScriptParseProcedure2_Release IActiveScriptParseProcedure2_32_Release
+#define IActiveScriptParseProcedure2_ParseProcedureText IActiveScriptParseProcedure2_32_ParseProcedureText
 
 #endif
 
@@ -80,7 +80,7 @@ struct ScriptHost {
 
     IActiveScript *script;
     IActiveScriptParse *parse;
-    IActiveScriptParseProcedure *parse_proc;
+    IActiveScriptParseProcedure2 *parse_proc;
 
     SCRIPTSTATE script_state;
 
@@ -214,7 +214,7 @@ static void release_script_engine(ScriptHost *This)
 
     default:
         if(This->parse_proc) {
-            IActiveScriptParseProcedure_Release(This->parse_proc);
+            IActiveScriptParseProcedure2_Release(This->parse_proc);
             This->parse_proc = NULL;
         }
 
@@ -968,7 +968,7 @@ IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
     if(!script_host || !script_host->parse_proc)
         return NULL;
 
-    hres = IActiveScriptParseProcedure_ParseProcedureText(script_host->parse_proc, ptr, NULL, emptyW,
+    hres = IActiveScriptParseProcedure2_ParseProcedureText(script_host->parse_proc, ptr, NULL, emptyW,
             NULL, NULL, delimiterW, 0 /* FIXME */, 0,
             SCRIPTPROC_HOSTMANAGESSOURCE|SCRIPTPROC_IMPLICIT_THIS|SCRIPTPROC_IMPLICIT_PARENTS, &disp);
     if(FAILED(hres)) {
@@ -1129,7 +1129,7 @@ static IDispatch *parse_event_elem(HTMLDocumentNode *doc, HTMLScriptElement *scr
         const PRUnichar *text;
 
         nsAString_GetData(&nsstr, &text);
-        hres = IActiveScriptParseProcedure_ParseProcedureText(script_host->parse_proc, text, args,
+        hres = IActiveScriptParseProcedure2_ParseProcedureText(script_host->parse_proc, text, args,
                 emptyW, NULL, NULL, script_endW, 0, 0,
                 SCRIPTPROC_HOSTMANAGESSOURCE|SCRIPTPROC_IMPLICIT_THIS|SCRIPTPROC_IMPLICIT_PARENTS, &disp);
         if(FAILED(hres))
