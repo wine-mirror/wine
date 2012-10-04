@@ -170,8 +170,8 @@
 @ stub -arch=win64 ??0?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAA@AEBV_Locinfo@1@_K@Z
 @ stub -arch=win32 ??0?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAE@I@Z
 @ stub -arch=win64 ??0?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAA@_K@Z
-@ stub -arch=win32 ??0Init@ios_base@std@@QAE@XZ
-@ stub -arch=win64 ??0Init@ios_base@std@@QEAA@XZ
+@ thiscall -arch=win32 ??0Init@ios_base@std@@QAE@XZ(ptr) ios_base_Init_ctor
+@ cdecl -arch=win64 ??0Init@ios_base@std@@QEAA@XZ(ptr) ios_base_Init_ctor
 @ stub -arch=win32 ??0_Concurrent_queue_base_v4@details@Concurrency@@IAE@I@Z
 @ stub -arch=win64 ??0_Concurrent_queue_base_v4@details@Concurrency@@IEAA@_K@Z
 @ stub -arch=win32 ??0_Concurrent_queue_iterator_base_v4@details@Concurrency@@IAE@ABV_Concurrent_queue_base_v4@12@@Z
@@ -298,8 +298,8 @@
 @ stub -arch=win64 ??1?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MEAA@XZ
 @ stub -arch=win32 ??1?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MAE@XZ
 @ stub -arch=win64 ??1?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEAA@XZ
-@ stub -arch=win32 ??1Init@ios_base@std@@QAE@XZ
-@ stub -arch=win64 ??1Init@ios_base@std@@QEAA@XZ
+@ thiscall -arch=win32 ??1Init@ios_base@std@@QAE@XZ(ptr) ios_base_Init_dtor
+@ cdecl -arch=win64 ??1Init@ios_base@std@@QEAA@XZ(ptr) ios_base_Init_dtor
 @ stub -arch=win32 ??1_Concurrent_queue_base_v4@details@Concurrency@@MAE@XZ
 @ stub -arch=win64 ??1_Concurrent_queue_base_v4@details@Concurrency@@MEAA@XZ
 @ stub -arch=win32 ??1_Concurrent_queue_iterator_base_v4@details@Concurrency@@IAE@XZ
@@ -398,8 +398,8 @@
 @ cdecl -arch=win64 ??4?$numeric_limits@_N@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) std_Num_base_op_assign
 @ thiscall -arch=win32 ??4?$numeric_limits@_W@std@@QAEAAV01@ABV01@@Z(ptr ptr) std_Num_base_op_assign
 @ cdecl -arch=win64 ??4?$numeric_limits@_W@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) std_Num_base_op_assign
-@ stub -arch=win32 ??4Init@ios_base@std@@QAEAAV012@ABV012@@Z
-@ stub -arch=win64 ??4Init@ios_base@std@@QEAAAEAV012@AEBV012@@Z
+@ thiscall -arch=win32 ??4Init@ios_base@std@@QAEAAV012@ABV012@@Z(ptr ptr) ios_base_Init_op_assign
+@ cdecl -arch=win64 ??4Init@ios_base@std@@QEAAAEAV012@AEBV012@@Z(ptr ptr) ios_base_Init_op_assign
 @ stub -arch=win32 ??4_Container_base0@std@@QAEAAU01@ABU01@@Z
 @ stub -arch=win64 ??4_Container_base0@std@@QEAAAEAU01@AEBU01@@Z
 @ stub -arch=win32 ??4_Container_base12@std@@QAEAAU01@ABU01@@Z
@@ -993,19 +993,19 @@
 @ stub -arch=win64 ?_Init@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z
 @ stub -arch=win32 ?_Init@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IAEXABV_Locinfo@2@@Z
 @ stub -arch=win64 ?_Init@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z
-@ thiscall -arch=win32 ?_Init@ios_base@std@@IAEXXZ(ptr) ios_base_Init
-@ cdecl -arch=win64 ?_Init@ios_base@std@@IEAAXXZ(ptr) ios_base_Init
+@ thiscall -arch=win32 ?_Init@ios_base@std@@IAEXXZ(ptr) ios_base__Init
+@ cdecl -arch=win64 ?_Init@ios_base@std@@IEAAXXZ(ptr) ios_base__Init
 @ cdecl -arch=win32 ?_Init@locale@std@@CAPAV_Locimp@12@XZ() locale__Init
 @ cdecl -arch=win64 ?_Init@locale@std@@CAPEAV_Locimp@12@XZ() locale__Init
-# extern ?_Init_cnt@Init@ios_base@std@@0HA
+@ extern ?_Init_cnt@Init@ios_base@std@@0HA ios_base_Init__Init_cnt
 # extern ?_Init_cnt@_UShinit@std@@0HA
 # extern ?_Init_cnt@_Winit@std@@0HA
-@ stub -arch=win32 ?_Init_cnt_func@Init@ios_base@std@@CAAAHXZ
-@ stub -arch=win64 ?_Init_cnt_func@Init@ios_base@std@@CAAEAHXZ
-@ stub -arch=win32 ?_Init_ctor@Init@ios_base@std@@CAXPAV123@@Z
-@ stub -arch=win64 ?_Init_ctor@Init@ios_base@std@@CAXPEAV123@@Z
-@ stub -arch=win32 ?_Init_dtor@Init@ios_base@std@@CAXPAV123@@Z
-@ stub -arch=win64 ?_Init_dtor@Init@ios_base@std@@CAXPEAV123@@Z
+@ cdecl -arch=win32 ?_Init_cnt_func@Init@ios_base@std@@CAAAHXZ() ios_base_Init__Init_cnt_func
+@ cdecl -arch=win64 ?_Init_cnt_func@Init@ios_base@std@@CAAEAHXZ() ios_base_Init__Init_cnt_func
+@ cdecl -arch=win32 ?_Init_ctor@Init@ios_base@std@@CAXPAV123@@Z(ptr) ios_base_Init__Init_ctor
+@ cdecl -arch=win64 ?_Init_ctor@Init@ios_base@std@@CAXPEAV123@@Z(ptr) ios_base_Init__Init_ctor
+@ cdecl -arch=win32 ?_Init_dtor@Init@ios_base@std@@CAXPAV123@@Z(ptr) ios_base_Init__Init_dtor
+@ cdecl -arch=win64 ?_Init_dtor@Init@ios_base@std@@CAXPEAV123@@Z(ptr) ios_base_Init__Init_dtor
 @ stub -arch=win32 ?_Init_locks_ctor@_Init_locks@std@@CAXPAV12@@Z
 @ stub -arch=win64 ?_Init_locks_ctor@_Init_locks@std@@CAXPEAV12@@Z
 @ stub -arch=win32 ?_Init_locks_dtor@_Init_locks@std@@CAXPAV12@@Z

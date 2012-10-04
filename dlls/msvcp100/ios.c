@@ -3194,8 +3194,8 @@ void CDECL ios_base_Addstd(ios_base *add)
 
 /* ?_Init@ios_base@std@@IAEXXZ */
 /* ?_Init@ios_base@std@@IEAAXXZ */
-DEFINE_THISCALL_WRAPPER(ios_base_Init, 4)
-void __thiscall ios_base_Init(ios_base *this)
+DEFINE_THISCALL_WRAPPER(ios_base__Init, 4)
+void __thiscall ios_base__Init(ios_base *this)
 {
     TRACE("(%p)\n", this);
 
@@ -3436,7 +3436,7 @@ DEFINE_THISCALL_WRAPPER(basic_ios_char_init, 12)
 void __thiscall basic_ios_char_init(basic_ios_char *this, basic_streambuf_char *streambuf, MSVCP_bool isstd)
 {
     TRACE("(%p %p %x)\n", this, streambuf, isstd);
-    ios_base_Init(&this->base);
+    ios_base__Init(&this->base);
     this->strbuf = streambuf;
     this->stream = NULL;
     this->fillch = ' ';
@@ -3671,7 +3671,7 @@ DEFINE_THISCALL_WRAPPER(basic_ios_wchar_init, 12)
 void __thiscall basic_ios_wchar_init(basic_ios_wchar *this, basic_streambuf_wchar *streambuf, MSVCP_bool isstd)
 {
     TRACE("(%p %p %x)\n", this, streambuf, isstd);
-    ios_base_Init(&this->base);
+    ios_base__Init(&this->base);
     this->strbuf = streambuf;
     this->stream = NULL;
     this->fillch = ' ';
@@ -8128,6 +8128,68 @@ struct {
 /* ?_Ptr_wclog@std@@3PAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@A */
 /* ?_Ptr_wclog@std@@3PEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@EA */
 basic_ostream_wchar *_Ptr_wclog = &wclog.obj;
+
+/* ?_Init_cnt@Init@ios_base@std@@0HA */
+int ios_base_Init__Init_cnt = -1;
+
+/* ?_Init_cnt_func@Init@ios_base@std@@CAAAHXZ */
+/* ?_Init_cnt_func@Init@ios_base@std@@CAAEAHXZ */
+int* __cdecl ios_base_Init__Init_cnt_func(void)
+{
+    return &ios_base_Init__Init_cnt;
+}
+
+/* ?_Init_ctor@Init@ios_base@std@@CAXPAV123@@Z */
+/* ?_Init_ctor@Init@ios_base@std@@CAXPEAV123@@Z */
+void __cdecl ios_base_Init__Init_ctor(void *this)
+{
+    TRACE("(%p)\n", this);
+
+    if(ios_base_Init__Init_cnt < 0)
+        ios_base_Init__Init_cnt = 1;
+    else
+        ios_base_Init__Init_cnt++;
+}
+
+/* ??0Init@ios_base@std@@QAE@XZ */
+/* ??0Init@ios_base@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(ios_base_Init_ctor, 4)
+void* __thiscall ios_base_Init_ctor(void *this)
+{
+    ios_base_Init__Init_ctor(this);
+    return this;
+}
+
+/* ?_Init_dtor@Init@ios_base@std@@CAXPAV123@@Z */
+/* ?_Init_dtor@Init@ios_base@std@@CAXPEAV123@@Z */
+void __cdecl ios_base_Init__Init_dtor(void *this)
+{
+    TRACE("(%p)\n", this);
+
+    ios_base_Init__Init_cnt--;
+    if(!ios_base_Init__Init_cnt) {
+        basic_ostream_char_flush(&cout.obj);
+        basic_ostream_char_flush(&cerr.obj);
+        basic_ostream_char_flush(&clog.obj);
+    }
+}
+
+/* ??1Init@ios_base@std@@QAE@XZ */
+/* ??1Init@ios_base@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(ios_base_Init_dtor, 4)
+void __thiscall ios_base_Init_dtor(void *this)
+{
+    ios_base_Init__Init_dtor(this);
+}
+
+/* ??4Init@ios_base@std@@QAEAAV012@ABV012@@Z */
+/* ??4Init@ios_base@std@@QEAAAEAV012@AEBV012@@Z */
+DEFINE_THISCALL_WRAPPER(ios_base_Init_op_assign, 8)
+void* __thiscall ios_base_Init_op_assign(void *this, void *rhs)
+{
+    TRACE("(%p %p)\n", this, rhs);
+    return this;
+}
 
 void init_io(void *base)
 {

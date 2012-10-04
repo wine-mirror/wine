@@ -950,8 +950,8 @@
 @ stub -arch=win64 ??0?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAA@AEBV_Locinfo@1@_K@Z
 @ stub -arch=win32 ??0?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAE@I@Z
 @ stub -arch=win64 ??0?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAA@_K@Z
-@ stub -arch=win32 ??0Init@ios_base@std@@QAE@XZ
-@ stub -arch=win64 ??0Init@ios_base@std@@QEAA@XZ
+@ thiscall -arch=win32 ??0Init@ios_base@std@@QAE@XZ(ptr) ios_base_Init_ctor
+@ cdecl -arch=win64 ??0Init@ios_base@std@@QEAA@XZ(ptr) ios_base_Init_ctor
 @ thiscall -arch=win32 ??0_Locimp@locale@std@@AAE@ABV012@@Z(ptr ptr) locale__Locimp_copy_ctor
 @ cdecl -arch=win64 ??0_Locimp@locale@std@@AEAA@AEBV012@@Z(ptr ptr) locale__Locimp_copy_ctor
 @ thiscall -arch=win32 ??0_Locinfo@std@@QAE@HPBD@Z(ptr long str) _Locinfo_ctor_cat_cstr
@@ -1175,8 +1175,8 @@
 @ stub -arch=win64 ??1?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MEAA@XZ
 @ stub -arch=win32 ??1?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MAE@XZ
 @ stub -arch=win64 ??1?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEAA@XZ
-@ stub -arch=win32 ??1Init@ios_base@std@@QAE@XZ
-@ stub -arch=win64 ??1Init@ios_base@std@@QEAA@XZ
+@ thiscall -arch=win32 ??1Init@ios_base@std@@QAE@XZ(ptr) ios_base_Init_dtor
+@ cdecl -arch=win64 ??1Init@ios_base@std@@QEAA@XZ(ptr) ios_base_Init_dtor
 @ thiscall -arch=win32 ??1_Locinfo@std@@QAE@XZ(ptr) _Locinfo_dtor
 @ cdecl -arch=win64 ??1_Locinfo@std@@QEAA@XZ(ptr) _Locinfo_dtor
 @ thiscall -arch=win32 ??1_Lockit@std@@QAE@XZ(ptr) _Lockit_dtor
@@ -1305,8 +1305,8 @@
 @ cdecl -arch=win64 ??4?$numeric_limits@_N@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) std_Num_base_op_assign
 @ thiscall -arch=win32 ??4?$numeric_limits@_W@std@@QAEAAV01@ABV01@@Z(ptr ptr) std_Num_base_op_assign
 @ cdecl -arch=win64 ??4?$numeric_limits@_W@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) std_Num_base_op_assign
-@ stub -arch=win32 ??4Init@ios_base@std@@QAEAAV012@ABV012@@Z
-@ stub -arch=win64 ??4Init@ios_base@std@@QEAAAEAV012@AEBV012@@Z
+@ thiscall -arch=win32 ??4Init@ios_base@std@@QAEAAV012@ABV012@@Z(ptr ptr) ios_base_Init_op_assign
+@ cdecl -arch=win64 ??4Init@ios_base@std@@QEAAAEAV012@AEBV012@@Z(ptr ptr) ios_base_Init_op_assign
 @ thiscall -arch=win32 ??4_Num_base@std@@QAEAAU01@ABU01@@Z(ptr ptr) std_Num_base_op_assign
 @ cdecl -arch=win64 ??4_Num_base@std@@QEAAAEAU01@AEBU01@@Z(ptr ptr) std_Num_base_op_assign
 @ thiscall -arch=win32 ??4_Num_float_base@std@@QAEAAU01@ABU01@@Z(ptr ptr) std_Num_base_op_assign
@@ -2264,13 +2264,13 @@
 @ stub -arch=win64 ?_Init@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z
 @ stub -arch=win32 ?_Init@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IAEXABV_Locinfo@2@@Z
 @ stub -arch=win64 ?_Init@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z
-@ thiscall -arch=win32 ?_Init@ios_base@std@@IAEXXZ(ptr) ios_base_Init
-@ cdecl -arch=win64 ?_Init@ios_base@std@@IEAAXXZ(ptr) ios_base_Init
+@ thiscall -arch=win32 ?_Init@ios_base@std@@IAEXXZ(ptr) ios_base__Init
+@ cdecl -arch=win64 ?_Init@ios_base@std@@IEAAXXZ(ptr) ios_base__Init
 @ cdecl -arch=win32 ?_Init@locale@std@@CAPAV_Locimp@12@XZ() locale__Init
 @ cdecl -arch=win64 ?_Init@locale@std@@CAPEAV_Locimp@12@XZ() locale__Init
 @ thiscall -arch=win32 ?_Init@strstreambuf@std@@IAEXHPAD0H@Z(ptr long ptr ptr long) strstreambuf__Init
 @ cdecl -arch=win64 ?_Init@strstreambuf@std@@IEAAX_JPEAD1H@Z(ptr long ptr ptr long) strstreambuf__Init
-# extern ?_Init_cnt@Init@ios_base@std@@0HA
+@ extern ?_Init_cnt@Init@ios_base@std@@0HA ios_base_Init__Init_cnt
 # extern ?_Init_cnt@_UShinit@std@@0HA
 # extern ?_Init_cnt@_Winit@std@@0HA
 @ thiscall -arch=win32 ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAV?$codecvt@DDH@2@@Z(ptr ptr) basic_filebuf_char__Initcvt
