@@ -2386,11 +2386,15 @@ BOOL CDECL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO 
     }
     else set_surface_color_key( surface, color_key );
 
+    if (surface) window_surface_add_ref( surface );
     release_win_data( data );
 
     if (!surface) return FALSE;
-    if (!info->hdcSrc) return TRUE;
-    if (info->prcDirty && !IntersectRect( &rect, &rect, info->prcDirty )) return TRUE;
+    if (!info->hdcSrc)
+    {
+        window_surface_release( surface );
+        return TRUE;
+    }
 
     dst_bits = surface->funcs->get_info( surface, bmi );
 
@@ -2403,6 +2407,7 @@ BOOL CDECL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO 
 
     if (info->prcDirty)
     {
+        IntersectRect( &rect, &rect, info->prcDirty );
         memcpy( src_bits, dst_bits, bmi->bmiHeader.biSizeImage );
         PatBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS );
     }
@@ -2422,6 +2427,7 @@ BOOL CDECL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO 
     surface->funcs->flush( surface );
 
 done:
+    window_surface_release( surface );
     if (hdc) DeleteDC( hdc );
     if (dib) DeleteObject( dib );
     return ret;
