@@ -182,6 +182,8 @@ static const WCHAR prop_totalphysicalmemoryW[] =
     {'T','o','t','a','l','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
 static const WCHAR prop_typeW[] =
     {'T','y','p','e',0};
+static const WCHAR prop_uniqueidW[] =
+    {'U','n','i','q','u','e','I','d',0};
 static const WCHAR prop_versionW[] =
     {'V','e','r','s','i','o','n',0};
 
@@ -290,7 +292,8 @@ static const struct column col_processor[] =
     { prop_maxclockspeedW,        CIM_UINT32, VT_I4 },
     { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_numlogicalprocessorsW, CIM_UINT32, VT_I4 },
-    { prop_processoridW,          CIM_STRING|COL_FLAG_DYNAMIC }
+    { prop_processoridW,          CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_uniqueidW,             CIM_STRING }
 };
 static const struct column col_service[] =
 {
@@ -462,6 +465,7 @@ struct record_processor
     const WCHAR *name;
     UINT32       num_logical_processors;
     const WCHAR *processor_id;
+    const WCHAR *unique_id;
 };
 struct record_service
 {
@@ -898,6 +902,7 @@ static void fill_processor( struct table *table )
         rec->name                   = heap_strdupW( name );
         rec->num_logical_processors = num_logical_processors;
         rec->processor_id           = heap_strdupW( processor_id );
+        rec->unique_id              = NULL;
         offset += sizeof(*rec);
     }
 
