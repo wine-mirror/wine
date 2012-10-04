@@ -244,14 +244,12 @@ struct wined3d_device * CDECL wined3d_swapchain_get_device(const struct wined3d_
     return swapchain->device;
 }
 
-HRESULT CDECL wined3d_swapchain_get_desc(const struct wined3d_swapchain *swapchain,
+void CDECL wined3d_swapchain_get_desc(const struct wined3d_swapchain *swapchain,
         struct wined3d_swapchain_desc *desc)
 {
     TRACE("swapchain %p, desc %p.\n", swapchain, desc);
 
     *desc = swapchain->desc;
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_swapchain_set_gamma_ramp(const struct wined3d_swapchain *swapchain,

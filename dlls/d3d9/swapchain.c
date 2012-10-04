@@ -210,16 +210,15 @@ static HRESULT WINAPI d3d9_swapchain_GetPresentParameters(IDirect3DSwapChain9 *i
 {
     struct d3d9_swapchain *swapchain = impl_from_IDirect3DSwapChain9(iface);
     struct wined3d_swapchain_desc desc;
-    HRESULT hr;
 
     TRACE("iface %p, parameters %p.\n", iface, parameters);
 
     wined3d_mutex_lock();
-    hr = wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &desc);
+    wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &desc);
     wined3d_mutex_unlock();
     present_parameters_from_wined3d_swapchain_desc(parameters, &desc);
 
-    return hr;
+    return D3D_OK;
 }
 
 

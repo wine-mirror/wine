@@ -2900,13 +2900,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     {
         struct wined3d_swapchain_desc swapchain_desc;
 
-        hr = wined3d_swapchain_get_desc(ddraw->wined3d_swapchain, &swapchain_desc);
-        if (FAILED(hr))
-        {
-            ERR("Failed to get present parameters.\n");
-            return hr;
-        }
-
+        wined3d_swapchain_get_desc(ddraw->wined3d_swapchain, &swapchain_desc);
         swapchain_desc.backbuffer_width = mode.width;
         swapchain_desc.backbuffer_height = mode.height;
         swapchain_desc.backbuffer_format = mode.format_id;

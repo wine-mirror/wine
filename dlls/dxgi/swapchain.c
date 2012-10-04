@@ -192,7 +192,6 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc(IDXGISwapChain *iface, D
 {
     struct dxgi_swapchain *swapchain = impl_from_IDXGISwapChain(iface);
     struct wined3d_swapchain_desc wined3d_desc;
-    HRESULT hr;
 
     FIXME("iface %p, desc %p partial stub!\n", iface, desc);
 
@@ -200,14 +199,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc(IDXGISwapChain *iface, D
         return E_INVALIDARG;
 
     EnterCriticalSection(&dxgi_cs);
-
-    hr = wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
-    if (FAILED(hr))
-    {
-        LeaveCriticalSection(&dxgi_cs);
-        return hr;
-    }
-
+    wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
     LeaveCriticalSection(&dxgi_cs);
 
     FIXME("Ignoring ScanlineOrdering, Scaling, SwapEffect and Flags\n");
@@ -227,7 +219,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc(IDXGISwapChain *iface, D
     desc->SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
     desc->Flags = 0;
 
-    return hr;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_ResizeBuffers(IDXGISwapChain *iface,
