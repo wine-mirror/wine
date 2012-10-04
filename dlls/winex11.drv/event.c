@@ -1065,19 +1065,19 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
                data->window_rect.bottom - data->window_rect.top, cx, cy );
 
     style = GetWindowLongW( data->hwnd, GWL_STYLE );
-    if ((style & WS_CAPTION) == WS_CAPTION && is_net_wm_state_maximized( event->display, data ))
+    if ((style & WS_CAPTION) == WS_CAPTION)
     {
-        if (!(style & WS_MAXIMIZE))
+        if (is_net_wm_state_maximized( event->display, data ))
         {
-            TRACE( "win %p/%lx is maximized\n", data->hwnd, data->whole_window );
-            release_win_data( data );
-            SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, 0 );
-            return;
+            if (!(style & WS_MAXIMIZE))
+            {
+                TRACE( "win %p/%lx is maximized\n", data->hwnd, data->whole_window );
+                release_win_data( data );
+                SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, 0 );
+                return;
+            }
         }
-    }
-    else
-    {
-        if (style & WS_MAXIMIZE)
+        else if (style & WS_MAXIMIZE)
         {
             TRACE( "window %p/%lx is no longer maximized\n", data->hwnd, data->whole_window );
             release_win_data( data );
