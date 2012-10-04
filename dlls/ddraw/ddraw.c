@@ -955,14 +955,8 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
             wined3d_surface_decref(rt);
         }
 
-        hr = wined3d_stateblock_apply(stateblock);
+        wined3d_stateblock_apply(stateblock);
         wined3d_stateblock_decref(stateblock);
-        if (FAILED(hr))
-        {
-            ERR("Failed to apply stateblock, hr %#x.\n", hr);
-            wined3d_mutex_unlock();
-            return hr;
-        }
     }
 
     /* Unhandled flags */

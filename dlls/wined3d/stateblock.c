@@ -917,7 +917,7 @@ static void apply_lights(struct wined3d_device *device, const struct wined3d_sta
     }
 }
 
-HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
+void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
 {
     struct wined3d_device *device = stateblock->device;
     unsigned int i;
@@ -1072,8 +1072,6 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
     }
 
     TRACE("Applied stateblock %p.\n", stateblock);
-
-    return WINED3D_OK;
 }
 
 void stateblock_init_default_state(struct wined3d_stateblock *stateblock)

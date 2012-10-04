@@ -5380,7 +5380,6 @@ static HRESULT d3d_device7_ApplyStateBlock(IDirect3DDevice7 *iface, DWORD stateb
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
     struct wined3d_stateblock *wined3d_sb;
-    HRESULT hr;
 
     TRACE("iface %p, stateblock %#x.\n", iface, stateblock);
 
@@ -5393,10 +5392,10 @@ static HRESULT d3d_device7_ApplyStateBlock(IDirect3DDevice7 *iface, DWORD stateb
         return D3DERR_INVALIDSTATEBLOCK;
     }
 
-    hr = wined3d_stateblock_apply(wined3d_sb);
+    wined3d_stateblock_apply(wined3d_sb);
     wined3d_mutex_unlock();
 
-    return hr_ddraw_from_wined3d(hr);
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d_device7_ApplyStateBlock_FPUSetup(IDirect3DDevice7 *iface, DWORD stateblock)
