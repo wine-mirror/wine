@@ -67,6 +67,8 @@ static const WCHAR class_processorW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR class_serviceW[] =
     {'W','i','n','3','2','_','S','e','r','v','i','c','e',0};
+static const WCHAR class_sounddeviceW[] =
+    {'W','i','n','3','2','_','S','o','u','n','d','D','e','v','i','c','e',0};
 static const WCHAR class_stdregprovW[] =
     {'S','t','d','R','e','g','P','r','o','v',0};
 static const WCHAR class_videocontrollerW[] =
@@ -152,6 +154,8 @@ static const WCHAR prop_processidW[] =
     {'P','r','o','c','e','s','s','I','D',0};
 static const WCHAR prop_processoridW[] =
     {'P','r','o','c','e','s','s','o','r','I','d',0};
+static const WCHAR prop_productnameW[] =
+    {'P','r','o','d','u','c','t','N','a','m','e',0};
 static const WCHAR prop_releasedateW[] =
     {'R','e','l','e','a','s','e','D','a','t','e',0};
 static const WCHAR prop_serialnumberW[] =
@@ -300,6 +304,10 @@ static const struct column col_service[] =
     { prop_stateW,            CIM_STRING },
     { prop_systemnameW,       CIM_STRING|COL_FLAG_DYNAMIC }
 };
+static const struct column col_sounddevice[] =
+{
+    { prop_productnameW, CIM_STRING }
+};
 static const struct column col_stdregprov[] =
 {
     { method_enumkeyW,    CIM_OBJECT|COL_FLAG_METHOD },
@@ -359,6 +367,8 @@ static const WCHAR os_32bitW[] =
     {'3','2','-','b','i','t',0};
 static const WCHAR os_64bitW[] =
     {'6','4','-','b','i','t',0};
+static const WCHAR sounddevice_productnameW[] =
+    {'W','i','n','e',' ','A','u','d','i','o',' ','D','e','v','i','c','e',0};
 static const WCHAR videocontroller_deviceidW[] =
     {'V','i','d','e','o','C','o','n','t','r','o','l','l','e','r','1',0};
 
@@ -465,6 +475,10 @@ struct record_service
     const WCHAR *state;
     const WCHAR *systemname;
 };
+struct record_sounddevice
+{
+    const WCHAR *productname;
+};
 struct record_stdregprov
 {
     class_method *enumkey;
@@ -520,6 +534,10 @@ static const struct record_params data_params[] =
     { class_stdregprovW, method_enumvaluesW, -1, param_returnvalueW, CIM_UINT32 },
     { class_stdregprovW, method_enumvaluesW, -1, param_namesW, CIM_STRING|CIM_FLAG_ARRAY },
     { class_stdregprovW, method_enumvaluesW, -1, param_typesW, CIM_SINT32|CIM_FLAG_ARRAY }
+};
+static const struct record_sounddevice data_sounddevice[] =
+{
+    { sounddevice_productnameW }
 };
 static const struct record_stdregprov data_stdregprov[] =
 {
@@ -1162,6 +1180,7 @@ static struct table builtin_classes[] =
     { class_processW, SIZEOF(col_process), col_process, 0, NULL, fill_process },
     { class_processorW, SIZEOF(col_processor), col_processor, 0, NULL, fill_processor },
     { class_serviceW, SIZEOF(col_service), col_service, 0, NULL, fill_service },
+    { class_sounddeviceW, SIZEOF(col_sounddevice), col_sounddevice, SIZEOF(data_sounddevice), (BYTE *)data_sounddevice },
     { class_stdregprovW, SIZEOF(col_stdregprov), col_stdregprov, SIZEOF(data_stdregprov), (BYTE *)data_stdregprov },
     { class_videocontrollerW, SIZEOF(col_videocontroller), col_videocontroller, 0, NULL, fill_videocontroller }
 };
