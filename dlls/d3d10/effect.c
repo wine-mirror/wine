@@ -1347,6 +1347,14 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
             break;
         }
 
+        case D3D10_EOT_DEPTH_STENCIL_STATE:
+        {
+            ID3D10EffectDepthStencilVariable *dv = variable->lpVtbl->AsDepthStencil(variable);
+            if (FAILED(hr = dv->lpVtbl->GetDepthStencilState(dv, variable_idx, &o->object.ds)))
+                return hr;
+            break;
+        }
+
         case D3D10_EOT_VERTEXSHADER:
         {
             ID3D10EffectShaderVariable *sv = variable->lpVtbl->AsShader(variable);
@@ -1377,7 +1385,6 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
             break;
         }
 
-        case D3D10_EOT_DEPTH_STENCIL_STATE:
         case D3D10_EOT_BLEND_STATE:
         case D3D10_EOT_STENCIL_REF:
         case D3D10_EOT_BLEND_FACTOR:
@@ -2170,6 +2177,10 @@ static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
             ID3D10Device_RSSetState(device, o->object.rs);
             return S_OK;
 
+        case D3D10_EOT_DEPTH_STENCIL_STATE:
+            ID3D10Device_OMSetDepthStencilState(device, o->object.ds, o->pass->stencil_ref);
+            return S_OK;
+
         case D3D10_EOT_VERTEXSHADER:
             ID3D10Device_VSSetShader(device, o->object.vs);
             return S_OK;
@@ -2180,6 +2191,9 @@ static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
 
         case D3D10_EOT_GEOMETRYSHADER:
             ID3D10Device_GSSetShader(device, o->object.gs);
+            return S_OK;
+
+        case D3D10_EOT_STENCIL_REF:
             return S_OK;
 
         default:
@@ -2272,6 +2286,11 @@ static void d3d10_effect_object_destroy(struct d3d10_effect_object *o)
         case D3D10_EOT_RASTERIZER_STATE:
             if (o->object.rs)
                 ID3D10RasterizerState_Release(o->object.rs);
+            break;
+
+        case D3D10_EOT_DEPTH_STENCIL_STATE:
+            if (o->object.ds)
+                ID3D10DepthStencilState_Release(o->object.ds);
             break;
 
         case D3D10_EOT_VERTEXSHADER:
