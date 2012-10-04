@@ -5101,7 +5101,7 @@ static int num_get_char__Getffld(const num_get *this, char *dest, istreambuf_ite
 
     numpunct_char_grouping(numpunct, &grouping_bstr);
     grouping = basic_string_char_c_str(&grouping_bstr);
-    sep = grouping[0] ? numpunct_char_thousands_sep(numpunct) : '\0';
+    sep = grouping ? numpunct_char_thousands_sep(numpunct) : '\0';
 
     istreambuf_iterator_char_val(first);
     if(first->strbuf && (first->val=='-' || first->val=='+')) {
@@ -5258,7 +5258,7 @@ static int num_get_char__Getifld(const num_get *this, char *dest, istreambuf_ite
 
     numpunct_char_grouping(numpunct, &grouping_bstr);
     grouping = basic_string_char_c_str(&grouping_bstr);
-    sep = grouping[0] ? numpunct_char_thousands_sep(numpunct) : '\0';
+    sep = grouping ? numpunct_char_thousands_sep(numpunct) : '\0';
 
     basefield = fmtflags & FMTFLAG_basefield;
     if(basefield == FMTFLAG_oct)
@@ -6007,7 +6007,7 @@ static ostreambuf_iterator_char* num_put_char_fput(const num_put *this, ostreamb
     /* Add separators to number */
     numpunct_char_grouping(numpunct, &grouping_bstr);
     grouping = basic_string_char_c_str(&grouping_bstr);
-    sep = grouping[0] ? numpunct_char_thousands_sep(numpunct) : '\0';
+    sep = grouping ? numpunct_char_thousands_sep(numpunct) : '\0';
 
     for(; p>buf && sep && grouping[cur_group]!=CHAR_MAX; p--) {
         group_size++;
@@ -6090,7 +6090,7 @@ static ostreambuf_iterator_char* num_put_char__Iput(const num_put *this, ostream
     /* Add separators to number */
     numpunct_char_grouping(numpunct, &grouping_bstr);
     grouping = basic_string_char_c_str(&grouping_bstr);
-    sep = grouping[0] ? numpunct_char_thousands_sep(numpunct) : '\0';
+    sep = grouping ? numpunct_char_thousands_sep(numpunct) : '\0';
 
     for(p=buf+count-1; p>buf && sep && grouping[cur_group]!=CHAR_MAX; p--) {
         group_size++;
