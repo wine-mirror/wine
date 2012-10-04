@@ -255,6 +255,7 @@
 @ stub SetDocumentBitStg
 @ stdcall SetErrorInfo(long ptr)
 @ stdcall StgConvertPropertyToVariant(ptr long ptr ptr)
+@ stdcall StgConvertVariantToProperty(ptr long ptr ptr long long ptr)
 @ stdcall StgCreateDocfile(wstr long long ptr)
 @ stdcall StgCreateDocfileOnILockBytes(ptr long long ptr)
 @ stdcall StgCreatePropSetStg(ptr long ptr)

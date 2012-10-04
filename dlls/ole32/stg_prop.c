@@ -2762,3 +2762,12 @@ BOOLEAN WINAPI StgConvertPropertyToVariant(const SERIALIZEDPROPERTYVALUE* prop,
 
     return 0;
 }
+
+SERIALIZEDPROPERTYVALUE* WINAPI StgConvertVariantToProperty(const PROPVARIANT *pvar,
+    USHORT CodePage, SERIALIZEDPROPERTYVALUE *pprop, ULONG *pcb, PROPID pid,
+    BOOLEAN fReserved, ULONG *pcIndirect)
+{
+    FIXME("%p,%d,%p,%p,%d,%d,%p\n", pvar, CodePage, pprop, pcb, pid, fReserved, pcIndirect);
+
+    return NULL;
+}
