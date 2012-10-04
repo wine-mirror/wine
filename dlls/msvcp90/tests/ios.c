@@ -340,10 +340,14 @@ typedef struct
 } basic_string_wchar;
 
 /* stringstream */
+static basic_stringstream_char* (*__thiscall p_basic_stringstream_char_ctor)(basic_stringstream_char*, MSVCP_bool);
 static basic_stringstream_char* (*__thiscall p_basic_stringstream_char_ctor_str)(basic_stringstream_char*, const basic_string_char*, int, MSVCP_bool);
+static basic_string_char* (*__thiscall p_basic_stringstream_char_str_get)(const basic_stringstream_char*, basic_string_char*);
 static void (*__thiscall p_basic_stringstream_char_vbase_dtor)(basic_stringstream_char*);
 
+static basic_stringstream_wchar* (*__thiscall p_basic_stringstream_wchar_ctor)(basic_stringstream_wchar*, MSVCP_bool);
 static basic_stringstream_wchar* (*__thiscall p_basic_stringstream_wchar_ctor_str)(basic_stringstream_wchar*, const basic_string_wchar*, int, MSVCP_bool);
+static basic_string_wchar* (*__thiscall p_basic_stringstream_wchar_str_get)(const basic_stringstream_wchar*, basic_string_wchar*);
 static void (*__thiscall p_basic_stringstream_wchar_vbase_dtor)(basic_stringstream_wchar*);
 
 /* istream */
@@ -355,6 +359,11 @@ static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_read_uint64)(basi
 static basic_istream_wchar* (*__thiscall p_basic_istream_wchar_read_double)(basic_istream_wchar*, double *);
 static int (*__thiscall p_basic_istream_wchar_get)(basic_istream_wchar*);
 
+/* ostream */
+static basic_ostream_char* (*__thiscall p_basic_ostream_char_print_double)(basic_ostream_char*, double);
+
+static basic_ostream_wchar* (*__thiscall p_basic_ostream_wchar_print_double)(basic_ostream_wchar*, double);
+
 /* basic_ios */
 static locale*  (*__thiscall p_basic_ios_char_imbue)(basic_ios_char*, locale*, const locale*);
 
@@ -363,6 +372,7 @@ static locale*  (*__thiscall p_basic_ios_wchar_imbue)(basic_ios_wchar*, locale*,
 /* ios_base */
 static IOSB_iostate  (*__thiscall p_ios_base_rdstate)(const ios_base*);
 static IOSB_fmtflags (*__thiscall p_ios_base_setf_mask)(ios_base*, IOSB_fmtflags, IOSB_fmtflags);
+static streamsize    (*__thiscall p_ios_base_precision_set)(ios_base*, streamsize);
 
 /* locale */
 static locale*  (*__thiscall p_locale_ctor_cstr)(locale*, const char*, int /* FIXME: category */);
@@ -370,9 +380,11 @@ static void     (*__thiscall p_locale_dtor)(locale *this);
 
 /* basic_string */
 static basic_string_char* (__thiscall *p_basic_string_char_ctor_cstr)(basic_string_char*, const char*);
+static const char* (__thiscall *p_basic_string_char_cstr)(basic_string_char*);
 static void (__thiscall *p_basic_string_char_dtor)(basic_string_char*);
 
 static basic_string_wchar* (__thiscall *p_basic_string_wchar_ctor_cstr)(basic_string_wchar*, const wchar_t*);
+static const wchar_t* (__thiscall *p_basic_string_wchar_cstr)(basic_string_wchar*);
 static void (__thiscall *p_basic_string_wchar_dtor)(basic_string_wchar*);
 
 static int invalid_parameter = 0;
@@ -409,6 +421,10 @@ static void * (WINAPI *call_thiscall_func4)( void *func, void *this, const void 
         const void *c );
 static void * (WINAPI *call_thiscall_func5)( void *func, void *this, const void *a, const void *b,
         const void *c, const void *d );
+
+/* to silence compiler error about converting double to pointer */
+static void * (WINAPI *call_thiscall_func2_ptr_dbl)( void *func, void *this, double a );
+
 struct thiscall_thunk_retptr *thunk_retptr;
 
 static void init_thiscall_thunk(void)
@@ -425,6 +441,8 @@ static void init_thiscall_thunk(void)
     call_thiscall_func3 = (void *)thunk;
     call_thiscall_func4 = (void *)thunk;
     call_thiscall_func5 = (void *)thunk;
+
+    call_thiscall_func2_ptr_dbl = (void *)thunk;
 }
 
 #define call_func1(func,_this) call_thiscall_func1(func,_this)
@@ -435,6 +453,8 @@ static void init_thiscall_thunk(void)
 #define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(const void*)(a),(const void*)(b), \
         (const void*)(c), (const void *)(d))
 
+#define call_func2_ptr_dbl(func,_this,a) call_thiscall_func2_ptr_dbl(func,_this,a)
+
 #else
 
 #define init_thiscall_thunk()
@@ -443,6 +463,8 @@ static void init_thiscall_thunk(void)
 #define call_func3(func,_this,a,b) func(_this,a,b)
 #define call_func4(func,_this,a,b,c) func(_this,a,b,c)
 #define call_func5(func,_this,a,b,c,d) func(_this,a,b,c,d)
+
+#define call_func2_ptr_dbl  call_func2
 
 #endif /* __i386__ */
 
@@ -467,13 +489,21 @@ static BOOL init(void)
     p_set_invalid_parameter_handler(test_invalid_parameter_handler);
 
     if(sizeof(void*) == 8) { /* 64-bit initialization */
+        SET(p_basic_stringstream_char_ctor,
+            "??_F?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXXZ");
         SET(p_basic_stringstream_char_ctor_str,
             "??0?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@H@Z");
+        SET(p_basic_stringstream_char_str_get,
+            "?str@?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ");
         SET(p_basic_stringstream_char_vbase_dtor,
             "??_D?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXXZ");
 
+        SET(p_basic_stringstream_wchar_ctor,
+            "??_F?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXXZ");
         SET(p_basic_stringstream_wchar_ctor_str,
             "??0?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@AEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@1@H@Z");
+        SET(p_basic_stringstream_wchar_str_get,
+            "?str@?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ");
         SET(p_basic_stringstream_wchar_vbase_dtor,
             "??_D?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXXZ");
 
@@ -491,10 +521,18 @@ static BOOL init(void)
         SET(p_basic_istream_wchar_get,
             "?get@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAGXZ");
 
+        SET(p_basic_ostream_char_print_double,
+            "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@N@Z");
+
+        SET(p_basic_ostream_wchar_print_double,
+            "??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@N@Z");
+
         SET(p_ios_base_rdstate,
             "?rdstate@ios_base@std@@QEBAHXZ");
         SET(p_ios_base_setf_mask,
             "?setf@ios_base@std@@QEAAHHH@Z");
+        SET(p_ios_base_precision_set,
+            "?precision@ios_base@std@@QEAA_J_J@Z");
 
         SET(p_basic_ios_char_imbue,
             "?imbue@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAA?AVlocale@2@AEBV32@@Z");
@@ -509,21 +547,33 @@ static BOOL init(void)
 
         SET(p_basic_string_char_ctor_cstr,
                 "??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@PEBD@Z");
+        SET(p_basic_string_char_cstr,
+                "?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ");
         SET(p_basic_string_char_dtor,
                 "??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ");
 
         SET(p_basic_string_wchar_ctor_cstr,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@PEB_W@Z");
+        SET(p_basic_string_wchar_cstr,
+                "?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAPEB_WXZ");
         SET(p_basic_string_wchar_dtor,
                 "??1?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@XZ");
     } else {
+        SET(p_basic_stringstream_char_ctor,
+            "??_F?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ");
         SET(p_basic_stringstream_char_ctor_str,
             "??0?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@H@Z");
+        SET(p_basic_stringstream_char_str_get,
+            "?str@?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ");
         SET(p_basic_stringstream_char_vbase_dtor,
             "??_D?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ");
 
+        SET(p_basic_stringstream_wchar_ctor,
+            "??_F?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXXZ");
         SET(p_basic_stringstream_wchar_ctor_str,
             "??0?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@ABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@1@H@Z");
+        SET(p_basic_stringstream_wchar_str_get,
+            "?str@?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ");
         SET(p_basic_stringstream_wchar_vbase_dtor,
             "??_D?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXXZ");
 
@@ -541,10 +591,18 @@ static BOOL init(void)
         SET(p_basic_istream_wchar_get,
             "?get@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEGXZ");
 
+        SET(p_basic_ostream_char_print_double,
+            "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@N@Z");
+
+        SET(p_basic_ostream_wchar_print_double,
+            "??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@N@Z");
+
         SET(p_ios_base_rdstate,
             "?rdstate@ios_base@std@@QBEHXZ");
         SET(p_ios_base_setf_mask,
             "?setf@ios_base@std@@QAEHHH@Z");
+        SET(p_ios_base_precision_set,
+            "?precision@ios_base@std@@QAEHH@Z");
 
         SET(p_basic_ios_char_imbue,
             "?imbue@?$basic_ios@DU?$char_traits@D@std@@@std@@QAE?AVlocale@2@ABV32@@Z");
@@ -559,11 +617,15 @@ static BOOL init(void)
 
         SET(p_basic_string_char_ctor_cstr,
                 "??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@PBD@Z");
+        SET(p_basic_string_char_cstr,
+                "?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ");
         SET(p_basic_string_char_dtor,
                 "??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ");
 
         SET(p_basic_string_wchar_ctor_cstr,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@PB_W@Z");
+        SET(p_basic_string_wchar_cstr,
+                "?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ");
         SET(p_basic_string_wchar_dtor,
                 "??1?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ");
     }
@@ -866,6 +928,125 @@ static void test_num_get_get_double(void)
 }
 
 
+static void test_num_put_put_double(void)
+{
+    basic_stringstream_wchar wss;
+    basic_stringstream_char ss;
+    basic_string_wchar pwstr;
+    basic_string_char pstr;
+    locale lcl, retlcl;
+    const wchar_t *wstr;
+    const char *str;
+    wchar_t wide[64];
+    int i;
+
+    struct _test_num_get {
+        double        val;
+        const char    *lcl;
+        streamsize    prec;  /* set to -1 for default */
+        IOSB_fmtflags fmtfl; /* FMTFLAG_scientific, FMTFLAG_fixed */
+        const char    *str;
+    } tests[] = {
+        { 0.0, NULL, -1, 0, "0" },
+
+        /* simple cases */
+        { 0.123, NULL, -1, 0, "0.123" },
+        { 0.123, NULL,  6, 0, "0.123" },
+        { 0.123, NULL,  0, 0, "0.123" },
+
+        /* fixed format */
+        { 0.123, NULL, -1, FMTFLAG_fixed, "0.123000" },
+        { 0.123, NULL,  6, FMTFLAG_fixed, "0.123000" },
+        { 0.123, NULL,  0, FMTFLAG_fixed, "0" },
+
+        /* scientific format */
+        { 123456.789, NULL,    -1, FMTFLAG_scientific, "1.234568e+005"    },
+        { 123456.789, NULL,     0, FMTFLAG_scientific, "1.234568e+005"    },
+        { 123456.789, NULL,     9, FMTFLAG_scientific, "1.234567890e+005" },
+        { 123456.789, "German", 9, FMTFLAG_scientific, "1,234567890e+005" },
+
+        /* different locales */
+        { 0.123, "C",       -1, 0, "0.123" },
+        { 0.123, "English", -1, 0, "0.123" },
+        { 0.123, "German",  -1, 0, "0,123" },
+
+        { 123456.789, "C",       -1, 0, "123457"  },
+        { 123456.789, "English", -1, 0, "123,457" },
+        { 123456.789, "German",  -1, 0, "123.457" },
+
+        /* signs and exponents */
+        {  1.0e-9, NULL, -1, 0, "1e-009"  },
+        {  1.0e-9, NULL,  9, 0, "1e-009"  },
+        { -1.0e9,  NULL, -1, 0, "-1e+009" },
+        { -1.0e9,  NULL,  9, 0, "-1e+009" },
+
+        {  1.0e-9, NULL, 0, FMTFLAG_fixed, "0"                  },
+        {  1.0e-9, NULL, 6, FMTFLAG_fixed, "0.000000"           },
+        {  1.0e-9, NULL, 9, FMTFLAG_fixed, "0.000000001"        },
+        { -1.0e9,  NULL, 0, FMTFLAG_fixed, "-1000000000"        },
+        { -1.0e9,  NULL, 6, FMTFLAG_fixed, "-1000000000.000000" },
+
+        { -1.23456789e9,  NULL, 0, 0,             "-1.23457e+009"      },
+        { -1.23456789e9,  NULL, 0, FMTFLAG_fixed, "-1234567890"        },
+        { -1.23456789e9,  NULL, 6, FMTFLAG_fixed, "-1234567890.000000" },
+        { -1.23456789e-9, NULL, 6, FMTFLAG_fixed, "-0.000000"          },
+        { -1.23456789e-9, NULL, 9, FMTFLAG_fixed, "-0.000000001"       }
+    };
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        /* char version */
+        call_func2(p_basic_stringstream_char_ctor, &ss, TRUE);
+
+        if(tests[i].lcl) {
+            call_func3(p_locale_ctor_cstr, &lcl, tests[i].lcl, 0x3f /* FIXME: support categories */);
+            call_func3(p_basic_ios_char_imbue, &ss.basic_ios, &retlcl, &lcl);
+        }
+
+        /* set format and precision only if specified, so we can try defaults */
+        if(tests[i].fmtfl)
+            call_func3(p_ios_base_setf_mask, &ss.basic_ios.base, tests[i].fmtfl, FMTFLAG_floatfield);
+        if(tests[i].prec != -1)
+            call_func2(p_ios_base_precision_set, &ss.basic_ios.base, tests[i].prec);
+        call_func2_ptr_dbl(p_basic_ostream_char_print_double, &ss.base.base2, tests[i].val);
+
+        call_func2(p_basic_stringstream_char_str_get, &ss, &pstr);
+        str = call_func1(p_basic_string_char_cstr, &pstr);
+
+        ok(!strcmp(tests[i].str, str), "wrong output, expected = %s found = %s\n", tests[i].str, str);
+
+        if(tests[i].lcl)
+            call_func1(p_locale_dtor, &lcl);
+
+        call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+
+        /* wchar_t version */
+        call_func2(p_basic_stringstream_wchar_ctor, &wss, TRUE);
+
+        if(tests[i].lcl) {
+            call_func3(p_locale_ctor_cstr, &lcl, tests[i].lcl, 0x3f /* FIXME: support categories */);
+            call_func3(p_basic_ios_wchar_imbue, &wss.basic_ios, &retlcl, &lcl);
+        }
+
+        /* set format and precision only if specified, so we can try defaults */
+        if(tests[i].fmtfl)
+            call_func3(p_ios_base_setf_mask, &wss.basic_ios.base, tests[i].fmtfl, FMTFLAG_floatfield);
+        if(tests[i].prec != -1)
+            call_func2(p_ios_base_precision_set, &wss.basic_ios.base, tests[i].prec);
+        call_func2_ptr_dbl(p_basic_ostream_wchar_print_double, &wss.base.base2, tests[i].val);
+
+        call_func2(p_basic_stringstream_wchar_str_get, &wss, &pwstr);
+        wstr = call_func1(p_basic_string_wchar_cstr, &pwstr);
+
+        AtoW(wide, tests[i].str, strlen(tests[i].str));
+        ok(!lstrcmpW(wide, wstr), "wrong output, expected = %s found = %s\n", tests[i].str, str);
+
+        if(tests[i].lcl)
+            call_func1(p_locale_dtor, &lcl);
+
+        call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
+    }
+}
+
 START_TEST(ios)
 {
     if(!init())
@@ -873,6 +1054,7 @@ START_TEST(ios)
 
     test_num_get_get_uint64();
     test_num_get_get_double();
+    test_num_put_put_double();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 }
