@@ -1991,13 +1991,6 @@ basic_string_char* __thiscall basic_string_char_replace_cstr_len(basic_string_ch
     return this;
 }
 
-/* Not exported from msvcp90 */
-basic_string_char* __stdcall basic_string_char_replace_helper(basic_string_char *this,
-        MSVCP_size_t off, MSVCP_size_t len, const char *str, MSVCP_size_t str_len)
-{
-    return basic_string_char_replace_cstr_len(this, off, len, str, str_len);
-}
-
 /* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@IIPBD@Z */
 /* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_K0PEBD@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_replace_cstr, 16)
@@ -3948,13 +3941,6 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_cstr_len(basic_string_
 
     basic_string_wchar_eos(this, this->size-len+str_len);
     return this;
-}
-
-/* Not exported from msvcp90 */
-basic_string_wchar* __stdcall basic_string_wchar_replace_helper(basic_string_wchar *this,
-        MSVCP_size_t off, MSVCP_size_t len, const wchar_t *str, MSVCP_size_t str_len)
-{
-    return basic_string_wchar_replace_cstr_len(this, off, len ,str, str_len);
 }
 
 /* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@IIPB_W@Z */
