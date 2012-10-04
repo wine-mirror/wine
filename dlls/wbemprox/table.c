@@ -335,7 +335,7 @@ struct table *create_table( const WCHAR *name, UINT num_cols, const struct colum
     struct table *table;
 
     if (!(table = heap_alloc( sizeof(*table) ))) return NULL;
-    table->name     = name;
+    table->name     = heap_strdupW( name );
     table->num_cols = num_cols;
     table->columns  = columns;
     table->num_rows = num_rows;
