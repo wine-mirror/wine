@@ -854,7 +854,7 @@ typedef struct
     const char* verb;
     const char* basename;
     int todo;
-    int rc;
+    INT_PTR rc;
 } filename_tests_t;
 
 static filename_tests_t filename_tests[]=
@@ -1136,7 +1136,7 @@ static void test_filename(void)
     char filename[MAX_PATH];
     const filename_tests_t* test;
     char* c;
-    int rc;
+    INT_PTR rc;
 
     test=filename_tests;
     while (test->basename)
@@ -1179,12 +1179,12 @@ static void test_filename(void)
         {
             ok(rc==test->rc ||
                broken(quotedfile && rc == 2), /* NT4 */
-               "%s failed: rc=%d err=%u\n", shell_call,
+               "%s failed: rc=%ld err=%u\n", shell_call,
                rc, GetLastError());
         }
         else todo_wine
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%u\n", shell_call,
+            ok(rc==test->rc, "%s failed: rc=%ld err=%u\n", shell_call,
                rc, GetLastError());
         }
         if (rc == 33)
@@ -1228,12 +1228,12 @@ static void test_filename(void)
             rc=33;
         if ((test->todo & 0x1)==0)
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%u\n", shell_call,
+            ok(rc==test->rc, "%s failed: rc=%ld err=%u\n", shell_call,
                rc, GetLastError());
         }
         else todo_wine
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%u\n", shell_call,
+            ok(rc==test->rc, "%s failed: rc=%ld err=%u\n", shell_call,
                rc, GetLastError());
         }
         if (rc==0)
@@ -1297,7 +1297,7 @@ static void test_filename(void)
          */
         sprintf(filename, "\"%s\\test file.shlexec\"", tmpdir);
         rc=shell_execute(NULL, filename, NULL, NULL);
-        ok(rc > 32, "%s failed: rc=%d err=%u\n", shell_call, rc,
+        ok(rc > 32, "%s failed: rc=%ld err=%u\n", shell_call, rc,
            GetLastError());
         okChildInt("argcA", 5);
         okChildString("argvA3", "Open");
