@@ -27,36 +27,8 @@
 #include "wine/debug.h"
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
-/* dlls/msvcrt/cppexcept.h */
-typedef void (*cxx_copy_ctor)(void);
-
-/* complete information about a C++ type */
-typedef struct __cxx_type_info
-{
-    UINT             flags;        /* flags (see CLASS_* flags below) */
-    const type_info *type_info;    /* C++ type info */
-    this_ptr_offsets offsets;      /* offsets for computing the this pointer */
-    unsigned int     size;         /* object size */
-    cxx_copy_ctor    copy_ctor;    /* copy constructor */
-} cxx_type_info;
 #define CLASS_IS_SIMPLE_TYPE          1
 #define CLASS_HAS_VIRTUAL_BASE_CLASS  4
-
-/* table of C++ types that apply for a given object */
-typedef struct __cxx_type_info_table
-{
-    UINT                 count;     /* number of types */
-    const cxx_type_info *info[3];   /* variable length, we declare it large enough for static RTTI */
-} cxx_type_info_table;
-
-/* type information for an exception object */
-typedef struct __cxx_exception_type
-{
-    UINT                       flags;            /* TYPE_FLAG flags */
-    void                     (*destructor)(void);/* exception object destructor */
-    void* /*cxx_exc_custom_handler*/ custom_handler;   /* custom handler for this exception */
-    const cxx_type_info_table *type_info_table;  /* list of types for this exception object */
-} cxx_exception_type;
 
 void WINAPI _CxxThrowException(exception*,const cxx_exception_type*);
 
@@ -160,30 +132,7 @@ void * __thiscall MSVCP_exception_vector_dtor(exception *this, unsigned int flag
 }
 
 DEFINE_RTTI_DATA0(exception, 0, ".?AVexception@std@@");
-
-static const cxx_type_info exception_cxx_type_info = {
-    0,
-    &exception_type_info,
-    { 0, -1, 0 },
-    sizeof(exception),
-    (cxx_copy_ctor)THISCALL(MSVCP_exception_dtor)
-};
-
-static const cxx_type_info_table exception_cxx_type_table = {
-    1,
-    {
-        &exception_cxx_type_info,
-        NULL,
-        NULL
-    }
-};
-
-static const cxx_exception_type exception_cxx_type = {
-    0,
-    (cxx_copy_ctor)THISCALL(MSVCP_exception_copy_ctor),
-    NULL,
-    &exception_cxx_type_table
-};
+DEFINE_CXX_DATA0(exception, MSVCP_exception_dtor);
 
 /* bad_alloc class data */
 typedef exception bad_alloc;
@@ -240,30 +189,7 @@ const char* __thiscall MSVCP_what_exception(exception * this)
 }
 
 DEFINE_RTTI_DATA1(bad_alloc, 0, &exception_rtti_base_descriptor, ".?AVbad_alloc@std@@");
-
-static const cxx_type_info bad_alloc_cxx_type_info = {
-    0,
-    &bad_alloc_type_info,
-    { 0, -1, 0 },
-    sizeof(bad_alloc),
-    (cxx_copy_ctor)THISCALL(MSVCP_bad_alloc_copy_ctor)
-};
-
-static const cxx_type_info_table bad_alloc_cxx_type_table = {
-    2,
-    {
-        &bad_alloc_cxx_type_info,
-        &exception_cxx_type_info,
-        NULL
-    }
-};
-
-static const cxx_exception_type bad_alloc_cxx_type = {
-    0,
-    (cxx_copy_ctor)THISCALL(MSVCP_bad_alloc_dtor),
-    NULL,
-    &bad_alloc_cxx_type_table
-};
+DEFINE_CXX_DATA1(bad_alloc, &exception_cxx_type_info, MSVCP_bad_alloc_dtor);
 
 /* logic_error class data */
 typedef struct _logic_error {
@@ -330,30 +256,7 @@ const char* __thiscall MSVCP_logic_error_what(logic_error *this)
 }
 
 DEFINE_RTTI_DATA1(logic_error, 0, &exception_rtti_base_descriptor, ".?AVlogic_error@std@@");
-
-static const cxx_type_info logic_error_cxx_type_info = {
-    0,
-    &logic_error_type_info,
-    { 0, -1, 0 },
-    sizeof(logic_error),
-    (cxx_copy_ctor)THISCALL(MSVCP_logic_error_copy_ctor)
-};
-
-static const cxx_type_info_table logic_error_cxx_type_table = {
-    2,
-    {
-        &logic_error_cxx_type_info,
-        &exception_cxx_type_info,
-        NULL
-    }
-};
-
-static const cxx_exception_type logic_error_cxx_type = {
-    0,
-    (cxx_copy_ctor)THISCALL(MSVCP_logic_error_dtor),
-    NULL,
-    &logic_error_cxx_type_table
-};
+DEFINE_CXX_DATA1(logic_error, &exception_cxx_type_info, MSVCP_logic_error_dtor);
 
 /* length_error class data */
 typedef logic_error length_error;
@@ -378,30 +281,7 @@ length_error* __thiscall MSVCP_length_error_copy_ctor(
 }
 
 DEFINE_RTTI_DATA2(length_error, 0, &logic_error_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AVlength_error@std@@");
-
-static const cxx_type_info length_error_cxx_type_info = {
-    0,
-    &length_error_type_info,
-    { 0, -1, 0 },
-    sizeof(length_error),
-    (cxx_copy_ctor)THISCALL(MSVCP_length_error_copy_ctor)
-};
-
-static const cxx_type_info_table length_error_cxx_type_table = {
-    3,
-    {
-        &length_error_cxx_type_info,
-        &logic_error_cxx_type_info,
-        &exception_cxx_type_info
-    }
-};
-
-static const cxx_exception_type length_error_cxx_type = {
-    0,
-    (cxx_copy_ctor)THISCALL(MSVCP_logic_error_dtor),
-    NULL,
-    &length_error_cxx_type_table
-};
+DEFINE_CXX_DATA2(length_error, &logic_error_cxx_type_info, &exception_cxx_type_info, MSVCP_logic_error_dtor);
 
 /* out_of_range class data */
 typedef logic_error out_of_range;
@@ -426,30 +306,7 @@ out_of_range* __thiscall MSVCP_out_of_range_copy_ctor(
 }
 
 DEFINE_RTTI_DATA2(out_of_range, 0, &logic_error_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AVout_of_range@std@@");
-
-static const cxx_type_info out_of_range_cxx_type_info = {
-    0,
-    &out_of_range_type_info,
-    { 0, -1, 0 },
-    sizeof(out_of_range),
-    (cxx_copy_ctor)THISCALL(MSVCP_out_of_range_copy_ctor)
-};
-
-static const cxx_type_info_table out_of_range_cxx_type_table = {
-    3,
-    {
-        &out_of_range_cxx_type_info,
-        &logic_error_cxx_type_info,
-        &exception_cxx_type_info
-    }
-};
-
-static const cxx_exception_type out_of_range_cxx_type = {
-    0,
-    (cxx_copy_ctor)THISCALL(MSVCP_logic_error_dtor),
-    NULL,
-    &out_of_range_cxx_type_table
-};
+DEFINE_CXX_DATA2(out_of_range, &logic_error_cxx_type_info, &exception_cxx_type_info, MSVCP_logic_error_dtor);
 
 /* invalid_argument class data */
 typedef logic_error invalid_argument;
@@ -474,30 +331,7 @@ invalid_argument* __thiscall MSVCP_invalid_argument_copy_ctor(
 }
 
 DEFINE_RTTI_DATA2(invalid_argument, 0, &logic_error_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AVinvalid_argument@std@@");
-
-static const cxx_type_info invalid_argument_cxx_type_info = {
-    0,
-    &invalid_argument_type_info,
-    { 0, -1, 0 },
-    sizeof(invalid_argument),
-    (cxx_copy_ctor)THISCALL(MSVCP_invalid_argument_copy_ctor)
-};
-
-static const cxx_type_info_table invalid_argument_cxx_type_table = {
-    3,
-    {
-        &invalid_argument_cxx_type_info,
-        &logic_error_cxx_type_info,
-        &exception_cxx_type_info
-    }
-};
-
-static const cxx_exception_type invalid_argument_cxx_type = {
-    0,
-    (cxx_copy_ctor)THISCALL(MSVCP_logic_error_dtor),
-    NULL,
-    &invalid_argument_cxx_type_table
-};
+DEFINE_CXX_DATA2(invalid_argument, &logic_error_cxx_type_info,  &exception_cxx_type_info, MSVCP_logic_error_dtor);
 
 /* runtime_error class data */
 typedef struct {
@@ -564,30 +398,7 @@ const char* __thiscall MSVCP_runtime_error_what(runtime_error *this)
 }
 
 DEFINE_RTTI_DATA1(runtime_error, 0, &exception_rtti_base_descriptor, ".?AVruntime_error@std@@");
-
-static const cxx_type_info runtime_error_cxx_type_info = {
-    0,
-    &runtime_error_type_info,
-    { 0, -1, 0 },
-    sizeof(runtime_error),
-    (cxx_copy_ctor)THISCALL(MSVCP_runtime_error_copy_ctor)
-};
-
-static const cxx_type_info_table runtime_error_cxx_type_table = {
-    2,
-    {
-        &runtime_error_cxx_type_info,
-        &exception_cxx_type_info,
-        NULL
-    }
-};
-
-static const cxx_exception_type runtime_error_cxx_type = {
-    0,
-    (cxx_copy_ctor)THISCALL(MSVCP_runtime_error_dtor),
-    NULL,
-    &runtime_error_cxx_type_table
-};
+DEFINE_CXX_DATA1(runtime_error, &exception_cxx_type_info, MSVCP_runtime_error_dtor);
 
 /* failure class data */
 typedef runtime_error failure;
@@ -634,30 +445,7 @@ const char* __thiscall MSVCP_failure_what(failure *this)
 }
 
 DEFINE_RTTI_DATA2(failure, 0, &runtime_error_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AVfailure@std@@");
-
-static const cxx_type_info failure_cxx_type_info = {
-    0,
-    &failure_type_info,
-    { 0, -1, 0 },
-    sizeof(failure),
-    (cxx_copy_ctor)THISCALL(MSVCP_failure_copy_ctor)
-};
-
-static const cxx_type_info_table failure_cxx_type_table = {
-    3,
-    {
-        &failure_cxx_type_info,
-        &runtime_error_cxx_type_info,
-        &exception_cxx_type_info
-    }
-};
-
-static const cxx_exception_type failure_cxx_type = {
-    0,
-    (cxx_copy_ctor)THISCALL(MSVCP_failure_dtor),
-    NULL,
-    &failure_cxx_type_table
-};
+DEFINE_CXX_DATA2(failure, &runtime_error_cxx_type_info, &exception_cxx_type_info, MSVCP_runtime_error_dtor);
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -755,5 +543,14 @@ void init_exception(void *base)
     init_invalid_argument_rtti(base);
     init_runtime_error_rtti(base);
     init_failure_rtti(base);
+
+    init_exception_cxx(base);
+    init_bad_alloc_cxx(base);
+    init_logic_error_cxx(base);
+    init_length_error_cxx(base);
+    init_out_of_range_cxx(base);
+    init_invalid_argument_cxx(base);
+    init_runtime_error_cxx(base);
+    init_failure_cxx(base);
 #endif
 }
