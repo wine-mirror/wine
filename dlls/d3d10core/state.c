@@ -140,6 +140,15 @@ HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state)
     return S_OK;
 }
 
+struct d3d10_blend_state *unsafe_impl_from_ID3D10BlendState(ID3D10BlendState *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d10_blend_state_vtbl);
+
+    return impl_from_ID3D10BlendState(iface);
+}
+
 static inline struct d3d10_depthstencil_state *impl_from_ID3D10DepthStencilState(ID3D10DepthStencilState *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d10_depthstencil_state, ID3D10DepthStencilState_iface);

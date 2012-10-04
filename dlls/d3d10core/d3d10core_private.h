@@ -217,6 +217,7 @@ struct d3d10_blend_state
 };
 
 HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state) DECLSPEC_HIDDEN;
+struct d3d10_blend_state *unsafe_impl_from_ID3D10BlendState(ID3D10BlendState *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10DepthStencilState */
 struct d3d10_depthstencil_state
@@ -269,6 +270,9 @@ struct d3d10_device
     struct wined3d_device_parent device_parent;
     struct wined3d_device *wined3d_device;
 
+    struct d3d10_blend_state *blend_state;
+    float blend_factor[4];
+    UINT sample_mask;
     struct d3d10_depthstencil_state *depth_stencil_state;
     UINT stencil_ref;
     struct d3d10_rasterizer_state *rasterizer_state;
