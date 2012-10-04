@@ -33,6 +33,8 @@
 #define IActiveScriptParse_Release IActiveScriptParse64_Release
 #define IActiveScriptParse_InitNew IActiveScriptParse64_InitNew
 #define IActiveScriptParse_ParseScriptText IActiveScriptParse64_ParseScriptText
+#define IActiveScriptParseProcedure2_Release IActiveScriptParseProcedure2_64_Release
+#define IActiveScriptParseProcedure2_ParseProcedureText IActiveScriptParseProcedure2_64_ParseProcedureText
 
 #else
 
@@ -40,6 +42,8 @@
 #define IActiveScriptParse_Release IActiveScriptParse32_Release
 #define IActiveScriptParse_InitNew IActiveScriptParse32_InitNew
 #define IActiveScriptParse_ParseScriptText IActiveScriptParse32_ParseScriptText
+#define IActiveScriptParseProcedure2_Release IActiveScriptParseProcedure2_32_Release
+#define IActiveScriptParseProcedure2_ParseProcedureText IActiveScriptParseProcedure2_32_ParseProcedureText
 
 #endif
 
@@ -134,6 +138,7 @@ static const WCHAR testW[] = {'t','e','s','t',0};
 static const CHAR testA[] = "test";
 static const WCHAR test_valW[] = {'t','e','s','t','V','a','l',0};
 static const CHAR test_valA[] = "testVal";
+static const WCHAR emptyW[] = {0};
 
 static BOOL strict_dispid_check;
 static const char *test_name = "(null)";
@@ -1255,6 +1260,62 @@ static HRESULT parse_script(DWORD flags, BSTR script_str)
     return hres;
 }
 
+static HRESULT invoke_procedure(const char *argsa, const char *sourcea, DISPPARAMS *dp)
+{
+    IActiveScriptParseProcedure2 *parse_proc;
+    IActiveScriptParse *parser;
+    IActiveScript *engine;
+    IDispatchEx *dispex;
+    EXCEPINFO ei = {0};
+    BSTR source, args;
+    IDispatch *disp;
+    VARIANT res;
+    HRESULT hres;
+
+    engine = create_script();
+    if(!engine)
+        return S_OK;
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+
+    hres = IActiveScriptParse_InitNew(parser);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParseProcedure2, (void**)&parse_proc);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+
+    source = a2bstr(sourcea);
+    args = argsa ? a2bstr(argsa) : NULL;
+    hres = IActiveScriptParseProcedure2_ParseProcedureText(parse_proc, source, args, emptyW, NULL, NULL, NULL, 0, 0,
+        SCRIPTPROC_HOSTMANAGESSOURCE|SCRIPTPROC_IMPLICIT_THIS|SCRIPTPROC_IMPLICIT_PARENTS, &disp);
+    ok(hres == S_OK, "ParseProcedureText failed: %08x\n", hres);
+    SysFreeString(source);
+    SysFreeString(args);
+
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
+    IDispatch_Release(disp);
+
+    V_VT(&res) = VT_EMPTY;
+    hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, 0, DISPATCH_METHOD, dp, &res, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&res) == VT_BOOL && V_BOOL(&res), "InvokeEx returned vt %d (%x)\n", V_VT(&res), V_I4(&res));
+    IDispatchEx_Release(dispex);
+
+    IActiveScriptParseProcedure2_Release(parse_proc);
+    IActiveScript_Release(engine);
+    IActiveScriptParse_Release(parser);
+
+    return hres;
+}
+
 static HRESULT parse_htmlscript(BSTR script_str)
 {
     IActiveScriptParse *parser;
@@ -1855,6 +1916,19 @@ static BOOL run_tests(void)
     return TRUE;
 }
 
+static void test_parse_proc(void)
+{
+    VARIANT args[2];
+    DISPPARAMS dp = {args};
+
+    dp.cArgs = 0;
+    invoke_procedure(NULL, "return true;", &dp);
+
+    dp.cArgs = 1;
+    V_VT(args) = VT_EMPTY;
+    invoke_procedure(NULL, "return arguments.length == 1;", &dp);
+}
+
 static void run_encoded_tests(void)
 {
     BSTR src;
@@ -1963,6 +2037,8 @@ START_TEST(run)
         if(run_tests()) {
             trace("JSctipt.Encode tests...\n");
             run_encoded_tests();
+            trace("ParseProcedureText tests...\n");
+            test_parse_proc();
         }
     }
 
