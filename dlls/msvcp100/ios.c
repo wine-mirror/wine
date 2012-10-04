@@ -8191,6 +8191,48 @@ void* __thiscall ios_base_Init_op_assign(void *this, void *rhs)
     return this;
 }
 
+/* ?_Init_cnt@_Winit@std@@0HA */
+int _Winit__Init_cnt = -1;
+
+/* ??0_Winit@std@@QAE@XZ */
+/* ??0_Winit@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Winit_ctor, 4)
+void* __thiscall _Winit_ctor(void *this)
+{
+    TRACE("(%p)\n", this);
+
+    if(_Winit__Init_cnt < 0)
+        _Winit__Init_cnt = 1;
+    else
+        _Winit__Init_cnt++;
+
+    return this;
+}
+
+/* ??1_Winit@std@@QAE@XZ */
+/* ??1_Winit@std@@QAE@XZ */
+DEFINE_THISCALL_WRAPPER(_Winit_dtor, 4)
+void __thiscall _Winit_dtor(void *this)
+{
+    TRACE("(%p)\n", this);
+
+    _Winit__Init_cnt--;
+    if(!_Winit__Init_cnt) {
+        basic_ostream_wchar_flush(&wcout.obj);
+        basic_ostream_wchar_flush(&wcerr.obj);
+        basic_ostream_wchar_flush(&wclog.obj);
+    }
+}
+
+/* ??4_Winit@std@@QAEAAV01@ABV01@@Z */
+/* ??4_Winit@std@@QEAAAEAV01@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(_Winit_op_assign, 8)
+void* __thiscall _Winit_op_assign(void *this, void *rhs)
+{
+    TRACE("(%p %p)\n", this, rhs);
+    return this;
+}
+
 void init_io(void *base)
 {
 #ifdef __x86_64__

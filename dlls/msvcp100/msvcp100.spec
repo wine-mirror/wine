@@ -208,8 +208,8 @@
 @ cdecl -arch=win64 ??0_Timevec@std@@QEAA@PEAX@Z(ptr ptr) _Timevec_ctor_timeptr
 @ stub -arch=win32 ??0_UShinit@std@@QAE@XZ
 @ stub -arch=win64 ??0_UShinit@std@@QEAA@XZ
-@ stub -arch=win32 ??0_Winit@std@@QAE@XZ
-@ stub -arch=win64 ??0_Winit@std@@QEAA@XZ
+@ thiscall -arch=win32 ??0_Winit@std@@QAE@XZ(ptr) _Winit_ctor
+@ cdecl -arch=win64 ??0_Winit@std@@QEAA@XZ(ptr) _Winit_ctor
 @ stub -arch=win32 ??0agent@Concurrency@@QAE@AAVScheduleGroup@1@@Z
 @ stub -arch=win64 ??0agent@Concurrency@@QEAA@AEAVScheduleGroup@1@@Z
 @ stub -arch=win32 ??0agent@Concurrency@@QAE@AAVScheduler@1@@Z
@@ -322,8 +322,8 @@
 @ cdecl -arch=win64 ??1_Timevec@std@@QEAA@XZ(ptr) _Timevec_dtor
 @ stub -arch=win32 ??1_UShinit@std@@QAE@XZ
 @ stub -arch=win64 ??1_UShinit@std@@QEAA@XZ
-@ stub -arch=win32 ??1_Winit@std@@QAE@XZ
-@ stub -arch=win64 ??1_Winit@std@@QEAA@XZ
+@ thiscall -arch=win32 ??1_Winit@std@@QAE@XZ(ptr) _Winit_dtor
+@ cdecl -arch=win64 ??1_Winit@std@@QEAA@XZ(ptr) _Winit_dtor
 @ stub -arch=win32 ??1agent@Concurrency@@UAE@XZ
 @ stub -arch=win64 ??1agent@Concurrency@@UEAA@XZ
 @ thiscall -arch=win32 ??1codecvt_base@std@@UAE@XZ(ptr) codecvt_base_dtor
@@ -416,8 +416,8 @@
 @ cdecl -arch=win64 ??4_Timevec@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) _Timevec_op_assign
 @ stub -arch=win32 ??4_UShinit@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4_UShinit@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4_Winit@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4_Winit@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4_Winit@std@@QAEAAV01@ABV01@@Z(ptr ptr) _Winit_op_assign
+@ cdecl -arch=win64 ??4_Winit@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) _Winit_op_assign
 @ thiscall -arch=win32 ??4ios_base@std@@QAEAAV01@ABV01@@Z(ptr ptr) ios_base_assign
 @ cdecl -arch=win64 ??4ios_base@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) ios_base_assign
 @ thiscall -arch=win32 ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAF@Z(ptr ptr) basic_istream_char_read_short
@@ -999,7 +999,7 @@
 @ cdecl -arch=win64 ?_Init@locale@std@@CAPEAV_Locimp@12@XZ() locale__Init
 @ extern ?_Init_cnt@Init@ios_base@std@@0HA ios_base_Init__Init_cnt
 # extern ?_Init_cnt@_UShinit@std@@0HA
-# extern ?_Init_cnt@_Winit@std@@0HA
+@ extern ?_Init_cnt@_Winit@std@@0HA _Winit__Init_cnt
 @ cdecl -arch=win32 ?_Init_cnt_func@Init@ios_base@std@@CAAAHXZ() ios_base_Init__Init_cnt_func
 @ cdecl -arch=win64 ?_Init_cnt_func@Init@ios_base@std@@CAAEAHXZ() ios_base_Init__Init_cnt_func
 @ cdecl -arch=win32 ?_Init_ctor@Init@ios_base@std@@CAXPAV123@@Z(ptr) ios_base_Init__Init_ctor
