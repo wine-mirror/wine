@@ -74,6 +74,7 @@ struct d3d10_effect_object
     enum d3d10_effect_object_type type;
     union
     {
+        ID3D10RasterizerState *rs;
         ID3D10VertexShader *vs;
         ID3D10PixelShader *ps;
         ID3D10GeometryShader *gs;

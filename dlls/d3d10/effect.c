@@ -1339,6 +1339,14 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
 
     switch (o->type)
     {
+        case D3D10_EOT_RASTERIZER_STATE:
+        {
+            ID3D10EffectRasterizerVariable *rv = variable->lpVtbl->AsRasterizer(variable);
+            if (FAILED(hr = rv->lpVtbl->GetRasterizerState(rv, variable_idx, &o->object.rs)))
+                return hr;
+            break;
+        }
+
         case D3D10_EOT_VERTEXSHADER:
         {
             ID3D10EffectShaderVariable *sv = variable->lpVtbl->AsShader(variable);
@@ -1369,7 +1377,6 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
             break;
         }
 
-        case D3D10_EOT_RASTERIZER_STATE:
         case D3D10_EOT_DEPTH_STENCIL_STATE:
         case D3D10_EOT_BLEND_STATE:
         case D3D10_EOT_STENCIL_REF:
@@ -2159,6 +2166,10 @@ static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
 
     switch(o->type)
     {
+        case D3D10_EOT_RASTERIZER_STATE:
+            ID3D10Device_RSSetState(device, o->object.rs);
+            return S_OK;
+
         case D3D10_EOT_VERTEXSHADER:
             ID3D10Device_VSSetShader(device, o->object.vs);
             return S_OK;
@@ -2258,6 +2269,11 @@ static void d3d10_effect_object_destroy(struct d3d10_effect_object *o)
 {
     switch (o->type)
     {
+        case D3D10_EOT_RASTERIZER_STATE:
+            if (o->object.rs)
+                ID3D10RasterizerState_Release(o->object.rs);
+            break;
+
         case D3D10_EOT_VERTEXSHADER:
             if (o->object.vs)
                 ID3D10VertexShader_Release(o->object.vs);
