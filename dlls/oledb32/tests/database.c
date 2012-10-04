@@ -31,7 +31,7 @@
 #include "wine/test.h"
 
 
-void test_database(void)
+static void test_database(void)
 {
     HRESULT hr;
     IDBInitialize *dbinit = NULL;
