@@ -222,7 +222,7 @@
 
 @ cdecl wined3d_swapchain_create(ptr ptr long ptr ptr ptr)
 @ cdecl wined3d_swapchain_decref(ptr)
-@ cdecl wined3d_swapchain_get_back_buffer(ptr long long ptr)
+@ cdecl wined3d_swapchain_get_back_buffer(ptr long long)
 @ cdecl wined3d_swapchain_get_device(ptr)
 @ cdecl wined3d_swapchain_get_display_mode(ptr ptr ptr)
 @ cdecl wined3d_swapchain_get_front_buffer_data(ptr ptr)

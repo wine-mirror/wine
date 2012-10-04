@@ -158,17 +158,15 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetBuffer(IDXGISwapChain *iface,
 
     EnterCriticalSection(&dxgi_cs);
 
-    hr = wined3d_swapchain_get_back_buffer(This->wined3d_swapchain,
-            buffer_idx, WINED3D_BACKBUFFER_TYPE_MONO, &backbuffer);
-    if (FAILED(hr))
+    if (!(backbuffer = wined3d_swapchain_get_back_buffer(This->wined3d_swapchain,
+            buffer_idx, WINED3D_BACKBUFFER_TYPE_MONO)))
     {
         LeaveCriticalSection(&dxgi_cs);
-        return hr;
+        return DXGI_ERROR_INVALID_CALL;
     }
 
     parent = wined3d_surface_get_parent(backbuffer);
     hr = IUnknown_QueryInterface(parent, riid, surface);
-    wined3d_surface_decref(backbuffer);
     LeaveCriticalSection(&dxgi_cs);
 
     return hr;

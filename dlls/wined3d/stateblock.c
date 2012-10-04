@@ -1095,7 +1095,6 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     unsigned int i;
     struct wined3d_swapchain *swapchain;
     struct wined3d_surface *backbuffer;
-    HRESULT hr;
 
     TRACE("stateblock %p.\n", stateblock);
 
@@ -1298,13 +1297,11 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     /* check the return values, because the GetBackBuffer call isn't valid for ddraw */
     if ((swapchain = wined3d_device_get_swapchain(device, 0)))
     {
-        hr = wined3d_swapchain_get_back_buffer(swapchain, 0, WINED3D_BACKBUFFER_TYPE_MONO, &backbuffer);
-        if (SUCCEEDED(hr) && backbuffer)
+        if ((backbuffer = wined3d_swapchain_get_back_buffer(swapchain, 0, WINED3D_BACKBUFFER_TYPE_MONO)))
         {
             struct wined3d_resource_desc desc;
 
             wined3d_resource_get_desc(&backbuffer->resource, &desc);
-            wined3d_surface_decref(backbuffer);
 
             /* Set the default scissor rect values */
             state->scissor_rect.left = 0;

@@ -647,7 +647,6 @@ static HRESULT WINAPI d3d8_device_GetBackBuffer(IDirect3DDevice8 *iface,
         surface_impl = wined3d_surface_get_parent(wined3d_surface);
         *backbuffer = &surface_impl->IDirect3DSurface8_iface;
         IDirect3DSurface8_AddRef(*backbuffer);
-        wined3d_surface_decref(wined3d_surface);
     }
     wined3d_mutex_unlock();
 

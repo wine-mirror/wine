@@ -3583,7 +3583,9 @@ HRESULT CDECL wined3d_device_get_back_buffer(const struct wined3d_device *device
     if (!(swapchain = wined3d_device_get_swapchain(device, swapchain_idx)))
         return WINED3DERR_INVALIDCALL;
 
-    return wined3d_swapchain_get_back_buffer(swapchain, backbuffer_idx, backbuffer_type, backbuffer);
+    if (!(*backbuffer = wined3d_swapchain_get_back_buffer(swapchain, backbuffer_idx, backbuffer_type)))
+        return WINED3DERR_INVALIDCALL;
+    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_get_device_caps(const struct wined3d_device *device, WINED3DCAPS *caps)
