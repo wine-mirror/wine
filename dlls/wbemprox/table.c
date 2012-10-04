@@ -308,8 +308,10 @@ void free_table( struct table *table )
     clear_table( table );
     if (table->flags & TABLE_FLAG_DYNAMIC)
     {
+        TRACE("destroying %p\n", table);
         heap_free( (WCHAR *)table->name );
         free_columns( (struct column *)table->columns, table->num_cols );
+        list_remove( &table->entry );
         heap_free( table );
     }
 }
@@ -342,6 +344,7 @@ struct table *create_table( const WCHAR *name, UINT num_cols, const struct colum
     table->data     = data;
     table->fill     = fill;
     table->flags    = TABLE_FLAG_DYNAMIC;
+    list_init( &table->entry );
     return table;
 }
 
