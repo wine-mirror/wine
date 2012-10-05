@@ -2396,8 +2396,8 @@
 @ stub -arch=win64 ?_Xl@?BN@???$_Fabs@N@std@@YANAEBV?$complex@N@1@PEAH@Z@4NB
 @ cdecl ?_Xlen@std@@YAXXZ() _Xlen
 @ cdecl ?_Xran@std@@YAXXZ() _Xran
-@ stub -arch=win32 ?__Fiopen@std@@YAPAU_iobuf@@PBDH@Z
-@ stub -arch=win64 ?__Fiopen@std@@YAPEAU_iobuf@@PEBDH@Z
+@ cdecl -arch=win32 ?__Fiopen@std@@YAPAU_iobuf@@PBDH@Z(str long) ___Fiopen
+@ cdecl -arch=win64 ?__Fiopen@std@@YAPEAU_iobuf@@PEBDH@Z(str long) ___Fiopen
 @ stub -arch=win32 ?abs@std@@YAMABV?$complex@M@1@@Z
 @ stub -arch=win64 ?abs@std@@YAMAEBV?$complex@M@1@@Z
 @ stub -arch=win32 ?abs@std@@YANABV?$complex@N@1@@Z

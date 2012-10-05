@@ -2413,6 +2413,84 @@ MSVCP_bool __thiscall basic_filebuf_char_is_open(const basic_filebuf_char *this)
     return this->file != NULL;
 }
 
+/* ?_Fiopen@std@@YAPAU_iobuf@@PB_WHH@Z */
+/* ?_Fiopen@std@@YAPEAU_iobuf@@PEB_WHH@Z */
+static FILE* _Fiopen_wchar(const wchar_t *name, int mode, int prot)
+{
+    static const wchar_t rW[] = {'r',0};
+    static const struct {
+        int mode;
+        const wchar_t str[4];
+        const wchar_t str_bin[4];
+    } str_mode[] = {
+        {OPENMODE_out,                            {'w',0},     {'w','b',0}},
+        {OPENMODE_out|OPENMODE_app,               {'a',0},     {'a','b',0}},
+        {OPENMODE_app,                            {'a',0},     {'a','b',0}},
+        {OPENMODE_out|OPENMODE_trunc,             {'w',0},     {'w','b',0}},
+        {OPENMODE_in,                             {'r',0},     {'r','b',0}},
+        {OPENMODE_in|OPENMODE_out,                {'r','+',0}, {'r','+','b',0}},
+        {OPENMODE_in|OPENMODE_out|OPENMODE_trunc, {'w','+',0}, {'w','+','b',0}},
+        {OPENMODE_in|OPENMODE_out|OPENMODE_app,   {'a','+',0}, {'a','+','b',0}},
+        {OPENMODE_in|OPENMODE_app,                {'a','+',0}, {'a','+','b',0}}
+    };
+
+    int real_mode = mode & ~(OPENMODE_ate|OPENMODE__Nocreate|OPENMODE__Noreplace|OPENMODE_binary);
+    int mode_idx;
+    FILE *f = NULL;
+
+    TRACE("(%s %d %d)\n", debugstr_w(name), mode, prot);
+
+    for(mode_idx=0; mode_idx<sizeof(str_mode)/sizeof(str_mode[0]); mode_idx++)
+        if(str_mode[mode_idx].mode == real_mode)
+            break;
+    if(mode_idx == sizeof(str_mode)/sizeof(str_mode[0]))
+        return NULL;
+
+    if((mode & OPENMODE__Nocreate) && !(f = _wfopen(name, rW)))
+        return NULL;
+    else if(f)
+        fclose(f);
+
+    if((mode & OPENMODE__Noreplace) && (mode & (OPENMODE_out|OPENMODE_app))
+            && (f = _wfopen(name, rW))) {
+        fclose(f);
+        return NULL;
+    }
+
+    f = _wfsopen(name, (mode & OPENMODE_binary) ? str_mode[mode_idx].str_bin
+            : str_mode[mode_idx].str, prot);
+    if(!f)
+        return NULL;
+
+    if((mode & OPENMODE_ate) && fseek(f, 0, SEEK_END)) {
+        fclose(f);
+        return NULL;
+    }
+
+    return f;
+}
+
+/* ?_Fiopen@std@@YAPAU_iobuf@@PBDHH@Z */
+/* ?_Fiopen@std@@YAPEAU_iobuf@@PEBDHH@Z */
+static FILE* _Fiopen(const char *name, int mode, int prot)
+{
+    wchar_t nameW[FILENAME_MAX];
+
+    TRACE("(%s %d %d)\n", name, mode, prot);
+
+    if(mbstowcs_s(NULL, nameW, FILENAME_MAX, name, FILENAME_MAX-1) != 0)
+        return NULL;
+    return _Fiopen_wchar(nameW, mode, prot);
+}
+
+/* ?__Fiopen@std@@YAPAU_iobuf@@PBDH@Z */
+/* ?__Fiopen@std@@YAPEAU_iobuf@@PEBDH@Z */
+FILE* __cdecl ___Fiopen(const char *name, int mode)
+{
+    TRACE("(%p %d)\n", name, mode);
+    return _Fiopen(name, mode, _SH_DENYNO);
+}
+
 /* ?overflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHH@Z */
 /* ?overflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHH@Z */
 DEFINE_THISCALL_WRAPPER(basic_filebuf_char_overflow, 8)
