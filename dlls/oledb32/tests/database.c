@@ -51,7 +51,7 @@ static void test_database(void)
         IDBProperties *props = NULL;
 
         hr = IDBInitialize_QueryInterface(dbinit, &IID_IDBProperties, (void**)&props);
-        todo_wine ok(hr == S_OK, "got %08x\n", hr);
+        ok(hr == S_OK, "got %08x\n", hr);
         if(SUCCEEDED(hr))
         {
             IDBProperties_Release(props);

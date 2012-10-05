@@ -50,6 +50,7 @@ static inline datainit *impl_from_IDataInitialize(IDataInitialize *iface)
 typedef struct
 {
     IDBInitialize IDBInitialize_iface;
+    IDBProperties IDBProperties_iface;
 
     LONG ref;
 } dbinit;
@@ -58,6 +59,74 @@ static inline dbinit *impl_from_IDBInitialize(IDBInitialize *iface)
 {
     return CONTAINING_RECORD(iface, dbinit, IDBInitialize_iface);
 }
+
+static inline dbinit *impl_from_IDBProperties(IDBProperties *iface)
+{
+    return CONTAINING_RECORD(iface, dbinit, IDBProperties_iface);
+}
+
+static HRESULT WINAPI dbprops_QueryInterface(IDBProperties *iface, REFIID riid, void **ppvObject)
+{
+    dbinit *This = impl_from_IDBProperties(iface);
+
+    return IDBInitialize_QueryInterface(&This->IDBInitialize_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI dbprops_AddRef(IDBProperties *iface)
+{
+    dbinit *This = impl_from_IDBProperties(iface);
+
+    return IDBInitialize_AddRef(&This->IDBInitialize_iface);
+}
+
+static ULONG WINAPI dbprops_Release(IDBProperties *iface)
+{
+    dbinit *This = impl_from_IDBProperties(iface);
+
+    return IDBInitialize_Release(&This->IDBInitialize_iface);
+}
+
+static HRESULT WINAPI dbprops_GetProperties(IDBProperties *iface, ULONG cPropertyIDSets,
+            const DBPROPIDSET rgPropertyIDSets[], ULONG *pcPropertySets, DBPROPSET **prgPropertySets)
+{
+    dbinit *This = impl_from_IDBProperties(iface);
+
+    FIXME("(%p)->(%d %p %p %p)\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dbprops_GetPropertyInfo(IDBProperties *iface, ULONG cPropertyIDSets,
+            const DBPROPIDSET rgPropertyIDSets[], ULONG *pcPropertyInfoSets,
+            DBPROPINFOSET **prgPropertyInfoSets, OLECHAR **ppDescBuffer)
+{
+    dbinit *This = impl_from_IDBProperties(iface);
+
+    FIXME("(%p)->(%d %p %p %p %p)\n", This, cPropertyIDSets, rgPropertyIDSets, pcPropertyInfoSets,
+                prgPropertyInfoSets, ppDescBuffer);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dbprops_SetProperties(IDBProperties *iface, ULONG cPropertySets,
+            DBPROPSET rgPropertySets[])
+{
+    dbinit *This = impl_from_IDBProperties(iface);
+
+    FIXME("(%p)->(%d %p)\n", This, cPropertySets, rgPropertySets);
+
+    return E_NOTIMPL;
+}
+
+static const struct IDBPropertiesVtbl dbprops_vtbl =
+{
+    dbprops_QueryInterface,
+    dbprops_AddRef,
+    dbprops_Release,
+    dbprops_GetProperties,
+    dbprops_GetPropertyInfo,
+    dbprops_SetProperties
+};
 
 static HRESULT WINAPI dbinit_QueryInterface(IDBInitialize *iface, REFIID riid, void **obj)
 {
@@ -70,6 +139,10 @@ static HRESULT WINAPI dbinit_QueryInterface(IDBInitialize *iface, REFIID riid, v
        IsEqualIID(riid, &IID_IDBInitialize))
     {
         *obj = iface;
+    }
+    else if(IsEqualIID(riid, &IID_IDBProperties))
+    {
+        *obj = &This->IDBProperties_iface;
     }
     else
     {
@@ -144,6 +217,7 @@ static HRESULT create_db_init(void **obj)
     if(!This) return E_OUTOFMEMORY;
 
     This->IDBInitialize_iface.lpVtbl = &dbinit_vtbl;
+    This->IDBProperties_iface.lpVtbl = &dbprops_vtbl;
     This->ref = 1;
 
     *obj = &This->IDBInitialize_iface;
