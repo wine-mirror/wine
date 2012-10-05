@@ -88,6 +88,9 @@ static void strcat_param(char* str, const char* name, const char* param)
     }
 }
 
+static int _todo_wait = 0;
+#define todo_wait for (_todo_wait = 1; _todo_wait; _todo_wait = 0)
+
 static char shell_call[2048]="";
 static int bad_shellexecute = 0;
 static INT_PTR shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, LPCSTR directory)
@@ -130,7 +133,10 @@ static INT_PTR shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, L
                 rc = SE_ERR_NOASSOC;
             }
         }
-        ok(wait_rc==WAIT_OBJECT_0 || rc <= 32, "%s WaitForSingleObject returned %d\n", shell_call, wait_rc);
+        if (!_todo_wait)
+            ok(wait_rc==WAIT_OBJECT_0 || rc <= 32, "%s WaitForSingleObject returned %d\n", shell_call, wait_rc);
+        else todo_wine
+            ok(wait_rc==WAIT_OBJECT_0 || rc <= 32, "%s WaitForSingleObject returned %d\n", shell_call, wait_rc);
     }
     /* The child process may have changed the result file, so let profile
      * functions know about it
@@ -151,7 +157,8 @@ static INT_PTR shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, L
 }
 
 static INT_PTR shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
-                                LPCSTR parameters, LPCSTR directory)
+                                LPCSTR parameters, LPCSTR directory,
+                                LPCSTR class)
 {
     SHELLEXECUTEINFO sei;
     BOOL success;
@@ -168,6 +175,7 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
     strcat_param(shell_call, "file", file);
     strcat_param(shell_call, "params", parameters);
     strcat_param(shell_call, "dir", directory);
+    strcat_param(shell_call, "class", class);
     strcat(shell_call, ")");
     if (winetest_debug > 1)
         trace("%s\n", shell_call);
@@ -182,7 +190,7 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
     sei.nShow=SW_SHOWNORMAL;
     sei.hInstApp=NULL; /* Out */
     sei.lpIDList=NULL;
-    sei.lpClass=NULL;
+    sei.lpClass=class;
     sei.hkeyClass=NULL;
     sei.dwHotKey=0;
     U(sei).hIcon=NULL;
@@ -204,7 +212,10 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
             ok(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject(hProcess) returned %d\n", wait_rc);
         }
         wait_rc=WaitForSingleObject(hEvent, 5000);
-        ok(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait_rc);
+        if (!_todo_wait)
+            ok(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait_rc);
+        else todo_wine
+            ok(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait_rc);
     }
     /* The child process may have changed the result file, so let profile
      * functions know about it
@@ -943,12 +954,12 @@ static void test_lpFile_parsed(void)
 
     /* test SEE_MASK_DOENVSUBST works */
     rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI,
-                        NULL, "%TMPDIR%\\simple.shlexec", NULL, NULL);
+                        NULL, "%TMPDIR%\\simple.shlexec", NULL, NULL, NULL);
     ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
 
     /* quoted lpFile does not work on real win95 and nt4 */
     rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI,
-                        NULL, "\"%TMPDIR%\\simple.shlexec\"", NULL, NULL);
+                        NULL, "\"%TMPDIR%\\simple.shlexec\"", NULL, NULL, NULL);
     ok(rc > 32 || broken(rc == SE_ERR_FNF) /* Win95/NT4 */,
        "%s failed: rc=%lu\n", shell_call, rc);
 }
@@ -1752,20 +1763,34 @@ static void test_lnks(void)
     const filename_tests_t* test;
     INT_PTR rc;
 
+    /* Should open through our association */
     sprintf(filename, "%s\\test_shortcut_shlexec.lnk", tmpdir);
-    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
-    ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc,
-       GetLastError());
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, NULL);
+    ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc, GetLastError());
     okChildInt("argcA", 5);
     okChildString("argvA3", "Open");
     sprintf(params, "%s\\test file.shlexec", tmpdir);
     get_long_path_name(params, filename, sizeof(filename));
     okChildPath("argvA4", filename);
 
+    todo_wait rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_DOENVSUBST, NULL, "%TMPDIR%\\test_shortcut_shlexec.lnk", NULL, NULL, NULL);
+    ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc, GetLastError());
+    okChildInt("argcA", 5);
+    todo_wine okChildString("argvA3", "Open");
+    sprintf(params, "%s\\test file.shlexec", tmpdir);
+    get_long_path_name(params, filename, sizeof(filename));
+    todo_wine okChildPath("argvA4", filename);
+
+    /* Should just run our executable */
     sprintf(filename, "%s\\test_shortcut_exe.lnk", tmpdir);
-    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
-    ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc,
-       GetLastError());
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, NULL);
+    ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc, GetLastError());
+    okChildInt("argcA", 4);
+    okChildString("argvA3", "Lnk");
+
+    /* Lnk's ContextMenuHandler has priority over an explicit class */
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, "shlexec.shlexec");
+    ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc, GetLastError());
     okChildInt("argcA", 4);
     okChildString("argvA3", "Lnk");
 
@@ -1783,7 +1808,7 @@ static void test_lnks(void)
                 *c='/';
             c++;
         }
-        rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
+        rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, NULL);
         ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc,
            GetLastError());
         okChildInt("argcA", 4);
@@ -1798,7 +1823,7 @@ static void test_lnks(void)
         sprintf(params+1, test->basename, tmpdir);
         strcat(params,"\"");
         rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, params,
-                            NULL);
+                            NULL, NULL);
         if (rc > 32)
             rc=33;
         if ((test->todo & 0x1)==0)
@@ -1854,7 +1879,7 @@ static void test_exes(void)
 
     /* We need NOZONECHECKS on Win2003 to block a dialog */
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params,
-                        NULL);
+                        NULL, NULL);
     ok(rc > 32, "%s returned %lu\n", shell_call, rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
@@ -1892,7 +1917,7 @@ static void test_exes_long(void)
 
     /* We need NOZONECHECKS on Win2003 to block a dialog */
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params,
-                        NULL);
+                        NULL, NULL);
     ok(rc > 32, "%s returned %lu\n", shell_call, rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", longparam);
@@ -2069,7 +2094,7 @@ static void test_dde(void)
         ddeExec[0] = 0;
 
         dde_ready_event = CreateEventA(NULL, FALSE, FALSE, "winetest_shlexec_dde_ready");
-        rc = shell_execute_ex(SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI, NULL, filename, NULL, NULL);
+        rc = shell_execute_ex(SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI, NULL, filename, NULL, NULL, NULL);
         CloseHandle(dde_ready_event);
         if ((test->todo & 0x1)==0)
         {
@@ -2186,7 +2211,7 @@ static DWORD CALLBACK ddeThread(LPVOID arg)
     assert(info && info->filename);
     PostThreadMessage(info->threadIdParent,
                       WM_QUIT,
-                      shell_execute_ex(SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI, NULL, info->filename, NULL, NULL),
+                      shell_execute_ex(SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI, NULL, info->filename, NULL, NULL, NULL),
                       0L);
     ExitThread(0);
 }
@@ -2458,11 +2483,11 @@ static void test_directory(void)
     sprintf(params, "shlexec \"%s\" Exec", child_file);
 
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
-                        NULL, path_find_file_name(argv0), params, NULL);
+                        NULL, path_find_file_name(argv0), params, NULL, NULL);
     todo_wine ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
 
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
-                        NULL, path_find_file_name(argv0), params, newdir);
+                        NULL, path_find_file_name(argv0), params, newdir, NULL);
     ok(rc > 32, "%s returned %lu\n", shell_call, rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
