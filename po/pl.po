@@ -6,14 +6,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-06-14 15:46+0200\n"
+"PO-Revision-Date: 2012-10-05 17:26+0200\n"
 "Last-Translator: Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: Polish\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.4\n"
+"X-Generator: Lokalize 1.5\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
 
@@ -3471,6 +3471,8 @@ msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
+"Po wyłączeniu lub włączeniu urządzenia, podłączone joysticki nie będą tutaj "
+"uaktualnione do momentu ponownego uruchomienia tego apletu."
 
 #: joy.rc:47
 msgid "Test Joystick"
@@ -3485,16 +3487,16 @@ msgid "Test Force Feedback"
 msgstr "Testuj odczucie siły zwrotnej"
 
 #: joy.rc:64
-#, fuzzy
-#| msgid "Available formats"
 msgid "Available Effects"
-msgstr "Dostępne formaty"
+msgstr "Dostępne efekty"
 
 #: joy.rc:66
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
+"Naciśnij jakikolwiek klawisz na kontrolerze, aby aktywować wybrany efekt. "
+"Kierunek efektu może być zmieniony przy użyciu osi kontrolera."
 
 #: joy.rc:28
 msgid "Game Controllers"
@@ -9718,6 +9720,33 @@ msgid ""
 "/ProgIDOpen  Open a document using the specified progID.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
+"Uruchom program lub otwórz dokument w programie normalnie używanym do plików "
+"z tym przyrostkiem.\n"
+"Użycie:\n"
+"start [opcje] nazwa_programu_ze_ścieżką [...]\n"
+"start [opcje] nazwa_dokumentu_ze_ścieżką\n"
+"\n"
+"Opcje:\n"
+"\"title\"      Podaje tytuł podrzędnych okien.\n"
+"/d katalog Uruchamia program w podanym katalogu.\n"
+"/b           Nie twórz nowej konsoli dla programu.\n"
+"/i           Uruchom program ze świeżymi zmiennymi środowiskowymi.\n"
+"/min         Uruchom program zminimalizowany.\n"
+"/max         Uruchom program zmaksymalizowany.\n"
+"/low         Uruchom program w klasie priorytetowej bezczynności.\n"
+"/normal      Uruchom program w normalnej klasie priorytetowej.\n"
+"/high        Uruchom program w wysokiej klasie priorytetowej.\n"
+"/realtime    Uruchom program w klasie priorytetowej czasu rzeczywistego.\n"
+"/abovenormal Uruchom program w klasie priorytetowej powyżej normalnej.\n"
+"/belownormal Uruchom program w klasie priorytetowej poniżej normalnej.\n"
+"/node n      Uruchom program na podanym węźle NUMA.\n"
+"/affinity maska Uruchom program ze specjalną maską afiniczności.\n"
+"/wait        Poczekaj, aż uruchomiony program skończy, a następnie wyjdź z "
+"jego kodem wyjścia.\n"
+"/unix        Użyj nazwy pliku ze ścieżka z Uniksa i uruchom plik tak jak "
+"windows explorer.\n"
+"/ProgIDOpen  Otwórz dokument używając podanego progID.\n"
+"/?           Wyświetl tą pomoc i wyjdź.\n"
 
 #: cmd.rc:211
 msgid "TIME sets or shows the current system time.\n"
@@ -13699,22 +13728,16 @@ msgid "Help topics: "
 msgstr "Tematy pomocy: "
 
 #: wmic.rc:25
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "Error: Command line not supported\n"
-msgstr "Błąd: Niewłaściwe parametry wiersza poleceń\n"
+msgstr "Błąd: Wiersz poleceń jest nieobsługiwany\n"
 
 #: wmic.rc:26
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Error: Alias not found\n"
-msgstr "Nie znaleziono zestawu właściwości.\n"
+msgstr "Błąd: Nie znaleziono aliasu\n"
 
 #: wmic.rc:27
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid query\n"
-msgstr "Błąd: Niewłaściwa nazwa klucza\n"
+msgstr "Błąd: Nieprawidłowe zapytanie\n"
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
