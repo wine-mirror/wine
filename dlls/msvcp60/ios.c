@@ -9452,6 +9452,29 @@ MSVCP_bool __thiscall basic_ofstream_char_is_open(const basic_ofstream_char *thi
     return basic_filebuf_char_is_open(&this->filebuf);
 }
 
+/* ?open@?$basic_ofstream@DU?$char_traits@D@std@@@std@@QAEXPBDH@Z */
+/* ?open@?$basic_ofstream@DU?$char_traits@D@std@@@std@@QEAAXPEBDH@Z */
+DEFINE_THISCALL_WRAPPER(basic_ofstream_char_open, 12)
+void __thiscall basic_ofstream_char_open(basic_ofstream_char *this,
+        const char *name, int mode)
+{
+    TRACE("(%p %s %d)\n", this, name, mode);
+
+    if(!basic_filebuf_char_open(&this->filebuf, name, mode|OPENMODE_out, _SH_DENYNO)) {
+        basic_ios_char *basic_ios = basic_ostream_char_get_basic_ios(&this->base);
+        basic_ios_char_setstate(basic_ios, IOSTATE_failbit);
+    }
+}
+
+/* ?open@?$basic_ofstream@DU?$char_traits@D@std@@@std@@QAEXPBDF@Z */
+/* ?open@?$basic_ofstream@DU?$char_traits@D@std@@@std@@QEAAXPEBDF@Z */
+DEFINE_THISCALL_WRAPPER(basic_ofstream_char_open_old, 12)
+void __thiscall basic_ofstream_char_open_old(basic_ofstream_char *this,
+        const char *name, short mode)
+{
+    basic_ofstream_char_open(this, name, mode);
+}
+
 /* ?rdbuf@?$basic_ofstream@DU?$char_traits@D@std@@@std@@QBEPAV?$basic_filebuf@DU?$char_traits@D@std@@@2@XZ */
 /* ?rdbuf@?$basic_ofstream@DU?$char_traits@D@std@@@std@@QEBAPEAV?$basic_filebuf@DU?$char_traits@D@std@@@2@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ofstream_char_rdbuf, 4)
@@ -9578,6 +9601,29 @@ MSVCP_bool __thiscall basic_ofstream_wchar_is_open(const basic_ofstream_wchar *t
 {
     TRACE("(%p)\n", this);
     return basic_filebuf_wchar_is_open(&this->filebuf);
+}
+
+/* ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXPBDH@Z */
+/* ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXPEBDH@Z */
+DEFINE_THISCALL_WRAPPER(basic_ofstream_wchar_open, 12)
+void __thiscall basic_ofstream_wchar_open(basic_ofstream_wchar *this,
+        const char *name, int mode)
+{
+    TRACE("(%p %s %d)\n", this, name, mode);
+
+    if(!basic_filebuf_wchar_open(&this->filebuf, name, mode|OPENMODE_out, _SH_DENYNO)) {
+        basic_ios_wchar *basic_ios = basic_ostream_wchar_get_basic_ios(&this->base);
+        basic_ios_wchar_setstate(basic_ios, IOSTATE_failbit);
+    }
+}
+
+/* ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAEXPBDF@Z */
+/* ?open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAAXPEBDF@Z */
+DEFINE_THISCALL_WRAPPER(basic_ofstream_wchar_open_old, 12)
+void __thiscall basic_ofstream_wchar_open_old(basic_ofstream_wchar *this,
+        const char *name, int mode)
+{
+    basic_ofstream_wchar_open(this, name, mode);
 }
 
 /* ?rdbuf@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QBEPAV?$basic_filebuf@_WU?$char_traits@_W@std@@@2@XZ */
