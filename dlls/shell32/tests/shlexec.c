@@ -1197,7 +1197,7 @@ static void test_commandline2argv(void)
 
 static void test_argify(void)
 {
-    char fileA[MAX_PATH];
+    char fileA[MAX_PATH], params[1024];
     INT_PTR rc;
 
     sprintf(fileA, "%s\\test file.shlexec", tmpdir);
@@ -1294,6 +1294,17 @@ static void test_argify(void)
         }
     }
 
+    /* Test with a long parameter */
+    for (rc = 0; rc < MAX_PATH; rc++)
+        fileA[rc] = 'a' + rc % 26;
+    fileA[MAX_PATH-1] = '\0';
+    sprintf(params, "shlexec \"%s\" %s", child_file, fileA);
+
+    /* We need NOZONECHECKS on Win2003 to block a dialog */
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params, NULL, NULL);
+    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
+    okChildInt("argcA", 4);
+    okChildString("argvA3", fileA);
 }
 
 static void test_filename(void)
@@ -1901,44 +1912,6 @@ static void test_exes(void)
     }
 }
 
-static void test_exes_long(void)
-{
-    char filename[MAX_PATH];
-    char params[2024];
-    char longparam[MAX_PATH];
-    INT_PTR rc;
-
-    for (rc = 0; rc < MAX_PATH; rc++)
-        longparam[rc]='a'+rc%26;
-    longparam[MAX_PATH-1]=0;
-
-
-    sprintf(params, "shlexec \"%s\" %s", child_file,longparam);
-
-    /* We need NOZONECHECKS on Win2003 to block a dialog */
-    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params,
-                        NULL, NULL);
-    ok(rc > 32, "%s returned %lu\n", shell_call, rc);
-    okChildInt("argcA", 4);
-    okChildString("argvA3", longparam);
-
-    if (! skip_noassoc_tests)
-    {
-        sprintf(filename, "%s\\test file.noassoc", tmpdir);
-        if (CopyFile(argv0, filename, FALSE))
-        {
-            rc=shell_execute(NULL, filename, params, NULL);
-            todo_wine {
-                ok(rc==SE_ERR_NOASSOC, "%s succeeded: rc=%lu\n", shell_call, rc);
-            }
-        }
-    }
-    else
-    {
-        win_skip("Skipping shellexecute of file with unassociated extension\n");
-    }
-}
-
 typedef struct
 {
     const char* command;
@@ -2517,7 +2490,6 @@ START_TEST(shlexec)
     test_find_executable();
     test_lnks();
     test_exes();
-    test_exes_long();
     test_dde();
     test_dde_default_app();
     test_directory();
