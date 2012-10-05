@@ -10178,6 +10178,57 @@ basic_fstream_char* __thiscall basic_fstream_char_ctor(basic_fstream_char *this,
     return this;
 }
 
+/* ??0?$basic_fstream@DU?$char_traits@D@std@@@std@@QAE@PAU_iobuf@@@Z */
+/* ??0?$basic_fstream@DU?$char_traits@D@std@@@std@@QEAA@PEAU_iobuf@@@Z */
+static basic_fstream_char* basic_fstream_char_ctor_file(basic_fstream_char *this,
+        FILE *file, MSVCP_bool virt_init)
+{
+    basic_ios_char *basic_ios;
+
+    TRACE("(%p %p %d)\n", this, file, virt_init);
+
+    if(virt_init) {
+        this->base.base1.vbtable = basic_fstream_char_vbtable1;
+        this->base.base2.vbtable = basic_fstream_char_vbtable2;
+        basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
+        basic_ios_char_ctor(basic_ios);
+    }else {
+        basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
+    }
+
+    basic_filebuf_char_ctor_file(&this->filebuf, file);
+    basic_iostream_char_ctor(&this->base, &this->filebuf.base, FALSE);
+    basic_ios->base.vtable = &MSVCP_basic_fstream_char_vtable;
+    return this;
+}
+
+/* ??0?$basic_fstream@DU?$char_traits@D@std@@@std@@QAE@ABV01@@Z */
+/* ??0?$basic_fstream@DU?$char_traits@D@std@@@std@@QEAA@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(basic_fstream_char_copy_ctor, 12)
+basic_fstream_char* __thiscall basic_fstream_char_copy_ctor(basic_fstream_char *this,
+        basic_fstream_char *copy, MSVCP_bool virt_init)
+{
+    TRACE("(%p %p %d)\n", this, copy, virt_init);
+    return basic_fstream_char_ctor_file(this, copy->filebuf.file, virt_init);
+}
+
+/* ??0?$basic_fstream@DU?$char_traits@D@std@@@std@@QAE@PBDH@Z */
+/* ??0?$basic_fstream@DU?$char_traits@D@std@@@std@@QEAA@PEBDH@Z */
+DEFINE_THISCALL_WRAPPER(basic_fstream_char_ctor_name, 16)
+basic_fstream_char* __thiscall basic_fstream_char_ctor_name(basic_fstream_char *this,
+        const char *name, int mode, MSVCP_bool virt_init)
+{
+    TRACE("(%p %s %d %d)\n", this, name, mode, virt_init);
+
+    basic_fstream_char_ctor(this, virt_init);
+
+    if(!basic_filebuf_char_open(&this->filebuf, name, mode, _SH_DENYNO)) {
+        basic_ios_char *basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
+        basic_ios_char_setstate(basic_ios, IOSTATE_failbit);
+    }
+    return this;
+}
+
 /* ??1?$basic_fstream@DU?$char_traits@D@std@@@std@@UAE@XZ */
 /* ??1?$basic_fstream@DU?$char_traits@D@std@@@std@@UEAA@XZ */
 DEFINE_THISCALL_WRAPPER(basic_fstream_char_dtor, 4)
@@ -10319,6 +10370,67 @@ basic_fstream_wchar* __thiscall basic_fstream_short_ctor(basic_fstream_wchar *th
 {
     basic_fstream_wchar_ctor(this, virt_init);
     basic_istream_wchar_get_basic_ios(&this->base.base1)->base.vtable = &MSVCP_basic_fstream_short_vtable;
+    return this;
+}
+
+/* ??0?$basic_fstream@_WU?$char_traits@_W@std@@@std@@QAE@PAU_iobuf@@@Z */
+/* ??0?$basic_fstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEAU_iobuf@@@Z */
+static basic_fstream_wchar* basic_fstream_wchar_ctor_file(basic_fstream_wchar *this,
+        FILE *file, MSVCP_bool virt_init)
+{
+    basic_ios_wchar *basic_ios;
+
+    TRACE("(%p %p %d)\n", this, file, virt_init);
+
+    if(virt_init) {
+        this->base.base1.vbtable = basic_fstream_wchar_vbtable1;
+        this->base.base2.vbtable = basic_fstream_wchar_vbtable2;
+        basic_ios = basic_istream_wchar_get_basic_ios(&this->base.base1);
+        basic_ios_wchar_ctor(basic_ios);
+    }else {
+        basic_ios = basic_istream_wchar_get_basic_ios(&this->base.base1);
+    }
+
+    basic_filebuf_wchar_ctor_file(&this->filebuf, file);
+    basic_iostream_wchar_ctor(&this->base, &this->filebuf.base, FALSE);
+    basic_ios->base.vtable = &MSVCP_basic_fstream_wchar_vtable;
+    return this;
+}
+
+/* ??0?$basic_fstream@GU?$char_traits@G@std@@@std@@QAE@PAU_iobuf@@@Z */
+/* ??0?$basic_fstream@GU?$char_traits@G@std@@@std@@QEAA@PEAU_iobuf@@@Z */
+static basic_fstream_wchar* basic_fstream_short_ctor_file(basic_fstream_wchar *this,
+        FILE *file, MSVCP_bool virt_init)
+{
+    basic_fstream_wchar_ctor_file(this, file, virt_init);
+    basic_istream_wchar_get_basic_ios(&this->base.base1)->base.vtable = &MSVCP_basic_fstream_short_vtable;
+    return this;
+}
+
+/* ??0?$basic_fstream@GU?$char_traits@G@std@@@std@@QAE@ABV01@@Z */
+/* ??0?$basic_fstream@GU?$char_traits@G@std@@@std@@QEAA@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(basic_fstream_short_copy_ctor, 12)
+basic_fstream_wchar* __thiscall basic_fstream_short_copy_ctor(basic_fstream_wchar *this,
+        basic_fstream_wchar *copy, MSVCP_bool virt_init)
+{
+    TRACE("(%p %p %d)\n", this, copy, virt_init);
+    return basic_fstream_short_ctor_file(this, copy->filebuf.file, virt_init);
+}
+
+/* ??0?$basic_fstream@_WU?$char_traits@_W@std@@@std@@QAE@PB_WHH@Z */
+/* ??0?$basic_fstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEB_WHH@Z */
+DEFINE_THISCALL_WRAPPER(basic_fstream_short_ctor_name, 16)
+basic_fstream_wchar* __thiscall basic_fstream_short_ctor_name(basic_fstream_wchar *this,
+        const char *name, int mode, MSVCP_bool virt_init)
+{
+    TRACE("(%p %s %d %d)\n", this, name, mode, virt_init);
+
+    basic_fstream_short_ctor(this, virt_init);
+
+    if(!basic_filebuf_wchar_open(&this->filebuf, name, mode, _SH_DENYNO)) {
+        basic_ios_wchar *basic_ios = basic_istream_wchar_get_basic_ios(&this->base.base1);
+        basic_ios_wchar_setstate(basic_ios, IOSTATE_failbit);
+    }
     return this;
 }
 
