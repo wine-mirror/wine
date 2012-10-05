@@ -2491,6 +2491,58 @@ FILE* __cdecl ___Fiopen(const char *name, int mode)
     return _Fiopen(name, mode, _SH_DENYNO);
 }
 
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PB_WHH@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEB_WHH@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBGHH@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBGHH@Z */
+static basic_filebuf_char* basic_filebuf_char_open_wchar(basic_filebuf_char *this, const wchar_t *name, int mode, int prot)
+{
+    FILE *f = NULL;
+
+    TRACE("(%p %s %d %d)\n", this, debugstr_w(name), mode, prot);
+
+    if(basic_filebuf_char_is_open(this))
+        return NULL;
+
+    if(!(f = _Fiopen_wchar(name, mode, prot)))
+        return NULL;
+
+    basic_filebuf_char__Init(this, f, INITFL_open);
+    basic_filebuf_char__Initcvt(this, codecvt_char_use_facet(this->base.loc));
+    return this;
+}
+
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBDHH@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBDHH@Z */
+static basic_filebuf_char* basic_filebuf_char_open(basic_filebuf_char *this, const char *name, int mode, int prot)
+{
+    wchar_t nameW[FILENAME_MAX];
+
+    TRACE("(%p %s %d %d)\n", this, name, mode, prot);
+
+    if(mbstowcs_s(NULL, nameW, FILENAME_MAX, name, FILENAME_MAX-1) != 0)
+        return NULL;
+    return basic_filebuf_char_open_wchar(this, nameW, mode, prot);
+}
+
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBDF@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBDF@Z */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_open_mode_old, 12)
+basic_filebuf_char* __thiscall basic_filebuf_char_open_mode_old(basic_filebuf_char *this, const char *name, short mode)
+{
+    TRACE("(%p %p %d)\n", this, name, mode);
+    return basic_filebuf_char_open(this, name, mode, _SH_DENYNO);
+}
+
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PBDH@Z */
+/* ?open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEBDH@Z */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char_open_mode, 12)
+basic_filebuf_char* __thiscall basic_filebuf_char_open_mode(basic_filebuf_char *this, const char *name, int mode)
+{
+    TRACE("(%p %p %d)\n", this, name, mode);
+    return basic_filebuf_char_open(this, name, mode, _SH_DENYNO);
+}
+
 /* ?overflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHH@Z */
 /* ?overflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHH@Z */
 DEFINE_THISCALL_WRAPPER(basic_filebuf_char_overflow, 8)
@@ -2953,6 +3005,58 @@ MSVCP_bool __thiscall basic_filebuf_wchar_is_open(const basic_filebuf_wchar *thi
 {
     TRACE("(%p)\n", this);
     return this->file != NULL;
+}
+
+/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QAEPAV12@PB_WHH@Z */
+/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QEAAPEAV12@PEB_WHH@Z */
+/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QAEPAV12@PBGHH@Z */
+/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QEAAPEAV12@PEBGHH@Z */
+static basic_filebuf_wchar* basic_filebuf_wchar_open_wchar(basic_filebuf_wchar *this, const wchar_t *name, int mode, int prot)
+{
+    FILE *f = NULL;
+
+    TRACE("(%p %s %d %d)\n", this, debugstr_w(name), mode, prot);
+
+    if(basic_filebuf_wchar_is_open(this))
+        return NULL;
+
+    if(!(f = _Fiopen_wchar(name, mode, prot)))
+        return NULL;
+
+    basic_filebuf_wchar__Init(this, f, INITFL_open);
+    basic_filebuf_wchar__Initcvt(this, codecvt_wchar_use_facet(this->base.loc));
+    return this;
+}
+
+/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QAEPAV12@PBDHH@Z */
+/* ?open@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@QEAAPEAV12@PEBDHH@Z */
+static basic_filebuf_wchar* basic_filebuf_wchar_open(basic_filebuf_wchar *this, const char *name, int mode, int prot)
+{
+    wchar_t nameW[FILENAME_MAX];
+
+    TRACE("(%p %s %d %d)\n", this, name, mode, prot);
+
+    if(mbstowcs_s(NULL, nameW, FILENAME_MAX, name, FILENAME_MAX-1) != 0)
+        return NULL;
+    return basic_filebuf_wchar_open_wchar(this, nameW, mode, prot);
+}
+
+/* ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEPAV12@PBDF@Z */
+/* ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QEAAPEAV12@PEBDF@Z */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_open_mode_old, 12)
+basic_filebuf_wchar* __thiscall basic_filebuf_wchar_open_mode_old(basic_filebuf_wchar *this, const char *name, short mode)
+{
+    TRACE("(%p %p %d)\n", this, name, mode);
+    return basic_filebuf_wchar_open(this, name, mode, _SH_DENYNO);
+}
+
+/* ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QAEPAV12@PBDH@Z */
+/* ?open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QEAAPEAV12@PEBDH@Z */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_open_mode, 12)
+basic_filebuf_wchar* __thiscall basic_filebuf_wchar_open_mode(basic_filebuf_wchar *this, const char *name, int mode)
+{
+    TRACE("(%p %p %d)\n", this, name, mode);
+    return basic_filebuf_wchar_open(this, name, mode, _SH_DENYNO);
 }
 
 /* ?overflow@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAEGG@Z */
