@@ -2091,9 +2091,9 @@ static HRESULT WINAPI MediaControl_RenderFile(IMediaControl *iface, BSTR strFile
 {
     IFilterGraphImpl *This = impl_from_IMediaControl(iface);
 
-    FIXME("(%p/%p)->(%s (%p)): stub !!!\n", This, iface, debugstr_w(strFilename), strFilename);
+    TRACE("(%p/%p)->(%s (%p))\n", This, iface, debugstr_w(strFilename), strFilename);
 
-    return S_OK;
+    return IFilterGraph2_RenderFile(&This->IFilterGraph2_iface, strFilename, NULL);
 }
 
 static HRESULT WINAPI MediaControl_AddSourceFilter(IMediaControl *iface, BSTR strFilename,
