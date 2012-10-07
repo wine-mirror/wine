@@ -443,8 +443,6 @@ typedef struct _IRP {
 typedef struct _IRP *PIRP;
 #include <poppack.h>
 
-/* MDL definitions */
-
 typedef VOID (WINAPI *PINTERFACE_REFERENCE)(
   PVOID  Context);
 
@@ -954,6 +952,33 @@ typedef struct _IO_STACK_LOCATION {
   PVOID  Context;
 } IO_STACK_LOCATION, *PIO_STACK_LOCATION;
 #include <poppack.h>
+
+/* MDL definitions */
+
+#define MDL_MAPPED_TO_SYSTEM_VA     0x0001
+#define MDL_PAGES_LOCKED            0x0002
+#define MDL_SOURCE_IS_NONPAGED_POOL 0x0004
+#define MDL_ALLOCATED_FIXED_SIZE    0x0008
+#define MDL_PARTIAL                 0x0010
+#define MDL_PARTIAL_HAS_BEEN_MAPPED 0x0020
+#define MDL_IO_PAGE_READ            0x0040
+#define MDL_WRITE_OPERATION         0x0080
+#define MDL_PARENT_MAPPED_SYSTEM_VA 0x0100
+#define MDL_FREE_EXTRA_PTES         0x0200
+#define MDL_DESCRIBES_AWE           0x0400
+#define MDL_IO_SPACE                0x0800
+#define MDL_NETWORK_HEADER          0x1000
+#define MDL_MAPPING_CAN_FAIL        0x2000
+#define MDL_ALLOCATED_MUST_SUCCEED  0x4000
+#define MDL_INTERNAL                0x8000
+
+#define MDL_MAPPING_FLAGS (MDL_MAPPED_TO_SYSTEM_VA     | \
+                           MDL_PAGES_LOCKED            | \
+                           MDL_SOURCE_IS_NONPAGED_POOL | \
+                           MDL_PARTIAL_HAS_BEEN_MAPPED | \
+                           MDL_PARENT_MAPPED_SYSTEM_VA | \
+                           MDL_SYSTEM_VA               | \
+                           MDL_IO_SPACE )
 
 typedef struct _MDL {
   struct _MDL  *Next;
