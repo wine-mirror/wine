@@ -729,6 +729,7 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
         xprintf ("%s:%s done (%d)\n", test->name, subtest, status);
         if (status) failures++;
     }
+    if (failures) report (R_STATUS, "Running tests - %u failures", failures);
 }
 
 static BOOL CALLBACK
