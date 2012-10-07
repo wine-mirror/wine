@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/unicode.h"
+
 static inline void *heap_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);
@@ -24,6 +26,21 @@ static inline void *heap_alloc(size_t len)
 static inline BOOL heap_free(void *mem)
 {
     return HeapFree(GetProcessHeap(), 0, mem);
+}
+
+static inline LPWSTR heap_strdupW(LPCWSTR str)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD size;
+
+        size = (strlenW(str)+1)*sizeof(WCHAR);
+        ret = heap_alloc(size);
+        memcpy(ret, str, size);
+    }
+
+    return ret;
 }
 
 extern HRESULT create_font_from_logfont(const LOGFONTW*, IDWriteFont**) DECLSPEC_HIDDEN;

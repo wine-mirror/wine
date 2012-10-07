@@ -43,6 +43,7 @@ static IDWriteFactory *factory;
 static void test_CreateFontFromLOGFONT(void)
 {
     static const WCHAR arialW[] = {'A','r','i','a','l',0};
+    static const WCHAR arialspW[] = {'A','r','i','a','l',' ',0};
     static const WCHAR blahW[]  = {'B','l','a','h','!',0};
     IDWriteGdiInterop *interop;
     DWRITE_FONT_WEIGHT weight;
@@ -143,18 +144,40 @@ todo_wine
     logfont.lfWeight = FW_NORMAL;
     lstrcpyW(logfont.lfFaceName, blahW);
 
+    font = (void*)0xdeadbeef;
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
-todo_wine
+todo_wine {
     EXPECT_HR(hr, DWRITE_E_NOFONT);
+    ok(font == NULL, "got %p\n", font);
+    if(font) IDWriteFont_Release(font);
+}
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfWeight = FW_NORMAL;
+    lstrcpyW(logfont.lfFaceName, arialspW);
+
+    font = (void*)0xdeadbeef;
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
+todo_wine {
+    EXPECT_HR(hr, DWRITE_E_NOFONT);
+    ok(font == NULL, "got %p\n", font);
+    if(font) IDWriteFont_Release(font);
+}
 
     memset(&logfont, 0, sizeof(logfont));
     logfont.lfHeight = 12;
     logfont.lfWidth  = 12;
     logfont.lfWeight = FW_NORMAL;
 
+    font = (void*)0xdeadbeef;
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
-todo_wine
+todo_wine {
     EXPECT_HR(hr, DWRITE_E_NOFONT);
+    ok(font == NULL, "got %p\n", font);
+    if(font) IDWriteFont_Release(font);
+}
 
     IDWriteGdiInterop_Release(interop);
 }

@@ -30,6 +30,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 struct dwrite_fontfamily {
     IDWriteFontFamily IDWriteFontFamily_iface;
     LONG ref;
+
+    WCHAR *familyname;
 };
 
 struct dwrite_font {
@@ -222,7 +224,10 @@ static ULONG WINAPI dwritefontfamily_Release(IDWriteFontFamily *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (!ref)
+    {
+        heap_free(This->familyname);
         heap_free(This);
+    }
 
     return S_OK;
 }
@@ -283,7 +288,7 @@ static const IDWriteFontFamilyVtbl fontfamilyvtbl = {
     dwritefontfamily_GetMatchingFonts
 };
 
-static HRESULT create_fontfamily(IDWriteFontFamily **family)
+static HRESULT create_fontfamily(const WCHAR *familyname, IDWriteFontFamily **family)
 {
     struct dwrite_fontfamily *This;
 
@@ -294,6 +299,7 @@ static HRESULT create_fontfamily(IDWriteFontFamily **family)
 
     This->IDWriteFontFamily_iface.lpVtbl = &fontfamilyvtbl;
     This->ref = 1;
+    This->familyname = heap_strdupW(familyname);
 
     *family = &This->IDWriteFontFamily_iface;
 
@@ -302,13 +308,37 @@ static HRESULT create_fontfamily(IDWriteFontFamily **family)
 
 HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
 {
+    const WCHAR* facename, *familyname;
     struct dwrite_font *This;
     IDWriteFontFamily *family;
+    OUTLINETEXTMETRICW *otm;
     HRESULT hr;
+    HFONT hfont;
+    HDC hdc;
+    int ret;
 
     *font = NULL;
 
-    hr = create_fontfamily(&family);
+    hfont = CreateFontIndirectW(logfont);
+    if (!hfont) return DWRITE_E_NOFONT;
+
+    hdc = CreateCompatibleDC(0);
+    SelectObject(hdc, hfont);
+
+    ret = GetOutlineTextMetricsW(hdc, 0, NULL);
+    otm = heap_alloc(ret);
+    otm->otmSize = ret;
+    ret = GetOutlineTextMetricsW(hdc, otm->otmSize, otm);
+
+    DeleteDC(hdc);
+    DeleteObject(hfont);
+
+    facename = (WCHAR*)((char*)otm + (ptrdiff_t)otm->otmpFaceName);
+    familyname = (WCHAR*)((char*)otm + (ptrdiff_t)otm->otmpFamilyName);
+    TRACE("facename=%s, familyname=%s\n", debugstr_w(facename), debugstr_w(familyname));
+
+    hr = create_fontfamily(familyname, &family);
+    heap_free(otm);
     if (hr != S_OK) return hr;
 
     This = heap_alloc(sizeof(struct dwrite_font));
