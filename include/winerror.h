@@ -1939,6 +1939,8 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 /* the codes 4000-40ff are reserved for OLE */
 #undef NOERROR  /* arpa/nameser_compat.h defines this */
 
+#define E_NOT_SUFFICIENT_BUFFER                            HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)
+
 #ifdef RC_INVOKED
 #define _HRESULT_TYPEDEF_(x) (x)
 #else

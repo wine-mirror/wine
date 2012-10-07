@@ -320,6 +320,7 @@ static void test_GetFamilyNames(void)
     IDWriteGdiInterop *interop;
     IDWriteFont *font;
     LOGFONTW logfont;
+    WCHAR buffer[100];
     HRESULT hr;
     UINT32 len;
 
@@ -357,15 +358,45 @@ if (0) /* crashes on native */
 if (0) /* crashes on native */
     hr = IDWriteLocalizedStrings_GetStringLength(names, 0, NULL);
 
+    len = 100;
+    hr = IDWriteLocalizedStrings_GetStringLength(names, 10, &len);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(len == (UINT32)-1, "got %u\n", len);
+
     len = 0;
     hr = IDWriteLocalizedStrings_GetStringLength(names, 0, &len);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(len > 0, "got %u\n", len);
 
-    len = 100;
-    hr = IDWriteLocalizedStrings_GetStringLength(names, 10, &len);
+    /* GetString */
+    hr = IDWriteLocalizedStrings_GetString(names, 0, NULL, 0);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+
+    hr = IDWriteLocalizedStrings_GetString(names, 10, NULL, 0);
     ok(hr == E_FAIL, "got 0x%08x\n", hr);
-    ok(len == (UINT32)-1, "got %u\n", len);
+
+if (0)
+    hr = IDWriteLocalizedStrings_GetString(names, 0, NULL, 100);
+
+    buffer[0] = 1;
+    hr = IDWriteLocalizedStrings_GetString(names, 10, buffer, 100);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(buffer[0] == 0, "got %x\n", buffer[0]);
+
+    buffer[0] = 1;
+    hr = IDWriteLocalizedStrings_GetString(names, 0, buffer, len-1);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    ok(buffer[0] == 0, "got %x\n", buffer[0]);
+
+    buffer[0] = 1;
+    hr = IDWriteLocalizedStrings_GetString(names, 0, buffer, len);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    ok(buffer[0] == 0, "got %x\n", buffer[0]);
+
+    buffer[0] = 0;
+    hr = IDWriteLocalizedStrings_GetString(names, 0, buffer, len+1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(buffer[0] != 0, "got %x\n", buffer[0]);
 
     IDWriteLocalizedStrings_Release(names);
 

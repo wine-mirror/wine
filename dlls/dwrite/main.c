@@ -286,8 +286,21 @@ static HRESULT WINAPI localizedstrings_GetStringLength(IDWriteLocalizedStrings *
 static HRESULT WINAPI localizedstrings_GetString(IDWriteLocalizedStrings *iface, UINT32 index, WCHAR *buffer, UINT32 size)
 {
     struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
-    FIXME("(%p)->(%u %p %u): stub\n", This, index, buffer, size);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%u %p %u)\n", This, index, buffer, size);
+
+    if (index >= This->count) {
+        if (buffer) *buffer = 0;
+        return E_FAIL;
+    }
+
+    if (size < strlenW(This->data[index].string)+1) {
+        if (buffer) *buffer = 0;
+        return E_NOT_SUFFICIENT_BUFFER;
+    }
+
+    strcpyW(buffer, This->data[index].string);
+    return S_OK;
 }
 
 static const IDWriteLocalizedStringsVtbl localizedstringsvtbl = {
