@@ -1,9 +1,7 @@
 /*
  * Debugger ARM specific functions
  *
- * Copyright 2000-2003 Marcus Meissner
- *                2004 Eric Pouech
- *           2010-2012 André Hentschel
+ * Copyright 2010-2012 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
