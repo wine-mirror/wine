@@ -23,6 +23,16 @@ static inline void *heap_alloc(size_t len)
     return HeapAlloc(GetProcessHeap(), 0, len);
 }
 
+static inline void *heap_alloc_zero(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+}
+
+static inline void *heap_realloc(void *mem, size_t len)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, mem, len);
+}
+
 static inline BOOL heap_free(void *mem)
 {
     return HeapFree(GetProcessHeap(), 0, mem);
@@ -47,3 +57,4 @@ extern HRESULT create_font_from_logfont(const LOGFONTW*, IDWriteFont**) DECLSPEC
 extern HRESULT create_textlayout(IDWriteTextLayout**) DECLSPEC_HIDDEN;
 extern HRESULT create_gdiinterop(IDWriteGdiInterop**) DECLSPEC_HIDDEN;
 extern HRESULT create_localizedstrings(IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
+extern HRESULT add_localizedstring(IDWriteLocalizedStrings*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;

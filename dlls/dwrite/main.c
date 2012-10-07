@@ -172,9 +172,18 @@ static HRESULT create_renderingparams(FLOAT gamma, FLOAT enhancedContrast, FLOAT
     return S_OK;
 }
 
+struct localizedpair {
+    WCHAR *locale;
+    WCHAR *string;
+};
+
 struct localizedstrings {
     IDWriteLocalizedStrings IDWriteLocalizedStrings_iface;
     LONG ref;
+
+    struct localizedpair *data;
+    UINT32 count;
+    UINT32 alloc;
 };
 
 static inline struct localizedstrings *impl_from_IDWriteLocalizedStrings(IDWriteLocalizedStrings *iface)
@@ -215,8 +224,17 @@ static ULONG WINAPI localizedstrings_Release(IDWriteLocalizedStrings *iface)
 
     TRACE("(%p)->(%d)\n", This, ref);
 
-    if (!ref)
+    if (!ref) {
+        int i;
+
+        for (i = 0; i < This->count; i++) {
+            heap_free(This->data[i].locale);
+            heap_free(This->data[i].string);
+        }
+
+        heap_free(This->data);
         heap_free(This);
+    }
 
     return S_OK;
 }
@@ -224,8 +242,8 @@ static ULONG WINAPI localizedstrings_Release(IDWriteLocalizedStrings *iface)
 static UINT32 WINAPI localizedstrings_GetCount(IDWriteLocalizedStrings *iface)
 {
     struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
-    FIXME("(%p): stub\n", This);
-    return 0;
+    TRACE("(%p)\n", This);
+    return This->count;
 }
 
 static HRESULT WINAPI localizedstrings_FindLocaleName(IDWriteLocalizedStrings *iface,
@@ -287,8 +305,31 @@ HRESULT create_localizedstrings(IDWriteLocalizedStrings **strings)
 
     This->IDWriteLocalizedStrings_iface.lpVtbl = &localizedstringsvtbl;
     This->ref = 1;
+    This->count = 0;
+    This->data = heap_alloc_zero(sizeof(struct localizedpair));
+    if (!This->data) {
+        heap_free(This);
+        return E_OUTOFMEMORY;
+    }
+    This->alloc = 1;
 
     *strings = &This->IDWriteLocalizedStrings_iface;
+
+    return S_OK;
+}
+
+HRESULT add_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *locale, const WCHAR *string)
+{
+    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+
+    if (This->count == This->alloc) {
+        This->alloc *= 2;
+        This->data = heap_realloc(This->data, This->alloc*sizeof(struct localizedpair));
+    }
+
+    This->data[This->count].locale = heap_strdupW(locale);
+    This->data[This->count].string = heap_strdupW(string);
+    This->count++;
 
     return S_OK;
 }

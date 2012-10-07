@@ -471,9 +471,15 @@ static HRESULT WINAPI dwritefontfamily_GetFont(IDWriteFontFamily *iface, UINT32 
 static HRESULT WINAPI dwritefontfamily_GetFamilyNames(IDWriteFontFamily *iface, IDWriteLocalizedStrings **names)
 {
     struct dwrite_fontfamily *This = impl_from_IDWriteFontFamily(iface);
+    static const WCHAR enusW[] = {'e','n','-','u','s',0};
+    HRESULT hr;
 
-    FIXME("(%p)->(%p): stub\n", This, names);
-    return create_localizedstrings(names);
+    TRACE("(%p)->(%p)\n", This, names);
+
+    hr = create_localizedstrings(names);
+    if (FAILED(hr)) return hr;
+
+    return add_localizedstring(*names, enusW, This->familyname);
 }
 
 static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *iface, DWRITE_FONT_WEIGHT weight,
