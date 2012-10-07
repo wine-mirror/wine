@@ -658,7 +658,7 @@ interface IDWriteFontFace : IUnknown
 
     void ReleaseFontTable(void *table_context);
 
-    HRESULT GettGlyphRunOutline(
+    HRESULT GetGlyphRunOutline(
         FLOAT emSize,
         UINT16 const *glyph_indices,
         FLOAT const* glyph_advances,

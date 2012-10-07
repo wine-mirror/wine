@@ -358,6 +358,56 @@ if (0) /* crashes on native */
     IDWriteGdiInterop_Release(interop);
 }
 
+static void test_CreateFontFace(void)
+{
+    static const WCHAR arialW[] = {'A','r','i','a','l',0};
+    IDWriteFontFace *fontface, *fontface2;
+    IDWriteGdiInterop *interop;
+    IDWriteFont *font;
+    LOGFONTW logfont;
+    HRESULT hr;
+
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    EXPECT_HR(hr, S_OK);
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfWeight = FW_NORMAL;
+    logfont.lfItalic = 1;
+    lstrcpyW(logfont.lfFaceName, arialW);
+
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFont_QueryInterface(font, &IID_IDWriteFontFace, (void**)&fontface);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+if (0) /* crashes on native */
+    hr = IDWriteFont_CreateFontFace(font, NULL);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(font, 1);
+    EXPECT_REF(fontface, 1);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fontface == fontface2, "got %p, was %p\n", fontface2, fontface);
+    EXPECT_REF(fontface, 2);
+    EXPECT_REF(font, 1);
+
+    IDWriteFontFace_AddRef(fontface);
+    EXPECT_REF(font, 1);
+    EXPECT_REF(fontface, 3);
+    IDWriteFontFace_Release(fontface);
+    IDWriteFontFace_Release(fontface);
+
+    IDWriteFontFace_Release(fontface);
+    IDWriteFont_Release(font);
+    IDWriteGdiInterop_Release(interop);
+}
+
 START_TEST(font)
 {
     HRESULT hr;
@@ -374,6 +424,7 @@ START_TEST(font)
     test_CreateBitmapRenderTarget();
     test_GetFontFamily();
     test_GetFamilyNames();
+    test_CreateFontFace();
 
     IDWriteFactory_Release(factory);
 }
