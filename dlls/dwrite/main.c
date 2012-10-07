@@ -172,6 +172,127 @@ static HRESULT create_renderingparams(FLOAT gamma, FLOAT enhancedContrast, FLOAT
     return S_OK;
 }
 
+struct localizedstrings {
+    IDWriteLocalizedStrings IDWriteLocalizedStrings_iface;
+    LONG ref;
+};
+
+static inline struct localizedstrings *impl_from_IDWriteLocalizedStrings(IDWriteLocalizedStrings *iface)
+{
+    return CONTAINING_RECORD(iface, struct localizedstrings, IDWriteLocalizedStrings_iface);
+}
+
+static HRESULT WINAPI localizedstrings_QueryInterface(IDWriteLocalizedStrings *iface, REFIID riid, void **obj)
+{
+    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteLocalizedStrings))
+    {
+        *obj = iface;
+        IDWriteLocalizedStrings_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI localizedstrings_AddRef(IDWriteLocalizedStrings *iface)
+{
+    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI localizedstrings_Release(IDWriteLocalizedStrings *iface)
+{
+    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref)
+        heap_free(This);
+
+    return S_OK;
+}
+
+static UINT32 WINAPI localizedstrings_GetCount(IDWriteLocalizedStrings *iface)
+{
+    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    FIXME("(%p): stub\n", This);
+    return 0;
+}
+
+static HRESULT WINAPI localizedstrings_FindLocaleName(IDWriteLocalizedStrings *iface,
+    WCHAR const *locale_name, UINT32 *index, BOOL *exists)
+{
+    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    FIXME("(%p)->(%s %p %p): stub\n", This, debugstr_w(locale_name), index, exists);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI localizedstrings_GetLocaleNameLength(IDWriteLocalizedStrings *iface, UINT32 index, UINT32 *length)
+{
+    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    FIXME("(%p)->(%u %p): stub\n", This, index, length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI localizedstrings_GetLocaleName(IDWriteLocalizedStrings *iface, UINT32 index, WCHAR *locale_name, UINT32 size)
+{
+    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    FIXME("(%p)->(%u %p %u): stub\n", This, index, locale_name, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI localizedstrings_GetStringLength(IDWriteLocalizedStrings *iface, UINT32 index, UINT32 *length)
+{
+    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    FIXME("(%p)->(%u %p): stub\n", This, index, length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI localizedstrings_GetString(IDWriteLocalizedStrings *iface, UINT32 index, WCHAR *buffer, UINT32 size)
+{
+    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    FIXME("(%p)->(%u %p %u): stub\n", This, index, buffer, size);
+    return E_NOTIMPL;
+}
+
+static const IDWriteLocalizedStringsVtbl localizedstringsvtbl = {
+    localizedstrings_QueryInterface,
+    localizedstrings_AddRef,
+    localizedstrings_Release,
+    localizedstrings_GetCount,
+    localizedstrings_FindLocaleName,
+    localizedstrings_GetLocaleNameLength,
+    localizedstrings_GetLocaleName,
+    localizedstrings_GetStringLength,
+    localizedstrings_GetString
+};
+
+HRESULT create_localizedstrings(IDWriteLocalizedStrings **strings)
+{
+    struct localizedstrings *This;
+
+    *strings = NULL;
+
+    This = heap_alloc(sizeof(struct localizedstrings));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->IDWriteLocalizedStrings_iface.lpVtbl = &localizedstringsvtbl;
+    This->ref = 1;
+
+    *strings = &This->IDWriteLocalizedStrings_iface;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI dwritefactory_QueryInterface(IDWriteFactory *iface, REFIID riid, void **obj)
 {
     TRACE("(%s %p)\n", debugstr_guid(riid), obj);

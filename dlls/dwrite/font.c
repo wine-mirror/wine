@@ -256,8 +256,9 @@ static HRESULT WINAPI dwritefontfamily_GetFont(IDWriteFontFamily *iface, UINT32 
 static HRESULT WINAPI dwritefontfamily_GetFamilyNames(IDWriteFontFamily *iface, IDWriteLocalizedStrings **names)
 {
     struct dwrite_fontfamily *This = impl_from_IDWriteFontFamily(iface);
+
     FIXME("(%p)->(%p): stub\n", This, names);
-    return E_NOTIMPL;
+    return create_localizedstrings(names);
 }
 
 static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *iface, DWRITE_FONT_WEIGHT weight,

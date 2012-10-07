@@ -46,3 +46,4 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
 extern HRESULT create_font_from_logfont(const LOGFONTW*, IDWriteFont**) DECLSPEC_HIDDEN;
 extern HRESULT create_textlayout(IDWriteTextLayout**) DECLSPEC_HIDDEN;
 extern HRESULT create_gdiinterop(IDWriteGdiInterop**) DECLSPEC_HIDDEN;
+extern HRESULT create_localizedstrings(IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
