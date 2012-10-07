@@ -271,8 +271,16 @@ static HRESULT WINAPI localizedstrings_GetLocaleName(IDWriteLocalizedStrings *if
 static HRESULT WINAPI localizedstrings_GetStringLength(IDWriteLocalizedStrings *iface, UINT32 index, UINT32 *length)
 {
     struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
-    FIXME("(%p)->(%u %p): stub\n", This, index, length);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%u %p)\n", This, index, length);
+
+    if (index >= This->count) {
+        *length = (UINT32)-1;
+        return E_FAIL;
+    }
+
+    *length = strlenW(This->data[index].string);
+    return S_OK;
 }
 
 static HRESULT WINAPI localizedstrings_GetString(IDWriteLocalizedStrings *iface, UINT32 index, WCHAR *buffer, UINT32 size)

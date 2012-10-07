@@ -321,6 +321,7 @@ static void test_GetFamilyNames(void)
     IDWriteFont *font;
     LOGFONTW logfont;
     HRESULT hr;
+    UINT32 len;
 
     hr = IDWriteFactory_GetGdiInterop(factory, &interop);
     EXPECT_HR(hr, S_OK);
@@ -350,8 +351,23 @@ if (0) /* crashes on native */
     EXPECT_REF(names2, 1);
     ok(names != names2, "got %p, was %p\n", names2, names);
 
-    IDWriteLocalizedStrings_Release(names);
     IDWriteLocalizedStrings_Release(names2);
+
+    /* GetStringLength */
+if (0) /* crashes on native */
+    hr = IDWriteLocalizedStrings_GetStringLength(names, 0, NULL);
+
+    len = 0;
+    hr = IDWriteLocalizedStrings_GetStringLength(names, 0, &len);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(len > 0, "got %u\n", len);
+
+    len = 100;
+    hr = IDWriteLocalizedStrings_GetStringLength(names, 10, &len);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(len == (UINT32)-1, "got %u\n", len);
+
+    IDWriteLocalizedStrings_Release(names);
 
     IDWriteFontFamily_Release(family);
     IDWriteFont_Release(font);
