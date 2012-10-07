@@ -959,6 +959,39 @@ static UINT thumb2_disasm_ldrword(UINT inst, ADDRESS64 *addr)
     return 0;
 }
 
+static UINT thumb2_disasm_preload(UINT inst, ADDRESS64 *addr)
+{
+    WORD op1 = (inst >> 23) & 0x03;
+
+    if (!(op1 & 0x01) && !((inst >> 6) & 0x3f) && get_nibble(inst, 4) != 15)
+    {
+        WORD shift = (inst >> 4) & 0x03;
+        dbg_printf("\n\t%s\t[%s, %s", op1?"pli":"pld", tbl_regs[get_nibble(inst, 4)],
+                   tbl_regs[get_nibble(inst, 0)]);
+        if (shift) dbg_printf(", lsl #%u]", shift);
+        else dbg_printf("]");
+        return 0;
+    }
+
+    if (get_nibble(inst, 4) != 15)
+    {
+        dbg_printf("\n\t%s\t[%s, #%d]", (op1 & 0x02)?"pli":"pld", tbl_regs[get_nibble(inst, 4)],
+                   (op1 & 0x01)?(inst & 0x0fff):(-1 * (inst & 0xff)));
+        return 0;
+    }
+
+    if (get_nibble(inst, 4) == 15)
+    {
+        int offset = inst & 0x0fff;
+        if (!op1) offset *= -1;
+        dbg_printf("\n\t%s\t", (op1 & 0x02)?"pli":"pld");
+        db_printsym(addr->Offset + offset + 4);
+        return 0;
+    }
+
+    return inst;
+}
+
 static UINT thumb2_disasm_coprocdat(UINT inst, ADDRESS64 *addr)
 {
     WORD opc2 = (inst >> 5) & 0x07;
@@ -1105,6 +1138,7 @@ static const struct inst_arm tbl_thumb32[] = {
     { 0xff8000f0, 0xfb8000f0, thumb2_disasm_longmuldiv },
     { 0xff100000, 0xf8000000, thumb2_disasm_str },
     { 0xff700000, 0xf8500000, thumb2_disasm_ldrword },
+    { 0xfe70f000, 0xf810f000, thumb2_disasm_preload },
     { 0xef000010, 0xee000000, thumb2_disasm_coprocdat },
     { 0xef000010, 0xee000010, thumb2_disasm_coprocmov1 },
     { 0xefe00000, 0xec400000, thumb2_disasm_coprocmov2 },
