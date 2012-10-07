@@ -599,10 +599,10 @@ static HRESULT WINAPI VideoRenderer_SetDefaultTargetRect(BaseControlVideo* iface
     if (!GetClientRect(This->baseControlWindow.baseWindow.hWnd, &rect))
         return E_FAIL;
 
-    This->SourceRect.left = 0;
-    This->SourceRect.top = 0;
-    This->SourceRect.right = rect.right;
-    This->SourceRect.bottom = rect.bottom;
+    This->DestRect.left = 0;
+    This->DestRect.top = 0;
+    This->DestRect.right = rect.right;
+    This->DestRect.bottom = rect.bottom;
 
     return S_OK;
 }
