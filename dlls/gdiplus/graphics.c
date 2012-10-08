@@ -2138,15 +2138,13 @@ static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
 {
     HDC hdc = CreateCompatibleDC(0);
     GpPointF pt[3];
-    REAL angle, rel_width, rel_height, font_height, font_to_pixel_scale;
+    REAL angle, rel_width, rel_height, font_height;
     LOGFONTW lfw;
     HFONT unscaled_font;
     TEXTMETRICW textmet;
 
-    font_to_pixel_scale = (format && format->generic_typographic) ? 1.0 : units_scale(UnitPoint, UnitPixel, font->family->dpi);
-
     if (font->unit == UnitPixel)
-        font_height = font->emSize * font_to_pixel_scale;
+        font_height = font->emSize;
     else
     {
         REAL unit_scale, res;
@@ -2154,7 +2152,7 @@ static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
         res = (graphics->unit == UnitDisplay || graphics->unit == UnitPixel) ? graphics->xres : graphics->yres;
         unit_scale = units_scale(font->unit, graphics->unit, res);
 
-        font_height = font->emSize * font_to_pixel_scale * unit_scale;
+        font_height = font->emSize * unit_scale;
         if (graphics->unit != UnitDisplay)
             font_height /= graphics->scale;
     }

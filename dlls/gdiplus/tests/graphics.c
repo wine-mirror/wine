@@ -3530,6 +3530,7 @@ static void test_GdipMeasureString(void)
 
         expectf(0.0, bounds.X);
         expectf(0.0, bounds.Y);
+todo_wine
         expectf_(height, bounds.Height, height / 100.0);
         expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.1);
         expect(7, chars);
@@ -3546,6 +3547,7 @@ static void test_GdipMeasureString(void)
         expect(Ok, status);
         expectf(50.0, bounds.X);
         expectf(50.0, bounds.Y);
+todo_wine
         expectf_(height, bounds.Height, height / 100.0);
         expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.1);
         expect(7, chars);
@@ -3613,6 +3615,7 @@ static void test_GdipMeasureString(void)
 
             expectf(0.0, bounds.X);
             expectf(0.0, bounds.Y);
+todo_wine
             expectf_(height, bounds.Height, height / 85.0);
             expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.1);
             expect(7, chars);
@@ -3629,6 +3632,7 @@ static void test_GdipMeasureString(void)
             expect(Ok, status);
             expectf(50.0, bounds.X);
             expectf(50.0, bounds.Y);
+todo_wine
             expectf_(height, bounds.Height, height / 85.0);
             expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.1);
             expect(7, chars);
@@ -3640,6 +3644,7 @@ static void test_GdipMeasureString(void)
                 height *= td[i].page_scale;
             /*trace("%u: unit %u, %.1fx%.1f dpi, scale %.1f, height %f, pixels %f\n",
                   i, td[i].unit, td[i].res_x, td[i].res_y, td[i].page_scale, bounds.Height, height);*/
+todo_wine
             expectf_(100.0, height, 1.1);
 
             status = GdipDeleteGraphics(graphics);
@@ -3833,12 +3838,14 @@ static void test_font_height_scaling(void)
             status = GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, &ptf, 1);
             expect(Ok, status);
             match = fabs(100.0 - ptf.Y) <= 1.0;
+todo_wine
             ok(match, "Expected 100.0, got %f\n", ptf.Y);
 
             /* verify the result */
             ptf.Y = units_to_pixels(bounds.Height, gfx_unit, dpi);
             ptf.Y /= 100.0;
             match = fabs(100.0 - ptf.Y) <= 1.0;
+todo_wine
             ok(match, "Expected 100.0, got %f\n", ptf.Y);
 
             /* bounds.width of 1 glyph: [margin]+[width]+[margin] */
@@ -3874,6 +3881,7 @@ static void test_font_height_scaling(void)
             match = fabs(1.0 - margin / rect.X) <= 0.05;
             ok(match, "Expected %f, got %f\n", margin, rect.X);
             match = fabs(1.0 - height / rect.Height) <= 0.1;
+todo_wine
             ok(match, "Expected %f, got %f\n", height, rect.Height);
             match = fabs(1.0 - bounds.Width / (rect.Width + margin * 2.0)) <= 0.05;
             ok(match, "Expected %f, got %f\n", bounds.Width, rect.Width + margin * 2.0);
