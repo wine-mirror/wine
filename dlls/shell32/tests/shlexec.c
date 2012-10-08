@@ -979,6 +979,9 @@ typedef struct
 
 static const cmdline_tests_t cmdline_tests[] =
 {
+    {"exe",
+     {"exe", NULL}, 0},
+
     {"exe arg1 arg2 \"arg three\" 'four five` six\\ $even)",
      {"exe", "arg1", "arg2", "arg three", "'four", "five`", "six\\", "$even)", NULL}, 0},
 
@@ -987,6 +990,13 @@ static const cmdline_tests_t cmdline_tests[] =
 
     {"exe arg\"one\" \"second\"arg thirdarg ",
      {"exe", "argone", "secondarg", "thirdarg", NULL}, 0},
+
+    /* Don't lose unclosed quoted arguments */
+    {"exe arg1 \"unclosed",
+     {"exe", "arg1", "unclosed", NULL}, 0},
+
+    {"exe arg1 \"",
+     {"exe", "arg1", "", NULL}, 0},
 
     /* cmd's metacharacters have no special meaning */
     {"exe \"one^\" \"arg\"&two three|four",
@@ -1073,6 +1083,10 @@ static const cmdline_tests_t cmdline_tests[] =
     {"exe \"twelve\"\"\"\"\"\"\"\"\"\"\"\" quotes\" next 13%3=1",
      {"exe", "twelve\"\"\"\" quotes", "next", "13%3=1", NULL}, 0x20},
 
+    /* Escaped consecutive quotes are fun */
+    {"exe \"the crazy \\\\\"\"\"\\\\\" quotes",
+     {"exe", "the crazy \\\"\\", "quotes", NULL}, 0x21},
+
     /* The executable path has its own rules!!!
      * - Backslashes have no special meaning.
      * - If the first character is a quote, then the second quote ends the
@@ -1085,7 +1099,10 @@ static const cmdline_tests_t cmdline_tests[] =
      *   argument, the latter is parsed using the regular rules.
      */
     {"exe\"file\"path arg1",
-     {"exe\"file\"path", "arg1", NULL}, 0x30},
+     {"exe\"file\"path", "arg1", NULL}, 0x10},
+
+    {"exe\"file\"path\targ1",
+     {"exe\"file\"path", "arg1", NULL}, 0x10},
 
     {"exe\"path\\ arg1",
      {"exe\"path\\", "arg1", NULL}, 0x31},
@@ -1096,6 +1113,9 @@ static const cmdline_tests_t cmdline_tests[] =
     {"\"spaced exe\" \"next arg\"",
      {"spaced exe", "next arg", NULL}, 0},
 
+    {"\"spaced exe\"\t\"next arg\"",
+     {"spaced exe", "next arg", NULL}, 0},
+
     {"\"exe\"arg\" one\" argtwo",
      {"exe", "arg one", "argtwo", NULL}, 0x31},
 
@@ -1103,13 +1123,13 @@ static const cmdline_tests_t cmdline_tests[] =
      {"spaced exe\\", "arg1", "arg2", NULL}, 0x11},
 
     {"\"two\"\" arg1 ",
-     {"two", " arg1 ", NULL}, 0x21},
+     {"two", " arg1 ", NULL}, 0x11},
 
     {"\"three\"\"\" arg2",
      {"three", "", "arg2", NULL}, 0x61},
 
     {"\"four\"\"\"\"arg1",
-     {"four", "\"arg1", NULL}, 0x21},
+     {"four", "\"arg1", NULL}, 0x11},
 
     /* If the first character is a space then the executable path is empty */
     {" \"arg\"one argtwo",
@@ -1143,9 +1163,9 @@ static BOOL test_one_cmdline(const cmdline_tests_t* test)
     else todo_wine
         ok(cl2a_count == count, "%s: expected %d arguments, but got %d\n", test->cmd, count, cl2a_count);
 
-    for (i = 0; i < cl2a_count - 1; i++)
+    for (i = 0; i < cl2a_count; i++)
     {
-        if (test->args[i])
+        if (i < count)
         {
             MultiByteToWideChar(CP_ACP, 0, test->args[i], -1, argW, sizeof(argW)/sizeof(*argW));
             if ((test->todo & (1 << (i+4))) == 0)
@@ -1250,7 +1270,7 @@ static const argify_tests_t argify_tests[] =
     /* Only (double-)quotes have a special meaning. */
     {"Params23456", "'p2 p3` p4\\ $even", 0x40,
      {" \"'p2\" \"p3`\" \"p4\\\" \"$even\" \"\"",
-      {"", "'p2", "p3`", "p4\" $even \"", NULL}, 0}},
+      {"", "'p2", "p3`", "p4\" $even \"", NULL}, 0x80}},
 
     {"Params23456", "p=2 p-3 p4\tp4\rp4\np4", 0x1c2,
      {" \"p=2\" \"p-3\" \"p4\tp4\rp4\np4\" \"\" \"\"",
@@ -1272,7 +1292,7 @@ static const argify_tests_t argify_tests[] =
 
     {"Params23456789", "three\"\"\"quotes \"p four\" three\"\"\"quotes p6", 0xff3,
      {" \"three\"\" \"quotes\" \"p four\" \"three\"\" \"quotes\" \"p6\" \"\" \"\"",
-      {"", "three\"", "quotes", "p four", "three\"", "quotes", "p6", "", "", NULL}, 0x3e1}},
+      {"", "three\"", "quotes", "p four", "three\"", "quotes", "p6", "", "", NULL}, 0x7e1}},
 
     {"Params23456789", "four\"\"\"\"quotes \"p three\" four\"\"\"\"quotes p5", 0xf3,
      {" \"four\"\"quotes\" \"p three\" \"four\"\"quotes\" \"p5\" \"\" \"\" \"\" \"\"",
@@ -1319,7 +1339,7 @@ static const argify_tests_t argify_tests[] =
 
     {"Params23456789", "\"\"\"\"fourquotes \"p four\" \"\"\"\"fourquotes p7", 0xbf3,
      {" \"\"\" \"fourquotes\" \"p four\" \"\"\" \"fourquotes\" \"p7\" \"\" \"\"",
-      {"", "\"", "fourquotes", "p four", "\"", "fourquotes", "p7", "", "", NULL}, 0x3e1}},
+      {"", "\"", "fourquotes", "p four", "\"", "fourquotes", "p7", "", "", NULL}, 0x7e1}},
 
     /* An unclosed quoted string gets lost! */
     {"Params23456", "p2 \"p3\" \"p4 is lost", 0x1c3,
