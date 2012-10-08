@@ -2589,7 +2589,7 @@ sub generate_project_files($)
         } else {
           print FILEO "\t\$(CC)";
         }
-        print FILEO " \$(${canon}_LDFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_LIBRARY_PATH) \$(DEFLIB) \$(${canon}_DLLS:%=-l%) \$(${canon}_LIBRARIES:%=-l%)\n";
+        print FILEO " \$(${canon}_LDFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_LIBRARY_PATH) \$(${canon}_DLL_PATH) \$(DEFLIB) \$(${canon}_DLLS:%=-l%) \$(${canon}_LIBRARIES:%=-l%)\n";
       }
       print FILEO "\n\n";
     }
