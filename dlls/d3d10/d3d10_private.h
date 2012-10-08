@@ -117,6 +117,7 @@ struct d3d10_effect_state_object_variable
         ID3D10RasterizerState *rasterizer;
         ID3D10DepthStencilState *depth_stencil;
         ID3D10BlendState *blend;
+        ID3D10SamplerState *sampler;
     } object;
 };
 

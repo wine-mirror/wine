@@ -1608,6 +1608,9 @@ static HRESULT create_state_object(struct d3d10_effect_variable *v)
             break;
 
         case D3D10_SVT_SAMPLER:
+            if (FAILED(hr = ID3D10Device_CreateSamplerState(device,
+                    &v->u.state.desc.sampler, &v->u.state.object.sampler)))
+                return hr;
             break;
 
         default:
@@ -6778,9 +6781,25 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_sampler_variable_GetRawValue(ID3D1
 static HRESULT STDMETHODCALLTYPE d3d10_effect_sampler_variable_GetSampler(ID3D10EffectSamplerVariable *iface,
         UINT index, ID3D10SamplerState **sampler)
 {
-    FIXME("iface %p, index %u, sampler %p stub!\n", iface, index, sampler);
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, sampler %p.\n", iface, index, sampler);
+
+    if (v->type->element_count)
+        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
+    else if (index)
+        return E_FAIL;
+
+    if (v->type->basetype != D3D10_SVT_SAMPLER)
+    {
+        WARN("Variable is not a sampler state.\n");
+        return E_FAIL;
+    }
+
+    if ((*sampler = v->u.state.object.sampler))
+        ID3D10SamplerState_AddRef(*sampler);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_sampler_variable_GetBackingStore(ID3D10EffectSamplerVariable *iface,
