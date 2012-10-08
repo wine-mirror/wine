@@ -1033,25 +1033,25 @@ static const cmdline_tests_t cmdline_tests[] =
      {"exe", "twoquotes", "next", NULL}, 0},
 
     {"exe three\"\"\"quotes next",
-     {"exe", "three\"quotes", "next", NULL}, 0x21},
+     {"exe", "three\"quotes", "next", NULL}, 0},
 
     {"exe four\"\"\"\" quotes\" next 4%3=1",
-     {"exe", "four\" quotes", "next", "4%3=1", NULL}, 0x61},
+     {"exe", "four\" quotes", "next", "4%3=1", NULL}, 0},
 
     {"exe five\"\"\"\"\"quotes next",
-     {"exe", "five\"quotes", "next", NULL}, 0x21},
+     {"exe", "five\"quotes", "next", NULL}, 0},
 
     {"exe six\"\"\"\"\"\"quotes next",
-     {"exe", "six\"\"quotes", "next", NULL}, 0x20},
+     {"exe", "six\"\"quotes", "next", NULL}, 0},
 
     {"exe seven\"\"\"\"\"\"\" quotes\" next 7%3=1",
-     {"exe", "seven\"\" quotes", "next", "7%3=1", NULL}, 0x20},
+     {"exe", "seven\"\" quotes", "next", "7%3=1", NULL}, 0},
 
     {"exe twelve\"\"\"\"\"\"\"\"\"\"\"\"quotes next",
-     {"exe", "twelve\"\"\"\"quotes", "next", NULL}, 0x20},
+     {"exe", "twelve\"\"\"\"quotes", "next", NULL}, 0},
 
     {"exe thirteen\"\"\"\"\"\"\"\"\"\"\"\"\" quotes\" next 13%3=1",
-     {"exe", "thirteen\"\"\"\" quotes", "next", "13%3=1", NULL}, 0x20},
+     {"exe", "thirteen\"\"\"\" quotes", "next", "13%3=1", NULL}, 0},
 
     /* Inside a quoted string the opening quote is added to the set of
      * consecutive quotes to get the effective quotes count. This gives:
@@ -1060,32 +1060,32 @@ static const cmdline_tests_t cmdline_tests[] =
      * 1+3n+2 quotes -> n+1 quotes plus closes the quoted string
      */
     {"exe \"two\"\"quotes next",
-     {"exe", "two\"quotes", "next", NULL}, 0x21},
+     {"exe", "two\"quotes", "next", NULL}, 0},
 
     {"exe \"two\"\" next",
-     {"exe", "two\"", "next", NULL}, 0x21},
+     {"exe", "two\"", "next", NULL}, 0},
 
     {"exe \"three\"\"\" quotes\" next 4%3=1",
-     {"exe", "three\" quotes", "next", "4%3=1", NULL}, 0x61},
+     {"exe", "three\" quotes", "next", "4%3=1", NULL}, 0},
 
     {"exe \"four\"\"\"\"quotes next",
-     {"exe", "four\"quotes", "next", NULL}, 0x21},
+     {"exe", "four\"quotes", "next", NULL}, 0},
 
     {"exe \"five\"\"\"\"\"quotes next",
-     {"exe", "five\"\"quotes", "next", NULL}, 0x20},
+     {"exe", "five\"\"quotes", "next", NULL}, 0},
 
     {"exe \"six\"\"\"\"\"\" quotes\" next 7%3=1",
-     {"exe", "six\"\" quotes", "next", "7%3=1", NULL}, 0x20},
+     {"exe", "six\"\" quotes", "next", "7%3=1", NULL}, 0},
 
     {"exe \"eleven\"\"\"\"\"\"\"\"\"\"\"quotes next",
-     {"exe", "eleven\"\"\"\"quotes", "next", NULL}, 0x20},
+     {"exe", "eleven\"\"\"\"quotes", "next", NULL}, 0},
 
     {"exe \"twelve\"\"\"\"\"\"\"\"\"\"\"\" quotes\" next 13%3=1",
-     {"exe", "twelve\"\"\"\" quotes", "next", "13%3=1", NULL}, 0x20},
+     {"exe", "twelve\"\"\"\" quotes", "next", "13%3=1", NULL}, 0},
 
     /* Escaped consecutive quotes are fun */
     {"exe \"the crazy \\\\\"\"\"\\\\\" quotes",
-     {"exe", "the crazy \\\"\\", "quotes", NULL}, 0x21},
+     {"exe", "the crazy \\\"\\", "quotes", NULL}, 0},
 
     /* The executable path has its own rules!!!
      * - Backslashes have no special meaning.
@@ -1099,16 +1099,16 @@ static const cmdline_tests_t cmdline_tests[] =
      *   argument, the latter is parsed using the regular rules.
      */
     {"exe\"file\"path arg1",
-     {"exe\"file\"path", "arg1", NULL}, 0x10},
+     {"exe\"file\"path", "arg1", NULL}, 0},
 
     {"exe\"file\"path\targ1",
-     {"exe\"file\"path", "arg1", NULL}, 0x10},
+     {"exe\"file\"path", "arg1", NULL}, 0},
 
     {"exe\"path\\ arg1",
-     {"exe\"path\\", "arg1", NULL}, 0x31},
+     {"exe\"path\\", "arg1", NULL}, 0},
 
     {"\\\"exe \"arg one\"",
-     {"\\\"exe", "arg one", NULL}, 0x10},
+     {"\\\"exe", "arg one", NULL}, 0},
 
     {"\"spaced exe\" \"next arg\"",
      {"spaced exe", "next arg", NULL}, 0},
@@ -1117,19 +1117,19 @@ static const cmdline_tests_t cmdline_tests[] =
      {"spaced exe", "next arg", NULL}, 0},
 
     {"\"exe\"arg\" one\" argtwo",
-     {"exe", "arg one", "argtwo", NULL}, 0x31},
+     {"exe", "arg one", "argtwo", NULL}, 0},
 
     {"\"spaced exe\\\"arg1 arg2",
-     {"spaced exe\\", "arg1", "arg2", NULL}, 0x11},
+     {"spaced exe\\", "arg1", "arg2", NULL}, 0},
 
     {"\"two\"\" arg1 ",
-     {"two", " arg1 ", NULL}, 0x11},
+     {"two", " arg1 ", NULL}, 0},
 
     {"\"three\"\"\" arg2",
-     {"three", "", "arg2", NULL}, 0x61},
+     {"three", "", "arg2", NULL}, 0},
 
     {"\"four\"\"\"\"arg1",
-     {"four", "\"arg1", NULL}, 0x11},
+     {"four", "\"arg1", NULL}, 0},
 
     /* If the first character is a space then the executable path is empty */
     {" \"arg\"one argtwo",
@@ -1270,7 +1270,7 @@ static const argify_tests_t argify_tests[] =
     /* Only (double-)quotes have a special meaning. */
     {"Params23456", "'p2 p3` p4\\ $even", 0x40,
      {" \"'p2\" \"p3`\" \"p4\\\" \"$even\" \"\"",
-      {"", "'p2", "p3`", "p4\" $even \"", NULL}, 0x80}},
+      {"", "'p2", "p3`", "p4\" $even \"", NULL}, 0}},
 
     {"Params23456", "p=2 p-3 p4\tp4\rp4\np4", 0x1c2,
      {" \"p=2\" \"p-3\" \"p4\tp4\rp4\np4\" \"\" \"\"",
@@ -1292,11 +1292,11 @@ static const argify_tests_t argify_tests[] =
 
     {"Params23456789", "three\"\"\"quotes \"p four\" three\"\"\"quotes p6", 0xff3,
      {" \"three\"\" \"quotes\" \"p four\" \"three\"\" \"quotes\" \"p6\" \"\" \"\"",
-      {"", "three\"", "quotes", "p four", "three\"", "quotes", "p6", "", "", NULL}, 0x7e1}},
+      {"", "three\"", "quotes", "p four", "three\"", "quotes", "p6", "", "", NULL}, 0}},
 
     {"Params23456789", "four\"\"\"\"quotes \"p three\" four\"\"\"\"quotes p5", 0xf3,
      {" \"four\"\"quotes\" \"p three\" \"four\"\"quotes\" \"p5\" \"\" \"\" \"\" \"\"",
-      {"", "four\"quotes p", "three fourquotes p5 \"", "", "", "", NULL}, 0xde1}},
+      {"", "four\"quotes p", "three fourquotes p5 \"", "", "", "", NULL}, 0}},
 
     /* Quoted strings cannot be continued by tacking on a non space character
      * either.
@@ -1320,11 +1320,11 @@ static const argify_tests_t argify_tests[] =
 
     {"Params23456789", "\"three q\"\"\"uotes \"p four\" \"three q\"\"\"uotes p7", 0xff3,
      {" \"three q\"\" \"uotes\" \"p four\" \"three q\"\" \"uotes\" \"p7\" \"\" \"\"",
-      {"", "three q\"", "uotes", "p four", "three q\"", "uotes", "p7", "", "", NULL}, 0x7e1}},
+      {"", "three q\"", "uotes", "p four", "three q\"", "uotes", "p7", "", "", NULL}, 0}},
 
     {"Params23456789", "\"four \"\"\"\" quotes\" \"p three\" \"four \"\"\"\" quotes\" p5", 0xff3,
      {" \"four \"\" quotes\" \"p three\" \"four \"\" quotes\" \"p5\" \"\" \"\" \"\" \"\"",
-      {"", "four \"", "quotes p", "three four", "", "quotes p5 \"", "", "", "", NULL}, 0x3e0}},
+      {"", "four \"", "quotes p", "three four", "", "quotes p5 \"", "", "", "", NULL}, 0}},
 
     /* The quoted string rules also apply to consecutive quotes at the start
      * of a parameter but don't count the opening quote!
@@ -1335,11 +1335,11 @@ static const argify_tests_t argify_tests[] =
 
     {"Params23456789", "\"\"\"three quotes\" \"p three\" \"\"\"three quotes\" p5", 0x6f3,
      {" \"\"three quotes\" \"p three\" \"\"three quotes\" \"p5\" \"\" \"\" \"\" \"\"",
-      {"", "three", "quotes p", "three \"three", "quotes p5 \"", "", "", "", NULL}, 0x181}},
+      {"", "three", "quotes p", "three \"three", "quotes p5 \"", "", "", "", NULL}, 0}},
 
     {"Params23456789", "\"\"\"\"fourquotes \"p four\" \"\"\"\"fourquotes p7", 0xbf3,
      {" \"\"\" \"fourquotes\" \"p four\" \"\"\" \"fourquotes\" \"p7\" \"\" \"\"",
-      {"", "\"", "fourquotes", "p four", "\"", "fourquotes", "p7", "", "", NULL}, 0x7e1}},
+      {"", "\"", "fourquotes", "p four", "\"", "fourquotes", "p7", "", "", NULL}, 0}},
 
     /* An unclosed quoted string gets lost! */
     {"Params23456", "p2 \"p3\" \"p4 is lost", 0x1c3,
