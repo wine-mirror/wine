@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-%option noinput nounput never-interactive 8bit prefix="dbg_"
+%option noinput nounput always-interactive 8bit prefix="dbg_"
 
 %{
 #include "config.h"
