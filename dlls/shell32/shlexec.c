@@ -1740,23 +1740,6 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         sei_tmp.lpFile = wszApplicationName;
     }
 
-    if (*sei_tmp.lpParameters)
-    {
-        len = ExpandEnvironmentStringsW(sei_tmp.lpParameters, NULL, 0);
-        if (len > 0)
-        {
-            LPWSTR buf;
-            len++;
-            buf = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
-            ExpandEnvironmentStringsW(sei_tmp.lpParameters, buf, len);
-            if (wszParameters != parametersBuffer)
-                HeapFree(GetProcessHeap(), 0, wszParameters);
-            wszParameters = buf;
-            parametersLen = len;
-            sei_tmp.lpParameters = wszParameters;
-        }
-    }
-
     if (*sei_tmp.lpDirectory)
     {
         len = ExpandEnvironmentStringsW(sei_tmp.lpDirectory, NULL, 0);

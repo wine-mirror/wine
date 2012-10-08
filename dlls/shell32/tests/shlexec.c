@@ -1354,7 +1354,7 @@ static const argify_tests_t argify_tests[] =
       {"", "\" p\\three pfour\"", "pfive", "", NULL}, 0}},
 
     /* Environment variables are left untouched. */
-    {"Params23456", "%TMPDIR% %t %c", 0x12,
+    {"Params23456", "%TMPDIR% %t %c", 0,
      {" \"%TMPDIR%\" \"%t\" \"%c\" \"\" \"\"",
       {"", "%TMPDIR%", "%t", "%c", "", "", NULL}, 0}},
 
