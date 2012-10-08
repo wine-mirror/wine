@@ -1469,7 +1469,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
         WCMD_clear_screen ();
         break;
       case WCMD_COPY:
-        WCMD_copy ();
+        WCMD_copy (p);
         break;
       case WCMD_CTTY:
         WCMD_change_tty ();

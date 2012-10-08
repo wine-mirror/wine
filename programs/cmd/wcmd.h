@@ -60,7 +60,7 @@ void WCMD_change_tty (void);
 void WCMD_choice (const WCHAR *);
 void WCMD_clear_screen (void);
 void WCMD_color (void);
-void WCMD_copy (void);
+void WCMD_copy (WCHAR *);
 void WCMD_create_dir (WCHAR *);
 BOOL WCMD_delete (WCHAR *);
 void WCMD_directory (WCHAR *);
