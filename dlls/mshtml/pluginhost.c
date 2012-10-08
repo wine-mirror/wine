@@ -485,6 +485,7 @@ struct PHEventSink {
     ITypeInfo *typeinfo;
     GUID iid;
     DWORD cookie;
+    BOOL is_dispiface;
 
     sink_entry_t *handlers;
     DWORD handlers_cnt;
@@ -547,6 +548,9 @@ static HRESULT WINAPI PHEventSink_QueryInterface(IDispatch *iface, REFIID riid, 
         *ppv = &This->IDispatch_iface;
     }else if(IsEqualGUID(riid, &IID_IDispatch)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = &This->IDispatch_iface;
+    }else if(This->is_dispiface && IsEqualGUID(riid, &This->iid)) {
+        TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = &This->IDispatch_iface;
     }else {
         WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
@@ -670,6 +674,7 @@ static PHEventSink *create_event_sink(PluginHost *plugin_host, ITypeInfo *typein
     PHEventSink *ret;
     IConnectionPoint *cp;
     TYPEATTR *typeattr;
+    TYPEKIND typekind;
     GUID guid;
     HRESULT hres;
 
@@ -677,8 +682,16 @@ static PHEventSink *create_event_sink(PluginHost *plugin_host, ITypeInfo *typein
     if(FAILED(hres))
         return NULL;
 
+    typekind = typeattr->typekind;
     guid = typeattr->guid;
     ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
+
+    TRACE("guid %s typekind %d\n", debugstr_guid(&guid), typekind);
+
+    if(typekind != TKIND_INTERFACE && typekind != TKIND_DISPATCH) {
+        WARN("invalid typekind %d\n", typekind);
+        return NULL;
+    }
 
     hres = IUnknown_QueryInterface(plugin_host->plugin_unk, &IID_IConnectionPointContainer, (void**)&cp_container);
     if(FAILED(hres)) {
@@ -699,6 +712,7 @@ static PHEventSink *create_event_sink(PluginHost *plugin_host, ITypeInfo *typein
         ret->ref = 1;
         ret->host = plugin_host;
         ret->iid = guid;
+        ret->is_dispiface = typekind == TKIND_DISPATCH;
 
         ITypeInfo_AddRef(typeinfo);
         ret->typeinfo = typeinfo;

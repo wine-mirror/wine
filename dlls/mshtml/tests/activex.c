@@ -331,6 +331,7 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoi
 
 static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *pUnkSink, DWORD *pdwCookie)
 {
+    DispActiveXTest *ax_test;
     IDispatchEx *dispex;
     HRESULT hres;
 
@@ -341,6 +342,10 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
 
     hres = IUnknown_QueryInterface(pUnkSink, &IID_IDispatchEx, (void**)&dispex);
     ok(hres == E_NOINTERFACE, "QueryInterface(IID_IDispatchEx) returned: %08x\n", hres);
+
+    hres = IUnknown_QueryInterface(pUnkSink, &DIID_DispActiveXTest, (void**)&ax_test);
+    ok(hres == S_OK, "Could not get DispActiveXTest iface: %08x\n", hres);
+    DispActiveXTest_Release(ax_test);
 
     *pdwCookie = 0xdeadbeef;
     return S_OK;
