@@ -562,15 +562,7 @@ sub source_scan_project_file($$$)
         $path.="/";
     }
 
-    if (defined $opt_single_target or $is_sub_project == 0) {
-        # Either there is a single target and thus a single project,
-        # or we are a single project-file for which a project
-        # already exists
-        $project=$parent_project;
-    } else {
-        $project=[];
-        project_init($project, $path, \@global_settings);
-    }
+    $project=$parent_project;
     my $project_settings=@$project[$P_SETTINGS];
 
     if ($filename =~ /.dsp$/i) {
