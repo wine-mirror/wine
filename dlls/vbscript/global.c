@@ -402,8 +402,16 @@ static HRESULT Global_CSng(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
 
 static HRESULT Global_CStr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR str;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    hres = to_string(arg, &str);
+    if(FAILED(hres))
+        return hres;
+
+    return return_bstr(res, str);
 }
 
 static inline WCHAR hex_char(unsigned n)

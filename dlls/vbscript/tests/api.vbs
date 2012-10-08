@@ -38,6 +38,18 @@ Call ok(getVT(vbFriday) = "VT_I2", "getVT(vbFriday) = " & getVT(vbFriday))
 Call ok(vbSaturday = 7, "vbSaturday = " & vbSaturday)
 Call ok(getVT(vbSaturday) = "VT_I2", "getVT(vbSaturday) = " & getVT(vbSaturday))
 
+Sub TestCStr(arg, exval)
+    dim x
+    x = CStr(arg)
+    Call ok(getVT(x) = "VT_BSTR*", "getVT(x) = " & getVT(x))
+    Call ok(x = exval, "CStr(" & arg & ") = " & x)
+End Sub
+
+TestCStr "test", "test"
+TestCStr 3, "3"
+TestCStr 3.5, "3.5"
+if isEnglishLang then TestCStr true, "True"
+
 Call ok(isObject(new EmptyClass), "isObject(new EmptyClass) is not true?")
 Set x = new EmptyClass
 Call ok(isObject(x), "isObject(x) is not true?")
