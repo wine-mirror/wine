@@ -3725,7 +3725,7 @@ static void test_font_height_scaling(void)
     GpFont *font;
     GpStatus status;
     RectF bounds, rect;
-    REAL height, dpi;
+    REAL height, dpi, scale;
     PointF ptf;
     GpUnit gfx_unit, font_unit;
 
@@ -3744,6 +3744,51 @@ static void test_font_height_scaling(void)
 
     status = GdipGetDpiY(graphics, &dpi);
     expect(Ok, status);
+
+    /* First check if tested functionality works:
+     * under XP if font and graphics units differ then GdipTransformPoints
+     * followed by GdipSetPageUnit to change the graphics units breaks region
+     * scaling in GdipMeasureCharacterRanges called later.
+     */
+    status = GdipSetPageUnit(graphics, UnitDocument);
+    expect(Ok, status);
+
+    ptf.X = 0.0;
+    ptf.Y = 0.0;
+    status = GdipTransformPoints(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, &ptf, 1);
+    expect(Ok, status);
+
+    status = GdipSetPageUnit(graphics, UnitInch);
+    expect(Ok, status);
+
+    status = GdipCreateFont(family, 720.0, FontStyleRegular, UnitPoint, &font);
+    expect(Ok, status);
+
+    set_rect_empty(&rect);
+    set_rect_empty(&bounds);
+    status = GdipMeasureString(graphics, string, -1, font, &rect, format, &bounds, NULL, NULL);
+    expect(Ok, status);
+    trace("test bounds: %f,%f,%f,%f\n", bounds.X, bounds.Y, bounds.Width, bounds.Height);
+
+    set_rect_empty(&rect);
+    rect.Width = 32000.0;
+    rect.Height = 32000.0;
+    status = GdipMeasureCharacterRanges(graphics, string, -1, font, &rect, format, 1, &region);
+    expect(Ok, status);
+
+    set_rect_empty(&rect);
+    status = GdipGetRegionBounds(region, graphics, &rect);
+    expect(Ok, status);
+    trace("test region: %f,%f,%f,%f\n", rect.X, rect.Y, rect.Width, rect.Height);
+
+    GdipDeleteFont(font);
+
+    scale = rect.Height / bounds.Height;
+    if (fabs(scale - 1.0) > 0.1)
+    {
+        win_skip("GdipGetRegionBounds is broken, scale %f (should be near 1.0)\n", scale);
+        return;
+    }
 
     /* UnitPixel = 2, UnitPoint = 3, UnitInch = 4, UnitDocument = 5, UnitMillimeter = 6 */
     /* UnitPixel as a font base unit is not tested because it drastically
@@ -3785,12 +3830,12 @@ static void test_font_height_scaling(void)
             status = GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, &ptf, 1);
             expect(Ok, status);
             match = fabs(100.0 - ptf.Y) <= 1.0;
-            ok(match || broken(!match) /* before win7 */, "Expected 100.0, got %f\n", ptf.Y);
+            ok(match, "Expected 100.0, got %f\n", ptf.Y);
 
             /* verify the result */
             ptf.Y = units_to_pixels(bounds.Height, gfx_unit, dpi);
             match = fabs(100.0 - ptf.Y) <= 1.1;
-            ok(match || broken(!match) /* before win7 */, "Expected 100.0, got %f\n", ptf.Y);
+            ok(match, "Expected 100.0, got %f\n", ptf.Y);
 
             /* bounds.width of 1 glyph: [margin]+[width]+[margin] */
             set_rect_empty(&rect);
@@ -3826,22 +3871,16 @@ static void test_font_height_scaling(void)
             else
             ok(rect.X > 0.0, "wrong rect.X %f\n", rect.X);
             expectf(0.0, rect.Y);
-            /* before Win7 GdipMeasureCharacterRanges behaviour is completely broken */
             /* FIXME: Wine uses integer gdi32 regions and rounding breaks things */
             if (margin < 1.0)
             {
             match = fabs(margin - rect.X) < 0.25;
-            ok(match || broken(!match) /* before win7 */, "Expected %f, got %f\n", margin, rect.X);
+            ok(match, "Expected %f, got %f\n", margin, rect.X);
             }
             else
             {
             match = fabs(margin - rect.X) <= 0.5;
-            ok(match || broken(!match) /* before win7 */, "Expected %f, got %f\n", margin, rect.X);
-            }
-            if (!match)
-            {
-                win_skip("GdipMeasureCharacterRanges ignores units before Win7\n");
-                continue;
+            ok(match, "Expected %f, got %f\n", margin, rect.X);
             }
             /* FIXME: Wine uses integer gdi32 regions and rounding breaks things */
             if (height < 1.0)
