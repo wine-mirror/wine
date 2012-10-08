@@ -1796,8 +1796,8 @@ static void vertexshader_set_limits(struct wined3d_shader *shader)
 
         case WINED3D_SHADER_VERSION(3, 0):
             shader->limits.temporary = 32;
-            shader->limits.constant_bool = 32;
-            shader->limits.constant_int = 32;
+            shader->limits.constant_bool = 16;
+            shader->limits.constant_int = 16;
             shader->limits.address = 1;
             shader->limits.packed_output = 12;
             shader->limits.sampler = 4;
