@@ -136,7 +136,7 @@ static	DWORD	ADPCM_GetFormatIndex(const WAVEFORMATEX *wfx)
 
 static void     init_wfx_ima_adpcm(IMAADPCMWAVEFORMAT* awfx/*, DWORD nba*/)
 {
-    register WAVEFORMATEX*      pwfx = &awfx->wfx;
+    WAVEFORMATEX* pwfx = &awfx->wfx;
 
     /* we assume wFormatTag, nChannels, nSamplesPerSec and wBitsPerSample
      * have been initialized... */
