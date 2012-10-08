@@ -3150,14 +3150,14 @@ HRESULT CDECL wined3d_surface_restore(struct wined3d_surface *surface)
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_surface_set_palette(struct wined3d_surface *surface, struct wined3d_palette *palette)
+void CDECL wined3d_surface_set_palette(struct wined3d_surface *surface, struct wined3d_palette *palette)
 {
     TRACE("surface %p, palette %p.\n", surface, palette);
 
     if (surface->palette == palette)
     {
         TRACE("Nop palette change.\n");
-        return WINED3D_OK;
+        return;
     }
 
     if (surface->palette && (surface->resource.usage & WINED3DUSAGE_RENDERTARGET))
@@ -3172,8 +3172,6 @@ HRESULT CDECL wined3d_surface_set_palette(struct wined3d_surface *surface, struc
 
         surface->surface_ops->surface_realize_palette(surface);
     }
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_surface_set_color_key(struct wined3d_surface *surface,

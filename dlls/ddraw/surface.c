@@ -4712,11 +4712,8 @@ static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDir
 
     /* Update the wined3d frontbuffer if this is the frontbuffer. */
     if ((This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER) && This->ddraw->wined3d_frontbuffer)
-    {
-        hr = wined3d_surface_set_palette(This->ddraw->wined3d_frontbuffer, palette_impl ? palette_impl->wineD3DPalette : NULL);
-        if (FAILED(hr))
-            ERR("Failed to set frontbuffer palette, hr %#x.\n", hr);
-    }
+        wined3d_surface_set_palette(This->ddraw->wined3d_frontbuffer,
+                palette_impl ? palette_impl->wineD3DPalette : NULL);
 
     /* If this is a front buffer, also update the back buffers
      * TODO: How do things work for palettized cube textures?
