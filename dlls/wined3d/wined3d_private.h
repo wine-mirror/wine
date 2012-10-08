@@ -2553,17 +2553,12 @@ struct wined3d_shader_lconst
 
 struct wined3d_shader_limits
 {
-    unsigned int temporary;
-    unsigned int texcoord;
     unsigned int sampler;
     unsigned int constant_int;
     unsigned int constant_float;
     unsigned int constant_bool;
-    unsigned int address;
     unsigned int packed_output;
     unsigned int packed_input;
-    unsigned int attributes;
-    unsigned int label;
 };
 
 #ifdef __GNUC__
