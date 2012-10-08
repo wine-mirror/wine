@@ -804,6 +804,75 @@ todo_wine
     DeleteDC(hdc);
 }
 
+static void test_font_transform(void)
+{
+    GpStatus status;
+    HDC hdc;
+    LOGFONT lf;
+    GpFont *font;
+    GpGraphics *graphics;
+    GpMatrix *matrix;
+
+    hdc = CreateCompatibleDC(0);
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    memset(&lf, 0, sizeof(lf));
+    lstrcpy(lf.lfFaceName, "Tahoma");
+    lf.lfHeight = -100;
+    lf.lfWidth = 100;
+    status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
+    expect(Ok, status);
+
+    /* identity matrix */
+    status = GdipCreateMatrix(&matrix);
+    expect(Ok, status);
+    status = GdipSetWorldTransform(graphics, matrix);
+    expect(Ok, status);
+    status = GdipGetLogFontA(font, graphics, &lf);
+    expect(Ok, status);
+    expect(-100, lf.lfHeight);
+    expect(0, lf.lfWidth);
+
+    /* scale matrix */
+    status = GdipScaleMatrix(matrix, 2.0, 3.0, MatrixOrderAppend);
+    expect(Ok, status);
+    status = GdipSetWorldTransform(graphics, matrix);
+    expect(Ok, status);
+    status = GdipGetLogFontA(font, graphics, &lf);
+    expect(Ok, status);
+todo_wine
+    expect(-300, lf.lfHeight);
+    expect(0, lf.lfWidth);
+
+    /* scale + ratate matrix */
+    status = GdipRotateMatrix(matrix, 45.0, MatrixOrderAppend);
+    expect(Ok, status);
+    status = GdipSetWorldTransform(graphics, matrix);
+    expect(Ok, status);
+    status = GdipGetLogFontA(font, graphics, &lf);
+    expect(Ok, status);
+todo_wine
+    expect(-300, lf.lfHeight);
+    expect(0, lf.lfWidth);
+
+    /* scale + ratate + shear matrix */
+    status = GdipShearMatrix(matrix, 4.0, 5.0, MatrixOrderAppend);
+    expect(Ok, status);
+    status = GdipSetWorldTransform(graphics, matrix);
+    expect(Ok, status);
+    status = GdipGetLogFontA(font, graphics, &lf);
+    expect(Ok, status);
+todo_wine
+    expect(1032, lf.lfHeight);
+    expect(0, lf.lfWidth);
+
+    GdipDeleteMatrix(matrix);
+    GdipDeleteFont(font);
+    GdipDeleteGraphics(graphics);
+    DeleteDC(hdc);
+}
+
 START_TEST(font)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -816,6 +885,7 @@ START_TEST(font)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_font_transform();
     test_font_substitution();
     test_font_metrics();
     test_createfont();
