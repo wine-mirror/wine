@@ -3729,7 +3729,7 @@ static void test_font_height_scaling(void)
     PointF ptf;
     GpUnit gfx_unit, font_unit;
 
-    status = GdipCreateStringFormat(0, LANG_NEUTRAL, &format);
+    status = GdipCreateStringFormat(StringFormatFlagsNoWrap, LANG_NEUTRAL, &format);
     expect(Ok, status);
     status = GdipSetStringFormatMeasurableCharacterRanges(format, 1, &range);
     expect(Ok, status);
@@ -3790,6 +3790,9 @@ static void test_font_height_scaling(void)
         return;
     }
 
+    status = GdipScaleWorldTransform(graphics, 0.01, 0.01, MatrixOrderAppend);
+    expect(Ok, status);
+
     /* UnitPixel = 2, UnitPoint = 3, UnitInch = 4, UnitDocument = 5, UnitMillimeter = 6 */
     /* UnitPixel as a font base unit is not tested because it drastically
        differs in behaviour */
@@ -3834,7 +3837,8 @@ static void test_font_height_scaling(void)
 
             /* verify the result */
             ptf.Y = units_to_pixels(bounds.Height, gfx_unit, dpi);
-            match = fabs(100.0 - ptf.Y) <= 1.1;
+            ptf.Y /= 100.0;
+            match = fabs(100.0 - ptf.Y) <= 1.0;
             ok(match, "Expected 100.0, got %f\n", ptf.Y);
 
             /* bounds.width of 1 glyph: [margin]+[width]+[margin] */
@@ -3857,38 +3861,22 @@ static void test_font_height_scaling(void)
             expect(Ok, status);
 
             set_rect_empty(&rect);
-            rect.Width = 32000.0;
-            rect.Height = 32000.0;
+            rect.Width = 320000.0;
+            rect.Height = 320000.0;
             status = GdipMeasureCharacterRanges(graphics, string, -1, font, &rect, format, 1, &region);
             expect(Ok, status);
             set_rect_empty(&rect);
             status = GdipGetRegionBounds(region, graphics, &rect);
             expect(Ok, status);
             /*trace("region: %f,%f,%f,%f\n", rect.X, rect.Y, rect.Width, rect.Height);*/
-            /* FIXME: Wine uses integer gdi32 regions and rounding breaks things */
-            if (margin < 1.0)
-            todo_wine ok(rect.X > 0.0, "wrong rect.X %f\n", rect.X);
-            else
             ok(rect.X > 0.0, "wrong rect.X %f\n", rect.X);
             expectf(0.0, rect.Y);
-            /* FIXME: Wine uses integer gdi32 regions and rounding breaks things */
-            if (margin < 1.0)
-            {
-            match = fabs(margin - rect.X) < 0.25;
+            match = fabs(1.0 - margin / rect.X) <= 0.05;
             ok(match, "Expected %f, got %f\n", margin, rect.X);
-            }
-            else
-            {
-            match = fabs(margin - rect.X) <= 0.5;
-            ok(match, "Expected %f, got %f\n", margin, rect.X);
-            }
-            /* FIXME: Wine uses integer gdi32 regions and rounding breaks things */
-            if (height < 1.0)
-            expectf_(height, rect.Height, height / 15.0);
-            else
-todo_wine
-            expectf_(height, rect.Height, height / 15.0);
-            expectf_(bounds.Width, rect.Width + margin * 2.0, bounds.Width / 15.0);
+            match = fabs(1.0 - height / rect.Height) <= 0.1;
+            ok(match, "Expected %f, got %f\n", height, rect.Height);
+            match = fabs(1.0 - bounds.Width / (rect.Width + margin * 2.0)) <= 0.05;
+            ok(match, "Expected %f, got %f\n", bounds.Width, rect.Width + margin * 2.0);
         }
 
         GdipDeleteFont(font);
