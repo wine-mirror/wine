@@ -76,19 +76,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
  * - '\' that are not followed by a '"' are copied literally
  *   'a\b'     -> 'a\b'
  *   'a\\b'    -> 'a\\b'
- *
- * Note:
- * '\t' == 0x0009
- * ' '  == 0x0020
- * '"'  == 0x0022
- * '\\' == 0x005c
  */
 LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
 {
     DWORD argc;
     LPWSTR  *argv;
-    LPCWSTR cs;
-    LPWSTR arg,s,d;
+    LPCWSTR s;
+    LPWSTR d;
     LPWSTR cmdline;
     int in_quotes,bcount;
 
@@ -124,32 +118,29 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
         return argv;
     }
 
-    /* to get a writable copy */
-    argc=0;
+    /* --- First count the arguments */
+    argc=1;
     bcount=0;
     in_quotes=0;
-    cs=lpCmdline;
-    while (1)
+    s=lpCmdline;
+    while (*s)
     {
-        if (*cs==0 || ((*cs==0x0009 || *cs==0x0020) && !in_quotes))
+        if (((*s==' ' || *s=='\t') && !in_quotes))
         {
-            /* space */
-            argc++;
-            /* skip the remaining spaces */
-            while (*cs==0x0009 || *cs==0x0020) {
-                cs++;
-            }
-            if (*cs==0)
-                break;
+            /* skip to the next argument and count it if any */
+            while (*s==' ' || *s=='\t')
+                s++;
+            if (*s)
+                argc++;
             bcount=0;
             continue;
         }
-        else if (*cs==0x005c)
+        else if (*s=='\\')
         {
             /* '\', count them */
             bcount++;
         }
-        else if ((*cs==0x0022) && ((bcount & 1)==0))
+        else if ((*s=='"') && ((bcount & 1)==0))
         {
             /* unescaped '"' */
             in_quotes=!in_quotes;
@@ -160,10 +151,12 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
             /* a regular character */
             bcount=0;
         }
-        cs++;
+        s++;
     }
-    /* Allocate in a single lump, the string array, and the strings that go with it.
-     * This way the caller can make a single GlobalFree call to free both, as per MSDN.
+
+    /* Allocate in a single lump, the string array, and the strings that go
+     * with it. This way the caller can make a single LocalFree() call to free
+     * both, as per MSDN.
      */
     argv=LocalAlloc(LMEM_FIXED, argc*sizeof(LPWSTR)+(strlenW(lpCmdline)+1)*sizeof(WCHAR));
     if (!argv)
@@ -171,36 +164,33 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
     cmdline=(LPWSTR)(argv+argc);
     strcpyW(cmdline, lpCmdline);
 
-    argc=0;
+    /* --- Then split and copy the arguments */
+    argc=1;
     bcount=0;
     in_quotes=0;
-    arg=d=s=cmdline;
+    s=argv[0]=d=cmdline;
     while (*s)
     {
-        if ((*s==0x0009 || *s==0x0020) && !in_quotes)
+        if ((*s==' ' || *s=='\t') && !in_quotes)
         {
-            /* Close the argument and copy it */
-            *d=0;
-            argv[argc++]=arg;
+            /* close the argument */
+            *d++=0;
+            bcount=0;
 
-            /* skip the remaining spaces */
+            /* skip to the next one and initialize it if any */
             do {
                 s++;
-            } while (*s==0x0009 || *s==0x0020);
-
-            /* Start with a new argument */
-            arg=d=s;
-            bcount=0;
+            } while (*s==' ' || *s=='\t');
+            if (*s)
+                argv[argc++]=d;
         }
-        else if (*s==0x005c)
+        else if (*s=='\\')
         {
-            /* '\\' */
             *d++=*s++;
             bcount++;
         }
-        else if (*s==0x0022)
+        else if (*s=='"')
         {
-            /* '"' */
             if ((bcount & 1)==0)
             {
                 /* Preceded by an even number of '\', this is half that
@@ -228,11 +218,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
             bcount=0;
         }
     }
-    if (*arg)
-    {
-        *d='\0';
-        argv[argc++]=arg;
-    }
+    *d='\0';
     *numargs=argc;
 
     return argv;
