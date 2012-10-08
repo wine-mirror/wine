@@ -76,6 +76,7 @@ struct d3d10_effect_object
     {
         ID3D10RasterizerState *rs;
         ID3D10DepthStencilState *ds;
+        ID3D10BlendState *bs;
         ID3D10VertexShader *vs;
         ID3D10PixelShader *ps;
         ID3D10GeometryShader *gs;

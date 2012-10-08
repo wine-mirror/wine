@@ -3922,12 +3922,7 @@ static void test_effect_state_groups(ID3D10Device *device)
     ok(pass_desc.BlendFactor[2] == 0.7f, "Got unexpected BlendFactor[2] %.8e.\n", pass_desc.BlendFactor[2]);
     ok(pass_desc.BlendFactor[3] == 0.8f, "Got unexpected BlendFactor[3] %.8e.\n", pass_desc.BlendFactor[3]);
     hr = pass->lpVtbl->Apply(pass, 0);
-    todo_wine ok(SUCCEEDED(hr), "Failed to apply pass, hr %#x.\n", hr);
-    if (FAILED(hr))
-    {
-        effect->lpVtbl->Release(effect);
-        return;
-    }
+    ok(SUCCEEDED(hr), "Failed to apply pass, hr %#x.\n", hr);
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ID3D10BlendState_GetDesc(blend_state, &blend_desc);
@@ -3958,7 +3953,7 @@ static void test_effect_state_groups(ID3D10Device *device)
     ok(!ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
     ok(ds_desc.DepthWriteMask == D3D10_DEPTH_WRITE_MASK_ZERO, "Got unexpected DepthWriteMask %#x.\n",
             ds_desc.DepthWriteMask);
-    ok(ds_desc.DepthFunc == D3D10_COMPARISON_NEVER, "Got unexpected DepthFunc %#x.\n", ds_desc.DepthFunc);
+    todo_wine ok(ds_desc.DepthFunc == D3D10_COMPARISON_NEVER, "Got unexpected DepthFunc %#x.\n", ds_desc.DepthFunc);
     ok(ds_desc.StencilEnable, "Got unexpected StencilEnable %#x.\n", ds_desc.StencilEnable);
     ok(ds_desc.StencilReadMask == 0x4, "Got unexpected StencilReadMask %#x.\n", ds_desc.StencilReadMask);
     ok(ds_desc.StencilWriteMask == 0x5, "Got unexpected StencilWriteMask %#x.\n", ds_desc.StencilWriteMask);

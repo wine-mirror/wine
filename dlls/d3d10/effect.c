@@ -1355,6 +1355,14 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
             break;
         }
 
+        case D3D10_EOT_BLEND_STATE:
+        {
+            ID3D10EffectBlendVariable *bv = variable->lpVtbl->AsBlend(variable);
+            if (FAILED(hr = bv->lpVtbl->GetBlendState(bv, variable_idx, &o->object.bs)))
+                return hr;
+            break;
+        }
+
         case D3D10_EOT_VERTEXSHADER:
         {
             ID3D10EffectShaderVariable *sv = variable->lpVtbl->AsShader(variable);
@@ -1385,7 +1393,6 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
             break;
         }
 
-        case D3D10_EOT_BLEND_STATE:
         case D3D10_EOT_STENCIL_REF:
         case D3D10_EOT_BLEND_FACTOR:
         case D3D10_EOT_SAMPLE_MASK:
@@ -2181,6 +2188,10 @@ static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
             ID3D10Device_OMSetDepthStencilState(device, o->object.ds, o->pass->stencil_ref);
             return S_OK;
 
+        case D3D10_EOT_BLEND_STATE:
+            ID3D10Device_OMSetBlendState(device, o->object.bs, o->pass->blend_factor, o->pass->sample_mask);
+            return S_OK;
+
         case D3D10_EOT_VERTEXSHADER:
             ID3D10Device_VSSetShader(device, o->object.vs);
             return S_OK;
@@ -2194,6 +2205,8 @@ static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
             return S_OK;
 
         case D3D10_EOT_STENCIL_REF:
+        case D3D10_EOT_BLEND_FACTOR:
+        case D3D10_EOT_SAMPLE_MASK:
             return S_OK;
 
         default:
@@ -2291,6 +2304,11 @@ static void d3d10_effect_object_destroy(struct d3d10_effect_object *o)
         case D3D10_EOT_DEPTH_STENCIL_STATE:
             if (o->object.ds)
                 ID3D10DepthStencilState_Release(o->object.ds);
+            break;
+
+        case D3D10_EOT_BLEND_STATE:
+            if (o->object.bs)
+                ID3D10BlendState_Release(o->object.bs);
             break;
 
         case D3D10_EOT_VERTEXSHADER:
