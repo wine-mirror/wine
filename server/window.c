@@ -102,6 +102,7 @@ struct window
 #define PAINT_ERASE              0x0020  /* needs WM_ERASEBKGND */
 #define PAINT_NONCLIENT          0x0040  /* needs WM_NCPAINT */
 #define PAINT_DELAYED_ERASE      0x0080  /* still needs erase after WM_ERASEBKGND */
+#define PAINT_PIXEL_FORMAT_CHILD 0x0100  /* at least one child has a custom pixel format */
 
 /* growable array of user handles */
 struct user_handle_array
@@ -163,6 +164,14 @@ static inline struct window *get_last_child( struct window *win )
 {
     struct list *ptr = list_tail( &win->children );
     return ptr ? LIST_ENTRY( ptr, struct window, entry ) : NULL;
+}
+
+/* set the PAINT_PIXEL_FORMAT_CHILD flag on all the parents */
+/* note: we never reset the flag, it's just a heuristic */
+static inline void update_pixel_format_flags( struct window *win )
+{
+    for (win = win->parent; win && win->parent; win = win->parent)
+        win->paint_flags |= PAINT_PIXEL_FORMAT_CHILD;
 }
 
 /* link a window at the right place in the siblings list */
@@ -244,6 +253,8 @@ static int set_parent_window( struct window *win, struct window *parent )
         /* top-level, attach the two threads */
         if (parent->thread && parent->thread != win->thread && !is_desktop_window(parent))
             attach_thread_input( win->thread, parent->thread );
+
+        if (win->paint_flags & PAINT_HAS_PIXEL_FORMAT) update_pixel_format_flags( win );
     }
     else  /* move it to parent unlinked list */
     {
@@ -1038,6 +1049,7 @@ static struct region *clip_pixel_format_children( struct window *parent, struct 
         offset_region( clip, offset_x, offset_y );
         if (!intersect_region( clip, clip, parent_clip )) break;
         if (!union_region( region, region, clip )) break;
+        if (!(ptr->paint_flags & (PAINT_HAS_PIXEL_FORMAT | PAINT_PIXEL_FORMAT_CHILD))) continue;
 
         /* subtract the client rect if it uses a custom pixel format */
         set_region_rect( clip, &ptr->client_rect );
@@ -2238,6 +2250,7 @@ DECL_HANDLER(set_window_pos)
     }
 
     win->paint_flags = (win->paint_flags & ~PAINT_CLIENT_FLAGS) | (req->paint_flags & PAINT_CLIENT_FLAGS);
+    if (win->paint_flags & PAINT_HAS_PIXEL_FORMAT) update_pixel_format_flags( win );
 
     if (get_req_data_size() >= 3 * sizeof(rectangle_t))
     {
@@ -2256,7 +2269,10 @@ DECL_HANDLER(set_window_pos)
     reply->new_ex_style = win->ex_style;
 
     top = get_top_clipping_window( win );
-    if (is_visible( top ) && (top->paint_flags & PAINT_HAS_SURFACE)) reply->surface_win = top->handle;
+    if (is_visible( top ) &&
+        (top->paint_flags & PAINT_HAS_SURFACE) &&
+        (top->paint_flags & PAINT_PIXEL_FORMAT_CHILD))
+        reply->surface_win = top->handle;
 }
 
 
