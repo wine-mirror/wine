@@ -184,7 +184,7 @@ static void VideoRenderer_AutoShowWindow(VideoRendererImpl *This)
             }
         }
 
-        AdjustWindowRectEx(&This->WindowPos, style, TRUE, style_ex);
+        AdjustWindowRectEx(&This->WindowPos, style, FALSE, style_ex);
 
         TRACE("WindowPos: %d %d %d %d\n", This->WindowPos.left, This->WindowPos.top, This->WindowPos.right, This->WindowPos.bottom);
         SetWindowPos(This->baseControlWindow.baseWindow.hWnd, NULL,
