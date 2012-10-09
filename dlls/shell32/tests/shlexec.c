@@ -1637,34 +1637,37 @@ typedef struct
 static fileurl_tests_t fileurl_tests[]=
 {
     /* How many slashes does it take... */
-    {"file:", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
-    {"file:/", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
-    {"file://", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
-    {"file:///", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
-    {"File:///", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
-    {"file:////", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
-    {"file://///", "%s\\test file.shlexec", 0, 0x1},
+    {"file:", "%s\\test file.shlexec", URL_SUCCESS, 0},
+    {"file:/", "%s\\test file.shlexec", URL_SUCCESS, 0},
+    {"file://", "%s\\test file.shlexec", URL_SUCCESS, 0},
+    {"file:///", "%s\\test file.shlexec", URL_SUCCESS, 0},
+    {"File:///", "%s\\test file.shlexec", URL_SUCCESS, 0},
+    {"file:////", "%s\\test file.shlexec", URL_SUCCESS, 0},
+    {"file://///", "%s\\test file.shlexec", 0, 0},
 
     /* Test with Windows-style paths */
-    {"file:///", "%s\\test file.shlexec", URL_SUCCESS | USE_COLON, 0x1},
-    {"file:///", "%s\\test file.shlexec", URL_SUCCESS | USE_BSLASH, 0x1},
+    {"file:///", "%s\\test file.shlexec", URL_SUCCESS | USE_COLON, 0},
+    {"file:///", "%s\\test file.shlexec", URL_SUCCESS | USE_BSLASH, 0},
 
     /* Check handling of hostnames */
-    {"file://localhost/", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
-    {"file://localhost:80/", "%s\\test file.shlexec", 0, 0x1},
-    {"file://LocalHost/", "%s\\test file.shlexec", URL_SUCCESS, 0x1},
-    {"file://127.0.0.1/", "%s\\test file.shlexec", 0, 0x1},
-    {"file://::1/", "%s\\test file.shlexec", 0, 0x1},
-    {"file://notahost/", "%s\\test file.shlexec", 0, 0x1},
+    {"file://localhost/", "%s\\test file.shlexec", URL_SUCCESS, 0},
+    {"file://localhost:80/", "%s\\test file.shlexec", 0, 0},
+    {"file://LocalHost/", "%s\\test file.shlexec", URL_SUCCESS, 0},
+    {"file://127.0.0.1/", "%s\\test file.shlexec", 0, 0},
+    {"file://::1/", "%s\\test file.shlexec", 0, 0},
+    {"file://notahost/", "%s\\test file.shlexec", 0, 0},
 
     /* Environment variables are not expanded in URLs */
     {"%urlprefix%", "%s\\test file.shlexec", 0, 0x1},
-    {"file:///", "%s\\%%urlenvvar%% file.shlexec", 0, 0x1},
+    {"file:///", "%%TMPDIR%%\\test file.shlexec", 0, 0},
+
+    /* Test shortcuts vs. URLs */
+    {"file://///", "%s\\test_shortcut_shlexec.lnk", 0, 0x1d},
 
     {NULL, NULL, 0, 0}
 };
 
-static void test_fileurl(void)
+static void test_fileurls(void)
 {
     char filename[MAX_PATH], fileurl[MAX_PATH], longtmpdir[MAX_PATH];
     char command[MAX_PATH];
@@ -1681,7 +1684,6 @@ static void test_fileurl(void)
 
     get_long_path_name(tmpdir, longtmpdir, sizeof(longtmpdir)/sizeof(*longtmpdir));
     SetEnvironmentVariable("urlprefix", "file:///");
-    SetEnvironmentVariable("urlenvvar", "test");
 
     test=fileurl_tests;
     while (test->basename)
@@ -1705,7 +1707,10 @@ static void test_fileurl(void)
         ok(rc == SE_ERR_FNF, "FindExecutable(%s) failed: bad rc=%lu\n", fileurl, rc);
 
         /* Then ShellExecute() */
-        rc = shell_execute(NULL, fileurl, NULL, NULL);
+        if ((test->todo & 0x10) == 0)
+            rc = shell_execute(NULL, fileurl, NULL, NULL);
+        else todo_wait
+            rc = shell_execute(NULL, fileurl, NULL, NULL);
         if (bad_shellexecute)
         {
             win_skip("shell32 is too old (likely 4.72). Skipping the file URL tests\n");
@@ -1750,7 +1755,6 @@ static void test_fileurl(void)
     }
 
     SetEnvironmentVariable("urlprefix", NULL);
-    SetEnvironmentVariable("urlenvvar", NULL);
 }
 
 static void test_find_executable(void)
@@ -2639,7 +2643,7 @@ START_TEST(shlexec)
     test_argify();
     test_lpFile_parsed();
     test_filename();
-    test_fileurl();
+    test_fileurls();
     test_find_executable();
     test_lnks();
     test_exes();

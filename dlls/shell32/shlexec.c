@@ -1504,7 +1504,7 @@ static UINT_PTR SHELL_quote_and_execute( LPCWSTR wcmd, LPCWSTR wszParameters, LP
     return retval;
 }
 
-static UINT_PTR SHELL_execute_url( LPCWSTR lpFile, LPCWSTR wFile, LPCWSTR wcmd, LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out, SHELL_ExecuteW32 execfunc )
+static UINT_PTR SHELL_execute_url( LPCWSTR lpFile, LPCWSTR wcmd, LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out, SHELL_ExecuteW32 execfunc )
 {
     static const WCHAR wShell[] = {'\\','s','h','e','l','l','\\',0};
     static const WCHAR wCommand[] = {'\\','c','o','m','m','a','n','d',0};
@@ -1534,13 +1534,6 @@ static UINT_PTR SHELL_execute_url( LPCWSTR lpFile, LPCWSTR wFile, LPCWSTR wcmd, 
     strcatW(lpstrProtocol, psei->lpVerb && *psei->lpVerb ? psei->lpVerb: wszOpen);
     strcatW(lpstrProtocol, wCommand);
 
-    /* Remove File Protocol from lpFile */
-    /* In the case file://path/file     */
-    if (!strncmpiW(lpFile, wFile, iSize))
-    {
-        lpFile += iSize;
-        while (*lpFile == ':') lpFile++;
-    }
     retval = execute_from_key(lpstrProtocol, lpFile, NULL, psei->lpParameters,
                               wcmd, execfunc, psei, psei_out);
     HeapFree(GetProcessHeap(), 0, lpstrProtocol);
@@ -1567,7 +1560,6 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 {
     static const WCHAR wSpace[] = {' ',0};
     static const WCHAR wWww[] = {'w','w','w',0};
-    static const WCHAR wFile[] = {'f','i','l','e',0};
     static const WCHAR wHttp[] = {'h','t','t','p',':','/','/',0};
     static const DWORD unsupportedFlags =
         SEE_MASK_INVOKEIDLIST  | SEE_MASK_ICON         | SEE_MASK_HOTKEY |
@@ -1724,20 +1716,38 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
                                                    dwApplicationNameLen );
     }
 
-    /* expand environment strings */
-    len = ExpandEnvironmentStringsW(sei_tmp.lpFile, NULL, 0);
-    if (len>0)
+    /* convert file URLs */
+    if (UrlIsFileUrlW(sei_tmp.lpFile))
     {
         LPWSTR buf;
-        buf = HeapAlloc(GetProcessHeap(),0,(len+1)*sizeof(WCHAR));
+        DWORD size;
 
-        ExpandEnvironmentStringsW(sei_tmp.lpFile, buf, len+1);
+        size = MAX_PATH;
+        buf = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+        if (FAILED(PathCreateFromUrlW(sei_tmp.lpFile, buf, &size, 0)))
+            return SE_ERR_OOM;
+
         HeapFree(GetProcessHeap(), 0, wszApplicationName);
-        dwApplicationNameLen = len+1;
+        dwApplicationNameLen = lstrlenW(buf) + 1;
         wszApplicationName = buf;
-        /* appKnownSingular unmodified */
-
         sei_tmp.lpFile = wszApplicationName;
+    }
+    else /* or expand environment strings (not both!) */
+    {
+        len = ExpandEnvironmentStringsW(sei_tmp.lpFile, NULL, 0);
+        if (len>0)
+        {
+            LPWSTR buf;
+            buf = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+
+            ExpandEnvironmentStringsW(sei_tmp.lpFile, buf, len + 1);
+            HeapFree(GetProcessHeap(), 0, wszApplicationName);
+            dwApplicationNameLen = len + 1;
+            wszApplicationName = buf;
+            /* appKnownSingular unmodified */
+
+            sei_tmp.lpFile = wszApplicationName;
+        }
     }
 
     if (*sei_tmp.lpDirectory)
@@ -1889,7 +1899,7 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     }
     else if (PathIsURLW(lpFile))    /* File not found, check for URL */
     {
-        retval = SHELL_execute_url( lpFile, wFile, wcmd, &sei_tmp, sei, execfunc );
+        retval = SHELL_execute_url( lpFile, wcmd, &sei_tmp, sei, execfunc );
     }
     /* Check if file specified is in the form www.??????.*** */
     else if (!strncmpiW(lpFile, wWww, 3))
