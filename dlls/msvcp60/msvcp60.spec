@@ -2280,7 +2280,7 @@
 @ cdecl -arch=win32 ?_Init@locale@std@@CAPAV_Locimp@12@XZ() locale__Init
 @ cdecl -arch=win64 ?_Init@locale@std@@CAPEAV_Locimp@12@XZ() locale__Init
 @ thiscall -arch=win32 ?_Init@strstreambuf@std@@IAEXHPAD0H@Z(ptr long ptr ptr long) strstreambuf__Init
-@ stub -arch=win64 ?_Init@strstreambuf@std@@IEAAXHPEAD0H@Z
+@ cdecl -arch=win64 ?_Init@strstreambuf@std@@IEAAXHPEAD0H@Z(ptr long ptr ptr long) strstreambuf__Init
 @ extern ?_Init_cnt@Init@ios_base@std@@0HA ios_base_Init__Init_cnt
 @ extern ?_Init_cnt@_Winit@std@@0HA _Winit__Init_cnt
 @ stub -arch=win32 ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXXZ
@@ -3638,7 +3638,7 @@
 @ thiscall -arch=win32 ?pptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IBEPAGXZ(ptr) basic_streambuf_wchar_pptr
 @ cdecl -arch=win64 ?pptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEBAPEAGXZ(ptr) basic_streambuf_wchar_pptr
 @ thiscall -arch=win32 ?precision@ios_base@std@@QAEHH@Z(ptr long) ios_base_precision_set
-@ stub -arch=win64 ?precision@ios_base@std@@QEAA_JH@Z
+@ cdecl -arch=win64 ?precision@ios_base@std@@QEAA_JH@Z(ptr long) ios_base_precision_set
 @ thiscall -arch=win32 ?precision@ios_base@std@@QBEHXZ(ptr) ios_base_precision_get
 @ cdecl -arch=win64 ?precision@ios_base@std@@QEBA_JXZ(ptr) ios_base_precision_get
 @ thiscall -arch=win32 ?pubimbue@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE?AVlocale@2@ABV32@@Z(ptr ptr ptr) basic_streambuf_char_pubimbue
@@ -4003,9 +4003,9 @@
 @ thiscall -arch=win32 ?sgetn@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEHPAGH@Z(ptr ptr long) basic_streambuf_wchar_sgetn
 @ cdecl -arch=win64 ?sgetn@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAA_JPEAG_J@Z(ptr ptr long) basic_streambuf_wchar_sgetn
 @ thiscall -arch=win32 ?showmanyc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ(ptr) basic_streambuf_char_showmanyc
-@ stub -arch=win64 ?showmanyc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHXZ
+@ cdecl -arch=win64 ?showmanyc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHXZ(ptr) basic_streambuf_char_showmanyc
 @ thiscall -arch=win32 ?showmanyc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEHXZ(ptr) basic_streambuf_wchar_showmanyc
-@ stub -arch=win64 ?showmanyc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAHXZ
+@ cdecl -arch=win64 ?showmanyc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAHXZ(ptr) basic_streambuf_wchar_showmanyc
 @ cdecl ?signaling_NaN@?$numeric_limits@C@std@@SACXZ() msvcp90.?signaling_NaN@?$numeric_limits@C@std@@SACXZ
 @ cdecl ?signaling_NaN@?$numeric_limits@D@std@@SADXZ() msvcp90.?signaling_NaN@?$numeric_limits@D@std@@SADXZ
 @ cdecl ?signaling_NaN@?$numeric_limits@E@std@@SAEXZ() msvcp90.?signaling_NaN@?$numeric_limits@E@std@@SAEXZ
