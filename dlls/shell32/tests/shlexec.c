@@ -818,26 +818,6 @@ static DWORD get_long_path_name(const char* shortpath, char* longpath, DWORD lon
 
 /***
  *
- * PathFindFileNameA equivalent that supports WinNT
- *
- ***/
-
-static LPSTR path_find_file_name(LPCSTR lpszPath)
-{
-  LPCSTR lastSlash = lpszPath;
-
-  while (lpszPath && *lpszPath)
-  {
-    if ((*lpszPath == '\\' || *lpszPath == '/' || *lpszPath == ':') &&
-        lpszPath[1] && lpszPath[1] != '\\' && lpszPath[1] != '/')
-      lastSlash = lpszPath + 1;
-    lpszPath = CharNext(lpszPath);
-  }
-  return (LPSTR)lastSlash;
-}
-
-/***
- *
  * Tests
  *
  ***/
@@ -2592,33 +2572,55 @@ static void cleanup_test(void)
 
 static void test_directory(void)
 {
-    char path[MAX_PATH], newdir[MAX_PATH];
-    char params[1024];
+    char path[MAX_PATH], curdir[MAX_PATH];
+    char params[1024], dirpath[1024];
     INT_PTR rc;
 
-    /* copy this executable to a new folder and cd to it */
-    sprintf(newdir, "%s\\newfolder", tmpdir);
-    rc = CreateDirectoryA( newdir, NULL );
-    ok( rc, "failed to create %s err %u\n", newdir, GetLastError() );
-    sprintf(path, "%s\\%s", newdir, path_find_file_name(argv0));
+    sprintf(path, "%s\\test2.exe", tmpdir);
     CopyFileA(argv0, path, FALSE);
-    SetCurrentDirectory(tmpdir);
 
     sprintf(params, "shlexec \"%s\" Exec", child_file);
 
+    /* Test with the current directory */
+    GetCurrentDirectoryA(sizeof(curdir), curdir);
+    SetCurrentDirectoryA(tmpdir);
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
-                        NULL, path_find_file_name(argv0), params, NULL, NULL);
-    todo_wine ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
+                        NULL, "test2.exe", params, NULL, NULL);
+    ok(rc > 32, "%s returned %lu\n", shell_call, rc);
+    okChildInt("argcA", 4);
+    okChildString("argvA3", "Exec");
+    todo_wine okChildPath("longPath", path);
+    SetCurrentDirectoryA(curdir);
 
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
-                        NULL, path_find_file_name(argv0), params, newdir, NULL);
+                        NULL, "test2.exe", params, NULL, NULL);
+    ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
+
+    /* Explicitly specify the directory to use */
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
+                        NULL, "test2.exe", params, tmpdir, NULL);
     ok(rc > 32, "%s returned %lu\n", shell_call, rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
     todo_wine okChildPath("longPath", path);
 
-    DeleteFile(path);
-    RemoveDirectoryA(newdir);
+    /* Specify it through an environment variable */
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
+                        NULL, "test2.exe", params, "%TMPDIR%", NULL);
+    todo_wine ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
+
+    rc=shell_execute_ex(SEE_MASK_DOENVSUBST|SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
+                        NULL, "test2.exe", params, "%TMPDIR%", NULL);
+    ok(rc > 32, "%s returned %lu\n", shell_call, rc);
+    okChildInt("argcA", 4);
+    okChildString("argvA3", "Exec");
+    todo_wine okChildPath("longPath", path);
+
+    /* Not a colon-separated directory list */
+    sprintf(dirpath, "%s:%s", curdir, tmpdir);
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
+                        NULL, "test2.exe", params, dirpath, NULL);
+    ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
 }
 
 START_TEST(shlexec)
