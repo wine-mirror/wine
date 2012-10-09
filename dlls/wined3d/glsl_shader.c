@@ -2198,6 +2198,7 @@ static void shader_glsl_binop(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_ADD: op = '+'; break;
         case WINED3DSIH_AND: op = '&'; break;
         case WINED3DSIH_DIV: op = '/'; break;
+        case WINED3DSIH_IADD: op = '+'; break;
         case WINED3DSIH_MUL: op = '*'; break;
         case WINED3DSIH_SUB: op = '-'; break;
         default:
@@ -5173,7 +5174,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_FRC                   */ shader_glsl_map2gl,
     /* WINED3DSIH_FTOI                  */ NULL,
     /* WINED3DSIH_GE                    */ NULL,
-    /* WINED3DSIH_IADD                  */ NULL,
+    /* WINED3DSIH_IADD                  */ shader_glsl_binop,
     /* WINED3DSIH_IEQ                   */ NULL,
     /* WINED3DSIH_IF                    */ shader_glsl_if,
     /* WINED3DSIH_IFC                   */ shader_glsl_ifc,
