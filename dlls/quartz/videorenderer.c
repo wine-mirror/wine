@@ -150,7 +150,8 @@ static BOOL CreateRenderingSubsystem(VideoRendererImpl* This)
     return TRUE;
 }
 
-static void VideoRenderer_AutoShowWindow(VideoRendererImpl *This) {
+static void VideoRenderer_AutoShowWindow(VideoRendererImpl *This)
+{
     if (!This->init && (!This->WindowPos.right || !This->WindowPos.top))
     {
         DWORD style = GetWindowLongW(This->baseControlWindow.baseWindow.hWnd, GWL_STYLE);
@@ -158,13 +159,29 @@ static void VideoRenderer_AutoShowWindow(VideoRendererImpl *This) {
 
         if (!This->WindowPos.right)
         {
-            This->WindowPos.left = This->SourceRect.left;
-            This->WindowPos.right = This->SourceRect.right;
+            if (This->DestRect.right)
+            {
+                This->WindowPos.left = This->DestRect.left;
+                This->WindowPos.right = This->DestRect.right;
+            }
+            else
+            {
+                This->WindowPos.left = This->SourceRect.left;
+                This->WindowPos.right = This->SourceRect.right;
+            }
         }
         if (!This->WindowPos.bottom)
         {
-            This->WindowPos.top = This->SourceRect.top;
-            This->WindowPos.bottom = This->SourceRect.bottom;
+            if (This->DestRect.bottom)
+            {
+                This->WindowPos.top = This->DestRect.top;
+                This->WindowPos.bottom = This->DestRect.bottom;
+            }
+            else
+            {
+                This->WindowPos.top = This->SourceRect.top;
+                This->WindowPos.bottom = This->SourceRect.bottom;
+            }
         }
 
         AdjustWindowRectEx(&This->WindowPos, style, TRUE, style_ex);
@@ -740,7 +757,7 @@ static ULONG WINAPI VideoRenderer_Release(IBaseFilter * iface)
 static HRESULT WINAPI VideoRenderer_Pause(IBaseFilter * iface)
 {
     VideoRendererImpl *This = impl_from_IBaseFilter(iface);
-    
+
     TRACE("(%p/%p)->()\n", This, iface);
 
     EnterCriticalSection(&This->renderer.csRenderLock);
@@ -781,9 +798,8 @@ static const IBaseFilterVtbl VideoRenderer_Vtbl =
 };
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI Basicvideo_QueryInterface(IBasicVideo *iface,
-						REFIID riid,
-						LPVOID*ppvObj) {
+static HRESULT WINAPI Basicvideo_QueryInterface(IBasicVideo *iface, REFIID riid, LPVOID *ppvObj)
+{
     VideoRendererImpl *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
@@ -852,9 +868,8 @@ static const IBasicVideoVtbl IBasicVideo_VTable =
 
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI Videowindow_QueryInterface(IVideoWindow *iface,
-						 REFIID riid,
-						 LPVOID*ppvObj) {
+static HRESULT WINAPI Videowindow_QueryInterface(IVideoWindow *iface, REFIID riid, LPVOID *ppvObj)
+{
     VideoRendererImpl *This = impl_from_IVideoWindow(iface);
 
     TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
