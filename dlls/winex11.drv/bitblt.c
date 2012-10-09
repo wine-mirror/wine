@@ -1848,6 +1848,28 @@ static RECT *x11drv_surface_get_bounds( struct window_surface *window_surface )
 }
 
 /***********************************************************************
+ *           x11drv_surface_set_region
+ */
+static void x11drv_surface_set_region( struct window_surface *window_surface, HRGN region )
+{
+    RGNDATA *data;
+    struct x11drv_window_surface *surface = get_x11_surface( window_surface );
+
+    TRACE( "updating surface %p with %p\n", surface, region );
+
+    if (!region)
+    {
+        XSetClipMask( gdi_display, surface->gc, None );
+    }
+    else if ((data = X11DRV_GetRegionData( region, 0 )))
+    {
+        XSetClipRectangles( gdi_display, surface->gc, 0, 0,
+                            (XRectangle *)data->Buffer, data->rdh.nCount, YXBanded );
+        HeapFree( GetProcessHeap(), 0, data );
+    }
+}
+
+/***********************************************************************
  *           x11drv_surface_flush
  */
 static void x11drv_surface_flush( struct window_surface *window_surface )
@@ -1945,6 +1967,7 @@ static const struct window_surface_funcs x11drv_surface_funcs =
     x11drv_surface_unlock,
     x11drv_surface_get_bitmap_info,
     x11drv_surface_get_bounds,
+    x11drv_surface_set_region,
     x11drv_surface_flush,
     x11drv_surface_destroy
 };

@@ -539,6 +539,11 @@ static RECT *dummy_surface_get_bounds( struct window_surface *window_surface )
     return &dummy_bounds;
 }
 
+static void dummy_surface_set_region( struct window_surface *window_surface, HRGN region )
+{
+    /* nothing to do */
+}
+
 static void dummy_surface_flush( struct window_surface *window_surface )
 {
     /* nothing to do */
@@ -555,6 +560,7 @@ static const struct window_surface_funcs dummy_surface_funcs =
     dummy_surface_unlock,
     dummy_surface_get_bitmap_info,
     dummy_surface_get_bounds,
+    dummy_surface_set_region,
     dummy_surface_flush,
     dummy_surface_destroy
 };

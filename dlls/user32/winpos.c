@@ -1941,6 +1941,57 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
 
 
 /***********************************************************************
+ *		update_surface_region
+ */
+static void update_surface_region( HWND hwnd )
+{
+    NTSTATUS status;
+    HRGN region = 0;
+    RGNDATA *data;
+    size_t size = 256;
+    WND *win = WIN_GetPtr( hwnd );
+
+    if (!win || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return;
+    if (!win->surface) goto done;
+
+    do
+    {
+        if (!(data = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( RGNDATA, Buffer[size] )))) goto done;
+
+        SERVER_START_REQ( get_surface_region )
+        {
+            req->window = wine_server_user_handle( hwnd );
+            wine_server_set_reply( req, data->Buffer, size );
+            if (!(status = wine_server_call( req )))
+            {
+                size_t reply_size = wine_server_reply_size( reply );
+                if (reply_size)
+                {
+                    data->rdh.dwSize   = sizeof(data->rdh);
+                    data->rdh.iType    = RDH_RECTANGLES;
+                    data->rdh.nCount   = reply_size / sizeof(RECT);
+                    data->rdh.nRgnSize = reply_size;
+                    region = ExtCreateRegion( NULL, size, data );
+                    OffsetRgn( region, -reply->visible_rect.left, -reply->visible_rect.top );
+                }
+            }
+            else size = reply->total_size;
+        }
+        SERVER_END_REQ;
+        HeapFree( GetProcessHeap(), 0, data );
+    } while (status == STATUS_BUFFER_OVERFLOW);
+
+    if (status) goto done;
+
+    win->surface->funcs->set_region( win->surface, region );
+    if (region) DeleteObject( region );
+
+done:
+    WIN_ReleasePtr( win );
+}
+
+
+/***********************************************************************
  *		set_window_pos
  *
  * Backend implementation of SetWindowPos.
@@ -1949,7 +2000,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
                      const RECT *window_rect, const RECT *client_rect, const RECT *valid_rects )
 {
     WND *win;
-    HWND parent = GetAncestor( hwnd, GA_PARENT );
+    HWND surface_win = 0, parent = GetAncestor( hwnd, GA_PARENT );
     BOOL ret;
     int old_width;
     RECT visible_rect, old_visible_rect, old_window_rect;
@@ -2005,6 +2056,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
             win->visible_rect = visible_rect;
             old_surface       = win->surface;
             win->surface      = new_surface;
+            surface_win       = wine_server_ptr_handle( reply->surface_win );
             if (GetWindowLongW( win->parent, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
             {
                 RECT client;
@@ -2022,6 +2074,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
 
     if (ret)
     {
+        if (surface_win) update_surface_region( surface_win );
         if (old_surface != new_surface ||
             ((swp_flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE) ||
             (swp_flags & (SWP_HIDEWINDOW | SWP_SHOWWINDOW | SWP_STATECHANGED | SWP_FRAMECHANGED)))
