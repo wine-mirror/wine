@@ -456,8 +456,10 @@ DWORD __cdecl svcctl_CreateServiceW(
         return err;
 
     err = parse_dependencies((LPCWSTR)lpDependencies, entry);
-    if (err != ERROR_SUCCESS)
+    if (err != ERROR_SUCCESS) {
+        free_service_entry(entry);
         return err;
+    }
 
     entry->ref_count = 1;
     entry->config.dwServiceType = entry->status.dwServiceType = dwServiceType;
