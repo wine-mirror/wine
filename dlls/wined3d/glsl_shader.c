@@ -3120,6 +3120,14 @@ static void shader_glsl_breakc(const struct wined3d_shader_instruction *ins)
             src0_param.param_str, shader_glsl_get_rel_op(ins->flags), src1_param.param_str);
 }
 
+static void shader_glsl_breakp(const struct wined3d_shader_instruction *ins)
+{
+    struct glsl_src_param src_param;
+
+    shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src_param);
+    shader_addline(ins->ctx->buffer, "if (bool(%s)) break;\n", src_param.param_str);
+}
+
 static void shader_glsl_label(const struct wined3d_shader_instruction *ins)
 {
     shader_addline(ins->ctx->buffer, "}\n");
@@ -5131,7 +5139,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_BEM                   */ shader_glsl_bem,
     /* WINED3DSIH_BREAK                 */ shader_glsl_break,
     /* WINED3DSIH_BREAKC                */ shader_glsl_breakc,
-    /* WINED3DSIH_BREAKP                */ NULL,
+    /* WINED3DSIH_BREAKP                */ shader_glsl_breakp,
     /* WINED3DSIH_CALL                  */ shader_glsl_call,
     /* WINED3DSIH_CALLNZ                */ shader_glsl_callnz,
     /* WINED3DSIH_CMP                   */ shader_glsl_cmp,
