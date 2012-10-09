@@ -1181,9 +1181,13 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
 
     /* Declare loop registers aLx */
-    for (i = 0; i < reg_maps->loop_depth; i++) {
-        shader_addline(buffer, "int aL%u;\n", i);
-        shader_addline(buffer, "int tmpInt%u;\n", i);
+    if (reg_maps->shader_version.major < 4)
+    {
+        for (i = 0; i < reg_maps->loop_depth; ++i)
+        {
+            shader_addline(buffer, "int aL%u;\n", i);
+            shader_addline(buffer, "int tmpInt%u;\n", i);
+        }
     }
 
     /* Temporary variables for matrix operations */
@@ -2954,68 +2958,78 @@ static void shader_glsl_sgn(const struct wined3d_shader_instruction *ins)
 static void shader_glsl_loop(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader_loop_state *loop_state = ins->ctx->loop_state;
+    struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     const struct wined3d_shader *shader = ins->ctx->shader;
     const struct wined3d_shader_lconst *constant;
     struct glsl_src_param src1_param;
     const DWORD *control_values = NULL;
 
-    shader_glsl_add_src_param(ins, &ins->src[1], WINED3DSP_WRITEMASK_ALL, &src1_param);
-
-    /* Try to hardcode the loop control parameters if possible. Direct3D 9 class hardware doesn't support real
-     * varying indexing, but Microsoft designed this feature for Shader model 2.x+. If the loop control is
-     * known at compile time, the GLSL compiler can unroll the loop, and replace indirect addressing with direct
-     * addressing.
-     */
-    if (ins->src[1].reg.type == WINED3DSPR_CONSTINT)
+    if (ins->ctx->reg_maps->shader_version.major < 4)
     {
-        LIST_FOR_EACH_ENTRY(constant, &shader->constantsI, struct wined3d_shader_lconst, entry)
+        shader_glsl_add_src_param(ins, &ins->src[1], WINED3DSP_WRITEMASK_ALL, &src1_param);
+
+        /* Try to hardcode the loop control parameters if possible. Direct3D 9
+         * class hardware doesn't support real varying indexing, but Microsoft
+         * designed this feature for Shader model 2.x+. If the loop control is
+         * known at compile time, the GLSL compiler can unroll the loop, and
+         * replace indirect addressing with direct addressing. */
+        if (ins->src[1].reg.type == WINED3DSPR_CONSTINT)
         {
-            if (constant->idx == ins->src[1].reg.idx)
+            LIST_FOR_EACH_ENTRY(constant, &shader->constantsI, struct wined3d_shader_lconst, entry)
             {
-                control_values = constant->value;
-                break;
+                if (constant->idx == ins->src[1].reg.idx)
+                {
+                    control_values = constant->value;
+                    break;
+                }
             }
         }
-    }
 
-    if (control_values)
-    {
-        struct wined3d_shader_loop_control loop_control;
-        loop_control.count = control_values[0];
-        loop_control.start = control_values[1];
-        loop_control.step = (int)control_values[2];
+        if (control_values)
+        {
+            struct wined3d_shader_loop_control loop_control;
+            loop_control.count = control_values[0];
+            loop_control.start = control_values[1];
+            loop_control.step = (int)control_values[2];
 
-        if (loop_control.step > 0)
-        {
-            shader_addline(ins->ctx->buffer, "for (aL%u = %u; aL%u < (%u * %d + %u); aL%u += %d) {\n",
-                    loop_state->current_depth, loop_control.start,
-                    loop_state->current_depth, loop_control.count, loop_control.step, loop_control.start,
-                    loop_state->current_depth, loop_control.step);
-        }
-        else if (loop_control.step < 0)
-        {
-            shader_addline(ins->ctx->buffer, "for (aL%u = %u; aL%u > (%u * %d + %u); aL%u += %d) {\n",
-                    loop_state->current_depth, loop_control.start,
-                    loop_state->current_depth, loop_control.count, loop_control.step, loop_control.start,
-                    loop_state->current_depth, loop_control.step);
+            if (loop_control.step > 0)
+            {
+                shader_addline(buffer, "for (aL%u = %u; aL%u < (%u * %d + %u); aL%u += %d)\n{\n",
+                        loop_state->current_depth, loop_control.start,
+                        loop_state->current_depth, loop_control.count, loop_control.step, loop_control.start,
+                        loop_state->current_depth, loop_control.step);
+            }
+            else if (loop_control.step < 0)
+            {
+                shader_addline(buffer, "for (aL%u = %u; aL%u > (%u * %d + %u); aL%u += %d)\n{\n",
+                        loop_state->current_depth, loop_control.start,
+                        loop_state->current_depth, loop_control.count, loop_control.step, loop_control.start,
+                        loop_state->current_depth, loop_control.step);
+            }
+            else
+            {
+                shader_addline(buffer, "for (aL%u = %u, tmpInt%u = 0; tmpInt%u < %u; tmpInt%u++)\n{\n",
+                        loop_state->current_depth, loop_control.start, loop_state->current_depth,
+                        loop_state->current_depth, loop_control.count,
+                        loop_state->current_depth);
+            }
         }
         else
         {
-            shader_addline(ins->ctx->buffer, "for (aL%u = %u, tmpInt%u = 0; tmpInt%u < %u; tmpInt%u++) {\n",
-                    loop_state->current_depth, loop_control.start, loop_state->current_depth,
-                    loop_state->current_depth, loop_control.count,
-                    loop_state->current_depth);
+            shader_addline(buffer, "for (tmpInt%u = 0, aL%u = %s.y; tmpInt%u < %s.x; tmpInt%u++, aL%u += %s.z)\n{\n",
+                    loop_state->current_depth, loop_state->current_reg,
+                    src1_param.reg_name, loop_state->current_depth, src1_param.reg_name,
+                    loop_state->current_depth, loop_state->current_reg, src1_param.reg_name);
         }
-    } else {
-        shader_addline(ins->ctx->buffer,
-                "for (tmpInt%u = 0, aL%u = %s.y; tmpInt%u < %s.x; tmpInt%u++, aL%u += %s.z) {\n",
-                loop_state->current_depth, loop_state->current_reg,
-                src1_param.reg_name, loop_state->current_depth, src1_param.reg_name,
-                loop_state->current_depth, loop_state->current_reg, src1_param.reg_name);
+
+        ++loop_state->current_reg;
+    }
+    else
+    {
+        shader_addline(buffer, "for (;;)\n{\n");
     }
 
     ++loop_state->current_depth;
-    ++loop_state->current_reg;
 }
 
 static void shader_glsl_end(const struct wined3d_shader_instruction *ins)
