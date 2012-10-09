@@ -45,6 +45,8 @@ const WCHAR nullW[]   = {'\0'};
 const WCHAR starW[]   = {'*','\0'};
 const WCHAR slashW[]  = {'\\','\0'};
 const WCHAR equalW[]  = {'=','\0'};
+const WCHAR wildcardsW[] = {'*','?','\0'};
+const WCHAR slashstarW[] = {'\\','*','\0'};
 const WCHAR inbuilt[][10] = {
         {'C','A','L','L','\0'},
         {'C','D','\0'},
@@ -372,12 +374,29 @@ void WCMD_choice (const WCHAR * command) {
  * WCMD_copy
  *
  * Copy a file or wildcarded set.
- * FIXME: Add support for a+b+c type syntax
+ * For ascii/binary type copies, it gets complex:
+ *  Syntax on command line is
+ *   ... /a | /b   filename  /a /b {[ + filename /a /b]}  [dest /a /b]
+ *  Where first /a or /b sets 'mode in operation' until another is found
+ *  once another is found, it applies to the file preceeding the /a or /b
+ *  In addition each filename can contain wildcards
+ * To make matters worse, the + may be in the same parameter (ie no whitespace)
+ *  or with whitespace separating it
+ *
+ * ASCII mode on read == read and stop at first EOF
+ * ASCII mode on write == append EOF to destination
+ * Binary == copy as-is
+ *
+ * Design of this is to build up a list of files which will be copied into a
+ * list, then work through the list file by file.
+ * If no destination is specified, it defaults to the name of the first file in
+ * the list, but the current directory.
+ *
  */
 
 void WCMD_copy(WCHAR * command) {
 
-  BOOL    opt_d, opt_v, opt_n, opt_z;
+  BOOL    opt_d, opt_v, opt_n, opt_z, opt_y, opt_noty;
   WCHAR  *thisparam;
   int     argno = 0;
   WCHAR  *rawarg;
@@ -386,18 +405,15 @@ void WCMD_copy(WCHAR * command) {
   int     binarymode = -1;            /* -1 means use the default, 1 is binary, 0 ascii */
   BOOL    concatnextfilename = FALSE; /* True if we have just processed a +             */
   BOOL    anyconcats         = FALSE; /* Have we found any + options                    */
-
-  BOOL force, status;
-  WCHAR outpath[MAX_PATH], srcpath[MAX_PATH], copycmd[4];
-  DWORD len;
+  BOOL    appendfirstsource  = FALSE; /* Use first found filename as destination        */
+  BOOL    writtenoneconcat   = FALSE; /* Remember when the first concatenated file done */
+  BOOL    prompt;                     /* Prompt before overwriting                      */
+  WCHAR   destname[MAX_PATH];         /* Used in calculating the destination name       */
+  BOOL    destisdirectory = FALSE;    /* Is the destination a directory?                */
+  BOOL    status;
+  WCHAR   copycmd[4];
+  DWORD   len;
   static const WCHAR copyCmdW[] = {'C','O','P','Y','C','M','D','\0'};
-  BOOL copyToDir = FALSE;
-  WCHAR srcspec[MAX_PATH];
-  DWORD attribs;
-  WCHAR drive[10];
-  WCHAR dir[MAX_PATH];
-  WCHAR fname[MAX_PATH];
-  WCHAR ext[MAX_PATH];
 
   typedef struct _COPY_FILES
   {
@@ -412,13 +428,17 @@ void WCMD_copy(WCHAR * command) {
   COPY_FILES *thiscopy      = NULL;
   COPY_FILES *prevcopy      = NULL;
 
+  /* Assume we were successful! */
+  errorlevel = 0;
+
   /* If no args supplied at all, report an error */
   if (param1[0] == 0x00) {
     WCMD_output_stderr (WCMD_LoadMessage(WCMD_NOARG));
+    errorlevel = 1;
     return;
   }
 
-  opt_d = opt_v = opt_n = opt_z = FALSE;
+  opt_d = opt_v = opt_n = opt_z = opt_y = opt_noty = FALSE;
 
   /* Walk through all args, building up a list of files to process */
   thisparam = WCMD_parameter(command, argno++, &rawarg, NULL, TRUE);
@@ -435,6 +455,10 @@ void WCMD_copy(WCHAR * command) {
         if (toupperW(*thisparam) == 'D') {
           opt_d = TRUE;
           if (opt_d) WINE_FIXME("copy /D support not implemented yet\n");
+        } else if (toupperW(*thisparam) == 'Y') {
+          opt_y = TRUE;
+        } else if (toupperW(*thisparam) == '-' && toupperW(*(thisparam+1)) == 'Y') {
+          opt_noty = TRUE;
         } else if (toupperW(*thisparam) == 'V') {
           opt_v = TRUE;
           if (opt_v) WINE_FIXME("copy /V support not implemented yet\n");
@@ -567,131 +591,247 @@ void WCMD_copy(WCHAR * command) {
     goto exitreturn;
   }
 
-  /* Convert source into full spec */
-  WINE_TRACE("Copy source (supplied): '%s'\n", wine_dbgstr_w(sourcelist->name));
-  GetFullPathNameW(sourcelist->name, sizeof(srcpath)/sizeof(WCHAR), srcpath, NULL);
-  if (srcpath[strlenW(srcpath) - 1] == '\\')
-      srcpath[strlenW(srcpath) - 1] = '\0';
-
-  if ((strchrW(srcpath,'*') == NULL) && (strchrW(srcpath,'?') == NULL)) {
-    attribs = GetFileAttributesW(srcpath);
-  } else {
-    attribs = 0;
-  }
-  strcpyW(srcspec, srcpath);
-
-  /* If a directory, then add \* on the end when searching */
-  if (attribs & FILE_ATTRIBUTE_DIRECTORY) {
-    strcatW(srcpath, slashW);
-    strcatW(srcspec, slashW);
-    strcatW(srcspec, starW);
-  } else {
-    WCMD_splitpath(srcpath, drive, dir, fname, ext);
-    strcpyW(srcpath, drive);
-    strcatW(srcpath, dir);
-  }
-
-  WINE_TRACE("Copy source (calculated): path: '%s' (Concats: %d)\n",
-             wine_dbgstr_w(srcpath), anyconcats);
-
-  /* Temporarily use param2 to hold destination */
-  /* If no destination supplied, assume current directory */
-  if (destination) {
-    WINE_TRACE("Copy destination (supplied): '%s'\n", wine_dbgstr_w(destination->name));
-    strcpyW(param2, destination->name);
-  } else {
-    WINE_TRACE("Copy destination not supplied\n");
-    strcpyW(param2, dotW);
-  }
-
-  GetFullPathNameW(param2, sizeof(outpath)/sizeof(WCHAR), outpath, NULL);
-  if (outpath[strlenW(outpath) - 1] == '\\')
-      outpath[strlenW(outpath) - 1] = '\0';
-  attribs = GetFileAttributesW(outpath);
-  if (attribs != INVALID_FILE_ATTRIBUTES && (attribs & FILE_ATTRIBUTE_DIRECTORY)) {
-    strcatW (outpath, slashW);
-    copyToDir = TRUE;
-  }
-  WINE_TRACE("Copy destination (calculated): '%s'(%d)\n",
-             wine_dbgstr_w(outpath), copyToDir);
-
-  /* /-Y has the highest priority, then /Y and finally the COPYCMD env. variable */
-  if (strstrW (quals, parmNoY))
-    force = FALSE;
-  else if (strstrW (quals, parmY))
-    force = TRUE;
+  /* Default whether automatic overwriting is on. If we are interactive then
+     we prompt by default, otherwise we overwrite by default
+     /-Y has the highest priority, then /Y and finally the COPYCMD env. variable */
+  if (opt_noty) prompt = TRUE;
+  else if (opt_y) prompt = FALSE;
   else {
     /* By default, we will force the overwrite in batch mode and ask for
      * confirmation in interactive mode. */
-    force = !interactive;
-
+    prompt = interactive;
     /* If COPYCMD is set, then we force the overwrite with /Y and ask for
      * confirmation with /-Y. If COPYCMD is neither of those, then we use the
      * default behavior. */
     len = GetEnvironmentVariableW(copyCmdW, copycmd, sizeof(copycmd)/sizeof(WCHAR));
     if (len && len < (sizeof(copycmd)/sizeof(WCHAR))) {
       if (!lstrcmpiW (copycmd, parmY))
-        force = TRUE;
+        prompt = FALSE;
       else if (!lstrcmpiW (copycmd, parmNoY))
-        force = FALSE;
+        prompt = TRUE;
     }
   }
 
-  /* Loop through all source files */
-  WINE_TRACE("Searching for: '%s'\n", wine_dbgstr_w(srcspec));
-  hff = FindFirstFileW(srcspec, &fd);
-  if (hff != INVALID_HANDLE_VALUE) {
+  /* Calculate the destination now - if none supplied, its current dir +
+     filename of first file in list*/
+  if (destination == NULL) {
+
+    WINE_TRACE("No destination supplied, so need to calculate it\n");
+    strcpyW(destname, dotW);
+    strcatW(destname, slashW);
+
+    destination = HeapAlloc(GetProcessHeap(),0,sizeof(COPY_FILES));
+    if (destination == NULL) goto exitreturn;
+    destination->concatenate = FALSE;           /* Not used for destination */
+    destination->binarycopy  = binarymode;
+    destination->next        = NULL;            /* Not used for destination */
+    destination->name        = NULL;            /* To be filled in          */
+    destisdirectory          = TRUE;
+
+  } else {
+    WCHAR *filenamepart;
+    DWORD  attributes;
+
+    WINE_TRACE("Destination supplied, processing to see if file or directory\n");
+
+    /* Convert to fully qualified path/filename */
+    GetFullPathNameW(destination->name, sizeof(destname)/sizeof(WCHAR), destname, &filenamepart);
+    WINE_TRACE("Full dest name is '%s'\n", wine_dbgstr_w(destname));
+
+    /* If parameter is a directory, ensure it ends in \ */
+    attributes = GetFileAttributesW(destname);
+    if ((destname[strlenW(destname) - 1] == '\\') ||
+        ((attributes != INVALID_FILE_ATTRIBUTES) &&
+         (attributes & FILE_ATTRIBUTE_DIRECTORY))) {
+
+      destisdirectory = TRUE;
+      if (!(destname[strlenW(destname) - 1] == '\\')) strcatW(destname, slashW);
+      WINE_TRACE("Directory, so full name is now '%s'\n", wine_dbgstr_w(destname));
+    }
+  }
+
+  /* Normally, the destination is the current directory unless we are
+     concatenating, in which case its current directory plus first filename.
+     Note that if the
+     In addition by default it is a binary copy unless concatenating, when
+     the copy defaults to an ascii copy (stop at EOF). We do not know the
+     first source part yet (until we search) so flag as needing filling in. */
+
+  if (anyconcats) {
+    /* We have found an a+b type syntax, so destination has to be a filename
+       and we need to default to ascii copying. If we have been supplied a
+       directory as the destination, we need to defer calculating the name   */
+    if (destisdirectory) appendfirstsource = TRUE;
+    if (destination->binarycopy == -1) destination->binarycopy = 0;
+
+  } else if (!destisdirectory) {
+    /* We have been asked to copy to a filename. Default to ascii IF the
+       source contains wildcards (true even if only one match)           */
+    if (destination->binarycopy == -1) {
+      if (strpbrkW(sourcelist->name, wildcardsW) != NULL) {
+        anyconcats = TRUE;  /* We really are concatenating to a single file */
+        destination->binarycopy = 0;
+      } else {
+        destination->binarycopy = 1;
+      }
+    }
+  }
+
+  /* Save away the destination name*/
+  HeapFree(GetProcessHeap(), 0, destination->name);
+  destination->name = WCMD_strdupW(destname);
+  WINE_TRACE("Resolved destination is '%s' (calc later %d)\n",
+             wine_dbgstr_w(destname), appendfirstsource);
+
+  /* Now we need to walk the set of sources, and process each name we come to.
+     If anyconcats is true, we are writing to one file, otherwise we are using
+     the source name each time.
+     If destination exists, prompt for overwrite the first time (if concatenating
+     we ask each time until yes is answered)
+     The first source file we come across must exist (when wildcards expanded)
+     and if concatenating with overwrite prompts, each source file must exist
+     until a yes is answered.                                                    */
+
+  thiscopy = sourcelist;
+  prevcopy = NULL;
+
+  while (thiscopy != NULL) {
+
+    WCHAR  srcpath[MAX_PATH];
+    WCHAR *filenamepart;
+    DWORD  attributes;
+
+    /* If it was not explicit, we now know whehter we are concatenating or not and
+       hence whether to copy as binary or ascii                                    */
+    if (thiscopy->binarycopy == -1) thiscopy->binarycopy = !anyconcats;
+
+    /* Convert to fully qualified path/filename in srcpath, file filenamepart pointing
+       to where the filename portion begins (used for wildcart expansion.              */
+    GetFullPathNameW(thiscopy->name, sizeof(srcpath)/sizeof(WCHAR), srcpath, &filenamepart);
+    WINE_TRACE("Full src name is '%s'\n", wine_dbgstr_w(srcpath));
+
+    /* If parameter is a directory, ensure it ends in \* */
+    attributes = GetFileAttributesW(srcpath);
+    if (srcpath[strlenW(srcpath) - 1] == '\\') {
+
+      /* We need to know where the filename part starts, so append * and
+         recalculate the full resulting path                              */
+      strcatW(thiscopy->name, starW);
+      GetFullPathNameW(thiscopy->name, sizeof(srcpath)/sizeof(WCHAR), srcpath, &filenamepart);
+      WINE_TRACE("Directory, so full name is now '%s'\n", wine_dbgstr_w(srcpath));
+
+    } else if ((strpbrkW(srcpath, wildcardsW) == NULL) &&
+               (attributes != INVALID_FILE_ATTRIBUTES) &&
+               (attributes & FILE_ATTRIBUTE_DIRECTORY)) {
+
+      /* We need to know where the filename part starts, so append \* and
+         recalculate the full resulting path                              */
+      strcatW(thiscopy->name, slashstarW);
+      GetFullPathNameW(thiscopy->name, sizeof(srcpath)/sizeof(WCHAR), srcpath, &filenamepart);
+      WINE_TRACE("Directory, so full name is now '%s'\n", wine_dbgstr_w(srcpath));
+    }
+
+    WINE_TRACE("Copy source (calculated): path: '%s' (Concats: %d)\n",
+                    wine_dbgstr_w(srcpath), anyconcats);
+
+    /* Loop through all source files */
+    WINE_TRACE("Searching for: '%s'\n", wine_dbgstr_w(srcpath));
+    hff = FindFirstFileW(srcpath, &fd);
+    if (hff != INVALID_HANDLE_VALUE) {
       do {
         WCHAR outname[MAX_PATH];
-        WCHAR srcname[MAX_PATH];
-        BOOL  overwrite = force;
-
-        /* Destination is either supplied filename, or source name in
-           supplied destination directory                             */
-        strcpyW(outname, outpath);
-        if (copyToDir) strcatW(outname, fd.cFileName);
-        strcpyW(srcname, srcpath);
-        strcatW(srcname, fd.cFileName);
-
-        WINE_TRACE("Copying from : '%s'\n", wine_dbgstr_w(srcname));
-        WINE_TRACE("Copying to : '%s'\n", wine_dbgstr_w(outname));
+        BOOL  overwrite;
 
         /* Skip . and .., and directories */
         if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-          overwrite = FALSE;
           WINE_TRACE("Skipping directories\n");
-        }
+        } else {
 
-        /* Prompt before overwriting */
-        else if (!overwrite) {
-          attribs = GetFileAttributesW(outname);
-          if (attribs != INVALID_FILE_ATTRIBUTES) {
-            WCHAR* question;
-            question = WCMD_format_string(WCMD_LoadMessage(WCMD_OVERWRITE), outname);
-            overwrite = WCMD_ask_confirm(question, FALSE, NULL);
-            LocalFree(question);
+          /* Build final destination name */
+          strcpyW(outname, destination->name);
+          if (destisdirectory || appendfirstsource) strcatW(outname, fd.cFileName);
+
+          /* Build source name */
+          strcpyW(filenamepart, fd.cFileName);
+
+          /* Do we just overwrite */
+          overwrite = !prompt;
+          if (anyconcats && writtenoneconcat) {
+            overwrite = TRUE;
           }
-          else overwrite = TRUE;
-        }
 
-        /* Do the copy as appropriate */
-        if (overwrite) {
-          status = CopyFileW(srcname, outname, FALSE);
-          if (!status) {
-            WCMD_print_error ();
-            errorlevel = 1;
+          WINE_TRACE("Copying from : '%s'\n", wine_dbgstr_w(srcpath));
+          WINE_TRACE("Copying to : '%s'\n", wine_dbgstr_w(outname));
+          WINE_TRACE("Flags: srcbinary(%d), dstbinary(%d), over(%d), prompt(%d)\n",
+                     thiscopy->binarycopy, destination->binarycopy, overwrite, prompt);
+
+          /* Prompt before overwriting */
+          if (!overwrite) {
+            DWORD attributes = GetFileAttributesW(outname);
+            if (attributes != INVALID_FILE_ATTRIBUTES) {
+              WCHAR* question;
+              question = WCMD_format_string(WCMD_LoadMessage(WCMD_OVERWRITE), outname);
+              overwrite = WCMD_ask_confirm(question, FALSE, NULL);
+              LocalFree(question);
+            }
+            else overwrite = TRUE;
+          }
+
+          /* If we needed tyo save away the first filename, do it */
+          if (appendfirstsource && overwrite) {
+            HeapFree(GetProcessHeap(), 0, destination->name);
+            destination->name = WCMD_strdupW(outname);
+            WINE_TRACE("Final resolved destination name : '%s'\n", wine_dbgstr_w(outname));
+            appendfirstsource = FALSE;
+            destisdirectory = FALSE;
+          }
+
+          /* Do the copy as appropriate */
+          if (overwrite) {
+            if (anyconcats && writtenoneconcat) {
+              if (thiscopy->binarycopy) {
+                WINE_FIXME("Need to concatenate %s to %s (read as binary), will overwrite\n",
+                           wine_dbgstr_w(srcpath), wine_dbgstr_w(outname));
+              } else {
+                WINE_FIXME("Need to concatenate %s to %s (read as ascii), will overwrite\n",
+                           wine_dbgstr_w(srcpath), wine_dbgstr_w(outname));
+              }
+            } else if (!thiscopy->binarycopy) {
+              WINE_FIXME("Need to ascii copy %s to %s - dropping to binary copy\n",
+                         wine_dbgstr_w(srcpath), wine_dbgstr_w(outname));
+            }
+            /* Append EOF if ascii destination and we are not going to add more onto the end */
+            if (!destination->binarycopy && !anyconcats) {
+              WINE_FIXME("Need to ascii copy destination (append EOF)\n");
+            }
+            status = CopyFileW(srcpath, outname, FALSE);
+            if (!status) {
+              WCMD_print_error ();
+              errorlevel = 1;
+            } else {
+              WINE_TRACE("Copied successfully\n");
+              if (anyconcats) writtenoneconcat = TRUE;
+            }
           }
         }
-
       } while (FindNextFileW(hff, &fd) != 0);
       FindClose (hff);
-  } else {
-      WCMD_print_error ();
-      errorlevel = 1;
+    } else {
+      /* Error if the first file was not found */
+      if (!anyconcats || (anyconcats && !writtenoneconcat)) {
+        WCMD_print_error ();
+        errorlevel = 1;
+      }
+    }
+
+    /* Step on to the next supplied source */
+    thiscopy = thiscopy -> next;
   }
 
-  /* We were successful! */
-  errorlevel = 0;
+  /* Append EOF if ascii destination and we were concatenating */
+  if (!destination->binarycopy && anyconcats && writtenoneconcat) {
+    WINE_FIXME("Need to ascii copy destination (append EOF) to concatenated file\n");
+  }
 
   /* Exit out of the routine, freeing any remaing allocated memory */
 exitreturn:
@@ -1407,7 +1547,6 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
      mode, or once for the rest of the time.                                  */
   do {
     WCHAR fullitem[MAX_PATH];
-    static const WCHAR slashstarW[] = {'\\','*','\0'};
 
     /* Save away the starting position for the commands (and offset for the
        first one)                                                           */
