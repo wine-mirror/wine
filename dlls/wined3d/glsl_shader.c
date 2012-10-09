@@ -2909,28 +2909,68 @@ static void shader_glsl_dst(const struct wined3d_shader_instruction *ins)
  */
 static void shader_glsl_sincos(const struct wined3d_shader_instruction *ins)
 {
+    struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     struct glsl_src_param src0_param;
     DWORD write_mask;
 
-    write_mask = shader_glsl_append_dst(ins->ctx->buffer, ins);
-    shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src0_param);
+    if (ins->ctx->reg_maps->shader_version.major < 4)
+    {
+        shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src0_param);
 
-    switch (write_mask) {
-        case WINED3DSP_WRITEMASK_0:
-            shader_addline(ins->ctx->buffer, "cos(%s));\n", src0_param.param_str);
-            break;
+        write_mask = shader_glsl_append_dst(buffer, ins);
+        switch (write_mask)
+        {
+            case WINED3DSP_WRITEMASK_0:
+                shader_addline(buffer, "cos(%s));\n", src0_param.param_str);
+                break;
 
-        case WINED3DSP_WRITEMASK_1:
-            shader_addline(ins->ctx->buffer, "sin(%s));\n", src0_param.param_str);
-            break;
+            case WINED3DSP_WRITEMASK_1:
+                shader_addline(buffer, "sin(%s));\n", src0_param.param_str);
+                break;
 
-        case (WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1):
-            shader_addline(ins->ctx->buffer, "vec2(cos(%s), sin(%s)));\n", src0_param.param_str, src0_param.param_str);
-            break;
+            case (WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1):
+                shader_addline(buffer, "vec2(cos(%s), sin(%s)));\n",
+                        src0_param.param_str, src0_param.param_str);
+                break;
 
-        default:
-            ERR("Write mask should be .x, .y or .xy\n");
-            break;
+            default:
+                ERR("Write mask should be .x, .y or .xy\n");
+                break;
+        }
+
+        return;
+    }
+
+    if (ins->dst[0].reg.type != WINED3DSPR_NULL)
+    {
+
+        if (ins->dst[1].reg.type != WINED3DSPR_NULL)
+        {
+            char dst_mask[6];
+
+            write_mask = shader_glsl_get_write_mask(&ins->dst[0], dst_mask);
+            shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src0_param);
+            shader_addline(buffer, "tmp0%s = sin(%s);\n", dst_mask, src0_param.param_str);
+
+            write_mask = shader_glsl_append_dst_ext(buffer, ins, &ins->dst[1]);
+            shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src0_param);
+            shader_addline(buffer, "cos(%s));\n", src0_param.param_str);
+
+            shader_glsl_append_dst_ext(buffer, ins, &ins->dst[0]);
+            shader_addline(buffer, "tmp0%s);\n", dst_mask);
+        }
+        else
+        {
+            write_mask = shader_glsl_append_dst_ext(buffer, ins, &ins->dst[0]);
+            shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src0_param);
+            shader_addline(buffer, "sin(%s));\n", src0_param.param_str);
+        }
+    }
+    else if (ins->dst[1].reg.type != WINED3DSPR_NULL)
+    {
+        write_mask = shader_glsl_append_dst_ext(buffer, ins, &ins->dst[1]);
+        shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src0_param);
+        shader_addline(buffer, "cos(%s));\n", src0_param.param_str);
     }
 }
 
