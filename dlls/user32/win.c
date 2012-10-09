@@ -431,6 +431,21 @@ static void send_parent_notify( HWND hwnd, UINT msg )
 
 
 /*******************************************************************
+ *		update_window_state
+ *
+ * Trigger an update of the window's driver state and surface.
+ */
+static void update_window_state( HWND hwnd )
+{
+    RECT window_rect, client_rect;
+
+    WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
+    set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
+                    SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW, &window_rect, &client_rect, NULL );
+}
+
+
+/*******************************************************************
  *		get_server_window_text
  *
  * Retrieve the window text from the server.
@@ -718,7 +733,7 @@ HWND WIN_SetOwner( HWND hwnd, HWND owner )
  */
 ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
 {
-    BOOL ok, needs_show = FALSE;
+    BOOL ok, made_visible = FALSE;
     STYLESTRUCT style;
     WND *win = WIN_GetPtr( hwnd );
 
@@ -756,7 +771,7 @@ ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
         /* Some apps try to make their window visible through WM_SETREDRAW.
          * Only do that if the window was never explicitly hidden,
          * because Steam messes with WM_SETREDRAW after hiding its windows. */
-        needs_show = !(win->flags & WIN_HIDDEN) && (style.styleNew & WS_VISIBLE);
+        made_visible = !(win->flags & WIN_HIDDEN) && (style.styleNew & WS_VISIBLE);
         invalidate_dce( win, NULL );
     }
     WIN_ReleasePtr( win );
@@ -764,14 +779,7 @@ ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
     if (!ok) return 0;
 
     USER_Driver->pSetWindowStyle( hwnd, GWL_STYLE, &style );
-    if (needs_show)
-    {
-        RECT window_rect, client_rect;
-        WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
-        set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
-                        SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW,
-                        &window_rect, &client_rect, NULL );
-    }
+    if (made_visible) update_window_state( hwnd );
 
     return style.styleOld;
 }
@@ -2272,7 +2280,7 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, UINT size, BOOL unicod
 LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, BOOL unicode )
 {
     STYLESTRUCT style;
-    BOOL ok, needs_show = FALSE;
+    BOOL ok, made_visible = FALSE;
     LONG_PTR retval = 0;
     WND *wndPtr;
 
@@ -2475,7 +2483,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
     if ((offset == GWL_STYLE && ((style.styleOld ^ style.styleNew) & WS_VISIBLE)) ||
         (offset == GWL_EXSTYLE && ((style.styleOld ^ style.styleNew) & WS_EX_LAYERED)))
     {
-        needs_show = !(wndPtr->flags & WIN_HIDDEN) && (wndPtr->dwStyle & WS_VISIBLE);
+        made_visible = !(wndPtr->flags & WIN_HIDDEN) && (wndPtr->dwStyle & WS_VISIBLE);
         invalidate_dce( wndPtr, NULL );
     }
     WIN_ReleasePtr( wndPtr );
@@ -2487,14 +2495,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
         style.styleOld = retval;
         style.styleNew = newval;
         USER_Driver->pSetWindowStyle( hwnd, offset, &style );
-        if (needs_show)
-        {
-            RECT window_rect, client_rect;
-            WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
-            set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
-                            SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW,
-                            &window_rect, &client_rect, NULL );
-        }
+        if (made_visible) update_window_state( hwnd );
         SendMessageW( hwnd, WM_STYLECHANGED, offset, (LPARAM)&style );
     }
 
@@ -3598,12 +3599,8 @@ BOOL WINAPI SwitchDesktop( HDESK hDesktop)
  */
 BOOL CDECL __wine_set_pixel_format( HWND hwnd, int format )
 {
-    RECT window_rect, client_rect;
-
-    WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
-    return set_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
-                           SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW,
-                           &window_rect, &client_rect, NULL );
+    update_window_state( hwnd );
+    return TRUE;
 }
 
 
