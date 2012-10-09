@@ -3312,7 +3312,8 @@ struct get_window_tree_reply
 struct set_window_pos_request
 {
     struct request_header __header;
-    unsigned int   flags;
+    unsigned short swp_flags;
+    unsigned short paint_flags;
     user_handle_t  handle;
     user_handle_t  previous;
     rectangle_t    window;
@@ -3325,7 +3326,8 @@ struct set_window_pos_reply
     unsigned int   new_style;
     unsigned int   new_ex_style;
 };
-
+#define SET_WINPOS_PAINT_SURFACE 0x01
+#define SET_WINPOS_PIXEL_FORMAT  0x02
 
 
 struct get_window_rectangles_request
@@ -5690,6 +5692,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 435
+#define SERVER_PROTOCOL_VERSION 436
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

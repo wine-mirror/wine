@@ -93,10 +93,15 @@ struct window
     char             extra_bytes[1];  /* extra bytes storage */
 };
 
-#define PAINT_INTERNAL      0x01  /* internal WM_PAINT pending */
-#define PAINT_ERASE         0x02  /* needs WM_ERASEBKGND */
-#define PAINT_NONCLIENT     0x04  /* needs WM_NCPAINT */
-#define PAINT_DELAYED_ERASE 0x08  /* still needs erase after WM_ERASEBKGND */
+/* flags that can be set by the client */
+#define PAINT_HAS_SURFACE        SET_WINPOS_PAINT_SURFACE
+#define PAINT_HAS_PIXEL_FORMAT   SET_WINPOS_PIXEL_FORMAT
+#define PAINT_CLIENT_FLAGS       (PAINT_HAS_SURFACE | PAINT_HAS_PIXEL_FORMAT)
+/* flags only manipulated by the server */
+#define PAINT_INTERNAL           0x0010  /* internal WM_PAINT pending */
+#define PAINT_ERASE              0x0020  /* needs WM_ERASEBKGND */
+#define PAINT_NONCLIENT          0x0040  /* needs WM_NCPAINT */
+#define PAINT_DELAYED_ERASE      0x0080  /* still needs erase after WM_ERASEBKGND */
 
 /* growable array of user handles */
 struct user_handle_array
@@ -920,7 +925,8 @@ static void set_region_client_rect( struct region *region, struct window *win )
 /* get the top-level window to clip against for a given window */
 static inline struct window *get_top_clipping_window( struct window *win )
 {
-    while (win->parent && !is_desktop_window(win->parent)) win = win->parent;
+    while (!(win->paint_flags & PAINT_HAS_SURFACE) && win->parent && !is_desktop_window(win->parent))
+        win = win->parent;
     return win;
 }
 
@@ -2102,7 +2108,7 @@ DECL_HANDLER(set_window_pos)
     rectangle_t window_rect, client_rect, visible_rect;
     struct window *previous = NULL;
     struct window *win = get_window( req->handle );
-    unsigned int flags = req->flags;
+    unsigned int flags = req->swp_flags;
 
     if (!win) return;
     if (!win->parent) flags |= SWP_NOZORDER;  /* no Z order for the desktop */
@@ -2156,6 +2162,8 @@ DECL_HANDLER(set_window_pos)
         mirror_rect( &win->parent->client_rect, &visible_rect );
         mirror_rect( &win->parent->client_rect, &client_rect );
     }
+
+    win->paint_flags = (win->paint_flags & ~PAINT_CLIENT_FLAGS) | (req->paint_flags & PAINT_CLIENT_FLAGS);
 
     if (get_req_data_size() >= 3 * sizeof(rectangle_t))
     {

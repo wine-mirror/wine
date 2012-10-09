@@ -1608,7 +1608,7 @@ BOOL CDECL X11DRV_CreateDesktopWindow( HWND hwnd )
         {
             req->handle        = wine_server_user_handle( hwnd );
             req->previous      = 0;
-            req->flags         = SWP_NOZORDER;
+            req->swp_flags     = SWP_NOZORDER;
             req->window.left   = virtual_screen_rect.left;
             req->window.top    = virtual_screen_rect.top;
             req->window.right  = virtual_screen_rect.right;

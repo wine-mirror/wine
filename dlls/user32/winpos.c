@@ -1978,7 +1978,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     {
         req->handle        = wine_server_user_handle( hwnd );
         req->previous      = wine_server_user_handle( insert_after );
-        req->flags         = swp_flags;
+        req->swp_flags     = swp_flags;
         req->window.left   = window_rect->left;
         req->window.top    = window_rect->top;
         req->window.right  = window_rect->right;
@@ -1993,6 +1993,9 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
             if (!IsRectEmpty( &valid_rects[0] ))
                 wine_server_add_data( req, valid_rects, 2 * sizeof(*valid_rects) );
         }
+        if (new_surface) req->paint_flags |= SET_WINPOS_PAINT_SURFACE;
+        if (win->pixel_format) req->paint_flags |= SET_WINPOS_PIXEL_FORMAT;
+
         if ((ret = !wine_server_call( req )))
         {
             win->dwStyle    = reply->new_style;

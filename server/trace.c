@@ -2815,7 +2815,8 @@ static void dump_get_window_tree_reply( const struct get_window_tree_reply *req 
 
 static void dump_set_window_pos_request( const struct set_window_pos_request *req )
 {
-    fprintf( stderr, " flags=%08x", req->flags );
+    fprintf( stderr, " swp_flags=%04x", req->swp_flags );
+    fprintf( stderr, ", paint_flags=%04x", req->paint_flags );
     fprintf( stderr, ", handle=%08x", req->handle );
     fprintf( stderr, ", previous=%08x", req->previous );
     dump_rectangle( ", window=", &req->window );
