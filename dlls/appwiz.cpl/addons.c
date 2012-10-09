@@ -17,10 +17,12 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdarg.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <errno.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -105,6 +107,10 @@ static const addon_info_t *addon;
 static HWND install_dialog = NULL;
 static LPWSTR url = NULL;
 
+static WCHAR * (CDECL *p_wine_get_dos_file_name)(const char*);
+static const WCHAR kernel32_dllW[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
+
+
 /* SHA definitions are copied from advapi32. They aren't available in headers. */
 
 typedef struct {
@@ -153,13 +159,7 @@ static BOOL sha_check(const WCHAR *file_name)
         sprintf(buf + i*2, "%02x", *((unsigned char*)sha+i));
 
     if(strcmp(buf, addon->sha)) {
-        WCHAR message[256];
-
         WARN("Got %s, expected %s\n", buf, addon->sha);
-
-        if(LoadStringW(hInst, IDS_INVALID_SHA, message, sizeof(message)/sizeof(WCHAR)))
-            MessageBoxW(NULL, message, NULL, MB_ICONERROR);
-
         return FALSE;
     }
 
@@ -201,9 +201,6 @@ static enum install_res install_from_unix_file(const char *dir, const char *subd
     int fd, len;
     enum install_res ret;
 
-    static WCHAR * (CDECL *wine_get_dos_file_name)(const char*);
-    static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
-
     len = strlen(dir);
     file_path = heap_alloc(len+strlen(subdir)+strlen(file_name)+3);
     if(!file_path)
@@ -228,11 +225,8 @@ static enum install_res install_from_unix_file(const char *dir, const char *subd
 
     close(fd);
 
-    if(!wine_get_dos_file_name)
-        wine_get_dos_file_name = (void*)GetProcAddress(GetModuleHandleW(kernel32W), "wine_get_dos_file_name");
-
-    if(wine_get_dos_file_name) { /* Wine UNIX mode */
-	dos_file_name = wine_get_dos_file_name(file_path);
+    if(p_wine_get_dos_file_name) { /* Wine UNIX mode */
+	dos_file_name = p_wine_get_dos_file_name(file_path);
 	if(!dos_file_name) {
 	    ERR("Could not get dos file name of %s\n", debugstr_a(file_path));
             heap_free(file_path);
@@ -332,6 +326,90 @@ static enum install_res install_from_default_dir(void)
     if (ret == INSTALL_NEXT && strcmp(INSTALL_DATADIR, "/usr/share"))
         ret = install_from_unix_file("/usr/share/wine/", addon->subdir_name, addon->file_name);
     return ret;
+}
+
+static WCHAR *get_cache_file_name(BOOL ensure_exists)
+{
+    const char *home_dir = NULL, *xdg_cache_dir;
+    size_t len, size = strlen(addon->file_name) + 7; /* strlen("/wine/"), '\0' */
+    char *cache_file_name;
+    WCHAR *ret;
+
+    /* non-Wine (eg. Windows) cache is currently not supported */
+    if(!p_wine_get_dos_file_name)
+        return NULL;
+
+    xdg_cache_dir = getenv("XDG_CACHE_HOME");
+    if(xdg_cache_dir && *xdg_cache_dir) {
+        size += strlen(xdg_cache_dir);
+    }else {
+        home_dir = getenv("HOME");
+        if(!home_dir)
+            return NULL;
+
+        size += strlen(home_dir) + 8; /* strlen("/.cache/") */
+    }
+
+    cache_file_name = heap_alloc(size);
+    if(!cache_file_name)
+        return NULL;
+
+    if(xdg_cache_dir && *xdg_cache_dir) {
+        len = strlen(xdg_cache_dir);
+        if(len > 1 && xdg_cache_dir[len-1] == '/')
+            len--;
+        memcpy(cache_file_name, xdg_cache_dir, len);
+        cache_file_name[len] = 0;
+    }else {
+        len = strlen(home_dir);
+        memcpy(cache_file_name, home_dir, len);
+        strcpy(cache_file_name+len, "/.cache");
+        len += 7;
+    }
+
+    if(ensure_exists && mkdir(cache_file_name, 0777) && errno != EEXIST) {
+        WARN("%s does not exist and could not be created: %s\n", cache_file_name, strerror(errno));
+        heap_free(cache_file_name);
+        return NULL;
+    }
+
+    strcpy(cache_file_name+len, "/wine");
+    len += 5;
+
+    if(ensure_exists && mkdir(cache_file_name, 0777) && errno != EEXIST) {
+        WARN("%s does not exist and could not be created: %s\n", cache_file_name, strerror(errno));
+        return NULL;
+    }
+
+    cache_file_name[len++] = '/';
+    strcpy(cache_file_name+len, addon->file_name);
+    ret = p_wine_get_dos_file_name(cache_file_name);
+
+    TRACE("%s -> %s\n", cache_file_name, debugstr_w(ret));
+
+    heap_free(cache_file_name);
+    return ret;
+}
+
+static enum install_res install_from_cache(void)
+{
+    WCHAR *cache_file_name;
+    enum install_res res;
+
+    cache_file_name = get_cache_file_name(FALSE);
+    if(!cache_file_name)
+        return INSTALL_NEXT;
+
+    if(!sha_check(cache_file_name)) {
+        WARN("could not validate check sum\n");
+        DeleteFileW(cache_file_name);
+        heap_free(cache_file_name);
+        return INSTALL_NEXT;
+    }
+
+    res = install_file(cache_file_name);
+    heap_free(cache_file_name);
+    return res;
 }
 
 static HRESULT WINAPI InstallCallback_QueryInterface(IBindStatusCallback *iface,
@@ -501,8 +579,23 @@ static DWORD WINAPI download_proc(PVOID arg)
         return 0;
     }
 
-    if(sha_check(tmp_file))
+    if(sha_check(tmp_file)) {
+        WCHAR *cache_file_name;
+
         install_file(tmp_file);
+
+        cache_file_name = get_cache_file_name(TRUE);
+        if(cache_file_name) {
+            MoveFileW(tmp_file, cache_file_name);
+            heap_free(cache_file_name);
+        }
+    }else {
+        WCHAR message[256];
+
+        if(LoadStringW(hInst, IDS_INVALID_SHA, message, sizeof(message)/sizeof(WCHAR)))
+            MessageBoxW(NULL, message, NULL, MB_ICONERROR);
+    }
+
     DeleteFileW(tmp_file);
     EndDialog(install_dialog, 0);
     return 0;
@@ -589,6 +682,8 @@ BOOL install_addon(addon_t addon_type)
 
     addon = addons_info+addon_type;
 
+    p_wine_get_dos_file_name = (void*)GetProcAddress(GetModuleHandleW(kernel32_dllW), "wine_get_dos_file_name");
+
     /*
      * Try to find addon .msi file in following order:
      * - directory stored in $dir_config_key value of HKCU/Wine/Software/$config_key key
@@ -599,6 +694,7 @@ BOOL install_addon(addon_t addon_type)
      */
     if (install_from_registered_dir() == INSTALL_NEXT
         && install_from_default_dir() == INSTALL_NEXT
+        && install_from_cache() == INSTALL_NEXT
         && (url = get_url()))
         DialogBoxW(hInst, addon->dialog_template, 0, installer_proc);
 
