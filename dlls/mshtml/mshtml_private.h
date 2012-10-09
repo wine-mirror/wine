@@ -234,7 +234,7 @@ typedef struct {
 } nsCycleCollectingAutoRefCnt;
 
 typedef struct {
-    void *x[3];
+    void *x[9];
 } nsXPCOMCycleCollectionParticipant;
 
 typedef struct nsCycleCollectionTraversalCallback nsCycleCollectionTraversalCallback;

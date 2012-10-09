@@ -1295,6 +1295,10 @@ void set_script_mode(HTMLOuterWindow *window, SCRIPTMODE mode)
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIWebBrowserSetup_SetProperty(setup, SETUP_ALLOW_JAVASCRIPT,
                 window->scriptmode == SCRIPTMODE_GECKO);
+
+        if(NS_SUCCEEDED(nsres))
+            nsres = nsIWebBrowserSetup_SetProperty(setup, SETUP_DISABLE_NOSCRIPT, TRUE);
+
         nsIWebBrowserSetup_Release(setup);
     }
 
