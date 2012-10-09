@@ -1018,6 +1018,80 @@ error:
 }
 
 
+/* clip all children with a custom pixel format out of the visible region */
+static struct region *clip_pixel_format_children( struct window *parent, struct region *parent_clip,
+                                                  struct region *region, int offset_x, int offset_y )
+{
+    struct window *ptr;
+    struct region *clip = create_empty_region();
+
+    if (!clip) return NULL;
+
+    LIST_FOR_EACH_ENTRY_REV( ptr, &parent->children, struct window, entry )
+    {
+        if (!(ptr->style & WS_VISIBLE)) continue;
+        if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
+
+        /* add the visible rect */
+        set_region_rect( clip, &ptr->visible_rect );
+        if (ptr->win_region && !intersect_window_region( clip, ptr )) break;
+        offset_region( clip, offset_x, offset_y );
+        if (!intersect_region( clip, clip, parent_clip )) break;
+        if (!union_region( region, region, clip )) break;
+
+        /* subtract the client rect if it uses a custom pixel format */
+        set_region_rect( clip, &ptr->client_rect );
+        if (ptr->win_region && !intersect_window_region( clip, ptr )) break;
+        offset_region( clip, offset_x, offset_y );
+        if (!intersect_region( clip, clip, parent_clip )) break;
+        if ((ptr->paint_flags & PAINT_HAS_PIXEL_FORMAT) && !subtract_region( region, region, clip ))
+            break;
+
+        if (!clip_pixel_format_children( ptr, clip, region, offset_x + ptr->client_rect.left,
+                                         offset_y + ptr->client_rect.top ))
+            break;
+    }
+    free_region( clip );
+    return region;
+}
+
+
+/* compute the visible surface region of a window, in parent coordinates */
+static struct region *get_surface_region( struct window *win )
+{
+    struct region *region, *clip;
+    int offset_x, offset_y;
+
+    /* create a region relative to the window itself */
+
+    if (!(region = create_empty_region())) return NULL;
+    if (!(clip = create_empty_region())) goto error;
+    set_region_rect( region, &win->visible_rect );
+    if (win->win_region && !intersect_window_region( region, win )) goto error;
+    set_region_rect( clip, &win->client_rect );
+    if (win->win_region && !intersect_window_region( clip, win )) goto error;
+
+    /* clip children */
+
+    if (!is_desktop_window(win))
+    {
+        offset_x = win->client_rect.left;
+        offset_y = win->client_rect.top;
+    }
+    else offset_x = offset_y = 0;
+
+    if (!clip_pixel_format_children( win, clip, region, offset_x, offset_y )) goto error;
+
+    free_region( clip );
+    return region;
+
+error:
+    if (clip) free_region( clip );
+    free_region( region );
+    return NULL;
+}
+
+
 /* get the window class of a window */
 struct window_class* get_window_class( user_handle_t window )
 {
@@ -2107,7 +2181,7 @@ DECL_HANDLER(set_window_pos)
 {
     rectangle_t window_rect, client_rect, visible_rect;
     struct window *previous = NULL;
-    struct window *win = get_window( req->handle );
+    struct window *top, *win = get_window( req->handle );
     unsigned int flags = req->swp_flags;
 
     if (!win) return;
@@ -2180,6 +2254,9 @@ DECL_HANDLER(set_window_pos)
 
     reply->new_style = win->style;
     reply->new_ex_style = win->ex_style;
+
+    top = get_top_clipping_window( win );
+    if (is_visible( top ) && (top->paint_flags & PAINT_HAS_SURFACE)) reply->surface_win = top->handle;
 }
 
 
@@ -2345,6 +2422,26 @@ DECL_HANDLER(get_visible_region)
         reply->win_rect.right  = win->client_rect.right - win->client_rect.left;
         reply->win_rect.bottom = win->client_rect.bottom - win->client_rect.top;
     }
+}
+
+
+/* get the surface visible region of a window */
+DECL_HANDLER(get_surface_region)
+{
+    struct region *region;
+    struct window *win = get_window( req->window );
+
+    if (!win || !is_visible( win )) return;
+
+    if ((region = get_surface_region( win )))
+    {
+        rectangle_t *data;
+        if (win->parent) map_win_region_to_screen( win->parent, region );
+        data = get_region_data_and_free( region, get_reply_max_size(), &reply->total_size );
+        if (data) set_reply_data_ptr( data, reply->total_size );
+    }
+    reply->visible_rect = win->visible_rect;
+    if (win->parent) client_to_screen_rect( win->parent, &reply->visible_rect );
 }
 
 

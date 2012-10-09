@@ -2401,6 +2401,7 @@ enum message_type
 @REPLY
     unsigned int   new_style;     /* new window style */
     unsigned int   new_ex_style;  /* new window extended style */
+    user_handle_t  surface_win;   /* window that needs a surface update */
 @END
 #define SET_WINPOS_PAINT_SURFACE 0x01  /* window has a paintable surface */
 #define SET_WINPOS_PIXEL_FORMAT  0x02  /* window has a custom pixel format */
@@ -2457,6 +2458,16 @@ enum coords_relative
     user_handle_t  top_win;       /* top window to clip against */
     rectangle_t    top_rect;      /* top window visible rect with screen coords */
     rectangle_t    win_rect;      /* window rect in screen coords */
+    data_size_t    total_size;    /* total size of the resulting region */
+    VARARG(region,rectangles);    /* list of rectangles for the region (in screen coords) */
+@END
+
+
+/* Get the visible surface region of a window */
+@REQ(get_surface_region)
+    user_handle_t  window;        /* handle to the window */
+@REPLY
+    rectangle_t    visible_rect;  /* window visible rect in screen coords */
     data_size_t    total_size;    /* total size of the resulting region */
     VARARG(region,rectangles);    /* list of rectangles for the region (in screen coords) */
 @END

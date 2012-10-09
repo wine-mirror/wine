@@ -269,6 +269,7 @@ DECL_HANDLER(get_window_text);
 DECL_HANDLER(set_window_text);
 DECL_HANDLER(get_windows_offset);
 DECL_HANDLER(get_visible_region);
+DECL_HANDLER(get_surface_region);
 DECL_HANDLER(get_window_region);
 DECL_HANDLER(set_window_region);
 DECL_HANDLER(get_update_region);
@@ -523,6 +524,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_window_text,
     (req_handler)req_get_windows_offset,
     (req_handler)req_get_visible_region,
+    (req_handler)req_get_surface_region,
     (req_handler)req_get_window_region,
     (req_handler)req_set_window_region,
     (req_handler)req_get_update_region,
@@ -1597,7 +1599,8 @@ C_ASSERT( FIELD_OFFSET(struct set_window_pos_request, client) == 40 );
 C_ASSERT( sizeof(struct set_window_pos_request) == 56 );
 C_ASSERT( FIELD_OFFSET(struct set_window_pos_reply, new_style) == 8 );
 C_ASSERT( FIELD_OFFSET(struct set_window_pos_reply, new_ex_style) == 12 );
-C_ASSERT( sizeof(struct set_window_pos_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct set_window_pos_reply, surface_win) == 16 );
+C_ASSERT( sizeof(struct set_window_pos_reply) == 24 );
 C_ASSERT( FIELD_OFFSET(struct get_window_rectangles_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_window_rectangles_request, relative) == 16 );
 C_ASSERT( sizeof(struct get_window_rectangles_request) == 24 );
@@ -1625,6 +1628,11 @@ C_ASSERT( FIELD_OFFSET(struct get_visible_region_reply, top_rect) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_visible_region_reply, win_rect) == 28 );
 C_ASSERT( FIELD_OFFSET(struct get_visible_region_reply, total_size) == 44 );
 C_ASSERT( sizeof(struct get_visible_region_reply) == 48 );
+C_ASSERT( FIELD_OFFSET(struct get_surface_region_request, window) == 12 );
+C_ASSERT( sizeof(struct get_surface_region_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_surface_region_reply, visible_rect) == 8 );
+C_ASSERT( FIELD_OFFSET(struct get_surface_region_reply, total_size) == 24 );
+C_ASSERT( sizeof(struct get_surface_region_reply) == 32 );
 C_ASSERT( FIELD_OFFSET(struct get_window_region_request, window) == 12 );
 C_ASSERT( sizeof(struct get_window_region_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_window_region_reply, total_size) == 8 );
