@@ -74,6 +74,8 @@ static const WCHAR class_stdregprovW[] =
 static const WCHAR class_videocontrollerW[] =
     {'W','i','n','3','2','_','V','i','d','e','o','C','o','n','t','r','o','l','l','e','r',0};
 
+static const WCHAR prop_adaptertypeW[] =
+    {'A','d','a','p','t','e','r','T','y','p','e',0};
 static const WCHAR prop_acceptpauseW[] =
     {'A','c','c','e','p','t','P','a','u','s','e',0};
 static const WCHAR prop_acceptstopW[] =
@@ -249,6 +251,7 @@ static const struct column col_logicaldisk[] =
 };
 static const struct column col_networkadapter[] =
 {
+    { prop_adaptertypeW,         CIM_STRING },
     { prop_deviceidW,            CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_interfaceindexW,      CIM_UINT32, VT_I4 },
     { prop_macaddressW,          CIM_STRING|COL_FLAG_DYNAMIC },
@@ -422,6 +425,7 @@ struct record_logicaldisk
 };
 struct record_networkadapter
 {
+    const WCHAR *adaptertype;
     const WCHAR *device_id;
     INT32        interface_index;
     const WCHAR *mac_address;
@@ -711,6 +715,23 @@ static WCHAR *get_mac_address( const BYTE *addr, DWORD len )
     sprintfW( ret, fmtW, addr[0], addr[1], addr[2], addr[3], addr[4], addr[5] );
     return ret;
 }
+static const WCHAR *get_adaptertype( DWORD type )
+{
+    static const WCHAR ethernetW[] = {'E','t','h','e','r','n','e','t',' ','8','0','2','.','3',0};
+    static const WCHAR wirelessW[] = {'W','i','r','e','l','e','s','s',0};
+    static const WCHAR firewireW[] = {'1','3','9','4',0};
+    static const WCHAR tunnelW[]   = {'T','u','n','n','e','l',0};
+
+    switch (type)
+    {
+    case IF_TYPE_ETHERNET_CSMACD: return ethernetW;
+    case IF_TYPE_IEEE80211:       return wirelessW;
+    case IF_TYPE_IEEE1394:        return firewireW;
+    case IF_TYPE_TUNNEL:          return tunnelW;
+    default: break;
+    }
+    return NULL;
+}
 
 static void fill_networkadapter( struct table *table )
 {
@@ -740,6 +761,7 @@ static void fill_networkadapter( struct table *table )
     {
         rec = (struct record_networkadapter *)(table->data + offset);
         sprintfW( device_id, fmtW, aa->u.s.IfIndex );
+        rec->adaptertype          = get_adaptertype( aa->IfType );
         rec->device_id            = heap_strdupW( device_id );
         rec->interface_index      = aa->u.s.IfIndex;
         rec->mac_address          = get_mac_address( aa->PhysicalAddress, aa->PhysicalAddressLength );
