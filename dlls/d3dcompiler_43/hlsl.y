@@ -320,7 +320,7 @@ enum loop_type
 };
 
 static struct list *create_loop(enum loop_type type, struct list *init, struct list *cond,
-        struct list *iter, struct list *body, struct source_location *loc)
+        struct hlsl_ir_node *iter, struct list *body, struct source_location *loc)
 {
     struct list *list = NULL;
     struct hlsl_ir_loop *loop = NULL;
@@ -355,14 +355,13 @@ static struct list *create_loop(enum loop_type type, struct list *init, struct l
     list_move_tail(loop->body, body);
 
     if (iter)
-        list_move_tail(loop->body, iter);
+        list_add_tail(loop->body, &iter->entry);
 
     if (type == LOOP_DO_WHILE)
         list_add_tail(loop->body, &cond_jump->node.entry);
 
     d3dcompiler_free(init);
     d3dcompiler_free(cond);
-    d3dcompiler_free(iter);
     d3dcompiler_free(body);
     return list;
 
@@ -375,7 +374,7 @@ oom:
     d3dcompiler_free(list);
     free_instr_list(init);
     free_instr_list(cond);
-    free_instr_list(iter);
+    free_instr(iter);
     free_instr_list(body);
     return NULL;
 }
@@ -1651,7 +1650,7 @@ loop_statement:           KW_WHILE '(' expr ')' statement
                                 set_location(&loc, &@1);
                                 $$ = create_loop(LOOP_DO_WHILE, NULL, cond, NULL, $2, &loc);
                             }
-                        | KW_FOR '(' scope_start expr_statement expr_statement expr_statement ')' statement
+                        | KW_FOR '(' scope_start expr_statement expr_statement expr ')' statement
                             {
                                 struct source_location loc;
 
@@ -1659,7 +1658,7 @@ loop_statement:           KW_WHILE '(' expr ')' statement
                                 $$ = create_loop(LOOP_FOR, $4, $5, $6, $8, &loc);
                                 pop_scope(&hlsl_ctx);
                             }
-                        | KW_FOR '(' scope_start declaration expr_statement expr_statement ')' statement
+                        | KW_FOR '(' scope_start declaration expr_statement expr ')' statement
                             {
                                 struct source_location loc;
 
