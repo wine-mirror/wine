@@ -2238,6 +2238,7 @@ static void shader_glsl_relop(const struct wined3d_shader_instruction *ins)
         {
             case WINED3DSIH_EQ:  op = "equal"; break;
             case WINED3DSIH_GE:  op = "greaterThanEqual"; break;
+            case WINED3DSIH_IGE: op = "greaterThanEqual"; break;
             default:
                 op = "<unhandled operator>";
                 ERR("Unhandled opcode %#x.\n", ins->handler_idx);
@@ -2253,6 +2254,7 @@ static void shader_glsl_relop(const struct wined3d_shader_instruction *ins)
         {
             case WINED3DSIH_EQ:  op = "=="; break;
             case WINED3DSIH_GE:  op = ">="; break;
+            case WINED3DSIH_IGE: op = ">="; break;
             default:
                 op = "<unhandled operator>";
                 ERR("Unhandled opcode %#x.\n", ins->handler_idx);
@@ -5279,7 +5281,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_IEQ                   */ NULL,
     /* WINED3DSIH_IF                    */ shader_glsl_if,
     /* WINED3DSIH_IFC                   */ shader_glsl_ifc,
-    /* WINED3DSIH_IGE                   */ NULL,
+    /* WINED3DSIH_IGE                   */ shader_glsl_relop,
     /* WINED3DSIH_IMUL                  */ NULL,
     /* WINED3DSIH_ITOF                  */ NULL,
     /* WINED3DSIH_LABEL                 */ shader_glsl_label,
