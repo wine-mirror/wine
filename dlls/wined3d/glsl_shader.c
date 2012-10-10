@@ -2218,6 +2218,50 @@ static void shader_glsl_binop(const struct wined3d_shader_instruction *ins)
     shader_addline(buffer, "%s %c %s);\n", src0_param.param_str, op, src1_param.param_str);
 }
 
+static void shader_glsl_relop(const struct wined3d_shader_instruction *ins)
+{
+    struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
+    struct glsl_src_param src0_param;
+    struct glsl_src_param src1_param;
+    unsigned int mask_size;
+    DWORD write_mask;
+    const char *op;
+
+    write_mask = shader_glsl_append_dst(buffer, ins);
+    mask_size = shader_glsl_get_write_mask_size(write_mask);
+    shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src0_param);
+    shader_glsl_add_src_param(ins, &ins->src[1], write_mask, &src1_param);
+
+    if (mask_size > 1)
+    {
+        switch (ins->handler_idx)
+        {
+            case WINED3DSIH_EQ:  op = "equal"; break;
+            default:
+                op = "<unhandled operator>";
+                ERR("Unhandled opcode %#x.\n", ins->handler_idx);
+                break;
+        }
+
+        shader_addline(buffer, "uvec%u(%s(%s, %s)) * 0xffffffffu);\n",
+                mask_size, op, src0_param.param_str, src1_param.param_str);
+    }
+    else
+    {
+        switch (ins->handler_idx)
+        {
+            case WINED3DSIH_EQ:  op = "=="; break;
+            default:
+                op = "<unhandled operator>";
+                ERR("Unhandled opcode %#x.\n", ins->handler_idx);
+                break;
+        }
+
+        shader_addline(buffer, "%s %s %s ? 0xffffffffu : 0u);\n",
+                src0_param.param_str, op, src1_param.param_str);
+    }
+}
+
 /* Process the WINED3DSIO_MOV opcode using GLSL (dst = src) */
 static void shader_glsl_mov(const struct wined3d_shader_instruction *ins)
 {
@@ -5223,7 +5267,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_ENDIF                 */ shader_glsl_end,
     /* WINED3DSIH_ENDLOOP               */ shader_glsl_end,
     /* WINED3DSIH_ENDREP                */ shader_glsl_end,
-    /* WINED3DSIH_EQ                    */ NULL,
+    /* WINED3DSIH_EQ                    */ shader_glsl_relop,
     /* WINED3DSIH_EXP                   */ shader_glsl_map2gl,
     /* WINED3DSIH_EXPP                  */ shader_glsl_expp,
     /* WINED3DSIH_FRC                   */ shader_glsl_map2gl,
