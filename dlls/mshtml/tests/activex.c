@@ -2297,7 +2297,7 @@ static IHTMLDocument2 *create_document(void)
     return doc;
 }
 
-static IHTMLDocument2 *create_doc(const char *str, BOOL *b)
+static IHTMLDocument2 *create_doc(const char *str)
 {
     IHTMLDocument2 *doc;
     MSG msg;
@@ -2307,7 +2307,7 @@ static IHTMLDocument2 *create_doc(const char *str, BOOL *b)
     doc_load_string(doc, str);
     do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
 
-    while((!doc_complete || (b && !*b)) && GetMessage(&msg, NULL, 0, 0)) {
+    while(!doc_complete && GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
@@ -2375,11 +2375,6 @@ static void test_flash_ax(void)
 
     init_test(TEST_FLASH);
 
-    /*
-     * We pump messages until both document is loaded and plugin instance is created.
-     * Pumping until document is loaded should be enough, but Gecko loads plugins
-     * asynchronously and until we'll work around it, we need this hack.
-     */
     SET_EXPECT(CreateInstance);
     SET_EXPECT(FreezeEvents_TRUE);
     SET_EXPECT(QuickActivate);
@@ -2390,7 +2385,7 @@ static void test_flash_ax(void)
     SET_EXPECT(GetExtent);
     SET_EXPECT(DoVerb);
 
-    doc = create_doc(object_ax_str, &called_CreateInstance);
+    doc = create_doc(object_ax_str);
 
     CHECK_CALLED(CreateInstance);
     todo_wine
@@ -2449,7 +2444,7 @@ static void test_noquickact_ax(void)
     SET_EXPECT(GetExtent);
     SET_EXPECT(DoVerb);
 
-    doc = create_doc(object_ax_str, &called_CreateInstance);
+    doc = create_doc(object_ax_str);
 
     CHECK_CALLED(CreateInstance);
     todo_wine CHECK_CALLED(FreezeEvents_TRUE);
@@ -2482,11 +2477,6 @@ static void test_event_binding(void)
 
     init_test(TEST_FLASH);
 
-    /*
-     * We pump messages until both document is loaded and plugin instance is created.
-     * Pumping until document is loaded should be enough, but Gecko loads plugins
-     * asynchronously and until we'll work around it, we need this hack.
-     */
     SET_EXPECT(CreateInstance);
     SET_EXPECT(FreezeEvents_TRUE);
     SET_EXPECT(QuickActivate);
@@ -2502,7 +2492,7 @@ static void test_event_binding(void)
     SET_EXPECT(FindConnectionPoint);
     SET_EXPECT(Advise);
 
-    doc = create_doc(event_binding_str, &called_CreateInstance);
+    doc = create_doc(event_binding_str);
 
     CHECK_CALLED(CreateInstance);
     todo_wine
@@ -2521,25 +2511,6 @@ static void test_event_binding(void)
     /* Set in DoVerb */
     CHECK_CALLED(InPlaceObject_GetWindow);
     CHECK_CALLED(SetObjectRects);
-
-    /* FIXME: to be removed once we have support for synchronous plugin loading (planned for Wine Gecko 1.8) */
-    if(!called_GetClassInfo) {
-        todo_wine ok(0, "GetClassInfo not called\n");
-
-        CLEAR_CALLED(GetClassInfo);
-        CLEAR_CALLED(OnAmbientPropertyChange_UNKNOWN);
-        CLEAR_CALLED(FindConnectionPoint);
-        CLEAR_CALLED(Advise);
-
-        SET_EXPECT(InPlaceDeactivate);
-        SET_EXPECT(Close);
-        SET_EXPECT(SetClientSite_NULL);
-        release_doc(doc);
-        CHECK_CALLED(InPlaceDeactivate);
-        CHECK_CALLED(Close);
-        CHECK_CALLED(SetClientSite_NULL);
-        return;
-    }
 
     CHECK_CALLED(GetClassInfo);
     todo_wine
@@ -2571,7 +2542,7 @@ static void test_nooleobj_ax(void)
     SET_EXPECT(CreateInstance);
     SET_EXPECT(Invoke_READYSTATE);
 
-    doc = create_doc(object_ax_str, &called_CreateInstance);
+    doc = create_doc(object_ax_str);
 
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(Invoke_READYSTATE);
