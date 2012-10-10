@@ -241,6 +241,11 @@ static void destroy_record( struct record *record )
     {
         if (record->fields[i].type == CIM_STRING || record->fields[i].type == CIM_DATETIME)
             heap_free( record->fields[i].u.sval );
+        else if ((record->fields[i].type & CIM_FLAG_ARRAY) && record->fields[i].u.aval)
+        {
+            heap_free( record->fields[i].u.aval->ptr );
+            heap_free( record->fields[i].u.aval );
+        }
     }
     heap_free( record->fields );
     heap_free( record );
@@ -327,6 +332,12 @@ static HRESULT record_get_value( const struct record *record, UINT index, VARIAN
 {
     if (type) *type = record->fields[index].type;
 
+    if (record->fields[index].type & CIM_FLAG_ARRAY)
+    {
+        V_VT( var ) = VT_ARRAY;
+        V_ARRAY( var ) = to_safearray( record->fields[index].u.aval, record->fields[index].type & COL_TYPE_MASK );
+        return S_OK;
+    }
     switch (record->fields[index].type)
     {
     case CIM_STRING:
@@ -383,9 +394,14 @@ static HRESULT record_set_value( struct record *record, UINT index, VARIANT *var
     CIMTYPE type;
     HRESULT hr;
 
-    if ((hr = variant_to_longlong( var, &val, &type )) != S_OK) return hr;
+    if ((hr = to_longlong( var, &val, &type )) != S_OK) return hr;
     if (type != record->fields[index].type) return WBEM_E_TYPE_MISMATCH;
 
+    if (type & CIM_FLAG_ARRAY)
+    {
+        record->fields[index].u.aval = (struct array *)(INT_PTR)val;
+        return S_OK;
+    }
     switch (type)
     {
     case CIM_STRING:

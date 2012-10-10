@@ -99,7 +99,7 @@ HRESULT get_value( const struct table *table, UINT row, UINT column, LONGLONG *v
 
     if (table->columns[column].type & CIM_FLAG_ARRAY)
     {
-        *val = (LONGLONG)(INT_PTR)*(const void **)ptr;
+        *val = (INT_PTR)*(const void **)ptr;
         return S_OK;
     }
     switch (table->columns[column].type & COL_TYPE_MASK)
@@ -109,7 +109,7 @@ HRESULT get_value( const struct table *table, UINT row, UINT column, LONGLONG *v
         break;
     case CIM_DATETIME:
     case CIM_STRING:
-        *val = (LONGLONG)(INT_PTR)*(const WCHAR **)ptr;
+        *val = (INT_PTR)*(const WCHAR **)ptr;
         break;
     case CIM_SINT16:
         *val = *(const INT16 *)ptr;

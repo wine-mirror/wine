@@ -227,7 +227,7 @@ static HRESULT eval_cond( const struct table *table, UINT row, const struct expr
     case EXPR_PROPVAL:
         return eval_propval( table, row, cond->u.propval, val );
     case EXPR_SVAL:
-        *val = (LONGLONG)(INT_PTR)cond->u.sval;
+        *val = (INT_PTR)cond->u.sval;
         return S_OK;
     case EXPR_IVAL:
     case EXPR_BVAL:
@@ -551,42 +551,95 @@ static HRESULT get_system_propval( const struct view *view, UINT index, const WC
     return WBEM_E_NOT_FOUND;
 }
 
-static void set_variant( VARTYPE vartype, LONGLONG val, BSTR val_bstr, VARIANT *ret )
+VARTYPE to_vartype( CIMTYPE type )
 {
-    switch (vartype)
+    switch (type)
     {
-    case VT_BOOL:
-        V_VT( ret ) = VT_BOOL;
-        V_BOOL( ret ) = val;
-        return;
-    case VT_BSTR:
-        V_VT( ret ) = VT_BSTR;
-        V_BSTR( ret ) = val_bstr;
-        return;
-    case VT_I2:
-        V_VT( ret ) = VT_I2;
-        V_I2( ret ) = val;
-        return;
-    case VT_UI2:
-        V_VT( ret ) = VT_UI2;
-        V_UI2( ret ) = val;
-        return;
-    case VT_I4:
-        V_VT( ret ) = VT_I4;
-        V_I4( ret ) = val;
-        return;
-    case VT_UI4:
-        V_VT( ret ) = VT_UI4;
-        V_UI4( ret ) = val;
-        return;
-    case VT_NULL:
-        V_VT( ret ) = VT_NULL;
-        return;
+    case CIM_BOOLEAN:  return VT_BOOL;
+    case CIM_STRING:
+    case CIM_DATETIME: return VT_BSTR;
+    case CIM_SINT16:   return VT_I2;
+    case CIM_UINT16:   return VT_UI2;
+    case CIM_SINT32:   return VT_I4;
+    case CIM_UINT32:   return VT_UI4;
+    case CIM_SINT64:   return VT_I8;
+    case CIM_UINT64:   return VT_UI8;
     default:
-        ERR("unhandled variant type %u\n", vartype);
+        ERR("unhandled type %u\n", type);
+        break;
+    }
+    return 0;
+}
+
+SAFEARRAY *to_safearray( const struct array *array, CIMTYPE type )
+{
+    SAFEARRAY *ret;
+    UINT size = get_type_size( type );
+    VARTYPE vartype = to_vartype( type );
+    LONG i;
+
+    if (!(ret = SafeArrayCreateVector( vartype, 0, array->count ))) return NULL;
+
+    for (i = 0; i < array->count; i++)
+    {
+        void *ptr = (char *)array->ptr + i * size;
+        if (vartype == VT_BSTR)
+        {
+            BSTR str = SysAllocString( *(const WCHAR **)ptr );
+            if (!str || SafeArrayPutElement( ret, &i, str ) != S_OK)
+            {
+                SysFreeString( str );
+                SafeArrayDestroy( ret );
+                return NULL;
+            }
+        }
+        else if (SafeArrayPutElement( ret, &i, ptr ) != S_OK)
+        {
+            SafeArrayDestroy( ret );
+            return NULL;
+        }
+    }
+    return ret;
+}
+
+static void set_variant( VARTYPE type, LONGLONG val, void *val_ptr, VARIANT *ret )
+{
+    if (type & VT_ARRAY)
+    {
+        V_VT( ret ) = type;
+        V_ARRAY( ret ) = val_ptr;
         return;
     }
+    switch (type)
+    {
+    case VT_BOOL:
+        V_BOOL( ret ) = val;
+        break;
+    case VT_BSTR:
+        V_BSTR( ret ) = val_ptr;
+        break;
+    case VT_I2:
+        V_I2( ret ) = val;
+        break;
+    case VT_UI2:
+        V_UI2( ret ) = val;
+        break;
+    case VT_I4:
+        V_I4( ret ) = val;
+        break;
+    case VT_UI4:
+        V_UI4( ret ) = val;
+        break;
+    case VT_NULL:
+        break;
+    default:
+        ERR("unhandled variant type %u\n", type);
+        return;
+    }
+    V_VT( ret ) = type;
 }
+
+#define CIM_TYPE_MASK 0xfff
 
 HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VARIANT *ret,
                      CIMTYPE *type, LONG *flavor )
@@ -594,7 +647,7 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
     HRESULT hr;
     UINT column, row = view->result[index];
     VARTYPE vartype;
-    BSTR val_bstr = NULL;
+    void *val_ptr = NULL;
     LONGLONG val;
 
     if (is_system_prop( name )) return get_system_propval( view, index, name, ret, type, flavor );
@@ -608,6 +661,14 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
     hr = get_value( view->table, row, column, &val );
     if (hr != S_OK) return hr;
 
+    if (view->table->columns[column].type & CIM_FLAG_ARRAY)
+    {
+        CIMTYPE basetype = view->table->columns[column].type & CIM_TYPE_MASK;
+
+        val_ptr = to_safearray( (const struct array *)(INT_PTR)val, basetype );
+        if (!vartype) vartype = to_vartype( basetype ) | VT_ARRAY;
+        goto done;
+    }
     switch (view->table->columns[column].type & COL_TYPE_MASK)
     {
     case CIM_BOOLEAN:
@@ -618,7 +679,7 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
         if (val)
         {
             vartype = VT_BSTR;
-            val_bstr = SysAllocString( (const WCHAR *)(INT_PTR)val );
+            val_ptr = SysAllocString( (const WCHAR *)(INT_PTR)val );
         }
         else
             vartype = VT_NULL;
@@ -637,27 +698,89 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
         break;
     case CIM_SINT64:
         vartype = VT_BSTR;
-        val_bstr = get_value_bstr( view->table, row, column );
+        val_ptr = get_value_bstr( view->table, row, column );
         break;
     case CIM_UINT64:
         vartype = VT_BSTR;
-        val_bstr = get_value_bstr( view->table, row, column );
+        val_ptr = get_value_bstr( view->table, row, column );
         break;
     default:
         ERR("unhandled column type %u\n", view->table->columns[column].type);
         return WBEM_E_FAILED;
     }
-    set_variant( vartype, val, val_bstr, ret );
+
+done:
+    set_variant( vartype, val, val_ptr, ret );
     if (type) *type = view->table->columns[column].type & COL_TYPE_MASK;
     if (flavor) *flavor = 0;
     return S_OK;
 }
 
-HRESULT variant_to_longlong( VARIANT *var, LONGLONG *val, CIMTYPE *type )
+static CIMTYPE to_cimtype( VARTYPE type )
+{
+    switch (type)
+    {
+    case VT_BOOL:  return CIM_BOOLEAN;
+    case VT_BSTR:  return CIM_STRING;
+    case VT_I2:    return CIM_SINT16;
+    case VT_UI2:   return CIM_UINT16;
+    case VT_I4:    return CIM_SINT32;
+    case VT_UI4:   return CIM_UINT32;
+    case VT_I8:    return CIM_SINT64;
+    case VT_UI8:   return CIM_UINT64;
+    default:
+        ERR("unhandled type %u\n", type);
+        break;
+    }
+    return 0;
+}
+
+static struct array *to_array( VARIANT *var, CIMTYPE *type )
+{
+    struct array *ret;
+    LONG bound, i;
+    VARTYPE vartype;
+    CIMTYPE basetype;
+    UINT size;
+
+    if (SafeArrayGetVartype( V_ARRAY( var ), &vartype ) != S_OK) return NULL;
+    if (!(basetype = to_cimtype( vartype ))) return NULL;
+    if (SafeArrayGetUBound( V_ARRAY( var ), 1, &bound ) != S_OK) return NULL;
+    if (!(ret = heap_alloc( sizeof(struct array) ))) return NULL;
+
+    ret->count = bound + 1;
+    size = get_type_size( basetype );
+    if (!(ret->ptr = heap_alloc( ret->count * size )))
+    {
+        heap_free( ret );
+        return NULL;
+    }
+    for (i = 0; i < ret->count; i++)
+    {
+        if (SafeArrayGetElement( V_ARRAY( var ), &i, (char *)ret->ptr + i * size ) != S_OK)
+        {
+            if (vartype == VT_BSTR)
+                for (i--; i >= 0; i--) SysFreeString( *(BSTR *)(char *)ret->ptr + i * size );
+            heap_free( ret->ptr );
+            heap_free( ret );
+            return NULL;
+        }
+    }
+    *type = basetype | CIM_FLAG_ARRAY;
+    return ret;
+}
+
+HRESULT to_longlong( VARIANT *var, LONGLONG *val, CIMTYPE *type )
 {
     if (!var)
     {
         *val = 0;
+        return S_OK;
+    }
+    if (V_VT( var ) & VT_ARRAY)
+    {
+        *val = (INT_PTR)to_array( var, type );
+        if (!*val) return E_OUTOFMEMORY;
         return S_OK;
     }
     switch (V_VT( var ))
@@ -712,7 +835,7 @@ HRESULT put_propval( const struct view *view, UINT index, const WCHAR *name, VAR
     if (is_method( view->table, column ) || !(view->table->columns[column].type & COL_FLAG_DYNAMIC))
         return WBEM_E_FAILED;
 
-    hr = variant_to_longlong( var, &val, &type );
+    hr = to_longlong( var, &val, &type );
     if (hr != S_OK) return hr;
 
     return set_value( view->table, row, column, val, type );

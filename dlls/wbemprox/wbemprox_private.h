@@ -67,6 +67,12 @@ struct property
     const struct property *next;
 };
 
+struct array
+{
+    UINT count;
+    void *ptr;
+};
+
 struct field
 {
     UINT type;
@@ -74,6 +80,7 @@ struct field
     {
         LONGLONG ival;
         WCHAR *sval;
+        struct array *aval;
     } u;
 };
 
@@ -168,7 +175,8 @@ HRESULT get_method( const struct table *, const WCHAR *, class_method ** ) DECLS
 HRESULT get_propval( const struct view *, UINT, const WCHAR *, VARIANT *,
                      CIMTYPE *, LONG * ) DECLSPEC_HIDDEN;
 HRESULT put_propval( const struct view *, UINT, const WCHAR *, VARIANT *, CIMTYPE ) DECLSPEC_HIDDEN;
-HRESULT variant_to_longlong( VARIANT *, LONGLONG *, CIMTYPE * ) DECLSPEC_HIDDEN;
+HRESULT to_longlong( VARIANT *, LONGLONG *, CIMTYPE * ) DECLSPEC_HIDDEN;
+SAFEARRAY *to_safearray( const struct array *, CIMTYPE ) DECLSPEC_HIDDEN;
 HRESULT get_properties( const struct view *, SAFEARRAY ** ) DECLSPEC_HIDDEN;
 HRESULT get_object( const WCHAR *, IWbemClassObject ** ) DECLSPEC_HIDDEN;
 BSTR get_method_name( const WCHAR *, UINT ) DECLSPEC_HIDDEN;
