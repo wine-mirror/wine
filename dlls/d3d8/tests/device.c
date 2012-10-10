@@ -168,7 +168,7 @@ static void check_mipmap_levels(IDirect3DDevice8 *device, UINT width, UINT heigh
     } else
         trace("CreateTexture failed: %#08x\n", hr);
 
-    if (texture) IDirect3DDevice8_Release( texture );
+    if (texture) IDirect3DBaseTexture8_Release( texture );
 }
 
 static void test_mipmap_levels(void)
