@@ -662,6 +662,7 @@ get_subtests (const char *tempdir, struct wine_test *test, LPSTR res_name)
     if (status == -2)
     {
         report (R_ERROR, "Cannot run %s error %u", test->exename, err);
+        CloseHandle( subfile );
         goto quit;
     }
 
