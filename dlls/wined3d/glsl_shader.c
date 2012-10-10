@@ -2205,6 +2205,7 @@ static void shader_glsl_binop(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_IADD: op = '+'; break;
         case WINED3DSIH_MUL: op = '*'; break;
         case WINED3DSIH_SUB: op = '-'; break;
+        case WINED3DSIH_XOR: op = '^'; break;
         default:
             op = ' ';
             FIXME("Opcode %#x not yet handled in GLSL\n", ins->handler_idx);
@@ -5299,7 +5300,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_UDIV                  */ NULL,
     /* WINED3DSIH_USHR                  */ NULL,
     /* WINED3DSIH_UTOF                  */ NULL,
-    /* WINED3DSIH_XOR                   */ NULL,
+    /* WINED3DSIH_XOR                   */ shader_glsl_binop,
 };
 
 static void shader_glsl_handle_instruction(const struct wined3d_shader_instruction *ins) {
