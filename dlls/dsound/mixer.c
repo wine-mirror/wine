@@ -684,12 +684,6 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 	to_mix_frags = device->prebuf - (pad * device->pwfx->nBlockAlign + device->fraglen - 1) / device->fraglen;
 
-	if(to_mix_frags == 0){
-		/* nothing to do! */
-		LeaveCriticalSection(&device->mixlock);
-		return;
-	}
-
 	to_mix_bytes = to_mix_frags * device->fraglen;
 
 	if(device->in_mmdev_bytes > 0){
