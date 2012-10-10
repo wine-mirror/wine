@@ -269,7 +269,7 @@ static void compute_shader_probe9(IDirect3DDevice9 *device, IDirect3DVertexShade
 
     /* Now go through the probes and check each one */
     for (i = 0; i < count; i++, probes++) {
-        int index = probes->x + (probes->y * lr.Pitch);
+        int index = probes->x + (probes->y * lr.Pitch / sizeof(D3DXCOLOR));
         ok(colors_match(probes->c, pbits_data[index], probes->epsilon),
                 "Line %d: At (%d, %d): %s: Expected (%.04f,%.04f,%.04f, %.04f), got "
                 "(%.04f,%.04f,%.04f,%.04f)\n", line_number, probes->x, probes->y, probes->message,
