@@ -605,7 +605,7 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
             local = FALSE;
         }
 
-        if (var->modifiers & HLSL_MODIFIER_CONST && !v->initializer)
+        if (var->modifiers & HLSL_MODIFIER_CONST && !(var->modifiers & HLSL_STORAGE_UNIFORM) && !v->initializer)
         {
             hlsl_report_message(v->loc.file, v->loc.line, v->loc.col,
                     HLSL_LEVEL_ERROR, "const variable without initializer");
