@@ -57,6 +57,7 @@ struct table
     void (*fill)(struct table *);
     UINT flags;
     struct list entry;
+    LONG refs;
 };
 
 struct property
@@ -151,7 +152,8 @@ HRESULT create_view( const struct property *, const WCHAR *, const struct expr *
                      struct view ** ) DECLSPEC_HIDDEN;
 void destroy_view( struct view * ) DECLSPEC_HIDDEN;
 void init_table_list( void ) DECLSPEC_HIDDEN;
-struct table *get_table( const WCHAR * ) DECLSPEC_HIDDEN;
+struct table *grab_table( const WCHAR * ) DECLSPEC_HIDDEN;
+void release_table( struct table * ) DECLSPEC_HIDDEN;
 struct table *create_table( const WCHAR *, UINT, const struct column *, UINT,
                             BYTE *, void (*)(struct table *)) DECLSPEC_HIDDEN;
 BOOL add_table( struct table * ) DECLSPEC_HIDDEN;
@@ -169,8 +171,8 @@ HRESULT put_propval( const struct view *, UINT, const WCHAR *, VARIANT *, CIMTYP
 HRESULT variant_to_longlong( VARIANT *, LONGLONG *, CIMTYPE * ) DECLSPEC_HIDDEN;
 HRESULT get_properties( const struct view *, SAFEARRAY ** ) DECLSPEC_HIDDEN;
 HRESULT get_object( const WCHAR *, IWbemClassObject ** ) DECLSPEC_HIDDEN;
-const WCHAR *get_method_name( const WCHAR *, UINT ) DECLSPEC_HIDDEN;
-const WCHAR *get_property_name( const WCHAR *, UINT ) DECLSPEC_HIDDEN;
+BSTR get_method_name( const WCHAR *, UINT ) DECLSPEC_HIDDEN;
+BSTR get_property_name( const WCHAR *, UINT ) DECLSPEC_HIDDEN;
 
 HRESULT WbemLocator_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT WbemServices_create(IUnknown *, const WCHAR *, LPVOID *) DECLSPEC_HIDDEN;

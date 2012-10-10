@@ -382,11 +382,14 @@ static HRESULT WINAPI class_object_Put(
 
     if (co->record)
     {
-        struct table *table = get_table( co->name );
+        struct table *table = grab_table( co->name );
         UINT index;
         HRESULT hr;
 
-        if ((hr = get_column_index( table, wszName, &index )) != S_OK) return hr;
+        if (!table) return WBEM_E_FAILED;
+        hr = get_column_index( table, wszName, &index );
+        release_table( table );
+        if (hr != S_OK) return hr;
         return record_set_value( co->record, index, pVal );
     }
     return put_propval( ec->query->view, co->index, wszName, pVal, Type );
@@ -450,18 +453,18 @@ static HRESULT WINAPI class_object_Next(
     struct class_object *co = impl_from_IWbemClassObject( iface );
     struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
     struct view *view = ec->query->view;
-    const WCHAR *property;
+    BSTR property;
     HRESULT hr;
 
     TRACE("%p, %08x, %p, %p, %p, %p\n", iface, lFlags, strName, pVal, pType, plFlavor);
 
     if (!(property = get_property_name( co->name, co->index_property ))) return WBEM_S_NO_MORE_DATA;
-    if (!(*strName = SysAllocString( property ))) return E_OUTOFMEMORY;
     if ((hr = get_propval( view, co->index, property, pVal, pType, plFlavor ) != S_OK))
     {
-        SysFreeString( *strName );
+        SysFreeString( property );
         return hr;
     }
+    *strName = property;
     co->index_property++;
     return S_OK;
 }
@@ -834,7 +837,7 @@ static HRESULT WINAPI class_object_NextMethod(
     IWbemClassObject **ppOutSignature)
 {
     struct class_object *co = impl_from_IWbemClassObject( iface );
-    const WCHAR *method;
+    BSTR method;
     HRESULT hr;
 
     TRACE("%p, %08x, %p, %p, %p\n", iface, lFlags, pstrName, ppInSignature, ppOutSignature);
@@ -842,18 +845,20 @@ static HRESULT WINAPI class_object_NextMethod(
     if (!(method = get_method_name( co->name, co->index_method ))) return WBEM_S_NO_MORE_DATA;
 
     hr = create_signature( co->name, method, PARAM_IN, ppInSignature );
-    if (hr != S_OK) return hr;
-
+    if (hr != S_OK)
+    {
+        SysFreeString( method );
+        return hr;
+    }
     hr = create_signature( co->name, method, PARAM_OUT, ppOutSignature );
-    if (hr != S_OK) IWbemClassObject_Release( *ppInSignature );
+    if (hr != S_OK)
+    {
+        SysFreeString( method );
+        IWbemClassObject_Release( *ppInSignature );
+    }
     else
     {
-        if (!(*pstrName = SysAllocString( method )))
-        {
-            IWbemClassObject_Release( *ppInSignature );
-            IWbemClassObject_Release( *ppOutSignature );
-            return E_OUTOFMEMORY;
-        }
+        *pstrName = method;
         co->index_method++;
     }
     return hr;

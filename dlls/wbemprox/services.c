@@ -578,7 +578,7 @@ static HRESULT WINAPI wbem_services_ExecMethod(
     IWbemClassObject **ppOutParams,
     IWbemCallResult **ppCallResult )
 {
-    const struct table *table;
+    struct table *table;
     class_method *func;
     struct path *path;
     HRESULT hr;
@@ -590,11 +590,13 @@ static HRESULT WINAPI wbem_services_ExecMethod(
 
     if ((hr = parse_path( strObjectPath, &path )) != S_OK) return hr;
 
-    table = get_table( path->class );
+    table = grab_table( path->class );
     free_path( path );
     if (!table) return WBEM_E_NOT_FOUND;
 
-    if ((hr = get_method( table, strMethodName, &func )) != S_OK) return hr;
+    hr = get_method( table, strMethodName, &func );
+    release_table( table );
+    if (hr != S_OK) return hr;
     return func( pInParams, ppOutParams );
 }
 

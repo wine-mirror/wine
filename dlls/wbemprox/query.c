@@ -37,7 +37,7 @@ HRESULT create_view( const struct property *proplist, const WCHAR *class,
 
     if (!view) return E_OUTOFMEMORY;
     view->proplist = proplist;
-    view->table    = get_table( class );
+    view->table    = grab_table( class );
     view->cond     = cond;
     view->result   = NULL;
     view->count    = 0;
@@ -47,7 +47,7 @@ HRESULT create_view( const struct property *proplist, const WCHAR *class,
 
 void destroy_view( struct view *view )
 {
-    free_table( view->table );
+    if (view->table) release_table( view->table );
     heap_free( view->result );
     heap_free( view );
 }
