@@ -162,9 +162,12 @@ DWORD convert_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
 {
     void *ptr;
     DWORD err;
+    BOOL top_down = dst_info->bmiHeader.biHeight < 0;
 
     dst_info->bmiHeader.biWidth = src->visrect.right - src->visrect.left;
+    dst_info->bmiHeader.biHeight = src->visrect.bottom - src->visrect.top;
     dst_info->bmiHeader.biSizeImage = get_dib_image_size( dst_info );
+    if (top_down) dst_info->bmiHeader.biHeight = -dst_info->bmiHeader.biHeight;
 
     if (!(ptr = HeapAlloc( GetProcessHeap(), 0, dst_info->bmiHeader.biSizeImage )))
         return ERROR_OUTOFMEMORY;
