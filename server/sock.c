@@ -760,10 +760,7 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
 
         if (!(newfd = create_anonymous_fd( &sock_fd_ops, acceptfd, &acceptsock->obj,
                                             get_fd_options( acceptsock->fd ) )))
-        {
-            close( acceptfd );
             return FALSE;
-        }
     }
 
     acceptsock->state  |= FD_WINE_CONNECTED|FD_READ|FD_WRITE;
