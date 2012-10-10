@@ -812,12 +812,11 @@ static DWORD get_image_dib_info( dib_info *dib, BITMAPINFO *info,
 {
     info->bmiHeader.biSize          = sizeof(info->bmiHeader);
     info->bmiHeader.biPlanes        = 1;
-    info->bmiHeader.biCompression   = BI_RGB;
     info->bmiHeader.biXPelsPerMeter = 0;
     info->bmiHeader.biYPelsPerMeter = 0;
     info->bmiHeader.biClrImportant  = 0;
     info->bmiHeader.biWidth         = dib->width;
-    info->bmiHeader.biHeight        = dib->rect.bottom - dib->rect.top;
+    info->bmiHeader.biHeight        = dib->height - dib->rect.top;
     info->bmiHeader.biBitCount      = dib->bit_count;
     info->bmiHeader.biSizeImage     = info->bmiHeader.biHeight * abs( dib->stride );
     if (dib->stride > 0) info->bmiHeader.biHeight = -info->bmiHeader.biHeight;
