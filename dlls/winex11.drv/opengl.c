@@ -1162,26 +1162,13 @@ static void free_gl_drawable( struct gl_drawable *gl )
 
 
 /***********************************************************************
- *              set_win_format
+ *              create_gl_drawable
  */
-static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format )
+static BOOL create_gl_drawable( HWND hwnd, HWND parent, struct gl_drawable *gl )
 {
-    HWND parent = GetAncestor( hwnd, GA_PARENT );
     XSetWindowAttributes attrib;
-    struct gl_drawable *gl, *prev;
 
-    gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) );
-    gl->format = format;
-    gl->visual = pglXGetVisualFromFBConfig( gdi_display, format->fbconfig );
-    if (!gl->visual)
-    {
-        HeapFree( GetProcessHeap(), 0, gl );
-        return FALSE;
-    }
-
-    GetClientRect( hwnd, &gl->rect );
-    gl->rect.right  = min( max( 1, gl->rect.right ), 65535 );
-    gl->rect.bottom = min( max( 1, gl->rect.bottom ), 65535 );
+    gl->drawable = 0;
 
     if (parent == GetDesktopWindow())  /* top-level window */
     {
@@ -1261,7 +1248,32 @@ static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format )
         }
     }
 
-    if (!gl->drawable)
+    return gl->drawable != 0;
+}
+
+
+/***********************************************************************
+ *              set_win_format
+ */
+static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format )
+{
+    HWND parent = GetAncestor( hwnd, GA_PARENT );
+    struct gl_drawable *gl, *prev;
+
+    gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) );
+    gl->format = format;
+    gl->visual = pglXGetVisualFromFBConfig( gdi_display, format->fbconfig );
+    if (!gl->visual)
+    {
+        HeapFree( GetProcessHeap(), 0, gl );
+        return FALSE;
+    }
+
+    GetClientRect( hwnd, &gl->rect );
+    gl->rect.right  = min( max( 1, gl->rect.right ), 65535 );
+    gl->rect.bottom = min( max( 1, gl->rect.bottom ), 65535 );
+
+    if (!create_gl_drawable( hwnd, parent, gl ))
     {
         XFree( gl->visual );
         HeapFree( GetProcessHeap(), 0, gl );
@@ -1342,6 +1354,57 @@ void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_r
 done:
     release_gl_drawable( gl );
 }
+
+
+/***********************************************************************
+ *              set_gl_drawable_parent
+ */
+void set_gl_drawable_parent( HWND hwnd, HWND parent )
+{
+    struct gl_drawable *gl;
+    Drawable old_drawable;
+
+    if (!(gl = get_gl_drawable( hwnd, 0 ))) return;
+
+    TRACE( "setting drawable %lx parent %p\n", gl->drawable, parent );
+
+    old_drawable = gl->drawable;
+    switch (gl->type)
+    {
+    case DC_GL_WINDOW:
+        XDestroyWindow( gdi_display, gl->drawable );
+        XFreeColormap( gdi_display, gl->colormap );
+        break;
+    case DC_GL_CHILD_WIN:
+        if (parent != GetDesktopWindow()) goto done;
+        XDestroyWindow( gdi_display, gl->drawable );
+        XFreeColormap( gdi_display, gl->colormap );
+        break;
+    case DC_GL_PIXMAP_WIN:
+        if (parent != GetDesktopWindow()) goto done;
+        pglXDestroyGLXPixmap( gdi_display, gl->drawable );
+        XFreePixmap( gdi_display, gl->pixmap );
+        break;
+    default:
+        goto done;
+    }
+
+    if (!create_gl_drawable( hwnd, parent, gl ))
+    {
+        XDeleteContext( gdi_display, (XID)hwnd, gl_hwnd_context );
+        release_gl_drawable( gl );
+        XFree( gl->visual );
+        HeapFree( GetProcessHeap(), 0, gl );
+        __wine_set_pixel_format( hwnd, 0 );
+        return;
+    }
+    mark_drawable_dirty( old_drawable, gl->drawable );
+
+done:
+    release_gl_drawable( gl );
+
+}
+
 
 /***********************************************************************
  *              destroy_gl_drawable
@@ -3073,6 +3136,10 @@ struct opengl_funcs *get_glx_driver( UINT version )
 }
 
 void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_rect )
+{
+}
+
+void set_gl_drawable_parent( HWND hwnd, HWND parent )
 {
 }
 

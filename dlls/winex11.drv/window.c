@@ -2002,6 +2002,7 @@ void CDECL X11DRV_SetParent( HWND hwnd, HWND parent, HWND old_parent )
     }
 done:
     release_win_data( data );
+    set_gl_drawable_parent( hwnd, parent );
     fetch_icon_data( hwnd, 0, 0 );
 }
 
