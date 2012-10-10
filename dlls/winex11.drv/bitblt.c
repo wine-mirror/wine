@@ -946,7 +946,7 @@ static inline int get_dib_image_size( const BITMAPINFO *info )
 }
 
 /* store the palette or color mask data in the bitmap info structure */
-static void set_color_info( const XVisualInfo *vis, BITMAPINFO *info )
+static void set_color_info( const XVisualInfo *vis, BITMAPINFO *info, BOOL has_alpha )
 {
     DWORD *colors = (DWORD *)((char *)info + info->bmiHeader.biSize);
 
@@ -984,7 +984,7 @@ static void set_color_info( const XVisualInfo *vis, BITMAPINFO *info )
         colors[0] = vis->red_mask;
         colors[1] = vis->green_mask;
         colors[2] = vis->blue_mask;
-        if (colors[0] != 0xff0000 || colors[1] != 0x00ff00 || colors[2] != 0x0000ff)
+        if (colors[0] != 0xff0000 || colors[1] != 0x00ff00 || colors[2] != 0x0000ff || !has_alpha)
             info->bmiHeader.biCompression = BI_BITFIELDS;
         break;
     }
@@ -1291,7 +1291,7 @@ update_format:
     info->bmiHeader.biPlanes   = 1;
     info->bmiHeader.biBitCount = format->bits_per_pixel;
     if (info->bmiHeader.biHeight > 0) info->bmiHeader.biHeight = -info->bmiHeader.biHeight;
-    set_color_info( &vis, info );
+    set_color_info( &vis, info, FALSE );
     return ERROR_BAD_FORMAT;
 }
 
@@ -1339,7 +1339,7 @@ DWORD X11DRV_GetImage( PHYSDEV dev, BITMAPINFO *info,
     info->bmiHeader.biXPelsPerMeter = 0;
     info->bmiHeader.biYPelsPerMeter = 0;
     info->bmiHeader.biClrImportant  = 0;
-    set_color_info( &vis, info );
+    set_color_info( &vis, info, FALSE );
 
     if (!bits) return ERROR_SUCCESS;  /* just querying the color information */
 
@@ -1445,7 +1445,7 @@ update_format:
     info->bmiHeader.biPlanes   = 1;
     info->bmiHeader.biBitCount = format->bits_per_pixel;
     if (info->bmiHeader.biHeight > 0) info->bmiHeader.biHeight = -info->bmiHeader.biHeight;
-    set_color_info( vis, info );
+    set_color_info( vis, info, FALSE );
     return ERROR_BAD_FORMAT;
 }
 
@@ -1525,7 +1525,7 @@ DWORD get_pixmap_image( Pixmap pixmap, int width, int height, const XVisualInfo 
     info->bmiHeader.biXPelsPerMeter = 0;
     info->bmiHeader.biYPelsPerMeter = 0;
     info->bmiHeader.biClrImportant  = 0;
-    set_color_info( vis, info );
+    set_color_info( vis, info, FALSE );
 
     if (!bits) return ERROR_SUCCESS;  /* just querying the color information */
 
@@ -1992,7 +1992,7 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
     surface->info.bmiHeader.biPlanes      = 1;
     surface->info.bmiHeader.biBitCount    = format->bits_per_pixel;
     surface->info.bmiHeader.biSizeImage   = get_dib_image_size( &surface->info );
-    set_color_info( vis, &surface->info );
+    set_color_info( vis, &surface->info, use_alpha );
 
     InitializeCriticalSection( &surface->crit );
     surface->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": surface");
