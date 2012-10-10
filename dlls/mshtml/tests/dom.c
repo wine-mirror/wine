@@ -80,6 +80,9 @@ static const char frameset_str[] =
 static const char emptydiv_str[] =
     "<html><head><title>emptydiv test</title></head>"
     "<body><div id=\"divid\"></div></body></html>";
+static const char noscript_str[] =
+    "<html><head><title>noscript test</title><noscript><style>.body { margin-right: 0px; }</style></noscript></head>"
+    "<body><noscript><div>test</div></noscript></body></html>";
 
 static WCHAR characterW[] = {'c','h','a','r','a','c','t','e','r',0};
 static WCHAR texteditW[] = {'t','e','x','t','e','d','i','t',0};
@@ -115,7 +118,8 @@ typedef enum {
     ET_OBJECT,
     ET_EMBED,
     ET_DIV,
-    ET_META
+    ET_META,
+    ET_NOSCRIPT
 } elem_type_t;
 
 static const IID * const none_iids[] = {
@@ -427,7 +431,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"OBJECT",    object_iids,      &DIID_DispHTMLObjectElement},
     {"EMBED",     embed_iids,       &DIID_DispHTMLEmbed},
     {"DIV",       elem_iids,        NULL},
-    {"META",      meta_iids,        &DIID_DispHTMLMetaElement}
+    {"META",      meta_iids,        &DIID_DispHTMLMetaElement},
+    {"NOSCRIPT",  elem_iids,        NULL /*&DIID_DispHTMLNoShowElement*/}
 };
 
 static const char *dbgstr_guid(REFIID riid)
@@ -2011,8 +2016,11 @@ static void _test_elem_innertext(unsigned line, IHTMLElement *elem, const char *
 
     hres = IHTMLElement_get_innerText(elem, &text);
     ok_(__FILE__,line) (hres == S_OK, "get_innerText failed: %08x\n", hres);
-    ok_(__FILE__,line) (!strcmp_wa(text, extext), "get_innerText returned %s expected %s\n",
-                        wine_dbgstr_w(text), extext);
+    if(extext)
+        ok_(__FILE__,line) (!strcmp_wa(text, extext), "get_innerText returned %s expected %s\n",
+                            wine_dbgstr_w(text), extext);
+    else
+        ok_(__FILE__,line) (!text, "get_innerText returned %s expected NULL\n", wine_dbgstr_w(text));
     SysFreeString(text);
 }
 
@@ -6042,6 +6050,37 @@ static void test_replacechild_elems(IHTMLDocument2 *doc)
     IHTMLElement_Release(body);
 }
 
+static void test_noscript(IHTMLDocument2 *doc)
+{
+    IHTMLElementCollection *col;
+    IHTMLElement *body;
+    HRESULT hres;
+
+    static const elem_type_t all_types[] = {
+        ET_HTML,
+        ET_HEAD,
+        ET_TITLE,
+        ET_NOSCRIPT,
+        ET_BODY,
+        ET_NOSCRIPT
+    };
+
+    static const elem_type_t body_all_types[] = {
+        ET_DIV,
+        ET_NOSCRIPT
+    };
+
+    hres = IHTMLDocument2_get_all(doc, &col);
+    ok(hres == S_OK, "get_all failed: %08x\n", hres);
+    test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
+    IHTMLElementCollection_Release(col);
+
+    body = doc_get_body(doc);
+    test_elem_set_innerhtml((IUnknown*)body, "<div>test</div><noscript><a href=\"about:blank\">A</a></noscript>");
+    test_elem_all((IUnknown*)body, body_all_types, sizeof(body_all_types)/sizeof(*body_all_types));
+    IHTMLElement_Release(body);
+}
+
 static void test_null_write(IHTMLDocument2 *doc)
 {
     HRESULT hres;
@@ -6536,6 +6575,7 @@ START_TEST(dom)
     run_domtest(frameset_str, test_frameset);
     run_domtest(emptydiv_str, test_docfrag);
     run_domtest(doc_blank, test_replacechild_elems);
+    run_domtest(noscript_str, test_noscript);
 
     CoUninitialize();
 }
