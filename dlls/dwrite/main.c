@@ -479,9 +479,9 @@ static HRESULT WINAPI dwritefactory_CreateTextFormat(IDWriteFactory *iface, WCHA
     IDWriteFontCollection *collection, DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style,
     DWRITE_FONT_STRETCH stretch, FLOAT size, WCHAR const *locale, IDWriteTextFormat **format)
 {
-    FIXME("(%s %p %d %d %d %f %s %p): stub\n", debugstr_w(family_name), collection, weight, style, stretch,
+    FIXME("(%s %p %d %d %d %f %s %p): semi-stub\n", debugstr_w(family_name), collection, weight, style, stretch,
         size, debugstr_w(locale), format);
-    return E_NOTIMPL;
+    return create_textformat(format);
 }
 
 static HRESULT WINAPI dwritefactory_CreateTypography(IDWriteFactory *iface, IDWriteTypography **typography)
