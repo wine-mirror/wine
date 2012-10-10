@@ -47,7 +47,7 @@ End Sub
 
 TestCStr "test", "test"
 TestCStr 3, "3"
-TestCStr 3.5, "3.5"
+if isEnglishLang then TestCStr 3.5, "3.5"
 if isEnglishLang then TestCStr true, "True"
 
 Call ok(isObject(new EmptyClass), "isObject(new EmptyClass) is not true?")
