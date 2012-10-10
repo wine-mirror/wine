@@ -1114,15 +1114,6 @@ static void release_gl_drawable( struct gl_drawable *gl )
     if (gl) LeaveCriticalSection( &context_section );
 }
 
-BOOL has_gl_drawable( HWND hwnd )
-{
-    struct gl_drawable *gl;
-
-    gl = get_gl_drawable( hwnd, 0 );
-    release_gl_drawable( gl );
-    return gl != NULL;
-}
-
 static GLXContext create_glxcontext(Display *display, struct wgl_context *context, GLXContext shareList)
 {
     GLXContext ctx;
@@ -3079,11 +3070,6 @@ struct opengl_funcs *get_glx_driver( UINT version )
 struct opengl_funcs *get_glx_driver( UINT version )
 {
     return NULL;
-}
-
-BOOL has_gl_drawable( HWND hwnd )
-{
-    return FALSE;
 }
 
 void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_rect )
