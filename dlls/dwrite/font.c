@@ -27,6 +27,69 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
+/* PANOSE is 10 bytes in size, need to pack the structure properly */
+#include "pshpack2.h"
+typedef struct
+{
+    USHORT version;
+    SHORT xAvgCharWidth;
+    USHORT usWeightClass;
+    USHORT usWidthClass;
+    SHORT fsType;
+    SHORT ySubscriptXSize;
+    SHORT ySubscriptYSize;
+    SHORT ySubscriptXOffset;
+    SHORT ySubscriptYOffset;
+    SHORT ySuperscriptXSize;
+    SHORT ySuperscriptYSize;
+    SHORT ySuperscriptXOffset;
+    SHORT ySuperscriptYOffset;
+    SHORT yStrikeoutSize;
+    SHORT yStrikeoutPosition;
+    SHORT sFamilyClass;
+    PANOSE panose;
+    ULONG ulUnicodeRange1;
+    ULONG ulUnicodeRange2;
+    ULONG ulUnicodeRange3;
+    ULONG ulUnicodeRange4;
+    CHAR achVendID[4];
+    USHORT fsSelection;
+    USHORT usFirstCharIndex;
+    USHORT usLastCharIndex;
+    /* According to the Apple spec, original version didn't have the below fields,
+     * version numbers were taken from the OpenType spec.
+     */
+    /* version 0 (TrueType 1.5) */
+    USHORT sTypoAscender;
+    USHORT sTypoDescender;
+    USHORT sTypoLineGap;
+    USHORT usWinAscent;
+    USHORT usWinDescent;
+    /* version 1 (TrueType 1.66) */
+    ULONG ulCodePageRange1;
+    ULONG ulCodePageRange2;
+    /* version 2 (OpenType 1.2) */
+    SHORT sxHeight;
+    SHORT sCapHeight;
+    USHORT usDefaultChar;
+    USHORT usBreakChar;
+    USHORT usMaxContext;
+} TT_OS2_V2;
+#include "poppack.h"
+
+#ifdef WORDS_BIGENDIAN
+#define GET_BE_WORD(x) (x)
+#define GET_BE_DWORD(x) (x)
+#else
+#define GET_BE_WORD(x) MAKEWORD(HIBYTE(x), LOBYTE(x))
+#define GET_BE_DWORD(x) MAKELONG(GET_BE_WORD(HIWORD(x)), GET_BE_WORD(LOWORD(x)));
+#endif
+
+#define MS_MAKE_TAG(ch0, ch1, ch2, ch3) \
+                    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
+                    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
+#define MS_OS2_TAG MS_MAKE_TAG('O','S','/','2')
+
 struct dwrite_fontfamily {
     IDWriteFontFamily IDWriteFontFamily_iface;
     LONG ref;
@@ -41,6 +104,7 @@ struct dwrite_font {
     IDWriteFontFamily *family;
     IDWriteFontFace *face;
     DWRITE_FONT_STYLE style;
+    DWRITE_FONT_STRETCH stretch;
 };
 
 struct dwrite_fontface {
@@ -314,8 +378,8 @@ static DWRITE_FONT_WEIGHT WINAPI dwritefont_GetWeight(IDWriteFont *iface)
 static DWRITE_FONT_STRETCH WINAPI dwritefont_GetStretch(IDWriteFont *iface)
 {
     struct dwrite_font *This = impl_from_IDWriteFont(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_FONT_STRETCH_UNDEFINED;
+    TRACE("(%p)\n", This);
+    return This->stretch;
 }
 
 static DWRITE_FONT_STYLE WINAPI dwritefont_GetStyle(IDWriteFont *iface)
@@ -528,12 +592,37 @@ static HRESULT create_fontfamily(const WCHAR *familyname, IDWriteFontFamily **fa
     return S_OK;
 }
 
+static DWRITE_FONT_STRETCH get_font_stretch(HDC hdc)
+{
+    DWRITE_FONT_STRETCH stretch;
+    TT_OS2_V2 tt_os2;
+    LONG size;
+
+    /* default stretch to normal */
+    stretch = DWRITE_FONT_STRETCH_NORMAL;
+
+    size = GetFontData(hdc, MS_OS2_TAG, 0, NULL, 0);
+    if (size == GDI_ERROR) return stretch;
+
+    if (size > sizeof(tt_os2)) size = sizeof(tt_os2);
+
+    memset(&tt_os2, 0, sizeof(tt_os2));
+    if (GetFontData(hdc, MS_OS2_TAG, 0, &tt_os2, size) != size) return stretch;
+
+    /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
+    if (GET_BE_WORD(tt_os2.usWeightClass) <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
+        stretch = GET_BE_WORD(tt_os2.usWeightClass);
+
+    return stretch;
+}
+
 HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
 {
     const WCHAR* facename, *familyname;
     struct dwrite_font *This;
     IDWriteFontFamily *family;
     OUTLINETEXTMETRICW *otm;
+    DWRITE_FONT_STRETCH stretch;
     HRESULT hr;
     HFONT hfont;
     HDC hdc;
@@ -551,6 +640,8 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     otm = heap_alloc(ret);
     otm->otmSize = ret;
     ret = GetOutlineTextMetricsW(hdc, otm->otmSize, otm);
+
+    stretch = get_font_stretch(hdc);
 
     DeleteDC(hdc);
     DeleteObject(hfont);
@@ -575,6 +666,7 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     This->face = NULL;
     This->family = family;
     This->style = logfont->lfItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
+    This->stretch = stretch;
 
     *font = &This->IDWriteFont_iface;
 
