@@ -1780,6 +1780,8 @@ static void run_from_res(const char *name)
 
 static void run_tests(void)
 {
+    HRESULT hres;
+
     strict_dispid_check = TRUE;
 
     parse_script_a("");
@@ -1879,6 +1881,14 @@ static void run_tests(void)
                    "Call ok(x = 1, \"x = \" & x)\n"
                    "End Sub\n"
                    "Call testsub()");
+
+    parse_script_a("Call ok(getVT(x) = \"VT_EMPTY*\", \"getVT(x) = \" & getVT(x))\n");
+    parse_script_a("Call ok(x = \"\", \"x = \" & x)\n");
+    parse_script_a("x = y\n"
+                   "Call ok(getVT(x) = \"VT_EMPTY*\", \"getVT(x) = \" & getVT(x))\n"
+                   "Call ok(getVT(y) = \"VT_EMPTY*\", \"getVT(y) = \" & getVT(y))");
+    hres = parse_script_ar("x = y(\"a\")");
+    ok(FAILED(hres), "script didn't fail\n");
 
     run_from_res("lang.vbs");
     run_from_res("api.vbs");

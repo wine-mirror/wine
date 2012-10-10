@@ -206,7 +206,8 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     return S_OK;
 }
 
-static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name, BOOL is_const, VARIANT *val, BOOL own_val)
+static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name,
+        BOOL is_const, VARIANT *val, BOOL own_val, VARIANT **out_var)
 {
     dynamic_var_t *new_var;
     vbsheap_t *heap;
@@ -244,6 +245,9 @@ static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name, BOOL is_const
         new_var->next = ctx->dynamic_vars;
         ctx->dynamic_vars = new_var;
     }
+
+    if(out_var)
+        *out_var = &new_var->v;
 
     return S_OK;
 }
@@ -526,6 +530,16 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
         }
         break;
     case REF_NONE:
+        if(res && !ctx->func->code_ctx->option_explicit && arg_cnt == 0) {
+            VARIANT v, *new;
+            VariantInit(&v);
+            hres = add_dynamic_var(ctx, identifier, FALSE, &v, FALSE, &new);
+            if(FAILED(hres))
+                return hres;
+            V_VT(res) = VT_BYREF|VT_VARIANT;
+            V_BYREF(res) = new;
+            break;
+        }
         FIXME("%s not found\n", debugstr_w(identifier));
         return DISP_E_UNKNOWNNAME;
     }
@@ -653,7 +667,7 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, DISPPARAMS *dp)
             }
 
             TRACE("creating variable %s\n", debugstr_w(name));
-            hres = add_dynamic_var(ctx, name, FALSE, dp->rgvarg, FALSE);
+            hres = add_dynamic_var(ctx, name, FALSE, dp->rgvarg, FALSE, NULL);
         }
     }
 
@@ -810,7 +824,7 @@ static HRESULT interp_const(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    return add_dynamic_var(ctx, arg, TRUE, val.v, val.owned);
+    return add_dynamic_var(ctx, arg, TRUE, val.v, val.owned, NULL);
 }
 
 static HRESULT interp_val(exec_ctx_t *ctx)
