@@ -165,7 +165,8 @@ static void update_visible_region( struct dce *dce )
 
     if ((win = WIN_GetPtr( top_win )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
     {
-        surface = win->surface;
+        /* don't use a surface to paint the client area of OpenGL windows */
+        if (!win->pixel_format || (flags & DCX_WINDOW)) surface = win->surface;
         if (surface) window_surface_add_ref( surface );
         WIN_ReleasePtr( win );
     }
