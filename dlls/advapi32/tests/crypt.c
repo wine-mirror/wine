@@ -624,9 +624,6 @@ static BOOL FindProvTypesRegVals(DWORD *pdwIndex, DWORD *pdwProvType, LPSTR *psz
 
 		(*pdwIndex)++;
 	}
-
-	if (!ret)
-		LocalFree(*pszTypeName);
 	RegCloseKey(hSubKey);
 	LocalFree(szName);
 
