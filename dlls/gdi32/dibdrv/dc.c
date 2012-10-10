@@ -760,6 +760,19 @@ static DWORD windrv_GetImage( PHYSDEV dev, BITMAPINFO *info,
     lock_surface( physdev->surface );
     dev = GET_NEXT_PHYSDEV( dev, pGetImage );
     ret = dev->funcs->pGetImage( dev, info, bits, src );
+
+    /* don't return alpha if original surface doesn't support it */
+    if (info->bmiHeader.biBitCount == 32 &&
+        info->bmiHeader.biCompression == BI_RGB &&
+        physdev->dibdrv->dib.compression == BI_BITFIELDS)
+    {
+        DWORD *colors = (DWORD *)info->bmiColors;
+        colors[0] = 0xff0000;
+        colors[1] = 0x00ff00;
+        colors[2] = 0x0000ff;
+        info->bmiHeader.biCompression = BI_BITFIELDS;
+    }
+
     if (!bits->is_copy)
     {
         /* use the freeing callback to unlock the surface */

@@ -2077,7 +2077,7 @@ static DWORD xrenderdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct 
     format = get_xrender_format_from_bitmapinfo( info );
     if (!(func.AlphaFormat & AC_SRC_ALPHA))
         format = get_format_without_alpha( format );
-    else if (format != WXR_FORMAT_A8R8G8B8)
+    else if (format != WXR_FORMAT_A8R8G8B8 || info->bmiHeader.biCompression != BI_RGB)
         return ERROR_INVALID_PARAMETER;
 
     if (!(pict_format = pict_formats[format])) goto update_format;
