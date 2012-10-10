@@ -2042,6 +2042,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
     case FileIdBothDirectoryInformation:
     case FileIdFullDirectoryInformation:
         if (length < dir_info_size( info_class, 1 )) return io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
+        if (!buffer) return io->u.Status = STATUS_ACCESS_VIOLATION;
         break;
     default:
         FIXME( "Unsupported file info class %d\n", info_class );

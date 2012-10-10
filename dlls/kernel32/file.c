@@ -864,6 +864,59 @@ BOOL WINAPI GetFileInformationByHandle( HANDLE hFile, BY_HANDLE_FILE_INFORMATION
 
 
 /***********************************************************************
+*             GetFileInformationByHandleEx (KERNEL32.@)
+*/
+BOOL WINAPI GetFileInformationByHandleEx( HANDLE handle, FILE_INFO_BY_HANDLE_CLASS class,
+                                          LPVOID info, DWORD size )
+{
+    NTSTATUS status;
+    IO_STATUS_BLOCK io;
+
+    switch (class)
+    {
+    case FileBasicInfo:
+    case FileStandardInfo:
+    case FileNameInfo:
+    case FileRenameInfo:
+    case FileDispositionInfo:
+    case FileAllocationInfo:
+    case FileEndOfFileInfo:
+    case FileStreamInfo:
+    case FileCompressionInfo:
+    case FileAttributeTagInfo:
+    case FileIoPriorityHintInfo:
+    case FileRemoteProtocolInfo:
+    case FileFullDirectoryInfo:
+    case FileFullDirectoryRestartInfo:
+    case FileStorageInfo:
+    case FileAlignmentInfo:
+    case FileIdInfo:
+    case FileIdExtdDirectoryInfo:
+    case FileIdExtdDirectoryRestartInfo:
+        FIXME( "%p, %u, %p, %u\n", handle, class, info, size );
+        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+        return FALSE;
+
+    case FileIdBothDirectoryRestartInfo:
+    case FileIdBothDirectoryInfo:
+        status = NtQueryDirectoryFile( handle, NULL, NULL, NULL, &io, info, size,
+                                       FileIdBothDirectoryInformation, FALSE, NULL,
+                                       (class == FileIdBothDirectoryRestartInfo) );
+        if (status != STATUS_SUCCESS)
+        {
+            SetLastError( RtlNtStatusToDosError( status ) );
+            return FALSE;
+        }
+        return TRUE;
+
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+}
+
+
+/***********************************************************************
  *           GetFileSize   (KERNEL32.@)
  *
  * Retrieve the size of a file.

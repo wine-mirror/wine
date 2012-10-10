@@ -3303,7 +3303,6 @@ static void test_GetFileInformationByHandleEx(void)
     {
         SetLastError(0xdeadbeef);
         ret = pGetFileInformationByHandleEx(directory, checks[i].handleClass, checks[i].ptr, checks[i].size);
-        todo_wine
         ok(!ret && GetLastError() == checks[i].errorCode, "GetFileInformationByHandleEx: expected error %u, "
            "got %u.\n", checks[i].errorCode, GetLastError());
     }
@@ -3314,18 +3313,14 @@ static void test_GetFileInformationByHandleEx(void)
         ret = pGetFileInformationByHandleEx(directory, FileIdBothDirectoryInfo, buffer, sizeof(buffer));
         if (!ret && GetLastError() == ERROR_NO_MORE_FILES)
             break;
-        todo_wine
         ok(ret, "GetFileInformationByHandleEx: failed to query for FileIdBothDirectoryInfo, got error %u.\n", GetLastError());
         if (!ret)
             break;
         bothDirInfo = (FILE_ID_BOTH_DIR_INFO *)buffer;
         while (TRUE)
         {
-            todo_wine
             ok(bothDirInfo->FileAttributes != 0xffffffff, "GetFileInformationByHandleEx: returned invalid file attributes.\n");
-            todo_wine
             ok(bothDirInfo->FileId.u.LowPart != 0xffffffff, "GetFileInformationByHandleEx: returned invalid file id.\n");
-            todo_wine
             ok(bothDirInfo->FileNameLength != 0xffffffff, "GetFileInformationByHandleEx: returned invalid file name length.\n");
             if (!bothDirInfo->NextEntryOffset)
                 break;
