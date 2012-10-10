@@ -2431,8 +2431,8 @@ static void test_D3DXSHDot(void)
 
     for (i = 0; i < 49; i++)
     {
-        a[i] = (FLOAT)i + 1.0f;
-        b[i] = (FLOAT)i + 0.5f;
+        a[i] = i + 1.0f;
+        b[i] = i + 0.5f;
     }
 
     /* D3DXSHDot computes by using order * order elements */
