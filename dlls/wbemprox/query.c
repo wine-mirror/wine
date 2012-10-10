@@ -72,6 +72,11 @@ static BOOL eval_like( const WCHAR *lstr, const WCHAR *rstr )
 
 static HRESULT eval_strcmp( UINT op, const WCHAR *lstr, const WCHAR *rstr, LONGLONG *val )
 {
+    if (!lstr || !rstr)
+    {
+        *val = 0;
+        return S_OK;
+    }
     switch (op)
     {
     case OP_EQ:
