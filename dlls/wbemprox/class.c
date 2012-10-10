@@ -323,6 +323,32 @@ static HRESULT WINAPI class_object_GetQualifierSet(
     return E_NOTIMPL;
 }
 
+static HRESULT record_get_value( const struct record *record, UINT index, VARIANT *var, CIMTYPE *type )
+{
+    if (type) *type = record->fields[index].type;
+
+    switch (record->fields[index].type)
+    {
+    case CIM_STRING:
+    case CIM_DATETIME:
+        V_VT( var ) = VT_BSTR;
+        V_BSTR( var ) = SysAllocString( record->fields[index].u.sval );
+        return S_OK;
+    case CIM_SINT32:
+        V_VT( var ) = VT_I4;
+        V_I4( var ) = record->fields[index].u.ival;
+        return S_OK;
+    case CIM_UINT32:
+        V_VT( var ) = VT_UI4;
+        V_UI4( var ) = record->fields[index].u.ival;
+        return S_OK;
+    default:
+        FIXME("unhandled type %u\n", record->fields[index].type);
+        break;
+    }
+    return WBEM_E_INVALID_PARAMETER;
+}
+
 static HRESULT WINAPI class_object_Get(
     IWbemClassObject *iface,
     LPCWSTR wszName,
@@ -333,11 +359,22 @@ static HRESULT WINAPI class_object_Get(
 {
     struct class_object *co = impl_from_IWbemClassObject( iface );
     struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
-    struct view *view = ec->query->view;
 
     TRACE("%p, %s, %08x, %p, %p, %p\n", iface, debugstr_w(wszName), lFlags, pVal, pType, plFlavor);
 
-    return get_propval( view, co->index, wszName, pVal, pType, plFlavor );
+    if (co->record)
+    {
+        struct table *table = grab_table( co->name );
+        UINT index;
+        HRESULT hr;
+
+        if (!table) return WBEM_E_FAILED;
+        hr = get_column_index( table, wszName, &index );
+        release_table( table );
+        if (hr != S_OK) return hr;
+        return record_get_value( co->record, index, pVal, pType );
+    }
+    return get_propval( ec->query->view, co->index, wszName, pVal, pType, plFlavor );
 }
 
 static HRESULT record_set_value( struct record *record, UINT index, VARIANT *var )
