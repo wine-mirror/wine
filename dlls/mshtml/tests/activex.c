@@ -79,6 +79,7 @@ DEFINE_EXPECT(Invoke_ENABLED);
 DEFINE_EXPECT(Invoke_VALID);
 DEFINE_EXPECT(Invoke_SECURITYCTX);
 DEFINE_EXPECT(Invoke_SCRIPTPROP);
+DEFINE_EXPECT(Invoke_SCRIPTCALL);
 DEFINE_EXPECT(GetIDsOfNames_scriptprop);
 DEFINE_EXPECT(DoVerb);
 DEFINE_EXPECT(SetExtent);
@@ -106,6 +107,7 @@ DEFINE_EXPECT(Advise);
 DEFINE_EXPECT(Unadvise);
 
 #define DISPID_SCRIPTPROP 1000
+#define DISPID_SCRIPTCALL 1001
 
 enum {
     TEST_FLASH,
@@ -132,6 +134,9 @@ static const char object_ax_str[] =
     "<param name=\"param_name\" value=\"param_value\">"
     "<param name=\"num_param\" value=\"3\">"
     "</object>"
+    "<script>"
+    "objid.scriptCall();"
+    "</script>"
     "</body></html>";
 
 static const char event_binding_str[] =
@@ -711,14 +716,20 @@ static HRESULT WINAPI Dispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID l
 static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
         UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    CHECK_EXPECT(GetIDsOfNames_scriptprop);
     ok(IsEqualGUID(riid, &IID_NULL), "riid = %s\n", debugstr_guid(riid));
     ok(cNames == 1, "cNames = %d\n", cNames);
     ok(rgszNames != NULL, "rgszNames == NULL\n");
-    ok(!strcmp_wa(rgszNames[0], "scriptprop"), "rgszNames[0] = %s\n", wine_dbgstr_w(rgszNames[0]));
     ok(rgDispId != NULL, "rgDispId == NULL\n");
 
-    *rgDispId = DISPID_SCRIPTPROP;
+    if(!strcmp_wa(rgszNames[0], "scriptprop")) {
+        CHECK_EXPECT(GetIDsOfNames_scriptprop);
+        *rgDispId = DISPID_SCRIPTPROP;
+    }else if(!strcmp_wa(rgszNames[0], "scriptCall")) {
+        *rgDispId = DISPID_SCRIPTCALL;
+    }else {
+        ok(0, "rgszNames[0] = %s\n", wine_dbgstr_w(rgszNames[0]));
+    }
+
     return S_OK;
 }
 
@@ -730,7 +741,6 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
     ok(pDispParams != NULL, "pDispParams == NULL\n");
     ok(!pDispParams->cNamedArgs, "pDispParams->cNamedArgs = %d\n", pDispParams->cNamedArgs);
     ok(!pDispParams->rgdispidNamedArgs, "pDispParams->rgdispidNamedArgs != NULL\n");
-    ok(pVarResult != NULL, "pVarResult == NULL\n");
 
     switch(dispIdMember) {
     case DISPID_READYSTATE:
@@ -740,6 +750,7 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         ok(!pDispParams->rgvarg, "pDispParams->rgvarg != NULL\n");
         ok(!pExcepInfo, "pExcepInfo != NULL\n");
         ok(puArgErr != NULL, "puArgErr == NULL\n");
+        ok(pVarResult != NULL, "pVarResult == NULL\n");
 
         V_VT(pVarResult) = VT_I4;
         V_I4(pVarResult) = plugin_readystate;
@@ -751,6 +762,7 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         ok(!pDispParams->rgvarg, "pDispParams->rgvarg != NULL\n");
         ok(!pExcepInfo, "pExcepInfo != NULL\n");
         ok(puArgErr != NULL, "puArgErr == NULL\n");
+        ok(pVarResult != NULL, "pVarResult == NULL\n");
         return DISP_E_MEMBERNOTFOUND;
     case DISPID_VALID:
         CHECK_EXPECT(Invoke_VALID);
@@ -759,6 +771,7 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         ok(!pDispParams->rgvarg, "pDispParams->rgvarg != NULL\n");
         ok(!pExcepInfo, "pExcepInfo != NULL\n");
         ok(puArgErr != NULL, "puArgErr == NULL\n");
+        ok(pVarResult != NULL, "pVarResult == NULL\n");
         return DISP_E_MEMBERNOTFOUND;
     case DISPID_SECURITYCTX:
         CHECK_EXPECT(Invoke_SECURITYCTX);
@@ -767,6 +780,7 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         ok(!pDispParams->rgvarg, "pDispParams->rgvarg != NULL\n");
         ok(!pExcepInfo, "pExcepInfo != NULL\n");
         ok(puArgErr != NULL, "puArgErr == NULL\n");
+        ok(pVarResult != NULL, "pVarResult == NULL\n");
         return DISP_E_MEMBERNOTFOUND;
     case DISPID_SCRIPTPROP:
         CHECK_EXPECT(Invoke_SCRIPTPROP);
@@ -775,9 +789,22 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         ok(!pDispParams->rgvarg, "pDispParams->rgvarg != NULL\n");
         ok(pExcepInfo != NULL, "pExcepInfo == NULL\n");
         ok(!puArgErr, "puArgErr != NULL\n");
+        ok(pVarResult != NULL, "pVarResult == NULL\n");
 
         V_VT(pVarResult) = VT_I4;
         V_I4(pVarResult) = 4;
+        return S_OK;
+    case DISPID_SCRIPTCALL:
+        CHECK_EXPECT(Invoke_SCRIPTCALL);
+        ok(wFlags == DISPATCH_METHOD, "wFlags = %x\n", wFlags);
+        ok(!pDispParams->cArgs, "pDispParams->cArgs = %d\n", pDispParams->cArgs);
+        ok(pExcepInfo != NULL, "pExcepInfo == NULL\n");
+        ok(!puArgErr, "puArgErr != NULL\n");
+        ok(!pVarResult, "pVarResult != NULL\n");
+        /*
+        V_VT(pVarResult) = VT_I4;
+        V_I4(pVarResult) = 4;
+        */
         return S_OK;
     default:
         ok(0, "unexpected call %d\n", dispIdMember);
@@ -2381,6 +2408,8 @@ static void test_flash_ax(void)
     SET_EXPECT(FreezeEvents_FALSE);
     SET_EXPECT(IPersistPropertyBag_Load);
     SET_EXPECT(Invoke_READYSTATE);
+    SET_EXPECT(Invoke_SECURITYCTX);
+    SET_EXPECT(Invoke_SCRIPTCALL);
     SET_EXPECT(SetExtent);
     SET_EXPECT(GetExtent);
     SET_EXPECT(DoVerb);
@@ -2395,6 +2424,8 @@ static void test_flash_ax(void)
     CHECK_CALLED(FreezeEvents_FALSE);
     CHECK_CALLED(IPersistPropertyBag_Load);
     CHECK_CALLED(Invoke_READYSTATE);
+    CHECK_CALLED(Invoke_SECURITYCTX);
+    CHECK_CALLED(Invoke_SCRIPTCALL);
     todo_wine
     CHECK_CALLED(SetExtent);
     todo_wine
@@ -2440,6 +2471,8 @@ static void test_noquickact_ax(void)
     SET_EXPECT(GetViewStatus);
     SET_EXPECT(FreezeEvents_FALSE);
     SET_EXPECT(Invoke_READYSTATE);
+    SET_EXPECT(Invoke_SECURITYCTX);
+    SET_EXPECT(Invoke_SCRIPTCALL);
     SET_EXPECT(SetExtent);
     SET_EXPECT(GetExtent);
     SET_EXPECT(DoVerb);
@@ -2454,6 +2487,8 @@ static void test_noquickact_ax(void)
     CHECK_CALLED(GetViewStatus);
     todo_wine CHECK_CALLED(FreezeEvents_FALSE);
     CHECK_CALLED(Invoke_READYSTATE);
+    CHECK_CALLED(Invoke_SECURITYCTX);
+    CHECK_CALLED(Invoke_SCRIPTCALL);
     todo_wine CHECK_CALLED(SetExtent);
     todo_wine CHECK_CALLED(GetExtent);
     CHECK_CALLED(DoVerb);
@@ -2541,11 +2576,15 @@ static void test_nooleobj_ax(void)
 
     SET_EXPECT(CreateInstance);
     SET_EXPECT(Invoke_READYSTATE);
+    SET_EXPECT(Invoke_SECURITYCTX);
+    SET_EXPECT(Invoke_SCRIPTCALL);
 
     doc = create_doc(object_ax_str);
 
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(Invoke_READYSTATE);
+    CHECK_CALLED(Invoke_SECURITYCTX);
+    CHECK_CALLED(Invoke_SCRIPTCALL);
 
     release_doc(doc);
 }
