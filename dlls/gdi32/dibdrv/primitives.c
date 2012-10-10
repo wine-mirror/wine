@@ -3838,6 +3838,14 @@ static inline DWORD blend_argb_constant_alpha( DWORD dst, DWORD src, DWORD alpha
             blend_color( dst >> 24, src >> 24, alpha ) << 24);
 }
 
+static inline DWORD blend_argb_no_src_alpha( DWORD dst, DWORD src, DWORD alpha )
+{
+    return (blend_color( dst, src, alpha ) |
+            blend_color( dst >> 8, src >> 8, alpha ) << 8 |
+            blend_color( dst >> 16, src >> 16, alpha ) << 16 |
+            blend_color( dst >> 24, 255, alpha ) << 24);
+}
+
 static inline DWORD blend_argb( DWORD dst, DWORD src )
 {
     BYTE b = (BYTE)src;
@@ -3898,10 +3906,14 @@ static void blend_rect_8888(const dib_info *dst, const RECT *rc,
 		for (x = 0; x < rc->right - rc->left; x++)
 		    dst_ptr[x] = blend_argb_alpha( dst_ptr[x], src_ptr[x], blend.SourceConstantAlpha );
     }
-    else
+    else if (src->compression == BI_RGB)
 	for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
 	    for (x = 0; x < rc->right - rc->left; x++)
 		dst_ptr[x] = blend_argb_constant_alpha( dst_ptr[x], src_ptr[x], blend.SourceConstantAlpha );
+    else
+	for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
+	    for (x = 0; x < rc->right - rc->left; x++)
+		dst_ptr[x] = blend_argb_no_src_alpha( dst_ptr[x], src_ptr[x], blend.SourceConstantAlpha );
 }
 
 static void blend_rect_32(const dib_info *dst, const RECT *rc,

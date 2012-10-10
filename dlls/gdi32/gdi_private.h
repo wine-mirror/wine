@@ -222,7 +222,7 @@ extern BOOL BIDI_Reorder( HDC hDC, LPCWSTR lpString, INT uCount, DWORD dwFlags, 
 
 /* bitblt.c */
 extern DWORD convert_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
-                           BITMAPINFO *dst_info, struct gdi_image_bits *bits, BOOL add_alpha ) DECLSPEC_HIDDEN;
+                           BITMAPINFO *dst_info, struct gdi_image_bits *bits ) DECLSPEC_HIDDEN;
 extern BOOL intersect_vis_rectangles( struct bitblt_coords *dst, struct bitblt_coords *src ) DECLSPEC_HIDDEN;
 extern DWORD stretch_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
                            BITMAPINFO *dst_info, struct bitblt_coords *dst,
@@ -264,7 +264,7 @@ extern void fill_default_color_table( BITMAPINFO *info ) DECLSPEC_HIDDEN;
 extern void get_ddb_bitmapinfo( BITMAPOBJ *bmp, BITMAPINFO *info ) DECLSPEC_HIDDEN;
 extern BITMAPINFO *copy_packed_dib( const BITMAPINFO *src_info, UINT usage ) DECLSPEC_HIDDEN;
 extern DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitblt_coords *src,
-                                 const BITMAPINFO *dst_info, void *dst_bits, BOOL add_alpha ) DECLSPEC_HIDDEN;
+                                 const BITMAPINFO *dst_info, void *dst_bits ) DECLSPEC_HIDDEN;
 
 extern DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitblt_coords *src,
                                  const BITMAPINFO *dst_info, void *dst_bits, struct bitblt_coords *dst,

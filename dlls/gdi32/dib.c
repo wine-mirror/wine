@@ -572,7 +572,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
             dst_info->bmiHeader.biClrUsed = 1;
         }
 
-        if (!(err = convert_bits( src_info, &src, dst_info, &src_bits, FALSE )))
+        if (!(err = convert_bits( src_info, &src, dst_info, &src_bits )))
         {
             /* get rid of the fake 1-bpp table */
             if (dst_info->bmiHeader.biClrUsed == 1) dst_info->bmiHeader.biClrUsed = 0;
@@ -738,7 +738,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     err = put_image_into_bitmap( bitmap, clip, dst_info, &src_bits, &src, &dst );
     if (err == ERROR_BAD_FORMAT)
     {
-        err = convert_bits( src_info, &src, dst_info, &src_bits, FALSE );
+        err = convert_bits( src_info, &src, dst_info, &src_bits );
         if (!err) err = put_image_into_bitmap( bitmap, clip, dst_info, &src_bits, &src, &dst );
     }
     if(err) result = 0;
@@ -855,7 +855,7 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
     err = dev->funcs->pPutImage( dev, clip, dst_info, &src_bits, &src, &dst, SRCCOPY );
     if (err == ERROR_BAD_FORMAT)
     {
-        err = convert_bits( src_info, &src, dst_info, &src_bits, FALSE );
+        err = convert_bits( src_info, &src, dst_info, &src_bits );
         if (!err) err = dev->funcs->pPutImage( dev, clip, dst_info, &src_bits, &src, &dst, SRCCOPY );
     }
     if (err) lines = 0;
@@ -1387,7 +1387,7 @@ INT WINAPI GetDIBits(
         else
             dst_info->bmiHeader.biHeight = -src.height;
 
-        convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, bits, FALSE );
+        convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, bits );
         if (src_bits.free) src_bits.free( &src_bits );
         ret = lines;
     }

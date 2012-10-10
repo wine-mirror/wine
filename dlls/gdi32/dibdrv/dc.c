@@ -214,7 +214,7 @@ void copy_dib_color_info(dib_info *dst, const dib_info *src)
 }
 
 DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitblt_coords *src,
-                          const BITMAPINFO *dst_info, void *dst_bits, BOOL add_alpha )
+                          const BITMAPINFO *dst_info, void *dst_bits )
 {
     dib_info src_dib, dst_dib;
     DWORD ret;
@@ -234,24 +234,12 @@ DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
     }
     __ENDTRY
 
-    /* We shared the color tables, so there's no need to free the dib_infos here */
     if(!ret) return ERROR_BAD_FORMAT;
 
     /* update coordinates, the destination rectangle is always stored at 0,0 */
     src->x -= src->visrect.left;
     src->y -= src->visrect.top;
     offset_rect( &src->visrect, -src->visrect.left, -src->visrect.top );
-
-    if (add_alpha && dst_dib.funcs == &funcs_8888 && src_dib.funcs != &funcs_8888)
-    {
-        DWORD *pixel = dst_dib.bits.ptr;
-        int x, y;
-
-        for (y = src->visrect.top; y < src->visrect.bottom; y++, pixel += dst_dib.stride / 4)
-            for (x = src->visrect.left; x < src->visrect.right; x++)
-                pixel[x] |= 0xff000000;
-    }
-
     return ERROR_SUCCESS;
 }
 
