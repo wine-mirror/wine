@@ -2146,13 +2146,14 @@ static BOOL interface_bind( SOCKET s, int fd, struct sockaddr *addr )
 {
     struct sockaddr_in *in_sock = (struct sockaddr_in *) addr;
     unsigned int sock_type = 0, optlen = sizeof(sock_type);
+    in_addr_t bind_addr = in_sock->sin_addr.s_addr;
     PIP_ADAPTER_INFO adapters = NULL, adapter;
     BOOL ret = FALSE;
     DWORD adap_size;
     int enable = 1;
 
-    if (in_sock->sin_addr.s_addr == htonl(WS_INADDR_ANY))
-        return FALSE; /* Not binding to specific interface, uses default route */
+    if (bind_addr == htonl(WS_INADDR_ANY) || bind_addr == htonl(WS_INADDR_LOOPBACK))
+        return FALSE; /* Not binding to a network adapter, special interface binding unnecessary. */
     if (getsockopt(fd, SOL_SOCKET, SO_TYPE, &sock_type, &optlen) == -1 || sock_type != SOCK_DGRAM)
         return FALSE; /* Special interface binding is only necessary for UDP datagrams. */
     if (GetAdaptersInfo(NULL, &adap_size) != ERROR_BUFFER_OVERFLOW)
@@ -2165,7 +2166,7 @@ static BOOL interface_bind( SOCKET s, int fd, struct sockaddr *addr )
     {
         in_addr_t adapter_addr = (in_addr_t) inet_addr(adapter->IpAddressList.IpAddress.String);
 
-        if (in_sock->sin_addr.s_addr == adapter_addr)
+        if (bind_addr == adapter_addr)
         {
 #if defined(IP_BOUND_IF)
             /* IP_BOUND_IF sets both the incoming and outgoing restriction at once */
