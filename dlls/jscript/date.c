@@ -22,6 +22,7 @@
 
 #include <limits.h>
 #include <math.h>
+#include <assert.h>
 
 #include "jscript.h"
 
@@ -490,10 +491,10 @@ static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, 
         LOCALE_SABBREVMONTHNAME11, LOCALE_SABBREVMONTHNAME12 };
 
     BOOL formatAD = TRUE;
-    BSTR week, month;
+    WCHAR week[64], month[64];
     jsstr_t *date_str;
     int len, size, year, day;
-    DWORD lcid_en, week_id, month_id;
+    DWORD lcid_en;
     WCHAR sign = '-';
 
     if(isnan(time)) {
@@ -507,22 +508,11 @@ static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, 
 
         lcid_en = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
 
-        week_id = week_ids[(int)week_day(time)];
-        size = GetLocaleInfoW(lcid_en, week_id, NULL, 0);
-        week = SysAllocStringLen(NULL, size);
-        if(!week)
-            return E_OUTOFMEMORY;
-        GetLocaleInfoW(lcid_en, week_id, week, size);
+        size = GetLocaleInfoW(lcid_en, week_ids[(int)week_day(time)], week, sizeof(week)/sizeof(*week));
+        assert(size);
         len += size-1;
 
-        month_id = month_ids[(int)month_from_time(time)];
-        size = GetLocaleInfoW(lcid_en, month_id, NULL, 0);
-        month = SysAllocStringLen(NULL, size);
-        if(!month) {
-            SysFreeString(week);
-            return E_OUTOFMEMORY;
-        }
-        GetLocaleInfoW(lcid_en, month_id, month, size);
+        size = GetLocaleInfoW(lcid_en, month_ids[(int)month_from_time(time)], month, sizeof(month)/sizeof(*month));
         len += size-1;
 
         year = year_from_time(time);
@@ -555,11 +545,8 @@ static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, 
         }
 
         date_str = jsstr_alloc_buf(len);
-        if(!date_str) {
-            SysFreeString(week);
-            SysFreeString(month);
+        if(!date_str)
             return E_OUTOFMEMORY;
-        }
 
         if(!show_offset)
             sprintfW(date_str->str, formatNoOffsetW, week, month, day,
@@ -574,9 +561,6 @@ static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, 
             sprintfW(date_str->str, formatUTCW, week, month, day,
                     (int)hour_from_time(time), (int)min_from_time(time),
                     (int)sec_from_time(time), year, formatAD?ADW:BCW);
-
-        SysFreeString(week);
-        SysFreeString(month);
 
         *r = jsval_string(date_str);
     }
@@ -681,11 +665,11 @@ static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis, jsva
         LOCALE_SABBREVMONTHNAME11, LOCALE_SABBREVMONTHNAME12 };
 
     BOOL formatAD = TRUE;
-    BSTR week, month;
+    WCHAR week[64], month[64];
     DateInstance *date;
     jsstr_t *date_str;
     int len, size, year, day;
-    DWORD lcid_en, week_id, month_id;
+    DWORD lcid_en;
 
     if(!(date = date_this(jsthis)))
         return throw_type_error(ctx, JS_E_DATE_EXPECTED, NULL);
@@ -701,22 +685,10 @@ static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis, jsva
 
         lcid_en = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
 
-        week_id = week_ids[(int)week_day(date->time)];
-        size = GetLocaleInfoW(lcid_en, week_id, NULL, 0);
-        week = SysAllocStringLen(NULL, size);
-        if(!week)
-            return E_OUTOFMEMORY;
-        GetLocaleInfoW(lcid_en, week_id, week, size);
+        size = GetLocaleInfoW(lcid_en, week_ids[(int)week_day(date->time)], week, sizeof(week)/sizeof(*week));
         len += size-1;
 
-        month_id = month_ids[(int)month_from_time(date->time)];
-        size = GetLocaleInfoW(lcid_en, month_id, NULL, 0);
-        month = SysAllocStringLen(NULL, size);
-        if(!month) {
-            SysFreeString(week);
-            return E_OUTOFMEMORY;
-        }
-        GetLocaleInfoW(lcid_en, month_id, month, size);
+        size = GetLocaleInfoW(lcid_en, month_ids[(int)month_from_time(date->time)], month, sizeof(month)/sizeof(*month));
         len += size-1;
 
         year = year_from_time(date->time);
@@ -791,11 +763,11 @@ static HRESULT dateobj_to_date_string(DateInstance *date, jsval_t *r)
         LOCALE_SABBREVMONTHNAME11, LOCALE_SABBREVMONTHNAME12 };
 
     BOOL formatAD = TRUE;
-    BSTR week, month;
+    WCHAR week[64], month[64];
     jsstr_t *date_str;
     DOUBLE time;
     int len, size, year, day;
-    DWORD lcid_en, week_id, month_id;
+    DWORD lcid_en;
 
     if(isnan(date->time)) {
         if(r)
@@ -810,22 +782,12 @@ static HRESULT dateobj_to_date_string(DateInstance *date, jsval_t *r)
 
         lcid_en = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
 
-        week_id = week_ids[(int)week_day(time)];
-        size = GetLocaleInfoW(lcid_en, week_id, NULL, 0);
-        week = SysAllocStringLen(NULL, size);
-        if(!week)
-            return E_OUTOFMEMORY;
-        GetLocaleInfoW(lcid_en, week_id, week, size);
+        size = GetLocaleInfoW(lcid_en, week_ids[(int)week_day(time)], week, sizeof(week)/sizeof(*week));
+        assert(size);
         len += size-1;
 
-        month_id = month_ids[(int)month_from_time(time)];
-        size = GetLocaleInfoW(lcid_en, month_id, NULL, 0);
-        month = SysAllocStringLen(NULL, size);
-        if(!month) {
-            SysFreeString(week);
-            return E_OUTOFMEMORY;
-        }
-        GetLocaleInfoW(lcid_en, month_id, month, size);
+        size = GetLocaleInfoW(lcid_en, month_ids[(int)month_from_time(time)], month, sizeof(month)/sizeof(*month));
+        assert(size);
         len += size-1;
 
         year = year_from_time(time);
@@ -851,15 +813,9 @@ static HRESULT dateobj_to_date_string(DateInstance *date, jsval_t *r)
         day = date_from_time(time);
 
         date_str = jsstr_alloc_buf(len);
-        if(!date_str) {
-            SysFreeString(week);
-            SysFreeString(month);
+        if(!date_str)
             return E_OUTOFMEMORY;
-        }
         sprintfW(date_str->str, formatAD?formatADW:formatBCW, week, month, day, year);
-
-        SysFreeString(week);
-        SysFreeString(month);
 
         *r = jsval_string(date_str);
     }
@@ -2073,9 +2029,8 @@ static inline HRESULT date_parse(jsstr_t *input_str, double *ret) {
         LOCALE_SMONTHNAME1, LOCALE_SDAYNAME7, LOCALE_SDAYNAME1,
         LOCALE_SDAYNAME2, LOCALE_SDAYNAME3, LOCALE_SDAYNAME4,
         LOCALE_SDAYNAME5, LOCALE_SDAYNAME6 };
-    BSTR strings[sizeof(string_ids)/sizeof(DWORD)];
-
-    BSTR parse;
+    WCHAR *strings[sizeof(string_ids)/sizeof(DWORD)];
+    WCHAR *parse;
     int input_len, parse_len = 0, nest_level = 0, i, size;
     int year = 0, month = 0, day = 0, hour = 0, min = 0, sec = 0;
     int ms = 0, offset = 0, hour_adjust = 0;
@@ -2102,7 +2057,7 @@ static inline HRESULT date_parse(jsstr_t *input_str, double *ret) {
         else if(!nest_level) parse_len++;
     }
 
-    parse = SysAllocStringLen(NULL, parse_len);
+    parse = heap_alloc((parse_len+1)*sizeof(WCHAR));
     if(!parse)
         return E_OUTOFMEMORY;
     nest_level = 0;
@@ -2112,6 +2067,7 @@ static inline HRESULT date_parse(jsstr_t *input_str, double *ret) {
         else if(input[i] == ')') nest_level--;
         else if(!nest_level) parse[parse_len++] = toupperW(input[i]);
     }
+    parse[parse_len] = 0;
 
     GetTimeZoneInformation(&tzi);
     di.bias = tzi.Bias;
@@ -2120,15 +2076,16 @@ static inline HRESULT date_parse(jsstr_t *input_str, double *ret) {
     di.daylightDate = tzi.DaylightDate;
     di.daylightBias = tzi.DaylightBias;
 
+    /* FIXME: Cache strings */
     lcid_en = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
     for(i=0; i<sizeof(string_ids)/sizeof(DWORD); i++) {
         size = GetLocaleInfoW(lcid_en, string_ids[i], NULL, 0);
-        strings[i] = SysAllocStringLen(NULL, size);
+        strings[i] = heap_alloc((size+1)*sizeof(WCHAR));
         if(!strings[i]) {
             i--;
             while(i-- >= 0)
-                SysFreeString(strings[i]);
-            SysFreeString(parse);
+                heap_free(strings[i]);
+            heap_free(parse);
             return E_OUTOFMEMORY;
         }
         GetLocaleInfoW(lcid_en, string_ids[i], strings[i], size);
@@ -2290,7 +2247,7 @@ static inline HRESULT date_parse(jsstr_t *input_str, double *ret) {
                 size -= i;
 
                 for(j=0; j<sizeof(string_ids)/sizeof(DWORD); j++)
-                    if(!memicmpW(&parse[i], strings[j], size)) break;
+                    if(!strncmpiW(&parse[i], strings[j], size)) break;
 
                 if(j < 12) {
                     if(set_month) break;
@@ -2323,8 +2280,8 @@ static inline HRESULT date_parse(jsstr_t *input_str, double *ret) {
     }
 
     for(i=0; i<sizeof(string_ids)/sizeof(DWORD); i++)
-        SysFreeString(strings[i]);
-    SysFreeString(parse);
+        heap_free(strings[i]);
+    heap_free(parse);
 
     return S_OK;
 }
