@@ -824,7 +824,7 @@ static void test_font_transform(void)
     GpMatrix *matrix;
     GpStringFormat *format, *typographic;
     PointF pos[1] = { { 0,0 } };
-    REAL height;
+    REAL height, margin_y;
     RectF bounds, rect;
 
     hdc = CreateCompatibleDC(0);
@@ -846,6 +846,8 @@ static void test_font_transform(void)
     status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
     expect(Ok, status);
 
+    margin_y = 100.0 / 8.0;
+
     /* identity matrix */
     status = GdipCreateMatrix(&matrix);
     expect(Ok, status);
@@ -865,7 +867,7 @@ static void test_font_transform(void)
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
 todo_wine
-    expectf(133.203125, bounds.Height);
+    expectf(height + margin_y, bounds.Height);
     set_rect_empty(&rect);
     set_rect_empty(&bounds);
     status = GdipMeasureString(graphics, string, -1, font, &rect, typographic, &bounds, NULL, NULL);
@@ -873,7 +875,7 @@ todo_wine
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
 todo_wine
-    expectf(120.703125, bounds.Height);
+    expectf(height, bounds.Height);
     set_rect_empty(&bounds);
     status = GdipMeasureDriverString(graphics, (const UINT16 *)string, -1, font, pos,
                                      DriverStringOptionsCmapLookup, NULL, &bounds);
@@ -882,7 +884,7 @@ todo_wine
 todo_wine
     expectf_(-100.0, bounds.Y, 0.05);
 todo_wine
-    expectf(120.703125, bounds.Height);
+    expectf(height, bounds.Height);
 
     /* scale matrix */
     status = GdipScaleMatrix(matrix, 2.0, 3.0, MatrixOrderAppend);
@@ -904,7 +906,7 @@ todo_wine
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
 todo_wine
-    expectf(133.203125, bounds.Height);
+    expectf(height + margin_y, bounds.Height);
     set_rect_empty(&rect);
     set_rect_empty(&bounds);
     status = GdipMeasureString(graphics, string, -1, font, &rect, typographic, &bounds, NULL, NULL);
@@ -912,7 +914,7 @@ todo_wine
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
 todo_wine
-    expectf(120.703125, bounds.Height);
+    expectf(height, bounds.Height);
     set_rect_empty(&bounds);
     status = GdipMeasureDriverString(graphics, (const UINT16 *)string, -1, font, pos,
                                      DriverStringOptionsCmapLookup, NULL, &bounds);
@@ -921,7 +923,7 @@ todo_wine
 todo_wine
     expectf_(-100.0, bounds.Y, 0.05);
 todo_wine
-    expectf(120.703125, bounds.Height);
+    expectf(height, bounds.Height);
 
     /* scale + ratate matrix */
     status = GdipRotateMatrix(matrix, 45.0, MatrixOrderAppend);
@@ -943,7 +945,7 @@ todo_wine
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
 todo_wine
-    expectf(133.203125, bounds.Height);
+    expectf(height + margin_y, bounds.Height);
     set_rect_empty(&rect);
     set_rect_empty(&bounds);
     status = GdipMeasureString(graphics, string, -1, font, &rect, typographic, &bounds, NULL, NULL);
@@ -951,7 +953,7 @@ todo_wine
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
 todo_wine
-    expectf(120.703125, bounds.Height);
+    expectf(height, bounds.Height);
     set_rect_empty(&bounds);
     status = GdipMeasureDriverString(graphics, (const UINT16 *)string, -1, font, pos,
                                      DriverStringOptionsCmapLookup, NULL, &bounds);
@@ -960,7 +962,7 @@ todo_wine
 todo_wine
     expectf_(-100.0, bounds.Y, 0.05);
 todo_wine
-    expectf(120.703125, bounds.Height);
+    expectf(height, bounds.Height);
 
     /* scale + ratate + shear matrix */
     status = GdipShearMatrix(matrix, 4.0, 5.0, MatrixOrderAppend);
@@ -982,7 +984,7 @@ todo_wine
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
 todo_wine
-    expectf(133.203125, bounds.Height);
+    expectf(height + margin_y, bounds.Height);
     set_rect_empty(&rect);
     set_rect_empty(&bounds);
     status = GdipMeasureString(graphics, string, -1, font, &rect, typographic, &bounds, NULL, NULL);
@@ -990,7 +992,7 @@ todo_wine
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
 todo_wine
-    expectf(120.703125, bounds.Height);
+    expectf(height, bounds.Height);
     set_rect_empty(&bounds);
     status = GdipMeasureDriverString(graphics, (const UINT16 *)string, -1, font, pos,
                                      DriverStringOptionsCmapLookup, NULL, &bounds);
@@ -999,7 +1001,7 @@ todo_wine
 todo_wine
     expectf_(-100.0, bounds.Y, 0.05);
 todo_wine
-    expectf(120.703125, bounds.Height);
+    expectf(height, bounds.Height);
 
     /* scale + ratate + shear + translate matrix */
     status = GdipTranslateMatrix(matrix, 10.0, 20.0, MatrixOrderAppend);
@@ -1021,7 +1023,7 @@ todo_wine
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
 todo_wine
-    expectf(133.203125, bounds.Height);
+    expectf(height + margin_y, bounds.Height);
     set_rect_empty(&rect);
     set_rect_empty(&bounds);
     status = GdipMeasureString(graphics, string, -1, font, &rect, typographic, &bounds, NULL, NULL);
@@ -1029,7 +1031,7 @@ todo_wine
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
 todo_wine
-    expectf(120.703125, bounds.Height);
+    expectf(height, bounds.Height);
     set_rect_empty(&bounds);
     status = GdipMeasureDriverString(graphics, (const UINT16 *)string, -1, font, pos,
                                      DriverStringOptionsCmapLookup, NULL, &bounds);
@@ -1038,7 +1040,7 @@ todo_wine
 todo_wine
     expectf_(-100.0, bounds.Y, 0.05);
 todo_wine
-    expectf(120.703125, bounds.Height);
+    expectf(height, bounds.Height);
 
     GdipDeleteMatrix(matrix);
     GdipDeleteFont(font);
