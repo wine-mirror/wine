@@ -5082,6 +5082,7 @@ static void test_frame_doc(IUnknown *frame_elem, BOOL iframe)
 static void test_iframe_elem(IHTMLElement *elem)
 {
     IHTMLDocument2 *content_doc, *owner_doc;
+    IHTMLIFrameElement3 *iframe3;
     IHTMLElementCollection *col;
     IHTMLWindow2 *content_window;
     IHTMLElement *body;
@@ -5107,6 +5108,18 @@ static void test_iframe_elem(IHTMLElement *elem)
 
     content_doc = get_window_doc(content_window);
     IHTMLWindow2_Release(content_window);
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLIFrameElement3, (void**)&iframe3);
+    if(SUCCEEDED(hres)) {
+        hres = IHTMLIFrameElement3_get_contentDocument(iframe3, &disp);
+        ok(hres == S_OK, "get_contentDocument failed: %08x\n", hres);
+        ok(iface_cmp((IUnknown*)content_doc, (IUnknown*)disp), "content_doc != disp\n");
+        IDispatch_Release(disp);
+
+        IHTMLIFrameElement3_Release(iframe3);
+    }else {
+        win_skip("IHTMLIFrameElement3 not supported\n");
+    }
 
     str = a2bstr("text/html");
     V_VT(&errv) = VT_ERROR;

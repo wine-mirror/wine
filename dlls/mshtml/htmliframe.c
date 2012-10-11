@@ -318,8 +318,19 @@ static HRESULT WINAPI HTMLIFrameElement3_Invoke(IHTMLIFrameElement3 *iface, DISP
 static HRESULT WINAPI HTMLIFrameElement3_get_contentDocument(IHTMLIFrameElement3 *iface, IDispatch **p)
 {
     HTMLIFrame *This = impl_from_IHTMLIFrameElement3(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    IHTMLDocument2 *doc;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->framebase.content_window) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    hres = IHTMLWindow2_get_document(&This->framebase.content_window->base.IHTMLWindow2_iface, &doc);
+    *p = (IDispatch*)doc;
+    return hres;
 }
 
 static HRESULT WINAPI HTMLIFrameElement3_put_src(IHTMLIFrameElement3 *iface, BSTR v)
