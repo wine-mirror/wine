@@ -181,6 +181,9 @@ static BOOL CALLBACK EnumJoysticks(
     DIDEVICEINSTANCE inst;
     DIDEVICEINSTANCE_DX3 inst3;
     DIPROPDWORD dipw;
+    DIPROPSTRING dps;
+    DIPROPGUIDANDPATH dpg;
+    WCHAR nameBuffer[MAX_PATH];
     HWND hWnd = get_hwnd();
     char oldstate[248], curstate[248];
 
@@ -215,6 +218,29 @@ static BOOL CALLBACK EnumJoysticks(
 
     hr = IDirectInputDevice_GetProperty(pJoystick, DIPROP_JOYSTICKID, &dipw.diph);
     ok(SUCCEEDED(hr), "IDirectInputDevice_GetProperty() for DIPROP_JOYSTICKID failed\n");
+
+    /* Test for INSTANCENAME property */
+    memset(&dps, 0, sizeof(dps));
+    dps.diph.dwSize = sizeof(DIPROPSTRING);
+    dps.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    dps.diph.dwHow = DIPH_DEVICE;
+
+    hr = IDirectInputDevice_GetProperty(pJoystick, DIPROP_INSTANCENAME, &dps.diph);
+    ok(SUCCEEDED(hr), "IDirectInput_GetProperty() for DIPROP_INSTANCENAME failed: %08x\n", hr);
+
+    /* Test if instance name is the same as present in DIDEVICEINSTANCE */
+    MultiByteToWideChar(CP_ACP, 0, lpddi->tszInstanceName, -1, nameBuffer, MAX_PATH);
+    ok(!lstrcmpW(nameBuffer, dps.wsz), "DIPROP_INSTANCENAME returned is wrong. Expected: %s Got: %s\n",
+                 wine_dbgstr_w(nameBuffer), wine_dbgstr_w(dps.wsz));
+
+    /* Test for GUIDPATH properties */
+    memset(&dpg, 0, sizeof(dpg));
+    dpg.diph.dwSize = sizeof(DIPROPGUIDANDPATH);
+    dpg.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    dpg.diph.dwHow = DIPH_DEVICE;
+
+    hr = IDirectInputDevice_GetProperty(pJoystick, DIPROP_GUIDANDPATH, &dpg.diph);
+    todo_wine ok(SUCCEEDED(hr), "IDirectInput_GetProperty() for DIPROP_GUIDANDPATH failed: %08x\n", hr);
 
     hr = IDirectInputDevice_SetDataFormat(pJoystick, NULL);
     ok(hr==E_POINTER,"IDirectInputDevice_SetDataFormat() should have returned "
