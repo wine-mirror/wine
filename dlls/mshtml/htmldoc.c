@@ -1442,11 +1442,55 @@ static HRESULT WINAPI HTMLDocument_createStyleSheet(IHTMLDocument2 *iface, BSTR 
                                             LONG lIndex, IHTMLStyleSheet **ppnewStyleSheet)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
+    nsIDOMHTMLHeadElement *head_elem;
+    IHTMLStyleElement *style_elem;
+    HTMLElement *elem;
+    nsresult nsres;
+    HRESULT hres;
 
-    FIXME("(%p)->(%s %d %p) semi-stub\n", This, debugstr_w(bstrHref), lIndex, ppnewStyleSheet);
+    static const WCHAR styleW[] = {'s','t','y','l','e',0};
 
-    *ppnewStyleSheet = HTMLStyleSheet_Create(NULL);
-    return S_OK;
+    TRACE("(%p)->(%s %d %p)\n", This, debugstr_w(bstrHref), lIndex, ppnewStyleSheet);
+
+    if(!This->doc_node->nsdoc) {
+        FIXME("not a real doc object\n");
+        return E_NOTIMPL;
+    }
+
+    if(lIndex != -1)
+        FIXME("Unsupported lIndex %d\n", lIndex);
+
+    if(bstrHref) {
+        FIXME("semi-stub for href %s\n", debugstr_w(bstrHref));
+        *ppnewStyleSheet = HTMLStyleSheet_Create(NULL);
+        return S_OK;
+    }
+
+    hres = create_element(This->doc_node, styleW, &elem);
+    if(FAILED(hres))
+        return hres;
+
+    nsres = nsIDOMHTMLDocument_GetHead(This->doc_node->nsdoc, &head_elem);
+    if(NS_SUCCEEDED(nsres)) {
+        nsIDOMNode *tmp_node;
+
+        nsres = nsIDOMHTMLHeadElement_AppendChild(head_elem, (nsIDOMNode*)elem->nselem, &tmp_node);
+        nsIDOMHTMLHeadElement_Release(head_elem);
+        if(NS_SUCCEEDED(nsres) && tmp_node)
+            nsIDOMNode_Release(tmp_node);
+    }
+    if(NS_FAILED(nsres)) {
+        IHTMLElement_Release(&elem->IHTMLElement_iface);
+        return E_FAIL;
+    }
+
+    hres = IHTMLElement_QueryInterface(&elem->IHTMLElement_iface, &IID_IHTMLStyleElement, (void**)&style_elem);
+    assert(hres == S_OK);
+    IHTMLElement_Release(&elem->IHTMLElement_iface);
+
+    hres = IHTMLStyleElement_get_styleSheet(style_elem, ppnewStyleSheet);
+    IHTMLStyleElement_Release(style_elem);
+    return hres;
 }
 
 static const IHTMLDocument2Vtbl HTMLDocumentVtbl = {
