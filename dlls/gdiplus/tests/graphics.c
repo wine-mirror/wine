@@ -3821,10 +3821,16 @@ static void test_font_height_scaling(void)
         {
             static const WCHAR doubleW[2] = { 'W','W' };
             RectF bounds_1, bounds_2;
-            REAL margin;
+            REAL margin, margin_y, font_height;
             int match;
 
             status = GdipSetPageUnit(graphics, gfx_unit);
+            expect(Ok, status);
+
+            margin_y = units_to_pixels(height / 8.0, font_unit, dpi);
+            margin_y = pixels_to_units(margin_y, gfx_unit, dpi);
+
+            status = GdipGetFontHeight(font, graphics, &font_height);
             expect(Ok, status);
 
             set_rect_empty(&rect);
@@ -3832,6 +3838,8 @@ static void test_font_height_scaling(void)
             status = GdipMeasureString(graphics, string, -1, font, &rect, format, &bounds, NULL, NULL);
             expect(Ok, status);
             /*trace("bounds: %f,%f,%f,%f\n", bounds.X, bounds.Y, bounds.Width, bounds.Height);*/
+todo_wine
+            expectf_(font_height + margin_y, bounds.Height, 0.005);
 
             ptf.X = 0;
             ptf.Y = bounds.Height;
@@ -3864,9 +3872,6 @@ todo_wine
             /*trace("margin %f\n", margin);*/
             ok(margin > 0.0, "wrong margin %f\n", margin);
 
-            status = GdipGetFontHeight(font, graphics, &height);
-            expect(Ok, status);
-
             set_rect_empty(&rect);
             rect.Width = 320000.0;
             rect.Height = 320000.0;
@@ -3880,9 +3885,9 @@ todo_wine
             expectf(0.0, rect.Y);
             match = fabs(1.0 - margin / rect.X) <= 0.05;
             ok(match, "Expected %f, got %f\n", margin, rect.X);
-            match = fabs(1.0 - height / rect.Height) <= 0.1;
+            match = fabs(1.0 - font_height / rect.Height) <= 0.1;
 todo_wine
-            ok(match, "Expected %f, got %f\n", height, rect.Height);
+            ok(match, "Expected %f, got %f\n", font_height, rect.Height);
             match = fabs(1.0 - bounds.Width / (rect.Width + margin * 2.0)) <= 0.05;
             ok(match, "Expected %f, got %f\n", bounds.Width, rect.Width + margin * 2.0);
         }
