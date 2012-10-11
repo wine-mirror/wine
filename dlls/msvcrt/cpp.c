@@ -666,34 +666,6 @@ __ASM_VTABLE(__non_rtti_object,
 }
 #endif
 
-#define DEFINE_EXCEPTION_TYPE_INFO(name, base_classes, cl1, cl2) \
-static const cxx_type_info name ## _cxx_type_info = \
-{ \
-    0, \
-    &name ## _type_info, \
-    { 0, -1, 0 }, \
-    sizeof(name), \
-    (cxx_copy_ctor)THISCALL(MSVCRT_ ## name ## _copy_ctor) \
-}; \
-\
-static const cxx_type_info_table name ## _type_info_table = \
-{ \
-    base_classes+1, \
-    { \
-        &name ## _cxx_type_info, \
-        cl1, \
-        cl2 \
-    } \
-}; \
-\
-const cxx_exception_type name ## _exception_type = \
-{ \
-    0, \
-    (void *)THISCALL(MSVCRT_ ## name ## _dtor), \
-    NULL, \
-    &name ## _type_info_table \
-}
-
 DEFINE_RTTI_DATA0( type_info, 0, ".?AVtype_info@@" );
 DEFINE_RTTI_DATA0( exception, 0, ".?AVexception@@" );
 DEFINE_RTTI_DATA1( bad_typeid, 0, &exception_rtti_base_descriptor, ".?AVbad_typeid@@" );
@@ -713,6 +685,11 @@ void msvcrt_init_exception(void *base)
     init_bad_typeid_rtti(base);
     init_bad_cast_rtti(base);
     init___non_rtti_object_rtti(base);
+
+    init_exception_cxx(base);
+    init_bad_typeid_cxx(base);
+    init_bad_cast_cxx(base);
+    init___non_rtti_object_cxx(base);
 #endif
 }
 
