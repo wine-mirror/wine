@@ -376,7 +376,7 @@ static void IMM_RegisterMessages(void)
     WM_MSIME_DOCUMENTFEED = RegisterWindowMessageA("MSIMEDocumentFeed");
 }
 
-static void IMM_RegisterIMEClass(HINSTANCE hInstDLL)
+static void IMM_RegisterIMEClass(void)
 {
     static const WCHAR szwIME[] = {'I','M','E',0};
     WNDCLASSW wndClass;
@@ -402,7 +402,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
             tlsIndex = TlsAlloc();
             if (tlsIndex == TLS_OUT_OF_INDEXES)
                 return FALSE;
-            IMM_RegisterIMEClass(hInstDLL);
+            IMM_RegisterIMEClass();
             break;
         case DLL_THREAD_ATTACH:
             break;
