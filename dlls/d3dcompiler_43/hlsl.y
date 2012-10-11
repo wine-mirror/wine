@@ -808,6 +808,29 @@ static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct lis
     return TRUE;
 }
 
+static const struct hlsl_ir_function_decl *get_overloaded_func(struct wine_rb_tree *funcs, char *name,
+        struct list *params, BOOL exact_signature)
+{
+    struct hlsl_ir_function *func;
+    struct wine_rb_entry *entry;
+
+    entry = wine_rb_get(funcs, name);
+    if (entry)
+    {
+        func = WINE_RB_ENTRY_VALUE(entry, struct hlsl_ir_function, entry);
+
+        entry = wine_rb_get(&func->overloads, params);
+        if (!entry)
+        {
+            if (!exact_signature)
+                FIXME("No exact match, search for a compatible overloaded function (if any).\n");
+            return NULL;
+        }
+        return WINE_RB_ENTRY_VALUE(entry, struct hlsl_ir_function_decl, entry);
+    }
+    return NULL;
+}
+
 %}
 
 %locations
@@ -1000,6 +1023,38 @@ hlsl_prog:                /* empty */
                             }
                         | hlsl_prog func_declaration
                             {
+                                const struct hlsl_ir_function_decl *decl;
+
+                                decl = get_overloaded_func(&hlsl_ctx.functions, $2.name, $2.decl->parameters, TRUE);
+                                if (decl && !decl->func->intrinsic)
+                                {
+                                    if (decl->body && $2.decl->body)
+                                    {
+                                        hlsl_report_message($2.decl->node.loc.file, $2.decl->node.loc.line,
+                                                $2.decl->node.loc.col, HLSL_LEVEL_ERROR,
+                                                "redefinition of function %s", debugstr_a($2.name));
+                                        return 1;
+                                    }
+                                    else if (!compare_hlsl_types(decl->node.data_type, $2.decl->node.data_type))
+                                    {
+                                        hlsl_report_message($2.decl->node.loc.file, $2.decl->node.loc.line,
+                                                $2.decl->node.loc.col, HLSL_LEVEL_ERROR,
+                                                "redefining function %s with a different return type",
+                                                debugstr_a($2.name));
+                                        hlsl_report_message(decl->node.loc.file, decl->node.loc.line, decl->node.loc.col, HLSL_LEVEL_NOTE,
+                                                "%s previously declared here",
+                                                debugstr_a($2.name));
+                                        return 1;
+                                    }
+                                }
+
+                                if ($2.decl->node.data_type->base_type == HLSL_TYPE_VOID && $2.decl->semantic)
+                                {
+                                    hlsl_report_message($2.decl->node.loc.file, $2.decl->node.loc.line,
+                                            $2.decl->node.loc.col, HLSL_LEVEL_ERROR,
+                                            "void function with a semantic");
+                                }
+
                                 TRACE("Adding function '%s' to the function list.\n", $2.name);
                                 add_function_decl(&hlsl_ctx.functions, $2.name, $2.decl, FALSE);
                             }

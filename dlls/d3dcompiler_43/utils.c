@@ -907,7 +907,7 @@ unsigned int components_count_type(struct hlsl_type *type)
     return count;
 }
 
-static BOOL compare_hlsl_types(const struct hlsl_type *t1, const struct hlsl_type *t2)
+BOOL compare_hlsl_types(const struct hlsl_type *t1, const struct hlsl_type *t2)
 {
     if (t1 == t2)
         return TRUE;
