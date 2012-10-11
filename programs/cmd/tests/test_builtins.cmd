@@ -1642,6 +1642,303 @@ if exist foo.cmd (
     echo file not created!
 )
 
+echo ---------- Testing copy
+md foobar2
+cd foobar2
+rem Note echo adds 0x0d 0x0a on the end of the line in the file
+echo AAA> file1
+echo BBBBBB> file2
+echo CCCCCCCCC> file3
+md dir1
+goto :testcopy
+
+:CheckExist
+if exist "%1" (
+  echo Passed: Found expected %1
+) else (
+  echo Failed: Did not find expected %1
+)
+del /q "%1" >nul 2>&1
+shift
+if not "%1"=="" goto :CheckExist
+goto :eof
+
+:CheckNotExist
+if not exist "%1" (
+  echo Passed: Did not find %1
+) else (
+  echo Failed: Unexpectedly found %1
+  del /q "%1" >nul 2>&1
+)
+shift
+if not "%1"=="" goto :CheckNotExist
+goto :eof
+
+rem Note: No way to check file size on NT4 so skip the test
+:CheckFileSize
+if not exist "%1" (
+  echo Failed: File missing when requested filesize check [%2]
+  goto :ContinueFileSizeChecks
+)
+for %%i in (%1) do set filesize=%%~zi
+if "%filesize%"=="%2" (
+    echo Passed: file size check on %1 [%filesize%]
+) else (
+  if "%filesize%"=="%%~zi" (
+    echo Skipping file size check on NT4
+  ) else (
+    echo Failed: file size check on %1 [%filesize% != %2]
+  )
+)
+:ContinueFileSizeChecks
+shift
+shift
+if not "%1"=="" goto :CheckFileSize
+goto :eof
+
+:testcopy
+
+rem -----------------------
+rem Simple single file copy
+rem -----------------------
+rem Simple single file copy, normally used syntax
+copy file1 dummy.file >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist dummy.file
+
+rem Simple single file copy, destination supplied as two forms of directory
+copy file1 dir1 >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist dir1\file1
+
+copy file1 dir1\ >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist dir1\file1
+
+rem Simple single file copy, destination supplied as fully qualified destination
+copy file1 dir1\file99 >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist dir1\file99
+
+rem Simple single file copy, destination not supplied
+cd dir1
+copy ..\file1 >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist file1
+cd ..
+
+rem Simple single file copy, destination supplied as non existant directory
+copy file1 dir2\ >nul 2>&1
+if not errorlevel 1 echo Incorrect errorlevel
+call :CheckNotExist dir2 dir2\file1
+
+rem -----------------------
+rem Wildcarded copy
+rem -----------------------
+rem Simple single file copy, destination supplied as two forms of directory
+copy file? dir1 >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist dir1\file1 dir1\file2 dir1\file3
+
+copy file* dir1\ >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist dir1\file1 dir1\file2 dir1\file3
+
+rem Simple single file copy, destination not supplied
+cd dir1
+copy ..\file*.* >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist file1 file2 file3
+cd ..
+
+rem Simple wildcarded file copy, destination supplied as non existant directory
+copy file? dir2\ >nul 2>&1
+if not errorlevel 1 echo Incorrect errorlevel
+call :CheckNotExist dir2 dir2\file1 dir2\file2 dir2\file3
+
+rem ------------------------------------------------
+rem Confirm overwrite works (cannot test prompting!)
+rem ------------------------------------------------
+copy file1 testfile >nul 2>&1
+copy /y file2 testfile >nul 2>&1
+call :CheckExist testfile
+
+rem ------------------------------------------------
+rem Test concatenation
+rem ------------------------------------------------
+rem simple case, no wildcards
+copy file1+file2 testfile >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist testfile
+
+rem simple case, wildcards, no concatenation
+copy file* testfile >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist testfile
+
+rem simple case, wildcards, and concatenation
+echo ddddd > fred
+copy file*+fred testfile >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist testfile
+
+rem simple case, wildcards, and concatenation
+copy fred+file* testfile >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist testfile
+
+rem Calculate destination name
+copy fred+file* dir1 >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist dir1\fred
+
+rem Calculate destination name
+copy fred+file* dir1\ >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist dir1\fred
+
+rem Calculate destination name (none supplied)
+cd dir1
+copy ..\fred+..\file* >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist fred
+
+copy ..\fr*+..\file1  >nul 2>&1
+if errorlevel 1 echo Incorrect errorlevel
+call :CheckExist fred
+cd ..
+
+rem ******************************************************************
+rem ASCII and BINARY tests
+rem Note: hard coded numbers deliberate because need to ensure whether
+rem an additional EOF has been added or not. There is no way to handle
+rem EOFs in batch, so assume if a single byte appears, its an EOF!
+rem ******************************************************************
+
+rem Confirm original sizes of file1,2,3
+call :CheckFileSize file1 5 file2 8 file3 11
+
+cd dir1
+
+rem ----------------------------------------------
+rem Show concatenation defaults copy to ascii mode
+rem ----------------------------------------------
+rem Simple default copy source to destination (should not append EOF 5)
+copy ..\file1 file1_default >nul 2>&1
+call :CheckFileSize file1_default 5
+
+rem Simple binary copy source to destination (should not append EOF 5)
+copy /b ..\file1 file1_default2 >nul 2>&1
+call :CheckFileSize file1_default2 5
+
+rem Simple ascii copy source to destination (should append EOF 5+1, 8+1, 11+1)
+copy /a ..\file1 file1_plus_eof >nul 2>&1
+call :CheckFileSize file1_plus_eof 6
+copy /a ..\file2 file2_plus_eof >nul 2>&1
+call :CheckFileSize file2_plus_eof 9
+copy /a ..\file3 file3_plus_eof >nul 2>&1
+call :CheckFileSize file3_plus_eof 12
+
+rem Concat 2 files, ascii mode - (only one EOF on the end 5+8+1)
+copy /a ..\file1+..\file2 file12_plus_eof >nul 2>&1
+call :CheckFileSize file12_plus_eof 14
+
+rem Concat 2 files, binary mode - (no EOF on the end 5+8)
+copy /b ..\file1+..\file2 file12_no_eof >nul 2>&1
+call :CheckFileSize file12_no_eof 13
+
+rem Concat 2 files, default mode - (one EOF on the end 5+8+1)
+copy ..\file1+..\file2 file12_eof2 >nul 2>&1
+call :CheckFileSize file12_eof2 14
+
+rem --------------------------------------------------------------
+rem Show ascii source copy stops at first EOF, binary does the lot
+rem --------------------------------------------------------------
+copy file1_plus_eof /b file1_binary_srccopy /b >nul 2>&1
+call :CheckFileSize file1_binary_srccopy 6
+
+copy file1_plus_eof /a file1_ascii_srccopy /b >nul 2>&1
+call :CheckFileSize file1_ascii_srccopy 5
+
+rem --------------------------------------------------------------
+rem Show results of concatenating files (ending in EOFs) and /a /b
+rem --------------------------------------------------------------
+
+rem Default and ascii copy reads as ascii, stripping EOFs, so 6-1 + 9-1 + 12-1 + 1
+copy file1_plus_eof+file2_plus_eof+file3_plus_eof file123_default_copy >nul 2>&1
+call :CheckFileSize file123_default_copy 25
+copy /a file1_plus_eof+file2_plus_eof+file3_plus_eof file123_ascii_copy >nul 2>&1
+call :CheckFileSize file123_ascii_copy 25
+
+rem In binary mode, we get 3 eofs, so 6 + 9 + 12 = 27
+copy /b file1_plus_eof + file2_plus_eof + file3_plus_eof file123_binary_copy >nul 2>&1
+call :CheckFileSize file123_binary_copy 27
+
+rem We can select which we want the eofs from by postfixing it with /a or /b
+rem so here have first and third with eof, second as ascii 6 + 9-1 + 12
+copy file1_plus_eof /b + file2_plus_eof /a + file3_plus_eof /b file123_mixed_copy1 >nul 2>&1
+call :CheckFileSize file123_mixed_copy1 26
+
+rem By postfixing the destination with /a, we ask for an ascii destination which appends EOF
+rem so here have first and third with eof, second as ascii 6 + 9-1 + 12 + extra EOF
+rem Note the delta between this and the previous one also shows that the destination
+rem ascii/binary is inherited from the last /a or /b on the line
+copy file1_plus_eof /b + file2_plus_eof /a + file3_plus_eof /b file123_mixed_copy2 /a >nul 2>&1
+call :CheckFileSize file123_mixed_copy2 27
+
+rem so here have second with eof, first and third as ascii 6-1 + 9 + 12-1
+rem Note the delta between the next two also shows that the destination ascii/binary is
+rem inherited from the last /a or /b on the line, so the first has an extra EOF
+copy file1_plus_eof /a + file2_plus_eof /b + file3_plus_eof /a file123_mixed_copy3 >nul 2>&1
+call :CheckFileSize file123_mixed_copy3 26
+copy file1_plus_eof /a + file2_plus_eof /b + file3_plus_eof /a file123_mixed_copy4 /b >nul 2>&1
+call :CheckFileSize file123_mixed_copy4 25
+
+rem -------------------------------------------------------------------------------------------
+rem This shows when concatenating, an ascii destination always adds on an EOF but when we
+rem are not concatenating, its a direct copy regardless of destination if being read as binary
+rem -------------------------------------------------------------------------------------------
+
+rem All 3 have eof's, plus an extra = 6 + 9 + 12 + eof
+copy /b file1_plus_eof + file2_plus_eof + file3_plus_eof file123_mixed_copy5 /a >nul 2>&1
+call :CheckFileSize file123_mixed_copy5 28
+
+rem All 2 have eof's, plus an extra = 6 + 12 + eof
+copy /b file1_plus_eof + file3_plus_eof file123_mixed_copy6 /a >nul 2>&1
+call :CheckFileSize file123_mixed_copy6 19
+
+rem One file has EOF, but doesnt get an extra one, ie 6
+copy /b file1_plus_eof file123_mixed_copy7 /a >nul 2>&1
+call :CheckFileSize file123_mixed_copy7 6
+
+del *.* /q
+cd ..
+
+rem ---------------------------------------
+rem Error combinations
+rem ---------------------------------------
+rem Specify source directory but name is a file
+call :setError 0
+copy file1\ dir1\ >NUL 2>&1
+if errorlevel 1 echo Passed: errorlevel invalid check 1
+if not errorlevel 1 echo Failed: errorlevel invalid check 1
+call :CheckNotExist dir1\file1
+
+rem Overwrite same file
+call :setError 0
+copy file1 file1 >NUL 2>&1
+if errorlevel 1 echo Passed: errorlevel invalid check 2
+if not errorlevel 1 echo Failed: errorlevel invalid check 2
+
+rem Supply same file identified as a directory
+call :setError 0
+copy file1 file1\ >NUL 2>&1
+if errorlevel 1 echo Passed: errorlevel invalid check 3
+if not errorlevel 1 echo Failed: errorlevel invalid check 3
+
+cd ..
+rd foobar2 /s /q
+
 echo ------------ Testing setlocal/endlocal ------------
 call :setError 0
 rem Note: setlocal EnableDelayedExpansion already tested in the variable delayed expansion test section

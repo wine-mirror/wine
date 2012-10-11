@@ -844,6 +844,63 @@ non-builtin dir
 file correctly deleted
 --- a batch file can alter itself
 @todo_wine@bar
+---------- Testing copy
+Passed: Found expected dummy.file
+Passed: Found expected dir1\file1
+Passed: Found expected dir1\file1
+Passed: Found expected dir1\file99
+Passed: Found expected file1
+Passed: Did not find dir2
+Passed: Did not find dir2\file1
+Passed: Found expected dir1\file1
+Passed: Found expected dir1\file2
+Passed: Found expected dir1\file3
+Passed: Found expected dir1\file1
+Passed: Found expected dir1\file2
+Passed: Found expected dir1\file3
+Passed: Found expected file1
+Passed: Found expected file2
+Passed: Found expected file3
+Passed: Did not find dir2
+Passed: Did not find dir2\file1
+Passed: Did not find dir2\file2
+Passed: Did not find dir2\file3
+Passed: Found expected testfile
+Passed: Found expected testfile
+Passed: Found expected testfile
+Passed: Found expected testfile
+Passed: Found expected testfile
+Passed: Found expected dir1\fred
+Passed: Found expected dir1\fred
+Passed: Found expected fred
+Passed: Found expected fred
+Passed: file size check on file1 [5]@or_broken@Skipping file size check on NT4
+Passed: file size check on file2 [8]@or_broken@Skipping file size check on NT4
+Passed: file size check on file3 [11]@or_broken@Skipping file size check on NT4
+Passed: file size check on file1_default [5]@or_broken@Skipping file size check on NT4
+Passed: file size check on file1_default2 [5]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file1_plus_eof [6]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file2_plus_eof [9]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file3_plus_eof [12]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file12_plus_eof [14]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file12_no_eof [13]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file12_eof2 [14]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file1_binary_srccopy [6]@or_broken@Skipping file size check on NT4
+Passed: file size check on file1_ascii_srccopy [5]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file123_default_copy [25]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file123_ascii_copy [25]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file123_binary_copy [27]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file123_mixed_copy1 [26]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file123_mixed_copy2 [27]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file123_mixed_copy3 [26]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file123_mixed_copy4 [25]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file123_mixed_copy5 [28]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file123_mixed_copy6 [19]@or_broken@Skipping file size check on NT4
+@todo_wine@Passed: file size check on file123_mixed_copy7 [6]@or_broken@Skipping file size check on NT4
+Passed: errorlevel invalid check 1
+Passed: Did not find dir1\file1
+Passed: errorlevel invalid check 2
+Passed: errorlevel invalid check 3
 ------------ Testing setlocal/endlocal ------------
 --- enable/disable extensions
 @todo_wine@ErrLev:@space@
