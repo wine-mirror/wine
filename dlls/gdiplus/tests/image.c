@@ -3006,7 +3006,7 @@ static const struct tiff_data
         { 0x100, IFD_LONG, 1, 1 }, /* IMAGEWIDTH */
         { 0x101, IFD_LONG, 1, 1 }, /* IMAGELENGTH */
         { 0x102, IFD_SHORT, 1, 1 }, /* BITSPERSAMPLE */
-        { 0x103, IFD_LONG, 1, 1 }, /* COMPRESSION */
+        { 0x103, IFD_SHORT, 1, 1 }, /* COMPRESSION: XP doesn't accept IFD_LONG here */
         { 0x106, IFD_SHORT, 1, 1 }, /* PHOTOMETRIC */
         { 0x111, IFD_LONG, 1, FIELD_OFFSET(struct tiff_data, pixel_data) }, /* STRIPOFFSETS */
         { 0x115, IFD_SHORT, 1, 1 }, /* SAMPLESPERPIXEL */
@@ -3065,7 +3065,7 @@ static void test_tiff_properties(void)
         { PropertyTagTypeLong, 0x100, 4, { 1 } },
         { PropertyTagTypeLong, 0x101, 4, { 1 } },
         { PropertyTagTypeShort, 0x102, 2, { 1 } },
-        { PropertyTagTypeLong, 0x103, 4, { 1 } },
+        { PropertyTagTypeShort, 0x103, 2, { 1 } },
         { PropertyTagTypeShort, 0x106, 2, { 1 } },
         { PropertyTagTypeLong, 0x111, 4, { 0x44,0x02 } },
         { PropertyTagTypeShort, 0x115, 2, { 1 } },
