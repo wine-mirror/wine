@@ -1033,24 +1033,12 @@ static HRESULT WINAPI HTMLDocument_createElement(IHTMLDocument2 *iface, BSTR eTa
                                                  IHTMLElement **newElem)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    HTMLDocumentNode *doc_node;
-    nsIDOMHTMLElement *nselem;
     HTMLElement *elem;
     HRESULT hres;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(eTag), newElem);
 
-    /* Use owner doc if called on document fragment */
-    doc_node = This->doc_node;
-    if(!doc_node->nsdoc)
-        doc_node = doc_node->node.doc;
-
-    hres = create_nselem(doc_node, eTag, &nselem);
-    if(FAILED(hres))
-        return hres;
-
-    hres = HTMLElement_Create(doc_node, (nsIDOMNode*)nselem, TRUE, &elem);
-    nsIDOMHTMLElement_Release(nselem);
+    hres = create_element(This->doc_node, eTag, &elem);
     if(FAILED(hres))
         return hres;
 
