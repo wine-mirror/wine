@@ -467,6 +467,8 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val, IServi
         return E_FAIL;
     }
 
+    TRACE("%s = %s\n", debugstr_w(prop->name), debugstr_jsval(val));
+
     hres = jsval_copy(val, &prop->u.val);
     if(FAILED(hres)) {
         prop->u.val = jsval_undefined();
@@ -1408,7 +1410,7 @@ HRESULT jsdisp_delete_idx(jsdisp_t *obj, DWORD idx)
     return delete_prop(prop);
 }
 
-HRESULT jsdisp_is_own_prop(jsdisp_t *obj, BSTR name, BOOL *ret)
+HRESULT jsdisp_is_own_prop(jsdisp_t *obj, const WCHAR *name, BOOL *ret)
 {
     dispex_prop_t *prop;
     HRESULT hres;

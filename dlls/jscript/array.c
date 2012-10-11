@@ -234,22 +234,18 @@ static HRESULT Array_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 
 static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, const WCHAR *sep, jsval_t *r)
 {
-    BSTR *str_tab, ret = NULL;
+    jsstr_t **str_tab, *ret = NULL;
     jsval_t val;
     DWORD i;
     HRESULT hres = E_FAIL;
 
     if(!length) {
-        if(r) {
-            BSTR ret = SysAllocStringLen(NULL, 0);
-            if(!ret)
-                return E_OUTOFMEMORY;
-            *r = jsval_string(ret);
-        }
+        if(r)
+            *r = jsval_string(jsstr_empty());
         return S_OK;
     }
 
-    str_tab = heap_alloc_zero(length * sizeof(BSTR));
+    str_tab = heap_alloc_zero(length * sizeof(*str_tab));
     if(!str_tab)
         return E_OUTOFMEMORY;
 
@@ -276,20 +272,30 @@ static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, cons
         seplen = strlenW(sep);
 
         if(str_tab[0])
-            len = SysStringLen(str_tab[0]);
-        for(i=1; i < length; i++)
-            len += seplen + SysStringLen(str_tab[i]);
+            len = jsstr_length(str_tab[0]);
+        for(i=1; i < length; i++) {
+            len += seplen;
+            if(str_tab[i])
+                len += jsstr_length(str_tab[i]);
+            if(len > JSSTR_MAX_LENGTH) {
+                hres = E_OUTOFMEMORY;
+                break;
+            }
+        }
 
-        ret = SysAllocStringLen(NULL, len);
+        if(SUCCEEDED(hres))
+            ret = jsstr_alloc_buf(len);
         if(ret) {
-            DWORD tmplen = 0;
+            unsigned tmplen;
+
+            ptr = ret->str;
 
             if(str_tab[0]) {
-                tmplen = SysStringLen(str_tab[0]);
-                memcpy(ret, str_tab[0], tmplen*sizeof(WCHAR));
+                tmplen = jsstr_length(str_tab[0]);
+                memcpy(ptr, str_tab[0]->str, tmplen*sizeof(WCHAR));
+                ptr += tmplen;
             }
 
-            ptr = ret + tmplen;
             for(i=1; i < length; i++) {
                 if(seplen) {
                     memcpy(ptr, sep, seplen*sizeof(WCHAR));
@@ -297,8 +303,8 @@ static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, cons
                 }
 
                 if(str_tab[i]) {
-                    tmplen = SysStringLen(str_tab[i]);
-                    memcpy(ptr, str_tab[i], tmplen*sizeof(WCHAR));
+                    tmplen = jsstr_length(str_tab[i]);
+                    memcpy(ptr, str_tab[i]->str, tmplen*sizeof(WCHAR));
                     ptr += tmplen;
                 }
             }
@@ -308,26 +314,20 @@ static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, cons
         }
     }
 
-    for(i=0; i < length; i++)
-        SysFreeString(str_tab[i]);
+    for(i=0; i < length; i++) {
+        if(str_tab[i])
+            jsstr_release(str_tab[i]);
+    }
     heap_free(str_tab);
     if(FAILED(hres))
         return hres;
 
-    TRACE("= %s\n", debugstr_w(ret));
+    TRACE("= %s\n", debugstr_jsstr(ret));
 
-    if(r) {
-        if(!ret) {
-            ret = SysAllocStringLen(NULL, 0);
-            if(!ret)
-                return E_OUTOFMEMORY;
-        }
-
-        *r = jsval_string(ret);
-    }else {
-        SysFreeString(ret);
-    }
-
+    if(r)
+        *r = ret ? jsval_string(ret) : jsval_string(jsstr_empty());
+    else
+        jsstr_release(ret);
     return S_OK;
 }
 
@@ -346,15 +346,15 @@ static HRESULT Array_join(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
         return hres;
 
     if(argc) {
-        BSTR sep;
+        jsstr_t *sep;
 
         hres = to_string(ctx, argv[0], &sep);
         if(FAILED(hres))
             return hres;
 
-        hres = array_join(ctx, jsthis, length, sep, r);
+        hres = array_join(ctx, jsthis, length, sep->str, r);
 
-        SysFreeString(sep);
+        jsstr_release(sep);
     }else {
         hres = array_join(ctx, jsthis, length, default_separatorW, r);
     }
@@ -653,7 +653,7 @@ static HRESULT sort_cmp(script_ctx_t *ctx, jsdisp_t *cmp_func, jsval_t v1, jsval
         else
             *cmp = d < -0.0 ? -1 : 0;
     }else {
-        BSTR x, y;
+        jsstr_t *x, *y;
 
         hres = to_string(ctx, v1, &x);
         if(FAILED(hres))
@@ -661,10 +661,10 @@ static HRESULT sort_cmp(script_ctx_t *ctx, jsdisp_t *cmp_func, jsval_t v1, jsval
 
         hres = to_string(ctx, v2, &y);
         if(SUCCEEDED(hres)) {
-            *cmp = strcmpW(x, y);
-            SysFreeString(y);
+            *cmp = jsstr_cmp(x, y);
+            jsstr_release(y);
         }
-        SysFreeString(x);
+        jsstr_release(x);
         if(FAILED(hres))
             return hres;
     }

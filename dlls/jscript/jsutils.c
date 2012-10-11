@@ -69,7 +69,7 @@ const char *debugstr_jsval(const jsval_t v)
     case JSV_OBJECT:
         return wine_dbg_sprintf("obj(%p)", get_object(v));
     case JSV_STRING:
-        return debugstr_w(get_string(v));
+        return wine_dbg_sprintf("str(%s)", debugstr_jsstr(get_string(v)));
     case JSV_NUMBER:
         return wine_dbg_sprintf("%lf", get_number(v));
     case JSV_BOOL:
@@ -210,11 +210,6 @@ jsheap_t *jsheap_mark(jsheap_t *heap)
     return heap;
 }
 
-static BSTR clone_bstr(BSTR str)
-{
-    return SysAllocStringLen(str, str ? SysStringLen(str) : 0);
-}
-
 void jsval_release(jsval_t val)
 {
     switch(jsval_type(val)) {
@@ -223,7 +218,7 @@ void jsval_release(jsval_t val)
             IDispatch_Release(get_object(val));
         break;
     case JSV_STRING:
-        SysFreeString(get_string(val));
+        jsstr_release(get_string(val));
         break;
     case JSV_VARIANT:
         VariantClear(get_variant(val));
@@ -266,10 +261,8 @@ HRESULT jsval_copy(jsval_t v, jsval_t *r)
         *r = v;
         return S_OK;
     case JSV_STRING: {
-        BSTR str = clone_bstr(get_string(v));
-        if(!str)
-            return E_OUTOFMEMORY;
-        *r = jsval_string(str);
+        jsstr_addref(get_string(v));
+        *r = v;
         return S_OK;
     }
     case JSV_VARIANT:
@@ -299,15 +292,14 @@ HRESULT variant_to_jsval(VARIANT *var, jsval_t *r)
         *r = jsval_number(V_R8(var));
         return S_OK;
     case VT_BSTR: {
-        BSTR str;
+        jsstr_t *str;
 
-        if(V_BSTR(var)) {
-            str = clone_bstr(V_BSTR(var));
-            if(!str)
-                return E_OUTOFMEMORY;
-        }else {
-            str = NULL;
-        }
+        str = jsstr_alloc_len(V_BSTR(var), SysStringLen(V_BSTR(var)));
+        if(!str)
+            return E_OUTOFMEMORY;
+        if(!V_BSTR(var))
+            str->length_flags |= JSSTR_FLAG_NULLBSTR;
+
         *r = jsval_string(str);
         return S_OK;
     }
@@ -343,16 +335,19 @@ HRESULT jsval_to_variant(jsval_t val, VARIANT *retv)
             IDispatch_AddRef(get_object(val));
         V_DISPATCH(retv) = get_object(val);
         return S_OK;
-    case JSV_STRING:
+    case JSV_STRING: {
+        jsstr_t *str = get_string(val);
+
         V_VT(retv) = VT_BSTR;
-        if(get_string(val)) {
-            V_BSTR(retv) = clone_bstr(get_string(val));
+        if(str->length_flags & JSSTR_FLAG_NULLBSTR) {
+            V_BSTR(retv) = NULL;
+        }else {
+            V_BSTR(retv) = SysAllocStringLen(str->str, jsstr_length(str));
             if(!V_BSTR(retv))
                 return E_OUTOFMEMORY;
-        }else {
-            V_BSTR(retv) = NULL;
         }
         return S_OK;
+    }
     case JSV_NUMBER: {
         double n = get_number(val);
 
@@ -459,7 +454,7 @@ HRESULT to_boolean(jsval_t val, BOOL *ret)
         *ret = get_object(val) != NULL;
         return S_OK;
     case JSV_STRING:
-        *ret = get_string(val) && *get_string(val);
+        *ret = jsstr_length(get_string(val)) != 0;
         return S_OK;
     case JSV_NUMBER:
         *ret = !isnan(get_number(val)) && get_number(val);
@@ -491,9 +486,9 @@ static int hex_to_int(WCHAR c)
 }
 
 /* ECMA-262 3rd Edition    9.3.1 */
-static HRESULT str_to_number(BSTR str, double *ret)
+static HRESULT str_to_number(jsstr_t *str, double *ret)
 {
-    const WCHAR *ptr = str;
+    const WCHAR *ptr = str->str;
     BOOL neg = FALSE;
     DOUBLE d = 0.0;
 
@@ -669,14 +664,14 @@ HRESULT to_uint32(script_ctx_t *ctx, jsval_t val, DWORD *ret)
     return S_OK;
 }
 
-static BSTR int_to_bstr(int i)
+static jsstr_t *int_to_string(int i)
 {
     WCHAR buf[12], *p;
     BOOL neg = FALSE;
 
     if(!i) {
         static const WCHAR zeroW[] = {'0',0};
-        return SysAllocString(zeroW);
+        return jsstr_alloc(zeroW);
     }
 
     if(i < 0) {
@@ -696,24 +691,24 @@ static BSTR int_to_bstr(int i)
     else
         p++;
 
-    return SysAllocString(p);
+    return jsstr_alloc(p);
 }
 
-HRESULT double_to_bstr(double n, BSTR *str)
+HRESULT double_to_string(double n, jsstr_t **str)
 {
-    const WCHAR NaNW[] = {'N','a','N',0};
     const WCHAR InfinityW[] = {'-','I','n','f','i','n','i','t','y',0};
 
     if(isnan(n)) {
-       *str = SysAllocString(NaNW);
+        *str = jsstr_nan();
     }else if(isinf(n)) {
-        *str = SysAllocString(n<0 ? InfinityW : InfinityW+1);
+        *str = jsstr_alloc(n<0 ? InfinityW : InfinityW+1);
     }else if(is_int32(n)) {
-        *str = int_to_bstr(n);
+        *str = int_to_string(n);
     }else {
         VARIANT strv, v;
         HRESULT hres;
 
+        /* FIXME: Don't use VariantChangeTypeEx */
         V_VT(&v) = VT_R8;
         V_R8(&v) = n;
         V_VT(&strv) = VT_EMPTY;
@@ -721,14 +716,15 @@ HRESULT double_to_bstr(double n, BSTR *str)
         if(FAILED(hres))
             return hres;
 
-        *str = V_BSTR(&strv);
+        *str = jsstr_alloc(V_BSTR(&strv));
+        SysFreeString(V_BSTR(&strv));
     }
 
     return *str ? S_OK : E_OUTOFMEMORY;
 }
 
 /* ECMA-262 3rd Edition    9.8 */
-HRESULT to_string(script_ctx_t *ctx, jsval_t val, BSTR *str)
+HRESULT to_string(script_ctx_t *ctx, jsval_t val, jsstr_t **str)
 {
     const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
     const WCHAR nullW[] = {'n','u','l','l',0};
@@ -737,15 +733,15 @@ HRESULT to_string(script_ctx_t *ctx, jsval_t val, BSTR *str)
 
     switch(jsval_type(val)) {
     case JSV_UNDEFINED:
-        *str = SysAllocString(undefinedW);
+        *str = jsstr_alloc(undefinedW);
         break;
     case JSV_NULL:
-        *str = SysAllocString(nullW);
+        *str = jsstr_alloc(nullW);
         break;
     case JSV_NUMBER:
-        return double_to_bstr(get_number(val), str);
+        return double_to_string(get_number(val), str);
     case JSV_STRING:
-        *str = clone_bstr(get_string(val));
+        *str = jsstr_addref(get_string(val));
         break;
     case JSV_OBJECT: {
         jsval_t prim;
@@ -760,7 +756,7 @@ HRESULT to_string(script_ctx_t *ctx, jsval_t val, BSTR *str)
         return hres;
     }
     case JSV_BOOL:
-        *str = SysAllocString(get_bool(val) ? trueW : falseW);
+        *str = jsstr_alloc(get_bool(val) ? trueW : falseW);
         break;
     default:
         FIXME("unsupported %s\n", debugstr_jsval(val));
@@ -778,7 +774,7 @@ HRESULT to_object(script_ctx_t *ctx, jsval_t val, IDispatch **disp)
 
     switch(jsval_type(val)) {
     case JSV_STRING:
-        hres = create_string(ctx, get_string(val), SysStringLen(get_string(val)), &dispex);
+        hres = create_string(ctx, get_string(val), &dispex);
         if(FAILED(hres))
             return hres;
 
@@ -883,11 +879,20 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
         break;
     }
     case VT_BSTR: {
-        BSTR str;
+        jsstr_t *str;
 
         hres = to_string(ctx, val, &str);
-        if(SUCCEEDED(hres))
-            V_BSTR(dst) = str;
+        if(FAILED(hres))
+            break;
+
+        if(str->length_flags & JSSTR_FLAG_NULLBSTR) {
+            V_BSTR(dst) = NULL;
+            break;
+        }
+
+        V_BSTR(dst) = SysAllocStringLen(str->str, jsstr_length(str));
+        if(!V_BSTR(dst))
+            hres = E_OUTOFMEMORY;
         break;
     }
     case VT_EMPTY:

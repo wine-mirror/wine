@@ -15,6 +15,7 @@ C_SRCS = \
 	global.c \
 	jscript.c \
 	jscript_main.c \
+	jsstr.c \
 	jsutils.c \
 	lex.c \
 	math.c \

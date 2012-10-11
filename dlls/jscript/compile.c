@@ -766,8 +766,18 @@ static HRESULT literal_as_bstr(compiler_ctx_t *ctx, literal_t *literal, BSTR *st
     case LT_STRING:
         *str = compiler_alloc_bstr(ctx, literal->u.wstr);
         break;
-    case LT_DOUBLE:
-        return double_to_bstr(literal->u.dval, str);
+    case LT_DOUBLE: {
+        jsstr_t *jsstr;
+        HRESULT hres;
+
+        hres = double_to_string(literal->u.dval, &jsstr);
+        if(FAILED(hres))
+            return hres;
+
+        *str = SysAllocStringLen(jsstr->str, jsstr_length(jsstr));
+        jsstr_release(jsstr);
+        break;
+    }
     default:
         assert(0);
     }

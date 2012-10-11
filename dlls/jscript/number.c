@@ -91,12 +91,13 @@ static inline void dtoa(double d, WCHAR *buf, int size, int *dec_point)
     }
 }
 
-static inline void number_to_fixed(double val, int prec, BSTR *out)
+static inline jsstr_t *number_to_fixed(double val, int prec)
 {
     WCHAR buf[NUMBER_DTOA_SIZE];
     int dec_point, size, buf_size, buf_pos;
     BOOL neg = FALSE;
-    BSTR str;
+    jsstr_t *ret;
+    WCHAR *str;
 
     if(val < 0) {
         neg = TRUE;
@@ -122,7 +123,11 @@ static inline void number_to_fixed(double val, int prec, BSTR *out)
     if(prec)
         size += prec+1;
 
-    str = SysAllocStringLen(NULL, size);
+    ret = jsstr_alloc_buf(size);
+    if(!ret)
+        return NULL;
+
+    str = ret->str;
     size = buf_pos = 0;
     if(neg)
         str[size++] = '-';
@@ -146,16 +151,16 @@ static inline void number_to_fixed(double val, int prec, BSTR *out)
         }
     }
     str[size++] = 0;
-
-    *out = str;
+    return ret;
 }
 
-static inline void number_to_exponential(double val, int prec, BSTR *out)
+static inline jsstr_t *number_to_exponential(double val, int prec)
 {
     WCHAR buf[NUMBER_DTOA_SIZE], *pbuf;
     int dec_point, size, buf_size, exp_size = 1;
     BOOL neg = FALSE;
-    BSTR str;
+    jsstr_t *ret;
+    WCHAR *str;
 
     if(val < 0) {
         neg = TRUE;
@@ -185,8 +190,12 @@ static inline void number_to_exponential(double val, int prec, BSTR *out)
         size = prec+4+exp_size; /* 4 = strlen(0.e+) */
     if(neg)
         size++;
-    str = SysAllocStringLen(NULL, size);
 
+    ret = jsstr_alloc_buf(size);
+    if(!ret)
+        return NULL;
+
+    str = ret->str;
     size = 0;
     pbuf = buf;
     if(neg)
@@ -214,7 +223,7 @@ static inline void number_to_exponential(double val, int prec, BSTR *out)
     size += exp_size;
     str[size] = 0;
 
-    *out = str;
+    return ret;
 }
 
 /* ECMA-262 3rd Edition    15.7.4.2 */
@@ -224,7 +233,7 @@ static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     NumberInstance *number;
     INT radix = 10;
     DOUBLE val;
-    BSTR str;
+    jsstr_t *str;
     HRESULT hres;
 
     TRACE("\n");
@@ -326,7 +335,7 @@ static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
         }
         else buf[idx] = '\0';
 
-        str = SysAllocString(buf);
+        str = jsstr_alloc(buf);
         if(!str)
             return E_OUTOFMEMORY;
     }
@@ -334,7 +343,7 @@ static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     if(r)
         *r = jsval_string(str);
     else
-        SysFreeString(str);
+        jsstr_release(str);
     return S_OK;
 }
 
@@ -351,7 +360,7 @@ static HRESULT Number_toFixed(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     NumberInstance *number;
     DOUBLE val;
     INT prec = 0;
-    BSTR str;
+    jsstr_t *str;
     HRESULT hres;
 
     TRACE("\n");
@@ -374,13 +383,15 @@ static HRESULT Number_toFixed(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         if(FAILED(hres))
             return hres;
     }else {
-        number_to_fixed(val, prec, &str);
+        str = number_to_fixed(val, prec);
+        if(!str)
+            return E_OUTOFMEMORY;
     }
 
     if(r)
         *r = jsval_string(str);
     else
-        SysFreeString(str);
+        jsstr_release(str);
     return S_OK;
 }
 
@@ -390,7 +401,7 @@ static HRESULT Number_toExponential(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
     NumberInstance *number;
     DOUBLE val;
     INT prec = 0;
-    BSTR str;
+    jsstr_t *str;
     HRESULT hres;
 
     TRACE("\n");
@@ -415,13 +426,15 @@ static HRESULT Number_toExponential(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
     }else {
         if(!prec)
             prec--;
-        number_to_exponential(val, prec, &str);
+        str = number_to_exponential(val, prec);
+        if(!str)
+            return E_OUTOFMEMORY;
     }
 
     if(r)
         *r = jsval_string(str);
     else
-        SysFreeString(str);
+        jsstr_release(str);
     return S_OK;
 }
 
@@ -430,8 +443,8 @@ static HRESULT Number_toPrecision(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 {
     NumberInstance *number;
     INT prec = 0, size;
+    jsstr_t *str;
     DOUBLE val;
-    BSTR str;
     HRESULT hres;
 
     if(!(number = number_this(jsthis)))
@@ -458,15 +471,17 @@ static HRESULT Number_toPrecision(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
             size = 1;
 
         if(size > prec)
-            number_to_exponential(val, prec-1, &str);
+            str = number_to_exponential(val, prec-1);
         else
-            number_to_fixed(val, prec-size, &str);
+            str = number_to_fixed(val, prec-size);
+        if(!str)
+            return E_OUTOFMEMORY;
     }
 
     if(r)
         *r = jsval_string(str);
     else
-        SysFreeString(str);
+        jsstr_release(str);
     return S_OK;
 }
 

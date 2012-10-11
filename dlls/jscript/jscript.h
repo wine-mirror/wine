@@ -34,6 +34,7 @@
 #include "wine/list.h"
 
 typedef struct _jsval_t jsval_t;
+typedef struct _jsstr_t jsstr_t;
 typedef struct _script_ctx_t script_ctx_t;
 typedef struct _exec_ctx_t exec_ctx_t;
 typedef struct _dispex_prop_t dispex_prop_t;
@@ -53,6 +54,41 @@ void *jsheap_grow(jsheap_t*,void*,DWORD,DWORD) DECLSPEC_HIDDEN;
 void jsheap_clear(jsheap_t*) DECLSPEC_HIDDEN;
 void jsheap_free(jsheap_t*) DECLSPEC_HIDDEN;
 jsheap_t *jsheap_mark(jsheap_t*) DECLSPEC_HIDDEN;
+
+static inline void *heap_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline void *heap_alloc_zero(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+}
+
+static inline void *heap_realloc(void *mem, size_t len)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, mem, len);
+}
+
+static inline BOOL heap_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
+
+static inline LPWSTR heap_strdupW(LPCWSTR str)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD size;
+
+        size = (strlenW(str)+1)*sizeof(WCHAR);
+        ret = heap_alloc(size);
+        memcpy(ret, str, size);
+    }
+
+    return ret;
+}
 
 typedef struct jsdisp_t jsdisp_t;
 
@@ -219,7 +255,7 @@ HRESULT jsdisp_propget_name(jsdisp_t*,LPCWSTR,jsval_t*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_get_idx(jsdisp_t*,DWORD,jsval_t*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_get_id(jsdisp_t*,const WCHAR*,DWORD,DISPID*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_delete_idx(jsdisp_t*,DWORD) DECLSPEC_HIDDEN;
-HRESULT jsdisp_is_own_prop(jsdisp_t*,BSTR,BOOL*) DECLSPEC_HIDDEN;
+HRESULT jsdisp_is_own_prop(jsdisp_t*,const WCHAR*,BOOL*) DECLSPEC_HIDDEN;
 
 HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,const WCHAR*,const builtin_info_t*,DWORD,
         jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
@@ -242,7 +278,7 @@ HRESULT create_math(script_ctx_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_array(script_ctx_t*,DWORD,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_regexp(script_ctx_t*,const WCHAR *,int,DWORD,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_regexp_var(script_ctx_t*,jsval_t,jsval_t*,jsdisp_t**) DECLSPEC_HIDDEN;
-HRESULT create_string(script_ctx_t*,const WCHAR*,DWORD,jsdisp_t**) DECLSPEC_HIDDEN;
+HRESULT create_string(script_ctx_t*,jsstr_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_bool(script_ctx_t*,BOOL,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_number(script_ctx_t*,double,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_vbarray(script_ctx_t*,SAFEARRAY*,jsdisp_t**) DECLSPEC_HIDDEN;
@@ -259,14 +295,14 @@ HRESULT to_number(script_ctx_t*,jsval_t,double*) DECLSPEC_HIDDEN;
 HRESULT to_integer(script_ctx_t*,jsval_t,double*) DECLSPEC_HIDDEN;
 HRESULT to_int32(script_ctx_t*,jsval_t,INT*) DECLSPEC_HIDDEN;
 HRESULT to_uint32(script_ctx_t*,jsval_t,DWORD*) DECLSPEC_HIDDEN;
-HRESULT to_string(script_ctx_t*,jsval_t,BSTR*) DECLSPEC_HIDDEN;
+HRESULT to_string(script_ctx_t*,jsval_t,jsstr_t**) DECLSPEC_HIDDEN;
 HRESULT to_object(script_ctx_t*,jsval_t,IDispatch**) DECLSPEC_HIDDEN;
 
 HRESULT variant_change_type(script_ctx_t*,VARIANT*,VARIANT*,VARTYPE) DECLSPEC_HIDDEN;
 
 HRESULT decode_source(WCHAR*) DECLSPEC_HIDDEN;
 
-HRESULT double_to_bstr(double,BSTR*) DECLSPEC_HIDDEN;
+HRESULT double_to_string(double,jsstr_t**) DECLSPEC_HIDDEN;
 
 typedef struct named_item_t {
     IDispatch *disp;
@@ -325,7 +361,7 @@ struct _script_ctx_t {
 
     IDispatch *host_global;
 
-    BSTR last_match;
+    jsstr_t *last_match;
     match_result_t match_parens[9];
     DWORD last_match_index;
     DWORD last_match_length;
@@ -383,7 +419,7 @@ HRESULT create_jscaller(script_ctx_t*) DECLSPEC_HIDDEN;
 HRESULT regexp_match_next(script_ctx_t*,jsdisp_t*,DWORD,const WCHAR*,DWORD,const WCHAR**,match_result_t**,
         DWORD*,DWORD*,match_result_t*) DECLSPEC_HIDDEN;
 HRESULT parse_regexp_flags(const WCHAR*,DWORD,DWORD*) DECLSPEC_HIDDEN;
-HRESULT regexp_string_match(script_ctx_t*,jsdisp_t*,BSTR,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT regexp_string_match(script_ctx_t*,jsdisp_t*,jsstr_t*,jsval_t*) DECLSPEC_HIDDEN;
 
 static inline BOOL is_class(jsdisp_t *jsdisp, jsclass_t class)
 {
@@ -474,39 +510,4 @@ static inline void lock_module(void)
 static inline void unlock_module(void)
 {
     InterlockedDecrement(&module_ref);
-}
-
-static inline void *heap_alloc(size_t len)
-{
-    return HeapAlloc(GetProcessHeap(), 0, len);
-}
-
-static inline void *heap_alloc_zero(size_t len)
-{
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
-}
-
-static inline void *heap_realloc(void *mem, size_t len)
-{
-    return HeapReAlloc(GetProcessHeap(), 0, mem, len);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}
-
-static inline LPWSTR heap_strdupW(LPCWSTR str)
-{
-    LPWSTR ret = NULL;
-
-    if(str) {
-        DWORD size;
-
-        size = (strlenW(str)+1)*sizeof(WCHAR);
-        ret = heap_alloc(size);
-        memcpy(ret, str, size);
-    }
-
-    return ret;
 }

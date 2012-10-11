@@ -141,9 +141,9 @@ static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
 static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
+    jsstr_t * progid;
     IDispatch *disp;
     IUnknown *obj;
-    BSTR progid;
     HRESULT hres;
 
     TRACE("\n");
@@ -168,8 +168,8 @@ static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
     if(FAILED(hres))
         return hres;
 
-    obj = create_activex_object(ctx, progid);
-    SysFreeString(progid);
+    obj = create_activex_object(ctx, progid->str);
+    jsstr_release(progid);
     if(!obj)
         return throw_generic_error(ctx, JS_E_CANNOT_CREATE_OBJ, NULL);
 

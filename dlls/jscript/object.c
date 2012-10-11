@@ -67,11 +67,13 @@ static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     }
 
     if(r) {
-        BSTR ret = SysAllocStringLen(NULL, 9+strlenW(str));
+        jsstr_t *ret;
+
+        ret = jsstr_alloc_buf(9+strlenW(str));
         if(!ret)
             return E_OUTOFMEMORY;
 
-        sprintfW(ret, formatW, str);
+        sprintfW(ret->str, formatW, str);
         *r = jsval_string(ret);
     }
 
@@ -106,7 +108,7 @@ static HRESULT Object_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    BSTR name;
+    jsstr_t *name;
     DISPID id;
     HRESULT hres;
 
@@ -125,7 +127,7 @@ static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
     if(is_jsdisp(jsthis)) {
         BOOL result;
 
-        hres = jsdisp_is_own_prop(jsthis->u.jsdisp, name, &result);
+        hres = jsdisp_is_own_prop(jsthis->u.jsdisp, name->str, &result);
         if(FAILED(hres))
             return hres;
 
@@ -135,11 +137,19 @@ static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
     }
 
     if(is_dispex(jsthis)) {
-        hres = IDispatchEx_GetDispID(jsthis->u.dispex, name,
+        BSTR bstr;
+
+        bstr = SysAllocStringLen(name->str, jsstr_length(name));
+        if(!bstr)
+            return E_OUTOFMEMORY;
+
+        hres = IDispatchEx_GetDispID(jsthis->u.dispex, bstr,
                 make_grfdex(ctx, fdexNameCaseSensitive), &id);
+        SysFreeString(bstr);
     } else {
+        OLECHAR *names = name->str;
         hres = IDispatch_GetIDsOfNames(jsthis->u.disp, &IID_NULL,
-                &name, 1, ctx->lcid, &id);
+                &names, 1, ctx->lcid, &id);
     }
 
     if(r)
@@ -170,7 +180,7 @@ static HRESULT Object_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     case INVOKE_FUNC:
         return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
     case DISPATCH_PROPERTYGET: {
-        BSTR ret = SysAllocString(default_valueW);
+        jsstr_t *ret = jsstr_alloc(default_valueW);
         if(!ret)
             return E_OUTOFMEMORY;
         *r = jsval_string(ret);

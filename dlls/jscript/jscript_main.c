@@ -140,7 +140,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hInstDLL);
         jscript_hinstance = hInstDLL;
+        if(!init_strings())
+            return FALSE;
         break;
+    case DLL_PROCESS_DETACH:
+        free_strings();
     }
 
     return TRUE;

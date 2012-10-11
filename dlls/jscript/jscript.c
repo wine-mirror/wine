@@ -72,7 +72,8 @@ void script_release(script_ctx_t *ctx)
     if(ctx->cc)
         release_cc(ctx->cc);
     jsheap_free(&ctx->tmp_heap);
-    SysFreeString(ctx->last_match);
+    if(ctx->last_match)
+        jsstr_release(ctx->last_match);
 
     ctx->jscaller->ctx = NULL;
     IServiceProvider_Release(&ctx->jscaller->IServiceProvider_iface);
@@ -723,6 +724,8 @@ static HRESULT WINAPI JScriptParse_InitNew(IActiveScriptParse *iface)
         heap_free(ctx);
         return hres;
     }
+
+    ctx->last_match = jsstr_empty();
 
     ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
     if(ctx) {

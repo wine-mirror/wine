@@ -51,11 +51,9 @@ static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         return throw_type_error(ctx, JS_E_BOOLEAN_EXPECTED, NULL);
 
     if(r) {
-        BSTR val;
+        jsstr_t *val;
 
-        if(bool->val) val = SysAllocString(trueW);
-        else val = SysAllocString(falseW);
-
+        val = jsstr_alloc(bool->val ? trueW : falseW);
         if(!val)
             return E_OUTOFMEMORY;
 

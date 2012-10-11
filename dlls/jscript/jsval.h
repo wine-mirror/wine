@@ -19,6 +19,8 @@
 #ifndef JSVAL_H
 #define JSVAL_H
 
+#include "jsstr.h"
+
 /*
  * jsval_t structure is used to represent JavaScript dynamically-typed values.
  * It's a (type,value) pair, usually represented as a structure of enum (type)
@@ -56,7 +58,7 @@ struct _jsval_t {
         struct {
             union {
                 IDispatch *obj;
-                BSTR str;
+                jsstr_t *str;
                 BOOL b;
                 VARIANT *v;
                 UINT_PTR as_uintptr;
@@ -68,7 +70,7 @@ struct _jsval_t {
     jsval_type_t type;
     union {
         IDispatch *obj;
-        BSTR str;
+        jsstr_t *str;
         double n;
         BOOL b;
         VARIANT *v;
@@ -104,7 +106,7 @@ static inline jsval_t jsval_bool(BOOL b)
     return ret;
 }
 
-static inline jsval_t jsval_string(BSTR str)
+static inline jsval_t jsval_string(jsstr_t *str)
 {
     jsval_t ret;
     __JSVAL_TYPE(ret) = JSV_STRING;
@@ -224,7 +226,7 @@ static inline double get_number(jsval_t v)
     return v.u.n;
 }
 
-static inline BSTR get_string(jsval_t v)
+static inline jsstr_t *get_string(jsval_t v)
 {
     return __JSVAL_STR(v);
 }

@@ -245,9 +245,9 @@ static HRESULT call_function(script_ctx_t *ctx, FunctionInstance *function, IDis
     return invoke_source(ctx, function, this_obj, argc, argv, r);
 }
 
-static HRESULT function_to_string(FunctionInstance *function, BSTR *ret)
+static HRESULT function_to_string(FunctionInstance *function, jsstr_t **ret)
 {
-    BSTR str;
+    jsstr_t *str;
 
     static const WCHAR native_prefixW[] = {'\n','f','u','n','c','t','i','o','n',' '};
     static const WCHAR native_suffixW[] =
@@ -257,15 +257,15 @@ static HRESULT function_to_string(FunctionInstance *function, BSTR *ret)
         DWORD name_len;
 
         name_len = strlenW(function->name);
-        str = SysAllocStringLen(NULL, sizeof(native_prefixW) + name_len*sizeof(WCHAR) + sizeof(native_suffixW));
+        str = jsstr_alloc_buf((sizeof(native_prefixW)+sizeof(native_suffixW))/sizeof(WCHAR) + name_len);
         if(!str)
             return E_OUTOFMEMORY;
 
-        memcpy(str, native_prefixW, sizeof(native_prefixW));
-        memcpy(str + sizeof(native_prefixW)/sizeof(WCHAR), function->name, name_len*sizeof(WCHAR));
-        memcpy(str + sizeof(native_prefixW)/sizeof(WCHAR) + name_len, native_suffixW, sizeof(native_suffixW));
+        memcpy(str->str, native_prefixW, sizeof(native_prefixW));
+        memcpy(str->str + sizeof(native_prefixW)/sizeof(WCHAR), function->name, name_len*sizeof(WCHAR));
+        memcpy(str->str + sizeof(native_prefixW)/sizeof(WCHAR) + name_len, native_suffixW, sizeof(native_suffixW));
     }else {
-        str = SysAllocStringLen(function->func_code->source, function->func_code->source_len);
+        str = jsstr_alloc_len(function->func_code->source, function->func_code->source_len);
         if(!str)
             return E_OUTOFMEMORY;
     }
@@ -316,7 +316,7 @@ static HRESULT Function_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         jsval_t *r)
 {
     FunctionInstance *function;
-    BSTR str;
+    jsstr_t *str;
     HRESULT hres;
 
     TRACE("\n");
@@ -331,7 +331,7 @@ static HRESULT Function_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     if(r)
         *r = jsval_string(str);
     else
-        SysFreeString(str);
+        jsstr_release(str);
     return S_OK;
 }
 
@@ -475,7 +475,7 @@ HRESULT Function_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned 
 
     case DISPATCH_PROPERTYGET: {
         HRESULT hres;
-        BSTR str;
+        jsstr_t *str;
 
         hres = function_to_string(function, &str);
         if(FAILED(hres))
@@ -689,7 +689,7 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
     DWORD len = 0, l;
     bytecode_t *code;
     jsdisp_t *function;
-    BSTR *params = NULL;
+    jsstr_t **params = NULL;
     int i=0, j=0;
     HRESULT hres = S_OK;
 
@@ -698,7 +698,7 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
     static const WCHAR function_endW[] = {'\n','}',0};
 
     if(argc) {
-        params = heap_alloc(argc*sizeof(BSTR));
+        params = heap_alloc(argc*sizeof(*params));
         if(!params)
             return E_OUTOFMEMORY;
 
@@ -708,7 +708,7 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
             hres = to_string(ctx, argv[i], params+i);
             if(FAILED(hres))
                 break;
-            len += SysStringLen(params[i]);
+            len += jsstr_length(params[i]);
         }
     }
 
@@ -720,8 +720,8 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
             ptr = str + sizeof(function_anonymousW)/sizeof(WCHAR);
             if(argc > 1) {
                 while(1) {
-                    l = SysStringLen(params[j]);
-                    memcpy(ptr, params[j], l*sizeof(WCHAR));
+                    l = jsstr_length(params[j]);
+                    memcpy(ptr, params[j]->str, l*sizeof(WCHAR));
                     ptr += l;
                     if(++j == argc-1)
                         break;
@@ -732,8 +732,8 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
             memcpy(ptr, function_beginW, sizeof(function_beginW));
             ptr += sizeof(function_beginW)/sizeof(WCHAR);
             if(argc) {
-                l = SysStringLen(params[argc-1]);
-                memcpy(ptr, params[argc-1], l*sizeof(WCHAR));
+                l = jsstr_length(params[argc-1]);
+                memcpy(ptr, params[argc-1]->str, l*sizeof(WCHAR));
                 ptr += l;
             }
             memcpy(ptr, function_endW, sizeof(function_endW));
@@ -745,7 +745,7 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
     }
 
     while(--i >= 0)
-        SysFreeString(params[i]);
+        jsstr_release(params[i]);
     heap_free(params);
     if(FAILED(hres))
         return hres;

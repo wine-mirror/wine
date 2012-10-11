@@ -467,7 +467,6 @@ static SYSTEMTIME create_systemtime(DOUBLE time)
 
 static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, jsval_t *r)
 {
-    static const WCHAR NaNW[] = { 'N','a','N',0 };
     static const WCHAR formatW[] = { '%','s',' ','%','s',' ','%','d',' ',
         '%','0','2','d',':','%','0','2','d',':','%','0','2','d',' ',
         'U','T','C','%','c','%','0','2','d','%','0','2','d',' ','%','d','%','s',0 };
@@ -492,18 +491,14 @@ static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, 
 
     BOOL formatAD = TRUE;
     BSTR week, month;
-    BSTR date_str;
+    jsstr_t *date_str;
     int len, size, year, day;
     DWORD lcid_en, week_id, month_id;
     WCHAR sign = '-';
 
     if(isnan(time)) {
-        if(r) {
-            BSTR ret = SysAllocString(NaNW);
-            if(!ret)
-                return E_OUTOFMEMORY;
-            *r = jsval_string(ret);
-        }
+        if(r)
+            *r = jsval_string(jsstr_nan());
         return S_OK;
     }
 
@@ -559,7 +554,7 @@ static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, 
             offset = -offset;
         }
 
-        date_str = SysAllocStringLen(NULL, len);
+        date_str = jsstr_alloc_buf(len);
         if(!date_str) {
             SysFreeString(week);
             SysFreeString(month);
@@ -567,16 +562,16 @@ static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, 
         }
 
         if(!show_offset)
-            sprintfW(date_str, formatNoOffsetW, week, month, day,
+            sprintfW(date_str->str, formatNoOffsetW, week, month, day,
                     (int)hour_from_time(time), (int)min_from_time(time),
                     (int)sec_from_time(time), year, formatAD?ADW:BCW);
         else if(offset)
-            sprintfW(date_str, formatW, week, month, day,
+            sprintfW(date_str->str, formatW, week, month, day,
                     (int)hour_from_time(time), (int)min_from_time(time),
                     (int)sec_from_time(time), sign, offset/60, offset%60,
                     year, formatAD?ADW:BCW);
         else
-            sprintfW(date_str, formatUTCW, week, month, day,
+            sprintfW(date_str->str, formatUTCW, week, month, day,
                     (int)hour_from_time(time), (int)min_from_time(time),
                     (int)sec_from_time(time), year, formatAD?ADW:BCW);
 
@@ -617,10 +612,9 @@ static HRESULT Date_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 static HRESULT Date_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    static const WCHAR NaNW[] = { 'N','a','N',0 };
     SYSTEMTIME st;
     DateInstance *date;
-    BSTR date_str;
+    jsstr_t *date_str;
     int date_len, time_len;
 
     TRACE("\n");
@@ -629,12 +623,8 @@ static HRESULT Date_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         return throw_type_error(ctx, JS_E_DATE_EXPECTED, NULL);
 
     if(isnan(date->time)) {
-        if(r) {
-            BSTR ret = SysAllocString(NaNW);
-            if(!ret)
-                return E_OUTOFMEMORY;
-            *r = jsval_string(ret);
-        }
+        if(r)
+            *r = jsval_string(jsstr_nan());
         return S_OK;
     }
 
@@ -646,12 +636,12 @@ static HRESULT Date_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
     if(r) {
         date_len = GetDateFormatW(ctx->lcid, DATE_LONGDATE, &st, NULL, NULL, 0);
         time_len = GetTimeFormatW(ctx->lcid, 0, &st, NULL, NULL, 0);
-        date_str = SysAllocStringLen(NULL, date_len+time_len-1);
+        date_str = jsstr_alloc_buf(date_len+time_len-1);
         if(!date_str)
             return E_OUTOFMEMORY;
-        GetDateFormatW(ctx->lcid, DATE_LONGDATE, &st, NULL, date_str, date_len);
-        GetTimeFormatW(ctx->lcid, 0, &st, NULL, &date_str[date_len], time_len);
-        date_str[date_len-1] = ' ';
+        GetDateFormatW(ctx->lcid, DATE_LONGDATE, &st, NULL, date_str->str, date_len);
+        GetTimeFormatW(ctx->lcid, 0, &st, NULL, date_str->str+date_len, time_len);
+        date_str->str[date_len-1] = ' ';
 
         *r = jsval_string(date_str);
     }
@@ -675,7 +665,6 @@ static HRESULT Date_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 
 static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
 {
-    static const WCHAR NaNW[] = { 'N','a','N',0 };
     static const WCHAR formatADW[] = { '%','s',',',' ','%','d',' ','%','s',' ','%','d',' ',
         '%','0','2','d',':','%','0','2','d',':','%','0','2','d',' ','U','T','C',0 };
     static const WCHAR formatBCW[] = { '%','s',',',' ','%','d',' ','%','s',' ','%','d',' ','B','.','C','.',' ',
@@ -694,7 +683,7 @@ static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis, jsva
     BOOL formatAD = TRUE;
     BSTR week, month;
     DateInstance *date;
-    BSTR date_str;
+    jsstr_t *date_str;
     int len, size, year, day;
     DWORD lcid_en, week_id, month_id;
 
@@ -702,12 +691,8 @@ static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis, jsva
         return throw_type_error(ctx, JS_E_DATE_EXPECTED, NULL);
 
     if(isnan(date->time)) {
-        if(r) {
-            BSTR ret = SysAllocString(NaNW);
-            if(!ret)
-                return E_OUTOFMEMORY;
-            *r = jsval_string(ret);
-        }
+        if(r)
+            *r = jsval_string(jsstr_nan());
         return S_OK;
     }
 
@@ -756,13 +741,13 @@ static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis, jsva
         } while(day);
         day = date_from_time(date->time);
 
-        date_str = SysAllocStringLen(NULL, len);
+        date_str = jsstr_alloc_buf(len);
         if(!date_str) {
             SysFreeString(week);
             SysFreeString(month);
             return E_OUTOFMEMORY;
         }
-        sprintfW(date_str, formatAD?formatADW:formatBCW, week, day, month, year,
+        sprintfW(date_str->str, formatAD?formatADW:formatBCW, week, day, month, year,
                 (int)hour_from_time(date->time), (int)min_from_time(date->time),
                 (int)sec_from_time(date->time));
 
@@ -792,7 +777,6 @@ static HRESULT Date_toGMTString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 /* ECMA-262 3rd Edition    15.9.5.3 */
 static HRESULT dateobj_to_date_string(DateInstance *date, jsval_t *r)
 {
-    static const WCHAR NaNW[] = { 'N','a','N',0 };
     static const WCHAR formatADW[] = { '%','s',' ','%','s',' ','%','d',' ','%','d',0 };
     static const WCHAR formatBCW[] = { '%','s',' ','%','s',' ','%','d',' ','%','d',' ','B','.','C','.',0 };
 
@@ -808,18 +792,14 @@ static HRESULT dateobj_to_date_string(DateInstance *date, jsval_t *r)
 
     BOOL formatAD = TRUE;
     BSTR week, month;
-    BSTR date_str;
+    jsstr_t *date_str;
     DOUBLE time;
     int len, size, year, day;
     DWORD lcid_en, week_id, month_id;
 
     if(isnan(date->time)) {
-        if(r) {
-            BSTR ret = SysAllocString(NaNW);
-            if(!ret)
-                return E_OUTOFMEMORY;
-            *r = jsval_string(ret);
-        }
+        if(r)
+            *r = jsval_string(jsstr_nan());
         return S_OK;
     }
 
@@ -870,13 +850,13 @@ static HRESULT dateobj_to_date_string(DateInstance *date, jsval_t *r)
         } while(day);
         day = date_from_time(time);
 
-        date_str = SysAllocStringLen(NULL, len);
+        date_str = jsstr_alloc_buf(len);
         if(!date_str) {
             SysFreeString(week);
             SysFreeString(month);
             return E_OUTOFMEMORY;
         }
-        sprintfW(date_str, formatAD?formatADW:formatBCW, week, month, day, year);
+        sprintfW(date_str->str, formatAD?formatADW:formatBCW, week, month, day, year);
 
         SysFreeString(week);
         SysFreeString(month);
@@ -901,13 +881,12 @@ static HRESULT Date_toDateString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 static HRESULT Date_toTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    static const WCHAR NaNW[] = { 'N','a','N',0 };
     static const WCHAR formatW[] = { '%','0','2','d',':','%','0','2','d',':','%','0','2','d',
         ' ','U','T','C','%','c','%','0','2','d','%','0','2','d',0 };
     static const WCHAR formatUTCW[] = { '%','0','2','d',':','%','0','2','d',
         ':','%','0','2','d',' ','U','T','C',0 };
     DateInstance *date;
-    BSTR date_str;
+    jsstr_t *date_str;
     DOUBLE time;
     WCHAR sign;
     int offset;
@@ -918,18 +897,15 @@ static HRESULT Date_toTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         return throw_type_error(ctx, JS_E_DATE_EXPECTED, NULL);
 
     if(isnan(date->time)) {
-        if(r) {
-            BSTR ret = SysAllocString(NaNW);
-            if(!ret)
-                return E_OUTOFMEMORY;
-            *r = jsval_string(ret);
-        }
+        if(r)
+            *r = jsval_string(jsstr_nan());
+        return S_OK;
     }
 
     time = local_time(date->time, date);
 
     if(r) {
-        date_str = SysAllocStringLen(NULL, 17);
+        date_str = jsstr_alloc_buf(17);
         if(!date_str)
             return E_OUTOFMEMORY;
 
@@ -943,11 +919,11 @@ static HRESULT Date_toTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         else sign = '-';
 
         if(offset)
-            sprintfW(date_str, formatW, (int)hour_from_time(time),
+            sprintfW(date_str->str, formatW, (int)hour_from_time(time),
                     (int)min_from_time(time), (int)sec_from_time(time),
                     sign, offset/60, offset%60);
         else
-            sprintfW(date_str, formatUTCW, (int)hour_from_time(time),
+            sprintfW(date_str->str, formatUTCW, (int)hour_from_time(time),
                     (int)min_from_time(time), (int)sec_from_time(time));
 
         *r = jsval_string(date_str);
@@ -959,10 +935,9 @@ static HRESULT Date_toTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 static HRESULT Date_toLocaleDateString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    static const WCHAR NaNW[] = { 'N','a','N',0 };
     SYSTEMTIME st;
     DateInstance *date;
-    BSTR date_str;
+    jsstr_t *date_str;
     int len;
 
     TRACE("\n");
@@ -971,12 +946,8 @@ static HRESULT Date_toLocaleDateString(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
         return throw_type_error(ctx, JS_E_DATE_EXPECTED, NULL);
 
     if(isnan(date->time)) {
-        if(r) {
-            BSTR ret = SysAllocString(NaNW);
-            if(!ret)
-                return E_OUTOFMEMORY;
-            *r = jsval_string(ret);
-        }
+        if(r)
+            *r = jsval_string(jsstr_nan());
         return S_OK;
     }
 
@@ -987,10 +958,10 @@ static HRESULT Date_toLocaleDateString(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
 
     if(r) {
         len = GetDateFormatW(ctx->lcid, DATE_LONGDATE, &st, NULL, NULL, 0);
-        date_str = SysAllocStringLen(NULL, len);
+        date_str = jsstr_alloc_buf(len);
         if(!date_str)
             return E_OUTOFMEMORY;
-        GetDateFormatW(ctx->lcid, DATE_LONGDATE, &st, NULL, date_str, len);
+        GetDateFormatW(ctx->lcid, DATE_LONGDATE, &st, NULL, date_str->str, len);
 
         *r = jsval_string(date_str);
     }
@@ -1001,10 +972,9 @@ static HRESULT Date_toLocaleDateString(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
 static HRESULT Date_toLocaleTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    static const WCHAR NaNW[] = { 'N','a','N',0 };
     SYSTEMTIME st;
     DateInstance *date;
-    BSTR date_str;
+    jsstr_t *date_str;
     int len;
 
     TRACE("\n");
@@ -1013,12 +983,8 @@ static HRESULT Date_toLocaleTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
         return throw_type_error(ctx, JS_E_DATE_EXPECTED, NULL);
 
     if(isnan(date->time)) {
-        if(r) {
-            BSTR ret = SysAllocString(NaNW);
-            if(!ret)
-                return E_OUTOFMEMORY;
-            *r = jsval_string(ret);
-        }
+        if(r)
+            *r = jsval_string(jsstr_nan());
         return S_OK;
     }
 
@@ -1029,10 +995,10 @@ static HRESULT Date_toLocaleTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
 
     if(r) {
         len = GetTimeFormatW(ctx->lcid, 0, &st, NULL, NULL, 0);
-        date_str = SysAllocStringLen(NULL, len);
+        date_str = jsstr_alloc_buf(len);
         if(!date_str)
             return E_OUTOFMEMORY;
-        GetTimeFormatW(ctx->lcid, 0, &st, NULL, date_str, len);
+        GetTimeFormatW(ctx->lcid, 0, &st, NULL, date_str->str, len);
 
         *r = jsval_string(date_str);
     }
@@ -2099,7 +2065,7 @@ static HRESULT create_date(script_ctx_t *ctx, jsdisp_t *object_prototype, DOUBLE
     return S_OK;
 }
 
-static inline HRESULT date_parse(BSTR input, double *ret) {
+static inline HRESULT date_parse(jsstr_t *input_str, double *ret) {
     static const DWORD string_ids[] = { LOCALE_SMONTHNAME12, LOCALE_SMONTHNAME11,
         LOCALE_SMONTHNAME10, LOCALE_SMONTHNAME9, LOCALE_SMONTHNAME8,
         LOCALE_SMONTHNAME7, LOCALE_SMONTHNAME6, LOCALE_SMONTHNAME5,
@@ -2117,10 +2083,13 @@ static inline HRESULT date_parse(BSTR input, double *ret) {
     BOOL set_offset = FALSE, set_era = FALSE, ad = TRUE, set_am = FALSE, am = TRUE;
     BOOL set_hour_adjust = TRUE;
     TIME_ZONE_INFORMATION tzi;
+    const WCHAR *input;
     DateInstance di;
     DWORD lcid_en;
 
-    input_len = SysStringLen(input);
+    input_len = jsstr_length(input_str);
+    input = input_str->str;
+
     for(i=0; i<input_len; i++) {
         if(input[i] == '(') nest_level++;
         else if(input[i] == ')') {
@@ -2363,7 +2332,7 @@ static inline HRESULT date_parse(BSTR input, double *ret) {
 static HRESULT DateConstr_parse(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    BSTR parse_str;
+    jsstr_t *parse_str;
     double n;
     HRESULT hres;
 
@@ -2380,7 +2349,7 @@ static HRESULT DateConstr_parse(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
         return hres;
 
     hres = date_parse(parse_str, &n);
-    SysFreeString(parse_str);
+    jsstr_release(parse_str);
     if(FAILED(hres))
         return hres;
 

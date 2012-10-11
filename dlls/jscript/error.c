@@ -38,7 +38,7 @@ static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
     jsdisp_t *jsthis;
-    BSTR name = NULL, msg = NULL, ret = NULL;
+    jsstr_t *name = NULL, *msg = NULL, *ret = NULL;
     jsval_t v;
     HRESULT hres;
 
@@ -49,10 +49,12 @@ static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
     jsthis = get_jsdisp(vthis);
     if(!jsthis || ctx->version < 2) {
         if(r) {
-            BSTR ret = SysAllocString(object_errorW);
-            if(!ret)
+            jsstr_t *str;
+
+            str = jsstr_alloc(object_errorW);
+            if(!str)
                 return E_OUTOFMEMORY;
-            *r = jsval_string(ret);
+            *r = jsval_string(str);
         }
         return S_OK;
     }
@@ -66,10 +68,6 @@ static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
         jsval_release(v);
         if(FAILED(hres))
             return hres;
-        if(!*name) {
-            SysFreeString(name);
-            name = NULL;
-        }
     }
 
     hres = jsdisp_propget_name(jsthis, messageW, &v);
@@ -77,40 +75,36 @@ static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
         if(!is_undefined(v)) {
             hres = to_string(ctx, v, &msg);
             jsval_release(v);
-            if(SUCCEEDED(hres) && !*msg) {
-                SysFreeString(msg);
-                msg = NULL;
-            }
         }
     }
 
     if(SUCCEEDED(hres)) {
-        if(name && msg) {
-            DWORD name_len, msg_len;
+        unsigned name_len = name ? jsstr_length(name) : 0;
+        unsigned msg_len = msg ? jsstr_length(msg) : 0;
 
-            name_len = SysStringLen(name);
-            msg_len = SysStringLen(msg);
-
-            ret = SysAllocStringLen(NULL, name_len + msg_len + 2);
+        if(name_len && msg_len) {
+            ret = jsstr_alloc_buf(name_len + msg_len + 2);
             if(ret) {
-                memcpy(ret, name, name_len*sizeof(WCHAR));
-                ret[name_len] = ':';
-                ret[name_len+1] = ' ';
-                memcpy(ret+name_len+2, msg, msg_len*sizeof(WCHAR));
+                memcpy(ret->str, name->str, name_len*sizeof(WCHAR));
+                ret->str[name_len] = ':';
+                ret->str[name_len+1] = ' ';
+                memcpy(ret->str+name_len+2, msg->str, msg_len*sizeof(WCHAR));
             }
-        }else if(name) {
+        }else if(name_len) {
             ret = name;
             name = NULL;
-        }else if(msg) {
+        }else if(msg_len) {
             ret = msg;
             msg = NULL;
         }else {
-            ret = SysAllocString(object_errorW);
+            ret = jsstr_alloc(object_errorW);
         }
     }
 
-    SysFreeString(msg);
-    SysFreeString(name);
+    if(msg)
+        jsstr_release(msg);
+    if(name)
+        jsstr_release(name);
     if(FAILED(hres))
         return hres;
     if(!ret)
@@ -119,7 +113,7 @@ static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
     if(r)
         *r = jsval_string(ret);
     else
-        SysFreeString(ret);
+        jsstr_release(ret);
     return S_OK;
 }
 
@@ -189,7 +183,7 @@ static HRESULT create_error(script_ctx_t *ctx, jsdisp_t *constr,
         UINT number, const WCHAR *msg, jsdisp_t **ret)
 {
     jsdisp_t *err;
-    BSTR str;
+    jsstr_t *str;
     HRESULT hres;
 
     hres = alloc_error(ctx, NULL, constr, &err);
@@ -202,13 +196,13 @@ static HRESULT create_error(script_ctx_t *ctx, jsdisp_t *constr,
         return hres;
     }
 
-    if(msg) str = SysAllocString(msg);
-    else str = SysAllocStringLen(NULL, 0);
+    if(msg) str = jsstr_alloc(msg);
+    else str = jsstr_empty();
     if(str) {
         hres = jsdisp_propput_name(err, messageW, jsval_string(str));
         if(SUCCEEDED(hres))
             hres = jsdisp_propput_name(err, descriptionW, jsval_string(str));
-        SysFreeString(str);
+        jsstr_release(str);
     }else {
         hres = E_OUTOFMEMORY;
     }
@@ -225,7 +219,7 @@ static HRESULT error_constr(script_ctx_t *ctx, WORD flags, unsigned argc, jsval_
         jsval_t *r, jsdisp_t *constr) {
     jsdisp_t *err;
     UINT num = 0;
-    BSTR msg = NULL;
+    jsstr_t *msg = NULL;
     HRESULT hres;
 
     if(argc) {
@@ -250,8 +244,9 @@ static HRESULT error_constr(script_ctx_t *ctx, WORD flags, unsigned argc, jsval_
     switch(flags) {
     case INVOKE_FUNC:
     case DISPATCH_CONSTRUCT:
-        hres = create_error(ctx, constr, num, msg, &err);
-        SysFreeString(msg);
+        hres = create_error(ctx, constr, num, msg ? msg->str : NULL, &err);
+        if(msg)
+            jsstr_release(msg);
 
         if(FAILED(hres))
             return hres;
@@ -263,6 +258,8 @@ static HRESULT error_constr(script_ctx_t *ctx, WORD flags, unsigned argc, jsval_
         return S_OK;
 
     default:
+        if(msg)
+            jsstr_release(msg);
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;
     }
@@ -346,7 +343,7 @@ HRESULT init_error_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
 
     jsdisp_t *err;
     INT i;
-    BSTR str;
+    jsstr_t *str;
     HRESULT hres;
 
     for(i=0; i < sizeof(names)/sizeof(names[0]); i++) {
@@ -354,14 +351,14 @@ HRESULT init_error_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
         if(FAILED(hres))
             return hres;
 
-        str = SysAllocString(names[i]);
+        str = jsstr_alloc(names[i]);
         if(!str) {
             jsdisp_release(err);
             return E_OUTOFMEMORY;
         }
 
         hres = jsdisp_propput_name(err, nameW, jsval_string(str));
-        SysFreeString(str);
+        jsstr_release(str);
         if(SUCCEEDED(hres))
             hres = create_builtin_constructor(ctx, constr_val[i], names[i], NULL,
                     PROPF_CONSTR|1, err, constr_addr[i]);

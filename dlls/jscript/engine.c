@@ -72,9 +72,9 @@ static HRESULT stack_push(exec_ctx_t *ctx, jsval_t v)
 
 static inline HRESULT stack_push_string(exec_ctx_t *ctx, const WCHAR *str)
 {
-    BSTR v;
+    jsstr_t *v;
 
-    v = SysAllocString(str);
+    v = jsstr_alloc(str);
     if(!v)
         return E_OUTOFMEMORY;
 
@@ -332,23 +332,37 @@ void exec_release(exec_ctx_t *ctx)
     heap_free(ctx);
 }
 
-static HRESULT disp_get_id(script_ctx_t *ctx, IDispatch *disp, BSTR name, DWORD flags, DISPID *id)
+static HRESULT disp_get_id(script_ctx_t *ctx, IDispatch *disp, WCHAR *name, BSTR name_bstr, DWORD flags, DISPID *id)
 {
     IDispatchEx *dispex;
+    jsdisp_t *jsdisp;
     HRESULT hres;
 
-    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
-    if(FAILED(hres)) {
-        TRACE("using IDispatch\n");
-
-        *id = 0;
-        return IDispatch_GetIDsOfNames(disp, &IID_NULL, &name, 1, 0, id);
+    jsdisp = iface_to_jsdisp((IUnknown*)disp);
+    if(jsdisp) {
+        hres = jsdisp_get_id(jsdisp, name, flags, id);
+        jsdisp_release(jsdisp);
+        return hres;
     }
 
     *id = 0;
-    hres = IDispatchEx_GetDispID(dispex, name, make_grfdex(ctx, flags|fdexNameCaseSensitive), id);
-    IDispatchEx_Release(dispex);
-    return hres;
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    if(SUCCEEDED(hres)) {
+        BSTR str = name_bstr;
+
+        if(!str)
+            str = SysAllocString(name);
+        if(str)
+            hres = IDispatchEx_GetDispID(dispex, str, make_grfdex(ctx, flags|fdexNameCaseSensitive), id);
+        else
+            hres = E_OUTOFMEMORY;
+        IDispatchEx_Release(dispex);
+        return hres;
+    }
+
+    TRACE("using IDispatch\n");
+
+    return IDispatch_GetIDsOfNames(disp, &IID_NULL, &name, 1, 0, id);
 }
 
 static inline BOOL var_is_null(const VARIANT *v)
@@ -423,12 +437,7 @@ static HRESULT equal2_values(jsval_t lval, jsval_t rval, BOOL *ret)
     case JSV_OBJECT:
         return disp_cmp(get_object(lval), get_object(rval), ret);
     case JSV_STRING:
-        if(!get_string(lval))
-            *ret = !SysStringLen(get_string(rval));
-        else if(!get_string(rval))
-            *ret = !SysStringLen(get_string(lval));
-        else
-            *ret = !strcmpW(get_string(lval), get_string(rval));
+        *ret = jsstr_eq(get_string(lval), get_string(rval));
         break;
     case JSV_NUMBER:
         *ret = get_number(lval) == get_number(rval);
@@ -452,7 +461,7 @@ static BOOL lookup_global_members(script_ctx_t *ctx, BSTR identifier, exprval_t 
 
     for(item = ctx->named_items; item; item = item->next) {
         if(item->flags & SCRIPTITEM_GLOBALMEMBERS) {
-            hres = disp_get_id(ctx, item->disp, identifier, 0, &id);
+            hres = disp_get_id(ctx, item->disp, identifier, identifier, 0, &id);
             if(SUCCEEDED(hres)) {
                 if(ret)
                     exprval_set_idref(ret, item->disp, id);
@@ -478,7 +487,7 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
         if(scope->jsobj)
             hres = jsdisp_get_id(scope->jsobj, identifier, fdexNameImplicit, &id);
         else
-            hres = disp_get_id(ctx, scope->obj, identifier, fdexNameImplicit, &id);
+            hres = disp_get_id(ctx, scope->obj, identifier, identifier, fdexNameImplicit, &id);
         if(SUCCEEDED(hres)) {
             exprval_set_idref(ret, scope->obj, id);
             return S_OK;
@@ -608,12 +617,19 @@ static HRESULT interp_forin(exec_ctx_t *ctx)
     }
 
     if(name) {
+        jsstr_t *str;
+
+        str = jsstr_alloc_len(name, SysStringLen(name));
+        SysFreeString(name);
+        if(!str)
+            return E_OUTOFMEMORY;
+
         jsval_release(val);
         stack_pop(ctx);
         stack_push(ctx, jsval_number(id)); /* safe, just after pop() */
 
-        hres = disp_propput(ctx->script, var_obj, var_id, jsval_string(name));
-        SysFreeString(name);
+        hres = disp_propput(ctx->script, var_obj, var_id, jsval_string(str));
+        jsstr_release(str);
         if(FAILED(hres))
             return hres;
 
@@ -806,8 +822,8 @@ static HRESULT interp_array(exec_ctx_t *ctx)
 {
     jsval_t v, namev;
     IDispatch *obj;
+    jsstr_t *name;
     DISPID id;
-    BSTR name;
     HRESULT hres;
 
     TRACE("\n");
@@ -827,8 +843,8 @@ static HRESULT interp_array(exec_ctx_t *ctx)
         return hres;
     }
 
-    hres = disp_get_id(ctx->script, obj, name, 0, &id);
-    SysFreeString(name);
+    hres = disp_get_id(ctx->script, obj, name->str, NULL, 0, &id);
+    jsstr_release(name);
     if(SUCCEEDED(hres)) {
         hres = disp_propget(ctx->script, obj, id, &v);
     }else if(hres == DISP_E_UNKNOWNNAME) {
@@ -857,7 +873,7 @@ static HRESULT interp_member(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = disp_get_id(ctx->script, obj, arg, 0, &id);
+    hres = disp_get_id(ctx->script, obj, arg, arg, 0, &id);
     if(SUCCEEDED(hres)) {
         hres = disp_propget(ctx->script, obj, id, &v);
     }else if(hres == DISP_E_UNKNOWNNAME) {
@@ -877,7 +893,7 @@ static HRESULT interp_memberid(exec_ctx_t *ctx)
     const unsigned arg = get_op_uint(ctx, 0);
     jsval_t objv, namev;
     IDispatch *obj;
-    BSTR name;
+    jsstr_t *name;
     DISPID id;
     HRESULT hres;
 
@@ -897,8 +913,8 @@ static HRESULT interp_memberid(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = disp_get_id(ctx->script, obj, name, arg, &id);
-    SysFreeString(name);
+    hres = disp_get_id(ctx->script, obj, name->str, NULL, arg, &id);
+    jsstr_release(name);
     if(FAILED(hres)) {
         IDispatch_Release(obj);
         if(hres == DISP_E_UNKNOWNNAME && !(arg & fdexNameEnsure)) {
@@ -1118,16 +1134,16 @@ static HRESULT interp_double(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    7.8.4 */
 static HRESULT interp_str(exec_ctx_t *ctx)
 {
-    const WCHAR *str = get_op_str(ctx, 0);
-    BSTR bstr;
+    const WCHAR *arg = get_op_str(ctx, 0);
+    jsstr_t *str;
 
-    TRACE("%s\n", debugstr_w(str));
+    TRACE("%s\n", debugstr_w(arg));
 
-    bstr = SysAllocString(str);
-    if(!bstr)
+    str = jsstr_alloc(arg);
+    if(!str)
         return E_OUTOFMEMORY;
 
-    return stack_push(ctx, jsval_string(bstr));
+    return stack_push(ctx, jsval_string(str));
 }
 
 /* ECMA-262 3rd Edition    7.8 */
@@ -1376,7 +1392,7 @@ static HRESULT interp_in(exec_ctx_t *ctx)
     jsval_t obj, v;
     DISPID id = 0;
     BOOL ret;
-    BSTR str;
+    jsstr_t *str;
     HRESULT hres;
 
     TRACE("\n");
@@ -1395,9 +1411,9 @@ static HRESULT interp_in(exec_ctx_t *ctx)
         return hres;
     }
 
-    hres = disp_get_id(ctx->script, get_object(obj), str, 0, &id);
+    hres = disp_get_id(ctx->script, get_object(obj), str->str, NULL, 0, &id);
     IDispatch_Release(get_object(obj));
-    SysFreeString(str);
+    jsstr_release(str);
     if(SUCCEEDED(hres))
         ret = TRUE;
     else if(hres == DISP_E_UNKNOWNNAME)
@@ -1425,40 +1441,34 @@ static HRESULT add_eval(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsval_t *
     }
 
     if(is_string(l) || is_string(r)) {
-        BSTR lstr = NULL, rstr = NULL;
+        jsstr_t *lstr, *rstr = NULL;
 
-        if(is_string(l))
-            lstr = get_string(l);
-        else
-            hres = to_string(ctx, l, &lstr);
-
-        if(SUCCEEDED(hres)) {
-            if(is_string(r))
-                rstr = get_string(r);
-            else
-                hres = to_string(ctx, r, &rstr);
-        }
+        hres = to_string(ctx, l, &lstr);
+        if(SUCCEEDED(hres))
+            hres = to_string(ctx, r, &rstr);
 
         if(SUCCEEDED(hres)) {
-            int len1, len2;
-            BSTR ret_str;
+            unsigned len1, len2;
+            jsstr_t *ret_str;
 
-            len1 = SysStringLen(lstr);
-            len2 = SysStringLen(rstr);
+            len1 = jsstr_length(lstr);
+            len2 = jsstr_length(rstr);
 
-            ret_str = SysAllocStringLen(NULL, len1+len2);
-            if(len1)
-                memcpy(ret_str, lstr, len1*sizeof(WCHAR));
-            if(len2)
-                memcpy(ret_str+len1, rstr, len2*sizeof(WCHAR));
-            ret_str[len1+len2] = 0;
-            *ret = jsval_string(ret_str);
+            ret_str = jsstr_alloc_buf(len1+len2);
+            if(ret_str) {
+                if(len1)
+                    memcpy(ret_str->str, lstr->str, len1*sizeof(WCHAR));
+                if(len2)
+                    memcpy(ret_str->str+len1, rstr->str, len2*sizeof(WCHAR));
+                *ret = jsval_string(ret_str);
+            }else {
+                hres = E_OUTOFMEMORY;
+            }
         }
 
-        if(!is_string(l))
-            SysFreeString(lstr);
-        else if(!is_string(r))
-            SysFreeString(rstr);
+        jsstr_release(lstr);
+        if(rstr)
+            jsstr_release(rstr);
     }else {
         double nl, nr;
 
@@ -1577,7 +1587,7 @@ static HRESULT interp_delete(exec_ctx_t *ctx)
     jsval_t objv, namev;
     IDispatchEx *dispex;
     IDispatch *obj;
-    BSTR name;
+    jsstr_t *name;
     BOOL ret;
     HRESULT hres;
 
@@ -1602,8 +1612,17 @@ static HRESULT interp_delete(exec_ctx_t *ctx)
 
     hres = IDispatch_QueryInterface(obj, &IID_IDispatchEx, (void**)&dispex);
     if(SUCCEEDED(hres)) {
-        hres = IDispatchEx_DeleteMemberByName(dispex, name, make_grfdex(ctx->script, fdexNameCaseSensitive));
-        ret = TRUE;
+        BSTR bstr;
+
+        bstr = SysAllocStringLen(name->str, jsstr_length(name));
+        if(bstr) {
+            hres = IDispatchEx_DeleteMemberByName(dispex, bstr, make_grfdex(ctx->script, fdexNameCaseSensitive));
+            SysFreeString(bstr);
+            ret = TRUE;
+        }else {
+            hres = E_OUTOFMEMORY;
+        }
+
         IDispatchEx_Release(dispex);
     }else {
         hres = S_OK;
@@ -1611,7 +1630,7 @@ static HRESULT interp_delete(exec_ctx_t *ctx)
     }
 
     IDispatch_Release(obj);
-    SysFreeString(name);
+    jsstr_release(name);
     if(FAILED(hres))
         return hres;
 
@@ -2063,9 +2082,9 @@ static HRESULT less_eval(script_ctx_t *ctx, jsval_t lval, jsval_t rval, BOOL gre
     }
 
     if(is_string(l) && is_string(r)) {
-        *ret = (strcmpW(get_string(l), get_string(r)) < 0) ^ greater;
-        SysFreeString(get_string(l));
-        SysFreeString(get_string(r));
+        *ret = (jsstr_cmp(get_string(l), get_string(r)) < 0) ^ greater;
+        jsstr_release(get_string(l));
+        jsstr_release(get_string(r));
         return S_OK;
     }
 
@@ -2456,7 +2475,6 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, bytecode_t *code, function_code
 
     while(exec_ctx->ip != -1) {
         op = code->instrs[exec_ctx->ip].op;
-        TRACE("top %d\n", exec_ctx->top);
         hres = op_funcs[op](exec_ctx);
         if(FAILED(hres)) {
             TRACE("EXCEPTION\n");
