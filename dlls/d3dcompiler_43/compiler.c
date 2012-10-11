@@ -475,6 +475,10 @@ HRESULT WINAPI D3DAssemble(const void *data, SIZE_T datasize, const char *filena
 {
     HRESULT hr;
 
+    TRACE("data %p, datasize %lu, filename %s, defines %p, include %p, sflags %#x,\n"
+            "shader %p, error_messages %p\n",
+            data, datasize, debugstr_a(filename), defines, include, flags, shader, error_messages);
+
     EnterCriticalSection(&wpp_mutex);
 
     /* TODO: flags */
