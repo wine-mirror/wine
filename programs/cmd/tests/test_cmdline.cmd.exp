@@ -45,3 +45,80 @@ one = %1
 @todo_wine@var contents: 11
 var=33@space@
 99
+------ Testing invocation of batch files ----------
+0@space@
+1@space@
+@todo_wine@1@space@
+1@space@
+@todo_wine@1@space@
+0@space@
+@todo_wine@1@space@
+@todo_wine@2@space@
+0@space@
+3@space@
+@todo_wine@3@space@
+@todo_wine@4@space@
+------ Testing invocation with CMD /C -------------
+0@space@
+@todo_wine@1@space@
+@todo_wine@0@space@
+0@space@
+@todo_wine@1@space@
+0@space@
+@todo_wine@1@space@
+@todo_wine@2@space@
+0@space@
+@todo_wine@3@space@
+@todo_wine@4@space@
+---------- Testing CMD /C quoting -----------------
+"hi"
+@todo_wine@1@space@
+"\"\\"\\\"\\\\"@space@"\"\\"\\\"\\\\"
+@todo_wine@1@space@
+0@space@
+1@space@
+0@space@
+@todo_wine@0@space@
+0@space@@or_broken@3@space@
+3@space@
+2@space@
+2@space@
+2@space@
+0@space@
+@todo_wine@5@space@
+------- Testing CMD /C qualifier treatment ------------
+0@space@
+@todo_wine@1@space@
+THIS FAILS: cmd "/c"say one
+THIS FAILS: cmd ignoreme/c say one
+--------- Testing special characters --------------
+0@space@
+@todo_wine@0@space@
+)@space@
+[@space@
+]@space@
+{@space@
+}@space@
+0@space@
+@todo_wine@0@space@
+!@space@
+@todo_wine@0@space@@or_broken@!@space@
+@todo_wine@0@space@
+'@space@
++@space@
+0@space@
+'@space@
+~@space@
+--------- Testing parameter passing  --------------
+1:1,2:@space@
+1:(1),2:@space@
+1:1(2),2:@space@
+@todo_wine@1:(1),2:@space@
+@todo_wine@1:((1)),2:@space@
+@todo_wine@1:(1)(2),2:@space@
+@todo_wine@1:(1),2:(2)@space@
+@todo_wine@1:1,2:2@space@
+@todo_wine@1:1,2:2@space@
+@todo_wine@1:1,2:2@space@
+1:"p@space@"1,2:p"@space@"2@space@
+1:p"1@space@p",2:2@space@

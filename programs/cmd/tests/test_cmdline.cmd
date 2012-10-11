@@ -88,3 +88,170 @@ cmd.exe /c exit
 
 cd ..
 rd foobar /s /q
+
+rem - Temporary batch files
+echo @echo 0 > "say.bat"
+echo @echo 1 > "say one.bat"
+echo @echo 2 > "saytwo.bat"
+echo @echo 3 > "say (3).bat"
+echo @echo 4 > "say .bat"
+
+echo ------ Testing invocation of batch files ----------
+call say one
+call "say one"
+call "say"" one"
+call "say one
+call :setError 0
+call say" one"
+if errorlevel 2 echo error %ErrorLevel%
+call say "one"
+call :setError 0
+call s"ay one
+if errorlevel 2 echo error %ErrorLevel%
+call :setError 0
+call s"aytwo
+if errorlevel 2 echo error %ErrorLevel%
+call say (3)
+call "say (3)"
+call :setError 0
+call say" (3)"
+if errorlevel 2 echo error %ErrorLevel%
+call :setError 0
+call say" "(3) prints 4?!
+if errorlevel 2 echo error %ErrorLevel%
+
+echo ------ Testing invocation with CMD /C -------------
+cmd /c say one
+cmd /c "say one"
+call :setError 0
+cmd /c "say"" one"
+if errorlevel 2 echo error %ErrorLevel%
+cmd /c "say one
+call :setError 0
+cmd /c say" one"
+if errorlevel 2 echo error %ErrorLevel%
+cmd /c say "one"
+call :setError 0
+cmd /c s"ay one
+if errorlevel 2 echo error %ErrorLevel%
+call :setError 0
+cmd /c s"aytwo
+if errorlevel 2 echo error %ErrorLevel%
+cmd /c say (3)
+call :setError 0
+cmd /c say" (3)"
+if errorlevel 2 echo error %ErrorLevel%
+call :setError 0
+cmd /c say" "(3) prints 4?!
+if errorlevel 2 echo error %ErrorLevel%
+
+echo ---------- Testing CMD /C quoting -----------------
+cmd /c @echo "hi"
+call :setError 0
+cmd /c say" "one
+if errorlevel 2 echo error %ErrorLevel%
+cmd /c @echo "\"\\"\\\"\\\\" "\"\\"\\\"\\\\"
+rem ---- all 5 conditions met, quotes preserved
+cmd /c "say one"
+rem cond 1 - /s
+cmd /s/c "say one"
+cmd /s/c ""say one""
+rem cond 2 - not 2 quotes
+cmd /c "say one
+call :setError 0
+cmd /c "say"" one"
+if errorlevel 2 echo error %ErrorLevel%
+rem cond 3 - special char - first test fails on Vista, W2K8!
+cmd /c "say (3)"
+cmd /c ""say (3)""
+rem cond 4 - no spaces (quotes make no difference here)
+cmd /c saytwo
+cmd /c "saytwo"
+cmd /c "saytwo
+rem cond 5 - string between quotes must be name of executable
+cmd /c "say five"
+echo @echo 5 >"say five.bat"
+cmd /c "say five"
+
+echo ------- Testing CMD /C qualifier treatment ------------
+rem no need for space after /c
+cmd /csay one
+cmd /c"say one"
+rem ignore quote before qualifier
+rem FIXME the next command in wine starts a sub-CMD
+echo THIS FAILS: cmd "/c"say one
+rem ignore anything before /c
+rem FIXME the next command in wine starts a sub-CMD
+echo THIS FAILS: cmd ignoreme/c say one
+
+echo --------- Testing special characters --------------
+echo @echo amp > "say&.bat"
+call say&
+echo @echo ( > "say(.bat"
+call say(
+echo @echo ) > "say).bat"
+call say)
+echo @echo [ > "say[.bat"
+call say[
+echo @echo ] > "say].bat"
+call say]
+echo @echo { > "say{.bat"
+call say{
+echo @echo } > "say}.bat"
+call say}
+echo @echo = > "say=.bat"
+call say=
+echo @echo sem > "say;.bat"
+call say;
+setlocal DisableDelayedExpansion
+echo @echo ! > "say!.bat"
+call say!
+endlocal
+setlocal EnableDelayedExpansion
+call say!
+endlocal
+echo @echo %%%% > "say%%.bat"
+call say%%
+echo @echo ' > "say'.bat"
+call say'
+echo @echo + > "say+.bat"
+call say+
+echo @echo com > "say,.bat"
+call say,
+echo @echo ` > "say`.bat"
+call say'
+echo @echo ~ > "say~.bat"
+call say~
+
+echo --------- Testing parameter passing  --------------
+echo @echo 1:%%1,2:%%2 > tell.bat
+call tell 1
+call tell (1)
+call tell 1(2)
+call :setError 0
+call tell(1)
+if errorlevel 2 echo error %ErrorLevel%
+call :setError 0
+call tell((1))
+if errorlevel 2 echo error %ErrorLevel%
+call :setError 0
+call tell(1)(2)
+if errorlevel 2 echo error %ErrorLevel%
+call :setError 0
+call tell(1);,;(2)
+if errorlevel 2 echo error %ErrorLevel%
+call :setError 0
+call tell;1 2
+if errorlevel 2 echo error %ErrorLevel%
+call :setError 0
+call tell; 1, ;2
+if errorlevel 2 echo error %ErrorLevel%
+call :setError 0
+call tell;1;;2
+if errorlevel 2 echo error %ErrorLevel%
+call tell "p "1 p" "2
+call tell p"1 p";2
+del tell.bat say*.*
+exit
+:setError
+exit /B %1
