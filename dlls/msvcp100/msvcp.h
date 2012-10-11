@@ -48,10 +48,12 @@ typedef struct
     MSVCP_size_t res;
 } basic_string_char;
 
+basic_string_char* MSVCP_basic_string_char_ctor(basic_string_char*);
 basic_string_char* MSVCP_basic_string_char_ctor_cstr(basic_string_char*, const char*);
 basic_string_char* MSVCP_basic_string_char_copy_ctor(basic_string_char*, const basic_string_char*);
 void MSVCP_basic_string_char_dtor(basic_string_char*);
 const char* MSVCP_basic_string_char_c_str(const basic_string_char*);
+basic_string_char* MSVCP_basic_string_char_append_ch(basic_string_char*, char);
 MSVCP_size_t MSVCP_basic_string_char_length(const basic_string_char*);
 
 #define BUF_SIZE_WCHAR 8
