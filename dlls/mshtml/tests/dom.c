@@ -1980,8 +1980,21 @@ static void _test_elem_all(unsigned line, IUnknown *unk, const elem_type_t *elem
     IDispatch_Release(disp);
 }
 
-#define test_elem_getelembytag(u,t,l) _test_elem_getelembytag(__LINE__,u,t,l)
-static void _test_elem_getelembytag(unsigned line, IUnknown *unk, elem_type_t type, LONG exlen)
+#define test_doc_all(a,b,c) _test_doc_all(__LINE__,a,b,c)
+static void _test_doc_all(unsigned line, IHTMLDocument2 *doc, const elem_type_t *elem_types, LONG exlen)
+{
+    IHTMLElementCollection *col;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_all(doc, &col);
+    ok_(__FILE__,line)(hres == S_OK, "get_all failed: %08x\n", hres);
+
+    _test_elem_collection(line, (IUnknown*)col, elem_types, exlen);
+    IHTMLElementCollection_Release(col);
+}
+
+#define test_elem_getelembytag(a,b,c,d) _test_elem_getelembytag(__LINE__,a,b,c,d)
+static void _test_elem_getelembytag(unsigned line, IUnknown *unk, elem_type_t type, LONG exlen, IHTMLElement **ret)
 {
     IHTMLElement2 *elem = _get_elem2_iface(line, unk);
     IHTMLElementCollection *col = NULL;
@@ -2006,6 +2019,22 @@ static void _test_elem_getelembytag(unsigned line, IUnknown *unk, elem_type_t ty
     _test_elem_collection(line, (IUnknown*)col, types, exlen);
 
     HeapFree(GetProcessHeap(), 0, types);
+
+    if(ret) {
+        IDispatch *disp;
+        VARIANT v;
+
+        V_VT(&v) = VT_I4;
+        V_I4(&v) = 0;
+        disp = NULL;
+        hres = IHTMLElementCollection_item(col, v, v, &disp);
+        ok(hres == S_OK, "item failed: %08x\n", hres);
+        ok(disp != NULL, "disp == NULL\n");
+        *ret = _get_elem_iface(line, (IUnknown*)disp);
+        IDispatch_Release(disp);
+    }
+
+    IHTMLElementCollection_Release(col);
 }
 
 #define test_elem_innertext(e,t) _test_elem_innertext(__LINE__,e,t)
@@ -5365,9 +5394,9 @@ static void test_elems(IHTMLDocument2 *doc)
         ok(elem2 == NULL, "elem2 != NULL\n");
         IHTMLElement_Release(elem3);
 
-        test_elem_getelembytag((IUnknown*)elem, ET_OPTION, 2);
-        test_elem_getelembytag((IUnknown*)elem, ET_SELECT, 0);
-        test_elem_getelembytag((IUnknown*)elem, ET_HTML, 0);
+        test_elem_getelembytag((IUnknown*)elem, ET_OPTION, 2, NULL);
+        test_elem_getelembytag((IUnknown*)elem, ET_SELECT, 0, NULL);
+        test_elem_getelembytag((IUnknown*)elem, ET_HTML, 0, NULL);
 
         test_elem_innertext(elem, "opt1opt2");
 
@@ -6097,6 +6126,58 @@ static void test_null_write(IHTMLDocument2 *doc)
        "Expected IHTMLDocument2::writeln to return S_OK, got 0x%08x\n", hres);
 }
 
+static void test_create_stylesheet(IHTMLDocument2 *doc)
+{
+    IHTMLStyleSheet *stylesheet, *stylesheet2;
+    IHTMLStyleElement *style_elem;
+    IHTMLElement *doc_elem, *elem;
+    HRESULT hres;
+
+    static const elem_type_t all_types[] = {
+        ET_HTML,
+        ET_HEAD,
+        ET_TITLE,
+        ET_BODY,
+        ET_DIV
+    };
+
+    static const elem_type_t all_types2[] = {
+        ET_HTML,
+        ET_HEAD,
+        ET_TITLE,
+        ET_STYLE,
+        ET_BODY,
+        ET_DIV
+    };
+
+    test_doc_all(doc, all_types, sizeof(all_types)/sizeof(*all_types));
+
+    hres = IHTMLDocument2_createStyleSheet(doc, NULL, -1, &stylesheet);
+    ok(hres == S_OK, "createStyleSheet failed: %08x\n", hres);
+
+    test_doc_all(doc, all_types2, sizeof(all_types2)/sizeof(*all_types2));
+
+    doc_elem = get_doc_elem(doc);
+
+    test_elem_getelembytag((IUnknown*)doc_elem, ET_STYLE, 1, &elem);
+    IHTMLElement_Release(doc_elem);
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLStyleElement, (void**)&style_elem);
+    IHTMLElement_Release(elem);
+    ok(hres == S_OK, "Could not get IHTMLStyleElement iface: %08x\n", hres);
+
+    stylesheet2 = NULL;
+    hres = IHTMLStyleElement_get_styleSheet(style_elem, &stylesheet2);
+    ok(hres == S_OK, "get_styleSheet failed: %08x\n", hres);
+    ok(stylesheet2 != NULL, "stylesheet2 == NULL\n");
+    ok(iface_cmp((IUnknown*)stylesheet, (IUnknown*)stylesheet2), "stylesheet != stylesheet2\n");
+
+    IHTMLStyleSheet_Release(stylesheet2);
+    IHTMLStyleSheet_Release(stylesheet);
+
+    IHTMLStyleElement_Release(style_elem);
+}
+
 static void test_exec(IUnknown *unk, const GUID *grpid, DWORD cmdid, VARIANT *in, VARIANT *out)
 {
     IOleCommandTarget *cmdtrg;
@@ -6571,6 +6652,7 @@ START_TEST(dom)
     run_domtest(doc_blank, test_create_elems);
     run_domtest(doc_blank, test_defaults);
     run_domtest(doc_blank, test_null_write);
+    run_domtest(emptydiv_str, test_create_stylesheet);
     run_domtest(indent_test_str, test_indent);
     run_domtest(cond_comment_str, test_cond_comment);
     run_domtest(frameset_str, test_frameset);
