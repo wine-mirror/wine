@@ -878,14 +878,7 @@ struct hlsl_type *get_type(struct hlsl_scope *scope, const char *name, BOOL recu
 
 BOOL find_function(const char *name)
 {
-    struct hlsl_ir_function_decl *func;
-
-    LIST_FOR_EACH_ENTRY(func, &hlsl_ctx.functions, struct hlsl_ir_function_decl, node.entry)
-    {
-        if (!strcmp(func->name, name))
-            return TRUE;
-    }
-    return FALSE;
+    return wine_rb_get(&hlsl_ctx.functions, name) != NULL;
 }
 
 unsigned int components_count_type(struct hlsl_type *type)
@@ -1762,7 +1755,7 @@ BOOL pop_scope(struct hlsl_parse_ctx *ctx)
     return TRUE;
 }
 
-struct hlsl_ir_function_decl *new_func_decl(const char *name, struct hlsl_type *return_type, struct list *parameters)
+struct hlsl_ir_function_decl *new_func_decl(struct hlsl_type *return_type, struct list *parameters)
 {
     struct hlsl_ir_function_decl *decl;
 
@@ -1774,10 +1767,115 @@ struct hlsl_ir_function_decl *new_func_decl(const char *name, struct hlsl_type *
     }
     decl->node.type = HLSL_IR_FUNCTION_DECL;
     decl->node.data_type = return_type;
-    decl->name = name;
     decl->parameters = parameters;
 
     return decl;
+}
+
+static int compare_param_hlsl_types(const struct hlsl_type *t1, const struct hlsl_type *t2)
+{
+    if (t1->type != t2->type)
+    {
+        if (!((t1->type == HLSL_CLASS_SCALAR && t2->type == HLSL_CLASS_VECTOR)
+                || (t1->type == HLSL_CLASS_VECTOR && t2->type == HLSL_CLASS_SCALAR)))
+            return t1->type - t2->type;
+    }
+    if (t1->base_type != t2->base_type)
+        return t1->base_type - t2->base_type;
+    if (t1->base_type == HLSL_TYPE_SAMPLER && t1->sampler_dim != t2->sampler_dim)
+        return t1->sampler_dim - t2->sampler_dim;
+    if (t1->dimx != t2->dimx)
+        return t1->dimx - t2->dimx;
+    if (t1->dimy != t2->dimy)
+        return t1->dimx - t2->dimx;
+    if (t1->type == HLSL_CLASS_STRUCT)
+    {
+        struct list *t1cur, *t2cur;
+        struct hlsl_struct_field *t1field, *t2field;
+        int r;
+
+        t1cur = list_head(t1->e.elements);
+        t2cur = list_head(t2->e.elements);
+        while (t1cur && t2cur)
+        {
+            t1field = LIST_ENTRY(t1cur, struct hlsl_struct_field, entry);
+            t2field = LIST_ENTRY(t2cur, struct hlsl_struct_field, entry);
+            if ((r = compare_param_hlsl_types(t1field->type, t2field->type)))
+                return r;
+            if ((r = strcmp(t1field->name, t2field->name)))
+                return r;
+            t1cur = list_next(t1->e.elements, t1cur);
+            t2cur = list_next(t2->e.elements, t2cur);
+        }
+        if (t1cur != t2cur)
+            return t1cur ? 1 : -1;
+        return 0;
+    }
+    if (t1->type == HLSL_CLASS_ARRAY)
+    {
+        if (t1->e.array.elements_count != t2->e.array.elements_count)
+            return t1->e.array.elements_count - t2->e.array.elements_count;
+        return compare_param_hlsl_types(t1->e.array.type, t2->e.array.type);
+    }
+
+    return 0;
+}
+
+static int compare_function_decl_rb(const void *key, const struct wine_rb_entry *entry)
+{
+    const struct list *params = (const struct list *)key;
+    const struct hlsl_ir_function_decl *decl = WINE_RB_ENTRY_VALUE(entry, const struct hlsl_ir_function_decl, entry);
+    int params_count = params ? list_count(params) : 0;
+    int decl_params_count = decl->parameters ? list_count(decl->parameters) : 0;
+    int r;
+    struct list *p1cur, *p2cur;
+
+    if (params_count != decl_params_count)
+        return params_count - decl_params_count;
+
+    p1cur = params ? list_head(params) : NULL;
+    p2cur = decl->parameters ? list_head(decl->parameters) : NULL;
+    while (p1cur && p2cur)
+    {
+        struct hlsl_ir_var *p1, *p2;
+        p1 = LIST_ENTRY(p1cur, struct hlsl_ir_var, node.entry);
+        p2 = LIST_ENTRY(p2cur, struct hlsl_ir_var, node.entry);
+        if ((r = compare_param_hlsl_types(p1->node.data_type, p2->node.data_type)))
+            return r;
+        p1cur = list_next(params, p1cur);
+        p2cur = list_next(decl->parameters, p2cur);
+    }
+    return 0;
+}
+
+static const struct wine_rb_functions hlsl_ir_function_decl_rb_funcs =
+{
+    d3dcompiler_alloc_rb,
+    d3dcompiler_realloc_rb,
+    d3dcompiler_free_rb,
+    compare_function_decl_rb,
+};
+
+static int compare_function_rb(const void *key, const struct wine_rb_entry *entry)
+{
+    const char *name = (const char *)key;
+    const struct hlsl_ir_function *func = WINE_RB_ENTRY_VALUE(entry, const struct hlsl_ir_function,entry);
+
+    return strcmp(name, func->name);
+}
+
+static const struct wine_rb_functions function_rb_funcs =
+{
+    d3dcompiler_alloc_rb,
+    d3dcompiler_realloc_rb,
+    d3dcompiler_free_rb,
+    compare_function_rb,
+};
+
+void init_functions_tree(struct wine_rb_tree *funcs)
+{
+    if (wine_rb_init(&hlsl_ctx.functions, &function_rb_funcs) == -1)
+        ERR("Failed to initialize functions rbtree.\n");
 }
 
 static const char *debug_base_type(const struct hlsl_type *type)
@@ -2198,11 +2296,11 @@ static void debug_dump_instr(const struct hlsl_ir_node *instr)
     }
 }
 
-void debug_dump_ir_function(const struct hlsl_ir_function_decl *func)
+void debug_dump_ir_function_decl(const struct hlsl_ir_function_decl *func)
 {
     struct hlsl_ir_var *param;
 
-    TRACE("Dumping function %s.\n", debugstr_a(func->name));
+    TRACE("Dumping function %s.\n", debugstr_a(func->func->name));
     TRACE("Function parameters:\n");
     LIST_FOR_EACH_ENTRY(param, func->parameters, struct hlsl_ir_var, node.entry)
     {
@@ -2370,11 +2468,69 @@ void free_instr(struct hlsl_ir_node *node)
     }
 }
 
-void free_function(struct hlsl_ir_function_decl *func)
+void free_function_decl(struct hlsl_ir_function_decl *func)
 {
-    d3dcompiler_free((void *)func->name);
     d3dcompiler_free((void *)func->semantic);
     d3dcompiler_free(func->parameters);
     free_instr_list(func->body);
     d3dcompiler_free(func);
+}
+
+static void free_function_decl_rb(struct wine_rb_entry *entry, void *context)
+{
+    free_function_decl(WINE_RB_ENTRY_VALUE(entry, struct hlsl_ir_function_decl, entry));
+}
+
+void free_function(struct hlsl_ir_function *func)
+{
+    wine_rb_destroy(&func->overloads, free_function_decl_rb, NULL);
+    d3dcompiler_free((void *)func->name);
+}
+
+void free_function_rb(struct wine_rb_entry *entry, void *context)
+{
+    free_function(WINE_RB_ENTRY_VALUE(entry, struct hlsl_ir_function, entry));
+}
+
+void add_function_decl(struct wine_rb_tree *funcs, char *name, struct hlsl_ir_function_decl *decl, BOOL intrinsic)
+{
+    struct hlsl_ir_function *func;
+    struct wine_rb_entry *func_entry, *old_entry;
+
+    func_entry = wine_rb_get(funcs, name);
+    if (func_entry)
+    {
+        func = WINE_RB_ENTRY_VALUE(func_entry, struct hlsl_ir_function, entry);
+        decl->func = func;
+        if ((old_entry = wine_rb_get(&func->overloads, decl->parameters)))
+        {
+            struct hlsl_ir_function_decl *old_decl =
+                    WINE_RB_ENTRY_VALUE(old_entry, struct hlsl_ir_function_decl, entry);
+
+            if (!decl->body)
+            {
+                free_function_decl(decl);
+                d3dcompiler_free(name);
+                return;
+            }
+            wine_rb_remove(&func->overloads, decl->parameters);
+            free_function_decl(old_decl);
+        }
+        wine_rb_put(&func->overloads, decl->parameters, &decl->entry);
+        d3dcompiler_free(name);
+        return;
+    }
+    func = d3dcompiler_alloc(sizeof(*func));
+    func->name = name;
+    if (wine_rb_init(&func->overloads, &hlsl_ir_function_decl_rb_funcs) == -1)
+    {
+        ERR("Failed to initialize function rbtree.\n");
+        d3dcompiler_free(name);
+        d3dcompiler_free(func);
+        return;
+    }
+    decl->func = func;
+    wine_rb_put(&func->overloads, decl->parameters, &decl->entry);
+    func->intrinsic = intrinsic;
+    wine_rb_put(funcs, func->name, &func->entry);
 }

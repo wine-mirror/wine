@@ -752,10 +752,19 @@ struct hlsl_ir_var
     struct hlsl_var_allocation *allocation;
 };
 
+struct hlsl_ir_function
+{
+    struct wine_rb_entry entry;
+    const char *name;
+    struct wine_rb_tree overloads;
+    BOOL intrinsic;
+};
+
 struct hlsl_ir_function_decl
 {
     struct hlsl_ir_node node;
-    const char *name;
+    struct wine_rb_entry entry;
+    struct hlsl_ir_function *func;
     const char *semantic;
     struct list *parameters;
     struct list *body;
@@ -960,6 +969,12 @@ struct parse_variable_def
     struct list *initializer;
 };
 
+struct parse_function
+{
+    char *name;
+    struct hlsl_ir_function_decl *decl;
+};
+
 struct parse_if_body
 {
     struct list *then_instrs;
@@ -1004,7 +1019,7 @@ struct hlsl_parse_ctx
     struct list scopes;
 
     struct list types;
-    struct list functions;
+    struct wine_rb_tree functions;
 
     enum hlsl_matrix_majority matrix_majority;
 };
@@ -1127,18 +1142,21 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
         DWORD writemask, struct hlsl_ir_node *right) DECLSPEC_HIDDEN;
 void push_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
 BOOL pop_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
-struct hlsl_ir_function_decl *new_func_decl(const char *name, struct hlsl_type *return_type, struct list *parameters) DECLSPEC_HIDDEN;
+struct hlsl_ir_function_decl *new_func_decl(struct hlsl_type *return_type, struct list *parameters) DECLSPEC_HIDDEN;
+void init_functions_tree(struct wine_rb_tree *funcs) DECLSPEC_HIDDEN;
+void add_function_decl(struct wine_rb_tree *funcs, char *name, struct hlsl_ir_function_decl *decl,
+        BOOL intrinsic) DECLSPEC_HIDDEN;
 struct bwriter_shader *parse_hlsl_shader(const char *text, enum shader_type type, DWORD major, DWORD minor,
         const char *entrypoint, char **messages) DECLSPEC_HIDDEN;
 
 const char *debug_hlsl_type(const struct hlsl_type *type) DECLSPEC_HIDDEN;
 const char *debug_modifiers(DWORD modifiers) DECLSPEC_HIDDEN;
-void debug_dump_ir_function(const struct hlsl_ir_function_decl *func) DECLSPEC_HIDDEN;
+void debug_dump_ir_function_decl(const struct hlsl_ir_function_decl *func) DECLSPEC_HIDDEN;
 
 void free_hlsl_type(struct hlsl_type *type) DECLSPEC_HIDDEN;
 void free_instr(struct hlsl_ir_node *node) DECLSPEC_HIDDEN;
 void free_instr_list(struct list *list) DECLSPEC_HIDDEN;
-void free_function(struct hlsl_ir_function_decl *func) DECLSPEC_HIDDEN;
+void free_function_rb(struct wine_rb_entry *entry, void *context) DECLSPEC_HIDDEN;
 
 
 #define MAKE_TAG(ch0, ch1, ch2, ch3) \
