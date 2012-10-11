@@ -39,6 +39,7 @@ typedef struct {
     IHTMLStyleElement IHTMLStyleElement_iface;
 
     nsIDOMHTMLStyleElement *nsstyle;
+    IHTMLStyleSheet *style_sheet;
 } HTMLStyleElement;
 
 static inline HTMLStyleElement *impl_from_IHTMLStyleElement(IHTMLStyleElement *iface)
@@ -183,8 +184,31 @@ static HRESULT WINAPI HTMLStyleElement_get_onerror(IHTMLStyleElement *iface, VAR
 static HRESULT WINAPI HTMLStyleElement_get_styleSheet(IHTMLStyleElement *iface, IHTMLStyleSheet **p)
 {
     HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->nsstyle)
+        return E_FAIL;
+
+    if(!This->style_sheet) {
+        nsIDOMStyleSheet *ss;
+        nsresult nsres;
+
+        nsres = nsIDOMHTMLStyleElement_GetDOMStyleSheet(This->nsstyle, &ss);
+        assert(nsres == NS_OK);
+
+        if(ss) {
+            This->style_sheet = HTMLStyleSheet_Create(ss);
+            nsIDOMStyleSheet_Release(ss);
+            if(!This->style_sheet)
+                return E_OUTOFMEMORY;
+        }
+    }
+
+    if(This->style_sheet)
+        IHTMLStyleSheet_AddRef(This->style_sheet);
+    *p = This->style_sheet;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyleElement_put_disabled(IHTMLStyleElement *iface, VARIANT_BOOL v)
@@ -283,9 +307,21 @@ static HRESULT HTMLStyleElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return S_OK;
 }
 
+static void HTMLStyleElement_destructor(HTMLDOMNode *iface)
+{
+    HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->style_sheet) {
+        IHTMLStyleSheet_Release(This->style_sheet);
+        This->style_sheet = NULL;
+    }
+
+    HTMLElement_destructor(iface);
+}
+
 static const NodeImplVtbl HTMLStyleElementImplVtbl = {
     HTMLStyleElement_QI,
-    HTMLElement_destructor,
+    HTMLStyleElement_destructor,
     HTMLElement_clone,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col
