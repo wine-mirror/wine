@@ -371,6 +371,36 @@ void WCMD_choice (const WCHAR * command) {
 }
 
 /****************************************************************************
+ * WCMD_AppendEOF
+ *
+ * Adds an EOF onto the end of a file
+ * Returns TRUE on success
+ */
+static BOOL WCMD_AppendEOF(WCHAR *filename)
+{
+    HANDLE h;
+
+    char eof = '\x1a';
+
+    WINE_TRACE("Appending EOF to %s\n", wine_dbgstr_w(filename));
+    h = CreateFileW(filename, GENERIC_WRITE, 0, NULL,
+                    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    if (h == NULL) {
+      WINE_ERR("Failed to open %s (%d)\n", wine_dbgstr_w(filename), GetLastError());
+      return FALSE;
+    } else {
+      SetFilePointer (h, 0, NULL, FILE_END);
+      if (!WriteFile(h, &eof, 1, NULL, NULL)) {
+        WINE_ERR("Failed to append EOF to %s (%d)\n", wine_dbgstr_w(filename), GetLastError());
+        return FALSE;
+      }
+      CloseHandle(h);
+    }
+    return TRUE;
+}
+
+/****************************************************************************
  * WCMD_copy
  *
  * Copy a file or wildcarded set.
@@ -800,10 +830,6 @@ void WCMD_copy(WCHAR * command) {
               WINE_FIXME("Need to ascii copy %s to %s - dropping to binary copy\n",
                          wine_dbgstr_w(srcpath), wine_dbgstr_w(outname));
             }
-            /* Append EOF if ascii destination and we are not going to add more onto the end */
-            if (!destination->binarycopy && !anyconcats) {
-              WINE_FIXME("Need to ascii copy destination (append EOF)\n");
-            }
             status = CopyFileW(srcpath, outname, FALSE);
             if (!status) {
               WCMD_print_error ();
@@ -811,6 +837,14 @@ void WCMD_copy(WCHAR * command) {
             } else {
               WINE_TRACE("Copied successfully\n");
               if (anyconcats) writtenoneconcat = TRUE;
+
+              /* Append EOF if ascii destination and we are not going to add more onto the end */
+              if (!destination->binarycopy && !anyconcats) {
+                if (!WCMD_AppendEOF(outname)) {
+                  WCMD_print_error ();
+                  errorlevel = 1;
+                }
+              }
             }
           }
         }
@@ -829,8 +863,11 @@ void WCMD_copy(WCHAR * command) {
   }
 
   /* Append EOF if ascii destination and we were concatenating */
-  if (!destination->binarycopy && anyconcats && writtenoneconcat) {
-    WINE_FIXME("Need to ascii copy destination (append EOF) to concatenated file\n");
+  if (!errorlevel && !destination->binarycopy && anyconcats && writtenoneconcat) {
+    if (!WCMD_AppendEOF(destination->name)) {
+      WCMD_print_error ();
+      errorlevel = 1;
+    }
   }
 
   /* Exit out of the routine, freeing any remaing allocated memory */
