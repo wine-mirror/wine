@@ -1152,11 +1152,17 @@ static HRESULT interp_regexp(exec_ctx_t *ctx)
     const WCHAR *source = get_op_str(ctx, 0);
     const unsigned flags = get_op_uint(ctx, 1);
     jsdisp_t *regexp;
+    jsstr_t *src;
     HRESULT hres;
 
     TRACE("%s %x\n", debugstr_w(source), flags);
 
-    hres = create_regexp(ctx->script, source, strlenW(source), flags, &regexp);
+    src = jsstr_alloc(source);
+    if(!src)
+        return E_OUTOFMEMORY;
+
+    hres = create_regexp(ctx->script, src, flags, &regexp);
+    jsstr_release(src);
     if(FAILED(hres))
         return hres;
 

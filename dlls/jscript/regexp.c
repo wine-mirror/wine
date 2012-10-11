@@ -74,7 +74,7 @@ typedef struct {
     size_t       parenCount;    /* number of parenthesized submatches */
     size_t       classCount;    /* count [...] bitmaps */
     RECharSet    *classList;    /* list of [...] bitmaps */
-    BSTR         source;        /* locked source string, sans // */
+    jsstr_t      *source;       /* locked source string, sans // */
     jsbytecode   program[1];    /* regular expression bytecode */
 } JSRegExp;
 
@@ -82,7 +82,7 @@ typedef struct {
     jsdisp_t dispex;
 
     JSRegExp *jsregexp;
-    BSTR str;
+    jsstr_t *str;
     INT last_index;
     jsval_t last_index_val;
 } RegExpInstance;
@@ -2158,12 +2158,12 @@ ProcessCharSet(REGlobalData *gData, RECharSet *charSet)
      */
     assert(1 <= charSet->u.src.startIndex);
     assert(charSet->u.src.startIndex
-              < SysStringLen(gData->regexp->source));
-    assert(charSet->u.src.length <= SysStringLen(gData->regexp->source)
+              < jsstr_length(gData->regexp->source));
+    assert(charSet->u.src.length <= jsstr_length(gData->regexp->source)
                                        - 1 - charSet->u.src.startIndex);
 
     charSet->converted = TRUE;
-    src = gData->regexp->source + charSet->u.src.startIndex;
+    src = gData->regexp->source->str + charSet->u.src.startIndex;
 
     end = src + charSet->u.src.length;
 
@@ -2488,12 +2488,12 @@ SimpleMatch(REGlobalData *gData, REMatchState *x, REOp op,
         break;
       case REOP_FLAT:
         pc = ReadCompactIndex(pc, &offset);
-        assert(offset < SysStringLen(gData->regexp->source));
+        assert(offset < jsstr_length(gData->regexp->source));
         pc = ReadCompactIndex(pc, &length);
         assert(1 <= length);
-        assert(length <= SysStringLen(gData->regexp->source) - offset);
+        assert(length <= jsstr_length(gData->regexp->source) - offset);
         if (length <= (size_t)(gData->cpend - x->cp)) {
-            source = gData->regexp->source + offset;
+            source = gData->regexp->source->str + offset;
             TRACE("%s\n", debugstr_wn(source, length));
             for (index = 0; index != length; index++) {
                 if (source[index] != x->cp[index])
@@ -2513,11 +2513,11 @@ SimpleMatch(REGlobalData *gData, REMatchState *x, REOp op,
         break;
       case REOP_FLATi:
         pc = ReadCompactIndex(pc, &offset);
-        assert(offset < SysStringLen(gData->regexp->source));
+        assert(offset < jsstr_length(gData->regexp->source));
         pc = ReadCompactIndex(pc, &length);
         assert(1 <= length);
-        assert(length <= SysStringLen(gData->regexp->source) - offset);
-        source = gData->regexp->source;
+        assert(length <= jsstr_length(gData->regexp->source) - offset);
+        source = gData->regexp->source->str;
         result = FlatNIMatcher(gData, x, source + offset, length);
         break;
       case REOP_FLAT1i:
@@ -3218,7 +3218,7 @@ js_DestroyRegExp(JSRegExp *re)
 }
 
 static JSRegExp *
-js_NewRegExp(script_ctx_t *cx, BSTR str, UINT flags, BOOL flat)
+js_NewRegExp(script_ctx_t *cx, jsstr_t *str, UINT flags, BOOL flat)
 {
     JSRegExp *re;
     jsheap_t *mark;
@@ -3230,10 +3230,10 @@ js_NewRegExp(script_ctx_t *cx, BSTR str, UINT flags, BOOL flat)
 
     re = NULL;
     mark = jsheap_mark(&cx->tmp_heap);
-    len = SysStringLen(str);
+    len = jsstr_length(str);
 
     state.context = cx;
-    state.cp = str;
+    state.cp = str->str;
     if (!state.cp)
         goto out;
     state.cpbegin = state.cp;
@@ -3508,10 +3508,7 @@ static HRESULT RegExp_source(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     switch(flags) {
     case DISPATCH_PROPERTYGET: {
         RegExpInstance *This = regexp_from_vdisp(jsthis);
-        jsstr_t *ret = jsstr_alloc(This->str);
-        if(!ret)
-            return E_OUTOFMEMORY;
-        *r = jsval_string(ret);
+        *r = jsval_string(jsstr_addref(This->str));
         break;
     }
     default:
@@ -3789,7 +3786,7 @@ static void RegExp_destructor(jsdisp_t *dispex)
     if(This->jsregexp)
         js_DestroyRegExp(This->jsregexp);
     jsval_release(This->last_index_val);
-    SysFreeString(This->str);
+    jsstr_release(This->str);
     heap_free(This);
 }
 
@@ -3853,25 +3850,19 @@ static HRESULT alloc_regexp(script_ctx_t *ctx, jsdisp_t *object_prototype, RegEx
     return S_OK;
 }
 
-HRESULT create_regexp(script_ctx_t *ctx, const WCHAR *exp, int len, DWORD flags, jsdisp_t **ret)
+HRESULT create_regexp(script_ctx_t *ctx, jsstr_t *src, DWORD flags, jsdisp_t **ret)
 {
     RegExpInstance *regexp;
     HRESULT hres;
 
-    TRACE("%s %x\n", debugstr_wn(exp, len), flags);
+    TRACE("%s %x\n", debugstr_jsstr(src), flags);
 
     hres = alloc_regexp(ctx, NULL, &regexp);
     if(FAILED(hres))
         return hres;
 
-    if(len == -1)
-        regexp->str = SysAllocString(exp);
-    else
-        regexp->str = SysAllocStringLen(exp, len);
-    if(!regexp->str) {
-        jsdisp_release(&regexp->dispex);
-        return E_OUTOFMEMORY;
-    }
+    regexp->str = jsstr_addref(src);
+    regexp->last_index_val = jsval_number(0);
 
     regexp->jsregexp = js_NewRegExp(ctx, regexp->str, flags, FALSE);
     if(!regexp->jsregexp) {
@@ -3879,8 +3870,6 @@ HRESULT create_regexp(script_ctx_t *ctx, const WCHAR *exp, int len, DWORD flags,
         jsdisp_release(&regexp->dispex);
         return E_FAIL;
     }
-
-    regexp->last_index_val = jsval_number(0);
 
     *ret = &regexp->dispex;
     return S_OK;
@@ -3900,7 +3889,7 @@ HRESULT create_regexp_var(script_ctx_t *ctx, jsval_t src_arg, jsval_t *flags_arg
             if(is_class(obj, JSCLASS_REGEXP)) {
                 RegExpInstance *regexp = (RegExpInstance*)obj;
 
-                hres = create_regexp(ctx, regexp->str, -1, regexp->jsregexp->flags, ret);
+                hres = create_regexp(ctx, regexp->str, regexp->jsregexp->flags, ret);
                 jsdisp_release(obj);
                 return hres;
             }
@@ -3929,7 +3918,7 @@ HRESULT create_regexp_var(script_ctx_t *ctx, jsval_t src_arg, jsval_t *flags_arg
     if(FAILED(hres))
         return hres;
 
-    return create_regexp(ctx, src->str, -1, flags, ret);
+    return create_regexp(ctx, src, flags, ret);
 }
 
 HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, jsstr_t *str, jsval_t *r)
