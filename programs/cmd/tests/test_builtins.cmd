@@ -347,6 +347,7 @@ rem file attribute
 for %%i in ("U V" W) do echo '%%~ai'
 echo foo> foo
 for %%i in (foo) do echo '%%~ai'
+for %%i in (foo) do echo '%%~zi'
 del foo
 rem file date/time
 rem Not fully testable, until we can grep dir's output to get foo's creation time in an envvar...

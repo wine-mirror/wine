@@ -303,13 +303,14 @@ N
 @todo_wine@'@drive@@shortpath@R S'@or_broken@''
 @todo_wine@'@drive@@shortpath@T'@or_broken@''
 @todo_wine@'@drive@@shortpath@ABCDEFGHIJK.LMNOP'@or_broken@''
-@todo_wine@''@or_broken@'%~ai'
-@todo_wine@''@or_broken@'%~ai'
-@todo_wine@'--a------'@or_broken@'%~ai'
-@todo_wine@''@or_broken@'%~ti'
-@todo_wine@''@or_broken@'%~ti'
-@todo_wine@''@or_broken@'%~zi'
-@todo_wine@''@or_broken@'%~zi'
+''@or_broken@'%~ai'
+''@or_broken@'%~ai'
+'--a------'@or_broken@'%~ai'
+'5'@or_broken@'%~zi'
+''@or_broken@'%~ti'
+''@or_broken@'%~ti'
+''@or_broken@'%~zi'
+''@or_broken@'%~zi'
 @drive@@path@
 @drive@@path@
 @drive@
