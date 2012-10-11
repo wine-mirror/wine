@@ -6564,6 +6564,7 @@ START_TEST(dom)
     if (winetest_interactive || ! is_ie_hardened()) {
         run_domtest(elem_test_str, test_elems);
         run_domtest(elem_test2_str, test_elems2);
+        run_domtest(noscript_str, test_noscript);
     }else {
         skip("IE running in Enhanced Security Configuration\n");
     }
@@ -6575,7 +6576,6 @@ START_TEST(dom)
     run_domtest(frameset_str, test_frameset);
     run_domtest(emptydiv_str, test_docfrag);
     run_domtest(doc_blank, test_replacechild_elems);
-    run_domtest(noscript_str, test_noscript);
 
     CoUninitialize();
 }
