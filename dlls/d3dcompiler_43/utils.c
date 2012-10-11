@@ -1568,7 +1568,10 @@ struct hlsl_ir_deref *new_record_deref(struct hlsl_ir_node *record, struct hlsl_
     deref->node.type = HLSL_IR_DEREF;
     deref->node.data_type = field->type;
     deref->type = HLSL_IR_DEREF_RECORD;
-    deref->v.record.record = record;
+    if (record->type == HLSL_IR_VAR)
+        deref->v.record.record = &new_var_deref(var_from_node(record))->node;
+    else
+        deref->v.record.record = record;
     deref->v.record.field = field;
     return deref;
 }
