@@ -991,6 +991,7 @@ static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct lis
 %type <list> expr_statement
 %type <unary_op> unary_op
 %type <assign_op> assign_op
+%type <modifiers> input_mods
 %type <modifiers> input_mod
 %%
 
@@ -1225,20 +1226,31 @@ param_list:               parameter
                                 }
                             }
 
-parameter:                input_mod var_modifiers type any_identifier semantic
+parameter:                input_mods var_modifiers type any_identifier semantic
                             {
-                                $$.modifiers = $1;
+                                $$.modifiers = $1 ? $1 : HLSL_MODIFIER_IN;
                                 $$.modifiers |= $2;
                                 $$.type = $3;
                                 $$.name = $4;
                                 $$.semantic = $5;
                             }
 
-input_mod:                /* Empty */
+input_mods:               /* Empty */
                             {
-                                $$ = HLSL_MODIFIER_IN;
+                                $$ = 0;
                             }
-                        | KW_IN
+                        | input_mods input_mod
+                            {
+                                if ($1 & $2)
+                                {
+                                    hlsl_report_message(hlsl_ctx.source_file, @2.first_line, @2.first_column,
+                                            HLSL_LEVEL_ERROR, "duplicate input-output modifiers");
+                                    return 1;
+                                }
+                                $$ = $1 | $2;
+                            }
+
+input_mod:                KW_IN
                             {
                                 $$ = HLSL_MODIFIER_IN;
                             }
