@@ -75,7 +75,7 @@ static void dump_instr_arg(instr_arg_type_t type, instr_arg_t *arg)
 {
     switch(type) {
     case ARG_STR:
-        TRACE_(jscript_disas)("\t%s", debugstr_w(arg->str));
+        TRACE_(jscript_disas)("\t%s", debugstr_jsstr(arg->str));
         break;
     case ARG_BSTR:
         TRACE_(jscript_disas)("\t%s", debugstr_wn(arg->bstr, SysStringLen(arg->bstr)));
@@ -119,16 +119,37 @@ static inline void *compiler_alloc(bytecode_t *code, size_t size)
     return jsheap_alloc(&code->heap, size);
 }
 
-static WCHAR *compiler_alloc_string(bytecode_t *code, const WCHAR *str)
+static jsstr_t *compiler_alloc_string_len(compiler_ctx_t *ctx, const WCHAR *str, unsigned len)
 {
-    size_t size;
-    WCHAR *ret;
+    jsstr_t *new_str;
 
-    size = (strlenW(str)+1)*sizeof(WCHAR);
-    ret = compiler_alloc(code, size);
-    if(ret)
-        memcpy(ret, str, size);
-    return ret;
+    if(!ctx->code->str_pool_size) {
+        ctx->code->str_pool = heap_alloc(8 * sizeof(jsstr_t*));
+        if(!ctx->code->str_pool)
+            return NULL;
+        ctx->code->str_pool_size = 8;
+    }else if(ctx->code->str_pool_size == ctx->code->str_cnt) {
+        jsstr_t **new_pool;
+
+        new_pool = heap_realloc(ctx->code->str_pool, ctx->code->str_pool_size*2*sizeof(jsstr_t*));
+        if(!new_pool)
+            return NULL;
+
+        ctx->code->str_pool = new_pool;
+        ctx->code->str_pool_size *= 2;
+    }
+
+    new_str = jsstr_alloc_len(str, len);
+    if(!new_str)
+        return NULL;
+
+    ctx->code->str_pool[ctx->code->str_cnt++] = new_str;
+    return new_str;
+}
+
+static jsstr_t *compiler_alloc_string(compiler_ctx_t *ctx, const WCHAR *str)
+{
+    return compiler_alloc_string_len(ctx, str, strlenW(str));
 }
 
 static BOOL ensure_bstr_slot(compiler_ctx_t *ctx)
@@ -216,9 +237,9 @@ static HRESULT push_instr_int(compiler_ctx_t *ctx, jsop_t op, LONG arg)
 static HRESULT push_instr_str(compiler_ctx_t *ctx, jsop_t op, const WCHAR *arg)
 {
     unsigned instr;
-    WCHAR *str;
+    jsstr_t *str;
 
-    str = compiler_alloc_string(ctx->code, arg);
+    str = compiler_alloc_string(ctx, arg);
     if(!str)
         return E_OUTOFMEMORY;
 
@@ -268,9 +289,9 @@ static HRESULT push_instr_bstr_uint(compiler_ctx_t *ctx, jsop_t op, const WCHAR 
 static HRESULT push_instr_uint_str(compiler_ctx_t *ctx, jsop_t op, unsigned arg1, const WCHAR *arg2)
 {
     unsigned instr;
-    WCHAR *str;
+    jsstr_t *str;
 
-    str = compiler_alloc_string(ctx->code, arg2);
+    str = compiler_alloc_string(ctx, arg2);
     if(!str)
         return E_OUTOFMEMORY;
 
@@ -711,7 +732,7 @@ static HRESULT compile_typeof_expression(compiler_ctx_t *ctx, unary_expression_t
 
     if(is_memberid_expr(expr->expression->type)) {
         if(expr->expression->type == EXPR_IDENT)
-            return push_instr_str(ctx, OP_typeofident, ((identifier_expression_t*)expr->expression)->identifier);
+            return push_instr_bstr(ctx, OP_typeofident, ((identifier_expression_t*)expr->expression)->identifier);
 
         op = OP_typeofid;
         hres = compile_memberid_expression(ctx, expr->expression, 0);
@@ -738,13 +759,11 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
         return push_instr_str(ctx, OP_str, literal->u.wstr);
     case LT_REGEXP: {
         unsigned instr;
-        WCHAR *str;
+        jsstr_t *str;
 
-        str = compiler_alloc(ctx->code, (literal->u.regexp.str_len+1)*sizeof(WCHAR));
+        str = compiler_alloc_string_len(ctx, literal->u.regexp.str, literal->u.regexp.str_len);
         if(!str)
             return E_OUTOFMEMORY;
-        memcpy(str, literal->u.regexp.str, literal->u.regexp.str_len*sizeof(WCHAR));
-        str[literal->u.regexp.str_len] = 0;
 
         instr = push_instr(ctx, OP_regexp);
         if(!instr)
@@ -1796,10 +1815,13 @@ void release_bytecode(bytecode_t *code)
 
     for(i=0; i < code->bstr_cnt; i++)
         SysFreeString(code->bstr_pool[i]);
+    for(i=0; i < code->str_cnt; i++)
+        jsstr_release(code->str_pool[i]);
 
     heap_free(code->source);
     jsheap_free(&code->heap);
     heap_free(code->bstr_pool);
+    heap_free(code->str_pool);
     heap_free(code->instrs);
     heap_free(code);
 }

@@ -549,7 +549,7 @@ static inline unsigned get_op_int(exec_ctx_t *ctx, int i){
     return ctx->code->instrs[ctx->ip].u.arg[i].lng;
 }
 
-static inline const WCHAR *get_op_str(exec_ctx_t *ctx, int i){
+static inline jsstr_t *get_op_str(exec_ctx_t *ctx, int i){
     return ctx->code->instrs[ctx->ip].u.arg[i].str;
 }
 
@@ -718,11 +718,11 @@ static HRESULT interp_throw_ref(exec_ctx_t *ctx)
 static HRESULT interp_throw_type(exec_ctx_t *ctx)
 {
     const HRESULT hres = get_op_uint(ctx, 0);
-    const WCHAR *str = get_op_str(ctx, 1);
+    jsstr_t *str = get_op_str(ctx, 1);
 
-    TRACE("%08x %s\n", hres, debugstr_w(str));
+    TRACE("%08x %s\n", hres, debugstr_jsstr(str));
 
-    return throw_type_error(ctx->script, hres, str);
+    return throw_type_error(ctx->script, hres, str->str);
 }
 
 /* ECMA-262 3rd Edition    12.14 */
@@ -1134,35 +1134,24 @@ static HRESULT interp_double(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    7.8.4 */
 static HRESULT interp_str(exec_ctx_t *ctx)
 {
-    const WCHAR *arg = get_op_str(ctx, 0);
-    jsstr_t *str;
+    jsstr_t *str = get_op_str(ctx, 0);
 
-    TRACE("%s\n", debugstr_w(arg));
+    TRACE("%s\n", debugstr_jsstr(str));
 
-    str = jsstr_alloc(arg);
-    if(!str)
-        return E_OUTOFMEMORY;
-
-    return stack_push(ctx, jsval_string(str));
+    return stack_push(ctx, jsval_string(jsstr_addref(str)));
 }
 
 /* ECMA-262 3rd Edition    7.8 */
 static HRESULT interp_regexp(exec_ctx_t *ctx)
 {
-    const WCHAR *source = get_op_str(ctx, 0);
+    jsstr_t *source = get_op_str(ctx, 0);
     const unsigned flags = get_op_uint(ctx, 1);
     jsdisp_t *regexp;
-    jsstr_t *src;
     HRESULT hres;
 
-    TRACE("%s %x\n", debugstr_w(source), flags);
+    TRACE("%s %x\n", debugstr_jsstr(source), flags);
 
-    src = jsstr_alloc(source);
-    if(!src)
-        return E_OUTOFMEMORY;
-
-    hres = create_regexp(ctx->script, src, flags, &regexp);
-    jsstr_release(src);
+    hres = create_regexp(ctx->script, source, flags, &regexp);
     if(FAILED(hres))
         return hres;
 

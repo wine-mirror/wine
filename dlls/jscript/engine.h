@@ -121,7 +121,7 @@ OP_LIST
 typedef union {
     BSTR bstr;
     LONG lng;
-    WCHAR *str;
+    jsstr_t *str;
     unsigned uint;
 } instr_arg_t;
 
@@ -174,6 +174,10 @@ typedef struct _bytecode_t {
     BSTR *bstr_pool;
     unsigned bstr_pool_size;
     unsigned bstr_cnt;
+
+    jsstr_t **str_pool;
+    unsigned str_pool_size;
+    unsigned str_cnt;
 
     struct _bytecode_t *next;
 } bytecode_t;
