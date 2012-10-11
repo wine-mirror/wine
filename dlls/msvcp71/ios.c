@@ -5211,11 +5211,12 @@ locale *__thiscall basic_ios_wchar_imbue(basic_ios_wchar *this, locale *ret, con
 {
     TRACE("(%p %p %p)\n", this, ret, loc);
 
-    if(this->strbuf)
-        return basic_streambuf_wchar_pubimbue(this->strbuf, ret, loc);
+    if(this->strbuf) {
+        basic_streambuf_wchar_pubimbue(this->strbuf, ret, loc);
+        locale_dtor(ret);
+    }
 
-    locale_copy_ctor(ret, loc);
-    return ret;
+    return ios_base_imbue(&this->base, ret, loc);
 }
 
 /* ?narrow@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBED_WD@Z */
@@ -10936,19 +10937,17 @@ basic_fstream_wchar* __thiscall basic_fstream_short_ctor_file(basic_fstream_wcha
     return this;
 }
 
-/* ??0?$basic_fstream@_WU?$char_traits@_W@std@@@std@@QAE@PBGHH@Z */
-/* ??0?$basic_fstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEBGHH@Z */
 /* ??0?$basic_fstream@_WU?$char_traits@_W@std@@@std@@QAE@PB_WHH@Z */
 /* ??0?$basic_fstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEB_WHH@Z */
-DEFINE_THISCALL_WRAPPER(basic_fstream_wchar_ctor_name_wchar, 20)
-basic_fstream_wchar* __thiscall basic_fstream_wchar_ctor_name_wchar(basic_fstream_wchar *this,
-        const wchar_t *name, int mode, int prot, MSVCP_bool virt_init)
+DEFINE_THISCALL_WRAPPER(basic_fstream_wchar_ctor_name, 20)
+basic_fstream_wchar* __thiscall basic_fstream_wchar_ctor_name(basic_fstream_wchar *this,
+        const char *name, int mode, int prot, MSVCP_bool virt_init)
 {
-    TRACE("(%p %s %d %d %d)\n", this, debugstr_w(name), mode, prot, virt_init);
+    TRACE("(%p %s %d %d %d)\n", this, name, mode, prot, virt_init);
 
     basic_fstream_wchar_ctor(this, virt_init);
 
-    if(!basic_filebuf_wchar_open_wchar(&this->filebuf, name, mode, prot)) {
+    if(!basic_filebuf_wchar_open(&this->filebuf, name, mode, prot)) {
         basic_ios_wchar *basic_ios = basic_istream_wchar_get_basic_ios(&this->base.base1);
         basic_ios_wchar_setstate(basic_ios, IOSTATE_failbit);
     }
@@ -10957,13 +10956,11 @@ basic_fstream_wchar* __thiscall basic_fstream_wchar_ctor_name_wchar(basic_fstrea
 
 /* ??0?$basic_fstream@GU?$char_traits@G@std@@@std@@QAE@PBGHH@Z */
 /* ??0?$basic_fstream@GU?$char_traits@G@std@@@std@@QEAA@PEBGHH@Z */
-/* ??0?$basic_fstream@GU?$char_traits@G@std@@@std@@QAE@PB_WHH@Z */
-/* ??0?$basic_fstream@GU?$char_traits@G@std@@@std@@QEAA@PEB_WHH@Z */
-DEFINE_THISCALL_WRAPPER(basic_fstream_short_ctor_name_wchar, 20)
-basic_fstream_wchar* __thiscall basic_fstream_short_ctor_name_wchar(basic_fstream_wchar *this,
-        const wchar_t *name, int mode, int prot, MSVCP_bool virt_init)
+DEFINE_THISCALL_WRAPPER(basic_fstream_short_ctor_name, 20)
+basic_fstream_wchar* __thiscall basic_fstream_short_ctor_name(basic_fstream_wchar *this,
+        const char *name, int mode, int prot, MSVCP_bool virt_init)
 {
-    basic_fstream_wchar_ctor_name_wchar(this, name, mode, prot, virt_init);
+    basic_fstream_wchar_ctor_name(this, name, mode, prot, virt_init);
     basic_istream_wchar_get_basic_ios(&this->base.base1)->base.vtable = &MSVCP_basic_fstream_short_vtable;
     return this;
 }

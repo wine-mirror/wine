@@ -110,6 +110,32 @@ const rtti_object_locator name ## _rtti = { \
     &name ## _hierarchy \
 }
 
+#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, dtor)  \
+\
+static const cxx_type_info type ## _cxx_type_info = { \
+    0, \
+    & type ##_type_info, \
+    { 0, -1, 0 }, \
+    sizeof(type), \
+    (cxx_copy_ctor)THISCALL(MSVCP_ ## type ##_copy_ctor) \
+}; \
+\
+static const cxx_type_info_table type ## _cxx_type_table = { \
+    base_no+1, \
+    { \
+        & type ## _cxx_type_info, \
+        cl1, \
+        cl2 \
+    } \
+}; \
+\
+static const cxx_exception_type type ## _cxx_type = { \
+    0, \
+    (cxx_copy_ctor)THISCALL(dtor), \
+    NULL, \
+    & type ## _cxx_type_table \
+};
+
 #else
 
 #define DEFINE_RTTI_DATA(name, off, base_classes_no, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
@@ -176,6 +202,43 @@ static void init_ ## name ## _rtti(char *base) \
     name ## _rtti.object_locator = (char*)&name ## _rtti - base; \
 }
 
+#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, dtor)  \
+\
+static cxx_type_info type ## _cxx_type_info = { \
+    0, \
+    0xdeadbeef, \
+    { 0, -1, 0 }, \
+    sizeof(type), \
+    0xdeadbeef \
+}; \
+\
+static cxx_type_info_table type ## _cxx_type_table = { \
+    base_no+1, \
+    { \
+        0xdeadbeef, \
+        0xdeadbeef, \
+        0xdeadbeef  \
+    } \
+}; \
+\
+static cxx_exception_type type ##_cxx_type = { \
+    0, \
+    0xdeadbeef, \
+    0, \
+    0xdeadbeef \
+}; \
+\
+static void init_ ## type ## _cxx(char *base) \
+{ \
+    type ## _cxx_type_info.type_info  = (char *)&type ## _type_info - base; \
+    type ## _cxx_type_info.copy_ctor  = (char *)MSVCP_ ## type ## _copy_ctor - base; \
+    type ## _cxx_type_table.info[0]   = (char *)&type ## _cxx_type_info - base; \
+    type ## _cxx_type_table.info[1]   = (char *)cl1 - base; \
+    type ## _cxx_type_table.info[2]   = (char *)cl2 - base; \
+    type ## _cxx_type.destructor      = (char *)dtor - base; \
+    type ## _cxx_type.type_info_table = (char *)&type ## _cxx_type_table - base; \
+}
+
 #endif
 
 #define DEFINE_RTTI_DATA0(name, off, mangled_name) \
@@ -192,6 +255,13 @@ static void init_ ## name ## _rtti(char *base) \
     DEFINE_RTTI_DATA(name, off, 8, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, NULL, mangled_name)
 #define DEFINE_RTTI_DATA9(name, off, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
     DEFINE_RTTI_DATA(name, off, 9, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name)
+
+#define DEFINE_CXX_DATA0(name, dtor) \
+    DEFINE_CXX_DATA(name, 0, NULL, NULL, dtor)
+#define DEFINE_CXX_DATA1(name, cl1, dtor) \
+    DEFINE_CXX_DATA(name, 1, cl1, NULL, dtor)
+#define DEFINE_CXX_DATA2(name, cl1, cl2, dtor) \
+    DEFINE_CXX_DATA(name, 2, cl1, cl2, dtor)
 
 #ifdef __i386__
 
@@ -259,6 +329,9 @@ typedef struct
     int         vbase_offset;  /* offset of this pointer offset in virtual base class descriptor */
 } this_ptr_offsets;
 
+/* dlls/msvcrt/cppexcept.h */
+typedef void (*cxx_copy_ctor)(void);
+
 #ifndef __x86_64__
 
 typedef struct _rtti_base_descriptor
@@ -290,6 +363,29 @@ typedef struct _rtti_object_locator
     const type_info *type_descriptor;
     const rtti_object_hierarchy *type_hierarchy;
 } rtti_object_locator;
+
+typedef struct
+{
+    UINT flags;
+    const type_info *type_info;
+    this_ptr_offsets offsets;
+    unsigned int size;
+    cxx_copy_ctor copy_ctor;
+} cxx_type_info;
+
+typedef struct
+{
+    UINT count;
+    const cxx_type_info *info[3];
+} cxx_type_info_table;
+
+typedef struct
+{
+    UINT flags;
+    void (*destructor)(void);
+    void* /*cxx_exc_custom_handler*/ custom_handler;
+    const cxx_type_info_table *type_info_table;
+} cxx_exception_type;
 
 #else
 
@@ -323,5 +419,28 @@ typedef struct
     unsigned int type_hierarchy;
     unsigned int object_locator;
 } rtti_object_locator;
+
+typedef struct
+{
+    UINT flags;
+    unsigned int type_info;
+    this_ptr_offsets offsets;
+    unsigned int size;
+    unsigned int copy_ctor;
+} cxx_type_info;
+
+typedef struct
+{
+    UINT count;
+    unsigned int info[3];
+} cxx_type_info_table;
+
+typedef struct
+{
+    UINT flags;
+    unsigned int destructor;
+    unsigned int custom_handler;
+    unsigned int type_info_table;
+} cxx_exception_type;
 
 #endif

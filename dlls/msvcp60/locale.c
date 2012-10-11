@@ -3948,7 +3948,7 @@ num_get* num_get_short_use_facet(const locale *loc)
 
 static inline wchar_t mb_to_wc(char ch, const _Cvtvec *cvt)
 {
-    int state;
+    int state = 0;
     wchar_t ret;
 
     return _Mbrtowc(&ret, &ch, 1, &state, cvt) == 1 ? ret : 0;
@@ -7201,8 +7201,11 @@ static locale__Locimp* locale__Locimp_copy_ctor(locale__Locimp *this, const loca
             return NULL;
         }
         for(i=0; i<this->facet_cnt; i++)
+        {
+            this->facetvec[i] = copy->facetvec[i];
             if(this->facetvec[i])
                 locale_facet__Incref(this->facetvec[i]);
+        }
     }
     basic_string_char_copy_ctor(&this->name, &copy->name);
     _Lockit_dtor(&lock);
