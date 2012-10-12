@@ -232,6 +232,20 @@ static struct record *create_record( const struct column *columns, UINT num_cols
     return record;
 }
 
+void destroy_array( struct array *array, CIMTYPE type )
+{
+    UINT i, size;
+
+    if (!array) return;
+    if (type == CIM_STRING || type == CIM_DATETIME)
+    {
+        size = get_type_size( type );
+        for (i = 0; i < array->count; i++) heap_free( *(WCHAR **)((char *)array->ptr + i * size) );
+    }
+    heap_free( array->ptr );
+    heap_free( array );
+}
+
 static void destroy_record( struct record *record )
 {
     UINT i;
@@ -241,11 +255,8 @@ static void destroy_record( struct record *record )
     {
         if (record->fields[i].type == CIM_STRING || record->fields[i].type == CIM_DATETIME)
             heap_free( record->fields[i].u.sval );
-        else if ((record->fields[i].type & CIM_FLAG_ARRAY) && record->fields[i].u.aval)
-        {
-            heap_free( record->fields[i].u.aval->ptr );
-            heap_free( record->fields[i].u.aval );
-        }
+        else if (record->fields[i].type & CIM_FLAG_ARRAY)
+            destroy_array( record->fields[i].u.aval, record->fields[i].type & CIM_TYPE_MASK );
     }
     heap_free( record->fields );
     heap_free( record );

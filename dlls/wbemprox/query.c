@@ -639,8 +639,6 @@ static void set_variant( VARTYPE type, LONGLONG val, void *val_ptr, VARIANT *ret
     V_VT( ret ) = type;
 }
 
-#define CIM_TYPE_MASK 0xfff
-
 HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VARIANT *ret,
                      CIMTYPE *type, LONG *flavor )
 {
@@ -750,19 +748,33 @@ static struct array *to_array( VARIANT *var, CIMTYPE *type )
 
     ret->count = bound + 1;
     size = get_type_size( basetype );
-    if (!(ret->ptr = heap_alloc( ret->count * size )))
+    if (!(ret->ptr = heap_alloc_zero( ret->count * size )))
     {
         heap_free( ret );
         return NULL;
     }
     for (i = 0; i < ret->count; i++)
     {
-        if (SafeArrayGetElement( V_ARRAY( var ), &i, (char *)ret->ptr + i * size ) != S_OK)
+        void *ptr = (char *)ret->ptr + i * size;
+        if (vartype == VT_BSTR)
         {
-            if (vartype == VT_BSTR)
-                for (i--; i >= 0; i--) SysFreeString( *(BSTR *)(char *)ret->ptr + i * size );
-            heap_free( ret->ptr );
-            heap_free( ret );
+            BSTR str;
+            if (SafeArrayGetElement( V_ARRAY( var ), &i, &str ) != S_OK)
+            {
+                destroy_array( ret, basetype );
+                return NULL;
+            }
+            *(WCHAR **)ptr = heap_strdupW( str );
+            SysFreeString( str );
+            if (!*(WCHAR **)ptr)
+            {
+                destroy_array( ret, basetype );
+                return NULL;
+            }
+        }
+        else if (SafeArrayGetElement( V_ARRAY( var ), &i, ptr ) != S_OK)
+        {
+            destroy_array( ret, basetype );
             return NULL;
         }
     }
@@ -790,7 +802,7 @@ HRESULT to_longlong( VARIANT *var, LONGLONG *val, CIMTYPE *type )
         *type = CIM_BOOLEAN;
         break;
     case VT_BSTR:
-        *val = (INT_PTR)SysAllocString( V_BSTR( var ) );
+        *val = (INT_PTR)heap_strdupW( V_BSTR( var ) );
         if (!*val) return E_OUTOFMEMORY;
         *type = CIM_STRING;
         break;
