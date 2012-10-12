@@ -164,74 +164,82 @@ static ULONG WINAPI MediaStreamFilterImpl_Release(IMediaStreamFilter *iface)
 
 /*** IPersist methods ***/
 
-static HRESULT WINAPI MediaStreamFilterImpl_GetClassID(IMediaStreamFilter * iface, CLSID * pClsid)
+static HRESULT WINAPI MediaStreamFilterImpl_GetClassID(IMediaStreamFilter *iface, CLSID *clsid)
 {
-    return BaseFilterImpl_GetClassID((IBaseFilter*)iface, pClsid);
+    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
+    return BaseFilterImpl_GetClassID(&This->filter.IBaseFilter_iface, clsid);
 }
 
 /*** IBaseFilter methods ***/
 
-static HRESULT WINAPI MediaStreamFilterImpl_Stop(IMediaStreamFilter * iface)
+static HRESULT WINAPI MediaStreamFilterImpl_Stop(IMediaStreamFilter *iface)
 {
     FIXME("(%p)->(): Stub!\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MediaStreamFilterImpl_Pause(IMediaStreamFilter * iface)
+static HRESULT WINAPI MediaStreamFilterImpl_Pause(IMediaStreamFilter *iface)
 {
     FIXME("(%p)->(): Stub!\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MediaStreamFilterImpl_Run(IMediaStreamFilter * iface, REFERENCE_TIME tStart)
+static HRESULT WINAPI MediaStreamFilterImpl_Run(IMediaStreamFilter *iface, REFERENCE_TIME start)
 {
-    FIXME("(%p)->(%s): Stub!\n", iface, wine_dbgstr_longlong(tStart));
+    FIXME("(%p)->(%s): Stub!\n", iface, wine_dbgstr_longlong(start));
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MediaStreamFilterImpl_GetState(IMediaStreamFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
+static HRESULT WINAPI MediaStreamFilterImpl_GetState(IMediaStreamFilter *iface, DWORD ms_timeout, FILTER_STATE *state)
 {
-    return BaseFilterImpl_GetState((IBaseFilter*)iface, dwMilliSecsTimeout, pState);
+    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
+    return BaseFilterImpl_GetState(&This->filter.IBaseFilter_iface, ms_timeout, state);
 }
 
-static HRESULT WINAPI MediaStreamFilterImpl_SetSyncSource(IMediaStreamFilter * iface, IReferenceClock *pClock)
+static HRESULT WINAPI MediaStreamFilterImpl_SetSyncSource(IMediaStreamFilter *iface, IReferenceClock *clock)
 {
-    return BaseFilterImpl_SetSyncSource((IBaseFilter*)iface, pClock);
+    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
+    return BaseFilterImpl_SetSyncSource(&This->filter.IBaseFilter_iface, clock);
 }
 
-static HRESULT WINAPI MediaStreamFilterImpl_GetSyncSource(IMediaStreamFilter * iface, IReferenceClock **ppClock)
+static HRESULT WINAPI MediaStreamFilterImpl_GetSyncSource(IMediaStreamFilter *iface, IReferenceClock **clock)
 {
-    return BaseFilterImpl_GetSyncSource((IBaseFilter*)iface, ppClock);
+    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
+    return BaseFilterImpl_GetSyncSource(&This->filter.IBaseFilter_iface, clock);
 }
 
-static HRESULT WINAPI MediaStreamFilterImpl_EnumPins(IMediaStreamFilter * iface, IEnumPins **ppEnum)
+static HRESULT WINAPI MediaStreamFilterImpl_EnumPins(IMediaStreamFilter *iface, IEnumPins **enum_pins)
 {
-    return BaseFilterImpl_EnumPins((IBaseFilter*)iface, ppEnum);
+    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
+    return BaseFilterImpl_EnumPins(&This->filter.IBaseFilter_iface, enum_pins);
 }
 
-static HRESULT WINAPI MediaStreamFilterImpl_FindPin(IMediaStreamFilter * iface, LPCWSTR Id, IPin **ppPin)
+static HRESULT WINAPI MediaStreamFilterImpl_FindPin(IMediaStreamFilter *iface, LPCWSTR id, IPin **pin)
 {
-    FIXME("(%p)->(%s,%p): Stub!\n", iface, debugstr_w(Id), ppPin);
+    FIXME("(%p)->(%s,%p): Stub!\n", iface, debugstr_w(id), pin);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MediaStreamFilterImpl_QueryFilterInfo(IMediaStreamFilter * iface, FILTER_INFO *pInfo)
+static HRESULT WINAPI MediaStreamFilterImpl_QueryFilterInfo(IMediaStreamFilter *iface, FILTER_INFO *info)
 {
-    return BaseFilterImpl_QueryFilterInfo((IBaseFilter*)iface, pInfo);
+    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
+    return BaseFilterImpl_QueryFilterInfo(&This->filter.IBaseFilter_iface, info);
 }
 
-static HRESULT WINAPI MediaStreamFilterImpl_JoinFilterGraph(IMediaStreamFilter * iface, IFilterGraph *pGraph, LPCWSTR pName)
+static HRESULT WINAPI MediaStreamFilterImpl_JoinFilterGraph(IMediaStreamFilter *iface, IFilterGraph *graph, LPCWSTR name)
 {
-    return BaseFilterImpl_JoinFilterGraph((IBaseFilter*)iface, pGraph, pName);
+    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
+    return BaseFilterImpl_JoinFilterGraph(&This->filter.IBaseFilter_iface, graph, name);
 }
 
-static HRESULT WINAPI MediaStreamFilterImpl_QueryVendorInfo(IMediaStreamFilter * iface, LPWSTR *pVendorInfo)
+static HRESULT WINAPI MediaStreamFilterImpl_QueryVendorInfo(IMediaStreamFilter *iface, LPWSTR *vendor_info)
 {
-    return BaseFilterImpl_QueryVendorInfo((IBaseFilter*)iface, pVendorInfo);
+    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
+    return BaseFilterImpl_QueryVendorInfo(&This->filter.IBaseFilter_iface, vendor_info);
 }
 
 /*** IMediaStreamFilter methods ***/
