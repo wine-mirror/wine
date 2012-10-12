@@ -600,11 +600,21 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     return TRUE;
 }
 
-#define FIRST_LARGE_HANDLE 16
-#define MAX_LARGE_HANDLES ((GDI_HEAP_SIZE >> 2) - FIRST_LARGE_HANDLE)
-static GDIOBJHDR *large_handles[MAX_LARGE_HANDLES];
-static int next_large_handle;
+#define FIRST_GDI_HANDLE 16
+#define MAX_GDI_HANDLES ((GDI_HEAP_SIZE >> 2) - FIRST_GDI_HANDLE)
+static GDIOBJHDR *gdi_handles[MAX_GDI_HANDLES];
+static int next_gdi_handle;
 static LONG debug_count;
+
+static inline HGDIOBJ index_to_handle( int index )
+{
+    return ULongToHandle( (index + FIRST_GDI_HANDLE) << 2);
+}
+
+static inline int handle_to_index( HGDIOBJ handle )
+{
+    return (HandleToULong(handle) >> 2) - FIRST_GDI_HANDLE;
+}
 
 static const char *gdi_obj_type( unsigned type )
 {
@@ -632,20 +642,19 @@ static void dump_gdi_objects( void )
 {
     int i;
 
-    TRACE( "%u objects:\n", MAX_LARGE_HANDLES );
+    TRACE( "%u objects:\n", MAX_GDI_HANDLES );
 
     EnterCriticalSection( &gdi_section );
-    for (i = 0; i < MAX_LARGE_HANDLES; i++)
+    for (i = 0; i < MAX_GDI_HANDLES; i++)
     {
-        if (!large_handles[i])
+        if (!gdi_handles[i])
         {
-            TRACE( "index %d handle %p FREE\n", i, (HGDIOBJ)(ULONG_PTR)((i + FIRST_LARGE_HANDLE) << 2) );
+            TRACE( "index %d handle %p FREE\n", i, index_to_handle( i ));
             continue;
         }
         TRACE( "handle %p obj %p type %s selcount %u deleted %u\n",
-               (HGDIOBJ)(ULONG_PTR)((i + FIRST_LARGE_HANDLE) << 2),
-               large_handles[i], gdi_obj_type( large_handles[i]->type ),
-               large_handles[i]->selcount, large_handles[i]->deleted );
+               index_to_handle( i ), gdi_handles[i], gdi_obj_type( gdi_handles[i]->type ),
+               gdi_handles[i]->selcount, gdi_handles[i]->deleted );
     }
     LeaveCriticalSection( &gdi_section );
 }
@@ -668,10 +677,10 @@ HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs 
     obj->hdcs     = NULL;
 
     EnterCriticalSection( &gdi_section );
-    for (i = next_large_handle + 1; i < MAX_LARGE_HANDLES; i++)
-        if (!large_handles[i]) goto found;
-    for (i = 0; i <= next_large_handle; i++)
-        if (!large_handles[i]) goto found;
+    for (i = next_gdi_handle + 1; i < MAX_GDI_HANDLES; i++)
+        if (!gdi_handles[i]) goto found;
+    for (i = 0; i <= next_gdi_handle; i++)
+        if (!gdi_handles[i]) goto found;
     LeaveCriticalSection( &gdi_section );
 
     ERR( "out of GDI object handles, expect a crash\n" );
@@ -679,13 +688,13 @@ HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs 
     return 0;
 
  found:
-    large_handles[i] = obj;
-    next_large_handle = i;
+    gdi_handles[i] = obj;
+    next_gdi_handle = i;
     LeaveCriticalSection( &gdi_section );
     TRACE( "allocated %s %p %u/%u\n",
-           gdi_obj_type(type), (HGDIOBJ)(ULONG_PTR)((i + FIRST_LARGE_HANDLE) << 2),
-           InterlockedIncrement( &debug_count ), MAX_LARGE_HANDLES );
-    return (HGDIOBJ)(ULONG_PTR)((i + FIRST_LARGE_HANDLE) << 2);
+           gdi_obj_type(type), index_to_handle( i ),
+           InterlockedIncrement( &debug_count ), MAX_GDI_HANDLES );
+    return index_to_handle( i );
 }
 
 
@@ -697,20 +706,19 @@ HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs 
 void *free_gdi_handle( HGDIOBJ handle )
 {
     GDIOBJHDR *object = NULL;
-    int i;
+    int i = handle_to_index( handle );
 
-    i = (HandleToULong(handle) >> 2) - FIRST_LARGE_HANDLE;
-    if (i >= 0 && i < MAX_LARGE_HANDLES)
+    if (i >= 0 && i < MAX_GDI_HANDLES)
     {
         EnterCriticalSection( &gdi_section );
-        object = large_handles[i];
-        large_handles[i] = NULL;
+        object = gdi_handles[i];
+        gdi_handles[i] = NULL;
         LeaveCriticalSection( &gdi_section );
     }
     if (object)
     {
         TRACE( "freed %s %p %u/%u\n", gdi_obj_type( object->type ), handle,
-               InterlockedDecrement( &debug_count ) + 1, MAX_LARGE_HANDLES );
+               InterlockedDecrement( &debug_count ) + 1, MAX_GDI_HANDLES );
         object->type  = 0;  /* mark it as invalid */
         object->funcs = NULL;
     }
@@ -728,14 +736,13 @@ void *free_gdi_handle( HGDIOBJ handle )
 void *GDI_GetObjPtr( HGDIOBJ handle, WORD type )
 {
     GDIOBJHDR *ptr = NULL;
-    int i;
+    int i = handle_to_index( handle );
 
     EnterCriticalSection( &gdi_section );
 
-    i = (HandleToULong(handle) >> 2) - FIRST_LARGE_HANDLE;
-    if (i >= 0 && i < MAX_LARGE_HANDLES)
+    if (i >= 0 && i < MAX_GDI_HANDLES)
     {
-        ptr = large_handles[i];
+        ptr = gdi_handles[i];
         if (ptr && type && ptr->type != type) ptr = NULL;
     }
 
