@@ -681,10 +681,10 @@ static void test_query_processor_power_info(void)
             ok( status == STATUS_BUFFER_TOO_SMALL, "Expected STATUS_BUFFER_TOO_SMALL, got %08x\n", status);
 
             status = pNtPowerInformation(ProcessorInformation, 0, 0, 0, size);
-            ok( status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
+            ok( status == STATUS_SUCCESS || status == STATUS_INVALID_PARAMETER, "Got %08x\n", status);
 
             status = pNtPowerInformation(ProcessorInformation, 0, 0, ppi, 0);
-            ok( status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
+            ok( status == STATUS_BUFFER_TOO_SMALL || status == STATUS_INVALID_PARAMETER, "Got %08x\n", status);
         }
     }
     else
