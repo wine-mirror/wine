@@ -412,6 +412,10 @@ static void test_media_streams(void)
         }
     }
 
+    /* Test open file with no filename */
+    hr = IAMMultiMediaStream_OpenFile(pams, NULL, 0);
+    ok(hr == E_POINTER, "IAMMultiMediaStream_OpenFile returned %x instead of %x\n", hr, E_POINTER);
+
     if (video_stream)
         IMediaStream_Release(video_stream);
     if (audio_stream)

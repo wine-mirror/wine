@@ -397,7 +397,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
     return hr;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* iface, LPCWSTR pszFileName, DWORD dwFlags)
+static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* iface, LPCWSTR filename, DWORD flags)
 {
     IAMMultiMediaStreamImpl *This = impl_from_IAMMultiMediaStream(iface);
     HRESULT ret = S_OK;
@@ -407,14 +407,17 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
     PIN_DIRECTION pin_direction;
     const WCHAR sourceW[] = {'S','o','u','r','c','e',0};
 
-    TRACE("(%p/%p)->(%s,%x)\n", This, iface, debugstr_w(pszFileName), dwFlags);
+    TRACE("(%p/%p)->(%s,%x)\n", This, iface, debugstr_w(filename), flags);
+
+    if (!filename)
+        return E_POINTER;
 
     /* If Initialize was not called before, we do it here */
     if (!This->pFilterGraph)
         ret = IAMMultiMediaStream_Initialize(iface, STREAMTYPE_READ, 0, NULL);
 
     if (SUCCEEDED(ret))
-        ret = IGraphBuilder_AddSourceFilter(This->pFilterGraph, pszFileName, sourceW, &BaseFilter);
+        ret = IGraphBuilder_AddSourceFilter(This->pFilterGraph, filename, sourceW, &BaseFilter);
 
     if (SUCCEEDED(ret))
         ret = IBaseFilter_EnumPins(BaseFilter, &EnumPins);
