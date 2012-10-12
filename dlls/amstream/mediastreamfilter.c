@@ -133,17 +133,22 @@ static HRESULT WINAPI MediaStreamFilterImpl_QueryInterface(IMediaStreamFilter *i
 
 static ULONG WINAPI MediaStreamFilterImpl_AddRef(IMediaStreamFilter *iface)
 {
-    return BaseFilterImpl_AddRef((IBaseFilter*)iface);
+    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
+    ULONG ref = BaseFilterImpl_AddRef(&This->filter.IBaseFilter_iface);
+
+    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+
+    return ref;
 }
 
 static ULONG WINAPI MediaStreamFilterImpl_Release(IMediaStreamFilter *iface)
 {
     IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
-    ULONG refCount = BaseFilterImpl_Release((IBaseFilter*)iface);
+    ULONG ref = BaseFilterImpl_Release(&This->filter.IBaseFilter_iface);
 
-    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
+    TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
-    if (!refCount)
+    if (!ref)
     {
         int i;
         for (i = 0; i < This->nb_streams; i++)
@@ -154,7 +159,7 @@ static ULONG WINAPI MediaStreamFilterImpl_Release(IMediaStreamFilter *iface)
         HeapFree(GetProcessHeap(), 0, This);
     }
 
-    return refCount;
+    return ref;
 }
 
 /*** IPersist methods ***/
