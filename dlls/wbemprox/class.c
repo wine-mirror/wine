@@ -804,8 +804,8 @@ static WCHAR *build_signature_table_name( const WCHAR *class, const WCHAR *metho
     return struprW( ret );
 }
 
-static HRESULT create_signature( const WCHAR *class, const WCHAR *method, enum param_direction dir,
-                                 IWbemClassObject **sig )
+HRESULT create_signature( const WCHAR *class, const WCHAR *method, enum param_direction dir,
+                          IWbemClassObject **sig )
 {
     static const WCHAR selectW[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',

@@ -69,8 +69,6 @@ static const WCHAR class_serviceW[] =
     {'W','i','n','3','2','_','S','e','r','v','i','c','e',0};
 static const WCHAR class_sounddeviceW[] =
     {'W','i','n','3','2','_','S','o','u','n','d','D','e','v','i','c','e',0};
-static const WCHAR class_stdregprovW[] =
-    {'S','t','d','R','e','g','P','r','o','v',0};
 static const WCHAR class_videocontrollerW[] =
     {'W','i','n','3','2','_','V','i','d','e','o','C','o','n','t','r','o','l','l','e','r',0};
 
@@ -191,22 +189,6 @@ static const WCHAR prop_varianttypeW[] =
 static const WCHAR prop_versionW[] =
     {'V','e','r','s','i','o','n',0};
 
-static const WCHAR method_enumkeyW[] =
-    {'E','n','u','m','K','e','y',0};
-static const WCHAR method_enumvaluesW[] =
-    {'E','n','u','m','V','a','l','u','e','s',0};
-
-static const WCHAR param_defkeyW[] =
-    {'h','D','e','f','K','e','y',0};
-static const WCHAR param_namesW[] =
-    {'N','a','m','e','s',0};
-static const WCHAR param_returnvalueW[] =
-    {'R','e','t','u','r','n','V','a','l','u','e',0};
-static const WCHAR param_subkeynameW[] =
-    {'s','S','u','b','K','e','y','N','a','m','e',0};
-static const WCHAR param_typesW[] =
-    {'T','y','p','e','s',0};
-
 /* column definitions must be kept in sync with record structures below */
 static const struct column col_baseboard[] =
 {
@@ -321,8 +303,8 @@ static const struct column col_sounddevice[] =
 };
 static const struct column col_stdregprov[] =
 {
-    { method_enumkeyW,    CIM_OBJECT|COL_FLAG_METHOD },
-    { method_enumvaluesW, CIM_OBJECT|COL_FLAG_METHOD }
+    { method_enumkeyW,    CIM_FLAG_ARRAY|COL_FLAG_METHOD },
+    { method_enumvaluesW, CIM_FLAG_ARRAY|COL_FLAG_METHOD }
 };
 static const struct column col_videocontroller[] =
 {
@@ -511,17 +493,6 @@ struct record_videocontroller
     const WCHAR *name;
 };
 #include "poppack.h"
-
-static HRESULT reg_enumkey( IWbemClassObject *in, IWbemClassObject **out )
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-static HRESULT reg_enumvalues( IWbemClassObject *in, IWbemClassObject **out )
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
 
 static const struct record_baseboard data_baseboard[] =
 {

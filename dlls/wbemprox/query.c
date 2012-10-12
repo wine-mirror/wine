@@ -602,7 +602,7 @@ SAFEARRAY *to_safearray( const struct array *array, CIMTYPE type )
     return ret;
 }
 
-static void set_variant( VARTYPE type, LONGLONG val, void *val_ptr, VARIANT *ret )
+void set_variant( VARTYPE type, LONGLONG val, void *val_ptr, VARIANT *ret )
 {
     if (type & VT_ARRAY)
     {
