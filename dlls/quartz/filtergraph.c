@@ -351,7 +351,7 @@ static ULONG WINAPI FilterGraph2_AddRef(IFilterGraph2 *iface)
 {
     IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
 
-    TRACE("(%p/%p)->() calling FilterGraph AddRef\n", This, iface);
+    TRACE("(%p/%p)->()\n", This, iface);
 
     return IUnknown_AddRef(This->outer_unk);
 }
@@ -360,7 +360,7 @@ static ULONG WINAPI FilterGraph2_Release(IFilterGraph2 *iface)
 {
     IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
 
-    TRACE("(%p/%p)->() calling FilterGraph Release\n", This, iface);
+    TRACE("(%p/%p)->()\n", This, iface);
 
     return IUnknown_Release(This->outer_unk);
 }
@@ -457,11 +457,11 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface, IBaseFilter *
         IBaseFilter_SetSyncSource(pFilter, This->refClock);
     }
     else
-	CoTaskMemFree(wszFilterName);
+        CoTaskMemFree(wszFilterName);
 
     if (SUCCEEDED(hr) && duplicate_name)
-	return VFW_S_DUPLICATE_NAME;
-	
+        return VFW_S_DUPLICATE_NAME;
+
     return hr;
 }
 
@@ -1664,13 +1664,13 @@ static HRESULT WINAPI FilterGraph2_AddSourceFilter(IFilterGraph2 *iface, LPCWSTR
     IFileSourceFilter_Release(pfile);
 
     return S_OK;
-    
+
 error:
     if (pfile)
         IFileSourceFilter_Release(pfile);
     IFilterGraph2_RemoveFilter(iface, preader);
     IBaseFilter_Release(preader);
-       
+
     return hr;
 }
 
@@ -1869,8 +1869,8 @@ static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, fnFoundF
             for(i = 0; i < nb; i++)
             {
                 /* Explore the graph downstream from this pin
-		 * FIXME: We should prevent exploring from a pin more than once. This can happens when
-		 * several input pins are connected to the same output (a MUX for instance). */
+                 * FIXME: We should prevent exploring from a pin more than once. This can happens when
+                 * several input pins are connected to the same output (a MUX for instance). */
                 ExploreGraph(pGraph, ppPins[i], FoundFilter, data);
                 IPin_Release(ppPins[i]);
             }
@@ -2638,22 +2638,26 @@ static ULONG WINAPI MediaPosition_Release(IMediaPosition *iface)
 }
 
 /*** IDispatch methods ***/
-static HRESULT WINAPI MediaPosition_GetTypeInfoCount(IMediaPosition *iface, UINT* pctinfo){
+static HRESULT WINAPI MediaPosition_GetTypeInfoCount(IMediaPosition *iface, UINT* pctinfo)
+{
     FIXME("(%p) stub!\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MediaPosition_GetTypeInfo(IMediaPosition *iface, UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo){
+static HRESULT WINAPI MediaPosition_GetTypeInfo(IMediaPosition *iface, UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo)
+{
     FIXME("(%p) stub!\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MediaPosition_GetIDsOfNames(IMediaPosition* iface, REFIID riid, LPOLESTR* rgszNames, UINT cNames, LCID lcid, DISPID* rgDispId){
+static HRESULT WINAPI MediaPosition_GetIDsOfNames(IMediaPosition* iface, REFIID riid, LPOLESTR* rgszNames, UINT cNames, LCID lcid, DISPID* rgDispId)
+{
     FIXME("(%p) stub!\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MediaPosition_Invoke(IMediaPosition* iface, DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult, EXCEPINFO* pExcepInfo, UINT* puArgErr){
+static HRESULT WINAPI MediaPosition_Invoke(IMediaPosition* iface, DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult, EXCEPINFO* pExcepInfo, UINT* puArgErr)
+{
     FIXME("(%p) stub!\n", iface);
     return E_NOTIMPL;
 }
@@ -2753,12 +2757,14 @@ static HRESULT WINAPI MediaPosition_put_StopTime(IMediaPosition * iface, REFTIME
             &reftime, AM_SEEKING_AbsolutePositioning);
 }
 
-static HRESULT WINAPI MediaPosition_get_PrerollTime(IMediaPosition * iface, REFTIME *pllTime){
+static HRESULT WINAPI MediaPosition_get_PrerollTime(IMediaPosition * iface, REFTIME *pllTime)
+{
     FIXME("(%p)->(%p) stub!\n", iface, pllTime);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MediaPosition_put_PrerollTime(IMediaPosition * iface, REFTIME llTime){
+static HRESULT WINAPI MediaPosition_put_PrerollTime(IMediaPosition * iface, REFTIME llTime)
+{
     FIXME("(%p)->(%f) stub!\n", iface, llTime);
     return E_NOTIMPL;
 }
@@ -2775,12 +2781,14 @@ static HRESULT WINAPI MediaPosition_get_Rate(IMediaPosition * iface, double *pdR
     return IMediaSeeking_GetRate(&This->IMediaSeeking_iface, pdRate);
 }
 
-static HRESULT WINAPI MediaPosition_CanSeekForward(IMediaPosition * iface, LONG *pCanSeekForward){
+static HRESULT WINAPI MediaPosition_CanSeekForward(IMediaPosition * iface, LONG *pCanSeekForward)
+{
     FIXME("(%p)->(%p) stub!\n", iface, pCanSeekForward);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MediaPosition_CanSeekBackward(IMediaPosition * iface, LONG *pCanSeekBackward){
+static HRESULT WINAPI MediaPosition_CanSeekBackward(IMediaPosition * iface, LONG *pCanSeekBackward)
+{
     FIXME("(%p)->(%p) stub!\n", iface, pCanSeekBackward);
     return E_NOTIMPL;
 }
@@ -4088,7 +4096,7 @@ static HRESULT WINAPI VideoWindow_put_Caption(IVideoWindow *iface, BSTR strCapti
     IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
-    
+
     TRACE("(%p/%p)->(%s (%p))\n", This, iface, debugstr_w(strCaption), strCaption);
 
     EnterCriticalSection(&This->cs);
