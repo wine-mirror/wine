@@ -886,6 +886,7 @@
 @ stdcall OpenEventA(long long str)
 @ stdcall OpenEventW(long long wstr)
 @ stdcall OpenFile(str ptr long)
+@ stdcall OpenFileById(long ptr long long ptr long)
 @ stdcall OpenFileMappingA(long long str)
 @ stdcall OpenFileMappingW(long long wstr)
 @ stdcall OpenJobObjectA(long long str)

@@ -3419,7 +3419,6 @@ static void test_OpenFileById(void)
 
     SetLastError(0xdeadbeef);
     handle = pOpenFileById(directory, NULL, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, 0);
-    todo_wine
     ok(handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_INVALID_PARAMETER,
         "OpenFileById: expected ERROR_INVALID_PARAMETER, got error %u.\n", GetLastError());
 
@@ -3427,7 +3426,6 @@ static void test_OpenFileById(void)
     fileIdDescr.Type      = FileIdType;
     U(fileIdDescr).FileId = bothDirInfo->FileId;
     handle = pOpenFileById(directory, &fileIdDescr, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, 0);
-    todo_wine
     ok(handle != INVALID_HANDLE_VALUE, "OpenFileById: failed to open the file, got error %u.\n", GetLastError());
 
     ret = ReadFile(handle, buffer, sizeof(buffer), &count, NULL);
