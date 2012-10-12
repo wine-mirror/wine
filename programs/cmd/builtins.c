@@ -401,6 +401,76 @@ static BOOL WCMD_AppendEOF(WCHAR *filename)
 }
 
 /****************************************************************************
+ * WCMD_ManualCopy
+ *
+ * Copies from a file
+ *    optionally reading only until EOF (ascii copy)
+ *    optionally appending onto an existing file (append)
+ * Returns TRUE on success
+ */
+static BOOL WCMD_ManualCopy(WCHAR *srcname, WCHAR *dstname, BOOL ascii, BOOL append)
+{
+    HANDLE in,out;
+    BOOL   ok;
+    DWORD  bytesread, byteswritten;
+
+    WINE_TRACE("ASCII Copying %s to %s (append?%d)\n",
+               wine_dbgstr_w(srcname), wine_dbgstr_w(dstname), append);
+
+    in  = CreateFileW(srcname, GENERIC_READ, 0, NULL,
+                      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (in == NULL) {
+      WINE_ERR("Failed to open %s (%d)\n", wine_dbgstr_w(srcname), GetLastError());
+      return FALSE;
+    }
+
+    /* Open the output file, overwriting if not appending */
+    out = CreateFileW(dstname, GENERIC_WRITE, 0, NULL,
+                      append?OPEN_EXISTING:CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (out == NULL) {
+      WINE_ERR("Failed to open %s (%d)\n", wine_dbgstr_w(dstname), GetLastError());
+      return FALSE;
+    }
+
+    /* Move to end of destination if we are going to append to it */
+    if (append) {
+      SetFilePointer(out, 0, NULL, FILE_END);
+    }
+
+    /* Loop copying data from source to destination until EOF read */
+    ok = TRUE;
+    do
+    {
+      char buffer[MAXSTRING];
+
+      ok = ReadFile(in, buffer, MAXSTRING, &bytesread, NULL);
+      if (ok) {
+
+        /* Stop at first EOF */
+        if (ascii) {
+          char *ptr = (char *)memchr((void *)buffer, '\x1a', bytesread);
+          if (ptr) bytesread = (ptr - buffer);
+        }
+
+        if (bytesread) {
+          ok = WriteFile(out, buffer, bytesread, &byteswritten, NULL);
+          if (!ok || byteswritten != bytesread) {
+            WINE_ERR("Unexpected failure writing to %s, rc=%d\n",
+                     wine_dbgstr_w(dstname), GetLastError());
+          }
+        }
+      } else {
+        WINE_ERR("Unexpected failure reading from %s, rc=%d\n",
+                 wine_dbgstr_w(srcname), GetLastError());
+      }
+    } while (ok && bytesread > 0);
+
+    CloseHandle(out);
+    CloseHandle(in);
+    return ok;
+}
+
+/****************************************************************************
  * WCMD_copy
  *
  * Copy a file or wildcarded set.
@@ -697,11 +767,13 @@ void WCMD_copy(WCHAR * command) {
   } else if (!destisdirectory) {
     /* We have been asked to copy to a filename. Default to ascii IF the
        source contains wildcards (true even if only one match)           */
-    if (destination->binarycopy == -1) {
-      if (strpbrkW(sourcelist->name, wildcardsW) != NULL) {
-        anyconcats = TRUE;  /* We really are concatenating to a single file */
+    if (strpbrkW(sourcelist->name, wildcardsW) != NULL) {
+      anyconcats = TRUE;  /* We really are concatenating to a single file */
+      if (destination->binarycopy == -1) {
         destination->binarycopy = 0;
-      } else {
+      }
+    } else {
+      if (destination->binarycopy == -1) {
         destination->binarycopy = 1;
       }
     }
@@ -731,7 +803,7 @@ void WCMD_copy(WCHAR * command) {
     WCHAR *filenamepart;
     DWORD  attributes;
 
-    /* If it was not explicit, we now know whehter we are concatenating or not and
+    /* If it was not explicit, we now know whether we are concatenating or not and
        hence whether to copy as binary or ascii                                    */
     if (thiscopy->binarycopy == -1) thiscopy->binarycopy = !anyconcats;
 
@@ -820,17 +892,15 @@ void WCMD_copy(WCHAR * command) {
           if (overwrite) {
             if (anyconcats && writtenoneconcat) {
               if (thiscopy->binarycopy) {
-                WINE_FIXME("Need to concatenate %s to %s (read as binary), will overwrite\n",
-                           wine_dbgstr_w(srcpath), wine_dbgstr_w(outname));
+                status = WCMD_ManualCopy(srcpath, outname, FALSE, TRUE);
               } else {
-                WINE_FIXME("Need to concatenate %s to %s (read as ascii), will overwrite\n",
-                           wine_dbgstr_w(srcpath), wine_dbgstr_w(outname));
+                status = WCMD_ManualCopy(srcpath, outname, TRUE, TRUE);
               }
             } else if (!thiscopy->binarycopy) {
-              WINE_FIXME("Need to ascii copy %s to %s - dropping to binary copy\n",
-                         wine_dbgstr_w(srcpath), wine_dbgstr_w(outname));
+              status = WCMD_ManualCopy(srcpath, outname, TRUE, FALSE);
+            } else {
+              status = CopyFileW(srcpath, outname, FALSE);
             }
-            status = CopyFileW(srcpath, outname, FALSE);
             if (!status) {
               WCMD_print_error ();
               errorlevel = 1;
@@ -838,8 +908,11 @@ void WCMD_copy(WCHAR * command) {
               WINE_TRACE("Copied successfully\n");
               if (anyconcats) writtenoneconcat = TRUE;
 
-              /* Append EOF if ascii destination and we are not going to add more onto the end */
-              if (!destination->binarycopy && !anyconcats) {
+              /* Append EOF if ascii destination and we are not going to add more onto the end
+                 Note: Testing shows windows has an optimization whereas if you have a binary
+                 copy of a file to a single destination (ie concatenation) then it does not add
+                 the EOF, hence the check on the source copy type below.                       */
+              if (!destination->binarycopy && !anyconcats && !thiscopy->binarycopy) {
                 if (!WCMD_AppendEOF(outname)) {
                   WCMD_print_error ();
                   errorlevel = 1;

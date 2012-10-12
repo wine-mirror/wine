@@ -1911,6 +1911,10 @@ rem One file has EOF, but doesnt get an extra one, ie 6
 copy /b file1_plus_eof file123_mixed_copy7 /a >nul 2>&1
 call :CheckFileSize file123_mixed_copy7 6
 
+rem Syntax means concatenate so ascii destination kicks in
+copy /b file1_plus_eof* file123_mixed_copy8 /a >nul 2>&1
+call :CheckFileSize file123_mixed_copy8 7
+
 del *.* /q
 cd ..
 
