@@ -5238,13 +5238,11 @@ TREEVIEW_KeyDown(TREEVIEW_INFO *infoPtr, WPARAM wParam)
 	break;
 
     case VK_ADD:
-	if (!(prevItem->state & TVIS_EXPANDED))
-	    TREEVIEW_Expand(infoPtr, prevItem, FALSE, TRUE);
+	TREEVIEW_Expand(infoPtr, prevItem, FALSE, TRUE);
 	break;
 
     case VK_SUBTRACT:
-	if (prevItem->state & TVIS_EXPANDED)
-	    TREEVIEW_Collapse(infoPtr, prevItem, FALSE, TRUE);
+	TREEVIEW_Collapse(infoPtr, prevItem, FALSE, TRUE);
 	break;
 
     case VK_PRIOR:
