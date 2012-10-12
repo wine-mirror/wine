@@ -126,8 +126,66 @@ static LONG WINAPI BasePinImp_GetMediaTypeVersion(BasePin *This)
     return 0;
 }
 
-static HRESULT WINAPI BasePinImp_GetMediaType(BasePin *This, int iPosition, AM_MEDIA_TYPE *amt)
+static HRESULT WINAPI BasePinImp_GetMediaType(BasePin *This, int index, AM_MEDIA_TYPE *amt)
 {
+    IMediaStreamFilterImpl *filter = (IMediaStreamFilterImpl*)This->pinInfo.pFilter;
+    MSPID purpose_id;
+    int i;
+
+    /* Find which stream is associated with the pin */
+    for (i = 0; i < filter->nb_streams; i++)
+        if (&This->IPin_iface == filter->pins[i])
+            break;
+
+    if (i == filter->nb_streams)
+        return S_FALSE;
+
+    if (FAILED(IMediaStream_GetInformation(filter->streams[i], &purpose_id, NULL)))
+        return S_FALSE;
+
+    TRACE("Processing stream with purpose id %s\n", debugstr_guid(&purpose_id));
+
+    if (IsEqualGUID(&purpose_id, &MSPID_PrimaryVideo))
+    {
+        amt->majortype = MEDIATYPE_Video;
+
+        switch (index)
+        {
+            case 0:
+                amt->subtype = MEDIASUBTYPE_RGB1;
+                break;
+            case 1:
+                amt->subtype = MEDIASUBTYPE_RGB4;
+                break;
+            case 2:
+                amt->subtype = MEDIASUBTYPE_RGB8;
+                break;
+            case 3:
+                amt->subtype = MEDIASUBTYPE_RGB565;
+                break;
+            case 4:
+                amt->subtype = MEDIASUBTYPE_RGB555;
+                break;
+            case 5:
+                amt->subtype = MEDIASUBTYPE_RGB24;
+                break;
+            case 6:
+                amt->subtype = MEDIASUBTYPE_RGB32;
+                break;
+            default:
+                return S_FALSE;
+        }
+    }
+    else if (IsEqualGUID(&purpose_id, &MSPID_PrimaryAudio))
+    {
+        if (!index)
+        {
+            amt->majortype = MEDIATYPE_Audio;
+            amt->subtype = MEDIASUBTYPE_PCM;
+            return S_OK;
+        }
+    }
+
     return S_FALSE;
 }
 
