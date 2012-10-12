@@ -6788,6 +6788,221 @@ methods:
 }
 
 /*****************************************************************************
+ *    IHTMLLinkElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f205-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLLinkElement : IDispatch
+{
+    [propput, id(DISPID_IHTMLLINKELEMENT_HREF), displaybind, bindable]
+    HRESULT href([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_HREF), displaybind, bindable]
+    HRESULT href([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLLINKELEMENT_REL), displaybind, bindable]
+    HRESULT rel([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_REL), displaybind, bindable]
+    HRESULT rel([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLLINKELEMENT_REV), displaybind, bindable]
+    HRESULT rev([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_REV), displaybind, bindable]
+    HRESULT rev([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLLINKELEMENT_TYPE), displaybind, bindable]
+    HRESULT type([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_TYPE), displaybind, bindable]
+    HRESULT type([out, retval] BSTR *p);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_READYSTATE)]
+    HRESULT readyState([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLLINKELEMENT_ONREADYSTATECHANGE), displaybind, bindable]
+    HRESULT onreadystatechange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_ONREADYSTATECHANGE), displaybind, bindable]
+    HRESULT onreadystatechange([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLLINKELEMENT_ONLOAD), displaybind, bindable]
+    HRESULT onload([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_ONLOAD), displaybind, bindable]
+    HRESULT onload([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLLINKELEMENT_ONERROR), displaybind, bindable]
+    HRESULT onerror([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_ONERROR), displaybind, bindable]
+    HRESULT onerror([out, retval] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_STYLESHEET)]
+    HRESULT styleSheet([out, retval] IHTMLStyleSheet **p);
+
+    [propput, id(DISPID_IHTMLLINKELEMENT_DISABLED), displaybind, bindable]
+    HRESULT disabled([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_DISABLED), displaybind, bindable]
+    HRESULT disabled([out, retval] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLLINKELEMENT_MEDIA), displaybind, bindable]
+    HRESULT media([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_MEDIA), displaybind, bindable]\
+    HRESULT media([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
+ *    IHTMLLinkElement2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f4e5-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLLinkElement2 : IDispatch
+{
+    [propput, id(DISPID_IHTMLLINKELEMENT2_TARGET), displaybind, bindable]
+    HRESULT target([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT2_TARGET), displaybind, bindable]
+    HRESULT target([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
+ *    IHTMLLinkElement3 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f81e-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLLinkElement3 : IDispatch
+{
+    [propput, id(DISPID_IHTMLLINKELEMENT3_CHARSET), displaybind, bindable]
+    HRESULT charset([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT3_CHARSET), displaybind, bindable]
+    HRESULT charset([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLLINKELEMENT3_HREFLANG), displaybind, bindable]
+    HRESULT hreflang([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT3_HREFLANG), displaybind, bindable]
+    HRESULT hreflang([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
+ *    IHTMLLinkElement4 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051043a-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLLinkElement4 : IDispatch
+{
+    [propput, id(DISPID_IHTMLLINKELEMENT4_IE8_HREF)]
+    HRESULT href([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT4_IE8_HREF)]
+    HRESULT href([retval, out] BSTR * p);
+}
+
+/*****************************************************************************
+ *    DispHTMLLinkElement dispinterface
+ */
+[
+    hidden,
+    uuid(3050f524-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLLinkElement
+{
+properties:
+methods:
+    WINE_HTMLELEMENT_DISPINTERFACE_DECL;
+
+    [propput, id(DISPID_IHTMLLINKELEMENT_HREF), displaybind, bindable]
+    void href(BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_HREF), displaybind, bindable]
+    BSTR href();
+
+    [propput, id(DISPID_IHTMLLINKELEMENT_REL), displaybind, bindable]
+    void rel(BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_REL), displaybind, bindable]
+    BSTR rel();
+
+    [propput, id(DISPID_IHTMLLINKELEMENT_REV), displaybind, bindable]
+    void rev(BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_REV), displaybind, bindable]
+    BSTR rev();
+
+    [propput, id(DISPID_IHTMLLINKELEMENT_TYPE), displaybind, bindable]
+    void type(BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_TYPE), displaybind, bindable]
+    BSTR type();
+
+    [propput, id(DISPID_IHTMLLINKELEMENT_ONLOAD), displaybind, bindable]
+    void onload(VARIANT v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_ONLOAD), displaybind, bindable]
+    VARIANT onload();
+
+    [propput, id(DISPID_IHTMLLINKELEMENT_ONERROR), displaybind, bindable]
+    void onerror(VARIANT v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_ONERROR), displaybind, bindable]
+    VARIANT onerror();
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_STYLESHEET)]
+    IHTMLStyleSheet *styleSheet();
+
+    [propput, id(DISPID_IHTMLLINKELEMENT_MEDIA), displaybind, bindable]
+    void media(BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT_MEDIA), displaybind, bindable]
+    BSTR media();
+
+    [propput, id(DISPID_IHTMLLINKELEMENT2_TARGET), displaybind, bindable]
+    void target(BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT2_TARGET), displaybind, bindable]
+    BSTR target();
+
+    [propput, id(DISPID_IHTMLLINKELEMENT3_CHARSET), displaybind, bindable]
+    void charset(BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT3_CHARSET), displaybind, bindable]
+    BSTR charset();
+
+    [propput, id(DISPID_IHTMLLINKELEMENT3_HREFLANG), displaybind, bindable]
+    void hreflang(BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT3_HREFLANG), displaybind, bindable]
+    BSTR hreflang();
+
+    [propput, id(DISPID_IHTMLLINKELEMENT4_IE8_HREF)]
+    void ie8_href(BSTR v);
+
+    [propget, id(DISPID_IHTMLLINKELEMENT4_IE8_HREF)]
+    BSTR ie8_href();
+}
+
+/*****************************************************************************
  *    IHTMLTxtRange interface
  */
 [
