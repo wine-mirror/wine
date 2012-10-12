@@ -39,6 +39,7 @@ static BOOL (WINAPI *pReplaceFileW)(LPCWSTR, LPCWSTR, LPCWSTR, DWORD, LPVOID, LP
 static UINT (WINAPI *pGetSystemWindowsDirectoryA)(LPSTR, UINT);
 static BOOL (WINAPI *pGetVolumeNameForVolumeMountPointA)(LPCSTR, LPSTR, DWORD);
 static DWORD (WINAPI *pQueueUserAPC)(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData);
+static BOOL (WINAPI *pGetFileInformationByHandleEx)(HANDLE, FILE_INFO_BY_HANDLE_CLASS, LPVOID, DWORD);
 
 /* keep filename and filenameW the same */
 static const char filename[] = "testfile.xxx";
@@ -73,6 +74,7 @@ static void InitFunctionPointers(void)
     pGetSystemWindowsDirectoryA=(void*)GetProcAddress(hkernel32, "GetSystemWindowsDirectoryA");
     pGetVolumeNameForVolumeMountPointA = (void *) GetProcAddress(hkernel32, "GetVolumeNameForVolumeMountPointA");
     pQueueUserAPC = (void *) GetProcAddress(hkernel32, "QueueUserAPC");
+    pGetFileInformationByHandleEx = (void *) GetProcAddress(hkernel32, "GetFileInformationByHandleEx");
 }
 
 static void test__hread( void )
@@ -3258,6 +3260,83 @@ static void test_CreatFile(void)
     DeleteFile(file_name);
 }
 
+static void test_GetFileInformationByHandleEx(void)
+{
+    int i;
+    char tempPath[MAX_PATH], tempFileName[MAX_PATH], buffer[1024];
+    BOOL ret;
+    DWORD ret2;
+    HANDLE directory;
+    FILE_ID_BOTH_DIR_INFO *bothDirInfo;
+    struct {
+        FILE_INFO_BY_HANDLE_CLASS handleClass;
+        void *ptr;
+        DWORD size;
+        DWORD errorCode;
+    } checks[] = {
+        {0xdeadbeef, NULL, 0, ERROR_INVALID_PARAMETER},
+        {FileIdBothDirectoryInfo, NULL, 0, ERROR_BAD_LENGTH},
+        {FileIdBothDirectoryInfo, NULL, sizeof(buffer), ERROR_NOACCESS},
+        {FileIdBothDirectoryInfo, buffer, 0, ERROR_BAD_LENGTH}};
+
+    if (!pGetFileInformationByHandleEx)
+    {
+        win_skip("GetFileInformationByHandleEx is missing.\n");
+        return;
+    }
+
+    ret2 = GetTempPathA(sizeof(tempPath), tempPath);
+    ok(ret2, "GetFileInformationByHandleEx: GetTempPathA failed, got error %u.\n", GetLastError());
+
+    /* ensure the existence of a file in the temp folder */
+    ret2 = GetTempFileNameA(tempPath, "abc", 0, tempFileName);
+    ok(ret2, "GetFileInformationByHandleEx: GetTempFileNameA failed, got error %u.\n", GetLastError());
+    ok(GetFileAttributesA(tempFileName) != INVALID_FILE_ATTRIBUTES, "GetFileInformationByHandleEx: "
+        "GetFileAttributesA failed to find the temp file, got error %u.\n", GetLastError());
+
+    directory = CreateFileA(tempPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+    ok(directory != INVALID_HANDLE_VALUE, "GetFileInformationByHandleEx: failed to open the temp folder, "
+        "got error %u.\n", GetLastError());
+
+    for (i = 0; i < sizeof(checks) / sizeof(checks[0]); i += 1)
+    {
+        SetLastError(0xdeadbeef);
+        ret = pGetFileInformationByHandleEx(directory, checks[i].handleClass, checks[i].ptr, checks[i].size);
+        todo_wine
+        ok(!ret && GetLastError() == checks[i].errorCode, "GetFileInformationByHandleEx: expected error %u, "
+           "got %u.\n", checks[i].errorCode, GetLastError());
+    }
+
+    while (TRUE)
+    {
+        memset(buffer, 0xff, sizeof(buffer));
+        ret = pGetFileInformationByHandleEx(directory, FileIdBothDirectoryInfo, buffer, sizeof(buffer));
+        if (!ret && GetLastError() == ERROR_NO_MORE_FILES)
+            break;
+        todo_wine
+        ok(ret, "GetFileInformationByHandleEx: failed to query for FileIdBothDirectoryInfo, got error %u.\n", GetLastError());
+        if (!ret)
+            break;
+        bothDirInfo = (FILE_ID_BOTH_DIR_INFO *)buffer;
+        while (TRUE)
+        {
+            todo_wine
+            ok(bothDirInfo->FileAttributes != 0xffffffff, "GetFileInformationByHandleEx: returned invalid file attributes.\n");
+            todo_wine
+            ok(bothDirInfo->FileId.u.LowPart != 0xffffffff, "GetFileInformationByHandleEx: returned invalid file id.\n");
+            todo_wine
+            ok(bothDirInfo->FileNameLength != 0xffffffff, "GetFileInformationByHandleEx: returned invalid file name length.\n");
+            if (!bothDirInfo->NextEntryOffset)
+                break;
+            bothDirInfo = (FILE_ID_BOTH_DIR_INFO *)(((char *)bothDirInfo) + bothDirInfo->NextEntryOffset);
+        }
+    }
+
+    CloseHandle(directory);
+    DeleteFile(tempFileName);
+}
+
 START_TEST(file)
 {
     InitFunctionPointers();
@@ -3297,4 +3376,5 @@ START_TEST(file)
     test_RemoveDirectory();
     test_ReplaceFileA();
     test_ReplaceFileW();
+    test_GetFileInformationByHandleEx();
 }
