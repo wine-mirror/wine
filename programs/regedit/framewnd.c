@@ -30,7 +30,10 @@
 
 #include "main.h"
 #include "regproc.h"
+#include "wine/debug.h"
 #include "wine/unicode.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(regedit);
 
 /********************************************************************************
  * Global and Local Variables:
@@ -408,6 +411,7 @@ static BOOL PrintRegistryHive(HWND hWnd, LPCWSTR path)
     pd.nMinPage    = 1;
     pd.nMaxPage    = 0xFFFF;
     if (PrintDlgW(&pd)) {
+        FIXME("printing is not yet implemented.\n");
         /* GDI calls to render output. */
         DeleteDC(pd.hDC); /* Delete DC when done.*/
     }
@@ -420,11 +424,13 @@ static BOOL PrintRegistryHive(HWND hWnd, LPCWSTR path)
         switch (pd.dwResultAction) {
         case PD_RESULT_APPLY:
             /*The user clicked the Apply button and later clicked the Cancel button. This indicates that the user wants to apply the changes made in the property sheet, but does not yet want to print. The PRINTDLGEX structure contains the information specified by the user at the time the Apply button was clicked. */
+            FIXME("printing is not yet implemented.\n");
             break;
         case PD_RESULT_CANCEL:
             /*The user clicked the Cancel button. The information in the PRINTDLGEX structure is unchanged. */
             break;
         case PD_RESULT_PRINT:
+            FIXME("printing is not yet implemented.\n");
             /*The user clicked the Print button. The PRINTDLGEX structure contains the information specified by the user. */
             break;
         default:
