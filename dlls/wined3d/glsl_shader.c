@@ -2543,6 +2543,23 @@ static void shader_glsl_expp(const struct wined3d_shader_instruction *ins)
     }
 }
 
+static void shader_glsl_to_int(const struct wined3d_shader_instruction *ins)
+{
+    struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
+    struct glsl_src_param src_param;
+    unsigned int mask_size;
+    DWORD write_mask;
+
+    write_mask = shader_glsl_append_dst(buffer, ins);
+    mask_size = shader_glsl_get_write_mask_size(write_mask);
+    shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src_param);
+
+    if (mask_size > 1)
+        shader_addline(buffer, "ivec%u(%s));\n", mask_size, src_param.param_str);
+    else
+        shader_addline(buffer, "int(%s));\n", src_param.param_str);
+}
+
 /** Process the RCP (reciprocal or inverse) opcode in GLSL (dst = 1 / src) */
 static void shader_glsl_rcp(const struct wined3d_shader_instruction *ins)
 {
@@ -5277,7 +5294,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_EXP                   */ shader_glsl_map2gl,
     /* WINED3DSIH_EXPP                  */ shader_glsl_expp,
     /* WINED3DSIH_FRC                   */ shader_glsl_map2gl,
-    /* WINED3DSIH_FTOI                  */ NULL,
+    /* WINED3DSIH_FTOI                  */ shader_glsl_to_int,
     /* WINED3DSIH_GE                    */ shader_glsl_relop,
     /* WINED3DSIH_IADD                  */ shader_glsl_binop,
     /* WINED3DSIH_IEQ                   */ NULL,
