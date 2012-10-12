@@ -102,29 +102,22 @@ static const BaseInputPinFuncTable input_BaseInputFuncTable = {
 
 /*** IUnknown methods ***/
 
-static HRESULT WINAPI MediaStreamFilterImpl_QueryInterface(IMediaStreamFilter *iface, REFIID riid,
-        void **ppv)
+static HRESULT WINAPI MediaStreamFilterImpl_QueryInterface(IMediaStreamFilter *iface, REFIID riid, void **ret_iface)
 {
-    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ret_iface);
 
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
+    *ret_iface = NULL;
 
-    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IPersist) ||
+        IsEqualIID(riid, &IID_IMediaFilter) ||
+        IsEqualIID(riid, &IID_IBaseFilter) ||
+        IsEqualIID(riid, &IID_IMediaStreamFilter))
+        *ret_iface = iface;
 
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IPersist))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IMediaFilter))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IMediaStreamFilter))
-        *ppv = This;
-
-    if (*ppv)
+    if (*ret_iface)
     {
-        IUnknown_AddRef((IUnknown *)(*ppv));
+        IMediaStreamFilter_AddRef(*ret_iface);
         return S_OK;
     }
 
