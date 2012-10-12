@@ -247,6 +247,7 @@ static const struct column col_logicaldisk[] =
     { prop_drivetypeW,  CIM_UINT32, VT_I4 },
     { prop_filesystemW, CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_freespaceW,  CIM_UINT64 },
+    { prop_nameW,       CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_sizeW,       CIM_UINT64 }
 };
 static const struct column col_networkadapter[] =
@@ -421,6 +422,7 @@ struct record_logicaldisk
     UINT32       drivetype;
     const WCHAR *filesystem;
     UINT64       freespace;
+    const WCHAR *name;
     UINT64       size;
 };
 struct record_networkadapter
@@ -681,6 +683,7 @@ static void fill_logicaldisk( struct table *table )
             rec->drivetype  = type;
             rec->filesystem = get_filesystem( root );
             rec->freespace  = get_freespace( root, &size );
+            rec->name       = heap_strdupW( device_id );
             rec->size       = size;
             offset += sizeof(*rec);
             num_rows++;
