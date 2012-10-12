@@ -40,6 +40,15 @@ struct dwrite_textlayout {
 struct dwrite_textformat {
     IDWriteTextFormat IDWriteTextFormat_iface;
     LONG ref;
+
+    WCHAR *family_name;
+    WCHAR *locale;
+
+    DWRITE_FONT_WEIGHT weight;
+    DWRITE_FONT_STYLE style;
+    DWRITE_FONT_STRETCH stretch;
+
+    FLOAT size;
 };
 
 static inline struct dwrite_textlayout *impl_from_IDWriteTextLayout(IDWriteTextLayout *iface)
@@ -689,7 +698,11 @@ static ULONG WINAPI dwritetextformat_Release(IDWriteTextFormat *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (!ref)
+    {
+        heap_free(This->family_name);
+        heap_free(This->locale);
         heap_free(This);
+    }
 
     return S_OK;
 }
@@ -904,7 +917,8 @@ static const IDWriteTextFormatVtbl dwritetextformatvtbl = {
     dwritetextformat_GetLocaleName
 };
 
-HRESULT create_textformat(IDWriteTextFormat **format)
+HRESULT create_textformat(const WCHAR *family_name, DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style,
+    DWRITE_FONT_STRETCH stretch, FLOAT size, const WCHAR *locale, IDWriteTextFormat **format)
 {
     struct dwrite_textformat *This;
 
@@ -913,6 +927,11 @@ HRESULT create_textformat(IDWriteTextFormat **format)
 
     This->IDWriteTextFormat_iface.lpVtbl = &dwritetextformatvtbl;
     This->ref = 1;
+    This->family_name = heap_strdupW(family_name);
+    This->locale = heap_strdupW(locale);
+    This->weight = weight;
+    This->style = style;
+    This->size = size;
 
     *format = &This->IDWriteTextFormat_iface;
 
