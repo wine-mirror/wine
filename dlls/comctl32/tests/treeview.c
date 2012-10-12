@@ -1395,7 +1395,7 @@ static void test_expandnotify(void)
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     ret = SendMessageA(hTree, TVM_EXPAND, TVE_COLLAPSE, (LPARAM)hRoot);
-    todo_wine expect(FALSE, ret);
+    expect(FALSE, ret);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "no collapse notifications", FALSE);
 
     g_get_from_expand = TRUE;

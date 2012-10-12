@@ -3234,6 +3234,7 @@ TREEVIEW_Collapse(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
     RECT scrollRect;
     LONG scrollDist = 0;
     TREEVIEW_ITEM *nextItem = NULL, *tmpItem;
+    BOOL wasExpanded;
 
     TRACE("TVE_COLLAPSE %p %s\n", item, TREEVIEW_ItemName(item));
 
@@ -3246,9 +3247,10 @@ TREEVIEW_Collapse(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
     if (item->firstChild == NULL)
 	return FALSE;
 
+    wasExpanded = (item->state & TVIS_EXPANDED) != 0;
     item->state &= ~TVIS_EXPANDED;
 
-    if (bUser)
+    if (wasExpanded && bUser)
 	TREEVIEW_SendExpanded(infoPtr, item, action);
 
     bSetSelection = (infoPtr->selectedItem != NULL
@@ -3329,7 +3331,7 @@ TREEVIEW_Collapse(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
                              bSetFirstVisible ? item : infoPtr->firstVisible,
                              TRUE);
 
-    return TRUE;
+    return wasExpanded;
 }
 
 static BOOL
