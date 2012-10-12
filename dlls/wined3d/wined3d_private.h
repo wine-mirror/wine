@@ -632,6 +632,7 @@ struct wined3d_shader_register
     UINT idx;
     UINT array_idx;
     const struct wined3d_shader_src_param *rel_addr;
+    const struct wined3d_shader_src_param *array_rel_addr;
     enum wined3d_immconst_type immconst_type;
     DWORD immconst_data[4];
 };
