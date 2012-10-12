@@ -2560,6 +2560,23 @@ static void shader_glsl_to_int(const struct wined3d_shader_instruction *ins)
         shader_addline(buffer, "int(%s));\n", src_param.param_str);
 }
 
+static void shader_glsl_to_float(const struct wined3d_shader_instruction *ins)
+{
+    struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
+    struct glsl_src_param src_param;
+    unsigned int mask_size;
+    DWORD write_mask;
+
+    write_mask = shader_glsl_append_dst(buffer, ins);
+    mask_size = shader_glsl_get_write_mask_size(write_mask);
+    shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src_param);
+
+    if (mask_size > 1)
+        shader_addline(buffer, "vec%u(%s));\n", mask_size, src_param.param_str);
+    else
+        shader_addline(buffer, "float(%s));\n", src_param.param_str);
+}
+
 /** Process the RCP (reciprocal or inverse) opcode in GLSL (dst = 1 / src) */
 static void shader_glsl_rcp(const struct wined3d_shader_instruction *ins)
 {
@@ -5302,7 +5319,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_IFC                   */ shader_glsl_ifc,
     /* WINED3DSIH_IGE                   */ shader_glsl_relop,
     /* WINED3DSIH_IMUL                  */ NULL,
-    /* WINED3DSIH_ITOF                  */ NULL,
+    /* WINED3DSIH_ITOF                  */ shader_glsl_to_float,
     /* WINED3DSIH_LABEL                 */ shader_glsl_label,
     /* WINED3DSIH_LD                    */ NULL,
     /* WINED3DSIH_LIT                   */ shader_glsl_lit,
