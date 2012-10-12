@@ -394,13 +394,13 @@ static void *load_fake_dll( const WCHAR *name, SIZE_T *size )
     if ((p = strrchrW( name, '\\' ))) name = p + 1;
 
     i = 0;
-    if (build_dir) maxlen = strlen(build_dir) + sizeof("/programs/") + strlenW(name);
+    len = strlenW( name );
+    if (build_dir) maxlen = strlen(build_dir) + sizeof("/programs/") + len;
     while ((path = wine_dll_enum_load_path( i++ ))) maxlen = max( maxlen, strlen(path) );
-    maxlen += sizeof("/fakedlls") + strlenW(name) + 2;
+    maxlen += sizeof("/fakedlls") + len + sizeof(".fake");
 
     if (!(file = HeapAlloc( GetProcessHeap(), 0, maxlen ))) return NULL;
 
-    len = strlenW( name );
     pos = maxlen - len - sizeof(".fake");
     if (!dll_name_WtoA( file + pos, name, len )) goto done;
     file[--pos] = '/';
