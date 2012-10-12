@@ -32,6 +32,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winnls.h"
 
 static HANDLE (WINAPI *pFindFirstFileExA)(LPCSTR,FINDEX_INFO_LEVELS,LPVOID,FINDEX_SEARCH_OPS,LPVOID,DWORD);
 static BOOL (WINAPI *pReplaceFileA)(LPCSTR, LPCSTR, LPCSTR, DWORD, LPVOID, LPVOID);
@@ -40,6 +41,7 @@ static UINT (WINAPI *pGetSystemWindowsDirectoryA)(LPSTR, UINT);
 static BOOL (WINAPI *pGetVolumeNameForVolumeMountPointA)(LPCSTR, LPSTR, DWORD);
 static DWORD (WINAPI *pQueueUserAPC)(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData);
 static BOOL (WINAPI *pGetFileInformationByHandleEx)(HANDLE, FILE_INFO_BY_HANDLE_CLASS, LPVOID, DWORD);
+static HANDLE (WINAPI *pOpenFileById)(HANDLE, LPFILE_ID_DESCRIPTOR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD);
 
 /* keep filename and filenameW the same */
 static const char filename[] = "testfile.xxx";
@@ -75,6 +77,7 @@ static void InitFunctionPointers(void)
     pGetVolumeNameForVolumeMountPointA = (void *) GetProcAddress(hkernel32, "GetVolumeNameForVolumeMountPointA");
     pQueueUserAPC = (void *) GetProcAddress(hkernel32, "QueueUserAPC");
     pGetFileInformationByHandleEx = (void *) GetProcAddress(hkernel32, "GetFileInformationByHandleEx");
+    pOpenFileById = (void *) GetProcAddress(hkernel32, "OpenFileById");
 }
 
 static void test__hread( void )
@@ -3332,6 +3335,111 @@ static void test_GetFileInformationByHandleEx(void)
     DeleteFile(tempFileName);
 }
 
+static void test_OpenFileById(void)
+{
+    char tempPath[MAX_PATH], tempFileName[MAX_PATH], buffer[256], tickCount[256];
+    WCHAR tempFileNameW[MAX_PATH];
+    BOOL ret, found;
+    DWORD ret2, count, tempFileNameLen;
+    HANDLE directory, handle, tempFile;
+    FILE_ID_BOTH_DIR_INFO *bothDirInfo;
+    FILE_ID_DESCRIPTOR fileIdDescr;
+
+    if (!pGetFileInformationByHandleEx || !pOpenFileById)
+    {
+        win_skip("GetFileInformationByHandleEx or OpenFileById is missing.\n");
+        return;
+    }
+
+    ret2 = GetTempPathA(sizeof(tempPath), tempPath);
+    ok(ret2, "OpenFileById: GetTempPath failed, got error %u.\n", GetLastError());
+
+    /* ensure the existance of a file in the temp folder */
+    ret2 = GetTempFileNameA(tempPath, "abc", 0, tempFileName);
+    ok(ret2, "OpenFileById: GetTempFileNameA failed, got error %u.\n", GetLastError());
+    ok(GetFileAttributesA(tempFileName) != INVALID_FILE_ATTRIBUTES,
+        "OpenFileById: GetFileAttributesA failed to find the temp file, got error %u\n", GetLastError());
+
+    ret2 = MultiByteToWideChar(CP_ACP, 0, tempFileName + strlen(tempPath), -1, tempFileNameW, sizeof(tempFileNameW));
+    ok(ret2, "OpenFileById: MultiByteToWideChar failed to convert tempFileName, got error %u.\n", GetLastError());
+    tempFileNameLen = ret2 - 1;
+
+    tempFile = CreateFileA(tempFileName, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(tempFile != INVALID_HANDLE_VALUE, "OpenFileById: failed to create a temp file, "
+	    "got error %u.\n", GetLastError());
+    ret2 = sprintf(tickCount, "%u", GetTickCount());
+    ret = WriteFile(tempFile, tickCount, ret2, &count, NULL);
+    ok(ret, "OpenFileById: WriteFile failed, got error %u.\n", GetLastError());
+    CloseHandle(tempFile);
+
+    directory = CreateFileA(tempPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+    ok(directory != INVALID_HANDLE_VALUE, "OpenFileById: failed to open the temp folder, "
+        "got error %u.\n", GetLastError());
+
+    /* get info about the temp folder itself */
+    bothDirInfo = (FILE_ID_BOTH_DIR_INFO *)buffer;
+    ret = pGetFileInformationByHandleEx(directory, FileIdBothDirectoryInfo, buffer, sizeof(buffer));
+    ok(ret, "OpenFileById: failed to query for FileIdBothDirectoryInfo, got error %u.\n", GetLastError());
+    ok(bothDirInfo->FileNameLength == sizeof(WCHAR) && bothDirInfo->FileName[0] == '.',
+        "OpenFileById: failed to return the temp folder at the first entry, got error %u.\n", GetLastError());
+
+    /* open the temp folder itself */
+    fileIdDescr.dwSize    = sizeof(fileIdDescr);
+    fileIdDescr.Type      = FileIdType;
+    U(fileIdDescr).FileId = bothDirInfo->FileId;
+    handle = pOpenFileById(directory, &fileIdDescr, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, 0);
+    todo_wine
+    ok(handle != INVALID_HANDLE_VALUE, "OpenFileById: failed to open the temp folder itself, got error %u.\n", GetLastError());
+    CloseHandle(handle);
+
+    /* find the temp file in the temp folder */
+    found = FALSE;
+    while (!found)
+    {
+        ret = pGetFileInformationByHandleEx(directory, FileIdBothDirectoryInfo, buffer, sizeof(buffer));
+        ok(ret, "OpenFileById: failed to query for FileIdBothDirectoryInfo, got error %u.\n", GetLastError());
+        if (!ret)
+            break;
+        bothDirInfo = (FILE_ID_BOTH_DIR_INFO *)buffer;
+        while (TRUE)
+        {
+            if (tempFileNameLen == bothDirInfo->FileNameLength / sizeof(WCHAR) &&
+                memcmp(tempFileNameW, bothDirInfo->FileName, bothDirInfo->FileNameLength) == 0)
+            {
+                found = TRUE;
+                break;
+            }
+            if (!bothDirInfo->NextEntryOffset)
+                break;
+            bothDirInfo = (FILE_ID_BOTH_DIR_INFO *)(((char *)bothDirInfo) + bothDirInfo->NextEntryOffset);
+        }
+    }
+    ok(found, "OpenFileById: failed to find the temp file in the temp folder.\n");
+
+    SetLastError(0xdeadbeef);
+    handle = pOpenFileById(directory, NULL, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, 0);
+    todo_wine
+    ok(handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_INVALID_PARAMETER,
+        "OpenFileById: expected ERROR_INVALID_PARAMETER, got error %u.\n", GetLastError());
+
+    fileIdDescr.dwSize    = sizeof(fileIdDescr);
+    fileIdDescr.Type      = FileIdType;
+    U(fileIdDescr).FileId = bothDirInfo->FileId;
+    handle = pOpenFileById(directory, &fileIdDescr, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, 0);
+    todo_wine
+    ok(handle != INVALID_HANDLE_VALUE, "OpenFileById: failed to open the file, got error %u.\n", GetLastError());
+
+    ret = ReadFile(handle, buffer, sizeof(buffer), &count, NULL);
+    buffer[count] = 0;
+    ok(ret, "OpenFileById: ReadFile failed, got error %u.\n", GetLastError());
+    ok(strcmp(tickCount, buffer) == 0, "OpenFileById: invalid contents of the temp file.\n");
+
+    CloseHandle(handle);
+    CloseHandle(directory);
+    DeleteFile(tempFileName);
+}
+
 START_TEST(file)
 {
     InitFunctionPointers();
@@ -3372,4 +3480,5 @@ START_TEST(file)
     test_ReplaceFileA();
     test_ReplaceFileW();
     test_GetFileInformationByHandleEx();
+    test_OpenFileById();
 }

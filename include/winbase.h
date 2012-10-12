@@ -740,6 +740,22 @@ typedef struct _BY_HANDLE_FILE_INFORMATION
   DWORD nFileIndexLow;
 } BY_HANDLE_FILE_INFORMATION, *PBY_HANDLE_FILE_INFORMATION, *LPBY_HANDLE_FILE_INFORMATION ;
 
+typedef enum _FILE_ID_TYPE {
+    FileIdType,
+    ObjectIdType,
+    ExtendedFileIdType,
+    MaximumFileIdType
+} FILE_ID_TYPE, *PFILE_ID_TYPE;
+
+typedef struct _FILE_ID_DESCRIPTOR {
+    DWORD        dwSize;
+    FILE_ID_TYPE Type;
+    union {
+        LARGE_INTEGER FileId;
+        GUID          ObjectId;
+    } DUMMYUNIONNAME;
+} FILE_ID_DESCRIPTOR, *LPFILE_ID_DESCRIPTOR;
+
 typedef enum _FILE_INFO_BY_HANDLE_CLASS {
     FileBasicInfo,
     FileStandardInfo,
