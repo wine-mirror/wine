@@ -56,6 +56,7 @@ typedef struct tagCLASS
     HINSTANCE        hInstance;     /* Module that created the task */
     HICON            hIcon;         /* Default icon */
     HICON            hIconSm;       /* Default small icon */
+    HICON            hIconSmIntern; /* Internal small icon, derived from hIcon */
     HCURSOR          hCursor;       /* Default cursor */
     HBRUSH           hbrBackground; /* Default background */
     ATOM             atomName;      /* Name of the class */
@@ -518,6 +519,10 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
 
     classPtr->hIcon         = wc->hIcon;
     classPtr->hIconSm       = wc->hIconSm;
+    classPtr->hIconSmIntern = wc->hIcon && !wc->hIconSm ?
+                                            CopyImage( wc->hIcon, IMAGE_ICON,
+                                                GetSystemMetrics( SM_CXSMICON ),
+                                                GetSystemMetrics( SM_CYSMICON ), 0 ) : NULL;
     classPtr->hCursor       = wc->hCursor;
     classPtr->hbrBackground = wc->hbrBackground;
     classPtr->winproc       = WINPROC_AllocProc( wc->lpfnWndProc, FALSE );
@@ -556,6 +561,10 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
 
     classPtr->hIcon         = wc->hIcon;
     classPtr->hIconSm       = wc->hIconSm;
+    classPtr->hIconSmIntern = wc->hIcon && !wc->hIconSm ?
+                                            CopyImage( wc->hIcon, IMAGE_ICON,
+                                                GetSystemMetrics( SM_CXSMICON ),
+                                                GetSystemMetrics( SM_CYSMICON ), 0 ) : NULL;
     classPtr->hCursor       = wc->hCursor;
     classPtr->hbrBackground = wc->hbrBackground;
     classPtr->winproc       = WINPROC_AllocProc( wc->lpfnWndProc, TRUE );
@@ -741,7 +750,7 @@ static ULONG_PTR CLASS_GetClassLong( HWND hwnd, INT offset, UINT size,
         retvalue = (ULONG_PTR)class->hIcon;
         break;
     case GCLP_HICONSM:
-        retvalue = (ULONG_PTR)class->hIconSm;
+        retvalue = (ULONG_PTR)(class->hIconSm ? class->hIconSm : class->hIconSmIntern);
         break;
     case GCL_STYLE:
         retvalue = class->style;
@@ -884,10 +893,27 @@ static ULONG_PTR CLASS_SetClassLong( HWND hwnd, INT offset, LONG_PTR newval,
         break;
     case GCLP_HICON:
         retval = (ULONG_PTR)class->hIcon;
+        if (retval && class->hIconSmIntern)
+        {
+            DestroyIcon(class->hIconSmIntern);
+            class->hIconSmIntern = NULL;
+        }
+        if (newval && !class->hIconSm)
+            class->hIconSmIntern = CopyImage( (HICON)newval, IMAGE_ICON,
+                      GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
         class->hIcon = (HICON)newval;
         break;
     case GCLP_HICONSM:
         retval = (ULONG_PTR)class->hIconSm;
+        if (retval && !newval)
+            class->hIconSmIntern = class->hIcon ? CopyImage( class->hIcon, IMAGE_ICON,
+                                                GetSystemMetrics( SM_CXSMICON ),
+                                                GetSystemMetrics( SM_CYSMICON ), 0 ) : NULL;
+        else if (!retval && newval && class->hIconSmIntern)
+        {
+            DestroyIcon(class->hIconSmIntern);
+            class->hIconSmIntern = NULL;
+        }
         class->hIconSm = (HICON)newval;
         break;
     case GCL_STYLE:
@@ -1099,7 +1125,7 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
     wc->cbWndExtra    = classPtr->cbWndExtra;
     wc->hInstance     = (hInstance == user32_module) ? 0 : hInstance;
     wc->hIcon         = classPtr->hIcon;
-    wc->hIconSm       = classPtr->hIconSm;
+    wc->hIconSm       = classPtr->hIconSm ? classPtr->hIconSm : classPtr->hIconSmIntern;
     wc->hCursor       = classPtr->hCursor;
     wc->hbrBackground = classPtr->hbrBackground;
     wc->lpszMenuName  = CLASS_GetMenuNameA( classPtr );
@@ -1141,7 +1167,7 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc 
     wc->cbWndExtra    = classPtr->cbWndExtra;
     wc->hInstance     = (hInstance == user32_module) ? 0 : hInstance;
     wc->hIcon         = classPtr->hIcon;
-    wc->hIconSm       = classPtr->hIconSm;
+    wc->hIconSm       = classPtr->hIconSm ? classPtr->hIconSm : classPtr->hIconSmIntern;
     wc->hCursor       = classPtr->hCursor;
     wc->hbrBackground = classPtr->hbrBackground;
     wc->lpszMenuName  = CLASS_GetMenuNameW( classPtr );

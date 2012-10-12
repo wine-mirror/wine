@@ -999,11 +999,9 @@ static void test_icons(void)
 
     ok(GetClassInfoExW(hinst, cls_name, &ret_wcex), "Class info was not retrieved\n");
     ok(wcex.hIcon == ret_wcex.hIcon, "Icons don't match\n");
-todo_wine
     ok(ret_wcex.hIconSm != NULL, "hIconSm should be non-zero handle\n");
 
     hsmicon = (HICON)GetClassLongPtrW(hwnd, GCLP_HICONSM);
-todo_wine
     ok(hsmicon != NULL, "GetClassLong should return non-zero handle\n");
 
     hsmallnew = CopyImage(wcex.hIcon, IMAGE_ICON, GetSystemMetrics(SM_CXSMICON),
@@ -1016,7 +1014,6 @@ todo_wine
 
     SetClassLongPtrW(hwnd, GCLP_HICONSM, 0);
     hsmicon = (HICON)GetClassLongPtrW(hwnd, GCLP_HICONSM);
-todo_wine
     ok( hsmicon != NULL, "GetClassLong should return non-zero handle\n");
 
     SetClassLongPtrW(hwnd, GCLP_HICON, 0);
@@ -1024,10 +1021,8 @@ todo_wine
 
     SetClassLongPtrW(hwnd, GCLP_HICON, (LONG_PTR)LoadIconW(NULL, (LPCWSTR)IDI_QUESTION));
     hsmicon = (HICON)GetClassLongPtrW(hwnd, GCLP_HICONSM);
-todo_wine
     ok(hsmicon != NULL, "GetClassLong should return non-zero handle\n");
     UnregisterClassW(cls_name, hinst);
-todo_wine
     ok(GetIconInfo(hsmicon, &icinf), "Icon should NOT be destroyed\n");
 
     DestroyIcon(hsmallnew);
