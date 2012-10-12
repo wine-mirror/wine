@@ -714,17 +714,12 @@ static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis, jsva
         day = date_from_time(date->time);
 
         date_str = jsstr_alloc_buf(len);
-        if(!date_str) {
-            SysFreeString(week);
-            SysFreeString(month);
+        if(!date_str)
             return E_OUTOFMEMORY;
-        }
+
         sprintfW(date_str->str, formatAD?formatADW:formatBCW, week, day, month, year,
                 (int)hour_from_time(date->time), (int)min_from_time(date->time),
                 (int)sec_from_time(date->time));
-
-        SysFreeString(week);
-        SysFreeString(month);
 
         *r = jsval_string(date_str);
     }
