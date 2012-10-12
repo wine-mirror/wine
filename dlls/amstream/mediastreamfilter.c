@@ -76,6 +76,48 @@ static inline IMediaStreamFilterImpl *impl_from_IMediaStreamFilter(IMediaStreamF
 
 static HRESULT WINAPI BasePinImpl_CheckMediaType(BasePin *This, const AM_MEDIA_TYPE *pmt)
 {
+    IMediaStreamFilterImpl *filter = impl_from_IMediaStreamFilter((IMediaStreamFilter*)This->pinInfo.pFilter);
+    MSPID purpose_id;
+    int i;
+
+    TRACE("Checking media type %s - %s\n", debugstr_guid(&pmt->majortype), debugstr_guid(&pmt->subtype));
+
+    /* Find which stream is associated with the pin */
+    for (i = 0; i < filter->nb_streams; i++)
+        if (&This->IPin_iface == filter->pins[i])
+            break;
+
+    if (i == filter->nb_streams)
+        return S_FALSE;
+
+    if (FAILED(IMediaStream_GetInformation(filter->streams[i], &purpose_id, NULL)))
+        return S_FALSE;
+
+    TRACE("Checking stream with purpose id %s\n", debugstr_guid(&purpose_id));
+
+    if (IsEqualGUID(&purpose_id, &MSPID_PrimaryVideo) && IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video))
+    {
+        if (IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_RGB1) ||
+            IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_RGB4) ||
+            IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_RGB8)  ||
+            IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_RGB565) ||
+            IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_RGB555) ||
+            IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_RGB24) ||
+            IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_RGB32))
+        {
+            TRACE("Video sub-type %s matches\n", debugstr_guid(&pmt->subtype));
+            return S_OK;
+        }
+    }
+    else if (IsEqualGUID(&purpose_id, &MSPID_PrimaryAudio) && IsEqualGUID(&pmt->majortype, &MEDIATYPE_Audio))
+    {
+        if (IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_PCM))
+        {
+            TRACE("Audio sub-type %s matches\n", debugstr_guid(&pmt->subtype));
+            return S_OK;
+        }
+    }
+
     return S_FALSE;
 }
 
