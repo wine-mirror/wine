@@ -186,6 +186,8 @@ static const WCHAR prop_typeW[] =
     {'T','y','p','e',0};
 static const WCHAR prop_uniqueidW[] =
     {'U','n','i','q','u','e','I','d',0};
+static const WCHAR prop_varianttypeW[] =
+    {'V','a','r','i','a','n','t','T','y','p','e',0};
 static const WCHAR prop_versionW[] =
     {'V','e','r','s','i','o','n',0};
 
@@ -277,6 +279,7 @@ static const struct column col_params[] =
     { prop_directionW,    CIM_SINT32 },
     { prop_parameterW,    CIM_STRING },
     { prop_typeW,         CIM_UINT32 },
+    { prop_varianttypeW,  CIM_UINT32 },
     { prop_defaultvalueW, CIM_UINT32 }
 };
 static const struct column col_process[] =
@@ -452,6 +455,7 @@ struct record_params
     INT32        direction;
     const WCHAR *parameter;
     UINT32       type;
+    UINT32       varianttype;
     UINT32       defaultvalue;
 };
 struct record_process
@@ -537,13 +541,13 @@ static const struct record_diskdrive data_diskdrive[] =
 };
 static const struct record_params data_params[] =
 {
-    { class_stdregprovW, method_enumkeyW, 1, param_defkeyW, CIM_UINT32, 0x80000002 },
+    { class_stdregprovW, method_enumkeyW, 1, param_defkeyW, CIM_SINT32, 0, 0x80000002 },
     { class_stdregprovW, method_enumkeyW, 1, param_subkeynameW, CIM_STRING },
-    { class_stdregprovW, method_enumkeyW, -1, param_returnvalueW, CIM_UINT32 },
+    { class_stdregprovW, method_enumkeyW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
     { class_stdregprovW, method_enumkeyW, -1, param_namesW, CIM_STRING|CIM_FLAG_ARRAY },
-    { class_stdregprovW, method_enumvaluesW, 1, param_defkeyW, CIM_UINT32, 0x80000002 },
+    { class_stdregprovW, method_enumvaluesW, 1, param_defkeyW, CIM_SINT32, 0, 0x80000002 },
     { class_stdregprovW, method_enumvaluesW, 1, param_subkeynameW, CIM_STRING },
-    { class_stdregprovW, method_enumvaluesW, -1, param_returnvalueW, CIM_UINT32 },
+    { class_stdregprovW, method_enumvaluesW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
     { class_stdregprovW, method_enumvaluesW, -1, param_namesW, CIM_STRING|CIM_FLAG_ARRAY },
     { class_stdregprovW, method_enumvaluesW, -1, param_typesW, CIM_SINT32|CIM_FLAG_ARRAY }
 };

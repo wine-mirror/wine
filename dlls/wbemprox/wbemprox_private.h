@@ -78,6 +78,7 @@ struct array
 struct field
 {
     UINT type;
+    VARTYPE vartype; /* 0 for default mapping */
     union
     {
         LONGLONG ival;
@@ -179,6 +180,7 @@ HRESULT get_propval( const struct view *, UINT, const WCHAR *, VARIANT *,
 HRESULT put_propval( const struct view *, UINT, const WCHAR *, VARIANT *, CIMTYPE ) DECLSPEC_HIDDEN;
 HRESULT to_longlong( VARIANT *, LONGLONG *, CIMTYPE * ) DECLSPEC_HIDDEN;
 SAFEARRAY *to_safearray( const struct array *, CIMTYPE ) DECLSPEC_HIDDEN;
+VARTYPE to_vartype( CIMTYPE ) DECLSPEC_HIDDEN;
 void destroy_array( struct array *, CIMTYPE ) DECLSPEC_HIDDEN;
 HRESULT get_properties( const struct view *, SAFEARRAY ** ) DECLSPEC_HIDDEN;
 HRESULT get_object( const WCHAR *, IWbemClassObject ** ) DECLSPEC_HIDDEN;
