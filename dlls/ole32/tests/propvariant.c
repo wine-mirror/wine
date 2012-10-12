@@ -463,8 +463,9 @@ static void test_varianttoproperty(void)
         0, FALSE, 0);
 
     ok(propvalue == own_propvalue, "unexpected propvalue %p\n", propvalue);
-    ok(len == 0, "unexpected length %d\n", len);
-    ok(propvalue->dwType == 0xdeadbeef, "unexpected type %d\n", propvalue->dwType);
+    ok(len == 4 || broken(len == 0) /* before Vista */, "unexpected length %d\n", len);
+    if (len) ok(!memcmp(propvalue, serialized_empty, 4), "got wrong data\n");
+    else ok(propvalue->dwType == 0xdeadbeef, "unexpected type %d\n", propvalue->dwType);
 
     propvar.vt = VT_NULL;
     len = 20;
