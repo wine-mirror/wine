@@ -212,6 +212,13 @@ static const struct message parent_expand_kb_seq[] = {
     { 0 }
 };
 
+static const struct message parent_collapse_2nd_kb_seq[] = {
+    { WM_NOTIFY, sent|id|optional, 0, 0, TVN_KEYDOWN },
+    { WM_NOTIFY, sent|id, 0, 0, TVN_ITEMEXPANDINGA },
+    { WM_CHANGEUISTATE, sent|optional },
+    { 0 }
+};
+
 static const struct message parent_expand_empty_kb_seq[] = {
     { WM_NOTIFY, sent|id|optional, 0, 0, TVN_KEYDOWN },
     { WM_CHANGEUISTATE, sent|optional },
@@ -1082,8 +1089,6 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                 ok(pTreeView->itemNew.mask ==
                    (TVIF_HANDLE | TVIF_SELECTEDIMAGE | TVIF_IMAGE | TVIF_PARAM | TVIF_STATE),
                    "got wrong mask %x\n", pTreeView->itemNew.mask);
-                ok((pTreeView->itemNew.state & TVIS_EXPANDED) == 0,
-                   "got wrong state %x\n", pTreeView->itemNew.state);
                 ok(pTreeView->itemOld.mask == 0,
                    "got wrong mask %x\n", pTreeView->itemOld.mask);
 
@@ -1472,6 +1477,42 @@ static void test_expandnotify(void)
     /* preselect root node here */
     ret = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
     expect(TRUE, ret);
+
+    g_get_from_expand = TRUE;
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessageA(hTree, WM_KEYDOWN, VK_ADD, 0);
+    expect(FALSE, ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_expand_kb_seq, "expand node", FALSE);
+    ok(g_item_expanding.state == TVIS_SELECTED, "got state on TVN_ITEMEXPANDING 0x%08x\n",
+       g_item_expanding.state);
+    ok(g_item_expanded.state == (TVIS_SELECTED|TVIS_EXPANDED), "got state on TVN_ITEMEXPANDED 0x%08x\n",
+       g_item_expanded.state);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessageA(hTree, WM_KEYDOWN, VK_ADD, 0);
+    expect(FALSE, ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_expand_kb_seq, "expand node again", FALSE);
+    ok(g_item_expanding.state == (TVIS_SELECTED|TVIS_EXPANDED|TVIS_EXPANDEDONCE), "got state on TVN_ITEMEXPANDING 0x%08x\n",
+       g_item_expanding.state);
+    ok(g_item_expanded.state == (TVIS_SELECTED|TVIS_EXPANDED|TVIS_EXPANDEDONCE), "got state on TVN_ITEMEXPANDED 0x%08x\n",
+       g_item_expanded.state);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessageA(hTree, WM_KEYDOWN, VK_SUBTRACT, 0);
+    expect(FALSE, ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_expand_kb_seq, "collapse node", FALSE);
+    ok(g_item_expanding.state == (TVIS_SELECTED|TVIS_EXPANDED|TVIS_EXPANDEDONCE), "got state on TVN_ITEMEXPANDING 0x%08x\n",
+       g_item_expanding.state);
+    ok(g_item_expanded.state == (TVIS_SELECTED|TVIS_EXPANDEDONCE), "got state on TVN_ITEMEXPANDED 0x%08x\n",
+       g_item_expanded.state);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessageA(hTree, WM_KEYDOWN, VK_SUBTRACT, 0);
+    expect(FALSE, ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_collapse_2nd_kb_seq, "collapse node again", FALSE);
+    ok(g_item_expanding.state == (TVIS_SELECTED|TVIS_EXPANDEDONCE), "got state on TVN_ITEMEXPANDING 0x%08x\n",
+       g_item_expanding.state);
+    g_get_from_expand = FALSE;
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     ret = SendMessageA(hTree, WM_KEYDOWN, VK_ADD, 0);
