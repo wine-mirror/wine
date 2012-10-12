@@ -185,7 +185,8 @@ HRESULT WINAPI DECLSPEC_HOTPATCH DirectInputCreateW(HINSTANCE hinst, DWORD dwVer
     return DirectInputCreateEx(hinst, dwVersion, &IID_IDirectInput7W, (LPVOID *)ppDI, punkOuter);
 }
 
-static const char *_dump_DIDEVTYPE_value(DWORD dwDevType) {
+static const char *_dump_DIDEVTYPE_value(DWORD dwDevType)
+{
     switch (dwDevType) {
         case 0: return "All devices";
 	case DIDEVTYPE_MOUSE: return "DIDEVTYPE_MOUSE";
@@ -196,7 +197,8 @@ static const char *_dump_DIDEVTYPE_value(DWORD dwDevType) {
     }
 }
 
-static void _dump_EnumDevices_dwFlags(DWORD dwFlags) {
+static void _dump_EnumDevices_dwFlags(DWORD dwFlags)
+{
     if (TRACE_ON(dinput)) {
 	unsigned int   i;
 	static const struct {
@@ -224,33 +226,34 @@ static void _dump_EnumDevices_dwFlags(DWORD dwFlags) {
     TRACE("\n");
 }
 
-static void _dump_diactionformatA(LPDIACTIONFORMATA lpdiActionFormat) {
+static void _dump_diactionformatA(LPDIACTIONFORMATA lpdiActionFormat)
+{
     unsigned int i;
 
-    FIXME("diaf.dwSize = %d\n", lpdiActionFormat->dwSize);
-    FIXME("diaf.dwActionSize = %d\n", lpdiActionFormat->dwActionSize);
-    FIXME("diaf.dwDataSize = %d\n", lpdiActionFormat->dwDataSize);
-    FIXME("diaf.dwNumActions = %d\n", lpdiActionFormat->dwNumActions);
-    FIXME("diaf.rgoAction = %p\n", lpdiActionFormat->rgoAction);
-    FIXME("diaf.guidActionMap = %s\n", debugstr_guid(&lpdiActionFormat->guidActionMap));
-    FIXME("diaf.dwGenre = 0x%08x\n", lpdiActionFormat->dwGenre);
-    FIXME("diaf.dwBufferSize = %d\n", lpdiActionFormat->dwBufferSize);
-    FIXME("diaf.lAxisMin = %d\n", lpdiActionFormat->lAxisMin);
-    FIXME("diaf.lAxisMax = %d\n", lpdiActionFormat->lAxisMax);
-    FIXME("diaf.hInstString = %p\n", lpdiActionFormat->hInstString);
-    FIXME("diaf.ftTimeStamp ...\n");
-    FIXME("diaf.dwCRC = 0x%x\n", lpdiActionFormat->dwCRC);
-    FIXME("diaf.tszActionMap = %s\n", debugstr_a(lpdiActionFormat->tszActionMap));
+    TRACE("diaf.dwSize = %d\n", lpdiActionFormat->dwSize);
+    TRACE("diaf.dwActionSize = %d\n", lpdiActionFormat->dwActionSize);
+    TRACE("diaf.dwDataSize = %d\n", lpdiActionFormat->dwDataSize);
+    TRACE("diaf.dwNumActions = %d\n", lpdiActionFormat->dwNumActions);
+    TRACE("diaf.rgoAction = %p\n", lpdiActionFormat->rgoAction);
+    TRACE("diaf.guidActionMap = %s\n", debugstr_guid(&lpdiActionFormat->guidActionMap));
+    TRACE("diaf.dwGenre = 0x%08x\n", lpdiActionFormat->dwGenre);
+    TRACE("diaf.dwBufferSize = %d\n", lpdiActionFormat->dwBufferSize);
+    TRACE("diaf.lAxisMin = %d\n", lpdiActionFormat->lAxisMin);
+    TRACE("diaf.lAxisMax = %d\n", lpdiActionFormat->lAxisMax);
+    TRACE("diaf.hInstString = %p\n", lpdiActionFormat->hInstString);
+    TRACE("diaf.ftTimeStamp ...\n");
+    TRACE("diaf.dwCRC = 0x%x\n", lpdiActionFormat->dwCRC);
+    TRACE("diaf.tszActionMap = %s\n", debugstr_a(lpdiActionFormat->tszActionMap));
     for (i = 0; i < lpdiActionFormat->dwNumActions; i++)
     {
-        FIXME("diaf.rgoAction[%u]:\n", i);
-        FIXME("\tuAppData=0x%lx\n", lpdiActionFormat->rgoAction[i].uAppData);
-        FIXME("\tdwSemantic=0x%08x\n", lpdiActionFormat->rgoAction[i].dwSemantic);
-        FIXME("\tdwFlags=0x%x\n", lpdiActionFormat->rgoAction[i].dwFlags);
-        FIXME("\tszActionName=%s\n", debugstr_a(lpdiActionFormat->rgoAction[i].u.lptszActionName));
-        FIXME("\tguidInstance=%s\n", debugstr_guid(&lpdiActionFormat->rgoAction[i].guidInstance));
-        FIXME("\tdwObjID=0x%x\n", lpdiActionFormat->rgoAction[i].dwObjID);
-        FIXME("\tdwHow=0x%x\n", lpdiActionFormat->rgoAction[i].dwHow);
+        TRACE("diaf.rgoAction[%u]:\n", i);
+        TRACE("\tuAppData=0x%lx\n", lpdiActionFormat->rgoAction[i].uAppData);
+        TRACE("\tdwSemantic=0x%08x\n", lpdiActionFormat->rgoAction[i].dwSemantic);
+        TRACE("\tdwFlags=0x%x\n", lpdiActionFormat->rgoAction[i].dwFlags);
+        TRACE("\tszActionName=%s\n", debugstr_a(lpdiActionFormat->rgoAction[i].u.lptszActionName));
+        TRACE("\tguidInstance=%s\n", debugstr_guid(&lpdiActionFormat->rgoAction[i].guidInstance));
+        TRACE("\tdwObjID=0x%x\n", lpdiActionFormat->rgoAction[i].dwObjID);
+        TRACE("\tdwHow=0x%x\n", lpdiActionFormat->rgoAction[i].dwHow);
     }
 }
 
