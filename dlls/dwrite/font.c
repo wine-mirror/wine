@@ -610,8 +610,8 @@ static DWRITE_FONT_STRETCH get_font_stretch(HDC hdc)
     if (GetFontData(hdc, MS_OS2_TAG, 0, &tt_os2, size) != size) return stretch;
 
     /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
-    if (GET_BE_WORD(tt_os2.usWeightClass) <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
-        stretch = GET_BE_WORD(tt_os2.usWeightClass);
+    if (GET_BE_WORD(tt_os2.usWidthClass) <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
+        stretch = GET_BE_WORD(tt_os2.usWidthClass);
 
     return stretch;
 }
