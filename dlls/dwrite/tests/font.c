@@ -91,7 +91,6 @@ if (0)
 
     /* now check properties */
     weight = IDWriteFont_GetWeight(font);
-todo_wine
     ok(weight == DWRITE_FONT_WEIGHT_NORMAL, "got %d\n", weight);
 
     style = IDWriteFont_GetStyle(font);
@@ -115,7 +114,6 @@ todo_wine
         EXPECT_HR(hr, S_OK);
 
         weight = IDWriteFont_GetWeight(font);
-    todo_wine
         ok(weight == weights[i][1],
             "%d: got %d, expected %d\n", i, weight, weights[i][1]);
         IDWriteFont_Release(font);
@@ -132,7 +130,6 @@ todo_wine
     EXPECT_HR(hr, S_OK);
 
     weight = IDWriteFont_GetWeight(font);
-todo_wine
     ok(weight == DWRITE_FONT_WEIGHT_NORMAL || broken(weight == DWRITE_FONT_WEIGHT_BOLD) /* win7 w/o SP */,
         "got %d\n", weight);
     IDWriteFont_Release(font);

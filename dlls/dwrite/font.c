@@ -105,6 +105,7 @@ struct dwrite_font {
     IDWriteFontFace *face;
     DWRITE_FONT_STYLE style;
     DWRITE_FONT_STRETCH stretch;
+    DWRITE_FONT_WEIGHT weight;
 };
 
 struct dwrite_fontface {
@@ -371,8 +372,8 @@ static HRESULT WINAPI dwritefont_GetFontFamily(IDWriteFont *iface, IDWriteFontFa
 static DWRITE_FONT_WEIGHT WINAPI dwritefont_GetWeight(IDWriteFont *iface)
 {
     struct dwrite_font *This = impl_from_IDWriteFont(iface);
-    FIXME("(%p): stub\n", This);
-    return 0;
+    TRACE("(%p)\n", This);
+    return This->weight;
 }
 
 static DWRITE_FONT_STRETCH WINAPI dwritefont_GetStretch(IDWriteFont *iface)
@@ -592,28 +593,30 @@ static HRESULT create_fontfamily(const WCHAR *familyname, IDWriteFontFamily **fa
     return S_OK;
 }
 
-static DWRITE_FONT_STRETCH get_font_stretch(HDC hdc)
+static void get_font_properties(struct dwrite_font *font, HDC hdc)
 {
-    DWRITE_FONT_STRETCH stretch;
     TT_OS2_V2 tt_os2;
     LONG size;
 
-    /* default stretch to normal */
-    stretch = DWRITE_FONT_STRETCH_NORMAL;
+    /* default stretch and weight to normal */
+    font->stretch = DWRITE_FONT_STRETCH_NORMAL;
+    font->weight = DWRITE_FONT_WEIGHT_NORMAL;
 
     size = GetFontData(hdc, MS_OS2_TAG, 0, NULL, 0);
-    if (size == GDI_ERROR) return stretch;
+    if (size != GDI_ERROR)
+    {
+        if (size > sizeof(tt_os2)) size = sizeof(tt_os2);
 
-    if (size > sizeof(tt_os2)) size = sizeof(tt_os2);
+        memset(&tt_os2, 0, sizeof(tt_os2));
+        if (GetFontData(hdc, MS_OS2_TAG, 0, &tt_os2, size) != size) return;
 
-    memset(&tt_os2, 0, sizeof(tt_os2));
-    if (GetFontData(hdc, MS_OS2_TAG, 0, &tt_os2, size) != size) return stretch;
+        /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
+        if (GET_BE_WORD(tt_os2.usWidthClass) <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
+            font->stretch = GET_BE_WORD(tt_os2.usWidthClass);
 
-    /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
-    if (GET_BE_WORD(tt_os2.usWidthClass) <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
-        stretch = GET_BE_WORD(tt_os2.usWidthClass);
-
-    return stretch;
+        font->weight = GET_BE_WORD(tt_os2.usWeightClass);
+        TRACE("stretch=%d, weight=%d\n", font->stretch, font->weight);
+    }
 }
 
 HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
@@ -622,7 +625,6 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     struct dwrite_font *This;
     IDWriteFontFamily *family;
     OUTLINETEXTMETRICW *otm;
-    DWRITE_FONT_STRETCH stretch;
     HRESULT hr;
     HFONT hfont;
     HDC hdc;
@@ -630,8 +632,15 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
 
     *font = NULL;
 
+    This = heap_alloc(sizeof(struct dwrite_font));
+    if (!This) return E_OUTOFMEMORY;
+
     hfont = CreateFontIndirectW(logfont);
-    if (!hfont) return DWRITE_E_NOFONT;
+    if (!hfont)
+    {
+        heap_free(This);
+        return DWRITE_E_NOFONT;
+    }
 
     hdc = CreateCompatibleDC(0);
     SelectObject(hdc, hfont);
@@ -641,7 +650,7 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     otm->otmSize = ret;
     ret = GetOutlineTextMetricsW(hdc, otm->otmSize, otm);
 
-    stretch = get_font_stretch(hdc);
+    get_font_properties(This, hdc);
 
     DeleteDC(hdc);
     DeleteObject(hfont);
@@ -652,13 +661,10 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
 
     hr = create_fontfamily(familyname, &family);
     heap_free(otm);
-    if (hr != S_OK) return hr;
-
-    This = heap_alloc(sizeof(struct dwrite_font));
-    if (!This)
+    if (hr != S_OK)
     {
-        IDWriteFontFamily_Release(family);
-        return E_OUTOFMEMORY;
+        heap_free(This);
+        return hr;
     }
 
     This->IDWriteFont_iface.lpVtbl = &dwritefontvtbl;
@@ -666,7 +672,6 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     This->face = NULL;
     This->family = family;
     This->style = logfont->lfItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
-    This->stretch = stretch;
 
     *font = &This->IDWriteFont_iface;
 
