@@ -251,6 +251,16 @@ call tell;1;;2
 if errorlevel 2 echo error %ErrorLevel%
 call tell "p "1 p" "2
 call tell p"1 p";2
+
+echo --------- Testing delimiters and parameter passing  --------------
+echo @echo 0:%%0,1:%%1,2:%%2,All:'%%*'> tell.bat
+call;tell 1 2
+call   tell 1 2
+==call==tell==1==2
+call tell(1234)
+call tell(12(34)
+call tell(12;34)
+echo --------- Finished  --------------
 del tell.bat say*.*
 exit
 :setError

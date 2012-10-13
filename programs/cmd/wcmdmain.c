@@ -843,10 +843,12 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors,
     /* Replace use of %* if in batch program*/
     } else if (!justFors && context && *(p+1)=='*') {
       WCHAR *startOfParms = NULL;
-      WCMD_parameter(context -> command, 1, &startOfParms, NULL, TRUE);
-      if (startOfParms != NULL)
+      WCMD_parameter(context -> command, 0, NULL, &startOfParms, TRUE);
+      if (startOfParms != NULL) {
+        startOfParms++; /* Skip to first delimiter then skip whitespace */
+        while (*startOfParms==' ' || *startOfParms == '\t') startOfParms++;
         WCMD_strsubstW(p, p+2, startOfParms, -1);
-      else
+      } else
         WCMD_strsubstW(p, p+2, NULL, 0);
 
     } else if (forVariable &&
