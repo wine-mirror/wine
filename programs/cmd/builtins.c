@@ -1439,7 +1439,7 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
   /* Process the first command, if there is one */
   if (executecmds && firstcmd && *firstcmd) {
     WCHAR *command = WCMD_strdupW(firstcmd);
-    WCMD_execute (firstcmd, (*cmdList)->redirects, variable, value, cmdList);
+    WCMD_execute (firstcmd, (*cmdList)->redirects, variable, value, cmdList, FALSE);
     HeapFree(GetProcessHeap(), 0, command);
   }
 
@@ -1468,14 +1468,14 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
           (*cmdList)->prevDelim == CMD_ONSUCCESS) {
         if (processThese && (*cmdList)->command) {
           WCMD_execute ((*cmdList)->command, (*cmdList)->redirects, variable,
-                        value, cmdList);
+                        value, cmdList, FALSE);
         }
         if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
 
       /* Execute any appended to the statement with (...) */
       } else if ((*cmdList)->bracketDepth > myDepth) {
         if (processThese) {
-          *cmdList = WCMD_process_commands(*cmdList, TRUE, variable, value);
+          *cmdList = WCMD_process_commands(*cmdList, TRUE, variable, value, FALSE);
           WINE_TRACE("Back from processing commands, (next = %p)\n", *cmdList);
         }
         if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
@@ -1497,7 +1497,7 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
             /* Skip leading whitespace between condition and the command */
             while (*cmd && (*cmd==' ' || *cmd=='\t')) cmd++;
             if (*cmd) {
-              WCMD_execute (cmd, (*cmdList)->redirects, variable, value, cmdList);
+              WCMD_execute (cmd, (*cmdList)->redirects, variable, value, cmdList, FALSE);
             }
           }
           if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
@@ -1809,7 +1809,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
                 /* Execute program and redirect output */
                 wsprintfW(temp_cmd, redirOut, (itemStart+1), temp_file);
-                WCMD_execute (itemStart, temp_cmd, NULL, NULL, NULL);
+                WCMD_execute (itemStart, temp_cmd, NULL, NULL, NULL, FALSE);
 
                 /* Open the file, read line by line and process */
                 input = CreateFileW(temp_file, GENERIC_READ, FILE_SHARE_READ,

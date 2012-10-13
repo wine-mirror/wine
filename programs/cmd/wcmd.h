@@ -121,11 +121,11 @@ BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWO
 
 WCHAR    *WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_LIST **output, HANDLE readFrom);
 CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket,
-                                const WCHAR *var, const WCHAR *val);
+                                const WCHAR *var, const WCHAR *val, BOOL retrycall);
 void      WCMD_free_commands(CMD_LIST *cmds);
 void      WCMD_execute (const WCHAR *orig_command, const WCHAR *redirects,
                         const WCHAR *parameter, const WCHAR *substitution,
-                        CMD_LIST **cmdList);
+                        CMD_LIST **cmdList, BOOL retrycall);
 
 /* Data structure to hold context when executing batch files */
 

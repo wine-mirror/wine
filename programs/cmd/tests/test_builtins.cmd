@@ -1599,6 +1599,22 @@ echo %ErrorLevel%
 rem First look for programs in the path before trying a builtin
 echo echo non-builtin dir> dir.cmd
 call dir /b
+del dir.cmd
+rem The below line equates to call (, which does nothing, then the
+rem subsequent lines are executed.
+call (
+  echo Line one
+  echo Line two
+)
+rem The below line equates to call if, which always fails, then the
+rem subsequent lines are executed. Note cmd.exe swallows all lines
+rem starting with )
+call if 1==1 (
+  echo Get if
+) else (
+  echo ... and else!
+)
+call call call echo passed
 cd .. & rd /s/q foobar
 
 echo ------------ Testing SHIFT ------------

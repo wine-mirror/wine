@@ -89,7 +89,10 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
       CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
       if (!WCMD_ReadAndParseLine(NULL, &toExecute, h))
         break;
-      WCMD_process_commands(toExecute, FALSE, NULL, NULL);
+      /* Note: although this batch program itself may be called, we are not retrying
+         the command as a result of a call failing to find a program, hence the
+         retryCall parameter below is FALSE                                           */
+      WCMD_process_commands(toExecute, FALSE, NULL, NULL, FALSE);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
   }
@@ -649,6 +652,8 @@ void WCMD_call (WCHAR *command) {
   /* Run other program if no leading ':' */
   if (*command != ':') {
     WCMD_run_program(command, TRUE);
+    /* If the thing we try to run does not exist, call returns 1 */
+    if (errorlevel) errorlevel=1;
   } else {
 
     WCHAR gotoLabel[MAX_PATH];

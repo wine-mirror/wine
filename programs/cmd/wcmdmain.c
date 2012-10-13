@@ -1000,6 +1000,9 @@ static void init_msvcrt_io_block(STARTUPINFOW* st)
  *      Launching
  *        Once a match has been found, it is launched - Code currently uses
  *          findexecutable to achieve this which is left untouched.
+ *        If an executable has not been found, and we were launched through
+ *          a call, we need to check if the command is an internal command,
+ *          so go back through wcmd_execute.
  */
 
 void WCMD_run_program (WCHAR *command, BOOL called)
@@ -1197,6 +1200,8 @@ void WCMD_run_program (WCHAR *command, BOOL called)
         if (!status)
           break;
 
+        called = FALSE; /* No need to retry as we launched something */
+
         if (!assumeInternal && !console) errorlevel = 0;
         else
         {
@@ -1210,6 +1215,18 @@ void WCMD_run_program (WCHAR *command, BOOL called)
         return;
       }
     }
+  }
+
+  /* Not found anywhere - were we called? */
+  if (called) {
+    CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
+
+    /* Parse the command string, without reading any more input */
+    WCMD_ReadAndParseLine(command, &toExecute, INVALID_HANDLE_VALUE);
+    WCMD_process_commands(toExecute, FALSE, NULL, NULL, called);
+    WCMD_free_commands(toExecute);
+    toExecute = NULL;
+    return;
   }
 
   /* Not found anywhere - give up */
@@ -1226,10 +1243,13 @@ void WCMD_run_program (WCHAR *command, BOOL called)
 /*****************************************************************************
  * Process one command. If the command is EXIT this routine does not return.
  * We will recurse through here executing batch files.
+ * Note: If call is used to a non-existing program, we reparse the line and
+ *       try to run it as an internal command. 'retrycall' represents whether
+ *       we are attempting this retry.
  */
 void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
                    const WCHAR *forVariable, const WCHAR *forValue,
-                   CMD_LIST **cmdList)
+                   CMD_LIST **cmdList, BOOL retrycall)
 {
     WCHAR *cmd, *p, *redir;
     int status, i;
@@ -1487,18 +1507,12 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
       case WCMD_ECHO:
         WCMD_echo(&whichcmd[count]);
         break;
-      case WCMD_FOR:
-        WCMD_for (p, cmdList);
-        break;
       case WCMD_GOTO:
         WCMD_goto (cmdList);
         break;
       case WCMD_HELP:
         WCMD_give_help (p);
 	break;
-      case WCMD_IF:
-	WCMD_if (p, cmdList);
-        break;
       case WCMD_LABEL:
         WCMD_volume (TRUE, p);
         break;
@@ -1587,6 +1601,17 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
       case WCMD_EXIT:
         WCMD_exit (cmdList);
         break;
+      case WCMD_FOR:
+      case WCMD_IF:
+        /* Very oddly, probably because of all the special parsing required for
+           these two commands, neither for nor if are supported when called,
+           ie call if 1==1... will fail.                                        */
+        if (!retrycall) {
+          if (i==WCMD_FOR) WCMD_for (p, cmdList);
+          else if (i==WCMD_IF) WCMD_if (p, cmdList);
+          break;
+        }
+        /* else: drop through */
       default:
         prev_echo_mode = echo_mode;
         WCMD_run_program (whichcmd, FALSE);
@@ -2240,7 +2265,8 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
  * Process all the commands read in so far
  */
 CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket,
-                                const WCHAR *var, const WCHAR *val) {
+                                const WCHAR *var, const WCHAR *val,
+                                BOOL retrycall) {
 
     int bdepth = -1;
 
@@ -2265,7 +2291,7 @@ CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket,
          Also, skip over any batch labels (eg. :fred)          */
       if (thisCmd->command && thisCmd->command[0] != ':') {
         WINE_TRACE("Executing command: '%s'\n", wine_dbgstr_w(thisCmd->command));
-        WCMD_execute (thisCmd->command, thisCmd->redirects, var, val, &thisCmd);
+        WCMD_execute (thisCmd->command, thisCmd->redirects, var, val, &thisCmd, retrycall);
       }
 
       /* Step on unless the command itself already stepped on */
@@ -2555,7 +2581,7 @@ int wmain (int argc, WCHAR *argvW[])
 
       /* Parse the command string, without reading any more input */
       WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
-      WCMD_process_commands(toExecute, FALSE, NULL, NULL);
+      WCMD_process_commands(toExecute, FALSE, NULL, NULL, FALSE);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
 
@@ -2642,7 +2668,7 @@ int wmain (int argc, WCHAR *argvW[])
   if (opt_k) {
       /* Parse the command string, without reading any more input */
       WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
-      WCMD_process_commands(toExecute, FALSE, NULL, NULL);
+      WCMD_process_commands(toExecute, FALSE, NULL, NULL, FALSE);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
       HeapFree(GetProcessHeap(), 0, cmd);
@@ -2662,7 +2688,7 @@ int wmain (int argc, WCHAR *argvW[])
     if (echo_mode) WCMD_show_prompt();
     if (!WCMD_ReadAndParseLine(NULL, &toExecute, GetStdHandle(STD_INPUT_HANDLE)))
       break;
-    WCMD_process_commands(toExecute, FALSE, NULL, NULL);
+    WCMD_process_commands(toExecute, FALSE, NULL, NULL, FALSE);
     WCMD_free_commands(toExecute);
     toExecute = NULL;
   }
