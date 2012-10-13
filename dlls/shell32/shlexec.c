@@ -1724,8 +1724,10 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 
         size = MAX_PATH;
         buf = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-        if (FAILED(PathCreateFromUrlW(sei_tmp.lpFile, buf, &size, 0)))
+        if (!buf || FAILED(PathCreateFromUrlW(sei_tmp.lpFile, buf, &size, 0))) {
+            HeapFree(GetProcessHeap(), 0, buf);
             return SE_ERR_OOM;
+        }
 
         HeapFree(GetProcessHeap(), 0, wszApplicationName);
         dwApplicationNameLen = lstrlenW(buf) + 1;
