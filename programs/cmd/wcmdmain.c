@@ -47,6 +47,11 @@ BOOL echo_mode = TRUE;
 WCHAR anykey[100], version_string[100];
 const WCHAR newlineW[] = {'\r','\n','\0'};
 const WCHAR spaceW[]   = {' ','\0'};
+static const WCHAR envPathExt[] = {'P','A','T','H','E','X','T','\0'};
+static const WCHAR dfltPathExt[] = {'.','b','a','t',';',
+                                    '.','c','o','m',';',
+                                    '.','c','m','d',';',
+                                    '.','e','x','e','\0'};
 
 static BOOL opt_c, opt_k, opt_s, unicodeOutput = FALSE;
 
@@ -1009,7 +1014,6 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   BOOL  assumeInternal = FALSE;
   DWORD len;
   static const WCHAR envPath[] = {'P','A','T','H','\0'};
-  static const WCHAR envPathExt[] = {'P','A','T','H','E','X','T','\0'};
   static const WCHAR delims[] = {'/','\\',':','\0'};
 
   /* Quick way to get the filename
@@ -1055,10 +1059,6 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   /* Now extract PATHEXT */
   len = GetEnvironmentVariableW(envPathExt, pathext, sizeof(pathext)/sizeof(WCHAR));
   if ((len == 0) || (len >= (sizeof(pathext)/sizeof(WCHAR)))) {
-    static const WCHAR dfltPathExt[] = {'.','b','a','t',';',
-                                        '.','c','o','m',';',
-                                        '.','c','m','d',';',
-                                        '.','e','x','e','\0'};
     strcpyW (pathext, dfltPathExt);
   }
 
@@ -2445,9 +2445,14 @@ int wmain (int argc, WCHAR *argvW[])
          is a valid executable, ie must exist, otherwise drop back to old mode  */
       if (!opt_s) {
         WCHAR *thisArg = WCMD_parameter(cmd, 0, NULL, NULL, FALSE);
-        static const WCHAR extEXEW[]    = {'.','e','x','e','\0'};
-        static const WCHAR extCOMW[]    = {'.','c','o','m','\0'};
+        WCHAR  pathext[MAXSTRING];
         BOOL found = FALSE;
+
+        /* Now extract PATHEXT */
+        len = GetEnvironmentVariableW(envPathExt, pathext, sizeof(pathext)/sizeof(WCHAR));
+        if ((len == 0) || (len >= (sizeof(pathext)/sizeof(WCHAR)))) {
+          strcpyW (pathext, dfltPathExt);
+        }
 
         /* If the supplied parameter has any directory information, look there */
         WINE_TRACE("First parameter is '%s'\n", wine_dbgstr_w(thisArg));
@@ -2461,18 +2466,28 @@ int wmain (int argc, WCHAR *argvW[])
           if (GetFileAttributesW(string) != INVALID_FILE_ATTRIBUTES) {
             WINE_TRACE("Found file as '%s'\n", wine_dbgstr_w(string));
             found = TRUE;
-          } else strcpyW(p, extEXEW);
+          } else {
+            WCHAR *thisExt = pathext;
 
-          /* Does file exist with .exe appended */
-          if (!found && GetFileAttributesW(string) != INVALID_FILE_ATTRIBUTES) {
-            WINE_TRACE("Found file as '%s'\n", wine_dbgstr_w(string));
-            found = TRUE;
-          } else strcpyW(p, extCOMW);
+            /* No - try with each of the PATHEXT extensions */
+            while (!found && thisExt) {
+              WCHAR *nextExt = strchrW(thisExt, ';');
 
-          /* Does file exist with .com appended */
-          if (!found && GetFileAttributesW(string) != INVALID_FILE_ATTRIBUTES) {
-            WINE_TRACE("Found file as '%s'\n", wine_dbgstr_w(string));
-            found = TRUE;
+              if (nextExt) {
+                memcpy(p, thisExt, (nextExt-thisExt) * sizeof(WCHAR));
+                p[(nextExt-thisExt)] = 0x00;
+                thisExt = nextExt+1;
+              } else {
+                strcpyW(p, thisExt);
+                thisExt = NULL;
+              }
+
+              /* Does file exist with this extension appended? */
+              if (GetFileAttributesW(string) != INVALID_FILE_ATTRIBUTES) {
+                WINE_TRACE("Found file as '%s'\n", wine_dbgstr_w(string));
+                found = TRUE;
+              }
+            }
           }
 
         /* Otherwise we now need to look in the path to see if we can find it */
@@ -2483,18 +2498,28 @@ int wmain (int argc, WCHAR *argvW[])
           if (SearchPathW(NULL, thisArg, NULL, sizeof(string)/sizeof(WCHAR), string, NULL) != 0)  {
             WINE_TRACE("Found on path as '%s'\n", wine_dbgstr_w(string));
             found = TRUE;
-          }
+          } else {
+            WCHAR *thisExt = pathext;
 
-          /* Does file exist plus an extension of .exe? */
-          if (SearchPathW(NULL, thisArg, extEXEW, sizeof(string)/sizeof(WCHAR), string, NULL) != 0)  {
-            WINE_TRACE("Found on path as '%s'\n", wine_dbgstr_w(string));
-            found = TRUE;
-          }
+            /* No - try with each of the PATHEXT extensions */
+            while (!found && thisExt) {
+              WCHAR *nextExt = strchrW(thisExt, ';');
 
-          /* Does file exist plus an extension of .com? */
-          if (SearchPathW(NULL, thisArg, extCOMW, sizeof(string)/sizeof(WCHAR), string, NULL) != 0)  {
-            WINE_TRACE("Found on path as '%s'\n", wine_dbgstr_w(string));
-            found = TRUE;
+              if (nextExt) {
+                *nextExt = 0;
+                nextExt = nextExt+1;
+              } else {
+                nextExt = NULL;
+              }
+
+              /* Does file exist with this extension? */
+              if (SearchPathW(NULL, thisArg, thisExt, sizeof(string)/sizeof(WCHAR), string, NULL) != 0)  {
+                WINE_TRACE("Found on path as '%s' with extension '%s'\n", wine_dbgstr_w(string),
+                           wine_dbgstr_w(thisExt));
+                found = TRUE;
+              }
+              thisExt = nextExt;
+            }
           }
         }
 
