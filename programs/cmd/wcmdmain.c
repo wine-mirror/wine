@@ -1008,6 +1008,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
                                        MAX_PATH, including null character */
   WCHAR *lastSlash;
   WCHAR  pathext[MAXSTRING];
+  WCHAR *firstParam;
   BOOL  extensionsupplied = FALSE;
   BOOL  launched = FALSE;
   BOOL  status;
@@ -1016,17 +1017,13 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   static const WCHAR envPath[] = {'P','A','T','H','\0'};
   static const WCHAR delims[] = {'/','\\',':','\0'};
 
-  /* Quick way to get the filename
-   * (but handle leading / as part of program name, not qualifier)
-   */
-  for (len = 0; command[len] == '/'; len++) param1[len] = '/';
-  WCMD_parse (command + len, quals, param1 + len, param2);
-
-  if (!(*param1) && !(*param2))
-    return;
+  /* Quick way to get the filename is to extract the first argument. */
+  WINE_TRACE("Running '%s' (%d)\n", wine_dbgstr_w(command), called);
+  firstParam = WCMD_parameter(command, 0, NULL, NULL, FALSE);
+  if (!firstParam) return;
 
   /* Calculate the search path and stem to search for */
-  if (strpbrkW (param1, delims) == NULL) {  /* No explicit path given, search path */
+  if (strpbrkW (firstParam, delims) == NULL) {  /* No explicit path given, search path */
     static const WCHAR curDir[] = {'.',';','\0'};
     strcpyW(pathtosearch, curDir);
     len = GetEnvironmentVariableW(envPath, &pathtosearch[2], (sizeof(pathtosearch)/sizeof(WCHAR))-2);
@@ -1034,19 +1031,19 @@ void WCMD_run_program (WCHAR *command, BOOL called)
       static const WCHAR curDir[] = {'.','\0'};
       strcpyW (pathtosearch, curDir);
     }
-    if (strchrW(param1, '.') != NULL) extensionsupplied = TRUE;
-    if (strlenW(param1) >= MAX_PATH)
+    if (strchrW(firstParam, '.') != NULL) extensionsupplied = TRUE;
+    if (strlenW(firstParam) >= MAX_PATH)
     {
         WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_LINETOOLONG));
         return;
     }
 
-    strcpyW(stemofsearch, param1);
+    strcpyW(stemofsearch, firstParam);
 
   } else {
 
     /* Convert eg. ..\fred to include a directory by removing file part */
-    GetFullPathNameW(param1, sizeof(pathtosearch)/sizeof(WCHAR), pathtosearch, NULL);
+    GetFullPathNameW(firstParam, sizeof(pathtosearch)/sizeof(WCHAR), pathtosearch, NULL);
     lastSlash = strrchrW(pathtosearch, '\\');
     if (lastSlash && strchrW(lastSlash, '.') != NULL) extensionsupplied = TRUE;
     strcpyW(stemofsearch, lastSlash+1);
