@@ -757,7 +757,6 @@ static void CRYPT_CacheURL(LPCWSTR pszURL, const CRYPT_BLOB_ARRAY *pObject,
             if (CompareFileTime(&info->ExpireTime, &ft) < 0)
             {
                 DeleteUrlCacheEntryW(pszURL);
-                CryptMemFree(info);
             }
             else
             {
@@ -767,6 +766,7 @@ static void CRYPT_CacheURL(LPCWSTR pszURL, const CRYPT_BLOB_ARRAY *pObject,
                 return;
             }
         }
+        CryptMemFree(info);
     }
 
     if (!CreateUrlCacheEntryW(pszURL, pObject->rgBlob[0].cbData, NULL, cacheFileName, 0))
