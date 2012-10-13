@@ -432,6 +432,7 @@ static void repaint_tray_icon( struct tray_icon *icon )
 
     UpdateLayeredWindow( icon->window, 0, NULL, NULL, hdc, NULL, 0, &blend, ULW_ALPHA );
 done:
+    HeapFree (GetProcessHeap(), 0, info);
     if (hdc) DeleteDC( hdc );
     if (dib) DeleteObject( dib );
 }
