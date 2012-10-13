@@ -1787,7 +1787,7 @@ POWER_STATE WINAPI PoSetPowerState(PDEVICE_OBJECT DeviceObject, POWER_STATE_TYPE
  */
 NTSTATUS WINAPI IoWMIRegistrationControl(PDEVICE_OBJECT DeviceObject, ULONG Action)
 {
-    FIXME("(%p %u ) stub\n", DeviceObject, Action);
+    FIXME("(%p %u) stub\n", DeviceObject, Action);
     return STATUS_SUCCESS;
 }
 
@@ -1824,10 +1824,24 @@ BOOLEAN WINAPI IoSetThreadHardErrorMode(BOOLEAN EnableHardErrors)
  *           IoInitializeRemoveLockEx  (NTOSKRNL.EXE.@)
  */
 VOID WINAPI IoInitializeRemoveLockEx(PIO_REMOVE_LOCK lock, ULONG tag,
-		                             ULONG maxmin, ULONG high, ULONG size)
+                                     ULONG maxmin, ULONG high, ULONG size)
 {
     FIXME("(%p %u %u %u %u) stub\n", lock, tag, maxmin, high, size);
 }
+
+
+/*****************************************************
+ *           IoAcquireRemoveLockEx  (NTOSKRNL.EXE.@)
+ */
+
+NTSTATUS WINAPI IoAcquireRemoveLockEx(PIO_REMOVE_LOCK lock, PVOID tag,
+                                      LPCSTR file, ULONG line, ULONG lock_size)
+{
+    FIXME("(%p, %p, %s, %u, %u): stub\n", lock, tag, debugstr_a(file), line, lock_size);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 
 /*****************************************************
  *           DllMain

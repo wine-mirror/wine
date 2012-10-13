@@ -304,7 +304,7 @@
 @ stub InbvSolidColorFill
 @ stub InitSafeBootMode
 @ stdcall IoAcquireCancelSpinLock(ptr)
-@ stub IoAcquireRemoveLockEx
+@ stdcall IoAcquireRemoveLockEx(ptr ptr ptr long long)
 @ stub IoAcquireVpbSpinLock
 @ stub IoAdapterObjectType
 @ stub IoAllocateAdapterChannel
