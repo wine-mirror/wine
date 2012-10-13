@@ -352,6 +352,7 @@ static ULONG WINAPI dwritefont_Release(IDWriteFont *iface)
 
     if (!ref)
     {
+        if (This->face) IDWriteFontFace_Release(This->face);
         IDWriteFontFamily_Release(This->family);
         heap_free(This);
     }
@@ -442,8 +443,6 @@ static HRESULT WINAPI dwritefont_CreateFontFace(IDWriteFont *iface, IDWriteFontF
     {
         HRESULT hr = create_fontface(&This->face);
         if (FAILED(hr)) return hr;
-        *face = This->face;
-        return hr;
     }
 
     *face = This->face;
