@@ -3163,7 +3163,7 @@ static void set_header(Pane* pane)
 	item.mask = HDI_WIDTH;
 	item.cxy = 0;
 
-	for(; x+pane->widths[i]<scroll_pos && i<COLUMNS; i++) {
+	for(; (i < COLUMNS) && (x+pane->widths[i] < scroll_pos); i++) {
 		x += pane->widths[i];
 		SendMessageW(pane->hwndHeader, HDM_SETITEMW, i, (LPARAM)&item);
 	}
@@ -3173,7 +3173,7 @@ static void set_header(Pane* pane)
 		item.cxy = x - scroll_pos;
 		SendMessageW(pane->hwndHeader, HDM_SETITEMW, i++, (LPARAM)&item);
 
-		for(; i<COLUMNS; i++) {
+		for(; i < COLUMNS; i++) {
 			item.cxy = pane->widths[i];
 			x += pane->widths[i];
 			SendMessageW(pane->hwndHeader, HDM_SETITEMW, i, (LPARAM)&item);
