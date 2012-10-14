@@ -625,14 +625,17 @@ struct wined3d_shader_context
     void *backend_data;
 };
 
+struct wined3d_shader_register_index
+{
+    const struct wined3d_shader_src_param *rel_addr;
+    unsigned int offset;
+};
+
 struct wined3d_shader_register
 {
     enum wined3d_shader_register_type type;
     enum wined3d_data_type data_type;
-    UINT idx;
-    UINT array_idx;
-    const struct wined3d_shader_src_param *rel_addr;
-    const struct wined3d_shader_src_param *array_rel_addr;
+    struct wined3d_shader_register_index idx[2];
     enum wined3d_immconst_type immconst_type;
     DWORD immconst_data[4];
 };
@@ -2667,7 +2670,8 @@ static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
     {
         case WINED3DSPR_RASTOUT:
             /* oFog & oPts */
-            if (reg->idx) return TRUE;
+            if (reg->idx[0].offset)
+                return TRUE;
             /* oPos */
             return FALSE;
 
@@ -2678,7 +2682,7 @@ static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
             return TRUE;
 
         case WINED3DSPR_MISCTYPE:
-            switch(reg->idx)
+            switch (reg->idx[0].offset)
             {
                 case 0: /* vPos */
                     return FALSE;

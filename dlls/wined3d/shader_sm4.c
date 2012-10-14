@@ -195,12 +195,6 @@ struct sysval_map
     UINT register_idx;
 };
 
-struct wined3d_sm4_reg_idx
-{
-    struct wined3d_shader_src_param *rel_addr;
-    unsigned int offset;
-};
-
 /*
  * F -> WINED3D_DATA_FLOAT
  * I -> WINED3D_DATA_INT
@@ -339,7 +333,7 @@ static void map_sysval(enum wined3d_sysval_semantic sysval, struct wined3d_shade
         if (sysval == sysval_map[i].sysval)
         {
             reg->type = sysval_map[i].register_type;
-            reg->idx = sysval_map[i].register_idx;
+            reg->idx[0].offset = sysval_map[i].register_idx;
         }
     }
 }
@@ -362,7 +356,7 @@ static void map_register(const struct wined3d_sm4_data *priv, struct wined3d_sha
 
                 for (i = 0; i < s->element_count; ++i)
                 {
-                    if (s->elements[i].register_idx == reg->idx)
+                    if (s->elements[i].register_idx == reg->idx[0].offset)
                     {
                         map_sysval(s->elements[i].sysval_semantic, reg);
                         break;
@@ -484,7 +478,7 @@ static void shader_sm4_read_header(void *data, const DWORD **ptr, struct wined3d
 }
 
 static BOOL shader_sm4_read_reg_idx(struct wined3d_sm4_data *priv, const DWORD **ptr,
-        DWORD addressing, struct wined3d_sm4_reg_idx *reg_idx)
+        DWORD addressing, struct wined3d_shader_register_index *reg_idx)
 {
     if (addressing & WINED3D_SM4_ADDRESSING_RELATIVE)
     {
@@ -516,7 +510,6 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
         enum wined3d_shader_src_modifier *modifier)
 {
     enum wined3d_sm4_register_type register_type;
-    struct wined3d_sm4_reg_idx reg_idx;
     DWORD token = *(*ptr)++;
     DWORD order;
 
@@ -563,31 +556,27 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
     order = (token & WINED3D_SM4_REGISTER_ORDER_MASK) >> WINED3D_SM4_REGISTER_ORDER_SHIFT;
 
     if (order < 1)
-        param->idx = ~0U;
+        param->idx[0].offset = ~0U;
     else
     {
         DWORD addressing = (token & WINED3D_SM4_ADDRESSING_MASK0) >> WINED3D_SM4_ADDRESSING_SHIFT0;
-        if (!(shader_sm4_read_reg_idx(priv, ptr, addressing, &reg_idx)))
+        if (!(shader_sm4_read_reg_idx(priv, ptr, addressing, &param->idx[0])))
         {
             ERR("Failed to read register index.\n");
             return FALSE;
         }
-        param->rel_addr = reg_idx.rel_addr;
-        param->idx = reg_idx.offset;
     }
 
     if (order < 2)
-        param->array_idx = ~0U;
+        param->idx[1].offset = ~0U;
     else
     {
         DWORD addressing = (token & WINED3D_SM4_ADDRESSING_MASK1) >> WINED3D_SM4_ADDRESSING_SHIFT1;
-        if (!(shader_sm4_read_reg_idx(priv, ptr, addressing, &reg_idx)))
+        if (!(shader_sm4_read_reg_idx(priv, ptr, addressing, &param->idx[1])))
         {
             ERR("Failed to read register index.\n");
             return FALSE;
         }
-        param->array_rel_addr = reg_idx.rel_addr;
-        param->array_idx = reg_idx.offset;
     }
 
     if (order > 2)

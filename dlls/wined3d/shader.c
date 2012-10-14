@@ -202,7 +202,7 @@ static void shader_signature_from_semantic(struct wined3d_shader_signature_eleme
     e->semantic_idx = s->usage_idx;
     e->sysval_semantic = 0;
     e->component_type = 0;
-    e->register_idx = s->reg.reg.idx;
+    e->register_idx = s->reg.reg.idx[0].offset;
     e->mask = s->reg.write_mask;
 }
 
@@ -365,18 +365,20 @@ static void shader_record_register_usage(struct wined3d_shader *shader, struct w
     switch (reg->type)
     {
         case WINED3DSPR_TEXTURE: /* WINED3DSPR_ADDR */
-            if (shader_type == WINED3D_SHADER_TYPE_PIXEL) reg_maps->texcoord |= 1 << reg->idx;
-            else reg_maps->address |= 1 << reg->idx;
+            if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
+                reg_maps->texcoord |= 1 << reg->idx[0].offset;
+            else
+                reg_maps->address |= 1 << reg->idx[0].offset;
             break;
 
         case WINED3DSPR_TEMP:
-            reg_maps->temporary |= 1 << reg->idx;
+            reg_maps->temporary |= 1 << reg->idx[0].offset;
             break;
 
         case WINED3DSPR_INPUT:
             if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
             {
-                if (reg->rel_addr)
+                if (reg->idx[0].rel_addr)
                 {
                     /* If relative addressing is used, we must assume that all registers
                      * are used. Even if it is a construct like v3[aL], we can't assume
@@ -389,51 +391,58 @@ static void shader_record_register_usage(struct wined3d_shader *shader, struct w
                 }
                 else
                 {
-                    shader->u.ps.input_reg_used[reg->idx] = TRUE;
+                    shader->u.ps.input_reg_used[reg->idx[0].offset] = TRUE;
                 }
             }
-            else reg_maps->input_registers |= 1 << reg->idx;
+            else
+                reg_maps->input_registers |= 1 << reg->idx[0].offset;
             break;
 
         case WINED3DSPR_RASTOUT:
-            if (reg->idx == 1) reg_maps->fog = 1;
+            if (reg->idx[0].offset == 1)
+                reg_maps->fog = 1;
             break;
 
         case WINED3DSPR_MISCTYPE:
             if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
             {
-                if (!reg->idx) reg_maps->vpos = 1;
-                else if (reg->idx == 1) reg_maps->usesfacing = 1;
+                if (!reg->idx[0].offset)
+                    reg_maps->vpos = 1;
+                else if (reg->idx[0].offset == 1)
+                    reg_maps->usesfacing = 1;
             }
             break;
 
         case WINED3DSPR_CONST:
-            if (reg->rel_addr)
+            if (reg->idx[0].rel_addr)
             {
-                if (reg->idx < reg_maps->min_rel_offset) reg_maps->min_rel_offset = reg->idx;
-                if (reg->idx > reg_maps->max_rel_offset) reg_maps->max_rel_offset = reg->idx;
+                if (reg->idx[0].offset < reg_maps->min_rel_offset)
+                    reg_maps->min_rel_offset = reg->idx[0].offset;
+                if (reg->idx[0].offset > reg_maps->max_rel_offset)
+                    reg_maps->max_rel_offset = reg->idx[0].offset;
                 reg_maps->usesrelconstF = TRUE;
             }
             else
             {
-                set_bitmap_bit(reg_maps->constf, reg->idx);
+                set_bitmap_bit(reg_maps->constf, reg->idx[0].offset);
             }
             break;
 
         case WINED3DSPR_CONSTINT:
-            reg_maps->integer_constants |= (1 << reg->idx);
+            reg_maps->integer_constants |= (1 << reg->idx[0].offset);
             break;
 
         case WINED3DSPR_CONSTBOOL:
-            reg_maps->boolean_constants |= (1 << reg->idx);
+            reg_maps->boolean_constants |= (1 << reg->idx[0].offset);
             break;
 
         case WINED3DSPR_COLOROUT:
-            reg_maps->rt_mask |= (1 << reg->idx);
+            reg_maps->rt_mask |= (1 << reg->idx[0].offset);
             break;
 
         default:
-            TRACE("Not recording register of type %#x and idx %u\n", reg->type, reg->idx);
+            TRACE("Not recording register of type %#x and [%#x][%#x].\n",
+                    reg->type, reg->idx[0].offset, reg->idx[1].offset);
             break;
     }
 }
@@ -511,21 +520,21 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             {
                 /* Mark input registers used. */
                 case WINED3DSPR_INPUT:
-                    reg_maps->input_registers |= 1 << semantic->reg.reg.idx;
-                    shader_signature_from_semantic(&input_signature[semantic->reg.reg.idx], semantic);
+                    reg_maps->input_registers |= 1 << semantic->reg.reg.idx[0].offset;
+                    shader_signature_from_semantic(&input_signature[semantic->reg.reg.idx[0].offset], semantic);
                     break;
 
                 /* Vertex shader: mark 3.0 output registers used, save token. */
                 case WINED3DSPR_OUTPUT:
-                    reg_maps->output_registers |= 1 << semantic->reg.reg.idx;
-                    shader_signature_from_semantic(&output_signature[semantic->reg.reg.idx], semantic);
+                    reg_maps->output_registers |= 1 << semantic->reg.reg.idx[0].offset;
+                    shader_signature_from_semantic(&output_signature[semantic->reg.reg.idx[0].offset], semantic);
                     if (semantic->usage == WINED3D_DECL_USAGE_FOG)
                         reg_maps->fog = 1;
                     break;
 
                 /* Save sampler usage token. */
                 case WINED3DSPR_SAMPLER:
-                    reg_maps->sampler_type[semantic->reg.reg.idx] = semantic->sampler_type;
+                    reg_maps->sampler_type[semantic->reg.reg.idx[0].offset] = semantic->sampler_type;
                     break;
 
                 default:
@@ -536,17 +545,17 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         else if (ins.handler_idx == WINED3DSIH_DCL_CONSTANT_BUFFER)
         {
             struct wined3d_shader_register *reg = &ins.declaration.src.reg;
-            if (reg->idx >= WINED3D_MAX_CBS)
-                ERR("Invalid CB index %u.\n", reg->idx);
+            if (reg->idx[0].offset >= WINED3D_MAX_CBS)
+                ERR("Invalid CB index %u.\n", reg->idx[0].offset);
             else
-                reg_maps->cb_sizes[reg->idx] = reg->array_idx;
+                reg_maps->cb_sizes[reg->idx[0].offset] = reg->idx[1].offset;
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {
             struct wined3d_shader_lconst *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(*lconst));
             if (!lconst) return E_OUTOFMEMORY;
 
-            lconst->idx = ins.dst[0].reg.idx;
+            lconst->idx = ins.dst[0].reg.idx[0].offset;
             memcpy(lconst->value, ins.src[0].reg.immconst_data, 4 * sizeof(DWORD));
 
             /* In pixel shader 1.X shaders, the constants are clamped between [-1;1] */
@@ -570,7 +579,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             struct wined3d_shader_lconst *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(*lconst));
             if (!lconst) return E_OUTOFMEMORY;
 
-            lconst->idx = ins.dst[0].reg.idx;
+            lconst->idx = ins.dst[0].reg.idx[0].offset;
             memcpy(lconst->value, ins.src[0].reg.immconst_data, 4 * sizeof(DWORD));
 
             list_add_head(&shader->constantsI, &lconst->entry);
@@ -581,7 +590,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             struct wined3d_shader_lconst *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(*lconst));
             if (!lconst) return E_OUTOFMEMORY;
 
-            lconst->idx = ins.dst[0].reg.idx;
+            lconst->idx = ins.dst[0].reg.idx[0].offset;
             memcpy(lconst->value, ins.src[0].reg.immconst_data, sizeof(DWORD));
 
             list_add_head(&shader->constantsB, &lconst->entry);
@@ -590,7 +599,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         /* For subroutine prototypes. */
         else if (ins.handler_idx == WINED3DSIH_LABEL)
         {
-            reg_maps->labels |= 1 << ins.src[0].reg.idx;
+            reg_maps->labels |= 1 << ins.src[0].reg.idx[0].offset;
         }
         /* Set texture, address, temporary registers. */
         else
@@ -613,7 +622,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                  * shaders because TECRDOUT isn't used in them, but future register types might cause issues */
                 if (shader_version.type == WINED3D_SHADER_TYPE_VERTEX && shader_version.major < 3)
                 {
-                    UINT idx = ins.dst[i].reg.idx;
+                    UINT idx = ins.dst[i].reg.idx[0].offset;
 
                     switch (ins.dst[i].reg.type)
                     {
@@ -679,7 +688,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
 
                 if (shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
                 {
-                    if (ins.dst[i].reg.type == WINED3DSPR_COLOROUT && !ins.dst[i].reg.idx)
+                    if (ins.dst[i].reg.type == WINED3DSPR_COLOROUT && !ins.dst[i].reg.idx[0].offset)
                     {
                         /* Many 2.0 and 3.0 pixel shaders end with a MOV from a temp register to
                          * COLOROUT 0. If we know this in advance, the ARB shader backend can skip
@@ -700,7 +709,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                      * end
                      */
                     else if (ins.dst[i].reg.type == WINED3DSPR_TEMP
-                            && ins.dst[i].reg.idx == shader->u.ps.color0_reg)
+                            && ins.dst[i].reg.idx[0].offset == shader->u.ps.color0_reg)
                     {
                         shader->u.ps.color0_mov = FALSE;
                     }
@@ -721,7 +730,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                             || ins.handler_idx == WINED3DSIH_TEXREG2RGB))
                 {
                     /* Fake sampler usage, only set reserved bit and type. */
-                    DWORD sampler_code = ins.dst[i].reg.idx;
+                    DWORD sampler_code = ins.dst[i].reg.idx[0].offset;
 
                     TRACE("Setting fake 2D sampler for 1.x pixelshader.\n");
                     reg_maps->sampler_type[sampler_code] = WINED3DSTT_2D;
@@ -730,16 +739,16 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                     if (ins.handler_idx == WINED3DSIH_TEXBEM
                             || ins.handler_idx == WINED3DSIH_TEXBEML)
                     {
-                        reg_maps->bumpmat |= 1 << ins.dst[i].reg.idx;
+                        reg_maps->bumpmat |= 1 << ins.dst[i].reg.idx[0].offset;
                         if (ins.handler_idx == WINED3DSIH_TEXBEML)
                         {
-                            reg_maps->luminanceparams |= 1 << ins.dst[i].reg.idx;
+                            reg_maps->luminanceparams |= 1 << ins.dst[i].reg.idx[0].offset;
                         }
                     }
                 }
                 else if (ins.handler_idx == WINED3DSIH_BEM)
                 {
-                    reg_maps->bumpmat |= 1 << ins.dst[i].reg.idx;
+                    reg_maps->bumpmat |= 1 << ins.dst[i].reg.idx[0].offset;
                 }
             }
 
@@ -774,7 +783,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 shader_record_register_usage(shader, reg_maps, &ins.src[i].reg, shader_version.type);
                 while (count)
                 {
-                    ++reg.idx;
+                    ++reg.idx[0].offset;
                     shader_record_register_usage(shader, reg_maps, &reg, shader_version.type);
                     --count;
                 }
@@ -785,7 +794,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                             && ins.src[i].swizzle == WINED3DSP_NOSWIZZLE)
                     {
                         shader->u.ps.color0_mov = TRUE;
-                        shader->u.ps.color0_reg = ins.src[i].reg.idx;
+                        shader->u.ps.color0_reg = ins.src[i].reg.idx[0].offset;
                     }
                 }
             }
@@ -903,7 +912,7 @@ static void shader_dump_register(const struct wined3d_shader_register *reg,
 {
     static const char * const rastout_reg_names[] = {"oPos", "oFog", "oPts"};
     static const char * const misctype_reg_names[] = {"vPos", "vFace"};
-    UINT offset = reg->idx;
+    UINT offset = reg->idx[0].offset;
 
     switch (reg->type)
     {
@@ -920,7 +929,7 @@ static void shader_dump_register(const struct wined3d_shader_register *reg,
         case WINED3DSPR_CONST3:
         case WINED3DSPR_CONST4:
             TRACE("c");
-            offset = shader_get_float_offset(reg->type, reg->idx);
+            offset = shader_get_float_offset(reg->type, offset);
             break;
 
         case WINED3DSPR_TEXTURE: /* vs: case WINED3DSPR_ADDR */
@@ -928,7 +937,7 @@ static void shader_dump_register(const struct wined3d_shader_register *reg,
             break;
 
         case WINED3DSPR_RASTOUT:
-            TRACE("%s", rastout_reg_names[reg->idx]);
+            TRACE("%s", rastout_reg_names[offset]);
             break;
 
         case WINED3DSPR_COLOROUT:
@@ -971,8 +980,10 @@ static void shader_dump_register(const struct wined3d_shader_register *reg,
             break;
 
         case WINED3DSPR_MISCTYPE:
-            if (reg->idx > 1) FIXME("Unhandled misctype register %u.\n", reg->idx);
-            else TRACE("%s", misctype_reg_names[reg->idx]);
+            if (offset > 1)
+                FIXME("Unhandled misctype register %u.\n", offset);
+            else
+                TRACE("%s", misctype_reg_names[offset]);
             break;
 
         case WINED3DSPR_PREDICATE:
@@ -1064,22 +1075,22 @@ static void shader_dump_register(const struct wined3d_shader_register *reg,
         if (offset != ~0U)
         {
             TRACE("[");
-            if (reg->rel_addr)
+            if (reg->idx[0].rel_addr)
             {
-                shader_dump_src_param(reg->rel_addr, shader_version);
+                shader_dump_src_param(reg->idx[0].rel_addr, shader_version);
                 TRACE(" + ");
             }
             TRACE("%u]", offset);
 
-            if (reg->array_idx != ~0U)
+            if (reg->idx[1].offset != ~0U)
             {
                 TRACE("[");
-                if (reg->array_rel_addr)
+                if (reg->idx[1].rel_addr)
                 {
-                    shader_dump_src_param(reg->array_rel_addr, shader_version);
+                    shader_dump_src_param(reg->idx[1].rel_addr, shader_version);
                     TRACE(" + ");
                 }
-                TRACE("%u]", reg->array_idx);
+                TRACE("%u]", reg->idx[1].offset);
             }
         }
     }
@@ -1394,7 +1405,8 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {
-            TRACE("def c%u = %f, %f, %f, %f", shader_get_float_offset(ins.dst[0].reg.type, ins.dst[0].reg.idx),
+            TRACE("def c%u = %f, %f, %f, %f", shader_get_float_offset(ins.dst[0].reg.type,
+                    ins.dst[0].reg.idx[0].offset),
                     *(const float *)&ins.src[0].reg.immconst_data[0],
                     *(const float *)&ins.src[0].reg.immconst_data[1],
                     *(const float *)&ins.src[0].reg.immconst_data[2],
@@ -1402,7 +1414,7 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
         }
         else if (ins.handler_idx == WINED3DSIH_DEFI)
         {
-            TRACE("defi i%u = %d, %d, %d, %d", ins.dst[0].reg.idx,
+            TRACE("defi i%u = %d, %d, %d, %d", ins.dst[0].reg.idx[0].offset,
                     ins.src[0].reg.immconst_data[0],
                     ins.src[0].reg.immconst_data[1],
                     ins.src[0].reg.immconst_data[2],
@@ -1410,7 +1422,7 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
         }
         else if (ins.handler_idx == WINED3DSIH_DEFB)
         {
-            TRACE("defb b%u = %s", ins.dst[0].reg.idx, ins.src[0].reg.immconst_data[0] ? "true" : "false");
+            TRACE("defb b%u = %s", ins.dst[0].reg.idx[0].offset, ins.src[0].reg.immconst_data[0] ? "true" : "false");
         }
         else
         {

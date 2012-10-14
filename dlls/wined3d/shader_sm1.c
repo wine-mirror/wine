@@ -448,11 +448,12 @@ static void shader_parse_src_param(DWORD param, const struct wined3d_shader_src_
     src->reg.type = ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
             | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
     src->reg.data_type = WINED3D_DATA_FLOAT;
-    src->reg.idx = param & WINED3DSP_REGNUM_MASK;
-    src->reg.array_idx = ~0U;
+    src->reg.idx[0].offset = param & WINED3DSP_REGNUM_MASK;
+    src->reg.idx[0].rel_addr = rel_addr;
+    src->reg.idx[1].offset = ~0U;
+    src->reg.idx[1].rel_addr = NULL;
     src->swizzle = (param & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
     src->modifiers = (param & WINED3DSP_SRCMOD_MASK) >> WINED3DSP_SRCMOD_SHIFT;
-    src->reg.rel_addr = rel_addr;
 }
 
 static void shader_parse_dst_param(DWORD param, const struct wined3d_shader_src_param *rel_addr,
@@ -461,12 +462,13 @@ static void shader_parse_dst_param(DWORD param, const struct wined3d_shader_src_
     dst->reg.type = ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
             | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
     dst->reg.data_type = WINED3D_DATA_FLOAT;
-    dst->reg.idx = param & WINED3DSP_REGNUM_MASK;
-    dst->reg.array_idx = ~0U;
+    dst->reg.idx[0].offset = param & WINED3DSP_REGNUM_MASK;
+    dst->reg.idx[0].rel_addr = rel_addr;
+    dst->reg.idx[1].offset = ~0U;
+    dst->reg.idx[1].rel_addr = NULL;
     dst->write_mask = (param & WINED3D_SM1_WRITEMASK_MASK) >> WINED3D_SM1_WRITEMASK_SHIFT;
     dst->modifiers = (param & WINED3DSP_DSTMOD_MASK) >> WINED3DSP_DSTMOD_SHIFT;
     dst->shift = (param & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
-    dst->reg.rel_addr = rel_addr;
 }
 
 /* Read the parameters of an unrecognized opcode from the input stream
@@ -628,9 +630,10 @@ static void shader_sm1_read_immconst(const DWORD **ptr, struct wined3d_shader_sr
     UINT count = type == WINED3D_IMMCONST_VEC4 ? 4 : 1;
     src_param->reg.type = WINED3DSPR_IMMCONST;
     src_param->reg.data_type = data_type;
-    src_param->reg.idx = ~0U;
-    src_param->reg.array_idx = ~0U;
-    src_param->reg.rel_addr = NULL;
+    src_param->reg.idx[0].offset = ~0U;
+    src_param->reg.idx[0].rel_addr = NULL;
+    src_param->reg.idx[1].offset = ~0U;
+    src_param->reg.idx[1].rel_addr = NULL;
     src_param->reg.immconst_type = type;
     memcpy(src_param->reg.immconst_data, *ptr, count * sizeof(DWORD));
     src_param->swizzle = WINED3DSP_NOSWIZZLE;
