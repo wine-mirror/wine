@@ -96,6 +96,9 @@ typedef struct
 {
     IRpcChannelBuffer IRpcChannelBuffer_iface;
     LONG refs;
+
+    DWORD dest_context; /* returned from GetDestCtx */
+    void *dest_context_data; /* returned from GetDestCtx */
 } RpcChannelBuffer;
 
 typedef struct
@@ -105,8 +108,6 @@ typedef struct
     RPC_BINDING_HANDLE     bind; /* handle to the remote server */
     OXID                   oxid; /* apartment in which the channel is valid */
     DWORD                  server_pid; /* id of server process */
-    DWORD                  dest_context; /* returned from GetDestCtx */
-    LPVOID                 dest_context_data; /* returned from GetDestCtx */
     HANDLE                 event; /* cached event handle */
 } ClientRpcChannelBuffer;
 
@@ -1041,20 +1042,22 @@ static HRESULT WINAPI ClientRpcChannelBuffer_GetDestCtx(LPRPCCHANNELBUFFER iface
 
     TRACE("(%p,%p)\n", pdwDestContext, ppvDestContext);
 
-    *pdwDestContext = This->dest_context;
-    *ppvDestContext = This->dest_context_data;
+    *pdwDestContext = This->super.dest_context;
+    *ppvDestContext = This->super.dest_context_data;
 
     return S_OK;
 }
 
-static HRESULT WINAPI ServerRpcChannelBuffer_GetDestCtx(LPRPCCHANNELBUFFER iface, DWORD* pdwDestContext, void** ppvDestContext)
+static HRESULT WINAPI ServerRpcChannelBuffer_GetDestCtx(LPRPCCHANNELBUFFER iface, DWORD* dest_context, void** dest_context_data)
 {
-    WARN("(%p,%p), stub!\n", pdwDestContext, ppvDestContext);
+    RpcChannelBuffer *This = (RpcChannelBuffer *)iface;
+
+    WARN("(%p,%p), stub!\n", dest_context, dest_context_data);
 
     /* FIXME: implement this by storing the dwDestContext and pvDestContext
      * values passed into IMarshal_MarshalInterface and returning them here */
-    *pdwDestContext = MSHCTX_DIFFERENTMACHINE;
-    *ppvDestContext = NULL;
+    *dest_context = This->dest_context;
+    *dest_context_data = This->dest_context_data;
     return S_OK;
 }
 
@@ -1144,11 +1147,11 @@ HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
 
     This->super.IRpcChannelBuffer_iface.lpVtbl = &ClientRpcChannelBufferVtbl;
     This->super.refs = 1;
+    This->super.dest_context = dest_context;
+    This->super.dest_context_data = dest_context_data;
     This->bind = bind;
     apartment_getoxid(COM_CurrentApt(), &This->oxid);
     This->server_pid = oxid_info->dwPid;
-    This->dest_context = dest_context;
-    This->dest_context_data = dest_context_data;
     This->event = NULL;
 
     *chan = &This->super.IRpcChannelBuffer_iface;
@@ -1164,6 +1167,8 @@ HRESULT RPC_CreateServerChannel(IRpcChannelBuffer **chan)
 
     This->IRpcChannelBuffer_iface.lpVtbl = &ServerRpcChannelBufferVtbl;
     This->refs = 1;
+    This->dest_context = MSHCTX_DIFFERENTMACHINE;
+    This->dest_context_data = NULL;
     
     *chan = &This->IRpcChannelBuffer_iface;
 
