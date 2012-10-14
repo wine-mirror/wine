@@ -51,6 +51,9 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM4_REGISTER_TYPE_SHIFT         12
 #define WINED3D_SM4_REGISTER_TYPE_MASK          (0xf << WINED3D_SM4_REGISTER_TYPE_SHIFT)
 
+#define WINED3D_SM4_SWIZZLE_TYPE_SHIFT          2
+#define WINED3D_SM4_SWIZZLE_TYPE_MASK           (0x3 << WINED3D_SM4_SWIZZLE_TYPE_SHIFT)
+
 #define WINED3D_SM4_IMMCONST_TYPE_SHIFT         0
 #define WINED3D_SM4_IMMCONST_TYPE_MASK          (0x3 << WINED3D_SM4_IMMCONST_TYPE_SHIFT)
 
@@ -145,6 +148,12 @@ enum wined3d_sm4_input_primitive_type
     WINED3D_SM4_INPUT_PT_TRIANGLE       = 0x3,
     WINED3D_SM4_INPUT_PT_LINEADJ        = 0x6,
     WINED3D_SM4_INPUT_PT_TRIANGLEADJ    = 0x7,
+};
+
+enum wined3d_sm4_swizzle_type
+{
+    WINED3D_SM4_SWIZZLE_VEC4            = 0x1,
+    WINED3D_SM4_SWIZZLE_SCALAR          = 0x2,
 };
 
 enum wined3d_sm4_immconst_type
@@ -609,7 +618,24 @@ static BOOL shader_sm4_read_src_param(struct wined3d_sm4_data *priv, const DWORD
     }
     else
     {
-        src_param->swizzle = (token & WINED3D_SM4_SWIZZLE_MASK) >> WINED3D_SM4_SWIZZLE_SHIFT;
+        enum wined3d_sm4_swizzle_type swizzle_type =
+                (token & WINED3D_SM4_SWIZZLE_TYPE_MASK) >> WINED3D_SM4_SWIZZLE_TYPE_SHIFT;
+
+        switch (swizzle_type)
+        {
+            case WINED3D_SM4_SWIZZLE_SCALAR:
+                src_param->swizzle = (token & WINED3D_SM4_SWIZZLE_MASK) >> WINED3D_SM4_SWIZZLE_SHIFT;
+                src_param->swizzle = (src_param->swizzle & 0x3) * 0x55;
+                break;
+
+            case WINED3D_SM4_SWIZZLE_VEC4:
+                src_param->swizzle = (token & WINED3D_SM4_SWIZZLE_MASK) >> WINED3D_SM4_SWIZZLE_SHIFT;
+                break;
+
+            default:
+                FIXME("Unhandled swizzle type %#x.\n", swizzle_type);
+                break;
+        }
     }
 
     map_register(priv, &src_param->reg);
