@@ -94,8 +94,8 @@ static inline void get_rpc_endpoint(LPWSTR endpoint, const OXID *oxid)
 
 typedef struct
 {
-    const IRpcChannelBufferVtbl *lpVtbl;
-    LONG                  refs;
+    IRpcChannelBuffer IRpcChannelBuffer_iface;
+    LONG refs;
 } RpcChannelBuffer;
 
 typedef struct
@@ -1142,7 +1142,7 @@ HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
         return E_OUTOFMEMORY;
     }
 
-    This->super.lpVtbl = &ClientRpcChannelBufferVtbl;
+    This->super.IRpcChannelBuffer_iface.lpVtbl = &ClientRpcChannelBufferVtbl;
     This->super.refs = 1;
     This->bind = bind;
     apartment_getoxid(COM_CurrentApt(), &This->oxid);
@@ -1151,7 +1151,7 @@ HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
     This->dest_context_data = dest_context_data;
     This->event = NULL;
 
-    *chan = (IRpcChannelBuffer*)This;
+    *chan = &This->super.IRpcChannelBuffer_iface;
 
     return S_OK;
 }
@@ -1162,10 +1162,10 @@ HRESULT RPC_CreateServerChannel(IRpcChannelBuffer **chan)
     if (!This)
         return E_OUTOFMEMORY;
 
-    This->lpVtbl = &ServerRpcChannelBufferVtbl;
+    This->IRpcChannelBuffer_iface.lpVtbl = &ServerRpcChannelBufferVtbl;
     This->refs = 1;
     
-    *chan = (IRpcChannelBuffer*)This;
+    *chan = &This->IRpcChannelBuffer_iface;
 
     return S_OK;
 }
