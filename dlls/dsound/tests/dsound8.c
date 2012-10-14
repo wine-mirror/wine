@@ -1021,7 +1021,7 @@ static void test_hw_buffers(void)
     trace("dwMaxHwMixingStreamingBuffers: %u\n", caps.dwMaxHwMixingStreamingBuffers);
     for(i = 0; i < caps.dwMaxHwMixingAllBuffers; ++i){
         hr = IDirectSound8_CreateSoundBuffer(ds, &bufdesc, &secondaries[i], NULL);
-        ok(hr == S_OK || hr == E_NOTIMPL || broken(hr == DSERR_CONTROLUNAVAIL),
+        ok(hr == S_OK || hr == E_NOTIMPL || broken(hr == DSERR_CONTROLUNAVAIL) || broken(hr == E_FAIL),
                 "CreateSoundBuffer(%u) failed: %08x\n", i, hr);
         if(hr != S_OK)
             break;
@@ -1039,8 +1039,9 @@ static void test_hw_buffers(void)
             (caps.dwMaxHwMixingAllBuffers == 0 && hr == DSERR_INVALIDCALL) || /* no hw buffers at all */
             hr == E_NOTIMPL || /* don't support hw buffers */
             broken(hr == DSERR_CONTROLUNAVAIL) || /* vmware winxp, others? */
+            broken(hr == E_FAIL) || /* broken AC97 driver */
             broken(hr == S_OK) /* broken driver allows more hw bufs than dscaps claims */,
-            "CreateSoundBuffer gave wrong error: %08x\n", hr);
+            "CreateSoundBuffer(%u) gave wrong error: %08x\n", i, hr);
     if(hr == S_OK)
         IDirectSoundBuffer_Release(secondary);
 
