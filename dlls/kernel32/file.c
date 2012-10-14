@@ -876,7 +876,6 @@ BOOL WINAPI GetFileInformationByHandleEx( HANDLE handle, FILE_INFO_BY_HANDLE_CLA
     {
     case FileBasicInfo:
     case FileStandardInfo:
-    case FileNameInfo:
     case FileRenameInfo:
     case FileDispositionInfo:
     case FileAllocationInfo:
@@ -896,6 +895,15 @@ BOOL WINAPI GetFileInformationByHandleEx( HANDLE handle, FILE_INFO_BY_HANDLE_CLA
         FIXME( "%p, %u, %p, %u\n", handle, class, info, size );
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return FALSE;
+
+    case FileNameInfo:
+        status = NtQueryInformationFile( handle, &io, info, size, FileNameInformation );
+        if (status != STATUS_SUCCESS)
+        {
+            SetLastError( RtlNtStatusToDosError( status ) );
+            return FALSE;
+        }
+        return TRUE;
 
     case FileIdBothDirectoryRestartInfo:
     case FileIdBothDirectoryInfo:
