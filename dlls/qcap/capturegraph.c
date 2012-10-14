@@ -58,7 +58,6 @@ typedef struct CaptureGraphImpl
     ICaptureGraphBuilder ICaptureGraphBuilder_iface;
     LONG ref;
     IGraphBuilder *mygraph;
-
     CRITICAL_SECTION csFilter;
 } CaptureGraphImpl;
 
@@ -143,8 +142,7 @@ fnCaptureGraphBuilder2_AddRef(ICaptureGraphBuilder2 * iface)
     return ref;
 }
 
-static ULONG WINAPI
-fnCaptureGraphBuilder2_Release(ICaptureGraphBuilder2 * iface)
+static ULONG WINAPI fnCaptureGraphBuilder2_Release(ICaptureGraphBuilder2 * iface)
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder2(iface);
     DWORD ref = InterlockedDecrement(&This->ref);
@@ -153,10 +151,9 @@ fnCaptureGraphBuilder2_Release(ICaptureGraphBuilder2 * iface)
 
     if (!ref)
     {
-        FIXME("Release IGraphFilter or w/e\n");
         This->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csFilter);
-        if (This->mygraph != NULL)
+        if (This->mygraph)
             IGraphBuilder_Release(This->mygraph);
         CoTaskMemFree(This);
         ObjectRefCount(FALSE);
@@ -212,7 +209,7 @@ fnCaptureGraphBuilder2_GetFilterGraph(ICaptureGraphBuilder2 * iface,
     }
 
     IGraphBuilder_AddRef(This->mygraph);
-   
+
     TRACE("(%p) return filtergraph %p\n", iface, *pfg);
     return S_OK;
 }
@@ -452,7 +449,7 @@ fnCaptureGraphBuilder2_FindPin(ICaptureGraphBuilder2 * iface,
 }
 
 static const ICaptureGraphBuilder2Vtbl builder2_Vtbl =
-{   
+{
     fnCaptureGraphBuilder2_QueryInterface,
     fnCaptureGraphBuilder2_AddRef,
     fnCaptureGraphBuilder2_Release,
@@ -578,7 +575,7 @@ fnCaptureGraphBuilder_CopyCaptureFile(ICaptureGraphBuilder * iface,
 }
 
 static const ICaptureGraphBuilderVtbl builder_Vtbl =
-{   
+{
    fnCaptureGraphBuilder_QueryInterface,
    fnCaptureGraphBuilder_AddRef,
    fnCaptureGraphBuilder_Release,
