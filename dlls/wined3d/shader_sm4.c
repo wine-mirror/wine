@@ -789,12 +789,6 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
     }
 }
 
-static void shader_sm4_read_comment(const DWORD **ptr, const char **comment, UINT *comment_size)
-{
-    FIXME("ptr %p, comment %p, comment_size %p stub!\n", ptr, comment, comment_size);
-    *comment = NULL;
-}
-
 static BOOL shader_sm4_is_end(void *data, const DWORD **ptr)
 {
     struct wined3d_sm4_data *priv = data;
@@ -807,6 +801,5 @@ const struct wined3d_shader_frontend sm4_shader_frontend =
     shader_sm4_free,
     shader_sm4_read_header,
     shader_sm4_read_instruction,
-    shader_sm4_read_comment,
     shader_sm4_is_end,
 };

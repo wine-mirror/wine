@@ -494,12 +494,6 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
     while (!fe->shader_is_end(fe_data, &ptr))
     {
         struct wined3d_shader_instruction ins;
-        const char *comment;
-        UINT comment_size;
-
-        /* Skip comments. */
-        fe->shader_read_comment(&ptr, &comment, &comment_size);
-        if (comment) continue;
 
         /* Fetch opcode. */
         fe->shader_read_instruction(fe_data, &ptr, &ins);
@@ -1214,13 +1208,6 @@ void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_sh
 
     while (!fe->shader_is_end(fe_data, &ptr))
     {
-        const char *comment;
-        UINT comment_size;
-
-        /* Skip comment tokens. */
-        fe->shader_read_comment(&ptr, &comment, &comment_size);
-        if (comment) continue;
-
         /* Read opcode. */
         fe->shader_read_instruction(fe_data, &ptr, &ins);
 
@@ -1342,36 +1329,6 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
     while (!fe->shader_is_end(fe_data, &ptr))
     {
         struct wined3d_shader_instruction ins;
-        const char *comment;
-        UINT comment_size;
-
-        /* comment */
-        fe->shader_read_comment(&ptr, &comment, &comment_size);
-        if (comment)
-        {
-            if (comment_size > 4 && *(const DWORD *)comment == WINEMAKEFOURCC('T', 'E', 'X', 'T'))
-            {
-                const char *end = comment + comment_size;
-                const char *ptr = comment + 4;
-                const char *line = ptr;
-
-                TRACE("// TEXT\n");
-                while (ptr != end)
-                {
-                    if (*ptr == '\n')
-                    {
-                        UINT len = ptr - line;
-                        if (len && *(ptr - 1) == '\r') --len;
-                        TRACE("// %s\n", debugstr_an(line, len));
-                        line = ++ptr;
-                    }
-                    else ++ptr;
-                }
-                if (line != ptr) TRACE("// %s\n", debugstr_an(line, ptr - line));
-            }
-            else TRACE("// %s\n", debugstr_an(comment, comment_size));
-            continue;
-        }
 
         fe->shader_read_instruction(fe_data, &ptr, &ins);
         if (ins.handler_idx == WINED3DSIH_TABLE_SIZE)

@@ -642,6 +642,48 @@ static void shader_sm1_read_immconst(const DWORD **ptr, struct wined3d_shader_sr
     *ptr += count;
 }
 
+static void shader_sm1_read_comment(const DWORD **ptr)
+{
+    DWORD token = **ptr;
+    const char *comment;
+    UINT size;
+
+    while ((token & WINED3DSI_OPCODE_MASK) == WINED3D_SM1_OP_COMMENT)
+    {
+        size = (token & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
+        comment = (const char *)++(*ptr);
+        *ptr += size;
+
+        if (size > 1 && *(const DWORD *)comment == WINEMAKEFOURCC('T', 'E', 'X', 'T'))
+        {
+            const char *end = comment + size * sizeof(token);
+            const char *p = comment + sizeof(token);
+            const char *line = p;
+
+            TRACE("// TEXT\n");
+            while (p != end)
+            {
+                if (*p == '\n')
+                {
+                    UINT len = p - line;
+                    if (len && *(p - 1) == '\r') --len;
+                    TRACE("// %s\n", debugstr_an(line, len));
+                    line = ++p;
+                }
+                else ++p;
+            }
+            if (line != p)
+                TRACE("// %s\n", debugstr_an(line, p - line));
+        }
+        else if (size)
+            TRACE("// %s\n", debugstr_an(comment, size * sizeof(token)));
+        else
+            break;
+
+        token = **ptr;
+    }
+}
+
 static void shader_sm1_read_instruction(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_sm1_opcode_info *opcode_info;
@@ -649,6 +691,8 @@ static void shader_sm1_read_instruction(void *data, const DWORD **ptr, struct wi
     DWORD opcode_token;
     unsigned int i;
     const DWORD *p;
+
+    shader_sm1_read_comment(ptr);
 
     opcode_token = *(*ptr)++;
     if (!(opcode_info = shader_get_opcode(priv, opcode_token)))
@@ -708,23 +752,6 @@ static void shader_sm1_read_instruction(void *data, const DWORD **ptr, struct wi
     }
 }
 
-static void shader_sm1_read_comment(const DWORD **ptr, const char **comment, UINT *comment_size)
-{
-    DWORD token = **ptr;
-    UINT size;
-
-    if ((token & WINED3DSI_OPCODE_MASK) != WINED3D_SM1_OP_COMMENT)
-    {
-        *comment = NULL;
-        return;
-    }
-
-    size = (token & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
-    *comment = (const char *)++(*ptr);
-    *comment_size = size * sizeof(DWORD);
-    *ptr += size;
-}
-
 static BOOL shader_sm1_is_end(void *data, const DWORD **ptr)
 {
     if (**ptr == WINED3DSP_END)
@@ -742,6 +769,5 @@ const struct wined3d_shader_frontend sm1_shader_frontend =
     shader_sm1_free,
     shader_sm1_read_header,
     shader_sm1_read_instruction,
-    shader_sm1_read_comment,
     shader_sm1_is_end,
 };
