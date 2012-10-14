@@ -115,7 +115,8 @@ static inline HRESULT get_facbuf_for_iid(REFIID riid, IPSFactoryBuffer **facbuf)
 }
 
 /* marshals an object into a STDOBJREF structure */
-HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *object, MSHLFLAGS mshlflags)
+HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *object,
+    DWORD dest_context, void *dest_context_data, MSHLFLAGS mshlflags)
 {
     struct stub_manager *manager;
     struct ifstub       *ifstub;
@@ -192,7 +193,7 @@ HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkno
     /* make sure ifstub that we are creating is unique */
     ifstub = stub_manager_find_ifstub(manager, riid, mshlflags);
     if (!ifstub)
-        ifstub = stub_manager_new_ifstub(manager, stub, iobject, riid, mshlflags);
+        ifstub = stub_manager_new_ifstub(manager, stub, iobject, riid, dest_context, dest_context_data, mshlflags);
 
     if (stub) IRpcStubBuffer_Release(stub);
     IUnknown_Release(iobject);
@@ -1225,8 +1226,8 @@ StdMarshalImpl_GetMarshalSizeMax(
 
 static HRESULT WINAPI
 StdMarshalImpl_MarshalInterface(
-    LPMARSHAL iface, IStream *pStm,REFIID riid, void* pv, DWORD dwDestContext,
-    void* pvDestContext, DWORD mshlflags)
+    LPMARSHAL iface, IStream *pStm,REFIID riid, void* pv, DWORD dest_context,
+    void* dest_context_data, DWORD mshlflags)
 {
     STDOBJREF             stdobjref;
     ULONG                 res;
@@ -1244,7 +1245,7 @@ StdMarshalImpl_MarshalInterface(
     /* make sure this apartment can be reached from other threads / processes */
     RPC_StartRemoting(apt);
 
-    hres = marshal_object(apt, &stdobjref, riid, pv, mshlflags);
+    hres = marshal_object(apt, &stdobjref, riid, pv, dest_context, dest_context_data, mshlflags);
     if (hres != S_OK)
     {
         ERR("Failed to create ifstub, hres=0x%x\n", hres);

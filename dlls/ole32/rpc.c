@@ -1052,10 +1052,8 @@ static HRESULT WINAPI ServerRpcChannelBuffer_GetDestCtx(LPRPCCHANNELBUFFER iface
 {
     RpcChannelBuffer *This = (RpcChannelBuffer *)iface;
 
-    WARN("(%p,%p), stub!\n", dest_context, dest_context_data);
+    TRACE("(%p,%p)\n", dest_context, dest_context_data);
 
-    /* FIXME: implement this by storing the dwDestContext and pvDestContext
-     * values passed into IMarshal_MarshalInterface and returning them here */
     *dest_context = This->dest_context;
     *dest_context_data = This->dest_context_data;
     return S_OK;
@@ -1159,7 +1157,7 @@ HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
     return S_OK;
 }
 
-HRESULT RPC_CreateServerChannel(IRpcChannelBuffer **chan)
+HRESULT RPC_CreateServerChannel(DWORD dest_context, void *dest_context_data, IRpcChannelBuffer **chan)
 {
     RpcChannelBuffer *This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This)
@@ -1167,8 +1165,8 @@ HRESULT RPC_CreateServerChannel(IRpcChannelBuffer **chan)
 
     This->IRpcChannelBuffer_iface.lpVtbl = &ServerRpcChannelBufferVtbl;
     This->refs = 1;
-    This->dest_context = MSHCTX_DIFFERENTMACHINE;
-    This->dest_context_data = NULL;
+    This->dest_context = dest_context;
+    This->dest_context_data = dest_context_data;
     
     *chan = &This->IRpcChannelBuffer_iface;
 
