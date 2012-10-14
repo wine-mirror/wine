@@ -1541,10 +1541,10 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             break;
 
         case WINED3DSPR_CONSTBUFFER:
-            if (reg->rel_addr)
+            if (reg->array_rel_addr)
             {
                 struct glsl_src_param rel_param;
-                shader_glsl_add_src_param(ins, reg->rel_addr, WINED3DSP_WRITEMASK_0, &rel_param);
+                shader_glsl_add_src_param(ins, reg->array_rel_addr, WINED3DSP_WRITEMASK_0, &rel_param);
                 sprintf(register_name, "%s_cb%u[%s + %u]", prefix, reg->idx, rel_param.param_str, reg->array_idx);
             }
             else
