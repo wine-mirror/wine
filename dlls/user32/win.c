@@ -1467,6 +1467,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 
     wndPtr->min_pos.x = wndPtr->min_pos.y = -1;
     wndPtr->max_pos.x = wndPtr->max_pos.y = -1;
+    SetRect( &wndPtr->normal_rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
 
     if (wndPtr->dwStyle & WS_SYSMENU) SetSystemMenu( hwnd, 0 );
 
