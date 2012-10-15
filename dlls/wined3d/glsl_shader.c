@@ -3491,7 +3491,7 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &lod_param);
 
     if (!gl_info->supported[ARB_SHADER_TEXTURE_LOD] && !gl_info->supported[EXT_GPU_SHADER4]
-            && shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
+            && ins->ctx->reg_maps->shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
     {
         /* Plain GLSL only supports Lod sampling functions in vertex shaders.
          * However, the NVIDIA drivers allow them in fragment shaders as well,
