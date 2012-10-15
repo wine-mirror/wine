@@ -48,6 +48,7 @@ static const char range_test2_str[] =
 static const char elem_test_str[] =
     "<html><head><title>test</title><style id=\"styleid\">.body { margin-right: 0px; }</style>"
     "<meta id=\"metaid\" name=\"meta name\" http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">"
+    "<link id=\"linkid\"></head>"
     "<body onload=\"Testing()\">text test<!-- a comment -->"
     "<a id=\"a\" href=\"http://test\" name=\"x\">link</a>"
     "<input id=\"in\" class=\"testclass\" tabIndex=\"2\" title=\"test title\" />"
@@ -119,7 +120,8 @@ typedef enum {
     ET_EMBED,
     ET_DIV,
     ET_META,
-    ET_NOSCRIPT
+    ET_NOSCRIPT,
+    ET_LINK
 } elem_type_t;
 
 static const IID * const none_iids[] = {
@@ -320,6 +322,13 @@ static const IID * const meta_iids[] = {
     NULL
 };
 
+static const IID * const link_iids[] = {
+    ELEM_IFACES,
+    &IID_IHTMLLinkElement,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
 static const IID * const object_iids[] = {
     ELEM_IFACES,
     &IID_IHTMLObjectElement,
@@ -432,7 +441,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"EMBED",     embed_iids,       &DIID_DispHTMLEmbed},
     {"DIV",       elem_iids,        NULL},
     {"META",      meta_iids,        &DIID_DispHTMLMetaElement},
-    {"NOSCRIPT",  elem_iids,        NULL /*&DIID_DispHTMLNoShowElement*/}
+    {"NOSCRIPT",  elem_iids,        NULL /*&DIID_DispHTMLNoShowElement*/},
+    {"LINK",      link_iids,        &DIID_DispHTMLLinkElement}
 };
 
 static const char *dbgstr_guid(REFIID riid)
@@ -5277,6 +5287,7 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_TITLE,
         ET_STYLE,
         ET_META,
+        ET_LINK,
         ET_BODY,
         ET_COMMENT,
         ET_A,

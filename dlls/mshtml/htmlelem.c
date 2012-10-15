@@ -45,6 +45,7 @@ static const WCHAR headW[]     = {'H','E','A','D',0};
 static const WCHAR iframeW[]   = {'I','F','R','A','M','E',0};
 static const WCHAR imgW[]      = {'I','M','G',0};
 static const WCHAR inputW[]    = {'I','N','P','U','T',0};
+static const WCHAR linkW[]     = {'L','I','N','K',0};
 static const WCHAR metaW[]     = {'M','E','T','A',0};
 static const WCHAR objectW[]   = {'O','B','J','E','C','T',0};
 static const WCHAR optionW[]   = {'O','P','T','I','O','N',0};
@@ -72,6 +73,7 @@ static const tag_desc_t tag_descs[] = {
     {iframeW,    HTMLIFrame_Create},
     {imgW,       HTMLImgElement_Create},
     {inputW,     HTMLInputElement_Create},
+    {linkW,      HTMLLinkElement_Create},
     {metaW,      HTMLMetaElement_Create},
     {objectW,    HTMLObjectElement_Create},
     {optionW,    HTMLOptionElement_Create},
