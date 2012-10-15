@@ -1998,11 +1998,17 @@ static const SPY_NOTIFY spnfy_array[] = {
 };
 #undef SPNFY
 
-static unsigned char SPY_Exclude[SPY_MAX_MSGNUM+1];
-static unsigned char SPY_ExcludeDWP = 0;
+static unsigned char *spy_exclude;
 
-#define SPY_EXCLUDE(msg) \
-    (SPY_Exclude[(msg) > SPY_MAX_MSGNUM ? SPY_MAX_MSGNUM : (msg)])
+static inline BOOL exclude_msg( UINT msg )
+{
+    return spy_exclude[ min( msg, SPY_MAX_MSGNUM ) ];
+}
+
+static inline BOOL exclude_dwp(void)
+{
+    return spy_exclude[SPY_MAX_MSGNUM + 1];
+}
 
 
 typedef struct
@@ -2017,7 +2023,7 @@ typedef struct
     WCHAR      wnd_name[16];     /* window name for message            */
 } SPY_INSTANCE;
 
-static int indent_tls_index;
+static int indent_tls_index = TLS_OUT_OF_INDEXES;
 
 /***********************************************************************
  *           get_indent_level
@@ -2521,6 +2527,70 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
         }
 
 }
+
+
+/***********************************************************************
+ *           spy_init
+ */
+static BOOL spy_init(void)
+{
+    int i;
+    char buffer[1024];
+    HKEY hkey;
+    char *exclude;
+
+    if (!TRACE_ON(message)) return FALSE;
+
+    if (indent_tls_index == TLS_OUT_OF_INDEXES)
+    {
+        DWORD index = TlsAlloc();
+        if (InterlockedCompareExchange( &indent_tls_index, index, TLS_OUT_OF_INDEXES ) != TLS_OUT_OF_INDEXES)
+            TlsFree( index );
+    }
+
+    if (spy_exclude) return TRUE;
+    exclude = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, SPY_MAX_MSGNUM + 2 );
+
+    /* @@ Wine registry key: HKCU\Software\Wine\Debug */
+    if(!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Debug", &hkey))
+    {
+        DWORD type, count = sizeof(buffer);
+
+        buffer[0] = 0;
+        if (!RegQueryValueExA(hkey, "SpyInclude", 0, &type, (LPBYTE) buffer, &count) &&
+            strcmp( buffer, "INCLUDEALL" ))
+        {
+            TRACE("Include=%s\n", buffer );
+            for (i = 0; i <= SPY_MAX_MSGNUM; i++)
+                exclude[i] = (MessageTypeNames[i] && !strstr(buffer,MessageTypeNames[i]));
+        }
+
+        count = sizeof(buffer);
+        buffer[0] = 0;
+        if (!RegQueryValueExA(hkey, "SpyExclude", 0, &type, (LPBYTE) buffer, &count))
+        {
+            TRACE("Exclude=%s\n", buffer );
+            if (!strcmp( buffer, "EXCLUDEALL" ))
+                for (i = 0; i <= SPY_MAX_MSGNUM; i++) exclude[i] = TRUE;
+            else
+                for (i = 0; i <= SPY_MAX_MSGNUM; i++)
+                    exclude[i] = (MessageTypeNames[i] && strstr(buffer,MessageTypeNames[i]));
+        }
+
+        count = sizeof(buffer);
+        if(!RegQueryValueExA(hkey, "SpyExcludeDWP", 0, &type, (LPBYTE) buffer, &count))
+            exclude[SPY_MAX_MSGNUM + 1] = atoi(buffer);
+
+        RegCloseKey(hkey);
+    }
+
+    if (InterlockedCompareExchangePointer( (void **)&spy_exclude, exclude, NULL ))
+        HeapFree( GetProcessHeap(), 0, exclude );
+
+    return TRUE;
+}
+
+
 /***********************************************************************
  *           SPY_EnterMessage
  */
@@ -2531,7 +2601,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
     int indent;
     DWORD save_error = GetLastError();
 
-    if (!TRACE_ON(message) || SPY_EXCLUDE(msg)) return;
+    if (!spy_init() || exclude_msg(msg)) return;
 
     sp_e.msgnum = msg;
     sp_e.msg_hwnd = hWnd;
@@ -2566,7 +2636,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
         break;
 
     case SPY_DEFWNDPROC:
-        if( SPY_ExcludeDWP ) return;
+        if (exclude_dwp()) return;
         TRACE("%*s(%p)  DefWindowProc:[%04x] %s  wp=%08lx lp=%08lx\n",
               indent, "", hWnd, msg, sp_e.msg_name, wParam, lParam );
         break;
@@ -2586,8 +2656,8 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
     int indent;
     DWORD save_error = GetLastError();
 
-    if (!TRACE_ON(message) || SPY_EXCLUDE(msg) ||
-        (SPY_ExcludeDWP && iFlag == SPY_RESULT_DEFWND))
+    if (!TRACE_ON(message) || exclude_msg(msg) ||
+        (exclude_dwp() && iFlag == SPY_RESULT_DEFWND))
         return;
 
     sp_e.msgnum = msg;
@@ -2618,54 +2688,4 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
         break;
     }
     SetLastError( save_error );
-}
-
-
-/***********************************************************************
- *           SPY_Init
- */
-int SPY_Init(void)
-{
-    int i;
-    char buffer[1024];
-    HKEY hkey;
-
-    if (!TRACE_ON(message)) return TRUE;
-
-    indent_tls_index = TlsAlloc();
-    /* @@ Wine registry key: HKCU\Software\Wine\Debug */
-    if(!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Debug", &hkey))
-    {
-        DWORD type, count = sizeof(buffer);
-
-        buffer[0] = 0;
-        if (!RegQueryValueExA(hkey, "SpyInclude", 0, &type, (LPBYTE) buffer, &count) &&
-            strcmp( buffer, "INCLUDEALL" ))
-        {
-            TRACE("Include=%s\n", buffer );
-            for (i = 0; i <= SPY_MAX_MSGNUM; i++)
-                SPY_Exclude[i] = (MessageTypeNames[i] && !strstr(buffer,MessageTypeNames[i]));
-        }
-
-        count = sizeof(buffer);
-        buffer[0] = 0;
-        if (!RegQueryValueExA(hkey, "SpyExclude", 0, &type, (LPBYTE) buffer, &count))
-        {
-            TRACE("Exclude=%s\n", buffer );
-            if (!strcmp( buffer, "EXCLUDEALL" ))
-                for (i = 0; i <= SPY_MAX_MSGNUM; i++) SPY_Exclude[i] = TRUE;
-            else
-                for (i = 0; i <= SPY_MAX_MSGNUM; i++)
-                    SPY_Exclude[i] = (MessageTypeNames[i] && strstr(buffer,MessageTypeNames[i]));
-        }
-
-        SPY_ExcludeDWP = 0;
-        count = sizeof(buffer);
-        if(!RegQueryValueExA(hkey, "SpyExcludeDWP", 0, &type, (LPBYTE) buffer, &count))
-            SPY_ExcludeDWP = atoi(buffer);
-
-        RegCloseKey(hkey);
-    }
-
-    return 1;
 }
