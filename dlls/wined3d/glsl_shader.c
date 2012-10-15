@@ -2314,7 +2314,7 @@ static void shader_glsl_mov(const struct wined3d_shader_instruction *ins)
     /* In vs_1_1 WINED3DSIO_MOV can write to the address register. In later
      * shader versions WINED3DSIO_MOVA is used for this. */
     if (ins->ctx->reg_maps->shader_version.major == 1
-            && !shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type)
+            && ins->ctx->reg_maps->shader_version.type == WINED3D_SHADER_TYPE_VERTEX
             && ins->dst[0].reg.type == WINED3DSPR_ADDR)
     {
         /* This is a simple floor() */
