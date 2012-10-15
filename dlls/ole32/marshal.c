@@ -55,7 +55,7 @@ extern const CLSID CLSID_DfMarshal;
 /* imported object / proxy manager */
 struct proxy_manager
 {
-  const IMultiQIVtbl *lpVtbl;
+  IMultiQI IMultiQI_iface;
   const IMarshalVtbl *lpVtblMarshal;
   const IClientSecurityVtbl *lpVtblCliSec;
   struct apartment *parent; /* owning apartment (RO) */
@@ -385,19 +385,19 @@ static HRESULT WINAPI StdMarshalImpl_DisconnectObject(LPMARSHAL iface, DWORD dwR
 static HRESULT WINAPI Proxy_QueryInterface(IMarshal *iface, REFIID riid, void **ppvObject)
 {
     struct proxy_manager *This = impl_from_IMarshal( iface );
-    return IMultiQI_QueryInterface((IMultiQI *)&This->lpVtbl, riid, ppvObject);
+    return IMultiQI_QueryInterface(&This->IMultiQI_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI Proxy_AddRef(IMarshal *iface)
 {
     struct proxy_manager *This = impl_from_IMarshal( iface );
-    return IMultiQI_AddRef((IMultiQI *)&This->lpVtbl);
+    return IMultiQI_AddRef(&This->IMultiQI_iface);
 }
 
 static ULONG WINAPI Proxy_Release(IMarshal *iface)
 {
     struct proxy_manager *This = impl_from_IMarshal( iface );
-    return IMultiQI_Release((IMultiQI *)&This->lpVtbl);
+    return IMultiQI_Release(&This->IMultiQI_iface);
 }
 
 static HRESULT WINAPI Proxy_MarshalInterface(
@@ -530,19 +530,19 @@ static const IMarshalVtbl ProxyMarshal_Vtbl =
 static HRESULT WINAPI ProxyCliSec_QueryInterface(IClientSecurity *iface, REFIID riid, void **ppvObject)
 {
     struct proxy_manager *This = impl_from_IClientSecurity( iface );
-    return IMultiQI_QueryInterface((IMultiQI *)&This->lpVtbl, riid, ppvObject);
+    return IMultiQI_QueryInterface(&This->IMultiQI_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI ProxyCliSec_AddRef(IClientSecurity *iface)
 {
     struct proxy_manager *This = impl_from_IClientSecurity( iface );
-    return IMultiQI_AddRef((IMultiQI *)&This->lpVtbl);
+    return IMultiQI_AddRef(&This->IMultiQI_iface);
 }
 
 static ULONG WINAPI ProxyCliSec_Release(IClientSecurity *iface)
 {
     struct proxy_manager *This = impl_from_IClientSecurity( iface );
-    return IMultiQI_Release((IMultiQI *)&This->lpVtbl);
+    return IMultiQI_Release(&This->IMultiQI_iface);
 }
 
 static HRESULT WINAPI ProxyCliSec_QueryBlanket(IClientSecurity *iface,
@@ -754,7 +754,7 @@ static HRESULT proxy_manager_construct(
         }
     }
 
-    This->lpVtbl = &ClientIdentity_Vtbl;
+    This->IMultiQI_iface.lpVtbl = &ClientIdentity_Vtbl;
     This->lpVtblMarshal = &ProxyMarshal_Vtbl;
     This->lpVtblCliSec = &ProxyCliSec_Vtbl;
 
@@ -869,8 +869,8 @@ static HRESULT proxy_manager_query_local_interface(struct proxy_manager * This, 
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IMultiQI))
     {
-        *ppv = &This->lpVtbl;
-        IUnknown_AddRef((IUnknown *)*ppv);
+        *ppv = &This->IMultiQI_iface;
+        IMultiQI_AddRef(&This->IMultiQI_iface);
         return S_OK;
     }
     if (IsEqualIID(riid, &IID_IMarshal))
@@ -922,8 +922,8 @@ static HRESULT proxy_manager_create_ifproxy(
      * proxy associated with the ifproxy as we handle IUnknown ourselves */
     if (IsEqualIID(riid, &IID_IUnknown))
     {
-        ifproxy->iface = &This->lpVtbl;
-        IMultiQI_AddRef((IMultiQI *)&This->lpVtbl);
+        ifproxy->iface = &This->IMultiQI_iface;
+        IMultiQI_AddRef(&This->IMultiQI_iface);
         hr = S_OK;
     }
     else
@@ -935,7 +935,7 @@ static HRESULT proxy_manager_create_ifproxy(
              * This ensures the COM identity rules are not violated, by having a
              * one-to-one mapping of objects on the proxy side to objects on the
              * stub side, no matter which interface you view the object through */
-            hr = IPSFactoryBuffer_CreateProxy(psfb, (IUnknown *)&This->lpVtbl, riid,
+            hr = IPSFactoryBuffer_CreateProxy(psfb, (IUnknown*)&This->IMultiQI_iface, riid,
                                               &ifproxy->proxy, &ifproxy->iface);
             IPSFactoryBuffer_Release(psfb);
             if (hr != S_OK)
@@ -1138,7 +1138,7 @@ static BOOL find_proxy_manager(APARTMENT * apt, OXID oxid, OID oid, struct proxy
             /* be careful of a race with ClientIdentity_Release, which would
              * cause us to return a proxy which is in the process of being
              * destroyed */
-            if (ClientIdentity_AddRef((IMultiQI *)&proxy->lpVtbl) != 0)
+            if (IMultiQI_AddRef(&proxy->IMultiQI_iface) != 0)
             {
                 *proxy_found = proxy;
                 found = TRUE;
@@ -1322,7 +1322,7 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt,
 
     /* release our reference to the proxy manager - the client/apartment
      * will hold on to the remaining reference for us */
-    if (proxy_manager) ClientIdentity_Release((IMultiQI*)&proxy_manager->lpVtbl);
+    if (proxy_manager) IMultiQI_Release(&proxy_manager->IMultiQI_iface);
 
     return hr;
 }
