@@ -86,8 +86,8 @@
 @ stub _vcomp_sections_init
 @ stub _vcomp_sections_next
 @ cdecl _vcomp_set_num_threads(long) vcomp._vcomp_set_num_threads
-@ stub _vcomp_single_begin
-@ stub _vcomp_single_end
+@ cdecl _vcomp_single_begin(long) vcomp._vcomp_single_begin
+@ cdecl _vcomp_single_end() vcomp._vcomp_single_end
 @ stub omp_destroy_lock
 @ stub omp_destroy_nest_lock
 @ cdecl omp_get_dynamic() vcomp.omp_get_dynamic
