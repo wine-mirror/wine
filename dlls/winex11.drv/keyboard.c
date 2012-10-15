@@ -1902,16 +1902,6 @@ static BOOL match_x11_keyboard_layout(HKL hkl)
         return (hkl == xHkl);
 }
 
-/**********************************************************************
- *		GetAsyncKeyState (X11DRV.@)
- */
-SHORT CDECL X11DRV_GetAsyncKeyState(INT key)
-{
-    /* Photoshop livelocks unless mouse events are included here */
-    X11DRV_MsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_KEY | QS_MOUSE, 0 );
-    return -1;
-}
-
 
 /***********************************************************************
  *		GetKeyboardLayout (X11DRV.@)

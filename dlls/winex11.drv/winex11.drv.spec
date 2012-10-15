@@ -6,7 +6,6 @@
 
 @ cdecl ActivateKeyboardLayout(long long) X11DRV_ActivateKeyboardLayout
 @ cdecl Beep() X11DRV_Beep
-@ cdecl GetAsyncKeyState(long) X11DRV_GetAsyncKeyState
 @ cdecl GetKeyNameText(long ptr long) X11DRV_GetKeyNameText
 @ cdecl GetKeyboardLayout(long) X11DRV_GetKeyboardLayout
 @ cdecl GetKeyboardLayoutName(ptr) X11DRV_GetKeyboardLayoutName
