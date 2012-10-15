@@ -64,7 +64,7 @@ static const char elem_test_str[] =
     "</body></html>";
 static const char elem_test2_str[] =
     "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
-    "<link id=\"linkid\" rel=\"stylesheet\" href=\"some.css\" type=\"text/css\"></head>"
+    "<link id=\"linkid\" rel=\"stylesheet\" href=\"about:blank\" type=\"text/css\"></head>"
     "<body><div id=\"divid\" emptyattr=\"\" onclick=\"parseInt();\"></div></body>"
     "</html>";
 
@@ -3515,6 +3515,37 @@ static void _link_put_type(unsigned line, IHTMLElement *elem, const char *v)
     _test_link_type(line, elem, v);
 }
 
+#define test_link_href(a,b) _test_link_href(__LINE__,a,b)
+static void _test_link_href(unsigned line, IHTMLElement *elem, const char *v)
+{
+    IHTMLLinkElement *link = _get_link_iface(line, (IUnknown*)elem);
+    BSTR href;
+    HRESULT hres;
+
+    hres = IHTMLLinkElement_get_href(link, &href);
+    ok_(__FILE__,line)(hres == S_OK, "get_href failed: %08x\n", hres);
+    if(v)
+        ok_(__FILE__,line)(!strcmp_wa(href, v), "href = %s, expected %s\n", wine_dbgstr_w(href), v);
+    else
+        ok_(__FILE__,line)(!href, "href = %s, expected NULL\n", wine_dbgstr_w(href));
+
+    IHTMLLinkElement_Release(link);
+}
+
+#define link_put_href(a,b) _link_put_href(__LINE__,a,b)
+static void _link_put_href(unsigned line, IHTMLElement *elem, const char *v)
+{
+    IHTMLLinkElement *link = _get_link_iface(line, (IUnknown*)elem);
+    BSTR str = a2bstr(v);
+    HRESULT hres;
+
+    hres = IHTMLLinkElement_put_href(link, str);
+    ok_(__FILE__,line)(hres == S_OK, "put_disabled failed: %08x\n", hres);
+    SysFreeString(str);
+    IHTMLLinkElement_Release(link);
+    _test_link_href(line, elem, v);
+}
+
 #define get_elem_doc(e) _get_elem_doc(__LINE__,e)
 static IHTMLDocument2 *_get_elem_doc(unsigned line, IUnknown *unk)
 {
@@ -6018,9 +6049,11 @@ static void test_elems2(IHTMLDocument2 *doc)
         test_link_disabled(elem, VARIANT_FALSE);
         test_link_rel(elem, "stylesheet");
         test_link_type(elem, "text/css");
+        test_link_href(elem, "about:blank");
         link_put_disabled(elem, VARIANT_TRUE);
         link_put_rel(elem, "prev");
         link_put_type(elem, "text/plain");
+        link_put_href(elem, "about:prev");
         IHTMLElement_Release(elem);
     }
 
