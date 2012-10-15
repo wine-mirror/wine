@@ -1009,7 +1009,7 @@ static void test_icons(void)
     ok(!SetClassLongPtrW(hwnd, GCLP_HICONSM, (LONG_PTR)hsmallnew),
                     "Previous hIconSm should be zero\n");
     ok(hsmallnew == (HICON)GetClassLongPtrW(hwnd, GCLP_HICONSM),
-                    "Should return explicitly assigned small icon");
+                    "Should return explicitly assigned small icon\n");
     ok(!GetIconInfo(hsmicon, &icinf), "Previous small icon should be destroyed\n");
 
     SetClassLongPtrW(hwnd, GCLP_HICONSM, 0);
