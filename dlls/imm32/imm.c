@@ -2351,6 +2351,8 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
                     0, data->immKbd->hIME, 0);
         SetWindowLongPtrW(data->immKbd->UIWnd, IMMGWL_IMC, (LONG_PTR)data);
     }
+    else if (fOpen)
+        SetWindowLongPtrW(data->immKbd->UIWnd, IMMGWL_IMC, (LONG_PTR)data);
 
     if (!fOpen != !data->IMC.fOpen)
     {
