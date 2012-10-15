@@ -660,42 +660,43 @@ BOOL WINPOS_RedrawIconTitle( HWND hWnd )
 /***********************************************************************
  *           WINPOS_ShowIconTitle
  */
-static BOOL WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow )
+static void WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow )
 {
-    if (!GetPropA( hwnd, "__wine_x11_managed" ))
+    WND *win = WIN_GetPtr( hwnd );
+    HWND title = 0;
+
+    TRACE("%p %i\n", hwnd, (bShow != 0) );
+
+    if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return;
+    if (win->rectWindow.left == -32000 || win->rectWindow.top == -32000)
     {
-        WND *win = WIN_GetPtr( hwnd );
-        HWND title = 0;
-
-	TRACE("%p %i\n", hwnd, (bShow != 0) );
-
-        if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return FALSE;
-        title = win->icon_title;
-        WIN_ReleasePtr( win );
-
-	if( bShow )
-        {
-            if (!title)
-            {
-                title = ICONTITLE_Create( hwnd );
-                if (!(win = WIN_GetPtr( hwnd )) || win == WND_OTHER_PROCESS)
-                {
-                    DestroyWindow( title );
-                    return FALSE;
-                }
-                win->icon_title = title;
-                WIN_ReleasePtr( win );
-            }
-            if (!IsWindowVisible(title))
-            {
-                SendMessageW( title, WM_SHOWWINDOW, TRUE, 0 );
-                SetWindowPos( title, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
-                              SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW );
-            }
-	}
-	else if (title) ShowWindow( title, SW_HIDE );
+        TRACE( "not showing title for hidden icon %p\n", hwnd );
+        bShow = FALSE;
     }
-    return FALSE;
+    else title = win->icon_title;
+    WIN_ReleasePtr( win );
+
+    if (bShow)
+    {
+        if (!title)
+        {
+            title = ICONTITLE_Create( hwnd );
+            if (!(win = WIN_GetPtr( hwnd )) || win == WND_OTHER_PROCESS)
+            {
+                DestroyWindow( title );
+                return;
+            }
+            win->icon_title = title;
+            WIN_ReleasePtr( win );
+        }
+        if (!IsWindowVisible(title))
+        {
+            SendMessageW( title, WM_SHOWWINDOW, TRUE, 0 );
+            SetWindowPos( title, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+                          SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW );
+        }
+    }
+    else if (title) ShowWindow( title, SW_HIDE );
 }
 
 /*******************************************************************
