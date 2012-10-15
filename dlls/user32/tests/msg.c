@@ -11031,11 +11031,6 @@ static void test_ShowWindow(void)
         }
         else
         {
-            if (wp.ptMinPosition.x != sw[i].wp_min.x || wp.ptMinPosition.y != sw[i].wp_min.y)
-            todo_wine
-            ok(wp.ptMinPosition.x == sw[i].wp_min.x && wp.ptMinPosition.y == sw[i].wp_min.y,
-               "expected %d,%d got %d,%d\n", sw[i].wp_min.x, sw[i].wp_min.y, wp.ptMinPosition.x, wp.ptMinPosition.y);
-            else
             ok(wp.ptMinPosition.x == sw[i].wp_min.x && wp.ptMinPosition.y == sw[i].wp_min.y,
                "expected %d,%d got %d,%d\n", sw[i].wp_min.x, sw[i].wp_min.y, wp.ptMinPosition.x, wp.ptMinPosition.y);
         }

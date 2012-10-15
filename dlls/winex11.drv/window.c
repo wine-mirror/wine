@@ -2175,7 +2175,7 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
     if (data->mapped && event_type != ReparentNotify)
     {
         if (((swp_flags & SWP_HIDEWINDOW) && !(new_style & WS_VISIBLE)) ||
-            (!event_type &&
+            (!event_type && !(new_style & WS_MINIMIZE) &&
              !is_window_rect_mapped( rectWindow ) && is_window_rect_mapped( &old_window_rect )))
         {
             release_win_data( data );
@@ -2241,9 +2241,18 @@ UINT CDECL X11DRV_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     struct x11drv_win_data *data = get_win_data( hwnd );
 
-    if (!data || !data->whole_window || !data->managed || !data->mapped || data->iconic) goto done;
-    if (style & WS_MINIMIZE) goto done;
+    if (!data || !data->whole_window || !data->managed) goto done;
     if (IsRectEmpty( rect )) goto done;
+    if (style & WS_MINIMIZE)
+    {
+        if (rect->left != -32000 || rect->top != -32000)
+        {
+            OffsetRect( rect, -32000 - rect->left, -32000 - rect->top );
+            swp &= ~(SWP_NOMOVE | SWP_NOCLIENTMOVE);
+        }
+        goto done;
+    }
+    if (!data->mapped || data->iconic) goto done;
 
     /* only fetch the new rectangle if the ShowWindow was a result of a window manager event */
 
