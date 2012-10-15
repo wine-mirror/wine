@@ -1070,8 +1070,29 @@ static HRESULT Global_Asc(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
 
 static HRESULT Global_Chr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    int c;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    hres = to_int(arg, &c);
+    if(FAILED(hres))
+        return hres;
+
+    if(c <= 0 || c >= 0x100) {
+        FIXME("invalid arg\n");
+        return E_FAIL;
+    }
+
+    if(res) {
+        WCHAR ch = c;
+
+        V_VT(res) = VT_BSTR;
+        V_BSTR(res) = SysAllocStringLen(&ch, 1);
+        if(!V_BSTR(res))
+            return E_OUTOFMEMORY;
+    }
+    return S_OK;
 }
 
 static HRESULT Global_AscW(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
