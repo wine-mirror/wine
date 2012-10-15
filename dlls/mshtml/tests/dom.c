@@ -64,6 +64,7 @@ static const char elem_test_str[] =
     "</body></html>";
 static const char elem_test2_str[] =
     "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
+    "<link id=\"linkid\" rel=\"stylesheet\" href=\"some.css\" type=\"text/css\"></head>"
     "<body><div id=\"divid\" emptyattr=\"\" onclick=\"parseInt();\"></div></body>"
     "</html>";
 
@@ -863,6 +864,17 @@ static IHTMLMetaElement *_get_metaelem_iface(unsigned line, IUnknown *unk)
 
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLMetaElement, (void**)&ret);
     ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLMetaElement: %08x\n", hres);
+    return ret;
+}
+
+#define get_link_iface(u) _get_link_iface(__LINE__,u)
+static IHTMLLinkElement *_get_link_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLLinkElement *ret;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLLinkElement, (void**)&ret);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLLinkElement: %08x\n", hres);
     return ret;
 }
 
@@ -3415,6 +3427,32 @@ static void _test_meta_httpequiv(unsigned line, IUnknown *unk, const char *exval
     IHTMLMetaElement_Release(meta);
 }
 
+#define test_link_disabled(a,b) _test_link_disabled(__LINE__,a,b)
+static void _test_link_disabled(unsigned line, IHTMLElement *elem, VARIANT_BOOL v)
+{
+    IHTMLLinkElement *link = _get_link_iface(line, (IUnknown*)elem);
+    VARIANT_BOOL b = 10;
+    HRESULT hres;
+
+    hres = IHTMLLinkElement_get_disabled(link, &b);
+    ok_(__FILE__,line)(hres == S_OK, "get_disabled failed: %08x\n", hres);
+    ok_(__FILE__,line)(b == v, "disabled = %x, expected %x\n", b, v);
+
+    IHTMLLinkElement_Release(link);
+}
+
+#define link_put_disabled(a,b) _link_put_disabled(__LINE__,a,b)
+static void _link_put_disabled(unsigned line, IHTMLElement *elem, VARIANT_BOOL v)
+{
+    IHTMLLinkElement *link = _get_link_iface(line, (IUnknown*)elem);
+    HRESULT hres;
+
+    hres = IHTMLLinkElement_put_disabled(link, v);
+    ok_(__FILE__,line)(hres == S_OK, "put_disabled failed: %08x\n", hres);
+    IHTMLLinkElement_Release(link);
+    _test_link_disabled(line, elem, v);
+}
+
 #define get_elem_doc(e) _get_elem_doc(__LINE__,e)
 static IHTMLDocument2 *_get_elem_doc(unsigned line, IUnknown *unk)
 {
@@ -5912,6 +5950,13 @@ static void test_elems2(IHTMLDocument2 *doc)
     };
 
     div = get_doc_elem_by_id(doc, "divid");
+
+    elem = get_elem_by_id(doc, "linkid", TRUE);
+    if(elem) {
+        test_link_disabled(elem, VARIANT_FALSE);
+        link_put_disabled(elem, VARIANT_TRUE);
+        IHTMLElement_Release(elem);
+    }
 
     test_elem_set_innerhtml((IUnknown*)div, "<div id=\"innerid\"></div>");
     elem2 = get_doc_elem_by_id(doc, "innerid");

@@ -1902,6 +1902,33 @@ interface nsIDOMHTMLAnchorElement : nsIDOMHTMLElement
 
 [
     object,
+    uuid(59ae3529-170a-41e4-8d7a-241dca6b5760),
+    local
+]
+interface nsIDOMHTMLLinkElement : nsIDOMHTMLElement
+{
+    nsresult GetDisabled(bool *aDisabled);
+    nsresult SetDisabled(bool aDisabled);
+    nsresult GetCharset(nsAString *aCharset);
+    nsresult SetCharset(const nsAString *aCharset);
+    nsresult GetHref(nsAString *aHref);
+    nsresult SetHref(const nsAString *aHref);
+    nsresult GetHreflang(nsAString *aHreflang);
+    nsresult SetHreflang(const nsAString *aHreflang);
+    nsresult GetMedia(nsAString *aMedia);
+    nsresult SetMedia(const nsAString *aMedia);
+    nsresult GetRel(nsAString *aRel);
+    nsresult SetRel(const nsAString *aRel);
+    nsresult GetRev(nsAString *aRev);
+    nsresult SetRev(const nsAString *aRev);
+    nsresult GetTarget(nsAString *aTarget);
+    nsresult SetTarget(const nsAString *aTarget);
+    nsresult GetType(nsAString *aType);
+    nsresult SetType(const nsAString *aType);
+}
+
+[
+    object,
     uuid(ae50de74-bc26-402e-85dc-a980f506b655),
     local
 ]

@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -34,6 +35,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 typedef struct {
     HTMLElement element;
     IHTMLLinkElement IHTMLLinkElement_iface;
+
+    nsIDOMHTMLLinkElement *nslink;
 } HTMLLinkElement;
 
 static inline HTMLLinkElement *impl_from_IHTMLLinkElement(IHTMLLinkElement *iface)
@@ -214,15 +217,28 @@ static HRESULT WINAPI HTMLLinkElement_get_styleSheet(IHTMLLinkElement *iface, IH
 static HRESULT WINAPI HTMLLinkElement_put_disabled(IHTMLLinkElement *iface, VARIANT_BOOL v)
 {
     HTMLLinkElement *This = impl_from_IHTMLLinkElement(iface);
-    FIXME("(%p)->(%x)\n", This, v);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%x)\n", This, v);
+
+    nsres = nsIDOMHTMLLinkElement_SetDisabled(This->nslink, !!v);
+    return SUCCEEDED(nsres) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI HTMLLinkElement_get_disabled(IHTMLLinkElement *iface, VARIANT_BOOL *p)
 {
     HTMLLinkElement *This = impl_from_IHTMLLinkElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    cpp_bool ret;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLLinkElement_GetDisabled(This->nslink, &ret);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    *p = ret ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLLinkElement_put_media(IHTMLLinkElement *iface, BSTR v)
@@ -289,19 +305,28 @@ static HRESULT HTMLLinkElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return S_OK;
 }
 
-static void HTMLLinkElement_destructor(HTMLDOMNode *iface)
+static HRESULT HTMLLinkElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
 {
     HTMLLinkElement *This = impl_from_HTMLDOMNode(iface);
+    return IHTMLLinkElement_put_disabled(&This->IHTMLLinkElement_iface, v);
+}
 
-    HTMLElement_destructor(&This->element.node);
+static HRESULT HTMLLinkElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOOL *p)
+{
+    HTMLLinkElement *This = impl_from_HTMLDOMNode(iface);
+    return IHTMLLinkElement_get_disabled(&This->IHTMLLinkElement_iface, p);
 }
 
 static const NodeImplVtbl HTMLLinkElementImplVtbl = {
     HTMLLinkElement_QI,
-    HTMLLinkElement_destructor,
+    HTMLElement_destructor,
     HTMLElement_clone,
     HTMLElement_handle_event,
-    HTMLElement_get_attr_col
+    HTMLElement_get_attr_col,
+    NULL,
+    NULL,
+    HTMLLinkElementImpl_put_disabled,
+    HTMLLinkElementImpl_get_disabled,
 };
 
 static const tid_t HTMLLinkElement_iface_tids[] = {
@@ -319,6 +344,7 @@ static dispex_static_data_t HTMLLinkElement_dispex = {
 HRESULT HTMLLinkElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
     HTMLLinkElement *ret;
+    nsresult nsres;
 
     ret = heap_alloc_zero(sizeof(*ret));
     if(!ret)
@@ -328,6 +354,12 @@ HRESULT HTMLLinkElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
     ret->element.node.vtbl = &HTMLLinkElementImplVtbl;
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLLinkElement_dispex);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLLinkElement, (void**)&ret->nslink);
+
+    /* Share nslink reference with nsnode */
+    assert(nsres == NS_OK && (nsIDOMNode*)ret->nslink == ret->element.node.nsnode);
+    nsIDOMNode_Release(ret->element.node.nsnode);
 
     *elem = &ret->element;
     return S_OK;
