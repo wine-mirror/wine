@@ -28,7 +28,7 @@ struct _jsstr_t {
 
 #define JSSTR_FLAG_NULLBSTR 1
 
-static unsigned inline jsstr_length(jsstr_t *str)
+static inline unsigned jsstr_length(jsstr_t *str)
 {
     return str->length_flags >> JSSTR_LENGTH_SHIFT;
 }
