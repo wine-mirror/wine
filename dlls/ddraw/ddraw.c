@@ -2772,35 +2772,10 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     copy_to_surfacedesc2(&desc2, DDSD);
     desc2.u4.ddpfPixelFormat.dwSize=sizeof(DDPIXELFORMAT); /* Just to be sure */
 
-    /* Get the video mode from WineD3D - we will need it */
     if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL)))
     {
         ERR("Failed to get display mode, hr %#x.\n", hr);
-
-        switch (ddraw->orig_bpp)
-        {
-            case 8:
-                mode.format_id = WINED3DFMT_P8_UINT;
-                break;
-
-            case 15:
-                mode.format_id = WINED3DFMT_B5G5R5X1_UNORM;
-                break;
-
-            case 16:
-                mode.format_id = WINED3DFMT_B5G6R5_UNORM;
-                break;
-
-            case 24:
-                mode.format_id = WINED3DFMT_B8G8R8_UNORM;
-                break;
-
-            case 32:
-                mode.format_id = WINED3DFMT_B8G8R8X8_UNORM;
-                break;
-        }
-        mode.width = ddraw->orig_width;
-        mode.height = ddraw->orig_height;
+        return hr;
     }
 
     /* No pixelformat given? Use the current screen format */
