@@ -816,7 +816,7 @@ static DWORD get_image_dib_info( dib_info *dib, BITMAPINFO *info,
     info->bmiHeader.biYPelsPerMeter = 0;
     info->bmiHeader.biClrImportant  = 0;
     info->bmiHeader.biWidth         = dib->width;
-    info->bmiHeader.biHeight        = dib->height - dib->rect.top;
+    info->bmiHeader.biHeight        = dib->height;
     info->bmiHeader.biBitCount      = dib->bit_count;
     info->bmiHeader.biSizeImage     = info->bmiHeader.biHeight * abs( dib->stride );
     if (dib->stride > 0) info->bmiHeader.biHeight = -info->bmiHeader.biHeight;
@@ -825,14 +825,13 @@ static DWORD get_image_dib_info( dib_info *dib, BITMAPINFO *info,
 
     if (bits)
     {
-        if (dib->stride < 0)
-            bits->ptr = (char *)dib->bits.ptr + (dib->rect.bottom - 1) * dib->stride;
-        else
-            bits->ptr = (char *)dib->bits.ptr + dib->rect.top * dib->stride;
+        bits->ptr = dib->bits.ptr;
         bits->is_copy = FALSE;
         bits->free = NULL;
+        if (dib->stride < 0) bits->ptr = (char *)bits->ptr + (dib->height - 1) * dib->stride;
         src->x += dib->rect.left;
-        offset_rect( &src->visrect, dib->rect.left, 0 );
+        src->y += dib->rect.top;
+        offset_rect( &src->visrect, dib->rect.left, dib->rect.top );
     }
     return ERROR_SUCCESS;
 }
