@@ -353,6 +353,12 @@ HWND WINAPI GetCapture(void)
 }
 
 
+static void check_for_events( UINT flags )
+{
+    if (USER_Driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, flags, 0 ) == WAIT_TIMEOUT)
+        flush_window_surfaces( TRUE );
+}
+
 /**********************************************************************
  *		GetAsyncKeyState (USER32.@)
  *
@@ -366,6 +372,8 @@ SHORT WINAPI DECLSPEC_HOTPATCH GetAsyncKeyState( INT key )
     SHORT ret;
 
     if (key < 0 || key >= 256) return 0;
+
+    check_for_events( QS_INPUT );
 
     if ((ret = USER_Driver->pGetAsyncKeyState( key )) == -1)
     {
@@ -400,7 +408,7 @@ SHORT WINAPI DECLSPEC_HOTPATCH GetAsyncKeyState( INT key )
  */
 DWORD WINAPI GetQueueStatus( UINT flags )
 {
-    DWORD ret = 0;
+    DWORD ret;
 
     if (flags & ~(QS_ALLINPUT | QS_ALLPOSTMESSAGE | QS_SMRESULT))
     {
@@ -408,8 +416,7 @@ DWORD WINAPI GetQueueStatus( UINT flags )
         return 0;
     }
 
-    /* check for pending X events */
-    USER_Driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, flags, 0 );
+    check_for_events( flags );
 
     SERVER_START_REQ( get_queue_status )
     {
@@ -427,10 +434,9 @@ DWORD WINAPI GetQueueStatus( UINT flags )
  */
 BOOL WINAPI GetInputState(void)
 {
-    DWORD ret = 0;
+    DWORD ret;
 
-    /* check for pending X events */
-    USER_Driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_INPUT, 0 );
+    check_for_events( QS_INPUT );
 
     SERVER_START_REQ( get_queue_status )
     {
