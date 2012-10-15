@@ -320,6 +320,7 @@ enum wined3d_shader_register_type
     WINED3DSPR_PREDICATE = 19,
     WINED3DSPR_IMMCONST,
     WINED3DSPR_CONSTBUFFER,
+    WINED3DSPR_PRIMID,
     WINED3DSPR_NULL,
     WINED3DSPR_RESOURCE,
 };
@@ -2678,6 +2679,7 @@ static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
         case WINED3DSPR_CONSTBOOL:  /* b# */
         case WINED3DSPR_LOOP:       /* aL */
         case WINED3DSPR_PREDICATE:  /* p0 */
+        case WINED3DSPR_PRIMID:     /* primID */
             return TRUE;
 
         case WINED3DSPR_MISCTYPE:
