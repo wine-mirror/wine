@@ -121,7 +121,7 @@ static HRESULT enum_key( HKEY root, const WCHAR *subkey, VARIANT *names, VARIANT
     return hr;
 }
 
-HRESULT reg_enum_key( IWbemClassObject *in, IWbemClassObject **out )
+HRESULT reg_enum_key( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT defkey, subkey, names, retval;
     IWbemClassObject *sig;
@@ -219,7 +219,7 @@ done:
     return hr;
 }
 
-HRESULT reg_enum_values( IWbemClassObject *in, IWbemClassObject **out )
+HRESULT reg_enum_values( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT defkey, subkey, names, types, retval;
     IWbemClassObject *sig;
@@ -291,7 +291,7 @@ done:
     return hr;
 }
 
-HRESULT reg_get_stringvalue( IWbemClassObject *in, IWbemClassObject **out )
+HRESULT reg_get_stringvalue( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT defkey, subkey, name, value, retval;
     IWbemClassObject *sig;

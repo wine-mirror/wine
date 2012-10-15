@@ -38,7 +38,7 @@ enum param_direction
 #define COL_FLAG_KEY     0x00020000
 #define COL_FLAG_METHOD  0x00040000
 
-typedef HRESULT (class_method)(IWbemClassObject *, IWbemClassObject **);
+typedef HRESULT (class_method)(IWbemClassObject *, IWbemClassObject *, IWbemClassObject **);
 
 struct column
 {
@@ -196,9 +196,9 @@ HRESULT create_class_object(const WCHAR *, IEnumWbemClassObject *, UINT,
                             struct record *, IWbemClassObject **) DECLSPEC_HIDDEN;
 HRESULT EnumWbemClassObject_create(IUnknown *, struct query *, LPVOID *) DECLSPEC_HIDDEN;
 
-HRESULT reg_enum_key(IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
-HRESULT reg_enum_values(IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
-HRESULT reg_get_stringvalue(IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
+HRESULT reg_enum_key(IWbemClassObject *, IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
+HRESULT reg_enum_values(IWbemClassObject *, IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
+HRESULT reg_get_stringvalue(IWbemClassObject *, IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
 
 static void *heap_alloc( size_t len ) __WINE_ALLOC_SIZE(1);
 static inline void *heap_alloc( size_t len )
