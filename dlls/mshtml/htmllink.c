@@ -161,15 +161,29 @@ static HRESULT WINAPI HTMLLinkElement_get_rev(IHTMLLinkElement *iface, BSTR *p)
 static HRESULT WINAPI HTMLLinkElement_put_type(IHTMLLinkElement *iface, BSTR v)
 {
     HTMLLinkElement *This = impl_from_IHTMLLinkElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString type_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&type_str, v);
+    nsres = nsIDOMHTMLLinkElement_SetType(This->nslink, &type_str);
+    nsAString_Finish(&type_str);
+
+    return NS_SUCCEEDED(nsres) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI HTMLLinkElement_get_type(IHTMLLinkElement *iface, BSTR *p)
 {
     HTMLLinkElement *This = impl_from_IHTMLLinkElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString type_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&type_str, NULL);
+    nsres = nsIDOMHTMLLinkElement_GetType(This->nslink, &type_str);
+    return return_nsstr(nsres, &type_str, p);
 }
 
 static HRESULT WINAPI HTMLLinkElement_get_readyState(IHTMLLinkElement *iface, BSTR *p)

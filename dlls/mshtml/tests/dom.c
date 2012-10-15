@@ -3484,6 +3484,37 @@ static void _link_put_rel(unsigned line, IHTMLElement *elem, const char *v)
     _test_link_rel(line, elem, v);
 }
 
+#define test_link_type(a,b) _test_link_type(__LINE__,a,b)
+static void _test_link_type(unsigned line, IHTMLElement *elem, const char *v)
+{
+    IHTMLLinkElement *link = _get_link_iface(line, (IUnknown*)elem);
+    BSTR type;
+    HRESULT hres;
+
+    hres = IHTMLLinkElement_get_type(link, &type);
+    ok_(__FILE__,line)(hres == S_OK, "get_type failed: %08x\n", hres);
+    if(v)
+        ok_(__FILE__,line)(!strcmp_wa(type, v), "type = %s, expected %s\n", wine_dbgstr_w(type), v);
+    else
+        ok_(__FILE__,line)(!type, "type = %s, expected NULL\n", wine_dbgstr_w(type));
+
+    IHTMLLinkElement_Release(link);
+}
+
+#define link_put_type(a,b) _link_put_type(__LINE__,a,b)
+static void _link_put_type(unsigned line, IHTMLElement *elem, const char *v)
+{
+    IHTMLLinkElement *link = _get_link_iface(line, (IUnknown*)elem);
+    BSTR str = a2bstr(v);
+    HRESULT hres;
+
+    hres = IHTMLLinkElement_put_type(link, str);
+    ok_(__FILE__,line)(hres == S_OK, "put_disabled failed: %08x\n", hres);
+    SysFreeString(str);
+    IHTMLLinkElement_Release(link);
+    _test_link_type(line, elem, v);
+}
+
 #define get_elem_doc(e) _get_elem_doc(__LINE__,e)
 static IHTMLDocument2 *_get_elem_doc(unsigned line, IUnknown *unk)
 {
@@ -5986,8 +6017,10 @@ static void test_elems2(IHTMLDocument2 *doc)
     if(elem) {
         test_link_disabled(elem, VARIANT_FALSE);
         test_link_rel(elem, "stylesheet");
+        test_link_type(elem, "text/css");
         link_put_disabled(elem, VARIANT_TRUE);
         link_put_rel(elem, "prev");
+        link_put_type(elem, "text/plain");
         IHTMLElement_Release(elem);
     }
 
