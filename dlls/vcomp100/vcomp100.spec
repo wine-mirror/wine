@@ -50,7 +50,7 @@
 @ stub _vcomp_atomic_xor_i2
 @ stub _vcomp_atomic_xor_i4
 @ stub _vcomp_atomic_xor_i8
-@ stub _vcomp_barrier
+@ cdecl _vcomp_barrier() vcomp._vcomp_barrier
 @ stub _vcomp_copyprivate_broadcast
 @ stub _vcomp_copyprivate_receive
 @ stub _vcomp_enter_critsect
