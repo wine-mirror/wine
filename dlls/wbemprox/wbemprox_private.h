@@ -196,8 +196,9 @@ HRESULT create_class_object(const WCHAR *, IEnumWbemClassObject *, UINT,
                             struct record *, IWbemClassObject **) DECLSPEC_HIDDEN;
 HRESULT EnumWbemClassObject_create(IUnknown *, struct query *, LPVOID *) DECLSPEC_HIDDEN;
 
-HRESULT reg_enumkey(IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
-HRESULT reg_enumvalues(IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
+HRESULT reg_enum_key(IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
+HRESULT reg_enum_values(IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
+HRESULT reg_get_stringvalue(IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
 
 static void *heap_alloc( size_t len ) __WINE_ALLOC_SIZE(1);
 static inline void *heap_alloc( size_t len )
@@ -234,9 +235,12 @@ static const WCHAR class_stdregprovW[] = {'S','t','d','R','e','g','P','r','o','v
 
 static const WCHAR method_enumkeyW[] = {'E','n','u','m','K','e','y',0};
 static const WCHAR method_enumvaluesW[] = {'E','n','u','m','V','a','l','u','e','s',0};
+static const WCHAR method_getstringvalueW[] = {'G','e','t','S','t','r','i','n','g','V','a','l','u','e',0};
 
 static const WCHAR param_defkeyW[] = {'h','D','e','f','K','e','y',0};
 static const WCHAR param_namesW[] = {'s','N','a','m','e','s',0};
 static const WCHAR param_returnvalueW[] = {'R','e','t','u','r','n','V','a','l','u','e',0};
 static const WCHAR param_subkeynameW[] = {'s','S','u','b','K','e','y','N','a','m','e',0};
 static const WCHAR param_typesW[] = {'T','y','p','e','s',0};
+static const WCHAR param_valueW[] = {'s','V','a','l','u','e',0};
+static const WCHAR param_valuenameW[] = {'s','V','a','l','u','e','N','a','m','e',0};

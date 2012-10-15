@@ -129,18 +129,22 @@ static void test_StdRegProv( IWbemServices *services )
 {
     static const WCHAR enumkeyW[] = {'E','n','u','m','K','e','y',0};
     static const WCHAR enumvaluesW[] = {'E','n','u','m','V','a','l','u','e','s',0};
+    static const WCHAR getstringvalueW[] = {'G','e','t','S','t','r','i','n','g','V','a','l','u','e',0};
     static const WCHAR stdregprovW[] = {'S','t','d','R','e','g','P','r','o','v',0};
     static const WCHAR defkeyW[] = {'h','D','e','f','K','e','y',0};
     static const WCHAR subkeynameW[] = {'s','S','u','b','K','e','y','N','a','m','e',0};
     static const WCHAR returnvalueW[] = {'R','e','t','u','r','n','V','a','l','u','e',0};
     static const WCHAR namesW[] = {'s','N','a','m','e','s',0};
     static const WCHAR typesW[] = {'T','y','p','e','s',0};
+    static const WCHAR valueW[] = {'s','V','a','l','u','e',0};
+    static const WCHAR valuenameW[] = {'s','V','a','l','u','e','N','a','m','e',0};
+    static const WCHAR programfilesW[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r',0};
     static const WCHAR windowsW[] =
         {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
          'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
     BSTR class = SysAllocString( stdregprovW ), method;
     IWbemClassObject *reg, *sig_in, *sig_out, *in, *out;
-    VARIANT defkey, subkey, retval, names, types;
+    VARIANT defkey, subkey, retval, names, types, value, valuename;
     CIMTYPE type;
     HRESULT hr;
 
@@ -240,6 +244,56 @@ static void test_StdRegProv( IWbemServices *services )
 
     VariantClear( &types );
     VariantClear( &names );
+    VariantClear( &subkey );
+    IWbemClassObject_Release( in );
+    IWbemClassObject_Release( out );
+    IWbemClassObject_Release( sig_in );
+    IWbemClassObject_Release( sig_out );
+
+    hr = IWbemClassObject_GetMethod( reg, getstringvalueW, 0, &sig_in, &sig_out );
+    ok( hr == S_OK, "failed to get GetStringValue method %08x\n", hr );
+
+    hr = IWbemClassObject_SpawnInstance( sig_in, 0, &in );
+    ok( hr == S_OK, "failed to spawn instance %08x\n", hr );
+
+    V_VT( &defkey ) = VT_I4;
+    V_I4( &defkey ) = 0x80000002;
+    hr = IWbemClassObject_Put( in, defkeyW, 0, &defkey, 0 );
+    ok( hr == S_OK, "failed to set root %08x\n", hr );
+
+    V_VT( &subkey ) = VT_BSTR;
+    V_BSTR( &subkey ) = SysAllocString( windowsW );
+    hr = IWbemClassObject_Put( in, subkeynameW, 0, &subkey, 0 );
+    ok( hr == S_OK, "failed to set subkey %08x\n", hr );
+
+    V_VT( &valuename ) = VT_BSTR;
+    V_BSTR( &valuename ) = SysAllocString( programfilesW );
+    hr = IWbemClassObject_Put( in, valuenameW, 0, &valuename, 0 );
+    ok( hr == S_OK, "failed to set value name %08x\n", hr );
+
+    out = NULL;
+    method = SysAllocString( getstringvalueW );
+    hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, in, &out, NULL );
+    ok( hr == S_OK, "failed to execute method %08x\n", hr );
+    SysFreeString( method );
+
+    type = 0xdeadbeef;
+    VariantInit( &retval );
+    hr = IWbemClassObject_Get( out, returnvalueW, 0, &retval, &type, NULL );
+    ok( hr == S_OK, "failed to get return value %08x\n", hr );
+    ok( V_VT( &retval ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &retval ) );
+    ok( !V_I4( &retval ), "unexpected error %u\n", V_I4( &retval ) );
+    ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
+
+    type = 0xdeadbeef;
+    VariantInit( &value );
+    hr = IWbemClassObject_Get( out, valueW, 0, &value, &type, NULL );
+    ok( hr == S_OK, "failed to get value %08x\n", hr );
+    ok( V_VT( &value ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &value ) );
+    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+
+    VariantClear( &value );
+    VariantClear( &valuename );
     VariantClear( &subkey );
     IWbemClassObject_Release( in );
     IWbemClassObject_Release( out );
