@@ -90,22 +90,22 @@
 @ stub _vcomp_single_end
 @ stub omp_destroy_lock
 @ stub omp_destroy_nest_lock
-@ stub omp_get_dynamic
-@ stub omp_get_max_threads
-@ stub omp_get_nested
+@ cdecl omp_get_dynamic() vcomp.omp_get_dynamic
+@ cdecl omp_get_max_threads() vcomp.omp_get_max_threads
+@ cdecl omp_get_nested() vcomp.omp_get_nested
 @ cdecl omp_get_num_procs() vcomp.omp_get_num_procs
-@ stub omp_get_num_threads
-@ stub omp_get_thread_num
+@ cdecl omp_get_num_threads() vcomp.omp_get_num_threads
+@ cdecl omp_get_thread_num() vcomp.omp_get_thread_num
 @ stub omp_get_wtick
 @ cdecl omp_get_wtime() vcomp.omp_get_wtime
 @ stub omp_in_parallel
 @ stub omp_init_lock
 @ stub omp_init_nest_lock
-@ stub omp_set_dynamic
+@ cdecl omp_set_dynamic(long) vcomp.omp_set_dynamic
 @ stub omp_set_lock
 @ stub omp_set_nest_lock
-@ stub omp_set_nested
-@ stub omp_set_num_threads
+@ cdecl omp_set_nested(long) vcomp.omp_set_nested
+@ cdecl omp_set_num_threads(long) vcomp.omp_set_num_threads
 @ stub omp_test_lock
 @ stub omp_test_nest_lock
 @ stub omp_unset_lock
