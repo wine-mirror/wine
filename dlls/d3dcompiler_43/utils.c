@@ -2468,7 +2468,7 @@ void free_instr(struct hlsl_ir_node *node)
     }
 }
 
-void free_function_decl(struct hlsl_ir_function_decl *func)
+static void free_function_decl(struct hlsl_ir_function_decl *func)
 {
     d3dcompiler_free((void *)func->semantic);
     d3dcompiler_free(func->parameters);
@@ -2481,7 +2481,7 @@ static void free_function_decl_rb(struct wine_rb_entry *entry, void *context)
     free_function_decl(WINE_RB_ENTRY_VALUE(entry, struct hlsl_ir_function_decl, entry));
 }
 
-void free_function(struct hlsl_ir_function *func)
+static void free_function(struct hlsl_ir_function *func)
 {
     wine_rb_destroy(&func->overloads, free_function_decl_rb, NULL);
     d3dcompiler_free((void *)func->name);
