@@ -493,13 +493,14 @@ static HRESULT WINAPI IDirectSoundCaptureBufferImpl_Start(IDirectSoundCaptureBuf
 
     EnterCriticalSection(&(This->device->lock));
 
-    This->flags = dwFlags;
-    TRACE("old This->device->state=%s\n",captureStateString[This->device->state]);
     if (This->device->state == STATE_STOPPED)
         This->device->state = STATE_STARTING;
     else if (This->device->state == STATE_STOPPING)
         This->device->state = STATE_CAPTURING;
+    else
+        goto out;
     TRACE("new This->device->state=%s\n",captureStateString[This->device->state]);
+    This->flags = dwFlags;
 
     if (This->device->buffer)
         FillMemory(This->device->buffer, This->device->buflen, (This->device->pwfx->wBitsPerSample == 8) ? 128 : 0);
@@ -511,6 +512,7 @@ static HRESULT WINAPI IDirectSoundCaptureBufferImpl_Start(IDirectSoundCaptureBuf
         return hres;
     }
 
+out:
     LeaveCriticalSection(&This->device->lock);
 
     TRACE("returning DS_OK\n");

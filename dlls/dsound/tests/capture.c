@@ -394,15 +394,18 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
     ok(ref==0,"IDirectSoundNotify_Release(): has %d references, should have "
        "0\n",ref);
 
+    rc=IDirectSoundCaptureBuffer_Start(dscbo,DSCBSTART_LOOPING);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Start() failed: %08x\n", rc);
+
+    rc=IDirectSoundCaptureBuffer_Start(dscbo,0);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Start() failed: %08x\n", rc);
+
+    rc=IDirectSoundCaptureBuffer_GetStatus(dscbo,&status);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetStatus() failed: %08x\n", rc);
+    ok(status==(DSCBSTATUS_CAPTURING|DSCBSTATUS_LOOPING),
+       "GetStatus: bad status: %x\n",status);
+
     if (record) {
-	rc=IDirectSoundCaptureBuffer_Start(dscbo,DSCBSTART_LOOPING);
-	ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Start() failed: %08x\n", rc);
-
-	rc=IDirectSoundCaptureBuffer_GetStatus(dscbo,&status);
-	ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetStatus() failed: %08x\n", rc);
-	ok(status==(DSCBSTATUS_CAPTURING|DSCBSTATUS_LOOPING),
-           "GetStatus: bad status: %x\n",status);
-
 	/* wait for the notifications */
 	for (i = 0; i < (NOTIFICATIONS * 2); i++) {
 	    rc=WaitForMultipleObjects(NOTIFICATIONS,state.event,FALSE,3000);
@@ -417,9 +420,12 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
 		break;
 	}
 
-	rc=IDirectSoundCaptureBuffer_Stop(dscbo);
-	ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Stop() failed: %08x\n", rc);
     }
+    rc=IDirectSoundCaptureBuffer_Stop(dscbo);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Stop() failed: %08x\n", rc);
+
+    rc=IDirectSoundCaptureBuffer_Stop(dscbo);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Stop() failed: %08x\n", rc);
 }
 
 static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
