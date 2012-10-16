@@ -594,7 +594,7 @@ static void WCMD_dir_trailer(WCHAR drive) {
  *
  */
 
-void WCMD_directory (WCHAR *cmd)
+void WCMD_directory (WCHAR *args)
 {
   WCHAR path[MAX_PATH], cwd[MAX_PATH];
   DWORD status;
@@ -602,7 +602,7 @@ void WCMD_directory (WCHAR *cmd)
   WCHAR *p;
   WCHAR string[MAXSTRING];
   int   argno         = 0;
-  WCHAR *argN          = cmd;
+  WCHAR *argN          = args;
   WCHAR  lastDrive;
   BOOL  trailerReqd = FALSE;
   DIRECTORY_STACK *fullParms = NULL;
@@ -794,7 +794,7 @@ void WCMD_directory (WCHAR *cmd)
   }
 
   argno         = 0;
-  argN          = cmd;
+  argN          = args;
   GetCurrentDirectoryW(MAX_PATH, cwd);
   strcatW(cwd, slashW);
 
@@ -803,7 +803,7 @@ void WCMD_directory (WCHAR *cmd)
   prevEntry = NULL;
   while (argN) {
     WCHAR fullname[MAXSTRING];
-    WCHAR *thisArg = WCMD_parameter(cmd, argno++, &argN, NULL, FALSE, FALSE);
+    WCHAR *thisArg = WCMD_parameter(args, argno++, &argN, NULL, FALSE, FALSE);
     if (argN && argN[0] != '/') {
 
       WINE_TRACE("Found parm '%s'\n", wine_dbgstr_w(thisArg));
