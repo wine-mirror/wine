@@ -331,7 +331,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetFilter(IAMMultiMediaStream* ifa
     return hr;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream* iface, IUnknown* pStreamObject, const MSPID* PurposeId,
+static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream* iface, IUnknown* stream_object, const MSPID* PurposeId,
                                           DWORD dwFlags, IMediaStream** ppNewStream)
 {
     IAMMultiMediaStreamImpl *This = impl_from_IAMMultiMediaStream(iface);
@@ -339,10 +339,13 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
     IMediaStream* pStream;
     IMediaStream** pNewStreams;
 
-    TRACE("(%p/%p)->(%p,%s,%x,%p)\n", This, iface, pStreamObject, debugstr_guid(PurposeId), dwFlags, ppNewStream);
+    TRACE("(%p/%p)->(%p,%s,%x,%p)\n", This, iface, stream_object, debugstr_guid(PurposeId), dwFlags, ppNewStream);
 
     if (!IsEqualGUID(PurposeId, &MSPID_PrimaryVideo) && !IsEqualGUID(PurposeId, &MSPID_PrimaryAudio))
         return MS_E_PURPOSEID;
+
+    if (stream_object)
+        FIXME("Specifying a stream object in params is not yet supported\n");
 
     if (dwFlags & AMMSF_ADDDEFAULTRENDERER)
     {
