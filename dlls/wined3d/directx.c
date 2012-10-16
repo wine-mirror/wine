@@ -2136,7 +2136,7 @@ static enum wined3d_pci_device select_card_fallback_nvidia(const struct wined3d_
     if (d3d_level >= 10)
         return CARD_NVIDIA_GEFORCE_8800GTX;
     if (d3d_level >= 9 && gl_info->supported[NV_VERTEX_PROGRAM3])
-        return CARD_NVIDIA_GEFORCE_6200;
+        return CARD_NVIDIA_GEFORCE_6800;
     if (d3d_level >= 9)
         return CARD_NVIDIA_GEFORCEFX_5800;
     if (d3d_level >= 8)
