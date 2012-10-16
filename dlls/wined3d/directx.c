@@ -2152,7 +2152,7 @@ static enum wined3d_pci_device select_card_fallback_amd(const struct wined3d_gl_
 {
     UINT d3d_level = d3d_level_from_gl_info(gl_info);
     if (d3d_level >= 10)
-        return CARD_AMD_RADEON_HD2600;
+        return CARD_AMD_RADEON_HD2900;
     if (d3d_level >= 9)
         return CARD_AMD_RADEON_9500;
     if (d3d_level >= 8)
