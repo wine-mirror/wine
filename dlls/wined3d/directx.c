@@ -2164,6 +2164,9 @@ static enum wined3d_pci_device select_card_fallback_amd(const struct wined3d_gl_
 
 static enum wined3d_pci_device select_card_fallback_intel(const struct wined3d_gl_info *gl_info)
 {
+    UINT d3d_level = d3d_level_from_gl_info(gl_info);
+    if (d3d_level >= 10)
+        return CARD_INTEL_G45;
     return CARD_INTEL_915G;
 }
 
