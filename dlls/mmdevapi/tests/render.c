@@ -2094,6 +2094,8 @@ static void test_worst_case(void)
 
             hr = IAudioRenderClient_ReleaseBuffer(arc, fragment, AUDCLNT_BUFFERFLAGS_SILENT);
             ok(hr == S_OK, "ReleaseBuffer failed: %08x\n", hr);
+            if(hr == S_OK)
+                sum += fragment;
         }
 
         hr = IAudioClient_Start(ac);
