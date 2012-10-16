@@ -1919,6 +1919,13 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         SetLastError( ERROR_TOO_MANY_OPEN_FILES );
         return FALSE;
     }
+#ifdef SO_PASSCRED
+    else
+    {
+        int enable = 1;
+        setsockopt( socketfd[0], SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable) );
+    }
+#endif
 
     if (exec_only)  /* things are much simpler in this case */
     {

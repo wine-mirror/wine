@@ -881,6 +881,13 @@ static int server_connect(void)
         addr.sun_len = slen;
 #endif
         if ((s = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );
+#ifdef SO_PASSCRED
+        else
+        {
+            int enable = 1;
+            setsockopt( s, SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable) );
+        }
+#endif
         if (connect( s, (struct sockaddr *)&addr, slen ) != -1)
         {
             /* switch back to the starting directory */
@@ -1004,18 +1011,15 @@ void server_init_process(void)
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
 
     /* receive the first thread request fd on the main socket */
+    ntdll_get_thread_data()->request_fd = receive_fd( &version );
+
 #ifdef SO_PASSCRED
-    if (server_pid == -1)
+    /* now that we hopefully received the server_pid, disable SO_PASSCRED */
     {
-        int enable = 1;
-        setsockopt( fd_socket, SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable) );
-        ntdll_get_thread_data()->request_fd = receive_fd( &version );
-        enable = 0;
+        int enable = 0;
         setsockopt( fd_socket, SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable) );
     }
-    else
 #endif
-    ntdll_get_thread_data()->request_fd = receive_fd( &version );
 
     if (version != SERVER_PROTOCOL_VERSION)
         server_protocol_error( "version mismatch %d/%d.\n"
