@@ -138,8 +138,9 @@ static HRESULT WINAPI HTMLScriptElement_put_src(IHTMLScriptElement *iface, BSTR 
 
     nsres = nsIDOMHTMLScriptElement_GetParentNode(This->nsscript, &parent);
     if(NS_FAILED(nsres) || !parent) {
-        FIXME("No parent, not supported detached elements\n");
-        return E_NOTIMPL;
+        TRACE("No parent, not executing\n");
+        This->parse_on_bind = TRUE;
+        return S_OK;
     }
 
     nsIDOMNode_Release(parent);

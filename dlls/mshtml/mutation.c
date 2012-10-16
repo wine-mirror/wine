@@ -629,6 +629,7 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
     HTMLDocumentNode *This = impl_from_nsIDocumentObserver(iface);
     nsIDOMHTMLIFrameElement *nsiframe;
     nsIDOMHTMLFrameElement *nsframe;
+    nsIDOMHTMLScriptElement *nsscript;
     nsIDOMComment *nscomment;
     nsIDOMElement *nselem;
     nsresult nsres;
@@ -666,6 +667,24 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
         add_script_runner(This, run_bind_to_tree, (nsISupports*)nsframe, NULL);
         nsIDOMHTMLFrameElement_Release(nsframe);
         return;
+    }
+
+    nsres = nsIContent_QueryInterface(aContent, &IID_nsIDOMHTMLScriptElement, (void**)&nsscript);
+    if(NS_SUCCEEDED(nsres)) {
+        HTMLScriptElement *script_elem;
+        HRESULT hres;
+
+        TRACE("script element\n");
+
+        hres = script_elem_from_nsscript(This, nsscript, &script_elem);
+        nsIDOMHTMLScriptElement_Release(nsscript);
+        if(FAILED(hres))
+            return;
+
+        if(script_elem->parse_on_bind)
+            add_script_runner(This, run_insert_script, (nsISupports*)nsscript, NULL);
+
+        IHTMLScriptElement_Release(&script_elem->IHTMLScriptElement_iface);
     }
 }
 
