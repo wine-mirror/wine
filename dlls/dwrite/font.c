@@ -31,6 +31,40 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #include "pshpack2.h"
 typedef struct
 {
+    ULONG version;
+    ULONG revision;
+    ULONG checksumadj;
+    ULONG magic;
+    USHORT flags;
+    USHORT unitsPerEm;
+    ULONGLONG created;
+    ULONGLONG modified;
+    SHORT xMin;
+    SHORT yMin;
+    SHORT xMax;
+    SHORT yMax;
+    USHORT macStyle;
+    USHORT lowestRecPPEM;
+    SHORT direction_hint;
+    SHORT index_format;
+    SHORT glyphdata_format;
+} TT_HEAD;
+
+typedef struct
+{
+    ULONG Version;
+    ULONG italicAngle;
+    SHORT underlinePosition;
+    SHORT underlineThickness;
+    ULONG fixed_pitch;
+    ULONG minmemType42;
+    ULONG maxmemType42;
+    ULONG minmemType1;
+    ULONG maxmemType1;
+} TT_POST;
+
+typedef struct
+{
     USHORT version;
     SHORT xAvgCharWidth;
     USHORT usWeightClass;
@@ -88,7 +122,10 @@ typedef struct
 #define MS_MAKE_TAG(ch0, ch1, ch2, ch3) \
                     ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
                     ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
-#define MS_OS2_TAG MS_MAKE_TAG('O','S','/','2')
+
+#define MS_HEAD_TAG MS_MAKE_TAG('h','e','a','d')
+#define MS_OS2_TAG  MS_MAKE_TAG('O','S','/','2')
+#define MS_POST_TAG MS_MAKE_TAG('p','o','s','t')
 
 struct dwrite_fontfamily {
     IDWriteFontFamily IDWriteFontFamily_iface;
@@ -106,6 +143,7 @@ struct dwrite_font {
     DWRITE_FONT_STYLE style;
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_WEIGHT weight;
+    DWRITE_FONT_METRICS metrics;
 };
 
 struct dwrite_fontface {
@@ -423,7 +461,9 @@ static DWRITE_FONT_SIMULATIONS WINAPI dwritefont_GetSimulations(IDWriteFont *ifa
 static void WINAPI dwritefont_GetMetrics(IDWriteFont *iface, DWRITE_FONT_METRICS *metrics)
 {
     struct dwrite_font *This = impl_from_IDWriteFont(iface);
-    FIXME("(%p)->(%p): stub\n", This, metrics);
+
+    TRACE("(%p)->(%p)\n", This, metrics);
+    *metrics = This->metrics;
 }
 
 static HRESULT WINAPI dwritefont_HasCharacter(IDWriteFont *iface, UINT32 value, BOOL *exists)
@@ -595,11 +635,15 @@ static HRESULT create_fontfamily(const WCHAR *familyname, IDWriteFontFamily **fa
 static void get_font_properties(struct dwrite_font *font, HDC hdc)
 {
     TT_OS2_V2 tt_os2;
+    TT_HEAD tt_head;
+    TT_POST tt_post;
     LONG size;
 
     /* default stretch and weight to normal */
     font->stretch = DWRITE_FONT_STRETCH_NORMAL;
     font->weight = DWRITE_FONT_WEIGHT_NORMAL;
+
+    memset(&font->metrics, 0, sizeof(font->metrics));
 
     size = GetFontData(hdc, MS_OS2_TAG, 0, NULL, 0);
     if (size != GDI_ERROR)
@@ -615,6 +659,27 @@ static void get_font_properties(struct dwrite_font *font, HDC hdc)
 
         font->weight = GET_BE_WORD(tt_os2.usWeightClass);
         TRACE("stretch=%d, weight=%d\n", font->stretch, font->weight);
+
+        font->metrics.ascent    = GET_BE_WORD(tt_os2.sTypoAscender);
+        font->metrics.descent   = GET_BE_WORD(tt_os2.sTypoDescender);
+        font->metrics.lineGap   = GET_BE_WORD(tt_os2.sTypoLineGap);
+        font->metrics.capHeight = GET_BE_WORD(tt_os2.sCapHeight);
+        font->metrics.xHeight   = GET_BE_WORD(tt_os2.sxHeight);
+        font->metrics.strikethroughPosition  = GET_BE_WORD(tt_os2.yStrikeoutPosition);
+        font->metrics.strikethroughThickness = GET_BE_WORD(tt_os2.yStrikeoutSize);
+    }
+
+    memset(&tt_head, 0, sizeof(tt_head));
+    if (GetFontData(hdc, MS_HEAD_TAG, 0, &tt_head, sizeof(tt_head)) != GDI_ERROR)
+    {
+        font->metrics.designUnitsPerEm = GET_BE_WORD(tt_head.unitsPerEm);
+    }
+
+    memset(&tt_post, 0, sizeof(tt_post));
+    if (GetFontData(hdc, MS_POST_TAG, 0, &tt_post, sizeof(tt_post)) != GDI_ERROR)
+    {
+        font->metrics.underlinePosition = GET_BE_WORD(tt_post.underlinePosition);
+        font->metrics.underlineThickness = GET_BE_WORD(tt_post.underlineThickness);
     }
 }
 

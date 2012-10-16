@@ -40,10 +40,11 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
 
 static IDWriteFactory *factory;
 
+static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
+
 static void test_CreateFontFromLOGFONT(void)
 {
-    static const WCHAR arialW[] = {'A','r','i','a','l',0};
-    static const WCHAR arialspW[] = {'A','r','i','a','l',' ',0};
+    static const WCHAR tahomaspW[] = {'T','a','h','o','m','a',' ',0};
     static const WCHAR blahW[]  = {'B','l','a','h','!',0};
     IDWriteGdiInterop *interop;
     DWRITE_FONT_WEIGHT weight;
@@ -65,9 +66,13 @@ static void test_CreateFontFromLOGFONT(void)
         {950, DWRITE_FONT_WEIGHT_BOLD},
         {960, DWRITE_FONT_WEIGHT_BOLD},
     };
+    OUTLINETEXTMETRICW otm;
     HRESULT hr;
     BOOL ret;
+    HDC hdc;
+    HFONT hfont;
     int i;
+    UINT r;
 
     hr = IDWriteFactory_GetGdiInterop(factory, &interop);
     EXPECT_HR(hr, S_OK);
@@ -84,18 +89,30 @@ if (0)
     logfont.lfWidth  = 12;
     logfont.lfWeight = FW_NORMAL;
     logfont.lfItalic = 1;
-    lstrcpyW(logfont.lfFaceName, arialW);
+    lstrcpyW(logfont.lfFaceName, tahomaW);
 
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
     EXPECT_HR(hr, S_OK);
+
+    hfont = CreateFontIndirectW(&logfont);
+    hdc = CreateCompatibleDC(0);
+    SelectObject(hdc, hfont);
+
+    otm.otmSize = sizeof(otm);
+    r = GetOutlineTextMetricsW(hdc, otm.otmSize, &otm);
+    ok(r, "got %d\n", r);
+    DeleteDC(hdc);
+    DeleteObject(hfont);
 
     /* now check properties */
     weight = IDWriteFont_GetWeight(font);
     ok(weight == DWRITE_FONT_WEIGHT_NORMAL, "got %d\n", weight);
 
     style = IDWriteFont_GetStyle(font);
-    ok(style == DWRITE_FONT_STYLE_ITALIC, "got %d\n", style);
-
+todo_wine {
+    ok(style == DWRITE_FONT_STYLE_OBLIQUE, "got %d\n", style);
+    ok(otm.otmfsSelection == 1, "got 0x%08x\n", otm.otmfsSelection);
+}
     ret = IDWriteFont_IsSymbolFont(font);
     ok(!ret, "got %d\n", ret);
 
@@ -108,7 +125,7 @@ if (0)
         logfont.lfHeight = 12;
         logfont.lfWidth  = 12;
         logfont.lfWeight = weights[i][0];
-        lstrcpyW(logfont.lfFaceName, arialW);
+        lstrcpyW(logfont.lfFaceName, tahomaW);
 
         hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
         EXPECT_HR(hr, S_OK);
@@ -124,7 +141,7 @@ if (0)
     logfont.lfHeight = 12;
     logfont.lfWidth  = 12;
     logfont.lfWeight = 550;
-    lstrcpyW(logfont.lfFaceName, arialW);
+    lstrcpyW(logfont.lfFaceName, tahomaW);
 
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
     EXPECT_HR(hr, S_OK);
@@ -153,7 +170,7 @@ todo_wine {
     logfont.lfHeight = 12;
     logfont.lfWidth  = 12;
     logfont.lfWeight = FW_NORMAL;
-    lstrcpyW(logfont.lfFaceName, arialspW);
+    lstrcpyW(logfont.lfFaceName, tahomaspW);
 
     font = (void*)0xdeadbeef;
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
@@ -264,7 +281,6 @@ if (0) /* crashes on native */
 
 static void test_GetFontFamily(void)
 {
-    static const WCHAR arialW[] = {'A','r','i','a','l',0};
     IDWriteFontFamily *family, *family2;
     IDWriteGdiInterop *interop;
     IDWriteFont *font;
@@ -279,7 +295,7 @@ static void test_GetFontFamily(void)
     logfont.lfWidth  = 12;
     logfont.lfWeight = FW_NORMAL;
     logfont.lfItalic = 1;
-    lstrcpyW(logfont.lfFaceName, arialW);
+    lstrcpyW(logfont.lfFaceName, tahomaW);
 
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
     EXPECT_HR(hr, S_OK);
@@ -311,7 +327,6 @@ if (0) /* crashes on native */
 
 static void test_GetFamilyNames(void)
 {
-    static const WCHAR arialW[] = {'A','r','i','a','l',0};
     IDWriteFontFamily *family;
     IDWriteLocalizedStrings *names, *names2;
     IDWriteGdiInterop *interop;
@@ -329,7 +344,7 @@ static void test_GetFamilyNames(void)
     logfont.lfWidth  = 12;
     logfont.lfWeight = FW_NORMAL;
     logfont.lfItalic = 1;
-    lstrcpyW(logfont.lfFaceName, arialW);
+    lstrcpyW(logfont.lfFaceName, tahomaW);
 
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
     EXPECT_HR(hr, S_OK);
@@ -404,7 +419,6 @@ if (0)
 
 static void test_CreateFontFace(void)
 {
-    static const WCHAR arialW[] = {'A','r','i','a','l',0};
     IDWriteFontFace *fontface, *fontface2;
     IDWriteGdiInterop *interop;
     IDWriteFont *font;
@@ -419,7 +433,7 @@ static void test_CreateFontFace(void)
     logfont.lfWidth  = 12;
     logfont.lfWeight = FW_NORMAL;
     logfont.lfItalic = 1;
-    lstrcpyW(logfont.lfFaceName, arialW);
+    lstrcpyW(logfont.lfFaceName, tahomaW);
 
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -452,6 +466,63 @@ if (0) /* crashes on native */
     IDWriteGdiInterop_Release(interop);
 }
 
+static void test_GetMetrics(void)
+{
+    IDWriteGdiInterop *interop;
+    DWRITE_FONT_METRICS metrics;
+    OUTLINETEXTMETRICW otm;
+    IDWriteFont *font;
+    LOGFONTW logfont;
+    HRESULT hr;
+    HDC hdc;
+    HFONT hfont;
+    int ret;
+
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    EXPECT_HR(hr, S_OK);
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfWeight = FW_NORMAL;
+    logfont.lfItalic = 1;
+    lstrcpyW(logfont.lfFaceName, tahomaW);
+
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hfont = CreateFontIndirectW(&logfont);
+    hdc = CreateCompatibleDC(0);
+    SelectObject(hdc, hfont);
+
+    otm.otmSize = sizeof(otm);
+    ret = GetOutlineTextMetricsW(hdc, otm.otmSize, &otm);
+    ok(ret, "got %d\n", ret);
+    DeleteDC(hdc);
+    DeleteObject(hfont);
+
+if (0) /* crashes on native */
+    IDWriteFont_GetMetrics(font, NULL);
+
+    memset(&metrics, 0, sizeof(metrics));
+    IDWriteFont_GetMetrics(font, &metrics);
+
+    ok(metrics.designUnitsPerEm != 0, "designUnitsPerEm %u\n", metrics.designUnitsPerEm);
+    ok(metrics.ascent != 0, "ascent %u\n", metrics.ascent);
+    ok(metrics.descent != 0, "descent %u\n", metrics.descent);
+todo_wine
+    ok(metrics.lineGap == 0, "lineGap %d\n", metrics.lineGap);
+    ok(metrics.capHeight, "capHeight %u\n", metrics.capHeight);
+    ok(metrics.xHeight != 0, "xHeight %u\n", metrics.xHeight);
+    ok(metrics.underlinePosition < 0, "underlinePosition %d\n", metrics.underlinePosition);
+    ok(metrics.underlineThickness != 0, "underlineThickness %u\n", metrics.underlineThickness);
+    ok(metrics.strikethroughPosition > 0, "strikethroughPosition %d\n", metrics.strikethroughPosition);
+    ok(metrics.strikethroughThickness != 0, "strikethroughThickness %u\n", metrics.strikethroughThickness);
+
+    IDWriteFont_Release(font);
+    IDWriteGdiInterop_Release(interop);
+}
+
 START_TEST(font)
 {
     HRESULT hr;
@@ -469,6 +540,7 @@ START_TEST(font)
     test_GetFontFamily();
     test_GetFamilyNames();
     test_CreateFontFace();
+    test_GetMetrics();
 
     IDWriteFactory_Release(factory);
 }
