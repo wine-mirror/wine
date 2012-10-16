@@ -27,6 +27,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
+static const struct ddraw *exclusive_ddraw;
+
 /* Device identifier. Don't relay it to WineD3D */
 static const DDDEVICEIDENTIFIER2 deviceidentifier =
 {
@@ -967,6 +969,11 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
     if(cooplevel & DDSCL_FPUSETUP)
         WARN("(%p) Unhandled flag DDSCL_FPUSETUP, harmless\n", This);
 
+    if (cooplevel & DDSCL_EXCLUSIVE)
+        exclusive_ddraw = This;
+    else if (exclusive_ddraw == This)
+        exclusive_ddraw = NULL;
+
     /* Store the cooperative_level */
     This->cooperative_level = cooplevel;
     TRACE("SetCooperativeLevel retuning DD_OK\n");
@@ -1044,6 +1051,12 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
 
     wined3d_mutex_lock();
 
+    if (exclusive_ddraw && exclusive_ddraw != ddraw)
+    {
+        wined3d_mutex_unlock();
+        return DDERR_NOEXCLUSIVEMODE;
+    }
+
     if (!width || !height)
     {
         /* It looks like Need for Speed Porsche Unleashed expects DD_OK here. */
@@ -1061,12 +1074,6 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
         default: format = WINED3DFMT_UNKNOWN;        break;
     }
 
-    /* Check the exclusive mode.
-     * if(!(ddraw->cooperative_level & DDSCL_EXCLUSIVE))
-     *     return DDERR_NOEXCLUSIVEMODE;
-     * This is WRONG. Don't know if the SDK is completely wrong and if there
-     * are any conditions when DDERR_NOEXCLUSIVE is returned, but Half-Life
-     * 1.1.1.1 (Steam version) depends on this. */
     mode.width = width;
     mode.height = height;
     mode.refresh_rate = refresh_rate;
@@ -1147,6 +1154,12 @@ static HRESULT WINAPI ddraw7_RestoreDisplayMode(IDirectDraw7 *iface)
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
+
+    if (exclusive_ddraw && exclusive_ddraw != ddraw)
+    {
+        wined3d_mutex_unlock();
+        return DDERR_NOEXCLUSIVEMODE;
+    }
 
     hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &ddraw->original_mode);
 
