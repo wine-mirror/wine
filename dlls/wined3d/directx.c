@@ -1729,6 +1729,7 @@ static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_in
             {"HD 5570", CARD_AMD_RADEON_HD5600},    /* Radeon EG REDWOOD PRO mapped to HD5600 series */
             {"HD 5550", CARD_AMD_RADEON_HD5600},    /* Radeon EG REDWOOD LE mapped to HD5600 series */
             {"HD 5450", CARD_AMD_RADEON_HD5400},    /* Radeon EG CEDAR PRO */
+            {"HD 5000", CARD_AMD_RADEON_HD5600},    /* Defaulting to HD 5600 */
             /* R700 */
             {"HD 4890", CARD_AMD_RADEON_HD4800},    /* Radeon RV790 */
             {"HD 4870", CARD_AMD_RADEON_HD4800},    /* Radeon RV770 */
