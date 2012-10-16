@@ -79,7 +79,6 @@ struct ddraw
 
     /* DirectDraw things, which are not handled by WineD3D */
     DWORD                   cooperative_level;
-    struct wined3d_display_mode original_mode;
 
     /* D3D things */
     HWND                    d3d_window;

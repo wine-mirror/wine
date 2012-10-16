@@ -27,7 +27,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
+static struct wined3d_display_mode original_mode;
 static const struct ddraw *exclusive_ddraw;
+static BOOL restore_mode;
 
 /* Device identifier. Don't relay it to WineD3D */
 static const DDDEVICEIDENTIFIER2 deviceidentifier =
@@ -1064,8 +1066,8 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
         return DD_OK;
     }
 
-    if (!ddraw->restore_mode && FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d,
-            WINED3DADAPTER_DEFAULT, &ddraw->original_mode, NULL)))
+    if (!restore_mode && FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d,
+            WINED3DADAPTER_DEFAULT, &original_mode, NULL)))
         ERR("Failed to get current display mode, hr %#x.\n", hr);
 
     switch (bpp)
@@ -1088,7 +1090,10 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
      * can't be changed if a surface is locked or some drawing is in progress. */
     /* TODO: Lose the primary surface. */
     if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
+    {
         ddraw->restore_mode = TRUE;
+        restore_mode = TRUE;
+    }
 
     wined3d_mutex_unlock();
 
@@ -1135,17 +1140,6 @@ static HRESULT WINAPI ddraw1_SetDisplayMode(IDirectDraw *iface, DWORD width, DWO
  *
  * Restores the display mode to what it was at creation time. Basically.
  *
- * A problem arises when there are 2 DirectDraw objects using the same hwnd:
- *  -> DD_1 finds the screen at 1400x1050x32 when created, sets it to 640x480x16
- *  -> DD_2 is created, finds the screen at 640x480x16, sets it to 1024x768x32
- *  -> DD_1 is released. The screen should be left at 1024x768x32.
- *  -> DD_2 is released. The screen should be set to 1400x1050x32
- * This case is unhandled right now, but Empire Earth does it this way.
- * (But perhaps there is something in SetCooperativeLevel to prevent this)
- *
- * The msdn says that this method resets the display mode to what it was before
- * SetDisplayMode was called. What if SetDisplayModes is called 2 times??
- *
  * Returns
  *  DD_OK on success
  *  DDERR_NOEXCLUSIVE mode if the device isn't in fullscreen mode
@@ -1172,8 +1166,11 @@ static HRESULT WINAPI ddraw7_RestoreDisplayMode(IDirectDraw7 *iface)
         return DDERR_NOEXCLUSIVEMODE;
     }
 
-    if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &ddraw->original_mode)))
+    if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &original_mode)))
+    {
         ddraw->restore_mode = FALSE;
+        restore_mode = FALSE;
+    }
 
     wined3d_mutex_unlock();
 
