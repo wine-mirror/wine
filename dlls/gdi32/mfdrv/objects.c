@@ -49,7 +49,7 @@ UINT MFDRV_AddHandle( PHYSDEV dev, HGDIOBJ obj )
                                        physDev->handles,
                                        physDev->handles_size * sizeof(physDev->handles[0]));
     }
-    physDev->handles[index] = obj;
+    physDev->handles[index] = get_full_gdi_handle( obj );
 
     physDev->cur_handles++; 
     if(physDev->cur_handles > physDev->mh->mtNoObjects)

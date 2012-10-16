@@ -52,6 +52,7 @@ struct gdi_handle_entry
     void                       *obj;         /* pointer to the object-specific data */
     const struct gdi_obj_funcs *funcs;       /* type-specific functions */
     struct hdc_list            *hdcs;        /* list of HDCs interested in this object */
+    WORD                        generation;  /* generation count for reusing handle values */
     WORD                        type;        /* object type (one of the OBJ_* constants) */
     WORD                        selcount;    /* number of times the object is selected in a DC */
     WORD                        system : 1;  /* system object flag */
@@ -59,21 +60,27 @@ struct gdi_handle_entry
 };
 
 static struct gdi_handle_entry gdi_handles[MAX_GDI_HANDLES];
-static int next_gdi_handle;
+static struct gdi_handle_entry *next_free;
+static struct gdi_handle_entry *next_unused = gdi_handles;
 static LONG debug_count;
 HMODULE gdi32_module = 0;
 
 static inline HGDIOBJ entry_to_handle( struct gdi_handle_entry *entry )
 {
     unsigned int idx = entry - gdi_handles + FIRST_GDI_HANDLE;
-    return ULongToHandle( idx << 2 );
+    return LongToHandle( idx | (entry->generation << 16) );
 }
 
 static inline struct gdi_handle_entry *handle_entry( HGDIOBJ handle )
 {
-    unsigned int idx = (HandleToULong(handle) >> 2) - FIRST_GDI_HANDLE;
+    unsigned int idx = LOWORD(handle) - FIRST_GDI_HANDLE;
 
-    if (idx < MAX_GDI_HANDLES && gdi_handles[idx].type) return &gdi_handles[idx];
+    if (idx < MAX_GDI_HANDLES && gdi_handles[idx].type)
+    {
+        if (!HIWORD( handle ) || HIWORD( handle ) == gdi_handles[idx].generation)
+            return &gdi_handles[idx];
+    }
+    if (handle) WARN( "invalid handle %p\n", handle );
     return NULL;
 }
 
@@ -681,16 +688,14 @@ static void dump_gdi_objects( void )
     TRACE( "%u objects:\n", MAX_GDI_HANDLES );
 
     EnterCriticalSection( &gdi_section );
-    for (entry = gdi_handles; entry < gdi_handles + MAX_GDI_HANDLES; entry++)
+    for (entry = gdi_handles; entry < next_unused; entry++)
     {
         if (!entry->type)
-        {
             TRACE( "handle %p FREE\n", entry_to_handle( entry ));
-            continue;
-        }
-        TRACE( "handle %p obj %p type %s selcount %u deleted %u\n",
-               entry_to_handle( entry ), entry->obj, gdi_obj_type( entry->type ),
-               entry->selcount, entry->deleted );
+        else
+            TRACE( "handle %p obj %p type %s selcount %u deleted %u\n",
+                   entry_to_handle( entry ), entry->obj, gdi_obj_type( entry->type ),
+                   entry->selcount, entry->deleted );
     }
     LeaveCriticalSection( &gdi_section );
 }
@@ -704,23 +709,23 @@ HGDIOBJ alloc_gdi_handle( void *obj, WORD type, const struct gdi_obj_funcs *func
 {
     struct gdi_handle_entry *entry;
     HGDIOBJ ret;
-    int i;
 
     assert( type );  /* type 0 is reserved to mark free entries */
 
     EnterCriticalSection( &gdi_section );
-    for (i = next_gdi_handle + 1; i < MAX_GDI_HANDLES; i++)
-        if (!gdi_handles[i].type) goto found;
-    for (i = 0; i <= next_gdi_handle; i++)
-        if (!gdi_handles[i].type) goto found;
-    LeaveCriticalSection( &gdi_section );
 
-    ERR( "out of GDI object handles, expect a crash\n" );
-    if (TRACE_ON(gdi)) dump_gdi_objects();
-    return 0;
-
- found:
-    entry = &gdi_handles[i];
+    entry = next_free;
+    if (entry)
+        next_free = entry->obj;
+    else if (next_unused < gdi_handles + MAX_GDI_HANDLES)
+        entry = next_unused++;
+    else
+    {
+        LeaveCriticalSection( &gdi_section );
+        ERR( "out of GDI object handles, expect a crash\n" );
+        if (TRACE_ON(gdi)) dump_gdi_objects();
+        return 0;
+    }
     entry->obj      = obj;
     entry->funcs    = funcs;
     entry->hdcs     = NULL;
@@ -728,7 +733,7 @@ HGDIOBJ alloc_gdi_handle( void *obj, WORD type, const struct gdi_obj_funcs *func
     entry->selcount = 0;
     entry->system   = 0;
     entry->deleted  = 0;
-    next_gdi_handle = i;
+    if (++entry->generation == 0xffff) entry->generation = 1;
     ret = entry_to_handle( entry );
     LeaveCriticalSection( &gdi_section );
     TRACE( "allocated %s %p %u/%u\n", gdi_obj_type(type), ret,
@@ -754,11 +759,31 @@ void *free_gdi_handle( HGDIOBJ handle )
                InterlockedDecrement( &debug_count ) + 1, MAX_GDI_HANDLES );
         object = entry->obj;
         entry->type = 0;
+        entry->obj = next_free;
+        next_free = entry;
     }
     LeaveCriticalSection( &gdi_section );
     return object;
 }
 
+
+/***********************************************************************
+ *           get_full_gdi_handle
+ *
+ * Return the full GDI handle from a possibly truncated value.
+ */
+HGDIOBJ get_full_gdi_handle( HGDIOBJ handle )
+{
+    struct gdi_handle_entry *entry;
+
+    if (!HIWORD( handle ))
+    {
+        EnterCriticalSection( &gdi_section );
+        if ((entry = handle_entry( handle ))) handle = entry_to_handle( entry );
+        LeaveCriticalSection( &gdi_section );
+    }
+    return handle;
+}
 
 /***********************************************************************
  *           GDI_GetObjPtr
@@ -779,12 +804,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD type )
         if (!type || entry->type == type) ptr = entry->obj;
     }
 
-    if (!ptr)
-    {
-        LeaveCriticalSection( &gdi_section );
-        WARN( "Invalid handle %p\n", handle );
-    }
-
+    if (!ptr) LeaveCriticalSection( &gdi_section );
     return ptr;
 }
 
@@ -845,6 +865,8 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
         LeaveCriticalSection( &gdi_section );
 	return TRUE;
     }
+
+    obj = entry_to_handle( entry );  /* make it a full handle */
 
     hdcs_head = entry->hdcs;
     entry->hdcs = NULL;
@@ -960,7 +982,11 @@ INT WINAPI GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer )
     TRACE("%p %d %p\n", handle, count, buffer );
 
     EnterCriticalSection( &gdi_section );
-    if ((entry = handle_entry( handle ))) funcs = entry->funcs;
+    if ((entry = handle_entry( handle )))
+    {
+        funcs = entry->funcs;
+        handle = entry_to_handle( entry );  /* make it a full handle */
+    }
     LeaveCriticalSection( &gdi_section );
 
     if (funcs)
@@ -987,7 +1013,11 @@ INT WINAPI GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer )
     TRACE("%p %d %p\n", handle, count, buffer );
 
     EnterCriticalSection( &gdi_section );
-    if ((entry = handle_entry( handle ))) funcs = entry->funcs;
+    if ((entry = handle_entry( handle )))
+    {
+        funcs = entry->funcs;
+        handle = entry_to_handle( entry );  /* make it a full handle */
+    }
     LeaveCriticalSection( &gdi_section );
 
     if (funcs)
@@ -1091,7 +1121,11 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
     TRACE( "(%p,%p)\n", hdc, hObj );
 
     EnterCriticalSection( &gdi_section );
-    if ((entry = handle_entry( hObj ))) funcs = entry->funcs;
+    if ((entry = handle_entry( hObj )))
+    {
+        funcs = entry->funcs;
+        hObj = entry_to_handle( entry );  /* make it a full handle */
+    }
     LeaveCriticalSection( &gdi_section );
 
     if (funcs && funcs->pSelectObject) return funcs->pSelectObject( hObj, hdc );
@@ -1104,11 +1138,15 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
  */
 BOOL WINAPI UnrealizeObject( HGDIOBJ obj )
 {
-    struct gdi_handle_entry *entry;
     const struct gdi_obj_funcs *funcs = NULL;
+    struct gdi_handle_entry *entry;
 
     EnterCriticalSection( &gdi_section );
-    if ((entry = handle_entry( obj ))) funcs = entry->funcs;
+    if ((entry = handle_entry( obj )))
+    {
+        funcs = entry->funcs;
+        obj = entry_to_handle( entry );  /* make it a full handle */
+    }
     LeaveCriticalSection( &gdi_section );
 
     if (funcs && funcs->pUnrealizeObject) return funcs->pUnrealizeObject( obj );

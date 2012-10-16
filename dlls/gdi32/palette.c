@@ -238,6 +238,7 @@ UINT WINAPI SetPaletteEntries(
 
     TRACE("hpal=%p,start=%i,count=%i\n",hpalette,start,count );
 
+    hpalette = get_full_gdi_handle( hpalette );
     if (hpalette == GetStockObject(DEFAULT_PALETTE)) return 0;
     palPtr = GDI_GetObjPtr( hpalette, OBJ_PAL );
     if (!palPtr) return 0;
@@ -310,6 +311,7 @@ BOOL WINAPI AnimatePalette(
 {
     TRACE("%p (%i - %i)\n", hPal, StartIndex,StartIndex+NumEntries);
 
+    hPal = get_full_gdi_handle( hPal );
     if( hPal != GetStockObject(DEFAULT_PALETTE) )
     {
         PALETTEOBJ * palPtr;
@@ -590,6 +592,7 @@ HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg)
 
     TRACE("%p %p\n", hdc, hpal );
 
+    hpal = get_full_gdi_handle( hpal );
     if (GetObjectType(hpal) != OBJ_PAL)
     {
       WARN("invalid selected palette %p\n",hpal);
