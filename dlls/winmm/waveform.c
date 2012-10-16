@@ -1398,6 +1398,8 @@ static void WOD_PushData(WINMM_Device *device)
         goto exit;
 
     if(!device->first){
+        if (device->stopped)
+            goto exit;
         device->stopped = TRUE;
         device->last_clock_pos = 0;
         IAudioClient_Stop(device->client);
