@@ -2091,6 +2091,10 @@ static void test_ui(void)
     HRESULT hres;
 
     hres = IActiveScriptSite_QueryInterface(site, &IID_IActiveScriptSiteUIControl, (void**)&ui_control);
+    if(hres == E_NOINTERFACE) {
+        win_skip("IActiveScriptSiteUIControl not supported\n");
+        return;
+    }
     ok(hres == S_OK, "Could not get IActiveScriptSiteUIControl: %08x\n", hres);
 
     hres = IActiveScriptSiteUIControl_GetUIBehavior(ui_control, SCRIPTUICITEM_MSGBOX, &uic_handling);
