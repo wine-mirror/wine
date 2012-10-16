@@ -1562,6 +1562,10 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             }
             break;
 
+        case WINED3DSPR_PRIMID:
+            sprintf(register_name, "uint(gl_PrimitiveIDIn)");
+            break;
+
         default:
             FIXME("Unhandled register type %#x.\n", reg->type);
             sprintf(register_name, "unrecognized_register");
@@ -1649,7 +1653,7 @@ static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *i
     shader_glsl_get_register_name(&wined3d_src->reg, glsl_src->reg_name, &is_color, ins);
     shader_glsl_get_swizzle(wined3d_src, is_color, mask, swizzle_str);
 
-    if (wined3d_src->reg.type == WINED3DSPR_IMMCONST)
+    if (wined3d_src->reg.type == WINED3DSPR_IMMCONST || wined3d_src->reg.type == WINED3DSPR_PRIMID)
     {
         shader_glsl_gen_modifier(wined3d_src->modifiers, glsl_src->reg_name, swizzle_str, glsl_src->param_str);
     }
