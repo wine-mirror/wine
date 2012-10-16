@@ -633,6 +633,7 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
 
         add_script_runner(This, run_insert_comment, (nsISupports*)nscomment, NULL);
         nsIDOMComment_Release(nscomment);
+        return;
     }
 
     nsres = nsIContent_QueryInterface(aContent, &IID_nsIDOMHTMLIFrameElement, (void**)&nsiframe);
@@ -641,6 +642,7 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
 
         add_script_runner(This, run_bind_to_tree, (nsISupports*)nsiframe, NULL);
         nsIDOMHTMLIFrameElement_Release(nsiframe);
+        return;
     }
 
     nsres = nsIContent_QueryInterface(aContent, &IID_nsIDOMHTMLFrameElement, (void**)&nsframe);
@@ -649,6 +651,7 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
 
         add_script_runner(This, run_bind_to_tree, (nsISupports*)nsframe, NULL);
         nsIDOMHTMLFrameElement_Release(nsframe);
+        return;
     }
 }
 
