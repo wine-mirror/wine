@@ -36,6 +36,7 @@
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
+#include "htmlscript.h"
 #include "binding.h"
 #include "resource.h"
 

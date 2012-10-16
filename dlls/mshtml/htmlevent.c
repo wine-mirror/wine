@@ -28,6 +28,7 @@
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
+#include "htmlscript.h"
 
 #include "wine/debug.h"
 

@@ -29,6 +29,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "htmlscript.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 

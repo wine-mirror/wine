@@ -30,6 +30,7 @@
 #include "shlguid.h"
 
 #include "mshtml_private.h"
+#include "htmlscript.h"
 #include "htmlevent.h"
 
 #include "wine/debug.h"
