@@ -2720,6 +2720,7 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, IMoniker *mon,
 
     list_init(&window->script_hosts);
     list_init(&window->bindings);
+    list_init(&window->script_queue);
 
     window->base.outer_window = outer_window;
     window->base.inner_window = window;

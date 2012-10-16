@@ -400,6 +400,7 @@ struct HTMLInnerWindow {
     IHTMLStorage *session_storage;
 
     unsigned parser_callback_cnt;
+    struct list script_queue;
 
     global_prop_t *global_props;
     DWORD global_prop_cnt;

@@ -123,8 +123,17 @@ static HRESULT WINAPI HTMLScriptElement_put_src(IHTMLScriptElement *iface, BSTR 
     }
 
     if(window->parser_callback_cnt) {
-        FIXME("execution inside parser not supported\n");
-        return E_NOTIMPL;
+        script_queue_entry_t *queue;
+
+        queue = heap_alloc(sizeof(*queue));
+        if(!queue)
+            return E_OUTOFMEMORY;
+
+        IHTMLScriptElement_AddRef(&This->IHTMLScriptElement_iface);
+        queue->script = This;
+
+        list_add_tail(&window->script_queue, &queue->entry);
+        return S_OK;
     }
 
     nsres = nsIDOMHTMLScriptElement_GetParentNode(This->nsscript, &parent);

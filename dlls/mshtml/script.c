@@ -915,6 +915,9 @@ void doc_insert_script(HTMLInnerWindow *window, HTMLScriptElement *script_elem)
 {
     ScriptHost *script_host;
 
+    if(script_elem->parsed)
+        return;
+
     script_host = get_elem_script_host(window, script_elem);
     if(!script_host)
         return;
@@ -1309,7 +1312,16 @@ void set_script_mode(HTMLOuterWindow *window, SCRIPTMODE mode)
 
 void release_script_hosts(HTMLInnerWindow *window)
 {
+    script_queue_entry_t *queue_iter;
     ScriptHost *iter;
+
+    while(!list_empty(&window->script_queue)) {
+        queue_iter = LIST_ENTRY(list_head(&window->script_queue), script_queue_entry_t, entry);
+
+        list_remove(&queue_iter->entry);
+        IHTMLScriptElement_Release(&queue_iter->script->IHTMLScriptElement_iface);
+        heap_free(queue_iter);
+    }
 
     while(!list_empty(&window->script_hosts)) {
         iter = LIST_ENTRY(list_head(&window->script_hosts), ScriptHost, entry);

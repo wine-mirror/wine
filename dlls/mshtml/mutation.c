@@ -298,6 +298,7 @@ static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_ifa
     nsIDOMHTMLScriptElement *nsscript;
     HTMLScriptElement *script_elem;
     nsIParser *nsparser = NULL;
+    script_queue_entry_t *iter;
     HTMLInnerWindow *window;
     nsresult nsres;
     HRESULT hres;
@@ -332,7 +333,19 @@ static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_ifa
         window->parser_callback_cnt++;
     }
 
+    IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
+
     doc_insert_script(window, script_elem);
+
+    while(!list_empty(&window->script_queue)) {
+        iter = LIST_ENTRY(list_head(&window->script_queue), script_queue_entry_t, entry);
+        list_remove(&iter->entry);
+        doc_insert_script(window, iter->script);
+        IHTMLScriptElement_Release(&iter->script->IHTMLScriptElement_iface);
+        heap_free(iter);
+    }
+
+    IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
 
     if(nsparser) {
         window->parser_callback_cnt--;
@@ -341,6 +354,7 @@ static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_ifa
     }
 
     IHTMLScriptElement_Release(&script_elem->IHTMLScriptElement_iface);
+
     return NS_OK;
 }
 
