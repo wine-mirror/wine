@@ -399,6 +399,8 @@ struct HTMLInnerWindow {
     IOmHistory *history;
     IHTMLStorage *session_storage;
 
+    unsigned parser_callback_cnt;
+
     global_prop_t *global_props;
     DWORD global_prop_cnt;
     DWORD global_prop_size;

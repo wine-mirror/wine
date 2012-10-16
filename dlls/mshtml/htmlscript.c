@@ -95,8 +95,47 @@ static HRESULT WINAPI HTMLScriptElement_Invoke(IHTMLScriptElement *iface, DISPID
 static HRESULT WINAPI HTMLScriptElement_put_src(IHTMLScriptElement *iface, BSTR v)
 {
     HTMLScriptElement *This = impl_from_IHTMLScriptElement(iface);
+    HTMLInnerWindow *window;
+    nsIDOMNode *parent;
+    nsAString src_str;
+    nsresult nsres;
+
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    if(!This->element.node.doc || !This->element.node.doc->window) {
+        WARN("no windoow\n");
+        return E_UNEXPECTED;
+    }
+
+    window = This->element.node.doc->window;
+
+    nsAString_InitDepend(&src_str, v);
+    nsres = nsIDOMHTMLScriptElement_SetSrc(This->nsscript, &src_str);
+    nsAString_Finish(&src_str);
+    if(NS_FAILED(nsres)) {
+        ERR("SetSrc failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    if(This->parsed) {
+        WARN("already parsed\n");
+        return S_OK;
+    }
+
+    if(window->parser_callback_cnt) {
+        FIXME("execution inside parser not supported\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLScriptElement_GetParentNode(This->nsscript, &parent);
+    if(NS_FAILED(nsres) || !parent) {
+        FIXME("No parent, not supported detached elements\n");
+        return E_NOTIMPL;
+    }
+
+    nsIDOMNode_Release(parent);
+    doc_insert_script(window, This);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLScriptElement_get_src(IHTMLScriptElement *iface, BSTR *p)

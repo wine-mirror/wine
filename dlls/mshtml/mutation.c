@@ -298,10 +298,15 @@ static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_ifa
     nsIDOMHTMLScriptElement *nsscript;
     HTMLScriptElement *script_elem;
     nsIParser *nsparser = NULL;
+    HTMLInnerWindow *window;
     nsresult nsres;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", doc, script_iface);
+
+    window = doc->window;
+    if(!window)
+        return NS_OK;
 
     nsres = nsISupports_QueryInterface(script_iface, &IID_nsIDOMHTMLScriptElement, (void**)&nsscript);
     if(NS_FAILED(nsres)) {
@@ -322,12 +327,15 @@ static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_ifa
     if(FAILED(hres))
         return NS_ERROR_FAILURE;
 
-    if(nsparser)
+    if(nsparser) {
         nsIParser_BeginEvaluatingParserInsertedScript(nsparser);
+        window->parser_callback_cnt++;
+    }
 
-    doc_insert_script(doc->window, script_elem);
+    doc_insert_script(window, script_elem);
 
     if(nsparser) {
+        window->parser_callback_cnt--;
         nsIParser_EndEvaluatingParserInsertedScript(nsparser);
         nsIParser_Release(nsparser);
     }
