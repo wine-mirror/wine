@@ -68,7 +68,8 @@ struct ddraw
 
     struct wined3d *wined3d;
     struct wined3d_device *wined3d_device;
-    BOOL                    d3d_initialized;
+    BOOL d3d_initialized;
+    BOOL restore_mode;
 
     struct ddraw_surface *primary;
     RECT primary_lock;

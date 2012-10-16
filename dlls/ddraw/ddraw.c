@@ -1064,6 +1064,10 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
         return DD_OK;
     }
 
+    if (!ddraw->restore_mode && FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d,
+            WINED3DADAPTER_DEFAULT, &ddraw->original_mode, NULL)))
+        ERR("Failed to get current display mode, hr %#x.\n", hr);
+
     switch (bpp)
     {
         case 8:  format = WINED3DFMT_P8_UINT;        break;
@@ -1083,7 +1087,8 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
     /* TODO: The possible return values from msdn suggest that the screen mode
      * can't be changed if a surface is locked or some drawing is in progress. */
     /* TODO: Lose the primary surface. */
-    hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode);
+    if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
+        ddraw->restore_mode = TRUE;
 
     wined3d_mutex_unlock();
 
@@ -1155,13 +1160,20 @@ static HRESULT WINAPI ddraw7_RestoreDisplayMode(IDirectDraw7 *iface)
 
     wined3d_mutex_lock();
 
+    if (!ddraw->restore_mode)
+    {
+        wined3d_mutex_unlock();
+        return DD_OK;
+    }
+
     if (exclusive_ddraw && exclusive_ddraw != ddraw)
     {
         wined3d_mutex_unlock();
         return DDERR_NOEXCLUSIVEMODE;
     }
 
-    hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &ddraw->original_mode);
+    if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &ddraw->original_mode)))
+        ddraw->restore_mode = FALSE;
 
     wined3d_mutex_unlock();
 
@@ -5369,14 +5381,6 @@ HRESULT ddraw_init(struct ddraw *ddraw, enum wined3d_device_type device_type)
     {
         WARN("Failed to create a wined3d object.\n");
         return E_OUTOFMEMORY;
-    }
-
-    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d,
-            WINED3DADAPTER_DEFAULT, &ddraw->original_mode, NULL)))
-    {
-        ERR("Failed to get display mode, hr %#x.\n", hr);
-        wined3d_decref(ddraw->wined3d);
-        return hr;
     }
 
     hr = wined3d_device_create(ddraw->wined3d, WINED3DADAPTER_DEFAULT, device_type,
