@@ -1579,9 +1579,7 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
             if (strstr(gl_renderer, cards[i].renderer))
                 return cards[i].id;
         }
-
-        /* Geforce8-compatible fall back if the GPU is not in the list yet */
-        return CARD_NVIDIA_GEFORCE_8300GS;
+        return PCI_DEVICE_NONE;
     }
 
     /* Both the GeforceFX, 6xxx and 7xxx series support D3D9. The last two types have more
@@ -1616,9 +1614,7 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
             if (strstr(gl_renderer, cards[i].renderer))
                 return cards[i].id;
         }
-
-        /* Geforce 6/7 - lowend */
-        return CARD_NVIDIA_GEFORCE_6200; /* Geforce 6100/6150/6200/7300/7400/7500 */
+        return PCI_DEVICE_NONE;
     }
 
     if (d3d_level >= 9)
@@ -1771,9 +1767,7 @@ static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_in
             if (strstr(gl_renderer, cards[i].renderer))
                 return cards[i].id;
         }
-
-        /* Default for when no GPU has been found */
-        return CARD_AMD_RADEON_HD3200;
+        return PCI_DEVICE_NONE;
     }
 
     if (d3d_level >= 9)
@@ -1810,18 +1804,8 @@ static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_in
         {
             return CARD_AMD_RADEON_XPRESS_200M;
         }
-
-        /* Radeon R3xx */
-        return CARD_AMD_RADEON_9500; /* Radeon 9500/9550/9600/9700/9800/X300/X550/X600 */
     }
-
-    if (d3d_level >= 8)
-        return CARD_AMD_RADEON_8500; /* Radeon 8500/9000/9100/9200/9300 */
-
-    if (d3d_level >= 7)
-        return CARD_AMD_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
-
-    return CARD_AMD_RAGE_128PRO;
+    return PCI_DEVICE_NONE;
 }
 
 static enum wined3d_pci_device select_card_intel(const struct wined3d_gl_info *gl_info,
@@ -1889,7 +1873,7 @@ static enum wined3d_pci_device select_card_intel(const struct wined3d_gl_info *g
             return cards[i].id;
     }
 
-    return CARD_INTEL_915G;
+    return PCI_DEVICE_NONE;
 }
 
 static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info *gl_info,
@@ -1991,12 +1975,10 @@ static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info
             if (strstr(gl_renderer, cards[i].renderer))
                 return cards[i].id;
         }
+        return PCI_DEVICE_NONE;
     }
 
     d3d_level = d3d_level_from_gl_info(gl_info);
-    if (d3d_level >= 10)
-        return CARD_AMD_RADEON_HD2600;
-
     if (d3d_level >= 9)
     {
         static const struct
@@ -2031,23 +2013,13 @@ static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info
             if (strstr(gl_renderer, cards[i].renderer))
                 return cards[i].id;
         }
-
-        return CARD_AMD_RADEON_9500;
     }
-
-    if (d3d_level >= 8)
-        return CARD_AMD_RADEON_8500; /* Radeon 8500/9000/9100/9200/9300 */
-
-    if (d3d_level >= 7)
-        return CARD_AMD_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
-
-    return CARD_AMD_RAGE_128PRO;
+    return PCI_DEVICE_NONE;
 }
 
 static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer)
 {
-    UINT d3d_level;
     unsigned int i;
 
     static const struct
@@ -2130,12 +2102,41 @@ static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_i
         if (strstr(gl_renderer, cards[i].renderer))
             return cards[i].id;
     }
+    return PCI_DEVICE_NONE;
+}
 
-    FIXME("Unknown renderer %s.\n", debugstr_a(gl_renderer));
+static const struct gl_vendor_selection
+{
+    enum wined3d_gl_vendor gl_vendor;
+    const char *description;        /* Description of the card selector i.e. Apple OS/X Intel */
+    enum wined3d_pci_device (*select_card)(const struct wined3d_gl_info *gl_info, const char *gl_renderer);
+}
+nvidia_gl_vendor_table[] =
+{
+    {GL_VENDOR_NVIDIA, "Nvidia binary driver", select_card_nvidia_binary},
+    {GL_VENDOR_APPLE, "Apple OSX NVidia binary driver", select_card_nvidia_binary},
+    {GL_VENDOR_MESA, "Mesa Nouveau driver", select_card_nvidia_mesa},
+},
+amd_gl_vendor_table[] =
+{
+    {GL_VENDOR_APPLE, "Apple OSX AMD/ATI binary driver", select_card_amd_binary},
+    {GL_VENDOR_FGLRX, "AMD/ATI binary driver", select_card_amd_binary},
+    {GL_VENDOR_MESA, "Mesa AMD/ATI driver", select_card_amd_mesa},
+},
+intel_gl_vendor_table[] =
+{
+    {GL_VENDOR_APPLE, "Apple OSX Intel binary driver", select_card_intel},
+    {GL_VENDOR_INTEL, "Mesa Intel driver", select_card_intel},
+    {GL_VENDOR_MESA, "Mesa Intel driver", select_card_intel},
+};
 
-    d3d_level = d3d_level_from_gl_info(gl_info);
+static enum wined3d_pci_device select_card_fallback_nvidia(const struct wined3d_gl_info *gl_info)
+{
+    UINT d3d_level = d3d_level_from_gl_info(gl_info);
     if (d3d_level >= 10)
         return CARD_NVIDIA_GEFORCE_8800GTX;
+    if (d3d_level >= 9 && gl_info->supported[NV_VERTEX_PROGRAM3])
+        return CARD_NVIDIA_GEFORCE_6200;
     if (d3d_level >= 9)
         return CARD_NVIDIA_GEFORCEFX_5800;
     if (d3d_level >= 8)
@@ -2147,40 +2148,71 @@ static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_i
     return CARD_NVIDIA_RIVA_128;
 }
 
-
-struct vendor_card_selection
+static enum wined3d_pci_device select_card_fallback_amd(const struct wined3d_gl_info *gl_info)
 {
-    enum wined3d_gl_vendor gl_vendor;
+    UINT d3d_level = d3d_level_from_gl_info(gl_info);
+    if (d3d_level >= 10)
+        return CARD_AMD_RADEON_HD2600;
+    if (d3d_level >= 9)
+        return CARD_AMD_RADEON_9500;
+    if (d3d_level >= 8)
+        return CARD_AMD_RADEON_8500;
+    if (d3d_level >= 7)
+        return CARD_AMD_RADEON_7200;
+    return CARD_AMD_RAGE_128PRO;
+}
+
+static enum wined3d_pci_device select_card_fallback_intel(const struct wined3d_gl_info *gl_info)
+{
+    return CARD_INTEL_915G;
+}
+
+static enum wined3d_pci_device select_card_handler(const struct gl_vendor_selection *table,
+        unsigned int table_size, enum wined3d_gl_vendor gl_vendor,
+        const struct wined3d_gl_info *gl_info, const char *gl_renderer)
+{
+    unsigned int i;
+
+    for (i = 0; i < table_size; ++i)
+    {
+        if (table[i].gl_vendor != gl_vendor)
+            continue;
+
+        TRACE("Applying card selector \"%s\".\n", table[i].description);
+        return table[i].select_card(gl_info, gl_renderer);
+    }
+    FIXME("Couldn't find a suitable card selector for GL vendor %04x (using GL_RENDERER %s)",
+            gl_vendor, debugstr_a(gl_renderer));
+
+    return PCI_DEVICE_NONE;
+}
+
+static const struct
+{
     enum wined3d_pci_vendor card_vendor;
     const char *description;        /* Description of the card selector i.e. Apple OS/X Intel */
-    enum wined3d_pci_device (*select_card)(const struct wined3d_gl_info *gl_info, const char *gl_renderer);
-};
-
-static const struct vendor_card_selection vendor_card_select_table[] =
+    const struct gl_vendor_selection *gl_vendor_selection;
+    unsigned int gl_vendor_count;
+    enum wined3d_pci_device (*select_card_fallback)(const struct wined3d_gl_info *gl_info);
+}
+card_vendor_table[] =
 {
-    {GL_VENDOR_NVIDIA, HW_VENDOR_NVIDIA,  "Nvidia binary driver",     select_card_nvidia_binary},
-    {GL_VENDOR_APPLE,  HW_VENDOR_NVIDIA,  "Apple OSX NVidia binary driver",   select_card_nvidia_binary},
-    {GL_VENDOR_APPLE,  HW_VENDOR_AMD,     "Apple OSX AMD/ATI binary driver",  select_card_amd_binary},
-    {GL_VENDOR_APPLE,  HW_VENDOR_INTEL,   "Apple OSX Intel binary driver",    select_card_intel},
-    {GL_VENDOR_FGLRX,  HW_VENDOR_AMD,     "AMD/ATI binary driver",    select_card_amd_binary},
-    {GL_VENDOR_MESA,   HW_VENDOR_AMD,     "Mesa AMD/ATI driver",      select_card_amd_mesa},
-    {GL_VENDOR_MESA,   HW_VENDOR_NVIDIA,  "Mesa Nouveau driver",      select_card_nvidia_mesa},
-    {GL_VENDOR_MESA,   HW_VENDOR_INTEL,   "Mesa Intel driver",        select_card_intel},
-    {GL_VENDOR_INTEL,  HW_VENDOR_INTEL,   "Mesa Intel driver",        select_card_intel}
+    {HW_VENDOR_NVIDIA,  "Nvidia",  nvidia_gl_vendor_table,
+            sizeof(nvidia_gl_vendor_table) / sizeof(nvidia_gl_vendor_table[0]),
+            select_card_fallback_nvidia},
+    {HW_VENDOR_AMD,     "AMD",     amd_gl_vendor_table,
+            sizeof(amd_gl_vendor_table) / sizeof(amd_gl_vendor_table[0]),
+            select_card_fallback_amd},
+    {HW_VENDOR_INTEL,   "Intel",   intel_gl_vendor_table,
+            sizeof(intel_gl_vendor_table) / sizeof(intel_gl_vendor_table[0]),
+            select_card_fallback_intel},
 };
 
 
 static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
         enum wined3d_gl_vendor *gl_vendor, enum wined3d_pci_vendor *card_vendor)
 {
-    UINT d3d_level;
-
-    /* Above is a list of Nvidia and ATI GPUs. Both vendors have dozens of
-     * different GPUs with roughly the same features. In most cases GPUs from a
-     * certain family differ in clockspeeds, the amount of video memory and the
-     * number of shader pipelines.
-     *
-     * A Direct3D device object contains the PCI id (vendor + device) of the
+    /* A Direct3D device object contains the PCI id (vendor + device) of the
      * videocard which is used for rendering. Various applications use this
      * information to get a rough estimation of the features of the card and
      * some might use it for enabling 3d effects only on certain types of
@@ -2231,33 +2263,29 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
      * memory can be overruled using a registry setting. */
 
     int i;
+    enum wined3d_pci_device device;
 
-    for (i = 0; i < (sizeof(vendor_card_select_table) / sizeof(*vendor_card_select_table)); ++i)
+    for (i = 0; i < (sizeof(card_vendor_table) / sizeof(*card_vendor_table)); ++i)
     {
-        if ((vendor_card_select_table[i].gl_vendor != *gl_vendor)
-                || (vendor_card_select_table[i].card_vendor != *card_vendor))
+        if (card_vendor_table[i].card_vendor != *card_vendor)
             continue;
-        TRACE("Applying card_selector \"%s\".\n", vendor_card_select_table[i].description);
-        return vendor_card_select_table[i].select_card(gl_info, gl_renderer);
+
+        TRACE("Applying card selector \"%s\".\n", card_vendor_table[i].description);
+        device = select_card_handler(card_vendor_table[i].gl_vendor_selection,
+                card_vendor_table[i].gl_vendor_count, *gl_vendor, gl_info, gl_renderer);
+        if (device != PCI_DEVICE_NONE)
+            return device;
+
+        TRACE("Unrecognized renderer %s, falling back to default.\n", debugstr_a(gl_renderer));
+        return card_vendor_table[i].select_card_fallback(gl_info);
     }
 
-    FIXME("No card selector available for GL vendor %#x and card vendor %04x (using GL_RENDERER %s).\n",
-            *gl_vendor, *card_vendor, debugstr_a(gl_renderer));
+    FIXME("No card selector available for card vendor %04x (using GL_RENDERER %s).\n",
+            *card_vendor, debugstr_a(gl_renderer));
 
-    /* Default to generic Nvidia hardware based on the supported OpenGL extensions. The choice
-     * for Nvidia was because the hardware and drivers they make are of good quality. This makes
-     * them a good generic choice. */
+    /* Default to generic Nvidia hardware based on the supported OpenGL extensions. */
     *card_vendor = HW_VENDOR_NVIDIA;
-    d3d_level = d3d_level_from_gl_info(gl_info);
-    if (d3d_level >= 9)
-        return CARD_NVIDIA_GEFORCEFX_5600;
-    if (d3d_level >= 8)
-        return CARD_NVIDIA_GEFORCE3;
-    if (d3d_level >= 7)
-        return CARD_NVIDIA_GEFORCE;
-    if (d3d_level >= 6)
-        return CARD_NVIDIA_RIVA_TNT;
-    return CARD_NVIDIA_RIVA_128;
+    return select_card_fallback_nvidia(gl_info);
 }
 
 static const struct fragment_pipeline *select_fragment_implementation(const struct wined3d_gl_info *gl_info)
