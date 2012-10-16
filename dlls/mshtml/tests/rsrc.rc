@@ -28,5 +28,8 @@ vbtest.html HTML "vbtest.html"
 /* @makedep: events.html */
 events.html HTML "events.html"
 
+/* @makedep: externscr.js */
+externscr.js HTML "externscr.js"
+
 /* @makedep: test_tlb.tlb */
 1 TYPELIB test_tlb.tlb
