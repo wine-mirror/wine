@@ -56,7 +56,7 @@ extern const CLSID CLSID_DfMarshal;
 struct proxy_manager
 {
   IMultiQI IMultiQI_iface;
-  const IMarshalVtbl *lpVtblMarshal;
+  IMarshal IMarshal_iface;
   const IClientSecurityVtbl *lpVtblCliSec;
   struct apartment *parent; /* owning apartment (RO) */
   struct list entry;        /* entry in apartment (CS parent->cs) */
@@ -75,7 +75,7 @@ struct proxy_manager
 
 static inline struct proxy_manager *impl_from_IMarshal( IMarshal *iface )
 {
-    return (struct proxy_manager *)((char*)iface - FIELD_OFFSET(struct proxy_manager, lpVtblMarshal));
+    return CONTAINING_RECORD(iface, struct proxy_manager, IMarshal_iface);
 }
 
 static inline struct proxy_manager *impl_from_IClientSecurity( IClientSecurity *iface )
@@ -755,7 +755,7 @@ static HRESULT proxy_manager_construct(
     }
 
     This->IMultiQI_iface.lpVtbl = &ClientIdentity_Vtbl;
-    This->lpVtblMarshal = &ProxyMarshal_Vtbl;
+    This->IMarshal_iface.lpVtbl = &ProxyMarshal_Vtbl;
     This->lpVtblCliSec = &ProxyCliSec_Vtbl;
 
     list_init(&This->entry);
@@ -875,8 +875,8 @@ static HRESULT proxy_manager_query_local_interface(struct proxy_manager * This, 
     }
     if (IsEqualIID(riid, &IID_IMarshal))
     {
-        *ppv = &This->lpVtblMarshal;
-        IUnknown_AddRef((IUnknown *)*ppv);
+        *ppv = &This->IMarshal_iface;
+        IMarshal_AddRef(&This->IMarshal_iface);
         return S_OK;
     }
     if (IsEqualIID(riid, &IID_IClientSecurity))
