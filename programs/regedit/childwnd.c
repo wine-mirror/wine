@@ -405,6 +405,12 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 			       TPM_RIGHTBUTTON, pt.x, pt.y, 0, hFrameWnd, NULL);
 		break;
             }
+            case TVN_BEGINLABELEDITW: {
+                HKEY hRootKey;
+                LPWSTR path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
+                if (!path || !*path) return 1;
+                return 0;
+            }
 	    case TVN_ENDLABELEDITW: {
 		HKEY hRootKey;
 	        LPNMTVDISPINFOW dispInfo = (LPNMTVDISPINFOW)lParam;
