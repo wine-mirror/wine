@@ -837,13 +837,14 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors,
 
     /* Replace use of %0...%9 if in batch program*/
     } else if (!justFors && context && (i >= 0) && (i <= 9)) {
-      t = WCMD_parameter(context -> command, i + context -> shift_count[i], NULL, NULL, TRUE);
+      t = WCMD_parameter(context -> command, i + context -> shift_count[i],
+                         NULL, NULL, TRUE, TRUE);
       WCMD_strsubstW(p, p+2, t, -1);
 
     /* Replace use of %* if in batch program*/
     } else if (!justFors && context && *(p+1)=='*') {
       WCHAR *startOfParms = NULL;
-      WCMD_parameter(context -> command, 0, NULL, &startOfParms, TRUE);
+      WCMD_parameter(context -> command, 0, NULL, &startOfParms, TRUE, TRUE);
       if (startOfParms != NULL) {
         startOfParms++; /* Skip to first delimiter then skip whitespace */
         while (*startOfParms==' ' || *startOfParms == '\t') startOfParms++;
@@ -1021,7 +1022,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
 
   /* Quick way to get the filename is to extract the first argument. */
   WINE_TRACE("Running '%s' (%d)\n", wine_dbgstr_w(command), called);
-  firstParam = WCMD_parameter(command, 0, NULL, NULL, FALSE);
+  firstParam = WCMD_parameter(command, 0, NULL, NULL, FALSE, TRUE);
   if (!firstParam) return;
 
   /* Calculate the search path and stem to search for */
@@ -1359,7 +1360,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
 
     /* Otherwise STDIN could come from a '<' redirect */
     } else if ((p = strchrW(new_redir,'<')) != NULL) {
-      h = CreateFileW(WCMD_parameter(++p, 0, NULL, NULL, FALSE), GENERIC_READ, FILE_SHARE_READ,
+      h = CreateFileW(WCMD_parameter(++p, 0, NULL, NULL, FALSE, FALSE), GENERIC_READ, FILE_SHARE_READ,
                       &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
       if (h == INVALID_HANDLE_VALUE) {
 	WCMD_print_error ();
@@ -1404,7 +1405,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
         WINE_TRACE("Redirect %d (%p) to %d (%p)\n", handle, GetStdHandle(idx_stdhandles[idx]), idx, h);
 
       } else {
-        WCHAR *param = WCMD_parameter(p, 0, NULL, NULL, FALSE);
+        WCHAR *param = WCMD_parameter(p, 0, NULL, NULL, FALSE, FALSE);
         h = CreateFileW(param, GENERIC_WRITE, 0, &sa, creationDisposition,
                         FILE_ATTRIBUTE_NORMAL, NULL);
         if (h == INVALID_HANDLE_VALUE) {
@@ -2330,14 +2331,14 @@ int wmain (int argc, WCHAR *argvW[])
   args = 1;                /* start at first arg, skipping cmd.exe itself */
 
   opt_c = opt_k = opt_q = opt_s = FALSE;
-  WCMD_parameter(cmdLine, args, &argPos, NULL, TRUE);
+  WCMD_parameter(cmdLine, args, &argPos, NULL, TRUE, TRUE);
   while (argPos && argPos[0] != 0x00)
   {
       WCHAR c;
       WINE_TRACE("Command line parm: '%s'\n", wine_dbgstr_w(argPos));
       if (argPos[0]!='/' || argPos[1]=='\0') {
           args++;
-          WCMD_parameter(cmdLine, args, &argPos, NULL, TRUE);
+          WCMD_parameter(cmdLine, args, &argPos, NULL, TRUE, TRUE);
           continue;
       }
 
@@ -2362,7 +2363,7 @@ int wmain (int argc, WCHAR *argvW[])
 
       if (argPos[2]==0 || argPos[2]==' ' || argPos[2]=='\t') {
           args++;
-          WCMD_parameter(cmdLine, args, &argPos, NULL, TRUE);
+          WCMD_parameter(cmdLine, args, &argPos, NULL, TRUE, TRUE);
       }
       else /* handle `cmd /cnotepad.exe` and `cmd /x/c ...` */
       {
@@ -2443,7 +2444,7 @@ int wmain (int argc, WCHAR *argvW[])
       /* Finally, we only stay in new mode IF the first parameter is quoted and
          is a valid executable, ie must exist, otherwise drop back to old mode  */
       if (!opt_s) {
-        WCHAR *thisArg = WCMD_parameter(cmd, 0, NULL, NULL, FALSE);
+        WCHAR *thisArg = WCMD_parameter(cmd, 0, NULL, NULL, FALSE, TRUE);
         WCHAR  pathext[MAXSTRING];
         BOOL found = FALSE;
 

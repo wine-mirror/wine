@@ -57,7 +57,7 @@ var=33@space@
 0@space@
 3@space@
 3@space@
-@todo_wine@4@space@
+4@space@
 ------ Testing invocation with CMD /C -------------
 0@space@
 1@space@
@@ -69,7 +69,7 @@ var=33@space@
 2@space@
 0@space@
 3@space@
-@todo_wine@4@space@
+4@space@
 ---------- Testing CMD /C quoting -----------------
 "hi"
 1@space@
@@ -93,7 +93,7 @@ THIS FAILS: cmd "/c"say one
 THIS FAILS: cmd ignoreme/c say one
 --------- Testing special characters --------------
 0@space@
-@todo_wine@0@space@
+0@space@
 )@space@
 [@space@
 ]@space@
@@ -113,10 +113,10 @@ THIS FAILS: cmd ignoreme/c say one
 1:1,2:@space@
 1:(1),2:@space@
 1:1(2),2:@space@
-@todo_wine@1:(1),2:@space@
-@todo_wine@1:((1)),2:@space@
-@todo_wine@1:(1)(2),2:@space@
-@todo_wine@1:(1),2:(2)@space@
+1:(1),2:@space@
+1:((1)),2:@space@
+1:(1)(2),2:@space@
+1:(1),2:(2)@space@
 1:1,2:2@space@
 1:1,2:2@space@
 1:1,2:2@space@
@@ -126,7 +126,7 @@ THIS FAILS: cmd ignoreme/c say one
 0:tell,1:1,2:2,All:'1 2'@or_broken@0:tell,1:1,2:2,All:' 1 2'
 0:tell,1:1,2:2,All:'1 2'@or_broken@0:tell,1:1,2:2,All:' 1 2'
 0:tell,1:1,2:2,All:'==1==2'
-@todo_wine@0:tell,1:(1234),2:,All:'(1234)'
-@todo_wine@0:tell,1:(12(34),2:,All:'(12(34)'
-@todo_wine@0:tell,1:(12,2:34),All:'(12;34)'
-@todo_wine@--------- Finished  --------------
+0:tell,1:(1234),2:,All:'(1234)'
+0:tell,1:(12(34),2:,All:'(12(34)'
+0:tell,1:(12,2:34),All:'(12;34)'
+--------- Finished  --------------

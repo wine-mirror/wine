@@ -128,6 +128,9 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
  *  end   [O] Optional. Pointer to the last char of param n in s
  *  raw   [I] True to return the parameter in raw format (quotes maintained)
  *            False returns the parameter with quotes stripped
+ *  wholecmdline [I] True to indicate this routine is being used to parse the
+ *                   command line, and special logic for arg0->1 transition
+ *                   needs to be applied.
  *
  * RETURNS
  *  Success: The nth delimited parameter found in s
@@ -143,7 +146,8 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
  *  other API calls, e.g. c:\"a b"\c is returned as c:\a b\c. However, some commands
  *  need to preserve the exact syntax (echo, for, etc) hence the raw option.
  */
-WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end, BOOL raw)
+WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end, BOOL raw,
+                       BOOL wholecmdline)
 {
     static const WCHAR defaultDelims[] = { ' ', '\t', ',', '=', ';', '\0' };
     int curParamNb = 0;
@@ -172,6 +176,12 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end, BOOL raw)
         while (*p) {
             /* Once we have found a delimiter, break */
             if (strchrW(defaultDelims, *p) != NULL) break;
+
+            /* Very odd special case - Seems as if a ( acts as a delimiter which is
+               not swallowed but is effective only when it comes between the program
+               name and the parameters. Need to avoid this triggering when used
+               to walk parameters generally.                                         */
+            if (wholecmdline && curParamNb == 0 && *p=='(') break;
 
             /* If we find a quote, copy until we get the end quote */
             if (*p == '"') {
@@ -418,8 +428,9 @@ void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable,
     strcpyW(outputparam, context->batchfileW);
   } else if ((*lastModifier >= '1' && *lastModifier <= '9')) {
     strcpyW(outputparam,
-            WCMD_parameter (context -> command, *lastModifier-'0' + context -> shift_count[*lastModifier-'0'],
-                            NULL, NULL, FALSE));
+            WCMD_parameter (context -> command,
+                            *lastModifier-'0' + context -> shift_count[*lastModifier-'0'],
+                            NULL, NULL, FALSE, TRUE));
   } else {
     strcpyW(outputparam, forValue);
   }
