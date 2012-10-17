@@ -59,8 +59,6 @@ struct gdi_obj_funcs
 
 typedef struct tagGDIOBJHDR
 {
-    WORD        system : 1;   /* system object flag */
-    WORD        deleted : 1;  /* whether DeleteObject has been called on this object */
 } GDIOBJHDR;
 
 typedef struct tagGdiFont GdiFont;
@@ -310,7 +308,7 @@ extern BOOL WineEngInit(void) DECLSPEC_HIDDEN;
 extern BOOL WineEngRemoveFontResourceEx(LPCWSTR, DWORD, PVOID) DECLSPEC_HIDDEN;
 
 /* gdiobj.c */
-extern HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs *funcs ) DECLSPEC_HIDDEN;
+extern HGDIOBJ alloc_gdi_handle( void *obj, WORD type, const struct gdi_obj_funcs *funcs ) DECLSPEC_HIDDEN;
 extern void *free_gdi_handle( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern void *GDI_GetObjPtr( HGDIOBJ, WORD ) DECLSPEC_HIDDEN;
 extern void GDI_ReleaseObj( HGDIOBJ ) DECLSPEC_HIDDEN;

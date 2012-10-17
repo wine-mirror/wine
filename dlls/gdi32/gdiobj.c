@@ -49,11 +49,13 @@ struct hdc_list
 
 struct gdi_handle_entry
 {
-    GDIOBJHDR                  *obj;         /* pointer to the object-specific data */
+    void                       *obj;         /* pointer to the object-specific data */
     const struct gdi_obj_funcs *funcs;       /* type-specific functions */
     struct hdc_list            *hdcs;        /* list of HDCs interested in this object */
     WORD                        type;        /* object type (one of the OBJ_* constants) */
     WORD                        selcount;    /* number of times the object is selected in a DC */
+    WORD                        system : 1;  /* system object flag */
+    WORD                        deleted : 1; /* whether DeleteObject has been called on this object */
 };
 
 static struct gdi_handle_entry gdi_handles[MAX_GDI_HANDLES];
@@ -479,9 +481,11 @@ static const struct DefaultFontInfo default_fonts[] =
  */
 void CDECL __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set)
 {
-    GDIOBJHDR *ptr = GDI_GetObjPtr( handle, 0 );
-    ptr->system = !!set;
-    GDI_ReleaseObj( handle );
+    struct gdi_handle_entry *entry;
+
+    EnterCriticalSection( &gdi_section );
+    if ((entry = handle_entry( handle ))) entry->system = !!set;
+    LeaveCriticalSection( &gdi_section );
 }
 
 /******************************************************************************
@@ -572,10 +576,10 @@ BOOL GDI_dec_ref_count( HGDIOBJ handle )
     if ((entry = handle_entry( handle )))
     {
         assert( entry->selcount );
-        if (!--entry->selcount && entry->obj->deleted)
+        if (!--entry->selcount && entry->deleted)
         {
             /* handle delayed DeleteObject*/
-            entry->obj->deleted = 0;
+            entry->deleted = 0;
             LeaveCriticalSection( &gdi_section );
             TRACE( "executing delayed DeleteObject for %p\n", handle );
             DeleteObject( handle );
@@ -686,7 +690,7 @@ static void dump_gdi_objects( void )
         }
         TRACE( "handle %p obj %p type %s selcount %u deleted %u\n",
                entry_to_handle( entry ), entry->obj, gdi_obj_type( entry->type ),
-               entry->selcount, entry->obj->deleted );
+               entry->selcount, entry->deleted );
     }
     LeaveCriticalSection( &gdi_section );
 }
@@ -696,17 +700,13 @@ static void dump_gdi_objects( void )
  *
  * Allocate a GDI handle for an object, which must have been allocated on the process heap.
  */
-HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs *funcs )
+HGDIOBJ alloc_gdi_handle( void *obj, WORD type, const struct gdi_obj_funcs *funcs )
 {
     struct gdi_handle_entry *entry;
     HGDIOBJ ret;
     int i;
 
     assert( type );  /* type 0 is reserved to mark free entries */
-
-    /* initialize the object header */
-    obj->system   = 0;
-    obj->deleted  = 0;
 
     EnterCriticalSection( &gdi_section );
     for (i = next_gdi_handle + 1; i < MAX_GDI_HANDLES; i++)
@@ -726,6 +726,8 @@ HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs 
     entry->hdcs     = NULL;
     entry->type     = type;
     entry->selcount = 0;
+    entry->system   = 0;
+    entry->deleted  = 0;
     next_gdi_handle = i;
     ret = entry_to_handle( entry );
     LeaveCriticalSection( &gdi_section );
@@ -837,7 +839,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
         return FALSE;
     }
 
-    if (entry->obj->system)
+    if (entry->system)
     {
 	TRACE("Preserving system object %p\n", obj);
         LeaveCriticalSection( &gdi_section );
@@ -850,7 +852,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
     if (entry->selcount)
     {
         TRACE("delayed for %p because object in use, count %u\n", obj, entry->selcount );
-        entry->obj->deleted = 1;  /* mark for delete */
+        entry->deleted = 1;  /* mark for delete */
     }
     else funcs = entry->funcs;
 
@@ -891,7 +893,7 @@ void GDI_hdc_using_object(HGDIOBJ obj, HDC hdc)
     TRACE("obj %p hdc %p\n", obj, hdc);
 
     EnterCriticalSection( &gdi_section );
-    if ((entry = handle_entry( obj )) && !entry->obj->system)
+    if ((entry = handle_entry( obj )) && !entry->system)
     {
         for (phdc = entry->hdcs; phdc; phdc = phdc->next)
             if (phdc->hdc == hdc) break;
@@ -919,7 +921,7 @@ void GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc)
     TRACE("obj %p hdc %p\n", obj, hdc);
 
     EnterCriticalSection( &gdi_section );
-    if ((entry = handle_entry( obj )) && !entry->obj->system)
+    if ((entry = handle_entry( obj )) && !entry->system)
     {
         for (pphdc = &entry->hdcs; *pphdc; pphdc = &(*pphdc)->next)
             if ((*pphdc)->hdc == hdc)
