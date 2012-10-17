@@ -1589,7 +1589,7 @@ static HGDIOBJ DIB_SelectObject( HGDIOBJ handle, HDC hdc )
         goto done;
     }
 
-    if (bitmap->header.selcount)
+    if (GDI_get_ref_count( handle ))
     {
         WARN( "Bitmap already selected in another DC\n" );
         GDI_ReleaseObj( handle );

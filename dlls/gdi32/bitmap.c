@@ -436,7 +436,7 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
         goto done;
     }
 
-    if (bitmap->header.selcount && (handle != GetStockObject(DEFAULT_BITMAP)))
+    if (handle != GetStockObject(DEFAULT_BITMAP) && GDI_get_ref_count( handle ))
     {
         WARN( "Bitmap already selected in another DC\n" );
         GDI_ReleaseObj( handle );

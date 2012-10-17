@@ -61,7 +61,6 @@ typedef struct tagGDIOBJHDR
 {
     WORD        system : 1;   /* system object flag */
     WORD        deleted : 1;  /* whether DeleteObject has been called on this object */
-    DWORD       selcount;     /* number of times the object is selected in a DC */
 } GDIOBJHDR;
 
 typedef struct tagGdiFont GdiFont;
@@ -316,6 +315,7 @@ extern void *free_gdi_handle( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern void *GDI_GetObjPtr( HGDIOBJ, WORD ) DECLSPEC_HIDDEN;
 extern void GDI_ReleaseObj( HGDIOBJ ) DECLSPEC_HIDDEN;
 extern void GDI_CheckNotLock(void) DECLSPEC_HIDDEN;
+extern UINT GDI_get_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern HGDIOBJ GDI_inc_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern BOOL GDI_dec_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern void GDI_hdc_using_object(HGDIOBJ obj, HDC hdc) DECLSPEC_HIDDEN;

@@ -53,6 +53,7 @@ struct gdi_handle_entry
     const struct gdi_obj_funcs *funcs;       /* type-specific functions */
     struct hdc_list            *hdcs;        /* list of HDCs interested in this object */
     WORD                        type;        /* object type (one of the OBJ_* constants) */
+    WORD                        selcount;    /* number of times the object is selected in a DC */
 };
 
 static struct gdi_handle_entry gdi_handles[MAX_GDI_HANDLES];
@@ -524,21 +525,36 @@ static UINT get_default_charset( void )
 
 
 /***********************************************************************
+ *           GDI_get_ref_count
+ *
+ * Retrieve the reference count of a GDI object.
+ * Note: the object must be locked otherwise the count is meaningless.
+ */
+UINT GDI_get_ref_count( HGDIOBJ handle )
+{
+    struct gdi_handle_entry *entry;
+    UINT ret = 0;
+
+    EnterCriticalSection( &gdi_section );
+    if ((entry = handle_entry( handle ))) ret = entry->selcount;
+    LeaveCriticalSection( &gdi_section );
+    return ret;
+}
+
+
+/***********************************************************************
  *           GDI_inc_ref_count
  *
  * Increment the reference count of a GDI object.
  */
 HGDIOBJ GDI_inc_ref_count( HGDIOBJ handle )
 {
-    GDIOBJHDR *header;
+    struct gdi_handle_entry *entry;
 
-    if ((header = GDI_GetObjPtr( handle, 0 )))
-    {
-        header->selcount++;
-        GDI_ReleaseObj( handle );
-    }
+    EnterCriticalSection( &gdi_section );
+    if ((entry = handle_entry( handle ))) entry->selcount++;
     else handle = 0;
-
+    LeaveCriticalSection( &gdi_section );
     return handle;
 }
 
@@ -550,22 +566,24 @@ HGDIOBJ GDI_inc_ref_count( HGDIOBJ handle )
  */
 BOOL GDI_dec_ref_count( HGDIOBJ handle )
 {
-    GDIOBJHDR *header;
+    struct gdi_handle_entry *entry;
 
-    if ((header = GDI_GetObjPtr( handle, 0 )))
+    EnterCriticalSection( &gdi_section );
+    if ((entry = handle_entry( handle )))
     {
-        assert( header->selcount );
-        if (!--header->selcount && header->deleted)
+        assert( entry->selcount );
+        if (!--entry->selcount && entry->obj->deleted)
         {
             /* handle delayed DeleteObject*/
-            header->deleted = 0;
-            GDI_ReleaseObj( handle );
+            entry->obj->deleted = 0;
+            LeaveCriticalSection( &gdi_section );
             TRACE( "executing delayed DeleteObject for %p\n", handle );
             DeleteObject( handle );
+            return TRUE;
         }
-        else GDI_ReleaseObj( handle );
     }
-    return header != NULL;
+    LeaveCriticalSection( &gdi_section );
+    return entry != NULL;
 }
 
 
@@ -668,7 +686,7 @@ static void dump_gdi_objects( void )
         }
         TRACE( "handle %p obj %p type %s selcount %u deleted %u\n",
                entry_to_handle( entry ), entry->obj, gdi_obj_type( entry->type ),
-               entry->obj->selcount, entry->obj->deleted );
+               entry->selcount, entry->obj->deleted );
     }
     LeaveCriticalSection( &gdi_section );
 }
@@ -689,7 +707,6 @@ HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs 
     /* initialize the object header */
     obj->system   = 0;
     obj->deleted  = 0;
-    obj->selcount = 0;
 
     EnterCriticalSection( &gdi_section );
     for (i = next_gdi_handle + 1; i < MAX_GDI_HANDLES; i++)
@@ -708,6 +725,7 @@ HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs 
     entry->funcs    = funcs;
     entry->hdcs     = NULL;
     entry->type     = type;
+    entry->selcount = 0;
     next_gdi_handle = i;
     ret = entry_to_handle( entry );
     LeaveCriticalSection( &gdi_section );
@@ -829,9 +847,9 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
     hdcs_head = entry->hdcs;
     entry->hdcs = NULL;
 
-    if (entry->obj->selcount)
+    if (entry->selcount)
     {
-        TRACE("delayed for %p because object in use, count %u\n", obj, entry->obj->selcount );
+        TRACE("delayed for %p because object in use, count %u\n", obj, entry->selcount );
         entry->obj->deleted = 1;  /* mark for delete */
     }
     else funcs = entry->funcs;
