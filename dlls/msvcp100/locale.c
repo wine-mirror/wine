@@ -55,7 +55,7 @@ typedef struct _locale__Locimp {
     MSVCP_size_t facet_cnt;
     category catmask;
     MSVCP_bool transparent;
-    basic_string_char name;
+    _Yarn_char name;
 } locale__Locimp;
 
 typedef struct {
@@ -64,10 +64,10 @@ typedef struct {
 
 typedef struct {
     _Lockit lock;
-    basic_string_char days;
-    basic_string_char months;
-    basic_string_char oldlocname;
-    basic_string_char newlocname;
+    _Yarn_char days;
+    _Yarn_char months;
+    _Yarn_char oldlocname;
+    _Yarn_char newlocname;
 } _Locinfo;
 
 typedef struct {
@@ -403,9 +403,9 @@ _Locinfo* __cdecl _Locinfo__Locinfo_ctor_cat_cstr(_Locinfo *locinfo, int categor
         throw_exception(EXCEPTION_RUNTIME_ERROR, "bad locale name");
 
     _Lockit_ctor_locktype(&locinfo->lock, _LOCK_LOCALE);
-    MSVCP_basic_string_char_ctor_cstr(&locinfo->days, "");
-    MSVCP_basic_string_char_ctor_cstr(&locinfo->months, "");
-    MSVCP_basic_string_char_ctor_cstr(&locinfo->oldlocname, setlocale(LC_ALL, NULL));
+    _Yarn_char_ctor_cstr(&locinfo->days, NULL);
+    _Yarn_char_ctor_cstr(&locinfo->months, NULL);
+    _Yarn_char_ctor_cstr(&locinfo->oldlocname, setlocale(LC_ALL, NULL));
 
     if(category)
         locale = setlocale(LC_ALL, locstr);
@@ -413,9 +413,9 @@ _Locinfo* __cdecl _Locinfo__Locinfo_ctor_cat_cstr(_Locinfo *locinfo, int categor
         locale = setlocale(LC_ALL, NULL);
 
     if(locale)
-        MSVCP_basic_string_char_ctor_cstr(&locinfo->newlocname, locale);
+        _Yarn_char_ctor_cstr(&locinfo->newlocname, locale);
     else
-        MSVCP_basic_string_char_ctor_cstr(&locinfo->newlocname, "*");
+        _Yarn_char_ctor_cstr(&locinfo->newlocname, "*");
 
     return locinfo;
 }
@@ -449,11 +449,11 @@ void __cdecl _Locinfo__Locinfo_dtor(_Locinfo *locinfo)
 {
     TRACE("(%p)\n", locinfo);
 
-    setlocale(LC_ALL, MSVCP_basic_string_char_c_str(&locinfo->oldlocname));
-    MSVCP_basic_string_char_dtor(&locinfo->days);
-    MSVCP_basic_string_char_dtor(&locinfo->months);
-    MSVCP_basic_string_char_dtor(&locinfo->oldlocname);
-    MSVCP_basic_string_char_dtor(&locinfo->newlocname);
+    setlocale(LC_ALL, _Yarn_char_c_str(&locinfo->oldlocname));
+    _Yarn_char_dtor(&locinfo->days);
+    _Yarn_char_dtor(&locinfo->months);
+    _Yarn_char_dtor(&locinfo->oldlocname);
+    _Yarn_char_dtor(&locinfo->newlocname);
     _Lockit_dtor(&locinfo->lock);
 }
 
@@ -484,7 +484,7 @@ _Locinfo* __cdecl _Locinfo__Locinfo_Addcats(_Locinfo *locinfo, int category, con
     if(!locstr)
         throw_exception(EXCEPTION_RUNTIME_ERROR, "bad locale name");
 
-    MSVCP_basic_string_char_dtor(&locinfo->newlocname);
+    _Yarn_char_dtor(&locinfo->newlocname);
 
     if(category)
         locale = setlocale(LC_ALL, locstr);
@@ -492,9 +492,9 @@ _Locinfo* __cdecl _Locinfo__Locinfo_Addcats(_Locinfo *locinfo, int category, con
         locale = setlocale(LC_ALL, NULL);
 
     if(locale)
-        MSVCP_basic_string_char_ctor_cstr(&locinfo->newlocname, locale);
+        _Yarn_char_ctor_cstr(&locinfo->newlocname, locale);
     else
-        MSVCP_basic_string_char_ctor_cstr(&locinfo->newlocname, "*");
+        _Yarn_char_ctor_cstr(&locinfo->newlocname, "*");
 
     return locinfo;
 }
@@ -610,12 +610,12 @@ const char* __thiscall _Locinfo__Getdays(_Locinfo *this)
     TRACE("(%p)\n", this);
 
     if(days) {
-        MSVCP_basic_string_char_dtor(&this->days);
-        MSVCP_basic_string_char_ctor_cstr(&this->days, days);
+        _Yarn_char_dtor(&this->days);
+        _Yarn_char_ctor_cstr(&this->days, days);
         free(days);
     }
 
-    return this->days.size ? MSVCP_basic_string_char_c_str(&this->days) :
+    return this->days.str ? _Yarn_char_c_str(&this->days) :
         ":Sun:Sunday:Mon:Monday:Tue:Tuesday:Wed:Wednesday:Thu:Thursday:Fri:Friday:Sat:Saturday";
 }
 
@@ -629,12 +629,12 @@ const char* __thiscall _Locinfo__Getmonths(_Locinfo *this)
     TRACE("(%p)\n", this);
 
     if(months) {
-        MSVCP_basic_string_char_dtor(&this->months);
-        MSVCP_basic_string_char_ctor_cstr(&this->months, months);
+        _Yarn_char_dtor(&this->months);
+        _Yarn_char_ctor_cstr(&this->months, months);
         free(months);
     }
 
-    return this->months.size ? MSVCP_basic_string_char_c_str(&this->months) :
+    return this->months.str ? _Yarn_char_c_str(&this->months) :
         ":Jan:January:Feb:February:Mar:March:Apr:April:May:May:Jun:June:Jul:July"
         ":Aug:August:Sep:September:Oct:October:Nov:November:Dec:December";
 }
@@ -1126,7 +1126,7 @@ MSVCP_size_t __cdecl ctype_char__Getcat(const locale_facet **facet, const locale
             return 0;
         }
 
-        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        _Locinfo_ctor_cstr(&locinfo, _Yarn_char_c_str(&loc->ptr->name));
         ctype_char_ctor_locinfo((ctype_char*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
     }
@@ -1752,7 +1752,7 @@ MSVCP_size_t __cdecl ctype_wchar__Getcat(const locale_facet **facet, const local
             return 0;
         }
 
-        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        _Locinfo_ctor_cstr(&locinfo, _Yarn_char_c_str(&loc->ptr->name));
         ctype_wchar_ctor_locinfo((ctype_wchar*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
     }
@@ -2550,7 +2550,7 @@ MSVCP_size_t __cdecl codecvt_wchar__Getcat(const locale_facet **facet, const loc
             return 0;
         }
 
-        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        _Locinfo_ctor_cstr(&locinfo, _Yarn_char_c_str(&loc->ptr->name));
         codecvt_wchar_ctor_locinfo((codecvt_wchar*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
     }
@@ -2602,7 +2602,7 @@ MSVCP_size_t __cdecl codecvt_short__Getcat(const locale_facet **facet, const loc
             return 0;
         }
 
-        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        _Locinfo_ctor_cstr(&locinfo, _Yarn_char_c_str(&loc->ptr->name));
         codecvt_short_ctor((codecvt_wchar*)*facet);
         _Locinfo_dtor(&locinfo);
     }
@@ -2979,7 +2979,7 @@ static MSVCP_size_t numpunct_char__Getcat(const locale_facet **facet, const loca
             return 0;
         }
         numpunct_char_ctor_name((numpunct_char*)*facet,
-                MSVCP_basic_string_char_c_str(&loc->ptr->name), 0, TRUE);
+                _Yarn_char_c_str(&loc->ptr->name), 0, TRUE);
     }
 
     return LC_NUMERIC;
@@ -3285,7 +3285,7 @@ static MSVCP_size_t numpunct_wchar__Getcat(const locale_facet **facet, const loc
             return 0;
         }
         numpunct_wchar_ctor_name((numpunct_wchar*)*facet,
-                MSVCP_basic_string_char_c_str(&loc->ptr->name), 0, TRUE);
+                _Yarn_char_c_str(&loc->ptr->name), 0, TRUE);
     }
 
     return LC_NUMERIC;
@@ -3333,7 +3333,7 @@ static MSVCP_size_t numpunct_short__Getcat(const locale_facet **facet, const loc
             return 0;
         }
         numpunct_short_ctor_name((numpunct_wchar*)*facet,
-                MSVCP_basic_string_char_c_str(&loc->ptr->name), 0, TRUE);
+                _Yarn_char_c_str(&loc->ptr->name), 0, TRUE);
     }
 
     return LC_NUMERIC;
@@ -3719,7 +3719,7 @@ MSVCP_size_t __cdecl num_get_wchar__Getcat(const locale_facet **facet, const loc
             return 0;
         }
 
-        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        _Locinfo_ctor_cstr(&locinfo, _Yarn_char_c_str(&loc->ptr->name));
         num_get_wchar_ctor_locinfo((num_get*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
     }
@@ -4866,7 +4866,7 @@ MSVCP_size_t __cdecl num_get_char__Getcat(const locale_facet **facet, const loca
             return 0;
         }
 
-        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        _Locinfo_ctor_cstr(&locinfo, _Yarn_char_c_str(&loc->ptr->name));
         num_get_char_ctor_locinfo((num_get*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
     }
@@ -5743,7 +5743,7 @@ MSVCP_size_t __cdecl num_put_char__Getcat(const locale_facet **facet, const loca
             return 0;
         }
 
-        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        _Locinfo_ctor_cstr(&locinfo, _Yarn_char_c_str(&loc->ptr->name));
         num_put_char_ctor_locinfo((num_put*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
     }
@@ -6390,7 +6390,7 @@ MSVCP_size_t __cdecl num_put_wchar__Getcat(const locale_facet **facet, const loc
             return 0;
         }
 
-        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        _Locinfo_ctor_cstr(&locinfo, _Yarn_char_c_str(&loc->ptr->name));
         num_put_wchar_ctor_locinfo((num_put*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
     }
@@ -6414,7 +6414,7 @@ MSVCP_size_t __cdecl num_put_short__Getcat(const locale_facet **facet, const loc
             return 0;
         }
 
-        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        _Locinfo_ctor_cstr(&locinfo, _Yarn_char_c_str(&loc->ptr->name));
         num_put_short_ctor_locinfo((num_put*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
     }
@@ -7178,7 +7178,7 @@ locale__Locimp* __thiscall locale__Locimp_ctor_transparent(locale__Locimp *this,
     memset(this, 0, sizeof(locale__Locimp));
     locale_facet_ctor_refs(&this->facet, 1);
     this->transparent = transparent;
-    MSVCP_basic_string_char_ctor_cstr(&this->name, "*");
+    _Yarn_char_ctor_cstr(&this->name, "*");
     return this;
 }
 
@@ -7218,7 +7218,7 @@ locale__Locimp* __thiscall locale__Locimp_copy_ctor(locale__Locimp *this, const 
                 locale_facet__Incref(this->facetvec[i]);
         }
     }
-    MSVCP_basic_string_char_copy_ctor(&this->name, &copy->name);
+    _Yarn_char_copy_ctor(&this->name, &copy->name);
     _Lockit_dtor(&lock);
     return this;
 }
@@ -7244,7 +7244,7 @@ void __thiscall locale__Locimp_dtor(locale__Locimp *this)
                 call_locale_facet_vector_dtor(this->facetvec[i], 0);
 
         MSVCRT_operator_delete(this->facetvec);
-        MSVCP_basic_string_char_dtor(&this->name);
+        _Yarn_char_dtor(&this->name);
     }
 }
 
@@ -7604,7 +7604,7 @@ locale__Locimp* __cdecl locale__Locimp__Makeloc(const _Locinfo *locinfo, categor
     locale__Locimp__Makeushloc(locinfo, cat, locimp, loc);
 
     locimp->catmask |= cat;
-    MSVCP_basic_string_char_copy_ctor(&locimp->name, &locinfo->newlocname);
+    _Yarn_char_copy_ctor(&locimp->name, &locinfo->newlocname);
     return locimp;
 }
 
@@ -7647,8 +7647,8 @@ locale__Locimp* __cdecl locale__Init(void)
 
     locale__Locimp_ctor(global_locale);
     global_locale->catmask = (1<<(LC_MAX+1))-1;
-    MSVCP_basic_string_char_dtor(&global_locale->name);
-    MSVCP_basic_string_char_ctor_cstr(&global_locale->name, "C");
+    _Yarn_char_dtor(&global_locale->name);
+    _Yarn_char_ctor_cstr(&global_locale->name, "C");
 
     locale__Locimp__Clocptr = global_locale;
     global_locale->facet.refs++;
@@ -7771,7 +7771,7 @@ locale* __cdecl locale_global(locale *ret, const locale *loc)
         for(i=LC_ALL+1; i<=LC_MAX; i++) {
             if((global_locale->catmask & (1<<(i-1))) == 0)
                 continue;
-            setlocale(i, MSVCP_basic_string_char_c_str(&global_locale->name));
+            setlocale(i, _Yarn_char_c_str(&global_locale->name));
         }
     }
     _Lockit_dtor(&lock);
