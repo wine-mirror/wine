@@ -399,7 +399,7 @@ MSVCP_size_t MSVCP_basic_string_char_length(const basic_string_char *this)
 
 /* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ID@Z */
 /* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_KD@Z */
-basic_string_char* MSVCP_basic_string_char_append_len_ch(basic_string_char *this, MSVCP_size_t count, char ch)
+static basic_string_char* MSVCP_basic_string_char_append_len_ch(basic_string_char *this, MSVCP_size_t count, char ch)
 {
     TRACE("%p %lu %c\n", this, count, ch);
 
