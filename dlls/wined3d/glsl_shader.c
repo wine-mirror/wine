@@ -2208,20 +2208,21 @@ static void shader_glsl_binop(const struct wined3d_shader_instruction *ins)
     struct glsl_src_param src0_param;
     struct glsl_src_param src1_param;
     DWORD write_mask;
-    char op;
+    const char *op;
 
     /* Determine the GLSL operator to use based on the opcode */
     switch (ins->handler_idx)
     {
-        case WINED3DSIH_ADD: op = '+'; break;
-        case WINED3DSIH_AND: op = '&'; break;
-        case WINED3DSIH_DIV: op = '/'; break;
-        case WINED3DSIH_IADD: op = '+'; break;
-        case WINED3DSIH_MUL: op = '*'; break;
-        case WINED3DSIH_SUB: op = '-'; break;
-        case WINED3DSIH_XOR: op = '^'; break;
+        case WINED3DSIH_ADD:  op = "+";  break;
+        case WINED3DSIH_AND:  op = "&";  break;
+        case WINED3DSIH_DIV:  op = "/";  break;
+        case WINED3DSIH_IADD: op = "+";  break;
+        case WINED3DSIH_MUL:  op = "*";  break;
+        case WINED3DSIH_SUB:  op = "-";  break;
+        case WINED3DSIH_USHR: op = ">>"; break;
+        case WINED3DSIH_XOR:  op = "^";  break;
         default:
-            op = ' ';
+            op = "<unhandled operator>";
             FIXME("Opcode %#x not yet handled in GLSL\n", ins->handler_idx);
             break;
     }
@@ -2229,7 +2230,7 @@ static void shader_glsl_binop(const struct wined3d_shader_instruction *ins)
     write_mask = shader_glsl_append_dst(buffer, ins);
     shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src0_param);
     shader_glsl_add_src_param(ins, &ins->src[1], write_mask, &src1_param);
-    shader_addline(buffer, "%s %c %s);\n", src0_param.param_str, op, src1_param.param_str);
+    shader_addline(buffer, "%s %s %s);\n", src0_param.param_str, op, src1_param.param_str);
 }
 
 static void shader_glsl_relop(const struct wined3d_shader_instruction *ins)
@@ -5466,7 +5467,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_TEXREG2GB             */ shader_glsl_texreg2gb,
     /* WINED3DSIH_TEXREG2RGB            */ shader_glsl_texreg2rgb,
     /* WINED3DSIH_UDIV                  */ shader_glsl_udiv,
-    /* WINED3DSIH_USHR                  */ NULL,
+    /* WINED3DSIH_USHR                  */ shader_glsl_binop,
     /* WINED3DSIH_UTOF                  */ shader_glsl_to_float,
     /* WINED3DSIH_XOR                   */ shader_glsl_binop,
 };
