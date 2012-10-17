@@ -557,6 +557,13 @@ const char* __thiscall MSVCP_failure_what(failure *this)
 DEFINE_RTTI_DATA2(failure, 0, &runtime_error_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AVfailure@std@@");
 DEFINE_CXX_DATA2(failure, &runtime_error_cxx_type_info, &exception_cxx_type_info, MSVCP_logic_error_dtor);
 
+/* ?_Nomemory@std@@YAXXZ */
+void __cdecl _Nomemory(void)
+{
+    TRACE("()\n");
+    throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+}
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif

@@ -1122,7 +1122,7 @@
 @ cdecl -arch=win64 ?_Mutex_ctor@_Mutex@std@@CAXPEAV12@@Z(ptr) mutex_mutex_ctor
 @ cdecl -arch=win32 ?_Mutex_dtor@_Mutex@std@@CAXPAV12@@Z(ptr) mutex_mutex_dtor
 @ cdecl -arch=win64 ?_Mutex_dtor@_Mutex@std@@CAXPEAV12@@Z(ptr) mutex_mutex_dtor
-@ stub ?_Nomemory@std@@YAXXZ
+@ cdecl ?_Nomemory@std@@YAXXZ() _Nomemory
 @ thiscall -arch=win32 ?_Orphan_all@_Container_base0@std@@QAEXXZ(ptr) Container_base0_Orphan_all
 @ cdecl -arch=win64 ?_Orphan_all@_Container_base0@std@@QEAAXXZ(ptr) Container_base0_Orphan_all
 @ stub -arch=win32 ?_Orphan_all@_Container_base12@std@@QAEXXZ

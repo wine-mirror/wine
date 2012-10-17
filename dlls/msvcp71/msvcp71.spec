@@ -2326,7 +2326,7 @@
 @ stub ?_Nanv@?$_Ctraits@M@std@@SAMM@Z
 @ stub ?_Nanv@?$_Ctraits@N@std@@SANN@Z
 @ stub ?_Nanv@?$_Ctraits@O@std@@SAOO@Z
-@ stub ?_Nomemory@std@@YAXXZ
+@ cdecl ?_Nomemory@std@@YAXXZ() _Nomemory
 @ thiscall -arch=win32 ?_Osfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) basic_ostream_char__Osfx
 @ cdecl -arch=win64 ?_Osfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAXXZ(ptr) basic_ostream_char__Osfx
 @ thiscall -arch=win32 ?_Osfx@?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEXXZ(ptr) basic_ostream_wchar__Osfx

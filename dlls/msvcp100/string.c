@@ -158,7 +158,7 @@ static const MSVCP_size_t MSVCP_basic_string_char_npos = -1;
 /* ?_Myptr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAAPEADXZ */
 static char* basic_string_char_ptr(basic_string_char *this)
 {
-    if(this->res == BUF_SIZE_CHAR-1)
+    if(this->res < BUF_SIZE_CHAR)
         return this->data.buf;
     return this->data.ptr;
 }
@@ -167,7 +167,7 @@ static char* basic_string_char_ptr(basic_string_char *this)
 /* ?_Myptr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEBAPEBDXZ */
 static const char* basic_string_char_const_ptr(const basic_string_char *this)
 {
-    if(this->res == BUF_SIZE_CHAR-1)
+    if(this->res < BUF_SIZE_CHAR)
         return this->data.buf;
     return this->data.ptr;
 }
@@ -437,7 +437,7 @@ const MSVCP_size_t MSVCP_basic_string_wchar_npos = -1;
 /* ?_Myptr@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@IEAAPEAGXZ */
 static wchar_t* basic_string_wchar_ptr(basic_string_wchar *this)
 {
-    if(this->res == BUF_SIZE_WCHAR-1)
+    if(this->res < BUF_SIZE_WCHAR)
         return this->data.buf;
     return this->data.ptr;
 }
@@ -448,7 +448,7 @@ static wchar_t* basic_string_wchar_ptr(basic_string_wchar *this)
 /* ?_Myptr@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@IEBAPEBGXZ */
 static const wchar_t* basic_string_wchar_const_ptr(const basic_string_wchar *this)
 {
-    if(this->res == BUF_SIZE_WCHAR-1)
+    if(this->res < BUF_SIZE_WCHAR)
         return this->data.buf;
     return this->data.ptr;
 }

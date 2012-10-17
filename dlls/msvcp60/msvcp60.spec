@@ -897,8 +897,8 @@
 @ stub -arch=win64 ??0messages_base@std@@QEAA@_K@Z
 @ stub -arch=win32 ??0money_base@std@@QAE@I@Z
 @ stub -arch=win64 ??0money_base@std@@QEAA@_K@Z
-@ stub -arch=win32 ??0ostrstream@std@@QAE@PADHH@Z
-@ stub -arch=win64 ??0ostrstream@std@@QEAA@PEAD_JH@Z
+@ thiscall -arch=win32 ??0ostrstream@std@@QAE@PADHH@Z(ptr ptr long long long) ostrstream_ctor
+@ cdecl -arch=win64 ??0ostrstream@std@@QEAA@PEAD_JH@Z(ptr ptr long long long) ostrstream_ctor
 @ thiscall -arch=win32 ??0out_of_range@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_out_of_range_copy_ctor
 @ cdecl -arch=win64 ??0out_of_range@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_out_of_range_copy_ctor
 @ thiscall -arch=win32 ??0out_of_range@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_out_of_range_ctor_bstr
@@ -915,8 +915,8 @@
 @ cdecl -arch=win64 ??0runtime_error@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_runtime_error_copy_ctor
 @ thiscall -arch=win32 ??0runtime_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_runtime_error_ctor_bstr
 @ cdecl -arch=win64 ??0runtime_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_runtime_error_ctor_bstr
-@ stub -arch=win32 ??0strstream@std@@QAE@PADHH@Z
-@ stub -arch=win64 ??0strstream@std@@QEAA@PEAD_JH@Z
+@ thiscall -arch=win32 ??0strstream@std@@QAE@PADHH@Z(ptr ptr long long long) strstream_ctor
+@ cdecl -arch=win64 ??0strstream@std@@QEAA@PEAD_JH@Z(ptr ptr long long long) strstream_ctor
 @ stub -arch=win32 ??0time_base@std@@QAE@I@Z
 @ stub -arch=win64 ??0time_base@std@@QEAA@_K@Z
 @ stub -arch=win32 ??0underflow_error@std@@QAE@ABV01@@Z
@@ -1065,8 +1065,8 @@
 @ cdecl -arch=win64 ??1facet@locale@std@@UEAA@XZ(ptr) locale_facet_dtor
 @ thiscall -arch=win32 ??1ios_base@std@@UAE@XZ(ptr) ios_base_dtor
 @ cdecl -arch=win64 ??1ios_base@std@@UEAA@XZ(ptr) ios_base_dtor
-@ stub -arch=win32 ??1istrstream@std@@UAE@XZ
-@ stub -arch=win64 ??1istrstream@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1istrstream@std@@UAE@XZ(ptr) istrstream_dtor
+@ cdecl -arch=win64 ??1istrstream@std@@UEAA@XZ(ptr) istrstream_dtor
 @ thiscall -arch=win32 ??1length_error@std@@UAE@XZ(ptr) MSVCP_logic_error_dtor
 @ cdecl -arch=win64 ??1length_error@std@@UEAA@XZ(ptr) MSVCP_logic_error_dtor
 @ thiscall -arch=win32 ??1locale@std@@QAE@XZ(ptr) locale_dtor
@@ -1077,8 +1077,8 @@
 @ stub -arch=win64 ??1messages_base@std@@UEAA@XZ
 @ stub -arch=win32 ??1money_base@std@@UAE@XZ
 @ stub -arch=win64 ??1money_base@std@@UEAA@XZ
-@ stub -arch=win32 ??1ostrstream@std@@UAE@XZ
-@ stub -arch=win64 ??1ostrstream@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1ostrstream@std@@UAE@XZ(ptr) ostrstream_dtor
+@ cdecl -arch=win64 ??1ostrstream@std@@UEAA@XZ(ptr) ostrstream_dtor
 @ thiscall -arch=win32 ??1out_of_range@std@@UAE@XZ(ptr) MSVCP_logic_error_dtor
 @ cdecl -arch=win64 ??1out_of_range@std@@UEAA@XZ(ptr) MSVCP_logic_error_dtor
 @ stub -arch=win32 ??1overflow_error@std@@UAE@XZ
@@ -1087,8 +1087,8 @@
 @ stub -arch=win64 ??1range_error@std@@UEAA@XZ
 @ thiscall -arch=win32 ??1runtime_error@std@@UAE@XZ(ptr) MSVCP_logic_error_dtor
 @ cdecl -arch=win64 ??1runtime_error@std@@UEAA@XZ(ptr) MSVCP_logic_error_dtor
-@ stub -arch=win32 ??1strstream@std@@UAE@XZ
-@ stub -arch=win64 ??1strstream@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1strstream@std@@UAE@XZ(ptr) strstream_dtor
+@ cdecl -arch=win64 ??1strstream@std@@UEAA@XZ(ptr) strstream_dtor
 @ thiscall -arch=win32 ??1strstreambuf@std@@UAE@XZ(ptr) strstreambuf_dtor
 @ cdecl -arch=win64 ??1strstreambuf@std@@UEAA@XZ(ptr) strstreambuf_dtor
 @ stub -arch=win32 ??1time_base@std@@UAE@XZ
@@ -2310,7 +2310,7 @@
 @ stub ?_Nanv@?$_Ctr@M@std@@SAMM@Z
 @ stub ?_Nanv@?$_Ctr@N@std@@SANN@Z
 @ stub ?_Nanv@?$_Ctr@O@std@@SAOO@Z
-@ stub ?_Nomemory@std@@YAXXZ
+@ cdecl ?_Nomemory@std@@YAXXZ() _Nomemory
 @ cdecl -arch=win32 ?_Nullstr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@CAPBDXZ() basic_string_char__Nullstr
 @ cdecl -arch=win64 ?_Nullstr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@CAPEBDXZ() basic_string_char__Nullstr
 @ cdecl -arch=win32 ?_Nullstr@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@CAPBGXZ() basic_string_wchar__Nullstr
