@@ -1560,48 +1560,6 @@ static HRESULT Global_vbUseSystemDayOfWeek(vbdisp_t *This, VARIANT *arg, unsigne
     return E_NOTIMPL;
 }
 
-static HRESULT Global_vbSunday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, 1);
-}
-
-static HRESULT Global_vbMonday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, 2);
-}
-
-static HRESULT Global_vbTuesday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, 3);
-}
-
-static HRESULT Global_vbWednesday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, 4);
-}
-
-static HRESULT Global_vbThursday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, 5);
-}
-
-static HRESULT Global_vbFriday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, 6);
-}
-
-static HRESULT Global_vbSaturday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, 7);
-}
-
 static HRESULT Global_vbFirstJan1(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
@@ -2061,13 +2019,13 @@ static HRESULT Global_vbMsgBoxRtlReading(vbdisp_t *This, VARIANT *arg, unsigned 
 static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_VBUSESYSTEM,        Global_vbUseSystem, BP_GET},
     {DISPID_GLOBAL_USESYSTEMDAYOFWEEK, Global_vbUseSystemDayOfWeek, BP_GET},
-    {DISPID_GLOBAL_VBSUNDAY,           Global_vbSunday, BP_GET},
-    {DISPID_GLOBAL_VBMONDAY,           Global_vbMonday, BP_GET},
-    {DISPID_GLOBAL_VBTUESDAY,          Global_vbTuesday, BP_GET},
-    {DISPID_GLOBAL_VBWEDNESDAY,        Global_vbWednesday, BP_GET},
-    {DISPID_GLOBAL_VBTHURSDAY,         Global_vbThursday, BP_GET},
-    {DISPID_GLOBAL_VBFRIDAY,           Global_vbFriday, BP_GET},
-    {DISPID_GLOBAL_VBSATURDAY,         Global_vbSaturday, BP_GET},
+    {DISPID_GLOBAL_VBSUNDAY,           NULL, BP_GET, 1},
+    {DISPID_GLOBAL_VBMONDAY,           NULL, BP_GET, 2},
+    {DISPID_GLOBAL_VBTUESDAY,          NULL, BP_GET, 3},
+    {DISPID_GLOBAL_VBWEDNESDAY,        NULL, BP_GET, 4},
+    {DISPID_GLOBAL_VBTHURSDAY,         NULL, BP_GET, 5},
+    {DISPID_GLOBAL_VBFRIDAY,           NULL, BP_GET, 6},
+    {DISPID_GLOBAL_VBSATURDAY,         NULL, BP_GET, 7},
     {DISPID_GLOBAL_VBFIRSTJAN1,        Global_vbFirstJan1, BP_GET},
     {DISPID_GLOBAL_VBFIRSTFOURDAYS,    Global_vbFirstFourDays, BP_GET},
     {DISPID_GLOBAL_VBFIRSTFULLWEEK,    Global_vbFirstFullWeek, BP_GET},
