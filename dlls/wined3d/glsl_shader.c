@@ -1793,7 +1793,7 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
 {
     enum wined3d_sampler_texture_type sampler_type = ctx->reg_maps->sampler_type[sampler_idx];
     const struct wined3d_gl_info *gl_info = ctx->gl_info;
-    BOOL shadow = shader_is_pshader_version(ctx->reg_maps->shader_version.type)
+    BOOL shadow = ctx->reg_maps->shader_version.type == WINED3D_SHADER_TYPE_PIXEL
             && (((const struct shader_glsl_ctx_priv *)ctx->backend_data)->cur_ps_args->shadow & (1 << sampler_idx));
     BOOL projected = flags & WINED3D_GLSL_SAMPLE_PROJECTED;
     BOOL texrect = flags & WINED3D_GLSL_SAMPLE_RECT;
