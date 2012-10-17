@@ -478,14 +478,30 @@ BOOL WINAPI GetLastInputInfo(PLASTINPUTINFO plii)
 /******************************************************************
 *		GetRawInputDeviceList (USER32.@)
 */
-UINT WINAPI GetRawInputDeviceList(PRAWINPUTDEVICELIST pRawInputDeviceList, PUINT puiNumDevices, UINT cbSize)
+UINT WINAPI GetRawInputDeviceList(RAWINPUTDEVICELIST *devices, UINT *device_count, UINT size)
 {
-    FIXME("(pRawInputDeviceList=%p, puiNumDevices=%p, cbSize=%d) stub!\n", pRawInputDeviceList, puiNumDevices, cbSize);
+    TRACE("devices %p, device_count %p, size %u.\n", devices, device_count, size);
 
-    if(pRawInputDeviceList)
-        memset(pRawInputDeviceList, 0, sizeof *pRawInputDeviceList);
-    *puiNumDevices = 0;
-    return 0;
+    if (size != sizeof(*devices) || !device_count) return ~0U;
+
+    if (!devices)
+    {
+        *device_count = 2;
+        return 0;
+    }
+
+    if (*device_count < 2)
+    {
+        *device_count = 2;
+        return ~0U;
+    }
+
+    devices[0].hDevice = WINE_MOUSE_HANDLE;
+    devices[0].dwType = RIM_TYPEMOUSE;
+    devices[1].hDevice = WINE_KEYBOARD_HANDLE;
+    devices[1].dwType = RIM_TYPEKEYBOARD;
+
+    return 2;
 }
 
 
