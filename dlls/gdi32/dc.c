@@ -55,16 +55,18 @@ static inline DC *get_dc_obj( HDC hdc )
     DC *dc = GDI_GetObjPtr( hdc, 0 );
     if (!dc) return NULL;
 
-    if ((dc->header.type != OBJ_DC) &&
-        (dc->header.type != OBJ_MEMDC) &&
-        (dc->header.type != OBJ_METADC) &&
-        (dc->header.type != OBJ_ENHMETADC))
+    switch (GetObjectType( hdc ))
     {
+    case OBJ_DC:
+    case OBJ_MEMDC:
+    case OBJ_METADC:
+    case OBJ_ENHMETADC:
+        return dc;
+    default:
         GDI_ReleaseObj( hdc );
         SetLastError( ERROR_INVALID_HANDLE );
-        dc = NULL;
+        return NULL;
     }
-    return dc;
 }
 
 

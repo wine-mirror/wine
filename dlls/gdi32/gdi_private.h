@@ -65,7 +65,6 @@ struct hdc_list
 
 typedef struct tagGDIOBJHDR
 {
-    WORD        type;         /* object type (one of the OBJ_* constants) */
     WORD        system : 1;   /* system object flag */
     WORD        deleted : 1;  /* whether DeleteObject has been called on this object */
     DWORD       selcount;     /* number of times the object is selected in a DC */

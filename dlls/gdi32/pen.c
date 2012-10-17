@@ -236,7 +236,7 @@ static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
         struct brush_pattern *pattern;
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectPen );
 
-        switch (pen->header.type)
+        switch (GetObjectType( handle ))
         {
         case OBJ_PEN:
             pattern = NULL;
@@ -293,7 +293,7 @@ static INT PEN_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 
     if (!pen) return 0;
 
-    switch (pen->header.type)
+    switch (GetObjectType( handle ))
     {
     case OBJ_PEN:
     {

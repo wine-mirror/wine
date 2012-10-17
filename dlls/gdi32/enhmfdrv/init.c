@@ -435,7 +435,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
     TRACE("(%p)\n", hdc );
 
     if (!(dc = get_dc_ptr( hdc ))) return NULL;
-    if (dc->header.type != OBJ_ENHMETADC)
+    if (GetObjectType( hdc ) != OBJ_ENHMETADC)
     {
         release_dc_ptr( dc );
         return NULL;

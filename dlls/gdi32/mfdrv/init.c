@@ -390,7 +390,7 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
     TRACE("(%p)\n", hdc );
 
     if (!(dc = get_dc_ptr( hdc ))) return NULL;
-    if (dc->header.type != OBJ_METADC)
+    if (GetObjectType( hdc ) != OBJ_METADC)
     {
         release_dc_ptr( dc );
         return NULL;
