@@ -7,6 +7,7 @@ C_SRCS = \
 	main.c \
 	query.c \
 	reg.c \
+	service.c \
 	services.c \
 	table.c \
 	wbemlocator.c
