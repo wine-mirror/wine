@@ -358,8 +358,19 @@ static HRESULT WINAPI HTMLImgElement_get_readyState(IHTMLImgElement *iface, BSTR
 static HRESULT WINAPI HTMLImgElement_get_complete(IHTMLImgElement *iface, VARIANT_BOOL *p)
 {
     HTMLImgElement *This = impl_from_IHTMLImgElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    cpp_bool complete;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLImageElement_GetComplete(This->nsimg, &complete);
+    if(NS_FAILED(nsres)) {
+        ERR("GetComplete failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = complete ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLImgElement_put_loop(IHTMLImgElement *iface, VARIANT v)

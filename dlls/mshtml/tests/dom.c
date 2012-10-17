@@ -2504,6 +2504,19 @@ static void _test_img_name(unsigned line, IUnknown *unk, const char *pValue)
     SysFreeString(sName);
 }
 
+#define test_img_complete(a,b) _test_img_complete(__LINE__,a,b)
+static void _test_img_complete(unsigned line, IHTMLElement *elem, VARIANT_BOOL exb)
+{
+    IHTMLImgElement *img = _get_img_iface(line, (IUnknown*)elem);
+    VARIANT_BOOL b = 100;
+    HRESULT hres;
+
+    hres = IHTMLImgElement_get_complete(img, &b);
+    ok_(__FILE__,line) (hres == S_OK, "get_complete failed: %08x\n", hres);
+    ok_(__FILE__,line) (b == exb, "complete = %x, expected %x\n", b, exb);
+    IHTMLImgElement_Release(img);
+}
+
 static void test_dynamic_properties(IHTMLElement *elem)
 {
     static const WCHAR attr1W[] = {'a','t','t','r','1',0};
@@ -5703,6 +5716,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_img_alt((IUnknown*)elem, NULL);
         test_img_set_alt((IUnknown*)elem, "alt test");
         test_img_name((IUnknown*)elem, "WineImg");
+        test_img_complete(elem, VARIANT_FALSE);
         IHTMLElement_Release(elem);
     }
 
