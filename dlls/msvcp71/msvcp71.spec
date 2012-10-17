@@ -1002,7 +1002,7 @@
 @ stub -arch=win64 ??0messages_base@std@@QEAA@_K@Z
 @ stub -arch=win32 ??0money_base@std@@QAE@I@Z
 @ stub -arch=win64 ??0money_base@std@@QEAA@_K@Z
-@ stub -arch=win32 ??0ostrstream@std@@QAE@PADHH@Z
+@ thiscall -arch=win32 ??0ostrstream@std@@QAE@PADHH@Z(ptr ptr long long long) ostrstream_ctor
 @ thiscall -arch=win32 ??0strstream@std@@QAE@PADHH@Z(ptr ptr long long long) strstream_ctor
 @ cdecl -arch=win64 ??0strstream@std@@QEAA@PEAD_JH@Z(ptr ptr long long long) strstream_ctor
 @ stub -arch=win32 ??0time_base@std@@QAE@I@Z
@@ -1205,8 +1205,8 @@
 @ stub -arch=win64 ??1messages_base@std@@UEAA@XZ
 @ stub -arch=win32 ??1money_base@std@@UAE@XZ
 @ stub -arch=win64 ??1money_base@std@@UEAA@XZ
-@ stub -arch=win32 ??1ostrstream@std@@UAE@XZ
-@ stub -arch=win64 ??1ostrstream@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1ostrstream@std@@UAE@XZ(ptr) ostrstream_dtor
+@ cdecl -arch=win64 ??1ostrstream@std@@UEAA@XZ(ptr) ostrstream_dtor
 @ thiscall -arch=win32 ??1strstream@std@@UAE@XZ(ptr) strstream_dtor
 @ cdecl -arch=win64 ??1strstream@std@@UEAA@XZ(ptr) strstream_dtor
 @ thiscall -arch=win32 ??1strstreambuf@std@@UAE@XZ(ptr) strstreambuf_dtor
