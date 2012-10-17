@@ -12561,7 +12561,7 @@ strstreambuf* __thiscall strstreambuf_ctor_get(strstreambuf *this, const char *g
 {
     TRACE("(%p %p %ld)\n", this, g, len);
 
-    strstreambuf_ctor_get_put(this, NULL, 0, NULL);
+    strstreambuf_ctor_get_put(this, (char*)g, len, NULL);
     this->strmode |= STRSTATE_Constant;
     return this;
 }
