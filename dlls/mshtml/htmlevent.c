@@ -1312,8 +1312,10 @@ void detach_events(HTMLDocumentNode *doc)
         int i;
 
         for(i=0; i < EVENTID_LAST; i++) {
-            if(doc->event_vector[i])
+            if(doc->event_vector[i]) {
                 detach_nsevent(doc, event_info[i].name);
+                doc->event_vector[i] = FALSE;
+            }
         }
     }
 

@@ -106,23 +106,23 @@ static inline HRESULT get_window_event(HTMLWindow *window, eventid_t eid, VARIAN
     return get_event_handler(&window->inner_window->doc->body_event_target, eid, var);
 }
 
-static void detach_inner_window(HTMLOuterWindow *outer_window)
+static void detach_inner_window(HTMLInnerWindow *window)
 {
-    HTMLInnerWindow *window = outer_window->base.inner_window;
+    HTMLOuterWindow *outer_window = window->base.outer_window;
 
-    if(!window)
-        return;
-
-    if(outer_window->doc_obj && outer_window == outer_window->doc_obj->basedoc.window)
+    if(outer_window && outer_window->doc_obj && outer_window == outer_window->doc_obj->basedoc.window)
         window->doc->basedoc.cp_container.forward_container = NULL;
 
-    detach_events(window->doc);
+    if(window->doc)
+        detach_events(window->doc);
     abort_window_bindings(window);
     release_script_hosts(window);
-    window->doc->basedoc.window = NULL;
     window->base.outer_window = NULL;
 
-    IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    if(outer_window && outer_window->base.inner_window == window) {
+        outer_window->base.inner_window = NULL;
+        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    }
 }
 
 static inline HTMLWindow *impl_from_IHTMLWindow2(IHTMLWindow2 *iface)
@@ -206,7 +206,8 @@ static void release_outer_window(HTMLOuterWindow *This)
 
     remove_target_tasks(This->task_magic);
     set_current_mon(This, NULL);
-    detach_inner_window(This);
+    if(This->base.inner_window)
+        detach_inner_window(This->base.inner_window);
     release_children(This);
 
     if(This->secmgr)
@@ -231,9 +232,8 @@ static void release_inner_window(HTMLInnerWindow *This)
 
     TRACE("%p\n", This);
 
+    detach_inner_window(This);
     remove_target_tasks(This->task_magic);
-    abort_window_bindings(This);
-    release_script_hosts(This);
 
     if(This->doc) {
         This->doc->window = NULL;
@@ -2877,7 +2877,8 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
         return S_OK;
     }
 
-    detach_inner_window(outer_window);
+    if(outer_window->base.inner_window)
+        detach_inner_window(outer_window->base.inner_window);
     outer_window->base.inner_window = window;
     outer_window->pending_window = NULL;
 
