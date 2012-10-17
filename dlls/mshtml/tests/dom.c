@@ -4496,6 +4496,7 @@ static void test_navigator(IHTMLDocument2 *doc)
 {
     IHTMLWindow2 *window;
     IOmNavigator *navigator, *navigator2;
+    VARIANT_BOOL b;
     char buf[512];
     DWORD size;
     ULONG ref;
@@ -4580,6 +4581,11 @@ static void test_navigator(IHTMLDocument2 *doc)
     ok(hres == S_OK, "toString failed: %08x\n", hres);
     ok(!strcmp_wa(bstr, "[object]"), "toString returned %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
+
+    b = 100;
+    hres = IOmNavigator_get_onLine(navigator, &b);
+    ok(hres == S_OK, "get_onLine failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "onLine = %x\n", b);
 
     size = sizeof(buf);
     hres = ObtainUserAgentString(0, buf, &size);

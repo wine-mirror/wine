@@ -881,8 +881,11 @@ static HRESULT WINAPI OmNavigator_get_connectionSpeed(IOmNavigator *iface, LONG 
 static HRESULT WINAPI OmNavigator_get_onLine(IOmNavigator *iface, VARIANT_BOOL *p)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    WARN("(%p)->(%p) semi-stub, returning true\n", This, p);
+
+    *p = VARIANT_TRUE;
+    return S_OK;
 }
 
 static HRESULT WINAPI OmNavigator_get_userProfile(IOmNavigator *iface, IHTMLOpsProfile **p)
