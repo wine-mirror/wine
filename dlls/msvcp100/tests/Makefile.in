@@ -1,0 +1,9 @@
+TESTDLL   = msvcp100.dll
+APPMODE   = -mno-cygwin
+MODCFLAGS = @BUILTINFLAG@
+EXTRAINCL = -I$(top_srcdir)/include/msvcrt
+
+C_SRCS = \
+	string.c
+
+@MAKE_TEST_RULES@
