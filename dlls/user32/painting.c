@@ -790,7 +790,6 @@ void move_window_bits( HWND hwnd, struct window_surface *old_surface,
                            bits, info, DIB_RGB_COLORS );
         old_surface->funcs->unlock( old_surface );
         ReleaseDC( hwnd, hdc );
-        DeleteObject( rgn );
     }
 }
 
