@@ -71,12 +71,6 @@ typedef struct
 } METAHEADERDISK;
 #include "poppack.h"
 
-typedef struct
-{
-    GDIOBJHDR   header;
-    METAHEADER  *mh;
-} METAFILEOBJ;
-
 
 /******************************************************************
  *         MF_AddHandle
@@ -108,31 +102,7 @@ static int MF_AddHandle(HANDLETABLE *ht, UINT htlen, HGDIOBJ hobj)
  */
 HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh)
 {
-    HMETAFILE hmf;
-    METAFILEOBJ *metaObj;
-
-    if (!(metaObj = HeapAlloc( GetProcessHeap(), 0, sizeof(*metaObj) ))) return 0;
-    metaObj->mh = mh;
-    if (!(hmf = alloc_gdi_handle( &metaObj->header, OBJ_METAFILE, NULL )))
-        HeapFree( GetProcessHeap(), 0, metaObj );
-    return hmf;
-}
-
-/******************************************************************
- *         MF_GetMetaHeader
- *
- * Returns ptr to METAHEADER associated with HMETAFILE
- */
-static METAHEADER *MF_GetMetaHeader( HMETAFILE hmf )
-{
-    METAHEADER *ret = NULL;
-    METAFILEOBJ * metaObj = GDI_GetObjPtr( hmf, OBJ_METAFILE );
-    if (metaObj)
-    {
-        ret = metaObj->mh;
-        GDI_ReleaseObj( hmf );
-    }
-    return ret;
+    return alloc_gdi_handle( mh, OBJ_METAFILE, NULL );
 }
 
 /******************************************************************
@@ -164,10 +134,9 @@ static POINT *convert_points( UINT count, const POINTS *pts )
 
 BOOL WINAPI DeleteMetaFile( HMETAFILE hmf )
 {
-    METAFILEOBJ * metaObj = free_gdi_handle( hmf );
-    if (!metaObj) return FALSE;
-    HeapFree( GetProcessHeap(), 0, metaObj->mh );
-    return HeapFree( GetProcessHeap(), 0, metaObj );
+    METAHEADER *mh = free_gdi_handle( hmf );
+    if (!mh) return FALSE;
+    return HeapFree( GetProcessHeap(), 0, mh );
 }
 
 /******************************************************************
@@ -312,6 +281,24 @@ METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mh, LPCVOID filename, BOOL uni )
     return mh;
 }
 
+/* return a copy of the metafile bits, to be freed with HeapFree */
+static METAHEADER *get_metafile_bits( HMETAFILE hmf )
+{
+    METAHEADER *ret, *mh = GDI_GetObjPtr( hmf, OBJ_METAFILE );
+
+    if (!mh) return NULL;
+
+    if (mh->mtType != METAFILE_DISK)
+    {
+        ret = HeapAlloc( GetProcessHeap(), 0, mh->mtSize * 2 );
+        if (ret) memcpy( ret, mh, mh->mtSize * 2 );
+    }
+    else ret = MF_LoadDiskBasedMetaFile( mh );
+
+    GDI_ReleaseObj( hmf );
+    return ret;
+}
+
 /******************************************************************
  *         CopyMetaFileW   (GDI32.@)
  *
@@ -331,33 +318,25 @@ METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mh, LPCVOID filename, BOOL uni )
  */
 HMETAFILE WINAPI CopyMetaFileW( HMETAFILE hSrcMetaFile, LPCWSTR lpFilename )
 {
-    METAHEADER *mh = MF_GetMetaHeader( hSrcMetaFile );
-    METAHEADER *mh2 = NULL;
+    METAHEADER *mh = get_metafile_bits( hSrcMetaFile );
     HANDLE hFile;
 
     TRACE("(%p,%s)\n", hSrcMetaFile, debugstr_w(lpFilename));
 
     if(!mh) return 0;
 
-    if(mh->mtType == METAFILE_DISK)
-        mh2 = MF_LoadDiskBasedMetaFile(mh);
-    else {
-        mh2 = HeapAlloc( GetProcessHeap(), 0, mh->mtSize * 2 );
-        memcpy( mh2, mh, mh->mtSize * 2 );
-    }
-
     if(lpFilename) {         /* disk based metafile */
         DWORD w;
         if((hFile = CreateFileW(lpFilename, GENERIC_WRITE, 0, NULL,
 				CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
-	    HeapFree( GetProcessHeap(), 0, mh2 );
+	    HeapFree( GetProcessHeap(), 0, mh );
 	    return 0;
 	}
-	WriteFile(hFile, mh2, mh2->mtSize * 2, &w, NULL);
+	WriteFile(hFile, mh, mh->mtSize * 2, &w, NULL);
 	CloseHandle(hFile);
     }
 
-    return MF_Create_HMETAFILE( mh2 );
+    return MF_Create_HMETAFILE( mh );
 }
 
 
@@ -380,14 +359,23 @@ HMETAFILE WINAPI CopyMetaFileA( HMETAFILE hSrcMetaFile, LPCSTR lpFilename )
     return ret;
 }
 
-/*******************************************************************
- *         MF_PlayMetaFile
+/******************************************************************
+ *         PlayMetaFile   (GDI32.@)
  *
- * Helper for PlayMetaFile
+ *  Renders the metafile specified by hmf in the DC specified by
+ *  hdc. Returns FALSE on failure, TRUE on success.
+ *
+ * PARAMS
+ *  hdc [I] handle of DC to render in
+ *  hmf [I] handle of metafile to render
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
-static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
+BOOL WINAPI PlayMetaFile( HDC hdc, HMETAFILE hmf )
 {
-
+    METAHEADER *mh = get_metafile_bits( hmf );
     METARECORD *mr;
     HANDLETABLE *ht;
     unsigned int offset = 0;
@@ -396,14 +384,8 @@ static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
     HBRUSH hBrush;
     HPALETTE hPal;
     HRGN hRgn;
-    BOOL loaded = FALSE;
 
     if (!mh) return FALSE;
-    if(mh->mtType == METAFILE_DISK) { /* Create a memory-based copy */
-        mh = MF_LoadDiskBasedMetaFile(mh);
-	if(!mh) return FALSE;
-	loaded = TRUE;
-    }
 
     /* save DC */
     hPen = GetCurrentObject(hdc, OBJ_PEN);
@@ -420,7 +402,11 @@ static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
     /* create the handle table */
     ht = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
 		    sizeof(HANDLETABLE) * mh->mtNoObjects);
-    if(!ht) return FALSE;
+    if(!ht)
+    {
+        HeapFree( GetProcessHeap(), 0, mh );
+        return FALSE;
+    }
 
     /* loop through metafile playing records */
     offset = mh->mtHeaderSize * 2;
@@ -455,31 +441,9 @@ static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
       if(*(ht->objectHandle + i) != 0)
         DeleteObject(*(ht->objectHandle + i));
 
-    /* free handle table */
     HeapFree( GetProcessHeap(), 0, ht );
-    if(loaded)
-        HeapFree( GetProcessHeap(), 0, mh );
+    HeapFree( GetProcessHeap(), 0, mh );
     return TRUE;
-}
-
-/******************************************************************
- *         PlayMetaFile   (GDI32.@)
- *
- *  Renders the metafile specified by hmf in the DC specified by
- *  hdc. Returns FALSE on failure, TRUE on success.
- *
- * PARAMS
- *  hdc [I] handle of DC to render in
- *  hmf [I] handle of metafile to render
- *
- * RETURNS
- *  Success: TRUE
- *  Failure: FALSE
- */
-BOOL WINAPI PlayMetaFile( HDC hdc, HMETAFILE hmf )
-{
-    METAHEADER *mh = MF_GetMetaHeader( hmf );
-    return MF_PlayMetaFile( hdc, mh );
 }
 
 /******************************************************************
@@ -495,7 +459,7 @@ BOOL WINAPI PlayMetaFile( HDC hdc, HMETAFILE hmf )
  */
 BOOL WINAPI EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC lpEnumFunc, LPARAM lpData)
 {
-    METAHEADER *mhTemp = NULL, *mh = MF_GetMetaHeader(hmf);
+    METAHEADER *mh = get_metafile_bits( hmf );
     METARECORD *mr;
     HANDLETABLE *ht;
     BOOL result = TRUE;
@@ -505,14 +469,9 @@ BOOL WINAPI EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC lpEnumFunc, LPARAM l
     HBRUSH hBrush;
     HFONT hFont;
 
-    TRACE("(%p,%p,%p,%p)\n", hdc, hmf, lpEnumFunc, (void*)lpData);
+    TRACE("(%p,%p,%p,%lx)\n", hdc, hmf, lpEnumFunc, lpData);
+
     if (!mh) return 0;
-    if(mh->mtType == METAFILE_DISK)
-    {
-        /* Create a memory-based copy */
-        if (!(mhTemp = MF_LoadDiskBasedMetaFile(mh))) return FALSE;
-	mh = mhTemp;
-    }
 
     /* save the current pen, brush and font */
     hPen = GetCurrentObject(hdc, OBJ_PEN);
@@ -534,7 +493,7 @@ BOOL WINAPI EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC lpEnumFunc, LPARAM l
 	}
 	TRACE("Calling EnumFunc with record type %x\n",
 	      mr->rdFunction);
-        if (!lpEnumFunc( hdc, ht, mr, mh->mtNoObjects, (LONG)lpData ))
+        if (!lpEnumFunc( hdc, ht, mr, mh->mtNoObjects, lpData ))
 	{
 	    result = FALSE;
 	    break;
@@ -553,10 +512,8 @@ BOOL WINAPI EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC lpEnumFunc, LPARAM l
       if(*(ht->objectHandle + i) != 0)
         DeleteObject(*(ht->objectHandle + i));
 
-    /* free handle table */
     HeapFree( GetProcessHeap(), 0, ht);
-    /* free a copy of metafile */
-    HeapFree( GetProcessHeap(), 0, mhTemp );
+    HeapFree( GetProcessHeap(), 0, mh);
     return result;
 }
 
@@ -1129,7 +1086,7 @@ HMETAFILE WINAPI SetMetaFileBitsEx( UINT size, const BYTE *lpData )
  */
 UINT WINAPI GetMetaFileBitsEx( HMETAFILE hmf, UINT nSize, LPVOID buf )
 {
-    METAHEADER *mh = MF_GetMetaHeader(hmf);
+    METAHEADER *mh = GDI_GetObjPtr( hmf, OBJ_METAFILE );
     UINT mfSize;
 
     TRACE("(%p,%d,%p)\n", hmf, nSize, buf);
@@ -1137,12 +1094,13 @@ UINT WINAPI GetMetaFileBitsEx( HMETAFILE hmf, UINT nSize, LPVOID buf )
     if(mh->mtType == METAFILE_DISK)
         FIXME("Disk-based metafile?\n");
     mfSize = mh->mtSize * 2;
-    if (!buf) {
-	TRACE("returning size %d\n", mfSize);
-	return mfSize;
+    if (buf)
+    {
+        if(mfSize > nSize) mfSize = nSize;
+        memmove(buf, mh, mfSize);
     }
-    if(mfSize > nSize) mfSize = nSize;
-    memmove(buf, mh, mfSize);
+    GDI_ReleaseObj( hmf );
+    TRACE("returning size %d\n", mfSize);
     return mfSize;
 }
 
