@@ -116,6 +116,7 @@ static void detach_inner_window(HTMLInnerWindow *window)
     if(window->doc)
         detach_events(window->doc);
     abort_window_bindings(window);
+    remove_target_tasks(window->task_magic);
     release_script_hosts(window);
     window->base.outer_window = NULL;
 
@@ -233,7 +234,6 @@ static void release_inner_window(HTMLInnerWindow *This)
     TRACE("%p\n", This);
 
     detach_inner_window(This);
-    remove_target_tasks(This->task_magic);
 
     if(This->doc) {
         This->doc->window = NULL;
