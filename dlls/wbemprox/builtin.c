@@ -295,7 +295,8 @@ static const struct column col_service[] =
     /* methods */
     { method_pauseserviceW,   CIM_FLAG_ARRAY|COL_FLAG_METHOD },
     { method_resumeserviceW,  CIM_FLAG_ARRAY|COL_FLAG_METHOD },
-    { method_startserviceW,   CIM_FLAG_ARRAY|COL_FLAG_METHOD }
+    { method_startserviceW,   CIM_FLAG_ARRAY|COL_FLAG_METHOD },
+    { method_stopserviceW,    CIM_FLAG_ARRAY|COL_FLAG_METHOD }
 };
 static const struct column col_sounddevice[] =
 {
@@ -477,6 +478,7 @@ struct record_service
     class_method *pause_service;
     class_method *resume_service;
     class_method *start_service;
+    class_method *stop_service;
 };
 struct record_sounddevice
 {
@@ -521,6 +523,7 @@ static const struct record_params data_params[] =
     { class_serviceW, method_pauseserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
     { class_serviceW, method_resumeserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
     { class_serviceW, method_startserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
+    { class_serviceW, method_stopserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
     { class_stdregprovW, method_enumkeyW, 1, param_defkeyW, CIM_SINT32, 0, 0x80000002 },
     { class_stdregprovW, method_enumkeyW, 1, param_subkeynameW, CIM_STRING },
     { class_stdregprovW, method_enumkeyW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
@@ -1122,6 +1125,7 @@ static void fill_service( struct table *table )
         rec->pause_service  = service_pause_service;
         rec->resume_service = service_resume_service;
         rec->start_service  = service_start_service;
+        rec->stop_service   = service_stop_service;
         heap_free( config );
         offset += sizeof(*rec);
         num_rows++;
