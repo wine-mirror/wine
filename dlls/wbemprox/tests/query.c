@@ -143,7 +143,7 @@ static void test_StdRegProv( IWbemServices *services )
         {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
          'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
     BSTR class = SysAllocString( stdregprovW ), method;
-    IWbemClassObject *reg, *sig_in, *sig_out, *in, *out;
+    IWbemClassObject *reg, *sig_in, *in, *out;
     VARIANT defkey, subkey, retval, names, types, value, valuename;
     CIMTYPE type;
     HRESULT hr;
@@ -154,7 +154,7 @@ static void test_StdRegProv( IWbemServices *services )
         win_skip( "StdRegProv not available\n" );
         return;
     }
-    hr = IWbemClassObject_GetMethod( reg, enumkeyW, 0, &sig_in, &sig_out );
+    hr = IWbemClassObject_GetMethod( reg, enumkeyW, 0, &sig_in, NULL );
     ok( hr == S_OK, "failed to get EnumKey method %08x\n", hr );
 
     hr = IWbemClassObject_SpawnInstance( sig_in, 0, &in );
@@ -196,9 +196,8 @@ static void test_StdRegProv( IWbemServices *services )
     IWbemClassObject_Release( in );
     IWbemClassObject_Release( out );
     IWbemClassObject_Release( sig_in );
-    IWbemClassObject_Release( sig_out );
 
-    hr = IWbemClassObject_GetMethod( reg, enumvaluesW, 0, &sig_in, &sig_out );
+    hr = IWbemClassObject_GetMethod( reg, enumvaluesW, 0, &sig_in, NULL );
     ok( hr == S_OK, "failed to get EnumValues method %08x\n", hr );
 
     hr = IWbemClassObject_SpawnInstance( sig_in, 0, &in );
@@ -248,9 +247,8 @@ static void test_StdRegProv( IWbemServices *services )
     IWbemClassObject_Release( in );
     IWbemClassObject_Release( out );
     IWbemClassObject_Release( sig_in );
-    IWbemClassObject_Release( sig_out );
 
-    hr = IWbemClassObject_GetMethod( reg, getstringvalueW, 0, &sig_in, &sig_out );
+    hr = IWbemClassObject_GetMethod( reg, getstringvalueW, 0, &sig_in, NULL );
     ok( hr == S_OK, "failed to get GetStringValue method %08x\n", hr );
 
     hr = IWbemClassObject_SpawnInstance( sig_in, 0, &in );
@@ -298,7 +296,6 @@ static void test_StdRegProv( IWbemServices *services )
     IWbemClassObject_Release( in );
     IWbemClassObject_Release( out );
     IWbemClassObject_Release( sig_in );
-    IWbemClassObject_Release( sig_out );
 
     IWbemClassObject_Release( reg );
     SysFreeString( class );

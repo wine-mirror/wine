@@ -848,7 +848,7 @@ static HRESULT WINAPI class_object_GetMethod(
     TRACE("%p, %s, %08x, %p, %p\n", iface, debugstr_w(wszName), lFlags, ppInSignature, ppOutSignature);
 
     hr = create_signature( co->name, wszName, PARAM_IN, ppInSignature );
-    if (hr != S_OK) return hr;
+    if (hr != S_OK || !ppOutSignature) return hr;
 
     hr = create_signature( co->name, wszName, PARAM_OUT, ppOutSignature );
     if (hr != S_OK) IWbemClassObject_Release( *ppInSignature );
