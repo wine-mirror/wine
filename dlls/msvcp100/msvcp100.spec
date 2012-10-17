@@ -1,9 +1,9 @@
-@ stub -arch=win32 ??0?$_Yarn@D@std@@QAE@ABV01@@Z
-@ stub -arch=win64 ??0?$_Yarn@D@std@@QEAA@AEBV01@@Z
-@ stub -arch=win32 ??0?$_Yarn@D@std@@QAE@PBD@Z
-@ stub -arch=win64 ??0?$_Yarn@D@std@@QEAA@PEBD@Z
-@ stub -arch=win32 ??0?$_Yarn@D@std@@QAE@XZ
-@ stub -arch=win64 ??0?$_Yarn@D@std@@QEAA@XZ
+@ thiscall -arch=win32 ??0?$_Yarn@D@std@@QAE@ABV01@@Z(ptr ptr) _Yarn_char_copy_ctor
+@ cdecl -arch=win64 ??0?$_Yarn@D@std@@QEAA@AEBV01@@Z(ptr ptr) _Yarn_char_copy_ctor
+@ thiscall -arch=win32 ??0?$_Yarn@D@std@@QAE@PBD@Z(ptr str) _Yarn_char_ctor_cstr
+@ cdecl -arch=win64 ??0?$_Yarn@D@std@@QEAA@PEBD@Z(ptr str) _Yarn_char_ctor_cstr
+@ thiscall -arch=win32 ??0?$_Yarn@D@std@@QAE@XZ(ptr) _Yarn_char_ctor
+@ cdecl -arch=win64 ??0?$_Yarn@D@std@@QEAA@XZ(ptr) _Yarn_char_ctor
 @ thiscall -arch=win32 ??0?$basic_ios@DU?$char_traits@D@std@@@std@@IAE@XZ(ptr) basic_ios_char_ctor
 @ cdecl -arch=win64 ??0?$basic_ios@DU?$char_traits@D@std@@@std@@IEAA@XZ(ptr) basic_ios_char_ctor
 @ thiscall -arch=win32 ??0?$basic_ios@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z(ptr ptr) basic_ios_char_ctor_streambuf
@@ -230,8 +230,8 @@
 @ cdecl -arch=win64 ??0ios_base@std@@QEAA@AEBV01@@Z(ptr ptr) ios_base_copy_ctor
 @ stub -arch=win32 ??0time_base@std@@QAE@I@Z
 @ stub -arch=win64 ??0time_base@std@@QEAA@_K@Z
-@ stub -arch=win32 ??1?$_Yarn@D@std@@QAE@XZ
-@ stub -arch=win64 ??1?$_Yarn@D@std@@QEAA@XZ
+@ thiscall -arch=win32 ??1?$_Yarn@D@std@@QAE@XZ(ptr) _Yarn_char_dtor
+@ cdecl -arch=win64 ??1?$_Yarn@D@std@@QEAA@XZ(ptr) _Yarn_char_dtor
 @ thiscall -arch=win32 ??1?$basic_ios@DU?$char_traits@D@std@@@std@@UAE@XZ(ptr) basic_ios_char_dtor
 @ cdecl -arch=win64 ??1?$basic_ios@DU?$char_traits@D@std@@@std@@UEAA@XZ(ptr) basic_ios_char_dtor
 @ thiscall -arch=win32 ??1?$basic_ios@GU?$char_traits@G@std@@@std@@UAE@XZ(ptr) basic_ios_wchar_dtor
@@ -338,10 +338,10 @@
 @ stub -arch=win64 ??1time_base@std@@UEAA@XZ
 @ stub -arch=win32 ??4?$_Iosb@H@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4?$_Iosb@H@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$_Yarn@D@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$_Yarn@D@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$_Yarn@D@std@@QAEAAV01@PBD@Z
-@ stub -arch=win64 ??4?$_Yarn@D@std@@QEAAAEAV01@PEBD@Z
+@ thiscall -arch=win32 ??4?$_Yarn@D@std@@QAEAAV01@ABV01@@Z(ptr ptr) _Yarn_char_op_assign
+@ cdecl -arch=win64 ??4?$_Yarn@D@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) _Yarn_char_op_assign
+@ thiscall -arch=win32 ??4?$_Yarn@D@std@@QAEAAV01@PBD@Z(ptr str) _Yarn_char_op_assign_cstr
+@ cdecl -arch=win64 ??4?$_Yarn@D@std@@QEAAAEAV01@PEBD@Z(ptr str) _Yarn_char_op_assign_cstr
 @ stub -arch=win32 ??4?$basic_iostream@DU?$char_traits@D@std@@@std@@QAEAAV01@$$QAV01@@Z
 @ stub -arch=win64 ??4?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@$$QEAV01@@Z
 @ stub -arch=win32 ??4?$basic_iostream@GU?$char_traits@G@std@@@std@@QAEAAV01@$$QAV01@@Z
@@ -768,8 +768,8 @@
 @ stub -arch=win64 ?_Assign@_Concurrent_queue_iterator_base_v4@details@Concurrency@@IEAAXAEBV123@@Z
 @ stub ?_Atexit@@YAXP6AXXZ@Z
 @ extern ?_BADOFF@std@@3_JB std_BADOFF
-@ stub -arch=win32 ?_C_str@?$_Yarn@D@std@@QBEPBDXZ
-@ stub -arch=win64 ?_C_str@?$_Yarn@D@std@@QEBAPEBDXZ
+@ thiscall -arch=win32 ?_C_str@?$_Yarn@D@std@@QBEPBDXZ(ptr) _Yarn_char_c_str
+@ cdecl -arch=win64 ?_C_str@?$_Yarn@D@std@@QEBAPEBDXZ(ptr) _Yarn_char_c_str
 @ thiscall -arch=win32 ?_Callfns@ios_base@std@@AAEXW4event@12@@Z(ptr long) ios_base_Callfns
 @ cdecl -arch=win64 ?_Callfns@ios_base@std@@AEAAXW4event@12@@Z(ptr long) ios_base_Callfns
 @ extern -arch=win32 ?_Clocptr@_Locimp@locale@std@@0PAV123@A locale__Locimp__Clocptr
@@ -784,8 +784,8 @@
 @ cdecl -arch=win64 ?_Dowiden@?$ctype@G@std@@IEBAGD@Z(ptr long) ctype_wchar__Dowiden
 @ thiscall -arch=win32 ?_Dowiden@?$ctype@_W@std@@IBE_WD@Z(ptr long) ctype_wchar__Dowiden
 @ cdecl -arch=win64 ?_Dowiden@?$ctype@_W@std@@IEBA_WD@Z(ptr long) ctype_wchar__Dowiden
-@ stub -arch=win32 ?_Empty@?$_Yarn@D@std@@QBE_NXZ
-@ stub -arch=win64 ?_Empty@?$_Yarn@D@std@@QEBA_NXZ
+@ thiscall -arch=win32 ?_Empty@?$_Yarn@D@std@@QBE_NXZ(ptr) _Yarn_char_empty
+@ cdecl -arch=win64 ?_Empty@?$_Yarn@D@std@@QEBA_NXZ(ptr) _Yarn_char_empty
 @ cdecl -arch=win32 ?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAPADPADDH@Z(ptr ptr long long) num_put_char__Ffmt
 @ cdecl -arch=win64 ?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAPEADPEADDH@Z(ptr ptr long long) num_put_char__Ffmt
 @ cdecl -arch=win32 ?_Ffmt@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABAPADPADDH@Z(ptr ptr long long) num_put_wchar__Ffmt
@@ -1207,8 +1207,8 @@
 @ stub -arch=win32 ?_Swap_all@_Container_base12@std@@QAEXAAU12@@Z
 @ stub -arch=win64 ?_Swap_all@_Container_base12@std@@QEAAXAEAU12@@Z
 @ extern ?_Sync@ios_base@std@@0_NA ios_base_Sync
-@ stub -arch=win32 ?_Tidy@?$_Yarn@D@std@@AAEXXZ
-@ stub -arch=win64 ?_Tidy@?$_Yarn@D@std@@AEAAXXZ
+@ thiscall -arch=win32 ?_Tidy@?$_Yarn@D@std@@AAEXXZ(ptr) _Yarn_char__Tidy
+@ cdecl -arch=win64 ?_Tidy@?$_Yarn@D@std@@AEAAXXZ(ptr) _Yarn_char__Tidy
 @ thiscall -arch=win32 ?_Tidy@?$ctype@D@std@@IAEXXZ(ptr) ctype_char__Tidy
 @ cdecl -arch=win64 ?_Tidy@?$ctype@D@std@@IEAAXXZ(ptr) ctype_char__Tidy
 @ stub -arch=win32 ?_Tidy@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AAEXXZ
@@ -1247,8 +1247,8 @@
 @ cdecl -arch=win64 ?always_noconv@codecvt_base@std@@QEBA_NXZ(ptr) codecvt_base_always_noconv
 @ thiscall -arch=win32 ?bad@ios_base@std@@QBE_NXZ(ptr) ios_base_bad
 @ cdecl -arch=win64 ?bad@ios_base@std@@QEBA_NXZ(ptr) ios_base_bad
-@ stub -arch=win32 ?c_str@?$_Yarn@D@std@@QBEPBDXZ
-@ stub -arch=win64 ?c_str@?$_Yarn@D@std@@QEBAPEBDXZ
+@ thiscall -arch=win32 ?c_str@?$_Yarn@D@std@@QBEPBDXZ(ptr) _Yarn_char_c_str
+@ cdecl -arch=win64 ?c_str@?$_Yarn@D@std@@QEBAPEBDXZ(ptr) _Yarn_char_c_str
 @ stub -arch=win32 ?cancel@agent@Concurrency@@QAE_NXZ
 @ stub -arch=win64 ?cancel@agent@Concurrency@@QEAA_NXZ
 @ extern ?cerr@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A cerr
@@ -1619,8 +1619,8 @@
 @ cdecl -arch=win64 ?egptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEBAPEAGXZ(ptr) basic_streambuf_wchar_egptr
 @ thiscall -arch=win32 ?egptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEPA_WXZ(ptr) basic_streambuf_wchar_egptr
 @ cdecl -arch=win64 ?egptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEBAPEA_WXZ(ptr) basic_streambuf_wchar_egptr
-@ stub -arch=win32 ?empty@?$_Yarn@D@std@@QBE_NXZ
-@ stub -arch=win64 ?empty@?$_Yarn@D@std@@QEBA_NXZ
+@ thiscall -arch=win32 ?empty@?$_Yarn@D@std@@QBE_NXZ(ptr) _Yarn_char_empty
+@ cdecl -arch=win64 ?empty@?$_Yarn@D@std@@QEBA_NXZ(ptr) _Yarn_char_empty
 @ cdecl ?empty@locale@std@@SA?AV12@XZ(ptr) locale_empty
 @ thiscall -arch=win32 ?encoding@codecvt_base@std@@QBEHXZ(ptr) codecvt_base_encoding
 @ cdecl -arch=win64 ?encoding@codecvt_base@std@@QEBAHXZ(ptr) codecvt_base_encoding

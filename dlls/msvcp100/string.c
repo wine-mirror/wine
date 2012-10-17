@@ -678,3 +678,112 @@ MSVCP_size_t MSVCP_basic_string_wchar_length(const basic_string_wchar *this)
     TRACE("%p\n", this);
     return this->size;
 }
+
+/* ??0?$_Yarn@D@std@@QAE@XZ */
+/* ??0?$_Yarn@D@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Yarn_char_ctor, 4)
+_Yarn_char* __thiscall _Yarn_char_ctor(_Yarn_char *this)
+{
+    TRACE("(%p)\n", this);
+
+    this->str = NULL;
+    this->null_str = '\0';
+    return this;
+}
+
+/* ?_Tidy@?$_Yarn@D@std@@AAEXXZ */
+/* ?_Tidy@?$_Yarn@D@std@@AEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_Yarn_char__Tidy, 4)
+void __thiscall _Yarn_char__Tidy(_Yarn_char *this)
+{
+    TRACE("(%p)\n", this);
+
+    if(this->str)
+        MSVCRT_operator_delete(this->str);
+    this->str = NULL;
+}
+
+/* ??4?$_Yarn@D@std@@QAEAAV01@PBD@Z */
+/* ??4?$_Yarn@D@std@@QEAAAEAV01@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(_Yarn_char_op_assign_cstr, 8)
+_Yarn_char* __thiscall _Yarn_char_op_assign_cstr(_Yarn_char *this, const char *str)
+{
+    TRACE("(%p %p)\n", this, str);
+
+    _Yarn_char__Tidy(this);
+
+    if(str) {
+        MSVCP_size_t len = strlen(str);
+
+        this->str = MSVCRT_operator_new((len+1)*sizeof(char));
+        if(!this->str) {
+            ERR("out of memory\n");
+            return NULL;
+        }
+        memcpy(this->str, str, (len+1)*sizeof(char));
+    }
+    return this;
+}
+
+/* ??0?$_Yarn@D@std@@QAE@PBD@Z */
+/* ??0?$_Yarn@D@std@@QEAA@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(_Yarn_char_ctor_cstr, 8)
+_Yarn_char* __thiscall _Yarn_char_ctor_cstr(_Yarn_char *this, const char *str)
+{
+    TRACE("(%p %p)\n", this, str);
+
+    _Yarn_char_ctor(this);
+    return _Yarn_char_op_assign_cstr(this, str);
+}
+
+/* ??4?$_Yarn@D@std@@QAEAAV01@ABV01@@Z */
+/* ??4?$_Yarn@D@std@@QEAAAEAV01@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(_Yarn_char_op_assign, 8)
+_Yarn_char* __thiscall _Yarn_char_op_assign(_Yarn_char *this, const _Yarn_char *rhs)
+{
+    TRACE("(%p %p)\n", this, rhs);
+
+    return _Yarn_char_op_assign_cstr(this, rhs->str);
+}
+
+/* ??0?$_Yarn@D@std@@QAE@ABV01@@Z */
+/* ??0?$_Yarn@D@std@@QEAA@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(_Yarn_char_copy_ctor, 8)
+_Yarn_char* __thiscall _Yarn_char_copy_ctor(_Yarn_char *this, const _Yarn_char *copy)
+{
+    TRACE("(%p %p)\n", this, copy);
+
+    _Yarn_char_ctor(this);
+    return _Yarn_char_op_assign(this, copy);
+}
+
+/* ??1?$_Yarn@D@std@@QAE@XZ */
+/* ??1?$_Yarn@D@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Yarn_char_dtor, 4)
+void __thiscall _Yarn_char_dtor(_Yarn_char *this)
+{
+    TRACE("(%p)\n", this);
+    _Yarn_char__Tidy(this);
+}
+
+/* ?_C_str@?$_Yarn@D@std@@QBEPBDXZ */
+/* ?_C_str@?$_Yarn@D@std@@QEBAPEBDXZ */
+/* ?c_str@?$_Yarn@D@std@@QBEPBDXZ */
+/* ?c_str@?$_Yarn@D@std@@QEBAPEBDXZ */
+DEFINE_THISCALL_WRAPPER(_Yarn_char_c_str, 4)
+const char* __thiscall _Yarn_char_c_str(const _Yarn_char *this)
+{
+    TRACE("(%p)\n", this);
+    return this->str ? this->str : &this->null_str;
+}
+
+/* ?_Empty@?$_Yarn@D@std@@QBE_NXZ */
+/* ?_Empty@?$_Yarn@D@std@@QEBA_NXZ */
+/* ?empty@?$_Yarn@D@std@@QBE_NXZ */
+/* ?empty@?$_Yarn@D@std@@QEBA_NXZ */
+DEFINE_THISCALL_WRAPPER(_Yarn_char_empty, 4)
+MSVCP_bool __thiscall _Yarn_char_empty(const _Yarn_char *this)
+{
+    TRACE("(%p)\n", this);
+    return !this->str;
+}

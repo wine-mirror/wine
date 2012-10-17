@@ -78,6 +78,12 @@ void MSVCP_allocator_char_deallocate(void*, char*, MSVCP_size_t);
 wchar_t* MSVCP_allocator_wchar_allocate(void*, MSVCP_size_t);
 void MSVCP_allocator_wchar_deallocate(void*, wchar_t*, MSVCP_size_t);
 
+typedef struct
+{
+    char *str;
+    char null_str;
+} _Yarn_char;
+
 /* class locale::facet */
 typedef struct {
     const vtable_ptr *vtable;
