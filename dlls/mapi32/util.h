@@ -59,6 +59,7 @@ typedef struct MAPI_FUNCTIONS {
     HRESULT  (WINAPI *HrQueryAllRows)             (LPMAPITABLE, LPSPropTagArray, LPSRestriction, LPSSortOrderSet, LONG, LPSRowSet *);
     HRESULT  (WINAPI *OpenStreamOnFile)           (LPALLOCATEBUFFER, LPFREEBUFFER, ULONG, LPWSTR, LPWSTR, LPSTREAM *);
     SCODE    (WINAPI *ScInitMapiUtil)             (ULONG ulReserved);
+    HRESULT  (WINAPI *WrapCompressedRTFStream)    (LPSTREAM, ULONG, LPSTREAM *);
 } MAPI_FUNCTIONS;
 
 extern MAPI_FUNCTIONS mapiFunctions DECLSPEC_HIDDEN;
