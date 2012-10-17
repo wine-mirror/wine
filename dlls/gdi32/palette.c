@@ -42,7 +42,6 @@ typedef BOOL (*unrealize_function)(HPALETTE);
 
 typedef struct tagPALETTEOBJ
 {
-    GDIOBJHDR           header;
     unrealize_function  unrealize;
     WORD                version;    /* palette version */
     WORD                count;      /* count of palette entries */
@@ -130,7 +129,7 @@ HPALETTE WINAPI CreatePalette(
         return 0;
     }
     memcpy( palettePtr->entries, palette->palPalEntry, size );
-    if (!(hpalette = alloc_gdi_handle( &palettePtr->header, OBJ_PAL, &palette_funcs )))
+    if (!(hpalette = alloc_gdi_handle( palettePtr, OBJ_PAL, &palette_funcs )))
     {
         HeapFree( GetProcessHeap(), 0, palettePtr->entries );
         HeapFree( GetProcessHeap(), 0, palettePtr );

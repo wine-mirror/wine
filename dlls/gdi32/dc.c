@@ -118,7 +118,7 @@ DC *alloc_dc_ptr( WORD magic )
 
     reset_bounds( &dc->bounds );
 
-    if (!(dc->hSelf = alloc_gdi_handle( &dc->header, magic, &dc_funcs )))
+    if (!(dc->hSelf = alloc_gdi_handle( dc, magic, &dc_funcs )))
     {
         HeapFree( GetProcessHeap(), 0, dc );
         return NULL;

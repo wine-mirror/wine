@@ -36,7 +36,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
   /* GDI logical pen object */
 typedef struct
 {
-    GDIOBJHDR            header;
     struct brush_pattern pattern;
     EXTLOGPEN            logpen;
 } PENOBJ;
@@ -113,7 +112,7 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
         break;
     }
 
-    if (!(hpen = alloc_gdi_handle( &penPtr->header, OBJ_PEN, &pen_funcs )))
+    if (!(hpen = alloc_gdi_handle( penPtr, OBJ_PEN, &pen_funcs )))
         HeapFree( GetProcessHeap(), 0, penPtr );
     return hpen;
 }
@@ -203,7 +202,7 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
     penPtr->logpen.elpNumEntries = style_count;
     memcpy(penPtr->logpen.elpStyleEntry, style_bits, style_count * sizeof(DWORD));
 
-    if (!(hpen = alloc_gdi_handle( &penPtr->header, OBJ_EXTPEN, &pen_funcs )))
+    if (!(hpen = alloc_gdi_handle( penPtr, OBJ_EXTPEN, &pen_funcs )))
     {
         free_brush_pattern( &penPtr->pattern );
         HeapFree( GetProcessHeap(), 0, penPtr );

@@ -50,7 +50,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
 typedef struct
 {
-    GDIOBJHDR      header;
     ENHMETAHEADER  *emh;
     BOOL           on_disk;   /* true if metafile is on disk */
 } ENHMETAFILEOBJ;
@@ -270,7 +269,7 @@ HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk )
     metaObj->emh = emh;
     metaObj->on_disk = on_disk;
 
-    if (!(hmf = alloc_gdi_handle( &metaObj->header, OBJ_ENHMETAFILE, NULL )))
+    if (!(hmf = alloc_gdi_handle( metaObj, OBJ_ENHMETAFILE, NULL )))
         HeapFree( GetProcessHeap(), 0, metaObj );
     return hmf;
 }

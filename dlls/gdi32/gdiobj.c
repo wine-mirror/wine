@@ -744,7 +744,7 @@ HGDIOBJ alloc_gdi_handle( void *obj, WORD type, const struct gdi_obj_funcs *func
  */
 void *free_gdi_handle( HGDIOBJ handle )
 {
-    GDIOBJHDR *object = NULL;
+    void *object = NULL;
     struct gdi_handle_entry *entry;
 
     EnterCriticalSection( &gdi_section );
@@ -769,7 +769,7 @@ void *free_gdi_handle( HGDIOBJ handle )
  */
 void *GDI_GetObjPtr( HGDIOBJ handle, WORD type )
 {
-    GDIOBJHDR *ptr = NULL;
+    void *ptr = NULL;
     struct gdi_handle_entry *entry;
 
     EnterCriticalSection( &gdi_section );

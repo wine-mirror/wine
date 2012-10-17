@@ -57,15 +57,10 @@ struct gdi_obj_funcs
     BOOL    (*pDeleteObject)( HGDIOBJ handle );
 };
 
-typedef struct tagGDIOBJHDR
-{
-} GDIOBJHDR;
-
 typedef struct tagGdiFont GdiFont;
 
 typedef struct tagDC
 {
-    GDIOBJHDR    header;
     HDC          hSelf;            /* Handle to this DC */
     struct gdi_physdev nulldrv;    /* physdev for the null driver */
     PHYSDEV      physDev;          /* current top of the physdev stack */
@@ -180,7 +175,6 @@ static inline PHYSDEV find_dc_driver( DC *dc, const struct gdi_dc_funcs *funcs )
 
 typedef struct tagBITMAPOBJ
 {
-    GDIOBJHDR           header;
     DIBSECTION          dib;
     SIZE                size;   /* For SetBitmapDimension() */
     RGBQUAD            *color_table;  /* DIB color table if <= 8bpp (always 1 << bpp in size) */

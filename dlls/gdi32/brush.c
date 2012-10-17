@@ -34,7 +34,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 /* GDI logical brush object */
 typedef struct
 {
-    GDIOBJHDR             header;
     LOGBRUSH              logbrush;
     struct brush_pattern  pattern;
 } BRUSHOBJ;
@@ -201,7 +200,7 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
     ptr->logbrush = *brush;
 
     if (store_brush_pattern( &ptr->logbrush, &ptr->pattern ) &&
-        (hbrush = alloc_gdi_handle( &ptr->header, OBJ_BRUSH, &brush_funcs )))
+        (hbrush = alloc_gdi_handle( ptr, OBJ_BRUSH, &brush_funcs )))
     {
         TRACE("%p\n", hbrush);
         return hbrush;
