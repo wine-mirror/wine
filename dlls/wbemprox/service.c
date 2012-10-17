@@ -111,3 +111,38 @@ done:
     if (hr != S_OK) IWbemClassObject_Release( *out );
     return hr;
 }
+
+HRESULT service_resume_service( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+{
+    VARIANT name, retval;
+    IWbemClassObject *sig;
+    HRESULT hr;
+
+    TRACE("%p, %p, %p\n", obj, in, out);
+
+    hr = IWbemClassObject_Get( obj, prop_nameW, 0, &name, NULL, NULL );
+    if (hr != S_OK) return hr;
+
+    hr = create_signature( class_serviceW, method_resumeserviceW, PARAM_OUT, &sig );
+    if (hr != S_OK)
+    {
+        VariantClear( &name );
+        return hr;
+    }
+    hr = IWbemClassObject_SpawnInstance( sig, 0, out );
+    if (hr != S_OK)
+    {
+        VariantClear( &name );
+        IWbemClassObject_Release( sig );
+        return hr;
+    }
+    hr = control_service( V_BSTR(&name), SERVICE_CONTROL_CONTINUE, &retval );
+    if (hr != S_OK) goto done;
+    hr = IWbemClassObject_Put( *out, param_returnvalueW, 0, &retval, CIM_UINT32 );
+
+done:
+    VariantClear( &name );
+    IWbemClassObject_Release( sig );
+    if (hr != S_OK) IWbemClassObject_Release( *out );
+    return hr;
+}

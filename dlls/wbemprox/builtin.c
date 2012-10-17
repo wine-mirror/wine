@@ -293,7 +293,8 @@ static const struct column col_service[] =
     { prop_stateW,            CIM_STRING },
     { prop_systemnameW,       CIM_STRING|COL_FLAG_DYNAMIC },
     /* methods */
-    { method_pauseserviceW,   CIM_FLAG_ARRAY|COL_FLAG_METHOD }
+    { method_pauseserviceW,   CIM_FLAG_ARRAY|COL_FLAG_METHOD },
+    { method_resumeserviceW,  CIM_FLAG_ARRAY|COL_FLAG_METHOD }
 };
 static const struct column col_sounddevice[] =
 {
@@ -473,6 +474,7 @@ struct record_service
     const WCHAR *systemname;
     /* methods */
     class_method *pause_service;
+    class_method *resume_service;
 };
 struct record_sounddevice
 {
@@ -515,6 +517,7 @@ static const struct record_diskdrive data_diskdrive[] =
 static const struct record_params data_params[] =
 {
     { class_serviceW, method_pauseserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
+    { class_serviceW, method_resumeserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
     { class_stdregprovW, method_enumkeyW, 1, param_defkeyW, CIM_SINT32, 0, 0x80000002 },
     { class_stdregprovW, method_enumkeyW, 1, param_subkeynameW, CIM_STRING },
     { class_stdregprovW, method_enumkeyW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
@@ -1114,6 +1117,7 @@ static void fill_service( struct table *table )
         rec->state          = get_service_state( status->dwCurrentState );
         rec->systemname     = heap_strdupW( sysnameW );
         rec->pause_service  = service_pause_service;
+        rec->resume_service = service_resume_service;
         heap_free( config );
         offset += sizeof(*rec);
         num_rows++;
