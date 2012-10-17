@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define TIMER_ID 0x3000
 
 typedef struct {
-    HTMLDocument *doc;
+    HTMLInnerWindow *window;
     DWORD id;
     DWORD time;
     DWORD interval;
@@ -107,7 +107,7 @@ void remove_target_tasks(LONG target)
 
     LIST_FOR_EACH_SAFE(liter, ltmp, &thread_data->timer_list) {
         timer = LIST_ENTRY(liter, task_timer_t, entry);
-        if(timer->doc->task_magic == target)
+        if(timer->window->task_magic == target)
             release_task_timer(thread_data->thread_hwnd, timer);
     }
 
@@ -163,7 +163,7 @@ static BOOL queue_timer(thread_data_t *thread_data, task_timer_t *timer)
     return FALSE;
 }
 
-DWORD set_task_timer(HTMLDocument *doc, DWORD msec, BOOL interval, IDispatch *disp)
+DWORD set_task_timer(HTMLInnerWindow *window, DWORD msec, BOOL interval, IDispatch *disp)
 {
     thread_data_t *thread_data = get_thread_data(TRUE);
     task_timer_t *timer;
@@ -173,7 +173,7 @@ DWORD set_task_timer(HTMLDocument *doc, DWORD msec, BOOL interval, IDispatch *di
 
     timer = heap_alloc(sizeof(task_timer_t));
     timer->id = id_cnt++;
-    timer->doc = doc;
+    timer->window = window;
     timer->time = tc + msec;
     timer->interval = interval ? msec : 0;
     list_init(&timer->entry);
@@ -187,7 +187,7 @@ DWORD set_task_timer(HTMLDocument *doc, DWORD msec, BOOL interval, IDispatch *di
     return timer->id;
 }
 
-HRESULT clear_task_timer(HTMLDocument *doc, BOOL interval, DWORD id)
+HRESULT clear_task_timer(HTMLInnerWindow *window, BOOL interval, DWORD id)
 {
     thread_data_t *thread_data = get_thread_data(FALSE);
     task_timer_t *iter;
@@ -196,7 +196,7 @@ HRESULT clear_task_timer(HTMLDocument *doc, BOOL interval, DWORD id)
         return S_OK;
 
     LIST_FOR_EACH_ENTRY(iter, &thread_data->timer_list, task_timer_t, entry) {
-        if(iter->id == id && iter->doc == doc && (iter->interval == 0) == !interval) {
+        if(iter->id == id && iter->window == window && !iter->interval == !interval) {
             release_task_timer(thread_data->thread_hwnd, iter);
             return S_OK;
         }

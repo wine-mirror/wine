@@ -567,7 +567,7 @@ static HRESULT WINAPI HTMLWindow2_clearTimeout(IHTMLWindow2 *iface, LONG timerID
 
     TRACE("(%p)->(%d)\n", This, timerID);
 
-    return clear_task_timer(&This->inner_window->doc->basedoc, FALSE, timerID);
+    return clear_task_timer(This->inner_window, FALSE, timerID);
 }
 
 #define MAX_MESSAGE_LEN 2000
@@ -1243,7 +1243,7 @@ static HRESULT WINAPI HTMLWindow2_clearInterval(IHTMLWindow2 *iface, LONG timerI
 
     TRACE("(%p)->(%d)\n", This, timerID);
 
-    return clear_task_timer(&This->inner_window->doc->basedoc, TRUE, timerID);
+    return clear_task_timer(This->inner_window, TRUE, timerID);
 }
 
 static HRESULT WINAPI HTMLWindow2_put_offscreenBuffering(IHTMLWindow2 *iface, VARIANT v)
@@ -1563,7 +1563,7 @@ static HRESULT window_set_timer(HTMLInnerWindow *This, VARIANT *expr, LONG msec,
     if(!disp)
         return E_FAIL;
 
-    *timer_id = set_task_timer(&This->doc->basedoc, msec, interval, disp);
+    *timer_id = set_task_timer(This, msec, interval, disp);
     IDispatch_Release(disp);
 
     return S_OK;

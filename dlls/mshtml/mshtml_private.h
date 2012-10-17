@@ -980,8 +980,8 @@ LONG get_task_target_magic(void) DECLSPEC_HIDDEN;
 void push_task(task_t*,task_proc_t,task_proc_t,LONG) DECLSPEC_HIDDEN;
 void remove_target_tasks(LONG) DECLSPEC_HIDDEN;
 
-DWORD set_task_timer(HTMLDocument*,DWORD,BOOL,IDispatch*) DECLSPEC_HIDDEN;
-HRESULT clear_task_timer(HTMLDocument*,BOOL,DWORD) DECLSPEC_HIDDEN;
+DWORD set_task_timer(HTMLInnerWindow*,DWORD,BOOL,IDispatch*) DECLSPEC_HIDDEN;
+HRESULT clear_task_timer(HTMLInnerWindow*,BOOL,DWORD) DECLSPEC_HIDDEN;
 
 const char *debugstr_variant(const VARIANT*) DECLSPEC_HIDDEN;
 
