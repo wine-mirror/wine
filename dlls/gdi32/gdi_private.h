@@ -57,18 +57,11 @@ struct gdi_obj_funcs
     BOOL    (*pDeleteObject)( HGDIOBJ handle );
 };
 
-struct hdc_list
-{
-    HDC hdc;
-    struct hdc_list *next;
-};
-
 typedef struct tagGDIOBJHDR
 {
     WORD        system : 1;   /* system object flag */
     WORD        deleted : 1;  /* whether DeleteObject has been called on this object */
     DWORD       selcount;     /* number of times the object is selected in a DC */
-    struct hdc_list *hdcs;
 } GDIOBJHDR;
 
 typedef struct tagGdiFont GdiFont;
@@ -325,8 +318,8 @@ extern void GDI_ReleaseObj( HGDIOBJ ) DECLSPEC_HIDDEN;
 extern void GDI_CheckNotLock(void) DECLSPEC_HIDDEN;
 extern HGDIOBJ GDI_inc_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern BOOL GDI_dec_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
-extern BOOL GDI_hdc_using_object(HGDIOBJ obj, HDC hdc) DECLSPEC_HIDDEN;
-extern BOOL GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc) DECLSPEC_HIDDEN;
+extern void GDI_hdc_using_object(HGDIOBJ obj, HDC hdc) DECLSPEC_HIDDEN;
+extern void GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc) DECLSPEC_HIDDEN;
 
 /* metafile.c */
 extern HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh) DECLSPEC_HIDDEN;

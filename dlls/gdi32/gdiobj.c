@@ -41,10 +41,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 #define FIRST_GDI_HANDLE 16
 #define MAX_GDI_HANDLES  16384
 
+struct hdc_list
+{
+    HDC hdc;
+    struct hdc_list *next;
+};
+
 struct gdi_handle_entry
 {
     GDIOBJHDR                  *obj;         /* pointer to the object-specific data */
     const struct gdi_obj_funcs *funcs;       /* type-specific functions */
+    struct hdc_list            *hdcs;        /* list of HDCs interested in this object */
     WORD                        type;        /* object type (one of the OBJ_* constants) */
 };
 
@@ -683,7 +690,6 @@ HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs 
     obj->system   = 0;
     obj->deleted  = 0;
     obj->selcount = 0;
-    obj->hdcs     = NULL;
 
     EnterCriticalSection( &gdi_section );
     for (i = next_gdi_handle + 1; i < MAX_GDI_HANDLES; i++)
@@ -700,6 +706,7 @@ HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs 
     entry = &gdi_handles[i];
     entry->obj      = obj;
     entry->funcs    = funcs;
+    entry->hdcs     = NULL;
     entry->type     = type;
     next_gdi_handle = i;
     ret = entry_to_handle( entry );
@@ -819,11 +826,11 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 	return TRUE;
     }
 
-    while ((hdcs_head = entry->obj->hdcs) != NULL)
+    while ((hdcs_head = entry->hdcs) != NULL)
     {
         DC *dc = get_dc_ptr(hdcs_head->hdc);
 
-        entry->obj->hdcs = hdcs_head->next;
+        entry->hdcs = hdcs_head->next;
         TRACE("hdc %p has interest in %p\n", hdcs_head->hdc, obj);
 
         if(dc)
@@ -861,70 +868,54 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
  *
  * Call this if the dc requires DeleteObject notification
  */
-BOOL GDI_hdc_using_object(HGDIOBJ obj, HDC hdc)
+void GDI_hdc_using_object(HGDIOBJ obj, HDC hdc)
 {
-    GDIOBJHDR * header;
-    struct hdc_list **pphdc;
+    struct gdi_handle_entry *entry;
+    struct hdc_list *phdc;
 
     TRACE("obj %p hdc %p\n", obj, hdc);
 
-    if (!(header = GDI_GetObjPtr( obj, 0 ))) return FALSE;
-
-    if (header->system)
+    EnterCriticalSection( &gdi_section );
+    if ((entry = handle_entry( obj )) && !entry->obj->system)
     {
-        GDI_ReleaseObj(obj);
-        return FALSE;
+        for (phdc = entry->hdcs; phdc; phdc = phdc->next)
+            if (phdc->hdc == hdc) break;
+
+        if (!phdc)
+        {
+            phdc = HeapAlloc(GetProcessHeap(), 0, sizeof(*phdc));
+            phdc->hdc = hdc;
+            phdc->next = entry->hdcs;
+            entry->hdcs = phdc;
+        }
     }
-
-    for(pphdc = &header->hdcs; *pphdc; pphdc = &(*pphdc)->next)
-        if((*pphdc)->hdc == hdc)
-            break;
-
-    if(!*pphdc) {
-        *pphdc = HeapAlloc(GetProcessHeap(), 0, sizeof(**pphdc));
-        (*pphdc)->hdc = hdc;
-        (*pphdc)->next = NULL;
-    }
-
-    GDI_ReleaseObj(obj);
-    return TRUE;
+    LeaveCriticalSection( &gdi_section );
 }
 
 /***********************************************************************
  *           GDI_hdc_not_using_object
  *
  */
-BOOL GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc)
+void GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc)
 {
-    GDIOBJHDR * header;
-    struct hdc_list *phdc, **prev;
+    struct gdi_handle_entry *entry;
+    struct hdc_list **pphdc;
 
     TRACE("obj %p hdc %p\n", obj, hdc);
 
-    if (!(header = GDI_GetObjPtr( obj, 0 ))) return FALSE;
-
-    if (header->system)
+    EnterCriticalSection( &gdi_section );
+    if ((entry = handle_entry( obj )) && !entry->obj->system)
     {
-        GDI_ReleaseObj(obj);
-        return FALSE;
+        for (pphdc = &entry->hdcs; *pphdc; pphdc = &(*pphdc)->next)
+            if ((*pphdc)->hdc == hdc)
+            {
+                struct hdc_list *phdc = *pphdc;
+                *pphdc = phdc->next;
+                HeapFree(GetProcessHeap(), 0, phdc);
+                break;
+            }
     }
-
-    phdc = header->hdcs;
-    prev = &header->hdcs;
-
-    while(phdc) {
-        if(phdc->hdc == hdc) {
-            *prev = phdc->next;
-            HeapFree(GetProcessHeap(), 0, phdc);
-            phdc = *prev;
-        } else {
-            prev = &phdc->next;
-            phdc = phdc->next;
-        }
-    }
-
-    GDI_ReleaseObj(obj);
-    return TRUE;
+    LeaveCriticalSection( &gdi_section );
 }
 
 /***********************************************************************
