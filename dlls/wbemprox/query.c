@@ -290,9 +290,10 @@ static void free_query( struct query *query )
     heap_free( query );
 }
 
-void addref_query( struct query *query )
+struct query *addref_query( struct query *query )
 {
     InterlockedIncrement( &query->refs );
+    return query;
 }
 
 void release_query( struct query *query )

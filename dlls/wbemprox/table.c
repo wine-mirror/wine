@@ -321,6 +321,12 @@ void release_table( struct table *table )
     if (!InterlockedDecrement( &table->refs )) free_table( table );
 }
 
+struct table *addref_table( struct table *table )
+{
+    InterlockedIncrement( &table->refs );
+    return table;
+}
+
 struct table *grab_table( const WCHAR *name )
 {
     struct table *table;
@@ -330,9 +336,8 @@ struct table *grab_table( const WCHAR *name )
         if (!strcmpiW( table->name, name ))
         {
             if (table->fill && !table->data) table->fill( table );
-            InterlockedIncrement( &table->refs );
             TRACE("returning %p\n", table);
-            return table;
+            return addref_table( table );
         }
     }
     return NULL;

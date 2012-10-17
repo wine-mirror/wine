@@ -202,8 +202,7 @@ HRESULT EnumWbemClassObject_create(
 
     ec->IEnumWbemClassObject_iface.lpVtbl = &enum_class_object_vtbl;
     ec->refs  = 1;
-    ec->query = query;
-    addref_query( query );
+    ec->query = addref_query( query );
     ec->index = 0;
 
     *ppObj = &ec->IEnumWbemClassObject_iface;
@@ -212,24 +211,25 @@ HRESULT EnumWbemClassObject_create(
     return S_OK;
 }
 
-static struct record *create_record( const struct column *columns, UINT num_cols )
+static struct record *create_record( struct table *table )
 {
     UINT i;
     struct record *record;
 
     if (!(record = heap_alloc( sizeof(struct record) ))) return NULL;
-    if (!(record->fields = heap_alloc( num_cols * sizeof(struct field) )))
+    if (!(record->fields = heap_alloc( table->num_cols * sizeof(struct field) )))
     {
         heap_free( record );
         return NULL;
     }
-    for (i = 0; i < num_cols; i++)
+    for (i = 0; i < table->num_cols; i++)
     {
-        record->fields[i].type    = columns[i].type;
-        record->fields[i].vartype = columns[i].vartype;
+        record->fields[i].type    = table->columns[i].type;
+        record->fields[i].vartype = table->columns[i].vartype;
         record->fields[i].u.ival  = 0;
     }
-    record->count = num_cols;
+    record->count = table->num_cols;
+    record->table = addref_table( table );
     return record;
 }
 
@@ -252,6 +252,7 @@ static void destroy_record( struct record *record )
     UINT i;
 
     if (!record) return;
+    release_table( record->table );
     for (i = 0; i < record->count; i++)
     {
         if (record->fields[i].type == CIM_STRING || record->fields[i].type == CIM_DATETIME)
@@ -390,14 +391,10 @@ static HRESULT WINAPI class_object_Get(
 
     if (co->record)
     {
-        struct table *table = grab_table( co->name );
         UINT index;
         HRESULT hr;
 
-        if (!table) return WBEM_E_FAILED;
-        hr = get_column_index( table, wszName, &index );
-        release_table( table );
-        if (hr != S_OK) return hr;
+        if ((hr = get_column_index( co->record->table, wszName, &index )) != S_OK) return hr;
         return record_get_value( co->record, index, pVal, pType );
     }
     return get_propval( ec->query->view, co->index, wszName, pVal, pType, plFlavor );
@@ -450,14 +447,10 @@ static HRESULT WINAPI class_object_Put(
 
     if (co->record)
     {
-        struct table *table = grab_table( co->name );
         UINT index;
         HRESULT hr;
 
-        if (!table) return WBEM_E_FAILED;
-        hr = get_column_index( table, wszName, &index );
-        release_table( table );
-        if (hr != S_OK) return hr;
+        if ((hr = get_column_index( co->record->table, wszName, &index )) != S_OK) return hr;
         return record_set_value( co->record, index, pVal );
     }
     return put_propval( ec->query->view, co->index, wszName, pVal, Type );
@@ -650,8 +643,7 @@ static HRESULT WINAPI class_object_SpawnInstance(
 
     TRACE("%p, %08x, %p\n", iface, lFlags, ppNewInstance);
 
-    if (!(record = create_record( view->table->columns, view->table->num_cols )))
-        return E_OUTOFMEMORY;
+    if (!(record = create_record( view->table ))) return E_OUTOFMEMORY;
 
     return create_class_object( co->name, NULL, 0, record, ppNewInstance );
 }

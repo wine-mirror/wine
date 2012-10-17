@@ -91,6 +91,7 @@ struct record
 {
     UINT count;
     struct field *fields;
+    struct table *table;
 };
 
 enum operator
@@ -154,7 +155,7 @@ struct query
     struct list mem;
 };
 
-void addref_query( struct query * ) DECLSPEC_HIDDEN;
+struct query *addref_query( struct query * ) DECLSPEC_HIDDEN;
 void release_query( struct query *query ) DECLSPEC_HIDDEN;
 HRESULT exec_query( const WCHAR *, IEnumWbemClassObject ** ) DECLSPEC_HIDDEN;
 HRESULT parse_query( const WCHAR *, struct view **, struct list * ) DECLSPEC_HIDDEN;
@@ -163,6 +164,7 @@ HRESULT create_view( const struct property *, const WCHAR *, const struct expr *
 void destroy_view( struct view * ) DECLSPEC_HIDDEN;
 void init_table_list( void ) DECLSPEC_HIDDEN;
 struct table *grab_table( const WCHAR * ) DECLSPEC_HIDDEN;
+struct table *addref_table( struct table * ) DECLSPEC_HIDDEN;
 void release_table( struct table * ) DECLSPEC_HIDDEN;
 struct table *create_table( const WCHAR *, UINT, const struct column *, UINT,
                             BYTE *, void (*)(struct table *)) DECLSPEC_HIDDEN;
