@@ -7846,17 +7846,17 @@ locale__Locimp* __cdecl locale__Locimp__Locimp_ctor(locale__Locimp *this, const 
 DEFINE_THISCALL_WRAPPER(locale__Locimp_dtor, 4)
 void __thiscall locale__Locimp_dtor(locale__Locimp *this)
 {
+    MSVCP_size_t i;
+
     TRACE("(%p)\n", this);
 
-    if(locale_facet__Decref(&this->facet)) {
-        MSVCP_size_t i;
-        for(i=0; i<this->facet_cnt; i++)
-            if(this->facetvec[i] && locale_facet__Decref(this->facetvec[i]))
-                call_locale_facet_vector_dtor(this->facetvec[i], 0);
+    locale_facet_dtor(&this->facet);
+    for(i=0; i<this->facet_cnt; i++)
+        if(this->facetvec[i] && locale_facet__Decref(this->facetvec[i]))
+            call_locale_facet_vector_dtor(this->facetvec[i], 1);
 
-        MSVCRT_operator_delete(this->facetvec);
-        MSVCP_basic_string_char_dtor(&this->name);
-    }
+    MSVCRT_operator_delete(this->facetvec);
+    MSVCP_basic_string_char_dtor(&this->name);
 }
 
 /* ?_Locimp_dtor@_Locimp@locale@std@@CAXPAV123@@Z */
@@ -7918,7 +7918,7 @@ void __cdecl locale__Locimp__Locimp_Addfac(locale__Locimp *locimp, locale_facet 
     }
 
     if(locimp->facetvec[id] && locale_facet__Decref(locimp->facetvec[id]))
-        call_locale_facet_vector_dtor(locimp->facetvec[id], 0);
+        call_locale_facet_vector_dtor(locimp->facetvec[id], 1);
 
     locimp->facetvec[id] = facet;
     if(facet)
@@ -8380,8 +8380,11 @@ DEFINE_THISCALL_WRAPPER(locale_dtor, 4)
 void __thiscall locale_dtor(locale *this)
 {
     TRACE("(%p)\n", this);
-    if(this->ptr)
+    if(this->ptr && locale_facet__Decref(&this->ptr->facet))
+    {
         locale__Locimp_dtor(this->ptr);
+        MSVCRT_operator_delete(this->ptr);
+    }
 }
 
 /* ??4locale@std@@QAEAAV01@ABV01@@Z */
