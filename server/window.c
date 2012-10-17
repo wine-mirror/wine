@@ -254,7 +254,8 @@ static int set_parent_window( struct window *win, struct window *parent )
         if (parent->thread && parent->thread != win->thread && !is_desktop_window(parent))
             attach_thread_input( win->thread, parent->thread );
 
-        if (win->paint_flags & PAINT_HAS_PIXEL_FORMAT) update_pixel_format_flags( win );
+        if (win->paint_flags & (PAINT_HAS_PIXEL_FORMAT | PAINT_PIXEL_FORMAT_CHILD))
+            update_pixel_format_flags( win );
     }
     else  /* move it to parent unlinked list */
     {
