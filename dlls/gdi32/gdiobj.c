@@ -44,6 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 struct gdi_handle_entry
 {
     GDIOBJHDR                  *obj;         /* pointer to the object-specific data */
+    const struct gdi_obj_funcs *funcs;       /* type-specific functions */
     WORD                        type;        /* object type (one of the OBJ_* constants) */
 };
 
@@ -682,7 +683,6 @@ HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs 
     obj->system   = 0;
     obj->deleted  = 0;
     obj->selcount = 0;
-    obj->funcs    = funcs;
     obj->hdcs     = NULL;
 
     EnterCriticalSection( &gdi_section );
@@ -699,6 +699,7 @@ HGDIOBJ alloc_gdi_handle( GDIOBJHDR *obj, WORD type, const struct gdi_obj_funcs 
  found:
     entry = &gdi_handles[i];
     entry->obj      = obj;
+    entry->funcs    = funcs;
     entry->type     = type;
     next_gdi_handle = i;
     ret = entry_to_handle( entry );
@@ -728,11 +729,6 @@ void *free_gdi_handle( HGDIOBJ handle )
         entry->type = 0;
     }
     LeaveCriticalSection( &gdi_section );
-
-    if (object)
-    {
-        object->funcs = NULL;
-    }
     return object;
 }
 
@@ -805,60 +801,59 @@ void GDI_CheckNotLock(void)
  */
 BOOL WINAPI DeleteObject( HGDIOBJ obj )
 {
-      /* Check if object is valid */
-
+    struct gdi_handle_entry *entry;
     struct hdc_list *hdcs_head;
     const struct gdi_obj_funcs *funcs;
-    GDIOBJHDR * header;
 
-    if (HIWORD(obj)) return FALSE;
+    EnterCriticalSection( &gdi_section );
+    if (!(entry = handle_entry( obj )))
+    {
+        LeaveCriticalSection( &gdi_section );
+        return FALSE;
+    }
 
-    if (!(header = GDI_GetObjPtr( obj, 0 ))) return FALSE;
-
-    if (header->system)
+    if (entry->obj->system)
     {
 	TRACE("Preserving system object %p\n", obj);
-        GDI_ReleaseObj( obj );
+        LeaveCriticalSection( &gdi_section );
 	return TRUE;
     }
 
-    while ((hdcs_head = header->hdcs) != NULL)
+    while ((hdcs_head = entry->obj->hdcs) != NULL)
     {
         DC *dc = get_dc_ptr(hdcs_head->hdc);
 
-        header->hdcs = hdcs_head->next;
+        entry->obj->hdcs = hdcs_head->next;
         TRACE("hdc %p has interest in %p\n", hdcs_head->hdc, obj);
 
         if(dc)
         {
             PHYSDEV physdev = GET_DC_PHYSDEV( dc, pDeleteObject );
-            GDI_ReleaseObj( obj );  /* release the GDI lock */
+            LeaveCriticalSection( &gdi_section );
             physdev->funcs->pDeleteObject( physdev, obj );
-            header = GDI_GetObjPtr( obj, 0 );  /* and grab it again */
+            EnterCriticalSection( &gdi_section );  /* and grab it again */
+            entry = handle_entry( obj );
             release_dc_ptr( dc );
         }
         HeapFree(GetProcessHeap(), 0, hdcs_head);
-        if (!header) return FALSE;
+        if (!entry) return FALSE;
     }
 
-    if (header->selcount)
+    if (entry->obj->selcount)
     {
-        TRACE("delayed for %p because object in use, count %u\n", obj, header->selcount );
-        header->deleted = 1;  /* mark for delete */
-        GDI_ReleaseObj( obj );
+        TRACE("delayed for %p because object in use, count %u\n", obj, entry->obj->selcount );
+        entry->obj->deleted = 1;  /* mark for delete */
+        LeaveCriticalSection( &gdi_section );
         return TRUE;
     }
 
+    funcs = entry->funcs;
+    LeaveCriticalSection( &gdi_section );
+
     TRACE("%p\n", obj );
 
-      /* Delete object */
-
-    funcs = header->funcs;
-    GDI_ReleaseObj( obj );
-    if (funcs && funcs->pDeleteObject)
-        return funcs->pDeleteObject( obj );
-    else
-        return FALSE;
+    if (funcs && funcs->pDeleteObject) return funcs->pDeleteObject( obj );
+    return FALSE;
 }
 
 /***********************************************************************
@@ -950,26 +945,25 @@ HGDIOBJ WINAPI GetStockObject( INT obj )
  */
 INT WINAPI GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    const struct gdi_obj_funcs *funcs;
-    GDIOBJHDR * ptr;
+    struct gdi_handle_entry *entry;
+    const struct gdi_obj_funcs *funcs = NULL;
     INT result = 0;
 
     TRACE("%p %d %p\n", handle, count, buffer );
 
-    if (!(ptr = GDI_GetObjPtr( handle, 0 ))) return 0;
-    funcs = ptr->funcs;
-    GDI_ReleaseObj( handle );
+    EnterCriticalSection( &gdi_section );
+    if ((entry = handle_entry( handle ))) funcs = entry->funcs;
+    LeaveCriticalSection( &gdi_section );
 
-    if (funcs && funcs->pGetObjectA)
+    if (funcs)
     {
-        if (buffer && ((ULONG_PTR)buffer >> 16) == 0) /* catch apps getting argument order wrong */
+        if (!funcs->pGetObjectA)
+            SetLastError( ERROR_INVALID_HANDLE );
+        else if (buffer && ((ULONG_PTR)buffer >> 16) == 0) /* catch apps getting argument order wrong */
             SetLastError( ERROR_NOACCESS );
         else
             result = funcs->pGetObjectA( handle, count, buffer );
     }
-    else
-        SetLastError( ERROR_INVALID_HANDLE );
-
     return result;
 }
 
@@ -978,25 +972,25 @@ INT WINAPI GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer )
  */
 INT WINAPI GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    const struct gdi_obj_funcs *funcs;
-    GDIOBJHDR * ptr;
+    struct gdi_handle_entry *entry;
+    const struct gdi_obj_funcs *funcs = NULL;
     INT result = 0;
+
     TRACE("%p %d %p\n", handle, count, buffer );
 
-    if (!(ptr = GDI_GetObjPtr( handle, 0 ))) return 0;
-    funcs = ptr->funcs;
-    GDI_ReleaseObj( handle );
+    EnterCriticalSection( &gdi_section );
+    if ((entry = handle_entry( handle ))) funcs = entry->funcs;
+    LeaveCriticalSection( &gdi_section );
 
-    if (funcs && funcs->pGetObjectW)
+    if (funcs)
     {
-        if (buffer && ((ULONG_PTR)buffer >> 16) == 0) /* catch apps getting argument order wrong */
+        if (!funcs->pGetObjectW)
+            SetLastError( ERROR_INVALID_HANDLE );
+        else if (buffer && ((ULONG_PTR)buffer >> 16) == 0) /* catch apps getting argument order wrong */
             SetLastError( ERROR_NOACCESS );
         else
             result = funcs->pGetObjectW( handle, count, buffer );
     }
-    else
-        SetLastError( ERROR_INVALID_HANDLE );
-
     return result;
 }
 
@@ -1083,19 +1077,17 @@ HGDIOBJ WINAPI GetCurrentObject(HDC hdc,UINT type)
  */
 HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
 {
-    HGDIOBJ ret = 0;
-    GDIOBJHDR *header;
+    struct gdi_handle_entry *entry;
+    const struct gdi_obj_funcs *funcs = NULL;
 
     TRACE( "(%p,%p)\n", hdc, hObj );
 
-    header = GDI_GetObjPtr( hObj, 0 );
-    if (header)
-    {
-        const struct gdi_obj_funcs *funcs = header->funcs;
-        GDI_ReleaseObj( hObj );
-        if (funcs && funcs->pSelectObject) ret = funcs->pSelectObject( hObj, hdc );
-    }
-    return ret;
+    EnterCriticalSection( &gdi_section );
+    if ((entry = handle_entry( hObj ))) funcs = entry->funcs;
+    LeaveCriticalSection( &gdi_section );
+
+    if (funcs && funcs->pSelectObject) return funcs->pSelectObject( hObj, hdc );
+    return 0;
 }
 
 
@@ -1104,20 +1096,15 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
  */
 BOOL WINAPI UnrealizeObject( HGDIOBJ obj )
 {
-    BOOL result = FALSE;
-    GDIOBJHDR * header = GDI_GetObjPtr( obj, 0 );
+    struct gdi_handle_entry *entry;
+    const struct gdi_obj_funcs *funcs = NULL;
 
-    if (header)
-    {
-        const struct gdi_obj_funcs *funcs = header->funcs;
+    EnterCriticalSection( &gdi_section );
+    if ((entry = handle_entry( obj ))) funcs = entry->funcs;
+    LeaveCriticalSection( &gdi_section );
 
-        GDI_ReleaseObj( obj );
-        if (funcs && funcs->pUnrealizeObject)
-            result = header->funcs->pUnrealizeObject( obj );
-        else
-            result = TRUE;
-    }
-    return result;
+    if (funcs && funcs->pUnrealizeObject) return funcs->pUnrealizeObject( obj );
+    return funcs != NULL;
 }
 
 

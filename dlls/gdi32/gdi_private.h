@@ -68,7 +68,6 @@ typedef struct tagGDIOBJHDR
     WORD        system : 1;   /* system object flag */
     WORD        deleted : 1;  /* whether DeleteObject has been called on this object */
     DWORD       selcount;     /* number of times the object is selected in a DC */
-    const struct gdi_obj_funcs *funcs;
     struct hdc_list *hdcs;
 } GDIOBJHDR;
 
