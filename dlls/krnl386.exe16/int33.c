@@ -184,6 +184,11 @@ void WINAPI DOSVM_Int33Handler( CONTEXT *context )
         FIXME("Define screen region for update\n");
         break;
 
+    case 0x0015:
+        TRACE("Get mouse driver state and memory requirements\n");
+        SET_BX(context, sizeof(mouse_info));
+        break;
+
     case 0x0021:
         TRACE("Software reset\n");
         INT33_ResetMouse( context );
