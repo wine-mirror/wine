@@ -1578,42 +1578,6 @@ static HRESULT Global_vbFirstFullWeek(vbdisp_t *This, VARIANT *arg, unsigned arg
     return E_NOTIMPL;
 }
 
-static HRESULT Global_vbOKOnly(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, MB_OK);
-}
-
-static HRESULT Global_vbOKCancel(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, MB_OKCANCEL);
-}
-
-static HRESULT Global_vbAbortRetryIgnore(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, MB_ABORTRETRYIGNORE);
-}
-
-static HRESULT Global_vbYesNoCancel(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, MB_YESNOCANCEL);
-}
-
-static HRESULT Global_vbYesNo(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, MB_YESNO);
-}
-
-static HRESULT Global_vbRetryCancel(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, MB_RETRYCANCEL);
-}
-
 static HRESULT Global_vbCritical(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
@@ -2029,12 +1993,12 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_VBFIRSTJAN1,        Global_vbFirstJan1, BP_GET},
     {DISPID_GLOBAL_VBFIRSTFOURDAYS,    Global_vbFirstFourDays, BP_GET},
     {DISPID_GLOBAL_VBFIRSTFULLWEEK,    Global_vbFirstFullWeek, BP_GET},
-    {DISPID_GLOBAL_VBOKONLY,           Global_vbOKOnly, BP_GET},
-    {DISPID_GLOBAL_VBOKCANCEL,         Global_vbOKCancel, BP_GET},
-    {DISPID_GLOBAL_VBABORTRETRYIGNORE, Global_vbAbortRetryIgnore, BP_GET},
-    {DISPID_GLOBAL_VBYESNOCANCEL,      Global_vbYesNoCancel, BP_GET},
-    {DISPID_GLOBAL_VBYESNO,            Global_vbYesNo, BP_GET},
-    {DISPID_GLOBAL_VBRETRYCANCEL,      Global_vbRetryCancel, BP_GET},
+    {DISPID_GLOBAL_VBOKONLY,           NULL, BP_GET, MB_OK},
+    {DISPID_GLOBAL_VBOKCANCEL,         NULL, BP_GET, MB_OKCANCEL},
+    {DISPID_GLOBAL_VBABORTRETRYIGNORE, NULL, BP_GET, MB_ABORTRETRYIGNORE},
+    {DISPID_GLOBAL_VBYESNOCANCEL,      NULL, BP_GET, MB_YESNOCANCEL},
+    {DISPID_GLOBAL_VBYESNO,            NULL, BP_GET, MB_YESNO},
+    {DISPID_GLOBAL_VBRETRYCANCEL,      NULL, BP_GET, MB_RETRYCANCEL},
     {DISPID_GLOBAL_VBCRITICAL,         Global_vbCritical, BP_GET},
     {DISPID_GLOBAL_VBQUESTION,         Global_vbQuestion, BP_GET},
     {DISPID_GLOBAL_VBEXCLAMATION,      Global_vbExclamation, BP_GET},
