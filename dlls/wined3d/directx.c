@@ -2186,7 +2186,7 @@ static enum wined3d_pci_device select_card_handler(const struct gl_vendor_select
         TRACE("Applying card selector \"%s\".\n", table[i].description);
         return table[i].select_card(gl_info, gl_renderer);
     }
-    FIXME("Couldn't find a suitable card selector for GL vendor %04x (using GL_RENDERER %s)",
+    FIXME("Couldn't find a suitable card selector for GL vendor %04x (using GL_RENDERER %s)\n",
             gl_vendor, debugstr_a(gl_renderer));
 
     return PCI_DEVICE_NONE;
