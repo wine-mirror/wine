@@ -93,15 +93,15 @@ static int _todo_wait = 0;
 
 static char shell_call[2048]="";
 static int bad_shellexecute = 0;
-static INT_PTR shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, LPCSTR directory)
+static INT_PTR shell_execute(LPCSTR verb, LPCSTR file, LPCSTR parameters, LPCSTR directory)
 {
     INT_PTR rc, rcEmpty = 0;
 
-    if(!operation)
+    if(!verb)
         rcEmpty = shell_execute("", file, parameters, directory);
 
     strcpy(shell_call, "ShellExecute(");
-    strcat_param(shell_call, "verb", operation);
+    strcat_param(shell_call, "verb", verb);
     strcat_param(shell_call, "file", file);
     strcat_param(shell_call, "params", parameters);
     strcat_param(shell_call, "dir", directory);
@@ -116,7 +116,7 @@ static INT_PTR shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, L
      * association it displays the 'Open With' dialog and I could not find
      * a flag to prevent this.
      */
-    rc=(INT_PTR)ShellExecute(NULL, operation, file, parameters, directory, SW_SHOWNORMAL);
+    rc=(INT_PTR)ShellExecute(NULL, verb, file, parameters, directory, SW_SHOWNORMAL);
 
     if (rc > 32)
     {
@@ -145,7 +145,7 @@ static INT_PTR shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, L
     if (rc > 32)
         dump_child();
 
-    if(!operation)
+    if(!verb)
     {
         if (rc != rcEmpty && rcEmpty == SE_ERR_NOASSOC) /* NT4 */
             bad_shellexecute = 1;
@@ -156,7 +156,7 @@ static INT_PTR shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, L
     return rc;
 }
 
-static INT_PTR shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
+static INT_PTR shell_execute_ex(DWORD mask, LPCSTR verb, LPCSTR file,
                                 LPCSTR parameters, LPCSTR directory,
                                 LPCSTR class)
 {
@@ -171,7 +171,7 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
         sprintf(smask, "0x%x", mask);
         strcat_param(shell_call, "mask", smask);
     }
-    strcat_param(shell_call, "verb", operation);
+    strcat_param(shell_call, "verb", verb);
     strcat_param(shell_call, "file", file);
     strcat_param(shell_call, "params", parameters);
     strcat_param(shell_call, "dir", directory);
@@ -183,7 +183,7 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
     sei.cbSize=sizeof(sei);
     sei.fMask=SEE_MASK_NOCLOSEPROCESS | mask;
     sei.hwnd=NULL;
-    sei.lpVerb=operation;
+    sei.lpVerb=verb;
     sei.lpFile=file;
     sei.lpParameters=parameters;
     sei.lpDirectory=directory;
