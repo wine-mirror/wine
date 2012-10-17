@@ -648,16 +648,16 @@ static HRESULT Global_Left(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VAR
 
     TRACE("(%s %s)\n", debugstr_variant(args+1), debugstr_variant(args));
 
-    if(V_VT(args+1) == VT_BSTR) {
-        str = V_BSTR(args+1);
+    if(V_VT(args) == VT_BSTR) {
+        str = V_BSTR(args);
     }else {
-        hres = to_string(args+1, &conv_str);
+        hres = to_string(args, &conv_str);
         if(FAILED(hres))
             return hres;
         str = conv_str;
     }
 
-    hres = to_int(args, &len);
+    hres = to_int(args+1, &len);
     if(FAILED(hres))
         return hres;
 
@@ -690,18 +690,18 @@ static HRESULT Global_Right(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VA
     int len, str_len;
     HRESULT hres;
 
-    TRACE("(%s %s)\n", debugstr_variant(args+1), debugstr_variant(args));
+    TRACE("(%s %s)\n", debugstr_variant(args), debugstr_variant(args+1));
 
     if(V_VT(args+1) == VT_BSTR) {
-        str = V_BSTR(args+1);
+        str = V_BSTR(args);
     }else {
-        hres = to_string(args+1, &conv_str);
+        hres = to_string(args, &conv_str);
         if(FAILED(hres))
             return hres;
         str = conv_str;
     }
 
-    hres = to_int(args, &len);
+    hres = to_int(args+1, &len);
     if(FAILED(hres))
         return hres;
 
@@ -734,11 +734,23 @@ static HRESULT Global_Mid(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARI
     BSTR str;
     HRESULT hres;
 
-    TRACE("\n");
+    TRACE("(%s %s ...)\n", debugstr_variant(args), debugstr_variant(args+1));
 
-    switch(args_cnt) {
-    case 3:
-        hres = to_int(args, &len);
+    assert(args_cnt == 2 || args_cnt == 3);
+
+    if(V_VT(args) != VT_BSTR) {
+        FIXME("args[0] = %s\n", debugstr_variant(args));
+        return E_NOTIMPL;
+    }
+
+    str = V_BSTR(args);
+
+    hres = to_int(args+1, &start);
+    if(FAILED(hres))
+        return hres;
+
+    if(args_cnt == 3) {
+        hres = to_int(args+2, &len);
         if(FAILED(hres))
             return hres;
 
@@ -746,21 +758,6 @@ static HRESULT Global_Mid(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARI
             FIXME("len = %d\n", len);
             return E_FAIL;
         }
-        /* fallthrough */
-    case 2:
-        hres = to_int(args+args_cnt-2, &start);
-        if(FAILED(hres))
-            return hres;
-
-        if(V_VT(args+args_cnt-1) != VT_BSTR) {
-            FIXME("args[0] = %s\n", debugstr_variant(args+args_cnt-1));
-            return E_NOTIMPL;
-        }
-
-        str = V_BSTR(args+args_cnt-1);
-        break;
-    default:
-        assert(0);
     }
 
 
@@ -987,16 +984,18 @@ static HRESULT Global_InStr(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VA
 
     TRACE("\n");
 
+    assert(2 <= args_cnt && args_cnt <= 4);
+
     switch(args_cnt) {
     case 2:
         startv = NULL;
-        str1v = args+1;
-        str2v = args;
+        str1v = args;
+        str2v = args+1;
         break;
     case 3:
-        startv = args+2;
+        startv = args;
         str1v = args+1;
-        str2v = args;
+        str2v = args+2;
         break;
     case 4:
         FIXME("unsupported compare argument %s\n", debugstr_variant(args));
@@ -1227,7 +1226,7 @@ static HRESULT Global_InputBox(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, 
     return E_NOTIMPL;
 }
 
-static HRESULT Global_MsgBox(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_MsgBox(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     BSTR prompt;
     HRESULT hres;
@@ -1239,7 +1238,7 @@ static HRESULT Global_MsgBox(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VA
         return E_NOTIMPL;
     }
 
-    hres = to_string(arg, &prompt);
+    hres = to_string(args, &prompt);
     if(FAILED(hres))
         return hres;
 
@@ -1425,7 +1424,7 @@ static HRESULT Global_FormatDateTime(vbdisp_t *This, VARIANT *arg, unsigned args
     return E_NOTIMPL;
 }
 
-static HRESULT Global_WeekdayName(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_WeekdayName(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     int weekday, first_day = 0, abbrev = 0;
     BSTR ret;
@@ -1435,17 +1434,17 @@ static HRESULT Global_WeekdayName(vbdisp_t *This, VARIANT *arg, unsigned args_cn
 
     assert(1 <= args_cnt && args_cnt <= 3);
 
-    hres = to_int(arg+args_cnt-1, &weekday);
+    hres = to_int(args, &weekday);
     if(FAILED(hres))
         return hres;
 
     if(args_cnt > 1) {
-        hres = to_int(arg+args_cnt-2, &abbrev);
+        hres = to_int(args+1, &abbrev);
         if(FAILED(hres))
             return hres;
 
         if(args_cnt == 3) {
-            hres = to_int(arg, &first_day);
+            hres = to_int(args+2, &first_day);
             if(FAILED(hres))
                 return hres;
         }
@@ -1458,7 +1457,7 @@ static HRESULT Global_WeekdayName(vbdisp_t *This, VARIANT *arg, unsigned args_cn
     return return_bstr(res, ret);
 }
 
-static HRESULT Global_MonthName(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_MonthName(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     int month, abbrev = 0;
     BSTR ret;
@@ -1468,12 +1467,12 @@ static HRESULT Global_MonthName(vbdisp_t *This, VARIANT *arg, unsigned args_cnt,
 
     assert(args_cnt == 1 || args_cnt == 2);
 
-    hres = to_int(arg+args_cnt-1, &month);
+    hres = to_int(args, &month);
     if(FAILED(hres))
         return hres;
 
     if(args_cnt == 2) {
-        hres = to_int(arg, &abbrev);
+        hres = to_int(args+1, &abbrev);
         if(FAILED(hres))
             return hres;
     }
