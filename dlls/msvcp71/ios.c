@@ -276,6 +276,14 @@ typedef struct {
     void (__cdecl *pfree)(void*);
 } strstreambuf;
 
+typedef struct {
+    basic_iostream_char base;
+    strstreambuf buf;
+    /* virtual inheritance
+     * basic_ios_char basic_ios;
+     */
+} strstream;
+
 extern const vtable_ptr MSVCP_iosb_vtable;
 
 /* ??_7ios_base@std@@6B@ */
@@ -467,6 +475,10 @@ extern const vtable_ptr MSVCP_basic_stringstream_short_vtable;
 /* ??_7strstreambuf@std@@6B */
 extern const vtable_ptr MSVCP_strstreambuf_vtable;
 
+static const int strstream_vbtable1[] = {0, sizeof(strstream)};
+static const int strstream_vbtable2[] = {0, sizeof(strstream)-FIELD_OFFSET(strstream, base.base2)};
+extern const vtable_ptr MSVCP_strstream_vtable;
+
 DEFINE_RTTI_DATA0(iosb, 0, ".?AV?$_Iosb@H@std@@");
 DEFINE_RTTI_DATA1(ios_base, 0, &iosb_rtti_base_descriptor, ".?AV?$_Iosb@H@std@@");
 DEFINE_RTTI_DATA2(basic_ios_char, 0, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
@@ -615,6 +627,12 @@ DEFINE_RTTI_DATA8(basic_stringstream_short, sizeof(basic_stringstream_wchar),
         ".?AV?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@");
 DEFINE_RTTI_DATA1(strstreambuf, sizeof(strstreambuf),
         &basic_streambuf_char_rtti_base_descriptor, ".?AVstrstreambuf@std@@");
+DEFINE_RTTI_DATA8(strstream, sizeof(strstream),
+        &basic_istream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
+        &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
+        &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        "?AVstrstream@std@@");
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -829,6 +847,8 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_streambuf_char_setbuf)
             VTABLE_ADD_FUNC(basic_streambuf_char_sync)
             VTABLE_ADD_FUNC(basic_streambuf_char_imbue));
+    __ASM_VTABLE(strstream,
+            VTABLE_ADD_FUNC(strstream_vector_dtor));
 #ifndef __GNUC__
 }
 #endif
@@ -12088,6 +12108,23 @@ void __thiscall strstreambuf__Init(strstreambuf *this, streamsize len, char *g, 
         basic_streambuf_char_setp(&this->base, p, this->seekhigh);
 }
 
+/* ??0strstreambuf@std@@QAE@PACH0@Z */
+/* ??0strstreambuf@std@@QEAA@PEAC_J0@Z */
+/* ??0strstreambuf@std@@QAE@PADH0@Z */
+/* ??0strstreambuf@std@@QEAA@PEAD_J0@Z */
+/* ??0strstreambuf@std@@QAE@PAEH0@Z */
+/* ??0strstreambuf@std@@QEAA@PEAE_J0@Z */
+static strstreambuf* strstreambuf_ctor_get_put(strstreambuf *this, char *g, streamsize len, char *p)
+{
+    TRACE("(%p %p %ld %p)\n", this, g, len, p);
+
+    basic_streambuf_char_ctor(&this->base);
+    this->base.vtable = &MSVCP_strstreambuf_vtable;
+
+    strstreambuf__Init(this, len, g, p, 0);
+    return this;
+}
+
 /* ?_Tidy@strstreambuf@std@@IAEXXZ */
 /* ?_Tidy@strstreambuf@std@@IEAAXXZ */
 DEFINE_THISCALL_WRAPPER(strstreambuf__Tidy, 4)
@@ -12340,6 +12377,85 @@ int __thiscall strstreambuf_underflow(strstreambuf *this)
     basic_streambuf_char_setg(&this->base, basic_streambuf_char_eback(&this->base),
             gptr, this->seekhigh);
     return (unsigned char)(*gptr);
+}
+
+static inline basic_ios_char* strstream_to_basic_ios(strstream *ptr)
+{
+    return (basic_ios_char*)((char*)ptr+strstream_vbtable1[1]);
+}
+
+static inline strstream* strstream_from_basic_ios(basic_ios_char *ptr)
+{
+    return (strstream*)((char*)ptr-strstream_vbtable1[1]);
+}
+
+/* ??0strstream@std@@QAE@PADHH@Z */
+/* ??0strstream@std@@QEAA@PEAD_JH@Z */
+DEFINE_THISCALL_WRAPPER(strstream_ctor, 20)
+strstream* __thiscall strstream_ctor(strstream *this, char *buf, streamsize size, int mode, MSVCP_bool virt_init)
+{
+    basic_ios_char *basic_ios;
+
+    TRACE("(%p %p %ld %d %d)\n", this, buf, size, mode, virt_init);
+
+    if(virt_init) {
+        this->base.base1.vbtable = strstream_vbtable1;
+        this->base.base2.vbtable = strstream_vbtable2;
+        basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
+        basic_ios_char_ctor(basic_ios);
+    }else {
+        basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
+    }
+
+    strstreambuf_ctor_get_put(&this->buf, buf, size,
+            buf && (mode & OPENMODE_app) ? buf+strlen(buf) : buf);
+    basic_iostream_char_ctor(&this->base, &this->buf.base, FALSE);
+    basic_ios->base.vtable = &MSVCP_strstream_vtable;
+    return this;
+}
+
+/* ??1strstream@std@@UAE@XZ */
+/* ??1strstream@std@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(strstream_dtor, 4)
+void __thiscall strstream_dtor(basic_ios_char *base)
+{
+    strstream *this = strstream_from_basic_ios(base);
+
+    TRACE("(%p)\n", this);
+
+    basic_iostream_char_dtor(basic_iostream_char_to_basic_ios(&this->base));
+    strstreambuf_dtor(&this->buf);
+}
+
+static void strstream_vbase_dtor(strstream *this)
+{
+    TRACE("(%p)\n", this);
+
+    strstream_dtor(strstream_to_basic_ios(this));
+    basic_ios_char_dtor(basic_istream_char_get_basic_ios(&this->base.base1));
+}
+
+DEFINE_THISCALL_WRAPPER(strstream_vector_dtor, 8)
+strstream* __thiscall strstream_vector_dtor(basic_ios_char *base, unsigned int flags)
+{
+    strstream *this = strstream_from_basic_ios(base);
+
+    TRACE("(%p %x)\n", this, flags);
+
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            strstream_vbase_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        strstream_vbase_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
 }
 
 static void __cdecl setprecision_func(ios_base *base, streamsize prec)
@@ -12690,6 +12806,7 @@ void init_io(void *base)
     init_basic_stringstream_wchar_rtti(base);
     init_basic_stringstream_short_rtti(base);
     init_strstreambuf_rtti(base);
+    init_strstream_rtti(base);
 #endif
 
     basic_filebuf_char_ctor_file(&filebuf_char_stdin, stdin);
