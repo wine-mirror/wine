@@ -2140,6 +2140,7 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
         DWORD sampler, const struct glsl_sample_function *sample_function, DWORD swizzle,
         const char *dx, const char *dy, const char *bias, const char *coord_reg_fmt, ...)
 {
+    const struct wined3d_shader_version *version = &ins->ctx->reg_maps->shader_version;
     const char *sampler_base;
     char dst_swizzle[6];
     struct color_fixup_desc fixup;
@@ -2148,7 +2149,7 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
 
     shader_glsl_swizzle_to_str(swizzle, FALSE, ins->dst[0].write_mask, dst_swizzle);
 
-    if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
+    if (version->type == WINED3D_SHADER_TYPE_PIXEL)
     {
         const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
         fixup = priv->cur_ps_args->color_fixup[sampler];
