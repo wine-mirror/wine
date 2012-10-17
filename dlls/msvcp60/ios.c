@@ -91,14 +91,18 @@ typedef enum {
 
 typedef struct {
     basic_streambuf_char base;
+    char *pendsave;
     char *seekhigh;
+    int alsize;
     int state;
     char allocator; /* empty struct */
 } basic_stringbuf_char;
 
 typedef struct {
     basic_streambuf_wchar base;
+    wchar_t *pendsave;
     wchar_t *seekhigh;
+    int alsize;
     int state;
     char allocator; /* empty struct */
 } basic_stringbuf_wchar;
@@ -884,7 +888,6 @@ basic_streambuf_char* __thiscall basic_streambuf_char_ctor_uninitialized(basic_s
 {
     TRACE("(%p %d)\n", this, uninitialized);
     this->vtable = &MSVCP_basic_streambuf_char_vtable;
-    mutex_ctor(&this->lock);
     return this;
 }
 
@@ -896,7 +899,6 @@ basic_streambuf_char* __thiscall basic_streambuf_char_ctor(basic_streambuf_char 
     TRACE("(%p)\n", this);
 
     this->vtable = &MSVCP_basic_streambuf_char_vtable;
-    mutex_ctor(&this->lock);
     this->loc = MSVCRT_operator_new(sizeof(locale));
     locale_ctor(this->loc);
     basic_streambuf_char__Init_empty(this);
@@ -911,7 +913,6 @@ void __thiscall basic_streambuf_char_dtor(basic_streambuf_char *this)
 {
     TRACE("(%p)\n", this);
 
-    mutex_dtor(&this->lock);
     locale_dtor(this->loc);
     MSVCRT_operator_delete(this->loc);
 }
@@ -995,7 +996,6 @@ void __thiscall basic_streambuf_char__Init(basic_streambuf_char *this, char **gf
 static void basic_streambuf_char__Lock(basic_streambuf_char *this)
 {
     TRACE("(%p)\n", this);
-    mutex_lock(&this->lock);
 }
 
 /* ?_Pnavail@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEHXZ */
@@ -1092,7 +1092,6 @@ static streamsize basic_streambuf_char__Sgetn_s(basic_streambuf_char *this, char
 static void basic_streambuf_char__Unlock(basic_streambuf_char *this)
 {
     TRACE("(%p)\n", this);
-    mutex_unlock(&this->lock);
 }
 
 /* ?eback@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ */

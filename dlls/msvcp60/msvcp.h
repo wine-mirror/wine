@@ -290,7 +290,6 @@ typedef struct _ios_base {
 /* class basic_streambuf<char> */
 typedef struct {
     const vtable_ptr *vtable;
-    mutex lock;
     char *rbuf;
     char *wbuf;
     char **prbuf;
