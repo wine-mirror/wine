@@ -285,6 +285,14 @@ typedef struct {
 } ostrstream;
 
 typedef struct {
+    basic_istream_char base;
+    strstreambuf buf;
+    /* virtual inheritance
+     * basic_ios_char basic_ios;
+     */
+} istrstream;
+
+typedef struct {
     basic_iostream_char base;
     strstreambuf buf;
     /* virtual inheritance
@@ -485,6 +493,8 @@ extern const vtable_ptr MSVCP_strstreambuf_vtable;
 
 static const int ostrstream_vbtable[] = {0, sizeof(ostrstream)};
 extern const vtable_ptr MSVCP_ostrstream_vtable;
+
+static const int istrstream_vbtable[] = {0, sizeof(istrstream)};
 
 static const int strstream_vbtable1[] = {0, sizeof(strstream)};
 static const int strstream_vbtable2[] = {0, sizeof(strstream)-FIELD_OFFSET(strstream, base.base2)};
@@ -12471,6 +12481,24 @@ ostrstream* __thiscall ostrstream_vector_dtor(basic_ios_char *base, unsigned int
     }
 
     return this;
+}
+
+static inline istrstream* istrstream_from_basic_ios(basic_ios_char *ptr)
+{
+    return (istrstream*)((char*)ptr-istrstream_vbtable[1]);
+}
+
+/* ??1istrstream@std@@UAE@XZ */
+/* ??1istrstream@std@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(istrstream_dtor, 4)
+void __thiscall istrstream_dtor(basic_ios_char *base)
+{
+    istrstream *this = istrstream_from_basic_ios(base);
+
+    TRACE("(%p)\n", this);
+
+    basic_istream_char_dtor(basic_istream_char_to_basic_ios(&this->base));
+    strstreambuf_dtor(&this->buf);
 }
 
 static inline basic_ios_char* strstream_to_basic_ios(strstream *ptr)

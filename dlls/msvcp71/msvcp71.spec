@@ -1197,8 +1197,8 @@
 @ cdecl -arch=win64 ??1facet@locale@std@@UEAA@XZ(ptr) locale_facet_dtor
 @ thiscall -arch=win32 ??1ios_base@std@@UAE@XZ(ptr) ios_base_dtor
 @ cdecl -arch=win64 ??1ios_base@std@@UEAA@XZ(ptr) ios_base_dtor
-@ stub -arch=win32 ??1istrstream@std@@UAE@XZ
-@ stub -arch=win64 ??1istrstream@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1istrstream@std@@UAE@XZ(ptr) istrstream_dtor
+@ cdecl -arch=win64 ??1istrstream@std@@UEAA@XZ(ptr) istrstream_dtor
 @ thiscall -arch=win32 ??1locale@std@@QAE@XZ(ptr) locale_dtor
 @ cdecl -arch=win64 ??1locale@std@@QEAA@XZ(ptr) locale_dtor
 @ stub -arch=win32 ??1messages_base@std@@UAE@XZ
