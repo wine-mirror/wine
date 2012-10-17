@@ -146,3 +146,62 @@ done:
     if (hr != S_OK) IWbemClassObject_Release( *out );
     return hr;
 }
+
+static HRESULT start_service( const WCHAR *name, VARIANT *retval )
+{
+    SC_HANDLE manager, service = NULL;
+    UINT error = 0;
+
+    if (!(manager = OpenSCManagerW( NULL, NULL, SC_MANAGER_ENUMERATE_SERVICE )))
+    {
+        error = map_error( GetLastError() );
+        goto done;
+    }
+    if (!(service = OpenServiceW( manager, name, SERVICE_START )))
+    {
+        error = map_error( GetLastError() );
+        goto done;
+    }
+    if (!StartServiceW( service, 0, NULL )) error = map_error( GetLastError() );
+
+done:
+    set_variant( VT_UI4, error, NULL, retval );
+    CloseServiceHandle( service );
+    CloseServiceHandle( manager );
+    return S_OK;
+}
+
+HRESULT service_start_service( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+{
+    VARIANT name, retval;
+    IWbemClassObject *sig;
+    HRESULT hr;
+
+    TRACE("%p, %p, %p\n", obj, in, out);
+
+    hr = IWbemClassObject_Get( obj, prop_nameW, 0, &name, NULL, NULL );
+    if (hr != S_OK) return hr;
+
+    hr = create_signature( class_serviceW, method_startserviceW, PARAM_OUT, &sig );
+    if (hr != S_OK)
+    {
+        VariantClear( &name );
+        return hr;
+    }
+    hr = IWbemClassObject_SpawnInstance( sig, 0, out );
+    if (hr != S_OK)
+    {
+        VariantClear( &name );
+        IWbemClassObject_Release( sig );
+        return hr;
+    }
+    hr = start_service( V_BSTR(&name), &retval );
+    if (hr != S_OK) goto done;
+    hr = IWbemClassObject_Put( *out, param_returnvalueW, 0, &retval, CIM_UINT32 );
+
+done:
+    VariantClear( &name );
+    IWbemClassObject_Release( sig );
+    if (hr != S_OK) IWbemClassObject_Release( *out );
+    return hr;
+}
