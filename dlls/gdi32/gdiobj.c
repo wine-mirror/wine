@@ -810,7 +810,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 {
     struct gdi_handle_entry *entry;
     struct hdc_list *hdcs_head;
-    const struct gdi_obj_funcs *funcs;
+    const struct gdi_obj_funcs *funcs = NULL;
 
     EnterCriticalSection( &gdi_section );
     if (!(entry = handle_entry( obj )))
@@ -826,41 +826,38 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 	return TRUE;
     }
 
-    while ((hdcs_head = entry->hdcs) != NULL)
-    {
-        DC *dc = get_dc_ptr(hdcs_head->hdc);
-
-        entry->hdcs = hdcs_head->next;
-        TRACE("hdc %p has interest in %p\n", hdcs_head->hdc, obj);
-
-        if(dc)
-        {
-            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pDeleteObject );
-            LeaveCriticalSection( &gdi_section );
-            physdev->funcs->pDeleteObject( physdev, obj );
-            EnterCriticalSection( &gdi_section );  /* and grab it again */
-            entry = handle_entry( obj );
-            release_dc_ptr( dc );
-        }
-        HeapFree(GetProcessHeap(), 0, hdcs_head);
-        if (!entry) return FALSE;
-    }
+    hdcs_head = entry->hdcs;
+    entry->hdcs = NULL;
 
     if (entry->obj->selcount)
     {
         TRACE("delayed for %p because object in use, count %u\n", obj, entry->obj->selcount );
         entry->obj->deleted = 1;  /* mark for delete */
-        LeaveCriticalSection( &gdi_section );
-        return TRUE;
     }
+    else funcs = entry->funcs;
 
-    funcs = entry->funcs;
     LeaveCriticalSection( &gdi_section );
+
+    while (hdcs_head)
+    {
+        struct hdc_list *next = hdcs_head->next;
+        DC *dc = get_dc_ptr(hdcs_head->hdc);
+
+        TRACE("hdc %p has interest in %p\n", hdcs_head->hdc, obj);
+        if(dc)
+        {
+            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pDeleteObject );
+            physdev->funcs->pDeleteObject( physdev, obj );
+            release_dc_ptr( dc );
+        }
+        HeapFree(GetProcessHeap(), 0, hdcs_head);
+        hdcs_head = next;
+    }
 
     TRACE("%p\n", obj );
 
     if (funcs && funcs->pDeleteObject) return funcs->pDeleteObject( obj );
-    return FALSE;
+    return TRUE;
 }
 
 /***********************************************************************
