@@ -2318,14 +2318,17 @@ static int X11DRV_wglReleasePbufferDCARB( struct wgl_pbuffer *object, HDC hdc )
     TRACE("(%p, %p)\n", object, hdc);
 
     EnterCriticalSection( &context_section );
+
     if (!XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&gl ))
     {
         XDeleteContext( gdi_display, (XID)hdc, gl_pbuffer_context );
         free_gl_drawable( gl );
     }
+    else hdc = 0;
+
     LeaveCriticalSection( &context_section );
 
-    return DeleteDC(hdc);
+    return hdc && DeleteDC(hdc);
 }
 
 /**
