@@ -2616,6 +2616,197 @@ static void test_coop_level_mode_set(void)
     UnregisterClassA("ddraw_test_wndproc_wc", GetModuleHandleA(NULL));
 }
 
+static void test_coop_level_mode_set_multi(void)
+{
+    IDirectDraw4 *ddraw1, *ddraw2;
+    UINT orig_w, orig_h, w, h;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+
+    if (!(ddraw1 = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 100, 100, 0, 0, 0, 0);
+
+    orig_w = GetSystemMetrics(SM_CXSCREEN);
+    orig_h = GetSystemMetrics(SM_CYSCREEN);
+
+    /* With just a single ddraw object, the display mode is restored on
+     * release. */
+    hr = IDirectDraw4_SetDisplayMode(ddraw1, 800, 600, 32, 0, 0);
+    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == 800, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == 600, "Got unexpected screen height %u.\n", h);
+
+    ref = IDirectDraw4_Release(ddraw1);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+
+    /* When there are multiple ddraw objects, the display mode is restored to
+     * the initial mode, before the first SetDisplayMode() call. */
+    ddraw1 = create_ddraw();
+    hr = IDirectDraw4_SetDisplayMode(ddraw1, 800, 600, 32, 0, 0);
+    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == 800, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == 600, "Got unexpected screen height %u.\n", h);
+
+    ddraw2 = create_ddraw();
+    hr = IDirectDraw4_SetDisplayMode(ddraw2, 640, 480, 32, 0, 0);
+    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == 640, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == 480, "Got unexpected screen height %u.\n", h);
+
+    ref = IDirectDraw4_Release(ddraw2);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+
+    ref = IDirectDraw4_Release(ddraw1);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+
+    /* Regardless of release ordering. */
+    ddraw1 = create_ddraw();
+    hr = IDirectDraw4_SetDisplayMode(ddraw1, 800, 600, 32, 0, 0);
+    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == 800, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == 600, "Got unexpected screen height %u.\n", h);
+
+    ddraw2 = create_ddraw();
+    hr = IDirectDraw4_SetDisplayMode(ddraw2, 640, 480, 32, 0, 0);
+    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == 640, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == 480, "Got unexpected screen height %u.\n", h);
+
+    ref = IDirectDraw4_Release(ddraw1);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+
+    ref = IDirectDraw4_Release(ddraw2);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+
+    /* But only for ddraw objects that called SetDisplayMode(). */
+    ddraw1 = create_ddraw();
+    ddraw2 = create_ddraw();
+    hr = IDirectDraw4_SetDisplayMode(ddraw2, 640, 480, 32, 0, 0);
+    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == 640, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == 480, "Got unexpected screen height %u.\n", h);
+
+    ref = IDirectDraw4_Release(ddraw1);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == 640, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == 480, "Got unexpected screen height %u.\n", h);
+
+    ref = IDirectDraw4_Release(ddraw2);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+
+    /* If there's a ddraw object that's currently in exclusive mode, it blocks
+     * restoring the display mode. */
+    ddraw1 = create_ddraw();
+    hr = IDirectDraw4_SetDisplayMode(ddraw1, 800, 600, 32, 0, 0);
+    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == 800, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == 600, "Got unexpected screen height %u.\n", h);
+
+    ddraw2 = create_ddraw();
+    hr = IDirectDraw4_SetDisplayMode(ddraw2, 640, 480, 32, 0, 0);
+    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == 640, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == 480, "Got unexpected screen height %u.\n", h);
+
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw2, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+
+    ref = IDirectDraw4_Release(ddraw1);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == 640, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == 480, "Got unexpected screen height %u.\n", h);
+
+    ref = IDirectDraw4_Release(ddraw2);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+
+    /* Exclusive mode blocks mode setting on other ddraw objects in general. */
+    ddraw1 = create_ddraw();
+    hr = IDirectDraw4_SetDisplayMode(ddraw1, 800, 600, 32, 0, 0);
+    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == 800, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == 600, "Got unexpected screen height %u.\n", h);
+
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw1, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+
+    ddraw2 = create_ddraw();
+    hr = IDirectDraw4_SetDisplayMode(ddraw2, 640, 480, 32, 0, 0);
+    ok(hr == DDERR_NOEXCLUSIVEMODE, "Got unexpected hr %#x.\n", hr);
+
+    ref = IDirectDraw4_Release(ddraw1);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+
+    ref = IDirectDraw4_Release(ddraw2);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+    w = GetSystemMetrics(SM_CXSCREEN);
+    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    h = GetSystemMetrics(SM_CYSCREEN);
+    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+
+    DestroyWindow(window);
+}
+
 static void test_initialize(void)
 {
     IDirectDraw4 *ddraw;
@@ -2685,6 +2876,7 @@ START_TEST(ddraw4)
     test_window_style();
     test_redundant_mode_set();
     test_coop_level_mode_set();
+    test_coop_level_mode_set_multi();
     test_initialize();
     test_coop_level_surf_create();
 }
