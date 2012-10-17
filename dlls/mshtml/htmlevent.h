@@ -17,6 +17,7 @@
  */
 
 typedef enum {
+    EVENTID_ABORT,
     EVENTID_BEFOREUNLOAD,
     EVENTID_BLUR,
     EVENTID_CHANGE,
