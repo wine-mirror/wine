@@ -100,7 +100,7 @@ static HRESULT WINAPI HTMLScriptElement_put_src(IHTMLScriptElement *iface, BSTR 
     nsAString src_str;
     nsresult nsres;
 
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
     if(!This->element.node.doc || !This->element.node.doc->window) {
         WARN("no windoow\n");
