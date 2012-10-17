@@ -2664,7 +2664,7 @@
 @ cdecl -arch=win64 ?_Narrow_s@?$ctype@G@std@@QEBAPEBGPEBG0DPEAD_K@Z(ptr ptr ptr long ptr long) ctype_wchar__Narrow_s
 @ thiscall -arch=win32 ?_Narrow_s@?$ctype@_W@std@@QBEPB_WPB_W0DPADI@Z(ptr ptr ptr long ptr long) ctype_wchar__Narrow_s
 @ cdecl -arch=win64 ?_Narrow_s@?$ctype@_W@std@@QEBAPEB_WPEB_W0DPEAD_K@Z(ptr ptr ptr long ptr long) ctype_wchar__Narrow_s
-@ stub ?_Nomemory@std@@YAXXZ
+@ cdecl ?_Nomemory@std@@YAXXZ() _Nomemory
 # extern -arch=win64 ?_Oneplusroot2high@?CA@???$_Fabs@M@std@@YAMAEBV?$complex@M@1@PEAH@Z@4MB
 # extern -arch=win64 ?_Oneplusroot2high@?CA@???$_Fabs@N@std@@YANAEBV?$complex@N@1@PEAH@Z@4NB
 # extern -arch=win64 ?_Oneplusroot2low@?CA@???$_Fabs@M@std@@YAMAEBV?$complex@M@1@PEAH@Z@4MB
