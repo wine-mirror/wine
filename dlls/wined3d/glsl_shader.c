@@ -2530,6 +2530,7 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_EXP: instruction = "exp2"; break;
         case WINED3DSIH_DSX: instruction = "dFdx"; break;
         case WINED3DSIH_DSY: instruction = "ycorrection.y * dFdy"; break;
+        case WINED3DSIH_ROUND_NI: instruction = "floor"; break;
         default: instruction = "";
             FIXME("Opcode %#x not yet handled in GLSL\n", ins->handler_idx);
             break;
@@ -5432,7 +5433,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_RCP                   */ shader_glsl_rcp,
     /* WINED3DSIH_REP                   */ shader_glsl_rep,
     /* WINED3DSIH_RET                   */ shader_glsl_ret,
-    /* WINED3DSIH_ROUND_NI              */ NULL,
+    /* WINED3DSIH_ROUND_NI              */ shader_glsl_map2gl,
     /* WINED3DSIH_RSQ                   */ shader_glsl_rsq,
     /* WINED3DSIH_SAMPLE                */ NULL,
     /* WINED3DSIH_SAMPLE_GRAD           */ NULL,
