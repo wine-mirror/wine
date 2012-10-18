@@ -1419,7 +1419,7 @@ static void close_script(IActiveScript *script)
     ok(!ref, "ref=%u\n", ref);
 }
 
-static HRESULT parse_script(DWORD flags, BSTR script_str)
+static HRESULT parse_script(DWORD flags, BSTR script_str, const WCHAR *delim)
 {
     IActiveScriptParse *parser;
     IActiveScript *engine;
@@ -1446,7 +1446,7 @@ static HRESULT parse_script(DWORD flags, BSTR script_str)
 
     test_counter = 0;
 
-    hres = IActiveScriptParse_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, script_str, NULL, NULL, delim, 0, 0, 0, NULL, NULL);
 
     IActiveScript_Close(engine);
 
@@ -1464,7 +1464,7 @@ static void parse_script_af(DWORD flags, const char *src)
     HRESULT hres;
 
     tmp = a2bstr(src);
-    hres = parse_script(flags, tmp);
+    hres = parse_script(flags, tmp, NULL);
     SysFreeString(tmp);
     ok(hres == S_OK, "parse_script failed: %08x\n", hres);
 }
@@ -1475,7 +1475,7 @@ static HRESULT parse_script_ar(const char *src)
     HRESULT hres;
 
     tmp = a2bstr(src);
-    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, tmp);
+    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, tmp, NULL);
     SysFreeString(tmp);
     return hres;
 }
@@ -1483,6 +1483,20 @@ static HRESULT parse_script_ar(const char *src)
 static void parse_script_a(const char *src)
 {
     parse_script_af(SCRIPTITEM_GLOBALMEMBERS, src);
+}
+
+#define parse_htmlscript_a(a) _parse_htmlscript_a(__LINE__,a)
+static void _parse_htmlscript_a(unsigned line, const char *src)
+{
+    BSTR tmp;
+    HRESULT hres;
+
+    static const WCHAR script_delimW[] = {'<','/','S','C','R','I','P','T','>',0};
+
+    tmp = a2bstr(src);
+    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, tmp, script_delimW);
+    SysFreeString(tmp);
+    ok_(__FILE__,line)(hres == S_OK, "parse_script failed: %08x\n", hres);
 }
 
 static IDispatchEx *parse_procedure(IActiveScriptParseProcedure2 *parse_proc, const char *src)
@@ -1742,7 +1756,7 @@ static void run_from_file(const char *filename)
         return;
 
     strict_dispid_check = FALSE;
-    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, script_str);
+    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, script_str, NULL);
     SysFreeString(script_str);
     ok(hres == S_OK, "parse_script failed: %08x\n", hres);
 }
@@ -1770,7 +1784,7 @@ static void run_from_res(const char *name)
 
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
-    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, str);
+    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, str, NULL);
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
 
@@ -1858,6 +1872,20 @@ static void run_tests(void)
     parse_script_a("test.propargput1(counter()) = counter()");
     CHECK_CALLED(global_propargput1_d);
     CHECK_CALLED(global_propargput1_i);
+
+    parse_htmlscript_a("<!--");
+    parse_htmlscript_a(" -->");
+    parse_htmlscript_a("<!--\ndim x\nx=1\n-->\n");
+    parse_htmlscript_a("<!--\ndim x\n-->\n<!--\nx=1\n-->\n");
+
+    hres = parse_script_ar("<!--");
+    ok(FAILED(hres), "script didn't fail\n");
+
+    SET_EXPECT(global_success_d);
+    SET_EXPECT(global_success_i);
+    parse_htmlscript_a("<!--\n<!-- ignore this <> <>\n--> <>\nCall reportSuccess()\n-->\n");
+    CHECK_CALLED(global_success_d);
+    CHECK_CALLED(global_success_i);
 
     next_cnt = 0;
     SET_EXPECT(collectionobj_newenum_i);
