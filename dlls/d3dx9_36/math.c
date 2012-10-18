@@ -2811,70 +2811,48 @@ FLOAT* WINAPI D3DXSHRotate(FLOAT *out, UINT order, CONST D3DXMATRIX *matrix, CON
     return out;
 }
 
-FLOAT * WINAPI D3DXSHRotateZ(FLOAT *out, UINT order, FLOAT angle, CONST FLOAT *in)
+FLOAT * WINAPI D3DXSHRotateZ(FLOAT *out, UINT order, FLOAT angle, const FLOAT *in)
 {
-    FLOAT c1a, c2a, c3a, c4a, c5a, s1a, s2a, s3a, s4a, s5a;
+    UINT i, sum = 0;
+    FLOAT c[5], s[5];
 
     TRACE("out %p, order %u, angle %f, in %p\n", out, order, angle, in);
 
-    c1a = cosf(angle);
-    s1a = sinf(angle);
+    order = min(max(order, D3DXSH_MINORDER), D3DXSH_MAXORDER);
+
     out[0] = in[0];
-    out[1] = c1a * in[1] + s1a * in[3];
-    out[2] = in[2];
-    out[3] = c1a * in[3] - s1a * in[1];
-    if (order <= D3DXSH_MINORDER)
-        return out;
 
-    c2a = cosf(2.0f * angle);
-    s2a = sinf(2.0f * angle);
-    out[4] = c2a * in[4] + s2a * in[8];
-    out[5] = c1a * in[5] + s1a * in[7];
-    out[6] = in[6];
-    out[7] = c1a * in[7] - s1a * in[5];
-    out[8] = c2a * in[8] - s2a * in[4];
-    if (order == 3)
-        return out;
+    for (i = 1; i < order; i++)
+    {
+        UINT j;
 
-    c3a = cosf(3.0f * angle);
-    s3a = sinf(3.0f * angle);
-    out[9] = c3a * in[9] + s3a * in[15];
-    out[10] = c2a * in[10] + s2a * in[14];
-    out[11] = c1a * in[11] + s1a * in[13];
-    out[12] = in[12];
-    out[13] = c1a * in[13] - s1a * in[11];
-    out[14] = c2a * in[14] - s2a * in[10];
-    out[15] = c3a * in[15] - s3a * in[9];
-    if (order == 4)
-        return out;
+        c[i - 1] = cosf(i * angle);
+        s[i - 1] = sinf(i * angle);
+        sum += i * 2;
 
-    c4a = cosf(4.0f * angle);
-    s4a = sinf(4.0f * angle);
-    out[16] = c4a * in[16] + s4a * in[24];
-    out[17] = c3a * in[17] + s3a * in[23];
-    out[18] = c2a * in[18] + s2a * in[22];
-    out[19] = c1a * in[19] + s1a * in[21];
-    out[20] = in[20];
-    out[21] = c1a * in[21] - s1a * in[19];
-    out[22] = c2a * in[22] - s2a * in[18];
-    out[23] = c3a * in[23] - s3a * in[17];
-    out[24] = c4a * in[24] - s4a * in[16];
-    if (order == 5)
-        return out;
+        out[sum - i] = c[i - 1] * in[sum - i];
+        out[sum - i] += s[i - 1] * in[sum + i];
+        for (j = i - 1; j > 0; j--)
+        {
+            out[sum - j] = 0.0f;
+            out[sum - j] = c[j - 1] * in[sum - j];
+            out[sum - j] += s[j - 1] * in[sum + j];
+        }
 
-    c5a = cosf(5.0f * angle);
-    s5a = sinf(5.0f * angle);
-    out[25] = c5a * in[25] + s5a * in[35];
-    out[26] = c4a * in[26] + s4a * in[34];
-    out[27] = c3a * in[27] + s3a * in[33];
-    out[28] = c2a * in[28] + s2a * in[32];
-    out[29] = c1a * in[29] + s1a * in[31];
-    out[30] = in[30];
-    out[31] = c1a * in[31] - s1a * in[29];
-    out[32] = c2a * in[32] - s2a * in[28];
-    out[33] = c3a * in[33] - s3a * in[27];
-    out[34] = c4a * in[34] - s4a * in[26];
-    out[35] = c5a * in[35] - s5a * in[25];
+        if (in == out)
+            out[sum] = 0.0f;
+        else
+            out[sum] = in[sum];
+
+        for (j = 1; j < i; j++)
+        {
+            out[sum + j] = 0.0f;
+            out[sum + j] = -s[j - 1] * in[sum - j];
+            out[sum + j] += c[j - 1] * in[sum + j];
+        }
+        out[sum + i] = -s[i - 1] * in[sum - i];
+        out[sum + i] += c[i - 1] * in[sum + i];
+    }
 
     return out;
 }
