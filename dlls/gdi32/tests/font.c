@@ -4162,7 +4162,7 @@ static void test_fullname2_helper(const char *Family)
         ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_SUBFAMILY, bufW, buf_size, GetSystemDefaultLangID());
         if (!ret)
         {
-            trace("no localized FONT_SUBFAMILY font.\n");
+            trace("no localized FONT_SUBFAMILY found.\n");
             ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_SUBFAMILY, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
         }
         ok(ret, "SUBFAMILY (style name) could not be read\n");
