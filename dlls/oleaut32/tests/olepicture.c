@@ -1055,7 +1055,7 @@ todo_wine
     GlobalUnlock(hmem);
     GlobalFree(hmem);
 
-    DeleteObject(desc.u.bmp.hbitmap);
+    DestroyIcon(desc.u.icon.hicon);
     IPicture_Release(pic);
 }
 
