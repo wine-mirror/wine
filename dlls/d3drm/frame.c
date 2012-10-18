@@ -813,7 +813,7 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_GetTransform(IDirect3DRMFrame2* ifac
 
     TRACE("(%p/%p)->(%p)\n", iface, This, return_matrix);
 
-    memcpy(&return_matrix[0][0], &This->transform[0][0], sizeof(D3DRMMATRIX4D));
+    memcpy(return_matrix, This->transform, sizeof(D3DRMMATRIX4D));
 
     return D3DRM_OK;
 }
@@ -1639,7 +1639,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddTransform(IDirect3DRMFrame3* ifac
     switch (type)
     {
         case D3DRMCOMBINE_REPLACE:
-            memcpy(&This->transform[0][0], &matrix[0][0], sizeof(D3DRMMATRIX4D));
+            memcpy(This->transform, matrix, sizeof(D3DRMMATRIX4D));
             break;
 
         case D3DRMCOMBINE_BEFORE:
@@ -1905,7 +1905,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_GetTransform(IDirect3DRMFrame3* ifac
     if (reference)
         FIXME("Specifying a frame as the root of the scene different from the current root frame is not supported yet\n");
 
-    memcpy(&return_matrix[0][0], &This->transform[0][0], sizeof(D3DRMMATRIX4D));
+    memcpy(return_matrix, This->transform, sizeof(D3DRMMATRIX4D));
 
     return D3DRM_OK;
 }
@@ -2694,7 +2694,7 @@ HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown* parent, IUnknown** ret_ifa
     object->ref = 1;
     object->scenebackground = D3DCOLOR_ARGB(0xff, 0, 0, 0);
 
-    memcpy(&object->transform[0][0], &identity[0][0], sizeof(D3DRMMATRIX4D));
+    memcpy(object->transform, identity, sizeof(D3DRMMATRIX4D));
 
     if (parent)
     {
