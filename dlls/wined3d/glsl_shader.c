@@ -539,7 +539,7 @@ static void shader_glsl_load_constantsF(const struct wined3d_shader *shader, con
 
     /* 1.X pshaders have the constants clamped to [-1;1] implicitly. */
     if (shader->reg_maps.shader_version.major == 1
-            && shader_is_pshader_version(shader->reg_maps.shader_version.type))
+            && shader->reg_maps.shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
         walk_constant_heap_clamped(gl_info, constants, constant_locations, heap, stack, version);
     else
         walk_constant_heap(gl_info, constants, constant_locations, heap, stack, version);
