@@ -668,6 +668,12 @@ static INT CALLBACK find_font_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DW
     return 1; /* continue enumeration */
 }
 
+static BOOL is_CJK(void)
+{
+    WORD system_lang_id = PRIMARYLANGID(GetSystemDefaultLangID());
+    return (system_lang_id == LANG_CHINESE || system_lang_id == LANG_JAPANESE || system_lang_id == LANG_KOREAN);
+}
+
 #define FH_SCALE 0x80000000
 static void test_bitmap_font_metrics(void)
 {
@@ -933,7 +939,10 @@ static void test_bitmap_font_metrics(void)
 
             SetLastError(0xdeadbeef);
             ret = GetTextCharset(hdc);
-            ok(ret == expected_cs, "got charset %d, expected %d\n", ret, expected_cs);
+            if (is_CJK() && lf.lfCharSet == ANSI_CHARSET)
+                ok(ret == ANSI_CHARSET, "got charset %d, expected ANSI_CHARSETd\n", ret);
+            else
+                ok(ret == expected_cs, "got charset %d, expected %d\n", ret, expected_cs);
 
             trace("created %s, height %d charset %x dpi %d\n", face_name, tm.tmHeight, tm.tmCharSet, tm.tmDigitizedAspectX);
             trace("expected %s, height %d scaled_hight %d, dpi %d\n", fd[i].face_name, height, fd[i].scaled_height, fd[i].dpi);
