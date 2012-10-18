@@ -657,7 +657,6 @@ static void test_tab(INT nMinTabWidth)
     DestroyWindow (hwTab);
 
     ImageList_Destroy(himl);
-    DeleteObject(hFont);
 }
 
 static void test_width(void)
