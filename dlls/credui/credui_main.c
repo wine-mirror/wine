@@ -410,7 +410,9 @@ static BOOL CredDialogInit(HWND hwndDlg, struct cred_dialog_params *params)
         SetWindowTextW(hwndDlg, title);
     }
 
-    if (params->dwFlags & (CREDUI_FLAGS_DO_NOT_PERSIST|CREDUI_FLAGS_PERSIST))
+    if (params->dwFlags & CREDUI_FLAGS_PERSIST ||
+        (params->dwFlags & CREDUI_FLAGS_DO_NOT_PERSIST &&
+         !(params->dwFlags & CREDUI_FLAGS_SHOW_SAVE_CHECK_BOX)))
         ShowWindow(GetDlgItem(hwndDlg, IDC_SAVE), SW_HIDE);
     else if (params->fSave)
         CheckDlgButton(hwndDlg, IDC_SAVE, BST_CHECKED);
