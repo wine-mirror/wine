@@ -1319,9 +1319,9 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
 
     const struct wined3d_shader *shader = ins->ctx->shader;
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
+    const struct wined3d_shader_version *version = &reg_maps->shader_version;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
-    char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
-    const char *prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
+    const char *prefix = shader_glsl_get_prefix(version->type);
 
     *is_color = FALSE;
 
@@ -1333,7 +1333,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
 
         case WINED3DSPR_INPUT:
             /* vertex shaders */
-            if (!pshader)
+            if (version->type == WINED3D_SHADER_TYPE_VERTEX)
             {
                 struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
                 if (priv->cur_vs_args->swizzle_map & (1 << reg->idx[0].offset))
@@ -1343,10 +1343,10 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             }
 
             /* pixel shaders >= 3.0 */
-            if (reg_maps->shader_version.major >= 3)
+            if (version->major >= 3)
             {
                 DWORD idx = shader->u.ps.input_reg_map[reg->idx[0].offset];
-                unsigned int in_count = vec4_varyings(reg_maps->shader_version.major, gl_info);
+                unsigned int in_count = vec4_varyings(version->major, gl_info);
 
                 if (reg->idx[0].rel_addr)
                 {
@@ -1432,7 +1432,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             break;
 
         case WINED3DSPR_TEXTURE: /* case WINED3DSPR_ADDR: */
-            if (pshader)
+            if (version->type == WINED3D_SHADER_TYPE_PIXEL)
                 sprintf(register_name, "T%u", reg->idx[0].offset);
             else
                 sprintf(register_name, "A%u", reg->idx[0].offset);
