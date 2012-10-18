@@ -612,7 +612,7 @@ static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(This->thread_id != GetCurrentThreadId() || This->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
-    hres = compile_script(This->ctx, pstrCode, &code);
+    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, &code);
     if(FAILED(hres))
         return hres;
 
@@ -672,7 +672,7 @@ static HRESULT WINAPI VBScriptParseProcedure_ParseProcedureText(IActiveScriptPar
     if(This->thread_id != GetCurrentThreadId() || This->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
-    hres = compile_script(This->ctx, pstrCode, &code);
+    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, &code);
     if(FAILED(hres))
         return hres;
 

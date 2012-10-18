@@ -253,6 +253,7 @@ typedef struct {
 
     BOOL option_explicit;
     BOOL parse_complete;
+    BOOL is_html;
     HRESULT hres;
 
     int last_token;
@@ -265,7 +266,7 @@ typedef struct {
     vbsheap_t heap;
 } parser_ctx_t;
 
-HRESULT parse_script(parser_ctx_t*,const WCHAR*) DECLSPEC_HIDDEN;
+HRESULT parse_script(parser_ctx_t*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;
 void parser_release(parser_ctx_t*) DECLSPEC_HIDDEN;
 int parser_lex(void*,parser_ctx_t*) DECLSPEC_HIDDEN;
 void *parser_alloc(parser_ctx_t*,size_t) DECLSPEC_HIDDEN;

@@ -320,6 +320,16 @@ static void skip_spaces(parser_ctx_t *ctx)
         ctx->ptr++;
 }
 
+static int comment_line(parser_ctx_t *ctx)
+{
+    ctx->ptr = strchrW(ctx->ptr, '\n');
+    if(ctx->ptr)
+        ctx->ptr++;
+    else
+        ctx->ptr = ctx->end;
+    return tNL;
+}
+
 static int parse_next_token(void *lval, parser_ctx_t *ctx)
 {
     WCHAR c;
@@ -347,18 +357,12 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
         ctx->ptr++;
         return tNL;
     case '\'':
-        ctx->ptr = strchrW(ctx->ptr, '\n');
-        if(ctx->ptr)
-            ctx->ptr++;
-        else
-            ctx->ptr = ctx->end;
-        return tNL;
+        return comment_line(ctx);
     case ':':
     case ')':
     case ',':
     case '=':
     case '+':
-    case '-':
     case '*':
     case '/':
     case '^':
@@ -366,6 +370,11 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
     case '.':
     case '_':
         return *ctx->ptr++;
+    case '-':
+        if(ctx->is_html && ctx->ptr[1] == '-' && ctx->ptr[2] == '>')
+            return comment_line(ctx);
+        ctx->ptr++;
+        return '-';
     case '(':
         /* NOTE:
          * We resolve empty brackets in lexer instead of parser to avoid complex conflicts
@@ -392,6 +401,9 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
         case '=':
             ctx->ptr++;
             return tLTEQ;
+        case '!':
+            if(ctx->is_html && ctx->ptr[1] == '-' && ctx->ptr[2] == '-')
+                return comment_line(ctx);
         }
         return '<';
     case '>':

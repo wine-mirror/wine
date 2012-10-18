@@ -919,8 +919,10 @@ void *parser_alloc(parser_ctx_t *ctx, size_t size)
     return ret;
 }
 
-HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code)
+HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code, const WCHAR *delimiter)
 {
+    const WCHAR html_delimiterW[] = {'<','/','s','c','r','i','p','t','>',0};
+
     ctx->code = ctx->ptr = code;
     ctx->end = ctx->code + strlenW(ctx->code);
 
@@ -934,6 +936,7 @@ HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code)
     ctx->stats = ctx->stats_tail = NULL;
     ctx->class_decls = NULL;
     ctx->option_explicit = FALSE;
+    ctx->is_html = delimiter && !strcmpiW(delimiter, html_delimiterW);
 
     parser_parse(ctx);
 

@@ -1644,7 +1644,7 @@ static void release_compiler(compile_ctx_t *ctx)
         release_vbscode(ctx->code);
 }
 
-HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
+HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *delimiter, vbscode_t **ret)
 {
     function_t *new_func;
     function_decl_t *func_decl;
@@ -1653,7 +1653,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
     vbscode_t *code;
     HRESULT hres;
 
-    hres = parse_script(&ctx.parser, src);
+    hres = parse_script(&ctx.parser, src, delimiter);
     if(FAILED(hres))
         return hres;
 
