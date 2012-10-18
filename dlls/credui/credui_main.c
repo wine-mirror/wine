@@ -655,7 +655,7 @@ DWORD WINAPI CredUIPromptForCredentialsW(PCREDUI_INFOW pUIInfo,
 
             LeaveCriticalSection(&csPendingCredentials);
         }
-        else
+        else if (!(dwFlags & CREDUI_FLAGS_DO_NOT_PERSIST))
             result = save_credentials(pszTargetName, pszUsername, pszPassword,
                                       (dwFlags & CREDUI_FLAGS_GENERIC_CREDENTIALS) != 0);
     }
