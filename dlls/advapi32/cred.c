@@ -1804,13 +1804,19 @@ BOOL WINAPI CredWriteW(PCREDENTIALW Credential, DWORD Flags)
         return FALSE;
     }
 
+    TRACE("Credential->Flags = 0x%08x\n", Credential->Flags);
+    TRACE("Credential->Type = %u\n", Credential->Type);
     TRACE("Credential->TargetName = %s\n", debugstr_w(Credential->TargetName));
+    TRACE("Credential->Comment = %s\n", debugstr_w(Credential->Comment));
+    TRACE("Credential->Persist = %u\n", Credential->Persist);
+    TRACE("Credential->TargetAlias = %s\n", debugstr_w(Credential->TargetAlias));
     TRACE("Credential->UserName = %s\n", debugstr_w(Credential->UserName));
 
     if (Credential->Type == CRED_TYPE_DOMAIN_PASSWORD)
     {
         if (!Credential->UserName ||
-            (!strchrW(Credential->UserName, '\\') && !strchrW(Credential->UserName, '@')))
+            (Credential->Persist == CRED_PERSIST_ENTERPRISE &&
+            (!strchrW(Credential->UserName, '\\') && !strchrW(Credential->UserName, '@'))))
         {
             ERR("bad username %s\n", debugstr_w(Credential->UserName));
             SetLastError(ERROR_BAD_USERNAME);

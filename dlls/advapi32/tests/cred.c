@@ -121,6 +121,47 @@ static void test_CredWriteA(void)
     ok(!ret && GetLastError() == ERROR_BAD_USERNAME,
         "CredWriteA with NULL username should have failed with ERROR_BAD_USERNAME instead of %d\n",
         GetLastError());
+
+    new_cred.UserName = (char *)"winetest";
+    new_cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
+    SetLastError(0xdeadbeef);
+    ret = pCredWriteA(&new_cred, 0);
+    ok(ret || broken(!ret), "CredWriteA failed with error %u\n", GetLastError());
+    if (ret)
+    {
+        ret = pCredDeleteA(TEST_TARGET_NAME, CRED_TYPE_DOMAIN_PASSWORD, 0);
+        ok(ret, "CredDeleteA failed with error %u\n", GetLastError());
+    }
+    new_cred.Type = CRED_TYPE_GENERIC;
+    SetLastError(0xdeadbeef);
+    ret = pCredWriteA(&new_cred, 0);
+    ok(ret || broken(!ret), "CredWriteA failed with error %u\n", GetLastError());
+    if  (ret)
+    {
+        ret = pCredDeleteA(TEST_TARGET_NAME, CRED_TYPE_GENERIC, 0);
+        ok(ret, "CredDeleteA failed with error %u\n", GetLastError());
+    }
+    new_cred.Persist = CRED_PERSIST_SESSION;
+    ret = pCredWriteA(&new_cred, 0);
+    ok(ret, "CredWriteA failed with error %u\n", GetLastError());
+
+    ret = pCredDeleteA(TEST_TARGET_NAME, CRED_TYPE_GENERIC, 0);
+    ok(ret, "CredDeleteA failed with error %u\n", GetLastError());
+
+    new_cred.Type = CRED_TYPE_DOMAIN_PASSWORD;
+    SetLastError(0xdeadbeef);
+    ret = pCredWriteA(&new_cred, 0);
+    ok(ret || broken(!ret), "CredWriteA failed with error %u\n", GetLastError());
+    if (ret)
+    {
+        ret = pCredDeleteA(TEST_TARGET_NAME, CRED_TYPE_DOMAIN_PASSWORD, 0);
+        ok(ret, "CredDeleteA failed with error %u\n", GetLastError());
+    }
+    new_cred.UserName = NULL;
+    SetLastError(0xdeadbeef);
+    ret = pCredWriteA(&new_cred, 0);
+    ok(!ret, "CredWriteA succeeded\n");
+    ok(GetLastError() == ERROR_BAD_USERNAME, "got %u\n", GetLastError());
 }
 
 static void test_CredDeleteA(void)
