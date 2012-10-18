@@ -2489,7 +2489,6 @@ todo_wine
     hemf = CloseEnhMetaFile(hdc);
     DeleteEnhMetaFile(hemf);
     DeleteObject(hrgn);
-    DeleteDC(hdc);
 }
 
 static const unsigned char MF_CLIP_BITS[] = {

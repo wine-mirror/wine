@@ -3523,7 +3523,6 @@ static void test_GdiAlphaBlend(void)
     HDC hdcNull;
     HDC hdcDst;
     HBITMAP bmpDst;
-    HBITMAP oldDst;
     BITMAPINFO *bmi;
     HDC hdcSrc;
     HBITMAP bmpSrc;
@@ -3553,7 +3552,7 @@ static void test_GdiAlphaBlend(void)
     bmpSrc = CreateDIBSection(hdcDst, bmi, DIB_RGB_COLORS, &bits, NULL, 0);
     ok(bmpSrc != NULL, "Couldn't create source bitmap\n");
 
-    oldDst = SelectObject(hdcDst, bmpDst);
+    SelectObject(hdcDst, bmpDst);
     oldSrc = SelectObject(hdcSrc, bmpSrc);
 
     blend.BlendOp = AC_SRC_OVER;
@@ -3736,12 +3735,10 @@ static void test_GdiAlphaBlend(void)
     ok( !ret, "GdiAlphaBlend succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
 
-    SelectObject(hdcDst, oldDst);
-    SelectObject(hdcSrc, oldSrc);
-    DeleteObject(bmpSrc);
-    DeleteObject(bmpDst);
     DeleteDC(hdcDst);
     DeleteDC(hdcSrc);
+    DeleteObject(bmpSrc);
+    DeleteObject(bmpDst);
 
     ReleaseDC(NULL, hdcNull);
 
