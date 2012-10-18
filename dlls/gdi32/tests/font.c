@@ -2421,6 +2421,7 @@ static void test_EnumFontFamiliesEx_default_charset(void)
     LOGFONT gui_font, enum_font;
     DWORD ret;
     HDC hdc;
+    WORD system_lang_id = PRIMARYLANGID(GetSystemDefaultLangID());
 
     ret = GetObject(GetStockObject(DEFAULT_GUI_FONT), sizeof(gui_font), &gui_font);
     ok(ret, "GetObject failed.\n");
@@ -2442,7 +2443,7 @@ static void test_EnumFontFamiliesEx_default_charset(void)
     }
     trace("'%s' has %d charsets.\n", gui_font.lfFaceName, efd.total);
 
-    ok(efd.lf[0].lfCharSet == gui_font.lfCharSet,
+    ok(efd.lf[0].lfCharSet == gui_font.lfCharSet || broken(system_lang_id == LANG_ARABIC),
        "(%s) got charset %d expected %d\n",
        efd.lf[0].lfFaceName, efd.lf[0].lfCharSet, gui_font.lfCharSet);
 
