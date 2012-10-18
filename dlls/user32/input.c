@@ -617,11 +617,73 @@ UINT WINAPI GetRawInputDeviceInfoA(HANDLE hDevice, UINT uiCommand, LPVOID pData,
 /******************************************************************
 *		GetRawInputDeviceInfoW (USER32.@)
 */
-UINT WINAPI GetRawInputDeviceInfoW(HANDLE hDevice, UINT uiCommand, LPVOID pData, PUINT pcbSize)
+UINT WINAPI GetRawInputDeviceInfoW(HANDLE device, UINT command, void *data, UINT *data_size)
 {
-    FIXME("(hDevice=%p, uiCommand=%d, pData=%p, pcbSize=%p) stub!\n", hDevice, uiCommand, pData, pcbSize);
+    /* FIXME: Most of this is made up. */
+    static const WCHAR keyboard_name[] = {'\\','\\','?','\\','W','I','N','E','_','K','E','Y','B','O','A','R','D',0};
+    static const WCHAR mouse_name[] = {'\\','\\','?','\\','W','I','N','E','_','M','O','U','S','E',0};
+    static const RID_DEVICE_INFO_KEYBOARD keyboard_info = {0, 0, 1, 12, 3, 101};
+    static const RID_DEVICE_INFO_MOUSE mouse_info = {1, 5, 0, FALSE};
+    const WCHAR *name = NULL;
+    RID_DEVICE_INFO *info;
+    UINT s;
 
-    return 0;
+    TRACE("device %p, command %u, data %p, data_size %p.\n", device, command, data, data_size);
+
+    if (!data_size || (device != WINE_MOUSE_HANDLE && device != WINE_KEYBOARD_HANDLE)) return ~0U;
+
+    switch (command)
+    {
+    case RIDI_DEVICENAME:
+        if (device == WINE_MOUSE_HANDLE)
+        {
+            s = sizeof(mouse_name);
+            name = mouse_name;
+        }
+        else
+        {
+            s = sizeof(keyboard_name);
+            name = keyboard_name;
+        }
+        break;
+    case RIDI_DEVICEINFO:
+        s = sizeof(*info);
+        break;
+    default:
+        return ~0U;
+    }
+
+    if (!data)
+    {
+        *data_size = s;
+        return 0;
+    }
+
+    if (*data_size < s)
+    {
+        *data_size = s;
+        return ~0U;
+    }
+
+    if (command == RIDI_DEVICENAME)
+    {
+        memcpy(data, name, s);
+        return s;
+    }
+
+    info = data;
+    info->cbSize = sizeof(*info);
+    if (device == WINE_MOUSE_HANDLE)
+    {
+        info->dwType = RIM_TYPEMOUSE;
+        info->u.mouse = mouse_info;
+    }
+    else
+    {
+        info->dwType = RIM_TYPEKEYBOARD;
+        info->u.keyboard = keyboard_info;
+    }
+    return s;
 }
 
 
