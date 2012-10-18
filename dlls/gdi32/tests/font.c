@@ -54,6 +54,7 @@ static BOOL  (WINAPI *pRemoveFontResourceExA)(LPCSTR, DWORD, PVOID);
 
 static HMODULE hgdi32 = 0;
 static const MAT2 mat = { {0,1}, {0,0}, {0,0}, {0,1} };
+static WORD system_lang_id;
 
 static void init(void)
 {
@@ -74,6 +75,8 @@ static void init(void)
     pRemoveFontMemResourceEx = (void *)GetProcAddress(hgdi32, "RemoveFontMemResourceEx");
     pAddFontResourceExA = (void *)GetProcAddress(hgdi32, "AddFontResourceExA");
     pRemoveFontResourceExA = (void *)GetProcAddress(hgdi32, "RemoveFontResourceExA");
+
+    system_lang_id = PRIMARYLANGID(GetSystemDefaultLangID());
 }
 
 static INT CALLBACK is_truetype_font_installed_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
@@ -670,7 +673,6 @@ static INT CALLBACK find_font_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DW
 
 static BOOL is_CJK(void)
 {
-    WORD system_lang_id = PRIMARYLANGID(GetSystemDefaultLangID());
     return (system_lang_id == LANG_CHINESE || system_lang_id == LANG_JAPANESE || system_lang_id == LANG_KOREAN);
 }
 
@@ -834,11 +836,9 @@ static void test_bitmap_font_metrics(void)
     HFONT hfont, old_hfont;
     TEXTMETRIC tm;
     INT ret, i, expected_cs, screen_log_pixels, diff, font_res;
-    WORD system_lang_id;
     char face_name[LF_FACESIZE];
     CHARSETINFO csi;
 
-    system_lang_id = PRIMARYLANGID(GetSystemDefaultLangID());
     trace("system language id %04x\n", system_lang_id);
 
     expected_cs = GetACP();
@@ -2421,7 +2421,6 @@ static void test_EnumFontFamiliesEx_default_charset(void)
     LOGFONT gui_font, enum_font;
     DWORD ret;
     HDC hdc;
-    WORD system_lang_id = PRIMARYLANGID(GetSystemDefaultLangID());
 
     ret = GetObject(GetStockObject(DEFAULT_GUI_FONT), sizeof(gui_font), &gui_font);
     ok(ret, "GetObject failed.\n");
