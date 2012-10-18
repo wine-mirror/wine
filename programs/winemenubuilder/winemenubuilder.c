@@ -379,6 +379,7 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numInd
     IWICImagingFactory *factory = NULL;
     IWICBitmapDecoder *decoder = NULL;
     IWICBitmapEncoder *encoder = NULL;
+    IWICBitmapScaler *scaler = NULL;
     IStream *outputFile = NULL;
     int i;
     HRESULT hr = E_FAIL;
@@ -402,6 +403,14 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numInd
     {
         WINE_ERR("error 0x%08X creating IWICBitmapDecoder\n", hr);
         goto end;
+    }
+    if (IsEqualCLSID(outputFormat,&CLSID_WICIcnsEncoder))
+    {
+        hr = IWICImagingFactory_CreateBitmapScaler(factory, &scaler);
+        if (FAILED(hr))
+        {
+            WINE_WARN("error 0x%08X creating IWICBitmapScaler\n", hr);
+        }
     }
     hr = CoCreateInstance(outputFormat, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapEncoder, (void**)&encoder);
@@ -442,6 +451,22 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numInd
         {
             WINE_ERR("error 0x%08X converting bitmap to 32bppBGRA\n", hr);
             goto endloop;
+        }
+        if ( scaler)
+        {
+            IWICBitmapSource_GetSize(sourceBitmap, &width, &height);
+            if (width == 64) /* Classic Mode */
+            {
+                hr = IWICBitmapScaler_Initialize( scaler, sourceBitmap, 128, 128,
+                                  WICBitmapInterpolationModeNearestNeighbor);
+                if (FAILED(hr))
+                    WINE_ERR("error 0x%08X scaling bitmap\n", hr);
+                else
+                {
+                    IWICBitmapSource_Release(sourceBitmap);
+                    IWICBitmapScaler_QueryInterface(scaler, &IID_IWICBitmapSource, (LPVOID)&sourceBitmap);
+                }
+            }
         }
         hr = IWICBitmapEncoder_CreateNewFrame(encoder, &dstFrame, &options);
         if (FAILED(hr))
@@ -507,6 +532,8 @@ end:
         IWICImagingFactory_Release(factory);
     if (decoder)
         IWICBitmapDecoder_Release(decoder);
+    if (scaler)
+        IWICBitmapScaler_Release(scaler);
     if (encoder)
         IWICBitmapEncoder_Release(encoder);
     if (outputFile)
@@ -1052,6 +1079,7 @@ static inline int size_to_slot(int size)
         case 16: return 0;
         case 32: return 1;
         case 48: return 2;
+        case 64: return -2;  /* Classic Mode */
         case 128: return 3;
         case 256: return 4;
         case 512: return 5;
@@ -1059,6 +1087,8 @@ static inline int size_to_slot(int size)
 
     return -1;
 }
+
+#define CLASSIC_SLOT 3
 
 static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR icoPathW,
                                    const char *destFilename, char **nativeIdentifier)
@@ -1068,6 +1098,7 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
     struct {
         int index;
         int maxBits;
+        BOOL scaled;
     } best[ICNS_SLOTS];
     int indexes[ICNS_SLOTS];
     int i;
@@ -1091,19 +1122,39 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
         int slot;
         int width = iconDirEntries[i].bWidth ? iconDirEntries[i].bWidth : 256;
         int height = iconDirEntries[i].bHeight ? iconDirEntries[i].bHeight : 256;
+        BOOL scaled = FALSE;
 
         WINE_TRACE("[%d]: %d x %d @ %d\n", i, width, height, iconDirEntries[i].wBitCount);
         if (height != width)
             continue;
         slot = size_to_slot(width);
-        if (slot < 0)
+        if (slot == -2)
+        {
+            scaled = TRUE;
+            slot = CLASSIC_SLOT;
+        }
+        else if (slot < 0)
             continue;
-        if (iconDirEntries[i].wBitCount >= best[slot].maxBits)
+        if (scaled && best[slot].maxBits && !best[slot].scaled)
+            continue; /* don't replace unscaled with scaled */
+        if (iconDirEntries[i].wBitCount >= best[slot].maxBits || (!scaled && best[slot].scaled))
         {
             best[slot].index = i;
             best[slot].maxBits = iconDirEntries[i].wBitCount;
+            best[slot].scaled = scaled;
         }
     }
+    /* remove the scaled icon if a larger unscaled icon exists */
+    if (best[CLASSIC_SLOT].scaled)
+    {
+        for (i = CLASSIC_SLOT+1; i < ICNS_SLOTS; i++)
+            if (best[i].index >= 0 && !best[i].scaled)
+            {
+                best[CLASSIC_SLOT].index = 0;
+                break;
+            }
+    }
+
     numEntries = 0;
     for (i = 0; i < ICNS_SLOTS; i++)
     {
