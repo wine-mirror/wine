@@ -3323,16 +3323,16 @@ static void set_last_index(RegExpInstance *This, DWORD last_index)
 }
 
 static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, DWORD rem_flags,
-        const WCHAR *str, DWORD len, const WCHAR **cp, match_result_t **parens, DWORD *parens_size,
+        jsstr_t *str, const WCHAR **cp, match_result_t **parens, DWORD *parens_size,
         DWORD *parens_cnt, match_result_t *ret)
 {
     REMatchState *x, *result;
     REGlobalData gData;
     DWORD matchlen;
 
-    gData.cpbegin = str;
-    gData.cpend = str + len;
-    gData.start = *cp-str;
+    gData.cpbegin = str->str;
+    gData.cpend = str->str + jsstr_length(str);
+    gData.start = *cp-str->str;
     gData.skipped = 0;
     gData.pool = &ctx->tmp_heap;
 
@@ -3370,16 +3370,9 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
         }
     }
 
-    /* FIXME: We often already have a copy of input string that we could use to store last match */
-    if(!(rem_flags & REM_NO_CTX_UPDATE) &&
-       (!ctx->last_match || len != jsstr_length(ctx->last_match) || strncmpW(ctx->last_match->str, str, len))) {
-        jsstr_t *last_match;
-
-        last_match = jsstr_alloc_len(str, len);
-        if(!last_match)
-            return E_OUTOFMEMORY;
+    if(!(rem_flags & REM_NO_CTX_UPDATE) && ctx->last_match != str) {
         jsstr_release(ctx->last_match);
-        ctx->last_match = last_match;
+        ctx->last_match = jsstr_addref(str);
     }
 
     if(parens) {
@@ -3392,7 +3385,7 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
                 (*parens)[i].str = NULL;
                 (*parens)[i].len = 0;
             }else {
-                (*parens)[i].str = str + result->parens[i].index;
+                (*parens)[i].str = str->str + result->parens[i].index;
                 (*parens)[i].len = result->parens[i].length;
             }
         }
@@ -3419,18 +3412,18 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
     *cp = result->cp;
     ret->str = result->cp-matchlen;
     ret->len = matchlen;
-    set_last_index(regexp, result->cp-str);
+    set_last_index(regexp, result->cp-str->str);
 
     if(!(rem_flags & REM_NO_CTX_UPDATE)) {
-        ctx->last_match_index = ret->str-str;
+        ctx->last_match_index = ret->str-str->str;
         ctx->last_match_length = matchlen;
     }
 
     return S_OK;
 }
 
-HRESULT regexp_match_next(script_ctx_t *ctx, jsdisp_t *dispex, DWORD rem_flags, const WCHAR *str,
-        DWORD len, const WCHAR **cp, match_result_t **parens, DWORD *parens_size, DWORD *parens_cnt,
+HRESULT regexp_match_next(script_ctx_t *ctx, jsdisp_t *dispex, DWORD rem_flags, jsstr_t *str,
+        const WCHAR **cp, match_result_t **parens, DWORD *parens_size, DWORD *parens_cnt,
         match_result_t *ret)
 {
     RegExpInstance *regexp = (RegExpInstance*)dispex;
@@ -3442,18 +3435,18 @@ HRESULT regexp_match_next(script_ctx_t *ctx, jsdisp_t *dispex, DWORD rem_flags, 
 
     mark = jsheap_mark(&ctx->tmp_heap);
 
-    hres = do_regexp_match_next(ctx, regexp, rem_flags, str, len, cp, parens, parens_size, parens_cnt, ret);
+    hres = do_regexp_match_next(ctx, regexp, rem_flags, str, cp, parens, parens_size, parens_cnt, ret);
 
     jsheap_clear(mark);
     return hres;
 }
 
-static HRESULT regexp_match(script_ctx_t *ctx, jsdisp_t *dispex, const WCHAR *str, DWORD len, BOOL gflag,
+static HRESULT regexp_match(script_ctx_t *ctx, jsdisp_t *dispex, jsstr_t *str, BOOL gflag,
         match_result_t **match_result, DWORD *result_cnt)
 {
     RegExpInstance *This = (RegExpInstance*)dispex;
     match_result_t *ret = NULL, cres;
-    const WCHAR *cp = str;
+    const WCHAR *cp = str->str;
     DWORD i=0, ret_size = 0;
     jsheap_t *mark;
     HRESULT hres;
@@ -3461,7 +3454,7 @@ static HRESULT regexp_match(script_ctx_t *ctx, jsdisp_t *dispex, const WCHAR *st
     mark = jsheap_mark(&ctx->tmp_heap);
 
     while(1) {
-        hres = do_regexp_match_next(ctx, This, 0, str, len, &cp, NULL, NULL, NULL, &cres);
+        hres = do_regexp_match_next(ctx, This, 0, str, &cp, NULL, NULL, NULL, &cres);
         if(hres == S_FALSE) {
             hres = S_OK;
             break;
@@ -3658,7 +3651,7 @@ static HRESULT run_exec(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t arg, jsstr_t
         match_result_t *match, match_result_t **parens, DWORD *parens_cnt, BOOL *ret)
 {
     RegExpInstance *regexp;
-    DWORD parens_size = 0, last_index = 0, length;
+    DWORD parens_size = 0, last_index = 0;
     const WCHAR *cp;
     jsstr_t *string;
     HRESULT hres;
@@ -3673,7 +3666,6 @@ static HRESULT run_exec(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t arg, jsstr_t
     hres = to_string(ctx, arg, &string);
     if(FAILED(hres))
         return hres;
-    length = jsstr_length(string);
 
     if(regexp->jsregexp->flags & JSREG_GLOB) {
         if(regexp->last_index < 0) {
@@ -3689,7 +3681,7 @@ static HRESULT run_exec(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t arg, jsstr_t
     }
 
     cp = string->str + last_index;
-    hres = regexp_match_next(ctx, &regexp->dispex, REM_RESET_INDEX, string->str, length, &cp, parens,
+    hres = regexp_match_next(ctx, &regexp->dispex, REM_RESET_INDEX, string, &cp, parens,
             parens ? &parens_size : NULL, parens_cnt, match);
     if(FAILED(hres)) {
         jsstr_release(string);
@@ -3929,18 +3921,16 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, jsstr_t *str, jsval
 
     RegExpInstance *regexp = (RegExpInstance*)re;
     match_result_t *match_result;
-    unsigned match_cnt, i, length;
+    unsigned match_cnt, i;
     jsdisp_t *array;
     HRESULT hres;
-
-    length = jsstr_length(str);
 
     if(!(regexp->jsregexp->flags & JSREG_GLOB)) {
         match_result_t match, *parens = NULL;
         DWORD parens_cnt, parens_size = 0;
         const WCHAR *cp = str->str;
 
-        hres = regexp_match_next(ctx, &regexp->dispex, 0, str->str, length, &cp, &parens, &parens_size, &parens_cnt, &match);
+        hres = regexp_match_next(ctx, &regexp->dispex, 0, str, &cp, &parens, &parens_size, &parens_cnt, &match);
         if(FAILED(hres))
             return hres;
 
@@ -3960,7 +3950,7 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, jsstr_t *str, jsval
         return S_OK;
     }
 
-    hres = regexp_match(ctx, &regexp->dispex, str->str, length, FALSE, &match_result, &match_cnt);
+    hres = regexp_match(ctx, &regexp->dispex, str, FALSE, &match_result, &match_cnt);
     if(FAILED(hres))
         return hres;
 

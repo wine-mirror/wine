@@ -745,7 +745,7 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 
         while(1) {
             if(regexp) {
-                hres = regexp_match_next(ctx, regexp, re_flags, str->str, jsstr_length(str), &cp, parens_ptr,
+                hres = regexp_match_next(ctx, regexp, re_flags, str, &cp, parens_ptr,
                         &parens_size, &parens_cnt, &match);
                 re_flags |= REM_CHECK_GLOBAL;
 
@@ -933,7 +933,7 @@ static HRESULT String_search(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     }
 
     cp = str->str;
-    hres = regexp_match_next(ctx, regexp, REM_RESET_INDEX, str->str, jsstr_length(str), &cp, NULL, NULL, NULL, &match);
+    hres = regexp_match_next(ctx, regexp, REM_RESET_INDEX, str, &cp, NULL, NULL, NULL, &match);
     jsstr_release(str);
     jsdisp_release(regexp);
     if(FAILED(hres))
@@ -1090,7 +1090,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
         ptr = cp = str->str;
         for(i=0; i<limit; i++) {
             if(regexp) {
-                hres = regexp_match_next(ctx, regexp, 0, str->str, length, &cp, NULL, NULL, NULL, &match_result);
+                hres = regexp_match_next(ctx, regexp, 0, str, &cp, NULL, NULL, NULL, &match_result);
                 if(hres != S_OK)
                     break;
                 ptr2 = match_result.str;
