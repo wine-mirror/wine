@@ -774,32 +774,32 @@ static void test_bitmap_font_metrics(void)
 
         { "System", FW_BOLD, 16, 13, 3, 3, 0, 7, 14, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1 },
         { "System", FW_BOLD, 16, 13, 3, 3, 0, 7, 15, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN2 | FS_CYRILLIC },
-        { "System", FW_NORMAL, 18, 16, 2, 0, 2, 8, 16, 96, 0, 0, 0, 0, FS_JISJAPAN },
+        { "System", FW_NORMAL, 18, 16, 2, 0, 2, 8, 16, 96, 0x20, 0xff, 0x80, 0x20, FS_JISJAPAN },
 
         { "System", FW_BOLD, 20, 16, 4, 4, 0, 9, 14, 120, 0x20, 0xff, 0x80, 0x20, FS_LATIN1 },
         { "System", FW_BOLD, 20, 16, 4, 4, 0, 9, 17, 120, 0x20, 0xff, 0x80, 0x20, FS_LATIN2 | FS_CYRILLIC },
 
         { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 2, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1 },
         { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN2 | FS_CYRILLIC },
-        { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 2, 4, 96, 0, 0, 0, 0, FS_JISJAPAN },
+        { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 2, 4, 96, 0x20, 0xff, 0x80, 0x20, FS_JISJAPAN },
         { "Small Fonts", FW_NORMAL, 5, 4, 1, 1, 0, 3, 4, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1, LANG_ARABIC },
         { "Small Fonts", FW_NORMAL, 5, 4, 1, 1, 0, 2, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN2 | FS_CYRILLIC },
-        { "Small Fonts", FW_NORMAL, 5, 4, 1, 0, 0, 3, 6, 96, 0, 0, 0, 0, FS_JISJAPAN },
+        { "Small Fonts", FW_NORMAL, 5, 4, 1, 0, 0, 3, 6, 96, 0x20, 0xff, 0x80, 0x20, FS_JISJAPAN },
         { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 13, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1, LANG_ARABIC },
         { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN2 | FS_CYRILLIC },
         { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 8, 96, 0, 0, 0, 0, FS_ARABIC },
-        { "Small Fonts", FW_NORMAL, 6, 5, 1, 0, 0, 4, 8, 96, 0, 0, 0, 0, FS_JISJAPAN },
+        { "Small Fonts", FW_NORMAL, 6, 5, 1, 0, 0, 4, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_JISJAPAN },
         { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 7, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1, LANG_ARABIC },
         { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN2 | FS_CYRILLIC },
         { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 8, 96, 0, 0, 0, 0, FS_ARABIC },
-        { "Small Fonts", FW_NORMAL, 8, 7, 1, 0, 0, 5, 10, 96, 0, 0, 0, 0, FS_JISJAPAN },
+        { "Small Fonts", FW_NORMAL, 8, 7, 1, 0, 0, 5, 10, 96, 0x20, 0xff, 0x80, 0x20, FS_JISJAPAN },
         { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 4, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1 | FS_LATIN2, LANG_ARABIC },
         { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 5, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_CYRILLIC },
         { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 4, 9, 96, 0, 0, 0, 0, FS_ARABIC },
-        { "Small Fonts", FW_NORMAL, 10, 8, 2, 0, 0, 6, 12, 96, 0, 0, 0, 0, FS_JISJAPAN },
+        { "Small Fonts", FW_NORMAL, 10, 8, 2, 0, 0, 6, 12, 96, 0x20, 0xff, 0x80, 0x20, FS_JISJAPAN },
         { "Small Fonts", FW_NORMAL, 11, 9, 2, 2, 0, 5, 9, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC, LANG_ARABIC },
         { "Small Fonts", FW_NORMAL, 11, 9, 2, 2, 0, 4, 10, 96, 0, 0, 0, 0, FS_ARABIC },
-        { "Small Fonts", FW_NORMAL, 11, 9, 2, 0, 0, 7, 14, 96, 0, 0, 0, 0, FS_JISJAPAN },
+        { "Small Fonts", FW_NORMAL, 11, 9, 2, 0, 0, 7, 14, 96, 0x20, 0xff, 0x80, 0x20, FS_JISJAPAN },
 
         { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 2, 120, 0x20, 0xff, 0x80, 0x20, FS_LATIN1 | FS_JISJAPAN },
         { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 8, 120, 0x20, 0xff, 0x80, 0x20, FS_LATIN2 | FS_CYRILLIC },
@@ -816,7 +816,7 @@ static void test_bitmap_font_metrics(void)
 
         { "Fixedsys", FW_NORMAL, 15, 12, 3, 3, 0, 8, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1 | FS_LATIN2 },
         { "Fixedsys", FW_NORMAL, 16, 12, 4, 3, 0, 8, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_CYRILLIC },
-        { "FixedSys", FW_NORMAL, 18, 16, 2, 0, 0, 8, 16, 96, 0, 0, 0, 0, FS_JISJAPAN },
+        { "FixedSys", FW_NORMAL, 18, 16, 2, 0, 0, 8, 16, 96, 0x20, 0xff, 0xa0, 0x20, FS_JISJAPAN },
 
         { "Fixedsys", FW_NORMAL, 20, 16, 4, 2, 0, 10, 10, 120, 0x20, 0xff, 0x80, 0x20, FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC }
 
