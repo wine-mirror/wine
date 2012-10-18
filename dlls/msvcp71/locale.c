@@ -6465,6 +6465,11 @@ ostreambuf_iterator_char* __thiscall num_put_char_put_ulong(const num_put *this,
     return call_num_put_char_do_put_ulong(this, ret, dest, base, fill, v);
 }
 
+static inline streamsize get_precision(const ios_base *base)
+{
+    return base->prec <= 0 && !(base->fmtfl & FMTFLAG_fixed) ? 6 : base->prec;
+}
+
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DN@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DN@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DO@Z */
@@ -6482,11 +6487,13 @@ ostreambuf_iterator_char* __thiscall num_put_char_do_put_double(const num_put *t
     char *tmp;
     char fmt[8]; /* strlen("%+#.*lg")+1 */
     int size;
+    streamsize prec;
 
     TRACE("(%p %p %p %d %lf)\n", this, ret, base, fill, v);
 
     num_put_char__Ffmt(this, fmt, '\0', base->fmtfl);
-    size = _scprintf(fmt, base->prec, v);
+    prec = get_precision(base);
+    size = _scprintf(fmt, prec, v);
 
     /* TODO: don't use dynamic allocation */
     tmp = MSVCRT_operator_new(size*2);
@@ -6494,7 +6501,7 @@ ostreambuf_iterator_char* __thiscall num_put_char_do_put_double(const num_put *t
         ERR("Out of memory\n");
         throw_exception(EXCEPTION_BAD_ALLOC, NULL);
     }
-    num_put_char_fput(this, ret, dest, base, fill, tmp, sprintf(tmp, fmt, base->prec, v));
+    num_put_char_fput(this, ret, dest, base, fill, tmp, sprintf(tmp, fmt, prec, v));
     MSVCRT_operator_delete(tmp);
     return ret;
 }
@@ -7301,11 +7308,13 @@ ostreambuf_iterator_wchar* __thiscall num_put_short_do_put_double(const num_put 
     char *tmp;
     char fmt[8]; /* strlen("%+#.*lg")+1 */
     int size;
+    streamsize prec;
 
     TRACE("(%p %p %p %d %lf)\n", this, ret, base, fill, v);
 
     num_put_wchar__Ffmt(this, fmt, '\0', base->fmtfl);
-    size = _scprintf(fmt, base->prec, v);
+    prec = get_precision(base);
+    size = _scprintf(fmt, prec, v);
 
     /* TODO: don't use dynamic allocation */
     tmp = MSVCRT_operator_new(size*2);
@@ -7313,7 +7322,7 @@ ostreambuf_iterator_wchar* __thiscall num_put_short_do_put_double(const num_put 
         ERR("Out of memory\n");
         throw_exception(EXCEPTION_BAD_ALLOC, NULL);
     }
-    num_put__fput(this, ret, dest, base, fill, tmp, sprintf(tmp, fmt, base->prec, v),
+    num_put__fput(this, ret, dest, base, fill, tmp, sprintf(tmp, fmt, prec, v),
             numpunct_short_use_facet(base->loc));
     MSVCRT_operator_delete(tmp);
     return ret;
