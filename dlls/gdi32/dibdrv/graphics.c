@@ -553,13 +553,49 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT aa_flags, GLYPHMETRICS 
     return ERROR_SUCCESS;
 }
 
+static void render_string( HDC hdc, dib_info *dib, INT x, INT y, UINT flags, UINT aa_flags,
+                           const WCHAR *str, UINT count, const INT *dx, DWORD text_color,
+                           const struct intensity_range *ranges, const struct clipped_rects *clipped_rects,
+                           RECT *bounds )
+{
+    UINT i;
+    DWORD err;
+    GLYPHMETRICS metrics;
+    dib_info glyph_dib;
+
+    for (i = 0; i < count; i++)
+    {
+        err = get_glyph_bitmap( hdc, (UINT)str[i], aa_flags, &metrics, &glyph_dib );
+        if (err) continue;
+
+        if (glyph_dib.bits.ptr)
+            draw_glyph( dib, x, y, &metrics, &glyph_dib, text_color, ranges, clipped_rects, bounds );
+
+        free_dib_info( &glyph_dib );
+
+        if (dx)
+        {
+            if (flags & ETO_PDY)
+            {
+                x += dx[ i * 2 ];
+                y += dx[ i * 2 + 1];
+            }
+            else
+                x += dx[ i ];
+        }
+        else
+        {
+            x += metrics.gmCellIncX;
+            y += metrics.gmCellIncY;
+        }
+    }
+}
+
 BOOL render_aa_text_bitmapinfo( HDC hdc, BITMAPINFO *info, struct gdi_image_bits *bits,
                                 struct bitblt_coords *src, INT x, INT y, UINT flags,
                                 UINT aa_flags, LPCWSTR str, UINT count, const INT *dx )
 {
     dib_info dib;
-    UINT i;
-    DWORD err;
     BOOL got_pixel;
     COLORREF fg, bg;
     DWORD fg_pixel, bg_pixel;
@@ -590,35 +626,8 @@ BOOL render_aa_text_bitmapinfo( HDC hdc, BITMAPINFO *info, struct gdi_image_bits
         dib.funcs->solid_rects( &dib, 1, &src->visrect, bkgnd_color.and, bkgnd_color.xor );
     }
 
-    for (i = 0; i < count; i++)
-    {
-        GLYPHMETRICS metrics;
-        dib_info glyph_dib;
-
-        err = get_glyph_bitmap( hdc, (UINT)str[i], aa_flags, &metrics, &glyph_dib );
-        if (err) continue;
-
-        if (glyph_dib.bits.ptr)
-            draw_glyph( &dib, x, y, &metrics, &glyph_dib, fg_pixel, glyph_intensities, &visrect, NULL );
-
-        free_dib_info( &glyph_dib );
-
-        if (dx)
-        {
-            if (flags & ETO_PDY)
-            {
-                x += dx[ i * 2 ];
-                y += dx[ i * 2 + 1];
-            }
-            else
-                x += dx[ i ];
-        }
-        else
-        {
-            x += metrics.gmCellIncX;
-            y += metrics.gmCellIncY;
-        }
-    }
+    render_string( hdc, &dib, x, y, flags, aa_flags, str, count, dx,
+                   fg_pixel, glyph_intensities, &visrect, NULL );
     return TRUE;
 }
 
@@ -630,9 +639,9 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     struct clipped_rects clipped_rects;
-    UINT aa_flags, i;
+    UINT aa_flags;
     RECT bounds;
-    DWORD text_color, err;
+    DWORD text_color;
     struct intensity_range ranges[17];
 
     init_clipped_rects( &clipped_rects );
@@ -667,35 +676,8 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 
     aa_flags = get_font_aa_flags( dev->hdc );
 
-    for (i = 0; i < count; i++)
-    {
-        GLYPHMETRICS metrics;
-        dib_info glyph_dib;
-
-        err = get_glyph_bitmap( dev->hdc, (UINT)str[i], aa_flags, &metrics, &glyph_dib );
-        if (err) continue;
-
-        if (glyph_dib.bits.ptr)
-            draw_glyph( &pdev->dib, x, y, &metrics, &glyph_dib, text_color, ranges, &clipped_rects, &bounds );
-
-        free_dib_info( &glyph_dib );
-
-        if (dx)
-        {
-            if (flags & ETO_PDY)
-            {
-                x += dx[ i * 2 ];
-                y += dx[ i * 2 + 1];
-            }
-            else
-                x += dx[ i ];
-        }
-        else
-        {
-            x += metrics.gmCellIncX;
-            y += metrics.gmCellIncY;
-        }
-    }
+    render_string( dev->hdc, &pdev->dib, x, y, flags, aa_flags, str, count, dx,
+                   text_color, ranges, &clipped_rects, &bounds );
 
 done:
     add_clipped_bounds( pdev, &bounds, pdev->clip );
