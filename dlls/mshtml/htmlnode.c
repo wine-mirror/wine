@@ -282,6 +282,9 @@ static IHTMLDOMChildrenCollection *create_child_collection(HTMLDocumentNode *doc
     HTMLDOMChildrenCollection *ret;
 
     ret = heap_alloc_zero(sizeof(*ret));
+    if(!ret)
+        return NULL;
+
     ret->IHTMLDOMChildrenCollection_iface.lpVtbl = &HTMLDOMChildrenCollectionVtbl;
     ret->ref = 1;
 
@@ -468,7 +471,7 @@ static HRESULT WINAPI HTMLDOMNode_get_childNodes(IHTMLDOMNode *iface, IDispatch 
     *p = (IDispatch*)create_child_collection(This->doc, nslist);
     nsIDOMNodeList_Release(nslist);
 
-    return S_OK;
+    return *p ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI HTMLDOMNode_get_attributes(IHTMLDOMNode *iface, IDispatch **p)
@@ -1072,8 +1075,7 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
         htmldoc_addref(&doc->basedoc);
     node->doc = doc;
 
-    if(nsnode)
-        nsIDOMNode_AddRef(nsnode);
+    nsIDOMNode_AddRef(nsnode);
     node->nsnode = nsnode;
 
     nsres = nsIDOMNode_SetMshtmlNode(nsnode, (nsISupports*)&node->IHTMLDOMNode_iface);
