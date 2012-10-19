@@ -520,8 +520,8 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
          * "_EnumFORMATETC_"
          */
 
-        IBindCtx_GetObjectParam(pibc, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM, &unk);
-        if(unk) {
+        hres = IBindCtx_GetObjectParam(pibc, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM, &unk);
+        if(SUCCEEDED(hres) && unk) {
             IOleClientSite *client = NULL;
 
             hres = IUnknown_QueryInterface(unk, &IID_IOleClientSite, (void**)&client);
