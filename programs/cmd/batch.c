@@ -234,31 +234,53 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
 {
   DWORD charsRead;
   BOOL status;
-  LARGE_INTEGER filepos;
   DWORD i;
 
   /* We can't use the native f* functions because of the filename syntax differences
      between DOS and Unix. Also need to lose the LF (or CRLF) from the line. */
 
   if (!WCMD_is_console_handle(h)) {
-    /* Save current file position */
-    filepos.QuadPart = 0;
-    SetFilePointerEx(h, filepos, &filepos, FILE_CURRENT);
+      LARGE_INTEGER filepos;
+      char *bufA;
+      UINT cp;
+      const char *p;
+
+      cp = GetConsoleCP();
+      bufA = HeapAlloc(GetProcessHeap(), 0, noChars);
+      if (!bufA) return NULL;
+
+      /* Save current file position */
+      filepos.QuadPart = 0;
+      SetFilePointerEx(h, filepos, &filepos, FILE_CURRENT);
+
+      status = ReadFile(h, bufA, noChars, &charsRead, NULL);
+      if (!status || charsRead == 0) {
+          HeapFree(GetProcessHeap(), 0, bufA);
+          return NULL;
+      }
+
+      /* Find first EOL */
+      for (p = bufA; p < (bufA + charsRead); p = CharNextExA(cp, p, 0)) {
+          if (*p == '\n' || *p == '\r')
+              break;
+      }
+
+      /* Sets file pointer to the start of the next line, if any */
+      filepos.QuadPart += p - bufA + 1 + (*p == '\r' ? 1 : 0);
+      SetFilePointerEx(h, filepos, NULL, FILE_BEGIN);
+
+      i = MultiByteToWideChar(cp, 0, bufA, p - bufA, buf, noChars);
+      HeapFree(GetProcessHeap(), 0, bufA);
   }
+  else {
+      status = WCMD_ReadFile(h, buf, noChars, &charsRead);
+      if (!status || charsRead == 0) return NULL;
 
-  status = WCMD_ReadFile(h, buf, noChars, &charsRead);
-  if (!status || charsRead == 0) return NULL;
-
-  /* Find first EOL */
-  for (i = 0; i < charsRead; i++) {
-    if (buf[i] == '\n' || buf[i] == '\r')
-      break;
-  }
-
-  if (!WCMD_is_console_handle(h) && i != charsRead) {
-    /* Sets file pointer to the start of the next line, if any */
-    filepos.QuadPart += i + 1 + (buf[i] == '\r' ? 1 : 0);
-    SetFilePointerEx(h, filepos, NULL, FILE_BEGIN);
+      /* Find first EOL */
+      for (i = 0; i < charsRead; i++) {
+          if (buf[i] == '\n' || buf[i] == '\r')
+              break;
+      }
   }
 
   /* Truncate at EOL (or end of buffer) */
