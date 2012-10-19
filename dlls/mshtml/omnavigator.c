@@ -941,6 +941,9 @@ IOmNavigator *OmNavigator_Create(void)
     OmNavigator *ret;
 
     ret = heap_alloc_zero(sizeof(*ret));
+    if(!ret)
+        return NULL;
+
     ret->IOmNavigator_iface.lpVtbl = &OmNavigatorVtbl;
     ret->ref = 1;
 

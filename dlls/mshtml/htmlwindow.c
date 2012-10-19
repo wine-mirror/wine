@@ -803,7 +803,7 @@ static HRESULT WINAPI HTMLWindow2_get_navigator(IHTMLWindow2 *iface, IOmNavigato
     TRACE("(%p)->(%p)\n", This, p);
 
     *p = OmNavigator_Create();
-    return S_OK;
+    return *p ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI HTMLWindow2_put_name(IHTMLWindow2 *iface, BSTR v)
