@@ -1005,11 +1005,17 @@ static nsresult async_open(nsChannel *This, HTMLOuterWindow *window, BOOL is_doc
         hres = create_pending_window(window, bscallback);
         if(SUCCEEDED(hres))
             async_start_doc_binding(window, window->pending_window);
-        IUnknown_Release((IUnknown*)bscallback);
+        IBindStatusCallback_Release(&bscallback->bsc.IBindStatusCallback_iface);
         if(FAILED(hres))
             return NS_ERROR_UNEXPECTED;
     }else {
-        start_binding_task_t *task = heap_alloc(sizeof(start_binding_task_t));
+        start_binding_task_t *task;
+
+        task = heap_alloc(sizeof(start_binding_task_t));
+        if(!task) {
+            IBindStatusCallback_Release(&bscallback->bsc.IBindStatusCallback_iface);
+            return NS_ERROR_OUT_OF_MEMORY;
+        }
 
         task->window = window->base.inner_window;
         task->bscallback = bscallback;
@@ -2846,8 +2852,12 @@ static const nsIStandardURLVtbl nsStandardURLVtbl = {
 
 static nsresult create_nsuri(IUri *iuri, HTMLOuterWindow *window, NSContainer *container, nsWineURI **_retval)
 {
-    nsWineURI *ret = heap_alloc_zero(sizeof(nsWineURI));
+    nsWineURI *ret;
     HRESULT hres;
+
+    ret = heap_alloc_zero(sizeof(nsWineURI));
+    if(!ret)
+        return NS_ERROR_OUT_OF_MEMORY;
 
     ret->nsIFileURL_iface.lpVtbl = &nsFileURLVtbl;
     ret->nsIStandardURL_iface.lpVtbl = &nsStandardURLVtbl;
@@ -3121,17 +3131,6 @@ static const nsIProtocolHandlerVtbl nsProtocolHandlerVtbl = {
     nsProtocolHandler_AllowPort
 };
 
-static nsIProtocolHandler *create_protocol_handler(nsIProtocolHandler *nshandler)
-{
-    nsProtocolHandler *ret = heap_alloc(sizeof(nsProtocolHandler));
-
-    ret->nsIProtocolHandler_iface.lpVtbl = &nsProtocolHandlerVtbl;
-    ret->ref = 1;
-    ret->nshandler = nshandler;
-
-    return &ret->nsIProtocolHandler_iface;
-}
-
 static nsresult NSAPI nsIOService_QueryInterface(nsIIOService*,nsIIDRef,void**);
 
 static nsrefcnt NSAPI nsIOService_AddRef(nsIIOService *iface)
@@ -3149,6 +3148,7 @@ static nsresult NSAPI nsIOService_GetProtocolHandler(nsIIOService *iface, const 
 {
     nsIExternalProtocolHandler *nsexthandler;
     nsIProtocolHandler *nshandler;
+    nsProtocolHandler *ret;
     nsresult nsres;
 
     TRACE("(%s %p)\n", debugstr_a(aScheme), _retval);
@@ -3167,7 +3167,16 @@ static nsresult NSAPI nsIOService_GetProtocolHandler(nsIIOService *iface, const 
     }
 
     nsIExternalProtocolHandler_Release(nsexthandler);
-    *_retval = create_protocol_handler(nshandler);
+
+    ret = heap_alloc(sizeof(nsProtocolHandler));
+    if(!ret)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    ret->nsIProtocolHandler_iface.lpVtbl = &nsProtocolHandlerVtbl;
+    ret->ref = 1;
+    ret->nshandler = nshandler;
+    *_retval = &ret->nsIProtocolHandler_iface;
+
     TRACE("return %p\n", *_retval);
     return NS_OK;
 }
