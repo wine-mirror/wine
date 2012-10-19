@@ -1544,6 +1544,7 @@ static HRESULT window_set_timer(HTMLInnerWindow *This, VARIANT *expr, LONG msec,
         BOOL interval, LONG *timer_id)
 {
     IDispatch *disp = NULL;
+    HRESULT hres;
 
     switch(V_VT(expr)) {
     case VT_DISPATCH:
@@ -1563,10 +1564,10 @@ static HRESULT window_set_timer(HTMLInnerWindow *This, VARIANT *expr, LONG msec,
     if(!disp)
         return E_FAIL;
 
-    *timer_id = set_task_timer(This, msec, interval, disp);
+    hres = set_task_timer(This, msec, interval, disp, timer_id);
     IDispatch_Release(disp);
 
-    return S_OK;
+    return hres;
 }
 
 static HRESULT WINAPI HTMLWindow3_setTimeout(IHTMLWindow3 *iface, VARIANT *expression, LONG msec,

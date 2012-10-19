@@ -1013,7 +1013,9 @@ static nsresult async_open(nsChannel *This, HTMLOuterWindow *window, BOOL is_doc
 
         task->window = window->base.inner_window;
         task->bscallback = bscallback;
-        push_task(&task->header, start_binding_proc, start_binding_task_destr, window->base.inner_window->task_magic);
+        hres = push_task(&task->header, start_binding_proc, start_binding_task_destr, window->base.inner_window->task_magic);
+        if(FAILED(hres))
+            return NS_ERROR_OUT_OF_MEMORY;
     }
 
     return NS_OK;

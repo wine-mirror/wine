@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -52,9 +53,18 @@ static void default_task_destr(task_t *task)
     heap_free(task);
 }
 
-void push_task(task_t *task, task_proc_t proc, task_proc_t destr, LONG magic)
+HRESULT push_task(task_t *task, task_proc_t proc, task_proc_t destr, LONG magic)
 {
-    thread_data_t *thread_data = get_thread_data(TRUE);
+    thread_data_t *thread_data;
+
+    thread_data = get_thread_data(TRUE);
+    if(!thread_data) {
+        if(destr)
+            destr(task);
+        else
+            heap_free(task);
+        return E_OUTOFMEMORY;
+    }
 
     task->target_magic = magic;
     task->proc = proc;
@@ -69,13 +79,19 @@ void push_task(task_t *task, task_proc_t proc, task_proc_t destr, LONG magic)
     thread_data->task_queue_tail = task;
 
     PostMessageW(thread_data->thread_hwnd, WM_PROCESSTASK, 0, 0);
+    return S_OK;
 }
 
 static task_t *pop_task(void)
 {
-    thread_data_t *thread_data = get_thread_data(TRUE);
-    task_t *task = thread_data->task_queue_head;
+    thread_data_t *thread_data;
+    task_t *task;
 
+    thread_data = get_thread_data(FALSE);
+    if(!thread_data)
+        return NULL;
+
+    task = thread_data->task_queue_head;
     if(!task)
         return NULL;
 
@@ -163,15 +179,22 @@ static BOOL queue_timer(thread_data_t *thread_data, task_timer_t *timer)
     return FALSE;
 }
 
-DWORD set_task_timer(HTMLInnerWindow *window, DWORD msec, BOOL interval, IDispatch *disp)
+HRESULT set_task_timer(HTMLInnerWindow *window, DWORD msec, BOOL interval, IDispatch *disp, LONG *id)
 {
-    thread_data_t *thread_data = get_thread_data(TRUE);
+    thread_data_t *thread_data;
     task_timer_t *timer;
     DWORD tc = GetTickCount();
 
     static DWORD id_cnt = 0x20000000;
 
+    thread_data = get_thread_data(TRUE);
+    if(!thread_data)
+        return E_OUTOFMEMORY;
+
     timer = heap_alloc(sizeof(task_timer_t));
+    if(!timer)
+        return E_OUTOFMEMORY;
+
     timer->id = id_cnt++;
     timer->window = window;
     timer->time = tc + msec;
@@ -184,7 +207,8 @@ DWORD set_task_timer(HTMLInnerWindow *window, DWORD msec, BOOL interval, IDispat
     if(queue_timer(thread_data, timer))
         SetTimer(thread_data->thread_hwnd, TIMER_ID, msec, NULL);
 
-    return timer->id;
+    *id = timer->id;
+    return S_OK;
 }
 
 HRESULT clear_task_timer(HTMLInnerWindow *window, BOOL interval, DWORD id)
@@ -228,12 +252,15 @@ static void call_timer_disp(IDispatch *disp)
 
 static LRESULT process_timer(void)
 {
-    thread_data_t *thread_data = get_thread_data(TRUE);
+    thread_data_t *thread_data;
     IDispatch *disp;
     DWORD tc;
     task_timer_t *timer;
 
     TRACE("\n");
+
+    thread_data = get_thread_data(FALSE);
+    assert(thread_data != NULL);
 
     while(!list_empty(&thread_data->timer_list)) {
         timer = LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry);
@@ -311,7 +338,11 @@ static HWND create_thread_hwnd(void)
 
 HWND get_thread_hwnd(void)
 {
-    thread_data_t *thread_data = get_thread_data(TRUE);
+    thread_data_t *thread_data;
+
+    thread_data = get_thread_data(TRUE);
+    if(!thread_data)
+        return NULL;
 
     if(!thread_data->thread_hwnd)
         thread_data->thread_hwnd = create_thread_hwnd();
@@ -341,6 +372,9 @@ thread_data_t *get_thread_data(BOOL create)
     thread_data = TlsGetValue(mshtml_tls);
     if(!thread_data && create) {
         thread_data = heap_alloc_zero(sizeof(thread_data_t));
+        if(!thread_data)
+            return NULL;
+
         TlsSetValue(mshtml_tls, thread_data);
         list_init(&thread_data->timer_list);
     }
