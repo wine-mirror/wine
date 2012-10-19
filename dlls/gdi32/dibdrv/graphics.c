@@ -453,7 +453,7 @@ static void draw_glyph( dib_info *dib, int x, int y, const GLYPHMETRICS *metrics
     rect.top    = y          - metrics->gmptGlyphOrigin.y;
     rect.right  = rect.left  + metrics->gmBlackBoxX;
     rect.bottom = rect.top   + metrics->gmBlackBoxY;
-    add_bounds_rect( bounds, &rect );
+    if (bounds) add_bounds_rect( bounds, &rect );
 
     for (i = 0; i < clipped_rects->count; i++)
     {
@@ -564,10 +564,14 @@ BOOL render_aa_text_bitmapinfo( HDC hdc, BITMAPINFO *info, struct gdi_image_bits
     COLORREF fg, bg;
     DWORD fg_pixel, bg_pixel;
     struct intensity_range glyph_intensities[17];
+    struct clipped_rects visrect;
 
     assert( info->bmiHeader.biBitCount > 8 ); /* mono and indexed formats don't support anti-aliasing */
 
     init_dib_info_from_bitmapinfo( &dib, info, bits->ptr );
+
+    visrect.count = 1;
+    visrect.rects = &src->visrect;
 
     fg = make_rgb_colorref( hdc, &dib, GetTextColor( hdc ), &got_pixel, &fg_pixel);
     if (!got_pixel) fg_pixel = dib.funcs->colorref_to_pixel( &dib, fg );
@@ -595,24 +599,8 @@ BOOL render_aa_text_bitmapinfo( HDC hdc, BITMAPINFO *info, struct gdi_image_bits
         if (err) continue;
 
         if (glyph_dib.bits.ptr)
-        {
-            RECT rect, clipped_rect;
-            POINT src_origin;
+            draw_glyph( &dib, x, y, &metrics, &glyph_dib, fg_pixel, glyph_intensities, &visrect, NULL );
 
-            rect.left   = x + metrics.gmptGlyphOrigin.x;
-            rect.top    = y - metrics.gmptGlyphOrigin.y;
-            rect.right  = rect.left + metrics.gmBlackBoxX;
-            rect.bottom = rect.top  + metrics.gmBlackBoxY;
-
-            if (intersect_rect( &clipped_rect, &rect, &src->visrect ))
-            {
-                src_origin.x = clipped_rect.left - rect.left;
-                src_origin.y = clipped_rect.top  - rect.top;
-
-                dib.funcs->draw_glyph( &dib, &clipped_rect, &glyph_dib, &src_origin,
-                                       fg_pixel, glyph_intensities );
-            }
-        }
         free_dib_info( &glyph_dib );
 
         if (dx)
