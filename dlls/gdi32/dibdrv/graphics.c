@@ -440,7 +440,7 @@ static inline void get_text_bkgnd_masks( dibdrv_physdev *pdev, rop_mask *mask )
     }
 }
 
-static void draw_glyph( dib_info *dib, const POINT *origin, const GLYPHMETRICS *metrics,
+static void draw_glyph( dib_info *dib, int x, int y, const GLYPHMETRICS *metrics,
                         const dib_info *glyph_dib, DWORD text_color,
                         const struct intensity_range *ranges, const struct clipped_rects *clipped_rects,
                         RECT *bounds )
@@ -449,8 +449,8 @@ static void draw_glyph( dib_info *dib, const POINT *origin, const GLYPHMETRICS *
     RECT rect, clipped_rect;
     POINT src_origin;
 
-    rect.left   = origin->x  + metrics->gmptGlyphOrigin.x;
-    rect.top    = origin->y  - metrics->gmptGlyphOrigin.y;
+    rect.left   = x          + metrics->gmptGlyphOrigin.x;
+    rect.top    = y          - metrics->gmptGlyphOrigin.y;
     rect.right  = rect.left  + metrics->gmBlackBoxX;
     rect.bottom = rect.top   + metrics->gmBlackBoxY;
     add_bounds_rect( bounds, &rect );
@@ -643,7 +643,6 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     struct clipped_rects clipped_rects;
     UINT aa_flags, i;
-    POINT origin;
     RECT bounds;
     DWORD text_color, err;
     struct intensity_range ranges[17];
@@ -679,8 +678,7 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     get_aa_ranges( pdev->dib.funcs->pixel_to_colorref( &pdev->dib, text_color ), ranges );
 
     aa_flags = get_font_aa_flags( dev->hdc );
-    origin.x = x;
-    origin.y = y;
+
     for (i = 0; i < count; i++)
     {
         GLYPHMETRICS metrics;
@@ -690,7 +688,7 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         if (err) continue;
 
         if (glyph_dib.bits.ptr)
-            draw_glyph( &pdev->dib, &origin, &metrics, &glyph_dib, text_color, ranges, &clipped_rects, &bounds );
+            draw_glyph( &pdev->dib, x, y, &metrics, &glyph_dib, text_color, ranges, &clipped_rects, &bounds );
 
         free_dib_info( &glyph_dib );
 
@@ -698,16 +696,16 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         {
             if (flags & ETO_PDY)
             {
-                origin.x += dx[ i * 2 ];
-                origin.y += dx[ i * 2 + 1];
+                x += dx[ i * 2 ];
+                y += dx[ i * 2 + 1];
             }
             else
-                origin.x += dx[ i ];
+                x += dx[ i ];
         }
         else
         {
-            origin.x += metrics.gmCellIncX;
-            origin.y += metrics.gmCellIncY;
+            x += metrics.gmCellIncX;
+            y += metrics.gmCellIncY;
         }
     }
 
