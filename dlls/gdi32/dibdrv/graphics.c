@@ -440,7 +440,7 @@ static inline void get_text_bkgnd_masks( dibdrv_physdev *pdev, rop_mask *mask )
     }
 }
 
-static void draw_glyph( dibdrv_physdev *pdev, const POINT *origin, const GLYPHMETRICS *metrics,
+static void draw_glyph( dib_info *dib, const POINT *origin, const GLYPHMETRICS *metrics,
                         const dib_info *glyph_dib, DWORD text_color,
                         const struct intensity_range *ranges, const struct clipped_rects *clipped_rects,
                         RECT *bounds )
@@ -462,8 +462,8 @@ static void draw_glyph( dibdrv_physdev *pdev, const POINT *origin, const GLYPHME
             src_origin.x = clipped_rect.left - rect.left;
             src_origin.y = clipped_rect.top  - rect.top;
 
-            pdev->dib.funcs->draw_glyph( &pdev->dib, &clipped_rect, glyph_dib, &src_origin,
-                                         text_color, ranges );
+            dib->funcs->draw_glyph( dib, &clipped_rect, glyph_dib, &src_origin,
+                                    text_color, ranges );
         }
     }
 }
@@ -690,7 +690,7 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         if (err) continue;
 
         if (glyph_dib.bits.ptr)
-            draw_glyph( pdev, &origin, &metrics, &glyph_dib, text_color, ranges, &clipped_rects, &bounds );
+            draw_glyph( &pdev->dib, &origin, &metrics, &glyph_dib, text_color, ranges, &clipped_rects, &bounds );
 
         free_dib_info( &glyph_dib );
 
