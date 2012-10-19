@@ -666,6 +666,9 @@ static ScriptHost *create_script_host(HTMLInnerWindow *window, const GUID *guid)
     HRESULT hres;
 
     ret = heap_alloc_zero(sizeof(*ret));
+    if(!ret)
+        return NULL;
+
     ret->IActiveScriptSite_iface.lpVtbl = &ActiveScriptSiteVtbl;
     ret->IActiveScriptSiteInterruptPoll_iface.lpVtbl = &ActiveScriptSiteInterruptPollVtbl;
     ret->IActiveScriptSiteWindow_iface.lpVtbl = &ActiveScriptSiteWindowVtbl;
@@ -944,6 +947,9 @@ IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
         BOOL b;
 
         language = heap_alloc((ptr-text+1)*sizeof(WCHAR));
+        if(!language)
+            return NULL;
+
         memcpy(language, text, (ptr-text)*sizeof(WCHAR));
         language[ptr-text] = 0;
 
@@ -1207,9 +1213,10 @@ void bind_event_scripts(HTMLDocumentNode *doc)
         if(event_disp) {
             event_target = find_event_target(doc, script_elem);
             if(event_target) {
-                IHTMLElement_QueryInterface(&event_target->IHTMLElement_iface, &IID_HTMLPluginContainer, (void**)&plugin_container);
+                hres = IHTMLElement_QueryInterface(&event_target->IHTMLElement_iface, &IID_HTMLPluginContainer,
+                        (void**)&plugin_container);
 
-                if(plugin_container)
+                if(SUCCEEDED(hres))
                     bind_activex_event(doc, plugin_container, event, event_disp);
                 else
                     bind_elem_event(doc, event_target, event, event_disp);
