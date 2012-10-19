@@ -215,7 +215,11 @@ static const nsIInputStreamVtbl nsInputStreamVtbl = {
 
 static nsProtocolStream *create_nsprotocol_stream(void)
 {
-    nsProtocolStream *ret = heap_alloc(sizeof(nsProtocolStream));
+    nsProtocolStream *ret;
+
+    ret = heap_alloc(sizeof(nsProtocolStream));
+    if(!ret)
+        return NULL;
 
     ret->nsIInputStream_iface.lpVtbl = &nsInputStreamVtbl;
     ret->ref = 1;
@@ -877,8 +881,10 @@ static HRESULT BufferBSC_read_data(BSCallback *bsc, IStream *stream)
     HRESULT hres;
 
     if(!This->buf) {
+        This->buf = heap_alloc(128);
+        if(!This->buf)
+            return E_OUTOFMEMORY;
         This->size = 128;
-        This->buf = heap_alloc(This->size);
     }
 
     do {
@@ -921,22 +927,19 @@ static const BSCallbackVtbl BufferBSCVtbl = {
 };
 
 
-static BufferBSC *create_bufferbsc(IMoniker *mon)
-{
-    BufferBSC *ret = heap_alloc_zero(sizeof(*ret));
-
-    init_bscallback(&ret->bsc, &BufferBSCVtbl, mon, 0);
-    ret->hres = E_FAIL;
-
-    return ret;
-}
-
 HRESULT bind_mon_to_wstr(HTMLInnerWindow *window, IMoniker *mon, WCHAR **ret)
 {
-    BufferBSC *bsc = create_bufferbsc(mon);
+    BufferBSC *bsc;
     int cp = CP_ACP;
     WCHAR *text;
     HRESULT hres;
+
+    bsc = heap_alloc_zero(sizeof(*bsc));
+    if(!bsc)
+        return E_OUTOFMEMORY;
+
+    init_bscallback(&bsc->bsc, &BufferBSCVtbl, mon, 0);
+    bsc->hres = E_FAIL;
 
     hres = start_binding(window, &bsc->bsc, NULL);
     if(SUCCEEDED(hres))
@@ -1164,8 +1167,11 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
         return S_OK;
     }
 
-    if(!This->nsstream)
+    if(!This->nsstream) {
         This->nsstream = create_nsprotocol_stream();
+        if(!This->nsstream)
+            return E_OUTOFMEMORY;
+    }
 
     do {
         BOOL first_read = !This->bsc.readed;
