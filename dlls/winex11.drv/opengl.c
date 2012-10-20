@@ -3011,7 +3011,7 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
         /* Again there's no GLX equivalent for this extension, so depend on the required GL extension */
         if (has_extension(WineGLInfo.glExtensions, "GL_NV_texture_rectangle"))
-            register_extension("WGL_NV_texture_rectangle");
+            register_extension("WGL_NV_render_texture_rectangle");
     }
 
     /* EXT Extensions */
