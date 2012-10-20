@@ -1150,7 +1150,7 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
         for (i = CLASSIC_SLOT+1; i < ICNS_SLOTS; i++)
             if (best[i].index >= 0 && !best[i].scaled)
             {
-                best[CLASSIC_SLOT].index = 0;
+                best[CLASSIC_SLOT].index = -1;
                 break;
             }
     }
