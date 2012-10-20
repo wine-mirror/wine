@@ -35,6 +35,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 struct dwrite_textlayout {
     IDWriteTextLayout IDWriteTextLayout_iface;
     LONG ref;
+
+    WCHAR *str;
 };
 
 struct dwrite_textformat {
@@ -97,7 +99,10 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (!ref)
+    {
+        heap_free(This->str);
         heap_free(This);
+    }
 
     return S_OK;
 }
@@ -646,7 +651,7 @@ static const IDWriteTextLayoutVtbl dwritetextlayoutvtbl = {
     dwritetextlayout_HitTestTextRange
 };
 
-HRESULT create_textlayout(IDWriteTextLayout **layout)
+HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextLayout **layout)
 {
     struct dwrite_textlayout *This;
 
@@ -657,6 +662,7 @@ HRESULT create_textlayout(IDWriteTextLayout **layout)
 
     This->IDWriteTextLayout_iface.lpVtbl = &dwritetextlayoutvtbl;
     This->ref = 1;
+    This->str = heap_strdupnW(str, len);
 
     *layout = &This->IDWriteTextLayout_iface;
 

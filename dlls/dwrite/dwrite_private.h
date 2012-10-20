@@ -38,7 +38,7 @@ static inline BOOL heap_free(void *mem)
     return HeapFree(GetProcessHeap(), 0, mem);
 }
 
-static inline LPWSTR heap_strdupW(LPCWSTR str)
+static inline LPWSTR heap_strdupW(const WCHAR *str)
 {
     LPWSTR ret = NULL;
 
@@ -53,10 +53,24 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
     return ret;
 }
 
+static inline LPWSTR heap_strdupnW(const WCHAR *str, UINT32 len)
+{
+    WCHAR *ret = NULL;
+
+    if (len)
+    {
+        ret = heap_alloc((len+1)*sizeof(WCHAR));
+        memcpy(ret, str, len*sizeof(WCHAR));
+        ret[len] = 0;
+    }
+
+    return ret;
+}
+
 extern HRESULT create_font_from_logfont(const LOGFONTW*, IDWriteFont**) DECLSPEC_HIDDEN;
 extern HRESULT create_textformat(const WCHAR*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
                                  FLOAT,const WCHAR*,IDWriteTextFormat**) DECLSPEC_HIDDEN;
-extern HRESULT create_textlayout(IDWriteTextLayout**) DECLSPEC_HIDDEN;
+extern HRESULT create_textlayout(const WCHAR*,UINT32,IDWriteTextLayout**) DECLSPEC_HIDDEN;
 extern HRESULT create_gdiinterop(IDWriteGdiInterop**) DECLSPEC_HIDDEN;
 extern HRESULT create_localizedstrings(IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT add_localizedstring(IDWriteLocalizedStrings*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;
