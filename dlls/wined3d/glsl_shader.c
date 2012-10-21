@@ -1000,58 +1000,6 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             shader_addline(buffer, "uniform vec4 %s_cb%u[%u];\n", prefix, i, reg_maps->cb_sizes[i]);
     }
 
-    if (!pshader)
-    {
-        shader_addline(buffer, "uniform vec4 posFixup;\n");
-        shader_addline(buffer, "void order_ps_input(in vec4[%u]);\n", shader->limits.packed_output);
-    }
-    else
-    {
-        for (i = 0, map = reg_maps->bumpmat; map; map >>= 1, ++i)
-        {
-            if (!(map & 1)) continue;
-
-            shader_addline(buffer, "uniform mat2 bumpenvmat%d;\n", i);
-
-            if (reg_maps->luminanceparams & (1 << i))
-            {
-                shader_addline(buffer, "uniform float luminancescale%d;\n", i);
-                shader_addline(buffer, "uniform float luminanceoffset%d;\n", i);
-                extra_constants_needed++;
-            }
-
-            extra_constants_needed++;
-        }
-
-        if (ps_args->srgb_correction)
-        {
-            shader_addline(buffer, "const vec4 srgb_const0 = vec4(%.8e, %.8e, %.8e, %.8e);\n",
-                    srgb_pow, srgb_mul_high, srgb_sub_high, srgb_mul_low);
-            shader_addline(buffer, "const vec4 srgb_const1 = vec4(%.8e, 0.0, 0.0, 0.0);\n",
-                    srgb_cmp);
-        }
-        if (reg_maps->vpos || reg_maps->usesdsy)
-        {
-            if (shader->limits.constant_float + extra_constants_needed
-                    + 1 < gl_info->limits.glsl_ps_float_constants)
-            {
-                shader_addline(buffer, "uniform vec4 ycorrection;\n");
-                extra_constants_needed++;
-            }
-            else
-            {
-                /* This happens because we do not have proper tracking of the constant registers that are
-                 * actually used, only the max limit of the shader version
-                 */
-                FIXME("Cannot find a free uniform for vpos correction params\n");
-                shader_addline(buffer, "const vec4 ycorrection = vec4(%f, %f, 0.0, 0.0);\n",
-                        context->render_offscreen ? 0.0f : fb->render_targets[0]->resource.height,
-                        context->render_offscreen ? 1.0f : -1.0f);
-            }
-            shader_addline(buffer, "vec4 vpos;\n");
-        }
-    }
-
     /* Declare texture samplers */
     for (i = 0; i < shader->limits.sampler; ++i)
     {
@@ -1145,20 +1093,79 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         if (map & 1) shader_addline(buffer, "vec4 T%u = gl_TexCoord[%u];\n", i, i);
     }
 
-    /* Declare input register varyings. Only pixel shader, vertex shaders have that declared in the
-     * helper function shader that is linked in at link time
-     */
-    if (pshader && reg_maps->shader_version.major >= 3)
+    if (!pshader)
     {
-        UINT in_count = min(vec4_varyings(reg_maps->shader_version.major, gl_info), shader->limits.packed_input);
+        /* Declare attributes. */
+        for (i = 0, map = reg_maps->input_registers; map; map >>= 1, ++i)
+        {
+            if (map & 1)
+                shader_addline(buffer, "attribute vec4 %s_in%u;\n", prefix, i);
+        }
 
-        if (use_vs(state))
-            shader_addline(buffer, "varying vec4 %s_in[%u];\n", prefix, in_count);
-        else
-            /* TODO: Write a replacement shader for the fixed function vertex pipeline, so this isn't needed.
-             * For fixed function vertex processing + 3.0 pixel shader we need a separate function in the
-             * pixel shader that reads the fixed function color into the packed input registers. */
-            shader_addline(buffer, "vec4 %s_in[%u];\n", prefix, in_count);
+        shader_addline(buffer, "uniform vec4 posFixup;\n");
+        shader_addline(buffer, "void order_ps_input(in vec4[%u]);\n", shader->limits.packed_output);
+    }
+    else
+    {
+        if (reg_maps->shader_version.major >= 3)
+        {
+            UINT in_count = min(vec4_varyings(reg_maps->shader_version.major, gl_info), shader->limits.packed_input);
+
+            if (use_vs(state))
+                shader_addline(buffer, "varying vec4 %s_in[%u];\n", prefix, in_count);
+            else
+                /* TODO: Write a replacement shader for the fixed function
+                 * vertex pipeline, so this isn't needed. For fixed function
+                 * vertex processing + 3.0 pixel shader we need a separate
+                 * function in the pixel shader that reads the fixed function
+                 * color into the packed input registers. */
+                shader_addline(buffer, "vec4 %s_in[%u];\n", prefix, in_count);
+        }
+
+        for (i = 0, map = reg_maps->bumpmat; map; map >>= 1, ++i)
+        {
+            if (!(map & 1))
+                continue;
+
+            shader_addline(buffer, "uniform mat2 bumpenvmat%d;\n", i);
+
+            if (reg_maps->luminanceparams & (1 << i))
+            {
+                shader_addline(buffer, "uniform float luminancescale%d;\n", i);
+                shader_addline(buffer, "uniform float luminanceoffset%d;\n", i);
+                extra_constants_needed++;
+            }
+
+            extra_constants_needed++;
+        }
+
+        if (ps_args->srgb_correction)
+        {
+            shader_addline(buffer, "const vec4 srgb_const0 = vec4(%.8e, %.8e, %.8e, %.8e);\n",
+                    srgb_pow, srgb_mul_high, srgb_sub_high, srgb_mul_low);
+            shader_addline(buffer, "const vec4 srgb_const1 = vec4(%.8e, 0.0, 0.0, 0.0);\n",
+                    srgb_cmp);
+        }
+        if (reg_maps->vpos || reg_maps->usesdsy)
+        {
+            if (shader->limits.constant_float + extra_constants_needed
+                    + 1 < gl_info->limits.glsl_ps_float_constants)
+            {
+                shader_addline(buffer, "uniform vec4 ycorrection;\n");
+                extra_constants_needed++;
+            }
+            else
+            {
+                /* This happens because we do not have proper tracking of the constant registers that are
+                 * actually used, only the max limit of the shader version
+                 */
+                FIXME("Cannot find a free uniform for vpos correction params\n");
+                shader_addline(buffer, "const vec4 ycorrection = vec4(%f, %f, 0.0, 0.0);\n",
+                        context->render_offscreen ? 0.0f : fb->render_targets[0]->resource.height,
+                        context->render_offscreen ? 1.0f : -1.0f);
+            }
+            shader_addline(buffer, "vec4 vpos;\n");
+        }
     }
 
     /* Declare output register temporaries */
@@ -1169,15 +1176,6 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     for (i = 0, map = reg_maps->temporary; map; map >>= 1, ++i)
     {
         if (map & 1) shader_addline(buffer, "vec4 R%u;\n", i);
-    }
-
-    /* Declare attributes */
-    if (reg_maps->shader_version.type == WINED3D_SHADER_TYPE_VERTEX)
-    {
-        for (i = 0, map = reg_maps->input_registers; map; map >>= 1, ++i)
-        {
-            if (map & 1) shader_addline(buffer, "attribute vec4 %s_in%u;\n", prefix, i);
-        }
     }
 
     /* Declare loop registers aLx */
