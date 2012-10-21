@@ -690,8 +690,22 @@ static HRESULT WINAPI dwritefontcollection_GetFontFamily(IDWriteFontCollection *
 static HRESULT WINAPI dwritefontcollection_FindFamilyName(IDWriteFontCollection *iface, const WCHAR *name, UINT32 *index, BOOL *exists)
 {
     struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection(iface);
-    FIXME("(%p)->(%s %p %p): stub\n", This, debugstr_w(name), index, exists);
-    return E_NOTIMPL;
+    UINT32 i;
+
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(name), index, exists);
+
+    for (i = 0; i < This->count; i++)
+        if (!strcmpW(This->families[i], name))
+        {
+            *index = i;
+            *exists = TRUE;
+            return S_OK;
+        }
+
+    *index = (UINT32)-1;
+    *exists = FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefontcollection_GetFontFromFontFace(IDWriteFontCollection *iface, IDWriteFontFace *face, IDWriteFont **font)

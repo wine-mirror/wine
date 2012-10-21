@@ -536,7 +536,6 @@ static void test_system_fontcollection(void)
     i = IDWriteFontCollection_GetFontFamilyCount(collection);
     ok(i, "got %u\n", i);
 
-todo_wine {
     ret = FALSE;
     i = (UINT32)-1;
     hr = IDWriteFontCollection_FindFamilyName(collection, tahomaW, &i, &ret);
@@ -550,7 +549,7 @@ todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!ret, "got %d\n", ret);
     ok(i == (UINT32)-1, "got %u\n", i);
-}
+
     IDWriteFontCollection_Release(collection);
 }
 
