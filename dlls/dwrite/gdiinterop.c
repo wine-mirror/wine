@@ -84,7 +84,7 @@ static ULONG WINAPI rendertarget_Release(IDWriteBitmapRenderTarget *iface)
         heap_free(This);
     }
 
-    return S_OK;
+    return ref;
 }
 
 static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget *iface,

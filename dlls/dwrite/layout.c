@@ -104,7 +104,7 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout *iface)
         heap_free(This);
     }
 
-    return S_OK;
+    return ref;
 }
 
 static HRESULT WINAPI dwritetextlayout_SetTextAlignment(IDWriteTextLayout *iface, DWRITE_TEXT_ALIGNMENT alignment)
@@ -710,7 +710,7 @@ static ULONG WINAPI dwritetextformat_Release(IDWriteTextFormat *iface)
         heap_free(This);
     }
 
-    return S_OK;
+    return ref;
 }
 
 static HRESULT WINAPI dwritetextformat_SetTextAlignment(IDWriteTextFormat *iface, DWRITE_TEXT_ALIGNMENT alignment)

@@ -99,7 +99,7 @@ static ULONG WINAPI renderingparams_Release(IDWriteRenderingParams *iface)
     if (!ref)
         heap_free(This);
 
-    return S_OK;
+    return ref;
 }
 
 static FLOAT WINAPI renderingparams_GetGamma(IDWriteRenderingParams *iface)
@@ -236,7 +236,7 @@ static ULONG WINAPI localizedstrings_Release(IDWriteLocalizedStrings *iface)
         heap_free(This);
     }
 
-    return S_OK;
+    return ref;
 }
 
 static UINT32 WINAPI localizedstrings_GetCount(IDWriteLocalizedStrings *iface)

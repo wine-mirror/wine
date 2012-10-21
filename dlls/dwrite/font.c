@@ -211,7 +211,7 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace *iface)
     if (!ref)
         heap_free(This);
 
-    return S_OK;
+    return ref;
 }
 
 static DWRITE_FONT_FACE_TYPE WINAPI dwritefontface_GetType(IDWriteFontFace *iface)
@@ -405,7 +405,7 @@ static ULONG WINAPI dwritefont_Release(IDWriteFont *iface)
         heap_free(This);
     }
 
-    return S_OK;
+    return ref;
 }
 
 static HRESULT WINAPI dwritefont_GetFontFamily(IDWriteFont *iface, IDWriteFontFamily **family)
@@ -558,7 +558,7 @@ static ULONG WINAPI dwritefontfamily_Release(IDWriteFontFamily *iface)
         heap_free(This);
     }
 
-    return S_OK;
+    return ref;
 }
 
 static HRESULT WINAPI dwritefontfamily_GetFontCollection(IDWriteFontFamily *iface, IDWriteFontCollection **collection)
