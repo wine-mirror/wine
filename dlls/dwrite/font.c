@@ -130,6 +130,10 @@ typedef struct
 struct dwrite_fontcollection {
     IDWriteFontCollection IDWriteFontCollection_iface;
     LONG ref;
+
+    WCHAR **families;
+    UINT32 count;
+    int alloc;
 };
 
 struct dwrite_fontfamily {
@@ -657,7 +661,14 @@ static ULONG WINAPI dwritefontcollection_Release(IDWriteFontCollection *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (!ref)
+    {
+        int i;
+
+        for (i = 0; i < This->count; i++)
+            heap_free(This->families[i]);
+        heap_free(This->families);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -665,8 +676,8 @@ static ULONG WINAPI dwritefontcollection_Release(IDWriteFontCollection *iface)
 static UINT32 WINAPI dwritefontcollection_GetFontFamilyCount(IDWriteFontCollection *iface)
 {
     struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection(iface);
-    FIXME("(%p): stub\n", This);
-    return 0;
+    TRACE("(%p)\n", This);
+    return This->count;
 }
 
 static HRESULT WINAPI dwritefontcollection_GetFontFamily(IDWriteFontCollection *iface, UINT32 index, IDWriteFontFamily **family)
@@ -700,9 +711,35 @@ static const IDWriteFontCollectionVtbl fontcollectionvtbl = {
     dwritefontcollection_GetFontFromFontFace
 };
 
-HRESULT create_fontcollection(IDWriteFontCollection **collection)
+static HRESULT add_family_syscollection(struct dwrite_fontcollection *collection, const WCHAR *family)
+{
+    /* check for duplicate family name */
+    if (collection->count && !strcmpW(collection->families[collection->count-1], family)) return S_OK;
+
+    /* double array length */
+    if (collection->count == collection->alloc)
+    {
+        collection->alloc *= 2;
+        collection->families = heap_realloc(collection->families, collection->alloc*sizeof(WCHAR*));
+    }
+
+    collection->families[collection->count++] = heap_strdupW(family);
+    TRACE("family name %s\n", debugstr_w(family));
+
+    return S_OK;
+}
+
+static INT CALLBACK enum_font_families(const LOGFONTW *lf, const TEXTMETRICW *tm, DWORD type, LPARAM lParam)
+{
+    struct dwrite_fontcollection *collection = (struct dwrite_fontcollection*)lParam;
+    return add_family_syscollection(collection, lf->lfFaceName) == S_OK;
+}
+
+HRESULT create_system_fontcollection(IDWriteFontCollection **collection)
 {
     struct dwrite_fontcollection *This;
+    LOGFONTW lf;
+    HDC hdc;
 
     *collection = NULL;
 
@@ -711,6 +748,20 @@ HRESULT create_fontcollection(IDWriteFontCollection **collection)
 
     This->IDWriteFontCollection_iface.lpVtbl = &fontcollectionvtbl;
     This->ref = 1;
+
+    This->alloc = 50;
+    This->count = 0;
+    This->families = heap_alloc(This->alloc*sizeof(WCHAR*));
+
+    TRACE("building system font collection:\n");
+
+    hdc = CreateCompatibleDC(0);
+    memset(&lf, 0, sizeof(lf));
+    lf.lfCharSet = DEFAULT_CHARSET;
+    lf.lfPitchAndFamily = DEFAULT_PITCH;
+    lf.lfFaceName[0] = 0;
+    EnumFontFamiliesExW(hdc, &lf, enum_font_families, (LPARAM)This, 0);
+    DeleteDC(hdc);
 
     *collection = &This->IDWriteFontCollection_iface;
 

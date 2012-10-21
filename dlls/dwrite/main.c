@@ -384,8 +384,12 @@ static ULONG WINAPI dwritefactory_Release(IDWriteFactory *iface)
 static HRESULT WINAPI dwritefactory_GetSystemFontCollection(IDWriteFactory *iface,
     IDWriteFontCollection **collection, BOOL check_for_updates)
 {
-    FIXME("(%p %d): semi-stub\n", collection, check_for_updates);
-    return create_fontcollection(collection);
+    TRACE("(%p %d)\n", collection, check_for_updates);
+
+    if (check_for_updates)
+        FIXME("checking for system font updates not implemented\n");
+
+    return create_system_fontcollection(collection);
 }
 
 static HRESULT WINAPI dwritefactory_CreateCustomFontCollection(IDWriteFactory *iface,
