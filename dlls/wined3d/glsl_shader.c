@@ -2141,7 +2141,6 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
         const char *dx, const char *dy, const char *bias, const char *coord_reg_fmt, ...)
 {
     const struct wined3d_shader_version *version = &ins->ctx->reg_maps->shader_version;
-    const char *sampler_base;
     char dst_swizzle[6];
     struct color_fixup_desc fixup;
     BOOL np2_fixup = FALSE;
@@ -2153,7 +2152,6 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
     {
         const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
         fixup = priv->cur_ps_args->color_fixup[sampler];
-        sampler_base = "ps_sampler";
 
         if(priv->cur_ps_args->np2_fixup & (1 << sampler)) {
             if(bias) {
@@ -2165,13 +2163,13 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
     }
     else
     {
-        sampler_base = "vs_sampler";
         fixup = COLOR_FIXUP_IDENTITY; /* FIXME: Vshader color fixup */
     }
 
     shader_glsl_append_dst(ins->ctx->buffer, ins);
 
-    shader_addline(ins->ctx->buffer, "%s(%s%u, ", sample_function->name, sampler_base, sampler);
+    shader_addline(ins->ctx->buffer, "%s(%s_sampler%u, ",
+            sample_function->name, shader_glsl_get_prefix(version->type), sampler);
 
     va_start(args, coord_reg_fmt);
     shader_vaddline(ins->ctx->buffer, coord_reg_fmt, args);
