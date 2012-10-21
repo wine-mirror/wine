@@ -1624,6 +1624,58 @@ static BOOL WCMD_parse_forf_options(WCHAR *options, WCHAR *eol, int *skip,
   return TRUE;
 }
 
+/*****************************************************************************
+ * WCMD_add_dirstowalk
+ *
+ * When recursing through directories (for /r), we need to add to the list of
+ * directories still to walk, any subdirectories of the one we are processing.
+ *
+ * Parameters
+ *  options    [I] The remaining list of directories still to process
+ *
+ * Note this routine inserts the subdirectories found between the entry being
+ * processed, and any other directory still to be processed, mimicing what
+ * Windows does
+ */
+static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk) {
+  DIRECTORY_STACK *remainingDirs = dirsToWalk;
+  WCHAR fullitem[MAX_PATH];
+  WIN32_FIND_DATAW fd;
+  HANDLE hff;
+
+  /* Build a generic search and add all directories on the list of directories
+     still to walk                                                             */
+  strcpyW(fullitem, dirsToWalk->dirName);
+  strcatW(fullitem, slashstarW);
+  hff = FindFirstFileW(fullitem, &fd);
+  if (hff != INVALID_HANDLE_VALUE) {
+    do {
+      WINE_TRACE("Looking for subdirectories\n");
+      if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+          (strcmpW(fd.cFileName, dotdotW) != 0) &&
+          (strcmpW(fd.cFileName, dotW) != 0))
+      {
+        /* Allocate memory, add to list */
+        DIRECTORY_STACK *toWalk = HeapAlloc(GetProcessHeap(), 0, sizeof(DIRECTORY_STACK));
+        WINE_TRACE("(%p->%p)\n", remainingDirs, remainingDirs->next);
+        toWalk->next = remainingDirs->next;
+        remainingDirs->next = toWalk;
+        remainingDirs = toWalk;
+        toWalk->dirName = HeapAlloc(GetProcessHeap(), 0,
+                                    sizeof(WCHAR) *
+                                    (strlenW(dirsToWalk->dirName) + 2 + strlenW(fd.cFileName)));
+        strcpyW(toWalk->dirName, dirsToWalk->dirName);
+        strcatW(toWalk->dirName, slashW);
+        strcatW(toWalk->dirName, fd.cFileName);
+        WINE_TRACE("Added to stack %s (%p->%p)\n", wine_dbgstr_w(toWalk->dirName),
+                   toWalk, toWalk->next);
+      }
+    } while (FindNextFileW(hff, &fd) != 0);
+    WINE_TRACE("Finished adding all subdirectories\n");
+    FindClose (hff);
+  }
+}
+
 /**************************************************************************
  * WCMD_for
  *
@@ -1779,7 +1831,6 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   /* Loop repeatedly per-directory we are potentially walking, when in for /r
      mode, or once for the rest of the time.                                  */
   do {
-    WCHAR fullitem[MAX_PATH];
 
     /* Save away the starting position for the commands (and offset for the
        first one)                                                           */
@@ -1789,41 +1840,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
     /* If we are recursing directories (ie /R), add all sub directories now, then
        prefix the root when searching for the item */
-    if (dirsToWalk) {
-      DIRECTORY_STACK *remainingDirs = dirsToWalk;
-
-      /* Build a generic search and add all directories on the list of directories
-         still to walk                                                             */
-      strcpyW(fullitem, dirsToWalk->dirName);
-      strcatW(fullitem, slashstarW);
-      hff = FindFirstFileW(fullitem, &fd);
-      if (hff != INVALID_HANDLE_VALUE) {
-        do {
-          WINE_TRACE("Looking for subdirectories\n");
-          if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-              (strcmpW(fd.cFileName, dotdotW) != 0) &&
-              (strcmpW(fd.cFileName, dotW) != 0))
-          {
-            /* Allocate memory, add to list */
-            DIRECTORY_STACK *toWalk = HeapAlloc(GetProcessHeap(), 0, sizeof(DIRECTORY_STACK));
-            WINE_TRACE("(%p->%p)\n", remainingDirs, remainingDirs->next);
-            toWalk->next = remainingDirs->next;
-            remainingDirs->next = toWalk;
-            remainingDirs = toWalk;
-            toWalk->dirName = HeapAlloc(GetProcessHeap(), 0,
-                                        sizeof(WCHAR) *
-                                        (strlenW(dirsToWalk->dirName) + 2 + strlenW(fd.cFileName)));
-            strcpyW(toWalk->dirName, dirsToWalk->dirName);
-            strcatW(toWalk->dirName, slashW);
-            strcatW(toWalk->dirName, fd.cFileName);
-            WINE_TRACE("Added to stack %s (%p->%p)\n", wine_dbgstr_w(toWalk->dirName),
-                       toWalk, toWalk->next);
-          }
-        } while (FindNextFileW(hff, &fd) != 0);
-        WINE_TRACE("Finished adding all subdirectories\n");
-        FindClose (hff);
-      }
-    }
+    if (dirsToWalk) WCMD_add_dirstowalk(dirsToWalk);
 
     thisSet = setStart;
     /* Loop through all set entries */
