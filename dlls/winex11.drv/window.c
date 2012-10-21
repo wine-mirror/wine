@@ -2043,7 +2043,7 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
 
     /* create the window surface if necessary */
 
-    if (!data->whole_window) goto done;
+    if (!data->whole_window && !data->embedded) goto done;
     if (swp_flags & SWP_HIDEWINDOW) goto done;
     if (data->vis.visualid != default_visual.visualid) goto done;
 
