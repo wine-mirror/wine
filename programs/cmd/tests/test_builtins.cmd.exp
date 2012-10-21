@@ -824,9 +824,12 @@ a|d
 foo bar baz
 @todo_wine@c:\
 ------ skip option
-@todo_wine@c
-@todo_wine@no output
-@todo_wine@no output
+c
+no output
+no output
+c
+c
+no output
 ------------ Testing del /a ------------
 not-r.test not found after delete, good
 r.test found before delete, good

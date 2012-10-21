@@ -1179,6 +1179,10 @@ for /f "skip=3" %%i in (foo) do echo %%i > output_file
 if not exist output_file (echo no output) else (del output_file)
 for /f "skip=4" %%i in (foo) do echo %%i > output_file
 if not exist output_file (echo no output) else (del output_file)
+for /f "skip=02" %%i in (foo) do echo %%i
+for /f "skip=0x2" %%i in (foo) do echo %%i
+for /f "skip=1" %%i in ("skipme") do echo %%i > output_file
+if not exist output_file (echo no output) else (del output_file)
 cd ..
 rd /s/q foobar
 

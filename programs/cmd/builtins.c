@@ -1511,6 +1511,119 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
   return;
 }
 
+/*****************************************************************************
+ * WCMD_parse_forf_options
+ *
+ * Parses the for /f 'options', extracting the values and validating the
+ * keywords. Note all keywords are optional.
+ * Parameters:
+ *  options    [I] The unparsed parameter string
+ *  eol        [O] Set to the comment character (eol=x)
+ *  skip       [O] Set to the number of lines to skip (skip=xx)
+ *  delims     [O] Set to the token delimiters (delims=)
+ *  tokens     [O] Set to the requested tokens, as provided (tokens=)
+ *  usebackq   [O] Set to TRUE if usebackq found
+ *
+ * Returns TRUE on success, FALSE on syntax error
+ *
+ */
+static BOOL WCMD_parse_forf_options(WCHAR *options, WCHAR *eol, int *skip,
+                                    WCHAR *delims, WCHAR *tokens, BOOL *usebackq)
+{
+
+  WCHAR *pos = options;
+  int    len = strlenW(pos);
+  static const WCHAR eolW[] = {'e','o','l','='};
+  static const WCHAR skipW[] = {'s','k','i','p','='};
+  static const WCHAR tokensW[] = {'t','o','k','e','n','s','='};
+  static const WCHAR delimsW[] = {'d','e','l','i','m','s','='};
+  static const WCHAR usebackqW[] = {'u','s','e','b','a','c','k','q'};
+  static const WCHAR forf_defaultdelims[] = {' ', '\t', '\0'};
+  static const WCHAR forf_defaulttokens[] = {'1', '\0'};
+
+  /* Initialize to defaults */
+  strcpyW(delims, forf_defaultdelims);
+  strcpyW(tokens, forf_defaulttokens);
+  *eol      = 0;
+  *skip     = 0;
+  *usebackq = FALSE;
+
+  /* Strip (optional) leading and trailing quotes */
+  if ((*pos == '"') && (pos[len-1] == '"')) {
+    pos[len-1] = 0;
+    pos++;
+  }
+
+  /* Process each keyword */
+  while (pos && *pos) {
+    if (*pos == ' ' || *pos == '\t') {
+      pos++;
+
+    /* Save End of line character (Ignore line if first token (based on delims) starts with it) */
+    } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                       pos, sizeof(eolW)/sizeof(WCHAR),
+                       eolW, sizeof(eolW)/sizeof(WCHAR)) == CSTR_EQUAL) {
+      *eol = *(pos + sizeof(eolW)/sizeof(WCHAR));
+      pos = pos + sizeof(eolW)/sizeof(WCHAR) + 1;
+      WINE_FIXME("Found eol as %c(%x)\n", *eol, *eol);
+
+    /* Save number of lines to skip (Can be in base 10, hex (0x...) or octal (0xx) */
+    } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                       pos, sizeof(skipW)/sizeof(WCHAR),
+                       skipW, sizeof(skipW)/sizeof(WCHAR)) == CSTR_EQUAL) {
+      WCHAR *nextchar = NULL;
+      pos = pos + sizeof(skipW)/sizeof(WCHAR);
+      *skip = strtoulW(pos, &nextchar, 0);
+      WINE_TRACE("Found skip as %d lines\n", *skip);
+      pos = nextchar;
+
+    /* Save if usebackq semantics are in effect */
+    } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                       pos, sizeof(usebackqW)/sizeof(WCHAR),
+                       usebackqW, sizeof(usebackqW)/sizeof(WCHAR)) == CSTR_EQUAL) {
+      *usebackq = TRUE;
+      pos = pos + sizeof(usebackqW)/sizeof(WCHAR);
+      WINE_FIXME("Found usebackq\n");
+
+    /* Save the supplied delims. Slightly odd as space can be a delimiter but only
+       if you finish the optionsroot string with delims= otherwise the space is
+       just a token delimiter!                                                     */
+    } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                       pos, sizeof(delimsW)/sizeof(WCHAR),
+                       delimsW, sizeof(delimsW)/sizeof(WCHAR)) == CSTR_EQUAL) {
+      int i=0;
+
+      pos = pos + sizeof(delimsW)/sizeof(WCHAR);
+      while (*pos && *pos != ' ') {
+        delims[i++] = *pos;
+        pos++;
+      }
+      if (*pos==' ' && *(pos+1)==0) delims[i++] = *pos;
+      delims[i++] = 0; /* Null terminate the delims */
+      WINE_FIXME("Found delims as '%s'\n", wine_dbgstr_w(delims));
+
+    /* Save the tokens being requested */
+    } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                       pos, sizeof(tokensW)/sizeof(WCHAR),
+                       tokensW, sizeof(tokensW)/sizeof(WCHAR)) == CSTR_EQUAL) {
+      int i=0;
+
+      pos = pos + sizeof(tokensW)/sizeof(WCHAR);
+      while (*pos && *pos != ' ') {
+        tokens[i++] = *pos;
+        pos++;
+      }
+      tokens[i++] = 0; /* Null terminate the tokens */
+      WINE_FIXME("Found tokens as '%s'\n", wine_dbgstr_w(tokens));
+
+    } else {
+      WINE_WARN("Unexpected data in optionsroot: '%s'\n", wine_dbgstr_w(pos));
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
 /**************************************************************************
  * WCMD_for
  *
@@ -1536,7 +1649,6 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   int thisDepth;
   WCHAR optionsRoot[MAX_PATH];
   DIRECTORY_STACK *dirsToWalk = NULL;
-
   BOOL   expandDirs  = FALSE;
   BOOL   useNumbers  = FALSE;
   BOOL   doFileset   = FALSE;
@@ -1546,6 +1658,11 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   int    itemNum;
   CMD_LIST *thisCmdStart;
   int    parameterNo = 0;
+  WCHAR  forf_eol = 0;
+  int    forf_skip = 0;
+  WCHAR  forf_delims[256];
+  WCHAR  forf_tokens[MAXSTRING];
+  BOOL   forf_usebackq;
 
   /* Handle optional qualifiers (multiple are allowed) */
   WCHAR *thisArg = WCMD_parameter(p, parameterNo++, NULL, NULL, FALSE, FALSE);
@@ -1579,10 +1696,6 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
               if (thisArg && *thisArg != '/' && *thisArg != '%') {
                   parameterNo++;
                   strcpyW(optionsRoot, thisArg);
-                  if (!doRecurse) {
-                      static unsigned int once;
-                      if (!once++) WINE_FIXME("/F needs to handle options\n");
-                  }
               }
               break;
           }
@@ -1600,8 +1713,17 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
       return;
   }
 
+  /* With for /f parse the options if provided */
+  if (doFileset) {
+    if (!WCMD_parse_forf_options(optionsRoot, &forf_eol, &forf_skip,
+                                 forf_delims, forf_tokens, &forf_usebackq))
+    {
+      WCMD_output_stderr (WCMD_LoadMessage(WCMD_SYNTAXERR));
+      return;
+    }
+
   /* Set up the list of directories to recurse if we are going to */
-  if (doRecurse) {
+  } else if (doRecurse) {
        /* Allocate memory, add to list */
        dirsToWalk = HeapAlloc(GetProcessHeap(), 0, sizeof(DIRECTORY_STACK));
        dirsToWalk->next = NULL;
@@ -1835,6 +1957,13 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
               while (WCMD_fgets(buffer, sizeof(buffer)/sizeof(WCHAR), input)) {
 
+                /* Skip lines if requested */
+                if (forf_skip) {
+                  forf_skip--;
+                  buffer[0] = 0;
+                  continue;
+                }
+
                 /* Skip blank lines*/
                 parm = WCMD_parameter (buffer, 0, &where, NULL, FALSE, FALSE);
                 WINE_TRACE("Parsed parameter: %s from %s\n", wine_dbgstr_w(parm),
@@ -1871,7 +2000,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
             WINE_TRACE("Parsed parameter: %s from %s\n", wine_dbgstr_w(parm),
                          wine_dbgstr_w(buffer));
 
-            if (where) {
+            if (where && forf_skip == 0) {
                 /* FIXME: The following should be moved into its own routine and
                    reused for the string literal parsing below                  */
                 thisCmdStart = cmdStart;
