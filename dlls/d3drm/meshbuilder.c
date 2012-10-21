@@ -1244,10 +1244,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
                 WARN("Returned size %u does not match expected one %u\n", size, data_size);
 
             if (nb_materials > 1)
-            {
                 FIXME("Only one material per mesh supported, first one applies to all faces\n");
-                nb_materials = 1;
-            }
 
             while (SUCCEEDED(hr = IDirectXFileData_GetNextObject(pData2, &child)) && (i < nb_materials))
             {
@@ -1255,6 +1252,14 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
                 LPDIRECTXFILEDATAREFERENCE reference;
                 LPDIRECT3DRMMATERIAL2 material;
                 LPDIRECTXFILEOBJECT material_child;
+
+                if (i >= 1)
+                {
+                    /* FIXME: Only handle first material but enum all of them */
+                    IDirectXFileObject_Release(child);
+                    i++;
+                    continue;
+                }
 
                 hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileData, (void **)&data);
                 if (FAILED(hr))
