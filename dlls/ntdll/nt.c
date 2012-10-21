@@ -910,6 +910,11 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
             if (info->Level == 0xf)  /* AMD says to add the extended family to the family if family is 0xf */
                 info->Level += (regs2[0] >> 20) & 0xff;
 
+            /* repack model and stepping to make a "revision" */
+            info->Revision  = ((regs2[0] >> 16) & 0xf) << 12; /* extended model */
+            info->Revision |= ((regs2[0] >> 4 ) & 0xf) << 8;  /* model          */
+            info->Revision |= regs2[0] & 0xf;                 /* stepping       */
+
             do_cpuid(0x80000000, regs);  /* get vendor cpuid level */
             if (regs[0] >= 0x80000001)
             {
@@ -925,6 +930,11 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
             info->Level = ((regs2[0] >> 8) & 0xf) + ((regs2[0] >> 20) & 0xff); /* family + extended family */
             if(info->Level == 15) info->Level = 6;
 
+            /* repack model and stepping to make a "revision" */
+            info->Revision  = ((regs2[0] >> 16) & 0xf) << 12; /* extended model */
+            info->Revision |= ((regs2[0] >> 4 ) & 0xf) << 8;  /* model          */
+            info->Revision |= regs2[0] & 0xf;                 /* stepping       */
+
             if(regs2[3] & (1 << 21)) info->FeatureSet |= CPU_FEATURE_DS;
             user_shared_data->ProcessorFeatures[PF_VIRT_FIRMWARE_ENABLED] = (regs2[2] & (1 << 5 )) >> 5;
 
@@ -938,6 +948,10 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
         else
         {
             info->Level = (regs2[0] >> 8) & 0xf; /* family */
+
+            /* repack model and stepping to make a "revision" */
+            info->Revision = ((regs2[0] >> 4 ) & 0xf) << 8;  /* model    */
+            info->Revision |= regs2[0] & 0xf;                /* stepping */
         }
     }
 }
