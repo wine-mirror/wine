@@ -606,11 +606,17 @@ UINT WINAPI DECLSPEC_HOTPATCH GetRawInputBuffer(PRAWINPUT pData, PUINT pcbSize, 
 /******************************************************************
 *		GetRawInputDeviceInfoA (USER32.@)
 */
-UINT WINAPI GetRawInputDeviceInfoA(HANDLE hDevice, UINT uiCommand, LPVOID pData, PUINT pcbSize)
+UINT WINAPI GetRawInputDeviceInfoA(HANDLE device, UINT command, void *data, UINT *data_size)
 {
-    FIXME("(hDevice=%p, uiCommand=%d, pData=%p, pcbSize=%p) stub!\n", hDevice, uiCommand, pData, pcbSize);
+    UINT ret;
 
-    return 0;
+    TRACE("device %p, command %u, data %p, data_size %p.\n", device, command, data, data_size);
+
+    ret = GetRawInputDeviceInfoW(device, command, data, data_size);
+    if (command == RIDI_DEVICENAME && ret && ret != ~0U)
+        ret = WideCharToMultiByte(CP_ACP, 0, data, -1, data, *data_size, NULL, NULL);
+
+    return ret;
 }
 
 
