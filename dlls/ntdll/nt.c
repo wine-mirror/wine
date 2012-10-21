@@ -815,6 +815,10 @@ static  SYSTEM_CPU_INFORMATION cached_sci;
 #define ENTI	0x69746e65	/* "enti" */
 #define CAMD	0x444d4163	/* "cAMD" */
 
+#define GENU	0x756e6547	/* "Genu" */
+#define INEI	0x49656e69	/* "ineI" */
+#define NTEL	0x6c65746e	/* "ntel" */
+
 /* Calls cpuid with an eax of 'ax' and returns the 16 bytes in *p
  * We are compiled with -fPIC, so we can't clobber ebx.
  */
@@ -866,6 +870,10 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
 {
     unsigned int regs[4], regs2[4];
 
+    /* We're at least a 386 */
+    info->FeatureSet = CPU_FEATURE_VME | CPU_FEATURE_X86 | CPU_FEATURE_PGE;
+    info->Level = 3;
+
     if (!have_cpuid()) return;
 
     do_cpuid(0x00000000, regs);  /* get standard cpuid level and vendor name */
@@ -885,6 +893,19 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
             info->Level = 3;
             break;
         }
+
+        if(regs2[3] & (1 << 3 )) info->FeatureSet |= CPU_FEATURE_PSE;
+        if(regs2[3] & (1 << 4 )) info->FeatureSet |= CPU_FEATURE_TSC;
+        if(regs2[3] & (1 << 8 )) info->FeatureSet |= CPU_FEATURE_CX8;
+        if(regs2[3] & (1 << 11)) info->FeatureSet |= CPU_FEATURE_SEP;
+        if(regs2[3] & (1 << 12)) info->FeatureSet |= CPU_FEATURE_MTRR;
+        if(regs2[3] & (1 << 15)) info->FeatureSet |= CPU_FEATURE_CMOV;
+        if(regs2[3] & (1 << 16)) info->FeatureSet |= CPU_FEATURE_PAT;
+        if(regs2[3] & (1 << 23)) info->FeatureSet |= CPU_FEATURE_MMX;
+        if(regs2[3] & (1 << 24)) info->FeatureSet |= CPU_FEATURE_FXSR;
+        if(regs2[3] & (1 << 25)) info->FeatureSet |= CPU_FEATURE_SSE;
+        if(regs2[3] & (1 << 26)) info->FeatureSet |= CPU_FEATURE_SSE2;
+
         user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED]       = !(regs2[3] & 1);
         user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE]   = (regs2[3] & (1 << 4 )) >> 4;
         user_shared_data->ProcessorFeatures[PF_PAE_ENABLED]                   = (regs2[3] & (1 << 6 )) >> 6;
@@ -892,6 +913,9 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
         user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE]    = (regs2[3] & (1 << 23)) >> 23;
         user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE]   = (regs2[3] & (1 << 25)) >> 25;
         user_shared_data->ProcessorFeatures[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = (regs2[3] & (1 << 26)) >> 26;
+        user_shared_data->ProcessorFeatures[PF_SSE3_INSTRUCTIONS_AVAILABLE]   = regs2[2] & 1;
+        user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED]                 = (regs2[2] & (1 << 27)) >> 27;
+        user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE128]           = (regs2[2] & (1 << 13)) >> 13;
 
         if (regs[1] == AUTH && regs[3] == ENTI && regs[2] == CAMD)
         {
@@ -899,7 +923,22 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
             if (regs[0] >= 0x80000001)
             {
                 do_cpuid(0x80000001, regs2);  /* get vendor features */
+                user_shared_data->ProcessorFeatures[PF_VIRT_FIRMWARE_ENABLED]        = (regs2[2] & (1 << 2  )) >> 2;
+                user_shared_data->ProcessorFeatures[PF_NX_ENABLED]                   = (regs2[3] & (1 << 20 )) >> 20;
                 user_shared_data->ProcessorFeatures[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = (regs2[3] & (1 << 31 )) >> 31;
+                if(regs2[3] & (1 << 31)) info->FeatureSet |= CPU_FEATURE_3DNOW;
+            }
+        }
+        else if (regs[1] == GENU && regs[3] == INEI && regs[2] == NTEL)
+        {
+            if(regs2[3] & (1 << 21)) info->FeatureSet |= CPU_FEATURE_DS;
+            user_shared_data->ProcessorFeatures[PF_VIRT_FIRMWARE_ENABLED] = (regs2[2] & (1 << 5 )) >> 5;
+
+            do_cpuid(0x80000000, regs);  /* get vendor cpuid level */
+            if (regs[0] >= 0x80000001)
+            {
+                do_cpuid(0x80000001, regs2);  /* get vendor features */
+                user_shared_data->ProcessorFeatures[PF_NX_ENABLED] = (regs2[3] & (1 << 20 )) >> 20;
             }
         }
     }
