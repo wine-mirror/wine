@@ -1260,6 +1260,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
                 if (FAILED(hr))
                 {
                     hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileDataReference, (void **)&reference);
+                    IDirectXFileObject_Release(child);
                     if (FAILED(hr))
                         goto end;
 
@@ -1267,6 +1268,10 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
                     IDirectXFileDataReference_Release(reference);
                     if (FAILED(hr))
                         goto end;
+                }
+                else
+                {
+                    IDirectXFileObject_Release(child);
                 }
 
                 hr = Direct3DRMMaterial_create(&material);
@@ -1357,9 +1362,14 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
                 i++;
             }
             if (hr == S_OK)
+            {
+                IDirectXFileObject_Release(child);
                 WARN("Found more sub-objects than expected\n");
+            }
             else if (hr != DXFILEERR_NOMOREOBJECTS)
+            {
                 goto end;
+            }
             hr = S_OK;
         }
         else
