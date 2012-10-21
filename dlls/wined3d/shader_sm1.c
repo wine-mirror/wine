@@ -754,6 +754,8 @@ static void shader_sm1_read_instruction(void *data, const DWORD **ptr, struct wi
 
 static BOOL shader_sm1_is_end(void *data, const DWORD **ptr)
 {
+    shader_sm1_read_comment(ptr);
+
     if (**ptr == WINED3DSP_END)
     {
         ++(*ptr);
