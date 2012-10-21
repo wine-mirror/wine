@@ -1419,7 +1419,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
                 D3DVECTOR a, b;
 
                 D3DRMVectorSubtract(&a, &This->pVertices[faces_vertex_idx_ptr[2]], &This->pVertices[faces_vertex_idx_ptr[1]]);
-                D3DRMVectorSubtract(&a, &This->pVertices[faces_vertex_idx_ptr[1]], &This->pVertices[faces_vertex_idx_ptr[0]]);
+                D3DRMVectorSubtract(&b, &This->pVertices[faces_vertex_idx_ptr[0]], &This->pVertices[faces_vertex_idx_ptr[1]]);
                 D3DRMVectorCrossProduct(&face_normal, &a, &b);
                 D3DRMVectorNormalize(&face_normal);
             }

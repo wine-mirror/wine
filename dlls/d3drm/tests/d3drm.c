@@ -64,6 +64,11 @@ static int get_refcount(IUnknown *object)
     return IUnknown_Release( object );
 }
 
+static BOOL match_float(float a, float b)
+{
+    return (a - b) < 0.000001f;
+}
+
 static D3DRMMATRIX4D identity = {
     { 1.0f, 0.0f, 0.0f, 0.0f },
     { 0.0f, 1.0f, 0.0f, 0.0f },
@@ -186,7 +191,7 @@ static void test_MeshBuilder(void)
     DWORD val1, val2, val3;
     D3DVALUE valu, valv;
     D3DVECTOR v[3];
-    D3DVECTOR n[3];
+    D3DVECTOR n[4];
     DWORD f[8];
     char name[10];
     DWORD size;
@@ -258,6 +263,22 @@ static void test_MeshBuilder(void)
     ok(val1 == 4, "Wrong number of vertices %d (must be 4)\n", val1);
     ok(val2 == 4, "Wrong number of normals %d (must be 4)\n", val2);
     ok(val3 == 22, "Wrong number of face data bytes %d (must be 22)\n", val3);
+
+    /* Check that Load method generated default normals */
+    hr = IDirect3DRMMeshBuilder_GetVertices(pMeshBuilder, NULL, NULL, &val2, n, NULL, NULL);
+    ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);
+    ok(match_float(U1(n[0]).x, 0.577350f),  "Wrong component n[0].x = %f (expected %f)\n", U1(n[0]).x, 0.577350f);
+    ok(match_float(U2(n[0]).y, 0.577350f),  "Wrong component n[0].y = %f (expected %f)\n", U2(n[0]).y, 0.577350f);
+    ok(match_float(U3(n[0]).z, 0.577350f),  "Wrong component n[0].z = %f (expected %f)\n", U3(n[0]).z, 0.577350f);
+    ok(match_float(U1(n[1]).x, -0.229416f), "Wrong component n[1].x = %f (expected %f)\n", U1(n[1]).x, -0.229416f);
+    ok(match_float(U2(n[1]).y, 0.688247f),  "Wrong component n[1].y = %f (expected %f)\n", U2(n[1]).y, 0.688247f);
+    ok(match_float(U3(n[1]).z, 0.688247f),  "Wrong component n[1].z = %f (expected %f)\n", U3(n[1]).z, 0.688247f);
+    ok(match_float(U1(n[2]).x, -0.229416f), "Wrong component n[2].x = %f (expected %f)\n", U1(n[2]).x, -0.229416f);
+    ok(match_float(U2(n[2]).y, 0.688247f),  "Wrong component n[2].y = %f (expected %f)\n", U2(n[2]).y, 0.688247f);
+    ok(match_float(U3(n[2]).z, 0.688247f),  "Wrong component n[2].z = %f (expected %f)\n", U3(n[2]).z, 0.688247f);
+    ok(match_float(U1(n[3]).x, -0.577350f), "Wrong component n[3].x = %f (expected %f)\n", U1(n[3]).x, -0.577350f);
+    ok(match_float(U2(n[3]).y, 0.577350f),  "Wrong component n[3].y = %f (expected %f)\n", U2(n[3]).y, 0.577350f);
+    ok(match_float(U3(n[3]).z, 0.577350f),  "Wrong component n[3].z = %f (expected %f)\n", U3(n[3]).z, 0.577350f);
 
     /* Check that Load method generated default texture coordinates (0.0f, 0.0f) for each vertex */
     valu = 1.23f;
