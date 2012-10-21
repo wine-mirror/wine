@@ -2756,12 +2756,12 @@ static void shader_glsl_compare(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_conditional_move(const struct wined3d_shader_instruction *ins)
 {
+    const char *condition_prefix, *condition_suffix;
     struct wined3d_shader_dst_param dst;
     struct glsl_src_param src0_param;
     struct glsl_src_param src1_param;
     struct glsl_src_param src2_param;
     BOOL temp_destination = FALSE;
-    const char *condition_suffix;
     DWORD cmp_channel = 0;
     unsigned int i, j;
     char mask_char[6];
@@ -2770,15 +2770,23 @@ static void shader_glsl_conditional_move(const struct wined3d_shader_instruction
     switch (ins->handler_idx)
     {
         case WINED3DSIH_CMP:
+            condition_prefix = "";
             condition_suffix = " >= 0.0";
             break;
 
         case WINED3DSIH_CND:
+            condition_prefix = "";
             condition_suffix = " > 0.5";
+            break;
+
+        case WINED3DSIH_MOVC:
+            condition_prefix = "bool(";
+            condition_suffix = ")";
             break;
 
         default:
             FIXME("Unhandled instruction %#x.\n", ins->handler_idx);
+            condition_prefix = "<unhandled prefix>";
             condition_suffix = "<unhandled suffix>";
             break;
     }
@@ -2790,8 +2798,8 @@ static void shader_glsl_conditional_move(const struct wined3d_shader_instruction
         shader_glsl_add_src_param(ins, &ins->src[1], write_mask, &src1_param);
         shader_glsl_add_src_param(ins, &ins->src[2], write_mask, &src2_param);
 
-        shader_addline(ins->ctx->buffer, "%s%s ? %s : %s);\n",
-                src0_param.param_str, condition_suffix,
+        shader_addline(ins->ctx->buffer, "%s%s%s ? %s : %s);\n",
+                condition_prefix, src0_param.param_str, condition_suffix,
                 src1_param.param_str, src2_param.param_str);
         return;
     }
@@ -2837,8 +2845,8 @@ static void shader_glsl_conditional_move(const struct wined3d_shader_instruction
         shader_glsl_add_src_param(ins, &ins->src[1], write_mask, &src1_param);
         shader_glsl_add_src_param(ins, &ins->src[2], write_mask, &src2_param);
 
-        shader_addline(ins->ctx->buffer, "%s%s ? %s : %s);\n",
-                src0_param.param_str, condition_suffix,
+        shader_addline(ins->ctx->buffer, "%s%s%s ? %s : %s);\n",
+                condition_prefix, src0_param.param_str, condition_suffix,
                 src1_param.param_str, src2_param.param_str);
     }
 
@@ -5415,7 +5423,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_MIN                   */ shader_glsl_map2gl,
     /* WINED3DSIH_MOV                   */ shader_glsl_mov,
     /* WINED3DSIH_MOVA                  */ shader_glsl_mov,
-    /* WINED3DSIH_MOVC                  */ NULL,
+    /* WINED3DSIH_MOVC                  */ shader_glsl_conditional_move,
     /* WINED3DSIH_MUL                   */ shader_glsl_binop,
     /* WINED3DSIH_NOP                   */ shader_glsl_nop,
     /* WINED3DSIH_NRM                   */ shader_glsl_nrm,
