@@ -880,19 +880,6 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
     if (regs[0]>=0x00000001)   /* Check for supported cpuid version */
     {
         do_cpuid(0x00000001, regs2); /* get cpu features */
-        switch ((regs2[0] >> 8) & 0xf)  /* cpu family */
-        {
-        case 3: info->Level = 3;        break;
-        case 4: info->Level = 4;        break;
-        case 5: info->Level = 5;        break;
-        case 15: /* PPro/2/3/4 has same info as P1 */
-        case 6: info->Level = 6;         break;
-        default:
-            FIXME("unknown cpu family %d, please report! (-> setting to 386)\n",
-                  (regs2[0] >> 8)&0xf);
-            info->Level = 3;
-            break;
-        }
 
         if(regs2[3] & (1 << 3 )) info->FeatureSet |= CPU_FEATURE_PSE;
         if(regs2[3] & (1 << 4 )) info->FeatureSet |= CPU_FEATURE_TSC;
@@ -919,6 +906,10 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
 
         if (regs[1] == AUTH && regs[3] == ENTI && regs[2] == CAMD)
         {
+            info->Level = (regs2[0] >> 8) & 0xf; /* family */
+            if (info->Level == 0xf)  /* AMD says to add the extended family to the family if family is 0xf */
+                info->Level += (regs2[0] >> 20) & 0xff;
+
             do_cpuid(0x80000000, regs);  /* get vendor cpuid level */
             if (regs[0] >= 0x80000001)
             {
@@ -931,6 +922,9 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
         }
         else if (regs[1] == GENU && regs[3] == INEI && regs[2] == NTEL)
         {
+            info->Level = ((regs2[0] >> 8) & 0xf) + ((regs2[0] >> 20) & 0xff); /* family + extended family */
+            if(info->Level == 15) info->Level = 6;
+
             if(regs2[3] & (1 << 21)) info->FeatureSet |= CPU_FEATURE_DS;
             user_shared_data->ProcessorFeatures[PF_VIRT_FIRMWARE_ENABLED] = (regs2[2] & (1 << 5 )) >> 5;
 
@@ -940,6 +934,10 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
                 do_cpuid(0x80000001, regs2);  /* get vendor features */
                 user_shared_data->ProcessorFeatures[PF_NX_ENABLED] = (regs2[3] & (1 << 20 )) >> 20;
             }
+        }
+        else
+        {
+            info->Level = (regs2[0] >> 8) & 0xf; /* family */
         }
     }
 }
