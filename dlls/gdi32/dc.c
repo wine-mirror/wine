@@ -162,6 +162,10 @@ void free_dc_ptr( DC *dc )
         dc->physDev = physdev->next;
         physdev->funcs->pDeleteDC( physdev );
     }
+    GDI_dec_ref_count( dc->hPen );
+    GDI_dec_ref_count( dc->hBrush );
+    GDI_dec_ref_count( dc->hFont );
+    if (dc->hBitmap) GDI_dec_ref_count( dc->hBitmap );
     free_gdi_handle( dc->hSelf );
     free_dc_state( dc );
 }
