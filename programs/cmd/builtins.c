@@ -1677,6 +1677,54 @@ static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk) {
 }
 
 /**************************************************************************
+ * WCMD_parse_line
+ *
+ * When parsing file or string contents (for /f), once the string to parse
+ * hase been identified, handle the various options and call the do part
+ * if appropriate.
+ *
+ * Parameters:
+ *  cmdStart     [I]    - Identifies the list of commands making up the
+ *                           for loop body (especially if brackets in use)
+ *  firstCmd     [I]    - The textual start of the command after the DO
+ *                           which is within the first item of cmdStart
+ *  cmdEnd       [O]    - Identifies where to continue after the DO
+ *  variable     [I]    - The variable identified on the for line
+ *  buffer       [I]    - The string to parse
+ *  doExecuted   [O]    - Set to TRUE if the DO is ever executed once
+ *  forf_skip    [I/O]  - How many lines to skip first
+ */
+static void WCMD_parse_line(CMD_LIST *cmdStart,
+                            const WCHAR *firstCmd,
+                            CMD_LIST **cmdEnd,
+                            const WCHAR *variable,
+                            WCHAR *buffer,
+                            BOOL *doExecuted,
+                            int *forf_skip) {
+
+  WCHAR *parm, *where;
+
+  /* Skip lines if requested */
+  if (*forf_skip) {
+    (*forf_skip)--;
+    return;
+  }
+
+  /* Extract the parameter */
+  parm = WCMD_parameter (buffer, 0, &where, NULL, FALSE, FALSE);
+  WINE_TRACE("Parsed parameter: %s from %s\n", wine_dbgstr_w(parm),
+             wine_dbgstr_w(buffer));
+
+  if (where) {
+    CMD_LIST *thisCmdStart = cmdStart;
+    *doExecuted = TRUE;
+    WCMD_part_execute(&thisCmdStart, firstCmd, variable, parm, FALSE, TRUE);
+    *cmdEnd = thisCmdStart;
+  }
+
+}
+
+/**************************************************************************
  * WCMD_for
  *
  * Batch file loop processing.
@@ -1851,6 +1899,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
       /* Loop through all entries on the same line */
       WCHAR *item;
       WCHAR *itemStart;
+      WCHAR buffer[MAXSTRING];
 
       WINE_TRACE("Processing for set %p\n", thisSet);
       i = 0;
@@ -1970,33 +2019,11 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
             } else {
 
               WCHAR buffer[MAXSTRING];
-              WCHAR *where, *parm;
 
               while (WCMD_fgets(buffer, sizeof(buffer)/sizeof(WCHAR), input)) {
-
-                /* Skip lines if requested */
-                if (forf_skip) {
-                  forf_skip--;
-                  buffer[0] = 0;
-                  continue;
-                }
-
-                /* Skip blank lines*/
-                parm = WCMD_parameter (buffer, 0, &where, NULL, FALSE, FALSE);
-                WINE_TRACE("Parsed parameter: %s from %s\n", wine_dbgstr_w(parm),
-                           wine_dbgstr_w(buffer));
-
-                if (where) {
-                    /* FIXME: The following should be moved into its own routine and
-                       reused for the string literal parsing below                  */
-                    thisCmdStart = cmdStart;
-                    doExecuted = TRUE;
-                    WCMD_part_execute(&thisCmdStart, firstCmd, variable, parm, FALSE, TRUE);
-                    cmdEnd = thisCmdStart;
-                }
-
+                WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, variable, buffer, &doExecuted,
+                                &forf_skip);
                 buffer[0] = 0;
-
               }
               CloseHandle (input);
             }
@@ -2008,23 +2035,11 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
         /* Filesets - A string literal */
         } else if (doFileset && *itemStart == '"') {
-            WCHAR buffer[MAXSTRING];
-            WCHAR *where, *parm;
 
-            /* Skip blank lines, and re-extract parameter now string has quotes removed */
-            strcpyW(buffer, item);
-            parm = WCMD_parameter (buffer, 0, &where, NULL, FALSE, FALSE);
-            WINE_TRACE("Parsed parameter: %s from %s\n", wine_dbgstr_w(parm),
-                         wine_dbgstr_w(buffer));
-
-            if (where && forf_skip == 0) {
-                /* FIXME: The following should be moved into its own routine and
-                   reused for the string literal parsing below                  */
-                thisCmdStart = cmdStart;
-                doExecuted = TRUE;
-                WCMD_part_execute(&thisCmdStart, firstCmd, variable, parm, FALSE, TRUE);
-                cmdEnd = thisCmdStart;
-            }
+          /* Copy the item away from the global buffer used by WCMD_parameter */
+          strcpyW(buffer, item);
+          WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, variable, buffer, &doExecuted,
+                            &forf_skip);
         }
 
         WINE_TRACE("Post-command, cmdEnd = %p\n", cmdEnd);
