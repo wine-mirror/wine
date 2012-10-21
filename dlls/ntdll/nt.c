@@ -827,6 +827,13 @@ static inline void do_cpuid(unsigned int ax, unsigned int *p)
                 "popl %%ebx"
                 : "=a" (p[0]), "=S" (p[1]), "=c" (p[2]), "=d" (p[3])
                 :  "0" (ax));
+#elif defined(__x86_64__)
+	__asm__("push %%rbx\n\t"
+                "cpuid\n\t"
+                "movq %%rbx, %%rsi\n\t"
+                "pop %%rbx"
+                : "=a" (p[0]), "=S" (p[1]), "=c" (p[2]), "=d" (p[3])
+                :  "0" (ax));
 #endif
 }
 
@@ -848,6 +855,8 @@ static inline int have_cpuid(void)
                 : "=&r" (f1), "=&r" (f2)
                 : "ir" (0x00200000));
 	return ((f1^f2) & 0x00200000) != 0;
+#elif defined(__x86_64__)
+        return 1;
 #else
         return 0;
 #endif
