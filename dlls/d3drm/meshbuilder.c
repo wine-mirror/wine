@@ -1243,7 +1243,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
             if (size != data_size)
                 WARN("Returned size %u does not match expected one %u\n", size, data_size);
 
-            if (nb_materials > 2)
+            if (nb_materials > 1)
             {
                 FIXME("Only one material per mesh supported, first one applies to all faces\n");
                 nb_materials = 1;
