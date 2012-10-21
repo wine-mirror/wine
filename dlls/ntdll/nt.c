@@ -866,6 +866,49 @@ static inline int have_cpuid(void)
 #endif
 }
 
+/* Detect if a SSE2 processor is capable of Denormals Are Zero (DAZ) mode.
+ *
+ * This function assumes you have already checked for SSE2/FXSAVE support. */
+static inline int have_sse_daz_mode(void)
+{
+#ifdef __i386__
+    typedef struct DECLSPEC_ALIGN(16) _M128A {
+        ULONGLONG Low;
+        LONGLONG High;
+    } M128A;
+
+    typedef struct _XMM_SAVE_AREA32 {
+        WORD ControlWord;
+        WORD StatusWord;
+        BYTE TagWord;
+        BYTE Reserved1;
+        WORD ErrorOpcode;
+        DWORD ErrorOffset;
+        WORD ErrorSelector;
+        WORD Reserved2;
+        DWORD DataOffset;
+        WORD DataSelector;
+        WORD Reserved3;
+        DWORD MxCsr;
+        DWORD MxCsr_Mask;
+        M128A FloatRegisters[8];
+        M128A XmmRegisters[16];
+        BYTE Reserved4[96];
+    } XMM_SAVE_AREA32;
+
+    /* Intel says we need a zeroed 16-byte aligned buffer */
+    char buffer[512 + 16];
+    XMM_SAVE_AREA32 *state = (XMM_SAVE_AREA32 *)(((ULONG_PTR)buffer + 15) & ~15);
+    memset(buffer, 0, sizeof(buffer));
+
+    __asm__ __volatile__( "fxsave %0" : "=m" (*state) : "m" (*state) );
+
+    return (state->MxCsr_Mask & (1 << 6)) >> 6;
+#else /* all x86_64 processors include SSE2 with DAZ mode */
+    return 1;
+#endif
+}
+
 static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
 {
     unsigned int regs[4], regs2[4];
@@ -903,6 +946,9 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
         user_shared_data->ProcessorFeatures[PF_SSE3_INSTRUCTIONS_AVAILABLE]   = regs2[2] & 1;
         user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED]                 = (regs2[2] & (1 << 27)) >> 27;
         user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE128]           = (regs2[2] & (1 << 13)) >> 13;
+
+        if((regs2[3] & (1 << 26)) && (regs2[3] & (1 << 24))) /* has SSE2 and FXSAVE/FXRSTOR */
+            user_shared_data->ProcessorFeatures[PF_SSE_DAZ_MODE_AVAILABLE] = have_sse_daz_mode();
 
         if (regs[1] == AUTH && regs[3] == ENTI && regs[2] == CAMD)
         {
