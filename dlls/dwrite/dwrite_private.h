@@ -74,4 +74,5 @@ extern HRESULT create_textlayout(const WCHAR*,UINT32,IDWriteTextLayout**) DECLSP
 extern HRESULT create_gdiinterop(IDWriteGdiInterop**) DECLSPEC_HIDDEN;
 extern HRESULT create_localizedstrings(IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT add_localizedstring(IDWriteLocalizedStrings*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;
-extern HRESULT create_system_fontcollection(IDWriteFontCollection**) DECLSPEC_HIDDEN;
+extern HRESULT get_system_fontcollection(IDWriteFontCollection**) DECLSPEC_HIDDEN;
+extern void release_system_fontcollection(void) DECLSPEC_HIDDEN;

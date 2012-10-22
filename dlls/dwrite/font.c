@@ -129,12 +129,13 @@ typedef struct
 
 struct dwrite_fontcollection {
     IDWriteFontCollection IDWriteFontCollection_iface;
-    LONG ref;
 
     WCHAR **families;
     UINT32 count;
     int alloc;
 };
+
+static IDWriteFontCollection *system_collection;
 
 struct dwrite_fontfamily {
     IDWriteFontFamily IDWriteFontFamily_iface;
@@ -645,32 +646,14 @@ static HRESULT WINAPI dwritefontcollection_QueryInterface(IDWriteFontCollection 
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI dwritefontcollection_AddRef(IDWriteFontCollection *iface)
+static ULONG WINAPI dwritesysfontcollection_AddRef(IDWriteFontCollection *iface)
 {
-    struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
-    return ref;
+    return 2;
 }
 
-static ULONG WINAPI dwritefontcollection_Release(IDWriteFontCollection *iface)
+static ULONG WINAPI dwritesysfontcollection_Release(IDWriteFontCollection *iface)
 {
-    struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p)->(%d)\n", This, ref);
-
-    if (!ref)
-    {
-        int i;
-
-        for (i = 0; i < This->count; i++)
-            heap_free(This->families[i]);
-        heap_free(This->families);
-        heap_free(This);
-    }
-
-    return ref;
+    return 1;
 }
 
 static UINT32 WINAPI dwritefontcollection_GetFontFamilyCount(IDWriteFontCollection *iface)
@@ -715,10 +698,10 @@ static HRESULT WINAPI dwritefontcollection_GetFontFromFontFace(IDWriteFontCollec
     return E_NOTIMPL;
 }
 
-static const IDWriteFontCollectionVtbl fontcollectionvtbl = {
+static const IDWriteFontCollectionVtbl systemfontcollectionvtbl = {
     dwritefontcollection_QueryInterface,
-    dwritefontcollection_AddRef,
-    dwritefontcollection_Release,
+    dwritesysfontcollection_AddRef,
+    dwritesysfontcollection_Release,
     dwritefontcollection_GetFontFamilyCount,
     dwritefontcollection_GetFontFamily,
     dwritefontcollection_FindFamilyName,
@@ -749,35 +732,55 @@ static INT CALLBACK enum_font_families(const LOGFONTW *lf, const TEXTMETRICW *tm
     return add_family_syscollection(collection, lf->lfFaceName) == S_OK;
 }
 
-HRESULT create_system_fontcollection(IDWriteFontCollection **collection)
+static void release_font_collection(IDWriteFontCollection *iface)
 {
-    struct dwrite_fontcollection *This;
-    LOGFONTW lf;
-    HDC hdc;
+    struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection(iface);
+    int i;
 
-    *collection = NULL;
+    for (i = 0; i < This->count; i++)
+        heap_free(This->families[i]);
+    heap_free(This->families);
+    heap_free(This);
+}
 
-    This = heap_alloc(sizeof(struct dwrite_fontcollection));
-    if (!This) return E_OUTOFMEMORY;
+void release_system_fontcollection(void)
+{
+    release_font_collection(system_collection);
+}
 
-    This->IDWriteFontCollection_iface.lpVtbl = &fontcollectionvtbl;
-    This->ref = 1;
+HRESULT get_system_fontcollection(IDWriteFontCollection **collection)
+{
+    if (!system_collection)
+    {
+        struct dwrite_fontcollection *This;
+        LOGFONTW lf;
+        HDC hdc;
 
-    This->alloc = 50;
-    This->count = 0;
-    This->families = heap_alloc(This->alloc*sizeof(WCHAR*));
+        *collection = NULL;
 
-    TRACE("building system font collection:\n");
+        This = heap_alloc(sizeof(struct dwrite_fontcollection));
+        if (!This) return E_OUTOFMEMORY;
 
-    hdc = CreateCompatibleDC(0);
-    memset(&lf, 0, sizeof(lf));
-    lf.lfCharSet = DEFAULT_CHARSET;
-    lf.lfPitchAndFamily = DEFAULT_PITCH;
-    lf.lfFaceName[0] = 0;
-    EnumFontFamiliesExW(hdc, &lf, enum_font_families, (LPARAM)This, 0);
-    DeleteDC(hdc);
+        This->IDWriteFontCollection_iface.lpVtbl = &systemfontcollectionvtbl;
+        This->alloc = 50;
+        This->count = 0;
+        This->families = heap_alloc(This->alloc*sizeof(WCHAR*));
 
-    *collection = &This->IDWriteFontCollection_iface;
+        TRACE("building system font collection:\n");
+
+        hdc = CreateCompatibleDC(0);
+        memset(&lf, 0, sizeof(lf));
+        lf.lfCharSet = DEFAULT_CHARSET;
+        lf.lfPitchAndFamily = DEFAULT_PITCH;
+        lf.lfFaceName[0] = 0;
+        EnumFontFamiliesExW(hdc, &lf, enum_font_families, (LPARAM)This, 0);
+        DeleteDC(hdc);
+
+        if (InterlockedCompareExchangePointer((void**)&system_collection, &This->IDWriteFontCollection_iface, NULL))
+            release_font_collection(&This->IDWriteFontCollection_iface);
+    }
+
+    *collection = system_collection;
 
     return S_OK;
 }

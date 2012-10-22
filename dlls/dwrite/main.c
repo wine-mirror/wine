@@ -43,6 +43,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( hinstDLL );
         break;
+    case DLL_PROCESS_DETACH:
+        release_system_fontcollection();
+        break;
     }
     return TRUE;
 }
@@ -389,7 +392,7 @@ static HRESULT WINAPI dwritefactory_GetSystemFontCollection(IDWriteFactory *ifac
     if (check_for_updates)
         FIXME("checking for system font updates not implemented\n");
 
-    return create_system_fontcollection(collection);
+    return get_system_fontcollection(collection);
 }
 
 static HRESULT WINAPI dwritefactory_CreateCustomFontCollection(IDWriteFactory *iface,

@@ -525,13 +525,23 @@ todo_wine
 
 static void test_system_fontcollection(void)
 {
-    IDWriteFontCollection *collection;
+    IDWriteFontCollection *collection, *coll2;
     HRESULT hr;
     UINT32 i;
     BOOL ret;
 
     hr = IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &coll2, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(coll2 == collection, "got %p, was %p\n", coll2, collection);
+    IDWriteFontCollection_Release(coll2);
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &coll2, TRUE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(coll2 == collection, "got %p, was %p\n", coll2, collection);
+    IDWriteFontCollection_Release(coll2);
 
     i = IDWriteFontCollection_GetFontFamilyCount(collection);
     ok(i, "got %u\n", i);
