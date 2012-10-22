@@ -547,7 +547,6 @@ static BOOL service_run_main_thread(void)
         {
             services[wait_services[ret]]->thread = 0;
             CloseHandle( wait_handles[ret] );
-            if (n == 5) return TRUE; /* it was the last running thread */
         }
         else return FALSE;
     }
