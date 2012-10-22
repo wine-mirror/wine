@@ -255,7 +255,6 @@ static void set_desktop_window_title( HWND hwnd, const WCHAR *name )
 /* main desktop management function */
 void manage_desktop( WCHAR *arg )
 {
-    static const WCHAR defaultW[] = {'D','e','f','a','u','l','t',0};
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
     MSG msg;
     HWND hwnd, msg_hwnd;
@@ -287,27 +286,6 @@ void manage_desktop( WCHAR *arg )
     else if ((name = get_default_desktop_name()))
     {
         if (!get_default_desktop_size( name, &width, &height )) width = height = 0;
-    }
-    else  /* check for the X11 driver key for backwards compatibility (to be removed) */
-    {
-        static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
-        static const WCHAR x11_keyW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                         'X','1','1',' ','D','r','i','v','e','r',0};
-        HKEY hkey;
-        WCHAR buffer[64];
-        DWORD size = sizeof(buffer);
-
-        width = height = 0;
-        /* @@ Wine registry key: HKCU\Software\Wine\X11 Driver */
-        if (!RegOpenKeyW( HKEY_CURRENT_USER, x11_keyW, &hkey ))
-        {
-            if (!RegQueryValueExW( hkey, desktopW, 0, NULL, (LPBYTE)buffer, &size ))
-            {
-                name = defaultW;
-                if (!parse_size( buffer, &width, &height )) width = height = 0;
-            }
-            RegCloseKey( hkey );
-        }
     }
 
     if (name && width && height) xwin = create_desktop( name, width, height );
