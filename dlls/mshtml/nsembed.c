@@ -1418,7 +1418,7 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
 
     TRACE("(%p)->(%08x %p %p)\n", This, aContextFlags, aEvent, aNode);
 
-    fire_event(This->doc->basedoc.doc_node /* FIXME */, EVENTID_CONTEXTMENU, TRUE, aNode, aEvent);
+    fire_event(This->doc->basedoc.doc_node /* FIXME */, EVENTID_CONTEXTMENU, TRUE, aNode, aEvent, NULL);
 
     nsres = nsIDOMEvent_QueryInterface(aEvent, &IID_nsIDOMMouseEvent, (void**)&event);
     if(NS_FAILED(nsres)) {

@@ -1033,7 +1033,8 @@ static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, 
     }
 }
 
-static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *event_obj, nsIDOMNode *target)
+static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *event_obj,
+        nsIDOMNode *target, IDispatch *script_this)
 {
     IHTMLEventObj *prev_event;
     nsIDOMNode *parent, *nsnode;
@@ -1060,7 +1061,7 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
             hres = get_node(doc, nsnode, FALSE, &node);
             if(SUCCEEDED(hres) && node) {
                 call_event_handlers(doc, event_obj, *get_node_event_target(node),
-                        node->cp_container, eid, (IDispatch*)&node->IHTMLDOMNode_iface);
+                        node->cp_container, eid, script_this ? script_this : (IDispatch*)&node->IHTMLDOMNode_iface);
                 node_release(node);
             }
 
@@ -1089,7 +1090,7 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
                 hres = get_node(doc, (nsIDOMNode*)nsbody, FALSE, &node);
                 if(SUCCEEDED(hres) && node) {
                     call_event_handlers(doc, event_obj, *get_node_event_target(node),
-                            node->cp_container, eid, (IDispatch*)&node->IHTMLDOMNode_iface);
+                            node->cp_container, eid, script_this ? script_this : (IDispatch*)&node->IHTMLDOMNode_iface);
                     node_release(node);
                 }
                 nsIDOMHTMLElement_Release(nsbody);
@@ -1099,7 +1100,7 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
         }
 
         call_event_handlers(doc, event_obj, doc->node.event_target, &doc->basedoc.cp_container, eid,
-                (IDispatch*)&doc->basedoc.IHTMLDocument2_iface);
+                script_this ? script_this : (IDispatch*)&doc->basedoc.IHTMLDocument2_iface);
         break;
 
     default:
@@ -1148,7 +1149,8 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
     }
 }
 
-void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode *target, nsIDOMEvent *nsevent)
+void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode *target, nsIDOMEvent *nsevent,
+        IDispatch *script_this)
 {
     HTMLEventObj *event_obj = NULL;
     HTMLDOMNode *node;
@@ -1171,7 +1173,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
         }
     }
 
-    fire_event_obj(doc, eid, event_obj, target);
+    fire_event_obj(doc, eid, event_obj, target, script_this);
 
     if(event_obj)
         IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
@@ -1216,7 +1218,7 @@ HRESULT dispatch_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *even
     if(event_obj) {
         hres = set_event_info(event_obj, node, eid, NULL);
         if(SUCCEEDED(hres))
-            fire_event_obj(node->doc, eid, event_obj, node->nsnode);
+            fire_event_obj(node->doc, eid, event_obj, node->nsnode, NULL);
 
         IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
         if(FAILED(hres))
@@ -1227,7 +1229,7 @@ HRESULT dispatch_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *even
             return E_NOTIMPL;
         }
 
-        fire_event(node->doc, eid, TRUE, node->nsnode, NULL);
+        fire_event(node->doc, eid, TRUE, node->nsnode, NULL, NULL);
     }
 
     *cancelled = VARIANT_TRUE; /* FIXME */
@@ -1246,7 +1248,7 @@ HRESULT call_fire_event(HTMLDOMNode *node, eventid_t eid)
             return hres;
     }
 
-    fire_event(node->doc, eid, TRUE, node->nsnode, NULL);
+    fire_event(node->doc, eid, TRUE, node->nsnode, NULL, NULL);
     return S_OK;
 }
 
