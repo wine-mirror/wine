@@ -84,6 +84,53 @@ struct sc_lock
     struct scmdatabase *db;
 };
 
+static HANDLE timeout_queue_event;
+static CRITICAL_SECTION timeout_queue_cs;
+static CRITICAL_SECTION_DEBUG timeout_queue_cs_debug =
+{
+    0, 0, &timeout_queue_cs,
+    { &timeout_queue_cs_debug.ProcessLocksList, &timeout_queue_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": timeout_queue_cs") }
+};
+static CRITICAL_SECTION timeout_queue_cs = { &timeout_queue_cs_debug, -1, 0, 0, 0, 0 };
+static struct list timeout_queue = LIST_INIT(timeout_queue);
+struct timeout_queue_elem
+{
+    struct list entry;
+
+    FILETIME time;
+    void (*func)(struct service_entry*);
+    struct service_entry *service_entry;
+};
+
+static void run_after_timeout(void (*func)(struct service_entry*), struct service_entry *service, DWORD timeout)
+{
+    struct timeout_queue_elem *elem = HeapAlloc(GetProcessHeap(), 0, sizeof(struct timeout_queue_elem));
+    ULARGE_INTEGER time;
+
+    if(!elem) {
+        func(service);
+        return;
+    }
+
+    service->ref_count++;
+    elem->func = func;
+    elem->service_entry = service;
+
+    GetSystemTimeAsFileTime(&elem->time);
+    time.LowPart = elem->time.dwLowDateTime;
+    time.HighPart = elem->time.dwHighDateTime;
+    time.QuadPart += timeout*10000000;
+    elem->time.dwLowDateTime = time.LowPart;
+    elem->time.dwHighDateTime = time.HighPart;
+
+    EnterCriticalSection(&timeout_queue_cs);
+    list_add_head(&timeout_queue, &elem->entry);
+    LeaveCriticalSection(&timeout_queue_cs);
+
+    SetEvent(timeout_queue_event);
+}
+
 static void free_service_strings(struct service_entry *old, struct service_entry *new)
 {
     QUERY_SERVICE_CONFIGW *old_cfg = &old->config;
@@ -700,7 +747,7 @@ DWORD __cdecl svcctl_SetServiceStatus(
     service_unlock(service->service_entry);
 
     if (lpServiceStatus->dwCurrentState == SERVICE_STOPPED)
-        service_terminate(service->service_entry);
+        run_after_timeout(service_terminate, service->service_entry, service_kill_timeout);
     else if (service->service_entry->status_changed_event)
         SetEvent(service->service_entry->status_changed_event);
 
@@ -1567,10 +1614,16 @@ DWORD RPC_Init(void)
     return ERROR_SUCCESS;
 }
 
-DWORD RPC_MainLoop(void)
+DWORD events_loop(void)
 {
+    struct timeout_queue_elem *iter, *iter_safe;
     DWORD err;
-    HANDLE hExitEvent = __wine_make_process_system();
+    HANDLE wait_handles[2];
+    DWORD timeout = INFINITE;
+
+    wait_handles[0] = __wine_make_process_system();
+    wait_handles[1] = CreateEventW(NULL, FALSE, FALSE, NULL);
+    timeout_queue_event = wait_handles[1];
 
     SetEvent(g_hStartedEvent);
 
@@ -1578,12 +1631,67 @@ DWORD RPC_MainLoop(void)
 
     do
     {
-        err = WaitForSingleObjectEx(hExitEvent, INFINITE, TRUE);
+        err = WaitForMultipleObjects(2, wait_handles, FALSE, timeout);
         WINE_TRACE("Wait returned %d\n", err);
+
+        if(err==WAIT_OBJECT_0+1 || err==WAIT_TIMEOUT)
+        {
+            FILETIME cur_time;
+            ULARGE_INTEGER time;
+
+            GetSystemTimeAsFileTime(&cur_time);
+            time.LowPart = cur_time.dwLowDateTime;
+            time.HighPart = cur_time.dwHighDateTime;
+
+            EnterCriticalSection(&timeout_queue_cs);
+            timeout = INFINITE;
+            LIST_FOR_EACH_ENTRY_SAFE(iter, iter_safe, &timeout_queue, struct timeout_queue_elem, entry)
+            {
+                if(CompareFileTime(&cur_time, &iter->time) >= 0)
+                {
+                    LeaveCriticalSection(&timeout_queue_cs);
+                    iter->func(iter->service_entry);
+                    EnterCriticalSection(&timeout_queue_cs);
+
+                    release_service(iter->service_entry);
+                    list_remove(&iter->entry);
+                    HeapFree(GetProcessHeap(), 0, iter);
+                }
+                else
+                {
+                    ULARGE_INTEGER time_diff;
+
+                    time_diff.LowPart = iter->time.dwLowDateTime;
+                    time_diff.HighPart = iter->time.dwHighDateTime;
+                    time_diff.QuadPart = (time_diff.QuadPart-time.QuadPart)/10000;
+
+                    if(time_diff.QuadPart < timeout)
+                        timeout = time_diff.QuadPart;
+                }
+            }
+            LeaveCriticalSection(&timeout_queue_cs);
+
+            if(timeout != INFINITE)
+                timeout += 1000;
+        }
     } while (err != WAIT_OBJECT_0);
 
     WINE_TRACE("Object signaled - wine shutdown\n");
-    CloseHandle(hExitEvent);
+    EnterCriticalSection(&timeout_queue_cs);
+    LIST_FOR_EACH_ENTRY_SAFE(iter, iter_safe, &timeout_queue, struct timeout_queue_elem, entry)
+    {
+        LeaveCriticalSection(&timeout_queue_cs);
+        iter->func(iter->service_entry);
+        EnterCriticalSection(&timeout_queue_cs);
+
+        release_service(iter->service_entry);
+        list_remove(&iter->entry);
+        HeapFree(GetProcessHeap(), 0, iter);
+    }
+    LeaveCriticalSection(&timeout_queue_cs);
+
+    CloseHandle(wait_handles[0]);
+    CloseHandle(wait_handles[1]);
     return ERROR_SUCCESS;
 }
 

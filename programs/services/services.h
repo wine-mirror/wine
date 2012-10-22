@@ -88,7 +88,7 @@ extern DWORD service_pipe_timeout;
 extern DWORD service_kill_timeout;
 
 DWORD RPC_Init(void);
-DWORD RPC_MainLoop(void);
+DWORD events_loop(void);
 
 /* from utils.c */
 LPWSTR strdupW(LPCWSTR str);

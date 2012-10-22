@@ -40,7 +40,7 @@ HANDLE g_hStartedEvent;
 struct scmdatabase *active_database;
 
 DWORD service_pipe_timeout = 10000;
-DWORD service_kill_timeout = 20000;
+DWORD service_kill_timeout = 60000;
 static DWORD default_preshutdown_timeout = 180000;
 static void *env = NULL;
 
@@ -914,7 +914,7 @@ int main(int argc, char *argv[])
     if ((err = RPC_Init()) == ERROR_SUCCESS)
     {
         scmdatabase_autostart_services(active_database);
-        RPC_MainLoop();
+        events_loop();
         scmdatabase_wait_terminate(active_database);
     }
     scmdatabase_destroy(active_database);
