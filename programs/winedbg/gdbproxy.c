@@ -1547,7 +1547,7 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
     assert(gdbctx->in_trap);
 
     reg = strtoul(gdbctx->in_packet, &ptr, 16);
-    if (ptr == NULL || reg > cpu_num_regs || *ptr++ != '=')
+    if (ptr == NULL || reg >= cpu_num_regs || *ptr++ != '=')
     {
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
             fprintf(stderr, "Invalid register index %s\n", gdbctx->in_packet);
