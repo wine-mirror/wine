@@ -113,6 +113,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
   HeapFree(GetProcessHeap(), 0, context->batchfileW);
   LocalFree (context);
   if ((prev_context != NULL) && (!called)) {
+    WINE_TRACE("Batch completed, but was not 'called' so skipping outer batch too\n");
     prev_context -> skip_rest = TRUE;
     context = prev_context;
   }

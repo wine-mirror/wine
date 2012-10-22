@@ -1583,7 +1583,7 @@ static BOOL WCMD_parse_forf_options(WCHAR *options, WCHAR *eol, int *skip,
                        usebackqW, sizeof(usebackqW)/sizeof(WCHAR)) == CSTR_EQUAL) {
       *usebackq = TRUE;
       pos = pos + sizeof(usebackqW)/sizeof(WCHAR);
-      WINE_FIXME("Found usebackq\n");
+      WINE_TRACE("Found usebackq\n");
 
     /* Save the supplied delims. Slightly odd as space can be a delimiter but only
        if you finish the optionsroot string with delims= otherwise the space is
@@ -1727,6 +1727,67 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
 }
 
 /**************************************************************************
+ * WCMD_forf_getinputhandle
+ *
+ * Return a file handle which can be used for reading the input lines,
+ * either to a specific file (which may be quote delimited as we have to
+ * read the parameters in raw mode) or to a command which we need to
+ * execute. The command being executed runs in its own shell and stores
+ * its data in a temporary file.
+ *
+ * Parameters:
+ *  usebackq     [I]    - Indicates whether usebackq is in effect or not
+ *  itemStr      [I]    - The item to be handled, either a filename or
+ *                           whole command string to execute
+ *  iscmd        [I]    - Identifies whether this is a command or not
+ *
+ * Returns a file handle which can be used to read the input lines from.
+ */
+HANDLE WCMD_forf_getinputhandle(BOOL usebackq, WCHAR *itemstr, BOOL iscmd) {
+  WCHAR  temp_str[MAX_PATH];
+  WCHAR  temp_file[MAX_PATH];
+  WCHAR  temp_cmd[MAXSTRING];
+  HANDLE hinput = INVALID_HANDLE_VALUE;
+  static const WCHAR redirOutW[]  = {'>','%','s','\0'};
+  static const WCHAR cmdW[]       = {'C','M','D','\0'};
+  static const WCHAR cmdslashcW[] = {'C','M','D','.','E','X','E',' ',
+                                     '/','C',' ','"','%','s','"','\0'};
+
+  /* Remove leading and trailing character */
+  if ((iscmd && (itemstr[0] == '`' && usebackq)) ||
+      (iscmd && (itemstr[0] == '\'' && !usebackq)) ||
+      (!iscmd && (itemstr[0] == '"' && usebackq)))
+  {
+    itemstr[strlenW(itemstr)-1] = 0x00;
+    itemstr++;
+  }
+
+  if (iscmd) {
+    /* Get temp filename */
+    GetTempPathW(sizeof(temp_str)/sizeof(WCHAR), temp_str);
+    GetTempFileNameW(temp_str, cmdW, 0, temp_file);
+
+    /* Redirect output to the temporary file */
+    wsprintfW(temp_str, redirOutW, temp_file);
+    wsprintfW(temp_cmd, cmdslashcW, itemstr);
+    WINE_TRACE("Issuing '%s' with redirs '%s'\n",
+               wine_dbgstr_w(temp_cmd), wine_dbgstr_w(temp_str));
+    WCMD_execute (temp_cmd, temp_str, NULL, NULL, NULL, FALSE);
+
+    /* Open the file, read line by line and process */
+    hinput = CreateFileW(temp_file, GENERIC_READ, FILE_SHARE_READ,
+                        NULL, OPEN_EXISTING, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+
+  } else {
+    /* Open the file, read line by line and process */
+    WINE_TRACE("Reading input to parse from '%s'\n", wine_dbgstr_w(itemstr));
+    hinput = CreateFileW(itemstr, GENERIC_READ, FILE_SHARE_READ,
+                        NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  }
+  return hinput;
+}
+
+/**************************************************************************
  * WCMD_for
  *
  * Batch file loop processing.
@@ -1764,7 +1825,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   int    forf_skip = 0;
   WCHAR  forf_delims[256];
   WCHAR  forf_tokens[MAXSTRING];
-  BOOL   forf_usebackq;
+  BOOL   forf_usebackq = FALSE;
 
   /* Handle optional qualifiers (multiple are allowed) */
   WCHAR *thisArg = WCMD_parameter(p, parameterNo++, NULL, NULL, FALSE, FALSE);
@@ -1974,41 +2035,25 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
             /* else ignore them! */
 
         /* Filesets - either a list of files, or a command to run and parse the output */
-        } else if (doFileset && *itemStart != '"') {
+        } else if (doFileset && ((!forf_usebackq && *itemStart != '"') ||
+                                 (forf_usebackq && *itemStart != '\''))) {
 
             HANDLE input;
-            WCHAR temp_file[MAX_PATH];
 
             WINE_TRACE("Processing for filespec from item %d '%s'\n", itemNum,
                        wine_dbgstr_w(item));
 
             /* If backquote or single quote, we need to launch that command
                and parse the results - use a temporary file                 */
-            if (*itemStart == '`' || *itemStart == '\'') {
+            if ((forf_usebackq && *itemStart == '`') ||
+                (!forf_usebackq && *itemStart == '\'')) {
 
-                WCHAR temp_path[MAX_PATH], temp_cmd[MAXSTRING];
-                static const WCHAR redirOut[] = {'>','%','s','\0'};
-                static const WCHAR cmdW[]     = {'C','M','D','\0'};
-
-                /* Remove trailing character */
-                itemStart[strlenW(itemStart)-1] = 0x00;
-
-                /* Get temp filename */
-                GetTempPathW(sizeof(temp_path)/sizeof(WCHAR), temp_path);
-                GetTempFileNameW(temp_path, cmdW, 0, temp_file);
-
-                /* Execute program and redirect output */
-                wsprintfW(temp_cmd, redirOut, (itemStart+1), temp_file);
-                WCMD_execute (itemStart, temp_cmd, NULL, NULL, NULL, FALSE);
-
-                /* Open the file, read line by line and process */
-                input = CreateFileW(temp_file, GENERIC_READ, FILE_SHARE_READ,
-                                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+              /* Use itemstart because the command is the whole set, not just the first token */
+              input = WCMD_forf_getinputhandle(forf_usebackq, itemStart, TRUE);
             } else {
 
-                /* Open the file, read line by line and process */
-                input = CreateFileW(item, GENERIC_READ, FILE_SHARE_READ,
-                                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+              /* Use item because the file to process is just the first item in the set */
+              input = WCMD_forf_getinputhandle(forf_usebackq, item, FALSE);
             }
 
             /* Process the input file */
@@ -2020,8 +2065,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
             } else {
 
-              WCHAR buffer[MAXSTRING];
-
+              /* Read line by line until end of file */
               while (WCMD_fgets(buffer, sizeof(buffer)/sizeof(WCHAR), input)) {
                 WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, variable, buffer, &doExecuted,
                                 &forf_skip, forf_eol);
@@ -2030,13 +2074,9 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
               CloseHandle (input);
             }
 
-            /* Delete the temporary file */
-            if (*itemStart == '`' || *itemStart == '\'') {
-                DeleteFileW(temp_file);
-            }
-
         /* Filesets - A string literal */
-        } else if (doFileset && *itemStart == '"') {
+        } else if (doFileset && ((!forf_usebackq && *itemStart == '"') ||
+                                 (forf_usebackq && *itemStart == '\''))) {
 
           /* Copy the item away from the global buffer used by WCMD_parameter */
           strcpyW(buffer, item);

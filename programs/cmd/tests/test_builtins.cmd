@@ -1147,9 +1147,17 @@ echo.>> bar
 echo kkk>>bar
 for /f %%k in (foo bar) do echo %%k
 for /f %%k in (bar foo) do echo %%k
-rem echo ------ command argument
-rem Not implemented on NT4
-rem FIXME: Not testable right now in wine: not implemented and would need
+echo ------ command argument
+rem Not implemented on NT4, need to skip it as no way to get output otherwise
+if "%CD%"=="" goto :SkipFORFcmdNT4
+for /f %%i in ('echo.Passed1') do echo %%i
+for /f "usebackq" %%i in (`echo.Passed2`) do echo %%i
+for /f usebackq %%i in (`echo.Passed3`) do echo %%i
+goto :ContinueFORF
+:SkipFORFcmdNT4
+for /l %%i in (1,1,3) do echo Missing functionality - Broken%%i
+:ContinueFORF
+rem FIXME: Rest not testable right now in wine: not implemented and would need
 rem preliminary grep-like program implementation (e.g. like findstr or fc) even
 rem for a simple todo_wine test
 rem (for /f "usebackq" %%i in (`echo z a b`) do echo %%i) || echo not supported

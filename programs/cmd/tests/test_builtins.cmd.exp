@@ -809,6 +809,10 @@ kkk
 a
 b
 c
+------ command argument
+Passed1@or_broken@Missing functionality - Broken1
+Passed2@or_broken@Missing functionality - Broken2
+Passed3@or_broken@Missing functionality - Broken3
 ------ eol option
 and@or_broken@Broken NT4 functionality1
 Line@or_broken@Broken NT4 functionality2
