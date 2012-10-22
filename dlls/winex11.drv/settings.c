@@ -35,11 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11settings);
 
-/*
- * The DDHALMODEINFO type is used to hold all the mode information.  
- * This is done because the array of DDHALMODEINFO structures must be 
- * created for use by DirectDraw anyway.
- */
 static struct x11drv_mode_info *dd_modes = NULL;
 static unsigned int dd_mode_count = 0;
 static unsigned int dd_max_modes = 0;

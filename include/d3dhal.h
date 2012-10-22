@@ -47,9 +47,6 @@ typedef struct _D3DDeviceDesc_V1 {
   DWORD			dwMaxVertexCount;
 } D3DDEVICEDESC_V1,*LPD3DDEVICEDESC_V1;
 
-/* this is to allow keeping the bulk of our OpenGL code out of x11drv */
-#define D3DDD_WINE_OPENGL_DEVICE 0x00008000
-
 typedef struct _D3DHAL_GLOBALDRIVERDATA {
   DWORD			dwSize;
   D3DDEVICEDESC_V1	hwCaps;
