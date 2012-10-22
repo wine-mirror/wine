@@ -25,6 +25,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/debug.h"
+#include "wine/gdi_driver.h"
 
 #include "user_private.h"
 
@@ -36,38 +37,18 @@ static DWORD driver_load_error;
 /* load the graphics driver */
 static const USER_DRIVER *load_driver(void)
 {
-    char buffer[MAX_PATH], libname[32], *name, *next;
-    HKEY hkey;
+    static const WCHAR displayW[] = {'D','I','S','P','L','A','Y',0};
+    HDC hdc;
     void *ptr;
     HMODULE graphics_driver;
     USER_DRIVER *driver, *prev;
 
-    strcpy( buffer, "x11" );  /* default value */
-    /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
-    if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Drivers", &hkey ))
-    {
-        DWORD type, count = sizeof(buffer);
-        RegQueryValueExA( hkey, "Graphics", 0, &type, (LPBYTE) buffer, &count );
-        RegCloseKey( hkey );
-    }
-
-    name = buffer;
-    while (name)
-    {
-        next = strchr( name, ',' );
-        if (next) *next++ = 0;
-
-        snprintf( libname, sizeof(libname), "wine%s.drv", name );
-        if ((graphics_driver = LoadLibraryA( libname )) != 0) break;
-        name = next;
-    }
-
-    if (!graphics_driver)
-        driver_load_error = GetLastError();
-
     driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver) );
     *driver = null_driver;
 
+    hdc = CreateDCW( displayW, NULL, NULL, NULL );
+
+    graphics_driver = __wine_get_driver_module( hdc );
     if (graphics_driver)
     {
 #define GET_USER_FUNC(name) \
@@ -129,15 +110,18 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(WindowPosChanged);
 #undef GET_USER_FUNC
     }
+    else driver_load_error = GetLastError();
 
     prev = InterlockedCompareExchangePointer( (void **)&USER_Driver, driver, &lazy_load_driver );
     if (prev != &lazy_load_driver)
     {
         /* another thread beat us to it */
         HeapFree( GetProcessHeap(), 0, driver );
-        FreeLibrary( graphics_driver );
         driver = prev;
     }
+    else LdrAddRefDll( 0, graphics_driver );
+
+    DeleteDC( hdc );
     return driver;
 }
 
@@ -334,7 +318,7 @@ static BOOL CDECL nulldrv_CreateWindow( HWND hwnd )
     switch (driver_load_error)
     {
     case ERROR_MOD_NOT_FOUND:
-        MESSAGE( "The X11 driver is missing.  Check your build!\n" );
+        MESSAGE( "The graphics driver is missing. Check your build!\n" );
         break;
     case ERROR_DLL_INIT_FAILED:
         MESSAGE( "Make sure that your X server is running and that $DISPLAY is set correctly.\n" );
