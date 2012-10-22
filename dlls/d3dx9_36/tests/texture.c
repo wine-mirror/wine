@@ -1135,6 +1135,20 @@ static void test_D3DXFillTexture(IDirect3DDevice9 *device)
     }
     else
         skip("Failed to create D3DFMT_A32B32G32R32F texture\n");
+
+    /* test a compressed texture */
+    hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_DXT1,
+                                        D3DPOOL_MANAGED, &tex, NULL);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFillTexture(tex, fillfunc, NULL);
+        todo_wine ok(hr == D3D_OK, "D3DXFillTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+        IDirect3DTexture9_Release(tex);
+    }
+    else
+        skip("Failed to create D3DFMT_DXT1 texture\n");
 }
 
 static void WINAPI fillfunc_cube(D3DXVECTOR4 *value, const D3DXVECTOR3 *texcoord,
