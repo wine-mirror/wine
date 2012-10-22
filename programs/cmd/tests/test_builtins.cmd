@@ -1155,6 +1155,17 @@ rem for a simple todo_wine test
 rem (for /f "usebackq" %%i in (`echo z a b`) do echo %%i) || echo not supported
 rem (for /f usebackq %%i in (`echo z a b`) do echo %%i) || echo not supported
 echo ------ eol option
+if "%CD%"=="" goto :SkipFORFeolNT4
+echo Line one>foo
+echo and Line two>>foo
+echo Line three>>foo
+for /f "eol=L" %%i in (foo) do echo %%i
+for /f "eol=a" %%i in (foo) do echo %%i
+del foo
+goto :ContinueFORFeol
+:SkipFORFeolNT4
+for /l %%i in (1,1,3) do echo Broken NT4 functionality%%i
+:ContinueFORFeol
 for /f "eol=@" %%i in ("    ad") do echo %%i
 for /f "eol=@" %%i in (" z@y") do echo %%i
 for /f "eol=|" %%i in ("a|d") do echo %%i

@@ -1565,7 +1565,7 @@ static BOOL WCMD_parse_forf_options(WCHAR *options, WCHAR *eol, int *skip,
                        eolW, sizeof(eolW)/sizeof(WCHAR)) == CSTR_EQUAL) {
       *eol = *(pos + sizeof(eolW)/sizeof(WCHAR));
       pos = pos + sizeof(eolW)/sizeof(WCHAR) + 1;
-      WINE_FIXME("Found eol as %c(%x)\n", *eol, *eol);
+      WINE_TRACE("Found eol as %c(%x)\n", *eol, *eol);
 
     /* Save number of lines to skip (Can be in base 10, hex (0x...) or octal (0xx) */
     } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
@@ -1680,7 +1680,7 @@ static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk) {
  * WCMD_parse_line
  *
  * When parsing file or string contents (for /f), once the string to parse
- * hase been identified, handle the various options and call the do part
+ * has been identified, handle the various options and call the do part
  * if appropriate.
  *
  * Parameters:
@@ -1693,14 +1693,16 @@ static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk) {
  *  buffer       [I]    - The string to parse
  *  doExecuted   [O]    - Set to TRUE if the DO is ever executed once
  *  forf_skip    [I/O]  - How many lines to skip first
+ *  forf_eol     [I]    - The 'end of line' (comment) character
  */
-static void WCMD_parse_line(CMD_LIST *cmdStart,
+static void WCMD_parse_line(CMD_LIST    *cmdStart,
                             const WCHAR *firstCmd,
-                            CMD_LIST **cmdEnd,
+                            CMD_LIST   **cmdEnd,
                             const WCHAR *variable,
-                            WCHAR *buffer,
-                            BOOL *doExecuted,
-                            int *forf_skip) {
+                            WCHAR       *buffer,
+                            BOOL        *doExecuted,
+                            int         *forf_skip,
+                            WCHAR        forf_eol) {
 
   WCHAR *parm, *where;
 
@@ -1715,7 +1717,7 @@ static void WCMD_parse_line(CMD_LIST *cmdStart,
   WINE_TRACE("Parsed parameter: %s from %s\n", wine_dbgstr_w(parm),
              wine_dbgstr_w(buffer));
 
-  if (where) {
+  if (where && where[0] != forf_eol) {
     CMD_LIST *thisCmdStart = cmdStart;
     *doExecuted = TRUE;
     WCMD_part_execute(&thisCmdStart, firstCmd, variable, parm, FALSE, TRUE);
@@ -2022,7 +2024,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
               while (WCMD_fgets(buffer, sizeof(buffer)/sizeof(WCHAR), input)) {
                 WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, variable, buffer, &doExecuted,
-                                &forf_skip);
+                                &forf_skip, forf_eol);
                 buffer[0] = 0;
               }
               CloseHandle (input);
@@ -2039,7 +2041,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
           /* Copy the item away from the global buffer used by WCMD_parameter */
           strcpyW(buffer, item);
           WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, variable, buffer, &doExecuted,
-                            &forf_skip);
+                            &forf_skip, forf_eol);
         }
 
         WINE_TRACE("Post-command, cmdEnd = %p\n", cmdEnd);

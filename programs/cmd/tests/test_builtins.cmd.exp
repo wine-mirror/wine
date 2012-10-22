@@ -810,6 +810,9 @@ a
 b
 c
 ------ eol option
+and@or_broken@Broken NT4 functionality1
+Line@or_broken@Broken NT4 functionality2
+Line@or_broken@Broken NT4 functionality3
 @todo_wine@ad
 @todo_wine@z@y
 a|d
