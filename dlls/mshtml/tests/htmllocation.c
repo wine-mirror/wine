@@ -129,6 +129,12 @@ static void test_href(IHTMLLocation *loc, const struct location_test *test)
                 "%s: expected retrieved href to be L\"%s\", was: %s\n",
                 test->name, test->href, wine_dbgstr_w(str));
     SysFreeString(str);
+
+    hres = IHTMLLocation_toString(loc, &str);
+    ok(hres == S_OK, "%s: toString failed: 0x%08x\n", test->name, hres);
+    ok(str_eq_wa(str, test->href), "%s: toString returned %s, expected %s\n",
+       test->name, wine_dbgstr_w(str), test->href);
+    SysFreeString(str);
 }
 
 static void test_protocol(IHTMLLocation *loc, const struct location_test *test)

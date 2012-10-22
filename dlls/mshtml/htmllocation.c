@@ -583,8 +583,10 @@ static HRESULT WINAPI HTMLLocation_assign(IHTMLLocation *iface, BSTR bstr)
 static HRESULT WINAPI HTMLLocation_toString(IHTMLLocation *iface, BSTR *String)
 {
     HTMLLocation *This = impl_from_IHTMLLocation(iface);
-    FIXME("(%p)->(%p)\n", This, String);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, String);
+
+    return IHTMLLocation_get_href(&This->IHTMLLocation_iface, String);
 }
 
 static const IHTMLLocationVtbl HTMLLocationVtbl = {
