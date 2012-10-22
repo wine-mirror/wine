@@ -86,6 +86,7 @@ static CRITICAL_SECTION service_cs = { &service_cs_debug, -1, 0, 0, 0, 0 };
 static service_data **services;
 static unsigned int nb_services;
 static HANDLE service_event;
+static HANDLE stop_event;
 
 extern HANDLE CDECL __wine_make_process_system(void);
 
@@ -465,11 +466,13 @@ static BOOL service_run_main_thread(void)
     UINT wait_services[MAXIMUM_WAIT_OBJECTS];
 
     service_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    stop_event = CreateEventW( NULL, FALSE, FALSE, NULL );
 
     /* FIXME: service_control_dispatcher should be merged into the main thread */
     wait_handles[0] = __wine_make_process_system();
     wait_handles[1] = CreateThread( NULL, 0, service_control_dispatcher, NULL, 0, NULL );
     wait_handles[2] = service_event;
+    wait_handles[3] = stop_event;
 
     TRACE("Starting %d services running as process %d\n",
           nb_services, GetCurrentProcessId());
@@ -478,7 +481,7 @@ static BOOL service_run_main_thread(void)
     for (;;)
     {
         EnterCriticalSection( &service_cs );
-        for (i = 0, n = 3; i < nb_services && n < MAXIMUM_WAIT_OBJECTS; i++)
+        for (i = 0, n = 4; i < nb_services && n < MAXIMUM_WAIT_OBJECTS; i++)
         {
             if (!services[i]->thread) continue;
             wait_services[n] = i;
@@ -536,11 +539,15 @@ static BOOL service_run_main_thread(void)
         {
             continue;  /* rebuild the list */
         }
+        else if (ret == 3)
+        {
+            return TRUE;
+        }
         else if (ret < n)
         {
             services[wait_services[ret]]->thread = 0;
             CloseHandle( wait_handles[ret] );
-            if (n == 4) return TRUE; /* it was the last running thread */
+            if (n == 5) return TRUE; /* it was the last running thread */
         }
         else return FALSE;
     }
@@ -727,8 +734,10 @@ SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
         return FALSE;
     }
 
-    if (lpStatus->dwCurrentState == SERVICE_STOPPED)
+    if (lpStatus->dwCurrentState == SERVICE_STOPPED) {
+        SetEvent(stop_event);
         CloseServiceHandle((SC_HANDLE)hService);
+    }
 
     return TRUE;
 }
