@@ -1344,7 +1344,7 @@ HRESULT WINAPI D3DXFillTexture(LPDIRECT3DTEXTURE9 texture,
             return D3DERR_INVALIDCALL;
 
         format = get_format_info(desc.Format);
-        if (format->format == D3DFMT_UNKNOWN)
+        if (format->type != FORMAT_ARGB)
         {
             FIXME("Unsupported texture format %#x\n", desc.Format);
             return D3DERR_INVALIDCALL;
@@ -1746,7 +1746,7 @@ HRESULT WINAPI D3DXFillCubeTexture(LPDIRECT3DCUBETEXTURE9 texture,
             return D3DERR_INVALIDCALL;
 
         format = get_format_info(desc.Format);
-        if (format->format == D3DFMT_UNKNOWN)
+        if (format->type != FORMAT_ARGB)
         {
             FIXME("Unsupported texture format %#x\n", desc.Format);
             return D3DERR_INVALIDCALL;
@@ -1840,7 +1840,7 @@ HRESULT WINAPI D3DXFillVolumeTexture(LPDIRECT3DVOLUMETEXTURE9 texture,
             return D3DERR_INVALIDCALL;
 
         format = get_format_info(desc.Format);
-        if (format->format == D3DFMT_UNKNOWN)
+        if (format->type != FORMAT_ARGB)
         {
             FIXME("Unsupported texture format %#x\n", desc.Format);
             return D3DERR_INVALIDCALL;
