@@ -85,6 +85,43 @@ static const unsigned char dds_volume_map[] = {
 0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x10,0x84,0xef,0x7b,0xaa,0xab,0xab,0xab
 };
 
+#define ADMITTED_ERROR 0.0001f
+
+static inline float relative_error(float expected, float got)
+{
+    return expected == 0.0f ? fabs(expected - got) : fabs(1.0f - got / expected);
+}
+
+#define expect_vec4(expected, got) expect_vec4_(__LINE__, expected, got)
+static inline void expect_vec4_(unsigned int line, const D3DXVECTOR4 *expected, const D3DXVECTOR4 *got)
+{
+    ok_(__FILE__, line)(relative_error(expected->x, got->x) < ADMITTED_ERROR
+        && relative_error(expected->y, got->y) < ADMITTED_ERROR
+        && relative_error(expected->z, got->z) < ADMITTED_ERROR
+        && relative_error(expected->w, got->w) < ADMITTED_ERROR,
+        "Expected (%f, %f, %f, %f), got (%f, %f, %f, %f)\n",
+        expected->x, expected->y, expected->z, expected->w,
+        got->x, got->y, got->z, got->w);
+}
+
+static inline float float_16_to_32(unsigned short in)
+{
+    unsigned short s = (in & 0x8000);
+    unsigned short e = (in & 0x7C00) >> 10;
+    unsigned short m = in & 0x3FF;
+    float sgn = (s ? -1.0f : 1.0f);
+
+    if (e == 0)
+    {
+        if (m == 0) return sgn * 0.0f; /* +0.0 or -0.0 */
+        else return sgn * powf(2, -14.0f) * (m / 1024.0f);
+    }
+    else
+    {
+        return sgn * powf(2, e - 15.0f) * (1.0f + (m / 1024.0f));
+    }
+}
+
 static BOOL is_autogenmipmap_supported(IDirect3DDevice9 *device, D3DRESOURCETYPE resource_type)
 {
     HRESULT hr;
@@ -1011,6 +1048,93 @@ static void test_D3DXFillTexture(IDirect3DDevice9 *device)
     }
     else
         skip("Failed to create texture\n");
+
+    /* test floating-point textures */
+    hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_A16B16G16R16F,
+                                        D3DPOOL_MANAGED, &tex, NULL);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFillTexture(tex, fillfunc, NULL);
+        todo_wine ok(hr == D3D_OK, "D3DXFillTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = IDirect3DTexture9_LockRect(tex, 0, &lock_rect, NULL, D3DLOCK_READONLY);
+        if (SUCCEEDED(hr))
+        {
+            pitch = lock_rect.Pitch / sizeof(WORD);
+            for (y = 0; y < 4; y++)
+            {
+                WORD *ptr = (WORD *)lock_rect.pBits + y * pitch;
+                for (x = 0; x < 4; x++)
+                {
+                    D3DXVECTOR4 got, expected;
+
+                    got.x = float_16_to_32(*ptr++);
+                    got.y = float_16_to_32(*ptr++);
+                    got.z = float_16_to_32(*ptr++);
+                    got.w = float_16_to_32(*ptr++);
+
+                    expected.x = (x + 0.5f) / 4.0f;
+                    expected.y = (y + 0.5f) / 4.0f;
+                    expected.z = 1.0f / 4.0f;
+                    expected.w = 1.0f;
+
+                    todo_wine expect_vec4(&expected, &got);
+                }
+            }
+
+            IDirect3DTexture9_UnlockRect(tex, 0);
+        }
+        else
+            skip("Failed to lock texture\n");
+
+        IDirect3DTexture9_Release(tex);
+    }
+    else
+        skip("Failed to create D3DFMT_A16B16G16R16F texture\n");
+
+    hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_A32B32G32R32F,
+                                        D3DPOOL_MANAGED, &tex, NULL);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFillTexture(tex, fillfunc, NULL);
+        todo_wine ok(hr == D3D_OK, "D3DXFillTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = IDirect3DTexture9_LockRect(tex, 0, &lock_rect, NULL, D3DLOCK_READONLY);
+        if (SUCCEEDED(hr))
+        {
+            pitch = lock_rect.Pitch / sizeof(float);
+            for (y = 0; y < 4; y++)
+            {
+                float *ptr = (float *)lock_rect.pBits + y * pitch;
+                for (x = 0; x < 4; x++)
+                {
+                    D3DXVECTOR4 got, expected;
+
+                    got.x = *ptr++;
+                    got.y = *ptr++;
+                    got.z = *ptr++;
+                    got.w = *ptr++;
+
+                    expected.x = (x + 0.5f) / 4.0f;
+                    expected.y = (y + 0.5f) / 4.0f;
+                    expected.z = 1.0f / 4.0f;
+                    expected.w = 1.0f;
+
+                    todo_wine expect_vec4(&expected, &got);
+                }
+            }
+
+            IDirect3DTexture9_UnlockRect(tex, 0);
+        }
+        else
+            skip("Failed to lock texture\n");
+
+        IDirect3DTexture9_Release(tex);
+    }
+    else
+        skip("Failed to create D3DFMT_A32B32G32R32F texture\n");
 }
 
 static void WINAPI fillfunc_cube(D3DXVECTOR4 *value, const D3DXVECTOR3 *texcoord,
