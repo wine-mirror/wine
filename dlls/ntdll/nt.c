@@ -811,6 +811,14 @@ NTSTATUS WINAPI NtSetIntervalProfile(
 
 static  SYSTEM_CPU_INFORMATION cached_sci;
 
+/*******************************************************************************
+ * Architecture specific feature detection for CPUs
+ *
+ * This a set of mutually exclusive #if define()s each providing its own get_cpuinfo() to be called
+ * from fill_cpu_info();
+ */
+#if defined(__i386__) || defined(__x86_64__)
+
 #define AUTH	0x68747541	/* "Auth" */
 #define ENTI	0x69746e65	/* "enti" */
 #define CAMD	0x444d4163	/* "cAMD" */
@@ -913,6 +921,12 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
 {
     unsigned int regs[4], regs2[4];
 
+#if defined(__i386__)
+    info->Architecture = PROCESSOR_ARCHITECTURE_INTEL;
+#elif defined(__x86_64__)
+    info->Architecture = PROCESSOR_ARCHITECTURE_AMD64;
+#endif
+
     /* We're at least a 386 */
     info->FeatureSet = CPU_FEATURE_VME | CPU_FEATURE_X86 | CPU_FEATURE_PGE;
     info->Level = 3;
@@ -1002,6 +1016,102 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
     }
 }
 
+#elif defined(__powerpc__) || defined(__ppc__)
+
+static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
+{
+#ifdef __APPLE__
+    size_t valSize;
+    int value;
+
+    valSize = sizeof(value);
+    if (sysctlbyname("hw.optional.floatingpoint", &value, &valSize, NULL, 0) == 0)
+        user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = !value;
+
+    valSize = sizeof(value);
+    if (sysctlbyname("hw.cpusubtype", &value, &valSize, NULL, 0) == 0)
+    {
+        switch (value)
+        {
+            case CPU_SUBTYPE_POWERPC_601:
+            case CPU_SUBTYPE_POWERPC_602:       info->Level = 1;   break;
+            case CPU_SUBTYPE_POWERPC_603:       info->Level = 3;   break;
+            case CPU_SUBTYPE_POWERPC_603e:
+            case CPU_SUBTYPE_POWERPC_603ev:     info->Level = 6;   break;
+            case CPU_SUBTYPE_POWERPC_604:       info->Level = 4;   break;
+            case CPU_SUBTYPE_POWERPC_604e:      info->Level = 9;   break;
+            case CPU_SUBTYPE_POWERPC_620:       info->Level = 20;  break;
+            case CPU_SUBTYPE_POWERPC_750:       /* G3/G4 derive from 603 so ... */
+            case CPU_SUBTYPE_POWERPC_7400:
+            case CPU_SUBTYPE_POWERPC_7450:      info->Level = 6;   break;
+            case CPU_SUBTYPE_POWERPC_970:       info->Level = 9;
+                /* :o) user_shared_data->ProcessorFeatures[PF_ALTIVEC_INSTRUCTIONS_AVAILABLE] ;-) */
+                break;
+            default: break;
+        }
+    }
+#else
+    FIXME("CPU Feature detection not implemented.\n");
+#endif
+    info->Architecture = PROCESSOR_ARCHITECTURE_PPC;
+}
+
+#elif defined(__arm__)
+
+static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
+{
+#ifdef linux
+    char line[512];
+    char *s, *value;
+    FILE *f = fopen("/proc/cpuinfo", "r");
+    if (f)
+    {
+        while (fgets(line, sizeof(line), f) != NULL)
+        {
+            /* NOTE: the ':' is the only character we can rely on */
+            if (!(value = strchr(line,':')))
+                continue;
+            /* terminate the valuename */
+            s = value - 1;
+            while ((s >= line) && isspace(*s)) s--;
+            *(s + 1) = '\0';
+            /* and strip leading spaces from value */
+            value += 1;
+            while (isspace(*value)) value++;
+            if ((s = strchr(value,'\n')))
+                *s='\0';
+            if (!strcasecmp(line, "CPU architecture"))
+            {
+                if (isdigit(value[0]))
+                    info->Level = atoi(value);
+                continue;
+            }
+            if (!strcasecmp(line, "features"))
+            {
+                if (strstr(value, "vfpv3"))
+                    user_shared_data->ProcessorFeatures[PF_ARM_VFP_32_REGISTERS_AVAILABLE] = TRUE;
+                if (strstr(value, "neon"))
+                    user_shared_data->ProcessorFeatures[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE] = TRUE;
+                continue;
+            }
+        }
+        fclose(f);
+    }
+#else
+    FIXME("CPU Feature detection not implemented.\n");
+#endif
+    info->Architecture = PROCESSOR_ARCHITECTURE_ARM;
+}
+
+#elif defined(__sparc__)
+
+static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
+{
+    info->Architecture = PROCESSOR_ARCHITECTURE_SPARC;
+}
+
+#endif /* End architecture specific feature detection for CPUs */
+
 /******************************************************************
  *		fill_cpu_info
  *
@@ -1038,339 +1148,8 @@ void fill_cpu_info(void)
     NtCurrentTeb()->Peb->NumberOfProcessors = num;
 
     memset(&cached_sci, 0, sizeof(cached_sci));
-    /* choose sensible defaults ...
-     * FIXME: perhaps overridable with precompiler flags?
-     */
-#ifdef __i386__
-    cached_sci.Architecture     = PROCESSOR_ARCHITECTURE_INTEL;
-    cached_sci.Level		= 5; /* 586 */
-#elif defined(__x86_64__)
-    cached_sci.Architecture     = PROCESSOR_ARCHITECTURE_AMD64;
-#elif defined(__powerpc__)
-    cached_sci.Architecture     = PROCESSOR_ARCHITECTURE_PPC;
-#elif defined(__arm__)
-    cached_sci.Architecture     = PROCESSOR_ARCHITECTURE_ARM;
-#elif defined(__sparc__)
-    cached_sci.Architecture     = PROCESSOR_ARCHITECTURE_SPARC;
-#else
-#error Unknown CPU
-#endif
-    cached_sci.Revision   = 0;
-    cached_sci.Reserved   = 0;
-    cached_sci.FeatureSet = 0x1fff;
+    get_cpuinfo(&cached_sci);
 
-    /* Hmm, reasonable processor feature defaults? */
-
-#ifdef linux
-    {
-	char line[200];
-	FILE *f = fopen ("/proc/cpuinfo", "r");
-
-	if (!f)
-		return;
-	while (fgets(line,200,f) != NULL)
-        {
-            char	*s,*value;
-
-            /* NOTE: the ':' is the only character we can rely on */
-            if (!(value = strchr(line,':')))
-                continue;
-
-            /* terminate the valuename */
-            s = value - 1;
-            while ((s >= line) && ((*s == ' ') || (*s == '\t'))) s--;
-            *(s + 1) = '\0';
-
-            /* and strip leading spaces from value */
-            value += 1;
-            while (*value==' ') value++;
-            if ((s = strchr(value,'\n')))
-                *s='\0';
-
-            if (!strcasecmp(line, "model"))
-            {
-                /* First part of Revision */
-                int	x;
-
-                if (sscanf(value, "%d",&x))
-                    cached_sci.Revision = cached_sci.Revision | (x << 8);
-
-                continue;
-            }
-
-            /* 2.1 and ARM method */
-            if (!strcasecmp(line, "cpu family") || !strcasecmp(line, "CPU architecture"))
-            {
-                if (isdigit(value[0]))
-                {
-                    cached_sci.Level = atoi(value);
-                }
-                continue;
-            }
-            /* old 2.0 method */
-            if (!strcasecmp(line, "cpu"))
-            {
-                if (isdigit(value[0]) && value[1] == '8' && value[2] == '6' && value[3] == 0)
-                {
-                    switch (cached_sci.Level = value[0] - '0')
-                    {
-                    case 3:
-                    case 4:
-                    case 5:
-                    case 6:
-                        break;
-                    default:
-                        FIXME("unknown Linux 2.0 cpu family '%s', please report ! (-> setting to 386)\n", value);
-                        cached_sci.Level = 3;
-                        break;
-                    }
-                }
-                continue;
-            }
-            if (!strcasecmp(line, "stepping"))
-            {
-                /* Second part of Revision */
-                int	x;
-
-                if (sscanf(value, "%d",&x))
-                    cached_sci.Revision = cached_sci.Revision | x;
-                continue;
-            }
-            if (!strcasecmp(line, "fdiv_bug"))
-            {
-                if (!strncasecmp(value, "yes",3))
-                    user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_PRECISION_ERRATA] = TRUE;
-                continue;
-            }
-            if (!strcasecmp(line, "fpu"))
-            {
-                if (!strncasecmp(value, "no",2))
-                    user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = TRUE;
-                continue;
-            }
-            if (!strcasecmp(line, "flags") || !strcasecmp(line, "features"))
-            {
-                if (strstr(value, "cx8"))
-                    user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
-                if (strstr(value, "cx16"))
-                    user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE128] = TRUE;
-                if (strstr(value, "mmx"))
-                    user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
-                if (strstr(value, "nx"))
-                    user_shared_data->ProcessorFeatures[PF_NX_ENABLED] = TRUE;
-                if (strstr(value, "tsc"))
-                    user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
-                if (strstr(value, "3dnow"))
-                {
-                    user_shared_data->ProcessorFeatures[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    cached_sci.FeatureSet |= CPU_FEATURE_3DNOW;
-                }
-                /* This will also catch sse2, but we have sse itself
-                 * if we have sse2, so no problem */
-                if (strstr(value, "sse"))
-                {
-                    user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    cached_sci.FeatureSet |= CPU_FEATURE_SSE;
-                }
-                if (strstr(value, "sse2"))
-                {
-                    user_shared_data->ProcessorFeatures[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    cached_sci.FeatureSet |= CPU_FEATURE_SSE2;
-                }
-                if (strstr(value, "pni"))
-                    user_shared_data->ProcessorFeatures[PF_SSE3_INSTRUCTIONS_AVAILABLE] = TRUE;
-                if (strstr(value, "pae"))
-                    user_shared_data->ProcessorFeatures[PF_PAE_ENABLED] = TRUE;
-                if (strstr(value, "ht"))
-                    cached_sci.FeatureSet |= CPU_FEATURE_HTT;
-                continue;
-            }
-	}
-	fclose(f);
-    }
-#elif defined (__NetBSD__)
-    {
-        int mib[2];
-        int value;
-        size_t val_len;
-        char model[256];
-        char *cpuclass;
-        FILE *f = fopen("/var/run/dmesg.boot", "r");
-
-        /* first deduce as much as possible from the sysctls */
-        mib[0] = CTL_MACHDEP;
-#ifdef CPU_FPU_PRESENT
-        mib[1] = CPU_FPU_PRESENT;
-        val_len = sizeof(value);
-        if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
-            user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = !value;
-#endif
-#ifdef CPU_SSE
-        mib[1] = CPU_SSE;   /* this should imply MMX */
-        val_len = sizeof(value);
-        if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
-            if (value) user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
-#endif
-#ifdef CPU_SSE2
-        mib[1] = CPU_SSE2;  /* this should imply MMX */
-        val_len = sizeof(value);
-        if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
-            if (value) user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
-#endif
-        mib[0] = CTL_HW;
-        mib[1] = HW_MODEL;
-        val_len = sizeof(model)-1;
-        if (sysctl(mib, 2, model, &val_len, NULL, 0) >= 0)
-        {
-            model[val_len] = '\0'; /* just in case */
-            cpuclass = strstr(model, "-class");
-            if (cpuclass != NULL) {
-                while(cpuclass > model && cpuclass[0] != '(') cpuclass--;
-                if (!strncmp(cpuclass+1, "386", 3))
-                {
-                    cached_sci.Level= 3;
-                }
-                if (!strncmp(cpuclass+1, "486", 3))
-                {
-                    cached_sci.Level= 4;
-                }
-                if (!strncmp(cpuclass+1, "586", 3))
-                {
-                    cached_sci.Level= 5;
-                }
-                if (!strncmp(cpuclass+1, "686", 3))
-                {
-                    cached_sci.Level= 6;
-                    /* this should imply MMX */
-                    user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
-                }
-            }
-        }
-
-        /* it may be worth reading from /var/run/dmesg.boot for
-           additional information such as CX8, MMX and TSC
-           (however this information should be considered less
-           reliable than that from the sysctl calls) */
-        if (f != NULL)
-        {
-            while (fgets(model, 255, f) != NULL)
-            {
-                int cpu, features;
-                if (sscanf(model, "cpu%d: features %x<", &cpu, &features) == 2)
-                {
-                    /* we could scan the string but it is easier
-                       to test the bits directly */
-                    if (features & 0x1)
-                        user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = TRUE;
-                    if (features & 0x10)
-                        user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
-                    if (features & 0x100)
-                        user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
-                    if (features & 0x800000)
-                        user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
-
-                    break;
-                }
-            }
-            fclose(f);
-        }
-    }
-#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__DragonFly__)
-    {
-        get_cpuinfo( &cached_sci );
-
-        /* Check for OS support of SSE -- Is this used, and should it be sse1 or sse2? */
-        /*len = sizeof(num);
-          ret = sysctlbyname("hw.instruction_sse", &num, &len, NULL, 0);
-          if (!ret)
-          user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] = num;*/
-    }
-#elif defined(__sun)
-    {
-        get_cpuinfo( &cached_sci );
-    }
-#elif defined (__APPLE__)
-    {
-        size_t valSize;
-        int value;
-        int cputype;
-        char buffer[1024];
-
-        valSize = sizeof(int);
-        if (sysctlbyname ("hw.optional.floatingpoint", &value, &valSize, NULL, 0) == 0)
-        {
-            if (value)
-                user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = FALSE;
-            else
-                user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = TRUE;
-        }
-
-        valSize = sizeof(int);
-        if (sysctlbyname ("hw.cputype", &cputype, &valSize, NULL, 0) == 0)
-        {
-            switch (cputype)
-            {
-            case CPU_TYPE_POWERPC:
-                cached_sci.Architecture = PROCESSOR_ARCHITECTURE_PPC;
-                valSize = sizeof(int);
-                if (sysctlbyname ("hw.cpusubtype", &value, &valSize, NULL, 0) == 0)
-                {
-                    switch (value)
-                    {
-                    case CPU_SUBTYPE_POWERPC_601:
-                    case CPU_SUBTYPE_POWERPC_602:       cached_sci.Level = 1;   break;
-                    case CPU_SUBTYPE_POWERPC_603:       cached_sci.Level = 3;   break;
-                    case CPU_SUBTYPE_POWERPC_603e:
-                    case CPU_SUBTYPE_POWERPC_603ev:     cached_sci.Level = 6;   break;
-                    case CPU_SUBTYPE_POWERPC_604:       cached_sci.Level = 4;   break;
-                    case CPU_SUBTYPE_POWERPC_604e:      cached_sci.Level = 9;   break;
-                    case CPU_SUBTYPE_POWERPC_620:       cached_sci.Level = 20;  break;
-                    case CPU_SUBTYPE_POWERPC_750:       /* G3/G4 derive from 603 so ... */
-                    case CPU_SUBTYPE_POWERPC_7400:
-                    case CPU_SUBTYPE_POWERPC_7450:      cached_sci.Level = 6;   break;
-                    case CPU_SUBTYPE_POWERPC_970:       cached_sci.Level = 9;
-                        /* :o) user_shared_data->ProcessorFeatures[PF_ALTIVEC_INSTRUCTIONS_AVAILABLE] ;-) */
-                        break;
-                    default: break;
-                    }
-                }
-                break; /* CPU_TYPE_POWERPC */
-            case CPU_TYPE_I386:
-                cached_sci.Architecture = PROCESSOR_ARCHITECTURE_INTEL;
-                valSize = sizeof(int);
-                if (sysctlbyname ("machdep.cpu.family", &value, &valSize, NULL, 0) == 0)
-                {
-                    cached_sci.Level = value;
-                }
-                valSize = sizeof(int);
-                if (sysctlbyname ("machdep.cpu.model", &value, &valSize, NULL, 0) == 0)
-                    cached_sci.Revision = (value << 8);
-                valSize = sizeof(int);
-                if (sysctlbyname ("machdep.cpu.stepping", &value, &valSize, NULL, 0) == 0)
-                    cached_sci.Revision |= value;
-                valSize = sizeof(buffer);
-                if (sysctlbyname ("machdep.cpu.features", buffer, &valSize, NULL, 0) == 0)
-                {
-                    if (!valSize) FIXME("Buffer not large enough, please increase\n");
-                    if (strstr(buffer, "CX8"))   user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
-                    if (strstr(buffer, "CX16"))  user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE128] = TRUE;
-                    if (strstr(buffer, "MMX"))   user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    if (strstr(buffer, "TSC"))   user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
-                    if (strstr(buffer, "3DNOW")) user_shared_data->ProcessorFeatures[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    if (strstr(buffer, "SSE"))   user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    if (strstr(buffer, "SSE2"))  user_shared_data->ProcessorFeatures[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    if (strstr(buffer, "SSE3"))  user_shared_data->ProcessorFeatures[PF_SSE3_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    if (strstr(buffer, "PAE"))   user_shared_data->ProcessorFeatures[PF_PAE_ENABLED] = TRUE;
-                    if (strstr(buffer, "HTT"))   cached_sci.FeatureSet |= CPU_FEATURE_HTT;
-                }
-                break; /* CPU_TYPE_I386 */
-            default: break;
-            } /* switch (cputype) */
-        }
-    }
-#else
-    FIXME("not yet supported on this system\n");
-#endif
     TRACE("<- CPU arch %d, level %d, rev %d, features 0x%x\n",
           cached_sci.Architecture, cached_sci.Level, cached_sci.Revision, cached_sci.FeatureSet);
 }
