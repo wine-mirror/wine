@@ -53,7 +53,7 @@ rem - Try cmd.exe /k as well
 cmd.exe /k "copy file1 file2 >nul && exit"
 echo No prompts or I would not get here2
 
-rem Non existing variable expansion is as per command line, i.e. left as-is
+rem Nonexistent variable expansion is as per command line, i.e. left as-is
 cmd.exe /c echo %%hello1%%
 cmd.exe /c echo %%hello2
 cmd.exe /c echo %%hello3^:h=t%%

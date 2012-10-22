@@ -478,10 +478,10 @@ static BOOL WCMD_ManualCopy(WCHAR *srcname, WCHAR *dstname, BOOL ascii, BOOL app
  *  Syntax on command line is
  *   ... /a | /b   filename  /a /b {[ + filename /a /b]}  [dest /a /b]
  *  Where first /a or /b sets 'mode in operation' until another is found
- *  once another is found, it applies to the file preceeding the /a or /b
+ *  once another is found, it applies to the file preceding the /a or /b
  *  In addition each filename can contain wildcards
- * To make matters worse, the + may be in the same parameter (ie no whitespace)
- *  or with whitespace separating it
+ * To make matters worse, the + may be in the same parameter (i.e. no
+ *  whitespace) or with whitespace separating it
  *
  * ASCII mode on read == read and stop at first EOF
  * ASCII mode on write == append EOF to destination
@@ -944,7 +944,7 @@ void WCMD_copy(WCHAR * args) {
     }
   }
 
-  /* Exit out of the routine, freeing any remaing allocated memory */
+  /* Exit out of the routine, freeing any remaining allocated memory */
 exitreturn:
 
   thiscopy = sourcelist;

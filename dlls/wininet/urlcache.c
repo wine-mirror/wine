@@ -2456,7 +2456,7 @@ static int dword_cmp(const void *p1, const void *p2)
  *
  * PARAMETERS
  *   cache_path    [I] Which volume to free up from, or NULL if you don't care.
- *   size          [I] How many percents of the cache should be free.
+ *   size          [I] Percentage of the cache that should be free.
  *   filter        [I] Which entries can't be deleted (CacheEntryType)
  *
  * RETURNS

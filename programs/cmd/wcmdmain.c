@@ -2393,7 +2393,7 @@ int wmain (int argc, WCHAR *argvW[])
       }
       else /* handle `cmd /cnotepad.exe` and `cmd /x/c ...` */
       {
-          /* Do not step to next paramater, instead carry on parsing this one */
+          /* Do not step to next parameter, instead carry on parsing this one */
           argPos+=2;
       }
 
@@ -2413,7 +2413,7 @@ int wmain (int argc, WCHAR *argvW[])
       int     len;
       WCHAR   *q1 = NULL,*q2 = NULL,*p;
 
-      /* Handle very edge case error scenarion, "cmd.exe /c" ie when there are no
+      /* Handle very edge case error scenario, "cmd.exe /c" ie when there are no
        * parameters after the /C or /K by pretending there was a single space     */
       if (argPos == NULL) argPos = (WCHAR *)spaceW;
 
@@ -2468,7 +2468,7 @@ int wmain (int argc, WCHAR *argvW[])
       WINE_TRACE("/c command line: '%s'\n", wine_dbgstr_w(cmd));
 
       /* Finally, we only stay in new mode IF the first parameter is quoted and
-         is a valid executable, ie must exist, otherwise drop back to old mode  */
+         is a valid executable, i.e. must exist, otherwise drop back to old mode  */
       if (!opt_s) {
         WCHAR *thisArg = WCMD_parameter(cmd, 0, NULL, NULL, FALSE, TRUE);
         WCHAR  pathext[MAXSTRING];

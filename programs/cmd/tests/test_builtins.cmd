@@ -1743,7 +1743,7 @@ if errorlevel 1 echo Incorrect errorlevel
 call :CheckExist file1
 cd ..
 
-rem Simple single file copy, destination supplied as non existant directory
+rem Simple single file copy, destination supplied as nonexistent directory
 copy file1 dir2\ >nul 2>&1
 if not errorlevel 1 echo Incorrect errorlevel
 call :CheckNotExist dir2 dir2\file1
@@ -1767,7 +1767,7 @@ if errorlevel 1 echo Incorrect errorlevel
 call :CheckExist file1 file2 file3
 cd ..
 
-rem Simple wildcarded file copy, destination supplied as non existant directory
+rem Simple wildcarded file copy, destination supplied as nonexistent directory
 copy file? dir2\ >nul 2>&1
 if not errorlevel 1 echo Incorrect errorlevel
 call :CheckNotExist dir2 dir2\file1 dir2\file2 dir2\file3
@@ -1923,7 +1923,7 @@ rem All 2 have eof's, plus an extra = 6 + 12 + eof
 copy /b file1_plus_eof + file3_plus_eof file123_mixed_copy6 /a >nul 2>&1
 call :CheckFileSize file123_mixed_copy6 19
 
-rem One file has EOF, but doesnt get an extra one, ie 6
+rem One file has EOF, but doesn't get an extra one, i.e. 6
 copy /b file1_plus_eof file123_mixed_copy7 /a >nul 2>&1
 call :CheckFileSize file123_mixed_copy7 6
 

@@ -3354,7 +3354,7 @@ static void test_OpenFileById(void)
     ret2 = GetTempPathA(sizeof(tempPath), tempPath);
     ok(ret2, "OpenFileById: GetTempPath failed, got error %u.\n", GetLastError());
 
-    /* ensure the existance of a file in the temp folder */
+    /* ensure the existence of a file in the temp folder */
     ret2 = GetTempFileNameA(tempPath, "abc", 0, tempFileName);
     ok(ret2, "OpenFileById: GetTempFileNameA failed, got error %u.\n", GetLastError());
     ok(GetFileAttributesA(tempFileName) != INVALID_FILE_ATTRIBUTES,
