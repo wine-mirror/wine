@@ -565,6 +565,12 @@ BOOL WINAPI StartServiceCtrlDispatcherA( const SERVICE_TABLE_ENTRYA *servent )
         return FALSE;
     }
     while (servent[nb_services].lpServiceName) nb_services++;
+    if (!nb_services)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
     services = HeapAlloc( GetProcessHeap(), 0, nb_services * sizeof(*services) );
 
     for (i = 0; i < nb_services; i++)
@@ -610,6 +616,12 @@ BOOL WINAPI StartServiceCtrlDispatcherW( const SERVICE_TABLE_ENTRYW *servent )
         return FALSE;
     }
     while (servent[nb_services].lpServiceName) nb_services++;
+    if (!nb_services)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
     services = HeapAlloc( GetProcessHeap(), 0, nb_services * sizeof(*services) );
 
     for (i = 0; i < nb_services; i++)
