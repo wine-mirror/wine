@@ -2039,6 +2039,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
                                  (forf_usebackq && *itemStart != '\''))) {
 
             HANDLE input;
+            WCHAR *itemparm;
 
             WINE_TRACE("Processing for filespec from item %d '%s'\n", itemNum,
                        wine_dbgstr_w(item));
@@ -2049,12 +2050,13 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
                 (!forf_usebackq && *itemStart == '\'')) {
 
               /* Use itemstart because the command is the whole set, not just the first token */
-              input = WCMD_forf_getinputhandle(forf_usebackq, itemStart, TRUE);
+              itemparm = itemStart;
             } else {
 
               /* Use item because the file to process is just the first item in the set */
-              input = WCMD_forf_getinputhandle(forf_usebackq, item, FALSE);
+              itemparm = item;
             }
+            input = WCMD_forf_getinputhandle(forf_usebackq, itemparm, (itemparm==itemStart));
 
             /* Process the input file */
             if (input == INVALID_HANDLE_VALUE) {
@@ -2074,6 +2076,12 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
               CloseHandle (input);
             }
 
+            /* When we have processed the item as a whole command, abort future set processing */
+            if (itemparm==itemStart) {
+              thisSet = NULL;
+              break;
+            }
+
         /* Filesets - A string literal */
         } else if (doFileset && ((!forf_usebackq && *itemStart == '"') ||
                                  (forf_usebackq && *itemStart == '\''))) {
@@ -2082,6 +2090,10 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
           strcpyW(buffer, item);
           WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, variable, buffer, &doExecuted,
                             &forf_skip, forf_eol);
+
+          /* Only one string can be supplied in the whole set, abort future set processing */
+          thisSet = NULL;
+          break;
         }
 
         WINE_TRACE("Post-command, cmdEnd = %p\n", cmdEnd);
@@ -2089,7 +2101,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
       }
 
       /* Move onto the next set line */
-      thisSet = thisSet->nextcommand;
+      if (thisSet) thisSet = thisSet->nextcommand;
     }
 
     /* If /L is provided, now run the for loop */
