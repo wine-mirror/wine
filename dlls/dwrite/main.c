@@ -488,11 +488,7 @@ static HRESULT WINAPI dwritefactory_CreateTextFormat(IDWriteFactory *iface, WCHA
 {
     TRACE("(%s %p %d %d %d %f %s %p)\n", debugstr_w(family_name), collection, weight, style, stretch,
         size, debugstr_w(locale), format);
-
-    if (collection)
-        FIXME("font collection not supported\n");
-
-    return create_textformat(family_name, weight, style, stretch, size, locale, format);
+    return create_textformat(family_name, collection, weight, style, stretch, size, locale, format);
 }
 
 static HRESULT WINAPI dwritefactory_CreateTypography(IDWriteFactory *iface, IDWriteTypography **typography)

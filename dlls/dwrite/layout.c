@@ -51,6 +51,8 @@ struct dwrite_textformat {
     DWRITE_FONT_STRETCH stretch;
 
     FLOAT size;
+
+    IDWriteFontCollection *collection;
 };
 
 static inline struct dwrite_textlayout *impl_from_IDWriteTextLayout(IDWriteTextLayout *iface)
@@ -705,6 +707,7 @@ static ULONG WINAPI dwritetextformat_Release(IDWriteTextFormat *iface)
 
     if (!ref)
     {
+        if (This->collection) IDWriteFontCollection_Release(This->collection);
         heap_free(This->family_name);
         heap_free(This->locale);
         heap_free(This);
@@ -832,8 +835,13 @@ static HRESULT WINAPI dwritetextformat_GetLineSpacing(IDWriteTextFormat *iface, 
 static HRESULT WINAPI dwritetextformat_GetFontCollection(IDWriteTextFormat *iface, IDWriteFontCollection **collection)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p)->(%p): stub\n", This, collection);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, collection);
+
+    *collection = This->collection;
+    IDWriteFontCollection_AddRef(*collection);
+
+    return S_OK;
 }
 
 static UINT32 WINAPI dwritetextformat_GetFontFamilyNameLength(IDWriteTextFormat *iface)
@@ -923,10 +931,12 @@ static const IDWriteTextFormatVtbl dwritetextformatvtbl = {
     dwritetextformat_GetLocaleName
 };
 
-HRESULT create_textformat(const WCHAR *family_name, DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style,
+HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *collection, DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style,
     DWRITE_FONT_STRETCH stretch, FLOAT size, const WCHAR *locale, IDWriteTextFormat **format)
 {
     struct dwrite_textformat *This;
+
+    *format = NULL;
 
     This = heap_alloc(sizeof(struct dwrite_textformat));
     if (!This) return E_OUTOFMEMORY;
@@ -938,6 +948,21 @@ HRESULT create_textformat(const WCHAR *family_name, DWRITE_FONT_WEIGHT weight, D
     This->weight = weight;
     This->style = style;
     This->size = size;
+
+    if (collection)
+    {
+        This->collection = collection;
+        IDWriteFontCollection_AddRef(collection);
+    }
+    else
+    {
+        HRESULT hr = get_system_fontcollection(&This->collection);
+        if (hr != S_OK)
+        {
+            IDWriteTextFormat_Release(&This->IDWriteTextFormat_iface);
+            return hr;
+        }
+    }
 
     *format = &This->IDWriteTextFormat_iface;
 

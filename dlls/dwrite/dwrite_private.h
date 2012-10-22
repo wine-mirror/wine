@@ -68,7 +68,7 @@ static inline LPWSTR heap_strdupnW(const WCHAR *str, UINT32 len)
 }
 
 extern HRESULT create_font_from_logfont(const LOGFONTW*, IDWriteFont**) DECLSPEC_HIDDEN;
-extern HRESULT create_textformat(const WCHAR*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
+extern HRESULT create_textformat(const WCHAR*,IDWriteFontCollection*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
                                  FLOAT,const WCHAR*,IDWriteTextFormat**) DECLSPEC_HIDDEN;
 extern HRESULT create_textlayout(const WCHAR*,UINT32,IDWriteTextLayout**) DECLSPEC_HIDDEN;
 extern HRESULT create_gdiinterop(IDWriteGdiInterop**) DECLSPEC_HIDDEN;

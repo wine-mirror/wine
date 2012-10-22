@@ -28,6 +28,7 @@
 static IDWriteFactory *factory;
 
 static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
+static const WCHAR enusW[] = {'e','n','-','u','s',0};
 
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
@@ -62,7 +63,6 @@ static void test_CreateTextLayout(void)
 static void test_CreateGdiCompatibleTextLayout(void)
 {
     static const WCHAR strW[] = {'s','t','r','i','n','g',0};
-    static const WCHAR enusW[] = {'e','n','-','u','s',0};
     IDWriteTextLayout *layout;
     IDWriteTextFormat *format;
     HRESULT hr;
@@ -107,6 +107,33 @@ static void test_CreateGdiCompatibleTextLayout(void)
     IDWriteTextFormat_Release(format);
 }
 
+static void test_CreateTextFormat(void)
+{
+    IDWriteFontCollection *collection, *syscoll;
+    IDWriteTextFormat *format;
+    HRESULT hr;
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+if (0) /* crashes on native */
+    hr = IDWriteTextFormat_GetFontCollection(format, NULL);
+
+    collection = NULL;
+    hr = IDWriteTextFormat_GetFontCollection(format, &collection);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(collection != NULL, "got %p\n", collection);
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &syscoll, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(collection == syscoll, "got %p, was %p\n", syscoll, collection);
+    IDWriteFontCollection_Release(syscoll);
+    IDWriteFontCollection_Release(collection);
+
+    IDWriteTextFormat_Release(format);
+}
+
 START_TEST(layout)
 {
     HRESULT hr;
@@ -121,6 +148,7 @@ START_TEST(layout)
 
     test_CreateTextLayout();
     test_CreateGdiCompatibleTextLayout();
+    test_CreateTextFormat();
 
     IDWriteFactory_Release(factory);
 }
