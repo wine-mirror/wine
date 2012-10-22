@@ -113,7 +113,16 @@ function test_setAttribute() {
 
     input.setAttribute("checked", "");
     ok(input.checked === false, "input.checked = " + input.checked);
+}
 
+function test_attribute_collection() {
+    var div, attr;
+
+    document.body.innerHTML = '<div id="divid" class="test"></div>';
+    div = document.getElementById("divid");
+
+    attr = div.attributes["dir"];
+    ok(attr === div.attributes["dir"], "attr !== div.attributes['dir']");
 }
 
 function test_getter_call() {
@@ -166,6 +175,7 @@ function runTests() {
     test_remove_style_attribute();
     test_getter_call();
     test_setAttribute();
+    test_attribute_collection();
     test_override_functions();
 
     var r = window.execScript("globalVar = true;");

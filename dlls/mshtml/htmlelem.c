@@ -2254,7 +2254,6 @@ static inline HRESULT get_domattr(HTMLAttributeCollection *This, DISPID id, LONG
             return E_UNEXPECTED;
         }
 
-        pos++;
         hres = HTMLDOMAttribute_Create(This->elem, id, attr);
         if(FAILED(hres))
             return hres;
@@ -2596,20 +2595,22 @@ static HRESULT HTMLAttributeCollection_invoke(DispatchEx *dispex, DISPID id, LCI
     switch(flags) {
     case DISPATCH_PROPERTYGET: {
         HTMLDOMAttribute *iter;
+        DWORD pos;
 
-        id = id-MSHTML_DISPID_CUSTOM_MIN+1;
+        pos = id-MSHTML_DISPID_CUSTOM_MIN;
 
         LIST_FOR_EACH_ENTRY(iter, &This->attrs, HTMLDOMAttribute, entry) {
-            if(!(--id))
-                break;
+            if(!pos) {
+                IHTMLDOMAttribute_AddRef(&iter->IHTMLDOMAttribute_iface);
+                V_VT(res) = VT_DISPATCH;
+                V_DISPATCH(res) = (IDispatch*)&iter->IHTMLDOMAttribute_iface;
+                return S_OK;
+            }
+            pos--;
         }
-        if(id)
-            return E_INVALIDARG;
 
-        IHTMLDOMAttribute_AddRef(&iter->IHTMLDOMAttribute_iface);
-        V_VT(res) = VT_DISPATCH;
-        V_DISPATCH(res) = (IDispatch*)&iter->IHTMLDOMAttribute_iface;
-        return S_OK;
+        WARN("invalid arg\n");
+        return E_INVALIDARG;
     }
 
     default:
