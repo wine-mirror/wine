@@ -2948,7 +2948,7 @@ static void test_string_functions(void)
     GpRegion *regions[4];
     BOOL region_isempty[4];
     int i;
-    PointF position;
+    PointF positions[8];
     GpMatrix *identity;
 
     ok(hdc != NULL, "Expected HDC to be initialized\n");
@@ -3186,24 +3186,22 @@ static void test_string_functions(void)
     status = GdipCreateMatrix(&identity);
     expect(Ok, status);
 
-    position.X = 0;
-    position.Y = 0;
-
     rc.X = 0;
     rc.Y = 0;
     rc.Width = 0;
     rc.Height = 0;
-    status = GdipMeasureDriverString(NULL, teststring, 6, font, &position,
+    memset(positions, 0, sizeof(positions));
+    status = GdipMeasureDriverString(NULL, teststring, 6, font, positions,
         DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
         identity, &rc);
     expect(InvalidParameter, status);
 
-    status = GdipMeasureDriverString(graphics, NULL, 6, font, &position,
+    status = GdipMeasureDriverString(graphics, NULL, 6, font, positions,
         DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
         identity, &rc);
     expect(InvalidParameter, status);
 
-    status = GdipMeasureDriverString(graphics, teststring, 6, NULL, &position,
+    status = GdipMeasureDriverString(graphics, teststring, 6, NULL, positions,
         DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
         identity, &rc);
     expect(InvalidParameter, status);
@@ -3213,16 +3211,16 @@ static void test_string_functions(void)
         identity, &rc);
     expect(InvalidParameter, status);
 
-    status = GdipMeasureDriverString(graphics, teststring, 6, font, &position,
+    status = GdipMeasureDriverString(graphics, teststring, 6, font, positions,
         0x100, identity, &rc);
     expect(Ok, status);
 
-    status = GdipMeasureDriverString(graphics, teststring, 6, font, &position,
+    status = GdipMeasureDriverString(graphics, teststring, 6, font, positions,
         DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
         NULL, &rc);
     expect(Ok, status);
 
-    status = GdipMeasureDriverString(graphics, teststring, 6, font, &position,
+    status = GdipMeasureDriverString(graphics, teststring, 6, font, positions,
         DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
         identity, NULL);
     expect(InvalidParameter, status);
@@ -3231,7 +3229,7 @@ static void test_string_functions(void)
     rc.Y = 0;
     rc.Width = 0;
     rc.Height = 0;
-    status = GdipMeasureDriverString(graphics, teststring, 6, font, &position,
+    status = GdipMeasureDriverString(graphics, teststring, 6, font, positions,
         DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
         identity, &rc);
     expect(Ok, status);
@@ -3248,7 +3246,7 @@ static void test_string_functions(void)
     rc.Y = 0;
     rc.Width = 0;
     rc.Height = 0;
-    status = GdipMeasureDriverString(graphics, teststring, 4, font, &position,
+    status = GdipMeasureDriverString(graphics, teststring, 4, font, positions,
         DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
         identity, &rc);
     expect(Ok, status);
@@ -3262,7 +3260,7 @@ static void test_string_functions(void)
     rc.Y = 0;
     rc.Width = 0;
     rc.Height = 0;
-    status = GdipMeasureDriverString(graphics, teststring2, 1, font, &position,
+    status = GdipMeasureDriverString(graphics, teststring2, 1, font, positions,
         DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
         identity, &rc);
     expect(Ok, status);
