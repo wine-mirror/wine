@@ -71,7 +71,7 @@ typedef struct tagDC
     struct tagDC *saved_dc;
     DWORD_PTR    dwHookData;
     DCHOOKPROC   hookProc;         /* DC hook */
-
+    HMODULE      module;           /* module handle of the graphics driver */
     BOOL         bounds_enabled:1; /* bounds tracking is enabled */
     BOOL         path_open:1;      /* path is currently open (only for saved DCs) */
 
@@ -272,7 +272,7 @@ extern const struct gdi_dc_funcs null_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs dib_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs path_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs *font_driver DECLSPEC_HIDDEN;
-extern const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name ) DECLSPEC_HIDDEN;
+extern const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name, HMODULE *module ) DECLSPEC_HIDDEN;
 extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size ) DECLSPEC_HIDDEN;
 
 /* enhmetafile.c */

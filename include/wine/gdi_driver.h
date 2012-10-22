@@ -275,6 +275,7 @@ WINGDIAPI WORD      WINAPI SetHookFlags(HDC,WORD);
 extern void CDECL __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set );
 extern void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect,
                                              const RECT *device_rect, struct window_surface *surface );
+extern HMODULE CDECL __wine_get_driver_module( HDC hdc );
 extern struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version );
 
 #endif /* __WINE_WINE_GDI_DRIVER_H */

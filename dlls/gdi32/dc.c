@@ -81,6 +81,7 @@ DC *alloc_dc_ptr( WORD magic )
 
     dc->nulldrv.funcs       = &null_driver;
     dc->physDev             = &dc->nulldrv;
+    dc->module              = gdi32_module;
     dc->thread              = GetCurrentThreadId();
     dc->refcount            = 1;
     dc->wndExtX             = 1;
@@ -568,6 +569,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
     HDC hdc;
     DC * dc;
     const struct gdi_dc_funcs *funcs;
+    HMODULE module;
     WCHAR buf[300];
 
     GDI_CheckNotLock();
@@ -582,7 +584,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         strcpyW(buf, driver);
     }
 
-    if (!(funcs = DRIVER_load_driver( buf )))
+    if (!(funcs = DRIVER_load_driver( buf, &module )))
     {
         ERR( "no driver found for %s\n", debugstr_w(buf) );
         return 0;
@@ -590,6 +592,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
     if (!(dc = alloc_dc_ptr( OBJ_DC ))) return 0;
     hdc = dc->hSelf;
 
+    dc->module  = module;
     dc->hBitmap = GDI_inc_ref_count( GetStockObject( DEFAULT_BITMAP ));
 
     TRACE("(driver=%s, device=%s, output=%s): returning %p\n",

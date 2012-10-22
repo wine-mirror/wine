@@ -513,5 +513,8 @@
 @ cdecl __wine_make_gdi_object_system(long long)
 @ cdecl __wine_set_visible_region(long long ptr ptr ptr)
 
+# Graphics drivers
+@ cdecl __wine_get_driver_module(long)
+
 # OpenGL
 @ cdecl __wine_get_wgl_driver(long long)

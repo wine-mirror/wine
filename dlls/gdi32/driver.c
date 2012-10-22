@@ -48,6 +48,7 @@ struct graphics_driver
 
 static struct list drivers = LIST_INIT( drivers );
 static struct graphics_driver *display_driver;
+static DWORD display_driver_load_error;
 
 const struct gdi_dc_funcs *font_driver = NULL;
 
@@ -92,14 +93,18 @@ static struct graphics_driver *create_driver( HMODULE module )
  *
  * Special case for loading the display driver: get the name from the config file
  */
-static const struct gdi_dc_funcs *get_display_driver(void)
+static const struct gdi_dc_funcs *get_display_driver( HMODULE *module_ret )
 {
     struct graphics_driver *driver;
     char buffer[MAX_PATH], libname[32], *name, *next;
     HMODULE module = 0;
     HKEY hkey;
 
-    if (display_driver) return display_driver->funcs;  /* already loaded */
+    if (display_driver)
+    {
+        *module_ret = display_driver->module;
+        return display_driver->funcs;  /* already loaded */
+    }
 
     strcpy( buffer, "x11" );  /* default value */
     /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
@@ -121,6 +126,8 @@ static const struct gdi_dc_funcs *get_display_driver(void)
         name = next;
     }
 
+    if (!module) display_driver_load_error = GetLastError();
+
     if (!(driver = create_driver( module )))
     {
         MESSAGE( "Could not create graphics driver '%s'\n", buffer );
@@ -140,7 +147,7 @@ static const struct gdi_dc_funcs *get_display_driver(void)
 /**********************************************************************
  *	     DRIVER_load_driver
  */
-const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name )
+const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name, HMODULE *module_ret )
 {
     HMODULE module;
     struct graphics_driver *driver, *new_driver;
@@ -148,11 +155,16 @@ const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name )
     static const WCHAR display1W[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
 
     /* display driver is a special case */
-    if (!strcmpiW( name, displayW ) || !strcmpiW( name, display1W )) return get_display_driver();
+    if (!strcmpiW( name, displayW ) || !strcmpiW( name, display1W ))
+        return get_display_driver( module_ret );
 
     if ((module = GetModuleHandleW( name )))
     {
-        if (display_driver && display_driver->module == module) return display_driver->funcs;
+        if (display_driver && display_driver->module == module)
+        {
+            *module_ret = module;
+            return display_driver->funcs;
+        }
         EnterCriticalSection( &driver_section );
         LIST_FOR_EACH_ENTRY( driver, &drivers, struct graphics_driver, entry )
         {
@@ -182,8 +194,28 @@ const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name )
     list_add_head( &drivers, &driver->entry );
     TRACE( "loaded driver %p for %s\n", driver, debugstr_w(name) );
 done:
+    *module_ret = driver->module;
     LeaveCriticalSection( &driver_section );
     return driver->funcs;
+}
+
+
+/***********************************************************************
+ *           __wine_get_driver_module    (GDI32.@)
+ */
+HMODULE CDECL __wine_get_driver_module( HDC hdc )
+{
+    DC *dc;
+    HMODULE ret = 0;
+
+    if ((dc = get_dc_ptr( hdc )))
+    {
+        ret = dc->module;
+        release_dc_ptr( dc );
+        if (!ret) SetLastError( display_driver_load_error );
+    }
+    else SetLastError( ERROR_INVALID_HANDLE );
+    return ret;
 }
 
 
