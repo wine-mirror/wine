@@ -203,13 +203,16 @@ MSVCP_bool __thiscall basic_string_char__Grow(basic_string_char *this, MSVCP_siz
             return FALSE;
         }
 
+        if(len > new_res)
+            len = new_res;
+
         *ptr = 0;
         if(this->ptr)
-            char_traits_char__Copy_s(ptr+1, new_size, this->ptr, this->size);
+            char_traits_char__Copy_s(ptr+1, new_size, this->ptr, len);
         basic_string_char__Tidy(this, TRUE);
         this->ptr = ptr+1;
         this->res = new_res;
-        basic_string_char__Eos(this, len>new_res ? new_res : len);
+        basic_string_char__Eos(this, len);
     }
 
     return new_size>0;
@@ -1911,13 +1914,16 @@ MSVCP_bool __thiscall basic_string_wchar__Grow(basic_string_wchar *this, MSVCP_s
             return FALSE;
         }
 
+        if(len > new_res)
+            len = new_res;
+
         *ptr = 0;
         if(this->ptr)
-            char_traits_wchar__Copy_s(ptr+1, new_size, this->ptr, this->size);
+            char_traits_wchar__Copy_s(ptr+1, new_size, this->ptr, len);
         basic_string_wchar__Tidy(this, TRUE);
         this->ptr = ptr+1;
         this->res = new_res;
-        basic_string_wchar__Eos(this, len>new_res ? new_res : len);
+        basic_string_wchar__Eos(this, len);
     }
 
     return new_size>0;
