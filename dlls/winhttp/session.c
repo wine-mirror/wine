@@ -509,6 +509,7 @@ HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PO
     connect->hdr.callback = session->hdr.callback;
     connect->hdr.notify_mask = session->hdr.notify_mask;
     connect->hdr.context = session->hdr.context;
+    connect->hdr.redirect_policy = session->hdr.redirect_policy;
     list_init( &connect->hdr.children );
 
     addref_object( &session->hdr );
@@ -948,6 +949,7 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     request->hdr.callback = connect->hdr.callback;
     request->hdr.notify_mask = connect->hdr.notify_mask;
     request->hdr.context = connect->hdr.context;
+    request->hdr.redirect_policy = connect->hdr.redirect_policy;
     list_init( &request->hdr.children );
 
     addref_object( &connect->hdr );
