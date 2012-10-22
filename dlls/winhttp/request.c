@@ -1876,7 +1876,8 @@ static BOOL receive_response( request_t *request, BOOL async )
 
         if (status == HTTP_STATUS_MOVED || status == HTTP_STATUS_REDIRECT || status == HTTP_STATUS_REDIRECT_KEEP_VERB)
         {
-            if (request->hdr.disable_flags & WINHTTP_DISABLE_REDIRECTS) break;
+            if (request->hdr.disable_flags & WINHTTP_DISABLE_REDIRECTS ||
+                request->hdr.redirect_policy == WINHTTP_OPTION_REDIRECT_POLICY_NEVER) break;
 
             drain_content( request );
             if (!(ret = handle_redirect( request, status ))) break;
