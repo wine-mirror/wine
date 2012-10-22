@@ -512,57 +512,57 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
         case 0x0f: /* extended instruction */
             switch(instr[1])
             {
-	    case 0x22: /* mov eax, crX */
+            case 0x22: /* mov %eax, %crX */
                 switch (instr[2])
                 {
-		case 0xc0:
-			ERR("mov eax,cr0 at 0x%08x, EAX=0x%08x\n",
-                            context->Eip,context->Eax );
+                case 0xc0:
+                    ERR("mov %%eax, %%cr0 at 0x%08x, EAX=0x%08x\n",
+                        context->Eip,context->Eax );
                         context->Eip += prefixlen+3;
-			return ExceptionContinueExecution;
-		default:
-			break; /*fallthrough to bad instruction handling */
-		}
-		break; /*fallthrough to bad instruction handling */
-	    case 0x20: /* mov crX, eax */
+                    return ExceptionContinueExecution;
+                default:
+                    break; /* Fallthrough to bad instruction handling */
+                }
+                break; /* Fallthrough to bad instruction handling */
+            case 0x20: /* mov %crX, %eax */
                 switch (instr[2])
                 {
-		case 0xe0: /* mov cr4, eax */
-		    /* CR4 register . See linux/arch/i386/mm/init.c, X86_CR4_ defs
-		     * bit 0: VME	Virtual Mode Exception ?
-		     * bit 1: PVI	Protected mode Virtual Interrupt
-		     * bit 2: TSD	Timestamp disable
-		     * bit 3: DE	Debugging extensions
-		     * bit 4: PSE	Page size extensions
-		     * bit 5: PAE   Physical address extension
-		     * bit 6: MCE	Machine check enable
-		     * bit 7: PGE   Enable global pages
-		     * bit 8: PCE	Enable performance counters at IPL3
-		     */
-                    ERR("mov cr4,eax at 0x%08x\n",context->Eip);
+                case 0xe0: /* mov %cr4, %eax */
+                    /* CR4 register: See linux/arch/i386/mm/init.c, X86_CR4_ defs
+                     * bit 0: VME Virtual Mode Exception ?
+                     * bit 1: PVI Protected mode Virtual Interrupt
+                     * bit 2: TSD Timestamp disable
+                     * bit 3: DE  Debugging extensions
+                     * bit 4: PSE Page size extensions
+                     * bit 5: PAE Physical address extension
+                     * bit 6: MCE Machine check enable
+                     * bit 7: PGE Enable global pages
+                     * bit 8: PCE Enable performance counters at IPL3
+                     */
+                    ERR("mov %%cr4, %%eax at 0x%08x\n",context->Eip);
                     context->Eax = 0;
                     context->Eip += prefixlen+3;
-		    return ExceptionContinueExecution;
-		case 0xc0: /* mov cr0, eax */
-                    ERR("mov cr0,eax at 0x%08x\n",context->Eip);
+                    return ExceptionContinueExecution;
+                case 0xc0: /* mov %cr0, %eax */
+                    ERR("mov %%cr0, %%eax at 0x%08x\n",context->Eip);
                     context->Eax = 0x10; /* FIXME: set more bits ? */
                     context->Eip += prefixlen+3;
-		    return ExceptionContinueExecution;
-		default: /* fallthrough to illegal instruction */
-		    break;
-		}
-		/* fallthrough to illegal instruction */
-		break;
-            case 0x21: /* mov drX, eax */
+                    return ExceptionContinueExecution;
+                default: /* Fallthrough to illegal instruction */
+                    break;
+                }
+                /* Fallthrough to illegal instruction */
+                break;
+            case 0x21: /* mov %drX, %eax */
                 switch (instr[2])
                 {
-                case 0xc8: /* mov dr1, eax */
-                    TRACE("mov dr1,eax at 0x%08x\n",context->Eip);
+                case 0xc8: /* mov %dr1, %eax */
+                    TRACE("mov %%dr1, %%eax at 0x%08x\n",context->Eip);
                     context->Eax = context->Dr1;
                     context->Eip += prefixlen+3;
                     return ExceptionContinueExecution;
-                case 0xf8: /* mov dr7, eax */
-                    TRACE("mov dr7,eax at 0x%08x\n",context->Eip);
+                case 0xf8: /* mov %dr7, %eax */
+                    TRACE("mov %%dr7, %%eax at 0x%08x\n",context->Eip);
                     context->Eax = 0x400;
                     context->Eip += prefixlen+3;
                     return ExceptionContinueExecution;
@@ -570,10 +570,10 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
                 ERR("Unsupported DR register, eip+2 is %02x\n", instr[2]);
                 /* fallthrough to illegal instruction */
                 break;
-            case 0x23: /* mov eax drX */
+            case 0x23: /* mov %eax, %drX */
                 switch (instr[2])
                 {
-                case 0xc8: /* mov eax, dr1 */
+                case 0xc8: /* mov %eax, %dr1 */
                     context->Dr1 = context->Eax;
                     context->Eip += prefixlen+3;
                     return ExceptionContinueExecution;
