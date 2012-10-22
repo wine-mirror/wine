@@ -706,6 +706,8 @@ static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int* plevel)
     ok(hr == DXFILE_OK || hr == DXFILEERR_NOMOREOBJECTS, "IDirectXFileData_GetNextObject: %x\n", hr);
 }
 
+/* Dump an X file 'objects.x' and its related templates file 'templates.x' if they are both presents
+ * Useful for debug by comparing outputs from native and builtin dlls */
 static void test_dump(void)
 {
     HRESULT hr;
@@ -724,12 +726,12 @@ static void test_dump(void)
     }
 
     /* Dump data only if there is an object and a template */
-    hFile = CreateFileA("objects.txt", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    hFile = CreateFileA("objects.x", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
       return;
     CloseHandle(hFile);
 
-    hFile = CreateFileA("templates.txt", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    hFile = CreateFileA("templates.x", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
       return;
 
