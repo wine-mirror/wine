@@ -72,7 +72,7 @@ void * WINAPI WinGGetDIBPointer( HBITMAP hbmp, BITMAPINFO *bmi )
 
     if (GetObjectW( hbmp, sizeof(ds), &ds ) == sizeof(ds))
     {
-        memcpy( &bmi->bmiHeader, &ds.dsBmih, sizeof(*bmi) );
+        memcpy( &bmi->bmiHeader, &ds.dsBmih, sizeof(bmi->bmiHeader) );
         return ds.dsBm.bmBits;
     }
     return NULL;
