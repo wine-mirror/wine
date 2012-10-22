@@ -260,7 +260,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMessage, WPARAM wparam, LPARAM 
               if (FileOpen(hwnd, filename, sizeof(filename)/sizeof(WCHAR)))
               {
                   szFileTitle[0] = 0;
-                  GetFileTitleW(filename, szFileTitle, sizeof(szFileTitle));
+                  GetFileTitleW(filename, szFileTitle, sizeof(szFileTitle)/sizeof(WCHAR));
                   DoOpenFile(filename);
                   UpdateWindowCaption();
               }
@@ -387,7 +387,7 @@ static void HandleCommandLine(LPWSTR cmdline)
             cmdline[lstrlenW(cmdline) - 1] = 0;
         }
         szFileTitle[0] = 0;
-        GetFileTitleW(cmdline, szFileTitle, sizeof(szFileTitle));
+        GetFileTitleW(cmdline, szFileTitle, sizeof(szFileTitle)/sizeof(WCHAR));
         DoOpenFile(cmdline);
         UpdateWindowCaption();
     }
