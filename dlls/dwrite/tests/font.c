@@ -526,6 +526,7 @@ todo_wine
 static void test_system_fontcollection(void)
 {
     IDWriteFontCollection *collection, *coll2;
+    IDWriteFontFamily *family;
     HRESULT hr;
     UINT32 i;
     BOOL ret;
@@ -545,6 +546,12 @@ static void test_system_fontcollection(void)
 
     i = IDWriteFontCollection_GetFontFamilyCount(collection);
     ok(i, "got %u\n", i);
+
+    /* invalid index */
+    family = (void*)0xdeadbeef;
+    hr = IDWriteFontCollection_GetFontFamily(collection, i, &family);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(family == NULL, "got %p\n", family);
 
     ret = FALSE;
     i = (UINT32)-1;
