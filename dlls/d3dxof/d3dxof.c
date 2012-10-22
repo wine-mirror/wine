@@ -619,7 +619,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetId(IDirectXFileData* iface, LPGUID
   if (!pGuid)
     return DXFILEERR_BADVALUE;
 
-  memcpy(pGuid, &This->pobj->class_id, 16);
+  *pGuid = This->pobj->class_id;
 
   return DXFILE_OK;
 }
@@ -667,7 +667,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetType(IDirectXFileData* iface, cons
   if (!pguid)
     return DXFILEERR_BADVALUE;
 
-  memcpy(&guid, &This->pobj->type, 16);
+  guid = This->pobj->type;
   *pguid = &guid;
 
   return DXFILE_OK;
@@ -886,7 +886,7 @@ static HRESULT WINAPI IDirectXFileDataReferenceImpl_GetId(IDirectXFileDataRefere
   if (!pGuid)
     return DXFILEERR_BADVALUE;
 
-  memcpy(pGuid, &This->ptarget->class_id, 16);
+  *pGuid = This->ptarget->class_id;
 
   return DXFILE_OK;
 }
