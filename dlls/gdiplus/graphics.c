@@ -6345,7 +6345,7 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
         }
 
         GetCharABCWidthsW(hdc, glyph_indices[i], glyph_indices[i], &abc);
-        char_width = abc.abcA + abc.abcB + abc.abcB;
+        char_width = abc.abcA + abc.abcB + abc.abcC;
 
         if (min_y > y - ascent) min_y = y - ascent;
         if (max_y < y + descent) max_y = y + descent;
