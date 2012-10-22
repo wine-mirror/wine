@@ -307,7 +307,7 @@ static HRESULT calculate_dds_surface_size(D3DFORMAT format, UINT width, UINT hei
     UINT *pitch, UINT *size)
 {
     const struct pixel_format_desc *format_desc = get_format_info(format);
-    if (format_desc->format == D3DFMT_UNKNOWN)
+    if (format_desc->type == FORMAT_UNKNOWN)
         return E_NOTIMPL;
 
     if (format_desc->block_width != 1 || format_desc->block_height != 1)
@@ -460,7 +460,11 @@ static HRESULT save_dds_surface_to_memory(ID3DXBuffer **dst_buffer, IDirect3DSur
     if (FAILED(hr)) return hr;
 
     pixel_format = get_format_info(src_desc.Format);
-    if (pixel_format->type == FORMAT_UNKNOWN) return E_NOTIMPL;
+    if (pixel_format->type != FORMAT_ARGB)
+    {
+        FIXME("Unsupported pixel format %#x\n", src_desc.Format);
+        return E_NOTIMPL;
+    }
 
     file_size = calculate_dds_file_size(src_desc.Format, src_desc.Width, src_desc.Height, 1, 1, 1);
 
@@ -1028,7 +1032,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
 
     formatdesc = get_format_info(imginfo.Format);
 
-    if (formatdesc->format == D3DFMT_UNKNOWN)
+    if (formatdesc->type == FORMAT_UNKNOWN)
     {
         FIXME("Unsupported pixel format\n");
         hr = D3DXERR_INVALIDDATA;
@@ -1676,15 +1680,13 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
     }
     else /* Stretching or format conversion. */
     {
-        if (srcformatdesc->bytes_per_pixel > 4 || destformatdesc->bytes_per_pixel > 4
-                || srcformatdesc->block_height != 1 || srcformatdesc->block_width != 1
-                || destformatdesc->block_height != 1 || destformatdesc->block_width != 1)
+        if (srcformatdesc->type != FORMAT_ARGB || destformatdesc->type != FORMAT_ARGB)
         {
             FIXME("Format conversion missing %#x -> %#x\n", src_format, surfdesc.Format);
             return E_NOTIMPL;
         }
 
-        if (FAILED(hr = IDirect3DSurface9_LockRect(dst_surface, &lockrect, dst_rect, 0)))
+        if (FAILED(IDirect3DSurface9_LockRect(dst_surface, &lockrect, dst_rect, 0)))
             return D3DXERR_INVALIDDATA;
 
         if ((filter & 0xf) == D3DX_FILTER_NONE)
@@ -1952,21 +1954,10 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
 
             src_format_desc = get_format_info(src_surface_desc.Format);
             dst_format_desc = get_format_info(d3d_pixel_format);
-            if (src_format_desc->format == D3DFMT_UNKNOWN || dst_format_desc->format == D3DFMT_UNKNOWN)
+            if (src_format_desc->type != FORMAT_ARGB || dst_format_desc->type != FORMAT_ARGB)
             {
                 FIXME("Unsupported pixel format conversion %#x -> %#x\n",
                     src_surface_desc.Format, d3d_pixel_format);
-                hr = E_NOTIMPL;
-                goto cleanup;
-            }
-
-            if (src_format_desc->bytes_per_pixel > 4
-                || dst_format_desc->bytes_per_pixel > 4
-                || src_format_desc->block_height != 1 || src_format_desc->block_width != 1
-                || dst_format_desc->block_height != 1 || dst_format_desc->block_width != 1)
-            {
-                FIXME("Format conversion missing %#x -> %#x\n",
-                        src_surface_desc.Format, d3d_pixel_format);
                 hr = E_NOTIMPL;
                 goto cleanup;
             }

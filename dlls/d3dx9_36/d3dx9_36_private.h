@@ -47,6 +47,7 @@ struct volume
 /* for internal use */
 enum format_type {
     FORMAT_ARGB,   /* unsigned */
+    FORMAT_DXT,
     FORMAT_UNKNOWN
 };
 
