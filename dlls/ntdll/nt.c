@@ -1012,6 +1012,31 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
  */
 void fill_cpu_info(void)
 {
+    long num;
+
+#ifdef _SC_NPROCESSORS_ONLN
+    num = sysconf(_SC_NPROCESSORS_ONLN);
+    if (num < 1)
+    {
+        num = 1;
+        WARN("Failed to detect the number of processors.\n");
+    }
+#elif defined(CTL_HW) && defined(HW_NCPU)
+    int mib[2];
+    size_t len = sizeof(num);
+    mib[0] = CTL_HW;
+    mib[1] = HW_NCPU;
+    if (sysctl(mib, 2, &num, &len, NULL, 0) != 0)
+    {
+        num = 1;
+        WARN("Failed to detect the number of processors.\n");
+    }
+#else
+    num = 1;
+    FIXME("Detecting the number of processors not suported.\n");
+#endif
+    NtCurrentTeb()->Peb->NumberOfProcessors = num;
+
     memset(&cached_sci, 0, sizeof(cached_sci));
     /* choose sensible defaults ...
      * FIXME: perhaps overridable with precompiler flags?
@@ -1033,8 +1058,6 @@ void fill_cpu_info(void)
     cached_sci.Revision   = 0;
     cached_sci.Reserved   = 0;
     cached_sci.FeatureSet = 0x1fff;
-
-    NtCurrentTeb()->Peb->NumberOfProcessors = 1;
 
     /* Hmm, reasonable processor feature defaults? */
 
@@ -1064,17 +1087,6 @@ void fill_cpu_info(void)
             if ((s = strchr(value,'\n')))
                 *s='\0';
 
-            if (!strcasecmp(line, "processor"))
-            {
-                /* processor number counts up... */
-                unsigned int x;
-
-                if (sscanf(value, "%d",&x))
-                    if (x + 1 > NtCurrentTeb()->Peb->NumberOfProcessors)
-                        NtCurrentTeb()->Peb->NumberOfProcessors = x + 1;
-
-                continue;
-            }
             if (!strcasecmp(line, "model"))
             {
                 /* First part of Revision */
@@ -1206,11 +1218,6 @@ void fill_cpu_info(void)
             if (value) user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
 #endif
         mib[0] = CTL_HW;
-        mib[1] = HW_NCPU;
-        val_len = sizeof(value);
-        if (sysctl(mib, 2, &value, &val_len, NULL, 0) >= 0)
-            if (value > NtCurrentTeb()->Peb->NumberOfProcessors)
-                NtCurrentTeb()->Peb->NumberOfProcessors = value;
         mib[1] = HW_MODEL;
         val_len = sizeof(model)-1;
         if (sysctl(mib, 2, model, &val_len, NULL, 0) >= 0)
@@ -1270,9 +1277,6 @@ void fill_cpu_info(void)
     }
 #elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__DragonFly__)
     {
-        int ret, num;
-        size_t len;
-
         get_cpuinfo( &cached_sci );
 
         /* Check for OS support of SSE -- Is this used, and should it be sse1 or sse2? */
@@ -1280,32 +1284,10 @@ void fill_cpu_info(void)
           ret = sysctlbyname("hw.instruction_sse", &num, &len, NULL, 0);
           if (!ret)
           user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] = num;*/
-
-        len = sizeof(num);
-        ret = sysctlbyname("hw.ncpu", &num, &len, NULL, 0);
-        if (!ret)
-            NtCurrentTeb()->Peb->NumberOfProcessors = num;
     }
 #elif defined(__sun)
     {
-        int num = sysconf( _SC_NPROCESSORS_ONLN );
-
-        if (num == -1) num = 1;
         get_cpuinfo( &cached_sci );
-        NtCurrentTeb()->Peb->NumberOfProcessors = num;
-    }
-#elif defined (__OpenBSD__)
-    {
-        int mib[2], num, ret;
-        size_t len;
-
-        mib[0] = CTL_HW;
-        mib[1] = HW_NCPU;
-        len = sizeof(num);
-
-        ret = sysctl(mib, 2, &num, &len, NULL, 0);
-        if (!ret)
-            NtCurrentTeb()->Peb->NumberOfProcessors = num;
     }
 #elif defined (__APPLE__)
     {
@@ -1322,11 +1304,6 @@ void fill_cpu_info(void)
             else
                 user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED] = TRUE;
         }
-        valSize = sizeof(int);
-        if (sysctlbyname ("hw.ncpu", &value, &valSize, NULL, 0) == 0)
-            NtCurrentTeb()->Peb->NumberOfProcessors = value;
-
-        /* FIXME: we don't use the "hw.activecpu" value... but the cached one */
 
         valSize = sizeof(int);
         if (sysctlbyname ("hw.cputype", &cputype, &valSize, NULL, 0) == 0)
