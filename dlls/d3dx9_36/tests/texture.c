@@ -964,11 +964,11 @@ static void test_D3DXFillTexture(IDirect3DDevice9 *device)
             }
             size >>= 1;
         }
+
+        IDirect3DTexture9_Release(tex);
     }
     else
         skip("Failed to create texture\n");
-
-    IDirect3DTexture9_Release(tex);
 
     hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_A1R5G5B5,
                                         D3DPOOL_MANAGED, &tex, NULL);
@@ -1006,11 +1006,11 @@ static void test_D3DXFillTexture(IDirect3DDevice9 *device)
             }
             IDirect3DTexture9_UnlockRect(tex, 0);
         }
+
+        IDirect3DTexture9_Release(tex);
     }
     else
         skip("Failed to create texture\n");
-
-    IDirect3DTexture9_Release(tex);
 }
 
 static void WINAPI fillfunc_cube(D3DXVECTOR4 *value, const D3DXVECTOR3 *texcoord,
@@ -1117,11 +1117,11 @@ static void test_D3DXFillCubeTexture(IDirect3DDevice9 *device)
             }
             size >>= 1;
         }
+
+        IDirect3DCubeTexture9_Release(tex);
     }
     else
         skip("Failed to create texture\n");
-
-    IDirect3DCubeTexture9_Release(tex);
 
     hr = IDirect3DDevice9_CreateCubeTexture(device, 4, 1, 0, D3DFMT_A1R5G5B5,
                                             D3DPOOL_MANAGED, &tex, NULL);
@@ -1162,11 +1162,11 @@ static void test_D3DXFillCubeTexture(IDirect3DDevice9 *device)
                 IDirect3DCubeTexture9_UnlockRect(tex, f, 0);
             }
         }
+
+        IDirect3DCubeTexture9_Release(tex);
     }
     else
         skip("Failed to create texture\n");
-
-    IDirect3DCubeTexture9_Release(tex);
 }
 
 static void WINAPI fillfunc_volume(D3DXVECTOR4 *value, const D3DXVECTOR3 *texcoord,
@@ -1232,11 +1232,11 @@ static void test_D3DXFillVolumeTexture(IDirect3DDevice9 *device)
             }
             size >>= 1;
         }
+
+        IDirect3DVolumeTexture9_Release(tex);
     }
     else
         skip("Failed to create texture\n");
-
-    IDirect3DVolumeTexture9_Release(tex);
 
     hr = IDirect3DDevice9_CreateVolumeTexture(device, 4, 4, 4, 1, 0, D3DFMT_A1R5G5B5,
                                               D3DPOOL_MANAGED, &tex, NULL);
@@ -1277,11 +1277,11 @@ static void test_D3DXFillVolumeTexture(IDirect3DDevice9 *device)
             }
             IDirect3DVolumeTexture9_UnlockBox(tex, 0);
         }
+
+        IDirect3DVolumeTexture9_Release(tex);
     }
     else
         skip("Failed to create texture\n");
-
-    IDirect3DVolumeTexture9_Release(tex);
 }
 
 static void test_D3DXCreateTextureFromFileInMemory(IDirect3DDevice9 *device)
