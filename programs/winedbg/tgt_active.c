@@ -862,7 +862,7 @@ enum dbg_start dbg_active_minidump(int argc, char* argv[])
     HANDLE              hFile;
     enum dbg_start      ds = start_error_parse;
     const char*     file = NULL;
-    char            tmp[8 + 1 + MAX_PATH]; /* minidump <file> */
+    char            tmp[8 + 1 + 2 + MAX_PATH]; /* minidump "<file>" */
 
     dbg_houtput = GetStdHandle(STD_ERROR_HANDLE);
     DBG_IVAR(BreakOnDllLoad) = 0;
