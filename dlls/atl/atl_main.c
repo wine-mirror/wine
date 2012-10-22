@@ -179,7 +179,6 @@ HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEW *pM, DWORD dwClsContex
                                              DWORD dwFlags)
 {
     _ATL_OBJMAP_ENTRYW_V1 *obj;
-    HRESULT hRes = S_OK;
     int i=0;
 
     TRACE("(%p %i %i)\n",pM, dwClsContext, dwFlags);
@@ -199,15 +198,19 @@ HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEW *pM, DWORD dwClsContex
                                    (LPVOID*)&pUnknown);
             if (SUCCEEDED (rc) )
             {
-                CoRegisterClassObject(obj->pclsid, pUnknown, dwClsContext,
-                                      dwFlags, &obj->dwRegister);
+                rc = CoRegisterClassObject(obj->pclsid, pUnknown, dwClsContext,
+                                           dwFlags, &obj->dwRegister);
+
+                if (FAILED (rc) )
+                    WARN("Failed to register object %i: 0x%08x\n", i, rc);
+
                 if (pUnknown)
                     IUnknown_Release(pUnknown);
             }
         }
     }
 
-   return hRes;
+   return S_OK;
 }
 
 HRESULT WINAPI AtlModuleUnregisterServerEx(_ATL_MODULEW* pM, BOOL bUnRegTypeLib, const CLSID* pCLSID)
