@@ -417,20 +417,20 @@ bar
 NUL
 @todo_wine@foo created
 ------------ Testing if/else ------------
-if/else should work with blocks
+--- if/else should work with blocks
 if seems to work
 else seems to work
 if seems not to detect /c as parameter
-Testing case sensitivity with and without /i option
+--- case sensitivity with and without /i option
 if seems to default to case sensitivity
 if /i seems to work
 if /I seems to work
-Testing string comparisons
+--- string comparisons
 equal
 non equal
 non equal
 equal
-Testing tabs handling
+--- tabs handling
 doom
 doom
 doom
@@ -438,6 +438,42 @@ lol
 quake
 quake
 quake
+--- comparison operators
+------ for strings
+LSS string can be used as operand for LSS comparison
+@todo_wine@floats are handled as strings
+@todo_wine@numbers in quotes are handled as strings
+@todo_wine@negative numbers as well@or_broken@NT4
+@todo_wine@if /i seems to work for LSS
+@todo_wine@A LSS B
+@todo_wine@AB LSS B
+@todo_wine@AA LSS B
+@todo_wine@A LSS AB
+@todo_wine@AA LSS AB
+@todo_wine@A LSS BA
+@todo_wine@B LSS BA
+@todo_wine@AB LSS BA
+@todo_wine@AA LSS BA
+@todo_wine@A LSS AA
+@todo_wine@b LSS B@or_broken@NT4
+@todo_wine@a LSS B@or_broken@NT4
+@todo_wine@a LSS B insensitive
+@todo_wine@A LSS b
+@todo_wine@A LSS b insensitive
+------ for numbers
+negative numbers handled
+negative numbers handled
+octal handled
+also in negative form
+hexa handled
+also in negative form
+11 LSS 101
+@todo_wine@0 LSS 1
+@todo_wine@0 LSS 10
+@todo_wine@1 LSS 10
+@todo_wine@9 LSS 10
+@todo_wine@0 LSS 9
+@todo_wine@1 LSS 9
 ------------ Testing for ------------
 --- plain FOR
 A

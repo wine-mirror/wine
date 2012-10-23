@@ -607,7 +607,7 @@ if exist foo (
 cd .. & rd foobar
 
 echo ------------ Testing if/else ------------
-echo if/else should work with blocks
+echo --- if/else should work with blocks
 if 0 == 0 (
   echo if seems to work
 ) else (
@@ -623,19 +623,22 @@ if /c==/c (
 ) else (
   echo parameter detection seems to be broken
 )
-echo Testing case sensitivity with and without /i option
+
+echo --- case sensitivity with and without /i option
 if bar==BAR echo if does not default to case sensitivity
 if not bar==BAR echo if seems to default to case sensitivity
 if /i foo==FOO echo if /i seems to work
 if /i not foo==FOO echo if /i seems to be broken
 if /I foo==FOO echo if /I seems to work
 if /I not foo==FOO echo if /I seems to be broken
-echo Testing string comparisons
+
+echo --- string comparisons
 if abc == abc  (echo equal) else echo non equal
 if abc =="abc" (echo equal) else echo non equal
 if "abc"== abc (echo equal) else echo non equal
 if "abc"== "abc" (echo equal) else echo non equal
-echo Testing tabs handling
+
+echo --- tabs handling
 if@tab@1==1 echo doom
 if @tab@1==1 echo doom
 if 1==1 (echo doom) else@tab@echo quake
@@ -643,6 +646,58 @@ if@tab@not @tab@1==@tab@0 @tab@echo lol
 if 1==0@tab@(echo doom) else echo quake
 if 1==0 (echo doom)@tab@else echo quake
 if 1==0 (echo doom) else@tab@echo quake
+
+echo --- comparison operators
+rem NT4 misevaluates conditionals in for loops so we have to use subroutines as workarounds
+rem Imbricated for loops parameters are currently not expanded correctly; this prevents usage of simpler imbricated for loops in tests
+echo ------ for strings
+rem NT4 stops processing of the whole batch file as soon as it finds a
+rem comparison operator non fully uppercased, such as lss instead of LSS, so we
+rem can't test those here.
+if LSS LSS LSSfoo (echo LSS string can be used as operand for LSS comparison)
+if LSS LSS LSS (echo bar)
+if 1.1 LSS 1.10 (echo floats are handled as strings)
+if "9" LSS "10" (echo numbers in quotes recognized!) else echo numbers in quotes are handled as strings
+if not "-1" LSS "1" (echo negative numbers as well) else echo NT4
+if /i foo LSS FoOc echo if /i seems to work for LSS
+if /I not foo LSS FOOb echo if /I seems to be broken for LSS
+set STR_PARMS=A B AB BA AA
+for %%i in (%STR_PARMS%) do call :LSStest %%i A
+for %%i in (%STR_PARMS%) do call :LSStest %%i B
+for %%i in (%STR_PARMS%) do call :LSStest %%i AB
+for %%i in (%STR_PARMS%) do call :LSStest %%i BA
+for %%i in (%STR_PARMS%) do call :LSStest %%i AA
+if b LSS B (echo b LSS B) else echo NT4
+if /I b LSS B echo b LSS B insensitive
+if b LSS A echo b LSS A
+if /I b LSS A echo b LSS A insensitive
+if a LSS B (echo a LSS B) else echo NT4
+if /I a LSS B echo a LSS B insensitive
+if A LSS b echo A LSS b
+if /I A LSS b echo A LSS b insensitive
+echo ------ for numbers
+if -1 LSS 1 (echo negative numbers handled)
+if not -1 LSS -10 (echo negative numbers handled)
+if not 9 LSS 010 (echo octal handled)
+if not -010 LSS -8 (echo also in negative form)
+if 4 LSS 0x5 (echo hexa handled)
+if not -1 LSS -0x1A (echo also in negative form)
+if 11 LSS 101 (echo 11 LSS 101)
+set INT_PARMS=0 1 10 9
+for %%i in (%INT_PARMS%) do call :LSStest %%i 0
+for %%i in (%INT_PARMS%) do call :LSStest %%i 1
+for %%i in (%INT_PARMS%) do call :LSStest %%i 10
+for %%i in (%INT_PARMS%) do call :LSStest %%i 9
+goto :endIfCompOpsSubroutines
+
+rem IF subroutines helpers
+:LSStest
+if %1 LSS %2 echo %1 LSS %2
+goto :eof
+
+:endIfCompOpsSubroutines
+set STR_PARMS=
+set INT_PARMS=
 
 echo ------------ Testing for ------------
 echo --- plain FOR
