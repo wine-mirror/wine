@@ -857,6 +857,8 @@ static void test_font_transform(void)
     expect(Ok, status);
     expect(-100, lf.lfHeight);
     expect(0, lf.lfWidth);
+    expect(0, lf.lfEscapement);
+    expect(0, lf.lfOrientation);
     status = GdipGetFontHeight(font, graphics, &height);
     expect(Ok, status);
     expectf(120.703125, height);
@@ -905,6 +907,8 @@ todo_wine
 todo_wine
     expect(-300, lf.lfHeight);
     expect(0, lf.lfWidth);
+    expect(0, lf.lfEscapement);
+    expect(0, lf.lfOrientation);
     status = GdipGetFontHeight(font, graphics, &height);
     expect(Ok, status);
     expectf(120.703125, height);
@@ -953,6 +957,10 @@ todo_wine
 todo_wine
     expect(-300, lf.lfHeight);
     expect(0, lf.lfWidth);
+todo_wine
+    expect(3151, lf.lfEscapement);
+todo_wine
+    expect(3151, lf.lfOrientation);
     status = GdipGetFontHeight(font, graphics, &height);
     expect(Ok, status);
     expectf(120.703125, height);
@@ -1002,6 +1010,10 @@ todo_wine
 todo_wine
     expect(1032, lf.lfHeight);
     expect(0, lf.lfWidth);
+todo_wine
+    expect(3099, lf.lfEscapement);
+todo_wine
+    expect(3099, lf.lfOrientation);
     status = GdipGetFontHeight(font, graphics, &height);
     expect(Ok, status);
     expectf(120.703125, height);
@@ -1051,6 +1063,10 @@ todo_wine
 todo_wine
     expect(1032, lf.lfHeight);
     expect(0, lf.lfWidth);
+todo_wine
+    expect(3099, lf.lfEscapement);
+todo_wine
+    expect(3099, lf.lfOrientation);
     status = GdipGetFontHeight(font, graphics, &height);
     expect(Ok, status);
     expectf(120.703125, height);
