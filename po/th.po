@@ -57,7 +57,7 @@ msgstr "รายละเอียด"
 #: comdlg32.rc:299 comdlg32.rc:353 comdlg32.rc:392 comdlg32.rc:446
 #: credui.rc:49 cryptui.rc:260 cryptui.rc:272 cryptui.rc:362 dinput.rc:43
 #: ieframe.rc:93 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
-#: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
+#: mshtml.rc:44 mshtml.rc:54 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
 #: serialui.rc:38 setupapi.rc:56 shell32.rc:273 shell32.rc:297 shell32.rc:319
 #: shell32.rc:337 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
 #: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:114 oleview.rc:159
@@ -136,7 +136,7 @@ msgstr ""
 #: comdlg32.rc:342 comdlg32.rc:354 comdlg32.rc:393 comdlg32.rc:447
 #: comdlg32.rc:472 comdlg32.rc:490 credui.rc:50 cryptui.rc:261 cryptui.rc:273
 #: cryptui.rc:363 dinput.rc:44 ieframe.rc:94 inetcpl.rc:78 localui.rc:42
-#: localui.rc:55 mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56
+#: localui.rc:55 mpr.rc:47 msacm32.rc:51 mshtml.rc:45 mshtml.rc:55
 #: msvfw32.rc:34 oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39
 #: setupapi.rc:57 shell32.rc:274 shell32.rc:298 shell32.rc:309 shell32.rc:338
 #: shlwapi.rc:42 user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69
@@ -6706,28 +6706,24 @@ msgstr ""
 msgid "&Attributes:"
 msgstr ""
 
-#: mshtml.rc:37
+#: mshtml.rc:36
 msgid "Hyperlink"
 msgstr ""
 
-#: mshtml.rc:40
+#: mshtml.rc:39
 #, fuzzy
 msgid "Hyperlink Information"
 msgstr "รายละเอียด"
 
-#: mshtml.rc:41 winecfg.rc:236
+#: mshtml.rc:40 winecfg.rc:236
 msgid "&Type:"
 msgstr ""
 
-#: mshtml.rc:43
+#: mshtml.rc:42
 msgid "&URL:"
 msgstr ""
 
 #: mshtml.rc:31
-msgid "HTML rendering is currently disabled."
-msgstr ""
-
-#: mshtml.rc:32
 msgid "HTML Document"
 msgstr ""
 

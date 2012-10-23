@@ -20,7 +20,6 @@
 #include <winuser.h>
 #include <commctrl.h>
 
-#define IDS_HTMLDISABLED    7500
 #define IDS_HTMLDOCUMENT    7501
 
 #define IDS_STATUS_FIRST            7550

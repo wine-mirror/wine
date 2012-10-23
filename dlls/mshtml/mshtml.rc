@@ -28,7 +28,6 @@ STRINGTABLE
 
 STRINGTABLE
 {
-    IDS_HTMLDISABLED    "HTML rendering is currently disabled."
     IDS_HTMLDOCUMENT    "HTML Document"
 }
 

@@ -63,23 +63,6 @@ static void paint_document(HTMLDocumentObj *This)
     if(!(This->hostinfo.dwFlags & (DOCHOSTUIFLAG_NO3DOUTERBORDER|DOCHOSTUIFLAG_NO3DBORDER)))
         DrawEdge(hdc, &rect, EDGE_SUNKEN, BF_RECT|BF_ADJUST);
 
-    if(!This->nscontainer) {
-        WCHAR wszHTMLDisabled[100];
-        HFONT font;
-
-        LoadStringW(hInst, IDS_HTMLDISABLED, wszHTMLDisabled, sizeof(wszHTMLDisabled)/sizeof(WCHAR));
-
-        font = CreateFontA(25,0,0,0,400,0,0,0,ANSI_CHARSET,0,0,DEFAULT_QUALITY,DEFAULT_PITCH,NULL);
-
-        SelectObject(hdc, font);
-        SelectObject(hdc, GetSysColorBrush(COLOR_WINDOW));
-
-        Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
-        DrawTextW(hdc, wszHTMLDisabled,-1, &rect, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
-
-        DeleteObject(font);
-    }
-
     EndPaint(This->hwnd, &ps);
 }
 
