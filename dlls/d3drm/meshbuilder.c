@@ -2063,6 +2063,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
     HRESULT hr;
     D3DRMGROUPINDEX group;
+    ULONG vertex_per_face = 0;
 
     TRACE("(%p)->(%p)\n", This, mesh);
 
@@ -2089,10 +2090,27 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
         }
         out_ptr = face_data;
 
-        /* Put only vertex indices */
+        /* If all faces have the same number of vertex, set vertex_per_face */
         for (i = 0; i < This->nb_faces; i++)
         {
-            DWORD nb_indices = *out_ptr++ = *in_ptr++;
+            if (vertex_per_face && (vertex_per_face != *in_ptr))
+                break;
+            vertex_per_face = *in_ptr;
+            in_ptr += 1 + *in_ptr * 2;
+        }
+        if (i != This->nb_faces)
+            vertex_per_face = 0;
+
+        /* Put only vertex indices */
+        in_ptr = This->pFaceData;
+        for (i = 0; i < This->nb_faces; i++)
+        {
+            DWORD nb_indices = *in_ptr++;
+
+            /* Don't put nb indices when vertex_per_face is set */
+            if (vertex_per_face)
+                *out_ptr++ = nb_indices;
+
             for (j = 0; j < nb_indices; j++)
             {
                 *out_ptr++ = *in_ptr++;
@@ -2101,7 +2119,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
             }
         }
 
-        hr = IDirect3DRMMesh_AddGroup(*mesh, This->nb_vertices, This->nb_faces, 0, face_data, &group);
+        hr = IDirect3DRMMesh_AddGroup(*mesh, This->nb_vertices, This->nb_faces, vertex_per_face, face_data, &group);
         HeapFree(GetProcessHeap(), 0, face_data);
         if (SUCCEEDED(hr))
         {

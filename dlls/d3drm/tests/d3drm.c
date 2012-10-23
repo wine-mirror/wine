@@ -402,8 +402,8 @@ static void test_MeshBuilder(void)
         ok(hr == D3DRM_OK, "GetCroup failed returning hr = %x\n", hr);
         ok(nb_vertices == 3, "Wrong number of vertices %u (must be 3)\n", nb_vertices);
         ok(nb_faces == 1, "Wrong number of faces %u (must be 1)\n", nb_faces);
-        todo_wine ok(nb_face_vertices == 3, "Wrong number of vertices per face %u (must be 3)\n", nb_face_vertices);
-        todo_wine ok(data_size == 3, "Wrong number of face data bytes %u (must be 3)\n", data_size);
+        ok(nb_face_vertices == 3, "Wrong number of vertices per face %u (must be 3)\n", nb_face_vertices);
+        ok(data_size == 3, "Wrong number of face data bytes %u (must be 3)\n", data_size);
         color = IDirect3DRMMesh_GetGroupColor(mesh, 0);
         ok(color == 0xff00ff00, "Wrong color returned %#x instead of %#x\n", color, 0xff00ff00);
         hr = IDirect3DRMMesh_GetGroupTexture(mesh, 0, &texture);
