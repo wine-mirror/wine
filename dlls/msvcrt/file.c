@@ -3995,8 +3995,11 @@ int CDECL MSVCRT_ungetc(int c, MSVCRT_FILE * file)
 MSVCRT_wint_t CDECL MSVCRT_ungetwc(MSVCRT_wint_t wc, MSVCRT_FILE * file)
 {
     MSVCRT_wchar_t mwc = wc;
-    char * pp = (char *)&mwc;
+    unsigned char * pp = (unsigned char *)&mwc;
     int i;
+
+    if (wc == MSVCRT_WEOF)
+        return MSVCRT_WEOF;
 
     MSVCRT__lock_file(file);
     for(i=sizeof(MSVCRT_wchar_t)-1;i>=0;i--) {
