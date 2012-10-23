@@ -607,8 +607,16 @@ static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *i
     DWRITE_FONT_STRETCH stretch, DWRITE_FONT_STYLE style, IDWriteFont **font)
 {
     struct dwrite_fontfamily *This = impl_from_IDWriteFontFamily(iface);
-    FIXME("(%p)->(%d %d %d %p): stub\n", This, weight, stretch, style, font);
-    return E_NOTIMPL;
+    LOGFONTW lf;
+
+    TRACE("(%p)->(%d %d %d %p)\n", This, weight, stretch, style, font);
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfWeight = weight;
+    lf.lfItalic = style == DWRITE_FONT_STYLE_ITALIC;
+    strcpyW(lf.lfFaceName, This->familyname);
+
+    return create_font_from_logfont(&lf, font);
 }
 
 static HRESULT WINAPI dwritefontfamily_GetMatchingFonts(IDWriteFontFamily *iface, DWRITE_FONT_WEIGHT weight,
