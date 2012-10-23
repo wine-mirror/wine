@@ -5939,7 +5939,6 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
 {
     const char *dstmask, *dstreg, *arg0, *arg1, *arg2;
     unsigned int mul = 1;
-    BOOL mul_final_dest = FALSE;
 
     if(color && alpha) dstmask = "";
     else if(color) dstmask = ".xyz";
@@ -5971,11 +5970,6 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
             /* FALLTHROUGH */
         case WINED3D_TOP_MODULATE_2X:
             mul *= 2;
-            if (!strcmp(dstreg, "result.color"))
-            {
-                dstreg = "ret";
-                mul_final_dest = TRUE;
-            }
             /* FALLTHROUGH */
         case WINED3D_TOP_MODULATE:
             shader_addline(buffer, "MUL %s%s, %s, %s;\n", dstreg, dstmask, arg1, arg2);
@@ -5983,11 +5977,6 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
 
         case WINED3D_TOP_ADD_SIGNED_2X:
             mul = 2;
-            if (!strcmp(dstreg, "result.color"))
-            {
-                dstreg = "ret";
-                mul_final_dest = TRUE;
-            }
             /* FALLTHROUGH */
         case WINED3D_TOP_ADD_SIGNED:
             shader_addline(buffer, "SUB arg2, %s, const.w;\n", arg2);
@@ -6048,11 +6037,6 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
 
         case WINED3D_TOP_DOTPRODUCT3:
             mul = 4;
-            if (!strcmp(dstreg, "result.color"))
-            {
-                dstreg = "ret";
-                mul_final_dest = TRUE;
-            }
             shader_addline(buffer, "SUB arg1, %s, const.w;\n", arg1);
             shader_addline(buffer, "SUB arg2, %s, const.w;\n", arg2);
             shader_addline(buffer, "DP3_SAT %s%s, arg1, arg2;\n", dstreg, dstmask);
@@ -6076,11 +6060,10 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
             FIXME("Unhandled texture op %08x\n", op);
     }
 
-    if(mul == 2) {
-        shader_addline(buffer, "MUL_SAT %s%s, %s, const.y;\n", mul_final_dest ? "result.color" : dstreg, dstmask, dstreg);
-    } else if(mul == 4) {
-        shader_addline(buffer, "MUL_SAT %s%s, %s, const.z;\n", mul_final_dest ? "result.color" : dstreg, dstmask, dstreg);
-    }
+    if (mul == 2)
+        shader_addline(buffer, "MUL_SAT %s%s, %s, const.y;\n", dstreg, dstmask, dstreg);
+    else if (mul == 4)
+        shader_addline(buffer, "MUL_SAT %s%s, %s, const.z;\n", dstreg, dstmask, dstreg);
 }
 
 static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, const struct wined3d_gl_info *gl_info)
