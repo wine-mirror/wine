@@ -5618,7 +5618,6 @@ struct arbfp_ffp_desc
 {
     struct ffp_frag_desc parent;
     GLuint shader;
-    unsigned int num_textures_used;
 };
 
 /* Context activation and GL locking are done by the caller. */
@@ -6420,13 +6419,6 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
             {
                 ERR("Out of memory\n");
                 return;
-            }
-            new_desc->num_textures_used = 0;
-            for (i = 0; i < gl_info->limits.texture_stages; ++i)
-            {
-                if (settings.op[i].cop == WINED3D_TOP_DISABLE)
-                    break;
-                new_desc->num_textures_used = i;
             }
 
             memcpy(&new_desc->parent.settings, &settings, sizeof(settings));
