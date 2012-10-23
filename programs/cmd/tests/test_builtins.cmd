@@ -694,6 +694,11 @@ for %%i in (%STR_PARMS%) do call :EQUtest %%i AB
 for %%i in (%STR_PARMS%) do call :EQUtest %%i BA
 for %%i in (%STR_PARMS%) do call :EQUtest %%i AA
 if /I A EQU a echo A EQU a insensitive
+for %%i in (%STR_PARMS%) do call :NEQtest %%i A
+for %%i in (%STR_PARMS%) do call :NEQtest %%i B
+for %%i in (%STR_PARMS%) do call :NEQtest %%i AB
+for %%i in (%STR_PARMS%) do call :NEQtest %%i BA
+for %%i in (%STR_PARMS%) do call :NEQtest %%i AA
 echo ------ for numbers
 if -1 LSS 1 (echo negative numbers handled)
 if not -1 LSS -10 (echo negative numbers handled)
@@ -719,6 +724,10 @@ if 011 EQU 9 (echo octal ok)
 if 0xA1 EQU 161 (echo hexa ok)
 if 0xA1 EQU "161" (echo hexa should be be recognized) else (echo string/hexa compare ok)
 if "0xA1" EQU 161 (echo hexa should be be recognized) else (echo string/hexa compare ok)
+for %%i in (%INT_PARMS%) do call :NEQtest %%i 0
+for %%i in (%INT_PARMS%) do call :NEQtest %%i 1
+for %%i in (%INT_PARMS%) do call :NEQtest %%i 10
+for %%i in (%INT_PARMS%) do call :NEQtest %%i 9
 goto :endIfCompOpsSubroutines
 
 rem IF subroutines helpers
@@ -730,6 +739,9 @@ if %1 LEQ %2 echo %1 LEQ %2
 goto :eof
 :EQUtest
 if %1 EQU %2 echo %1 EQU %2
+goto :eof
+:NEQtest
+if %1 NEQ %2 echo %1 NEQ %2
 goto :eof
 
 :endIfCompOpsSubroutines

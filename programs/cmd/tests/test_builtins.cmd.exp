@@ -487,6 +487,26 @@ LSS string can be used as operand for LSS comparison
 @todo_wine@BA EQU BA
 @todo_wine@AA EQU AA
 @todo_wine@A EQU a insensitive
+@todo_wine@B NEQ A
+@todo_wine@AB NEQ A
+@todo_wine@BA NEQ A
+@todo_wine@AA NEQ A
+@todo_wine@A NEQ B
+@todo_wine@AB NEQ B
+@todo_wine@BA NEQ B
+@todo_wine@AA NEQ B
+@todo_wine@A NEQ AB
+@todo_wine@B NEQ AB
+@todo_wine@BA NEQ AB
+@todo_wine@AA NEQ AB
+@todo_wine@A NEQ BA
+@todo_wine@B NEQ BA
+@todo_wine@AB NEQ BA
+@todo_wine@AA NEQ BA
+@todo_wine@A NEQ AA
+@todo_wine@B NEQ AA
+@todo_wine@AB NEQ AA
+@todo_wine@BA NEQ AA
 ------ for numbers
 negative numbers handled
 negative numbers handled
@@ -519,6 +539,18 @@ also in negative form
 @todo_wine@hexa ok
 @todo_wine@string/hexa compare ok
 @todo_wine@string/hexa compare ok
+@todo_wine@1 NEQ 0
+@todo_wine@10 NEQ 0
+@todo_wine@9 NEQ 0
+@todo_wine@0 NEQ 1
+@todo_wine@10 NEQ 1
+@todo_wine@9 NEQ 1
+@todo_wine@0 NEQ 10
+@todo_wine@1 NEQ 10
+@todo_wine@9 NEQ 10
+@todo_wine@0 NEQ 9
+@todo_wine@1 NEQ 9
+@todo_wine@10 NEQ 9
 ------------ Testing for ------------
 --- plain FOR
 A
