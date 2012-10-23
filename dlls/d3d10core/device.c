@@ -1448,8 +1448,8 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
             "\tpool %#x, level %u, face %u, surface %p.\n",
             device_parent, container_parent, width, height, format, usage, pool, level, face, surface);
 
-    return wined3d_surface_create(device->wined3d_device, width, height, format, level,
-            usage, pool, WINED3D_MULTISAMPLE_NONE, 0, WINED3D_SURFACE_TYPE_OPENGL, 0, container_parent,
+    return wined3d_surface_create(device->wined3d_device, width, height, format, usage, pool,
+            WINED3D_MULTISAMPLE_NONE, 0, WINED3D_SURFACE_TYPE_OPENGL, 0, container_parent,
             &d3d10_null_wined3d_parent_ops, surface);
 }
 

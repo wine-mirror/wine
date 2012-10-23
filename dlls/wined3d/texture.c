@@ -720,7 +720,7 @@ static void texture2d_sub_resource_cleanup(struct wined3d_resource *sub_resource
      * surface doesn't try and release it. */
     surface_set_texture_name(surface, 0, TRUE);
     surface_set_texture_name(surface, 0, FALSE);
-    surface_set_texture_target(surface, 0);
+    surface_set_texture_target(surface, 0, 0);
     surface_set_container(surface, WINED3D_CONTAINER_NONE, NULL);
     wined3d_surface_decref(surface);
 }
@@ -868,7 +868,7 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_lengt
             }
 
             surface_set_container(surface, WINED3D_CONTAINER_TEXTURE, texture);
-            surface_set_texture_target(surface, cube_targets[j]);
+            surface_set_texture_target(surface, cube_targets[j], i);
             texture->sub_resources[idx] = &surface->resource;
             TRACE("Created surface level %u @ %p.\n", i, surface);
         }
@@ -1023,7 +1023,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT he
         }
 
         surface_set_container(surface, WINED3D_CONTAINER_TEXTURE, texture);
-        surface_set_texture_target(surface, texture->target);
+        surface_set_texture_target(surface, texture->target, i);
         texture->sub_resources[i] = &surface->resource;
         TRACE("Created surface level %u @ %p.\n", i, surface);
         /* Calculate the next mipmap level. */

@@ -2544,12 +2544,11 @@ static HRESULT WINAPI ddraw7_StartModeTest(IDirectDraw7 *iface, SIZE *Modes, DWO
  *
  *****************************************************************************/
 static HRESULT ddraw_create_surface(struct ddraw *ddraw, DDSURFACEDESC2 *pDDSD,
-        struct ddraw_surface **surface, UINT level, UINT version)
+        struct ddraw_surface **surface, UINT version)
 {
     HRESULT hr;
 
-    TRACE("ddraw %p, surface_desc %p, surface %p, level %u.\n",
-            ddraw, pDDSD, surface, level);
+    TRACE("ddraw %p, surface_desc %p, surface %p.\n", ddraw, pDDSD, surface);
 
     if (TRACE_ON(ddraw))
     {
@@ -2571,8 +2570,7 @@ static HRESULT ddraw_create_surface(struct ddraw *ddraw, DDSURFACEDESC2 *pDDSD,
         return DDERR_OUTOFVIDEOMEMORY;
     }
 
-    hr = ddraw_surface_init(*surface, ddraw, pDDSD, level, version);
-    if (FAILED(hr))
+    if (FAILED(hr = ddraw_surface_init(*surface, ddraw, pDDSD, version)))
     {
         WARN("Failed to initialize surface, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, *surface);
@@ -2878,8 +2876,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     }
 
     /* Create the first surface */
-    hr = ddraw_create_surface(ddraw, &desc2, &object, 0, version);
-    if (FAILED(hr))
+    if (FAILED(hr = ddraw_create_surface(ddraw, &desc2, &object, version)))
     {
         WARN("ddraw_create_surface failed, hr %#x.\n", hr);
         return hr;
@@ -2906,7 +2903,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         {
             struct ddraw_surface *object2 = NULL;
 
-            if (FAILED(hr = ddraw_create_surface(ddraw, &desc2, &object2, 0, version)))
+            if (FAILED(hr = ddraw_create_surface(ddraw, &desc2, &object2, version)))
             {
                 if (version == 7)
                     IDirectDrawSurface7_Release(&object->IDirectDrawSurface7_iface);
@@ -5264,7 +5261,7 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
     }
 
     /* FIXME: Validate that format, usage, pool, etc. really make sense. */
-    if (FAILED(hr = ddraw_create_surface(ddraw, &desc, &ddraw_surface, level, tex_root->version)))
+    if (FAILED(hr = ddraw_create_surface(ddraw, &desc, &ddraw_surface, tex_root->version)))
         return hr;
 
 done:
@@ -5303,7 +5300,7 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
         return E_FAIL;
     }
 
-    if (SUCCEEDED(hr = wined3d_surface_create(ddraw->wined3d_device, width, height, format_id, 0,
+    if (SUCCEEDED(hr = wined3d_surface_create(ddraw->wined3d_device, width, height, format_id,
             usage, WINED3D_POOL_DEFAULT, multisample_type, multisample_quality, DefaultSurfaceType,
             WINED3D_SURFACE_MAPPABLE, ddraw, &ddraw_frontbuffer_parent_ops, surface)))
         ddraw->wined3d_frontbuffer = *surface;

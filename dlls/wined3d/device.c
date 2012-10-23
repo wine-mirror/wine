@@ -937,7 +937,7 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
         bm.bmHeight = 32;
     }
 
-    hr = wined3d_surface_create(device, bm.bmWidth, bm.bmHeight, WINED3DFMT_B5G6R5_UNORM, 0, 0,
+    hr = wined3d_surface_create(device, bm.bmWidth, bm.bmHeight, WINED3DFMT_B5G6R5_UNORM, 0,
             WINED3D_POOL_SYSTEM_MEM, WINED3D_MULTISAMPLE_NONE, 0, WINED3D_SURFACE_TYPE_OPENGL, WINED3D_SURFACE_MAPPABLE,
             NULL, &wined3d_null_parent_ops, &device->logo_surface);
     if (FAILED(hr))

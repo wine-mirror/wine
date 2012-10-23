@@ -185,7 +185,7 @@ struct ddraw_surface
 
 HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface) DECLSPEC_HIDDEN;
 HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
-        DDSURFACEDESC2 *desc, UINT mip_level, UINT version) DECLSPEC_HIDDEN;
+        DDSURFACEDESC2 *desc, UINT version) DECLSPEC_HIDDEN;
 ULONG ddraw_surface_release_iface(struct ddraw_surface *This) DECLSPEC_HIDDEN;
 
 static inline struct ddraw_surface *impl_from_IDirect3DTexture(IDirect3DTexture *iface)

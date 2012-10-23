@@ -848,17 +848,16 @@ static HRESULT WINAPI d3d8_device_CreateIndexBuffer(IDirect3DDevice8 *iface, UIN
     return D3D_OK;
 }
 
-static HRESULT d3d8_device_CreateSurface(struct d3d8_device *device, UINT width,
-        UINT height, D3DFORMAT format, BOOL lockable, BOOL discard, UINT level,
-        IDirect3DSurface8 **surface, UINT usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type,
-        DWORD multisample_quality)
+static HRESULT d3d8_device_create_surface(struct d3d8_device *device, UINT width, UINT height,
+        D3DFORMAT format, BOOL lockable, BOOL discard, IDirect3DSurface8 **surface, UINT usage,
+        D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality)
 {
     struct d3d8_surface *object;
     HRESULT hr;
 
-    TRACE("device %p, width %u, height %u, format %#x, lockable %#x, discard %#x, level %u, surface %p,\n"
+    TRACE("device %p, width %u, height %u, format %#x, lockable %#x, discard %#x, surface %p,\n"
             "\tusage %#x, pool %#x, multisample_type %#x, multisample_quality %u.\n",
-            device, width, height, format, lockable, discard, level, surface,
+            device, width, height, format, lockable, discard, surface,
             usage, pool, multisample_type, multisample_quality);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
@@ -867,9 +866,8 @@ static HRESULT d3d8_device_CreateSurface(struct d3d8_device *device, UINT width,
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
-    hr = surface_init(object, device, width, height, format, lockable, discard, level, usage,
-            pool, multisample_type, multisample_quality);
-    if (FAILED(hr))
+    if (FAILED(hr = surface_init(object, device, width, height, format, lockable,
+            discard, usage, pool, multisample_type, multisample_quality)))
     {
         WARN("Failed to initialize surface, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -887,16 +885,12 @@ static HRESULT WINAPI d3d8_device_CreateRenderTarget(IDirect3DDevice8 *iface, UI
         IDirect3DSurface8 **surface)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
 
     TRACE("iface %p, width %u, height %u, format %#x, multisample_type %#x, lockable %#x, surface %p.\n",
             iface, width, height, format, multisample_type, lockable, surface);
 
-    hr = d3d8_device_CreateSurface(device, width, height, format, lockable,
-            FALSE, 0, surface, D3DUSAGE_RENDERTARGET, D3DPOOL_DEFAULT,
-            multisample_type, 0);
-
-    return hr;
+    return d3d8_device_create_surface(device, width, height, format, lockable, FALSE,
+            surface, D3DUSAGE_RENDERTARGET, D3DPOOL_DEFAULT, multisample_type, 0);
 }
 
 static HRESULT WINAPI d3d8_device_CreateDepthStencilSurface(IDirect3DDevice8 *iface,
@@ -904,16 +898,13 @@ static HRESULT WINAPI d3d8_device_CreateDepthStencilSurface(IDirect3DDevice8 *if
         IDirect3DSurface8 **surface)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
 
     TRACE("iface %p, width %u, height %u, format %#x, multisample_type %#x, surface %p.\n",
             iface, width, height, format, multisample_type, surface);
 
     /* TODO: Verify that Discard is false */
-    hr = d3d8_device_CreateSurface(device, width, height, format, TRUE, FALSE,
-            0, surface, D3DUSAGE_DEPTHSTENCIL, D3DPOOL_DEFAULT, multisample_type, 0);
-
-    return hr;
+    return d3d8_device_create_surface(device, width, height, format, TRUE, FALSE,
+            surface, D3DUSAGE_DEPTHSTENCIL, D3DPOOL_DEFAULT, multisample_type, 0);
 }
 
 /*  IDirect3DDevice8Impl::CreateImageSurface returns surface with pool type SYSTEMMEM */
@@ -921,15 +912,12 @@ static HRESULT WINAPI d3d8_device_CreateImageSurface(IDirect3DDevice8 *iface, UI
         UINT height, D3DFORMAT format, IDirect3DSurface8 **surface)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
 
     TRACE("iface %p, width %u, height %u, format %#x, surface %p.\n",
             iface, width, height, format, surface);
 
-    hr = d3d8_device_CreateSurface(device, width, height, format, TRUE, FALSE,
-            0, surface, 0, D3DPOOL_SYSTEMMEM, D3DMULTISAMPLE_NONE, 0);
-
-    return hr;
+    return d3d8_device_create_surface(device, width, height, format, TRUE, FALSE,
+            surface, 0, D3DPOOL_SYSTEMMEM, D3DMULTISAMPLE_NONE, 0);
 }
 
 static HRESULT WINAPI d3d8_device_CopyRects(IDirect3DDevice8 *iface,
@@ -2766,10 +2754,8 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
     if (pool == WINED3D_POOL_DEFAULT && !(usage & WINED3DUSAGE_DYNAMIC))
         lockable = FALSE;
 
-    hr = d3d8_device_CreateSurface(device, width, height,
-            d3dformat_from_wined3dformat(format), lockable, FALSE /* Discard */, level,
-            (IDirect3DSurface8 **)&d3d_surface, usage, pool, D3DMULTISAMPLE_NONE, 0 /* MultisampleQuality */);
-    if (FAILED(hr))
+    if (FAILED(hr = d3d8_device_create_surface(device, width, height, d3dformat_from_wined3dformat(format),
+            lockable, FALSE, (IDirect3DSurface8 **)&d3d_surface, usage, pool, D3DMULTISAMPLE_NONE, 0)))
     {
         WARN("Failed to create surface, hr %#x.\n", hr);
         return hr;
@@ -2801,8 +2787,8 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
             device_parent, container_parent, width, height, format_id, usage,
             multisample_type, multisample_quality, surface);
 
-    if (FAILED(hr = d3d8_device_CreateSurface(device, width, height, d3dformat_from_wined3dformat(format_id),
-            TRUE, FALSE, 0, (IDirect3DSurface8 **)&d3d_surface, usage, D3DPOOL_DEFAULT, multisample_type,
+    if (FAILED(hr = d3d8_device_create_surface(device, width, height, d3dformat_from_wined3dformat(format_id),
+            TRUE, FALSE, (IDirect3DSurface8 **)&d3d_surface, usage, D3DPOOL_DEFAULT, multisample_type,
             multisample_quality)))
     {
         WARN("Failed to create surface, hr %#x.\n", hr);

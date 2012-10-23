@@ -5646,8 +5646,7 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface)
     return DD_OK;
 }
 
-HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
-        DDSURFACEDESC2 *desc, UINT mip_level, UINT version)
+HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, DDSURFACEDESC2 *desc, UINT version)
 {
     enum wined3d_pool pool = WINED3D_POOL_DEFAULT;
     DWORD flags = WINED3D_SURFACE_MAPPABLE;
@@ -5749,10 +5748,9 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
 
     surface->first_attached = surface;
 
-    hr = wined3d_surface_create(ddraw->wined3d_device, desc->dwWidth, desc->dwHeight, format, mip_level,
-            usage, pool, WINED3D_MULTISAMPLE_NONE, 0, DefaultSurfaceType, flags,
-            surface, &ddraw_surface_wined3d_parent_ops, &surface->wined3d_surface);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_surface_create(ddraw->wined3d_device, desc->dwWidth, desc->dwHeight, format,
+            usage, pool, WINED3D_MULTISAMPLE_NONE, 0, DefaultSurfaceType, flags, surface,
+            &ddraw_surface_wined3d_parent_ops, &surface->wined3d_surface)))
     {
         WARN("Failed to create wined3d surface, hr %#x.\n", hr);
         return hr;
