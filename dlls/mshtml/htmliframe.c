@@ -256,15 +256,40 @@ static HRESULT WINAPI HTMLIFrameElement2_get_height(IHTMLIFrameElement2 *iface, 
 static HRESULT WINAPI HTMLIFrameElement2_put_width(IHTMLIFrameElement2 *iface, VARIANT v)
 {
     HTMLIFrame *This = impl_from_IHTMLIFrameElement2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    if(V_VT(&v) != VT_BSTR) {
+        FIXME("Unsupported %s\n", debugstr_variant(&v));
+        return E_NOTIMPL;
+    }
+
+    nsAString_InitDepend(&nsstr, V_BSTR(&v));
+    nsres = nsIDOMHTMLIFrameElement_SetWidth(This->framebase.nsiframe, &nsstr);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres)) {
+        ERR("SetWidth failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLIFrameElement2_get_width(IHTMLIFrameElement2 *iface, VARIANT *p)
 {
     HTMLIFrame *This = impl_from_IHTMLIFrameElement2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&nsstr, NULL);
+    nsres = nsIDOMHTMLIFrameElement_GetWidth(This->framebase.nsiframe, &nsstr);
+
+    V_VT(p) = VT_BSTR;
+    return return_nsstr(nsres, &nsstr, &V_BSTR(p));
 }
 
 static const IHTMLIFrameElement2Vtbl HTMLIFrameElement2Vtbl = {

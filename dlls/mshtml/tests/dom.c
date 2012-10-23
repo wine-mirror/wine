@@ -5283,6 +5283,39 @@ static void _set_iframe_height(unsigned line, IHTMLElement *elem, const char *va
     IHTMLIFrameElement2_Release(iframe);
 }
 
+#define test_iframe_width(a,b) _test_iframe_width(__LINE__,a,b)
+static void _test_iframe_width(unsigned line, IHTMLElement *elem, const char *exval)
+{
+    IHTMLIFrameElement2 *iframe = _get_iframe2_iface(line, (IUnknown*)elem);
+    VARIANT v;
+    HRESULT hres;
+
+    hres = IHTMLIFrameElement2_get_width(iframe, &v);
+    ok_(__FILE__,line)(hres == S_OK, "get_width failed: %08x\n", hres);
+    ok_(__FILE__,line)(V_VT(&v) == VT_BSTR, "V_VT(width) = %d\n", V_VT(&v));
+    if(exval)
+        ok_(__FILE__,line)(!strcmp_wa(V_BSTR(&v), exval), "width = %s, expected %s\n", wine_dbgstr_w(V_BSTR(&v)), exval);
+    else
+        ok_(__FILE__,line)(!V_BSTR(&v), "width = %s, expected NULL\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    IHTMLIFrameElement2_Release(iframe);
+}
+
+#define set_iframe_width(a,b) _set_iframe_width(__LINE__,a,b)
+static void _set_iframe_width(unsigned line, IHTMLElement *elem, const char *val)
+{
+    IHTMLIFrameElement2 *iframe = _get_iframe2_iface(line, (IUnknown*)elem);
+    VARIANT v;
+    HRESULT hres;
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr(val);
+    hres = IHTMLIFrameElement2_put_width(iframe, v);
+    ok_(__FILE__,line)(hres == S_OK, "put_width failed: %08x\n", hres);
+    VariantClear(&v);
+    IHTMLIFrameElement2_Release(iframe);
+}
+
 static void test_iframe_elem(IHTMLElement *elem)
 {
     IHTMLDocument2 *content_doc, *owner_doc;
@@ -5329,6 +5362,11 @@ static void test_iframe_elem(IHTMLElement *elem)
     set_iframe_height(elem, "100px");
     set_iframe_height(elem, "50%");
     test_iframe_height(elem, "50%");
+
+    test_iframe_width(elem, NULL);
+    set_iframe_width(elem, "150px");
+    set_iframe_width(elem, "70%");
+    test_iframe_width(elem, "70%");
 
     str = a2bstr("text/html");
     V_VT(&errv) = VT_ERROR;
