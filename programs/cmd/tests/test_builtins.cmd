@@ -746,6 +746,25 @@ for %%i in (%INT_PARMS%) do call :GTRtest %%i 0
 for %%i in (%INT_PARMS%) do call :GTRtest %%i 1
 for %%i in (%INT_PARMS%) do call :GTRtest %%i 10
 for %%i in (%INT_PARMS%) do call :GTRtest %%i 9
+echo ------ for numbers and stringified numbers
+if not "1" EQU 1 (echo strings and integers not equal) else echo foo
+if not 1 EQU "1" (echo strings and integers not equal) else echo foo
+if '1' EQU 1 echo '1' EQU 1
+if 1 EQU '1' echo 1 EQU '1'
+if not "1" GEQ 1 (echo foo) else echo bar
+if "10" GEQ "1" echo "10" GEQ "1"
+if '1' GEQ 1 (echo '1' GEQ 1) else echo NT4
+if 1 GEQ "1" echo 1 GEQ "1"
+if "1" GEQ "1" echo "1" GEQ "1"
+if '1' GEQ "1" echo '1' GEQ "1"
+if "10" GEQ "1" echo "10" GEQ "1"
+if not 1 GEQ '1' (echo non NT4) else echo 1 GEQ '1'
+for %%i in ("1" '1') do call :GEQtest %%i '1'
+if "10" GEQ '1' (echo "10" GEQ '1') else echo foo
+if 1 GEQ "10" (echo 1 GEQ "10") else echo foo
+if "1" GEQ "10" (echo 1 GEQ "10") else echo foo
+if '1' GEQ "10" (echo '1' GEQ "10") else echo foo
+if "10" GEQ "10" (echo "10" GEQ "10")
 goto :endIfCompOpsSubroutines
 
 rem IF subroutines helpers

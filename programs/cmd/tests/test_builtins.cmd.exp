@@ -592,6 +592,23 @@ also in negative form
 @todo_wine@10 GTR 1
 @todo_wine@9 GTR 1
 @todo_wine@10 GTR 9
+------ for numbers and stringified numbers
+strings and integers not equal
+strings and integers not equal
+foo
+@todo_wine@"10" GEQ "1"
+@todo_wine@'1' GEQ 1@or_broken@NT4
+@todo_wine@1 GEQ "1"
+@todo_wine@"1" GEQ "1"
+@todo_wine@'1' GEQ "1"
+@todo_wine@"10" GEQ "1"
+@todo_wine@non NT4@or_broken@1 GEQ '1'
+@todo_wine@'1' GEQ '1'
+@todo_wine@foo
+@todo_wine@1 GEQ "10"
+@todo_wine@foo
+@todo_wine@'1' GEQ "10"
+@todo_wine@"10" GEQ "10"
 ------------ Testing for ------------
 --- plain FOR
 A
