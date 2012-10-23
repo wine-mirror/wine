@@ -987,15 +987,8 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemory(LPDIRECT3DDEVICE9 device,
         0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, texture);
 }
 
-HRESULT WINAPI D3DXCreateVolumeTexture(LPDIRECT3DDEVICE9 device,
-                                       UINT width,
-                                       UINT height,
-                                       UINT depth,
-                                       UINT miplevels,
-                                       DWORD usage,
-                                       D3DFORMAT format,
-                                       D3DPOOL pool,
-                                       LPDIRECT3DVOLUMETEXTURE9 *texture)
+HRESULT WINAPI D3DXCreateVolumeTexture(struct IDirect3DDevice9 *device, UINT width, UINT height, UINT depth,
+        UINT miplevels, DWORD usage, D3DFORMAT format, D3DPOOL pool, struct IDirect3DVolumeTexture9 **texture)
 {
     HRESULT hr;
 
@@ -1814,9 +1807,7 @@ HRESULT WINAPI D3DXFillCubeTexture(LPDIRECT3DCUBETEXTURE9 texture,
     return D3D_OK;
 }
 
-HRESULT WINAPI D3DXFillVolumeTexture(LPDIRECT3DVOLUMETEXTURE9 texture,
-                                     LPD3DXFILL3D function,
-                                     LPVOID funcdata)
+HRESULT WINAPI D3DXFillVolumeTexture(struct IDirect3DVolumeTexture9 *texture, LPD3DXFILL3D function, void *funcdata)
 {
     DWORD miplevels;
     DWORD m, i, x, y, z, c, v;
