@@ -481,6 +481,12 @@ LSS string can be used as operand for LSS comparison
 @todo_wine@a LEQ B insensitive
 @todo_wine@A LEQ b
 @todo_wine@A LEQ b insensitive
+@todo_wine@A EQU A
+@todo_wine@B EQU B
+@todo_wine@AB EQU AB
+@todo_wine@BA EQU BA
+@todo_wine@AA EQU AA
+@todo_wine@A EQU a insensitive
 ------ for numbers
 negative numbers handled
 negative numbers handled
@@ -505,6 +511,14 @@ also in negative form
 @todo_wine@0 LEQ 9
 @todo_wine@1 LEQ 9
 @todo_wine@9 LEQ 9
+@todo_wine@0 EQU 0
+@todo_wine@1 EQU 1
+@todo_wine@10 EQU 10
+@todo_wine@9 EQU 9
+@todo_wine@octal ok
+@todo_wine@hexa ok
+@todo_wine@string/hexa compare ok
+@todo_wine@string/hexa compare ok
 ------------ Testing for ------------
 --- plain FOR
 A

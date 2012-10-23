@@ -688,6 +688,12 @@ if a LEQ B (echo a LEQ B) else echo NT4
 if /I a LEQ B echo a LEQ B insensitive
 if A LEQ b echo A LEQ b
 if /I A LEQ b echo A LEQ b insensitive
+for %%i in (%STR_PARMS%) do call :EQUtest %%i A
+for %%i in (%STR_PARMS%) do call :EQUtest %%i B
+for %%i in (%STR_PARMS%) do call :EQUtest %%i AB
+for %%i in (%STR_PARMS%) do call :EQUtest %%i BA
+for %%i in (%STR_PARMS%) do call :EQUtest %%i AA
+if /I A EQU a echo A EQU a insensitive
 echo ------ for numbers
 if -1 LSS 1 (echo negative numbers handled)
 if not -1 LSS -10 (echo negative numbers handled)
@@ -705,6 +711,14 @@ for %%i in (%INT_PARMS%) do call :LEQtest %%i 0
 for %%i in (%INT_PARMS%) do call :LEQtest %%i 1
 for %%i in (%INT_PARMS%) do call :LEQtest %%i 10
 for %%i in (%INT_PARMS%) do call :LEQtest %%i 9
+for %%i in (%INT_PARMS%) do call :EQUtest %%i 0
+for %%i in (%INT_PARMS%) do call :EQUtest %%i 1
+for %%i in (%INT_PARMS%) do call :EQUtest %%i 10
+for %%i in (%INT_PARMS%) do call :EQUtest %%i 9
+if 011 EQU 9 (echo octal ok)
+if 0xA1 EQU 161 (echo hexa ok)
+if 0xA1 EQU "161" (echo hexa should be be recognized) else (echo string/hexa compare ok)
+if "0xA1" EQU 161 (echo hexa should be be recognized) else (echo string/hexa compare ok)
 goto :endIfCompOpsSubroutines
 
 rem IF subroutines helpers
@@ -713,6 +727,9 @@ if %1 LSS %2 echo %1 LSS %2
 goto :eof
 :LEQtest
 if %1 LEQ %2 echo %1 LEQ %2
+goto :eof
+:EQUtest
+if %1 EQU %2 echo %1 EQU %2
 goto :eof
 
 :endIfCompOpsSubroutines
