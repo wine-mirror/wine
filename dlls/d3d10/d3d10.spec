@@ -7,7 +7,7 @@
 @ stub D3D10CreateEffectPoolFromMemory
 @ stdcall D3D10CreateStateBlock(ptr ptr ptr)
 @ stub D3D10DisassembleEffect
-@ stub D3D10DisassembleShader
+@ stdcall D3D10DisassembleShader(ptr long long ptr ptr)
 @ stdcall D3D10GetGeometryShaderProfile(ptr)
 @ stdcall D3D10GetInputAndOutputSignatureBlob(ptr long ptr) d3dcompiler_43.D3DGetInputAndOutputSignatureBlob
 @ stdcall D3D10GetInputSignatureBlob(ptr long ptr) d3dcompiler_43.D3DGetInputSignatureBlob

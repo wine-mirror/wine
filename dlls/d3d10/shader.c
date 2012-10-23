@@ -147,3 +147,12 @@ HRESULT WINAPI D3D10CompileShader(const char *data, SIZE_T data_size, const char
     return D3DCompile(data, data_size, filename, defines, include,
             entrypoint, profile, flags, 0, shader, error_messages);
 }
+
+HRESULT WINAPI D3D10DisassembleShader(const void *data, SIZE_T data_size,
+        BOOL color_code, const char *comments, ID3D10Blob **disassembly)
+{
+    TRACE("data %p, data_size %#lx, color_code %#x, comments %p, disassembly %p.\n",
+            data, data_size, color_code, comments, disassembly);
+
+    return D3DDisassemble(data, data_size, color_code ? D3D_DISASM_ENABLE_COLOR_CODE : 0, comments, disassembly);
+}

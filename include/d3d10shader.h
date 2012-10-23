@@ -214,6 +214,8 @@ extern "C" {
 HRESULT WINAPI D3D10CompileShader(LPCSTR data, SIZE_T data_size, LPCSTR filename,
         const D3D10_SHADER_MACRO *defines, ID3D10Include *include, LPCSTR entrypoint,
         LPCSTR profile, UINT flags, ID3D10Blob **shader, ID3D10Blob **error_messages);
+HRESULT WINAPI D3D10DisassembleShader(const void *data, SIZE_T data_size,
+        BOOL color_code, const char *comments, ID3D10Blob **disassembly);
 LPCSTR WINAPI D3D10GetVertexShaderProfile(ID3D10Device *device);
 LPCSTR WINAPI D3D10GetGeometryShaderProfile(ID3D10Device *device);
 LPCSTR WINAPI D3D10GetPixelShaderProfile(ID3D10Device *device);
