@@ -460,6 +460,27 @@ LSS string can be used as operand for LSS comparison
 @todo_wine@a LSS B insensitive
 @todo_wine@A LSS b
 @todo_wine@A LSS b insensitive
+@todo_wine@A LEQ A
+@todo_wine@A LEQ B
+@todo_wine@B LEQ B
+@todo_wine@AB LEQ B
+@todo_wine@AA LEQ B
+@todo_wine@A LEQ AB
+@todo_wine@AB LEQ AB
+@todo_wine@AA LEQ AB
+@todo_wine@A LEQ BA
+@todo_wine@B LEQ BA
+@todo_wine@AB LEQ BA
+@todo_wine@BA LEQ BA
+@todo_wine@AA LEQ BA
+@todo_wine@A LEQ AA
+@todo_wine@AA LEQ AA
+@todo_wine@b LEQ B@or_broken@NT4
+@todo_wine@b LEQ B insensitive
+@todo_wine@a LEQ B@or_broken@NT4
+@todo_wine@a LEQ B insensitive
+@todo_wine@A LEQ b
+@todo_wine@A LEQ b insensitive
 ------ for numbers
 negative numbers handled
 negative numbers handled
@@ -474,6 +495,16 @@ also in negative form
 @todo_wine@9 LSS 10
 @todo_wine@0 LSS 9
 @todo_wine@1 LSS 9
+@todo_wine@0 LEQ 0
+@todo_wine@0 LEQ 1
+@todo_wine@1 LEQ 1
+@todo_wine@0 LEQ 10
+@todo_wine@1 LEQ 10
+@todo_wine@10 LEQ 10
+@todo_wine@9 LEQ 10
+@todo_wine@0 LEQ 9
+@todo_wine@1 LEQ 9
+@todo_wine@9 LEQ 9
 ------------ Testing for ------------
 --- plain FOR
 A

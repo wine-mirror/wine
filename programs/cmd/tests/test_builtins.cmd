@@ -675,6 +675,19 @@ if a LSS B (echo a LSS B) else echo NT4
 if /I a LSS B echo a LSS B insensitive
 if A LSS b echo A LSS b
 if /I A LSS b echo A LSS b insensitive
+for %%i in (%STR_PARMS%) do call :LEQtest %%i A
+for %%i in (%STR_PARMS%) do call :LEQtest %%i B
+for %%i in (%STR_PARMS%) do call :LEQtest %%i AB
+for %%i in (%STR_PARMS%) do call :LEQtest %%i BA
+for %%i in (%STR_PARMS%) do call :LEQtest %%i AA
+if b LEQ B (echo b LEQ B) else echo NT4
+if /I b LEQ B echo b LEQ B insensitive
+if b LEQ A echo b LEQ A
+if /I b LEQ A echo b LEQ A insensitive
+if a LEQ B (echo a LEQ B) else echo NT4
+if /I a LEQ B echo a LEQ B insensitive
+if A LEQ b echo A LEQ b
+if /I A LEQ b echo A LEQ b insensitive
 echo ------ for numbers
 if -1 LSS 1 (echo negative numbers handled)
 if not -1 LSS -10 (echo negative numbers handled)
@@ -688,11 +701,18 @@ for %%i in (%INT_PARMS%) do call :LSStest %%i 0
 for %%i in (%INT_PARMS%) do call :LSStest %%i 1
 for %%i in (%INT_PARMS%) do call :LSStest %%i 10
 for %%i in (%INT_PARMS%) do call :LSStest %%i 9
+for %%i in (%INT_PARMS%) do call :LEQtest %%i 0
+for %%i in (%INT_PARMS%) do call :LEQtest %%i 1
+for %%i in (%INT_PARMS%) do call :LEQtest %%i 10
+for %%i in (%INT_PARMS%) do call :LEQtest %%i 9
 goto :endIfCompOpsSubroutines
 
 rem IF subroutines helpers
 :LSStest
 if %1 LSS %2 echo %1 LSS %2
+goto :eof
+:LEQtest
+if %1 LEQ %2 echo %1 LEQ %2
 goto :eof
 
 :endIfCompOpsSubroutines
