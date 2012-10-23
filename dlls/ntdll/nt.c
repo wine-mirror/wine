@@ -1739,9 +1739,8 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 
                             /* spi->ti will be set later on */
 
-                            len += procstructlen;
                         }
-                        else ret = STATUS_INFO_LENGTH_MISMATCH;
+                        len += procstructlen;
                     }
                 }
                 SERVER_END_REQ;
@@ -1751,7 +1750,8 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                     if (ret == STATUS_NO_MORE_FILES) ret = STATUS_SUCCESS;
                     break;
                 }
-                else /* Length is already checked for */
+
+                if (Length >= len)
                 {
                     int     i, j;
 
@@ -1799,6 +1799,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 }
             }
             if (ret == STATUS_SUCCESS && last) last->NextEntryOffset = 0;
+            if (len > Length) ret = STATUS_INFO_LENGTH_MISMATCH;
             if (hSnap) NtClose(hSnap);
         }
         break;
