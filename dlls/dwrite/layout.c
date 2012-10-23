@@ -32,17 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
-struct dwrite_textlayout {
-    IDWriteTextLayout IDWriteTextLayout_iface;
-    LONG ref;
-
-    WCHAR *str;
-};
-
-struct dwrite_textformat {
-    IDWriteTextFormat IDWriteTextFormat_iface;
-    LONG ref;
-
+struct dwrite_textformat_data {
     WCHAR *family_name;
     WCHAR *locale;
 
@@ -54,6 +44,27 @@ struct dwrite_textformat {
 
     IDWriteFontCollection *collection;
 };
+
+struct dwrite_textlayout {
+    IDWriteTextLayout IDWriteTextLayout_iface;
+    LONG ref;
+
+    WCHAR *str;
+    struct dwrite_textformat_data format;
+};
+
+struct dwrite_textformat {
+    IDWriteTextFormat IDWriteTextFormat_iface;
+    LONG ref;
+    struct dwrite_textformat_data format;
+};
+
+static void release_format_data(struct dwrite_textformat_data *data)
+{
+    if (data->collection) IDWriteFontCollection_Release(data->collection);
+    heap_free(data->family_name);
+    heap_free(data->locale);
+}
 
 static inline struct dwrite_textlayout *impl_from_IDWriteTextLayout(IDWriteTextLayout *iface)
 {
@@ -665,6 +676,7 @@ HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextLayout **layo
     This->IDWriteTextLayout_iface.lpVtbl = &dwritetextlayoutvtbl;
     This->ref = 1;
     This->str = heap_strdupnW(str, len);
+    memset(&This->format, 0, sizeof(This->format));
 
     *layout = &This->IDWriteTextLayout_iface;
 
@@ -707,9 +719,7 @@ static ULONG WINAPI dwritetextformat_Release(IDWriteTextFormat *iface)
 
     if (!ref)
     {
-        if (This->collection) IDWriteFontCollection_Release(This->collection);
-        heap_free(This->family_name);
-        heap_free(This->locale);
+        release_format_data(&This->format);
         heap_free(This);
     }
 
@@ -838,7 +848,7 @@ static HRESULT WINAPI dwritetextformat_GetFontCollection(IDWriteTextFormat *ifac
 
     TRACE("(%p)->(%p)\n", This, collection);
 
-    *collection = This->collection;
+    *collection = This->format.collection;
     IDWriteFontCollection_AddRef(*collection);
 
     return S_OK;
@@ -943,20 +953,20 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
 
     This->IDWriteTextFormat_iface.lpVtbl = &dwritetextformatvtbl;
     This->ref = 1;
-    This->family_name = heap_strdupW(family_name);
-    This->locale = heap_strdupW(locale);
-    This->weight = weight;
-    This->style = style;
-    This->size = size;
+    This->format.family_name = heap_strdupW(family_name);
+    This->format.locale = heap_strdupW(locale);
+    This->format.weight = weight;
+    This->format.style = style;
+    This->format.size = size;
 
     if (collection)
     {
-        This->collection = collection;
+        This->format.collection = collection;
         IDWriteFontCollection_AddRef(collection);
     }
     else
     {
-        HRESULT hr = get_system_fontcollection(&This->collection);
+        HRESULT hr = get_system_fontcollection(&This->format.collection);
         if (hr != S_OK)
         {
             IDWriteTextFormat_Release(&This->IDWriteTextFormat_iface);
