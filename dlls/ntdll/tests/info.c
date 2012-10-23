@@ -285,8 +285,14 @@ static void test_query_process(void)
     ULONG SystemInformationLength = sizeof(SYSTEM_PROCESS_INFORMATION_PRIVATE);
     SYSTEM_PROCESS_INFORMATION_PRIVATE *spi, *spi_buf = HeapAlloc(GetProcessHeap(), 0, SystemInformationLength);
 
-    /* Only W2K3 returns the needed length, the rest returns 0, so we have to loop */
+    /* test ReturnLength */
+    ReturnLength = 0;
+    status = pNtQuerySystemInformation(SystemProcessInformation, NULL, 0, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_LENGTH_MISMATCH got %08x\n", status);
+    todo_wine ok( ReturnLength > 0 || broken(ReturnLength == 0) /* NT4, Win2K */,
+        "Expected a ReturnLength to show the needed length\n");
 
+    /* W2K3 and later returns the needed length, the rest returns 0, so we have to loop */
     for (;;)
     {
         status = pNtQuerySystemInformation(SystemProcessInformation, spi_buf, SystemInformationLength, &ReturnLength);
