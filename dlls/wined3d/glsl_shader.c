@@ -896,6 +896,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         struct wined3d_shader_buffer *buffer, const struct wined3d_shader *shader,
         const struct wined3d_shader_reg_maps *reg_maps, const struct shader_glsl_ctx_priv *ctx_priv)
 {
+    const struct wined3d_shader_version *version = &reg_maps->shader_version;
     const struct wined3d_state *state = &shader->device->stateBlock->state;
     const struct ps_compile_args *ps_args = ctx_priv->cur_ps_args;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -905,9 +906,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     const char *prefix;
     DWORD map;
 
-    /* There are some minor differences between pixel and vertex shaders */
-    char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
-    prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
+    prefix = shader_glsl_get_prefix(version->type);
 
     /* Prototype the subroutines */
     for (i = 0, map = reg_maps->labels; map; map >>= 1, ++i)
@@ -919,20 +918,25 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     if (shader->limits.constant_float > 0)
     {
         unsigned max_constantsF;
-        /* Unless the shader uses indirect addressing, always declare the maximum array size and ignore that we need some
-         * uniforms privately. E.g. if GL supports 256 uniforms, and we need 2 for the pos fixup and immediate values, still
-         * declare VC[256]. If the shader needs more uniforms than we have it won't work in any case. If it uses less, the
-         * compiler will figure out which uniforms are really used and strip them out. This allows a shader to use c255 on
-         * a dx9 card, as long as it doesn't also use all the other constants.
+
+        /* Unless the shader uses indirect addressing, always declare the
+         * maximum array size and ignore that we need some uniforms privately.
+         * E.g. if GL supports 256 uniforms, and we need 2 for the pos fixup
+         * and immediate values, still declare VC[256]. If the shader needs
+         * more uniforms than we have it won't work in any case. If it uses
+         * less, the compiler will figure out which uniforms are really used
+         * and strip them out. This allows a shader to use c255 on a dx9 card,
+         * as long as it doesn't also use all the other constants.
          *
-         * If the shader uses indirect addressing the compiler must assume that all declared uniforms are used. In this case,
-         * declare only the amount that we're assured to have.
+         * If the shader uses indirect addressing the compiler must assume
+         * that all declared uniforms are used. In this case, declare only the
+         * amount that we're assured to have.
          *
          * Thus we run into problems in these two cases:
-         * 1) The shader really uses more uniforms than supported
-         * 2) The shader uses indirect addressing, less constants than supported, but uses a constant index > #supported consts
-         */
-        if (pshader)
+         * 1) The shader really uses more uniforms than supported.
+         * 2) The shader uses indirect addressing, less constants than
+         *    supported, but uses a constant index > #supported consts. */
+        if (version->type == WINED3D_SHADER_TYPE_PIXEL)
         {
             /* No indirect addressing here. */
             max_constantsF = gl_info->limits.glsl_ps_float_constants;
@@ -1005,19 +1009,20 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     {
         if (reg_maps->sampler_type[i])
         {
+            BOOL shadow_sampler = version->type == WINED3D_SHADER_TYPE_PIXEL && (ps_args->shadow & (1 << i));
             const struct wined3d_texture *texture;
 
             switch (reg_maps->sampler_type[i])
             {
                 case WINED3DSTT_1D:
-                    if (pshader && ps_args->shadow & (1 << i))
+                    if (shadow_sampler)
                         shader_addline(buffer, "uniform sampler1DShadow %s_sampler%u;\n", prefix, i);
                     else
                         shader_addline(buffer, "uniform sampler1D %s_sampler%u;\n", prefix, i);
                     break;
                 case WINED3DSTT_2D:
                     texture = state->textures[i];
-                    if (pshader && ps_args->shadow & (1 << i))
+                    if (shadow_sampler)
                     {
                         if (texture && texture->target == GL_TEXTURE_RECTANGLE_ARB)
                             shader_addline(buffer, "uniform sampler2DRectShadow %s_sampler%u;\n", prefix, i);
@@ -1033,11 +1038,13 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                     }
                     break;
                 case WINED3DSTT_CUBE:
-                    if (pshader && ps_args->shadow & (1 << i)) FIXME("Unsupported Cube shadow sampler.\n");
+                    if (shadow_sampler)
+                        FIXME("Unsupported Cube shadow sampler.\n");
                     shader_addline(buffer, "uniform samplerCube %s_sampler%u;\n", prefix, i);
                     break;
                 case WINED3DSTT_VOLUME:
-                    if (pshader && ps_args->shadow & (1 << i)) FIXME("Unsupported 3D shadow sampler.\n");
+                    if (shadow_sampler)
+                        FIXME("Unsupported 3D shadow sampler.\n");
                     shader_addline(buffer, "uniform sampler3D %s_sampler%u;\n", prefix, i);
                     break;
                 default:
@@ -1049,12 +1056,13 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
 
     /* Declare uniforms for NP2 texcoord fixup:
-     * This is NOT done inside the loop that declares the texture samplers since the NP2 fixup code
-     * is currently only used for the GeforceFX series and when forcing the ARB_npot extension off.
-     * Modern cards just skip the code anyway, so put it inside a separate loop. */
-    if (pshader && ps_args->np2_fixup) {
-
-        struct ps_np2fixup_info* const fixup = ctx_priv->cur_np2fixup_info;
+     * This is NOT done inside the loop that declares the texture samplers
+     * since the NP2 fixup code is currently only used for the GeforceFX
+     * series and when forcing the ARB_npot extension off. Modern cards just
+     * skip the code anyway, so put it inside a separate loop. */
+    if (version->type == WINED3D_SHADER_TYPE_PIXEL && ps_args->np2_fixup)
+    {
+        struct ps_np2fixup_info *fixup = ctx_priv->cur_np2fixup_info;
         UINT cur = 0;
 
         /* NP2/RECT textures in OpenGL use texcoords in the range [0,width]x[0,height]
@@ -1093,7 +1101,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         if (map & 1) shader_addline(buffer, "vec4 T%u = gl_TexCoord[%u];\n", i, i);
     }
 
-    if (!pshader)
+    if (version->type == WINED3D_SHADER_TYPE_VERTEX)
     {
         /* Declare attributes. */
         for (i = 0, map = reg_maps->input_registers; map; map >>= 1, ++i)
@@ -1105,11 +1113,11 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         shader_addline(buffer, "uniform vec4 posFixup;\n");
         shader_addline(buffer, "void order_ps_input(in vec4[%u]);\n", shader->limits.packed_output);
     }
-    else
+    else if (version->type == WINED3D_SHADER_TYPE_PIXEL)
     {
-        if (reg_maps->shader_version.major >= 3)
+        if (version->major >= 3)
         {
-            UINT in_count = min(vec4_varyings(reg_maps->shader_version.major, gl_info), shader->limits.packed_input);
+            UINT in_count = min(vec4_varyings(version->major, gl_info), shader->limits.packed_input);
 
             if (use_vs(state))
                 shader_addline(buffer, "varying vec4 %s_in[%u];\n", prefix, in_count);
@@ -1179,7 +1187,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
 
     /* Declare loop registers aLx */
-    if (reg_maps->shader_version.major < 4)
+    if (version->major < 4)
     {
         for (i = 0; i < reg_maps->loop_depth; ++i)
         {
@@ -1204,25 +1212,28 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         }
     }
 
-    /* Start the main program */
-    shader_addline(buffer, "void main() {\n");
-    if(pshader && reg_maps->vpos) {
-        /* DirectX apps expect integer values, while OpenGL drivers add approximately 0.5. This causes
-         * off-by-one problems as spotted by the vPos d3d9 visual test. Unfortunately the ATI cards do
-         * not add exactly 0.5, but rather something like 0.49999999 or 0.50000001, which still causes
-         * precision troubles when we just subtract 0.5.
-         *
-         * To deal with that just floor() the position. This will eliminate the fraction on all cards.
-         *
-         * TODO: Test how that behaves with multisampling once we can enable multisampling in winex11.
-         *
-         * An advantage of floor is that it works even if the driver doesn't add 1/2. It is somewhat
-         * questionable if 1.5, 2.5, ... are the proper values to return in gl_FragCoord, even though
-         * coordinates specify the pixel centers instead of the pixel corners. This code will behave
-         * correctly on drivers that returns integer values.
-         */
-        shader_addline(buffer, "vpos = floor(vec4(0, ycorrection[0], 0, 0) + gl_FragCoord * vec4(1, ycorrection[1], 1, 1));\n");
-    }
+    /* Start the main program. */
+    shader_addline(buffer, "void main()\n{\n");
+
+    /* Direct3D applications expect integer vPos values, while OpenGL drivers
+     * add approximately 0.5. This causes off-by-one problems as spotted by
+     * the vPos d3d9 visual test. Unfortunately ATI cards do not add exactly
+     * 0.5, but rather something like 0.49999999 or 0.50000001, which still
+     * causes precision troubles when we just subtract 0.5.
+     *
+     * To deal with that, just floor() the position. This will eliminate the
+     * fraction on all cards.
+     *
+     * TODO: Test how this behaves with multisampling.
+     *
+     * An advantage of floor is that it works even if the driver doesn't add
+     * 0.5. It is somewhat questionable if 1.5, 2.5, ... are the proper values
+     * to return in gl_FragCoord, even though coordinates specify the pixel
+     * centers instead of the pixel corners. This code will behave correctly
+     * on drivers that returns integer values. */
+    if (version->type == WINED3D_SHADER_TYPE_PIXEL && reg_maps->vpos)
+        shader_addline(buffer,
+                "vpos = floor(vec4(0, ycorrection[0], 0, 0) + gl_FragCoord * vec4(1, ycorrection[1], 1, 1));\n");
 }
 
 /*****************************************************************************
