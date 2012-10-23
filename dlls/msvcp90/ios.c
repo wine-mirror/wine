@@ -1055,7 +1055,7 @@ int __thiscall basic_streambuf_char_uflow(basic_streambuf_char *this)
     if(call_basic_streambuf_char_underflow(this)==EOF)
         return EOF;
 
-    ret = **this->prpos;
+    ret = (unsigned char)**this->prpos;
     (*this->prsize)--;
     (*this->prpos)++;
     return ret;
@@ -1393,10 +1393,10 @@ int __thiscall basic_streambuf_char_sputbackc(basic_streambuf_char *this, char c
     if(*this->prpos && *this->prpos>*this->prbuf && (*this->prpos)[-1]==ch) {
         (*this->prsize)++;
         (*this->prpos)--;
-        return ch;
+        return (unsigned char)ch;
     }
 
-    return call_basic_streambuf_char_pbackfail(this, ch);
+    return call_basic_streambuf_char_pbackfail(this, (unsigned char)ch);
 }
 
 /* ?sputc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHD@Z */
@@ -1407,7 +1407,7 @@ int __thiscall basic_streambuf_char_sputc(basic_streambuf_char *this, char ch)
     TRACE("(%p %d)\n", this, ch);
     return basic_streambuf_char__Pnavail(this) ?
         (*basic_streambuf_char__Pninc(this) = ch) :
-        call_basic_streambuf_char_overflow(this, ch);
+        call_basic_streambuf_char_overflow(this, (unsigned char)ch);
 }
 
 /* ?sungetc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ */
@@ -1419,7 +1419,7 @@ int __thiscall basic_streambuf_char_sungetc(basic_streambuf_char *this)
     if(*this->prpos && *this->prpos>*this->prbuf) {
         (*this->prsize)++;
         (*this->prpos)--;
-        return **this->prpos;
+        return (unsigned char)**this->prpos;
     }
 
     return call_basic_streambuf_char_pbackfail(this, EOF);
@@ -1444,7 +1444,7 @@ int __thiscall basic_streambuf_char_sbumpc(basic_streambuf_char *this)
 {
     TRACE("(%p)\n", this);
     return basic_streambuf_char__Gnavail(this) ?
-        *basic_streambuf_char__Gninc(this) : call_basic_streambuf_char_uflow(this);
+        (int)(unsigned char)*basic_streambuf_char__Gninc(this) : call_basic_streambuf_char_uflow(this);
 }
 
 /* ?sgetc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ */
@@ -1454,7 +1454,7 @@ int __thiscall basic_streambuf_char_sgetc(basic_streambuf_char *this)
 {
     TRACE("(%p)\n", this);
     return basic_streambuf_char__Gnavail(this) ?
-        *basic_streambuf_char_gptr(this) : call_basic_streambuf_char_underflow(this);
+        (int)(unsigned char)*basic_streambuf_char_gptr(this) : call_basic_streambuf_char_underflow(this);
 }
 
 /* ?snextc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ */
@@ -1465,7 +1465,7 @@ int __thiscall basic_streambuf_char_snextc(basic_streambuf_char *this)
     TRACE("(%p)\n", this);
 
     if(basic_streambuf_char__Gnavail(this) > 1)
-        return *basic_streambuf_char__Gnpreinc(this);
+        return (unsigned char)*basic_streambuf_char__Gnpreinc(this);
     return basic_streambuf_char_sbumpc(this)==EOF ?
         EOF : basic_streambuf_char_sgetc(this);
 }
@@ -1502,7 +1502,7 @@ streamsize __thiscall basic_streambuf_char_xsputn(basic_streambuf_char *this, co
             *this->pwpos += chunk;
             *this->pwsize -= chunk;
             copied += chunk;
-        }else if(call_basic_streambuf_char_overflow(this, ptr[copied]) != EOF) {
+        }else if(call_basic_streambuf_char_overflow(this, (unsigned char)ptr[copied]) != EOF) {
             copied++;
         }else {
             break;
@@ -2714,7 +2714,7 @@ int __thiscall basic_filebuf_char_pbackfail(basic_filebuf_char *this, int c)
         return EOF;
 
     if(basic_streambuf_char_gptr(&this->base)>basic_streambuf_char_eback(&this->base)
-            && (c==EOF || basic_streambuf_char_gptr(&this->base)[-1]==(char)c)) {
+            && (c==EOF || (int)(unsigned char)basic_streambuf_char_gptr(&this->base)[-1]==c)) {
         basic_streambuf_char__Gndec(&this->base);
         return c==EOF ? !c : c;
     }else if(c!=EOF && !this->cvt) {
@@ -2739,7 +2739,7 @@ int __thiscall basic_filebuf_char_uflow(basic_filebuf_char *this)
         return EOF;
 
     if(basic_streambuf_char_gptr(&this->base) < basic_streambuf_char_egptr(&this->base))
-        return *basic_streambuf_char__Gninc(&this->base);
+        return (unsigned char)*basic_streambuf_char__Gninc(&this->base);
 
     c = fgetc(this->file);
     if(!this->cvt || c==EOF)
@@ -2764,7 +2764,7 @@ int __thiscall basic_filebuf_char_uflow(basic_filebuf_char *this)
                 ungetc(buf[i], this->file);
             return ch;
         case CODECVT_noconv:
-            return buf[0];
+            return (unsigned char)buf[0];
         default:
             return EOF;
         }
@@ -2784,7 +2784,7 @@ int __thiscall basic_filebuf_char_underflow(basic_filebuf_char *this)
     TRACE("(%p)\n", this);
 
     if(basic_streambuf_char_gptr(&this->base) < basic_streambuf_char_egptr(&this->base))
-        return *basic_streambuf_char_gptr(&this->base);
+        return (unsigned char)*basic_streambuf_char_gptr(&this->base);
 
     ret = call_basic_streambuf_char_uflow(&this->base);
     if(ret != EOF)
@@ -3312,7 +3312,7 @@ unsigned short __thiscall basic_filebuf_wchar_pbackfail(basic_filebuf_wchar *thi
         return WEOF;
 
     if(basic_streambuf_wchar_gptr(&this->base)>basic_streambuf_wchar_eback(&this->base)
-            && (c==WEOF || basic_streambuf_wchar_gptr(&this->base)[-1]==(wchar_t)c)) {
+            && (c==WEOF || basic_streambuf_wchar_gptr(&this->base)[-1]==c)) {
         basic_streambuf_wchar__Gndec(&this->base);
         return c==WEOF ? !c : c;
     }else if(c!=WEOF && !this->cvt) {
@@ -3784,7 +3784,7 @@ int __thiscall basic_stringbuf_char_underflow(basic_stringbuf_char *this)
         basic_streambuf_char_setg(&this->base, basic_streambuf_char_eback(&this->base), cur, this->seekhigh);
 
     if(cur < this->seekhigh)
-        return *cur;
+        return (unsigned char)*cur;
     return EOF;
 }
 
@@ -7444,7 +7444,7 @@ DEFINE_THISCALL_WRAPPER(basic_istream_char_getline_delim, 16)
 basic_istream_char* __thiscall basic_istream_char_getline_delim(basic_istream_char *this, char *str, streamsize count, char delim)
 {
     basic_ios_char *base = basic_istream_char_get_basic_ios(this);
-    int ch = delim;
+    int ch = (unsigned char)delim;
 
     TRACE("(%p %p %ld %c)\n", this, str, count, delim);
 
@@ -7456,7 +7456,7 @@ basic_istream_char* __thiscall basic_istream_char_getline_delim(basic_istream_ch
         while(count > 1) {
             ch = basic_streambuf_char_sbumpc(strbuf);
 
-            if(ch==EOF || ch==delim)
+            if(ch==EOF || ch==(unsigned char)delim)
                 break;
 
             *str++ = ch;
@@ -7464,12 +7464,12 @@ basic_istream_char* __thiscall basic_istream_char_getline_delim(basic_istream_ch
             count--;
         }
 
-        if(ch == delim)
+        if(ch == (unsigned char)delim)
             this->count++;
         else if(ch != EOF) {
             ch = basic_streambuf_char_sgetc(strbuf);
 
-            if(ch == delim) {
+            if(ch == (unsigned char)delim) {
                 basic_streambuf_char__Gninc(strbuf);
                 this->count++;
             }
@@ -7478,7 +7478,7 @@ basic_istream_char* __thiscall basic_istream_char_getline_delim(basic_istream_ch
     basic_istream_char_sentry_destroy(this);
 
     basic_ios_char_setstate(base, (ch==EOF ? IOSTATE_eofbit : IOSTATE_goodbit) |
-            (!this->count || (ch!=delim && ch!=EOF) ? IOSTATE_failbit : IOSTATE_goodbit));
+            (!this->count || (ch!=(unsigned char)delim && ch!=EOF) ? IOSTATE_failbit : IOSTATE_goodbit));
     if(count > 0)
         *str = 0;
     return this;
@@ -8128,7 +8128,7 @@ basic_istream_char* __cdecl basic_istream_char_getline_bstr_delim(
         basic_istream_char *istream, basic_string_char *str, char delim)
 {
     IOSB_iostate state = IOSTATE_failbit;
-    int c = delim;
+    int c = (unsigned char)delim;
 
     TRACE("(%p %p %c)\n", istream, str, delim);
 
@@ -8139,7 +8139,7 @@ basic_istream_char* __cdecl basic_istream_char_getline_bstr_delim(
         if(c != EOF)
             state = IOSTATE_goodbit;
 
-        for(; c!=delim && c!=EOF; c = basic_istream_char_get(istream)) {
+        for(; c!=(unsigned char)delim && c!=EOF; c = basic_istream_char_get(istream)) {
             state = IOSTATE_goodbit;
             MSVCP_basic_string_char_append_ch(str, c);
         }
