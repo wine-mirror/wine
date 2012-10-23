@@ -2717,18 +2717,19 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetPixelShader(ID3DXBaseEffect *iface,
     return D3DERR_INVALIDCALL;
 }
 
-static HRESULT WINAPI ID3DXBaseEffectImpl_GetVertexShader(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPDIRECT3DVERTEXSHADER9 *vshader)
+static HRESULT WINAPI ID3DXBaseEffectImpl_GetVertexShader(struct ID3DXBaseEffect *iface,
+        D3DXHANDLE parameter, struct IDirect3DVertexShader9 **shader)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
     struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
-    TRACE("iface %p, parameter %p, vshader %p\n", This, parameter, vshader);
+    TRACE("iface %p, parameter %p, shader %p.\n", This, parameter, shader);
 
-    if (vshader && param && !param->element_count && param->type == D3DXPT_VERTEXSHADER)
+    if (shader && param && !param->element_count && param->type == D3DXPT_VERTEXSHADER)
     {
-        *vshader = *(LPDIRECT3DVERTEXSHADER9 *)param->data;
-        if (*vshader) IDirect3DVertexShader9_AddRef(*vshader);
-        TRACE("Returning %p\n", *vshader);
+        if ((*shader = *(struct IDirect3DVertexShader9 **)param->data))
+            IDirect3DVertexShader9_AddRef(*shader);
+        TRACE("Returning %p.\n", *shader);
         return D3D_OK;
     }
 
@@ -3379,14 +3380,15 @@ static HRESULT WINAPI ID3DXEffectImpl_GetPixelShader(ID3DXEffect *iface,
     return ID3DXBaseEffectImpl_GetPixelShader(base, parameter, shader);
 }
 
-static HRESULT WINAPI ID3DXEffectImpl_GetVertexShader(ID3DXEffect *iface, D3DXHANDLE parameter, LPDIRECT3DVERTEXSHADER9 *vshader)
+static HRESULT WINAPI ID3DXEffectImpl_GetVertexShader(struct ID3DXEffect *iface,
+        D3DXHANDLE parameter, struct IDirect3DVertexShader9 **shader)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
     ID3DXBaseEffect *base = This->base_effect;
 
     TRACE("Forward iface %p, base %p\n", This, base);
 
-    return ID3DXBaseEffectImpl_GetVertexShader(base, parameter, vshader);
+    return ID3DXBaseEffectImpl_GetVertexShader(base, parameter, shader);
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_SetArrayRange(ID3DXEffect *iface, D3DXHANDLE parameter, UINT start, UINT end)
@@ -4345,14 +4347,15 @@ static HRESULT WINAPI ID3DXEffectCompilerImpl_GetPixelShader(ID3DXEffectCompiler
     return ID3DXBaseEffectImpl_GetPixelShader(base, parameter, shader);
 }
 
-static HRESULT WINAPI ID3DXEffectCompilerImpl_GetVertexShader(ID3DXEffectCompiler *iface, D3DXHANDLE parameter, LPDIRECT3DVERTEXSHADER9 *vshader)
+static HRESULT WINAPI ID3DXEffectCompilerImpl_GetVertexShader(struct ID3DXEffectCompiler *iface,
+        D3DXHANDLE parameter, struct IDirect3DVertexShader9 **shader)
 {
     struct ID3DXEffectCompilerImpl *This = impl_from_ID3DXEffectCompiler(iface);
     ID3DXBaseEffect *base = This->base_effect;
 
     TRACE("Forward iface %p, base %p\n", This, base);
 
-    return ID3DXBaseEffectImpl_GetVertexShader(base, parameter, vshader);
+    return ID3DXBaseEffectImpl_GetVertexShader(base, parameter, shader);
 }
 
 static HRESULT WINAPI ID3DXEffectCompilerImpl_SetArrayRange(ID3DXEffectCompiler *iface, D3DXHANDLE parameter, UINT start, UINT end)
@@ -4737,8 +4740,7 @@ static HRESULT d3dx9_parse_data(struct d3dx_parameter *param, const char **ptr, 
             break;
 
         case D3DXPT_VERTEXSHADER:
-            hr = IDirect3DDevice9_CreateVertexShader(device, (DWORD *)*ptr, (LPDIRECT3DVERTEXSHADER9 *)param->data);
-            if (hr != D3D_OK)
+            if (FAILED(hr = IDirect3DDevice9_CreateVertexShader(device, (DWORD *)*ptr, param->data)))
             {
                 WARN("Failed to create vertex shader\n");
                 return hr;
