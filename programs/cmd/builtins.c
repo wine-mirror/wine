@@ -1600,7 +1600,7 @@ static BOOL WCMD_parse_forf_options(WCHAR *options, WCHAR *eol, int *skip,
       }
       if (*pos==' ' && *(pos+1)==0) delims[i++] = *pos;
       delims[i++] = 0; /* Null terminate the delims */
-      WINE_FIXME("Found delims as '%s'\n", wine_dbgstr_w(delims));
+      WINE_TRACE("Found delims as '%s'\n", wine_dbgstr_w(delims));
 
     /* Save the tokens being requested */
     } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
@@ -1694,6 +1694,7 @@ static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk) {
  *  doExecuted   [O]    - Set to TRUE if the DO is ever executed once
  *  forf_skip    [I/O]  - How many lines to skip first
  *  forf_eol     [I]    - The 'end of line' (comment) character
+ *  forf_delims  [I]    - The delimiters to use when breaking the string apart
  */
 static void WCMD_parse_line(CMD_LIST    *cmdStart,
                             const WCHAR *firstCmd,
@@ -1702,7 +1703,8 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
                             WCHAR       *buffer,
                             BOOL        *doExecuted,
                             int         *forf_skip,
-                            WCHAR        forf_eol) {
+                            WCHAR        forf_eol,
+                            WCHAR       *forf_delims) {
 
   WCHAR *parm, *where;
 
@@ -1713,7 +1715,7 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
   }
 
   /* Extract the parameter */
-  parm = WCMD_parameter (buffer, 0, &where, NULL, FALSE, FALSE);
+  parm = WCMD_parameter_with_delims(buffer, 0, &where, NULL, FALSE, FALSE, forf_delims);
   WINE_TRACE("Parsed parameter: %s from %s\n", wine_dbgstr_w(parm),
              wine_dbgstr_w(buffer));
 
@@ -2070,7 +2072,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
               /* Read line by line until end of file */
               while (WCMD_fgets(buffer, sizeof(buffer)/sizeof(WCHAR), input)) {
                 WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, variable, buffer, &doExecuted,
-                                &forf_skip, forf_eol);
+                                &forf_skip, forf_eol, forf_delims);
                 buffer[0] = 0;
               }
               CloseHandle (input);
@@ -2090,7 +2092,6 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
              Note that the last quote is removed from the set and the string terminates
              there to mimic windows                                                        */
           WCHAR *strend = strrchrW(itemStart, forf_usebackq?'\'':'"');
-
           if (strend) {
             *strend = 0x00;
             itemStart++;
@@ -2099,7 +2100,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
           /* Copy the item away from the global buffer used by WCMD_parameter */
           strcpyW(buffer, itemStart);
           WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, variable, buffer, &doExecuted,
-                            &forf_skip, forf_eol);
+                            &forf_skip, forf_eol, forf_delims);
 
           /* Only one string can be supplied in the whole set, abort future set processing */
           thisSet = NULL;

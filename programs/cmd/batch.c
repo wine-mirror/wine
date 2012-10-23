@@ -121,9 +121,10 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
 }
 
 /*******************************************************************
- * WCMD_parameter
+ * WCMD_parameter_with_delims
  *
- * Extracts a delimited parameter from an input string
+ * Extracts a delimited parameter from an input string, providing
+ * the delimiters characters to use
  *
  * PARAMS
  *  s     [I] input string, non NULL
@@ -135,6 +136,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
  *  wholecmdline [I] True to indicate this routine is being used to parse the
  *                   command line, and special logic for arg0->1 transition
  *                   needs to be applied.
+ *  delims[I] The delimiter characters to use
  *
  * RETURNS
  *  Success: The nth delimited parameter found in s
@@ -150,10 +152,9 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
  *  other API calls, e.g. c:\"a b"\c is returned as c:\a b\c. However, some commands
  *  need to preserve the exact syntax (echo, for, etc) hence the raw option.
  */
-WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end, BOOL raw,
-                       BOOL wholecmdline)
+WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start, WCHAR **end,
+                                   BOOL raw, BOOL wholecmdline, const WCHAR *delims)
 {
-    static const WCHAR defaultDelims[] = { ' ', '\t', ',', '=', ';', '\0' };
     int curParamNb = 0;
     static WCHAR param[MAX_PATH];
     WCHAR *p = s, *begin;
@@ -165,7 +166,7 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end, BOOL raw,
     while (TRUE) {
 
         /* Absorb repeated word delimiters until we get to the next token (or the end!) */
-        while (*p && (strchrW(defaultDelims, *p) != NULL))
+        while (*p && (strchrW(delims, *p) != NULL))
             p++;
         if (*p == '\0') return param;
 
@@ -179,7 +180,7 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end, BOOL raw,
         /* Loop character by character, but just need to special case quotes */
         while (*p) {
             /* Once we have found a delimiter, break */
-            if (strchrW(defaultDelims, *p) != NULL) break;
+            if (strchrW(delims, *p) != NULL) break;
 
             /* Very odd special case - Seems as if a ( acts as a delimiter which is
                not swallowed but is effective only when it comes between the program
@@ -216,6 +217,20 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end, BOOL raw,
         }
         curParamNb++;
     }
+}
+
+/*******************************************************************
+ * WCMD_parameter
+ *
+ * Extracts a delimited parameter from an input string, using a
+ * default set of delimiter characters. For parameters, see the main
+ * function above.
+ */
+WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end, BOOL raw,
+                       BOOL wholecmdline)
+{
+  static const WCHAR defaultDelims[] = { ' ', '\t', ',', '=', ';', '\0' };
+  return WCMD_parameter_with_delims (s, n, start, end, raw, wholecmdline, defaultDelims);
 }
 
 /****************************************************************************

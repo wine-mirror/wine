@@ -826,14 +826,14 @@ ad
 z@y
 a|d
 no output
-@todo_wine@no output
+no output
 ------ delims option
-@todo_wine@a
-@todo_wine@a@space@
-@todo_wine@a d
 a
-@todo_wine@C r
-@todo_wine@foo bar baz
+a@space@
+a d
+a
+C r
+foo bar baz
 @todo_wine@c:\
 ------ skip option
 c
