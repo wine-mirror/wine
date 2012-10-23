@@ -1170,9 +1170,9 @@ static BOOL create_gl_drawable( HWND hwnd, HWND parent, struct gl_drawable *gl )
 
     gl->drawable = 0;
 
-    if (parent == GetDesktopWindow())  /* top-level window */
+    if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())  /* top-level window */
     {
-        Window xparent = X11DRV_get_whole_window( hwnd );
+        Window parent = X11DRV_get_whole_window( hwnd );
 
         gl->type = DC_GL_WINDOW;
         gl->colormap = XCreateColormap( gdi_display, root_window, gl->visual->visual,
@@ -1185,8 +1185,8 @@ static BOOL create_gl_drawable( HWND hwnd, HWND parent, struct gl_drawable *gl )
         attrib.backing_store = NotUseful;
         /* put the initial rect outside of the window, it will be moved into place by SetWindowPos */
         OffsetRect( &gl->rect, gl->rect.right, gl->rect.bottom );
-        if (xparent)
-            gl->drawable = XCreateWindow( gdi_display, xparent, gl->rect.left, gl->rect.top,
+        if (parent)
+            gl->drawable = XCreateWindow( gdi_display, parent, gl->rect.left, gl->rect.top,
                                           gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top,
                                           0, default_visual.depth, InputOutput, gl->visual->visual,
                                           CWBitGravity | CWWinGravity | CWBackingStore | CWColormap,
@@ -1195,10 +1195,6 @@ static BOOL create_gl_drawable( HWND hwnd, HWND parent, struct gl_drawable *gl )
             XMapWindow( gdi_display, gl->drawable );
         else
             XFreeColormap( gdi_display, gl->colormap );
-    }
-    else if (!GetAncestor( parent, GA_PARENT ))
-    {
-        FIXME( "can't set format of HWND_MESSAGE window %p\n", hwnd );
     }
 #ifdef SONAME_LIBXCOMPOSITE
     else if(usexcomposite)
