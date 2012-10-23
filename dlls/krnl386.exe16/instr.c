@@ -516,9 +516,9 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
                 switch (instr[2])
                 {
                 case 0xc0:
-                    ERR("mov %%eax, %%cr0 at 0x%08x, EAX=0x%08x\n",
-                        context->Eip,context->Eax );
-                        context->Eip += prefixlen+3;
+                    FIXME("mov %%eax, %%cr0 at 0x%08x, EAX=0x%08x\n",
+                          context->Eip,context->Eax );
+                          context->Eip += prefixlen+3;
                     return ExceptionContinueExecution;
                 default:
                     break; /* Fallthrough to bad instruction handling */
@@ -539,12 +539,12 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
                      * bit 7: PGE Enable global pages
                      * bit 8: PCE Enable performance counters at IPL3
                      */
-                    ERR("mov %%cr4, %%eax at 0x%08x\n",context->Eip);
+                    FIXME("mov %%cr4, %%eax at 0x%08x\n",context->Eip);
                     context->Eax = 0;
                     context->Eip += prefixlen+3;
                     return ExceptionContinueExecution;
                 case 0xc0: /* mov %cr0, %eax */
-                    ERR("mov %%cr0, %%eax at 0x%08x\n",context->Eip);
+                    FIXME("mov %%cr0, %%eax at 0x%08x\n",context->Eip);
                     context->Eax = 0x10; /* FIXME: set more bits ? */
                     context->Eip += prefixlen+3;
                     return ExceptionContinueExecution;
@@ -567,7 +567,7 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
                     context->Eip += prefixlen+3;
                     return ExceptionContinueExecution;
                 }
-                ERR("Unsupported DR register, eip+2 is %02x\n", instr[2]);
+                FIXME("Unsupported DR register, eip+2 is %02x\n", instr[2]);
                 /* fallthrough to illegal instruction */
                 break;
             case 0x23: /* mov %eax, %drX */
@@ -578,7 +578,7 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
                     context->Eip += prefixlen+3;
                     return ExceptionContinueExecution;
                 }
-                ERR("Unsupported DR register, eip+2 is %02x\n", instr[2]);
+                FIXME("Unsupported DR register, eip+2 is %02x\n", instr[2]);
                 /* fallthrough to illegal instruction */
                 break;
             case 0xa1: /* pop fs */
