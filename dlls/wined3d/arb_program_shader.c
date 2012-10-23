@@ -39,6 +39,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
+static BOOL shader_is_pshader_version(enum wined3d_shader_type type)
+{
+    return type == WINED3D_SHADER_TYPE_PIXEL;
+}
+
+static BOOL shader_is_vshader_version(enum wined3d_shader_type type)
+{
+    return type == WINED3D_SHADER_TYPE_VERTEX;
+}
+
 /* Extract a line. Note that this modifies the source string. */
 static char *get_line(char **ptr)
 {

@@ -2654,16 +2654,6 @@ void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_sh
         const struct wined3d_shader_reg_maps *reg_maps, const DWORD *byte_code, void *backend_ctx) DECLSPEC_HIDDEN;
 BOOL shader_match_semantic(const char *semantic_name, enum wined3d_decl_usage usage) DECLSPEC_HIDDEN;
 
-static inline BOOL shader_is_pshader_version(enum wined3d_shader_type type)
-{
-    return type == WINED3D_SHADER_TYPE_PIXEL;
-}
-
-static inline BOOL shader_is_vshader_version(enum wined3d_shader_type type)
-{
-    return type == WINED3D_SHADER_TYPE_VERTEX;
-}
-
 static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
 {
     switch (reg->type)
