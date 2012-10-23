@@ -91,6 +91,8 @@ static const WCHAR attrBorderWidth[] =
     {'b','o','r','d','e','r','-','w','i','d','t','h',0};
 static const WCHAR attrBottom[] =
     {'b','o','t','t','o','m',0};
+static const WCHAR attrClear[] =
+    {'c','l','e','a','r',0};
 static const WCHAR attrClip[] =
     {'c','l','i','p',0};
 static const WCHAR attrColor[] =
@@ -212,6 +214,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {attrBorderTopWidth,       DISPID_IHTMLSTYLE_BORDERTOPWIDTH},
     {attrBorderWidth,          DISPID_IHTMLSTYLE_BORDERWIDTH},
     {attrBottom,               DISPID_IHTMLSTYLE2_BOTTOM},
+    {attrClear,                DISPID_IHTMLSTYLE_CLEAR},
     {attrClip,                 DISPID_IHTMLSTYLE_CLIP},
     {attrColor,                DISPID_IHTMLSTYLE_COLOR},
     {attrCursor,               DISPID_IHTMLSTYLE_CURSOR},
@@ -2063,15 +2066,19 @@ static HRESULT WINAPI HTMLStyle_get_styleFloat(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_clear(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_attr(This, STYLEID_CLEAR, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_clear(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_attr(This, STYLEID_CLEAR, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_display(IHTMLStyle *iface, BSTR v)

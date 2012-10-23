@@ -1910,6 +1910,21 @@ static void test_body_style(IHTMLStyle *style)
     ok(!strcmp_wa(str, "rect(0px 1px 500px 505px)"), "clip = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
+    /* clear */
+    hres = IHTMLStyle_get_clear(style, &str);
+    ok(hres == S_OK, "get_clear failed: %08x\n", hres);
+    ok(!str, "clear = %s\n", wine_dbgstr_w(str));
+
+    str = a2bstr("both");
+    hres = IHTMLStyle_put_clear(style, str);
+    ok(hres == S_OK, "put_clear failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_clear(style, &str);
+    ok(hres == S_OK, "get_clear failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "both"), "clear = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
     /* pageBreakAfter */
     hres = IHTMLStyle_get_pageBreakAfter(style, &str);
     ok(hres == S_OK, "get_pageBreakAfter failed: %08x\n", hres);
