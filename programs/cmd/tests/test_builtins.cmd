@@ -704,6 +704,11 @@ for %%i in (%STR_PARMS%) do call :GEQtest %%i B
 for %%i in (%STR_PARMS%) do call :GEQtest %%i AB
 for %%i in (%STR_PARMS%) do call :GEQtest %%i BA
 for %%i in (%STR_PARMS%) do call :GEQtest %%i AA
+for %%i in (%STR_PARMS%) do call :GTRtest %%i A
+for %%i in (%STR_PARMS%) do call :GTRtest %%i B
+for %%i in (%STR_PARMS%) do call :GTRtest %%i AB
+for %%i in (%STR_PARMS%) do call :GTRtest %%i BA
+for %%i in (%STR_PARMS%) do call :GTRtest %%i AA
 echo ------ for numbers
 if -1 LSS 1 (echo negative numbers handled)
 if not -1 LSS -10 (echo negative numbers handled)
@@ -737,6 +742,10 @@ for %%i in (%INT_PARMS%) do call :GEQtest %%i 0
 for %%i in (%INT_PARMS%) do call :GEQtest %%i 1
 for %%i in (%INT_PARMS%) do call :GEQtest %%i 10
 for %%i in (%INT_PARMS%) do call :GEQtest %%i 9
+for %%i in (%INT_PARMS%) do call :GTRtest %%i 0
+for %%i in (%INT_PARMS%) do call :GTRtest %%i 1
+for %%i in (%INT_PARMS%) do call :GTRtest %%i 10
+for %%i in (%INT_PARMS%) do call :GTRtest %%i 9
 goto :endIfCompOpsSubroutines
 
 rem IF subroutines helpers
@@ -754,6 +763,9 @@ if %1 NEQ %2 echo %1 NEQ %2
 goto :eof
 :GEQtest
 if %1 GEQ %2 echo %1 GEQ %2
+goto :eof
+:GTRtest
+if %1 GTR %2 echo %1 GTR %2
 goto :eof
 
 :endIfCompOpsSubroutines
