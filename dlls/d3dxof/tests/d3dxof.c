@@ -756,7 +756,7 @@ static void test_dump(void)
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, pvData, cbSize);
     ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
-    hr = IDirectXFile_CreateEnumObject(lpDirectXFile, (LPVOID)"objects.txt", DXFILELOAD_FROMFILE, &lpDirectXFileEnumObject);
+    hr = IDirectXFile_CreateEnumObject(lpDirectXFile, (LPVOID)"objects.x", DXFILELOAD_FROMFILE, &lpDirectXFileEnumObject);
     ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
 
     while (SUCCEEDED(hr = IDirectXFileEnumObject_GetNextDataObject(lpDirectXFileEnumObject, &lpDirectXFileData)))
