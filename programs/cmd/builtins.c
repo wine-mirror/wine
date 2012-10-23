@@ -2086,8 +2086,18 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
         } else if (doFileset && ((!forf_usebackq && *itemStart == '"') ||
                                  (forf_usebackq && *itemStart == '\''))) {
 
+          /* Remove leading and trailing character, ready to parse with delims= delimiters
+             Note that the last quote is removed from the set and the string terminates
+             there to mimic windows                                                        */
+          WCHAR *strend = strrchrW(itemStart, forf_usebackq?'\'':'"');
+
+          if (strend) {
+            *strend = 0x00;
+            itemStart++;
+          }
+
           /* Copy the item away from the global buffer used by WCMD_parameter */
-          strcpyW(buffer, item);
+          strcpyW(buffer, itemStart);
           WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, variable, buffer, &doExecuted,
                             &forf_skip, forf_eol);
 

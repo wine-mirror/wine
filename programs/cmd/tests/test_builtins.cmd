@@ -1111,11 +1111,22 @@ set var=
 echo --- for /F
 mkdir foobar & cd foobar
 echo ------ string argument
+rem NT4 does not support usebackq
 for /F %%i in ("a b c") do echo %%i
+for /f usebackq %%i in ('a b c') do echo %%i>output_file
+if not exist output_file (echo no output) else (type output_file & del output_file)
 for /f %%i in ("a ") do echo %%i
+for /f usebackq %%i in ('a ') do echo %%i>output_file
+if not exist output_file (echo no output) else (type output_file & del output_file)
 for /f %%i in ("a") do echo %%i
+for /f usebackq %%i in ('a') do echo %%i>output_file
+if not exist output_file (echo no output) else (type output_file & del output_file)
 fOr /f %%i in (" a") do echo %%i
+for /f usebackq %%i in (' a') do echo %%i>output_file
+if not exist output_file (echo no output) else (type output_file & del output_file)
 for /f %%i in (" a ") do echo %%i
+for /f usebackq %%i in (' a ') do echo %%i>output_file
+if not exist output_file (echo no output) else (type output_file & del output_file)
 echo ------ fileset argument
 echo --------- basic blank handling
 echo a b c>foo
