@@ -172,7 +172,7 @@ EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
         if(bounds.left > xCentre) bounds.left = xCentre;
 	else if(bounds.right < xCentre) bounds.right = xCentre;
 	if(bounds.top > yCentre) bounds.top = yCentre;
-	else if(bounds.bottom < yCentre) bounds.right = yCentre;
+	else if(bounds.bottom < yCentre) bounds.bottom = yCentre;
     }
     if(!EMFDRV_WriteRecord( dev, &emr.emr ))
         return FALSE;
