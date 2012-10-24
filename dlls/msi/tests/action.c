@@ -2610,36 +2610,46 @@ static void check_reg_dword5(HKEY prodkey, LPCSTR name, DWORD expected1, DWORD e
     check_reg_str(prodkey, name, expected, TRUE, __LINE__);
 
 #define CHECK_DEL_REG_STR(prodkey, name, expected) \
-    check_reg_str(prodkey, name, expected, TRUE, __LINE__); \
-    RegDeleteValueA(prodkey, name);
+    do { \
+        check_reg_str(prodkey, name, expected, TRUE, __LINE__); \
+        RegDeleteValueA(prodkey, name); \
+    } while(0)
 
 #define CHECK_REG_ISTR(prodkey, name, expected) \
     check_reg_str(prodkey, name, expected, FALSE, __LINE__);
 
 #define CHECK_DEL_REG_ISTR(prodkey, name, expected) \
-    check_reg_str(prodkey, name, expected, FALSE, __LINE__); \
-    RegDeleteValueA(prodkey, name);
+    do { \
+        check_reg_str(prodkey, name, expected, FALSE, __LINE__); \
+        RegDeleteValueA(prodkey, name); \
+    } while(0)
 
 #define CHECK_REG_DWORD(prodkey, name, expected) \
     check_reg_dword(prodkey, name, expected, __LINE__);
 
 #define CHECK_DEL_REG_DWORD(prodkey, name, expected) \
-    check_reg_dword(prodkey, name, expected, __LINE__); \
-    RegDeleteValueA(prodkey, name);
+    do { \
+        check_reg_dword(prodkey, name, expected, __LINE__); \
+        RegDeleteValueA(prodkey, name); \
+    } while(0)
 
 #define CHECK_REG_DWORD2(prodkey, name, expected1, expected2) \
     check_reg_dword2(prodkey, name, expected1, expected2, __LINE__);
 
 #define CHECK_DEL_REG_DWORD2(prodkey, name, expected1, expected2) \
-    check_reg_dword2(prodkey, name, expected1, expected2, __LINE__); \
-    RegDeleteValueA(prodkey, name);
+    do { \
+        check_reg_dword2(prodkey, name, expected1, expected2, __LINE__); \
+        RegDeleteValueA(prodkey, name); \
+    } while(0)
 
 #define CHECK_REG_DWORD4(prodkey, name, expected1, expected2, expected3, expected4) \
     check_reg_dword4(prodkey, name, expected1, expected2, expected3, expected4, __LINE__);
 
 #define CHECK_DEL_REG_DWORD5(prodkey, name, expected1, expected2, expected3, expected4 ,expected5) \
-    check_reg_dword5(prodkey, name, expected1, expected2, expected3, expected4, expected5, __LINE__); \
-    RegDeleteValueA(prodkey, name);
+    do { \
+        check_reg_dword5(prodkey, name, expected1, expected2, expected3, expected4, expected5, __LINE__); \
+        RegDeleteValueA(prodkey, name); \
+    } while(0)
 
 static void get_date_str(LPSTR date)
 {
