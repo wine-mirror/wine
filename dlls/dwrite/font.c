@@ -154,11 +154,14 @@ struct dwrite_font {
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_FONT_METRICS metrics;
+    WCHAR *facename;
 };
 
 struct dwrite_fontface {
     IDWriteFontFace IDWriteFontFace_iface;
     LONG ref;
+
+    LOGFONTW logfont;
 };
 
 static HRESULT create_fontfamily(const WCHAR *familyname, IDWriteFontFamily **family);
@@ -282,8 +285,30 @@ static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace *iface, UIN
     UINT32 count, UINT16 *glyph_indices)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace(iface);
-    FIXME("(%p)->(%p %u %p): stub\n", This, codepoints, count, glyph_indices);
-    return E_NOTIMPL;
+    HFONT hfont;
+    WCHAR *str;
+    HDC hdc;
+    int i;
+
+    TRACE("(%p)->(%p %u %p)\n", This, codepoints, count, glyph_indices);
+
+    str = heap_alloc(count*sizeof(WCHAR));
+    if (!str) return E_OUTOFMEMORY;
+
+    for (i = 0; i < count; i++)
+        str[i] = codepoints[i] < 0x10000 ? codepoints[i] : '?';
+
+    hdc = CreateCompatibleDC(0);
+    hfont = CreateFontIndirectW(&This->logfont);
+    SelectObject(hdc, hfont);
+
+    GetGlyphIndicesW(hdc, str, count, glyph_indices, 0);
+    heap_free(str);
+
+    DeleteDC(hdc);
+    DeleteObject(hfont);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefontface_TryGetFontTable(IDWriteFontFace *iface, UINT32 table_tag,
@@ -357,7 +382,7 @@ static const IDWriteFontFaceVtbl dwritefontfacevtbl = {
     dwritefontface_GetGdiCompatibleGlyphMetrics
 };
 
-static HRESULT create_fontface(IDWriteFontFace **face)
+static HRESULT create_fontface(struct dwrite_font *font, IDWriteFontFace **face)
 {
     struct dwrite_fontface *This;
 
@@ -368,6 +393,11 @@ static HRESULT create_fontface(IDWriteFontFace **face)
 
     This->IDWriteFontFace_iface.lpVtbl = &dwritefontfacevtbl;
     This->ref = 1;
+
+    memset(&This->logfont, 0, sizeof(This->logfont));
+    This->logfont.lfItalic = font->style == DWRITE_FONT_STYLE_ITALIC;
+    strcpyW(This->logfont.lfFaceName, font->facename);
+
     *face = &This->IDWriteFontFace_iface;
 
     return S_OK;
@@ -409,6 +439,7 @@ static ULONG WINAPI dwritefont_Release(IDWriteFont *iface)
     {
         if (This->face) IDWriteFontFace_Release(This->face);
         IDWriteFontFamily_Release(This->family);
+        heap_free(This->facename);
         heap_free(This);
     }
 
@@ -498,7 +529,7 @@ static HRESULT WINAPI dwritefont_CreateFontFace(IDWriteFont *iface, IDWriteFontF
 
     if (!This->face)
     {
-        HRESULT hr = create_fontface(&This->face);
+        HRESULT hr = create_fontface(This, &This->face);
         if (FAILED(hr)) return hr;
     }
 
@@ -524,7 +555,6 @@ static const IDWriteFontVtbl dwritefontvtbl = {
     dwritefont_HasCharacter,
     dwritefont_CreateFontFace
 };
-
 
 static HRESULT WINAPI dwritefontfamily_QueryInterface(IDWriteFontFamily *iface, REFIID riid, void **obj)
 {
@@ -925,6 +955,7 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     This->face = NULL;
     This->family = family;
     This->style = logfont->lfItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
+    This->facename = heap_strdupW(logfont->lfFaceName);
 
     *font = &This->IDWriteFont_iface;
 
