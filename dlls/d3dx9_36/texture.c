@@ -949,13 +949,8 @@ HRESULT WINAPI D3DXCreateTextureFromResourceExW(LPDIRECT3DDEVICE9 device,
     return D3DXERR_INVALIDDATA;
 }
 
-HRESULT WINAPI D3DXCreateCubeTexture(LPDIRECT3DDEVICE9 device,
-                                     UINT size,
-                                     UINT miplevels,
-                                     DWORD usage,
-                                     D3DFORMAT format,
-                                     D3DPOOL pool,
-                                     LPDIRECT3DCUBETEXTURE9 *texture)
+HRESULT WINAPI D3DXCreateCubeTexture(struct IDirect3DDevice9 *device, UINT size, UINT miplevels,
+        DWORD usage, D3DFORMAT format, D3DPOOL pool, struct IDirect3DCubeTexture9 **texture)
 {
     HRESULT hr;
 
@@ -976,10 +971,8 @@ HRESULT WINAPI D3DXCreateCubeTexture(LPDIRECT3DDEVICE9 device,
     return IDirect3DDevice9_CreateCubeTexture(device, size, miplevels, usage, format, pool, texture, NULL);
 }
 
-HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemory(LPDIRECT3DDEVICE9 device,
-                                                     LPCVOID data,
-                                                     UINT datasize,
-                                                     LPDIRECT3DCUBETEXTURE9 *texture)
+HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemory(struct IDirect3DDevice9 *device,
+        const void *data, UINT datasize, struct IDirect3DCubeTexture9 **texture)
 {
     TRACE("(%p, %p, %u, %p)\n", device, data, datasize, texture);
 
@@ -1704,9 +1697,7 @@ static float get_cube_coord(enum cube_coord coord, unsigned int x, unsigned int 
     }
 }
 
-HRESULT WINAPI D3DXFillCubeTexture(LPDIRECT3DCUBETEXTURE9 texture,
-                                   LPD3DXFILL3D function,
-                                   LPVOID funcdata)
+HRESULT WINAPI D3DXFillCubeTexture(struct IDirect3DCubeTexture9 *texture, LPD3DXFILL3D function, void *funcdata)
 {
     DWORD miplevels;
     DWORD m, i, x, y, c, f, v;
