@@ -178,16 +178,6 @@ static void update_visible_region( struct dce *dce )
 
 
 /***********************************************************************
- *		reset_dce_attrs
- */
-static void reset_dce_attrs( struct dce *dce )
-{
-    RestoreDC( dce->hdc, 1 );  /* initial save level is always 1 */
-    SaveDC( dce->hdc );  /* save the state again for next time */
-}
-
-
-/***********************************************************************
  *		release_dce
  */
 static void release_dce( struct dce *dce )
@@ -235,8 +225,6 @@ static struct dce *alloc_dce(void)
         HeapFree( GetProcessHeap(), 0, dce );
         return 0;
     }
-    SaveDC( dce->hdc );
-
     dce->hwnd      = 0;
     dce->clip_rgn  = 0;
     dce->flags     = 0;
@@ -352,7 +340,7 @@ void free_dce( struct dce *dce, HWND hwnd )
         if (!--dce->count)
         {
             /* turn it into a cache entry */
-            reset_dce_attrs( dce );
+            SetHookFlags( dce->hdc, DCHF_RESETDC );
             release_dce( dce );
             dce->flags |= DCX_CACHE;
         }
@@ -470,7 +458,7 @@ static INT release_dc( HWND hwnd, HDC hdc, BOOL end_paint )
     dce = (struct dce *)GetDCHook( hdc, NULL );
     if (dce && dce->count)
     {
-        if (!(dce->flags & DCX_NORESETATTRS)) reset_dce_attrs( dce );
+        if (!(dce->flags & DCX_NORESETATTRS)) SetHookFlags( dce->hdc, DCHF_RESETDC );
         if (end_paint || (dce->flags & DCX_CACHE)) delete_clip_rgn( dce );
         if (dce->flags & DCX_CACHE) dce->count = 0;
         ret = TRUE;

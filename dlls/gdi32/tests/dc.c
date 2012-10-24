@@ -124,10 +124,7 @@ static void test_savedc_2(void)
        rc_clip.left, rc_clip.top, rc_clip.right, rc_clip.bottom);
 
     ret = SaveDC(hdc);
-todo_wine
-{
     ok(ret == 1, "ret = %d\n", ret);
-}
 
     ret = IntersectClipRect(hdc, 0, 0, 50, 50);
     if (ret == COMPLEXREGION)

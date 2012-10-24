@@ -71,6 +71,56 @@ static inline DC *get_dc_obj( HDC hdc )
 
 
 /***********************************************************************
+ *           set_initial_dc_state
+ */
+static void set_initial_dc_state( DC *dc )
+{
+    dc->wndOrgX             = 0;
+    dc->wndOrgY             = 0;
+    dc->wndExtX             = 1;
+    dc->wndExtY             = 1;
+    dc->vportOrgX           = 0;
+    dc->vportOrgY           = 0;
+    dc->vportExtX           = 1;
+    dc->vportExtY           = 1;
+    dc->miterLimit          = 10.0f; /* 10.0 is the default, from MSDN */
+    dc->layout              = 0;
+    dc->font_code_page      = CP_ACP;
+    dc->ROPmode             = R2_COPYPEN;
+    dc->polyFillMode        = ALTERNATE;
+    dc->stretchBltMode      = BLACKONWHITE;
+    dc->relAbsMode          = ABSOLUTE;
+    dc->backgroundMode      = OPAQUE;
+    dc->backgroundColor     = RGB( 255, 255, 255 );
+    dc->dcBrushColor        = RGB( 255, 255, 255 );
+    dc->dcPenColor          = RGB( 0, 0, 0 );
+    dc->textColor           = RGB( 0, 0, 0 );
+    dc->brushOrgX           = 0;
+    dc->brushOrgY           = 0;
+    dc->mapperFlags         = 0;
+    dc->textAlign           = TA_LEFT | TA_TOP | TA_NOUPDATECP;
+    dc->charExtra           = 0;
+    dc->breakExtra          = 0;
+    dc->breakRem            = 0;
+    dc->MapMode             = MM_TEXT;
+    dc->GraphicsMode        = GM_COMPATIBLE;
+    dc->CursPosX            = 0;
+    dc->CursPosY            = 0;
+    dc->ArcDirection        = AD_COUNTERCLOCKWISE;
+    dc->xformWorld2Wnd.eM11 = 1.0f;
+    dc->xformWorld2Wnd.eM12 = 0.0f;
+    dc->xformWorld2Wnd.eM21 = 0.0f;
+    dc->xformWorld2Wnd.eM22 = 1.0f;
+    dc->xformWorld2Wnd.eDx  = 0.0f;
+    dc->xformWorld2Wnd.eDy  = 0.0f;
+    dc->xformWorld2Vport    = dc->xformWorld2Wnd;
+    dc->xformVport2World    = dc->xformWorld2Wnd;
+    dc->vport2WorldValid    = TRUE;
+
+    reset_bounds( &dc->bounds );
+}
+
+/***********************************************************************
  *           alloc_dc_ptr
  */
 DC *alloc_dc_ptr( WORD magic )
@@ -84,40 +134,12 @@ DC *alloc_dc_ptr( WORD magic )
     dc->module              = gdi32_module;
     dc->thread              = GetCurrentThreadId();
     dc->refcount            = 1;
-    dc->wndExtX             = 1;
-    dc->wndExtY             = 1;
-    dc->vportExtX           = 1;
-    dc->vportExtY           = 1;
-    dc->miterLimit          = 10.0f; /* 10.0 is the default, from MSDN */
     dc->hPen                = GDI_inc_ref_count( GetStockObject( BLACK_PEN ));
     dc->hBrush              = GDI_inc_ref_count( GetStockObject( WHITE_BRUSH ));
     dc->hFont               = GDI_inc_ref_count( GetStockObject( SYSTEM_FONT ));
     dc->hPalette            = GetStockObject( DEFAULT_PALETTE );
-    dc->font_code_page      = CP_ACP;
-    dc->ROPmode             = R2_COPYPEN;
-    dc->polyFillMode        = ALTERNATE;
-    dc->stretchBltMode      = BLACKONWHITE;
-    dc->relAbsMode          = ABSOLUTE;
-    dc->backgroundMode      = OPAQUE;
-    dc->backgroundColor     = RGB( 255, 255, 255 );
-    dc->dcBrushColor        = RGB( 255, 255, 255 );
-    dc->dcPenColor          = RGB( 0, 0, 0 );
-    dc->textColor           = RGB( 0, 0, 0 );
-    dc->textAlign           = TA_LEFT | TA_TOP | TA_NOUPDATECP;
-    dc->MapMode             = MM_TEXT;
-    dc->GraphicsMode        = GM_COMPATIBLE;
-    dc->ArcDirection        = AD_COUNTERCLOCKWISE;
-    dc->xformWorld2Wnd.eM11 = 1.0f;
-    dc->xformWorld2Wnd.eM12 = 0.0f;
-    dc->xformWorld2Wnd.eM21 = 0.0f;
-    dc->xformWorld2Wnd.eM22 = 1.0f;
-    dc->xformWorld2Wnd.eDx  = 0.0f;
-    dc->xformWorld2Wnd.eDy  = 0.0f;
-    dc->xformWorld2Vport    = dc->xformWorld2Wnd;
-    dc->xformVport2World    = dc->xformWorld2Wnd;
-    dc->vport2WorldValid    = TRUE;
 
-    reset_bounds( &dc->bounds );
+    set_initial_dc_state( dc );
 
     if (!(dc->hSelf = alloc_gdi_handle( dc, magic, &dc_funcs )))
     {
@@ -515,6 +537,44 @@ BOOL nulldrv_RestoreDC( PHYSDEV dev, INT level )
         free_dc_state( first_dcs );
         first_dcs = next;
     }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           reset_dc_state
+ */
+static BOOL reset_dc_state( HDC hdc )
+{
+    DC *dc, *dcs, *next;
+
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+
+    set_initial_dc_state( dc );
+    SetBkColor( hdc, RGB( 255, 255, 255 ));
+    SetTextColor( hdc, RGB( 0, 0, 0 ));
+    SelectObject( hdc, GetStockObject( WHITE_BRUSH ));
+    SelectObject( hdc, GetStockObject( SYSTEM_FONT ));
+    SelectObject( hdc, GetStockObject( BLACK_PEN ));
+    SetVirtualResolution( hdc, 0, 0, 0, 0 );
+    GDISelectPalette( hdc, GetStockObject( DEFAULT_PALETTE ), FALSE );
+    SetBoundsRect( hdc, NULL, DCB_DISABLE );
+    AbortPath( hdc );
+
+    if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
+    if (dc->hMetaRgn) DeleteObject( dc->hMetaRgn );
+    dc->hClipRgn = 0;
+    dc->hMetaRgn = 0;
+    update_dc_clipping( dc );
+
+    for (dcs = dc->saved_dc; dcs; dcs = next)
+    {
+        next = dcs->saved_dc;
+        free_dc_state( dcs );
+    }
+    dc->saved_dc = NULL;
+    dc->saveLevel = 0;
+    release_dc_ptr( dc );
     return TRUE;
 }
 
@@ -1217,8 +1277,6 @@ WORD WINAPI SetHookFlags( HDC hdc, WORD flags )
 
     if (!dc) return 0;
 
-    /* "Undocumented Windows" info is slightly confusing. */
-
     TRACE("hDC %p, flags %04x\n",hdc,flags);
 
     if (flags & DCHF_INVALIDATEVISRGN)
@@ -1227,6 +1285,8 @@ WORD WINAPI SetHookFlags( HDC hdc, WORD flags )
         ret = InterlockedExchange( &dc->dirty, 0 );
 
     GDI_ReleaseObj( hdc );
+
+    if (flags & DCHF_RESETDC) ret = reset_dc_state( hdc );
     return ret;
 }
 
