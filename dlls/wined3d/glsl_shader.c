@@ -96,6 +96,8 @@ struct shader_glsl_priv {
     GLhandleARB depth_blt_program_full[tex_type_count];
     GLhandleARB depth_blt_program_masked[tex_type_count];
     UINT next_constant_version;
+
+    const struct fragment_pipeline *fragment_pipe;
 };
 
 /* Struct to maintain data about a linked GLSL program */
@@ -5225,12 +5227,20 @@ static const struct wine_rb_functions wined3d_glsl_program_rb_functions =
     glsl_program_key_compare,
 };
 
-static HRESULT shader_glsl_alloc(struct wined3d_device *device)
+static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct fragment_pipeline *fragment_pipe)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct shader_glsl_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
     SIZE_T stack_size = wined3d_log2i(max(gl_info->limits.glsl_vs_float_constants,
             gl_info->limits.glsl_ps_float_constants)) + 1;
+    HRESULT hr;
+
+    if (FAILED(hr = fragment_pipe->alloc_private(device)))
+    {
+        ERR("Failed to initialize fragment pipe, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, priv);
+        return hr;
+    }
 
     if (!shader_buffer_init(&priv->shader_buffer))
     {
@@ -5264,6 +5274,7 @@ static HRESULT shader_glsl_alloc(struct wined3d_device *device)
     }
 
     priv->next_constant_version = 1;
+    priv->fragment_pipe = fragment_pipe;
 
     device->shader_priv = priv;
     return WINED3D_OK;
@@ -5273,6 +5284,7 @@ fail:
     constant_heap_free(&priv->vconst_heap);
     HeapFree(GetProcessHeap(), 0, priv->stack);
     shader_buffer_free(&priv->shader_buffer);
+    fragment_pipe->free_private(device);
     HeapFree(GetProcessHeap(), 0, priv);
     return E_OUTOFMEMORY;
 }
@@ -5303,6 +5315,7 @@ static void shader_glsl_free(struct wined3d_device *device)
     constant_heap_free(&priv->vconst_heap);
     HeapFree(GetProcessHeap(), 0, priv->stack);
     shader_buffer_free(&priv->shader_buffer);
+    priv->fragment_pipe->free_private(device);
 
     HeapFree(GetProcessHeap(), 0, device->shader_priv);
     device->shader_priv = NULL;
@@ -5500,6 +5513,21 @@ static void shader_glsl_handle_instruction(const struct wined3d_shader_instructi
     shader_glsl_add_instruction_modifiers(ins);
 }
 
+static void shader_glsl_enable_fragment_pipe(void *shader_priv,
+        const struct wined3d_gl_info *gl_info, BOOL enable)
+{
+    struct shader_glsl_priv *priv = shader_priv;
+
+    priv->fragment_pipe->enable_extension(gl_info, enable);
+}
+
+static BOOL shader_glsl_has_ffp_proj_control(void *shader_priv)
+{
+    struct shader_glsl_priv *priv = shader_priv;
+
+    return priv->fragment_pipe->ffp_proj_control;
+}
+
 const struct wined3d_shader_backend_ops glsl_shader_backend =
 {
     shader_glsl_handle_instruction,
@@ -5516,4 +5544,6 @@ const struct wined3d_shader_backend_ops glsl_shader_backend =
     shader_glsl_context_destroyed,
     shader_glsl_get_caps,
     shader_glsl_color_fixup_supported,
+    shader_glsl_enable_fragment_pipe,
+    shader_glsl_has_ffp_proj_control,
 };

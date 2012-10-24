@@ -1569,7 +1569,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     {
         GL_EXTCALL(glProvokingVertexEXT(GL_FIRST_VERTEX_CONVENTION_EXT));
     }
-    device->frag_pipe->enable_extension(gl_info, TRUE);
+    device->shader_backend->shader_enable_fragment_pipe(device->shader_priv, gl_info, TRUE);
 
     /* If this happens to be the first context for the device, dummy textures
      * are not created yet. In that case, they will be created (and bound) by
@@ -1865,7 +1865,7 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
     context_invalidate_state(context, STATE_RENDER(WINED3D_RS_CLIPPING));
 
     set_blit_dimension(gl_info, rt_size.cx, rt_size.cy);
-    device->frag_pipe->enable_extension(gl_info, FALSE);
+    device->shader_backend->shader_enable_fragment_pipe(device->shader_priv, gl_info, FALSE);
 
     LEAVE_GL();
 
@@ -2225,7 +2225,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
 
     if (context->last_was_blit)
     {
-        device->frag_pipe->enable_extension(gl_info, TRUE);
+        device->shader_backend->shader_enable_fragment_pipe(device->shader_priv, gl_info, TRUE);
         context->last_was_blit = FALSE;
     }
 
@@ -2354,7 +2354,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
 
     ENTER_GL();
     if (context->last_was_blit)
-        device->frag_pipe->enable_extension(context->gl_info, TRUE);
+        device->shader_backend->shader_enable_fragment_pipe(device->shader_priv, context->gl_info, TRUE);
 
     for (i = 0; i < context->numDirtyEntries; ++i)
     {
@@ -2494,7 +2494,8 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device, str
         else
         {
             ENTER_GL();
-            device->frag_pipe->enable_extension(context->gl_info, !context->last_was_blit);
+            device->shader_backend->shader_enable_fragment_pipe(device->shader_priv,
+                    context->gl_info, !context->last_was_blit);
             LEAVE_GL();
         }
     }

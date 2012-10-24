@@ -784,6 +784,7 @@ struct vs_compile_args {
 
 struct wined3d_context;
 struct wined3d_state;
+struct fragment_pipeline;
 
 struct wined3d_shader_backend_ops
 {
@@ -798,11 +799,13 @@ struct wined3d_shader_backend_ops
     void (*shader_load_np2fixup_constants)(void *shader_priv, const struct wined3d_gl_info *gl_info,
             const struct wined3d_state *state);
     void (*shader_destroy)(struct wined3d_shader *shader);
-    HRESULT (*shader_alloc_private)(struct wined3d_device *device);
+    HRESULT (*shader_alloc_private)(struct wined3d_device *device, const struct fragment_pipeline *fragment_pipe);
     void (*shader_free_private)(struct wined3d_device *device);
     void (*shader_context_destroyed)(void *shader_priv, const struct wined3d_context *context);
     void (*shader_get_caps)(const struct wined3d_gl_info *gl_info, struct shader_caps *caps);
     BOOL (*shader_color_fixup_supported)(struct color_fixup_desc fixup);
+    void (*shader_enable_fragment_pipe)(void *shader_priv, const struct wined3d_gl_info *gl_info, BOOL enable);
+    BOOL (*shader_has_ffp_proj_control)(void *shader_priv);
 };
 
 extern const struct wined3d_shader_backend_ops glsl_shader_backend DECLSPEC_HIDDEN;
@@ -1704,7 +1707,6 @@ struct wined3d_device
     struct StateEntry StateTable[STATE_HIGHEST + 1];
     /* Array of functions for states which are handled by more than one pipeline part */
     APPLYSTATEFUNC *multistate_funcs[STATE_HIGHEST + 1];
-    const struct fragment_pipeline *frag_pipe;
     const struct blit_shader *blitter;
 
     unsigned int max_ffp_textures;

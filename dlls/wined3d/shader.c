@@ -1452,6 +1452,11 @@ static void shader_cleanup(struct wined3d_shader *shader)
         shader->frontend->shader_free(shader->frontend_data);
 }
 
+struct shader_none_priv
+{
+    const struct fragment_pipeline *fragment_pipe;
+};
+
 static void shader_none_handle_instruction(const struct wined3d_shader_instruction *ins) {}
 static void shader_none_select(const struct wined3d_context *context, BOOL usePS, BOOL useVS) {}
 static void shader_none_select_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info,
@@ -1463,9 +1468,39 @@ static void shader_none_load_constants(const struct wined3d_context *context, BO
 static void shader_none_load_np2fixup_constants(void *shader_priv,
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state) {}
 static void shader_none_destroy(struct wined3d_shader *shader) {}
-static HRESULT shader_none_alloc(struct wined3d_device *device) {return WINED3D_OK;}
-static void shader_none_free(struct wined3d_device *device) {}
 static void shader_none_context_destroyed(void *shader_priv, const struct wined3d_context *context) {}
+
+static HRESULT shader_none_alloc(struct wined3d_device *device, const struct fragment_pipeline *fragment_pipe)
+{
+    struct shader_none_priv *priv;
+    HRESULT hr;
+
+    if (!(priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv))))
+    {
+        ERR("Failed to allocate private data.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    if (FAILED(hr = fragment_pipe->alloc_private(device)))
+    {
+        ERR("Failed to initialize fragment pipe, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, priv);
+        return hr;
+    }
+
+    priv->fragment_pipe = fragment_pipe;
+    device->shader_priv = priv;
+
+    return WINED3D_OK;
+}
+
+static void shader_none_free(struct wined3d_device *device)
+{
+    struct shader_none_priv *priv = device->shader_priv;
+
+    priv->fragment_pipe->free_private(device);
+    HeapFree(GetProcessHeap(), 0, priv);
+}
 
 static void shader_none_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
 {
@@ -1498,6 +1533,21 @@ static BOOL shader_none_color_fixup_supported(struct color_fixup_desc fixup)
     return FALSE;
 }
 
+static void shader_none_enable_fragment_pipe(void *shader_priv,
+        const struct wined3d_gl_info *gl_info, BOOL enable)
+{
+    struct shader_none_priv *priv = shader_priv;
+
+    priv->fragment_pipe->enable_extension(gl_info, enable);
+}
+
+static BOOL shader_none_has_ffp_proj_control(void *shader_priv)
+{
+    struct shader_none_priv *priv = shader_priv;
+
+    return priv->fragment_pipe->ffp_proj_control;
+}
+
 const struct wined3d_shader_backend_ops none_shader_backend =
 {
     shader_none_handle_instruction,
@@ -1514,6 +1564,8 @@ const struct wined3d_shader_backend_ops none_shader_backend =
     shader_none_context_destroyed,
     shader_none_get_caps,
     shader_none_color_fixup_supported,
+    shader_none_enable_fragment_pipe,
+    shader_none_has_ffp_proj_control,
 };
 
 static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *byte_code,

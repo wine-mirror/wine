@@ -3348,7 +3348,7 @@ static void transform_texture(struct wined3d_context *context, const struct wine
             device->strided_streams.use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coordIdx))
             ? device->strided_streams.elements[WINED3D_FFP_TEXCOORD0 + coordIdx].format->id
             : WINED3DFMT_UNKNOWN,
-            device->frag_pipe->ffp_proj_control);
+            device->shader_backend->shader_has_ffp_proj_control(device->shader_priv));
 
     /* The sampler applying function calls us if this changes */
     if ((context->lastWasPow2Texture & (1 << texUnit)) && state->textures[texUnit])

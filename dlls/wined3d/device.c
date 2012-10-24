@@ -1241,6 +1241,17 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
         }
     }
 
+    if (FAILED(hr = device->shader_backend->shader_alloc_private(device, device->adapter->fragment_pipe)))
+    {
+        TRACE("Shader private data couldn't be allocated\n");
+        goto err_out;
+    }
+    if (FAILED(hr = device->blitter->alloc_private(device)))
+    {
+        TRACE("Blitter private data couldn't be allocated\n");
+        goto err_out;
+    }
+
     /* Setup the implicit swapchain. This also initializes a context. */
     TRACE("Creating implicit swapchain\n");
     hr = device->device_parent->ops->create_swapchain(device->device_parent,
@@ -1276,25 +1287,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     device->fb.depth_stencil = device->auto_depth_stencil;
     if (device->fb.depth_stencil)
         wined3d_surface_incref(device->fb.depth_stencil);
-
-    hr = device->shader_backend->shader_alloc_private(device);
-    if (FAILED(hr))
-    {
-        TRACE("Shader private data couldn't be allocated\n");
-        goto err_out;
-    }
-    hr = device->frag_pipe->alloc_private(device);
-    if (FAILED(hr))
-    {
-        TRACE("Fragment pipeline private data couldn't be allocated\n");
-        goto err_out;
-    }
-    hr = device->blitter->alloc_private(device);
-    if (FAILED(hr))
-    {
-        TRACE("Blitter private data couldn't be allocated\n");
-        goto err_out;
-    }
 
     /* Set up some starting GL setup */
 
@@ -1356,8 +1348,6 @@ err_out:
         wined3d_swapchain_decref(swapchain);
     if (device->blit_priv)
         device->blitter->free_private(device);
-    if (device->fragment_priv)
-        device->frag_pipe->free_private(device);
     if (device->shader_priv)
         device->shader_backend->shader_free_private(device);
 
@@ -1467,7 +1457,6 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
 
     /* Destroy the shader backend. Note that this has to happen after all shaders are destroyed. */
     device->blitter->free_private(device);
-    device->frag_pipe->free_private(device);
     device->shader_backend->shader_free_private(device);
 
     /* Release the buffers (with sanity checks)*/
@@ -4895,7 +4884,6 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
     LEAVE_GL();
 
     device->blitter->free_private(device);
-    device->frag_pipe->free_private(device);
     device->shader_backend->shader_free_private(device);
     destroy_dummy_textures(device, gl_info);
 
@@ -4917,11 +4905,26 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
     struct wined3d_surface *target;
     HRESULT hr;
 
+    if (FAILED(hr = device->shader_backend->shader_alloc_private(device, device->adapter->fragment_pipe)))
+    {
+        ERR("Failed to allocate shader private data, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = device->blitter->alloc_private(device)))
+    {
+        ERR("Failed to allocate blitter private data, hr %#x.\n", hr);
+        device->shader_backend->shader_free_private(device);
+        return hr;
+    }
+
     /* Recreate the primary swapchain's context */
     swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(*swapchain->context));
     if (!swapchain->context)
     {
         ERR("Failed to allocate memory for swapchain context array.\n");
+        device->blitter->free_private(device);
+        device->shader_backend->shader_free_private(device);
         return E_OUTOFMEMORY;
     }
 
@@ -4929,6 +4932,8 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
     if (!(context = context_create(swapchain, target, swapchain->ds_format)))
     {
         WARN("Failed to create context.\n");
+        device->blitter->free_private(device);
+        device->shader_backend->shader_free_private(device);
         HeapFree(GetProcessHeap(), 0, swapchain->context);
         return E_FAIL;
     }
@@ -4938,40 +4943,7 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
     create_dummy_textures(device, context);
     context_release(context);
 
-    hr = device->shader_backend->shader_alloc_private(device);
-    if (FAILED(hr))
-    {
-        ERR("Failed to allocate shader private data, hr %#x.\n", hr);
-        goto err;
-    }
-
-    hr = device->frag_pipe->alloc_private(device);
-    if (FAILED(hr))
-    {
-        ERR("Failed to allocate fragment pipe private data, hr %#x.\n", hr);
-        device->shader_backend->shader_free_private(device);
-        goto err;
-    }
-
-    hr = device->blitter->alloc_private(device);
-    if (FAILED(hr))
-    {
-        ERR("Failed to allocate blitter private data, hr %#x.\n", hr);
-        device->frag_pipe->free_private(device);
-        device->shader_backend->shader_free_private(device);
-        goto err;
-    }
-
     return WINED3D_OK;
-
-err:
-    context_acquire(device, NULL);
-    destroy_dummy_textures(device, context->gl_info);
-    context_release(context);
-    context_destroy(device, context);
-    HeapFree(GetProcessHeap(), 0, swapchain->context);
-    swapchain->num_contexts = 0;
-    return hr;
 }
 
 /* Do not call while under the GL lock. */
@@ -5487,7 +5459,6 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
         device->vs_clipping = shader_caps.vs_clipping;
     }
     fragment_pipeline = adapter->fragment_pipe;
-    device->frag_pipe = fragment_pipeline;
     if (fragment_pipeline)
     {
         fragment_pipeline->get_caps(&adapter->gl_info, &ffp_caps);

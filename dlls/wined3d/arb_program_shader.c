@@ -326,6 +326,8 @@ struct shader_arb_priv
     unsigned int highest_dirty_ps_const, highest_dirty_vs_const;
     char *vshader_const_dirty, *pshader_const_dirty;
     const struct wined3d_context *last_context;
+
+    const struct fragment_pipeline *fragment_pipe;
 };
 
 /* GL locking for state handlers is done by the caller. */
@@ -4166,6 +4168,7 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
 {
     const struct arb_vshader_private *shader_data = shader->backend_data;
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
+    struct shader_arb_priv *priv = shader->device->shader_priv;
     const struct wined3d_shader_lconst *lconst;
     const DWORD *function = shader->function;
     GLuint ret;
@@ -4258,11 +4261,10 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
      */
     if (!gl_info->supported[NV_VERTEX_PROGRAM])
     {
-        struct wined3d_device *device = shader->device;
         const char *color_init = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_0001);
         shader_addline(buffer, "MOV result.color.secondary, %s;\n", color_init);
 
-        if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W && !device->frag_pipe->ffp_proj_control)
+        if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W && !priv->fragment_pipe->ffp_proj_control)
         {
             int i;
             const char *one = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_ONE);
@@ -4876,9 +4878,17 @@ static const struct wine_rb_functions sig_tree_functions =
     sig_tree_compare
 };
 
-static HRESULT shader_arb_alloc(struct wined3d_device *device)
+static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct fragment_pipeline *fragment_pipe)
 {
     struct shader_arb_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*priv));
+    HRESULT hr;
+
+    if (FAILED(hr = fragment_pipe->alloc_private(device)))
+    {
+        ERR("Failed to initialize fragment pipe, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, priv);
+        return hr;
+    }
 
     priv->vshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
             sizeof(*priv->vshader_const_dirty) * device->d3d_vshader_constantF);
@@ -4899,12 +4909,14 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device)
         ERR("RB tree init failed\n");
         goto fail;
     }
+    priv->fragment_pipe = fragment_pipe;
     device->shader_priv = priv;
     return WINED3D_OK;
 
 fail:
     HeapFree(GetProcessHeap(), 0, priv->pshader_const_dirty);
     HeapFree(GetProcessHeap(), 0, priv->vshader_const_dirty);
+    fragment_pipe->free_private(device);
     HeapFree(GetProcessHeap(), 0, priv);
     return E_OUTOFMEMORY;
 }
@@ -4948,6 +4960,7 @@ static void shader_arb_free(struct wined3d_device *device)
     wine_rb_destroy(&priv->signature_tree, release_signature, NULL);
     HeapFree(GetProcessHeap(), 0, priv->pshader_const_dirty);
     HeapFree(GetProcessHeap(), 0, priv->vshader_const_dirty);
+    priv->fragment_pipe->free_private(device);
     HeapFree(GetProcessHeap(), 0, device->shader_priv);
 }
 
@@ -5589,6 +5602,21 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
     shader_arb_add_instruction_modifiers(ins);
 }
 
+static void shader_arb_enable_fragment_pipe(void *shader_priv,
+        const struct wined3d_gl_info *gl_info, BOOL enable)
+{
+    struct shader_arb_priv *priv = shader_priv;
+
+    priv->fragment_pipe->enable_extension(gl_info, enable);
+}
+
+static BOOL shader_arb_has_ffp_proj_control(void *shader_priv)
+{
+    struct shader_arb_priv *priv = shader_priv;
+
+    return priv->fragment_pipe->ffp_proj_control;
+}
+
 const struct wined3d_shader_backend_ops arb_program_shader_backend =
 {
     shader_arb_handle_instruction,
@@ -5605,6 +5633,8 @@ const struct wined3d_shader_backend_ops arb_program_shader_backend =
     shader_arb_context_destroyed,
     shader_arb_get_caps,
     shader_arb_color_fixup_supported,
+    shader_arb_enable_fragment_pipe,
+    shader_arb_has_ffp_proj_control,
 };
 
 /* ARB_fragment_program fixed function pipeline replacement definitions */
