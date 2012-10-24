@@ -853,7 +853,7 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                 if (comm_fault_offsets->FaultOffset == -1)
                     fault_status = (ULONG *)&RetVal;
                 else if (comm_fault_offsets->FaultOffset >= 0)
-                    fault_status = *(ULONG **)ARG_FROM_OFFSET(stubMsg.StackTop, comm_fault_offsets->CommOffset);
+                    fault_status = *(ULONG **)ARG_FROM_OFFSET(stubMsg.StackTop, comm_fault_offsets->FaultOffset);
                 else
                     fault_status = NULL;
 
