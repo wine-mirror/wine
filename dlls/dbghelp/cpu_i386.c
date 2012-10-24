@@ -575,14 +575,16 @@ static void* i386_fetch_context_reg(CONTEXT* ctx, unsigned regno, unsigned* size
     case CV_REG_ESP: *size = sizeof(ctx->Esp); return &ctx->Esp;
     case CV_REG_EIP: *size = sizeof(ctx->Eip); return &ctx->Eip;
 
-    case CV_REG_ST0 + 0: *size = sizeof(long double); return &ctx->FloatSave.RegisterArea[0*sizeof(long double)];
-    case CV_REG_ST0 + 1: *size = sizeof(long double); return &ctx->FloatSave.RegisterArea[1*sizeof(long double)];
-    case CV_REG_ST0 + 2: *size = sizeof(long double); return &ctx->FloatSave.RegisterArea[2*sizeof(long double)];
-    case CV_REG_ST0 + 3: *size = sizeof(long double); return &ctx->FloatSave.RegisterArea[3*sizeof(long double)];
-    case CV_REG_ST0 + 4: *size = sizeof(long double); return &ctx->FloatSave.RegisterArea[4*sizeof(long double)];
-    case CV_REG_ST0 + 5: *size = sizeof(long double); return &ctx->FloatSave.RegisterArea[5*sizeof(long double)];
-    case CV_REG_ST0 + 6: *size = sizeof(long double); return &ctx->FloatSave.RegisterArea[6*sizeof(long double)];
-    case CV_REG_ST0 + 7: *size = sizeof(long double); return &ctx->FloatSave.RegisterArea[7*sizeof(long double)];
+    /* These are x87 floating point registers... They do not match a C type in
+     * the Linux ABI, so hardcode their 80-bitness. */
+    case CV_REG_ST0 + 0: *size = 10; return &ctx->FloatSave.RegisterArea[0*10];
+    case CV_REG_ST0 + 1: *size = 10; return &ctx->FloatSave.RegisterArea[1*10];
+    case CV_REG_ST0 + 2: *size = 10; return &ctx->FloatSave.RegisterArea[2*10];
+    case CV_REG_ST0 + 3: *size = 10; return &ctx->FloatSave.RegisterArea[3*10];
+    case CV_REG_ST0 + 4: *size = 10; return &ctx->FloatSave.RegisterArea[4*10];
+    case CV_REG_ST0 + 5: *size = 10; return &ctx->FloatSave.RegisterArea[5*10];
+    case CV_REG_ST0 + 6: *size = 10; return &ctx->FloatSave.RegisterArea[6*10];
+    case CV_REG_ST0 + 7: *size = 10; return &ctx->FloatSave.RegisterArea[7*10];
 
     case CV_REG_CTRL: *size = sizeof(DWORD); return &ctx->FloatSave.ControlWord;
     case CV_REG_STAT: *size = sizeof(DWORD); return &ctx->FloatSave.StatusWord;
