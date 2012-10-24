@@ -783,13 +783,15 @@ HRESULT GAMEUX_FindGameInstanceId(
                                              sConfigGDFBinaryPath, &lpValue);
 
                 if(SUCCEEDED(hr))
+                {
                     if(lstrcmpW(lpValue, sGDFBinaryPath)==0)
                     {
                         /* key found, let's copy instance id and exit */
                         hr = (GUIDFromStringW(lpName, pInstanceId) ? S_OK : E_FAIL);
                         found = TRUE;
                     }
-                HeapFree(GetProcessHeap(), 0, lpValue);
+                    HeapFree(GetProcessHeap(), 0, lpValue);
+                }
             }
         }
 
