@@ -454,18 +454,22 @@ GpStatus WINGDIPAPI GdipGetLogFontA(GpFont *font, GpGraphics *graphics,
  */
 GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics, LOGFONTW *lf)
 {
-    REAL height;
+    REAL angle, rel_height, height;
+    GpMatrix *matrix;
+    GpPointF pt[3];
 
     TRACE("(%p, %p, %p)\n", font, graphics, lf);
 
     if (!font || !graphics || !lf)
         return InvalidParameter;
 
+    GdipCloneMatrix(graphics->worldtrans, &matrix);
+
     if (font->unit == UnitPixel)
     {
         height = units_to_pixels(font->emSize, graphics->unit, graphics->yres);
         if (graphics->unit != UnitDisplay)
-            height *= graphics->scale;
+            GdipScaleMatrix(matrix, graphics->scale, graphics->scale, MatrixOrderAppend);
     }
     else
     {
@@ -475,10 +479,26 @@ GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics, LOGFONTW
             height = units_to_pixels(font->emSize, font->unit, graphics->yres);
     }
 
-    lf->lfHeight = -(height + 0.5);
+    pt[0].X = 0.0;
+    pt[0].Y = 0.0;
+    pt[1].X = 1.0;
+    pt[1].Y = 0.0;
+    pt[2].X = 0.0;
+    pt[2].Y = 1.0;
+    GdipTransformMatrixPoints(matrix, pt, 3);
+    angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
+    rel_height = sqrt((pt[2].Y - pt[0].Y) * (pt[2].Y - pt[0].Y)+
+                      (pt[2].X - pt[0].X) * (pt[2].X - pt[0].X));
+    GdipDeleteMatrix(matrix);
+
+    lf->lfHeight = -gdip_round(height * rel_height);
     lf->lfWidth = 0;
-    lf->lfEscapement = 0;
-    lf->lfOrientation = 0;
+    lf->lfEscapement = lf->lfOrientation = gdip_round((angle / M_PI) * 1800.0);
+    if (lf->lfEscapement < 0)
+    {
+        lf->lfEscapement += 3600;
+        lf->lfOrientation += 3600;
+    }
     lf->lfWeight = font->otm.otmTextMetrics.tmWeight;
     lf->lfItalic = font->otm.otmTextMetrics.tmItalic ? 1 : 0;
     lf->lfUnderline = font->otm.otmTextMetrics.tmUnderlined ? 1 : 0;

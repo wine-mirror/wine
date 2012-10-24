@@ -26,6 +26,7 @@
 #include "wine/test.h"
 
 #define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
+#define expect_(expected, got, precision) ok(abs((expected) - (got)) <= (precision), "Expected %d, got %d\n", (expected), (got))
 #define expectf_(expected, got, precision) ok(fabs((expected) - (got)) <= (precision), "Expected %f, got %f\n", (expected), (got))
 #define expectf(expected, got) expectf_((expected), (got), 0.001)
 
@@ -904,7 +905,6 @@ todo_wine
     expect(Ok, status);
     status = GdipGetLogFontA(font, graphics, &lf);
     expect(Ok, status);
-todo_wine
     expect(-300, lf.lfHeight);
     expect(0, lf.lfWidth);
     expect(0, lf.lfEscapement);
@@ -954,13 +954,10 @@ todo_wine
     expect(Ok, status);
     status = GdipGetLogFontA(font, graphics, &lf);
     expect(Ok, status);
-todo_wine
     expect(-300, lf.lfHeight);
     expect(0, lf.lfWidth);
-todo_wine
-    expect(3151, lf.lfEscapement);
-todo_wine
-    expect(3151, lf.lfOrientation);
+    expect_(3151, lf.lfEscapement, 1);
+    expect_(3151, lf.lfOrientation, 1);
     status = GdipGetFontHeight(font, graphics, &height);
     expect(Ok, status);
     expectf(120.703125, height);
@@ -1010,10 +1007,8 @@ todo_wine
 todo_wine
     expect(1032, lf.lfHeight);
     expect(0, lf.lfWidth);
-todo_wine
-    expect(3099, lf.lfEscapement);
-todo_wine
-    expect(3099, lf.lfOrientation);
+    expect_(3099, lf.lfEscapement, 1);
+    expect_(3099, lf.lfOrientation, 1);
     status = GdipGetFontHeight(font, graphics, &height);
     expect(Ok, status);
     expectf(120.703125, height);
@@ -1063,10 +1058,8 @@ todo_wine
 todo_wine
     expect(1032, lf.lfHeight);
     expect(0, lf.lfWidth);
-todo_wine
-    expect(3099, lf.lfEscapement);
-todo_wine
-    expect(3099, lf.lfOrientation);
+    expect_(3099, lf.lfEscapement, 1);
+    expect_(3099, lf.lfOrientation, 1);
     status = GdipGetFontHeight(font, graphics, &height);
     expect(Ok, status);
     expectf(120.703125, height);
