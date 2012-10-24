@@ -3857,9 +3857,6 @@ static BOOL CheckTextureCapability(const struct wined3d_adapter *adapter, const 
                     TRACE("[OK]\n");
                     return TRUE;
                 }
-
-                TRACE("[OK]\n");
-                return TRUE;
             }
             TRACE("[FAILED]\n");
             return FALSE;
