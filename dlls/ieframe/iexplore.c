@@ -551,6 +551,18 @@ static LRESULT iewnd_OnNotify(InternetExplorer *This, WPARAM wparam, LPARAM lpar
         }
     }
 
+    if(hdr->idFrom == IDC_BROWSE_REBAR && hdr->code == RBN_HEIGHTCHANGE)
+    {
+        RECT docarea;
+
+        GetClientRect(This->frame_hwnd, &docarea);
+        adjust_ie_docobj_rect(This->frame_hwnd, &docarea);
+
+        if(This->doc_host->doc_host.hwnd)
+            SetWindowPos(This->doc_host->doc_host.hwnd, NULL, docarea.left, docarea.top, docarea.right, docarea.bottom,
+                    SWP_NOZORDER | SWP_NOACTIVATE);
+    }
+
     return 0;
 }
 
