@@ -1024,8 +1024,8 @@ static BOOL add_font_subst(struct list *subst_list, FontSubst *subst, INT flags)
     if(from_exist && (flags & ADD_FONT_SUBST_FORCE))
     {
         list_remove(&from_exist->entry);
-        HeapFree(GetProcessHeap(), 0, &from_exist->from.name);
-        HeapFree(GetProcessHeap(), 0, &from_exist->to.name);
+        HeapFree(GetProcessHeap(), 0, from_exist->from.name);
+        HeapFree(GetProcessHeap(), 0, from_exist->to.name);
         HeapFree(GetProcessHeap(), 0, from_exist);
         from_exist = NULL;
     }
