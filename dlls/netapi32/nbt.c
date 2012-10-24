@@ -1003,7 +1003,7 @@ static UCHAR NetBTCall(void *adapt, PNCB ncb, void **sess)
                     setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout,
                      sizeof(timeout));
                 }
-                if (ncb->ncb_rto > 0)
+                if (ncb->ncb_sto > 0)
                 {
                     timeout = ncb->ncb_sto * 500;
                     setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout,
