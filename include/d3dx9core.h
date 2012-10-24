@@ -138,7 +138,8 @@ DECLARE_INTERFACE_(ID3DXFont, IUnknown)
     STDMETHOD_(BOOL, GetTextMetricsW)(THIS_ TEXTMETRICW *metrics) PURE;
 
     STDMETHOD_(HDC, GetDC)(THIS) PURE;
-    STDMETHOD(GetGlyphData)(THIS_ UINT glyph, LPDIRECT3DTEXTURE9 *texture, RECT *blackbox, POINT *cellinc) PURE;
+    STDMETHOD(GetGlyphData)(THIS_ UINT glyph, struct IDirect3DTexture9 **texture,
+            RECT *blackbox, POINT *cellinc) PURE;
 
     STDMETHOD(PreloadCharacters)(THIS_ UINT first, UINT last) PURE;
     STDMETHOD(PreloadGlyphs)(THIS_ UINT first, UINT last) PURE;
@@ -304,9 +305,9 @@ DECLARE_INTERFACE_(ID3DXRenderToEnvMap, IUnknown)
     STDMETHOD(GetDesc)(THIS_ D3DXRTE_DESC *desc) PURE;
 
     STDMETHOD(BeginCube)(THIS_ struct IDirect3DCubeTexture9 *cubetex) PURE;
-    STDMETHOD(BeginSphere)(THIS_ LPDIRECT3DTEXTURE9 tex) PURE;
-    STDMETHOD(BeginHemisphere)(THIS_ LPDIRECT3DTEXTURE9 texzpos, LPDIRECT3DTEXTURE9 texzneg) PURE;
-    STDMETHOD(BeginParabolic)(THIS_ LPDIRECT3DTEXTURE9 texzpos, LPDIRECT3DTEXTURE9 texzneg) PURE;
+    STDMETHOD(BeginSphere)(THIS_ struct IDirect3DTexture9 *tex) PURE;
+    STDMETHOD(BeginHemisphere)(THIS_ struct IDirect3DTexture9 *texzpos, struct IDirect3DTexture9 *texzneg) PURE;
+    STDMETHOD(BeginParabolic)(THIS_ struct IDirect3DTexture9 *texzpos, struct IDirect3DTexture9 *texzneg) PURE;
 
     STDMETHOD(Face)(THIS_ D3DCUBEMAP_FACES face, DWORD mipfilter) PURE;
     STDMETHOD(End)(THIS_ DWORD mipfilter) PURE;
@@ -420,7 +421,8 @@ DECLARE_INTERFACE_(ID3DXSprite, IUnknown)
     STDMETHOD(SetWorldViewLH)(THIS_ CONST D3DXMATRIX *world, CONST D3DXMATRIX *view) PURE;
 
     STDMETHOD(Begin)(THIS_ DWORD flags) PURE;
-    STDMETHOD(Draw)(THIS_ LPDIRECT3DTEXTURE9 texture, CONST RECT *rect, CONST D3DXVECTOR3 *center, CONST D3DXVECTOR3 *position, D3DCOLOR color) PURE;
+    STDMETHOD(Draw)(THIS_ struct IDirect3DTexture9 *texture, const RECT *rect,
+            const D3DXVECTOR3 *center, const D3DXVECTOR3 *position, D3DCOLOR color) PURE;
     STDMETHOD(Flush)(THIS) PURE;
     STDMETHOD(End)(THIS) PURE;
 

@@ -508,46 +508,27 @@ HRESULT WINAPI D3DXCheckVolumeTextureRequirements(LPDIRECT3DDEVICE9 device,
     return hr;
 }
 
-HRESULT WINAPI D3DXCreateTexture(LPDIRECT3DDEVICE9 pDevice,
-                                 UINT width,
-                                 UINT height,
-                                 UINT miplevels,
-                                 DWORD usage,
-                                 D3DFORMAT format,
-                                 D3DPOOL pool,
-                                 LPDIRECT3DTEXTURE9 *ppTexture)
+HRESULT WINAPI D3DXCreateTexture(struct IDirect3DDevice9 *device, UINT width, UINT height,
+        UINT miplevels, DWORD usage, D3DFORMAT format, D3DPOOL pool, struct IDirect3DTexture9 **texture)
 {
     HRESULT hr;
 
-    TRACE("(%p, %u, %u, %u, %x, %x, %x, %p)\n", pDevice, width, height, miplevels, usage, format,
-        pool, ppTexture);
+    TRACE("device %p, width %u, height %u, miplevels %u, usage %#x, format %#x, pool %#x, texture %p.\n",
+            device, width, height, miplevels, usage, format, pool, texture);
 
-    if (!pDevice || !ppTexture)
+    if (!device || !texture)
         return D3DERR_INVALIDCALL;
 
-    hr = D3DXCheckTextureRequirements(pDevice, &width, &height, &miplevels, usage, &format, pool);
-
-    if (FAILED(hr))
+    if (FAILED(hr = D3DXCheckTextureRequirements(device, &width, &height, &miplevels, usage, &format, pool)))
         return hr;
 
-    return IDirect3DDevice9_CreateTexture(pDevice, width, height, miplevels, usage, format, pool, ppTexture, NULL);
+    return IDirect3DDevice9_CreateTexture(device, width, height, miplevels, usage, format, pool, texture, NULL);
 }
 
-HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(LPDIRECT3DDEVICE9 device,
-                                                   LPCVOID srcdata,
-                                                   UINT srcdatasize,
-                                                   UINT width,
-                                                   UINT height,
-                                                   UINT miplevels,
-                                                   DWORD usage,
-                                                   D3DFORMAT format,
-                                                   D3DPOOL pool,
-                                                   DWORD filter,
-                                                   DWORD mipfilter,
-                                                   D3DCOLOR colorkey,
-                                                   D3DXIMAGE_INFO* srcinfo,
-                                                   PALETTEENTRY* palette,
-                                                   LPDIRECT3DTEXTURE9* texture)
+HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *device, const void *srcdata,
+        UINT srcdatasize, UINT width, UINT height, UINT miplevels, DWORD usage, D3DFORMAT format,
+        D3DPOOL pool, DWORD filter, DWORD mipfilter, D3DCOLOR colorkey, D3DXIMAGE_INFO *srcinfo,
+        PALETTEENTRY *palette, struct IDirect3DTexture9 **texture)
 {
     IDirect3DTexture9 **texptr;
     IDirect3DTexture9 *buftex;
@@ -711,10 +692,8 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(LPDIRECT3DDEVICE9 device,
     return D3D_OK;
 }
 
-HRESULT WINAPI D3DXCreateTextureFromFileInMemory(LPDIRECT3DDEVICE9 device,
-                                                 LPCVOID srcdata,
-                                                 UINT srcdatasize,
-                                                 LPDIRECT3DTEXTURE9 *texture)
+HRESULT WINAPI D3DXCreateTextureFromFileInMemory(struct IDirect3DDevice9 *device,
+        const void *srcdata, UINT srcdatasize, struct IDirect3DTexture9 **texture)
 {
     TRACE("(%p, %p, %d, %p)\n", device, srcdata, srcdatasize, texture);
 
@@ -722,20 +701,10 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemory(LPDIRECT3DDEVICE9 device,
                                                D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, texture);
 }
 
-HRESULT WINAPI D3DXCreateTextureFromFileExW(LPDIRECT3DDEVICE9 device,
-                                            LPCWSTR srcfile,
-                                            UINT width,
-                                            UINT height,
-                                            UINT miplevels,
-                                            DWORD usage,
-                                            D3DFORMAT format,
-                                            D3DPOOL pool,
-                                            DWORD filter,
-                                            DWORD mipfilter,
-                                            D3DCOLOR colorkey,
-                                            D3DXIMAGE_INFO *srcinfo,
-                                            PALETTEENTRY *palette,
-                                            LPDIRECT3DTEXTURE9 *texture)
+HRESULT WINAPI D3DXCreateTextureFromFileExW(struct IDirect3DDevice9 *device, const WCHAR *srcfile,
+        UINT width, UINT height, UINT miplevels, DWORD usage, D3DFORMAT format,
+        D3DPOOL pool, DWORD filter, DWORD mipfilter, D3DCOLOR colorkey, D3DXIMAGE_INFO *srcinfo,
+        PALETTEENTRY *palette, struct IDirect3DTexture9 **texture)
 {
     HRESULT hr;
     DWORD size;
@@ -760,20 +729,10 @@ HRESULT WINAPI D3DXCreateTextureFromFileExW(LPDIRECT3DDEVICE9 device,
     return hr;
 }
 
-HRESULT WINAPI D3DXCreateTextureFromFileExA(LPDIRECT3DDEVICE9 device,
-                                            LPCSTR srcfile,
-                                            UINT width,
-                                            UINT height,
-                                            UINT miplevels,
-                                            DWORD usage,
-                                            D3DFORMAT format,
-                                            D3DPOOL pool,
-                                            DWORD filter,
-                                            DWORD mipfilter,
-                                            D3DCOLOR colorkey,
-                                            D3DXIMAGE_INFO *srcinfo,
-                                            PALETTEENTRY *palette,
-                                            LPDIRECT3DTEXTURE9 *texture)
+HRESULT WINAPI D3DXCreateTextureFromFileExA(struct IDirect3DDevice9 *device, const char *srcfile,
+        UINT width, UINT height, UINT miplevels, DWORD usage, D3DFORMAT format,
+        D3DPOOL pool, DWORD filter, DWORD mipfilter, D3DCOLOR colorkey, D3DXIMAGE_INFO *srcinfo,
+        PALETTEENTRY *palette, struct IDirect3DTexture9 **texture)
 {
     LPWSTR widename;
     HRESULT hr;
@@ -798,9 +757,8 @@ HRESULT WINAPI D3DXCreateTextureFromFileExA(LPDIRECT3DDEVICE9 device,
     return hr;
 }
 
-HRESULT WINAPI D3DXCreateTextureFromFileA(LPDIRECT3DDEVICE9 device,
-                                          LPCSTR srcfile,
-                                          LPDIRECT3DTEXTURE9 *texture)
+HRESULT WINAPI D3DXCreateTextureFromFileA(struct IDirect3DDevice9 *device,
+        const char *srcfile, struct IDirect3DTexture9 **texture)
 {
     TRACE("(%p, %s, %p)\n", device, debugstr_a(srcfile), texture);
 
@@ -808,9 +766,8 @@ HRESULT WINAPI D3DXCreateTextureFromFileA(LPDIRECT3DDEVICE9 device,
                                         D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, texture);
 }
 
-HRESULT WINAPI D3DXCreateTextureFromFileW(LPDIRECT3DDEVICE9 device,
-                                          LPCWSTR srcfile,
-                                          LPDIRECT3DTEXTURE9 *texture)
+HRESULT WINAPI D3DXCreateTextureFromFileW(struct IDirect3DDevice9 *device,
+        const WCHAR *srcfile, struct IDirect3DTexture9 **texture)
 {
     TRACE("(%p, %s, %p)\n", device, debugstr_w(srcfile), texture);
 
@@ -819,10 +776,8 @@ HRESULT WINAPI D3DXCreateTextureFromFileW(LPDIRECT3DDEVICE9 device,
 }
 
 
-HRESULT WINAPI D3DXCreateTextureFromResourceA(LPDIRECT3DDEVICE9 device,
-                                              HMODULE srcmodule,
-                                              LPCSTR resource,
-                                              LPDIRECT3DTEXTURE9 *texture)
+HRESULT WINAPI D3DXCreateTextureFromResourceA(struct IDirect3DDevice9 *device,
+        HMODULE srcmodule, const char *resource, struct IDirect3DTexture9 **texture)
 {
     TRACE("(%p, %s): relay\n", srcmodule, debugstr_a(resource));
 
@@ -830,10 +785,8 @@ HRESULT WINAPI D3DXCreateTextureFromResourceA(LPDIRECT3DDEVICE9 device,
                                             D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, texture);
 }
 
-HRESULT WINAPI D3DXCreateTextureFromResourceW(LPDIRECT3DDEVICE9 device,
-                                              HMODULE srcmodule,
-                                              LPCWSTR resource,
-                                              LPDIRECT3DTEXTURE9 *texture)
+HRESULT WINAPI D3DXCreateTextureFromResourceW(struct IDirect3DDevice9 *device,
+        HMODULE srcmodule, const WCHAR *resource, struct IDirect3DTexture9 **texture)
 {
     TRACE("(%p, %s): relay\n", srcmodule, debugstr_w(resource));
 
@@ -841,21 +794,10 @@ HRESULT WINAPI D3DXCreateTextureFromResourceW(LPDIRECT3DDEVICE9 device,
                                             D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, texture);
 }
 
-HRESULT WINAPI D3DXCreateTextureFromResourceExA(LPDIRECT3DDEVICE9 device,
-                                                HMODULE srcmodule,
-                                                LPCSTR resource,
-                                                UINT width,
-                                                UINT height,
-                                                UINT miplevels,
-                                                DWORD usage,
-                                                D3DFORMAT format,
-                                                D3DPOOL pool,
-                                                DWORD filter,
-                                                DWORD mipfilter,
-                                                D3DCOLOR colorkey,
-                                                D3DXIMAGE_INFO *srcinfo,
-                                                PALETTEENTRY *palette,
-                                                LPDIRECT3DTEXTURE9 *texture)
+HRESULT WINAPI D3DXCreateTextureFromResourceExA(struct IDirect3DDevice9 *device, HMODULE srcmodule,
+        const char *resource, UINT width, UINT height, UINT miplevels, DWORD usage, D3DFORMAT format,
+        D3DPOOL pool, DWORD filter, DWORD mipfilter, D3DCOLOR colorkey, D3DXIMAGE_INFO *srcinfo,
+        PALETTEENTRY *palette, struct IDirect3DTexture9 **texture)
 {
     HRSRC resinfo;
 
@@ -895,21 +837,10 @@ HRESULT WINAPI D3DXCreateTextureFromResourceExA(LPDIRECT3DDEVICE9 device,
     return D3DXERR_INVALIDDATA;
 }
 
-HRESULT WINAPI D3DXCreateTextureFromResourceExW(LPDIRECT3DDEVICE9 device,
-                                                HMODULE srcmodule,
-                                                LPCWSTR resource,
-                                                UINT width,
-                                                UINT height,
-                                                UINT miplevels,
-                                                DWORD usage,
-                                                D3DFORMAT format,
-                                                D3DPOOL pool,
-                                                DWORD filter,
-                                                DWORD mipfilter,
-                                                D3DCOLOR colorkey,
-                                                D3DXIMAGE_INFO *srcinfo,
-                                                PALETTEENTRY *palette,
-                                                LPDIRECT3DTEXTURE9 *texture)
+HRESULT WINAPI D3DXCreateTextureFromResourceExW(struct IDirect3DDevice9 *device, HMODULE srcmodule,
+        const WCHAR *resource, UINT width, UINT height, UINT miplevels, DWORD usage, D3DFORMAT format,
+        D3DPOOL pool, DWORD filter, DWORD mipfilter, D3DCOLOR colorkey, D3DXIMAGE_INFO *srcinfo,
+        PALETTEENTRY *palette, struct IDirect3DTexture9 **texture)
 {
     HRSRC resinfo;
 
@@ -1304,9 +1235,7 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
     return D3D_OK;
 }
 
-HRESULT WINAPI D3DXFillTexture(LPDIRECT3DTEXTURE9 texture,
-                               LPD3DXFILL2D function,
-                               LPVOID funcdata)
+HRESULT WINAPI D3DXFillTexture(struct IDirect3DTexture9 *texture, LPD3DXFILL2D function, void *funcdata)
 {
     DWORD miplevels;
     DWORD m, i, x, y, c, v;

@@ -558,7 +558,7 @@ DECLARE_INTERFACE_(ID3DXPRTBuffer, IUnknown)
     STDMETHOD(ReleaseGH)(THIS) PURE;
     STDMETHOD(EvalGH)(THIS) PURE;
     STDMETHOD(ExtractTexture)(THIS_ UINT channel, UINT start_coefficient,
-        UINT num_coefficients, LPDIRECT3DTEXTURE9 texture) PURE;
+        UINT num_coefficients, struct IDirect3DTexture9 *texture) PURE;
     STDMETHOD(ExtractToMesh)(THIS_ UINT num_coefficients, D3DDECLUSAGE usage,
         UINT usage_index_start, LPD3DXMESH scene) PURE;
 };
@@ -584,7 +584,7 @@ DECLARE_INTERFACE_(ID3DXPRTCompBuffer, IUnknown)
     STDMETHOD(ExtractBasis)(THIS_ UINT cluster, FLOAT *cluster_basis) PURE;
     STDMETHOD(ExtractClusterIDs)(THIS_ UINT *cluster_ids) PURE;
     STDMETHOD(ExtractPCA)(THIS_ UINT start_pca, UINT num_extract, FLOAT *pca_coefficients) PURE;
-    STDMETHOD(ExtractTexture)(THIS_ UINT start_pca, UINT num_pca, LPDIRECT3DTEXTURE9 texture) PURE;
+    STDMETHOD(ExtractTexture)(THIS_ UINT start_pca, UINT num_pca, struct IDirect3DTexture9 *texture) PURE;
     STDMETHOD(ExtractToMesh)(THIS_ UINT num_pca, D3DDECLUSAGE usage, UINT usage_index_start, LPD3DXMESH scene) PURE;
 };
 #undef INTERFACE
@@ -601,10 +601,10 @@ DECLARE_INTERFACE_(ID3DXTextureGutterHelper, IUnknown)
     STDMETHOD_(UINT, GetHeight)(THIS) PURE;
 
     STDMETHOD(ApplyGuttersFloat)(THIS_ FLOAT *data_in, UINT num_coeffs, UINT width, UINT height) PURE;
-    STDMETHOD(ApplyGuttersTex)(THIS_ LPDIRECT3DTEXTURE9 texture) PURE;
+    STDMETHOD(ApplyGuttersTex)(THIS_ struct IDirect3DTexture9 *texture) PURE;
     STDMETHOD(ApplyGuttersPRT)(THIS_ LPD3DXPRTBUFFER buffer) PURE;
-    STDMETHOD(ResampleTex)(THIS_ LPDIRECT3DTEXTURE9 texture_in, LPD3DXMESH mesh_in,
-        D3DDECLUSAGE usage, UINT usage_index, LPDIRECT3DTEXTURE9 texture_out) PURE;
+    STDMETHOD(ResampleTex)(THIS_ struct IDirect3DTexture9 *texture_in, struct ID3DXMesh *mesh_in,
+        D3DDECLUSAGE usage, UINT usage_index, struct IDirect3DTexture9 *texture_out) PURE;
     STDMETHOD(GetFaceMap)(THIS_ UINT *face_data) PURE;
     STDMETHOD(GetBaryMap)(THIS_ D3DXVECTOR2 *bary_data) PURE;
     STDMETHOD(GetTexelMap)(THIS_ D3DXVECTOR2 *texel_data) PURE;
@@ -627,10 +627,10 @@ DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
     STDMETHOD(SetMeshMaterials)(THIS_ CONST D3DXSHMATERIAL **materials, UINT num_meshes,
         UINT num_channels, BOOL set_albedo, FLOAT length_scale) PURE;
     STDMETHOD(SetPerVertexAlbedo)(THIS_ CONST VOID *data_in, UINT num_channels, UINT stride) PURE;
-    STDMETHOD(SetPerTexelAlbedo)(THIS_ LPDIRECT3DTEXTURE9 albedo_texture, UINT num_channels,
-        LPD3DXTEXTUREGUTTERHELPER gh) PURE;
+    STDMETHOD(SetPerTexelAlbedo)(THIS_ struct IDirect3DTexture9 *albedo_texture,
+            UINT num_channels, struct ID3DXTextureGutterHelper *gh) PURE;
     STDMETHOD(GetVertexAlbedo)(THIS_ D3DXCOLOR *vert_colors, UINT num_verts) PURE;
-    STDMETHOD(SetPerTexelNormals)(THIS_ LPDIRECT3DTEXTURE9 normal_texture) PURE;
+    STDMETHOD(SetPerTexelNormals)(THIS_ struct IDirect3DTexture9 *normal_texture) PURE;
     STDMETHOD(ExtractPerVertexAlbedo)(THIS_ LPD3DXMESH mesh, D3DDECLUSAGE usage, UINT num_channels) PURE;
     STDMETHOD(ResampleBuffer)(THIS_ LPD3DXPRTBUFFER buffer_in, LPD3DXPRTBUFFER buffer_out) PURE;
     STDMETHOD(GetAdaptedMesh)(THIS_ LPDIRECT3DDEVICE9 device, UINT *face_remap,
@@ -729,7 +729,8 @@ HRESULT WINAPI D3DXComputeBoundingSphere(CONST D3DXVECTOR3 *, DWORD, DWORD, D3DX
 HRESULT WINAPI D3DXComputeIMTFromPerTexelSignal(LPD3DXMESH, DWORD, FLOAT *, UINT, UINT, UINT, UINT, DWORD, LPD3DXUVATLASCB, LPVOID, LPD3DXBUFFER *);
 HRESULT WINAPI D3DXComputeIMTFromPerVertexSignal(LPD3DXMESH, CONST FLOAT *, UINT, UINT, DWORD, LPD3DXUVATLASCB, LPVOID, LPD3DXBUFFER *);
 HRESULT WINAPI D3DXComputeIMTFromSignal(LPD3DXMESH, DWORD, UINT, FLOAT, DWORD, LPD3DXIMTSIGNALCALLBACK, VOID *, LPD3DXUVATLASCB, LPVOID, LPD3DXBUFFER *);
-HRESULT WINAPI D3DXComputeIMTFromTexture(LPD3DXMESH, LPDIRECT3DTEXTURE9, DWORD, DWORD, LPD3DXUVATLASCB, LPVOID, LPD3DXBUFFER *);
+HRESULT WINAPI D3DXComputeIMTFromTexture(struct ID3DXMesh *mesh, struct IDirect3DTexture9 *texture,
+        DWORD texture_idx, DWORD options, LPD3DXUVATLASCB cb, void *ctx, struct ID3DXBuffer **out);
 HRESULT WINAPI D3DXComputeNormals(LPD3DXBASEMESH, CONST DWORD *);
 HRESULT WINAPI D3DXComputeTangentFrameEx(LPD3DXMESH, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, CONST DWORD *, FLOAT, FLOAT, FLOAT, LPD3DXMESH *, LPD3DXBUFFER *);
 HRESULT WINAPI D3DXComputeTangent(LPD3DXMESH, DWORD, DWORD, DWORD, DWORD, CONST DWORD *);
