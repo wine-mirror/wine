@@ -351,7 +351,6 @@ INT nulldrv_SaveDC( PHYSDEV dev )
     newdc->hBrush           = dc->hBrush;
     newdc->hFont            = dc->hFont;
     newdc->hBitmap          = dc->hBitmap;
-    newdc->hDevice          = dc->hDevice;
     newdc->hPalette         = dc->hPalette;
     newdc->ROPmode          = dc->ROPmode;
     newdc->polyFillMode     = dc->polyFillMode;
@@ -417,7 +416,7 @@ INT nulldrv_SaveDC( PHYSDEV dev )
 
 
 /***********************************************************************
- *           restore_dc_state
+ *           nulldrv_RestoreDC
  */
 BOOL nulldrv_RestoreDC( PHYSDEV dev, INT level )
 {
@@ -437,7 +436,6 @@ BOOL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     if (!PATH_RestorePath( dc, dcs )) return FALSE;
 
     dc->layout           = dcs->layout;
-    dc->hDevice          = dcs->hDevice;
     dc->ROPmode          = dcs->ROPmode;
     dc->polyFillMode     = dcs->polyFillMode;
     dc->stretchBltMode   = dcs->stretchBltMode;

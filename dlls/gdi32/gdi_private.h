@@ -100,7 +100,6 @@ typedef struct tagDC
     HBRUSH        hBrush;
     HFONT         hFont;
     HBITMAP       hBitmap;
-    HANDLE        hDevice;
     HPALETTE      hPalette;
 
     GdiFont      *gdiFont;
