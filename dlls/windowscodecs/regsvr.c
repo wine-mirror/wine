@@ -817,7 +817,7 @@ static HRESULT register_metadatareaders(struct regsvr_metadatareader const *list
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
         }
 
-        if (list->vendor) {
+        if (list->metadata_format) {
             StringFromGUID2(list->metadata_format, buf, 39);
 	    res = RegSetValueExW(clsid_key, metadataformat_valuename, 0, REG_SZ,
 				 (CONST BYTE*)(buf), 78);
