@@ -2133,6 +2133,38 @@ end:
     return stat;
 }
 
+void get_log_fontW(const GpFont *font, GpGraphics *graphics, LOGFONTW *lf)
+{
+    REAL height;
+
+    if (font->unit == UnitPixel)
+    {
+        height = units_to_pixels(font->emSize, graphics->unit, graphics->yres);
+    }
+    else
+    {
+        if (graphics->unit == UnitDisplay || graphics->unit == UnitPixel)
+            height = units_to_pixels(font->emSize, font->unit, graphics->xres);
+        else
+            height = units_to_pixels(font->emSize, font->unit, graphics->yres);
+    }
+
+    lf->lfHeight = -(height + 0.5);
+    lf->lfWidth = 0;
+    lf->lfEscapement = 0;
+    lf->lfOrientation = 0;
+    lf->lfWeight = font->otm.otmTextMetrics.tmWeight;
+    lf->lfItalic = font->otm.otmTextMetrics.tmItalic ? 1 : 0;
+    lf->lfUnderline = font->otm.otmTextMetrics.tmUnderlined ? 1 : 0;
+    lf->lfStrikeOut = font->otm.otmTextMetrics.tmStruckOut ? 1 : 0;
+    lf->lfCharSet = font->otm.otmTextMetrics.tmCharSet;
+    lf->lfOutPrecision = OUT_DEFAULT_PRECIS;
+    lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    lf->lfQuality = DEFAULT_QUALITY;
+    lf->lfPitchAndFamily = 0;
+    strcpyW(lf->lfFaceName, font->family->FamilyName);
+}
+
 static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
                            GDIPCONST GpStringFormat *format, HFONT *hfont)
 {
@@ -2153,8 +2185,6 @@ static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
         unit_scale = units_scale(font->unit, graphics->unit, res);
 
         font_height = font->emSize * unit_scale;
-        if (graphics->unit != UnitDisplay)
-            font_height /= graphics->scale;
     }
 
     pt[0].X = 0.0;

@@ -449,9 +449,17 @@ GpStatus WINGDIPAPI GdipGetLogFontA(GpFont *font, GpGraphics *graphics,
     return Ok;
 }
 
-void get_log_fontW(const GpFont *font, GpGraphics *graphics, LOGFONTW *lf)
+/*******************************************************************************
+ * GdipGetLogFontW [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics, LOGFONTW *lf)
 {
     REAL height;
+
+    TRACE("(%p, %p, %p)\n", font, graphics, lf);
+
+    if (!font || !graphics || !lf)
+        return InvalidParameter;
 
     if (font->unit == UnitPixel)
     {
@@ -481,21 +489,8 @@ void get_log_fontW(const GpFont *font, GpGraphics *graphics, LOGFONTW *lf)
     lf->lfQuality = DEFAULT_QUALITY;
     lf->lfPitchAndFamily = 0;
     strcpyW(lf->lfFaceName, font->family->FamilyName);
-}
 
-/*******************************************************************************
- * GdipGetLogFontW [GDIPLUS.@]
- */
-GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics,
-    LOGFONTW *lfw)
-{
-    TRACE("(%p, %p, %p)\n", font, graphics, lfw);
-
-    if(!font || !graphics || !lfw)
-        return InvalidParameter;
-
-    get_log_fontW(font, graphics, lfw);
-    TRACE("=> %s,%d\n", debugstr_w(lfw->lfFaceName), lfw->lfHeight);
+    TRACE("=> %s,%d\n", debugstr_w(lf->lfFaceName), lf->lfHeight);
 
     return Ok;
 }
