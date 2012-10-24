@@ -265,9 +265,9 @@ static void ProgressDialog_Destructor(ProgressDialog *This)
     heap_free(This->lines[2]);
     heap_free(This->cancelMsg);
     heap_free(This->title);
-    heap_free(This);
     This->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->cs);
+    heap_free(This);
     BROWSEUI_refCount--;
 }
 
