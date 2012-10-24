@@ -5218,47 +5218,6 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
 
     desc.dwWidth = width;
     desc.dwHeight = height;
-    if (level)
-        desc.ddsCaps.dwCaps2 |= DDSCAPS2_MIPMAPSUBLEVEL;
-    else
-        desc.ddsCaps.dwCaps2 &= ~DDSCAPS2_MIPMAPSUBLEVEL;
-
-    if (desc.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
-    {
-        desc.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
-
-        switch (face)
-        {
-            case WINED3D_CUBEMAP_FACE_POSITIVE_X:
-                desc.ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEX;
-                break;
-
-            case WINED3D_CUBEMAP_FACE_NEGATIVE_X:
-                desc.ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEX;
-                break;
-
-            case WINED3D_CUBEMAP_FACE_POSITIVE_Y:
-                desc.ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEY;
-                break;
-
-            case WINED3D_CUBEMAP_FACE_NEGATIVE_Y:
-                desc.ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEY;
-                break;
-
-            case WINED3D_CUBEMAP_FACE_POSITIVE_Z:
-                desc.ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEZ;
-                break;
-
-            case WINED3D_CUBEMAP_FACE_NEGATIVE_Z:
-                desc.ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEZ;
-                break;
-
-            default:
-                ERR("Unexpected cube face.\n");
-                return DDERR_INVALIDPARAMS;
-        }
-
-    }
 
     /* FIXME: Validate that format, usage, pool, etc. really make sense. */
     if (FAILED(hr = ddraw_create_surface(ddraw, &desc, &ddraw_surface, tex_root->version)))

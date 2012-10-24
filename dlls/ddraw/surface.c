@@ -5592,6 +5592,7 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface)
     struct wined3d_resource *resource;
     enum wined3d_format_id format;
     UINT layers, levels, i, j;
+    DDSURFACEDESC2 *mip_desc;
     enum wined3d_pool pool;
     HRESULT hr;
 
@@ -5637,6 +5638,41 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface)
 
             if (mip == surface)
                 continue;
+
+            mip_desc = &mip->surface_desc;
+
+            if (j)
+                mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_MIPMAPSUBLEVEL;
+            else
+                mip_desc->ddsCaps.dwCaps2 &= ~DDSCAPS2_MIPMAPSUBLEVEL;
+
+            if (mip_desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+            {
+                mip_desc->ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
+
+                switch (i)
+                {
+                    case WINED3D_CUBEMAP_FACE_POSITIVE_X:
+                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEX;
+                        break;
+                    case WINED3D_CUBEMAP_FACE_NEGATIVE_X:
+                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEX;
+                        break;
+                    case WINED3D_CUBEMAP_FACE_POSITIVE_Y:
+                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEY;
+                        break;
+                    case WINED3D_CUBEMAP_FACE_NEGATIVE_Y:
+                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEY;
+                        break;
+                    case WINED3D_CUBEMAP_FACE_POSITIVE_Z:
+                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEZ;
+                        break;
+                    case WINED3D_CUBEMAP_FACE_NEGATIVE_Z:
+                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEZ;
+                        break;
+                }
+
+            }
 
             *attach = mip;
             attach = &mip->complex_array[0];
