@@ -3106,7 +3106,7 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
 
 static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
-        enum wined3d_pool pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
+        enum wined3d_pool pool, UINT sub_resource_idx, struct wined3d_surface **surface)
 {
     struct d3d9_device *device = device_from_device_parent(device_parent);
     struct d3d9_surface *d3d_surface;
@@ -3114,8 +3114,8 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
     HRESULT hr;
 
     TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, usage %#x,\n"
-            "\tpool %#x, level %u, face %u, surface %p.\n",
-            device_parent, container_parent, width, height, format, usage, pool, level, face, surface);
+            "\tpool %#x, sub_resource_idx %u, surface %p.\n",
+            device_parent, container_parent, width, height, format, usage, pool, sub_resource_idx, surface);
 
     if (pool == WINED3D_POOL_DEFAULT && !(usage & D3DUSAGE_DYNAMIC))
         lockable = FALSE;

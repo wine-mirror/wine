@@ -859,8 +859,8 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_lengt
             UINT idx = j * texture->level_count + i;
             struct wined3d_surface *surface;
 
-            if (FAILED(hr = device->device_parent->ops->create_texture_surface(device->device_parent, parent,
-                    tmp_w, tmp_w, format_id, usage, pool, i /* Level */, j, &surface)))
+            if (FAILED(hr = device->device_parent->ops->create_texture_surface(device->device_parent,
+                    parent, tmp_w, tmp_w, format_id, usage, pool, idx, &surface)))
             {
                 FIXME("(%p) Failed to create surface, hr %#x.\n", texture, hr);
                 wined3d_texture_cleanup(texture);
@@ -1014,8 +1014,8 @@ static HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT he
         struct wined3d_surface *surface;
 
         /* Use the callback to create the texture surface. */
-        if (FAILED(hr = device->device_parent->ops->create_texture_surface(device->device_parent, parent,
-                tmp_w, tmp_h, format->id, usage, pool, i, 0, &surface)))
+        if (FAILED(hr = device->device_parent->ops->create_texture_surface(device->device_parent,
+                parent, tmp_w, tmp_h, format->id, usage, pool, i, &surface)))
         {
             FIXME("Failed to create surface %p, hr %#x\n", texture, hr);
             wined3d_texture_cleanup(texture);
