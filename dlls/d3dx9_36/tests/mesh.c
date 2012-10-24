@@ -10167,7 +10167,7 @@ static void test_optimize_faces(void)
         DWORD j;
         DWORD *face_remap;
         face_remap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                               tc[i].num_faces*sizeof(face_remap));
+                               tc[i].num_faces*sizeof(*face_remap));
 
         hr = D3DXOptimizeFaces(tc[i].indices, tc[i].num_faces,
                                tc[i].num_vertices, tc[i].indices_are_32bit,
