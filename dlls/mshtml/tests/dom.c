@@ -4448,6 +4448,34 @@ static void _test_framebase_put_name(unsigned line, IHTMLElement *elem, const ch
     IHTMLFrameBase_Release(fbase);
 }
 
+#define test_framebase_marginheight(a,b) _test_framebase_marginheight(__LINE__,a,b)
+static void _test_framebase_marginheight(unsigned line, IHTMLFrameBase *framebase, const char *exval)
+{
+    VARIANT v;
+    HRESULT hres;
+
+    hres = IHTMLFrameBase_get_marginHeight(framebase, &v);
+    ok_(__FILE__,line)(hres == S_OK, "get_marginHeight failed: %08x\n", hres);
+    ok_(__FILE__,line)(V_VT(&v) == VT_BSTR, "V_VT(marginHeight) = %d\n", V_VT(&v));
+    if(exval)
+        ok_(__FILE__,line)(!strcmp_wa(V_BSTR(&v), exval), "marginHeight = %s, expected %s\n", wine_dbgstr_w(V_BSTR(&v)), exval);
+    else
+        ok_(__FILE__,line)(!V_BSTR(&v), "marginHeight = %s, expected NULL\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+}
+
+#define set_framebase_marginheight(a,b) _set_framebase_marginheight(__LINE__,a,b)
+static void _set_framebase_marginheight(unsigned line, IHTMLFrameBase *framebase, const char *val)
+{
+    VARIANT v;
+    HRESULT hres;
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr(val);
+    hres = IHTMLFrameBase_put_marginHeight(framebase, v);
+    ok_(__FILE__,line)(hres == S_OK, "put_marginHeight failed: %08x\n", hres);
+    VariantClear(&v);
+}
 static void test_framebase(IUnknown *unk)
 {
     IHTMLFrameBase *fbase;
@@ -4496,6 +4524,10 @@ static void test_framebase(IUnknown *unk)
     hres = IHTMLFrameBase_get_frameBorder(fbase, &str);
     ok(hres == S_OK, "get_frameBorder failed: %08x\n", hres);
     ok(!strcmp_wa(str, "1"), "frameBorder = %s, expected \"1\"\n", wine_dbgstr_w(str));
+
+    test_framebase_marginheight(fbase, NULL);
+    set_framebase_marginheight(fbase, "1px");
+    test_framebase_marginheight(fbase, "1");
 
     IHTMLFrameBase_Release(fbase);
 }

@@ -35,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 static const WCHAR autoW[] = {'a','u','t','o',0};
 static const WCHAR yesW[] = {'y','e','s',0};
 static const WCHAR noW[] = {'n','o',0};
+static const WCHAR pxW[] = {'p','x',0};
 
 HRESULT set_frame_doc(HTMLFrameBase *frame, nsIDOMDocument *nsdoc)
 {
@@ -286,15 +287,68 @@ static HRESULT WINAPI HTMLFrameBase_get_marginWidth(IHTMLFrameBase *iface, VARIA
 static HRESULT WINAPI HTMLFrameBase_put_marginHeight(IHTMLFrameBase *iface, VARIANT v)
 {
     HTMLFrameBase *This = impl_from_IHTMLFrameBase(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    if(V_VT(&v) != VT_BSTR) {
+        FIXME("unsupported %s\n", debugstr_variant(&v));
+        return E_NOTIMPL;
+    }
+
+    nsAString_InitDepend(&nsstr, V_BSTR(&v));
+    if(This->nsframe)
+        nsres = nsIDOMHTMLFrameElement_SetMarginHeight(This->nsframe, &nsstr);
+    else
+        nsres = nsIDOMHTMLIFrameElement_SetMarginHeight(This->nsiframe, &nsstr);
+    nsAString_Finish(&nsstr);
+    return NS_SUCCEEDED(nsres) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI HTMLFrameBase_get_marginHeight(IHTMLFrameBase *iface, VARIANT *p)
 {
     HTMLFrameBase *This = impl_from_IHTMLFrameBase(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+    HRESULT hres = S_OK;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&nsstr, NULL);
+    if(This->nsframe)
+        nsres = nsIDOMHTMLFrameElement_GetMarginHeight(This->nsframe, &nsstr);
+    else
+        nsres = nsIDOMHTMLIFrameElement_GetMarginHeight(This->nsiframe, &nsstr);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *str, *end;
+
+        nsAString_GetData(&nsstr, &str);
+
+        if(*str) {
+            BSTR ret;
+
+            end = strstrW(str, pxW);
+            if(!end)
+                end = str+strlenW(str);
+            ret = SysAllocStringLen(str, end-str);
+            if(ret) {
+                V_VT(p) = VT_BSTR;
+                V_BSTR(p) = ret;
+            }else {
+                hres = E_OUTOFMEMORY;
+            }
+        }else {
+            V_VT(p) = VT_BSTR;
+            V_BSTR(p) = NULL;
+        }
+    }else {
+        ERR("SetMarginHeight failed: %08x\n", nsres);
+        hres = E_FAIL;
+    }
+
+    nsAString_Finish(&nsstr);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLFrameBase_put_noResize(IHTMLFrameBase *iface, VARIANT_BOOL v)
