@@ -440,6 +440,7 @@ static void create_rebar(HWND hwnd)
     WCHAR addr[40];
     HIMAGELIST imagelist;
     WCHAR idb_ietoolbar[] = {'I','D','B','_','I','E','T','O','O','L','B','A','R',0};
+    SIZE toolbar_size;
 
     LoadStringW(ieframe_instance, IDS_ADDRESS, addr, sizeof(addr)/sizeof(addr[0]));
 
@@ -450,11 +451,10 @@ static void create_rebar(HWND hwnd)
     rebarinf.cbSize = sizeof(rebarinf);
     rebarinf.fMask = 0;
     rebarinf.himl = NULL;
-    rebarinf.cbSize = sizeof(rebarinf);
 
     SendMessageW(hwndRebar, RB_SETBARINFO, 0, (LPARAM)&rebarinf);
 
-    hwndToolbar = CreateWindowExW(TBSTYLE_EX_MIXEDBUTTONS, TOOLBARCLASSNAMEW, NULL, TBSTYLE_FLAT | WS_CHILD | WS_VISIBLE,
+    hwndToolbar = CreateWindowExW(TBSTYLE_EX_MIXEDBUTTONS, TOOLBARCLASSNAMEW, NULL, TBSTYLE_FLAT | WS_CHILD | WS_VISIBLE | CCS_NORESIZE,
             0, 0, 0, 0, hwndRebar, (HMENU)IDC_BROWSE_TOOLBAR, ieframe_instance, NULL);
 
     imagelist = ImageList_LoadImageW(ieframe_instance, idb_ietoolbar, 32, 0, CLR_NONE, IMAGE_BITMAP, LR_CREATEDIBSECTION);
@@ -469,14 +469,13 @@ static void create_rebar(HWND hwnd)
     add_tb_separator(hwndToolbar);
     add_tb_button(hwndToolbar, 5, ID_BROWSE_PRINT, IDS_TB_PRINT);
     SendMessageW(hwndToolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(55,50));
-    SendMessageW(hwndToolbar, TB_AUTOSIZE, 0, 0);
+    SendMessageW(hwndToolbar, TB_GETMAXSIZE, 0, (LPARAM)&toolbar_size);
 
     bandinf.cbSize = sizeof(bandinf);
-    bandinf.fMask = RBBIM_STYLE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_SIZE;
+    bandinf.fMask = RBBIM_STYLE | RBBIM_CHILD | RBBIM_CHILDSIZE;
     bandinf.fStyle = RBBS_CHILDEDGE;
-    bandinf.cx = 100;
-    bandinf.cxMinChild = 0;
-    bandinf.cyMinChild = 52;
+    bandinf.cxMinChild = toolbar_size.cx;
+    bandinf.cyMinChild = toolbar_size.cy+2;
     bandinf.hwndChild = hwndToolbar;
 
     SendMessageW(hwndRebar, RB_INSERTBANDW, -1, (LPARAM)&bandinf);
@@ -487,6 +486,7 @@ static void create_rebar(HWND hwnd)
     bandinf.fMask |= RBBIM_TEXT;
     bandinf.fStyle = RBBS_CHILDEDGE | RBBS_BREAK;
     bandinf.lpText = addr;
+    bandinf.cxMinChild = 100;
     bandinf.cyMinChild = 20;
     bandinf.hwndChild = hwndAddress;
 
