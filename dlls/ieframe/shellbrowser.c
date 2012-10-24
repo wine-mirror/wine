@@ -663,9 +663,9 @@ static HRESULT WINAPI DocObjectService_FireBeforeNavigate2(
 
     if(cbPostData) {
         post_data = SafeArrayCreateVector(VT_UI1, 0, cbPostData);
-        memcpy(post_data->pvData, pPostData, cbPostData);
         if(!post_data)
             return E_OUTOFMEMORY;
+        memcpy(post_data->pvData, pPostData, cbPostData);
     }else {
         post_data = NULL;
     }
