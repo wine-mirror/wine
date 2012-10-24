@@ -1498,6 +1498,7 @@ static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, I
                 if (advance.y)
                     FIXME("Unhandled adjustment to Y advancement\n");
             }
+            break;
         }
         case 2:
         {
