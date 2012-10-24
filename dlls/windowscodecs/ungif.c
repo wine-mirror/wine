@@ -159,6 +159,7 @@ MakeMapObject(int ColorCount,
 
     Object->Colors = ungif_calloc(ColorCount, sizeof(GifColorType));
     if (Object->Colors == NULL) {
+        ungif_free(Object);
         return NULL;
     }
 
