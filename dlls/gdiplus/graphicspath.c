@@ -1067,9 +1067,9 @@ GpStatus WINGDIPAPI GdipClonePath(GpPath* path, GpPath **clone)
     (*clone)->pathdata.Points = GdipAlloc(path->datalen * sizeof(PointF));
     (*clone)->pathdata.Types = GdipAlloc(path->datalen);
     if(!(*clone)->pathdata.Points || !(*clone)->pathdata.Types){
-        GdipFree(*clone);
         GdipFree((*clone)->pathdata.Points);
         GdipFree((*clone)->pathdata.Types);
+        GdipFree(*clone);
         return OutOfMemory;
     }
 
