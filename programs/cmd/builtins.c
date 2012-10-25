@@ -2389,8 +2389,8 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
     /* We need to get potential surrounding double quotes, so param1/2 can't be used */
     WCHAR *leftPart, *leftPartEnd, *rightPart, *rightPartEnd;
     s += 2;
-    WCMD_parameter(p, 0+negate+caseInsensitive, &leftPart, &leftPartEnd, FALSE, FALSE);
-    WCMD_parameter(p, 1+negate+caseInsensitive, &rightPart, &rightPartEnd, FALSE, FALSE);
+    WCMD_parameter(p, 0+negate+caseInsensitive, &leftPart, &leftPartEnd, TRUE, FALSE);
+    WCMD_parameter(p, 1+negate+caseInsensitive, &rightPart, &rightPartEnd, TRUE, FALSE);
     test = caseInsensitive
             ? (CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
                               leftPart, leftPartEnd-leftPart+1,
