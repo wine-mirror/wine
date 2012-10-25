@@ -129,11 +129,11 @@ int wmain(int argc, WCHAR *argv[])
     WIN32_FIND_DATAW fd;
     WCHAR flags[] = {' ',' ',' ',' ',' ',' ',' ',' ','\0'};
     WCHAR name[MAX_PATH];
+    WCHAR *namepart;
     WCHAR curdir[MAX_PATH];
     DWORD attrib_set = 0;
     DWORD attrib_clear = 0;
     const WCHAR help_option[] = {'/','?','\0'};
-    const WCHAR slash[]  = {'\\','\0'};
     const WCHAR start[]  = {'*','\0'};
     int i = 1;
 
@@ -143,13 +143,11 @@ int wmain(int argc, WCHAR *argv[])
     }
 
     /* By default all files from current directory are taken into account */
-    GetCurrentDirectoryW(sizeof(curdir)/sizeof(WCHAR), curdir);
-    strcatW(curdir, slash);
-    strcpyW(name, curdir);
-    strcatW(name, start);
+    strcpyW(name, start);
 
     while (i < argc) {
         WCHAR *param = argv[i++];
+        WINE_TRACE("Processing arg: '%s'\n", wine_dbgstr_w(param));
         if ((param[0] == '+') || (param[0] == '-')) {
             DWORD attrib = 0;
             switch (param[1]) {
@@ -178,6 +176,15 @@ int wmain(int argc, WCHAR *argv[])
         }
     }
 
+    /* Name may be a relative or explicit path, so calculate curdir based on
+       current locations, stripping off the filename                         */
+    WINE_TRACE("Supplied name: '%s'\n", wine_dbgstr_w(name));
+    GetFullPathNameW(name, sizeof(curdir)/sizeof(WCHAR), curdir, &namepart);
+    WINE_TRACE("Result: '%s'\n", wine_dbgstr_w(curdir));
+    strcpyW(name, curdir);
+    if (namepart) *namepart = 0x00;
+
+    /* Search for files based on the location and filespec supplied */
     hff = FindFirstFileW(name, &fd);
     if (hff == INVALID_HANDLE_VALUE) {
         ATTRIB_wprintf(ATTRIB_LoadMessage(STRING_FILENOTFOUND), name);
@@ -195,6 +202,8 @@ int wmain(int argc, WCHAR *argv[])
                 fd.dwFileAttributes |= attrib_set;
                 if (!fd.dwFileAttributes)
                     fd.dwFileAttributes |= FILE_ATTRIBUTE_NORMAL;
+                strcpyW(name, curdir);
+                strcatW(name, fd.cFileName);
                 SetFileAttributesW(name, fd.dwFileAttributes);
             } else {
                 static const WCHAR fmt[] = {'%','1',' ',' ',' ',' ',' ','%','2','\n','\0'};
