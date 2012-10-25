@@ -1637,6 +1637,7 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
                     debug_hlsl_type(rhs->data_type), debug_hlsl_type(type));
             free_instr(lhs);
             free_instr(rhs);
+            d3dcompiler_free(assign);
             return NULL;
         }
         if (lhs->data_type->dimx * lhs->data_type->dimy < rhs->data_type->dimx * rhs->data_type->dimy)
@@ -1649,6 +1650,7 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
             ERR("Couldn't implicitly convert expression to %s.\n", debug_hlsl_type(type));
             free_instr(lhs);
             free_instr(rhs);
+            d3dcompiler_free(assign);
             return NULL;
         }
         rhs = converted_rhs;
