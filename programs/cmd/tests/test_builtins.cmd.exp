@@ -522,16 +522,16 @@ B GEQ AA
 AB GEQ AA
 BA GEQ AA
 AA GEQ AA
-@todo_wine@B GTR A
-@todo_wine@AB GTR A
-@todo_wine@BA GTR A
-@todo_wine@AA GTR A
-@todo_wine@BA GTR B
-@todo_wine@B GTR AB
-@todo_wine@BA GTR AB
-@todo_wine@B GTR AA
-@todo_wine@AB GTR AA
-@todo_wine@BA GTR AA
+B GTR A
+AB GTR A
+BA GTR A
+AA GTR A
+BA GTR B
+B GTR AB
+BA GTR AB
+B GTR AA
+AB GTR AA
+BA GTR AA
 ------ for numbers
 negative numbers handled
 negative numbers handled
@@ -586,12 +586,12 @@ string/hexa compare ok
 10 GEQ 10
 10 GEQ 9
 9 GEQ 9
-@todo_wine@1 GTR 0
-@todo_wine@10 GTR 0
-@todo_wine@9 GTR 0
-@todo_wine@10 GTR 1
-@todo_wine@9 GTR 1
-@todo_wine@10 GTR 9
+1 GTR 0
+10 GTR 0
+9 GTR 0
+10 GTR 1
+9 GTR 1
+10 GTR 9
 ------ for numbers and stringified numbers
 strings and integers not equal
 strings and integers not equal

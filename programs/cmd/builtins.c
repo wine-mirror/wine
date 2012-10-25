@@ -2360,6 +2360,7 @@ static int evaluate_if_comparison(const WCHAR *leftOperand, const WCHAR *operato
     static const WCHAR equW[]  = {'e','q','u','\0'};
     static const WCHAR neqW[]  = {'n','e','q','\0'};
     static const WCHAR geqW[]  = {'g','e','q','\0'};
+    static const WCHAR gtrW[]  = {'g','t','r','\0'};
 
     /* == is a special case, as it always compares strings */
     if (!lstrcmpiW(operator, eqeqW))
@@ -2410,6 +2411,14 @@ static int evaluate_if_comparison(const WCHAR *leftOperand, const WCHAR *operato
         else
             return caseInsensitive ? lstrcmpiW(leftOperand, rightOperand) >= 0
                                    : lstrcmpW (leftOperand, rightOperand) >= 0;
+    }
+
+    if (!lstrcmpiW(operator, gtrW)) {
+        if (int_operands)
+            return leftOperand_int > rightOperand_int;
+        else
+            return caseInsensitive ? lstrcmpiW(leftOperand, rightOperand) > 0
+                                   : lstrcmpW (leftOperand, rightOperand) > 0;
     }
 
     return -1;
