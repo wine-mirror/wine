@@ -784,7 +784,8 @@ static HRESULT WINAPI ID3DXMeshImpl_GetVertexBuffer(ID3DXMesh *iface, LPDIRECT3D
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_GetIndexBuffer(ID3DXMesh *iface, LPDIRECT3DINDEXBUFFER9 *index_buffer)
+static HRESULT WINAPI ID3DXMeshImpl_GetIndexBuffer(struct ID3DXMesh *iface,
+        struct IDirect3DIndexBuffer9 **index_buffer)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 

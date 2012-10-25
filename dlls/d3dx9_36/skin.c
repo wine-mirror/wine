@@ -210,7 +210,8 @@ static HRESULT WINAPI ID3DXSkinInfoImpl_FindBoneVertexInfluenceIndex(ID3DXSkinIn
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ID3DXSkinInfoImpl_GetMaxFaceInfluences(ID3DXSkinInfo *iface, LPDIRECT3DINDEXBUFFER9 index_buffer, DWORD num_faces, DWORD *max_face_influences)
+static HRESULT WINAPI ID3DXSkinInfoImpl_GetMaxFaceInfluences(struct ID3DXSkinInfo *iface,
+        struct IDirect3DIndexBuffer9 *index_buffer, DWORD num_faces, DWORD *max_face_influences)
 {
     ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
 
