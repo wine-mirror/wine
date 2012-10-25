@@ -462,6 +462,7 @@ static LRESULT WINAPI tray_icon_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
         break;
 
     case WM_PAINT:
+        if (!icon->layered)
         {
             PAINTSTRUCT ps;
             RECT rc;
@@ -477,6 +478,7 @@ static LRESULT WINAPI tray_icon_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
             EndPaint(hwnd, &ps);
             return 0;
         }
+        break;
 
     case WM_MOUSEMOVE:
     case WM_LBUTTONDOWN:
