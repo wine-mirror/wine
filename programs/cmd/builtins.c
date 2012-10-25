@@ -2350,7 +2350,7 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
 {
   int negate; /* Negate condition */
   int test;   /* Condition evaluation result */
-  WCHAR condition[MAX_PATH], *command, *s;
+  WCHAR condition[MAX_PATH], *command;
   static const WCHAR notW[]    = {'n','o','t','\0'};
   static const WCHAR errlvlW[] = {'e','r','r','o','r','l','e','v','e','l','\0'};
   static const WCHAR existW[]  = {'e','x','i','s','t','\0'};
@@ -2381,23 +2381,35 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
                                     NULL, 0) > 0);
     WCMD_parameter(p, 2+negate, &command, FALSE, FALSE);
   }
-  else if ((s = strstrW (p, eqeqW))) {
-    /* We need to get potential surrounding double quotes, so param1/2 can't be used */
-    WCHAR *leftPart, *rightPart;
-    unsigned int leftPartLen, rightPartLen;
-    s += 2;
-    leftPartLen  = strlenW(WCMD_parameter(p, 0+negate+caseInsensitive, &leftPart, TRUE, FALSE));
-    rightPartLen = strlenW(WCMD_parameter(p, 1+negate+caseInsensitive, &rightPart, TRUE, FALSE));
-    test = caseInsensitive
-            ? (CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                              leftPart, leftPartLen,
-                              rightPart, rightPartLen) == CSTR_EQUAL)
-            : (CompareStringW(LOCALE_SYSTEM_DEFAULT, 0,
-                              leftPart, leftPartLen,
-                              rightPart, rightPartLen) == CSTR_EQUAL);
-    WCMD_parameter(s, 1, &command, FALSE, FALSE);
+  else { /* comparison operation */
+    WCHAR leftOperand[MAXSTRING], rightOperand[MAXSTRING], operator[MAXSTRING];
+    WCHAR *paramStart;
+
+    strcpyW(leftOperand, WCMD_parameter(p, negate+caseInsensitive, &paramStart, TRUE, FALSE));
+    if (!*leftOperand)
+      goto syntax_err;
+
+    /* Note: '==' can't be returned by WCMD_parameter since '=' is a separator */
+    p = paramStart + strlenW(leftOperand);
+    while (*p == ' ' || *p == '\t')
+      p++;
+
+    if (strncmpW(p, eqeqW, strlenW(eqeqW)))
+      goto syntax_err;
+
+    strcpyW(operator, eqeqW);
+    p += strlenW(operator);
+
+    strcpyW(rightOperand, WCMD_parameter(p, 0, &paramStart, TRUE, FALSE));
+    if (!*rightOperand)
+      goto syntax_err;
+
+    test = caseInsensitive ? lstrcmpiW(leftOperand, rightOperand) == 0
+                           : lstrcmpW (leftOperand, rightOperand) == 0;
+
+    p = paramStart + strlenW(rightOperand);
+    WCMD_parameter(p, 0, &command, FALSE, FALSE);
   }
-  else goto syntax_err;
 
   /* Process rest of IF statement which is on the same line
      Note: This may process all or some of the cmdList (eg a GOTO) */
