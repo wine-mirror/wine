@@ -2292,6 +2292,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
     unsigned int        s_len = sizeof(s_addrs);
     struct pollfd       pollfd;
     IMAGEHLP_MODULE64   imh_mod;
+    BOOL                ret = FALSE;
 
     /* step 1: create socket for gdb connection request */
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
@@ -2301,15 +2302,15 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
         return FALSE;
     }
 
-    if (listen(sock, 1) == -1 ||
-        getsockname(sock, (struct sockaddr*)&s_addrs, &s_len) == -1)
-        return FALSE;
+    if (listen(sock, 1) == -1 || getsockname(sock, (struct sockaddr*)&s_addrs, &s_len) == -1)
+        goto cleanup;
 
     /* step 2: do the process internal creation */
     handle_debug_event(gdbctx, de);
 
     /* step3: get the wine loader name */
-    if (!dbg_get_debuggee_info(gdbctx->process->handle, &imh_mod)) return FALSE;
+    if (!dbg_get_debuggee_info(gdbctx->process->handle, &imh_mod))
+        goto cleanup;
 
     /* step 4: fire up gdb (if requested) */
     if (flags & FLAG_NO_START)
@@ -2319,14 +2320,14 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
         {
         case -1: /* error in parent... */
             fprintf(stderr, "Cannot create gdb\n");
-            return FALSE;
+            goto cleanup;
         default: /* in parent... success */
             signal(SIGINT, SIG_IGN);
             break;
         case 0: /* in child... and alive */
             gdb_exec(imh_mod.LoadedImageName, s_addrs.sin_port, flags);
             /* if we're here, exec failed, so report failure */
-            return FALSE;
+            goto cleanup;
         }
 
     /* step 5: wait for gdb to connect actually */
@@ -2343,6 +2344,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
             gdbctx->sock = accept(sock, (struct sockaddr*)&s_addrs, &s_len);
             if (gdbctx->sock == -1)
                 break;
+            ret = TRUE;
             if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
                 fprintf(stderr, "Connected on %d\n", gdbctx->sock);
             /* don't keep our small packets too long: send them ASAP back to GDB
@@ -2354,17 +2356,18 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
     case 0:
         if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
             fprintf(stderr, "Poll for cnx failed (timeout)\n");
-        return FALSE;
+        break;
     case -1:
         if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
             fprintf(stderr, "Poll for cnx failed (error)\n");
-        return FALSE;
+        break;
     default:
         assert(0);
     }
 
+cleanup:
     close(sock);
-    return TRUE;
+    return ret;
 }
 
 static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags)
