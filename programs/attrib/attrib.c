@@ -25,6 +25,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(attrib);
 
+static const WCHAR starW[]  = {'*','\0'};
+
 /* =========================================================================
  * Load a string from the resource file, handling any error
  * Returns string retrieved from resource file
@@ -122,20 +124,133 @@ static int __cdecl ATTRIB_wprintf(const WCHAR *format, ...)
     return nOut;
 }
 
-int wmain(int argc, WCHAR *argv[])
+/* =========================================================================
+ * Handle the processing for a single directory, optionally recursing into
+ *  subdirectories if needed.
+ * Parameters:
+ *  rootdir      [I]   The directory to search in
+ *  filespec     [I]   The filespec to search for
+ *  recurse      [I]   Whether to recurse (search subdirectories before
+ *                          current directory)
+ *  attrib_set   [I]   Attributes to set
+ *  attrib_clear [I]   Attributes to clear
+ *
+ * Returns TRUE if at least one file displayed / modified
+ * ========================================================================= */
+static BOOL ATTRIB_processdirectory(const WCHAR *rootdir, const WCHAR *filespec,
+                                    BOOL recurse, DWORD attrib_set, DWORD attrib_clear)
 {
-    DWORD count;
+    BOOL found = FALSE;
+    WCHAR buffer[MAX_PATH];
     HANDLE hff;
     WIN32_FIND_DATAW fd;
     WCHAR flags[] = {' ',' ',' ',' ',' ',' ',' ',' ','\0'};
+    static const WCHAR slashW[] = {'\\','\0'};
+
+    WINE_TRACE("Processing dir '%s', spec '%s', %d,%x,%x\n",
+               wine_dbgstr_w(rootdir), wine_dbgstr_w(filespec),
+               recurse, attrib_set, attrib_clear);
+
+    if (recurse) {
+
+      /* Build spec to search for */
+      strcpyW(buffer, rootdir);
+      strcatW(buffer, starW);
+
+      /* Search for directories in the location and recurse if necessary */
+      WINE_TRACE("Searching for directories with '%s'\n", wine_dbgstr_w(buffer));
+      hff = FindFirstFileW(buffer, &fd);
+      if (hff != INVALID_HANDLE_VALUE) {
+          do {
+              const WCHAR dot[] = {'.', 0};
+              const WCHAR dotdot[] = {'.', '.', 0};
+
+              /* Only interested in directories, and not . nor .. */
+              if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
+                  !strcmpW(fd.cFileName, dot) || !strcmpW(fd.cFileName, dotdot))
+                  continue;
+
+              /* Build new root dir to go searching in */
+              strcpyW(buffer, rootdir);
+              strcatW(buffer, fd.cFileName);
+              strcatW(buffer, slashW);
+              ATTRIB_processdirectory(buffer, filespec, recurse, attrib_set, attrib_clear);
+
+          } while (FindNextFileW(hff, &fd) != 0);
+      }
+      FindClose (hff);
+    }
+
+    /* Build spec to search for */
+    strcpyW(buffer, rootdir);
+    strcatW(buffer, filespec);
+    WINE_TRACE("Searching for files as '%s'\n", wine_dbgstr_w(buffer));
+
+    /* Search for files in the location with the filespec supplied */
+    hff = FindFirstFileW(buffer, &fd);
+    if (hff != INVALID_HANDLE_VALUE) {
+        do {
+            const WCHAR dot[] = {'.', 0};
+            const WCHAR dotdot[] = {'.', '.', 0};
+            DWORD count;
+            WINE_TRACE("Found '%s'\n", wine_dbgstr_w(fd.cFileName));
+
+            if (!strcmpW(fd.cFileName, dot) || !strcmpW(fd.cFileName, dotdot))
+                continue;
+
+            if (attrib_set || attrib_clear) {
+                fd.dwFileAttributes &= ~attrib_clear;
+                fd.dwFileAttributes |= attrib_set;
+                if (!fd.dwFileAttributes)
+                    fd.dwFileAttributes |= FILE_ATTRIBUTE_NORMAL;
+                strcpyW(buffer, rootdir);
+                strcatW(buffer, fd.cFileName);
+                SetFileAttributesW(buffer, fd.dwFileAttributes);
+                found = TRUE;
+            } else {
+                static const WCHAR fmt[] = {'%','1',' ',' ',' ',' ',' ','%','2','\n','\0'};
+                if (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) {
+                    flags[4] = 'H';
+                }
+                if (fd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) {
+                    flags[1] = 'S';
+                }
+                if (fd.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) {
+                    flags[0] = 'A';
+                }
+                if (fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
+                    flags[5] = 'R';
+                }
+                if (fd.dwFileAttributes & FILE_ATTRIBUTE_TEMPORARY) {
+                    flags[6] = 'T';
+                }
+                if (fd.dwFileAttributes & FILE_ATTRIBUTE_COMPRESSED) {
+                    flags[7] = 'C';
+                }
+                strcpyW(buffer, rootdir);
+                strcatW(buffer, fd.cFileName);
+                ATTRIB_wprintf(fmt, flags, buffer);
+                for (count = 0; count < (sizeof(flags)/sizeof(WCHAR) - 1); count++) flags[count] = ' ';
+                found = TRUE;
+            }
+        } while (FindNextFileW(hff, &fd) != 0);
+    }
+    FindClose (hff);
+    return found;
+}
+
+int wmain(int argc, WCHAR *argv[])
+{
     WCHAR name[MAX_PATH];
     WCHAR *namepart;
     WCHAR curdir[MAX_PATH];
+    WCHAR originalname[MAX_PATH];
     DWORD attrib_set = 0;
     DWORD attrib_clear = 0;
+    BOOL  attrib_recurse = 0;
     const WCHAR help_option[] = {'/','?','\0'};
-    const WCHAR start[]  = {'*','\0'};
     int i = 1;
+    BOOL  found = FALSE;
 
     if ((argc >= 2) && !strcmpW(argv[1], help_option)) {
         ATTRIB_wprintf(ATTRIB_LoadMessage(STRING_HELP));
@@ -143,7 +258,7 @@ int wmain(int argc, WCHAR *argv[])
     }
 
     /* By default all files from current directory are taken into account */
-    strcpyW(name, start);
+    strcpyW(name, starW);
 
     while (i < argc) {
         WCHAR *param = argv[i++];
@@ -168,71 +283,33 @@ int wmain(int argc, WCHAR *argv[])
                 WINE_FIXME("Option /D not yet supported\n");
             } else if (((param[1] == 'R') || (param[1] == 'r')) && !param[2]) {
                 WINE_FIXME("Option /R not yet supported\n");
+            } else if (((param[1] == 'S') || (param[1] == 's')) && !param[2]) {
+                attrib_recurse = TRUE;
             } else {
                 WINE_FIXME("Unknown option %s\n", debugstr_w(param));
             }
         } else if (param[0]) {
-            strcpyW(name, param);
+            strcpyW(originalname, param);
         }
     }
 
     /* Name may be a relative or explicit path, so calculate curdir based on
        current locations, stripping off the filename                         */
-    WINE_TRACE("Supplied name: '%s'\n", wine_dbgstr_w(name));
-    GetFullPathNameW(name, sizeof(curdir)/sizeof(WCHAR), curdir, &namepart);
+    WINE_TRACE("Supplied name: '%s'\n", wine_dbgstr_w(originalname));
+    GetFullPathNameW(originalname, sizeof(curdir)/sizeof(WCHAR), curdir, &namepart);
     WINE_TRACE("Result: '%s'\n", wine_dbgstr_w(curdir));
-    strcpyW(name, curdir);
-    if (namepart) *namepart = 0x00;
-
-    /* Search for files based on the location and filespec supplied */
-    hff = FindFirstFileW(name, &fd);
-    if (hff == INVALID_HANDLE_VALUE) {
-        ATTRIB_wprintf(ATTRIB_LoadMessage(STRING_FILENOTFOUND), name);
+    if (namepart) {
+        strcpyW(name, namepart);
+        *namepart = 0;
+    } else {
+        name[0] = 0;
     }
-    else {
-        do {
-            const WCHAR dot[] = {'.', 0};
-            const WCHAR dotdot[] = {'.', '.', 0};
 
-            if (!strcmpW(fd.cFileName, dot) || !strcmpW(fd.cFileName, dotdot))
-                continue;
-
-            if (attrib_set || attrib_clear) {
-                fd.dwFileAttributes &= ~attrib_clear;
-                fd.dwFileAttributes |= attrib_set;
-                if (!fd.dwFileAttributes)
-                    fd.dwFileAttributes |= FILE_ATTRIBUTE_NORMAL;
-                strcpyW(name, curdir);
-                strcatW(name, fd.cFileName);
-                SetFileAttributesW(name, fd.dwFileAttributes);
-            } else {
-                static const WCHAR fmt[] = {'%','1',' ',' ',' ',' ',' ','%','2','\n','\0'};
-                if (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) {
-                    flags[4] = 'H';
-                }
-                if (fd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) {
-                    flags[1] = 'S';
-                }
-                if (fd.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) {
-                    flags[0] = 'A';
-                }
-                if (fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
-                    flags[5] = 'R';
-                }
-                if (fd.dwFileAttributes & FILE_ATTRIBUTE_TEMPORARY) {
-                    flags[6] = 'T';
-                }
-                if (fd.dwFileAttributes & FILE_ATTRIBUTE_COMPRESSED) {
-                    flags[7] = 'C';
-                }
-                strcpyW(name, curdir);
-                strcatW(name, fd.cFileName);
-                ATTRIB_wprintf(fmt, flags, name);
-                for (count = 0; count < (sizeof(flags)/sizeof(WCHAR) - 1); count++) flags[count] = ' ';
-            }
-        } while (FindNextFileW(hff, &fd) != 0);
+    /* Do all the processing based on the filename arg */
+    found = ATTRIB_processdirectory(curdir, name, attrib_recurse,
+                                    attrib_set, attrib_clear);
+    if (!found) {
+      ATTRIB_wprintf(ATTRIB_LoadMessage(STRING_FILENOTFOUND), originalname);
     }
-    FindClose (hff);
-
     return 0;
 }
