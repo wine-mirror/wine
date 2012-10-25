@@ -35,7 +35,7 @@
 #include "ole2.h"
 #include "mmdeviceapi.h"
 #include "devpkey.h"
-#include "dshow.h"
+#include "mmsystem.h"
 #include "dsound.h"
 
 #include "initguid.h"
