@@ -2014,6 +2014,7 @@ AC_CHECK_FUNCS(\
 	fstatfs \
 	fstatvfs \
 	ftruncate \
+	futimens \
 	futimes \
 	futimesat \
 	getattrlist \

@@ -1562,7 +1562,24 @@ static NTSTATUS set_file_times( int fd, const LARGE_INTEGER *mtime, const LARGE_
 {
     NTSTATUS status = STATUS_SUCCESS;
 
-#if defined(HAVE_FUTIMES) || defined(HAVE_FUTIMESAT)
+#ifdef HAVE_FUTIMENS
+    struct timespec tv[2];
+
+    tv[0].tv_sec = tv[1].tv_sec = 0;
+    tv[0].tv_nsec = tv[1].tv_nsec = UTIME_OMIT;
+    if (atime->QuadPart)
+    {
+        tv[0].tv_sec = atime->QuadPart / 10000000 - SECS_1601_TO_1970;
+        tv[0].tv_nsec = (atime->QuadPart % 10000000) * 100;
+    }
+    if (mtime->QuadPart)
+    {
+        tv[1].tv_sec = mtime->QuadPart / 10000000 - SECS_1601_TO_1970;
+        tv[1].tv_nsec = (mtime->QuadPart % 10000000) * 100;
+    }
+    if (futimens( fd, tv ) == -1) status = FILE_GetNtStatus();
+
+#elif defined(HAVE_FUTIMES) || defined(HAVE_FUTIMESAT)
     struct timeval tv[2];
     struct stat st;
 
