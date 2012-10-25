@@ -486,10 +486,12 @@ DECLARE_INTERFACE_(ID3DXPatchMesh, IUnknown)
     STDMETHOD(GenerateAdjacency)(THIS_ FLOAT tolerance) PURE;
     STDMETHOD(CloneMesh)(THIS_ DWORD options, CONST D3DVERTEXELEMENT9* declaration, LPD3DXPATCHMESH *clone_mesh) PURE;
     STDMETHOD(Optimize)(THIS_ DWORD flags) PURE;
-    STDMETHOD(SetDisplaceParam)(THIS_ LPDIRECT3DBASETEXTURE9 texture, D3DTEXTUREFILTERTYPE min_filter,
-        D3DTEXTUREFILTERTYPE mag_filter, D3DTEXTUREFILTERTYPE mip_filter, D3DTEXTUREADDRESS wrap, DWORD lod_bias) PURE;
-    STDMETHOD(GetDisplaceParam)(THIS_ LPDIRECT3DBASETEXTURE9* texture, D3DTEXTUREFILTERTYPE* min_filter,
-        D3DTEXTUREFILTERTYPE* mag_filter, D3DTEXTUREFILTERTYPE* mip_filter, D3DTEXTUREADDRESS* wrap, DWORD* lod_bias) PURE;
+    STDMETHOD(SetDisplaceParam)(THIS_ struct IDirect3DBaseTexture9 *texture, D3DTEXTUREFILTERTYPE min_filter,
+            D3DTEXTUREFILTERTYPE mag_filter, D3DTEXTUREFILTERTYPE mip_filter, D3DTEXTUREADDRESS wrap,
+            DWORD lod_bias) PURE;
+    STDMETHOD(GetDisplaceParam)(THIS_ struct IDirect3DBaseTexture9 **texture, D3DTEXTUREFILTERTYPE *min_filter,
+            D3DTEXTUREFILTERTYPE *mag_filter, D3DTEXTUREFILTERTYPE *mip_filter, D3DTEXTUREADDRESS *wrap,
+            DWORD *lod_bias) PURE;
     STDMETHOD(Tessellate)(THIS_ FLOAT tess_level, LPD3DXMESH mesh) PURE;
     STDMETHOD(TessellateAdaptive)(THIS_ CONST D3DXVECTOR4* trans, DWORD max_tess_level, DWORD min_tess_level, LPD3DXMESH mesh) PURE;
 };

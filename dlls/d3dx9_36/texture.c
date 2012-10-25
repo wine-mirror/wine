@@ -46,8 +46,8 @@ static UINT make_pow2(UINT num)
     return result;
 }
 
-static HRESULT get_surface(D3DRESOURCETYPE type, LPDIRECT3DBASETEXTURE9 tex,
-                           int face, UINT level, LPDIRECT3DSURFACE9 *surf)
+static HRESULT get_surface(D3DRESOURCETYPE type, struct IDirect3DBaseTexture9 *tex,
+        int face, UINT level, struct IDirect3DSurface9 **surf)
 {
     switch (type)
     {

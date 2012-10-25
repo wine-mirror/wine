@@ -434,7 +434,7 @@ static HRESULT WINAPI ID3DXSpriteImpl_Flush(ID3DXSprite *iface)
             i++;
         }
 
-        IDirect3DDevice9_SetTexture(This->device, 0, (LPDIRECT3DBASETEXTURE9)(This->sprites[start].texture));
+        IDirect3DDevice9_SetTexture(This->device, 0, (struct IDirect3DBaseTexture9 *)This->sprites[start].texture);
         IDirect3DDevice9_SetVertexDeclaration(This->device, This->vdecl);
 
         IDirect3DDevice9_DrawPrimitiveUP(This->device, D3DPT_TRIANGLELIST, 2*count, vertices+6*start, sizeof(SPRITEVERTEX));

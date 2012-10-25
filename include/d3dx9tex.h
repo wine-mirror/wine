@@ -421,27 +421,17 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(struct IDirect3DDevice9
         D3DPOOL pool, DWORD filter, DWORD mipfilter, D3DCOLOR colorkey, D3DXIMAGE_INFO *srcinfo,
         PALETTEENTRY *palette, struct IDirect3DVolumeTexture9 **volume);
 
-HRESULT WINAPI D3DXSaveTextureToFileInMemory(LPD3DXBUFFER *destbuffer,
-                                             D3DXIMAGE_FILEFORMAT destformat,
-                                             LPDIRECT3DBASETEXTURE9 srctexture,
-                                             CONST PALETTEENTRY *srcpalette);
-
-HRESULT WINAPI D3DXSaveTextureToFileA(LPCSTR destfile,
-                                      D3DXIMAGE_FILEFORMAT destformat,
-                                      LPDIRECT3DBASETEXTURE9 srctexture,
-                                      CONST PALETTEENTRY *srcpalette);
-HRESULT WINAPI D3DXSaveTextureToFileW(LPCWSTR destfile,
-                                      D3DXIMAGE_FILEFORMAT destformat,
-                                      LPDIRECT3DBASETEXTURE9 srctexture,
-                                      CONST PALETTEENTRY *srcpalette);
-#define        D3DXSaveTextureToFile WINELIB_NAME_AW(D3DXSaveTextureToFile)
-
+HRESULT WINAPI D3DXSaveTextureToFileInMemory(struct ID3DXBuffer **destbuffer, D3DXIMAGE_FILEFORMAT destformat,
+        struct IDirect3DBaseTexture9 *srctexture, const PALETTEENTRY *srcpalette);
+HRESULT WINAPI D3DXSaveTextureToFileA(const char *destfile, D3DXIMAGE_FILEFORMAT destformat,
+        struct IDirect3DBaseTexture9 *srctexture, const PALETTEENTRY *srcpalette);
+HRESULT WINAPI D3DXSaveTextureToFileW(const WCHAR *destfile, D3DXIMAGE_FILEFORMAT destformat,
+        struct IDirect3DBaseTexture9 *srctexture, const PALETTEENTRY *srcpalette);
+#define D3DXSaveTextureToFile WINELIB_NAME_AW(D3DXSaveTextureToFile)
 
 /* Other functions */
-HRESULT WINAPI D3DXFilterTexture(      LPDIRECT3DBASETEXTURE9 texture,
-                                       CONST PALETTEENTRY *palette,
-                                       UINT srclevel,
-                                       DWORD filter);
+HRESULT WINAPI D3DXFilterTexture(struct IDirect3DBaseTexture9 *texture,
+        const PALETTEENTRY *palette, UINT srclevel, DWORD filter);
 #define D3DXFilterCubeTexture D3DXFilterTexture
 #define D3DXFilterVolumeTexture D3DXFilterTexture
 
