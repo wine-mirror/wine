@@ -441,25 +441,25 @@ quake
 --- comparison operators
 ------ for strings
 LSS string can be used as operand for LSS comparison
-@todo_wine@floats are handled as strings
-@todo_wine@numbers in quotes are handled as strings
-@todo_wine@negative numbers as well@or_broken@NT4
-@todo_wine@if /i seems to work for LSS
-@todo_wine@A LSS B
-@todo_wine@AB LSS B
-@todo_wine@AA LSS B
-@todo_wine@A LSS AB
-@todo_wine@AA LSS AB
-@todo_wine@A LSS BA
-@todo_wine@B LSS BA
-@todo_wine@AB LSS BA
-@todo_wine@AA LSS BA
-@todo_wine@A LSS AA
-@todo_wine@b LSS B@or_broken@NT4
-@todo_wine@a LSS B@or_broken@NT4
-@todo_wine@a LSS B insensitive
-@todo_wine@A LSS b
-@todo_wine@A LSS b insensitive
+floats are handled as strings
+numbers in quotes are handled as strings
+negative numbers as well@or_broken@NT4
+if /i seems to work for LSS
+A LSS B
+AB LSS B
+AA LSS B
+A LSS AB
+AA LSS AB
+A LSS BA
+B LSS BA
+AB LSS BA
+AA LSS BA
+A LSS AA
+b LSS B@or_broken@NT4
+a LSS B@or_broken@NT4
+a LSS B insensitive
+A LSS b
+A LSS b insensitive
 @todo_wine@A LEQ A
 @todo_wine@A LEQ B
 @todo_wine@B LEQ B
@@ -540,12 +540,12 @@ also in negative form
 hexa handled
 also in negative form
 11 LSS 101
-@todo_wine@0 LSS 1
-@todo_wine@0 LSS 10
-@todo_wine@1 LSS 10
-@todo_wine@9 LSS 10
-@todo_wine@0 LSS 9
-@todo_wine@1 LSS 9
+0 LSS 1
+0 LSS 10
+1 LSS 10
+9 LSS 10
+0 LSS 9
+1 LSS 9
 @todo_wine@0 LEQ 0
 @todo_wine@0 LEQ 1
 @todo_wine@1 LEQ 1

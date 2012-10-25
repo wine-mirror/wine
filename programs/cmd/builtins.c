@@ -104,6 +104,7 @@ static const WCHAR onW[]  = {'O','N','\0'};
 static const WCHAR offW[] = {'O','F','F','\0'};
 static const WCHAR parmY[] = {'/','Y','\0'};
 static const WCHAR parmNoY[] = {'/','-','Y','\0'};
+static const WCHAR eqeqW[]   = {'=','=','\0'};
 
 static HINSTANCE hinst;
 struct env_stack *saved_environment;
@@ -2332,6 +2333,52 @@ void WCMD_popd (void) {
     LocalFree (temp);
 }
 
+/*******************************************************************
+ * evaluate_if_comparison
+ *
+ * Evaluates an "if" comparison operation
+ *
+ * PARAMS
+ *  leftOperand     [I] left operand, non NULL
+ *  operator        [I] "if" binary comparison operator, non NULL
+ *  rightOperand    [I] right operand, non NULL
+ *  caseInsensitive [I] 0 for case sensitive comparison, anything else for insensitive
+ *
+ * RETURNS
+ *  Success:  1 if operator applied to the operands evaluates to TRUE
+ *            0 if operator applied to the operands evaluates to FALSE
+ *  Failure: -1 if operator is not recognized
+ */
+static int evaluate_if_comparison(const WCHAR *leftOperand, const WCHAR *operator,
+                                  const WCHAR *rightOperand, int caseInsensitive)
+{
+    WCHAR *endptr_leftOp, *endptr_rightOp;
+    long int leftOperand_int, rightOperand_int;
+    BOOL int_operands;
+    static const WCHAR lssW[]  = {'l','s','s','\0'};
+
+    /* == is a special case, as it always compares strings */
+    if (!lstrcmpiW(operator, eqeqW))
+        return caseInsensitive ? lstrcmpiW(leftOperand, rightOperand) == 0
+                               : lstrcmpW (leftOperand, rightOperand) == 0;
+
+    /* Check if we have plain integers (in decimal, octal or hexadecimal notation) */
+    leftOperand_int = strtolW(leftOperand, &endptr_leftOp, 0);
+    rightOperand_int = strtolW(rightOperand, &endptr_rightOp, 0);
+    int_operands = (!*endptr_leftOp) && (!*endptr_rightOp);
+
+    /* Perform actual (integer or string) comparison */
+    if (!lstrcmpiW(operator, lssW)) {
+        if (int_operands)
+            return leftOperand_int < rightOperand_int;
+        else
+            return caseInsensitive ? lstrcmpiW(leftOperand, rightOperand) < 0
+                                   : lstrcmpW (leftOperand, rightOperand) < 0;
+    }
+
+    return -1;
+}
+
 /****************************************************************************
  * WCMD_if
  *
@@ -2355,7 +2402,6 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
   static const WCHAR errlvlW[] = {'e','r','r','o','r','l','e','v','e','l','\0'};
   static const WCHAR existW[]  = {'e','x','i','s','t','\0'};
   static const WCHAR defdW[]   = {'d','e','f','i','n','e','d','\0'};
-  static const WCHAR eqeqW[]   = {'=','=','\0'};
   static const WCHAR parmI[]   = {'/','I','\0'};
   int caseInsensitive = (strstrW(quals, parmI) != NULL);
 
@@ -2394,18 +2440,21 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
     while (*p == ' ' || *p == '\t')
       p++;
 
-    if (strncmpW(p, eqeqW, strlenW(eqeqW)))
-      goto syntax_err;
-
-    strcpyW(operator, eqeqW);
+    if (!strncmpW(p, eqeqW, strlenW(eqeqW)))
+      strcpyW(operator, eqeqW);
+    else {
+      strcpyW(operator, WCMD_parameter(p, 0, &paramStart, FALSE, FALSE));
+      if (!*operator) goto syntax_err;
+    }
     p += strlenW(operator);
 
     strcpyW(rightOperand, WCMD_parameter(p, 0, &paramStart, TRUE, FALSE));
     if (!*rightOperand)
       goto syntax_err;
 
-    test = caseInsensitive ? lstrcmpiW(leftOperand, rightOperand) == 0
-                           : lstrcmpW (leftOperand, rightOperand) == 0;
+    test = evaluate_if_comparison(leftOperand, operator, rightOperand, caseInsensitive);
+    if (test == -1)
+      goto syntax_err;
 
     p = paramStart + strlenW(rightOperand);
     WCMD_parameter(p, 0, &command, FALSE, FALSE);
