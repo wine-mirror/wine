@@ -460,27 +460,27 @@ a LSS B@or_broken@NT4
 a LSS B insensitive
 A LSS b
 A LSS b insensitive
-@todo_wine@A LEQ A
-@todo_wine@A LEQ B
-@todo_wine@B LEQ B
-@todo_wine@AB LEQ B
-@todo_wine@AA LEQ B
-@todo_wine@A LEQ AB
-@todo_wine@AB LEQ AB
-@todo_wine@AA LEQ AB
-@todo_wine@A LEQ BA
-@todo_wine@B LEQ BA
-@todo_wine@AB LEQ BA
-@todo_wine@BA LEQ BA
-@todo_wine@AA LEQ BA
-@todo_wine@A LEQ AA
-@todo_wine@AA LEQ AA
-@todo_wine@b LEQ B@or_broken@NT4
-@todo_wine@b LEQ B insensitive
-@todo_wine@a LEQ B@or_broken@NT4
-@todo_wine@a LEQ B insensitive
-@todo_wine@A LEQ b
-@todo_wine@A LEQ b insensitive
+A LEQ A
+A LEQ B
+B LEQ B
+AB LEQ B
+AA LEQ B
+A LEQ AB
+AB LEQ AB
+AA LEQ AB
+A LEQ BA
+B LEQ BA
+AB LEQ BA
+BA LEQ BA
+AA LEQ BA
+A LEQ AA
+AA LEQ AA
+b LEQ B@or_broken@NT4
+b LEQ B insensitive
+a LEQ B@or_broken@NT4
+a LEQ B insensitive
+A LEQ b
+A LEQ b insensitive
 @todo_wine@A EQU A
 @todo_wine@B EQU B
 @todo_wine@AB EQU AB
@@ -546,16 +546,16 @@ also in negative form
 9 LSS 10
 0 LSS 9
 1 LSS 9
-@todo_wine@0 LEQ 0
-@todo_wine@0 LEQ 1
-@todo_wine@1 LEQ 1
-@todo_wine@0 LEQ 10
-@todo_wine@1 LEQ 10
-@todo_wine@10 LEQ 10
-@todo_wine@9 LEQ 10
-@todo_wine@0 LEQ 9
-@todo_wine@1 LEQ 9
-@todo_wine@9 LEQ 9
+0 LEQ 0
+0 LEQ 1
+1 LEQ 1
+0 LEQ 10
+1 LEQ 10
+10 LEQ 10
+9 LEQ 10
+0 LEQ 9
+1 LEQ 9
+9 LEQ 9
 @todo_wine@0 EQU 0
 @todo_wine@1 EQU 1
 @todo_wine@10 EQU 10

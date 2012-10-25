@@ -2356,6 +2356,7 @@ static int evaluate_if_comparison(const WCHAR *leftOperand, const WCHAR *operato
     long int leftOperand_int, rightOperand_int;
     BOOL int_operands;
     static const WCHAR lssW[]  = {'l','s','s','\0'};
+    static const WCHAR leqW[]  = {'l','e','q','\0'};
 
     /* == is a special case, as it always compares strings */
     if (!lstrcmpiW(operator, eqeqW))
@@ -2374,6 +2375,14 @@ static int evaluate_if_comparison(const WCHAR *leftOperand, const WCHAR *operato
         else
             return caseInsensitive ? lstrcmpiW(leftOperand, rightOperand) < 0
                                    : lstrcmpW (leftOperand, rightOperand) < 0;
+    }
+
+    if (!lstrcmpiW(operator, leqW)) {
+        if (int_operands)
+            return leftOperand_int <= rightOperand_int;
+        else
+            return caseInsensitive ? lstrcmpiW(leftOperand, rightOperand) <= 0
+                                   : lstrcmpW (leftOperand, rightOperand) <= 0;
     }
 
     return -1;
