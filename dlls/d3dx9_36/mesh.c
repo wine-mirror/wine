@@ -2559,6 +2559,7 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ID3DXMeshImpl));
     if (object == NULL || attrib_buffer == NULL)
     {
+        HeapFree(GetProcessHeap(), 0, object);
         HeapFree(GetProcessHeap(), 0, attrib_buffer);
         IDirect3DIndexBuffer9_Release(index_buffer);
         IDirect3DVertexBuffer9_Release(vertex_buffer);
