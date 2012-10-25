@@ -730,6 +730,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start,
         else if (copybytes < 0) copybytes = 0;
         WCMD_strsubstW(start, endOfVar + 1, startCopy, copybytes);
       } else {
+        substrlength = min(substrlength, len - (startCopy- thisVarContents + 1));
         WCMD_strsubstW(start, endOfVar + 1, startCopy, substrlength);
       }
 
