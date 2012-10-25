@@ -481,12 +481,12 @@ a LEQ B@or_broken@NT4
 a LEQ B insensitive
 A LEQ b
 A LEQ b insensitive
-@todo_wine@A EQU A
-@todo_wine@B EQU B
-@todo_wine@AB EQU AB
-@todo_wine@BA EQU BA
-@todo_wine@AA EQU AA
-@todo_wine@A EQU a insensitive
+A EQU A
+B EQU B
+AB EQU AB
+BA EQU BA
+AA EQU AA
+A EQU a insensitive
 @todo_wine@B NEQ A
 @todo_wine@AB NEQ A
 @todo_wine@BA NEQ A
@@ -556,14 +556,14 @@ also in negative form
 0 LEQ 9
 1 LEQ 9
 9 LEQ 9
-@todo_wine@0 EQU 0
-@todo_wine@1 EQU 1
-@todo_wine@10 EQU 10
-@todo_wine@9 EQU 9
-@todo_wine@octal ok
-@todo_wine@hexa ok
-@todo_wine@string/hexa compare ok
-@todo_wine@string/hexa compare ok
+0 EQU 0
+1 EQU 1
+10 EQU 10
+9 EQU 9
+octal ok
+hexa ok
+string/hexa compare ok
+string/hexa compare ok
 @todo_wine@1 NEQ 0
 @todo_wine@10 NEQ 0
 @todo_wine@9 NEQ 0
