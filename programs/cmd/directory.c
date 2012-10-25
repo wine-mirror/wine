@@ -803,7 +803,7 @@ void WCMD_directory (WCHAR *args)
   prevEntry = NULL;
   while (argN) {
     WCHAR fullname[MAXSTRING];
-    WCHAR *thisArg = WCMD_parameter(args, argno++, &argN, NULL, FALSE, FALSE);
+    WCHAR *thisArg = WCMD_parameter(args, argno++, &argN, FALSE, FALSE);
     if (argN && argN[0] != '/') {
 
       WINE_TRACE("Found parm '%s'\n", wine_dbgstr_w(thisArg));

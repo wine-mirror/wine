@@ -130,29 +130,26 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
  *  s     [I] input string, non NULL
  *  n     [I] # of the parameter to return, counted from 0
  *  start [O] Optional. Pointer to the first char of param n in s
- *  end   [O] Optional. Pointer to the last char of param n in s
- *  raw   [I] True to return the parameter in raw format (quotes maintained)
- *            False returns the parameter with quotes stripped
- *  wholecmdline [I] True to indicate this routine is being used to parse the
+ *  raw   [I] TRUE to return the parameter in raw format (quotes maintained)
+ *            FALSE to return the parameter with quotes stripped (including internal ones)
+ *  wholecmdline [I] TRUE to indicate this routine is being used to parse the
  *                   command line, and special logic for arg0->1 transition
  *                   needs to be applied.
  *  delims[I] The delimiter characters to use
  *
  * RETURNS
  *  Success: The nth delimited parameter found in s
- *           if start != NULL, *start points to the start of the param
- *           if end != NULL, *end points to the end of the param
+ *           if start != NULL, *start points to the start of the param (quotes maintained)
  *  Failure: An empty string if the param is not found.
- *           *start == *end == NULL
+ *           *start == NULL
  *
  * NOTES
  *  Return value is stored in static storage (i.e. overwritten after each call).
- *  Specify 'start' and/or 'end' to include delimiting double quotes as well, if any.
  *  By default, the parameter is returned with quotes removed, ready for use with
  *  other API calls, e.g. c:\"a b"\c is returned as c:\a b\c. However, some commands
  *  need to preserve the exact syntax (echo, for, etc) hence the raw option.
  */
-WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start, WCHAR **end,
+WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start,
                                    BOOL raw, BOOL wholecmdline, const WCHAR *delims)
 {
     int curParamNb = 0;
@@ -160,7 +157,6 @@ WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start, WCHAR **end,
     WCHAR *p = s, *begin;
 
     if (start != NULL) *start = NULL;
-    if (end != NULL) *end = NULL;
     param[0] = '\0';
 
     while (TRUE) {
@@ -212,7 +208,6 @@ WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start, WCHAR **end,
                 }
                 param[i] = '\0';
             }
-            if (end) *end = p - 1;
             return param;
         }
         curParamNb++;
@@ -226,11 +221,11 @@ WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start, WCHAR **end,
  * default set of delimiter characters. For parameters, see the main
  * function above.
  */
-WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end, BOOL raw,
+WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, BOOL raw,
                        BOOL wholecmdline)
 {
   static const WCHAR defaultDelims[] = { ' ', '\t', ',', '=', ';', '\0' };
-  return WCMD_parameter_with_delims (s, n, start, end, raw, wholecmdline, defaultDelims);
+  return WCMD_parameter_with_delims (s, n, start, raw, wholecmdline, defaultDelims);
 }
 
 /****************************************************************************
@@ -471,7 +466,7 @@ void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable,
     strcpyW(outputparam,
             WCMD_parameter (context -> command,
                             *lastModifier-'0' + context -> shift_count[*lastModifier-'0'],
-                            NULL, NULL, FALSE, TRUE));
+                            NULL, FALSE, TRUE));
   } else {
     strcpyW(outputparam, forValue);
   }
