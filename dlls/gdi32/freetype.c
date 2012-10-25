@@ -5580,7 +5580,12 @@ static FT_UInt get_glyph_index(const GdiFont *font, UINT glyph)
         if (codepage_sets_default_used(font->codepage))
             default_used_pointer = &default_used;
         if(!WideCharToMultiByte(font->codepage, 0, &wc, 1, &buf, sizeof(buf), NULL, default_used_pointer) || default_used)
-            ret = 0;
+        {
+            if (font->codepage == CP_SYMBOL && wc < 0x100)
+                ret = pFT_Get_Char_Index(font->ft_face, (unsigned char)wc);
+            else
+                ret = 0;
+        }
         else
             ret = pFT_Get_Char_Index(font->ft_face, (unsigned char)buf);
         TRACE("%04x (%02x) -> ret %d def_used %d\n", glyph, buf, ret, default_used);
