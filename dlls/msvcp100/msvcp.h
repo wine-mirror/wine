@@ -289,7 +289,7 @@ typedef struct _fnarray {
 /* class ios_base */
 typedef struct _ios_base {
     const vtable_ptr *vtable;
-    MSVCP_size_t stdstr;
+    MSVCP_size_t DECLSPEC_ALIGN(8) stdstr;
     IOSB_iostate state;
     IOSB_iostate except;
     IOSB_fmtflags fmtfl;
