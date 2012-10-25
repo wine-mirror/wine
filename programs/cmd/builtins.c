@@ -2346,9 +2346,8 @@ void WCMD_popd (void) {
  *
  * FIXME: Much more syntax checking needed!
  */
-
-void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
-
+void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
+{
   int negate; /* Negate condition */
   int test;   /* Condition evaluation result */
   WCHAR condition[MAX_PATH], *command, *s;
@@ -2368,10 +2367,7 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
     WCHAR *param = WCMD_parameter(p, 1+negate, NULL, FALSE, FALSE);
     WCHAR *endptr;
     long int param_int = strtolW(param, &endptr, 10);
-    if (*endptr) {
-      WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
-      return;
-    }
+    if (*endptr) goto syntax_err;
     test = ((long int)errorlevel >= param_int);
     WCMD_parameter(p, 2+negate, &command, FALSE, FALSE);
   }
@@ -2401,14 +2397,15 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
                               rightPart, rightPartLen) == CSTR_EQUAL);
     WCMD_parameter(s, 1, &command, FALSE, FALSE);
   }
-  else {
-    WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
-    return;
-  }
+  else goto syntax_err;
 
   /* Process rest of IF statement which is on the same line
      Note: This may process all or some of the cmdList (eg a GOTO) */
   WCMD_part_execute(cmdList, command, NULL, NULL, TRUE, (test != negate));
+  return;
+
+syntax_err:
+  WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
 }
 
 /****************************************************************************
