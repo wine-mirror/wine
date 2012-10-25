@@ -27,7 +27,6 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "x11drv.h"
-#include "ddrawi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);

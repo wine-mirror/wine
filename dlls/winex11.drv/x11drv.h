@@ -114,6 +114,13 @@ typedef struct
     int           exposures;   /* count of graphics exposures operations */
 } X11DRV_PDEVICE;
 
+struct x11drv_gamma_ramp
+{
+    WORD red[256];
+    WORD green[256];
+    WORD blue[256];
+};
+
 static inline X11DRV_PDEVICE *get_x11drv_dev( PHYSDEV dev )
 {
     return (X11DRV_PDEVICE *)dev;

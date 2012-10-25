@@ -36,7 +36,6 @@
 
 #include "windef.h"
 #include "wingdi.h"
-#include "ddrawi.h"
 #include "wine/debug.h"
 #include "wine/library.h"
 
@@ -335,7 +334,7 @@ static BOOL ComputeGammaFromRamp(WORD ramp[256], float *gamma)
 /* Hmm... should gamma control be available in desktop mode or not?
  * I'll assume that it should */
 
-static BOOL X11DRV_XF86VM_GetGammaRamp(LPDDGAMMARAMP ramp)
+static BOOL X11DRV_XF86VM_GetGammaRamp(struct x11drv_gamma_ramp *ramp)
 {
 #ifdef X_XF86VidModeSetGamma
   XF86VidModeGamma gamma;
@@ -357,7 +356,7 @@ static BOOL X11DRV_XF86VM_GetGammaRamp(LPDDGAMMARAMP ramp)
   return FALSE;
 }
 
-static BOOL X11DRV_XF86VM_SetGammaRamp(LPDDGAMMARAMP ramp)
+static BOOL X11DRV_XF86VM_SetGammaRamp(struct x11drv_gamma_ramp *ramp)
 {
 #ifdef X_XF86VidModeSetGamma
   XF86VidModeGamma gamma;
