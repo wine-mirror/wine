@@ -417,6 +417,7 @@ static HRESULT on_default_action(FileDialogImpl *This)
     {
         UINT size_used;
         file_count = COMDLG32_SplitFileNames(tmp_files, len, &files, &size_used);
+        CoTaskMemFree(tmp_files);
     }
     if(!file_count) return E_FAIL;
 
