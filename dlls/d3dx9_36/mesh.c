@@ -771,7 +771,8 @@ error:
     return hr;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_GetVertexBuffer(ID3DXMesh *iface, LPDIRECT3DVERTEXBUFFER9 *vertex_buffer)
+static HRESULT WINAPI ID3DXMeshImpl_GetVertexBuffer(struct ID3DXMesh *iface,
+        struct IDirect3DVertexBuffer9 **vertex_buffer)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 

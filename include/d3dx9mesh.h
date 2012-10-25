@@ -322,7 +322,7 @@ DECLARE_INTERFACE_(ID3DXBaseMesh, IUnknown)
     STDMETHOD(CloneMeshFVF)(THIS_ DWORD options, DWORD fvf, LPDIRECT3DDEVICE9 device, LPD3DXMESH* clone_mesh) PURE;
     STDMETHOD(CloneMesh)(THIS_ DWORD options, CONST D3DVERTEXELEMENT9* declaration, LPDIRECT3DDEVICE9 device,
         LPD3DXMESH* clone_mesh) PURE;
-    STDMETHOD(GetVertexBuffer)(THIS_ LPDIRECT3DVERTEXBUFFER9* vertex_buffer) PURE;
+    STDMETHOD(GetVertexBuffer)(THIS_ struct IDirect3DVertexBuffer9 **vertex_buffer) PURE;
     STDMETHOD(GetIndexBuffer)(THIS_ struct IDirect3DIndexBuffer9 **index_buffer) PURE;
     STDMETHOD(LockVertexBuffer)(THIS_ DWORD flags, LPVOID* data) PURE;
     STDMETHOD(UnlockVertexBuffer)(THIS) PURE;
@@ -355,7 +355,7 @@ DECLARE_INTERFACE_(ID3DXMesh, ID3DXBaseMesh)
     STDMETHOD(CloneMeshFVF)(THIS_ DWORD options, DWORD fvf, LPDIRECT3DDEVICE9 device, LPD3DXMESH* clone_mesh) PURE;
     STDMETHOD(CloneMesh)(THIS_ DWORD options, CONST D3DVERTEXELEMENT9* declaration, LPDIRECT3DDEVICE9 device,
         LPD3DXMESH* clone_mesh) PURE;
-    STDMETHOD(GetVertexBuffer)(THIS_ LPDIRECT3DVERTEXBUFFER9* vertex_buffer) PURE;
+    STDMETHOD(GetVertexBuffer)(THIS_ struct IDirect3DVertexBuffer9 **vertex_buffer) PURE;
     STDMETHOD(GetIndexBuffer)(THIS_ struct IDirect3DIndexBuffer9 **index_buffer) PURE;
     STDMETHOD(LockVertexBuffer)(THIS_ DWORD flags, LPVOID* data) PURE;
     STDMETHOD(UnlockVertexBuffer)(THIS) PURE;
@@ -396,7 +396,7 @@ DECLARE_INTERFACE_(ID3DXPMesh, ID3DXBaseMesh)
     STDMETHOD(CloneMeshFVF)(THIS_ DWORD options, DWORD fvf, LPDIRECT3DDEVICE9 device, LPD3DXMESH* clone_mesh) PURE;
     STDMETHOD(CloneMesh)(THIS_ DWORD options, CONST D3DVERTEXELEMENT9* declaration, LPDIRECT3DDEVICE9 device,
         LPD3DXMESH* clone_mesh) PURE;
-    STDMETHOD(GetVertexBuffer)(THIS_ LPDIRECT3DVERTEXBUFFER9* vertex_buffer) PURE;
+    STDMETHOD(GetVertexBuffer)(THIS_ struct IDirect3DVertexBuffer9 **vertex_buffer) PURE;
     STDMETHOD(GetIndexBuffer)(THIS_ struct IDirect3DIndexBuffer9 **index_buffer) PURE;
     STDMETHOD(LockVertexBuffer)(THIS_ DWORD flags, LPVOID* data) PURE;
     STDMETHOD(UnlockVertexBuffer)(THIS) PURE;
@@ -474,7 +474,7 @@ DECLARE_INTERFACE_(ID3DXPatchMesh, IUnknown)
     STDMETHOD_(DWORD, GetOptions)(THIS) PURE;
     STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9* device) PURE;
     STDMETHOD(GetPatchInfo)(THIS_ LPD3DXPATCHINFO patch_info) PURE;
-    STDMETHOD(GetVertexBuffer)(THIS_ LPDIRECT3DVERTEXBUFFER9* vertex_buffer) PURE;
+    STDMETHOD(GetVertexBuffer)(THIS_ struct IDirect3DVertexBuffer9 **vertex_buffer) PURE;
     STDMETHOD(GetIndexBuffer)(THIS_ struct IDirect3DIndexBuffer9 **index_buffer) PURE;
     STDMETHOD(LockVertexBuffer)(THIS_ DWORD flags, LPVOID* data) PURE;
     STDMETHOD(UnlockVertexBuffer)(THIS) PURE;
@@ -757,8 +757,10 @@ HRESULT WINAPI D3DXSHPRTCompSplitMeshSC(UINT *, UINT, UINT, UINT *, UINT, LPVOID
 HRESULT WINAPI D3DXSimplifyMesh(LPD3DXMESH, CONST DWORD *, CONST D3DXATTRIBUTEWEIGHTS, CONST FLOAT *, DWORD, DWORD, LPD3DXMESH *);
 HRESULT WINAPI D3DXSplitMesh(LPD3DXMESH, CONST DWORD *, CONST DWORD, CONST DWORD, DWORD *, LPD3DXBUFFER *, LPD3DXBUFFER *, LPD3DXBUFFER *, LPD3DXBUFFER *);
 HRESULT WINAPI D3DXTesselateNPatches(LPD3DXMESH, CONST DWORD *, FLOAT, BOOL, LPD3DXMESH *, LPD3DXBUFFER *);
-HRESULT WINAPI D3DXTesselateRectPatch(LPDIRECT3DVERTEXBUFFER9, CONST FLOAT *, CONST D3DVERTEXELEMENT9 *, CONST D3DRECTPATCH_INFO *, LPD3DXMESH);
-HRESULT WINAPI D3DXTesselateTriPatch(LPDIRECT3DVERTEXBUFFER9, CONST FLOAT *, CONST D3DVERTEXELEMENT9 *, CONST D3DTRIPATCH_INFO *, LPD3DXMESH);
+HRESULT WINAPI D3DXTesselateRectPatch(struct IDirect3DVertexBuffer9 *buffer, const float *segment_count,
+        const D3DVERTEXELEMENT9 *declaration, const D3DRECTPATCH_INFO *patch_info, struct ID3DXMesh *mesh);
+HRESULT WINAPI D3DXTesselateTriPatch(struct IDirect3DVertexBuffer9 *buffer, const float *segment_count,
+        const D3DVERTEXELEMENT9 *declaration, const D3DTRIPATCH_INFO *patch_info, struct ID3DXMesh *mesh);
 HRESULT WINAPI D3DXTriPatchSize(CONST FLOAT *, DWORD *, DWORD *);
 HRESULT WINAPI D3DXUVAtlasCreate(LPD3DXMESH, UINT, FLOAT, UINT, UINT, FLOAT, DWORD, CONST DWORD *, CONST FLOAT *, LPD3DXUVATLASCB, FLOAT, LPVOID, DWORD, LPD3DXMESH *, LPD3DXBUFFER *, LPD3DXBUFFER *, FLOAT *, UINT *);
 HRESULT WINAPI D3DXUVAtlasPack(ID3DXMesh *, UINT, UINT, FLOAT, DWORD, CONST DWORD *, LPD3DXUVATLASCB, FLOAT, LPVOID, DWORD, LPD3DXBUFFER);
