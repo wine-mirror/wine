@@ -507,21 +507,21 @@ A NEQ AA
 B NEQ AA
 AB NEQ AA
 BA NEQ AA
-@todo_wine@A GEQ A
-@todo_wine@B GEQ A
-@todo_wine@AB GEQ A
-@todo_wine@BA GEQ A
-@todo_wine@AA GEQ A
-@todo_wine@B GEQ B
-@todo_wine@BA GEQ B
-@todo_wine@B GEQ AB
-@todo_wine@AB GEQ AB
-@todo_wine@BA GEQ AB
-@todo_wine@BA GEQ BA
-@todo_wine@B GEQ AA
-@todo_wine@AB GEQ AA
-@todo_wine@BA GEQ AA
-@todo_wine@AA GEQ AA
+A GEQ A
+B GEQ A
+AB GEQ A
+BA GEQ A
+AA GEQ A
+B GEQ B
+BA GEQ B
+B GEQ AB
+AB GEQ AB
+BA GEQ AB
+BA GEQ BA
+B GEQ AA
+AB GEQ AA
+BA GEQ AA
+AA GEQ AA
 @todo_wine@B GTR A
 @todo_wine@AB GTR A
 @todo_wine@BA GTR A
@@ -576,16 +576,16 @@ string/hexa compare ok
 0 NEQ 9
 1 NEQ 9
 10 NEQ 9
-@todo_wine@0 GEQ 0
-@todo_wine@1 GEQ 0
-@todo_wine@10 GEQ 0
-@todo_wine@9 GEQ 0
-@todo_wine@1 GEQ 1
-@todo_wine@10 GEQ 1
-@todo_wine@9 GEQ 1
-@todo_wine@10 GEQ 10
-@todo_wine@10 GEQ 9
-@todo_wine@9 GEQ 9
+0 GEQ 0
+1 GEQ 0
+10 GEQ 0
+9 GEQ 0
+1 GEQ 1
+10 GEQ 1
+9 GEQ 1
+10 GEQ 10
+10 GEQ 9
+9 GEQ 9
 @todo_wine@1 GTR 0
 @todo_wine@10 GTR 0
 @todo_wine@9 GTR 0
@@ -596,19 +596,19 @@ string/hexa compare ok
 strings and integers not equal
 strings and integers not equal
 foo
-@todo_wine@"10" GEQ "1"
-@todo_wine@'1' GEQ 1@or_broken@NT4
-@todo_wine@1 GEQ "1"
-@todo_wine@"1" GEQ "1"
-@todo_wine@'1' GEQ "1"
-@todo_wine@"10" GEQ "1"
-@todo_wine@non NT4@or_broken@1 GEQ '1'
-@todo_wine@'1' GEQ '1'
-@todo_wine@foo
-@todo_wine@1 GEQ "10"
-@todo_wine@foo
-@todo_wine@'1' GEQ "10"
-@todo_wine@"10" GEQ "10"
+"10" GEQ "1"
+'1' GEQ 1@or_broken@NT4
+1 GEQ "1"
+"1" GEQ "1"
+'1' GEQ "1"
+"10" GEQ "1"
+non NT4@or_broken@1 GEQ '1'
+'1' GEQ '1'
+foo
+1 GEQ "10"
+foo
+'1' GEQ "10"
+"10" GEQ "10"
 ------------ Testing for ------------
 --- plain FOR
 A
