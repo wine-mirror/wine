@@ -132,13 +132,15 @@ static int __cdecl ATTRIB_wprintf(const WCHAR *format, ...)
  *  filespec     [I]   The filespec to search for
  *  recurse      [I]   Whether to recurse (search subdirectories before
  *                          current directory)
+ *  includedirs  [I]   Whether to set directory attributes as well
  *  attrib_set   [I]   Attributes to set
  *  attrib_clear [I]   Attributes to clear
  *
  * Returns TRUE if at least one file displayed / modified
  * ========================================================================= */
 static BOOL ATTRIB_processdirectory(const WCHAR *rootdir, const WCHAR *filespec,
-                                    BOOL recurse, DWORD attrib_set, DWORD attrib_clear)
+                                    BOOL recurse, BOOL includedirs,
+                                    DWORD attrib_set, DWORD attrib_clear)
 {
     BOOL found = FALSE;
     WCHAR buffer[MAX_PATH];
@@ -174,7 +176,8 @@ static BOOL ATTRIB_processdirectory(const WCHAR *rootdir, const WCHAR *filespec,
               strcpyW(buffer, rootdir);
               strcatW(buffer, fd.cFileName);
               strcatW(buffer, slashW);
-              ATTRIB_processdirectory(buffer, filespec, recurse, attrib_set, attrib_clear);
+              ATTRIB_processdirectory(buffer, filespec, recurse, includedirs,
+                                      attrib_set, attrib_clear);
 
           } while (FindNextFileW(hff, &fd) != 0);
       }
@@ -197,6 +200,9 @@ static BOOL ATTRIB_processdirectory(const WCHAR *rootdir, const WCHAR *filespec,
 
             if (!strcmpW(fd.cFileName, dot) || !strcmpW(fd.cFileName, dotdot))
                 continue;
+
+            if (!includedirs && (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+              continue;
 
             if (attrib_set || attrib_clear) {
                 fd.dwFileAttributes &= ~attrib_clear;
@@ -248,7 +254,9 @@ int wmain(int argc, WCHAR *argv[])
     DWORD attrib_set = 0;
     DWORD attrib_clear = 0;
     BOOL  attrib_recurse = 0;
-    const WCHAR help_option[] = {'/','?','\0'};
+    BOOL  attrib_includedirs = FALSE;
+    static const WCHAR help_option[] = {'/','?','\0'};
+    static const WCHAR wildcardsW[] = {'*','?','\0'};
     int i = 1;
     BOOL  found = FALSE;
 
@@ -280,7 +288,7 @@ int wmain(int argc, WCHAR *argv[])
             }
         } else if (param[0] == '/') {
             if (((param[1] == 'D') || (param[1] == 'd')) && !param[2]) {
-                WINE_FIXME("Option /D not yet supported\n");
+                attrib_includedirs = TRUE;
             } else if (((param[1] == 'R') || (param[1] == 'r')) && !param[2]) {
                 WINE_FIXME("Option /R not yet supported\n");
             } else if (((param[1] == 'S') || (param[1] == 's')) && !param[2]) {
@@ -305,9 +313,13 @@ int wmain(int argc, WCHAR *argv[])
         name[0] = 0;
     }
 
+    /* If a directory is explicitly supplied on the command line, and no
+       wildcards are in the name, then allow it to be changed/displayed  */
+    if (strpbrkW(originalname, wildcardsW) == NULL) attrib_includedirs = TRUE;
+
     /* Do all the processing based on the filename arg */
     found = ATTRIB_processdirectory(curdir, name, attrib_recurse,
-                                    attrib_set, attrib_clear);
+                                    attrib_includedirs, attrib_set, attrib_clear);
     if (!found) {
       ATTRIB_wprintf(ATTRIB_LoadMessage(STRING_FILENOTFOUND), originalname);
     }
