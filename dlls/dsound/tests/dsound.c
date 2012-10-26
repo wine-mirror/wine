@@ -1562,6 +1562,7 @@ static void test_hw_buffers(void)
     for(i = 0; i < caps.dwMaxHwMixingAllBuffers; ++i)
         if(secondaries[i])
             IDirectSoundBuffer_Release(secondaries[i]);
+    HeapFree(GetProcessHeap(), 0, secondaries);
 
     IDirectSoundBuffer_Release(primary);
     IDirectSound_Release(ds);
