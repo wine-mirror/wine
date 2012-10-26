@@ -5821,6 +5821,10 @@ int __thiscall basic_istream_char_peek(basic_istream_char *this)
     if(basic_istream_char_sentry_create(this, TRUE))
         ret = basic_streambuf_char_sgetc(basic_ios_char_rdbuf_get(base));
     basic_istream_char_sentry_destroy(this);
+
+    if (ret == EOF)
+        basic_ios_char_setstate(base, IOSTATE_eofbit);
+
     return ret;
 }
 
@@ -6949,6 +6953,10 @@ unsigned short __thiscall basic_istream_wchar_peek(basic_istream_wchar *this)
     if(basic_istream_wchar_sentry_create(this, TRUE))
         ret = basic_streambuf_wchar_sgetc(basic_ios_wchar_rdbuf_get(base));
     basic_istream_wchar_sentry_destroy(this);
+
+    if (ret == WEOF)
+        basic_ios_wchar_setstate(base, IOSTATE_eofbit);
+
     return ret;
 }
 
