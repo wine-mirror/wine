@@ -543,46 +543,23 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid,
         return E_NOINTERFACE;
     }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
+    jsdisp_addref(This);
     return S_OK;
 }
 
 static ULONG WINAPI DispatchEx_AddRef(IDispatchEx *iface)
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    return ref;
+    jsdisp_addref(This);
+    return This->ref;
 }
 
 static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    if(!ref) {
-        dispex_prop_t *prop;
-
-        for(prop = This->props; prop < This->props+This->prop_cnt; prop++) {
-            if(prop->type == PROP_JSVAL)
-                jsval_release(prop->u.val);
-            heap_free(prop->name);
-        }
-        heap_free(This->props);
-        script_release(This->ctx);
-        if(This->prototype)
-            jsdisp_release(This->prototype);
-
-        if(This->builtin_info->destructor)
-            This->builtin_info->destructor(This);
-        else
-            heap_free(This);
-    }
-
+    ULONG ref = --This->ref;
+    if(!ref)
+        jsdisp_free(This);
     return ref;
 }
 
@@ -930,6 +907,49 @@ HRESULT create_dispex(script_ctx_t *ctx, const builtin_info_t *builtin_info, jsd
     *dispex = ret;
     return S_OK;
 }
+
+void jsdisp_free(jsdisp_t *obj)
+{
+    dispex_prop_t *prop;
+
+    TRACE("(%p)\n", obj);
+
+    for(prop = obj->props; prop < obj->props+obj->prop_cnt; prop++) {
+        if(prop->type == PROP_JSVAL)
+            jsval_release(prop->u.val);
+        heap_free(prop->name);
+    }
+    heap_free(obj->props);
+    script_release(obj->ctx);
+    if(obj->prototype)
+        jsdisp_release(obj->prototype);
+
+    if(obj->builtin_info->destructor)
+        obj->builtin_info->destructor(obj);
+    else
+        heap_free(obj);
+}
+
+#ifdef TRACE_REFCNT
+
+jsdisp_t *jsdisp_addref(jsdisp_t *jsdisp)
+{
+    ULONG ref = ++jsdisp->ref;
+    TRACE("(%p) ref=%d\n", jsdisp, ref);
+    return jsdisp;
+}
+
+void jsdisp_release(jsdisp_t *jsdisp)
+{
+    ULONG ref = --jsdisp->ref;
+
+    TRACE("(%p) ref=%d\n", jsdisp, ref);
+
+    if(!ref)
+        jsdisp_free(jsdisp);
+}
+
+#endif
 
 HRESULT init_dispex_from_constr(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *builtin_info, jsdisp_t *constr)
 {
