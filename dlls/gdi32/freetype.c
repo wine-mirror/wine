@@ -4408,6 +4408,21 @@ static BOOL freetype_DeleteDC( PHYSDEV dev )
     return TRUE;
 }
 
+static FT_Encoding pick_charmap( FT_Face face, int charset )
+{
+    static const FT_Encoding regular_order[] = { FT_ENCODING_UNICODE, FT_ENCODING_APPLE_ROMAN, 0 };
+    static const FT_Encoding symbol_order[]  = { FT_ENCODING_MS_SYMBOL, FT_ENCODING_UNICODE, FT_ENCODING_APPLE_ROMAN, 0 };
+    const FT_Encoding *encs = regular_order;
+
+    if (charset == SYMBOL_CHARSET) encs = symbol_order;
+
+    while (*encs != 0)
+    {
+        if (select_charmap( face, *encs )) break;
+        encs++;
+    }
+    return *encs;
+}
 
 /*************************************************************
  * freetype_SelectFont
@@ -4824,16 +4839,7 @@ found_face:
 
     ret->ntmFlags = face->ntmFlags;
 
-    if (ret->charset == SYMBOL_CHARSET && 
-        select_charmap(ret->ft_face, FT_ENCODING_MS_SYMBOL)) {
-        /* No ops */
-    }
-    else if (select_charmap(ret->ft_face, FT_ENCODING_UNICODE)) {
-        /* No ops */
-    }
-    else {
-        select_charmap(ret->ft_face, FT_ENCODING_APPLE_ROMAN);
-    }
+    pick_charmap( ret->ft_face, ret->charset );
 
     ret->orientation = FT_IS_SCALABLE(ret->ft_face) ? lf.lfOrientation : 0;
     ret->name = psub ? strdupW(psub->from.name) : strdupW(family->FamilyName);
