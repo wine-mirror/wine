@@ -681,14 +681,11 @@ HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *forma
     memset(&This->format, 0, sizeof(This->format));
 
     /* reference is not kept here, instead copy all underlying data */
-    if (format)
-    {
-        IDWriteTextFormat_GetFontCollection(format, &This->format.collection);
-        This->format.weight  = IDWriteTextFormat_GetFontWeight(format);
-        This->format.style   = IDWriteTextFormat_GetFontStyle(format);
-        This->format.stretch = IDWriteTextFormat_GetFontStretch(format);
-        This->format.size    = IDWriteTextFormat_GetFontSize(format);
-    }
+    IDWriteTextFormat_GetFontCollection(format, &This->format.collection);
+    This->format.weight  = IDWriteTextFormat_GetFontWeight(format);
+    This->format.style   = IDWriteTextFormat_GetFontStyle(format);
+    This->format.stretch = IDWriteTextFormat_GetFontStretch(format);
+    This->format.size    = IDWriteTextFormat_GetFontSize(format);
 
     *layout = &This->IDWriteTextLayout_iface;
 
