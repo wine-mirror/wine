@@ -1230,8 +1230,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   }
 
   /* Not found anywhere - give up */
-  SetLastError(ERROR_FILE_NOT_FOUND);
-  WCMD_print_error ();
+  WCMD_output_stderr(WCMD_LoadMessage(WCMD_NO_COMMAND_FOUND), command);
 
   /* If a command fails to launch, it sets errorlevel 9009 - which
      does not seem to have any associated constant definition     */

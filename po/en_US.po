@@ -10076,6 +10076,12 @@ msgstr " (Yes|No)"
 msgid " (Yes|No|All)"
 msgstr " (Yes|No|All)"
 
+#: cmd.rc:356
+msgid ""
+"Can't recognize '%1' as an internal or external command, or batch script.\n"
+msgstr ""
+"Can't recognize '%1' as an internal or external command, or batch script.\n"
+
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
 msgstr "DirectX Diagnostic Tool"

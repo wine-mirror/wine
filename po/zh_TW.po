@@ -9925,6 +9925,11 @@ msgstr " (是|否)"
 msgid " (Yes|No|All)"
 msgstr " (是|否|全部)"
 
+#: cmd.rc:356
+msgid ""
+"Can't recognize '%1' as an internal or external command, or batch script.\n"
+msgstr ""
+
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
 msgstr "DirectX 診斷工具"

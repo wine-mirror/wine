@@ -286,3 +286,4 @@ extern WCHAR version_string[];
 #define WCMD_VOLUMENOLABEL    1037
 #define WCMD_YESNO            1038
 #define WCMD_YESNOALL         1039
+#define WCMD_NO_COMMAND_FOUND 1040

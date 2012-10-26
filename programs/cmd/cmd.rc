@@ -353,4 +353,5 @@ Enter HELP <command> for further information on any of the above commands.\n"
   WCMD_VOLUMENOLABEL, "Volume in drive %1!c! has no label.\n"
   WCMD_YESNO, " (Yes|No)"
   WCMD_YESNOALL, " (Yes|No|All)"
+  WCMD_NO_COMMAND_FOUND, "Can't recognize '%1' as an internal or external command, or batch script.\n"
 }
