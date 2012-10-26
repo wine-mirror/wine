@@ -79,8 +79,6 @@ HRESULT bind_to_object(IMoniker*,IUri*,IBindCtx*,REFIID,void**ppv) DECLSPEC_HIDD
 HRESULT create_default_callback(IBindStatusCallback**) DECLSPEC_HIDDEN;
 HRESULT wrap_callback(IBindStatusCallback*,IBindStatusCallback**) DECLSPEC_HIDDEN;
 
-HRESULT WINAPI CopyBindInfo(const BINDINFO *pcbiSrc, BINDINFO *pcbiDest) DECLSPEC_HIDDEN;
-
 typedef struct ProtocolVtbl ProtocolVtbl;
 
 typedef struct {
