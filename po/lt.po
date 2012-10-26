@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-08-24 22:13+0300\n"
+"PO-Revision-Date: 2012-10-27 10:40+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -9568,7 +9568,7 @@ msgid ""
 "The prompt can also be changed by altering the PROMPT environment variable,\n"
 "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 msgstr ""
-"PROMPT nustato komandinės eilutės raginimą.\n"
+"PROMPT nustato komandos eilutės raginimą.\n"
 "\n"
 "Simbolių eilutė, einanti po PROMPT komandos (ir tarpas iškart po to),\n"
 "atsiranda eilutės pradžioje, kai cmd laukia įvedimo.\n"
@@ -10017,7 +10017,7 @@ msgstr "Nepavyko atverti „%1“\n"
 
 #: cmd.rc:337
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "Negalima iškviesti žymės esančios už komandos failo ribų\n"
+msgstr "Negalima iškviesti žymės esančios už komandų failo ribų\n"
 
 #: cmd.rc:338 xcopy.rc:42
 msgctxt "All key"
@@ -10100,6 +10100,8 @@ msgstr " (Taip|Ne|Visus)"
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
+"Nepavyko atpažinti „%1“ kaip vidinės ar išorinės komandos, ar komandų "
+"failo.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10139,7 +10141,7 @@ msgstr "Naudojimas: ipconfig [ /? | /all ]\n"
 #: ipconfig.rc:28
 msgid "Error: Unknown or invalid command line parameters specified\n"
 msgstr ""
-"Klaida: nurodytas nežinomas arba netinkamas komandinės eilutės parametras\n"
+"Klaida: nurodytas nežinomas arba netinkamas komandos eilutės parametras\n"
 
 #: ipconfig.rc:29
 msgid "%1 adapter %2\n"
@@ -13168,7 +13170,7 @@ msgstr "wineconsole: neteisinga posistemė\n"
 
 #: wineconsole.rc:43
 msgid "wineconsole: Unrecognized command line option\n"
-msgstr "wineconsole: neatpažintas komandinės eilutės parametras\n"
+msgstr "wineconsole: neatpažintas komandos eilutės parametras\n"
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
