@@ -35,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 struct dwrite_textformat_data {
     WCHAR *family_name;
     WCHAR *locale;
+    UINT32 locale_len;
 
     DWRITE_FONT_WEIGHT weight;
     DWRITE_FONT_STYLE style;
@@ -114,6 +115,7 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout *iface)
 
     if (!ref)
     {
+        release_format_data(&This->format);
         heap_free(This->str);
         heap_free(This);
     }
@@ -289,15 +291,19 @@ static FLOAT WINAPI dwritetextlayout_GetFontSize(IDWriteTextLayout *iface)
 static UINT32 WINAPI dwritetextlayout_GetLocaleNameLength(IDWriteTextLayout *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p): stub\n", This);
-    return 0;
+    TRACE("(%p)\n", This);
+    return This->format.locale_len;
 }
 
 static HRESULT WINAPI dwritetextlayout_GetLocaleName(IDWriteTextLayout *iface, WCHAR *name, UINT32 size)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%p %u): stub\n", This, name, size);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %u)\n", This, name, size);
+
+    if (size <= This->format.locale_len) return E_NOT_SUFFICIENT_BUFFER;
+    strcpyW(name, This->format.locale);
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout_SetMaxWidth(IDWriteTextLayout *iface, FLOAT maxWidth)
@@ -668,6 +674,7 @@ static const IDWriteTextLayoutVtbl dwritetextlayoutvtbl = {
 HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, IDWriteTextLayout **layout)
 {
     struct dwrite_textlayout *This;
+    UINT32 locale_len;
 
     *layout = NULL;
 
@@ -682,6 +689,13 @@ HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *forma
 
     /* reference is not kept here, instead copy all underlying data */
     IDWriteTextFormat_GetFontCollection(format, &This->format.collection);
+
+    /* locale name and length */
+    locale_len = IDWriteTextFormat_GetLocaleNameLength(format);
+    This->format.locale  = heap_alloc((locale_len+1)*sizeof(WCHAR));
+    IDWriteTextFormat_GetLocaleName(format, This->format.locale, locale_len+1);
+    This->format.locale_len = locale_len;
+
     This->format.weight  = IDWriteTextFormat_GetFontWeight(format);
     This->format.style   = IDWriteTextFormat_GetFontStyle(format);
     This->format.stretch = IDWriteTextFormat_GetFontStretch(format);
@@ -908,15 +922,19 @@ static FLOAT WINAPI dwritetextformat_GetFontSize(IDWriteTextFormat *iface)
 static UINT32 WINAPI dwritetextformat_GetLocaleNameLength(IDWriteTextFormat *iface)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p): stub\n", This);
-    return 0;
+    TRACE("(%p)\n", This);
+    return This->format.locale_len;
 }
 
 static HRESULT WINAPI dwritetextformat_GetLocaleName(IDWriteTextFormat *iface, WCHAR *name, UINT32 size)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p)->(%p %u): stub\n", This, name, size);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %u)\n", This, name, size);
+
+    if (size <= This->format.locale_len) return E_NOT_SUFFICIENT_BUFFER;
+    strcpyW(name, This->format.locale);
+    return S_OK;
 }
 
 static const IDWriteTextFormatVtbl dwritetextformatvtbl = {
@@ -964,6 +982,7 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
     This->ref = 1;
     This->format.family_name = heap_strdupW(family_name);
     This->format.locale = heap_strdupW(locale);
+    This->format.locale_len = strlenW(locale);
     This->format.weight = weight;
     This->format.style = style;
     This->format.size = size;

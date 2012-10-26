@@ -134,6 +134,41 @@ if (0) /* crashes on native */
     IDWriteTextFormat_Release(format);
 }
 
+static void test_GetLocaleName(void)
+{
+    static const WCHAR strW[] = {'s','t','r','i','n','g',0};
+    static const WCHAR ruW[] = {'r','u',0};
+    IDWriteTextLayout *layout;
+    IDWriteTextFormat *format;
+    WCHAR buff[10];
+    UINT32 len;
+    HRESULT hr;
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, ruW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 0, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    len = IDWriteTextLayout_GetLocaleNameLength(layout);
+    ok(len == 2, "got %u\n", len);
+    len = IDWriteTextFormat_GetLocaleNameLength(format);
+    ok(len == 2, "got %u\n", len);
+    hr = IDWriteTextLayout_GetLocaleName(layout, buff, len);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    hr = IDWriteTextLayout_GetLocaleName(layout, buff, len+1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(buff, ruW), "got %s\n", wine_dbgstr_w(buff));
+    hr = IDWriteTextFormat_GetLocaleName(format, buff, len);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    hr = IDWriteTextFormat_GetLocaleName(format, buff, len+1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(buff, ruW), "got %s\n", wine_dbgstr_w(buff));
+
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+}
+
 START_TEST(layout)
 {
     HRESULT hr;
@@ -149,6 +184,7 @@ START_TEST(layout)
     test_CreateTextLayout();
     test_CreateGdiCompatibleTextLayout();
     test_CreateTextFormat();
+    test_GetLocaleName();
 
     IDWriteFactory_Release(factory);
 }
