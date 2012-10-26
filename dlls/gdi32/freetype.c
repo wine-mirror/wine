@@ -4410,7 +4410,7 @@ static BOOL freetype_DeleteDC( PHYSDEV dev )
 
 static FT_Encoding pick_charmap( FT_Face face, int charset )
 {
-    static const FT_Encoding regular_order[] = { FT_ENCODING_UNICODE, FT_ENCODING_APPLE_ROMAN, 0 };
+    static const FT_Encoding regular_order[] = { FT_ENCODING_UNICODE, FT_ENCODING_APPLE_ROMAN, FT_ENCODING_MS_SYMBOL, 0 };
     static const FT_Encoding symbol_order[]  = { FT_ENCODING_MS_SYMBOL, FT_ENCODING_UNICODE, FT_ENCODING_APPLE_ROMAN, 0 };
     const FT_Encoding *encs = regular_order;
 
