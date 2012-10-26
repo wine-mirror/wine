@@ -50,6 +50,7 @@ struct dwrite_textlayout {
     LONG ref;
 
     WCHAR *str;
+    UINT32 len;
     struct dwrite_textformat_data format;
 };
 
@@ -676,6 +677,7 @@ HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *forma
     This->IDWriteTextLayout_iface.lpVtbl = &dwritetextlayoutvtbl;
     This->ref = 1;
     This->str = heap_strdupnW(str, len);
+    This->len = len;
     memset(&This->format, 0, sizeof(This->format));
 
     /* reference is not kept here, instead copy all underlying data */
