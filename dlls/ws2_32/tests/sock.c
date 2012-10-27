@@ -5402,8 +5402,6 @@ static void test_completion_port(void)
 
     if (dest != INVALID_SOCKET)
         closesocket(dest);
-    if (src != INVALID_SOCKET)
-        closesocket(src);
 
     memset(&ov, 0, sizeof(ov));
 
