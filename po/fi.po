@@ -10062,7 +10062,7 @@ msgstr " (Kyllä|Ei|kAikki)"
 #: cmd.rc:356
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
-msgstr ""
+msgstr "'%1' ei ole sisäinen eikä ulkoinen komento eikä komentojono.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
