@@ -689,6 +689,7 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
             if ((hr = SafeArrayGetUBound(sa, 1, &size) != S_OK))
             {
                 SafeArrayUnaccessData(sa);
+                heap_free(bsc);
                 return hr;
             }
             size++;
