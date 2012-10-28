@@ -72,9 +72,10 @@ HRESULT write_buffer_to_file(const WCHAR *filename, ID3DXBuffer *buffer) DECLSPE
 const struct pixel_format_desc *get_format_info(D3DFORMAT format) DECLSPEC_HIDDEN;
 const struct pixel_format_desc *get_format_info_idx(int idx) DECLSPEC_HIDDEN;
 
-void copy_simple_data(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, struct volume *src_size, const struct pixel_format_desc *src_format,
-        BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, struct volume *dst_size, const struct pixel_format_desc *dst_format,
-        D3DCOLOR color_key) DECLSPEC_HIDDEN;
+void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch,
+    const struct volume *src_size, const struct pixel_format_desc *src_format,
+    BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, const struct volume *dst_size,
+    const struct pixel_format_desc *dst_format, D3DCOLOR color_key) DECLSPEC_HIDDEN;
 void point_filter_simple_data(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, struct volume *src_size, const struct pixel_format_desc *src_format,
         BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, struct volume *dst_size, const struct pixel_format_desc *dst_format,
         D3DCOLOR color_key) DECLSPEC_HIDDEN;

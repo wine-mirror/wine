@@ -212,7 +212,7 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
 
         if ((filter & 0xf) == D3DX_FILTER_NONE)
         {
-            copy_simple_data(src_memory, src_row_pitch, src_slice_pitch, &src_size, src_format_desc,
+            convert_argb_pixels(src_memory, src_row_pitch, src_slice_pitch, &src_size, src_format_desc,
                     locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch, &dst_size, dst_format_desc, color_key);
         }
         else
