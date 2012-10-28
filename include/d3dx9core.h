@@ -371,7 +371,7 @@ DECLARE_INTERFACE_(ID3DXRenderToSurface, IUnknown)
     STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9 *device) PURE;
     STDMETHOD(GetDesc)(THIS_ D3DXRTS_DESC *desc) PURE;
 
-    STDMETHOD(BeginScene)(THIS_ LPDIRECT3DSURFACE9 surface, CONST D3DVIEWPORT9 *viewport) PURE;
+    STDMETHOD(BeginScene)(THIS_ struct IDirect3DSurface9 *surface, const D3DVIEWPORT9 *viewport) PURE;
     STDMETHOD(EndScene)(THIS_ DWORD mipfilter) PURE;
 
     STDMETHOD(OnLostDevice)(THIS) PURE;
