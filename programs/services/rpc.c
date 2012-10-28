@@ -118,11 +118,11 @@ static void run_after_timeout(void (*func)(struct service_entry*), struct servic
     elem->service_entry = service;
 
     GetSystemTimeAsFileTime(&elem->time);
-    time.LowPart = elem->time.dwLowDateTime;
-    time.HighPart = elem->time.dwHighDateTime;
+    time.u.LowPart = elem->time.dwLowDateTime;
+    time.u.HighPart = elem->time.dwHighDateTime;
     time.QuadPart += timeout*10000000;
-    elem->time.dwLowDateTime = time.LowPart;
-    elem->time.dwHighDateTime = time.HighPart;
+    elem->time.dwLowDateTime = time.u.LowPart;
+    elem->time.dwHighDateTime = time.u.HighPart;
 
     EnterCriticalSection(&timeout_queue_cs);
     list_add_head(&timeout_queue, &elem->entry);
@@ -1640,8 +1640,8 @@ DWORD events_loop(void)
             ULARGE_INTEGER time;
 
             GetSystemTimeAsFileTime(&cur_time);
-            time.LowPart = cur_time.dwLowDateTime;
-            time.HighPart = cur_time.dwHighDateTime;
+            time.u.LowPart = cur_time.dwLowDateTime;
+            time.u.HighPart = cur_time.dwHighDateTime;
 
             EnterCriticalSection(&timeout_queue_cs);
             timeout = INFINITE;
@@ -1661,8 +1661,8 @@ DWORD events_loop(void)
                 {
                     ULARGE_INTEGER time_diff;
 
-                    time_diff.LowPart = iter->time.dwLowDateTime;
-                    time_diff.HighPart = iter->time.dwHighDateTime;
+                    time_diff.u.LowPart = iter->time.dwLowDateTime;
+                    time_diff.u.HighPart = iter->time.dwHighDateTime;
                     time_diff.QuadPart = (time_diff.QuadPart-time.QuadPart)/10000;
 
                     if(time_diff.QuadPart < timeout)
