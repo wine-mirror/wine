@@ -148,7 +148,10 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
         return E_NOTIMPL;
 
     if (desc.Format == src_format
-            && dst_size.width == src_size.width && dst_size.height == src_size.height && dst_size.depth == src_size.depth)
+            && dst_size.width == src_size.width
+            && dst_size.height == src_size.height
+            && dst_size.depth == src_size.depth
+            && color_key == 0)
     {
         const BYTE *src_addr;
 

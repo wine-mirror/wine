@@ -1668,7 +1668,8 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
 
     if (src_format == surfdesc.Format
             && dst_size.width == src_size.width
-            && dst_size.height == src_size.height) /* Simple copy. */
+            && dst_size.height == src_size.height
+            && color_key == 0) /* Simple copy. */
     {
         if (src_rect->left & (srcformatdesc->block_width - 1)
                 || src_rect->top & (srcformatdesc->block_height - 1)
