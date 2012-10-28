@@ -9075,6 +9075,7 @@ static HRESULT OLECONVERT_GetOLE10ProgID(LPSTORAGE pStorage, char *strProgID, DW
         if(hRes == S_OK)
         {
             *dwSize = WideCharToMultiByte(CP_ACP, 0, wstrProgID, -1, strProgID, *dwSize, NULL, FALSE);
+            CoTaskMemFree(wstrProgID);
         }
 
     }
