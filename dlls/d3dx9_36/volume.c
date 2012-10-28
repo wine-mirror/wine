@@ -150,11 +150,7 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
     if (desc.Format == src_format
             && dst_size.width == src_size.width && dst_size.height == src_size.height && dst_size.depth == src_size.depth)
     {
-        UINT row, slice;
-        BYTE *dst_addr;
         const BYTE *src_addr;
-        UINT row_block_count = (src_size.width + src_format_desc->block_width - 1) / src_format_desc->block_width;
-        UINT row_count = (src_size.height + src_format_desc->block_height - 1) / src_format_desc->block_height;
 
         if (src_box->Left & (src_format_desc->block_width - 1)
                 || src_box->Top & (src_format_desc->block_height - 1)
@@ -168,26 +164,17 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
             return E_NOTIMPL;
         }
 
+        src_addr = src_memory;
+        src_addr += src_box->Front * src_slice_pitch;
+        src_addr += (src_box->Top / src_format_desc->block_height) * src_row_pitch;
+        src_addr += (src_box->Left / src_format_desc->block_width) * src_format_desc->block_byte_count;
+
         hr = IDirect3DVolume9_LockBox(dst_volume, &locked_box, dst_box, 0);
         if (FAILED(hr)) return hr;
 
-        for (slice = 0; slice < src_size.depth; slice++)
-        {
-            src_addr = src_memory;
-            src_addr += (src_box->Front + slice) * src_slice_pitch;
-            src_addr += (src_box->Top / src_format_desc->block_height) * src_row_pitch;
-            src_addr += (src_box->Left / src_format_desc->block_width) * src_format_desc->block_byte_count;
-
-            dst_addr = locked_box.pBits;
-            dst_addr += slice * locked_box.SlicePitch;
-
-            for (row = 0; row < row_count; row++)
-            {
-                memcpy(dst_addr, src_addr, row_block_count * src_format_desc->block_byte_count);
-                src_addr += src_row_pitch;
-                dst_addr += locked_box.RowPitch;
-            }
-        }
+        copy_pixels(src_addr, src_row_pitch, src_slice_pitch,
+                locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch,
+                &dst_size, dst_format_desc);
 
         IDirect3DVolume9_UnlockBox(dst_volume);
     }
