@@ -1149,7 +1149,10 @@ static HRESULT WINAPI BPInternetProtocolSink_Switch(IInternetProtocolSink *iface
 
         task = heap_alloc(sizeof(switch_task_t));
         if(!task)
+        {
+            heap_free(data);
             return E_OUTOFMEMORY;
+        }
 
         task->data = data;
 
