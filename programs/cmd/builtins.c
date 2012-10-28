@@ -1746,7 +1746,7 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
  *
  * Returns a file handle which can be used to read the input lines from.
  */
-HANDLE WCMD_forf_getinputhandle(BOOL usebackq, WCHAR *itemstr, BOOL iscmd) {
+static HANDLE WCMD_forf_getinputhandle(BOOL usebackq, WCHAR *itemstr, BOOL iscmd) {
   WCHAR  temp_str[MAX_PATH];
   WCHAR  temp_file[MAX_PATH];
   WCHAR  temp_cmd[MAXSTRING];
