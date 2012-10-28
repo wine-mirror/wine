@@ -1454,16 +1454,16 @@ void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pit
 }
 
 /************************************************************
- * point_filter_simple_data
+ * point_filter_argb_pixels
  *
  * Copies the source buffer to the destination buffer, performing
  * any necessary format conversion, color keying and stretching
  * using a point filter.
  * Works only for ARGB formats with 1 - 4 bytes per pixel.
  */
-void point_filter_simple_data(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, struct volume *src_size,
+void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, const struct volume *src_size,
         const struct pixel_format_desc *src_format, BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch,
-        struct volume *dst_size, const struct pixel_format_desc *dst_format, D3DCOLOR color_key)
+        const struct volume *dst_size, const struct pixel_format_desc *dst_format, D3DCOLOR color_key)
 {
     struct argb_conversion_info conv_info, ck_conv_info;
     const struct pixel_format_desc *ck_format = NULL;
@@ -1701,7 +1701,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
 
             /* Always apply a point filter until D3DX_FILTER_LINEAR,
              * D3DX_FILTER_TRIANGLE and D3DX_FILTER_BOX are implemented. */
-            point_filter_simple_data(src_memory, src_pitch, 0, &src_size, srcformatdesc,
+            point_filter_argb_pixels(src_memory, src_pitch, 0, &src_size, srcformatdesc,
                     lockrect.pBits, lockrect.Pitch, 0, &dst_size, destformatdesc, color_key);
         }
 
