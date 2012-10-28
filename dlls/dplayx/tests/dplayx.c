@@ -2525,6 +2525,13 @@ static void test_PlayerName(void)
     hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], &playerName,
                                      DPSET_GUARANTEED );
     checkHR( DP_OK, hr );
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0], lpData, &dwDataSize );
+    checkHR( DP_OK, hr );
+    check( 45, dwDataSize );
+    checkStr( U1(playerName).lpszShortNameA, U1(*(LPDPNAME)lpData).lpszShortNameA );
+    checkStr( U2(playerName).lpszLongNameA,  U2(*(LPDPNAME)lpData).lpszLongNameA );
+    check( 0, ((LPDPNAME)lpData)->dwFlags );
 
     /* - Local (no propagation) */
     U1(playerName).lpszShortNameA = (LPSTR) "no_propagation";
