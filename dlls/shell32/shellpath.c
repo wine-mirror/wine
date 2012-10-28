@@ -3790,7 +3790,10 @@ static BOOL is_knownfolder( struct foldermanager *fm, const KNOWNFOLDERID *id )
 
     hr = get_known_folder_registry_path(id, NULL, &registryPath);
     if(SUCCEEDED(hr))
+    {
         hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, registryPath, 0, 0, &hKey));
+        HeapFree(GetProcessHeap(), 0, registryPath);
+    }
 
     if(SUCCEEDED(hr))
     {

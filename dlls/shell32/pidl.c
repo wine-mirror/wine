@@ -2503,9 +2503,10 @@ LPITEMIDLIST* _ILCopyaPidl(const LPCITEMIDLIST * apidlsrc, UINT cidl)
     UINT i;
     LPITEMIDLIST *apidldest;
 
-    apidldest = SHAlloc(cidl * sizeof(LPITEMIDLIST));
     if (!apidlsrc)
         return NULL;
+
+    apidldest = SHAlloc(cidl * sizeof(LPITEMIDLIST));
 
     for (i = 0; i < cidl; i++)
         apidldest[i] = ILClone(apidlsrc[i]);

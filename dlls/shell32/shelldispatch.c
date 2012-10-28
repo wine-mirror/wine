@@ -1061,7 +1061,7 @@ static HRESULT WINAPI ShellDispatch_IsServiceRunning(IShellDispatch2 *iface, BST
     if (!service)
     {
         ERR("Failed to open service %s (%u)\n", debugstr_w(name), GetLastError());
-        CloseServiceHandle(service);
+        CloseServiceHandle(scm);
         return S_OK;
     }
 
