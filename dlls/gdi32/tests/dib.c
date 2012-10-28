@@ -1308,6 +1308,7 @@ static void compare_hash_broken_todo(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const
         if(current_sha1[i] == NULL)
         {
             ok(current_sha1[i] != NULL, "missing hash, got \"%s\",\n", hash);
+            HeapFree(GetProcessHeap(), 0, hash);
             return;
         }
     }

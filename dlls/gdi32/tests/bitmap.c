@@ -3741,7 +3741,7 @@ static void test_GdiAlphaBlend(void)
     DeleteObject(bmpDst);
 
     ReleaseDC(NULL, hdcNull);
-
+    HeapFree(GetProcessHeap(), 0, bmi);
 }
 
 static void test_GdiGradientFill(void)
@@ -3854,6 +3854,7 @@ static void test_GdiGradientFill(void)
 
     DeleteDC( hdc );
     DeleteObject( bmp );
+    HeapFree(GetProcessHeap(), 0, bmi);
 }
 
 static void test_clipping(void)

@@ -545,6 +545,9 @@ BOOL BIDI_Reorder(
                 WARN("Out of memory\n");
                 HeapFree(GetProcessHeap(), 0, chartype);
                 HeapFree(GetProcessHeap(), 0, levels);
+                HeapFree(GetProcessHeap(), 0, run_glyphs);
+                HeapFree(GetProcessHeap(), 0, pwLogClust);
+                HeapFree(GetProcessHeap(), 0, psva);
                 return FALSE;
             }
             res = ScriptItemize(lpString + done, i, maxItems, &Control, &State, pItems, &nItems);
