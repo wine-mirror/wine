@@ -1640,6 +1640,7 @@ BOOL WINAPI SetupGetInfFileListW(PCWSTR dir, DWORD style, PWSTR buffer,
                                   ( 2 + dir_len + name_len) * sizeof( WCHAR ));
             if( !fullname )
             {
+                FindClose( hdl );
                 HeapFree( GetProcessHeap(), 0, filter );
                 SetLastError( ERROR_NOT_ENOUGH_MEMORY );
                 return FALSE;
