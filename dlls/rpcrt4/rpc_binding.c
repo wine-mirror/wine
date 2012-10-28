@@ -851,21 +851,22 @@ RPC_STATUS WINAPI RpcBindingFromStringBindingA( RPC_CSTR StringBinding, RPC_BIND
 
   if (ret == RPC_S_OK)
     ret = RPCRT4_CreateBindingA(&bind, FALSE, (char*)Protseq);
-  if (ret != RPC_S_OK) return ret;
-  ret = RPCRT4_SetBindingObject(bind, &Uuid);
-  if (ret == RPC_S_OK)
-    ret = RPCRT4_CompleteBindingA(bind, (char*)NetworkAddr, (char*)Endpoint, (char*)Options);
+  if (ret == RPC_S_OK) {
+      ret = RPCRT4_SetBindingObject(bind, &Uuid);
+      if (ret == RPC_S_OK)
+        ret = RPCRT4_CompleteBindingA(bind, (char*)NetworkAddr, (char*)Endpoint, (char*)Options);
+
+      if (ret == RPC_S_OK)
+        *Binding = (RPC_BINDING_HANDLE)bind;
+      else
+        RPCRT4_ReleaseBinding(bind);
+  }
 
   RpcStringFreeA(&Options);
   RpcStringFreeA(&Endpoint);
   RpcStringFreeA(&NetworkAddr);
   RpcStringFreeA(&Protseq);
   RpcStringFreeA(&ObjectUuid);
-
-  if (ret == RPC_S_OK) 
-    *Binding = (RPC_BINDING_HANDLE)bind;
-  else 
-    RPCRT4_ReleaseBinding(bind);
 
   return ret;
 }
@@ -890,21 +891,22 @@ RPC_STATUS WINAPI RpcBindingFromStringBindingW( RPC_WSTR StringBinding, RPC_BIND
 
   if (ret == RPC_S_OK)
     ret = RPCRT4_CreateBindingW(&bind, FALSE, Protseq);
-  if (ret != RPC_S_OK) return ret;
-  ret = RPCRT4_SetBindingObject(bind, &Uuid);
-  if (ret == RPC_S_OK)
-    ret = RPCRT4_CompleteBindingW(bind, NetworkAddr, Endpoint, Options);
+  if (ret == RPC_S_OK) {
+      ret = RPCRT4_SetBindingObject(bind, &Uuid);
+      if (ret == RPC_S_OK)
+        ret = RPCRT4_CompleteBindingW(bind, NetworkAddr, Endpoint, Options);
+
+      if (ret == RPC_S_OK)
+        *Binding = (RPC_BINDING_HANDLE)bind;
+      else
+        RPCRT4_ReleaseBinding(bind);
+  }
 
   RpcStringFreeW(&Options);
   RpcStringFreeW(&Endpoint);
   RpcStringFreeW(&NetworkAddr);
   RpcStringFreeW(&Protseq);
   RpcStringFreeW(&ObjectUuid);
-
-  if (ret == RPC_S_OK)
-    *Binding = (RPC_BINDING_HANDLE)bind;
-  else
-    RPCRT4_ReleaseBinding(bind);
 
   return ret;
 }
