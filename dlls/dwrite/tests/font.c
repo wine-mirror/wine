@@ -21,8 +21,6 @@
 #define COBJMACROS
 
 #include "windows.h"
-
-#include "initguid.h"
 #include "dwrite.h"
 
 #include "wine/test.h"
