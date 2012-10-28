@@ -4070,10 +4070,10 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
       SLTG_TypeInfoTail *pTITail;
       SLTG_MemberHeader *pMemHeader;
 
-      if(strcmp(pBlkEntry[order].index_string + (char*)pMagic,
-		pOtherTypeInfoBlks[i].index_name)) {
-	FIXME_(typelib)("Index strings don't match\n");
-	return NULL;
+      if(strcmp(pBlkEntry[order].index_string + (char*)pMagic, pOtherTypeInfoBlks[i].index_name)) {
+        FIXME_(typelib)("Index strings don't match\n");
+        heap_free(pOtherTypeInfoBlks);
+        return NULL;
       }
 
       pTIHeader = pBlk;
@@ -4189,6 +4189,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
     if(i != pTypeLibImpl->TypeInfoCount) {
       FIXME("Somehow processed %d TypeInfos\n", i);
+      heap_free(pOtherTypeInfoBlks);
       return NULL;
     }
 

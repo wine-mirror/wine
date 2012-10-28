@@ -5272,7 +5272,8 @@ static ICreateTypeLib2 *ICreateTypeLib2_Constructor(SYSKIND syskind, LPCOLESTR f
 
     if (failed) {
         ICreateTypeLib2_fnRelease(&create_tlib2->ICreateTypeLib2_iface);
-	return NULL;
+        heap_free(create_tlib2);
+        return NULL;
     }
 
     return &create_tlib2->ICreateTypeLib2_iface;
