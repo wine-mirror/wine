@@ -145,89 +145,40 @@ HRESULT WINAPI D3DXSaveSurfaceToFileW(const WCHAR *destfile, D3DXIMAGE_FILEFORMA
 
 
 /* Volume Loading/Saving */
-HRESULT WINAPI D3DXLoadVolumeFromFileA(       LPDIRECT3DVOLUME9 destvolume,
-                                              CONST PALETTEENTRY *destpalette,
-                                              CONST D3DBOX *destbox,
-                                              LPCSTR srcfile,
-                                              CONST D3DBOX *srcbox,
-                                              DWORD filter,
-                                              D3DCOLOR colorkey,
-                                              D3DXIMAGE_INFO *srcinfo);
+HRESULT WINAPI D3DXLoadVolumeFromFileA(struct IDirect3DVolume9 *destvolume,
+        const PALETTEENTRY *destpalette, const D3DBOX *destbox, const char *srcfile,
+        const D3DBOX *srcbox, DWORD filter, D3DCOLOR colorkey, D3DXIMAGE_INFO *srcinfo);
+HRESULT WINAPI D3DXLoadVolumeFromFileW( struct IDirect3DVolume9 *destvolume,
+        const PALETTEENTRY *destpalette, const D3DBOX *destbox, const WCHAR *srcfile,
+        const D3DBOX *srcbox, DWORD filter, D3DCOLOR colorkey, D3DXIMAGE_INFO *srcinfo);
+#define D3DXLoadVolumeFromFile WINELIB_NAME_AW(D3DXLoadVolumeFromFile)
 
-HRESULT WINAPI D3DXLoadVolumeFromFileW(       LPDIRECT3DVOLUME9 destVolume,
-                                              CONST PALETTEENTRY *destpalette,
-                                              CONST D3DBOX *destbox,
-                                              LPCWSTR srcfile,
-                                              CONST D3DBOX *srcbox,
-                                              DWORD filter,
-                                              D3DCOLOR colorkey,
-                                              D3DXIMAGE_INFO *srcinfo);
-#define        D3DXLoadVolumeFromFile WINELIB_NAME_AW(D3DXLoadVolumeFromFile)
+HRESULT WINAPI D3DXLoadVolumeFromResourceA(struct IDirect3DVolume9 *destvolume,
+        const PALETTEENTRY *destpalette, const D3DBOX *destbox, HMODULE srcmodule, const char *resource,
+        const D3DBOX *srcbox, DWORD filter, D3DCOLOR colorkey, D3DXIMAGE_INFO *srcinfo);
+HRESULT WINAPI D3DXLoadVolumeFromResourceW(struct IDirect3DVolume9 *destvolume,
+        const PALETTEENTRY *destpalette, const D3DBOX *destbox, HMODULE srcmodule, const WCHAR *resource,
+        const D3DBOX *srcbox, DWORD filter, D3DCOLOR colorkey, D3DXIMAGE_INFO *srcinfo);
+#define D3DXLoadVolumeFromResource WINELIB_NAME_AW(D3DXLoadVolumeFromResource)
 
-HRESULT WINAPI D3DXLoadVolumeFromResourceA(   LPDIRECT3DVOLUME9 destVolume,
-                                              CONST PALETTEENTRY *destpalette,
-                                              CONST D3DBOX *destbox,
-                                              HMODULE srcmodule,
-                                              LPCSTR resource,
-                                              CONST D3DBOX *srcbox,
-                                              DWORD filter,
-                                              D3DCOLOR colorkey,
-                                              D3DXIMAGE_INFO *srcinfo);
+HRESULT WINAPI D3DXLoadVolumeFromFileInMemory(struct IDirect3DVolume9 *destvolume,
+        const PALETTEENTRY *destpalette, const D3DBOX *destbox, const void *srcdata, UINT srcdatasize,
+        const D3DBOX *srcbox, DWORD filter, D3DCOLOR colorkey, D3DXIMAGE_INFO *srcinfo);
 
-HRESULT WINAPI D3DXLoadVolumeFromResourceW(   LPDIRECT3DVOLUME9 destVolume,
-                                              CONST PALETTEENTRY *destpalette,
-                                              CONST D3DBOX *destbox,
-                                              HMODULE srcmodule,
-                                              LPCWSTR resource,
-                                              CONST D3DBOX *srcbox,
-                                              DWORD filter,
-                                              D3DCOLOR colorkey,
-                                              D3DXIMAGE_INFO *srcinfo);
-#define        D3DXLoadVolumeFromResource WINELIB_NAME_AW(D3DXLoadVolumeFromResource)
+HRESULT WINAPI D3DXLoadVolumeFromVolume(struct IDirect3DVolume9 *destvolume,
+        const PALETTEENTRY *destpalette, const D3DBOX *destbox, struct IDirect3DVolume9 *srcvolume,
+        const PALETTEENTRY *srcpalette, const D3DBOX *srcbox, DWORD filter, D3DCOLOR colorkey);
 
-HRESULT WINAPI D3DXLoadVolumeFromFileInMemory(LPDIRECT3DVOLUME9 destvolume,
-                                              CONST PALETTEENTRY *destpalette,
-                                              CONST D3DBOX *destbox,
-                                              LPCVOID srcdata,
-                                              UINT srcdatasize,
-                                              CONST D3DBOX *srcbox,
-                                              DWORD filter,
-                                              D3DCOLOR colorkey,
-                                              D3DXIMAGE_INFO *srcinfo);
+HRESULT WINAPI D3DXLoadVolumeFromMemory(struct IDirect3DVolume9 *destvolume,
+        const PALETTEENTRY *destpalette, const D3DBOX *destbox, const void *srcmemory,
+        D3DFORMAT srcformat, UINT srcrowpitch, UINT srcslicepitch, const PALETTEENTRY *srcpalette,
+        const D3DBOX *srcbox, DWORD filter, D3DCOLOR colorkey);
 
-HRESULT WINAPI D3DXLoadVolumeFromVolume(      LPDIRECT3DVOLUME9 destvolume,
-                                              CONST PALETTEENTRY *destpalette,
-                                              CONST D3DBOX *destbox,
-                                              LPDIRECT3DVOLUME9 srcvolume,
-                                              CONST PALETTEENTRY *srcpalette,
-                                              CONST D3DBOX *srcbox,
-                                              DWORD filter,
-                                              D3DCOLOR colorkey);
-
-HRESULT WINAPI D3DXLoadVolumeFromMemory(      LPDIRECT3DVOLUME9 destvolume,
-                                              CONST PALETTEENTRY *destpalette,
-                                              CONST D3DBOX *destbox,
-                                              LPCVOID srcmemory,
-                                              D3DFORMAT srcformat,
-                                              UINT srcrowpitch,
-                                              UINT srcslicepitch,
-                                              CONST PALETTEENTRY *srcpalette,
-                                              CONST D3DBOX *srcbox,
-                                              DWORD filter,
-                                              D3DCOLOR colorkey);
-
-HRESULT WINAPI D3DXSaveVolumeToFileA(         LPCSTR destfile,
-                                              D3DXIMAGE_FILEFORMAT destformat,
-                                              LPDIRECT3DVOLUME9 srcvolume,
-                                              CONST PALETTEENTRY *srcpalette,
-                                              CONST D3DBOX *srcbox);
-
-HRESULT WINAPI D3DXSaveVolumeToFileW(         LPCWSTR destfile,
-                                              D3DXIMAGE_FILEFORMAT destformat,
-                                              LPDIRECT3DVOLUME9 srcvolume,
-                                              CONST PALETTEENTRY *srcpalette,
-                                              CONST D3DBOX *srcbox);
-#define        D3DXSaveVolumeToFile WINELIB_NAME_AW(D3DXSaveVolumeToFile)
+HRESULT WINAPI D3DXSaveVolumeToFileA(const char *destfile, D3DXIMAGE_FILEFORMAT destformat,
+        struct IDirect3DVolume9 *srcvolume, const PALETTEENTRY *srcpalette, const D3DBOX *srcbox);
+HRESULT WINAPI D3DXSaveVolumeToFileW(const WCHAR *destfile, D3DXIMAGE_FILEFORMAT destformat,
+        struct IDirect3DVolume9 *srcvolume, const PALETTEENTRY *srcpalette, const D3DBOX *srcbox);
+#define D3DXSaveVolumeToFile WINELIB_NAME_AW(D3DXSaveVolumeToFile)
 
 
 /* Texture, cube texture and volume texture creation */
