@@ -711,24 +711,25 @@ FileMonikerImpl_ComposeWith(IMoniker* iface, IMoniker* pmkRight,
         /* the length of the composed path string  is raised by the sum of the two paths lengths  */
         newStr=HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(lstrlenW(str1)+lstrlenW(str2)+1));
 
-	  if (newStr==NULL)
-		return E_OUTOFMEMORY;
+        if (newStr)
+        {
+            /* new path is the concatenation of the rest of str1 and str2 */
+            for(*newStr=0,j=0;j<=lastIdx1;j++)
+                strcatW(newStr,strDec1[j]);
 
-        /* new path is the concatenation of the rest of str1 and str2 */
-        for(*newStr=0,j=0;j<=lastIdx1;j++)
-            strcatW(newStr,strDec1[j]);
+            if ((strDec2[i]==NULL && lastIdx1>-1 && lastIdx2>-1) || lstrcmpW(strDec2[i],bkSlash)!=0)
+                strcatW(newStr,bkSlash);
 
-        if ((strDec2[i]==NULL && lastIdx1>-1 && lastIdx2>-1) || lstrcmpW(strDec2[i],bkSlash)!=0)
-            strcatW(newStr,bkSlash);
+            for(j=i;j<=lastIdx2;j++)
+                strcatW(newStr,strDec2[j]);
 
-        for(j=i;j<=lastIdx2;j++)
-            strcatW(newStr,strDec2[j]);
+            /* create a new moniker with the new string */
+            res=CreateFileMoniker(newStr,ppmkComposite);
 
-        /* create a new moniker with the new string */
-        res=CreateFileMoniker(newStr,ppmkComposite);
-
-        /* free all strings space memory used by this function */
-        HeapFree(GetProcessHeap(),0,newStr);
+            /* free all strings space memory used by this function */
+            HeapFree(GetProcessHeap(),0,newStr);
+        }
+        else res = E_OUTOFMEMORY;
 
         for(i=0; strDec1[i]!=NULL;i++)
             CoTaskMemFree(strDec1[i]);
