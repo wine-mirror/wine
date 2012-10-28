@@ -1473,7 +1473,7 @@ static void shader_none_context_destroyed(void *shader_priv, const struct wined3
 static HRESULT shader_none_alloc(struct wined3d_device *device, const struct fragment_pipeline *fragment_pipe)
 {
     struct shader_none_priv *priv;
-    HRESULT hr;
+    void *fragment_priv;
 
     if (!(priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv))))
     {
@@ -1481,13 +1481,14 @@ static HRESULT shader_none_alloc(struct wined3d_device *device, const struct fra
         return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr = fragment_pipe->alloc_private(device)))
+    if (!(fragment_priv = fragment_pipe->alloc_private(&none_shader_backend, priv)))
     {
-        ERR("Failed to initialize fragment pipe, hr %#x.\n", hr);
+        ERR("Failed to initialize fragment pipe.\n");
         HeapFree(GetProcessHeap(), 0, priv);
-        return hr;
+        return E_FAIL;
     }
 
+    device->fragment_priv = fragment_priv;
     priv->fragment_pipe = fragment_pipe;
     device->shader_priv = priv;
 

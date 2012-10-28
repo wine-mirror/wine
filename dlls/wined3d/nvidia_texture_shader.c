@@ -720,7 +720,11 @@ static void nvrc_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct
     caps->MaxSimultaneousTextures = gl_info->limits.textures;
 }
 
-static HRESULT nvrc_fragment_alloc(struct wined3d_device *device) { return WINED3D_OK; }
+static void *nvrc_fragment_alloc(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv)
+{
+    return shader_priv;
+}
+
 /* Context activation is done by the caller. */
 static void nvrc_fragment_free(struct wined3d_device *device) {}
 

@@ -4881,13 +4881,13 @@ static const struct wine_rb_functions sig_tree_functions =
 static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct fragment_pipeline *fragment_pipe)
 {
     struct shader_arb_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*priv));
-    HRESULT hr;
+    void *fragment_priv;
 
-    if (FAILED(hr = fragment_pipe->alloc_private(device)))
+    if (!(fragment_priv = fragment_pipe->alloc_private(&arb_program_shader_backend, priv)))
     {
-        ERR("Failed to initialize fragment pipe, hr %#x.\n", hr);
+        ERR("Failed to initialize fragment pipe.\n");
         HeapFree(GetProcessHeap(), 0, priv);
-        return hr;
+        return E_FAIL;
     }
 
     priv->vshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
@@ -4909,6 +4909,7 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct frag
         ERR("RB tree init failed\n");
         goto fail;
     }
+    device->fragment_priv = fragment_priv;
     priv->fragment_pipe = fragment_pipe;
     device->shader_priv = priv;
     return WINED3D_OK;
@@ -5665,31 +5666,29 @@ static void arbfp_enable(const struct wined3d_gl_info *gl_info, BOOL enable)
     }
 }
 
-static HRESULT arbfp_alloc(struct wined3d_device *device)
+static void *arbfp_alloc(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv)
 {
     struct shader_arb_priv *priv;
-    /* Share private data between the shader backend and the pipeline replacement, if both
-     * are the arb implementation. This is needed to figure out whether ARBfp should be disabled
-     * if no pixel shader is bound or not
-     */
-    if (device->shader_backend == &arb_program_shader_backend)
-    {
-        device->fragment_priv = device->shader_priv;
-    }
-    else
-    {
-        device->fragment_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_arb_priv));
-        if (!device->fragment_priv) return E_OUTOFMEMORY;
-    }
-    priv = device->fragment_priv;
+
+    /* Share private data between the shader backend and the pipeline
+     * replacement, if both are the arb implementation. This is needed to
+     * figure out whether ARBfp should be disabled if no pixel shader is bound
+     * or not. */
+    if (shader_backend == &arb_program_shader_backend)
+        priv = shader_priv;
+    else if (!(priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*priv))))
+        return NULL;
+
     if (wine_rb_init(&priv->fragment_shaders, &wined3d_ffp_frag_program_rb_functions) == -1)
     {
         ERR("Failed to initialize rbtree.\n");
-        HeapFree(GetProcessHeap(), 0, device->fragment_priv);
-        return E_OUTOFMEMORY;
+        if (priv != shader_priv)
+            HeapFree(GetProcessHeap(), 0, priv);
+        return NULL;
     }
     priv->use_arbfp_fixed_func = TRUE;
-    return WINED3D_OK;
+
+    return priv;
 }
 
 /* Context activation is done by the caller. */

@@ -5233,13 +5233,13 @@ static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct fra
     struct shader_glsl_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
     SIZE_T stack_size = wined3d_log2i(max(gl_info->limits.glsl_vs_float_constants,
             gl_info->limits.glsl_ps_float_constants)) + 1;
-    HRESULT hr;
+    void *fragment_priv;
 
-    if (FAILED(hr = fragment_pipe->alloc_private(device)))
+    if (!(fragment_priv = fragment_pipe->alloc_private(&glsl_shader_backend, priv)))
     {
-        ERR("Failed to initialize fragment pipe, hr %#x.\n", hr);
+        ERR("Failed to initialize fragment pipe.\n");
         HeapFree(GetProcessHeap(), 0, priv);
-        return hr;
+        return E_FAIL;
     }
 
     if (!shader_buffer_init(&priv->shader_buffer))
@@ -5274,6 +5274,7 @@ static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct fra
     }
 
     priv->next_constant_version = 1;
+    device->fragment_priv = fragment_priv;
     priv->fragment_pipe = fragment_pipe;
 
     device->shader_priv = priv;
