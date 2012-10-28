@@ -76,9 +76,9 @@ static HRESULT get_corversion(LPWSTR version, DWORD size)
 
     pGetCORVersion = (void *)GetProcAddress(hmscoree, "GetCORVersion");
     if (!pGetCORVersion)
-        return E_FAIL;
-
-    hr = pGetCORVersion(version, size, &len);
+        hr = E_FAIL;
+    else
+        hr = pGetCORVersion(version, size, &len);
 
     FreeLibrary(hmscoree);
     return hr;
