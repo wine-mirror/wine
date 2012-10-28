@@ -2386,7 +2386,10 @@ static HRESULT create_EnumSTATPROPSETSTG(
     /* add all the property set elements into a list */
     r = IStorage_EnumElements(stg, 0, NULL, 0, &penum);
     if (FAILED(r))
+    {
+        enumx_Release(enumx);
         return E_OUTOFMEMORY;
+    }
 
     while (1)
     {
