@@ -988,6 +988,7 @@ static HDDEDATA WINAPI dde_proc(UINT type, UINT uFmt, HCONV hConv, HSZ hsz1, HSZ
 
         if(DdeGetData(data, (BYTE*)url, size, 0) != size) {
             ERR("error during read\n");
+            heap_free(url);
             break;
         }
 
