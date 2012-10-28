@@ -255,7 +255,7 @@ static DWORD WINAPI ID3DXMeshImpl_GetOptions(ID3DXMesh *iface)
     return This->options;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_GetDevice(ID3DXMesh *iface, LPDIRECT3DDEVICE9 *device)
+static HRESULT WINAPI ID3DXMeshImpl_GetDevice(struct ID3DXMesh *iface, struct IDirect3DDevice9 **device)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
@@ -268,7 +268,8 @@ static HRESULT WINAPI ID3DXMeshImpl_GetDevice(ID3DXMesh *iface, LPDIRECT3DDEVICE
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_CloneMeshFVF(ID3DXMesh *iface, DWORD options, DWORD fvf, LPDIRECT3DDEVICE9 device, LPD3DXMESH *clone_mesh)
+static HRESULT WINAPI ID3DXMeshImpl_CloneMeshFVF(struct ID3DXMesh *iface, DWORD options, DWORD fvf,
+        struct IDirect3DDevice9 *device, struct ID3DXMesh **clone_mesh)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
     HRESULT hr;
@@ -675,8 +676,8 @@ static BOOL declaration_equals(CONST D3DVERTEXELEMENT9 *declaration1, CONST D3DV
     return FALSE;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_CloneMesh(ID3DXMesh *iface, DWORD options, CONST D3DVERTEXELEMENT9 *declaration, LPDIRECT3DDEVICE9 device,
-                                              LPD3DXMESH *clone_mesh_out)
+static HRESULT WINAPI ID3DXMeshImpl_CloneMesh(struct ID3DXMesh *iface, DWORD options,
+        const D3DVERTEXELEMENT9 *declaration, struct IDirect3DDevice9 *device, struct ID3DXMesh **clone_mesh_out)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
     ID3DXMeshImpl *cloned_this;
@@ -2431,8 +2432,8 @@ BOOL WINAPI D3DXSphereBoundProbe(CONST D3DXVECTOR3 *pcenter, FLOAT radius, CONST
 /*************************************************************************
  * D3DXCreateMesh
  */
-HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, CONST D3DVERTEXELEMENT9 *declaration,
-                              LPDIRECT3DDEVICE9 device, LPD3DXMESH *mesh)
+HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options,
+        const D3DVERTEXELEMENT9 *declaration, struct IDirect3DDevice9 *device, struct ID3DXMesh **mesh)
 {
     HRESULT hr;
     DWORD fvf;
@@ -2593,8 +2594,8 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
 /*************************************************************************
  * D3DXCreateMeshFVF
  */
-HRESULT WINAPI D3DXCreateMeshFVF(DWORD numfaces, DWORD numvertices, DWORD options, DWORD fvf,
-                                 LPDIRECT3DDEVICE9 device, LPD3DXMESH *mesh)
+HRESULT WINAPI D3DXCreateMeshFVF(DWORD numfaces, DWORD numvertices, DWORD options,
+        DWORD fvf, struct IDirect3DDevice9 *device, struct ID3DXMesh **mesh)
 {
     HRESULT hr;
     D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE];
@@ -3274,15 +3275,10 @@ static HRESULT generate_effects(ID3DXBuffer *materials, DWORD num_materials,
 }
 
 /* change to D3DXLoadSkinMeshFromXof when ID3DXFileData is implemented */
-static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
-                                       DWORD options,
-                                       LPDIRECT3DDEVICE9 device,
-                                       LPD3DXBUFFER *adjacency_out,
-                                       LPD3DXBUFFER *materials_out,
-                                       LPD3DXBUFFER *effects_out,
-                                       DWORD *num_materials_out,
-                                       LPD3DXSKININFO *skin_info_out,
-                                       LPD3DXMESH *mesh_out)
+static HRESULT load_skin_mesh_from_xof(struct IDirectXFileData *filedata, DWORD options,
+        struct IDirect3DDevice9 *device, struct ID3DXBuffer **adjacency_out, struct ID3DXBuffer **materials_out,
+        struct ID3DXBuffer **effects_out, DWORD *num_materials_out, struct ID3DXSkinInfo **skin_info_out,
+        struct ID3DXMesh **mesh_out)
 {
     HRESULT hr;
     DWORD *index_in_ptr;
@@ -3518,13 +3514,9 @@ cleanup:
     return hr;
 }
 
-HRESULT WINAPI D3DXLoadMeshHierarchyFromXA(LPCSTR filename,
-                                           DWORD options,
-                                           LPDIRECT3DDEVICE9 device,
-                                           LPD3DXALLOCATEHIERARCHY alloc_hier,
-                                           LPD3DXLOADUSERDATA load_user_data,
-                                           LPD3DXFRAME *frame_hierarchy,
-                                           LPD3DXANIMATIONCONTROLLER *anim_controller)
+HRESULT WINAPI D3DXLoadMeshHierarchyFromXA(const char *filename, DWORD options, struct IDirect3DDevice9 *device,
+        struct ID3DXAllocateHierarchy *alloc_hier, struct ID3DXLoadUserData *load_user_data,
+        D3DXFRAME **frame_hierarchy, struct ID3DXAnimationController **anim_controller)
 {
     HRESULT hr;
     int len;
@@ -3548,13 +3540,9 @@ HRESULT WINAPI D3DXLoadMeshHierarchyFromXA(LPCSTR filename,
     return hr;
 }
 
-HRESULT WINAPI D3DXLoadMeshHierarchyFromXW(LPCWSTR filename,
-                                           DWORD options,
-                                           LPDIRECT3DDEVICE9 device,
-                                           LPD3DXALLOCATEHIERARCHY alloc_hier,
-                                           LPD3DXLOADUSERDATA load_user_data,
-                                           LPD3DXFRAME *frame_hierarchy,
-                                           LPD3DXANIMATIONCONTROLLER *anim_controller)
+HRESULT WINAPI D3DXLoadMeshHierarchyFromXW(const WCHAR *filename, DWORD options, struct IDirect3DDevice9 *device,
+        struct ID3DXAllocateHierarchy *alloc_hier, struct ID3DXLoadUserData *load_user_data,
+        D3DXFRAME **frame_hierarchy, struct ID3DXAnimationController **anim_controller)
 {
     HRESULT hr;
     DWORD size;
@@ -3600,11 +3588,8 @@ static HRESULT filedata_get_name(IDirectXFileData *filedata, char **name)
     return hr;
 }
 
-static HRESULT load_mesh_container(IDirectXFileData *filedata,
-                                   DWORD options,
-                                   LPDIRECT3DDEVICE9 device,
-                                   LPD3DXALLOCATEHIERARCHY alloc_hier,
-                                   D3DXMESHCONTAINER **mesh_container)
+static HRESULT load_mesh_container(struct IDirectXFileData *filedata, DWORD options, struct IDirect3DDevice9 *device,
+        struct ID3DXAllocateHierarchy *alloc_hier, D3DXMESHCONTAINER **mesh_container)
 {
     HRESULT hr;
     ID3DXBuffer *adjacency = NULL;
@@ -3670,11 +3655,8 @@ static HRESULT parse_transform_matrix(IDirectXFileData *filedata, D3DXMATRIX *tr
     return D3D_OK;
 }
 
-static HRESULT load_frame(IDirectXFileData *filedata,
-                          DWORD options,
-                          LPDIRECT3DDEVICE9 device,
-                          LPD3DXALLOCATEHIERARCHY alloc_hier,
-                          D3DXFRAME **frame_out)
+static HRESULT load_frame(struct IDirectXFileData *filedata, DWORD options, struct IDirect3DDevice9 *device,
+        struct ID3DXAllocateHierarchy *alloc_hier, D3DXFRAME **frame_out)
 {
     HRESULT hr;
     const GUID *type;
@@ -3717,14 +3699,10 @@ static HRESULT load_frame(IDirectXFileData *filedata,
     return hr;
 }
 
-HRESULT WINAPI D3DXLoadMeshHierarchyFromXInMemory(LPCVOID memory,
-                                                  DWORD memory_size,
-                                                  DWORD options,
-                                                  LPDIRECT3DDEVICE9 device,
-                                                  LPD3DXALLOCATEHIERARCHY alloc_hier,
-                                                  LPD3DXLOADUSERDATA load_user_data,
-                                                  LPD3DXFRAME *frame_hierarchy,
-                                                  LPD3DXANIMATIONCONTROLLER *anim_controller)
+HRESULT WINAPI D3DXLoadMeshHierarchyFromXInMemory(const void *memory, DWORD memory_size, DWORD options,
+        struct IDirect3DDevice9 *device, struct ID3DXAllocateHierarchy *alloc_hier,
+        struct ID3DXLoadUserData *load_user_data, D3DXFRAME **frame_hierarchy,
+        struct ID3DXAnimationController **anim_controller)
 {
     HRESULT hr;
     IDirectXFile *dxfile = NULL;
@@ -3867,14 +3845,9 @@ HRESULT WINAPI D3DXFrameDestroy(LPD3DXFRAME frame, LPD3DXALLOCATEHIERARCHY alloc
     return D3D_OK;
 }
 
-HRESULT WINAPI D3DXLoadMeshFromXA(LPCSTR filename,
-                                  DWORD options,
-                                  LPDIRECT3DDEVICE9 device,
-                                  LPD3DXBUFFER *adjacency,
-                                  LPD3DXBUFFER *materials,
-                                  LPD3DXBUFFER *effect_instances,
-                                  DWORD *num_materials,
-                                  LPD3DXMESH *mesh)
+HRESULT WINAPI D3DXLoadMeshFromXA(const char *filename, DWORD options, struct IDirect3DDevice9 *device,
+        struct ID3DXBuffer **adjacency, struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
+        DWORD *num_materials, struct ID3DXMesh **mesh)
 {
     HRESULT hr;
     int len;
@@ -3898,14 +3871,9 @@ HRESULT WINAPI D3DXLoadMeshFromXA(LPCSTR filename,
     return hr;
 }
 
-HRESULT WINAPI D3DXLoadMeshFromXW(LPCWSTR filename,
-                                  DWORD options,
-                                  LPDIRECT3DDEVICE9 device,
-                                  LPD3DXBUFFER *adjacency,
-                                  LPD3DXBUFFER *materials,
-                                  LPD3DXBUFFER *effect_instances,
-                                  DWORD *num_materials,
-                                  LPD3DXMESH *mesh)
+HRESULT WINAPI D3DXLoadMeshFromXW(const WCHAR *filename, DWORD options, struct IDirect3DDevice9 *device,
+        struct ID3DXBuffer **adjacency, struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
+        DWORD *num_materials, struct ID3DXMesh **mesh)
 {
     HRESULT hr;
     DWORD size;
@@ -3929,16 +3897,9 @@ HRESULT WINAPI D3DXLoadMeshFromXW(LPCWSTR filename,
     return hr;
 }
 
-HRESULT WINAPI D3DXLoadMeshFromXResource(HMODULE module,
-                                         LPCSTR name,
-                                         LPCSTR type,
-                                         DWORD options,
-                                         LPDIRECT3DDEVICE9 device,
-                                         LPD3DXBUFFER *adjacency,
-                                         LPD3DXBUFFER *materials,
-                                         LPD3DXBUFFER *effect_instances,
-                                         DWORD *num_materials,
-                                         LPD3DXMESH *mesh)
+HRESULT WINAPI D3DXLoadMeshFromXResource(HMODULE module, const char *name, const char *type, DWORD options,
+        struct IDirect3DDevice9 *device, struct ID3DXBuffer **adjacency, struct ID3DXBuffer **materials,
+        struct ID3DXBuffer **effect_instances, DWORD *num_materials, struct ID3DXMesh **mesh)
 {
     HRESULT hr;
     HRSRC resinfo;
@@ -3970,12 +3931,8 @@ struct mesh_container
     D3DXMATRIX transform;
 };
 
-static HRESULT parse_frame(IDirectXFileData *filedata,
-                           DWORD options,
-                           LPDIRECT3DDEVICE9 device,
-                           const D3DXMATRIX *parent_transform,
-                           struct list *container_list,
-                           DWORD provide_flags)
+static HRESULT parse_frame(struct IDirectXFileData *filedata, DWORD options, struct IDirect3DDevice9 *device,
+        const D3DXMATRIX *parent_transform, struct list *container_list, DWORD provide_flags)
 {
     HRESULT hr;
     D3DXMATRIX transform = *parent_transform;
@@ -4009,15 +3966,9 @@ static HRESULT parse_frame(IDirectXFileData *filedata,
     return hr == DXFILEERR_NOMOREOBJECTS ? D3D_OK : hr;
 }
 
-HRESULT WINAPI D3DXLoadMeshFromXInMemory(LPCVOID memory,
-                                         DWORD memory_size,
-                                         DWORD options,
-                                         LPDIRECT3DDEVICE9 device,
-                                         LPD3DXBUFFER *adjacency_out,
-                                         LPD3DXBUFFER *materials_out,
-                                         LPD3DXBUFFER *effects_out,
-                                         DWORD *num_materials_out,
-                                         LPD3DXMESH *mesh_out)
+HRESULT WINAPI D3DXLoadMeshFromXInMemory(const void *memory, DWORD memory_size, DWORD options,
+        struct IDirect3DDevice9 *device, struct ID3DXBuffer **adjacency_out, struct ID3DXBuffer **materials_out,
+        struct ID3DXBuffer **effects_out, DWORD *num_materials_out, struct ID3DXMesh **mesh_out)
 {
     HRESULT hr;
     IDirectXFile *dxfile = NULL;
@@ -4365,8 +4316,8 @@ cleanup:
     return hr;
 }
 
-HRESULT WINAPI D3DXCreateBox(LPDIRECT3DDEVICE9 device, FLOAT width, FLOAT height,
-                             FLOAT depth, LPD3DXMESH* mesh, LPD3DXBUFFER* adjacency)
+HRESULT WINAPI D3DXCreateBox(struct IDirect3DDevice9 *device, float width, float height,
+        float depth, struct ID3DXMesh **mesh, struct ID3DXBuffer **adjacency)
 {
     FIXME("(%p, %f, %f, %f, %p, %p): stub\n", device, width, height, depth, mesh, adjacency);
 
@@ -4427,8 +4378,8 @@ static WORD vertex_index(UINT slices, int slice, int stack)
     return stack*slices+slice+1;
 }
 
-HRESULT WINAPI D3DXCreateSphere(LPDIRECT3DDEVICE9 device, FLOAT radius, UINT slices,
-                                UINT stacks, LPD3DXMESH* mesh, LPD3DXBUFFER* adjacency)
+HRESULT WINAPI D3DXCreateSphere(struct IDirect3DDevice9 *device, float radius, UINT slices,
+        UINT stacks, struct ID3DXMesh **mesh, struct ID3DXBuffer **adjacency)
 {
     DWORD number_of_vertices, number_of_faces;
     HRESULT hr;
@@ -4598,8 +4549,8 @@ HRESULT WINAPI D3DXCreateSphere(LPDIRECT3DDEVICE9 device, FLOAT radius, UINT sli
     return D3D_OK;
 }
 
-HRESULT WINAPI D3DXCreateCylinder(LPDIRECT3DDEVICE9 device, FLOAT radius1, FLOAT radius2, FLOAT length, UINT slices,
-                                  UINT stacks, LPD3DXMESH* mesh, LPD3DXBUFFER* adjacency)
+HRESULT WINAPI D3DXCreateCylinder(struct IDirect3DDevice9 *device, float radius1, float radius2,
+        float length, UINT slices, UINT stacks, struct ID3DXMesh **mesh, struct ID3DXBuffer **adjacency)
 {
     DWORD number_of_vertices, number_of_faces;
     HRESULT hr;
@@ -4784,18 +4735,16 @@ HRESULT WINAPI D3DXCreateCylinder(LPDIRECT3DDEVICE9 device, FLOAT radius1, FLOAT
     return D3D_OK;
 }
 
-HRESULT WINAPI D3DXCreateTeapot(LPDIRECT3DDEVICE9 device, LPD3DXMESH *mesh, LPD3DXBUFFER* adjacency)
+HRESULT WINAPI D3DXCreateTeapot(struct IDirect3DDevice9 *device,
+        struct ID3DXMesh **mesh, struct ID3DXBuffer **adjacency)
 {
     FIXME("(%p, %p, %p): stub\n", device, mesh, adjacency);
 
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI D3DXCreateTextA(LPDIRECT3DDEVICE9 device,
-                               HDC hdc, LPCSTR text,
-                               FLOAT deviation, FLOAT extrusion,
-                               LPD3DXMESH *mesh, LPD3DXBUFFER *adjacency,
-                               LPGLYPHMETRICSFLOAT glyphmetrics)
+HRESULT WINAPI D3DXCreateTextA(struct IDirect3DDevice9 *device, HDC hdc, const char *text, float deviation,
+        float extrusion, struct ID3DXMesh **mesh, struct ID3DXBuffer **adjacency, GLYPHMETRICSFLOAT *glyphmetrics)
 {
     HRESULT hr;
     int len;
@@ -5600,11 +5549,8 @@ static HRESULT triangulate(struct triangulation_array *triangulations)
     return S_OK;
 }
 
-HRESULT WINAPI D3DXCreateTextW(LPDIRECT3DDEVICE9 device,
-                               HDC hdc, LPCWSTR text,
-                               FLOAT deviation, FLOAT extrusion,
-                               LPD3DXMESH *mesh_ptr, LPD3DXBUFFER *adjacency,
-                               LPGLYPHMETRICSFLOAT glyphmetrics)
+HRESULT WINAPI D3DXCreateTextW(struct IDirect3DDevice9 *device, HDC hdc, const WCHAR *text, float deviation,
+        float extrusion, struct ID3DXMesh **mesh_ptr, struct ID3DXBuffer **adjacency, GLYPHMETRICSFLOAT *glyphmetrics)
 {
     HRESULT hr;
     ID3DXMesh *mesh = NULL;

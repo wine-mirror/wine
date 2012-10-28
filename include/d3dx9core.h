@@ -131,7 +131,7 @@ DECLARE_INTERFACE_(ID3DXFont, IUnknown)
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXFont methods ***/
-    STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9 *device) PURE;
+    STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice9 **device) PURE;
     STDMETHOD(GetDescA)(THIS_ D3DXFONT_DESCA *desc) PURE;
     STDMETHOD(GetDescW)(THIS_ D3DXFONT_DESCW *desc) PURE;
     STDMETHOD_(BOOL, GetTextMetricsA)(THIS_ TEXTMETRICA *metrics) PURE;
@@ -212,7 +212,7 @@ DECLARE_INTERFACE_(ID3DXLine, IUnknown)
     STDMETHOD_(ULONG, Release)(THIS) PURE;
 
     /*** ID3DXLine methods ***/
-    STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9 *device) PURE;
+    STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice9 **device) PURE;
 
     STDMETHOD(Begin)(THIS) PURE;
     STDMETHOD(Draw)(THIS_ CONST D3DXVECTOR2 *vertexlist, DWORD vertexlistcount, D3DCOLOR color) PURE;
@@ -301,7 +301,7 @@ DECLARE_INTERFACE_(ID3DXRenderToEnvMap, IUnknown)
     STDMETHOD_(ULONG, Release)(THIS) PURE;
 
     /*** ID3DXRenderToEnvMap methods ***/
-    STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9 *device) PURE;
+    STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice9 **device) PURE;
     STDMETHOD(GetDesc)(THIS_ D3DXRTE_DESC *desc) PURE;
 
     STDMETHOD(BeginCube)(THIS_ struct IDirect3DCubeTexture9 *cubetex) PURE;
@@ -368,7 +368,7 @@ DECLARE_INTERFACE_(ID3DXRenderToSurface, IUnknown)
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXRenderToSurface methods ***/
-    STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9 *device) PURE;
+    STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice9 **device) PURE;
     STDMETHOD(GetDesc)(THIS_ D3DXRTS_DESC *desc) PURE;
 
     STDMETHOD(BeginScene)(THIS_ struct IDirect3DSurface9 *surface, const D3DVIEWPORT9 *viewport) PURE;
@@ -413,7 +413,7 @@ DECLARE_INTERFACE_(ID3DXSprite, IUnknown)
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /*** ID3DXSprite methods ***/
-    STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9 *device) PURE;
+    STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice9 **device) PURE;
 
     STDMETHOD(GetTransform)(THIS_ D3DXMATRIX *transform) PURE;
     STDMETHOD(SetTransform)(THIS_ CONST D3DXMATRIX *transform) PURE;
@@ -474,21 +474,27 @@ DECLARE_INTERFACE_(ID3DXSprite, IUnknown)
 extern "C" {
 #endif
 
-BOOL    WINAPI D3DXCheckVersion(UINT d3dsdkvers, UINT d3dxsdkvers);
-HRESULT WINAPI D3DXCreateFontA(LPDIRECT3DDEVICE9 device, INT height, UINT width, UINT weight, UINT miplevels, BOOL italic, DWORD charset,
-                               DWORD precision, DWORD quality, DWORD pitchandfamily, LPCSTR facename, LPD3DXFONT *font);
-HRESULT WINAPI D3DXCreateFontW(LPDIRECT3DDEVICE9 device, INT height, UINT width, UINT weight, UINT miplevels, BOOL italic, DWORD charset,
-                               DWORD precision, DWORD quality, DWORD pitchandfamily, LPCWSTR facename, LPD3DXFONT *font);
-#define        D3DXCreateFont WINELIB_NAME_AW(D3DXCreateFont)
-HRESULT WINAPI D3DXCreateFontIndirectA(LPDIRECT3DDEVICE9 device, CONST D3DXFONT_DESCA *desc, LPD3DXFONT *font);
-HRESULT WINAPI D3DXCreateFontIndirectW(LPDIRECT3DDEVICE9 device, CONST D3DXFONT_DESCW *desc, LPD3DXFONT *font);
-#define        D3DXCreateFontIndirect WINELIB_NAME_AW(D3DXCreateFontIndirect)
-HRESULT WINAPI D3DXCreateLine(LPDIRECT3DDEVICE9 device, LPD3DXLINE *line);
-HRESULT WINAPI D3DXCreateRenderToEnvMap(LPDIRECT3DDEVICE9 device, UINT size, UINT miplevels, D3DFORMAT format, BOOL stencil, D3DFORMAT stencil_format, LPD3DXRenderToEnvMap *rtem);
-HRESULT WINAPI D3DXCreateRenderToSurface(LPDIRECT3DDEVICE9 device, UINT width, UINT height, D3DFORMAT format, BOOL stencil, D3DFORMAT stencil_format, LPD3DXRENDERTOSURFACE *rts);
-HRESULT WINAPI D3DXCreateSprite(LPDIRECT3DDEVICE9 device, LPD3DXSPRITE *sprite);
-BOOL    WINAPI D3DXDebugMute(BOOL mute);
-UINT    WINAPI D3DXGetDriverLevel(LPDIRECT3DDEVICE9 device);
+BOOL WINAPI D3DXCheckVersion(UINT d3dsdkvers, UINT d3dxsdkvers);
+HRESULT WINAPI D3DXCreateFontA(struct IDirect3DDevice9 *device, INT height, UINT width, UINT weight,
+        UINT miplevels, BOOL italic, DWORD charset, DWORD precision, DWORD quality, DWORD pitchandfamily,
+        const char *facename, struct ID3DXFont **font);
+HRESULT WINAPI D3DXCreateFontW(struct IDirect3DDevice9 *device, INT height, UINT width, UINT weight,
+        UINT miplevels, BOOL italic, DWORD charset, DWORD precision, DWORD quality, DWORD pitchandfamily,
+        const WCHAR *facename, struct ID3DXFont **font);
+#define D3DXCreateFont WINELIB_NAME_AW(D3DXCreateFont)
+HRESULT WINAPI D3DXCreateFontIndirectA(struct IDirect3DDevice9 *device,
+        const D3DXFONT_DESCA *desc, struct ID3DXFont **font);
+HRESULT WINAPI D3DXCreateFontIndirectW(struct IDirect3DDevice9 *device,
+        const D3DXFONT_DESCW *desc, struct ID3DXFont **font);
+#define D3DXCreateFontIndirect WINELIB_NAME_AW(D3DXCreateFontIndirect)
+HRESULT WINAPI D3DXCreateLine(struct IDirect3DDevice9 *device, struct ID3DXLine **line);
+HRESULT WINAPI D3DXCreateRenderToEnvMap(struct IDirect3DDevice9 *device, UINT size, UINT miplevels,
+        D3DFORMAT format, BOOL stencil, D3DFORMAT stencil_format, struct ID3DXRenderToEnvMap **rtem);
+HRESULT WINAPI D3DXCreateRenderToSurface(struct IDirect3DDevice9 *device, UINT width, UINT height,
+        D3DFORMAT format, BOOL stencil, D3DFORMAT stencil_format, struct ID3DXRenderToSurface **rts);
+HRESULT WINAPI D3DXCreateSprite(struct IDirect3DDevice9 *device, struct ID3DXSprite **sprite);
+BOOL WINAPI D3DXDebugMute(BOOL mute);
+UINT WINAPI D3DXGetDriverLevel(struct IDirect3DDevice9 *device);
 
 #ifdef __cplusplus
 }

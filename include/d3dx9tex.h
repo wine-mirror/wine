@@ -182,28 +182,12 @@ HRESULT WINAPI D3DXSaveVolumeToFileW(const WCHAR *destfile, D3DXIMAGE_FILEFORMAT
 
 
 /* Texture, cube texture and volume texture creation */
-HRESULT WINAPI D3DXCheckTextureRequirements(      LPDIRECT3DDEVICE9 device,
-                                                  UINT *width,
-                                                  UINT *height,
-                                                  UINT *miplevels,
-                                                  DWORD usage,
-                                                  D3DFORMAT *format,
-                                                  D3DPOOL pool);
-HRESULT WINAPI D3DXCheckCubeTextureRequirements(  LPDIRECT3DDEVICE9 device,
-                                                  UINT *size,
-                                                  UINT *miplevels,
-                                                  DWORD usage,
-                                                  D3DFORMAT *format,
-                                                  D3DPOOL pool);
-
-HRESULT WINAPI D3DXCheckVolumeTextureRequirements(LPDIRECT3DDEVICE9 device,
-                                                  UINT *width,
-                                                  UINT *height,
-                                                  UINT *depth,
-                                                  UINT *miplevels,
-                                                  DWORD usage,
-                                                  D3DFORMAT *format,
-                                                  D3DPOOL pool);
+HRESULT WINAPI D3DXCheckTextureRequirements(struct IDirect3DDevice9 *device, UINT *width, UINT *height,
+        UINT *miplevels, DWORD usage, D3DFORMAT *format, D3DPOOL pool);
+HRESULT WINAPI D3DXCheckCubeTextureRequirements(struct IDirect3DDevice9 *device, UINT *size,
+        UINT *miplevels, DWORD usage, D3DFORMAT *format, D3DPOOL pool);
+HRESULT WINAPI D3DXCheckVolumeTextureRequirements(struct IDirect3DDevice9 *device, UINT *width, UINT *height,
+        UINT *depth, UINT *miplevels, DWORD usage, D3DFORMAT *format, D3DPOOL pool);
 
 HRESULT WINAPI D3DXCreateTexture(struct IDirect3DDevice9 *device, UINT width, UINT height,
         UINT miplevels, DWORD usage, D3DFORMAT format, D3DPOOL pool, struct IDirect3DTexture9 **texture);

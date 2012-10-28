@@ -81,7 +81,7 @@ static ULONG WINAPI ID3DXLineImpl_Release(ID3DXLine* iface)
 }
 
 /*** ID3DXLine methods ***/
-static HRESULT WINAPI ID3DXLineImpl_GetDevice(ID3DXLine* iface, LPDIRECT3DDEVICE9* device)
+static HRESULT WINAPI ID3DXLineImpl_GetDevice(struct ID3DXLine *iface, struct IDirect3DDevice9 **device)
 {
     ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
@@ -328,7 +328,7 @@ static const struct ID3DXLineVtbl ID3DXLine_Vtbl =
     ID3DXLineImpl_OnResetDevice
 };
 
-HRESULT WINAPI D3DXCreateLine(LPDIRECT3DDEVICE9 device, LPD3DXLINE* line)
+HRESULT WINAPI D3DXCreateLine(struct IDirect3DDevice9 *device, struct ID3DXLine **line)
 {
     ID3DXLineImpl* object;
 

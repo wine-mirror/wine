@@ -228,8 +228,9 @@ static const ID3DXFontVtbl D3DXFont_Vtbl =
     ID3DXFontImpl_OnResetDevice
 };
 
-HRESULT WINAPI D3DXCreateFontA(LPDIRECT3DDEVICE9 device, INT height, UINT width, UINT weight, UINT miplevels, BOOL italic, DWORD charset,
-                               DWORD precision, DWORD quality, DWORD pitchandfamily, LPCSTR facename, LPD3DXFONT *font)
+HRESULT WINAPI D3DXCreateFontA(struct IDirect3DDevice9 *device, INT height, UINT width,
+        UINT weight, UINT miplevels, BOOL italic, DWORD charset, DWORD precision, DWORD quality,
+        DWORD pitchandfamily, const char *facename, struct ID3DXFont **font)
 {
     D3DXFONT_DESCA desc;
 

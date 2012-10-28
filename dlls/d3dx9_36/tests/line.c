@@ -59,7 +59,7 @@ static void test_create_line(IDirect3DDevice9* device)
 {
     HRESULT hr;
     LPD3DXLINE line = NULL;
-    LPDIRECT3DDEVICE9 return_device;
+    struct IDirect3DDevice9 *return_device;
     D3DXMATRIX world, identity, result;
     FLOAT r11, r12, r13, r14;
     ULONG ref;

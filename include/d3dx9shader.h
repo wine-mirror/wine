@@ -133,22 +133,32 @@ DECLARE_INTERFACE_(ID3DXConstantTable, ID3DXBuffer)
     STDMETHOD_(D3DXHANDLE, GetConstant)(THIS_ D3DXHANDLE hConstant, UINT Index) PURE;
     STDMETHOD_(D3DXHANDLE, GetConstantByName)(THIS_ D3DXHANDLE hConstant, LPCSTR pName) PURE;
     STDMETHOD_(D3DXHANDLE, GetConstantElement)(THIS_ D3DXHANDLE hConstant, UINT Index) PURE;
-    STDMETHOD(SetDefaults)(THIS_ LPDIRECT3DDEVICE9 pDevice) PURE;
-    STDMETHOD(SetValue)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, LPCVOID pData, UINT Bytes) PURE;
-    STDMETHOD(SetBool)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, BOOL b) PURE;
-    STDMETHOD(SetBoolArray)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, CONST BOOL* pb, UINT Count) PURE;
-    STDMETHOD(SetInt)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, INT n) PURE;
-    STDMETHOD(SetIntArray)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, CONST INT* pn, UINT Count) PURE;
-    STDMETHOD(SetFloat)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, FLOAT f) PURE;
-    STDMETHOD(SetFloatArray)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, CONST FLOAT* pf, UINT Count) PURE;
-    STDMETHOD(SetVector)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, CONST D3DXVECTOR4* pVector) PURE;
-    STDMETHOD(SetVectorArray)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, CONST D3DXVECTOR4* pVector, UINT Count) PURE;
-    STDMETHOD(SetMatrix)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, CONST D3DXMATRIX* pMatrix) PURE;
-    STDMETHOD(SetMatrixArray)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, CONST D3DXMATRIX* pMatrix, UINT Count) PURE;
-    STDMETHOD(SetMatrixPointerArray)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, CONST D3DXMATRIX** ppMatrix, UINT Count) PURE;
-    STDMETHOD(SetMatrixTranspose)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, CONST D3DXMATRIX* pMatrix) PURE;
-    STDMETHOD(SetMatrixTransposeArray)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, CONST D3DXMATRIX* pMatrix, UINT Count) PURE;
-    STDMETHOD(SetMatrixTransposePointerArray)(THIS_ LPDIRECT3DDEVICE9 pDevice, D3DXHANDLE hConstant, CONST D3DXMATRIX** ppMatrix, UINT Count) PURE;
+    STDMETHOD(SetDefaults)(THIS_ struct IDirect3DDevice9 *device) PURE;
+    STDMETHOD(SetValue)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant,
+            const void *data, UINT data_size) PURE;
+    STDMETHOD(SetBool)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant, BOOL value) PURE;
+    STDMETHOD(SetBoolArray)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant,
+            const BOOL *values, UINT value_count) PURE;
+    STDMETHOD(SetInt)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant, INT value) PURE;
+    STDMETHOD(SetIntArray)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant,
+            const INT *values, UINT value_count) PURE;
+    STDMETHOD(SetFloat)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant, float value) PURE;
+    STDMETHOD(SetFloatArray)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant,
+            const float *values, UINT value_count) PURE;
+    STDMETHOD(SetVector)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant, const D3DXVECTOR4 *value) PURE;
+    STDMETHOD(SetVectorArray)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant,
+            const D3DXVECTOR4 *values, UINT value_count) PURE;
+    STDMETHOD(SetMatrix)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant, const D3DXMATRIX *value) PURE;
+    STDMETHOD(SetMatrixArray)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant,
+            const D3DXMATRIX *values, UINT value_count) PURE;
+    STDMETHOD(SetMatrixPointerArray)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant,
+            const D3DXMATRIX **values, UINT value_count) PURE;
+    STDMETHOD(SetMatrixTranspose)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant,
+            const D3DXMATRIX *value) PURE;
+    STDMETHOD(SetMatrixTransposeArray)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant,
+            const D3DXMATRIX *values, UINT value_count) PURE;
+    STDMETHOD(SetMatrixTransposePointerArray)(THIS_ struct IDirect3DDevice9 *device, D3DXHANDLE constant,
+            const D3DXMATRIX **values, UINT value_count) PURE;
 };
 #undef INTERFACE
 
@@ -253,10 +263,10 @@ typedef struct ID3DXInclude *LPD3DXINCLUDE;
 extern "C" {
 #endif
 
-LPCSTR WINAPI D3DXGetPixelShaderProfile(LPDIRECT3DDEVICE9 device);
+const char * WINAPI D3DXGetPixelShaderProfile(struct IDirect3DDevice9 *device);
 UINT WINAPI D3DXGetShaderSize(const DWORD *byte_code);
 DWORD WINAPI D3DXGetShaderVersion(const DWORD *byte_code);
-LPCSTR WINAPI D3DXGetVertexShaderProfile(LPDIRECT3DDEVICE9 device);
+const char * WINAPI D3DXGetVertexShaderProfile(struct IDirect3DDevice9 *device);
 HRESULT WINAPI D3DXFindShaderComment(CONST DWORD* byte_code, DWORD fourcc, LPCVOID* data, UINT* size);
 HRESULT WINAPI D3DXGetShaderSamplers(CONST DWORD *byte_code, LPCSTR *samplers, UINT *count);
 

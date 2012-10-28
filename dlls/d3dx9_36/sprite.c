@@ -119,7 +119,7 @@ static ULONG WINAPI ID3DXSpriteImpl_Release(ID3DXSprite *iface)
     return ref;
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_GetDevice(ID3DXSprite *iface, LPDIRECT3DDEVICE9 *device)
+static HRESULT WINAPI ID3DXSpriteImpl_GetDevice(struct ID3DXSprite *iface, struct IDirect3DDevice9 **device)
 {
     ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
 
@@ -529,7 +529,7 @@ static const ID3DXSpriteVtbl D3DXSprite_Vtbl =
     ID3DXSpriteImpl_OnResetDevice
 };
 
-HRESULT WINAPI D3DXCreateSprite(LPDIRECT3DDEVICE9 device, LPD3DXSPRITE *sprite)
+HRESULT WINAPI D3DXCreateSprite(struct IDirect3DDevice9 *device, struct ID3DXSprite **sprite)
 {
     ID3DXSpriteImpl *object;
     D3DCAPS9 caps;

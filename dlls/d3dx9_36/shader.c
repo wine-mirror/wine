@@ -40,7 +40,7 @@ HRESULT WINAPI D3DAssemble(LPCVOID data, SIZE_T datasize, LPCSTR filename,
                            UINT flags,
                            ID3DBlob **shader, ID3DBlob **error_messages);
 
-LPCSTR WINAPI D3DXGetPixelShaderProfile(LPDIRECT3DDEVICE9 device)
+const char * WINAPI D3DXGetPixelShaderProfile(struct IDirect3DDevice9 *device)
 {
     D3DCAPS9 caps;
 
@@ -118,7 +118,7 @@ DWORD WINAPI D3DXGetShaderVersion(const DWORD *byte_code)
     return byte_code ? *byte_code : 0;
 }
 
-LPCSTR WINAPI D3DXGetVertexShaderProfile(LPDIRECT3DDEVICE9 device)
+const char * WINAPI D3DXGetVertexShaderProfile(struct IDirect3DDevice9 *device)
 {
     D3DCAPS9 caps;
 
@@ -1321,7 +1321,8 @@ static HRESULT set_matrix_pointer_array(ID3DXConstantTable *iface, IDirect3DDevi
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetDefaults(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetDefaults(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
     UINT i;
@@ -1344,8 +1345,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetDefaults(ID3DXConstantTable *ifa
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetValue(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
-                                                      D3DXHANDLE constant, LPCVOID data, UINT bytes)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetValue(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device, D3DXHANDLE constant, const void *data, UINT bytes)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
     HRESULT hr;
@@ -1380,8 +1381,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetValue(ID3DXConstantTable *iface,
     }
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetBool(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
-                                                     D3DXHANDLE constant, BOOL b)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetBool(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device, D3DXHANDLE constant, BOOL b)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
@@ -1390,8 +1391,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetBool(ID3DXConstantTable *iface, 
     return set_scalar_array(iface, device, constant, &b, 1, D3DXPT_BOOL);
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetBoolArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
-                                                          D3DXHANDLE constant, CONST BOOL* b, UINT count)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetBoolArray(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device, D3DXHANDLE constant, const BOOL *b, UINT count)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
@@ -1400,7 +1401,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetBoolArray(ID3DXConstantTable *if
     return set_scalar_array(iface, device, constant, b, count, D3DXPT_BOOL);
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetInt(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device, D3DXHANDLE constant, INT n)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetInt(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device, D3DXHANDLE constant, INT n)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
@@ -1409,8 +1411,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetInt(ID3DXConstantTable *iface, L
     return set_scalar_array(iface, device, constant, &n, 1, D3DXPT_INT);
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetIntArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
-                                                         D3DXHANDLE constant, CONST INT* n, UINT count)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetIntArray(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device, D3DXHANDLE constant, const INT *n, UINT count)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
@@ -1419,8 +1421,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetIntArray(ID3DXConstantTable *ifa
     return set_scalar_array(iface, device, constant, n, count, D3DXPT_INT);
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetFloat(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
-                                                      D3DXHANDLE constant, FLOAT f)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetFloat(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device, D3DXHANDLE constant, float f)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
@@ -1429,8 +1431,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetFloat(ID3DXConstantTable *iface,
     return set_scalar_array(iface, device, constant, &f, 1, D3DXPT_FLOAT);
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetFloatArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
-                                                           D3DXHANDLE constant, CONST FLOAT *f, UINT count)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetFloatArray(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device, D3DXHANDLE constant, const float *f, UINT count)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
@@ -1439,8 +1441,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetFloatArray(ID3DXConstantTable *i
     return set_scalar_array(iface, device, constant, f, count, D3DXPT_FLOAT);
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetVector(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
-                                                       D3DXHANDLE constant, CONST D3DXVECTOR4 *vector)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetVector(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device, D3DXHANDLE constant, const D3DXVECTOR4 *vector)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
@@ -1449,8 +1451,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetVector(ID3DXConstantTable *iface
     return set_vector_array(iface, device, constant, vector, 1, D3DXPT_FLOAT);
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetVectorArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
-                                                            D3DXHANDLE constant, CONST D3DXVECTOR4 *vector, UINT count)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetVectorArray(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device, D3DXHANDLE constant, const D3DXVECTOR4 *vector, UINT count)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
@@ -1459,8 +1461,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetVectorArray(ID3DXConstantTable *
     return set_vector_array(iface, device, constant, vector, count, D3DXPT_FLOAT);
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrix(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
-                                                       D3DXHANDLE constant, CONST D3DXMATRIX *matrix)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrix(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device, D3DXHANDLE constant, const D3DXMATRIX *matrix)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
@@ -1469,8 +1471,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrix(ID3DXConstantTable *iface
     return set_matrix_array(iface, device, constant, matrix, 1, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 4);
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
-                                                            D3DXHANDLE constant, CONST D3DXMATRIX *matrix, UINT count)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixArray(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device, D3DXHANDLE constant, const D3DXMATRIX *matrix, UINT count)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
@@ -1479,8 +1481,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixArray(ID3DXConstantTable *
     return set_matrix_array(iface, device, constant, matrix, count, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 4);
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixPointerArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
-                                                                   D3DXHANDLE constant, CONST D3DXMATRIX **matrix, UINT count)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixPointerArray(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device, D3DXHANDLE constant, const D3DXMATRIX **matrix, UINT count)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
@@ -1489,8 +1491,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixPointerArray(ID3DXConstant
     return set_matrix_pointer_array(iface, device, constant, matrix, count, D3DXPC_MATRIX_ROWS);
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixTranspose(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
-                                                                D3DXHANDLE constant, CONST D3DXMATRIX *matrix)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixTranspose(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device, D3DXHANDLE constant, const D3DXMATRIX *matrix)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
@@ -1499,8 +1501,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixTranspose(ID3DXConstantTab
     return set_matrix_array(iface, device, constant, matrix, 1, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 4, 4);
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixTransposeArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
-                                                                     D3DXHANDLE constant, CONST D3DXMATRIX *matrix, UINT count)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixTransposeArray(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device, D3DXHANDLE constant, const D3DXMATRIX *matrix, UINT count)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
@@ -1509,8 +1511,8 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixTransposeArray(ID3DXConsta
     return set_matrix_array(iface, device, constant, matrix, count, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 4, 4);
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixTransposePointerArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
-                                                                            D3DXHANDLE constant, CONST D3DXMATRIX **matrix, UINT count)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixTransposePointerArray(struct ID3DXConstantTable *iface,
+        struct IDirect3DDevice9 *device, D3DXHANDLE constant, const D3DXMATRIX **matrix, UINT count)
 {
     struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 

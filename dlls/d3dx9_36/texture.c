@@ -184,13 +184,8 @@ HRESULT WINAPI D3DXFilterTexture(IDirect3DBaseTexture9 *texture,
     }
 }
 
-HRESULT WINAPI D3DXCheckTextureRequirements(LPDIRECT3DDEVICE9 device,
-                                            UINT* width,
-                                            UINT* height,
-                                            UINT* miplevels,
-                                            DWORD usage,
-                                            D3DFORMAT* format,
-                                            D3DPOOL pool)
+HRESULT WINAPI D3DXCheckTextureRequirements(struct IDirect3DDevice9 *device, UINT *width, UINT *height,
+        UINT *miplevels, DWORD usage, D3DFORMAT *format, D3DPOOL pool)
 {
     UINT w = (width && *width) ? *width : 1;
     UINT h = (height && *height) ? *height : 1;
@@ -389,12 +384,8 @@ cleanup:
     return D3D_OK;
 }
 
-HRESULT WINAPI D3DXCheckCubeTextureRequirements(LPDIRECT3DDEVICE9 device,
-                                                UINT *size,
-                                                UINT *miplevels,
-                                                DWORD usage,
-                                                D3DFORMAT *format,
-                                                D3DPOOL pool)
+HRESULT WINAPI D3DXCheckCubeTextureRequirements(struct IDirect3DDevice9 *device, UINT *size,
+        UINT *miplevels, DWORD usage, D3DFORMAT *format, D3DPOOL pool)
 {
     D3DCAPS9 caps;
     UINT s = (size && *size) ? *size : 256;
@@ -429,14 +420,8 @@ HRESULT WINAPI D3DXCheckCubeTextureRequirements(LPDIRECT3DDEVICE9 device,
     return hr;
 }
 
-HRESULT WINAPI D3DXCheckVolumeTextureRequirements(LPDIRECT3DDEVICE9 device,
-                                                  UINT *width,
-                                                  UINT *height,
-                                                  UINT *depth,
-                                                  UINT *miplevels,
-                                                  DWORD usage,
-                                                  D3DFORMAT *format,
-                                                  D3DPOOL pool)
+HRESULT WINAPI D3DXCheckVolumeTextureRequirements(struct IDirect3DDevice9 *device, UINT *width, UINT *height,
+        UINT *depth, UINT *miplevels, DWORD usage, D3DFORMAT *format, D3DPOOL pool)
 {
     D3DCAPS9 caps;
     UINT w = width ? *width : D3DX_DEFAULT;

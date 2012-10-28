@@ -367,10 +367,17 @@ DECLARE_INTERFACE_(ID3DXAnimationController, IUnknown)
 extern "C" {
 #endif
 
-HRESULT WINAPI D3DXLoadMeshHierarchyFromXA(LPCSTR, DWORD, LPDIRECT3DDEVICE9, LPD3DXALLOCATEHIERARCHY, LPD3DXLOADUSERDATA, LPD3DXFRAME*, LPD3DXANIMATIONCONTROLLER*);
-HRESULT WINAPI D3DXLoadMeshHierarchyFromXW(LPCWSTR, DWORD, LPDIRECT3DDEVICE9, LPD3DXALLOCATEHIERARCHY, LPD3DXLOADUSERDATA, LPD3DXFRAME*, LPD3DXANIMATIONCONTROLLER*);
+HRESULT WINAPI D3DXLoadMeshHierarchyFromXA(const char *filename, DWORD flags, struct IDirect3DDevice9 *device,
+        struct ID3DXAllocateHierarchy *alloc, struct ID3DXLoadUserData *user_data_loader,
+        D3DXFRAME **frame_hierarchy, struct ID3DXAnimationController **animation_controller);
+HRESULT WINAPI D3DXLoadMeshHierarchyFromXW(const WCHAR *filename, DWORD flags, struct IDirect3DDevice9 *device,
+        struct ID3DXAllocateHierarchy *alloc, struct ID3DXLoadUserData *user_data_loader,
+        D3DXFRAME **frame_hierarchy, struct ID3DXAnimationController **animation_controller);
 #define D3DXLoadMeshHierarchyFromX WINELIB_NAME_AW(D3DXLoadMeshHierarchyFromX)
-HRESULT WINAPI D3DXLoadMeshHierarchyFromXInMemory(LPCVOID, DWORD, DWORD, LPDIRECT3DDEVICE9, LPD3DXALLOCATEHIERARCHY, LPD3DXLOADUSERDATA, LPD3DXFRAME*, LPD3DXANIMATIONCONTROLLER*);
+HRESULT WINAPI D3DXLoadMeshHierarchyFromXInMemory(const void *data, DWORD data_size, DWORD flags,
+        struct IDirect3DDevice9 *device, struct ID3DXAllocateHierarchy *alloc,
+        struct ID3DXLoadUserData *user_data_loader, D3DXFRAME **frame_hierarchy,
+        struct ID3DXAnimationController **animation_controller);
 HRESULT WINAPI D3DXSaveMeshHierarchyToFileA(LPCSTR, DWORD, CONST D3DXFRAME*, LPD3DXANIMATIONCONTROLLER, LPD3DXSAVEUSERDATA);
 HRESULT WINAPI D3DXSaveMeshHierarchyToFileW(LPCWSTR, DWORD, CONST D3DXFRAME*, LPD3DXANIMATIONCONTROLLER, LPD3DXSAVEUSERDATA);
 #define D3DXSaveMeshHierarchyToFile WINELIB_NAME_AW(D3DXSaveMeshHierarchyToFile)

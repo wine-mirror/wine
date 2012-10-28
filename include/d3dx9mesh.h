@@ -318,10 +318,11 @@ DECLARE_INTERFACE_(ID3DXBaseMesh, IUnknown)
     STDMETHOD(GetDeclaration)(THIS_ D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE]) PURE;
     STDMETHOD_(DWORD, GetNumBytesPerVertex)(THIS) PURE;
     STDMETHOD_(DWORD, GetOptions)(THIS) PURE;
-    STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9* device) PURE;
-    STDMETHOD(CloneMeshFVF)(THIS_ DWORD options, DWORD fvf, LPDIRECT3DDEVICE9 device, LPD3DXMESH* clone_mesh) PURE;
-    STDMETHOD(CloneMesh)(THIS_ DWORD options, CONST D3DVERTEXELEMENT9* declaration, LPDIRECT3DDEVICE9 device,
-        LPD3DXMESH* clone_mesh) PURE;
+    STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice9 **device) PURE;
+    STDMETHOD(CloneMeshFVF)(THIS_ DWORD options, DWORD fvf,
+            struct IDirect3DDevice9 *device, struct ID3DXMesh **clone_mesh) PURE;
+    STDMETHOD(CloneMesh)(THIS_ DWORD options, const D3DVERTEXELEMENT9 *declaration,
+            struct IDirect3DDevice9 *device, struct ID3DXMesh **clone_mesh) PURE;
     STDMETHOD(GetVertexBuffer)(THIS_ struct IDirect3DVertexBuffer9 **vertex_buffer) PURE;
     STDMETHOD(GetIndexBuffer)(THIS_ struct IDirect3DIndexBuffer9 **index_buffer) PURE;
     STDMETHOD(LockVertexBuffer)(THIS_ DWORD flags, LPVOID* data) PURE;
@@ -351,10 +352,11 @@ DECLARE_INTERFACE_(ID3DXMesh, ID3DXBaseMesh)
     STDMETHOD(GetDeclaration)(THIS_ D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE]) PURE;
     STDMETHOD_(DWORD, GetNumBytesPerVertex)(THIS) PURE;
     STDMETHOD_(DWORD, GetOptions)(THIS) PURE;
-    STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9* device) PURE;
-    STDMETHOD(CloneMeshFVF)(THIS_ DWORD options, DWORD fvf, LPDIRECT3DDEVICE9 device, LPD3DXMESH* clone_mesh) PURE;
-    STDMETHOD(CloneMesh)(THIS_ DWORD options, CONST D3DVERTEXELEMENT9* declaration, LPDIRECT3DDEVICE9 device,
-        LPD3DXMESH* clone_mesh) PURE;
+    STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice9 **device) PURE;
+    STDMETHOD(CloneMeshFVF)(THIS_ DWORD options, DWORD fvf,
+            struct IDirect3DDevice9 *device, struct ID3DXMesh **clone_mesh) PURE;
+    STDMETHOD(CloneMesh)(THIS_ DWORD options, const D3DVERTEXELEMENT9 *declaration,
+            struct IDirect3DDevice9 *device, struct ID3DXMesh **clone_mesh) PURE;
     STDMETHOD(GetVertexBuffer)(THIS_ struct IDirect3DVertexBuffer9 **vertex_buffer) PURE;
     STDMETHOD(GetIndexBuffer)(THIS_ struct IDirect3DIndexBuffer9 **index_buffer) PURE;
     STDMETHOD(LockVertexBuffer)(THIS_ DWORD flags, LPVOID* data) PURE;
@@ -392,10 +394,11 @@ DECLARE_INTERFACE_(ID3DXPMesh, ID3DXBaseMesh)
     STDMETHOD(GetDeclaration)(THIS_ D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE]) PURE;
     STDMETHOD_(DWORD, GetNumBytesPerVertex)(THIS) PURE;
     STDMETHOD_(DWORD, GetOptions)(THIS) PURE;
-    STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9* device) PURE;
-    STDMETHOD(CloneMeshFVF)(THIS_ DWORD options, DWORD fvf, LPDIRECT3DDEVICE9 device, LPD3DXMESH* clone_mesh) PURE;
-    STDMETHOD(CloneMesh)(THIS_ DWORD options, CONST D3DVERTEXELEMENT9* declaration, LPDIRECT3DDEVICE9 device,
-        LPD3DXMESH* clone_mesh) PURE;
+    STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice9 **device) PURE;
+    STDMETHOD(CloneMeshFVF)(THIS_ DWORD options, DWORD fvf,
+            struct IDirect3DDevice9 *device, struct ID3DXMesh **clone_mesh) PURE;
+    STDMETHOD(CloneMesh)(THIS_ DWORD options, const D3DVERTEXELEMENT9 *declaration,
+            struct IDirect3DDevice9 *device, struct ID3DXMesh **clone_mesh) PURE;
     STDMETHOD(GetVertexBuffer)(THIS_ struct IDirect3DVertexBuffer9 **vertex_buffer) PURE;
     STDMETHOD(GetIndexBuffer)(THIS_ struct IDirect3DIndexBuffer9 **index_buffer) PURE;
     STDMETHOD(LockVertexBuffer)(THIS_ DWORD flags, LPVOID* data) PURE;
@@ -408,9 +411,10 @@ DECLARE_INTERFACE_(ID3DXPMesh, ID3DXBaseMesh)
     STDMETHOD(GenerateAdjacency)(THIS_ FLOAT epsilon, DWORD* adjacency) PURE;
     STDMETHOD(UpdateSemantics)(THIS_ D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE]) PURE;
     /*** ID3DXPMesh ***/
-    STDMETHOD(ClonePMeshFVF)(THIS_ DWORD options, DWORD fvf, LPDIRECT3DDEVICE9 device, LPD3DXPMESH* clone_mesh) PURE;
-    STDMETHOD(ClonePMesh)(THIS_ DWORD options, CONST D3DVERTEXELEMENT9* declaration, LPDIRECT3DDEVICE9 device,
-        LPD3DXPMESH* clone_mesh) PURE;
+    STDMETHOD(ClonePMeshFVF)(THIS_ DWORD options, DWORD fvf,
+            struct IDirect3DDevice9 *device, struct ID3DXPMesh **clone_mesh) PURE;
+    STDMETHOD(ClonePMesh)(THIS_ DWORD options, const D3DVERTEXELEMENT9 *declaration,
+            struct IDirect3DDevice9 *device, struct ID3DXPMesh **clone_mesh) PURE;
     STDMETHOD(SetNumFaces)(THIS_ DWORD faces) PURE;
     STDMETHOD(SetNumVertices)(THIS_ DWORD vertices) PURE;
     STDMETHOD_(DWORD, GetMaxFaces)(THIS) PURE;
@@ -441,15 +445,19 @@ DECLARE_INTERFACE_(ID3DXSPMesh, IUnknown)
     STDMETHOD_(DWORD, GetNumFVF)(THIS) PURE;
     STDMETHOD(GetDeclaration)(THIS_ D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE]) PURE;
     STDMETHOD_(DWORD, GetOptions)(THIS) PURE;
-    STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9* device) PURE;
-    STDMETHOD(CloneMeshFVF)(THIS_ DWORD options, DWORD fvf, LPDIRECT3DDEVICE9 device, DWORD* adjacency_out,
-        DWORD* vertex_remap_out, LPD3DXMESH* clone_mesh) PURE;
-    STDMETHOD(CloneMesh)(THIS_ DWORD options, CONST D3DVERTEXELEMENT9* declaration, LPDIRECT3DDEVICE9 device,
-        DWORD* adjacency_out, DWORD* vertex_remap_out, LPD3DXMESH* clone_mesh) PURE;
-    STDMETHOD(ClonePMeshFVF)(THIS_ DWORD options, DWORD fvf, LPDIRECT3DDEVICE9 device, DWORD* vertex_remap_out,
-        FLOAT* errors_by_face, LPD3DXPMESH* clone_mesh) PURE;
-    STDMETHOD(ClonePMesh)(THIS_ DWORD options, CONST D3DVERTEXELEMENT9* declaration, LPDIRECT3DDEVICE9 device,
-        DWORD* vertex_remap_out, FLOAT* errors_by_face, LPD3DXPMESH* clone_mesh) PURE;
+    STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice9 **device) PURE;
+    STDMETHOD(CloneMeshFVF)(THIS_ DWORD options, DWORD fvf,
+            struct IDirect3DDevice9 *device, DWORD *adjacency_out,
+            DWORD *vertex_remap_out, struct ID3DXMesh **clone_mesh) PURE;
+    STDMETHOD(CloneMesh)(THIS_ DWORD options, const D3DVERTEXELEMENT9 *declaration,
+            struct IDirect3DDevice9 *device, DWORD *adjacency_out,
+            DWORD *vertex_remap_out, struct ID3DXMesh **clone_mesh) PURE;
+    STDMETHOD(ClonePMeshFVF)(THIS_ DWORD options, DWORD fvf,
+            struct IDirect3DDevice9 *device, DWORD *vertex_remap_out,
+            float *errors_by_face, struct ID3DXPMesh **clone_mesh) PURE;
+    STDMETHOD(ClonePMesh)(THIS_ DWORD options, const D3DVERTEXELEMENT9 *declaration,
+            struct IDirect3DDevice9 *device, DWORD *vertex_remap_out,
+            float *errors_by_face, struct ID3DXPMesh **clone_mesh) PURE;
     STDMETHOD(ReduceFaces)(THIS_ DWORD faces) PURE;
     STDMETHOD(ReduceVertices)(THIS_ DWORD vertices) PURE;
     STDMETHOD_(DWORD, GetMaxFaces)(THIS) PURE;
@@ -472,7 +480,7 @@ DECLARE_INTERFACE_(ID3DXPatchMesh, IUnknown)
     STDMETHOD(GetDeclaration)(THIS_ D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE]) PURE;
     STDMETHOD_(DWORD, GetControlVerticesPerPatch)(THIS) PURE;
     STDMETHOD_(DWORD, GetOptions)(THIS) PURE;
-    STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9* device) PURE;
+    STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice9 **device) PURE;
     STDMETHOD(GetPatchInfo)(THIS_ LPD3DXPATCHINFO patch_info) PURE;
     STDMETHOD(GetVertexBuffer)(THIS_ struct IDirect3DVertexBuffer9 **vertex_buffer) PURE;
     STDMETHOD(GetIndexBuffer)(THIS_ struct IDirect3DIndexBuffer9 **index_buffer) PURE;
@@ -636,8 +644,8 @@ DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
     STDMETHOD(SetPerTexelNormals)(THIS_ struct IDirect3DTexture9 *normal_texture) PURE;
     STDMETHOD(ExtractPerVertexAlbedo)(THIS_ LPD3DXMESH mesh, D3DDECLUSAGE usage, UINT num_channels) PURE;
     STDMETHOD(ResampleBuffer)(THIS_ LPD3DXPRTBUFFER buffer_in, LPD3DXPRTBUFFER buffer_out) PURE;
-    STDMETHOD(GetAdaptedMesh)(THIS_ LPDIRECT3DDEVICE9 device, UINT *face_remap,
-        UINT *vert_remap, FLOAT *vert_weights, LPD3DXMESH *mesh) PURE;
+    STDMETHOD(GetAdaptedMesh)(THIS_ struct IDirect3DDevice9 *device, UINT *face_remap,
+            UINT *vert_remap, float *vert_weights, struct ID3DXMesh **mesh) PURE;
     STDMETHOD_(UINT, GetNumVerts)(THIS) PURE;
     STDMETHOD_(UINT, GetNumFaces)(THIS) PURE;
     STDMETHOD(SetMinMaxIntersection)(THIS_ FLOAT min, FLOAT max) PURE;
@@ -647,8 +655,8 @@ DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
     STDMETHOD(ComputeDirectLightingSH)(THIS_ UINT sh_order, LPD3DXPRTBUFFER data_out) PURE;
     STDMETHOD(ComputeDirectLightingSHAdaptive)(THIS_ UINT sh_order, FLOAT adaptive_thresh,
         FLOAT min_edge_length, UINT max_subdiv, LPD3DXPRTBUFFER data_out) PURE;
-    STDMETHOD(ComputeDirectLightingSHGPU)(THIS_ LPDIRECT3DDEVICE9 device, UINT flags,
-        UINT sh_order, FLOAT zbias, FLOAT zangle_bias, LPD3DXPRTBUFFER data_out) PURE;
+    STDMETHOD(ComputeDirectLightingSHGPU)(THIS_ struct IDirect3DDevice9 *device, UINT flags,
+            UINT sh_order, float zbias, float zangle_bias, struct ID3DXPRTBuffer *data_out) PURE;
     STDMETHOD(ComputeSS)(THIS_ LPD3DXPRTBUFFER data_in, LPD3DXPRTBUFFER data_out,
         LPD3DXPRTBUFFER data_total) PURE;
     STDMETHOD(ComputeSSAdaptive)(THIS_ LPD3DXPRTBUFFER data_in, FLOAT adaptive_thres,
@@ -683,28 +691,49 @@ DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
 extern "C" {
 #endif
 
-HRESULT WINAPI D3DXCreateMesh(DWORD, DWORD, DWORD, CONST D3DVERTEXELEMENT9 *, LPDIRECT3DDEVICE9, LPD3DXMESH *);
-HRESULT WINAPI D3DXCreateMeshFVF(DWORD, DWORD, DWORD, DWORD, LPDIRECT3DDEVICE9, LPD3DXMESH *);
+HRESULT WINAPI D3DXCreateMesh(DWORD face_count, DWORD vertex_count, DWORD flags,
+        const D3DVERTEXELEMENT9 *declaration, struct IDirect3DDevice9 *device, struct ID3DXMesh **mesh);
+HRESULT WINAPI D3DXCreateMeshFVF(DWORD face_count, DWORD vertex_count, DWORD flags,
+        DWORD fvf, struct IDirect3DDevice9 *device, struct ID3DXMesh **mesh);
 HRESULT WINAPI D3DXCreateBuffer(DWORD, LPD3DXBUFFER*);
 HRESULT WINAPI D3DXCreateSPMesh(LPD3DXMESH, CONST DWORD *, CONST D3DXATTRIBUTEWEIGHTS, CONST FLOAT *, LPD3DXSPMESH *);
-HRESULT WINAPI D3DXCreatePMeshFromStream(IStream *, DWORD, LPDIRECT3DDEVICE9, LPD3DXBUFFER *, LPD3DXBUFFER *, DWORD *, LPD3DXPMESH *);
+HRESULT WINAPI D3DXCreatePMeshFromStream(struct IStream *stream, DWORD flags, struct IDirect3DDevice9 *device,
+        struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
+        DWORD *material_count, struct ID3DXPMesh **mesh);
 HRESULT WINAPI D3DXCreateSkinInfo(DWORD, CONST D3DVERTEXELEMENT9 *, DWORD, LPD3DXSKININFO *);
 HRESULT WINAPI D3DXCreateSkinInfoFVF(DWORD, DWORD, DWORD, LPD3DXSKININFO *);
 HRESULT WINAPI D3DXCreateSkinInfoFromBlendedMesh(LPD3DXBASEMESH, DWORD, CONST D3DXBONECOMBINATION *, LPD3DXSKININFO *);
-HRESULT WINAPI D3DXCreatePatchMesh(CONST D3DXPATCHINFO *, DWORD, DWORD, DWORD, CONST D3DVERTEXELEMENT9 *, LPDIRECT3DDEVICE9, LPD3DXPATCHMESH *);
+HRESULT WINAPI D3DXCreatePatchMesh(const D3DXPATCHINFO *patch_info, DWORD patch_count,
+        DWORD vertex_count, DWORD flags, const D3DVERTEXELEMENT9 *declaration,
+        struct IDirect3DDevice9 *device, struct ID3DXPatchMesh **mesh);
 HRESULT WINAPI D3DXCreatePRTBuffer(UINT, UINT, UINT, LPD3DXPRTBUFFER *);
 HRESULT WINAPI D3DXCreatePRTBufferTex(UINT, UINT, UINT, UINT, LPD3DXPRTBUFFER *);
 HRESULT WINAPI D3DXCreatePRTCompBuffer(D3DXSHCOMPRESSQUALITYTYPE, UINT, UINT, LPD3DXSHPRTSIMCB, LPVOID, LPD3DXPRTBUFFER, LPD3DXPRTCOMPBUFFER *);
 HRESULT WINAPI D3DXCreateTextureGutterHelper(UINT, UINT, LPD3DXMESH, FLOAT, LPD3DXTEXTUREGUTTERHELPER *);
 HRESULT WINAPI D3DXCreatePRTEngine(LPD3DXMESH, DWORD *, BOOL, LPD3DXMESH, LPD3DXPRTENGINE *);
-HRESULT WINAPI D3DXLoadMeshFromXA(LPCSTR, DWORD, LPDIRECT3DDEVICE9, LPD3DXBUFFER *, LPD3DXBUFFER *, LPD3DXBUFFER *, DWORD *, LPD3DXMESH *);
-HRESULT WINAPI D3DXLoadMeshFromXW(LPCWSTR, DWORD, LPDIRECT3DDEVICE9, LPD3DXBUFFER *, LPD3DXBUFFER *, LPD3DXBUFFER *, DWORD *, LPD3DXMESH *);
+HRESULT WINAPI D3DXLoadMeshFromXA(const char *filename, DWORD flags, struct IDirect3DDevice9 *device,
+        struct ID3DXBuffer **adjacency, struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
+        DWORD *material_count, struct ID3DXMesh **mesh);
+HRESULT WINAPI D3DXLoadMeshFromXW(const WCHAR *filename, DWORD flags, struct IDirect3DDevice9 *device,
+        struct ID3DXBuffer **adjacency, struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
+        DWORD *material_count, struct ID3DXMesh **mesh);
 #define D3DXLoadMeshFromX WINELIB_NAME_AW(D3DXLoadMeshFromX)
-HRESULT WINAPI D3DXLoadMeshFromXInMemory(LPCVOID, DWORD, DWORD, LPDIRECT3DDEVICE9, LPD3DXBUFFER *, LPD3DXBUFFER *, LPD3DXBUFFER *, DWORD *, LPD3DXMESH *);
-HRESULT WINAPI D3DXLoadMeshFromXResource(HMODULE, LPCSTR, LPCSTR, DWORD, LPDIRECT3DDEVICE9, LPD3DXBUFFER *, LPD3DXBUFFER *, LPD3DXBUFFER *, DWORD *, LPD3DXMESH *);
-HRESULT WINAPI D3DXLoadMeshFromXof(LPD3DXFILEDATA, DWORD, LPDIRECT3DDEVICE9, LPD3DXBUFFER *, LPD3DXBUFFER *, LPD3DXBUFFER *, DWORD *, LPD3DXMESH *);
-HRESULT WINAPI D3DXLoadPatchMeshFromXof(LPD3DXFILEDATA, DWORD, LPDIRECT3DDEVICE9, LPD3DXBUFFER *, LPD3DXBUFFER *, LPD3DXBUFFER *, DWORD *, LPD3DXPATCHMESH *);
-HRESULT WINAPI D3DXLoadSkinMeshFromXof(LPD3DXFILEDATA, DWORD, LPDIRECT3DDEVICE9, LPD3DXBUFFER *, LPD3DXBUFFER *, LPD3DXBUFFER *, DWORD *, LPD3DXSKININFO *, LPD3DXMESH *);
+HRESULT WINAPI D3DXLoadMeshFromXInMemory(const void *data, DWORD data_size, DWORD flags,
+        struct IDirect3DDevice9 *device, struct ID3DXBuffer **adjacency, struct ID3DXBuffer **materials,
+        struct ID3DXBuffer **effect_instances, DWORD *material_count, struct ID3DXMesh **mesh);
+HRESULT WINAPI D3DXLoadMeshFromXResource(HMODULE module, const char *resource, const char *resource_type,
+        DWORD flags, struct IDirect3DDevice9 *device, struct ID3DXBuffer **adjacency,
+        struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
+        DWORD *material_count, struct ID3DXMesh **mesh);
+HRESULT WINAPI D3DXLoadMeshFromXof(struct ID3DXFileData *file_data, DWORD flags, struct IDirect3DDevice9 *device,
+        struct ID3DXBuffer **adjacency, struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
+        DWORD *material_count, struct ID3DXMesh **mesh);
+HRESULT WINAPI D3DXLoadPatchMeshFromXof(struct ID3DXFileData *file_data, DWORD flags, struct IDirect3DDevice9 *device,
+        struct ID3DXBuffer **adjacency, struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
+        DWORD *material_count, struct ID3DXPatchMesh **mesh);
+HRESULT WINAPI D3DXLoadSkinMeshFromXof(struct ID3DXFileData *file_data, DWORD flags, struct IDirect3DDevice9 *device,
+        struct ID3DXBuffer **adjacency, struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
+        DWORD *material_count, struct ID3DXSkinInfo **skin_info, struct ID3DXMesh **mesh);
 HRESULT WINAPI D3DXLoadPRTBufferFromFileA(LPCSTR, LPD3DXPRTBUFFER *);
 HRESULT WINAPI D3DXLoadPRTBufferFromFileW(LPCWSTR, LPD3DXPRTBUFFER *);
 #define D3DXLoadPRTBufferFromFile WINELIB_NAME_AW(D3DXLoadPRTBufferFromFile)
@@ -726,7 +755,9 @@ UINT    WINAPI D3DXGetFVFVertexSize(DWORD);
 BOOL    WINAPI D3DXBoxBoundProbe(CONST D3DXVECTOR3 *, CONST D3DXVECTOR3 *, CONST D3DXVECTOR3 *, CONST D3DXVECTOR3 *);
 BOOL    WINAPI D3DXSphereBoundProbe(CONST D3DXVECTOR3 *,FLOAT,CONST D3DXVECTOR3 *,CONST D3DXVECTOR3 *);
 HRESULT WINAPI D3DXCleanMesh(D3DXCLEANTYPE, LPD3DXMESH, CONST DWORD *, LPD3DXMESH *, DWORD *, LPD3DXBUFFER *);
-HRESULT WINAPI D3DXConcatenateMeshes(LPD3DXMESH *, UINT, DWORD, CONST D3DXMATRIX *, CONST D3DXMATRIX *, CONST D3DVERTEXELEMENT9 *, LPDIRECT3DDEVICE9, LPD3DXMESH *);
+HRESULT WINAPI D3DXConcatenateMeshes(struct ID3DXMesh **meshes, UINT mesh_count, DWORD flags,
+        const D3DXMATRIX *geometry_matrices, const D3DXMATRIX *texture_matrices,
+        const D3DVERTEXELEMENT9 *declaration, struct IDirect3DDevice9 *device, struct ID3DXMesh **mesh);
 HRESULT WINAPI D3DXComputeBoundingBox(CONST D3DXVECTOR3 *, DWORD, DWORD, D3DXVECTOR3 *, D3DXVECTOR3 *);
 HRESULT WINAPI D3DXComputeBoundingSphere(CONST D3DXVECTOR3 *, DWORD, DWORD, D3DXVECTOR3 *, FLOAT *);
 HRESULT WINAPI D3DXComputeIMTFromPerTexelSignal(LPD3DXMESH, DWORD, FLOAT *, UINT, UINT, UINT, UINT, DWORD, LPD3DXUVATLASCB, LPVOID, LPD3DXBUFFER *);

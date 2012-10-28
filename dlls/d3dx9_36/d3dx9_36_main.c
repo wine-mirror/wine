@@ -76,7 +76,7 @@ BOOL WINAPI D3DXDebugMute(BOOL mute)
  * D3DXGetDriverLevel.
  * Returns always 900 (DX 9) for us
  */
-UINT WINAPI D3DXGetDriverLevel(LPDIRECT3DDEVICE9 device)
+UINT WINAPI D3DXGetDriverLevel(struct IDirect3DDevice9 *device)
 {
     return 900;
 }

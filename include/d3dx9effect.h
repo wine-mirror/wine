@@ -269,7 +269,7 @@ DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
     STDMETHOD(CommitChanges)(THIS) PURE;
     STDMETHOD(EndPass)(THIS) PURE;
     STDMETHOD(End)(THIS) PURE;
-    STDMETHOD(GetDevice)(THIS_ LPDIRECT3DDEVICE9* device) PURE;
+    STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice9 **device) PURE;
     STDMETHOD(OnLostDevice)(THIS) PURE;
     STDMETHOD(OnResetDevice)(THIS) PURE;
     STDMETHOD(SetStateManager)(THIS_ LPD3DXEFFECTSTATEMANAGER manager) PURE;
@@ -278,7 +278,7 @@ DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
     STDMETHOD_(D3DXHANDLE, EndParameterBlock)(THIS) PURE;
     STDMETHOD(ApplyParameterBlock)(THIS_ D3DXHANDLE parameter_block) PURE;
     STDMETHOD(DeleteParameterBlock)(THIS_ D3DXHANDLE parameter_block) PURE;
-    STDMETHOD(CloneEffect)(THIS_ LPDIRECT3DDEVICE9 device, LPD3DXEFFECT* effect) PURE;
+    STDMETHOD(CloneEffect)(THIS_ struct IDirect3DDevice9 *device, struct ID3DXEffect **effect) PURE;
     STDMETHOD(SetRawValue)(THIS_ D3DXHANDLE parameter, LPCVOID data, UINT byte_offset, UINT bytes) PURE;
 };
 #undef INTERFACE
@@ -364,28 +364,12 @@ extern "C" {
 #endif
 
 HRESULT WINAPI D3DXCreateEffectPool(LPD3DXEFFECTPOOL* pool);
-
-HRESULT WINAPI D3DXCreateEffect(LPDIRECT3DDEVICE9 device,
-                                LPCVOID srcdata,
-                                UINT srcdatalen,
-                                CONST D3DXMACRO* defines,
-                                LPD3DXINCLUDE include,
-                                DWORD flags,
-                                LPD3DXEFFECTPOOL pool,
-                                LPD3DXEFFECT* effect,
-                                LPD3DXBUFFER* compilation_errors);
-
-HRESULT WINAPI D3DXCreateEffectEx(LPDIRECT3DDEVICE9 device,
-                                  LPCVOID srcdata,
-                                  UINT srcdatalen,
-                                  CONST D3DXMACRO* defines,
-                                  LPD3DXINCLUDE include,
-                                  LPCSTR skip_constants,
-                                  DWORD flags,
-                                  LPD3DXEFFECTPOOL pool,
-                                  LPD3DXEFFECT* effect,
-                                  LPD3DXBUFFER* compilation_errors);
-
+HRESULT WINAPI D3DXCreateEffect(struct IDirect3DDevice9 *device, const void *srcdata, UINT srcdatalen,
+        const D3DXMACRO *defines, struct ID3DXInclude *include, DWORD flags,
+        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilation_errors);
+HRESULT WINAPI D3DXCreateEffectEx(struct IDirect3DDevice9 *device, const void *srcdata, UINT srcdatalen,
+        const D3DXMACRO *defines, struct ID3DXInclude *include, const char *skip_constants, DWORD flags,
+        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilation_errors);
 HRESULT WINAPI D3DXCreateEffectCompiler(LPCSTR srcdata,
                                         UINT srcdatalen,
                                         CONST D3DXMACRO* defines,
@@ -393,85 +377,38 @@ HRESULT WINAPI D3DXCreateEffectCompiler(LPCSTR srcdata,
                                         DWORD flags,
                                         LPD3DXEFFECTCOMPILER* compiler,
                                         LPD3DXBUFFER* parse_errors);
-
-HRESULT WINAPI D3DXCreateEffectFromFileExA(LPDIRECT3DDEVICE9 device,
-                                           LPCSTR srcfile,
-                                           const D3DXMACRO *defines,
-                                           LPD3DXINCLUDE include,
-                                           LPCSTR skipconstants,
-                                           DWORD flags,
-                                           LPD3DXEFFECTPOOL pool,
-                                           LPD3DXEFFECT *effect,
-                                           LPD3DXBUFFER *compilationerrors);
-HRESULT WINAPI D3DXCreateEffectFromFileExW(LPDIRECT3DDEVICE9 device,
-                                           LPCWSTR srcfile,
-                                           const D3DXMACRO *defines,
-                                           LPD3DXINCLUDE include,
-                                           LPCSTR skipconstants,
-                                           DWORD flags,
-                                           LPD3DXEFFECTPOOL pool,
-                                           LPD3DXEFFECT *effect,
-                                           LPD3DXBUFFER *compilationerrors);
+HRESULT WINAPI D3DXCreateEffectFromFileExA(struct IDirect3DDevice9 *device, const char *srcfile,
+        const D3DXMACRO *defines, struct ID3DXInclude *include, const char *skip_constants, DWORD flags,
+        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilation_errors);
+HRESULT WINAPI D3DXCreateEffectFromFileExW(struct IDirect3DDevice9 *device, const WCHAR *srcfile,
+        const D3DXMACRO *defines, struct ID3DXInclude *include, const char *skip_constants, DWORD flags,
+        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilation_errors);
 #define D3DXCreateEffectFromFileEx WINELIB_NAME_AW(D3DXCreateEffectFromFileEx)
 
-HRESULT WINAPI D3DXCreateEffectFromFileA(LPDIRECT3DDEVICE9 device,
-                                         LPCSTR srcfile,
-                                         const D3DXMACRO *defines,
-                                         LPD3DXINCLUDE include,
-                                         DWORD flags,
-                                         LPD3DXEFFECTPOOL pool,
-                                         LPD3DXEFFECT *effect,
-                                         LPD3DXBUFFER *compilationerrors);
-HRESULT WINAPI D3DXCreateEffectFromFileW(LPDIRECT3DDEVICE9 device,
-                                         LPCWSTR srcfile,
-                                         const D3DXMACRO *defines,
-                                         LPD3DXINCLUDE include,
-                                         DWORD flags,
-                                         LPD3DXEFFECTPOOL pool,
-                                         LPD3DXEFFECT *effect,
-                                         LPD3DXBUFFER *compilationerrors);
+HRESULT WINAPI D3DXCreateEffectFromFileA(struct IDirect3DDevice9 *device, const char *srcfile,
+        const D3DXMACRO *defines, struct ID3DXInclude *include, DWORD flags,
+        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilation_errors);
+HRESULT WINAPI D3DXCreateEffectFromFileW(struct IDirect3DDevice9 *device, const WCHAR *srcfile,
+        const D3DXMACRO *defines, struct ID3DXInclude *include, DWORD flags,
+        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilation_errors);
 #define D3DXCreateEffectFromFile WINELIB_NAME_AW(D3DXCreateEffectFromFile)
 
-HRESULT WINAPI D3DXCreateEffectFromResourceExA(LPDIRECT3DDEVICE9 device,
-                                               HMODULE srcmodule,
-                                               LPCSTR srcresource,
-                                               const D3DXMACRO *defines,
-                                               LPD3DXINCLUDE include,
-                                               LPCSTR skipconstants,
-                                               DWORD flags,
-                                               LPD3DXEFFECTPOOL pool,
-                                               LPD3DXEFFECT *effect,
-                                               LPD3DXBUFFER *compilationerrors);
-HRESULT WINAPI D3DXCreateEffectFromResourceExW(LPDIRECT3DDEVICE9 device,
-                                               HMODULE srcmodule,
-                                               LPCWSTR srcresource,
-                                               const D3DXMACRO *defines,
-                                               LPD3DXINCLUDE include,
-                                               LPCSTR skipconstants,
-                                               DWORD flags,
-                                               LPD3DXEFFECTPOOL pool,
-                                               LPD3DXEFFECT *effect,
-                                               LPD3DXBUFFER *compilationerrors);
+HRESULT WINAPI D3DXCreateEffectFromResourceExA(struct IDirect3DDevice9 *device, HMODULE srcmodule,
+        const char *srcresource, const D3DXMACRO *defines, struct ID3DXInclude *include,
+        const char *skip_constants, DWORD flags, struct ID3DXEffectPool *pool,
+        struct ID3DXEffect **effect, struct ID3DXBuffer **compilation_errors);
+HRESULT WINAPI D3DXCreateEffectFromResourceExW(struct IDirect3DDevice9 *device, HMODULE srcmodule,
+        const WCHAR *srcresource, const D3DXMACRO *defines, struct ID3DXInclude *include,
+        const char *skip_constants, DWORD flags, struct ID3DXEffectPool *pool,
+        struct ID3DXEffect **effect, struct ID3DXBuffer **compilation_errors);
 #define D3DXCreateEffectFromResourceEx WINELIB_NAME_AW(D3DXCreateEffectFromResourceEx)
 
-HRESULT WINAPI D3DXCreateEffectFromResourceA(LPDIRECT3DDEVICE9 device,
-                                             HMODULE srcmodule,
-                                             LPCSTR srcresource,
-                                             const D3DXMACRO *defines,
-                                             LPD3DXINCLUDE include,
-                                             DWORD flags,
-                                             LPD3DXEFFECTPOOL pool,
-                                             LPD3DXEFFECT *effect,
-                                             LPD3DXBUFFER *compilationerrors);
-HRESULT WINAPI D3DXCreateEffectFromResourceW(LPDIRECT3DDEVICE9 device,
-                                             HMODULE srcmodule,
-                                             LPCWSTR srcresource,
-                                             const D3DXMACRO *defines,
-                                             LPD3DXINCLUDE include,
-                                             DWORD flags,
-                                             LPD3DXEFFECTPOOL pool,
-                                             LPD3DXEFFECT *effect,
-                                             LPD3DXBUFFER *compilationerrors);
+HRESULT WINAPI D3DXCreateEffectFromResourceA(struct IDirect3DDevice9 *device, HMODULE srcmodule,
+        const char *srcresource, const D3DXMACRO *defines, struct ID3DXInclude *include, DWORD flags,
+        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilation_errors);
+HRESULT WINAPI D3DXCreateEffectFromResourceW(struct IDirect3DDevice9 *device, HMODULE srcmodule,
+        const WCHAR *srcresource, const D3DXMACRO *defines, struct ID3DXInclude *include, DWORD flags,
+        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilation_errors);
 #define D3DXCreateEffectFromResource WINELIB_NAME_AW(D3DXCreateEffectFromResource)
 
 HRESULT WINAPI D3DXCreateEffectCompilerFromFileA(LPCSTR srcfile,
