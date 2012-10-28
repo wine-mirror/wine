@@ -1381,6 +1381,10 @@ static void D3DXVector3Test(void)
     D3DXMatrixMultiply(&mat,&world,&view);
     D3DXVec3Unproject(&gotvec,&u,&viewport,&projection,&mat,NULL);
     expect_vec3(expectedvec,gotvec);
+    /* Viewport can be omitted */
+    expectedvec.x = -11.018396f; expectedvec.y = 3.218991f; expectedvec.z = 1.380329f;
+    D3DXVec3Unproject(&gotvec,&u,NULL,&projection,&view,&world);
+    expect_vec3(expectedvec,gotvec);
 }
 
 static void D3DXVector4Test(void)
