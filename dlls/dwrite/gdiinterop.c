@@ -275,7 +275,7 @@ static const struct IDWriteGdiInteropVtbl gdiinteropvtbl = {
 
 static IDWriteGdiInterop gdiinterop = { &gdiinteropvtbl };
 
-HRESULT create_gdiinterop(IDWriteGdiInterop **ret)
+HRESULT get_gdiinterop(IDWriteGdiInterop **ret)
 {
     *ret = &gdiinterop;
     return S_OK;

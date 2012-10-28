@@ -396,10 +396,62 @@ struct sa_test {
     struct script_analysis sa[10];
 };
 
+enum scriptcode {
+    Script_Arabic = 0,
+    Script_Latin  = 38,
+    Script_Latin_Symb = 77
+};
+
 static struct sa_test sa_tests[] = {
     {
-      {'t', 'e', 's', 't',0}, 1,
-      { { 0, 4, { 38, DWRITE_SCRIPT_SHAPES_DEFAULT } }} },
+      {'t','e','s','t',0}, 1,
+          { { 0, 4, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      {' ',' ',' ',' ','!','$','[','^','{','~',0}, 1,
+          { { 0, 10, { Script_Latin_Symb, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      {' ',' ',' ','1','2',' ',0}, 1,
+          { { 0, 6, { Script_Latin_Symb, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* digits only */
+      {'1','2',0}, 1,
+          { { 0, 2, { Script_Latin_Symb, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Arabic */
+      {0x064a,0x064f,0x0633,0x0627,0x0648,0x0650,0x064a,0}, 1,
+          { { 0, 7, { Script_Arabic, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Arabic, Latin */
+      {'1','2','3','-','5','2',0x064a,0x064f,0x0633,0x0627,0x0648,0x0650,0x064a,'7','1','.',0}, 1,
+          { { 0, 16, { 0, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Arabic, English */
+      {'A','B','C','-','D','E','F',' ',0x0621,0x0623,0x0624,0}, 2,
+          { { 0, 8, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } },
+            { 8, 3, { Script_Arabic, DWRITE_SCRIPT_SHAPES_DEFAULT } },
+          }
+    },
+    {
+      /* leading space, Arabic, English */
+      {' ',0x0621,0x0623,0x0624,'A','B','C','-','D','E','F',0}, 2,
+          { { 0, 4, { Script_Arabic,  DWRITE_SCRIPT_SHAPES_DEFAULT } },
+            { 4, 7, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } },
+          }
+    },
+    {
+      /* English, Arabic, trailing space */
+      {'A','B','C','-','D','E','F',0x0621,0x0623,0x0624,' ',0}, 2,
+          { { 0, 7, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } },
+            { 7, 4, { Script_Arabic, DWRITE_SCRIPT_SHAPES_DEFAULT } },
+          }
+    },
+
     { {0} }
 };
 
@@ -433,9 +485,7 @@ static void test_AnalyzeScript(void)
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    if (hr != S_OK) return;
 
     while (*ptr->string)
     {
@@ -443,7 +493,9 @@ todo_wine
 
         init_expected_sa(expected_seq, ptr);
         hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource, 0, lstrlenW(g_source), &analysissink);
+todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
+        if (hr == E_NOTIMPL) break;
         ok_sequence(sequences, ANALYZER_ID, expected_seq[0]->sequence, "AnalyzeScript", FALSE);
         ptr++;
     }

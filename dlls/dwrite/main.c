@@ -500,7 +500,7 @@ static HRESULT WINAPI dwritefactory_CreateTypography(IDWriteFactory *iface, IDWr
 static HRESULT WINAPI dwritefactory_GetGdiInterop(IDWriteFactory *iface, IDWriteGdiInterop **gdi_interop)
 {
     TRACE("(%p)\n", gdi_interop);
-    return create_gdiinterop(gdi_interop);
+    return get_gdiinterop(gdi_interop);
 }
 
 static HRESULT WINAPI dwritefactory_CreateTextLayout(IDWriteFactory *iface, WCHAR const* string,
@@ -532,8 +532,8 @@ static HRESULT WINAPI dwritefactory_CreateEllipsisTrimmingSign(IDWriteFactory *i
 
 static HRESULT WINAPI dwritefactory_CreateTextAnalyzer(IDWriteFactory *iface, IDWriteTextAnalyzer **analyzer)
 {
-    FIXME("(%p): stub\n", analyzer);
-    return E_NOTIMPL;
+    TRACE("(%p)\n", analyzer);
+    return get_textanalyzer(analyzer);
 }
 
 static HRESULT WINAPI dwritefactory_CreateNumberSubstitution(IDWriteFactory *iface, DWRITE_NUMBER_SUBSTITUTION_METHOD method,
