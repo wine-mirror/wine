@@ -404,6 +404,11 @@ enum scriptcode {
 
 static struct sa_test sa_tests[] = {
     {
+      /* just 1 char string */
+      {'t',0}, 1,
+          { { 0, 1, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
       {'t','e','s','t',0}, 1,
           { { 0, 4, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
@@ -451,7 +456,7 @@ static struct sa_test sa_tests[] = {
             { 7, 4, { Script_Arabic, DWRITE_SCRIPT_SHAPES_DEFAULT } },
           }
     },
-
+    /* keep this as end marker */
     { {0} }
 };
 
@@ -493,9 +498,7 @@ static void test_AnalyzeScript(void)
 
         init_expected_sa(expected_seq, ptr);
         hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource, 0, lstrlenW(g_source), &analysissink);
-todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        if (hr == E_NOTIMPL) break;
         ok_sequence(sequences, ANALYZER_ID, expected_seq[0]->sequence, "AnalyzeScript", FALSE);
         ptr++;
     }
