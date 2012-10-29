@@ -555,13 +555,12 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
 
     if (IS_INTRESOURCE( lppsp->pszTitle ))
     {
-      if (!LoadStringW( lppsp->hInstance, (DWORD_PTR)lppsp->pszTitle,szTitle,sizeof(szTitle)/sizeof(szTitle[0]) ))
-      {
-        pTitle = pszNull;
-	FIXME("Could not load resource #%04x?\n",LOWORD(lppsp->pszTitle));
-      }
-      else
+      if (LoadStringW( lppsp->hInstance, (DWORD_PTR)lppsp->pszTitle, szTitle, sizeof(szTitle)/sizeof(szTitle[0]) ))
         pTitle = szTitle;
+      else if (*p)
+        pTitle = p;
+      else
+        pTitle = pszNull;
     }
     else
       pTitle = lppsp->pszTitle;
