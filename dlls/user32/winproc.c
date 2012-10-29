@@ -1124,10 +1124,7 @@ static LRESULT WINAPI StaticWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 
 static DWORD wait_message( DWORD count, CONST HANDLE *handles, DWORD timeout, DWORD mask, DWORD flags )
 {
-    DWORD ret;
-
-    flush_window_surfaces( TRUE );
-    ret = USER_Driver->pMsgWaitForMultipleObjectsEx( count, handles, timeout, mask, flags );
+    DWORD ret = USER_Driver->pMsgWaitForMultipleObjectsEx( count, handles, timeout, mask, flags );
     if (ret == WAIT_TIMEOUT && !count && !timeout) NtYieldExecution();
     return ret;
 }
