@@ -5164,9 +5164,9 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     scaled_rect.Height = rect->Height * args.rel_height;
 
     if ((format_flags & StringFormatFlagsNoClip) ||
-        scaled_rect.Width >= INT_MAX || scaled_rect.Width < 0.5) scaled_rect.Width = (REAL)(1 << 23);
+        scaled_rect.Width >= 1 << 23 || scaled_rect.Width < 0.5) scaled_rect.Width = 1 << 23;
     if ((format_flags & StringFormatFlagsNoClip) ||
-        scaled_rect.Height >= INT_MAX || scaled_rect.Height < 0.5) scaled_rect.Height = (REAL)(1 << 23);
+        scaled_rect.Height >= 1 << 23 || scaled_rect.Height < 0.5) scaled_rect.Height = 1 << 23;
 
     if (scaled_rect.Width >= 0.5)
     {
@@ -5174,8 +5174,8 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
         if (scaled_rect.Width < 0.5) return Ok; /* doesn't fit */
     }
 
-    if (scaled_rect.Width >= INT_MAX || scaled_rect.Width < 0.5) scaled_rect.Width = (REAL)(1 << 23);
-    if (scaled_rect.Height >= INT_MAX || scaled_rect.Height < 0.5) scaled_rect.Height = (REAL)(1 << 23);
+    if (scaled_rect.Width >= 1 << 23 || scaled_rect.Width < 0.5) scaled_rect.Width = 1 << 23;
+    if (scaled_rect.Height >= 1 << 23 || scaled_rect.Height < 0.5) scaled_rect.Height = 1 << 23;
 
     get_font_hfont(graphics, font, format, &gdifont);
     oldfont = SelectObject(hdc, gdifont);
@@ -5343,9 +5343,9 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     scaled_rect.Height = rel_height * rect->Height;
 
     if ((format_flags & StringFormatFlagsNoClip) ||
-        scaled_rect.Width >= INT_MAX || scaled_rect.Width < 0.5) scaled_rect.Width = (REAL)(1 << 23);
+        scaled_rect.Width >= 1 << 23 || scaled_rect.Width < 0.5) scaled_rect.Width = 1 << 23;
     if ((format_flags & StringFormatFlagsNoClip) ||
-        scaled_rect.Height >= INT_MAX || scaled_rect.Height < 0.5) scaled_rect.Height = (REAL)(1 << 23);
+        scaled_rect.Height >= 1 << 23 || scaled_rect.Height < 0.5) scaled_rect.Height = 1 << 23;
 
     if (scaled_rect.Width >= 0.5)
     {
@@ -5353,8 +5353,8 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
         if (scaled_rect.Width < 0.5) return Ok; /* doesn't fit */
     }
 
-    if (scaled_rect.Width >= INT_MAX || scaled_rect.Width < 0.5) scaled_rect.Width = (REAL)(1 << 23);
-    if (scaled_rect.Height >= INT_MAX || scaled_rect.Height < 0.5) scaled_rect.Height = (REAL)(1 << 23);
+    if (scaled_rect.Width >= 1 << 23 || scaled_rect.Width < 0.5) scaled_rect.Width = 1 << 23;
+    if (scaled_rect.Height >= 1 << 23 || scaled_rect.Height < 0.5) scaled_rect.Height = 1 << 23;
 
     if (!(format_flags & StringFormatFlagsNoClip) &&
         scaled_rect.Width != 1 << 23 && scaled_rect.Height != 1 << 23)
