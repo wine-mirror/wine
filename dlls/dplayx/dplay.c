@@ -1126,10 +1126,6 @@ DP_SetGroupData( lpGroupData lpGData, DWORD dwFlags,
   /* Reallocate for new data */
   if( lpData != NULL )
   {
-    LPVOID lpNewData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                  sizeof( dwDataSize ) );
-    CopyMemory( lpNewData, lpData, dwDataSize );
-
     if( dwFlags & DPSET_LOCAL )
     {
       lpGData->lpLocalData     = lpData;
@@ -1137,7 +1133,8 @@ DP_SetGroupData( lpGroupData lpGData, DWORD dwFlags,
     }
     else
     {
-      lpGData->lpRemoteData     = lpNewData;
+      lpGData->lpRemoteData = HeapAlloc( GetProcessHeap(), 0, dwDataSize );
+      CopyMemory( lpGData->lpRemoteData, lpData, dwDataSize );
       lpGData->dwRemoteDataSize = dwDataSize;
     }
   }
@@ -1330,9 +1327,6 @@ DP_SetPlayerData( lpPlayerData lpPData, DWORD dwFlags,
   /* Reallocate for new data */
   if( lpData != NULL )
   {
-    LPVOID lpNewData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                  sizeof( dwDataSize ) );
-    CopyMemory( lpNewData, lpData, dwDataSize );
 
     if( dwFlags & DPSET_LOCAL )
     {
@@ -1341,7 +1335,8 @@ DP_SetPlayerData( lpPlayerData lpPData, DWORD dwFlags,
     }
     else
     {
-      lpPData->lpRemoteData     = lpNewData;
+      lpPData->lpRemoteData = HeapAlloc( GetProcessHeap(), 0, dwDataSize );
+      CopyMemory( lpPData->lpRemoteData, lpData, dwDataSize );
       lpPData->dwRemoteDataSize = dwDataSize;
     }
   }
