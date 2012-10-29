@@ -912,9 +912,19 @@ Call obj.test(obj)
 Call ok(getVT(test) = "VT_DISPATCH", "getVT(test) = " & getVT(test))
 Call ok(Me is Test, "Me is not Test")
 
-Const c1 = 1, c2 = 2
+Const c1 = 1, c2 = 2, c3 = -3
 Call ok(c1 = 1, "c1 = " & c1)
 Call ok(getVT(c1) = "VT_I2", "getVT(c1) = " & getVT(c1))
+Call ok(c3 = -3, "c3 = " & c3)
+Call ok(getVT(c3) = "VT_I2", "getVT(c3) = " & getVT(c3))
+
+Const cb = True, cs = "test", cnull = null
+Call ok(cb, "cb = " & cb)
+Call ok(getVT(cb) = "VT_BOOL", "getVT(cb) = " & getVT(cb))
+Call ok(cs = "test", "cs = " & cs)
+Call ok(getVT(cs) = "VT_BSTR", "getVT(cs) = " & getVT(cs))
+Call ok(isNull(cnull), "cnull = " & cnull)
+Call ok(getVT(cnull) = "VT_NULL", "getVT(cnull) = " & getVT(cnull))
 
 if false then Const conststr = "str"
 Call ok(conststr = "str", "conststr = " & conststr)
