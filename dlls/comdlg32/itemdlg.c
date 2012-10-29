@@ -1214,17 +1214,17 @@ static SIZE update_layout(FileDialogImpl *This)
     }
 
     /* The custom controls */
-    customctrls_rc.left = dialog_rc.left + vspacing;
-    customctrls_rc.right = dialog_rc.right - vspacing;
-    customctrls_rc.bottom = filename_rc.top - hspacing;
+    customctrls_rc.left = dialog_rc.left + hspacing;
+    customctrls_rc.right = dialog_rc.right - hspacing;
+    customctrls_rc.bottom = filename_rc.top - vspacing;
     customctrls_rc.top = customctrls_rc.bottom -
         ctrl_container_resize(This, customctrls_rc.right - customctrls_rc.left);
 
     /* The ExplorerBrowser control. */
-    ebrowser_rc.left = dialog_rc.left + vspacing;
+    ebrowser_rc.left = dialog_rc.left + hspacing;
     ebrowser_rc.top = toolbar_rc.bottom + vspacing;
     ebrowser_rc.right = dialog_rc.right - hspacing;
-    ebrowser_rc.bottom = customctrls_rc.top - hspacing;
+    ebrowser_rc.bottom = customctrls_rc.top - vspacing;
 
     /****
      * Move everything to the right place.
