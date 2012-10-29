@@ -754,9 +754,9 @@ enum StringPersistence
 };
 
 extern BOOL msi_addstringW( string_table *st, const WCHAR *data, int len, USHORT refcount, enum StringPersistence persistence ) DECLSPEC_HIDDEN;
-extern UINT msi_string2idW( const string_table *st, LPCWSTR buffer, UINT *id ) DECLSPEC_HIDDEN;
+extern UINT msi_string2id( const string_table *st, const WCHAR *data, int len, UINT *id ) DECLSPEC_HIDDEN;
 extern VOID msi_destroy_stringtable( string_table *st ) DECLSPEC_HIDDEN;
-extern const WCHAR *msi_string_lookup_id( const string_table *st, UINT id ) DECLSPEC_HIDDEN;
+extern const WCHAR *msi_string_lookup( const string_table *st, UINT id, int *len ) DECLSPEC_HIDDEN;
 extern HRESULT msi_init_string_table( IStorage *stg ) DECLSPEC_HIDDEN;
 extern string_table *msi_load_string_table( IStorage *stg, UINT *bytes_per_strref ) DECLSPEC_HIDDEN;
 extern UINT msi_save_string_table( const string_table *st, IStorage *storage, UINT *bytes_per_strref ) DECLSPEC_HIDDEN;

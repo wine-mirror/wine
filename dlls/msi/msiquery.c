@@ -347,7 +347,7 @@ UINT msi_view_get_row(MSIDATABASE *db, MSIVIEW *view, UINT row, MSIRECORD **rec)
         {
             LPCWSTR sval;
 
-            sval = msi_string_lookup_id(db->strings, ival);
+            sval = msi_string_lookup(db->strings, ival, NULL);
             MSI_RecordSetStringW(*rec, i, sval);
         }
         else
