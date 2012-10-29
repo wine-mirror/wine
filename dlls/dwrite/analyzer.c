@@ -29,6 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
 enum scriptcode {
     Script_Arabic = 0,
+    Script_C1Controls = 12,
     Script_Latin  = 38,
     Script_Latin_Symb = 77,
     Script_Unknown = (UINT16)-1
@@ -54,6 +55,14 @@ static const struct script_range script_ranges[] = {
     { Script_Latin, 0x61, 0x7a },
     /* ASCII punctuation and symbols, control char DEL: U+007B–U+007F */
     { Script_Latin_Symb, 0x7b, 0x7f },
+    /* C1 Controls: U+0080–U+009F */
+    { Script_C1Controls, 0x80, 0x9f },
+    /* Latin-1 Supplement: U+00A0–U+00FF */
+    /* Latin Extended-A: U+0100–U+017F */
+    /* Latin Extended-B: U+0180–U+024F */
+    /* IPA Extensions: U+0250–U+02AF */
+    /* Spacing Modifier Letters: U+02B0–U+02FF */
+    { Script_Latin, 0xa0, 0x2ff },
     /* Arabic: U+0600–U+06FF */
     { Script_Arabic, 0x600, 0x6ef },
     /* unsuppoted range */

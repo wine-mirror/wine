@@ -398,6 +398,7 @@ struct sa_test {
 
 enum scriptcode {
     Script_Arabic = 0,
+    Script_C1Controls = 12,
     Script_Latin  = 38,
     Script_Latin_Symb = 77
 };
@@ -433,7 +434,7 @@ static struct sa_test sa_tests[] = {
     {
       /* Arabic, Latin */
       {'1','2','3','-','5','2',0x064a,0x064f,0x0633,0x0627,0x0648,0x0650,0x064a,'7','1','.',0}, 1,
-          { { 0, 16, { 0, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 16, { Script_Arabic, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
     {
       /* Arabic, English */
@@ -455,6 +456,33 @@ static struct sa_test sa_tests[] = {
           { { 0, 7, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } },
             { 7, 4, { Script_Arabic, DWRITE_SCRIPT_SHAPES_DEFAULT } },
           }
+    },
+    {
+      /* C1 Controls, Latin-1 Supplement */
+      {0x80,0x90,0x9f,0xa0,0xc0,0xb8,0xbf,0xc0,0xff,0}, 2,
+          { { 0, 3, { Script_C1Controls, DWRITE_SCRIPT_SHAPES_DEFAULT } },
+            { 3, 6, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } },
+          }
+    },
+    {
+      /* Latin Extended-A */
+      {0x100,0x120,0x130,0x140,0x150,0x160,0x170,0x17f,0}, 1,
+          { { 0, 8, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Latin Extended-B */
+      {0x180,0x190,0x1bf,0x1c0,0x1c3,0x1c4,0x1cc,0x1dc,0x1ff,0x217,0x21b,0x24f,0}, 1,
+          { { 0, 12, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* IPA Extensions */
+      {0x250,0x260,0x270,0x290,0x2af,0}, 1,
+          { { 0, 5, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Spacing Modifier Letters */
+      {0x2b0,0x2ba,0x2d7,0x2dd,0x2ef,0x2ff,0}, 1,
+          { { 0, 6, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
     /* keep this as end marker */
     { {0} }
