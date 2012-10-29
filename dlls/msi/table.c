@@ -1273,10 +1273,11 @@ static UINT get_table_value_from_record( MSITABLEVIEW *tv, MSIRECORD *rec, UINT 
     }
     else if ( columninfo.type & MSITYPE_STRING )
     {
-        LPCWSTR sval = MSI_RecordGetString( rec, iField );
+        int len;
+        const WCHAR *sval = msi_record_get_string( rec, iField, &len );
         if (sval)
         {
-            r = msi_string2id(tv->db->strings, sval, -1, pvalue);
+            r = msi_string2id( tv->db->strings, sval, len, pvalue );
             if (r != ERROR_SUCCESS)
                 return ERROR_NOT_FOUND;
         }
@@ -1360,8 +1361,9 @@ static UINT TABLE_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UI
 
                 if ( r != ERROR_SUCCESS )
                 {
-                    LPCWSTR sval = MSI_RecordGetString( rec, i + 1 );
-                    val = msi_addstringW( tv->db->strings, sval, -1, 1,
+                    int len;
+                    const WCHAR *sval = msi_record_get_string( rec, i + 1, &len );
+                    val = msi_addstringW( tv->db->strings, sval, len, 1,
                       persistent ? StringPersistent : StringNonPersistent );
                 }
                 else
@@ -1530,10 +1532,10 @@ static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec, UINT *column )
             TRACE("skipping binary column\n");
         else if ( tv->columns[i].type & MSITYPE_STRING )
         {
-            LPCWSTR str;
+            int len;
+            const WCHAR *str = msi_record_get_string( rec, i+1, &len );
 
-            str = MSI_RecordGetString( rec, i+1 );
-            if (str == NULL || str[0] == 0)
+            if (!str || (!str[0] && !len))
             {
                 if (column) *column = i;
                 return ERROR_INVALID_DATA;
@@ -2383,12 +2385,13 @@ static void dump_record( MSIRECORD *rec )
     n = MSI_RecordGetFieldCount( rec );
     for( i=1; i<=n; i++ )
     {
-        LPCWSTR sval;
+        int len;
+        const WCHAR *sval;
 
         if( MSI_RecordIsNull( rec, i ) )
             TRACE("row -> []\n");
-        else if( (sval = MSI_RecordGetString( rec, i )) )
-            TRACE("row -> [%s]\n", debugstr_w(sval));
+        else if( (sval = msi_record_get_string( rec, i, &len )) )
+            TRACE("row -> [%s]\n", debugstr_wn(sval, len));
         else
             TRACE("row -> [0x%08x]\n", MSI_RecordGetInteger( rec, i ) );
     }
@@ -2407,7 +2410,6 @@ static void dump_table( const string_table *st, const USHORT *rawdata, UINT raws
 
 static UINT* msi_record_to_row( const MSITABLEVIEW *tv, MSIRECORD *rec )
 {
-    LPCWSTR str;
     UINT i, r, *data;
 
     data = msi_alloc( tv->num_cols *sizeof (UINT) );
@@ -2422,10 +2424,11 @@ static UINT* msi_record_to_row( const MSITABLEVIEW *tv, MSIRECORD *rec )
         if ( ( tv->columns[i].type & MSITYPE_STRING ) &&
              ! MSITYPE_IS_BINARY(tv->columns[i].type) )
         {
-            str = MSI_RecordGetString( rec, i+1 );
+            int len;
+            const WCHAR *str = msi_record_get_string( rec, i+1, &len );
             if (str)
             {
-                r = msi_string2id( tv->db->strings, str, -1, &data[i] );
+                r = msi_string2id( tv->db->strings, str, len, &data[i] );
 
                 /* if there's no matching string in the string table,
                    these keys can't match any record, so fail now. */
