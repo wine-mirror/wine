@@ -724,7 +724,7 @@ typedef struct {
     } str;
 } awcstring;
 
-UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz ) DECLSPEC_HIDDEN;
+UINT msi_strcpy_to_awstring(const WCHAR *, int, awstring *, DWORD *) DECLSPEC_HIDDEN;
 
 /* msi server interface */
 extern HRESULT create_msi_custom_remote( IUnknown *pOuter, LPVOID *ppObj ) DECLSPEC_HIDDEN;

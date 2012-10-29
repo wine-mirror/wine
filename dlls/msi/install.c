@@ -178,32 +178,28 @@ UINT WINAPI MsiSequenceW( MSIHANDLE hInstall, LPCWSTR szTable, INT iSequenceMode
     return ret;
 }
 
-UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz )
+UINT msi_strcpy_to_awstring( const WCHAR *str, int len, awstring *awbuf, DWORD *sz )
 {
-    UINT len, r = ERROR_SUCCESS;
+    UINT r = ERROR_SUCCESS;
 
-    if (awbuf->str.w && !sz )
+    if (awbuf->str.w && !sz)
         return ERROR_INVALID_PARAMETER;
-
     if (!sz)
-        return r;
+        return ERROR_SUCCESS;
+
+    if (len < 0) len = strlenW( str );
  
-    if (awbuf->unicode)
-    {
-        len = lstrlenW( str );
-        if (awbuf->str.w) 
-            lstrcpynW( awbuf->str.w, str, *sz );
-    }
+    if (awbuf->unicode && awbuf->str.w)
+        memcpy( awbuf->str.w, str, min(len + 1, *sz) * sizeof(WCHAR) );
     else
     {
-        len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
-        if (len)
-            len--;
-        WideCharToMultiByte( CP_ACP, 0, str, -1, awbuf->str.a, *sz, NULL, NULL );
-        if ( awbuf->str.a && *sz && (len >= *sz) )
+        int lenA = WideCharToMultiByte( CP_ACP, 0, str, len + 1, NULL, 0, NULL, NULL );
+        if (lenA) lenA--;
+        WideCharToMultiByte( CP_ACP, 0, str, len + 1, awbuf->str.a, *sz, NULL, NULL );
+        if (awbuf->str.a && *sz && lenA >= *sz)
             awbuf->str.a[*sz - 1] = 0;
+        len = lenA;
     }
-
     if (awbuf->str.w && len >= *sz)
         r = ERROR_MORE_DATA;
     *sz = len;
@@ -277,7 +273,7 @@ static UINT MSI_GetTargetPath( MSIHANDLE hInstall, LPCWSTR szFolder,
         if (FAILED(hr))
             goto done;
 
-        r = msi_strcpy_to_awstring( value, szPathBuf, pcchPathBuf );
+        r = msi_strcpy_to_awstring( value, len, szPathBuf, pcchPathBuf );
 
 done:
         IWineMsiRemotePackage_Release( remote_package );
@@ -301,8 +297,7 @@ done:
     if (!path)
         return ERROR_DIRECTORY;
 
-    r = msi_strcpy_to_awstring( path, szPathBuf, pcchPathBuf );
-    return r;
+    return msi_strcpy_to_awstring( path, -1, szPathBuf, pcchPathBuf );
 }
 
 /***********************************************************************
@@ -447,7 +442,7 @@ static UINT MSI_GetSourcePath( MSIHANDLE hInstall, LPCWSTR szFolder,
         if (FAILED(hr))
             goto done;
 
-        r = msi_strcpy_to_awstring( value, szPathBuf, pcchPathBuf );
+        r = msi_strcpy_to_awstring( value, len, szPathBuf, pcchPathBuf );
 
 done:
         IWineMsiRemotePackage_Release( remote_package );
@@ -478,7 +473,7 @@ done:
     if (!path)
         return ERROR_DIRECTORY;
 
-    r = msi_strcpy_to_awstring( path, szPathBuf, pcchPathBuf );
+    r = msi_strcpy_to_awstring( path, -1, szPathBuf, pcchPathBuf );
     msi_free( path );
     return r;
 }

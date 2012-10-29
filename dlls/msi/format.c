@@ -934,7 +934,7 @@ UINT WINAPI MsiFormatRecordW( MSIHANDLE hInstall, MSIHANDLE hRecord,
 
             wstr.unicode = TRUE;
             wstr.str.w = szResult;
-            r = msi_strcpy_to_awstring( value, &wstr, sz );
+            r = msi_strcpy_to_awstring( value, SysStringLen(value), &wstr, sz );
 
 done:
             IWineMsiRemotePackage_Release( remote_package );

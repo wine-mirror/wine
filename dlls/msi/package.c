@@ -2232,6 +2232,7 @@ static UINT MSI_GetProperty( MSIHANDLE handle, LPCWSTR name,
     MSIRECORD *row = NULL;
     UINT r = ERROR_FUNCTION_FAILED;
     LPCWSTR val = NULL;
+    DWORD len = 0;
 
     TRACE("%u %s %p %p\n", handle, debugstr_w(name),
           szValueBuf->str.w, pchValueBuf );
@@ -2246,7 +2247,6 @@ static UINT MSI_GetProperty( MSIHANDLE handle, LPCWSTR name,
         IWineMsiRemotePackage *remote_package;
         LPWSTR value = NULL;
         BSTR bname;
-        DWORD len;
 
         remote_package = (IWineMsiRemotePackage *)msi_get_remote( handle );
         if (!remote_package)
@@ -2259,7 +2259,6 @@ static UINT MSI_GetProperty( MSIHANDLE handle, LPCWSTR name,
             return ERROR_OUTOFMEMORY;
         }
 
-        len = 0;
         hr = IWineMsiRemotePackage_GetProperty( remote_package, bname, NULL, &len );
         if (FAILED(hr))
             goto done;
@@ -2276,7 +2275,7 @@ static UINT MSI_GetProperty( MSIHANDLE handle, LPCWSTR name,
         if (FAILED(hr))
             goto done;
 
-        r = msi_strcpy_to_awstring( value, szValueBuf, pchValueBuf );
+        r = msi_strcpy_to_awstring( value, len, szValueBuf, pchValueBuf );
 
         /* Bug required by Adobe installers */
         if (!szValueBuf->unicode && !szValueBuf->str.a)
@@ -2300,12 +2299,12 @@ done:
 
     row = msi_get_property_row( package->db, name );
     if (row)
-        val = MSI_RecordGetString( row, 1 );
+        val = msi_record_get_string( row, 1, (int *)&len );
 
     if (!val)
         val = szEmpty;
 
-    r = msi_strcpy_to_awstring( val, szValueBuf, pchValueBuf );
+    r = msi_strcpy_to_awstring( val, len, szValueBuf, pchValueBuf );
 
     if (row)
         msiobj_release( &row->hdr );
