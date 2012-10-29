@@ -1399,6 +1399,7 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
         }
 
 	funcs->gl.p_glNewList(listBase++, GL_COMPILE);
+        funcs->gl.p_glFrontFace(GL_CW);
         pgluTessBeginPolygon(tess, NULL);
 
         pph = (TTPOLYGONHEADER*)buf;
