@@ -2181,7 +2181,7 @@ UINT msi_get_property( MSIDATABASE *db, LPCWSTR szName,
     }
 
     if (rc == ERROR_SUCCESS)
-        TRACE("returning %s for property %s\n", debugstr_w(szValueBuf),
+        TRACE("returning %s for property %s\n", debugstr_wn(szValueBuf, *pchValueBuf),
             debugstr_w(szName));
     else if (rc == ERROR_MORE_DATA)
         TRACE("need %d sized buffer for %s\n", *pchValueBuf,

@@ -276,8 +276,9 @@ static UINT msi_select_update(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row)
         }
         else if (type & MSITYPE_STRING)
         {
-            str = MSI_RecordGetString(rec, i + 1);
-            r = MSI_RecordSetStringW(mod, col, str);
+            int len;
+            str = msi_record_get_string( rec, i + 1, &len );
+            r = msi_record_set_string( mod, col, str, len );
         }
         else
         {

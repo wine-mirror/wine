@@ -2340,12 +2340,13 @@ static MSIRECORD *msi_get_transform_record( const MSITABLEVIEW *tv, const string
         }
         else if( columns[i].type & MSITYPE_STRING )
         {
-            LPCWSTR sval;
+            int len;
+            const WCHAR *sval;
 
             val = read_raw_int(rawdata, ofs, bytes_per_strref);
-            sval = msi_string_lookup( st, val, NULL );
-            MSI_RecordSetStringW( rec, i+1, sval );
-            TRACE(" field %d [%s]\n", i+1, debugstr_w(sval));
+            sval = msi_string_lookup( st, val, &len );
+            msi_record_set_string( rec, i+1, sval, len );
+            TRACE(" field %d [%s]\n", i+1, debugstr_wn(sval, len));
             ofs += bytes_per_strref;
         }
         else
