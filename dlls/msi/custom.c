@@ -1225,23 +1225,19 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
     UINT rc = ERROR_SUCCESS;
     MSIRECORD *row;
     UINT type;
-    LPCWSTR source, target;
-    LPWSTR ptr, deferred_data = NULL;
-    LPWSTR deformated = NULL, action_copy = strdupW(action);
+    const WCHAR *source, *target, *ptr, *deferred_data = NULL;
+    WCHAR *deformated = NULL;
 
     /* deferred action: [properties]Action */
-    if ((ptr = strrchrW(action_copy, ']')))
+    if ((ptr = strrchrW(action, ']')))
     {
-        deferred_data = action_copy;
+        deferred_data = action;
         action = ptr + 1;
     }
 
     row = MSI_QueryGetRecord( package->db, query, action );
     if (!row)
-    {
-        msi_free(action_copy);
         return ERROR_CALL_NOT_IMPLEMENTED;
-    }
 
     type = MSI_RecordGetInteger(row,2);
     source = MSI_RecordGetString(row,3);
@@ -1361,7 +1357,6 @@ end:
     package->scheduled_action_running = FALSE;
     package->commit_action_running = FALSE;
     package->rollback_action_running = FALSE;
-    msi_free(action_copy);
     msiobj_release(&row->hdr);
     return rc;
 }
