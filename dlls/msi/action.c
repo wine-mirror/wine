@@ -2549,7 +2549,7 @@ static LPSTR parse_value(MSIPACKAGE *package, LPCWSTR value, DWORD *type, DWORD 
         if (!strncmpW(value, szMulti, 3))
             ptr = value + 3;
 
-        *size = deformat_string(package, ptr,(LPWSTR*)&data);
+        *size = deformat_string( package, ptr, (LPWSTR *)&data ) * sizeof(WCHAR);
 
         /* add double NULL terminator */
         if (*type == REG_MULTI_SZ)
@@ -4943,7 +4943,7 @@ static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
     {
         msi_reg_set_val_dword( hkey, szSystemComponent, 1 );
     }
-    size = deformat_string(package, modpath_fmt, &buffer);
+    size = deformat_string(package, modpath_fmt, &buffer) * sizeof(WCHAR);
     RegSetValueExW(hkey, szModifyPath, 0, REG_EXPAND_SZ, (LPBYTE)buffer, size);
     RegSetValueExW(hkey, szUninstallString, 0, REG_EXPAND_SZ, (LPBYTE)buffer, size);
     msi_free(buffer);

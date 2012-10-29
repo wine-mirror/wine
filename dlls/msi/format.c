@@ -1026,19 +1026,19 @@ DWORD deformat_string( MSIPACKAGE *package, const WCHAR *ptr, WCHAR **data )
 {
     if (ptr)
     {
-        DWORD size = 0;
+        DWORD len = 0;
         MSIRECORD *rec = MSI_CreateRecord( 1 );
 
         MSI_RecordSetStringW( rec, 0, ptr );
-        MSI_FormatRecordW( package, rec, NULL, &size );
+        MSI_FormatRecordW( package, rec, NULL, &len );
 
-        size++;
-        *data = msi_alloc( size * sizeof(WCHAR) );
-        if (size > 1) MSI_FormatRecordW( package, rec, *data, &size );
+        len++;
+        *data = msi_alloc( len * sizeof(WCHAR) );
+        if (len > 1) MSI_FormatRecordW( package, rec, *data, &len );
         else *data[0] = 0;
 
         msiobj_release( &rec->hdr );
-        return size * sizeof(WCHAR);
+        return len;
     }
     *data = NULL;
     return 0;
