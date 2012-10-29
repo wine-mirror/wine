@@ -1500,6 +1500,7 @@ void CDECL X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
 
     if (offset == GWL_EXSTYLE && (changed & WS_EX_LAYERED)) /* changing WS_EX_LAYERED resets attributes */
     {
+        data->layered = FALSE;
         set_window_visual( data, &default_visual );
         sync_window_opacity( data->display, data->whole_window, 0, 0, 0 );
         if (data->surface) set_surface_color_key( data->surface, CLR_INVALID );
@@ -2187,10 +2188,13 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
         if (!data->mapped)
         {
             BOOL needs_icon = !data->icon_pixmap;
+            BOOL needs_map = TRUE;
 
+            /* layered windows are mapped only once their attributes are set */
+            if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED) needs_map = data->layered;
             release_win_data( data );
             if (needs_icon) fetch_icon_data( hwnd, 0, 0 );
-            map_window( hwnd, new_style );
+            if (needs_map) map_window( hwnd, new_style );
             return;
         }
         else if ((swp_flags & SWP_STATECHANGED) && (!data->iconic != !(new_style & WS_MINIMIZE)))
@@ -2336,6 +2340,20 @@ void CDECL X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alph
             sync_window_opacity( data->display, data->whole_window, key, alpha, flags );
         if (data->surface)
             set_surface_color_key( data->surface, (flags & LWA_COLORKEY) ? key : CLR_INVALID );
+
+        data->layered = TRUE;
+        if (!data->mapped)  /* mapping is delayed until attributes are set */
+        {
+            DWORD style = GetWindowLongW( data->hwnd, GWL_STYLE );
+
+            if ((style & WS_VISIBLE) &&
+                ((style & WS_MINIMIZE) || is_window_rect_mapped( &data->window_rect )))
+            {
+                release_win_data( data );
+                map_window( hwnd, style );
+                return;
+            }
+        }
         release_win_data( data );
     }
     else
@@ -2371,6 +2389,7 @@ BOOL CDECL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO 
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
 
+    data->layered = TRUE;
     if (!data->embedded && argb_visual.visualid) set_window_visual( data, &argb_visual );
 
     rect = *window_rect;
