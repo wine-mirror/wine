@@ -2316,11 +2316,11 @@ static void test_property_table(void)
     memset( buffer, 'a', sizeof(buffer) );
     r = MsiGetProperty( hpkg, "prop2", buffer, &sz );
     ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
-    todo_wine ok( !memcmp( buffer, "\0np", sizeof("\0np") ), "wrong value\n");
-    todo_wine ok( sz == sizeof("\0np") - 1, "got %u\n", sz );
+    ok( !memcmp( buffer, "\0np", sizeof("\0np") ), "wrong value\n");
+    ok( sz == sizeof("\0np") - 1, "got %u\n", sz );
 
     found = find_prop_in_property(hdb, "prop2", "\0np", 3);
-    todo_wine ok(found == TRUE, "prop2 should be in the _Property table\n");
+    ok(found == TRUE, "prop2 should be in the _Property table\n");
 
     MsiCloseHandle(hdb);
     MsiCloseHandle(hpkg);

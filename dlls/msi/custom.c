@@ -1227,6 +1227,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
     UINT type;
     const WCHAR *source, *target, *ptr, *deferred_data = NULL;
     WCHAR *deformated = NULL;
+    int len;
 
     /* deferred action: [properties]Action */
     if ((ptr = strrchrW(action, ']')))
@@ -1326,8 +1327,8 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
             if (!source)
                 break;
 
-            deformat_string(package,target,&deformated);
-            rc = msi_set_property( package->db, source, deformated, -1 );
+            len = deformat_string( package, target, &deformated );
+            rc = msi_set_property( package->db, source, deformated, len );
             if (rc == ERROR_SUCCESS && !strcmpW( source, szSourceDir ))
                 msi_reset_folders( package, TRUE );
             msi_free(deformated);

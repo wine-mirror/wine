@@ -2697,8 +2697,8 @@ static void test_formatrecord_tables(void)
     memset( buf, 'a', sizeof(buf) );
     r = MsiGetProperty( hpkg, "prop", buf, &size );
     ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
-    todo_wine ok( !memcmp( buf, "\0np", sizeof("\0np") ), "wrong value\n");
-    todo_wine ok( size == sizeof("\0np") - 1, "got %u\n", size );
+    ok( !memcmp( buf, "\0np", sizeof("\0np") ), "wrong value\n");
+    ok( size == sizeof("\0np") - 1, "got %u\n", size );
 
     r = MsiSetProperty( hpkg, "prop", "[~]np" );
     ok( r == ERROR_SUCCESS, "cannot set property: %d\n", r);
