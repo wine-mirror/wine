@@ -184,25 +184,21 @@ static LPWSTR msi_get_deferred_action(LPCWSTR action, LPCWSTR actiondata,
     return deferred;
 }
 
-static void set_deferred_action_props(MSIPACKAGE *package, LPWSTR deferred_data)
+static void set_deferred_action_props( MSIPACKAGE *package, const WCHAR *deferred_data )
 {
-    LPWSTR end, beg = deferred_data + 1;
-
     static const WCHAR sep[] = {'<','=','>',0};
+    const WCHAR *end, *beg = deferred_data + 1;
 
     end = strstrW(beg, sep);
-    *end = '\0';
-    msi_set_property(package->db, szCustomActionData, beg);
+    msi_set_property( package->db, szCustomActionData, beg, end - beg );
     beg = end + 3;
 
     end = strstrW(beg, sep);
-    *end = '\0';
-    msi_set_property(package->db, szUserSID, beg);
+    msi_set_property( package->db, szUserSID, beg, end - beg );
     beg = end + 3;
 
     end = strchrW(beg, ']');
-    *end = '\0';
-    msi_set_property(package->db, szProductCode, beg);
+    msi_set_property( package->db, szProductCode, beg, end - beg );
 }
 
 static MSIBINARY *create_temp_binary( MSIPACKAGE *package, LPCWSTR source, BOOL dll )
@@ -1284,9 +1280,9 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
             if (deferred_data)
                 set_deferred_action_props(package, deferred_data);
             else if (actiondata)
-                msi_set_property(package->db, szCustomActionData, actiondata);
+                msi_set_property( package->db, szCustomActionData, actiondata, -1 );
             else
-                msi_set_property(package->db, szCustomActionData, szEmpty);
+                msi_set_property( package->db, szCustomActionData, szEmpty, -1 );
 
             msi_free(actiondata);
         }
@@ -1335,7 +1331,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
                 break;
 
             deformat_string(package,target,&deformated);
-            rc = msi_set_property( package->db, source, deformated );
+            rc = msi_set_property( package->db, source, deformated, -1 );
             if (rc == ERROR_SUCCESS && !strcmpW( source, szSourceDir ))
                 msi_reset_folders( package, TRUE );
             msi_free(deformated);

@@ -583,7 +583,7 @@ static void msi_dialog_update_controls( msi_dialog *dialog, LPCWSTR property )
 
 static void msi_dialog_set_property( MSIPACKAGE *package, LPCWSTR property, LPCWSTR value )
 {
-    UINT r = msi_set_property( package->db, property, value );
+    UINT r = msi_set_property( package->db, property, value, -1 );
     if (r == ERROR_SUCCESS && !strcmpW( property, szSourceDir ))
         msi_reset_folders( package, TRUE );
 }
@@ -3939,7 +3939,7 @@ static UINT error_dialog_handler(MSIPACKAGE *package, LPCWSTR event,
     if ( !strcmpW( argument, error_abort ) || !strcmpW( argument, error_cancel ) ||
          !strcmpW( argument, error_no ) )
     {
-         msi_set_property( package->db, result_prop, error_abort );
+         msi_set_property( package->db, result_prop, error_abort, -1 );
     }
 
     ControlEvent_CleanupSubscriptions(package);

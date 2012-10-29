@@ -558,7 +558,7 @@ static void set_target_path( MSIPACKAGE *package, MSIFOLDER *folder, const WCHAR
     {
         msi_free( folder->ResolvedTarget );
         folder->ResolvedTarget = target_path;
-        msi_set_property( package->db, folder->Directory, folder->ResolvedTarget );
+        msi_set_property( package->db, folder->Directory, folder->ResolvedTarget, -1 );
 
         LIST_FOR_EACH_ENTRY( fl, &folder->children, FolderList, entry )
         {
@@ -1650,6 +1650,7 @@ UINT MSI_SetInstallLevel( MSIPACKAGE *package, int iInstallLevel )
 {
     static const WCHAR fmt[] = { '%','d',0 };
     WCHAR level[6];
+    int len;
     UINT r;
 
     TRACE("%p %i\n", package, iInstallLevel);
@@ -1660,8 +1661,8 @@ UINT MSI_SetInstallLevel( MSIPACKAGE *package, int iInstallLevel )
     if (iInstallLevel < 1)
         return MSI_SetFeatureStates( package );
 
-    sprintfW( level, fmt, iInstallLevel );
-    r = msi_set_property( package->db, szInstallLevel, level );
+    len = sprintfW( level, fmt, iInstallLevel );
+    r = msi_set_property( package->db, szInstallLevel, level, len );
     if ( r == ERROR_SUCCESS )
         r = MSI_SetFeatureStates( package );
 

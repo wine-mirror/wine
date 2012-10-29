@@ -353,7 +353,7 @@ UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine,
         remove_quotes( val );
         TRACE("Found commandline property %s = %s\n", debugstr_w(prop), debugstr_w(val));
 
-        r = msi_set_property( package->db, prop, val );
+        r = msi_set_property( package->db, prop, val, -1 );
         if (r == ERROR_SUCCESS && !strcmpW( prop, szSourceDir ))
             msi_reset_folders( package, TRUE );
 
@@ -462,7 +462,7 @@ UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
     check = msi_dup_property( package->db, szSourceDir );
     if (!check || replace)
     {
-        UINT r = msi_set_property( package->db, szSourceDir, source );
+        UINT r = msi_set_property( package->db, szSourceDir, source, -1 );
         if (r == ERROR_SUCCESS)
             msi_reset_folders( package, TRUE );
     }
@@ -470,7 +470,7 @@ UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
 
     check = msi_dup_property( package->db, szSOURCEDIR );
     if (!check || replace)
-        msi_set_property( package->db, szSOURCEDIR, source );
+        msi_set_property( package->db, szSOURCEDIR, source, -1 );
 
     msi_free( check );
     msi_free( source );
@@ -605,7 +605,7 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
     {
         TRACE("Running the actions\n");
 
-        msi_set_property(package->db, szSourceDir, NULL);
+        msi_set_property( package->db, szSourceDir, NULL, -1 );
         rc = MSI_IterateRecords(view, NULL, ITERATE_Actions, package);
         msiobj_release(&view->hdr);
     }
@@ -1568,8 +1568,8 @@ static UINT load_all_folders( MSIPACKAGE *package )
 
 static UINT ACTION_CostInitialize(MSIPACKAGE *package)
 {
-    msi_set_property( package->db, szCostingComplete, szZero );
-    msi_set_property( package->db, szRootDrive, szCRoot );
+    msi_set_property( package->db, szCostingComplete, szZero, -1 );
+    msi_set_property( package->db, szRootDrive, szCRoot, -1 );
 
     load_all_folders( package );
     msi_load_all_components( package );
@@ -1785,7 +1785,7 @@ static BOOL process_overrides( MSIPACKAGE *package, int level )
     ret |= process_state_property( package, level, szAdvertise, INSTALLSTATE_ADVERTISED );
 
     if (ret)
-        msi_set_property( package->db, szPreselected, szOne );
+        msi_set_property( package->db, szPreselected, szOne, -1 );
 
     return ret;
 }
@@ -2361,7 +2361,7 @@ void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL loa
         msi_free( normalized_path );
         return;
     }
-    msi_set_property( package->db, folder->Directory, normalized_path );
+    msi_set_property( package->db, folder->Directory, normalized_path, -1 );
     msi_free( folder->ResolvedTarget );
     folder->ResolvedTarget = normalized_path;
 
@@ -2422,15 +2422,15 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     TRACE("Calculating file cost\n");
     calculate_file_cost( package );
 
-    msi_set_property( package->db, szCostingComplete, szOne );
+    msi_set_property( package->db, szCostingComplete, szOne, -1 );
     /* set default run level if not set */
     level = msi_dup_property( package->db, szInstallLevel );
     if (!level)
-        msi_set_property( package->db, szInstallLevel, szOne );
+        msi_set_property( package->db, szInstallLevel, szOne, -1 );
     msi_free(level);
 
     /* FIXME: check volume disk space */
-    msi_set_property( package->db, szOutOfDiskSpace, szZero );
+    msi_set_property( package->db, szOutOfDiskSpace, szZero, -1 );
 
     return MSI_SetFeatureStates(package);
 }
@@ -7006,7 +7006,7 @@ UINT msi_validate_product_id( MSIPACKAGE *package )
     if (key && template)
     {
         FIXME( "partial stub: template %s key %s\n", debugstr_w(template), debugstr_w(key) );
-        r = msi_set_property( package->db, szProductID, key );
+        r = msi_set_property( package->db, szProductID, key, -1 );
     }
     msi_free( template );
     msi_free( key );
@@ -7046,7 +7046,7 @@ static UINT ACTION_DisableRollback( MSIPACKAGE *package )
 {
     TRACE("%p\n", package);
 
-    msi_set_property( package->db, szRollbackDisabled, szOne );
+    msi_set_property( package->db, szRollbackDisabled, szOne, -1 );
     return ERROR_SUCCESS;
 }
 
@@ -7567,7 +7567,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     BOOL ui_exists;
     UINT rc;
 
-    msi_set_property( package->db, szAction, szInstall );
+    msi_set_property( package->db, szAction, szInstall, -1 );
 
     package->script->InWhatSequence = SEQUENCE_INSTALL;
 
@@ -7617,7 +7617,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     if (!szCommandLine && msi_get_property_int( package->db, szInstalled, 0 ))
     {
         TRACE("setting reinstall property\n");
-        msi_set_property( package->db, szReinstall, szAll );
+        msi_set_property( package->db, szReinstall, szAll, -1 );
     }
 
     /* properties may have been added by a transform */
@@ -7630,7 +7630,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     if (msi_get_property_int( package->db, szDisableRollback, 0 ))
     {
         TRACE("disabling rollback\n");
-        msi_set_property( package->db, szRollbackDisabled, szOne );
+        msi_set_property( package->db, szRollbackDisabled, szOne, -1 );
     }
 
     if (needs_ui_sequence( package))
