@@ -574,45 +574,27 @@ UINT WINAPI MsiRecordDataSize(MSIHANDLE handle, UINT iField)
     return ret;
 }
 
-static UINT MSI_RecordSetStringA( MSIRECORD *rec, UINT iField, LPCSTR szValue )
-{
-    LPWSTR str;
-
-    TRACE("%p %d %s\n", rec, iField, debugstr_a(szValue));
-
-    if( iField > rec->count )
-        return ERROR_INVALID_FIELD;
-
-    MSI_FreeField( &rec->fields[iField] );
-    if( szValue && szValue[0] )
-    {
-        str = strdupAtoW( szValue );
-        rec->fields[iField].type = MSIFIELD_WSTR;
-        rec->fields[iField].u.szwVal = str;
-    }
-    else
-    {
-        rec->fields[iField].type = MSIFIELD_NULL;
-        rec->fields[iField].u.szwVal = NULL;
-    }
-
-    return 0;
-}
-
 UINT WINAPI MsiRecordSetStringA( MSIHANDLE handle, UINT iField, LPCSTR szValue )
 {
+    WCHAR *valueW = NULL;
     MSIRECORD *rec;
     UINT ret;
 
     TRACE("%d %d %s\n", handle, iField, debugstr_a(szValue));
 
+    if (szValue && !(valueW = strdupAtoW( szValue ))) return ERROR_OUTOFMEMORY;
+
     rec = msihandle2msiinfo( handle, MSIHANDLETYPE_RECORD );
     if( !rec )
+    {
+        msi_free( valueW );
         return ERROR_INVALID_HANDLE;
+    }
     msiobj_lock( &rec->hdr );
-    ret = MSI_RecordSetStringA( rec, iField, szValue );
+    ret = MSI_RecordSetStringW( rec, iField, valueW );
     msiobj_unlock( &rec->hdr );
     msiobj_release( &rec->hdr );
+    msi_free( valueW );
     return ret;
 }
 
