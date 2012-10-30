@@ -836,7 +836,7 @@ static HRESULT compile_select_statement(compile_ctx_t *ctx, select_statement_t *
 
         hres = push_instr_addr(ctx, OP_jmp, end_label);
         if(FAILED(hres))
-            return hres;
+            break;
     }
 
     heap_free(case_labels);
