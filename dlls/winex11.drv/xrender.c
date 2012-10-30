@@ -1405,9 +1405,9 @@ static void UploadGlyph(struct xrender_physdev *physDev, int glyph, AA_Type form
 
 	pXRenderAddGlyphs(gdi_display, formatEntry->glyphset, &gid, &gi, 1,
                           buflen ? buf : zero, buflen ? buflen : sizeof(zero));
-	HeapFree(GetProcessHeap(), 0, buf);
     }
 
+    HeapFree(GetProcessHeap(), 0, buf);
     formatEntry->gis[glyph] = gi;
 }
 

@@ -2400,6 +2400,7 @@ static BOOL X11DRV_CLIPBOARD_ReadProperty(Display *display, Window w, Atom prop,
             if (!tmp)
             {
                 HeapFree(GetProcessHeap(), 0, buf);
+                HeapFree(GetProcessHeap(), 0, prop_data);
                 return FALSE;
             }
 
