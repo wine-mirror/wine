@@ -952,7 +952,7 @@ HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
     if(FAILED(ctx->hres))
         return ctx->hres;
     if(!ctx->parse_complete) {
-        FIXME("parser failed on parsing %s\n", debugstr_w(ctx->ptr));
+        FIXME("parser failed around %s\n", debugstr_w(ctx->code+20 > ctx->ptr ? ctx->code : ctx->ptr-20));
         return E_FAIL;
     }
 
