@@ -716,6 +716,7 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
     HGDIOBJ ret = 0;
     DC *dc = get_dc_ptr( hdc );
     PHYSDEV physdev;
+    UINT aa_flags = 0;
 
     if (!dc) return 0;
 
@@ -726,7 +727,7 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
     }
 
     physdev = GET_DC_PHYSDEV( dc, pSelectFont );
-    if (physdev->funcs->pSelectFont( physdev, handle ))
+    if (physdev->funcs->pSelectFont( physdev, handle, &aa_flags ))
     {
         ret = dc->hFont;
         dc->hFont = handle;

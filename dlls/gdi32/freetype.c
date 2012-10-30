@@ -4429,7 +4429,7 @@ static FT_Encoding pick_charmap( FT_Face face, int charset )
 /*************************************************************
  * freetype_SelectFont
  */
-static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont )
+static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 {
     struct freetype_physdev *physdev = get_freetype_dev( dev );
     GdiFont *ret;

@@ -153,7 +153,7 @@ struct gdi_dc_funcs
     HBITMAP  (*pSelectBitmap)(PHYSDEV,HBITMAP);
     HBRUSH   (*pSelectBrush)(PHYSDEV,HBRUSH,const struct brush_pattern*);
     BOOL     (*pSelectClipPath)(PHYSDEV,INT);
-    HFONT    (*pSelectFont)(PHYSDEV,HFONT);
+    HFONT    (*pSelectFont)(PHYSDEV,HFONT,UINT*);
     HPALETTE (*pSelectPalette)(PHYSDEV,HPALETTE,BOOL);
     HPEN     (*pSelectPen)(PHYSDEV,HPEN,const struct brush_pattern*);
     INT      (*pSetArcDirection)(PHYSDEV,INT);
@@ -197,7 +197,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 44
+#define WINE_GDI_DRIVER_VERSION 45
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

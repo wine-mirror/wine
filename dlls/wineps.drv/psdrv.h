@@ -444,7 +444,7 @@ extern BOOL PSDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bott
 extern BOOL PSDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
                              INT bottom, INT ell_width, INT ell_height ) DECLSPEC_HIDDEN;
 extern HBRUSH PSDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
-extern HFONT PSDRV_SelectFont( PHYSDEV dev, HFONT hfont ) DECLSPEC_HIDDEN;
+extern HFONT PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags ) DECLSPEC_HIDDEN;
 extern HPEN PSDRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
 extern COLORREF PSDRV_SetBkColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF PSDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;

@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           SelectFont   (WINEPS.@)
  */
-HFONT PSDRV_SelectFont( PHYSDEV dev, HFONT hfont )
+HFONT PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectFont );
@@ -114,14 +114,14 @@ HFONT PSDRV_SelectFont( PHYSDEV dev, HFONT hfont )
     physDev->font.escapement = lf.lfEscapement;
     physDev->font.set = FALSE;
 
-    if (!subst && ((ret = next->funcs->pSelectFont( next, hfont ))))
+    if (!subst && ((ret = next->funcs->pSelectFont( next, hfont, aa_flags ))))
     {
         PSDRV_SelectDownloadFont(dev);
         return ret;
     }
 
     PSDRV_SelectBuiltinFont(dev, hfont, &lf, FaceName);
-    next->funcs->pSelectFont( next, 0 );  /* tell next driver that we selected a device font */
+    next->funcs->pSelectFont( next, 0, aa_flags );  /* tell next driver that we selected a device font */
     return hfont;
 }
 

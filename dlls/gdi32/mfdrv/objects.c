@@ -285,7 +285,7 @@ static UINT16 MFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont, LOGFONTW *logfo
 /***********************************************************************
  *           MFDRV_SelectFont
  */
-HFONT MFDRV_SelectFont( PHYSDEV dev, HFONT hfont )
+HFONT MFDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 {
     LOGFONTW font;
     INT16 index;

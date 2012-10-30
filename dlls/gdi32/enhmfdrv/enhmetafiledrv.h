@@ -105,7 +105,7 @@ extern BOOL     EMFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom,
 extern HBITMAP  EMFDRV_SelectBitmap( PHYSDEV dev, HBITMAP handle ) DECLSPEC_HIDDEN;
 extern HBRUSH   EMFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_SelectClipPath( PHYSDEV dev, INT iMode ) DECLSPEC_HIDDEN;
-extern HFONT    EMFDRV_SelectFont( PHYSDEV dev, HFONT handle ) DECLSPEC_HIDDEN;
+extern HFONT    EMFDRV_SelectFont( PHYSDEV dev, HFONT handle, UINT *aa_flags ) DECLSPEC_HIDDEN;
 extern HPEN     EMFDRV_SelectPen( PHYSDEV dev, HPEN handle, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
 extern HPALETTE EMFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPal, BOOL force ) DECLSPEC_HIDDEN;
 extern INT      EMFDRV_SetArcDirection( PHYSDEV dev, INT arcDirection ) DECLSPEC_HIDDEN;
