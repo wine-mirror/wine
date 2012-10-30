@@ -313,9 +313,10 @@ BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev)
         UINT emsize;
 
         if (!get_bbox(dev->hdc, &bbox, &emsize)) {
-	    HeapFree(GetProcessHeap(), 0, potm);
-	    return FALSE;
-	}
+            HeapFree(GetProcessHeap(), 0, ps_name);
+            HeapFree(GetProcessHeap(), 0, potm);
+            return FALSE;
+        }
         if(!is_room_for_font(physDev))
             PSDRV_EmptyDownloadList(dev, TRUE);
 

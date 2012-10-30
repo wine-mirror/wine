@@ -385,6 +385,7 @@ INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
                      strlen(escaped_title) + 30 );
     if(!buf) {
         WARN("HeapAlloc failed\n");
+        HeapFree(GetProcessHeap(), 0, escaped_title);
         return 0;
     }
 
