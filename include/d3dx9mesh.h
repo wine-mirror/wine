@@ -770,7 +770,7 @@ HRESULT WINAPI D3DXComputeTangentFrameEx(LPD3DXMESH, DWORD, DWORD, DWORD, DWORD,
 HRESULT WINAPI D3DXComputeTangent(LPD3DXMESH, DWORD, DWORD, DWORD, DWORD, CONST DWORD *);
 HRESULT WINAPI D3DXConvertMeshSubsetToSingleStrip(struct ID3DXBaseMesh *mesh_in, DWORD attribute_id,
         DWORD ib_flags, struct IDirect3DIndexBuffer9 **index_buffer, DWORD *index_count);
-HRESULT WINAPI D3DXConvertMeshSubsetToStrips(struct ID3DXBaseMesh mesh_in, DWORD attribute_id,
+HRESULT WINAPI D3DXConvertMeshSubsetToStrips(struct ID3DXBaseMesh *mesh_in, DWORD attribute_id,
         DWORD ib_flags, struct IDirect3DIndexBuffer9 **index_buffer, DWORD *index_count,
         struct ID3DXBuffer **strip_lengths, DWORD *strip_count);
 HRESULT WINAPI D3DXDeclaratorFromFVF(DWORD, D3DVERTEXELEMENT9[MAX_FVF_DECL_SIZE]);
