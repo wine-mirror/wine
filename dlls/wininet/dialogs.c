@@ -188,7 +188,7 @@ static BOOL WININET_SetAuthorization( http_request_t *request, LPWSTR username,
     q = heap_strdupW(password);
     if( !q )
     {
-        heap_free(username);
+        heap_free(p);
         return FALSE;
     }
 
