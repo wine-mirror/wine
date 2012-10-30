@@ -7014,14 +7014,14 @@ out:
 static void shademode_test(IDirect3DDevice9 *device)
 {
     /* Render a quad and try all of the different fixed function shading models. */
+    struct IDirect3DVertexBuffer9 *vb_strip = NULL;
+    struct IDirect3DVertexBuffer9 *vb_list = NULL;
     HRESULT hr;
     DWORD color0, color1;
     DWORD color0_gouraud = 0, color1_gouraud = 0;
     DWORD shademode = D3DSHADE_FLAT;
     DWORD primtype = D3DPT_TRIANGLESTRIP;
     LPVOID data = NULL;
-    LPDIRECT3DVERTEXBUFFER9 vb_strip = NULL;
-    LPDIRECT3DVERTEXBUFFER9 vb_list = NULL;
     UINT i, j;
     struct vertex quad_strip[] =
     {
