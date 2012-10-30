@@ -223,8 +223,8 @@ static NTSTATUS TAPE_GetMediaParams( int fd, TAPE_GET_MEDIA_PARAMETERS *data )
     if (status != STATUS_SUCCESS)
         return status;
 
-    data->Capacity.u.LowPart = 1024 * 1024 * 1024;
-    data->Remaining.u.LowPart = 1024 * 1024 * 1024;
+    data->Capacity.QuadPart = 1024 * 1024 * 1024;
+    data->Remaining.QuadPart = 1024 * 1024 * 1024;
 #ifdef HAVE_STRUCT_MTGET_MT_BLKSIZ
     data->BlockSize = get.mt_blksiz;
 #else

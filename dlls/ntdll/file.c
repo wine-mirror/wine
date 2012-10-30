@@ -2857,7 +2857,7 @@ NTSTATUS WINAPI NtCancelIoFileEx( HANDLE hFile, PIO_STATUS_BLOCK iosb, PIO_STATU
      * of the queued APC, but not yet run. This is needed to ensure proper
      * clean-up of allocated data.
      */
-    timeout.u.LowPart = timeout.u.HighPart = 0;
+    timeout.QuadPart = 0;
     NtDelayExecution( TRUE, &timeout );
     return io_status->u.Status;
 }
@@ -2889,7 +2889,7 @@ NTSTATUS WINAPI NtCancelIoFile( HANDLE hFile, PIO_STATUS_BLOCK io_status )
      * of the queued APC, but not yet run. This is needed to ensure proper
      * clean-up of allocated data.
      */
-    timeout.u.LowPart = timeout.u.HighPart = 0;
+    timeout.QuadPart = 0;
     NtDelayExecution( TRUE, &timeout );
     return io_status->u.Status;
 }

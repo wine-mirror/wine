@@ -756,9 +756,8 @@ static NTSTATUS CDROM_GetDriveGeometry(int dev, int fd, DISK_GEOMETRY* dg)
 
   fsize = FRAME_OF_TOC(toc, toc.LastTrack+1)
         - FRAME_OF_TOC(toc, 1); /* Total size in frames */
-  
-  dg->Cylinders.u.LowPart = fsize / (64 * 32); 
-  dg->Cylinders.u.HighPart = 0; 
+
+  dg->Cylinders.QuadPart = fsize / (64 * 32);
   dg->MediaType = RemovableMedia;  
   dg->TracksPerCylinder = 64; 
   dg->SectorsPerTrack = 32;  
@@ -2511,8 +2510,7 @@ static NTSTATUS DVD_ReadStructure(int dev, const DVD_READ_STRUCTURE *structure, 
 	struct dvd_manufact	manufact;
     } s;
 
-    if (structure->BlockByteOffset.u.HighPart || structure->BlockByteOffset.u.LowPart)
-        FIXME(": BlockByteOffset is not handled\n");
+    if (structure->BlockByteOffset.QuadPart) FIXME(": BlockByteOffset is not handled\n");
 
     switch (structure->Format)
     {
