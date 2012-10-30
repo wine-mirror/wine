@@ -1558,6 +1558,42 @@ NTSTATUS WINAPI NtSetVolumeInformationFile(
 	return 0;
 }
 
+static NTSTATUS set_file_times( int fd, const LARGE_INTEGER *mtime, const LARGE_INTEGER *atime )
+{
+    struct timeval tv[2];
+    struct stat st;
+
+    if (!atime->QuadPart || !mtime->QuadPart)
+    {
+
+        tv[0].tv_sec = tv[0].tv_usec = 0;
+        tv[1].tv_sec = tv[1].tv_usec = 0;
+        if (!fstat( fd, &st ))
+        {
+            tv[0].tv_sec = st.st_atime;
+            tv[1].tv_sec = st.st_mtime;
+#ifdef HAVE_STRUCT_STAT_ST_ATIM
+            tv[0].tv_usec = st.st_atim.tv_nsec / 1000;
+#endif
+#ifdef HAVE_STRUCT_STAT_ST_MTIM
+            tv[1].tv_usec = st.st_mtim.tv_nsec / 1000;
+#endif
+        }
+    }
+    if (atime->QuadPart)
+    {
+        tv[0].tv_sec = atime->QuadPart / 10000000 - SECS_1601_TO_1970;
+        tv[0].tv_usec = (atime->QuadPart % 10000000) / 10;
+    }
+    if (mtime->QuadPart)
+    {
+        tv[1].tv_sec = mtime->QuadPart / 10000000 - SECS_1601_TO_1970;
+        tv[1].tv_usec = (mtime->QuadPart % 10000000) / 10;
+    }
+    if (!futimes( fd, tv )) return STATUS_SUCCESS;
+    return FILE_GetNtStatus();
+}
+
 static inline void get_file_times( const struct stat *st, LARGE_INTEGER *mtime, LARGE_INTEGER *ctime,
                                    LARGE_INTEGER *atime, LARGE_INTEGER *creation )
 {
@@ -2047,36 +2083,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
                 return io->u.Status;
 
             if (info->LastAccessTime.QuadPart || info->LastWriteTime.QuadPart)
-            {
-                struct timeval tv[2];
-
-                if (!info->LastAccessTime.QuadPart || !info->LastWriteTime.QuadPart)
-                {
-
-                    tv[0].tv_sec = tv[0].tv_usec = 0;
-                    tv[1].tv_sec = tv[1].tv_usec = 0;
-                    if (!fstat( fd, &st ))
-                    {
-                        tv[0].tv_sec = st.st_atime;
-                        tv[1].tv_sec = st.st_mtime;
-                    }
-                }
-                if (info->LastAccessTime.QuadPart)
-                {
-                    ULONGLONG sec = info->LastAccessTime.QuadPart / 10000000;
-                    UINT nsec = info->LastAccessTime.QuadPart % 10000000;
-                    tv[0].tv_sec = sec - SECS_1601_TO_1970;
-                    tv[0].tv_usec = nsec / 10;
-                }
-                if (info->LastWriteTime.QuadPart)
-                {
-                    ULONGLONG sec = info->LastWriteTime.QuadPart / 10000000;
-                    UINT nsec = info->LastWriteTime.QuadPart % 10000000;
-                    tv[1].tv_sec = sec - SECS_1601_TO_1970;
-                    tv[1].tv_usec = nsec / 10;
-                }
-                if (futimes( fd, tv ) == -1) io->u.Status = FILE_GetNtStatus();
-            }
+                io->u.Status = set_file_times( fd, &info->LastAccessTime, &info->LastWriteTime );
 
             if (io->u.Status == STATUS_SUCCESS && info->FileAttributes)
             {
