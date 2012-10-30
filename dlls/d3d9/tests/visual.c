@@ -6936,9 +6936,9 @@ static void srgbtexture_test(IDirect3DDevice9 *device)
      *    linear_color = ((srgb_color + 0.055) / 1.055) ^ 2.4
      * This is true where srgb_color > 0.04045. */
     struct IDirect3DTexture9 *texture = NULL;
+    struct IDirect3DSurface9 *surface = NULL;
     IDirect3D9 *d3d = NULL;
     HRESULT hr;
-    LPDIRECT3DSURFACE9 surface = NULL;
     D3DLOCKED_RECT lr;
     DWORD color;
     float quad[] = {
