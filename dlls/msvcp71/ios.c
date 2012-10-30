@@ -1286,8 +1286,8 @@ fpos_int* __thiscall basic_streambuf_char_seekoff(basic_streambuf_char *this,
         fpos_int *ret, streamoff off, int way, int mode)
 {
     TRACE("(%p %ld %d %d)\n", this, off, way, mode);
-    ret->off = 0;
-    ret->pos = -1;
+    ret->off = -1;
+    ret->pos = 0;
     ret->state = 0;
     return ret;
 }
@@ -1321,8 +1321,8 @@ fpos_int* __thiscall basic_streambuf_char_seekpos(basic_streambuf_char *this,
         fpos_int *ret, fpos_int pos, int mode)
 {
     TRACE("(%p %s %d)\n", this, debugstr_fpos_int(&pos), mode);
-    ret->off = 0;
-    ret->pos = -1;
+    ret->off = -1;
+    ret->pos = 0;
     ret->state = 0;
     return ret;
 }
@@ -2052,8 +2052,8 @@ fpos_int* __thiscall basic_streambuf_wchar_seekoff(basic_streambuf_wchar *this,
         fpos_int *ret, streamoff off, int way, int mode)
 {
     TRACE("(%p %ld %d %d)\n", this, off, way, mode);
-    ret->off = 0;
-    ret->pos = -1;
+    ret->off = -1;
+    ret->pos = 0;
     ret->state = 0;
     return ret;
 }
@@ -2093,8 +2093,8 @@ fpos_int* __thiscall basic_streambuf_wchar_seekpos(basic_streambuf_wchar *this,
         fpos_int *ret, fpos_int pos, int mode)
 {
     TRACE("(%p %s %d)\n", this, debugstr_fpos_int(&pos), mode);
-    ret->off = 0;
-    ret->pos = -1;
+    ret->off = -1;
+    ret->pos = 0;
     ret->state = 0;
     return ret;
 }
@@ -2825,8 +2825,8 @@ fpos_int* __thiscall basic_filebuf_char_seekoff(basic_filebuf_char *this,
 
     if(!basic_filebuf_char_is_open(this) || !basic_filebuf_char__Endwrite(this)
             || fseek(this->file, off, way)) {
-        ret->off = 0;
-        ret->pos = -1;
+        ret->off = -1;
+        ret->pos = 0;
         ret->state = 0;
         return ret;
     }
@@ -2851,8 +2851,8 @@ fpos_int* __thiscall basic_filebuf_char_seekpos(basic_filebuf_char *this,
     if(!basic_filebuf_char_is_open(this) || !basic_filebuf_char__Endwrite(this)
             || fseek(this->file, (LONG)pos.pos, SEEK_SET)
             || (pos.off && fseek(this->file, pos.off, SEEK_CUR))) {
-        ret->off = 0;
-        ret->pos = -1;
+        ret->off = -1;
+        ret->pos = 0;
         ret->state = 0;
         return ret;
     }
@@ -3420,8 +3420,8 @@ fpos_int* __thiscall basic_filebuf_wchar_seekoff(basic_filebuf_wchar *this,
 
     if(!basic_filebuf_wchar_is_open(this) || !basic_filebuf_wchar__Endwrite(this)
             || fseek(this->file, off, way)) {
-        ret->off = 0;
-        ret->pos = -1;
+        ret->off = -1;
+        ret->pos = 0;
         ret->state = 0;
         return ret;
     }
@@ -3448,8 +3448,8 @@ fpos_int* __thiscall basic_filebuf_wchar_seekpos(basic_filebuf_wchar *this,
     if(!basic_filebuf_wchar_is_open(this) || !basic_filebuf_wchar__Endwrite(this)
             || fseek(this->file, (LONG)pos.pos, SEEK_SET)
             || (pos.off && fseek(this->file, pos.off, SEEK_CUR))) {
-        ret->off = 0;
-        ret->pos = -1;
+        ret->off = -1;
+        ret->pos = 0;
         ret->state = 0;
         return ret;
     }
@@ -3802,6 +3802,7 @@ fpos_int* __thiscall basic_stringbuf_char_seekoff(basic_stringbuf_char *this,
         this->seekhigh = cur_w;
 
     ret->off = 0;
+    ret->pos = 0;
     ret->state = 0;
 
     beg = basic_streambuf_char_eback(&this->base);
@@ -3840,7 +3841,7 @@ fpos_int* __thiscall basic_stringbuf_char_seekoff(basic_stringbuf_char *this,
         off = -1;
     }
 
-    ret->pos = off;
+    ret->off = off;
     return ret;
 }
 
@@ -3852,7 +3853,7 @@ fpos_int* __thiscall basic_stringbuf_char_seekpos(basic_stringbuf_char *this,
 {
     TRACE("(%p %p %s %d)\n", this, ret, debugstr_fpos_int(&pos), mode);
 
-    if(pos.off==0 && pos.pos==-1 && pos.state==0) {
+    if(pos.off==-1 && pos.pos==0 && pos.state==0) {
         *ret = pos;
         return ret;
     }
@@ -4212,6 +4213,7 @@ fpos_int* __thiscall basic_stringbuf_wchar_seekoff(basic_stringbuf_wchar *this,
         this->seekhigh = cur_w;
 
     ret->off = 0;
+    ret->pos = 0;
     ret->state = 0;
 
     beg = basic_streambuf_wchar_eback(&this->base);
@@ -4250,7 +4252,7 @@ fpos_int* __thiscall basic_stringbuf_wchar_seekoff(basic_stringbuf_wchar *this,
         off = -1;
     }
 
-    ret->pos = off;
+    ret->off = off;
     return ret;
 }
 
@@ -4264,7 +4266,7 @@ fpos_int* __thiscall basic_stringbuf_wchar_seekpos(basic_stringbuf_wchar *this,
 {
     TRACE("(%p %p %s %d)\n", this, ret, debugstr_fpos_int(&pos), mode);
 
-    if(pos.off==0 && pos.pos==-1 && pos.state==0) {
+    if(pos.off==-1 && pos.pos==0 && pos.state==0) {
         *ret = pos;
         return ret;
     }
@@ -5590,7 +5592,7 @@ basic_ostream_char* __thiscall basic_ostream_char_seekp(basic_ostream_char *this
 
         basic_streambuf_char_pubseekoff(basic_ios_char_rdbuf_get(base),
                 &seek, off, way, OPENMODE_out);
-        if(seek.off==0 && seek.pos==-1 && seek.state==0)
+        if(seek.off==-1 && seek.pos==0 && seek.state==0)
             basic_ios_char_setstate(base, IOSTATE_failbit);
     }
     return this;
@@ -5610,7 +5612,7 @@ basic_ostream_char* __thiscall basic_ostream_char_seekp_fpos(basic_ostream_char 
 
         basic_streambuf_char_pubseekpos(basic_ios_char_rdbuf_get(base),
                 &seek, pos, OPENMODE_out);
-        if(seek.off==0 && seek.pos==-1 && seek.state==0)
+        if(seek.off==-1 && seek.pos==0 && seek.state==0)
             basic_ios_char_setstate(base, IOSTATE_failbit);
     }
     return this;
@@ -5629,8 +5631,8 @@ fpos_int* __thiscall basic_ostream_char_tellp(basic_ostream_char *this, fpos_int
         basic_streambuf_char_pubseekoff(basic_ios_char_rdbuf_get(base),
                 ret, 0, SEEKDIR_cur, OPENMODE_out);
     }else {
-        ret->off = 0;
-        ret->pos = -1;
+        ret->off = -1;
+        ret->pos = 0;
         ret->state = 0;
     }
     return ret;
@@ -6387,7 +6389,7 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_seekp(basic_ostream_wchar *t
 
         basic_streambuf_wchar_pubseekoff(basic_ios_wchar_rdbuf_get(base),
                 &seek, off, way, OPENMODE_out);
-        if(seek.off==0 && seek.pos==-1 && seek.state==0)
+        if(seek.off==-1 && seek.pos==0 && seek.state==0)
             basic_ios_wchar_setstate(base, IOSTATE_failbit);
     }
     return this;
@@ -6409,7 +6411,7 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_seekp_fpos(basic_ostream_wch
 
         basic_streambuf_wchar_pubseekpos(basic_ios_wchar_rdbuf_get(base),
                 &seek, pos, OPENMODE_out);
-        if(seek.off==0 && seek.pos==-1 && seek.state==0)
+        if(seek.off==-1 && seek.pos==0 && seek.state==0)
             basic_ios_wchar_setstate(base, IOSTATE_failbit);
     }
     return this;
@@ -6430,8 +6432,8 @@ fpos_int* __thiscall basic_ostream_wchar_tellp(basic_ostream_wchar *this, fpos_i
         basic_streambuf_wchar_pubseekoff(basic_ios_wchar_rdbuf_get(base),
                 ret, 0, SEEKDIR_cur, OPENMODE_out);
     }else {
-        ret->off = 0;
-        ret->pos = -1;
+        ret->off = -1;
+        ret->pos = 0;
         ret->state = 0;
     }
     return ret;
@@ -7702,25 +7704,23 @@ int __thiscall basic_istream_char_sync(basic_istream_char *this)
 DEFINE_THISCALL_WRAPPER(basic_istream_char_tellg, 8)
 fpos_int* __thiscall basic_istream_char_tellg(basic_istream_char *this, fpos_int *ret)
 {
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+
     TRACE("(%p %p)\n", this, ret);
 
-    if(basic_istream_char_sentry_create(this, TRUE)) {
-        basic_ios_char *base = basic_istream_char_get_basic_ios(this);
-        if(!ios_base_fail(&base->base)) {
-            basic_streambuf_char_pubseekoff(basic_ios_char_rdbuf_get(base),
-                    ret, 0, SEEKDIR_cur, OPENMODE_in);
-            basic_istream_char_sentry_destroy(this);
-
-            if(ret->off==0 && ret->pos==-1 && ret->state==0)
-                basic_ios_char_setstate(base, IOSTATE_failbit);
-            return ret;
-        }
+    if(ios_base_fail(&base->base)) {
+        ret->off = -1;
+        ret->pos = 0;
+        ret->state = 0;
+        return ret;
     }
-    basic_istream_char_sentry_destroy(this);
 
-    ret->off = 0;
-    ret->pos = -1;
-    ret->state = 0;
+    basic_streambuf_char_pubseekoff(basic_ios_char_rdbuf_get(base),
+            ret, 0, SEEKDIR_cur, OPENMODE_in);
+
+    if(ret->off==-1 && ret->pos==0 && ret->state==0)
+        basic_ios_char_setstate(base, IOSTATE_failbit);
+
     return ret;
 }
 
@@ -7739,7 +7739,7 @@ basic_istream_char* __thiscall basic_istream_char_seekg(basic_istream_char *this
 
         basic_streambuf_char_pubseekoff(strbuf, &ret, off, dir, OPENMODE_in);
 
-        if(ret.off==0 && ret.pos==-1 && ret.state==0)
+        if(ret.off==-1 && ret.pos==0 && ret.state==0)
             basic_ios_char_setstate(base, IOSTATE_failbit);
         else
             basic_ios_char_clear(base, IOSTATE_goodbit);
@@ -7766,7 +7766,7 @@ basic_istream_char* __thiscall basic_istream_char_seekg_fpos(basic_istream_char 
         basic_streambuf_char_pubseekpos(strbuf, &ret, pos, OPENMODE_in);
         basic_istream_char_sentry_destroy(this);
 
-        if(ret.off==0 && ret.pos==-1 && ret.state==0)
+        if(ret.off==-1 && ret.pos==0 && ret.state==0)
             basic_ios_char_setstate(base, IOSTATE_failbit);
         else
             basic_ios_char_clear(base, IOSTATE_goodbit);
@@ -8980,25 +8980,22 @@ int __thiscall basic_istream_wchar_sync(basic_istream_wchar *this)
 DEFINE_THISCALL_WRAPPER(basic_istream_wchar_tellg, 8)
 fpos_int* __thiscall basic_istream_wchar_tellg(basic_istream_wchar *this, fpos_int *ret)
 {
+    basic_ios_wchar *base = basic_istream_wchar_get_basic_ios(this);
+
     TRACE("(%p %p)\n", this, ret);
 
-    if(basic_istream_wchar_sentry_create(this, TRUE)) {
-        basic_ios_wchar *base = basic_istream_wchar_get_basic_ios(this);
-        if(!ios_base_fail(&base->base)) {
-            basic_streambuf_wchar_pubseekoff(basic_ios_wchar_rdbuf_get(base),
-                    ret, 0, SEEKDIR_cur, OPENMODE_in);
-            basic_istream_wchar_sentry_destroy(this);
-
-            if(ret->off==0 && ret->pos==-1 && ret->state==0)
-                basic_ios_wchar_setstate(base, IOSTATE_failbit);
-            return ret;
-        }
+    if(ios_base_fail(&base->base)) {
+        ret->off = -1;
+        ret->pos = 0;
+        ret->state = 0;
+        return ret;
     }
-    basic_istream_wchar_sentry_destroy(this);
 
-    ret->off = 0;
-    ret->pos = -1;
-    ret->state = 0;
+    basic_streambuf_wchar_pubseekoff(basic_ios_wchar_rdbuf_get(base),
+            ret, 0, SEEKDIR_cur, OPENMODE_in);
+    if(ret->off==-1 && ret->pos==0 && ret->state==0)
+        basic_ios_wchar_setstate(base, IOSTATE_failbit);
+
     return ret;
 }
 
@@ -9020,7 +9017,7 @@ basic_istream_wchar* __thiscall basic_istream_wchar_seekg(basic_istream_wchar *t
         basic_streambuf_wchar_pubseekoff(strbuf, &ret, off, dir, OPENMODE_in);
         basic_istream_wchar_sentry_destroy(this);
 
-        if(ret.off==0 && ret.pos==-1 && ret.state==0)
+        if(ret.off==-1 && ret.pos==0 && ret.state==0)
             basic_ios_wchar_setstate(base, IOSTATE_failbit);
         else
             basic_ios_wchar_clear(base, IOSTATE_goodbit);
@@ -9049,7 +9046,7 @@ basic_istream_wchar* __thiscall basic_istream_wchar_seekg_fpos(basic_istream_wch
         basic_streambuf_wchar_pubseekpos(strbuf, &ret, pos, OPENMODE_in);
         basic_istream_wchar_sentry_destroy(this);
 
-        if(ret.off==0 && ret.pos==-1 && ret.state==0)
+        if(ret.off==-1 && ret.pos==0 && ret.state==0)
             basic_ios_wchar_setstate(base, IOSTATE_failbit);
         else
             basic_ios_wchar_clear(base, IOSTATE_goodbit);
@@ -12382,7 +12379,7 @@ fpos_int* __thiscall strstreambuf_seekpos(strstreambuf *this, fpos_int *ret, fpo
 {
     TRACE("(%p %p %s %d)\n", this, ret, debugstr_fpos_int(&pos), mode);
 
-    if(pos.off==0 && pos.pos==-1 && pos.state==0) {
+    if(pos.off==-1 && pos.pos==0 && pos.state==0) {
         *ret = pos;
         return ret;
     }
