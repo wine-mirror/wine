@@ -38,6 +38,28 @@ Call ok(getVT(vbFriday) = "VT_I2", "getVT(vbFriday) = " & getVT(vbFriday))
 Call ok(vbSaturday = 7, "vbSaturday = " & vbSaturday)
 Call ok(getVT(vbSaturday) = "VT_I2", "getVT(vbSaturday) = " & getVT(vbSaturday))
 
+Sub TestConstant(name, val, exval)
+    Call ok(val = exval, name & " =  " & val & " expected " & exval)
+    Call ok(getVT(val) = "VT_I2*", "getVT(" & name & ") = " & getVT(val))
+End Sub
+
+TestConstant "vbEmpty", vbEmpty, 0
+TestConstant "vbNull", vbNull, 1
+TestConstant "vbLong", vbLong, 3
+TestConstant "vbSingle", vbSingle, 4
+TestConstant "vbDouble", vbDouble, 5
+TestConstant "vbCurrency", vbCurrency, 6
+TestConstant "vbDate", vbDate, 7
+TestConstant "vbString", vbString, 8
+TestConstant "vbObject", vbObject, 9
+TestConstant "vbError", vbError, 10
+TestConstant "vbBoolean", vbBoolean, 11
+TestConstant "vbVariant", vbVariant, 12
+TestConstant "vbDataObject", vbDataObject, 13
+TestConstant "vbDecimal", vbDecimal, 14
+TestConstant "vbByte", vbByte, 17
+TestConstant "vbArray", vbArray, 8192
+
 Sub TestCStr(arg, exval)
     dim x
     x = CStr(arg)

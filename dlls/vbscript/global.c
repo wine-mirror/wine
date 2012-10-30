@@ -1680,108 +1680,6 @@ static HRESULT Global_vbNo(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
     return return_short(res, IDNO);
 }
 
-static HRESULT Global_vbEmpty(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbNull(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbInteger(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbLong(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbSingle(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbDouble(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbCurrency(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbDate(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbString(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbObject(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbError(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbBoolean(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbVariant(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbDataObject(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbDecimal(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbByte(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbArray(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
 static HRESULT Global_vbTrue(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
@@ -2016,23 +1914,23 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_VBIGNORE,           Global_vbIgnore, BP_GET},
     {DISPID_GLOBAL_VBYES,              Global_vbYes, BP_GET},
     {DISPID_GLOBAL_VBNO,               Global_vbNo, BP_GET},
-    {DISPID_GLOBAL_VBEMPTY,            Global_vbEmpty, BP_GET},
-    {DISPID_GLOBAL_VBNULL,             Global_vbNull, BP_GET},
-    {DISPID_GLOBAL_VBINTEGER,          Global_vbInteger, BP_GET},
-    {DISPID_GLOBAL_VBLONG,             Global_vbLong, BP_GET},
-    {DISPID_GLOBAL_VBSINGLE,           Global_vbSingle, BP_GET},
-    {DISPID_GLOBAL_VBDOUBLE,           Global_vbDouble, BP_GET},
-    {DISPID_GLOBAL_VBCURRENCY,         Global_vbCurrency, BP_GET},
-    {DISPID_GLOBAL_VBDATE,             Global_vbDate, BP_GET},
-    {DISPID_GLOBAL_VBSTRING,           Global_vbString, BP_GET},
-    {DISPID_GLOBAL_VBOBJECT,           Global_vbObject, BP_GET},
-    {DISPID_GLOBAL_VBERROR,            Global_vbError, BP_GET},
-    {DISPID_GLOBAL_VBBOOLEAN,          Global_vbBoolean, BP_GET},
-    {DISPID_GLOBAL_VBVARIANT,          Global_vbVariant, BP_GET},
-    {DISPID_GLOBAL_VBDATAOBJECT,       Global_vbDataObject, BP_GET},
-    {DISPID_GLOBAL_VBDECIMAL,          Global_vbDecimal, BP_GET},
-    {DISPID_GLOBAL_VBBYTE,             Global_vbByte, BP_GET},
-    {DISPID_GLOBAL_VBARRAY,            Global_vbArray, BP_GET},
+    {DISPID_GLOBAL_VBEMPTY,            NULL, BP_GET, VT_EMPTY},
+    {DISPID_GLOBAL_VBNULL,             NULL, BP_GET, VT_NULL},
+    {DISPID_GLOBAL_VBINTEGER,          NULL, BP_GET, VT_I2},
+    {DISPID_GLOBAL_VBLONG,             NULL, BP_GET, VT_I4},
+    {DISPID_GLOBAL_VBSINGLE,           NULL, BP_GET, VT_R4},
+    {DISPID_GLOBAL_VBDOUBLE,           NULL, BP_GET, VT_R8},
+    {DISPID_GLOBAL_VBCURRENCY,         NULL, BP_GET, VT_CY},
+    {DISPID_GLOBAL_VBDATE,             NULL, BP_GET, VT_DATE},
+    {DISPID_GLOBAL_VBSTRING,           NULL, BP_GET, VT_BSTR},
+    {DISPID_GLOBAL_VBOBJECT,           NULL, BP_GET, VT_DISPATCH},
+    {DISPID_GLOBAL_VBERROR,            NULL, BP_GET, VT_ERROR},
+    {DISPID_GLOBAL_VBBOOLEAN,          NULL, BP_GET, VT_BOOL},
+    {DISPID_GLOBAL_VBVARIANT,          NULL, BP_GET, VT_VARIANT},
+    {DISPID_GLOBAL_VBDATAOBJECT,       NULL, BP_GET, VT_UNKNOWN},
+    {DISPID_GLOBAL_VBDECIMAL,          NULL, BP_GET, VT_DECIMAL},
+    {DISPID_GLOBAL_VBBYTE,             NULL, BP_GET, VT_UI1},
+    {DISPID_GLOBAL_VBARRAY,            NULL, BP_GET, VT_ARRAY},
     {DISPID_GLOBAL_VBTRUE,             Global_vbTrue, BP_GET},
     {DISPID_GLOBAL_VBFALSE,            Global_vbFalse, BP_GET},
     {DISPID_GLOBAL_VBUSEDEFAULT,       Global_vbUseDefault, BP_GET},
