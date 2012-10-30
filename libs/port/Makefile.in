@@ -5,7 +5,6 @@ MODULE    = libwine_port.a
 C_SRCS = \
 	ffs.c \
 	fstatvfs.c \
-	futimes.c \
 	getopt.c \
 	getopt1.c \
 	getpagesize.c \

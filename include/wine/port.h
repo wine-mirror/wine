@@ -257,11 +257,6 @@ extern int getopt_long_only (int ___argc, char *const *___argv,
 int ffs( int x );
 #endif
 
-#ifndef HAVE_FUTIMES
-struct timeval;
-int futimes(int fd, const struct timeval *tv);
-#endif
-
 #ifndef HAVE_GETPAGESIZE
 size_t getpagesize(void);
 #endif  /* HAVE_GETPAGESIZE */
@@ -456,7 +451,6 @@ extern unsigned char interlocked_cmpxchg128( __int64 *dest, __int64 xchg_high,
 
 #define ffs                     __WINE_NOT_PORTABLE(ffs)
 #define fstatvfs                __WINE_NOT_PORTABLE(fstatvfs)
-#define futimes                 __WINE_NOT_PORTABLE(futimes)
 #define getopt_long             __WINE_NOT_PORTABLE(getopt_long)
 #define getopt_long_only        __WINE_NOT_PORTABLE(getopt_long_only)
 #define getpagesize             __WINE_NOT_PORTABLE(getpagesize)

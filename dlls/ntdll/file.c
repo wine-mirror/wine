@@ -1560,6 +1560,9 @@ NTSTATUS WINAPI NtSetVolumeInformationFile(
 
 static NTSTATUS set_file_times( int fd, const LARGE_INTEGER *mtime, const LARGE_INTEGER *atime )
 {
+    NTSTATUS status = STATUS_SUCCESS;
+
+#if defined(HAVE_FUTIMES) || defined(HAVE_FUTIMESAT)
     struct timeval tv[2];
     struct stat st;
 
@@ -1590,8 +1593,17 @@ static NTSTATUS set_file_times( int fd, const LARGE_INTEGER *mtime, const LARGE_
         tv[1].tv_sec = mtime->QuadPart / 10000000 - SECS_1601_TO_1970;
         tv[1].tv_usec = (mtime->QuadPart % 10000000) / 10;
     }
-    if (!futimes( fd, tv )) return STATUS_SUCCESS;
-    return FILE_GetNtStatus();
+#ifdef HAVE_FUTIMES
+    if (futimes( fd, tv ) == -1) status = FILE_GetNtStatus();
+#elif defined(HAVE_FUTIMESAT)
+    if (futimesat( fd, NULL, tv ) == -1) status = FILE_GetNtStatus();
+#endif
+
+#else  /* HAVE_FUTIMES || HAVE_FUTIMESAT */
+    FIXME( "setting file times not supported\n" );
+    status = STATUS_NOT_IMPLEMENTED;
+#endif
+    return status;
 }
 
 static inline void get_file_times( const struct stat *st, LARGE_INTEGER *mtime, LARGE_INTEGER *ctime,
