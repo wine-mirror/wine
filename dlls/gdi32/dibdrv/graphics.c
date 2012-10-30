@@ -462,9 +462,35 @@ static void draw_glyph( dib_info *dib, int x, int y, const GLYPHMETRICS *metrics
             src_origin.x = clipped_rect.left - rect.left;
             src_origin.y = clipped_rect.top  - rect.top;
 
-            dib->funcs->draw_glyph( dib, &clipped_rect, glyph_dib, &src_origin,
-                                    text_color, ranges );
+            if (glyph_dib->bit_count == 32)
+                dib->funcs->draw_subpixel_glyph( dib, &clipped_rect, glyph_dib, &src_origin,
+                                                 text_color );
+            else
+                dib->funcs->draw_glyph( dib, &clipped_rect, glyph_dib, &src_origin,
+                                        text_color, ranges );
         }
+    }
+}
+
+static int get_glyph_depth( UINT aa_flags )
+{
+    switch (aa_flags)
+    {
+    case GGO_BITMAP: return 1;
+
+    case GGO_GRAY2_BITMAP:
+    case GGO_GRAY4_BITMAP:
+    case GGO_GRAY8_BITMAP:
+    case WINE_GGO_GRAY16_BITMAP: return 8;
+
+    case WINE_GGO_HRGB_BITMAP:
+    case WINE_GGO_HBGR_BITMAP:
+    case WINE_GGO_VRGB_BITMAP:
+    case WINE_GGO_VBGR_BITMAP: return 32;
+
+    default:
+        ERR("Unexpected flags %08x\n", aa_flags);
+        return 0;
     }
 }
 
@@ -488,7 +514,7 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT aa_flags, GLYPHMETRICS 
     int i, x, y;
     DWORD ret, size;
     BYTE *buf, *dst, *src;
-    int pad;
+    int pad = 0, depth = get_glyph_depth( aa_flags );
 
     glyph_dib->bits.ptr = NULL;
     glyph_dib->bits.is_copy = FALSE;
@@ -508,7 +534,7 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT aa_flags, GLYPHMETRICS 
     if (!ret) return ERROR_SUCCESS; /* empty glyph */
 
     /* We'll convert non-antialiased 1-bpp bitmaps to 8-bpp, so these sizes relate to 8-bpp */
-    glyph_dib->bit_count   = 8;
+    glyph_dib->bit_count   = depth == 1 ? 8 : depth;
     glyph_dib->width       = metrics->gmBlackBoxX;
     glyph_dib->height      = metrics->gmBlackBoxY;
     glyph_dib->rect.left   = 0;
@@ -517,7 +543,7 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT aa_flags, GLYPHMETRICS 
     glyph_dib->rect.bottom = metrics->gmBlackBoxY;
     glyph_dib->stride      = get_dib_stride( metrics->gmBlackBoxX, glyph_dib->bit_count );
 
-    pad = padding[ metrics->gmBlackBoxX % 4 ];
+    if (glyph_dib->bit_count == 8) pad = padding[ metrics->gmBlackBoxX % 4 ];
     size = metrics->gmBlackBoxY * glyph_dib->stride;
 
     buf = HeapAlloc( GetProcessHeap(), 0, size );

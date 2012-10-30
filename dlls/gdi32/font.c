@@ -33,6 +33,7 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "winternl.h"
+#include "winreg.h"
 #include "gdi_private.h"
 #include "wine/exception.h"
 #include "wine/unicode.h"
@@ -328,10 +329,74 @@ done:
     return ret;
 }
 
+enum smoothing { no_smoothing, aa_smoothing, subpixel_smoothing };
+
+static DWORD get_desktop_value( const WCHAR *name, DWORD *value )
+{
+    static const WCHAR desktop[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+    HKEY key;
+    WCHAR buf[12];
+    DWORD count = sizeof(buf), type, err;
+
+    err = RegOpenKeyW( HKEY_CURRENT_USER, desktop, &key );
+    if (!err)
+    {
+        err = RegQueryValueExW( key, name, NULL, &type, (BYTE*)buf, &count );
+        if (!err) *value = atoiW( buf );
+        RegCloseKey( key );
+    }
+    return err;
+}
+
+static enum smoothing get_default_smoothing( void )
+{
+    static const WCHAR smoothing_type[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g','T','y','p','e',0};
+    DWORD type, err;
+
+    /* FIXME: Ignoring FontSmoothing for now since this is
+       set to off by default in wine.inf */
+
+    err = get_desktop_value( smoothing_type, &type );
+    if (err) return aa_smoothing;
+
+    switch (type)
+    {
+    case 1: /* FE_FONTSMOOTHINGSTANDARD */
+        return aa_smoothing;
+    case 2: /* FE_FONTSMOOTHINGCLEARTYPE */
+        return subpixel_smoothing;
+    }
+
+    return aa_smoothing;
+}
+
+static UINT get_subpixel_orientation( void )
+{
+    static const WCHAR smoothing_orientation[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g',
+                                                  'O','r','i','e','n','t','a','t','i','o','n',0};
+    DWORD orient, err;
+
+    /* FIXME: handle vertical orientations even though Windows doesn't */
+    err = get_desktop_value( smoothing_orientation, &orient );
+    if (err) return GGO_GRAY4_BITMAP;
+
+    switch (orient)
+    {
+    case 0: /* FE_FONTSMOOTHINGORIENTATIONBGR */
+        return WINE_GGO_HBGR_BITMAP;
+    case 1: /* FE_FONTSMOOTHINGORIENTATIONRGB */
+        return WINE_GGO_HRGB_BITMAP;
+    }
+    return GGO_GRAY4_BITMAP;
+}
+
 UINT get_font_aa_flags( HDC hdc )
 {
     LOGFONTW lf;
     WORD gasp_flags;
+    static int hinter = -1;
+    static int subpixel_enabled = -1;
+    enum smoothing smoothing;
 
     if (GetObjectType( hdc ) == OBJ_MEMDC)
     {
@@ -344,11 +409,48 @@ UINT get_font_aa_flags( HDC hdc )
     GetObjectW( GetCurrentObject( hdc, OBJ_FONT ), sizeof(lf), &lf );
     if (lf.lfQuality == NONANTIALIASED_QUALITY) return GGO_BITMAP;
 
-    if (get_gasp_flags( hdc, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
-        return GGO_BITMAP;
+    if (hinter == -1 || subpixel_enabled == -1)
+    {
+        RASTERIZER_STATUS status;
+        GetRasterizerCaps(&status, sizeof(status));
+        hinter = status.wFlags & WINE_TT_HINTER_ENABLED;
+        subpixel_enabled = status.wFlags & WINE_TT_SUBPIXEL_RENDERING_ENABLED;
+    }
 
-    /* FIXME, check user prefs */
-    return GGO_GRAY4_BITMAP;
+    switch (lf.lfQuality)
+    {
+    case ANTIALIASED_QUALITY:
+        smoothing = aa_smoothing;
+        break;
+    case CLEARTYPE_QUALITY:
+    case CLEARTYPE_NATURAL_QUALITY:
+        smoothing = subpixel_smoothing;
+        break;
+    case DEFAULT_QUALITY:
+    case DRAFT_QUALITY:
+    case PROOF_QUALITY:
+    default:
+        smoothing = get_default_smoothing();
+    }
+
+    if (smoothing == subpixel_smoothing)
+    {
+        if (subpixel_enabled)
+        {
+            UINT ret = get_subpixel_orientation();
+            if (ret != GGO_GRAY4_BITMAP) return ret;
+        }
+        smoothing = aa_smoothing;
+    }
+
+    if (smoothing == aa_smoothing)
+    {
+        if (hinter && get_gasp_flags( hdc, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
+            return GGO_BITMAP;
+        return GGO_GRAY4_BITMAP;
+    }
+
+    return GGO_BITMAP;
 }
 
 /***********************************************************************
@@ -1876,6 +1978,9 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
         struct gdi_image_bits bits;
         struct bitblt_coords src, dst;
         PHYSDEV dst_dev;
+
+        /* FIXME Subpixel modes */
+        aa_flags = GGO_GRAY4_BITMAP;
 
         dst_dev = GET_DC_PHYSDEV( dc, pPutImage );
         src.visrect = get_total_extents( dev->hdc, x, y, flags, aa_flags, str, count, dx );
