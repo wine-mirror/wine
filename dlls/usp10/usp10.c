@@ -3246,7 +3246,10 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
 
         rtlGlyphs = heap_alloc(cGlyphs * sizeof(WORD));
         if (!rtlGlyphs)
+        {
+            heap_free(lpDx);
             return E_OUTOFMEMORY;
+        }
 
         for (i = 0; i < cGlyphs; i++)
             rtlGlyphs[i] = pwGlyphs[cGlyphs-1-i];
