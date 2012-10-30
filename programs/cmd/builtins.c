@@ -394,6 +394,7 @@ static BOOL WCMD_AppendEOF(WCHAR *filename)
       SetFilePointer (h, 0, NULL, FILE_END);
       if (!WriteFile(h, &eof, 1, NULL, NULL)) {
         WINE_ERR("Failed to append EOF to %s (%d)\n", wine_dbgstr_w(filename), GetLastError());
+        CloseHandle(h);
         return FALSE;
       }
       CloseHandle(h);
@@ -430,6 +431,7 @@ static BOOL WCMD_ManualCopy(WCHAR *srcname, WCHAR *dstname, BOOL ascii, BOOL app
                       append?OPEN_EXISTING:CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (out == NULL) {
       WINE_ERR("Failed to open %s (%d)\n", wine_dbgstr_w(dstname), GetLastError());
+      CloseHandle(in);
       return FALSE;
     }
 
