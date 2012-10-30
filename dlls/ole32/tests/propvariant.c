@@ -445,6 +445,7 @@ static void test_varianttoproperty(void)
 
     if (len == 0xdeadbeef)
     {
+        HeapFree(GetProcessHeap(), 0, own_propvalue);
         return;
     }
 
