@@ -3790,7 +3790,7 @@ static void test_font_height_scaling(void)
     if (fabs(scale - 1.0) > 0.1)
     {
         win_skip("GdipGetRegionBounds is broken, scale %f (should be near 1.0)\n", scale);
-        return;
+        goto cleanup;
     }
 
     status = GdipScaleWorldTransform(graphics, 0.01, 0.01, MatrixOrderAppend);
@@ -3893,6 +3893,7 @@ todo_wine
         GdipDeleteFont(font);
     }
 
+cleanup:
     status = GdipDeleteGraphics(graphics);
     expect(Ok, status);
     DeleteDC(hdc);
