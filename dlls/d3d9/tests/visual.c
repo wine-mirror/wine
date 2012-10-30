@@ -6934,11 +6934,10 @@ static void srgbtexture_test(IDirect3DDevice9 *device)
      * texture stage state to render a quad using that texture.  The resulting
      * color components should be 0x36 (~ 0.21), per this formula:
      *    linear_color = ((srgb_color + 0.055) / 1.055) ^ 2.4
-     * This is true where srgb_color > 0.04045.
-     */
+     * This is true where srgb_color > 0.04045. */
+    struct IDirect3DTexture9 *texture = NULL;
     IDirect3D9 *d3d = NULL;
     HRESULT hr;
-    LPDIRECT3DTEXTURE9 texture = NULL;
     LPDIRECT3DSURFACE9 surface = NULL;
     D3DLOCKED_RECT lr;
     DWORD color;
