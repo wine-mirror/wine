@@ -985,7 +985,10 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
                     p = str; while (p < str+len && *p != TAB) p++;
                     len_seg = p - str;
                     if (len_seg != len && !GetTextExtentPointW(hdc, str, len_seg, &size))
+                    {
+                        HeapFree (GetProcessHeap(), 0, retstr);
                         return 0;
+                    }
                 }
                 else
                     len_seg = len;
@@ -993,7 +996,11 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
                 if (!ExtTextOutW( hdc, xseg, y,
                                  ((flags & DT_NOCLIP) ? 0 : ETO_CLIPPED) |
                                  ((flags & DT_RTLREADING) ? ETO_RTLREADING : 0),
-                                 rect, str, len_seg, NULL ))  return 0;
+                                 rect, str, len_seg, NULL ))
+                {
+                    HeapFree (GetProcessHeap(), 0, retstr);
+                    return 0;
+                }
                 if (prefix_offset != -1 && prefix_offset < len_seg)
                 {
                     TEXT_DrawUnderscore (hdc, xseg, y + tm.tmAscent + 1, str, prefix_offset, (flags & DT_NOCLIP) ? NULL : rect);
