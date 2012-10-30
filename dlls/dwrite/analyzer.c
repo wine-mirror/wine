@@ -30,8 +30,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 enum scriptcode {
     Script_Arabic = 0,
     Script_C1Controls = 12,
+    Script_Coptic = 13,
+    Script_Cyrillic = 16,
+    Script_Greek = 23,
     Script_Latin  = 38,
-    Script_Latin_Symb = 77,
+    Script_Symbol = 77,
     Script_Unknown = (UINT16)-1
 };
 
@@ -46,15 +49,15 @@ static const struct script_range script_ranges[] = {
     /* ASCII punctuation and symbols: U+0020–U+002F */
     /* ASCII digits: U+0030–U+0039 */
     /* ASCII punctuation and symbols: U+003A–U+0040 */
-    { Script_Latin_Symb, 0x00, 0x040 },
+    { Script_Symbol, 0x00, 0x040 },
     /* Latin uppercase: U+0041–U+005A */
     { Script_Latin, 0x41, 0x5a },
     /* ASCII punctuation and symbols: U+005B–U+0060 */
-    { Script_Latin_Symb, 0x5b, 0x060 },
+    { Script_Symbol, 0x5b, 0x060 },
     /* Latin lowercase: U+0061–U+007A */
     { Script_Latin, 0x61, 0x7a },
     /* ASCII punctuation and symbols, control char DEL: U+007B–U+007F */
-    { Script_Latin_Symb, 0x7b, 0x7f },
+    { Script_Symbol, 0x7b, 0x7f },
     /* C1 Controls: U+0080–U+009F */
     { Script_C1Controls, 0x80, 0x9f },
     /* Latin-1 Supplement: U+00A0–U+00FF */
@@ -63,9 +66,22 @@ static const struct script_range script_ranges[] = {
     /* IPA Extensions: U+0250–U+02AF */
     /* Spacing Modifier Letters: U+02B0–U+02FF */
     { Script_Latin, 0xa0, 0x2ff },
+    /* Combining Diacritical Marks: U+0300–U+036F */
+    { Script_Symbol, 0x300, 0x36f },
+    /* Greek: U+0370–U+03E1 */
+    { Script_Greek, 0x370, 0x3e1 },
+    /* Coptic: U+03E2–U+03Ef */
+    { Script_Coptic, 0x3e2, 0x3ef },
+    /* Greek: U+03F0–U+03FF */
+    { Script_Greek, 0x3f0, 0x3ff },
+    /* Cyrillic: U+0400–U+04FF */
+    /* Cyrillic Supplement: U+0500–U+052F */
+    /* Cyrillic Supplement range is incomplete cause it's based on Unicode 5.2
+       that doesn't define some Abkhaz and Azerbaijani letters, we support Unicode 6.0 range here */
+    { Script_Cyrillic, 0x400, 0x52f },
     /* Arabic: U+0600–U+06FF */
     { Script_Arabic, 0x600, 0x6ef },
-    /* unsuppoted range */
+    /* unsupported range */
     { Script_Unknown }
 };
 
@@ -102,8 +118,8 @@ static HRESULT analyze_script(const WCHAR *text, UINT32 len, IDWriteTextAnalysis
         UINT16 script = get_char_script(text[i]);
 
         /* Script_Latin_Symb script type is ignored when preceded or followed by another script */
-        if (sa.script == Script_Latin_Symb) sa.script = script;
-        if (script    == Script_Latin_Symb) script = sa.script;
+        if (sa.script == Script_Symbol) sa.script = script;
+        if (script    == Script_Symbol) script = sa.script;
         /* this is a length of a sequence to be reported next */
         if (sa.script == script) length++;
 

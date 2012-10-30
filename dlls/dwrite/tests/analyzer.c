@@ -399,8 +399,11 @@ struct sa_test {
 enum scriptcode {
     Script_Arabic = 0,
     Script_C1Controls = 12,
+    Script_Coptic = 13,
+    Script_Cyrillic = 16,
+    Script_Greek = 23,
     Script_Latin  = 38,
-    Script_Latin_Symb = 77
+    Script_Symbol = 77
 };
 
 static struct sa_test sa_tests[] = {
@@ -415,16 +418,16 @@ static struct sa_test sa_tests[] = {
     },
     {
       {' ',' ',' ',' ','!','$','[','^','{','~',0}, 1,
-          { { 0, 10, { Script_Latin_Symb, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 10, { Script_Symbol, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
     {
       {' ',' ',' ','1','2',' ',0}, 1,
-          { { 0, 6, { Script_Latin_Symb, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, { Script_Symbol, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
     {
       /* digits only */
       {'1','2',0}, 1,
-          { { 0, 2, { Script_Latin_Symb, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 2, { Script_Symbol, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
     {
       /* Arabic */
@@ -483,6 +486,24 @@ static struct sa_test sa_tests[] = {
       /* Spacing Modifier Letters */
       {0x2b0,0x2ba,0x2d7,0x2dd,0x2ef,0x2ff,0}, 1,
           { { 0, 6, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Combining Diacritical Marks */
+      {0x300,0x320,0x340,0x345,0x350,0x36f,0}, 1,
+          { { 0, 6, { Script_Symbol, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Greek and Coptic */
+      {0x370,0x388,0x3d8,0x3e1,0x3e2,0x3fa,0x3ff,0}, 3,
+          { { 0, 4, { Script_Greek, DWRITE_SCRIPT_SHAPES_DEFAULT } },
+            { 4, 1, { Script_Coptic, DWRITE_SCRIPT_SHAPES_DEFAULT } },
+            { 5, 2, { Script_Greek, DWRITE_SCRIPT_SHAPES_DEFAULT } }
+          }
+    },
+    {
+      /* Cyrillic and Cyrillic Supplement */
+      {0x400,0x40f,0x410,0x44f,0x450,0x45f,0x460,0x481,0x48a,0x4f0,0x4fa,0x4ff,0x500,0x510,0x520,0}, 1,
+          { { 0, 15, { Script_Cyrillic, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
     /* keep this as end marker */
     { {0} }
