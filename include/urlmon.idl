@@ -2096,6 +2096,7 @@ cpp_quote("HRESULT WINAPI CoInternetIsFeatureEnabled(INTERNETFEATURELIST,DWORD d
 cpp_quote("HRESULT WINAPI CoInternetIsFeatureEnabledForUrl(INTERNETFEATURELIST,DWORD,LPCWSTR,IInternetSecurityManager*);")
 cpp_quote("HRESULT WINAPI CoInternetGetSecurityUrl(LPCWSTR,LPWSTR*,PSUACTION,DWORD);")
 cpp_quote("HRESULT WINAPI CoInternetGetSecurityUrlEx(IUri*,IUri**,PSUACTION,DWORD_PTR);")
+cpp_quote("HRESULT WINAPI AsyncInstallDistributionUnit(LPCWSTR,LPCWSTR,LPCWSTR,DWORD,DWORD,LPCWSTR,IBindCtx*,LPVOID,DWORD);")
 cpp_quote("HRESULT WINAPI CreateFormatEnumerator(UINT,FORMATETC*,IEnumFORMATETC**);")
 cpp_quote("HRESULT WINAPI GetSoftwareUpdateInfo( LPCWSTR szDistUnit, LPSOFTDISTINFO psdi);")
 cpp_quote("HRESULT WINAPI FaultInIEFeature(HWND,uCLSSPEC*,QUERYCONTEXT*,DWORD);")
