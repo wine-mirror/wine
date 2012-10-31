@@ -314,6 +314,25 @@ static inline IDirect3DRMMeshBuilderImpl *impl_from_IDirect3DRMMeshBuilder3(IDir
     return CONTAINING_RECORD(iface, IDirect3DRMMeshBuilderImpl, IDirect3DRMMeshBuilder3_iface);
 }
 
+static void clean_mesh_builder_data(IDirect3DRMMeshBuilderImpl *mesh_builder)
+{
+    HeapFree(GetProcessHeap(), 0, mesh_builder->name);
+    mesh_builder->name = NULL;
+    HeapFree(GetProcessHeap(), 0, mesh_builder->pVertices);
+    mesh_builder->pVertices = NULL;
+    mesh_builder->nb_vertices = 0;
+    HeapFree(GetProcessHeap(), 0, mesh_builder->pNormals);
+    mesh_builder->pNormals = NULL;
+    mesh_builder->nb_normals = 0;
+    HeapFree(GetProcessHeap(), 0, mesh_builder->pFaceData);
+    mesh_builder->pFaceData = NULL;
+    mesh_builder->face_data_size = 0;
+    mesh_builder->nb_faces = 0;
+    HeapFree(GetProcessHeap(), 0, mesh_builder->pCoords2d);
+    mesh_builder->pCoords2d = NULL;
+    mesh_builder->nb_coords2d = 0;
+}
+
 /*** IUnknown methods ***/
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_QueryInterface(IDirect3DRMMeshBuilder2* iface,
                                                                  REFIID riid, void** ppvObject)
@@ -363,15 +382,11 @@ static ULONG WINAPI IDirect3DRMMeshBuilder2Impl_Release(IDirect3DRMMeshBuilder2*
 
     if (!ref)
     {
+        clean_mesh_builder_data(This);
         if (This->material)
             IDirect3DRMMaterial2_Release(This->material);
         if (This->texture)
             IDirect3DRMTexture3_Release(This->texture);
-        HeapFree(GetProcessHeap(), 0, This->name);
-        HeapFree(GetProcessHeap(), 0, This->pVertices);
-        HeapFree(GetProcessHeap(), 0, This->pNormals);
-        HeapFree(GetProcessHeap(), 0, This->pFaceData);
-        HeapFree(GetProcessHeap(), 0, This->pCoords2d);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -1114,9 +1129,6 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
 
     TRACE("(%p)->(%p)\n", This, pData);
 
-    /* Remove previous name */
-    HeapFree(GetProcessHeap(), 0, This->name);
-    This->name = NULL;
     hr = IDirectXFileData_GetName(pData, NULL, &size);
     if (hr != DXFILE_OK)
         return hr;
@@ -1128,11 +1140,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
 
         hr = IDirectXFileData_GetName(pData, This->name, &size);
         if (hr != DXFILE_OK)
-        {
-            HeapFree(GetProcessHeap(), 0, This->name);
-            This->name = NULL;
             return hr;
-        }
     }
 
     TRACE("Mesh name is '%s'\n", This->name ? This->name : "");
@@ -1518,15 +1526,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
 
     TRACE("(%p)->(%p,%p,%x,%p,%p)\n", This, filename, name, loadflags, cb, arg);
 
-    /* First free allocated buffers of previous mesh data */
-    HeapFree(GetProcessHeap(), 0, This->pVertices);
-    This->pVertices = NULL;
-    HeapFree(GetProcessHeap(), 0, This->pNormals);
-    This->pNormals = NULL;
-    HeapFree(GetProcessHeap(), 0, This->pFaceData);
-    This->pFaceData = NULL;
-    HeapFree(GetProcessHeap(), 0, This->pCoords2d);
-    This->pCoords2d = NULL;
+    clean_mesh_builder_data(This);
 
     if (loadflags == D3DRMLOAD_FROMMEMORY)
     {
@@ -1622,22 +1622,7 @@ end:
         IDirectXFile_Release(pDXFile);
 
     if (ret != D3DRM_OK)
-    {
-        /* Clean mesh data */
-        This->nb_vertices = 0;
-        This->nb_normals = 0;
-        This->nb_faces = 0;
-        This->face_data_size = 0;
-        This->nb_coords2d = 0;
-        HeapFree(GetProcessHeap(), 0, This->pVertices);
-        This->pVertices = NULL;
-        HeapFree(GetProcessHeap(), 0, This->pNormals);
-        This->pNormals = NULL;
-        HeapFree(GetProcessHeap(), 0, This->pFaceData);
-        This->pFaceData = NULL;
-        HeapFree(GetProcessHeap(), 0, This->pCoords2d);
-        This->pCoords2d = NULL;
-    }
+        clean_mesh_builder_data(This);
 
     return ret;
 }
