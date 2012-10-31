@@ -1345,6 +1345,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
         if (getsockname(sock, (struct sockaddr *)&sa, &sa_len))
         {
             WARN("getsockname() failed: %s\n", strerror(errno));
+            closesocket(sock);
             status = RPC_S_CANT_CREATE_ENDPOINT;
             continue;
         }
@@ -1355,6 +1356,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
         if (ret)
         {
             WARN("getnameinfo failed: %s\n", gai_strerror(ret));
+            closesocket(sock);
             status = RPC_S_CANT_CREATE_ENDPOINT;
             continue;
         }
@@ -2139,6 +2141,8 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
     {
         HeapFree(GetProcessHeap(), 0, password);
         HeapFree(GetProcessHeap(), 0, user);
+        HeapFree(GetProcessHeap(), 0, proxy);
+        HeapFree(GetProcessHeap(), 0, servername);
         ERR("InternetOpenW failed with error %d\n", GetLastError());
         return RPC_S_SERVER_UNAVAILABLE;
     }
@@ -2153,6 +2157,7 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
         {
             HeapFree(GetProcessHeap(), 0, password);
             HeapFree(GetProcessHeap(), 0, user);
+            HeapFree(GetProcessHeap(), 0, proxy);
             return RPC_S_OUT_OF_RESOURCES;
         }
         MultiByteToWideChar(CP_ACP, 0, httpc->common.NetworkAddr, -1, servername, strlen(httpc->common.NetworkAddr) + 1);
@@ -2163,6 +2168,7 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
 
     HeapFree(GetProcessHeap(), 0, password);
     HeapFree(GetProcessHeap(), 0, user);
+    HeapFree(GetProcessHeap(), 0, proxy);
     HeapFree(GetProcessHeap(), 0, servername);
 
     if (!httpc->session)
