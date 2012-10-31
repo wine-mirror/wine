@@ -578,8 +578,10 @@ static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_
         hres = init_dispex_from_constr(&function->dispex, ctx, builtin_info, ctx->function_constr);
     else
         hres = init_dispex_from_constr(&function->dispex, ctx, &FunctionInst_info, ctx->function_constr);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        heap_free(function);
         return hres;
+    }
 
     function->flags = flags;
     function->length = flags & PROPF_ARGMASK;

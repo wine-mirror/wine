@@ -609,8 +609,10 @@ static HRESULT alloc_number(script_ctx_t *ctx, jsdisp_t *object_prototype, Numbe
         hres = init_dispex(&number->dispex, ctx, &Number_info, object_prototype);
     else
         hres = init_dispex_from_constr(&number->dispex, ctx, &NumberInst_info, ctx->number_constr);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        heap_free(number);
         return hres;
+    }
 
     *ret = number;
     return S_OK;

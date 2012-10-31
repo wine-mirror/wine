@@ -901,8 +901,10 @@ HRESULT create_dispex(script_ctx_t *ctx, const builtin_info_t *builtin_info, jsd
         return E_OUTOFMEMORY;
 
     hres = init_dispex(ret, ctx, builtin_info ? builtin_info : &dispex_info, prototype);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        heap_free(ret);
         return hres;
+    }
 
     *dispex = ret;
     return S_OK;

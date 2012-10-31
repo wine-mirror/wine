@@ -184,6 +184,8 @@ static HRESULT VBArray_toArray(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, un
 
     if(r)
         *r = jsval_obj(array);
+    else
+        jsdisp_release(array);
     return S_OK;
 }
 
