@@ -87,6 +87,7 @@ static INT (WINAPI *pIdnToAscii)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pIdnToUnicode)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pGetLocaleInfoEx)(LPCWSTR, LCTYPE, LPWSTR, INT);
 static BOOL (WINAPI *pIsValidLocaleName)(LPCWSTR);
+static INT (WINAPI *pCompareStringOrdinal)(const WCHAR *, INT, const WCHAR *, INT, BOOL);
 
 static void InitFunctionPointers(void)
 {
@@ -106,6 +107,7 @@ static void InitFunctionPointers(void)
   pIdnToUnicode = (void*)GetProcAddress(hKernel32, "IdnToUnicode");
   pGetLocaleInfoEx = (void*)GetProcAddress(hKernel32, "GetLocaleInfoEx");
   pIsValidLocaleName = (void*)GetProcAddress(hKernel32, "IsValidLocaleName");
+  pCompareStringOrdinal = (void*)GetProcAddress(hKernel32, "CompareStringOrdinal");
 }
 
 #define eq(received, expected, label, type) \
@@ -3478,10 +3480,81 @@ static void test_IsValidLocaleName(void)
     ok(!ret, "IsValidLocaleName should have failed\n");
 }
 
+void test_CompareStringOrdinal(void)
+{
+    INT ret;
+    WCHAR test1[] = { 't','e','s','t',0 };
+    WCHAR test2[] = { 'T','e','S','t',0 };
+    WCHAR test3[] = { 't','e','s','t','3',0 };
+    WCHAR null1[] = { 'a',0,'a',0 };
+    WCHAR null2[] = { 'a',0,'b',0 };
+    WCHAR bills1[] = { 'b','i','l','l','\'','s',0 };
+    WCHAR bills2[] = { 'b','i','l','l','s',0 };
+    WCHAR coop1[] = { 'c','o','-','o','p',0 };
+    WCHAR coop2[] = { 'c','o','o','p',0 };
+    WCHAR nonascii1[] = { 0x0102,0 };
+    WCHAR nonascii2[] = { 0x0201,0 };
+
+    if (!pCompareStringOrdinal)
+    {
+        win_skip("CompareStringOrdinal not supported\n");
+        return;
+    }
+
+    /* Check errors */
+    SetLastError(0xdeadbeef);
+    ret = pCompareStringOrdinal(NULL, 0, NULL, 0, FALSE);
+    ok(!ret, "Got %u, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got %x, expected %x\n", GetLastError(), ERROR_INVALID_PARAMETER);
+    SetLastError(0xdeadbeef);
+    ret = pCompareStringOrdinal(test1, -1, NULL, 0, FALSE);
+    ok(!ret, "Got %u, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got %x, expected %x\n", GetLastError(), ERROR_INVALID_PARAMETER);
+    SetLastError(0xdeadbeef);
+    ret = pCompareStringOrdinal(NULL, 0, test1, -1, FALSE);
+    ok(!ret, "Got %u, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got %x, expected %x\n", GetLastError(), ERROR_INVALID_PARAMETER);
+
+    /* Check case */
+    ret = pCompareStringOrdinal(test1, -1, test1, -1, FALSE);
+    ok(ret == CSTR_EQUAL, "Got %u, expected %u\n", ret, CSTR_EQUAL);
+    ret = pCompareStringOrdinal(test1, -1, test2, -1, FALSE);
+    ok(ret == CSTR_GREATER_THAN, "Got %u, expected %u\n", ret, CSTR_GREATER_THAN);
+    ret = pCompareStringOrdinal(test2, -1, test1, -1, FALSE);
+    ok(ret == CSTR_LESS_THAN, "Got %u, expected %u\n", ret, CSTR_LESS_THAN);
+    ret = pCompareStringOrdinal(test1, -1, test2, -1, TRUE);
+    ok(ret == CSTR_EQUAL, "Got %u, expected %u\n", ret, CSTR_EQUAL);
+
+    /* Check different sizes */
+    ret = pCompareStringOrdinal(test1, 3, test2, -1, TRUE);
+    ok(ret == CSTR_LESS_THAN, "Got %u, expected %u\n", ret, CSTR_LESS_THAN);
+    ret = pCompareStringOrdinal(test1, -1, test2, 3, TRUE);
+    ok(ret == CSTR_GREATER_THAN, "Got %u, expected %u\n", ret, CSTR_GREATER_THAN);
+
+    /* Check null character */
+    ret = pCompareStringOrdinal(null1, 3, null2, 3, FALSE);
+    ok(ret == CSTR_LESS_THAN, "Got %u, expected %u\n", ret, CSTR_LESS_THAN);
+    ret = pCompareStringOrdinal(null1, 3, null2, 3, TRUE);
+    ok(ret == CSTR_LESS_THAN, "Got %u, expected %u\n", ret, CSTR_LESS_THAN);
+    ret = pCompareStringOrdinal(test1, 5, test3, 5, FALSE);
+    ok(ret == CSTR_LESS_THAN, "Got %u, expected %u\n", ret, CSTR_LESS_THAN);
+    ret = pCompareStringOrdinal(test1, 4, test1, 5, FALSE);
+    ok(ret == CSTR_LESS_THAN, "Got %u, expected %u\n", ret, CSTR_LESS_THAN);
+
+    /* Check ordinal behaviour */
+    ret = pCompareStringOrdinal(bills1, -1, bills2, -1, FALSE);
+    ok(ret == CSTR_LESS_THAN, "Got %u, expected %u\n", ret, CSTR_LESS_THAN);
+    ret = pCompareStringOrdinal(coop2, -1, coop1, -1, FALSE);
+    ok(ret == CSTR_GREATER_THAN, "Got %u, expected %u\n", ret, CSTR_GREATER_THAN);
+    ret = pCompareStringOrdinal(nonascii1, -1, nonascii2, -1, FALSE);
+    ok(ret == CSTR_LESS_THAN, "Got %u, expected %u\n", ret, CSTR_LESS_THAN);
+    ret = pCompareStringOrdinal(nonascii1, -1, nonascii2, -1, TRUE);
+    ok(ret == CSTR_LESS_THAN, "Got %u, expected %u\n", ret, CSTR_LESS_THAN);
+}
+
 START_TEST(locale)
 {
   InitFunctionPointers();
-
 
   test_EnumTimeFormatsA();
   test_EnumDateFormatsA();
@@ -3512,6 +3585,7 @@ START_TEST(locale)
   test_IdnToAscii();
   test_IdnToUnicode();
   test_IsValidLocaleName();
+  test_CompareStringOrdinal();
   /* this requires collation table patch to make it MS compatible */
   if (0) test_sorting();
 }
