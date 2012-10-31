@@ -1426,7 +1426,7 @@ static HRESULT Global_FormatDateTime(vbdisp_t *This, VARIANT *arg, unsigned args
 
 static HRESULT Global_WeekdayName(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    int weekday, first_day = 0, abbrev = 0;
+    int weekday, first_day = 1, abbrev = 0;
     BSTR ret;
     HRESULT hres;
 
