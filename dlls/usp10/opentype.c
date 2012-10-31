@@ -933,7 +933,8 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
                 continue;
             TRACE("Matched Backtrack\n");
 
-            ccsf3_2 = (const GSUB_ChainContextSubstFormat3_2 *)(((LPBYTE)ccsf1)+sizeof(GSUB_ChainContextSubstFormat3_1) + (sizeof(WORD) * (GET_BE_WORD(ccsf3_1->BacktrackGlyphCount)-1)));
+            ccsf3_2 = (const GSUB_ChainContextSubstFormat3_2 *)((BYTE *)ccsf1 +
+                    FIELD_OFFSET(GSUB_ChainContextSubstFormat3_1, Coverage[GET_BE_WORD(ccsf3_1->BacktrackGlyphCount)]));
 
             indexGlyphs = GET_BE_WORD(ccsf3_2->InputGlyphCount);
             for (k = 0; k < indexGlyphs; k++)
@@ -946,7 +947,8 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
                 continue;
             TRACE("Matched IndexGlyphs\n");
 
-            ccsf3_3 = (const GSUB_ChainContextSubstFormat3_3 *)(((LPBYTE)ccsf3_2)+sizeof(GSUB_ChainContextSubstFormat3_2) + (sizeof(WORD) * (GET_BE_WORD(ccsf3_2->InputGlyphCount)-1)));
+            ccsf3_3 = (const GSUB_ChainContextSubstFormat3_3 *)((BYTE *)ccsf3_2 +
+                    FIELD_OFFSET(GSUB_ChainContextSubstFormat3_2, Coverage[GET_BE_WORD(ccsf3_2->InputGlyphCount)]));
 
             for (k = 0; k < GET_BE_WORD(ccsf3_3->LookaheadGlyphCount); k++)
             {
@@ -958,7 +960,8 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
                 continue;
             TRACE("Matched LookAhead\n");
 
-            ccsf3_4 = (const GSUB_ChainContextSubstFormat3_4 *)(((LPBYTE)ccsf3_3)+sizeof(GSUB_ChainContextSubstFormat3_3) + (sizeof(WORD) * (GET_BE_WORD(ccsf3_3->LookaheadGlyphCount)-1)));
+            ccsf3_4 = (const GSUB_ChainContextSubstFormat3_4 *)((BYTE *)ccsf3_3 +
+                    FIELD_OFFSET(GSUB_ChainContextSubstFormat3_3, Coverage[GET_BE_WORD(ccsf3_3->LookaheadGlyphCount)]));
 
             if (GET_BE_WORD(ccsf3_4->SubstCount))
             {
@@ -1421,7 +1424,8 @@ static INT GPOS_apply_ChainContextPos(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lpl
                 continue;
             TRACE("Matched Backtrack\n");
 
-            ccpf3_2 = (const GPOS_ChainContextPosFormat3_2*)(((LPBYTE)ccpf3)+sizeof(GPOS_ChainContextPosFormat3_1) + (sizeof(WORD) * (GET_BE_WORD(ccpf3->BacktrackGlyphCount)-1)));
+            ccpf3_2 = (const GPOS_ChainContextPosFormat3_2*)((BYTE *)ccpf3 +
+                    FIELD_OFFSET(GPOS_ChainContextPosFormat3_1, Coverage[GET_BE_WORD(ccpf3->BacktrackGlyphCount)]));
 
             indexGlyphs = GET_BE_WORD(ccpf3_2->InputGlyphCount);
             for (k = 0; k < indexGlyphs; k++)
@@ -1434,7 +1438,8 @@ static INT GPOS_apply_ChainContextPos(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lpl
                 continue;
             TRACE("Matched IndexGlyphs\n");
 
-            ccpf3_3 = (const GPOS_ChainContextPosFormat3_3*)(((LPBYTE)ccpf3_2)+sizeof(GPOS_ChainContextPosFormat3_2) + (sizeof(WORD) * (GET_BE_WORD(ccpf3_2->InputGlyphCount)-1)));
+            ccpf3_3 = (const GPOS_ChainContextPosFormat3_3*)((BYTE *)ccpf3_2 +
+                    FIELD_OFFSET(GPOS_ChainContextPosFormat3_2, Coverage[GET_BE_WORD(ccpf3_2->InputGlyphCount)]));
 
             for (k = 0; k < GET_BE_WORD(ccpf3_3->LookaheadGlyphCount); k++)
             {
@@ -1446,7 +1451,8 @@ static INT GPOS_apply_ChainContextPos(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lpl
                 continue;
             TRACE("Matched LookAhead\n");
 
-            ccpf3_4 = (const GPOS_ChainContextPosFormat3_4*)(((LPBYTE)ccpf3_3)+sizeof(GPOS_ChainContextPosFormat3_3) + (sizeof(WORD) * (GET_BE_WORD(ccpf3_3->LookaheadGlyphCount)-1)));
+            ccpf3_4 = (const GPOS_ChainContextPosFormat3_4*)((BYTE *)ccpf3_3 +
+                    FIELD_OFFSET(GPOS_ChainContextPosFormat3_3, Coverage[GET_BE_WORD(ccpf3_3->LookaheadGlyphCount)]));
 
             if (GET_BE_WORD(ccpf3_4->PosCount))
             {
