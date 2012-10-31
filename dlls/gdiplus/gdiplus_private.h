@@ -58,6 +58,7 @@ extern GpStatus METAFILE_GetGraphicsContext(GpMetafile* metafile, GpGraphics **r
 extern GpStatus METAFILE_GetDC(GpMetafile* metafile, HDC *hdc) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_ReleaseDC(GpMetafile* metafile, HDC hdc) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile) DECLSPEC_HIDDEN;
+extern MetafileType METAFILE_GetEmfType(HENHMETAFILE hemf) DECLSPEC_HIDDEN;
 
 extern void calc_curve_bezier(CONST GpPointF *pts, REAL tension, REAL *x1,
     REAL *y1, REAL *x2, REAL *y2) DECLSPEC_HIDDEN;
@@ -280,6 +281,7 @@ struct GpMetafile{
     GpUnit unit;
     MetafileType metafile_type;
     HENHMETAFILE hemf;
+    int preserve_hemf; /* if true, hemf belongs to the app and should not be deleted */
 
     /* recording */
     HDC record_dc;

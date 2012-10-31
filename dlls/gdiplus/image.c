@@ -2189,7 +2189,8 @@ static GpStatus free_image_data(GpImage *image)
         GpMetafile *metafile = (GpMetafile*)image;
         GdipFree(metafile->comment_data);
         DeleteEnhMetaFile(CloseEnhMetaFile(metafile->record_dc));
-        DeleteEnhMetaFile(metafile->hemf);
+        if (!metafile->preserve_hemf)
+            DeleteEnhMetaFile(metafile->hemf);
         if (metafile->record_graphics)
         {
             WARN("metafile closed while recording\n");
