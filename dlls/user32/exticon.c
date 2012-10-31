@@ -216,9 +216,6 @@ static BYTE * ICO_LoadIcon( LPBYTE peimage, LPicoICONDIRENTRY lpiIDE, ULONG *uSi
  *
  * Reads .ico file and build phony ICONDIR struct
  */
-#define HEADER_SIZE		(sizeof(CURSORICONDIR) - sizeof (CURSORICONDIRENTRY))
-#define HEADER_SIZE_FILE	(sizeof(icoICONDIR) - sizeof (icoICONDIRENTRY))
-
 static BYTE * ICO_GetIconDirectory( LPBYTE peimage, LPicoICONDIR* lplpiID, ULONG *uSize )
 {
 	CURSORICONDIR	* lpcid;	/* icon resource in resource-dir format */
@@ -233,7 +230,7 @@ static BYTE * ICO_GetIconDirectory( LPBYTE peimage, LPicoICONDIR* lplpiID, ULONG
 	  return 0;
 
 	/* allocate the phony ICONDIR structure */
-	*uSize = lpcid->idCount * sizeof(CURSORICONDIRENTRY) + HEADER_SIZE;
+        *uSize = FIELD_OFFSET(CURSORICONDIR, idEntries[lpcid->idCount]);
 	if( (lpID = HeapAlloc(GetProcessHeap(),0, *uSize) ))
 	{
 	  /* copy the header */
