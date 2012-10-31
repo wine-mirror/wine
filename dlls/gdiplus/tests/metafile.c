@@ -431,7 +431,7 @@ static void test_getdc(void)
 
     stat = GdipDrawImagePointsRect(graphics, (GpImage*)metafile, dst_points, 3,
         0.0, 0.0, 100.0, 100.0, UnitPixel, NULL, NULL, NULL);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipBitmapGetPixel(bitmap, 15, 15, &color);
     expect(Ok, stat);
@@ -439,7 +439,7 @@ static void test_getdc(void)
 
     stat = GdipBitmapGetPixel(bitmap, 50, 50, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff0000ff, color);
+    expect(0xff0000ff, color);
 
     stat = GdipDeleteGraphics(graphics);
     expect(Ok, stat);
@@ -550,7 +550,7 @@ static void test_emfonly(void)
 
     stat = GdipDrawImagePointsRect(graphics, (GpImage*)metafile, dst_points, 3,
         0.0, 0.0, 100.0, 100.0, UnitPixel, NULL, NULL, NULL);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipBitmapGetPixel(bitmap, 15, 15, &color);
     expect(Ok, stat);
@@ -558,7 +558,7 @@ static void test_emfonly(void)
 
     stat = GdipBitmapGetPixel(bitmap, 50, 50, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff0000ff, color);
+    expect(0xff0000ff, color);
 
     stat = GdipDeleteGraphics(graphics);
     expect(Ok, stat);

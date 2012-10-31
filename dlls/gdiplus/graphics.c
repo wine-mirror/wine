@@ -3085,6 +3085,13 @@ GpStatus WINGDIPAPI GdipDrawImagePointsI(GpGraphics *graphics, GpImage *image,
     return GdipDrawImagePoints(graphics, image, ptf, count);
 }
 
+static BOOL CALLBACK play_metafile_proc(EmfPlusRecordType record_type, unsigned int flags,
+    unsigned int dataSize, const unsigned char *pStr, void *userdata)
+{
+    GdipPlayMetafileRecord(userdata, record_type, flags, dataSize, pStr);
+    return TRUE;
+}
+
 GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image,
      GDIPCONST GpPointF *points, INT count, REAL srcx, REAL srcy, REAL srcwidth,
      REAL srcheight, GpUnit srcUnit, GDIPCONST GpImageAttributes* imageAttributes,
@@ -3379,10 +3386,22 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 DeleteObject(hbitmap);
         }
     }
+    else if (image->type == ImageTypeMetafile && ((GpMetafile*)image)->hemf)
+    {
+        GpRectF rc;
+
+        rc.X = srcx;
+        rc.Y = srcy;
+        rc.Width = srcwidth;
+        rc.Height = srcheight;
+
+        return GdipEnumerateMetafileSrcRectDestPoints(graphics, (GpMetafile*)image,
+            points, count, &rc, srcUnit, play_metafile_proc, image, imageAttributes);
+    }
     else
     {
-        ERR("GpImage with no IPicture or HBITMAP?!\n");
-        return NotImplemented;
+        WARN("GpImage with nothing we can draw (metafile in wrong state?)\n");
+        return InvalidParameter;
     }
 
     return Ok;
