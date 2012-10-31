@@ -2081,6 +2081,18 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
         unsigned* out_ptr;
         DWORD* in_ptr = This->pFaceData;
         int i, j;
+        D3DRMVERTEX* vertices;
+
+        vertices = HeapAlloc(GetProcessHeap(), 0, This->nb_vertices * sizeof(D3DRMVERTEX));
+        if (!vertices)
+        {
+            IDirect3DRMMesh_Release(*mesh);
+            return E_OUTOFMEMORY;
+        }
+        for (i = 0; i < This->nb_vertices; i++)
+            vertices[i].position = This->pVertices[i];
+        hr = IDirect3DRMMesh_SetVertices(*mesh, 0, 0, This->nb_vertices, vertices);
+        HeapFree(GetProcessHeap(), 0, vertices);
 
         face_data = HeapAlloc(GetProcessHeap(), 0, This->face_data_size * sizeof(DWORD));
         if (!face_data)
@@ -2121,25 +2133,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
 
         hr = IDirect3DRMMesh_AddGroup(*mesh, This->nb_vertices, This->nb_faces, vertex_per_face, face_data, &group);
         HeapFree(GetProcessHeap(), 0, face_data);
-        if (SUCCEEDED(hr))
-        {
-            D3DRMVERTEX* vertices;
 
-            vertices = HeapAlloc(GetProcessHeap(), 0, This->nb_vertices * sizeof(D3DRMVERTEX));
-            if (vertices)
-            {
-                for (i = 0; i < This->nb_vertices; i++)
-                {
-                    vertices[i].position = This->pVertices[i];
-                }
-                hr = IDirect3DRMMesh_SetVertices(*mesh, 0, 0, This->nb_vertices, vertices);
-                HeapFree(GetProcessHeap(), 0, vertices);
-            }
-            else
-            {
-                hr = E_OUTOFMEMORY;
-            }
-        }
         if (SUCCEEDED(hr))
             hr = IDirect3DRMMesh_SetGroupColor(*mesh, 0, This->color);
         if (SUCCEEDED(hr))
