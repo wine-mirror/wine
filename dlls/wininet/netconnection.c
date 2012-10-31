@@ -124,8 +124,10 @@ MAKE_FUNCPTR(SSL_load_error_strings);
 MAKE_FUNCPTR(SSLv23_method);
 MAKE_FUNCPTR(SSL_CTX_free);
 MAKE_FUNCPTR(SSL_CTX_new);
+MAKE_FUNCPTR(SSL_CTX_ctrl);
 MAKE_FUNCPTR(SSL_new);
 MAKE_FUNCPTR(SSL_free);
+MAKE_FUNCPTR(SSL_ctrl);
 MAKE_FUNCPTR(SSL_set_fd);
 MAKE_FUNCPTR(SSL_connect);
 MAKE_FUNCPTR(SSL_shutdown);
@@ -446,7 +448,50 @@ static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
     return ret;
 }
 
+static long get_tls_option(void) {
+    long tls_option = SSL_OP_NO_SSLv2; /* disable SSLv2 for security reason, secur32/Schannel(GnuTLS) don't support it */
+#ifdef SSL_OP_NO_TLSv1_2
+    DWORD type, val, size;
+    HKEY hkey,tls12_client,tls11_client;
+    LONG res;
+    const WCHAR Schannel_Prot[] = {  /* SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\SCANNEL\\Protocols */
+              'S','Y','S','T','E','M','\\',
+              'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+              'C','o','n','t','r','o','l','\\',
+              'S','e','c','u','r','i','t','y','P','r','o','v','i','d','e','r','s','\\',
+              'S','C','H','A','N','N','E','L','\\',
+              'P','r','o','t','o','c','o','l','s',0 };
+     const WCHAR TLS12_Client[] = {'T','L','S',' ','1','.','2','\\','C','l','i','e','n','t',0};
+     const WCHAR TLS11_Client[] = {'T','L','S',' ','1','.','1','\\','C','l','i','e','n','t',0};
+     const WCHAR DisabledByDefault[] = {'D','i','s','a','b','l','e','d','B','y','D','e','f','a','u','l','t',0};
+
+    res = RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+          Schannel_Prot,
+          0, KEY_READ, &hkey);
+    if (res != ERROR_SUCCESS) { /* enabled TLSv1.1/1.2 when no registry entry */
+        return tls_option;
+    }
+    if (RegOpenKeyExW(hkey, TLS12_Client, 0, KEY_READ, &tls12_client) == ERROR_SUCCESS) {
+        size = sizeof(DWORD);
+        if (RegQueryValueExW(tls12_client, DisabledByDefault, NULL, &type,  (LPBYTE) &val, &size) == ERROR_SUCCESS
+            && type == REG_DWORD) {
+            tls_option |= val?SSL_OP_NO_TLSv1_2:0;
+        }
+        RegCloseKey(tls12_client);
+    }
+    if (RegOpenKeyExW(hkey, TLS11_Client, 0, KEY_READ, &tls11_client) == ERROR_SUCCESS) {
+        size = sizeof(DWORD);
+        if (RegQueryValueExW(tls11_client, DisabledByDefault, NULL, &type,  (LPBYTE) &val, &size) == ERROR_SUCCESS
+            && type == REG_DWORD) {
+            tls_option |= val?SSL_OP_NO_TLSv1_1:0;
+        }
+        RegCloseKey(tls11_client);
+    }
+    RegCloseKey(hkey);
 #endif
+    return tls_option;
+}
+#endif /* SONAME_LIBSSL */
 
 static CRITICAL_SECTION init_ssl_cs;
 static CRITICAL_SECTION_DEBUG init_ssl_cs_debug =
@@ -491,8 +536,10 @@ static DWORD init_openssl(void)
     DYNSSL(SSLv23_method);
     DYNSSL(SSL_CTX_free);
     DYNSSL(SSL_CTX_new);
+    DYNSSL(SSL_CTX_ctrl);
     DYNSSL(SSL_new);
     DYNSSL(SSL_free);
+    DYNSSL(SSL_ctrl);
     DYNSSL(SSL_set_fd);
     DYNSSL(SSL_connect);
     DYNSSL(SSL_shutdown);
@@ -534,12 +581,18 @@ static DWORD init_openssl(void)
     DYNCRYPTO(sk_value);
 #undef DYNCRYPTO
 
+#define pSSL_CTX_set_options(ctx,op) \
+       pSSL_CTX_ctrl((ctx),SSL_CTRL_OPTIONS,(op),NULL)
+#define pSSL_set_options(ssl,op) \
+       pSSL_ctrl((ssl),SSL_CTRL_OPTIONS,(op),NULL)
+
     pSSL_library_init();
     pSSL_load_error_strings();
     pBIO_new_fp(stderr, BIO_NOCLOSE); /* FIXME: should use winedebug stuff */
 
     meth = pSSLv23_method();
     ctx = pSSL_CTX_new(meth);
+    pSSL_CTX_set_options(ctx, get_tls_option());
     if(!pSSL_CTX_set_default_verify_paths(ctx)) {
         ERR("SSL_CTX_set_default_verify_paths failed: %s\n",
             pERR_error_string(pERR_get_error(), 0));
@@ -580,32 +633,9 @@ static DWORD init_openssl(void)
 #endif
 }
 
-DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, BOOL mask_errors, DWORD timeout, netconn_t **ret)
+static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD timeout)
 {
-    netconn_t *netconn;
     int result, flag;
-
-    if(useSSL) {
-        DWORD res;
-
-        TRACE("using SSL connection\n");
-
-        EnterCriticalSection(&init_ssl_cs);
-        res = init_openssl();
-        LeaveCriticalSection(&init_ssl_cs);
-        if(res != ERROR_SUCCESS)
-            return res;
-    }
-
-    netconn = heap_alloc_zero(sizeof(*netconn));
-    if(!netconn)
-        return ERROR_OUTOFMEMORY;
-
-    netconn->useSSL = useSSL;
-    netconn->socketFD = -1;
-    netconn->security_flags = security_flags | server->security_flags;
-    netconn->mask_errors = mask_errors;
-    list_init(&netconn->pool_entry);
 
     assert(server->addr_len);
     result = netconn->socketFD = socket(server->addr.ss_family, SOCK_STREAM, 0);
@@ -656,11 +686,42 @@ DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, BOOL m
         WARN("setsockopt(TCP_NODELAY) failed\n");
 #endif
 
+    return ERROR_SUCCESS;
+}
+
+DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, BOOL mask_errors, DWORD timeout, netconn_t **ret)
+{
+    netconn_t *netconn;
+    int result;
+
+    if(useSSL) {
+        DWORD res;
+
+        TRACE("using SSL connection\n");
+
+        EnterCriticalSection(&init_ssl_cs);
+        res = init_openssl();
+        LeaveCriticalSection(&init_ssl_cs);
+        if(res != ERROR_SUCCESS)
+            return res;
+    }
+
+    netconn = heap_alloc_zero(sizeof(*netconn));
+    if(!netconn)
+        return ERROR_OUTOFMEMORY;
+
+    netconn->useSSL = useSSL;
+    netconn->socketFD = -1;
+    netconn->security_flags = security_flags | server->security_flags;
+    netconn->mask_errors = mask_errors;
+    list_init(&netconn->pool_entry);
+
+    result = create_netconn_socket(server, netconn, timeout);
     server_addref(server);
     netconn->server = server;
 
     *ret = netconn;
-    return ERROR_SUCCESS;
+    return result;
 }
 
 void free_netconn(netconn_t *netconn)
@@ -772,23 +833,12 @@ int sock_get_error( int err )
     return err;
 }
 
-/******************************************************************************
- * NETCON_secure_connect
- * Initiates a secure connection over an existing plaintext connection.
- */
-DWORD NETCON_secure_connect(netconn_t *connection)
-{
-    DWORD res = ERROR_NOT_SUPPORTED;
 #ifdef SONAME_LIBSSL
+static DWORD netcon_secure_connect_setup(netconn_t *connection, long tls_option)
+{
     void *ssl_s;
+    DWORD res;
     int bits;
-
-    /* can't connect if we are already connected */
-    if (connection->ssl_s)
-    {
-        ERR("already connected\n");
-        return ERROR_INTERNET_CANNOT_CONNECT;
-    }
 
     ssl_s = pSSL_new(ctx);
     if (!ssl_s)
@@ -798,6 +848,7 @@ DWORD NETCON_secure_connect(netconn_t *connection)
         return ERROR_OUTOFMEMORY;
     }
 
+    pSSL_set_options(ssl_s, tls_option);
     if (!pSSL_set_fd(ssl_s, connection->socketFD))
     {
         ERR("SSL_set_fd failed: %s\n",
@@ -843,6 +894,43 @@ fail:
         pSSL_shutdown(ssl_s);
         pSSL_free(ssl_s);
     }
+    return res;
+}
+#endif
+
+/******************************************************************************
+ * NETCON_secure_connect
+ * Initiates a secure connection over an existing plaintext connection.
+ */
+DWORD NETCON_secure_connect(netconn_t *connection)
+{
+    DWORD res = ERROR_NOT_SUPPORTED;
+#ifdef SONAME_LIBSSL
+    /* can't connect if we are already connected */
+    if (connection->ssl_s)
+    {
+        ERR("already connected\n");
+        return ERROR_INTERNET_CANNOT_CONNECT;
+    }
+
+    /* connect with given TLS options */
+    res = netcon_secure_connect_setup(connection, get_tls_option());
+    if (res == ERROR_SUCCESS)
+        return res;
+
+#ifdef SSL_OP_NO_TLSv1_2
+    /* FIXME: when got version alert and FIN from server */
+    /* fallback to connect without TLSv1.1/TLSv1.2        */
+    if (res == ERROR_INTERNET_SECURITY_CHANNEL_ERROR)
+    {
+        closesocket(connection->socketFD);
+        pSSL_CTX_set_options(ctx,SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2);
+        res = create_netconn_socket(connection->server, connection, 500);
+        if (res != ERROR_SUCCESS)
+            return res;
+        res = netcon_secure_connect_setup(connection, get_tls_option()|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2);
+    }
+#endif
 #endif
     return res;
 }
