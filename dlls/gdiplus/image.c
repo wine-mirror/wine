@@ -1382,10 +1382,40 @@ GpStatus WINGDIPAPI GdipCloneImage(GpImage *image, GpImage **cloneImage)
 
         return stat;
     }
+    else if (image->type == ImageTypeMetafile && ((GpMetafile*)image)->hemf)
+    {
+        GpMetafile *result, *metafile;
+
+        metafile = (GpMetafile*)image;
+
+        result = GdipAlloc(sizeof(*result));
+        if (!result)
+            return OutOfMemory;
+
+        result->image.type = ImageTypeMetafile;
+        result->image.format = image->format;
+        result->image.flags = image->flags;
+        result->image.frame_count = 1;
+        result->image.xres = image->xres;
+        result->image.yres = image->yres;
+        result->bounds = metafile->bounds;
+        result->unit = metafile->unit;
+        result->metafile_type = metafile->metafile_type;
+        result->hemf = CopyEnhMetaFileW(metafile->hemf, NULL);
+
+        if (!result->hemf)
+        {
+            GdipFree(result);
+            return OutOfMemory;
+        }
+
+        *cloneImage = &result->image;
+        return Ok;
+    }
     else
     {
-        ERR("GpImage with no IPicture or bitmap?!\n");
-        return NotImplemented;
+        WARN("GpImage with no image data (metafile in wrong state?)\n");
+        return InvalidParameter;
     }
 }
 
