@@ -391,17 +391,19 @@ static IDWriteTextAnalysisSourceVtbl analysissourcevtbl = {
 static IDWriteTextAnalysisSource analysissource = { &analysissourcevtbl };
 
 struct sa_test {
-    const WCHAR string[20];
+    const WCHAR string[50];
     int item_count;
     struct script_analysis sa[10];
 };
 
 enum scriptcode {
     Script_Arabic = 0,
+    Script_Armenian = 1,
     Script_C1Controls = 12,
     Script_Coptic = 13,
     Script_Cyrillic = 16,
     Script_Greek = 23,
+    Script_Hebrew = 29,
     Script_Latin  = 38,
     Script_Symbol = 77
 };
@@ -433,6 +435,14 @@ static struct sa_test sa_tests[] = {
       /* Arabic */
       {0x064a,0x064f,0x0633,0x0627,0x0648,0x0650,0x064a,0}, 1,
           { { 0, 7, { Script_Arabic, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Arabic */
+      {0x0627,0x0644,0x0635,0x0651,0x0650,0x062d,0x0629,0x064f,' ',0x062a,0x064e,
+       0x0627,0x062c,0x064c,' ',0x0639,0x064e,0x0644,0x0649,' ',
+       0x0631,0x064f,0x0624,0x0648,0x0633,0x0650,' ',0x0627,0x0644,
+       0x0623,0x0635,0x0650,0x062d,0x0651,0x064e,0x0627,0x0621,0x0650,0x06f0,0x06f5,0}, 1,
+          { { 0, 40, { Script_Arabic, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
     {
       /* Arabic, Latin */
@@ -504,6 +514,23 @@ static struct sa_test sa_tests[] = {
       /* Cyrillic and Cyrillic Supplement */
       {0x400,0x40f,0x410,0x44f,0x450,0x45f,0x460,0x481,0x48a,0x4f0,0x4fa,0x4ff,0x500,0x510,0x520,0}, 1,
           { { 0, 15, { Script_Cyrillic, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Armenian */
+      {0x531,0x540,0x559,0x55f,0x570,0x589,0x58a,0}, 1,
+          { { 0, 7, { Script_Armenian, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Hebrew */
+      {0x5e9,0x5dc,0x5d5,0x5dd,0}, 1,
+          { { 0, 4, { Script_Hebrew, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Hebrew */
+      {'p','a','r','t',' ','o','n','e',' ',0x5d7,0x5dc,0x5e7,' ',0x5e9,0x5ea,0x5d9,0x5d9,0x5dd,' ','p','a','r','t',' ','t','h','r','e','e',0}, 3,
+          { { 0, 9, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } },
+            { 9, 10, { Script_Hebrew, DWRITE_SCRIPT_SHAPES_DEFAULT } },
+            { 19, 10, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
     /* keep this as end marker */
     { {0} }

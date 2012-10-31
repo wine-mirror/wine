@@ -29,10 +29,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
 enum scriptcode {
     Script_Arabic = 0,
+    Script_Armenian = 1,
     Script_C1Controls = 12,
     Script_Coptic = 13,
     Script_Cyrillic = 16,
     Script_Greek = 23,
+    Script_Hebrew = 29,
     Script_Latin  = 38,
     Script_Symbol = 77,
     Script_Unknown = (UINT16)-1
@@ -79,8 +81,12 @@ static const struct script_range script_ranges[] = {
     /* Cyrillic Supplement range is incomplete cause it's based on Unicode 5.2
        that doesn't define some Abkhaz and Azerbaijani letters, we support Unicode 6.0 range here */
     { Script_Cyrillic, 0x400, 0x52f },
+    /* Armenian: U+0530–U+058F */
+    { Script_Armenian, 0x530, 0x58f },
+    /* Hebrew: U+0590–U+05FF */
+    { Script_Hebrew, 0x590, 0x5ff },
     /* Arabic: U+0600–U+06FF */
-    { Script_Arabic, 0x600, 0x6ef },
+    { Script_Arabic, 0x600, 0x6ff },
     /* unsupported range */
     { Script_Unknown }
 };
