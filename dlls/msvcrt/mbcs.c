@@ -174,11 +174,19 @@ unsigned char* CDECL __p__mbctype(void)
 }
 
 /*********************************************************************
- *		___mb_cur_max_func(MSVCRT.@)
+ *		__p___mb_cur_max(MSVCRT.@)
  */
-int* CDECL MSVCRT____mb_cur_max_func(void)
+int* CDECL __p___mb_cur_max(void)
 {
   return &get_locinfo()->mb_cur_max;
+}
+
+/*********************************************************************
+ *		___mb_cur_max_func(MSVCRT.@)
+ */
+int CDECL MSVCRT____mb_cur_max_func(void)
+{
+  return get_locinfo()->mb_cur_max;
 }
 
 /* ___mb_cur_max_l_func - not exported in native msvcrt */

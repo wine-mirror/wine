@@ -221,7 +221,7 @@
 @ cdecl __p___argc()
 @ cdecl __p___argv()
 @ cdecl __p___initenv()
-@ cdecl __p___mb_cur_max() MSVCRT____mb_cur_max_func
+@ cdecl __p___mb_cur_max()
 @ cdecl __p___wargv()
 @ cdecl __p___winitenv()
 @ cdecl __p__acmdln()
