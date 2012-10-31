@@ -141,6 +141,7 @@ extern BOOL     dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT
 extern BOOL     dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                                   INT ellipse_width, INT ellipse_height ) DECLSPEC_HIDDEN;
 extern HBRUSH   dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
+extern HFONT    dibdrv_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags ) DECLSPEC_HIDDEN;
 extern HPEN     dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
 extern COLORREF dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;

@@ -397,14 +397,6 @@ UINT get_font_aa_flags( HDC hdc, const LOGFONTW *lf )
     static int subpixel_enabled = -1;
     enum smoothing smoothing;
 
-    if (GetObjectType( hdc ) == OBJ_MEMDC)
-    {
-        BITMAP bm;
-        GetObjectW( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(bm), &bm );
-        if (bm.bmBitsPixel <= 8) return GGO_BITMAP;
-    }
-    else if (GetDeviceCaps( hdc, BITSPIXEL ) <= 8) return GGO_BITMAP;
-
     if (hinter == -1 || subpixel_enabled == -1)
     {
         RASTERIZER_STATUS status;

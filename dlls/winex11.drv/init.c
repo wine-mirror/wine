@@ -295,6 +295,16 @@ static INT X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
 }
 
 
+/***********************************************************************
+ *           SelectFont
+ */
+static HFONT X11DRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
+{
+    if (default_visual.depth <= 8) *aa_flags = GGO_BITMAP;  /* no anti-aliasing on <= 8bpp */
+    dev = GET_NEXT_PHYSDEV( dev, pSelectFont );
+    return dev->funcs->pSelectFont( dev, hfont, aa_flags );
+}
+
 /**********************************************************************
  *           ExtEscape  (X11DRV.@)
  */
@@ -532,7 +542,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pSelectBitmap */
     X11DRV_SelectBrush,                 /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
-    NULL,                               /* pSelectFont */
+    X11DRV_SelectFont,                  /* pSelectFont */
     NULL,                               /* pSelectPalette */
     X11DRV_SelectPen,                   /* pSelectPen */
     NULL,                               /* pSetArcDirection */

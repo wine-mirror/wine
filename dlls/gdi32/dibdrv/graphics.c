@@ -712,6 +712,19 @@ done:
 }
 
 /***********************************************************************
+ *           dibdrv_SelectFont
+ */
+HFONT dibdrv_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+
+    if (pdev->dib.bit_count <= 8) *aa_flags = GGO_BITMAP;  /* no anti-aliasing on <= 8bpp */
+
+    dev = GET_NEXT_PHYSDEV( dev, pSelectFont );
+    return dev->funcs->pSelectFont( dev, font, aa_flags );
+}
+
+/***********************************************************************
  *           dibdrv_Arc
  */
 BOOL dibdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,

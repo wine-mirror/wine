@@ -290,6 +290,7 @@ HFONT MFDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     LOGFONTW font;
     INT16 index;
 
+    *aa_flags = GGO_BITMAP;  /* no point in anti-aliasing on metafiles */
     index = MFDRV_FindObject(dev, hfont);
     if( index < 0 )
     {

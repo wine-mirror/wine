@@ -314,6 +314,7 @@ HFONT EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, UINT *aa_flags )
     if(!EMFDRV_WriteRecord( dev, &emr.emr ))
         return 0;
 done:
+    *aa_flags = GGO_BITMAP;  /* no point in anti-aliasing on metafiles */
     dev = GET_NEXT_PHYSDEV( dev, pSelectFont );
     dev->funcs->pSelectFont( dev, hFont, aa_flags );
     return hFont;

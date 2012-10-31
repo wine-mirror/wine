@@ -484,7 +484,7 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_SelectBitmap,                /* pSelectBitmap */
     dibdrv_SelectBrush,                 /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
-    NULL,                               /* pSelectFont */
+    dibdrv_SelectFont,                  /* pSelectFont */
     NULL,                               /* pSelectPalette */
     dibdrv_SelectPen,                   /* pSelectPen */
     NULL,                               /* pSetArcDirection */
