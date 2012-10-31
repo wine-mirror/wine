@@ -665,7 +665,7 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     struct clipped_rects clipped_rects;
-    UINT aa_flags;
+    DC *dc;
     RECT bounds;
     DWORD text_color;
     struct intensity_range ranges[17];
@@ -700,10 +700,10 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     text_color = get_pixel_color( pdev, GetTextColor( pdev->dev.hdc ), TRUE );
     get_aa_ranges( pdev->dib.funcs->pixel_to_colorref( &pdev->dib, text_color ), ranges );
 
-    aa_flags = get_font_aa_flags( dev->hdc );
-
-    render_string( dev->hdc, &pdev->dib, x, y, flags, aa_flags, str, count, dx,
+    dc = get_dc_ptr( dev->hdc );
+    render_string( dev->hdc, &pdev->dib, x, y, flags, dc->aa_flags, str, count, dx,
                    text_color, ranges, &clipped_rects, &bounds );
+    release_dc_ptr( dc );
 
 done:
     add_clipped_bounds( pdev, &bounds, pdev->clip );

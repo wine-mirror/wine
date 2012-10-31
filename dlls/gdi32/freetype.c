@@ -4459,6 +4459,8 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     GetObjectW( hfont, sizeof(lf), &lf );
     lf.lfWidth = abs(lf.lfWidth);
 
+    if (!*aa_flags) *aa_flags = get_font_aa_flags( dev->hdc, &lf );
+
     can_use_bitmap = GetDeviceCaps(dev->hdc, TEXTCAPS) & TC_RA_ABLE;
 
     TRACE("%s, h=%d, it=%d, weight=%d, PandF=%02x, charset=%d orient %d escapement %d\n",

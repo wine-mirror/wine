@@ -390,9 +390,8 @@ static UINT get_subpixel_orientation( void )
     return GGO_GRAY4_BITMAP;
 }
 
-UINT get_font_aa_flags( HDC hdc )
+UINT get_font_aa_flags( HDC hdc, const LOGFONTW *lf )
 {
-    LOGFONTW lf;
     WORD gasp_flags;
     static int hinter = -1;
     static int subpixel_enabled = -1;
@@ -406,9 +405,6 @@ UINT get_font_aa_flags( HDC hdc )
     }
     else if (GetDeviceCaps( hdc, BITSPIXEL ) <= 8) return GGO_BITMAP;
 
-    GetObjectW( GetCurrentObject( hdc, OBJ_FONT ), sizeof(lf), &lf );
-    if (lf.lfQuality == NONANTIALIASED_QUALITY) return GGO_BITMAP;
-
     if (hinter == -1 || subpixel_enabled == -1)
     {
         RASTERIZER_STATUS status;
@@ -417,8 +413,10 @@ UINT get_font_aa_flags( HDC hdc )
         subpixel_enabled = status.wFlags & WINE_TT_SUBPIXEL_RENDERING_ENABLED;
     }
 
-    switch (lf.lfQuality)
+    switch (lf->lfQuality)
     {
+    case NONANTIALIASED_QUALITY:
+        return GGO_BITMAP;
     case ANTIALIASED_QUALITY:
         smoothing = aa_smoothing;
         break;
@@ -731,6 +729,7 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
     {
         ret = dc->hFont;
         dc->hFont = handle;
+        dc->aa_flags = aa_flags ? aa_flags : GGO_BITMAP;
         update_font_code_page( dc );
         GDI_dec_ref_count( ret );
     }
@@ -1948,7 +1947,7 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
                          LPCWSTR str, UINT count, const INT *dx )
 {
     DC *dc = get_nulldrv_dc( dev );
-    UINT aa_flags, i;
+    UINT i;
     DWORD err;
     HGDIOBJ orig;
     HPEN pen;
@@ -1970,18 +1969,15 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
 
     if (!count) return TRUE;
 
-    aa_flags = get_font_aa_flags( dev->hdc );
-
-    if (aa_flags != GGO_BITMAP)
+    if (dc->aa_flags != GGO_BITMAP)
     {
         char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
         BITMAPINFO *info = (BITMAPINFO *)buffer;
         struct gdi_image_bits bits;
         struct bitblt_coords src, dst;
         PHYSDEV dst_dev;
-
         /* FIXME Subpixel modes */
-        aa_flags = GGO_GRAY4_BITMAP;
+        UINT aa_flags = GGO_GRAY4_BITMAP;
 
         dst_dev = GET_DC_PHYSDEV( dc, pPutImage );
         src.visrect = get_total_extents( dev->hdc, x, y, flags, aa_flags, str, count, dx );

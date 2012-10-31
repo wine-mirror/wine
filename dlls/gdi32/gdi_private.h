@@ -88,6 +88,7 @@ typedef struct tagDC
     RECT         vis_rect;         /* visible rectangle in screen coords */
     RECT         device_rect;      /* rectangle for the whole device */
     int          pixel_format;     /* pixel format (for memory DCs) */
+    UINT         aa_flags;         /* anti-aliasing flags to pass to GetGlyphOutline for current font */
     FLOAT        miterLimit;
 
     int           flags;
@@ -278,7 +279,7 @@ extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size ) DE
 extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk ) DECLSPEC_HIDDEN;
 
 /* font.c */
-extern UINT get_font_aa_flags( HDC hdc ) DECLSPEC_HIDDEN;
+extern UINT get_font_aa_flags( HDC hdc, const LOGFONTW *lf ) DECLSPEC_HIDDEN;
 
 /* freetype.c */
 
