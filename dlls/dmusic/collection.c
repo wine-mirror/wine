@@ -80,7 +80,7 @@ static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_AddRef(LPD
     IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p/%p)->(): new ref = %u)\n", iface, This, ref);
+    TRACE("(%p/%p)->(): new ref = %u\n", iface, This, ref);
 
     DMUSIC_LockModule();
 
@@ -92,7 +92,7 @@ static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_Release(LP
     IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p/%p)->(): new ref = %u)\n", iface, This, ref);
+    TRACE("(%p/%p)->(): new ref = %u\n", iface, This, ref);
 
     if (!ref)
         HeapFree(GetProcessHeap(), 0, This);

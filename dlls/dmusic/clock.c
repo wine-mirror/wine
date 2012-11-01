@@ -45,30 +45,29 @@ static HRESULT WINAPI IReferenceClockImpl_QueryInterface(IReferenceClock *iface,
 
 static ULONG WINAPI IReferenceClockImpl_AddRef(IReferenceClock *iface)
 {
-	IReferenceClockImpl *This = impl_from_IReferenceClock(iface);
-	ULONG refCount = InterlockedIncrement(&This->ref);
+    IReferenceClockImpl *This = impl_from_IReferenceClock(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
+    TRACE("(%p)->(): new ref = %u\n", This, ref);
 
-	DMUSIC_LockModule();
+    DMUSIC_LockModule();
 
-	return refCount;
+    return ref;
 }
 
 static ULONG WINAPI IReferenceClockImpl_Release(IReferenceClock *iface)
 {
-	IReferenceClockImpl *This = impl_from_IReferenceClock(iface);
-	ULONG refCount = InterlockedDecrement(&This->ref);
+    IReferenceClockImpl *This = impl_from_IReferenceClock(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
+    TRACE("(%p)->(): new ref = %u\n", This, ref);
 
-	if (!refCount) {
-		HeapFree(GetProcessHeap(), 0, This);
-	}
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
 
-	DMUSIC_UnlockModule();
+    DMUSIC_UnlockModule();
 
-	return refCount;
+    return ref;
 }
 
 /* IReferenceClockImpl IReferenceClock part: */
