@@ -1403,6 +1403,7 @@ void WCMD_echo (const WCHAR *args)
                  && origcommand[0]!=';') {
     if (echo_mode) WCMD_output (WCMD_LoadMessage(WCMD_ECHOPROMPT), onW);
     else WCMD_output (WCMD_LoadMessage(WCMD_ECHOPROMPT), offW);
+    HeapFree(GetProcessHeap(), 0, trimmed);
     return;
   }
 
@@ -2930,7 +2931,7 @@ void WCMD_endlocal (void) {
 
   /* delete the current environment, totally */
   env = GetEnvironmentStringsW ();
-  old = WCMD_dupenv (GetEnvironmentStringsW ());
+  old = WCMD_dupenv (env);
   len = 0;
   while (old[len]) {
     n = strlenW(&old[len]) + 1;
