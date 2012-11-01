@@ -1311,6 +1311,74 @@ static void WINAPI tess_callback_end(void)
     funcs->gl.p_glEnd();
 }
 
+typedef struct _bezier_vector {
+    GLdouble x;
+    GLdouble y;
+} bezier_vector;
+
+static double bezier_deviation_squared(const bezier_vector *p)
+{
+    bezier_vector deviation;
+    bezier_vector vertex;
+    bezier_vector base;
+    double base_length;
+    double dot;
+
+    vertex.x = (p[0].x + p[1].x*2 + p[2].x)/4 - p[0].x;
+    vertex.y = (p[0].y + p[1].y*2 + p[2].y)/4 - p[0].y;
+
+    base.x = p[2].x - p[0].x;
+    base.y = p[2].y - p[0].y;
+
+    base_length = sqrt(base.x*base.x + base.y*base.y);
+    base.x /= base_length;
+    base.y /= base_length;
+
+    dot = base.x*vertex.x + base.y*vertex.y;
+    dot = min(max(dot, 0.0), base_length);
+    base.x *= dot;
+    base.y *= dot;
+
+    deviation.x = vertex.x-base.x;
+    deviation.y = vertex.y-base.y;
+
+    return deviation.x*deviation.x + deviation.y*deviation.y;
+}
+
+static int bezier_approximate(const bezier_vector *p, bezier_vector *points, FLOAT deviation)
+{
+    bezier_vector first_curve[3];
+    bezier_vector second_curve[3];
+    bezier_vector vertex;
+    int total_vertices;
+
+    if(bezier_deviation_squared(p) <= deviation*deviation)
+    {
+        if(points)
+            *points = p[2];
+        return 1;
+    }
+
+    vertex.x = (p[0].x + p[1].x*2 + p[2].x)/4;
+    vertex.y = (p[0].y + p[1].y*2 + p[2].y)/4;
+
+    first_curve[0] = p[0];
+    first_curve[1].x = (p[0].x + p[1].x)/2;
+    first_curve[1].y = (p[0].y + p[1].y)/2;
+    first_curve[2] = vertex;
+
+    second_curve[0] = vertex;
+    second_curve[1].x = (p[2].x + p[1].x)/2;
+    second_curve[1].y = (p[2].y + p[1].y)/2;
+    second_curve[2] = p[2];
+
+    total_vertices = bezier_approximate(first_curve, points, deviation);
+    if(points)
+        points += total_vertices;
+    total_vertices += bezier_approximate(second_curve, points, deviation);
+    return total_vertices;
+}
+
 /***********************************************************************
  *		wglUseFontOutlines_common
  */
@@ -1335,6 +1403,9 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
 
     TRACE("(%p, %d, %d, %d, %f, %f, %d, %p, %s)\n", hdc, first, count,
           listBase, deviation, extrusion, format, lpgmf, unicode ? "W" : "A");
+
+    if(deviation <= 0.0)
+        deviation = 1.0/em_size;
 
     if (!load_libglu())
     {
@@ -1364,7 +1435,8 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
         BYTE *buf;
         TTPOLYGONHEADER *pph;
         TTPOLYCURVE *ppc;
-        GLdouble *vertices;
+        GLdouble *vertices = NULL;
+        int vertex_total = -1;
 
         if(unicode)
             needed = GetGlyphOutlineW(hdc, glyph, GGO_NATIVE, &gm, 0, NULL, &identity);
@@ -1375,7 +1447,6 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
             goto error;
 
         buf = HeapAlloc(GetProcessHeap(), 0, needed);
-        vertices = HeapAlloc(GetProcessHeap(), 0, needed / sizeof(POINTFX) * 3 * sizeof(GLdouble));
 
         if(unicode)
             GetGlyphOutlineW(hdc, glyph, GGO_NATIVE, &gm, needed, buf, &identity);
@@ -1398,63 +1469,116 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
             lpgmf++;
         }
 
-	funcs->gl.p_glNewList(listBase++, GL_COMPILE);
+        funcs->gl.p_glNewList(listBase++, GL_COMPILE);
         funcs->gl.p_glFrontFace(GL_CW);
         pgluTessBeginPolygon(tess, NULL);
 
-        pph = (TTPOLYGONHEADER*)buf;
-        while((BYTE*)pph < buf + needed)
+        while(!vertices)
         {
-            TRACE("\tstart %d, %d\n", pph->pfxStart.x.value, pph->pfxStart.y.value);
+            if(vertex_total != -1)
+                vertices = HeapAlloc(GetProcessHeap(), 0, vertex_total * 3 * sizeof(GLdouble));
+            vertex_total = 0;
 
-            pgluTessBeginContour(tess);
-
-            fixed_to_double(pph->pfxStart, em_size, vertices);
-            pgluTessVertex(tess, vertices, vertices);
-            vertices += 3;
-
-            ppc = (TTPOLYCURVE*)((char*)pph + sizeof(*pph));
-            while((char*)ppc < (char*)pph + pph->cb)
+            pph = (TTPOLYGONHEADER*)buf;
+            while((BYTE*)pph < buf + needed)
             {
-                int i;
+                GLdouble previous[3];
+                fixed_to_double(pph->pfxStart, em_size, previous);
 
-                switch(ppc->wType) {
-                case TT_PRIM_LINE:
-                    for(i = 0; i < ppc->cpfx; i++)
-                    {
-                        TRACE("\t\tline to %d, %d\n", ppc->apfx[i].x.value, ppc->apfx[i].y.value);
-                        fixed_to_double(ppc->apfx[i], em_size, vertices); 
-                        pgluTessVertex(tess, vertices, vertices);
-                        vertices += 3;
-                    }
-                    break;
+                if(vertices)
+                    TRACE("\tstart %d, %d\n", pph->pfxStart.x.value, pph->pfxStart.y.value);
 
-                case TT_PRIM_QSPLINE:
-                    for(i = 0; i < ppc->cpfx/2; i++)
-                    {
-                        /* FIXME: just connecting the control points for now */
-                        TRACE("\t\tcurve  %d,%d %d,%d\n",
-                              ppc->apfx[i * 2].x.value,     ppc->apfx[i * 3].y.value,
-                              ppc->apfx[i * 2 + 1].x.value, ppc->apfx[i * 3 + 1].y.value);
-                        fixed_to_double(ppc->apfx[i * 2], em_size, vertices); 
-                        pgluTessVertex(tess, vertices, vertices);
-                        vertices += 3;
-                        fixed_to_double(ppc->apfx[i * 2 + 1], em_size, vertices); 
-                        pgluTessVertex(tess, vertices, vertices);
-                        vertices += 3;
-                    }
-                    break;
-                default:
-                    ERR("\t\tcurve type = %d\n", ppc->wType);
-                    pgluTessEndContour(tess);
-                    goto error_in_list;
+                pgluTessBeginContour(tess);
+
+                if(vertices)
+                {
+                    fixed_to_double(pph->pfxStart, em_size, vertices);
+                    pgluTessVertex(tess, vertices, vertices);
+                    vertices += 3;
                 }
+                vertex_total++;
 
-                ppc = (TTPOLYCURVE*)((char*)ppc + sizeof(*ppc) +
-                                     (ppc->cpfx - 1) * sizeof(POINTFX));
+                ppc = (TTPOLYCURVE*)((char*)pph + sizeof(*pph));
+                while((char*)ppc < (char*)pph + pph->cb)
+                {
+                    int i, j;
+                    int num;
+
+                    switch(ppc->wType) {
+                    case TT_PRIM_LINE:
+                        for(i = 0; i < ppc->cpfx; i++)
+                        {
+                            if(vertices)
+                            {
+                                TRACE("\t\tline to %d, %d\n",
+                                      ppc->apfx[i].x.value, ppc->apfx[i].y.value);
+                                fixed_to_double(ppc->apfx[i], em_size, vertices);
+                                pgluTessVertex(tess, vertices, vertices);
+                                vertices += 3;
+                            }
+                            fixed_to_double(ppc->apfx[i], em_size, previous);
+                            vertex_total++;
+                        }
+                        break;
+
+                    case TT_PRIM_QSPLINE:
+                        for(i = 0; i < ppc->cpfx-1; i++)
+                        {
+                            bezier_vector curve[3];
+                            bezier_vector *points;
+                            GLdouble curve_vertex[3];
+
+                            if(vertices)
+                                TRACE("\t\tcurve  %d,%d %d,%d\n",
+                                      ppc->apfx[i].x.value,     ppc->apfx[i].y.value,
+                                      ppc->apfx[i + 1].x.value, ppc->apfx[i + 1].y.value);
+
+                            curve[0].x = previous[0];
+                            curve[0].y = previous[1];
+                            fixed_to_double(ppc->apfx[i], em_size, curve_vertex);
+                            curve[1].x = curve_vertex[0];
+                            curve[1].y = curve_vertex[1];
+                            fixed_to_double(ppc->apfx[i + 1], em_size, curve_vertex);
+                            curve[2].x = curve_vertex[0];
+                            curve[2].y = curve_vertex[1];
+                            if(i < ppc->cpfx-2)
+                            {
+                                curve[2].x = (curve[1].x + curve[2].x)/2;
+                                curve[2].y = (curve[1].y + curve[2].y)/2;
+                            }
+                            num = bezier_approximate(curve, NULL, deviation);
+                            points = HeapAlloc(GetProcessHeap(), 0, num*sizeof(bezier_vector));
+                            num = bezier_approximate(curve, points, deviation);
+                            vertex_total += num;
+                            if(vertices)
+                            {
+                                for(j=0; j<num; j++)
+                                {
+                                    TRACE("\t\t\tvertex at %f,%f\n", points[j].x, points[j].y);
+                                    vertices[0] = points[j].x;
+                                    vertices[1] = points[j].y;
+                                    vertices[2] = 0.0;
+                                    pgluTessVertex(tess, vertices, vertices);
+                                    vertices += 3;
+                                }
+                            }
+                            HeapFree(GetProcessHeap(), 0, points);
+                            previous[0] = curve[2].x;
+                            previous[1] = curve[2].y;
+                        }
+                        break;
+                    default:
+                        ERR("\t\tcurve type = %d\n", ppc->wType);
+                        pgluTessEndContour(tess);
+                        goto error_in_list;
+                    }
+
+                    ppc = (TTPOLYCURVE*)((char*)ppc + sizeof(*ppc) +
+                                         (ppc->cpfx - 1) * sizeof(POINTFX));
+                }
+                pgluTessEndContour(tess);
+                pph = (TTPOLYGONHEADER*)((char*)pph + pph->cb);
             }
-            pgluTessEndContour(tess);
-            pph = (TTPOLYGONHEADER*)((char*)pph + pph->cb);
         }
 
 error_in_list:
