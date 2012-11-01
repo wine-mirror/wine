@@ -2024,10 +2024,8 @@ BOOL WINAPI WinHttpGetProxyForUrl( HINTERNET hsession, LPCWSTR url, WINHTTP_AUTO
     }
     if (options->dwFlags & WINHTTP_AUTOPROXY_AUTO_DETECT &&
         !WinHttpDetectAutoProxyConfigUrl( options->dwAutoDetectFlags, &detected_pac_url ))
-    {
-        set_last_error( ERROR_WINHTTP_AUTO_PROXY_SERVICE_ERROR );
         goto done;
-    }
+
     if (options->dwFlags & WINHTTP_AUTOPROXY_CONFIG_URL) pac_url = options->lpszAutoConfigUrl;
     else pac_url = detected_pac_url;
 

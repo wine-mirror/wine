@@ -2620,6 +2620,7 @@ static void test_WinHttpGetIEProxyConfigForCurrentUser(void)
 static void test_WinHttpGetProxyForUrl(void)
 {
     static const WCHAR urlW[] = {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',0};
+    static const WCHAR wpadW[] = {'h','t','t','p',':','/','/','w','p','a','d','/','w','p','a','d','.','d','a','t',0};
     static const WCHAR emptyW[] = {0};
     BOOL ret;
     DWORD error;
@@ -2693,8 +2694,29 @@ static void test_WinHttpGetProxyForUrl(void)
     options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DNS_A;
 
     memset( &info, 0, sizeof(info) );
+    SetLastError(0xdeadbeef);
     ret = WinHttpGetProxyForUrl( session, urlW, &options, &info );
-    if (ret)
+    error = GetLastError();
+    if (!ret) ok( error == ERROR_WINHTTP_AUTODETECTION_FAILED, "got %u\n", error );
+    else
+    {
+        trace("%u\n", info.dwAccessType);
+        trace("%s\n", wine_dbgstr_w(info.lpszProxy));
+        trace("%s\n", wine_dbgstr_w(info.lpszProxyBypass));
+        GlobalFree( info.lpszProxy );
+        GlobalFree( info.lpszProxyBypass );
+    }
+
+    options.dwFlags = WINHTTP_AUTOPROXY_CONFIG_URL;
+    options.dwAutoDetectFlags = 0;
+    options.lpszAutoConfigUrl = wpadW;
+
+    memset( &info, 0, sizeof(info) );
+    SetLastError(0xdeadbeef);
+    ret = WinHttpGetProxyForUrl( session, urlW, &options, &info );
+    error = GetLastError();
+    if (!ret) ok( error == ERROR_WINHTTP_UNABLE_TO_DOWNLOAD_SCRIPT, "got %u\n", error );
+    else
     {
         trace("%u\n", info.dwAccessType);
         trace("%s\n", wine_dbgstr_w(info.lpszProxy));
