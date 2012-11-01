@@ -191,7 +191,7 @@ static FT_Error (*pFT_Library_SetLcdFilter)(FT_Library, FT_LcdFilter);
 
 #ifdef SONAME_LIBFONTCONFIG
 #include <fontconfig/fontconfig.h>
-MAKE_FUNCPTR(FcConfigGetCurrent);
+MAKE_FUNCPTR(FcConfigSubstitute);
 MAKE_FUNCPTR(FcFontList);
 MAKE_FUNCPTR(FcFontSetDestroy);
 MAKE_FUNCPTR(FcInit);
@@ -201,7 +201,9 @@ MAKE_FUNCPTR(FcObjectSetDestroy);
 MAKE_FUNCPTR(FcPatternCreate);
 MAKE_FUNCPTR(FcPatternDestroy);
 MAKE_FUNCPTR(FcPatternGetBool);
+MAKE_FUNCPTR(FcPatternGetInteger);
 MAKE_FUNCPTR(FcPatternGetString);
+MAKE_FUNCPTR(FcPatternPrint);
 #endif
 
 #undef MAKE_FUNCPTR
@@ -271,6 +273,7 @@ typedef struct tagFace {
     BOOL vertical;
     Bitmap_Size size;     /* set if face is a bitmap */
     BOOL external; /* TRUE if we should manually add this font to the registry */
+    DWORD aa_flags;
     struct tagFamily *family;
     /* Cached data for Enum */
     struct enum_data *cached_enum_data;
@@ -493,6 +496,7 @@ static const WCHAR face_width_value[] = {'W','i','d','t','h',0};
 static const WCHAR face_size_value[] = {'S','i','z','e',0};
 static const WCHAR face_x_ppem_value[] = {'X','p','p','e','m',0};
 static const WCHAR face_y_ppem_value[] = {'Y','p','p','e','m',0};
+static const WCHAR face_aa_value[] = {'A','n','t','i','a','l','i','a','s','i','n','g',0};
 static const WCHAR face_internal_leading_value[] = {'I','n','t','e','r','n','a','l',' ','L','e','a','d','i','n','g',0};
 static const WCHAR face_font_sig_value[] = {'F','o','n','t',' ','S','i','g','n','a','t','u','r','e',0};
 static const WCHAR face_file_name_value[] = {'F','i','l','e',' ','N','a','m','e','\0'};
@@ -1333,6 +1337,7 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family, void *bu
         reg_load_dword(hkey_face, face_ntmflags_value, &face->ntmFlags);
         reg_load_dword(hkey_face, face_version_value, (DWORD*)&face->font_version);
         reg_load_dword(hkey_face, face_vertical_value, (DWORD*)&face->vertical);
+        reg_load_dword(hkey_face, face_aa_value, (DWORD*)&face->aa_flags);
 
         needed = sizeof(face->fs);
         RegQueryValueExW(hkey_face, face_font_sig_value, NULL, NULL, (BYTE*)&face->fs, &needed);
@@ -1487,7 +1492,8 @@ static void add_face_to_cache(Face *face)
     reg_save_dword(hkey_face, face_index_value, face->face_index);
     reg_save_dword(hkey_face, face_ntmflags_value, face->ntmFlags);
     reg_save_dword(hkey_face, face_version_value, face->font_version);
-    reg_save_dword(hkey_face, face_vertical_value, face->vertical);
+    if (face->vertical) reg_save_dword(hkey_face, face_vertical_value, face->vertical);
+    if (face->aa_flags) reg_save_dword(hkey_face, face_aa_value, face->aa_flags);
 
     RegSetValueExW(hkey_face, face_font_sig_value, 0, REG_BINARY, (BYTE*)&face->fs, sizeof(face->fs));
 
@@ -1679,9 +1685,10 @@ static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
 #define ADDFONT_ADD_TO_CACHE  0x04
+#define ADDFONT_AA_FLAGS(flags) ((flags) << 16)
 
 static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file, void *font_data_ptr, DWORD font_data_size,
-                          DWORD flags, BOOL vertical )
+                          DWORD flags, BOOL vertical, DWORD aa_flags )
 {
     Face *face = HeapAlloc( GetProcessHeap(), 0, sizeof(*face) );
     My_FT_Bitmap_Size *size = (My_FT_Bitmap_Size *)ft_face->available_sizes;
@@ -1739,6 +1746,7 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
 
     face->vertical = vertical;
     face->external = (flags & ADDFONT_EXTERNAL_FONT) != 0;
+    face->aa_flags = aa_flags;
     face->family = NULL;
     face->cached_enum_data = NULL;
 
@@ -1751,12 +1759,12 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
 }
 
 static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr, DWORD font_data_size,
-                          FT_Long face_index, DWORD flags, BOOL vertical)
+                          FT_Long face_index, DWORD flags, BOOL vertical, DWORD aa_flags )
 {
     Face *face;
     Family *family;
 
-    face = create_face( ft_face, face_index, file, font_data_ptr, font_data_size, flags, vertical );
+    face = create_face( ft_face, face_index, file, font_data_ptr, font_data_size, flags, vertical, aa_flags );
     family = get_family( ft_face, vertical );
     if (!insert_face_in_family_list( face, family ))
     {
@@ -1852,6 +1860,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
     FT_Face ft_face;
     FT_Long face_index = 0, num_faces;
     INT ret = 0;
+    DWORD aa_flags = HIWORD( flags );
 
     /* we always load external fonts from files - otherwise we would get a crash in update_reg_entries */
     assert(file || !(flags & ADDFONT_EXTERNAL_FONT));
@@ -1888,12 +1897,12 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             return 0;
         }
 
-        AddFaceToList(ft_face, file, font_data_ptr, font_data_size, face_index, flags, FALSE);
+        AddFaceToList(ft_face, file, font_data_ptr, font_data_size, face_index, flags, FALSE, aa_flags);
         ++ret;
 
         if (FT_HAS_VERTICAL(ft_face))
         {
-            AddFaceToList(ft_face, file, font_data_ptr, font_data_size, face_index, flags, TRUE);
+            AddFaceToList(ft_face, file, font_data_ptr, font_data_size, face_index, flags, TRUE, aa_flags);
             ++ret;
         }
 
@@ -2329,7 +2338,6 @@ static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
 static void load_fontconfig_fonts(void)
 {
     void *fc_handle = NULL;
-    FcConfig *config;
     FcPattern *pat;
     FcObjectSet *os;
     FcFontSet *fontset;
@@ -2344,7 +2352,7 @@ static void load_fontconfig_fonts(void)
 	return;
     }
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(fc_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
-LOAD_FUNCPTR(FcConfigGetCurrent);
+LOAD_FUNCPTR(FcConfigSubstitute);
 LOAD_FUNCPTR(FcFontList);
 LOAD_FUNCPTR(FcFontSetDestroy);
 LOAD_FUNCPTR(FcInit);
@@ -2354,24 +2362,32 @@ LOAD_FUNCPTR(FcObjectSetDestroy);
 LOAD_FUNCPTR(FcPatternCreate);
 LOAD_FUNCPTR(FcPatternDestroy);
 LOAD_FUNCPTR(FcPatternGetBool);
+LOAD_FUNCPTR(FcPatternGetInteger);
 LOAD_FUNCPTR(FcPatternGetString);
+LOAD_FUNCPTR(FcPatternPrint);
 #undef LOAD_FUNCPTR
 
     if(!pFcInit()) return;
-    
-    config = pFcConfigGetCurrent();
+
     pat = pFcPatternCreate();
     os = pFcObjectSetCreate();
     pFcObjectSetAdd(os, FC_FILE);
     pFcObjectSetAdd(os, FC_SCALABLE);
-    fontset = pFcFontList(config, pat, os);
+    pFcObjectSetAdd(os, FC_ANTIALIAS);
+    pFcObjectSetAdd(os, FC_RGBA);
+    fontset = pFcFontList(NULL, pat, os);
     if(!fontset) return;
     for(i = 0; i < fontset->nfont; i++) {
         FcBool scalable;
+        FcBool antialias;
+        int rgba;
+        DWORD aa_flags = 0;
 
         if(pFcPatternGetString(fontset->fonts[i], FC_FILE, 0, (FcChar8**)&file) != FcResultMatch)
             continue;
         TRACE("fontconfig: %s\n", file);
+
+        pFcConfigSubstitute( NULL, fontset->fonts[i], FcMatchFont );
 
         /* We're just interested in OT/TT fonts for now, so this hack just
            picks up the scalable fonts without extensions .pf[ab] to save time
@@ -2383,11 +2399,27 @@ LOAD_FUNCPTR(FcPatternGetString);
             continue;
         }
 
+        if (pFcPatternGetBool( fontset->fonts[i], FC_ANTIALIAS, 0, &antialias ) == FcResultMatch)
+            aa_flags = antialias ? GGO_GRAY4_BITMAP : GGO_BITMAP;
+
+        if (pFcPatternGetInteger( fontset->fonts[i], FC_RGBA, 0, &rgba ) == FcResultMatch)
+        {
+            switch (rgba)
+            {
+            case FC_RGBA_RGB:  aa_flags = WINE_GGO_HRGB_BITMAP; break;
+            case FC_RGBA_BGR:  aa_flags = WINE_GGO_HBGR_BITMAP; break;
+            case FC_RGBA_VRGB: aa_flags = WINE_GGO_VRGB_BITMAP; break;
+            case FC_RGBA_VBGR: aa_flags = WINE_GGO_VBGR_BITMAP; break;
+            case FC_RGBA_NONE: aa_flags = GGO_GRAY4_BITMAP; break;
+            }
+        }
+
         len = strlen( file );
         if(len < 4) continue;
         ext = &file[ len - 3 ];
         if(strcasecmp(ext, "pfa") && strcasecmp(ext, "pfb"))
-            AddFontToList(file, NULL, 0, ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE);
+            AddFontToList(file, NULL, 0,
+                          ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE | ADDFONT_AA_FLAGS(aa_flags) );
     }
     pFcFontSetDestroy(fontset);
     pFcObjectSetDestroy(os);
@@ -2907,7 +2939,7 @@ static BOOL get_fontdir( const char *unix_name, struct fontdir *fd )
     DWORD type;
 
     if (!ft_face) return FALSE;
-    face = create_face( ft_face, 0, unix_name, NULL, 0, 0, FALSE );
+    face = create_face( ft_face, 0, unix_name, NULL, 0, 0, FALSE, 0 );
     get_family_names( ft_face, &name, &english_name, FALSE );
     family = create_family( name, english_name );
     insert_face_in_family_list( face, family );
