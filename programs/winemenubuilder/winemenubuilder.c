@@ -199,7 +199,6 @@ static WCHAR* assoc_query(ASSOCSTR assocStr, LPCWSTR name, LPCWSTR extra);
 static HRESULT open_icon(LPCWSTR filename, int index, BOOL bWait, IStream **ppStream);
 
 /* Utility routines */
-#ifndef __APPLE__
 static unsigned short crc16(const char* string)
 {
     unsigned short crc = 0;
@@ -218,7 +217,6 @@ static unsigned short crc16(const char* string)
     }
     return crc;
 }
-#endif
 
 static char *strdupA( const char *str )
 {
@@ -1069,6 +1067,35 @@ static HRESULT open_icon(LPCWSTR filename, int index, BOOL bWait, IStream **ppSt
     return hr;
 }
 
+static char* compute_native_identifier(int exeIndex, LPCWSTR icoPathW)
+{
+    char* nativeIdentifier;
+    char *icoPathA;
+    unsigned short crc;
+    char *basename, *ext;
+
+    icoPathA = wchars_to_utf8_chars(icoPathW);
+    if (icoPathA == NULL)
+        return NULL;
+
+    crc = crc16(icoPathA);
+    basename = strrchr(icoPathA, '\\');
+    if (basename == NULL)
+        basename = icoPathA;
+    else
+    {
+        *basename = 0;
+        basename++;
+    }
+    ext = strrchr(basename, '.');
+    if (ext)
+        *ext = 0;
+
+    nativeIdentifier = heap_printf("%04X_%s.%d", crc, basename, exeIndex);
+    HeapFree(GetProcessHeap(), 0, icoPathA);
+    return nativeIdentifier;
+}
+
 #ifdef __APPLE__
 #define ICNS_SLOTS 6
 
@@ -1102,9 +1129,6 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
     } best[ICNS_SLOTS];
     int indexes[ICNS_SLOTS];
     int i;
-    GUID guid;
-    WCHAR *guidStrW = NULL;
-    char *guidStrA = NULL;
     char *icnsPath = NULL;
     LARGE_INTEGER zero;
     HRESULT hr;
@@ -1165,26 +1189,16 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
         }
     }
 
-    hr = CoCreateGuid(&guid);
-    if (FAILED(hr))
-    {
-        WINE_WARN("CoCreateGuid failed, error 0x%08X\n", hr);
-        goto end;
-    }
-    hr = StringFromCLSID(&guid, &guidStrW);
-    if (FAILED(hr))
-    {
-        WINE_WARN("StringFromCLSID failed, error 0x%08X\n", hr);
-        goto end;
-    }
-    guidStrA = wchars_to_utf8_chars(guidStrW);
-    if (guidStrA == NULL)
+    if (destFilename)
+        *nativeIdentifier = heap_printf("%s", destFilename);
+    else
+        *nativeIdentifier = compute_native_identifier(exeIndex, icoPathW);
+    if (*nativeIdentifier == NULL)
     {
         hr = E_OUTOFMEMORY;
-        WINE_WARN("out of memory converting GUID string\n");
         goto end;
     }
-    icnsPath = heap_printf("/tmp/%s.icns", guidStrA);
+    icnsPath = heap_printf("/tmp/%s.icns", *nativeIdentifier);
     if (icnsPath == NULL)
     {
         hr = E_OUTOFMEMORY;
@@ -1209,8 +1223,6 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
 
 end:
     HeapFree(GetProcessHeap(), 0, iconDirEntries);
-    CoTaskMemFree(guidStrW);
-    HeapFree(GetProcessHeap(), 0, guidStrA);
     if (SUCCEEDED(hr))
         *nativeIdentifier = icnsPath;
     else
@@ -1244,10 +1256,7 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
     ICONDIRENTRY *iconDirEntries = NULL;
     int numEntries;
     int i;
-    char *icoPathA = NULL;
     char *iconsDir = NULL;
-    unsigned short crc;
-    char *p, *q;
     HRESULT hr = S_OK;
     LARGE_INTEGER zero;
 
@@ -1255,28 +1264,10 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
     if (FAILED(hr))
         goto end;
 
-    icoPathA = wchars_to_utf8_chars(icoPathW);
-    if (icoPathA == NULL)
-    {
-        hr = E_OUTOFMEMORY;
-        goto end;
-    }
-    crc = crc16(icoPathA);
-    p = strrchr(icoPathA, '\\');
-    if (p == NULL)
-        p = icoPathA;
-    else
-    {
-        *p = 0;
-        p++;
-    }
-    q = strrchr(p, '.');
-    if (q)
-        *q = 0;
     if (destFilename)
         *nativeIdentifier = heap_printf("%s", destFilename);
     else
-        *nativeIdentifier = heap_printf("%04X_%s.%d", crc, p, exeIndex);
+        *nativeIdentifier = compute_native_identifier(exeIndex, icoPathW);
     if (*nativeIdentifier == NULL)
     {
         hr = E_OUTOFMEMORY;
@@ -1353,7 +1344,6 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
 
 end:
     HeapFree(GetProcessHeap(), 0, iconDirEntries);
-    HeapFree(GetProcessHeap(), 0, icoPathA);
     HeapFree(GetProcessHeap(), 0, iconsDir);
     return hr;
 }
