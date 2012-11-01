@@ -129,9 +129,6 @@ static HRESULT WINAPI IDirectMusic8Impl_CreatePort(LPDIRECTMUSIC8 iface, REFCLSI
 
     TRACE("(%p)->(%s, %p, %p, %p)\n", This, debugstr_dmguid(rclsid_port), port_params, port, unkouter);
 
-    if (TRACE_ON(dmusic))
-        dump_DMUS_PORTPARAMS(port_params);
-
     if (!rclsid_port)
         return E_POINTER;
     if (!port_params)
