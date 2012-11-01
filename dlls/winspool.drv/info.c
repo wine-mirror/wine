@@ -944,7 +944,11 @@ static BOOL CUPS_LoadPrinters(void)
                 unlink_ppd( ppd );
             }
             HeapFree( GetProcessHeap(), 0, ppd );
-            if (!added_driver) continue;
+            if (!added_driver)
+            {
+                HeapFree( GetProcessHeap(), 0, port );
+                continue;
+            }
 
             memset(&pi2, 0, sizeof(PRINTER_INFO_2W));
             pi2.pPrinterName    = nameW;
@@ -2374,7 +2378,7 @@ LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
 {
 
     LPSTR pDeviceNameA = strdupWtoA(pDeviceName);
-    LPDEVMODEA pDevModeInputA = DEVMODEdupWtoA(pDevModeInput);
+    LPDEVMODEA pDevModeInputA;
     LPDEVMODEA pDevModeOutputA = NULL;
     LONG ret;
 
@@ -2386,6 +2390,7 @@ LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
 	if(ret < 0) return ret;
 	pDevModeOutputA = HeapAlloc(GetProcessHeap(), 0, ret);
     }
+    pDevModeInputA = DEVMODEdupWtoA(pDevModeInput);
     ret = DocumentPropertiesA(hWnd, hPrinter, pDeviceNameA, pDevModeOutputA,
 			      pDevModeInputA, fMode);
     if(pDevModeOutput) {
