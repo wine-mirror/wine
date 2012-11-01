@@ -260,7 +260,7 @@ typedef struct tagFace {
     struct list entry;
     WCHAR *StyleName;
     WCHAR *FullName;
-    char *file;
+    WCHAR *file;
     void *font_data_ptr;
     DWORD font_data_size;
     FT_Long face_index;
@@ -495,6 +495,7 @@ static const WCHAR face_x_ppem_value[] = {'X','p','p','e','m',0};
 static const WCHAR face_y_ppem_value[] = {'Y','p','p','e','m',0};
 static const WCHAR face_internal_leading_value[] = {'I','n','t','e','r','n','a','l',' ','L','e','a','d','i','n','g',0};
 static const WCHAR face_font_sig_value[] = {'F','o','n','t',' ','S','i','g','n','a','t','u','r','e',0};
+static const WCHAR face_file_name_value[] = {'F','i','l','e',' ','N','a','m','e','\0'};
 static const WCHAR face_full_name_value[] = {'F','u','l','l',' ','N','a','m','e','\0'};
 
 
@@ -902,12 +903,9 @@ static Face *find_face_from_filename(const WCHAR *file_name, const WCHAR *face_n
 {
     Family *family;
     Face *face;
-    const char *file;
-    DWORD len = WideCharToMultiByte(CP_UNIXCP, 0, file_name, -1, NULL, 0, NULL, NULL);
-    char *file_nameA = HeapAlloc(GetProcessHeap(), 0, len);
+    const WCHAR *file;
 
-    WideCharToMultiByte(CP_UNIXCP, 0, file_name, -1, file_nameA, len, NULL, NULL);
-    TRACE("looking for file %s name %s\n", debugstr_a(file_nameA), debugstr_w(face_name));
+    TRACE("looking for file %s name %s\n", debugstr_w(file_name), debugstr_w(face_name));
 
     LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
     {
@@ -919,19 +917,14 @@ static Face *find_face_from_filename(const WCHAR *file_name, const WCHAR *face_n
         {
             if (!face->file)
                 continue;
-            file = strrchr(face->file, '/');
+            file = strrchrW(face->file, '/');
             if(!file)
                 file = face->file;
             else
                 file++;
-            if(!strcasecmp(file, file_nameA))
-            {
-                HeapFree(GetProcessHeap(), 0, file_nameA);
-                return face;
-            }
+            if(!strcmpiW(file, file_name)) return face;
 	}
     }
-    HeapFree(GetProcessHeap(), 0, file_nameA);
     return NULL;
 }
 
@@ -983,15 +976,6 @@ static LPWSTR strdupW(LPCWSTR p)
 {
     LPWSTR ret;
     DWORD len = (strlenW(p) + 1) * sizeof(WCHAR);
-    ret = HeapAlloc(GetProcessHeap(), 0, len);
-    memcpy(ret, p, len);
-    return ret;
-}
-
-static LPSTR strdupA(LPCSTR p)
-{
-    LPSTR ret;
-    DWORD len = (strlen(p) + 1);
     ret = HeapAlloc(GetProcessHeap(), 0, len);
     memcpy(ret, p, len);
     return ret;
@@ -1060,6 +1044,14 @@ static WCHAR *towstr(UINT cp, const char *str)
     wstr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     MultiByteToWideChar(cp, 0, str, -1, wstr, len);
     return wstr;
+}
+
+static char *strWtoA(UINT cp, const WCHAR *str)
+{
+    int len = WideCharToMultiByte( cp, 0, str, -1, NULL, 0, NULL, NULL );
+    char *ret = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( cp, 0, str, -1, ret, len, NULL, NULL );
+    return ret;
 }
 
 static void split_subst_info(NameCs *nc, LPSTR str)
@@ -1256,13 +1248,13 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
             if (face->font_version <= cursor->font_version)
             {
                 TRACE("Original font %s is newer so skipping %s\n",
-                      debugstr_a(cursor->file), debugstr_a(face->file));
+                      debugstr_w(cursor->file), debugstr_w(face->file));
                 return FALSE;
             }
             else
             {
                 TRACE("Replacing original %s with %s\n",
-                      debugstr_a(cursor->file), debugstr_a(face->file));
+                      debugstr_w(cursor->file), debugstr_w(face->file));
                 list_add_before( &cursor->entry, &face->entry );
                 face->family = family;
                 list_remove( &cursor->entry);
@@ -1271,7 +1263,7 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
             }
         }
         else
-            TRACE("Adding new %s\n", debugstr_a(face->file));
+            TRACE("Adding new %s\n", debugstr_w(face->file));
 
         if (style_order( face ) < style_order( cursor )) break;
     }
@@ -1322,13 +1314,13 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family, void *bu
     /* If we have a File Name key then this is a real font, not just the parent
        key of a bunch of non-scalable strikes */
     needed = buffer_size;
-    if(RegQueryValueExA(hkey_face, "File Name", NULL, NULL, buffer, &needed) == ERROR_SUCCESS)
+    if (RegQueryValueExW(hkey_face, face_file_name_value, NULL, NULL, buffer, &needed) == ERROR_SUCCESS)
     {
         Face *face;
         face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
         face->cached_enum_data = NULL;
 
-        face->file = strdupA( buffer );
+        face->file = strdupW( buffer );
         face->StyleName = strdupW(face_name);
 
         needed = buffer_size;
@@ -1486,7 +1478,8 @@ static void add_face_to_cache(Face *face)
     if(!face->scalable)
         HeapFree(GetProcessHeap(), 0, face_key_name);
 
-    RegSetValueExA(hkey_face, "File Name", 0, REG_BINARY, (BYTE*)face->file, strlen(face->file) + 1);
+    RegSetValueExW(hkey_face, face_file_name_value, 0, REG_SZ, (BYTE *)face->file,
+                   (strlenW(face->file) + 1) * sizeof(WCHAR));
     if (face->FullName)
         RegSetValueExW(hkey_face, face_full_name_value, 0, REG_SZ, (BYTE*)face->FullName,
                        (strlenW(face->FullName) + 1) * sizeof(WCHAR));
@@ -1709,7 +1702,7 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
 
     if (file)
     {
-        face->file = strdupA( file );
+        face->file = towstr( CP_UNIXCP, file );
         face->font_data_ptr = NULL;
         face->font_data_size = 0;
     }
@@ -1948,7 +1941,6 @@ static void LoadReplaceList(void)
     DWORD valuelen, datalen, i = 0, type, dlen, vlen;
     LPWSTR value;
     LPVOID data;
-    CHAR familyA[400];
 
     /* @@ Wine registry key: HKCU\Software\Wine\Fonts\Replacements */
     if(RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts\\Replacements", &hkey) == ERROR_SUCCESS)
@@ -1966,8 +1958,6 @@ static void LoadReplaceList(void)
 			    &dlen) == ERROR_SUCCESS) {
 	    TRACE("Got %s=%s\n", debugstr_w(value), debugstr_w(data));
             /* "NewName"="Oldname" */
-            WideCharToMultiByte(CP_ACP, 0, value, -1, familyA, sizeof(familyA), NULL, NULL);
-
             if(!find_family_from_any_name(value))
             {
                 Family * const family = find_family_from_any_name(data);
@@ -2064,8 +2054,7 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
     FontSubst *psub;
     Family *family;
     Face *face;
-    const char *file;
-    WCHAR *fileW;
+    const WCHAR *file;
 
     if (values)
     {
@@ -2110,7 +2099,7 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
             {
                 if (!face->file)
                     continue;
-                file = strrchr(face->file, '/');
+                file = strrchrW(face->file, '/');
                 if (!file)
                     file = face->file;
                 else
@@ -2119,12 +2108,10 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
             }
             if (!file)
                 continue;
-            fileW = towstr(CP_UNIXCP, file);
-
-            face = find_face_from_filename(fileW, value);
+            face = find_face_from_filename(file, value);
             if(!face)
             {
-                TRACE("Unable to find file %s face name %s\n", debugstr_w(fileW), debugstr_w(value));
+                TRACE("Unable to find file %s face name %s\n", debugstr_w(file), debugstr_w(value));
                 continue;
             }
 
@@ -2133,11 +2120,11 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
             child_font->font = NULL;
             font_link->fs.fsCsb[0] |= face->fs.fsCsb[0];
             font_link->fs.fsCsb[1] |= face->fs.fsCsb[1];
-            TRACE("Adding file %s index %ld\n", child_font->face->file, child_font->face->face_index);
+            TRACE("Adding file %s index %ld\n", debugstr_w(child_font->face->file),
+                  child_font->face->face_index);
             list_add_tail(&font_link->links, &child_font->entry);
 
-            TRACE("added internal SystemLink for %s to %s in %s\n", debugstr_w(name), debugstr_w(value),debugstr_w(fileW));
-            HeapFree(GetProcessHeap(), 0, fileW);
+            TRACE("added internal SystemLink for %s to %s in %s\n", debugstr_w(name), debugstr_w(value),debugstr_w(file));
         }
     }
 }
@@ -2215,7 +2202,8 @@ static BOOL init_system_links(void)
                 child_font->font = NULL;
                 font_link->fs.fsCsb[0] |= face->fs.fsCsb[0];
                 font_link->fs.fsCsb[1] |= face->fs.fsCsb[1];
-                TRACE("Adding file %s index %ld\n", child_font->face->file, child_font->face->face_index);
+                TRACE("Adding file %s index %ld\n",
+                      debugstr_w(child_font->face->file), child_font->face->face_index);
                 list_add_tail(&font_link->links, &child_font->entry);
             }
             list_add_tail(&system_links, &font_link->entry);
@@ -2273,7 +2261,8 @@ skip_internal:
         child_font->font = NULL;
         system_font_link->fs.fsCsb[0] |= face->fs.fsCsb[0];
         system_font_link->fs.fsCsb[1] |= face->fs.fsCsb[1];
-        TRACE("Found Tahoma in %s index %ld\n", child_font->face->file, child_font->face->face_index);
+        TRACE("Found Tahoma in %s index %ld\n",
+              debugstr_w(child_font->face->file), child_font->face->face_index);
         list_add_tail(&system_font_link->links, &child_font->entry);
     }
     font_link = find_font_link(Tahoma);
@@ -2619,9 +2608,8 @@ static void update_reg_entries(void)
     Family *family;
     Face *face;
     struct list *family_elem_ptr, *face_elem_ptr;
-    WCHAR *file;
+    WCHAR *file, *path;
     static const WCHAR TrueType[] = {' ','(','T','r','u','e','T','y','p','e',')','\0'};
-    char *path;
 
     if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, winnt_font_reg_key,
                        0, NULL, 0, KEY_ALL_ACCESS, NULL, &winnt_key, NULL) != ERROR_SUCCESS) {
@@ -2646,6 +2634,7 @@ static void update_reg_entries(void)
     LIST_FOR_EACH(family_elem_ptr, &font_list) {
         family = LIST_ENTRY(family_elem_ptr, Family, entry); 
         LIST_FOR_EACH(face_elem_ptr, &family->faces) {
+            char *buffer;
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
             if(!face->external) continue;
 
@@ -2662,25 +2651,23 @@ static void update_reg_entries(void)
                 strcpyW(valueW, family->FamilyName);
             }
 
-            file = wine_get_dos_file_name(face->file);
-            if(file)
-                len = strlenW(file) + 1;
-            else
-            {
-                if((path = strrchr(face->file, '/')) == NULL)
-                    path = face->file;
-                else
-                    path++;
-                len = MultiByteToWideChar(CP_ACP, 0, path, -1, NULL, 0);
+            buffer = strWtoA( CP_UNIXCP, face->file );
+            path = wine_get_dos_file_name( buffer );
+            HeapFree( GetProcessHeap(), 0, buffer );
 
-                file = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-                MultiByteToWideChar(CP_ACP, 0, path, -1, file, len);
-            }
+            if (path)
+                file = path;
+            else if ((file = strrchrW(face->file, '/')))
+                file++;
+            else
+                file = face->file;
+
+            len = strlenW(file) + 1;
             RegSetValueExW(winnt_key, valueW, 0, REG_SZ, (BYTE*)file, len * sizeof(WCHAR));
             RegSetValueExW(win9x_key, valueW, 0, REG_SZ, (BYTE*)file, len * sizeof(WCHAR));
             RegSetValueExW(external_key, valueW, 0, REG_SZ, (BYTE*)file, len * sizeof(WCHAR));
 
-            HeapFree(GetProcessHeap(), 0, file);
+            HeapFree(GetProcessHeap(), 0, path);
             HeapFree(GetProcessHeap(), 0, valueW);
         }
     }
@@ -3847,13 +3834,16 @@ static FT_Face OpenFontFace(GdiFont *font, Face *face, LONG width, LONG height)
     void *data_ptr;
     DWORD data_size;
 
-    TRACE("%s/%p, %ld, %d x %d\n", debugstr_a(face->file), face->font_data_ptr, face->face_index, width, height);
+    TRACE("%s/%p, %ld, %d x %d\n", debugstr_w(face->file), face->font_data_ptr, face->face_index, width, height);
 
     if (face->file)
     {
-        if (!(font->mapping = map_font_file( face->file )))
+        char *filename = strWtoA( CP_UNIXCP, face->file );
+        font->mapping = map_font_file( filename );
+        HeapFree( GetProcessHeap(), 0, filename );
+        if (!font->mapping)
         {
-            WARN("failed to map %s\n", debugstr_a(face->file));
+            WARN("failed to map %s\n", debugstr_w(face->file));
             return 0;
         }
         data_ptr = font->mapping->data;
@@ -3929,7 +3919,7 @@ static int get_nearest_charset(const WCHAR *family_name, Face *face, int *cp)
     }
 
     FIXME("returning DEFAULT_CHARSET face->fs.fsCsb[0] = %08x file = %s\n",
-	  face->fs.fsCsb[0], face->file);
+	  face->fs.fsCsb[0], debugstr_w(face->file));
     *cp = acp;
     return DEFAULT_CHARSET;
 }
@@ -4277,7 +4267,7 @@ static BOOL create_child_font_list(GdiFont *font)
             new_child->face = font_link_entry->face;
             new_child->font = NULL;
             list_add_tail(&font->child_fonts, &new_child->entry);
-            TRACE("font %s %ld\n", debugstr_a(new_child->face->file), new_child->face->face_index);
+            TRACE("font %s %ld\n", debugstr_w(new_child->face->file), new_child->face->face_index);
         }
         ret = TRUE;
     }
@@ -4299,7 +4289,7 @@ static BOOL create_child_font_list(GdiFont *font)
                 new_child->face = font_link_entry->face;
                 new_child->font = NULL;
                 list_add_tail(&font->child_fonts, &new_child->entry);
-                TRACE("font %s %ld\n", debugstr_a(new_child->face->file), new_child->face->face_index);
+                TRACE("font %s %ld\n", debugstr_w(new_child->face->file), new_child->face->face_index);
             }
             ret = TRUE;
         }
@@ -4765,7 +4755,7 @@ found_face:
         ret->charset = get_nearest_charset(family->FamilyName, face, &ret->codepage);
 
     TRACE("Chosen: %s %s (%s/%p:%ld)\n", debugstr_w(family->FamilyName),
-	  debugstr_w(face->StyleName), face->file, face->font_data_ptr, face->face_index);
+	  debugstr_w(face->StyleName), debugstr_w(face->file), face->font_data_ptr, face->face_index);
 
     ret->aveWidth = height ? lf.lfWidth : 0;
 
@@ -6571,12 +6561,9 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     if (!style_nameW)
     {
         FIXME("failed to read style_nameW for font %s!\n", wine_dbgstr_w(font->name));
-        lensty = MultiByteToWideChar(CP_ACP, 0, ft_face->style_name, -1, NULL, 0) * sizeof(WCHAR);
-        style_nameW = HeapAlloc(GetProcessHeap(), 0, lensty);
-        MultiByteToWideChar(CP_ACP, 0, ft_face->style_name, -1, style_nameW, lensty/sizeof(WCHAR));
+        style_nameW = towstr( CP_ACP, ft_face->style_name );
     }
-    else
-        lensty = (strlenW(style_nameW) + 1) * sizeof(WCHAR);
+    lensty = (strlenW(style_nameW) + 1) * sizeof(WCHAR);
 
     face_nameW = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, GetSystemDefaultLangID() );
     if (!face_nameW)
