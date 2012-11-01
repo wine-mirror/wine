@@ -379,7 +379,7 @@ _FUNCTION_ {
 		    }
                     st = 1;
                     if (!suppress) {
-			if (L_prefix) _SET_NUMBER_(long double);
+			if (L_prefix) _SET_NUMBER_(double);
 			else if (l_prefix) _SET_NUMBER_(double);
 			else _SET_NUMBER_(float);
 		    }
