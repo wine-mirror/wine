@@ -25,6 +25,7 @@
 
 #include <stdarg.h>
 #include <limits.h>
+#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"

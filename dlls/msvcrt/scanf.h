@@ -305,84 +305,109 @@ _FUNCTION_ {
 		    }
                 }
                 break;
-	    case 'e':
-	    case 'E':
-	    case 'f':
-	    case 'g':
+            case 'e':
+            case 'E':
+            case 'f':
+            case 'g':
             case 'G': { /* read a float */
-                    long double cur = 0;
-		    int negative = 0;
+                    long double cur;
+                    ULONGLONG d, hlp;
+                    int exp = 0, negative = 0;
+
                     /* skip initial whitespace */
                     while ((nch!=_EOF_) && _ISSPACE_(nch))
                         nch = _GETC_(file);
-		    /* get sign. */
+
+                    /* get sign. */
                     if (nch == '-' || nch == '+') {
-			negative = (nch=='-');
-			if (width>0) width--;
-			if (width==0) break;
+                        negative = (nch=='-');
+                        if (width>0) width--;
+                        if (width==0) break;
                         nch = _GETC_(file);
                     }
-		    /* get first digit. */
-		    if (*locinfo->lconv->decimal_point != nch) {
-		      if (!_ISDIGIT_(nch)) break;
-		      cur = (nch - '0');
-		      nch = _GETC_(file);
-		      if (width>0) width--;
-		      /* read until no more digits */
-		      while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
-                        cur = cur*10 + (nch - '0');
+
+                    /* get first digit. */
+                    if (*locinfo->lconv->decimal_point != nch) {
+                        if (!_ISDIGIT_(nch)) break;
+                        d = nch - '0';
                         nch = _GETC_(file);
-			if (width>0) width--;
-		      }
-		    } else {
-		      cur = 0; /* Fix: .8 -> 0.8 */
-		    }
-		    /* handle decimals */
-                    if (width!=0 && nch == *locinfo->lconv->decimal_point) {
-                        long double dec = 1;
-                        nch = _GETC_(file);
-			if (width>0) width--;
+                        if (width>0) width--;
+                        /* read until no more digits */
                         while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
-                            dec /= 10;
-                            cur += dec * (nch - '0');
+                            hlp = d*10 + nch - '0';
                             nch = _GETC_(file);
-			    if (width>0) width--;
+                            if (width>0) width--;
+                            if(d > (ULONGLONG)-1/10 || hlp<d) {
+                                exp++;
+                                break;
+                            }
+                            else
+                                d = hlp;
+                        }
+                        while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
+                            exp++;
+                            nch = _GETC_(file);
+                            if (width>0) width--;
+                        }
+                    } else {
+                        d = 0; /* Fix: .8 -> 0.8 */
+                    }
+
+                    /* handle decimals */
+                    if (width!=0 && nch == *locinfo->lconv->decimal_point) {
+                        nch = _GETC_(file);
+                        if (width>0) width--;
+
+                        while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
+                            hlp = d*10 + nch - '0';
+                            nch = _GETC_(file);
+                            if (width>0) width--;
+                            if(d > (ULONGLONG)-1/10 || hlp<d)
+                                break;
+
+                            d = hlp;
+                            exp--;
+                        }
+                        while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
+                            nch = _GETC_(file);
+                            if (width>0) width--;
                         }
                     }
-		    /* handle exponent */
-		    if (width!=0 && (nch == 'e' || nch == 'E')) {
-			int exponent = 0, negexp = 0;
-			float expcnt;
+
+                    /* handle exponent */
+                    if (width!=0 && (nch == 'e' || nch == 'E')) {
+                        int sign = 1, e = 0;
+
                         nch = _GETC_(file);
-			if (width>0) width--;
-			/* possible sign on the exponent */
-			if (width!=0 && (nch=='+' || nch=='-')) {
-			    negexp = (nch=='-');
+                        if (width>0) width--;
+                        if (width!=0 && (nch=='+' || nch=='-')) {
+                            if(nch == '-')
+                                sign = -1;
                             nch = _GETC_(file);
-			    if (width>0) width--;
-			}
-			/* exponent digits */
-			while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
-			    exponent *= 10;
-			    exponent += (nch - '0');
-                            nch = _GETC_(file);
-			    if (width>0) width--;
+                            if (width>0) width--;
                         }
-			/* update 'cur' with this exponent. */
-			expcnt =  negexp ? .1 : 10;
-			while (exponent!=0) {
-			    if (exponent&1)
-				cur*=expcnt;
-			    exponent/=2;
-			    expcnt=expcnt*expcnt;
-			}
-		    }
+
+                        /* exponent digits */
+                        while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
+                            if(e > INT_MAX/10 || (e = e*10 + nch - '0')<0)
+                                e = INT_MAX;
+                            nch = _GETC_(file);
+                            if (width>0) width--;
+                        }
+                        e *= sign;
+
+                        if(exp<0 && e<0 && e+exp>0) exp = INT_MIN;
+                        else if(exp>0 && e>0 && e+exp<0) exp = INT_MAX;
+                        else exp += e;
+                    }
+
+                    cur = (exp>=0 ? d*pow(10, exp) : d/pow(10, -exp));
                     st = 1;
                     if (!suppress) {
-			if (L_prefix) _SET_NUMBER_(double);
-			else if (l_prefix) _SET_NUMBER_(double);
-			else _SET_NUMBER_(float);
-		    }
+                        if (L_prefix) _SET_NUMBER_(double);
+                        else if (l_prefix) _SET_NUMBER_(double);
+                        else _SET_NUMBER_(float);
+                    }
                 }
                 break;
 		/* According to msdn,

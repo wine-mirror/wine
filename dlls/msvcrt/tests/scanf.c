@@ -110,6 +110,12 @@ static void test_sscanf( void )
     ok(ret == 1, "expected 1, got %u\n", ret);
     ok(double_res == 32.715, "Got %lf, expected %lf\n", double_res, 32.715);
 
+    strcpy(buffer, "1.1e-30");
+    ret = sscanf(buffer, "%lf", &double_res);
+    ok(ret == 1, "expected 1, got %u\n", ret);
+    ok(double_res >= 1.1e-30-1e-45 && double_res <= 1.1e-30+1e-45,
+            "Got %.18le, expected %.18le\n", double_res, 1.1e-30);
+
     /* check strings */
     ret = sprintf(buffer," %s", pname);
     ok( ret == 26, "expected 26, got %u\n", ret);
