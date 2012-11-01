@@ -1223,10 +1223,7 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
 
 end:
     HeapFree(GetProcessHeap(), 0, iconDirEntries);
-    if (SUCCEEDED(hr))
-        *nativeIdentifier = icnsPath;
-    else
-        HeapFree(GetProcessHeap(), 0, icnsPath);
+    HeapFree(GetProcessHeap(), 0, icnsPath);
     return hr;
 }
 #else
