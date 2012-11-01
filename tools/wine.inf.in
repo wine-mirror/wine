@@ -125,6 +125,7 @@ AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
 AddService=PlugPlay,0,PlugPlayService
 AddService=FontCache3.0.0.0,0,FontCacheService
+AddService=LanmanServer,0,LanmanServerService
 
 [DefaultInstall.NT.Services]
 AddService=BITS,0,BITSService
@@ -135,6 +136,7 @@ AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
 AddService=PlugPlay,0,PlugPlayService
 AddService=FontCache3.0.0.0,0,FontCacheService
+AddService=LanmanServer,0,LanmanServerService
 
 [DefaultInstall.ntamd64.Services]
 AddService=BITS,0,BITSService
@@ -145,6 +147,7 @@ AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
 AddService=PlugPlay,0,PlugPlayService
 AddService=FontCache3.0.0.0,0,FontCacheService
+AddService=LanmanServer,0,LanmanServerService
 
 [Strings]
 MciExtStr="Software\Microsoft\Windows NT\CurrentVersion\MCI Extensions"
@@ -2986,6 +2989,19 @@ ServiceBinary="%10%\Microsoft.Net\Framework\v3.0\wpf\presentationfontcache.exe"
 ServiceType=16
 StartType=3
 ErrorControl=1
+
+[LanmanServerService]
+AddReg=LanmanServerServiceKeys
+Description="Lanman Server"
+DisplayName="Lanman Server"
+ServiceBinary="%11%\svchost.exe -k netsvcs"
+ServiceType=32
+StartType=4
+ErrorControl=1
+
+[LanmanServerServiceKeys]
+HKR,Parameters,"ServiceDll",,"%11%\srvsvc.dll"
+;; HKLM,%CurrentVersionNT%\SvcHost,"netsvcs",0x00010008,"lanmanserver"
 
 [Services]
 HKLM,%CurrentVersion%\RunServices,"winemenubuilder",2,"%11%\winemenubuilder.exe -a -r"
