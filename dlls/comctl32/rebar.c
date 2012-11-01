@@ -2139,7 +2139,7 @@ REBAR_HandleUDDrag (REBAR_INFO *infoPtr, const POINT *ptsmove)
         if(iHitBand==0 && (infoPtr->uNumBands==1 || REBAR_GetBand(infoPtr, 1)->fStyle&RBBS_BREAK))
             return;
         DPA_DeletePtr(infoPtr->bands, iHitBand);
-        hitBand->fStyle &= RBBS_BREAK;
+        hitBand->fStyle &= ~RBBS_BREAK;
         REBAR_GetBand(infoPtr, 0)->fStyle |= RBBS_BREAK;
         infoPtr->iGrabbedBand = DPA_InsertPtr(
             infoPtr->bands, 0, hitBand);
