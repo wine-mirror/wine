@@ -47,6 +47,7 @@ extern int need_proxy(const type_t *iface);
 extern int need_inline_stubs(const type_t *iface);
 extern int need_stub_files(const statement_list_t *stmts);
 extern int need_proxy_file(const statement_list_t *stmts);
+extern int need_proxy_delegation(const statement_list_t *stmts);
 extern int need_inline_stubs_file(const statement_list_t *stmts);
 extern const var_t *is_callas(const attr_list_t *list);
 extern void write_args(FILE *h, const var_list_t *arg, const char *name, int obj, int do_indent);
