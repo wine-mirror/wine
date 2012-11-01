@@ -404,6 +404,21 @@ static inline xmlChar *xmlchar_from_wchar( const WCHAR *str )
     return xmlchar_from_wcharn(str, -1);
 }
 
+static inline xmlChar *heap_strdupxmlChar(const xmlChar *str)
+{
+    xmlChar *ret = NULL;
+
+    if(str) {
+        DWORD size;
+
+        size = (xmlStrlen(str)+1)*sizeof(xmlChar);
+        ret = heap_alloc(size);
+        memcpy(ret, str, size);
+    }
+
+    return ret;
+}
+
 #endif
 
 static inline HRESULT return_bstr(const WCHAR *value, BSTR *p)
