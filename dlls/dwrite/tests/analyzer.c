@@ -399,12 +399,21 @@ struct sa_test {
 enum scriptcode {
     Script_Arabic = 0,
     Script_Armenian = 1,
+    Script_Bengali = 3,
     Script_C1Controls = 12,
     Script_Coptic = 13,
     Script_Cyrillic = 16,
+    Script_Devanagari = 18,
     Script_Greek = 23,
+    Script_Gujarati = 24,
+    Script_Gurmukhi = 25,
     Script_Hebrew = 29,
     Script_Latin  = 38,
+    Script_NKo = 48,
+    Script_Oriya = 53,
+    Script_Syriac = 64,
+    Script_Tamil = 68,
+    Script_Thaana = 70,
     Script_Symbol = 77
 };
 
@@ -531,6 +540,61 @@ static struct sa_test sa_tests[] = {
           { { 0, 9, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } },
             { 9, 10, { Script_Hebrew, DWRITE_SCRIPT_SHAPES_DEFAULT } },
             { 19, 10, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Syriac */
+      {0x710,0x712,0x712,0x714,'.',0}, 1,
+          { { 0, 5, { Script_Syriac, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Arabic Supplement */
+      {0x750,0x760,0x76d,'.',0}, 1,
+          { { 0, 4, { Script_Arabic, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Thaana */
+      {0x780,0x78e,0x798,0x7a6,0x7b0,'.',0}, 1,
+          { { 0, 6, { Script_Thaana, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* N'Ko */
+      {0x7c0,0x7ca,0x7e8,0x7eb,0x7f6,'.',0}, 1,
+          { { 0, 6, { Script_NKo, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Thaana */
+      {0x780,0x798,0x7a5,0x7a6,0x7b0,'.',0}, 1,
+          { { 0, 6, { Script_Thaana, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Devanagari */
+      {0x926,0x947,0x935,0x928,0x93e,0x917,0x930,0x940,'.',0}, 1,
+          { { 0, 9, { Script_Devanagari, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Bengali */
+      {0x9ac,0x9be,0x982,0x9b2,0x9be,'.',0}, 1,
+          { { 0, 6, { Script_Bengali, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Gurmukhi */
+      {0xa17,0xa41,0xa30,0xa2e,0xa41,0xa16,0xa40,'.',0}, 1,
+          { { 0, 8, { Script_Gurmukhi, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Gujarati */
+      {0xa97,0xac1,0xa9c,0xab0,0xabe,0xaa4,0xac0,'.',0}, 1,
+          { { 0, 8, { Script_Gujarati, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Oriya */
+      {0xb13,0xb21,0xb3c,0xb3f,0xb06,'.',0}, 1,
+          { { 0, 6, { Script_Oriya, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Tamil */
+      {0xba4,0xbae,0xbbf,0xbb4,0xbcd,'.',0}, 1,
+          { { 0, 6, { Script_Tamil, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
     /* keep this as end marker */
     { {0} }
