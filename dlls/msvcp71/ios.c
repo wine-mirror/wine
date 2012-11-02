@@ -2587,8 +2587,9 @@ static FILE* _Fiopen_wchar(const wchar_t *name, int mode, int prot)
         return NULL;
     }
 
+    /* msvcp60 - msvcp71 are ignoring prot argument */
     f = _wfsopen(name, (mode & OPENMODE_binary) ? str_mode[mode_idx].str_bin
-            : str_mode[mode_idx].str, prot);
+            : str_mode[mode_idx].str, SH_DENYNO);
     if(!f)
         return NULL;
 
