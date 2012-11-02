@@ -967,16 +967,14 @@ static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
  *
  *	Reads a registry value and expands it when necessary
  */
-static DWORD COM_RegReadPath(HKEY hkeyroot, const WCHAR *keyname, const WCHAR *valuename, WCHAR * dst, DWORD dstlen)
+static DWORD COM_RegReadPath(HKEY hkeyroot, WCHAR * dst, DWORD dstlen)
 {
 	DWORD ret;
-	HKEY key;
 	DWORD keytype;
 	WCHAR src[MAX_PATH];
 	DWORD dwLength = dstlen * sizeof(WCHAR);
 
-	if((ret = RegOpenKeyExW(hkeyroot, keyname, 0, KEY_READ, &key)) == ERROR_SUCCESS) {
-          if( (ret = RegQueryValueExW(key, NULL, NULL, &keytype, (LPBYTE)src, &dwLength)) == ERROR_SUCCESS ) {
+        if( (ret = RegQueryValueExW(hkeyroot, NULL, NULL, &keytype, (LPBYTE)src, &dwLength)) == ERROR_SUCCESS ) {
             if (keytype == REG_EXPAND_SZ) {
               if (dstlen <= ExpandEnvironmentStringsW(src, dst, dstlen)) ret = ERROR_MORE_DATA;
             } else {
@@ -992,9 +990,7 @@ static DWORD COM_RegReadPath(HKEY hkeyroot, const WCHAR *keyname, const WCHAR *v
               }
               lstrcpynW(dst, src, dstlen);
             }
-	  }
-          RegCloseKey (key);
-	}
+        }
 	return ret;
 }
 
@@ -1019,7 +1015,7 @@ static HRESULT apartment_hostobject(struct apartment *apt,
 
     TRACE("clsid %s, iid %s\n", debugstr_guid(&params->clsid), debugstr_guid(&params->iid));
 
-    if (COM_RegReadPath(params->hkeydll, NULL, NULL, dllpath, ARRAYSIZE(dllpath)) != ERROR_SUCCESS)
+    if (COM_RegReadPath(params->hkeydll, dllpath, ARRAYSIZE(dllpath)) != ERROR_SUCCESS)
     {
         /* failure: CLSID is not found in registry */
         WARN("class %s not registered inproc\n", debugstr_guid(&params->clsid));
@@ -2383,7 +2379,7 @@ static HRESULT get_inproc_class_object(APARTMENT *apt, HKEY hkeydll,
     else
         apartment_threaded = !apt->multi_threaded;
 
-    if (COM_RegReadPath(hkeydll, NULL, NULL, dllpath, ARRAYSIZE(dllpath)) != ERROR_SUCCESS)
+    if (COM_RegReadPath(hkeydll, dllpath, ARRAYSIZE(dllpath)) != ERROR_SUCCESS)
     {
         /* failure: CLSID is not found in registry */
         WARN("class %s not registered inproc\n", debugstr_guid(rclsid));
@@ -4299,7 +4295,7 @@ HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     {
         WCHAR dllpath[MAX_PATH+1];
 
-        if (COM_RegReadPath(hkey, NULL, NULL, dllpath, ARRAYSIZE(dllpath)) == ERROR_SUCCESS)
+        if (COM_RegReadPath(hkey, dllpath, ARRAYSIZE(dllpath)) == ERROR_SUCCESS)
         {
             static const WCHAR wszOle32[] = {'o','l','e','3','2','.','d','l','l',0};
             if (!strcmpiW(dllpath, wszOle32))
