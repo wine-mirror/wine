@@ -31,20 +31,37 @@ enum scriptcode {
     Script_Arabic = 0,
     Script_Armenian = 1,
     Script_Bengali = 3,
-    Script_C1Controls = 12,
+    Script_Canadian = 8,
+    Script_Cherokee = 11,
+    Script_Controls = 12,
     Script_Coptic = 13,
     Script_Cyrillic = 16,
     Script_Devanagari = 18,
+    Script_Ethiopic = 19,
+    Script_Georgian = 20,
     Script_Greek = 23,
     Script_Gujarati = 24,
     Script_Gurmukhi = 25,
+    Script_Hangul = 27,
     Script_Hebrew = 29,
+    Script_Kannada = 32,
+    Script_Khmer = 36,
+    Script_Lao = 37,
     Script_Latin  = 38,
+    Script_Malayalam = 44,
+    Script_Mongolian = 45,
+    Script_Myanmar = 46,
     Script_NKo = 48,
+    Script_Ogham = 49,
     Script_Oriya = 53,
+    Script_Runic = 58,
+    Script_Sinhala = 61,
     Script_Syriac = 64,
     Script_Tamil = 68,
+    Script_Telugu = 69,
     Script_Thaana = 70,
+    Script_Thai = 71,
+    Script_Tibetan = 72,
     Script_Symbol = 77,
     Script_Unknown = (UINT16)-1
 };
@@ -70,7 +87,7 @@ static const struct script_range script_ranges[] = {
     /* ASCII punctuation and symbols, control char DEL: U+007B–U+007F */
     { Script_Symbol, 0x7b, 0x7f },
     /* C1 Controls: U+0080–U+009F */
-    { Script_C1Controls, 0x80, 0x9f },
+    { Script_Controls, 0x80, 0x9f },
     /* Latin-1 Supplement: U+00A0–U+00FF */
     /* Latin Extended-A: U+0100–U+017F */
     /* Latin Extended-B: U+0180–U+024F */
@@ -116,6 +133,41 @@ static const struct script_range script_ranges[] = {
     { Script_Oriya, 0xb00, 0xb7f },
     /* Tamil: U+0B80–U+0BFF */
     { Script_Tamil, 0xb80, 0xbff },
+    /* Telugu: U+0C00–U+0C7F */
+    { Script_Telugu, 0xc00, 0xc7f },
+    /* Kannada: U+0C80–U+0CFF */
+    { Script_Kannada, 0xc80, 0xcff },
+    /* Malayalam: U+0D00–U+0D7F */
+    { Script_Malayalam, 0xd00, 0xd7f },
+    /* Sinhala: U+0D80–U+0DFF */
+    { Script_Sinhala, 0xd80, 0xdff },
+    /* Thai: U+0E00–U+0E7F */
+    { Script_Thai, 0xe00, 0xe7f },
+    /* Lao: U+0E80–U+0EFF */
+    { Script_Lao, 0xe80, 0xeff },
+    /* Tibetan: U+0F00–U+0FFF */
+    { Script_Tibetan, 0xf00, 0xfff },
+    /* Myanmar: U+1000–U+109F */
+    { Script_Myanmar, 0x1000, 0x109f },
+    /* Georgian: U+10A0–U+10FF */
+    { Script_Georgian, 0x10a0, 0x10ff },
+    /* Hangul Jamo: U+1100–U+11FF */
+    { Script_Hangul, 0x1100, 0x11ff },
+    /* Ethiopic: U+1200–U+137F */
+    /* Ethiopic Extensions: U+1380–U+139F */
+    { Script_Ethiopic, 0x1200, 0x139f },
+    /* Cherokee: U+13A0–U+13FF */
+    { Script_Cherokee, 0x13a0, 0x13ff },
+    /* Canadian Aboriginal Syllabics: U+1400–U+167F */
+    { Script_Canadian, 0x1400, 0x167f },
+    /* Ogham: U+1680–U+169F */
+    { Script_Ogham, 0x1680, 0x169f },
+    /* Runic: U+16A0–U+16F0 */
+    { Script_Runic, 0x16a0, 0x16f0 },
+    /* Khmer: U+1780–U+17FF */
+    { Script_Khmer, 0x1780, 0x17ff },
+    /* Mongolian: U+1800–U+18AF */
+    { Script_Mongolian, 0x1800, 0x18af},
     /* unsupported range */
     { Script_Unknown }
 };
