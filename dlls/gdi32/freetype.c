@@ -345,6 +345,7 @@ struct tagGdiFont {
     SHORT yMax;
     SHORT yMin;
     DWORD ntmFlags;
+    DWORD aa_flags;
     UINT ntmCellHeight, ntmAvgWidth;
     FONTSIGNATURE fs;
     GdiFont *base_font;
@@ -4544,8 +4545,6 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     GetObjectW( hfont, sizeof(lf), &lf );
     lf.lfWidth = abs(lf.lfWidth);
 
-    if (!*aa_flags) *aa_flags = get_font_aa_flags( dev->hdc, &lf );
-
     can_use_bitmap = GetDeviceCaps(dev->hdc, TEXTCAPS) & TC_RA_ABLE;
 
     TRACE("%s, h=%d, it=%d, weight=%d, PandF=%02x, charset=%d orient %d escapement %d\n",
@@ -4946,6 +4945,7 @@ found_face:
             TRACE("Loaded GSUB table of %i bytes\n",length);
         }
     }
+    ret->aa_flags = face->aa_flags;
 
     TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
 
@@ -4953,6 +4953,9 @@ found_face:
 done:
     if (ret)
     {
+        if (!*aa_flags) *aa_flags = ret->aa_flags;
+        if (!*aa_flags) *aa_flags = get_font_aa_flags( dev->hdc, &lf );
+
         /* fixup the antialiasing flags for that font */
         switch (*aa_flags)
         {
