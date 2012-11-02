@@ -31,7 +31,13 @@
 /* ??0_Mutex@std@@QEAA@XZ */
 mutex* mutex_ctor(mutex *this)
 {
-    this->mutex = CreateMutexW(NULL, FALSE, NULL);
+    CRITICAL_SECTION *cs = MSVCRT_operator_new(sizeof(*cs));
+    if(!cs)
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+
+    InitializeCriticalSection(cs);
+    cs->DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": _Mutex critical section");
+    this->mutex = cs;
     return this;
 }
 
@@ -39,21 +45,23 @@ mutex* mutex_ctor(mutex *this)
 /* ??1_Mutex@std@@QEAA@XZ */
 void mutex_dtor(mutex *this)
 {
-    CloseHandle(this->mutex);
+    ((CRITICAL_SECTION*)this->mutex)->DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(this->mutex);
+    MSVCRT_operator_delete(this->mutex);
 }
 
 /* ?_Lock@_Mutex@std@@QAEXXZ */
 /* ?_Lock@_Mutex@std@@QEAAXXZ */
 void mutex_lock(mutex *this)
 {
-    WaitForSingleObject(this->mutex, INFINITE);
+    EnterCriticalSection(this->mutex);
 }
 
 /* ?_Unlock@_Mutex@std@@QAEXXZ */
 /* ?_Unlock@_Mutex@std@@QEAAXXZ */
 void mutex_unlock(mutex *this)
 {
-    ReleaseMutex(this->mutex);
+    LeaveCriticalSection(this->mutex);
 }
 
 static CRITICAL_SECTION lockit_cs;

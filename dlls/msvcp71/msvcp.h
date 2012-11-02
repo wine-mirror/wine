@@ -201,7 +201,7 @@ void __thiscall _Lockit_dtor(_Lockit*);
 
 /* class mutex */
 typedef struct {
-        void *mutex;
+    void *mutex;
 } mutex;
 
 mutex* __thiscall mutex_ctor(mutex*);

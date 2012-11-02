@@ -33,7 +33,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 DEFINE_THISCALL_WRAPPER(mutex_ctor, 4)
 mutex* __thiscall mutex_ctor(mutex *this)
 {
-    this->mutex = CreateMutexW(NULL, FALSE, NULL);
+    CRITICAL_SECTION *cs = MSVCRT_operator_new(sizeof(*cs));
+    if(!cs) {
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    }
+
+    InitializeCriticalSection(cs);
+    cs->DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": _Mutex critical section");
+    this->mutex = cs;
     return this;
 }
 
@@ -42,7 +50,9 @@ mutex* __thiscall mutex_ctor(mutex *this)
 DEFINE_THISCALL_WRAPPER(mutex_dtor, 4)
 void __thiscall mutex_dtor(mutex *this)
 {
-    CloseHandle(this->mutex);
+    ((CRITICAL_SECTION*)this->mutex)->DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(this->mutex);
+    MSVCRT_operator_delete(this->mutex);
 }
 
 /* ?_Lock@_Mutex@std@@QAEXXZ */
@@ -50,7 +60,7 @@ void __thiscall mutex_dtor(mutex *this)
 DEFINE_THISCALL_WRAPPER(mutex_lock, 4)
 void __thiscall mutex_lock(mutex *this)
 {
-    WaitForSingleObject(this->mutex, INFINITE);
+    EnterCriticalSection(this->mutex);
 }
 
 /* ?_Unlock@_Mutex@std@@QAEXXZ */
@@ -58,7 +68,7 @@ void __thiscall mutex_lock(mutex *this)
 DEFINE_THISCALL_WRAPPER(mutex_unlock, 4)
 void __thiscall mutex_unlock(mutex *this)
 {
-    ReleaseMutex(this->mutex);
+    LeaveCriticalSection(this->mutex);
 }
 
 static CRITICAL_SECTION lockit_cs[_MAX_LOCK];
