@@ -1982,7 +1982,7 @@ void WINAPI SetRectRgn16( HRGN16 hrgn, INT16 left, INT16 top, INT16 right, INT16
  */
 void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr, UINT16 handles )
 {
-    HANDLETABLE *ht32 = HeapAlloc( GetProcessHeap(), 0, handles * sizeof(*ht32) );
+    HANDLETABLE *ht32 = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET(HANDLETABLE, objectHandle[handles] ));
     unsigned int i;
 
     for (i = 0; i < handles; i++) ht32->objectHandle[i] = HGDIOBJ_32(ht->objectHandle[i]);

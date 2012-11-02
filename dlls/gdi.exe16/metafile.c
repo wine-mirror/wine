@@ -213,7 +213,7 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc16, HMETAFILE16 hmf,
     /* create the handle table */
 
     hHT = GlobalAlloc16(GMEM_MOVEABLE | GMEM_ZEROINIT,
-		     sizeof(HANDLETABLE16) * mh->mtNoObjects);
+            FIELD_OFFSET(HANDLETABLE16, objectHandle[mh->mtNoObjects]));
     spht = WOWGlobalLock16(hHT);
 
     seg = hmf | 7;
