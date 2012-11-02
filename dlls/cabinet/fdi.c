@@ -2490,9 +2490,9 @@ BOOL __cdecl FDICopy(
   fdi_decomp_state *decomp_state;
   FDI_Int *fdi = get_fdi_ptr( hfdi );
 
-  TRACE("(hfdi == ^%p, pszCabinet == ^%p, pszCabPath == ^%p, flags == %0d, "
+  TRACE("(hfdi == ^%p, pszCabinet == %s, pszCabPath == %s, flags == %x, "
         "pfnfdin == ^%p, pfnfdid == ^%p, pvUser == ^%p)\n",
-        hfdi, pszCabinet, pszCabPath, flags, pfnfdin, pfnfdid, pvUser);
+        hfdi, debugstr_a(pszCabinet), debugstr_a(pszCabPath), flags, pfnfdin, pfnfdid, pvUser);
 
   if (!fdi) return FALSE;
 
