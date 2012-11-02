@@ -568,19 +568,23 @@ static BSTR get_body_text( const struct table *table, UINT row, UINT *len )
     *len = 0;
     for (i = 0; i < table->num_cols; i++)
     {
-        *len += sizeof(fmtW) / sizeof(fmtW[0]);
-        *len += strlenW( table->columns[i].name );
-        value = get_value_bstr( table, row, i );
-        *len += SysStringLen( value );
-        SysFreeString( value );
+        if ((value = get_value_bstr( table, row, i )))
+        {
+            *len += sizeof(fmtW) / sizeof(fmtW[0]);
+            *len += strlenW( table->columns[i].name );
+            *len += SysStringLen( value );
+            SysFreeString( value );
+        }
     }
     if (!(ret = SysAllocStringLen( NULL, *len ))) return NULL;
     p = ret;
     for (i = 0; i < table->num_cols; i++)
     {
-        value = get_value_bstr( table, row, i );
-        p += sprintfW( p, fmtW, table->columns[i].name, value );
-        SysFreeString( value );
+        if ((value = get_value_bstr( table, row, i )))
+        {
+            p += sprintfW( p, fmtW, table->columns[i].name, value );
+            SysFreeString( value );
+        }
     }
     return ret;
 }

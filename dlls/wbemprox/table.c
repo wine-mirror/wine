@@ -166,6 +166,7 @@ BSTR get_value_bstr( const struct table *table, UINT row, UINT column )
 
     case CIM_DATETIME:
     case CIM_STRING:
+        if (!val) return NULL;
         len = strlenW( (const WCHAR *)(INT_PTR)val ) + 2;
         if (!(ret = SysAllocStringLen( NULL, len ))) return NULL;
         sprintfW( ret, fmt_strW, (const WCHAR *)(INT_PTR)val );
