@@ -1815,18 +1815,8 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
     TRACE("\n");
 
     if(request->hCacheFile) {
-        WCHAR url[INTERNET_MAX_URL_LENGTH];
-
         CloseHandle(request->hCacheFile);
-
-        if(HTTP_GetRequestURL(request, url)) {
-            DWORD headersLen;
-
-            headersLen = request->rawHeaders ? strlenW(request->rawHeaders) : 0;
-            CommitUrlCacheEntryW(url, request->cacheFile, request->expires,
-                    request->last_modified, NORMAL_CACHE_ENTRY,
-                    request->rawHeaders, headersLen, NULL, 0);
-        }
+        DeleteFileW(request->cacheFile);
     }
     heap_free(request->cacheFile);
 
@@ -2233,6 +2223,25 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
     return INET_SetOption(hdr, option, buffer, size);
 }
 
+static void commit_cache_entry(http_request_t *req)
+{
+    WCHAR url[INTERNET_MAX_URL_LENGTH];
+
+    TRACE("%p\n", req);
+
+    CloseHandle(req->hCacheFile);
+    req->hCacheFile = NULL;
+
+    if(HTTP_GetRequestURL(req, url)) {
+        DWORD headersLen;
+
+        headersLen = req->rawHeaders ? strlenW(req->rawHeaders) : 0;
+        CommitUrlCacheEntryW(url, req->cacheFile, req->expires,
+                req->last_modified, NORMAL_CACHE_ENTRY,
+                req->rawHeaders, headersLen, NULL, 0);
+    }
+}
+
 static void create_cache_entry(http_request_t *req)
 {
     WCHAR url[INTERNET_MAX_URL_LENGTH];
@@ -2271,6 +2280,9 @@ static void create_cache_entry(http_request_t *req)
         b = WriteFile(req->hCacheFile, req->read_buf+req->read_pos, req->read_size, &written, NULL);
         if(!b)
             FIXME("WriteFile failed: %u\n", GetLastError());
+
+        if(req->data_stream->vtbl->end_of_data(req->data_stream, req))
+            commit_cache_entry(req);
     }
 }
 
@@ -2362,13 +2374,18 @@ static DWORD read_http_stream(http_request_t *req, BYTE *buf, DWORD size, DWORD 
     res = req->data_stream->vtbl->read(req->data_stream, req, buf, size, read, read_mode);
     assert(*read <= size);
 
-    if(*read && req->hCacheFile) {
-        BOOL bres;
-        DWORD written;
+    if(req->hCacheFile) {
+        if(*read) {
+            BOOL bres;
+            DWORD written;
 
-        bres = WriteFile(req->hCacheFile, buf, *read, &written, NULL);
-        if(!bres)
-            FIXME("WriteFile failed: %u\n", GetLastError());
+            bres = WriteFile(req->hCacheFile, buf, *read, &written, NULL);
+            if(!bres)
+                FIXME("WriteFile failed: %u\n", GetLastError());
+        }
+
+        if(req->data_stream->vtbl->end_of_data(req->data_stream, req))
+            commit_cache_entry(req);
     }
 
     return res;
