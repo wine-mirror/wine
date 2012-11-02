@@ -352,8 +352,10 @@ int msi_addstringW( string_table *st, const WCHAR *data, int len, USHORT refcoun
 const WCHAR *msi_string_lookup( const string_table *st, UINT id, int *len )
 {
     if( id == 0 )
+    {
+        if (len) *len = 0;
         return szEmpty;
-
+    }
     if( id >= st->maxcount )
         return NULL;
 
