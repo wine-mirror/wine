@@ -7432,7 +7432,6 @@ basic_istream_char* __thiscall basic_istream_char_seekg_fpos(basic_istream_char 
         fpos_int ret;
 
         basic_streambuf_char_pubseekpos(strbuf, &ret, pos, OPENMODE_in);
-        basic_istream_char_sentry_destroy(this);
 
         if(ret.off==-1 && ret.pos==0 && ret.state==0)
             basic_ios_char_setstate(base, IOSTATE_failbit);
@@ -8678,7 +8677,6 @@ basic_istream_wchar* __thiscall basic_istream_wchar_seekg(basic_istream_wchar *t
         fpos_int ret;
 
         basic_streambuf_wchar_pubseekoff(strbuf, &ret, off, dir, OPENMODE_in);
-        basic_istream_wchar_sentry_destroy(this);
 
         if(ret.off==-1 && ret.pos==0 && ret.state==0)
             basic_ios_wchar_setstate(base, IOSTATE_failbit);
@@ -8707,7 +8705,6 @@ basic_istream_wchar* __thiscall basic_istream_wchar_seekg_fpos(basic_istream_wch
         fpos_int ret;
 
         basic_streambuf_wchar_pubseekpos(strbuf, &ret, pos, OPENMODE_in);
-        basic_istream_wchar_sentry_destroy(this);
 
         if(ret.off==-1 && ret.pos==0 && ret.state==0)
             basic_ios_wchar_setstate(base, IOSTATE_failbit);
