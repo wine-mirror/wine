@@ -8101,6 +8101,48 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " sek"
 
+#: urlmon.rc:29 wininet.rc:74
+msgid "Security Warning"
+msgstr ""
+
+#: urlmon.rc:32
+#, fuzzy
+#| msgid "Do you want to continue anyway?"
+msgid "Do you want to install this software?"
+msgstr "Ĉu vi volas malgraŭe daŭri?"
+
+#: urlmon.rc:34 explorer.rc:29
+msgid "Location:"
+msgstr "Loko:"
+
+#: urlmon.rc:36
+#, fuzzy
+#| msgid "Install/Uninstall"
+msgid "Don't install"
+msgstr "Instali/Malinstali"
+
+#: urlmon.rc:40
+msgid ""
+"When installed, ActiveX has full access to your computer.Do not click "
+"install unless you have absolute trust in the above source."
+msgstr ""
+
+#: urlmon.rc:47
+msgid "Installation of component failed: %08x"
+msgstr ""
+
+#: urlmon.rc:48
+#, fuzzy
+#| msgid "&Install"
+msgid "Install (%d)"
+msgstr "&Instali"
+
+#: urlmon.rc:49
+#, fuzzy
+#| msgid "&Install"
+msgid "Install"
+msgstr "&Instali"
+
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
 msgid "&Restore"
@@ -8184,10 +8226,6 @@ msgstr ""
 
 #: wininet.rc:58
 msgid "Server"
-msgstr ""
-
-#: wininet.rc:74
-msgid "Security Warning"
 msgstr ""
 
 #: wininet.rc:77
@@ -9591,10 +9629,6 @@ msgstr ""
 #: explorer.rc:28
 msgid "Wine Explorer"
 msgstr "Esplorilo de Wine"
-
-#: explorer.rc:29
-msgid "Location:"
-msgstr "Loko:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"

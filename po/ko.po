@@ -8236,6 +8236,50 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr "초"
 
+#: urlmon.rc:29 wininet.rc:74
+msgid "Security Warning"
+msgstr "보안 경고"
+
+#: urlmon.rc:32
+#, fuzzy
+#| msgid "Do you want to continue anyway?"
+msgid "Do you want to install this software?"
+msgstr "그래도 계속 진행하겠습니까?"
+
+#: urlmon.rc:34 explorer.rc:29
+msgid "Location:"
+msgstr "위치:"
+
+#: urlmon.rc:36
+#, fuzzy
+#| msgid "Install/Uninstall"
+msgid "Don't install"
+msgstr "설치/삭제"
+
+#: urlmon.rc:40
+msgid ""
+"When installed, ActiveX has full access to your computer.Do not click "
+"install unless you have absolute trust in the above source."
+msgstr ""
+
+#: urlmon.rc:47
+#, fuzzy
+#| msgid "Installation transform failed to apply.\n"
+msgid "Installation of component failed: %08x"
+msgstr "설치 변환 실패가 추가됨.\n"
+
+#: urlmon.rc:48
+#, fuzzy
+#| msgid "&Install"
+msgid "Install (%d)"
+msgstr "설치(&I)"
+
+#: urlmon.rc:49
+#, fuzzy
+#| msgid "&Install"
+msgid "Install"
+msgstr "설치(&I)"
+
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
 msgid "&Restore"
@@ -8320,10 +8364,6 @@ msgstr "인증 필요"
 #: wininet.rc:58
 msgid "Server"
 msgstr "서버"
-
-#: wininet.rc:74
-msgid "Security Warning"
-msgstr "보안 경고"
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
@@ -10055,10 +10095,6 @@ msgstr "사용법: dxdiag [/whql:off | /whql:on] [/t 파일이름 | /x 파일이
 #: explorer.rc:28
 msgid "Wine Explorer"
 msgstr "Wine 탐색기"
-
-#: explorer.rc:29
-msgid "Location:"
-msgstr "위치:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"

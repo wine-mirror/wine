@@ -8373,6 +8373,47 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr ""
 
+#: urlmon.rc:29 wininet.rc:74
+msgid "Security Warning"
+msgstr ""
+
+#: urlmon.rc:32
+#, fuzzy
+msgid "Do you want to install this software?"
+msgstr "Искате ли да симулирате рестартиране на Windows?"
+
+#: urlmon.rc:34 explorer.rc:29
+#, fuzzy
+msgid "Location:"
+msgstr "LAN връзка"
+
+#: urlmon.rc:36
+#, fuzzy
+msgid "Don't install"
+msgstr "Инсталиране..."
+
+#: urlmon.rc:40
+msgid ""
+"When installed, ActiveX has full access to your computer.Do not click "
+"install unless you have absolute trust in the above source."
+msgstr ""
+
+#: urlmon.rc:47
+msgid "Installation of component failed: %08x"
+msgstr ""
+
+#: urlmon.rc:48
+#, fuzzy
+#| msgid "&Install"
+msgid "Install (%d)"
+msgstr "Инсталирай"
+
+#: urlmon.rc:49
+#, fuzzy
+#| msgid "&Install"
+msgid "Install"
+msgstr "Инсталирай"
+
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 #, fuzzy
 msgctxt "window"
@@ -8459,10 +8500,6 @@ msgstr ""
 #, fuzzy
 msgid "Server"
 msgstr "Превърти надолу"
-
-#: wininet.rc:74
-msgid "Security Warning"
-msgstr ""
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
@@ -9873,11 +9910,6 @@ msgstr ""
 #, fuzzy
 msgid "Wine Explorer"
 msgstr "&Разгледай"
-
-#: explorer.rc:29
-#, fuzzy
-msgid "Location:"
-msgstr "LAN връзка"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"

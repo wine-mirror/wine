@@ -8333,6 +8333,50 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " seg"
 
+#: urlmon.rc:29 wininet.rc:74
+msgid "Security Warning"
+msgstr "Advertencia de Seguridad"
+
+#: urlmon.rc:32
+#, fuzzy
+#| msgid "Do you want to continue anyway?"
+msgid "Do you want to install this software?"
+msgstr "¿Quieres continuar igualmente?"
+
+#: urlmon.rc:34 explorer.rc:29
+msgid "Location:"
+msgstr "Ubicación:"
+
+#: urlmon.rc:36
+#, fuzzy
+#| msgid "Install/Uninstall"
+msgid "Don't install"
+msgstr "Instalar/Desinstalar"
+
+#: urlmon.rc:40
+msgid ""
+"When installed, ActiveX has full access to your computer.Do not click "
+"install unless you have absolute trust in the above source."
+msgstr ""
+
+#: urlmon.rc:47
+#, fuzzy
+#| msgid "Installation transform failed to apply.\n"
+msgid "Installation of component failed: %08x"
+msgstr "No pudo aplicarse la transformación en la instalación.\n"
+
+#: urlmon.rc:48
+#, fuzzy
+#| msgid "&Install"
+msgid "Install (%d)"
+msgstr "&Instalar"
+
+#: urlmon.rc:49
+#, fuzzy
+#| msgid "&Install"
+msgid "Install"
+msgstr "&Instalar"
+
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
 msgid "&Restore"
@@ -8417,10 +8461,6 @@ msgstr "Autenticación Requerida"
 #: wininet.rc:58
 msgid "Server"
 msgstr "Servidor"
-
-#: wininet.rc:74
-msgid "Security Warning"
-msgstr "Advertencia de Seguridad"
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
@@ -10200,10 +10240,6 @@ msgstr "Uso: dxdiag [/whql:off | /whql:on] [/t fichero | /x fichero]"
 #: explorer.rc:28
 msgid "Wine Explorer"
 msgstr "Explorador de Wine"
-
-#: explorer.rc:29
-msgid "Location:"
-msgstr "Ubicación:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"

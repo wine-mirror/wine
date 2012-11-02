@@ -8312,6 +8312,50 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " sek"
 
+#: urlmon.rc:29 wininet.rc:74
+msgid "Security Warning"
+msgstr "Sikkerhedsadvarsel"
+
+#: urlmon.rc:32
+#, fuzzy
+#| msgid "Do you want to continue anyway?"
+msgid "Do you want to install this software?"
+msgstr "Vil du fortsætte alligevel?"
+
+#: urlmon.rc:34 explorer.rc:29
+msgid "Location:"
+msgstr "Placering:"
+
+#: urlmon.rc:36
+#, fuzzy
+#| msgid "Install/Uninstall"
+msgid "Don't install"
+msgstr "Installer/Fjern"
+
+#: urlmon.rc:40
+msgid ""
+"When installed, ActiveX has full access to your computer.Do not click "
+"install unless you have absolute trust in the above source."
+msgstr ""
+
+#: urlmon.rc:47
+#, fuzzy
+#| msgid "Installation transform failed to apply.\n"
+msgid "Installation of component failed: %08x"
+msgstr "Installations transformering blev ikke tilføjet.\n"
+
+#: urlmon.rc:48
+#, fuzzy
+#| msgid "&Install"
+msgid "Install (%d)"
+msgstr "&Installer"
+
+#: urlmon.rc:49
+#, fuzzy
+#| msgid "&Install"
+msgid "Install"
+msgstr "&Installer"
+
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
 msgid "&Restore"
@@ -8396,10 +8440,6 @@ msgstr "Godkendelse Påkrævet"
 #: wininet.rc:58
 msgid "Server"
 msgstr "Server"
-
-#: wininet.rc:74
-msgid "Security Warning"
-msgstr "Sikkerhedsadvarsel"
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
@@ -10117,10 +10157,6 @@ msgstr "Brug: dxdiag [/whql:off | /whql:on] [/t filnavn | /x filnavn]"
 #: explorer.rc:28
 msgid "Wine Explorer"
 msgstr "Wine Stifinder"
-
-#: explorer.rc:29
-msgid "Location:"
-msgstr "Placering:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"

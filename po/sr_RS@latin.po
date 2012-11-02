@@ -8661,6 +8661,49 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " sek."
 
+#: urlmon.rc:29 wininet.rc:74
+msgid "Security Warning"
+msgstr ""
+
+#: urlmon.rc:32
+#, fuzzy
+msgid "Do you want to install this software?"
+msgstr "Želite li da simulirate ponovno pokretanje Windows-a?"
+
+#: urlmon.rc:34 explorer.rc:29
+#, fuzzy
+msgid "Location:"
+msgstr "Lokacija"
+
+#: urlmon.rc:36
+#, fuzzy
+#| msgid "Install/Uninstall"
+msgid "Don't install"
+msgstr "Instaliraj/ukloni"
+
+#: urlmon.rc:40
+msgid ""
+"When installed, ActiveX has full access to your computer.Do not click "
+"install unless you have absolute trust in the above source."
+msgstr ""
+
+#: urlmon.rc:47
+#, fuzzy
+msgid "Installation of component failed: %08x"
+msgstr "Instalacioni programi.\n"
+
+#: urlmon.rc:48
+#, fuzzy
+#| msgid "&Install"
+msgid "Install (%d)"
+msgstr "&Instaliraj"
+
+#: urlmon.rc:49
+#, fuzzy
+#| msgid "&Install"
+msgid "Install"
+msgstr "&Instaliraj"
+
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 #, fuzzy
 msgctxt "window"
@@ -8747,10 +8790,6 @@ msgstr "Potvrda identiteta"
 #: wininet.rc:58
 msgid "Server"
 msgstr "Server"
-
-#: wininet.rc:74
-msgid "Security Warning"
-msgstr ""
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
@@ -10166,11 +10205,6 @@ msgstr ""
 #, fuzzy
 msgid "Wine Explorer"
 msgstr "Wine Internet Explorer"
-
-#: explorer.rc:29
-#, fuzzy
-msgid "Location:"
-msgstr "Lokacija"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"

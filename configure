@@ -15780,7 +15780,7 @@ wine_fn_config_dll typelib.dll16 enable_win16
 wine_fn_config_dll unicows enable_unicows implib
 wine_fn_config_dll updspapi enable_updspapi
 wine_fn_config_dll url enable_url implib
-wine_fn_config_dll urlmon enable_urlmon implib
+wine_fn_config_dll urlmon enable_urlmon implib,po
 wine_fn_config_test dlls/urlmon/tests urlmon_test
 wine_fn_config_dll usbd.sys enable_usbd_sys implib
 wine_fn_config_dll user.exe16 enable_win16

@@ -8243,6 +8243,50 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " 秒"
 
+#: urlmon.rc:29 wininet.rc:74
+msgid "Security Warning"
+msgstr "セキュリティ警告"
+
+#: urlmon.rc:32
+#, fuzzy
+#| msgid "Do you want to continue anyway?"
+msgid "Do you want to install this software?"
+msgstr "とにかく続行してしまいますか?"
+
+#: urlmon.rc:34 explorer.rc:29
+msgid "Location:"
+msgstr "場所:"
+
+#: urlmon.rc:36
+#, fuzzy
+#| msgid "Install/Uninstall"
+msgid "Don't install"
+msgstr "インストールとアンインストール"
+
+#: urlmon.rc:40
+msgid ""
+"When installed, ActiveX has full access to your computer.Do not click "
+"install unless you have absolute trust in the above source."
+msgstr ""
+
+#: urlmon.rc:47
+#, fuzzy
+#| msgid "Installation transform failed to apply.\n"
+msgid "Installation of component failed: %08x"
+msgstr "インストール トランスフォームの適用に失敗しました。\n"
+
+#: urlmon.rc:48
+#, fuzzy
+#| msgid "&Install"
+msgid "Install (%d)"
+msgstr "インストール(&I)"
+
+#: urlmon.rc:49
+#, fuzzy
+#| msgid "&Install"
+msgid "Install"
+msgstr "インストール(&I)"
+
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
 msgid "&Restore"
@@ -8327,10 +8371,6 @@ msgstr "認証が必要です"
 #: wininet.rc:58
 msgid "Server"
 msgstr "サーバ"
-
-#: wininet.rc:74
-msgid "Security Warning"
-msgstr "セキュリティ警告"
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
@@ -10087,10 +10127,6 @@ msgstr "使い方: dxdiag [/whql:off | /whql:on] [/t ファイル名 | /x ファ
 #: explorer.rc:28
 msgid "Wine Explorer"
 msgstr "Wine エクスプローラ"
-
-#: explorer.rc:29
-msgid "Location:"
-msgstr "場所:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"

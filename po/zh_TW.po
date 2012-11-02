@@ -8189,6 +8189,50 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " 秒"
 
+#: urlmon.rc:29 wininet.rc:74
+msgid "Security Warning"
+msgstr "安全警告"
+
+#: urlmon.rc:32
+#, fuzzy
+#| msgid "Do you want to continue anyway?"
+msgid "Do you want to install this software?"
+msgstr "您無論如何都要繼續？"
+
+#: urlmon.rc:34 explorer.rc:29
+msgid "Location:"
+msgstr "位址："
+
+#: urlmon.rc:36
+#, fuzzy
+#| msgid "Install/Uninstall"
+msgid "Don't install"
+msgstr "安裝/移除"
+
+#: urlmon.rc:40
+msgid ""
+"When installed, ActiveX has full access to your computer.Do not click "
+"install unless you have absolute trust in the above source."
+msgstr ""
+
+#: urlmon.rc:47
+#, fuzzy
+#| msgid "Installation transform failed to apply.\n"
+msgid "Installation of component failed: %08x"
+msgstr "無法套用安裝變換。\n"
+
+#: urlmon.rc:48
+#, fuzzy
+#| msgid "&Install"
+msgid "Install (%d)"
+msgstr "安裝(&I)"
+
+#: urlmon.rc:49
+#, fuzzy
+#| msgid "&Install"
+msgid "Install"
+msgstr "安裝(&I)"
+
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
 msgid "&Restore"
@@ -8273,10 +8317,6 @@ msgstr "需要認證"
 #: wininet.rc:58
 msgid "Server"
 msgstr "伺服器"
-
-#: wininet.rc:74
-msgid "Security Warning"
-msgstr "安全警告"
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
@@ -9941,10 +9981,6 @@ msgstr "用法：dxdiag [/whql:off | /whql:on] [/t 檔名 | /x 檔名]"
 #: explorer.rc:28
 msgid "Wine Explorer"
 msgstr "Wine 檔案總管"
-
-#: explorer.rc:29
-msgid "Location:"
-msgstr "位址："
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"

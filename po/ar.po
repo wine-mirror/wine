@@ -8230,6 +8230,41 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr ""
 
+#: urlmon.rc:29 wininet.rc:74
+msgid "Security Warning"
+msgstr ""
+
+#: urlmon.rc:32
+msgid "Do you want to install this software?"
+msgstr ""
+
+#: urlmon.rc:34 explorer.rc:29
+#, fuzzy
+msgid "Location:"
+msgstr "معلومات"
+
+#: urlmon.rc:36
+msgid "Don't install"
+msgstr ""
+
+#: urlmon.rc:40
+msgid ""
+"When installed, ActiveX has full access to your computer.Do not click "
+"install unless you have absolute trust in the above source."
+msgstr ""
+
+#: urlmon.rc:47
+msgid "Installation of component failed: %08x"
+msgstr ""
+
+#: urlmon.rc:48
+msgid "Install (%d)"
+msgstr ""
+
+#: urlmon.rc:49
+msgid "Install"
+msgstr ""
+
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
 msgid "&Restore"
@@ -8318,10 +8353,6 @@ msgstr ""
 
 #: wininet.rc:58
 msgid "Server"
-msgstr ""
-
-#: wininet.rc:74
-msgid "Security Warning"
 msgstr ""
 
 #: wininet.rc:77
@@ -9734,11 +9765,6 @@ msgstr ""
 #: explorer.rc:28
 msgid "Wine Explorer"
 msgstr ""
-
-#: explorer.rc:29
-#, fuzzy
-msgid "Location:"
-msgstr "معلومات"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"

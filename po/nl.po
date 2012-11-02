@@ -8386,6 +8386,50 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr ""
 
+#: urlmon.rc:29 wininet.rc:74
+msgid "Security Warning"
+msgstr "Veiligheidswaarschuwing"
+
+#: urlmon.rc:32
+#, fuzzy
+#| msgid "Do you want to continue anyway?"
+msgid "Do you want to install this software?"
+msgstr "Wilt u toch doorgaan?"
+
+#: urlmon.rc:34 explorer.rc:29
+msgid "Location:"
+msgstr "Locatie:"
+
+#: urlmon.rc:36
+#, fuzzy
+#| msgid "Install/Uninstall"
+msgid "Don't install"
+msgstr "Installeren/Verwijderen"
+
+#: urlmon.rc:40
+msgid ""
+"When installed, ActiveX has full access to your computer.Do not click "
+"install unless you have absolute trust in the above source."
+msgstr ""
+
+#: urlmon.rc:47
+#, fuzzy
+#| msgid "Installation transform failed to apply.\n"
+msgid "Installation of component failed: %08x"
+msgstr "Installatietransformatie kon niet worden toegepast.\n"
+
+#: urlmon.rc:48
+#, fuzzy
+#| msgid "&Install"
+msgid "Install (%d)"
+msgstr "&Installeren"
+
+#: urlmon.rc:49
+#, fuzzy
+#| msgid "&Install"
+msgid "Install"
+msgstr "&Installeren"
+
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
 msgid "&Restore"
@@ -8470,10 +8514,6 @@ msgstr "Authenticatie vereist"
 #: wininet.rc:58
 msgid "Server"
 msgstr "Server"
-
-#: wininet.rc:74
-msgid "Security Warning"
-msgstr "Veiligheidswaarschuwing"
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
@@ -10257,10 +10297,6 @@ msgstr ""
 #: explorer.rc:28
 msgid "Wine Explorer"
 msgstr "Wine Verkenner"
-
-#: explorer.rc:29
-msgid "Location:"
-msgstr "Locatie:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"

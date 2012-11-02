@@ -8550,6 +8550,50 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " sec"
 
+#: urlmon.rc:29 wininet.rc:74
+#, fuzzy
+msgid "Security Warning"
+msgstr "Sikkerhet"
+
+#: urlmon.rc:32
+#, fuzzy
+msgid "Do you want to install this software?"
+msgstr "Vil du simulere en omstart av Windows?"
+
+#: urlmon.rc:34 explorer.rc:29
+#, fuzzy
+msgid "Location:"
+msgstr "Plassering"
+
+#: urlmon.rc:36
+#, fuzzy
+#| msgid "Install/Uninstall"
+msgid "Don't install"
+msgstr "Installer/Avinstaller"
+
+#: urlmon.rc:40
+msgid ""
+"When installed, ActiveX has full access to your computer.Do not click "
+"install unless you have absolute trust in the above source."
+msgstr ""
+
+#: urlmon.rc:47
+#, fuzzy
+msgid "Installation of component failed: %08x"
+msgstr "Partisjonsfeil.\n"
+
+#: urlmon.rc:48
+#, fuzzy
+#| msgid "&Install"
+msgid "Install (%d)"
+msgstr "&Installer"
+
+#: urlmon.rc:49
+#, fuzzy
+#| msgid "&Install"
+msgid "Install"
+msgstr "&Installer"
+
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 #, fuzzy
 msgctxt "window"
@@ -8635,11 +8679,6 @@ msgstr "Pålogging"
 #: wininet.rc:58
 msgid "Server"
 msgstr "Tjener"
-
-#: wininet.rc:74
-#, fuzzy
-msgid "Security Warning"
-msgstr "Sikkerhet"
 
 #: wininet.rc:77
 #, fuzzy
@@ -10341,11 +10380,6 @@ msgstr ""
 #, fuzzy
 msgid "Wine Explorer"
 msgstr "Wine Internet Explorer"
-
-#: explorer.rc:29
-#, fuzzy
-msgid "Location:"
-msgstr "Plassering"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
