@@ -2919,8 +2919,13 @@ MSVCRT_size_t CDECL MSVCRT_fwrite(const void *ptr, MSVCRT_size_t size, MSVCRT_si
         }
     }
     if(wrcnt) {
+        int res;
+
+        if(file->_bufsiz == 0 && !(file->_flag & MSVCRT__IONBF))
+            msvcrt_alloc_buffer(file);
+
         /* Flush buffer */
-        int res=msvcrt_flush_buffer(file);
+        res=msvcrt_flush_buffer(file);
         if(!res) {
             int pwritten = MSVCRT__write(file->_file, ptr, wrcnt);
             if (pwritten <= 0)
