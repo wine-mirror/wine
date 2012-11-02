@@ -23,7 +23,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
-static WCHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
+static WCHAR bscb_holderW[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
 
 extern IID IID_IBindStatusCallbackHolder;
 
@@ -49,6 +49,44 @@ static void *get_callback_iface(BindStatusCallback *This, REFIID riid)
         hres = IServiceProvider_QueryService(This->serv_prov, riid, riid, &ret);
 
     return SUCCEEDED(hres) ? ret : NULL;
+}
+
+static IBindStatusCallback *bsch_from_bctx(IBindCtx *bctx)
+{
+    IBindStatusCallback *bsc;
+    IUnknown *unk;
+    HRESULT hres;
+
+    hres = IBindCtx_GetObjectParam(bctx, bscb_holderW, &unk);
+    if(FAILED(hres))
+        return NULL;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IBindStatusCallback, (void**)&bsc);
+    IUnknown_Release(unk);
+    return SUCCEEDED(hres) ? bsc : NULL;
+}
+
+static IBindStatusCallback *bsc_from_bctx(IBindCtx *bctx)
+{
+    BindStatusCallback *holder;
+    IBindStatusCallback *bsc;
+    HRESULT hres;
+
+    bsc = bsch_from_bctx(bctx);
+    if(!bsc)
+        return NULL;
+
+    hres = IBindStatusCallback_QueryInterface(bsc, &IID_IBindStatusCallbackHolder, (void**)&holder);
+    if(FAILED(hres))
+        return bsc;
+
+    if(holder->callback) {
+        IBindStatusCallback_Release(bsc);
+        bsc = holder->callback;
+    }
+
+    IBindStatusCallbackEx_Release(&holder->IBindStatusCallbackEx_iface);
+    return bsc;
 }
 
 static inline BindStatusCallback *impl_from_IBindStatusCallbackEx(IBindStatusCallbackEx *iface)
@@ -516,7 +554,6 @@ HRESULT WINAPI RegisterBindStatusCallback(IBindCtx *pbc, IBindStatusCallback *pb
 {
     BindStatusCallback *holder;
     IBindStatusCallback *bsc, *prev = NULL;
-    IUnknown *unk;
     HRESULT hres;
 
     TRACE("(%p %p %p %x)\n", pbc, pbsc, ppbscPrevious, dwReserved);
@@ -524,34 +561,30 @@ HRESULT WINAPI RegisterBindStatusCallback(IBindCtx *pbc, IBindStatusCallback *pb
     if (!pbc || !pbsc)
         return E_INVALIDARG;
 
-    hres = IBindCtx_GetObjectParam(pbc, BSCBHolder, &unk);
-    if(SUCCEEDED(hres)) {
-        hres = IUnknown_QueryInterface(unk, &IID_IBindStatusCallback, (void**)&bsc);
-        IUnknown_Release(unk);
+    bsc = bsch_from_bctx(pbc);
+    if(bsc) {
+        hres = IBindStatusCallback_QueryInterface(bsc, &IID_IBindStatusCallbackHolder, (void**)&holder);
         if(SUCCEEDED(hres)) {
-            hres = IBindStatusCallback_QueryInterface(bsc, &IID_IBindStatusCallbackHolder, (void**)&holder);
-            if(SUCCEEDED(hres)) {
-                if(ppbscPrevious) {
-                    IBindStatusCallback_AddRef(holder->callback);
-                    *ppbscPrevious = holder->callback;
-                }
-
-                set_callback(holder, pbsc);
-
-                IBindStatusCallback_Release(bsc);
-                IBindStatusCallbackEx_Release(&holder->IBindStatusCallbackEx_iface);
-                return S_OK;
-            }else {
-                prev = bsc;
+            if(ppbscPrevious) {
+                IBindStatusCallback_AddRef(holder->callback);
+                *ppbscPrevious = holder->callback;
             }
+
+            set_callback(holder, pbsc);
+
+            IBindStatusCallback_Release(bsc);
+            IBindStatusCallbackEx_Release(&holder->IBindStatusCallbackEx_iface);
+            return S_OK;
+        }else {
+            prev = bsc;
         }
 
-        IBindCtx_RevokeObjectParam(pbc, BSCBHolder);
+        IBindCtx_RevokeObjectParam(pbc, bscb_holderW);
     }
 
     hres = wrap_callback(pbsc, &bsc);
     if(SUCCEEDED(hres)) {
-        hres = IBindCtx_RegisterObjectParam(pbc, BSCBHolder, (IUnknown*)bsc);
+        hres = IBindCtx_RegisterObjectParam(pbc, bscb_holderW, (IUnknown*)bsc);
         IBindStatusCallback_Release(bsc);
     }
     if(FAILED(hres)) {
@@ -579,39 +612,21 @@ HRESULT WINAPI RegisterBindStatusCallback(IBindCtx *pbc, IBindStatusCallback *pb
  */
 HRESULT WINAPI RevokeBindStatusCallback(IBindCtx *pbc, IBindStatusCallback *pbsc)
 {
-    BindStatusCallback *holder;
     IBindStatusCallback *callback;
-    IUnknown *unk;
-    BOOL dorevoke = FALSE;
-    HRESULT hres;
 
     TRACE("(%p %p)\n", pbc, pbsc);
 
     if (!pbc || !pbsc)
         return E_INVALIDARG;
 
-    hres = IBindCtx_GetObjectParam(pbc, BSCBHolder, &unk);
-    if(FAILED(hres))
+    callback = bsc_from_bctx(pbc);
+    if(!callback)
         return S_OK;
 
-    hres = IUnknown_QueryInterface(unk, &IID_IBindStatusCallback, (void**)&callback);
-    IUnknown_Release(unk);
-    if(FAILED(hres))
-        return S_OK;
+    if(callback == pbsc)
+        IBindCtx_RevokeObjectParam(pbc, bscb_holderW);
 
-    hres = IBindStatusCallback_QueryInterface(callback, &IID_IBindStatusCallbackHolder, (void**)&holder);
-    if(SUCCEEDED(hres)) {
-        if(pbsc == holder->callback)
-            dorevoke = TRUE;
-        IBindStatusCallbackEx_Release(&holder->IBindStatusCallbackEx_iface);
-    }else if(pbsc == callback) {
-        dorevoke = TRUE;
-    }
     IBindStatusCallback_Release(callback);
-
-    if(dorevoke)
-        IBindCtx_RevokeObjectParam(pbc, BSCBHolder);
-
     return S_OK;
 }
 
