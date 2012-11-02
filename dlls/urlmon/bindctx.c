@@ -66,7 +66,7 @@ static IBindStatusCallback *bsch_from_bctx(IBindCtx *bctx)
     return SUCCEEDED(hres) ? bsc : NULL;
 }
 
-static IBindStatusCallback *bsc_from_bctx(IBindCtx *bctx)
+IBindStatusCallback *bsc_from_bctx(IBindCtx *bctx)
 {
     BindStatusCallback *holder;
     IBindStatusCallback *bsc;

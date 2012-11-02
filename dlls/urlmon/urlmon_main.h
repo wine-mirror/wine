@@ -64,6 +64,8 @@ extern LONG URLMON_refCount DECLSPEC_HIDDEN;
 static inline void URLMON_LockModule(void) { InterlockedIncrement( &URLMON_refCount ); }
 static inline void URLMON_UnlockModule(void) { InterlockedDecrement( &URLMON_refCount ); }
 
+extern HINSTANCE urlmon_instance;
+
 IInternetProtocolInfo *get_protocol_info(LPCWSTR) DECLSPEC_HIDDEN;
 HRESULT get_protocol_handler(IUri*,CLSID*,BOOL*,IClassFactory**) DECLSPEC_HIDDEN;
 IInternetProtocol *get_mime_filter(LPCWSTR) DECLSPEC_HIDDEN;
@@ -78,6 +80,10 @@ HRESULT bind_to_object(IMoniker*,IUri*,IBindCtx*,REFIID,void**ppv) DECLSPEC_HIDD
 
 HRESULT create_default_callback(IBindStatusCallback**) DECLSPEC_HIDDEN;
 HRESULT wrap_callback(IBindStatusCallback*,IBindStatusCallback**) DECLSPEC_HIDDEN;
+IBindStatusCallback *bsc_from_bctx(IBindCtx*) DECLSPEC_HIDDEN;
+
+typedef HRESULT (*stop_cache_binding_proc_t)(void*,const WCHAR*,HRESULT,const WCHAR*);
+HRESULT download_to_cache(IUri*,stop_cache_binding_proc_t,void*,IBindStatusCallback*) DECLSPEC_HIDDEN;
 
 typedef struct ProtocolVtbl ProtocolVtbl;
 
@@ -284,6 +290,19 @@ static inline LPWSTR heap_strdupAtoW(const char *str)
         DWORD len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
         ret = heap_alloc(len*sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    }
+
+    return ret;
+}
+
+static inline char *heap_strdupWtoA(const WCHAR *str)
+{
+    char *ret = NULL;
+
+    if(str) {
+        size_t size = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
+        ret = heap_alloc(size);
+        WideCharToMultiByte(CP_ACP, 0, str, -1, ret, size, NULL, NULL);
     }
 
     return ret;

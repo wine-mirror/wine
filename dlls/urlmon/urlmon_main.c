@@ -38,6 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 DEFINE_GUID(CLSID_CUri, 0xDF2FCE13, 0x25EC, 0x45BB, 0x9D,0x4C, 0xCE,0xCD,0x47,0xC2,0x43,0x0C);
 
 LONG URLMON_refCount = 0;
+HINSTANCE urlmon_instance;
 
 static HMODULE hCabinet = NULL;
 static DWORD urlmon_tls = TLS_OUT_OF_INDEXES;
@@ -151,6 +152,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
+        urlmon_instance = hinstDLL;
         init_session();
         break;
 
