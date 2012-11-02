@@ -1259,7 +1259,7 @@ static void test_http_cache(void)
                       FILE_ATTRIBUTE_NORMAL, NULL);
     ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
     file_size = GetFileSize(file, NULL);
-    todo_wine ok(file_size == 106, "file size = %u\n", file_size);
+    ok(file_size == 106, "file size = %u\n", file_size);
 
     size = sizeof(buf);
     ret = InternetReadFile(request, buf, sizeof(buf), &size);
@@ -1267,7 +1267,7 @@ static void test_http_cache(void)
     ok(size == 100, "size = %u\n", size);
 
     file_size = GetFileSize(file, NULL);
-    todo_wine ok(file_size == 106, "file size = %u\n", file_size);
+    ok(file_size == 106, "file size = %u\n", file_size);
     CloseHandle(file);
 
     ok(InternetCloseHandle(request), "Close request handle failed\n");

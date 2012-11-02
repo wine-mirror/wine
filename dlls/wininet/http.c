@@ -2233,6 +2233,47 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
     return INET_SetOption(hdr, option, buffer, size);
 }
 
+static void create_cache_entry(http_request_t *req)
+{
+    WCHAR url[INTERNET_MAX_URL_LENGTH];
+    WCHAR file_name[MAX_PATH+1];
+    BOOL b;
+
+    /* FIXME: We should free previous cache file earlier */
+    heap_free(req->cacheFile);
+    CloseHandle(req->hCacheFile);
+    req->hCacheFile = NULL;
+
+    b = HTTP_GetRequestURL(req, url);
+    if(!b) {
+        WARN("Could not get URL\n");
+        return;
+    }
+
+    b = CreateUrlCacheEntryW(url, req->contentLength, NULL, file_name, 0);
+    if(!b) {
+        WARN("Could not create cache entry: %08x\n", GetLastError());
+        return;
+    }
+
+    req->cacheFile = heap_strdupW(file_name);
+    req->hCacheFile = CreateFileW(req->cacheFile, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+              NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if(req->hCacheFile == INVALID_HANDLE_VALUE) {
+        WARN("Could not create file: %u\n", GetLastError());
+        req->hCacheFile = NULL;
+        return;
+    }
+
+    if(req->read_size) {
+        DWORD written;
+
+        b = WriteFile(req->hCacheFile, req->read_buf+req->read_pos, req->read_size, &written, NULL);
+        if(!b)
+            FIXME("WriteFile failed: %u\n", GetLastError());
+    }
+}
+
 /* read some more data into the read buffer (the read section must be held) */
 static DWORD read_more_data( http_request_t *req, int maxlen )
 {
@@ -2314,10 +2355,29 @@ static BOOL end_of_read_data( http_request_t *req )
     return !req->read_size && req->data_stream->vtbl->end_of_data(req->data_stream, req);
 }
 
+static DWORD read_http_stream(http_request_t *req, BYTE *buf, DWORD size, DWORD *read, read_mode_t read_mode)
+{
+    DWORD res;
+
+    res = req->data_stream->vtbl->read(req->data_stream, req, buf, size, read, read_mode);
+    assert(*read <= size);
+
+    if(*read && req->hCacheFile) {
+        BOOL bres;
+        DWORD written;
+
+        bres = WriteFile(req->hCacheFile, buf, *read, &written, NULL);
+        if(!bres)
+            FIXME("WriteFile failed: %u\n", GetLastError());
+    }
+
+    return res;
+}
+
 /* fetch some more data into the read buffer (the read section must be held) */
 static DWORD refill_read_buffer(http_request_t *req, read_mode_t read_mode, DWORD *read_bytes)
 {
-    DWORD res, read=0, want;
+    DWORD res, read=0;
 
     if(req->read_size == sizeof(req->read_buf))
         return ERROR_SUCCESS;
@@ -2328,10 +2388,8 @@ static DWORD refill_read_buffer(http_request_t *req, read_mode_t read_mode, DWOR
         req->read_pos = 0;
     }
 
-    want = sizeof(req->read_buf) - req->read_size;
-    res = req->data_stream->vtbl->read(req->data_stream, req, req->read_buf+req->read_size,
-            want, &read, read_mode);
-    assert(read <= want);
+    res = read_http_stream(req, req->read_buf+req->read_size, sizeof(req->read_buf) - req->read_size,
+            &read, read_mode);
     req->read_size += read;
 
     TRACE("read %u bytes, read_size %u\n", read, req->read_size);
@@ -2723,7 +2781,7 @@ static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *
     }
 
     if(ret_read < size) {
-        res = req->data_stream->vtbl->read(req->data_stream, req, (BYTE*)buffer+ret_read, size-ret_read, &current_read, read_mode);
+        res = read_http_stream(req, (BYTE*)buffer+ret_read, size-ret_read, &current_read, read_mode);
         ret_read += current_read;
     }
 
@@ -2731,15 +2789,6 @@ static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *
 
     *read = ret_read;
     TRACE( "retrieved %u bytes (%u)\n", ret_read, req->contentLength );
-
-    if(req->hCacheFile && res == ERROR_SUCCESS && ret_read) {
-        BOOL res;
-        DWORD written;
-
-        res = WriteFile(req->hCacheFile, buffer, ret_read, &written, NULL);
-        if(!res)
-            WARN("WriteFile failed: %u\n", GetLastError());
-    }
 
     if(size && !ret_read)
         http_release_netconn(req, res == ERROR_SUCCESS);
@@ -4610,35 +4659,6 @@ static void http_process_keep_alive(http_request_t *req)
         req->netconn->keep_alive = !strcmpiW(req->version, g_szHttp1_1);
 }
 
-static void HTTP_CacheRequest(http_request_t *request)
-{
-    WCHAR url[INTERNET_MAX_URL_LENGTH];
-    WCHAR cacheFileName[MAX_PATH+1];
-    BOOL b;
-
-    b = HTTP_GetRequestURL(request, url);
-    if(!b) {
-        WARN("Could not get URL\n");
-        return;
-    }
-
-    b = CreateUrlCacheEntryW(url, request->contentLength, NULL, cacheFileName, 0);
-    if(b) {
-        heap_free(request->cacheFile);
-        CloseHandle(request->hCacheFile);
-
-        request->cacheFile = heap_strdupW(cacheFileName);
-        request->hCacheFile = CreateFileW(request->cacheFile, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
-                  NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-        if(request->hCacheFile == INVALID_HANDLE_VALUE) {
-            WARN("Could not create file: %u\n", GetLastError());
-            request->hCacheFile = NULL;
-        }
-    }else {
-        WARN("Could not create cache entry: %08x\n", GetLastError());
-    }
-}
-
 static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
 {
     const BOOL is_https = (request->hdr.dwFlags & INTERNET_FLAG_SECURE) != 0;
@@ -4997,13 +5017,13 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
     }
     while (loop_next);
 
-    if(res == ERROR_SUCCESS)
-        HTTP_CacheRequest(request);
-
 lend:
     heap_free(requestString);
 
     /* TODO: send notification for P3P header */
+
+    if(res == ERROR_SUCCESS)
+        create_cache_entry(request);
 
     if (request->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
@@ -5106,6 +5126,9 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
         }
         }
     }
+
+    if(res == ERROR_SUCCESS)
+        create_cache_entry(request);
 
     if (res == ERROR_SUCCESS && request->contentLength)
         HTTP_ReceiveRequestData(request, TRUE);
