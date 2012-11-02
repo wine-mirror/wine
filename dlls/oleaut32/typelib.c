@@ -4092,9 +4092,6 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 					     pOtherTypeInfoBlks[i].name_offs +
 					     pNameTable);
       (*ppTypeInfoImpl)->dwHelpContext = pOtherTypeInfoBlks[i].helpcontext;
-      (*ppTypeInfoImpl)->DocString = TLB_MultiByteToBSTR(
-                                            pOtherTypeInfoBlks[i].helpcontext +
-                                            pNameTable);
       (*ppTypeInfoImpl)->TypeAttr.guid = pOtherTypeInfoBlks[i].uuid;
       (*ppTypeInfoImpl)->TypeAttr.typekind = pTIHeader->typekind;
       (*ppTypeInfoImpl)->TypeAttr.wMajorVerNum = pTIHeader->major_version;
