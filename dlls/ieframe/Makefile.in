@@ -18,7 +18,6 @@ C_SRCS = \
 	persist.c \
 	shellbrowser.c \
 	shelluihelper.c \
-	taskbarlist.c \
 	urlhist.c \
 	view.c \
 	webbrowser.c

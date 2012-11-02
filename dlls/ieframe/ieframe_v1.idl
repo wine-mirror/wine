@@ -30,12 +30,6 @@
 ] coclass CUrlHistory { interface IUrlHistoryStg2; }
 
 [
-    helpstring("Task Bar Communication"),
-    threading(apartment),
-    uuid(56fdf344-fd6d-11d0-958a-006097c9a090)
-] coclass TaskbarList { interface ITaskbarList; }
-
-[
     helpstring("Internet Shortcut"),
     threading(apartment),
     progid("InternetShortcut"),

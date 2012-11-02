@@ -21,6 +21,8 @@
 #ifndef __WINE_EXPLORERFRAME_H
 #define __WINE_EXPLORERFRAME_H
 
+#define COBJMACROS
+
 #include "shlobj.h"
 
 /* Not declared in commctrl.h ("for internal use (msdn)") */
@@ -33,5 +35,16 @@ static inline void EFRAME_LockModule(void) { InterlockedIncrement( &EFRAME_refCo
 static inline void EFRAME_UnlockModule(void) { InterlockedDecrement( &EFRAME_refCount ); }
 
 HRESULT NamespaceTreeControl_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv) DECLSPEC_HIDDEN;
+HRESULT TaskbarList_Constructor(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
+
+static inline void *heap_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline BOOL heap_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
 
 #endif /* __WINE_EXPLORERFRAME_H */

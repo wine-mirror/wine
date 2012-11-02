@@ -24,3 +24,10 @@
     uuid(ae054212-3535-4430-83ed-d501aa6680e6)
 ]
 coclass NamespaceTreeControl { interface INameSpaceTreeControl2; }
+
+[
+    helpstring("Task Bar Communication"),
+    threading(apartment),
+    uuid(56fdf344-fd6d-11d0-958a-006097c9a090)
+]
+coclass TaskbarList { interface ITaskbarList; }

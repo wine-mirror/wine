@@ -199,11 +199,15 @@ static const IClassFactoryVtbl EFCF_Vtbl =
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
     static IClassFactoryImpl NSTCClassFactory = {{&EFCF_Vtbl}, NamespaceTreeControl_Constructor};
+    static IClassFactoryImpl TaskbarListFactory = {{&EFCF_Vtbl}, TaskbarList_Constructor};
 
     TRACE("%s, %s, %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
     if(IsEqualGUID(&CLSID_NamespaceTreeControl, rclsid))
         return IClassFactory_QueryInterface(&NSTCClassFactory.IClassFactory_iface, riid, ppv);
+
+    if(IsEqualGUID(&CLSID_TaskbarList, rclsid))
+        return IClassFactory_QueryInterface(&TaskbarListFactory.IClassFactory_iface, riid, ppv);
 
     return CLASS_E_CLASSNOTAVAILABLE;
 }

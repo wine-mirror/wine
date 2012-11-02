@@ -18,7 +18,7 @@
  *
  */
 
-#include "ieframe.h"
+#include "explorerframe_main.h"
 
 #include "wine/debug.h"
 
@@ -78,7 +78,7 @@ static ULONG STDMETHODCALLTYPE taskbar_list_Release(ITaskbarList4 *iface)
     if (!refcount)
     {
         heap_free(This);
-        unlock_module();
+        EFRAME_UnlockModule();
     }
 
     return refcount;
@@ -289,7 +289,7 @@ static const struct ITaskbarList4Vtbl taskbar_list_vtbl =
     taskbar_list_SetTabProperties,
 };
 
-HRESULT WINAPI TaskbarList_Create(IClassFactory *iface, IUnknown *outer, REFIID riid, void **taskbar_list)
+HRESULT TaskbarList_Constructor(IUnknown *outer, REFIID riid, void **taskbar_list)
 {
     struct taskbar_list *object;
     HRESULT hres;
@@ -303,7 +303,7 @@ HRESULT WINAPI TaskbarList_Create(IClassFactory *iface, IUnknown *outer, REFIID 
         return CLASS_E_NOAGGREGATION;
     }
 
-    object = heap_alloc_zero(sizeof(*object));
+    object = heap_alloc(sizeof(*object));
     if (!object)
     {
         ERR("Failed to allocate taskbar list object memory\n");
@@ -313,7 +313,7 @@ HRESULT WINAPI TaskbarList_Create(IClassFactory *iface, IUnknown *outer, REFIID 
 
     object->ITaskbarList4_iface.lpVtbl = &taskbar_list_vtbl;
     object->refcount = 1;
-    lock_module();
+    EFRAME_LockModule();
 
     TRACE("Created ITaskbarList4 %p\n", object);
 

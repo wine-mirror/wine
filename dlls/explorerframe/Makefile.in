@@ -4,7 +4,8 @@ IMPORTS   = uuid ole32 shell32 user32
 
 C_SRCS = \
 	explorerframe_main.c \
-	nstc.c
+	nstc.c \
+	taskbarlist.c
 
 IDL_R_SRCS = explorerframe.idl
 

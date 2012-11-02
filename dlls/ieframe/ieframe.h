@@ -305,7 +305,6 @@ HRESULT register_class_object(BOOL) DECLSPEC_HIDDEN;
 HRESULT WINAPI CUrlHistory_Create(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT WINAPI InternetExplorer_Create(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT WINAPI InternetShortcut_Create(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
-HRESULT WINAPI TaskbarList_Create(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT WINAPI WebBrowser_Create(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT WINAPI WebBrowserV1_Create(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
