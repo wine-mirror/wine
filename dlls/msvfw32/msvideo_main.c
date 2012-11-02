@@ -1512,7 +1512,10 @@ static BOOL GetFileNamePreview(LPVOID lpofn,BOOL bSave,BOOL bUnicode)
 
   fnGetFileName = (LPVOID)GetProcAddress(hComdlg32, szFunctionName);
   if (fnGetFileName == NULL)
+  {
+    FreeLibrary(hComdlg32);
     return FALSE;
+  }
 
   /* FIXME: need to add OFN_ENABLEHOOK and our own handler */
   ret = fnGetFileName(lpofn);
