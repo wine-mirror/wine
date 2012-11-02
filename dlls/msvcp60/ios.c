@@ -7767,27 +7767,27 @@ basic_istream_char* __thiscall basic_istream_char_read_bool(basic_istream_char *
 basic_istream_char* __cdecl basic_istream_char_getline_bstr_delim(
         basic_istream_char *istream, basic_string_char *str, char delim)
 {
-    IOSB_iostate state = IOSTATE_failbit;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(istream);
+    IOSB_iostate state = IOSTATE_goodbit;
     int c = (unsigned char)delim;
 
     TRACE("(%p %p %c)\n", istream, str, delim);
 
     if(basic_istream_char_sentry_create(istream, TRUE)) {
+        basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
         basic_string_char_clear(str);
 
-        c = basic_istream_char_get(istream);
-        if(c != EOF)
-            state = IOSTATE_goodbit;
-
-        for(; c!=(unsigned char)delim && c!=EOF; c = basic_istream_char_get(istream)) {
-            state = IOSTATE_goodbit;
+        c = basic_streambuf_char_sgetc(strbuf);
+        for(; c!=(unsigned char)delim && c!=EOF; c = basic_streambuf_char_snextc(strbuf))
             basic_string_char_append_ch(str, c);
-        }
+        if(c==EOF) state |= IOSTATE_eofbit;
+        else if(c==(unsigned char)delim) basic_streambuf_char_sbumpc(strbuf);
+
+        if(!basic_string_char_length(str) && c!=(unsigned char)delim) state |= IOSTATE_failbit;
     }
     basic_istream_char_sentry_destroy(istream);
 
-    basic_ios_char_setstate(basic_istream_char_get_basic_ios(istream),
-        state | (c==EOF ? IOSTATE_eofbit : IOSTATE_goodbit));
+    basic_ios_char_setstate(basic_istream_char_get_basic_ios(istream), state);
     return istream;
 }
 
@@ -9078,27 +9078,27 @@ basic_istream_wchar* __thiscall basic_istream_short_read_bool(basic_istream_wcha
 basic_istream_wchar* __cdecl basic_istream_wchar_getline_bstr_delim(
         basic_istream_wchar *istream, basic_string_wchar *str, wchar_t delim)
 {
-    IOSB_iostate state = IOSTATE_failbit;
+    basic_ios_wchar *base = basic_istream_wchar_get_basic_ios(istream);
+    IOSB_iostate state = IOSTATE_goodbit;
     int c = delim;
 
     TRACE("(%p %p %c)\n", istream, str, delim);
 
     if(basic_istream_wchar_sentry_create(istream, TRUE)) {
+        basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
         basic_string_wchar_clear(str);
 
-        c = basic_istream_wchar_get(istream);
-        if(c != WEOF)
-            state = IOSTATE_goodbit;
-
-        for(; c!=delim && c!=WEOF; c = basic_istream_wchar_get(istream)) {
-            state = IOSTATE_goodbit;
+        c = basic_streambuf_wchar_sgetc(strbuf);
+        for(; c!=delim && c!=WEOF; c = basic_streambuf_wchar_snextc(strbuf))
             basic_string_wchar_append_ch(str, c);
-        }
+        if(c==delim) basic_streambuf_wchar_sbumpc(strbuf);
+        else if(c==WEOF) state |= IOSTATE_eofbit;
+
+        if(!basic_string_wchar_length(str) && c!=delim) state |= IOSTATE_failbit;
     }
     basic_istream_wchar_sentry_destroy(istream);
 
-    basic_ios_wchar_setstate(basic_istream_wchar_get_basic_ios(istream),
-            state | (c==WEOF ? IOSTATE_eofbit : IOSTATE_goodbit));
+    basic_ios_wchar_setstate(basic_istream_wchar_get_basic_ios(istream), state);
     return istream;
 }
 
