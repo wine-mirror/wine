@@ -894,6 +894,44 @@ static inline FT_Fixed FT_FixedFromFIXED(FIXED f)
     return (FT_Fixed)((int)f.value << 16 | (unsigned int)f.fract);
 }
 
+static BOOL is_hinting_enabled(void)
+{
+    static int enabled = -1;
+
+    if (enabled == -1)
+    {
+        /* Use the >= 2.2.0 function if available */
+        if (pFT_Get_TrueType_Engine_Type)
+        {
+            FT_TrueTypeEngineType type = pFT_Get_TrueType_Engine_Type(library);
+            enabled = (type == FT_TRUETYPE_ENGINE_TYPE_PATENTED);
+        }
+#ifdef FT_DRIVER_HAS_HINTER
+        else
+        {
+            /* otherwise if we've been compiled with < 2.2.0 headers use the internal macro */
+            FT_Module mod = pFT_Get_Module(library, "truetype");
+            enabled = (mod && FT_DRIVER_HAS_HINTER(mod));
+        }
+#endif
+        else enabled = FALSE;
+    }
+    return enabled;
+}
+
+static BOOL is_subpixel_rendering_enabled( void )
+{
+#ifdef HAVE_FREETYPE_FTLCDFIL_H
+    static int enabled = -1;
+    if (enabled == -1)
+        enabled = (pFT_Library_SetLcdFilter &&
+                   pFT_Library_SetLcdFilter( NULL, 0 ) != FT_Err_Unimplemented_Feature);
+    return enabled;
+#else
+    return FALSE;
+#endif
+}
+
 
 static const struct list *get_face_list_from_family(const Family *family)
 {
@@ -4426,6 +4464,53 @@ static FT_Encoding pick_charmap( FT_Face face, int charset )
     return *encs;
 }
 
+#define GASP_GRIDFIT 0x01
+#define GASP_DOGRAY  0x02
+#define GASP_TAG     MS_MAKE_TAG('g','a','s','p')
+
+static BOOL get_gasp_flags( GdiFont *font, WORD *flags )
+{
+    DWORD size;
+    WORD buf[16]; /* Enough for seven ranges before we need to alloc */
+    WORD *alloced = NULL, *ptr = buf;
+    WORD num_recs, version;
+    BOOL ret = FALSE;
+
+    *flags = 0;
+    size = get_font_data( font, GASP_TAG,  0, NULL, 0 );
+    if (size == GDI_ERROR) return FALSE;
+    if (size < 4 * sizeof(WORD)) return FALSE;
+    if (size > sizeof(buf))
+    {
+        ptr = alloced = HeapAlloc( GetProcessHeap(), 0, size );
+        if (!ptr) return FALSE;
+    }
+
+    get_font_data( font, GASP_TAG, 0, ptr, size );
+
+    version  = GET_BE_WORD( *ptr++ );
+    num_recs = GET_BE_WORD( *ptr++ );
+
+    if (version > 1 || size < (num_recs * 2 + 2) * sizeof(WORD))
+    {
+        FIXME( "Unsupported gasp table: ver %d size %d recs %d\n", version, size, num_recs );
+        goto done;
+    }
+
+    while (num_recs--)
+    {
+        *flags = GET_BE_WORD( *(ptr + 1) );
+        if (font->ft_face->size->metrics.y_ppem <= GET_BE_WORD( *ptr )) break;
+        ptr += 2;
+    }
+    TRACE( "got flags %04x for ppem %d\n", *flags, font->ft_face->size->metrics.y_ppem );
+    ret = TRUE;
+
+done:
+    HeapFree( GetProcessHeap(), 0, alloced );
+    return ret;
+}
+
 /*************************************************************
  * freetype_SelectFont
  */
@@ -4868,6 +4953,25 @@ found_face:
 done:
     if (ret)
     {
+        /* fixup the antialiasing flags for that font */
+        switch (*aa_flags)
+        {
+        case WINE_GGO_HRGB_BITMAP:
+        case WINE_GGO_HBGR_BITMAP:
+        case WINE_GGO_VRGB_BITMAP:
+        case WINE_GGO_VBGR_BITMAP:
+            if (is_subpixel_rendering_enabled()) break;
+            *aa_flags = GGO_GRAY4_BITMAP;
+            /* fall through */
+        case GGO_GRAY4_BITMAP:
+            if (is_hinting_enabled())
+            {
+                WORD gasp_flags;
+                if (get_gasp_flags( ret, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
+                    *aa_flags = GGO_BITMAP;
+            }
+            break;
+        }
         dc->gdiFont = ret;
         physdev->font = ret;
     }
@@ -7428,40 +7532,6 @@ static BOOL freetype_FontIsLinked( PHYSDEV dev )
     ret = !list_empty(&physdev->font->child_fonts);
     LeaveCriticalSection( &freetype_cs );
     return ret;
-}
-
-static BOOL is_hinting_enabled(void)
-{
-    /* Use the >= 2.2.0 function if available */
-    if(pFT_Get_TrueType_Engine_Type)
-    {
-        FT_TrueTypeEngineType type = pFT_Get_TrueType_Engine_Type(library);
-        return type == FT_TRUETYPE_ENGINE_TYPE_PATENTED;
-    }
-#ifdef FT_DRIVER_HAS_HINTER
-    else
-    {
-        FT_Module mod;
-
-        /* otherwise if we've been compiled with < 2.2.0 headers 
-           use the internal macro */
-        mod = pFT_Get_Module(library, "truetype");
-        if(mod && FT_DRIVER_HAS_HINTER(mod))
-            return TRUE;
-    }
-#endif
-
-    return FALSE;
-}
-
-static BOOL is_subpixel_rendering_enabled( void )
-{
-#ifdef HAVE_FREETYPE_FTLCDFIL_H
-    return pFT_Library_SetLcdFilter &&
-           pFT_Library_SetLcdFilter( NULL, 0 ) != FT_Err_Unimplemented_Feature;
-#else
-    return FALSE;
-#endif
 }
 
 /*************************************************************************

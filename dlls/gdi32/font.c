@@ -39,12 +39,6 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-#ifdef WORDS_BIGENDIAN
-#define get_be_word(x) (x)
-#else
-#define get_be_word(x) RtlUshortByteSwap(x)
-#endif
-
 WINE_DEFAULT_DEBUG_CHANNEL(font);
 
   /* Device -> World size conversion */
@@ -266,69 +260,6 @@ static void FONT_NewTextMetricExWToA(const NEWTEXTMETRICEXW *ptmW, NEWTEXTMETRIC
     memcpy(&ptmA->ntmFontSig, &ptmW->ntmFontSig, sizeof(FONTSIGNATURE));
 }
 
-static DWORD get_font_ppem( HDC hdc )
-{
-    TEXTMETRICW tm;
-    DWORD ppem;
-    DC *dc = get_dc_ptr( hdc );
-
-    if (!dc) return GDI_ERROR;
-
-    GetTextMetricsW( hdc, &tm );
-    ppem = abs( INTERNAL_YWSTODS( dc, tm.tmAscent + tm.tmDescent - tm.tmInternalLeading ) );
-    release_dc_ptr( dc );
-    return ppem;
-}
-
-#define GASP_GRIDFIT 0x01
-#define GASP_DOGRAY  0x02
-
-static BOOL get_gasp_flags( HDC hdc, WORD *flags )
-{
-    DWORD size, gasp_tag = 0x70736167;
-    WORD buf[16]; /* Enough for seven ranges before we need to alloc */
-    WORD *alloced = NULL, *ptr = buf;
-    WORD num_recs, version;
-    DWORD ppem = get_font_ppem( hdc );
-    BOOL ret = FALSE;
-
-    *flags = 0;
-    if (ppem == GDI_ERROR) return FALSE;
-
-    size = GetFontData( hdc, gasp_tag,  0, NULL, 0 );
-    if (size == GDI_ERROR) return FALSE;
-    if (size < 4 * sizeof(WORD)) return FALSE;
-    if (size > sizeof(buf))
-    {
-        ptr = alloced = HeapAlloc( GetProcessHeap(), 0, size );
-        if (!ptr) return FALSE;
-    }
-
-    GetFontData( hdc, gasp_tag, 0, ptr, size );
-
-    version  = get_be_word( *ptr++ );
-    num_recs = get_be_word( *ptr++ );
-
-    if (version > 1 || size < (num_recs * 2 + 2) * sizeof(WORD))
-    {
-        FIXME( "Unsupported gasp table: ver %d size %d recs %d\n", version, size, num_recs );
-        goto done;
-    }
-
-    while (num_recs--)
-    {
-        *flags = get_be_word( *(ptr + 1) );
-        if (ppem <= get_be_word( *ptr )) break;
-        ptr += 2;
-    }
-    TRACE( "got flags %04x for ppem %d\n", *flags, ppem );
-    ret = TRUE;
-
-done:
-    HeapFree( GetProcessHeap(), 0, alloced );
-    return ret;
-}
-
 enum smoothing { no_smoothing, aa_smoothing, subpixel_smoothing };
 
 static DWORD get_desktop_value( const WCHAR *name, DWORD *value )
@@ -392,18 +323,7 @@ static UINT get_subpixel_orientation( void )
 
 UINT get_font_aa_flags( HDC hdc, const LOGFONTW *lf )
 {
-    WORD gasp_flags;
-    static int hinter = -1;
-    static int subpixel_enabled = -1;
     enum smoothing smoothing;
-
-    if (hinter == -1 || subpixel_enabled == -1)
-    {
-        RASTERIZER_STATUS status;
-        GetRasterizerCaps(&status, sizeof(status));
-        hinter = status.wFlags & WINE_TT_HINTER_ENABLED;
-        subpixel_enabled = status.wFlags & WINE_TT_SUBPIXEL_RENDERING_ENABLED;
-    }
 
     switch (lf->lfQuality)
     {
@@ -423,24 +343,15 @@ UINT get_font_aa_flags( HDC hdc, const LOGFONTW *lf )
         smoothing = get_default_smoothing();
     }
 
-    if (smoothing == subpixel_smoothing)
+    switch (smoothing)
     {
-        if (subpixel_enabled)
-        {
-            UINT ret = get_subpixel_orientation();
-            if (ret != GGO_GRAY4_BITMAP) return ret;
-        }
-        smoothing = aa_smoothing;
-    }
-
-    if (smoothing == aa_smoothing)
-    {
-        if (hinter && get_gasp_flags( hdc, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
-            return GGO_BITMAP;
+    case subpixel_smoothing:
+        return get_subpixel_orientation();
+    case aa_smoothing:
         return GGO_GRAY4_BITMAP;
+    default:
+        return GGO_BITMAP;
     }
-
-    return GGO_BITMAP;
 }
 
 /***********************************************************************
