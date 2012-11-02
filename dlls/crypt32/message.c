@@ -210,6 +210,9 @@ BOOL WINAPI CryptVerifyMessageSignature(PCRYPT_VERIFY_MESSAGE_PARA pVerifyPara,
     if (msg)
     {
         ret = CryptMsgUpdate(msg, pbSignedBlob, cbSignedBlob, TRUE);
+        if (ret && pcbDecoded)
+            ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, pbDecoded,
+             pcbDecoded);
         if (ret)
         {
             CERT_INFO *certInfo = CRYPT_GetSignerCertInfoFromMsg(msg,
@@ -240,20 +243,6 @@ BOOL WINAPI CryptVerifyMessageSignature(PCRYPT_VERIFY_MESSAGE_PARA pVerifyPara,
                 }
             }
             CryptMemFree(certInfo);
-        }
-        if (ret)
-        {
-            /* The caller is expected to pass a valid pointer to pcbDecoded
-             * when the message verifies successfully.
-             */
-            if (pcbDecoded)
-                ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, pbDecoded,
-                 pcbDecoded);
-            else
-            {
-                SetLastError(CRYPT_E_NOT_FOUND);
-                ret = FALSE;
-            }
         }
         CryptMsgClose(msg);
     }
