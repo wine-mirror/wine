@@ -354,7 +354,7 @@ static HRESULT ITS_IMoniker_create( IMoniker **ppObj, LPCWSTR name, DWORD n )
     DWORD sz;
 
     /* szFile[1] has space for one character already */
-    sz = sizeof(ITS_IMonikerImpl) + strlenW( name )*sizeof(WCHAR);
+    sz = FIELD_OFFSET( ITS_IMonikerImpl, szFile[strlenW( name ) + 1] );
 
     itsmon = HeapAlloc( GetProcessHeap(), 0, sz );
     itsmon->IMoniker_iface.lpVtbl = &ITS_IMonikerImpl_Vtbl;
