@@ -3582,7 +3582,7 @@ static HRESULT filedata_get_name(IDirectXFileData *filedata, char **name)
     hr = IDirectXFileObject_GetName(filedata, *name, &name_len);
     if (FAILED(hr))
         HeapFree(GetProcessHeap(), 0, *name);
-    if (!name_len)
+    else if (!name_len)
         (*name)[0] = 0;
 
     return hr;
