@@ -767,7 +767,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_ReleaseObjectByU
 	
 	TRACE("(%p, %p)\n", This, pObject);
 	
-	if (IsBadReadPtr (pObject, sizeof(LPUNKNOWN))) {
+	if (IsBadReadPtr (pObject, sizeof(*pObject))) {
 		ERR(": pObject bad write pointer\n");
 		return E_POINTER;
 	}
