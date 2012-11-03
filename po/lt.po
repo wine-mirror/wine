@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-10-27 10:40+0300\n"
+"PO-Revision-Date: 2012-11-03 18:42+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -8270,44 +8270,36 @@ msgid "Security Warning"
 msgstr "Įspėjimas apie saugumą"
 
 #: urlmon.rc:32
-#, fuzzy
-#| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
-msgstr "Ar vis tiek norite tęsti?"
+msgstr "Ar norite įdiegti šią programinę įrangą?"
 
 #: urlmon.rc:34 explorer.rc:29
 msgid "Location:"
 msgstr "Vieta:"
 
 #: urlmon.rc:36
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Don't install"
-msgstr "Įdiegti/Pašalinti"
+msgstr "Nediegti"
 
 #: urlmon.rc:40
 msgid ""
 "When installed, ActiveX has full access to your computer.Do not click "
 "install unless you have absolute trust in the above source."
 msgstr ""
+"Kai įdiegta, ActiveX turi visišką prieigą prie kompiuterio. Nespauskite "
+"„Įdiegti“, nebent visiškai pasitikite šaltiniu aukščiau."
 
 #: urlmon.rc:47
-#, fuzzy
-#| msgid "Installation transform failed to apply.\n"
 msgid "Installation of component failed: %08x"
-msgstr "Nepavyko pritaikyti įdiegimo transformacijos.\n"
+msgstr "Nepavyko įdiegti komponento: %08x"
 
 #: urlmon.rc:48
-#, fuzzy
-#| msgid "&Install"
 msgid "Install (%d)"
-msgstr "&Įdiegti"
+msgstr "Įdiegti (%d)"
 
 #: urlmon.rc:49
-#, fuzzy
-#| msgid "&Install"
 msgid "Install"
-msgstr "&Įdiegti"
+msgstr "Įdiegti"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
