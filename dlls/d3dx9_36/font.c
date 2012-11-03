@@ -301,7 +301,7 @@ HRESULT WINAPI D3DXCreateFontIndirectW(IDirect3DDevice9 *device, const D3DXFONT_
     IDirect3D9 *d3d;
     HRESULT hr;
 
-    FIXME("(%p, %p, %p): stub\n", device, desc, font);
+    TRACE("(%p, %p, %p)\n", device, desc, font);
 
     if( !device || !desc || !font ) return D3DERR_INVALIDCALL;
 
