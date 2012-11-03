@@ -39,3 +39,27 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     }
     return TRUE;
 }
+
+HRESULT WINAPI DtcGetTransactionManager(char *host, char *tm_name, REFIID riid,
+        DWORD dwReserved1, WORD wcbReserved2, void *pvReserved2, void **ppv)
+{
+    FIXME("(%s, %s, %s, %d, %d, %p, %p): stub\n", debugstr_a(host), debugstr_a(tm_name),
+          debugstr_guid(riid), dwReserved1, wcbReserved2, pvReserved2, ppv);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI DtcGetTransactionManagerExA(CHAR *host, CHAR *tm_name, REFIID riid,
+        DWORD options, void *config, void **ppv)
+{
+    FIXME("(%s, %s, %s, %d, %p, %p): stub\n", debugstr_a(host), debugstr_a(tm_name),
+          debugstr_guid(riid), options, config, ppv);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI DtcGetTransactionManagerExW(WCHAR *host, WCHAR *tm_name, REFIID riid,
+        DWORD options, void *config, void **ppv)
+{
+    FIXME("(%s, %s, %s, %d, %p, %p): stub\n", debugstr_w(host), debugstr_w(tm_name),
+            debugstr_guid(riid), options, config, ppv);
+    return E_NOTIMPL;
+}
