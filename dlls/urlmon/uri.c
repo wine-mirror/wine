@@ -272,7 +272,7 @@ static inline BOOL is_drive_path(const WCHAR *str) {
 }
 
 static inline BOOL is_unc_path(const WCHAR *str) {
-    return (str[0] == '\\' && str[0] == '\\');
+    return (str[0] == '\\' && str[1] == '\\');
 }
 
 static inline BOOL is_forbidden_dos_path_char(WCHAR val) {
