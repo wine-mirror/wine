@@ -1370,6 +1370,8 @@ static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *display, Window w, Atom p
             }
             if (bits.free) bits.free( &bits );
         }
+
+        HeapFree(GetProcessHeap(), 0, lpdata);
     }
 
     return hClipData;
@@ -1489,7 +1491,10 @@ static HANDLE X11DRV_CLIPBOARD_ImportClipboardData(Display *display, Window w, A
             /* Turn on the DDESHARE flag to enable shared 32 bit memory */
             hClipData = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cbytes);
             if (hClipData == 0)
+            {
+                HeapFree(GetProcessHeap(), 0, lpdata);
                 return NULL;
+            }
 
             if ((lpClipData = GlobalLock(hClipData)))
             {
