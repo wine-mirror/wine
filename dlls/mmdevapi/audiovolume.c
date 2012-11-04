@@ -32,7 +32,7 @@
 
 #include "ole2.h"
 #include "mmdeviceapi.h"
-#include "dshow.h"
+#include "mmsystem.h"
 #include "dsound.h"
 #include "audioclient.h"
 #include "endpointvolume.h"

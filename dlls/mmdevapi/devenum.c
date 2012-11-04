@@ -29,6 +29,7 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
+#include "initguid.h"
 #include "ole2.h"
 #include "mmdeviceapi.h"
 #include "dshow.h"
