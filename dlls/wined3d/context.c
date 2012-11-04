@@ -1569,7 +1569,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     {
         GL_EXTCALL(glProvokingVertexEXT(GL_FIRST_VERTEX_CONVENTION_EXT));
     }
-    device->shader_backend->shader_enable_fragment_pipe(device->shader_priv, gl_info, TRUE);
+    ret->select_shader = 1;
 
     /* If this happens to be the first context for the device, dummy textures
      * are not created yet. In that case, they will be created (and bound) by
@@ -1707,13 +1707,6 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
     context->last_was_blit = TRUE;
 
     /* TODO: Use a display list */
-
-    /* Disable shaders */
-    ENTER_GL();
-    device->shader_backend->shader_select(context, FALSE, FALSE);
-    context->select_shader = 1;
-    context->load_constants = 1;
-    LEAVE_GL();
 
     /* Call ENTER_GL() once for all gl calls below. In theory we should not call
      * helper functions in between gl calls. This function is full of context_invalidate_state
@@ -1864,7 +1857,11 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
     context_invalidate_state(context, STATE_RENDER(WINED3D_RS_CLIPPING));
 
     set_blit_dimension(gl_info, rt_size.cx, rt_size.cy);
-    device->shader_backend->shader_enable_fragment_pipe(device->shader_priv, gl_info, FALSE);
+
+    /* Disable shaders */
+    device->shader_backend->shader_select(context, WINED3D_SHADER_MODE_NONE, WINED3D_SHADER_MODE_NONE);
+    context->select_shader = 1;
+    context->load_constants = 1;
 
     LEAVE_GL();
 
@@ -2223,10 +2220,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
     }
 
     if (context->last_was_blit)
-    {
-        device->shader_backend->shader_enable_fragment_pipe(device->shader_priv, gl_info, TRUE);
         context->last_was_blit = FALSE;
-    }
 
     /* Blending and clearing should be orthogonal, but tests on the nvidia
      * driver show that disabling blending when clearing improves the clearing
@@ -2352,8 +2346,6 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
     }
 
     ENTER_GL();
-    if (context->last_was_blit)
-        device->shader_backend->shader_enable_fragment_pipe(device->shader_priv, context->gl_info, TRUE);
 
     for (i = 0; i < context->numDirtyEntries; ++i)
     {
@@ -2366,7 +2358,9 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
 
     if (context->select_shader)
     {
-        device->shader_backend->shader_select(context, use_ps(state), use_vs(state));
+        device->shader_backend->shader_select(context,
+                use_vs(state) ? WINED3D_SHADER_MODE_SHADER : WINED3D_SHADER_MODE_FFP,
+                use_ps(state) ? WINED3D_SHADER_MODE_SHADER : WINED3D_SHADER_MODE_FFP);
         context->select_shader = 0;
     }
 
@@ -2499,16 +2493,7 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device, str
     if (context != current_context)
     {
         if (!context_set_current(context))
-        {
             ERR("Failed to activate the new context.\n");
-        }
-        else
-        {
-            ENTER_GL();
-            device->shader_backend->shader_enable_fragment_pipe(device->shader_priv,
-                    context->gl_info, !context->last_was_blit);
-            LEAVE_GL();
-        }
     }
     else if (context->restore_ctx)
     {

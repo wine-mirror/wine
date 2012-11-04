@@ -1458,7 +1458,6 @@ struct shader_none_priv
 };
 
 static void shader_none_handle_instruction(const struct wined3d_shader_instruction *ins) {}
-static void shader_none_select(const struct wined3d_context *context, BOOL usePS, BOOL useVS) {}
 static void shader_none_select_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info,
         enum tex_types tex_type, const SIZE *ds_mask_size) {}
 static void shader_none_deselect_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info) {}
@@ -1469,6 +1468,16 @@ static void shader_none_load_np2fixup_constants(void *shader_priv,
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state) {}
 static void shader_none_destroy(struct wined3d_shader *shader) {}
 static void shader_none_context_destroyed(void *shader_priv, const struct wined3d_context *context) {}
+
+static void shader_none_select(const struct wined3d_context *context, enum wined3d_shader_mode vertex_mode,
+        enum wined3d_shader_mode fragment_mode)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_device *device = context->swapchain->device;
+    struct shader_none_priv *priv = device->shader_priv;
+
+    priv->fragment_pipe->enable_extension(gl_info, fragment_mode == WINED3D_SHADER_MODE_FFP);
+}
 
 static HRESULT shader_none_alloc(struct wined3d_device *device, const struct fragment_pipeline *fragment_pipe)
 {
@@ -1534,14 +1543,6 @@ static BOOL shader_none_color_fixup_supported(struct color_fixup_desc fixup)
     return FALSE;
 }
 
-static void shader_none_enable_fragment_pipe(void *shader_priv,
-        const struct wined3d_gl_info *gl_info, BOOL enable)
-{
-    struct shader_none_priv *priv = shader_priv;
-
-    priv->fragment_pipe->enable_extension(gl_info, enable);
-}
-
 static BOOL shader_none_has_ffp_proj_control(void *shader_priv)
 {
     struct shader_none_priv *priv = shader_priv;
@@ -1565,7 +1566,6 @@ const struct wined3d_shader_backend_ops none_shader_backend =
     shader_none_context_destroyed,
     shader_none_get_caps,
     shader_none_color_fixup_supported,
-    shader_none_enable_fragment_pipe,
     shader_none_has_ffp_proj_control,
 };
 

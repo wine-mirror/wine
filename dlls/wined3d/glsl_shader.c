@@ -4998,16 +4998,20 @@ static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info,
 }
 
 /* GL locking is done by the caller */
-static void shader_glsl_select(const struct wined3d_context *context, BOOL usePS, BOOL useVS)
+static void shader_glsl_select(const struct wined3d_context *context, enum wined3d_shader_mode vertex_mode,
+        enum wined3d_shader_mode fragment_mode)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_device *device = context->swapchain->device;
     struct shader_glsl_priv *priv = device->shader_priv;
     GLhandleARB program_id = 0;
     GLenum old_vertex_color_clamp, current_vertex_color_clamp;
+    BOOL useVS = vertex_mode == WINED3D_SHADER_MODE_SHADER;
+    BOOL usePS = fragment_mode == WINED3D_SHADER_MODE_SHADER;
 
     old_vertex_color_clamp = priv->glsl_program ? priv->glsl_program->vertex_color_clamp : GL_FIXED_ONLY_ARB;
 
+    priv->fragment_pipe->enable_extension(gl_info, fragment_mode == WINED3D_SHADER_MODE_FFP);
     if (useVS || usePS) set_glsl_shader_program(context, device, usePS, useVS);
     else priv->glsl_program = NULL;
 
@@ -5105,7 +5109,7 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
             || priv->glsl_program->pshader == shader))
     {
         ENTER_GL();
-        shader_glsl_select(context, FALSE, FALSE);
+        shader_glsl_select(context, WINED3D_SHADER_MODE_NONE, WINED3D_SHADER_MODE_NONE);
         LEAVE_GL();
     }
 
@@ -5514,14 +5518,6 @@ static void shader_glsl_handle_instruction(const struct wined3d_shader_instructi
     shader_glsl_add_instruction_modifiers(ins);
 }
 
-static void shader_glsl_enable_fragment_pipe(void *shader_priv,
-        const struct wined3d_gl_info *gl_info, BOOL enable)
-{
-    struct shader_glsl_priv *priv = shader_priv;
-
-    priv->fragment_pipe->enable_extension(gl_info, enable);
-}
-
 static BOOL shader_glsl_has_ffp_proj_control(void *shader_priv)
 {
     struct shader_glsl_priv *priv = shader_priv;
@@ -5545,6 +5541,5 @@ const struct wined3d_shader_backend_ops glsl_shader_backend =
     shader_glsl_context_destroyed,
     shader_glsl_get_caps,
     shader_glsl_color_fixup_supported,
-    shader_glsl_enable_fragment_pipe,
     shader_glsl_has_ffp_proj_control,
 };
