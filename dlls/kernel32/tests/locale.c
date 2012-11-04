@@ -3480,7 +3480,7 @@ static void test_IsValidLocaleName(void)
     ok(!ret, "IsValidLocaleName should have failed\n");
 }
 
-void test_CompareStringOrdinal(void)
+static void test_CompareStringOrdinal(void)
 {
     INT ret;
     WCHAR test1[] = { 't','e','s','t',0 };
