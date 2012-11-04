@@ -972,8 +972,8 @@ static void GetDDInterface_4(void)
 
 static void GetDDInterface_7(void)
 {
+    IDirectDrawSurface7 *dsurface7;
     LPDIRECTDRAWSURFACE4 dsurface4;
-    LPDIRECTDRAWSURFACE7 dsurface7;
     DDSURFACEDESC2 surface;
     HRESULT ret;
     IDirectDraw2 *dd2;

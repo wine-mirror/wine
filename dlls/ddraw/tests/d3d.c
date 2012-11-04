@@ -31,8 +31,8 @@
 
 static LPDIRECTDRAW7           lpDD = NULL;
 static LPDIRECT3D7             lpD3D = NULL;
-static LPDIRECTDRAWSURFACE7    lpDDS = NULL;
-static LPDIRECTDRAWSURFACE7    lpDDSdepth = NULL;
+static IDirectDrawSurface7 *lpDDS;
+static IDirectDrawSurface7 *lpDDSdepth;
 static LPDIRECT3DDEVICE7       lpD3DDevice = NULL;
 static LPDIRECT3DVERTEXBUFFER7 lpVBufSrc = NULL;
 

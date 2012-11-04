@@ -361,7 +361,8 @@ DECLARE_INTERFACE_(IDirect3D7,IUnknown)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3D7 methods ***/
     STDMETHOD(EnumDevices)(THIS_ LPD3DENUMDEVICESCALLBACK7 lpEnumDevicesCallback, LPVOID lpUserArg) PURE;
-    STDMETHOD(CreateDevice)(THIS_ REFCLSID rclsid,LPDIRECTDRAWSURFACE7 lpDDS, LPDIRECT3DDEVICE7 *lplpD3DDevice) PURE;
+    STDMETHOD(CreateDevice)(THIS_ REFCLSID rclsid, IDirectDrawSurface7 *surface,
+            struct IDirect3DDevice7 **device) PURE;
     STDMETHOD(CreateVertexBuffer)(THIS_ LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc,LPDIRECT3DVERTEXBUFFER7 *lplpD3DVertBuf,DWORD dwFlags) PURE;
     STDMETHOD(EnumZBufferFormats)(THIS_ REFCLSID riidDevice,LPD3DENUMPIXELFORMATSCALLBACK lpEnumCallback,LPVOID lpContext) PURE;
     STDMETHOD(EvictManagedTextures)(THIS) PURE;
@@ -1287,8 +1288,8 @@ DECLARE_INTERFACE_(IDirect3DDevice7,IUnknown)
     STDMETHOD(BeginScene)(THIS) PURE;
     STDMETHOD(EndScene)(THIS) PURE;
     STDMETHOD(GetDirect3D)(THIS_ LPDIRECT3D7 *lplpDirect3D3) PURE;
-    STDMETHOD(SetRenderTarget)(THIS_ LPDIRECTDRAWSURFACE7 lpNewRenderTarget,DWORD dwFlags) PURE;
-    STDMETHOD(GetRenderTarget)(THIS_ LPDIRECTDRAWSURFACE7 *lplpRenderTarget) PURE;
+    STDMETHOD(SetRenderTarget)(THIS_ IDirectDrawSurface7 *surface, DWORD flags) PURE;
+    STDMETHOD(GetRenderTarget)(THIS_ IDirectDrawSurface7 **surface) PURE;
     STDMETHOD(Clear)(THIS_ DWORD dwCount,LPD3DRECT lpRects,DWORD dwFlags,D3DCOLOR dwColor,D3DVALUE dvZ,DWORD dwStencil) PURE;
     STDMETHOD(SetTransform)(THIS_ D3DTRANSFORMSTATETYPE dtstTransformStateType, LPD3DMATRIX lpD3DMatrix) PURE;
     STDMETHOD(GetTransform)(THIS_ D3DTRANSFORMSTATETYPE dtstTransformStateType, LPD3DMATRIX lpD3DMatrix) PURE;
@@ -1303,7 +1304,7 @@ DECLARE_INTERFACE_(IDirect3DDevice7,IUnknown)
     STDMETHOD(GetRenderState)(THIS_ D3DRENDERSTATETYPE dwRenderStateType, LPDWORD lpdwRenderState) PURE;
     STDMETHOD(BeginStateBlock)(THIS) PURE;
     STDMETHOD(EndStateBlock)(THIS_ LPDWORD lpdwBlockHandle) PURE;
-    STDMETHOD(PreLoad)(THIS_ LPDIRECTDRAWSURFACE7 lpddsTexture) PURE;
+    STDMETHOD(PreLoad)(THIS_ IDirectDrawSurface7 *surface) PURE;
     STDMETHOD(DrawPrimitive)(THIS_ D3DPRIMITIVETYPE d3dptPrimitiveType, DWORD d3dvtVertexType, LPVOID lpvVertices, DWORD dwVertexCount, DWORD dwFlags) PURE;
     STDMETHOD(DrawIndexedPrimitive)(THIS_ D3DPRIMITIVETYPE d3dptPrimitiveType, DWORD d3dvtVertexType, LPVOID lpvVertices, DWORD dwVertexCount, LPWORD dwIndices, DWORD dwIndexCount, DWORD dwFlags) PURE;
     STDMETHOD(SetClipStatus)(THIS_ LPD3DCLIPSTATUS lpD3DClipStatus) PURE;
@@ -1313,8 +1314,8 @@ DECLARE_INTERFACE_(IDirect3DDevice7,IUnknown)
     STDMETHOD(DrawPrimitiveVB)(THIS_ D3DPRIMITIVETYPE d3dptPrimitiveType,LPDIRECT3DVERTEXBUFFER7 lpD3DVertexBuf,DWORD dwStartVertex,DWORD dwNumVertices,DWORD dwFlags) PURE;
     STDMETHOD(DrawIndexedPrimitiveVB)(THIS_ D3DPRIMITIVETYPE d3dptPrimitiveType,LPDIRECT3DVERTEXBUFFER7 lpD3DVertexBuf,DWORD dwStartVertex,DWORD dwNumVertices,LPWORD lpwIndices,DWORD dwIndexCount,DWORD dwFlags) PURE;
     STDMETHOD(ComputeSphereVisibility)(THIS_ LPD3DVECTOR lpCenters,LPD3DVALUE lpRadii,DWORD dwNumSpheres,DWORD dwFlags,LPDWORD lpdwReturnValues) PURE;
-    STDMETHOD(GetTexture)(THIS_ DWORD dwStage,LPDIRECTDRAWSURFACE7 *lpTexture) PURE;
-    STDMETHOD(SetTexture)(THIS_ DWORD dwStage,LPDIRECTDRAWSURFACE7 lpTexture) PURE;
+    STDMETHOD(GetTexture)(THIS_ DWORD stage, IDirectDrawSurface7 **surface) PURE;
+    STDMETHOD(SetTexture)(THIS_ DWORD stage, IDirectDrawSurface7 *surface) PURE;
     STDMETHOD(GetTextureStageState)(THIS_ DWORD dwStage,D3DTEXTURESTAGESTATETYPE d3dTexStageStateType,LPDWORD lpdwState) PURE;
     STDMETHOD(SetTextureStageState)(THIS_ DWORD dwStage,D3DTEXTURESTAGESTATETYPE d3dTexStageStateType,DWORD dwState) PURE;
     STDMETHOD(ValidateDevice)(THIS_ LPDWORD lpdwPasses) PURE;
@@ -1322,7 +1323,8 @@ DECLARE_INTERFACE_(IDirect3DDevice7,IUnknown)
     STDMETHOD(CaptureStateBlock)(THIS_ DWORD dwBlockHandle) PURE;
     STDMETHOD(DeleteStateBlock)(THIS_ DWORD dwBlockHandle) PURE;
     STDMETHOD(CreateStateBlock)(THIS_ D3DSTATEBLOCKTYPE d3dsbType,LPDWORD lpdwBlockHandle) PURE;
-    STDMETHOD(Load)(THIS_ LPDIRECTDRAWSURFACE7 lpDestTex,LPPOINT lpDestPoint,LPDIRECTDRAWSURFACE7 lpSrcTex,LPRECT lprcSrcRect,DWORD dwFlags) PURE;
+    STDMETHOD(Load)(THIS_ IDirectDrawSurface7 *dst_surface, POINT *dst_point,
+            IDirectDrawSurface7 *src_surface, RECT *src_rect, DWORD flags) PURE;
     STDMETHOD(LightEnable)(THIS_ DWORD dwLightIndex,BOOL bEnable) PURE;
     STDMETHOD(GetLightEnable)(THIS_ DWORD dwLightIndex,BOOL *pbEnable) PURE;
     STDMETHOD(SetClipPlane)(THIS_ DWORD dwIndex,D3DVALUE *pPlaneEquation) PURE;
