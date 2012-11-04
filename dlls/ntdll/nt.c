@@ -1143,7 +1143,7 @@ void fill_cpu_info(void)
     }
 #else
     num = 1;
-    FIXME("Detecting the number of processors not suported.\n");
+    FIXME("Detecting the number of processors is not supported.\n");
 #endif
     NtCurrentTeb()->Peb->NumberOfProcessors = num;
 

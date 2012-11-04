@@ -324,7 +324,7 @@ static HRESULT install_file(install_ctx_t *ctx, const WCHAR *cache_file)
         if(!strcmpW(ext, cab_extW)) {
             hres = install_cab_file(ctx);
         }else {
-            FIXME("Unsupported extention %s\n", debugstr_w(ext));
+            FIXME("Unsupported extension %s\n", debugstr_w(ext));
             hres = E_NOTIMPL;
         }
         SysFreeString(path);

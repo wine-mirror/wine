@@ -732,8 +732,8 @@ for %%i in (%INT_PARMS%) do call :EQUtest %%i 10
 for %%i in (%INT_PARMS%) do call :EQUtest %%i 9
 if 011 EQU 9 (echo octal ok)
 if 0xA1 EQU 161 (echo hexa ok)
-if 0xA1 EQU "161" (echo hexa should be be recognized) else (echo string/hexa compare ok)
-if "0xA1" EQU 161 (echo hexa should be be recognized) else (echo string/hexa compare ok)
+if 0xA1 EQU "161" (echo hexa should be recognized) else (echo string/hexa compare ok)
+if "0xA1" EQU 161 (echo hexa should be recognized) else (echo string/hexa compare ok)
 for %%i in (%INT_PARMS%) do call :NEQtest %%i 0
 for %%i in (%INT_PARMS%) do call :NEQtest %%i 1
 for %%i in (%INT_PARMS%) do call :NEQtest %%i 10
