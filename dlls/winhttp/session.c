@@ -182,6 +182,9 @@ static BOOL session_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
     case WINHTTP_OPTION_RECEIVE_TIMEOUT:
         session->recv_timeout = *(DWORD *)buffer;
         return TRUE;
+    case WINHTTP_OPTION_CONFIGURE_PASSPORT_AUTH:
+        FIXME("WINHTTP_OPTION_CONFIGURE_PASSPORT_AUTH: 0x%x\n", *(DWORD *)buffer);
+        return TRUE;
     default:
         FIXME("unimplemented option %u\n", option);
         set_last_error( ERROR_INVALID_PARAMETER );
