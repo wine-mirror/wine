@@ -22,6 +22,7 @@
 
 #include "windows.h"
 #include "ole2.h"
+#include "olectl.h"
 #include "oleauto.h"
 #include "dispex.h"
 
@@ -32,9 +33,9 @@
 
 static void test_interfaces(void)
 {
-    static const WCHAR pathW[] = {'p','a','t','h',0};
     static const WCHAR nonexistent_dirW[] = {
         'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', 0};
+    static const WCHAR pathW[] = {'p','a','t','h',0};
     static const WCHAR file_kernel32W[] = {
         '\\', 'k', 'e', 'r', 'n', 'e', 'l', '3', '2', '.', 'd', 'l', 'l', 0};
     HRESULT hr;
@@ -122,12 +123,39 @@ static void test_interfaces(void)
     IDispatch_Release(disp);
 }
 
+static void test_createfolder(void)
+{
+    IFileSystem3 *fs3;
+    HRESULT hr;
+    WCHAR pathW[MAX_PATH];
+    BSTR path;
+    IFolder *folder;
+
+    hr = CoCreateInstance(&CLSID_FileSystemObject, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IFileSystem3, (void**)&fs3);
+    if(FAILED(hr)) {
+        win_skip("Could not create FileSystem object: %08x\n", hr);
+        return;
+    }
+
+    /* create existing directory */
+    GetCurrentDirectoryW(sizeof(pathW)/sizeof(WCHAR), pathW);
+    path = SysAllocString(pathW);
+    folder = (void*)0xdeabeef;
+    hr = IFileSystem3_CreateFolder(fs3, path, &folder);
+    ok(hr == CTL_E_FILEALREADYEXISTS, "got 0x%08x\n", hr);
+    ok(folder == NULL, "got %p\n", folder);
+    SysFreeString(path);
+
+    IFileSystem3_Release(fs3);
+}
+
 START_TEST(filesystem)
 {
     CoInitialize(NULL);
 
     test_interfaces();
-
+    test_createfolder();
 
     CoUninitialize();
 }

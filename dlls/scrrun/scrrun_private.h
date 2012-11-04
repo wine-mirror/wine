@@ -26,9 +26,20 @@ typedef enum tid_t
     NULL_tid,
     IDictionary_tid,
     IFileSystem3_tid,
+    IFolder_tid,
     LAST_tid
 } tid_t;
 
 HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
+
+static inline void *heap_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline BOOL heap_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
 
 #endif
