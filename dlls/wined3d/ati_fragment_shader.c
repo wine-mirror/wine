@@ -926,9 +926,6 @@ static void textransform(struct wined3d_context *context, const struct wined3d_s
 
 static void atifs_apply_pixelshader(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_device *device = context->swapchain->device;
-    BOOL use_vshader = use_vs(state);
-
     context->last_was_pshader = use_ps(state);
     /* The ATIFS code does not support pixel shaders currently, but we have to
      * provide a state handler to call shader_select to select a vertex shader
@@ -943,13 +940,8 @@ static void atifs_apply_pixelshader(struct wined3d_context *context, const struc
      * startup, and blitting disables all shaders and dirtifies all shader
      * states. If atifs can deal with this it keeps the rest of the code
      * simpler. */
-    if (!isStateDirty(context, context->state_table[STATE_VSHADER].representative))
-    {
-        device->shader_backend->shader_select(context, FALSE, use_vshader);
-
-        if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && use_vshader)
-            context_apply_state(context, state, STATE_VERTEXSHADERCONSTANT);
-    }
+    context->select_shader = 1;
+    context->load_constants = 1;
 }
 
 static void atifs_srgbwriteenable(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)

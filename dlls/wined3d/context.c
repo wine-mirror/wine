@@ -1711,10 +1711,9 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
     /* Disable shaders */
     ENTER_GL();
     device->shader_backend->shader_select(context, FALSE, FALSE);
+    context->select_shader = 1;
+    context->load_constants = 1;
     LEAVE_GL();
-
-    context_invalidate_state(context, STATE_VSHADER);
-    context_invalidate_state(context, STATE_PIXELSHADER);
 
     /* Call ENTER_GL() once for all gl calls below. In theory we should not call
      * helper functions in between gl calls. This function is full of context_invalidate_state
@@ -2363,6 +2362,18 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
         BYTE shift = rep & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
         context->isStateDirty[idx] &= ~(1 << shift);
         state_table[rep].apply(context, state, rep);
+    }
+
+    if (context->select_shader)
+    {
+        device->shader_backend->shader_select(context, use_ps(state), use_vs(state));
+        context->select_shader = 0;
+    }
+
+    if (context->load_constants)
+    {
+        device->shader_backend->shader_load_constants(context, use_ps(state), use_vs(state));
+        context->load_constants = 0;
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)

@@ -599,15 +599,7 @@ static void state_alpha(struct wined3d_context *context, const struct wined3d_st
 
 static void shaderconstant(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_device *device = context->swapchain->device;
-
-    /* Vertex and pixel shader states will call a shader upload, don't do
-     * anything as long one of them has an update pending. */
-    if (isStateDirty(context, STATE_VDECL)
-            || isStateDirty(context, STATE_PIXELSHADER))
-       return;
-
-    device->shader_backend->shader_load_constants(context, use_ps(state), use_vs(state));
+    context->load_constants = 1;
 }
 
 static void state_clipping(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -640,12 +632,8 @@ static void state_clipping(struct wined3d_context *context, const struct wined3d
 
         /* glEnable(GL_CLIP_PLANEx) doesn't apply to vertex shaders. The enabled / disabled planes are
          * hardcoded into the shader. Update the shader to update the enabled clipplanes */
-        if (!isStateDirty(context, context->state_table[STATE_VSHADER].representative))
-        {
-            device->shader_backend->shader_select(context, use_ps(state), TRUE);
-            if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT))
-                shaderconstant(context, state, STATE_VERTEXSHADERCONSTANT);
-        }
+        context->select_shader = 1;
+        context->load_constants = 1;
     }
 
     /* TODO: Keep track of previously enabled clipplanes to avoid unnecessary resetting
@@ -3618,14 +3606,9 @@ static void tex_bumpenvlscale(struct wined3d_context *context, const struct wine
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     const struct wined3d_shader *ps = state->pixel_shader;
 
+    /* The pixel shader has to know the luminance scale. Do a constants update. */
     if (ps && stage && (ps->reg_maps.luminanceparams & (1 << stage)))
-    {
-        /* The pixel shader has to know the luminance scale. Do a constants
-         * update if it isn't scheduled anyway. */
-        if (!isStateDirty(context, STATE_PIXELSHADERCONSTANT)
-                && !isStateDirty(context, STATE_PIXELSHADER))
-            shaderconstant(context, state, STATE_PIXELSHADERCONSTANT);
-    }
+        context->load_constants = 1;
 }
 
 static void sampler_texmatrix(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -3738,12 +3721,9 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
 
 void apply_pixelshader(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_device *device = context->swapchain->device;
-    BOOL use_vshader = use_vs(state);
-    BOOL use_pshader = use_ps(state);
     unsigned int i;
 
-    if (use_pshader)
+    if (use_ps(state))
     {
         if (!context->last_was_pshader)
         {
@@ -3776,13 +3756,8 @@ void apply_pixelshader(struct wined3d_context *context, const struct wined3d_sta
         context->last_was_pshader = FALSE;
     }
 
-    if (!isStateDirty(context, context->state_table[STATE_VSHADER].representative))
-    {
-        device->shader_backend->shader_select(context, use_pshader, use_vshader);
-
-        if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (use_vshader || use_pshader))
-            shaderconstant(context, state, STATE_VERTEXSHADERCONSTANT);
-    }
+    context->select_shader = 1;
+    context->load_constants = 1;
 }
 
 static void shader_bumpenvmat(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -3790,14 +3765,9 @@ static void shader_bumpenvmat(struct wined3d_context *context, const struct wine
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     const struct wined3d_shader *ps = state->pixel_shader;
 
+    /* The pixel shader has to know the bump env matrix. Do a constants update. */
     if (ps && stage && (ps->reg_maps.bumpmat & (1 << stage)))
-    {
-        /* The pixel shader has to know the bump env matrix. Do a constants
-         * update if it isn't scheduled anyway. */
-        if (!isStateDirty(context, STATE_PIXELSHADERCONSTANT)
-                && !isStateDirty(context, STATE_PIXELSHADER))
-            shaderconstant(context, state, STATE_PIXELSHADERCONSTANT);
-    }
+        context->load_constants = 1;
 }
 
 static void transform_world(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -4580,7 +4550,6 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
     const struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     BOOL useVertexShaderFunction = use_vs(state);
-    BOOL usePixelShaderFunction = use_ps(state);
     BOOL updateFog = FALSE;
     BOOL transformed;
     BOOL wasrhw = context->last_was_rhw;
@@ -4684,18 +4653,9 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
         }
     }
 
-    /* Vertex and pixel shaders are applied together, so let the last dirty
-     * state do the application. */
-    if (!isStateDirty(context, STATE_PIXELSHADER))
-    {
-        device->shader_backend->shader_select(context, usePixelShaderFunction, useVertexShaderFunction);
-
-        if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT)
-                && (useVertexShaderFunction || usePixelShaderFunction))
-            shaderconstant(context, state, STATE_VERTEXSHADERCONSTANT);
-    }
-
     context->last_was_vshader = useVertexShaderFunction;
+    context->select_shader = 1;
+    context->load_constants = 1;
 
     if (updateFog)
         context_apply_state(context, state, STATE_RENDER(WINED3D_RS_FOGVERTEXMODE));
@@ -4753,8 +4713,7 @@ static void viewport_vertexpart(struct wined3d_context *context, const struct wi
     if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE)))
         state_pscale(context, state, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE));
     /* Update the position fixup. */
-    if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT))
-        shaderconstant(context, state, STATE_VERTEXSHADERCONSTANT);
+    context->load_constants = 1;
 }
 
 static void light(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)

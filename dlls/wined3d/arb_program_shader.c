@@ -5821,14 +5821,10 @@ static void set_bumpmat_arbfp(struct wined3d_context *context, const struct wine
 
     if (use_ps(state))
     {
+        /* The pixel shader has to know the bump env matrix. Do a constants
+         * update. */
         if (stage && (state->pixel_shader->reg_maps.bumpmat & (1 << stage)))
-        {
-            /* The pixel shader has to know the bump env matrix. Do a constants update if it isn't scheduled
-             * anyway
-             */
-            if (!isStateDirty(context, STATE_PIXELSHADERCONSTANT))
-                context_apply_state(context, state, STATE_PIXELSHADERCONSTANT);
-        }
+            context->load_constants = 1;
 
         if(device->shader_backend == &arb_program_shader_backend) {
             /* Exit now, don't set the bumpmat below, otherwise we may overwrite pixel shader constants */
@@ -5861,14 +5857,10 @@ static void tex_bumpenvlum_arbfp(struct wined3d_context *context,
 
     if (use_ps(state))
     {
+        /* The pixel shader has to know the luminance offset. Do a constants
+         * update. */
         if (stage && (state->pixel_shader->reg_maps.luminanceparams & (1 << stage)))
-        {
-            /* The pixel shader has to know the luminance offset. Do a constants update if it
-             * isn't scheduled anyway
-             */
-            if (!isStateDirty(context, STATE_PIXELSHADERCONSTANT))
-                context_apply_state(context, state, STATE_PIXELSHADERCONSTANT);
-        }
+            context->load_constants = 1;
 
         if(device->shader_backend == &arb_program_shader_backend) {
             /* Exit now, don't set the bumpmat below, otherwise we may overwrite pixel shader constants */
@@ -6391,7 +6383,6 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
     const struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_arb_priv *priv = device->fragment_priv;
-    BOOL use_vshader = use_vs(state);
     BOOL use_pshader = use_ps(state);
     struct ffp_frag_settings settings;
     const struct arbfp_ffp_desc *desc;
@@ -6412,9 +6403,9 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
             state_texfactor_arbfp(context, state, STATE_RENDER(WINED3D_RS_TEXTUREFACTOR));
             state_arb_specularenable(context, state, STATE_RENDER(WINED3D_RS_SPECULARENABLE));
         }
-        else if (use_pshader && !isStateDirty(context, context->state_table[STATE_VSHADER].representative))
+        else if (use_pshader)
         {
-            device->shader_backend->shader_select(context, use_pshader, use_vshader);
+            context->select_shader = 1;
         }
         return;
     }
@@ -6464,24 +6455,8 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
         context->last_was_pshader = TRUE;
     }
 
-    /* Finally, select the shader. If a pixel shader is used, it will be set and enabled by the shader backend.
-     * If this shader backend is arbfp(most likely), then it will simply overwrite the last fixed function
-     * replacement shader. If the shader backend is not ARB, it currently is important that the opengl implementation
-     * type overwrites GL_ARB_fragment_program. This is currently the case with GLSL. If we really want to use
-     * atifs or nvrc pixel shaders with arb fragment programs we'd have to disable GL_FRAGMENT_PROGRAM_ARB here
-     *
-     * Don't call shader_select if the vertex shader is dirty, because it will be called later on by the vertex
-     * shader handler.
-     */
-    if (!isStateDirty(context, context->state_table[STATE_VSHADER].representative))
-    {
-        device->shader_backend->shader_select(context, use_pshader, use_vshader);
-
-        if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (use_vshader || use_pshader))
-            context_apply_state(context, state, STATE_VERTEXSHADERCONSTANT);
-    }
-    if (use_pshader)
-        context_apply_state(context, state, STATE_PIXELSHADERCONSTANT);
+    context->select_shader = 1;
+    context->load_constants = 1;
 }
 
 /* We can't link the fog states to the fragment state directly since the

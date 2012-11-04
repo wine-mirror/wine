@@ -1084,21 +1084,23 @@ struct wined3d_context
     DWORD                   tid;    /* Thread ID which owns this context at the moment */
 
     /* Stores some information about the context state for optimization */
-    WORD render_offscreen : 1;
-    WORD last_was_rhw : 1;              /* true iff last draw_primitive was in xyzrhw mode */
-    WORD last_was_pshader : 1;
-    WORD last_was_vshader : 1;
-    WORD namedArraysLoaded : 1;
-    WORD numberedArraysLoaded : 1;
-    WORD last_was_blit : 1;
-    WORD last_was_ckey : 1;
-    WORD fog_coord : 1;
-    WORD fog_enabled : 1;
-    WORD num_untracked_materials : 2;   /* Max value 2 */
-    WORD current : 1;
-    WORD destroyed : 1;
-    WORD valid : 1;
-    WORD padding : 1;
+    DWORD render_offscreen : 1;
+    DWORD last_was_rhw : 1;             /* true iff last draw_primitive was in xyzrhw mode */
+    DWORD last_was_pshader : 1;
+    DWORD last_was_vshader : 1;
+    DWORD namedArraysLoaded : 1;
+    DWORD numberedArraysLoaded : 1;
+    DWORD last_was_blit : 1;
+    DWORD last_was_ckey : 1;
+    DWORD fog_coord : 1;
+    DWORD fog_enabled : 1;
+    DWORD num_untracked_materials : 2;  /* Max value 2 */
+    DWORD current : 1;
+    DWORD destroyed : 1;
+    DWORD valid : 1;
+    DWORD select_shader : 1;
+    DWORD load_constants : 1;
+    DWORD padding : 15;
     BYTE texShaderBumpMap;              /* MAX_TEXTURES, 8 */
     BYTE lastWasPow2Texture;            /* MAX_TEXTURES, 8 */
     DWORD                   numbered_array_mask;
