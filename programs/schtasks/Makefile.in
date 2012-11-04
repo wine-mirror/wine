@@ -1,0 +1,7 @@
+MODULE    = schtasks.exe
+APPMODE   = -mconsole -municode
+
+C_SRCS = \
+	schtasks.c
+
+@MAKE_PROG_RULES@
