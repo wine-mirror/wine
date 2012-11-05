@@ -30,7 +30,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 enum scriptcode {
     Script_Arabic = 0,
     Script_Armenian = 1,
+    Script_Balinese = 2,
     Script_Bengali = 3,
+    Script_Buginese = 6,
     Script_Canadian = 8,
     Script_Cherokee = 11,
     Script_Controls = 12,
@@ -47,16 +49,22 @@ enum scriptcode {
     Script_Kannada = 32,
     Script_Khmer = 36,
     Script_Lao = 37,
-    Script_Latin  = 38,
+    Script_Latin = 38,
+    Script_Lepcha = 39,
+    Script_Limbu = 40,
     Script_Malayalam = 44,
     Script_Mongolian = 45,
     Script_Myanmar = 46,
+    Script_New_TaiLue = 47,
     Script_NKo = 48,
     Script_Ogham = 49,
+    Script_OlChiki = 50,
     Script_Oriya = 53,
     Script_Runic = 58,
     Script_Sinhala = 61,
+    Script_Sundanese = 62,
     Script_Syriac = 64,
+    Script_TaiLe = 67,
     Script_Tamil = 68,
     Script_Telugu = 69,
     Script_Thaana = 70,
@@ -167,7 +175,35 @@ static const struct script_range script_ranges[] = {
     /* Khmer: U+1780–U+17FF */
     { Script_Khmer, 0x1780, 0x17ff },
     /* Mongolian: U+1800–U+18AF */
-    { Script_Mongolian, 0x1800, 0x18af},
+    { Script_Mongolian, 0x1800, 0x18af },
+    /* Limbu: U+1900–U+194F */
+    { Script_Limbu, 0x1900, 0x194f },
+    /* Tai Le: U+1950–U+197F */
+    { Script_TaiLe, 0x1950, 0x197f },
+    /* New Tai Lue: U+1980–U+19DF */
+    { Script_New_TaiLue, 0x1980, 0x19df },
+    /* Khmer Symbols: U+19E0–U+19FF */
+    { Script_Khmer, 0x19e0, 0x19ff },
+    /* Buginese: U+1A00–U+1A1F */
+    { Script_Buginese, 0x1a00, 0x1a1f },
+    /* Tai Tham: U+1A20–U+1AAF */
+    { Script_Symbol, 0x1a20, 0x1aaf },
+    /* Balinese: U+1B00–U+1B7F */
+    { Script_Balinese, 0x1b00, 0x1b7f },
+    /* Sundanese: U+1B80–U+1BBF */
+    { Script_Sundanese, 0x1b80, 0x1bbf },
+    /* Batak: U+1BC0–U+1BFF */
+    { Script_Symbol, 0x1bc0, 0x1bff },
+    /* Lepcha: U+1C00–U+1C4F */
+    { Script_Lepcha, 0x1c00, 0x1c4f },
+    /* Ol Chiki: U+1C50–U+1C7F */
+    { Script_OlChiki, 0x1c50, 0x1c7f },
+    /* Sundanese Supplement: U+1CC0–U+1CCF */
+    { Script_Symbol, 0x1cc0, 0x1ccf },
+    /* Vedic Extensions: U+1CD0-U+1CFF */
+    { Script_Devanagari, 0x1cd0, 0x1cff },
+    /* Phonetic Extensions: U+1D00–U+1DBF */
+    { Script_Latin, 0x1d00, 0x1dbf },
     /* unsupported range */
     { Script_Unknown }
 };

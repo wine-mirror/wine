@@ -399,7 +399,9 @@ struct sa_test {
 enum scriptcode {
     Script_Arabic = 0,
     Script_Armenian = 1,
+    Script_Balinese = 2,
     Script_Bengali = 3,
+    Script_Buginese = 6,
     Script_Canadian = 8,
     Script_Cherokee = 11,
     Script_Controls = 12,
@@ -416,22 +418,28 @@ enum scriptcode {
     Script_Kannada = 32,
     Script_Khmer = 36,
     Script_Lao = 37,
-    Script_Latin  = 38,
+    Script_Latin = 38,
+    Script_Lepcha = 39,
+    Script_Limbu = 40,
     Script_Malayalam = 44,
     Script_Mongolian = 45,
     Script_Myanmar = 46,
+    Script_New_TaiLue = 47,
     Script_NKo = 48,
     Script_Ogham = 49,
+    Script_OlChiki = 50,
     Script_Oriya = 53,
     Script_Runic = 58,
     Script_Sinhala = 61,
+    Script_Sundanese = 62,
     Script_Syriac = 64,
+    Script_TaiLe = 67,
     Script_Tamil = 68,
     Script_Telugu = 69,
     Script_Thaana = 70,
     Script_Thai = 71,
     Script_Tibetan = 72,
-    Script_Symbol = 77
+    Script_Undefined = 77
 };
 
 static struct sa_test sa_tests[] = {
@@ -446,16 +454,16 @@ static struct sa_test sa_tests[] = {
     },
     {
       {' ',' ',' ',' ','!','$','[','^','{','~',0}, 1,
-          { { 0, 10, { Script_Symbol, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 10, { Script_Undefined, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
     {
       {' ',' ',' ','1','2',' ',0}, 1,
-          { { 0, 6, { Script_Symbol, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, { Script_Undefined, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
     {
       /* digits only */
       {'1','2',0}, 1,
-          { { 0, 2, { Script_Symbol, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 2, { Script_Undefined, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
     {
       /* Arabic */
@@ -526,7 +534,7 @@ static struct sa_test sa_tests[] = {
     {
       /* Combining Diacritical Marks */
       {0x300,0x320,0x340,0x345,0x350,0x36f,0}, 1,
-          { { 0, 6, { Script_Symbol, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, { Script_Undefined, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
     {
       /* Greek and Coptic */
@@ -694,13 +702,73 @@ static struct sa_test sa_tests[] = {
     },
     {
       /* Khmer */
-      {0x1781,0x17c1,0x1798,0x179a,0x1797,0x17b6,0x179f,0x17b6,0}, 1,
-          { { 0, 8, { Script_Khmer, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+      {0x1781,0x17c1,0x1798,0x179a,0x1797,0x17b6,0x179f,0x17b6,0x19e0,0}, 1,
+          { { 0, 9, { Script_Khmer, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
     {
       /* Mongolian */
       {0x182e,0x1823,0x1829,0x182d,0x1823,0x182f,0x0020,0x182a,0x1822,0x1834,0x1822,0x182d,0x180c,0}, 1,
           { { 0, 13, { Script_Mongolian, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Limbu */
+      {0x1900,0x1910,0x1920,0x1930,0}, 1,
+          { { 0, 4, { Script_Limbu, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Tai Le */
+      {0x1956,0x196d,0x1970,0x1956,0x196c,0x1973,0x1951,0x1968,0x1952,0x1970,0}, 1,
+          { { 0, 10, { Script_TaiLe, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* New Tai Lue */
+      {0x1992,0x19c4,0}, 1,
+          { { 0, 2, { Script_New_TaiLue, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Buginese */
+      {0x1a00,0x1a10,0}, 1,
+          { { 0, 2, { Script_Buginese, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Tai Tham */
+      {0x1a20,0x1a40,0x1a50,0}, 1,
+          { { 0, 3, { Script_Undefined, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Balinese */
+      {0x1b00,0x1b05,0x1b20,0}, 1,
+          { { 0, 3, { Script_Balinese, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Sundanese */
+      {0x1b80,0x1b85,0x1ba0,0}, 1,
+          { { 0, 3, { Script_Sundanese, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Batak */
+      {0x1bc0,0x1be5,0x1bfc,0}, 1,
+          { { 0, 3, { Script_Undefined, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Lepcha */
+      {0x1c00,0x1c20,0x1c40,0}, 1,
+          { { 0, 3, { Script_Lepcha, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Ol Chiki */
+      {0x1c50,0x1c5a,0x1c77,0}, 1,
+          { { 0, 3, { Script_OlChiki, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Sundanese Supplement */
+      {0x1cc0,0x1cc5,0x1cc8,0}, 1,
+          { { 0, 3, { Script_Undefined, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+    },
+    {
+      /* Phonetic Extensions */
+      {0x1d00,0x1d40,0x1d70,0}, 1,
+          { { 0, 3, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
     },
     /* keep this as end marker */
     { {0} }
