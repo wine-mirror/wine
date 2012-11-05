@@ -627,6 +627,7 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
             /* Find next one */
             findres = FindNextFileW(h, finddata);
         }
+        FindClose(h);
     }
 
 cleanup:
