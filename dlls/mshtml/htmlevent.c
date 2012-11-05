@@ -996,7 +996,12 @@ static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, 
         }
     }
 
-    if(cp_container) {
+    /*
+     * NOTE: CP events may require doc_obj reference, which we don't own. We make sure that
+     * it's safe to call event handler by checking nsevent_listener, which is NULL for
+     * detached documents.
+     */
+    if(cp_container && doc->nsevent_listener) {
         ConnectionPoint *cp;
 
         if(cp_container->forward_container)
@@ -1004,7 +1009,7 @@ static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, 
 
         for(cp = cp_container->cp_list; cp; cp = cp->next) {
             if(cp->sinks_size && is_cp_event(cp->data, event_info[eid].dispid)) {
-                for(i=0; i < cp->sinks_size; i++) {
+                for(i=0; doc->nsevent_listener && i < cp->sinks_size; i++) {
                     if(!cp->sinks[i].disp)
                         continue;
 
@@ -1028,6 +1033,9 @@ static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, 
                         WARN("cp %s [%d] <<< %08x\n", debugstr_w(event_info[eid].name), i, hres);
                     }
                 }
+
+                if(!doc->nsevent_listener)
+                    break;
             }
         }
     }
