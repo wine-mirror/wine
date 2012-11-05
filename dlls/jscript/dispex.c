@@ -1444,3 +1444,16 @@ HRESULT jsdisp_is_own_prop(jsdisp_t *obj, const WCHAR *name, BOOL *ret)
     *ret = prop && (prop->type == PROP_JSVAL || prop->type == PROP_BUILTIN);
     return S_OK;
 }
+
+HRESULT jsdisp_is_enumerable(jsdisp_t *obj, const WCHAR *name, BOOL *ret)
+{
+    dispex_prop_t *prop;
+    HRESULT hres;
+
+    hres = find_prop_name(obj, string_hash(name), name, &prop);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = prop && (prop->flags & PROPF_ENUM) && prop->type != PROP_PROTREF;
+    return S_OK;
+}

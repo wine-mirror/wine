@@ -160,8 +160,34 @@ static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
 static HRESULT Object_propertyIsEnumerable(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    jsstr_t *name;
+    BOOL ret;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(argc != 1) {
+        FIXME("argc %d not supported\n", argc);
+        return E_NOTIMPL;
+    }
+
+    if(!is_jsdisp(jsthis)) {
+        FIXME("Host object this\n");
+        return E_FAIL;
+    }
+
+    hres = to_string(ctx, argv[0], &name);
+    if(FAILED(hres))
+        return hres;
+
+    hres = jsdisp_is_enumerable(jsthis->u.jsdisp, name->str, &ret);
+    jsstr_release(name);
+    if(FAILED(hres))
+        return hres;
+
+    if(r)
+        *r = jsval_bool(ret);
+    return S_OK;
 }
 
 static HRESULT Object_isPrototypeOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
