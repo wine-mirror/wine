@@ -40,6 +40,7 @@ BATCH_CONTEXT *context = NULL;
 DWORD errorlevel;
 WCHAR quals[MAX_PATH], param1[MAXSTRING], param2[MAXSTRING];
 BOOL  interactive;
+FOR_CONTEXT forloopcontext; /* The 'for' loop context */
 
 int defaultColor = 7;
 BOOL echo_mode = TRUE;
@@ -549,8 +550,8 @@ static inline BOOL WCMD_is_magic_envvar(const WCHAR *s, const WCHAR *magicvar)
  *
  *	Expands environment variables, allowing for WCHARacter substitution
  */
-static WCHAR *WCMD_expand_envvar(WCHAR *start,
-                                 const WCHAR *forVar, const WCHAR *forVal) {
+static WCHAR *WCMD_expand_envvar(WCHAR *start)
+{
     WCHAR *endOfVar = NULL, *s;
     WCHAR *colonpos = NULL;
     WCHAR thisVar[MAXSTRING];
@@ -565,8 +566,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start,
     static const WCHAR Random[]    = {'R','A','N','D','O','M','\0'};
     static const WCHAR Delims[]    = {'%',':','\0'};
 
-    WINE_TRACE("Expanding: %s (%s,%s)\n", wine_dbgstr_w(start),
-               wine_dbgstr_w(forVal), wine_dbgstr_w(forVar));
+    WINE_TRACE("Expanding: %s\n", wine_dbgstr_w(start));
 
     /* Find the end of the environment variable, and extract name */
     endOfVar = strpbrkW(start+1, Delims);
@@ -629,17 +629,6 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start,
       static const WCHAR fmt[] = {'%','d','\0'};
       wsprintfW(thisVarContents, fmt, rand() % 32768);
       len = strlenW(thisVarContents);
-
-    /* Look for a matching 'for' variable */
-    } else if (forVar &&
-               (CompareStringW(LOCALE_USER_DEFAULT,
-                               SORT_STRINGSORT,
-                               thisVar,
-                               (colonpos - thisVar) - 1,
-                               forVar, -1) == CSTR_EQUAL)) {
-      strcpyW(thisVarContents, forVal);
-      len = strlenW(thisVarContents);
-
     } else {
 
       len = ExpandEnvironmentStringsW(thisVar, thisVarContents,
@@ -802,8 +791,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start,
  * read in and not again, except for 'for' variable substitution.
  * eg. As evidence, "echo %1 && shift && echo %1" or "echo %%path%%"
  */
-static void handleExpansion(WCHAR *cmd, BOOL justFors,
-                            const WCHAR *forVariable, const WCHAR *forValue) {
+static void handleExpansion(WCHAR *cmd, BOOL justFors) {
 
   /* For commands in a context (batch program):                  */
   /*   Expand environment variables in a batch file %{0-9} first */
@@ -817,6 +805,15 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors,
   WCHAR *p = cmd;
   WCHAR *t;
   int   i;
+
+  /* Display the FOR variables in effect */
+  for (i=0;i<52;i++) {
+    if (forloopcontext.variable[i]) {
+      WINE_TRACE("FOR variable context: %c = '%s'\n",
+                 i<26?i+'a':(i-26)+'A',
+                 wine_dbgstr_w(forloopcontext.variable[i]));
+    }
+  }
 
   while ((p = strchrW(p, '%'))) {
 
@@ -833,7 +830,7 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors,
 
     /* Replace %~ modifications if in batch program */
     } else if (*(p+1) == '~') {
-      WCMD_HandleTildaModifiers(&p, forVariable, forValue, justFors);
+      WCMD_HandleTildaModifiers(&p, justFors);
       p++;
 
     /* Replace use of %0...%9 if in batch program*/
@@ -853,20 +850,18 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors,
       } else
         WCMD_strsubstW(p, p+2, NULL, 0);
 
-    } else if (forVariable &&
-               (CompareStringW(LOCALE_USER_DEFAULT,
-                               SORT_STRINGSORT,
-                               p,
-                               strlenW(forVariable),
-                               forVariable, -1) == CSTR_EQUAL)) {
-      WCMD_strsubstW(p, p + strlenW(forVariable), forValue, -1);
+    } else {
+      int forvaridx = FOR_VAR_IDX(*(p+1));
+      if (forvaridx != -1 && forloopcontext.variable[forvaridx]) {
+        /* Replace the 2 characters, % and for variable character */
+        WCMD_strsubstW(p, p + 2, forloopcontext.variable[forvaridx], -1);
+      } else if (!justFors) {
+        p = WCMD_expand_envvar(p);
 
-    } else if (!justFors) {
-      p = WCMD_expand_envvar(p, forVariable, forValue);
-
-    /* In a FOR loop, see if this is the variable to replace */
-    } else { /* Ignore %'s on second pass of batch program */
-      p++;
+      /* In a FOR loop, see if this is the variable to replace */
+      } else { /* Ignore %'s on second pass of batch program */
+        p++;
+      }
     }
   }
 
@@ -1224,7 +1219,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
 
     /* Parse the command string, without reading any more input */
     WCMD_ReadAndParseLine(command, &toExecute, INVALID_HANDLE_VALUE);
-    WCMD_process_commands(toExecute, FALSE, NULL, NULL, called);
+    WCMD_process_commands(toExecute, FALSE, called);
     WCMD_free_commands(toExecute);
     toExecute = NULL;
     return;
@@ -1248,7 +1243,6 @@ void WCMD_run_program (WCHAR *command, BOOL called)
  *       we are attempting this retry.
  */
 void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
-                   const WCHAR *forVariable, const WCHAR *forValue,
                    CMD_LIST **cmdList, BOOL retrycall)
 {
     WCHAR *cmd, *p, *redir;
@@ -1267,9 +1261,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
                                 STD_ERROR_HANDLE};
     BOOL prev_echo_mode, piped = FALSE;
 
-    WINE_TRACE("command on entry:%s (%p), with forVariable '%s'='%s'\n",
-               wine_dbgstr_w(command), cmdList,
-               wine_dbgstr_w(forVariable), wine_dbgstr_w(forValue));
+    WINE_TRACE("command on entry:%s (%p)\n",
+               wine_dbgstr_w(command), cmdList);
 
     /* If the next command is a pipe then we implement pipes by redirecting
        the output from this command to a temp file and input into the
@@ -1323,8 +1316,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
 
     /* Expand variables in command line mode only (batch mode will
        be expanded as the line is read in, except for 'for' loops) */
-    handleExpansion(new_cmd, (context != NULL), forVariable, forValue);
-    handleExpansion(new_redir, (context != NULL), forVariable, forValue);
+    handleExpansion(new_cmd, (context != NULL));
+    handleExpansion(new_redir, (context != NULL));
     cmd = new_cmd;
 
 /*
@@ -1847,7 +1840,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     }
 
     /* Replace env vars if in a batch context */
-    if (context) handleExpansion(extraSpace, FALSE, NULL, NULL);
+    if (context) handleExpansion(extraSpace, FALSE);
 
     /* Skip preceding whitespace */
     while (*curPos == ' ' || *curPos == '\t') curPos++;
@@ -2244,7 +2237,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
 
         } while (*extraData == 0x00);
         curPos = extraSpace;
-        if (context) handleExpansion(extraSpace, FALSE, NULL, NULL);
+        if (context) handleExpansion(extraSpace, FALSE);
         /* Continue to echo commands IF echo is on and in batch program */
         if (context && echo_mode && extraSpace[0] && (extraSpace[0] != '@')) {
           WCMD_output_asis(extraSpace);
@@ -2265,7 +2258,6 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
  * Process all the commands read in so far
  */
 CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket,
-                                const WCHAR *var, const WCHAR *val,
                                 BOOL retrycall) {
 
     int bdepth = -1;
@@ -2291,7 +2283,7 @@ CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket,
          Also, skip over any batch labels (eg. :fred)          */
       if (thisCmd->command && thisCmd->command[0] != ':') {
         WINE_TRACE("Executing command: '%s'\n", wine_dbgstr_w(thisCmd->command));
-        WCMD_execute (thisCmd->command, thisCmd->redirects, var, val, &thisCmd, retrycall);
+        WCMD_execute (thisCmd->command, thisCmd->redirects, &thisCmd, retrycall);
       }
 
       /* Step on unless the command itself already stepped on */
@@ -2581,7 +2573,7 @@ int wmain (int argc, WCHAR *argvW[])
 
       /* Parse the command string, without reading any more input */
       WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
-      WCMD_process_commands(toExecute, FALSE, NULL, NULL, FALSE);
+      WCMD_process_commands(toExecute, FALSE, FALSE);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
 
@@ -2668,7 +2660,7 @@ int wmain (int argc, WCHAR *argvW[])
   if (opt_k) {
       /* Parse the command string, without reading any more input */
       WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
-      WCMD_process_commands(toExecute, FALSE, NULL, NULL, FALSE);
+      WCMD_process_commands(toExecute, FALSE, FALSE);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
       HeapFree(GetProcessHeap(), 0, cmd);
@@ -2688,7 +2680,7 @@ int wmain (int argc, WCHAR *argvW[])
     if (echo_mode) WCMD_show_prompt();
     if (!WCMD_ReadAndParseLine(NULL, &toExecute, GetStdHandle(STD_INPUT_HANDLE)))
       break;
-    WCMD_process_commands(toExecute, FALSE, NULL, NULL, FALSE);
+    WCMD_process_commands(toExecute, FALSE, FALSE);
     WCMD_free_commands(toExecute);
     toExecute = NULL;
   }

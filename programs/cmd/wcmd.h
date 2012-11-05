@@ -112,7 +112,7 @@ WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start, BOOL raw,
                                    BOOL wholecmdline, const WCHAR *delims);
 WCHAR *WCMD_skip_leading_spaces (WCHAR *string);
 BOOL WCMD_keyword_ws_found(const WCHAR *keyword, int len, const WCHAR *ptr);
-void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable, const WCHAR *forValue, BOOL justFors);
+void WCMD_HandleTildaModifiers(WCHAR **start, BOOL justFors);
 
 void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext);
 void WCMD_strip_quotes(WCHAR *cmd);
@@ -122,11 +122,9 @@ void WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int le
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead);
 
 WCHAR    *WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_LIST **output, HANDLE readFrom);
-CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket,
-                                const WCHAR *var, const WCHAR *val, BOOL retrycall);
+CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket, BOOL retrycall);
 void      WCMD_free_commands(CMD_LIST *cmds);
 void      WCMD_execute (const WCHAR *orig_command, const WCHAR *redirects,
-                        const WCHAR *parameter, const WCHAR *substitution,
                         CMD_LIST **cmdList, BOOL retrycall);
 
 /* Data structure to hold context when executing batch files */
@@ -163,6 +161,16 @@ typedef struct _DIRECTORY_STACK
   WCHAR  *fileName;
 } DIRECTORY_STACK;
 
+/* Data structure to for loop variables during for body execution, bearing
+   in mind that for loops can be nested                                    */
+#define MAX_FOR_VARIABLES 52
+#define FOR_VAR_IDX(c) (((c)>='a'&&(c)<='z')?((c)-'a'):\
+                        ((c)>='A'&&(c)<='Z')?(26+(c)-'A'):-1)
+
+typedef struct _FOR_CONTEXT {
+  WCHAR *variable[MAX_FOR_VARIABLES];	/* a-z then A-Z */
+} FOR_CONTEXT;
+
 /*
  * Global variables quals, param1, param2 contain the current qualifiers
  * (uppercased and concatenated) and parameters entered, with environment
@@ -171,6 +179,7 @@ typedef struct _DIRECTORY_STACK
 extern WCHAR quals[MAX_PATH], param1[MAXSTRING], param2[MAXSTRING];
 extern DWORD errorlevel;
 extern BATCH_CONTEXT *context;
+extern FOR_CONTEXT forloopcontext;
 
 #endif /* !RC_INVOKED */
 

@@ -92,7 +92,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
       /* Note: although this batch program itself may be called, we are not retrying
          the command as a result of a call failing to find a program, hence the
          retryCall parameter below is FALSE                                           */
-      WCMD_process_commands(toExecute, FALSE, NULL, NULL, FALSE);
+      WCMD_process_commands(toExecute, FALSE, FALSE);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
   }
@@ -358,8 +358,8 @@ void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHA
 /****************************************************************************
  * WCMD_HandleTildaModifiers
  *
- * Handle the ~ modifiers when expanding %0-9 or (%a-z in for command)
- *    %~xxxxxV  (V=0-9 or A-Z)
+ * Handle the ~ modifiers when expanding %0-9 or (%a-z/A-Z in for command)
+ *    %~xxxxxV  (V=0-9 or A-Z, a-z)
  * Where xxxx is any combination of:
  *    ~ - Removes quotes
  *    f - Fully qualified path (assumes current dir if not drive\dir)
@@ -387,8 +387,8 @@ void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHA
  *  Hence search forwards until find an invalid modifier, and then
  *  backwards until find for variable or 0-9
  */
-void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable,
-                               const WCHAR *forValue, BOOL justFors) {
+void WCMD_HandleTildaModifiers(WCHAR **start, BOOL justFors)
+{
 
 #define NUMMODIFIERS 11
   static const WCHAR validmodifiers[NUMMODIFIERS] = {
@@ -442,18 +442,19 @@ void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable,
   }
 
   while (lastModifier > firstModifier) {
-    WINE_TRACE("Looking backwards for parameter id: %s / %s\n",
-               wine_dbgstr_w(lastModifier), wine_dbgstr_w(forVariable));
+    WINE_TRACE("Looking backwards for parameter id: %s\n",
+               wine_dbgstr_w(lastModifier));
 
     if (!justFors && context && (*lastModifier >= '0' && *lastModifier <= '9')) {
       /* Its a valid parameter identifier - OK */
       break;
 
-    } else if (forVariable && *lastModifier == *(forVariable+1)) {
-      /* Its a valid parameter identifier - OK */
-      break;
-
     } else {
+      int foridx = FOR_VAR_IDX(*lastModifier);
+      /* Its a valid parameter identifier - OK */
+      if ((foridx >= 0) && (forloopcontext.variable[foridx] != NULL)) break;
+
+      /* Its not a valid parameter identifier - step backwards */
       lastModifier--;
     }
   }
@@ -468,7 +469,8 @@ void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable,
                             *lastModifier-'0' + context -> shift_count[*lastModifier-'0'],
                             NULL, FALSE, TRUE));
   } else {
-    strcpyW(outputparam, forValue);
+    int foridx = FOR_VAR_IDX(*lastModifier);
+    strcpyW(outputparam, forloopcontext.variable[foridx]);
   }
 
   /* So now, firstModifier points to beginning of modifiers, lastModifier
@@ -696,17 +698,24 @@ void WCMD_call (WCHAR *command) {
     if (context) {
 
       LARGE_INTEGER li;
+      FOR_CONTEXT oldcontext;
+
+      /* Save the for variable context, then start with an empty context
+         as for loop variables do not survive a call                    */
+      oldcontext = forloopcontext;
+      memset(&forloopcontext, 0, sizeof(forloopcontext));
 
       /* Save the current file position, call the same file,
          restore position                                    */
       li.QuadPart = 0;
       li.u.LowPart = SetFilePointer(context -> h, li.u.LowPart,
                      &li.u.HighPart, FILE_CURRENT);
-
       WCMD_batch (param1, command, TRUE, gotoLabel, context->h);
-
       SetFilePointer(context -> h, li.u.LowPart,
                      &li.u.HighPart, FILE_BEGIN);
+
+      /* Restore the for loop context */
+      forloopcontext = oldcontext;
     } else {
       WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_CALLINSCRIPT));
     }

@@ -648,16 +648,16 @@ B'
 "A B"
 C
 --- imbricated FORs
-@todo_wine@X Y
-@todo_wine@X Y
-@todo_wine@A C
-@todo_wine@A D
-@todo_wine@B C
-@todo_wine@B D
-@todo_wine@A C
-@todo_wine@A D
-@todo_wine@B C
-@todo_wine@B D
+X Y
+X Y
+A C
+A D
+B C
+B D
+A C
+A D
+B C
+B D
 --- basic wildcards
 bazbaz
 --- for /d
