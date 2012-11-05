@@ -1060,7 +1060,8 @@ DECL_WINELIB_TYPE_AW(LPDDENUMCALLBACK)
 
 typedef HRESULT (CALLBACK *LPDDENUMMODESCALLBACK)(LPDDSURFACEDESC, LPVOID);
 typedef HRESULT (CALLBACK *LPDDENUMMODESCALLBACK2)(LPDDSURFACEDESC2, LPVOID);
-typedef HRESULT (CALLBACK *LPDDENUMSURFACESCALLBACK)(LPDIRECTDRAWSURFACE, LPDDSURFACEDESC, LPVOID);
+typedef HRESULT (CALLBACK *LPDDENUMSURFACESCALLBACK)(struct IDirectDrawSurface *surface,
+        DDSURFACEDESC *surface_desc, void *ctx);
 typedef HRESULT (CALLBACK *LPDDENUMSURFACESCALLBACK2)(struct IDirectDrawSurface4 *surface,
         DDSURFACEDESC2 *surface_desc, void *ctx);
 typedef HRESULT (CALLBACK *LPDDENUMSURFACESCALLBACK7)(struct IDirectDrawSurface7 *surface,
@@ -1106,13 +1107,13 @@ typedef struct _DDBLTFX
     union
     {
         DWORD   dwZDestConst;                   /* Constant to use as Z buffer for dest */
-        LPDIRECTDRAWSURFACE lpDDSZBufferDest;   /* Surface to use as Z buffer for dest */
+        struct IDirectDrawSurface *lpDDSZBufferDest; /* Surface to use as Z buffer for dest */
     } DUMMYUNIONNAME1;
     DWORD       dwZSrcConstBitDepth;            /* Bit depth used to specify Z constant for source */
     union
     {
         DWORD   dwZSrcConst;                    /* Constant to use as Z buffer for src */
-        LPDIRECTDRAWSURFACE lpDDSZBufferSrc;    /* Surface to use as Z buffer for src */
+        struct IDirectDrawSurface *lpDDSZBufferSrc; /* Surface to use as Z buffer for src */
     } DUMMYUNIONNAME2;
     DWORD       dwAlphaEdgeBlendBitDepth;       /* Bit depth used to specify constant for alpha edge blend */
     DWORD       dwAlphaEdgeBlend;               /* Alpha for edge blending */
@@ -1121,20 +1122,20 @@ typedef struct _DDBLTFX
     union
     {
         DWORD   dwAlphaDestConst;               /* Constant to use as Alpha Channel */
-        LPDIRECTDRAWSURFACE lpDDSAlphaDest;     /* Surface to use as Alpha Channel */
+        struct IDirectDrawSurface *lpDDSAlphaDest; /* Surface to use as Alpha Channel */
     } DUMMYUNIONNAME3;
     DWORD       dwAlphaSrcConstBitDepth;        /* Bit depth used to specify alpha constant for source */
     union
     {
         DWORD   dwAlphaSrcConst;                /* Constant to use as Alpha Channel */
-        LPDIRECTDRAWSURFACE lpDDSAlphaSrc;      /* Surface to use as Alpha Channel */
+        struct IDirectDrawSurface *lpDDSAlphaSrc; /* Surface to use as Alpha Channel */
     } DUMMYUNIONNAME4;
     union
     {
         DWORD   dwFillColor;                    /* color in RGB or Palettized */
         DWORD   dwFillDepth;                    /* depth value for z-buffer */
-	DWORD   dwFillPixel;			/* pixel val for RGBA or RGBZ */
-        LPDIRECTDRAWSURFACE lpDDSPattern;       /* Surface to use as pattern */
+        DWORD   dwFillPixel;                    /* pixel val for RGBA or RGBZ */
+        struct IDirectDrawSurface *lpDDSPattern; /* Surface to use as pattern */
     } DUMMYUNIONNAME5;
     DDCOLORKEY  ddckDestColorkey;               /* DestColorkey override */
     DDCOLORKEY  ddckSrcColorkey;                /* SrcColorkey override */
@@ -1170,13 +1171,13 @@ typedef struct _DDOVERLAYFX
     union
     {
         DWORD   dwAlphaDestConst;               /* Constant to use as alpha channel for dest */
-        LPDIRECTDRAWSURFACE lpDDSAlphaDest;     /* Surface to use as alpha channel for dest */
+        struct IDirectDrawSurface *lpDDSAlphaDest; /* Surface to use as alpha channel for dest */
     } DUMMYUNIONNAME1;
     DWORD       dwAlphaSrcConstBitDepth;        /* Bit depth used to specify alpha constant for source */
     union
     {
         DWORD   dwAlphaSrcConst;                /* Constant to use as alpha channel for src */
-        LPDIRECTDRAWSURFACE lpDDSAlphaSrc;      /* Surface to use as alpha channel for src */
+        struct IDirectDrawSurface *lpDDSAlphaSrc; /* Surface to use as alpha channel for src */
     } DUMMYUNIONNAME2;
     DDCOLORKEY  dckDestColorkey;                /* DestColorkey override */
     DDCOLORKEY  dckSrcColorkey;                 /* DestColorkey override */
@@ -1186,11 +1187,11 @@ typedef struct _DDOVERLAYFX
 
 typedef struct _DDBLTBATCH
 {
-    LPRECT		lprDest;
-    LPDIRECTDRAWSURFACE	lpDDSSrc;
-    LPRECT		lprSrc;
-    DWORD		dwFlags;
-    LPDDBLTFX		lpDDBltFx;
+    RECT *lprDest;
+    struct IDirectDrawSurface *lpDDSSrc;
+    RECT *lprSrc;
+    DWORD dwFlags;
+    DDBLTFX *lpDDBltFx;
 } DDBLTBATCH,*LPDDBLTBATCH;
 
 #define MAX_DDDEVICEID_STRING          512
@@ -1323,15 +1324,17 @@ DECLARE_INTERFACE_(IDirectDraw,IUnknown)
     STDMETHOD(Compact)(THIS) PURE;
     STDMETHOD(CreateClipper)(THIS_ DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, IUnknown *pUnkOuter) PURE;
     STDMETHOD(CreatePalette)(THIS_ DWORD dwFlags, LPPALETTEENTRY lpColorTable, LPDIRECTDRAWPALETTE *lplpDDPalette, IUnknown *pUnkOuter) PURE;
-    STDMETHOD(CreateSurface)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc, LPDIRECTDRAWSURFACE *lplpDDSurface, IUnknown *pUnkOuter) PURE;
-    STDMETHOD(DuplicateSurface)(THIS_ LPDIRECTDRAWSURFACE lpDDSurface, LPDIRECTDRAWSURFACE *lplpDupDDSurface) PURE;
+    STDMETHOD(CreateSurface)(THIS_ DDSURFACEDESC *surface_desc,
+            struct IDirectDrawSurface **surface, IUnknown *outer) PURE;
+    STDMETHOD(DuplicateSurface)(THIS_ struct IDirectDrawSurface *src_surface,
+            struct IDirectDrawSurface **dst_surface) PURE;
     STDMETHOD(EnumDisplayModes)(THIS_ DWORD dwFlags, LPDDSURFACEDESC lpDDSurfaceDesc, LPVOID lpContext, LPDDENUMMODESCALLBACK lpEnumModesCallback) PURE;
     STDMETHOD(EnumSurfaces)(THIS_ DWORD dwFlags, LPDDSURFACEDESC lpDDSD, LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpEnumSurfacesCallback) PURE;
     STDMETHOD(FlipToGDISurface)(THIS) PURE;
     STDMETHOD(GetCaps)(THIS_ LPDDCAPS lpDDDriverCaps, LPDDCAPS lpDDHELCaps) PURE;
     STDMETHOD(GetDisplayMode)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
     STDMETHOD(GetFourCCCodes)(THIS_ LPDWORD lpNumCodes, LPDWORD lpCodes) PURE;
-    STDMETHOD(GetGDISurface)(THIS_ LPDIRECTDRAWSURFACE *lplpGDIDDSurface) PURE;
+    STDMETHOD(GetGDISurface)(THIS_ struct IDirectDrawSurface **surface) PURE;
     STDMETHOD(GetMonitorFrequency)(THIS_ LPDWORD lpdwFrequency) PURE;
     STDMETHOD(GetScanLine)(THIS_ LPDWORD lpdwScanLine) PURE;
     STDMETHOD(GetVerticalBlankStatus)(THIS_ BOOL *lpbIsInVB) PURE;
@@ -1430,15 +1433,17 @@ DECLARE_INTERFACE_(IDirectDraw2,IUnknown)
 /*0c*/    STDMETHOD(Compact)(THIS) PURE;
 /*10*/    STDMETHOD(CreateClipper)(THIS_ DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, IUnknown *pUnkOuter) PURE;
 /*14*/    STDMETHOD(CreatePalette)(THIS_ DWORD dwFlags, LPPALETTEENTRY lpColorTable, LPDIRECTDRAWPALETTE *lplpDDPalette, IUnknown *pUnkOuter) PURE;
-/*18*/    STDMETHOD(CreateSurface)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc, LPDIRECTDRAWSURFACE *lplpDDSurface, IUnknown *pUnkOuter) PURE;
-/*1c*/    STDMETHOD(DuplicateSurface)(THIS_ LPDIRECTDRAWSURFACE lpDDSurface, LPDIRECTDRAWSURFACE *lplpDupDDSurface) PURE;
+/*18*/    STDMETHOD(CreateSurface)(THIS_ DDSURFACEDESC *surface_desc,
+                struct IDirectDrawSurface **surface, IUnknown *outer) PURE;
+/*1c*/    STDMETHOD(DuplicateSurface)(THIS_ struct IDirectDrawSurface *src_surface,
+                struct IDirectDrawSurface **dst_surface) PURE;
 /*20*/    STDMETHOD(EnumDisplayModes)(THIS_ DWORD dwFlags, LPDDSURFACEDESC lpDDSurfaceDesc, LPVOID lpContext, LPDDENUMMODESCALLBACK lpEnumModesCallback) PURE;
 /*24*/    STDMETHOD(EnumSurfaces)(THIS_ DWORD dwFlags, LPDDSURFACEDESC lpDDSD, LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpEnumSurfacesCallback) PURE;
 /*28*/    STDMETHOD(FlipToGDISurface)(THIS) PURE;
 /*2c*/    STDMETHOD(GetCaps)(THIS_ LPDDCAPS lpDDDriverCaps, LPDDCAPS lpDDHELCaps) PURE;
 /*30*/    STDMETHOD(GetDisplayMode)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
 /*34*/    STDMETHOD(GetFourCCCodes)(THIS_ LPDWORD lpNumCodes, LPDWORD lpCodes) PURE;
-/*38*/    STDMETHOD(GetGDISurface)(THIS_ LPDIRECTDRAWSURFACE *lplpGDIDDSurface) PURE;
+/*38*/    STDMETHOD(GetGDISurface)(THIS_ struct IDirectDrawSurface **surface) PURE;
 /*3c*/    STDMETHOD(GetMonitorFrequency)(THIS_ LPDWORD lpdwFrequency) PURE;
 /*40*/    STDMETHOD(GetScanLine)(THIS_ LPDWORD lpdwScanLine) PURE;
 /*44*/    STDMETHOD(GetVerticalBlankStatus)(THIS_ BOOL *lpbIsInVB) PURE;
@@ -1525,15 +1530,17 @@ DECLARE_INTERFACE_(IDirectDraw3,IUnknown)
 /*0c*/    STDMETHOD(Compact)(THIS) PURE;
 /*10*/    STDMETHOD(CreateClipper)(THIS_ DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, IUnknown *pUnkOuter) PURE;
 /*14*/    STDMETHOD(CreatePalette)(THIS_ DWORD dwFlags, LPPALETTEENTRY lpColorTable, LPDIRECTDRAWPALETTE *lplpDDPalette, IUnknown *pUnkOuter) PURE;
-/*18*/    STDMETHOD(CreateSurface)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc, LPDIRECTDRAWSURFACE *lplpDDSurface, IUnknown *pUnkOuter) PURE;
-/*1c*/    STDMETHOD(DuplicateSurface)(THIS_ LPDIRECTDRAWSURFACE lpDDSurface, LPDIRECTDRAWSURFACE *lplpDupDDSurface) PURE;
+/*18*/    STDMETHOD(CreateSurface)(THIS_ DDSURFACEDESC *surface_desc,
+                struct IDirectDrawSurface **surface, IUnknown *outer) PURE;
+/*1c*/    STDMETHOD(DuplicateSurface)(THIS_ struct IDirectDrawSurface *src_surface,
+                struct IDirectDrawSurface **dst_surface) PURE;
 /*20*/    STDMETHOD(EnumDisplayModes)(THIS_ DWORD dwFlags, LPDDSURFACEDESC lpDDSurfaceDesc, LPVOID lpContext, LPDDENUMMODESCALLBACK lpEnumModesCallback) PURE;
 /*24*/    STDMETHOD(EnumSurfaces)(THIS_ DWORD dwFlags, LPDDSURFACEDESC lpDDSD, LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpEnumSurfacesCallback) PURE;
 /*28*/    STDMETHOD(FlipToGDISurface)(THIS) PURE;
 /*2c*/    STDMETHOD(GetCaps)(THIS_ LPDDCAPS lpDDDriverCaps, LPDDCAPS lpDDHELCaps) PURE;
 /*30*/    STDMETHOD(GetDisplayMode)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
 /*34*/    STDMETHOD(GetFourCCCodes)(THIS_ LPDWORD lpNumCodes, LPDWORD lpCodes) PURE;
-/*38*/    STDMETHOD(GetGDISurface)(THIS_ LPDIRECTDRAWSURFACE *lplpGDIDDSurface) PURE;
+/*38*/    STDMETHOD(GetGDISurface)(THIS_ struct IDirectDrawSurface **surface) PURE;
 /*3c*/    STDMETHOD(GetMonitorFrequency)(THIS_ LPDWORD lpdwFrequency) PURE;
 /*40*/    STDMETHOD(GetScanLine)(THIS_ LPDWORD lpdwScanLine) PURE;
 /*44*/    STDMETHOD(GetVerticalBlankStatus)(THIS_ BOOL *lpbIsInVB) PURE;
@@ -1545,7 +1552,7 @@ DECLARE_INTERFACE_(IDirectDraw3,IUnknown)
           /* added in v2 */
 /*5c*/    STDMETHOD(GetAvailableVidMem)(THIS_ LPDDSCAPS lpDDCaps, LPDWORD lpdwTotal, LPDWORD lpdwFree) PURE;
           /* added in v3 */
-/*60*/    STDMETHOD(GetSurfaceFromDC)(THIS_ HDC hdc, LPDIRECTDRAWSURFACE *pSurf) PURE;
+/*60*/    STDMETHOD(GetSurfaceFromDC)(THIS_ HDC dc, struct IDirectDrawSurface **surface) PURE;
 };
 #undef INTERFACE
 
@@ -1859,16 +1866,18 @@ DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown)
 /*04*/    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
 /*08*/    STDMETHOD_(ULONG,Release)(THIS) PURE;
           /*** IDirectDrawSurface methods ***/
-/*0c*/    STDMETHOD(AddAttachedSurface)(THIS_ LPDIRECTDRAWSURFACE lpDDSAttachedSurface) PURE;
+/*0c*/    STDMETHOD(AddAttachedSurface)(THIS_ IDirectDrawSurface *attachment) PURE;
 /*10*/    STDMETHOD(AddOverlayDirtyRect)(THIS_ LPRECT lpRect) PURE;
-/*14*/    STDMETHOD(Blt)(THIS_ LPRECT lpDestRect, LPDIRECTDRAWSURFACE lpDDSrcSurface, LPRECT lpSrcRect, DWORD dwFlags, LPDDBLTFX lpDDBltFx) PURE;
+/*14*/    STDMETHOD(Blt)(THIS_ RECT *dst_rect, IDirectDrawSurface *src_surface, RECT *src_rect,
+                DWORD flags, DDBLTFX *fx) PURE;
 /*18*/    STDMETHOD(BltBatch)(THIS_ LPDDBLTBATCH lpDDBltBatch, DWORD dwCount, DWORD dwFlags) PURE;
-/*1c*/    STDMETHOD(BltFast)(THIS_ DWORD dwX, DWORD dwY, LPDIRECTDRAWSURFACE lpDDSrcSurface, LPRECT lpSrcRect, DWORD dwTrans) PURE;
-/*20*/    STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD dwFlags, LPDIRECTDRAWSURFACE lpDDSAttachedSurface) PURE;
+/*1c*/    STDMETHOD(BltFast)(THIS_ DWORD x, DWORD y, IDirectDrawSurface *src_surface,
+                RECT *src_rect, DWORD flags) PURE;
+/*20*/    STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD flags, IDirectDrawSurface *attachment) PURE;
 /*24*/    STDMETHOD(EnumAttachedSurfaces)(THIS_ LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpEnumSurfacesCallback) PURE;
 /*28*/    STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD dwFlags, LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpfnCallback) PURE;
-/*2c*/    STDMETHOD(Flip)(THIS_ LPDIRECTDRAWSURFACE lpDDSurfaceTargetOverride, DWORD dwFlags) PURE;
-/*30*/    STDMETHOD(GetAttachedSurface)(THIS_ LPDDSCAPS lpDDSCaps, LPDIRECTDRAWSURFACE *lplpDDAttachedSurface) PURE;
+/*2c*/    STDMETHOD(Flip)(THIS_ IDirectDrawSurface *dst_surface, DWORD flags) PURE;
+/*30*/    STDMETHOD(GetAttachedSurface)(THIS_ DDSCAPS *caps, IDirectDrawSurface **attachment) PURE;
 /*34*/    STDMETHOD(GetBltStatus)(THIS_ DWORD dwFlags) PURE;
 /*38*/    STDMETHOD(GetCaps)(THIS_ LPDDSCAPS lpDDSCaps) PURE;
 /*3c*/    STDMETHOD(GetClipper)(THIS_ LPDIRECTDRAWCLIPPER *lplpDDClipper) PURE;
@@ -1889,9 +1898,10 @@ DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown)
 /*78*/    STDMETHOD(SetOverlayPosition)(THIS_ LONG lX, LONG lY) PURE;
 /*7c*/    STDMETHOD(SetPalette)(THIS_ LPDIRECTDRAWPALETTE lpDDPalette) PURE;
 /*80*/    STDMETHOD(Unlock)(THIS_ LPVOID lpSurfaceData) PURE;
-/*84*/    STDMETHOD(UpdateOverlay)(THIS_ LPRECT lpSrcRect, LPDIRECTDRAWSURFACE lpDDDestSurface, LPRECT lpDestRect, DWORD dwFlags, LPDDOVERLAYFX lpDDOverlayFx) PURE;
+/*84*/    STDMETHOD(UpdateOverlay)(THIS_ RECT *src_rect, IDirectDrawSurface *dst_surface,
+                RECT *dst_rect, DWORD flags, DDOVERLAYFX *fx) PURE;
 /*88*/    STDMETHOD(UpdateOverlayDisplay)(THIS_ DWORD dwFlags) PURE;
-/*8c*/    STDMETHOD(UpdateOverlayZOrder)(THIS_ DWORD dwFlags, LPDIRECTDRAWSURFACE lpDDSReference) PURE;
+/*8c*/    STDMETHOD(UpdateOverlayZOrder)(THIS_ DWORD flags, IDirectDrawSurface *reference_surface) PURE;
 };
 #undef INTERFACE
 

@@ -263,7 +263,8 @@ DECLARE_INTERFACE_(IDirect3D2,IUnknown)
     STDMETHOD(CreateMaterial)(THIS_ LPDIRECT3DMATERIAL2 *lplpDirect3DMaterial2, IUnknown *pUnkOuter) PURE;
     STDMETHOD(CreateViewport)(THIS_ LPDIRECT3DVIEWPORT2 *lplpD3DViewport2, IUnknown *pUnkOuter) PURE;
     STDMETHOD(FindDevice)(THIS_ LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lpD3DFDR) PURE;
-    STDMETHOD(CreateDevice)(THIS_ REFCLSID rclsid, LPDIRECTDRAWSURFACE lpDDS, LPDIRECT3DDEVICE2 *lplpD3DDevice2) PURE;
+    STDMETHOD(CreateDevice)(THIS_ REFCLSID rclsid, IDirectDrawSurface *surface,
+            struct IDirect3DDevice2 **device) PURE;
 };
 #undef INTERFACE
 
@@ -567,7 +568,7 @@ DECLARE_INTERFACE_(IDirect3DTexture,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3DTexture methods ***/
-    STDMETHOD(Initialize)(THIS_ LPDIRECT3DDEVICE lpDirect3DDevice, LPDIRECTDRAWSURFACE lpDDSurface) PURE;
+    STDMETHOD(Initialize)(THIS_ struct IDirect3DDevice *device, IDirectDrawSurface *surface) PURE;
     STDMETHOD(GetHandle)(THIS_ LPDIRECT3DDEVICE lpDirect3DDevice, LPD3DTEXTUREHANDLE  lpHandle) PURE;
     STDMETHOD(PaletteChanged)(THIS_ DWORD dwStart, DWORD dwCount) PURE;
     STDMETHOD(Load)(THIS_ LPDIRECT3DTEXTURE lpD3DTexture) PURE;
@@ -656,8 +657,8 @@ DECLARE_INTERFACE_(IDirect3DViewport,IUnknown)
     STDMETHOD(LightElements)(THIS_ DWORD dwElementCount, LPD3DLIGHTDATA lpData) PURE;
     STDMETHOD(SetBackground)(THIS_ D3DMATERIALHANDLE hMat) PURE;
     STDMETHOD(GetBackground)(THIS_ LPD3DMATERIALHANDLE lphMat, LPBOOL lpValid) PURE;
-    STDMETHOD(SetBackgroundDepth)(THIS_ LPDIRECTDRAWSURFACE lpDDSurface) PURE;
-    STDMETHOD(GetBackgroundDepth)(THIS_ LPDIRECTDRAWSURFACE *lplpDDSurface, LPBOOL lpValid) PURE;
+    STDMETHOD(SetBackgroundDepth)(THIS_ IDirectDrawSurface *surface) PURE;
+    STDMETHOD(GetBackgroundDepth)(THIS_ IDirectDrawSurface **surface, BOOL *valid) PURE;
     STDMETHOD(Clear)(THIS_ DWORD dwCount, LPD3DRECT lpRects, DWORD dwFlags) PURE;
     STDMETHOD(AddLight)(THIS_ LPDIRECT3DLIGHT lpDirect3DLight) PURE;
     STDMETHOD(DeleteLight)(THIS_ LPDIRECT3DLIGHT lpDirect3DLight) PURE;
@@ -724,8 +725,8 @@ DECLARE_INTERFACE_(IDirect3DViewport2,IDirect3DViewport)
     STDMETHOD(LightElements)(THIS_ DWORD dwElementCount, LPD3DLIGHTDATA lpData) PURE;
     STDMETHOD(SetBackground)(THIS_ D3DMATERIALHANDLE hMat) PURE;
     STDMETHOD(GetBackground)(THIS_ LPD3DMATERIALHANDLE lphMat, LPBOOL lpValid) PURE;
-    STDMETHOD(SetBackgroundDepth)(THIS_ LPDIRECTDRAWSURFACE lpDDSurface) PURE;
-    STDMETHOD(GetBackgroundDepth)(THIS_ LPDIRECTDRAWSURFACE *lplpDDSurface, LPBOOL lpValid) PURE;
+    STDMETHOD(SetBackgroundDepth)(THIS_ IDirectDrawSurface *surface) PURE;
+    STDMETHOD(GetBackgroundDepth)(THIS_ IDirectDrawSurface **surface, BOOL *valid) PURE;
     STDMETHOD(Clear)(THIS_ DWORD dwCount, LPD3DRECT lpRects, DWORD dwFlags) PURE;
     STDMETHOD(AddLight)(THIS_ LPDIRECT3DLIGHT lpDirect3DLight) PURE;
     STDMETHOD(DeleteLight)(THIS_ LPDIRECT3DLIGHT lpDirect3DLight) PURE;
@@ -800,8 +801,8 @@ DECLARE_INTERFACE_(IDirect3DViewport3,IDirect3DViewport2)
     STDMETHOD(LightElements)(THIS_ DWORD dwElementCount, LPD3DLIGHTDATA lpData) PURE;
     STDMETHOD(SetBackground)(THIS_ D3DMATERIALHANDLE hMat) PURE;
     STDMETHOD(GetBackground)(THIS_ LPD3DMATERIALHANDLE lphMat, LPBOOL lpValid) PURE;
-    STDMETHOD(SetBackgroundDepth)(THIS_ LPDIRECTDRAWSURFACE lpDDSurface) PURE;
-    STDMETHOD(GetBackgroundDepth)(THIS_ LPDIRECTDRAWSURFACE *lplpDDSurface, LPBOOL lpValid) PURE;
+    STDMETHOD(SetBackgroundDepth)(THIS_ IDirectDrawSurface *surface) PURE;
+    STDMETHOD(GetBackgroundDepth)(THIS_ IDirectDrawSurface **surface, BOOL *valid) PURE;
     STDMETHOD(Clear)(THIS_ DWORD dwCount, LPD3DRECT lpRects, DWORD dwFlags) PURE;
     STDMETHOD(AddLight)(THIS_ LPDIRECT3DLIGHT lpDirect3DLight) PURE;
     STDMETHOD(DeleteLight)(THIS_ LPDIRECT3DLIGHT lpDirect3DLight) PURE;
@@ -1032,8 +1033,8 @@ DECLARE_INTERFACE_(IDirect3DDevice2,IUnknown)
     /*** DrawPrimitive API ***/
     STDMETHOD(SetCurrentViewport)(THIS_ LPDIRECT3DVIEWPORT2 lpDirect3DViewport2) PURE;
     STDMETHOD(GetCurrentViewport)(THIS_ LPDIRECT3DVIEWPORT2 *lplpDirect3DViewport2) PURE;
-    STDMETHOD(SetRenderTarget)(THIS_ LPDIRECTDRAWSURFACE lpNewRenderTarget, DWORD dwFlags) PURE;
-    STDMETHOD(GetRenderTarget)(THIS_ LPDIRECTDRAWSURFACE *lplpRenderTarget) PURE;
+    STDMETHOD(SetRenderTarget)(THIS_ IDirectDrawSurface *surface, DWORD flags) PURE;
+    STDMETHOD(GetRenderTarget)(THIS_ IDirectDrawSurface **surface) PURE;
     STDMETHOD(Begin)(THIS_ D3DPRIMITIVETYPE d3dpt,D3DVERTEXTYPE dwVertexTypeDesc,DWORD dwFlags) PURE;
     STDMETHOD(BeginIndexed)(THIS_ D3DPRIMITIVETYPE d3dptPrimitiveType, D3DVERTEXTYPE d3dvtVertexType, LPVOID lpvVertices, DWORD dwNumVertices, DWORD dwFlags) PURE;
     STDMETHOD(Vertex)(THIS_ LPVOID lpVertexType) PURE;

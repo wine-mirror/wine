@@ -30,8 +30,8 @@
 #include "ddraw.h"
 
 static LPDIRECTDRAW lpDD = NULL;
-static LPDIRECTDRAWSURFACE lpDDSPrimary = NULL;
-static LPDIRECTDRAWSURFACE lpDDSBack = NULL;
+static IDirectDrawSurface *lpDDSPrimary;
+static IDirectDrawSurface *lpDDSBack;
 static WNDCLASS wc;
 static HWND hwnd, hwnd2;
 static int modes_cnt;
