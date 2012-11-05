@@ -552,11 +552,6 @@ static HBRUSH nulldrv_SelectBrush( PHYSDEV dev, HBRUSH brush, const struct brush
     return brush;
 }
 
-static HFONT nulldrv_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags )
-{
-    return 0;
-}
-
 static HPALETTE nulldrv_SelectPalette( PHYSDEV dev, HPALETTE palette, BOOL bkgnd )
 {
     return palette;

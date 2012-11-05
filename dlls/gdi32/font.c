@@ -260,8 +260,6 @@ static void FONT_NewTextMetricExWToA(const NEWTEXTMETRICEXW *ptmW, NEWTEXTMETRIC
     memcpy(&ptmA->ntmFontSig, &ptmW->ntmFontSig, sizeof(FONTSIGNATURE));
 }
 
-enum smoothing { no_smoothing, aa_smoothing, subpixel_smoothing };
-
 static DWORD get_desktop_value( const WCHAR *name, DWORD *value )
 {
     static const WCHAR desktop[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
@@ -277,28 +275,6 @@ static DWORD get_desktop_value( const WCHAR *name, DWORD *value )
         RegCloseKey( key );
     }
     return err;
-}
-
-static enum smoothing get_default_smoothing( void )
-{
-    static const WCHAR smoothing_type[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g','T','y','p','e',0};
-    DWORD type, err;
-
-    /* FIXME: Ignoring FontSmoothing for now since this is
-       set to off by default in wine.inf */
-
-    err = get_desktop_value( smoothing_type, &type );
-    if (err) return aa_smoothing;
-
-    switch (type)
-    {
-    case 1: /* FE_FONTSMOOTHINGSTANDARD */
-        return aa_smoothing;
-    case 2: /* FE_FONTSMOOTHINGCLEARTYPE */
-        return subpixel_smoothing;
-    }
-
-    return aa_smoothing;
 }
 
 static UINT get_subpixel_orientation( void )
@@ -321,38 +297,27 @@ static UINT get_subpixel_orientation( void )
     return GGO_GRAY4_BITMAP;
 }
 
-UINT get_font_aa_flags( HDC hdc, const LOGFONTW *lf )
+static UINT get_default_smoothing( void )
 {
-    enum smoothing smoothing;
+    static const WCHAR smoothing_type[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g','T','y','p','e',0};
+    DWORD type, err;
 
-    switch (lf->lfQuality)
-    {
-    case NONANTIALIASED_QUALITY:
-        return GGO_BITMAP;
-    case ANTIALIASED_QUALITY:
-        smoothing = aa_smoothing;
-        break;
-    case CLEARTYPE_QUALITY:
-    case CLEARTYPE_NATURAL_QUALITY:
-        smoothing = subpixel_smoothing;
-        break;
-    case DEFAULT_QUALITY:
-    case DRAFT_QUALITY:
-    case PROOF_QUALITY:
-    default:
-        smoothing = get_default_smoothing();
-    }
+    /* FIXME: Ignoring FontSmoothing for now since this is
+       set to off by default in wine.inf */
 
-    switch (smoothing)
+    err = get_desktop_value( smoothing_type, &type );
+    if (err) return 0;
+
+    switch (type)
     {
-    case subpixel_smoothing:
-        return get_subpixel_orientation();
-    case aa_smoothing:
+    case 1: /* FE_FONTSMOOTHINGSTANDARD */
         return GGO_GRAY4_BITMAP;
-    default:
-        return GGO_BITMAP;
+    case 2: /* FE_FONTSMOOTHINGCLEARTYPE */
+        return get_subpixel_orientation();
     }
+    return 0;
 }
+
 
 /***********************************************************************
  *           GdiGetCodePage   (GDI32.@)
@@ -693,6 +658,36 @@ static BOOL FONT_DeleteObject( HGDIOBJ handle )
 
     if (!(obj = free_gdi_handle( handle ))) return FALSE;
     return HeapFree( GetProcessHeap(), 0, obj );
+}
+
+
+/***********************************************************************
+ *           nulldrv_SelectFont
+ */
+HFONT nulldrv_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags )
+{
+    LOGFONTW lf;
+
+    if (*aa_flags) return 0;
+
+    GetObjectW( font, sizeof(lf), &lf );
+    switch (lf.lfQuality)
+    {
+    case NONANTIALIASED_QUALITY:
+        *aa_flags = GGO_BITMAP;
+        break;
+    case ANTIALIASED_QUALITY:
+        *aa_flags = GGO_GRAY4_BITMAP;
+        break;
+    case CLEARTYPE_QUALITY:
+    case CLEARTYPE_NATURAL_QUALITY:
+        *aa_flags = get_subpixel_orientation();
+        break;
+    default:
+        *aa_flags = get_default_smoothing();
+        break;
+    }
+    return 0;
 }
 
 

@@ -4953,27 +4953,41 @@ found_face:
 done:
     if (ret)
     {
-        if (!*aa_flags) *aa_flags = ret->aa_flags;
-        if (!*aa_flags) *aa_flags = get_font_aa_flags( dev->hdc, &lf );
+        PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectFont );
 
-        /* fixup the antialiasing flags for that font */
-        switch (*aa_flags)
+        switch (lf.lfQuality)
         {
-        case WINE_GGO_HRGB_BITMAP:
-        case WINE_GGO_HBGR_BITMAP:
-        case WINE_GGO_VRGB_BITMAP:
-        case WINE_GGO_VBGR_BITMAP:
-            if (is_subpixel_rendering_enabled()) break;
-            *aa_flags = GGO_GRAY4_BITMAP;
-            /* fall through */
-        case GGO_GRAY4_BITMAP:
-            if (is_hinting_enabled())
-            {
-                WORD gasp_flags;
-                if (get_gasp_flags( ret, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
-                    *aa_flags = GGO_BITMAP;
-            }
+        case NONANTIALIASED_QUALITY:
+        case ANTIALIASED_QUALITY:
+            next->funcs->pSelectFont( dev, hfont, aa_flags );
             break;
+        case CLEARTYPE_QUALITY:
+        case CLEARTYPE_NATURAL_QUALITY:
+        default:
+            if (!*aa_flags) *aa_flags = ret->aa_flags;
+            next->funcs->pSelectFont( dev, hfont, aa_flags );
+
+            /* fixup the antialiasing flags for that font */
+            switch (*aa_flags)
+            {
+            case WINE_GGO_HRGB_BITMAP:
+            case WINE_GGO_HBGR_BITMAP:
+            case WINE_GGO_VRGB_BITMAP:
+            case WINE_GGO_VBGR_BITMAP:
+                if (is_subpixel_rendering_enabled()) break;
+                *aa_flags = GGO_GRAY4_BITMAP;
+                /* fall through */
+            case GGO_GRAY2_BITMAP:
+            case GGO_GRAY4_BITMAP:
+            case GGO_GRAY8_BITMAP:
+            case WINE_GGO_GRAY16_BITMAP:
+                if (is_hinting_enabled())
+                {
+                    WORD gasp_flags;
+                    if (get_gasp_flags( ret, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
+                        *aa_flags = GGO_BITMAP;
+                }
+            }
         }
         dc->gdiFont = ret;
         physdev->font = ret;
