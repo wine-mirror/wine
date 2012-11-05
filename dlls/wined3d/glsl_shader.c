@@ -100,24 +100,30 @@ struct shader_glsl_priv {
     const struct fragment_pipeline *fragment_pipe;
 };
 
+struct glsl_vs_program
+{
+    struct list shader_entry;
+    GLhandleARB id;
+    GLenum vertex_color_clamp;
+    GLint *uniform_f_locations;
+    GLint uniform_i_locations[MAX_CONST_I];
+    GLint pos_fixup_location;
+};
+
 /* Struct to maintain data about a linked GLSL program */
-struct glsl_shader_prog_link {
-    struct wine_rb_entry        program_lookup_entry;
-    struct list                 vshader_entry;
+struct glsl_shader_prog_link
+{
+    struct wine_rb_entry program_lookup_entry;
+    struct glsl_vs_program vs;
     struct list                 pshader_entry;
     GLhandleARB                 programId;
-    GLint                       *vuniformF_locations;
     GLint                       *puniformF_locations;
-    GLint                       vuniformI_locations[MAX_CONST_I];
     GLint                       puniformI_locations[MAX_CONST_I];
-    GLint                       posFixup_location;
     GLint                       np2Fixup_location;
     GLint                       bumpenvmat_location[MAX_TEXTURES];
     GLint                       luminancescale_location[MAX_TEXTURES];
     GLint                       luminanceoffset_location[MAX_TEXTURES];
     GLint                       ycorrection_location;
-    GLenum                      vertex_color_clamp;
-    GLhandleARB vs_id;
     GLhandleARB ps_id;
     UINT                        constant_version;
     const struct ps_np2fixup_info *np2Fixup_info;
@@ -737,10 +743,10 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
 
         /* Load DirectX 9 float constants/uniforms for vertex shader */
         shader_glsl_load_constantsF(vshader, gl_info, state->vs_consts_f,
-                prog->vuniformF_locations, &priv->vconst_heap, priv->stack, constant_version);
+                prog->vs.uniform_f_locations, &priv->vconst_heap, priv->stack, constant_version);
 
         /* Load DirectX 9 integer constants/uniforms for vertex shader */
-        shader_glsl_load_constantsI(vshader, gl_info, prog->vuniformI_locations, state->vs_consts_i,
+        shader_glsl_load_constantsI(vshader, gl_info, prog->vs.uniform_i_locations, state->vs_consts_i,
                 stateBlock->changed.vertexShaderConstantsI & vshader->reg_maps.integer_constants);
 
         /* Load DirectX 9 boolean constants/uniforms for vertex shader */
@@ -749,7 +755,7 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
 
         /* Upload the position fixup params */
         shader_get_position_fixup(context, state, position_fixup);
-        GL_EXTCALL(glUniform4fvARB(prog->posFixup_location, 1, position_fixup));
+        GL_EXTCALL(glUniform4fvARB(prog->vs.pos_fixup_location, 1, position_fixup));
         checkGLcall("glUniform4fvARB");
     }
 
@@ -4100,7 +4106,7 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
 {
     struct glsl_program_key key;
 
-    key.vs_id = entry->vs_id;
+    key.vs_id = entry->vs.id;
     key.ps_id = entry->ps_id;
 
     if (wine_rb_put(&priv->program_lookup, &key, &entry->program_lookup_entry) == -1)
@@ -4128,16 +4134,16 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struc
 {
     struct glsl_program_key key;
 
-    key.vs_id = entry->vs_id;
+    key.vs_id = entry->vs.id;
     key.ps_id = entry->ps_id;
     wine_rb_remove(&priv->program_lookup, &key);
 
     GL_EXTCALL(glDeleteObjectARB(entry->programId));
-    if (entry->vs_id)
-        list_remove(&entry->vshader_entry);
+    if (entry->vs.id)
+        list_remove(&entry->vs.shader_entry);
     if (entry->ps_id)
         list_remove(&entry->pshader_entry);
-    HeapFree(GetProcessHeap(), 0, entry->vuniformF_locations);
+    HeapFree(GetProcessHeap(), 0, entry->vs.uniform_f_locations);
     HeapFree(GetProcessHeap(), 0, entry->puniformF_locations);
     HeapFree(GetProcessHeap(), 0, entry);
 }
@@ -4744,7 +4750,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     /* Create the entry */
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
     entry->programId = programId;
-    entry->vs_id = vs_id;
+    entry->vs.id = vs_id;
     entry->ps_id = ps_id;
     entry->constant_version = 0;
     entry->np2Fixup_info = np2fixup_info;
@@ -4791,7 +4797,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
         }
         checkGLcall("glBindAttribLocationARB");
 
-        list_add_head(&vshader->linked_programs, &entry->vshader_entry);
+        list_add_head(&vshader->linked_programs, &entry->vs.shader_entry);
     }
 
     /* Attach GLSL pshader */
@@ -4809,17 +4815,17 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     GL_EXTCALL(glLinkProgramARB(programId));
     shader_glsl_validate_link(gl_info, programId);
 
-    entry->vuniformF_locations = HeapAlloc(GetProcessHeap(), 0,
+    entry->vs.uniform_f_locations = HeapAlloc(GetProcessHeap(), 0,
             sizeof(GLhandleARB) * gl_info->limits.glsl_vs_float_constants);
     for (i = 0; i < gl_info->limits.glsl_vs_float_constants; ++i)
     {
         snprintf(glsl_name, sizeof(glsl_name), "vs_c[%u]", i);
-        entry->vuniformF_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
+        entry->vs.uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
     for (i = 0; i < MAX_CONST_I; ++i)
     {
         snprintf(glsl_name, sizeof(glsl_name), "vs_i[%u]", i);
-        entry->vuniformI_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
+        entry->vs.uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
     entry->puniformF_locations = HeapAlloc(GetProcessHeap(), 0,
             sizeof(GLhandleARB) * gl_info->limits.glsl_ps_float_constants);
@@ -4855,7 +4861,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
         }
     }
 
-    entry->posFixup_location = GL_EXTCALL(glGetUniformLocationARB(programId, "posFixup"));
+    entry->vs.pos_fixup_location = GL_EXTCALL(glGetUniformLocationARB(programId, "posFixup"));
     entry->ycorrection_location = GL_EXTCALL(glGetUniformLocationARB(programId, "ycorrection"));
     checkGLcall("Find glsl program uniform locations");
 
@@ -4863,9 +4869,11 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
             && pshader->u.ps.declared_in_count > vec4_varyings(3, gl_info))
     {
         TRACE("Shader %d needs vertex color clamping disabled\n", programId);
-        entry->vertex_color_clamp = GL_FALSE;
-    } else {
-        entry->vertex_color_clamp = GL_FIXED_ONLY_ARB;
+        entry->vs.vertex_color_clamp = GL_FALSE;
+    }
+    else
+    {
+        entry->vs.vertex_color_clamp = GL_FIXED_ONLY_ARB;
     }
 
     /* Set the shader to allow uniform loading on it */
@@ -5015,13 +5023,13 @@ static void shader_glsl_select(const struct wined3d_context *context, enum wined
     BOOL useVS = vertex_mode == WINED3D_SHADER_MODE_SHADER;
     BOOL usePS = fragment_mode == WINED3D_SHADER_MODE_SHADER;
 
-    old_vertex_color_clamp = priv->glsl_program ? priv->glsl_program->vertex_color_clamp : GL_FIXED_ONLY_ARB;
+    old_vertex_color_clamp = priv->glsl_program ? priv->glsl_program->vs.vertex_color_clamp : GL_FIXED_ONLY_ARB;
 
     priv->fragment_pipe->enable_extension(gl_info, fragment_mode == WINED3D_SHADER_MODE_FFP);
     if (useVS || usePS) set_glsl_shader_program(context, device, usePS, useVS);
     else priv->glsl_program = NULL;
 
-    current_vertex_color_clamp = priv->glsl_program ? priv->glsl_program->vertex_color_clamp : GL_FIXED_ONLY_ARB;
+    current_vertex_color_clamp = priv->glsl_program ? priv->glsl_program->vs.vertex_color_clamp : GL_FIXED_ONLY_ARB;
 
     if (old_vertex_color_clamp != current_vertex_color_clamp)
     {
@@ -5150,7 +5158,7 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
                 struct glsl_vs_compiled_shader *gl_shaders = shader_data->gl_shaders.vs;
 
                 LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs,
-                        struct glsl_shader_prog_link, vshader_entry)
+                        struct glsl_shader_prog_link, vs.shader_entry)
                 {
                     delete_glsl_program_entry(priv, gl_info, entry);
                 }
@@ -5158,7 +5166,7 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
                 for (i = 0; i < shader_data->num_gl_shaders; ++i)
                 {
                     TRACE("Deleting vertex shader %u.\n", gl_shaders[i].prgId);
-                    if (priv->glsl_program && priv->glsl_program->vs_id == gl_shaders[i].prgId)
+                    if (priv->glsl_program && priv->glsl_program->vs.id == gl_shaders[i].prgId)
                         shader_glsl_select(context, WINED3D_SHADER_MODE_NONE, WINED3D_SHADER_MODE_NONE);
                     GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].prgId));
                     checkGLcall("glDeleteObjectARB");
@@ -5188,8 +5196,8 @@ static int glsl_program_key_compare(const void *key, const struct wine_rb_entry 
     const struct glsl_shader_prog_link *prog = WINE_RB_ENTRY_VALUE(entry,
             const struct glsl_shader_prog_link, program_lookup_entry);
 
-    if (k->vs_id > prog->vs_id) return 1;
-    else if (k->vs_id < prog->vs_id) return -1;
+    if (k->vs_id > prog->vs.id) return 1;
+    else if (k->vs_id < prog->vs.id) return -1;
 
     if (k->ps_id > prog->ps_id) return 1;
     else if (k->ps_id < prog->ps_id) return -1;
