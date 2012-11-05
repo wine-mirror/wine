@@ -258,14 +258,12 @@ static UINT msi_string2idA( const string_table *st, LPCSTR buffer, UINT *id )
     return r;
 }
 
-static int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, USHORT refcount, enum StringPersistence persistence )
+static int msi_addstring( string_table *st, UINT n, const char *data, UINT len, USHORT refcount, enum StringPersistence persistence )
 {
     LPWSTR str;
     int sz;
 
-    if( !data )
-        return 0;
-    if( !data[0] )
+    if( !data || !len )
         return 0;
     if( n > 0 )
     {
@@ -295,8 +293,6 @@ static int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, U
     }
 
     /* allocate a new string */
-    if( len < 0 )
-        len = strlen(data);
     sz = MultiByteToWideChar( st->codepage, 0, data, len, NULL, 0 );
     str = msi_alloc( (sz+1)*sizeof(WCHAR) );
     if( !str )
@@ -305,7 +301,6 @@ static int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, U
     str[sz] = 0;
 
     set_st_entry( st, n, str, sz, refcount, persistence );
-
     return n;
 }
 
@@ -316,6 +311,9 @@ int msi_addstringW( string_table *st, const WCHAR *data, int len, USHORT refcoun
 
     if( !data )
         return 0;
+
+    if (len < 0) len = strlenW( data );
+
     if( !data[0] && !len )
         return 0;
 
@@ -333,8 +331,6 @@ int msi_addstringW( string_table *st, const WCHAR *data, int len, USHORT refcoun
         return -1;
 
     /* allocate a new string */
-    if(len<0)
-        len = strlenW(data);
     TRACE( "%s, n = %d len = %d\n", debugstr_wn(data, len), n, len );
 
     str = msi_alloc( (len+1)*sizeof(WCHAR) );
@@ -344,7 +340,6 @@ int msi_addstringW( string_table *st, const WCHAR *data, int len, USHORT refcoun
     str[len] = 0;
 
     set_st_entry( st, n, str, len, refcount, persistence );
-
     return n;
 }
 
