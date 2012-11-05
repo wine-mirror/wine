@@ -310,9 +310,11 @@ _FUNCTION_ {
             case 'f':
             case 'g':
             case 'G': { /* read a float */
-                    long double cur;
+                    long double cur = 1, expcnt = 10;
                     ULONGLONG d, hlp;
                     int exp = 0, negative = 0;
+                    unsigned fpcontrol;
+                    BOOL negexp;
 
                     /* skip initial whitespace */
                     while ((nch!=_EOF_) && _ISSPACE_(nch))
@@ -401,7 +403,24 @@ _FUNCTION_ {
                         else exp += e;
                     }
 
-                    cur = (exp>=0 ? d*pow(10, exp) : d/pow(10, -exp));
+                    fpcontrol = _control87(0, 0);
+                    _control87(MSVCRT__EM_DENORMAL|MSVCRT__EM_INVALID|MSVCRT__EM_ZERODIVIDE
+                            |MSVCRT__EM_OVERFLOW|MSVCRT__EM_UNDERFLOW|MSVCRT__EM_INEXACT, 0xffffffff);
+
+                    negexp = (exp < 0);
+                    if(negexp)
+                        exp = -exp;
+                    /* update 'cur' with this exponent. */
+                    while(exp) {
+                        if(exp & 1)
+                            cur *= expcnt;
+                        exp /= 2;
+                        expcnt = expcnt*expcnt;
+                    }
+                    cur = (negexp ? d/cur : d*cur);
+
+                    _control87(fpcontrol, 0xffffffff);
+
                     st = 1;
                     if (!suppress) {
                         if (L_prefix) _SET_NUMBER_(double);
