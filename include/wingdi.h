@@ -1459,11 +1459,6 @@ typedef struct
 #define TT_AVAILABLE        0x0001
 #define TT_ENABLED          0x0002
 
-#ifdef __WINESRC__
-#define WINE_TT_SUBPIXEL_RENDERING_ENABLED 0x4000
-#define WINE_TT_HINTER_ENABLED 0x8000
-#endif
-
 #define TT_PRIM_LINE    1
 #define TT_PRIM_QSPLINE 2
 #define TT_PRIM_CSPLINE 3

@@ -916,6 +916,7 @@ static BOOL is_hinting_enabled(void)
         }
 #endif
         else enabled = FALSE;
+        TRACE("hinting is %senabled\n", enabled ? "" : "NOT ");
     }
     return enabled;
 }
@@ -925,8 +926,11 @@ static BOOL is_subpixel_rendering_enabled( void )
 #ifdef HAVE_FREETYPE_FTLCDFIL_H
     static int enabled = -1;
     if (enabled == -1)
+    {
         enabled = (pFT_Library_SetLcdFilter &&
                    pFT_Library_SetLcdFilter( NULL, 0 ) != FT_Err_Unimplemented_Feature);
+        TRACE("subpixel rendering is %senabled\n", enabled ? "" : "NOT ");
+    }
     return enabled;
 #else
     return FALSE;
@@ -7556,25 +7560,8 @@ static BOOL freetype_FontIsLinked( PHYSDEV dev )
  */
 BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
 {
-    static int hinting = -1;
-    static int subpixel = -1;
-
-    if(hinting == -1)
-    {
-        hinting = is_hinting_enabled();
-        TRACE("hinting is %senabled\n", hinting ? "" : "NOT ");
-    }
-
-    if ( subpixel == -1 )
-    {
-        subpixel = is_subpixel_rendering_enabled();
-        TRACE("subpixel rendering is %senabled\n", subpixel ? "" : "NOT ");
-    }
-
     lprs->nSize = sizeof(RASTERIZER_STATUS);
-    lprs->wFlags = TT_AVAILABLE | TT_ENABLED | (hinting ? WINE_TT_HINTER_ENABLED : 0);
-    if ( subpixel )
-        lprs->wFlags |= WINE_TT_SUBPIXEL_RENDERING_ENABLED;
+    lprs->wFlags = TT_AVAILABLE | TT_ENABLED;
     lprs->nLanguageID = 0;
     return TRUE;
 }
