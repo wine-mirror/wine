@@ -146,7 +146,6 @@ typedef struct
 typedef struct
 {
     LFANDSIZE lfsz;
-    AA_Type aa_default;
     gsCacheEntryFormat * format[AA_MAXVALUE];
     INT count;
     INT next;
@@ -158,6 +157,7 @@ struct xrender_physdev
     X11DRV_PDEVICE    *x11dev;
     HRGN               region;
     enum wxr_format    format;
+    UINT               aa_flags;
     int                cache_index;
     BOOL               update_clip;
     Picture            pict;
@@ -789,10 +789,8 @@ static AA_Type aa_type_from_flags( UINT aa_flags )
 {
     switch (aa_flags & 0x7f)
     {
-    case 0:
     case GGO_BITMAP:
         return AA_None;
-    case GGO_GRAY4_BITMAP:
     case WINE_GGO_GRAY16_BITMAP:
         return AA_Grey;
     case WINE_GGO_HRGB_BITMAP:
@@ -860,6 +858,21 @@ static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     ret = next->funcs->pSelectFont( next, hfont, aa_flags );
     if (!ret) return 0;
 
+    switch (*aa_flags)
+    {
+    case GGO_GRAY2_BITMAP:
+    case GGO_GRAY4_BITMAP:
+    case GGO_GRAY8_BITMAP:
+        physdev->aa_flags = WINE_GGO_GRAY16_BITMAP;
+        break;
+    case 0:
+        physdev->aa_flags = GGO_BITMAP;
+        break;
+    default:
+        physdev->aa_flags = *aa_flags;
+        break;
+    }
+
     TRACE("h=%d w=%d weight=%d it=%d charset=%d name=%s\n",
           lfsz.lf.lfHeight, lfsz.lf.lfWidth, lfsz.lf.lfWeight,
           lfsz.lf.lfItalic, lfsz.lf.lfCharSet, debugstr_w(lfsz.lf.lfFaceName));
@@ -883,7 +896,6 @@ static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     if (physdev->cache_index != -1)
         dec_ref_cache( physdev->cache_index );
     physdev->cache_index = GetCacheEntry( &lfsz );
-    glyphsetCache[physdev->cache_index].aa_default = aa_type_from_flags( *aa_flags );
     LeaveCriticalSection(&xrender_cs);
     return ret;
 }
@@ -1014,7 +1026,7 @@ static void xrenderdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
  *
  * Helper to ExtTextOut.  Must be called inside xrender_cs
  */
-static void UploadGlyph(struct xrender_physdev *physDev, int glyph, AA_Type format)
+static void UploadGlyph(struct xrender_physdev *physDev, int glyph)
 {
     unsigned int buflen;
     char *buf;
@@ -1023,40 +1035,17 @@ static void UploadGlyph(struct xrender_physdev *physDev, int glyph, AA_Type form
     XGlyphInfo gi;
     gsCacheEntry *entry = glyphsetCache + physDev->cache_index;
     gsCacheEntryFormat *formatEntry;
-    UINT ggo_format = GGO_GLYPH_INDEX;
+    UINT ggo_format = GGO_GLYPH_INDEX | physDev->aa_flags;
+    AA_Type format = aa_type_from_flags( physDev->aa_flags );
     enum wxr_format wxr_format;
     static const char zero[4];
     static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
-
-    switch(format) {
-    case AA_Grey:
-	ggo_format |= WINE_GGO_GRAY16_BITMAP;
-	break;
-    case AA_RGB:
-	ggo_format |= WINE_GGO_HRGB_BITMAP;
-	break;
-    case AA_BGR:
-	ggo_format |= WINE_GGO_HBGR_BITMAP;
-	break;
-    case AA_VRGB:
-	ggo_format |= WINE_GGO_VRGB_BITMAP;
-	break;
-    case AA_VBGR:
-	ggo_format |= WINE_GGO_VBGR_BITMAP;
-	break;
-
-    default:
-        ERR("aa = %d - not implemented\n", format);
-    case AA_None:
-        ggo_format |= GGO_BITMAP;
-	break;
-    }
 
     buflen = GetGlyphOutlineW(physDev->dev.hdc, glyph, ggo_format, &gm, 0, NULL, &identity);
     if(buflen == GDI_ERROR) {
         if(format != AA_None) {
             format = AA_None;
-            entry->aa_default = AA_None;
+            physDev->aa_flags = GGO_BITMAP;
             ggo_format = GGO_GLYPH_INDEX | GGO_BITMAP;
             buflen = GetGlyphOutlineW(physDev->dev.hdc, glyph, ggo_format, &gm, 0, NULL, &identity);
         }
@@ -1318,7 +1307,6 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     struct xrender_physdev *physdev = get_xrender_dev( dev );
     gsCacheEntry *entry;
     gsCacheEntryFormat *formatEntry;
-    AA_Type aa_type = AA_None;
     unsigned int idx;
     Picture pict, tile_pict = 0;
     XGlyphElt16 *elts;
@@ -1354,17 +1342,15 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     EnterCriticalSection(&xrender_cs);
 
     entry = glyphsetCache + physdev->cache_index;
-    aa_type = entry->aa_default;
-    formatEntry = entry->format[aa_type];
+    formatEntry = entry->format[aa_type_from_flags( physdev->aa_flags )];
 
     for(idx = 0; idx < count; idx++) {
         if( !formatEntry ) {
-	    UploadGlyph(physdev, wstr[idx], aa_type);
-            /* re-evaluate antialias since aa_default may have changed */
-            aa_type = entry->aa_default;
-            formatEntry = entry->format[aa_type];
+	    UploadGlyph(physdev, wstr[idx]);
+            /* re-evaluate format entry since aa_flags may have changed */
+            formatEntry = entry->format[aa_type_from_flags( physdev->aa_flags )];
         } else if( wstr[idx] >= formatEntry->nrealized || formatEntry->realized[wstr[idx]] == FALSE) {
-	    UploadGlyph(physdev, wstr[idx], aa_type);
+	    UploadGlyph(physdev, wstr[idx]);
 	}
     }
     if (!formatEntry)
