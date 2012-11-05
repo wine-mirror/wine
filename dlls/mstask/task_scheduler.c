@@ -93,8 +93,30 @@ static HRESULT WINAPI MSTASK_ITaskScheduler_GetTargetComputer(
         ITaskScheduler* iface,
         LPWSTR *ppwszComputer)
 {
-    FIXME("%p, %p: stub\n", iface, ppwszComputer);
-    return E_NOTIMPL;
+    TaskSchedulerImpl *This = impl_from_ITaskScheduler(iface);
+    LPWSTR buffer;
+    DWORD len = MAX_COMPUTERNAME_LENGTH + 1; /* extra space for the zero */
+
+    TRACE("(%p)->(%p)\n", This, ppwszComputer);
+
+    if (!ppwszComputer)
+        return E_INVALIDARG;
+
+    /* extra space for two '\' and a zero */
+    buffer = CoTaskMemAlloc((MAX_COMPUTERNAME_LENGTH + 3) * sizeof(WCHAR));
+    if (buffer)
+    {
+        buffer[0] = '\\';
+        buffer[1] = '\\';
+        if (GetComputerNameW(buffer + 2, &len))
+        {
+            *ppwszComputer = buffer;
+            return S_OK;
+        }
+        CoTaskMemFree(buffer);
+    }
+    *ppwszComputer = NULL;
+    return HRESULT_FROM_WIN32(GetLastError());
 }
 
 static HRESULT WINAPI MSTASK_ITaskScheduler_Enum(
