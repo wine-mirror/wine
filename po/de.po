@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-10-27 03:40+0200\n"
+"PO-Revision-Date: 2012-11-05 11:27+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -8278,44 +8278,37 @@ msgid "Security Warning"
 msgstr "Sicherheitswarnung"
 
 #: urlmon.rc:32
-#, fuzzy
-#| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
-msgstr "Möchten Sie dennoch fortfahren?"
+msgstr "Möchten Sie diese Software installieren?"
 
 #: urlmon.rc:34 explorer.rc:29
 msgid "Location:"
 msgstr "Ort:"
 
 #: urlmon.rc:36
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Don't install"
-msgstr "Software"
+msgstr "Nicht installieren"
 
 #: urlmon.rc:40
 msgid ""
 "When installed, ActiveX has full access to your computer.Do not click "
 "install unless you have absolute trust in the above source."
 msgstr ""
+"Wenn ActiveX installiert ist, hat es Vollzugriff auf ihren Computer. Klicken "
+"Sie nicht auf Installieren, wenn Sie der obigen Quelle nicht absolut "
+"vertrauen."
 
 #: urlmon.rc:47
-#, fuzzy
-#| msgid "Installation transform failed to apply.\n"
 msgid "Installation of component failed: %08x"
-msgstr "Installationsumwandlung konnte nicht angewendet werden.\n"
+msgstr "Installation der Komponente fehlgeschlagen: %08x"
 
 #: urlmon.rc:48
-#, fuzzy
-#| msgid "&Install"
 msgid "Install (%d)"
-msgstr "&Installieren"
+msgstr "Installieren (%d)"
 
 #: urlmon.rc:49
-#, fuzzy
-#| msgid "&Install"
 msgid "Install"
-msgstr "&Installieren"
+msgstr "Installieren"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
