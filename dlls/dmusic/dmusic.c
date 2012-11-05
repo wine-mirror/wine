@@ -389,6 +389,7 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
     hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth8, (void**)&synth);
     if (SUCCEEDED(hr))
     {
+        port->caps.dwSize = sizeof(port->caps);
         hr = IDirectMusicSynth8_GetPortCaps(synth, &port->caps);
         IDirectMusicSynth8_Release(synth);
     }
