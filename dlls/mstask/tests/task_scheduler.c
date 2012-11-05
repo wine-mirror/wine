@@ -102,10 +102,43 @@ static void test_Activate(void)
     return;
 }
 
+static void test_GetTargetComputer(void)
+{
+    HRESULT hres;
+    WCHAR *oldname;
+
+    /* Create TaskScheduler */
+    hres = CoCreateInstance(&CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER,
+            &IID_ITaskScheduler, (void **) &test_task_scheduler);
+    ok(hres == S_OK, "CTaskScheduler CoCreateInstance failed: %08x\n", hres);
+    if (hres != S_OK)
+    {
+        skip("Failed to create task scheduler.\n");
+        return;
+    }
+
+    if (0)
+    {
+        /* This crashes on w2k */
+        hres = ITaskScheduler_GetTargetComputer(test_task_scheduler, NULL);
+        ok(hres == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hres);
+    }
+
+    hres = ITaskScheduler_GetTargetComputer(test_task_scheduler, &oldname);
+    ok((hres == S_OK) && oldname && oldname[0] == '\\' && oldname[1] == '\\' && oldname[2],
+        "got 0x%x and %s (expected S_OK and an unc name)\n", hres, wine_dbgstr_w(oldname));
+
+    CoTaskMemFree(oldname);
+
+    ITaskScheduler_Release(test_task_scheduler);
+    return;
+}
+
 START_TEST(task_scheduler)
 {
     CoInitialize(NULL);
     test_NewWorkItem();
     test_Activate();
+    test_GetTargetComputer();
     CoUninitialize();
 }
