@@ -156,7 +156,7 @@ static BOOL string2intW( LPCWSTR str, int *out )
     return TRUE;
 }
 
-static WCHAR *msi_strdupW( const WCHAR *value, int len )
+WCHAR *msi_strdupW( const WCHAR *value, int len )
 {
     WCHAR *ret;
 

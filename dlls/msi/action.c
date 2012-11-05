@@ -2435,15 +2435,15 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     return MSI_SetFeatureStates(package);
 }
 
-static LPSTR parse_value(MSIPACKAGE *package, LPCWSTR value, DWORD *type, DWORD *size)
+static BYTE *parse_value( MSIPACKAGE *package, const WCHAR *value, DWORD *type, DWORD *size )
 {
-    LPSTR data = NULL;
+    BYTE *data = NULL;
 
     if (!value)
     {
-        data = (LPSTR)strdupW(szEmpty);
-        *size = sizeof(szEmpty);
+        *size = sizeof(WCHAR);
         *type = REG_SZ;
+        if ((data = msi_alloc( *size ))) *(WCHAR *)data = 0;
         return data;
     }
     if (value[0]=='#' && value[1]!='#' && value[1]!='%')
@@ -2525,38 +2525,22 @@ static LPSTR parse_value(MSIPACKAGE *package, LPCWSTR value, DWORD *type, DWORD 
     }
     else
     {
-        static const WCHAR szMulti[] = {'[','~',']',0};
-        LPCWSTR ptr;
-        *type=REG_SZ;
+        const WCHAR *ptr = value;
+        DWORD len;
 
-        if (value[0]=='#')
+        *type = REG_SZ;
+        if (value[0] == '#')
         {
-            if (value[1]=='%')
+            ptr++;
+            if (value[1] == '%')
             {
-                ptr = &value[2];
-                *type=REG_EXPAND_SZ;
+                ptr++;
+                *type = REG_EXPAND_SZ;
             }
-            else
-                ptr = &value[1];
-         }
-         else
-            ptr=value;
-
-        if (strstrW(value, szMulti))
-            *type = REG_MULTI_SZ;
-
-        /* remove initial delimiter */
-        if (!strncmpW(value, szMulti, 3))
-            ptr = value + 3;
-
-        *size = deformat_string( package, ptr, (LPWSTR *)&data ) * sizeof(WCHAR);
-
-        /* add double NULL terminator */
-        if (*type == REG_MULTI_SZ)
-        {
-            *size += 2 * sizeof(WCHAR); /* two NULL terminators */
-            data = msi_realloc_zero(data, *size);
         }
+        len = deformat_string( package, ptr, (WCHAR **)&data );
+        if (len > strlenW( (const WCHAR *)data )) *type = REG_MULTI_SZ;
+        *size = (len + 1) * sizeof(WCHAR);
     }
     return data;
 }
@@ -2664,19 +2648,181 @@ static BOOL is_special_entry( const WCHAR *name )
      return (name && (name[0] == '*' || name[0] == '+') && !name[1]);
 }
 
+static WCHAR **split_multi_string_values( const WCHAR *str, DWORD len, DWORD *count )
+{
+    const WCHAR *p = str;
+    WCHAR **ret;
+    int i = 0;
+
+    *count = 0;
+    if (!str) return NULL;
+    while ((p - str) < len)
+    {
+        p += strlenW( p ) + 1;
+        (*count)++;
+    }
+    if (!(ret = msi_alloc( *count * sizeof(WCHAR *) ))) return NULL;
+    p = str;
+    while ((p - str) < len)
+    {
+        if (!(ret[i] = strdupW( p )))
+        {
+            for (; i >= 0; i--) msi_free( ret[i] );
+            msi_free( ret );
+            return NULL;
+        }
+        p += strlenW( p ) + 1;
+        i++;
+    }
+    return ret;
+}
+
+static WCHAR *flatten_multi_string_values( WCHAR **left, DWORD left_count,
+                                           WCHAR **right, DWORD right_count, DWORD *size )
+{
+    WCHAR *ret, *p;
+    unsigned int i;
+
+    *size = sizeof(WCHAR);
+    for (i = 0; i < left_count; i++) *size += (strlenW( left[i] ) + 1) * sizeof(WCHAR);
+    for (i = 0; i < right_count; i++) *size += (strlenW( right[i] ) + 1) * sizeof(WCHAR);
+
+    if (!(ret = p = msi_alloc( *size ))) return NULL;
+
+    for (i = 0; i < left_count; i++)
+    {
+        strcpyW( p, left[i] );
+        p += strlenW( p ) + 1;
+    }
+    for (i = 0; i < right_count; i++)
+    {
+        strcpyW( p, right[i] );
+        p += strlenW( p ) + 1;
+    }
+    *p = 0;
+    return ret;
+}
+
+static DWORD remove_duplicate_values( WCHAR **old, DWORD old_count,
+                                      WCHAR **new, DWORD new_count )
+{
+    DWORD ret = old_count;
+    unsigned int i, j, k;
+
+    for (i = 0; i < new_count; i++)
+    {
+        for (j = 0; j < old_count; j++)
+        {
+            if (old[j] && !strcmpW( new[i], old[j] ))
+            {
+                msi_free( old[j] );
+                for (k = j; k < old_count - 1; k++) { old[k] = old[k + 1]; }
+                old[k] = NULL;
+                ret--;
+            }
+        }
+    }
+    return ret;
+}
+
+enum join_op
+{
+    JOIN_OP_APPEND,
+    JOIN_OP_PREPEND,
+    JOIN_OP_REPLACE
+};
+
+static WCHAR *join_multi_string_values( enum join_op op, WCHAR **old, DWORD old_count,
+                                        WCHAR **new, DWORD new_count, DWORD *size )
+{
+    switch (op)
+    {
+    case JOIN_OP_APPEND:
+        old_count = remove_duplicate_values( old, old_count, new, new_count );
+        return flatten_multi_string_values( old, old_count, new, new_count, size );
+
+    case JOIN_OP_PREPEND:
+        old_count = remove_duplicate_values( old, old_count, new, new_count );
+        return flatten_multi_string_values( new, new_count, old, old_count, size );
+
+    case JOIN_OP_REPLACE:
+        return flatten_multi_string_values( new, new_count, NULL, 0, size );
+
+    default:
+        ERR("unhandled join op %u\n", op);
+        return NULL;
+    }
+}
+
+static BYTE *build_multi_string_value( BYTE *old_value, DWORD old_size,
+                                       BYTE *new_value, DWORD new_size, DWORD *size )
+{
+    DWORD i, old_len = 0, new_len = 0, old_count = 0, new_count = 0;
+    const WCHAR *new_ptr = NULL, *old_ptr = NULL;
+    enum join_op op = JOIN_OP_REPLACE;
+    WCHAR **old = NULL, **new = NULL;
+    BYTE *ret;
+
+    if (new_size / sizeof(WCHAR) - 1 > 1)
+    {
+        new_ptr = (const WCHAR *)new_value;
+        new_len = new_size / sizeof(WCHAR) - 1;
+
+        if (!new_ptr[0] && new_ptr[new_len - 1])
+        {
+            op = JOIN_OP_APPEND;
+            new_len--;
+            new_ptr++;
+        }
+        else if (new_ptr[0] && !new_ptr[new_len - 1])
+        {
+            op = JOIN_OP_PREPEND;
+            new_len--;
+        }
+        else if (new_len > 2 && !new_ptr[0] && !new_ptr[new_len - 1])
+        {
+            op = JOIN_OP_REPLACE;
+            new_len -= 2;
+            new_ptr++;
+        }
+        new = split_multi_string_values( new_ptr, new_len, &new_count );
+    }
+    if (old_size / sizeof(WCHAR) - 1 > 1)
+    {
+        old_ptr = (const WCHAR *)old_value;
+        old_len = old_size / sizeof(WCHAR) - 1;
+        old = split_multi_string_values( old_ptr, old_len, &old_count );
+    }
+    ret = (BYTE *)join_multi_string_values( op, old, old_count, new, new_count, size );
+    for (i = 0; i < old_count; i++) msi_free( old[i] );
+    for (i = 0; i < new_count; i++) msi_free( new[i] );
+    msi_free( old );
+    msi_free( new );
+    return ret;
+}
+
+static BYTE *reg_get_value( HKEY hkey, const WCHAR *name, DWORD *type, DWORD *size )
+{
+    BYTE *ret;
+    if (RegQueryValueExW( hkey, name, NULL, NULL, NULL, size )) return NULL;
+    if (!(ret = msi_alloc( *size ))) return NULL;
+    RegQueryValueExW( hkey, name, NULL, type, ret, size );
+    return ret;
+}
+
 static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
-    LPSTR value;
+    BYTE *new_value, *old_value = NULL;
     HKEY  root_key, hkey;
-    DWORD type,size;
+    DWORD type, old_type, new_size, old_size = 0;
     LPWSTR deformated, uikey, keypath;
-    LPCWSTR szRoot, component, name, key;
+    const WCHAR *szRoot, *component, *name, *key, *str;
     MSICOMPONENT *comp;
     MSIRECORD * uirow;
     INT   root;
     BOOL check_first = FALSE;
-    UINT rc;
+    int len;
 
     msi_ui_progress( package, 2, REG_PROGRESS_VALUE, 0, 0 );
 
@@ -2710,8 +2856,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
         return ERROR_SUCCESS;
 
     deformat_string(package, key , &deformated);
-    size = strlenW(deformated) + strlenW(szRoot) + 1;
-    uikey = msi_alloc(size*sizeof(WCHAR));
+    uikey = msi_alloc( (strlenW(deformated) + strlenW(szRoot) + 1) * sizeof(WCHAR) );
     strcpyW(uikey,szRoot);
     strcatW(uikey,deformated);
 
@@ -2724,34 +2869,46 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
         msi_free(keypath);
         return ERROR_FUNCTION_FAILED;
     }
-    value = parse_value(package, MSI_RecordGetString(row, 5), &type, &size);
+    str = msi_record_get_string( row, 5, &len );
+    if (str && len > strlenW( str ))
+    {
+        type = REG_MULTI_SZ;
+        new_size = (len + 1) * sizeof(WCHAR);
+        new_value = (BYTE *)msi_strdupW( str, len );
+    }
+    else new_value = parse_value( package, str, &type, &new_size );
     deformat_string(package, name, &deformated);
 
     if (!is_special_entry( name ))
     {
+        old_value = reg_get_value( hkey, deformated, &old_type, &old_size );
+        if (type == REG_MULTI_SZ)
+        {
+            BYTE *new;
+            if (old_type != REG_MULTI_SZ)
+            {
+                msi_free( old_value );
+                old_value = NULL;
+                old_size = 0;
+            }
+            new = build_multi_string_value( old_value, old_size, new_value, new_size, &new_size );
+            msi_free( new_value );
+            new_value = new;
+        }
         if (!check_first)
         {
-            TRACE("Setting value %s of %s\n", debugstr_w(deformated),
-                  debugstr_w(uikey));
-            RegSetValueExW(hkey, deformated, 0, type, (LPBYTE)value, size);
+            TRACE("setting value %s of %s type %u\n", debugstr_w(deformated), debugstr_w(uikey), type);
+            RegSetValueExW( hkey, deformated, 0, type, new_value, new_size );
         }
-        else
+        else if (!old_value)
         {
-            DWORD sz = 0;
-            rc = RegQueryValueExW(hkey, deformated, NULL, NULL, NULL, &sz);
-            if (rc == ERROR_SUCCESS || rc == ERROR_MORE_DATA)
+            if (deformated || new_size)
             {
-                TRACE("value %s of %s checked already exists\n", debugstr_w(deformated),
-                      debugstr_w(uikey));
-            }
-            else
-            {
-                TRACE("Checked and setting value %s of %s\n", debugstr_w(deformated),
-                      debugstr_w(uikey));
-                if (deformated || size)
-                    RegSetValueExW(hkey, deformated, 0, type, (LPBYTE)value, size);
+                TRACE("setting value %s of %s type %u\n", debugstr_w(deformated), debugstr_w(uikey), type);
+                RegSetValueExW( hkey, deformated, 0, type, new_value, new_size );
             }
         }
+        else TRACE("not overwriting existing value %s of %s\n", debugstr_w(deformated), debugstr_w(uikey));
     }
     RegCloseKey(hkey);
 
@@ -2759,11 +2916,12 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     MSI_RecordSetStringW(uirow,2,deformated);
     MSI_RecordSetStringW(uirow,1,uikey);
     if (type == REG_SZ || type == REG_EXPAND_SZ)
-        MSI_RecordSetStringW(uirow, 3, (LPWSTR)value);
+        MSI_RecordSetStringW(uirow, 3, (LPWSTR)new_value);
     msi_ui_actiondata( package, szWriteRegistryValues, uirow );
     msiobj_release( &uirow->hdr );
 
-    msi_free(value);
+    msi_free(new_value);
+    msi_free(old_value);
     msi_free(deformated);
     msi_free(uikey);
     msi_free(keypath);

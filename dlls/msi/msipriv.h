@@ -763,6 +763,7 @@ extern string_table *msi_load_string_table( IStorage *stg, UINT *bytes_per_strre
 extern UINT msi_save_string_table( const string_table *st, IStorage *storage, UINT *bytes_per_strref ) DECLSPEC_HIDDEN;
 extern UINT msi_get_string_table_codepage( const string_table *st ) DECLSPEC_HIDDEN;
 extern UINT msi_set_string_table_codepage( string_table *st, UINT codepage ) DECLSPEC_HIDDEN;
+extern WCHAR *msi_strdupW( const WCHAR *value, int len ) DECLSPEC_HIDDEN;
 
 extern BOOL TABLE_Exists( MSIDATABASE *db, LPCWSTR name ) DECLSPEC_HIDDEN;
 extern MSICONDITION MSI_DatabaseIsTablePersistent( MSIDATABASE *db, LPCWSTR table ) DECLSPEC_HIDDEN;
