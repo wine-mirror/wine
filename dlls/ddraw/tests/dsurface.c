@@ -776,8 +776,8 @@ static ULONG getref(IUnknown *iface)
 
 static void GetDDInterface_1(void)
 {
+    IDirectDrawSurface2 *dsurface2;
     LPDIRECTDRAWSURFACE dsurface;
-    LPDIRECTDRAWSURFACE2 dsurface2;
     DDSURFACEDESC surface;
     HRESULT ret;
     IDirectDraw2 *dd2;
@@ -840,8 +840,8 @@ static void GetDDInterface_1(void)
 
 static void GetDDInterface_2(void)
 {
+    IDirectDrawSurface2 *dsurface2;
     LPDIRECTDRAWSURFACE dsurface;
-    LPDIRECTDRAWSURFACE2 dsurface2;
     DDSURFACEDESC surface;
     HRESULT ret;
     IDirectDraw2 *dd2;
@@ -902,7 +902,7 @@ static void GetDDInterface_2(void)
 static void GetDDInterface_4(void)
 {
     IDirectDrawSurface4 *dsurface4;
-    LPDIRECTDRAWSURFACE2 dsurface2;
+    IDirectDrawSurface2 *dsurface2;
     DDSURFACEDESC2 surface;
     HRESULT ret;
     IDirectDraw2 *dd2;
