@@ -117,20 +117,16 @@ struct glsl_shader_prog_link {
     GLint                       luminanceoffset_location[MAX_TEXTURES];
     GLint                       ycorrection_location;
     GLenum                      vertex_color_clamp;
-    const struct wined3d_shader *vshader;
-    const struct wined3d_shader *pshader;
-    struct vs_compile_args      vs_args;
-    struct ps_compile_args      ps_args;
+    GLhandleARB vs_id;
+    GLhandleARB ps_id;
     UINT                        constant_version;
     const struct ps_np2fixup_info *np2Fixup_info;
 };
 
 struct glsl_program_key
 {
-    const struct wined3d_shader *vshader;
-    const struct wined3d_shader *pshader;
-    struct ps_compile_args      ps_args;
-    struct vs_compile_args      vs_args;
+    GLhandleARB vs_id;
+    GLhandleARB ps_id;
 };
 
 struct shader_glsl_ctx_priv {
@@ -675,10 +671,10 @@ static void shader_glsl_load_np2fixup_constants(void *shader_priv,
     /* NP2 texcoord fixup is (currently) only done for pixelshaders. */
     if (!use_ps(state)) return;
 
-    if (prog->ps_args.np2_fixup && prog->np2Fixup_location != -1)
+    if (prog->np2Fixup_info && prog->np2Fixup_location != -1)
     {
         UINT i;
-        UINT fixup = prog->ps_args.np2_fixup;
+        UINT fixup = prog->np2Fixup_info->active;
         GLfloat np2fixup_constants[4 * MAX_FRAGMENT_SAMPLERS];
 
         for (i = 0; fixup; fixup >>= 1, ++i)
@@ -1088,6 +1084,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         }
 
         fixup->num_consts = (cur + 1) >> 1;
+        fixup->active = ps_args->np2_fixup;
         shader_addline(buffer, "uniform vec4 %s_samplerNP2Fixup[%u];\n", prefix, fixup->num_consts);
     }
 
@@ -4103,10 +4100,8 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
 {
     struct glsl_program_key key;
 
-    key.vshader = entry->vshader;
-    key.pshader = entry->pshader;
-    key.vs_args = entry->vs_args;
-    key.ps_args = entry->ps_args;
+    key.vs_id = entry->vs_id;
+    key.ps_id = entry->ps_id;
 
     if (wine_rb_put(&priv->program_lookup, &key, &entry->program_lookup_entry) == -1)
     {
@@ -4115,16 +4110,13 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
 }
 
 static struct glsl_shader_prog_link *get_glsl_program_entry(const struct shader_glsl_priv *priv,
-        const struct wined3d_shader *vshader, const struct wined3d_shader *pshader,
-        const struct vs_compile_args *vs_args, const struct ps_compile_args *ps_args)
+        GLhandleARB vs_id, GLhandleARB ps_id)
 {
     struct wine_rb_entry *entry;
     struct glsl_program_key key;
 
-    key.vshader = vshader;
-    key.pshader = pshader;
-    key.vs_args = *vs_args;
-    key.ps_args = *ps_args;
+    key.vs_id = vs_id;
+    key.ps_id = ps_id;
 
     entry = wine_rb_get(&priv->program_lookup, &key);
     return entry ? WINE_RB_ENTRY_VALUE(entry, struct glsl_shader_prog_link, program_lookup_entry) : NULL;
@@ -4136,15 +4128,15 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struc
 {
     struct glsl_program_key key;
 
-    key.vshader = entry->vshader;
-    key.pshader = entry->pshader;
-    key.vs_args = entry->vs_args;
-    key.ps_args = entry->ps_args;
+    key.vs_id = entry->vs_id;
+    key.ps_id = entry->ps_id;
     wine_rb_remove(&priv->program_lookup, &key);
 
     GL_EXTCALL(glDeleteObjectARB(entry->programId));
-    if (entry->vshader) list_remove(&entry->vshader_entry);
-    if (entry->pshader) list_remove(&entry->pshader_entry);
+    if (entry->vs_id)
+        list_remove(&entry->vshader_entry);
+    if (entry->ps_id)
+        list_remove(&entry->pshader_entry);
     HeapFree(GetProcessHeap(), 0, entry->vuniformF_locations);
     HeapFree(GetProcessHeap(), 0, entry->puniformF_locations);
     HeapFree(GetProcessHeap(), 0, entry);
@@ -4707,6 +4699,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     struct wined3d_shader *vshader = use_vs ? state->vertex_shader : NULL;
     struct wined3d_shader *pshader = use_ps ? state->pixel_shader : NULL;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct ps_np2fixup_info *np2fixup_info = NULL;
     struct shader_glsl_priv *priv = device->shader_priv;
     struct glsl_shader_prog_link *entry    = NULL;
     GLhandleARB programId                  = 0;
@@ -4715,12 +4708,30 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     char glsl_name[10];
     struct ps_compile_args ps_compile_args;
     struct vs_compile_args vs_compile_args;
+    GLhandleARB vs_id, ps_id;
 
-    if (vshader) find_vs_compile_args(state, vshader, &vs_compile_args);
-    if (pshader) find_ps_compile_args(state, pshader, &ps_compile_args);
+    if (vshader)
+    {
+        find_vs_compile_args(state, vshader, &vs_compile_args);
+        vs_id = find_glsl_vshader(context, &priv->shader_buffer, vshader, &vs_compile_args);
+    }
+    else
+    {
+        vs_id = 0;
+    }
 
-    entry = get_glsl_program_entry(priv, vshader, pshader, &vs_compile_args, &ps_compile_args);
-    if (entry)
+    if (pshader)
+    {
+        find_ps_compile_args(state, pshader, &ps_compile_args);
+        ps_id = find_glsl_pshader(context, &priv->shader_buffer,
+                pshader, &ps_compile_args, &np2fixup_info);
+    }
+    else
+    {
+        ps_id = 0;
+    }
+
+    if ((entry = get_glsl_program_entry(priv, vs_id, ps_id)))
     {
         priv->glsl_program = entry;
         return;
@@ -4733,12 +4744,10 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     /* Create the entry */
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
     entry->programId = programId;
-    entry->vshader = vshader;
-    entry->pshader = pshader;
-    entry->vs_args = vs_compile_args;
-    entry->ps_args = ps_compile_args;
+    entry->vs_id = vs_id;
+    entry->ps_id = ps_id;
     entry->constant_version = 0;
-    entry->np2Fixup_info = NULL;
+    entry->np2Fixup_info = np2fixup_info;
     /* Add the hash table entry */
     add_glsl_program_entry(priv, entry);
 
@@ -4748,7 +4757,6 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     /* Attach GLSL vshader */
     if (vshader)
     {
-        GLhandleARB vshader_id = find_glsl_vshader(context, &priv->shader_buffer, vshader, &vs_compile_args);
         WORD map = vshader->reg_maps.input_registers;
         char tmp_name[10];
 
@@ -4761,8 +4769,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
          */
         GL_EXTCALL(glDeleteObjectARB(reorder_shader_id));
 
-        TRACE("Attaching GLSL shader object %u to program %u\n", vshader_id, programId);
-        GL_EXTCALL(glAttachObjectARB(programId, vshader_id));
+        TRACE("Attaching GLSL shader object %u to program %u.\n", vs_id, programId);
+        GL_EXTCALL(glAttachObjectARB(programId, vs_id));
         checkGLcall("glAttachObjectARB");
 
         /* Bind vertex attributes to a corresponding index number to match
@@ -4789,10 +4797,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     /* Attach GLSL pshader */
     if (pshader)
     {
-        GLhandleARB pshader_id = find_glsl_pshader(context, &priv->shader_buffer,
-                pshader, &ps_compile_args, &entry->np2Fixup_info);
-        TRACE("Attaching GLSL shader object %u to program %u\n", pshader_id, programId);
-        GL_EXTCALL(glAttachObjectARB(programId, pshader_id));
+        TRACE("Attaching GLSL shader object %u to program %u.\n", ps_id, programId);
+        GL_EXTCALL(glAttachObjectARB(programId, ps_id));
         checkGLcall("glAttachObjectARB");
 
         list_add_head(&pshader->linked_programs, &entry->pshader_entry);
@@ -5105,14 +5111,6 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
     context = context_acquire(device, NULL);
     gl_info = context->gl_info;
 
-    if (priv->glsl_program && (priv->glsl_program->vshader == shader
-            || priv->glsl_program->pshader == shader))
-    {
-        ENTER_GL();
-        shader_glsl_select(context, WINED3D_SHADER_MODE_NONE, WINED3D_SHADER_MODE_NONE);
-        LEAVE_GL();
-    }
-
     TRACE("Deleting linked programs.\n");
     linked_programs = &shader->linked_programs;
     if (linked_programs->next)
@@ -5137,6 +5135,8 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
                 for (i = 0; i < shader_data->num_gl_shaders; ++i)
                 {
                     TRACE("Deleting pixel shader %u.\n", gl_shaders[i].prgId);
+                    if (priv->glsl_program && priv->glsl_program->ps_id == gl_shaders[i].prgId)
+                        shader_glsl_select(context, WINED3D_SHADER_MODE_NONE, WINED3D_SHADER_MODE_NONE);
                     GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].prgId));
                     checkGLcall("glDeleteObjectARB");
                 }
@@ -5158,6 +5158,8 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
                 for (i = 0; i < shader_data->num_gl_shaders; ++i)
                 {
                     TRACE("Deleting vertex shader %u.\n", gl_shaders[i].prgId);
+                    if (priv->glsl_program && priv->glsl_program->vs_id == gl_shaders[i].prgId)
+                        shader_glsl_select(context, WINED3D_SHADER_MODE_NONE, WINED3D_SHADER_MODE_NONE);
                     GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].prgId));
                     checkGLcall("glDeleteObjectARB");
                 }
@@ -5185,16 +5187,12 @@ static int glsl_program_key_compare(const void *key, const struct wine_rb_entry 
     const struct glsl_program_key *k = key;
     const struct glsl_shader_prog_link *prog = WINE_RB_ENTRY_VALUE(entry,
             const struct glsl_shader_prog_link, program_lookup_entry);
-    int cmp;
 
-    if (k->vshader > prog->vshader) return 1;
-    else if (k->vshader < prog->vshader) return -1;
+    if (k->vs_id > prog->vs_id) return 1;
+    else if (k->vs_id < prog->vs_id) return -1;
 
-    if (k->pshader > prog->pshader) return 1;
-    else if (k->pshader < prog->pshader) return -1;
-
-    if (k->vshader && (cmp = memcmp(&k->vs_args, &prog->vs_args, sizeof(prog->vs_args)))) return cmp;
-    if (k->pshader && (cmp = memcmp(&k->ps_args, &prog->ps_args, sizeof(prog->ps_args)))) return cmp;
+    if (k->ps_id > prog->ps_id) return 1;
+    else if (k->ps_id < prog->ps_id) return -1;
 
     return 0;
 }
