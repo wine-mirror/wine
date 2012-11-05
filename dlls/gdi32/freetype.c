@@ -203,7 +203,6 @@ MAKE_FUNCPTR(FcPatternDestroy);
 MAKE_FUNCPTR(FcPatternGetBool);
 MAKE_FUNCPTR(FcPatternGetInteger);
 MAKE_FUNCPTR(FcPatternGetString);
-MAKE_FUNCPTR(FcPatternPrint);
 #endif
 
 #undef MAKE_FUNCPTR
@@ -515,6 +514,8 @@ struct font_mapping
 };
 
 static struct list mappings_list = LIST_INIT( mappings_list );
+
+static UINT default_aa_flags;
 
 static CRITICAL_SECTION freetype_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -1905,6 +1906,8 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
     INT ret = 0;
     DWORD aa_flags = HIWORD( flags );
 
+    if (!aa_flags) aa_flags = default_aa_flags;
+
     /* we always load external fonts from files - otherwise we would get a crash in update_reg_entries */
     assert(file || !(flags & ADDFONT_EXTERNAL_FONT));
 
@@ -2378,9 +2381,70 @@ static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
 }
 
 #ifdef SONAME_LIBFONTCONFIG
+
+static BOOL fontconfig_enabled;
+
+static UINT parse_aa_pattern( FcPattern *pattern )
+{
+    FcBool antialias;
+    int rgba;
+    UINT aa_flags = 0;
+
+    if (pFcPatternGetBool( pattern, FC_ANTIALIAS, 0, &antialias ) == FcResultMatch)
+        aa_flags = antialias ? GGO_GRAY4_BITMAP : GGO_BITMAP;
+
+    if (pFcPatternGetInteger( pattern, FC_RGBA, 0, &rgba ) == FcResultMatch)
+    {
+        switch (rgba)
+        {
+        case FC_RGBA_RGB:  aa_flags = WINE_GGO_HRGB_BITMAP; break;
+        case FC_RGBA_BGR:  aa_flags = WINE_GGO_HBGR_BITMAP; break;
+        case FC_RGBA_VRGB: aa_flags = WINE_GGO_VRGB_BITMAP; break;
+        case FC_RGBA_VBGR: aa_flags = WINE_GGO_VBGR_BITMAP; break;
+        case FC_RGBA_NONE: aa_flags = GGO_GRAY4_BITMAP; break;
+        }
+    }
+    return aa_flags;
+}
+
+static void init_fontconfig(void)
+{
+    void *fc_handle = wine_dlopen(SONAME_LIBFONTCONFIG, RTLD_NOW, NULL, 0);
+
+    if (!fc_handle)
+    {
+        TRACE("Wine cannot find the fontconfig library (%s).\n", SONAME_LIBFONTCONFIG);
+        return;
+    }
+
+#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(fc_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); return;}
+    LOAD_FUNCPTR(FcConfigSubstitute);
+    LOAD_FUNCPTR(FcFontList);
+    LOAD_FUNCPTR(FcFontSetDestroy);
+    LOAD_FUNCPTR(FcInit);
+    LOAD_FUNCPTR(FcObjectSetAdd);
+    LOAD_FUNCPTR(FcObjectSetCreate);
+    LOAD_FUNCPTR(FcObjectSetDestroy);
+    LOAD_FUNCPTR(FcPatternCreate);
+    LOAD_FUNCPTR(FcPatternDestroy);
+    LOAD_FUNCPTR(FcPatternGetBool);
+    LOAD_FUNCPTR(FcPatternGetInteger);
+    LOAD_FUNCPTR(FcPatternGetString);
+#undef LOAD_FUNCPTR
+
+    if (pFcInit())
+    {
+        FcPattern *pattern = pFcPatternCreate();
+        pFcConfigSubstitute( NULL, pattern, FcMatchFont );
+        default_aa_flags = parse_aa_pattern( pattern );
+        pFcPatternDestroy( pattern );
+        TRACE( "enabled, default flags = %x\n", default_aa_flags );
+        fontconfig_enabled = TRUE;
+    }
+}
+
 static void load_fontconfig_fonts(void)
 {
-    void *fc_handle = NULL;
     FcPattern *pat;
     FcObjectSet *os;
     FcFontSet *fontset;
@@ -2388,29 +2452,7 @@ static void load_fontconfig_fonts(void)
     char *file;
     const char *ext;
 
-    fc_handle = wine_dlopen(SONAME_LIBFONTCONFIG, RTLD_NOW, NULL, 0);
-    if(!fc_handle) {
-        TRACE("Wine cannot find the fontconfig library (%s).\n",
-              SONAME_LIBFONTCONFIG);
-	return;
-    }
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(fc_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
-LOAD_FUNCPTR(FcConfigSubstitute);
-LOAD_FUNCPTR(FcFontList);
-LOAD_FUNCPTR(FcFontSetDestroy);
-LOAD_FUNCPTR(FcInit);
-LOAD_FUNCPTR(FcObjectSetAdd);
-LOAD_FUNCPTR(FcObjectSetCreate);
-LOAD_FUNCPTR(FcObjectSetDestroy);
-LOAD_FUNCPTR(FcPatternCreate);
-LOAD_FUNCPTR(FcPatternDestroy);
-LOAD_FUNCPTR(FcPatternGetBool);
-LOAD_FUNCPTR(FcPatternGetInteger);
-LOAD_FUNCPTR(FcPatternGetString);
-LOAD_FUNCPTR(FcPatternPrint);
-#undef LOAD_FUNCPTR
-
-    if(!pFcInit()) return;
+    if (!fontconfig_enabled) return;
 
     pat = pFcPatternCreate();
     os = pFcObjectSetCreate();
@@ -2422,13 +2464,10 @@ LOAD_FUNCPTR(FcPatternPrint);
     if(!fontset) return;
     for(i = 0; i < fontset->nfont; i++) {
         FcBool scalable;
-        FcBool antialias;
-        int rgba;
-        DWORD aa_flags = 0;
+        DWORD aa_flags;
 
         if(pFcPatternGetString(fontset->fonts[i], FC_FILE, 0, (FcChar8**)&file) != FcResultMatch)
             continue;
-        TRACE("fontconfig: %s\n", file);
 
         pFcConfigSubstitute( NULL, fontset->fonts[i], FcMatchFont );
 
@@ -2442,20 +2481,8 @@ LOAD_FUNCPTR(FcPatternPrint);
             continue;
         }
 
-        if (pFcPatternGetBool( fontset->fonts[i], FC_ANTIALIAS, 0, &antialias ) == FcResultMatch)
-            aa_flags = antialias ? GGO_GRAY4_BITMAP : GGO_BITMAP;
-
-        if (pFcPatternGetInteger( fontset->fonts[i], FC_RGBA, 0, &rgba ) == FcResultMatch)
-        {
-            switch (rgba)
-            {
-            case FC_RGBA_RGB:  aa_flags = WINE_GGO_HRGB_BITMAP; break;
-            case FC_RGBA_BGR:  aa_flags = WINE_GGO_HBGR_BITMAP; break;
-            case FC_RGBA_VRGB: aa_flags = WINE_GGO_VRGB_BITMAP; break;
-            case FC_RGBA_VBGR: aa_flags = WINE_GGO_VBGR_BITMAP; break;
-            case FC_RGBA_NONE: aa_flags = GGO_GRAY4_BITMAP; break;
-            }
-        }
+        aa_flags = parse_aa_pattern( fontset->fonts[i] );
+        TRACE("fontconfig: %s aa %x\n", file, aa_flags);
 
         len = strlen( file );
         if(len < 4) continue;
@@ -2467,8 +2494,6 @@ LOAD_FUNCPTR(FcPatternPrint);
     pFcFontSetDestroy(fontset);
     pFcObjectSetDestroy(os);
     pFcPatternDestroy(pat);
- sym_not_found:
-    return;
 }
 
 #elif defined(HAVE_CARBON_CARBON_H)
@@ -3596,6 +3621,10 @@ static void init_font_list(void)
     WCHAR windowsdir[MAX_PATH];
     char *unixname;
     const char *data_dir;
+
+#ifdef SONAME_LIBFONTCONFIG
+    init_fontconfig();
+#endif
 
     delete_external_font_keys();
 
@@ -4989,10 +5018,15 @@ done:
                 {
                     WORD gasp_flags;
                     if (get_gasp_flags( ret, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
+                    {
+                        TRACE( "font %s %d aa disabled by GASP\n",
+                               debugstr_w(lf.lfFaceName), lf.lfHeight );
                         *aa_flags = GGO_BITMAP;
+                    }
                 }
             }
         }
+        TRACE( "%p %s %d aa %x\n", hfont, debugstr_w(lf.lfFaceName), lf.lfHeight, *aa_flags );
         dc->gdiFont = ret;
         physdev->font = ret;
     }
