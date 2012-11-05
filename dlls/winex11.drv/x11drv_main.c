@@ -81,8 +81,6 @@ int private_color_map = 0;
 int primary_monitor = 0;
 int client_side_graphics = 1;
 int client_side_with_render = 1;
-int client_side_antialias_with_core = 1;
-int client_side_antialias_with_render = 1;
 int copy_default_colors = 128;
 int alloc_system_colors = 256;
 DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
@@ -395,12 +393,6 @@ static void setup_options(void)
 
     if (!get_config_key( hkey, appkey, "ClientSideWithRender", buffer, sizeof(buffer) ))
         client_side_with_render = IS_OPTION_TRUE( buffer[0] );
-
-    if (!get_config_key( hkey, appkey, "ClientSideAntiAliasWithCore", buffer, sizeof(buffer) ))
-        client_side_antialias_with_core = IS_OPTION_TRUE( buffer[0] );
-
-    if (!get_config_key( hkey, appkey, "ClientSideAntiAliasWithRender", buffer, sizeof(buffer) ))
-        client_side_antialias_with_render = IS_OPTION_TRUE( buffer[0] );
 
     if (!get_config_key( hkey, appkey, "UseXIM", buffer, sizeof(buffer) ))
         use_xim = IS_OPTION_TRUE( buffer[0] );

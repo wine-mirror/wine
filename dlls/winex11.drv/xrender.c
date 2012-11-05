@@ -179,8 +179,6 @@ static INT mru = -1;
 
 #define INIT_CACHE_SIZE 10
 
-static int antialias = 1;
-
 static void *xrender_handle;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f;
@@ -203,23 +201,6 @@ MAKE_FUNCPTR(XRenderCreateLinearGradient)
 MAKE_FUNCPTR(XRenderSetPictureTransform)
 #endif
 MAKE_FUNCPTR(XRenderQueryExtension)
-
-#ifdef SONAME_LIBFONTCONFIG
-#include <fontconfig/fontconfig.h>
-MAKE_FUNCPTR(FcConfigSubstitute)
-MAKE_FUNCPTR(FcDefaultSubstitute)
-MAKE_FUNCPTR(FcFontMatch)
-MAKE_FUNCPTR(FcInit)
-MAKE_FUNCPTR(FcPatternCreate)
-MAKE_FUNCPTR(FcPatternDestroy)
-MAKE_FUNCPTR(FcPatternAddInteger)
-MAKE_FUNCPTR(FcPatternAddString)
-MAKE_FUNCPTR(FcPatternGetBool)
-MAKE_FUNCPTR(FcPatternGetInteger)
-MAKE_FUNCPTR(FcPatternGetString)
-static void *fontconfig_handle;
-static BOOL fontconfig_installed;
-#endif
 
 #undef MAKE_FUNCPTR
 
@@ -395,29 +376,6 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
         return NULL;
     }
 
-#ifdef SONAME_LIBFONTCONFIG
-    if ((fontconfig_handle = wine_dlopen(SONAME_LIBFONTCONFIG, RTLD_NOW, NULL, 0)))
-    {
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(fontconfig_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
-        LOAD_FUNCPTR(FcConfigSubstitute);
-        LOAD_FUNCPTR(FcDefaultSubstitute);
-        LOAD_FUNCPTR(FcFontMatch);
-        LOAD_FUNCPTR(FcInit);
-        LOAD_FUNCPTR(FcPatternCreate);
-        LOAD_FUNCPTR(FcPatternDestroy);
-        LOAD_FUNCPTR(FcPatternAddInteger);
-        LOAD_FUNCPTR(FcPatternAddString);
-        LOAD_FUNCPTR(FcPatternGetBool);
-        LOAD_FUNCPTR(FcPatternGetInteger);
-        LOAD_FUNCPTR(FcPatternGetString);
-#undef LOAD_FUNCPTR
-        fontconfig_installed = pFcInit();
-    }
-    else TRACE( "cannot find the fontconfig library " SONAME_LIBFONTCONFIG "\n" );
-
-sym_not_found:
-#endif
-
     glyphsetCache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                               sizeof(*glyphsetCache) * INIT_CACHE_SIZE);
 
@@ -428,8 +386,6 @@ sym_not_found:
         glyphsetCache[i].count = -1;
     }
     glyphsetCache[i-1].next = -1;
-
-    if(default_visual.depth <= 8 || !client_side_antialias_with_render) antialias = 0;
 
     return &xrender_funcs;
 }
@@ -777,81 +733,11 @@ static int AllocEntry(void)
   return mru;
 }
 
-static BOOL get_gasp_flags(HDC hdc, WORD *flags)
-{
-    DWORD size;
-    WORD *gasp, *buffer;
-    WORD num_recs;
-    DWORD ppem;
-    TEXTMETRICW tm;
-
-    *flags = 0;
-
-    size = GetFontData(hdc, MS_GASP_TAG,  0, NULL, 0);
-    if(size == GDI_ERROR)
-        return FALSE;
-
-    gasp = buffer = HeapAlloc(GetProcessHeap(), 0, size);
-    GetFontData(hdc, MS_GASP_TAG,  0, gasp, size);
-
-    GetTextMetricsW(hdc, &tm);
-    ppem = abs(X11DRV_YWStoDS(hdc, tm.tmAscent + tm.tmDescent - tm.tmInternalLeading));
-
-    gasp++;
-    num_recs = get_be_word(*gasp);
-    gasp++;
-    while(num_recs--)
-    {
-        *flags = get_be_word(*(gasp + 1));
-        if(ppem <= get_be_word(*gasp))
-            break;
-        gasp += 2;
-    }
-    TRACE("got flags %04x for ppem %d\n", *flags, ppem);
-
-    HeapFree(GetProcessHeap(), 0, buffer);
-    return TRUE;
-}
-
-static AA_Type get_antialias_type( HDC hdc, BOOL subpixel, BOOL hinter )
-{
-    AA_Type ret;
-    WORD flags;
-    UINT font_smoothing_type, font_smoothing_orientation;
-
-    if (subpixel &&
-        SystemParametersInfoW( SPI_GETFONTSMOOTHINGTYPE, 0, &font_smoothing_type, 0) &&
-        font_smoothing_type == FE_FONTSMOOTHINGCLEARTYPE)
-    {
-        if ( SystemParametersInfoW( SPI_GETFONTSMOOTHINGORIENTATION, 0,
-                                    &font_smoothing_orientation, 0) &&
-             font_smoothing_orientation == FE_FONTSMOOTHINGORIENTATIONBGR)
-        {
-            ret = AA_BGR;
-        }
-        else
-            ret = AA_RGB;
-        /*FIXME
-          If the monitor is in portrait mode, ClearType is disabled in the MS Windows (MSDN).
-          But, Wine's subpixel rendering can support the portrait mode.
-         */
-    }
-    else if (!hinter || !get_gasp_flags(hdc, &flags) || flags & GASP_DOGRAY)
-        ret = AA_Grey;
-    else
-        ret = AA_None;
-
-    return ret;
-}
-
-static int GetCacheEntry( HDC hdc, LFANDSIZE *plfsz )
+static int GetCacheEntry( LFANDSIZE *plfsz )
 {
     int ret;
     int format;
     gsCacheEntry *entry;
-    static int hinter = -1;
-    static int subpixel = -1;
-    BOOL font_smoothing;
 
     if((ret = LookupEntry(plfsz)) != -1) return ret;
 
@@ -861,140 +747,6 @@ static int GetCacheEntry( HDC hdc, LFANDSIZE *plfsz )
     for( format = 0; format < AA_MAXVALUE; format++ ) {
         assert( !entry->format[format] );
     }
-
-    if(antialias && plfsz->lf.lfQuality != NONANTIALIASED_QUALITY)
-    {
-        if(hinter == -1 || subpixel == -1)
-        {
-            RASTERIZER_STATUS status;
-            GetRasterizerCaps(&status, sizeof(status));
-            hinter = status.wFlags & WINE_TT_HINTER_ENABLED;
-            subpixel = status.wFlags & WINE_TT_SUBPIXEL_RENDERING_ENABLED;
-        }
-
-        switch (plfsz->lf.lfQuality)
-        {
-            case ANTIALIASED_QUALITY:
-                entry->aa_default = get_antialias_type( hdc, FALSE, hinter );
-                return ret;  /* ignore further configuration */
-            case CLEARTYPE_QUALITY:
-            case CLEARTYPE_NATURAL_QUALITY:
-                entry->aa_default = get_antialias_type( hdc, subpixel, hinter );
-                break;
-            case DEFAULT_QUALITY:
-            case DRAFT_QUALITY:
-            case PROOF_QUALITY:
-            default:
-                if ( SystemParametersInfoW( SPI_GETFONTSMOOTHING, 0, &font_smoothing, 0) &&
-                     font_smoothing)
-                {
-                    entry->aa_default = get_antialias_type( hdc, subpixel, hinter );
-                }
-                else
-                    entry->aa_default = AA_None;
-                break;
-        }
-
-        font_smoothing = TRUE;  /* default to enabled */
-#ifdef SONAME_LIBFONTCONFIG
-        if (fontconfig_installed)
-        {
-            FcPattern *match, *pattern;
-            FcResult result;
-            char family[LF_FACESIZE * 4];
-
-#if defined(__i386__) && defined(__GNUC__)
-            /* fontconfig generates floating point exceptions, mask them */
-            WORD cw, default_cw = 0x37f;
-            __asm__ __volatile__("fnstcw %0; fldcw %1" : "=m" (cw) : "m" (default_cw));
-#endif
-
-            WideCharToMultiByte( CP_UTF8, 0, plfsz->lf.lfFaceName, -1, family, sizeof(family), NULL, NULL );
-            pattern = pFcPatternCreate();
-            pFcPatternAddString( pattern, FC_FAMILY, (FcChar8 *)family );
-            if (plfsz->lf.lfWeight != FW_DONTCARE)
-            {
-                int weight;
-                switch (plfsz->lf.lfWeight)
-                {
-                case FW_THIN:       weight = FC_WEIGHT_THIN; break;
-                case FW_EXTRALIGHT: weight = FC_WEIGHT_EXTRALIGHT; break;
-                case FW_LIGHT:      weight = FC_WEIGHT_LIGHT; break;
-                case FW_NORMAL:     weight = FC_WEIGHT_NORMAL; break;
-                case FW_MEDIUM:     weight = FC_WEIGHT_MEDIUM; break;
-                case FW_SEMIBOLD:   weight = FC_WEIGHT_SEMIBOLD; break;
-                case FW_BOLD:       weight = FC_WEIGHT_BOLD; break;
-                case FW_EXTRABOLD:  weight = FC_WEIGHT_EXTRABOLD; break;
-                case FW_HEAVY:      weight = FC_WEIGHT_HEAVY; break;
-                default:            weight = (plfsz->lf.lfWeight - 80) / 4; break;
-                }
-                pFcPatternAddInteger( pattern, FC_WEIGHT, weight );
-            }
-            pFcPatternAddInteger( pattern, FC_SLANT, plfsz->lf.lfItalic ? FC_SLANT_ITALIC : FC_SLANT_ROMAN );
-            pFcConfigSubstitute( NULL, pattern, FcMatchPattern );
-            pFcDefaultSubstitute( pattern );
-            if ((match = pFcFontMatch( NULL, pattern, &result )))
-            {
-                int rgba;
-                FcBool antialias;
-
-                if (pFcPatternGetBool( match, FC_ANTIALIAS, 0, &antialias ) != FcResultMatch)
-                    antialias = TRUE;
-                if (pFcPatternGetInteger( match, FC_RGBA, 0, &rgba ) == FcResultMatch)
-                {
-                    FcChar8 *file;
-                    if (pFcPatternGetString( match, FC_FILE, 0, &file ) != FcResultMatch) file = NULL;
-
-                    TRACE( "fontconfig returned rgba %u antialias %u for font %s file %s\n",
-                           rgba, antialias, debugstr_w(plfsz->lf.lfFaceName), debugstr_a((char *)file) );
-
-                    switch (rgba)
-                    {
-                    case FC_RGBA_RGB:  entry->aa_default = AA_RGB; break;
-                    case FC_RGBA_BGR:  entry->aa_default = AA_BGR; break;
-                    case FC_RGBA_VRGB: entry->aa_default = AA_VRGB; break;
-                    case FC_RGBA_VBGR: entry->aa_default = AA_VBGR; break;
-                    case FC_RGBA_NONE: entry->aa_default = AA_Grey; break;
-                    }
-                }
-                if (!antialias) font_smoothing = FALSE;
-                pFcPatternDestroy( match );
-            }
-            pFcPatternDestroy( pattern );
-
-#if defined(__i386__) && defined(__GNUC__)
-            __asm__ __volatile__("fnclex; fldcw %0" : : "m" (cw));
-#endif
-        }
-#endif  /* SONAME_LIBFONTCONFIG */
-
-        /* now check Xft resources */
-        {
-            char *value;
-            BOOL antialias = TRUE;
-
-            if ((value = XGetDefault( gdi_display, "Xft", "antialias" )))
-            {
-                if (tolower(value[0]) == 'f' || tolower(value[0]) == 'n' ||
-                    value[0] == '0' || !strcasecmp( value, "off" ))
-                    antialias = FALSE;
-            }
-            if ((value = XGetDefault( gdi_display, "Xft", "rgba" )))
-            {
-                TRACE( "Xft resource returned rgba '%s' antialias %u\n", value, antialias );
-                if (!strcmp( value, "rgb" )) entry->aa_default = AA_RGB;
-                else if (!strcmp( value, "bgr" )) entry->aa_default = AA_BGR;
-                else if (!strcmp( value, "vrgb" )) entry->aa_default = AA_VRGB;
-                else if (!strcmp( value, "vbgr" )) entry->aa_default = AA_VBGR;
-                else if (!strcmp( value, "none" )) entry->aa_default = AA_Grey;
-            }
-            if (!antialias) font_smoothing = FALSE;
-        }
-
-        if (!font_smoothing) entry->aa_default = AA_None;
-    }
-    else
-        entry->aa_default = AA_None;
 
     return ret;
 }
@@ -1033,6 +785,65 @@ static void lfsz_calc_hash(LFANDSIZE *plfsz)
   return;
 }
 
+static AA_Type aa_type_from_flags( UINT aa_flags )
+{
+    switch (aa_flags & 0x7f)
+    {
+    case 0:
+    case GGO_BITMAP:
+        return AA_None;
+    case GGO_GRAY4_BITMAP:
+    case WINE_GGO_GRAY16_BITMAP:
+        return AA_Grey;
+    case WINE_GGO_HRGB_BITMAP:
+        return AA_RGB;
+    case WINE_GGO_HBGR_BITMAP:
+        return AA_BGR;
+    case WINE_GGO_VRGB_BITMAP:
+        return AA_VRGB;
+    case WINE_GGO_VBGR_BITMAP:
+        return AA_VBGR;
+    default:
+        FIXME( "unknown flags %x\n", aa_flags );
+        return AA_None;
+    }
+}
+
+static UINT get_xft_aa_flags( const LOGFONTW *lf )
+{
+    char *value;
+    UINT ret = 0;
+
+    switch (lf->lfQuality)
+    {
+    case NONANTIALIASED_QUALITY:
+    case ANTIALIASED_QUALITY:
+        break;
+    default:
+        if (!(value = XGetDefault( gdi_display, "Xft", "antialias" ))) break;
+        TRACE( "got antialias '%s'\n", value );
+        if (tolower(value[0]) == 'f' || tolower(value[0]) == 'n' ||
+            value[0] == '0' || !strcasecmp( value, "off" ))
+        {
+            ret = GGO_BITMAP;
+            break;
+        }
+        ret = GGO_GRAY4_BITMAP;
+        /* fall through */
+    case CLEARTYPE_QUALITY:
+    case CLEARTYPE_NATURAL_QUALITY:
+        if (!(value = XGetDefault( gdi_display, "Xft", "rgba" ))) break;
+        TRACE( "got rgba '%s'\n", value );
+        if (!strcmp( value, "rgb" )) ret = WINE_GGO_HRGB_BITMAP;
+        else if (!strcmp( value, "bgr" )) ret = WINE_GGO_HBGR_BITMAP;
+        else if (!strcmp( value, "vrgb" )) ret = WINE_GGO_VRGB_BITMAP;
+        else if (!strcmp( value, "vbgr" )) ret = WINE_GGO_VBGR_BITMAP;
+        else if (!strcmp( value, "none" )) ret = GGO_GRAY4_BITMAP;
+        break;
+    }
+    return ret;
+}
+
 /**********************************************************************
  *	     xrenderdrv_SelectFont
  */
@@ -1041,11 +852,13 @@ static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     LFANDSIZE lfsz;
     struct xrender_physdev *physdev = get_xrender_dev( dev );
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectFont );
-    HFONT ret = next->funcs->pSelectFont( next, hfont, aa_flags );
-
-    if (!ret) return 0;
+    HFONT ret;
 
     GetObjectW( hfont, sizeof(lfsz.lf), &lfsz.lf );
+    if (!*aa_flags) *aa_flags = get_xft_aa_flags( &lfsz.lf );
+
+    ret = next->funcs->pSelectFont( next, hfont, aa_flags );
+    if (!ret) return 0;
 
     TRACE("h=%d w=%d weight=%d it=%d charset=%d name=%s\n",
           lfsz.lf.lfHeight, lfsz.lf.lfWidth, lfsz.lf.lfWeight,
@@ -1069,7 +882,8 @@ static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     EnterCriticalSection(&xrender_cs);
     if (physdev->cache_index != -1)
         dec_ref_cache( physdev->cache_index );
-    physdev->cache_index = GetCacheEntry( dev->hdc, &lfsz );
+    physdev->cache_index = GetCacheEntry( &lfsz );
+    glyphsetCache[physdev->cache_index].aa_default = aa_type_from_flags( *aa_flags );
     LeaveCriticalSection(&xrender_cs);
     return ret;
 }
