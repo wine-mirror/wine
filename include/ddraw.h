@@ -2133,16 +2133,18 @@ DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirectDrawSurface3 methods ***/
-    STDMETHOD(AddAttachedSurface)(THIS_ LPDIRECTDRAWSURFACE3 lpDDSAttachedSurface) PURE;
+    STDMETHOD(AddAttachedSurface)(THIS_ IDirectDrawSurface3 *attachment) PURE;
     STDMETHOD(AddOverlayDirtyRect)(THIS_ LPRECT lpRect) PURE;
-    STDMETHOD(Blt)(THIS_ LPRECT lpDestRect, LPDIRECTDRAWSURFACE3 lpDDSrcSurface, LPRECT lpSrcRect, DWORD dwFlags, LPDDBLTFX lpDDBltFx) PURE;
+    STDMETHOD(Blt)(THIS_ RECT *dst_rest, IDirectDrawSurface3 *src_surface, RECT *src_rect,
+            DWORD flags, DDBLTFX *fx) PURE;
     STDMETHOD(BltBatch)(THIS_ LPDDBLTBATCH lpDDBltBatch, DWORD dwCount, DWORD dwFlags) PURE;
-    STDMETHOD(BltFast)(THIS_ DWORD dwX, DWORD dwY, LPDIRECTDRAWSURFACE3 lpDDSrcSurface, LPRECT lpSrcRect, DWORD dwTrans) PURE;
-    STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD dwFlags, LPDIRECTDRAWSURFACE3 lpDDSAttachedSurface) PURE;
+    STDMETHOD(BltFast)(THIS_ DWORD x, DWORD y, IDirectDrawSurface3 *src_surface,
+            RECT *src_rect, DWORD flags) PURE;
+    STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD flags, IDirectDrawSurface3 *attachment) PURE;
     STDMETHOD(EnumAttachedSurfaces)(THIS_ LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpEnumSurfacesCallback) PURE;
     STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD dwFlags, LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpfnCallback) PURE;
-    STDMETHOD(Flip)(THIS_ LPDIRECTDRAWSURFACE3 lpDDSurfaceTargetOverride, DWORD dwFlags) PURE;
-    STDMETHOD(GetAttachedSurface)(THIS_ LPDDSCAPS lpDDSCaps, LPDIRECTDRAWSURFACE3 *lplpDDAttachedSurface) PURE;
+    STDMETHOD(Flip)(THIS_ IDirectDrawSurface3 *dst_surface, DWORD flags) PURE;
+    STDMETHOD(GetAttachedSurface)(THIS_ DDSCAPS *caps, IDirectDrawSurface3 **attachment) PURE;
     STDMETHOD(GetBltStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetCaps)(THIS_ LPDDSCAPS lpDDSCaps) PURE;
     STDMETHOD(GetClipper)(THIS_ LPDIRECTDRAWCLIPPER *lplpDDClipper) PURE;
@@ -2163,9 +2165,10 @@ DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown)
     STDMETHOD(SetOverlayPosition)(THIS_ LONG lX, LONG lY) PURE;
     STDMETHOD(SetPalette)(THIS_ LPDIRECTDRAWPALETTE lpDDPalette) PURE;
     STDMETHOD(Unlock)(THIS_ LPVOID lpSurfaceData) PURE;
-    STDMETHOD(UpdateOverlay)(THIS_ LPRECT lpSrcRect, LPDIRECTDRAWSURFACE3 lpDDDestSurface, LPRECT lpDestRect, DWORD dwFlags, LPDDOVERLAYFX lpDDOverlayFx) PURE;
+    STDMETHOD(UpdateOverlay)(THIS_ RECT *src_rect, IDirectDrawSurface3 *dst_surface, RECT *dst_rect,
+            DWORD flags, DDOVERLAYFX *fx) PURE;
     STDMETHOD(UpdateOverlayDisplay)(THIS_ DWORD dwFlags) PURE;
-    STDMETHOD(UpdateOverlayZOrder)(THIS_ DWORD dwFlags, LPDIRECTDRAWSURFACE3 lpDDSReference) PURE;
+    STDMETHOD(UpdateOverlayZOrder)(THIS_ DWORD flags, IDirectDrawSurface3 *reference_surface) PURE;
     /* added in v2 */
     STDMETHOD(GetDDInterface)(THIS_ LPVOID *lplpDD) PURE;
     STDMETHOD(PageLock)(THIS_ DWORD dwFlags) PURE;
