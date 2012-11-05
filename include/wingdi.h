@@ -3767,6 +3767,9 @@ WINGDIAPI BOOL        WINAPI PolyTextOutW(HDC,const POLYTEXTW*,INT);
 #define WGL_SWAP_UNDERLAY14 (1 << 29)
 #define WGL_SWAP_UNDERLAY15 (1 << 30)
 
+#define WGL_FONT_LINES      0
+#define WGL_FONT_POLYGONS   1
+
 /* WGL prototypes */
 WINGDIAPI HGLRC   WINAPI wglCreateContext(HDC);
 WINGDIAPI HGLRC   WINAPI wglCreateLayerContext(HDC,INT);
