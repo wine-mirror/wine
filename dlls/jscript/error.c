@@ -190,7 +190,7 @@ static HRESULT create_error(script_ctx_t *ctx, jsdisp_t *constr,
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_propput_name(err, numberW, jsval_number((INT)number));
+    hres = jsdisp_propput_dontenum(err, numberW, jsval_number((INT)number));
     if(FAILED(hres)) {
         jsdisp_release(err);
         return hres;
@@ -201,7 +201,7 @@ static HRESULT create_error(script_ctx_t *ctx, jsdisp_t *constr,
     if(str) {
         hres = jsdisp_propput_name(err, messageW, jsval_string(str));
         if(SUCCEEDED(hres))
-            hres = jsdisp_propput_name(err, descriptionW, jsval_string(str));
+            hres = jsdisp_propput_dontenum(err, descriptionW, jsval_string(str));
         jsstr_release(str);
     }else {
         hres = E_OUTOFMEMORY;
@@ -357,7 +357,7 @@ HRESULT init_error_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
             return E_OUTOFMEMORY;
         }
 
-        hres = jsdisp_propput_name(err, nameW, jsval_string(str));
+        hres = jsdisp_propput_dontenum(err, nameW, jsval_string(str));
         jsstr_release(str);
         if(SUCCEEDED(hres))
             hres = create_builtin_constructor(ctx, constr_val[i], names[i], NULL,

@@ -1245,19 +1245,19 @@ HRESULT init_global(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_propput_name(ctx->global, MathW, jsval_obj(math));
+    hres = jsdisp_propput_dontenum(ctx->global, MathW, jsval_obj(math));
     jsdisp_release(math);
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_propput_name(ctx->global, undefinedW, jsval_undefined());
+    hres = jsdisp_propput_dontenum(ctx->global, undefinedW, jsval_undefined());
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_propput_name(ctx->global, NaNW, jsval_number(NAN));
+    hres = jsdisp_propput_dontenum(ctx->global, NaNW, jsval_number(NAN));
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_propput_name(ctx->global, InfinityW, jsval_number(INFINITY));
+    hres = jsdisp_propput_dontenum(ctx->global, InfinityW, jsval_number(INFINITY));
     return hres;
 }

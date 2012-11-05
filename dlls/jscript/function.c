@@ -104,16 +104,21 @@ static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, unsigned ar
     }
 
     for(i=0; i < argc; i++) {
-        hres = jsdisp_propput_idx(args, i, argv[i]);
+        WCHAR buf[12];
+
+        static const WCHAR formatW[] = {'%','d',0};
+
+        sprintfW(buf, formatW, i);
+        hres = jsdisp_propput_dontenum(args, buf, argv[i]);
         if(FAILED(hres))
             break;
     }
 
     if(SUCCEEDED(hres)) {
-        hres = jsdisp_propput_name(args, lengthW, jsval_number(argc));
+        hres = jsdisp_propput_dontenum(args, lengthW, jsval_number(argc));
 
         if(SUCCEEDED(hres))
-            hres = jsdisp_propput_name(args, caleeW, jsval_disp(calee));
+            hres = jsdisp_propput_dontenum(args, caleeW, jsval_disp(calee));
     }
 
     if(FAILED(hres)) {
@@ -592,7 +597,7 @@ static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_
 
 static inline HRESULT set_prototype(script_ctx_t *ctx, jsdisp_t *dispex, jsdisp_t *prototype)
 {
-    return jsdisp_propput_name(dispex, prototypeW, jsval_obj(prototype));
+    return jsdisp_propput_dontenum(dispex, prototypeW, jsval_obj(prototype));
 }
 
 HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, const WCHAR *name,
