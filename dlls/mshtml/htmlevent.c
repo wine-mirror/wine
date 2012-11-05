@@ -1055,6 +1055,8 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
 
     TRACE("(%p) %s\n", doc, debugstr_w(event_info[eid].name));
 
+    htmldoc_addref(&doc->basedoc);
+
     window = doc->window;
     prev_event = window->event;
     window->event = event_obj ? &event_obj->IHTMLEventObj_iface : NULL;
@@ -1155,6 +1157,8 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
         TRACE("calling PreventDefault\n");
         nsIDOMEvent_PreventDefault(event_obj->nsevent);
     }
+
+    htmldoc_release(&doc->basedoc);
 }
 
 void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode *target, nsIDOMEvent *nsevent,
