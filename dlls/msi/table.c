@@ -2267,6 +2267,7 @@ static UINT msi_record_encoded_stream_name( const MSITABLEVIEW *tv, MSIRECORD *r
             if ( !p )
             {
                 r = ERROR_OUTOFMEMORY;
+                msi_free(sval);
                 goto err;
             }
             stname = p;
