@@ -613,7 +613,7 @@ static void test_syntax(void)
  * only one string in a sub-object (very common). Use with care, this may lead to a crash. */
 #define EXPAND_STRING 0
 
-static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int* plevel)
+static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int level)
 {
     HRESULT hr;
     char name[100];
@@ -636,7 +636,7 @@ static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int* plevel)
     ok(hr == DXFILE_OK, "IDirectXFileData_GetType: %x\n", hr);
     hr = IDirectXFileData_GetData(lpDirectXFileData, NULL, &size, (void**)&pData);
     ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
-    for (i = 0; i < *plevel; i++)
+    for (i = 0; i < level; i++)
         printf("  ");
     debugstr_guid(str_clsid, &clsid);
     debugstr_guid(str_clsid_type, clsid_type);
@@ -657,7 +657,9 @@ static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int* plevel)
         }
         printf("\n");
     }
-    (*plevel)++;
+
+    level++;
+
     while (SUCCEEDED(hr = IDirectXFileData_GetNextObject(lpDirectXFileData, &pChildObj)))
     {
         LPDIRECTXFILEDATA p1;
@@ -668,17 +670,17 @@ static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int* plevel)
         hr = IDirectXFileObject_QueryInterface(pChildObj, &IID_IDirectXFileData, (void **) &p1);
         if (SUCCEEDED(hr))
         {
-            for (i = 0; i < *plevel; i++)
+            for (i = 0; i < level; i++)
                 printf("  ");
             printf("Found Data (%d)\n", j);
-            process_data(p1, plevel);
+            process_data(p1, level);
             IDirectXFileData_Release(p1);
         }
         hr = IDirectXFileObject_QueryInterface(pChildObj, &IID_IDirectXFileDataReference, (void **) &p2);
         if (SUCCEEDED(hr))
         {
             LPDIRECTXFILEDATA pfdo;
-            for (i = 0; i < *plevel; i++)
+            for (i = 0; i < level; i++)
                 printf("  ");
             printf("Found Data Reference (%d)\n", j);
 #if 0
@@ -688,21 +690,21 @@ static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int* plevel)
             ok(hr == DXFILE_OK, "IDirectXFileData_GetName: %x\n", hr);
 #endif
             IDirectXFileDataReference_Resolve(p2, &pfdo);
-            process_data(pfdo, plevel);
+            process_data(pfdo, level);
             IDirectXFileData_Release(pfdo);
             IDirectXFileDataReference_Release(p2);
         }
         hr = IDirectXFileObject_QueryInterface(pChildObj, &IID_IDirectXFileBinary, (void **) &p3);
         if (SUCCEEDED(hr))
         {
-            for (i = 0; i < *plevel; i++)
+            for (i = 0; i < level; i++)
                 printf("  ");
             printf("Found Binary (%d)\n", j);
             IDirectXFileBinary_Release(p3);
         }
         IDirectXFileObject_Release(pChildObj);
     }
-    (*plevel)--;
+
     ok(hr == DXFILE_OK || hr == DXFILEERR_NOMOREOBJECTS, "IDirectXFileData_GetNextObject: %x\n", hr);
 }
 
@@ -761,9 +763,8 @@ static void test_dump(void)
 
     while (SUCCEEDED(hr = IDirectXFileEnumObject_GetNextDataObject(lpDirectXFileEnumObject, &lpDirectXFileData)))
     {
-	int level = 0;
         printf("\n");
-	process_data(lpDirectXFileData, &level);
+        process_data(lpDirectXFileData, 0);
         IDirectXFileData_Release(lpDirectXFileData);
     }
     ok(hr == DXFILE_OK || hr == DXFILEERR_NOMOREOBJECTS, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
