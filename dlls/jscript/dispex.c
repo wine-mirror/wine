@@ -1271,7 +1271,7 @@ HRESULT jsdisp_propput_dontenum(jsdisp_t *obj, const WCHAR *name, jsval_t val)
     if(FAILED(hres))
         return hres;
 
-    return jsval_copy(val, &prop->u.val);
+    return prop_put(obj, prop, val, NULL);
 }
 
 HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, jsval_t val)
