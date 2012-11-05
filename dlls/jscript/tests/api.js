@@ -26,6 +26,74 @@ ok(ScriptEngineMajorVersion() === ScriptEngineMajorVersion(2), "ScriptEngineMajo
 ok(ScriptEngineMinorVersion() === ScriptEngineMinorVersion(2), "ScriptEngineMinorVersion() !== ScriptEngineMinorVersion(2)");
 ok(ScriptEngineBuildVersion() === ScriptEngineBuildVersion(2), "ScriptEngineBuildVersion() !== ScriptEngineBuildVersion(2)");
 
+function testNoEnumerables(expr) {
+    for(var iter in obj)
+        ok(false, expr + " has property " + iter);
+}
+
+testNoEnumerables("Object");
+testNoEnumerables("Object.prototype");
+testNoEnumerables("new Object()");
+testNoEnumerables("Math");
+testNoEnumerables("String");
+testNoEnumerables("String.prototype");
+testNoEnumerables("new String()");
+testNoEnumerables("Number");
+testNoEnumerables("Number.prototype");
+testNoEnumerables("new Number(1)");
+testNoEnumerables("ActiveXObject");
+testNoEnumerables("Array");
+testNoEnumerables("Array.prototype");
+testNoEnumerables("new Array()");
+testNoEnumerables("Boolean");
+testNoEnumerables("Boolean.prototype");
+testNoEnumerables("new Boolean()");
+testNoEnumerables("Date");
+testNoEnumerables("Date.prototype");
+testNoEnumerables("new Date()");
+testNoEnumerables("TypeError");
+testNoEnumerables("TypeError.prototype");
+testNoEnumerables("new TypeError()");
+testNoEnumerables("Function");
+testNoEnumerables("Function.prototype");
+testNoEnumerables("testNoEnumerates");
+testNoEnumerables("VBArray");
+
+ok(Object.propertyIsEnumerable("prototype") === false, "Object.prototype is enumerable");
+ok(Math.propertyIsEnumerable("E") === false, "Math.E is enumerable");
+ok(Math.propertyIsEnumerable("SQRT2") === false, "Math.SQRT2 is enumerable");
+ok(Math.propertyIsEnumerable("PI") === false, "Math.PI is enumerable");
+ok("test".propertyIsEnumerable("length") === false, "'test'.length is enumerable");
+ok([1].propertyIsEnumerable("length") === false, "[1].length is enumerable");
+ok((new TypeError()).propertyIsEnumerable("message") === true, "(new TypeError()).message is not enumerable");
+ok((new TypeError()).propertyIsEnumerable("description") === false, "(new TypeError()).description is enumerable");
+ok((new TypeError()).propertyIsEnumerable("name") === false, "(new TypeError()).name is enumerable");
+ok((new TypeError()).propertyIsEnumerable("number") === false, "(new TypeError()).number is enumerable");
+ok(Object.propertyIsEnumerable.propertyIsEnumerable("length") === false, "Object.propertyIsEnumerable.length is enumerable");
+
+tmp = new Object();
+tmp.test = "1";
+ok(tmp.propertyIsEnumerable("test"), "tmp.test is not enumerable");
+
+tmp = { test: 1 };
+ok(tmp.propertyIsEnumerable("test"), "tmp.test is not enumerable");
+
+ok([1].concat([2]).propertyIsEnumerable("1"), "[1].concat([2]).1 is not enumerable");
+ok("t.e.s.t".split(".").propertyIsEnumerable("0"), "'test'.split().0 is not enumerable");
+
+(function() {
+    ok(arguments.propertyIsEnumerable("0") === false, "arguments.0 is enumerable");
+    ok(arguments.propertyIsEnumerable("length") === false, "arguments.length is enumerable");
+    ok(arguments.propertyIsEnumerable("calee") === false, "arguments.calee is enumerable");
+})();
+
+tmp = [1];
+tmp.push("");
+ok(tmp.propertyIsEnumerable("1"), "[1].push() ... 1 is not enumerable");
+
+ok([1,2].reverse().propertyIsEnumerable("1"), "[1,2].rverse().1 is not enumerable");
+ok([1,2].propertyIsEnumerable("0"), "[1,2].0 is not enumerable");
+
 i = parseInt("0");
 ok(i === 0, "parseInt('0') = " + i);
 i = parseInt("123");
@@ -489,7 +557,6 @@ ok(r[0] === "1", "r[0] = " + r[0]);
 ok(r[1] === "2", "r[1] = " + r[1]);
 ok(r[2] === "3", "r[2] = " + r[2]);
 
-
 r = "1,2,3".split(",*");
 ok(r.length === 1, "r.length = " + r.length);
 ok(r[0] === "1,2,3", "r[0] = " + r[0]);
@@ -810,6 +877,14 @@ arr = [,,,,,];
 tmp = arr.pop();
 ok(arr.length === 5, "arr.length = " + arr.length);
 ok(tmp === undefined, "tmp = " + tmp);
+
+function PseudoArray() {
+    this[0] = 0;
+}
+PseudoArray.prototype = {length: 1};
+arr = new PseudoArray();
+Array.prototype.push.call(arr, 2);
+ok(arr.propertyIsEnumerable("length"), "arr.length is not enumerable");
 
 arr = [1,2,null,false,undefined,,"a"];
 
@@ -1998,6 +2073,7 @@ ok(err.valueOf === Object.prototype.valueOf, "err.valueOf !== Object.prototype.v
 ok(Error.prototype.name === "Error", "Error.prototype.name = " + Error.prototype.name);
 ok(err.name === "Error", "err.name = " + err.name);
 EvalError.prototype.message = "test";
+ok(EvalError.prototype.message === "test", "EvalError.prototype.message = " + EvalError.prototype.message);
 ok(err.toString !== Object.prototype.toString, "err.toString === Object.prototype.toString");
 ok(err.toString() === (invokeVersion < 2 ? "[object Error]" : "Error"), "err.toString() = " + err.toString());
 err = new EvalError();
@@ -2440,6 +2516,8 @@ function testFunctions(obj, arr) {
     for(var i=0; i<arr.length; i++) {
         l = obj[arr[i][0]].length;
         ok(l === arr[i][1], arr[i][0] + ".length = " + l);
+
+        ok(obj.propertyIsEnumerable(arr[i][0]) === false, arr[i][0] + " is enumerable");
     }
 }
 

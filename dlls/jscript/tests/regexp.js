@@ -41,6 +41,11 @@ ok(m.index === 1, "m.index = " + m.index);
 ok(m.input === " aabaaa", "m.input = " + m.input);
 ok(m.length === 1, "m.length = " + m.length);
 ok(m[0] === "aa", "m[0] = " + m[0]);
+ok(m.propertyIsEnumerable("0"), "m.0 is not enumerable");
+ok(m.propertyIsEnumerable("input"), "m.input is not enumerable");
+ok(m.propertyIsEnumerable("index"), "m.index is not enumerable");
+ok(m.propertyIsEnumerable("lastIndex"), "m.lastIndex is not enumerable");
+ok(m.propertyIsEnumerable("length") === false, "m.length is not enumerable");
 ok(RegExp.leftContext === " ", "RegExp.leftContext = " + RegExp.leftContext);
 ok(RegExp.rightContext === "baaa", "RegExp.rightContext = " + RegExp.rightContext);
 
