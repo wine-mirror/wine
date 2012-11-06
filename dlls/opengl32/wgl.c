@@ -1395,7 +1395,7 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     UINT glyph;
     const MAT2 identity = {{0,1},{0,0},{0,0},{0,1}};
-    GLUtesselator *tess;
+    GLUtesselator *tess = NULL;
     LOGFONTW lf;
     HFONT old_font, unscaled_font;
     UINT em_size = 1024;
@@ -1407,17 +1407,20 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
     if(deviation <= 0.0)
         deviation = 1.0/em_size;
 
-    if (!load_libglu())
+    if(format == WGL_FONT_POLYGONS)
     {
-        ERR("glu32 is required for this function but isn't available\n");
-        return FALSE;
-    }
+        if (!load_libglu())
+        {
+            ERR("glu32 is required for this function but isn't available\n");
+            return FALSE;
+        }
 
-    tess = pgluNewTess();
-    if(!tess) return FALSE;
-    pgluTessCallback(tess, GLU_TESS_VERTEX, (_GLUfuncptr)tess_callback_vertex);
-    pgluTessCallback(tess, GLU_TESS_BEGIN, (_GLUfuncptr)tess_callback_begin);
-    pgluTessCallback(tess, GLU_TESS_END, tess_callback_end);
+        tess = pgluNewTess();
+        if(!tess) return FALSE;
+        pgluTessCallback(tess, GLU_TESS_VERTEX, (_GLUfuncptr)tess_callback_vertex);
+        pgluTessCallback(tess, GLU_TESS_BEGIN, (_GLUfuncptr)tess_callback_begin);
+        pgluTessCallback(tess, GLU_TESS_END, tess_callback_end);
+    }
 
     GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf);
     rc.left = rc.right = rc.bottom = 0;
@@ -1471,7 +1474,8 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
 
         funcs->gl.p_glNewList(listBase++, GL_COMPILE);
         funcs->gl.p_glFrontFace(GL_CW);
-        pgluTessBeginPolygon(tess, NULL);
+        if(format == WGL_FONT_POLYGONS)
+            pgluTessBeginPolygon(tess, NULL);
 
         while(!vertices)
         {
@@ -1488,12 +1492,18 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
                 if(vertices)
                     TRACE("\tstart %d, %d\n", pph->pfxStart.x.value, pph->pfxStart.y.value);
 
-                pgluTessBeginContour(tess);
+                if(format == WGL_FONT_POLYGONS)
+                    pgluTessBeginContour(tess);
+                else
+                    funcs->gl.p_glBegin(GL_LINE_LOOP);
 
                 if(vertices)
                 {
                     fixed_to_double(pph->pfxStart, em_size, vertices);
-                    pgluTessVertex(tess, vertices, vertices);
+                    if(format == WGL_FONT_POLYGONS)
+                        pgluTessVertex(tess, vertices, vertices);
+                    else
+                        funcs->gl.p_glVertex3d(vertices[0], vertices[1], vertices[2]);
                     vertices += 3;
                 }
                 vertex_total++;
@@ -1513,7 +1523,10 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
                                 TRACE("\t\tline to %d, %d\n",
                                       ppc->apfx[i].x.value, ppc->apfx[i].y.value);
                                 fixed_to_double(ppc->apfx[i], em_size, vertices);
-                                pgluTessVertex(tess, vertices, vertices);
+                                if(format == WGL_FONT_POLYGONS)
+                                    pgluTessVertex(tess, vertices, vertices);
+                                else
+                                    funcs->gl.p_glVertex3d(vertices[0], vertices[1], vertices[2]);
                                 vertices += 3;
                             }
                             fixed_to_double(ppc->apfx[i], em_size, previous);
@@ -1558,7 +1571,10 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
                                     vertices[0] = points[j].x;
                                     vertices[1] = points[j].y;
                                     vertices[2] = 0.0;
-                                    pgluTessVertex(tess, vertices, vertices);
+                                    if(format == WGL_FONT_POLYGONS)
+                                        pgluTessVertex(tess, vertices, vertices);
+                                    else
+                                        funcs->gl.p_glVertex3d(vertices[0], vertices[1], vertices[2]);
                                     vertices += 3;
                                 }
                             }
@@ -1569,20 +1585,27 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
                         break;
                     default:
                         ERR("\t\tcurve type = %d\n", ppc->wType);
-                        pgluTessEndContour(tess);
+                        if(format == WGL_FONT_POLYGONS)
+                            pgluTessEndContour(tess);
+                        else
+                            funcs->gl.p_glEnd();
                         goto error_in_list;
                     }
 
                     ppc = (TTPOLYCURVE*)((char*)ppc + sizeof(*ppc) +
                                          (ppc->cpfx - 1) * sizeof(POINTFX));
                 }
-                pgluTessEndContour(tess);
+                if(format == WGL_FONT_POLYGONS)
+                    pgluTessEndContour(tess);
+                else
+                    funcs->gl.p_glEnd();
                 pph = (TTPOLYGONHEADER*)((char*)pph + pph->cb);
             }
         }
 
 error_in_list:
-        pgluTessEndPolygon(tess);
+        if(format == WGL_FONT_POLYGONS)
+            pgluTessEndPolygon(tess);
         funcs->gl.p_glTranslated((GLdouble)gm.gmCellIncX / em_size, (GLdouble)gm.gmCellIncY / em_size, 0.0);
         funcs->gl.p_glEndList();
         HeapFree(GetProcessHeap(), 0, buf);
@@ -1591,7 +1614,8 @@ error_in_list:
 
  error:
     DeleteObject(SelectObject(hdc, old_font));
-    pgluDeleteTess(tess);
+    if(format == WGL_FONT_POLYGONS)
+        pgluDeleteTess(tess);
     return TRUE;
 
 }
