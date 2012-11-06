@@ -1724,14 +1724,6 @@ static void set_window_pos( struct window *win, struct window *previous,
                           client_rect->bottom - old_client_rect.bottom != y_offset ||
                           !valid_rects ||
                           memcmp( &valid_rects[0], client_rect, sizeof(*client_rect) ));
-        /* if part of the non-client area was exposed, consider it changed */
-        if (exposed_rgn && !frame_changed)
-        {
-            get_region_extents( exposed_rgn, &rect );
-            offset_rect( &rect, client_rect->left, client_rect->top );
-            frame_changed = (rect.left < client_rect->left || rect.top < client_rect->top ||
-                             rect.right > client_rect->right || rect.bottom > client_rect->bottom);
-        }
     }
 
     if (frame_changed || client_changed)

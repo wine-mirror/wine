@@ -2025,6 +2025,8 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     }
     old_width = win->rectClient.right - win->rectClient.left;
     old_visible_rect = win->visible_rect;
+    old_surface = win->surface;
+    if (old_surface != new_surface) swp_flags |= SWP_FRAMECHANGED;  /* force refreshing non-client area */
 
     SERVER_START_REQ( set_window_pos )
     {
@@ -2055,7 +2057,6 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
             win->rectWindow = *window_rect;
             win->rectClient = *client_rect;
             win->visible_rect = visible_rect;
-            old_surface       = win->surface;
             win->surface      = new_surface;
             surface_win       = wine_server_ptr_handle( reply->surface_win );
             if (GetWindowLongW( win->parent, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
@@ -2076,8 +2077,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     if (ret)
     {
         if (surface_win) update_surface_region( surface_win );
-        if (old_surface != new_surface ||
-            ((swp_flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE) ||
+        if (((swp_flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE) ||
             (swp_flags & (SWP_HIDEWINDOW | SWP_SHOWWINDOW | SWP_STATECHANGED | SWP_FRAMECHANGED)))
             invalidate_dce( win, &old_window_rect );
     }
