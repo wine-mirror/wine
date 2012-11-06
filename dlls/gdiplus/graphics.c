@@ -312,7 +312,7 @@ static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
     GpPointF *ptf, INT count)
 {
     REAL scale_x, scale_y;
-    GpMatrix *matrix;
+    GpMatrix matrix;
     int i;
 
     scale_x = units_to_pixels(1.0, graphics->unit, graphics->xres);
@@ -325,10 +325,9 @@ static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
         scale_y *= graphics->scale;
     }
 
-    GdipCloneMatrix(graphics->worldtrans, &matrix);
-    GdipScaleMatrix(matrix, scale_x, scale_y, MatrixOrderAppend);
-    GdipTransformMatrixPoints(matrix, ptf, count);
-    GdipDeleteMatrix(matrix);
+    matrix = *graphics->worldtrans;
+    GdipScaleMatrix(&matrix, scale_x, scale_y, MatrixOrderAppend);
+    GdipTransformMatrixPoints(&matrix, ptf, count);
 
     for(i = 0; i < count; i++){
         pti[i].x = gdip_round(ptf[i].X);
