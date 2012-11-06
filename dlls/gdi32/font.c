@@ -260,32 +260,28 @@ static void FONT_NewTextMetricExWToA(const NEWTEXTMETRICEXW *ptmW, NEWTEXTMETRIC
     memcpy(&ptmA->ntmFontSig, &ptmW->ntmFontSig, sizeof(FONTSIGNATURE));
 }
 
-static DWORD get_desktop_value( const WCHAR *name, DWORD *value )
+static DWORD get_key_value( HKEY key, const WCHAR *name, DWORD *value )
 {
-    static const WCHAR desktop[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
-    HKEY key;
     WCHAR buf[12];
     DWORD count = sizeof(buf), type, err;
 
-    err = RegOpenKeyW( HKEY_CURRENT_USER, desktop, &key );
+    err = RegQueryValueExW( key, name, NULL, &type, (BYTE *)buf, &count );
     if (!err)
     {
-        err = RegQueryValueExW( key, name, NULL, &type, (BYTE*)buf, &count );
-        if (!err) *value = atoiW( buf );
-        RegCloseKey( key );
+        if (type == REG_DWORD) memcpy( value, buf, sizeof(*value) );
+        else *value = atoiW( buf );
     }
     return err;
 }
 
-static UINT get_subpixel_orientation( void )
+static UINT get_subpixel_orientation( HKEY key )
 {
     static const WCHAR smoothing_orientation[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g',
                                                   'O','r','i','e','n','t','a','t','i','o','n',0};
-    DWORD orient, err;
+    DWORD orient;
 
     /* FIXME: handle vertical orientations even though Windows doesn't */
-    err = get_desktop_value( smoothing_orientation, &orient );
-    if (err) return GGO_GRAY4_BITMAP;
+    if (get_key_value( key, smoothing_orientation, &orient )) return GGO_GRAY4_BITMAP;
 
     switch (orient)
     {
@@ -297,23 +293,22 @@ static UINT get_subpixel_orientation( void )
     return GGO_GRAY4_BITMAP;
 }
 
-static UINT get_default_smoothing( void )
+static UINT get_default_smoothing( HKEY key )
 {
     static const WCHAR smoothing_type[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g','T','y','p','e',0};
-    DWORD type, err;
+    DWORD type;
 
     /* FIXME: Ignoring FontSmoothing for now since this is
        set to off by default in wine.inf */
 
-    err = get_desktop_value( smoothing_type, &type );
-    if (err) return 0;
+    if (get_key_value( key, smoothing_type, &type )) return 0;
 
     switch (type)
     {
     case 1: /* FE_FONTSMOOTHINGSTANDARD */
         return GGO_GRAY4_BITMAP;
     case 2: /* FE_FONTSMOOTHINGCLEARTYPE */
-        return get_subpixel_orientation();
+        return get_subpixel_orientation( key );
     }
     return 0;
 }
@@ -666,7 +661,10 @@ static BOOL FONT_DeleteObject( HGDIOBJ handle )
  */
 HFONT nulldrv_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags )
 {
+    static const WCHAR desktopW[] = { 'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
+                                      'D','e','s','k','t','o','p',0 };
     LOGFONTW lf;
+    HKEY key;
 
     if (*aa_flags) return 0;
 
@@ -681,10 +679,14 @@ HFONT nulldrv_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags )
         break;
     case CLEARTYPE_QUALITY:
     case CLEARTYPE_NATURAL_QUALITY:
-        *aa_flags = get_subpixel_orientation();
+        if (RegOpenKeyW( HKEY_CURRENT_USER, desktopW, &key )) break;
+        *aa_flags = get_subpixel_orientation( key );
+        RegCloseKey( key );
         break;
     default:
-        *aa_flags = get_default_smoothing();
+        if (RegOpenKeyW( HKEY_CURRENT_USER, desktopW, &key )) break;
+        *aa_flags = get_default_smoothing( key );
+        RegCloseKey( key );
         break;
     }
     return 0;
