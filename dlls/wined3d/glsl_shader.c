@@ -116,9 +116,9 @@ struct glsl_ps_program
     GLhandleARB id;
     GLint *uniform_f_locations;
     GLint uniform_i_locations[MAX_CONST_I];
-    GLint bumpenvmat_location[MAX_TEXTURES];
-    GLint luminancescale_location[MAX_TEXTURES];
-    GLint luminanceoffset_location[MAX_TEXTURES];
+    GLint bumpenv_mat_location[MAX_TEXTURES];
+    GLint bumpenv_lum_scale_location[MAX_TEXTURES];
+    GLint bumpenv_lum_offset_location[MAX_TEXTURES];
     GLint ycorrection_location;
     GLint np2_fixup_location;
     const struct ps_np2fixup_info *np2_fixup_info;
@@ -788,24 +788,24 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
         {
             const float *data;
 
-            if (prog->ps.bumpenvmat_location[i] == -1)
+            if (prog->ps.bumpenv_mat_location[i] == -1)
                 continue;
 
             data = (const float *)&state->texture_states[i][WINED3D_TSS_BUMPENV_MAT00];
-            GL_EXTCALL(glUniformMatrix2fvARB(prog->ps.bumpenvmat_location[i], 1, 0, data));
+            GL_EXTCALL(glUniformMatrix2fvARB(prog->ps.bumpenv_mat_location[i], 1, 0, data));
             checkGLcall("glUniformMatrix2fvARB");
 
             /* texbeml needs the luminance scale and offset too. If texbeml
              * is used, needsbumpmat is set too, so we can check that in the
              * needsbumpmat check. */
-            if (prog->ps.luminancescale_location[i] != -1)
+            if (prog->ps.bumpenv_lum_scale_location[i] != -1)
             {
                 const GLfloat *scale = (const GLfloat *)&state->texture_states[i][WINED3D_TSS_BUMPENV_LSCALE];
                 const GLfloat *offset = (const GLfloat *)&state->texture_states[i][WINED3D_TSS_BUMPENV_LOFFSET];
 
-                GL_EXTCALL(glUniform1fvARB(prog->ps.luminancescale_location[i], 1, scale));
+                GL_EXTCALL(glUniform1fvARB(prog->ps.bumpenv_lum_scale_location[i], 1, scale));
                 checkGLcall("glUniform1fvARB");
-                GL_EXTCALL(glUniform1fvARB(prog->ps.luminanceoffset_location[i], 1, offset));
+                GL_EXTCALL(glUniform1fvARB(prog->ps.bumpenv_lum_offset_location[i], 1, offset));
                 checkGLcall("glUniform1fvARB");
             }
         }
@@ -1148,12 +1148,12 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             if (!(map & 1))
                 continue;
 
-            shader_addline(buffer, "uniform mat2 bumpenvmat%d;\n", i);
+            shader_addline(buffer, "uniform mat2 bumpenv_mat%u;\n", i);
 
             if (reg_maps->luminanceparams & (1 << i))
             {
-                shader_addline(buffer, "uniform float luminancescale%d;\n", i);
-                shader_addline(buffer, "uniform float luminanceoffset%d;\n", i);
+                shader_addline(buffer, "uniform float bumpenv_lum_scale%u;\n", i);
+                shader_addline(buffer, "uniform float bumpenv_lum_offset%u;\n", i);
                 extra_constants_needed++;
             }
 
@@ -3933,7 +3933,7 @@ static void shader_glsl_texbem(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1, &coord_param);
 
     shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL,
-            "T%u%s + vec4(bumpenvmat%d * %s, 0.0, 0.0)%s", sampler_idx, coord_mask, sampler_idx,
+            "T%u%s + vec4(bumpenv_mat%u * %s, 0.0, 0.0)%s", sampler_idx, coord_mask, sampler_idx,
             coord_param.param_str, coord_mask);
 
     if (ins->handler_idx == WINED3DSIH_TEXBEML)
@@ -3944,7 +3944,7 @@ static void shader_glsl_texbem(const struct wined3d_shader_instruction *ins)
         shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_2, &luminance_param);
         shader_glsl_add_dst_param(ins, &ins->dst[0], &dst_param);
 
-        shader_addline(ins->ctx->buffer, "%s%s *= (%s * luminancescale%d + luminanceoffset%d);\n",
+        shader_addline(ins->ctx->buffer, "%s%s *= (%s * bumpenv_lum_scale%u + bumpenv_lum_offset%u);\n",
                 dst_param.reg_name, dst_param.mask_str,
                 luminance_param.param_str, sampler_idx, sampler_idx);
     }
@@ -3959,7 +3959,7 @@ static void shader_glsl_bem(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[1], WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1, &src1_param);
 
     shader_glsl_append_dst(ins->ctx->buffer, ins);
-    shader_addline(ins->ctx->buffer, "%s + bumpenvmat%d * %s);\n",
+    shader_addline(ins->ctx->buffer, "%s + bumpenv_mat%u * %s);\n",
             src0_param.param_str, sampler_idx, src1_param.param_str);
 }
 
@@ -4854,12 +4854,12 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
 
         for (i = 0; i < MAX_TEXTURES; ++i)
         {
-            sprintf(name, "bumpenvmat%u", i);
-            entry->ps.bumpenvmat_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
-            sprintf(name, "luminancescale%u", i);
-            entry->ps.luminancescale_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
-            sprintf(name, "luminanceoffset%u", i);
-            entry->ps.luminanceoffset_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
+            sprintf(name, "bumpenv_mat%u", i);
+            entry->ps.bumpenv_mat_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
+            sprintf(name, "bumpenv_lum_scale%u", i);
+            entry->ps.bumpenv_lum_scale_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
+            sprintf(name, "bumpenv_lum_offset%u", i);
+            entry->ps.bumpenv_lum_offset_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
         }
 
         if (ps_compile_args.np2_fixup)
