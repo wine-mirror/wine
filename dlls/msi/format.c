@@ -221,7 +221,8 @@ static WCHAR *deformat_component( FORMAT *format, FORMSTR *str, int *ret_len )
     else
         ret = strdupW( msi_get_target_folder( format->package, comp->Directory ) );
 
-    *ret_len = strlenW( ret );
+    if (ret) *ret_len = strlenW( ret );
+    else *ret_len = 0;
     msi_free( key );
     return ret;
 }
@@ -238,14 +239,12 @@ static WCHAR *deformat_file( FORMAT *format, FORMSTR *str, BOOL shortname, int *
     if (!(file = msi_get_loaded_file( format->package, key ))) goto done;
     if (!shortname)
     {
-        ret = strdupW( file->TargetPath );
-        len = strlenW( ret );
+        if ((ret = strdupW( file->TargetPath ))) len = strlenW( ret );
         goto done;
     }
     if ((len = GetShortPathNameW(file->TargetPath, NULL, 0)) <= 0)
     {
-        ret = strdupW( file->TargetPath );
-        len = strlenW( ret );
+        if ((ret = strdupW( file->TargetPath ))) len = strlenW( ret );
         goto done;
     }
     len++;
