@@ -295,22 +295,17 @@ static UINT get_subpixel_orientation( HKEY key )
 
 static UINT get_default_smoothing( HKEY key )
 {
+    static const WCHAR smoothing[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g',0};
     static const WCHAR smoothing_type[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g','T','y','p','e',0};
-    DWORD type;
+    DWORD enabled, type;
 
-    /* FIXME: Ignoring FontSmoothing for now since this is
-       set to off by default in wine.inf */
+    if (get_key_value( key, smoothing, &enabled )) return 0;
+    if (!enabled) return GGO_BITMAP;
 
-    if (get_key_value( key, smoothing_type, &type )) return 0;
-
-    switch (type)
-    {
-    case 1: /* FE_FONTSMOOTHINGSTANDARD */
-        return GGO_GRAY4_BITMAP;
-    case 2: /* FE_FONTSMOOTHINGCLEARTYPE */
+    if (!get_key_value( key, smoothing_type, &type ) && type == 2 /* FE_FONTSMOOTHINGCLEARTYPE */)
         return get_subpixel_orientation( key );
-    }
-    return 0;
+
+    return GGO_GRAY4_BITMAP;
 }
 
 
