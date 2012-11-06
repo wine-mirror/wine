@@ -983,6 +983,7 @@ int pf_printf_w(puts_clbk_w, void*, const MSVCRT_wchar_t*, MSVCRT__locale_t,
         BOOL, BOOL, args_clbk, void*, __ms_va_list*) DECLSPEC_HIDDEN;
 printf_arg arg_clbk_valist(void*, int, int, __ms_va_list*) DECLSPEC_HIDDEN;
 
+#define MSVCRT_FLT_MIN 1.175494351e-38F
 #define MSVCRT__OVERFLOW  3
 #define MSVCRT__UNDERFLOW 4
 

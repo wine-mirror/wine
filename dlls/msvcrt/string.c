@@ -514,13 +514,13 @@ int CDECL MSVCRT__atoflt_l( MSVCRT__CRT_FLOAT *value, char *str, MSVCRT__locale_
             |MSVCRT__EM_OVERFLOW|MSVCRT__EM_UNDERFLOW|MSVCRT__EM_INEXACT, 0xffffffff);
 
     if(exp>0)
-        value->f = (float)sign*d*powf(10, exp);
+        value->f = (double)sign*d*pow(10, exp);
     else
-        value->f = (float)sign*d/powf(10, -exp);
+        value->f = (double)sign*d/pow(10, -exp);
 
     _control87(fpcontrol, 0xffffffff);
 
-    if((d && value->f==0.0) || isinf(value->f))
+    if((d && value->f>-MSVCRT_FLT_MIN && value->f<MSVCRT_FLT_MIN) || isinf(value->f))
         ret = exp > 0 ? MSVCRT__OVERFLOW : MSVCRT__UNDERFLOW;
 
     return ret;
