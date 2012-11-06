@@ -1323,7 +1323,8 @@ DECLARE_INTERFACE_(IDirectDraw,IUnknown)
     /*** IDirectDraw methods ***/
     STDMETHOD(Compact)(THIS) PURE;
     STDMETHOD(CreateClipper)(THIS_ DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, IUnknown *pUnkOuter) PURE;
-    STDMETHOD(CreatePalette)(THIS_ DWORD dwFlags, LPPALETTEENTRY lpColorTable, LPDIRECTDRAWPALETTE *lplpDDPalette, IUnknown *pUnkOuter) PURE;
+    STDMETHOD(CreatePalette)(THIS_ DWORD flags, PALETTEENTRY *color_table,
+            IDirectDrawPalette **palette, IUnknown *outer) PURE;
     STDMETHOD(CreateSurface)(THIS_ DDSURFACEDESC *surface_desc,
             struct IDirectDrawSurface **surface, IUnknown *outer) PURE;
     STDMETHOD(DuplicateSurface)(THIS_ struct IDirectDrawSurface *src_surface,
@@ -1432,7 +1433,8 @@ DECLARE_INTERFACE_(IDirectDraw2,IUnknown)
           /*** IDirectDraw2 methods ***/
 /*0c*/    STDMETHOD(Compact)(THIS) PURE;
 /*10*/    STDMETHOD(CreateClipper)(THIS_ DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, IUnknown *pUnkOuter) PURE;
-/*14*/    STDMETHOD(CreatePalette)(THIS_ DWORD dwFlags, LPPALETTEENTRY lpColorTable, LPDIRECTDRAWPALETTE *lplpDDPalette, IUnknown *pUnkOuter) PURE;
+/*14*/    STDMETHOD(CreatePalette)(THIS_ DWORD flags, PALETTEENTRY *color_table,
+                IDirectDrawPalette **palette, IUnknown *outer) PURE;
 /*18*/    STDMETHOD(CreateSurface)(THIS_ DDSURFACEDESC *surface_desc,
                 struct IDirectDrawSurface **surface, IUnknown *outer) PURE;
 /*1c*/    STDMETHOD(DuplicateSurface)(THIS_ struct IDirectDrawSurface *src_surface,
@@ -1529,7 +1531,8 @@ DECLARE_INTERFACE_(IDirectDraw3,IUnknown)
           /*** IDirectDraw2 methods ***/
 /*0c*/    STDMETHOD(Compact)(THIS) PURE;
 /*10*/    STDMETHOD(CreateClipper)(THIS_ DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, IUnknown *pUnkOuter) PURE;
-/*14*/    STDMETHOD(CreatePalette)(THIS_ DWORD dwFlags, LPPALETTEENTRY lpColorTable, LPDIRECTDRAWPALETTE *lplpDDPalette, IUnknown *pUnkOuter) PURE;
+/*14*/    STDMETHOD(CreatePalette)(THIS_ DWORD flags, PALETTEENTRY *color_table,
+                IDirectDrawPalette **lplpDDPalette, IUnknown *outer) PURE;
 /*18*/    STDMETHOD(CreateSurface)(THIS_ DDSURFACEDESC *surface_desc,
                 struct IDirectDrawSurface **surface, IUnknown *outer) PURE;
 /*1c*/    STDMETHOD(DuplicateSurface)(THIS_ struct IDirectDrawSurface *src_surface,
@@ -1632,7 +1635,8 @@ DECLARE_INTERFACE_(IDirectDraw4,IUnknown)
           /*** IDirectDraw4 methods ***/
 /*0c*/    STDMETHOD(Compact)(THIS) PURE;
 /*10*/    STDMETHOD(CreateClipper)(THIS_ DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, IUnknown *pUnkOuter) PURE;
-/*14*/    STDMETHOD(CreatePalette)(THIS_ DWORD dwFlags, LPPALETTEENTRY lpColorTable, LPDIRECTDRAWPALETTE *lplpDDPalette, IUnknown *pUnkOuter) PURE;
+/*14*/    STDMETHOD(CreatePalette)(THIS_ DWORD flags, PALETTEENTRY *color_table,
+                IDirectDrawPalette **palette, IUnknown *outer) PURE;
 /*18*/    STDMETHOD(CreateSurface)(THIS_ DDSURFACEDESC2 *surface_desc,
                 struct IDirectDrawSurface4 **surface, IUnknown *outer) PURE;
 /*1c*/    STDMETHOD(DuplicateSurface)(THIS_ struct IDirectDrawSurface4 *src_surface,
@@ -1747,7 +1751,8 @@ DECLARE_INTERFACE_(IDirectDraw7,IUnknown)
           /*** IDirectDraw7 methods ***/
 /*0c*/    STDMETHOD(Compact)(THIS) PURE;
 /*10*/    STDMETHOD(CreateClipper)(THIS_ DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, IUnknown *pUnkOuter) PURE;
-/*14*/    STDMETHOD(CreatePalette)(THIS_ DWORD dwFlags, LPPALETTEENTRY lpColorTable, LPDIRECTDRAWPALETTE *lplpDDPalette, IUnknown *pUnkOuter) PURE;
+/*14*/    STDMETHOD(CreatePalette)(THIS_ DWORD flags, PALETTEENTRY *color_table,
+                IDirectDrawPalette **palette, IUnknown *outer) PURE;
 /*18*/    STDMETHOD(CreateSurface)(THIS_ DDSURFACEDESC2 *surface_desc,
                 struct IDirectDrawSurface7 **surface, IUnknown *outer) PURE;
 /*1c*/    STDMETHOD(DuplicateSurface)(THIS_ struct IDirectDrawSurface7 *src_surface,
@@ -1885,7 +1890,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown)
 /*44*/    STDMETHOD(GetDC)(THIS_ HDC *lphDC) PURE;
 /*48*/    STDMETHOD(GetFlipStatus)(THIS_ DWORD dwFlags) PURE;
 /*4c*/    STDMETHOD(GetOverlayPosition)(THIS_ LPLONG lplX, LPLONG lplY) PURE;
-/*50*/    STDMETHOD(GetPalette)(THIS_ LPDIRECTDRAWPALETTE *lplpDDPalette) PURE;
+/*50*/    STDMETHOD(GetPalette)(THIS_ IDirectDrawPalette **palette) PURE;
 /*54*/    STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT lpDDPixelFormat) PURE;
 /*58*/    STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
 /*5c*/    STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW lpDD, LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
@@ -1896,7 +1901,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown)
 /*70*/    STDMETHOD(SetClipper)(THIS_ LPDIRECTDRAWCLIPPER lpDDClipper) PURE;
 /*74*/    STDMETHOD(SetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
 /*78*/    STDMETHOD(SetOverlayPosition)(THIS_ LONG lX, LONG lY) PURE;
-/*7c*/    STDMETHOD(SetPalette)(THIS_ LPDIRECTDRAWPALETTE lpDDPalette) PURE;
+/*7c*/    STDMETHOD(SetPalette)(THIS_ IDirectDrawPalette *palette) PURE;
 /*80*/    STDMETHOD(Unlock)(THIS_ LPVOID lpSurfaceData) PURE;
 /*84*/    STDMETHOD(UpdateOverlay)(THIS_ RECT *src_rect, IDirectDrawSurface *dst_surface,
                 RECT *dst_rect, DWORD flags, DDOVERLAYFX *fx) PURE;
@@ -2019,7 +2024,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface2,IUnknown)
     STDMETHOD(GetDC)(THIS_ HDC *lphDC) PURE;
     STDMETHOD(GetFlipStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetOverlayPosition)(THIS_ LPLONG lplX, LPLONG lplY) PURE;
-    STDMETHOD(GetPalette)(THIS_ LPDIRECTDRAWPALETTE *lplpDDPalette) PURE;
+    STDMETHOD(GetPalette)(THIS_ IDirectDrawPalette **palette) PURE;
     STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT lpDDPixelFormat) PURE;
     STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
     STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW lpDD, LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
@@ -2030,7 +2035,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface2,IUnknown)
     STDMETHOD(SetClipper)(THIS_ LPDIRECTDRAWCLIPPER lpDDClipper) PURE;
     STDMETHOD(SetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
     STDMETHOD(SetOverlayPosition)(THIS_ LONG lX, LONG lY) PURE;
-    STDMETHOD(SetPalette)(THIS_ LPDIRECTDRAWPALETTE lpDDPalette) PURE;
+    STDMETHOD(SetPalette)(THIS_ IDirectDrawPalette *palette) PURE;
     STDMETHOD(Unlock)(THIS_ LPVOID lpSurfaceData) PURE;
     STDMETHOD(UpdateOverlay)(THIS_ RECT *src_rect, IDirectDrawSurface2 *dst_surface, RECT *dst_rect,
             DWORD flags, DDOVERLAYFX *fx) PURE;
@@ -2165,7 +2170,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown)
     STDMETHOD(GetDC)(THIS_ HDC *lphDC) PURE;
     STDMETHOD(GetFlipStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetOverlayPosition)(THIS_ LPLONG lplX, LPLONG lplY) PURE;
-    STDMETHOD(GetPalette)(THIS_ LPDIRECTDRAWPALETTE *lplpDDPalette) PURE;
+    STDMETHOD(GetPalette)(THIS_ IDirectDrawPalette **palette) PURE;
     STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT lpDDPixelFormat) PURE;
     STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
     STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW lpDD, LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
@@ -2176,7 +2181,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown)
     STDMETHOD(SetClipper)(THIS_ LPDIRECTDRAWCLIPPER lpDDClipper) PURE;
     STDMETHOD(SetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
     STDMETHOD(SetOverlayPosition)(THIS_ LONG lX, LONG lY) PURE;
-    STDMETHOD(SetPalette)(THIS_ LPDIRECTDRAWPALETTE lpDDPalette) PURE;
+    STDMETHOD(SetPalette)(THIS_ IDirectDrawPalette *palette) PURE;
     STDMETHOD(Unlock)(THIS_ LPVOID lpSurfaceData) PURE;
     STDMETHOD(UpdateOverlay)(THIS_ RECT *src_rect, IDirectDrawSurface3 *dst_surface, RECT *dst_rect,
             DWORD flags, DDOVERLAYFX *fx) PURE;
@@ -2316,7 +2321,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface4,IUnknown)
     STDMETHOD(GetDC)(THIS_ HDC *lphDC) PURE;
     STDMETHOD(GetFlipStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetOverlayPosition)(THIS_ LPLONG lplX, LPLONG lplY) PURE;
-    STDMETHOD(GetPalette)(THIS_ LPDIRECTDRAWPALETTE *lplpDDPalette) PURE;
+    STDMETHOD(GetPalette)(THIS_ IDirectDrawPalette **palette) PURE;
     STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT lpDDPixelFormat) PURE;
     STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC2 lpDDSurfaceDesc) PURE;
     STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW lpDD, LPDDSURFACEDESC2 lpDDSurfaceDesc) PURE;
@@ -2327,7 +2332,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface4,IUnknown)
     STDMETHOD(SetClipper)(THIS_ LPDIRECTDRAWCLIPPER lpDDClipper) PURE;
     STDMETHOD(SetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
     STDMETHOD(SetOverlayPosition)(THIS_ LONG lX, LONG lY) PURE;
-    STDMETHOD(SetPalette)(THIS_ LPDIRECTDRAWPALETTE lpDDPalette) PURE;
+    STDMETHOD(SetPalette)(THIS_ IDirectDrawPalette *palette) PURE;
     STDMETHOD(Unlock)(THIS_ LPRECT lpSurfaceData) PURE;
     STDMETHOD(UpdateOverlay)(THIS_ RECT *src_rect, IDirectDrawSurface4 *dst_surface, RECT *dst_rect,
             DWORD flags, DDOVERLAYFX *fx) PURE;
@@ -2483,7 +2488,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface7,IUnknown)
     STDMETHOD(GetDC)(THIS_ HDC *lphDC) PURE;
     STDMETHOD(GetFlipStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetOverlayPosition)(THIS_ LPLONG lplX, LPLONG lplY) PURE;
-    STDMETHOD(GetPalette)(THIS_ LPDIRECTDRAWPALETTE *lplpDDPalette) PURE;
+    STDMETHOD(GetPalette)(THIS_ IDirectDrawPalette **palette) PURE;
     STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT lpDDPixelFormat) PURE;
     STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC2 lpDDSurfaceDesc) PURE;
     STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW lpDD, LPDDSURFACEDESC2 lpDDSurfaceDesc) PURE;
@@ -2494,7 +2499,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface7,IUnknown)
     STDMETHOD(SetClipper)(THIS_ LPDIRECTDRAWCLIPPER lpDDClipper) PURE;
     STDMETHOD(SetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
     STDMETHOD(SetOverlayPosition)(THIS_ LONG lX, LONG lY) PURE;
-    STDMETHOD(SetPalette)(THIS_ LPDIRECTDRAWPALETTE lpDDPalette) PURE;
+    STDMETHOD(SetPalette)(THIS_ IDirectDrawPalette *palette) PURE;
     STDMETHOD(Unlock)(THIS_ LPRECT lpSurfaceData) PURE;
     STDMETHOD(UpdateOverlay)(THIS_ RECT *src_rect, IDirectDrawSurface7 *dst_surface, RECT *dst_rect,
             DWORD flags, DDOVERLAYFX *fx) PURE;
