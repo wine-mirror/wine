@@ -110,23 +110,28 @@ struct glsl_vs_program
     GLint pos_fixup_location;
 };
 
+struct glsl_ps_program
+{
+    struct list shader_entry;
+    GLhandleARB id;
+    GLint *uniform_f_locations;
+    GLint uniform_i_locations[MAX_CONST_I];
+    GLint bumpenvmat_location[MAX_TEXTURES];
+    GLint luminancescale_location[MAX_TEXTURES];
+    GLint luminanceoffset_location[MAX_TEXTURES];
+    GLint ycorrection_location;
+    GLint np2_fixup_location;
+    const struct ps_np2fixup_info *np2_fixup_info;
+};
+
 /* Struct to maintain data about a linked GLSL program */
 struct glsl_shader_prog_link
 {
     struct wine_rb_entry program_lookup_entry;
     struct glsl_vs_program vs;
-    struct list                 pshader_entry;
-    GLhandleARB                 programId;
-    GLint                       *puniformF_locations;
-    GLint                       puniformI_locations[MAX_CONST_I];
-    GLint                       np2Fixup_location;
-    GLint                       bumpenvmat_location[MAX_TEXTURES];
-    GLint                       luminancescale_location[MAX_TEXTURES];
-    GLint                       luminanceoffset_location[MAX_TEXTURES];
-    GLint                       ycorrection_location;
-    GLhandleARB ps_id;
-    UINT                        constant_version;
-    const struct ps_np2fixup_info *np2Fixup_info;
+    struct glsl_ps_program ps;
+    GLhandleARB programId;
+    UINT constant_version;
 };
 
 struct glsl_program_key
@@ -677,16 +682,16 @@ static void shader_glsl_load_np2fixup_constants(void *shader_priv,
     /* NP2 texcoord fixup is (currently) only done for pixelshaders. */
     if (!use_ps(state)) return;
 
-    if (prog->np2Fixup_info && prog->np2Fixup_location != -1)
+    if (prog->ps.np2_fixup_info && prog->ps.np2_fixup_location != -1)
     {
         UINT i;
-        UINT fixup = prog->np2Fixup_info->active;
+        UINT fixup = prog->ps.np2_fixup_info->active;
         GLfloat np2fixup_constants[4 * MAX_FRAGMENT_SAMPLERS];
 
         for (i = 0; fixup; fixup >>= 1, ++i)
         {
             const struct wined3d_texture *tex = state->textures[i];
-            const unsigned char idx = prog->np2Fixup_info->idx[i];
+            const unsigned char idx = prog->ps.np2_fixup_info->idx[i];
             GLfloat *tex_dim = &np2fixup_constants[(idx >> 1) * 4];
 
             if (!tex)
@@ -707,7 +712,8 @@ static void shader_glsl_load_np2fixup_constants(void *shader_priv,
             }
         }
 
-        GL_EXTCALL(glUniform4fvARB(prog->np2Fixup_location, prog->np2Fixup_info->num_consts, np2fixup_constants));
+        GL_EXTCALL(glUniform4fvARB(prog->ps.np2_fixup_location,
+                prog->ps.np2_fixup_info->num_consts, np2fixup_constants));
     }
 }
 
@@ -765,44 +771,46 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
 
         /* Load DirectX 9 float constants/uniforms for pixel shader */
         shader_glsl_load_constantsF(pshader, gl_info, state->ps_consts_f,
-                prog->puniformF_locations, &priv->pconst_heap, priv->stack, constant_version);
+                prog->ps.uniform_f_locations, &priv->pconst_heap, priv->stack, constant_version);
 
         /* Load DirectX 9 integer constants/uniforms for pixel shader */
-        shader_glsl_load_constantsI(pshader, gl_info, prog->puniformI_locations, state->ps_consts_i,
+        shader_glsl_load_constantsI(pshader, gl_info, prog->ps.uniform_i_locations, state->ps_consts_i,
                 stateBlock->changed.pixelShaderConstantsI & pshader->reg_maps.integer_constants);
 
         /* Load DirectX 9 boolean constants/uniforms for pixel shader */
         shader_glsl_load_constantsB(pshader, gl_info, programId, state->ps_consts_b,
                 stateBlock->changed.pixelShaderConstantsB & pshader->reg_maps.boolean_constants);
 
-        /* Upload the environment bump map matrix if needed. The needsbumpmat member specifies the texture stage to load the matrix from.
-         * It can't be 0 for a valid texbem instruction.
-         */
-        for(i = 0; i < MAX_TEXTURES; i++) {
+        /* Upload the environment bump map matrix if needed. The needsbumpmat
+         * member specifies the texture stage to load the matrix from. It
+         * can't be 0 for a valid texbem instruction. */
+        for (i = 0; i < MAX_TEXTURES; ++i)
+        {
             const float *data;
 
-            if(prog->bumpenvmat_location[i] == -1) continue;
+            if (prog->ps.bumpenvmat_location[i] == -1)
+                continue;
 
             data = (const float *)&state->texture_states[i][WINED3D_TSS_BUMPENV_MAT00];
-            GL_EXTCALL(glUniformMatrix2fvARB(prog->bumpenvmat_location[i], 1, 0, data));
+            GL_EXTCALL(glUniformMatrix2fvARB(prog->ps.bumpenvmat_location[i], 1, 0, data));
             checkGLcall("glUniformMatrix2fvARB");
 
             /* texbeml needs the luminance scale and offset too. If texbeml
              * is used, needsbumpmat is set too, so we can check that in the
              * needsbumpmat check. */
-            if (prog->luminancescale_location[i] != -1)
+            if (prog->ps.luminancescale_location[i] != -1)
             {
                 const GLfloat *scale = (const GLfloat *)&state->texture_states[i][WINED3D_TSS_BUMPENV_LSCALE];
                 const GLfloat *offset = (const GLfloat *)&state->texture_states[i][WINED3D_TSS_BUMPENV_LOFFSET];
 
-                GL_EXTCALL(glUniform1fvARB(prog->luminancescale_location[i], 1, scale));
+                GL_EXTCALL(glUniform1fvARB(prog->ps.luminancescale_location[i], 1, scale));
                 checkGLcall("glUniform1fvARB");
-                GL_EXTCALL(glUniform1fvARB(prog->luminanceoffset_location[i], 1, offset));
+                GL_EXTCALL(glUniform1fvARB(prog->ps.luminanceoffset_location[i], 1, offset));
                 checkGLcall("glUniform1fvARB");
             }
         }
 
-        if (prog->ycorrection_location != -1)
+        if (prog->ps.ycorrection_location != -1)
         {
             float correction_params[4];
 
@@ -815,7 +823,7 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
                 correction_params[0] = (float) context->current_rt->resource.height;
                 correction_params[1] = -1.0f;
             }
-            GL_EXTCALL(glUniform4fvARB(prog->ycorrection_location, 1, correction_params));
+            GL_EXTCALL(glUniform4fvARB(prog->ps.ycorrection_location, 1, correction_params));
         }
     }
 
@@ -4107,7 +4115,7 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
     struct glsl_program_key key;
 
     key.vs_id = entry->vs.id;
-    key.ps_id = entry->ps_id;
+    key.ps_id = entry->ps.id;
 
     if (wine_rb_put(&priv->program_lookup, &key, &entry->program_lookup_entry) == -1)
     {
@@ -4135,16 +4143,16 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struc
     struct glsl_program_key key;
 
     key.vs_id = entry->vs.id;
-    key.ps_id = entry->ps_id;
+    key.ps_id = entry->ps.id;
     wine_rb_remove(&priv->program_lookup, &key);
 
     GL_EXTCALL(glDeleteObjectARB(entry->programId));
     if (entry->vs.id)
         list_remove(&entry->vs.shader_entry);
-    if (entry->ps_id)
-        list_remove(&entry->pshader_entry);
+    if (entry->ps.id)
+        list_remove(&entry->ps.shader_entry);
     HeapFree(GetProcessHeap(), 0, entry->vs.uniform_f_locations);
-    HeapFree(GetProcessHeap(), 0, entry->puniformF_locations);
+    HeapFree(GetProcessHeap(), 0, entry->ps.uniform_f_locations);
     HeapFree(GetProcessHeap(), 0, entry);
 }
 
@@ -4751,9 +4759,9 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
     entry->programId = programId;
     entry->vs.id = vs_id;
-    entry->ps_id = ps_id;
+    entry->ps.id = ps_id;
     entry->constant_version = 0;
-    entry->np2Fixup_info = np2fixup_info;
+    entry->ps.np2_fixup_info = np2fixup_info;
     /* Add the hash table entry */
     add_glsl_program_entry(priv, entry);
 
@@ -4807,7 +4815,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
         GL_EXTCALL(glAttachObjectARB(programId, ps_id));
         checkGLcall("glAttachObjectARB");
 
-        list_add_head(&pshader->linked_programs, &entry->pshader_entry);
+        list_add_head(&pshader->linked_programs, &entry->ps.shader_entry);
     }
 
     /* Link the program */
@@ -4827,42 +4835,44 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
         snprintf(glsl_name, sizeof(glsl_name), "vs_i[%u]", i);
         entry->vs.uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
-    entry->puniformF_locations = HeapAlloc(GetProcessHeap(), 0,
+    entry->ps.uniform_f_locations = HeapAlloc(GetProcessHeap(), 0,
             sizeof(GLhandleARB) * gl_info->limits.glsl_ps_float_constants);
     for (i = 0; i < gl_info->limits.glsl_ps_float_constants; ++i)
     {
         snprintf(glsl_name, sizeof(glsl_name), "ps_c[%u]", i);
-        entry->puniformF_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
+        entry->ps.uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
     for (i = 0; i < MAX_CONST_I; ++i)
     {
         snprintf(glsl_name, sizeof(glsl_name), "ps_i[%u]", i);
-        entry->puniformI_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
+        entry->ps.uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
 
-    if(pshader) {
+    if (pshader)
+    {
         char name[32];
 
-        for(i = 0; i < MAX_TEXTURES; i++) {
+        for (i = 0; i < MAX_TEXTURES; ++i)
+        {
             sprintf(name, "bumpenvmat%u", i);
-            entry->bumpenvmat_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
+            entry->ps.bumpenvmat_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
             sprintf(name, "luminancescale%u", i);
-            entry->luminancescale_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
+            entry->ps.luminancescale_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
             sprintf(name, "luminanceoffset%u", i);
-            entry->luminanceoffset_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
+            entry->ps.luminanceoffset_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
         }
 
         if (ps_compile_args.np2_fixup)
         {
-            if (entry->np2Fixup_info)
-                entry->np2Fixup_location = GL_EXTCALL(glGetUniformLocationARB(programId, "ps_samplerNP2Fixup"));
+            if (entry->ps.np2_fixup_info)
+                entry->ps.np2_fixup_location = GL_EXTCALL(glGetUniformLocationARB(programId, "ps_samplerNP2Fixup"));
             else
                 FIXME("NP2 texcoord fixup needed for this pixelshader, but no fixup uniform found.\n");
         }
     }
 
     entry->vs.pos_fixup_location = GL_EXTCALL(glGetUniformLocationARB(programId, "posFixup"));
-    entry->ycorrection_location = GL_EXTCALL(glGetUniformLocationARB(programId, "ycorrection"));
+    entry->ps.ycorrection_location = GL_EXTCALL(glGetUniformLocationARB(programId, "ycorrection"));
     checkGLcall("Find glsl program uniform locations");
 
     if (pshader && pshader->reg_maps.shader_version.major >= 3
@@ -5052,7 +5062,7 @@ static void shader_glsl_select(const struct wined3d_context *context, enum wined
     /* In case that NP2 texcoord fixup data is found for the selected program, trigger a reload of the
      * constants. This has to be done because it can't be guaranteed that sampler() (from state.c) is
      * called between selecting the shader and using it, which results in wrong fixup for some frames. */
-    if (priv->glsl_program && priv->glsl_program->np2Fixup_info)
+    if (priv->glsl_program && priv->glsl_program->ps.np2_fixup_info)
     {
         shader_glsl_load_np2fixup_constants(priv, gl_info, &device->stateBlock->state);
     }
@@ -5135,7 +5145,7 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
                 struct glsl_ps_compiled_shader *gl_shaders = shader_data->gl_shaders.ps;
 
                 LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs,
-                        struct glsl_shader_prog_link, pshader_entry)
+                        struct glsl_shader_prog_link, ps.shader_entry)
                 {
                     delete_glsl_program_entry(priv, gl_info, entry);
                 }
@@ -5143,7 +5153,7 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
                 for (i = 0; i < shader_data->num_gl_shaders; ++i)
                 {
                     TRACE("Deleting pixel shader %u.\n", gl_shaders[i].prgId);
-                    if (priv->glsl_program && priv->glsl_program->ps_id == gl_shaders[i].prgId)
+                    if (priv->glsl_program && priv->glsl_program->ps.id == gl_shaders[i].prgId)
                         shader_glsl_select(context, WINED3D_SHADER_MODE_NONE, WINED3D_SHADER_MODE_NONE);
                     GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].prgId));
                     checkGLcall("glDeleteObjectARB");
@@ -5199,8 +5209,8 @@ static int glsl_program_key_compare(const void *key, const struct wine_rb_entry 
     if (k->vs_id > prog->vs.id) return 1;
     else if (k->vs_id < prog->vs.id) return -1;
 
-    if (k->ps_id > prog->ps_id) return 1;
-    else if (k->ps_id < prog->ps_id) return -1;
+    if (k->ps_id > prog->ps.id) return 1;
+    else if (k->ps_id < prog->ps.id) return -1;
 
     return 0;
 }
