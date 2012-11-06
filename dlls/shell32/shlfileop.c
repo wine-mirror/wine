@@ -1541,6 +1541,7 @@ int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
     ZeroMemory(&op, sizeof(op));
     op.req = lpFileOp;
     op.bManyItems = (flFrom.dwNumFiles > 1);
+    lpFileOp->fAnyOperationsAborted = FALSE;
 
     switch (lpFileOp->wFunc)
     {
