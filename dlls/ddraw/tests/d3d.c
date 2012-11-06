@@ -29,7 +29,7 @@
 #include "d3d.h"
 #include "unknwn.h"
 
-static LPDIRECTDRAW7           lpDD = NULL;
+static IDirectDraw7 *lpDD;
 static LPDIRECT3D7             lpD3D = NULL;
 static IDirectDrawSurface7 *lpDDS;
 static IDirectDrawSurface7 *lpDDSdepth;
