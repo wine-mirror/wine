@@ -860,6 +860,7 @@ static void test_reset(void)
 {
     HRESULT                      hr;
     HWND                         hwnd               = NULL;
+    RECT                         winrect;
     IDirect3D9                  *pD3d               = NULL;
     D3DPRESENT_PARAMETERS        d3dpp;
     D3DDISPLAYMODE               d3ddm, d3ddm2;
@@ -1060,6 +1061,55 @@ static void test_reset(void)
         {
             ok(d3dpp.BackBufferWidth == 400, "Back buffer width is %d\n", d3dpp.BackBufferWidth);
             ok(d3dpp.BackBufferHeight == 300, "Back buffer height is %d\n", d3dpp.BackBufferHeight);
+        }
+        IDirect3DSwapChain9_Release(pSwapchain);
+    }
+
+    winrect.left = 0;
+    winrect.top = 0;
+    winrect.right = 200;
+    winrect.bottom = 150;
+    ok(AdjustWindowRect(&winrect, WS_OVERLAPPEDWINDOW, FALSE), "AdjustWindowRect failed\n");
+    ok(SetWindowPos(hwnd, NULL, 0, 0,
+                    winrect.right-winrect.left,
+                    winrect.bottom-winrect.top,
+                    SWP_NOMOVE|SWP_NOZORDER),
+       "SetWindowPos failed\n");
+
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.Windowed         = TRUE;
+    d3dpp.BackBufferWidth  = 0;
+    d3dpp.BackBufferHeight = 0;
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
+
+    ZeroMemory(&vp, sizeof(vp));
+    hr = IDirect3DDevice9_GetViewport(device1, &vp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetViewport failed with %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        ok(vp.X == 0, "D3DVIEWPORT->X = %d\n", vp.X);
+        ok(vp.Y == 0, "D3DVIEWPORT->Y = %d\n", vp.Y);
+        todo_wine ok(vp.Width == 200, "D3DVIEWPORT->Width = %d\n", vp.Width);
+        todo_wine ok(vp.Height == 150, "D3DVIEWPORT->Height = %d\n", vp.Height);
+        ok(vp.MinZ == 0, "D3DVIEWPORT->MinZ = %f\n", vp.MinZ);
+        ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %f\n", vp.MaxZ);
+    }
+
+    hr = IDirect3DDevice9_GetSwapChain(device1, 0, &pSwapchain);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetSwapChain returned %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        ZeroMemory(&d3dpp, sizeof(d3dpp));
+        hr = IDirect3DSwapChain9_GetPresentParameters(pSwapchain, &d3dpp);
+        ok(hr == D3D_OK, "IDirect3DSwapChain9_GetPresentParameters returned %08x\n", hr);
+        if(SUCCEEDED(hr))
+        {
+            todo_wine ok(d3dpp.BackBufferWidth == 200, "Back buffer width is %d\n", d3dpp.BackBufferWidth);
+            todo_wine ok(d3dpp.BackBufferHeight == 150, "Back buffer height is %d\n", d3dpp.BackBufferHeight);
         }
         IDirect3DSwapChain9_Release(pSwapchain);
     }
