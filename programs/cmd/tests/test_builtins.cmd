@@ -649,7 +649,6 @@ if 1==0 (echo doom) else@tab@echo quake
 
 echo --- comparison operators
 rem NT4 misevaluates conditionals in for loops so we have to use subroutines as workarounds
-rem Imbricated for loops parameters are currently not expanded correctly; this prevents usage of simpler imbricated for loops in tests
 echo ------ for strings
 rem NT4 stops processing of the whole batch file as soon as it finds a
 rem comparison operator non fully uppercased, such as lss instead of LSS, so we
@@ -662,11 +661,9 @@ if not "-1" LSS "1" (echo negative numbers as well) else echo NT4
 if /i foo LSS FoOc echo if /i seems to work for LSS
 if /I not foo LSS FOOb echo if /I seems to be broken for LSS
 set STR_PARMS=A B AB BA AA
-for %%i in (%STR_PARMS%) do call :LSStest %%i A
-for %%i in (%STR_PARMS%) do call :LSStest %%i B
-for %%i in (%STR_PARMS%) do call :LSStest %%i AB
-for %%i in (%STR_PARMS%) do call :LSStest %%i BA
-for %%i in (%STR_PARMS%) do call :LSStest %%i AA
+for %%i in (%STR_PARMS%) do (
+    for %%j in (%STR_PARMS%) do (
+        call :LSStest %%i %%j))
 if b LSS B (echo b LSS B) else echo NT4
 if /I b LSS B echo b LSS B insensitive
 if b LSS A echo b LSS A
@@ -675,11 +672,9 @@ if a LSS B (echo a LSS B) else echo NT4
 if /I a LSS B echo a LSS B insensitive
 if A LSS b echo A LSS b
 if /I A LSS b echo A LSS b insensitive
-for %%i in (%STR_PARMS%) do call :LEQtest %%i A
-for %%i in (%STR_PARMS%) do call :LEQtest %%i B
-for %%i in (%STR_PARMS%) do call :LEQtest %%i AB
-for %%i in (%STR_PARMS%) do call :LEQtest %%i BA
-for %%i in (%STR_PARMS%) do call :LEQtest %%i AA
+for %%i in (%STR_PARMS%) do (
+    for %%j in (%STR_PARMS%) do (
+        call :LEQtest %%i %%j))
 if b LEQ B (echo b LEQ B) else echo NT4
 if /I b LEQ B echo b LEQ B insensitive
 if b LEQ A echo b LEQ A
@@ -688,27 +683,19 @@ if a LEQ B (echo a LEQ B) else echo NT4
 if /I a LEQ B echo a LEQ B insensitive
 if A LEQ b echo A LEQ b
 if /I A LEQ b echo A LEQ b insensitive
-for %%i in (%STR_PARMS%) do call :EQUtest %%i A
-for %%i in (%STR_PARMS%) do call :EQUtest %%i B
-for %%i in (%STR_PARMS%) do call :EQUtest %%i AB
-for %%i in (%STR_PARMS%) do call :EQUtest %%i BA
-for %%i in (%STR_PARMS%) do call :EQUtest %%i AA
+for %%i in (%STR_PARMS%) do (
+    for %%j in (%STR_PARMS%) do (
+        call :EQUtest %%i %%j))
 if /I A EQU a echo A EQU a insensitive
-for %%i in (%STR_PARMS%) do call :NEQtest %%i A
-for %%i in (%STR_PARMS%) do call :NEQtest %%i B
-for %%i in (%STR_PARMS%) do call :NEQtest %%i AB
-for %%i in (%STR_PARMS%) do call :NEQtest %%i BA
-for %%i in (%STR_PARMS%) do call :NEQtest %%i AA
-for %%i in (%STR_PARMS%) do call :GEQtest %%i A
-for %%i in (%STR_PARMS%) do call :GEQtest %%i B
-for %%i in (%STR_PARMS%) do call :GEQtest %%i AB
-for %%i in (%STR_PARMS%) do call :GEQtest %%i BA
-for %%i in (%STR_PARMS%) do call :GEQtest %%i AA
-for %%i in (%STR_PARMS%) do call :GTRtest %%i A
-for %%i in (%STR_PARMS%) do call :GTRtest %%i B
-for %%i in (%STR_PARMS%) do call :GTRtest %%i AB
-for %%i in (%STR_PARMS%) do call :GTRtest %%i BA
-for %%i in (%STR_PARMS%) do call :GTRtest %%i AA
+for %%i in (%STR_PARMS%) do (
+    for %%j in (%STR_PARMS%) do (
+        call :NEQtest %%i %%j))
+for %%i in (%STR_PARMS%) do (
+    for %%j in (%STR_PARMS%) do (
+        call :GEQtest %%i %%j))
+for %%i in (%STR_PARMS%) do (
+    for %%j in (%STR_PARMS%) do (
+        call :GTRtest %%i %%j))
 echo ------ for numbers
 if -1 LSS 1 (echo negative numbers handled)
 if not -1 LSS -10 (echo negative numbers handled)
@@ -718,34 +705,28 @@ if 4 LSS 0x5 (echo hexa handled)
 if not -1 LSS -0x1A (echo also in negative form)
 if 11 LSS 101 (echo 11 LSS 101)
 set INT_PARMS=0 1 10 9
-for %%i in (%INT_PARMS%) do call :LSStest %%i 0
-for %%i in (%INT_PARMS%) do call :LSStest %%i 1
-for %%i in (%INT_PARMS%) do call :LSStest %%i 10
-for %%i in (%INT_PARMS%) do call :LSStest %%i 9
-for %%i in (%INT_PARMS%) do call :LEQtest %%i 0
-for %%i in (%INT_PARMS%) do call :LEQtest %%i 1
-for %%i in (%INT_PARMS%) do call :LEQtest %%i 10
-for %%i in (%INT_PARMS%) do call :LEQtest %%i 9
-for %%i in (%INT_PARMS%) do call :EQUtest %%i 0
-for %%i in (%INT_PARMS%) do call :EQUtest %%i 1
-for %%i in (%INT_PARMS%) do call :EQUtest %%i 10
-for %%i in (%INT_PARMS%) do call :EQUtest %%i 9
+for %%i in (%INT_PARMS%) do (
+    for %%j in (%INT_PARMS%) do (
+        call :LSStest %%i %%j))
+for %%i in (%INT_PARMS%) do (
+    for %%j in (%INT_PARMS%) do (
+        call :LEQtest %%i %%j))
+for %%i in (%INT_PARMS%) do (
+    for %%j in (%INT_PARMS%) do (
+        call :EQUtest %%i %%j))
 if 011 EQU 9 (echo octal ok)
 if 0xA1 EQU 161 (echo hexa ok)
 if 0xA1 EQU "161" (echo hexa should be recognized) else (echo string/hexa compare ok)
 if "0xA1" EQU 161 (echo hexa should be recognized) else (echo string/hexa compare ok)
-for %%i in (%INT_PARMS%) do call :NEQtest %%i 0
-for %%i in (%INT_PARMS%) do call :NEQtest %%i 1
-for %%i in (%INT_PARMS%) do call :NEQtest %%i 10
-for %%i in (%INT_PARMS%) do call :NEQtest %%i 9
-for %%i in (%INT_PARMS%) do call :GEQtest %%i 0
-for %%i in (%INT_PARMS%) do call :GEQtest %%i 1
-for %%i in (%INT_PARMS%) do call :GEQtest %%i 10
-for %%i in (%INT_PARMS%) do call :GEQtest %%i 9
-for %%i in (%INT_PARMS%) do call :GTRtest %%i 0
-for %%i in (%INT_PARMS%) do call :GTRtest %%i 1
-for %%i in (%INT_PARMS%) do call :GTRtest %%i 10
-for %%i in (%INT_PARMS%) do call :GTRtest %%i 9
+for %%i in (%INT_PARMS%) do (
+    for %%j in (%INT_PARMS%) do (
+        call :NEQtest %%i %%j))
+for %%i in (%INT_PARMS%) do (
+    for %%j in (%INT_PARMS%) do (
+        call :GEQtest %%i %%j))
+for %%i in (%INT_PARMS%) do (
+    for %%j in (%INT_PARMS%) do (
+        call :GTRtest %%i %%j))
 echo ------ for numbers and stringified numbers
 if not "1" EQU 1 (echo strings and integers not equal) else echo foo
 if not 1 EQU "1" (echo strings and integers not equal) else echo foo
