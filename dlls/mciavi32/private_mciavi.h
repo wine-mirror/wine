@@ -79,7 +79,6 @@ typedef struct {
     /* data for the background mechanism */
     CRITICAL_SECTION	cs;
     HANDLE              hStopEvent;
-    HANDLE              ack_event; /* acknowledge that an async command has started */
 } WINE_MCIAVI;
 
 extern HINSTANCE MCIAVI_hInstance DECLSPEC_HIDDEN;
