@@ -1406,6 +1406,7 @@ MMRESULT WINAPI midiStreamPosition(HMIDISTRM hMidiStrm, LPMMTIME lpMMT, UINT cbm
 	switch (lpMMT->wType) {
 	default:
 	    FIXME("Unsupported time type %x\n", lpMMT->wType);
+        /* fall through */
 	case TIME_BYTES:
 	case TIME_SAMPLES:
 	    lpMMT->wType = TIME_MS;
