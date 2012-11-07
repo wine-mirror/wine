@@ -247,7 +247,7 @@ int wmain (int argc, WCHAR *argv[])
 				sei.lpDirectory = argv[++i];
 		}
 		else if (is_option(argv[i], bW)) {
-			creation_flags &= !CREATE_NEW_CONSOLE;
+			creation_flags &= ~CREATE_NEW_CONSOLE;
 		}
 		else if (argv[i][0] == '/' && (argv[i][1] == 'i' || argv[i][1] == 'I')) {
                     TRACE("/i is ignored\n"); /* FIXME */
