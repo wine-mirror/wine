@@ -4344,12 +4344,10 @@ static int num_get__Getffld(const num_get *this, char *dest, istreambuf_iterator
     if(sep && groups_no)
         MSVCP_basic_string_char_append_ch(&groups_found, groups_no);
 
-    groups = MSVCP_basic_string_char_c_str(&groups_found);
-    if(cur_group && !groups[cur_group])
-    {
-        error = TRUE; /* trailing empty */
-    }else if(!cur_group) /* no groups, skip loop */
+    if(!cur_group) /* no groups, skip loop */
         cur_group--;
+    else if(!(groups = MSVCP_basic_string_char_c_str(&groups_found))[cur_group])
+        error = TRUE; /* trailing empty */
 
     for(; cur_group>=0 && !error; cur_group--) {
         if(*grouping == CHAR_MAX) {
@@ -4492,13 +4490,12 @@ static int num_get__Getifld(const num_get *this, char *dest, istreambuf_iterator
     if(sep && groups_no)
         MSVCP_basic_string_char_append_ch(&groups_found, groups_no);
 
-    groups = MSVCP_basic_string_char_c_str(&groups_found);
-    if(cur_group && !groups[cur_group])
-    {
+    if(!cur_group) { /* no groups, skip loop */
+        cur_group--;
+    }else if(!(groups = MSVCP_basic_string_char_c_str(&groups_found))[cur_group]) {
         error = TRUE; /* trailing empty */
         found_zero = FALSE;
-    }else if(!cur_group) /* no groups, skip loop */
-        cur_group--;
+    }
 
     for(; cur_group>=0 && !error; cur_group--) {
         if(*grouping == CHAR_MAX) {
@@ -5432,12 +5429,10 @@ int __cdecl num_get_char__Getffld(const num_get *this, char *dest, istreambuf_it
     if(sep && groups_no)
         MSVCP_basic_string_char_append_ch(&groups_found, groups_no);
 
-    groups = MSVCP_basic_string_char_c_str(&groups_found);
-    if(cur_group && !groups[cur_group])
-    {
-        error = TRUE; /* trailing empty */
-    }else if(!cur_group) /* no groups, skip loop */
+    if(!cur_group) /* no groups, skip loop */
         cur_group--;
+    else if(!(groups = MSVCP_basic_string_char_c_str(&groups_found))[cur_group])
+        error = TRUE; /* trailing empty */
 
     for(; cur_group>=0 && !error; cur_group--) {
         if(*grouping == CHAR_MAX) {
@@ -5563,13 +5558,12 @@ int __cdecl num_get_char__Getifld(const num_get *this, char *dest, istreambuf_it
     if(sep && groups_no)
         MSVCP_basic_string_char_append_ch(&groups_found, groups_no);
 
-    groups = MSVCP_basic_string_char_c_str(&groups_found);
-    if(cur_group && !groups[cur_group])
-    {
+    if(!cur_group) { /* no groups, skip loop */
+        cur_group--;
+    }else if(!(groups = MSVCP_basic_string_char_c_str(&groups_found))[cur_group]) {
         error = TRUE; /* trailing empty */
         found_zero = FALSE;
-    }else if(!cur_group) /* no groups, skip loop */
-        cur_group--;
+    }
 
     for(; cur_group>=0 && !error; cur_group--) {
         if(*grouping == CHAR_MAX) {
