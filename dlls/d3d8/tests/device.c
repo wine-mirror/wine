@@ -1018,6 +1018,7 @@ static void test_reset(void)
     IDirect3D8 *d3d8 = NULL;
     UINT mode_count = 0;
     HWND window = NULL;
+    RECT winrect;
     D3DVIEWPORT8 vp;
     D3DCAPS8 caps;
     DWORD shader;
@@ -1216,6 +1217,51 @@ static void test_reset(void)
             surface_desc.Width);
     ok(surface_desc.Height == 300, "Back buffer height is %u, expected 300.\n",
             surface_desc.Height);
+    IDirect3DSurface8_Release(surface);
+
+    winrect.left = 0;
+    winrect.top = 0;
+    winrect.right = 200;
+    winrect.bottom = 150;
+    ok(AdjustWindowRect(&winrect, WS_OVERLAPPEDWINDOW, FALSE), "AdjustWindowRect failed\n");
+    ok(SetWindowPos(window, NULL, 0, 0,
+                    winrect.right-winrect.left,
+                    winrect.bottom-winrect.top,
+                    SWP_NOMOVE|SWP_NOZORDER),
+       "SetWindowPos failed\n");
+
+    memset(&d3dpp, 0, sizeof(d3dpp));
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    d3dpp.Windowed = TRUE;
+    d3dpp.BackBufferWidth = 0;
+    d3dpp.BackBufferHeight = 0;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
+
+    memset(&vp, 0, sizeof(vp));
+    hr = IDirect3DDevice8_GetViewport(device1, &vp);
+    ok(SUCCEEDED(hr), "GetViewport failed, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(vp.X == 0, "D3DVIEWPORT->X = %u, expected 0.\n", vp.X);
+        ok(vp.Y == 0, "D3DVIEWPORT->Y = %u, expected 0.\n", vp.Y);
+        todo_wine ok(vp.Width == 200, "D3DVIEWPORT->Width = %u, expected 200.\n", vp.Width);
+        todo_wine ok(vp.Height == 150, "D3DVIEWPORT->Height = %u, expected 150.\n", vp.Height);
+        ok(vp.MinZ == 0, "D3DVIEWPORT->MinZ = %.8e, expected 0.\n", vp.MinZ);
+        ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %.8e, expected 1.\n", vp.MaxZ);
+    }
+
+    hr = IDirect3DDevice8_GetRenderTarget(device1, &surface);
+    ok(SUCCEEDED(hr), "GetRenderTarget failed, hr %#x.\n", hr);
+    hr = IDirect3DSurface8_GetDesc(surface, &surface_desc);
+    ok(hr == D3D_OK, "GetDesc failed, hr %#x.\n", hr);
+    todo_wine ok(surface_desc.Width == 200, "Back buffer width is %u, expected 200.\n",
+                 surface_desc.Width);
+    todo_wine ok(surface_desc.Height == 150, "Back buffer height is %u, expected 150.\n",
+                 surface_desc.Height);
     IDirect3DSurface8_Release(surface);
 
     memset(&d3dpp, 0, sizeof(d3dpp));
