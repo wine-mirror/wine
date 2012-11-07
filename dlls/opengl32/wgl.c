@@ -1215,6 +1215,7 @@ typedef void (WINAPI *_GLUfuncptr)(void);
 
 static GLUtesselator * (WINAPI *pgluNewTess)(void);
 static void (WINAPI *pgluDeleteTess)(GLUtesselator *tess);
+static void (WINAPI *pgluTessNormal)(GLUtesselator *tess, GLdouble x, GLdouble y, GLdouble z);
 static void (WINAPI *pgluTessBeginPolygon)(GLUtesselator *tess, void *polygon_data);
 static void (WINAPI *pgluTessEndPolygon)(GLUtesselator *tess);
 static void (WINAPI *pgluTessCallback)(GLUtesselator *tess, GLenum which, _GLUfuncptr fn);
@@ -1242,6 +1243,7 @@ static HMODULE load_libglu(void)
     LOAD_FUNCPTR(gluNewTess);
     LOAD_FUNCPTR(gluDeleteTess);
     LOAD_FUNCPTR(gluTessBeginContour);
+    LOAD_FUNCPTR(gluTessNormal);
     LOAD_FUNCPTR(gluTessBeginPolygon);
     LOAD_FUNCPTR(gluTessCallback);
     LOAD_FUNCPTR(gluTessEndContour);
@@ -1442,9 +1444,13 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
         }
 
         funcs->gl.p_glNewList(listBase++, GL_COMPILE);
-        funcs->gl.p_glFrontFace(GL_CW);
+        funcs->gl.p_glFrontFace(GL_CCW);
         if(format == WGL_FONT_POLYGONS)
+        {
+            funcs->gl.p_glNormal3d(0.0, 0.0, 1.0);
+            pgluTessNormal(tess, 0, 0, 1);
             pgluTessBeginPolygon(tess, NULL);
+        }
 
         while(!vertices)
         {
