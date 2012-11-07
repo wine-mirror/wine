@@ -455,7 +455,7 @@ GpStatus WINGDIPAPI GdipGetLogFontA(GpFont *font, GpGraphics *graphics,
 GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics, LOGFONTW *lf)
 {
     REAL angle, rel_height, height;
-    GpMatrix *matrix;
+    GpMatrix matrix;
     GpPointF pt[3];
 
     TRACE("(%p, %p, %p)\n", font, graphics, lf);
@@ -463,13 +463,13 @@ GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics, LOGFONTW
     if (!font || !graphics || !lf)
         return InvalidParameter;
 
-    GdipCloneMatrix(graphics->worldtrans, &matrix);
+    matrix = graphics->worldtrans;
 
     if (font->unit == UnitPixel)
     {
         height = units_to_pixels(font->emSize, graphics->unit, graphics->yres);
         if (graphics->unit != UnitDisplay)
-            GdipScaleMatrix(matrix, graphics->scale, graphics->scale, MatrixOrderAppend);
+            GdipScaleMatrix(&matrix, graphics->scale, graphics->scale, MatrixOrderAppend);
     }
     else
     {
@@ -485,11 +485,10 @@ GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics, LOGFONTW
     pt[1].Y = 0.0;
     pt[2].X = 0.0;
     pt[2].Y = 1.0;
-    GdipTransformMatrixPoints(matrix, pt, 3);
+    GdipTransformMatrixPoints(&matrix, pt, 3);
     angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
     rel_height = sqrt((pt[2].Y - pt[0].Y) * (pt[2].Y - pt[0].Y)+
                       (pt[2].X - pt[0].X) * (pt[2].X - pt[0].X));
-    GdipDeleteMatrix(matrix);
 
     lf->lfHeight = -gdip_round(height * rel_height);
     lf->lfWidth = 0;

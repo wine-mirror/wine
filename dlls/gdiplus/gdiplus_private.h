@@ -125,6 +125,10 @@ extern GpStatus convert_pixels(INT width, INT height,
     INT dst_stride, BYTE *dst_bits, PixelFormat dst_format,
     INT src_stride, const BYTE *src_bits, PixelFormat src_format, ColorPalette *palette) DECLSPEC_HIDDEN;
 
+struct GpMatrix{
+    REAL matrix[6];
+};
+
 struct GpPen{
     UINT style;
     GpUnit unit;
@@ -158,7 +162,7 @@ struct GpGraphics{
     GpUnit unit;    /* page unit */
     REAL scale;     /* page scale */
     REAL xres, yres;
-    GpMatrix * worldtrans; /* world transform */
+    GpMatrix worldtrans; /* world transform */
     BOOL busy;      /* hdc handle obtained by GdipGetDC */
     GpRegion *clip;
     UINT textcontrast; /* not used yet. get/set only */
@@ -238,10 +242,6 @@ struct GpPath{
     GpPathData pathdata;
     BOOL newfigure; /* whether the next drawing action starts a new figure */
     INT datalen; /* size of the arrays in pathdata */
-};
-
-struct GpMatrix{
-    REAL matrix[6];
 };
 
 struct GpPathIterator{
