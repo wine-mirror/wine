@@ -828,7 +828,8 @@ static void test_num_get_get_uint64(void)
         next  = (int)call_func1(p_basic_istream_char_get, &ss.base.base1);
 
         ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
-        ok(tests[i].val   == val,   "wrong val, expected = %llu found %llu\n", (unsigned long long)tests[i].val, (unsigned long long)val);
+        ok(tests[i].val   == val,   "wrong val, expected = %lx%08lx found %lx%08lx\n", (unsigned long)(tests[i].val >> 32),
+                (unsigned long)tests[i].val, (unsigned long)(val >> 32), (unsigned long)val);
         ok(tests[i].next  == next,  "wrong next, expected = %c (%i) found = %c (%i)\n", tests[i].next, tests[i].next, next, next);
 
         if(tests[i].lcl)
@@ -854,7 +855,8 @@ static void test_num_get_get_uint64(void)
         nextus = (unsigned short)(int)call_func1(p_basic_istream_wchar_get, &wss.base.base1);
 
         ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
-        ok(tests[i].val == val, "wrong val, expected = %llu found %llu\n", (unsigned long long)tests[i].val, (unsigned long long)val);
+        ok(tests[i].val == val, "wrong val, expected = %lx%08lx found %lx%08lx\n", (unsigned long)(tests[i].val >> 32),
+                (unsigned long)tests[i].val, (unsigned long)(val >> 32), (unsigned long)val);
         testus = tests[i].next == EOF ? WEOF : (unsigned short)tests[i].next;
         ok(testus == nextus, "wrong next, expected = %c (%i) found = %c (%i)\n", testus, testus, nextus, nextus);
 
