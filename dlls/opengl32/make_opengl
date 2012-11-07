@@ -157,32 +157,37 @@ my %debug_conv =
 
 #
 # This hash table gives the conversion between OpenGL types and what
-# is used in the .spec file
+# is used in the .spec and header files.
 #
 my %arg_conv =
-    ("GLbitfield" => [ "long", 4 ],
-     "GLboolean" => [ "long", 4 ],
-     "GLbyte" => [ "long", 4 ],
-     "GLclampd" => [ "double", 8 ],
-     "GLclampf" => [ "float", 4 ],
-     "GLdouble" => [ "double", 8 ],
-     "GLenum" => [ "long", 4 ],
-     "GLfloat" => [ "float", 4 ],
-     "GLint" => [ "long", 4 ],
-     "GLshort" => [ "long", 4 ],
-     "GLsizei" => [ "long", 4 ],
-     "GLstring" => [ "str", 4 ],
-     "GLubyte" => [ "long", 4 ],
-     "GLuint" => [ "long", 4 ],
-     "GLushort" => [ "long", 4 ],
-     "GLhalfNV" => [ "long", 4 ],
-     "GLintptrARB" => [ "long", 4 ],
-     "GLsizeiptrARB" => [ "long", 4 ],
-     "GLhandleARB" => [ "long", 4 ],
-     "GLcharARB" => [ "long", 4 ],
-     "GLintptr" => [ "long", 4 ],
-     "GLsizeiptr" => [ "long", 4 ],
-     "_GLfuncptr" => [ "ptr", 4 ]);
+    ("GLbitfield" =>       [ "long", "unsigned int" ],
+     "GLboolean" =>        [ "long", "unsigned char" ],
+     "GLbyte" =>           [ "long", "signed char" ],
+     "GLchar" =>           [ "long", "char" ],
+     "GLclampd" =>         [ "double", "double" ],
+     "GLclampf" =>         [ "float", "float" ],
+     "GLdouble" =>         [ "double", "double" ],
+     "GLenum" =>           [ "long", "unsigned int" ],
+     "GLfloat" =>          [ "float", "float" ],
+     "GLint" =>            [ "long", "int" ],
+     "GLint64" =>          [ "int64", "INT64" ],
+     "GLintptr" =>         [ "long", "INT_PTR" ],
+     "GLshort" =>          [ "long", "short" ],
+     "GLsizei" =>          [ "long", "int" ],
+     "GLsizeiptr" =>       [ "long", "INT_PTR" ],
+     "GLstring" =>         [ "str", "const unsigned char *" ],
+     "GLsync" =>           [ "ptr", "struct __GLsync *" ],
+     "GLubyte" =>          [ "long", "unsigned char" ],
+     "GLuint" =>           [ "long", "unsigned int" ],
+     "GLuint64" =>         [ "int64", "UINT64" ],
+     "GLushort" =>         [ "long", "unsigned short" ],
+     "GLvoid" =>           [ "void", "void" ],
+     "GLcharARB" =>        [ "long", "char" ],
+     "GLhandleARB" =>      [ "long", "unsigned int" ],
+     "GLintptrARB" =>      [ "long", "INT_PTR" ],
+     "GLsizeiptrARB" =>    [ "long", "INT_PTR" ],
+     "GLhalfNV" =>         [ "long", "unsigned short" ],
+     "GLvdpauSurfaceNV" => [ "long", "INT_PTR" ]);
 
 #
 # Used to convert some types
@@ -363,11 +368,11 @@ sub generate_null_func($$)
     return $ret;
 }
 
-sub get_func_proto($$)
+sub get_func_proto($$$)
 {
-    my ($name, $func) = @_;
+    my ($format, $name, $func) = @_;
     my $ret = sprintf "%-10s", ConvertType($func->[0]);
-    $ret .= " (WINE_GLAPI *p_$name)(";
+    $ret .= " " . sprintf($format,$name) . "(";
     for (my $i = 0; $i < @{$func->[1]}; $i++)
     {
 	$ret .= ConvertType($func->[1]->[$i]->[0]);
@@ -417,6 +422,8 @@ if ($version eq "1.0") {
 -f "gl.tm" || system "wget http://www.opengl.org/registry/api/gl.tm" || die "cannot download gl.tm";
 -f "wgl.tm" || system "wget http://www.opengl.org/registry/api/wgl.tm" || die "cannot download wgl.tm";
 -f "wglext.spec" || system "wget http://www.opengl.org/registry/api/wglext.spec" || die "cannot download wglext.spec";
+-f "enum.spec" || system "wget http://www.opengl.org/registry/api/enum.spec" || die "cannot download enum.spec";
+-f "enumext.spec" || system "wget http://www.opengl.org/registry/api/enumext.spec" || die "cannot download enumext.spec";
 
 #
 # First, create a mapping between the pseudo types used in the spec file
@@ -757,8 +764,29 @@ sub parse_registry_file($)
     close REGISTRY;
 }
 
+sub parse_enum_file($$)
+{
+    my ($file, $enums) = @_;
+    open FILE, "<$file" or die "cannot open $file";
+    while (<FILE>)
+    {
+        chomp;
+        next if /^#/;
+        if (/^\t([0-9A-Z_]+)\s*=\s*(((0x[0-9A-Fa-f]+)|([0-9]+))([uUlL]+)?)/)
+        {
+            ${$enums}{"GL_$1"} = $2;
+            next;
+        }
+    }
+    close FILE;
+}
+
 parse_registry_file( "gl.spec" );
 parse_registry_file( "wglext.spec" );
+
+my %enums = ();
+parse_enum_file( "enum.spec", \%enums );
+parse_enum_file( "enumext.spec", \%enums );
 
 #
 # Get the current wgl_driver.h version
@@ -793,7 +821,7 @@ print HEADER "struct opengl_funcs\n{\n";
 print HEADER "    struct\n    {\n";
 foreach (sort keys %wgl_functions)
 {
-    printf HEADER "        %s;\n", get_func_proto($_, $wgl_functions{$_});
+    printf HEADER "        %s;\n", get_func_proto("(WINE_GLAPI *p_%s)", $_, $wgl_functions{$_});
 }
 print HEADER "    } wgl;\n\n";
 
@@ -801,14 +829,14 @@ print HEADER "    struct\n    {\n";
 foreach (sort keys %norm_functions)
 {
     next if $_ eq "glDebugEntry";
-    printf HEADER "        %s;\n", get_func_proto($_, $norm_functions{$_});
+    printf HEADER "        %s;\n", get_func_proto("(WINE_GLAPI *p_%s)", $_, $norm_functions{$_});
 }
 print HEADER "    } gl;\n\n";
 
 print HEADER "    struct\n    {\n";
 foreach (sort keys %ext_functions)
 {
-    printf HEADER "        %s;\n", get_func_proto($_, $ext_functions{$_});
+    printf HEADER "        %s;\n", get_func_proto("(WINE_GLAPI *p_%s)", $_, $ext_functions{$_});
 }
 print HEADER "    } ext;\n";
 print HEADER "};\n\n";
@@ -824,6 +852,40 @@ print HEADER "\n\n";
 print HEADER "extern struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version );\n";
 print HEADER "extern BOOL CDECL __wine_set_pixel_format( HWND hwnd, int format );\n\n";
 print HEADER "#endif /* __WINE_WGL_DRIVER_H */\n";
+close HEADER;
+
+#
+# Generate the wgl.h file
+#
+open HEADER, ">../../include/wine/wgl.h" or die "cannot create wgl.h";
+print HEADER "/* Automatically generated from http://www.opengl.org/registry/api files; DO NOT EDIT! */\n\n";
+print HEADER "#ifndef __WINE_WGL_H\n";
+print HEADER "#define __WINE_WGL_H\n\n";
+
+print HEADER "#ifndef GLAPIENTRY\n";
+print HEADER "#define GLAPIENTRY __stdcall\n";
+print HEADER "#endif\n\n";
+
+foreach (sort keys %arg_conv)
+{
+    printf HEADER "typedef %-22s %s;\n", $arg_conv{$_}[1], $_;
+}
+print HEADER "\n";
+
+my $maxlen = 1;
+foreach (keys %enums) { $maxlen = length($_) if length($_) > $maxlen; }
+foreach (sort keys %enums)
+{
+    printf HEADER "#define %-*s %s\n", $maxlen, $_, $enums{$_};
+}
+print HEADER "\n";
+
+foreach (sort keys %norm_functions)
+{
+    printf HEADER "%s;\n", get_func_proto("GLAPIENTRY %s", $_, $norm_functions{$_});
+}
+
+print HEADER "\n#endif /* __WINE_WGL_H */\n";
 close HEADER;
 
 #
