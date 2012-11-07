@@ -2215,7 +2215,10 @@ UINT WINAPI MsiQueryComponentStateW(LPCWSTR szProductCode,
 
         if (!(val = msi_alloc( sz ))) return ERROR_OUTOFMEMORY;
         if ((r = msi_comp_find_prodcode(squished_pc, dwContext, szComponent, val, &sz)))
+        {
+            msi_free(val);
             return r;
+        }
 
         if (lstrlenW(val) > 2 &&
             val[0] >= '0' && val[0] <= '9' && val[1] >= '0' && val[1] <= '9' && val[2] != ':')

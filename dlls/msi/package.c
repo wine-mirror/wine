@@ -638,10 +638,12 @@ static void set_msi_assembly_prop(MSIPACKAGE *package)
         return;
 
     size = GetFileVersionInfoSizeW(fusion, &handle);
-    if (!size) return;
+    if (!size)
+        goto done;
 
     version = msi_alloc(size);
-    if (!version) return;
+    if (!version)
+        goto done;
 
     if (!GetFileVersionInfoW(fusion, handle, size, version))
         goto done;

@@ -1253,6 +1253,8 @@ UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR tables,
         if (r != ERROR_SUCCESS)
         {
             ERR("can't get table dimensions\n");
+            table->view->ops->delete(table->view);
+            msi_free(table);
             goto end;
         }
 
