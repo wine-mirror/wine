@@ -1094,6 +1094,7 @@ static void test_num_put_put_double(void)
         str = call_func1(p_basic_string_char_cstr, &pstr);
 
         ok(!strcmp(tests[i].str, str), "wrong output, expected = %s found = %s\n", tests[i].str, str);
+        call_func1(p_basic_string_char_dtor, &pstr);
 
         if(tests[i].lcl)
             call_func1(p_locale_dtor, &lcl);
@@ -1120,6 +1121,7 @@ static void test_num_put_put_double(void)
 
         AtoW(wide, tests[i].str, strlen(tests[i].str));
         ok(!lstrcmpW(wide, wstr), "wrong output, expected = %s found = %s\n", tests[i].str, wine_dbgstr_w(wstr));
+        call_func1(p_basic_string_wchar_dtor, &pwstr);
 
         if(tests[i].lcl)
             call_func1(p_locale_dtor, &lcl);
