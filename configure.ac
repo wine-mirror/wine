@@ -2019,7 +2019,7 @@ AC_CHECK_FUNCS(\
 	futimesat \
 	getattrlist \
 	getdirentries \
-	getopt_long \
+	getopt_long_only \
 	getpagesize \
 	getpwuid \
 	gettimeofday \

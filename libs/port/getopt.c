@@ -33,7 +33,7 @@
 # include <config.h>
 #endif
 
-#ifdef HAVE_GETOPT_LONG
+#ifdef HAVE_GETOPT_LONG_ONLY
 #define ELIDE_CODE
 #endif
 
@@ -218,26 +218,7 @@ static char *posixly_correct;
 #  include <strings.h>
 # endif
 
-/* Avoid depending on library functions or files
-   whose names are inconsistent.  */
-
-#ifndef getenv
-extern char *getenv ();
-#endif
-
-static char *
-my_index (str, chr)
-     const char *str;
-     int chr;
-{
-  while (*str)
-    {
-      if (*str == chr)
-	return (char *) str;
-      str++;
-    }
-  return 0;
-}
+# define my_index strchr
 
 /* If using GCC, we can safely declare strlen this way.
    If not using GCC, it is ok not to declare it.  */
@@ -1196,10 +1177,7 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 }
 
 int
-getopt (argc, argv, optstring)
-     int argc;
-     char *const *argv;
-     const char *optstring;
+getopt (int argc, char * const *argv, const char *optstring)
 {
   return _getopt_internal (argc, argv, optstring,
 			   NULL,
