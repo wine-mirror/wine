@@ -196,16 +196,7 @@ sub ConvertType($)
 {
     my ($type) = @_;
 
-    my %hash = ( "GLstring" => "const GLubyte *",
-	      "GLintptrARB" => "INT_PTR",
-	      "GLsizeiptrARB" => "INT_PTR",
-	      "GLintptr" => "INT_PTR",
-	      "GLsizeiptr" => "INT_PTR",
-	      "GLhandleARB" => "unsigned int",
-	      "GLcharARB" => "char",
-	      "GLchar" => "char",
-	      "GLhalfNV" => "unsigned short",
-              "GLvdpauSurfaceNV" => "INT_PTR",
+    my %hash = (
               "struct _cl_context" => "void",
               "struct _cl_event" => "void",
               "HGLRC" => "struct wgl_context *",
