@@ -945,9 +945,9 @@ print NORM "
 
 #include \"config.h\"
 #include <stdarg.h>
-#include \"opengl_ext.h\"
 #include \"winternl.h\"
 #include \"wingdi.h\"
+#include \"wine/wgl.h\"
 #include \"wine/wgl_driver.h\"
 #include \"wine/debug.h\"
 
@@ -991,6 +991,7 @@ print EXT "
 #include \"opengl_ext.h\"
 #include \"winternl.h\"
 #include \"wingdi.h\"
+#include \"wine/wgl.h\"
 #define WGL_WGLEXT_PROTOTYPES
 #include \"wine/wglext.h\"
 #include \"wine/wgl_driver.h\"

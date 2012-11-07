@@ -3,9 +3,9 @@
 
 #include "config.h"
 #include <stdarg.h>
-#include "opengl_ext.h"
 #include "winternl.h"
 #include "wingdi.h"
+#include "wine/wgl.h"
 #include "wine/wgl_driver.h"
 #include "wine/debug.h"
 
