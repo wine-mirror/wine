@@ -36,15 +36,6 @@
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
-#ifdef HAVE_GL_GL_H
-# include <GL/gl.h>
-#endif
-#ifdef HAVE_GL_GLX_H
-# include <GL/glx.h>
-#endif
-#undef APIENTRY
-#undef GLAPI
-#undef WINGDIAPI
 
 #include "x11drv.h"
 #include "xcomposite.h"
@@ -58,55 +49,125 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+#include "wine/wgl.h"
 #include "wine/wgl_driver.h"
 #include "wine/wglext.h"
 
-/* For compatibility with old Mesa headers */
-#ifndef GLX_SAMPLE_BUFFERS_ARB
-# define GLX_SAMPLE_BUFFERS_ARB           100000
-#endif
-#ifndef GLX_SAMPLES_ARB
-# define GLX_SAMPLES_ARB                  100001
-#endif
-#ifndef GL_TEXTURE_CUBE_MAP
-# define GL_TEXTURE_CUBE_MAP              0x8513
-#endif
-#ifndef GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT
-# define GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT 0x20B2
-#endif
-#ifndef GLX_EXT_fbconfig_packed_float
-# define GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT 0x20B1
-# define GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT  0x00000008
-#endif
-#ifndef GLX_ARB_create_context
-# define GLX_CONTEXT_MAJOR_VERSION_ARB    0x2091
-# define GLX_CONTEXT_MINOR_VERSION_ARB    0x2092
-# define GLX_CONTEXT_FLAGS_ARB            0x2094
-#endif
-#ifndef GLX_ARB_create_context_profile
-# define GLX_CONTEXT_PROFILE_MASK_ARB     0x9126
-#endif
+typedef struct __GLXcontextRec *GLXContext;
+typedef struct __GLXFBConfigRec *GLXFBConfig;
+typedef XID GLXPixmap;
+typedef XID GLXDrawable;
+typedef XID GLXFBConfigID;
+typedef XID GLXContextID;
+typedef XID GLXWindow;
+typedef XID GLXPbuffer;
+
+#define GLX_USE_GL                        1
+#define GLX_BUFFER_SIZE                   2
+#define GLX_LEVEL                         3
+#define GLX_RGBA                          4
+#define GLX_DOUBLEBUFFER                  5
+#define GLX_STEREO                        6
+#define GLX_AUX_BUFFERS                   7
+#define GLX_RED_SIZE                      8
+#define GLX_GREEN_SIZE                    9
+#define GLX_BLUE_SIZE                     10
+#define GLX_ALPHA_SIZE                    11
+#define GLX_DEPTH_SIZE                    12
+#define GLX_STENCIL_SIZE                  13
+#define GLX_ACCUM_RED_SIZE                14
+#define GLX_ACCUM_GREEN_SIZE              15
+#define GLX_ACCUM_BLUE_SIZE               16
+#define GLX_ACCUM_ALPHA_SIZE              17
+
+#define GLX_BAD_SCREEN                    1
+#define GLX_BAD_ATTRIBUTE                 2
+#define GLX_NO_EXTENSION                  3
+#define GLX_BAD_VISUAL                    4
+#define GLX_BAD_CONTEXT                   5
+#define GLX_BAD_VALUE                     6
+#define GLX_BAD_ENUM                      7
+
+#define GLX_VENDOR                        1
+#define GLX_VERSION                       2
+#define GLX_EXTENSIONS                    3
+
+#define GLX_CONFIG_CAVEAT                 0x20
+#define GLX_DONT_CARE                     0xFFFFFFFF
+#define GLX_X_VISUAL_TYPE                 0x22
+#define GLX_TRANSPARENT_TYPE              0x23
+#define GLX_TRANSPARENT_INDEX_VALUE       0x24
+#define GLX_TRANSPARENT_RED_VALUE         0x25
+#define GLX_TRANSPARENT_GREEN_VALUE       0x26
+#define GLX_TRANSPARENT_BLUE_VALUE        0x27
+#define GLX_TRANSPARENT_ALPHA_VALUE       0x28
+#define GLX_WINDOW_BIT                    0x00000001
+#define GLX_PIXMAP_BIT                    0x00000002
+#define GLX_PBUFFER_BIT                   0x00000004
+#define GLX_AUX_BUFFERS_BIT               0x00000010
+#define GLX_FRONT_LEFT_BUFFER_BIT         0x00000001
+#define GLX_FRONT_RIGHT_BUFFER_BIT        0x00000002
+#define GLX_BACK_LEFT_BUFFER_BIT          0x00000004
+#define GLX_BACK_RIGHT_BUFFER_BIT         0x00000008
+#define GLX_DEPTH_BUFFER_BIT              0x00000020
+#define GLX_STENCIL_BUFFER_BIT            0x00000040
+#define GLX_ACCUM_BUFFER_BIT              0x00000080
+#define GLX_NONE                          0x8000
+#define GLX_SLOW_CONFIG                   0x8001
+#define GLX_TRUE_COLOR                    0x8002
+#define GLX_DIRECT_COLOR                  0x8003
+#define GLX_PSEUDO_COLOR                  0x8004
+#define GLX_STATIC_COLOR                  0x8005
+#define GLX_GRAY_SCALE                    0x8006
+#define GLX_STATIC_GRAY                   0x8007
+#define GLX_TRANSPARENT_RGB               0x8008
+#define GLX_TRANSPARENT_INDEX             0x8009
+#define GLX_VISUAL_ID                     0x800B
+#define GLX_SCREEN                        0x800C
+#define GLX_NON_CONFORMANT_CONFIG         0x800D
+#define GLX_DRAWABLE_TYPE                 0x8010
+#define GLX_RENDER_TYPE                   0x8011
+#define GLX_X_RENDERABLE                  0x8012
+#define GLX_FBCONFIG_ID                   0x8013
+#define GLX_RGBA_TYPE                     0x8014
+#define GLX_COLOR_INDEX_TYPE              0x8015
+#define GLX_MAX_PBUFFER_WIDTH             0x8016
+#define GLX_MAX_PBUFFER_HEIGHT            0x8017
+#define GLX_MAX_PBUFFER_PIXELS            0x8018
+#define GLX_PRESERVED_CONTENTS            0x801B
+#define GLX_LARGEST_PBUFFER               0x801C
+#define GLX_WIDTH                         0x801D
+#define GLX_HEIGHT                        0x801E
+#define GLX_EVENT_MASK                    0x801F
+#define GLX_DAMAGED                       0x8020
+#define GLX_SAVED                         0x8021
+#define GLX_WINDOW                        0x8022
+#define GLX_PBUFFER                       0x8023
+#define GLX_PBUFFER_HEIGHT                0x8040
+#define GLX_PBUFFER_WIDTH                 0x8041
+#define GLX_RGBA_BIT                      0x00000001
+#define GLX_COLOR_INDEX_BIT               0x00000002
+#define GLX_PBUFFER_CLOBBER_MASK          0x08000000
+
+/** GLX_ARB_multisample */
+#define GLX_SAMPLE_BUFFERS_ARB            100000
+#define GLX_SAMPLES_ARB                   100001
+/** GLX_ARB_framebuffer_sRGB */
+#define GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT  0x20B2
+/** GLX_EXT_fbconfig_packed_float */
+#define GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT  0x20B1
+#define GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT   0x00000008
+/** GLX_ARB_create_context */
+#define GLX_CONTEXT_MAJOR_VERSION_ARB     0x2091
+#define GLX_CONTEXT_MINOR_VERSION_ARB     0x2092
+#define GLX_CONTEXT_FLAGS_ARB             0x2094
+/** GLX_ARB_create_context_profile */
+#define GLX_CONTEXT_PROFILE_MASK_ARB      0x9126
 /** GLX_ATI_pixel_format_float */
 #define GLX_RGBA_FLOAT_ATI_BIT            0x00000100
 /** GLX_ARB_pixel_format_float */
 #define GLX_RGBA_FLOAT_BIT                0x00000004
 #define GLX_RGBA_FLOAT_TYPE               0x20B9
-/** GL_NV_float_buffer */
-#define GL_FLOAT_R_NV                     0x8880
-#define GL_FLOAT_RG_NV                    0x8881
-#define GL_FLOAT_RGB_NV                   0x8882
-#define GL_FLOAT_RGBA_NV                  0x8883
-#define GL_FLOAT_R16_NV                   0x8884
-#define GL_FLOAT_R32_NV                   0x8885
-#define GL_FLOAT_RG16_NV                  0x8886
-#define GL_FLOAT_RG32_NV                  0x8887
-#define GL_FLOAT_RGB16_NV                 0x8888
-#define GL_FLOAT_RGB32_NV                 0x8889
-#define GL_FLOAT_RGBA16_NV                0x888A
-#define GL_FLOAT_RGBA32_NV                0x888B
-#define GL_TEXTURE_FLOAT_COMPONENTS_NV    0x888C
-#define GL_FLOAT_CLEAR_COLOR_VALUE_NV     0x888D
-#define GL_FLOAT_RGBA_MODE_NV             0x888E
 /** GLX_NV_float_buffer */
 #define GLX_FLOAT_COMPONENTS_NV           0x20B0
 
@@ -286,40 +347,37 @@ static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
 #define PUSH1(attribs,att)        do { attribs[nAttribs++] = (att); } while (0)
 #define PUSH2(attribs,att,value)  do { attribs[nAttribs++] = (att); attribs[nAttribs++] = (value); } while(0)
 
-#define MAKE_FUNCPTR(f) static typeof(f) * p##f;
 /* GLX 1.0 */
-MAKE_FUNCPTR(glXChooseVisual)
-MAKE_FUNCPTR(glXCopyContext)
-MAKE_FUNCPTR(glXCreateContext)
-MAKE_FUNCPTR(glXCreateGLXPixmap)
-MAKE_FUNCPTR(glXGetCurrentContext)
-MAKE_FUNCPTR(glXGetCurrentDrawable)
-MAKE_FUNCPTR(glXDestroyContext)
-MAKE_FUNCPTR(glXDestroyGLXPixmap)
-MAKE_FUNCPTR(glXGetConfig)
-MAKE_FUNCPTR(glXIsDirect)
-MAKE_FUNCPTR(glXMakeCurrent)
-MAKE_FUNCPTR(glXSwapBuffers)
-MAKE_FUNCPTR(glXQueryExtension)
-MAKE_FUNCPTR(glXQueryVersion)
+static XVisualInfo* (*pglXChooseVisual)( Display *dpy, int screen, int *attribList );
+static GLXContext (*pglXCreateContext)( Display *dpy, XVisualInfo *vis, GLXContext shareList, Bool direct );
+static void (*pglXDestroyContext)( Display *dpy, GLXContext ctx );
+static Bool (*pglXMakeCurrent)( Display *dpy, GLXDrawable drawable, GLXContext ctx);
+static void (*pglXCopyContext)( Display *dpy, GLXContext src, GLXContext dst, unsigned long mask );
+static void (*pglXSwapBuffers)( Display *dpy, GLXDrawable drawable );
+static GLXPixmap (*pglXCreateGLXPixmap)( Display *dpy, XVisualInfo *visual, Pixmap pixmap );
+static void (*pglXDestroyGLXPixmap)( Display *dpy, GLXPixmap pixmap );
+static Bool (*pglXQueryExtension)( Display *dpy, int *errorb, int *event );
+static Bool (*pglXQueryVersion)( Display *dpy, int *maj, int *min );
+static Bool (*pglXIsDirect)( Display *dpy, GLXContext ctx );
+static int (*pglXGetConfig)( Display *dpy, XVisualInfo *visual, int attrib, int *value );
+static GLXContext (*pglXGetCurrentContext)( void );
+static GLXDrawable (*pglXGetCurrentDrawable)( void );
 
 /* GLX 1.1 */
-MAKE_FUNCPTR(glXGetClientString)
-MAKE_FUNCPTR(glXQueryExtensionsString)
-MAKE_FUNCPTR(glXQueryServerString)
+static const char *(*pglXQueryExtensionsString)( Display *dpy, int screen );
+static const char *(*pglXQueryServerString)( Display *dpy, int screen, int name );
+static const char *(*pglXGetClientString)( Display *dpy, int name );
 
 /* GLX 1.3 */
-MAKE_FUNCPTR(glXGetFBConfigs)
-MAKE_FUNCPTR(glXChooseFBConfig)
-MAKE_FUNCPTR(glXCreatePbuffer)
-MAKE_FUNCPTR(glXCreateNewContext)
-MAKE_FUNCPTR(glXDestroyPbuffer)
-MAKE_FUNCPTR(glXGetFBConfigAttrib)
-MAKE_FUNCPTR(glXGetVisualFromFBConfig)
-MAKE_FUNCPTR(glXMakeContextCurrent)
-MAKE_FUNCPTR(glXQueryDrawable)
-MAKE_FUNCPTR(glXGetCurrentReadDrawable)
-#undef MAKE_FUNCPTR
+static GLXFBConfig *(*pglXChooseFBConfig)( Display *dpy, int screen, const int *attribList, int *nitems );
+static int (*pglXGetFBConfigAttrib)( Display *dpy, GLXFBConfig config, int attribute, int *value );
+static GLXFBConfig *(*pglXGetFBConfigs)( Display *dpy, int screen, int *nelements );
+static XVisualInfo *(*pglXGetVisualFromFBConfig)( Display *dpy, GLXFBConfig config );
+static GLXPbuffer (*pglXCreatePbuffer)( Display *dpy, GLXFBConfig config, const int *attribList );
+static void (*pglXDestroyPbuffer)( Display *dpy, GLXPbuffer pbuf );
+static void (*pglXQueryDrawable)( Display *dpy, GLXDrawable draw, int attribute, unsigned int *value );
+static GLXContext (*pglXCreateNewContext)( Display *dpy, GLXFBConfig config, int renderType, GLXContext shareList, Bool direct );
+static Bool (*pglXMakeContextCurrent)( Display *dpy, GLXDrawable draw, GLXDrawable read, GLXContext ctx );
 
 /* GLX Extensions */
 static GLXContext (*pglXCreateContextAttribsARB)(Display *dpy, GLXFBConfig config, GLXContext share_context, Bool direct, const int *attrib_list);
@@ -558,7 +616,6 @@ static BOOL has_opengl(void)
     LOAD_FUNCPTR(glXCreateNewContext);
     LOAD_FUNCPTR(glXDestroyPbuffer);
     LOAD_FUNCPTR(glXMakeContextCurrent);
-    LOAD_FUNCPTR(glXGetCurrentReadDrawable);
     LOAD_FUNCPTR(glXGetFBConfigs);
 #undef LOAD_FUNCPTR
 
