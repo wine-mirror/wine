@@ -1982,8 +1982,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
             continue;
         }
         TRACE("nobody wants component %s\n", debugstr_w(component->Component));
-        if (component->anyAbsent &&
-            (component->Installed == INSTALLSTATE_LOCAL || component->Installed == INSTALLSTATE_SOURCE))
+        if (component->anyAbsent && component->ComponentId)
         {
             component->Action = INSTALLSTATE_ABSENT;
             component->ActionRequest = INSTALLSTATE_ABSENT;
