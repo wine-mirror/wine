@@ -2112,7 +2112,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
                 return io->u.Status;
 
             if (info->LastAccessTime.QuadPart || info->LastWriteTime.QuadPart)
-                io->u.Status = set_file_times( fd, &info->LastAccessTime, &info->LastWriteTime );
+                io->u.Status = set_file_times( fd, &info->LastWriteTime, &info->LastAccessTime );
 
             if (io->u.Status == STATUS_SUCCESS && info->FileAttributes)
             {
