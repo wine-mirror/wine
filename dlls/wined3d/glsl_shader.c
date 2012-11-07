@@ -4719,6 +4719,40 @@ static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *
     vs->pos_fixup_location = GL_EXTCALL(glGetUniformLocationARB(program_id, "posFixup"));
 }
 
+static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *gl_info,
+        GLhandleARB program_id, struct glsl_ps_program *ps)
+{
+    unsigned int i;
+    char name[32];
+
+    ps->uniform_f_locations = HeapAlloc(GetProcessHeap(), 0,
+            sizeof(GLhandleARB) * gl_info->limits.glsl_ps_float_constants);
+    for (i = 0; i < gl_info->limits.glsl_ps_float_constants; ++i)
+    {
+        snprintf(name, sizeof(name), "ps_c[%u]", i);
+        ps->uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+    }
+
+    for (i = 0; i < MAX_CONST_I; ++i)
+    {
+        snprintf(name, sizeof(name), "ps_i[%u]", i);
+        ps->uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+    }
+
+    for (i = 0; i < MAX_TEXTURES; ++i)
+    {
+        snprintf(name, sizeof(name), "bumpenv_mat%u", i);
+        ps->bumpenv_mat_location[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+        snprintf(name, sizeof(name), "bumpenv_lum_scale%u", i);
+        ps->bumpenv_lum_scale_location[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+        snprintf(name, sizeof(name), "bumpenv_lum_offset%u", i);
+        ps->bumpenv_lum_offset_location[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+    }
+
+    ps->np2_fixup_location = GL_EXTCALL(glGetUniformLocationARB(program_id, "ps_samplerNP2Fixup"));
+    ps->ycorrection_location = GL_EXTCALL(glGetUniformLocationARB(program_id, "ycorrection"));
+}
+
 /** Sets the GLSL program ID for the given pixel and vertex shader combination.
  * It sets the programId on the current StateBlock (because it should be called
  * inside of the DrawPrimitive() part of the render loop).
@@ -4742,7 +4776,6 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     GLhandleARB programId                  = 0;
     GLhandleARB reorder_shader_id          = 0;
     unsigned int i;
-    char glsl_name[10];
     struct ps_compile_args ps_compile_args;
     struct vs_compile_args vs_compile_args;
     GLhandleARB vs_id, ps_id;
@@ -4847,44 +4880,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     shader_glsl_validate_link(gl_info, programId);
 
     shader_glsl_init_vs_uniform_locations(gl_info, programId, &entry->vs);
-
-    entry->ps.uniform_f_locations = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(GLhandleARB) * gl_info->limits.glsl_ps_float_constants);
-    for (i = 0; i < gl_info->limits.glsl_ps_float_constants; ++i)
-    {
-        snprintf(glsl_name, sizeof(glsl_name), "ps_c[%u]", i);
-        entry->ps.uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
-    }
-    for (i = 0; i < MAX_CONST_I; ++i)
-    {
-        snprintf(glsl_name, sizeof(glsl_name), "ps_i[%u]", i);
-        entry->ps.uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
-    }
-
-    if (pshader)
-    {
-        char name[32];
-
-        for (i = 0; i < MAX_TEXTURES; ++i)
-        {
-            sprintf(name, "bumpenv_mat%u", i);
-            entry->ps.bumpenv_mat_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
-            sprintf(name, "bumpenv_lum_scale%u", i);
-            entry->ps.bumpenv_lum_scale_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
-            sprintf(name, "bumpenv_lum_offset%u", i);
-            entry->ps.bumpenv_lum_offset_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
-        }
-
-        if (ps_compile_args.np2_fixup)
-        {
-            if (entry->ps.np2_fixup_info)
-                entry->ps.np2_fixup_location = GL_EXTCALL(glGetUniformLocationARB(programId, "ps_samplerNP2Fixup"));
-            else
-                FIXME("NP2 texcoord fixup needed for this pixelshader, but no fixup uniform found.\n");
-        }
-    }
-
-    entry->ps.ycorrection_location = GL_EXTCALL(glGetUniformLocationARB(programId, "ycorrection"));
+    shader_glsl_init_ps_uniform_locations(gl_info, programId, &entry->ps);
     checkGLcall("Find glsl program uniform locations");
 
     if (pshader && pshader->reg_maps.shader_version.major >= 3
