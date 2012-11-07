@@ -51,6 +51,7 @@
 static const char usage[] =
 "Usage: widl [options...] infile.idl\n"
 "   or: widl [options...] --dlldata-only name1 [name2...]\n"
+"   -app_config        Ignored, present for midl compatibility\n"
 "   -b arch            Set the target architecture\n"
 "   -c                 Generate client stub\n"
 "   -d n               Set debug level to 'n'\n"
@@ -154,7 +155,8 @@ enum {
     WIN32_OPTION,
     WIN64_OPTION,
     WIN32_ALIGN_OPTION,
-    WIN64_ALIGN_OPTION
+    WIN64_ALIGN_OPTION,
+    APP_CONFIG_OPTION
 };
 
 static const char short_options[] =
@@ -173,6 +175,7 @@ static const struct option long_options[] = {
     { "win64", 0, NULL, WIN64_OPTION },
     { "win32-align", 1, NULL, WIN32_ALIGN_OPTION },
     { "win64-align", 1, NULL, WIN64_ALIGN_OPTION },
+    { "app_config", 0, NULL, APP_CONFIG_OPTION },
     { NULL, 0, NULL, 0 }
 };
 
@@ -511,7 +514,7 @@ int main(int argc,char *argv[])
 
   now = time(NULL);
 
-  while((optc = getopt_long(argc, argv, short_options, long_options, &opti)) != EOF) {
+  while((optc = getopt_long_only(argc, argv, short_options, long_options, &opti)) != EOF) {
     switch(optc) {
     case DLLDATA_OPTION:
       dlldata_name = xstrdup(optarg);
@@ -558,6 +561,10 @@ int main(int argc,char *argv[])
       if(win64_packing != 2 && win64_packing != 4 && win64_packing != 8)
           error("Packing must be one of 2, 4 or 8\n");
       break;
+    case APP_CONFIG_OPTION:
+      /* widl does not distinguish between app_mode and default mode,
+         but we ignore this option for midl compatibility */
+        break;
     case 'b':
       set_target( optarg );
       break;
