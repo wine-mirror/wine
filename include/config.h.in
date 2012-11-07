@@ -233,18 +233,6 @@
 /* Define to 1 if you have the `getuid' function. */
 #undef HAVE_GETUID
 
-/* Define to 1 if you have the <GL/glu.h> header file. */
-#undef HAVE_GL_GLU_H
-
-/* Define to 1 if you have the <GL/glx.h> header file. */
-#undef HAVE_GL_GLX_H
-
-/* Define to 1 if you have the <GL/gl.h> header file. */
-#undef HAVE_GL_GL_H
-
-/* Define to 1 if you have the <GL/osmesa.h> header file. */
-#undef HAVE_GL_OSMESA_H
-
 /* Define if we have libgphoto2 development environment */
 #undef HAVE_GPHOTO2
 
@@ -583,9 +571,6 @@
 
 /* Define to 1 if you have the <OpenCL/opencl.h> header file. */
 #undef HAVE_OPENCL_OPENCL_H
-
-/* Define if OpenGL is present on the system */
-#undef HAVE_OPENGL
 
 /* Define to 1 if you have the <openssl/err.h> header file. */
 #undef HAVE_OPENSSL_ERR_H
@@ -1246,9 +1231,6 @@
 
 /* Define to the soname of the libGL library. */
 #undef SONAME_LIBGL
-
-/* Define to the soname of the libGLU library. */
-#undef SONAME_LIBGLU
 
 /* Define to the soname of the libgnutls library. */
 #undef SONAME_LIBGNUTLS

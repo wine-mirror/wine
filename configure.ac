@@ -49,8 +49,7 @@ AC_ARG_WITH(gettext,   AS_HELP_STRING([--without-gettext],[do not use gettext]))
 AC_ARG_WITH(gettextpo, AS_HELP_STRING([--with-gettextpo],[use the GetTextPO library to rebuild po files]),
             [if test "x$withval" = "xno"; then ac_cv_header_gettext_po_h=no; fi])
 AC_ARG_WITH(gphoto,    AS_HELP_STRING([--without-gphoto],[do not use gphoto (Digital Camera support)]))
-AC_ARG_WITH(glu,       AS_HELP_STRING([--without-glu],[do not use the GLU library]),
-            [if test "x$withval" = "xno"; then ac_cv_header_GL_glu_h=no; fi])
+AC_ARG_WITH(glu,       AS_HELP_STRING([--without-glu],[do not use the GLU library]))
 AC_ARG_WITH(gnutls,    AS_HELP_STRING([--without-gnutls],[do not use GnuTLS (schannel support)]))
 AC_ARG_WITH(gsm,       AS_HELP_STRING([--without-gsm],[do not use libgsm (GSM 06.10 codec support)]),
             [if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; ac_cv_header_gsm_gsm_h=no; fi])
@@ -69,8 +68,7 @@ AC_ARG_WITH(opencl,    AS_HELP_STRING([--without-opencl],[do not use OpenCL]),
 AC_ARG_WITH(opengl,    AS_HELP_STRING([--without-opengl],[do not use OpenGL]))
 AC_ARG_WITH(openssl,   AS_HELP_STRING([--without-openssl],[do not use OpenSSL]),
             [if test "x$withval" = "xno"; then ac_cv_header_openssl_err_h=no; ac_cv_header_openssl_ssl_h=no; fi])
-AC_ARG_WITH(osmesa,     AS_HELP_STRING([--without-osmesa],[do not use the OSMesa library]),
-            [if test "x$withval" = "xno"; then ac_cv_header_GL_osmesa_h=no; fi])
+AC_ARG_WITH(osmesa,     AS_HELP_STRING([--without-osmesa],[do not use the OSMesa library]))
 AC_ARG_WITH(oss,       AS_HELP_STRING([--without-oss],[do not use the OSS sound support]))
 AC_ARG_WITH(png,       AS_HELP_STRING([--without-png],[do not use PNG]),
             [if test "x$withval" = "xno"; then ac_cv_header_png_h=no; fi])
@@ -1108,60 +1106,32 @@ then
     opengl_msg=""
     if test "x$with_opengl" != "xno"
     then
-	AC_CHECK_HEADERS(GL/gl.h GL/glx.h GL/glu.h GL/osmesa.h,,,
-[#ifdef HAVE_GL_GLX_H
-# include <GL/glx.h>
-#endif])
-	if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_glx_h" = "yes"
-	then
-	    dnl Check for some problems due to old Mesa versions
-	    AC_CACHE_CHECK([for up-to-date OpenGL version], wine_cv_opengl_header_version_OK,
-	      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <GL/gl.h>]], [[GLenum test = GL_UNSIGNED_SHORT_5_6_5;  return (test == GL_UNSIGNED_SHORT_5_6_5);]])],
-		[wine_cv_opengl_header_version_OK="yes"],
-		[wine_cv_opengl_header_version_OK="no"]))
-
-	    if test "$wine_cv_opengl_header_version_OK" = "yes"
-            then
-		dnl Check for the presence of the library
-		WINE_CHECK_SONAME(GL,glXCreateContext,
-			     [OPENGL_LIBS="-lGL"
-                             AC_DEFINE(HAVE_OPENGL, 1, [Define if OpenGL is present on the system])],
-                             [WINE_CHECK_SONAME(GL,glXCreateContext,
-				    [OPENGL_LIBS="-Xlinker -dylib_file -Xlinker /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib -lGL"
-	                            AC_DEFINE(HAVE_OPENGL, 1, [Define if OpenGL is present on the system])],
-				    [if test -f /usr/X11R6/lib/libGL.a
-	                            then
-		                        opengl_msg="/usr/X11R6/lib/libGL.a is present on your system.
+	WINE_CHECK_SONAME(GL,glXCreateContext,
+		     [OPENGL_LIBS="-lGL"],
+                     [WINE_CHECK_SONAME(GL,glXCreateContext,
+			    [OPENGL_LIBS="-Xlinker -dylib_file -Xlinker /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib -lGL"],
+			    [if test -f /usr/X11R6/lib/libGL.a
+                            then
+	                        opengl_msg="/usr/X11R6/lib/libGL.a is present on your system.
 This probably prevents linking to OpenGL. Try deleting the file and restarting configure."
-	                            else
-	                                opengl_msg="No OpenGL library found on this system."
-	                            fi],
-				    $X_LIBS $XLIB -lm $X_EXTRA_LIBS -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib)],
-			     $X_LIBS $XLIB -lm $X_EXTRA_LIBS)
-                 if test "$ac_cv_header_GL_glu_h" = "yes"
-                 then
-                    WINE_CHECK_SONAME(GLU,gluLookAt,,,[$OPENGL_LIBS $X_LIBS $X_PRE_LIBS $XLIB -lm $X_EXTRA_LIBS])
-                 fi
-                 WINE_NOTICE_WITH(glu,[test "x$ac_cv_lib_soname_GLU" = "x"],
-                                 [libGLU ${notice_platform}development files not found, GLU won't be supported.])
+                            else
+                                opengl_msg="No OpenGL library found on this system."
+                            fi],
+			    $X_LIBS $XLIB -lm $X_EXTRA_LIBS -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib)],
+		     $X_LIBS $XLIB -lm $X_EXTRA_LIBS)
+        if test "x$with_glu" != "xno"
+        then
+            AC_CHECK_LIB(GLU,gluLookAt,[:],,[$OPENGL_LIBS $X_LIBS $X_PRE_LIBS $XLIB -lm $X_EXTRA_LIBS])
+            WINE_NOTICE_WITH(glu,[test "x$ac_cv_lib_GLU_gluLookAt" != xyes],
+                             [libGLU ${notice_platform}development files not found, GLU won't be supported.])
+        fi
 
-                 if test "$ac_cv_header_GL_osmesa_h" = "yes"
-                 then
-                    WINE_CHECK_SONAME(OSMesa,glAccum,,,[$X_LIBS $X_PRE_LIBS $XLIB -lm $X_EXTRA_LIBS])
-                 fi
-                 WINE_NOTICE_WITH(osmesa,[test "x$ac_cv_lib_soname_OSMesa" = "x"],
-                                 [libOSMesa ${notice_platform}development files not found (or too old), OpenGL rendering in bitmaps won't be supported.])
-             else
-                 opengl_msg="Old Mesa headers detected. Consider upgrading your Mesa libraries."
-	     fi
-         else
-             opengl_msg="OpenGL development headers not found."
-	 fi
-         test -n "$opengl_msg" && enable_opengl32=${enable_opengl32:-no}
-         test "x$ac_cv_lib_soname_GLU" = "x" && enable_glu32=${enable_glu32:-no}
-    else
-         enable_opengl32=${enable_opengl32:-no}
-         enable_glu32=${enable_glu32:-no}
+        if test "x$with_osmesa" != "xno"
+        then
+            WINE_CHECK_SONAME(OSMesa,glAccum,,,[$X_LIBS $X_PRE_LIBS $XLIB -lm $X_EXTRA_LIBS])
+            WINE_NOTICE_WITH(osmesa,[test "x$ac_cv_lib_soname_OSMesa" = "x"],
+                             [libOSMesa ${notice_platform}development files not found (or too old), OpenGL rendering in bitmaps won't be supported.])
+        fi
     fi
     WINE_WARNING_WITH(opengl,[test -n "$opengl_msg"],[$opengl_msg
 OpenGL and Direct3D won't be supported.])
@@ -1172,12 +1142,12 @@ else
     X_CFLAGS=""
     X_LIBS=""
     enable_winex11_drv=${enable_winex11_drv:-no}
-    enable_opengl32=${enable_opengl32:-no}
-    enable_glu32=${enable_glu32:-no}
 fi
 WINE_ERROR_WITH(x,[test "x$XLIB" = "x"],[X ${notice_platform}development files not found. Wine will be built
 without X support, which probably isn't what you want. You will need
 to install ${notice_platform}development packages of Xlib/Xfree86 at the very least.])
+
+test "x$ac_cv_lib_GLU_gluLookAt" != xyes && enable_glu32=${enable_glu32:-no}
 
 dnl **** Check for OpenCL ****
 if test "$ac_cv_header_CL_cl_h" = "yes"

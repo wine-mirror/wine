@@ -2613,7 +2613,7 @@ fi
 
 # Check whether --with-glu was given.
 if test "${with_glu+set}" = set; then :
-  withval=$with_glu; if test "x$withval" = "xno"; then ac_cv_header_GL_glu_h=no; fi
+  withval=$with_glu;
 fi
 
 
@@ -2685,7 +2685,7 @@ fi
 
 # Check whether --with-osmesa was given.
 if test "${with_osmesa+set}" = set; then :
-  withval=$with_osmesa; if test "x$withval" = "xno"; then ac_cv_header_GL_osmesa_h=no; fi
+  withval=$with_osmesa;
 fi
 
 
@@ -8879,53 +8879,7 @@ fi
         opengl_msg=""
     if test "x$with_opengl" != "xno"
     then
-	for ac_header in GL/gl.h GL/glx.h GL/glu.h GL/osmesa.h
-do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#ifdef HAVE_GL_GLX_H
-# include <GL/glx.h>
-#endif
-"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-	if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_glx_h" = "yes"
-	then
-	    	    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for up-to-date OpenGL version" >&5
-$as_echo_n "checking for up-to-date OpenGL version... " >&6; }
-if ${wine_cv_opengl_header_version_OK+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <GL/gl.h>
-int
-main ()
-{
-GLenum test = GL_UNSIGNED_SHORT_5_6_5;  return (test == GL_UNSIGNED_SHORT_5_6_5);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  wine_cv_opengl_header_version_OK="yes"
-else
-  wine_cv_opengl_header_version_OK="no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_opengl_header_version_OK" >&5
-$as_echo "$wine_cv_opengl_header_version_OK" >&6; }
-
-	    if test "$wine_cv_opengl_header_version_OK" = "yes"
-            then
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lGL" >&5
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lGL" >&5
 $as_echo_n "checking for -lGL... " >&6; }
 if ${ac_cv_lib_soname_GL+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -9004,12 +8958,12 @@ if test "x$ac_cv_lib_soname_GL" = "x"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
        if test -f /usr/X11R6/lib/libGL.a
-	                            then
-		                        opengl_msg="/usr/X11R6/lib/libGL.a is present on your system.
+                            then
+	                        opengl_msg="/usr/X11R6/lib/libGL.a is present on your system.
 This probably prevents linking to OpenGL. Try deleting the file and restarting configure."
-	                            else
-	                                opengl_msg="No OpenGL library found on this system."
-	                            fi
+                            else
+                                opengl_msg="No OpenGL library found on this system."
+                            fi
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_GL" >&5
 $as_echo "$ac_cv_lib_soname_GL" >&6; }
@@ -9019,9 +8973,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
        OPENGL_LIBS="-Xlinker -dylib_file -Xlinker /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib -lGL"
-
-$as_echo "#define HAVE_OPENGL 1" >>confdefs.h
-
 fi
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_GL" >&5
@@ -9032,20 +8983,17 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
        OPENGL_LIBS="-lGL"
-
-$as_echo "#define HAVE_OPENGL 1" >>confdefs.h
-
 fi
-                 if test "$ac_cv_header_GL_glu_h" = "yes"
-                 then
-                    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lGLU" >&5
-$as_echo_n "checking for -lGLU... " >&6; }
-if ${ac_cv_lib_soname_GLU+:} false; then :
+        if test "x$with_glu" != "xno"
+        then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gluLookAt in -lGLU" >&5
+$as_echo_n "checking for gluLookAt in -lGLU... " >&6; }
+if ${ac_cv_lib_GLU_gluLookAt+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  ac_check_soname_save_LIBS=$LIBS
+  ac_check_lib_save_LIBS=$LIBS
 LIBS="-lGLU $OPENGL_LIBS $X_LIBS $X_PRE_LIBS $XLIB -lm $X_EXTRA_LIBS $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 /* Override any GCC internal prototype to avoid an error.
@@ -9064,32 +9012,21 @@ return gluLookAt ();
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_GLU=`$ac_cv_path_LDD conftest.exe | grep "GLU" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_GLU=`otool -L conftest$ac_exeext | grep "libGLU\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libGLU\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_GLU=`$ac_cv_path_LDD conftest$ac_exeext | grep "libGLU\\.$LIBEXT" | sed -e "s/^.*\(libGLU\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
-  esac
+  ac_cv_lib_GLU_gluLookAt=yes
+else
+  ac_cv_lib_GLU_gluLookAt=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
+LIBS=$ac_check_lib_save_LIBS
 fi
-if test "x$ac_cv_lib_soname_GLU" = "x"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_GLU" >&5
-$as_echo "$ac_cv_lib_soname_GLU" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBGLU "$ac_cv_lib_soname_GLU"
-_ACEOF
-
-
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_GLU_gluLookAt" >&5
+$as_echo "$ac_cv_lib_GLU_gluLookAt" >&6; }
+if test "x$ac_cv_lib_GLU_gluLookAt" = xyes; then :
+  :
 fi
-                 fi
-                 if test "x$ac_cv_lib_soname_GLU" = "x"; then :
+
+            if test "x$ac_cv_lib_GLU_gluLookAt" != xyes; then :
   case "x$with_glu" in
   x)   as_fn_append wine_notices "|libGLU ${notice_platform}development files not found, GLU won't be supported." ;;
   xno) ;;
@@ -9097,10 +9034,11 @@ fi
 This is an error since --with-glu was requested." "$LINENO" 5 ;;
 esac
 fi
+        fi
 
-                 if test "$ac_cv_header_GL_osmesa_h" = "yes"
-                 then
-                    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lOSMesa" >&5
+        if test "x$with_osmesa" != "xno"
+        then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lOSMesa" >&5
 $as_echo_n "checking for -lOSMesa... " >&6; }
 if ${ac_cv_lib_soname_OSMesa+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -9150,8 +9088,7 @@ _ACEOF
 
 
 fi
-                 fi
-                 if test "x$ac_cv_lib_soname_OSMesa" = "x"; then :
+            if test "x$ac_cv_lib_soname_OSMesa" = "x"; then :
   case "x$with_osmesa" in
   x)   as_fn_append wine_notices "|libOSMesa ${notice_platform}development files not found (or too old), OpenGL rendering in bitmaps won't be supported." ;;
   xno) ;;
@@ -9159,17 +9096,7 @@ fi
 This is an error since --with-osmesa was requested." "$LINENO" 5 ;;
 esac
 fi
-             else
-                 opengl_msg="Old Mesa headers detected. Consider upgrading your Mesa libraries."
-	     fi
-         else
-             opengl_msg="OpenGL development headers not found."
-	 fi
-         test -n "$opengl_msg" && enable_opengl32=${enable_opengl32:-no}
-         test "x$ac_cv_lib_soname_GLU" = "x" && enable_glu32=${enable_glu32:-no}
-    else
-         enable_opengl32=${enable_opengl32:-no}
-         enable_glu32=${enable_glu32:-no}
+        fi
     fi
     if test -n "$opengl_msg"; then :
   case "x$with_opengl" in
@@ -9188,8 +9115,6 @@ else
     X_CFLAGS=""
     X_LIBS=""
     enable_winex11_drv=${enable_winex11_drv:-no}
-    enable_opengl32=${enable_opengl32:-no}
-    enable_glu32=${enable_glu32:-no}
 fi
 if test "x$XLIB" = "x"; then :
   case "x$with_x" in
@@ -9200,6 +9125,8 @@ to install ${notice_platform}development packages of Xlib/Xfree86 at the very le
 Use the --without-x option if you really want this." "$LINENO" 5 ;;
 esac
 fi
+
+test "x$ac_cv_lib_GLU_gluLookAt" != xyes && enable_glu32=${enable_glu32:-no}
 
 if test "$ac_cv_header_CL_cl_h" = "yes"
 then
