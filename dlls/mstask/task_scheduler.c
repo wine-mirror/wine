@@ -85,8 +85,27 @@ static HRESULT WINAPI MSTASK_ITaskScheduler_SetTargetComputer(
         ITaskScheduler* iface,
         LPCWSTR pwszComputer)
 {
-    FIXME("%p, %s: stub\n", iface, debugstr_w(pwszComputer));
-    return E_NOTIMPL;
+    TaskSchedulerImpl *This = impl_from_ITaskScheduler(iface);
+    WCHAR buffer[MAX_COMPUTERNAME_LENGTH + 3];  /* extra space for two '\' and a zero */
+    DWORD len = MAX_COMPUTERNAME_LENGTH + 1;    /* extra space for a zero */
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pwszComputer));
+
+    /* NULL is an alias for the local computer */
+    if (!pwszComputer)
+        return S_OK;
+
+    buffer[0] = '\\';
+    buffer[1] = '\\';
+    if (GetComputerNameW(buffer + 2, &len))
+    {
+        if (!lstrcmpiW(buffer, pwszComputer) ||    /* full unc name */
+            !lstrcmpiW(buffer + 2, pwszComputer))  /* name without backslash */
+            return S_OK;
+    }
+
+    FIXME("remote computer %s not supported\n", debugstr_w(pwszComputer));
+    return HRESULT_FROM_WIN32(ERROR_BAD_NETPATH);
 }
 
 static HRESULT WINAPI MSTASK_ITaskScheduler_GetTargetComputer(
