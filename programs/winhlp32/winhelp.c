@@ -1480,6 +1480,7 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                             break;
                         default:
                             WINE_FIXME("Unsupported %d\n", win->font_scale);
+                            /* fall through */
                         case 1:
                             CheckMenuItem(hMenu, MNID_CTXT_FONTS_NORMAL,
                                           MF_BYCOMMAND|MF_CHECKED);
