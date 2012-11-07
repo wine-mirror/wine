@@ -365,7 +365,8 @@ DECLARE_INTERFACE_(IDirect3D7,IUnknown)
     STDMETHOD(EnumDevices)(THIS_ LPD3DENUMDEVICESCALLBACK7 lpEnumDevicesCallback, LPVOID lpUserArg) PURE;
     STDMETHOD(CreateDevice)(THIS_ REFCLSID rclsid, IDirectDrawSurface7 *surface,
             struct IDirect3DDevice7 **device) PURE;
-    STDMETHOD(CreateVertexBuffer)(THIS_ LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc,LPDIRECT3DVERTEXBUFFER7 *lplpD3DVertBuf,DWORD dwFlags) PURE;
+    STDMETHOD(CreateVertexBuffer)(THIS_ D3DVERTEXBUFFERDESC *desc,
+            struct IDirect3DVertexBuffer7 **buffer, DWORD flags) PURE;
     STDMETHOD(EnumZBufferFormats)(THIS_ REFCLSID riidDevice,LPD3DENUMPIXELFORMATSCALLBACK lpEnumCallback,LPVOID lpContext) PURE;
     STDMETHOD(EvictManagedTextures)(THIS) PURE;
 };
@@ -1313,8 +1314,10 @@ DECLARE_INTERFACE_(IDirect3DDevice7,IUnknown)
     STDMETHOD(GetClipStatus)(THIS_ LPD3DCLIPSTATUS lpD3DClipStatus) PURE;
     STDMETHOD(DrawPrimitiveStrided)(THIS_ D3DPRIMITIVETYPE d3dptPrimitiveType,DWORD dwVertexType,LPD3DDRAWPRIMITIVESTRIDEDDATA lpD3DDrawPrimStrideData,DWORD dwVertexCount,DWORD dwFlags) PURE;
     STDMETHOD(DrawIndexedPrimitiveStrided)(THIS_ D3DPRIMITIVETYPE d3dptPrimitiveType,DWORD dwVertexType,LPD3DDRAWPRIMITIVESTRIDEDDATA lpD3DDrawPrimStrideData,DWORD dwVertexCount,LPWORD lpIndex,DWORD dwIndexCount,DWORD dwFlags) PURE;
-    STDMETHOD(DrawPrimitiveVB)(THIS_ D3DPRIMITIVETYPE d3dptPrimitiveType,LPDIRECT3DVERTEXBUFFER7 lpD3DVertexBuf,DWORD dwStartVertex,DWORD dwNumVertices,DWORD dwFlags) PURE;
-    STDMETHOD(DrawIndexedPrimitiveVB)(THIS_ D3DPRIMITIVETYPE d3dptPrimitiveType,LPDIRECT3DVERTEXBUFFER7 lpD3DVertexBuf,DWORD dwStartVertex,DWORD dwNumVertices,LPWORD lpwIndices,DWORD dwIndexCount,DWORD dwFlags) PURE;
+    STDMETHOD(DrawPrimitiveVB)(THIS_ D3DPRIMITIVETYPE primitive_type, struct IDirect3DVertexBuffer7 *vb,
+            DWORD start_vertex, DWORD vertex_count, DWORD flags) PURE;
+    STDMETHOD(DrawIndexedPrimitiveVB)(THIS_ D3DPRIMITIVETYPE primitive_type, struct IDirect3DVertexBuffer7 *vb,
+            DWORD start_vertex, DWORD vertex_count, WORD *indices, DWORD index_count, DWORD flags) PURE;
     STDMETHOD(ComputeSphereVisibility)(THIS_ LPD3DVECTOR lpCenters,LPD3DVALUE lpRadii,DWORD dwNumSpheres,DWORD dwFlags,LPDWORD lpdwReturnValues) PURE;
     STDMETHOD(GetTexture)(THIS_ DWORD stage, IDirectDrawSurface7 **surface) PURE;
     STDMETHOD(SetTexture)(THIS_ DWORD stage, IDirectDrawSurface7 *surface) PURE;
@@ -1499,7 +1502,9 @@ DECLARE_INTERFACE_(IDirect3DVertexBuffer7,IUnknown)
     /*** IDirect3DVertexBuffer7 methods ***/
     STDMETHOD(Lock)(THIS_ DWORD dwFlags,LPVOID *lplpData,LPDWORD lpdwSize) PURE;
     STDMETHOD(Unlock)(THIS) PURE;
-    STDMETHOD(ProcessVertices)(THIS_ DWORD dwVertexOp,DWORD dwDestIndex,DWORD dwCount,LPDIRECT3DVERTEXBUFFER7 lpSrcBuffer,DWORD dwSrcIndex,LPDIRECT3DDEVICE7 lpD3DDevice,DWORD dwFlags) PURE;
+    STDMETHOD(ProcessVertices)(THIS_ DWORD vertex_op, DWORD dst_idx, DWORD count,
+            IDirect3DVertexBuffer7 *src_buffer, DWORD src_idx,
+            IDirect3DDevice7 *device, DWORD flags) PURE;
     STDMETHOD(GetVertexBufferDesc)(THIS_ LPD3DVERTEXBUFFERDESC lpD3DVertexBufferDesc) PURE;
     STDMETHOD(Optimize)(THIS_ LPDIRECT3DDEVICE7  lpD3DDevice,DWORD dwFlags) PURE;
     STDMETHOD(ProcessVerticesStrided)(THIS_ DWORD dwVertexOp,DWORD dwDestIndex,DWORD dwCount,LPD3DDRAWPRIMITIVESTRIDEDDATA lpStrideData,DWORD dwVertexTypeDesc,LPDIRECT3DDEVICE7 lpD3DDevice,DWORD dwFlags) PURE;
