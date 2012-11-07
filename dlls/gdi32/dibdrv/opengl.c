@@ -21,13 +21,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#ifdef HAVE_GL_OSMESA_H
-#include <GL/osmesa.h>
-#undef APIENTRY
-#undef GLAPI
-#undef WINGDIAPI
-#endif
-
 #include "gdi_private.h"
 #include "dibdrv.h"
 
@@ -38,7 +31,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(dib);
 
 #ifdef SONAME_LIBOSMESA
 
+#include "wine/wgl.h"
 #include "wine/wgl_driver.h"
+
+#define OSMESA_COLOR_INDEX	GL_COLOR_INDEX
+#define OSMESA_RGBA		GL_RGBA
+#define OSMESA_BGRA		0x1
+#define OSMESA_ARGB		0x2
+#define OSMESA_RGB		GL_RGB
+#define OSMESA_BGR		0x4
+#define OSMESA_RGB_565		0x5
+#define OSMESA_ROW_LENGTH	0x10
+#define OSMESA_Y_UP		0x11
+
+typedef struct osmesa_context *OSMesaContext;
 
 extern BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT fmt, const PIXELFORMATDESCRIPTOR *pfd );
 
@@ -54,13 +60,13 @@ static struct opengl_funcs opengl_funcs;
 static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
 #undef USE_GL_FUNC
 
-#define MAKE_FUNCPTR(f) static typeof(f) * p##f;
-MAKE_FUNCPTR(OSMesaCreateContextExt)
-MAKE_FUNCPTR(OSMesaDestroyContext)
-MAKE_FUNCPTR(OSMesaGetProcAddress)
-MAKE_FUNCPTR(OSMesaMakeCurrent)
-MAKE_FUNCPTR(OSMesaPixelStore)
-#undef MAKE_FUNCPTR
+static OSMesaContext (*pOSMesaCreateContextExt)( GLenum format, GLint depthBits, GLint stencilBits,
+                                                 GLint accumBits, OSMesaContext sharelist );
+static void (*pOSMesaDestroyContext)( OSMesaContext ctx );
+static void * (*pOSMesaGetProcAddress)( const char *funcName );
+static GLboolean (*pOSMesaMakeCurrent)( OSMesaContext ctx, void *buffer, GLenum type,
+                                        GLsizei width, GLsizei height );
+static void (*pOSMesaPixelStore)( GLint pname, GLint value );
 
 static const struct
 {
