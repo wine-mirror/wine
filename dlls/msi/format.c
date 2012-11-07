@@ -1023,24 +1023,23 @@ done:
 }
 
 /* wrapper to resist a need for a full rewrite right now */
-DWORD deformat_string( MSIPACKAGE *package, const WCHAR *ptr, WCHAR **data )
+DWORD deformat_string( MSIPACKAGE *package, const WCHAR *fmt, WCHAR **data )
 {
-    if (ptr)
-    {
-        DWORD len = 0;
-        MSIRECORD *rec = MSI_CreateRecord( 1 );
+    DWORD len;
+    MSIRECORD *rec;
 
-        MSI_RecordSetStringW( rec, 0, ptr );
-        MSI_FormatRecordW( package, rec, NULL, &len );
-
-        len++;
-        *data = msi_alloc( len * sizeof(WCHAR) );
-        if (len > 1) MSI_FormatRecordW( package, rec, *data, &len );
-        else *data[0] = 0;
-
-        msiobj_release( &rec->hdr );
-        return len;
-    }
     *data = NULL;
-    return 0;
+    if (!fmt) return 0;
+    if (!(rec = MSI_CreateRecord( 1 ))) return 0;
+
+    MSI_RecordSetStringW( rec, 0, fmt );
+    MSI_FormatRecordW( package, rec, NULL, &len );
+    if (!(*data = msi_alloc( ++len * sizeof(WCHAR) )))
+    {
+        msiobj_release( &rec->hdr );
+        return 0;
+    }
+    MSI_FormatRecordW( package, rec, *data, &len );
+    msiobj_release( &rec->hdr );
+    return len;
 }
