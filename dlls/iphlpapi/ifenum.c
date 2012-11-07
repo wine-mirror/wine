@@ -741,6 +741,8 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
            ifp->ifa_addr);
           i++;
         }
+        if (ret)
+          HeapFree(GetProcessHeap(), 0, *ppIpAddrTable);
       }
       else
         ret = ERROR_OUTOFMEMORY;
@@ -928,6 +930,8 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
            &ifr->ifr_addr);
           i++;
         }
+        if (ret)
+          HeapFree(GetProcessHeap(), 0, *ppIpAddrTable);
       }
       else
         ret = ERROR_OUTOFMEMORY;

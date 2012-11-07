@@ -784,6 +784,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
     }
     if (ret)
     {
+        HeapFree(GetProcessHeap(), 0, v4addrs);
         HeapFree(GetProcessHeap(), 0, routeTable);
         return ret;
     }
