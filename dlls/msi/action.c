@@ -4720,27 +4720,27 @@ static UINT ACTION_RemoveIniValues( MSIPACKAGE *package )
 
 static void register_dll( const WCHAR *dll, BOOL unregister )
 {
-    HMODULE hmod;
+    static const WCHAR regW[] =
+        {'r','e','g','s','v','r','3','2','.','e','x','e',' ','\"','%','s','\"',0};
+    static const WCHAR unregW[] =
+        {'r','e','g','s','v','r','3','2','.','e','x','e',' ','/','u',' ','\"','%','s','\"',0};
+    PROCESS_INFORMATION pi;
+    STARTUPINFOW si;
+    WCHAR *cmd;
 
-    hmod = LoadLibraryExW( dll, 0, LOAD_WITH_ALTERED_SEARCH_PATH );
-    if (hmod)
+    if (!(cmd = msi_alloc( strlenW(dll) * sizeof(WCHAR) + sizeof(unregW) ))) return;
+
+    if (unregister) sprintfW( cmd, unregW, dll );
+    else sprintfW( cmd, regW, dll );
+
+    memset( &si, 0, sizeof(STARTUPINFOW) );
+    if (CreateProcessW( NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
     {
-        HRESULT (WINAPI *func_ptr)( void );
-        const char *func = unregister ? "DllUnregisterServer" : "DllRegisterServer";
-
-        func_ptr = (void *)GetProcAddress( hmod, func );
-        if (func_ptr)
-        {
-            HRESULT hr = func_ptr();
-            if (FAILED( hr ))
-                WARN("failed to register dll 0x%08x\n", hr);
-        }
-        else
-            WARN("entry point %s not found\n", func);
-        FreeLibrary( hmod );
-        return;
+        CloseHandle( pi.hThread );
+        msi_dialog_check_messages( pi.hProcess );
+        CloseHandle( pi.hProcess );
     }
-    WARN("failed to load library %u\n", GetLastError());
+    msi_free( cmd );
 }
 
 static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
