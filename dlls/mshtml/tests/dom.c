@@ -56,7 +56,7 @@ static const char elem_test_str[] =
     "<textarea id=\"X\">text text</textarea>"
     "<table id=\"tbl\"><tbody><tr></tr><tr id=\"row2\"><td>td1 text</td><td>td2 text</td></tr></tbody></table>"
     "<script id=\"sc\" type=\"text/javascript\"><!--\nfunction Testing() {}\n// -->\n</script>"
-    "<test /><object id=\"objid\" vspace=100></object><embed />"
+    "<test /><object id=\"objid\" name=\"objname\" vspace=100></object><embed />"
     "<img id=\"imgid\" name=\"WineImg\"/>"
     "<iframe src=\"about:blank\" id=\"ifr\"></iframe>"
     "<form id=\"frm\"></form>"
@@ -1571,6 +1571,40 @@ static void _test_object_vspace(unsigned line, IUnknown *unk, LONG exl)
     ok_(__FILE__,line)(hres == S_OK, "get_vspace failed: %08x\n", hres);
     ok_(__FILE__,line)(l == exl, "vspace=%d, expected %d\n", l, exl);
     IHTMLObjectElement_Release(object);
+}
+
+#define test_object_name(a,b) _test_object_name(__LINE__,a,b)
+static void _test_object_name(unsigned line, IHTMLElement *elem, const char *exname)
+{
+    IHTMLObjectElement *object = _get_object_iface(line, (IUnknown*)elem);
+    BSTR str;
+    HRESULT hres;
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLObjectElement_get_name(object, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_name failed: %08x\n", hres);
+    if(exname)
+        ok_(__FILE__,line)(!strcmp_wa(str, exname), "name=%s, expected %s\n", wine_dbgstr_w(str), exname);
+    else
+        ok_(__FILE__,line)(!str, "name=%s, expected NULL\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    IHTMLObjectElement_Release(object);
+}
+
+#define set_object_name(a,b) _set_object_name(__LINE__,a,b)
+static void _set_object_name(unsigned line, IHTMLElement *elem, const char *name)
+{
+    IHTMLObjectElement *object = _get_object_iface(line, (IUnknown*)elem);
+    BSTR str;
+    HRESULT hres;
+
+    str = a2bstr(name);
+    hres = IHTMLObjectElement_put_name(object, str);
+    ok_(__FILE__,line)(hres == S_OK, "put_name failed: %08x\n", hres);
+    SysFreeString(str);
+    IHTMLObjectElement_Release(object);
+
+    _test_object_name(line, elem, name);
 }
 
 #define create_option_elem(d,t,v) _create_option_elem(__LINE__,d,t,v)
@@ -5914,6 +5948,9 @@ static void test_elems(IHTMLDocument2 *doc)
     ok(elem != NULL, "elem == NULL\n");
     if(elem) {
         test_object_vspace((IUnknown*)elem, 100);
+        test_object_name(elem, "objname");
+        set_object_name(elem, "test");
+        set_object_name(elem, NULL);
         IHTMLElement_Release(elem);
     }
 
