@@ -4696,6 +4696,29 @@ static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
     return ret;
 }
 
+static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *gl_info,
+        GLhandleARB program_id, struct glsl_vs_program *vs)
+{
+    unsigned int i;
+    char name[32];
+
+    vs->uniform_f_locations = HeapAlloc(GetProcessHeap(), 0,
+            sizeof(GLhandleARB) * gl_info->limits.glsl_vs_float_constants);
+    for (i = 0; i < gl_info->limits.glsl_vs_float_constants; ++i)
+    {
+        snprintf(name, sizeof(name), "vs_c[%u]", i);
+        vs->uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+    }
+
+    for (i = 0; i < MAX_CONST_I; ++i)
+    {
+        snprintf(name, sizeof(name), "vs_i[%u]", i);
+        vs->uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+    }
+
+    vs->pos_fixup_location = GL_EXTCALL(glGetUniformLocationARB(program_id, "posFixup"));
+}
+
 /** Sets the GLSL program ID for the given pixel and vertex shader combination.
  * It sets the programId on the current StateBlock (because it should be called
  * inside of the DrawPrimitive() part of the render loop).
@@ -4823,18 +4846,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     GL_EXTCALL(glLinkProgramARB(programId));
     shader_glsl_validate_link(gl_info, programId);
 
-    entry->vs.uniform_f_locations = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(GLhandleARB) * gl_info->limits.glsl_vs_float_constants);
-    for (i = 0; i < gl_info->limits.glsl_vs_float_constants; ++i)
-    {
-        snprintf(glsl_name, sizeof(glsl_name), "vs_c[%u]", i);
-        entry->vs.uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
-    }
-    for (i = 0; i < MAX_CONST_I; ++i)
-    {
-        snprintf(glsl_name, sizeof(glsl_name), "vs_i[%u]", i);
-        entry->vs.uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
-    }
+    shader_glsl_init_vs_uniform_locations(gl_info, programId, &entry->vs);
+
     entry->ps.uniform_f_locations = HeapAlloc(GetProcessHeap(), 0,
             sizeof(GLhandleARB) * gl_info->limits.glsl_ps_float_constants);
     for (i = 0; i < gl_info->limits.glsl_ps_float_constants; ++i)
@@ -4871,7 +4884,6 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
         }
     }
 
-    entry->vs.pos_fixup_location = GL_EXTCALL(glGetUniformLocationARB(programId, "posFixup"));
     entry->ps.ycorrection_location = GL_EXTCALL(glGetUniformLocationARB(programId, "ycorrection"));
     checkGLcall("Find glsl program uniform locations");
 
