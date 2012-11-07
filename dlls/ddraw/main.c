@@ -270,25 +270,21 @@ DDRAW_Create(const GUID *guid,
  * Arguments, return values: See DDRAW_Create
  *
  ***********************************************************************/
-HRESULT WINAPI DECLSPEC_HOTPATCH
-DirectDrawCreate(GUID *GUID,
-                 LPDIRECTDRAW *DD,
-                 IUnknown *UnkOuter)
+HRESULT WINAPI DECLSPEC_HOTPATCH DirectDrawCreate(GUID *driver_guid, IDirectDraw **ddraw, IUnknown *outer)
 {
     HRESULT hr;
 
-    TRACE("driver_guid %s, ddraw %p, outer_unknown %p.\n",
-            debugstr_guid(GUID), DD, UnkOuter);
+    TRACE("driver_guid %s, ddraw %p, outer %p.\n",
+            debugstr_guid(driver_guid), ddraw, outer);
 
     wined3d_mutex_lock();
-    hr = DDRAW_Create(GUID, (void **) DD, UnkOuter, &IID_IDirectDraw);
+    hr = DDRAW_Create(driver_guid, (void **)ddraw, outer, &IID_IDirectDraw);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
     {
-        hr = IDirectDraw_Initialize(*DD, GUID);
-        if (FAILED(hr))
-            IDirectDraw_Release(*DD);
+        if (FAILED(hr = IDirectDraw_Initialize(*ddraw, driver_guid)))
+            IDirectDraw_Release(*ddraw);
     }
 
     return hr;

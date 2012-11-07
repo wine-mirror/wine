@@ -1235,7 +1235,7 @@ DECLARE_INTERFACE_(IDirectDrawPalette,IUnknown)
     /*** IDirectDrawPalette methods ***/
     STDMETHOD(GetCaps)(THIS_ LPDWORD lpdwCaps) PURE;
     STDMETHOD(GetEntries)(THIS_ DWORD dwFlags, DWORD dwBase, DWORD dwNumEntries, LPPALETTEENTRY lpEntries) PURE;
-    STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW lpDD, DWORD dwFlags, LPPALETTEENTRY lpDDColorTable) PURE;
+    STDMETHOD(Initialize)(THIS_ struct IDirectDraw *ddraw, DWORD flags, PALETTEENTRY *color_table) PURE;
     STDMETHOD(SetEntries)(THIS_ DWORD dwFlags, DWORD dwStartingEntry, DWORD dwCount, LPPALETTEENTRY lpEntries) PURE;
 };
 #undef INTERFACE
@@ -1276,7 +1276,7 @@ DECLARE_INTERFACE_(IDirectDrawClipper,IUnknown)
     /*** IDirectDrawClipper methods ***/
     STDMETHOD(GetClipList)(THIS_ LPRECT lpRect, LPRGNDATA lpClipList, LPDWORD lpdwSize) PURE;
     STDMETHOD(GetHWnd)(THIS_ HWND *lphWnd) PURE;
-    STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW lpDD, DWORD dwFlags) PURE;
+    STDMETHOD(Initialize)(THIS_ struct IDirectDraw *ddraw, DWORD flags) PURE;
     STDMETHOD(IsClipListChanged)(THIS_ BOOL *lpbChanged) PURE;
     STDMETHOD(SetClipList)(THIS_ LPRGNDATA lpClipList, DWORD dwFlags) PURE;
     STDMETHOD(SetHWnd)(THIS_ DWORD dwFlags, HWND hWnd) PURE;
@@ -1893,7 +1893,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown)
 /*50*/    STDMETHOD(GetPalette)(THIS_ IDirectDrawPalette **palette) PURE;
 /*54*/    STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT lpDDPixelFormat) PURE;
 /*58*/    STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
-/*5c*/    STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW lpDD, LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
+/*5c*/    STDMETHOD(Initialize)(THIS_ IDirectDraw *ddraw, DDSURFACEDESC *surface_desc) PURE;
 /*60*/    STDMETHOD(IsLost)(THIS) PURE;
 /*64*/    STDMETHOD(Lock)(THIS_ LPRECT lpDestRect, LPDDSURFACEDESC lpDDSurfaceDesc, DWORD dwFlags, HANDLE hEvent) PURE;
 /*68*/    STDMETHOD(ReleaseDC)(THIS_ HDC hDC) PURE;
@@ -2027,7 +2027,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface2,IUnknown)
     STDMETHOD(GetPalette)(THIS_ IDirectDrawPalette **palette) PURE;
     STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT lpDDPixelFormat) PURE;
     STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
-    STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW lpDD, LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
+    STDMETHOD(Initialize)(THIS_ IDirectDraw *ddraw, DDSURFACEDESC *surface_desc) PURE;
     STDMETHOD(IsLost)(THIS) PURE;
     STDMETHOD(Lock)(THIS_ LPRECT lpDestRect, LPDDSURFACEDESC lpDDSurfaceDesc, DWORD dwFlags, HANDLE hEvent) PURE;
     STDMETHOD(ReleaseDC)(THIS_ HDC hDC) PURE;
@@ -2173,7 +2173,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown)
     STDMETHOD(GetPalette)(THIS_ IDirectDrawPalette **palette) PURE;
     STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT lpDDPixelFormat) PURE;
     STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
-    STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW lpDD, LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
+    STDMETHOD(Initialize)(THIS_ IDirectDraw *ddraw, DDSURFACEDESC *surface_desc) PURE;
     STDMETHOD(IsLost)(THIS) PURE;
     STDMETHOD(Lock)(THIS_ LPRECT lpDestRect, LPDDSURFACEDESC lpDDSurfaceDesc, DWORD dwFlags, HANDLE hEvent) PURE;
     STDMETHOD(ReleaseDC)(THIS_ HDC hDC) PURE;
@@ -2324,7 +2324,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface4,IUnknown)
     STDMETHOD(GetPalette)(THIS_ IDirectDrawPalette **palette) PURE;
     STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT lpDDPixelFormat) PURE;
     STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC2 lpDDSurfaceDesc) PURE;
-    STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW lpDD, LPDDSURFACEDESC2 lpDDSurfaceDesc) PURE;
+    STDMETHOD(Initialize)(THIS_ IDirectDraw *ddraw, DDSURFACEDESC2 *surface_desc) PURE;
     STDMETHOD(IsLost)(THIS) PURE;
     STDMETHOD(Lock)(THIS_ LPRECT lpDestRect, LPDDSURFACEDESC2 lpDDSurfaceDesc, DWORD dwFlags, HANDLE hEvent) PURE;
     STDMETHOD(ReleaseDC)(THIS_ HDC hDC) PURE;
@@ -2491,7 +2491,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface7,IUnknown)
     STDMETHOD(GetPalette)(THIS_ IDirectDrawPalette **palette) PURE;
     STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT lpDDPixelFormat) PURE;
     STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC2 lpDDSurfaceDesc) PURE;
-    STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW lpDD, LPDDSURFACEDESC2 lpDDSurfaceDesc) PURE;
+    STDMETHOD(Initialize)(THIS_ IDirectDraw *ddraw, DDSURFACEDESC2 *surface_desc) PURE;
     STDMETHOD(IsLost)(THIS) PURE;
     STDMETHOD(Lock)(THIS_ LPRECT lpDestRect, LPDDSURFACEDESC2 lpDDSurfaceDesc, DWORD dwFlags, HANDLE hEvent) PURE;
     STDMETHOD(ReleaseDC)(THIS_ HDC hDC) PURE;
@@ -2708,7 +2708,7 @@ DECLARE_INTERFACE_(IDirectDrawGammaControl,IUnknown)
 #endif
 
 
-HRESULT WINAPI DirectDrawCreate(GUID*,LPDIRECTDRAW*,IUnknown*);
+HRESULT WINAPI DirectDrawCreate(GUID *driver_guid, IDirectDraw **ddraw, IUnknown *outer);
 HRESULT WINAPI DirectDrawCreateEx(GUID*,LPVOID*,REFIID,IUnknown*);
 HRESULT WINAPI DirectDrawCreateClipper(DWORD flags, IDirectDrawClipper **clipper, IUnknown *outer);
 

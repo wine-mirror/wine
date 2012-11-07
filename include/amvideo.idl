@@ -21,7 +21,7 @@ import "objidl.idl";
 /* trick widl into thinking that it knows the DirectDraw types 
  * as there is no IDL file for them (yet) */
 cpp_quote("#if 0")
-typedef void * LPDIRECTDRAW;
+typedef void IDirectDraw;
 typedef void DDSURFACEDESC,DDCAPS;
 typedef DWORD RGBQUAD;
 typedef LONGLONG REFERENCE_TIME;
@@ -73,8 +73,8 @@ interface IDirectDrawVideo : IUnknown
     HRESULT GetEmulatedCaps([out] DDCAPS *pCaps);
     HRESULT GetSurfaceDesc([out] DDSURFACEDESC * pSurfaceDesc);
     HRESULT GetFourCCCodes([out] DWORD * pCount, [out] DWORD * pCodes);
-    HRESULT SetDirectDraw([in] LPDIRECTDRAW pDirectDraw);
-    HRESULT GetDirectDraw([out] LPDIRECTDRAW * ppDirectDraw);
+    HRESULT SetDirectDraw([in] IDirectDraw *ddraw);
+    HRESULT GetDirectDraw([out] IDirectDraw **ddraw);
     HRESULT GetSurfaceType([out] DWORD * pSurfaceType);
     HRESULT SetDefault();
     HRESULT UseScanLine([in] long UseScanLine);

@@ -31,7 +31,7 @@
 
 static HRESULT (WINAPI *pDirectDrawCreateEx)(GUID *, void **, REFIID, IUnknown *);
 
-static LPDIRECTDRAW lpDD = NULL;
+static IDirectDraw *lpDD;
 static DDCAPS ddcaps;
 
 static BOOL CreateDirectDraw(void)
