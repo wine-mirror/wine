@@ -4020,6 +4020,8 @@ static void null_glGetPerfMonitorGroupStringAMD( GLuint group, GLsizei bufSize, 
 static void null_glGetPerfMonitorGroupsAMD( GLint* numGroups, GLsizei groupsSize, GLuint* groups ) { }
 static void null_glGetPixelTexGenParameterfvSGIS( GLenum pname, GLfloat* params ) { }
 static void null_glGetPixelTexGenParameterivSGIS( GLenum pname, GLint* params ) { }
+static void null_glGetPixelTransformParameterfvEXT( GLenum target, GLenum pname, GLfloat* params ) { }
+static void null_glGetPixelTransformParameterivEXT( GLenum target, GLenum pname, GLint* params ) { }
 static void null_glGetPointerIndexedvEXT( GLenum target, GLuint index, GLvoid** data ) { }
 static void null_glGetPointervEXT( GLenum pname, GLvoid** params ) { }
 static void null_glGetProgramBinary( GLuint program, GLsizei bufSize, GLsizei* length, GLenum* binaryFormat, GLvoid* binary ) { }
@@ -4953,6 +4955,7 @@ static void null_glTexStorage2D( GLenum target, GLsizei levels, GLenum internalf
 static void null_glTexStorage2DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations ) { }
 static void null_glTexStorage3D( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth ) { }
 static void null_glTexStorage3DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations ) { }
+static void null_glTexStorageSparseAMD( GLenum target, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLsizei layers, GLbitfield flags ) { }
 static void null_glTexSubImage1DEXT( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid* pixels ) { }
 static void null_glTexSubImage2DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels ) { }
 static void null_glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* pixels ) { }
@@ -4985,6 +4988,7 @@ static void null_glTextureStorage2DEXT( GLuint texture, GLenum target, GLsizei l
 static void null_glTextureStorage2DMultisampleEXT( GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations ) { }
 static void null_glTextureStorage3DEXT( GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth ) { }
 static void null_glTextureStorage3DMultisampleEXT( GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations ) { }
+static void null_glTextureStorageSparseAMD( GLuint texture, GLenum target, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLsizei layers, GLbitfield flags ) { }
 static void null_glTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid* pixels ) { }
 static void null_glTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels ) { }
 static void null_glTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* pixels ) { }
@@ -5112,7 +5116,7 @@ static void null_glVDPAUInitNV( const GLvoid* vdpDevice, const GLvoid* getProcAd
 static void null_glVDPAUIsSurfaceNV( INT_PTR surface ) { }
 static void null_glVDPAUMapSurfacesNV( GLsizei numSurfaces, const INT_PTR* surfaces ) { }
 static INT_PTR null_glVDPAURegisterOutputSurfaceNV( GLvoid* vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint* textureNames ) { return 0; }
-static INT_PTR null_glVDPAURegisterVideoSurfaceNV( GLvoid* vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint* textureNames ) { return 0; }
+static INT_PTR null_glVDPAURegisterVideoSurfaceNV( const GLvoid* vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint* textureNames ) { return 0; }
 static void null_glVDPAUSurfaceAccessNV( INT_PTR surface, GLenum access ) { }
 static void null_glVDPAUUnmapSurfacesNV( GLsizei numSurface, const INT_PTR* surfaces ) { }
 static void null_glVDPAUUnregisterSurfaceNV( INT_PTR surface ) { }
@@ -5411,7 +5415,7 @@ static void null_glVertexStream4iATI( GLenum stream, GLint x, GLint y, GLint z, 
 static void null_glVertexStream4ivATI( GLenum stream, const GLint* coords ) { }
 static void null_glVertexStream4sATI( GLenum stream, GLshort x, GLshort y, GLshort z, GLshort w ) { }
 static void null_glVertexStream4svATI( GLenum stream, const GLshort* coords ) { }
-static void null_glVertexWeightPointerEXT( GLsizei size, GLenum type, GLsizei stride, const GLvoid* pointer ) { }
+static void null_glVertexWeightPointerEXT( GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) { }
 static void null_glVertexWeightfEXT( GLfloat weight ) { }
 static void null_glVertexWeightfvEXT( const GLfloat* weight ) { }
 static void null_glVertexWeighthNV( unsigned short weight ) { }
@@ -6515,6 +6519,8 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetPerfMonitorGroupsAMD,
         null_glGetPixelTexGenParameterfvSGIS,
         null_glGetPixelTexGenParameterivSGIS,
+        null_glGetPixelTransformParameterfvEXT,
+        null_glGetPixelTransformParameterivEXT,
         null_glGetPointerIndexedvEXT,
         null_glGetPointervEXT,
         null_glGetProgramBinary,
@@ -7448,6 +7454,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glTexStorage2DMultisample,
         null_glTexStorage3D,
         null_glTexStorage3DMultisample,
+        null_glTexStorageSparseAMD,
         null_glTexSubImage1DEXT,
         null_glTexSubImage2DEXT,
         null_glTexSubImage3D,
@@ -7480,6 +7487,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glTextureStorage2DMultisampleEXT,
         null_glTextureStorage3DEXT,
         null_glTextureStorage3DMultisampleEXT,
+        null_glTextureStorageSparseAMD,
         null_glTextureSubImage1DEXT,
         null_glTextureSubImage2DEXT,
         null_glTextureSubImage3DEXT,

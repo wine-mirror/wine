@@ -7,7 +7,7 @@
 #define WINE_GLAPI
 #endif
 
-#define WINE_WGL_DRIVER_VERSION 8
+#define WINE_WGL_DRIVER_VERSION 9
 
 struct wgl_context;
 struct wgl_pbuffer;
@@ -1019,6 +1019,8 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glGetPerfMonitorGroupsAMD)(GLint*,GLsizei,GLuint*);
         void       (WINE_GLAPI *p_glGetPixelTexGenParameterfvSGIS)(GLenum,GLfloat*);
         void       (WINE_GLAPI *p_glGetPixelTexGenParameterivSGIS)(GLenum,GLint*);
+        void       (WINE_GLAPI *p_glGetPixelTransformParameterfvEXT)(GLenum,GLenum,GLfloat*);
+        void       (WINE_GLAPI *p_glGetPixelTransformParameterivEXT)(GLenum,GLenum,GLint*);
         void       (WINE_GLAPI *p_glGetPointerIndexedvEXT)(GLenum,GLuint,GLvoid**);
         void       (WINE_GLAPI *p_glGetPointervEXT)(GLenum,GLvoid**);
         void       (WINE_GLAPI *p_glGetProgramBinary)(GLuint,GLsizei,GLsizei*,GLenum*,GLvoid*);
@@ -1952,6 +1954,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glTexStorage2DMultisample)(GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLboolean);
         void       (WINE_GLAPI *p_glTexStorage3D)(GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLsizei);
         void       (WINE_GLAPI *p_glTexStorage3DMultisample)(GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLsizei,GLboolean);
+        void       (WINE_GLAPI *p_glTexStorageSparseAMD)(GLenum,GLenum,GLsizei,GLsizei,GLsizei,GLsizei,GLbitfield);
         void       (WINE_GLAPI *p_glTexSubImage1DEXT)(GLenum,GLint,GLint,GLsizei,GLenum,GLenum,const GLvoid*);
         void       (WINE_GLAPI *p_glTexSubImage2DEXT)(GLenum,GLint,GLint,GLint,GLsizei,GLsizei,GLenum,GLenum,const GLvoid*);
         void       (WINE_GLAPI *p_glTexSubImage3D)(GLenum,GLint,GLint,GLint,GLint,GLsizei,GLsizei,GLsizei,GLenum,GLenum,const GLvoid*);
@@ -1984,6 +1987,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glTextureStorage2DMultisampleEXT)(GLuint,GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLboolean);
         void       (WINE_GLAPI *p_glTextureStorage3DEXT)(GLuint,GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLsizei);
         void       (WINE_GLAPI *p_glTextureStorage3DMultisampleEXT)(GLuint,GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLsizei,GLboolean);
+        void       (WINE_GLAPI *p_glTextureStorageSparseAMD)(GLuint,GLenum,GLenum,GLsizei,GLsizei,GLsizei,GLsizei,GLbitfield);
         void       (WINE_GLAPI *p_glTextureSubImage1DEXT)(GLuint,GLenum,GLint,GLint,GLsizei,GLenum,GLenum,const GLvoid*);
         void       (WINE_GLAPI *p_glTextureSubImage2DEXT)(GLuint,GLenum,GLint,GLint,GLint,GLsizei,GLsizei,GLenum,GLenum,const GLvoid*);
         void       (WINE_GLAPI *p_glTextureSubImage3DEXT)(GLuint,GLenum,GLint,GLint,GLint,GLint,GLsizei,GLsizei,GLsizei,GLenum,GLenum,const GLvoid*);
@@ -2111,7 +2115,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glVDPAUIsSurfaceNV)(INT_PTR);
         void       (WINE_GLAPI *p_glVDPAUMapSurfacesNV)(GLsizei,const INT_PTR*);
         INT_PTR    (WINE_GLAPI *p_glVDPAURegisterOutputSurfaceNV)(GLvoid*,GLenum,GLsizei,const GLuint*);
-        INT_PTR    (WINE_GLAPI *p_glVDPAURegisterVideoSurfaceNV)(GLvoid*,GLenum,GLsizei,const GLuint*);
+        INT_PTR    (WINE_GLAPI *p_glVDPAURegisterVideoSurfaceNV)(const GLvoid*,GLenum,GLsizei,const GLuint*);
         void       (WINE_GLAPI *p_glVDPAUSurfaceAccessNV)(INT_PTR,GLenum);
         void       (WINE_GLAPI *p_glVDPAUUnmapSurfacesNV)(GLsizei,const INT_PTR*);
         void       (WINE_GLAPI *p_glVDPAUUnregisterSurfaceNV)(INT_PTR);
@@ -2410,7 +2414,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glVertexStream4ivATI)(GLenum,const GLint*);
         void       (WINE_GLAPI *p_glVertexStream4sATI)(GLenum,GLshort,GLshort,GLshort,GLshort);
         void       (WINE_GLAPI *p_glVertexStream4svATI)(GLenum,const GLshort*);
-        void       (WINE_GLAPI *p_glVertexWeightPointerEXT)(GLsizei,GLenum,GLsizei,const GLvoid*);
+        void       (WINE_GLAPI *p_glVertexWeightPointerEXT)(GLint,GLenum,GLsizei,const GLvoid*);
         void       (WINE_GLAPI *p_glVertexWeightfEXT)(GLfloat);
         void       (WINE_GLAPI *p_glVertexWeightfvEXT)(const GLfloat*);
         void       (WINE_GLAPI *p_glVertexWeighthNV)(unsigned short);
