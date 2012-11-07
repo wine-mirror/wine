@@ -302,7 +302,7 @@ typedef struct {
     int wsize;
     int *prsize;
     int *pwsize;
-    locale *loc;
+    locale loc;
 } basic_streambuf_char;
 
 typedef struct {
@@ -336,7 +336,7 @@ typedef struct {
     int wsize;
     int *prsize;
     int *pwsize;
-    locale *loc;
+    locale loc;
 } basic_streambuf_wchar;
 
 typedef struct {
