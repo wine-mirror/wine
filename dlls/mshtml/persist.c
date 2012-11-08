@@ -106,6 +106,11 @@ void set_current_uri(HTMLOuterWindow *window, IUri *uri)
         window->uri = NULL;
     }
 
+    if(window->uri_nofrag) {
+        IUri_Release(window->uri_nofrag);
+        window->uri_nofrag = NULL;
+    }
+
     SysFreeString(window->url);
     window->url = NULL;
 
@@ -114,6 +119,13 @@ void set_current_uri(HTMLOuterWindow *window, IUri *uri)
 
     IUri_AddRef(uri);
     window->uri = uri;
+
+    window->uri_nofrag = get_uri_nofrag(uri);
+    if(!window->uri_nofrag) {
+        FIXME("get_uri_nofrag failed\n");
+        IUri_AddRef(uri);
+        window->uri_nofrag = uri;
+    }
 
     IUri_GetDisplayUri(uri, &window->url);
 }

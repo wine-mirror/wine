@@ -94,7 +94,7 @@ IUri *nsuri_get_uri(nsWineURI *nsuri)
     return nsuri->uri;
 }
 
-static IUri *get_uri_nofrag(IUri *uri)
+IUri *get_uri_nofrag(IUri *uri)
 {
     IUriBuilder *uri_builder;
     IUri *ret;

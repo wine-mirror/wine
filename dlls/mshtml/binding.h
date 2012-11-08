@@ -116,4 +116,6 @@ void channelbsc_set_channel(nsChannelBSC*,nsChannel*,nsIStreamListener*,nsISuppo
 IUri *nsuri_get_uri(nsWineURI*) DECLSPEC_HIDDEN;
 HRESULT create_relative_uri(HTMLOuterWindow*,const WCHAR*,IUri**) DECLSPEC_HIDDEN;
 
+IUri *get_uri_nofrag(IUri*) DECLSPEC_HIDDEN;
+
 HRESULT bind_mon_to_wstr(HTMLInnerWindow*,IMoniker*,WCHAR**) DECLSPEC_HIDDEN;

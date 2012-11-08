@@ -372,6 +372,7 @@ struct HTMLOuterWindow {
     HTMLInnerWindow *pending_window;
     IMoniker *mon;
     IUri *uri;
+    IUri *uri_nofrag;
     BSTR url;
 
     SCRIPTMODE scriptmode;
