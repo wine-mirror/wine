@@ -771,7 +771,7 @@ static BOOL context_set_gl_context(struct wined3d_context *ctx)
         backup = TRUE;
     }
 
-    if (backup || !pwglMakeCurrent(ctx->hdc, ctx->glCtx))
+    if (backup || !wglMakeCurrent(ctx->hdc, ctx->glCtx))
     {
         HDC dc;
 
@@ -805,7 +805,7 @@ static BOOL context_set_gl_context(struct wined3d_context *ctx)
             return FALSE;
         }
 
-        if (!pwglMakeCurrent(dc, ctx->glCtx))
+        if (!wglMakeCurrent(dc, ctx->glCtx))
         {
             ERR("Fallback to backup window (dc %p) failed too, last error %#x.\n",
                     dc, GetLastError());
@@ -825,7 +825,7 @@ static void context_restore_gl_context(const struct wined3d_gl_info *gl_info, HD
         return;
     }
 
-    if (!pwglMakeCurrent(dc, gl_ctx))
+    if (!wglMakeCurrent(dc, gl_ctx))
     {
         ERR("Failed to restore GL context %p on device context %p, last error %#x.\n",
                 gl_ctx, dc, GetLastError());
@@ -897,8 +897,8 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
     unsigned int i;
     int restore_pf;
 
-    restore_ctx = pwglGetCurrentContext();
-    restore_dc = pwglGetCurrentDC();
+    restore_ctx = wglGetCurrentContext();
+    restore_dc = wglGetCurrentDC();
     restore_pf = GetPixelFormat(restore_dc);
 
     if (context->valid && restore_ctx != context->glCtx)
@@ -984,14 +984,14 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
     {
         context_restore_gl_context(gl_info, restore_dc, restore_ctx, restore_pf);
     }
-    else if (pwglGetCurrentContext() && !pwglMakeCurrent(NULL, NULL))
+    else if (wglGetCurrentContext() && !wglMakeCurrent(NULL, NULL))
     {
         ERR("Failed to disable GL context.\n");
     }
 
     ReleaseDC(context->win_handle, context->hdc);
 
-    if (!pwglDeleteContext(context->glCtx))
+    if (!wglDeleteContext(context->glCtx))
     {
         DWORD err = GetLastError();
         ERR("wglDeleteContext(%p) failed, last error %#x.\n", context->glCtx, err);
@@ -1052,10 +1052,10 @@ BOOL context_set_current(struct wined3d_context *ctx)
             return FALSE;
         ctx->current = 1;
     }
-    else if(pwglGetCurrentContext())
+    else if(wglGetCurrentContext())
     {
         TRACE("Clearing current D3D context.\n");
-        if (!pwglMakeCurrent(NULL, NULL))
+        if (!wglMakeCurrent(NULL, NULL))
         {
             DWORD err = GetLastError();
             ERR("Failed to clear current GL context, last error %#x.\n", err);
@@ -1095,14 +1095,14 @@ static void context_enter(struct wined3d_context *context)
     if (!context->level++)
     {
         const struct wined3d_context *current_context = context_get_current();
-        HGLRC current_gl = pwglGetCurrentContext();
+        HGLRC current_gl = wglGetCurrentContext();
 
         if (current_gl && (!current_context || current_context->glCtx != current_gl))
         {
             TRACE("Another GL context (%p on device context %p) is already current.\n",
-                    current_gl, pwglGetCurrentDC());
+                    current_gl, wglGetCurrentDC());
             context->restore_ctx = current_gl;
-            context->restore_dc = pwglGetCurrentDC();
+            context->restore_dc = wglGetCurrentDC();
             context->restore_pf = GetPixelFormat(context->restore_dc);
         }
     }
@@ -1380,7 +1380,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         goto out;
     }
 
-    if (!(ctx = pwglCreateContext(hdc)))
+    if (!(ctx = wglCreateContext(hdc)))
     {
         ERR("Failed to create a WGL context.\n");
         context_release(ret);
@@ -1389,12 +1389,12 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
 
     if (device->context_count)
     {
-        if (!pwglShareLists(device->contexts[0]->glCtx, ctx))
+        if (!wglShareLists(device->contexts[0]->glCtx, ctx))
         {
             ERR("wglShareLists(%p, %p) failed, last error %#x.\n",
                     device->contexts[0]->glCtx, ctx, GetLastError());
             context_release(ret);
-            if (!pwglDeleteContext(ctx))
+            if (!wglDeleteContext(ctx))
                 ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx, GetLastError());
             goto out;
         }
@@ -1404,7 +1404,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     {
         ERR("Failed to add the newly created context to the context list\n");
         context_release(ret);
-        if (!pwglDeleteContext(ctx))
+        if (!wglDeleteContext(ctx))
             ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx, GetLastError());
         goto out;
     }
@@ -1439,7 +1439,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         ERR("Cannot activate context to set up defaults.\n");
         device_context_remove(device, ret);
         context_release(ret);
-        if (!pwglDeleteContext(ctx))
+        if (!wglDeleteContext(ctx))
             ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx, GetLastError());
         goto out;
     }

@@ -31,24 +31,6 @@
 void (WINE_GLAPI *glDisableWINE)(GLenum cap) DECLSPEC_HIDDEN;
 void (WINE_GLAPI *glEnableWINE)(GLenum cap) DECLSPEC_HIDDEN;
 
-/* WGL functions */
-HGLRC (WINAPI *pwglCreateContext)(HDC) DECLSPEC_HIDDEN;
-BOOL (WINAPI *pwglDeleteContext)(HGLRC) DECLSPEC_HIDDEN;
-HGLRC (WINAPI *pwglGetCurrentContext)(void) DECLSPEC_HIDDEN;
-HDC (WINAPI *pwglGetCurrentDC)(void) DECLSPEC_HIDDEN;
-PROC (WINAPI *pwglGetProcAddress)(LPCSTR) DECLSPEC_HIDDEN;
-BOOL (WINAPI *pwglMakeCurrent)(HDC, HGLRC) DECLSPEC_HIDDEN;
-BOOL (WINAPI *pwglShareLists)(HGLRC, HGLRC) DECLSPEC_HIDDEN;
-
-#define WGL_FUNCS_GEN \
-    USE_WGL_FUNC(wglCreateContext) \
-    USE_WGL_FUNC(wglDeleteContext) \
-    USE_WGL_FUNC(wglGetCurrentContext) \
-    USE_WGL_FUNC(wglGetCurrentDC) \
-    USE_WGL_FUNC(wglGetProcAddress) \
-    USE_WGL_FUNC(wglMakeCurrent) \
-    USE_WGL_FUNC(wglShareLists)
-
 /* OpenGL extensions. */
 enum wined3d_gl_extension
 {

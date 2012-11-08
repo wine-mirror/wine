@@ -277,10 +277,10 @@ static void WineD3D_ReleaseFakeGLContext(const struct wined3d_fake_gl_ctx *ctx)
 {
     TRACE("Destroying fake GL context.\n");
 
-    if (!pwglMakeCurrent(NULL, NULL))
+    if (!wglMakeCurrent(NULL, NULL))
         ERR("Failed to disable fake GL context.\n");
 
-    if (!pwglDeleteContext(ctx->gl_ctx))
+    if (!wglDeleteContext(ctx->gl_ctx))
     {
         DWORD err = GetLastError();
         ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx->gl_ctx, err);
@@ -289,7 +289,7 @@ static void WineD3D_ReleaseFakeGLContext(const struct wined3d_fake_gl_ctx *ctx)
     ReleaseDC(ctx->wnd, ctx->dc);
     DestroyWindow(ctx->wnd);
 
-    if (ctx->restore_gl_ctx && !pwglMakeCurrent(ctx->restore_dc, ctx->restore_gl_ctx))
+    if (ctx->restore_gl_ctx && !wglMakeCurrent(ctx->restore_dc, ctx->restore_gl_ctx))
         ERR("Failed to restore previous GL context.\n");
 }
 
@@ -301,8 +301,8 @@ static BOOL WineD3D_CreateFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
 
     TRACE("getting context...\n");
 
-    ctx->restore_dc = pwglGetCurrentDC();
-    ctx->restore_gl_ctx = pwglGetCurrentContext();
+    ctx->restore_dc = wglGetCurrentDC();
+    ctx->restore_gl_ctx = wglGetCurrentContext();
 
     /* We need a fake window as a hdc retrieved using GetDC(0) can't be used for much GL purposes. */
     ctx->wnd = CreateWindowA(WINED3D_OPENGL_WINDOW_CLASS_NAME, "WineD3D fake window",
@@ -339,14 +339,14 @@ static BOOL WineD3D_CreateFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
     SetPixelFormat(ctx->dc, iPixelFormat, &pfd);
 
     /* Create a GL context. */
-    if (!(ctx->gl_ctx = pwglCreateContext(ctx->dc)))
+    if (!(ctx->gl_ctx = wglCreateContext(ctx->dc)))
     {
         WARN("Failed to create default context for capabilities initialization.\n");
         goto fail;
     }
 
     /* Make it the current GL context. */
-    if (!pwglMakeCurrent(ctx->dc, ctx->gl_ctx))
+    if (!wglMakeCurrent(ctx->dc, ctx->gl_ctx))
     {
         ERR("Failed to make fake GL context current.\n");
         goto fail;
@@ -355,13 +355,13 @@ static BOOL WineD3D_CreateFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
     return TRUE;
 
 fail:
-    if (ctx->gl_ctx) pwglDeleteContext(ctx->gl_ctx);
+    if (ctx->gl_ctx) wglDeleteContext(ctx->gl_ctx);
     ctx->gl_ctx = NULL;
     if (ctx->dc) ReleaseDC(ctx->wnd, ctx->dc);
     ctx->dc = NULL;
     if (ctx->wnd) DestroyWindow(ctx->wnd);
     ctx->wnd = NULL;
-    if (ctx->restore_gl_ctx && !pwglMakeCurrent(ctx->restore_dc, ctx->restore_gl_ctx))
+    if (ctx->restore_gl_ctx && !wglMakeCurrent(ctx->restore_dc, ctx->restore_gl_ctx))
         ERR("Failed to restore previous GL context.\n");
 
     return FALSE;
@@ -2363,7 +2363,7 @@ static void parse_extension_string(struct wined3d_gl_info *gl_info, const char *
 
 static void load_gl_funcs(struct wined3d_gl_info *gl_info)
 {
-#define USE_GL_FUNC(pfn) gl_info->gl_ops.ext.p_##pfn = (void *)pwglGetProcAddress(#pfn);
+#define USE_GL_FUNC(pfn) gl_info->gl_ops.ext.p_##pfn = (void *)wglGetProcAddress(#pfn);
     GL_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
 
@@ -2652,7 +2652,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     /* Now work out what GL support this card really has. */
     load_gl_funcs( gl_info );
 
-    hdc = pwglGetCurrentDC();
+    hdc = wglGetCurrentDC();
     /* Not all GL drivers might offer WGL extensions e.g. VirtualBox. */
     if (GL_EXTCALL(wglGetExtensionsStringARB))
         WGL_Extensions = (const char *)GL_EXTCALL(wglGetExtensionsStringARB(hdc));
@@ -5436,7 +5436,6 @@ static BOOL InitAdapters(struct wined3d *wined3d)
 {
     struct wined3d_adapter *adapter = &wined3d->adapters[0];
     struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    static HMODULE mod_gl;
     BOOL ret;
     int ps_selected_mode, vs_selected_mode;
 
@@ -5446,24 +5445,14 @@ static BOOL InitAdapters(struct wined3d *wined3d)
 
     TRACE("Initializing adapters\n");
 
-    if(!mod_gl) {
-        mod_gl = LoadLibraryA("opengl32.dll");
-        if(!mod_gl) {
-            ERR("Can't load opengl32.dll!\n");
-            goto nogl_adapter;
-        }
-    }
-
-/* Load WGL core functions from opengl32.dll */
-#define USE_WGL_FUNC(pfn) p##pfn = (void*)GetProcAddress(mod_gl, #pfn);
-    WGL_FUNCS_GEN;
-#undef USE_WGL_FUNC
-
 /* Dynamically load all GL core functions */
 #ifdef USE_WIN32_OPENGL
+    {
+        HMODULE mod_gl = GetModuleHandleA("opengl32.dll");
 #define USE_GL_FUNC(f) gl_info->gl_ops.gl.p_##f = (void *)GetProcAddress(mod_gl, #f);
-    ALL_WGL_FUNCS
+        ALL_WGL_FUNCS
 #undef USE_GL_FUNC
+    }
 #else
     /* To bypass the opengl32 thunks retrieve functions from the WGL driver instead of opengl32 */
     {
