@@ -616,7 +616,7 @@ DECLARE_INTERFACE_(IDirect3DTexture2,IUnknown)
     /*** IDirect3DTexture2 methods ***/
     STDMETHOD(GetHandle)(THIS_ LPDIRECT3DDEVICE2 lpDirect3DDevice2, LPD3DTEXTUREHANDLE lpHandle) PURE;
     STDMETHOD(PaletteChanged)(THIS_ DWORD dwStart, DWORD dwCount) PURE;
-    STDMETHOD(Load)(THIS_ LPDIRECT3DTEXTURE2 lpD3DTexture2) PURE;
+    STDMETHOD(Load)(THIS_ IDirect3DTexture2 *texture) PURE;
 };
 #undef INTERFACE
 
@@ -1026,7 +1026,7 @@ DECLARE_INTERFACE_(IDirect3DDevice2,IUnknown)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3DDevice2 methods ***/
     STDMETHOD(GetCaps)(THIS_ LPD3DDEVICEDESC lpD3DHWDevDesc, LPD3DDEVICEDESC lpD3DHELDevDesc) PURE;
-    STDMETHOD(SwapTextureHandles)(THIS_ LPDIRECT3DTEXTURE2 lpD3DTex1, LPDIRECT3DTEXTURE2 lpD3DTex2) PURE;
+    STDMETHOD(SwapTextureHandles)(THIS_ IDirect3DTexture2 *tex1, IDirect3DTexture2 *tex2) PURE;
     STDMETHOD(GetStats)(THIS_ LPD3DSTATS lpD3DStats) PURE;
     STDMETHOD(AddViewport)(THIS_ LPDIRECT3DVIEWPORT2 lpDirect3DViewport2) PURE;
     STDMETHOD(DeleteViewport)(THIS_ LPDIRECT3DVIEWPORT2 lpDirect3DViewport2) PURE;
@@ -1181,8 +1181,8 @@ DECLARE_INTERFACE_(IDirect3DDevice3,IUnknown)
     STDMETHOD(DrawIndexedPrimitiveVB)(THIS_ D3DPRIMITIVETYPE primitive_type, struct IDirect3DVertexBuffer *vb,
             WORD *indices, DWORD index_count, DWORD flags) PURE;
     STDMETHOD(ComputeSphereVisibility)(THIS_ LPD3DVECTOR lpCenters,LPD3DVALUE lpRadii,DWORD dwNumSpheres,DWORD dwFlags,LPDWORD lpdwReturnValues) PURE;
-    STDMETHOD(GetTexture)(THIS_ DWORD dwStage,LPDIRECT3DTEXTURE2 *lplpTexture2) PURE;
-    STDMETHOD(SetTexture)(THIS_ DWORD dwStage,LPDIRECT3DTEXTURE2 lpTexture2) PURE;
+    STDMETHOD(GetTexture)(THIS_ DWORD stage, IDirect3DTexture2 **texture) PURE;
+    STDMETHOD(SetTexture)(THIS_ DWORD stage, IDirect3DTexture2 *texture) PURE;
     STDMETHOD(GetTextureStageState)(THIS_ DWORD dwStage,D3DTEXTURESTAGESTATETYPE d3dTexStageStateType,LPDWORD lpdwState) PURE;
     STDMETHOD(SetTextureStageState)(THIS_ DWORD dwStage,D3DTEXTURESTAGESTATETYPE d3dTexStageStateType,DWORD dwState) PURE;
     STDMETHOD(ValidateDevice)(THIS_ LPDWORD lpdwPasses) PURE;
