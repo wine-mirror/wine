@@ -47,8 +47,6 @@ static HMODULE opengl32_handle;
 
 extern struct opengl_funcs null_opengl_funcs;
 
-const GLubyte * WINAPI wine_glGetString( GLenum name );
-
 /* handle management */
 
 #define MAX_WGL_HANDLES 1024
@@ -691,7 +689,7 @@ static int compar(const void *elt_a, const void *elt_b) {
 static BOOL is_extension_supported(const char* extension)
 {
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    const char *gl_ext_string = (const char*)wine_glGetString(GL_EXTENSIONS);
+    const char *gl_ext_string = (const char*)glGetString(GL_EXTENSIONS);
 
     TRACE("Checking for extension '%s'\n", extension);
 
@@ -1624,7 +1622,7 @@ BOOL WINAPI wglUseFontOutlinesW(HDC hdc,
 /***********************************************************************
  *              glDebugEntry (OPENGL32.@)
  */
-GLint WINAPI wine_glDebugEntry( GLint unknown1, GLint unknown2 )
+GLint WINAPI glDebugEntry( GLint unknown1, GLint unknown2 )
 {
     return 0;
 }
@@ -1692,7 +1690,7 @@ static GLubyte *filter_extensions( const char *extensions )
 /***********************************************************************
  *              glGetString (OPENGL32.@)
  */
-const GLubyte * WINAPI wine_glGetString( GLenum name )
+const GLubyte * WINAPI glGetString( GLenum name )
 {
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     const GLubyte *ret = funcs->gl.p_glGetString( name );

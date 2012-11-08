@@ -257,7 +257,7 @@ sub GenerateThunk($$$$)
 	$ret = "$ret *              $name (OPENGL32.\@)\n";
 	$ret = "$ret */\n";
     }
-    $ret = $ret . ConvertType($func_ref->[0]) . " WINAPI wine_$name( ";
+    $ret = $ret . ConvertType($func_ref->[0]) . " WINAPI $name( ";
     for (my $i = 0; $i < @{$func_ref->[1]}; $i++) {
 	## Quick debug code :-)
 	## print $func_ref->[1]->[$i]->[1] . "\n";
@@ -372,13 +372,6 @@ sub get_func_proto($$$)
     $ret .= "void" unless @{$func->[1]};
     $ret .= ")";
     return $ret;
-}
-
-sub get_func_link_name($$)
-{
-    my ($name, $func) = @_;
-    return $name if ($func->[2] =~ /^WGL_/);
-    return "wine_$name";
 }
 
 #
@@ -885,44 +878,45 @@ close HEADER;
 open(SPEC, ">$spec_file");
 
 foreach (sort keys %norm_functions) {
-    print SPEC "@  stdcall $_( ";
+    my $args=" ";
     for (my $i = 0; $i < @{$norm_functions{$_}->[1]}; $i++) {
 	my $type = $norm_functions{$_}->[1]->[$i]->[0];
 	if ($type =~ /\*/) {
-	    print SPEC "ptr ";
+	    $args .= "ptr ";
 	} elsif (defined($arg_conv{$type})) {
-	    print SPEC "$@$arg_conv{$type}[0] ";
+	    $args .= "$@$arg_conv{$type}[0] ";
 	} else {
 	    die "No conversion for GL type $type...\n";
 	}
     }
-    print SPEC ") wine_$_\n";
+    $args = substr($args,1,-1);
+    print SPEC "@ stdcall $_($args)\n";
 }
 
-print SPEC "@  stdcall wglChoosePixelFormat(long ptr)
-@  stdcall wglCopyContext(long long long)
-@  stdcall wglCreateContext(long)
-@  stdcall wglCreateLayerContext(long long)
-@  stdcall wglDeleteContext(long)
-@  stdcall wglDescribeLayerPlane(long long long long ptr)
-@  stdcall wglDescribePixelFormat(long long long ptr)
-@  stdcall wglGetCurrentContext()
-@  stdcall wglGetCurrentDC()
-@  stub    wglGetDefaultProcAddress
-@  stdcall wglGetLayerPaletteEntries(long long long long ptr)
-@  stdcall wglGetPixelFormat(long)
-@  stdcall wglGetProcAddress(str)
-@  stdcall wglMakeCurrent(long long)
-@  stdcall wglRealizeLayerPalette(long long long)
-@  stdcall wglSetLayerPaletteEntries(long long long long ptr)
-@  stdcall wglSetPixelFormat(long long ptr)
-@  stdcall wglShareLists(long long)
-@  stdcall wglSwapBuffers(long)
-@  stdcall wglSwapLayerBuffers(long long)
-@  stdcall wglUseFontBitmapsA(long long long long)
-@  stdcall wglUseFontBitmapsW(long long long long)
-@  stdcall wglUseFontOutlinesA(long long long long long long long ptr)
-@  stdcall wglUseFontOutlinesW(long long long long long long long ptr)
+print SPEC "@ stdcall wglChoosePixelFormat(long ptr)
+@ stdcall wglCopyContext(long long long)
+@ stdcall wglCreateContext(long)
+@ stdcall wglCreateLayerContext(long long)
+@ stdcall wglDeleteContext(long)
+@ stdcall wglDescribeLayerPlane(long long long long ptr)
+@ stdcall wglDescribePixelFormat(long long long ptr)
+@ stdcall wglGetCurrentContext()
+@ stdcall wglGetCurrentDC()
+@ stub    wglGetDefaultProcAddress
+@ stdcall wglGetLayerPaletteEntries(long long long long ptr)
+@ stdcall wglGetPixelFormat(long)
+@ stdcall wglGetProcAddress(str)
+@ stdcall wglMakeCurrent(long long)
+@ stdcall wglRealizeLayerPalette(long long long)
+@ stdcall wglSetLayerPaletteEntries(long long long long ptr)
+@ stdcall wglSetPixelFormat(long long ptr)
+@ stdcall wglShareLists(long long)
+@ stdcall wglSwapBuffers(long)
+@ stdcall wglSwapLayerBuffers(long long)
+@ stdcall wglUseFontBitmapsA(long long long long)
+@ stdcall wglUseFontBitmapsW(long long long long)
+@ stdcall wglUseFontOutlinesA(long long long long long long long ptr)
+@ stdcall wglUseFontOutlinesW(long long long long long long long ptr)
 ";
 
 close(SPEC);
@@ -1005,8 +999,7 @@ print EXT "\nconst OpenGL_extension extension_registry[$count] = {\n";
 my $i = 0;
 foreach (sort keys %ext_functions) {
     my $func_ref = $ext_functions{$_};
-    my $link_name = get_func_link_name( $_, $func_ref );
-    print EXT "  { \"$_\", \"$func_ref->[2]\", $link_name }";
+    print EXT "  { \"$_\", \"$func_ref->[2]\", $_ }";
     if ($i != $count-1) {
 	print EXT ",";
     }
