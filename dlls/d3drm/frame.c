@@ -2702,7 +2702,10 @@ HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown* parent, IUnknown** ret_ifa
 
         hr = IDirect3DRMFrame_QueryInterface(parent, &IID_IDirect3DRMFrame3, (void**)&p);
         if (hr != S_OK)
+        {
+            HeapFree(GetProcessHeap(), 0, object);
             return hr;
+        }
         IDirect3DRMFrame_Release(parent);
         IDirect3DRMFrame3_AddChild(p, &object->IDirect3DRMFrame3_iface);
     }
