@@ -69,6 +69,17 @@ typedef struct {
     codecvt_base base;
 } codecvt_char;
 
+typedef struct {
+    LCID handle;
+    unsigned page;
+} _Cvtvec;
+
+/* class codecvt<wchar> */
+typedef struct {
+    codecvt_base base;
+    _Cvtvec cvt;
+} codecvt_wchar;
+
 typedef enum {
     FMTFLAG_skipws      = 0x0001,
     FMTFLAG_unitbuf     = 0x0002,
@@ -196,6 +207,26 @@ typedef struct {
 
 typedef struct {
     basic_streambuf_char base;
+    codecvt_char *cvt;
+    char putback;
+    MSVCP_bool wrotesome;
+    int state;
+    MSVCP_bool close;
+    FILE *file;
+} basic_filebuf_char;
+
+typedef struct {
+    basic_streambuf_wchar base;
+    codecvt_wchar *cvt;
+    wchar_t putback;
+    MSVCP_bool wrotesome;
+    int state;
+    MSVCP_bool close;
+    FILE *file;
+} basic_filebuf_wchar;
+
+typedef struct {
+    basic_streambuf_char base;
     char *seekhigh;
     int state;
     char allocator; /* empty struct */
@@ -267,6 +298,52 @@ typedef struct {
      * basic_ios_wchar basic_ios;
      */
 } basic_iostream_wchar;
+
+typedef struct {
+    basic_ostream_char base;
+    basic_filebuf_char filebuf;
+    /* virtual inheritance
+     * basic_ios_char basic_ios;
+     */
+} basic_ofstream_char;
+
+typedef struct {
+    basic_ostream_wchar base;
+    basic_filebuf_wchar filebuf;
+    /* virtual inheritance
+     * basic_ios_wchar basic_ios;
+     */
+} basic_ofstream_wchar;
+
+typedef struct {
+    basic_istream_char base;
+    basic_filebuf_char filebuf;
+    /* virtual inheritance
+     * basic_ios_char basic_ios;
+     */
+} basic_ifstream_char;
+
+typedef struct {
+    basic_istream_wchar base;
+    basic_filebuf_wchar filebuf;
+    /* virtual inheritance
+     * basic_ios_wchar basic_ios;
+     */
+} basic_ifstream_wchar;
+
+typedef struct {
+    basic_iostream_char base;
+    basic_filebuf_char filebuf;
+    /* virtual inheritance */
+    basic_ios_char basic_ios; /* here to reserve correct stack size */
+} basic_fstream_char;
+
+typedef struct {
+    basic_iostream_wchar base;
+    basic_filebuf_wchar filebuf;
+    /* virtual inheritance */
+    basic_ios_wchar basic_ios; /* here to reserve correct stack size */
+} basic_fstream_wchar;
 
 typedef struct {
     basic_ostream_char base;
@@ -356,6 +433,13 @@ static basic_stringstream_wchar* (*__thiscall p_basic_stringstream_wchar_ctor_st
 static basic_string_wchar* (*__thiscall p_basic_stringstream_wchar_str_get)(const basic_stringstream_wchar*, basic_string_wchar*);
 static void (*__thiscall p_basic_stringstream_wchar_vbase_dtor)(basic_stringstream_wchar*);
 
+/* fstream */
+static basic_fstream_char* (*__thiscall p_basic_fstream_char_ctor_name)(basic_fstream_char*, const char*, int, int, MSVCP_bool);
+static void (*__thiscall p_basic_fstream_char_vbase_dtor)(basic_fstream_char*);
+
+static basic_fstream_wchar* (*__thiscall p_basic_fstream_wchar_ctor_name)(basic_fstream_wchar*, const char*, int, int, MSVCP_bool);
+static void (*__thiscall p_basic_fstream_wchar_vbase_dtor)(basic_fstream_wchar*);
+
 /* istream */
 static basic_istream_char* (*__thiscall p_basic_istream_char_read_uint64)(basic_istream_char*, unsigned __int64*);
 static basic_istream_char* (*__thiscall p_basic_istream_char_read_double)(basic_istream_char*, double*);
@@ -423,12 +507,15 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
 
 static inline const char* debugstr_longlong(ULONGLONG ll)
 {
-    static char string[17];
+    /* return a different string if called up to 4 times in the same ok() */
+    static char string[4][17];
+    static int which;
+
     if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
-        sprintf(string, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll);
+        sprintf(string[which & 3], "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll);
     else
-        sprintf(string, "%lx", (unsigned long)ll);
-    return string;
+        sprintf(string[which & 3], "%lx", (unsigned long)ll);
+    return string[which++ & 3];
 }
 
 /* Emulate a __thiscall */
@@ -542,6 +629,16 @@ static BOOL init(void)
         SET(p_basic_stringstream_wchar_vbase_dtor,
             "??_D?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXXZ");
 
+        SET(p_basic_fstream_char_ctor_name,
+            "??0?$basic_fstream@DU?$char_traits@D@std@@@std@@QEAA@PEBDHH@Z");
+        SET(p_basic_fstream_char_vbase_dtor,
+            "??_D?$basic_fstream@DU?$char_traits@D@std@@@std@@QEAAXXZ");
+
+        SET(p_basic_fstream_wchar_ctor_name,
+            "??0?$basic_fstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEBDHH@Z");
+        SET(p_basic_fstream_wchar_vbase_dtor,
+            "??_D?$basic_fstream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ");
+
         SET(p_basic_istream_char_read_uint64,
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEA_K@Z");
         SET(p_basic_istream_char_read_double,
@@ -641,6 +738,16 @@ static BOOL init(void)
             "?str@?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ");
         SET(p_basic_stringstream_wchar_vbase_dtor,
             "??_D?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXXZ");
+
+        SET(p_basic_fstream_char_ctor_name,
+            "??0?$basic_fstream@DU?$char_traits@D@std@@@std@@QAE@PBDHH@Z");
+        SET(p_basic_fstream_char_vbase_dtor,
+            "??_D?$basic_fstream@DU?$char_traits@D@std@@@std@@QAEXXZ");
+
+        SET(p_basic_fstream_wchar_ctor_name,
+            "??0?$basic_fstream@_WU?$char_traits@_W@std@@@std@@QAE@PBDHH@Z");
+        SET(p_basic_fstream_wchar_vbase_dtor,
+            "??_D?$basic_fstream@_WU?$char_traits@_W@std@@@std@@QAEXXZ");
 
         SET(p_basic_istream_char_read_uint64,
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AA_K@Z");
@@ -1470,37 +1577,44 @@ static void test_istream_tellg(void)
 {
     basic_stringstream_wchar wss;
     basic_stringstream_char ss;
+    basic_fstream_wchar wfs;
+    basic_fstream_char fs;
     basic_string_wchar wstr;
     basic_string_char str;
     fpos_int spos, tpos, *rpos;
     wchar_t wide[64];
+    FILE *file;
     int i;
+
+    const char *testfile = "file.txt";
 
     struct _test_istream_tellg_fpos {
         const char  *str;
         streamoff    seekoff;
-        streamoff    telloff;
+        streamoff    telloff_ss; /* offset for stringstream */
+        streamoff    telloff_fs; /* offset for fstream */
+        __int64      tellpos;
     } tests[] = {
         /* empty strings */
-        { "", -1, -1 }, /* tellg on defaults */
-        { "",  0, -1 }, /* tellg after seek 0 */
-        { "", 42, -1 }, /* tellg after seek beyond end */
-        { "", -6, -1 }, /* tellg after seek beyond beg */
+        { "", -1, -1,  0,  0 }, /* tellg on defaults */
+        { "",  0, -1,  0,  0 }, /* tellg after seek 0 */
+        { "", 42, -1,  0, 42 }, /* tellg after seek beyond end */
+        { "", -6, -1, -1,  0 }, /* tellg after seek beyond beg */
 
         /* non-empty strings */
-        { "ABCDEFGHIJ", -1,  0 },
-        { "ABCDEFGHIJ",  3,  3 },
-        { "ABCDEFGHIJ", 42, -1 },
-        { "ABCDEFGHIJ", -6, -1 }
+        { "ABCDEFGHIJ", -1,  0,  0,  0 },
+        { "ABCDEFGHIJ",  3,  3,  0,  3 },
+        { "ABCDEFGHIJ", 42, -1,  0, 42 },
+        { "ABCDEFGHIJ", -6, -1, -1,  0 }
     };
 
     for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
-        /* char version */
+        /* stringstream<char> version */
         call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
         call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
 
         spos.off   = tests[i].seekoff;
-        spos.pos   = 0; /* FIXME: a later patch will test this with filebuf */
+        spos.pos   = 0;
         spos.state = 0;
 
         tpos.off   = 0xdeadbeef;
@@ -1511,8 +1625,8 @@ static void test_istream_tellg(void)
             call_func2_ptr_fpos(p_basic_istream_char_seekg_fpos, &ss.base.base1, spos);
         rpos = (fpos_int *)call_func2(p_basic_istream_char_tellg, &ss.base.base1, &tpos);
 
-        ok(tests[i].telloff == tpos.off, "wrong offset, expected = %ld found = %ld\n", tests[i].telloff, tpos.off);
-        if (tests[i].telloff != -1 && spos.off != -1) /* check if tell == seek but only if not hit EOF */
+        ok(tests[i].telloff_ss == tpos.off, "wrong offset, expected = %ld found = %ld\n", tests[i].telloff_ss, tpos.off);
+        if (tests[i].telloff_ss != -1 && spos.off != -1) /* check if tell == seek but only if not hit EOF */
             ok(spos.off == tpos.off, "tell doesn't match seek, seek = %ld tell = %ld\n", spos.off, tpos.off);
         ok(rpos == &tpos, "wrong return fpos, expected = %p found = %p\n", rpos, &tpos);
         ok(tpos.pos == 0, "wrong position, expected = 0 found = %s\n", debugstr_longlong(tpos.pos));
@@ -1521,7 +1635,7 @@ static void test_istream_tellg(void)
         call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
         call_func1(p_basic_string_char_dtor, &str);
 
-        /* wchar_t version */
+        /* stringstream<wchar_t> version */
         AtoW(wide, tests[i].str, strlen(tests[i].str));
         call_func2(p_basic_string_wchar_ctor_cstr, &wstr, wide);
         call_func4(p_basic_stringstream_wchar_ctor_str, &wss, &wstr, OPENMODE_out|OPENMODE_in, TRUE);
@@ -1538,8 +1652,8 @@ static void test_istream_tellg(void)
             call_func2_ptr_fpos(p_basic_istream_wchar_seekg_fpos, &wss.base.base1, spos);
         rpos = (fpos_int *)call_func2(p_basic_istream_wchar_tellg, &wss.base.base1, &tpos);
 
-        ok(tests[i].telloff == tpos.off, "wrong offset, expected = %ld found = %ld\n", tests[i].telloff, tpos.off);
-        if (tests[i].telloff != -1 && spos.off != -1) /* check if tell == seek but only if not hit EOF */
+        ok(tests[i].telloff_ss == tpos.off, "wrong offset, expected = %ld found = %ld\n", tests[i].telloff_ss, tpos.off);
+        if (tests[i].telloff_ss != -1 && spos.off != -1) /* check if tell == seek but only if not hit EOF */
             ok(spos.off == tpos.off, "tell doesn't match seek, seek = %ld tell = %ld\n", spos.off, tpos.off);
         ok(rpos == &tpos, "wrong return fpos, expected = %p found = %p\n", rpos, &tpos);
         ok(tpos.pos == 0, "wrong position, expected = 0 found = %s\n", debugstr_longlong(tpos.pos));
@@ -1547,6 +1661,59 @@ static void test_istream_tellg(void)
 
         call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
         call_func1(p_basic_string_wchar_dtor, &wstr);
+
+        /* filebuf */
+        file = fopen(testfile, "wt");
+        fprintf(file, tests[i].str);
+        fclose(file);
+
+        /* fstream<char> version */
+        call_func5(p_basic_fstream_char_ctor_name, &fs, testfile, OPENMODE_out|OPENMODE_in, SH_DENYNO, TRUE);
+
+        spos.off   = tests[i].seekoff;
+        spos.pos   = 0;
+        spos.state = 0;
+
+        tpos.off   = 0xdeadbeef;
+        tpos.pos   = 0xdeadbeef;
+        tpos.state = 0xdeadbeef;
+
+        if (tests[i].seekoff != -1) /* to test without seek */
+            call_func2_ptr_fpos(p_basic_istream_char_seekg_fpos, &fs.base.base1, spos);
+        rpos = (fpos_int *)call_func2(p_basic_istream_char_tellg, &fs.base.base1, &tpos);
+
+        ok(tests[i].tellpos == tpos.pos, "wrong filepos, expected = %s found = %s\n",
+            debugstr_longlong(tests[i].tellpos), debugstr_longlong(tpos.pos));
+        ok(rpos == &tpos, "wrong return fpos, expected = %p found = %p\n", rpos, &tpos);
+        ok(tpos.off == tests[i].telloff_fs, "wrong offset, expected %ld found %ld\n", tests[i].telloff_fs, tpos.off);
+        ok(tpos.state == 0, "wrong state, expected = 0 found = %d\n", tpos.state);
+
+        call_func1(p_basic_fstream_char_vbase_dtor, &fs);
+
+        /* fstream<wchar_t> version */
+        call_func5(p_basic_fstream_wchar_ctor_name, &wfs, testfile, OPENMODE_out|OPENMODE_in, SH_DENYNO, TRUE);
+
+        spos.off   = tests[i].seekoff;
+        spos.pos   = 0;
+        spos.state = 0;
+
+        tpos.off   = 0xdeadbeef;
+        tpos.pos   = 0xdeadbeef;
+        tpos.state = 0xdeadbeef;
+
+        if (tests[i].seekoff != -1) /* to test without seek */
+            call_func2_ptr_fpos(p_basic_istream_wchar_seekg_fpos, &wfs.base.base1, spos);
+        rpos = (fpos_int *)call_func2(p_basic_istream_wchar_tellg, &wfs.base.base1, &tpos);
+
+        ok(tests[i].tellpos == tpos.pos, "wrong filepos, expected = %s found = %s\n",
+            debugstr_longlong(tests[i].tellpos), debugstr_longlong(tpos.pos));
+        ok(rpos == &tpos, "wrong return fpos, expected = %p found = %p\n", rpos, &tpos);
+        ok(tpos.off == tests[i].telloff_fs, "wrong offset, expected %ld found %ld\n", tests[i].telloff_fs, tpos.off);
+        ok(tpos.state == 0, "wrong state, expected = 0 found = %d\n", tpos.state);
+
+        call_func1(p_basic_fstream_wchar_vbase_dtor, &wfs);
+
+        unlink(testfile);
     }
 }
 
