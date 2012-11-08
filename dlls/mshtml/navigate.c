@@ -2044,7 +2044,7 @@ static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
     return S_OK;
 }
 
-HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, const WCHAR *headers, BYTE *post_data, DWORD post_data_size)
+HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WCHAR *headers, BYTE *post_data, DWORD post_data_size)
 {
     nsChannelBSC *bsc;
     IUri *uri_nofrag;
@@ -2104,7 +2104,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, const WCHAR *headers,
         return hres;
     }
 
-    prepare_for_binding(&window->doc_obj->basedoc, mon, TRUE);
+    prepare_for_binding(&window->doc_obj->basedoc, mon, flags);
 
     hres = IUri_GetScheme(uri, &scheme);
     if(SUCCEEDED(hres) && scheme != URL_SCHEME_JAVASCRIPT) {
@@ -2234,7 +2234,7 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url, nsChannel *nschanne
 
     hres = CreateAsyncBindCtx(0, &callback->bsc.IBindStatusCallback_iface, NULL, &bindctx);
     if(SUCCEEDED(hres))
-        hres = CoCreateInstance(&CLSID_StdHlink, NULL, CLSCTX_INPROC_SERVER,
+       hres = CoCreateInstance(&CLSID_StdHlink, NULL, CLSCTX_INPROC_SERVER,
                 &IID_IHlink, (LPVOID*)&hlink);
 
     if(SUCCEEDED(hres))
@@ -2261,7 +2261,7 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url, nsChannel *nschanne
     return hres;
 }
 
-static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *display_uri)
+static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *display_uri, DWORD flags)
 {
     nsWineURI *nsuri;
     HRESULT hres;
@@ -2276,7 +2276,7 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
             return S_OK;
         }
 
-        return super_navigate(window, uri, NULL, NULL, 0);
+        return super_navigate(window, uri, flags, NULL, NULL, 0);
     }
 
     if(window->doc_obj && window == window->doc_obj->basedoc.window) {
@@ -2343,7 +2343,7 @@ HRESULT navigate_url(HTMLOuterWindow *window, const WCHAR *new_url, IUri *base_u
         }
     }
 
-    hres = navigate_uri(window, uri, display_uri);
+    hres = navigate_uri(window, uri, display_uri, BINDING_NAVIGATED);
 
     IUri_Release(uri);
     SysFreeString(display_uri);

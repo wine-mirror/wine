@@ -292,7 +292,7 @@ static void set_downloading_task_destr(task_t *_task)
     heap_free(task);
 }
 
-void prepare_for_binding(HTMLDocument *This, IMoniker *mon, BOOL navigated_binding)
+void prepare_for_binding(HTMLDocument *This, IMoniker *mon, DWORD flags)
 {
     HRESULT hres;
 
@@ -332,17 +332,17 @@ void prepare_for_binding(HTMLDocument *This, IMoniker *mon, BOOL navigated_bindi
         if(SUCCEEDED(hres)) {
             VARIANT var, out;
 
-            if(!navigated_binding) {
-                V_VT(&var) = VT_I4;
-                V_I4(&var) = 0;
-                IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
-            }else {
+            if(flags & BINDING_NAVIGATED) {
                 V_VT(&var) = VT_UNKNOWN;
                 V_UNKNOWN(&var) = (IUnknown*)&This->window->base.IHTMLWindow2_iface;
                 V_VT(&out) = VT_EMPTY;
                 hres = IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 63, 0, &var, &out);
                 if(SUCCEEDED(hres))
                     VariantClear(&out);
+            }else {
+                V_VT(&var) = VT_I4;
+                V_I4(&var) = 0;
+                IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
             }
 
             IOleCommandTarget_Release(cmdtrg);

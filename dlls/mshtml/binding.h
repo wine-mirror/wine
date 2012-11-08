@@ -98,6 +98,9 @@ typedef struct {
     WCHAR *data;
 } http_header_t;
 
+#define BINDING_NAVIGATED    0x0001
+#define BINDING_REPLACE      0x0002
+
 HRESULT set_http_header(struct list*,const WCHAR*,int,const WCHAR*,int) DECLSPEC_HIDDEN;
 HRESULT create_redirect_nschannel(const WCHAR*,nsChannel*,nsChannel**) DECLSPEC_HIDDEN;
 
@@ -106,8 +109,8 @@ HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsChannel*,DWORD,BOOL*) DECLS
 HRESULT create_doc_uri(HTMLOuterWindow*,const WCHAR*,nsWineURI**) DECLSPEC_HIDDEN;
 HRESULT load_nsuri(HTMLOuterWindow*,nsWineURI*,nsChannelBSC*,DWORD) DECLSPEC_HIDDEN;
 HRESULT set_moniker(HTMLDocument*,IMoniker*,IBindCtx*,nsChannelBSC*,BOOL) DECLSPEC_HIDDEN;
-void prepare_for_binding(HTMLDocument*,IMoniker*,BOOL) DECLSPEC_HIDDEN;
-HRESULT super_navigate(HTMLOuterWindow*,IUri*,const WCHAR*,BYTE*,DWORD) DECLSPEC_HIDDEN;
+void prepare_for_binding(HTMLDocument*,IMoniker*,DWORD) DECLSPEC_HIDDEN;
+HRESULT super_navigate(HTMLOuterWindow*,IUri*,DWORD,const WCHAR*,BYTE*,DWORD) DECLSPEC_HIDDEN;
 HRESULT navigate_new_window(HTMLOuterWindow*,IUri*,const WCHAR*,IHTMLWindow2**) DECLSPEC_HIDDEN;
 
 HRESULT create_channelbsc(IMoniker*,const WCHAR*,BYTE*,DWORD,BOOL,nsChannelBSC**) DECLSPEC_HIDDEN;
