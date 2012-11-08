@@ -4360,6 +4360,36 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
     return ret;
 }
 
+static void shader_glsl_generate_fog_code(struct wined3d_shader_buffer *buffer, enum fogmode mode)
+{
+    switch (mode)
+    {
+        case FOG_OFF:
+            return;
+
+        case FOG_LINEAR:
+            /* Fog = (gl_Fog.end - gl_FogFragCoord) / (gl_Fog.end - gl_Fog.start) */
+            shader_addline(buffer, "float Fog = (gl_Fog.end - gl_FogFragCoord) / (gl_Fog.end - gl_Fog.start);\n");
+            break;
+
+        case FOG_EXP:
+            /* Fog = e^-(gl_Fog.density * gl_FogFragCoord) */
+            shader_addline(buffer, "float Fog = exp(-gl_Fog.density * gl_FogFragCoord);\n");
+            break;
+
+        case FOG_EXP2:
+            /* Fog = e^-((gl_Fog.density * gl_FogFragCoord)^2) */
+            shader_addline(buffer, "float Fog = exp(-gl_Fog.density * gl_Fog.density * gl_FogFragCoord * gl_FogFragCoord);\n");
+            break;
+
+        default:
+            ERR("Invalid fog mode %#x.\n", mode);
+            return;
+    }
+
+    shader_addline(buffer, "gl_FragData[0].xyz = mix(gl_Fog.color.xyz, gl_FragData[0].xyz, clamp(Fog, 0.0, 1.0));\n");
+}
+
 /* GL locking is done by the caller */
 static void hardcode_local_constants(const struct wined3d_shader *shader,
         const struct wined3d_gl_info *gl_info, GLhandleARB programId, const char *prefix)
@@ -4435,36 +4465,10 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
         shader_addline(buffer, "gl_FragData[0].xyz = mix(tmp0.xyz, tmp1.xyz, vec3(srgb_compare));\n");
         shader_addline(buffer, "gl_FragData[0] = clamp(gl_FragData[0], 0.0, 1.0);\n");
     }
-    /* Pixel shader < 3.0 do not replace the fog stage.
-     * This implements linear fog computation and blending.
-     * TODO: non linear fog
-     * NOTE: gl_Fog.start and gl_Fog.end don't hold fog start s and end e but
-     * -1/(e-s) and e/(e-s) respectively.
-     */
+
+    /* SM < 3 does not replace the fog stage. */
     if (reg_maps->shader_version.major < 3)
-    {
-        switch(args->fog) {
-            case FOG_OFF: break;
-            case FOG_LINEAR:
-                shader_addline(buffer, "float fogstart = -1.0 / (gl_Fog.end - gl_Fog.start);\n");
-                shader_addline(buffer, "float fogend = gl_Fog.end * -fogstart;\n");
-                shader_addline(buffer, "float Fog = clamp(gl_FogFragCoord * fogstart + fogend, 0.0, 1.0);\n");
-                shader_addline(buffer, "gl_FragData[0].xyz = mix(gl_Fog.color.xyz, gl_FragData[0].xyz, Fog);\n");
-                break;
-            case FOG_EXP:
-                /* Fog = e^(-gl_Fog.density * gl_FogFragCoord) */
-                shader_addline(buffer, "float Fog = exp(-gl_Fog.density * gl_FogFragCoord);\n");
-                shader_addline(buffer, "Fog = clamp(Fog, 0.0, 1.0);\n");
-                shader_addline(buffer, "gl_FragData[0].xyz = mix(gl_Fog.color.xyz, gl_FragData[0].xyz, Fog);\n");
-                break;
-            case FOG_EXP2:
-                /* Fog = e^(-(gl_Fog.density * gl_FogFragCoord)^2) */
-                shader_addline(buffer, "float Fog = exp(-gl_Fog.density * gl_Fog.density * gl_FogFragCoord * gl_FogFragCoord);\n");
-                shader_addline(buffer, "Fog = clamp(Fog, 0.0, 1.0);\n");
-                shader_addline(buffer, "gl_FragData[0].xyz = mix(gl_Fog.color.xyz, gl_FragData[0].xyz, Fog);\n");
-                break;
-        }
-    }
+        shader_glsl_generate_fog_code(buffer, args->fog);
 
     shader_addline(buffer, "}\n");
 
