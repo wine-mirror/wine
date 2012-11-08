@@ -1949,6 +1949,7 @@ typedef struct {
     HTMLOuterWindow *window;
     nsChannelBSC *bscallback;
     IMoniker *mon;
+    IUri *uri;
 } navigate_task_t;
 
 static void navigate_proc(task_t *_task)
@@ -1959,6 +1960,7 @@ static void navigate_proc(task_t *_task)
     hres = set_moniker(&task->window->doc_obj->basedoc, task->mon, NULL, task->bscallback, TRUE);
     if(SUCCEEDED(hres)) {
         set_current_mon(task->window, task->bscallback->bsc.mon);
+        set_current_uri(task->window, task->uri);
         start_binding(task->window->pending_window, &task->bscallback->bsc, NULL);
     }
 }
@@ -1969,6 +1971,7 @@ static void navigate_task_destr(task_t *_task)
 
     IBindStatusCallback_Release(&task->bscallback->bsc.IBindStatusCallback_iface);
     IMoniker_Release(task->mon);
+    IUri_Release(task->uri);
     heap_free(task);
 }
 
@@ -2109,6 +2112,9 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, const WCHAR *headers,
         task->window = window;
         task->bscallback = bsc;
         task->mon = mon;
+
+        IUri_AddRef(uri);
+        task->uri = uri;
         hres = push_task(&task->header, navigate_proc, navigate_task_destr, window->task_magic);
     }else {
         navigate_javascript_task_t *task;
