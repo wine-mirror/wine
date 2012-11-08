@@ -220,32 +220,32 @@ baz@space@
 foo > foo
 <
 ffoof
-FOO=bar | baz
+WINE_FOO=bar | baz
 0
-FOO=bar ^| baz
+WINE_FOO=bar ^| baz
 bar | baz
 0
 ------------ Testing 'set' ------------
 1
 0
-FOOBAR not defined
+WINE_FOOBAR not defined
   baz
-FOOBAR =  baz
+WINE_FOOBAR =  baz
 0
   baz2
 0
  bar
-FOOBAR= bar
-FOOBAR =  baz2
-FOOBAR =  baz2
-FOOBAR not defined
+WINE_FOOBAR= bar
+WINE_FOOBAR =  baz2
+WINE_FOOBAR =  baz2
+WINE_FOOBAR not defined
 1
 bar
 foobar
-FOO not defined
-BAZ=bazbaz
+WINE_FOO not defined
+WINE_BAZ=bazbaz
 bazbaz
-set "FOO=bar" should not include the quotes in the variable value
+set "WINE_FOO=bar" should not include the quotes in the variable value
 bar
 foo
 ''
@@ -349,23 +349,23 @@ N
 ------------ Testing variable delayed expansion ------------
 --- default mode (load-time expansion)
 foo
-!FOO!
+!WINE_FOO!
 foo
 foo
 --- runtime (delayed) expansion mode
 foo
-@todo_wine@foo@or_broken@!FOO!
+@todo_wine@foo@or_broken@!WINE_FOO!
 foo
 @todo_wine@bar@or_broken@foo
 0
 0@or_broken@1
 foo
-!FOO!
+!WINE_FOO!
 --- using /V cmd flag
 foo
-@todo_wine@foo@or_broken@!FOO!
+@todo_wine@foo@or_broken@!WINE_FOO!
 foo
-!FOO!
+!WINE_FOO!
 ------------ Testing conditional execution ------------
 --- unconditional ampersand
 foo1
@@ -764,7 +764,7 @@ ErrorLevel 0
 @todo_wine@15
 ------ variables
 @todo_wine@3
-@todo_wine@3@or_broken@foo not defined
+@todo_wine@3@or_broken@WINE_foo not defined
 @todo_wine@3@or_broken@0
 @todo_wine@3@or_broken@0
 @todo_wine@3@or_broken@0
@@ -1011,7 +1011,7 @@ footype=foo_opencmd
 +++
 footype=foo_opencmd
 --- resetting association
-@todo_wine@original value@or_broken@buggyXP@or_broken@!FOO!
+@todo_wine@original value@or_broken@buggyXP@or_broken@!WINE_FOO!
 ------------ Testing CALL ------------
 --- external script
 foo@space@
