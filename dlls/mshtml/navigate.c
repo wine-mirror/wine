@@ -2119,7 +2119,8 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
 
         /* Silently and repeated when real loading starts? */
         window->readystate = READYSTATE_LOADING;
-        call_docview_84(window->doc_obj);
+        if(!(flags & BINDING_FROMHIST))
+            call_docview_84(window->doc_obj);
 
         task->window = window;
         task->bscallback = bsc;
@@ -2140,7 +2141,8 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
 
         /* Why silently? */
         window->readystate = READYSTATE_COMPLETE;
-        call_docview_84(window->doc_obj);
+        if(!(flags & BINDING_FROMHIST))
+            call_docview_84(window->doc_obj);
 
         IUri_AddRef(uri);
         task->window = window;
@@ -2298,6 +2300,20 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
 
     hres = load_nsuri(window, nsuri, NULL, LOAD_FLAGS_NONE);
     nsISupports_Release((nsISupports*)nsuri);
+    return hres;
+}
+
+HRESULT load_uri(HTMLOuterWindow *window, IUri *uri, DWORD flags)
+{
+    BSTR display_uri;
+    HRESULT hres;
+
+    hres = IUri_GetDisplayUri(uri, &display_uri);
+    if(FAILED(hres))
+        return hres;
+
+    hres = navigate_uri(window, uri, display_uri, flags);
+    SysFreeString(display_uri);
     return hres;
 }
 

@@ -48,6 +48,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 /* Undocumented notification, see tests */
 #define CMDID_EXPLORER_UPDATEHISTORY 38
 
+static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+
 typedef struct {
     task_t header;
     HTMLDocumentObj *doc;
@@ -339,7 +341,7 @@ void prepare_for_binding(HTMLDocument *This, IMoniker *mon, DWORD flags)
                 hres = IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 63, 0, &var, &out);
                 if(SUCCEEDED(hres))
                     VariantClear(&out);
-            }else {
+            }else if(!(flags & BINDING_FROMHIST)) {
                 V_VT(&var) = VT_I4;
                 V_I4(&var) = 0;
                 IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
@@ -810,8 +812,6 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM
     IMoniker *mon;
     HRESULT hres;
 
-    static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
-
     TRACE("(%p)->(%p)\n", This, pStm);
 
     hres = CreateURLMoniker(NULL, about_blankW, &mon);
@@ -868,8 +868,6 @@ static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
     HTMLDocument *This = impl_from_IPersistStreamInit(iface);
     IMoniker *mon;
     HRESULT hres;
-
-    static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
 
     TRACE("(%p)\n", This);
 
@@ -936,8 +934,56 @@ static HRESULT WINAPI PersistHistory_GetClassID(IPersistHistory *iface, CLSID *p
 static HRESULT WINAPI PersistHistory_LoadHistory(IPersistHistory *iface, IStream *pStream, IBindCtx *pbc)
 {
     HTMLDocument *This = impl_from_IPersistHistory(iface);
-    FIXME("(%p)->(%p %p)\n", This, pStream, pbc);
-    return E_NOTIMPL;
+    ULONG str_len, read;
+    WCHAR *uri_str;
+    IUri *uri;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %p)\n", This, pStream, pbc);
+
+    if(!This->window) {
+        FIXME("No current window\n");
+        return E_UNEXPECTED;
+    }
+
+    if(pbc)
+        FIXME("pbc not supported\n");
+
+    if(This->doc_obj->client) {
+        IOleCommandTarget *cmdtrg = NULL;
+
+        hres = IOleClientSite_QueryInterface(This->doc_obj->client, &IID_IOleCommandTarget,
+                (void**)&cmdtrg);
+        if(SUCCEEDED(hres)) {
+            IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 138, 0, NULL, NULL);
+            IOleCommandTarget_Release(cmdtrg);
+        }
+    }
+
+    hres = IStream_Read(pStream, &str_len, sizeof(str_len), &read);
+    if(FAILED(hres))
+        return hres;
+    if(read != sizeof(str_len))
+        return E_FAIL;
+
+    uri_str = heap_alloc((str_len+1)*sizeof(WCHAR));
+    if(!uri_str)
+        return E_OUTOFMEMORY;
+
+    hres = IStream_Read(pStream, uri_str, str_len*sizeof(WCHAR), &read);
+    if(SUCCEEDED(hres) && read != str_len*sizeof(WCHAR))
+        hres = E_FAIL;
+    if(SUCCEEDED(hres)) {
+        uri_str[str_len] = 0;
+        hres = CreateUri(uri_str, 0, 0, &uri);
+    }
+    heap_free(uri_str);
+    if(FAILED(hres))
+        return hres;
+
+    hres = load_uri(This->window, uri, BINDING_FROMHIST);
+    IUri_Release(uri);
+    return hres;
 }
 
 static HRESULT WINAPI PersistHistory_SaveHistory(IPersistHistory *iface, IStream *pStream)
