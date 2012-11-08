@@ -738,79 +738,50 @@ static BOOL is_extension_supported(const char* extension)
 /***********************************************************************
  *		wglGetProcAddress (OPENGL32.@)
  */
-PROC WINAPI wglGetProcAddress(LPCSTR lpszProc)
+PROC WINAPI wglGetProcAddress( LPCSTR name )
 {
-  struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-  void **func_ptr;
-  void *local_func;
-  OpenGL_extension  ext;
-  const OpenGL_extension *ext_ret;
-  struct wgl_handle *context = get_current_context_ptr();
+    struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    void **func_ptr;
+    OpenGL_extension  ext;
+    const OpenGL_extension *ext_ret;
 
-  TRACE("(%s)\n", lpszProc);
+    if (!name) return NULL;
 
-  if (lpszProc == NULL)
-    return NULL;
-
-  /* Without an active context opengl32 doesn't know to what
-   * driver it has to dispatch wglGetProcAddress.
-   */
-  if (!context)
-  {
-    WARN("No active WGL context found\n");
-    return NULL;
-  }
-
-  /* Search in the thunks to find the real name of the extension */
-  ext.name = lpszProc;
-  ext_ret = bsearch(&ext, extension_registry, extension_registry_size,
-                    sizeof(OpenGL_extension), compar);
-  if (!ext_ret)
-  {
-      WARN("Extension '%s' not defined in opengl32.dll's function table!\n", lpszProc);
-      return NULL;
-  }
-
-  func_ptr = (void **)&funcs->ext + (ext_ret - extension_registry);
-  if (!*func_ptr)
-  {
-    /* Check if the GL extension required by the function is available */
-    if(!is_extension_supported(ext_ret->extension)) {
-        WARN("Extension '%s' required by function '%s' not supported!\n", ext_ret->extension, lpszProc);
+    /* Without an active context opengl32 doesn't know to what
+     * driver it has to dispatch wglGetProcAddress.
+     */
+    if (!get_current_context_ptr())
+    {
+        WARN("No active WGL context found\n");
+        return NULL;
     }
 
-    local_func = context->funcs->wgl.p_wglGetProcAddress( ext_ret->name );
-
-    /* After that, look at the extensions defined in the Linux OpenGL library */
-    if (local_func == NULL) {
-      char buf[256];
-      void *ret = NULL;
-
-      /* Remove the last 3 letters (EXT, ARB, ...).
-
-	 I know that some extensions have more than 3 letters (MESA, NV,
-	 INTEL, ...), but this is only a stop-gap measure to fix buggy
-	 OpenGL drivers (moreover, it is only useful for old 1.0 apps
-	 that query the glBindTextureEXT extension).
-      */
-      memcpy(buf, ext_ret->name, strlen(ext_ret->name) - 3);
-      buf[strlen(ext_ret->name) - 3] = '\0';
-      TRACE("Extension not found in the Linux OpenGL library, checking against libGL bug with %s..\n", buf);
-
-      ret = GetProcAddress(opengl32_handle, buf);
-      if (ret != NULL) {
-        TRACE("Found function in main OpenGL library (%p)!\n", ret);
-      } else {
-        WARN("Did not find function %s (%s) in your OpenGL library!\n", lpszProc, ext_ret->name);
-      }
-
-      return ret;
+    ext.name = name;
+    ext_ret = bsearch(&ext, extension_registry, extension_registry_size, sizeof(ext), compar);
+    if (!ext_ret)
+    {
+        WARN("Function %s unknown\n", name);
+        return NULL;
     }
-    *func_ptr = local_func;
-  }
 
-  TRACE("returning function (%p)\n", ext_ret->func);
-  return ext_ret->func;
+    func_ptr = (void **)&funcs->ext + (ext_ret - extension_registry);
+    if (!*func_ptr)
+    {
+        void *driver_func = funcs->wgl.p_wglGetProcAddress( name );
+
+        if (!is_extension_supported(ext_ret->extension))
+            WARN("Extension %s required for %s not supported\n", ext_ret->extension, name);
+
+        if (driver_func == NULL)
+        {
+            WARN("Function %s not supported by driver\n", name);
+            return NULL;
+        }
+        *func_ptr = driver_func;
+    }
+
+    TRACE("returning %s -> %p\n", name, ext_ret->func);
+    return ext_ret->func;
 }
 
 /***********************************************************************
