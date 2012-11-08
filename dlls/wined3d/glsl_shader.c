@@ -4360,6 +4360,16 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
     return ret;
 }
 
+static void shader_glsl_generate_srgb_write_correction(struct wined3d_shader_buffer *buffer)
+{
+    shader_addline(buffer, "tmp0.xyz = pow(gl_FragData[0].xyz, vec3(srgb_const0.x));\n");
+    shader_addline(buffer, "tmp0.xyz = tmp0.xyz * vec3(srgb_const0.y) - vec3(srgb_const0.z);\n");
+    shader_addline(buffer, "tmp1.xyz = gl_FragData[0].xyz * vec3(srgb_const0.w);\n");
+    shader_addline(buffer, "bvec3 srgb_compare = lessThan(gl_FragData[0].xyz, vec3(srgb_const1.x));\n");
+    shader_addline(buffer, "gl_FragData[0].xyz = mix(tmp0.xyz, tmp1.xyz, vec3(srgb_compare));\n");
+    shader_addline(buffer, "gl_FragData[0] = clamp(gl_FragData[0], 0.0, 1.0);\n");
+}
+
 static void shader_glsl_generate_fog_code(struct wined3d_shader_buffer *buffer, enum fogmode mode)
 {
     switch (mode)
@@ -4457,14 +4467,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     }
 
     if (args->srgb_correction)
-    {
-        shader_addline(buffer, "tmp0.xyz = pow(gl_FragData[0].xyz, vec3(srgb_const0.x));\n");
-        shader_addline(buffer, "tmp0.xyz = tmp0.xyz * vec3(srgb_const0.y) - vec3(srgb_const0.z);\n");
-        shader_addline(buffer, "tmp1.xyz = gl_FragData[0].xyz * vec3(srgb_const0.w);\n");
-        shader_addline(buffer, "bvec3 srgb_compare = lessThan(gl_FragData[0].xyz, vec3(srgb_const1.x));\n");
-        shader_addline(buffer, "gl_FragData[0].xyz = mix(tmp0.xyz, tmp1.xyz, vec3(srgb_compare));\n");
-        shader_addline(buffer, "gl_FragData[0] = clamp(gl_FragData[0], 0.0, 1.0);\n");
-    }
+        shader_glsl_generate_srgb_write_correction(buffer);
 
     /* SM < 3 does not replace the fog stage. */
     if (reg_maps->shader_version.major < 3)
