@@ -2047,9 +2047,14 @@ static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
 HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, const WCHAR *headers, BYTE *post_data, DWORD post_data_size)
 {
     nsChannelBSC *bsc;
+    IUri *uri_nofrag;
     IMoniker *mon;
     DWORD scheme;
     HRESULT hres;
+
+    uri_nofrag = get_uri_nofrag(uri);
+    if(!uri_nofrag)
+        return E_FAIL;
 
     if(window->doc_obj->client) {
         IOleCommandTarget *cmdtrg;
@@ -2059,7 +2064,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, const WCHAR *headers,
             VARIANT in, out;
             BSTR url_str;
 
-            hres = IUri_GetDisplayUri(uri, &url_str);
+            hres = IUri_GetDisplayUri(uri_nofrag, &url_str);
             if(SUCCEEDED(hres)) {
                 V_VT(&in) = VT_BSTR;
                 V_BSTR(&in) = url_str;
@@ -2074,12 +2079,19 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, const WCHAR *headers,
         }
     }
 
-    if(window->uri && !post_data_size && compare_ignoring_frag(window->uri, uri)) {
-        TRACE("fragment navigate\n");
-        return navigate_fragment(window, uri);
+    if(window->uri_nofrag && !post_data_size) {
+        BOOL eq;
+
+        hres = IUri_IsEqual(uri_nofrag, window->uri_nofrag, &eq);
+        if(SUCCEEDED(hres) && eq) {
+            IUri_Release(uri_nofrag);
+            TRACE("fragment navigate\n");
+            return navigate_fragment(window, uri);
+        }
     }
 
-    hres = CreateURLMonikerEx2(NULL, uri, &mon, URL_MK_UNIFORM);
+    hres = CreateURLMonikerEx2(NULL, uri_nofrag, &mon, URL_MK_UNIFORM);
+    IUri_Release(uri_nofrag);
     if(FAILED(hres))
         return hres;
 

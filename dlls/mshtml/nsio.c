@@ -121,7 +121,7 @@ IUri *get_uri_nofrag(IUri *uri)
     return ret;
 }
 
-BOOL compare_ignoring_frag(IUri *uri1, IUri *uri2)
+static BOOL compare_ignoring_frag(IUri *uri1, IUri *uri2)
 {
     IUri *uri_nofrag1, *uri_nofrag2;
     BOOL ret = FALSE;

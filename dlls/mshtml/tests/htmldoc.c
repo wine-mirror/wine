@@ -2835,10 +2835,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             CHECK_EXPECT(Exec_ShellDocView_67);
             ok(pvaIn != NULL, "pvaIn == NULL\n");
             ok(V_VT(pvaIn) == VT_BSTR, "V_VT(pvaIn) = %d\n", V_VT(pvaIn));
-            if(!loading_hash)
-                ok(!strcmp_wa(V_BSTR(pvaIn), nav_serv_url), "V_BSTR(pvaIn) = %s, expected %s\n", wine_dbgstr_w(V_BSTR(pvaIn)), nav_serv_url);
-            else
-                todo_wine ok(!strcmp_wa(V_BSTR(pvaIn), nav_serv_url), "V_BSTR(pvaIn) = %s, expected %s\n", wine_dbgstr_w(V_BSTR(pvaIn)), nav_serv_url);
+            ok(!strcmp_wa(V_BSTR(pvaIn), nav_serv_url), "V_BSTR(pvaIn) = %s, expected %s\n",
+               wine_dbgstr_w(V_BSTR(pvaIn)), nav_serv_url);
             ok(pvaOut != NULL, "pvaOut == NULL\n");
             ok(V_VT(pvaOut) == VT_BOOL, "V_VT(pvaOut) = %d\n", V_VT(pvaOut));
             ok(V_BOOL(pvaOut) == VARIANT_TRUE, "V_BOOL(pvaOut) = %x\n", V_BOOL(pvaOut));
