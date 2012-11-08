@@ -15810,6 +15810,7 @@ wine_fn_config_dll xmllite enable_xmllite
 wine_fn_config_test dlls/xmllite/tests xmllite_test
 wine_fn_config_dll xolehlp enable_xolehlp
 wine_fn_config_dll xpsprint enable_xpsprint
+wine_fn_config_dll xpssvcs enable_xpssvcs
 wine_fn_config_makefile documentation enable_documentation
 wine_fn_config_makefile fonts enable_fonts install-lib
 wine_fn_config_makefile include enable_include install-dev
