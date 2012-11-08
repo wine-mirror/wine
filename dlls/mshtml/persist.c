@@ -943,8 +943,29 @@ static HRESULT WINAPI PersistHistory_LoadHistory(IPersistHistory *iface, IStream
 static HRESULT WINAPI PersistHistory_SaveHistory(IPersistHistory *iface, IStream *pStream)
 {
     HTMLDocument *This = impl_from_IPersistHistory(iface);
-    FIXME("(%p)->(%p)\n", This, pStream);
-    return E_NOTIMPL;
+    ULONG len, written;
+    BSTR display_uri;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, pStream);
+
+    if(!This->window || !This->window->uri) {
+        FIXME("No current URI\n");
+        return E_FAIL;
+    }
+
+    /* NOTE: The format we store is *not* compatible with native MSHTML. We currently
+     * store only URI of the page (as a length followed by a string) */
+    hres = IUri_GetDisplayUri(This->window->uri, &display_uri);
+    if(FAILED(hres))
+        return hres;
+
+    len = SysStringLen(display_uri);
+    hres = IStream_Write(pStream, &len, sizeof(len), &written);
+    if(SUCCEEDED(hres))
+        hres = IStream_Write(pStream, display_uri, len*sizeof(WCHAR), &written);
+    SysFreeString(display_uri);
+    return hres;
 }
 
 static HRESULT WINAPI PersistHistory_SetPositionCookie(IPersistHistory *iface, DWORD dwPositioncookie)
