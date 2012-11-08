@@ -1936,16 +1936,12 @@ D3DXVECTOR3* WINAPI D3DXVec3Unproject(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv, 
 
     TRACE("(%p, %p, %p, %p, %p, %p)\n", pout, pv, pviewport, pprojection, pview, pworld);
 
-    if (pworld)
-    {
-        D3DXMatrixMultiply(&m, pworld, pview);
-        D3DXMatrixMultiply(&m, &m, pprojection);
-    }
-    else
-    {
-        D3DXMatrixMultiply(&m, pview, pprojection);
-    }
+    D3DXMatrixIdentity(&m);
+    if (pworld) D3DXMatrixMultiply(&m, &m, pworld);
+    if (pview) D3DXMatrixMultiply(&m, &m, pview);
+    if (pprojection) D3DXMatrixMultiply(&m, &m, pprojection);
     D3DXMatrixInverse(&m, NULL, &m);
+
     *pout = *pv;
     if (pviewport)
     {
