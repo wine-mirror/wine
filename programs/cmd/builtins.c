@@ -1609,7 +1609,7 @@ static BOOL WCMD_parse_forf_options(WCHAR *options, WCHAR *eol, int *skip,
         pos++;
       }
       tokens[i++] = 0; /* Null terminate the tokens */
-      WINE_FIXME("Found tokens as '%s'\n", wine_dbgstr_w(tokens));
+      WINE_TRACE("Found tokens as '%s'\n", wine_dbgstr_w(tokens));
 
     } else {
       WINE_WARN("Unexpected data in optionsroot: '%s'\n", wine_dbgstr_w(pos));
@@ -1670,6 +1670,111 @@ static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk) {
 }
 
 /**************************************************************************
+ * WCMD_for_nexttoken
+ *
+ * Parse the token= line, identifying the next highest number not processed
+ * so far. Count how many tokens are referred (including duplicates) and
+ * optionally return that, plus optionally indicate if the tokens= line
+ * ends in a star.
+ *
+ * Parameters:
+ *  lasttoken    [I]    - Identifies the token index of the last one
+ *                           returned so far (-1 used for first loop)
+ *  tokenstr     [I]    - The specified tokens= line
+ *  firstCmd     [O]    - Optionally indicate how many tokens are listed
+ *  doAll        [O]    - Optionally indicate if line ends with *
+ *  duplicates   [O]    - Optionally indicate if there is any evidence of
+ *                           overlaying tokens in the string
+ * Note the caller should keep a running track of duplicates as the tokens
+ * are recursively passed. If any have duplicates, then the * token should
+ * not be honoured.
+ */
+static int WCMD_for_nexttoken(int lasttoken, WCHAR *tokenstr,
+                              int *totalfound, BOOL *doall,
+                              BOOL *duplicates)
+{
+  WCHAR *pos = tokenstr;
+  int    nexttoken = -1;
+
+  if (totalfound) *totalfound = 0;
+  if (doall) *doall = FALSE;
+  if (duplicates) *duplicates = FALSE;
+
+  WINE_TRACE("Find next token after %d in %s was %d\n", lasttoken,
+             wine_dbgstr_w(tokenstr), nexttoken);
+
+  /* Loop through the token string, parsing it. Valid syntax is:
+     token=m or x-y with comma delimiter and optionally * to finish*/
+  while (*pos) {
+    int nextnumber1, nextnumber2 = -1;
+    WCHAR *nextchar;
+
+    /* Get the next number */
+    nextnumber1 = strtoulW(pos, &nextchar, 10);
+
+    /* If it is followed by a minus, its a range, so get the next one as well */
+    if (*nextchar == '-') {
+      nextnumber2 = strtoulW(nextchar+1, &nextchar, 10);
+
+      /* We want to return the lowest number that is higher than lasttoken
+         but only if range is positive                                     */
+      if (nextnumber2 >= nextnumber1 &&
+          lasttoken < nextnumber2) {
+
+        int nextvalue;
+        if (nexttoken == -1) {
+          nextvalue = max(nextnumber1, (lasttoken+1));
+        } else {
+          nextvalue = min(nexttoken, max(nextnumber1, (lasttoken+1)));
+        }
+
+        /* Flag if duplicates identified */
+        if (nexttoken == nextvalue && duplicates) *duplicates = TRUE;
+
+        nexttoken = nextvalue;
+      }
+
+      /* Update the running total for the whole range */
+      if (nextnumber2 >= nextnumber1 && totalfound) {
+        *totalfound = *totalfound + 1 + (nextnumber2 - nextnumber1);
+      }
+
+    } else {
+      if (totalfound) (*totalfound)++;
+
+      /* See if the number found is one we have already seen */
+      if (nextnumber1 == nexttoken && duplicates) *duplicates = TRUE;
+
+      /* We want to return the lowest number that is higher than lasttoken */
+      if (lasttoken < nextnumber1 &&
+         ((nexttoken == -1) || (nextnumber1 < nexttoken))) {
+        nexttoken = nextnumber1;
+      }
+
+    }
+
+    /* Remember if it is followed by a star, and if it is indicate a need to
+       show all tokens, unless a duplicate has been found                    */
+    if (*nextchar == '*') {
+      if (doall) *doall = TRUE;
+      if (totalfound) (*totalfound)++;
+    }
+
+    /* Step on to the next character */
+    pos = nextchar;
+    if (*pos) pos++;
+  }
+
+  /* Return result */
+  if (nexttoken == -1) nexttoken = lasttoken;
+  WINE_TRACE("Found next token after %d was %d\n", lasttoken, nexttoken);
+  if (totalfound) WINE_TRACE("Found total tokens in total %d\n", *totalfound);
+  if (doall && *doall) WINE_TRACE("Request for all tokens found\n");
+  if (duplicates && *duplicates) WINE_TRACE("Duplicate numbers found\n");
+  return nexttoken;
+}
+
+/**************************************************************************
  * WCMD_parse_line
  *
  * When parsing file or string contents (for /f), once the string to parse
@@ -1688,6 +1793,7 @@ static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk) {
  *  forf_skip    [I/O]  - How many lines to skip first
  *  forf_eol     [I]    - The 'end of line' (comment) character
  *  forf_delims  [I]    - The delimiters to use when breaking the string apart
+ *  forf_tokens  [I]    - The tokens to use when breaking the string apart
  */
 static void WCMD_parse_line(CMD_LIST    *cmdStart,
                             const WCHAR *firstCmd,
@@ -1697,11 +1803,17 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
                             BOOL        *doExecuted,
                             int         *forf_skip,
                             WCHAR        forf_eol,
-                            WCHAR       *forf_delims) {
+                            WCHAR       *forf_delims,
+                            WCHAR       *forf_tokens) {
 
-  WCHAR *parm, *where;
+  WCHAR *parm;
   FOR_CONTEXT oldcontext;
-  int varidx;
+  int varidx, varoffset;
+  int nexttoken, lasttoken = -1;
+  BOOL starfound = FALSE;
+  BOOL thisduplicate = FALSE;
+  BOOL anyduplicates = FALSE;
+  int  totalfound;
 
   /* Skip lines if requested */
   if (*forf_skip) {
@@ -1712,23 +1824,81 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
   /* Save away any existing for variable context (e.g. nested for loops) */
   oldcontext = forloopcontext;
 
-  /* Extract the parameter */
-  parm = WCMD_parameter_with_delims(buffer, 0, &where, FALSE, FALSE, forf_delims);
-  WINE_TRACE("Parsed parameter: %s from %s\n", wine_dbgstr_w(parm),
-             wine_dbgstr_w(buffer));
-
-  /* FIXME: Use tokens= line to populate forloopcontext */
+  /* Extract the parameters based on the tokens= value (There will always
+     be some value, as if it is not supplied, it defaults to tokens=1).
+     Rough logic:
+     Count how many tokens are named in the line, identify the lowest
+     Empty (set to null terminated string) that number of named variables
+     While lasttoken != nextlowest
+       %letter = parameter number 'nextlowest'
+       letter++ (if >26 or >52 abort)
+       Go through token= string finding next lowest number
+     If token ends in * set %letter = raw position of token(nextnumber+1)
+   */
+  lasttoken = -1;
+  nexttoken = WCMD_for_nexttoken(lasttoken, forf_tokens, &totalfound,
+                                 NULL, &thisduplicate);
   varidx = FOR_VAR_IDX(variable);
-  if (varidx >=0) forloopcontext.variable[varidx] = heap_strdupW(parm);
 
-  if (where && where[0] != forf_eol) {
+  /* Empty out variables */
+  for (varoffset=0;
+       varidx >= 0 && varoffset<totalfound && ((varidx+varoffset)%26);
+       varoffset++) {
+    forloopcontext.variable[varidx + varoffset] = (WCHAR *)nullW;
+    /* Stop if we walk beyond z or Z */
+    if (((varidx+varoffset) % 26) == 0) break;
+  }
+
+  /* Loop extracting the tokens */
+  varoffset = 0;
+  WINE_TRACE("Parsing buffer into tokens: '%s'\n", wine_dbgstr_w(buffer));
+  while (varidx >= 0 && (nexttoken > lasttoken)) {
+    anyduplicates |= thisduplicate;
+
+    /* Extract the token number requested and set into the next variable context */
+    parm = WCMD_parameter_with_delims(buffer, (nexttoken-1), NULL, FALSE, FALSE, forf_delims);
+    WINE_TRACE("Parsed token %d(%d) as parameter %s\n", nexttoken,
+               varidx + varoffset, wine_dbgstr_w(parm));
+    if (varidx >=0) {
+      forloopcontext.variable[varidx + varoffset] = heap_strdupW(parm);
+      varoffset++;
+      if (((varidx + varoffset) %26) == 0) break;
+    }
+
+    /* Find the next token */
+    lasttoken = nexttoken;
+    nexttoken = WCMD_for_nexttoken(lasttoken, forf_tokens, NULL,
+                                   &starfound, &thisduplicate);
+  }
+
+  /* If all the rest of the tokens were requested, and there is still space in
+     the variable range, write them now                                        */
+  if (!anyduplicates && starfound && varidx >= 0 && ((varidx+varoffset) % 26)) {
+    nexttoken++;
+    WCMD_parameter_with_delims(buffer, (nexttoken-1), &parm, FALSE, FALSE, forf_delims);
+    WINE_TRACE("Parsed allremaining tokens (%d) as parameter %s\n",
+               varidx + varoffset, wine_dbgstr_w(parm));
+    forloopcontext.variable[varidx + varoffset] = heap_strdupW(parm);
+  }
+
+  /* Execute the body of the foor loop with these values */
+  if (forloopcontext.variable[varidx] && forloopcontext.variable[varidx][0] != forf_eol) {
     CMD_LIST *thisCmdStart = cmdStart;
     *doExecuted = TRUE;
     WCMD_part_execute(&thisCmdStart, firstCmd, FALSE, TRUE);
     *cmdEnd = thisCmdStart;
   }
 
-  if (varidx >=0) heap_free(forloopcontext.variable[varidx]);
+  /* Free the duplicated strings, and restore the context */
+  if (varidx >=0) {
+    int i;
+    for (i=varidx; i<MAX_FOR_VARIABLES; i++) {
+      if ((forloopcontext.variable[i] != oldcontext.variable[i]) &&
+          (forloopcontext.variable[i] != nullW)) {
+        heap_free(forloopcontext.variable[i]);
+      }
+    }
+  }
 
   /* Restore the original for variable contextx */
   forloopcontext = oldcontext;
@@ -2096,7 +2266,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
               /* Read line by line until end of file */
               while (WCMD_fgets(buffer, sizeof(buffer)/sizeof(WCHAR), input)) {
                 WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, variable[1], buffer, &doExecuted,
-                                &forf_skip, forf_eol, forf_delims);
+                                &forf_skip, forf_eol, forf_delims, forf_tokens);
                 buffer[0] = 0;
               }
               CloseHandle (input);
@@ -2124,7 +2294,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
           /* Copy the item away from the global buffer used by WCMD_parameter */
           strcpyW(buffer, itemStart);
           WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, variable[1], buffer, &doExecuted,
-                            &forf_skip, forf_eol, forf_delims);
+                            &forf_skip, forf_eol, forf_delims, forf_tokens);
 
           /* Only one string can be supplied in the whole set, abort future set processing */
           thisSet = NULL;

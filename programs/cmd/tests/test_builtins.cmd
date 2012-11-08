@@ -1194,6 +1194,37 @@ for /f "skip=02" %%i in (foo) do echo %%i
 for /f "skip=0x2" %%i in (foo) do echo %%i
 for /f "skip=1" %%i in ("skipme") do echo %%i > output_file
 if not exist output_file (echo no output) else (del output_file)
+echo ------ tokens= option
+rem Basic
+for /f %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m o=%%o
+for /f "tokens=2" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m o=%%o
+for /f "tokens=1,3,5-7" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m o=%%o
+rem Show * means the rest
+for /f "tokens=1,5*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m o=%%o
+for /f "tokens=6,9*" %%i in ("a b c d e f g h i j k l m n o p q r s t u v w x y z") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m o=%%o
+rem Show * means the rest (not tokenized and rebuilt)
+for /f "tokens=6,9*" %%i in ("a b c d e f g h i j k l m  n;;==  o p q r s t u v w x y z") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m o=%%o
+rem Order is irrelevant
+for /f "tokens=1,2,3*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
+for /f "tokens=3,2,1*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
+rem Duplicates are ignored
+for /f "tokens=1,2,1*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
+rem Large tokens are allowed
+for /f "tokens=25,1,5*" %%i in ("a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
+rem Show tokens blanked in advance regardless of uniqueness of requested tokens
+for /f "tokens=1,1,1,2*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
+for /f "tokens=1-2,1-2,1-2" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
+rem Show No wrapping from z to A BUT wrapping sort of occurs Z to a occurs
+for /f "tokens=1-20" %%u in ("a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z") do echo u=%%u v=%%v w=%%w x=%%x y=%%y z=%%z A=%%A a=%%a
+for /f "tokens=1-20" %%U in ("a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z") do echo U=%%U V=%%V W=%%W X=%%X Y=%%Y Z=%%Z A=%%A a=%%a
+rem Show negative ranges have no effect
+for /f "tokens=1-3,5" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m o=%%o
+for /f "tokens=3-1,5" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m o=%%o
+rem Show duplicates stop * from working
+for /f "tokens=1,2,3*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
+for /f "tokens=1,1,3*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
+for /f "tokens=2,2,3*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
+for /f "tokens=3,2,3*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
 cd ..
 rd /s/q foobar
 

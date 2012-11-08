@@ -842,6 +842,27 @@ no output
 c
 c
 no output
+------ tokens= option
+h=%h i=a j=%j k=%k l=%l m=%m o=%o
+h=%h i=b j=%j k=%k l=%l m=%m o=%o
+h=%h i=a j=c k=e l=f m=g o=%o
+h=%h i=a j=e k=f g l=%l m=%m o=%o
+h=%h i=f j=i k=j k l m n o p q r s t u v w x y z l=%l m=%m o=%o
+h=%h i=f j=i k=j k l m  n;;==  o p q r s t u v w x y z l=%l m=%m o=%o
+h=%h i=a j=b k=c l=d e f g m=%m n=%n o=%o
+h=%h i=a j=b k=c l=d e f g m=%m n=%n o=%o
+h=%h i=a j=b k= l= m=%m n=%n o=%o
+h=%h i=a j=e k=y l=z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z m=%m n=%n o=%o
+h=%h i=a j=b k= l= m= n=%n o=%o
+h=%h i=a j=b k= l= m= n= o=%o
+u=a v=b w=c x=d y=e z=f A=%A a=%a
+@todo_wine@U=a V=b W=c X=d Y=e Z=f A=%A a=m
+h=%h i=a j=b k=c l=e m=%m o=%o@or_broken@h=%h i=a j=b k=c l=e m= o=%o
+h=%h i=e j=%j k=%k l=%l m=%m o=%o
+h=%h i=a j=b k=c l=d e f g m=%m n=%n o=%o@or_broken@h=%h i=a j=b k=c l=d e f g m= n=%n o=%o
+h=%h i=a j=c k= l= m=%m n=%n o=%o@or_broken@h=%h i=a j=c k= l= m= n=%n o=%o
+h=%h i=b j=c k= l= m=%m n=%n o=%o@or_broken@h=%h i=b j=c k= l= m= n=%n o=%o
+h=%h i=b j=c k= l= m=%m n=%n o=%o@or_broken@h=%h i=b j=c k= l= m= n=%n o=%o
 ------------ Testing del /a ------------
 not-r.test not found after delete, good
 r.test found before delete, good
