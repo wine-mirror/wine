@@ -78,13 +78,7 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
                 return stat;
             }
 
-            stat = GdipCloneMatrix(src->transform, &dest->transform);
-
-            if(stat != Ok){
-                GdipDeletePath(dest->path);
-                GdipFree(dest);
-                return stat;
-            }
+            dest->transform = src->transform;
 
             /* blending */
             count = src->blendcount;
@@ -102,7 +96,6 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
             if(!dest->blendfac || !dest->blendpos || !dest->surroundcolors ||
                (pcount && (!dest->pblendcolor || !dest->pblendpos))){
                 GdipDeletePath(dest->path);
-                GdipDeleteMatrix(dest->transform);
                 GdipFree(dest->blendfac);
                 GdipFree(dest->blendpos);
                 GdipFree(dest->surroundcolors);
@@ -184,7 +177,7 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
 
             if (stat == Ok)
             {
-                memcpy(new_texture->transform, texture->transform, sizeof(GpMatrix));
+                new_texture->transform = texture->transform;
                 *clone = (GpBrush*)new_texture;
             }
             else
@@ -512,7 +505,6 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngleI(GDIPCONST GpRect* rect
 static GpStatus create_path_gradient(GpPath *path, ARGB centercolor, GpPathGradient **grad)
 {
     GpRectF bounds;
-    GpStatus stat;
 
     if(!path || !grad)
         return InvalidParameter;
@@ -528,18 +520,12 @@ static GpStatus create_path_gradient(GpPath *path, ARGB centercolor, GpPathGradi
         return OutOfMemory;
     }
 
-    stat = GdipCreateMatrix(&(*grad)->transform);
-    if (stat != Ok)
-    {
-        GdipFree(*grad);
-        return stat;
-    }
+    GdipSetMatrixElements(&(*grad)->transform, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 
     (*grad)->blendfac = GdipAlloc(sizeof(REAL));
     (*grad)->blendpos = GdipAlloc(sizeof(REAL));
     (*grad)->surroundcolors = GdipAlloc(sizeof(ARGB));
     if(!(*grad)->blendfac || !(*grad)->blendpos || !(*grad)->surroundcolors){
-        GdipDeleteMatrix((*grad)->transform);
         GdipFree((*grad)->blendfac);
         GdipFree((*grad)->blendpos);
         GdipFree((*grad)->surroundcolors);
@@ -792,9 +778,7 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
         goto exit;
     }
 
-    if((status = GdipCreateMatrix(&(*texture)->transform)) != Ok){
-        goto exit;
-    }
+    GdipSetMatrixElements(&(*texture)->transform, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 
     if (imageattr)
     {
@@ -821,7 +805,6 @@ exit:
     {
         if (*texture)
         {
-            GdipDeleteMatrix((*texture)->transform);
             GdipDisposeImageAttributes((*texture)->imageattributes);
             GdipFree(*texture);
             *texture = NULL;
@@ -920,7 +903,6 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
     {
         case BrushTypePathGradient:
             GdipDeletePath(((GpPathGradient*) brush)->path);
-            GdipDeleteMatrix(((GpPathGradient*) brush)->transform);
             GdipFree(((GpPathGradient*) brush)->blendfac);
             GdipFree(((GpPathGradient*) brush)->blendpos);
             GdipFree(((GpPathGradient*) brush)->surroundcolors);
@@ -934,7 +916,6 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
             GdipFree(((GpLineGradient*)brush)->pblendpos);
             break;
         case BrushTypeTextureFill:
-            GdipDeleteMatrix(((GpTexture*)brush)->transform);
             GdipDisposeImage(((GpTexture*)brush)->image);
             GdipDisposeImageAttributes(((GpTexture*)brush)->imageattributes);
             GdipFree(((GpTexture*)brush)->bitmap_bits);
@@ -1226,7 +1207,7 @@ GpStatus WINGDIPAPI GdipGetTextureTransform(GpTexture *brush, GpMatrix *matrix)
     if(!brush || !matrix)
         return InvalidParameter;
 
-    memcpy(matrix, brush->transform, sizeof(GpMatrix));
+    *matrix = brush->transform;
 
     return Ok;
 }
@@ -1257,7 +1238,7 @@ GpStatus WINGDIPAPI GdipMultiplyTextureTransform(GpTexture* brush,
     if(!brush || !matrix)
         return InvalidParameter;
 
-    return GdipMultiplyMatrix(brush->transform, matrix, order);
+    return GdipMultiplyMatrix(&brush->transform, matrix, order);
 }
 
 /******************************************************************************
@@ -1270,7 +1251,7 @@ GpStatus WINGDIPAPI GdipResetTextureTransform(GpTexture* brush)
     if(!brush)
         return InvalidParameter;
 
-    return GdipSetMatrixElements(brush->transform, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+    return GdipSetMatrixElements(&brush->transform, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 }
 
 /******************************************************************************
@@ -1284,7 +1265,7 @@ GpStatus WINGDIPAPI GdipScaleTextureTransform(GpTexture* brush,
     if(!brush)
         return InvalidParameter;
 
-    return GdipScaleMatrix(brush->transform, sx, sy, order);
+    return GdipScaleMatrix(&brush->transform, sx, sy, order);
 }
 
 GpStatus WINGDIPAPI GdipSetLineBlend(GpLineGradient *brush,
@@ -1758,7 +1739,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientTransform(GpPathGradient *grad,
     if (!grad || !matrix)
         return InvalidParameter;
 
-    memcpy(grad->transform, matrix, sizeof(GpMatrix));
+    grad->transform = *matrix;
 
     return Ok;
 }
@@ -1771,7 +1752,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientTransform(GpPathGradient *grad,
     if (!grad || !matrix)
         return InvalidParameter;
 
-    memcpy(matrix, grad->transform, sizeof(GpMatrix));
+    *matrix = grad->transform;
 
     return Ok;
 }
@@ -1784,7 +1765,7 @@ GpStatus WINGDIPAPI GdipMultiplyPathGradientTransform(GpPathGradient *grad,
     if (!grad)
         return InvalidParameter;
 
-    return GdipMultiplyMatrix(grad->transform, matrix, order);
+    return GdipMultiplyMatrix(&grad->transform, matrix, order);
 }
 
 GpStatus WINGDIPAPI GdipResetPathGradientTransform(GpPathGradient *grad)
@@ -1794,7 +1775,7 @@ GpStatus WINGDIPAPI GdipResetPathGradientTransform(GpPathGradient *grad)
     if (!grad)
         return InvalidParameter;
 
-    return GdipSetMatrixElements(grad->transform, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+    return GdipSetMatrixElements(&grad->transform, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 }
 
 GpStatus WINGDIPAPI GdipRotatePathGradientTransform(GpPathGradient *grad,
@@ -1805,7 +1786,7 @@ GpStatus WINGDIPAPI GdipRotatePathGradientTransform(GpPathGradient *grad,
     if (!grad)
         return InvalidParameter;
 
-    return GdipRotateMatrix(grad->transform, angle, order);
+    return GdipRotateMatrix(&grad->transform, angle, order);
 }
 
 GpStatus WINGDIPAPI GdipScalePathGradientTransform(GpPathGradient *grad,
@@ -1816,7 +1797,7 @@ GpStatus WINGDIPAPI GdipScalePathGradientTransform(GpPathGradient *grad,
     if (!grad)
         return InvalidParameter;
 
-    return GdipScaleMatrix(grad->transform, sx, sy, order);
+    return GdipScaleMatrix(&grad->transform, sx, sy, order);
 }
 
 GpStatus WINGDIPAPI GdipTranslatePathGradientTransform(GpPathGradient *grad,
@@ -1827,7 +1808,7 @@ GpStatus WINGDIPAPI GdipTranslatePathGradientTransform(GpPathGradient *grad,
     if (!grad)
         return InvalidParameter;
 
-    return GdipTranslateMatrix(grad->transform, dx, dy, order);
+    return GdipTranslateMatrix(&grad->transform, dx, dy, order);
 }
 
 GpStatus WINGDIPAPI GdipSetSolidFillColor(GpSolidFill *sf, ARGB argb)
@@ -1852,7 +1833,7 @@ GpStatus WINGDIPAPI GdipSetTextureTransform(GpTexture *texture,
     if(!texture || !matrix)
         return InvalidParameter;
 
-    memcpy(texture->transform, matrix, sizeof(GpMatrix));
+    texture->transform = *matrix;
 
     return Ok;
 }
@@ -1912,7 +1893,7 @@ GpStatus WINGDIPAPI GdipRotateTextureTransform(GpTexture* brush, REAL angle,
     if(!brush)
         return InvalidParameter;
 
-    return GdipRotateMatrix(brush->transform, angle, order);
+    return GdipRotateMatrix(&brush->transform, angle, order);
 }
 
 GpStatus WINGDIPAPI GdipSetLineLinearBlend(GpLineGradient *brush, REAL focus,
@@ -2098,7 +2079,7 @@ GpStatus WINGDIPAPI GdipTranslateTextureTransform(GpTexture* brush, REAL dx, REA
     if(!brush)
         return InvalidParameter;
 
-    return GdipTranslateMatrix(brush->transform, dx, dy, order);
+    return GdipTranslateMatrix(&brush->transform, dx, dy, order);
 }
 
 GpStatus WINGDIPAPI GdipGetLineRect(GpLineGradient *brush, GpRectF *rect)

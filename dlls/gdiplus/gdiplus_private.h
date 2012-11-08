@@ -209,7 +209,7 @@ struct GpPathGradient{
     ARGB* pblendcolor; /* preset blend colors */
     REAL* pblendpos; /* preset blend positions */
     INT pblendcount;
-    GpMatrix *transform;
+    GpMatrix transform;
 };
 
 struct GpLineGradient{
@@ -231,7 +231,7 @@ struct GpLineGradient{
 
 struct GpTexture{
     GpBrush brush;
-    GpMatrix *transform;
+    GpMatrix transform;
     GpImage *image;
     GpImageAttributes *imageattributes;
     BYTE *bitmap_bits; /* image bits converted to ARGB and run through imageattributes */

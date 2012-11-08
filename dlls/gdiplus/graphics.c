@@ -1095,7 +1095,6 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         GpTexture *fill = (GpTexture*)brush;
         GpPointF draw_points[3];
         GpStatus stat;
-        GpMatrix *world_to_texture;
         int x, y;
         GpBitmap *bitmap;
         int src_stride;
@@ -1127,17 +1126,11 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
 
         if (stat == Ok)
         {
-            stat = GdipCloneMatrix(fill->transform, &world_to_texture);
-        }
+            GpMatrix world_to_texture = fill->transform;
 
-        if (stat == Ok)
-        {
-            stat = GdipInvertMatrix(world_to_texture);
-
+            stat = GdipInvertMatrix(&world_to_texture);
             if (stat == Ok)
-                stat = GdipTransformMatrixPoints(world_to_texture, draw_points, 3);
-
-            GdipDeleteMatrix(world_to_texture);
+                stat = GdipTransformMatrixPoints(&world_to_texture, draw_points, 3);
         }
 
         if (stat == Ok && !fill->bitmap_bits)
@@ -1246,7 +1239,7 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         if (!transform_fixme_once)
         {
             BOOL is_identity=TRUE;
-            GdipIsMatrixIdentity(fill->transform, &is_identity);
+            GdipIsMatrixIdentity(&fill->transform, &is_identity);
             if (!is_identity)
             {
                 FIXME("path gradient transform not implemented\n");
