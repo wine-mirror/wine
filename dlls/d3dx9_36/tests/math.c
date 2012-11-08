@@ -1331,12 +1331,6 @@ static void D3DXVector3Test(void)
     D3DXVec3Normalize(&gotvec,&nul);
     expect_vec3(expectedvec,gotvec);
 
-/*_______________D3DXVec3Project_________________________*/
-    expectedvec.x = 1135.721924f; expectedvec.y = 147.086914f; expectedvec.z = 0.153412f;
-    D3DXMatrixPerspectiveFovLH(&projection,D3DX_PI/4.0f,20.0f/17.0f,1.0f,1000.0f);
-    D3DXVec3Project(&gotvec,&u,&viewport,&projection,&view,&world);
-    expect_vec3(expectedvec,gotvec);
-
 /*_______________D3DXVec3Scale____________________________*/
     expectedvec.x = -58.5f; expectedvec.y = -39.0f; expectedvec.z = -13.0f;
     D3DXVec3Scale(&gotvec,&u,scale);
@@ -1370,6 +1364,32 @@ static void D3DXVector3Test(void)
 /*_______________D3DXVec3TransformNormal______________________*/
     expectedvec.x = 57.0f; expectedvec.y = 74.0f; expectedvec.z = 91.0f;
     D3DXVec3TransformNormal(&gotvec,&u,&mat);
+    expect_vec3(expectedvec,gotvec);
+
+/*_______________D3DXVec3Project_________________________*/
+    expectedvec.x = 1135.721924f; expectedvec.y = 147.086914f; expectedvec.z = 0.153412f;
+    D3DXMatrixPerspectiveFovLH(&projection,D3DX_PI/4.0f,20.0f/17.0f,1.0f,1000.0f);
+    D3DXVec3Project(&gotvec,&u,&viewport,&projection,&view,&world);
+    expect_vec3(expectedvec,gotvec);
+    /* World matrix can be omitted */
+    D3DXMatrixMultiply(&mat,&world,&view);
+    D3DXVec3Project(&gotvec,&u,&viewport,&projection,&mat,NULL);
+    expect_vec3(expectedvec,gotvec);
+    /* Projection matrix can be omitted */
+    D3DXMatrixMultiply(&mat,&view,&projection);
+    D3DXVec3Project(&gotvec,&u,&viewport,NULL,&mat,&world);
+    expect_vec3(expectedvec,gotvec);
+    /* View matrix can be omitted */
+    D3DXMatrixMultiply(&mat,&world,&view);
+    D3DXVec3Project(&gotvec,&u,&viewport,&projection,NULL,&mat);
+    expect_vec3(expectedvec,gotvec);
+    /* All matrices can be omitted */
+    expectedvec.x = 4010.000000f; expectedvec.y = -1695.000000f; expectedvec.z = 1.600000f;
+    D3DXVec3Project(&gotvec,&u,&viewport,NULL,NULL,NULL);
+    expect_vec3(expectedvec,gotvec);
+    /* Viewport can be omitted */
+    expectedvec.x = 1.814305f; expectedvec.y = 0.582097f; expectedvec.z = -0.066555f;
+    D3DXVec3Project(&gotvec,&u,NULL,&projection,&view,&world);
     expect_vec3(expectedvec,gotvec);
 
 /*_______________D3DXVec3Unproject_________________________*/

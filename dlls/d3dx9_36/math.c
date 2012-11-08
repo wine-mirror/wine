@@ -1809,17 +1809,22 @@ D3DXVECTOR3* WINAPI D3DXVec3Normalize(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv)
 D3DXVECTOR3* WINAPI D3DXVec3Project(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv, CONST D3DVIEWPORT9 *pviewport, CONST D3DXMATRIX *pprojection, CONST D3DXMATRIX *pview, CONST D3DXMATRIX *pworld)
 {
     D3DXMATRIX m;
-    D3DXVECTOR3 out;
 
     TRACE("(%p, %p, %p, %p, %p, %p)\n", pout, pv, pviewport, pprojection, pview, pworld);
 
-    D3DXMatrixMultiply(&m, pworld, pview);
-    D3DXMatrixMultiply(&m, &m, pprojection);
-    D3DXVec3TransformCoord(&out, pv, &m);
-    out.x = pviewport->X +  ( 1.0f + out.x ) * pviewport->Width / 2.0f;
-    out.y = pviewport->Y +  ( 1.0f - out.y ) * pviewport->Height / 2.0f;
-    out.z = pviewport->MinZ + out.z * ( pviewport->MaxZ - pviewport->MinZ );
-    *pout = out;
+    D3DXMatrixIdentity(&m);
+    if (pworld) D3DXMatrixMultiply(&m, &m, pworld);
+    if (pview) D3DXMatrixMultiply(&m, &m, pview);
+    if (pprojection) D3DXMatrixMultiply(&m, &m, pprojection);
+
+    D3DXVec3TransformCoord(pout, pv, &m);
+
+    if (pviewport)
+    {
+        pout->x = pviewport->X +  ( 1.0f + pout->x ) * pviewport->Width / 2.0f;
+        pout->y = pviewport->Y +  ( 1.0f - pout->y ) * pviewport->Height / 2.0f;
+        pout->z = pviewport->MinZ + pout->z * ( pviewport->MaxZ - pviewport->MinZ );
+    }
     return pout;
 }
 
