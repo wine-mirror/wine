@@ -96,6 +96,7 @@ static /*basic_ostringstream_char*/void* (__thiscall *p_basic_ostringstream_char
         /*basic_ostringstream_char*/void*, int, /*MSVCP_bool*/int);
 static void (__thiscall *p_basic_ostringstream_char_dtor)(/*basic_ostringstream_char*/void*);
 static void (__thiscall *p_basic_ostringstream_char_vbase_dtor)(/*basic_ostringstream_char*/void*);
+static void (__thiscall *p_basic_ios_char_dtor)(/*basic_ios_char*/void*);
 
 static int invalid_parameter = 0;
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
@@ -223,6 +224,8 @@ static BOOL init(void)
                 "??1?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UEAA@XZ");
         SET(p_basic_ostringstream_char_vbase_dtor,
                 "??_D?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXXZ");
+        SET(p_basic_ios_char_dtor,
+                "??1?$basic_ios@DU?$char_traits@D@std@@@std@@UEAA@XZ");
     } else {
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAADABD@Z");
         SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
@@ -258,6 +261,8 @@ static BOOL init(void)
                 "??1?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@UAE@XZ");
         SET(p_basic_ostringstream_char_vbase_dtor,
                 "??_D?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ");
+        SET(p_basic_ios_char_dtor,
+                "??1?$basic_ios@DU?$char_traits@D@std@@@std@@UAE@XZ");
     }
 
     init_thiscall_thunk();
@@ -503,8 +508,10 @@ static void test_virtual_base_dtors(void)
     call_func3(p_basic_ostringstream_char_ctor_mode, this, 0, 1);
     call_func1(p_basic_ostringstream_char_vbase_dtor, this);
 
+    /* this test uses vbtable set by earlier test */
     call_func3(p_basic_ostringstream_char_ctor_mode, this, 0, 0);
     call_func1(p_basic_ostringstream_char_dtor, this+basic_ostringstream_char_vbtable[1]);
+    call_func1(p_basic_ios_char_dtor, this+((int**)this)[0][1]);
 }
 
 START_TEST(misc)
