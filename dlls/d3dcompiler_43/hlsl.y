@@ -1065,6 +1065,10 @@ hlsl_prog:                /* empty */
                         | hlsl_prog preproc_directive
                             {
                             }
+                        | hlsl_prog ';'
+                            {
+                                TRACE("Skipping stray semicolon.\n");
+                            }
 
 preproc_directive:        PRE_LINE STRING
                             {
