@@ -184,15 +184,15 @@ row_major               {return KW_ROW_MAJOR;           }
                                 return NEW_IDENTIFIER;
                         }
 
-[+-]?[0-9]*\.[0-9]+([eE][+-]?[0-9]+)?[h|H|f|F]? {
+[0-9]*\.[0-9]+([eE][+-]?[0-9]+)?[h|H|f|F]? {
                             hlsl_lval.floatval = atof(yytext);
                             return C_FLOAT;
                         }
-[+-]?[0-9]+\.([eE][+-]?[0-9]+)?[h|H|f|F]? {
+[0-9]+\.([eE][+-]?[0-9]+)?[h|H|f|F]? {
                             hlsl_lval.floatval = atof(yytext);
                             return C_FLOAT;
                         }
-[+-]?[0-9]+([eE][+-]?[0-9]+)?[h|H|f|F] {
+[0-9]+([eE][+-]?[0-9]+)?[h|H|f|F] {
                             hlsl_lval.floatval = atof(yytext);
                             return C_FLOAT;
                         }
@@ -204,7 +204,7 @@ row_major               {return KW_ROW_MAJOR;           }
                             sscanf(yytext, "0%o", &hlsl_lval.intval);
                             return C_INTEGER;
                         }
-\-?[0-9]+               {
+[0-9]+                  {
                             hlsl_lval.intval = (atoi(yytext));
                             return C_INTEGER;
                         }
