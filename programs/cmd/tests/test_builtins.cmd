@@ -607,7 +607,22 @@ if exist foo (
 ) else (
     echo ***
 )
-cd .. & rd foobar
+echo 1234 >a.a
+copy a.a+NUL b.b >nul
+call :CheckFileSize a.a 7 b.b 8
+copy NUL+a.a b.b >nul
+call :CheckFileSize a.a 7 b.b 8
+mkdir subdir
+copy a.a+NUL subdir\ >nul
+call :CheckFileSize a.a 7 subdir\a.a 8
+del subdir\a.a
+cd subdir
+copy ..\a.a NUL >nul
+if exist a.a echo Failed
+cd ..
+rd subdir /s /q
+del a.a b.b
+cd .. & rd foobar /s /q
 
 echo ------------ Testing if/else ------------
 echo --- if/else should work with blocks

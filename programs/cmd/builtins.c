@@ -47,6 +47,7 @@ const WCHAR slashW[]  = {'\\','\0'};
 const WCHAR equalW[]  = {'=','\0'};
 const WCHAR wildcardsW[] = {'*','?','\0'};
 const WCHAR slashstarW[] = {'\\','*','\0'};
+const WCHAR deviceW[] = {'\\','\\','.','\\','\0'};
 const WCHAR inbuilt[][10] = {
         {'C','A','L','L','\0'},
         {'C','D','\0'},
@@ -414,7 +415,7 @@ static BOOL WCMD_ManualCopy(WCHAR *srcname, WCHAR *dstname, BOOL ascii, BOOL app
     BOOL   ok;
     DWORD  bytesread, byteswritten;
 
-    WINE_TRACE("ASCII Copying %s to %s (append?%d)\n",
+    WINE_TRACE("Manual Copying %s to %s (append?%d)\n",
                wine_dbgstr_w(srcname), wine_dbgstr_w(dstname), append);
 
     in  = CreateFileW(srcname, GENERIC_READ, 0, NULL,
@@ -502,7 +503,7 @@ void WCMD_copy(WCHAR * args) {
   int     argno = 0;
   WCHAR  *rawarg;
   WIN32_FIND_DATAW fd;
-  HANDLE  hff;
+  HANDLE  hff = INVALID_HANDLE_VALUE;
   int     binarymode = -1;            /* -1 means use the default, 1 is binary, 0 ascii */
   BOOL    concatnextfilename = FALSE; /* True if we have just processed a +             */
   BOOL    anyconcats         = FALSE; /* Have we found any + options                    */
@@ -514,6 +515,7 @@ void WCMD_copy(WCHAR * args) {
   BOOL    status;
   WCHAR   copycmd[4];
   DWORD   len;
+  BOOL    dstisdevice = FALSE;
   static const WCHAR copyCmdW[] = {'C','O','P','Y','C','M','D','\0'};
 
   typedef struct _COPY_FILES
@@ -785,6 +787,12 @@ void WCMD_copy(WCHAR * args) {
   WINE_TRACE("Resolved destination is '%s' (calc later %d)\n",
              wine_dbgstr_w(destname), appendfirstsource);
 
+  /* Remember if the destination is a device */
+  if (strncmpW(destination->name, deviceW, strlenW(deviceW)) == 0) {
+    WINE_TRACE("Destination is a device\n");
+    dstisdevice = TRUE;
+  }
+
   /* Now we need to walk the set of sources, and process each name we come to.
      If anyconcats is true, we are writing to one file, otherwise we are using
      the source name each time.
@@ -800,8 +808,10 @@ void WCMD_copy(WCHAR * args) {
   while (thiscopy != NULL) {
 
     WCHAR  srcpath[MAX_PATH];
+    const  WCHAR *srcname;
     WCHAR *filenamepart;
     DWORD  attributes;
+    BOOL   srcisdevice = FALSE;
 
     /* If it was not explicit, we now know whether we are concatenating or not and
        hence whether to copy as binary or ascii                                    */
@@ -836,29 +846,41 @@ void WCMD_copy(WCHAR * args) {
     WINE_TRACE("Copy source (calculated): path: '%s' (Concats: %d)\n",
                     wine_dbgstr_w(srcpath), anyconcats);
 
-    /* Loop through all source files */
-    WINE_TRACE("Searching for: '%s'\n", wine_dbgstr_w(srcpath));
-    hff = FindFirstFileW(srcpath, &fd);
-    if (hff != INVALID_HANDLE_VALUE) {
+    /* If the source is a device, just use it, otherwise search */
+    if (strncmpW(srcpath, deviceW, strlenW(deviceW)) == 0) {
+      WINE_TRACE("Source is a device\n");
+      srcisdevice = TRUE;
+      srcname  = &srcpath[4]; /* After the \\.\ prefix */
+    } else {
+
+      /* Loop through all source files */
+      WINE_TRACE("Searching for: '%s'\n", wine_dbgstr_w(srcpath));
+      hff = FindFirstFileW(srcpath, &fd);
+      if (hff != INVALID_HANDLE_VALUE) {
+        srcname = fd.cFileName;
+      }
+    }
+
+    if (srcisdevice || hff != INVALID_HANDLE_VALUE) {
       do {
         WCHAR outname[MAX_PATH];
         BOOL  overwrite;
 
         /* Skip . and .., and directories */
-        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        if (!srcisdevice && fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
           WINE_TRACE("Skipping directories\n");
         } else {
 
           /* Build final destination name */
           strcpyW(outname, destination->name);
-          if (destisdirectory || appendfirstsource) strcatW(outname, fd.cFileName);
+          if (destisdirectory || appendfirstsource) strcatW(outname, srcname);
 
           /* Build source name */
-          strcpyW(filenamepart, fd.cFileName);
+          if (!srcisdevice) strcpyW(filenamepart, srcname);
 
-          /* Do we just overwrite */
+          /* Do we just overwrite (we do if we are writing to a device) */
           overwrite = !prompt;
-          if (anyconcats && writtenoneconcat) {
+          if (dstisdevice || (anyconcats && writtenoneconcat)) {
             overwrite = TRUE;
           }
 
@@ -879,7 +901,7 @@ void WCMD_copy(WCHAR * args) {
             else overwrite = TRUE;
           }
 
-          /* If we needed tyo save away the first filename, do it */
+          /* If we needed to save away the first filename, do it */
           if (appendfirstsource && overwrite) {
             heap_free(destination->name);
             destination->name = heap_strdupW(outname);
@@ -898,6 +920,8 @@ void WCMD_copy(WCHAR * args) {
               }
             } else if (!thiscopy->binarycopy) {
               status = WCMD_ManualCopy(srcpath, outname, TRUE, FALSE);
+            } else if (srcisdevice) {
+              status = WCMD_ManualCopy(srcpath, outname, FALSE, FALSE);
             } else {
               status = CopyFileW(srcpath, outname, FALSE);
             }
@@ -921,8 +945,8 @@ void WCMD_copy(WCHAR * args) {
             }
           }
         }
-      } while (FindNextFileW(hff, &fd) != 0);
-      FindClose (hff);
+      } while (!srcisdevice && FindNextFileW(hff, &fd) != 0);
+      if (!srcisdevice) FindClose (hff);
     } else {
       /* Error if the first file was not found */
       if (!anyconcats || (anyconcats && !writtenoneconcat)) {

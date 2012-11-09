@@ -415,7 +415,13 @@ bar
 bar
 bar
 NUL
-@todo_wine@foo created
+foo created
+Passed: file size check on a.a [7]@or_broken@Skipping file size check on NT4
+Passed: file size check on b.b [8]@or_broken@Skipping file size check on NT4
+Passed: file size check on a.a [7]@or_broken@Skipping file size check on NT4
+Passed: file size check on b.b [8]@or_broken@Skipping file size check on NT4
+Passed: file size check on a.a [7]@or_broken@Skipping file size check on NT4
+Passed: file size check on subdir\a.a [8]@or_broken@Skipping file size check on NT4
 ------------ Testing if/else ------------
 --- if/else should work with blocks
 if seems to work
