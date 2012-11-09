@@ -846,7 +846,7 @@ static HRESULT RecordImpl_Invoke(
         UINT* puArgErr)
 {
     WCHAR *szString;
-    DWORD dwLen;
+    DWORD dwLen = 0;
     UINT ret;
     VARIANTARG varg0, varg1;
     HRESULT hr;

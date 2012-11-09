@@ -2884,7 +2884,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
         if (type == REG_MULTI_SZ)
         {
             BYTE *new;
-            if (old_type != REG_MULTI_SZ)
+            if (old_value && old_type != REG_MULTI_SZ)
             {
                 msi_free( old_value );
                 old_value = NULL;
