@@ -50,6 +50,7 @@ typedef struct
 
 static void* (__cdecl *p_set_invalid_parameter_handler)(void*);
 static _locale_t (__cdecl *p__get_current_locale)(void);
+static void (__cdecl *p__free_locale)(_locale_t);
 static void  (__cdecl *p_free)(void*);
 
 static void (__cdecl *p_char_assign)(void*, const void*);
@@ -174,8 +175,9 @@ static BOOL init(void)
 
     p_set_invalid_parameter_handler = (void*)GetProcAddress(msvcr, "_set_invalid_parameter_handler");
     p__get_current_locale = (void*)GetProcAddress(msvcr, "_get_current_locale");
+    p__free_locale = (void*)GetProcAddress(msvcr, "_free_locale");
     p_free = (void*)GetProcAddress(msvcr, "free");
-    if(!p_set_invalid_parameter_handler || !p__get_current_locale || !p_free) {
+    if(!p_set_invalid_parameter_handler || !p__get_current_locale || !p__free_locale || !p_free) {
         win_skip("Error setting tests environment\n");
         return FALSE;
     }
@@ -389,6 +391,7 @@ static void test_wctype(void)
 static void test__Getctype(void)
 {
     MSVCP__Ctypevec ret;
+    _locale_t locale;
 
     ok(p__Getctype(&ret) == &ret, "__Getctype returned incorrect pointer\n");
     ok(ret.handle == 0, "ret.handle = %d\n", ret.handle);
@@ -397,7 +400,9 @@ static void test__Getctype(void)
     ok(ret.table[0] == 32, "ret.table[0] = %d\n", ret.table[0]);
     p_free(ret.table);
 
-    p__get_current_locale()->locinfo->lc_handle[LC_COLLATE] = 0x1234567;
+    locale = p__get_current_locale();
+    locale->locinfo->lc_handle[LC_COLLATE] = 0x1234567;
+    p__free_locale(locale);
     ok(p__Getctype(&ret) == &ret, "__Getctype returned incorrect pointer\n");
     ok(ret.handle == 0x1234567, "ret.handle = %d\n", ret.handle);
     ok(ret.page == 0, "ret.page = %d\n", ret.page);
@@ -409,13 +414,16 @@ static void test__Getctype(void)
 static void test__Getcoll(void)
 {
     ULONGLONG (__cdecl *p__Getcoll_arg)(MSVCP__Collvec*);
+    _locale_t locale;
 
     union {
         MSVCP__Collvec collvec;
         ULONGLONG ull;
     }ret;
 
-    p__get_current_locale()->locinfo->lc_handle[LC_COLLATE] = 0x7654321;
+    locale = p__get_current_locale();
+    locale->locinfo->lc_handle[LC_COLLATE] = 0x7654321;
+    p__free_locale(locale);
     ret.ull = 0;
     p__Getcoll_arg = (void*)p__Getcoll;
     p__Getcoll_arg(&ret.collvec);
@@ -462,12 +470,15 @@ static void test_virtual_call(void)
 {
     BYTE this[256];
     basic_string_char bstr;
+    _locale_t locale;
     const char *p;
     char str1[] = "test";
     char str2[] = "TEST";
     int ret;
 
-    p__get_current_locale()->locinfo->lc_handle[LC_COLLATE] = 1;
+    locale = p__get_current_locale();
+    locale->locinfo->lc_handle[LC_COLLATE] = 1;
+    p__free_locale(locale);
     call_func2(p_collate_char_ctor_refs, this, 0);
     ret = (int)call_func5(p_collate_char_compare, this, str1, str1+4, str1, str1+4);
     ok(ret == 0, "collate<char>::compare returned %d\n", ret);
