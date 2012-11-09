@@ -4676,13 +4676,12 @@ static void shader_arb_select(const struct wined3d_context *context, enum wined3
         checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id);");
 
         if (!priv->use_arbfp_fixed_func)
-        {
             priv->fragment_pipe->enable_extension(gl_info, FALSE);
 
-            /* Enable OpenGL fragment programs. */
-            gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
-            checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
-        }
+        /* Enable OpenGL fragment programs. */
+        gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
+        checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
+
         TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n",
                 device, priv->current_fprogram_id);
 
