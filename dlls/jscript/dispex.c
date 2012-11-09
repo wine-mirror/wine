@@ -1413,7 +1413,9 @@ HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t *val
     if(FAILED(hres))
         return hres;
 
-    return variant_to_jsval(&var, val);
+    hres = variant_to_jsval(&var, val);
+    VariantClear(&var);
+    return hres;
 }
 
 HRESULT jsdisp_delete_idx(jsdisp_t *obj, DWORD idx)
