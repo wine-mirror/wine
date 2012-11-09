@@ -1585,6 +1585,10 @@ complex_initializer:      initializer_expr
                             {
                                 $$ = $2;
                             }
+                        | '{' initializer_expr_list ',' '}'
+                            {
+                                $$ = $2;
+                            }
 
 initializer_expr:         assignment_expr
                             {
