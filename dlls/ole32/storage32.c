@@ -8769,13 +8769,14 @@ HRESULT WINAPI ReadFmtUserTypeStg (LPSTORAGE pstg, CLIPFORMAT* pcf, LPOLESTR* lp
     /* ok, success... now we just need to store what we found */
     if( pcf )
         *pcf = RegisterClipboardFormatW( szOleTypeName );
-    CoTaskMemFree( szOleTypeName );
 
     if( lplpszUserType )
         *lplpszUserType = szCLSIDName;
-    CoTaskMemFree( szProgIDName );
 
 end:
+    CoTaskMemFree( szCLSIDName );
+    CoTaskMemFree( szOleTypeName );
+    CoTaskMemFree( szProgIDName );
     IStream_Release( stm );
 
     return r;
