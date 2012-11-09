@@ -5395,6 +5395,29 @@ static void free_recorded_instruction(struct list *list)
     }
 }
 
+static void pop_control_frame(const struct wined3d_shader_instruction *ins)
+{
+    struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+    struct control_frame *control_frame;
+
+    if (ins->handler_idx == WINED3DSIH_ENDLOOP || ins->handler_idx == WINED3DSIH_ENDREP)
+    {
+        struct list *e = list_head(&priv->control_frames);
+        control_frame = LIST_ENTRY(e, struct control_frame, entry);
+        list_remove(&control_frame->entry);
+        HeapFree(GetProcessHeap(), 0, control_frame);
+        priv->loop_depth--;
+    }
+    else if (ins->handler_idx == WINED3DSIH_ENDIF)
+    {
+        /* Non-ifc ENDIFs were already handled previously. */
+        struct list *e = list_head(&priv->control_frames);
+        control_frame = LIST_ENTRY(e, struct control_frame, entry);
+        list_remove(&control_frame->entry);
+        HeapFree(GetProcessHeap(), 0, control_frame);
+    }
+}
+
 static void shader_arb_handle_instruction(const struct wined3d_shader_instruction *ins) {
     SHADER_HANDLER hw_fct;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
@@ -5564,6 +5587,8 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
             return; /* Instruction is handled. */
         }
         /* In case of an ifc, generate a HW shader instruction */
+        if (control_frame->type != IFC)
+            ERR("Control frame does not match.\n");
     }
     else if(ins->handler_idx == WINED3DSIH_ENDIF)
     {
@@ -5578,9 +5603,16 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
             HeapFree(GetProcessHeap(), 0, control_frame);
             return; /* Instruction is handled */
         }
+        /* In case of an ifc, generate a HW shader instruction */
+        if (control_frame->type != IFC)
+            ERR("Control frame does not match.\n");
     }
 
-    if(priv->muted) return;
+    if(priv->muted)
+    {
+        pop_control_frame(ins);
+        return;
+    }
 
     /* Select handler */
     hw_fct = shader_arb_instruction_handler_table[ins->handler_idx];
@@ -5593,23 +5625,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
     }
     hw_fct(ins);
 
-    if(ins->handler_idx == WINED3DSIH_ENDLOOP || ins->handler_idx == WINED3DSIH_ENDREP)
-    {
-        struct list *e = list_head(&priv->control_frames);
-        control_frame = LIST_ENTRY(e, struct control_frame, entry);
-        list_remove(&control_frame->entry);
-        HeapFree(GetProcessHeap(), 0, control_frame);
-        priv->loop_depth--;
-    }
-    else if(ins->handler_idx == WINED3DSIH_ENDIF)
-    {
-        /* Non-ifc ENDIFs don't reach that place because of the return in the if block above */
-        struct list *e = list_head(&priv->control_frames);
-        control_frame = LIST_ENTRY(e, struct control_frame, entry);
-        list_remove(&control_frame->entry);
-        HeapFree(GetProcessHeap(), 0, control_frame);
-    }
-
+    pop_control_frame(ins);
 
     shader_arb_add_instruction_modifiers(ins);
 }
