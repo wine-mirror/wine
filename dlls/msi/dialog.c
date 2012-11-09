@@ -309,7 +309,7 @@ static UINT msi_dialog_add_font( MSIRECORD *rec, LPVOID param )
 
     /* create a font and add it to the list */
     name = MSI_RecordGetString( rec, 1 );
-    font = msi_alloc( sizeof *font + strlenW( name )*sizeof (WCHAR) );
+    font = msi_alloc( FIELD_OFFSET( msi_font, name[strlenW( name ) + 1] ));
     strcpyW( font->name, name );
     list_add_head( &dialog->fonts, &font->entry );
 
@@ -414,7 +414,7 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
 
     style |= WS_CHILD;
 
-    control = msi_alloc( sizeof *control + strlenW(name)*sizeof(WCHAR) );
+    control = msi_alloc( FIELD_OFFSET( msi_control, name[strlenW( name ) + 1] ));
     if (!control)
         return NULL;
 

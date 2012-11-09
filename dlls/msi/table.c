@@ -2141,7 +2141,7 @@ UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view )
     else if ( !strcmpW( name, szStorages ) )
         return STORAGES_CreateView( db, view );
 
-    sz = sizeof *tv + lstrlenW(name)*sizeof name[0] ;
+    sz = FIELD_OFFSET( MSITABLEVIEW, name[lstrlenW( name ) + 1] );
     tv = msi_alloc_zero( sz );
     if( !tv )
         return ERROR_FUNCTION_FAILED;
