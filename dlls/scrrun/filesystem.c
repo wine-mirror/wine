@@ -41,6 +41,13 @@ struct folder {
 struct textstream {
     ITextStream ITextStream_iface;
     LONG ref;
+
+    IOMode mode;
+};
+
+enum iotype {
+    IORead,
+    IOWrite
 };
 
 static inline struct folder *impl_from_IFolder(IFolder *iface)
@@ -51,6 +58,14 @@ static inline struct folder *impl_from_IFolder(IFolder *iface)
 static inline struct textstream *impl_from_ITextStream(ITextStream *iface)
 {
     return CONTAINING_RECORD(iface, struct textstream, ITextStream_iface);
+}
+
+static int textstream_check_iomode(struct textstream *This, enum iotype type)
+{
+    if (type == IORead)
+        return This->mode == ForWriting || This->mode == ForAppending;
+    else
+        return 1;
 }
 
 static HRESULT WINAPI textstream_QueryInterface(ITextStream *iface, REFIID riid, void **obj)
@@ -183,6 +198,10 @@ static HRESULT WINAPI textstream_Read(ITextStream *iface, LONG len, BSTR *text)
 {
     struct textstream *This = impl_from_ITextStream(iface);
     FIXME("(%p)->(%p): stub\n", This, text);
+
+    if (textstream_check_iomode(This, IORead))
+        return CTL_E_BADFILEMODE;
+
     return E_NOTIMPL;
 }
 
@@ -190,6 +209,10 @@ static HRESULT WINAPI textstream_ReadLine(ITextStream *iface, BSTR *text)
 {
     struct textstream *This = impl_from_ITextStream(iface);
     FIXME("(%p)->(%p): stub\n", This, text);
+
+    if (textstream_check_iomode(This, IORead))
+        return CTL_E_BADFILEMODE;
+
     return E_NOTIMPL;
 }
 
@@ -197,6 +220,10 @@ static HRESULT WINAPI textstream_ReadAll(ITextStream *iface, BSTR *text)
 {
     struct textstream *This = impl_from_ITextStream(iface);
     FIXME("(%p)->(%p): stub\n", This, text);
+
+    if (textstream_check_iomode(This, IORead))
+        return CTL_E_BADFILEMODE;
+
     return E_NOTIMPL;
 }
 
@@ -265,7 +292,7 @@ static const ITextStreamVtbl textstreamvtbl = {
     textstream_Close
 };
 
-static HRESULT create_textstream(ITextStream **ret)
+static HRESULT create_textstream(IOMode mode, ITextStream **ret)
 {
     struct textstream *stream;
 
@@ -274,6 +301,7 @@ static HRESULT create_textstream(ITextStream **ret)
 
     stream->ITextStream_iface.lpVtbl = &textstreamvtbl;
     stream->ref = 1;
+    stream->mode = mode;
 
     *ret = &stream->ITextStream_iface;
     return S_OK;
@@ -892,7 +920,7 @@ static HRESULT WINAPI filesys_OpenTextFile(IFileSystem3 *iface, BSTR filename,
                                             Tristate format, ITextStream **stream)
 {
     FIXME("(%p)->(%s %d %d %d %p)\n", iface, debugstr_w(filename), mode, create, format, stream);
-    return create_textstream(stream);
+    return create_textstream(mode, stream);
 }
 
 static HRESULT WINAPI filesys_GetStandardStream(IFileSystem3 *iface,
