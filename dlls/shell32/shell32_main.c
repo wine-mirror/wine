@@ -227,15 +227,20 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
         if (*s)
             s++;
     }
-    /* close the argument */
+    /* close the executable path */
     *d++=0;
     /* skip to the first argument and initialize it if any */
     while (*s==' ' || *s=='\t')
         s++;
-    if (*s)
-        argv[argc++]=d;
+    if (!*s)
+    {
+        /* There are no parameters so we are all done */
+        *numargs=argc;
+        return argv;
+    }
 
     /* Split and copy the remaining arguments */
+    argv[argc++]=d;
     qcount=bcount=0;
     while (*s)
     {
