@@ -8771,7 +8771,10 @@ HRESULT WINAPI ReadFmtUserTypeStg (LPSTORAGE pstg, CLIPFORMAT* pcf, LPOLESTR* lp
         *pcf = RegisterClipboardFormatW( szOleTypeName );
 
     if( lplpszUserType )
+    {
         *lplpszUserType = szCLSIDName;
+        szCLSIDName = NULL;
+    }
 
 end:
     CoTaskMemFree( szCLSIDName );
