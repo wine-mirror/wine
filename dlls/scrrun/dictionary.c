@@ -95,9 +95,7 @@ static ULONG WINAPI dictionary_Release(IDictionary *iface)
 
     ref = InterlockedDecrement(&This->ref);
     if(ref == 0)
-    {
-        HeapFree(GetProcessHeap(), 0, This);
-    }
+        heap_free(This);
 
     return ref;
 }
@@ -333,7 +331,7 @@ HRESULT WINAPI Dictionary_CreateInstance(IClassFactory *factory,IUnknown *outer,
 
     *obj = NULL;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    This = heap_alloc(sizeof(*This));
     if(!This) return E_OUTOFMEMORY;
 
     This->IDictionary_iface.lpVtbl = &dictionary_vtbl;
