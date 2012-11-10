@@ -38,9 +38,245 @@ struct folder {
     LONG ref;
 };
 
+struct textstream {
+    ITextStream ITextStream_iface;
+    LONG ref;
+};
+
 static inline struct folder *impl_from_IFolder(IFolder *iface)
 {
     return CONTAINING_RECORD(iface, struct folder, IFolder_iface);
+}
+
+static inline struct textstream *impl_from_ITextStream(ITextStream *iface)
+{
+    return CONTAINING_RECORD(iface, struct textstream, ITextStream_iface);
+}
+
+static HRESULT WINAPI textstream_QueryInterface(ITextStream *iface, REFIID riid, void **obj)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_ITextStream) ||
+        IsEqualIID(riid, &IID_IDispatch) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        ITextStream_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI textstream_AddRef(ITextStream *iface)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI textstream_Release(ITextStream *iface)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI textstream_GetTypeInfoCount(ITextStream *iface, UINT *pctinfo)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI textstream_GetTypeInfo(ITextStream *iface, UINT iTInfo,
+                                        LCID lcid, ITypeInfo **ppTInfo)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return get_typeinfo(ITextStream_tid, ppTInfo);
+}
+
+static HRESULT WINAPI textstream_GetIDsOfNames(ITextStream *iface, REFIID riid,
+                                        LPOLESTR *rgszNames, UINT cNames,
+                                        LCID lcid, DISPID *rgDispId)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+
+    hr = get_typeinfo(ITextStream_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI textstream_Invoke(ITextStream *iface, DISPID dispIdMember,
+                                      REFIID riid, LCID lcid, WORD wFlags,
+                                      DISPPARAMS *pDispParams, VARIANT *pVarResult,
+                                      EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(ITextStream_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI textstream_get_Line(ITextStream *iface, LONG *line)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    FIXME("(%p)->(%p): stub\n", This, line);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI textstream_get_Column(ITextStream *iface, LONG *column)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    FIXME("(%p)->(%p): stub\n", This, column);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI textstream_get_AtEndOfStream(ITextStream *iface, VARIANT_BOOL *eos)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    FIXME("(%p)->(%p): stub\n", This, eos);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI textstream_get_AtEndOfLine(ITextStream *iface, VARIANT_BOOL *eol)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    FIXME("(%p)->(%p): stub\n", This, eol);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI textstream_Read(ITextStream *iface, LONG len, BSTR *text)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    FIXME("(%p)->(%p): stub\n", This, text);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI textstream_ReadLine(ITextStream *iface, BSTR *text)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    FIXME("(%p)->(%p): stub\n", This, text);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI textstream_ReadAll(ITextStream *iface, BSTR *text)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    FIXME("(%p)->(%p): stub\n", This, text);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI textstream_Write(ITextStream *iface, BSTR text)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    FIXME("(%p)->(%s): stub\n", This, debugstr_w(text));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI textstream_WriteLine(ITextStream *iface, BSTR text)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    FIXME("(%p)->(%s): stub\n", This, debugstr_w(text));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI textstream_WriteBlankLines(ITextStream *iface, LONG lines)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    FIXME("(%p)->(%d): stub\n", This, lines);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI textstream_Skip(ITextStream *iface, LONG count)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    FIXME("(%p)->(%d): stub\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI textstream_SkipLine(ITextStream *iface)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI textstream_Close(ITextStream *iface)
+{
+    struct textstream *This = impl_from_ITextStream(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static const ITextStreamVtbl textstreamvtbl = {
+    textstream_QueryInterface,
+    textstream_AddRef,
+    textstream_Release,
+    textstream_GetTypeInfoCount,
+    textstream_GetTypeInfo,
+    textstream_GetIDsOfNames,
+    textstream_Invoke,
+    textstream_get_Line,
+    textstream_get_Column,
+    textstream_get_AtEndOfStream,
+    textstream_get_AtEndOfLine,
+    textstream_Read,
+    textstream_ReadLine,
+    textstream_ReadAll,
+    textstream_Write,
+    textstream_WriteLine,
+    textstream_WriteBlankLines,
+    textstream_Skip,
+    textstream_SkipLine,
+    textstream_Close
+};
+
+static HRESULT create_textstream(ITextStream **ret)
+{
+    struct textstream *stream;
+
+    stream = heap_alloc(sizeof(struct textstream));
+    if (!stream) return E_OUTOFMEMORY;
+
+    stream->ITextStream_iface.lpVtbl = &textstreamvtbl;
+    stream->ref = 1;
+
+    *ret = &stream->ITextStream_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI folder_QueryInterface(IFolder *iface, REFIID riid, void **obj)
@@ -651,13 +887,12 @@ static HRESULT WINAPI filesys_CreateTextFile(IFileSystem3 *iface, BSTR FileName,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI filesys_OpenTextFile(IFileSystem3 *iface, BSTR FileName,
-                                            IOMode IOMode, VARIANT_BOOL Create,
-                                            Tristate Format, ITextStream **ppts)
+static HRESULT WINAPI filesys_OpenTextFile(IFileSystem3 *iface, BSTR filename,
+                                            IOMode mode, VARIANT_BOOL create,
+                                            Tristate format, ITextStream **stream)
 {
-    FIXME("%p %s %d %d %d %p\n", iface, debugstr_w(FileName), IOMode, Create, Format, ppts);
-
-    return E_NOTIMPL;
+    FIXME("(%p)->(%s %d %d %d %p)\n", iface, debugstr_w(filename), mode, create, format, stream);
+    return create_textstream(stream);
 }
 
 static HRESULT WINAPI filesys_GetStandardStream(IFileSystem3 *iface,

@@ -27,6 +27,7 @@ typedef enum tid_t
     IDictionary_tid,
     IFileSystem3_tid,
     IFolder_tid,
+    ITextStream_tid,
     LAST_tid
 } tid_t;
 
