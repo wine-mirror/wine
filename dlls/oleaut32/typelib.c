@@ -4079,6 +4079,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
       pTIHeader = pBlk;
       if(pTIHeader->magic != SLTG_TIHEADER_MAGIC) {
 	FIXME_(typelib)("TypeInfoHeader magic = %04x\n", pTIHeader->magic);
+       heap_free(pOtherTypeInfoBlks);
 	return NULL;
       }
       TRACE_(typelib)("pTIHeader->res06 = %x, pTIHeader->res0e = %x, "
