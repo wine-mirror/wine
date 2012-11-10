@@ -685,7 +685,11 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
         case VT_ARRAY|VT_UI1:
         {
             sa = V_ARRAY(body);
-            if ((hr = SafeArrayAccessData(sa, (void **)&ptr)) != S_OK) return hr;
+            if ((hr = SafeArrayAccessData(sa, (void **)&ptr)) != S_OK)
+            {
+                heap_free(bsc);
+                return hr;
+            }
             if ((hr = SafeArrayGetUBound(sa, 1, &size) != S_OK))
             {
                 SafeArrayUnaccessData(sa);
