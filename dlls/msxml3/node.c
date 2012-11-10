@@ -833,6 +833,53 @@ HRESULT node_get_xml(xmlnode *This, BOOL ensure_eol, BSTR *ret)
     return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
+static void htmldtd_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc)
+{
+    xmlDtdPtr cur = doc->intSubset;
+
+    xmlOutputBufferWriteString(buf, "<!DOCTYPE ");
+    xmlOutputBufferWriteString(buf, (const char *)cur->name);
+    if (cur->ExternalID)
+    {
+        xmlOutputBufferWriteString(buf, " PUBLIC ");
+        xmlBufferWriteQuotedString(buf->buffer, cur->ExternalID);
+        if (cur->SystemID)
+        {
+            xmlOutputBufferWriteString(buf, " ");
+            xmlBufferWriteQuotedString(buf->buffer, cur->SystemID);
+	}
+    }
+    else if (cur->SystemID)
+    {
+        xmlOutputBufferWriteString(buf, " SYSTEM ");
+        xmlBufferWriteQuotedString(buf->buffer, cur->SystemID);
+    }
+    xmlOutputBufferWriteString(buf, ">\n");
+}
+
+static void htmldoc_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc)
+{
+    xmlElementType type;
+
+    /* force HTML output */
+    type = doc->type;
+    doc->type = XML_HTML_DOCUMENT_NODE;
+    if (doc->intSubset)
+        htmldtd_dumpcontent(buf, doc);
+    if (doc->children)
+    {
+        xmlNodePtr cur = doc->children;
+
+        while (cur)
+        {
+            htmlNodeDumpFormatOutput(buf, doc, cur, NULL, 1);
+            cur = cur->next;
+        }
+
+    }
+    doc->type = type;
+}
+
 HRESULT node_transform_node(const xmlnode *This, IXMLDOMNode *stylesheet, BSTR *p)
 {
 #ifdef SONAME_LIBXSLT
@@ -860,7 +907,7 @@ HRESULT node_transform_node(const xmlnode *This, IXMLDOMNode *stylesheet, BSTR *
                 xmlOutputBufferPtr output = xmlAllocOutputBuffer(NULL);
                 if (output)
                 {
-                    htmlDocContentDumpOutput(output, result->doc, NULL);
+                    htmldoc_dumpcontent(output, result->doc);
                     content = xmlBufferContent(output->buffer);
                     *p = bstr_from_xmlChar(content);
                     xmlOutputBufferClose(output);

@@ -9732,8 +9732,7 @@ todo_wine {
     hr = IXSLProcessor_get_output(processor, &v);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(V_VT(&v) == VT_BSTR, "got type %d\n", V_VT(&v));
-    /* we currently output one '\n' instead of empty string */
-    todo_wine ok(lstrcmpW(V_BSTR(&v), _bstr_("")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(lstrcmpW(V_BSTR(&v), _bstr_("")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
     IXMLDOMDocument_Release(doc2);
     VariantClear(&v);
 
@@ -12469,6 +12468,47 @@ static void test_namedmap_newenum(void)
     IXMLDOMDocument_Release(doc);
 }
 
+static const char xsltext_xsl[] =
+"<?xml version=\"1.0\"?>"
+"<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" >"
+"<xsl:output method=\"html\" encoding=\"us-ascii\"/>"
+"<xsl:template match=\"/\">"
+"    <xsl:choose>"
+"        <xsl:when test=\"testkey\">"
+"            <xsl:text>testdata</xsl:text>"
+"        </xsl:when>"
+"    </xsl:choose>"
+"</xsl:template>"
+"</xsl:stylesheet>";
+
+static void test_xsltext(void)
+{
+    IXMLDOMDocument *doc, *doc2;
+    VARIANT_BOOL b;
+    HRESULT hr;
+    BSTR ret;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    if (!doc) return;
+
+    doc2 = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(xsltext_xsl), &b);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_loadXML(doc2, _bstr_("<testkey/>"), &b);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_transformNode(doc2, (IXMLDOMNode*)doc, &ret);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(ret, _bstr_("testdata")), "transform result %s\n", wine_dbgstr_w(ret));
+    SysFreeString(ret);
+
+    IXMLDOMDocument_Release(doc2);
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -12552,6 +12592,7 @@ START_TEST(domdoc)
     test_namedmap_newenum();
 
     test_xsltemplate();
+    test_xsltext();
 
     hr = CoCreateInstance(&CLSID_MXNamespaceManager40, NULL, CLSCTX_INPROC_SERVER,
         &IID_IMXNamespaceManager, (void**)&unk);
