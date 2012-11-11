@@ -573,7 +573,7 @@ DECLARE_INTERFACE_(IDirect3DTexture,IUnknown)
     STDMETHOD(Initialize)(THIS_ struct IDirect3DDevice *device, IDirectDrawSurface *surface) PURE;
     STDMETHOD(GetHandle)(THIS_ LPDIRECT3DDEVICE lpDirect3DDevice, LPD3DTEXTUREHANDLE  lpHandle) PURE;
     STDMETHOD(PaletteChanged)(THIS_ DWORD dwStart, DWORD dwCount) PURE;
-    STDMETHOD(Load)(THIS_ LPDIRECT3DTEXTURE lpD3DTexture) PURE;
+    STDMETHOD(Load)(THIS_ IDirect3DTexture *texture) PURE;
     STDMETHOD(Unload)(THIS) PURE;
 };
 #undef INTERFACE
@@ -938,7 +938,7 @@ DECLARE_INTERFACE_(IDirect3DDevice,IUnknown)
     /*** IDirect3DDevice methods ***/
     STDMETHOD(Initialize)(THIS_ LPDIRECT3D lpDirect3D, LPGUID lpGUID, LPD3DDEVICEDESC lpD3DDVDesc) PURE;
     STDMETHOD(GetCaps)(THIS_ LPD3DDEVICEDESC lpD3DHWDevDesc, LPD3DDEVICEDESC lpD3DHELDevDesc) PURE;
-    STDMETHOD(SwapTextureHandles)(THIS_ LPDIRECT3DTEXTURE lpD3Dtex1, LPDIRECT3DTEXTURE lpD3DTex2) PURE;
+    STDMETHOD(SwapTextureHandles)(THIS_ IDirect3DTexture *tex1, IDirect3DTexture *tex2) PURE;
     STDMETHOD(CreateExecuteBuffer)(THIS_ D3DEXECUTEBUFFERDESC *desc,
             IDirect3DExecuteBuffer **buffer, IUnknown *outer) PURE;
     STDMETHOD(GetStats)(THIS_ LPD3DSTATS lpD3DStats) PURE;
