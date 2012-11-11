@@ -260,7 +260,7 @@ DECLARE_INTERFACE_(IDirect3D2,IUnknown)
     /*** IDirect3D2 methods ***/
     STDMETHOD(EnumDevices)(THIS_ LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback, LPVOID lpUserArg) PURE;
     STDMETHOD(CreateLight)(THIS_ LPDIRECT3DLIGHT *lplpDirect3DLight, IUnknown *pUnkOuter) PURE;
-    STDMETHOD(CreateMaterial)(THIS_ LPDIRECT3DMATERIAL2 *lplpDirect3DMaterial2, IUnknown *pUnkOuter) PURE;
+    STDMETHOD(CreateMaterial)(THIS_ struct IDirect3DMaterial2 **material, IUnknown *outer) PURE;
     STDMETHOD(CreateViewport)(THIS_ LPDIRECT3DVIEWPORT2 *lplpD3DViewport2, IUnknown *pUnkOuter) PURE;
     STDMETHOD(FindDevice)(THIS_ LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lpD3DFDR) PURE;
     STDMETHOD(CreateDevice)(THIS_ REFCLSID rclsid, IDirectDrawSurface *surface,
