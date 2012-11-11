@@ -1378,7 +1378,12 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
     const struct wined3d_shader_version *version = &reg_maps->shader_version;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     const char *prefix = shader_glsl_get_prefix(version->type);
+    struct glsl_src_param rel_param0, rel_param1;
 
+    if (reg->idx[0].offset != ~0U && reg->idx[0].rel_addr)
+        shader_glsl_add_src_param(ins, reg->idx[0].rel_addr, WINED3DSP_WRITEMASK_0, &rel_param0);
+    if (reg->idx[1].offset != ~0U && reg->idx[1].rel_addr)
+        shader_glsl_add_src_param(ins, reg->idx[1].rel_addr, WINED3DSP_WRITEMASK_0, &rel_param1);
     *is_color = FALSE;
 
     switch (reg->type)
@@ -1406,24 +1411,20 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
 
                 if (reg->idx[0].rel_addr)
                 {
-                    struct glsl_src_param rel_param;
-
-                    shader_glsl_add_src_param(ins, reg->idx[0].rel_addr, WINED3DSP_WRITEMASK_0, &rel_param);
-
-                    /* Removing a + 0 would be an obvious optimization, but macos doesn't see the NOP
-                     * operation there */
+                    /* Removing a + 0 would be an obvious optimization, but
+                     * OS X doesn't see the NOP operation there. */
                     if (idx)
                     {
                         if (shader->u.ps.declared_in_count > in_count)
                         {
                             sprintf(register_name,
                                     "((%s + %u) > %u ? (%s + %u) > %u ? gl_SecondaryColor : gl_Color : %s_in[%s + %u])",
-                                    rel_param.param_str, idx, in_count - 1, rel_param.param_str, idx, in_count,
-                                    prefix, rel_param.param_str, idx);
+                                    rel_param0.param_str, idx, in_count - 1, rel_param0.param_str, idx, in_count,
+                                    prefix, rel_param0.param_str, idx);
                         }
                         else
                         {
-                            sprintf(register_name, "%s_in[%s + %u]", prefix, rel_param.param_str, idx);
+                            sprintf(register_name, "%s_in[%s + %u]", prefix, rel_param0.param_str, idx);
                         }
                     }
                     else
@@ -1431,12 +1432,12 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                         if (shader->u.ps.declared_in_count > in_count)
                         {
                             sprintf(register_name, "((%s) > %u ? (%s) > %u ? gl_SecondaryColor : gl_Color : %s_in[%s])",
-                                    rel_param.param_str, in_count - 1, rel_param.param_str, in_count,
-                                    prefix, rel_param.param_str);
+                                    rel_param0.param_str, in_count - 1, rel_param0.param_str, in_count,
+                                    prefix, rel_param0.param_str);
                         }
                         else
                         {
-                            sprintf(register_name, "%s_in[%s]", prefix, rel_param.param_str);
+                            sprintf(register_name, "%s_in[%s]", prefix, rel_param0.param_str);
                         }
                     }
                 }
@@ -1462,12 +1463,10 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                 /* Relative addressing */
                 if (reg->idx[0].rel_addr)
                 {
-                    struct glsl_src_param rel_param;
-                    shader_glsl_add_src_param(ins, reg->idx[0].rel_addr, WINED3DSP_WRITEMASK_0, &rel_param);
                     if (reg->idx[0].offset)
-                        sprintf(register_name, "%s_c[%s + %u]", prefix, rel_param.param_str, reg->idx[0].offset);
+                        sprintf(register_name, "%s_c[%s + %u]", prefix, rel_param0.param_str, reg->idx[0].offset);
                     else
-                        sprintf(register_name, "%s_c[%s]", prefix, rel_param.param_str);
+                        sprintf(register_name, "%s_c[%s]", prefix, rel_param0.param_str);
                 }
                 else
                 {
@@ -1606,16 +1605,10 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
 
         case WINED3DSPR_CONSTBUFFER:
             if (reg->idx[1].rel_addr)
-            {
-                struct glsl_src_param rel_param;
-                shader_glsl_add_src_param(ins, reg->idx[1].rel_addr, WINED3DSP_WRITEMASK_0, &rel_param);
                 sprintf(register_name, "%s_cb%u[%s + %u]",
-                        prefix, reg->idx[0].offset, rel_param.param_str, reg->idx[1].offset);
-            }
+                        prefix, reg->idx[0].offset, rel_param1.param_str, reg->idx[1].offset);
             else
-            {
                 sprintf(register_name, "%s_cb%u[%u]", prefix, reg->idx[0].offset, reg->idx[1].offset);
-            }
             break;
 
         case WINED3DSPR_PRIMID:
