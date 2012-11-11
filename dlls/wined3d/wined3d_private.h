@@ -1206,6 +1206,7 @@ extern const struct fragment_pipeline atifs_fragment_pipeline DECLSPEC_HIDDEN;
 extern const struct fragment_pipeline arbfp_fragment_pipeline DECLSPEC_HIDDEN;
 extern const struct fragment_pipeline nvts_fragment_pipeline DECLSPEC_HIDDEN;
 extern const struct fragment_pipeline nvrc_fragment_pipeline DECLSPEC_HIDDEN;
+extern const struct fragment_pipeline glsl_fragment_pipe DECLSPEC_HIDDEN;
 
 /* "Base" state table */
 HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_multistate_funcs,
@@ -2544,6 +2545,8 @@ void state_fogdensity(struct wined3d_context *context,
 void state_fogstartend(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void state_fog_fragpart(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_srgbwrite(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 
 BOOL getColorBits(const struct wined3d_format *format,

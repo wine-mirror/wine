@@ -2298,13 +2298,17 @@ static const struct fragment_pipeline *select_fragment_implementation(const stru
     int vs_selected_mode, ps_selected_mode;
 
     select_shader_mode(gl_info, &ps_selected_mode, &vs_selected_mode);
-    if ((ps_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_GLSL)
-            && gl_info->supported[ARB_FRAGMENT_PROGRAM]) return &arbfp_fragment_pipeline;
-    else if (ps_selected_mode == SHADER_ATI) return &atifs_fragment_pipeline;
-    else if (gl_info->supported[NV_REGISTER_COMBINERS]
-            && gl_info->supported[NV_TEXTURE_SHADER2]) return &nvts_fragment_pipeline;
-    else if (gl_info->supported[NV_REGISTER_COMBINERS]) return &nvrc_fragment_pipeline;
-    else return &ffp_fragment_pipeline;
+    if (ps_selected_mode == SHADER_GLSL)
+        return &glsl_fragment_pipe;
+    if (ps_selected_mode == SHADER_ARB)
+        return &arbfp_fragment_pipeline;
+    if (ps_selected_mode == SHADER_ATI)
+        return &atifs_fragment_pipeline;
+    if (gl_info->supported[NV_REGISTER_COMBINERS] && gl_info->supported[NV_TEXTURE_SHADER2])
+        return &nvts_fragment_pipeline;
+    if (gl_info->supported[NV_REGISTER_COMBINERS])
+        return &nvrc_fragment_pipeline;
+    return &ffp_fragment_pipeline;
 }
 
 static const struct wined3d_shader_backend_ops *select_shader_backend(const struct wined3d_gl_info *gl_info)
