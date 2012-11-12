@@ -453,6 +453,32 @@ void deactivate_document(DocHost *This)
     This->document = NULL;
 }
 
+HRESULT refresh_document(DocHost *This)
+{
+    IOleCommandTarget *cmdtrg;
+    VARIANT vin, vout;
+    HRESULT hres;
+
+    if(!This->document) {
+        FIXME("no document\n");
+        return E_FAIL;
+    }
+
+    hres = IUnknown_QueryInterface(This->document, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(&vin) = VT_EMPTY;
+    V_VT(&vout) = VT_EMPTY;
+    hres = IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_REFRESH, OLECMDEXECOPT_PROMPTUSER, &vin, &vout);
+    IOleCommandTarget_Release(cmdtrg);
+    if(FAILED(hres))
+        return hres;
+
+    VariantClear(&vout);
+    return S_OK;
+}
+
 void release_dochost_client(DocHost *This)
 {
     if(This->hwnd) {

@@ -265,6 +265,7 @@ void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*) DECLSPEC_HIDDEN;
 HRESULT navigate_url(DocHost*,LPCWSTR,const VARIANT*,const VARIANT*,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT go_home(DocHost*) DECLSPEC_HIDDEN;
 HRESULT go_back(DocHost*) DECLSPEC_HIDDEN;
+HRESULT refresh_document(DocHost*) DECLSPEC_HIDDEN;
 HRESULT get_location_url(DocHost*,BSTR*) DECLSPEC_HIDDEN;
 HRESULT set_dochost_url(DocHost*,const WCHAR*) DECLSPEC_HIDDEN;
 void handle_navigation_error(DocHost*,HRESULT,BSTR,IHTMLWindow2*) DECLSPEC_HIDDEN;

@@ -292,8 +292,10 @@ static HRESULT WINAPI WebBrowser_Navigate(IWebBrowser2 *iface, BSTR szUrl,
 static HRESULT WINAPI WebBrowser_Refresh(IWebBrowser2 *iface)
 {
     WebBrowser *This = impl_from_IWebBrowser2(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    return refresh_document(&This->doc_host);
 }
 
 static HRESULT WINAPI WebBrowser_Refresh2(IWebBrowser2 *iface, VARIANT *Level)
