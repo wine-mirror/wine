@@ -130,6 +130,7 @@ DEFINE_EXPECT(Exec_ShellDocView_67);
 DEFINE_EXPECT(Exec_ShellDocView_84);
 DEFINE_EXPECT(Exec_ShellDocView_103);
 DEFINE_EXPECT(Exec_ShellDocView_105);
+DEFINE_EXPECT(Exec_ShellDocView_138);
 DEFINE_EXPECT(Exec_ShellDocView_140);
 DEFINE_EXPECT(Exec_UPDATECOMMANDS);
 DEFINE_EXPECT(Exec_SETTITLE);
@@ -208,6 +209,7 @@ static BOOL asynchronous_binding = FALSE;
 static BOOL support_wbapp, allow_new_window;
 static BOOL report_mime;
 static int stream_read, protocol_read;
+static IStream *history_stream;
 static enum load_state_t {
     LD_DOLOAD,
     LD_LOADING,
@@ -369,6 +371,7 @@ static void _test_GetCurMoniker(unsigned line, IUnknown *unk, IMoniker *exmon, c
     IPersistMoniker *permon;
     IMoniker *mon = (void*)0xdeadbeef;
     BSTR doc_url = (void*)0xdeadbeef;
+    const WCHAR *ptr;
     HRESULT hres;
 
     if(open_call)
@@ -384,6 +387,7 @@ static void _test_GetCurMoniker(unsigned line, IUnknown *unk, IMoniker *exmon, c
 
     hres = IHTMLDocument2_get_URL(doc, &doc_url);
     ok(hres == S_OK, "get_URL failed: %08x\n", hres);
+    for(ptr = doc_url; *ptr && *ptr != '#'; ptr++);
 
     hres = IPersistMoniker_GetCurMoniker(permon, &mon);
     IPersistMoniker_Release(permon);
@@ -405,8 +409,8 @@ static void _test_GetCurMoniker(unsigned line, IUnknown *unk, IMoniker *exmon, c
         expect_GetDisplayName = exb;
         called_GetDisplayName = clb;
 
-        if(!loading_hash)
-            ok(!lstrcmpW(url, doc_url), "url != doc_url\n");
+        if(!*ptr)
+            ok(!lstrcmpW(url, doc_url), "url %s != doc_url %s\n", wine_dbgstr_w(url), wine_dbgstr_w(doc_url));
         else
             ok(!strcmp_wa(url, nav_serv_url), "url = %s, expected %s\n", wine_dbgstr_w(url), nav_serv_url);
         CoTaskMemFree(url);
@@ -419,7 +423,8 @@ static void _test_GetCurMoniker(unsigned line, IUnknown *unk, IMoniker *exmon, c
         ok(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
 
         ok_(__FILE__,line)(!strcmp_wa(url, exurl), "unexpected url %s\n", wine_dbgstr_w(url));
-        ok_(__FILE__,line)(!lstrcmpW(url, doc_url), "url != doc_url\n");
+        if(!*ptr)
+            ok_(__FILE__,line)(!lstrcmpW(url, doc_url), "url %s != doc_url %s\n", wine_dbgstr_w(url), wine_dbgstr_w(doc_url));
 
         CoTaskMemFree(url);
     }else {
@@ -867,7 +872,7 @@ static HRESULT WINAPI NewWindowManager_EvaluateNewWindow(INewWindowManager *ifac
 
     ok(!strcmp_wa(pszUrl, "about:blank"), "pszUrl = %s\n", wine_dbgstr_w(pszUrl));
     ok(!strcmp_wa(pszName, "test"), "pszName = %s\n", wine_dbgstr_w(pszName));
-    ok(!strcmp_wa(pszUrlContext, "about:replace"), "pszUrlContext = %s\n", wine_dbgstr_w(pszUrlContext));
+    ok(!strcmp_wa(pszUrlContext, prev_url), "pszUrlContext = %s\n", wine_dbgstr_w(pszUrlContext));
     ok(!pszFeatures, "pszFeatures = %s\n", wine_dbgstr_w(pszFeatures));
     ok(!fReplace, "fReplace = %x\n", fReplace);
     ok(dwFlags == (allow_new_window ? 0 : NWMF_FIRST), "dwFlags = %x\n", dwFlags);
@@ -932,7 +937,7 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
         readystate_set_interactive = (load_state != LD_INTERACTIVE);
         return S_OK;
     case 1012:
-        CHECK_EXPECT(OnChanged_1012);
+        CHECK_EXPECT2(OnChanged_1012);
         return S_OK;
     case 1030:
     case 3000022:
@@ -2696,6 +2701,29 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
     return E_FAIL;
 }
 
+static void test_save_history(IUnknown *unk)
+{
+    IPersistHistory *per_hist;
+    LARGE_INTEGER li;
+    IStream *stream;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IPersistHistory, (void**)&per_hist);
+    ok(hres == S_OK, "Could not get IPersistHistory iface: %08x\n", hres);
+
+    hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hres);
+
+    hres = IPersistHistory_SaveHistory(per_hist, stream);
+    ok(hres == S_OK, "SaveHistory failed: %08x\n", hres);
+    IPersistHistory_Release(per_hist);
+
+    li.QuadPart = 0;
+    hres = IStream_Seek(stream, li, STREAM_SEEK_SET, NULL);
+    ok(hres == S_OK, "Stat failed: %08x\n", hres);
+    history_stream = stream;
+}
+
 static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
         DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
@@ -2797,7 +2825,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             CHECK_EXPECT2(Exec_ShellDocView_37);
 
             if(nav_url)
-                test_GetCurMoniker(doc_unk, NULL, nav_url);
+                test_GetCurMoniker(doc_unk, NULL, nav_serv_url);
             else if(load_from_stream)
                 test_GetCurMoniker(doc_unk, NULL, "about:blank");
             else if(!editmode)
@@ -2869,6 +2897,12 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             ok(pvaOut == NULL, "pvaOut != NULL\n");
 
             return E_NOTIMPL;
+
+        case 138:
+            CHECK_EXPECT2(Exec_ShellDocView_138);
+            ok(!pvaIn, "pvaIn != NULL\n");
+            ok(!pvaOut, "pvaOut != NULL\n");
+            return S_OK;
 
         case 140:
             CHECK_EXPECT2(Exec_ShellDocView_140);
@@ -2980,6 +3014,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             ok(!pvaOut, "pvaOut != NULL\n");
 
             test_current_url(doc_unk, prev_url);
+            if(!history_stream)
+                test_save_history(doc_unk);
 
             return S_OK;
         case 69:
@@ -5004,6 +5040,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
 #define DWL_JAVASCRIPT         0x0020
 #define DWL_ONREADY_LOADING    0x0040
 #define DWL_EXPECT_HISTUPDATE  0x0080
+#define DWL_FROM_HISTORY       0x0100
 
 static void test_download(DWORD flags)
 {
@@ -5054,7 +5091,8 @@ static void test_download(DWORD flags)
     if((nav_url && !is_js) || (flags & (DWL_CSS|DWL_HTTP)))
         SET_EXPECT(Exec_ShellDocView_37);
     if(flags & DWL_HTTP) {
-        SET_EXPECT(OnChanged_1012);
+        if(!(flags & DWL_FROM_HISTORY))
+            SET_EXPECT(OnChanged_1012);
         SET_EXPECT(Exec_HTTPEQUIV);
         SET_EXPECT(Exec_SETTITLE);
     }
@@ -5141,7 +5179,8 @@ static void test_download(DWORD flags)
     else if(flags & (DWL_CSS|DWL_HTTP))
         CLEAR_CALLED(Exec_ShellDocView_37); /* Called by IE9 */
     if(flags & DWL_HTTP)  {
-        todo_wine CHECK_CALLED(OnChanged_1012);
+        if(!(flags & DWL_FROM_HISTORY))
+            todo_wine CHECK_CALLED(OnChanged_1012);
         todo_wine CHECK_CALLED(Exec_HTTPEQUIV);
         todo_wine CHECK_CALLED(Exec_SETTITLE);
     }
@@ -5394,6 +5433,45 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
     loading_js = FALSE;
     if(is_js)
         nav_url = prev_nav_url;
+}
+
+static void test_load_history(IHTMLDocument2 *doc)
+{
+    IPersistHistory *per_hist;
+    HRESULT hres;
+
+    trace("LoadHistory...\n");
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistHistory, (void**)&per_hist);
+    ok(hres == S_OK, "Could not get IPersistHistory iface: %08x\n", hres);
+
+    prev_url = nav_url;
+    nav_url = "http://www.winehq.org/#test";
+    nav_serv_url = "http://www.winehq.org/";
+
+    SET_EXPECT(Exec_ShellDocView_138);
+    SET_EXPECT(Exec_ShellDocView_67);
+    SET_EXPECT(FireBeforeNavigate2);
+    SET_EXPECT(Invoke_AMBIENT_SILENT);
+    SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+
+    hres = IPersistHistory_LoadHistory(per_hist, history_stream, NULL);
+    ok(hres == S_OK, "LoadHistory failed: %08x\n", hres);
+
+    CHECK_CALLED_BROKEN(Exec_ShellDocView_138);
+    CHECK_CALLED(Exec_ShellDocView_67);
+    CHECK_CALLED(FireBeforeNavigate2);
+    CHECK_CALLED(Invoke_AMBIENT_SILENT);
+    CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+
+    load_state = LD_LOADING;
+    test_timer(EXPECT_UPDATEUI|EXPECT_SETTITLE);
+
+    test_download(DWL_VERBDONE|DWL_HTTP|DWL_EXPECT_HISTUPDATE|DWL_ONREADY_LOADING|DWL_FROM_HISTORY);
+
+    IPersistHistory_Release(per_hist);
+    IStream_Release(history_stream);
+    history_stream = NULL;
 }
 
 static void test_open_window(IHTMLDocument2 *doc, BOOL do_block)
@@ -6876,7 +6954,12 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
     test_put_href(doc, FALSE, NULL, "javascript:external%20&&undefined", TRUE, FALSE, 0);
     test_put_href(doc, FALSE, NULL, "about:blank", FALSE, FALSE, support_wbapp ? DWL_EXPECT_HISTUPDATE : 0);
     test_put_href(doc, TRUE, NULL, "about:replace", FALSE, FALSE, 0);
+    if(support_wbapp) {
+        test_load_history(doc);
+        test_put_href(doc, FALSE, NULL, "about:blank", FALSE, FALSE, support_wbapp ? DWL_EXPECT_HISTUPDATE : 0);
+    }
 
+    prev_url = nav_serv_url;
     test_open_window(doc, TRUE);
     if(!support_wbapp) /* FIXME */
         test_open_window(doc, FALSE);
@@ -6884,7 +6967,7 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
     test_InPlaceDeactivate(doc, TRUE);
     test_Close(doc, FALSE);
     test_IsDirty(doc, S_FALSE);
-    test_GetCurMoniker((IUnknown*)doc, NULL, "about:replace");
+    test_GetCurMoniker((IUnknown*)doc, NULL, prev_url);
 
     if(view)
         IOleDocumentView_Release(view);
@@ -7359,22 +7442,6 @@ static void test_HTMLDoc_ISupportErrorInfo(void)
     release_document(doc);
 }
 
-static void test_IPersistHistory(void)
-{
-    IHTMLDocument2 *doc;
-    HRESULT hres;
-    IPersistHistory *phist;
-
-    doc = create_document();
-
-    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistHistory, (void**)&phist);
-    ok(hres == S_OK, "QueryInterface returned %08x, expected S_OK\n", hres);
-    if(hres == S_OK)
-        IPersistHistory_Release(phist);
-
-    release_document(doc);
-}
-
 static BOOL check_ie(void)
 {
     IHTMLDocument2 *doc;
@@ -7467,7 +7534,6 @@ START_TEST(htmldoc)
     test_UIActivate(TRUE, TRUE, FALSE);
     test_UIActivate(TRUE, TRUE, TRUE);
     test_HTMLDoc_ISupportErrorInfo();
-    test_IPersistHistory();
     test_ServiceProvider();
 
     DestroyWindow(container_hwnd);
