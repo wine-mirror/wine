@@ -431,7 +431,7 @@ UINT SELECT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
 
     count = select_count_columns( columns );
 
-    sv = msi_alloc_zero( sizeof *sv + count*sizeof (UINT) );
+    sv = msi_alloc_zero( FIELD_OFFSET( MSISELECTVIEW, cols[count] ));
     if( !sv )
         return ERROR_FUNCTION_FAILED;
     
