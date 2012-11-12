@@ -477,7 +477,21 @@ static void STDMETHODCALLTYPE d3d10_device_PSGetSamplers(ID3D10Device *iface,
 
 static void STDMETHODCALLTYPE d3d10_device_VSGetShader(ID3D10Device *iface, ID3D10VertexShader **shader)
 {
-    FIXME("iface %p, shader %p stub!\n", iface, shader);
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+    struct d3d10_vertex_shader *shader_impl;
+    struct wined3d_shader *wined3d_shader;
+
+    TRACE("iface %p, shader %p.\n", iface, shader);
+
+    if (!(wined3d_shader = wined3d_device_get_vertex_shader(device->wined3d_device)))
+    {
+        *shader = NULL;
+        return;
+    }
+
+    shader_impl = wined3d_shader_get_parent(wined3d_shader);
+    *shader = &shader_impl->ID3D10VertexShader_iface;
+    ID3D10VertexShader_AddRef(*shader);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_PSGetConstantBuffers(ID3D10Device *iface,
