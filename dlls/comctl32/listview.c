@@ -11584,9 +11584,6 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case WM_SHOWWINDOW:
     return LISTVIEW_ShowWindow(infoPtr, wParam, lParam);
 
-  case WM_SIZE:
-    return LISTVIEW_Size(infoPtr, (short)LOWORD(lParam), (short)HIWORD(lParam));
-
   case WM_STYLECHANGED:
     return LISTVIEW_StyleChanged(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
 
@@ -11612,13 +11609,14 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case WM_WINDOWPOSCHANGED:
       if (!(((WINDOWPOS *)lParam)->flags & SWP_NOSIZE)) 
       {
-      SetWindowPos(infoPtr->hwndSelf, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOACTIVATE |
-	           SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE);
+          SetWindowPos(infoPtr->hwndSelf, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOACTIVATE |
+                       SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE);
 
-      if ((infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && (infoPtr->uView == LV_VIEW_DETAILS))
-      {
-          if (notify_measureitem(infoPtr)) LISTVIEW_InvalidateList(infoPtr);
-      }
+          if ((infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && (infoPtr->uView == LV_VIEW_DETAILS))
+          {
+              if (notify_measureitem(infoPtr)) LISTVIEW_InvalidateList(infoPtr);
+          }
+          LISTVIEW_Size(infoPtr, ((WINDOWPOS *)lParam)->cx, ((WINDOWPOS *)lParam)->cy);
       }
       return DefWindowProcW(hwnd, uMsg, wParam, lParam);
 
