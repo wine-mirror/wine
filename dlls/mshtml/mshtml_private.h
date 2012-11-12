@@ -374,6 +374,7 @@ struct HTMLOuterWindow {
     IUri *uri;
     IUri *uri_nofrag;
     BSTR url;
+    DWORD load_flags;
 
     SCRIPTMODE scriptmode;
 

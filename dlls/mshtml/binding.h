@@ -101,6 +101,7 @@ typedef struct {
 #define BINDING_NAVIGATED    0x0001
 #define BINDING_REPLACE      0x0002
 #define BINDING_FROMHIST     0x0004
+#define BINDING_REFRESH      0x0008
 
 HRESULT set_http_header(struct list*,const WCHAR*,int,const WCHAR*,int) DECLSPEC_HIDDEN;
 HRESULT create_redirect_nschannel(const WCHAR*,nsChannel*,nsChannel**) DECLSPEC_HIDDEN;

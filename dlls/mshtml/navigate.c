@@ -2052,7 +2052,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
     if(!uri_nofrag)
         return E_FAIL;
 
-    if(window->doc_obj->client) {
+    if(window->doc_obj->client && !(flags & BINDING_REFRESH)) {
         IOleCommandTarget *cmdtrg;
 
         hres = IOleClientSite_QueryInterface(window->doc_obj->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
@@ -2075,7 +2075,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
         }
     }
 
-    if(window->uri_nofrag && !post_data_size) {
+    if(!(flags & BINDING_REFRESH) && window->uri_nofrag && !post_data_size) {
         BOOL eq;
 
         hres = IUri_IsEqual(uri_nofrag, window->uri_nofrag, &eq);
@@ -2115,7 +2115,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
 
         /* Silently and repeated when real loading starts? */
         window->readystate = READYSTATE_LOADING;
-        if(!(flags & BINDING_FROMHIST))
+        if(!(flags & (BINDING_FROMHIST|BINDING_REFRESH)))
             call_docview_84(window->doc_obj);
 
         task->window = window;
@@ -2266,13 +2266,15 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
     HRESULT hres;
 
     if(window->doc_obj && window->doc_obj->is_webbrowser && window == window->doc_obj->basedoc.window) {
-        BOOL cancel = FALSE;
+        if(!(flags & BINDING_REFRESH)) {
+            BOOL cancel = FALSE;
 
-        hres = IDocObjectService_FireBeforeNavigate2(window->doc_obj->doc_object_service, NULL, display_uri, 0x40,
-                NULL, NULL, 0, NULL, TRUE, &cancel);
-        if(SUCCEEDED(hres) && cancel) {
-            TRACE("Navigation canceled\n");
-            return S_OK;
+            hres = IDocObjectService_FireBeforeNavigate2(window->doc_obj->doc_object_service, NULL, display_uri, 0x40,
+                    NULL, NULL, 0, NULL, TRUE, &cancel);
+            if(SUCCEEDED(hres) && cancel) {
+                TRACE("Navigation canceled\n");
+                return S_OK;
+            }
         }
 
         return super_navigate(window, uri, flags, NULL, NULL, 0);

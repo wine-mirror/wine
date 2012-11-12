@@ -34,6 +34,7 @@
 #include "mshtml_private.h"
 #include "htmlscript.h"
 #include "htmlevent.h"
+#include "binding.h"
 #include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
@@ -258,7 +259,8 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
         update_title(doc_obj);
     }
 
-    if(doc_obj && doc_obj->usermode!=EDITMODE && doc_obj->doc_object_service)
+    if(doc_obj && doc_obj->usermode!=EDITMODE && doc_obj->doc_object_service
+       && !(doc->basedoc.window->load_flags & BINDING_REFRESH))
         IDocObjectService_FireDocumentComplete(doc_obj->doc_object_service,
                 &doc->basedoc.window->base.IHTMLWindow2_iface, 0);
 

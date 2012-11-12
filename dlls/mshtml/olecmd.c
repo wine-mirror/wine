@@ -32,6 +32,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "binding.h"
 #include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
@@ -384,10 +385,69 @@ static HRESULT exec_get_zoom_range(HTMLDocument *This, DWORD nCmdexecopt, VARIAN
     return E_NOTIMPL;
 }
 
+typedef struct {
+    task_t header;
+    HTMLOuterWindow *window;
+}refresh_task_t;
+
+static void refresh_proc(task_t *_task)
+{
+    refresh_task_t *task = (refresh_task_t*)_task;
+    HTMLOuterWindow *window = task->window;
+
+    TRACE("%p\n", window);
+
+    window->readystate = READYSTATE_UNINITIALIZED;
+
+    if(window->doc_obj && window->doc_obj->client_cmdtrg) {
+        VARIANT var;
+
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = 0;
+        IOleCommandTarget_Exec(window->doc_obj->client_cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
+    }
+
+    load_uri(task->window, task->window->uri, BINDING_REFRESH);
+}
+
+static void refresh_destr(task_t *_task)
+{
+    refresh_task_t *task = (refresh_task_t*)_task;
+
+    IHTMLWindow2_Release(&task->window->base.IHTMLWindow2_iface);
+    heap_free(task);
+}
+
 static HRESULT exec_refresh(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", This, nCmdexecopt, pvaIn, pvaOut);
-    return E_NOTIMPL;
+    refresh_task_t *task;
+    HRESULT hres;
+
+    TRACE("(%p)->(%d %s %p)\n", This, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
+
+    if(This->doc_obj->client) {
+        IOleCommandTarget *olecmd;
+
+        hres = IOleClientSite_QueryInterface(This->doc_obj->client, &IID_IOleCommandTarget, (void**)&olecmd);
+        if(SUCCEEDED(hres)) {
+            hres = IOleCommandTarget_Exec(olecmd, &CGID_DocHostCommandHandler, 2300, nCmdexecopt, pvaIn, pvaOut);
+            IOleCommandTarget_Release(olecmd);
+            if(SUCCEEDED(hres))
+                return S_OK;
+        }
+    }
+
+    if(!This->window)
+        return E_UNEXPECTED;
+
+    task = heap_alloc(sizeof(*task));
+    if(!task)
+        return E_OUTOFMEMORY;
+
+    IHTMLWindow2_AddRef(&This->window->base.IHTMLWindow2_iface);
+    task->window = This->window;
+
+    return push_task(&task->header, refresh_proc, refresh_destr, This->window->task_magic);
 }
 
 static HRESULT exec_stop(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
