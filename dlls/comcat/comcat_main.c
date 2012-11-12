@@ -20,14 +20,8 @@
 
 #include <stdarg.h>
 
-#define COBJMACROS
-
 #include "windef.h"
 #include "winbase.h"
-#include "winuser.h"
-#include "winreg.h"
-#include "winerror.h"
-#include "ole2.h"
 
 /***********************************************************************
  *		DllCanUnloadNow (COMCAT.@)
