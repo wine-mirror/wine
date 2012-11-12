@@ -1450,7 +1450,6 @@ static void handle_navigation_error(nsChannelBSC *This, DWORD result)
 {
     HTMLOuterWindow *outer_window;
     HTMLDocumentObj *doc;
-    IOleCommandTarget *olecmd;
     BOOL is_error_url;
     SAFEARRAY *sa;
     SAFEARRAYBOUND bound;
@@ -1473,18 +1472,15 @@ static void handle_navigation_error(nsChannelBSC *This, DWORD result)
     if(FAILED(hres) || is_error_url)
         return;
 
-    hres = IOleClientSite_QueryInterface(doc->client,
-            &IID_IOleCommandTarget, (void**)&olecmd);
+    if(!doc->client_cmdtrg)
     if(FAILED(hres))
         return;
 
     bound.lLbound = 0;
     bound.cElements = 8;
     sa = SafeArrayCreate(VT_VARIANT, 1, &bound);
-    if(!sa) {
-        IOleCommandTarget_Release(olecmd);
+    if(!sa)
         return;
-    }
 
     ind = 0;
     V_VT(&var) = VT_I4;
@@ -1532,11 +1528,10 @@ static void handle_navigation_error(nsChannelBSC *This, DWORD result)
     V_ARRAY(&var) = sa;
     V_VT(&varOut) = VT_BOOL;
     V_BOOL(&varOut) = VARIANT_TRUE;
-    IOleCommandTarget_Exec(olecmd, &CGID_DocHostCmdPriv, 1, 0, &var, FAILED(hres)?NULL:&varOut);
+    IOleCommandTarget_Exec(doc->client_cmdtrg, &CGID_DocHostCmdPriv, 1, 0, &var, FAILED(hres)?NULL:&varOut);
 
     SysFreeString(unk);
     SafeArrayDestroy(sa);
-    IOleCommandTarget_Release(olecmd);
 }
 
 static HRESULT nsChannelBSC_stop_binding(BSCallback *bsc, HRESULT result)

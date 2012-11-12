@@ -231,6 +231,11 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
         This->doc_obj->usermode = UNKNOWN_USERMODE;
     }
 
+    if(This->doc_obj->client_cmdtrg) {
+        IOleCommandTarget_Release(This->doc_obj->client_cmdtrg);
+        This->doc_obj->client_cmdtrg = NULL;
+    }
+
     if(This->doc_obj->hostui && !This->doc_obj->custom_hostui) {
         IDocHostUIHandler_Release(This->doc_obj->hostui);
         This->doc_obj->hostui = NULL;
@@ -319,6 +324,8 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
         VARIANT var;
         OLECMD cmd = {OLECMDID_SETPROGRESSTEXT, 0};
 
+        This->doc_obj->client_cmdtrg = cmdtrg;
+
         if(!hostui_setup) {
             IDocObjectService *doc_object_service;
             IBrowserService *browser_service;
@@ -361,8 +368,6 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
                 OLECMDEXECOPT_DONTPROMPTUSER, &var, NULL);
         IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_SETPROGRESSPOS, 
                 OLECMDEXECOPT_DONTPROMPTUSER, &var, NULL);
-
-        IOleCommandTarget_Release(cmdtrg);
     }
 
     if(This->doc_obj->usermode == UNKNOWN_USERMODE)
