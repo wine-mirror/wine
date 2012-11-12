@@ -309,7 +309,7 @@ DECLARE_INTERFACE_(IDirect3D3,IUnknown)
     STDMETHOD(EnumDevices)(THIS_ LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback, LPVOID lpUserArg) PURE;
     STDMETHOD(CreateLight)(THIS_ LPDIRECT3DLIGHT *lplpDirect3DLight, IUnknown *pUnkOuter) PURE;
     STDMETHOD(CreateMaterial)(THIS_ struct IDirect3DMaterial3 **material, IUnknown *outer) PURE;
-    STDMETHOD(CreateViewport)(THIS_ LPDIRECT3DVIEWPORT3 *lplpD3DViewport3, IUnknown *pUnkOuter) PURE;
+    STDMETHOD(CreateViewport)(THIS_ struct IDirect3DViewport3 **viewport, IUnknown *outer) PURE;
     STDMETHOD(FindDevice)(THIS_ LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lpD3DFDR) PURE;
     STDMETHOD(CreateDevice)(THIS_ REFCLSID rclsid, IDirectDrawSurface4 *surface,
             struct IDirect3DDevice3 **device, IUnknown *outer) PURE;
@@ -1146,16 +1146,17 @@ DECLARE_INTERFACE_(IDirect3DDevice3,IUnknown)
     /*** IDirect3DDevice3 methods ***/
     STDMETHOD(GetCaps)(THIS_ LPD3DDEVICEDESC lpD3DHWDevDesc, LPD3DDEVICEDESC lpD3DHELDevDesc) PURE;
     STDMETHOD(GetStats)(THIS_ LPD3DSTATS lpD3DStats) PURE;
-    STDMETHOD(AddViewport)(THIS_ LPDIRECT3DVIEWPORT3 lpDirect3DViewport3) PURE;
-    STDMETHOD(DeleteViewport)(THIS_ LPDIRECT3DVIEWPORT3 lpDirect3DViewport3) PURE;
-    STDMETHOD(NextViewport)(THIS_ LPDIRECT3DVIEWPORT3 lpDirect3DViewport3, LPDIRECT3DVIEWPORT3 *lplpDirect3DViewport3, DWORD dwFlags) PURE;
+    STDMETHOD(AddViewport)(THIS_ IDirect3DViewport3 *viewport) PURE;
+    STDMETHOD(DeleteViewport)(THIS_ IDirect3DViewport3 *viewport) PURE;
+    STDMETHOD(NextViewport)(THIS_ IDirect3DViewport3 *ref,
+            IDirect3DViewport3 **viewport, DWORD flags) PURE;
     STDMETHOD(EnumTextureFormats)(THIS_ LPD3DENUMPIXELFORMATSCALLBACK lpD3DEnumPixelProc, LPVOID lpArg) PURE;
     STDMETHOD(BeginScene)(THIS) PURE;
     STDMETHOD(EndScene)(THIS) PURE;
     STDMETHOD(GetDirect3D)(THIS_ LPDIRECT3D3 *lplpDirect3D3) PURE;
     /*** DrawPrimitive API ***/
-    STDMETHOD(SetCurrentViewport)(THIS_ LPDIRECT3DVIEWPORT3 lpDirect3DViewport3) PURE;
-    STDMETHOD(GetCurrentViewport)(THIS_ LPDIRECT3DVIEWPORT3 *lplpDirect3DViewport3) PURE;
+    STDMETHOD(SetCurrentViewport)(THIS_ IDirect3DViewport3 *viewport) PURE;
+    STDMETHOD(GetCurrentViewport)(THIS_ IDirect3DViewport3 **viewport) PURE;
     STDMETHOD(SetRenderTarget)(THIS_ IDirectDrawSurface4 *surface, DWORD flags) PURE;
     STDMETHOD(GetRenderTarget)(THIS_ IDirectDrawSurface4 **surface) PURE;
     STDMETHOD(Begin)(THIS_ D3DPRIMITIVETYPE d3dptPrimitiveType,DWORD dwVertexTypeDesc, DWORD dwFlags) PURE;
