@@ -126,6 +126,7 @@ DEFINE_EXPECT(Exec_SETTITLE);
 DEFINE_EXPECT(QueryStatus_SETPROGRESSTEXT);
 DEFINE_EXPECT(Exec_STOP);
 DEFINE_EXPECT(Exec_IDM_STOP);
+DEFINE_EXPECT(Exec_DocHostCommandHandler_2300);
 DEFINE_EXPECT(QueryStatus_STOP);
 DEFINE_EXPECT(QueryStatus_IDM_STOP);
 DEFINE_EXPECT(DocHost_EnableModeless_TRUE);
@@ -160,6 +161,7 @@ static int wb_version;
 #define DWL_FROM_PUT_HREF           0x02
 #define DWL_FROM_GOBACK             0x04
 #define DWL_HTTP                    0x08
+#define DWL_REFRESH                 0x10
 
 static DWORD dwl_flags;
 
@@ -453,6 +455,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         case 105: /* TODO */
         case 138: /* TODO */
         case 140: /* TODO (Win7) */
+        case 144: /* TODO */
             return E_FAIL;
         default:
             ok(0, "unexpected nCmdID %d\n", nCmdID);
@@ -468,6 +471,9 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         switch(nCmdID) {
         case 6041: /* TODO */
             break;
+        case 2300:
+            CHECK_EXPECT(Exec_DocHostCommandHandler_2300);
+            return E_NOTIMPL;
         default:
             ok(0, "unexpected nCmdID %d of CGID_DocHostCommandHandler\n", nCmdID);
         }
@@ -2697,14 +2703,15 @@ static void test_ExecWB(IWebBrowser2 *webbrowser, BOOL use_custom_target, BOOL h
 
 static void test_download(DWORD flags)
 {
+    BOOL *b = (flags & DWL_REFRESH) ? &called_Exec_SETDOWNLOADSTATE_0 : &called_Invoke_DOCUMENTCOMPLETE;
     MSG msg;
 
     is_downloading = TRUE;
     dwl_flags = flags;
 
-    test_ready_state((flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK)) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
+    test_ready_state((flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK|DWL_REFRESH)) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
 
-    if((is_http && !(flags & DWL_FROM_GOBACK)) || (flags & DWL_EXPECT_BEFORE_NAVIGATE))
+    if((is_http && !(flags & (DWL_FROM_GOBACK|DWL_REFRESH))) || (flags & DWL_EXPECT_BEFORE_NAVIGATE))
         SET_EXPECT(Invoke_PROPERTYCHANGE);
 
     if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
@@ -2727,11 +2734,13 @@ static void test_download(DWORD flags)
         SET_EXPECT(GetHostInfo);
     SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
     SET_EXPECT(Invoke_TITLECHANGE);
-    SET_EXPECT(Invoke_NAVIGATECOMPLETE2);
+    if(!(flags & DWL_REFRESH))
+        SET_EXPECT(Invoke_NAVIGATECOMPLETE2);
     if(is_first_load)
         SET_EXPECT(GetDropTarget);
     SET_EXPECT(Invoke_PROGRESSCHANGE);
-    SET_EXPECT(Invoke_DOCUMENTCOMPLETE);
+    if(!(flags & DWL_REFRESH))
+        SET_EXPECT(Invoke_DOCUMENTCOMPLETE);
 
     if(flags & DWL_HTTP)
         SET_EXPECT(Exec_SETTITLE);
@@ -2739,12 +2748,12 @@ static void test_download(DWORD flags)
     SET_EXPECT(Exec_UPDATECOMMANDS);
     SET_EXPECT(QueryStatus_STOP);
 
-    while(!called_Invoke_DOCUMENTCOMPLETE && GetMessage(&msg, NULL, 0, 0)) {
+    while(!*b && GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
-    if((is_http && !(flags & DWL_FROM_GOBACK)) || (flags & DWL_EXPECT_BEFORE_NAVIGATE))
+    if((is_http && !(flags & (DWL_FROM_GOBACK|DWL_REFRESH))) || (flags & DWL_EXPECT_BEFORE_NAVIGATE))
         todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
 
     if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
@@ -2773,11 +2782,13 @@ static void test_download(DWORD flags)
         todo_wine CHECK_CALLED(GetHostInfo);
     CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
     todo_wine CHECK_CALLED(Invoke_TITLECHANGE);
-    CHECK_CALLED(Invoke_NAVIGATECOMPLETE2);
+    if(!(flags & DWL_REFRESH))
+        CHECK_CALLED(Invoke_NAVIGATECOMPLETE2);
     if(is_first_load)
         todo_wine CHECK_CALLED(GetDropTarget);
     todo_wine CHECK_CALLED(Invoke_PROGRESSCHANGE);
-    CHECK_CALLED(Invoke_DOCUMENTCOMPLETE);
+    if(!(flags & DWL_REFRESH))
+        CHECK_CALLED(Invoke_DOCUMENTCOMPLETE);
 
     is_downloading = FALSE;
 
@@ -2793,6 +2804,20 @@ static void test_download(DWORD flags)
     CHECK_CALLED(UpdateUI);
     CHECK_CALLED(Exec_UPDATECOMMANDS);
     CLEAR_CALLED(QueryStatus_STOP);
+}
+
+static void test_Refresh(IWebBrowser2 *webbrowser)
+{
+    HRESULT hres;
+
+    trace("Refresh...\n");
+
+    SET_EXPECT(Exec_DocHostCommandHandler_2300);
+    hres = IWebBrowser2_Refresh(webbrowser);
+    ok(hres == S_OK, "Refresh failed: %08x\n", hres);
+    CHECK_CALLED(Exec_DocHostCommandHandler_2300);
+
+    test_download(DWL_REFRESH);
 }
 
 static void test_olecmd(IWebBrowser2 *unk, BOOL loaded)
@@ -3335,6 +3360,8 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
             test_ready_state(READYSTATE_COMPLETE);
             test_Navigate2(webbrowser, "http://test.winehq.org/tests/hello.html");
             test_download(DWL_EXPECT_BEFORE_NAVIGATE|DWL_HTTP);
+
+            test_Refresh(webbrowser);
 
             trace("put_href http URL...\n");
             test_put_href(webbrowser, "http://www.winehq.org/");
