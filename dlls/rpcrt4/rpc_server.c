@@ -1663,8 +1663,14 @@ RPC_STATUS WINAPI RpcMgmtEpEltInqBegin(RPC_BINDING_HANDLE Binding, ULONG Inquiry
  */
 RPC_STATUS WINAPI RpcMgmtIsServerListening(RPC_BINDING_HANDLE Binding)
 {
-  FIXME("(%p): stub\n", Binding);
-  return RPC_S_INVALID_BINDING;
+  RPC_STATUS status = RPC_S_NOT_LISTENING;
+
+  TRACE("(%p)\n", Binding);
+
+  EnterCriticalSection(&listen_cs);
+  if (manual_listen_count > 0) status = RPC_S_OK;
+  LeaveCriticalSection(&listen_cs);
+  return status;
 }
 
 /***********************************************************************
