@@ -31,6 +31,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "binding.h"
 #include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
@@ -170,7 +171,7 @@ static HRESULT WINAPI HTMLLocation_put_href(IHTMLLocation *iface, BSTR v)
         return E_FAIL;
     }
 
-    return navigate_url(This->window->base.outer_window, v, This->window->base.outer_window->uri);
+    return navigate_url(This->window->base.outer_window, v, This->window->base.outer_window->uri, BINDING_NAVIGATED);
 }
 
 static HRESULT WINAPI HTMLLocation_get_href(IHTMLLocation *iface, BSTR *p)
@@ -570,7 +571,8 @@ static HRESULT WINAPI HTMLLocation_replace(IHTMLLocation *iface, BSTR bstr)
         return E_FAIL;
     }
 
-    return navigate_url(This->window->base.outer_window, bstr, This->window->base.outer_window->uri);
+    return navigate_url(This->window->base.outer_window, bstr, This->window->base.outer_window->uri,
+            BINDING_NAVIGATED|BINDING_REPLACE);
 }
 
 static HRESULT WINAPI HTMLLocation_assign(IHTMLLocation *iface, BSTR bstr)

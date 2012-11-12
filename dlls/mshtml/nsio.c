@@ -992,7 +992,7 @@ static nsresult async_open(nsChannel *This, HTMLOuterWindow *window, BOOL is_doc
     }
 
     if(is_doc_channel)
-        set_current_mon(window, mon);
+        set_current_mon(window, mon, BINDING_NAVIGATED);
 
     hres = create_channelbsc(mon, NULL, NULL, 0, is_doc_channel, &bscallback);
     IMoniker_Release(mon);

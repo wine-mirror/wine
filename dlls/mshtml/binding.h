@@ -114,6 +114,7 @@ void prepare_for_binding(HTMLDocument*,IMoniker*,DWORD) DECLSPEC_HIDDEN;
 HRESULT super_navigate(HTMLOuterWindow*,IUri*,DWORD,const WCHAR*,BYTE*,DWORD) DECLSPEC_HIDDEN;
 HRESULT load_uri(HTMLOuterWindow*,IUri*,DWORD) DECLSPEC_HIDDEN;
 HRESULT navigate_new_window(HTMLOuterWindow*,IUri*,const WCHAR*,IHTMLWindow2**) DECLSPEC_HIDDEN;
+HRESULT navigate_url(HTMLOuterWindow*,const WCHAR*,IUri*,DWORD) DECLSPEC_HIDDEN;
 
 HRESULT create_channelbsc(IMoniker*,const WCHAR*,BYTE*,DWORD,BOOL,nsChannelBSC**) DECLSPEC_HIDDEN;
 HRESULT channelbsc_load_stream(HTMLInnerWindow*,IStream*) DECLSPEC_HIDDEN;
@@ -122,5 +123,8 @@ IUri *nsuri_get_uri(nsWineURI*) DECLSPEC_HIDDEN;
 HRESULT create_relative_uri(HTMLOuterWindow*,const WCHAR*,IUri**) DECLSPEC_HIDDEN;
 
 IUri *get_uri_nofrag(IUri*) DECLSPEC_HIDDEN;
+
+void set_current_mon(HTMLOuterWindow*,IMoniker*,DWORD) DECLSPEC_HIDDEN;
+void set_current_uri(HTMLOuterWindow*,IUri*) DECLSPEC_HIDDEN;
 
 HRESULT bind_mon_to_wstr(HTMLInnerWindow*,IMoniker*,WCHAR**) DECLSPEC_HIDDEN;

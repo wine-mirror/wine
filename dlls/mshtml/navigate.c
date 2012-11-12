@@ -1777,7 +1777,7 @@ static void start_doc_binding_proc(task_t *_task)
 {
     start_doc_binding_task_t *task = (start_doc_binding_task_t*)_task;
 
-    set_current_mon(task->window, task->pending_window->bscallback->bsc.mon);
+    set_current_mon(task->window, task->pending_window->bscallback->bsc.mon, BINDING_NAVIGATED);
     start_binding(task->pending_window, &task->pending_window->bscallback->bsc, NULL);
 }
 
@@ -1948,6 +1948,7 @@ typedef struct {
     task_t header;
     HTMLOuterWindow *window;
     nsChannelBSC *bscallback;
+    DWORD flags;
     IMoniker *mon;
     IUri *uri;
 } navigate_task_t;
@@ -1959,7 +1960,7 @@ static void navigate_proc(task_t *_task)
 
     hres = set_moniker(&task->window->doc_obj->basedoc, task->mon, NULL, task->bscallback, TRUE);
     if(SUCCEEDED(hres)) {
-        set_current_mon(task->window, task->bscallback->bsc.mon);
+        set_current_mon(task->window, task->bscallback->bsc.mon, task->flags);
         set_current_uri(task->window, task->uri);
         start_binding(task->window->pending_window, &task->bscallback->bsc, NULL);
     }
@@ -2124,6 +2125,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
 
         task->window = window;
         task->bscallback = bsc;
+        task->flags = flags;
         task->mon = mon;
 
         IUri_AddRef(uri);
@@ -2317,7 +2319,7 @@ HRESULT load_uri(HTMLOuterWindow *window, IUri *uri, DWORD flags)
     return hres;
 }
 
-HRESULT navigate_url(HTMLOuterWindow *window, const WCHAR *new_url, IUri *base_uri)
+HRESULT navigate_url(HTMLOuterWindow *window, const WCHAR *new_url, IUri *base_uri, DWORD flags)
 {
     BSTR display_uri;
     IUri *uri;
@@ -2359,7 +2361,7 @@ HRESULT navigate_url(HTMLOuterWindow *window, const WCHAR *new_url, IUri *base_u
         }
     }
 
-    hres = navigate_uri(window, uri, display_uri, BINDING_NAVIGATED);
+    hres = navigate_uri(window, uri, display_uri, flags);
 
     IUri_Release(uri);
     SysFreeString(display_uri);

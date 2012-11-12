@@ -132,14 +132,14 @@ void set_current_uri(HTMLOuterWindow *window, IUri *uri)
     IUri_GetDisplayUri(uri, &window->url);
 }
 
-void set_current_mon(HTMLOuterWindow *This, IMoniker *mon)
+void set_current_mon(HTMLOuterWindow *This, IMoniker *mon, DWORD flags)
 {
     IUriContainer *uri_container;
     IUri *uri = NULL;
     HRESULT hres;
 
     if(This->mon) {
-        if(This->doc_obj)
+        if(This->doc_obj && !(flags & BINDING_REPLACE))
             notify_travellog_update(This->doc_obj);
         IMoniker_Release(This->mon);
         This->mon = NULL;
@@ -323,7 +323,7 @@ void prepare_for_binding(HTMLDocument *This, IMoniker *mon, DWORD flags)
         update_doc(This, UPDATE_TITLE|UPDATE_UI);
     }else {
         update_doc(This, UPDATE_TITLE);
-        set_current_mon(This->window, mon);
+        set_current_mon(This->window, mon, flags);
     }
 
     if(This->doc_obj->client) {

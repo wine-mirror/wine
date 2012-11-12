@@ -37,6 +37,7 @@
 #include "mshtml_private.h"
 #include "htmlevent.h"
 #include "pluginhost.h"
+#include "binding.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -609,7 +610,7 @@ static HRESULT WINAPI HTMLDocument_put_URL(IHTMLDocument2 *iface, BSTR v)
         return E_FAIL;
     }
 
-    return navigate_url(This->window, v, This->window->uri);
+    return navigate_url(This->window, v, This->window->uri, BINDING_NAVIGATED);
 }
 
 static HRESULT WINAPI HTMLDocument_get_URL(IHTMLDocument2 *iface, BSTR *p)

@@ -781,7 +781,6 @@ void init_node_cc(void);
 
 HRESULT nsuri_to_url(LPCWSTR,BOOL,BSTR*) DECLSPEC_HIDDEN;
 
-HRESULT navigate_url(HTMLOuterWindow*,const WCHAR*,IUri*) DECLSPEC_HIDDEN;
 HRESULT set_frame_doc(HTMLFrameBase*,nsIDOMDocument*) DECLSPEC_HIDDEN;
 
 void call_property_onchanged(ConnectionPoint*,DISPID) DECLSPEC_HIDDEN;
@@ -810,8 +809,6 @@ nsIWritableVariant *create_nsvariant(void) DECLSPEC_HIDDEN;
 nsresult create_nsfile(const PRUnichar*,nsIFile**) DECLSPEC_HIDDEN;
 
 HRESULT create_pending_window(HTMLOuterWindow*,nsChannelBSC*) DECLSPEC_HIDDEN;
-void set_current_mon(HTMLOuterWindow*,IMoniker*) DECLSPEC_HIDDEN;
-void set_current_uri(HTMLOuterWindow*,IUri*) DECLSPEC_HIDDEN;
 HRESULT start_binding(HTMLInnerWindow*,BSCallback*,IBindCtx*) DECLSPEC_HIDDEN;
 HRESULT async_start_doc_binding(HTMLOuterWindow*,HTMLInnerWindow*) DECLSPEC_HIDDEN;
 void abort_window_bindings(HTMLInnerWindow*) DECLSPEC_HIDDEN;
