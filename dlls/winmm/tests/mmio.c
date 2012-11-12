@@ -668,6 +668,125 @@ static void test_mmioOpen_fourcc(void)
     mmioInstallIOProc(FOURCC_DOS, NULL, MMIO_REMOVEPROC);
 }
 
+static BOOL create_test_file(char *temp_file)
+{
+    char temp_path[MAX_PATH];
+    DWORD ret, written;
+    HANDLE h;
+
+    ret = GetTempPath(sizeof(temp_path), temp_path);
+    ok(ret, "Failed to get a temp path, err %d\n", GetLastError());
+    if (!ret)
+        return FALSE;
+
+    ret = GetTempFileName(temp_path, "mmio", 0, temp_file);
+    ok(ret, "Failed to get a temp name, err %d\n", GetLastError());
+    if (!ret)
+        return FALSE;
+
+    h = CreateFileA(temp_file, GENERIC_WRITE, 0, NULL,
+                    CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(h != INVALID_HANDLE_VALUE, "Failed to create a file, err %d\n", GetLastError());
+    if (h == INVALID_HANDLE_VALUE) return FALSE;
+
+    ret = WriteFile(h, RIFF_buf, sizeof(RIFF_buf), &written, NULL);
+    ok(ret, "Failed to write a file, err %d\n", GetLastError());
+    CloseHandle(h);
+    if (!ret) DeleteFileA(temp_file);
+    return ret;
+}
+
+static void test_mmioSeek(void)
+{
+    HMMIO hmmio;
+    MMIOINFO mmio;
+    LONG end, pos;
+    const LONG size = sizeof(RIFF_buf), offset = 16;
+    char test_file[MAX_PATH];
+    MMRESULT res;
+
+    /* test memory file */
+    memset(&mmio, 0, sizeof(mmio));
+    mmio.fccIOProc = FOURCC_MEM;
+    mmio.pchBuffer = (char*)&RIFF_buf;
+    mmio.cchBuffer = sizeof(RIFF_buf);
+    hmmio = mmioOpen(NULL, &mmio, MMIO_READ);
+    ok(hmmio != NULL, "mmioOpen error %u\n", mmio.wErrorRet);
+    if (hmmio != NULL) {
+        /* seek to the end */
+        end = mmioSeek(hmmio, 0, SEEK_END);
+        todo_wine ok(end == size, "expected %d, got %d\n", size, end);
+
+        /* seek backward from the end */
+        pos = mmioSeek(hmmio, offset, SEEK_END);
+        ok(pos == size-offset, "expected %d, got %d\n", size-offset, pos);
+
+        mmioClose(hmmio, 0);
+    }
+
+    if (!create_test_file(test_file)) return;
+
+    /* test standard file without buffering */
+    hmmio = NULL;
+    memset(&mmio, 0, sizeof(mmio));
+    mmio.fccIOProc = FOURCC_DOS;
+    mmio.pchBuffer = 0;
+    mmio.cchBuffer = 0;
+    hmmio = mmioOpen(test_file, &mmio, MMIO_READ);
+    ok(hmmio != NULL, "mmioOpen error %u\n", mmio.wErrorRet);
+    if (hmmio != NULL) {
+        /* seek to the end */
+        end = mmioSeek(hmmio, 0, SEEK_END);
+        ok(end == size, "expected %d, got %d\n", size, end);
+
+        /* test MMIOINFO values */
+        res = mmioGetInfo(hmmio, &mmio, 0);
+        ok(res == MMSYSERR_NOERROR, "expected 0, got %d\n", res);
+        ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+        ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
+        ok(mmio.pchEndWrite == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndWrite);
+        todo_wine ok(mmio.lBufOffset == size, "expected %d, got %d\n", size, mmio.lBufOffset);
+        ok(mmio.lDiskOffset == size, "expected %d, got %d\n", size, mmio.lDiskOffset);
+
+        /* seek backward from the end */
+        pos = mmioSeek(hmmio, offset, SEEK_END);
+        todo_wine ok(pos == size-offset, "expected %d, got %d\n", size-offset, pos);
+
+        mmioClose(hmmio, 0);
+    }
+
+    /* test standard file with buffering */
+    hmmio = NULL;
+    memset(&mmio, 0, sizeof(mmio));
+    mmio.fccIOProc = FOURCC_DOS;
+    mmio.pchBuffer = 0;
+    mmio.cchBuffer = 0;
+    hmmio = mmioOpen(test_file, &mmio, MMIO_READ | MMIO_ALLOCBUF);
+    ok(hmmio != NULL, "mmioOpen error %u\n", mmio.wErrorRet);
+    if (hmmio != NULL) {
+        /* seek to the end */
+        end = mmioSeek(hmmio, 0, SEEK_END);
+        ok(end == size, "expected %d, got %d\n", size, end);
+
+        /* test MMIOINFO values */
+        res = mmioGetInfo(hmmio, &mmio, 0);
+        ok(res == MMSYSERR_NOERROR, "expected 0, got %d\n", res);
+        ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+        ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
+        ok(mmio.pchEndWrite == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndWrite);
+        ok(mmio.lBufOffset == end, "expected %d, got %d\n", end, mmio.lBufOffset);
+        ok(mmio.lDiskOffset == size, "expected %d, got %d\n", size, mmio.lDiskOffset);
+
+        /* seek backward from the end */
+        pos = mmioSeek(hmmio, offset, SEEK_END);
+        ok(pos == size-offset, "expected %d, got %d\n", size-offset, pos);
+
+        mmioClose(hmmio, 0);
+    }
+
+    DeleteFileA(test_file);
+}
+
 START_TEST(mmio)
 {
     /* Make it possible to run the tests against a specific AVI file in
@@ -683,4 +802,5 @@ START_TEST(mmio)
     test_mmioSetBuffer(NULL);
     test_mmioSetBuffer(fname);
     test_mmioOpen_fourcc();
+    test_mmioSeek();
 }
