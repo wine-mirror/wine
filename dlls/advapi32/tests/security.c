@@ -4294,7 +4294,7 @@ static void test_TokenIntegrityLevel(void)
     res = GetTokenInformation(token, TokenIntegrityLevel, buffer, sizeof(buffer), &size);
 
     /* not supported before Vista */
-    if (!res && (GetLastError() == ERROR_INVALID_PARAMETER))
+    if (!res && ((GetLastError() == ERROR_INVALID_PARAMETER) || GetLastError() == ERROR_INVALID_FUNCTION))
     {
         win_skip("TokenIntegrityLevel not supported\n");
         CloseHandle(token);
