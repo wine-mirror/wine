@@ -1320,7 +1320,8 @@ BOOL16 WINAPI GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
         struct gray_string_info *info;
 
         if (!cch) cch = strlen(str16);
-        if (!(info = HeapAlloc( GetProcessHeap(), 0, sizeof(*info) + cch ))) return FALSE;
+        info = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( struct gray_string_info, str[cch] ));
+        if (!info) return FALSE;
         info->proc  = gsprc;
         info->param = lParam;
         memcpy( info->str, str16, cch );
