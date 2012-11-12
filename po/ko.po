@@ -8241,44 +8241,36 @@ msgid "Security Warning"
 msgstr "보안 경고"
 
 #: urlmon.rc:32
-#, fuzzy
-#| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
-msgstr "그래도 계속 진행하겠습니까?"
+msgstr "이 소프트웨어를 설치하기를 원합니까?"
 
 #: urlmon.rc:34 explorer.rc:29
 msgid "Location:"
 msgstr "위치:"
 
 #: urlmon.rc:36
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Don't install"
-msgstr "설치/삭제"
+msgstr "설치 안  함"
 
 #: urlmon.rc:40
 msgid ""
 "When installed, ActiveX has full access to your computer.Do not click "
 "install unless you have absolute trust in the above source."
 msgstr ""
+"설치할 때,ActiveX는 당신의 컴퓨터에 완전한 접근권한을 가질 것입니다. 당신이"
+"이 원본을 완전히 신뢰하지 않는다면 설치를 클릭하지 마십시오."
 
 #: urlmon.rc:47
-#, fuzzy
-#| msgid "Installation transform failed to apply.\n"
 msgid "Installation of component failed: %08x"
-msgstr "설치 변환 실패가 추가됨.\n"
+msgstr "구성요소 설치가 실패함: %08x"
 
 #: urlmon.rc:48
-#, fuzzy
-#| msgid "&Install"
 msgid "Install (%d)"
-msgstr "설치(&I)"
+msgstr "설치 (%d)"
 
 #: urlmon.rc:49
-#, fuzzy
-#| msgid "&Install"
 msgid "Install"
-msgstr "설치(&I)"
+msgstr "설치"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
