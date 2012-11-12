@@ -12185,6 +12185,9 @@ static void test_put_data(void)
     WCHAR buff[100], *data;
     IXMLDOMDocument *doc;
     DOMNodeType *type;
+    IXMLDOMText *text;
+    IXMLDOMNode *node;
+    VARIANT v;
     BSTR get_data;
     HRESULT hr;
 
@@ -12199,9 +12202,6 @@ static void test_put_data(void)
     type = put_data_types;
     while (*type != NODE_INVALID)
     {
-       IXMLDOMNode *node;
-       VARIANT v;
-
        V_VT(&v) = VT_I2;
        V_I2(&v) = *type;
 
@@ -12213,8 +12213,6 @@ static void test_put_data(void)
        {
            case NODE_TEXT:
            {
-              IXMLDOMText *text;
-
               hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMText, (void**)&text);
               EXPECT_HR(hr, S_OK);
               hr = IXMLDOMText_put_data(text, data);
@@ -12283,6 +12281,32 @@ static void test_put_data(void)
        IXMLDOMNode_Release(node);
        type++;
     }
+
+    /* \r\n sequence is never escaped */
+    V_VT(&v) = VT_I2;
+    V_I2(&v) = NODE_TEXT;
+
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("name"), NULL, &node);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMText, (void**)&text);
+
+    hr = IXMLDOMText_put_data(text, _bstr_("\r\n"));
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMText_get_data(text, &get_data);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(!lstrcmpW(get_data, _bstr_("\n")), "got %s\n", wine_dbgstr_w(get_data));
+    SysFreeString(get_data);
+
+    hr = IXMLDOMText_get_xml(text, &get_data);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(get_data, _bstr_("\r\n")), "got %s\n", wine_dbgstr_w(get_data));
+    SysFreeString(get_data);
+
+    IXMLDOMText_Release(text);
+    IXMLDOMNode_Release(node);
 
     IXMLDOMDocument_Release(doc);
     free_bstrs();
