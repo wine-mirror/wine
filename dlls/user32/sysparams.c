@@ -615,7 +615,7 @@ static void SYSPARAMS_NotifyChange( UINT uiAction, UINT fWinIni )
 /***********************************************************************
  * Loads system parameter from user profile.
  */
-static BOOL SYSPARAMS_LoadRaw( LPCWSTR lpRegKey, LPCWSTR lpValName, LPBYTE lpBuf, DWORD count )
+static BOOL SYSPARAMS_LoadRaw( LPCWSTR lpRegKey, LPCWSTR lpValName, void *lpBuf, DWORD count )
 {
     BOOL ret = FALSE;
     DWORD type;
@@ -649,7 +649,7 @@ static BOOL SYSPARAMS_Load( LPCWSTR lpRegKey, LPCWSTR lpValName, LPWSTR lpBuf, D
 
 /* Save data as-is */
 static BOOL SYSPARAMS_SaveRaw( LPCWSTR lpRegKey, LPCWSTR lpValName, 
-                               const BYTE* lpValue, DWORD valueSize, 
+                               const void *lpValue, DWORD valueSize,
                                DWORD type, UINT fWinIni )
 {
     HKEY hKey;
@@ -847,6 +847,22 @@ static inline BOOL get_bool_param( unsigned int idx, LPCWSTR regkey, LPCWSTR val
     return get_uint_param( idx, regkey, value, (UINT *)value_ptr, (UINT *)ret_ptr );
 }
 
+/* load a dword (binary) parameter from the registry */
+static BOOL get_dword_param( unsigned int idx, LPCWSTR regkey, LPCWSTR value,
+                             DWORD *value_ptr, DWORD *ret_ptr )
+{
+    if (!ret_ptr) return FALSE;
+    if (!spi_loaded[idx])
+    {
+        DWORD val;
+
+        if (SYSPARAMS_LoadRaw( regkey, value, &val, sizeof(val) )) *value_ptr = val;
+        spi_loaded[idx] = TRUE;
+    }
+    *ret_ptr = *value_ptr;
+    return TRUE;
+}
+
 /* set a uint parameter that is mirrored in two different registry locations */
 static BOOL set_uint_param_mirrored( unsigned int idx, LPCWSTR regkey, LPCWSTR regkey_mirror,
                                      LPCWSTR value, UINT *value_ptr, UINT new_val, UINT fWinIni )
@@ -902,6 +918,19 @@ static inline BOOL set_bool_param( unsigned int idx, LPCWSTR regkey, LPCWSTR val
                                    BOOL *value_ptr, BOOL new_val, UINT fWinIni )
 {
     return set_uint_param( idx, regkey, value, (UINT *)value_ptr, new_val, fWinIni );
+}
+
+/* set a dword (binary) parameter in the registry */
+static BOOL set_dword_param( unsigned int idx, LPCWSTR regkey, LPCWSTR value,
+                             DWORD *value_ptr, DWORD new_val, UINT fWinIni )
+{
+    BOOL ret = SYSPARAMS_SaveRaw( regkey, value, &new_val, sizeof(new_val), REG_DWORD, fWinIni );
+    if (ret)
+    {
+        *value_ptr = new_val;
+        spi_loaded[idx] = TRUE;
+    }
+    return ret;
 }
 
 /* load a boolean parameter from the user preference key */
@@ -2418,62 +2447,31 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_GETMOUSECLICKLOCKTIME);  /* 0x2008  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETMOUSECLICKLOCKTIME);  /* 0x2009  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     case SPI_GETFONTSMOOTHINGTYPE:              /* 0x200A  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        spi_idx = SPI_SETFONTSMOOTHINGTYPE_IDX;
-        if (!spi_loaded[spi_idx])
-        {
-            ret = SYSPARAMS_Load( SPI_SETFONTSMOOTHINGTYPE_REGKEY,
-                                  SPI_SETFONTSMOOTHINGTYPE_VALNAME,
-                                  (LPWSTR)&font_smoothing_type,
-                                  sizeof(font_smoothing_type) );
-            if ( ret) spi_loaded[spi_idx] = TRUE;
-        }
-        if (!pvParam) ret = FALSE;
-
-        if (ret)
-            *(UINT *)pvParam = font_smoothing_type;
+        ret = get_dword_param( SPI_SETFONTSMOOTHINGTYPE_IDX,
+                               SPI_SETFONTSMOOTHINGTYPE_REGKEY,
+                               SPI_SETFONTSMOOTHINGTYPE_VALNAME,
+                               &font_smoothing_type, pvParam );
         break;
 
     case SPI_SETFONTSMOOTHINGTYPE:              /* 0x200B  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        spi_idx = SPI_SETFONTSMOOTHINGTYPE_IDX;
-        if (SYSPARAMS_SaveRaw( SPI_SETFONTSMOOTHINGTYPE_REGKEY,
+        ret = set_dword_param( SPI_SETFONTSMOOTHINGTYPE_IDX,
+                               SPI_SETFONTSMOOTHINGTYPE_REGKEY,
                                SPI_SETFONTSMOOTHINGTYPE_VALNAME,
-                               (LPBYTE)&pvParam, sizeof(UINT), REG_DWORD, fWinIni ))
-        {
-            font_smoothing_type = PtrToUlong(pvParam);
-            spi_loaded[spi_idx] = TRUE;
-        }
-        else
-            ret = FALSE;
+                               &font_smoothing_type, PtrToUlong(pvParam), fWinIni );
         break;
 
     case SPI_GETFONTSMOOTHINGCONTRAST:          /* 0x200C  _WIN32_WINNT >= 0x510 */
-        spi_idx = SPI_SETFONTSMOOTHINGCONTRAST_IDX;
-        if (!spi_loaded[spi_idx])
-        {
-            ret = SYSPARAMS_Load( SPI_SETFONTSMOOTHINGCONTRAST_REGKEY,
-                                  SPI_SETFONTSMOOTHINGCONTRAST_VALNAME,
-                                  (LPWSTR)&font_smoothing_contrast,
-                                  sizeof(font_smoothing_contrast) );
-            if (ret)
-                spi_loaded[spi_idx] = TRUE;
-        }
-        if (!pvParam) ret = FALSE;
-
-	if (ret)
-            *(UINT *)pvParam = font_smoothing_contrast;
+        ret = get_dword_param( SPI_SETFONTSMOOTHINGCONTRAST_IDX,
+                               SPI_SETFONTSMOOTHINGCONTRAST_REGKEY,
+                               SPI_SETFONTSMOOTHINGCONTRAST_VALNAME,
+                               &font_smoothing_contrast, pvParam );
         break;
 
     case SPI_SETFONTSMOOTHINGCONTRAST:          /* 0x200D  _WIN32_WINNT >= 0x510 */
-        spi_idx = SPI_SETFONTSMOOTHINGCONTRAST_IDX;
-        if (SYSPARAMS_SaveRaw( SPI_SETFONTSMOOTHINGCONTRAST_REGKEY,
+        ret = set_dword_param( SPI_SETFONTSMOOTHINGCONTRAST_IDX,
+                               SPI_SETFONTSMOOTHINGCONTRAST_REGKEY,
                                SPI_SETFONTSMOOTHINGCONTRAST_VALNAME,
-                               (LPBYTE)&pvParam, sizeof(UINT), REG_DWORD, fWinIni ))
-        {
-            font_smoothing_contrast = PtrToUlong(pvParam);
-            spi_loaded[spi_idx] = TRUE;
-        }
-        else
-            ret = FALSE;
+                               &font_smoothing_contrast, PtrToUlong(pvParam), fWinIni );
         break;
 
     case SPI_GETFOCUSBORDERWIDTH: /* 0x200E  _WIN32_WINNT >= 0x510 */
@@ -2488,33 +2486,17 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETFOCUSBORDERHEIGHT);    /* 0x2011  _WIN32_WINNT >= 0x510 */
 
     case SPI_GETFONTSMOOTHINGORIENTATION:       /* 0x2012 */
-        spi_idx = SPI_SETFONTSMOOTHINGORIENTATION_IDX;
-        if (!spi_loaded[spi_idx])
-        {
-            ret = SYSPARAMS_Load( SPI_SETFONTSMOOTHINGORIENTATION_REGKEY,
-                                  SPI_SETFONTSMOOTHINGORIENTATION_VALNAME,
-                                  (LPWSTR)&font_smoothing_orientation,
-                                  sizeof(font_smoothing_orientation) );
-            if (ret)
-                spi_loaded[spi_idx] = TRUE;
-        }
-        if (!pvParam) ret = FALSE;
-
-        if (ret)
-            *(UINT *)pvParam = font_smoothing_orientation;
+        ret = get_dword_param( SPI_SETFONTSMOOTHINGORIENTATION_IDX,
+                               SPI_SETFONTSMOOTHINGORIENTATION_REGKEY,
+                               SPI_SETFONTSMOOTHINGORIENTATION_VALNAME,
+                               &font_smoothing_orientation, pvParam );
         break;
 
     case SPI_SETFONTSMOOTHINGORIENTATION:       /* 0x2013 */
-        spi_idx = SPI_SETFONTSMOOTHINGORIENTATION_IDX;
-        if (SYSPARAMS_SaveRaw( SPI_SETFONTSMOOTHINGORIENTATION_REGKEY,
+        ret = set_dword_param( SPI_SETFONTSMOOTHINGORIENTATION_IDX,
+                               SPI_SETFONTSMOOTHINGORIENTATION_REGKEY,
                                SPI_SETFONTSMOOTHINGORIENTATION_VALNAME,
-                               (LPBYTE)&pvParam, sizeof(UINT), REG_DWORD, fWinIni ))
-        {
-            font_smoothing_orientation = PtrToUlong(pvParam);
-            spi_loaded[spi_idx] = TRUE;
-        }
-        else
-            ret = FALSE;
+                               &font_smoothing_orientation, PtrToUlong(pvParam), fWinIni );
         break;
 
     default:
