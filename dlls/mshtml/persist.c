@@ -80,15 +80,6 @@ static void notify_travellog_update(HTMLDocumentObj *doc)
     if(!doc->is_webbrowser)
         return;
 
-    /* Don't notify if we were in about: page */
-    if(doc->basedoc.window->uri) {
-        DWORD scheme;
-
-        hres = IUri_GetScheme(doc->basedoc.window->uri, &scheme);
-        if(SUCCEEDED(hres) && scheme == URL_SCHEME_ABOUT)
-            return;
-    }
-
     hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
     if(SUCCEEDED(hres)) {
         VARIANT vin;
