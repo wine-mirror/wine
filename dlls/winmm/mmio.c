@@ -127,7 +127,10 @@ static LRESULT CALLBACK mmioDosIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage,
 	 * lParam2 = from whence to seek (SEEK_SET, SEEK_CUR, SEEK_END)
 	 * Returns: new file position, -1 on error
 	 */
-	ret = _llseek((HFILE)lpmmioinfo->adwInfo[0], (LONG)lParam1, (LONG)lParam2);
+	if (lParam2 == SEEK_END)
+	    ret = _llseek((HFILE)lpmmioinfo->adwInfo[0], -(LONG)lParam1, (LONG)lParam2);
+	else
+	    ret = _llseek((HFILE)lpmmioinfo->adwInfo[0], (LONG)lParam1, (LONG)lParam2);
 	if (ret != -1)
 	    lpmmioinfo->lDiskOffset = ret;
 	return ret;

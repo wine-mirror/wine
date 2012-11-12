@@ -750,7 +750,7 @@ static void test_mmioSeek(void)
 
         /* seek backward from the end */
         pos = mmioSeek(hmmio, offset, SEEK_END);
-        todo_wine ok(pos == size-offset, "expected %d, got %d\n", size-offset, pos);
+        ok(pos == size-offset, "expected %d, got %d\n", size-offset, pos);
 
         mmioClose(hmmio, 0);
     }
