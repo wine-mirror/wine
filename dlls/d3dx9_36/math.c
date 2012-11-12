@@ -2774,7 +2774,7 @@ static void rotate_X(FLOAT *out, UINT order, FLOAT a, FLOAT *in)
 
 FLOAT* WINAPI D3DXSHRotate(FLOAT *out, UINT order, CONST D3DXMATRIX *matrix, CONST FLOAT *in)
 {
-    FLOAT alpha, beta, gamma, sinb, temp[36];
+    FLOAT alpha, beta, gamma, sinb, temp[36], temp1[36];
 
     TRACE("out %p, order %u, matrix %p, in %p\n", out, order, matrix, in);
 
@@ -2848,11 +2848,11 @@ FLOAT* WINAPI D3DXSHRotate(FLOAT *out, UINT order, CONST D3DXMATRIX *matrix, CON
         gamma = 0.0f;
     }
 
-    D3DXSHRotateZ(out, order, gamma, in);
-    rotate_X(temp, order, 1.0f, out);
-    D3DXSHRotateZ(out, order, beta, temp);
-    rotate_X(temp, order, -1.0f, out);
-    D3DXSHRotateZ(out, order, alpha, temp);
+    D3DXSHRotateZ(temp, order, gamma, in);
+    rotate_X(temp1, order, 1.0f, temp);
+    D3DXSHRotateZ(temp, order, beta, temp1);
+    rotate_X(temp1, order, -1.0f, temp);
+    D3DXSHRotateZ(out, order, alpha, temp1);
 
     return out;
 }
