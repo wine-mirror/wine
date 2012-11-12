@@ -2726,14 +2726,10 @@ FLOAT * WINAPI D3DXSHMultiply4(FLOAT *out, CONST FLOAT *a, CONST FLOAT *b)
 static void rotate_X(FLOAT *out, UINT order, FLOAT a, FLOAT *in)
 {
     out[0] = in[0];
-    if ( order < 2 )
-        return;
 
     out[1] = a * in[2];
     out[2] = -a * in[1];
     out[3] = in[3];
-    if ( order == 2 )
-        return;
 
     out[4] = a * in[7];
     out[5] = -in[5];
@@ -2741,8 +2737,6 @@ static void rotate_X(FLOAT *out, UINT order, FLOAT a, FLOAT *in)
     out[7] = -a * in[4];
     out[8] = -0.8660253882f * in[6] + 0.5f * in[8];
     out[9] = -a * 0.7905694842f * in[12] + a * 0.6123724580f * in[14];
-    if ( order == 3 )
-        return;
 
     out[10] = -in[10];
     out[11] = -a * 0.6123724580f * in[12] - a * 0.7905694842f * in[14];
@@ -2750,7 +2744,7 @@ static void rotate_X(FLOAT *out, UINT order, FLOAT a, FLOAT *in)
     out[13] = -0.25f * in[13] - 0.9682458639f * in[15];
     out[14] = -a * 0.6123724580f * in[9] + a * 0.7905694842f * in[11];
     out[15] = -0.9682458639f * in[13] + 0.25f * in[15];
-    if ( order == 4 )
+    if (order == 4)
         return;
 
     out[16] = -a * 0.9354143739f * in[21] + a * 0.3535533845f * in[23];
@@ -2762,7 +2756,7 @@ static void rotate_X(FLOAT *out, UINT order, FLOAT a, FLOAT *in)
     out[22] = 0.5590170026f * in[20] + 0.5f * in[22] - 0.6614378691f * in[24];
     out[23] = -a * 0.3535533845f * in[16] + a * 0.9354143739f * in[18];
     out[24] = 0.7395099998f * in[20] - 0.6614378691f * in[22] + 0.125f * in[24];
-    if ( order == 5 )
+    if (order == 5)
         return;
 
     out[25] = a * 0.7015607357f * in[30] - a * 0.6846531630f * in[32] + a * 0.1976423711f * in[34];
@@ -2776,7 +2770,6 @@ static void rotate_X(FLOAT *out, UINT order, FLOAT a, FLOAT *in)
     out[33] = 0.4050463140f * in[31] + 0.8125f * in[33] - 0.4192627370f * in[35];
     out[34] = -a * 0.1976423711f * in[25] + a * 0.7954951525f * in[27] - a * 0.5728219748f * in[29];
     out[35] = 0.9057110548f * in[31] - 0.4192627370f * in[33] + 0.0624999329f * in[35];
-
 }
 
 FLOAT* WINAPI D3DXSHRotate(FLOAT *out, UINT order, CONST D3DXMATRIX *matrix, CONST FLOAT *in)
@@ -2787,23 +2780,70 @@ FLOAT* WINAPI D3DXSHRotate(FLOAT *out, UINT order, CONST D3DXMATRIX *matrix, CON
 
     out[0] = in[0];
 
-    if ( ( order > D3DXSH_MAXORDER ) || ( order < D3DXSH_MINORDER ) )
+    if ((order > D3DXSH_MAXORDER) || (order < D3DXSH_MINORDER))
         return out;
 
-    /* TODO: Implement handy computations for order <= 3. They are faster than the general algorithm. */
-    if ( order < 4 )
-        WARN("Using general algorithm for order = %u\n", order);
-
-    if ( fabsf( matrix->u.m[2][2] ) != 1.0f )
+    if (order <= 3)
     {
-        sinb = sqrtf( 1.0f - matrix->u.m[2][2] * matrix->u.m[2][2] );
-        alpha = atan2f(matrix->u.m[2][1] / sinb, matrix->u.m[2][0] / sinb );
-        beta = atan2f( sinb, matrix->u.m[2][2] );
-        gamma = atan2f( matrix->u.m[1][2] / sinb, -matrix->u.m[0][2] / sinb );
+        out[1] = matrix->u.m[1][1] * in[1] - matrix->u.m[2][1] * in[2] + matrix->u.m[0][1] * in[3];
+        out[2] = -matrix->u.m[1][2] * in[1] + matrix->u.m[2][2] * in[2] - matrix->u.m[0][2] * in[3];
+        out[3] = matrix->u.m[1][0] * in[1] - matrix->u.m[2][0] * in[2] + matrix->u.m[0][0] * in[3];
+
+        if (order == 3)
+        {
+            FLOAT coeff[]={
+                matrix->u.m[1][0] * matrix->u.m[0][0], matrix->u.m[1][1] * matrix->u.m[0][1],
+                matrix->u.m[1][1] * matrix->u.m[2][1], matrix->u.m[1][0] * matrix->u.m[2][0],
+                matrix->u.m[2][0] * matrix->u.m[2][0], matrix->u.m[2][1] * matrix->u.m[2][1],
+                matrix->u.m[0][0] * matrix->u.m[2][0], matrix->u.m[0][1] * matrix->u.m[2][1],
+                matrix->u.m[0][1] * matrix->u.m[0][1], matrix->u.m[1][0] * matrix->u.m[1][0],
+                matrix->u.m[1][1] * matrix->u.m[1][1], matrix->u.m[0][0] * matrix->u.m[0][0], };
+
+            out[4] = (matrix->u.m[1][1] * matrix->u.m[0][0] + matrix->u.m[0][1] * matrix->u.m[1][0]) * in[4];
+            out[4] -= (matrix->u.m[1][0] * matrix->u.m[2][1] + matrix->u.m[1][1] * matrix->u.m[2][0]) * in[5];
+            out[4] += 1.7320508076f * matrix->u.m[2][0] * matrix->u.m[2][1] * in[6];
+            out[4] -= (matrix->u.m[0][1] * matrix->u.m[2][0] + matrix->u.m[0][0] * matrix->u.m[2][1]) * in[7];
+            out[4] += (matrix->u.m[0][0] * matrix->u.m[0][1] - matrix->u.m[1][0] * matrix->u.m[1][1]) * in[8];
+
+            out[5] = (matrix->u.m[1][1] * matrix->u.m[2][2] + matrix->u.m[1][2] * matrix->u.m[2][1]) * in[5];
+            out[5] -= (matrix->u.m[1][1] * matrix->u.m[0][2] + matrix->u.m[1][2] * matrix->u.m[0][1]) * in[4];
+            out[5] -= 1.7320508076f * matrix->u.m[2][2] * matrix->u.m[2][1] * in[6];
+            out[5] += (matrix->u.m[0][2] * matrix->u.m[2][1] + matrix->u.m[0][1] * matrix->u.m[2][2]) * in[7];
+            out[5] -= (matrix->u.m[0][1] * matrix->u.m[0][2] - matrix->u.m[1][1] * matrix->u.m[1][2]) * in[8];
+
+            out[6] = (matrix->u.m[2][2] * matrix->u.m[2][2] - 0.5f * (coeff[4] + coeff[5])) * in[6];
+            out[6] -= (0.5773502692f * (coeff[0] + coeff[1]) - 1.1547005384f * matrix->u.m[1][2] * matrix->u.m[0][2]) * in[4];
+            out[6] += (0.5773502692f * (coeff[2] + coeff[3]) - 1.1547005384f * matrix->u.m[1][2] * matrix->u.m[2][2]) * in[5];
+            out[6] += (0.5773502692f * (coeff[6] + coeff[7]) - 1.1547005384f * matrix->u.m[0][2] * matrix->u.m[2][2]) * in[7];
+            out[6] += (0.2886751347f * (coeff[9] - coeff[8] + coeff[10] - coeff[11]) - 0.5773502692f *
+                  (matrix->u.m[1][2] * matrix->u.m[1][2] - matrix->u.m[0][2] * matrix->u.m[0][2])) * in[8];
+
+            out[7] = (matrix->u.m[0][0] * matrix->u.m[2][2] + matrix->u.m[0][2] * matrix->u.m[2][0]) * in[7];
+            out[7] -= (matrix->u.m[1][0] * matrix->u.m[0][2] + matrix->u.m[1][2] * matrix->u.m[0][0]) * in[4];
+            out[7] += (matrix->u.m[1][0] * matrix->u.m[2][2] + matrix->u.m[1][2] * matrix->u.m[2][0]) * in[5];
+            out[7] -= 1.7320508076f * matrix->u.m[2][2] * matrix->u.m[2][0] * in[6];
+            out[7] -= (matrix->u.m[0][0] * matrix->u.m[0][2] - matrix->u.m[1][0] * matrix->u.m[1][2]) * in[8];
+
+            out[8] = 0.5f * (coeff[11] - coeff[8] - coeff[9] + coeff[10]) * in[8];
+            out[8] += (coeff[0] - coeff[1]) * in[4];
+            out[8] += (coeff[2] - coeff[3]) * in[5];
+            out[8] += 0.86602540f * (coeff[4] - coeff[5]) * in[6];
+            out[8] += (coeff[7] - coeff[6]) * in[7];
+        }
+
+        return out;
+    }
+
+    if (fabsf(matrix->u.m[2][2]) != 1.0f)
+    {
+        sinb = sqrtf(1.0f - matrix->u.m[2][2] * matrix->u.m[2][2]);
+        alpha = atan2f(matrix->u.m[2][1] / sinb, matrix->u.m[2][0] / sinb);
+        beta = atan2f(sinb, matrix->u.m[2][2]);
+        gamma = atan2f(matrix->u.m[1][2] / sinb, -matrix->u.m[0][2] / sinb);
     }
     else
     {
-        alpha = atan2f( matrix->u.m[0][1], matrix->u.m[0][0] );
+        alpha = atan2f(matrix->u.m[0][1], matrix->u.m[0][0]);
         beta = 0.0f;
         gamma = 0.0f;
     }
