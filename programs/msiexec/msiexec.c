@@ -109,10 +109,8 @@ static BOOL IsProductCode(LPWSTR str)
 static VOID StringListAppend(struct string_list **list, LPCWSTR str)
 {
 	struct string_list *entry;
-	DWORD size;
 
-	size = sizeof *entry + lstrlenW(str) * sizeof (WCHAR);
-	entry = HeapAlloc(GetProcessHeap(), 0, size);
+	entry = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(struct string_list, str[lstrlenW(str) + 1]));
 	if(!entry)
 	{
 		WINE_ERR("Out of memory!\n");
