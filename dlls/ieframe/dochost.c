@@ -526,6 +526,7 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
     if(!pguidCmdGroup) {
         switch(nCmdID) {
         case OLECMDID_UPDATECOMMANDS:
+        case OLECMDID_SETDOWNLOADSTATE:
             return This->container_vtbl->exec(This, pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
         default:
             FIXME("Unimplemented cmdid %d\n", nCmdID);
@@ -604,6 +605,9 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
             return E_NOTIMPL;
         }
     }
+
+    if(IsEqualGUID(&CGID_DocHostCommandHandler, pguidCmdGroup))
+        return This->container_vtbl->exec(This, pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
 
     FIXME("Unimplemented cmdid %d of group %s\n", nCmdID, debugstr_guid(pguidCmdGroup));
     return E_NOTIMPL;

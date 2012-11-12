@@ -789,8 +789,9 @@ static void WINAPI DocHostContainer_SetURL(DocHost* iface, LPCWSTR url)
 static HRESULT DocHostContainer_exec(DocHost* This, const GUID *cmd_group, DWORD cmdid, DWORD execopt, VARIANT *in,
         VARIANT *out)
 {
-    return S_OK;
+    return E_NOTIMPL;
 }
+
 static const IDocHostContainerVtbl DocHostContainerVtbl = {
     IEDocHost_addref,
     IEDocHost_release,

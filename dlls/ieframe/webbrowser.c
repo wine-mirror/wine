@@ -1219,11 +1219,13 @@ static HRESULT DocHostContainer_exec(DocHost *doc_host, const GUID *cmd_group, D
     }
 
     if(!cmdtrg)
-        return S_OK;
+        return E_NOTIMPL;
 
     hres = IOleCommandTarget_Exec(cmdtrg, cmd_group, cmdid, execopt, in, out);
     IOleCommandTarget_Release(cmdtrg);
-    if(FAILED(hres))
+    if(SUCCEEDED(hres))
+        TRACE("Exec returned %08x %s\n", hres, debugstr_variant(out));
+    else
         FIXME("Exec failed\n");
 
     return hres;

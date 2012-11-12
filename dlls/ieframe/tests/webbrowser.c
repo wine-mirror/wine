@@ -2753,7 +2753,7 @@ static void test_download(DWORD flags)
     }
     todo_wine CHECK_CALLED(Exec_SETPROGRESSMAX);
     todo_wine CHECK_CALLED(Exec_SETPROGRESSPOS);
-    todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
+    CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
     CLEAR_CALLED(DocHost_EnableModeless_FALSE); /* IE 7 */
     CLEAR_CALLED(DocHost_EnableModeless_TRUE); /* IE 7 */
     todo_wine CHECK_CALLED(Invoke_SETSECURELOCKICON);
@@ -2771,7 +2771,7 @@ static void test_download(DWORD flags)
         CLEAR_CALLED(EnableModeless_FALSE); /* IE 8 */
     if(!is_first_load)
         todo_wine CHECK_CALLED(GetHostInfo);
-    todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
+    CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
     todo_wine CHECK_CALLED(Invoke_TITLECHANGE);
     CHECK_CALLED(Invoke_NAVIGATECOMPLETE2);
     if(is_first_load)
