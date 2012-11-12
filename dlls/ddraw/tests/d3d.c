@@ -925,7 +925,7 @@ static void D3D1_releaseObjects(void)
 static void ViewportTest(void)
 {
     HRESULT hr;
-    LPDIRECT3DVIEWPORT2 Viewport2;
+    IDirect3DViewport2 *Viewport2;
     IDirect3DViewport3 *Viewport3;
     D3DVIEWPORT vp1_data, ret_vp1_data;
     D3DVIEWPORT2 vp2_data, ret_vp2_data;
