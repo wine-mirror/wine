@@ -3559,6 +3559,19 @@ static void _test_link_type(unsigned line, IHTMLElement *elem, const char *v)
     IHTMLLinkElement_Release(link);
 }
 
+#define test_script_text(a,b) _test_script_text(__LINE__,a,b)
+static void _test_script_text(unsigned line, IHTMLScriptElement *script, const char *extext)
+{
+    BSTR str;
+    HRESULT hres;
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLScriptElement_get_text(script, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_text failed: %08x\n", hres);
+    ok(!strcmp_wa(str, extext), "text = %s, expected \"%s\"\n", wine_dbgstr_w(str), extext);
+    SysFreeString(str);
+}
+
 #define link_put_type(a,b) _link_put_type(__LINE__,a,b)
 static void _link_put_type(unsigned line, IHTMLElement *elem, const char *v)
 {
@@ -5822,8 +5835,9 @@ static void test_elems(IHTMLDocument2 *doc)
             hres = IHTMLScriptElement_get_type(script, &type);
             ok(hres == S_OK, "get_type failed: %08x\n", hres);
             ok(!strcmp_wa(type, "text/javascript"), "Unexpected type %s\n", wine_dbgstr_w(type));
-
             SysFreeString(type);
+
+            test_script_text(script, "<!--\nfunction Testing() {}\n// -->\n");
 
             /* test defer */
             hres = IHTMLScriptElement_put_defer(script, VARIANT_TRUE);
