@@ -995,7 +995,10 @@ extern glMultiTexCoordFunc multi_texcoord_funcs[WINED3D_FFP_EMIT_COUNT] DECLSPEC
 #define STATE_VSHADER (STATE_VDECL + 1)
 #define STATE_IS_VSHADER(a) ((a) == STATE_VSHADER)
 
-#define STATE_VIEWPORT (STATE_VSHADER + 1)
+#define STATE_GEOMETRY_SHADER (STATE_VSHADER + 1)
+#define STATE_IS_GEOMETRY_SHADER(a) ((a) == STATE_GEOMETRY_SHADER)
+
+#define STATE_VIEWPORT (STATE_GEOMETRY_SHADER + 1)
 #define STATE_IS_VIEWPORT(a) ((a) == STATE_VIEWPORT)
 
 #define STATE_VERTEXSHADERCONSTANT (STATE_VIEWPORT + 1)
@@ -2295,6 +2298,8 @@ struct wined3d_state
     BOOL vs_consts_b[MAX_CONST_B];
     INT vs_consts_i[MAX_CONST_I * 4];
     float *vs_consts_f;
+
+    struct wined3d_shader *geometry_shader;
 
     struct wined3d_shader *pixel_shader;
     BOOL ps_consts_b[MAX_CONST_B];

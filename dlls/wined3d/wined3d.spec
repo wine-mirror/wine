@@ -111,6 +111,7 @@
 @ cdecl wined3d_device_set_depth_stencil(ptr ptr)
 @ cdecl wined3d_device_set_dialog_box_mode(ptr long)
 @ cdecl wined3d_device_set_gamma_ramp(ptr long long ptr)
+@ cdecl wined3d_device_set_geometry_shader(ptr ptr)
 @ cdecl wined3d_device_set_index_buffer(ptr ptr long)
 @ cdecl wined3d_device_set_light(ptr long ptr)
 @ cdecl wined3d_device_set_light_enable(ptr long long)

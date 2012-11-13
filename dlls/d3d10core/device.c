@@ -260,8 +260,12 @@ static void STDMETHODCALLTYPE d3d10_device_GSSetConstantBuffers(ID3D10Device *if
 
 static void STDMETHODCALLTYPE d3d10_device_GSSetShader(ID3D10Device *iface, ID3D10GeometryShader *shader)
 {
-    if (shader) FIXME("iface %p, shader %p stub!\n", iface, shader);
-    else WARN("iface %p, shader %p stub!\n", iface, shader);
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+    struct d3d10_geometry_shader *gs = unsafe_impl_from_ID3D10GeometryShader(shader);
+
+    TRACE("iface %p, shader %p.\n", iface, shader);
+
+    wined3d_device_set_geometry_shader(device->wined3d_device, gs ? gs->wined3d_shader : NULL);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_IASetPrimitiveTopology(ID3D10Device *iface,

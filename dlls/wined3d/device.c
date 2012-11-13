@@ -2993,6 +2993,25 @@ HRESULT CDECL wined3d_device_get_ps_consts_f(const struct wined3d_device *device
     return WINED3D_OK;
 }
 
+void CDECL wined3d_device_set_geometry_shader(struct wined3d_device *device, struct wined3d_shader *shader)
+{
+    struct wined3d_shader *prev = device->updateStateBlock->state.geometry_shader;
+
+    TRACE("device %p, shader %p.\n", device, shader);
+
+    if (shader)
+        wined3d_shader_incref(shader);
+    if (prev)
+        wined3d_shader_decref(prev);
+
+    device->updateStateBlock->state.geometry_shader = shader;
+
+    if (device->isRecordingState || shader == prev)
+        return;
+
+    device_invalidate_state(device, STATE_GEOMETRY_SHADER);
+}
+
 /* Context activation is done by the caller. */
 /* Do not call while under the GL lock. */
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)

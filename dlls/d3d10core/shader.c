@@ -420,6 +420,15 @@ HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct 
     return S_OK;
 }
 
+struct d3d10_geometry_shader *unsafe_impl_from_ID3D10GeometryShader(ID3D10GeometryShader *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d10_geometry_shader_vtbl);
+
+    return impl_from_ID3D10GeometryShader(iface);
+}
+
 static inline struct d3d10_pixel_shader *impl_from_ID3D10PixelShader(ID3D10PixelShader *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d10_pixel_shader, ID3D10PixelShader_iface);

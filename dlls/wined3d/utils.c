@@ -2335,6 +2335,8 @@ const char *debug_d3dstate(DWORD state)
         return "STATE_VDECL";
     if (STATE_IS_VSHADER(state))
         return "STATE_VSHADER";
+    if (STATE_IS_GEOMETRY_SHADER(state))
+        return "STATE_GEOMETRY_SHADER";
     if (STATE_IS_VIEWPORT(state))
         return "STATE_VIEWPORT";
     if (STATE_IS_VERTEXSHADERCONSTANT(state))
