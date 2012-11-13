@@ -534,7 +534,7 @@ DECLARE_INTERFACE_(IDirect3DMaterial3,IUnknown)
     /*** IDirect3DMaterial3 methods ***/
     STDMETHOD(SetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE;
     STDMETHOD(GetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE;
-    STDMETHOD(GetHandle)(THIS_ LPDIRECT3DDEVICE3 lpDirect3DDevice3, LPD3DMATERIALHANDLE lpHandle) PURE;
+    STDMETHOD(GetHandle)(THIS_ struct IDirect3DDevice3 *device, D3DMATERIALHANDLE *handle) PURE;
 };
 #undef INTERFACE
 
@@ -1472,7 +1472,7 @@ DECLARE_INTERFACE_(IDirect3DVertexBuffer,IUnknown)
             IDirect3DVertexBuffer *src_buffer, DWORD src_idx,
             IDirect3DDevice3 *device, DWORD flags) PURE;
     STDMETHOD(GetVertexBufferDesc)(THIS_ LPD3DVERTEXBUFFERDESC lpD3DVertexBufferDesc) PURE;
-    STDMETHOD(Optimize)(THIS_ LPDIRECT3DDEVICE3  lpD3DDevice,DWORD dwFlags) PURE;
+    STDMETHOD(Optimize)(THIS_ IDirect3DDevice3 *device, DWORD flags) PURE;
 };
 #undef INTERFACE
 
