@@ -215,7 +215,7 @@ DECLARE_INTERFACE_(IDirect3D,IUnknown)
     STDMETHOD(EnumDevices)(THIS_ LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback, LPVOID lpUserArg) PURE;
     STDMETHOD(CreateLight)(THIS_ LPDIRECT3DLIGHT *lplpDirect3DLight, IUnknown *pUnkOuter) PURE;
     STDMETHOD(CreateMaterial)(THIS_ struct IDirect3DMaterial **material, IUnknown *outer) PURE;
-    STDMETHOD(CreateViewport)(THIS_ LPDIRECT3DVIEWPORT *lplpD3DViewport, IUnknown *pUnkOuter) PURE;
+    STDMETHOD(CreateViewport)(THIS_ struct IDirect3DViewport **viewport, IUnknown *outer) PURE;
     STDMETHOD(FindDevice)(THIS_ LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lplpD3DDevice) PURE;
 };
 #undef INTERFACE
@@ -944,9 +944,10 @@ DECLARE_INTERFACE_(IDirect3DDevice,IUnknown)
     STDMETHOD(GetStats)(THIS_ LPD3DSTATS lpD3DStats) PURE;
     STDMETHOD(Execute)(THIS_ IDirect3DExecuteBuffer *buffer, IDirect3DViewport *viewport,
             DWORD flags) PURE;
-    STDMETHOD(AddViewport)(THIS_ LPDIRECT3DVIEWPORT lpDirect3DViewport) PURE;
-    STDMETHOD(DeleteViewport)(THIS_ LPDIRECT3DVIEWPORT lpDirect3DViewport) PURE;
-    STDMETHOD(NextViewport)(THIS_ LPDIRECT3DVIEWPORT lpDirect3DViewport, LPDIRECT3DVIEWPORT *lplpDirect3DViewport, DWORD dwFlags) PURE;
+    STDMETHOD(AddViewport)(THIS_ IDirect3DViewport *viewport) PURE;
+    STDMETHOD(DeleteViewport)(THIS_ IDirect3DViewport *viewport) PURE;
+    STDMETHOD(NextViewport)(THIS_ IDirect3DViewport *ref,
+            IDirect3DViewport **viewport, DWORD flags) PURE;
     STDMETHOD(Pick)(THIS_ IDirect3DExecuteBuffer *buffer, IDirect3DViewport *viewport,
             DWORD flags, D3DRECT *rect) PURE;
     STDMETHOD(GetPickRecords)(THIS_ LPDWORD lpCount, LPD3DPICKRECORD lpD3DPickRec) PURE;
