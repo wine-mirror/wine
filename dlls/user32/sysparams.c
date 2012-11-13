@@ -101,62 +101,63 @@ static const struct
  * "SET" action names, value names are created by adding "_REG_NAME"
  * to the "SET" action name.
  */
+static const WCHAR DESKTOP_REGKEY[] =  {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR KEYBOARD_REGKEY[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','K','e','y','b','o','a','r','d',0};
+static const WCHAR MOUSE_REGKEY[] =    {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+static const WCHAR METRICS_REGKEY[] =  {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\\',
+                                        'W','i','n','d','o','w','M','e','t','r','i','c','s',0};
+
 static const WCHAR SPI_SETBEEP_REGKEY[]=                      {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','S','o','u','n','d',0};
 static const WCHAR SPI_SETBEEP_VALNAME[]=                     {'B','e','e','p',0};
-static const WCHAR SPI_SETMOUSETHRESHOLD1_REGKEY[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+#define            SPI_SETMOUSETHRESHOLD1_REGKEY              MOUSE_REGKEY
 static const WCHAR SPI_SETMOUSETHRESHOLD1_VALNAME[]=          {'M','o','u','s','e','T','h','r','e','s','h','o','l','d','1',0};
-static const WCHAR SPI_SETMOUSETHRESHOLD2_REGKEY[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+#define            SPI_SETMOUSETHRESHOLD2_REGKEY              MOUSE_REGKEY
 static const WCHAR SPI_SETMOUSETHRESHOLD2_VALNAME[]=          {'M','o','u','s','e','T','h','r','e','s','h','o','l','d','2',0};
-static const WCHAR SPI_SETMOUSEACCELERATION_REGKEY[]=         {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+#define            SPI_SETMOUSEACCELERATION_REGKEY            MOUSE_REGKEY
 static const WCHAR SPI_SETMOUSEACCELERATION_VALNAME[]=        {'M','o','u','s','e','S','p','e','e','d',0};
-static const WCHAR SPI_SETBORDER_REGKEY[]=                    {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\\',
-                                                               'W','i','n','d','o','w','M','e','t','r','i','c','s',0};
+#define            SPI_SETBORDER_REGKEY                       METRICS_REGKEY
 static const WCHAR SPI_SETBORDER_VALNAME[]=                   {'B','o','r','d','e','r','W','i','d','t','h',0};
-static const WCHAR SPI_SETKEYBOARDSPEED_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','K','e','y','b','o','a','r','d',0};
+#define            SPI_SETKEYBOARDSPEED_REGKEY                KEYBOARD_REGKEY
 static const WCHAR SPI_SETKEYBOARDSPEED_VALNAME[]=            {'K','e','y','b','o','a','r','d','S','p','e','e','d',0};
-static const WCHAR SPI_SETICONHORIZONTALSPACING_REGKEY[]=     {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\\',
-                                                               'W','i','n','d','o','w','M','e','t','r','i','c','s',0};
+#define            SPI_SETICONHORIZONTALSPACING_REGKEY        METRICS_REGKEY
 static const WCHAR SPI_SETICONHORIZONTALSPACING_VALNAME[]=    {'I','c','o','n','S','p','a','c','i','n','g',0};
-static const WCHAR SPI_SETSCREENSAVETIMEOUT_REGKEY[]=         {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETSCREENSAVETIMEOUT_REGKEY            DESKTOP_REGKEY
 static const WCHAR SPI_SETSCREENSAVETIMEOUT_VALNAME[]=        {'S','c','r','e','e','n','S','a','v','e','T','i','m','e','O','u','t',0};
-static const WCHAR SPI_SETSCREENSAVEACTIVE_REGKEY[]=          {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETSCREENSAVEACTIVE_REGKEY             DESKTOP_REGKEY
 static const WCHAR SPI_SETSCREENSAVEACTIVE_VALNAME[]=         {'S','c','r','e','e','n','S','a','v','e','A','c','t','i','v','e',0};
-static const WCHAR SPI_SETGRIDGRANULARITY_REGKEY[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETGRIDGRANULARITY_REGKEY              DESKTOP_REGKEY
 static const WCHAR SPI_SETGRIDGRANULARITY_VALNAME[]=          {'G','r','i','d','G','r','a','n','u','l','a','r','i','t','y',0};
-static const WCHAR SPI_SETKEYBOARDDELAY_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','K','e','y','b','o','a','r','d',0};
+#define            SPI_SETKEYBOARDDELAY_REGKEY                KEYBOARD_REGKEY
 static const WCHAR SPI_SETKEYBOARDDELAY_VALNAME[]=            {'K','e','y','b','o','a','r','d','D','e','l','a','y',0};
-static const WCHAR SPI_SETICONVERTICALSPACING_REGKEY[]=       {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\\',
-                                                               'W','i','n','d','o','w','M','e','t','r','i','c','s',0};
+#define            SPI_SETICONVERTICALSPACING_REGKEY          METRICS_REGKEY
 static const WCHAR SPI_SETICONVERTICALSPACING_VALNAME[]=      {'I','c','o','n','V','e','r','t','i','c','a','l','S','p','a','c','i','n','g',0};
-static const WCHAR SPI_SETICONTITLEWRAP_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
-static const WCHAR SPI_SETICONTITLEWRAP_MIRROR[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\\',
-                                                               'W','i','n','d','o','w','M','e','t','r','i','c','s',0};
+#define            SPI_SETICONTITLEWRAP_REGKEY                DESKTOP_REGKEY
+#define            SPI_SETICONTITLEWRAP_MIRROR                METRICS_REGKEY
 static const WCHAR SPI_SETICONTITLEWRAP_VALNAME[]=            {'I','c','o','n','T','i','t','l','e','W','r','a','p',0};
-static const WCHAR SPI_SETICONTITLELOGFONT_REGKEY[]=          {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\\',
-                                                               'W','i','n','d','o','w','M','e','t','r','i','c','s',0};
+#define            SPI_SETICONTITLELOGFONT_REGKEY             METRICS_REGKEY
 static const WCHAR SPI_SETICONTITLELOGFONT_VALNAME[]=         {'I','c','o','n','F','o','n','t',0};
-static const WCHAR SPI_SETMENUDROPALIGNMENT_REGKEY[]=         {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETMENUDROPALIGNMENT_REGKEY            DESKTOP_REGKEY
 static const WCHAR SPI_SETMENUDROPALIGNMENT_MIRROR[]=         {'S','o','f','t','w','a','r','e','\\',
                                                                'M','i','c','r','o','s','o','f','t','\\',
                                                                'W','i','n','d','o','w','s',' ','N','T','\\',
                                                                'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                                                'W','i','n','d','o','w','s',0};
 static const WCHAR SPI_SETMENUDROPALIGNMENT_VALNAME[]=        {'M','e','n','u','D','r','o','p','A','l','i','g','n','m','e','n','t',0};
-static const WCHAR SPI_SETMOUSETRAILS_REGKEY[]=               {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+#define            SPI_SETMOUSETRAILS_REGKEY                  MOUSE_REGKEY
 static const WCHAR SPI_SETMOUSETRAILS_VALNAME[]=              {'M','o','u','s','e','T','r','a','i','l','s',0};
-static const WCHAR SPI_SETSNAPTODEFBUTTON_REGKEY[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+#define            SPI_SETSNAPTODEFBUTTON_REGKEY              MOUSE_REGKEY
 static const WCHAR SPI_SETSNAPTODEFBUTTON_VALNAME[]=          {'S','n','a','p','T','o','D','e','f','a','u','l','t','B','u','t','t','o','n',0};
-static const WCHAR SPI_SETDOUBLECLKWIDTH_REGKEY[]=            {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
-static const WCHAR SPI_SETDOUBLECLKWIDTH_MIRROR[]=            {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETDOUBLECLKWIDTH_REGKEY               MOUSE_REGKEY
+#define            SPI_SETDOUBLECLKWIDTH_MIRROR               DESKTOP_REGKEY
 static const WCHAR SPI_SETDOUBLECLKWIDTH_VALNAME[]=           {'D','o','u','b','l','e','C','l','i','c','k','W','i','d','t','h',0};
-static const WCHAR SPI_SETDOUBLECLKHEIGHT_REGKEY[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
-static const WCHAR SPI_SETDOUBLECLKHEIGHT_MIRROR[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETDOUBLECLKHEIGHT_REGKEY              MOUSE_REGKEY
+#define            SPI_SETDOUBLECLKHEIGHT_MIRROR              DESKTOP_REGKEY
 static const WCHAR SPI_SETDOUBLECLKHEIGHT_VALNAME[]=          {'D','o','u','b','l','e','C','l','i','c','k','H','e','i','g','h','t',0};
-static const WCHAR SPI_SETDOUBLECLICKTIME_REGKEY[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+#define            SPI_SETDOUBLECLICKTIME_REGKEY              MOUSE_REGKEY
 static const WCHAR SPI_SETDOUBLECLICKTIME_VALNAME[]=          {'D','o','u','b','l','e','C','l','i','c','k','S','p','e','e','d',0};
-static const WCHAR SPI_SETMOUSEBUTTONSWAP_REGKEY[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+#define            SPI_SETMOUSEBUTTONSWAP_REGKEY              MOUSE_REGKEY
 static const WCHAR SPI_SETMOUSEBUTTONSWAP_VALNAME[]=          {'S','w','a','p','M','o','u','s','e','B','u','t','t','o','n','s',0};
-static const WCHAR SPI_SETDRAGFULLWINDOWS_REGKEY[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETDRAGFULLWINDOWS_REGKEY              DESKTOP_REGKEY
 static const WCHAR SPI_SETDRAGFULLWINDOWS_VALNAME[]=          {'D','r','a','g','F','u','l','l','W','i','n','d','o','w','s',0};
 static const WCHAR SPI_SETSHOWSOUNDS_REGKEY[]=                {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
                                                                'A','c','c','e','s','s','i','b','i','l','i','t','y','\\',
@@ -170,65 +171,63 @@ static const WCHAR SPI_SETSCREENREADER_REGKEY[]=              {'C','o','n','t','
                                                                'A','c','c','e','s','s','i','b','i','l','i','t','y','\\',
                                                                'B','l','i','n','d',' ','A','c','c','e','s','s',0};
 static const WCHAR SPI_SETSCREENREADER_VALNAME[]=             {'O','n',0};
-static const WCHAR SPI_SETDESKWALLPAPER_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETDESKWALLPAPER_REGKEY                DESKTOP_REGKEY
 static const WCHAR SPI_SETDESKWALLPAPER_VALNAME[]=            {'W','a','l','l','p','a','p','e','r',0};
-static const WCHAR SPI_SETFONTSMOOTHING_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETFONTSMOOTHING_REGKEY                DESKTOP_REGKEY
 static const WCHAR SPI_SETFONTSMOOTHING_VALNAME[]=            {'F','o','n','t','S','m','o','o','t','h','i','n','g',0};
-static const WCHAR SPI_SETDRAGWIDTH_REGKEY[]=                 {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETDRAGWIDTH_REGKEY                    DESKTOP_REGKEY
 static const WCHAR SPI_SETDRAGWIDTH_VALNAME[]=                {'D','r','a','g','W','i','d','t','h',0};
-static const WCHAR SPI_SETDRAGHEIGHT_REGKEY[]=                {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETDRAGHEIGHT_REGKEY                   DESKTOP_REGKEY
 static const WCHAR SPI_SETDRAGHEIGHT_VALNAME[]=               {'D','r','a','g','H','e','i','g','h','t',0};
-static const WCHAR SPI_SETLOWPOWERACTIVE_REGKEY[]=            {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETLOWPOWERACTIVE_REGKEY               DESKTOP_REGKEY
 static const WCHAR SPI_SETLOWPOWERACTIVE_VALNAME[]=           {'L','o','w','P','o','w','e','r','A','c','t','i','v','e',0};
-static const WCHAR SPI_SETPOWEROFFACTIVE_REGKEY[]=            {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETPOWEROFFACTIVE_REGKEY               DESKTOP_REGKEY
 static const WCHAR SPI_SETPOWEROFFACTIVE_VALNAME[]=           {'P','o','w','e','r','O','f','f','A','c','t','i','v','e',0};
-static const WCHAR SPI_USERPREFERENCEMASK_REGKEY[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_USERPREFERENCEMASK_REGKEY              DESKTOP_REGKEY
 static const WCHAR SPI_USERPREFERENCEMASK_VALNAME[]=          {'U','s','e','r','P','r','e','f','e','r','e','n','c','e','m','a','s','k',0};
-static const WCHAR SPI_SETMOUSEHOVERWIDTH_REGKEY[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+#define            SPI_SETMOUSEHOVERWIDTH_REGKEY              MOUSE_REGKEY
 static const WCHAR SPI_SETMOUSEHOVERWIDTH_VALNAME[]=          {'M','o','u','s','e','H','o','v','e','r','W','i','d','t','h',0};
-static const WCHAR SPI_SETMOUSEHOVERHEIGHT_REGKEY[]=          {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+#define            SPI_SETMOUSEHOVERHEIGHT_REGKEY             MOUSE_REGKEY
 static const WCHAR SPI_SETMOUSEHOVERHEIGHT_VALNAME[]=         {'M','o','u','s','e','H','o','v','e','r','H','e','i','g','h','t',0};
-static const WCHAR SPI_SETMOUSEHOVERTIME_REGKEY[]=            {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+#define            SPI_SETMOUSEHOVERTIME_REGKEY               MOUSE_REGKEY
 static const WCHAR SPI_SETMOUSEHOVERTIME_VALNAME[]=           {'M','o','u','s','e','H','o','v','e','r','T','i','m','e',0};
-static const WCHAR SPI_SETWHEELSCROLLCHARS_REGKEY[]=          {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETWHEELSCROLLCHARS_REGKEY             DESKTOP_REGKEY
 static const WCHAR SPI_SETWHEELSCROLLCHARS_VALNAME[]=         {'W','h','e','e','l','S','c','r','o','l','l','C','h','a','r','s',0};
-static const WCHAR SPI_SETWHEELSCROLLLINES_REGKEY[]=          {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETWHEELSCROLLLINES_REGKEY             DESKTOP_REGKEY
 static const WCHAR SPI_SETWHEELSCROLLLINES_VALNAME[]=         {'W','h','e','e','l','S','c','r','o','l','l','L','i','n','e','s',0};
-static const WCHAR SPI_SETACTIVEWINDOWTRACKING_REGKEY[]=      {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+#define            SPI_SETACTIVEWINDOWTRACKING_REGKEY         MOUSE_REGKEY
 static const WCHAR SPI_SETACTIVEWINDOWTRACKING_VALNAME[]=     {'A','c','t','i','v','e','W','i','n','d','o','w','T','r','a','c','k','i','n','g',0};
-static const WCHAR SPI_SETMENUSHOWDELAY_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETMENUSHOWDELAY_REGKEY                DESKTOP_REGKEY
 static const WCHAR SPI_SETMENUSHOWDELAY_VALNAME[]=            {'M','e','n','u','S','h','o','w','D','e','l','a','y',0};
-static const WCHAR SPI_SETBLOCKSENDINPUTRESETS_REGKEY[]=      {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETBLOCKSENDINPUTRESETS_REGKEY         DESKTOP_REGKEY
 static const WCHAR SPI_SETBLOCKSENDINPUTRESETS_VALNAME[]=     {'B','l','o','c','k','S','e','n','d','I','n','p','u','t','R','e','s','e','t','s',0};
-static const WCHAR SPI_SETFOREGROUNDLOCKTIMEOUT_REGKEY[]=     {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETFOREGROUNDLOCKTIMEOUT_REGKEY        DESKTOP_REGKEY
 static const WCHAR SPI_SETFOREGROUNDLOCKTIMEOUT_VALNAME[]=    {'F','o','r','e','g','r','o','u','n','d','L','o','c','k','T','i','m','e','o','u','t',0};
-static const WCHAR SPI_SETACTIVEWNDTRKTIMEOUT_REGKEY[]=       {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETACTIVEWNDTRKTIMEOUT_REGKEY          DESKTOP_REGKEY
 static const WCHAR SPI_SETACTIVEWNDTRKTIMEOUT_VALNAME[]=      {'A','c','t','i','v','e','W','n','d','T','r','a','c','k','T','i','m','e','o','u','t',0};
-static const WCHAR SPI_SETFOREGROUNDFLASHCOUNT_REGKEY[]=      {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETFOREGROUNDFLASHCOUNT_REGKEY         DESKTOP_REGKEY
 static const WCHAR SPI_SETFOREGROUNDFLASHCOUNT_VALNAME[]=     {'F','o','r','e','g','r','o','u','n','d','F','l','a','s','h','C','o','u','n','t',0};
-static const WCHAR SPI_SETCARETWIDTH_REGKEY[]=                {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETCARETWIDTH_REGKEY                   DESKTOP_REGKEY
 static const WCHAR SPI_SETCARETWIDTH_VALNAME[]=               {'C','a','r','e','t','W','i','d','t','h',0};
-static const WCHAR SPI_SETMOUSECLICKLOCKTIME_REGKEY[]=        {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETMOUSECLICKLOCKTIME_REGKEY           DESKTOP_REGKEY
 static const WCHAR SPI_SETMOUSECLICKLOCKTIME_VALNAME[]=       {'C','l','i','c','k','L','o','c','k','T','i','m','e',0};
-static const WCHAR SPI_SETMOUSESPEED_REGKEY[]=                {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+#define            SPI_SETMOUSESPEED_REGKEY                   MOUSE_REGKEY
 static const WCHAR SPI_SETMOUSESPEED_VALNAME[]=               {'M','o','u','s','e','S','e','n','s','i','t','i','v','i','t','y',0};
-static const WCHAR SPI_SETFONTSMOOTHINGTYPE_REGKEY[]=         {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETFONTSMOOTHINGTYPE_REGKEY            DESKTOP_REGKEY
 static const WCHAR SPI_SETFONTSMOOTHINGTYPE_VALNAME[]=        {'F','o','n','t','S','m','o','o','t','h','i','n','g','T','y','p','e',0};
-static const WCHAR SPI_SETFONTSMOOTHINGCONTRAST_REGKEY[]=     {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETFONTSMOOTHINGCONTRAST_REGKEY        DESKTOP_REGKEY
 static const WCHAR SPI_SETFONTSMOOTHINGCONTRAST_VALNAME[]=    {'F','o','n','t','S','m','o','o','t','h','i','n','g','G','a','m','m','a',0};
-static const WCHAR SPI_SETFONTSMOOTHINGORIENTATION_REGKEY[]=  {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETFONTSMOOTHINGORIENTATION_REGKEY     DESKTOP_REGKEY
 static const WCHAR SPI_SETFONTSMOOTHINGORIENTATION_VALNAME[]= {'F','o','n','t','S','m','o','o','t','h','i','n','g','O','r','i','e','n','t','a','t','i','o','n',0};
-static const WCHAR SPI_SETFOCUSBORDERWIDTH_REGKEY[]=          {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETFOCUSBORDERWIDTH_REGKEY             DESKTOP_REGKEY
 static const WCHAR SPI_SETFOCUSBORDERWIDTH_VALNAME[]=         {'F','o','c','u','s','B','o','r','d','e','r','W','i','d','t','h',0};
-static const WCHAR SPI_SETFOCUSBORDERHEIGHT_REGKEY[]=         {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETFOCUSBORDERHEIGHT_REGKEY            DESKTOP_REGKEY
 static const WCHAR SPI_SETFOCUSBORDERHEIGHT_VALNAME[]=        {'F','o','c','u','s','B','o','r','d','e','r','H','e','i','g','h','t',0};
 
 /* FIXME - real values */
-static const WCHAR SPI_SETSCREENSAVERRUNNING_REGKEY[]=   {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+#define            SPI_SETSCREENSAVERRUNNING_REGKEY      DESKTOP_REGKEY
 static const WCHAR SPI_SETSCREENSAVERRUNNING_VALNAME[]=  {'W','I','N','E','_','S','c','r','e','e','n','S','a','v','e','r','R','u','n','n','i','n','g',0};
 
-static const WCHAR METRICS_REGKEY[]=                  {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\\',
-                                                       'W','i','n','d','o','w','M','e','t','r','i','c','s',0};
 static const WCHAR METRICS_SCROLLWIDTH_VALNAME[]=     {'S','c','r','o','l','l','W','i','d','t','h',0};
 static const WCHAR METRICS_SCROLLHEIGHT_VALNAME[]=    {'S','c','r','o','l','l','H','e','i','g','h','t',0};
 static const WCHAR METRICS_CAPTIONWIDTH_VALNAME[]=    {'C','a','p','t','i','o','n','W','i','d','t','h',0};
@@ -246,13 +245,13 @@ static const WCHAR METRICS_MENULOGFONT_VALNAME[]=     {'M','e','n','u','F','o','
 static const WCHAR METRICS_MESSAGELOGFONT_VALNAME[]=  {'M','e','s','s','a','g','e','F','o','n','t',0};
 static const WCHAR METRICS_STATUSLOGFONT_VALNAME[]=   {'S','t','a','t','u','s','F','o','n','t',0};
 /* minimized metrics */
-#define SPI_SETMETRICS_MINWIDTH_REGKEY METRICS_REGKEY
+#define            SPI_SETMETRICS_MINWIDTH_REGKEY        METRICS_REGKEY
 static const WCHAR SPI_SETMETRICS_MINWIDTH_VALNAME[] =   {'M','i','n','W','i','d','t','h',0};
-#define SPI_SETMETRICS_MINHORZGAP_REGKEY METRICS_REGKEY
+#define            SPI_SETMETRICS_MINHORZGAP_REGKEY      METRICS_REGKEY
 static const WCHAR SPI_SETMETRICS_MINHORZGAP_VALNAME[] = {'M','i','n','H','o','r','z','G','a','p',0};
-#define SPI_SETMETRICS_MINVERTGAP_REGKEY METRICS_REGKEY
+#define            SPI_SETMETRICS_MINVERTGAP_REGKEY      METRICS_REGKEY
 static const WCHAR SPI_SETMETRICS_MINVERTGAP_VALNAME[] = {'M','i','n','V','e','r','t','G','a','p',0};
-#define SPI_SETMETRICS_MINARRANGE_REGKEY METRICS_REGKEY
+#define            SPI_SETMETRICS_MINARRANGE_REGKEY      METRICS_REGKEY
 static const WCHAR SPI_SETMETRICS_MINARRANGE_VALNAME[] = {'M','i','n','A','r','r','a','n','g','e',0};
 
 static const WCHAR WINE_CURRENT_USER_REGKEY[] = {'S','o','f','t','w','a','r','e','\\',
