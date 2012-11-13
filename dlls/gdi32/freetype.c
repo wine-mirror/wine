@@ -6377,6 +6377,12 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	}
 
         for(contour = 0; contour < outline->n_contours; contour++) {
+            /* Ignore contours containing one point */
+            if(point == outline->contours[contour]) {
+                point++;
+                continue;
+            }
+
 	    pph_start = needed;
 	    pph = (TTPOLYGONHEADER *)((char *)buf + needed);
 	    first_pt = point;
