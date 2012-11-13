@@ -129,6 +129,14 @@ static HMODULE hmod;
 static int     myARGC;
 static char**  myARGV;
 
+struct strsid_entry
+{
+    const char *str;
+    DWORD flags;
+};
+#define STRSID_OK     0
+#define STRSID_OPT    1
+
 struct sidRef
 {
     SID_IDENTIFIER_AUTHORITY auth;
@@ -173,29 +181,6 @@ static void init(void)
     myARGC = winetest_get_mainargs( &myARGV );
 }
 
-static void test_str_sid(const char *str_sid)
-{
-    PSID psid;
-    char *temp;
-
-    if (pConvertStringSidToSidA(str_sid, &psid))
-    {
-        if (pConvertSidToStringSidA(psid, &temp))
-        {
-            trace(" %s: %s\n", str_sid, temp);
-            LocalFree(temp);
-        }
-        LocalFree(psid);
-    }
-    else
-    {
-        if (GetLastError() != ERROR_INVALID_SID)
-            trace(" %s: couldn't be converted, returned %d\n", str_sid, GetLastError());
-        else
-            trace(" %s: couldn't be converted\n", str_sid);
-    }
-}
-
 static void test_sid(void)
 {
     struct sidRef refs[] = {
@@ -206,6 +191,18 @@ static void test_sid(void)
      { { {0x00,0x00,0x00,0x00,0x00,0x02} }, "S-1-2-1"         },
      { { {0x00,0x00,0x00,0x00,0x00,0x0c} }, "S-1-12-1"        },
     };
+    struct strsid_entry strsid_table[] = {
+        {"AO", STRSID_OK},  {"RU", STRSID_OK},  {"AN", STRSID_OK},  {"AU", STRSID_OK},
+        {"BA", STRSID_OK},  {"BG", STRSID_OK},  {"BO", STRSID_OK},  {"BU", STRSID_OK},
+        {"CA", STRSID_OPT}, {"CG", STRSID_OK},  {"CO", STRSID_OK},  {"DA", STRSID_OPT},
+        {"DC", STRSID_OPT}, {"DD", STRSID_OPT}, {"DG", STRSID_OPT}, {"DU", STRSID_OPT},
+        {"EA", STRSID_OPT}, {"ED", STRSID_OK},  {"WD", STRSID_OK},  {"PA", STRSID_OPT},
+        {"IU", STRSID_OK},  {"LA", STRSID_OK},  {"LG", STRSID_OK},  {"LS", STRSID_OK},
+        {"SY", STRSID_OK},  {"NU", STRSID_OK},  {"NO", STRSID_OK},  {"NS", STRSID_OK},
+        {"PO", STRSID_OK},  {"PS", STRSID_OK},  {"PU", STRSID_OK},  {"RS", STRSID_OPT},
+        {"RD", STRSID_OK},  {"RE", STRSID_OK},  {"RC", STRSID_OK},  {"SA", STRSID_OPT},
+        {"SO", STRSID_OK},  {"SU", STRSID_OK}};
+
     const char noSubAuthStr[] = "S-1-5";
     unsigned int i;
     PSID psid = NULL;
@@ -290,45 +287,44 @@ static void test_sid(void)
             LocalFree( psid );
     }
 
-    trace("String SIDs:\n");
-    test_str_sid("AO");
-    test_str_sid("RU");
-    test_str_sid("AN");
-    test_str_sid("AU");
-    test_str_sid("BA");
-    test_str_sid("BG");
-    test_str_sid("BO");
-    test_str_sid("BU");
-    test_str_sid("CA");
-    test_str_sid("CG");
-    test_str_sid("CO");
-    test_str_sid("DA");
-    test_str_sid("DC");
-    test_str_sid("DD");
-    test_str_sid("DG");
-    test_str_sid("DU");
-    test_str_sid("EA");
-    test_str_sid("ED");
-    test_str_sid("WD");
-    test_str_sid("PA");
-    test_str_sid("IU");
-    test_str_sid("LA");
-    test_str_sid("LG");
-    test_str_sid("LS");
-    test_str_sid("SY");
-    test_str_sid("NU");
-    test_str_sid("NO");
-    test_str_sid("NS");
-    test_str_sid("PO");
-    test_str_sid("PS");
-    test_str_sid("PU");
-    test_str_sid("RS");
-    test_str_sid("RD");
-    test_str_sid("RE");
-    test_str_sid("RC");
-    test_str_sid("SA");
-    test_str_sid("SO");
-    test_str_sid("SU");
+    /* string constant format not supported before XP */
+    r = pConvertStringSidToSidA(strsid_table[0].str, &psid);
+    if(!r)
+    {
+        win_skip("String constant format not supported\n");
+        return;
+    }
+    LocalFree(psid);
+
+    for(i = 0; i < sizeof(strsid_table) / sizeof(strsid_table[0]); i++)
+    {
+        char *temp;
+
+        SetLastError(0xdeadbeef);
+        r = pConvertStringSidToSidA(strsid_table[i].str, &psid);
+
+        if (!(strsid_table[i].flags & STRSID_OPT))
+        {
+            ok(r, "%s: got %u\n", strsid_table[i].str, GetLastError());
+        }
+
+        if (r)
+        {
+            if ((winetest_debug > 1) && (pConvertSidToStringSidA(psid, &temp)))
+            {
+                trace(" %s: %s\n", strsid_table[i].str, temp);
+                LocalFree(temp);
+            }
+            LocalFree(psid);
+        }
+        else
+        {
+            if (GetLastError() != ERROR_INVALID_SID)
+                trace(" %s: couldn't be converted, returned %d\n", strsid_table[i].str, GetLastError());
+            else
+                trace(" %s: couldn't be converted\n", strsid_table[i].str);
+        }
+    }
 }
 
 static void test_trustee(void)
