@@ -49,11 +49,12 @@ static const char *cups_duplexes[3] =
     cups_two_sided_short    /* DMDUP_HORIZONTAL */
 };
 
-static const char psheader[] = /* title llx lly urx ury */
+static const char psheader[] = /* title llx lly urx ury orientation */
 "%%%%Creator: Wine PostScript Driver\n"
 "%%%%Title: %s\n"
 "%%%%BoundingBox: %d %d %d %d\n"
 "%%%%Pages: (atend)\n"
+"%%%%Orientation: %s\n"
 "%%%%EndComments\n";
 
 static const char psbeginprolog[] =
@@ -366,6 +367,8 @@ INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
     DUPLEX *duplex = find_duplex( physDev->pi->ppd, physDev->Devmode );
     int llx, lly, urx, ury;
     int ret, len;
+    const char * dmOrientation;
+
     struct ticket_info ticket_info = { page, duplex };
 
     TRACE("%s\n", debugstr_w(title));
@@ -397,7 +400,8 @@ INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
     ury = physDev->ImageableArea.top * 72.0 / physDev->logPixelsY;
     /* FIXME should do something better with BBox */
 
-    sprintf(buf, psheader, escaped_title, llx, lly, urx, ury);
+    dmOrientation = (physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE ? "Landscape" : "Portrait");
+    sprintf(buf, psheader, escaped_title, llx, lly, urx, ury, dmOrientation);
 
     HeapFree(GetProcessHeap(), 0, escaped_title);
 
