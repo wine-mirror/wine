@@ -160,6 +160,7 @@ static void run_usergetinfo_tests(void)
         ok(rc == ERROR_BAD_NETPATH ||
            rc == ERROR_NETWORK_UNREACHABLE ||
            rc == RPC_S_SERVER_UNAVAILABLE ||
+           rc == NERR_WkstaNotStarted || /* workstation service not running */
            rc == RPC_S_INVALID_NET_ADDR, /* Some Win7 */
            "Bad Network Path: rc=%d\n",rc);
     }
