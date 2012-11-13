@@ -546,7 +546,21 @@ static void STDMETHODCALLTYPE d3d10_device_GSGetConstantBuffers(ID3D10Device *if
 
 static void STDMETHODCALLTYPE d3d10_device_GSGetShader(ID3D10Device *iface, ID3D10GeometryShader **shader)
 {
-    FIXME("iface %p, shader %p stub!\n", iface, shader);
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+    struct d3d10_geometry_shader *shader_impl;
+    struct wined3d_shader *wined3d_shader;
+
+    TRACE("iface %p, shader %p.\n", iface, shader);
+
+    if (!(wined3d_shader = wined3d_device_get_geometry_shader(device->wined3d_device)))
+    {
+        *shader = NULL;
+        return;
+    }
+
+    shader_impl = wined3d_shader_get_parent(wined3d_shader);
+    *shader = &shader_impl->ID3D10GeometryShader_iface;
+    ID3D10GeometryShader_AddRef(*shader);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_IAGetPrimitiveTopology(ID3D10Device *iface,

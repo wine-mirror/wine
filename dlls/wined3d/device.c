@@ -3012,6 +3012,13 @@ void CDECL wined3d_device_set_geometry_shader(struct wined3d_device *device, str
     device_invalidate_state(device, STATE_GEOMETRY_SHADER);
 }
 
+struct wined3d_shader * CDECL wined3d_device_get_geometry_shader(const struct wined3d_device *device)
+{
+    TRACE("device %p.\n", device);
+
+    return device->stateBlock->state.geometry_shader;
+}
+
 /* Context activation is done by the caller. */
 /* Do not call while under the GL lock. */
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
