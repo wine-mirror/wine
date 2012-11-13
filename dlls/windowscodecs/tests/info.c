@@ -88,6 +88,7 @@ static void test_decoder_info(void)
     ULONG len;
     WCHAR value[256];
     const WCHAR expected_mimetype[] = {'i','m','a','g','e','/','b','m','p',0};
+    const WCHAR expected_extensions[] = {'.','b','m','p',',','.','d','i','b',',','.','r','l','e',0};
     CLSID clsid;
     GUID pixelformats[20];
     UINT num_formats, count;
@@ -167,6 +168,35 @@ static void test_decoder_info(void)
     hr = IWICBitmapDecoderInfo_GetPixelFormats(decoder_info, 20, pixelformats, &count);
     ok(hr == S_OK, "GetPixelFormats failed, hr=%x\n", hr);
     ok(count == num_formats, "got %d formats, expected %d\n", count, num_formats);
+
+    hr = IWICBitmapDecoderInfo_GetFileExtensions(decoder_info, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetFileExtensions failed, hr=%x\n", hr);
+
+    hr = IWICBitmapDecoderInfo_GetFileExtensions(decoder_info, 1, NULL, &len);
+    ok(hr == E_INVALIDARG, "GetFileExtensions failed, hr=%x\n", hr);
+    ok(len == lstrlenW(expected_extensions)+1, "GetFileExtensions returned wrong len %i\n", len);
+
+    hr = IWICBitmapDecoderInfo_GetFileExtensions(decoder_info, len, value, NULL);
+    ok(hr == E_INVALIDARG, "GetFileExtensions failed, hr=%x\n", hr);
+
+    hr = IWICBitmapDecoderInfo_GetFileExtensions(decoder_info, 0, NULL, &len);
+    ok(hr == S_OK, "GetFileExtensions failed, hr=%x\n", hr);
+    ok(len == lstrlenW(expected_extensions)+1, "GetFileExtensions returned wrong len %i\n", len);
+
+    value[0] = 0;
+    hr = IWICBitmapDecoderInfo_GetFileExtensions(decoder_info, len, value, &len);
+    ok(hr == S_OK, "GetFileExtensions failed, hr=%x\n", hr);
+    ok(lstrcmpW(value, expected_extensions) == 0, "GetFileExtensions returned wrong value %s\n", wine_dbgstr_w(value));
+    ok(len == lstrlenW(expected_extensions)+1, "GetFileExtensions returned wrong len %i\n", len);
+
+    hr = IWICBitmapDecoderInfo_GetFileExtensions(decoder_info, 1, value, &len);
+    ok(hr == WINCODEC_ERR_INSUFFICIENTBUFFER, "GetFileExtensions failed, hr=%x\n", hr);
+    ok(len == lstrlenW(expected_extensions)+1, "GetFileExtensions returned wrong len %i\n", len);
+
+    hr = IWICBitmapDecoderInfo_GetFileExtensions(decoder_info, 256, value, &len);
+    ok(hr == S_OK, "GetFileExtensions failed, hr=%x\n", hr);
+    ok(lstrcmpW(value, expected_extensions) == 0, "GetFileExtensions returned wrong value %s\n", wine_dbgstr_w(value));
+    ok(len == lstrlenW(expected_extensions)+1, "GetFileExtensions returned wrong len %i\n", len);
 
     IWICBitmapDecoderInfo_Release(decoder_info);
 

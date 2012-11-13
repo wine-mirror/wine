@@ -55,6 +55,7 @@ static const WCHAR numericrepresentation_valuename[] = {'N','u','m','e','r','i',
 static const WCHAR supportstransparency_valuename[] = {'S','u','p','p','o','r','t','s','T','r','a','n','s','p','a','r','e','n','c','y',0};
 static const WCHAR requiresfullstream_valuename[] = {'R','e','q','u','i','r','e','s','F','u','l','l','S','t','r','e','a','m',0};
 static const WCHAR supportspadding_valuename[] = {'S','u','p','p','o','r','t','s','P','a','d','d','i','n','g',0};
+static const WCHAR fileextensions_valuename[] = {'F','i','l','e','E','x','t','e','n','s','i','o','n','s',0};
 
 static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
     UINT buffer_size, WCHAR *buffer, UINT *actual_size)
@@ -393,8 +394,12 @@ static HRESULT WINAPI BitmapDecoderInfo_GetMimeTypes(IWICBitmapDecoderInfo *ifac
 static HRESULT WINAPI BitmapDecoderInfo_GetFileExtensions(IWICBitmapDecoderInfo *iface,
     UINT cchFileExtensions, WCHAR *wzFileExtensions, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchFileExtensions, wzFileExtensions, pcchActual);
-    return E_NOTIMPL;
+    BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchFileExtensions, wzFileExtensions, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, fileextensions_valuename,
+        cchFileExtensions, wzFileExtensions, pcchActual);
 }
 
 static HRESULT WINAPI BitmapDecoderInfo_DoesSupportAnimation(IWICBitmapDecoderInfo *iface,
