@@ -66,6 +66,8 @@ static DWORD from_bmformat( BMFORMAT format )
     case BM_RGBTRIPLETS: return TYPE_RGB_8;
     case BM_BGRTRIPLETS: return TYPE_BGR_8;
     case BM_GRAY:        return TYPE_GRAY_8;
+    case BM_xRGBQUADS:   return TYPE_ARGB_8;
+    case BM_xBGRQUADS:   return TYPE_ABGR_8;
     default:
         if (quietfixme == 0)
         {
