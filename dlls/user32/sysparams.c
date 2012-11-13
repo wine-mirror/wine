@@ -142,6 +142,8 @@ static const WCHAR SPI_SETMENUDROPALIGNMENT_MIRROR[]=         {'S','o','f','t','
                                                                'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                                                'W','i','n','d','o','w','s',0};
 static const WCHAR SPI_SETMENUDROPALIGNMENT_VALNAME[]=        {'M','e','n','u','D','r','o','p','A','l','i','g','n','m','e','n','t',0};
+static const WCHAR SPI_SETMOUSETRAILS_REGKEY[]=               {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+static const WCHAR SPI_SETMOUSETRAILS_VALNAME[]=              {'M','o','u','s','e','T','r','a','i','l','s',0};
 static const WCHAR SPI_SETSNAPTODEFBUTTON_REGKEY[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
 static const WCHAR SPI_SETSNAPTODEFBUTTON_VALNAME[]=          {'S','n','a','p','T','o','D','e','f','a','u','l','t','B','u','t','t','o','n',0};
 static const WCHAR SPI_SETDOUBLECLKWIDTH_REGKEY[]=            {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
@@ -172,6 +174,10 @@ static const WCHAR SPI_SETDESKWALLPAPER_REGKEY[]=             {'C','o','n','t','
 static const WCHAR SPI_SETDESKWALLPAPER_VALNAME[]=            {'W','a','l','l','p','a','p','e','r',0};
 static const WCHAR SPI_SETFONTSMOOTHING_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETFONTSMOOTHING_VALNAME[]=            {'F','o','n','t','S','m','o','o','t','h','i','n','g',0};
+static const WCHAR SPI_SETDRAGWIDTH_REGKEY[]=                 {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_SETDRAGWIDTH_VALNAME[]=                {'D','r','a','g','W','i','d','t','h',0};
+static const WCHAR SPI_SETDRAGHEIGHT_REGKEY[]=                {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_SETDRAGHEIGHT_VALNAME[]=               {'D','r','a','g','H','e','i','g','h','t',0};
 static const WCHAR SPI_SETLOWPOWERACTIVE_REGKEY[]=            {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETLOWPOWERACTIVE_VALNAME[]=           {'L','o','w','P','o','w','e','r','A','c','t','i','v','e',0};
 static const WCHAR SPI_SETPOWEROFFACTIVE_REGKEY[]=            {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
@@ -188,12 +194,22 @@ static const WCHAR SPI_SETWHEELSCROLLCHARS_REGKEY[]=          {'C','o','n','t','
 static const WCHAR SPI_SETWHEELSCROLLCHARS_VALNAME[]=         {'W','h','e','e','l','S','c','r','o','l','l','C','h','a','r','s',0};
 static const WCHAR SPI_SETWHEELSCROLLLINES_REGKEY[]=          {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETWHEELSCROLLLINES_VALNAME[]=         {'W','h','e','e','l','S','c','r','o','l','l','L','i','n','e','s',0};
+static const WCHAR SPI_SETACTIVEWINDOWTRACKING_REGKEY[]=      {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+static const WCHAR SPI_SETACTIVEWINDOWTRACKING_VALNAME[]=     {'A','c','t','i','v','e','W','i','n','d','o','w','T','r','a','c','k','i','n','g',0};
 static const WCHAR SPI_SETMENUSHOWDELAY_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETMENUSHOWDELAY_VALNAME[]=            {'M','e','n','u','S','h','o','w','D','e','l','a','y',0};
+static const WCHAR SPI_SETBLOCKSENDINPUTRESETS_REGKEY[]=      {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_SETBLOCKSENDINPUTRESETS_VALNAME[]=     {'B','l','o','c','k','S','e','n','d','I','n','p','u','t','R','e','s','e','t','s',0};
 static const WCHAR SPI_SETFOREGROUNDLOCKTIMEOUT_REGKEY[]=     {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETFOREGROUNDLOCKTIMEOUT_VALNAME[]=    {'F','o','r','e','g','r','o','u','n','d','L','o','c','k','T','i','m','e','o','u','t',0};
+static const WCHAR SPI_SETACTIVEWNDTRKTIMEOUT_REGKEY[]=       {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_SETACTIVEWNDTRKTIMEOUT_VALNAME[]=      {'A','c','t','i','v','e','W','n','d','T','r','a','c','k','T','i','m','e','o','u','t',0};
+static const WCHAR SPI_SETFOREGROUNDFLASHCOUNT_REGKEY[]=      {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_SETFOREGROUNDFLASHCOUNT_VALNAME[]=     {'F','o','r','e','g','r','o','u','n','d','F','l','a','s','h','C','o','u','n','t',0};
 static const WCHAR SPI_SETCARETWIDTH_REGKEY[]=                {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETCARETWIDTH_VALNAME[]=               {'C','a','r','e','t','W','i','d','t','h',0};
+static const WCHAR SPI_SETMOUSECLICKLOCKTIME_REGKEY[]=        {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_SETMOUSECLICKLOCKTIME_VALNAME[]=       {'C','l','i','c','k','L','o','c','k','T','i','m','e',0};
 static const WCHAR SPI_SETMOUSESPEED_REGKEY[]=                {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
 static const WCHAR SPI_SETMOUSESPEED_VALNAME[]=               {'M','o','u','s','e','S','e','n','s','i','t','i','v','i','t','y',0};
 static const WCHAR SPI_SETFONTSMOOTHINGTYPE_REGKEY[]=         {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
@@ -202,6 +218,10 @@ static const WCHAR SPI_SETFONTSMOOTHINGCONTRAST_REGKEY[]=     {'C','o','n','t','
 static const WCHAR SPI_SETFONTSMOOTHINGCONTRAST_VALNAME[]=    {'F','o','n','t','S','m','o','o','t','h','i','n','g','G','a','m','m','a',0};
 static const WCHAR SPI_SETFONTSMOOTHINGORIENTATION_REGKEY[]=  {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETFONTSMOOTHINGORIENTATION_VALNAME[]= {'F','o','n','t','S','m','o','o','t','h','i','n','g','O','r','i','e','n','t','a','t','i','o','n',0};
+static const WCHAR SPI_SETFOCUSBORDERWIDTH_REGKEY[]=          {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_SETFOCUSBORDERWIDTH_VALNAME[]=         {'F','o','c','u','s','B','o','r','d','e','r','W','i','d','t','h',0};
+static const WCHAR SPI_SETFOCUSBORDERHEIGHT_REGKEY[]=         {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_SETFOCUSBORDERHEIGHT_VALNAME[]=        {'F','o','c','u','s','B','o','r','d','e','r','H','e','i','g','h','t',0};
 
 /* FIXME - real values */
 static const WCHAR SPI_SETSCREENSAVERRUNNING_REGKEY[]=   {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
@@ -1271,6 +1291,8 @@ static BOOL set_entry( void *ptr,  UINT int_param, void *ptr_param, UINT flags )
                          SPI_SET ## name ##_REGKEY, SPI_SET ## name ##_VALNAME } }
 
 static UINT_ENTRY( CARETWIDTH, 1 );
+static UINT_ENTRY( DRAGWIDTH, 4 );
+static UINT_ENTRY( DRAGHEIGHT, 4 );
 static UINT_ENTRY( DOUBLECLICKTIME, 500 );
 static UINT_ENTRY( FONTSMOOTHING, 0 );
 static UINT_ENTRY( GRIDGRANULARITY, 0 );
@@ -1285,6 +1307,7 @@ static UINT_ENTRY( MOUSEHOVERHEIGHT, 4 );
 static UINT_ENTRY( MOUSEHOVERTIME, 400 );
 static UINT_ENTRY( MOUSEHOVERWIDTH, 4 );
 static UINT_ENTRY( MOUSESPEED, 10 );
+static UINT_ENTRY( MOUSETRAILS, 0 );
 static UINT_ENTRY( SCREENSAVETIMEOUT, 300 );
 static UINT_ENTRY( WHEELSCROLLCHARS, 3 );
 static UINT_ENTRY( WHEELSCROLLLINES, 3 );
@@ -1296,6 +1319,7 @@ static INT_ENTRY( MOUSETHRESHOLD1, 6 );
 static INT_ENTRY( MOUSETHRESHOLD2, 10 );
 static INT_ENTRY( MOUSEACCELERATION, 1 );
 
+static BOOL_ENTRY( BLOCKSENDINPUTRESETS, FALSE );
 static BOOL_ENTRY( DRAGFULLWINDOWS, FALSE );
 static BOOL_ENTRY( KEYBOARDPREF, TRUE );
 static BOOL_ENTRY( LOWPOWERACTIVE, FALSE );
@@ -1313,10 +1337,16 @@ static TWIPS_ENTRY( BORDER, 1 );
 static TWIPS_ENTRY( ICONHORIZONTALSPACING, 75 );
 static TWIPS_ENTRY( ICONVERTICALSPACING, 75 );
 
+static DWORD_ENTRY( ACTIVEWINDOWTRACKING, 0 );
+static DWORD_ENTRY( ACTIVEWNDTRKTIMEOUT, 0 );
+static DWORD_ENTRY( FOCUSBORDERHEIGHT, 1 );
+static DWORD_ENTRY( FOCUSBORDERWIDTH, 1 );
 static DWORD_ENTRY( FONTSMOOTHINGCONTRAST, 0 );
 static DWORD_ENTRY( FONTSMOOTHINGORIENTATION, 0 );
 static DWORD_ENTRY( FONTSMOOTHINGTYPE, 0 );
+static DWORD_ENTRY( FOREGROUNDFLASHCOUNT, 3 );
 static DWORD_ENTRY( FOREGROUNDLOCKTIMEOUT, 0 );
+static DWORD_ENTRY( MOUSECLICKLOCKTIME, 1200 );
 
 static FONT_ENTRY( ICONTITLELOGFONT );
 
@@ -1930,9 +1960,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         uiParam = uiParam ? 2 : 0; /* Win NT4/2k/XP behavior */
         ret = set_entry( &entry_FONTSMOOTHING, uiParam, pvParam, fWinIni );
         break;
-
-    WINE_SPI_FIXME(SPI_SETDRAGWIDTH);		/*     76  WINVER >= 0x400 */
-    WINE_SPI_FIXME(SPI_SETDRAGHEIGHT);		/*     77  WINVER >= 0x400 */
+    case SPI_SETDRAGWIDTH:
+        ret = set_entry( &entry_DRAGWIDTH, uiParam, pvParam, fWinIni );
+        break;
+    case SPI_SETDRAGHEIGHT:
+        ret = set_entry( &entry_DRAGHEIGHT, uiParam, pvParam, fWinIni );
+        break;
 
     WINE_SPI_FIXME(SPI_SETHANDHELD);		/*     78  WINVER >= 0x400 */
 
@@ -1969,10 +2002,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 	WARN("pretend no support for Win9x Plus! for now.\n");
 	ret = FALSE; /* yes, this is the result value */
 	break;
-
-    WINE_SPI_FIXME(SPI_SETMOUSETRAILS);		/*     93  WINVER >= 0x400 */
-    WINE_SPI_FIXME(SPI_GETMOUSETRAILS);		/*     94  WINVER >= 0x400 */
-
+    case SPI_SETMOUSETRAILS:
+        ret = set_entry( &entry_MOUSETRAILS, uiParam, pvParam, fWinIni );
+        break;
+    case SPI_GETMOUSETRAILS:
+        ret = get_entry( &entry_MOUSETRAILS, uiParam, pvParam );
+        break;
     case SPI_GETSNAPTODEFBUTTON:
         ret = get_entry( &entry_SNAPTODEFBUTTON, uiParam, pvParam );
         break;
@@ -2055,9 +2090,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
 	break;
     }
-
-    WINE_SPI_FIXME(SPI_GETACTIVEWINDOWTRACKING);/* 0x1000  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_SETACTIVEWINDOWTRACKING);/* 0x1001  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    case SPI_GETACTIVEWINDOWTRACKING:
+        ret = get_entry( &entry_ACTIVEWINDOWTRACKING, uiParam, pvParam );
+        break;
+    case SPI_SETACTIVEWINDOWTRACKING:
+        ret = set_entry( &entry_ACTIVEWINDOWTRACKING, uiParam, pvParam, fWinIni );
+        break;
     case SPI_GETMENUANIMATION:             /* 0x1002  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
         ret = get_user_pref_param( 0, 0x02, pvParam );
         break;
@@ -2171,8 +2209,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         ret = set_user_pref_param( 2, 0x04, PtrToUlong(pvParam), fWinIni );
         break;
 
-    WINE_SPI_FIXME(SPI_GETBLOCKSENDINPUTRESETS);
-    WINE_SPI_FIXME(SPI_SETBLOCKSENDINPUTRESETS);
+    case SPI_GETBLOCKSENDINPUTRESETS:
+        ret = get_entry( &entry_BLOCKSENDINPUTRESETS, uiParam, pvParam );
+        break;
+    case SPI_SETBLOCKSENDINPUTRESETS:
+        ret = set_entry( &entry_BLOCKSENDINPUTRESETS, uiParam, pvParam, fWinIni );
+        break;
     case SPI_GETUIEFFECTS:
         ret = get_user_pref_param( 3, 0x80, pvParam );
         break;
@@ -2200,20 +2242,30 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
          * is able to change the foreground window */
         ret = set_entry( &entry_FOREGROUNDLOCKTIMEOUT, uiParam, pvParam, fWinIni );
         break;
-
-    WINE_SPI_FIXME(SPI_GETACTIVEWNDTRKTIMEOUT); /* 0x2002  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_SETACTIVEWNDTRKTIMEOUT); /* 0x2003  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_GETFOREGROUNDFLASHCOUNT);/* 0x2004  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_SETFOREGROUNDFLASHCOUNT);/* 0x2005  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    case SPI_GETACTIVEWNDTRKTIMEOUT:
+        ret = get_entry( &entry_ACTIVEWNDTRKTIMEOUT, uiParam, pvParam );
+        break;
+    case SPI_SETACTIVEWNDTRKTIMEOUT:
+        ret = get_entry( &entry_ACTIVEWNDTRKTIMEOUT, uiParam, pvParam );
+        break;
+    case SPI_GETFOREGROUNDFLASHCOUNT:
+        ret = get_entry( &entry_FOREGROUNDFLASHCOUNT, uiParam, pvParam );
+        break;
+    case SPI_SETFOREGROUNDFLASHCOUNT:
+        ret = set_entry( &entry_FOREGROUNDFLASHCOUNT, uiParam, pvParam, fWinIni );
+        break;
     case SPI_GETCARETWIDTH:
         ret = get_entry( &entry_CARETWIDTH, uiParam, pvParam );
         break;
     case SPI_SETCARETWIDTH:
         ret = set_entry( &entry_CARETWIDTH, uiParam, pvParam, fWinIni );
         break;
-
-    WINE_SPI_FIXME(SPI_GETMOUSECLICKLOCKTIME);  /* 0x2008  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_SETMOUSECLICKLOCKTIME);  /* 0x2009  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    case SPI_GETMOUSECLICKLOCKTIME:
+        ret = get_entry( &entry_MOUSECLICKLOCKTIME, uiParam, pvParam );
+        break;
+    case SPI_SETMOUSECLICKLOCKTIME:
+        ret = set_entry( &entry_MOUSECLICKLOCKTIME, uiParam, pvParam, fWinIni );
+        break;
     case SPI_GETFONTSMOOTHINGTYPE:
         ret = get_entry( &entry_FONTSMOOTHINGTYPE, uiParam, pvParam );
         break;
@@ -2226,18 +2278,18 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     case SPI_SETFONTSMOOTHINGCONTRAST:
         ret = set_entry( &entry_FONTSMOOTHINGCONTRAST, uiParam, pvParam, fWinIni );
         break;
-
-    case SPI_GETFOCUSBORDERWIDTH: /* 0x200E  _WIN32_WINNT >= 0x510 */
-    case SPI_GETFOCUSBORDERHEIGHT: /* 0x200F  _WIN32_WINNT >= 0x510 */
-        if (!pvParam)
-            ret = FALSE;
-        else
-            *(UINT *)pvParam = 1;
+    case SPI_GETFOCUSBORDERWIDTH:
+        ret = get_entry( &entry_FOCUSBORDERWIDTH, uiParam, pvParam );
         break;
-
-    WINE_SPI_FIXME(SPI_SETFOCUSBORDERWIDTH);     /* 0x2010  _WIN32_WINNT >= 0x510 */
-    WINE_SPI_FIXME(SPI_SETFOCUSBORDERHEIGHT);    /* 0x2011  _WIN32_WINNT >= 0x510 */
-
+    case SPI_GETFOCUSBORDERHEIGHT:
+        ret = get_entry( &entry_FOCUSBORDERHEIGHT, uiParam, pvParam );
+        break;
+    case SPI_SETFOCUSBORDERWIDTH:
+        ret = set_entry( &entry_FOCUSBORDERWIDTH, uiParam, pvParam, fWinIni );
+        break;
+    case SPI_SETFOCUSBORDERHEIGHT:
+        ret = set_entry( &entry_FOCUSBORDERHEIGHT, uiParam, pvParam, fWinIni );
+        break;
     case SPI_GETFONTSMOOTHINGORIENTATION:
         ret = get_entry( &entry_FONTSMOOTHINGORIENTATION, uiParam, pvParam );
         break;
@@ -2576,8 +2628,11 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_CLEANBOOT:
         return 0; /* 0 = ok, 1 = failsafe, 2 = failsafe + network */
     case SM_CXDRAG:
+        get_entry( &entry_DRAGWIDTH, 0, &ret );
+        return ret;
     case SM_CYDRAG:
-        return 4;
+        get_entry( &entry_DRAGHEIGHT, 0, &ret );
+        return ret;
     case SM_SHOWSOUNDS:
         get_entry( &entry_SHOWSOUNDS, 0, &ret );
         return ret;
