@@ -4277,6 +4277,46 @@ static BOOL write_ttf_file(const char *fontname, char *tmp_name)
     return ret;
 }
 
+static void test_GetGlyphOutline_empty_contour(void)
+{
+    HDC hdc;
+    LOGFONTA lf;
+    HFONT hfont, hfont_prev;
+    TTPOLYGONHEADER *header;
+    GLYPHMETRICS gm;
+    char buf[1024];
+    DWORD ret;
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfHeight = 72;
+    lstrcpyA(lf.lfFaceName, "wine_test");
+
+    hfont = CreateFontIndirectA(&lf);
+    ok(hfont != 0, "CreateFontIndirectA error %u\n", GetLastError());
+
+    hdc = GetDC(NULL);
+
+    hfont_prev = SelectObject(hdc, hfont);
+    ok(hfont_prev != NULL, "SelectObject failed\n");
+
+    ret = GetGlyphOutlineW(hdc, 0xa8, GGO_NATIVE, &gm, 0, NULL, &mat);
+    ok(ret == 228, "GetGlyphOutline returned %d, expected 228\n", ret);
+
+    header = (TTPOLYGONHEADER*)buf;
+    ret = GetGlyphOutlineW(hdc, 0xa8, GGO_NATIVE, &gm, sizeof(buf), buf, &mat);
+    ok(ret == 228, "GetGlyphOutline returned %d, expected 228\n", ret);
+    ok(header->cb == 36, "header->cb = %d, expected 36\n", header->cb);
+    ok(header->dwType == TT_POLYGON_TYPE, "header->dwType = %d, expected TT_POLYGON_TYPE\n", header->dwType);
+    header = (TTPOLYGONHEADER*)((char*)header+header->cb);
+    ok(header->cb == 96, "header->cb = %d, expected 96\n", header->cb);
+    header = (TTPOLYGONHEADER*)((char*)header+header->cb);
+    ok(header->cb == 96, "header->cb = %d, expected 96\n", header->cb);
+
+    SelectObject(hdc, hfont_prev);
+    DeleteObject(hfont);
+    ReleaseDC(NULL, hdc);
+}
+
 static void test_CreateScalableFontResource(void)
 {
     char ttf_name[MAX_PATH];
@@ -4357,6 +4397,8 @@ todo_wine
 
     ret = is_truetype_font_installed("wine_test");
     ok(ret, "font wine_test should be enumerated\n");
+
+    test_GetGlyphOutline_empty_contour();
 
     ret = pRemoveFontResourceExA(fot_name, FR_PRIVATE, 0);
 todo_wine
