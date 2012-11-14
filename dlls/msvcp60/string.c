@@ -1666,7 +1666,7 @@ DEFINE_THISCALL_WRAPPER(basic_string_char_c_str, 4)
 const char* __thiscall basic_string_char_c_str(const basic_string_char *this)
 {
     TRACE("%p\n", this);
-    return this->ptr;
+    return this->ptr ? this->ptr : basic_string_char__Nullstr();
 }
 
 /* ?size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ */
@@ -3376,7 +3376,7 @@ DEFINE_THISCALL_WRAPPER(basic_string_wchar_c_str, 4)
 const wchar_t* __thiscall basic_string_wchar_c_str(const basic_string_wchar *this)
 {
     TRACE("%p\n", this);
-    return this->ptr;
+    return this->ptr ? this->ptr : basic_string_wchar__Nullstr();
 }
 
 /* ?size@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIXZ */
