@@ -1264,7 +1264,7 @@ static BOOL set_binary_entry( union sysparam_all_entry *entry, UINT int_param, v
 static BOOL get_userpref_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param )
 {
     union sysparam_all_entry *parent_entry = (union sysparam_all_entry *)entry->pref.parent;
-    BYTE prefs[4];
+    BYTE prefs[8];
 
     if (!ptr_param) return FALSE;
 
@@ -1277,7 +1277,7 @@ static BOOL get_userpref_entry( union sysparam_all_entry *entry, UINT int_param,
 static BOOL set_userpref_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param, UINT flags )
 {
     union sysparam_all_entry *parent_entry = (union sysparam_all_entry *)entry->pref.parent;
-    BYTE prefs[4];
+    BYTE prefs[8];
 
     parent_entry->hdr.loaded = FALSE;  /* force loading it again */
     if (!parent_entry->hdr.get( parent_entry, sizeof(prefs), prefs )) return FALSE;
@@ -1404,26 +1404,33 @@ static DWORD_ENTRY( FOREGROUNDFLASHCOUNT, 3 );
 static DWORD_ENTRY( FOREGROUNDLOCKTIMEOUT, 0 );
 static DWORD_ENTRY( MOUSECLICKLOCKTIME, 1200 );
 
-static BYTE user_prefs[4];
+static BYTE user_prefs[8] = { 0x30, 0x00, 0x02, 0x80, 0x10, 0x00, 0x00, 0x00 };
 static BINARY_ENTRY( USERPREFERENCESMASK, user_prefs );
 
 static FONT_ENTRY( ICONTITLELOGFONT );
 
-static USERPREF_ENTRY( MENUANIMATION,          0, 0x02 );
-static USERPREF_ENTRY( COMBOBOXANIMATION,      0, 0x04 );
-static USERPREF_ENTRY( LISTBOXSMOOTHSCROLLING, 0, 0x08 );
-static USERPREF_ENTRY( GRADIENTCAPTIONS,       0, 0x10 );
-static USERPREF_ENTRY( KEYBOARDCUES,           0, 0x20 );
-static USERPREF_ENTRY( HOTTRACKING,            0, 0x80 );
-static USERPREF_ENTRY( SELECTIONFADE,          1, 0x04 );
-static USERPREF_ENTRY( TOOLTIPANIMATION,       1, 0x08 );
-static USERPREF_ENTRY( TOOLTIPFADE,            1, 0x10 );
-static USERPREF_ENTRY( CURSORSHADOW,           1, 0x20 );
-static USERPREF_ENTRY( MOUSEVANISH,            2, 0x01 );
-static USERPREF_ENTRY( FLATMENU,               2, 0x02 );
-static USERPREF_ENTRY( DROPSHADOW,             2, 0x04 );
-static USERPREF_ENTRY( UIEFFECTS,              3, 0x80 );
-
+static USERPREF_ENTRY( MENUANIMATION,            0, 0x02 );
+static USERPREF_ENTRY( COMBOBOXANIMATION,        0, 0x04 );
+static USERPREF_ENTRY( LISTBOXSMOOTHSCROLLING,   0, 0x08 );
+static USERPREF_ENTRY( GRADIENTCAPTIONS,         0, 0x10 );
+static USERPREF_ENTRY( KEYBOARDCUES,             0, 0x20 );
+static USERPREF_ENTRY( ACTIVEWNDTRKZORDER,       0, 0x40 );
+static USERPREF_ENTRY( HOTTRACKING,              0, 0x80 );
+static USERPREF_ENTRY( MENUFADE,                 1, 0x02 );
+static USERPREF_ENTRY( SELECTIONFADE,            1, 0x04 );
+static USERPREF_ENTRY( TOOLTIPANIMATION,         1, 0x08 );
+static USERPREF_ENTRY( TOOLTIPFADE,              1, 0x10 );
+static USERPREF_ENTRY( CURSORSHADOW,             1, 0x20 );
+static USERPREF_ENTRY( MOUSESONAR,               1, 0x40 );
+static USERPREF_ENTRY( MOUSECLICKLOCK,           1, 0x80 );
+static USERPREF_ENTRY( MOUSEVANISH,              2, 0x01 );
+static USERPREF_ENTRY( FLATMENU,                 2, 0x02 );
+static USERPREF_ENTRY( DROPSHADOW,               2, 0x04 );
+static USERPREF_ENTRY( UIEFFECTS,                3, 0x80 );
+static USERPREF_ENTRY( DISABLEOVERLAPPEDCONTENT, 4, 0x01 );
+static USERPREF_ENTRY( CLIENTAREAANIMATION,      4, 0x02 );
+static USERPREF_ENTRY( CLEARTYPE,                4, 0x10 );
+static USERPREF_ENTRY( SPEECHRECOGNITION,        4, 0x20 );
 
 /***********************************************************************
  *		SystemParametersInfoW (USER32.@)
@@ -2201,18 +2208,24 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     case SPI_SETKEYBOARDCUES:
         ret = set_entry( &entry_KEYBOARDCUES, uiParam, pvParam, fWinIni );
         break;
-
-    WINE_SPI_FIXME(SPI_GETACTIVEWNDTRKZORDER);  /* 0x100C  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_SETACTIVEWNDTRKZORDER);  /* 0x100D  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    case SPI_GETACTIVEWNDTRKZORDER:
+        ret = get_entry( &entry_ACTIVEWNDTRKZORDER, uiParam, pvParam );
+        break;
+    case SPI_SETACTIVEWNDTRKZORDER:
+        ret = set_entry( &entry_ACTIVEWNDTRKZORDER, uiParam, pvParam, fWinIni );
+        break;
     case SPI_GETHOTTRACKING:
         ret = get_entry( &entry_HOTTRACKING, uiParam, pvParam );
         break;
     case SPI_SETHOTTRACKING:
         ret = set_entry( &entry_HOTTRACKING, uiParam, pvParam, fWinIni );
         break;
-
-    WINE_SPI_FIXME(SPI_GETMENUFADE);            /* 0x1012  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_SETMENUFADE);            /* 0x1013  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    case SPI_GETMENUFADE:
+        ret = get_entry( &entry_MENUFADE, uiParam, pvParam );
+        break;
+    case SPI_SETMENUFADE:
+        ret = set_entry( &entry_MENUFADE, uiParam, pvParam, fWinIni );
+        break;
     case SPI_GETSELECTIONFADE:
         ret = get_entry( &entry_SELECTIONFADE, uiParam, pvParam );
         break;
@@ -2237,12 +2250,18 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     case SPI_SETCURSORSHADOW:
         ret = set_entry( &entry_CURSORSHADOW, uiParam, pvParam, fWinIni );
         break;
-
-    WINE_SPI_FIXME(SPI_GETMOUSESONAR);          /* 0x101C  _WIN32_WINNT >= 0x510 || _WIN32_WINDOW >= 0x490*/
-    WINE_SPI_FIXME(SPI_SETMOUSESONAR);          /* 0x101D  _WIN32_WINNT >= 0x510 || _WIN32_WINDOW >= 0x490*/
-    WINE_SPI_FIXME(SPI_GETMOUSECLICKLOCK);      /* 0x101E  _WIN32_WINNT >= 0x510 || _WIN32_WINDOW >= 0x490*/
-    WINE_SPI_FIXME(SPI_SETMOUSECLICKLOCK);      /* 0x101F  _WIN32_WINNT >= 0x510 || _WIN32_WINDOW >= 0x490*/
-
+    case SPI_GETMOUSESONAR:
+        ret = get_entry( &entry_MOUSESONAR, uiParam, pvParam );
+        break;
+    case SPI_SETMOUSESONAR:
+        ret = set_entry( &entry_MOUSESONAR, uiParam, pvParam, fWinIni );
+        break;
+    case SPI_GETMOUSECLICKLOCK:
+        ret = get_entry( &entry_MOUSECLICKLOCK, uiParam, pvParam );
+        break;
+    case SPI_SETMOUSECLICKLOCK:
+        ret = set_entry( &entry_MOUSECLICKLOCK, uiParam, pvParam, fWinIni );
+        break;
     case SPI_GETMOUSEVANISH:
         ret = get_entry( &entry_MOUSEVANISH, uiParam, pvParam );
         break;
@@ -2274,17 +2293,30 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         /* FIXME: this probably should mask other UI effect values when unset */
         ret = set_entry( &entry_UIEFFECTS, uiParam, pvParam, fWinIni );
         break;
-
-    /* _WIN32_WINNT >= 0x600 */
-    WINE_SPI_FIXME(SPI_GETDISABLEOVERLAPPEDCONTENT);
-    WINE_SPI_FIXME(SPI_SETDISABLEOVERLAPPEDCONTENT);
-    WINE_SPI_FIXME(SPI_GETCLIENTAREAANIMATION);
-    WINE_SPI_FIXME(SPI_SETCLIENTAREAANIMATION);
-    WINE_SPI_FIXME(SPI_GETCLEARTYPE);
-    WINE_SPI_FIXME(SPI_SETCLEARTYPE);
-    WINE_SPI_FIXME(SPI_GETSPEECHRECOGNITION);
-    WINE_SPI_FIXME(SPI_SETSPEECHRECOGNITION);
-
+    case SPI_GETDISABLEOVERLAPPEDCONTENT:
+        ret = get_entry( &entry_DISABLEOVERLAPPEDCONTENT, uiParam, pvParam );
+        break;
+    case SPI_SETDISABLEOVERLAPPEDCONTENT:
+        ret = set_entry( &entry_DISABLEOVERLAPPEDCONTENT, uiParam, pvParam, fWinIni );
+        break;
+    case SPI_GETCLIENTAREAANIMATION:
+        ret = get_entry( &entry_CLIENTAREAANIMATION, uiParam, pvParam );
+        break;
+    case SPI_SETCLIENTAREAANIMATION:
+        ret = set_entry( &entry_CLIENTAREAANIMATION, uiParam, pvParam, fWinIni );
+        break;
+    case SPI_GETCLEARTYPE:
+        ret = get_entry( &entry_CLEARTYPE, uiParam, pvParam );
+        break;
+    case SPI_SETCLEARTYPE:
+        ret = set_entry( &entry_CLEARTYPE, uiParam, pvParam, fWinIni );
+        break;
+    case SPI_GETSPEECHRECOGNITION:
+        ret = get_entry( &entry_SPEECHRECOGNITION, uiParam, pvParam );
+        break;
+    case SPI_SETSPEECHRECOGNITION:
+        ret = set_entry( &entry_SPEECHRECOGNITION, uiParam, pvParam, fWinIni );
+        break;
     case SPI_GETFOREGROUNDLOCKTIMEOUT:
         ret = get_entry( &entry_FOREGROUNDLOCKTIMEOUT, uiParam, pvParam );
         break;
