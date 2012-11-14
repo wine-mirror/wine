@@ -6756,12 +6756,7 @@ static MSVCP_bool basic_istream_char__Ipfx(basic_istream_char *this, MSVCP_bool 
 
             for(ch = basic_streambuf_char_sgetc(strbuf); ;
                     ch = basic_streambuf_char_snextc(strbuf)) {
-                if(ch == EOF) {
-                    basic_ios_char_setstate(base, IOSTATE_eofbit);
-                    break;
-                }
-
-                if(!ctype_char_is_ch(ctype, _SPACE|_BLANK, ch))
+                if(ch==EOF || !ctype_char_is_ch(ctype, _SPACE|_BLANK, ch))
                     break;
             }
         }
@@ -7985,12 +7980,7 @@ static MSVCP_bool basic_istream_wchar__Ipfx(basic_istream_wchar *this, MSVCP_boo
 
             for(ch = basic_streambuf_wchar_sgetc(strbuf); ;
                     ch = basic_streambuf_wchar_snextc(strbuf)) {
-                if(ch == WEOF) {
-                    basic_ios_wchar_setstate(base, IOSTATE_eofbit);
-                    break;
-                }
-
-                if(!ctype_wchar_is_ch(ctype, _SPACE|_BLANK, ch))
+                if(ch==WEOF || !ctype_wchar_is_ch(ctype, _SPACE|_BLANK, ch))
                     break;
             }
         }
