@@ -268,8 +268,12 @@ static HRESULT WINAPI MsiActiveScriptSite_GetItemInfo(IActiveScriptSite* iface, 
 
     /* Are we looking for the session object? */
     if (!strcmpW(szSession, pstrName)) {
-        if (dwReturnMask & SCRIPTINFO_ITYPEINFO)
-            return load_type_info(This->pSession, ppti, &DIID_Session, 0);
+        if (dwReturnMask & SCRIPTINFO_ITYPEINFO) {
+            HRESULT hr = get_typeinfo(Session_tid, ppti);
+            if (SUCCEEDED(hr))
+                ITypeInfo_AddRef(*ppti);
+            return hr;
+        }
         else if (dwReturnMask & SCRIPTINFO_IUNKNOWN) {
             IDispatch_QueryInterface(This->pSession, &IID_IUnknown, (void **)ppiunkItem);
             return S_OK;

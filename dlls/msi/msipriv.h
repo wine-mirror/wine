@@ -1072,9 +1072,21 @@ extern VOID ControlEvent_SubscribeToEvent(MSIPACKAGE *package, msi_dialog *dialo
                                       LPCWSTR event, LPCWSTR control, LPCWSTR attribute) DECLSPEC_HIDDEN;
 
 /* OLE automation */
+typedef enum tid_t {
+    Database_tid,
+    Installer_tid,
+    Record_tid,
+    Session_tid,
+    StringList_tid,
+    SummaryInfo_tid,
+    View_tid,
+    LAST_tid
+} tid_t;
+
 extern HRESULT create_msiserver(IUnknown *pOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 extern HRESULT create_session(MSIHANDLE msiHandle, IDispatch *pInstaller, IDispatch **pDispatch) DECLSPEC_HIDDEN;
-extern HRESULT load_type_info(IDispatch *iface, ITypeInfo **pptinfo, REFIID clsid, LCID lcid) DECLSPEC_HIDDEN;
+extern HRESULT get_typeinfo(tid_t tid, ITypeInfo **ti) DECLSPEC_HIDDEN;
+extern void release_typelib(void) DECLSPEC_HIDDEN;
 
 /* Scripting */
 extern DWORD call_script(MSIHANDLE hPackage, INT type, LPCWSTR script, LPCWSTR function, LPCWSTR action) DECLSPEC_HIDDEN;
