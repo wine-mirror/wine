@@ -422,11 +422,11 @@ HWND WINAPI ChildWindowFromPointEx( HWND hwndParent, POINT pt, UINT uFlags)
  * Calculate the offset between the origin of the two windows. Used
  * to implement MapWindowPoints.
  */
-static POINT WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored )
+static BOOL WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored, POINT *ret_offset )
 {
     WND * wndPtr;
     POINT offset;
-    BOOL mirror_from, mirror_to;
+    BOOL mirror_from, mirror_to, ret;
     HWND hwnd;
 
     offset.x = offset.y = 0;
@@ -435,7 +435,11 @@ static POINT WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored )
     /* Translate source window origin to screen coords */
     if (hwndFrom)
     {
-        if (!(wndPtr = WIN_GetPtr( hwndFrom ))) return offset;
+        if (!(wndPtr = WIN_GetPtr( hwndFrom )))
+        {
+            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            return FALSE;
+        }
         if (wndPtr == WND_OTHER_PROCESS) goto other_process;
         if (wndPtr != WND_DESKTOP)
         {
@@ -466,7 +470,11 @@ static POINT WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored )
     /* Translate origin to destination window coords */
     if (hwndTo)
     {
-        if (!(wndPtr = WIN_GetPtr( hwndTo ))) return offset;
+        if (!(wndPtr = WIN_GetPtr( hwndTo )))
+        {
+            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            return FALSE;
+        }
         if (wndPtr == WND_OTHER_PROCESS) goto other_process;
         if (wndPtr != WND_DESKTOP)
         {
@@ -496,34 +504,36 @@ static POINT WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored )
 
     *mirrored = mirror_from ^ mirror_to;
     if (mirror_from) offset.x = -offset.x;
-    return offset;
+    *ret_offset = offset;
+    return TRUE;
 
  other_process:  /* one of the parents may belong to another process, do it the hard way */
-    offset.x = offset.y = 0;
     SERVER_START_REQ( get_windows_offset )
     {
         req->from = wine_server_user_handle( hwndFrom );
         req->to   = wine_server_user_handle( hwndTo );
-        if (!wine_server_call( req ))
+        if ((ret = !wine_server_call_err( req )))
         {
-            offset.x = reply->x;
-            offset.y = reply->y;
+            ret_offset->x = reply->x;
+            ret_offset->y = reply->y;
             *mirrored = reply->mirror;
         }
     }
     SERVER_END_REQ;
-    return offset;
+    return ret;
 }
 
 /* map coordinates of a window region */
 void map_window_region( HWND from, HWND to, HRGN hrgn )
 {
     BOOL mirrored;
-    POINT offset = WINPOS_GetWinOffset( from, to, &mirrored );
+    POINT offset;
     UINT i, size;
     RGNDATA *data;
     HRGN new_rgn;
     RECT *rect;
+
+    if (!WINPOS_GetWinOffset( from, to, &mirrored, &offset )) return;
 
     if (!mirrored)
     {
@@ -557,8 +567,10 @@ void map_window_region( HWND from, HWND to, HRGN hrgn )
 INT WINAPI MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, UINT count )
 {
     BOOL mirrored;
-    POINT offset = WINPOS_GetWinOffset( hwndFrom, hwndTo, &mirrored );
+    POINT offset;
     UINT i;
+
+    if (!WINPOS_GetWinOffset( hwndFrom, hwndTo, &mirrored, &offset )) return 0;
 
     for (i = 0; i < count; i++)
     {
