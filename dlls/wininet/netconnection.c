@@ -655,7 +655,6 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
                 if (!res)
                 {
                     closesocket(netconn->socketFD);
-                    heap_free(netconn);
                     return ERROR_INTERNET_CANNOT_CONNECT;
                 }
                 else if (res > 0)
@@ -674,10 +673,8 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
             ioctlsocket(netconn->socketFD, FIONBIO, &flag);
         }
     }
-    if(result == -1) {
-        heap_free(netconn);
+    if(result == -1)
         return sock_get_error(errno);
-    }
 
 #ifdef TCP_NODELAY
     flag = 1;
@@ -717,9 +714,13 @@ DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, BOOL m
     list_init(&netconn->pool_entry);
 
     result = create_netconn_socket(server, netconn, timeout);
+    if (result != ERROR_SUCCESS) {
+        heap_free(netconn);
+        return result;
+    }
+
     server_addref(server);
     netconn->server = server;
-
     *ret = netconn;
     return result;
 }
