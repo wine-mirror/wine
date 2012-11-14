@@ -180,6 +180,7 @@ typedef struct {
     MSVCP_size_t id;
 } locale_id;
 extern locale_id codecvt_char_id;
+extern locale_id codecvt_short_id;
 
 /* class _Lockit */
 typedef struct {
