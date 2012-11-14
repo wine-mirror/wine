@@ -49,8 +49,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(system);
 enum spi_index
 {
     SPI_SETWORKAREA_IDX,
-    SPI_SETLISTBOXSMOOTHSCROLLING_IDX,
-    SPI_USERPREFERENCEMASK_IDX,
     SPI_NONCLIENTMETRICS_IDX,
     SPI_INDEX_COUNT
 };
@@ -183,8 +181,8 @@ static const WCHAR SPI_SETDRAGHEIGHT_VALNAME[]=               {'D','r','a','g','
 static const WCHAR SPI_SETLOWPOWERACTIVE_VALNAME[]=           {'L','o','w','P','o','w','e','r','A','c','t','i','v','e',0};
 #define            SPI_SETPOWEROFFACTIVE_REGKEY               DESKTOP_REGKEY
 static const WCHAR SPI_SETPOWEROFFACTIVE_VALNAME[]=           {'P','o','w','e','r','O','f','f','A','c','t','i','v','e',0};
-#define            SPI_USERPREFERENCEMASK_REGKEY              DESKTOP_REGKEY
-static const WCHAR SPI_USERPREFERENCEMASK_VALNAME[]=          {'U','s','e','r','P','r','e','f','e','r','e','n','c','e','m','a','s','k',0};
+#define            SPI_SETUSERPREFERENCESMASK_REGKEY          DESKTOP_REGKEY
+static const WCHAR SPI_SETUSERPREFERENCESMASK_VALNAME[]=      {'U','s','e','r','P','r','e','f','e','r','e','n','c','e','s','M','a','s','k',0};
 #define            SPI_SETMOUSEHOVERWIDTH_REGKEY              MOUSE_REGKEY
 static const WCHAR SPI_SETMOUSEHOVERWIDTH_VALNAME[]=          {'M','o','u','s','e','H','o','v','e','r','W','i','d','t','h',0};
 #define            SPI_SETMOUSEHOVERHEIGHT_REGKEY             MOUSE_REGKEY
@@ -286,7 +284,6 @@ static BOOL notify_change = TRUE;
 
 /* System parameters storage */
 static RECT work_area;
-static BYTE user_prefs[4];
 
 static NONCLIENTMETRICSW nonclient_metrics =
 {
@@ -354,19 +351,36 @@ struct sysparam_dword_entry
     DWORD                 val;
 };
 
+struct sysparam_binary_entry
+{
+    struct sysparam_entry hdr;
+    void                 *ptr;
+    size_t                size;
+};
+
 struct sysparam_font_entry
 {
     struct sysparam_entry hdr;
     LOGFONTW              val;
 };
 
+struct sysparam_pref_entry
+{
+    struct sysparam_entry hdr;
+    struct sysparam_binary_entry *parent;
+    UINT                  offset;
+    UINT                  mask;
+};
+
 union sysparam_all_entry
 {
-    struct sysparam_entry       hdr;
-    struct sysparam_uint_entry  uint;
-    struct sysparam_bool_entry  bool;
-    struct sysparam_dword_entry dword;
-    struct sysparam_font_entry  font;
+    struct sysparam_entry        hdr;
+    struct sysparam_uint_entry   uint;
+    struct sysparam_bool_entry   bool;
+    struct sysparam_dword_entry  dword;
+    struct sysparam_binary_entry bin;
+    struct sysparam_font_entry   font;
+    struct sysparam_pref_entry   pref;
 };
 
 static void SYSPARAMS_LogFont16To32W( const LOGFONT16 *font16, LPLOGFONTW font32 )
@@ -796,39 +810,6 @@ static BOOL save_int_param( LPCWSTR regkey, LPCWSTR value, INT *value_ptr,
     return TRUE;
 }
 
-/* load a boolean parameter from the user preference key */
-static BOOL get_user_pref_param( UINT offset, UINT mask, BOOL *ret_ptr )
-{
-    if (!ret_ptr) return FALSE;
-
-    if (!spi_loaded[SPI_USERPREFERENCEMASK_IDX])
-    {
-        SYSPARAMS_LoadRaw( SPI_USERPREFERENCEMASK_REGKEY,
-                           SPI_USERPREFERENCEMASK_VALNAME,
-                           user_prefs, sizeof(user_prefs) );
-        spi_loaded[SPI_USERPREFERENCEMASK_IDX] = TRUE;
-    }
-    *ret_ptr = (user_prefs[offset] & mask) != 0;
-    return TRUE;
-}
-
-/* set a boolean parameter in the user preference key */
-static BOOL set_user_pref_param( UINT offset, UINT mask, BOOL value, BOOL fWinIni )
-{
-    SYSPARAMS_LoadRaw( SPI_USERPREFERENCEMASK_REGKEY,
-                       SPI_USERPREFERENCEMASK_VALNAME,
-                       user_prefs, sizeof(user_prefs) );
-    spi_loaded[SPI_USERPREFERENCEMASK_IDX] = TRUE;
-
-    if (value) user_prefs[offset] |= mask;
-    else user_prefs[offset] &= ~mask;
-
-    SYSPARAMS_SaveRaw( SPI_USERPREFERENCEMASK_REGKEY,
-                       SPI_USERPREFERENCEMASK_VALNAME,
-                       user_prefs, sizeof(user_prefs), REG_BINARY, fWinIni );
-    return TRUE;
-}
-
 /***********************************************************************
  *           SYSPARAMS_Init
  *
@@ -1239,6 +1220,74 @@ static BOOL set_font_entry( union sysparam_all_entry *entry, UINT int_param, voi
     return TRUE;
 }
 
+/* get a binary parameter in the registry */
+static BOOL get_binary_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param )
+{
+    if (!ptr_param) return FALSE;
+
+    if (!entry->hdr.loaded)
+    {
+        void *buffer = HeapAlloc( GetProcessHeap(), 0, entry->bin.size );
+
+        if (SYSPARAMS_LoadRaw( entry->hdr.regkey, entry->hdr.regval, buffer, entry->bin.size ))
+            memcpy( entry->bin.ptr, buffer, entry->bin.size );
+        entry->hdr.loaded = TRUE;
+        HeapFree( GetProcessHeap(), 0, buffer );
+    }
+    memcpy( ptr_param, entry->bin.ptr, min( int_param, entry->bin.size ) );
+    return TRUE;
+}
+
+/* set a binary parameter in the registry */
+static BOOL set_binary_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param, UINT flags )
+{
+    BOOL ret;
+    void *buffer = HeapAlloc( GetProcessHeap(), 0, entry->bin.size );
+
+    memcpy( buffer, entry->bin.ptr, entry->bin.size );
+    memcpy( buffer, ptr_param, min( int_param, entry->bin.size ));
+    ret = SYSPARAMS_SaveRaw( entry->hdr.regkey, entry->hdr.regval, buffer,
+                             entry->bin.size, REG_BINARY, flags );
+    if (ret)
+    {
+        if (entry->hdr.mirror)
+            SYSPARAMS_SaveRaw( entry->hdr.mirror, entry->hdr.regval, buffer,
+                               entry->bin.size, REG_BINARY, flags );
+        memcpy( entry->bin.ptr, buffer, entry->bin.size );
+        entry->hdr.loaded = TRUE;
+    }
+    HeapFree( GetProcessHeap(), 0, buffer );
+    return ret;
+}
+
+/* get a user pref parameter in the registry */
+static BOOL get_userpref_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param )
+{
+    union sysparam_all_entry *parent_entry = (union sysparam_all_entry *)entry->pref.parent;
+    BYTE prefs[4];
+
+    if (!ptr_param) return FALSE;
+
+    if (!parent_entry->hdr.get( parent_entry, sizeof(prefs), prefs )) return FALSE;
+    *(BOOL *)ptr_param = (prefs[entry->pref.offset] & entry->pref.mask) != 0;
+    return TRUE;
+}
+
+/* set a user pref parameter in the registry */
+static BOOL set_userpref_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param, UINT flags )
+{
+    union sysparam_all_entry *parent_entry = (union sysparam_all_entry *)entry->pref.parent;
+    BYTE prefs[4];
+
+    parent_entry->hdr.loaded = FALSE;  /* force loading it again */
+    if (!parent_entry->hdr.get( parent_entry, sizeof(prefs), prefs )) return FALSE;
+
+    if (PtrToUlong( ptr_param )) prefs[entry->pref.offset] |= entry->pref.mask;
+    else prefs[entry->pref.offset] &= ~entry->pref.mask;
+
+    return parent_entry->hdr.set( parent_entry, sizeof(prefs), prefs, flags );
+}
+
 static BOOL get_entry( void *ptr,  UINT int_param, void *ptr_param )
 {
     union sysparam_all_entry *entry = ptr;
@@ -1285,9 +1334,17 @@ static BOOL set_entry( void *ptr,  UINT int_param, void *ptr_param, UINT flags )
     struct sysparam_dword_entry entry_##name = { { get_dword_entry, set_dword_entry, \
                          SPI_SET ## name ##_REGKEY, SPI_SET ## name ##_VALNAME }, (val) }
 
+#define BINARY_ENTRY(name,data) \
+    struct sysparam_binary_entry entry_##name = { { get_binary_entry, set_binary_entry, \
+                         SPI_SET ## name ##_REGKEY, SPI_SET ## name ##_VALNAME }, &(data), sizeof(data) }
+
 #define FONT_ENTRY(name) \
     struct sysparam_font_entry entry_##name = { { get_font_entry, set_font_entry, \
                          SPI_SET ## name ##_REGKEY, SPI_SET ## name ##_VALNAME } }
+
+#define USERPREF_ENTRY(name,offset,mask) \
+    struct sysparam_pref_entry entry_##name = { { get_userpref_entry, set_userpref_entry }, \
+                                                &entry_USERPREFERENCESMASK, (offset), (mask) }
 
 static UINT_ENTRY( CARETWIDTH, 1 );
 static UINT_ENTRY( DRAGWIDTH, 4 );
@@ -1347,7 +1404,26 @@ static DWORD_ENTRY( FOREGROUNDFLASHCOUNT, 3 );
 static DWORD_ENTRY( FOREGROUNDLOCKTIMEOUT, 0 );
 static DWORD_ENTRY( MOUSECLICKLOCKTIME, 1200 );
 
+static BYTE user_prefs[4];
+static BINARY_ENTRY( USERPREFERENCESMASK, user_prefs );
+
 static FONT_ENTRY( ICONTITLELOGFONT );
+
+static USERPREF_ENTRY( MENUANIMATION,          0, 0x02 );
+static USERPREF_ENTRY( COMBOBOXANIMATION,      0, 0x04 );
+static USERPREF_ENTRY( LISTBOXSMOOTHSCROLLING, 0, 0x08 );
+static USERPREF_ENTRY( GRADIENTCAPTIONS,       0, 0x10 );
+static USERPREF_ENTRY( KEYBOARDCUES,           0, 0x20 );
+static USERPREF_ENTRY( HOTTRACKING,            0, 0x80 );
+static USERPREF_ENTRY( SELECTIONFADE,          1, 0x04 );
+static USERPREF_ENTRY( TOOLTIPANIMATION,       1, 0x08 );
+static USERPREF_ENTRY( TOOLTIPFADE,            1, 0x10 );
+static USERPREF_ENTRY( CURSORSHADOW,           1, 0x20 );
+static USERPREF_ENTRY( MOUSEVANISH,            2, 0x01 );
+static USERPREF_ENTRY( FLATMENU,               2, 0x02 );
+static USERPREF_ENTRY( DROPSHADOW,             2, 0x04 );
+static USERPREF_ENTRY( UIEFFECTS,              3, 0x80 );
+
 
 /***********************************************************************
  *		SystemParametersInfoW (USER32.@)
@@ -2095,88 +2171,71 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     case SPI_SETACTIVEWINDOWTRACKING:
         ret = set_entry( &entry_ACTIVEWINDOWTRACKING, uiParam, pvParam, fWinIni );
         break;
-    case SPI_GETMENUANIMATION:             /* 0x1002  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        ret = get_user_pref_param( 0, 0x02, pvParam );
+    case SPI_GETMENUANIMATION:
+        ret = get_entry( &entry_MENUANIMATION, uiParam, pvParam );
         break;
-
-    case SPI_SETMENUANIMATION:             /* 0x1003  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        ret = set_user_pref_param( 0, 0x02, PtrToUlong(pvParam), fWinIni );
+    case SPI_SETMENUANIMATION:
+        ret = set_entry( &entry_MENUANIMATION, uiParam, pvParam, fWinIni );
         break;
-
-    case SPI_GETCOMBOBOXANIMATION:         /* 0x1004  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        ret = get_user_pref_param( 0, 0x04, pvParam );
+    case SPI_GETCOMBOBOXANIMATION:
+        ret = get_entry( &entry_COMBOBOXANIMATION, uiParam, pvParam );
         break;
-
-    case SPI_SETCOMBOBOXANIMATION:         /* 0x1005  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        ret = set_user_pref_param( 0, 0x04, PtrToUlong(pvParam), fWinIni );
+    case SPI_SETCOMBOBOXANIMATION:
+        ret = set_entry( &entry_COMBOBOXANIMATION, uiParam, pvParam, fWinIni );
         break;
-
-    case SPI_GETLISTBOXSMOOTHSCROLLING:    /* 0x1006  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        ret = get_user_pref_param( 0, 0x08, pvParam );
+    case SPI_GETLISTBOXSMOOTHSCROLLING:
+        ret = get_entry( &entry_LISTBOXSMOOTHSCROLLING, uiParam, pvParam );
         break;
-
-    case SPI_SETLISTBOXSMOOTHSCROLLING:    /* 0x1007  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        ret = set_user_pref_param( 0, 0x08, PtrToUlong(pvParam), fWinIni );
+    case SPI_SETLISTBOXSMOOTHSCROLLING:
+        ret = set_entry( &entry_LISTBOXSMOOTHSCROLLING, uiParam, pvParam, fWinIni );
         break;
-
     case SPI_GETGRADIENTCAPTIONS:
-        ret = get_user_pref_param( 0, 0x10, pvParam );
+        ret = get_entry( &entry_GRADIENTCAPTIONS, uiParam, pvParam );
         break;
-
     case SPI_SETGRADIENTCAPTIONS:
-        ret = set_user_pref_param( 0, 0x10, PtrToUlong(pvParam), fWinIni );
+        ret = set_entry( &entry_GRADIENTCAPTIONS, uiParam, pvParam, fWinIni );
         break;
-
     case SPI_GETKEYBOARDCUES:
-        ret = get_user_pref_param( 0, 0x20, pvParam );
+        ret = get_entry( &entry_KEYBOARDCUES, uiParam, pvParam );
         break;
-
     case SPI_SETKEYBOARDCUES:
-        ret = set_user_pref_param( 0, 0x20, PtrToUlong(pvParam), fWinIni );
+        ret = set_entry( &entry_KEYBOARDCUES, uiParam, pvParam, fWinIni );
         break;
 
     WINE_SPI_FIXME(SPI_GETACTIVEWNDTRKZORDER);  /* 0x100C  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETACTIVEWNDTRKZORDER);  /* 0x100D  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     case SPI_GETHOTTRACKING:
-        ret = get_user_pref_param( 0, 0x80, pvParam );
+        ret = get_entry( &entry_HOTTRACKING, uiParam, pvParam );
         break;
-
     case SPI_SETHOTTRACKING:
-        ret = set_user_pref_param( 0, 0x80, PtrToUlong(pvParam), fWinIni );
+        ret = set_entry( &entry_HOTTRACKING, uiParam, pvParam, fWinIni );
         break;
 
     WINE_SPI_FIXME(SPI_GETMENUFADE);            /* 0x1012  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETMENUFADE);            /* 0x1013  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    case SPI_GETSELECTIONFADE:                  /* 0x1014  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        ret = get_user_pref_param( 1, 0x04, pvParam );
+    case SPI_GETSELECTIONFADE:
+        ret = get_entry( &entry_SELECTIONFADE, uiParam, pvParam );
         break;
-
-    case SPI_SETSELECTIONFADE:                  /* 0x1015  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        ret = set_user_pref_param( 1, 0x04, PtrToUlong(pvParam), fWinIni );
+    case SPI_SETSELECTIONFADE:
+        ret = set_entry( &entry_SELECTIONFADE, uiParam, pvParam, fWinIni );
         break;
-
-    case SPI_GETTOOLTIPANIMATION:               /* 0x1016  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        ret = get_user_pref_param( 1, 0x08, pvParam );
+    case SPI_GETTOOLTIPANIMATION:
+        ret = get_entry( &entry_TOOLTIPANIMATION, uiParam, pvParam );
         break;
-
-    case SPI_SETTOOLTIPANIMATION:               /* 0x1017  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        ret = set_user_pref_param( 1, 0x08, PtrToUlong(pvParam), fWinIni );
+    case SPI_SETTOOLTIPANIMATION:
+        ret = set_entry( &entry_TOOLTIPANIMATION, uiParam, pvParam, fWinIni );
         break;
-
-    case SPI_GETTOOLTIPFADE:                    /* 0x1018  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        ret = get_user_pref_param( 1, 0x10, pvParam );
+    case SPI_GETTOOLTIPFADE:
+        ret = get_entry( &entry_TOOLTIPFADE, uiParam, pvParam );
         break;
-
-    case SPI_SETTOOLTIPFADE:                    /* 0x1019  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        ret = set_user_pref_param( 1, 0x10, PtrToUlong(pvParam), fWinIni );
+    case SPI_SETTOOLTIPFADE:
+        ret = set_entry( &entry_TOOLTIPFADE, uiParam, pvParam, fWinIni );
         break;
-
-    case SPI_GETCURSORSHADOW:                   /* 0x101A  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        ret = get_user_pref_param( 1, 0x20, pvParam );
+    case SPI_GETCURSORSHADOW:
+        ret = get_entry( &entry_CURSORSHADOW, uiParam, pvParam );
         break;
-
-    case SPI_SETCURSORSHADOW:                   /* 0x101B  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        ret = set_user_pref_param( 1, 0x20, PtrToUlong(pvParam), fWinIni );
+    case SPI_SETCURSORSHADOW:
+        ret = set_entry( &entry_CURSORSHADOW, uiParam, pvParam, fWinIni );
         break;
 
     WINE_SPI_FIXME(SPI_GETMOUSESONAR);          /* 0x101C  _WIN32_WINNT >= 0x510 || _WIN32_WINDOW >= 0x490*/
@@ -2185,29 +2244,23 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETMOUSECLICKLOCK);      /* 0x101F  _WIN32_WINNT >= 0x510 || _WIN32_WINDOW >= 0x490*/
 
     case SPI_GETMOUSEVANISH:
-        ret = get_user_pref_param( 2, 0x01, pvParam );
+        ret = get_entry( &entry_MOUSEVANISH, uiParam, pvParam );
         break;
-
     case SPI_SETMOUSEVANISH:
-        ret = set_user_pref_param( 2, 0x01, PtrToUlong(pvParam), fWinIni );
+        ret = set_entry( &entry_MOUSEVANISH, uiParam, pvParam, fWinIni );
         break;
-
     case SPI_GETFLATMENU:
-        ret = get_user_pref_param( 2, 0x02, pvParam );
+        ret = get_entry( &entry_FLATMENU, uiParam, pvParam );
         break;
-
     case SPI_SETFLATMENU:
-        ret = set_user_pref_param( 2, 0x02, PtrToUlong(pvParam), fWinIni );
+        ret = set_entry( &entry_FLATMENU, uiParam, pvParam, fWinIni );
         break;
-
     case SPI_GETDROPSHADOW:
-        ret = get_user_pref_param( 2, 0x04, pvParam );
+        ret = get_entry( &entry_DROPSHADOW, uiParam, pvParam );
         break;
-
     case SPI_SETDROPSHADOW:
-        ret = set_user_pref_param( 2, 0x04, PtrToUlong(pvParam), fWinIni );
+        ret = set_entry( &entry_DROPSHADOW, uiParam, pvParam, fWinIni );
         break;
-
     case SPI_GETBLOCKSENDINPUTRESETS:
         ret = get_entry( &entry_BLOCKSENDINPUTRESETS, uiParam, pvParam );
         break;
@@ -2215,12 +2268,11 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         ret = set_entry( &entry_BLOCKSENDINPUTRESETS, uiParam, pvParam, fWinIni );
         break;
     case SPI_GETUIEFFECTS:
-        ret = get_user_pref_param( 3, 0x80, pvParam );
+        ret = get_entry( &entry_UIEFFECTS, uiParam, pvParam );
         break;
-
     case SPI_SETUIEFFECTS:
         /* FIXME: this probably should mask other UI effect values when unset */
-        ret = set_user_pref_param( 3, 0x80, PtrToUlong(pvParam), fWinIni );
+        ret = set_entry( &entry_UIEFFECTS, uiParam, pvParam, fWinIni );
         break;
 
     /* _WIN32_WINNT >= 0x600 */
