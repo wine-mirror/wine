@@ -198,16 +198,6 @@ void free_lockit(void);
 _Lockit* __thiscall _Lockit_ctor_locktype(_Lockit*, int);
 void __thiscall _Lockit_dtor(_Lockit*);
 
-/* class mutex */
-typedef struct {
-    void *mutex;
-} mutex;
-
-mutex* mutex_ctor(mutex*);
-void mutex_dtor(mutex*);
-void mutex_lock(mutex*);
-void mutex_unlock(mutex*);
-
 typedef enum {
     FMTFLAG_skipws      = 0x0001,
     FMTFLAG_unitbuf     = 0x0002,
@@ -331,7 +321,6 @@ int __thiscall basic_streambuf_char_sputc(basic_streambuf_char*, char);
 /* class basic_streambuf<wchar> */
 typedef struct {
     const vtable_ptr *vtable;
-    mutex lock;
     wchar_t *rbuf;
     wchar_t *wbuf;
     wchar_t **prbuf;

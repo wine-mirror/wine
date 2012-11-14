@@ -27,43 +27,6 @@
 #include "winbase.h"
 
 
-/* ??0_Mutex@std@@QAE@XZ */
-/* ??0_Mutex@std@@QEAA@XZ */
-mutex* mutex_ctor(mutex *this)
-{
-    CRITICAL_SECTION *cs = MSVCRT_operator_new(sizeof(*cs));
-    if(!cs)
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-
-    InitializeCriticalSection(cs);
-    cs->DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": _Mutex critical section");
-    this->mutex = cs;
-    return this;
-}
-
-/* ??1_Mutex@std@@QAE@XZ */
-/* ??1_Mutex@std@@QEAA@XZ */
-void mutex_dtor(mutex *this)
-{
-    ((CRITICAL_SECTION*)this->mutex)->DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(this->mutex);
-    MSVCRT_operator_delete(this->mutex);
-}
-
-/* ?_Lock@_Mutex@std@@QAEXXZ */
-/* ?_Lock@_Mutex@std@@QEAAXXZ */
-void mutex_lock(mutex *this)
-{
-    EnterCriticalSection(this->mutex);
-}
-
-/* ?_Unlock@_Mutex@std@@QAEXXZ */
-/* ?_Unlock@_Mutex@std@@QEAAXXZ */
-void mutex_unlock(mutex *this)
-{
-    LeaveCriticalSection(this->mutex);
-}
-
 static CRITICAL_SECTION lockit_cs;
 
 void init_lockit(void) {

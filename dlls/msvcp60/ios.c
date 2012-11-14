@@ -1592,7 +1592,6 @@ static basic_streambuf_wchar* basic_streambuf_wchar_ctor_uninitialized(basic_str
 {
     TRACE("(%p %d)\n", this, uninitialized);
     this->vtable = &MSVCP_basic_streambuf_wchar_vtable;
-    mutex_ctor(&this->lock);
     return this;
 }
 
@@ -1614,7 +1613,6 @@ static basic_streambuf_wchar* basic_streambuf_wchar_ctor(basic_streambuf_wchar *
     TRACE("(%p)\n", this);
 
     this->vtable = &MSVCP_basic_streambuf_wchar_vtable;
-    mutex_ctor(&this->lock);
     locale_ctor(&this->loc);
     basic_streambuf_wchar__Init_empty(this);
 
@@ -1641,7 +1639,6 @@ void __thiscall basic_streambuf_wchar_dtor(basic_streambuf_wchar *this)
 {
     TRACE("(%p)\n", this);
 
-    mutex_dtor(&this->lock);
     locale_dtor(&this->loc);
 }
 
@@ -1736,7 +1733,6 @@ void __thiscall basic_streambuf_wchar__Init(basic_streambuf_wchar *this, wchar_t
 static void basic_streambuf_wchar__Lock(basic_streambuf_wchar *this)
 {
     TRACE("(%p)\n", this);
-    mutex_lock(&this->lock);
 }
 
 /* ?_Pnavail@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEHXZ */
@@ -1847,7 +1843,6 @@ static streamsize basic_streambuf_wchar__Sgetn_s(basic_streambuf_wchar *this, wc
 static void basic_streambuf_wchar__Unlock(basic_streambuf_wchar *this)
 {
     TRACE("(%p)\n", this);
-    mutex_unlock(&this->lock);
 }
 
 /* ?eback@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEPA_WXZ */
