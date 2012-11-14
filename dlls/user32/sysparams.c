@@ -606,7 +606,7 @@ static void SYSPARAMS_NotifyChange( UINT uiAction, UINT fWinIni )
 /***********************************************************************
  * Loads system parameter from user profile.
  */
-static BOOL SYSPARAMS_LoadRaw( LPCWSTR lpRegKey, LPCWSTR lpValName, void *lpBuf, DWORD count )
+static BOOL SYSPARAMS_Load( LPCWSTR lpRegKey, LPCWSTR lpValName, void *lpBuf, DWORD count )
 {
     BOOL ret = FALSE;
     DWORD type;
@@ -627,11 +627,6 @@ static BOOL SYSPARAMS_LoadRaw( LPCWSTR lpRegKey, LPCWSTR lpValName, void *lpBuf,
     }
 
     return ret;
-}
-
-static BOOL SYSPARAMS_Load( LPCWSTR lpRegKey, LPCWSTR lpValName, LPWSTR lpBuf, DWORD count )
-{
-  return SYSPARAMS_LoadRaw( lpRegKey, lpValName, (LPBYTE)lpBuf, count );
 }
 
 /***********************************************************************
@@ -701,6 +696,28 @@ static BOOL SYSPARAMS_SaveLogFont( LPCWSTR lpRegKey, LPCWSTR lpValName,
                               sizeof(LOGFONTW), REG_BINARY, fWinIni );
 }
 
+/* load a value to a registry entry */
+static BOOL load_entry( struct sysparam_entry *entry, void *data, DWORD size )
+{
+    BOOL ret = SYSPARAMS_Load( entry->regkey, entry->regval, data, size );
+    entry->loaded = TRUE;
+    return ret;
+}
+
+/* save a value to a registry entry */
+static BOOL save_entry( const struct sysparam_entry *entry, const void *data, DWORD size,
+                        DWORD type, UINT flags )
+{
+    if (!SYSPARAMS_SaveRaw( entry->regkey, entry->regval, data, size, type, flags )) return FALSE;
+    if (entry->mirror) SYSPARAMS_SaveRaw( entry->mirror, entry->regval, data, size, type, flags );
+    return TRUE;
+}
+
+/* save a string value to a registry entry */
+static BOOL save_entry_string( const struct sysparam_entry *entry, const WCHAR *str, UINT flags )
+{
+    return save_entry( entry, str, (strlenW(str) + 1) * sizeof(WCHAR), REG_SZ, flags );
+}
 
 static inline HDC get_display_dc(void)
 {
@@ -1042,9 +1059,7 @@ static BOOL get_uint_entry( union sysparam_all_entry *entry, UINT int_param, voi
     {
         WCHAR buf[32];
 
-        if (SYSPARAMS_Load( entry->hdr.regkey, entry->hdr.regval, buf, sizeof(buf) ))
-            entry->uint.val = atoiW( buf );
-        entry->hdr.loaded = TRUE;
+        if (load_entry( &entry->hdr, buf, sizeof(buf) )) entry->uint.val = atoiW( buf );
     }
     *(UINT *)ptr_param = entry->uint.val;
     return TRUE;
@@ -1056,8 +1071,7 @@ static BOOL set_uint_entry( union sysparam_all_entry *entry, UINT int_param, voi
     WCHAR buf[32];
 
     wsprintfW( buf, CSu, int_param );
-    if (!SYSPARAMS_Save( entry->hdr.regkey, entry->hdr.regval, buf, flags )) return FALSE;
-    if (entry->hdr.mirror) SYSPARAMS_Save( entry->hdr.mirror, entry->hdr.regval, buf, flags );
+    if (!save_entry_string( &entry->hdr, buf, flags )) return FALSE;
     entry->uint.val = int_param;
     entry->hdr.loaded = TRUE;
     return TRUE;
@@ -1069,8 +1083,7 @@ static BOOL set_int_entry( union sysparam_all_entry *entry, UINT int_param, void
     WCHAR buf[32];
 
     wsprintfW( buf, CSd, int_param );
-    if (!SYSPARAMS_Save( entry->hdr.regkey, entry->hdr.regval, buf, flags )) return FALSE;
-    if (entry->hdr.mirror) SYSPARAMS_Save( entry->hdr.mirror, entry->hdr.regval, buf, flags );
+    if (!save_entry_string( &entry->hdr, buf, flags )) return FALSE;
     entry->uint.val = int_param;
     entry->hdr.loaded = TRUE;
     return TRUE;
@@ -1085,9 +1098,8 @@ static BOOL get_twips_entry( union sysparam_all_entry *entry, UINT int_param, vo
     {
         WCHAR buf[32];
 
-        if (SYSPARAMS_Load( entry->hdr.regkey, entry->hdr.regval, buf, sizeof(buf) ))
+        if (load_entry( &entry->hdr, buf, sizeof(buf) ))
             entry->uint.val = SYSPARAMS_Twips2Pixels( atoiW(buf) );
-        entry->hdr.loaded = TRUE;
     }
     *(UINT *)ptr_param = entry->uint.val;
     return TRUE;
@@ -1102,9 +1114,7 @@ static BOOL get_bool_entry( union sysparam_all_entry *entry, UINT int_param, voi
     {
         WCHAR buf[32];
 
-        if (SYSPARAMS_Load( entry->hdr.regkey, entry->hdr.regval, buf, sizeof(buf) ))
-            entry->bool.val = atoiW( buf ) != 0;
-        entry->hdr.loaded = TRUE;
+        if (load_entry( &entry->hdr, buf, sizeof(buf) )) entry->bool.val = atoiW( buf ) != 0;
     }
     *(UINT *)ptr_param = entry->bool.val;
     return TRUE;
@@ -1116,8 +1126,7 @@ static BOOL set_bool_entry( union sysparam_all_entry *entry, UINT int_param, voi
     WCHAR buf[32];
 
     wsprintfW( buf, CSu, int_param != 0 );
-    if (!SYSPARAMS_Save( entry->hdr.regkey, entry->hdr.regval, buf, flags )) return FALSE;
-    if (entry->hdr.mirror) SYSPARAMS_Save( entry->hdr.mirror, entry->hdr.regval, buf, flags );
+    if (!save_entry_string( &entry->hdr, buf, flags )) return FALSE;
     entry->bool.val = int_param != 0;
     entry->hdr.loaded = TRUE;
     return TRUE;
@@ -1132,9 +1141,7 @@ static BOOL get_yesno_entry( union sysparam_all_entry *entry, UINT int_param, vo
     {
         WCHAR buf[32];
 
-        if (SYSPARAMS_Load( entry->hdr.regkey, entry->hdr.regval, buf, sizeof(buf) ))
-            entry->bool.val = !lstrcmpiW( Yes, buf );
-        entry->hdr.loaded = TRUE;
+        if (load_entry( &entry->hdr, buf, sizeof(buf) )) entry->bool.val = !lstrcmpiW( Yes, buf );
     }
     *(UINT *)ptr_param = entry->bool.val;
     return TRUE;
@@ -1145,8 +1152,7 @@ static BOOL set_yesno_entry( union sysparam_all_entry *entry, UINT int_param, vo
 {
     const WCHAR *str = int_param ? Yes : No;
 
-    if (!SYSPARAMS_Save( entry->hdr.regkey, entry->hdr.regval, str, flags )) return FALSE;
-    if (entry->hdr.mirror) SYSPARAMS_Save( entry->hdr.mirror, entry->hdr.regval, str, flags );
+    if (!save_entry_string( &entry->hdr, str, flags )) return FALSE;
     entry->bool.val = int_param != 0;
     entry->hdr.loaded = TRUE;
     return TRUE;
@@ -1161,9 +1167,7 @@ static BOOL get_dword_entry( union sysparam_all_entry *entry, UINT int_param, vo
     {
         DWORD val;
 
-        if (SYSPARAMS_LoadRaw( entry->hdr.regkey, entry->hdr.regval, &val, sizeof(val) ))
-            entry->dword.val = val;
-        entry->hdr.loaded = TRUE;
+        if (load_entry( &entry->hdr, &val, sizeof(val) )) entry->dword.val = val;
     }
     *(DWORD *)ptr_param = entry->bool.val;
     return TRUE;
@@ -1174,10 +1178,7 @@ static BOOL set_dword_entry( union sysparam_all_entry *entry, UINT int_param, vo
 {
     DWORD val = PtrToUlong( ptr_param );
 
-    if (!SYSPARAMS_SaveRaw( entry->hdr.regkey, entry->hdr.regval, &val, sizeof(val), REG_DWORD, flags ))
-        return FALSE;
-    if (entry->hdr.mirror)
-        SYSPARAMS_SaveRaw( entry->hdr.mirror, entry->hdr.regval, &val, sizeof(val), REG_DWORD, flags );
+    if (!save_entry( &entry->hdr, &val, sizeof(val), REG_DWORD, flags )) return FALSE;
     entry->dword.val = val;
     entry->hdr.loaded = TRUE;
     return TRUE;
@@ -1211,10 +1212,7 @@ static BOOL set_font_entry( union sysparam_all_entry *entry, UINT int_param, voi
     ptr = memchrW( font.lfFaceName, 0, LF_FACESIZE );
     if (ptr) memset( ptr, 0, (font.lfFaceName + LF_FACESIZE - ptr) * sizeof(WCHAR) );
 
-    if (!SYSPARAMS_SaveRaw( entry->hdr.regkey, entry->hdr.regval, &font, sizeof(font), REG_BINARY, flags ))
-        return FALSE;
-    if (entry->hdr.mirror)
-        SYSPARAMS_SaveRaw( entry->hdr.mirror, entry->hdr.regval, &font, sizeof(font), REG_BINARY, flags );
+    if (!save_entry( &entry->hdr, &font, sizeof(font), REG_BINARY, flags )) return FALSE;
     entry->font.val = font;
     entry->hdr.loaded = TRUE;
     return TRUE;
@@ -1229,9 +1227,8 @@ static BOOL get_binary_entry( union sysparam_all_entry *entry, UINT int_param, v
     {
         void *buffer = HeapAlloc( GetProcessHeap(), 0, entry->bin.size );
 
-        if (SYSPARAMS_LoadRaw( entry->hdr.regkey, entry->hdr.regval, buffer, entry->bin.size ))
+        if (load_entry( &entry->hdr, buffer, entry->bin.size ))
             memcpy( entry->bin.ptr, buffer, entry->bin.size );
-        entry->hdr.loaded = TRUE;
         HeapFree( GetProcessHeap(), 0, buffer );
     }
     memcpy( ptr_param, entry->bin.ptr, min( int_param, entry->bin.size ) );
@@ -1246,13 +1243,9 @@ static BOOL set_binary_entry( union sysparam_all_entry *entry, UINT int_param, v
 
     memcpy( buffer, entry->bin.ptr, entry->bin.size );
     memcpy( buffer, ptr_param, min( int_param, entry->bin.size ));
-    ret = SYSPARAMS_SaveRaw( entry->hdr.regkey, entry->hdr.regval, buffer,
-                             entry->bin.size, REG_BINARY, flags );
+    ret = save_entry( &entry->hdr, buffer, entry->bin.size, REG_BINARY, flags );
     if (ret)
     {
-        if (entry->hdr.mirror)
-            SYSPARAMS_SaveRaw( entry->hdr.mirror, entry->hdr.regval, buffer,
-                               entry->bin.size, REG_BINARY, flags );
         memcpy( entry->bin.ptr, buffer, entry->bin.size );
         entry->hdr.loaded = TRUE;
     }
