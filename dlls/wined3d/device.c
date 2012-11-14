@@ -65,7 +65,7 @@ const struct wined3d_matrix identity =
 
 /* Note that except for WINED3DPT_POINTLIST and WINED3DPT_LINELIST these
  * actually have the same values in GL and D3D. */
-static GLenum gl_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type)
+GLenum gl_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type)
 {
     switch(primitive_type)
     {

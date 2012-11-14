@@ -544,6 +544,30 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             else
                 reg_maps->cb_sizes[reg->idx[0].offset] = reg->idx[1].offset;
         }
+        else if (ins.handler_idx == WINED3DSIH_DCL_INPUT_PRIMITIVE)
+        {
+            if (shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)
+                shader->u.gs.input_type = ins.declaration.primitive_type;
+            else
+                FIXME("Invalid instruction %#x for shader type %#x.\n",
+                        ins.handler_idx, shader_version.type);
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_OUTPUT_TOPOLOGY)
+        {
+            if (shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)
+                shader->u.gs.output_type = ins.declaration.primitive_type;
+            else
+                FIXME("Invalid instruction %#x for shader type %#x.\n",
+                        ins.handler_idx, shader_version.type);
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_VERTICES_OUT)
+        {
+            if (shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)
+                shader->u.gs.vertices_out = ins.declaration.count;
+            else
+                FIXME("Invalid instruction %#x for shader type %#x.\n",
+                        ins.handler_idx, shader_version.type);
+        }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {
             struct wined3d_shader_lconst *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(*lconst));

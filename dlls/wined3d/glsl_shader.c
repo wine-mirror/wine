@@ -111,6 +111,12 @@ struct glsl_vs_program
     GLint pos_fixup_location;
 };
 
+struct glsl_gs_program
+{
+    struct list shader_entry;
+    GLhandleARB id;
+};
+
 struct glsl_ps_program
 {
     struct list shader_entry;
@@ -132,6 +138,7 @@ struct glsl_shader_prog_link
 {
     struct wine_rb_entry program_lookup_entry;
     struct glsl_vs_program vs;
+    struct glsl_gs_program gs;
     struct glsl_ps_program ps;
     GLhandleARB programId;
     UINT constant_version;
@@ -140,6 +147,7 @@ struct glsl_shader_prog_link
 struct glsl_program_key
 {
     GLhandleARB vs_id;
+    GLhandleARB gs_id;
     GLhandleARB ps_id;
 };
 
@@ -162,11 +170,17 @@ struct glsl_vs_compiled_shader
     GLhandleARB                     prgId;
 };
 
+struct glsl_gs_compiled_shader
+{
+    GLhandleARB id;
+};
+
 struct glsl_shader_private
 {
     union
     {
         struct glsl_vs_compiled_shader *vs;
+        struct glsl_gs_compiled_shader *gs;
         struct glsl_ps_compiled_shader *ps;
     } gl_shaders;
     UINT num_gl_shaders, shader_array_size;
@@ -1160,6 +1174,10 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         shader_addline(buffer, "uniform vec4 posFixup;\n");
         shader_addline(buffer, "void order_ps_input(in vec4[%u]);\n", shader->limits.packed_output);
     }
+    else if (version->type == WINED3D_SHADER_TYPE_GEOMETRY)
+    {
+        shader_addline(buffer, "varying in vec4 gs_in[][%u];\n", shader->limits.packed_input);
+    }
     else if (version->type == WINED3D_SHADER_TYPE_PIXEL)
     {
         if (version->major >= 3)
@@ -1400,6 +1418,25 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                 if (priv->cur_vs_args->swizzle_map & (1 << reg->idx[0].offset))
                     *is_color = TRUE;
                 sprintf(register_name, "%s_in%u", prefix, reg->idx[0].offset);
+                break;
+            }
+
+            if (version->type == WINED3D_SHADER_TYPE_GEOMETRY)
+            {
+                if (reg->idx[0].rel_addr)
+                {
+                    if (reg->idx[1].rel_addr)
+                        sprintf(register_name, "gs_in[%s + %u][%s + %u]",
+                                rel_param0.param_str, reg->idx[0].offset, rel_param1.param_str, reg->idx[1].offset);
+                    else
+                        sprintf(register_name, "gs_in[%s + %u][%u]",
+                                rel_param0.param_str, reg->idx[0].offset, reg->idx[1].offset);
+                }
+                else if (reg->idx[1].rel_addr)
+                    sprintf(register_name, "gs_in[%u][%s + %u]",
+                            reg->idx[0].offset, rel_param1.param_str, reg->idx[1].offset);
+                else
+                    sprintf(register_name, "gs_in[%u][%u]", reg->idx[0].offset, reg->idx[1].offset);
                 break;
             }
 
@@ -4141,6 +4178,7 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
     struct glsl_program_key key;
 
     key.vs_id = entry->vs.id;
+    key.gs_id = entry->gs.id;
     key.ps_id = entry->ps.id;
 
     if (wine_rb_put(&priv->program_lookup, &key, &entry->program_lookup_entry) == -1)
@@ -4150,12 +4188,13 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
 }
 
 static struct glsl_shader_prog_link *get_glsl_program_entry(const struct shader_glsl_priv *priv,
-        GLhandleARB vs_id, GLhandleARB ps_id)
+        GLhandleARB vs_id, GLhandleARB gs_id, GLhandleARB ps_id)
 {
     struct wine_rb_entry *entry;
     struct glsl_program_key key;
 
     key.vs_id = vs_id;
+    key.gs_id = gs_id;
     key.ps_id = ps_id;
 
     entry = wine_rb_get(&priv->program_lookup, &key);
@@ -4169,12 +4208,15 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struc
     struct glsl_program_key key;
 
     key.vs_id = entry->vs.id;
+    key.gs_id = entry->gs.id;
     key.ps_id = entry->ps.id;
     wine_rb_remove(&priv->program_lookup, &key);
 
     GL_EXTCALL(glDeleteObjectARB(entry->programId));
     if (entry->vs.id)
         list_remove(&entry->vs.shader_entry);
+    if (entry->gs.id)
+        list_remove(&entry->gs.shader_entry);
     if (entry->ps.id)
         list_remove(&entry->ps.shader_entry);
     HeapFree(GetProcessHeap(), 0, entry->vs.uniform_f_locations);
@@ -4580,6 +4622,38 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     return shader_obj;
 }
 
+/* GL locking is done by the caller */
+static GLhandleARB shader_glsl_generate_geometry_shader(const struct wined3d_context *context,
+        struct wined3d_shader_buffer *buffer, const struct wined3d_shader *shader)
+{
+    const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    const DWORD *function = shader->function;
+    struct shader_glsl_ctx_priv priv_ctx;
+    GLhandleARB shader_id;
+
+    shader_id = GL_EXTCALL(glCreateShaderObjectARB(GL_GEOMETRY_SHADER_ARB));
+
+    shader_addline(buffer, "#version 120\n");
+
+    if (gl_info->supported[ARB_GEOMETRY_SHADER4])
+        shader_addline(buffer, "#extension GL_ARB_geometry_shader4 : enable\n");
+    if (gl_info->supported[ARB_SHADER_BIT_ENCODING])
+        shader_addline(buffer, "#extension GL_ARB_shader_bit_encoding : enable\n");
+    if (gl_info->supported[EXT_GPU_SHADER4])
+        shader_addline(buffer, "#extension GL_EXT_gpu_shader4 : enable\n");
+
+    memset(&priv_ctx, 0, sizeof(priv_ctx));
+    shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
+    shader_generate_main(shader, buffer, reg_maps, function, &priv_ctx);
+    shader_addline(buffer, "}\n");
+
+    TRACE("Compiling shader object %u.\n", shader_id);
+    shader_glsl_compile(gl_info, shader_id, buffer->buffer);
+
+    return shader_id;
+}
+
 static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
         struct wined3d_shader_buffer *buffer, struct wined3d_shader *shader,
         const struct ps_compile_args *args, const struct ps_np2fixup_info **np2fixup_info)
@@ -4725,6 +4799,44 @@ static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
     shader_buffer_clear(buffer);
     ret = shader_glsl_generate_vshader(context, buffer, shader, args);
     gl_shaders[shader_data->num_gl_shaders++].prgId = ret;
+
+    return ret;
+}
+
+static GLhandleARB find_glsl_geometry_shader(const struct wined3d_context *context,
+        struct wined3d_shader_buffer *buffer, struct wined3d_shader *shader)
+{
+    struct glsl_gs_compiled_shader *gl_shaders;
+    struct glsl_shader_private *shader_data;
+    GLhandleARB ret;
+
+    if (!shader->backend_data)
+    {
+        if (!(shader->backend_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*shader_data))))
+        {
+            ERR("Failed to allocate backend data.\n");
+            return 0;
+        }
+    }
+    shader_data = shader->backend_data;
+    gl_shaders = shader_data->gl_shaders.gs;
+
+    if (shader_data->num_gl_shaders)
+        return gl_shaders[0].id;
+
+    TRACE("No matching GL shader found for shader %p, compiling a new shader.\n", shader);
+
+    if (!(shader_data->gl_shaders.gs = HeapAlloc(GetProcessHeap(), 0, sizeof(*gl_shaders))))
+    {
+        ERR("Failed to allocate GL shader array.\n");
+        return 0;
+    }
+    shader_data->shader_array_size = 1;
+    gl_shaders = shader_data->gl_shaders.gs;
+
+    shader_buffer_clear(buffer);
+    ret = shader_glsl_generate_geometry_shader(context, buffer, shader);
+    gl_shaders[shader_data->num_gl_shaders++].id = ret;
 
     return ret;
 }
@@ -5436,13 +5548,14 @@ static void set_glsl_shader_program(const struct wined3d_context *context, struc
     struct shader_glsl_priv *priv = device->shader_priv;
     struct glsl_shader_prog_link *entry = NULL;
     struct wined3d_shader *vshader = NULL;
+    struct wined3d_shader *gshader = NULL;
     struct wined3d_shader *pshader = NULL;
     GLhandleARB programId                  = 0;
     GLhandleARB reorder_shader_id          = 0;
     unsigned int i;
     struct ps_compile_args ps_compile_args;
     struct vs_compile_args vs_compile_args;
-    GLhandleARB vs_id, ps_id;
+    GLhandleARB vs_id, gs_id, ps_id;
     struct list *ps_list;
 
     if (vertex_mode == WINED3D_SHADER_MODE_SHADER)
@@ -5450,10 +5563,16 @@ static void set_glsl_shader_program(const struct wined3d_context *context, struc
         vshader = state->vertex_shader;
         find_vs_compile_args(state, vshader, &vs_compile_args);
         vs_id = find_glsl_vshader(context, &priv->shader_buffer, vshader, &vs_compile_args);
+
+        if ((gshader = state->geometry_shader))
+            gs_id = find_glsl_geometry_shader(context, &priv->shader_buffer, gshader);
+        else
+            gs_id = 0;
     }
     else
     {
         vs_id = 0;
+        gs_id = 0;
     }
 
     if (fragment_mode == WINED3D_SHADER_MODE_SHADER)
@@ -5479,7 +5598,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, struc
         ps_id = 0;
     }
 
-    if ((!vs_id && !ps_id) || (entry = get_glsl_program_entry(priv, vs_id, ps_id)))
+    if ((!vs_id && !gs_id && !ps_id) || (entry = get_glsl_program_entry(priv, vs_id, gs_id, ps_id)))
     {
         priv->glsl_program = entry;
         return;
@@ -5493,6 +5612,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, struc
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
     entry->programId = programId;
     entry->vs.id = vs_id;
+    entry->gs.id = gs_id;
     entry->ps.id = ps_id;
     entry->constant_version = 0;
     entry->ps.np2_fixup_info = np2fixup_info;
@@ -5540,6 +5660,27 @@ static void set_glsl_shader_program(const struct wined3d_context *context, struc
         checkGLcall("glBindAttribLocationARB");
 
         list_add_head(&vshader->linked_programs, &entry->vs.shader_entry);
+    }
+
+    if (gshader)
+    {
+        TRACE("Attaching GLSL geometry shader object %u to program %u.\n", gs_id, programId);
+        GL_EXTCALL(glAttachObjectARB(programId, gs_id));
+        checkGLcall("glAttachObjectARB");
+
+        TRACE("input type %s, output type %s, vertices out %u.\n",
+                debug_d3dprimitivetype(gshader->u.gs.input_type),
+                debug_d3dprimitivetype(gshader->u.gs.output_type),
+                gshader->u.gs.vertices_out);
+        GL_EXTCALL(glProgramParameteriARB(programId, GL_GEOMETRY_INPUT_TYPE_ARB,
+                gl_primitive_type_from_d3d(gshader->u.gs.input_type)));
+        GL_EXTCALL(glProgramParameteriARB(programId, GL_GEOMETRY_OUTPUT_TYPE_ARB,
+                gl_primitive_type_from_d3d(gshader->u.gs.output_type)));
+        GL_EXTCALL(glProgramParameteriARB(programId, GL_GEOMETRY_VERTICES_OUT_ARB,
+                gshader->u.gs.vertices_out));
+        checkGLcall("glProgramParameteriARB");
+
+        list_add_head(&gshader->linked_programs, &entry->gs.shader_entry);
     }
 
     /* Attach GLSL pshader */
@@ -5865,6 +6006,29 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
                 break;
             }
 
+            case WINED3D_SHADER_TYPE_GEOMETRY:
+            {
+                struct glsl_gs_compiled_shader *gl_shaders = shader_data->gl_shaders.gs;
+
+                LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs,
+                        struct glsl_shader_prog_link, gs.shader_entry)
+                {
+                    delete_glsl_program_entry(priv, gl_info, entry);
+                }
+
+                for (i = 0; i < shader_data->num_gl_shaders; ++i)
+                {
+                    TRACE("Deleting geometry shader %u.\n", gl_shaders[i].id);
+                    if (priv->glsl_program && priv->glsl_program->gs.id == gl_shaders[i].id)
+                        shader_glsl_select(context, WINED3D_SHADER_MODE_NONE, WINED3D_SHADER_MODE_NONE);
+                    GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].id));
+                    checkGLcall("glDeleteObjectARB");
+                }
+                HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders.gs);
+
+                break;
+            }
+
             default:
                 ERR("Unhandled shader type %#x.\n", shader->reg_maps.shader_version.type);
                 break;
@@ -5887,6 +6051,9 @@ static int glsl_program_key_compare(const void *key, const struct wine_rb_entry 
 
     if (k->vs_id > prog->vs.id) return 1;
     else if (k->vs_id < prog->vs.id) return -1;
+
+    if (k->gs_id > prog->gs.id) return 1;
+    else if (k->gs_id < prog->gs.id) return -1;
 
     if (k->ps_id > prog->ps.id) return 1;
     else if (k->ps_id < prog->ps.id) return -1;

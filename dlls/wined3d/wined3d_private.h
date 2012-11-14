@@ -2558,6 +2558,7 @@ BOOL getColorBits(const struct wined3d_format *format,
         BYTE *redSize, BYTE *greenSize, BYTE *blueSize, BYTE *alphaSize, BYTE *totalSize) DECLSPEC_HIDDEN;
 BOOL getDepthStencilBits(const struct wined3d_format *format,
         BYTE *depthSize, BYTE *stencilSize) DECLSPEC_HIDDEN;
+GLenum gl_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type) DECLSPEC_HIDDEN;
 
 /* Math utils */
 void multiply_matrix(struct wined3d_matrix *dest, const struct wined3d_matrix *src1,
@@ -2601,6 +2602,13 @@ BOOL vshader_get_input(const struct wined3d_shader *shader,
 struct wined3d_vertex_shader
 {
     struct wined3d_shader_attribute attributes[MAX_ATTRIBS];
+};
+
+struct wined3d_geometry_shader
+{
+    enum wined3d_primitive_type input_type;
+    enum wined3d_primitive_type output_type;
+    UINT vertices_out;
 };
 
 struct wined3d_pixel_shader
@@ -2648,6 +2656,7 @@ struct wined3d_shader
     union
     {
         struct wined3d_vertex_shader vs;
+        struct wined3d_geometry_shader gs;
         struct wined3d_pixel_shader ps;
     } u;
 };
