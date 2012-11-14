@@ -59,8 +59,8 @@ static const WCHAR szSession[] = {'S','e','s','s','i','o','n',0};
  */
 typedef struct {
     IActiveScriptSite IActiveScriptSite_iface;
-    IDispatch *pInstaller;
-    IDispatch *pSession;
+    IDispatch *installer;
+    IDispatch *session;
     LONG ref;
 } MsiActiveScriptSite;
 
@@ -144,7 +144,7 @@ static HRESULT WINAPI MsiActiveScriptSite_GetItemInfo(IActiveScriptSite* iface, 
             return hr;
         }
         else if (dwReturnMask & SCRIPTINFO_IUNKNOWN) {
-            IDispatch_QueryInterface(This->pSession, &IID_IUnknown, (void **)ppiunkItem);
+            IDispatch_QueryInterface(This->session, &IID_IUnknown, (void **)ppiunkItem);
             return S_OK;
         }
     }
@@ -251,23 +251,24 @@ static const struct IActiveScriptSiteVtbl activescriptsitevtbl =
     MsiActiveScriptSite_OnLeaveScript
 };
 
-static HRESULT create_ActiveScriptSite(IUnknown *outer, void **obj)
+static HRESULT create_activescriptsite(MsiActiveScriptSite **obj)
 {
     MsiActiveScriptSite* object;
 
-    TRACE("(%p,%p)\n", outer, obj);
+    TRACE("(%p)\n", obj);
 
-    if( outer )
-        return CLASS_E_NOAGGREGATION;
+    *obj = NULL;
 
     object = msi_alloc( sizeof(MsiActiveScriptSite) );
+    if (!object)
+        return E_OUTOFMEMORY;
 
     object->IActiveScriptSite_iface.lpVtbl = &activescriptsitevtbl;
     object->ref = 1;
-    object->pInstaller = NULL;
-    object->pSession = NULL;
+    object->installer = NULL;
+    object->session = NULL;
 
-    *obj = &object->IActiveScriptSite_iface;
+    *obj = object;
 
     return S_OK;
 }
@@ -280,7 +281,7 @@ DWORD call_script(MSIHANDLE hPackage, INT type, LPCWSTR script, LPCWSTR function
     HRESULT hr;
     IActiveScript *pActiveScript = NULL;
     IActiveScriptParse *pActiveScriptParse = NULL;
-    MsiActiveScriptSite *pActiveScriptSite = NULL;
+    MsiActiveScriptSite *scriptsite;
     IDispatch *pDispatch = NULL;
     DISPPARAMS dispparamsNoArgs = {NULL, NULL, 0, 0};
     DISPID dispid;
@@ -291,15 +292,15 @@ DWORD call_script(MSIHANDLE hPackage, INT type, LPCWSTR script, LPCWSTR function
     CoInitialize(NULL);
 
     /* Create MsiActiveScriptSite object */
-    hr = create_ActiveScriptSite(NULL, (void **)&pActiveScriptSite);
+    hr = create_activescriptsite(&scriptsite);
     if (hr != S_OK) goto done;
 
     /* Create an installer object */
-    hr = create_msiserver(NULL, (LPVOID *)&pActiveScriptSite->pInstaller);
+    hr = create_msiserver(NULL, (void**)&scriptsite->installer);
     if (hr != S_OK) goto done;
 
     /* Create a session object */
-    hr = create_session(hPackage, pActiveScriptSite->pInstaller, &pActiveScriptSite->pSession);
+    hr = create_session(hPackage, scriptsite->installer, &scriptsite->session);
     if (hr != S_OK) goto done;
 
     /* Create the scripting engine */
@@ -325,7 +326,7 @@ DWORD call_script(MSIHANDLE hPackage, INT type, LPCWSTR script, LPCWSTR function
     hr = IActiveScript_QueryInterface(pActiveScript, &IID_IActiveScriptParse, (void **)&pActiveScriptParse);
     if (FAILED(hr)) goto done;
 
-    hr = IActiveScript_SetScriptSite(pActiveScript, (IActiveScriptSite *)pActiveScriptSite);
+    hr = IActiveScript_SetScriptSite(pActiveScript, &scriptsite->IActiveScriptSite_iface);
     if (FAILED(hr)) goto done;
 
     hr = IActiveScriptParse_InitNew(pActiveScriptParse);
@@ -372,11 +373,11 @@ done:
     if (pDispatch) IDispatch_Release(pDispatch);
     if (pActiveScript) IActiveScript_Release(pActiveScript);
     if (pActiveScriptParse) IActiveScriptParse_Release(pActiveScriptParse);
-    if (pActiveScriptSite)
+    if (scriptsite)
     {
-        if (pActiveScriptSite->pSession) IDispatch_Release(pActiveScriptSite->pSession);
-        if (pActiveScriptSite->pInstaller) IDispatch_Release(pActiveScriptSite->pInstaller);
-        IActiveScriptSite_Release((IActiveScriptSite *)pActiveScriptSite);
+        if (scriptsite->session) IDispatch_Release(scriptsite->session);
+        if (scriptsite->installer) IDispatch_Release(scriptsite->installer);
+        IActiveScriptSite_Release(&scriptsite->IActiveScriptSite_iface);
     }
     CoUninitialize();    /* must call even if CoInitialize failed */
     return ret;
