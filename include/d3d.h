@@ -496,7 +496,7 @@ DECLARE_INTERFACE_(IDirect3DMaterial2,IUnknown)
     /*** IDirect3DMaterial2 methods ***/
     STDMETHOD(SetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE;
     STDMETHOD(GetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE;
-    STDMETHOD(GetHandle)(THIS_ LPDIRECT3DDEVICE2 lpDirect3DDevice2, LPD3DMATERIALHANDLE lpHandle) PURE;
+    STDMETHOD(GetHandle)(THIS_ struct IDirect3DDevice2 *device, D3DMATERIALHANDLE *handle) PURE;
 };
 #undef INTERFACE
 
@@ -614,7 +614,7 @@ DECLARE_INTERFACE_(IDirect3DTexture2,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3DTexture2 methods ***/
-    STDMETHOD(GetHandle)(THIS_ LPDIRECT3DDEVICE2 lpDirect3DDevice2, LPD3DTEXTUREHANDLE lpHandle) PURE;
+    STDMETHOD(GetHandle)(THIS_ struct IDirect3DDevice2 *device, D3DTEXTUREHANDLE *handle) PURE;
     STDMETHOD(PaletteChanged)(THIS_ DWORD dwStart, DWORD dwCount) PURE;
     STDMETHOD(Load)(THIS_ IDirect3DTexture2 *texture) PURE;
 };
