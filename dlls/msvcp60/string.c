@@ -153,7 +153,8 @@ void __thiscall basic_string_char__Eos(basic_string_char *this, MSVCP_size_t len
 
 void basic_string_char_clear(basic_string_char *this)
 {
-    basic_string_char__Eos(this, 0);
+    if(this->ptr)
+        basic_string_char__Eos(this, 0);
 }
 
 /* ?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEX_N@Z */
@@ -1865,7 +1866,8 @@ void __thiscall basic_string_wchar__Eos(basic_string_wchar *this, MSVCP_size_t l
 
 void basic_string_wchar_clear(basic_string_wchar *this)
 {
-    basic_string_wchar__Eos(this, 0);
+    if(this->ptr)
+        basic_string_wchar__Eos(this, 0);
 }
 
 /* ?_Tidy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAEX_N@Z */

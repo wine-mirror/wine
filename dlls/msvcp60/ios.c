@@ -7617,9 +7617,9 @@ basic_istream_char* __cdecl basic_istream_char_getline_bstr_delim(
 
     TRACE("(%p %p %c)\n", istream, str, delim);
 
+    basic_string_char_clear(str);
     if(basic_istream_char_sentry_create(istream, TRUE)) {
         basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
-        basic_string_char_clear(str);
 
         c = basic_streambuf_char_sgetc(strbuf);
         for(; c!=(unsigned char)delim && c!=EOF; c = basic_streambuf_char_snextc(strbuf))
@@ -8909,9 +8909,9 @@ basic_istream_wchar* __cdecl basic_istream_wchar_getline_bstr_delim(
 
     TRACE("(%p %p %c)\n", istream, str, delim);
 
+    basic_string_wchar_clear(str);
     if(basic_istream_wchar_sentry_create(istream, TRUE)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        basic_string_wchar_clear(str);
 
         c = basic_streambuf_wchar_sgetc(strbuf);
         for(; c!=delim && c!=WEOF; c = basic_streambuf_wchar_snextc(strbuf))
