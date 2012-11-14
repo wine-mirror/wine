@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
+
 #include "jscript.h"
 
 #include "wine/debug.h"
@@ -51,7 +53,7 @@ static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     static const WCHAR regexpW[] = {'R','e','g','E','x','p',0};
     static const WCHAR stringW[] = {'S','t','r','i','n','g',0};
     /* Keep in sync with jsclass_t enum */
-    static const WCHAR *names[] = {objectW, arrayW, booleanW, dateW, errorW,
+    static const WCHAR *names[] = {NULL, arrayW, booleanW, dateW, errorW,
         functionW, NULL, mathW, numberW, objectW, regexpW, stringW, objectW, objectW};
 
     TRACE("\n");
@@ -62,6 +64,7 @@ static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     }else if(names[jsdisp->builtin_info->class]) {
         str = names[jsdisp->builtin_info->class];
     }else {
+        assert(jsdisp->builtin_info->class != JSCLASS_NONE);
         FIXME("jdisp->builtin_info->class = %d\n", jsdisp->builtin_info->class);
         return E_FAIL;
     }

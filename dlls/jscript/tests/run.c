@@ -1815,6 +1815,10 @@ static BOOL run_tests(void)
 
     parse_script_a("testThis(this);");
     parse_script_a("(function () { testThis(this); })();");
+    parse_script_a("function x() { testThis(this); }; x();");
+    parse_script_a("var t = {func: function () { ok(this === t, 'this !== t'); }}; with(t) { func(); }");
+    parse_script_a("function x() { testThis(this); }; with({y: 1}) { x(); }");
+    parse_script_a("(function () { function x() { testThis(this);} x(); })();");
 
     SET_EXPECT(testobj_onlydispid_d);
     SET_EXPECT(testobj_onlydispid_i);

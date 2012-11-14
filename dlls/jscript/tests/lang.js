@@ -56,6 +56,9 @@ ok(0 == false, "0 == false is false");
 ok(1 != 2, "1 != 2 is false");
 ok(false != 1, "false != 1 is false");
 
+ok(this === test, "this !== test");
+eval('ok(this === test, "this !== test");');
+
 var trueVar = true;
 ok(trueVar, "trueVar is not true");
 
@@ -70,6 +73,9 @@ function testFunc1(x, y) {
     ok(arguments["1"] === "test", "arguments[1] is not \"test\"");
     ok(arguments.callee === testFunc1, "arguments.calee !== testFunc1");
     ok(testFunc1.arguments === arguments, "testFunc1.arguments = " + testFunc1.arguments);
+
+    ok(this === test, "this !== test");
+    eval('ok(this === test, "this !== test");');
 
     return true;
 }

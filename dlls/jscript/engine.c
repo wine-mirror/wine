@@ -292,6 +292,18 @@ HRESULT create_exec_ctx(script_ctx_t *script_ctx, IDispatch *this_obj, jsdisp_t 
     ctx->ref = 1;
     ctx->is_global = is_global;
 
+    /* ECMA-262 3rd Edition    11.2.3.7 */
+    if(this_obj) {
+        jsdisp_t *jsthis;
+
+        jsthis = iface_to_jsdisp((IUnknown*)this_obj);
+        if(jsthis) {
+            if(jsthis->builtin_info->class == JSCLASS_GLOBAL || jsthis->builtin_info->class == JSCLASS_NONE)
+                this_obj = NULL;
+            jsdisp_release(jsthis);
+        }
+    }
+
     if(this_obj)
         ctx->this_obj = this_obj;
     else if(script_ctx->host_global)
