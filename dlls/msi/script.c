@@ -260,7 +260,7 @@ static HRESULT create_ActiveScriptSite(IUnknown *outer, void **obj)
     if( outer )
         return CLASS_E_NOAGGREGATION;
 
-    object = msi_alloc_zero( sizeof(MsiActiveScriptSite) );
+    object = msi_alloc( sizeof(MsiActiveScriptSite) );
 
     object->IActiveScriptSite_iface.lpVtbl = &activescriptsitevtbl;
     object->ref = 1;
@@ -303,9 +303,10 @@ DWORD call_script(MSIHANDLE hPackage, INT type, LPCWSTR script, LPCWSTR function
     if (hr != S_OK) goto done;
 
     /* Create the scripting engine */
-    if ((type & 7) == msidbCustomActionTypeJScript)
+    type &= msidbCustomActionTypeJScript|msidbCustomActionTypeVBScript;
+    if (type == msidbCustomActionTypeJScript)
         hr = CLSIDFromProgID(szJScript, &clsid);
-    else if ((type & 7) == msidbCustomActionTypeVBScript)
+    else if (type == msidbCustomActionTypeVBScript)
         hr = CLSIDFromProgID(szVBScript, &clsid);
     else {
         ERR("Unknown script type %d\n", type);
