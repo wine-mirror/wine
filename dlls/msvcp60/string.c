@@ -892,7 +892,7 @@ MSVCP_size_t __thiscall basic_string_char_rfind_cstr_substr(
     if(pos > this->size-len+1)
         pos = this->size-len+1;
     end = this->ptr;
-    for(p=end+pos-1; p>=end; p--) {
+    for(p=end+pos; p>=end; p--) {
         if(*p==*find && !char_traits_char_compare(p, find, len))
             return p-this->ptr;
     }
@@ -1390,7 +1390,8 @@ basic_string_char* __thiscall basic_string_char_replace_cstr_len(basic_string_ch
             memmove(ptr+off+size, ptr+off+str_len, (str_len-size)*sizeof(char));
     }
 
-    basic_string_char__Eos(this, this->size-len+str_len);
+    if(this->ptr)
+        basic_string_char__Eos(this, this->size-len+str_len);
     return this;
 }
 
@@ -1784,7 +1785,7 @@ static wchar_t* char_traits_wchar__Move_s(wchar_t *dest,
         return dest;
     }
 
-    return memmove(dest, src, count);
+    return memmove(dest, src, count * sizeof(WCHAR));
 }
 
 static wchar_t* char_traits_wchar__Copy_s(wchar_t *dest,
@@ -1797,7 +1798,7 @@ static wchar_t* char_traits_wchar__Copy_s(wchar_t *dest,
         return dest;
     }
 
-    return memcpy(dest, src, count);
+    return memcpy(dest, src, count * sizeof(wchar_t));
 }
 
 static MSVCP_size_t char_traits_wchar_length(const wchar_t *str)
@@ -2602,7 +2603,7 @@ MSVCP_size_t __thiscall basic_string_wchar_rfind_cstr_substr(
     if(pos > this->size-len+1)
         pos = this->size-len+1;
     end = this->ptr;
-    for(p=end+pos-1; p>=end; p--) {
+    for(p=end+pos; p>=end; p--) {
         if(*p==*find && !char_traits_wchar_compare(p, find, len))
             return p-this->ptr;
     }
@@ -3100,7 +3101,8 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_cstr_len(basic_string_
             memmove(ptr+off+size, ptr+off+str_len, (str_len-size)*sizeof(char));
     }
 
-    basic_string_wchar__Eos(this, this->size-len+str_len);
+    if(this->ptr)
+        basic_string_wchar__Eos(this, this->size-len+str_len);
     return this;
 }
 
