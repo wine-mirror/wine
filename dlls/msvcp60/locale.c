@@ -5732,10 +5732,7 @@ static ostreambuf_iterator_char* num_put_char_fput(const num_put *this, ostreamb
         ostreambuf_iterator_char dest, ios_base *base, char fill, char *buf, MSVCP_size_t count)
 {
     numpunct_char *numpunct = numpunct_char_use_facet(&base->loc);
-    basic_string_char grouping_bstr;
-    const char *grouping;
     char *p, sep = *localeconv()->decimal_point;
-    int cur_group = 0, group_size = 0;
     int adjustfield = base->fmtfl & FMTFLAG_adjustfield;
     MSVCP_size_t pad;
 
@@ -5749,25 +5746,6 @@ static ostreambuf_iterator_char* num_put_char_fput(const num_put *this, ostreamb
         }
     }
     p--;
-
-    /* Add separators to number */
-    numpunct_char_grouping(numpunct, &grouping_bstr);
-    grouping = basic_string_char_c_str(&grouping_bstr);
-    sep = grouping[0] ? numpunct_char_thousands_sep(numpunct) : '\0';
-
-    for(; p>buf && sep && grouping[cur_group]!=CHAR_MAX; p--) {
-        group_size++;
-        if(group_size == grouping[cur_group]) {
-            group_size = 0;
-            if(grouping[cur_group+1])
-                cur_group++;
-
-            memmove(p+1, p, buf+count-p);
-            *p = sep;
-            count++;
-        }
-    }
-    basic_string_char_dtor(&grouping_bstr);
 
     /* Display number with padding */
     if(count >= base->wide)
@@ -6420,11 +6398,7 @@ static ostreambuf_iterator_wchar* num_put__fput(const num_put *this, ostreambuf_
         ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, char *buf,
         MSVCP_size_t count, numpunct_wchar *numpunct)
 {
-    basic_string_char grouping_bstr;
-    const char *grouping;
     char *p, dec_point = *localeconv()->decimal_point;
-    wchar_t sep;
-    int cur_group = 0, group_size = 0;
     int adjustfield = base->fmtfl & FMTFLAG_adjustfield;
     MSVCP_size_t i, pad;
 
@@ -6435,25 +6409,6 @@ static ostreambuf_iterator_wchar* num_put__fput(const num_put *this, ostreambuf_
             break;
     }
     p--;
-
-    /* Add separators to number */
-    numpunct_wchar_grouping(numpunct, &grouping_bstr);
-    grouping = basic_string_char_c_str(&grouping_bstr);
-    sep = grouping[0] ? numpunct_wchar_thousands_sep(numpunct) : '\0';
-
-    for(; p>buf && sep && grouping[cur_group]!=CHAR_MAX; p--) {
-        group_size++;
-        if(group_size == grouping[cur_group]) {
-            group_size = 0;
-            if(grouping[cur_group+1])
-                cur_group++;
-
-            memmove(p+1, p, buf+count-p);
-            *p = '\0'; /* mark thousands separator positions */
-            count++;
-        }
-    }
-    basic_string_char_dtor(&grouping_bstr);
 
     /* Display number with padding */
     if(count >= base->wide)
@@ -6474,8 +6429,6 @@ static ostreambuf_iterator_wchar* num_put__fput(const num_put *this, ostreambuf_
     for(i=0; i<count; i++) {
         if(buf[i] == dec_point)
             num_put_wchar__Rep(this, &dest, dest, numpunct_wchar_decimal_point(numpunct), 1);
-        else if(!buf[i])
-            num_put_wchar__Rep(this, &dest, dest, sep, 1);
         else
             num_put_wchar__Putc(this, &dest, dest, buf+i, 1);
     }
