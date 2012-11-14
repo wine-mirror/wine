@@ -57,33 +57,217 @@ static const WCHAR szSession[] = {'S','e','s','s','i','o','n',0};
 /*
  * MsiActiveScriptSite - Our IActiveScriptSite implementation.
  */
-
 typedef struct {
-    IActiveScriptSite lpVtbl;
+    IActiveScriptSite IActiveScriptSite_iface;
     IDispatch *pInstaller;
     IDispatch *pSession;
     LONG ref;
 } MsiActiveScriptSite;
 
-static const struct IActiveScriptSiteVtbl ASS_Vtbl;
+static inline MsiActiveScriptSite *impl_from_IActiveScriptSite( IActiveScriptSite *iface )
+{
+    return CONTAINING_RECORD(iface, MsiActiveScriptSite, IActiveScriptSite_iface);
+}
 
-static HRESULT create_ActiveScriptSite(IUnknown *pUnkOuter, LPVOID *ppObj)
+/*
+ * MsiActiveScriptSite
+ */
+static HRESULT WINAPI MsiActiveScriptSite_QueryInterface(IActiveScriptSite* iface, REFIID riid, void** obj)
+{
+    MsiActiveScriptSite *This = impl_from_IActiveScriptSite(iface);
+
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IActiveScriptSite))
+    {
+        IActiveScriptSite_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    *obj = NULL;
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI MsiActiveScriptSite_AddRef(IActiveScriptSite* iface)
+{
+    MsiActiveScriptSite *This = impl_from_IActiveScriptSite(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI MsiActiveScriptSite_Release(IActiveScriptSite* iface)
+{
+    MsiActiveScriptSite *This = impl_from_IActiveScriptSite(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref)
+        msi_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI MsiActiveScriptSite_GetLCID(IActiveScriptSite* iface, LCID* plcid)
+{
+    MsiActiveScriptSite *This = impl_from_IActiveScriptSite(iface);
+    TRACE("(%p)->(%p)\n", This, plcid);
+    return E_NOTIMPL;  /* Script will use system-defined locale */
+}
+
+static HRESULT WINAPI MsiActiveScriptSite_GetItemInfo(IActiveScriptSite* iface, LPCOLESTR pstrName, DWORD dwReturnMask, IUnknown** ppiunkItem, ITypeInfo** ppti)
+{
+    MsiActiveScriptSite *This = impl_from_IActiveScriptSite(iface);
+
+    TRACE("(%p)->(%p, %d, %p, %p)\n", This, pstrName, dwReturnMask, ppiunkItem, ppti);
+
+    /* Determine the kind of pointer that is requested, and make sure placeholder is valid */
+    if (dwReturnMask & SCRIPTINFO_ITYPEINFO) {
+        if (!ppti) return E_INVALIDARG;
+        *ppti = NULL;
+    }
+    if (dwReturnMask & SCRIPTINFO_IUNKNOWN) {
+        if (!ppiunkItem) return E_INVALIDARG;
+        *ppiunkItem = NULL;
+    }
+
+    /* Are we looking for the session object? */
+    if (!strcmpW(szSession, pstrName)) {
+        if (dwReturnMask & SCRIPTINFO_ITYPEINFO) {
+            HRESULT hr = get_typeinfo(Session_tid, ppti);
+            if (SUCCEEDED(hr))
+                ITypeInfo_AddRef(*ppti);
+            return hr;
+        }
+        else if (dwReturnMask & SCRIPTINFO_IUNKNOWN) {
+            IDispatch_QueryInterface(This->pSession, &IID_IUnknown, (void **)ppiunkItem);
+            return S_OK;
+        }
+    }
+
+    return TYPE_E_ELEMENTNOTFOUND;
+}
+
+static HRESULT WINAPI MsiActiveScriptSite_GetDocVersionString(IActiveScriptSite* iface, BSTR* pbstrVersion)
+{
+    MsiActiveScriptSite *This = impl_from_IActiveScriptSite(iface);
+    TRACE("(%p)->(%p)\n", This, pbstrVersion);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MsiActiveScriptSite_OnScriptTerminate(IActiveScriptSite* iface, const VARIANT* pvarResult, const EXCEPINFO* pexcepinfo)
+{
+    MsiActiveScriptSite *This = impl_from_IActiveScriptSite(iface);
+    TRACE("(%p)->(%p, %p)\n", This, pvarResult, pexcepinfo);
+    return S_OK;
+}
+
+static HRESULT WINAPI MsiActiveScriptSite_OnStateChange(IActiveScriptSite* iface, SCRIPTSTATE ssScriptState)
+{
+    switch (ssScriptState) {
+        case SCRIPTSTATE_UNINITIALIZED:
+              TRACE("State: Uninitialized.\n");
+              break;
+
+        case SCRIPTSTATE_INITIALIZED:
+              TRACE("State: Initialized.\n");
+              break;
+
+        case SCRIPTSTATE_STARTED:
+              TRACE("State: Started.\n");
+              break;
+
+        case SCRIPTSTATE_CONNECTED:
+              TRACE("State: Connected.\n");
+              break;
+
+        case SCRIPTSTATE_DISCONNECTED:
+              TRACE("State: Disconnected.\n");
+              break;
+
+        case SCRIPTSTATE_CLOSED:
+              TRACE("State: Closed.\n");
+              break;
+
+        default:
+              ERR("Unknown State: %d\n", ssScriptState);
+              break;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI MsiActiveScriptSite_OnScriptError(IActiveScriptSite* iface, IActiveScriptError* pscripterror)
+{
+    MsiActiveScriptSite *This = impl_from_IActiveScriptSite(iface);
+    EXCEPINFO exception;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, pscripterror);
+
+    memset(&exception, 0, sizeof(EXCEPINFO));
+    hr = IActiveScriptError_GetExceptionInfo(pscripterror, &exception);
+    if (SUCCEEDED(hr))
+    {
+        ERR("script error: %s\n", debugstr_w(exception.bstrDescription));
+        SysFreeString(exception.bstrSource);
+        SysFreeString(exception.bstrDescription);
+        SysFreeString(exception.bstrHelpFile);
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI MsiActiveScriptSite_OnEnterScript(IActiveScriptSite* iface)
+{
+    MsiActiveScriptSite *This = impl_from_IActiveScriptSite(iface);
+    TRACE("(%p)\n", This);
+    return S_OK;
+}
+
+static HRESULT WINAPI MsiActiveScriptSite_OnLeaveScript(IActiveScriptSite* iface)
+{
+    MsiActiveScriptSite *This = impl_from_IActiveScriptSite(iface);
+    TRACE("(%p)\n", This);
+    return S_OK;
+}
+
+static const struct IActiveScriptSiteVtbl activescriptsitevtbl =
+{
+    MsiActiveScriptSite_QueryInterface,
+    MsiActiveScriptSite_AddRef,
+    MsiActiveScriptSite_Release,
+    MsiActiveScriptSite_GetLCID,
+    MsiActiveScriptSite_GetItemInfo,
+    MsiActiveScriptSite_GetDocVersionString,
+    MsiActiveScriptSite_OnScriptTerminate,
+    MsiActiveScriptSite_OnStateChange,
+    MsiActiveScriptSite_OnScriptError,
+    MsiActiveScriptSite_OnEnterScript,
+    MsiActiveScriptSite_OnLeaveScript
+};
+
+static HRESULT create_ActiveScriptSite(IUnknown *outer, void **obj)
 {
     MsiActiveScriptSite* object;
 
-    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
+    TRACE("(%p,%p)\n", outer, obj);
 
-    if( pUnkOuter )
+    if( outer )
         return CLASS_E_NOAGGREGATION;
 
     object = msi_alloc_zero( sizeof(MsiActiveScriptSite) );
 
-    object->lpVtbl.lpVtbl = &ASS_Vtbl;
+    object->IActiveScriptSite_iface.lpVtbl = &activescriptsitevtbl;
     object->ref = 1;
     object->pInstaller = NULL;
     object->pSession = NULL;
 
-    *ppObj = object;
+    *obj = &object->IActiveScriptSite_iface;
 
     return S_OK;
 }
@@ -196,188 +380,3 @@ done:
     CoUninitialize();    /* must call even if CoInitialize failed */
     return ret;
 }
-
-/*
- * MsiActiveScriptSite
- */
-
-/*** IUnknown methods ***/
-static HRESULT WINAPI MsiActiveScriptSite_QueryInterface(IActiveScriptSite* iface, REFIID riid, void** ppvObject)
-{
-    MsiActiveScriptSite *This = (MsiActiveScriptSite *)iface;
-
-    TRACE("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
-
-    if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IActiveScriptSite))
-    {
-        IActiveScriptSite_AddRef(iface);
-        *ppvObject = This;
-        return S_OK;
-    }
-
-    TRACE("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI MsiActiveScriptSite_AddRef(IActiveScriptSite* iface)
-{
-    MsiActiveScriptSite *This = (MsiActiveScriptSite *)iface;
-
-    TRACE("(%p/%p)\n", iface, This);
-
-    return InterlockedIncrement(&This->ref);
-}
-
-static ULONG WINAPI MsiActiveScriptSite_Release(IActiveScriptSite* iface)
-{
-    MsiActiveScriptSite *This = (MsiActiveScriptSite *)iface;
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p/%p)\n", iface, This);
-
-    if (!ref)
-        msi_free(This);
-
-    return ref;
-}
-
-/*** IActiveScriptSite methods **/
-static HRESULT WINAPI MsiActiveScriptSite_GetLCID(IActiveScriptSite* iface, LCID* plcid)
-{
-    MsiActiveScriptSite *This = (MsiActiveScriptSite *)iface;
-    TRACE("(%p/%p)->(%p)\n", This, iface, plcid);
-    return E_NOTIMPL;  /* Script will use system-defined locale */
-}
-
-static HRESULT WINAPI MsiActiveScriptSite_GetItemInfo(IActiveScriptSite* iface, LPCOLESTR pstrName, DWORD dwReturnMask, IUnknown** ppiunkItem, ITypeInfo** ppti)
-{
-    MsiActiveScriptSite *This = (MsiActiveScriptSite *)iface;
-    TRACE("(%p/%p)->(%p,%d,%p,%p)\n", This, iface, pstrName, dwReturnMask, ppiunkItem, ppti);
-
-    /* Determine the kind of pointer that is requested, and make sure placeholder is valid */
-    if (dwReturnMask & SCRIPTINFO_ITYPEINFO) {
-        if (!ppti) return E_INVALIDARG;
-        *ppti = NULL;
-    }
-    if (dwReturnMask & SCRIPTINFO_IUNKNOWN) {
-        if (!ppiunkItem) return E_INVALIDARG;
-        *ppiunkItem = NULL;
-    }
-
-    /* Are we looking for the session object? */
-    if (!strcmpW(szSession, pstrName)) {
-        if (dwReturnMask & SCRIPTINFO_ITYPEINFO) {
-            HRESULT hr = get_typeinfo(Session_tid, ppti);
-            if (SUCCEEDED(hr))
-                ITypeInfo_AddRef(*ppti);
-            return hr;
-        }
-        else if (dwReturnMask & SCRIPTINFO_IUNKNOWN) {
-            IDispatch_QueryInterface(This->pSession, &IID_IUnknown, (void **)ppiunkItem);
-            return S_OK;
-        }
-    }
-
-    return TYPE_E_ELEMENTNOTFOUND;
-}
-
-static HRESULT WINAPI MsiActiveScriptSite_GetDocVersionString(IActiveScriptSite* iface, BSTR* pbstrVersion)
-{
-    MsiActiveScriptSite *This = (MsiActiveScriptSite *)iface;
-    TRACE("(%p/%p)->(%p)\n", This, iface, pbstrVersion);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI MsiActiveScriptSite_OnScriptTerminate(IActiveScriptSite* iface, const VARIANT* pvarResult, const EXCEPINFO* pexcepinfo)
-{
-    MsiActiveScriptSite *This = (MsiActiveScriptSite *)iface;
-    TRACE("(%p/%p)->(%p,%p)\n", This, iface, pvarResult, pexcepinfo);
-    return S_OK;
-}
-
-static HRESULT WINAPI MsiActiveScriptSite_OnStateChange(IActiveScriptSite* iface, SCRIPTSTATE ssScriptState)
-{
-    switch (ssScriptState) {
-        case SCRIPTSTATE_UNINITIALIZED:
-              TRACE("State: Uninitialized.\n");
-              break;
-
-        case SCRIPTSTATE_INITIALIZED:
-              TRACE("State: Initialized.\n");
-              break;
-
-        case SCRIPTSTATE_STARTED:
-              TRACE("State: Started.\n");
-              break;
-
-        case SCRIPTSTATE_CONNECTED:
-              TRACE("State: Connected.\n");
-              break;
-
-        case SCRIPTSTATE_DISCONNECTED:
-              TRACE("State: Disconnected.\n");
-              break;
-
-        case SCRIPTSTATE_CLOSED:
-              TRACE("State: Closed.\n");
-              break;
-
-        default:
-              ERR("Unknown State: %d\n", ssScriptState);
-              break;
-    }
-
-    return S_OK;
-}
-
-static HRESULT WINAPI MsiActiveScriptSite_OnScriptError(IActiveScriptSite* iface, IActiveScriptError* pscripterror)
-{
-    MsiActiveScriptSite *This = (MsiActiveScriptSite *)iface;
-    EXCEPINFO exception;
-    HRESULT hr;
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, pscripterror);
-
-    memset(&exception, 0, sizeof(EXCEPINFO));
-    hr = IActiveScriptError_GetExceptionInfo(pscripterror, &exception);
-    if (SUCCEEDED(hr))
-    {
-        ERR("script error: %s\n", debugstr_w(exception.bstrDescription));
-        SysFreeString(exception.bstrSource);
-        SysFreeString(exception.bstrDescription);
-        SysFreeString(exception.bstrHelpFile);
-    }
-
-    return S_OK;
-}
-
-static HRESULT WINAPI MsiActiveScriptSite_OnEnterScript(IActiveScriptSite* iface)
-{
-    MsiActiveScriptSite *This = (MsiActiveScriptSite *)iface;
-    TRACE("(%p/%p)\n", This, iface);
-    return S_OK;
-}
-
-static HRESULT WINAPI MsiActiveScriptSite_OnLeaveScript(IActiveScriptSite* iface)
-{
-    MsiActiveScriptSite *This = (MsiActiveScriptSite *)iface;
-    TRACE("(%p/%p)\n", This, iface);
-    return S_OK;
-}
-
-static const struct IActiveScriptSiteVtbl ASS_Vtbl =
-{
-    MsiActiveScriptSite_QueryInterface,
-    MsiActiveScriptSite_AddRef,
-    MsiActiveScriptSite_Release,
-    MsiActiveScriptSite_GetLCID,
-    MsiActiveScriptSite_GetItemInfo,
-    MsiActiveScriptSite_GetDocVersionString,
-    MsiActiveScriptSite_OnScriptTerminate,
-    MsiActiveScriptSite_OnStateChange,
-    MsiActiveScriptSite_OnScriptError,
-    MsiActiveScriptSite_OnEnterScript,
-    MsiActiveScriptSite_OnLeaveScript
-};
