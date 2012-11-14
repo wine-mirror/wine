@@ -235,26 +235,6 @@ BOOL WINAPI GetClientRect( HWND hwnd, LPRECT rect )
 }
 
 
-/*******************************************************************
- *		ClientToScreen (USER32.@)
- */
-BOOL WINAPI ClientToScreen( HWND hwnd, LPPOINT lppnt )
-{
-    MapWindowPoints( hwnd, 0, lppnt, 1 );
-    return TRUE;
-}
-
-
-/*******************************************************************
- *		ScreenToClient (USER32.@)
- */
-BOOL WINAPI ScreenToClient( HWND hwnd, LPPOINT lppnt )
-{
-    MapWindowPoints( 0, hwnd, lppnt, 1 );
-    return TRUE;
-}
-
-
 /***********************************************************************
  *           list_children_from_point
  *
@@ -585,6 +565,48 @@ INT WINAPI MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, UINT count
         lppt[1].x = tmp;
     }
     return MAKELONG( LOWORD(offset.x), LOWORD(offset.y) );
+}
+
+
+/*******************************************************************
+ *		ClientToScreen (USER32.@)
+ */
+BOOL WINAPI ClientToScreen( HWND hwnd, LPPOINT lppnt )
+{
+    POINT offset;
+    BOOL mirrored;
+
+    if (!hwnd)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
+    if (!WINPOS_GetWinOffset( hwnd, 0, &mirrored, &offset )) return FALSE;
+    lppnt->x += offset.x;
+    lppnt->y += offset.y;
+    if (mirrored) lppnt->x = -lppnt->x;
+    return TRUE;
+}
+
+
+/*******************************************************************
+ *		ScreenToClient (USER32.@)
+ */
+BOOL WINAPI ScreenToClient( HWND hwnd, LPPOINT lppnt )
+{
+    POINT offset;
+    BOOL mirrored;
+
+    if (!hwnd)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
+    if (!WINPOS_GetWinOffset( 0, hwnd, &mirrored, &offset )) return FALSE;
+    lppnt->x += offset.x;
+    lppnt->y += offset.y;
+    if (mirrored) lppnt->x = -lppnt->x;
+    return TRUE;
 }
 
 
