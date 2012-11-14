@@ -45,10 +45,6 @@ static const locale_facet* locale__Getfacet(const locale*, MSVCP_size_t);
 
 typedef int category;
 
-typedef struct {
-    MSVCP_size_t id;
-} locale_id;
-
 typedef struct _locale__Locimp {
     locale_facet facet;
     locale_facet **facetvec;

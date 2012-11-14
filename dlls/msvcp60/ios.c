@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <share.h>
+#include <locale.h>
 
 #include "msvcp.h"
 #include "windef.h"
@@ -64,10 +65,11 @@ typedef enum {
 typedef struct {
     basic_streambuf_char base;
     codecvt_char *cvt;
-    char putback;
-    MSVCP_bool wrotesome;
+    int state0;
     int state;
+    basic_string_char *str;
     MSVCP_bool close;
+    locale loc;
     FILE *file;
 } basic_filebuf_char;
 
@@ -731,7 +733,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_filebuf_char_seekpos)
             VTABLE_ADD_FUNC(basic_filebuf_char_setbuf)
             VTABLE_ADD_FUNC(basic_filebuf_char_sync)
-            VTABLE_ADD_FUNC(basic_filebuf_char_imbue));
+            VTABLE_ADD_FUNC(basic_streambuf_char_imbue));
     __ASM_VTABLE(basic_filebuf_wchar,
             VTABLE_ADD_FUNC(basic_filebuf_wchar_vector_dtor)
             VTABLE_ADD_FUNC(basic_filebuf_wchar_overflow)
@@ -1516,6 +1518,15 @@ streamsize __thiscall basic_streambuf_char_sputn(basic_streambuf_char *this, con
     return call_basic_streambuf_char_xsputn(this, ptr, count);
 }
 
+/* ?getloc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE?AVlocale@2@XZ */
+/* ?getloc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA?AVlocale@2@XZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_getloc, 8)
+locale* __thiscall basic_streambuf_char_getloc(basic_streambuf_char *this, locale *ret)
+{
+    TRACE("(%p %p)\n", this, ret);
+    return locale_copy_ctor(ret, &this->loc);
+}
+
 /* ?setp@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXPA_W00@Z */
 /* ?setp@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEA_W00@Z */
 /* ?setp@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEXPAG00@Z */
@@ -2293,8 +2304,9 @@ void __thiscall basic_filebuf_char__Init(basic_filebuf_char *this, FILE *file, b
     TRACE("(%p %p %d)\n", this, file, which);
 
     this->cvt = NULL;
-    this->wrotesome = FALSE;
+    this->state0 = basic_filebuf_char__Init__Stinit;
     this->state = basic_filebuf_char__Init__Stinit;
+    this->str = NULL;
     this->close = (which == INITFL_open);
     this->file = file;
 
@@ -2304,57 +2316,20 @@ void __thiscall basic_filebuf_char__Init(basic_filebuf_char *this, FILE *file, b
                 &file->_cnt, &file->_base, &file->_ptr, &file->_cnt);
 }
 
-/* ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAV?$codecvt@DDH@2@@Z */
-/* ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAV?$codecvt@DDH@2@@Z */
-static void basic_filebuf_char__Initcvt(basic_filebuf_char *this, codecvt_char *cvt)
-{
-    TRACE("(%p %p)\n", this, cvt);
-
-    if(codecvt_base_always_noconv(&cvt->base)) {
-        this->cvt = NULL;
-    }else {
-        basic_streambuf_char__Init_empty(&this->base);
-        this->cvt = cvt;
-    }
-}
-
-/* ?_Endwrite@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAE_NXZ */
-/* ?_Endwrite@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAA_NXZ */
-static MSVCP_bool basic_filebuf_char__Endwrite(basic_filebuf_char *this)
+/* ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXXZ */
+/* ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_filebuf_char__Initcvt, 4)
+void __thiscall basic_filebuf_char__Initcvt(basic_filebuf_char *this)
 {
     TRACE("(%p)\n", this);
 
-    if(!this->wrotesome || !this->cvt)
-        return TRUE;
-
-
-    if(call_basic_streambuf_char_overflow(&this->base, EOF) == EOF)
-        return FALSE;
-
-    while(1) {
-        /* TODO: check if we need a dynamic buffer here */
-        char buf[128];
-        char *next;
-        int ret;
-
-        ret = codecvt_char_unshift(this->cvt, &this->state, buf, buf+sizeof(buf), &next);
-        switch(ret) {
-        case CODECVT_ok:
-            this->wrotesome = FALSE;
-            /* fall through */
-        case CODECVT_partial:
-            if(!fwrite(buf, next-buf, 1, this->file))
-                return FALSE;
-            if(this->wrotesome)
-                break;
-            /* fall through */
-        case CODECVT_noconv:
-            if(call_basic_streambuf_char_overflow(&this->base, EOF) == EOF)
-                return FALSE;
-            return TRUE;
-        default:
-            return FALSE;
-        }
+    this->cvt = codecvt_char_use_facet(&this->base.loc);
+    locale__Addfac(&this->loc, &this->cvt->base.facet, codecvt_char_id.id, LC_CTYPE);
+    if(codecvt_base_always_noconv(&this->cvt->base)) {
+        this->cvt = NULL;
+    }else {
+        this->str = MSVCRT_operator_new(sizeof(basic_string_char));
+        basic_string_char_ctor(this->str);
     }
 }
 
@@ -2367,14 +2342,8 @@ basic_filebuf_char* __thiscall basic_filebuf_char_close(basic_filebuf_char *this
 
     TRACE("(%p)\n", this);
 
-    if(!this->file)
+    if(!this->file || fclose(this->file))
         return NULL;
-
-    /* TODO: handle exceptions */
-    if(!basic_filebuf_char__Endwrite(this))
-        ret = NULL;
-    if(fclose(this->file))
-        ret  = NULL;
 
     basic_filebuf_char__Init(this, NULL, INITFL_close);
     return ret;
@@ -2390,6 +2359,7 @@ basic_filebuf_char* __thiscall basic_filebuf_char_ctor_file(basic_filebuf_char *
     basic_streambuf_char_ctor(&this->base);
     this->base.vtable = &MSVCP_basic_filebuf_char_vtable;
 
+    locale_ctor(&this->loc);
     basic_filebuf_char__Init(this, file, INITFL_new);
     return this;
 }
@@ -2409,8 +2379,9 @@ basic_filebuf_char* __thiscall basic_filebuf_char_ctor_uninitialized(basic_fileb
 {
     TRACE("(%p %d)\n", this, uninitialized);
 
-    basic_streambuf_char_ctor(&this->base);
+    basic_streambuf_char_ctor_uninitialized(&this->base, 0);
     this->base.vtable = &MSVCP_basic_filebuf_char_vtable;
+    locale_ctor(&this->loc);
     return this;
 }
 
@@ -2423,6 +2394,11 @@ void __thiscall basic_filebuf_char_dtor(basic_filebuf_char *this)
 
     if(this->close)
         basic_filebuf_char_close(this);
+    if(this->str) {
+        basic_string_char_dtor(this->str);
+        MSVCRT_operator_delete(this->str);
+    }
+    locale_dtor(&this->loc);
     basic_streambuf_char_dtor(&this->base);
 }
 
@@ -2550,7 +2526,7 @@ static basic_filebuf_char* basic_filebuf_char_open_wchar(basic_filebuf_char *thi
         return NULL;
 
     basic_filebuf_char__Init(this, f, INITFL_open);
-    basic_filebuf_char__Initcvt(this, codecvt_char_use_facet(&this->base.loc));
+    basic_filebuf_char__Initcvt(this);
     return this;
 }
 
@@ -2590,10 +2566,9 @@ basic_filebuf_char* __thiscall basic_filebuf_char_open_mode(basic_filebuf_char *
 DEFINE_THISCALL_WRAPPER(basic_filebuf_char_overflow, 8)
 int __thiscall basic_filebuf_char_overflow(basic_filebuf_char *this, int c)
 {
-    char buf[8], *dyn_buf;
-    char ch = c, *to_next;
+    char *ptr, ch = c, *to_next;
     const char *from_next;
-    int ret, max_size;
+    int ret;
 
 
     TRACE("(%p %d)\n", this, c);
@@ -2607,48 +2582,23 @@ int __thiscall basic_filebuf_char_overflow(basic_filebuf_char *this, int c)
         return fwrite(&ch, sizeof(char), 1, this->file) ? c : EOF;
 
     from_next = &ch;
-    do {
-        ret = codecvt_char_out(this->cvt, &this->state, from_next, &ch+1,
-                &from_next, buf, buf+sizeof(buf), &to_next);
-
-        switch(ret) {
-        case CODECVT_partial:
-            if(to_next == buf)
-                break;
-            /* fall through */
-        case CODECVT_ok:
-            if(!fwrite(buf, to_next-buf, 1, this->file))
-                return EOF;
-            if(ret == CODECVT_partial)
-                continue;
-            return c;
-        case CODECVT_noconv:
-            return fwrite(&ch, sizeof(char), 1, this->file) ? c : EOF;
-        default:
-            return EOF;
-        }
-
-        break;
-    } while(1);
-
-    max_size = codecvt_base_max_length(&this->cvt->base);
-    dyn_buf = malloc(max_size);
-    if(!dyn_buf)
-        return EOF;
-
-    ret = codecvt_char_out(this->cvt, &this->state, from_next, &ch+1,
-            &from_next, dyn_buf, dyn_buf+max_size, &to_next);
+    basic_string_char_clear(this->str);
+    basic_string_char_append_len_ch(this->str, 8, '\0');
+    ptr = this->str->ptr;
+    ret = codecvt_char_out(this->cvt, &this->state, from_next, &ch+1, &from_next,
+            ptr, ptr+basic_string_char_length(this->str), &to_next);
 
     switch(ret) {
-    case CODECVT_ok:
-        ret = fwrite(dyn_buf, to_next-dyn_buf, 1, this->file);
-        free(dyn_buf);
-        return ret ? c : EOF;
     case CODECVT_partial:
-        ERR("buffer should be big enough to store all output\n");
-        /* fall through */
+        if(from_next == &ch)
+            return EOF;
+    case CODECVT_ok:
+        if(!fwrite(ptr, to_next-ptr, 1, this->file))
+            return EOF;
+        return c;
+    case CODECVT_noconv:
+        return fwrite(&ch, sizeof(char), 1, this->file) ? c : EOF;
     default:
-        free(dyn_buf);
         return EOF;
     }
 }
@@ -2667,8 +2617,25 @@ int __thiscall basic_filebuf_char_pbackfail(basic_filebuf_char *this, int c)
             && (c==EOF || (int)(unsigned char)basic_streambuf_char_gptr(&this->base)[-1]==c)) {
         basic_streambuf_char__Gndec(&this->base);
         return c==EOF ? !c : c;
-    }else if(c!=EOF && !this->cvt) {
+    }else if(c == EOF) {
+        return EOF;
+    }else if(!this->cvt) {
         return ungetc(c, this->file);
+    }else if(basic_string_char_length(this->str)) {
+        char *b, *e, *cur;
+
+        e = this->str->ptr;
+        b = e+this->str->size-1;
+        for(cur = b; cur>=e; cur--) {
+            if(ungetc(*cur, this->file) == EOF) {
+                for(; cur<=b; cur++)
+                    fgetc(this->file);
+                return EOF;
+            }
+        }
+        basic_string_char_clear(this->str);
+        this->state = this->state0;
+        return c;
     }
 
     return EOF;
@@ -2679,9 +2646,9 @@ int __thiscall basic_filebuf_char_pbackfail(basic_filebuf_char *this, int c)
 DEFINE_THISCALL_WRAPPER(basic_filebuf_char_uflow, 4)
 int __thiscall basic_filebuf_char_uflow(basic_filebuf_char *this)
 {
-    char ch, buf[128], *to_next;
+    char ch, *to_next;
     const char *buf_next;
-    int c, i;
+    int c;
 
     TRACE("(%p)\n", this);
 
@@ -2695,33 +2662,28 @@ int __thiscall basic_filebuf_char_uflow(basic_filebuf_char *this)
     if(!this->cvt || c==EOF)
         return c;
 
-    buf_next = buf;
-    for(i=0; i < sizeof(buf)/sizeof(buf[0]); i++) {
-        buf[i] = c;
+    basic_string_char_clear(this->str);
+    this->state0 = this->state;
+    while(1) {
+        basic_string_char_append_ch(this->str, c);
+        this->state = this->state0;
 
-        switch(codecvt_char_in(this->cvt, &this->state, buf_next,
-                    buf+i+1, &buf_next, &ch, &ch+1, &to_next)) {
+        switch(codecvt_char_in(this->cvt, &this->state, this->str->ptr,
+                    this->str->ptr+this->str->size, &buf_next, &ch, &ch+1, &to_next)) {
         case CODECVT_partial:
-        case CODECVT_ok:
-            if(to_next == &ch) {
-                c = fgetc(this->file);
-                if(c == EOF)
-                    return EOF;
-                continue;
-            }
-
-            for(i--; i>=buf_next-buf; i--)
-                ungetc(buf[i], this->file);
-            return ch;
+            break;
         case CODECVT_noconv:
-            return (unsigned char)buf[0];
+            return (unsigned char)this->str->ptr[0];
+        case CODECVT_ok:
+            return (unsigned char)ch;
         default:
             return EOF;
         }
-    }
 
-    FIXME("buffer is too small\n");
-    return EOF;
+        c = fgetc(this->file);
+        if(c == EOF)
+            return EOF;
+    }
 }
 
 /* ?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
@@ -2752,8 +2714,7 @@ fpos_int* __thiscall basic_filebuf_char_seekoff(basic_filebuf_char *this,
 
     TRACE("(%p %p %ld %d %d)\n", this, ret, off, way, mode);
 
-    if(!basic_filebuf_char_is_open(this) || !basic_filebuf_char__Endwrite(this)
-            || fseek(this->file, off, way)) {
+    if(!basic_filebuf_char_is_open(this) || fseek(this->file, off, way)) {
         ret->off = -1;
         ret->pos = 0;
         ret->state = 0;
@@ -2777,8 +2738,7 @@ fpos_int* __thiscall basic_filebuf_char_seekpos(basic_filebuf_char *this,
 
     TRACE("(%p %p %s %d)\n", this, ret, debugstr_fpos_int(&pos), mode);
 
-    if(!basic_filebuf_char_is_open(this) || !basic_filebuf_char__Endwrite(this)
-            || fseek(this->file, (LONG)pos.pos, SEEK_SET)
+    if(!basic_filebuf_char_is_open(this) || fseek(this->file, (LONG)pos.pos, SEEK_SET)
             || (pos.off && fseek(this->file, pos.off, SEEK_CUR))) {
         ret->off = -1;
         ret->pos = 0;
@@ -2823,15 +2783,6 @@ int __thiscall basic_filebuf_char_sync(basic_filebuf_char *this)
     if(call_basic_streambuf_char_overflow(&this->base, EOF) == EOF)
         return 0;
     return fflush(this->file);
-}
-
-/* ?imbue@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEXABVlocale@2@@Z */
-/* ?imbue@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAXAEBVlocale@2@@Z */
-DEFINE_THISCALL_WRAPPER(basic_filebuf_char_imbue, 8)
-void __thiscall basic_filebuf_char_imbue(basic_filebuf_char *this, const locale *loc)
-{
-    TRACE("(%p %p)\n", this, loc);
-    basic_filebuf_char__Initcvt(this, codecvt_char_use_facet(loc));
 }
 
 /* ?_Stinit@?1??_Init@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA */
