@@ -165,6 +165,7 @@ typedef struct
 
 locale* __thiscall locale_ctor(locale*);
 locale* __thiscall locale_copy_ctor(locale*, const locale*);
+locale* __thiscall locale_ctor_uninitialized(locale *, int);
 locale* __thiscall locale_operator_assign(locale*, const locale*);
 void __thiscall locale_dtor(locale*);
 void free_locale(void);
@@ -274,7 +275,6 @@ typedef struct _fnarray {
 /* class ios_base */
 typedef struct _ios_base {
     const vtable_ptr *vtable;
-    MSVCP_size_t stdstr;
     IOSB_iostate state;
     IOSB_iostate except;
     IOSB_fmtflags fmtfl;
@@ -282,7 +282,8 @@ typedef struct _ios_base {
     streamsize wide;
     IOS_BASE_iosarray *arr;
     IOS_BASE_fnarray *calls;
-    locale *loc;
+    locale loc;
+    MSVCP_size_t stdstr;
 } ios_base;
 
 /* class basic_streambuf<char> */

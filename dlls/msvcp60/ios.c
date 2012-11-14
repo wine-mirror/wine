@@ -4054,6 +4054,7 @@ ios_base* __thiscall ios_base_ctor(ios_base *this)
 {
     TRACE("(%p)\n", this);
     this->vtable = &MSVCP_ios_base_vtable;
+    locale_ctor_uninitialized(&this->loc, 0);
     return this;
 }
 
@@ -4110,10 +4111,7 @@ void CDECL ios_base_Tidy(ios_base *this)
 static void ios_base_Ios_base_dtor(ios_base *obj)
 {
     TRACE("(%p)\n", obj);
-    if(obj->loc) {
-        locale_dtor(obj->loc);
-        MSVCRT_operator_delete(obj->loc);
-    }
+    locale_dtor(&obj->loc);
     ios_base_Tidy(obj);
 }
 
@@ -4296,7 +4294,7 @@ ios_base* __thiscall ios_base_copyfmt(ios_base *this, const ios_base *rhs)
         this->fmtfl = rhs->fmtfl;
         this->prec = rhs->prec;
         this->wide = rhs->wide;
-        locale_operator_assign(this->loc, rhs->loc);
+        locale_operator_assign(&this->loc, &rhs->loc);
 
         for(event_cur=rhs->calls; event_cur; event_cur=event_cur->next)
             ios_base_register_callback(this, event_cur->event_handler, event_cur->index);
@@ -4371,8 +4369,7 @@ void __thiscall ios_base__Init(ios_base *this)
     this->wide = 0;
     this->arr = NULL;
     this->calls = NULL;
-    this->loc = MSVCRT_operator_new(sizeof(locale));
-    locale_ctor(this->loc);
+    locale_ctor(&this->loc);
 }
 
 /* ?bad@ios_base@std@@QBE_NXZ */
@@ -4421,7 +4418,7 @@ DEFINE_THISCALL_WRAPPER(ios_base_getloc, 8)
 locale* __thiscall ios_base_getloc(const ios_base *this, locale *ret)
 {
     TRACE("(%p)\n", this);
-    return locale_copy_ctor(ret, this->loc);
+    return locale_copy_ctor(ret, &this->loc);
 }
 
 /* ?good@ios_base@std@@QBE_NXZ */
@@ -4439,8 +4436,8 @@ DEFINE_THISCALL_WRAPPER(ios_base_imbue, 12)
 locale* __thiscall ios_base_imbue(ios_base *this, locale *ret, const locale *loc)
 {
     TRACE("(%p %p)\n", this, loc);
-    *ret = *this->loc;
-    locale_copy_ctor(this->loc, loc);
+    *ret = this->loc;
+    locale_copy_ctor(&this->loc, loc);
     return ret;
 }
 
