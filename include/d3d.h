@@ -450,7 +450,7 @@ DECLARE_INTERFACE_(IDirect3DMaterial,IUnknown)
     STDMETHOD(Initialize)(THIS_ LPDIRECT3D lpDirect3D) PURE;
     STDMETHOD(SetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE;
     STDMETHOD(GetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE;
-    STDMETHOD(GetHandle)(THIS_ LPDIRECT3DDEVICE lpDirect3DDevice, LPD3DMATERIALHANDLE lpHandle) PURE;
+    STDMETHOD(GetHandle)(THIS_ struct IDirect3DDevice *device, D3DMATERIALHANDLE *handle) PURE;
     STDMETHOD(Reserve)(THIS) PURE;
     STDMETHOD(Unreserve)(THIS) PURE;
 };
@@ -571,7 +571,7 @@ DECLARE_INTERFACE_(IDirect3DTexture,IUnknown)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3DTexture methods ***/
     STDMETHOD(Initialize)(THIS_ struct IDirect3DDevice *device, IDirectDrawSurface *surface) PURE;
-    STDMETHOD(GetHandle)(THIS_ LPDIRECT3DDEVICE lpDirect3DDevice, LPD3DTEXTUREHANDLE  lpHandle) PURE;
+    STDMETHOD(GetHandle)(THIS_ struct IDirect3DDevice *device, D3DTEXTUREHANDLE *handle) PURE;
     STDMETHOD(PaletteChanged)(THIS_ DWORD dwStart, DWORD dwCount) PURE;
     STDMETHOD(Load)(THIS_ IDirect3DTexture *texture) PURE;
     STDMETHOD(Unload)(THIS) PURE;
@@ -886,7 +886,7 @@ DECLARE_INTERFACE_(IDirect3DExecuteBuffer,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3DExecuteBuffer methods ***/
-    STDMETHOD(Initialize)(THIS_ LPDIRECT3DDEVICE lpDirect3DDevice, LPD3DEXECUTEBUFFERDESC lpDesc) PURE;
+    STDMETHOD(Initialize)(THIS_ struct IDirect3DDevice *device, D3DEXECUTEBUFFERDESC *desc) PURE;
     STDMETHOD(Lock)(THIS_ LPD3DEXECUTEBUFFERDESC lpDesc) PURE;
     STDMETHOD(Unlock)(THIS) PURE;
     STDMETHOD(SetExecuteData)(THIS_ LPD3DEXECUTEDATA lpData) PURE;
