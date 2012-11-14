@@ -934,6 +934,12 @@ static void test_num_get_get_uint64(void)
         state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &ss.basic_ios.base);
         next  = (int)call_func1(p_basic_istream_char_get, &ss.base.base1);
 
+        if(state==IOSTATE_faileof && tests[i].val==~0) {
+            /* Maximal uint64 test is broken on 9.0.21022.8 */
+            skip("basic_istream_char_read_uint64(MAX_UINT64) is broken\n");
+            continue;
+        }
+
         ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
         ok(tests[i].val   == val,   "wrong val, expected = %lx%08lx found %lx%08lx\n", (unsigned long)(tests[i].val >> 32),
                 (unsigned long)tests[i].val, (unsigned long)(val >> 32), (unsigned long)val);
