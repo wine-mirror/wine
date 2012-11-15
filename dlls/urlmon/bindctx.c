@@ -83,6 +83,7 @@ IBindStatusCallback *bsc_from_bctx(IBindCtx *bctx)
     if(holder->callback) {
         IBindStatusCallback_Release(bsc);
         bsc = holder->callback;
+        IBindStatusCallback_AddRef(bsc);
     }
 
     IBindStatusCallbackEx_Release(&holder->IBindStatusCallbackEx_iface);
