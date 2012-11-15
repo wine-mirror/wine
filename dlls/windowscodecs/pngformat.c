@@ -166,6 +166,7 @@ MAKE_FUNCPTR(png_error);
 MAKE_FUNCPTR(png_get_bit_depth);
 MAKE_FUNCPTR(png_get_color_type);
 MAKE_FUNCPTR(png_get_error_ptr);
+MAKE_FUNCPTR(png_get_iCCP);
 MAKE_FUNCPTR(png_get_image_height);
 MAKE_FUNCPTR(png_get_image_width);
 MAKE_FUNCPTR(png_get_io_ptr);
@@ -213,6 +214,7 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_get_bit_depth);
         LOAD_FUNCPTR(png_get_color_type);
         LOAD_FUNCPTR(png_get_error_ptr);
+        LOAD_FUNCPTR(png_get_iCCP);
         LOAD_FUNCPTR(png_get_image_height);
         LOAD_FUNCPTR(png_get_image_width);
         LOAD_FUNCPTR(png_get_io_ptr);
@@ -624,7 +626,7 @@ static HRESULT WINAPI PngDecoder_GetPreview(IWICBitmapDecoder *iface,
 static HRESULT WINAPI PngDecoder_GetColorContexts(IWICBitmapDecoder *iface,
     UINT cCount, IWICColorContext **ppIColorContexts, UINT *pcActualCount)
 {
-    FIXME("(%p,%u,%p,%p)\n", iface, cCount, ppIColorContexts, pcActualCount);
+    TRACE("(%p,%u,%p,%p)\n", iface, cCount, ppIColorContexts, pcActualCount);
     return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 }
 
@@ -844,8 +846,35 @@ static HRESULT WINAPI PngDecoder_Frame_GetMetadataQueryReader(IWICBitmapFrameDec
 static HRESULT WINAPI PngDecoder_Frame_GetColorContexts(IWICBitmapFrameDecode *iface,
     UINT cCount, IWICColorContext **ppIColorContexts, UINT *pcActualCount)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cCount, ppIColorContexts, pcActualCount);
-    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+    PngDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
+    png_charp name, profile;
+    png_uint_32 len;
+    int compression_type;
+    HRESULT hr;
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cCount, ppIColorContexts, pcActualCount);
+
+    EnterCriticalSection(&This->lock);
+
+    if (ppng_get_iCCP(This->png_ptr, This->info_ptr, &name, &compression_type, &profile, &len))
+    {
+        if (cCount && ppIColorContexts)
+        {
+            hr = IWICColorContext_InitializeFromMemory(*ppIColorContexts, (const BYTE *)profile, len);
+            if (FAILED(hr))
+            {
+                LeaveCriticalSection(&This->lock);
+                return hr;
+            }
+        }
+        *pcActualCount = 1;
+    }
+    else
+        *pcActualCount = 0;
+
+    LeaveCriticalSection(&This->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PngDecoder_Frame_GetThumbnail(IWICBitmapFrameDecode *iface,
