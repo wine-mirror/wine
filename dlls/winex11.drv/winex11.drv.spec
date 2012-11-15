@@ -19,8 +19,6 @@
 @ cdecl GetCursorPos(ptr) X11DRV_GetCursorPos
 @ cdecl SetCursorPos(long long) X11DRV_SetCursorPos
 @ cdecl ClipCursor(ptr) X11DRV_ClipCursor
-@ cdecl GetScreenSaveActive() X11DRV_GetScreenSaveActive
-@ cdecl SetScreenSaveActive(long) X11DRV_SetScreenSaveActive
 @ cdecl ChangeDisplaySettingsEx(ptr ptr long long long) X11DRV_ChangeDisplaySettingsEx
 @ cdecl EnumDisplayMonitors(long ptr ptr long) X11DRV_EnumDisplayMonitors
 @ cdecl EnumDisplaySettingsEx(ptr long ptr long) X11DRV_EnumDisplaySettingsEx
@@ -54,6 +52,7 @@
 @ cdecl WindowMessage(long long long long) X11DRV_WindowMessage
 @ cdecl WindowPosChanging(long long long ptr ptr ptr ptr) X11DRV_WindowPosChanging
 @ cdecl WindowPosChanged(long long long ptr ptr ptr ptr ptr) X11DRV_WindowPosChanged
+@ cdecl SystemParametersInfo(long long ptr long) X11DRV_SystemParametersInfo
 
 # WinTab32
 @ cdecl AttachEventQueueToTablet(long) X11DRV_AttachEventQueueToTablet

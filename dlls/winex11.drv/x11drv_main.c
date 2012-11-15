@@ -696,35 +696,39 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     return ret;
 }
 
-/***********************************************************************
- *              GetScreenSaveActive (X11DRV.@)
- *
- * Returns the active status of the screen saver
- */
-BOOL CDECL X11DRV_GetScreenSaveActive(void)
-{
-    int timeout, temp;
-    XGetScreenSaver(gdi_display, &timeout, &temp, &temp, &temp);
-    return timeout != 0;
-}
 
 /***********************************************************************
- *              SetScreenSaveActive (X11DRV.@)
- *
- * Activate/Deactivate the screen saver
+ *              SystemParametersInfo (X11DRV.@)
  */
-void CDECL X11DRV_SetScreenSaveActive(BOOL bActivate)
+BOOL CDECL X11DRV_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, UINT flags )
 {
-    int timeout, interval, prefer_blanking, allow_exposures;
-    static int last_timeout = 15 * 60;
+    switch (action)
+    {
+    case SPI_GETSCREENSAVEACTIVE:
+        if (ptr_param)
+        {
+            int timeout, temp;
+            XGetScreenSaver(gdi_display, &timeout, &temp, &temp, &temp);
+            *(BOOL *)ptr_param = timeout != 0;
+            return TRUE;
+        }
+        break;
+    case SPI_SETSCREENSAVEACTIVE:
+        {
+            int timeout, interval, prefer_blanking, allow_exposures;
+            static int last_timeout = 15 * 60;
 
-    XLockDisplay( gdi_display );
-    XGetScreenSaver(gdi_display, &timeout, &interval, &prefer_blanking,
-                    &allow_exposures);
-    if (timeout) last_timeout = timeout;
+            XLockDisplay( gdi_display );
+            XGetScreenSaver(gdi_display, &timeout, &interval, &prefer_blanking,
+                            &allow_exposures);
+            if (timeout) last_timeout = timeout;
 
-    timeout = bActivate ? last_timeout : 0;
-    XSetScreenSaver(gdi_display, timeout, interval, prefer_blanking,
-                    allow_exposures);
-    XUnlockDisplay( gdi_display );
+            timeout = int_param ? last_timeout : 0;
+            XSetScreenSaver(gdi_display, timeout, interval, prefer_blanking,
+                            allow_exposures);
+            XUnlockDisplay( gdi_display );
+        }
+        break;
+    }
+    return FALSE;  /* let user32 handle it */
 }
