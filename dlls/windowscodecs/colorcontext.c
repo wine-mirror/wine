@@ -39,6 +39,7 @@ typedef struct ColorContext {
     WICColorContextType type;
     BYTE *profile;
     UINT profile_len;
+    UINT exif_color_space;
 } ColorContext;
 
 static inline ColorContext *impl_from_IWICColorContext(IWICColorContext *iface)
@@ -125,8 +126,16 @@ static HRESULT WINAPI ColorContext_InitializeFromMemory(IWICColorContext *iface,
 static HRESULT WINAPI ColorContext_InitializeFromExifColorSpace(IWICColorContext *iface,
     UINT value)
 {
-    FIXME("(%p,%u)\n", iface, value);
-    return E_NOTIMPL;
+    ColorContext *This = impl_from_IWICColorContext(iface);
+    TRACE("(%p,%u)\n", iface, value);
+
+    if (This->type != WICColorContextUninitialized && This->type != WICColorContextExifColorSpace)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    This->exif_color_space = value;
+    This->type = WICColorContextExifColorSpace;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ColorContext_GetType(IWICColorContext *iface,
@@ -177,6 +186,7 @@ HRESULT ColorContext_Create(IWICColorContext **colorcontext)
     This->type = 0;
     This->profile = NULL;
     This->profile_len = 0;
+    This->exif_color_space = ~0u;
 
     *colorcontext = &This->IWICColorContext_iface;
 
