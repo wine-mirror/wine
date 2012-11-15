@@ -92,10 +92,10 @@ GaspTable: 3 8 0 16 1 65535 3
 Encoding: UnicodeBmp
 UnicodeInterp: none
 NameList: Adobe Glyph List
-DisplaySize: 8
+DisplaySize: 10
 AntiAlias: 1
 FitToEm: 1
-WinInfo: 46 46 18
+WinInfo: 760 40 14
 BeginPrivate: 10
 BlueValues 27 [-30 0 1120 1177 1522 1522]
 OtherBlues 11 [-426 -426]
@@ -10944,7 +10944,7 @@ SplineSet
 EndSplineSet
 EndChar
 EndChars
-BitmapFont: 8 451 6 2 1
+BitmapFont: 8 454 6 2 1
 BDFChar: 0 0 8 1 7 0 6
 IY*0'JqAFO
 BDFChar: 1 32 2 0 0 0 0
@@ -11846,7 +11846,7 @@ J=uCnOH9GB
 BDFChar: 449 1211 4 1 4 0 4
 J=r!cO8o7\
 EndBitmapFont
-BitmapFont: 9 451 7 2 1
+BitmapFont: 9 454 7 2 1
 BDFChar: 0 0 9 1 7 0 6
 rdo`RJqEt%
 BDFChar: 1 32 3 0 0 0 0
@@ -12748,7 +12748,7 @@ J:QR>OH9GB
 BDFChar: 449 1211 5 0 3 0 4
 J:QR>O8o7\
 EndBitmapFont
-BitmapFont: 10 451 8 2 1
+BitmapFont: 10 454 8 2 1
 BDFChar: 0 0 10 1 8 0 7
 s+,`PJUrCP
 BDFChar: 1 32 3 0 0 0 0
@@ -13413,178 +13413,178 @@ BDFChar: 330 31 5 0 0 0 0
 z
 BDFChar: 331 127 5 0 0 0 0
 z
-BDFChar: 332 1040 6 0 5 0 6
-0JH<oG_h"Q
-BDFChar: 333 1041 6 1 5 0 6
+BDFChar: 332 1040 7 0 5 0 6
+0JH$gG_C_M
+BDFChar: 333 1041 6 0 4 0 6
 n:6&YLktO#
-BDFChar: 334 1042 6 1 5 0 6
-n<f=,LktO#
-BDFChar: 335 1047 5 0 4 0 7
-E!Q^TE!Qa=
-BDFChar: 336 1057 6 0 4 -1 6
-GY!@8J:L0M
-BDFChar: 337 1069 6 0 5 -1 6
-E/4dI":0g&
-BDFChar: 338 1045 6 1 5 0 6
+BDFChar: 334 1042 6 0 4 0 6
+n;)niLktO#
+BDFChar: 335 1047 6 0 4 0 6
+E/4d=#`*F"
+BDFChar: 336 1057 7 0 5 0 6
+3(/:IJ4)?s
+BDFChar: 337 1069 7 0 5 0 6
+E/4WZ"Gh!s
+BDFChar: 338 1045 6 0 4 0 6
 pjdnaJ:RCp
-BDFChar: 339 1052 8 1 6 0 6
-bfmH$UkFC$
-BDFChar: 340 1053 7 1 5 0 6
-Lkpl^Lkpie
-BDFChar: 341 1054 7 0 5 -1 6
-Gf58gKS3#Q
-BDFChar: 342 1056 6 1 4 0 6
-i/j&YJ:N.M
+BDFChar: 339 1052 8 0 6 0 6
+`l>$YP*1Cs
+BDFChar: 340 1053 7 0 5 0 6
+KS5$VKS5!Y
+BDFChar: 341 1054 8 0 6 0 6
+3(/@MJj_Qu
+BDFChar: 342 1056 6 0 4 0 6
+n;)niJ:N.M
 BDFChar: 343 1058 6 0 4 0 6
 p`L\%+<Vd,
 BDFChar: 344 1061 6 0 4 0 6
-84YEg0M%!"
+Lepnj:f)rJ
 BDFChar: 345 1071 6 0 4 0 6
-GXtAMBLmpZ
-BDFChar: 346 1050 6 1 5 0 6
-R%WBqTTFs0
-BDFChar: 347 1048 7 1 5 0 6
-R$ahNaN0/;
-BDFChar: 348 1059 6 0 5 0 7
-KLeX10JFVW
-BDFChar: 349 1043 5 1 4 0 6
+G_h0#-qK-o
+BDFChar: 346 1050 6 0 4 0 6
+Lle:FTTFs0
+BDFChar: 347 1048 7 0 5 0 6
+KT).kUr7od
+BDFChar: 348 1059 6 0 4 0 6
+Lknl(+<\H"
+BDFChar: 349 1043 5 0 3 0 6
 n:6%>J:N.M
-BDFChar: 350 1049 7 1 5 0 8
-?iZR]W2ReYL]@DT
-BDFChar: 351 1068 6 1 4 0 6
-J:PG>OHAB#
-BDFChar: 352 1067 8 1 6 0 6
-KS7:NPa(e?
-BDFChar: 353 1066 7 0 6 0 6
-i#j^)+soDP
-BDFChar: 354 1070 10 1 8 -1 6
-T!>!JTqS%d
-BDFChar: 355 1025 6 1 4 0 8
-?i]\HJFJ)>n,NFg
-BDFChar: 356 1091 5 0 4 -2 4
-Le(?=+<WoL
-BDFChar: 357 1055 7 1 5 0 6
-pkX`^Lkpie
+BDFChar: 350 1049 7 0 5 0 8
+82,^UPbb+nKE(uP
+BDFChar: 351 1068 6 0 4 0 6
+J:N1>LktO#
+BDFChar: 352 1067 8 0 6 0 6
+JqAUFMMgs)
+BDFChar: 353 1066 7 0 5 0 6
+^d(/06pu8"
+BDFChar: 354 1070 10 0 8 0 6
+NW>1ATRbsNTR`.)NW9%Z
+BDFChar: 355 1025 6 0 4 0 8
+:]U9@JFJ)>p](9o
+BDFChar: 356 1091 6 0 4 -2 4
+Lknl(+<WoL
+BDFChar: 357 1055 7 0 5 0 6
+r.K`VKS5!Y
 BDFChar: 358 1051 7 0 5 0 6
-4=!<_6q"rn
+4=!<_6pu\.
 BDFChar: 359 1044 7 0 5 -1 6
-4=!<_6q$s+
-BDFChar: 360 1064 9 1 8 0 6
-OcbcgOcfYD
-BDFChar: 361 1065 10 1 9 -2 6
-OT:LDOT:LDOT:LDs*t*"!.Y%L
-BDFChar: 362 1062 7 1 6 -2 6
-LkpkCLkts3"98E%
+3%.<g84`Z3
+BDFChar: 360 1064 10 0 8 0 6
+Lk(;3Lk(;3Lk(;3s*t(L
+BDFChar: 361 1065 10 0 9 -1 6
+Lk(;3Lk(;3Lk(;3s1eV"
+BDFChar: 362 1062 7 0 5 -1 6
+LkpkCLkts3
 BDFChar: 363 1060 7 0 6 0 6
-3)l'(dW?<+
-BDFChar: 364 1046 9 0 7 0 6
-8Lchb.SIk`
-BDFChar: 365 1063 6 1 4 0 6
-OH>Rn&.fBQ
-BDFChar: 366 1072 5 0 4 0 4
-G^,%#p](9o
-BDFChar: 367 1077 5 0 4 0 4
-E/=:>GQ7^D
-BDFChar: 368 1082 5 1 4 0 4
+&:BY(P'df@
+BDFChar: 364 1046 8 0 6 0 6
+P#PC?<)f"\
+BDFChar: 365 1063 6 0 4 0 6
+Lkpk3#RC\9
+BDFChar: 366 1072 5 0 3 0 4
+?k@:=Du]k<
+BDFChar: 367 1077 5 0 3 0 4
+@$'l.Du]k<
+BDFChar: 368 1082 5 0 3 0 4
 OJ'C^O8o7\
-BDFChar: 369 1086 5 0 4 0 4
+BDFChar: 369 1086 6 0 4 0 4
 E/9=+Du]k<
-BDFChar: 370 1088 6 1 4 -2 4
-i/j%^i.-=X
+BDFChar: 370 1088 6 0 4 -2 4
+n;)mVn:6#h
 BDFChar: 371 1089 5 0 3 0 4
-n:6%>Du]k<
+E.EIhDu]k<
 BDFChar: 372 1093 5 0 4 0 4
 Leo3jL]@DT
-BDFChar: 373 1080 6 1 4 0 4
-YcuK9O8o7\
-BDFChar: 374 1081 6 1 4 0 7
-T\ogSYgAJn
-BDFChar: 375 1092 8 0 6 -2 7
-&.j5PP*1uU&.egA
-BDFChar: 376 1085 6 1 4 0 4
-OHAsnO8o7\
-BDFChar: 377 1087 6 1 4 0 4
-n;r`nO8o7\
-BDFChar: 378 1090 5 0 4 0 4
+BDFChar: 373 1080 6 0 4 0 4
+LmY-^L]@DT
+BDFChar: 374 1081 6 0 4 0 6
+:`tR]W5sbp
+BDFChar: 375 1092 8 0 6 -2 6
+&.j5PP*12(&-)\1
+BDFChar: 376 1085 6 0 4 0 4
+Lkth^L]@DT
+BDFChar: 377 1087 6 0 4 0 4
+pkX`^L]@DT
+BDFChar: 378 1090 6 0 4 0 4
 p`L\%+92BA
-BDFChar: 379 1074 5 1 4 0 4
-n;uRin,NFg
-BDFChar: 380 1084 6 1 5 0 4
-R-:K)L]@DT
-BDFChar: 381 1075 4 1 4 0 4
-n:6%>J,fQL
+BDFChar: 379 1074 5 0 3 0 4
+i/llYhuE`W
+BDFChar: 380 1084 6 0 4 0 4
+LtJY^L]@DT
+BDFChar: 381 1075 4 0 2 0 4
+i.-?.J,fQL
 BDFChar: 382 1079 5 0 3 0 4
-n.8t=n,NFg
-BDFChar: 383 1076 6 0 4 -1 4
-GXt@rpkSnM
-BDFChar: 384 1100 5 1 4 0 4
-J:R-NhuE`W
-BDFChar: 385 1078 7 0 6 0 4
-;KOltdJs7I
-BDFChar: 386 1094 6 1 4 -1 4
-OH>Qcn.5R"
-BDFChar: 387 1096 8 1 6 0 4
-Unjf^qu?]s
-BDFChar: 388 1097 8 1 7 -1 4
-Unjf^rW3'"
+@#uLm?iU0,
+BDFChar: 383 1076 7 0 5 -1 4
+GXt@rr.G%M
+BDFChar: 384 1100 5 0 3 0 4
+J:QR>huE`W
+BDFChar: 385 1078 8 0 6 0 4
+P#OD?OoPI^
+BDFChar: 386 1094 6 0 4 -1 4
+OH>Qcp]pj"
+BDFChar: 387 1096 8 0 6 0 4
+P*1ukrVuou
+BDFChar: 388 1097 8 0 7 -1 4
+P*1ukrrE*"
 BDFChar: 389 1101 5 0 3 0 4
-E,Z@"huE`W
-BDFChar: 390 1102 8 1 6 0 4
-\AZ>(\,ZL/
+i"0i=huE`W
+BDFChar: 390 1102 8 0 6 0 4
+S>,#;S,`Nh
 BDFChar: 391 1083 6 0 4 0 4
-GXt@ra8c2?
-BDFChar: 392 1103 5 0 4 0 4
-G_gT8L]@DT
+GXt@rL]@DT
+BDFChar: 392 1103 5 0 3 0 4
+E0,$8O8o7\
 BDFChar: 393 1073 6 0 4 0 6
-0L5,`Lkp!M
+&7C%XLkp!M
 BDFChar: 394 1098 6 0 4 0 4
-^d*-8GQ7^D
-BDFChar: 395 1099 7 1 5 0 4
-LkthnkPtS_
-BDFChar: 396 1095 5 0 3 0 5
-J<5k3&.egA
-BDFChar: 397 1105 5 0 4 0 7
-:]LK7M"lLF
-BDFChar: 398 1024 6 1 5 0 8
-+9;1eJFJ)>p](9o
-BDFChar: 399 1027 5 1 4 0 9
+^d)j0Du]k<
+BDFChar: 395 1099 7 0 5 0 4
+KS8ENj8]/[
+BDFChar: 396 1095 5 0 3 0 4
+OH=Dm&-)\1
+BDFChar: 397 1105 5 0 3 0 6
+O8r[Mn:5HX
+BDFChar: 398 1024 6 0 4 0 9
+5Tg(%J:R->JG9*E
+BDFChar: 399 1027 5 0 3 0 9
 &0LuBJ:N0#J:IV"
-BDFChar: 400 1028 6 0 4 -1 6
-3(SShJ:L0E
-BDFChar: 401 1029 6 0 4 0 7
-G^t>&3!]fZ
+BDFChar: 400 1028 7 0 5 0 6
+3(/;dJ4)?s
+BDFChar: 401 1029 6 0 4 0 6
+E/9$`#`*F"
 BDFChar: 402 1031 4 0 2 0 8
 TE*n85X7S"huE`W
 BDFChar: 403 1030 4 0 2 0 6
 i'9Om5X=6-
 BDFChar: 404 1032 4 0 2 -2 6
 +<VdL+<VdL^]4?7
-BDFChar: 405 1036 6 1 5 0 9
-&0Lt7TYS@9OI-"J
-BDFChar: 406 1037 7 1 5 0 9
-5Tg&oR&Ht)aG9fr
-BDFChar: 407 1038 6 0 5 0 9
-89ff@aB3C8+M[sW
-BDFChar: 408 1104 5 0 4 0 6
-5Tk$%pjdSh
-BDFChar: 409 1107 4 1 4 0 7
-+@#qrJ:N0#
+BDFChar: 405 1036 6 0 4 0 9
+&0Lt/OJ'C^OGEl:
+BDFChar: 406 1037 7 0 5 0 9
++:nO+N0L-6`.S*j
+BDFChar: 407 1038 6 0 4 0 8
+82,jU:f&8W^]4?7
+BDFChar: 408 1104 5 0 3 0 7
+5Tg&7ORRd>
+BDFChar: 409 1107 4 0 2 0 7
++@#qbJ:N0#
 BDFChar: 410 1108 5 0 3 0 4
 E.HksDu]k<
-BDFChar: 411 1109 4 0 3 0 4
-n:5HhhuE`W
+BDFChar: 411 1109 4 0 2 0 4
+i.+'8huE`W
 BDFChar: 412 1111 2 0 2 0 6
 TE%5B5X7R7
-BDFChar: 413 1110 2 1 1 0 6
+BDFChar: 413 1110 2 0 0 0 6
 J,k+MJ:N.M
 BDFChar: 414 1112 3 0 1 -2 6
-5QF&75X7S"^]4?7
-BDFChar: 415 1116 5 1 4 0 7
-&0Lt7TYR4^
-BDFChar: 416 1117 6 1 4 0 7
-J3X+=YgAJn
-BDFChar: 417 1118 5 0 4 -2 7
-:iHDj85N,*+M[sW
+5QF&75X7S"J,fQL
+BDFChar: 415 1116 5 0 3 0 7
++@#pgTYR4^
+BDFChar: 416 1117 6 0 4 0 7
+5Tg&_R&J)^
+BDFChar: 417 1118 5 0 4 -2 6
+:`tRM:f&8W5QCca
 BDFChar: 418 302 4 0 2 -2 6
 i'9Om5X=6m?iU0,
 BDFChar: 419 303 2 0 1 -2 6
@@ -13613,44 +13613,52 @@ BDFChar: 430 160 3 0 0 0 0
 z
 BDFChar: 431 8470 7 1 5 0 6
 \@CJTTV.qX
-BDFChar: 432 1168 5 1 4 0 6
-n:6%>J:N.M
-BDFChar: 433 1169 4 1 3 0 4
-i.-?.J,fQL
-BDFChar: 434 1170 5 0 4 0 6
+BDFChar: 432 1168 5 0 3 0 7
+&Fb4#J:N0#
+BDFChar: 433 1169 4 0 2 0 5
++Q.d#J:IV"
+BDFChar: 434 1170 6 0 4 0 6
 GX1a`5X7R7
-BDFChar: 435 1171 4 1 4 0 4
-nDJhIJ,fQL
-BDFChar: 436 1178 6 1 5 -2 6
-OJ'D)TTGNH#QOi)
-BDFChar: 437 1186 7 1 6 -2 6
-Lkpl^Lkpum"98E%
-BDFChar: 438 1179 5 1 4 -1 4
-T]!VYYRgd7
-BDFChar: 439 1187 6 1 4 -1 4
-OHAsnO:VBl
+BDFChar: 435 1171 5 0 3 0 4
+E'W>H5QCca
+BDFChar: 436 1178 6 0 4 -1 6
+Lle:FTTFs8
+BDFChar: 437 1186 7 0 6 -1 6
+KS5$VKS5']
+BDFChar: 438 1179 5 0 3 -1 4
+OJ'C^O:VBl
+BDFChar: 439 1187 6 0 5 -1 4
+Lkth^N!'+\
 BDFChar: 440 1198 6 0 4 0 6
 Lepnj+<Vd,
 BDFChar: 441 1200 6 0 4 0 6
 LepnjE$-8'
 BDFChar: 442 1199 5 0 4 -2 4
 LepoE+<Vd,
-BDFChar: 443 1201 5 0 4 -2 5
-Lknl(:`s^"
+BDFChar: 443 1201 5 0 4 -2 4
+Lknl(+E/G'
 BDFChar: 444 1256 7 0 5 0 6
 G_H!JKM4?*
 BDFChar: 445 1257 5 0 4 0 4
 E;56FDu]k<
-BDFChar: 446 1240 6 0 5 0 7
-E!QaIKSW/Q
+BDFChar: 446 1240 7 0 5 0 6
+E!QUEKLdcs
 BDFChar: 447 1241 5 0 3 0 4
-0^t0c?iU0,
-BDFChar: 448 1210 6 1 4 0 6
-J:R-NOH>P(
-BDFChar: 449 1211 6 1 4 0 5
-J:R-NOH9GB
+?kDgh?iU0,
+BDFChar: 448 1210 6 0 4 0 6
+J:R-FLkpie
+BDFChar: 449 1211 6 0 4 0 6
+J:R-FLkpie
+BDFChar: -1 1106 10 0 0 0 0
+z
+BDFChar: -1 1113 10 0 0 0 0
+z
+BDFChar: -1 1180 10 0 0 0 0
+z
+BDFChar: -1 1033 10 0 0 0 0
+z
 EndBitmapFont
-BitmapFont: 11 451 9 2 1 FontForge
+BitmapFont: 11 454 9 2 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--11-80-96-96-P-62-ISO10646-1"
 FONTBOUNDINGBOX 1 "15 11 0 -2"
@@ -14587,7 +14595,7 @@ J:N0SaG>Y.
 BDFChar: 449 1211 6 0 4 0 6
 J:N1>Lkpie
 EndBitmapFont
-BitmapFont: 12 451 10 2 1 FontForge
+BitmapFont: 12 454 10 2 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--12-90-96-96-P-70-ISO10646-1"
 FONTBOUNDINGBOX 1 "16 12 0 -2"
@@ -15320,7 +15328,7 @@ J:N0[`.WesKE(uP
 BDFChar: 449 1211 7 0 5 0 7
 J:N0[`.Wes
 EndBitmapFont
-BitmapFont: 13 451 10 3 1 FontForge
+BitmapFont: 13 454 10 3 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--13-100-96-96-P-73-ISO10646-1"
 FONTBOUNDINGBOX 1 "15 13 0 -3"
@@ -16053,7 +16061,7 @@ J:N0[`.WesKE(uP
 BDFChar: 449 1211 7 0 5 0 7
 J:N0[`.Wes
 EndBitmapFont
-BitmapFont: 15 451 12 3 1 FontForge
+BitmapFont: 15 454 12 3 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--15-110-96-96-P-85-ISO10646-1"
 FONTBOUNDINGBOX 1 "19 15 0 -3"
@@ -16786,7 +16794,7 @@ J:N0#]Y]8PJqARS
 BDFChar: 449 1211 8 0 6 0 9
 J:N0#]Y]8PJq<t&
 EndBitmapFont
-BitmapFont: 16 451 13 3 1 FontForge
+BitmapFont: 16 454 13 3 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--16-120-96-96-P-93-ISO10646-1"
 FONTBOUNDINGBOX 1 "21 16 0 -3"
