@@ -1022,6 +1022,7 @@ static void test_reset(void)
     D3DVIEWPORT8 vp;
     D3DCAPS8 caps;
     DWORD shader;
+    DWORD value;
     HRESULT hr;
     UINT i;
 
@@ -1141,6 +1142,12 @@ static void test_reset(void)
     hr = IDirect3DDevice8_SetViewport(device1, &vp);
     ok(SUCCEEDED(hr), "SetViewport failed, hr %#x.\n", hr);
 
+    hr = IDirect3DDevice8_GetRenderState(device1, D3DRS_LIGHTING, &value);
+    ok(SUCCEEDED(hr), "Failed to get render state, hr %#x.\n", hr);
+    ok(!!value, "Got unexpected value %#x for D3DRS_LIGHTING.\n", value);
+    hr = IDirect3DDevice8_SetRenderState(device1, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+
     memset(&d3dpp, 0, sizeof(d3dpp));
     d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
     d3dpp.Windowed = FALSE;
@@ -1151,6 +1158,10 @@ static void test_reset(void)
     ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
     hr = IDirect3DDevice8_TestCooperativeLevel(device1);
     ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetRenderState(device1, D3DRS_LIGHTING, &value);
+    ok(SUCCEEDED(hr), "Failed to get render state, hr %#x.\n", hr);
+    ok(!!value, "Got unexpected value %#x for D3DRS_LIGHTING.\n", value);
 
     memset(&vp, 0, sizeof(vp));
     hr = IDirect3DDevice8_GetViewport(device1, &vp);
