@@ -10,6 +10,7 @@ C_SRCS = \
 	info.c \
 	metadata.c \
 	palette.c \
+	pngformat.c \
 	stream.c \
 	tiffformat.c
 
