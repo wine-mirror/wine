@@ -37,6 +37,8 @@ typedef struct ColorContext {
     IWICColorContext IWICColorContext_iface;
     LONG ref;
     WICColorContextType type;
+    BYTE *profile;
+    UINT profile_len;
 } ColorContext;
 
 static inline ColorContext *impl_from_IWICColorContext(IWICColorContext *iface)
@@ -86,6 +88,7 @@ static ULONG WINAPI ColorContext_Release(IWICColorContext *iface)
 
     if (ref == 0)
     {
+        HeapFree(GetProcessHeap(), 0, This->profile);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -102,8 +105,21 @@ static HRESULT WINAPI ColorContext_InitializeFromFilename(IWICColorContext *ifac
 static HRESULT WINAPI ColorContext_InitializeFromMemory(IWICColorContext *iface,
     const BYTE *pbBuffer, UINT cbBufferSize)
 {
-    FIXME("(%p,%p,%u)\n", iface, pbBuffer, cbBufferSize);
-    return E_NOTIMPL;
+    ColorContext *This = impl_from_IWICColorContext(iface);
+    TRACE("(%p,%p,%u)\n", iface, pbBuffer, cbBufferSize);
+
+    if (This->type != WICColorContextUninitialized)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    HeapFree(GetProcessHeap(), 0, This->profile);
+    if (!(This->profile = HeapAlloc(GetProcessHeap(), 0, cbBufferSize)))
+        return E_OUTOFMEMORY;
+
+    memcpy(This->profile, pbBuffer, cbBufferSize);
+    This->profile_len = cbBufferSize;
+    This->type = WICColorContextProfile;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ColorContext_InitializeFromExifColorSpace(IWICColorContext *iface,
@@ -159,6 +175,8 @@ HRESULT ColorContext_Create(IWICColorContext **colorcontext)
     This->IWICColorContext_iface.lpVtbl = &ColorContext_Vtbl;
     This->ref = 1;
     This->type = 0;
+    This->profile = NULL;
+    This->profile_len = 0;
 
     *colorcontext = &This->IWICColorContext_iface;
 
