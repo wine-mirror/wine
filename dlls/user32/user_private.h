@@ -79,9 +79,6 @@ typedef struct tagUSER_DRIVER {
     BOOL   (CDECL *pGetCursorPos)(LPPOINT);
     BOOL   (CDECL *pSetCursorPos)(INT,INT);
     BOOL   (CDECL *pClipCursor)(LPCRECT);
-    /* screen saver functions */
-    BOOL   (CDECL *pGetScreenSaveActive)(void);
-    void   (CDECL *pSetScreenSaveActive)(BOOL);
     /* clipboard functions */
     INT    (CDECL *pAcquireClipboard)(HWND);                     /* Acquire selection */
     BOOL   (CDECL *pCountClipboardFormats)(void);                /* Count available clipboard formats */
@@ -118,6 +115,8 @@ typedef struct tagUSER_DRIVER {
     LRESULT (CDECL *pWindowMessage)(HWND,UINT,WPARAM,LPARAM);
     void   (CDECL *pWindowPosChanging)(HWND,HWND,UINT,const RECT *,const RECT *,RECT *,struct window_surface**);
     void   (CDECL *pWindowPosChanged)(HWND,HWND,UINT,const RECT *,const RECT *,const RECT *,const RECT *,struct window_surface*);
+    /* system parameters */
+    BOOL   (CDECL *pSystemParametersInfo)(UINT,UINT,void*,UINT);
 } USER_DRIVER;
 
 extern const USER_DRIVER *USER_Driver DECLSPEC_HIDDEN;

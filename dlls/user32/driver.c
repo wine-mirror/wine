@@ -73,8 +73,6 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(GetCursorPos);
         GET_USER_FUNC(SetCursorPos);
         GET_USER_FUNC(ClipCursor);
-        GET_USER_FUNC(GetScreenSaveActive);
-        GET_USER_FUNC(SetScreenSaveActive);
         GET_USER_FUNC(AcquireClipboard);
         GET_USER_FUNC(EmptyClipboard);
         GET_USER_FUNC(SetClipboardData);
@@ -108,6 +106,7 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(WindowMessage);
         GET_USER_FUNC(WindowPosChanging);
         GET_USER_FUNC(WindowPosChanged);
+        GET_USER_FUNC(SystemParametersInfo);
 #undef GET_USER_FUNC
     }
     else driver_load_error = GetLastError();
@@ -231,15 +230,6 @@ static BOOL CDECL nulldrv_SetCursorPos( INT x, INT y )
 static BOOL CDECL nulldrv_ClipCursor( LPCRECT clip )
 {
     return FALSE;
-}
-
-static BOOL CDECL nulldrv_GetScreenSaveActive(void)
-{
-    return FALSE;
-}
-
-static void CDECL nulldrv_SetScreenSaveActive( BOOL on )
-{
 }
 
 static INT CDECL nulldrv_AcquireClipboard( HWND hwnd )
@@ -423,6 +413,11 @@ static void CDECL nulldrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT s
 {
 }
 
+static BOOL CDECL nulldrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, UINT flags )
+{
+    return FALSE;
+}
+
 static USER_DRIVER null_driver =
 {
     /* keyboard functions */
@@ -446,9 +441,6 @@ static USER_DRIVER null_driver =
     nulldrv_GetCursorPos,
     nulldrv_SetCursorPos,
     nulldrv_ClipCursor,
-    /* screen saver functions */
-    nulldrv_GetScreenSaveActive,
-    nulldrv_SetScreenSaveActive,
     /* clipboard functions */
     nulldrv_AcquireClipboard,
     nulldrv_CountClipboardFormats,
@@ -484,7 +476,9 @@ static USER_DRIVER null_driver =
     nulldrv_UpdateLayeredWindow,
     nulldrv_WindowMessage,
     nulldrv_WindowPosChanging,
-    nulldrv_WindowPosChanged
+    nulldrv_WindowPosChanged,
+    /* system parameters */
+    nulldrv_SystemParametersInfo
 };
 
 
@@ -589,16 +583,6 @@ static BOOL CDECL loaderdrv_SetCursorPos( INT x, INT y )
 static BOOL CDECL loaderdrv_ClipCursor( LPCRECT clip )
 {
     return load_driver()->pClipCursor( clip );
-}
-
-static BOOL CDECL loaderdrv_GetScreenSaveActive(void)
-{
-    return load_driver()->pGetScreenSaveActive();
-}
-
-static void CDECL loaderdrv_SetScreenSaveActive( BOOL on )
-{
-    load_driver()->pSetScreenSaveActive( on );
 }
 
 static INT CDECL loaderdrv_AcquireClipboard( HWND hwnd )
@@ -778,6 +762,11 @@ static void CDECL loaderdrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT
                                       client_rect, visible_rect, valid_rects, surface );
 }
 
+static BOOL CDECL loaderdrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, UINT flags )
+{
+    return FALSE;  /* don't trigger a driver load */
+}
+
 static USER_DRIVER lazy_load_driver =
 {
     /* keyboard functions */
@@ -801,9 +790,6 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_GetCursorPos,
     loaderdrv_SetCursorPos,
     loaderdrv_ClipCursor,
-    /* screen saver functions */
-    loaderdrv_GetScreenSaveActive,
-    loaderdrv_SetScreenSaveActive,
     /* clipboard functions */
     loaderdrv_AcquireClipboard,
     loaderdrv_CountClipboardFormats,
@@ -839,5 +825,7 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_UpdateLayeredWindow,
     loaderdrv_WindowMessage,
     loaderdrv_WindowPosChanging,
-    loaderdrv_WindowPosChanged
+    loaderdrv_WindowPosChanged,
+    /* system parameters */
+    loaderdrv_SystemParametersInfo
 };

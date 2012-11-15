@@ -641,14 +641,6 @@ static BOOL SYSPARAMS_SaveRaw( LPCWSTR lpRegKey, LPCWSTR lpValName,
     return ret;
 }
 
-/* Convenience function to save strings */
-static BOOL SYSPARAMS_Save( LPCWSTR lpRegKey, LPCWSTR lpValName, LPCWSTR lpValue,
-                            UINT fWinIni )
-{
-    return SYSPARAMS_SaveRaw( lpRegKey, lpValName, (const BYTE*)lpValue, 
-        (strlenW(lpValue) + 1)*sizeof(WCHAR), REG_SZ, fWinIni );
-}
-
 /* load a value to a registry entry */
 static DWORD load_entry( struct sysparam_entry *entry, void *data, DWORD size )
 {
@@ -1211,6 +1203,7 @@ static BOOL_ENTRY( LOWPOWERACTIVE, FALSE );
 static BOOL_ENTRY( MOUSEBUTTONSWAP, FALSE );
 static BOOL_ENTRY( POWEROFFACTIVE, FALSE );
 static BOOL_ENTRY( SCREENREADER, FALSE );
+static BOOL_ENTRY( SCREENSAVEACTIVE, TRUE );
 static BOOL_ENTRY( SCREENSAVERRUNNING, FALSE );
 static BOOL_ENTRY( SHOWSOUNDS, FALSE );
 static BOOL_ENTRY( SNAPTODEFBUTTON, FALSE );
@@ -1321,12 +1314,13 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 #define WINE_SPI_WARN(x) \
     case x: \
         WARN( "Ignored action: %u (%s)\n", x, #x ); \
+        ret = TRUE; \
         break
 
-    BOOL ret = TRUE;
+    BOOL ret = USER_Driver->pSystemParametersInfo( uiAction, uiParam, pvParam, fWinIni );
     unsigned spi_idx = 0;
 
-    switch (uiAction)
+    if (!ret) switch (uiAction)
     {
     case SPI_GETBEEP:
         ret = get_entry( &entry_BEEP, uiParam, pvParam );
@@ -1374,25 +1368,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     case SPI_SETSCREENSAVETIMEOUT:
         ret = set_entry( &entry_SCREENSAVETIMEOUT, uiParam, pvParam, fWinIni );
         break;
-
-    case SPI_GETSCREENSAVEACTIVE:               /*     16 */
-        if (!pvParam) return FALSE;
-        *(BOOL *)pvParam = USER_Driver->pGetScreenSaveActive();
+    case SPI_GETSCREENSAVEACTIVE:
+        ret = get_entry( &entry_SCREENSAVEACTIVE, uiParam, pvParam );
         break;
-
-    case SPI_SETSCREENSAVEACTIVE:               /*     17 */
-    {
-        WCHAR buf[12];
-
-        wsprintfW(buf, CSu, uiParam);
-        USER_Driver->pSetScreenSaveActive( uiParam );
-        /* saved value does not affect Wine */
-        SYSPARAMS_Save( SPI_SETSCREENSAVEACTIVE_REGKEY,
-                        SPI_SETSCREENSAVEACTIVE_VALNAME,
-                        buf, fWinIni );
+    case SPI_SETSCREENSAVEACTIVE:
+        ret = set_entry( &entry_SCREENSAVEACTIVE, uiParam, pvParam, fWinIni );
         break;
-    }
-
     case SPI_GETGRIDGRANULARITY:
         ret = get_entry( &entry_GRIDGRANULARITY, uiParam, pvParam );
         break;
@@ -1455,6 +1436,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     case SPI_GETFASTTASKSWITCH:			/*     35 */
         if (!pvParam) return FALSE;
 	*(BOOL *)pvParam = 1;
+        ret = TRUE;
         break;
 
     case SPI_SETFASTTASKSWITCH:                 /*     36 */
@@ -1474,22 +1456,22 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
         if (!pvParam) return FALSE;
 
-        get_entry( &entry_BORDER, 0, &lpnm->iBorderWidth );
-        get_entry( &entry_SCROLLWIDTH, 0, &lpnm->iScrollWidth );
-        get_entry( &entry_SCROLLHEIGHT, 0, &lpnm->iScrollHeight );
-        get_entry( &entry_CAPTIONWIDTH, 0, &lpnm->iCaptionWidth );
-        get_entry( &entry_CAPTIONHEIGHT, 0, &lpnm->iCaptionHeight );
-        get_entry( &entry_CAPTIONLOGFONT, 0, &lpnm->lfCaptionFont );
-        get_entry( &entry_SMCAPTIONWIDTH, 0, &lpnm->iSmCaptionWidth );
-        get_entry( &entry_SMCAPTIONHEIGHT, 0, &lpnm->iSmCaptionHeight );
-        get_entry( &entry_SMCAPTIONLOGFONT, 0, &lpnm->lfSmCaptionFont );
-        get_entry( &entry_MENUWIDTH, 0, &lpnm->iMenuWidth );
-        get_entry( &entry_MENUHEIGHT, 0, &lpnm->iMenuHeight );
-        get_entry( &entry_MENULOGFONT, 0, &lpnm->lfMenuFont );
-        get_entry( &entry_STATUSLOGFONT, 0, &lpnm->lfStatusFont );
-        get_entry( &entry_MESSAGELOGFONT, 0, &lpnm->lfMessageFont );
-        if (lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
-            get_entry( &entry_PADDEDBORDERWIDTH, 0, &lpnm->iPaddedBorderWidth );
+        ret = get_entry( &entry_BORDER, 0, &lpnm->iBorderWidth ) &&
+              get_entry( &entry_SCROLLWIDTH, 0, &lpnm->iScrollWidth ) &&
+              get_entry( &entry_SCROLLHEIGHT, 0, &lpnm->iScrollHeight ) &&
+              get_entry( &entry_CAPTIONWIDTH, 0, &lpnm->iCaptionWidth ) &&
+              get_entry( &entry_CAPTIONHEIGHT, 0, &lpnm->iCaptionHeight ) &&
+              get_entry( &entry_CAPTIONLOGFONT, 0, &lpnm->lfCaptionFont ) &&
+              get_entry( &entry_SMCAPTIONWIDTH, 0, &lpnm->iSmCaptionWidth ) &&
+              get_entry( &entry_SMCAPTIONHEIGHT, 0, &lpnm->iSmCaptionHeight ) &&
+              get_entry( &entry_SMCAPTIONLOGFONT, 0, &lpnm->lfSmCaptionFont ) &&
+              get_entry( &entry_MENUWIDTH, 0, &lpnm->iMenuWidth ) &&
+              get_entry( &entry_MENUHEIGHT, 0, &lpnm->iMenuHeight ) &&
+              get_entry( &entry_MENULOGFONT, 0, &lpnm->lfMenuFont ) &&
+              get_entry( &entry_STATUSLOGFONT, 0, &lpnm->lfStatusFont ) &&
+              get_entry( &entry_MESSAGELOGFONT, 0, &lpnm->lfMessageFont );
+        if (ret && lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
+            ret = get_entry( &entry_PADDEDBORDERWIDTH, 0, &lpnm->iPaddedBorderWidth );
         normalize_nonclientmetrics( lpnm );
         break;
     }
@@ -1524,16 +1506,15 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     {
         MINIMIZEDMETRICS * lpMm = pvParam;
         if (lpMm && lpMm->cbSize == sizeof(*lpMm)) {
-            get_entry( &entry_MINWIDTH, 0, &lpMm->iWidth );
-            get_entry( &entry_MINHORZGAP, 0, &lpMm->iHorzGap );
-            get_entry( &entry_MINVERTGAP, 0, &lpMm->iVertGap );
-            get_entry( &entry_MINARRANGE, 0, &lpMm->iArrange );
+            ret = get_entry( &entry_MINWIDTH, 0, &lpMm->iWidth ) &&
+                  get_entry( &entry_MINHORZGAP, 0, &lpMm->iHorzGap ) &&
+                  get_entry( &entry_MINVERTGAP, 0, &lpMm->iVertGap ) &&
+                  get_entry( &entry_MINARRANGE, 0, &lpMm->iArrange );
             lpMm->iWidth = max( 0, lpMm->iWidth );
             lpMm->iHorzGap = max( 0, lpMm->iHorzGap );
             lpMm->iVertGap = max( 0, lpMm->iVertGap );
             lpMm->iArrange &= 0x0f;
-        } else
-            ret = FALSE;
+        }
         break;
     }
     case SPI_SETMINIMIZEDMETRICS:
@@ -1544,8 +1525,6 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                   set_entry( &entry_MINHORZGAP, max( 0, lpMm->iHorzGap ), NULL, fWinIni ) &&
                   set_entry( &entry_MINVERTGAP, max( 0, lpMm->iVertGap ), NULL, fWinIni ) &&
                   set_entry( &entry_MINARRANGE, lpMm->iArrange & 0x0f, NULL, fWinIni );
-        else
-            ret = FALSE;
         break;
     }
     case SPI_GETICONMETRICS:
@@ -1553,12 +1532,11 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 	LPICONMETRICSW lpIcon = pvParam;
 	if(lpIcon && lpIcon->cbSize == sizeof(*lpIcon))
 	{
-            get_entry( &entry_ICONHORIZONTALSPACING, 0, &lpIcon->iHorzSpacing );
-            get_entry( &entry_ICONVERTICALSPACING, 0, &lpIcon->iVertSpacing );
-            get_entry( &entry_ICONTITLEWRAP, 0, &lpIcon->iTitleWrap );
-            get_entry( &entry_ICONTITLELOGFONT, 0, &lpIcon->lfFont );
+            ret = get_entry( &entry_ICONHORIZONTALSPACING, 0, &lpIcon->iHorzSpacing ) &&
+                  get_entry( &entry_ICONVERTICALSPACING, 0, &lpIcon->iVertSpacing ) &&
+                  get_entry( &entry_ICONTITLEWRAP, 0, &lpIcon->iTitleWrap ) &&
+                  get_entry( &entry_ICONTITLELOGFONT, 0, &lpIcon->lfFont );
 	}
-	else ret = FALSE;
 	break;
     }
     case SPI_SETICONMETRICS:
@@ -1569,8 +1547,6 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                   set_entry( &entry_ICONHORIZONTALSPACING, max(32,lpIcon->iHorzSpacing), NULL, fWinIni ) &&
                   set_entry( &entry_ICONTITLEWRAP, lpIcon->iTitleWrap, NULL, fWinIni ) &&
                   set_entry( &entry_ICONTITLELOGFONT, 0, &lpIcon->lfFont, fWinIni );
-        else
-            ret = FALSE;
         break;
     }
 
@@ -1581,6 +1557,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         spi_idx = SPI_SETWORKAREA_IDX;
         CopyRect( &work_area, pvParam );
         spi_loaded[spi_idx] = TRUE;
+        ret = TRUE;
         break;
     }
 
@@ -1598,6 +1575,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             spi_loaded[spi_idx] = TRUE;
         }
         CopyRect( pvParam, &work_area );
+        ret = TRUE;
         TRACE("work area %s\n", wine_dbgstr_rect( &work_area ));
         break;
     }
@@ -1616,10 +1594,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             lpFilterKeys->iDelayMSec = 0;
             lpFilterKeys->iRepeatMSec = 0;
             lpFilterKeys->iBounceMSec = 0;
-         }
-        else
-        {
-            ret = FALSE;
+            ret = TRUE;
         }
         break;
     }
@@ -1633,10 +1608,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         {
             /* Indicate that no ToggleKeys feature available */
             lpToggleKeys->dwFlags = 0;
-        }
-        else
-        {
-            ret = FALSE;
+            ret = TRUE;
         }
         break;
     }
@@ -1655,10 +1627,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             lpMouseKeys->iCtrlSpeed = 0;
             lpMouseKeys->dwReserved1 = 0;
             lpMouseKeys->dwReserved2 = 0;
-        }
-        else
-        {
-            ret = FALSE;
+            ret = TRUE;
         }
         break;
     }
@@ -1679,10 +1648,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         {
             /* Indicate that no StickyKeys feature available */
             lpStickyKeys->dwFlags = 0;
-        }
-        else
-        {
-            ret = FALSE;
+            ret = TRUE;
         }
         break;
     }
@@ -1697,10 +1663,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             /* Indicate that no accessibility features timeout is available */
             lpAccessTimeout->dwFlags = 0;
             lpAccessTimeout->iTimeOutMSec = 0;
-        }
-        else
-        {
-            ret = FALSE;
+            ret = TRUE;
         }
         break;
     }
@@ -1718,10 +1681,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             lpSerialKeysW->lpszPort = NULL;
             lpSerialKeysW->iBaudRate = 0;
             lpSerialKeysW->iPortState = 0;
-        }
-        else
-        {
-            ret = FALSE;
+            ret = TRUE;
         }
         break;
     }
@@ -1745,10 +1705,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             lpSoundSentryW->iWindowsEffectMSec = 0;
             lpSoundSentryW->lpszWindowsEffectDLL = 0;
             lpSoundSentryW->iWindowsEffectOrdinal = 0;
-        }
-        else
-        {
-            ret = FALSE;
+            ret = TRUE;
         }
         break;
     }
@@ -1763,10 +1720,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 	    /* Indicate that no high contrast feature available */
 	    lpHighContrastW->dwFlags = 0;
 	    lpHighContrastW->lpszDefaultScheme = NULL;
-	}
-	else
-	{
-	    ret = FALSE;
+            ret = TRUE;
 	}
 	break;
     }
@@ -1791,9 +1745,10 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
 	/* Tell it "disabled" */
 	if (lpAnimInfo && lpAnimInfo->cbSize == sizeof(ANIMATIONINFO))
+        {
 	    lpAnimInfo->iMinAnimate = 0; /* Minimise and restore animation is disabled (nonzero == enabled) */
-	else
-	    ret = FALSE;
+            ret = TRUE;
+        }
 	break;
     }
     WINE_SPI_WARN(SPI_SETANIMATION);		/*     73  WINVER >= 0x400 */
