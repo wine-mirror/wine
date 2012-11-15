@@ -601,32 +601,6 @@ static void SYSPARAMS_NotifyChange( UINT uiAction, UINT fWinIni )
 
 
 /***********************************************************************
- * Loads system parameter from user profile.
- */
-static BOOL SYSPARAMS_Load( LPCWSTR lpRegKey, LPCWSTR lpValName, void *lpBuf, DWORD count )
-{
-    BOOL ret = FALSE;
-    DWORD type;
-    HKEY hKey;
-
-    memset( lpBuf, 0, count );
-
-    if (RegOpenKeyW( get_volatile_regkey(), lpRegKey, &hKey ) == ERROR_SUCCESS)
-    {
-        ret = !RegQueryValueExW( hKey, lpValName, NULL, &type, lpBuf, &count );
-        RegCloseKey( hKey );
-    }
-
-    if (!ret && RegOpenKeyW( HKEY_CURRENT_USER, lpRegKey, &hKey ) == ERROR_SUCCESS)
-    {
-        ret = !RegQueryValueExW( hKey, lpValName, NULL, &type, lpBuf, &count );
-        RegCloseKey( hKey );
-    }
-
-    return ret;
-}
-
-/***********************************************************************
  * Saves system parameter to user profile.
  */
 
@@ -676,11 +650,27 @@ static BOOL SYSPARAMS_Save( LPCWSTR lpRegKey, LPCWSTR lpValName, LPCWSTR lpValue
 }
 
 /* load a value to a registry entry */
-static BOOL load_entry( struct sysparam_entry *entry, void *data, DWORD size )
+static DWORD load_entry( struct sysparam_entry *entry, void *data, DWORD size )
 {
-    BOOL ret = SYSPARAMS_Load( entry->regkey, entry->regval, data, size );
+    DWORD type, count = 0;
+    HKEY key;
+
+    if (!RegOpenKeyW( get_volatile_regkey(), entry->regkey, &key ))
+    {
+        count = size;
+        if (RegQueryValueExW( key, entry->regval, NULL, &type, data, &count )) count = 0;
+        RegCloseKey( key );
+    }
+    if (!count && !RegOpenKeyW( HKEY_CURRENT_USER, entry->regkey, &key ))
+    {
+        count = size;
+        if (RegQueryValueExW( key, entry->regval, NULL, &type, data, &count )) count = 0;
+        RegCloseKey( key );
+    }
+    /* make sure strings are null-terminated */
+    if (size && count == size && type == REG_SZ) ((WCHAR *)data)[count - 1] = 0;
     entry->loaded = TRUE;
-    return ret;
+    return count;
 }
 
 /* save a value to a registry entry */
@@ -791,53 +781,6 @@ void SYSPARAMS_Init(void)
     __wine_make_gdi_object_system( SYSCOLOR_55AABrush, TRUE );
 }
 
-
-/***********************************************************************
- *              reg_get_logfont
- *
- *  Tries to retrieve logfont info from the specified key and value
- */
-static BOOL reg_get_logfont(LPCWSTR key, LPCWSTR value, LOGFONTW *lf)
-{
-    HKEY hkey;
-    LOGFONTW lfbuf;
-    DWORD type, size;
-    BOOL found = FALSE;
-    HKEY base_keys[2];
-    int i;
-
-    base_keys[0] = get_volatile_regkey();
-    base_keys[1] = HKEY_CURRENT_USER;
-
-    for(i = 0; i < 2 && !found; i++)
-    {
-        if(RegOpenKeyW(base_keys[i], key, &hkey) == ERROR_SUCCESS)
-        {
-            size = sizeof(lfbuf);
-            if(RegQueryValueExW(hkey, value, NULL, &type, (LPBYTE)&lfbuf, &size) == ERROR_SUCCESS &&
-                    type == REG_BINARY)
-            {
-                if( size == sizeof(lfbuf))
-                {
-                    found = TRUE;
-                    memcpy(lf, &lfbuf, size);
-                } else if( size == sizeof( LOGFONT16))
-                {    /* win9x-winME format */
-                    found = TRUE;
-                    SYSPARAMS_LogFont16To32W( (LOGFONT16*) &lfbuf, lf);
-                } else
-                    WARN("Unknown format in key %s value %s, size is %d\n",
-                            debugstr_w( key), debugstr_w( value), size);
-            }
-            RegCloseKey(hkey);
-        }
-    }
-    if( found && lf->lfHeight > 0) { 
-        /* positive height value means points ( inch/72 ) */
-        lf->lfHeight = -MulDiv( lf->lfHeight, get_display_dpi(), 72);
-    }
-    return found;
-}
 
 /* adjust some of the raw values found in the registry */
 static void normalize_nonclientmetrics( NONCLIENTMETRICSW *pncm)
@@ -997,8 +940,7 @@ static BOOL get_dword_entry( union sysparam_all_entry *entry, UINT int_param, vo
     if (!entry->hdr.loaded)
     {
         DWORD val;
-
-        if (load_entry( &entry->hdr, &val, sizeof(val) )) entry->dword.val = val;
+        if (load_entry( &entry->hdr, &val, sizeof(val) ) == sizeof(DWORD)) entry->dword.val = val;
     }
     *(DWORD *)ptr_param = entry->bool.val;
     return TRUE;
@@ -1024,13 +966,28 @@ static BOOL get_font_entry( union sysparam_all_entry *entry, UINT int_param, voi
     {
         LOGFONTW font;
 
-        if (!reg_get_logfont( entry->hdr.regkey, entry->hdr.regval, &font ))
+        switch (load_entry( &entry->hdr, &font, sizeof(font) ))
         {
-            /* use the default GUI font */
+        case sizeof(font):
+            entry->font.val = font;
+            if (font.lfHeight > 0) /* positive height value means points ( inch/72 ) */
+                font.lfHeight = -MulDiv( font.lfHeight, get_display_dpi(), 72 );
+            break;
+        case sizeof(LOGFONT16): /* win9x-winME format */
+            SYSPARAMS_LogFont16To32W( (LOGFONT16 *)&font, &entry->font.val );
+            if (entry->font.val.lfHeight > 0)
+                entry->font.val.lfHeight = -MulDiv( entry->font.val.lfHeight, get_display_dpi(), 72 );
+            break;
+        default:
+            WARN( "Unknown format in key %s value %s\n",
+                  debugstr_w(entry->hdr.regkey), debugstr_w(entry->hdr.regval));
+            /* fall through */
+        case 0: /* use the default GUI font */
             GetObjectW( GetStockObject( DEFAULT_GUI_FONT ), sizeof(font), &font );
             font.lfWeight = entry->font.weight;
+            entry->font.val = font;
+            break;
         }
-        entry->font.val = font;
         entry->hdr.loaded = TRUE;
     }
     *(LOGFONTW *)ptr_param = entry->font.val;
@@ -1096,9 +1053,13 @@ static BOOL get_binary_entry( union sysparam_all_entry *entry, UINT int_param, v
     if (!entry->hdr.loaded)
     {
         void *buffer = HeapAlloc( GetProcessHeap(), 0, entry->bin.size );
+        DWORD len = load_entry( &entry->hdr, buffer, entry->bin.size );
 
-        if (load_entry( &entry->hdr, buffer, entry->bin.size ))
+        if (len)
+        {
             memcpy( entry->bin.ptr, buffer, entry->bin.size );
+            memset( (char *)entry->bin.ptr + len, 0, entry->bin.size - len );
+        }
         HeapFree( GetProcessHeap(), 0, buffer );
     }
     memcpy( ptr_param, entry->bin.ptr, min( int_param, entry->bin.size ) );
