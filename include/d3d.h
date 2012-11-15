@@ -1299,7 +1299,7 @@ DECLARE_INTERFACE_(IDirect3DDevice7,IUnknown)
     STDMETHOD(EnumTextureFormats)(THIS_ LPD3DENUMPIXELFORMATSCALLBACK lpD3DEnumPixelProc, LPVOID lpArg) PURE;
     STDMETHOD(BeginScene)(THIS) PURE;
     STDMETHOD(EndScene)(THIS) PURE;
-    STDMETHOD(GetDirect3D)(THIS_ LPDIRECT3D7 *lplpDirect3D3) PURE;
+    STDMETHOD(GetDirect3D)(THIS_ IDirect3D7 **d3d) PURE;
     STDMETHOD(SetRenderTarget)(THIS_ IDirectDrawSurface7 *surface, DWORD flags) PURE;
     STDMETHOD(GetRenderTarget)(THIS_ IDirectDrawSurface7 **surface) PURE;
     STDMETHOD(Clear)(THIS_ DWORD dwCount,LPD3DRECT lpRects,DWORD dwFlags,D3DCOLOR dwColor,D3DVALUE dvZ,DWORD dwStencil) PURE;

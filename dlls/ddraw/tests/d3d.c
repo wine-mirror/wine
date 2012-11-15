@@ -30,7 +30,7 @@
 #include "unknwn.h"
 
 static IDirectDraw7 *lpDD;
-static LPDIRECT3D7             lpD3D = NULL;
+static IDirect3D7 *lpD3D;
 static IDirectDrawSurface7 *lpDDS;
 static IDirectDrawSurface7 *lpDDSdepth;
 static IDirect3DDevice7 *lpD3DDevice;
