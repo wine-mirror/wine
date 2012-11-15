@@ -361,6 +361,7 @@ struct sysparam_binary_entry
 struct sysparam_font_entry
 {
     struct sysparam_entry hdr;
+    UINT                  weight;
     LOGFONTW              val;
 };
 
@@ -1193,7 +1194,12 @@ static BOOL get_font_entry( union sysparam_all_entry *entry, UINT int_param, voi
     {
         LOGFONTW font;
 
-        if (!reg_get_logfont( entry->hdr.regkey, entry->hdr.regval, &font )) return FALSE;
+        if (!reg_get_logfont( entry->hdr.regkey, entry->hdr.regval, &font ))
+        {
+            /* use the default GUI font */
+            GetObjectW( GetStockObject( DEFAULT_GUI_FONT ), sizeof(font), &font );
+            font.lfWeight = entry->font.weight;
+        }
         entry->font.val = font;
         entry->hdr.loaded = TRUE;
     }
@@ -1331,9 +1337,9 @@ static BOOL set_entry( void *ptr,  UINT int_param, void *ptr_param, UINT flags )
     struct sysparam_binary_entry entry_##name = { { get_binary_entry, set_binary_entry, \
                          SPI_SET ## name ##_REGKEY, SPI_SET ## name ##_VALNAME }, &(data), sizeof(data) }
 
-#define FONT_ENTRY(name) \
+#define FONT_ENTRY(name,weight) \
     struct sysparam_font_entry entry_##name = { { get_font_entry, set_font_entry, \
-                         SPI_SET ## name ##_REGKEY, SPI_SET ## name ##_VALNAME } }
+                         SPI_SET ## name ##_REGKEY, SPI_SET ## name ##_VALNAME }, (weight) }
 
 #define USERPREF_ENTRY(name,offset,mask) \
     struct sysparam_pref_entry entry_##name = { { get_userpref_entry, set_userpref_entry }, \
@@ -1400,7 +1406,7 @@ static DWORD_ENTRY( MOUSECLICKLOCKTIME, 1200 );
 static BYTE user_prefs[8] = { 0x30, 0x00, 0x02, 0x80, 0x10, 0x00, 0x00, 0x00 };
 static BINARY_ENTRY( USERPREFERENCESMASK, user_prefs );
 
-static FONT_ENTRY( ICONTITLELOGFONT );
+static FONT_ENTRY( ICONTITLELOGFONT, FW_NORMAL );
 
 static USERPREF_ENTRY( MENUANIMATION,            0, 0x02 );
 static USERPREF_ENTRY( COMBOBOXANIMATION,        0, 0x04 );
@@ -1599,43 +1605,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         ret = set_entry( &entry_DOUBLECLKHEIGHT, uiParam, pvParam, fWinIni );
         break;
     case SPI_GETICONTITLELOGFONT:
-        if (!pvParam) return FALSE;
-        if (!get_entry( &entry_ICONTITLELOGFONT, uiParam, pvParam ))
-        {
-            LOGFONTW lfDefault, *font = &entry_ICONTITLELOGFONT.val;
-            INT r;
-
-            /*
-             * The 'default GDI fonts' seems to be returned.
-             * If a returned font is not a correct font in your environment,
-             * please try to fix objects/gdiobj.c at first.
-             */
-            GetObjectW( GetStockObject( DEFAULT_GUI_FONT ), sizeof(LOGFONTW), &lfDefault );
-
-            GetProfileStringW( Desktop, IconTitleFaceName, lfDefault.lfFaceName,
-                               font->lfFaceName, LF_FACESIZE );
-
-            r = GetProfileIntW( Desktop, IconTitleSize, 0 );
-            if (r)
-                font->lfHeight = -r;
-            else
-                font->lfHeight = lfDefault.lfHeight;
-
-            font->lfWidth = 0;
-            font->lfEscapement = 0;
-            font->lfOrientation = 0;
-            font->lfWeight = FW_NORMAL;
-            font->lfItalic = FALSE;
-            font->lfStrikeOut = FALSE;
-            font->lfUnderline = FALSE;
-            font->lfCharSet = lfDefault.lfCharSet; /* at least 'charset' should not be hard-coded */
-            font->lfOutPrecision = OUT_DEFAULT_PRECIS;
-            font->lfClipPrecision = CLIP_DEFAULT_PRECIS;
-            font->lfQuality = DEFAULT_QUALITY;
-            font->lfPitchAndFamily = DEFAULT_PITCH;
-            entry_ICONTITLELOGFONT.hdr.loaded = TRUE;
-            *(LOGFONTW *)pvParam = *font;
-        }
+        ret = get_entry( &entry_ICONTITLELOGFONT, uiParam, pvParam );
         break;
     case SPI_SETDOUBLECLICKTIME:
         ret = set_entry( &entry_DOUBLECLICKTIME, uiParam, pvParam, fWinIni );
