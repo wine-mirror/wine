@@ -158,8 +158,11 @@ static HRESULT WINAPI ColorContext_GetProfileBytes(IWICColorContext *iface,
 static HRESULT WINAPI ColorContext_GetExifColorSpace(IWICColorContext *iface,
     UINT *pValue)
 {
-    FIXME("(%p,%p)\n", iface, pValue);
-    return E_NOTIMPL;
+    ColorContext *This = impl_from_IWICColorContext(iface);
+    TRACE("(%p,%p)\n", iface, pValue);
+
+    *pValue = This->exif_color_space;
+    return S_OK;
 }
 
 static const IWICColorContextVtbl ColorContext_Vtbl = {
