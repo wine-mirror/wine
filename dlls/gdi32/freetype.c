@@ -5997,12 +5997,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         needsTransform = TRUE;
     }
 
-    if (needsTransform || (format == GGO_NATIVE || format == GGO_BEZIER ||
-                           format == GGO_GRAY2_BITMAP || format == GGO_GRAY4_BITMAP ||
-                           format == GGO_GRAY8_BITMAP))
-    {
-        load_flags |= FT_LOAD_NO_BITMAP;
-    }
+    if (needsTransform || format != GGO_BITMAP) load_flags |= FT_LOAD_NO_BITMAP;
 
     err = pFT_Load_Glyph(ft_face, glyph_index, load_flags);
 
