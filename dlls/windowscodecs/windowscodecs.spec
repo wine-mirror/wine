@@ -106,7 +106,7 @@
 @ stdcall IWICStream_InitializeFromMemory_Proxy(ptr ptr long) IWICStream_InitializeFromMemory_Proxy_W
 @ stdcall WICConvertBitmapSource(ptr ptr ptr)
 @ stub WICCreateBitmapFromSection
-@ stub WICCreateColorContext_Proxy
+@ stdcall WICCreateColorContext_Proxy(ptr ptr)
 @ stdcall WICCreateImagingFactory_Proxy(long ptr)
 @ stub WICGetMetadataContentSize
 @ stub WICMapGuidToShortName

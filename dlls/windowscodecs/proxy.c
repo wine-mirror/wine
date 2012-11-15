@@ -620,6 +620,13 @@ HRESULT WINAPI IWICStream_InitializeFromMemory_Proxy_W(IWICStream *iface,
     return IWICStream_InitializeFromMemory(iface, pbBuffer, cbBufferSize);
 }
 
+HRESULT WINAPI WICCreateColorContext_Proxy(IWICImagingFactory *iface, IWICColorContext **ppIWICColorContext)
+{
+    TRACE("%p, %p\n", iface, ppIWICColorContext);
+
+    return IWICImagingFactory_CreateColorContext(iface, ppIWICColorContext);
+}
+
 HRESULT WINAPI WICCreateImagingFactory_Proxy(UINT SDKVersion, IWICImagingFactory **ppIImagingFactory)
 {
     TRACE("%x, %p\n", SDKVersion, ppIImagingFactory);
