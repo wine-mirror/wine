@@ -442,8 +442,8 @@ static HRESULT WINAPI ComponentFactory_CreateStream(IWICComponentFactory *iface,
 static HRESULT WINAPI ComponentFactory_CreateColorContext(IWICComponentFactory *iface,
     IWICColorContext **ppIColorContext)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIColorContext);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIColorContext);
+    return ColorContext_Create(ppIColorContext);
 }
 
 static HRESULT WINAPI ComponentFactory_CreateColorTransformer(IWICComponentFactory *iface,

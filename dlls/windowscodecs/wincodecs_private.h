@@ -51,6 +51,7 @@ extern HRESULT BitmapScaler_Create(IWICBitmapScaler **scaler) DECLSPEC_HIDDEN;
 extern HRESULT FlipRotator_Create(IWICBitmapFlipRotator **fliprotator) DECLSPEC_HIDDEN;
 extern HRESULT PaletteImpl_Create(IWICPalette **palette) DECLSPEC_HIDDEN;
 extern HRESULT StreamImpl_Create(IWICStream **stream) DECLSPEC_HIDDEN;
+extern HRESULT ColorContext_Create(IWICColorContext **context) DECLSPEC_HIDDEN;
 
 extern HRESULT copy_pixels(UINT bpp, const BYTE *srcbuffer,
     UINT srcwidth, UINT srcheight, INT srcstride,
