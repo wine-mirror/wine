@@ -120,10 +120,14 @@ static BOOL (WINAPI *pSetSecurityDescriptorControl)(PSECURITY_DESCRIPTOR, SECURI
                                                     SECURITY_DESCRIPTOR_CONTROL);
 static DWORD (WINAPI *pGetSecurityInfo)(HANDLE, SE_OBJECT_TYPE, SECURITY_INFORMATION,
                                         PSID*, PSID*, PACL*, PACL*, PSECURITY_DESCRIPTOR*);
+static DWORD (WINAPI *pSetSecurityInfo)(HANDLE, SE_OBJECT_TYPE, SECURITY_INFORMATION,
+                                        PSID, PSID, PACL, PACL);
 static NTSTATUS (WINAPI *pNtAccessCheck)(PSECURITY_DESCRIPTOR, HANDLE, ACCESS_MASK, PGENERIC_MAPPING,
                                          PPRIVILEGE_SET, PULONG, PULONG, NTSTATUS*);
 static BOOL (WINAPI *pCreateRestrictedToken)(HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD,
                                              PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
+static BOOL (WINAPI *pGetAclInformation)(PACL,LPVOID,DWORD,ACL_INFORMATION_CLASS);
+static BOOL (WINAPI *pGetAce)(PACL,DWORD,LPVOID*);
 
 static HMODULE hmod;
 static int     myARGC;
@@ -174,9 +178,12 @@ static void init(void)
     pSetEntriesInAclA = (void *)GetProcAddress(hmod, "SetEntriesInAclA");
     pSetSecurityDescriptorControl = (void *)GetProcAddress(hmod, "SetSecurityDescriptorControl");
     pGetSecurityInfo = (void *)GetProcAddress(hmod, "GetSecurityInfo");
+    pSetSecurityInfo = (void *)GetProcAddress(hmod, "SetSecurityInfo");
     pCreateRestrictedToken = (void *)GetProcAddress(hmod, "CreateRestrictedToken");
     pConvertSidToStringSidA = (void *)GetProcAddress(hmod, "ConvertSidToStringSidA");
     pConvertStringSidToSidA = (void *)GetProcAddress(hmod, "ConvertStringSidToSidA");
+    pGetAclInformation = (void *)GetProcAddress(hmod, "GetAclInformation");
+    pGetAce = (void *)GetProcAddress(hmod, "GetAce");
 
     myARGC = winetest_get_mainargs( &myARGV );
 }
@@ -3528,20 +3535,42 @@ static void test_acls(void)
 
 static void test_GetSecurityInfo(void)
 {
-    HANDLE obj;
-    PSECURITY_DESCRIPTOR sd;
+    char b[sizeof(TOKEN_USER) + sizeof(SID) + sizeof(DWORD)*SID_MAX_SUB_AUTHORITIES];
+    char admin_ptr[sizeof(SID)+sizeof(ULONG)*SID_MAX_SUB_AUTHORITIES], dacl[100];
+    DWORD sid_size = sizeof(admin_ptr), l = sizeof(b);
+    PSID admin_sid = (PSID) admin_ptr, user_sid;
+    char sd[SECURITY_DESCRIPTOR_MIN_LENGTH];
+    ACL_SIZE_INFORMATION acl_size;
+    PSECURITY_DESCRIPTOR pSD;
+    ACCESS_ALLOWED_ACE *ace;
+    HANDLE token, obj;
     PSID owner, group;
-    PACL dacl;
+    BOOL bret = TRUE;
+    PACL pDacl;
     DWORD ret;
 
-    if (!pGetSecurityInfo)
+    if (!pGetSecurityInfo || !pSetSecurityInfo)
     {
-        win_skip("GetSecurityInfo is not available\n");
+        win_skip("[Get|Set]SecurityInfo is not available\n");
         return;
     }
 
+    if (!OpenThreadToken(GetCurrentThread(), TOKEN_READ, TRUE, &token))
+    {
+        if (GetLastError() != ERROR_NO_TOKEN) bret = FALSE;
+        else if (!OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &token)) bret = FALSE;
+    }
+    if (!bret)
+    {
+        win_skip("Failed to get current user token\n");
+        return;
+    }
+    GetTokenInformation(token, TokenUser, b, l, &l);
+    CloseHandle( token );
+    user_sid = ((TOKEN_USER *)b)->User.Sid;
+
     /* Create something.  Files have lots of associated security info.  */
-    obj = CreateFile(myARGV[0], GENERIC_READ, FILE_SHARE_READ, NULL,
+    obj = CreateFile(myARGV[0], GENERIC_READ|WRITE_DAC, FILE_SHARE_READ, NULL,
                      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (obj == INVALID_HANDLE_VALUE)
     {
@@ -3551,7 +3580,7 @@ static void test_GetSecurityInfo(void)
 
     ret = pGetSecurityInfo(obj, SE_FILE_OBJECT,
                           OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
-                          &owner, &group, &dacl, NULL, &sd);
+                          &owner, &group, &pDacl, NULL, &pSD);
     if (ret == ERROR_CALL_NOT_IMPLEMENTED)
     {
         win_skip("GetSecurityInfo is not implemented\n");
@@ -3559,15 +3588,15 @@ static void test_GetSecurityInfo(void)
         return;
     }
     ok(ret == ERROR_SUCCESS, "GetSecurityInfo returned %d\n", ret);
-    ok(sd != NULL, "GetSecurityInfo\n");
+    ok(pSD != NULL, "GetSecurityInfo\n");
     ok(owner != NULL, "GetSecurityInfo\n");
     ok(group != NULL, "GetSecurityInfo\n");
-    if (dacl != NULL)
-        ok(IsValidAcl(dacl), "GetSecurityInfo\n");
+    if (pDacl != NULL)
+        ok(IsValidAcl(pDacl), "GetSecurityInfo\n");
     else
         win_skip("No ACL information returned\n");
 
-    LocalFree(sd);
+    LocalFree(pSD);
 
     if (!pCreateWellKnownSid)
     {
@@ -3580,14 +3609,60 @@ static void test_GetSecurityInfo(void)
        the other stuff, leaving us no way to free it.  */
     ret = pGetSecurityInfo(obj, SE_FILE_OBJECT,
                           OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
-                          &owner, &group, &dacl, NULL, NULL);
+                          &owner, &group, &pDacl, NULL, NULL);
     ok(ret == ERROR_SUCCESS, "GetSecurityInfo returned %d\n", ret);
     ok(owner != NULL, "GetSecurityInfo\n");
     ok(group != NULL, "GetSecurityInfo\n");
-    if (dacl != NULL)
-        ok(IsValidAcl(dacl), "GetSecurityInfo\n");
+    if (pDacl != NULL)
+        ok(IsValidAcl(pDacl), "GetSecurityInfo\n");
     else
         win_skip("No ACL information returned\n");
+
+    /* Create security descriptor information and test that it comes back the same */
+    pSD = &sd;
+    pDacl = (PACL)&dacl;
+    InitializeSecurityDescriptor(pSD, SECURITY_DESCRIPTOR_REVISION);
+    pCreateWellKnownSid(WinBuiltinAdministratorsSid, NULL, admin_sid, &sid_size);
+    bret = InitializeAcl(pDacl, sizeof(dacl), ACL_REVISION);
+    ok(bret, "Failed to initialize ACL.\n");
+    bret = pAddAccessAllowedAceEx(pDacl, ACL_REVISION, 0, GENERIC_ALL, user_sid);
+    ok(bret, "Failed to add Current User to ACL.\n");
+    bret = pAddAccessAllowedAceEx(pDacl, ACL_REVISION, 0, GENERIC_ALL, admin_sid);
+    ok(bret, "Failed to add Administrator Group to ACL.\n");
+    bret = SetSecurityDescriptorDacl(pSD, TRUE, pDacl, FALSE);
+    ok(bret, "Failed to add ACL to security desciptor.\n");
+    ret = pSetSecurityInfo(obj, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION,
+                          NULL, NULL, pDacl, NULL);
+    ok(ret == ERROR_SUCCESS, "SetSecurityInfo returned %d\n", ret);
+    ret = pGetSecurityInfo(obj, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION,
+                          NULL, NULL, &pDacl, NULL, NULL);
+    ok(ret == ERROR_SUCCESS, "GetSecurityInfo returned %d\n", ret);
+    ok(pDacl && IsValidAcl(pDacl), "GetSecurityInfo returned invalid DACL.\n");
+    bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+    ok(bret, "GetAclInformation failed\n");
+    if (acl_size.AceCount > 0)
+    {
+        bret = pGetAce(pDacl, 0, (VOID **)&ace);
+        ok(bret, "Failed to get Current User ACE.\n");
+        bret = EqualSid(&ace->SidStart, user_sid);
+        todo_wine ok(bret, "Current User ACE != Current User SID.\n");
+        ok(((ACE_HEADER *)ace)->AceFlags == 0,
+           "Current User ACE has unexpected flags (0x%x != 0x0)\n", ((ACE_HEADER *)ace)->AceFlags);
+        ok(ace->Mask == 0x1f01ff, "Current User ACE has unexpected mask (0x%x != 0x1f01ff)\n",
+                                    ace->Mask);
+    }
+    if (acl_size.AceCount > 1)
+    {
+        bret = pGetAce(pDacl, 1, (VOID **)&ace);
+        ok(bret, "Failed to get Administators Group ACE.\n");
+        bret = EqualSid(&ace->SidStart, admin_sid);
+        todo_wine ok(bret, "Administators Group ACE != Administators Group SID.\n");
+        ok(((ACE_HEADER *)ace)->AceFlags == 0,
+           "Administators Group ACE has unexpected flags (0x%x != 0x0)\n", ((ACE_HEADER *)ace)->AceFlags);
+        ok(ace->Mask == 0x1f01ff, "Administators Group ACE has unexpected mask (0x%x != 0x1f01ff)\n",
+                                  ace->Mask);
+    }
+    LocalFree(pSD);
 
     CloseHandle(obj);
 }

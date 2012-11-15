@@ -5611,9 +5611,25 @@ BOOL WINAPI FileEncryptionStatusA(LPCSTR lpFileName, LPDWORD lpStatus)
  */
 DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType, 
                       SECURITY_INFORMATION SecurityInfo, PSID psidOwner,
-                      PSID psidGroup, PACL pDacl, PACL pSacl) {
-    FIXME("stub\n");
-    return ERROR_SUCCESS;
+                      PSID psidGroup, PACL pDacl, PACL pSacl)
+{
+    SECURITY_DESCRIPTOR sd;
+    NTSTATUS status;
+
+    if (!InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION))
+        return ERROR_INVALID_SECURITY_DESCR;
+
+    if (SecurityInfo & OWNER_SECURITY_INFORMATION)
+        SetSecurityDescriptorOwner(&sd, psidOwner, FALSE);
+    if (SecurityInfo & GROUP_SECURITY_INFORMATION)
+        SetSecurityDescriptorGroup(&sd, psidGroup, FALSE);
+    if (SecurityInfo & DACL_SECURITY_INFORMATION)
+        SetSecurityDescriptorDacl(&sd, TRUE, pDacl, FALSE);
+    if (SecurityInfo & SACL_SECURITY_INFORMATION)
+        SetSecurityDescriptorSacl(&sd, TRUE, pSacl, FALSE);
+
+    status = NtSetSecurityObject(handle, SecurityInfo, &sd);
+    return RtlNtStatusToDosError(status);
 }
 
 /******************************************************************************
