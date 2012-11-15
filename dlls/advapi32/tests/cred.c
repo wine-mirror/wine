@@ -670,6 +670,14 @@ static void test_CredUnmarshalCredentialA(void)
     ok( username->UserName != NULL, "UserName is NULL\n" );
     ok( !lstrcmpW( username->UserName, testW ), "got %s\n", wine_dbgstr_w(username->UserName) );
     pCredFree( username );
+
+    type = 0;
+    username = NULL;
+    SetLastError( 0xdeadbeef );
+    ret = pCredUnmarshalCredentialA( "@@CA-----0BQZAMHA0BA", &type, (void **)&username );
+    error = GetLastError();
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
 }
 
 static void test_CredIsMarshaledCredentialA(void)

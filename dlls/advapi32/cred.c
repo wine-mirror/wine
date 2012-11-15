@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <time.h>
+#include <limits.h>
 
 #ifdef __APPLE__
 # include <Security/SecKeychain.h>
@@ -2102,7 +2103,7 @@ static BOOL cred_decode( const WCHAR *cred, unsigned int len, char *buf )
  */
 BOOL WINAPI CredUnmarshalCredentialW( LPCWSTR cred, PCRED_MARSHAL_TYPE type, PVOID *out )
 {
-    unsigned int len, buflen, size;
+    unsigned int len, buflen;
 
     TRACE("%s, %p, %p\n", debugstr_w(cred), type, out);
 
@@ -2134,8 +2135,10 @@ BOOL WINAPI CredUnmarshalCredentialW( LPCWSTR cred, PCRED_MARSHAL_TYPE type, PVO
     case UsernameTargetCredential:
     {
         USERNAME_TARGET_CREDENTIAL_INFO *target;
+        ULONGLONG size = 0;
 
-        if (len < 9 || !cred_decode( cred + 3, 6, (char *)&size ) || !size || size % sizeof(WCHAR))
+        if (len < 9 || !cred_decode( cred + 3, 6, (char *)&size ) ||
+            !size || size % sizeof(WCHAR) || size > INT_MAX)
         {
             SetLastError( ERROR_INVALID_PARAMETER );
             return FALSE;
