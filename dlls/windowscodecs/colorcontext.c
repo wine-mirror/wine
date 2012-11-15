@@ -36,6 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 typedef struct ColorContext {
     IWICColorContext IWICColorContext_iface;
     LONG ref;
+    WICColorContextType type;
 } ColorContext;
 
 static inline ColorContext *impl_from_IWICColorContext(IWICColorContext *iface)
@@ -115,8 +116,11 @@ static HRESULT WINAPI ColorContext_InitializeFromExifColorSpace(IWICColorContext
 static HRESULT WINAPI ColorContext_GetType(IWICColorContext *iface,
     WICColorContextType *pType)
 {
-    FIXME("(%p,%p)\n", iface, pType);
-    return E_NOTIMPL;
+    ColorContext *This = impl_from_IWICColorContext(iface);
+    TRACE("(%p,%p)\n", iface, pType);
+
+    *pType = This->type;
+    return S_OK;
 }
 
 static HRESULT WINAPI ColorContext_GetProfileBytes(IWICColorContext *iface,
@@ -154,6 +158,7 @@ HRESULT ColorContext_Create(IWICColorContext **colorcontext)
 
     This->IWICColorContext_iface.lpVtbl = &ColorContext_Vtbl;
     This->ref = 1;
+    This->type = 0;
 
     *colorcontext = &This->IWICColorContext_iface;
 
