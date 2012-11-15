@@ -1717,9 +1717,7 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
     lpUC->nPort = INTERNET_INVALID_PORT_NUMBER;
 
     /* Parse <params> */
-    lpszParam = memchrW(lpszap, ';', dwUrlLength - (lpszap - lpszUrl));
-    if(!lpszParam)
-        lpszParam = memchrW(lpszap, '?', dwUrlLength - (lpszap - lpszUrl));
+    lpszParam = memchrW(lpszap, '?', dwUrlLength - (lpszap - lpszUrl));
     if(!lpszParam)
         lpszParam = memchrW(lpszap, '#', dwUrlLength - (lpszap - lpszUrl));
 
