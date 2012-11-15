@@ -312,7 +312,6 @@ void manage_desktop( WCHAR *arg )
         SendMessageW( hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconW( 0, MAKEINTRESOURCEW(OIC_WINLOGO)));
         if (name) set_desktop_window_title( hwnd, name );
         SystemParametersInfoA( SPI_SETDESKPATTERN, -1, NULL, FALSE );
-        SetDeskWallPaper( (LPSTR)-1 );
         ClipCursor( NULL );
         initialize_display_settings( hwnd );
         initialize_appbar();
