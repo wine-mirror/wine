@@ -151,8 +151,18 @@ static HRESULT WINAPI ColorContext_GetType(IWICColorContext *iface,
 static HRESULT WINAPI ColorContext_GetProfileBytes(IWICColorContext *iface,
     UINT cbBuffer, BYTE *pbBuffer, UINT *pcbActual)
 {
-    FIXME("(%p,%u,%p,%p)\n", iface, cbBuffer, pbBuffer, pcbActual);
-    return E_NOTIMPL;
+    ColorContext *This = impl_from_IWICColorContext(iface);
+    TRACE("(%p,%u,%p,%p)\n", iface, cbBuffer, pbBuffer, pcbActual);
+
+    if (This->type != WICColorContextProfile)
+        return WINCODEC_ERR_NOTINITIALIZED;
+
+    if (cbBuffer >= This->profile_len && pbBuffer)
+        memcpy(pbBuffer, This->profile, This->profile_len);
+
+    *pcbActual = This->profile_len;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ColorContext_GetExifColorSpace(IWICColorContext *iface,
