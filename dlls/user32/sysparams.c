@@ -170,6 +170,8 @@ static const WCHAR SPI_SETSCREENREADER_REGKEY[]=              {'C','o','n','t','
 static const WCHAR SPI_SETSCREENREADER_VALNAME[]=             {'O','n',0};
 #define            SPI_SETDESKWALLPAPER_REGKEY                DESKTOP_REGKEY
 static const WCHAR SPI_SETDESKWALLPAPER_VALNAME[]=            {'W','a','l','l','p','a','p','e','r',0};
+#define            SPI_SETDESKPATTERN_REGKEY                  DESKTOP_REGKEY
+static const WCHAR SPI_SETDESKPATTERN_VALNAME[]=              {'P','a','t','t','e','r','n',0};
 #define            SPI_SETFONTSMOOTHING_REGKEY                DESKTOP_REGKEY
 static const WCHAR SPI_SETFONTSMOOTHING_VALNAME[]=            {'F','o','n','t','S','m','o','o','t','h','i','n','g',0};
 #define            SPI_SETDRAGWIDTH_REGKEY                    DESKTOP_REGKEY
@@ -345,6 +347,12 @@ struct sysparam_binary_entry
     size_t                size;
 };
 
+struct sysparam_path_entry
+{
+    struct sysparam_entry hdr;
+    WCHAR                 path[MAX_PATH];
+};
+
 struct sysparam_font_entry
 {
     struct sysparam_entry hdr;
@@ -367,6 +375,7 @@ union sysparam_all_entry
     struct sysparam_bool_entry   bool;
     struct sysparam_dword_entry  dword;
     struct sysparam_binary_entry bin;
+    struct sysparam_path_entry   path;
     struct sysparam_font_entry   font;
     struct sysparam_pref_entry   pref;
 };
@@ -1045,6 +1054,40 @@ static BOOL set_font_entry( union sysparam_all_entry *entry, UINT int_param, voi
     return TRUE;
 }
 
+/* get a path parameter in the registry */
+static BOOL get_path_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param )
+{
+    if (!ptr_param) return FALSE;
+
+    if (!entry->hdr.loaded)
+    {
+        WCHAR buffer[MAX_PATH];
+
+        if (load_entry( &entry->hdr, buffer, sizeof(buffer) ))
+            lstrcpynW( entry->path.path, buffer, MAX_PATH );
+        HeapFree( GetProcessHeap(), 0, buffer );
+    }
+    lstrcpynW( ptr_param, entry->path.path, int_param );
+    return TRUE;
+}
+
+/* set a path parameter in the registry */
+static BOOL set_path_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param, UINT flags )
+{
+    WCHAR buffer[MAX_PATH];
+    BOOL ret;
+
+    lstrcpynW( buffer, ptr_param, MAX_PATH );
+    ret = save_entry_string( &entry->hdr, buffer, flags );
+    if (ret)
+    {
+        strcpyW( entry->path.path, buffer );
+        entry->hdr.loaded = TRUE;
+    }
+    HeapFree( GetProcessHeap(), 0, buffer );
+    return ret;
+}
+
 /* get a binary parameter in the registry */
 static BOOL get_binary_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param )
 {
@@ -1158,6 +1201,10 @@ static BOOL set_entry( void *ptr,  UINT int_param, void *ptr_param, UINT flags )
     struct sysparam_binary_entry entry_##name = { { get_binary_entry, set_binary_entry, \
                          SPI_SET ## name ##_REGKEY, SPI_SET ## name ##_VALNAME }, &(data), sizeof(data) }
 
+#define PATH_ENTRY(name) \
+    struct sysparam_binary_entry entry_##name = { { get_path_entry, set_path_entry, \
+                         SPI_SET ## name ##_REGKEY, SPI_SET ## name ##_VALNAME } }
+
 #define FONT_ENTRY(name,weight) \
     struct sysparam_font_entry entry_##name = { { get_font_entry, set_font_entry, \
                          SPI_SET ## name ##_REGKEY, SPI_SET ## name ##_VALNAME }, (weight) }
@@ -1233,6 +1280,9 @@ static DWORD_ENTRY( FONTSMOOTHINGTYPE, 0 );
 static DWORD_ENTRY( FOREGROUNDFLASHCOUNT, 3 );
 static DWORD_ENTRY( FOREGROUNDLOCKTIMEOUT, 0 );
 static DWORD_ENTRY( MOUSECLICKLOCKTIME, 1200 );
+
+static PATH_ENTRY( DESKPATTERN );
+static PATH_ENTRY( DESKWALLPAPER );
 
 static BYTE user_prefs[8] = { 0x30, 0x00, 0x00, 0x80, 0x10, 0x00, 0x00, 0x00 };
 static BINARY_ENTRY( USERPREFERENCESMASK, user_prefs );
@@ -1388,26 +1438,16 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     case SPI_SETGRIDGRANULARITY:
         ret = set_entry( &entry_GRIDGRANULARITY, uiParam, pvParam, fWinIni );
         break;
-
-    case SPI_SETDESKWALLPAPER:			/*     20 */
-        if (!pvParam || !SetDeskWallPaper( pvParam )) return FALSE;
-        SYSPARAMS_Save(SPI_SETDESKWALLPAPER_REGKEY, SPI_SETDESKWALLPAPER_VALNAME, pvParam, fWinIni);
-	break;
-	
-    case SPI_SETDESKPATTERN:			/*     21 */
-	/* FIXME: the ability to specify a pattern in pvParam
-	   doesn't seem to be documented for Win32 */
-	if ((INT16)uiParam == -1)
-	{
+    case SPI_SETDESKWALLPAPER:
+        ret = set_entry( &entry_DESKWALLPAPER, uiParam, pvParam, fWinIni );
+        break;
+    case SPI_SETDESKPATTERN:
+        if (!pvParam || set_entry( &entry_DESKPATTERN, uiParam, pvParam, fWinIni ))
+        {
             WCHAR buf[256];
-            GetProfileStringW( Desktop, Pattern,
-                               defPattern,
-                               buf, sizeof(buf)/sizeof(WCHAR) );
-            ret = DESKTOP_SetPattern( buf );
-        } else
-            ret = DESKTOP_SetPattern( pvParam );
-	break;
-
+            ret = get_entry( &entry_DESKPATTERN, 256, buf ) && DESKTOP_SetPattern( buf );
+        }
+        break;
     case SPI_GETKEYBOARDDELAY:
         ret = get_entry( &entry_KEYBOARDDELAY, uiParam, pvParam );
         break;
@@ -1911,30 +1951,9 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     case SPI_GETSCREENSAVERRUNNING:
         ret = get_entry( &entry_SCREENSAVERRUNNING, uiParam, pvParam );
         break;
-
-    case SPI_GETDESKWALLPAPER:                  /*    115  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    {
-	WCHAR buf[MAX_PATH];
-
-        if (!pvParam) return FALSE;
-
-        if (uiParam > MAX_PATH)
-	{
-	    uiParam = MAX_PATH;
-	}
-
-        if (SYSPARAMS_Load(SPI_SETDESKWALLPAPER_REGKEY, SPI_SETDESKWALLPAPER_VALNAME, buf, sizeof(buf)))
-	{
-            lstrcpynW(pvParam, buf, uiParam);
-	}
-	else
-	{
-	    /* Return an empty string */
-            memset(pvParam, 0, uiParam);
-	}
-
-	break;
-    }
+    case SPI_GETDESKWALLPAPER:
+        ret = get_entry( &entry_DESKWALLPAPER, uiParam, pvParam );
+        break;
     case SPI_GETACTIVEWINDOWTRACKING:
         ret = get_entry( &entry_ACTIVEWINDOWTRACKING, uiParam, pvParam );
         break;
