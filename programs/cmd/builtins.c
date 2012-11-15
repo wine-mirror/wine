@@ -230,9 +230,7 @@ void WCMD_choice (const WCHAR * args) {
     have_console = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &oldmode);
     errorlevel = 0;
 
-    my_command = WCMD_strdupW(WCMD_skip_leading_spaces((WCHAR*) args));
-    if (!my_command)
-        return;
+    my_command = heap_strdupW(WCMD_skip_leading_spaces((WCHAR*) args));
 
     ptr = WCMD_skip_leading_spaces(my_command);
     while (*ptr == '/') {
@@ -632,9 +630,7 @@ void WCMD_copy(WCHAR * args) {
     }
 
     /* We have found something to process - build a COPY_FILE block to store it */
-    thiscopy = HeapAlloc(GetProcessHeap(),0,sizeof(COPY_FILES));
-    if (thiscopy == NULL) goto exitreturn;
-
+    thiscopy = heap_alloc(sizeof(COPY_FILES));
 
     WINE_TRACE("Not a switch, but probably a filename/list %s\n", wine_dbgstr_w(thisparam));
     thiscopy->concatenate = concatnextfilename;
@@ -645,7 +641,7 @@ void WCMD_copy(WCHAR * args) {
        leave space to append \* to the end) , then copy in character by character. Strip off
        quotes if we find them.                                                               */
     len = strlenW(thisparam) + (sizeof(WCHAR) * 5);  /* 5 spare characters, null + \*.*      */
-    thiscopy->name = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+    thiscopy->name = heap_alloc(len*sizeof(WCHAR));
     memset(thiscopy->name, 0x00, len);
 
     pos1 = thisparam;
@@ -724,7 +720,7 @@ void WCMD_copy(WCHAR * args) {
     strcpyW(destname, dotW);
     strcatW(destname, slashW);
 
-    destination = HeapAlloc(GetProcessHeap(),0,sizeof(COPY_FILES));
+    destination = heap_alloc(sizeof(COPY_FILES));
     if (destination == NULL) goto exitreturn;
     destination->concatenate = FALSE;           /* Not used for destination */
     destination->binarycopy  = binarymode;
@@ -785,7 +781,7 @@ void WCMD_copy(WCHAR * args) {
 
   /* Save away the destination name*/
   HeapFree(GetProcessHeap(), 0, destination->name);
-  destination->name = WCMD_strdupW(destname);
+  destination->name = heap_strdupW(destname);
   WINE_TRACE("Resolved destination is '%s' (calc later %d)\n",
              wine_dbgstr_w(destname), appendfirstsource);
 
@@ -886,7 +882,7 @@ void WCMD_copy(WCHAR * args) {
           /* If we needed tyo save away the first filename, do it */
           if (appendfirstsource && overwrite) {
             HeapFree(GetProcessHeap(), 0, destination->name);
-            destination->name = WCMD_strdupW(outname);
+            destination->name = heap_strdupW(outname);
             WINE_TRACE("Final resolved destination name : '%s'\n", wine_dbgstr_w(outname));
             appendfirstsource = FALSE;
             destisdirectory = FALSE;
@@ -1272,14 +1268,12 @@ static BOOL WCMD_delete_one (const WCHAR *thisArg) {
             WINE_TRACE("Recursive, Adding to search list '%s'\n", wine_dbgstr_w(subParm));
 
             /* Allocate memory, add to list */
-            nextDir = HeapAlloc(GetProcessHeap(),0,sizeof(DIRECTORY_STACK));
+            nextDir = heap_alloc(sizeof(DIRECTORY_STACK));
             if (allDirs == NULL) allDirs = nextDir;
             if (lastEntry != NULL) lastEntry->next = nextDir;
             lastEntry = nextDir;
             nextDir->next = NULL;
-            nextDir->dirName = HeapAlloc(GetProcessHeap(),0,
-	 (strlenW(subParm)+1) * sizeof(WCHAR));
-            strcpyW(nextDir->dirName, subParm);
+            nextDir->dirName = heap_strdupW(subParm);
           }
         } while (FindNextFileW(hff, &fd) != 0);
         FindClose (hff);
@@ -1362,8 +1356,7 @@ static WCHAR *WCMD_strtrim(const WCHAR *s)
     const WCHAR *start = s;
     WCHAR* result;
 
-    if (!(result = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR))))
-        return NULL;
+    result = heap_alloc((len + 1) * sizeof(WCHAR));
 
     while (isspaceW(*start)) start++;
     if (*start) {
@@ -1440,7 +1433,7 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
 
   /* Process the first command, if there is one */
   if (executecmds && firstcmd && *firstcmd) {
-    WCHAR *command = WCMD_strdupW(firstcmd);
+    WCHAR *command = heap_strdupW(firstcmd);
     WCMD_execute (firstcmd, (*cmdList)->redirects, cmdList, FALSE);
     HeapFree(GetProcessHeap(), 0, command);
   }
@@ -1658,14 +1651,12 @@ static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk) {
           (strcmpW(fd.cFileName, dotW) != 0))
       {
         /* Allocate memory, add to list */
-        DIRECTORY_STACK *toWalk = HeapAlloc(GetProcessHeap(), 0, sizeof(DIRECTORY_STACK));
+        DIRECTORY_STACK *toWalk = heap_alloc(sizeof(DIRECTORY_STACK));
         WINE_TRACE("(%p->%p)\n", remainingDirs, remainingDirs->next);
         toWalk->next = remainingDirs->next;
         remainingDirs->next = toWalk;
         remainingDirs = toWalk;
-        toWalk->dirName = HeapAlloc(GetProcessHeap(), 0,
-                                    sizeof(WCHAR) *
-                                    (strlenW(dirsToWalk->dirName) + 2 + strlenW(fd.cFileName)));
+        toWalk->dirName = heap_alloc(sizeof(WCHAR) * (strlenW(dirsToWalk->dirName) + 2 + strlenW(fd.cFileName)));
         strcpyW(toWalk->dirName, dirsToWalk->dirName);
         strcatW(toWalk->dirName, slashW);
         strcatW(toWalk->dirName, fd.cFileName);
@@ -1728,7 +1719,7 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
 
   /* FIXME: Use tokens= line to populate forloopcontext */
   varidx = FOR_VAR_IDX(variable);
-  if (varidx >=0) forloopcontext.variable[varidx] = WCMD_strdupW(parm);
+  if (varidx >=0) forloopcontext.variable[varidx] = heap_strdupW(parm);
 
   if (where && where[0] != forf_eol) {
     CMD_LIST *thisCmdStart = cmdStart;
@@ -1907,11 +1898,9 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   /* Set up the list of directories to recurse if we are going to */
   } else if (doRecurse) {
        /* Allocate memory, add to list */
-       dirsToWalk = HeapAlloc(GetProcessHeap(), 0, sizeof(DIRECTORY_STACK));
+       dirsToWalk = heap_alloc(sizeof(DIRECTORY_STACK));
        dirsToWalk->next = NULL;
-       dirsToWalk->dirName = HeapAlloc(GetProcessHeap(),0,
-                                       (strlenW(optionsRoot) + 1) * sizeof(WCHAR));
-       strcpyW(dirsToWalk->dirName, optionsRoot);
+       dirsToWalk->dirName = heap_strdupW(optionsRoot);
        WINE_TRACE("Starting with root directory %s\n", wine_dbgstr_w(dirsToWalk->dirName));
   }
 
@@ -3435,7 +3424,7 @@ void WCMD_start(const WCHAR *args)
 
     GetWindowsDirectoryW( file, MAX_PATH );
     strcatW( file, exeW );
-    cmdline = HeapAlloc( GetProcessHeap(), 0, (strlenW(file) + strlenW(args) + 2) * sizeof(WCHAR) );
+    cmdline = heap_alloc( (strlenW(file) + strlenW(args) + 2) * sizeof(WCHAR) );
     strcpyW( cmdline, file );
     strcatW( cmdline, spaceW );
     strcatW( cmdline, args );

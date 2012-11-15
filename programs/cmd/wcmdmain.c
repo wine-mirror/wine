@@ -73,11 +73,8 @@ static int numChars;
 static char *get_file_buffer(void)
 {
     static char *output_bufA = NULL;
-    if (!output_bufA) {
-        output_bufA = HeapAlloc(GetProcessHeap(), 0, MAX_WRITECONSOLE_SIZE);
-        if (!output_bufA)
-            WINE_FIXME("Out of memory - could not allocate ansi 64K buffer\n");
-    }
+    if (!output_bufA)
+        output_bufA = heap_alloc(MAX_WRITECONSOLE_SIZE);
     return output_bufA;
 }
 
@@ -439,16 +436,17 @@ static void WCMD_show_prompt (void) {
   WCMD_output_asis (out_string);
 }
 
+void *heap_alloc(size_t size)
+{
+    void *ret;
 
-/*************************************************************************
- * WCMD_strdupW
- *    A wide version of strdup as its missing from unicode.h
- */
-WCHAR *WCMD_strdupW(const WCHAR *input) {
-   int len=strlenW(input)+1;
-   WCHAR *result = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-   memcpy(result, input, len * sizeof(WCHAR));
-   return result;
+    ret = HeapAlloc(GetProcessHeap(), 0, size);
+    if(!ret) {
+        ERR("Out of memory\n");
+        ExitProcess(1);
+    }
+
+    return ret;
 }
 
 /*************************************************************************
@@ -732,16 +730,16 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start)
       WCHAR *searchFor;
 
       if (equalspos == NULL) return start+1;
-      s = WCMD_strdupW(endOfVar + 1);
+      s = heap_strdupW(endOfVar + 1);
 
       /* Null terminate both strings */
       thisVar[strlenW(thisVar)-1] = 0x00;
       *equalspos = 0x00;
 
       /* Since we need to be case insensitive, copy the 2 buffers */
-      searchIn  = WCMD_strdupW(thisVarContents);
+      searchIn  = heap_strdupW(thisVarContents);
       CharUpperBuffW(searchIn, strlenW(thisVarContents));
-      searchFor = WCMD_strdupW(colonpos+1);
+      searchFor = heap_strdupW(colonpos+1);
       CharUpperBuffW(searchFor, strlenW(colonpos+1));
 
       /* Handle wildcard case */
@@ -938,40 +936,42 @@ static void init_msvcrt_io_block(STARTUPINFOW* st)
     st->lpReserved2 = st_p.lpReserved2;
     if (st_p.cbReserved2 && st_p.lpReserved2)
     {
+        unsigned num = *(unsigned*)st_p.lpReserved2;
+        char* flags;
+        HANDLE* handles;
+        BYTE *ptr;
+        size_t sz;
+
         /* Override the entries for fd 0,1,2 if we happened
          * to change those std handles (this depends on the way cmd sets
          * its new input & output handles)
          */
-        size_t sz = max(sizeof(unsigned) + (sizeof(char) + sizeof(HANDLE)) * 3, st_p.cbReserved2);
-        BYTE* ptr = HeapAlloc(GetProcessHeap(), 0, sz);
-        if (ptr)
-        {
-            unsigned num = *(unsigned*)st_p.lpReserved2;
-            char* flags = (char*)(ptr + sizeof(unsigned));
-            HANDLE* handles = (HANDLE*)(flags + num * sizeof(char));
+        sz = max(sizeof(unsigned) + (sizeof(char) + sizeof(HANDLE)) * 3, st_p.cbReserved2);
+        ptr = heap_alloc(sz);
+        flags = (char*)(ptr + sizeof(unsigned));
+        handles = (HANDLE*)(flags + num * sizeof(char));
 
-            memcpy(ptr, st_p.lpReserved2, st_p.cbReserved2);
-            st->cbReserved2 = sz;
-            st->lpReserved2 = ptr;
+        memcpy(ptr, st_p.lpReserved2, st_p.cbReserved2);
+        st->cbReserved2 = sz;
+        st->lpReserved2 = ptr;
 
 #define WX_OPEN 0x01    /* see dlls/msvcrt/file.c */
-            if (num <= 0 || (flags[0] & WX_OPEN))
-            {
-                handles[0] = GetStdHandle(STD_INPUT_HANDLE);
-                flags[0] |= WX_OPEN;
-            }
-            if (num <= 1 || (flags[1] & WX_OPEN))
-            {
-                handles[1] = GetStdHandle(STD_OUTPUT_HANDLE);
-                flags[1] |= WX_OPEN;
-            }
-            if (num <= 2 || (flags[2] & WX_OPEN))
-            {
-                handles[2] = GetStdHandle(STD_ERROR_HANDLE);
-                flags[2] |= WX_OPEN;
-            }
-#undef WX_OPEN
+        if (num <= 0 || (flags[0] & WX_OPEN))
+        {
+            handles[0] = GetStdHandle(STD_INPUT_HANDLE);
+            flags[0] |= WX_OPEN;
         }
+        if (num <= 1 || (flags[1] & WX_OPEN))
+        {
+            handles[1] = GetStdHandle(STD_OUTPUT_HANDLE);
+            flags[1] |= WX_OPEN;
+        }
+        if (num <= 2 || (flags[2] & WX_OPEN))
+        {
+            handles[2] = GetStdHandle(STD_ERROR_HANDLE);
+            flags[2] |= WX_OPEN;
+        }
+#undef WX_OPEN
     }
 }
 
@@ -1288,22 +1288,11 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
     }
 
     /* Move copy of the command onto the heap so it can be expanded */
-    new_cmd = HeapAlloc( GetProcessHeap(), 0, MAXSTRING * sizeof(WCHAR));
-    if (!new_cmd)
-    {
-        WINE_ERR("Could not allocate memory for new_cmd\n");
-        return;
-    }
+    new_cmd = heap_alloc(MAXSTRING * sizeof(WCHAR));
     strcpyW(new_cmd, command);
 
     /* Move copy of the redirects onto the heap so it can be expanded */
-    new_redir = HeapAlloc( GetProcessHeap(), 0, MAXSTRING * sizeof(WCHAR));
-    if (!new_redir)
-    {
-        WINE_ERR("Could not allocate memory for new_redir\n");
-        HeapFree( GetProcessHeap(), 0, new_cmd );
-        return;
-    }
+    new_redir = heap_alloc(MAXSTRING * sizeof(WCHAR));
 
     /* If piped output, send stdout to the pipe by appending >filename to redirects */
     if (piped) {
@@ -1673,18 +1662,16 @@ static void WCMD_addCommand(WCHAR *command, int *commandLen,
     CMD_LIST *thisEntry = NULL;
 
     /* Allocate storage for command */
-    thisEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(CMD_LIST));
+    thisEntry = heap_alloc(sizeof(CMD_LIST));
 
     /* Copy in the command */
     if (command) {
-        thisEntry->command = HeapAlloc(GetProcessHeap(), 0,
-                                      (*commandLen+1) * sizeof(WCHAR));
+        thisEntry->command = heap_alloc((*commandLen+1) * sizeof(WCHAR));
         memcpy(thisEntry->command, command, *commandLen * sizeof(WCHAR));
         thisEntry->command[*commandLen] = 0x00;
 
         /* Copy in the redirects */
-        thisEntry->redirects = HeapAlloc(GetProcessHeap(), 0,
-                                         (*redirLen+1) * sizeof(WCHAR));
+        thisEntry->redirects = heap_alloc((*redirLen+1) * sizeof(WCHAR));
         memcpy(thisEntry->redirects, redirs, *redirLen * sizeof(WCHAR));
         thisEntry->redirects[*redirLen] = 0x00;
         thisEntry->pipeFile[0] = 0x00;
@@ -1814,7 +1801,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
 
     /* Allocate working space for a command read from keyboard, file etc */
     if (!extraSpace)
-      extraSpace = HeapAlloc(GetProcessHeap(), 0, (MAXSTRING+1) * sizeof(WCHAR));
+        extraSpace = heap_alloc((MAXSTRING+1) * sizeof(WCHAR));
     if (!extraSpace)
     {
         WINE_ERR("Could not allocate memory for extraSpace\n");
@@ -2413,10 +2400,7 @@ int wmain (int argc, WCHAR *argvW[])
       len = strlenW(argPos);
 
       /* Take a copy */
-      cmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-      if (!cmd)
-          exit(1);
-      strcpyW(cmd, argPos);
+      cmd = heap_strdupW(argPos);
 
       /* opt_s left unflagged if the command starts with and contains exactly
        * one quoted string (exactly two quote characters). The quoted string

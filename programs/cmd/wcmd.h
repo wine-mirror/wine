@@ -117,7 +117,6 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL justFors);
 void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext);
 void WCMD_strip_quotes(WCHAR *cmd);
 WCHAR *WCMD_LoadMessage(UINT id);
-WCHAR *WCMD_strdupW(const WCHAR *input);
 void WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int len);
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead);
 
@@ -126,6 +125,23 @@ CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket, BOOL retryca
 void      WCMD_free_commands(CMD_LIST *cmds);
 void      WCMD_execute (const WCHAR *orig_command, const WCHAR *redirects,
                         CMD_LIST **cmdList, BOOL retrycall);
+
+void *heap_alloc(size_t);
+
+static inline WCHAR *heap_strdupW(const WCHAR *str)
+{
+    WCHAR *ret = NULL;
+
+    if(str) {
+        size_t size;
+
+        size = (strlenW(str)+1)*sizeof(WCHAR);
+        ret = heap_alloc(size);
+        memcpy(ret, str, size);
+    }
+
+    return ret;
+}
 
 /* Data structure to hold context when executing batch files */
 

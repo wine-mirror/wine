@@ -68,7 +68,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
   prev_context = context;
   context = LocalAlloc (LMEM_FIXED, sizeof (BATCH_CONTEXT));
   context -> h = h;
-  context->batchfileW = WCMD_strdupW(file);
+  context->batchfileW = heap_strdupW(file);
   context -> command = command;
   memset(context -> shift_count, 0x00, sizeof(context -> shift_count));
   context -> prev_context = prev_context;
@@ -257,8 +257,7 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
       const char *p;
 
       cp = GetConsoleCP();
-      bufA = HeapAlloc(GetProcessHeap(), 0, noChars);
-      if (!bufA) return NULL;
+      bufA = heap_alloc(noChars);
 
       /* Save current file position */
       filepos.QuadPart = 0;
