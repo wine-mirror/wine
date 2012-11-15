@@ -49,7 +49,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(system);
 enum spi_index
 {
     SPI_SETWORKAREA_IDX,
-    SPI_NONCLIENTMETRICS_IDX,
     SPI_INDEX_COUNT
 };
 
@@ -226,31 +225,45 @@ static const WCHAR SPI_SETFOCUSBORDERHEIGHT_VALNAME[]=        {'F','o','c','u','
 #define            SPI_SETSCREENSAVERRUNNING_REGKEY      DESKTOP_REGKEY
 static const WCHAR SPI_SETSCREENSAVERRUNNING_VALNAME[]=  {'W','I','N','E','_','S','c','r','e','e','n','S','a','v','e','r','R','u','n','n','i','n','g',0};
 
-static const WCHAR METRICS_SCROLLWIDTH_VALNAME[]=     {'S','c','r','o','l','l','W','i','d','t','h',0};
-static const WCHAR METRICS_SCROLLHEIGHT_VALNAME[]=    {'S','c','r','o','l','l','H','e','i','g','h','t',0};
-static const WCHAR METRICS_CAPTIONWIDTH_VALNAME[]=    {'C','a','p','t','i','o','n','W','i','d','t','h',0};
-static const WCHAR METRICS_CAPTIONHEIGHT_VALNAME[]=   {'C','a','p','t','i','o','n','H','e','i','g','h','t',0};
-static const WCHAR METRICS_SMCAPTIONWIDTH_VALNAME[]=  {'S','m','C','a','p','t','i','o','n','W','i','d','t','h',0};
-static const WCHAR METRICS_SMCAPTIONHEIGHT_VALNAME[]= {'S','m','C','a','p','t','i','o','n','H','e','i','g','h','t',0};
-static const WCHAR METRICS_MENUWIDTH_VALNAME[]=       {'M','e','n','u','W','i','d','t','h',0};
-static const WCHAR METRICS_MENUHEIGHT_VALNAME[]=      {'M','e','n','u','H','e','i','g','h','t',0};
-static const WCHAR METRICS_ICONSIZE_VALNAME[]=        {'S','h','e','l','l',' ','I','c','o','n',' ','S','i','z','e',0};
-static const WCHAR METRICS_BORDERWIDTH_VALNAME[]=     {'B','o','r','d','e','r','W','i','d','t','h',0};
-static const WCHAR METRICS_PADDEDBORDERWIDTH_VALNAME[]={'P','a','d','d','e','d','B','o','r','d','e','r','W','i','d','t','h',0};
-static const WCHAR METRICS_CAPTIONLOGFONT_VALNAME[]=  {'C','a','p','t','i','o','n','F','o','n','t',0};
-static const WCHAR METRICS_SMCAPTIONLOGFONT_VALNAME[]={'S','m','C','a','p','t','i','o','n','F','o','n','t',0};
-static const WCHAR METRICS_MENULOGFONT_VALNAME[]=     {'M','e','n','u','F','o','n','t',0};
-static const WCHAR METRICS_MESSAGELOGFONT_VALNAME[]=  {'M','e','s','s','a','g','e','F','o','n','t',0};
-static const WCHAR METRICS_STATUSLOGFONT_VALNAME[]=   {'S','t','a','t','u','s','F','o','n','t',0};
+#define            SPI_SETSCROLLWIDTH_REGKEY             METRICS_REGKEY
+static const WCHAR SPI_SETSCROLLWIDTH_VALNAME[]=         {'S','c','r','o','l','l','W','i','d','t','h',0};
+#define            SPI_SETSCROLLHEIGHT_REGKEY            METRICS_REGKEY
+static const WCHAR SPI_SETSCROLLHEIGHT_VALNAME[]=        {'S','c','r','o','l','l','H','e','i','g','h','t',0};
+#define            SPI_SETCAPTIONWIDTH_REGKEY            METRICS_REGKEY
+static const WCHAR SPI_SETCAPTIONWIDTH_VALNAME[]=        {'C','a','p','t','i','o','n','W','i','d','t','h',0};
+#define            SPI_SETCAPTIONHEIGHT_REGKEY           METRICS_REGKEY
+static const WCHAR SPI_SETCAPTIONHEIGHT_VALNAME[]=       {'C','a','p','t','i','o','n','H','e','i','g','h','t',0};
+#define            SPI_SETSMCAPTIONWIDTH_REGKEY          METRICS_REGKEY
+static const WCHAR SPI_SETSMCAPTIONWIDTH_VALNAME[]=      {'S','m','C','a','p','t','i','o','n','W','i','d','t','h',0};
+#define            SPI_SETSMCAPTIONHEIGHT_REGKEY         METRICS_REGKEY
+static const WCHAR SPI_SETSMCAPTIONHEIGHT_VALNAME[]=     {'S','m','C','a','p','t','i','o','n','H','e','i','g','h','t',0};
+#define            SPI_SETMENUWIDTH_REGKEY               METRICS_REGKEY
+static const WCHAR SPI_SETMENUWIDTH_VALNAME[]=           {'M','e','n','u','W','i','d','t','h',0};
+#define            SPI_SETMENUHEIGHT_REGKEY              METRICS_REGKEY
+static const WCHAR SPI_SETMENUHEIGHT_VALNAME[]=          {'M','e','n','u','H','e','i','g','h','t',0};
+#define            SPI_SETICONSIZE_REGKEY                METRICS_REGKEY
+static const WCHAR SPI_SETICONSIZE_VALNAME[]=            {'S','h','e','l','l',' ','I','c','o','n',' ','S','i','z','e',0};
+#define            SPI_SETPADDEDBORDERWIDTH_REGKEY       METRICS_REGKEY
+static const WCHAR SPI_SETPADDEDBORDERWIDTH_VALNAME[]=   {'P','a','d','d','e','d','B','o','r','d','e','r','W','i','d','t','h',0};
+#define            SPI_SETCAPTIONLOGFONT_REGKEY          METRICS_REGKEY
+static const WCHAR SPI_SETCAPTIONLOGFONT_VALNAME[]=      {'C','a','p','t','i','o','n','F','o','n','t',0};
+#define            SPI_SETSMCAPTIONLOGFONT_REGKEY        METRICS_REGKEY
+static const WCHAR SPI_SETSMCAPTIONLOGFONT_VALNAME[]=    {'S','m','C','a','p','t','i','o','n','F','o','n','t',0};
+#define            SPI_SETMENULOGFONT_REGKEY             METRICS_REGKEY
+static const WCHAR SPI_SETMENULOGFONT_VALNAME[]=         {'M','e','n','u','F','o','n','t',0};
+#define            SPI_SETMESSAGELOGFONT_REGKEY          METRICS_REGKEY
+static const WCHAR SPI_SETMESSAGELOGFONT_VALNAME[]=      {'M','e','s','s','a','g','e','F','o','n','t',0};
+#define            SPI_SETSTATUSLOGFONT_REGKEY           METRICS_REGKEY
+static const WCHAR SPI_SETSTATUSLOGFONT_VALNAME[]=       {'S','t','a','t','u','s','F','o','n','t',0};
 /* minimized metrics */
-#define            SPI_SETMETRICS_MINWIDTH_REGKEY        METRICS_REGKEY
-static const WCHAR SPI_SETMETRICS_MINWIDTH_VALNAME[] =   {'M','i','n','W','i','d','t','h',0};
-#define            SPI_SETMETRICS_MINHORZGAP_REGKEY      METRICS_REGKEY
-static const WCHAR SPI_SETMETRICS_MINHORZGAP_VALNAME[] = {'M','i','n','H','o','r','z','G','a','p',0};
-#define            SPI_SETMETRICS_MINVERTGAP_REGKEY      METRICS_REGKEY
-static const WCHAR SPI_SETMETRICS_MINVERTGAP_VALNAME[] = {'M','i','n','V','e','r','t','G','a','p',0};
-#define            SPI_SETMETRICS_MINARRANGE_REGKEY      METRICS_REGKEY
-static const WCHAR SPI_SETMETRICS_MINARRANGE_VALNAME[] = {'M','i','n','A','r','r','a','n','g','e',0};
+#define            SPI_SETMINWIDTH_REGKEY                METRICS_REGKEY
+static const WCHAR SPI_SETMINWIDTH_VALNAME[] =           {'M','i','n','W','i','d','t','h',0};
+#define            SPI_SETMINHORZGAP_REGKEY              METRICS_REGKEY
+static const WCHAR SPI_SETMINHORZGAP_VALNAME[] =         {'M','i','n','H','o','r','z','G','a','p',0};
+#define            SPI_SETMINVERTGAP_REGKEY              METRICS_REGKEY
+static const WCHAR SPI_SETMINVERTGAP_VALNAME[] =         {'M','i','n','V','e','r','t','G','a','p',0};
+#define            SPI_SETMINARRANGE_REGKEY              METRICS_REGKEY
+static const WCHAR SPI_SETMINARRANGE_VALNAME[] =         {'M','i','n','A','r','r','a','n','g','e',0};
 
 static const WCHAR WINE_CURRENT_USER_REGKEY[] = {'S','o','f','t','w','a','r','e','\\',
                                                  'W','i','n','e',0};
@@ -284,32 +297,6 @@ static BOOL notify_change = TRUE;
 
 /* System parameters storage */
 static RECT work_area;
-
-static NONCLIENTMETRICSW nonclient_metrics =
-{
-    sizeof(NONCLIENTMETRICSW),
-    1,     /* iBorderWidth */
-    16,    /* iScrollWidth */
-    16,    /* iScrollHeight */
-    18,    /* iCaptionWidth */
-    18,    /* iCaptionHeight */
-    { 0 }, /* lfCaptionFont */
-    13,    /* iSmCaptionWidth */
-    15,    /* iSmCaptionHeight */
-    { 0 }, /* lfSmCaptionFont */
-    18,    /* iMenuWidth */
-    18,    /* iMenuHeight */
-    { 0 }, /* lfMenuFont */
-    { 0 }, /* lfStatusFont */
-    { 0 }, /* lfMessageFont */
-    0      /* iPaddedBorderWidth */
-};
-
-/* some additional non client metric info */
-static TEXTMETRICW tmMenuFont;
-static UINT CaptionFontAvCharWidth;
-
-static SIZE icon_size = { 32, 32 };
 
 #define NUM_SYS_COLORS     (COLOR_MENUBAR+1)
 
@@ -679,24 +666,6 @@ static BOOL SYSPARAMS_Save( LPCWSTR lpRegKey, LPCWSTR lpValName, LPCWSTR lpValue
         (strlenW(lpValue) + 1)*sizeof(WCHAR), REG_SZ, fWinIni );
 }
 
-/* Convenience function to save logical fonts */
-static BOOL SYSPARAMS_SaveLogFont( LPCWSTR lpRegKey, LPCWSTR lpValName,
-                                   const LOGFONTW *plf, UINT fWinIni )
-{
-    LOGFONTW lf = *plf;
-    int len;
-
-    /* Zero pad the end of lfFaceName so we don't write uninitialised
-       data to the registry */
-    lf.lfFaceName[LF_FACESIZE-1] = 0;
-    len = strlenW(lf.lfFaceName);
-    if(len < LF_FACESIZE-1)
-        memset(lf.lfFaceName + len, 0, (LF_FACESIZE - 1 - len) * sizeof(WCHAR));
-
-    return SYSPARAMS_SaveRaw( lpRegKey, lpValName, (const BYTE*)&lf,
-                              sizeof(LOGFONTW), REG_BINARY, fWinIni );
-}
-
 /* load a value to a registry entry */
 static BOOL load_entry( struct sysparam_entry *entry, void *data, DWORD size )
 {
@@ -739,59 +708,6 @@ static inline int get_display_dpi(void)
     return display_dpi;
 }
 
-/***********************************************************************
- * SYSPARAMS_Twips2Pixels
- *
- * Convert a dimension value that was obtained from the registry.  These are
- * quoted as being "twips" values if negative and pixels if positive.
- * One inch is 1440 twips. So to convert, divide by 1440 to get inches and
- * multiply that by the dots-per-inch to get the size in pixels. 
- * See for example
- *   MSDN Library - April 2001 -> Resource Kits ->
- *       Windows 2000 Resource Kit Reference ->
- *       Technical Reference to the Windows 2000 Registry ->
- *       HKEY_CURRENT_USER -> Control Panel -> Desktop -> WindowMetrics
- */
-static inline int SYSPARAMS_Twips2Pixels(int x)
-{
-    if (x < 0)
-        x = (-x * get_display_dpi() + 720) / 1440;
-    return x;
-}
-
-/***********************************************************************
- * get_reg_metric
- *
- * Get a registry entry from the already open key.  This allows us to open the
- * section once and read several values.
- *
- * Of course this function belongs somewhere more usable but here will do
- * for now.
- */
-static int get_reg_metric( HKEY hkey, LPCWSTR lpValName, int default_value )
-{
-    int value = default_value;
-    if (hkey)
-    {
-        WCHAR buffer[128];
-        DWORD type, count = sizeof(buffer);
-        if(!RegQueryValueExW( hkey, lpValName, NULL, &type, (LPBYTE)buffer, &count) )
-        {
-            if (type != REG_SZ)
-            {
-                /* Are there any utilities for converting registry entries
-                 * between formats?
-                 */
-                /* FIXME_(reg)("We need reg format converter\n"); */
-            }
-            else
-                value = atoiW(buffer);
-        }
-    }
-    return SYSPARAMS_Twips2Pixels(value);
-}
-
-
 /*************************************************************************
  *             SYSPARAMS_SetSysColor
  */
@@ -814,18 +730,6 @@ static void SYSPARAMS_SetSysColor( int index, COLORREF color )
     }
     SysColorPens[index] = CreatePen( PS_SOLID, 1, color );
     __wine_make_gdi_object_system( SysColorPens[index], TRUE);
-}
-
-/* save an int parameter in registry */
-static BOOL save_int_param( LPCWSTR regkey, LPCWSTR value, INT *value_ptr,
-                            INT new_val, UINT fWinIni )
-{
-    WCHAR buf[12];
-
-    wsprintfW(buf, CSd, new_val);
-    if (!SYSPARAMS_Save( regkey, value, buf, fWinIni )) return FALSE;
-    if( value_ptr) *value_ptr = new_val;
-    return TRUE;
 }
 
 /***********************************************************************
@@ -935,106 +839,13 @@ static void normalize_nonclientmetrics( NONCLIENTMETRICSW *pncm)
     if( pncm->iScrollWidth < 8) pncm->iScrollWidth = 8;
     if( pncm->iScrollHeight < 8) pncm->iScrollHeight = 8;
 
-    /* get some extra metrics */
-    get_text_metr_size( get_display_dc(), &pncm->lfMenuFont,
-            &tmMenuFont, NULL);
-    get_text_metr_size( get_display_dc(), &pncm->lfCaptionFont,
-            NULL, &CaptionFontAvCharWidth);
-
     /* adjust some heights to the corresponding font */
-    pncm->iMenuHeight = max( pncm->iMenuHeight,
-            2 + tmMenuFont.tmHeight + tmMenuFont.tmExternalLeading);
+    get_text_metr_size( get_display_dc(), &pncm->lfMenuFont, &tm, NULL);
+    pncm->iMenuHeight = max( pncm->iMenuHeight, 2 + tm.tmHeight + tm.tmExternalLeading );
     get_text_metr_size( get_display_dc(), &pncm->lfCaptionFont, &tm, NULL);
     pncm->iCaptionHeight = max( pncm->iCaptionHeight, 2 + tm.tmHeight);
     get_text_metr_size( get_display_dc(), &pncm->lfSmCaptionFont, &tm, NULL);
     pncm->iSmCaptionHeight = max( pncm->iSmCaptionHeight, 2 + tm.tmHeight);
-}
-
-/* load all the non-client metrics */
-static void load_nonclient_metrics(void)
-{
-    HKEY hkey;
-    NONCLIENTMETRICSW ncm;
-    INT r;
-
-    ncm.cbSize = sizeof (ncm);
-    if (RegOpenKeyExW (HKEY_CURRENT_USER, METRICS_REGKEY,
-                       0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS) hkey = 0;
-
-    /* initialize geometry entries */
-    ncm.iBorderWidth =  get_reg_metric(hkey, METRICS_BORDERWIDTH_VALNAME, 1);
-    ncm.iScrollWidth = get_reg_metric(hkey, METRICS_SCROLLWIDTH_VALNAME, 16);
-    ncm.iScrollHeight = get_reg_metric(hkey, METRICS_SCROLLHEIGHT_VALNAME, 16);
-    ncm.iPaddedBorderWidth = get_reg_metric(hkey, METRICS_PADDEDBORDERWIDTH_VALNAME, 0);
-
-    /* size of the normal caption buttons */
-    ncm.iCaptionHeight = get_reg_metric(hkey, METRICS_CAPTIONHEIGHT_VALNAME, 18);
-    ncm.iCaptionWidth = get_reg_metric(hkey, METRICS_CAPTIONWIDTH_VALNAME, ncm.iCaptionHeight);
-
-    /* caption font metrics */
-    if (!reg_get_logfont(METRICS_REGKEY, METRICS_CAPTIONLOGFONT_VALNAME, &ncm.lfCaptionFont))
-    {
-        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &ncm.lfCaptionFont, 0 );
-        ncm.lfCaptionFont.lfWeight = FW_BOLD;
-    }
-
-    /* size of the small caption buttons */
-    ncm.iSmCaptionWidth = get_reg_metric(hkey, METRICS_SMCAPTIONWIDTH_VALNAME, 13);
-    ncm.iSmCaptionHeight = get_reg_metric(hkey, METRICS_SMCAPTIONHEIGHT_VALNAME, 15);
-
-    /* small caption font metrics */
-    if (!reg_get_logfont(METRICS_REGKEY, METRICS_SMCAPTIONLOGFONT_VALNAME, &ncm.lfSmCaptionFont))
-        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &ncm.lfSmCaptionFont, 0 );
-
-    /* menus, FIXME: names of registry entries are bogus */
-
-    /* size of the menu (MDI) buttons */
-    ncm.iMenuHeight = get_reg_metric(hkey, METRICS_MENUHEIGHT_VALNAME, 18);
-    ncm.iMenuWidth = get_reg_metric(hkey, METRICS_MENUWIDTH_VALNAME, ncm.iMenuHeight);
-
-    /* menu font metrics */
-    if (!reg_get_logfont(METRICS_REGKEY, METRICS_MENULOGFONT_VALNAME, &ncm.lfMenuFont))
-    {
-        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &ncm.lfMenuFont, 0 );
-        GetProfileStringW( Desktop, MenuFont, ncm.lfCaptionFont.lfFaceName,
-                           ncm.lfMenuFont.lfFaceName, LF_FACESIZE );
-        r = GetProfileIntW( Desktop, MenuFontSize, 0 );
-        if (r)
-            ncm.lfMenuFont.lfHeight = -r;
-        ncm.lfMenuFont.lfWeight = FW_NORMAL;
-    }
-
-    /* status bar font metrics */
-    if (!reg_get_logfont(METRICS_REGKEY, METRICS_STATUSLOGFONT_VALNAME, &ncm.lfStatusFont))
-    {
-        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &ncm.lfStatusFont, 0 );
-        GetProfileStringW( Desktop, StatusFont, ncm.lfCaptionFont.lfFaceName,
-                           ncm.lfStatusFont.lfFaceName, LF_FACESIZE );
-        r = GetProfileIntW( Desktop, StatusFontSize, 0 );
-        if (r)
-            ncm.lfStatusFont.lfHeight = -r;
-        ncm.lfStatusFont.lfWeight = FW_NORMAL;
-    }
-
-    /* message font metrics */
-    if (!reg_get_logfont(METRICS_REGKEY, METRICS_MESSAGELOGFONT_VALNAME, &ncm.lfMessageFont))
-    {
-        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &ncm.lfMessageFont, 0 );
-        GetProfileStringW( Desktop, MessageFont, ncm.lfCaptionFont.lfFaceName,
-                           ncm.lfMessageFont.lfFaceName, LF_FACESIZE );
-        r = GetProfileIntW( Desktop, MessageFontSize, 0 );
-        if (r)
-            ncm.lfMessageFont.lfHeight = -r;
-        ncm.lfMessageFont.lfWeight = FW_NORMAL;
-    }
-
-    /* some extra fields not in the nonclient structure */
-    icon_size.cx = icon_size.cy = get_reg_metric( hkey, METRICS_ICONSIZE_VALNAME, 32 );
-
-    if (hkey) RegCloseKey( hkey );
-    normalize_nonclientmetrics( &ncm);
-    nonclient_metrics = ncm;
-    spi_loaded[SPI_NONCLIENTMETRICS_IDX] = TRUE;
 }
 
 static BOOL CALLBACK enum_monitors( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
@@ -1100,7 +911,17 @@ static BOOL get_twips_entry( union sysparam_all_entry *entry, UINT int_param, vo
         WCHAR buf[32];
 
         if (load_entry( &entry->hdr, buf, sizeof(buf) ))
-            entry->uint.val = SYSPARAMS_Twips2Pixels( atoiW(buf) );
+        {
+            int val = atoiW( buf );
+            /* Dimension are quoted as being "twips" values if negative and pixels if positive.
+             * One inch is 1440 twips.
+             * See for example
+             *       Technical Reference to the Windows 2000 Registry ->
+             *       HKEY_CURRENT_USER -> Control Panel -> Desktop -> WindowMetrics
+             */
+            if (val < 0) val = (-val * get_display_dpi() + 720) / 1440;
+            entry->uint.val = val;
+        }
     }
     *(UINT *)ptr_param = entry->uint.val;
     return TRUE;
@@ -1326,7 +1147,7 @@ static BOOL set_entry( void *ptr,  UINT int_param, void *ptr_param, UINT flags )
                          SPI_SET ## name ##_REGKEY, SPI_SET ## name ##_VALNAME }, (val) }
 
 #define TWIPS_ENTRY(name,val) \
-    struct sysparam_uint_entry entry_##name = { { get_twips_entry, set_uint_entry, \
+    struct sysparam_uint_entry entry_##name = { { get_twips_entry, set_int_entry, \
                          SPI_SET ## name ##_REGKEY, SPI_SET ## name ##_VALNAME }, (val) }
 
 #define DWORD_ENTRY(name,val) \
@@ -1351,13 +1172,14 @@ static UINT_ENTRY( DRAGHEIGHT, 4 );
 static UINT_ENTRY( DOUBLECLICKTIME, 500 );
 static UINT_ENTRY( FONTSMOOTHING, 0 );
 static UINT_ENTRY( GRIDGRANULARITY, 0 );
+static UINT_ENTRY( ICONSIZE, 32 );
 static UINT_ENTRY( KEYBOARDDELAY, 1 );
 static UINT_ENTRY( KEYBOARDSPEED, 31 );
 static UINT_ENTRY( MENUSHOWDELAY, 400 );
-static UINT_ENTRY( METRICS_MINARRANGE, ARW_HIDE );
-static UINT_ENTRY( METRICS_MINHORZGAP, 0 );
-static UINT_ENTRY( METRICS_MINVERTGAP, 0 );
-static UINT_ENTRY( METRICS_MINWIDTH, 154 );
+static UINT_ENTRY( MINARRANGE, ARW_HIDE );
+static UINT_ENTRY( MINHORZGAP, 0 );
+static UINT_ENTRY( MINVERTGAP, 0 );
+static UINT_ENTRY( MINWIDTH, 154 );
 static UINT_ENTRY( MOUSEHOVERHEIGHT, 4 );
 static UINT_ENTRY( MOUSEHOVERTIME, 400 );
 static UINT_ENTRY( MOUSEHOVERWIDTH, 4 );
@@ -1389,8 +1211,17 @@ static BOOL_ENTRY_MIRROR( ICONTITLEWRAP, TRUE );
 static YESNO_ENTRY( BEEP, TRUE );
 
 static TWIPS_ENTRY( BORDER, 1 );
+static TWIPS_ENTRY( CAPTIONHEIGHT, 18 );
+static TWIPS_ENTRY( CAPTIONWIDTH, 18 );
 static TWIPS_ENTRY( ICONHORIZONTALSPACING, 75 );
 static TWIPS_ENTRY( ICONVERTICALSPACING, 75 );
+static TWIPS_ENTRY( MENUHEIGHT, 18 );
+static TWIPS_ENTRY( MENUWIDTH, 18 );
+static TWIPS_ENTRY( PADDEDBORDERWIDTH, 0 );
+static TWIPS_ENTRY( SCROLLHEIGHT, 16 );
+static TWIPS_ENTRY( SCROLLWIDTH, 16 );
+static TWIPS_ENTRY( SMCAPTIONHEIGHT, 15 );
+static TWIPS_ENTRY( SMCAPTIONWIDTH, 13 );
 
 static DWORD_ENTRY( ACTIVEWINDOWTRACKING, 0 );
 static DWORD_ENTRY( ACTIVEWNDTRKTIMEOUT, 0 );
@@ -1403,10 +1234,15 @@ static DWORD_ENTRY( FOREGROUNDFLASHCOUNT, 3 );
 static DWORD_ENTRY( FOREGROUNDLOCKTIMEOUT, 0 );
 static DWORD_ENTRY( MOUSECLICKLOCKTIME, 1200 );
 
-static BYTE user_prefs[8] = { 0x30, 0x00, 0x02, 0x80, 0x10, 0x00, 0x00, 0x00 };
+static BYTE user_prefs[8] = { 0x30, 0x00, 0x00, 0x80, 0x10, 0x00, 0x00, 0x00 };
 static BINARY_ENTRY( USERPREFERENCESMASK, user_prefs );
 
+static FONT_ENTRY( CAPTIONLOGFONT, FW_BOLD );
 static FONT_ENTRY( ICONTITLELOGFONT, FW_NORMAL );
+static FONT_ENTRY( MENULOGFONT, FW_NORMAL );
+static FONT_ENTRY( MESSAGELOGFONT, FW_NORMAL );
+static FONT_ENTRY( SMCAPTIONLOGFONT, FW_NORMAL );
+static FONT_ENTRY( STATUSLOGFONT, FW_NORMAL );
 
 static USERPREF_ENTRY( MENUANIMATION,            0, 0x02 );
 static USERPREF_ENTRY( COMBOBOXANIMATION,        0, 0x04 );
@@ -1502,8 +1338,6 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         if (*(INT*)pvParam < 1) *(INT*)pvParam = 1;
         break;
     case SPI_SETBORDER:
-        nonclient_metrics.iBorderWidth = uiParam > 0 ? uiParam : 1;
-        /* raw value goes to registry */
         ret = set_entry( &entry_BORDER, uiParam, pvParam, fWinIni );
         break;
     case SPI_GETKEYBOARDSPEED:
@@ -1633,31 +1467,31 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     case SPI_GETDRAGFULLWINDOWS:
         ret = get_entry( &entry_DRAGFULLWINDOWS, uiParam, pvParam );
         break;
-
     case SPI_GETNONCLIENTMETRICS:
     {
         LPNONCLIENTMETRICSW lpnm = pvParam;
 
-        if (!lpnm)
-        {
-            ret = FALSE;
-            break;
-        }
+        if (!pvParam) return FALSE;
 
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-
+        get_entry( &entry_BORDER, 0, &lpnm->iBorderWidth );
+        get_entry( &entry_SCROLLWIDTH, 0, &lpnm->iScrollWidth );
+        get_entry( &entry_SCROLLHEIGHT, 0, &lpnm->iScrollHeight );
+        get_entry( &entry_CAPTIONWIDTH, 0, &lpnm->iCaptionWidth );
+        get_entry( &entry_CAPTIONHEIGHT, 0, &lpnm->iCaptionHeight );
+        get_entry( &entry_CAPTIONLOGFONT, 0, &lpnm->lfCaptionFont );
+        get_entry( &entry_SMCAPTIONWIDTH, 0, &lpnm->iSmCaptionWidth );
+        get_entry( &entry_SMCAPTIONHEIGHT, 0, &lpnm->iSmCaptionHeight );
+        get_entry( &entry_SMCAPTIONLOGFONT, 0, &lpnm->lfSmCaptionFont );
+        get_entry( &entry_MENUWIDTH, 0, &lpnm->iMenuWidth );
+        get_entry( &entry_MENUHEIGHT, 0, &lpnm->iMenuHeight );
+        get_entry( &entry_MENULOGFONT, 0, &lpnm->lfMenuFont );
+        get_entry( &entry_STATUSLOGFONT, 0, &lpnm->lfStatusFont );
+        get_entry( &entry_MESSAGELOGFONT, 0, &lpnm->lfMessageFont );
         if (lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
-            *lpnm = nonclient_metrics;
-        else if (lpnm->cbSize == FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth))
-        {
-            memcpy(lpnm, &nonclient_metrics, FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth));
-            lpnm->cbSize = FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth);
-        }
-        else
-            ret = FALSE;
+            get_entry( &entry_PADDEDBORDERWIDTH, 0, &lpnm->iPaddedBorderWidth );
+        normalize_nonclientmetrics( lpnm );
         break;
     }
-
     case SPI_SETNONCLIENTMETRICS:
     {
         LPNONCLIENTMETRICSW lpnm = pvParam;
@@ -1665,68 +1499,34 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         if (lpnm && (lpnm->cbSize == sizeof(NONCLIENTMETRICSW) ||
                      lpnm->cbSize == FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth)))
         {
-            NONCLIENTMETRICSW ncm;
-            ret = set_entry( &entry_BORDER, lpnm->iBorderWidth, NULL, fWinIni );
-            if( ret) ret = save_int_param( METRICS_REGKEY,
-                    METRICS_SCROLLWIDTH_VALNAME, NULL,
-                    lpnm->iScrollWidth, fWinIni );
-            if( ret) ret = save_int_param( METRICS_REGKEY,
-                    METRICS_SCROLLHEIGHT_VALNAME, NULL,
-                    lpnm->iScrollHeight, fWinIni );
-            if( ret) ret = save_int_param( METRICS_REGKEY,
-                    METRICS_CAPTIONWIDTH_VALNAME, NULL,
-                    lpnm->iCaptionWidth, fWinIni );
-            if( ret) ret = save_int_param( METRICS_REGKEY,
-                    METRICS_CAPTIONHEIGHT_VALNAME, NULL,
-                    lpnm->iCaptionHeight, fWinIni );
-            if( ret) ret = save_int_param( METRICS_REGKEY,
-                    METRICS_SMCAPTIONWIDTH_VALNAME, NULL,
-                    lpnm->iSmCaptionWidth, fWinIni );
-            if( ret) ret = save_int_param( METRICS_REGKEY,
-                    METRICS_SMCAPTIONHEIGHT_VALNAME, NULL,
-                    lpnm->iSmCaptionHeight, fWinIni );
-            if( ret) ret = save_int_param( METRICS_REGKEY,
-                    METRICS_MENUWIDTH_VALNAME, NULL,
-                    lpnm->iMenuWidth, fWinIni );
-            if( ret) ret = save_int_param( METRICS_REGKEY,
-                    METRICS_MENUHEIGHT_VALNAME, NULL,
-                    lpnm->iMenuHeight, fWinIni );
-            if( ret) ret = SYSPARAMS_SaveLogFont(
-                    METRICS_REGKEY, METRICS_MENULOGFONT_VALNAME,
-                    &lpnm->lfMenuFont, fWinIni);
-            if( ret) ret = SYSPARAMS_SaveLogFont(
-                    METRICS_REGKEY, METRICS_CAPTIONLOGFONT_VALNAME,
-                    &lpnm->lfCaptionFont, fWinIni);
-            if( ret) ret = SYSPARAMS_SaveLogFont(
-                    METRICS_REGKEY, METRICS_SMCAPTIONLOGFONT_VALNAME,
-                    &lpnm->lfSmCaptionFont, fWinIni);
-            if( ret) ret = SYSPARAMS_SaveLogFont(
-                    METRICS_REGKEY, METRICS_STATUSLOGFONT_VALNAME,
-                    &lpnm->lfStatusFont, fWinIni);
-            if( ret) ret = SYSPARAMS_SaveLogFont(
-                    METRICS_REGKEY, METRICS_MESSAGELOGFONT_VALNAME,
-                    &lpnm->lfMessageFont, fWinIni);
-            if( ret) {
-                memcpy(&ncm, lpnm, FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth));
-                ncm.cbSize = sizeof(ncm);
-                ncm.iPaddedBorderWidth = (lpnm->cbSize == sizeof(NONCLIENTMETRICSW)) ?
-                                         lpnm->iPaddedBorderWidth : 0;
-                normalize_nonclientmetrics( &ncm);
-                nonclient_metrics = ncm;
-                spi_loaded[SPI_NONCLIENTMETRICS_IDX] = TRUE;
-            }
+            ret = set_entry( &entry_BORDER, lpnm->iBorderWidth, NULL, fWinIni ) &&
+                  set_entry( &entry_SCROLLWIDTH, lpnm->iScrollWidth, NULL, fWinIni ) &&
+                  set_entry( &entry_SCROLLHEIGHT, lpnm->iScrollHeight, NULL, fWinIni ) &&
+                  set_entry( &entry_CAPTIONWIDTH, lpnm->iCaptionWidth, NULL, fWinIni ) &&
+                  set_entry( &entry_CAPTIONHEIGHT, lpnm->iCaptionHeight, NULL, fWinIni ) &&
+                  set_entry( &entry_SMCAPTIONWIDTH, lpnm->iSmCaptionWidth, NULL, fWinIni ) &&
+                  set_entry( &entry_SMCAPTIONHEIGHT, lpnm->iSmCaptionHeight, NULL, fWinIni ) &&
+                  set_entry( &entry_MENUWIDTH, lpnm->iMenuWidth, NULL, fWinIni ) &&
+                  set_entry( &entry_MENUHEIGHT, lpnm->iMenuHeight, NULL, fWinIni ) &&
+                  set_entry( &entry_MENULOGFONT, 0, &lpnm->lfMenuFont, fWinIni ) &&
+                  set_entry( &entry_CAPTIONLOGFONT, 0, &lpnm->lfCaptionFont, fWinIni ) &&
+                  set_entry( &entry_SMCAPTIONLOGFONT, 0, &lpnm->lfSmCaptionFont, fWinIni ) &&
+                  set_entry( &entry_STATUSLOGFONT, 0, &lpnm->lfStatusFont, fWinIni ) &&
+                  set_entry( &entry_MESSAGELOGFONT, 0, &lpnm->lfMessageFont, fWinIni );
+
+            if (ret && lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
+                set_entry( &entry_PADDEDBORDERWIDTH, lpnm->iPaddedBorderWidth, NULL, fWinIni );
         }
         break;
     }
-
     case SPI_GETMINIMIZEDMETRICS:
     {
         MINIMIZEDMETRICS * lpMm = pvParam;
         if (lpMm && lpMm->cbSize == sizeof(*lpMm)) {
-            get_entry( &entry_METRICS_MINWIDTH, 0, &lpMm->iWidth );
-            get_entry( &entry_METRICS_MINHORZGAP, 0, &lpMm->iHorzGap );
-            get_entry( &entry_METRICS_MINVERTGAP, 0, &lpMm->iVertGap );
-            get_entry( &entry_METRICS_MINARRANGE, 0, &lpMm->iArrange );
+            get_entry( &entry_MINWIDTH, 0, &lpMm->iWidth );
+            get_entry( &entry_MINHORZGAP, 0, &lpMm->iHorzGap );
+            get_entry( &entry_MINVERTGAP, 0, &lpMm->iVertGap );
+            get_entry( &entry_MINARRANGE, 0, &lpMm->iArrange );
             lpMm->iWidth = max( 0, lpMm->iWidth );
             lpMm->iHorzGap = max( 0, lpMm->iHorzGap );
             lpMm->iVertGap = max( 0, lpMm->iVertGap );
@@ -1739,10 +1539,10 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     {
         MINIMIZEDMETRICS * lpMm = pvParam;
         if (lpMm && lpMm->cbSize == sizeof(*lpMm))
-            ret = set_entry( &entry_METRICS_MINWIDTH, max( 0, lpMm->iWidth ), NULL, fWinIni ) &&
-                  set_entry( &entry_METRICS_MINHORZGAP, max( 0, lpMm->iHorzGap ), NULL, fWinIni ) &&
-                  set_entry( &entry_METRICS_MINVERTGAP, max( 0, lpMm->iVertGap ), NULL, fWinIni ) &&
-                  set_entry( &entry_METRICS_MINARRANGE, lpMm->iArrange & 0x0f, NULL, fWinIni );
+            ret = set_entry( &entry_MINWIDTH, max( 0, lpMm->iWidth ), NULL, fWinIni ) &&
+                  set_entry( &entry_MINHORZGAP, max( 0, lpMm->iHorzGap ), NULL, fWinIni ) &&
+                  set_entry( &entry_MINVERTGAP, max( 0, lpMm->iVertGap ), NULL, fWinIni ) &&
+                  set_entry( &entry_MINARRANGE, lpMm->iArrange & 0x0f, NULL, fWinIni );
         else
             ret = FALSE;
         break;
@@ -2506,6 +2306,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
  */
 INT WINAPI GetSystemMetrics( INT index )
 {
+    NONCLIENTMETRICSW ncm;
     UINT ret;
 
     /* some metrics are dynamic */
@@ -2516,13 +2317,11 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_CYSCREEN:
         return GetDeviceCaps( get_display_dc(), VERTRES );
     case SM_CXVSCROLL:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return nonclient_metrics.iScrollWidth;
     case SM_CYHSCROLL:
-        return GetSystemMetrics(SM_CXVSCROLL);
+        get_entry( &entry_SCROLLWIDTH, 0, &ret );
+        return max( 8, ret );
     case SM_CYCAPTION:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return nonclient_metrics.iCaptionHeight + 1;
+        return GetSystemMetrics( SM_CYSIZE ) + 1;
     case SM_CXBORDER:
     case SM_CYBORDER:
         /* SM_C{X,Y}BORDER always returns 1 regardless of 'BorderWidth' value in registry */
@@ -2531,16 +2330,15 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_CYDLGFRAME:
         return 3;
     case SM_CYVTHUMB:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return nonclient_metrics.iScrollHeight;
     case SM_CXHTHUMB:
-        return GetSystemMetrics(SM_CYVTHUMB);
+    case SM_CYVSCROLL:
+    case SM_CXHSCROLL:
+        get_entry( &entry_SCROLLHEIGHT, 0, &ret );
+        return max( 8, ret );
     case SM_CXICON:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return icon_size.cx;
     case SM_CYICON:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return icon_size.cy;
+        get_entry( &entry_ICONSIZE, 0, &ret );
+        return ret;
     case SM_CXCURSOR:
     case SM_CYCURSOR:
         return 32;
@@ -2558,12 +2356,6 @@ INT WINAPI GetSystemMetrics( INT index )
         return 0;
     case SM_MOUSEPRESENT:
         return 1;
-    case SM_CYVSCROLL:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return nonclient_metrics.iScrollHeight;
-    case SM_CXHSCROLL:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return nonclient_metrics.iScrollHeight;
     case SM_DEBUG:
         return 0;
     case SM_SWAPBUTTON:
@@ -2575,23 +2367,23 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_RESERVED4:
         return 0;
     case SM_CXMIN:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return 3 * nonclient_metrics.iCaptionWidth + GetSystemMetrics( SM_CYSIZE) +
-            4 * CaptionFontAvCharWidth + 2 * GetSystemMetrics( SM_CXFRAME) + 4;
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        get_text_metr_size( get_display_dc(), &ncm.lfCaptionFont, NULL, &ret );
+        return 3 * ncm.iCaptionWidth + ncm.iCaptionHeight + 4 * ret + 2 * GetSystemMetrics(SM_CXFRAME) + 4;
     case SM_CYMIN:
         return GetSystemMetrics( SM_CYCAPTION) + 2 * GetSystemMetrics( SM_CYFRAME);
     case SM_CXSIZE:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return nonclient_metrics.iCaptionWidth;
+        get_entry( &entry_CAPTIONWIDTH, 0, &ret );
+        return max( 8, ret );
     case SM_CYSIZE:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return nonclient_metrics.iCaptionHeight;
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        return ncm.iCaptionHeight;
     case SM_CXFRAME:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return GetSystemMetrics(SM_CXDLGFRAME) + nonclient_metrics.iBorderWidth;
+        get_entry( &entry_BORDER, 0, &ret );
+        return GetSystemMetrics(SM_CXDLGFRAME) + max( 1, ret );
     case SM_CYFRAME:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return GetSystemMetrics(SM_CYDLGFRAME) + nonclient_metrics.iBorderWidth;
+        get_entry( &entry_BORDER, 0, &ret );
+        return GetSystemMetrics(SM_CYDLGFRAME) + max( 1, ret );
     case SM_CXMINTRACK:
         return GetSystemMetrics(SM_CXMIN);
     case SM_CYMINTRACK:
@@ -2628,10 +2420,10 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_CYEDGE:
         return GetSystemMetrics(SM_CYBORDER) + 1;
     case SM_CXMINSPACING:
-        get_entry( &entry_METRICS_MINHORZGAP, 0, &ret );
+        get_entry( &entry_MINHORZGAP, 0, &ret );
         return GetSystemMetrics(SM_CXMINIMIZED) + max( 0, (INT)ret );
     case SM_CYMINSPACING:
-        get_entry( &entry_METRICS_MINVERTGAP, 0, &ret );
+        get_entry( &entry_MINVERTGAP, 0, &ret );
         return GetSystemMetrics(SM_CYMINIMIZED) + max( 0, (INT)ret );
     case SM_CXSMICON:
     case SM_CYSMICON:
@@ -2639,26 +2431,25 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_CYSMCAPTION:
         return GetSystemMetrics(SM_CYSMSIZE) + 1;
     case SM_CXSMSIZE:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return nonclient_metrics.iSmCaptionWidth;
+        get_entry( &entry_SMCAPTIONWIDTH, 0, &ret );
+        return ret;
     case SM_CYSMSIZE:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return nonclient_metrics.iSmCaptionHeight;
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        return ncm.iSmCaptionHeight;
     case SM_CXMENUSIZE:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return nonclient_metrics.iMenuWidth;
+        get_entry( &entry_MENUWIDTH, 0, &ret );
+        return ret;
     case SM_CYMENUSIZE:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return nonclient_metrics.iMenuHeight;
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        return ncm.iMenuHeight;
     case SM_ARRANGE:
-        get_entry( &entry_METRICS_MINARRANGE, 0, &ret );
+        get_entry( &entry_MINARRANGE, 0, &ret );
         return ret & 0x0f;
     case SM_CXMINIMIZED:
-        get_entry( &entry_METRICS_MINWIDTH, 0, &ret );
+        get_entry( &entry_MINWIDTH, 0, &ret );
         return max( 0, (INT)ret ) + 6;
     case SM_CYMINIMIZED:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return nonclient_metrics.iCaptionHeight + 6;
+        return GetSystemMetrics( SM_CYSIZE ) + 6;
     case SM_CXMAXTRACK:
         return GetSystemMetrics(SM_CXVIRTUALSCREEN) + 4 + 2 * GetSystemMetrics(SM_CXFRAME);
     case SM_CYMAXTRACK:
@@ -2684,9 +2475,12 @@ INT WINAPI GetSystemMetrics( INT index )
         return ret;
     case SM_CXMENUCHECK:
     case SM_CYMENUCHECK:
-        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
-        return tmMenuFont.tmHeight <= 0 ? 13 :
-        ((tmMenuFont.tmHeight + tmMenuFont.tmExternalLeading + 1) / 2) * 2 - 1;
+    {
+        TEXTMETRICW tm;
+        SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+        get_text_metr_size( get_display_dc(), &ncm.lfMenuFont, &tm, NULL);
+        return tm.tmHeight <= 0 ? 13 : ((tm.tmHeight + tm.tmExternalLeading + 1) / 2) * 2 - 1;
+    }
     case SM_SLOWMACHINE:
         return 0;  /* Never true */
     case SM_MIDEASTENABLED:
