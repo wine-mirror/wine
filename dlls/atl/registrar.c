@@ -698,21 +698,22 @@ static const IRegistrarVtbl RegistrarVtbl = {
     Registrar_ResourceUnregister,
 };
 
-static HRESULT Registrar_create(const IUnknown *pUnkOuter, REFIID riid, void **ppvObject)
+/* Exported only by newer ATL versions */
+static HRESULT AtlCreateRegistrar(IRegistrar **ret)
 {
-    Registrar *ret;
+    Registrar *registrar;
 
-    if(!IsEqualGUID(&IID_IUnknown, riid) && !IsEqualGUID(&IID_IRegistrar, riid))
-        return E_NOINTERFACE;
+    registrar = HeapAlloc(GetProcessHeap(), 0, sizeof(*registrar));
+    if(!registrar)
+        return E_OUTOFMEMORY;
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(Registrar));
-    ret->IRegistrar_iface.lpVtbl = &RegistrarVtbl;
-    ret->ref = 1;
-    ret->rep = NULL;
-    *ppvObject = ret;
+    registrar->IRegistrar_iface.lpVtbl = &RegistrarVtbl;
+    registrar->ref = 1;
+    registrar->rep = NULL;
 
     InterlockedIncrement(&dll_count);
 
+    *ret = &registrar->IRegistrar_iface;
     return S_OK;
 }
 
@@ -746,10 +747,25 @@ static ULONG WINAPI RegistrarCF_Release(IClassFactory *iface)
 }
 
 static HRESULT WINAPI RegistrarCF_CreateInstance(IClassFactory *iface, LPUNKNOWN pUnkOuter,
-                                                REFIID riid, void **ppvObject)
+                                                REFIID riid, void **ppv)
 {
-    TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppvObject);
-    return Registrar_create(pUnkOuter, riid, ppvObject);
+    IRegistrar *registrar;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+
+    if(pUnkOuter) {
+        *ppv = NULL;
+        return CLASS_E_NOAGGREGATION;
+    }
+
+    hres = AtlCreateRegistrar(&registrar);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IRegistrar_QueryInterface(registrar, riid, ppv);
+    IRegistrar_Release(registrar);
+    return hres;
 }
 
 static HRESULT WINAPI RegistrarCF_LockServer(IClassFactory *iface, BOOL lock)
@@ -801,10 +817,13 @@ static HRESULT do_register_dll_server(IRegistrar *pRegistrar, LPCOLESTR wszDll,
     static const WCHAR wszModule[] = {'M','O','D','U','L','E',0};
     static const WCHAR wszRegistry[] = {'R','E','G','I','S','T','R','Y',0};
 
-    if (pRegistrar)
+    if(pRegistrar) {
         registrar = pRegistrar;
-    else
-        Registrar_create(NULL, &IID_IRegistrar, (void**)&registrar);
+    }else {
+        hres = AtlCreateRegistrar(&registrar);
+        if(FAILED(hres))
+            return hres;
+    }
 
     IRegistrar_AddReplacement(registrar, wszModule, wszDll);
 
