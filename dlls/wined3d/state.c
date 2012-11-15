@@ -3760,7 +3760,7 @@ void apply_pixelshader(struct wined3d_context *context, const struct wined3d_sta
     context->load_constants = 1;
 }
 
-void state_geometry_shader(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void state_geometry_shader(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     context->select_shader = 1;
 }
