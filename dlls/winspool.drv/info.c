@@ -833,11 +833,14 @@ static BOOL get_cups_ppd( const char *printer_name, const WCHAR *ppd )
 
     http_status = cupsGetPPD3_wrapper( 0, printer_name, &modtime,
                                        unix_name, strlen( unix_name ) + 1 );
+
+    if (http_status != HTTP_OK) unlink( unix_name );
     HeapFree( GetProcessHeap(), 0, unix_name );
 
     if (http_status == HTTP_OK) return TRUE;
 
-    TRACE( "failed to get ppd for printer %s from cups, calling fallback\n", debugstr_a(printer_name) );
+    TRACE( "failed to get ppd for printer %s from cups (status %d), calling fallback\n",
+           debugstr_a(printer_name), http_status );
     return get_fallback_ppd( printer_name, ppd );
 }
 
