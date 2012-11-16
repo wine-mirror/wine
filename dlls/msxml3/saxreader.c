@@ -173,7 +173,7 @@ enum saxhandler_type
     SAXHandler_Last
 };
 
-struct saxhandler_iface
+struct saxanyhandler_iface
 {
     IUnknown *handler;
     IUnknown *vbhandler;
@@ -197,6 +197,16 @@ struct saxlexicalhandler_iface
     IVBSAXLexicalHandler *vbhandler;
 };
 
+struct saxhandler_iface
+{
+    union {
+        struct saxcontenthandler_iface content;
+        struct saxerrorhandler_iface error;
+        struct saxlexicalhandler_iface lexical;
+        struct saxanyhandler_iface anyhandler;
+    } u;
+};
+
 typedef struct
 {
     DispatchEx dispex;
@@ -215,7 +225,7 @@ typedef struct
 
 static HRESULT saxreader_put_handler(saxreader *reader, enum saxhandler_type type, void *ptr, BOOL vb)
 {
-    struct saxhandler_iface *iface = &reader->saxhandlers[type];
+    struct saxanyhandler_iface *iface = &reader->saxhandlers[type].u.anyhandler;
     IUnknown *unk = (IUnknown*)ptr;
 
     if (unk)
@@ -234,7 +244,7 @@ static HRESULT saxreader_put_handler(saxreader *reader, enum saxhandler_type typ
 
 static HRESULT saxreader_get_handler(const saxreader *reader, enum saxhandler_type type, BOOL vb, void **ret)
 {
-    const struct saxhandler_iface *iface = &reader->saxhandlers[type];
+    const struct saxanyhandler_iface *iface = &reader->saxhandlers[type].u.anyhandler;
 
     if (!ret) return E_POINTER;
 
@@ -253,17 +263,17 @@ static HRESULT saxreader_get_handler(const saxreader *reader, enum saxhandler_ty
 
 static struct saxcontenthandler_iface *saxreader_get_contenthandler(saxreader *reader)
 {
-    return (struct saxcontenthandler_iface*)&reader->saxhandlers[SAXContentHandler];
+    return &reader->saxhandlers[SAXContentHandler].u.content;
 }
 
 static struct saxerrorhandler_iface *saxreader_get_errorhandler(saxreader *reader)
 {
-    return (struct saxerrorhandler_iface*)&reader->saxhandlers[SAXErrorHandler];
+    return &reader->saxhandlers[SAXErrorHandler].u.error;
 }
 
 static struct saxlexicalhandler_iface *saxreader_get_lexicalhandler(saxreader *reader)
 {
-    return (struct saxlexicalhandler_iface*)&reader->saxhandlers[SAXLexicalHandler];
+    return &reader->saxhandlers[SAXLexicalHandler].u.lexical;
 }
 
 typedef struct
@@ -327,8 +337,8 @@ static inline saxlocator *impl_from_ISAXAttributes( ISAXAttributes *iface )
 
 static inline int saxreader_has_handler(const saxlocator *locator, enum saxhandler_type type)
 {
-    return (locator->vbInterface && locator->saxreader->saxhandlers[type].vbhandler) ||
-          (!locator->vbInterface && locator->saxreader->saxhandlers[type].handler);
+    struct saxanyhandler_iface *iface = &locator->saxreader->saxhandlers[type].u.anyhandler;
+    return (locator->vbInterface && iface->vbhandler) || (!locator->vbInterface && iface->handler);
 }
 
 /* property names */
@@ -2734,7 +2744,7 @@ static ULONG WINAPI saxxmlreader_Release(
 
         for (i = 0; i < SAXHandler_Last; i++)
         {
-            struct saxhandler_iface *iface = &This->saxhandlers[i];
+            struct saxanyhandler_iface *iface = &This->saxhandlers[i].u.anyhandler;
 
             if (iface->handler)
                 IUnknown_Release(iface->handler);
