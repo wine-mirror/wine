@@ -707,7 +707,6 @@ DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, BOOL m
     if(!netconn)
         return ERROR_OUTOFMEMORY;
 
-    netconn->useSSL = useSSL;
     netconn->socketFD = -1;
     netconn->security_flags = security_flags | server->security_flags;
     netconn->mask_errors = mask_errors;
@@ -903,7 +902,7 @@ fail:
  * NETCON_secure_connect
  * Initiates a secure connection over an existing plaintext connection.
  */
-DWORD NETCON_secure_connect(netconn_t *connection)
+DWORD NETCON_secure_connect(netconn_t *connection, server_t *server)
 {
     DWORD res = ERROR_NOT_SUPPORTED;
 #ifdef SONAME_LIBSSL
@@ -912,6 +911,13 @@ DWORD NETCON_secure_connect(netconn_t *connection)
     {
         ERR("already connected\n");
         return ERROR_INTERNET_CANNOT_CONNECT;
+    }
+
+    connection->useSSL = TRUE;
+    if(server != connection->server) {
+        server_release(connection->server);
+        server_addref(server);
+        connection->server = server;
     }
 
     /* connect with given TLS options */

@@ -4743,7 +4743,7 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
         if(request->proxy)
             res = HTTP_SecureProxyConnect(request);
         if(res == ERROR_SUCCESS)
-            res = NETCON_secure_connect(request->netconn);
+            res = NETCON_secure_connect(request->netconn, request->server);
     }
 
     if(res != ERROR_SUCCESS) {
