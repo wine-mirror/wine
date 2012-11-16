@@ -128,6 +128,11 @@ void      WCMD_execute (const WCHAR *orig_command, const WCHAR *redirects,
 
 void *heap_alloc(size_t);
 
+static inline BOOL heap_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
+
 static inline WCHAR *heap_strdupW(const WCHAR *str)
 {
     WCHAR *ret = NULL;

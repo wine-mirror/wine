@@ -777,9 +777,9 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start)
                 thisVarContents + (lastFound-searchIn));
         strcatW(outputposn, s);
       }
-      HeapFree(GetProcessHeap(), 0, s);
-      HeapFree(GetProcessHeap(), 0, searchIn);
-      HeapFree(GetProcessHeap(), 0, searchFor);
+      heap_free(s);
+      heap_free(searchIn);
+      heap_free(searchFor);
     }
     return start;
 }
@@ -1330,8 +1330,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
       WINE_TRACE("Got directory %s as %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(cmd));
       status = SetCurrentDirectoryW(cmd);
       if (!status) WCMD_print_error ();
-      HeapFree( GetProcessHeap(), 0, cmd );
-      HeapFree( GetProcessHeap(), 0, new_redir );
+      heap_free(cmd );
+      heap_free(new_redir);
       return;
     }
 
@@ -1351,8 +1351,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
                   FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, NULL);
         if (h == INVALID_HANDLE_VALUE) {
           WCMD_print_error ();
-          HeapFree( GetProcessHeap(), 0, cmd );
-          HeapFree( GetProcessHeap(), 0, new_redir );
+          heap_free(cmd);
+          heap_free(new_redir);
           return;
         }
         SetStdHandle (STD_INPUT_HANDLE, h);
@@ -1366,8 +1366,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
                       &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
       if (h == INVALID_HANDLE_VALUE) {
 	WCMD_print_error ();
-        HeapFree( GetProcessHeap(), 0, cmd );
-        HeapFree( GetProcessHeap(), 0, new_redir );
+        heap_free(cmd);
+        heap_free(new_redir);
 	return;
       }
       SetStdHandle (STD_INPUT_HANDLE, h);
@@ -1412,8 +1412,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
                         FILE_ATTRIBUTE_NORMAL, NULL);
         if (h == INVALID_HANDLE_VALUE) {
           WCMD_print_error ();
-          HeapFree( GetProcessHeap(), 0, cmd );
-          HeapFree( GetProcessHeap(), 0, new_redir );
+          heap_free(cmd);
+          heap_free(new_redir);
           return;
         }
         if (SetFilePointer (h, 0, NULL, FILE_END) ==
@@ -1599,8 +1599,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
         WCMD_run_program (whichcmd, FALSE);
         echo_mode = prev_echo_mode;
     }
-    HeapFree( GetProcessHeap(), 0, cmd );
-    HeapFree( GetProcessHeap(), 0, new_redir );
+    heap_free(cmd);
+    heap_free(new_redir);
 
     /* Restore old handles */
     for (i=0; i<3; i++) {
@@ -2293,9 +2293,9 @@ void WCMD_free_commands(CMD_LIST *cmds) {
     while (cmds) {
       CMD_LIST *thisCmd = cmds;
       cmds = cmds->nextcommand;
-      HeapFree(GetProcessHeap(), 0, thisCmd->command);
-      HeapFree(GetProcessHeap(), 0, thisCmd->redirects);
-      HeapFree(GetProcessHeap(), 0, thisCmd);
+      heap_free(thisCmd->command);
+      heap_free(thisCmd->redirects);
+      heap_free(thisCmd);
     }
 }
 
@@ -2561,7 +2561,7 @@ int wmain (int argc, WCHAR *argvW[])
       WCMD_free_commands(toExecute);
       toExecute = NULL;
 
-      HeapFree(GetProcessHeap(), 0, cmd);
+      heap_free(cmd);
       return errorlevel;
   }
 
@@ -2647,7 +2647,7 @@ int wmain (int argc, WCHAR *argvW[])
       WCMD_process_commands(toExecute, FALSE, FALSE);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
-      HeapFree(GetProcessHeap(), 0, cmd);
+      heap_free(cmd);
   }
 
 /*

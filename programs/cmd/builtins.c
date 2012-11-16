@@ -243,7 +243,7 @@ void WCMD_choice (const WCHAR * args) {
 
                 if (!*ptr || isspaceW(*ptr)) {
                     WINE_FIXME("bad parameter %s for /C\n", wine_dbgstr_w(ptr));
-                    HeapFree(GetProcessHeap(), 0, my_command);
+                    heap_free(my_command);
                     return;
                 }
 
@@ -280,7 +280,7 @@ void WCMD_choice (const WCHAR * args) {
 
                 if (!opt_default || (*ptr != ',')) {
                     WINE_FIXME("bad option %s for /T\n", opt_default ? wine_dbgstr_w(ptr) : "");
-                    HeapFree(GetProcessHeap(), 0, my_command);
+                    heap_free(my_command);
                     return;
                 }
                 ptr++;
@@ -299,7 +299,7 @@ void WCMD_choice (const WCHAR * args) {
 
             default:
                 WINE_FIXME("bad parameter: %s\n", wine_dbgstr_w(ptr));
-                HeapFree(GetProcessHeap(), 0, my_command);
+                heap_free(my_command);
                 return;
         }
     }
@@ -357,7 +357,7 @@ void WCMD_choice (const WCHAR * args) {
 
             errorlevel = (ptr - opt_c) + 1;
             WINE_TRACE("answer: %d\n", errorlevel);
-            HeapFree(GetProcessHeap(), 0, my_command);
+            heap_free(my_command);
             return;
         }
         else
@@ -780,7 +780,7 @@ void WCMD_copy(WCHAR * args) {
   }
 
   /* Save away the destination name*/
-  HeapFree(GetProcessHeap(), 0, destination->name);
+  heap_free(destination->name);
   destination->name = heap_strdupW(destname);
   WINE_TRACE("Resolved destination is '%s' (calc later %d)\n",
              wine_dbgstr_w(destname), appendfirstsource);
@@ -881,7 +881,7 @@ void WCMD_copy(WCHAR * args) {
 
           /* If we needed tyo save away the first filename, do it */
           if (appendfirstsource && overwrite) {
-            HeapFree(GetProcessHeap(), 0, destination->name);
+            heap_free(destination->name);
             destination->name = heap_strdupW(outname);
             WINE_TRACE("Final resolved destination name : '%s'\n", wine_dbgstr_w(outname));
             appendfirstsource = FALSE;
@@ -951,14 +951,14 @@ exitreturn:
     prevcopy = thiscopy;
     /* Free up this block*/
     thiscopy = thiscopy -> next;
-    HeapFree(GetProcessHeap(), 0, prevcopy->name);
-    HeapFree(GetProcessHeap(), 0, prevcopy);
+    heap_free(prevcopy->name);
+    heap_free(prevcopy);
   }
 
   /* Free up the destination memory */
   if (destination) {
-    HeapFree(GetProcessHeap(), 0, destination->name);
-    HeapFree(GetProcessHeap(), 0, destination);
+    heap_free(destination->name);
+    heap_free(destination);
   }
 
   return;
@@ -1285,8 +1285,8 @@ static BOOL WCMD_delete_one (const WCHAR *thisArg) {
           tempDir = allDirs->next;
           found |= WCMD_delete_one (allDirs->dirName);
 
-          HeapFree(GetProcessHeap(),0,allDirs->dirName);
-          HeapFree(GetProcessHeap(),0,allDirs);
+          heap_free(allDirs->dirName);
+          heap_free(allDirs);
           allDirs = tempDir;
         }
       }
@@ -1396,7 +1396,7 @@ void WCMD_echo (const WCHAR *args)
                  && origcommand[0]!=';') {
     if (echo_mode) WCMD_output (WCMD_LoadMessage(WCMD_ECHOPROMPT), onW);
     else WCMD_output (WCMD_LoadMessage(WCMD_ECHOPROMPT), offW);
-    HeapFree(GetProcessHeap(), 0, trimmed);
+    heap_free(trimmed);
     return;
   }
 
@@ -1408,7 +1408,7 @@ void WCMD_echo (const WCHAR *args)
     WCMD_output_asis (args);
     WCMD_output_asis (newlineW);
   }
-  HeapFree(GetProcessHeap(), 0, trimmed);
+  heap_free(trimmed);
 }
 
 /*****************************************************************************
@@ -1435,7 +1435,7 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
   if (executecmds && firstcmd && *firstcmd) {
     WCHAR *command = heap_strdupW(firstcmd);
     WCMD_execute (firstcmd, (*cmdList)->redirects, cmdList, FALSE);
-    HeapFree(GetProcessHeap(), 0, command);
+    heap_free(command);
   }
 
 
@@ -1728,7 +1728,7 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
     *cmdEnd = thisCmdStart;
   }
 
-  if (varidx >=0) HeapFree(GetProcessHeap(), 0, forloopcontext.variable[varidx]);
+  if (varidx >=0) heap_free(forloopcontext.variable[varidx]);
 
   /* Restore the original for variable contextx */
   forloopcontext = oldcontext;
@@ -2171,8 +2171,8 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
     /* If we are walking directories, move on to any which remain */
     if (dirsToWalk != NULL) {
       DIRECTORY_STACK *nextDir = dirsToWalk->next;
-      HeapFree(GetProcessHeap(), 0, dirsToWalk->dirName);
-      HeapFree(GetProcessHeap(), 0, dirsToWalk);
+      heap_free(dirsToWalk->dirName);
+      heap_free(dirsToWalk);
       dirsToWalk = nextDir;
       if (dirsToWalk) WINE_TRACE("Moving to next directorty to iterate: %s\n",
                                  wine_dbgstr_w(dirsToWalk->dirName));
@@ -3446,7 +3446,7 @@ void WCMD_start(const WCHAR *args)
         WCMD_print_error ();
         errorlevel = 9009;
     }
-    HeapFree( GetProcessHeap(), 0, cmdline );
+    heap_free(cmdline);
 }
 
 /****************************************************************************

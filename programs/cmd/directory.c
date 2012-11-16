@@ -208,13 +208,13 @@ static void WCMD_getfileowner(WCHAR *filename, WCHAR *owner, int ownerlen) {
         /* Get the owners security descriptor */
         if(!GetFileSecurityW(filename, OWNER_SECURITY_INFORMATION, secBuffer,
                             sizeNeeded, &sizeNeeded)) {
-            HeapFree(GetProcessHeap(),0,secBuffer);
+            heap_free(secBuffer);
             return;
         }
 
         /* Get the SID from the SD */
         if(!GetSecurityDescriptorOwner(secBuffer, &pSID, &defaulted)) {
-            HeapFree(GetProcessHeap(),0,secBuffer);
+            heap_free(secBuffer);
             return;
         }
 
@@ -223,7 +223,7 @@ static void WCMD_getfileowner(WCHAR *filename, WCHAR *owner, int ownerlen) {
             static const WCHAR fmt[]  = {'%','s','%','c','%','s','\0'};
             snprintfW(owner, ownerlen, fmt, domain, '\\', name);
         }
-        HeapFree(GetProcessHeap(),0,secBuffer);
+        heap_free(secBuffer);
     }
     return;
 }
@@ -477,7 +477,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
        }
     }
   }
-  HeapFree(GetProcessHeap(),0,fd);
+  heap_free(fd);
 
   /* When recursing, look in all subdirectories for matches */
   if (recurse) {
@@ -530,9 +530,9 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         dirStack = WCMD_list_directory (thisDir, 1);
         while (thisDir != dirStack) {
           DIRECTORY_STACK *tempDir = thisDir->next;
-          HeapFree(GetProcessHeap(),0,thisDir->dirName);
-          HeapFree(GetProcessHeap(),0,thisDir->fileName);
-          HeapFree(GetProcessHeap(),0,thisDir);
+          heap_free(thisDir->dirName);
+          heap_free(thisDir->fileName);
+          heap_free(thisDir);
           thisDir = tempDir;
         }
       }
@@ -935,8 +935,8 @@ exit:
   while (fullParms != NULL) {
     prevEntry = fullParms;
     fullParms = prevEntry->next;
-    HeapFree(GetProcessHeap(),0,prevEntry->dirName);
-    HeapFree(GetProcessHeap(),0,prevEntry->fileName);
-    HeapFree(GetProcessHeap(),0,prevEntry);
+    heap_free(prevEntry->dirName);
+    heap_free(prevEntry->fileName);
+    heap_free(prevEntry);
   }
 }
