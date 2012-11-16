@@ -1912,7 +1912,7 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
 
     TRACE("s %ld type %d\n", s, type);
 
-    wsa = HeapAlloc( GetProcessHeap(), 0, sizeof(*wsa) );
+    wsa = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( struct ws2_async, iovec[1] ));
     if ( !wsa )
         return WSAEFAULT;
 
@@ -2450,7 +2450,7 @@ static BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int n
                       FD_WINE_CONNECTED|FD_WINE_LISTENING);
 
         /* Indirectly call WSASend */
-        if (!(wsa = HeapAlloc( GetProcessHeap(), 0, sizeof(*wsa) )))
+        if (!(wsa = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( struct ws2_async, iovec[1] ))))
         {
             SetLastError(WSAEFAULT);
         }
