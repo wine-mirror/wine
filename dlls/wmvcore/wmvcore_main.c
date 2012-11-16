@@ -45,6 +45,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
+HRESULT WINAPI DllRegisterServer(void)
+{
+    FIXME("(): stub\n");
+
+    return S_OK;
+}
+
 HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMSyncReader **reader)
 {
     FIXME("(%p, %x, %p): stub\n", reserved, rights, reader);

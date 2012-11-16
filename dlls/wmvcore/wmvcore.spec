@@ -4,7 +4,7 @@
 @ stub WMCreateSyncReaderPriv
 @ stub WMIsAvailableOffline
 @ stub WMValidateData
-@ stub DllRegisterServer
+@ stdcall -private DllRegisterServer()
 @ stub WMCreateBackupRestorer
 @ stub WMCreateEditor
 @ stub WMCreateIndexer
