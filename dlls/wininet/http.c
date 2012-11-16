@@ -1729,8 +1729,7 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
     if(!new_server)
         return FALSE;
 
-    server_release(request->server);
-    request->server = new_server;
+    request->proxy = new_server;
 
     TRACE("proxy server=%s port=%d\n", debugstr_w(new_server->name), new_server->port);
     return TRUE;
@@ -1738,7 +1737,7 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
 
 static DWORD HTTP_ResolveName(http_request_t *request)
 {
-    server_t *server = request->server;
+    server_t *server = request->proxy ? request->proxy : request->server;
     socklen_t addr_len;
     void *addr;
 
@@ -1829,6 +1828,8 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
 
     if(request->server)
         server_release(request->server);
+    if(request->proxy)
+        server_release(request->proxy);
 
     heap_free(request->path);
     heap_free(request->verb);
@@ -3933,8 +3934,6 @@ static LPWSTR HTTP_GetRedirectURL(http_request_t *request, LPCWSTR lpszUrl)
 static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
 {
     http_session_t *session = request->session;
-    appinfo_t *hIC = session->appInfo;
-    BOOL using_proxy = hIC->proxy && hIC->proxy[0];
     WCHAR path[INTERNET_MAX_PATH_LENGTH];
     int index;
 
@@ -4020,7 +4019,7 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
 
         reset_data_stream(request);
 
-        if(!using_proxy && (strcmpiW(request->server->name, hostName) || request->server->port != urlComponents.nPort)) {
+        if(strcmpiW(request->server->name, hostName) || request->server->port != urlComponents.nPort) {
             server_t *new_server;
 
             new_server = get_server(hostName, urlComponents.nPort, TRUE);
@@ -4084,6 +4083,7 @@ static LPWSTR HTTP_build_req( LPCWSTR *list, int len )
 
 static DWORD HTTP_SecureProxyConnect(http_request_t *request)
 {
+    server_t *server = request->server;
     LPWSTR lpszPath;
     LPWSTR requestString;
     INT len;
@@ -4093,12 +4093,11 @@ static DWORD HTTP_SecureProxyConnect(http_request_t *request)
     DWORD res;
     static const WCHAR szConnect[] = {'C','O','N','N','E','C','T',0};
     static const WCHAR szFormat[] = {'%','s',':','%','u',0};
-    http_session_t *session = request->session;
 
     TRACE("\n");
 
-    lpszPath = heap_alloc((lstrlenW( session->hostName ) + 13)*sizeof(WCHAR));
-    sprintfW( lpszPath, szFormat, session->hostName, session->hostPort );
+    lpszPath = heap_alloc((lstrlenW(server->name) + 13)*sizeof(WCHAR));
+    sprintfW(lpszPath, szFormat, server->name, server->port);
     requestString = HTTP_BuildHeaderRequestString( request, szConnect, lpszPath, g_szHttp1_1 );
     heap_free( lpszPath );
 
@@ -4712,12 +4711,15 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
         return ERROR_SUCCESS;
     }
 
+    TRACE("connecting to %s, proxy %s\n", debugstr_w(request->server->name),
+          request->proxy ? debugstr_w(request->proxy->name) : "(null)");
+
     INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
                           INTERNET_STATUS_CONNECTING_TO_SERVER,
                           request->server->addr_str,
                           strlen(request->server->addr_str)+1);
 
-    res = create_netconn(is_https, request->server, request->security_flags,
+    res = create_netconn(is_https, request->proxy ? request->proxy : request->server, request->security_flags,
                          (request->hdr.ErrorMask & INTERNET_ERROR_MASK_COMBINED_SEC_CERT) != 0,
                          request->connect_timeout, &netconn);
     if(res != ERROR_SUCCESS) {
@@ -4738,7 +4740,7 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
          * behaviour to be more correct and to not cause any incompatibilities
          * because using a secure connection through a proxy server is a rare
          * case that would be hard for anyone to depend on */
-        if(request->session->appInfo->proxy)
+        if(request->proxy)
             res = HTTP_SecureProxyConnect(request);
         if(res == ERROR_SUCCESS)
             res = NETCON_secure_connect(request->netconn);

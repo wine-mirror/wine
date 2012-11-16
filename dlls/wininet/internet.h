@@ -314,6 +314,7 @@ typedef struct
     object_header_t hdr;
     http_session_t *session;
     server_t *server;
+    server_t *proxy;
     LPWSTR path;
     LPWSTR verb;
     LPWSTR rawHeaders;
