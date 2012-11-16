@@ -68,6 +68,11 @@ wchar_t __cdecl towlower(wchar_t);
 wchar_t __cdecl towupper(wchar_t);
 #endif /* _WCTYPE_DEFINED */
 
+typedef wchar_t wctrans_t;
+wint_t __cdecl towctrans(wint_t,wctrans_t);
+wctrans_t __cdecl wctrans(const char *);
+wctype_t __cdecl wctype(const char *);
+
 #ifdef __cplusplus
 }
 #endif

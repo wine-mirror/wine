@@ -5807,8 +5807,8 @@
 @ stub _Wcsxfrm
 # extern _Xbig
 @ stub __Wcrtomb_lk
-@ stub towctrans
-@ stub wctrans
+@ cdecl towctrans(long long)
+@ cdecl wctrans(str)
 @ cdecl wctype(str)
 
 #Functions not exported in native dll:
