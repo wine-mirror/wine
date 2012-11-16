@@ -1567,13 +1567,17 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         {
             r = msi_create_empty_local_file( localfile, dotmsi );
             if (r != ERROR_SUCCESS)
+            {
+                msi_free ( base_url );
                 return r;
+            }
 
             if (!CopyFileW( file, localfile, FALSE ))
             {
                 r = GetLastError();
                 WARN("unable to copy package %s to %s (%u)\n", debugstr_w(file), debugstr_w(localfile), r);
                 DeleteFileW( localfile );
+                msi_free ( base_url );
                 return r;
             }
             delete_on_close = TRUE;
@@ -1581,7 +1585,10 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         TRACE("opening package %s\n", debugstr_w( localfile ));
         r = MSI_OpenDatabaseW( localfile, MSIDBOPEN_TRANSACT, &db );
         if (r != ERROR_SUCCESS)
+        {
+            msi_free ( base_url );
             return r;
+        }
     }
     package = MSI_CreatePackage( db, base_url );
     msi_free( base_url );

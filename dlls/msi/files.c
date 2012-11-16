@@ -336,7 +336,8 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         if (rc != ERROR_SUCCESS)
         {
             ERR("Unable to load media info for %s (%u)\n", debugstr_w(file->File), rc);
-            return ERROR_FUNCTION_FAILED;
+            rc = ERROR_FUNCTION_FAILED;
+            goto done;
         }
         if (!file->Component->Enabled) continue;
 
@@ -513,7 +514,8 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
         if (rc != ERROR_SUCCESS)
         {
             ERR("Unable to load media info for %s (%u)\n", debugstr_w(file->File), rc);
-            return ERROR_FUNCTION_FAILED;
+            rc = ERROR_FUNCTION_FAILED;
+            goto done;
         }
         comp->Action = msi_get_component_action( package, comp );
         if (!comp->Enabled || comp->Action != INSTALLSTATE_LOCAL) continue;
