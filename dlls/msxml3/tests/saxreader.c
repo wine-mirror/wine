@@ -1903,6 +1903,7 @@ static void test_saxreader(void)
     while (table->clsid)
     {
         struct call_entry *test_seq;
+        ISAXEntityResolver *resolver;
         BSTR str;
 
         if (!is_clsid_supported(table->clsid, reader_support_data))
@@ -2219,6 +2220,14 @@ static void test_saxreader(void)
         hr = ISAXXMLReader_parse(reader, var);
         EXPECT_HR(hr, S_OK);
         ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "attribute value normalization", TRUE);
+
+        resolver = (void*)0xdeadbeef;
+        hr = ISAXXMLReader_getEntityResolver(reader, &resolver);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(resolver == NULL, "got %p\n", resolver);
+
+        hr = ISAXXMLReader_putEntityResolver(reader, NULL);
+        ok(hr == S_OK || broken(hr == E_FAIL), "got 0x%08x\n", hr);
 
         ISAXXMLReader_Release(reader);
         table++;

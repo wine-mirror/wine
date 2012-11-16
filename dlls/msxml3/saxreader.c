@@ -168,6 +168,7 @@ enum saxhandler_type
     SAXContentHandler = 0,
     SAXDeclHandler,
     SAXDTDHandler,
+    SAXEntityResolver,
     SAXErrorHandler,
     SAXLexicalHandler,
     SAXHandler_Last
@@ -197,10 +198,17 @@ struct saxlexicalhandler_iface
     IVBSAXLexicalHandler *vbhandler;
 };
 
+struct saxentityresolver_iface
+{
+    ISAXEntityResolver *handler;
+    IVBSAXEntityResolver *vbhandler;
+};
+
 struct saxhandler_iface
 {
     union {
         struct saxcontenthandler_iface content;
+        struct saxentityresolver_iface entityresolver;
         struct saxerrorhandler_iface error;
         struct saxlexicalhandler_iface lexical;
         struct saxanyhandler_iface anyhandler;
@@ -1843,6 +1851,12 @@ static void libxmlCDataBlock(void *ctx, const xmlChar *value, int len)
     This->column += 4+end-cur;
 }
 
+static xmlParserInputPtr libxmlresolveentity(void *ctx, const xmlChar *publicid, const xmlChar *systemid)
+{
+    FIXME("entity resolving not implemented, %s, %s\n", publicid, systemid);
+    return xmlSAX2ResolveEntity(ctx, publicid, systemid);
+}
+
 /*** IVBSAXLocator interface ***/
 /*** IUnknown methods ***/
 static HRESULT WINAPI ivbsaxlocator_QueryInterface(IVBSAXLocator* iface, REFIID riid, void **ppvObject)
@@ -2377,24 +2391,6 @@ static HRESULT internal_parseStream(saxreader *This, ISequentialStream *stream, 
     return hr;
 }
 
-static HRESULT internal_getEntityResolver(
-        saxreader *This,
-        void *pEntityResolver,
-        BOOL vbInterface)
-{
-    FIXME("(%p)->(%p) stub\n", This, pEntityResolver);
-    return E_NOTIMPL;
-}
-
-static HRESULT internal_putEntityResolver(
-        saxreader *This,
-        void *pEntityResolver,
-        BOOL vbInterface)
-{
-    FIXME("(%p)->(%p) stub\n", This, pEntityResolver);
-    return E_NOTIMPL;
-}
-
 static HRESULT internal_parse(
         saxreader* This,
         VARIANT varInput,
@@ -2877,18 +2873,18 @@ static HRESULT WINAPI saxxmlreader_putProperty(
 
 static HRESULT WINAPI saxxmlreader_get_entityResolver(
     IVBSAXXMLReader* iface,
-    IVBSAXEntityResolver **pEntityResolver)
+    IVBSAXEntityResolver **resolver)
 {
     saxreader *This = impl_from_IVBSAXXMLReader( iface );
-    return internal_getEntityResolver(This, pEntityResolver, TRUE);
+    return saxreader_get_handler(This, SAXEntityResolver, TRUE, (void**)resolver);
 }
 
 static HRESULT WINAPI saxxmlreader_put_entityResolver(
     IVBSAXXMLReader* iface,
-    IVBSAXEntityResolver *pEntityResolver)
+    IVBSAXEntityResolver *resolver)
 {
     saxreader *This = impl_from_IVBSAXXMLReader( iface );
-    return internal_putEntityResolver(This, pEntityResolver, TRUE);
+    return saxreader_put_handler(This, SAXEntityResolver, resolver, TRUE);
 }
 
 static HRESULT WINAPI saxxmlreader_get_contentHandler(
@@ -3084,18 +3080,18 @@ static HRESULT WINAPI isaxxmlreader_putProperty(
 
 static HRESULT WINAPI isaxxmlreader_getEntityResolver(
         ISAXXMLReader* iface,
-        ISAXEntityResolver **ppEntityResolver)
+        ISAXEntityResolver **resolver)
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
-    return internal_getEntityResolver(This, ppEntityResolver, FALSE);
+    return saxreader_get_handler(This, SAXEntityResolver, FALSE, (void**)resolver);
 }
 
 static HRESULT WINAPI isaxxmlreader_putEntityResolver(
         ISAXXMLReader* iface,
-        ISAXEntityResolver *pEntityResolver)
+        ISAXEntityResolver *resolver)
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
-    return internal_putEntityResolver(This, pEntityResolver, FALSE);
+    return saxreader_put_handler(This, SAXEntityResolver, resolver, FALSE);
 }
 
 static HRESULT WINAPI isaxxmlreader_getContentHandler(
@@ -3264,6 +3260,7 @@ HRESULT SAXXMLReader_create(MSXML_VERSION version, IUnknown *outer, LPVOID *ppOb
     reader->sax.error = libxmlFatalError;
     reader->sax.fatalError = libxmlFatalError;
     reader->sax.cdataBlock = libxmlCDataBlock;
+    reader->sax.resolveEntity = libxmlresolveentity;
 
     *ppObj = &reader->IVBSAXXMLReader_iface;
 
