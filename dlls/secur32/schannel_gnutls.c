@@ -129,7 +129,7 @@ BOOL schan_imp_create_session(schan_imp_session *session, BOOL is_server,
     }
 
     err = pgnutls_credentials_set(*s, GNUTLS_CRD_CERTIFICATE,
-                                  (gnutls_certificate_credentials)cred);
+                                  (gnutls_certificate_credentials_t)cred);
     if (err != GNUTLS_E_SUCCESS)
     {
         pgnutls_perror(err);
@@ -409,7 +409,7 @@ BOOL schan_imp_allocate_certificate_credentials(schan_imp_certificate_credential
 
 void schan_imp_free_certificate_credentials(schan_imp_certificate_credentials c)
 {
-    pgnutls_certificate_free_credentials((gnutls_certificate_credentials)c);
+    pgnutls_certificate_free_credentials((gnutls_certificate_credentials_t)c);
 }
 
 static void schan_gnutls_log(int level, const char *msg)
