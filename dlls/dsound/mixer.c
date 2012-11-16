@@ -112,6 +112,7 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	TRACE("(%p)\n",dsb);
 
 	pwfxe = (WAVEFORMATEXTENSIBLE *) dsb->pwfx;
+	dsb->freqAdjust = (float)dsb->freq / dsb->device->pwfx->nSamplesPerSec;
 
 	if ((pwfxe->Format.wFormatTag == WAVE_FORMAT_IEEE_FLOAT) || ((pwfxe->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
 	    && (IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))))

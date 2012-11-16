@@ -305,21 +305,36 @@ static HRESULT WINAPI IDirectSound8Impl_SetCooperativeLevel(IDirectSound8 *iface
         DWORD level)
 {
     IDirectSoundImpl *This = impl_from_IDirectSound8(iface);
+    DirectSoundDevice *device = This->device;
+    DWORD oldlevel;
+    HRESULT hr = S_OK;
 
     TRACE("(%p,%p,%s)\n", This, hwnd, dumpCooperativeLevel(level));
 
-    if (!This->device) {
+    if (!device) {
         WARN("not initialized\n");
         return DSERR_UNINITIALIZED;
     }
 
     if (level == DSSCL_PRIORITY || level == DSSCL_EXCLUSIVE) {
         WARN("level=%s not fully supported\n",
-                level == DSSCL_PRIORITY ? "DSSCL_PRIORITY" : "DSSCL_EXCLUSIVE");
+             level==DSSCL_PRIORITY ? "DSSCL_PRIORITY" : "DSSCL_EXCLUSIVE");
     }
 
-    This->device->priolevel = level;
-    return DS_OK;
+    RtlAcquireResourceExclusive(&device->buffer_list_lock, TRUE);
+    EnterCriticalSection(&device->mixlock);
+    oldlevel = device->priolevel;
+    device->priolevel = level;
+    if ((level == DSSCL_WRITEPRIMARY) != (oldlevel == DSSCL_WRITEPRIMARY)) {
+        hr = DSOUND_ReopenDevice(device, level == DSSCL_WRITEPRIMARY);
+        if (FAILED(hr))
+            device->priolevel = oldlevel;
+        else
+            DSOUND_PrimaryOpen(device);
+    }
+    LeaveCriticalSection(&device->mixlock);
+    RtlReleaseResource(&device->buffer_list_lock);
+    return hr;
 }
 
 static HRESULT WINAPI IDirectSound8Impl_Compact(IDirectSound8 *iface)
@@ -612,20 +627,24 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
     device->guid = GUID_NULL;
 
     /* Set default wave format (may need it for waveOutOpen) */
-    device->pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(WAVEFORMATEX));
-    if (device->pwfx == NULL) {
+    device->pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(WAVEFORMATEXTENSIBLE));
+    device->primary_pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(WAVEFORMATEXTENSIBLE));
+    if (!device->pwfx || !device->primary_pwfx) {
         WARN("out of memory\n");
+        HeapFree(GetProcessHeap(),0,device->primary_pwfx);
+        HeapFree(GetProcessHeap(),0,device->pwfx);
         HeapFree(GetProcessHeap(),0,device);
         return DSERR_OUTOFMEMORY;
     }
 
     device->pwfx->wFormatTag = WAVE_FORMAT_PCM;
-    device->pwfx->nSamplesPerSec = ds_default_sample_rate;
-    device->pwfx->wBitsPerSample = ds_default_bits_per_sample;
+    device->pwfx->nSamplesPerSec = 22050;
+    device->pwfx->wBitsPerSample = 8;
     device->pwfx->nChannels = 2;
     device->pwfx->nBlockAlign = device->pwfx->wBitsPerSample * device->pwfx->nChannels / 8;
     device->pwfx->nAvgBytesPerSec = device->pwfx->nSamplesPerSec * device->pwfx->nBlockAlign;
     device->pwfx->cbSize = 0;
+    memcpy(device->primary_pwfx, device->pwfx, sizeof(*device->pwfx));
 
     InitializeCriticalSection(&(device->mixlock));
     device->mixlock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": DirectSoundDevice.mixlock");
