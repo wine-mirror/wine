@@ -5752,6 +5752,7 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
     LPWSTR depends = NULL, pass = NULL, args = NULL, image_path = NULL;
     DWORD serv_type, start_type, err_control;
     SERVICE_DESCRIPTIONW sd = {NULL};
+    UINT ret = ERROR_SUCCESS;
 
     comp = MSI_RecordGetString( rec, 12 );
     component = msi_get_loaded_component( package, comp );
@@ -5809,7 +5810,10 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
     {
         int len = strlenW(file->TargetPath) + strlenW(args) + 2;
         if (!(image_path = msi_alloc(len * sizeof(WCHAR))))
-            return ERROR_OUTOFMEMORY;
+        {
+            ret = ERROR_OUTOFMEMORY;
+            goto done;
+        }
 
         strcpyW(image_path, file->TargetPath);
         strcatW(image_path, szSpace);
@@ -5843,7 +5847,7 @@ done:
     msi_free(depends);
     msi_free(args);
 
-    return ERROR_SUCCESS;
+    return ret;
 }
 
 static UINT ACTION_InstallServices( MSIPACKAGE *package )
