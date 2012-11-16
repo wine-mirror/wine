@@ -6043,6 +6043,7 @@ static BOOL stop_service_dependents(SC_HANDLE scm, SC_HANDLE service)
     ENUM_SERVICE_STATUSW *dependencies;
     SERVICE_STATUS ss;
     SC_HANDLE depserv;
+    BOOL stopped, ret = FALSE;
 
     if (EnumDependentServicesW(service, SERVICE_ACTIVE, NULL,
                                0, &needed, &count))
@@ -6057,24 +6058,26 @@ static BOOL stop_service_dependents(SC_HANDLE scm, SC_HANDLE service)
 
     if (!EnumDependentServicesW(service, SERVICE_ACTIVE, dependencies,
                                 needed, &needed, &count))
-        goto error;
+        goto done;
 
     for (i = 0; i < count; i++)
     {
         depserv = OpenServiceW(scm, dependencies[i].lpServiceName,
                                SERVICE_STOP | SERVICE_QUERY_STATUS);
         if (!depserv)
-            goto error;
+            goto done;
 
-        if (!ControlService(depserv, SERVICE_CONTROL_STOP, &ss))
-            goto error;
+        stopped = ControlService(depserv, SERVICE_CONTROL_STOP, &ss);
+        CloseServiceHandle(depserv);
+        if (!stopped)
+            goto done;
     }
 
-    return TRUE;
+    ret = TRUE;
 
-error:
+done:
     msi_free(dependencies);
-    return FALSE;
+    return ret;
 }
 
 static UINT stop_service( LPCWSTR name )
