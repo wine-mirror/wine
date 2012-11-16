@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <locale.h>
+#include <wctype.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -66,6 +67,8 @@ static char* (__cdecl *p_Copy_s)(char*, size_t, const char*, size_t);
 static unsigned short (__cdecl *p_wctype)(const char*);
 static MSVCP__Ctypevec* (__cdecl *p__Getctype)(MSVCP__Ctypevec*);
 static /*MSVCP__Collvec*/ULONGLONG (__cdecl *p__Getcoll)(void);
+static wctrans_t (__cdecl *p_wctrans)(const char*);
+static wint_t (__cdecl *p_towctrans)(wint_t, wctrans_t);
 
 #undef __thiscall
 #ifdef __i386__
@@ -188,6 +191,8 @@ static BOOL init(void)
     SET(p_wctype, "wctype");
     SET(p__Getctype, "_Getctype");
     SET(p__Getcoll, "_Getcoll");
+    SET(p_wctrans, "wctrans");
+    SET(p_towctrans, "towctrans");
     SET(basic_ostringstream_char_vbtable, "??_8?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B@");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAEADAEBD@Z");
@@ -440,6 +445,37 @@ static void test__Getcoll(void)
     ok(ret.collvec.page == 0, "ret.page = %x\n", ret.collvec.page);
 }
 
+static void test_towctrans(void)
+{
+    wchar_t ret;
+
+    ret = p_wctrans("tolower");
+    ok(ret == 2, "wctrans returned %d, expected 2\n", ret);
+    ret = p_wctrans("toupper");
+    ok(ret == 1, "wctrans returned %d, expected 1\n", ret);
+    ret = p_wctrans("toLower");
+    ok(ret == 0, "wctrans returned %d, expected 0\n", ret);
+    ret = p_wctrans("");
+    ok(ret == 0, "wctrans returned %d, expected 0\n", ret);
+    if(0) { /* crashes on windows */
+        ret = p_wctrans(NULL);
+        ok(ret == 0, "wctrans returned %d, expected 0\n", ret);
+    }
+
+    ret = p_towctrans('t', 2);
+    ok(ret == 't', "towctrans('t', 2) returned %c, expected t\n", ret);
+    ret = p_towctrans('T', 2);
+    ok(ret == 't', "towctrans('T', 2) returned %c, expected t\n", ret);
+    ret = p_towctrans('T', 0);
+    ok(ret == 't', "towctrans('T', 0) returned %c, expected t\n", ret);
+    ret = p_towctrans('T', 3);
+    ok(ret == 't', "towctrans('T', 3) returned %c, expected t\n", ret);
+    ret = p_towctrans('t', 1);
+    ok(ret == 'T', "towctrans('t', 1) returned %c, expected T\n", ret);
+    ret = p_towctrans('T', 1);
+    ok(ret == 'T', "towctrans('T', 1) returned %c, expected T\n", ret);
+}
+
 static void test_allocator_char(void)
 {
     void *allocator = (void*)0xdeadbeef;
@@ -525,6 +561,7 @@ START_TEST(misc)
     test_wctype();
     test__Getctype();
     test__Getcoll();
+    test_towctrans();
     test_virtual_call();
     test_virtual_base_dtors();
 
