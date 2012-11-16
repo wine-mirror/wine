@@ -44,6 +44,15 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 /***********************************************************************
+ * CommitTransaction (ktmw32.@)
+ */
+BOOL WINAPI CommitTransaction(HANDLE transaction)
+{
+    FIXME("(%p): stub\n", transaction);
+    return TRUE;
+}
+
+/***********************************************************************
  * CreateTransaction (ktmw32.@)
  */
 HANDLE WINAPI CreateTransaction(LPSECURITY_ATTRIBUTES pattr, LPGUID pguid, DWORD options,

@@ -1,6 +1,6 @@
 @ stub CommitComplete
 @ stub CommitEnlistment
-@ stub CommitTransaction
+@ stdcall CommitTransaction(ptr)
 @ stub CommitTransactionAsync
 @ stub CreateEnlistment
 @ stub CreateResourceManager
