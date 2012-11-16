@@ -23,6 +23,9 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(ktmw32);
 
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -38,4 +41,17 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
 
     return TRUE;
+}
+
+/***********************************************************************
+ * CreateTransaction (ktmw32.@)
+ */
+HANDLE WINAPI CreateTransaction(LPSECURITY_ATTRIBUTES pattr, LPGUID pguid, DWORD options,
+                                DWORD level, DWORD flags, DWORD timeout, LPWSTR description)
+{
+
+    FIXME("(%p %p 0x%x 0x%x 0x%x, %u, %s): stub\n",
+            pattr, pguid, options, level, flags, timeout, debugstr_w(description));
+
+    return (HANDLE) 1;
 }

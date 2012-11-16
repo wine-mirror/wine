@@ -4,7 +4,7 @@
 @ stub CommitTransactionAsync
 @ stub CreateEnlistment
 @ stub CreateResourceManager
-@ stub CreateTransaction
+@ stdcall CreateTransaction(ptr ptr long long long long wstr)
 @ stub CreateTransactionManager
 @ stub GetCurrentClockTransactionManager
 @ stub GetEnlistmentId
