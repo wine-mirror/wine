@@ -558,65 +558,44 @@ static void SYSPARAMS_NotifyChange( UINT uiAction, UINT fWinIni )
     }
 }
 
-
-/***********************************************************************
- * Saves system parameter to user profile.
- */
-
-/* Save data as-is */
-static BOOL SYSPARAMS_SaveRaw( LPCWSTR lpRegKey, LPCWSTR lpValName, 
-                               const void *lpValue, DWORD valueSize,
-                               DWORD type, UINT fWinIni )
+/* retrieve the cached base keys for a given entry */
+static BOOL get_base_keys( enum parameter_key index, HKEY *base_key, HKEY *volatile_key )
 {
-    HKEY hKey;
-    HKEY hBaseKey;
-    DWORD dwOptions;
-    BOOL ret = FALSE;
+    static HKEY base_keys[NB_PARAM_KEYS];
+    static HKEY volatile_keys[NB_PARAM_KEYS];
+    HKEY key;
 
-    if (fWinIni & SPIF_UPDATEINIFILE)
+    if (!base_keys[index] && base_key)
     {
-        hBaseKey = HKEY_CURRENT_USER;
-        dwOptions = 0;
+        if (RegCreateKeyW( HKEY_CURRENT_USER, parameter_key_names[index], &key )) return FALSE;
+        if (InterlockedCompareExchangePointer( (void **)&base_keys[index], key, 0 ))
+            RegCloseKey( key );
     }
-    else
+    if (!volatile_keys[index] && volatile_key)
     {
-        hBaseKey = get_volatile_regkey();
-        dwOptions = REG_OPTION_VOLATILE;
+        if (RegCreateKeyExW( get_volatile_regkey(), parameter_key_names[index],
+                             0, 0, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &key, 0 )) return FALSE;
+        if (InterlockedCompareExchangePointer( (void **)&volatile_keys[index], key, 0 ))
+            RegCloseKey( key );
     }
-
-    if (RegCreateKeyExW( hBaseKey, lpRegKey,
-                         0, 0, dwOptions, KEY_ALL_ACCESS,
-                         0, &hKey, 0 ) == ERROR_SUCCESS)
-    {
-        if (RegSetValueExW( hKey, lpValName, 0, type,
-                            lpValue, valueSize) == ERROR_SUCCESS)
-        {
-            ret = TRUE;
-            if (hBaseKey == HKEY_CURRENT_USER)
-                RegDeleteKeyW( get_volatile_regkey(), lpRegKey );
-        }
-        RegCloseKey( hKey );
-    }
-    return ret;
+    if (base_key) *base_key = base_keys[index];
+    if (volatile_key) *volatile_key = volatile_keys[index];
+    return TRUE;
 }
 
 /* load a value to a registry entry */
 static DWORD load_entry( struct sysparam_entry *entry, void *data, DWORD size )
 {
     DWORD type, count = 0;
-    HKEY key;
+    HKEY base_key, volatile_key;
 
-    if (!RegOpenKeyW( get_volatile_regkey(), parameter_key_names[entry->regval[0]], &key ))
+    if (!get_base_keys( entry->regval[0], &base_key, &volatile_key )) return FALSE;
+
+    count = size;
+    if (RegQueryValueExW( volatile_key, entry->regval + 1, NULL, &type, data, &count ))
     {
         count = size;
-        if (RegQueryValueExW( key, entry->regval + 1, NULL, &type, data, &count )) count = 0;
-        RegCloseKey( key );
-    }
-    if (!count && !RegOpenKeyW( HKEY_CURRENT_USER, parameter_key_names[entry->regval[0]], &key ))
-    {
-        count = size;
-        if (RegQueryValueExW( key, entry->regval + 1, NULL, &type, data, &count )) count = 0;
-        RegCloseKey( key );
+        if (RegQueryValueExW( base_key, entry->regval + 1, NULL, &type, data, &count )) count = 0;
     }
     /* make sure strings are null-terminated */
     if (size && count == size && type == REG_SZ) ((WCHAR *)data)[count - 1] = 0;
@@ -628,9 +607,22 @@ static DWORD load_entry( struct sysparam_entry *entry, void *data, DWORD size )
 static BOOL save_entry( const struct sysparam_entry *entry, const void *data, DWORD size,
                         DWORD type, UINT flags )
 {
-    if (!SYSPARAMS_SaveRaw( parameter_key_names[entry->regval[0]], entry->regval + 1, data, size, type, flags ))
-        return FALSE;
-    if (entry->mirror) SYSPARAMS_SaveRaw( parameter_key_names[entry->mirror[0]], entry->mirror + 1, data, size, type, flags );
+    HKEY base_key, volatile_key;
+
+    if (flags & SPIF_UPDATEINIFILE)
+    {
+        if (!get_base_keys( entry->regval[0], &base_key, &volatile_key )) return FALSE;
+        if (RegSetValueExW( base_key, entry->regval + 1, 0, type, data, size )) return FALSE;
+        RegDeleteValueW( volatile_key, entry->regval + 1 );
+
+        if (entry->mirror && get_base_keys( entry->mirror[0], &base_key, NULL ))
+            RegSetValueExW( base_key, entry->mirror + 1, 0, type, data, size );
+    }
+    else
+    {
+        if (!get_base_keys( entry->regval[0], NULL, &volatile_key )) return FALSE;
+        if (RegSetValueExW( volatile_key, entry->regval + 1, 0, type, data, size )) return FALSE;
+    }
     return TRUE;
 }
 
