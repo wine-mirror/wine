@@ -5785,6 +5785,6 @@
 @ stub __Stofx
 @ stub __Stoldx
 @ stub __Wcrtomb_lk
-@ stub towctrans
-@ stub wctrans
+@ cdecl towctrans(long long) msvcp90.towctrans
+@ cdecl wctrans(str) msvcp90.wctrans
 @ cdecl wctype(str) msvcp90.wctype

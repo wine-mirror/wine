@@ -5161,9 +5161,9 @@
 @ stub mbrlen
 @ stub mbrtowc
 @ stub mbsrtowcs
-@ stub towctrans
+@ cdecl towctrans(long long)
 @ stub wcrtomb
 @ cdecl wcsrtombs(ptr ptr long ptr) msvcrt.wcsrtombs
 @ cdecl wctob(long) msvcrt.wctob
-@ stub wctrans
+@ cdecl wctrans(str)
 @ cdecl wctype(str)

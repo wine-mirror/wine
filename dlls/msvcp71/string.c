@@ -565,7 +565,7 @@ MSVCP_bool __thiscall basic_string_char_inside(
 {
     char *cstr = basic_string_char_ptr(this);
 
-    return (ptr<cstr || ptr>=cstr+this->size) ? FALSE : TRUE;
+    return ptr>=cstr && ptr<cstr+this->size;
 }
 
 /* ?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEX_NI@Z */
@@ -2256,7 +2256,7 @@ MSVCP_bool __thiscall basic_string_wchar_inside(
 {
     wchar_t *cstr = basic_string_wchar_ptr(this);
 
-    return (ptr<cstr || ptr>=cstr+this->size) ? FALSE : TRUE;
+    return ptr>=cstr && ptr<cstr+this->size;
 }
 
 /* ?_Tidy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAEX_NI@Z */

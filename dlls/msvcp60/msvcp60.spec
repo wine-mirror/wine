@@ -4312,9 +4312,9 @@
 @ stub mbrlen # msvcrt.mbrlen
 @ stub mbrtowc # msvcrt.mbrtowc
 @ stub mbsrtowcs # msvcrt.mbsrtowcs
-@ stub towctrans
+@ cdecl towctrans(long long)
 @ stub wcrtomb # msvcrt.wcrtomb
 @ cdecl wcsrtombs(ptr ptr long ptr) msvcrt.wcsrtombs
 @ cdecl wctob(long) msvcrt.wctob
-@ stub wctrans
+@ cdecl wctrans(str)
 @ cdecl wctype(str)

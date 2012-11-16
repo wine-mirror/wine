@@ -26,6 +26,7 @@
 #include "limits.h"
 #include "math.h"
 #include "stdio.h"
+#include "wctype.h"
 
 #include "wine/list.h"
 
@@ -8273,6 +8274,27 @@ locale* __cdecl locale_global(locale *ret, const locale *loc)
     }
     _Lockit_dtor(&lock);
     return ret;
+}
+
+/* wctrans */
+wctrans_t __cdecl wctrans(const char *property)
+{
+    static const char str_tolower[] = "tolower";
+    static const char str_toupper[] = "toupper";
+
+    if(!strcmp(property, str_tolower))
+        return 2;
+    if(!strcmp(property, str_toupper))
+        return 1;
+    return 0;
+}
+
+/* towctrans */
+wint_t __cdecl towctrans(wint_t c, wctrans_t category)
+{
+    if(category == 1)
+        return towupper(c);
+    return towlower(c);
 }
 
 DEFINE_RTTI_DATA0(locale_facet, 0, ".?AVfacet@locale@std@@");
