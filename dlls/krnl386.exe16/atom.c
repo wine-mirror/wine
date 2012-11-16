@@ -163,7 +163,7 @@ WORD WINAPI InitAtomTable16( WORD entries )
       /* Allocate the table */
 
     if (!entries) entries = DEFAULT_ATOMTABLE_SIZE;  /* sanity check */
-    handle = LocalAlloc16( LMEM_FIXED, sizeof(ATOMTABLE) + (entries-1) * sizeof(HANDLE16) );
+    handle = LocalAlloc16( LMEM_FIXED, FIELD_OFFSET( ATOMTABLE, entries[entries] ));
     if (!handle) return 0;
     table = MapSL( MAKESEGPTR( CURRENT_DS, handle ) );
     table->size = entries;
