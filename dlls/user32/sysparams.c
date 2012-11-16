@@ -268,6 +268,8 @@ static HPEN   SysColorPens[NUM_SYS_COLORS];
 
 static const WORD wPattern55AA[] = { 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa };
 
+static HKEY volatile_base_key;
+
 HBRUSH SYSCOLOR_55AABrush = 0;
 
 union sysparam_all_entry;
@@ -276,6 +278,7 @@ struct sysparam_entry
 {
     BOOL       (*get)( union sysparam_all_entry *entry, UINT int_param, void *ptr_param );
     BOOL       (*set)( union sysparam_all_entry *entry, UINT int_param, void *ptr_param, UINT flags );
+    BOOL       (*init)( union sysparam_all_entry *entry );
     const WCHAR *regval;
     const WCHAR *mirror;
     BOOL         loaded;
@@ -500,40 +503,6 @@ static void get_text_metr_size( HDC hdc, LOGFONTW *plf, TEXTMETRICW * ptm, UINT 
 }
 
 /***********************************************************************
- *           get_volatile_regkey
- *
- * Return a handle to the volatile registry key used to store
- * non-permanently modified parameters.
- */
-static HKEY get_volatile_regkey(void)
-{
-    static HKEY volatile_key;
-
-    if (!volatile_key)
-    {
-        HKEY key;
-        /* This must be non-volatile! */
-        if (RegCreateKeyExW( HKEY_CURRENT_USER, WINE_CURRENT_USER_REGKEY,
-                             0, 0, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, 0,
-                             &key, 0 ) != ERROR_SUCCESS)
-        {
-            ERR("Can't create wine registry branch\n");
-        }
-        else
-        {
-            /* @@ Wine registry key: HKCU\Software\Wine\Temporary System Parameters */
-            if (RegCreateKeyExW( key, WINE_CURRENT_USER_REGKEY_TEMP_PARAMS,
-                                 0, 0, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, 0,
-                                 &volatile_key, 0 ) != ERROR_SUCCESS)
-                ERR("Can't create non-permanent wine registry branch\n");
-
-            RegCloseKey(key);
-        }
-    }
-    return volatile_key;
-}
-
-/***********************************************************************
  *           SYSPARAMS_NotifyChange
  *
  * Sends notification about system parameter update.
@@ -573,7 +542,7 @@ static BOOL get_base_keys( enum parameter_key index, HKEY *base_key, HKEY *volat
     }
     if (!volatile_keys[index] && volatile_key)
     {
-        if (RegCreateKeyExW( get_volatile_regkey(), parameter_key_names[index],
+        if (RegCreateKeyExW( volatile_base_key, parameter_key_names[index],
                              0, 0, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &key, 0 )) return FALSE;
         if (InterlockedCompareExchangePointer( (void **)&volatile_keys[index], key, 0 ))
             RegCloseKey( key );
@@ -632,6 +601,26 @@ static BOOL save_entry_string( const struct sysparam_entry *entry, const WCHAR *
     return save_entry( entry, str, (strlenW(str) + 1) * sizeof(WCHAR), REG_SZ, flags );
 }
 
+/* initialize an entry in the registry if missing */
+static BOOL init_entry( struct sysparam_entry *entry, const void *data, DWORD size, DWORD type )
+{
+    HKEY base_key;
+
+    if (!get_base_keys( entry->regval[0], &base_key, NULL )) return FALSE;
+    if (!RegQueryValueExW( base_key, entry->regval + 1, NULL, NULL, NULL, NULL )) return TRUE;
+    if (RegSetValueExW( base_key, entry->regval + 1, 0, type, data, size )) return FALSE;
+    if (entry->mirror && get_base_keys( entry->mirror[0], &base_key, NULL ))
+        RegSetValueExW( base_key, entry->mirror + 1, 0, type, data, size );
+    entry->loaded = TRUE;
+    return TRUE;
+}
+
+/* initialize a string value in the registry if missing */
+static BOOL init_entry_string( struct sysparam_entry *entry, const WCHAR *str )
+{
+    return init_entry( entry, str, (strlenW(str) + 1) * sizeof(WCHAR), REG_SZ );
+}
+
 static inline HDC get_display_dc(void)
 {
     static const WCHAR DISPLAY[] = {'D','I','S','P','L','A','Y',0};
@@ -675,12 +664,8 @@ static void SYSPARAMS_SetSysColor( int index, COLORREF color )
     __wine_make_gdi_object_system( SysColorPens[index], TRUE);
 }
 
-/***********************************************************************
- *           SYSPARAMS_Init
- *
- * Initialisation of the system metrics array.
- */
-void SYSPARAMS_Init(void)
+/* initialization of the system colors */
+static void init_syscolors(void)
 {
     HKEY hkey; /* key to the window metrics area of the registry */
     int i, r, g, b;
@@ -785,6 +770,15 @@ static BOOL set_uint_entry( union sysparam_all_entry *entry, UINT int_param, voi
     return TRUE;
 }
 
+/* initialize a uint parameter */
+static BOOL init_uint_entry( union sysparam_all_entry *entry )
+{
+    WCHAR buf[32];
+
+    wsprintfW( buf, CSu, entry->uint.val );
+    return init_entry_string( &entry->hdr, buf );
+}
+
 /* set an int parameter in the registry */
 static BOOL set_int_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param, UINT flags )
 {
@@ -795,6 +789,15 @@ static BOOL set_int_entry( union sysparam_all_entry *entry, UINT int_param, void
     entry->uint.val = int_param;
     entry->hdr.loaded = TRUE;
     return TRUE;
+}
+
+/* initialize an int parameter */
+static BOOL init_int_entry( union sysparam_all_entry *entry )
+{
+    WCHAR buf[32];
+
+    wsprintfW( buf, CSd, entry->uint.val );
+    return init_entry_string( &entry->hdr, buf );
 }
 
 /* load a twips parameter from the registry */
@@ -850,6 +853,15 @@ static BOOL set_bool_entry( union sysparam_all_entry *entry, UINT int_param, voi
     return TRUE;
 }
 
+/* initialize a bool parameter */
+static BOOL init_bool_entry( union sysparam_all_entry *entry )
+{
+    WCHAR buf[32];
+
+    wsprintfW( buf, CSu, entry->bool.val != 0 );
+    return init_entry_string( &entry->hdr, buf );
+}
+
 /* load a bool parameter using Yes/No strings from the registry */
 static BOOL get_yesno_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param )
 {
@@ -876,6 +888,12 @@ static BOOL set_yesno_entry( union sysparam_all_entry *entry, UINT int_param, vo
     return TRUE;
 }
 
+/* initialize a bool parameter using Yes/No strings */
+static BOOL init_yesno_entry( union sysparam_all_entry *entry )
+{
+    return init_entry_string( &entry->hdr, entry->bool.val ? Yes : No );
+}
+
 /* load a dword (binary) parameter from the registry */
 static BOOL get_dword_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param )
 {
@@ -899,6 +917,12 @@ static BOOL set_dword_entry( union sysparam_all_entry *entry, UINT int_param, vo
     entry->dword.val = val;
     entry->hdr.loaded = TRUE;
     return TRUE;
+}
+
+/* initialize a dword parameter */
+static BOOL init_dword_entry( union sysparam_all_entry *entry )
+{
+    return init_entry( &entry->hdr, &entry->dword.val, sizeof(entry->dword.val), REG_DWORD );
 }
 
 /* load a font (binary) parameter from the registry */
@@ -956,6 +980,14 @@ static BOOL set_font_entry( union sysparam_all_entry *entry, UINT int_param, voi
     return TRUE;
 }
 
+/* initialize a font (binary) parameter */
+static BOOL init_font_entry( union sysparam_all_entry *entry )
+{
+    GetObjectW( GetStockObject( DEFAULT_GUI_FONT ), sizeof(entry->font.val), &entry->font.val );
+    entry->font.val.lfWeight = entry->font.weight;
+    return init_entry( &entry->hdr, &entry->font.val, sizeof(entry->font.val), REG_BINARY );
+}
+
 /* get a path parameter in the registry */
 static BOOL get_path_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param )
 {
@@ -988,6 +1020,12 @@ static BOOL set_path_entry( union sysparam_all_entry *entry, UINT int_param, voi
     }
     HeapFree( GetProcessHeap(), 0, buffer );
     return ret;
+}
+
+/* initialize a path parameter */
+static BOOL init_path_entry( union sysparam_all_entry *entry )
+{
+    return init_entry_string( &entry->hdr, entry->path.path );
 }
 
 /* get a binary parameter in the registry */
@@ -1029,6 +1067,12 @@ static BOOL set_binary_entry( union sysparam_all_entry *entry, UINT int_param, v
     return ret;
 }
 
+/* initialize a binary parameter */
+static BOOL init_binary_entry( union sysparam_all_entry *entry )
+{
+    return init_entry( &entry->hdr, entry->bin.ptr, entry->bin.size, REG_BINARY );
+}
+
 /* get a user pref parameter in the registry */
 static BOOL get_userpref_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param )
 {
@@ -1057,71 +1101,70 @@ static BOOL set_userpref_entry( union sysparam_all_entry *entry, UINT int_param,
     return parent_entry->hdr.set( parent_entry, sizeof(prefs), prefs, flags );
 }
 
-static BOOL get_entry( void *ptr,  UINT int_param, void *ptr_param )
+static BOOL get_entry( void *ptr, UINT int_param, void *ptr_param )
 {
     union sysparam_all_entry *entry = ptr;
     return entry->hdr.get( entry, int_param, ptr_param );
 }
 
-static BOOL set_entry( void *ptr,  UINT int_param, void *ptr_param, UINT flags )
+static BOOL set_entry( void *ptr, UINT int_param, void *ptr_param, UINT flags )
 {
     union sysparam_all_entry *entry = ptr;
     return entry->hdr.set( entry, int_param, ptr_param, flags );
 }
 
 #define UINT_ENTRY(name,val) \
-    struct sysparam_uint_entry entry_##name = { { get_uint_entry, set_uint_entry, \
+    struct sysparam_uint_entry entry_##name = { { get_uint_entry, set_uint_entry, init_uint_entry, \
                                                   name ##_VALNAME }, (val) }
 
 #define UINT_ENTRY_MIRROR(name,val) \
-    struct sysparam_uint_entry entry_##name = { { get_uint_entry, set_uint_entry, \
+    struct sysparam_uint_entry entry_##name = { { get_uint_entry, set_uint_entry, init_uint_entry, \
                                                   name ##_VALNAME, name ##_MIRROR }, (val) }
 
 #define INT_ENTRY(name,val) \
-    struct sysparam_uint_entry entry_##name = { { get_uint_entry, set_int_entry, \
+    struct sysparam_uint_entry entry_##name = { { get_uint_entry, set_int_entry, init_int_entry, \
                                                   name ##_VALNAME }, (val) }
 
 #define BOOL_ENTRY(name,val) \
-    struct sysparam_bool_entry entry_##name = { { get_bool_entry, set_bool_entry, \
+    struct sysparam_bool_entry entry_##name = { { get_bool_entry, set_bool_entry, init_bool_entry, \
                                                   name ##_VALNAME }, (val) }
 
 #define BOOL_ENTRY_MIRROR(name,val) \
-    struct sysparam_bool_entry entry_##name = { { get_bool_entry, set_bool_entry, \
+    struct sysparam_bool_entry entry_##name = { { get_bool_entry, set_bool_entry, init_bool_entry, \
                                                   name ##_VALNAME, name ##_MIRROR }, (val) }
 
 #define YESNO_ENTRY(name,val) \
-    struct sysparam_bool_entry entry_##name = { { get_yesno_entry, set_yesno_entry, \
+    struct sysparam_bool_entry entry_##name = { { get_yesno_entry, set_yesno_entry, init_yesno_entry, \
                                                   name ##_VALNAME }, (val) }
 
 #define TWIPS_ENTRY(name,val) \
-    struct sysparam_uint_entry entry_##name = { { get_twips_entry, set_int_entry, \
+    struct sysparam_uint_entry entry_##name = { { get_twips_entry, set_int_entry, init_int_entry, \
                                                   name ##_VALNAME }, (val) }
 
 #define DWORD_ENTRY(name,val) \
-    struct sysparam_dword_entry entry_##name = { { get_dword_entry, set_dword_entry, \
+    struct sysparam_dword_entry entry_##name = { { get_dword_entry, set_dword_entry, init_dword_entry, \
                                                    name ##_VALNAME }, (val) }
 
 #define BINARY_ENTRY(name,data) \
-    struct sysparam_binary_entry entry_##name = { { get_binary_entry, set_binary_entry, \
+    struct sysparam_binary_entry entry_##name = { { get_binary_entry, set_binary_entry, init_binary_entry, \
                                                     name ##_VALNAME }, &(data), sizeof(data) }
 
 #define PATH_ENTRY(name) \
-    struct sysparam_binary_entry entry_##name = { { get_path_entry, set_path_entry, \
+    struct sysparam_binary_entry entry_##name = { { get_path_entry, set_path_entry, init_path_entry, \
                                                     name ##_VALNAME } }
 
 #define FONT_ENTRY(name,weight) \
-    struct sysparam_font_entry entry_##name = { { get_font_entry, set_font_entry, \
+    struct sysparam_font_entry entry_##name = { { get_font_entry, set_font_entry, init_font_entry, \
                                                   name ##_VALNAME }, (weight) }
 
 #define USERPREF_ENTRY(name,offset,mask) \
     struct sysparam_pref_entry entry_##name = { { get_userpref_entry, set_userpref_entry }, \
                                                 &entry_USERPREFERENCESMASK, (offset), (mask) }
 
-static UINT_ENTRY( CARETWIDTH, 1 );
 static UINT_ENTRY( DRAGWIDTH, 4 );
 static UINT_ENTRY( DRAGHEIGHT, 4 );
 static UINT_ENTRY( DOUBLECLICKTIME, 500 );
-static UINT_ENTRY( FONTSMOOTHING, 0 );
+static UINT_ENTRY( FONTSMOOTHING, 2 );
 static UINT_ENTRY( GRIDGRANULARITY, 0 );
 static UINT_ENTRY( ICONSIZE, 32 );
 static UINT_ENTRY( KEYBOARDDELAY, 1 );
@@ -1177,11 +1220,12 @@ static TWIPS_ENTRY( SMCAPTIONWIDTH, 13 );
 
 static DWORD_ENTRY( ACTIVEWINDOWTRACKING, 0 );
 static DWORD_ENTRY( ACTIVEWNDTRKTIMEOUT, 0 );
+static DWORD_ENTRY( CARETWIDTH, 1 );
 static DWORD_ENTRY( FOCUSBORDERHEIGHT, 1 );
 static DWORD_ENTRY( FOCUSBORDERWIDTH, 1 );
 static DWORD_ENTRY( FONTSMOOTHINGCONTRAST, 0 );
-static DWORD_ENTRY( FONTSMOOTHINGORIENTATION, 0 );
-static DWORD_ENTRY( FONTSMOOTHINGTYPE, 0 );
+static DWORD_ENTRY( FONTSMOOTHINGORIENTATION, FE_FONTSMOOTHINGORIENTATIONRGB );
+static DWORD_ENTRY( FONTSMOOTHINGTYPE, FE_FONTSMOOTHINGSTANDARD );
 static DWORD_ENTRY( FOREGROUNDFLASHCOUNT, 3 );
 static DWORD_ENTRY( FOREGROUNDLOCKTIMEOUT, 0 );
 static DWORD_ENTRY( MOUSECLICKLOCKTIME, 1200 );
@@ -1221,6 +1265,95 @@ static USERPREF_ENTRY( DISABLEOVERLAPPEDCONTENT, 4, 0x01 );
 static USERPREF_ENTRY( CLIENTAREAANIMATION,      4, 0x02 );
 static USERPREF_ENTRY( CLEARTYPE,                4, 0x10 );
 static USERPREF_ENTRY( SPEECHRECOGNITION,        4, 0x20 );
+
+/* entries that are initialized by default in the registry */
+static union sysparam_all_entry * const default_entries[] =
+{
+    (union sysparam_all_entry *)&entry_ACTIVEWINDOWTRACKING,
+    (union sysparam_all_entry *)&entry_ACTIVEWNDTRKTIMEOUT,
+    (union sysparam_all_entry *)&entry_BEEP,
+    (union sysparam_all_entry *)&entry_BLOCKSENDINPUTRESETS,
+    (union sysparam_all_entry *)&entry_BORDER,
+    (union sysparam_all_entry *)&entry_CAPTIONHEIGHT,
+    (union sysparam_all_entry *)&entry_CAPTIONWIDTH,
+    (union sysparam_all_entry *)&entry_CARETWIDTH,
+    (union sysparam_all_entry *)&entry_DOUBLECLICKTIME,
+    (union sysparam_all_entry *)&entry_DOUBLECLKHEIGHT,
+    (union sysparam_all_entry *)&entry_DOUBLECLKWIDTH,
+    (union sysparam_all_entry *)&entry_DRAGFULLWINDOWS,
+    (union sysparam_all_entry *)&entry_DRAGHEIGHT,
+    (union sysparam_all_entry *)&entry_DRAGWIDTH,
+    (union sysparam_all_entry *)&entry_FOCUSBORDERHEIGHT,
+    (union sysparam_all_entry *)&entry_FOCUSBORDERWIDTH,
+    (union sysparam_all_entry *)&entry_FONTSMOOTHING,
+    (union sysparam_all_entry *)&entry_FONTSMOOTHINGCONTRAST,
+    (union sysparam_all_entry *)&entry_FONTSMOOTHINGORIENTATION,
+    (union sysparam_all_entry *)&entry_FONTSMOOTHINGTYPE,
+    (union sysparam_all_entry *)&entry_FOREGROUNDFLASHCOUNT,
+    (union sysparam_all_entry *)&entry_FOREGROUNDLOCKTIMEOUT,
+    (union sysparam_all_entry *)&entry_ICONHORIZONTALSPACING,
+    (union sysparam_all_entry *)&entry_ICONSIZE,
+    (union sysparam_all_entry *)&entry_ICONTITLEWRAP,
+    (union sysparam_all_entry *)&entry_ICONVERTICALSPACING,
+    (union sysparam_all_entry *)&entry_KEYBOARDDELAY,
+    (union sysparam_all_entry *)&entry_KEYBOARDPREF,
+    (union sysparam_all_entry *)&entry_KEYBOARDSPEED,
+    (union sysparam_all_entry *)&entry_LOWPOWERACTIVE,
+    (union sysparam_all_entry *)&entry_MENUHEIGHT,
+    (union sysparam_all_entry *)&entry_MENUSHOWDELAY,
+    (union sysparam_all_entry *)&entry_MENUWIDTH,
+    (union sysparam_all_entry *)&entry_MOUSEACCELERATION,
+    (union sysparam_all_entry *)&entry_MOUSEBUTTONSWAP,
+    (union sysparam_all_entry *)&entry_MOUSECLICKLOCKTIME,
+    (union sysparam_all_entry *)&entry_MOUSEHOVERHEIGHT,
+    (union sysparam_all_entry *)&entry_MOUSEHOVERTIME,
+    (union sysparam_all_entry *)&entry_MOUSEHOVERWIDTH,
+    (union sysparam_all_entry *)&entry_MOUSESPEED,
+    (union sysparam_all_entry *)&entry_MOUSETHRESHOLD1,
+    (union sysparam_all_entry *)&entry_MOUSETHRESHOLD2,
+    (union sysparam_all_entry *)&entry_PADDEDBORDERWIDTH,
+    (union sysparam_all_entry *)&entry_SCREENREADER,
+    (union sysparam_all_entry *)&entry_SCROLLHEIGHT,
+    (union sysparam_all_entry *)&entry_SCROLLWIDTH,
+    (union sysparam_all_entry *)&entry_SHOWSOUNDS,
+    (union sysparam_all_entry *)&entry_SMCAPTIONHEIGHT,
+    (union sysparam_all_entry *)&entry_SMCAPTIONWIDTH,
+    (union sysparam_all_entry *)&entry_SNAPTODEFBUTTON,
+    (union sysparam_all_entry *)&entry_USERPREFERENCESMASK,
+    (union sysparam_all_entry *)&entry_WHEELSCROLLCHARS,
+    (union sysparam_all_entry *)&entry_WHEELSCROLLLINES,
+};
+
+/***********************************************************************
+ *           SYSPARAMS_Init
+ */
+void SYSPARAMS_Init(void)
+{
+    HKEY key;
+    DWORD i, dispos;
+
+    init_syscolors();
+
+    /* this one must be non-volatile */
+    if (RegCreateKeyW( HKEY_CURRENT_USER, WINE_CURRENT_USER_REGKEY, &key ))
+    {
+        ERR("Can't create wine registry branch\n");
+        return;
+    }
+
+    /* @@ Wine registry key: HKCU\Software\Wine\Temporary System Parameters */
+    if (RegCreateKeyExW( key, WINE_CURRENT_USER_REGKEY_TEMP_PARAMS, 0, 0,
+                         REG_OPTION_VOLATILE, KEY_ALL_ACCESS, 0, &volatile_base_key, &dispos ))
+        ERR("Can't create non-permanent wine registry branch\n");
+
+    RegCloseKey( key );
+
+    if (volatile_base_key && dispos == REG_CREATED_NEW_KEY)  /* first process, initialize entries */
+    {
+        for (i = 0; i < sizeof(default_entries)/sizeof(default_entries[0]); i++)
+            default_entries[i]->hdr.init( default_entries[i] );
+    }
+}
 
 /***********************************************************************
  *		SystemParametersInfoW (USER32.@)

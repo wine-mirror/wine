@@ -491,25 +491,6 @@ HKLM,%CurrentVersionNT%\AeDebug,"Auto",2,"1"
 HKCU,Software\Wine\Debug,"RelayExclude",2,"ntdll.RtlEnterCriticalSection;ntdll.RtlLeaveCriticalSection;kernel32.48;kernel32.49;kernel32.94;kernel32.95;kernel32.96;kernel32.97;kernel32.98;kernel32.TlsGetValue;kernel32.TlsSetValue;kernel32.FlsGetValue;kernel32.FlsSetValue;kernel32.SetLastError"
 HKCU,Software\Wine\Debug,"RelayFromExclude",2,"winex11.drv;user32;gdi32;advapi32;kernel32"
 
-[ControlPanel]
-HKCU,Control Panel\Desktop,DragFullWindows,2,"0"
-HKCU,Control Panel\Desktop,FontSmoothing,2,"0"
-HKCU,Control Panel\Desktop,LowPowerActive,,"0"
-HKCU,Control Panel\Desktop,MenuShowDelay,2,"400"
-HKCU,Control Panel\Desktop,SmoothScroll,3,00,00,00,00
-HKCU,Control Panel\Desktop,UserPreferenceMask,3,10,00,00,80
-HKCU,Control Panel\Desktop\WindowMetrics,BorderWidth,2,"1"
-HKCU,Control Panel\Desktop\WindowMetrics,CaptionHeight,2,"18"
-HKCU,Control Panel\Desktop\WindowMetrics,CaptionWidth,2,"18"
-HKCU,Control Panel\Desktop\WindowMetrics,MenuHeight,2,"18"
-HKCU,Control Panel\Desktop\WindowMetrics,MenuWidth,2,"18"
-HKCU,Control Panel\Desktop\WindowMetrics,ScrollHeight,2,"16"
-HKCU,Control Panel\Desktop\WindowMetrics,ScrollWidth,2,"16"
-HKCU,Control Panel\Desktop\WindowMetrics,Shell Icon Size,2,"32"
-HKCU,Control Panel\Desktop\WindowMetrics,SmCaptionHeight,2,"15"
-HKCU,Control Panel\Desktop\WindowMetrics,SmCaptionWidth,2,"13"
-HKCU,Control Panel\Mouse,Beep,2,"No"
-
 [DirectX]
 HKLM,Software\Microsoft\DirectX,"Version",,"4.09.00.0904"
 HKLM,Software\Microsoft\DirectX,"InstalledVersion",1,00,00,00,09,00,00,00,00
