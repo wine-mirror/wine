@@ -261,7 +261,8 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
 
         size = (strlenW(str)+1)*sizeof(WCHAR);
         ret = heap_alloc(size);
-        memcpy(ret, str, size);
+        if(ret)
+            memcpy(ret, str, size);
     }
 
     return ret;
@@ -289,7 +290,8 @@ static inline LPWSTR heap_strdupAtoW(const char *str)
     if(str) {
         DWORD len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
         ret = heap_alloc(len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+        if(ret)
+            MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
     }
 
     return ret;
@@ -302,7 +304,8 @@ static inline char *heap_strdupWtoA(const WCHAR *str)
     if(str) {
         size_t size = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
         ret = heap_alloc(size);
-        WideCharToMultiByte(CP_ACP, 0, str, -1, ret, size, NULL, NULL);
+        if(ret)
+            WideCharToMultiByte(CP_ACP, 0, str, -1, ret, size, NULL, NULL);
     }
 
     return ret;
