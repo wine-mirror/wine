@@ -55,6 +55,7 @@ typedef struct _xmlreaderinput
     IXmlReaderInput IXmlReaderInput_iface;
     LONG ref;
     IUnknown *input;          /* reference passed on IXmlReaderInput creation */
+    IMalloc *imalloc;
 } xmlreaderinput;
 
 static inline xmlreader *impl_from_IXmlReader(IXmlReader *iface)
@@ -67,21 +68,42 @@ static inline xmlreaderinput *impl_from_IXmlReaderInput(IXmlReaderInput *iface)
     return CONTAINING_RECORD(iface, xmlreaderinput, IXmlReaderInput_iface);
 }
 
-/* reader memory allocation functions */
-static inline void *reader_alloc(xmlreader *reader, size_t len)
+static inline void *m_alloc(IMalloc *imalloc, size_t len)
 {
-    if (reader->imalloc)
-        return IMalloc_Alloc(reader->imalloc, len);
+    if (imalloc)
+        return IMalloc_Alloc(imalloc, len);
     else
         return heap_alloc(len);
 }
 
-static inline void reader_free(xmlreader *reader, void *mem)
+static inline void m_free(IMalloc *imalloc, void *mem)
 {
-    if (reader->imalloc)
-        IMalloc_Free(reader->imalloc, mem);
+    if (imalloc)
+        IMalloc_Free(imalloc, mem);
     else
         heap_free(mem);
+}
+
+/* reader memory allocation functions */
+static inline void *reader_alloc(xmlreader *reader, size_t len)
+{
+    return m_alloc(reader->imalloc, len);
+}
+
+static inline void reader_free(xmlreader *reader, void *mem)
+{
+    return m_free(reader->imalloc, mem);
+}
+
+/* reader input memory allocation functions */
+static inline void *readerinput_alloc(xmlreaderinput *input, size_t len)
+{
+    return m_alloc(input->imalloc, len);
+}
+
+static inline void readerinput_free(xmlreaderinput *input, void *mem)
+{
+    return m_free(input->imalloc, mem);
 }
 
 static HRESULT WINAPI xmlreader_QueryInterface(IXmlReader *iface, REFIID riid, void** ppvObject)
@@ -444,22 +466,24 @@ static HRESULT WINAPI xmlreaderinput_QueryInterface(IXmlReaderInput *iface, REFI
 static ULONG WINAPI xmlreaderinput_AddRef(IXmlReaderInput *iface)
 {
     xmlreaderinput *This = impl_from_IXmlReaderInput(iface);
-    TRACE("%p\n", This);
-    return InterlockedIncrement(&This->ref);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
 }
 
 static ULONG WINAPI xmlreaderinput_Release(IXmlReaderInput *iface)
 {
     xmlreaderinput *This = impl_from_IXmlReaderInput(iface);
-    LONG ref;
+    LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("%p\n", This);
+    TRACE("(%p)->(%d)\n", This, ref);
 
-    ref = InterlockedDecrement(&This->ref);
     if (ref == 0)
     {
+        IMalloc *imalloc = This->imalloc;
         if (This->input) IUnknown_Release(This->input);
-        heap_free(This);
+        readerinput_free(This, This);
+        if (imalloc) IMalloc_Release(imalloc);
     }
 
     return ref;
@@ -508,7 +532,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
 }
 
 HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
-                                                    IMalloc *pMalloc,
+                                                    IMalloc *imalloc,
                                                     LPCWSTR encoding,
                                                     BOOL hint,
                                                     LPCWSTR base_uri,
@@ -516,16 +540,21 @@ HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
 {
     xmlreaderinput *readerinput;
 
-    FIXME("%p %p %s %d %s %p: stub\n", stream, pMalloc, wine_dbgstr_w(encoding),
+    FIXME("%p %p %s %d %s %p: stub\n", stream, imalloc, wine_dbgstr_w(encoding),
                                        hint, wine_dbgstr_w(base_uri), ppInput);
 
     if (!stream || !ppInput) return E_INVALIDARG;
 
-    readerinput = heap_alloc(sizeof(*readerinput));
+    if (imalloc)
+        readerinput = IMalloc_Alloc(imalloc, sizeof(*readerinput));
+    else
+        readerinput = heap_alloc(sizeof(*readerinput));
     if(!readerinput) return E_OUTOFMEMORY;
 
     readerinput->IXmlReaderInput_iface.lpVtbl = &xmlreaderinput_vtbl;
     readerinput->ref = 1;
+    readerinput->imalloc = imalloc;
+    if (imalloc) IMalloc_AddRef(imalloc);
     IUnknown_QueryInterface(stream, &IID_IUnknown, (void**)&readerinput->input);
 
     *ppInput = &readerinput->IXmlReaderInput_iface;
