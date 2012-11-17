@@ -26,6 +26,7 @@
 #include "initguid.h"
 #include "objbase.h"
 #include "xmllite.h"
+#include "xmllite_private.h"
 
 #include "wine/debug.h"
 
@@ -43,6 +44,7 @@ typedef struct _xmlreader
     IXmlReaderInput *input;
     ISequentialStream *stream;/* stored as sequential stream, cause currently
                                  optimizations possible with IStream aren't implemented */
+    IMalloc *imalloc;
     XmlReadState state;
     DtdProcessing dtdmode;
     UINT line, pos;           /* reader position in XML stream */
@@ -63,6 +65,23 @@ static inline xmlreader *impl_from_IXmlReader(IXmlReader *iface)
 static inline xmlreaderinput *impl_from_IXmlReaderInput(IXmlReaderInput *iface)
 {
     return CONTAINING_RECORD(iface, xmlreaderinput, IXmlReaderInput_iface);
+}
+
+/* reader memory allocation functions */
+static inline void *reader_alloc(xmlreader *reader, size_t len)
+{
+    if (reader->imalloc)
+        return IMalloc_Alloc(reader->imalloc, len);
+    else
+        return heap_alloc(len);
+}
+
+static inline void reader_free(xmlreader *reader, void *mem)
+{
+    if (reader->imalloc)
+        IMalloc_Free(reader->imalloc, mem);
+    else
+        heap_free(mem);
 }
 
 static HRESULT WINAPI xmlreader_QueryInterface(IXmlReader *iface, REFIID riid, void** ppvObject)
@@ -90,23 +109,25 @@ static HRESULT WINAPI xmlreader_QueryInterface(IXmlReader *iface, REFIID riid, v
 static ULONG WINAPI xmlreader_AddRef(IXmlReader *iface)
 {
     xmlreader *This = impl_from_IXmlReader(iface);
-    TRACE("%p\n", This);
-    return InterlockedIncrement(&This->ref);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
 }
 
 static ULONG WINAPI xmlreader_Release(IXmlReader *iface)
 {
     xmlreader *This = impl_from_IXmlReader(iface);
-    LONG ref;
+    LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("%p\n", This);
+    TRACE("(%p)->(%d)\n", This, ref);
 
-    ref = InterlockedDecrement(&This->ref);
     if (ref == 0)
     {
+        IMalloc *imalloc = This->imalloc;
         if (This->input)  IUnknown_Release(This->input);
         if (This->stream) ISequentialStream_Release(This->stream);
-        HeapFree(GetProcessHeap(), 0, This);
+        reader_free(This, This);
+        if (imalloc) IMalloc_Release(imalloc);
     }
 
     return ref;
@@ -438,7 +459,7 @@ static ULONG WINAPI xmlreaderinput_Release(IXmlReaderInput *iface)
     if (ref == 0)
     {
         if (This->input) IUnknown_Release(This->input);
-        HeapFree(GetProcessHeap(), 0, This);
+        heap_free(This);
     }
 
     return ref;
@@ -451,13 +472,11 @@ static const struct IUnknownVtbl xmlreaderinput_vtbl =
     xmlreaderinput_Release
 };
 
-HRESULT WINAPI CreateXmlReader(REFIID riid, void **pObject, IMalloc *pMalloc)
+HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
 {
     xmlreader *reader;
 
-    TRACE("(%s, %p, %p)\n", wine_dbgstr_guid(riid), pObject, pMalloc);
-
-    if (pMalloc) FIXME("custom IMalloc not supported yet\n");
+    TRACE("(%s, %p, %p)\n", wine_dbgstr_guid(riid), obj, imalloc);
 
     if (!IsEqualGUID(riid, &IID_IXmlReader))
     {
@@ -465,7 +484,10 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **pObject, IMalloc *pMalloc)
         return E_FAIL;
     }
 
-    reader = HeapAlloc(GetProcessHeap(), 0, sizeof (*reader));
+    if (imalloc)
+        reader = IMalloc_Alloc(imalloc, sizeof(*reader));
+    else
+        reader = heap_alloc(sizeof(*reader));
     if(!reader) return E_OUTOFMEMORY;
 
     reader->IXmlReader_iface.lpVtbl = &xmlreader_vtbl;
@@ -475,10 +497,12 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **pObject, IMalloc *pMalloc)
     reader->state = XmlReadState_Closed;
     reader->dtdmode = DtdProcessing_Prohibit;
     reader->line  = reader->pos = 0;
+    reader->imalloc = imalloc;
+    if (imalloc) IMalloc_AddRef(imalloc);
 
-    *pObject = &reader->IXmlReader_iface;
+    *obj = &reader->IXmlReader_iface;
 
-    TRACE("returning iface %p\n", *pObject);
+    TRACE("returning iface %p\n", *obj);
 
     return S_OK;
 }
@@ -497,7 +521,7 @@ HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
 
     if (!stream || !ppInput) return E_INVALIDARG;
 
-    readerinput = HeapAlloc(GetProcessHeap(), 0, sizeof (*readerinput));
+    readerinput = heap_alloc(sizeof(*readerinput));
     if(!readerinput) return E_OUTOFMEMORY;
 
     readerinput->IXmlReaderInput_iface.lpVtbl = &xmlreaderinput_vtbl;
