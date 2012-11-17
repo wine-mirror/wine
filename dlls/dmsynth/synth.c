@@ -21,6 +21,8 @@
 
 #define COBJMACROS
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "objbase.h"
 #include "initguid.h"
 #include "dmksctrl.h"
@@ -418,45 +420,45 @@ static HRESULT WINAPI DMSynthImpl_IKsControl_KsProperty(IKsControl* iface, PKSPR
 {
     TRACE("(%p)->(%p, %u, %p, %u, %p)\n", iface, Property, PropertyLength, PropertyData, DataLength, BytesReturned);
 
-    TRACE("Property = %s - %u - %u\n", debugstr_guid(&Property->Set), Property->Id, Property->Flags);
+    TRACE("Property = %s - %u - %u\n", debugstr_guid(&Property->u.s.Set), Property->u.s.Id, Property->u.s.Flags);
 
-    if (Property->Flags != KSPROPERTY_TYPE_GET)
+    if (Property->u.s.Flags != KSPROPERTY_TYPE_GET)
     {
-        FIXME("Property flags %u not yet supported\n", Property->Flags);
+        FIXME("Property flags %u not yet supported\n", Property->u.s.Flags);
         return S_FALSE;
     }
 
     if (DataLength <  sizeof(DWORD))
         return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 
-    if (IsEqualGUID(&Property->Set, &GUID_DMUS_PROP_INSTRUMENT2))
+    if (IsEqualGUID(&Property->u.s.Set, &GUID_DMUS_PROP_INSTRUMENT2))
     {
         *(DWORD*)PropertyData = TRUE;
         *BytesReturned = sizeof(DWORD);
     }
-    else if (IsEqualGUID(&Property->Set, &GUID_DMUS_PROP_DLS2))
+    else if (IsEqualGUID(&Property->u.s.Set, &GUID_DMUS_PROP_DLS2))
     {
         *(DWORD*)PropertyData = TRUE;
         *BytesReturned = sizeof(DWORD);
     }
-    else if (IsEqualGUID(&Property->Set, &GUID_DMUS_PROP_GM_Hardware))
+    else if (IsEqualGUID(&Property->u.s.Set, &GUID_DMUS_PROP_GM_Hardware))
     {
         *(DWORD*)PropertyData = FALSE;
         *BytesReturned = sizeof(DWORD);
     }
-    else if (IsEqualGUID(&Property->Set, &GUID_DMUS_PROP_GS_Hardware))
+    else if (IsEqualGUID(&Property->u.s.Set, &GUID_DMUS_PROP_GS_Hardware))
     {
         *(DWORD*)PropertyData = FALSE;
         *BytesReturned = sizeof(DWORD);
     }
-    else if (IsEqualGUID(&Property->Set, &GUID_DMUS_PROP_XG_Hardware))
+    else if (IsEqualGUID(&Property->u.s.Set, &GUID_DMUS_PROP_XG_Hardware))
     {
         *(DWORD*)PropertyData = FALSE;
         *BytesReturned = sizeof(DWORD);
     }
     else
     {
-        FIXME("Unknown property %s\n", debugstr_guid(&Property->Set));
+        FIXME("Unknown property %s\n", debugstr_guid(&Property->u.s.Set));
         *(DWORD*)PropertyData = FALSE;
         *BytesReturned = sizeof(DWORD);
     }
