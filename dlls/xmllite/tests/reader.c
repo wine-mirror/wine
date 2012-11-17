@@ -432,7 +432,7 @@ static void test_readerinput(void)
     IStream_Release(stream);
 
     /* try ::SetInput() with valid IXmlReaderInput */
-    hr = pCreateXmlReader(&IID_IXmlReader, (LPVOID*)&reader, NULL);
+    hr = pCreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     ref = IUnknown_AddRef(reader_input);
