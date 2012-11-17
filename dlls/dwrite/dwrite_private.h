@@ -47,7 +47,8 @@ static inline LPWSTR heap_strdupW(const WCHAR *str)
 
         size = (strlenW(str)+1)*sizeof(WCHAR);
         ret = heap_alloc(size);
-        memcpy(ret, str, size);
+        if(ret)
+            memcpy(ret, str, size);
     }
 
     return ret;
@@ -60,8 +61,11 @@ static inline LPWSTR heap_strdupnW(const WCHAR *str, UINT32 len)
     if (len)
     {
         ret = heap_alloc((len+1)*sizeof(WCHAR));
-        memcpy(ret, str, len*sizeof(WCHAR));
-        ret[len] = 0;
+        if(ret)
+        {
+            memcpy(ret, str, len*sizeof(WCHAR));
+            ret[len] = 0;
+        }
     }
 
     return ret;
