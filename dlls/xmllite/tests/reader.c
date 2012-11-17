@@ -402,7 +402,7 @@ static void test_readerinput(void)
     IXmlReaderInput *reader_input;
     IXmlReader *reader, *reader2;
     IUnknown *obj, *input;
-    IStream *stream;
+    IStream *stream, *stream2;
     HRESULT hr;
     LONG ref;
 
@@ -419,6 +419,12 @@ static void test_readerinput(void)
     IStream_Release(stream);
     hr = pCreateXmlReaderInputWithEncodingName((IUnknown*)stream, NULL, NULL, FALSE, NULL, &reader_input);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IUnknown_QueryInterface(reader_input, &IID_IStream, (void**)&stream2);
+    ok(hr == E_NOINTERFACE, "Expected S_OK, got %08x\n", hr);
+
+    hr = IUnknown_QueryInterface(reader_input, &IID_ISequentialStream, (void**)&stream2);
+    ok(hr == E_NOINTERFACE, "Expected S_OK, got %08x\n", hr);
 
     /* IXmlReaderInput grabs a stream reference */
     ref = IStream_AddRef(stream);

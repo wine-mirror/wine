@@ -35,6 +35,35 @@ WINE_DEFAULT_DEBUG_CHANNEL(xmllite);
 /* not defined in public headers */
 DEFINE_GUID(IID_IXmlReaderInput, 0x0b3ccc9b, 0x9214, 0x428b, 0xa2, 0xae, 0xef, 0x3a, 0xa8, 0x71, 0xaf, 0xda);
 
+typedef enum
+{
+    XmlEncoding_UTF16,
+    XmlEncoding_UTF8,
+    XmlEncoding_Unknown
+} xml_encoding;
+
+static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
+static const WCHAR utf8W[] = {'U','T','F','-','8',0};
+
+struct xml_encoding_data
+{
+    const WCHAR *encoding;
+    xml_encoding enc;
+    UINT cp;
+};
+
+static const struct xml_encoding_data xml_encoding_map[] = {
+    { utf16W, XmlEncoding_UTF16, ~0 },
+    { utf8W,  XmlEncoding_UTF8,  CP_UTF8 }
+};
+
+typedef struct
+{
+    char *data;
+    unsigned int allocated;
+    unsigned int written;
+} encoded_buffer;
+
 static HRESULT xmlreaderinput_query_for_stream(IXmlReaderInput *iface, void **pObj);
 
 typedef struct _xmlreader
@@ -50,13 +79,24 @@ typedef struct _xmlreader
     UINT line, pos;           /* reader position in XML stream */
 } xmlreader;
 
+typedef struct input_buffer input_buffer;
+
 typedef struct _xmlreaderinput
 {
     IXmlReaderInput IXmlReaderInput_iface;
     LONG ref;
     IUnknown *input;          /* reference passed on IXmlReaderInput creation */
     IMalloc *imalloc;
+    input_buffer *buffer;
 } xmlreaderinput;
+
+struct input_buffer
+{
+    encoded_buffer utf16;
+    encoded_buffer encoded;
+    UINT code_page;
+    xmlreaderinput *input;
+};
 
 static inline xmlreader *impl_from_IXmlReader(IXmlReader *iface)
 {
@@ -104,6 +144,85 @@ static inline void *readerinput_alloc(xmlreaderinput *input, size_t len)
 static inline void readerinput_free(xmlreaderinput *input, void *mem)
 {
     return m_free(input->imalloc, mem);
+}
+
+static HRESULT init_encoded_buffer(xmlreaderinput *input, encoded_buffer *buffer)
+{
+    const int initial_len = 0x2000;
+    buffer->data = readerinput_alloc(input, initial_len);
+    if (!buffer->data) return E_OUTOFMEMORY;
+
+    memset(buffer->data, 0, 4);
+    buffer->allocated = initial_len;
+    buffer->written = 0;
+
+    return S_OK;
+}
+
+static void free_encoded_buffer(xmlreaderinput *input, encoded_buffer *buffer)
+{
+    readerinput_free(input, buffer->data);
+}
+
+static HRESULT get_code_page(xml_encoding encoding, UINT *cp)
+{
+    const struct xml_encoding_data *data;
+
+    if (encoding == XmlEncoding_Unknown)
+    {
+        FIXME("unsupported encoding %d\n", encoding);
+        return E_NOTIMPL;
+    }
+
+    data = &xml_encoding_map[encoding];
+    *cp = data->cp;
+
+    return S_OK;
+}
+
+static HRESULT alloc_input_buffer(xmlreaderinput *input, xml_encoding encoding)
+{
+    input_buffer *buffer;
+    HRESULT hr;
+
+    input->buffer = NULL;
+
+    buffer = readerinput_alloc(input, sizeof(*buffer));
+    if (!buffer) return E_OUTOFMEMORY;
+
+    buffer->input = input;
+    hr = get_code_page(encoding, &buffer->code_page);
+    if (hr != S_OK) {
+        readerinput_free(input, buffer);
+        return hr;
+    }
+
+    hr = init_encoded_buffer(input, &buffer->utf16);
+    if (hr != S_OK) {
+        readerinput_free(input, buffer);
+        return hr;
+    }
+
+    if (encoding != XmlEncoding_UTF16) {
+        hr = init_encoded_buffer(input, &buffer->encoded);
+        if (hr != S_OK) {
+            free_encoded_buffer(input, &buffer->utf16);
+            readerinput_free(input, buffer);
+            return hr;
+        }
+    }
+    else
+        memset(&buffer->encoded, 0, sizeof(buffer->encoded));
+
+    input->buffer = buffer;
+    return S_OK;
+}
+
+static void free_input_buffer(input_buffer *buffer)
+{
+    free_encoded_buffer(buffer->input, &buffer->encoded);
+    free_encoded_buffer(buffer->input, &buffer->utf16);
+    readerinput_free(buffer->input, buffer);
 }
 
 static HRESULT WINAPI xmlreader_QueryInterface(IXmlReader *iface, REFIID riid, void** ppvObject)
@@ -482,6 +601,7 @@ static ULONG WINAPI xmlreaderinput_Release(IXmlReaderInput *iface)
     {
         IMalloc *imalloc = This->imalloc;
         if (This->input) IUnknown_Release(This->input);
+        if (This->buffer) free_input_buffer(This->buffer);
         readerinput_free(This, This);
         if (imalloc) IMalloc_Release(imalloc);
     }
@@ -539,6 +659,7 @@ HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
                                                     IXmlReaderInput **ppInput)
 {
     xmlreaderinput *readerinput;
+    HRESULT hr;
 
     FIXME("%p %p %s %d %s %p: stub\n", stream, imalloc, wine_dbgstr_w(encoding),
                                        hint, wine_dbgstr_w(base_uri), ppInput);
@@ -555,6 +676,13 @@ HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
     readerinput->ref = 1;
     readerinput->imalloc = imalloc;
     if (imalloc) IMalloc_AddRef(imalloc);
+
+    hr = alloc_input_buffer(readerinput, XmlEncoding_UTF16);
+    if (hr != S_OK)
+    {
+        readerinput_free(readerinput, readerinput);
+        return hr;
+    }
     IUnknown_QueryInterface(stream, &IID_IUnknown, (void**)&readerinput->input);
 
     *ppInput = &readerinput->IXmlReaderInput_iface;
