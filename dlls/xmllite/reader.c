@@ -64,17 +64,6 @@ typedef struct
     unsigned int written;
 } encoded_buffer;
 
-typedef struct _xmlreader
-{
-    IXmlReader IXmlReader_iface;
-    LONG ref;
-    IXmlReaderInput *input;
-    IMalloc *imalloc;
-    XmlReadState state;
-    DtdProcessing dtdmode;
-    UINT line, pos;           /* reader position in XML stream */
-} xmlreader;
-
 typedef struct input_buffer input_buffer;
 
 typedef struct _xmlreaderinput
@@ -90,6 +79,17 @@ typedef struct _xmlreaderinput
     ISequentialStream *stream;
     input_buffer *buffer;
 } xmlreaderinput;
+
+typedef struct _xmlreader
+{
+    IXmlReader IXmlReader_iface;
+    LONG ref;
+    xmlreaderinput *input;
+    IMalloc *imalloc;
+    XmlReadState state;
+    DtdProcessing dtdmode;
+    UINT line, pos;           /* reader position in XML stream */
+} xmlreader;
 
 struct input_buffer
 {
@@ -226,27 +226,24 @@ static void free_input_buffer(input_buffer *buffer)
     readerinput_free(buffer->input, buffer);
 }
 
-static void xmlreaderinput_release_stream(IXmlReaderInput *iface)
+static void xmlreaderinput_release_stream(xmlreaderinput *readerinput)
 {
-    xmlreaderinput *This = impl_from_IXmlReaderInput(iface);
-
-    if (This->stream) {
-        ISequentialStream_Release(This->stream);
-        This->stream = NULL;
+    if (readerinput->stream) {
+        ISequentialStream_Release(readerinput->stream);
+        readerinput->stream = NULL;
     }
 }
 
 /* Queries already stored interface for IStream/ISequentialStream.
    Interface supplied on creation will be overwritten */
-static HRESULT xmlreaderinput_query_for_stream(IXmlReaderInput *iface)
+static HRESULT xmlreaderinput_query_for_stream(xmlreaderinput *readerinput)
 {
-    xmlreaderinput *This = impl_from_IXmlReaderInput(iface);
     HRESULT hr;
 
-    xmlreaderinput_release_stream(iface);
-    hr = IUnknown_QueryInterface(This->input, &IID_IStream, (void**)&This->stream);
+    xmlreaderinput_release_stream(readerinput);
+    hr = IUnknown_QueryInterface(readerinput->input, &IID_IStream, (void**)&readerinput->stream);
     if (hr != S_OK)
-        hr = IUnknown_QueryInterface(This->input, &IID_ISequentialStream, (void**)&This->stream);
+        hr = IUnknown_QueryInterface(readerinput->input, &IID_ISequentialStream, (void**)&readerinput->stream);
 
     return hr;
 }
@@ -291,7 +288,7 @@ static ULONG WINAPI xmlreader_Release(IXmlReader *iface)
     if (ref == 0)
     {
         IMalloc *imalloc = This->imalloc;
-        if (This->input)  IUnknown_Release(This->input);
+        if (This->input) IUnknown_Release(&This->input->IXmlReaderInput_iface);
         reader_free(This, This);
         if (imalloc) IMalloc_Release(imalloc);
     }
@@ -309,7 +306,7 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
     if (This->input)
     {
         xmlreaderinput_release_stream(This->input);
-        IUnknown_Release(This->input);
+        IUnknown_Release(&This->input->IXmlReaderInput_iface);
         This->input = NULL;
     }
 
@@ -326,10 +323,13 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
     hr = IUnknown_QueryInterface(input, &IID_IXmlReaderInput, (void**)&This->input);
     if (hr != S_OK)
     {
+        IXmlReaderInput *readerinput;
+
         /* create IXmlReaderInput basing on supplied interface */
         hr = CreateXmlReaderInputWithEncodingName(input,
-                                         NULL, NULL, FALSE, NULL, &This->input);
+                                         NULL, NULL, FALSE, NULL, &readerinput);
         if (hr != S_OK) return hr;
+        This->input = impl_from_IXmlReaderInput(readerinput);
     }
 
     /* set stream for supplied IXmlReaderInput */
