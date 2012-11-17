@@ -84,7 +84,8 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
 
         size = (strlenW(str)+1)*sizeof(WCHAR);
         ret = heap_alloc(size);
-        memcpy(ret, str, size);
+        if(ret)
+            memcpy(ret, str, size);
     }
 
     return ret;
