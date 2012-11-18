@@ -4424,7 +4424,7 @@ static int num_get__Getffld(const num_get *this, char *dest, istreambuf_iterator
 
     numpunct_wchar_grouping(numpunct, &grouping_bstr);
     grouping = MSVCP_basic_string_char_c_str(&grouping_bstr);
-    sep = grouping[0] ? numpunct_wchar_thousands_sep(numpunct) : (wchar_t)0;
+    sep = grouping[0] ? numpunct_wchar_thousands_sep(numpunct) : 0;
 
     if(sep)
         MSVCP_basic_string_char_ctor(&groups_found);
