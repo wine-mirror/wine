@@ -27,6 +27,11 @@ static inline void *heap_alloc(size_t len)
     return HeapAlloc(GetProcessHeap(), 0, len);
 }
 
+static inline void *heap_realloc(void *mem, size_t len)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, mem, len);
+}
+
 static inline BOOL heap_free(void *mem)
 {
     return HeapFree(GetProcessHeap(), 0, mem);

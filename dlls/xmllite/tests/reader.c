@@ -551,15 +551,24 @@ static void test_readerinput(void)
 static void test_reader_state(void)
 {
     IXmlReader *reader;
+    XmlNodeType nodetype;
     HRESULT hr;
 
-    hr = pCreateXmlReader(&IID_IXmlReader, (LPVOID*)&reader, NULL);
+    hr = pCreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     /* invalid arguments */
     hr = IXmlReader_GetProperty(reader, XmlReaderProperty_ReadState, NULL);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
 
+    /* attempt to read on closed reader */
+    test_read_state(reader, XmlReadState_Closed, -1, 0);
+if (0)
+{
+    /* newer versions crash here, probably cause no input was set */
+    hr = IXmlReader_Read(reader, &nodetype);
+    ok(hr == S_FALSE, "got %08x\n", hr);
+}
     IXmlReader_Release(reader);
 }
 

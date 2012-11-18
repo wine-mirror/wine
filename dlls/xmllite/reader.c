@@ -117,6 +117,14 @@ static inline void *m_alloc(IMalloc *imalloc, size_t len)
         return heap_alloc(len);
 }
 
+static inline void *m_realloc(IMalloc *imalloc, void *mem, size_t len)
+{
+    if (imalloc)
+        return IMalloc_Realloc(imalloc, mem, len);
+    else
+        return heap_realloc(mem, len);
+}
+
 static inline void m_free(IMalloc *imalloc, void *mem)
 {
     if (imalloc)
@@ -142,6 +150,11 @@ static inline void *readerinput_alloc(xmlreaderinput *input, size_t len)
     return m_alloc(input->imalloc, len);
 }
 
+static inline void *readerinput_realloc(xmlreaderinput *input, void *mem, size_t len)
+{
+    return m_realloc(input->imalloc, mem, len);
+}
+
 static inline void readerinput_free(xmlreaderinput *input, void *mem)
 {
     return m_free(input->imalloc, mem);
@@ -165,7 +178,7 @@ static void free_encoded_buffer(xmlreaderinput *input, encoded_buffer *buffer)
     readerinput_free(input, buffer->data);
 }
 
-static HRESULT get_code_page(xml_encoding encoding, UINT *cp)
+static HRESULT get_code_page(xml_encoding encoding, xmlreaderinput *input)
 {
     const struct xml_encoding_data *data;
 
@@ -176,12 +189,12 @@ static HRESULT get_code_page(xml_encoding encoding, UINT *cp)
     }
 
     data = &xml_encoding_map[encoding];
-    *cp = data->cp;
+    input->buffer->code_page = data->cp;
 
     return S_OK;
 }
 
-static HRESULT alloc_input_buffer(xmlreaderinput *input, xml_encoding encoding)
+static HRESULT alloc_input_buffer(xmlreaderinput *input)
 {
     input_buffer *buffer;
     HRESULT hr;
@@ -192,28 +205,19 @@ static HRESULT alloc_input_buffer(xmlreaderinput *input, xml_encoding encoding)
     if (!buffer) return E_OUTOFMEMORY;
 
     buffer->input = input;
-    hr = get_code_page(encoding, &buffer->code_page);
-    if (hr != S_OK) {
-        readerinput_free(input, buffer);
-        return hr;
-    }
-
+    buffer->code_page = ~0; /* code page is unknown at this point */
     hr = init_encoded_buffer(input, &buffer->utf16);
     if (hr != S_OK) {
         readerinput_free(input, buffer);
         return hr;
     }
 
-    if (encoding != XmlEncoding_UTF16) {
-        hr = init_encoded_buffer(input, &buffer->encoded);
-        if (hr != S_OK) {
-            free_encoded_buffer(input, &buffer->utf16);
-            readerinput_free(input, buffer);
-            return hr;
-        }
+    hr = init_encoded_buffer(input, &buffer->encoded);
+    if (hr != S_OK) {
+        free_encoded_buffer(input, &buffer->utf16);
+        readerinput_free(input, buffer);
+        return hr;
     }
-    else
-        memset(&buffer->encoded, 0, sizeof(buffer->encoded));
 
     input->buffer = buffer;
     return S_OK;
@@ -226,7 +230,7 @@ static void free_input_buffer(input_buffer *buffer)
     readerinput_free(buffer->input, buffer);
 }
 
-static void xmlreaderinput_release_stream(xmlreaderinput *readerinput)
+static void readerinput_release_stream(xmlreaderinput *readerinput)
 {
     if (readerinput->stream) {
         ISequentialStream_Release(readerinput->stream);
@@ -236,16 +240,69 @@ static void xmlreaderinput_release_stream(xmlreaderinput *readerinput)
 
 /* Queries already stored interface for IStream/ISequentialStream.
    Interface supplied on creation will be overwritten */
-static HRESULT xmlreaderinput_query_for_stream(xmlreaderinput *readerinput)
+static HRESULT readerinput_query_for_stream(xmlreaderinput *readerinput)
 {
     HRESULT hr;
 
-    xmlreaderinput_release_stream(readerinput);
+    readerinput_release_stream(readerinput);
     hr = IUnknown_QueryInterface(readerinput->input, &IID_IStream, (void**)&readerinput->stream);
     if (hr != S_OK)
         hr = IUnknown_QueryInterface(readerinput->input, &IID_ISequentialStream, (void**)&readerinput->stream);
 
     return hr;
+}
+
+/* reads a chunk to raw buffer */
+static HRESULT readerinput_growraw(xmlreaderinput *readerinput)
+{
+    encoded_buffer *buffer = &readerinput->buffer->encoded;
+    ULONG len = buffer->allocated - buffer->written, read;
+    HRESULT hr;
+
+    /* always try to get aligned to 4 bytes, so the only case we can get partialy read characters is
+       variable width encodings like UTF-8 */
+    len = (len + 3) & ~3;
+    /* try to use allocated space or grow */
+    if (buffer->allocated - buffer->written < len)
+    {
+        buffer->allocated *= 2;
+        buffer->data = readerinput_realloc(readerinput, buffer->data, buffer->allocated);
+        len = buffer->allocated - buffer->written;
+    }
+
+    hr = ISequentialStream_Read(readerinput->stream, buffer->data + buffer->written, len, &read);
+    if (FAILED(hr)) return hr;
+    TRACE("requested %d, read %d, ret 0x%08x\n", len, read, hr);
+    buffer->written += read;
+
+    return hr;
+}
+
+static xml_encoding readerinput_detectencoding(xmlreaderinput *readerinput)
+{
+    encoded_buffer *buffer = &readerinput->buffer->encoded;
+
+    /* try start symbols if we have enough data to do that, input buffer should contain
+       first chunk already */
+    if (buffer->written >= 4)
+    {
+        static char startA[] = {'<','?','x','m'};
+        static WCHAR startW[] = {'<','?'};
+
+        if (!memcmp(buffer->data, startA, sizeof(startA))) return XmlEncoding_UTF8;
+        if (!memcmp(buffer->data, startW, sizeof(startW))) return XmlEncoding_UTF16;
+    }
+
+    /* try with BOM now */
+    if (buffer->written >= 3)
+    {
+        static char utf8bom[] = {0xef,0xbb,0xbf};
+        static char utf16lebom[] = {0xff,0xfe};
+        if (!memcmp(buffer->data, utf8bom, sizeof(utf8bom))) return XmlEncoding_UTF8;
+        if (!memcmp(buffer->data, utf16lebom, sizeof(utf16lebom))) return XmlEncoding_UTF16;
+    }
+
+    return XmlEncoding_Unknown;
 }
 
 static HRESULT WINAPI xmlreader_QueryInterface(IXmlReader *iface, REFIID riid, void** ppvObject)
@@ -305,7 +362,7 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
 
     if (This->input)
     {
-        xmlreaderinput_release_stream(This->input);
+        readerinput_release_stream(This->input);
         IUnknown_Release(&This->input->IXmlReaderInput_iface);
         This->input = NULL;
     }
@@ -333,7 +390,7 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
     }
 
     /* set stream for supplied IXmlReaderInput */
-    hr = xmlreaderinput_query_for_stream(This->input);
+    hr = readerinput_query_for_stream(This->input);
     if (hr == S_OK)
         This->state = XmlReadState_Initial;
 
@@ -386,7 +443,27 @@ static HRESULT WINAPI xmlreader_SetProperty(IXmlReader* iface, UINT property, LO
 
 static HRESULT WINAPI xmlreader_Read(IXmlReader* iface, XmlNodeType *node_type)
 {
-    FIXME("(%p %p): stub\n", iface, node_type);
+    xmlreader *This = impl_from_IXmlReader(iface);
+
+    FIXME("(%p)->(%p): stub\n", This, node_type);
+
+    if (This->state == XmlReadState_Closed) return S_FALSE;
+
+    /* if it's a first call for a new input we need to detect stream encoding */
+    if (This->state == XmlReadState_Initial)
+    {
+        xml_encoding enc;
+        HRESULT hr;
+
+        hr = readerinput_growraw(This->input);
+        if (FAILED(hr)) return hr;
+
+        /* try to detect encoding by BOM or data and set input code page */
+        enc = readerinput_detectencoding(This->input);
+        TRACE("detected encoding %d\n", enc);
+        get_code_page(enc, This->input);
+    }
+
     return E_NOTIMPL;
 }
 
@@ -683,7 +760,7 @@ HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
     readerinput->stream = NULL;
     if (imalloc) IMalloc_AddRef(imalloc);
 
-    hr = alloc_input_buffer(readerinput, XmlEncoding_UTF16);
+    hr = alloc_input_buffer(readerinput);
     if (hr != S_OK)
     {
         readerinput_free(readerinput, readerinput);
