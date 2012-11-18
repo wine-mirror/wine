@@ -1036,7 +1036,7 @@ DECLARE_INTERFACE_(IDirect3DDevice2,IUnknown)
     STDMETHOD(EnumTextureFormats)(THIS_ LPD3DENUMTEXTUREFORMATSCALLBACK lpD3DEnumTextureProc, LPVOID lpArg) PURE;
     STDMETHOD(BeginScene)(THIS) PURE;
     STDMETHOD(EndScene)(THIS) PURE;
-    STDMETHOD(GetDirect3D)(THIS_ LPDIRECT3D2 *lplpDirect3D2) PURE;
+    STDMETHOD(GetDirect3D)(THIS_ IDirect3D2 **d3d) PURE;
     /*** DrawPrimitive API ***/
     STDMETHOD(SetCurrentViewport)(THIS_ IDirect3DViewport2 *viewport) PURE;
     STDMETHOD(GetCurrentViewport)(THIS_ IDirect3DViewport2 **viewport) PURE;
