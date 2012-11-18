@@ -275,9 +275,9 @@ typedef enum {
 
 typedef struct {
     basic_streambuf_char base;
-    streamsize minsize;
     char *endsave;
     char *seekhigh;
+    streamsize minsize;
     int strmode;
     void* (__cdecl *palloc)(MSVCP_size_t);
     void (__cdecl *pfree)(void*);
@@ -3279,7 +3279,10 @@ int __thiscall basic_filebuf_wchar_sync(basic_filebuf_wchar *this)
 
 /* ?_Getstate@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEHH@Z */
 /* ?_Getstate@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAAHH@Z */
-static int basic_stringbuf_char__Getstate(basic_stringbuf_char *this, IOSB_openmode mode)
+/* ?_Mode@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEHH@Z */
+/* ?_Mode@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAAHH@Z */
+DEFINE_THISCALL_WRAPPER(basic_stringbuf_char__Getstate, 8)
+int __thiscall basic_stringbuf_char__Getstate(basic_stringbuf_char *this, IOSB_openmode mode)
 {
     int state = 0;
 
@@ -3645,7 +3648,10 @@ basic_string_char* __thiscall basic_stringbuf_char_str_get(const basic_stringbuf
 /* ?_Getstate@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@AEAAHH@Z */
 /* ?_Getstate@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAEHH@Z */
 /* ?_Getstate@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AEAAHH@Z */
-static int basic_stringbuf_wchar__Getstate(basic_stringbuf_wchar *this, IOSB_openmode mode)
+/* ?_Mode@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAEHH@Z */
+/* ?_Mode@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AEAAHH@Z */
+DEFINE_THISCALL_WRAPPER(basic_stringbuf_wchar__Getstate, 8)
+int __thiscall basic_stringbuf_wchar__Getstate(basic_stringbuf_wchar *this, IOSB_openmode mode)
 {
     int state = 0;
 

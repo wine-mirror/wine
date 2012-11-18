@@ -2303,10 +2303,10 @@
 @ stub -arch=win64 ?_Makpat@?$_Mpunct@D@std@@AEAAXAEAUpattern@money_base@2@DDD@Z
 @ stub -arch=win32 ?_Makpat@?$_Mpunct@G@std@@AAEXAAUpattern@money_base@2@DDD@Z
 @ stub -arch=win64 ?_Makpat@?$_Mpunct@G@std@@AEAAXAEAUpattern@money_base@2@DDD@Z
-@ stub -arch=win32 ?_Mode@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEHH@Z
-@ stub -arch=win64 ?_Mode@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAAHH@Z
-@ stub -arch=win32 ?_Mode@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAEHH@Z
-@ stub -arch=win64 ?_Mode@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AEAAHH@Z
+@ thiscall -arch=win32 ?_Mode@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEHH@Z(ptr long) basic_stringbuf_char__Getstate
+@ cdecl -arch=win64 ?_Mode@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAAHH@Z(ptr long) basic_stringbuf_char__Getstate
+@ thiscall -arch=win32 ?_Mode@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAEHH@Z(ptr long) basic_stringbuf_wchar__Getstate
+@ cdecl -arch=win64 ?_Mode@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AEAAHH@Z(ptr long) basic_stringbuf_wchar__Getstate
 @ stub ?_Nanv@?$_Ctr@M@std@@SAMM@Z
 @ stub ?_Nanv@?$_Ctr@N@std@@SANN@Z
 @ stub ?_Nanv@?$_Ctr@O@std@@SAOO@Z
