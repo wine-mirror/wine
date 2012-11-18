@@ -3284,6 +3284,96 @@ done:
     DestroyWindow(window);
 }
 
+static void test_set_rt_vp_scissor(void)
+{
+    IDirect3DDevice8 *device;
+    IDirect3DSurface8 *rt;
+    IDirect3D8 *d3d8;
+    DWORD stateblock;
+    D3DVIEWPORT8 vp;
+    UINT refcount;
+    HWND window;
+    HRESULT hr;
+
+    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D8 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d8, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice8_CreateRenderTarget(device, 128, 128, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_NONE, FALSE, &rt);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "Failed to get viewport, hr %#x.\n", hr);
+    ok(!vp.X, "Got unexpected vp.X %u.\n", vp.X);
+    ok(!vp.Y, "Got unexpected vp.Y %u.\n", vp.Y);
+    ok(vp.Width == screen_width, "Got unexpected vp.Width %u.\n", vp.Width);
+    ok(vp.Height == screen_height, "Got unexpected vp.Height %u.\n", vp.Height);
+    ok(vp.MinZ == 0.0f, "Got unexpected vp.MinZ %.8e.\n", vp.MinZ);
+    ok(vp.MaxZ == 1.0f, "Got unexpected vp.MaxZ %.8e.\n", vp.MaxZ);
+
+    hr = IDirect3DDevice8_BeginStateBlock(device);
+    ok(SUCCEEDED(hr), "Failed to begin stateblock, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderTarget(device, rt, NULL);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_EndStateBlock(device, &stateblock);
+    ok(SUCCEEDED(hr), "Failed to end stateblock, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DeleteStateBlock(device, stateblock);
+    ok(SUCCEEDED(hr), "Failed to delete stateblock, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "Failed to get viewport, hr %#x.\n", hr);
+    ok(!vp.X, "Got unexpected vp.X %u.\n", vp.X);
+    ok(!vp.Y, "Got unexpected vp.Y %u.\n", vp.Y);
+    ok(vp.Width == 128, "Got unexpected vp.Width %u.\n", vp.Width);
+    ok(vp.Height == 128, "Got unexpected vp.Height %u.\n", vp.Height);
+    ok(vp.MinZ == 0.0f, "Got unexpected vp.MinZ %.8e.\n", vp.MinZ);
+    ok(vp.MaxZ == 1.0f, "Got unexpected vp.MaxZ %.8e.\n", vp.MaxZ);
+
+    hr = IDirect3DDevice8_SetRenderTarget(device, rt, NULL);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    vp.X = 10;
+    vp.Y = 20;
+    vp.Width = 30;
+    vp.Height = 40;
+    vp.MinZ = 0.25f;
+    vp.MaxZ = 0.75f;
+    hr = IDirect3DDevice8_SetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "Failed to set viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderTarget(device, rt, NULL);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "Failed to get viewport, hr %#x.\n", hr);
+    ok(!vp.X, "Got unexpected vp.X %u.\n", vp.X);
+    ok(!vp.Y, "Got unexpected vp.Y %u.\n", vp.Y);
+    ok(vp.Width == 128, "Got unexpected vp.Width %u.\n", vp.Width);
+    ok(vp.Height == 128, "Got unexpected vp.Height %u.\n", vp.Height);
+    ok(vp.MinZ == 0.0f, "Got unexpected vp.MinZ %.8e.\n", vp.MinZ);
+    ok(vp.MaxZ == 1.0f, "Got unexpected vp.MaxZ %.8e.\n", vp.MaxZ);
+
+    IDirect3DSurface8_Release(rt);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d8);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -3340,6 +3430,7 @@ START_TEST(device)
         test_device_window_reset();
         test_reset_resources();
         depth_blit_test();
+        test_set_rt_vp_scissor();
     }
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
