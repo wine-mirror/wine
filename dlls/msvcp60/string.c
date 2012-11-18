@@ -166,7 +166,7 @@ void __thiscall basic_string_char__Tidy(basic_string_char *this, MSVCP_bool buil
 
     if(!this->ptr || !built);
     else if(!this->ptr[-1] || (unsigned char)this->ptr[-1]==FROZEN)
-        MSVCP_allocator_char_deallocate(NULL, this->ptr, this->res+2);
+        MSVCP_allocator_char_deallocate(NULL, this->ptr-1, this->res+2);
     else
         this->ptr[-1]--;
 
@@ -1882,7 +1882,7 @@ void __thiscall basic_string_wchar__Tidy(basic_string_wchar *this, MSVCP_bool bu
 
     if(!this->ptr || !built);
     else if(!this->ptr[-1] || (unsigned short)this->ptr[-1]==FROZEN)
-        MSVCP_allocator_wchar_deallocate(NULL, this->ptr, this->res+2);
+        MSVCP_allocator_wchar_deallocate(NULL, this->ptr-1, this->res+2);
     else
         this->ptr[-1]--;
 
