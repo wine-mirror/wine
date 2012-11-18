@@ -4531,13 +4531,6 @@ HRESULT CDECL wined3d_device_set_render_target(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
-    prev = device->fb.render_targets[render_target_idx];
-    if (render_target == prev)
-    {
-        TRACE("Trying to do a NOP SetRenderTarget operation.\n");
-        return WINED3D_OK;
-    }
-
     /* Render target 0 can't be set to NULL. */
     if (!render_target && !render_target_idx)
     {
@@ -4551,6 +4544,33 @@ HRESULT CDECL wined3d_device_set_render_target(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
+    /* Set the viewport and scissor rectangles, if requested. Tests show that
+     * stateblock recording is ignored, the change goes directly into the
+     * primary stateblock. */
+    if (!render_target_idx && set_viewport)
+    {
+        struct wined3d_state *state = &device->stateBlock->state;
+
+        state->viewport.x = 0;
+        state->viewport.y = 0;
+        state->viewport.width = render_target->resource.width;
+        state->viewport.height = render_target->resource.height;
+        state->viewport.min_z = 0.0f;
+        state->viewport.max_z = 1.0f;
+        device_invalidate_state(device, STATE_VIEWPORT);
+
+        state->scissor_rect.top = 0;
+        state->scissor_rect.left = 0;
+        state->scissor_rect.right = render_target->resource.width;
+        state->scissor_rect.bottom = render_target->resource.height;
+        device_invalidate_state(device, STATE_SCISSORRECT);
+    }
+
+
+    prev = device->fb.render_targets[render_target_idx];
+    if (render_target == prev)
+        return WINED3D_OK;
+
     if (render_target)
         wined3d_surface_incref(render_target);
     device->fb.render_targets[render_target_idx] = render_target;
@@ -4558,27 +4578,6 @@ HRESULT CDECL wined3d_device_set_render_target(struct wined3d_device *device,
      * from seeing the surface as still in use. */
     if (prev)
         wined3d_surface_decref(prev);
-
-    /* Render target 0 is special. */
-    if (!render_target_idx && set_viewport)
-    {
-        /* Set the viewport and scissor rectangles, if requested. Tests show
-         * that stateblock recording is ignored, the change goes directly
-         * into the primary stateblock. */
-        device->stateBlock->state.viewport.height = device->fb.render_targets[0]->resource.height;
-        device->stateBlock->state.viewport.width  = device->fb.render_targets[0]->resource.width;
-        device->stateBlock->state.viewport.x      = 0;
-        device->stateBlock->state.viewport.y      = 0;
-        device->stateBlock->state.viewport.max_z  = 1.0f;
-        device->stateBlock->state.viewport.min_z  = 0.0f;
-        device_invalidate_state(device, STATE_VIEWPORT);
-
-        device->stateBlock->state.scissor_rect.top = 0;
-        device->stateBlock->state.scissor_rect.left = 0;
-        device->stateBlock->state.scissor_rect.right = device->stateBlock->state.viewport.width;
-        device->stateBlock->state.scissor_rect.bottom = device->stateBlock->state.viewport.height;
-        device_invalidate_state(device, STATE_SCISSORRECT);
-    }
 
     device_invalidate_state(device, STATE_FRAMEBUFFER);
 
