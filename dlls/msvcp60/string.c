@@ -260,9 +260,8 @@ void __thiscall basic_string_char__Copy(basic_string_char *this, MSVCP_size_t co
 {
     TRACE("%p %lu\n", this, copy_len);
 
-    if(!basic_string_char__Grow(this, copy_len, FALSE))
+    if(!basic_string_char__Grow(this, copy_len, TRUE))
         return;
-    basic_string_char__Eos(this, copy_len);
 }
 
 /* ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@CAIPBD0@Z */
@@ -1976,9 +1975,8 @@ void __thiscall basic_string_wchar__Copy(basic_string_wchar *this, MSVCP_size_t 
 {
     TRACE("%p %lu\n", this, copy_len);
 
-    if(!basic_string_wchar__Grow(this, copy_len, FALSE))
+    if(!basic_string_wchar__Grow(this, copy_len, TRUE))
         return;
-    basic_string_wchar__Eos(this, copy_len);
 }
 
 /* ?_Pdif@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@CAIPBG0@Z */
