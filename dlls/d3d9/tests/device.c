@@ -3565,6 +3565,118 @@ done:
     DestroyWindow(window);
 }
 
+static void test_set_rt_vp_scissor(void)
+{
+    IDirect3DStateBlock9 *stateblock;
+    IDirect3DDevice9 *device;
+    IDirect3DSurface9 *rt;
+    IDirect3D9 *d3d9;
+    D3DVIEWPORT9 vp;
+    UINT refcount;
+    HWND window;
+    HRESULT hr;
+    RECT rect;
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D9 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d9, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 128, 128, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_NONE, 0, FALSE, &rt, NULL);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "Failed to get viewport, hr %#x.\n", hr);
+    ok(!vp.X, "Got unexpected vp.X %u.\n", vp.X);
+    ok(!vp.Y, "Got unexpected vp.Y %u.\n", vp.Y);
+    ok(vp.Width == screen_width, "Got unexpected vp.Width %u.\n", vp.Width);
+    ok(vp.Height == screen_height, "Got unexpected vp.Height %u.\n", vp.Height);
+    ok(vp.MinZ == 0.0f, "Got unexpected vp.MinZ %.8e.\n", vp.MinZ);
+    ok(vp.MaxZ == 1.0f, "Got unexpected vp.MaxZ %.8e.\n", vp.MaxZ);
+
+    hr = IDirect3DDevice9_GetScissorRect(device, &rect);
+    ok(SUCCEEDED(hr), "Failed to get scissor rect, hr %#x.\n", hr);
+    ok(rect.left == 0 && rect.top == 0 && rect.right == screen_width && rect.bottom == screen_height,
+            "Got unexpected scissor rect {%d, %d, %d, %d}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    hr = IDirect3DDevice9_BeginStateBlock(device);
+    ok(SUCCEEDED(hr), "Failed to begin stateblock, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_EndStateBlock(device, &stateblock);
+    ok(SUCCEEDED(hr), "Failed to end stateblock, hr %#x.\n", hr);
+    IDirect3DStateBlock9_Release(stateblock);
+
+    hr = IDirect3DDevice9_GetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "Failed to get viewport, hr %#x.\n", hr);
+    ok(!vp.X, "Got unexpected vp.X %u.\n", vp.X);
+    ok(!vp.Y, "Got unexpected vp.Y %u.\n", vp.Y);
+    ok(vp.Width == 128, "Got unexpected vp.Width %u.\n", vp.Width);
+    ok(vp.Height == 128, "Got unexpected vp.Height %u.\n", vp.Height);
+    ok(vp.MinZ == 0.0f, "Got unexpected vp.MinZ %.8e.\n", vp.MinZ);
+    ok(vp.MaxZ == 1.0f, "Got unexpected vp.MaxZ %.8e.\n", vp.MaxZ);
+
+    hr = IDirect3DDevice9_GetScissorRect(device, &rect);
+    ok(SUCCEEDED(hr), "Failed to get scissor rect, hr %#x.\n", hr);
+    ok(rect.left == 0 && rect.top == 0 && rect.right == 128 && rect.bottom == 128,
+            "Got unexpected scissor rect {%d, %d, %d, %d}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    vp.X = 10;
+    vp.Y = 20;
+    vp.Width = 30;
+    vp.Height = 40;
+    vp.MinZ = 0.25f;
+    vp.MaxZ = 0.75f;
+    hr = IDirect3DDevice9_SetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "Failed to set viewport, hr %#x.\n", hr);
+
+    SetRect(&rect, 50, 60, 70, 80);
+    hr = IDirect3DDevice9_SetScissorRect(device, &rect);
+    ok(SUCCEEDED(hr), "Failed to set scissor rect, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "Failed to get viewport, hr %#x.\n", hr);
+    ok(!vp.X, "Got unexpected vp.X %u.\n", vp.X);
+    ok(!vp.Y, "Got unexpected vp.Y %u.\n", vp.Y);
+    ok(vp.Width == 128, "Got unexpected vp.Width %u.\n", vp.Width);
+    ok(vp.Height == 128, "Got unexpected vp.Height %u.\n", vp.Height);
+    ok(vp.MinZ == 0.0f, "Got unexpected vp.MinZ %.8e.\n", vp.MinZ);
+    ok(vp.MaxZ == 1.0f, "Got unexpected vp.MaxZ %.8e.\n", vp.MaxZ);
+
+    hr = IDirect3DDevice9_GetScissorRect(device, &rect);
+    ok(SUCCEEDED(hr), "Failed to get scissor rect, hr %#x.\n", hr);
+    ok(rect.left == 0 && rect.top == 0 && rect.right == 128 && rect.bottom == 128,
+            "Got unexpected scissor rect {%d, %d, %d, %d}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    IDirect3DSurface9_Release(rt);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -3622,6 +3734,7 @@ START_TEST(device)
         test_mode_change();
         test_device_window_reset();
         test_reset_resources();
+        test_set_rt_vp_scissor();
     }
 
 out:
