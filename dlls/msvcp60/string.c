@@ -236,7 +236,8 @@ void __thiscall basic_string_char__Split(basic_string_char *this)
     len = this->size;
     basic_string_char__Tidy(this, TRUE);
     if(basic_string_char__Grow(this, len, FALSE)) {
-        char_traits_char__Copy_s(this->ptr, this->res, ptr, len);
+        if(ptr)
+            char_traits_char__Copy_s(this->ptr, this->res, ptr, len);
         basic_string_char__Eos(this, len);
     }
 }
@@ -345,8 +346,8 @@ basic_string_char* __thiscall basic_string_char_assign_substr(
         basic_string_char_erase(this, pos+len, basic_string_char_npos);
         basic_string_char_erase(this, 0, pos);
     } else if(basic_string_char__Grow(this, len, FALSE)) {
-        char_traits_char__Copy_s(this->ptr, this->res,
-                assign->ptr+pos, len);
+        if(assign->ptr)
+            char_traits_char__Copy_s(this->ptr, this->res, assign->ptr+pos, len);
         basic_string_char__Eos(this, len);
     }
 
@@ -1149,8 +1150,9 @@ basic_string_char* __thiscall basic_string_char_append_substr(basic_string_char 
         _Xlen();
 
     if(basic_string_char__Grow(this, this->size+count, FALSE)) {
-        char_traits_char__Copy_s(this->ptr+this->size,
-                this->res-this->size, append->ptr+offset, count);
+        if(append->ptr)
+            char_traits_char__Copy_s(this->ptr+this->size, this->res-this->size,
+                    append->ptr+offset, count);
         basic_string_char__Eos(this, this->size+count);
     }
 
@@ -1763,7 +1765,8 @@ MSVCP_size_t __thiscall basic_string_char_copy(const basic_string_char *this,
         _Xran();
     if(count > this->size-off)
         count = this->size-off;
-    char_traits_char__Copy_s(dest, count, this->ptr+off, count);
+    if(this->ptr)
+        char_traits_char__Copy_s(dest, count, this->ptr+off, count);
     return count;
 }
 
@@ -1949,7 +1952,8 @@ void __thiscall basic_string_wchar__Split(basic_string_wchar *this)
     len = this->size;
     basic_string_wchar__Tidy(this, TRUE);
     if(basic_string_wchar__Grow(this, len, FALSE)) {
-        char_traits_wchar__Copy_s(this->ptr, this->res, ptr, len);
+        if(ptr)
+            char_traits_wchar__Copy_s(this->ptr, this->res, ptr, len);
         basic_string_wchar__Eos(this, len);
     }
 }
@@ -2058,8 +2062,9 @@ basic_string_wchar* __thiscall basic_string_wchar_assign_substr(
         basic_string_wchar_erase(this, pos+len, basic_string_wchar_npos);
         basic_string_wchar_erase(this, 0, pos);
     } else if(basic_string_wchar__Grow(this, len, FALSE)) {
-        char_traits_wchar__Copy_s(this->ptr, this->res,
-                assign->ptr+pos, len);
+        if(assign->ptr)
+            char_traits_wchar__Copy_s(this->ptr, this->res,
+                    assign->ptr+pos, len);
         basic_string_wchar__Eos(this, len);
     }
 
@@ -2861,8 +2866,9 @@ basic_string_wchar* __thiscall basic_string_wchar_append_substr(basic_string_wch
         _Xlen();
 
     if(basic_string_wchar__Grow(this, this->size+count, FALSE)) {
-        char_traits_wchar__Copy_s(this->ptr+this->size,
-                this->res-this->size, append->ptr+offset, count);
+        if(append->ptr)
+            char_traits_wchar__Copy_s(this->ptr+this->size, this->res-this->size,
+                    append->ptr+offset, count);
         basic_string_wchar__Eos(this, this->size+count);
     }
 
@@ -3475,7 +3481,8 @@ MSVCP_size_t __thiscall basic_string_wchar_copy(const basic_string_wchar *this,
         _Xran();
     if(count > this->size-off)
         count = this->size-off;
-    char_traits_wchar__Copy_s(dest, count, this->ptr+off, count);
+    if(this->ptr)
+        char_traits_wchar__Copy_s(dest, count, this->ptr+off, count);
     return count;
 }
 
