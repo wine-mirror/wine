@@ -29,6 +29,7 @@
 #include "xmllite_private.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xmllite);
 
@@ -73,6 +74,9 @@ typedef struct _xmlreaderinput
     /* reference passed on IXmlReaderInput creation, is kept when input is created */
     IUnknown *input;
     IMalloc *imalloc;
+    xml_encoding encoding;
+    BOOL hint;
+    WCHAR *baseuri;
     /* stream reference set after SetInput() call from reader,
        stored as sequential stream, cause currently
        optimizations possible with IStream aren't implemented */
@@ -161,6 +165,21 @@ static inline void readerinput_free(xmlreaderinput *input, void *mem)
     return m_free(input->imalloc, mem);
 }
 
+static inline WCHAR *readerinput_strdupW(xmlreaderinput *input, const WCHAR *str)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD size;
+
+        size = (strlenW(str)+1)*sizeof(WCHAR);
+        ret = readerinput_alloc(input, size);
+        if (ret) memcpy(ret, str, size);
+    }
+
+    return ret;
+}
+
 static HRESULT init_encoded_buffer(xmlreaderinput *input, encoded_buffer *buffer)
 {
     const int initial_len = 0x2000;
@@ -193,6 +212,32 @@ static HRESULT get_code_page(xml_encoding encoding, xmlreaderinput *input)
     input->buffer->code_page = data->cp;
 
     return S_OK;
+}
+
+static xml_encoding parse_encoding_name(const WCHAR *encoding)
+{
+    int min, max, n, c;
+
+    if (!encoding) return XmlEncoding_Unknown;
+
+    min = 0;
+    max = sizeof(xml_encoding_map)/sizeof(struct xml_encoding_data) - 1;
+
+    while (min <= max)
+    {
+        n = (min+max)/2;
+
+        c = strcmpiW(xml_encoding_map[n].encoding, encoding);
+        if (!c)
+            return xml_encoding_map[n].enc;
+
+        if (c > 0)
+            max = n-1;
+        else
+            min = n+1;
+    }
+
+    return XmlEncoding_Unknown;
 }
 
 static HRESULT alloc_input_buffer(xmlreaderinput *input)
@@ -688,6 +733,7 @@ static ULONG WINAPI xmlreaderinput_Release(IXmlReaderInput *iface)
         if (This->input) IUnknown_Release(This->input);
         if (This->stream) ISequentialStream_Release(This->stream);
         if (This->buffer) free_input_buffer(This->buffer);
+        readerinput_free(This, This->baseuri);
         readerinput_free(This, This);
         if (imalloc) IMalloc_Release(imalloc);
     }
@@ -747,7 +793,7 @@ HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
     xmlreaderinput *readerinput;
     HRESULT hr;
 
-    FIXME("%p %p %s %d %s %p: stub\n", stream, imalloc, wine_dbgstr_w(encoding),
+    TRACE("%p %p %s %d %s %p\n", stream, imalloc, wine_dbgstr_w(encoding),
                                        hint, wine_dbgstr_w(base_uri), ppInput);
 
     if (!stream || !ppInput) return E_INVALIDARG;
@@ -763,6 +809,9 @@ HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
     readerinput->imalloc = imalloc;
     readerinput->stream = NULL;
     if (imalloc) IMalloc_AddRef(imalloc);
+    readerinput->encoding = parse_encoding_name(encoding);
+    readerinput->hint = hint;
+    readerinput->baseuri = readerinput_strdupW(readerinput, base_uri);
 
     hr = alloc_input_buffer(readerinput);
     if (hr != S_OK)
