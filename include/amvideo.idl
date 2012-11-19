@@ -21,7 +21,7 @@ import "objidl.idl";
 /* trick widl into thinking that it knows the DirectDraw types 
  * as there is no IDL file for them (yet) */
 cpp_quote("#if 0")
-typedef void IDirectDraw;
+interface IDirectDraw;
 typedef void DDSURFACEDESC,DDCAPS;
 typedef DWORD RGBQUAD;
 typedef LONGLONG REFERENCE_TIME;
