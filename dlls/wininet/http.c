@@ -255,6 +255,9 @@ server_t *get_server(const WCHAR *name, INTERNET_PORT port, BOOL is_https, BOOL 
 {
     server_t *iter, *server = NULL;
 
+    if(port == INTERNET_INVALID_PORT_NUMBER)
+        port = is_https ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
+
     EnterCriticalSection(&connection_pool_cs);
 
     LIST_FOR_EACH_ENTRY(iter, &connection_pool, server_t, entry) {
@@ -1723,9 +1726,6 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
     if( !request->path )
         request->path = szNul;
 
-    if(UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
-        UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
-
     new_server = get_server(UrlComponents.lpszHostName, UrlComponents.nPort, UrlComponents.nScheme == INTERNET_SCHEME_HTTPS, TRUE);
     if(!new_server)
         return FALSE;
@@ -3164,7 +3164,6 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
 {
     appinfo_t *hIC = session->appInfo;
     http_request_t *request;
-    INTERNET_PORT port;
     DWORD len, res = ERROR_SUCCESS;
 
     TRACE("-->\n");
@@ -3191,11 +3190,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     request->session = session;
     list_add_head( &session->hdr.children, &request->hdr.entry );
 
-    port = session->hostPort;
-    if(port == INTERNET_INVALID_PORT_NUMBER)
-        port = dwFlags & INTERNET_FLAG_SECURE ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
-
-    request->server = get_server(session->hostName, port, (dwFlags & INTERNET_FLAG_SECURE) != 0, TRUE);
+    request->server = get_server(session->hostName, session->hostPort, (dwFlags & INTERNET_FLAG_SECURE) != 0, TRUE);
     if(!request->server) {
         WININET_Release(&request->hdr);
         return ERROR_OUTOFMEMORY;
