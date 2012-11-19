@@ -80,7 +80,7 @@ static void wintab_create_window(HWND* pHwnd)
 
     ZeroMemory(&testWindowClass, sizeof(testWindowClass));
 
-    testWindowClass.lpfnWndProc   = (WNDPROC)wintabTestWndProc;
+    testWindowClass.lpfnWndProc   = wintabTestWndProc;
     testWindowClass.hInstance     = NULL;
     testWindowClass.hIcon         = NULL;
     testWindowClass.hCursor       = NULL;
