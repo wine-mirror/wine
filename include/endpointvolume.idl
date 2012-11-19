@@ -30,9 +30,9 @@ typedef struct AUDIO_VOLUME_NOTIFICATION_DATA
 
 cpp_quote("typedef struct AUDIO_VOLUME_NOTIFICATION_DATA *PAUDIO_VOLUME_NOTIFICATION_DATA;")
 
-cpp_quote("#define ENDPOINT_HARDWARE_SUPPORT_VOLUME 0x1\n")
-cpp_quote("#define ENDPOINT_HARDWARE_SUPPORT_MUTE 0x2\n")
-cpp_quote("#define ENDPOINT_HARDWARE_SUPPORT_METER 0x4\n")
+cpp_quote("#define ENDPOINT_HARDWARE_SUPPORT_VOLUME 0x1")
+cpp_quote("#define ENDPOINT_HARDWARE_SUPPORT_MUTE 0x2")
+cpp_quote("#define ENDPOINT_HARDWARE_SUPPORT_METER 0x4")
 
 interface IAudioEndpointVolumeCallback;
 interface IAudioEndpointVolume;
