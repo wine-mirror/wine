@@ -582,8 +582,9 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_Reset(IDirect3DDevice9Ex *if
 
     wined3d_mutex_lock();
     wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, present_parameters);
-    hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc, NULL, reset_enum_callback);
-    if (FAILED(hr))
+    hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc,
+            NULL, reset_enum_callback, !device->d3d_parent->extended);
+    if (FAILED(hr) && !device->d3d_parent->extended)
         device->not_reset = TRUE;
     else
         device->not_reset = FALSE;
@@ -2907,11 +2908,7 @@ static HRESULT WINAPI d3d9_device_ResetEx(IDirect3DDevice9Ex *iface,
     wined3d_mutex_lock();
     wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, present_parameters);
     hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc,
-            mode ? &wined3d_mode : NULL, reset_enum_callback);
-    if (FAILED(hr))
-        device->not_reset = TRUE;
-    else
-        device->not_reset = FALSE;
+            mode ? &wined3d_mode : NULL, reset_enum_callback, FALSE);
     wined3d_mutex_unlock();
 
     return hr;

@@ -4974,15 +4974,15 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
 /* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         const struct wined3d_swapchain_desc *swapchain_desc, const struct wined3d_display_mode *mode,
-        wined3d_device_reset_cb callback)
+        wined3d_device_reset_cb callback, BOOL reset_state)
 {
     struct wined3d_resource *resource, *cursor;
     struct wined3d_swapchain *swapchain;
     struct wined3d_display_mode m;
     BOOL DisplayModeChanged = FALSE;
     BOOL update_desc = FALSE;
+    HRESULT hr = WINED3D_OK;
     unsigned int i;
-    HRESULT hr;
 
     TRACE("device %p, swapchain_desc %p, mode %p, callback %p.\n", device, swapchain_desc, mode, callback);
 
@@ -4992,7 +4992,9 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
-    stateblock_unbind_resources(device->stateBlock);
+    if (reset_state)
+        stateblock_unbind_resources(device->stateBlock);
+
     if (device->fb.render_targets)
     {
         if (swapchain->back_buffers && swapchain->back_buffers[0])
@@ -5012,11 +5014,14 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         device->onscreen_depth_stencil = NULL;
     }
 
-    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
+    if (reset_state)
     {
-        TRACE("Enumerating resource %p.\n", resource);
-        if (FAILED(hr = callback(resource)))
-            return hr;
+        LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
+        {
+            TRACE("Enumerating resource %p.\n", resource);
+            if (FAILED(hr = callback(resource)))
+                return hr;
+        }
     }
 
     /* Is it necessary to recreate the gl context? Actually every setting can be changed
@@ -5067,8 +5072,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
     if (swapchain_desc->enable_auto_depth_stencil && !device->auto_depth_stencil)
     {
-        HRESULT hr;
-
         TRACE("Creating the depth stencil buffer\n");
 
         if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent,
@@ -5222,28 +5225,49 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         device->exStyle = exStyle;
     }
 
-    TRACE("Resetting stateblock.\n");
-    wined3d_stateblock_decref(device->updateStateBlock);
-    wined3d_stateblock_decref(device->stateBlock);
+    if (reset_state)
+    {
+        TRACE("Resetting stateblock.\n");
+        wined3d_stateblock_decref(device->updateStateBlock);
+        wined3d_stateblock_decref(device->stateBlock);
 
-    if (device->d3d_initialized)
-        delete_opengl_contexts(device, swapchain);
+        if (device->d3d_initialized)
+            delete_opengl_contexts(device, swapchain);
 
-    /* Note: No parent needed for initial internal stateblock */
-    hr = wined3d_stateblock_create(device, WINED3D_SBT_INIT, &device->stateBlock);
-    if (FAILED(hr))
-        ERR("Resetting the stateblock failed with error %#x.\n", hr);
+        /* Note: No parent needed for initial internal stateblock */
+        hr = wined3d_stateblock_create(device, WINED3D_SBT_INIT, &device->stateBlock);
+        if (FAILED(hr))
+            ERR("Resetting the stateblock failed with error %#x.\n", hr);
+        else
+            TRACE("Created stateblock %p.\n", device->stateBlock);
+        device->updateStateBlock = device->stateBlock;
+        wined3d_stateblock_incref(device->updateStateBlock);
+
+        stateblock_init_default_state(device->stateBlock);
+    }
     else
-        TRACE("Created stateblock %p.\n", device->stateBlock);
-    device->updateStateBlock = device->stateBlock;
-    wined3d_stateblock_incref(device->updateStateBlock);
+    {
+        struct wined3d_surface *rt = device->fb.render_targets[0];
+        struct wined3d_state *state = &device->stateBlock->state;
 
-    stateblock_init_default_state(device->stateBlock);
+        /* Note the min_z / max_z is not reset. */
+        state->viewport.x = 0;
+        state->viewport.y = 0;
+        state->viewport.width = rt->resource.width;
+        state->viewport.height = rt->resource.height;
+        device_invalidate_state(device, STATE_VIEWPORT);
+
+        state->scissor_rect.top = 0;
+        state->scissor_rect.left = 0;
+        state->scissor_rect.right = rt->resource.width;
+        state->scissor_rect.bottom = rt->resource.height;
+        device_invalidate_state(device, STATE_SCISSORRECT);
+    }
 
     swapchain_update_render_to_fbo(swapchain);
     swapchain_update_draw_bindings(swapchain);
 
-    if (device->d3d_initialized)
+    if (reset_state && device->d3d_initialized)
         hr = create_primary_opengl_context(device, swapchain);
 
     /* All done. There is no need to reload resources or shaders, this will happen automatically on the

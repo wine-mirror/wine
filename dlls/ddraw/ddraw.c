@@ -2867,7 +2867,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         swapchain_desc.backbuffer_format = mode.format_id;
 
         hr = wined3d_device_reset(ddraw->wined3d_device,
-                &swapchain_desc, NULL, ddraw_reset_enum_callback);
+                &swapchain_desc, NULL, ddraw_reset_enum_callback, TRUE);
         if (FAILED(hr))
         {
             ERR("Failed to reset device.\n");
