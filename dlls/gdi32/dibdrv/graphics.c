@@ -304,10 +304,10 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     pt[1].y = end_y;
     LPtoDP( dev->hdc, pt, 2 );
     /* make them relative to the ellipse center */
-    pt[0].x -= left + width / 2;
-    pt[0].y -= top + height / 2;
-    pt[1].x -= left + width / 2;
-    pt[1].y -= top + height / 2;
+    pt[0].x -= rect.left + width / 2;
+    pt[0].y -= rect.top + height / 2;
+    pt[1].x -= rect.left + width / 2;
+    pt[1].y -= rect.top + height / 2;
 
     points = HeapAlloc( GetProcessHeap(), 0, (width + height) * 3 * sizeof(*points) );
     if (!points) return FALSE;
