@@ -607,7 +607,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(mscorecf));
 
     This->IClassFactory_iface.lpVtbl = &mscorecf_vtbl;
-    This->pfnCreateInstance = &create_monodata;
+    This->pfnCreateInstance = create_monodata;
     This->ref = 1;
     This->clsid = *rclsid;
 
