@@ -52,56 +52,15 @@ enum spi_index
     SPI_INDEX_COUNT
 };
 
-static const struct
-{
-    const char *name;
-    COLORREF    rgb;
-} DefSysColors[] =
-{
-    {"Scrollbar", RGB(212, 208, 200)},              /* COLOR_SCROLLBAR */
-    {"Background", RGB(58, 110, 165)},              /* COLOR_BACKGROUND */
-    {"ActiveTitle", RGB(10, 36, 106)},              /* COLOR_ACTIVECAPTION */
-    {"InactiveTitle", RGB(128, 128, 128)},          /* COLOR_INACTIVECAPTION */
-    {"Menu", RGB(212, 208, 200)},                   /* COLOR_MENU */
-    {"Window", RGB(255, 255, 255)},                 /* COLOR_WINDOW */
-    {"WindowFrame", RGB(0, 0, 0)},                  /* COLOR_WINDOWFRAME */
-    {"MenuText", RGB(0, 0, 0)},                     /* COLOR_MENUTEXT */
-    {"WindowText", RGB(0, 0, 0)},                   /* COLOR_WINDOWTEXT */
-    {"TitleText", RGB(255, 255, 255)},              /* COLOR_CAPTIONTEXT */
-    {"ActiveBorder", RGB(212, 208, 200)},           /* COLOR_ACTIVEBORDER */
-    {"InactiveBorder", RGB(212, 208, 200)},         /* COLOR_INACTIVEBORDER */
-    {"AppWorkSpace", RGB(128, 128, 128)},           /* COLOR_APPWORKSPACE */
-    {"Hilight", RGB(10, 36, 106)},                  /* COLOR_HIGHLIGHT */
-    {"HilightText", RGB(255, 255, 255)},            /* COLOR_HIGHLIGHTTEXT */
-    {"ButtonFace", RGB(212, 208, 200)},             /* COLOR_BTNFACE */
-    {"ButtonShadow", RGB(128, 128, 128)},           /* COLOR_BTNSHADOW */
-    {"GrayText", RGB(128, 128, 128)},               /* COLOR_GRAYTEXT */
-    {"ButtonText", RGB(0, 0, 0)},                   /* COLOR_BTNTEXT */
-    {"InactiveTitleText", RGB(212, 208, 200)},      /* COLOR_INACTIVECAPTIONTEXT */
-    {"ButtonHilight", RGB(255, 255, 255)},          /* COLOR_BTNHIGHLIGHT */
-    {"ButtonDkShadow", RGB(64, 64, 64)},            /* COLOR_3DDKSHADOW */
-    {"ButtonLight", RGB(212, 208, 200)},            /* COLOR_3DLIGHT */
-    {"InfoText", RGB(0, 0, 0)},                     /* COLOR_INFOTEXT */
-    {"InfoWindow", RGB(255, 255, 225)},             /* COLOR_INFOBK */
-    {"ButtonAlternateFace", RGB(181, 181, 181)},    /* COLOR_ALTERNATEBTNFACE */
-    {"HotTrackingColor", RGB(0, 0, 200)},           /* COLOR_HOTLIGHT */
-    {"GradientActiveTitle", RGB(166, 202, 240)},    /* COLOR_GRADIENTACTIVECAPTION */
-    {"GradientInactiveTitle", RGB(192, 192, 192)},  /* COLOR_GRADIENTINACTIVECAPTION */
-    {"MenuHilight", RGB(10, 36, 106)},              /* COLOR_MENUHILIGHT */
-    {"MenuBar", RGB(212, 208, 200)}                 /* COLOR_MENUBAR */
-};
-
 /**
  * Names of the registry subkeys of HKEY_CURRENT_USER key and value names
  * for the system parameters.
- * Names of the keys are created by adding string "_REGKEY" to
- * "SET" action names, value names are created by adding "_REG_NAME"
- * to the "SET" action name.
  */
 
 /* the various registry keys that are used to store parameters */
 enum parameter_key
 {
+    COLORS_KEY,
     DESKTOP_KEY,
     KEYBOARD_KEY,
     MOUSE_KEY,
@@ -114,6 +73,7 @@ enum parameter_key
     NB_PARAM_KEYS
 };
 
+static const WCHAR COLORS_REGKEY[] =   {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','C','o','l','o','r','s',0};
 static const WCHAR DESKTOP_REGKEY[] =  {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR KEYBOARD_REGKEY[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','K','e','y','b','o','a','r','d',0};
 static const WCHAR MOUSE_REGKEY[] =    {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
@@ -137,6 +97,7 @@ static const WCHAR SCREENREADER_REGKEY[] = {'C','o','n','t','r','o','l',' ','P',
 
 static const WCHAR *parameter_key_names[NB_PARAM_KEYS] =
 {
+    COLORS_REGKEY,
     DESKTOP_REGKEY,
     KEYBOARD_REGKEY,
     MOUSE_REGKEY,
@@ -224,6 +185,38 @@ static const WCHAR MINWIDTH_VALNAME[] =                {METRICS_KEY,'M','i','n',
 static const WCHAR MINHORZGAP_VALNAME[] =              {METRICS_KEY,'M','i','n','H','o','r','z','G','a','p',0};
 static const WCHAR MINVERTGAP_VALNAME[] =              {METRICS_KEY,'M','i','n','V','e','r','t','G','a','p',0};
 static const WCHAR MINARRANGE_VALNAME[] =              {METRICS_KEY,'M','i','n','A','r','r','a','n','g','e',0};
+static const WCHAR COLOR_SCROLLBAR_VALNAME[] =         {COLORS_KEY,'S','c','r','o','l','l','b','a','r',0};
+static const WCHAR COLOR_BACKGROUND_VALNAME[] =        {COLORS_KEY,'B','a','c','k','g','r','o','u','n','d',0};
+static const WCHAR COLOR_ACTIVECAPTION_VALNAME[] =     {COLORS_KEY,'A','c','t','i','v','e','T','i','t','l','e',0};
+static const WCHAR COLOR_INACTIVECAPTION_VALNAME[] =   {COLORS_KEY,'I','n','a','c','t','i','v','e','T','i','t','l','e',0};
+static const WCHAR COLOR_MENU_VALNAME[] =              {COLORS_KEY,'M','e','n','u',0};
+static const WCHAR COLOR_WINDOW_VALNAME[] =            {COLORS_KEY,'W','i','n','d','o','w',0};
+static const WCHAR COLOR_WINDOWFRAME_VALNAME[] =       {COLORS_KEY,'W','i','n','d','o','w','F','r','a','m','e',0};
+static const WCHAR COLOR_MENUTEXT_VALNAME[] =          {COLORS_KEY,'M','e','n','u','T','e','x','t',0};
+static const WCHAR COLOR_WINDOWTEXT_VALNAME[] =        {COLORS_KEY,'W','i','n','d','o','w','T','e','x','t',0};
+static const WCHAR COLOR_CAPTIONTEXT_VALNAME[] =       {COLORS_KEY,'T','i','t','l','e','T','e','x','t',0};
+static const WCHAR COLOR_ACTIVEBORDER_VALNAME[] =      {COLORS_KEY,'A','c','t','i','v','e','B','o','r','d','e','r',0};
+static const WCHAR COLOR_INACTIVEBORDER_VALNAME[] =    {COLORS_KEY,'I','n','a','c','t','i','v','e','B','o','r','d','e','r',0};
+static const WCHAR COLOR_APPWORKSPACE_VALNAME[] =      {COLORS_KEY,'A','p','p','W','o','r','k','S','p','a','c','e',0};
+static const WCHAR COLOR_HIGHLIGHT_VALNAME[] =         {COLORS_KEY,'H','i','l','i','g','h','t',0};
+static const WCHAR COLOR_HIGHLIGHTTEXT_VALNAME[] =     {COLORS_KEY,'H','i','l','i','g','h','t','T','e','x','t',0};
+static const WCHAR COLOR_BTNFACE_VALNAME[] =           {COLORS_KEY,'B','u','t','t','o','n','F','a','c','e',0};
+static const WCHAR COLOR_BTNSHADOW_VALNAME[] =         {COLORS_KEY,'B','u','t','t','o','n','S','h','a','d','o','w',0};
+static const WCHAR COLOR_GRAYTEXT_VALNAME[] =          {COLORS_KEY,'G','r','a','y','T','e','x','t',0};
+static const WCHAR COLOR_BTNTEXT_VALNAME[] =           {COLORS_KEY,'B','u','t','t','o','n','T','e','x','t',0};
+static const WCHAR COLOR_INACTIVECAPTIONTEXT_VALNAME[] = {COLORS_KEY,'I','n','a','c','t','i','v','e','T','i','t','l','e','T','e','x','t',0};
+static const WCHAR COLOR_BTNHIGHLIGHT_VALNAME[] =      {COLORS_KEY,'B','u','t','t','o','n','H','i','l','i','g','h','t',0};
+static const WCHAR COLOR_3DDKSHADOW_VALNAME[] =        {COLORS_KEY,'B','u','t','t','o','n','D','k','S','h','a','d','o','w',0};
+static const WCHAR COLOR_3DLIGHT_VALNAME[] =           {COLORS_KEY,'B','u','t','t','o','n','L','i','g','h','t',0};
+static const WCHAR COLOR_INFOTEXT_VALNAME[] =          {COLORS_KEY,'I','n','f','o','T','e','x','t',0};
+static const WCHAR COLOR_INFOBK_VALNAME[] =            {COLORS_KEY,'I','n','f','o','W','i','n','d','o','w',0};
+static const WCHAR COLOR_ALTERNATEBTNFACE_VALNAME[] =  {COLORS_KEY,'B','u','t','t','o','n','A','l','t','e','r','n','a','t','e','F','a','c','e',0};
+static const WCHAR COLOR_HOTLIGHT_VALNAME[] =          {COLORS_KEY,'H','o','t','T','r','a','c','k','i','n','g','C','o','l','o','r',0};
+static const WCHAR COLOR_GRADIENTACTIVECAPTION_VALNAME[] = {COLORS_KEY,'G','r','a','d','i','e','n','t','A','c','t','i','v','e','T','i','t','l','e',0};
+static const WCHAR COLOR_GRADIENTINACTIVECAPTION_VALNAME[] = {COLORS_KEY,'G','r','a','d','i','e','n','t','I','n','a','c','t','i','v','e','T','i','t','l','e',0};
+static const WCHAR COLOR_MENUHILIGHT_VALNAME[] =       {COLORS_KEY,'M','e','n','u','H','i','l','i','g','h','t',0};
+static const WCHAR COLOR_MENUBAR_VALNAME[] =           {COLORS_KEY,'M','e','n','u','B','a','r',0};
+
 /* FIXME - real value */
 static const WCHAR SCREENSAVERRUNNING_VALNAME[]=  {DESKTOP_KEY,'W','I','N','E','_','S','c','r','e','e','n','S','a','v','e','r','R','u','n','n','i','n','g',0};
 
@@ -235,22 +228,11 @@ static const WCHAR WINE_CURRENT_USER_REGKEY_TEMP_PARAMS[] = {'T','e','m','p','o'
                                                              'S','y','s','t','e','m',' ',
                                                              'P','a','r','a','m','e','t','e','r','s',0};
 
-static const WCHAR Yes[]=                                    {'Y','e','s',0};
-static const WCHAR No[]=                                     {'N','o',0};
-static const WCHAR Desktop[]=                                {'D','e','s','k','t','o','p',0};
-static const WCHAR Pattern[]=                                {'P','a','t','t','e','r','n',0};
-static const WCHAR MenuFont[]=                               {'M','e','n','u','F','o','n','t',0};
-static const WCHAR MenuFontSize[]=                           {'M','e','n','u','F','o','n','t','S','i','z','e',0};
-static const WCHAR StatusFont[]=                             {'S','t','a','t','u','s','F','o','n','t',0};
-static const WCHAR StatusFontSize[]=                         {'S','t','a','t','u','s','F','o','n','t','S','i','z','e',0};
-static const WCHAR MessageFont[]=                            {'M','e','s','s','a','g','e','F','o','n','t',0};
-static const WCHAR MessageFontSize[]=                        {'M','e','s','s','a','g','e','F','o','n','t','S','i','z','e',0};
-static const WCHAR System[]=                                 {'S','y','s','t','e','m',0};
-static const WCHAR IconTitleSize[]=                          {'I','c','o','n','T','i','t','l','e','S','i','z','e',0};
-static const WCHAR IconTitleFaceName[]=                      {'I','c','o','n','T','i','t','l','e','F','a','c','e','N','a','m','e',0};
-static const WCHAR defPattern[]=                             {'0',' ','0',' ','0',' ','0',' ','0',' ','0',' ','0',' ','0',0};
-static const WCHAR CSu[]=                                    {'%','u',0};
-static const WCHAR CSd[]=                                    {'%','d',0};
+static const WCHAR Yes[] =   {'Y','e','s',0};
+static const WCHAR No[] =    {'N','o',0};
+static const WCHAR CSu[] =   {'%','u',0};
+static const WCHAR CSd[] =   {'%','d',0};
+static const WCHAR CSrgb[] = {'%','u',' ','%','u',' ','%','u',0};
 
 /* Indicators whether system parameter value is loaded */
 static char spi_loaded[SPI_INDEX_COUNT];
@@ -259,12 +241,6 @@ static BOOL notify_change = TRUE;
 
 /* System parameters storage */
 static RECT work_area;
-
-#define NUM_SYS_COLORS     (COLOR_MENUBAR+1)
-
-static COLORREF SysColors[NUM_SYS_COLORS];
-static HBRUSH SysColorBrushes[NUM_SYS_COLORS];
-static HPEN   SysColorPens[NUM_SYS_COLORS];
 
 static const WORD wPattern55AA[] = { 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa };
 
@@ -302,6 +278,14 @@ struct sysparam_dword_entry
     DWORD                 val;
 };
 
+struct sysparam_rgb_entry
+{
+    struct sysparam_entry hdr;
+    COLORREF              val;
+    HBRUSH                brush;
+    HPEN                  pen;
+};
+
 struct sysparam_binary_entry
 {
     struct sysparam_entry hdr;
@@ -336,6 +320,7 @@ union sysparam_all_entry
     struct sysparam_uint_entry   uint;
     struct sysparam_bool_entry   bool;
     struct sysparam_dword_entry  dword;
+    struct sysparam_rgb_entry    rgb;
     struct sysparam_binary_entry bin;
     struct sysparam_path_entry   path;
     struct sysparam_font_entry   font;
@@ -640,77 +625,6 @@ static inline int get_display_dpi(void)
     return display_dpi;
 }
 
-/*************************************************************************
- *             SYSPARAMS_SetSysColor
- */
-static void SYSPARAMS_SetSysColor( int index, COLORREF color )
-{
-    if (index < 0 || index >= NUM_SYS_COLORS) return;
-    SysColors[index] = color;
-    if (SysColorBrushes[index])
-    {
-        __wine_make_gdi_object_system( SysColorBrushes[index], FALSE);
-        DeleteObject( SysColorBrushes[index] );
-    }
-    SysColorBrushes[index] = CreateSolidBrush( color );
-    __wine_make_gdi_object_system( SysColorBrushes[index], TRUE);
-
-    if (SysColorPens[index])
-    {
-        __wine_make_gdi_object_system( SysColorPens[index], FALSE);
-        DeleteObject( SysColorPens[index] );
-    }
-    SysColorPens[index] = CreatePen( PS_SOLID, 1, color );
-    __wine_make_gdi_object_system( SysColorPens[index], TRUE);
-}
-
-/* initialization of the system colors */
-static void init_syscolors(void)
-{
-    HKEY hkey; /* key to the window metrics area of the registry */
-    int i, r, g, b;
-    char buffer[100];
-    HBITMAP h55AABitmap;
-
-    /* initialize system colors */
-
-    if (RegCreateKeyExA(HKEY_CURRENT_USER, "Control Panel\\Colors", 0, 0, 0, KEY_ALL_ACCESS, 0, &hkey, 0))
-        hkey = 0;
-    for (i = 0; i < NUM_SYS_COLORS; i++)
-    {
-        BOOL bOk = FALSE;
-
-        /* first try, registry */
-        if (hkey)
-        {
-            DWORD dwDataSize = sizeof(buffer);
-            if (!(RegQueryValueExA(hkey,DefSysColors[i].name, 0, 0, (LPBYTE) buffer, &dwDataSize)))
-                if (sscanf( buffer, "%d %d %d", &r, &g, &b ) == 3) bOk = TRUE;
-        }
-
-        /* second try, win.ini */
-        if (!bOk)
-        {
-            GetProfileStringA( "colors", DefSysColors[i].name, NULL, buffer, 100 );
-            if (sscanf( buffer, " %d %d %d", &r, &g, &b ) == 3) bOk = TRUE;
-        }
-
-        /* else, take the default */
-        if (!bOk)
-            SYSPARAMS_SetSysColor( i, DefSysColors[i].rgb );
-        else
-            SYSPARAMS_SetSysColor( i, RGB(r,g,b) );
-    }
-    if (hkey) RegCloseKey( hkey );
-
-    /* create 55AA bitmap */
-
-    h55AABitmap = CreateBitmap( 8, 8, 1, 1, wPattern55AA );
-    SYSCOLOR_55AABrush = CreatePatternBrush( h55AABitmap );
-    __wine_make_gdi_object_system( SYSCOLOR_55AABrush, TRUE );
-}
-
-
 /* adjust some of the raw values found in the registry */
 static void normalize_nonclientmetrics( NONCLIENTMETRICSW *pncm)
 {
@@ -923,6 +837,70 @@ static BOOL set_dword_entry( union sysparam_all_entry *entry, UINT int_param, vo
 static BOOL init_dword_entry( union sysparam_all_entry *entry )
 {
     return init_entry( &entry->hdr, &entry->dword.val, sizeof(entry->dword.val), REG_DWORD );
+}
+
+/* load an RGB parameter from the registry */
+static BOOL get_rgb_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param )
+{
+    if (!ptr_param) return FALSE;
+
+    if (!entry->hdr.loaded)
+    {
+        WCHAR buf[32];
+
+        if (load_entry( &entry->hdr, buf, sizeof(buf) ))
+        {
+            DWORD r, g, b;
+            WCHAR *end, *str = buf;
+
+            r = strtoulW( str, &end, 10 );
+            if (end == str || !*end) goto done;
+            str = end + 1;
+            g = strtoulW( str, &end, 10 );
+            if (end == str || !*end) goto done;
+            str = end + 1;
+            b = strtoulW( str, &end, 10 );
+            if (end == str) goto done;
+            if (r > 255 || g > 255 || b > 255) goto done;
+            entry->rgb.val = RGB( r, g, b );
+        }
+    }
+done:
+    *(COLORREF *)ptr_param = entry->rgb.val;
+    return TRUE;
+}
+
+/* set an RGB parameter in the registry */
+static BOOL set_rgb_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param, UINT flags )
+{
+    WCHAR buf[32];
+    HBRUSH brush;
+    HPEN pen;
+
+    wsprintfW( buf, CSrgb, GetRValue(int_param), GetGValue(int_param), GetBValue(int_param) );
+    if (!save_entry_string( &entry->hdr, buf, flags )) return FALSE;
+    entry->rgb.val = int_param;
+    entry->hdr.loaded = TRUE;
+    if ((brush = InterlockedExchangePointer( (void **)&entry->rgb.brush, 0 )))
+    {
+        __wine_make_gdi_object_system( brush, FALSE );
+        DeleteObject( brush );
+    }
+    if ((pen = InterlockedExchangePointer( (void **)&entry->rgb.pen, 0 )))
+    {
+        __wine_make_gdi_object_system( pen, FALSE );
+        DeleteObject( pen );
+    }
+    return TRUE;
+}
+
+/* initialize an RGB parameter */
+static BOOL init_rgb_entry( union sysparam_all_entry *entry )
+{
+    WCHAR buf[32];
+
+    wsprintfW( buf, CSrgb, GetRValue(entry->rgb.val), GetGValue(entry->rgb.val), GetBValue(entry->rgb.val) );
+    return init_entry_string( &entry->hdr, buf );
 }
 
 /* load a font (binary) parameter from the registry */
@@ -1266,6 +1244,44 @@ static USERPREF_ENTRY( CLIENTAREAANIMATION,      4, 0x02 );
 static USERPREF_ENTRY( CLEARTYPE,                4, 0x10 );
 static USERPREF_ENTRY( SPEECHRECOGNITION,        4, 0x20 );
 
+static struct sysparam_rgb_entry system_colors[] =
+{
+#define RGB_ENTRY(name,val) { { get_rgb_entry, set_rgb_entry, init_rgb_entry, name ##_VALNAME }, (val) }
+    RGB_ENTRY( COLOR_SCROLLBAR, RGB(212, 208, 200) ),
+    RGB_ENTRY( COLOR_BACKGROUND, RGB(58, 110, 165) ),
+    RGB_ENTRY( COLOR_ACTIVECAPTION, RGB(10, 36, 106) ),
+    RGB_ENTRY( COLOR_INACTIVECAPTION, RGB(128, 128, 128) ),
+    RGB_ENTRY( COLOR_MENU, RGB(212, 208, 200) ),
+    RGB_ENTRY( COLOR_WINDOW, RGB(255, 255, 255) ),
+    RGB_ENTRY( COLOR_WINDOWFRAME, RGB(0, 0, 0) ),
+    RGB_ENTRY( COLOR_MENUTEXT, RGB(0, 0, 0) ),
+    RGB_ENTRY( COLOR_WINDOWTEXT, RGB(0, 0, 0) ),
+    RGB_ENTRY( COLOR_CAPTIONTEXT, RGB(255, 255, 255) ),
+    RGB_ENTRY( COLOR_ACTIVEBORDER, RGB(212, 208, 200) ),
+    RGB_ENTRY( COLOR_INACTIVEBORDER, RGB(212, 208, 200) ),
+    RGB_ENTRY( COLOR_APPWORKSPACE, RGB(128, 128, 128) ),
+    RGB_ENTRY( COLOR_HIGHLIGHT, RGB(10, 36, 106) ),
+    RGB_ENTRY( COLOR_HIGHLIGHTTEXT, RGB(255, 255, 255) ),
+    RGB_ENTRY( COLOR_BTNFACE, RGB(212, 208, 200) ),
+    RGB_ENTRY( COLOR_BTNSHADOW, RGB(128, 128, 128) ),
+    RGB_ENTRY( COLOR_GRAYTEXT, RGB(128, 128, 128) ),
+    RGB_ENTRY( COLOR_BTNTEXT, RGB(0, 0, 0) ),
+    RGB_ENTRY( COLOR_INACTIVECAPTIONTEXT, RGB(212, 208, 200) ),
+    RGB_ENTRY( COLOR_BTNHIGHLIGHT, RGB(255, 255, 255) ),
+    RGB_ENTRY( COLOR_3DDKSHADOW, RGB(64, 64, 64) ),
+    RGB_ENTRY( COLOR_3DLIGHT, RGB(212, 208, 200) ),
+    RGB_ENTRY( COLOR_INFOTEXT, RGB(0, 0, 0) ),
+    RGB_ENTRY( COLOR_INFOBK, RGB(255, 255, 225) ),
+    RGB_ENTRY( COLOR_ALTERNATEBTNFACE, RGB(181, 181, 181) ),
+    RGB_ENTRY( COLOR_HOTLIGHT, RGB(0, 0, 200) ),
+    RGB_ENTRY( COLOR_GRADIENTACTIVECAPTION, RGB(166, 202, 240) ),
+    RGB_ENTRY( COLOR_GRADIENTINACTIVECAPTION, RGB(192, 192, 192) ),
+    RGB_ENTRY( COLOR_MENUHILIGHT, RGB(10, 36, 106) ),
+    RGB_ENTRY( COLOR_MENUBAR, RGB(212, 208, 200) )
+#undef RGB_ENTRY
+};
+#define NUM_SYS_COLORS (sizeof(system_colors) / sizeof(system_colors[0]))
+
 /* entries that are initialized by default in the registry */
 static union sysparam_all_entry * const default_entries[] =
 {
@@ -1331,8 +1347,11 @@ void SYSPARAMS_Init(void)
 {
     HKEY key;
     DWORD i, dispos;
+    HBITMAP h55AABitmap = CreateBitmap( 8, 8, 1, 1, wPattern55AA );
 
-    init_syscolors();
+    SYSCOLOR_55AABrush = CreatePatternBrush( h55AABitmap );
+    __wine_make_gdi_object_system( SYSCOLOR_55AABrush, TRUE );
+    DeleteObject( h55AABitmap );
 
     /* this one must be non-volatile */
     if (RegCreateKeyW( HKEY_CURRENT_USER, WINE_CURRENT_USER_REGKEY, &key ))
@@ -2592,24 +2611,25 @@ UINT WINAPI GetDoubleClickTime(void)
  */
 COLORREF WINAPI DECLSPEC_HOTPATCH GetSysColor( INT nIndex )
 {
-    if (nIndex >= 0 && nIndex < NUM_SYS_COLORS)
-        return SysColors[nIndex];
-    else
-        return 0;
+    COLORREF ret = 0;
+
+    if (nIndex >= 0 && nIndex < NUM_SYS_COLORS) get_entry( &system_colors[nIndex], 0, &ret );
+    return ret;
 }
 
 
 /*************************************************************************
  *		SetSysColors (USER32.@)
  */
-BOOL WINAPI SetSysColors( INT nChanges, const INT *lpSysColor,
-                              const COLORREF *lpColorValues )
+BOOL WINAPI SetSysColors( INT count, const INT *colors, const COLORREF *values )
 {
     int i;
 
-    if (IS_INTRESOURCE(lpSysColor)) return FALSE; /* stupid app passes a color instead of an array */
+    if (IS_INTRESOURCE(colors)) return FALSE; /* stupid app passes a color instead of an array */
 
-    for (i = 0; i < nChanges; i++) SYSPARAMS_SetSysColor( lpSysColor[i], lpColorValues[i] );
+    for (i = 0; i < count; i++)
+        if (colors[i] >= 0 && colors[i] <= NUM_SYS_COLORS)
+            set_entry( &system_colors[colors[i]], values[i], 0, 0 );
 
     /* Send WM_SYSCOLORCHANGE message to all windows */
 
@@ -2625,79 +2645,10 @@ BOOL WINAPI SetSysColors( INT nChanges, const INT *lpSysColor,
 
 /*************************************************************************
  *		SetSysColorsTemp (USER32.@)
- *
- * UNDOCUMENTED !!
- *
- * Called by W98SE desk.cpl Control Panel Applet:
- * handle = SetSysColorsTemp(ptr, ptr, nCount);     ("set" call)
- * result = SetSysColorsTemp(NULL, NULL, handle);   ("restore" call)
- *
- * pPens is an array of COLORREF values, which seems to be used
- * to indicate the color values to create new pens with.
- *
- * pBrushes is an array of solid brush handles (returned by a previous
- * CreateSolidBrush), which seems to contain the brush handles to set
- * for the system colors.
- *
- * n seems to be used for
- *   a) indicating the number of entries to operate on (length of pPens,
- *      pBrushes)
- *   b) passing the handle that points to the previously used color settings.
- *      I couldn't figure out in hell what kind of handle this is on
- *      Windows. I just use a heap handle instead. Shouldn't matter anyway.
- *
- * RETURNS
- *     heap handle of our own copy of the current syscolors in case of
- *                 "set" call, i.e. pPens, pBrushes != NULL.
- *     TRUE (unconditionally !) in case of "restore" call,
- *          i.e. pPens, pBrushes == NULL.
- *     FALSE in case of either pPens != NULL and pBrushes == NULL
- *          or pPens == NULL and pBrushes != NULL.
- *
- * I'm not sure whether this implementation is 100% correct. [AM]
  */
 DWORD_PTR WINAPI SetSysColorsTemp( const COLORREF *pPens, const HBRUSH *pBrushes, DWORD_PTR n)
 {
-    DWORD i;
-
-    if (pPens && pBrushes) /* "set" call */
-    {
-        /* allocate our structure to remember old colors */
-        LPVOID pOldCol = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD)+n*sizeof(HPEN)+n*sizeof(HBRUSH));
-        LPVOID p = pOldCol;
-        *(DWORD *)p = n; p = (char*)p + sizeof(DWORD);
-        memcpy(p, SysColorPens, n*sizeof(HPEN)); p = (char*)p + n*sizeof(HPEN);
-        memcpy(p, SysColorBrushes, n*sizeof(HBRUSH));
-
-        for (i=0; i < n; i++)
-        {
-            SysColorPens[i] = CreatePen( PS_SOLID, 1, pPens[i] );
-            SysColorBrushes[i] = pBrushes[i];
-        }
-
-        return (DWORD_PTR)pOldCol;
-    }
-    if (!pPens && !pBrushes) /* "restore" call */
-    {
-        LPVOID pOldCol = (LPVOID)n; /* FIXME: not 64-bit safe */
-        LPVOID p = pOldCol;
-        DWORD nCount = *(DWORD *)p;
-        p = (char*)p + sizeof(DWORD);
-
-        for (i=0; i < nCount; i++)
-        {
-            DeleteObject(SysColorPens[i]);
-            SysColorPens[i] = *(HPEN *)p; p = (char*)p + sizeof(HPEN);
-        }
-        for (i=0; i < nCount; i++)
-        {
-            SysColorBrushes[i] = *(HBRUSH *)p; p = (char*)p + sizeof(HBRUSH);
-        }
-        /* get rid of storage structure */
-        HeapFree(GetProcessHeap(), 0, pOldCol);
-
-        return TRUE;
-    }
+    FIXME( "no longer supported\n" );
     return FALSE;
 }
 
@@ -2707,9 +2658,19 @@ DWORD_PTR WINAPI SetSysColorsTemp( const COLORREF *pPens, const HBRUSH *pBrushes
  */
 HBRUSH WINAPI DECLSPEC_HOTPATCH GetSysColorBrush( INT index )
 {
-    if (0 <= index && index < NUM_SYS_COLORS) return SysColorBrushes[index];
-    WARN("Unknown index(%d)\n", index );
-    return NULL;
+    if (index < 0 || index >= NUM_SYS_COLORS) return 0;
+
+    if (!system_colors[index].brush)
+    {
+        HBRUSH brush = CreateSolidBrush( GetSysColor( index ));
+        __wine_make_gdi_object_system( brush, TRUE );
+        if (InterlockedCompareExchangePointer( (void **)&system_colors[index].brush, brush, 0 ))
+        {
+            __wine_make_gdi_object_system( brush, FALSE );
+            DeleteObject( brush );
+        }
+    }
+    return system_colors[index].brush;
 }
 
 
@@ -2720,7 +2681,18 @@ HPEN SYSCOLOR_GetPen( INT index )
 {
     /* We can assert here, because this function is internal to Wine */
     assert (0 <= index && index < NUM_SYS_COLORS);
-    return SysColorPens[index];
+
+    if (!system_colors[index].pen)
+    {
+        HPEN pen = CreatePen( PS_SOLID, 1, GetSysColor( index ));
+        __wine_make_gdi_object_system( pen, TRUE );
+        if (InterlockedCompareExchangePointer( (void **)&system_colors[index].pen, pen, 0 ))
+        {
+            __wine_make_gdi_object_system( pen, FALSE );
+            DeleteObject( pen );
+        }
+    }
+    return system_colors[index].pen;
 }
 
 
