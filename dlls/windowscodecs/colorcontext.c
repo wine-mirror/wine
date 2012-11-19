@@ -144,6 +144,8 @@ static HRESULT WINAPI ColorContext_GetType(IWICColorContext *iface,
     ColorContext *This = impl_from_IWICColorContext(iface);
     TRACE("(%p,%p)\n", iface, pType);
 
+    if (!pType) return E_INVALIDARG;
+
     *pType = This->type;
     return S_OK;
 }
@@ -156,6 +158,8 @@ static HRESULT WINAPI ColorContext_GetProfileBytes(IWICColorContext *iface,
 
     if (This->type != WICColorContextProfile)
         return WINCODEC_ERR_NOTINITIALIZED;
+
+    if (!pcbActual) return E_INVALIDARG;
 
     if (cbBuffer >= This->profile_len && pbBuffer)
         memcpy(pbBuffer, This->profile, This->profile_len);
@@ -170,6 +174,8 @@ static HRESULT WINAPI ColorContext_GetExifColorSpace(IWICColorContext *iface,
 {
     ColorContext *This = impl_from_IWICColorContext(iface);
     TRACE("(%p,%p)\n", iface, pValue);
+
+    if (!pValue) return E_INVALIDARG;
 
     *pValue = This->exif_color_space;
     return S_OK;
@@ -190,6 +196,8 @@ static const IWICColorContextVtbl ColorContext_Vtbl = {
 HRESULT ColorContext_Create(IWICColorContext **colorcontext)
 {
     ColorContext *This;
+
+    if (!colorcontext) return E_INVALIDARG;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(ColorContext));
     if (!This) return E_OUTOFMEMORY;

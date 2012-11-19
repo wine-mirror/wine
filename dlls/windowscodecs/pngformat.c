@@ -854,6 +854,8 @@ static HRESULT WINAPI PngDecoder_Frame_GetColorContexts(IWICBitmapFrameDecode *i
 
     TRACE("(%p,%u,%p,%p)\n", iface, cCount, ppIColorContexts, pcActualCount);
 
+    if (!pcActualCount) return E_INVALIDARG;
+
     EnterCriticalSection(&This->lock);
 
     if (ppng_get_iCCP(This->png_ptr, This->info_ptr, &name, &compression_type, &profile, &len))

@@ -331,6 +331,9 @@ static void test_color_contexts(void)
     ok(decoder != 0, "Failed to load PNG image data\n");
 
     /* global color context */
+    hr = IWICBitmapDecoder_GetColorContexts(decoder, 0, NULL, NULL);
+    ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "GetColorContexts error %#x\n", hr);
+
     count = 0xdeadbeef;
     hr = IWICBitmapDecoder_GetColorContexts(decoder, 0, NULL, &count);
     ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "GetColorContexts error %#x\n", hr);
@@ -339,6 +342,9 @@ static void test_color_contexts(void)
     /* frame color context */
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
     ok(hr == S_OK, "GetFrame error %#x\n", hr);
+
+    hr = IWICBitmapFrameDecode_GetColorContexts(frame, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     count = 0xdeadbeef;
     hr = IWICBitmapFrameDecode_GetColorContexts(frame, 0, NULL, &count);
@@ -366,18 +372,30 @@ static void test_color_contexts(void)
     ok(hr == S_OK, "GetColorContexts error %#x\n", hr);
     ok(count == 1, "unexpected count %u\n", count);
 
+    hr = IWICImagingFactory_CreateColorContext(factory, NULL);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
     hr = IWICImagingFactory_CreateColorContext(factory, &context);
     ok(hr == S_OK, "CreateColorContext error %#x\n", hr);
+
+    hr = IWICColorContext_GetType(context, NULL);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     type = 0xdeadbeef;
     hr = IWICColorContext_GetType(context, &type);
     ok(hr == S_OK, "GetType error %#x\n", hr);
     ok(type == WICColorContextUninitialized, "unexpected type %u\n", type);
 
+    hr = IWICColorContext_GetProfileBytes(context, 0, NULL, NULL);
+    ok(hr == WINCODEC_ERR_NOTINITIALIZED, "GetProfileBytes error %#x\n", hr);
+
     size = 0;
     hr = IWICColorContext_GetProfileBytes(context, 0, NULL, &size);
     ok(hr == WINCODEC_ERR_NOTINITIALIZED, "GetProfileBytes error %#x\n", hr);
     ok(!size, "unexpected size %u\n", size);
+
+    hr = IWICColorContext_GetExifColorSpace(context, NULL);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     colorspace = 0xdeadbeef;
     hr = IWICColorContext_GetExifColorSpace(context, &colorspace);
@@ -423,6 +441,9 @@ static void test_color_contexts(void)
     count = 1;
     hr = IWICBitmapFrameDecode_GetColorContexts(frame, count, &context, &count);
     ok(hr == S_OK, "GetColorContexts error %#x\n", hr);
+
+    hr = IWICColorContext_GetProfileBytes(context, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     size = 0;
     hr = IWICColorContext_GetProfileBytes(context, 0, NULL, &size);
