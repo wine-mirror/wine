@@ -248,7 +248,35 @@ void server_release(server_t *server)
     if(server->cert_chain)
         CertFreeCertificateChain(server->cert_chain);
     heap_free(server->name);
+    heap_free(server->scheme_host_port);
     heap_free(server);
+}
+
+static BOOL process_host_port(server_t *server)
+{
+    BOOL default_port;
+    size_t name_len;
+    WCHAR *buf;
+
+    static const WCHAR httpW[] = {'h','t','t','p',0};
+    static const WCHAR httpsW[] = {'h','t','t','p','s',0};
+    static const WCHAR formatW[] = {'%','s',':','/','/','%','s',':','%','u',0};
+
+    name_len = strlenW(server->name);
+    buf = heap_alloc((name_len + 10 /* strlen("://:<port>") */)*sizeof(WCHAR) + sizeof(httpsW));
+    if(!buf)
+        return FALSE;
+
+    sprintfW(buf, formatW, server->is_https ? httpsW : httpW, server->name, server->port);
+    server->scheme_host_port = buf;
+
+    server->host_port = server->scheme_host_port + 7 /* strlen("http://") */;
+    if(server->is_https)
+        server->host_port++;
+
+    default_port = server->port == (server->is_https ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT);
+    server->canon_host_port = default_port ? server->name : server->host_port;
+    return TRUE;
 }
 
 server_t *get_server(const WCHAR *name, INTERNET_PORT port, BOOL is_https, BOOL do_create)
@@ -276,7 +304,7 @@ server_t *get_server(const WCHAR *name, INTERNET_PORT port, BOOL is_https, BOOL 
             server->is_https = is_https;
             list_init(&server->conn_pool);
             server->name = heap_strdupW(name);
-            if(server->name) {
+            if(server->name && process_host_port(server)) {
                 list_add_head(&connection_pool, &server->entry);
             }else {
                 heap_free(server);
@@ -3241,27 +3269,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     request->verb = heap_strdupW(lpszVerb && *lpszVerb ? lpszVerb : szGET);
     request->version = heap_strdupW(lpszVersion ? lpszVersion : g_szHttp1_1);
 
-    if (session->hostPort != INTERNET_INVALID_PORT_NUMBER &&
-        session->hostPort != INTERNET_DEFAULT_HTTP_PORT &&
-        session->hostPort != INTERNET_DEFAULT_HTTPS_PORT)
-    {
-        WCHAR *host_name;
-
-        static const WCHAR host_formatW[] = {'%','s',':','%','u',0};
-
-        host_name = heap_alloc((strlenW(session->hostName) + 7 /* length of ":65535" + 1 */) * sizeof(WCHAR));
-        if (!host_name) {
-            res = ERROR_OUTOFMEMORY;
-            goto lend;
-        }
-
-        sprintfW(host_name, host_formatW, session->hostName, session->hostPort);
-        HTTP_ProcessHeader(request, hostW, host_name, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
-        heap_free(host_name);
-    }
-    else
-        HTTP_ProcessHeader(request, hostW, session->hostName,
-                HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
+    HTTP_ProcessHeader(request, hostW, request->server->canon_host_port, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
 
     if (session->hostPort == INTERNET_INVALID_PORT_NUMBER)
         session->hostPort = (dwFlags & INTERNET_FLAG_SECURE ?
@@ -3275,7 +3283,6 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
                           INTERNET_STATUS_HANDLE_CREATED, &request->hdr.hInternet,
                           sizeof(HINTERNET));
 
-lend:
     TRACE("<-- %u (%p)\n", res, request);
 
     if(res != ERROR_SUCCESS) {
@@ -4080,22 +4087,18 @@ static LPWSTR HTTP_build_req( LPCWSTR *list, int len )
 static DWORD HTTP_SecureProxyConnect(http_request_t *request)
 {
     server_t *server = request->server;
-    LPWSTR lpszPath;
     LPWSTR requestString;
     INT len;
     INT cnt;
     INT responseLen;
     char *ascii_req;
     DWORD res;
-    static const WCHAR szConnect[] = {'C','O','N','N','E','C','T',0};
-    static const WCHAR szFormat[] = {'%','s',':','%','u',0};
+
+    static const WCHAR connectW[] = {'C','O','N','N','E','C','T',0};
 
     TRACE("\n");
 
-    lpszPath = heap_alloc((lstrlenW(server->name) + 13)*sizeof(WCHAR));
-    sprintfW(lpszPath, szFormat, server->name, server->port);
-    requestString = HTTP_BuildHeaderRequestString( request, szConnect, lpszPath, g_szHttp1_1 );
-    heap_free( lpszPath );
+    requestString = HTTP_BuildHeaderRequestString( request, connectW, server->host_port, g_szHttp1_1 );
 
     len = WideCharToMultiByte( CP_ACP, 0, requestString, -1,
                                 NULL, 0, NULL, NULL );

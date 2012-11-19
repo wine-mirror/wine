@@ -63,6 +63,10 @@ typedef struct {
     socklen_t addr_len;
     char addr_str[INET6_ADDRSTRLEN];
 
+    WCHAR *scheme_host_port;
+    const WCHAR *host_port;
+    const WCHAR *canon_host_port;
+
     LONG ref;
 
     DWORD security_flags;
