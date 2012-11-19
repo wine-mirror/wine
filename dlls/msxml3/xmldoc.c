@@ -141,13 +141,16 @@ static HRESULT WINAPI xmldoc_GetTypeInfoCount(IXMLDocument *iface, UINT* pctinfo
 }
 
 static HRESULT WINAPI xmldoc_GetTypeInfo(IXMLDocument *iface, UINT iTInfo,
-                                         LCID lcid, ITypeInfo** ppTInfo)
+                                         LCID lcid, ITypeInfo** ti)
 {
     xmldoc *This = impl_from_IXMLDocument(iface);
+    HRESULT hr;
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ti);
 
-    return get_typeinfo(IXMLDocument_tid, ppTInfo);
+    hr = get_typeinfo(IXMLDocument_tid, ti);
+    ITypeInfo_AddRef(*ti);
+    return hr;
 }
 
 static HRESULT WINAPI xmldoc_GetIDsOfNames(IXMLDocument *iface, REFIID riid,
@@ -166,10 +169,7 @@ static HRESULT WINAPI xmldoc_GetIDsOfNames(IXMLDocument *iface, REFIID riid,
 
     hr = get_typeinfo(IXMLDocument_tid, &typeinfo);
     if(SUCCEEDED(hr))
-    {
         hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
-        ITypeInfo_Release(typeinfo);
-    }
 
     return hr;
 }
@@ -188,11 +188,8 @@ static HRESULT WINAPI xmldoc_Invoke(IXMLDocument *iface, DISPID dispIdMember,
 
     hr = get_typeinfo(IXMLDocument_tid, &typeinfo);
     if(SUCCEEDED(hr))
-    {
         hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDocument_iface, dispIdMember, wFlags,
                 pDispParams, pVarResult, pExcepInfo, puArgErr);
-        ITypeInfo_Release(typeinfo);
-    }
 
     return hr;
 }

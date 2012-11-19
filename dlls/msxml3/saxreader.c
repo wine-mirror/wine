@@ -727,15 +727,15 @@ static HRESULT WINAPI ivbsaxattributes_GetTypeInfoCount( IVBSAXAttributes *iface
 
 static HRESULT WINAPI ivbsaxattributes_GetTypeInfo(
     IVBSAXAttributes *iface,
-    UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo )
+    UINT iTInfo, LCID lcid, ITypeInfo** ti )
 {
     saxlocator *This = impl_from_IVBSAXAttributes( iface );
     HRESULT hr;
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ti);
 
-    hr = get_typeinfo(IVBSAXAttributes_tid, ppTInfo);
-
+    hr = get_typeinfo(IVBSAXAttributes_tid, ti);
+    ITypeInfo_AddRef(*ti);
     return hr;
 }
 
@@ -759,10 +759,7 @@ static HRESULT WINAPI ivbsaxattributes_GetIDsOfNames(
 
     hr = get_typeinfo(IVBSAXAttributes_tid, &typeinfo);
     if(SUCCEEDED(hr))
-    {
         hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
-        ITypeInfo_Release(typeinfo);
-    }
 
     return hr;
 }
@@ -787,11 +784,8 @@ static HRESULT WINAPI ivbsaxattributes_Invoke(
 
     hr = get_typeinfo(IVBSAXAttributes_tid, &typeinfo);
     if(SUCCEEDED(hr))
-    {
         hr = ITypeInfo_Invoke(typeinfo, &This->IVBSAXAttributes_iface, dispIdMember, wFlags,
                 pDispParams, pVarResult, pExcepInfo, puArgErr);
-        ITypeInfo_Release(typeinfo);
-    }
 
     return hr;
 }
@@ -1916,15 +1910,15 @@ static HRESULT WINAPI ivbsaxlocator_GetTypeInfoCount( IVBSAXLocator *iface, UINT
 
 static HRESULT WINAPI ivbsaxlocator_GetTypeInfo(
     IVBSAXLocator *iface,
-    UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo )
+    UINT iTInfo, LCID lcid, ITypeInfo** ti )
 {
     saxlocator *This = impl_from_IVBSAXLocator( iface );
     HRESULT hr;
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ti);
 
-    hr = get_typeinfo(IVBSAXLocator_tid, ppTInfo);
-
+    hr = get_typeinfo(IVBSAXLocator_tid, ti);
+    ITypeInfo_AddRef(*ti);
     return hr;
 }
 
@@ -1948,10 +1942,7 @@ static HRESULT WINAPI ivbsaxlocator_GetIDsOfNames(
 
     hr = get_typeinfo(IVBSAXLocator_tid, &typeinfo);
     if(SUCCEEDED(hr))
-    {
         hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
-        ITypeInfo_Release(typeinfo);
-    }
 
     return hr;
 }
@@ -1976,11 +1967,8 @@ static HRESULT WINAPI ivbsaxlocator_Invoke(
 
     hr = get_typeinfo(IVBSAXLocator_tid, &typeinfo);
     if(SUCCEEDED(hr))
-    {
         hr = ITypeInfo_Invoke(typeinfo, &This->IVBSAXLocator_iface, dispIdMember, wFlags,
                 pDispParams, pVarResult, pExcepInfo, puArgErr);
-        ITypeInfo_Release(typeinfo);
-    }
 
     return hr;
 }

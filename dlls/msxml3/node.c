@@ -1113,15 +1113,15 @@ static HRESULT WINAPI unknode_GetTypeInfo(
     IXMLDOMNode *iface,
     UINT iTInfo,
     LCID lcid,
-    ITypeInfo** ppTInfo )
+    ITypeInfo** ti )
 {
     unknode *This = unknode_from_IXMLDOMNode( iface );
     HRESULT hr;
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ti);
 
-    hr = get_typeinfo(IXMLDOMNode_tid, ppTInfo);
-
+    hr = get_typeinfo(IXMLDOMNode_tid, ti);
+    ITypeInfo_AddRef(*ti);
     return hr;
 }
 
@@ -1146,10 +1146,7 @@ static HRESULT WINAPI unknode_GetIDsOfNames(
 
     hr = get_typeinfo(IXMLDOMNode_tid, &typeinfo);
     if(SUCCEEDED(hr))
-    {
         hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
-        ITypeInfo_Release(typeinfo);
-    }
 
     return hr;
 }
@@ -1174,11 +1171,8 @@ static HRESULT WINAPI unknode_Invoke(
 
     hr = get_typeinfo(IXMLDOMNode_tid, &typeinfo);
     if(SUCCEEDED(hr))
-    {
         hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMNode_iface, dispIdMember, wFlags, pDispParams,
                 pVarResult, pExcepInfo, puArgErr);
-        ITypeInfo_Release(typeinfo);
-    }
 
     return hr;
 }

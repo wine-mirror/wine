@@ -200,8 +200,6 @@ HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo)
     }
 
     *typeinfo = typeinfos[tid];
-
-    ITypeInfo_AddRef(typeinfos[tid]);
     return S_OK;
 }
 
@@ -300,7 +298,6 @@ static dispex_data_t *preprocess_dispex_data(DispatchEx *This)
             ITypeInfo_ReleaseFuncDesc(ti, funcdesc);
         }
 
-        ITypeInfo_Release(ti);
         tid++;
     }
 
@@ -322,7 +319,6 @@ static dispex_data_t *preprocess_dispex_data(DispatchEx *This)
         data->name_table = NULL;
     }
 
-    ITypeInfo_Release(dti);
     return data;
 }
 
@@ -383,13 +379,16 @@ static HRESULT WINAPI DispatchEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pcti
 }
 
 static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo,
-                                              LCID lcid, ITypeInfo **ppTInfo)
+                                              LCID lcid, ITypeInfo **ti)
 {
     DispatchEx *This = impl_from_IDispatchEx(iface);
+    HRESULT hr;
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ti);
 
-    return get_typeinfo(This->data->disp_tid, ppTInfo);
+    hr = get_typeinfo(This->data->disp_tid, ti);
+    ITypeInfo_AddRef(*ti);
+    return hr;
 }
 
 static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
@@ -603,7 +602,6 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
     hres = ITypeInfo_Invoke(ti, unk, id, wFlags, pdp, pvarRes, pei, &argerr);
 
-    ITypeInfo_Release(ti);
     IUnknown_Release(unk);
     return hres;
 }
