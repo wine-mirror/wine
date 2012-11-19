@@ -1950,7 +1950,6 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
     switch(option) {
     case INTERNET_OPTION_DIAGNOSTIC_SOCKET_INFO:
     {
-        http_session_t *session = req->session;
         INTERNET_DIAGNOSTIC_SOCKET_INFO *info = buffer;
 
         FIXME("INTERNET_DIAGNOSTIC_SOCKET_INFO stub\n");
@@ -1964,11 +1963,11 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         info->Socket = 0;
         /* FIXME: get source port from req->netConnection */
         info->SourcePort = 0;
-        info->DestPort = session->hostPort;
+        info->DestPort = req->server->port;
         info->Flags = 0;
         if (HTTP_KeepAlive(req))
             info->Flags |= IDSI_FLAG_KEEP_ALIVE;
-        if (session->appInfo->proxy && session->appInfo->proxy[0] != 0)
+        if (req->proxy)
             info->Flags |= IDSI_FLAG_PROXY;
         if (req->netconn->useSSL)
             info->Flags |= IDSI_FLAG_SECURE;
@@ -2159,7 +2158,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
          * INTERNET_REQFLAG_CACHE_WRITE_DISABLED
          */
 
-        if(req->session->appInfo->proxy)
+        if(req->proxy)
             flags |= INTERNET_REQFLAG_VIA_PROXY;
         if(!req->rawHeaders)
             flags |= INTERNET_REQFLAG_NO_HEADERS;
@@ -4838,7 +4837,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         if (!(request->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES))
             HTTP_InsertCookies(request);
 
-        if (request->session->appInfo->proxy && request->session->appInfo->proxy[0])
+        if (request->proxy)
         {
             WCHAR *url = build_proxy_path_url(request);
             requestString = HTTP_BuildHeaderRequestString(request, request->verb, url, request->version);
