@@ -1679,41 +1679,25 @@ static BOOL HTTP_InsertAuthorization( http_request_t *request, struct HttpAuthIn
     return TRUE;
 }
 
-static WCHAR *HTTP_BuildProxyRequestUrl(http_request_t *req)
+static WCHAR *build_proxy_path_url(http_request_t *req)
 {
-    static const WCHAR slash[] = { '/',0 };
-    static const WCHAR format[] = { 'h','t','t','p',':','/','/','%','s',':','%','u',0 };
-    static const WCHAR formatSSL[] = { 'h','t','t','p','s',':','/','/','%','s',':','%','u',0 };
-    http_session_t *session = req->session;
-    WCHAR new_location[INTERNET_MAX_URL_LENGTH], *url;
-    DWORD size;
+    DWORD size, len;
+    WCHAR *url;
 
-    size = sizeof(new_location);
-    if (HTTP_HttpQueryInfoW(req, HTTP_QUERY_LOCATION, new_location, &size, NULL) == ERROR_SUCCESS)
-    {
-        URL_COMPONENTSW UrlComponents;
+    len = strlenW(req->server->scheme_host_port);
+    size = len + strlenW(req->path) + 1;
+    if(*req->path != '/')
+        size++;
+    url = heap_alloc(size * sizeof(WCHAR));
+    if(!url)
+        return NULL;
 
-        if (!(url = heap_alloc(size + sizeof(WCHAR)))) return NULL;
-        strcpyW( url, new_location );
+    memcpy(url, req->server->scheme_host_port, len*sizeof(WCHAR));
+    if(*req->path != '/')
+        url[len++] = '/';
 
-        ZeroMemory(&UrlComponents,sizeof(URL_COMPONENTSW));
-        if(InternetCrackUrlW(url, 0, 0, &UrlComponents)) goto done;
-        heap_free(url);
-    }
+    strcpyW(url+len, req->path);
 
-    size = 16; /* "https://" + sizeof(port#) + ":/\0" */
-    size += strlenW( session->hostName ) + strlenW( req->path );
-
-    if (!(url = heap_alloc(size * sizeof(WCHAR)))) return NULL;
-
-    if (req->hdr.dwFlags & INTERNET_FLAG_SECURE)
-        sprintfW( url, formatSSL, session->hostName, session->hostPort );
-    else
-        sprintfW( url, format, session->hostName, session->hostPort );
-    if (req->path[0] != '/') strcatW( url, slash );
-    strcatW( url, req->path );
-
-done:
     TRACE("url=%s\n", debugstr_w(url));
     return url;
 }
@@ -4856,7 +4840,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
 
         if (request->session->appInfo->proxy && request->session->appInfo->proxy[0])
         {
-            WCHAR *url = HTTP_BuildProxyRequestUrl(request);
+            WCHAR *url = build_proxy_path_url(request);
             requestString = HTTP_BuildHeaderRequestString(request, request->verb, url, request->version);
             heap_free(url);
         }
