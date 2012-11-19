@@ -49,11 +49,15 @@ static HWND create_window(void)
     return ret;
 }
 
-static IDirect3DDevice9Ex *create_device(IDirect3D9Ex *d3d9, HWND device_window, HWND focus_window, BOOL windowed)
+static IDirect3DDevice9Ex *create_device(HWND device_window, HWND focus_window, BOOL windowed)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
     IDirect3DDevice9Ex *device;
     D3DDISPLAYMODEEX mode, *m;
+    IDirect3D9Ex *d3d9;
+
+    if (FAILED(pDirect3DCreate9Ex(D3D_SDK_VERSION, &d3d9)))
+        return NULL;
 
     present_parameters.Windowed = windowed;
     present_parameters.hDeviceWindow = device_window;
@@ -73,16 +77,20 @@ static IDirect3DDevice9Ex *create_device(IDirect3D9Ex *d3d9, HWND device_window,
 
     m = windowed ? NULL : &mode;
     if (SUCCEEDED(IDirect3D9Ex_CreateDeviceEx(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
-            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, m, &device))) return device;
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, m, &device))) goto done;
 
     present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
     if (SUCCEEDED(IDirect3D9Ex_CreateDeviceEx(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
-            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, m, &device))) return device;
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, m, &device))) goto done;
 
     if (SUCCEEDED(IDirect3D9Ex_CreateDeviceEx(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
-            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, m, &device))) return device;
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, m, &device))) goto done;
 
-    return NULL;
+    device = NULL;
+
+done:
+    IDirect3D9Ex_Release(d3d9);
+    return device;
 }
 
 static ULONG getref(IUnknown *obj) {
@@ -387,21 +395,13 @@ static void test_texture_sysmem_create(void)
     IDirect3DDevice9Ex *device;
     IDirect3DTexture9 *texture;
     D3DLOCKED_RECT locked_rect;
-    IDirect3D9Ex *d3d9;
     UINT refcount;
     HWND window;
     HRESULT hr;
     void *mem;
 
-    if (FAILED(hr = pDirect3DCreate9Ex(D3D_SDK_VERSION, &d3d9)))
-    {
-        skip("Failed to create IDirect3D9Ex object (hr %#x), skipping tests.\n", hr);
-        return;
-    }
-
     window = create_window();
-    device = create_device(d3d9, window, window, TRUE);
-    if (!device)
+    if (!(device = create_device(window, window, TRUE)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
         goto done;
@@ -428,8 +428,6 @@ static void test_texture_sysmem_create(void)
 
 done:
     DestroyWindow(window);
-    if (d3d9)
-        IDirect3D9Ex_Release(d3d9);
 }
 
 START_TEST(d3d9ex)
