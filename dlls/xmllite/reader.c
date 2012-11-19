@@ -87,6 +87,7 @@ typedef struct _xmlreader
     xmlreaderinput *input;
     IMalloc *imalloc;
     XmlReadState state;
+    XmlNodeType nodetype;
     DtdProcessing dtdmode;
     UINT line, pos;           /* reader position in XML stream */
 } xmlreader;
@@ -469,8 +470,10 @@ static HRESULT WINAPI xmlreader_Read(IXmlReader* iface, XmlNodeType *node_type)
 
 static HRESULT WINAPI xmlreader_GetNodeType(IXmlReader* iface, XmlNodeType *node_type)
 {
-    FIXME("(%p %p): stub\n", iface, node_type);
-    return E_NOTIMPL;
+    xmlreader *This = impl_from_IXmlReader(iface);
+    TRACE("(%p)->(%p)\n", This, node_type);
+    *node_type = This->nodetype;
+    return This->state == XmlReadState_Closed ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI xmlreader_MoveToFirstAttribute(IXmlReader* iface)
@@ -725,6 +728,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
     reader->line  = reader->pos = 0;
     reader->imalloc = imalloc;
     if (imalloc) IMalloc_AddRef(imalloc);
+    reader->nodetype = XmlNodeType_None;
 
     *obj = &reader->IXmlReader_iface;
 
