@@ -4431,7 +4431,7 @@ BOOL WINAPI InternetGetSecurityInfoByURLW(LPCWSTR lpszURL, PCCERT_CHAIN_CONTEXT 
     if(url.nPort == INTERNET_INVALID_PORT_NUMBER)
         url.nPort = INTERNET_DEFAULT_HTTPS_PORT;
 
-    server = get_server(hostname, url.nPort, FALSE);
+    server = get_server(hostname, url.nPort, TRUE, FALSE);
     if(!server) {
         SetLastError(ERROR_INTERNET_ITEM_NOT_FOUND);
         return FALSE;

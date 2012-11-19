@@ -251,14 +251,14 @@ void server_release(server_t *server)
     heap_free(server);
 }
 
-server_t *get_server(const WCHAR *name, INTERNET_PORT port, BOOL do_create)
+server_t *get_server(const WCHAR *name, INTERNET_PORT port, BOOL is_https, BOOL do_create)
 {
     server_t *iter, *server = NULL;
 
     EnterCriticalSection(&connection_pool_cs);
 
     LIST_FOR_EACH_ENTRY(iter, &connection_pool, server_t, entry) {
-        if(iter->port == port && !strcmpW(iter->name, name)) {
+        if(iter->port == port && !strcmpW(iter->name, name) && iter->is_https == is_https) {
             server = iter;
             server_addref(server);
             break;
@@ -270,6 +270,7 @@ server_t *get_server(const WCHAR *name, INTERNET_PORT port, BOOL do_create)
         if(server) {
             server->ref = 2; /* list reference and return */
             server->port = port;
+            server->is_https = is_https;
             list_init(&server->conn_pool);
             server->name = heap_strdupW(name);
             if(server->name) {
@@ -1725,7 +1726,7 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
     if(UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
         UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
 
-    new_server = get_server(UrlComponents.lpszHostName, UrlComponents.nPort, TRUE);
+    new_server = get_server(UrlComponents.lpszHostName, UrlComponents.nPort, UrlComponents.nScheme == INTERNET_SCHEME_HTTPS, TRUE);
     if(!new_server)
         return FALSE;
 
@@ -3194,7 +3195,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     if(port == INTERNET_INVALID_PORT_NUMBER)
         port = dwFlags & INTERNET_FLAG_SECURE ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
 
-    request->server = get_server(session->hostName, port, TRUE);
+    request->server = get_server(session->hostName, port, (dwFlags & INTERNET_FLAG_SECURE) != 0, TRUE);
     if(!request->server) {
         WININET_Release(&request->hdr);
         return ERROR_OUTOFMEMORY;
@@ -4022,7 +4023,7 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
         if(strcmpiW(request->server->name, hostName) || request->server->port != urlComponents.nPort) {
             server_t *new_server;
 
-            new_server = get_server(hostName, urlComponents.nPort, TRUE);
+            new_server = get_server(hostName, urlComponents.nPort, urlComponents.nScheme == INTERNET_SCHEME_HTTPS, TRUE);
             server_release(request->server);
             request->server = new_server;
         }

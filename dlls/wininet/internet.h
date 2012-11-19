@@ -58,6 +58,7 @@ extern HMODULE WININET_hModule DECLSPEC_HIDDEN;
 typedef struct {
     WCHAR *name;
     INTERNET_PORT port;
+    BOOL is_https;
     struct sockaddr_storage addr;
     socklen_t addr_len;
     char addr_str[INET6_ADDRSTRLEN];
@@ -550,7 +551,7 @@ int NETCON_GetCipherStrength(netconn_t*) DECLSPEC_HIDDEN;
 DWORD NETCON_set_timeout(netconn_t *connection, BOOL send, DWORD value) DECLSPEC_HIDDEN;
 int sock_get_error(int) DECLSPEC_HIDDEN;
 
-server_t *get_server(const WCHAR*,INTERNET_PORT,BOOL);
+server_t *get_server(const WCHAR*,INTERNET_PORT,BOOL,BOOL);
 
 BOOL init_urlcache(void) DECLSPEC_HIDDEN;
 void free_urlcache(void) DECLSPEC_HIDDEN;
