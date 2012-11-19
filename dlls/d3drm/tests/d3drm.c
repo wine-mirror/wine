@@ -944,9 +944,9 @@ static void test_Frame(void)
 
 static void test_Viewport(void)
 {
+    IDirectDrawClipper *pClipper;
     HRESULT hr;
     LPDIRECT3DRM pD3DRM;
-    LPDIRECTDRAWCLIPPER pClipper;
     LPDIRECT3DRMDEVICE pDevice;
     LPDIRECT3DRMFRAME pFrame;
     LPDIRECT3DRMVIEWPORT pViewport;
@@ -1177,9 +1177,9 @@ static void test_Texture(void)
 
 static void test_Device(void)
 {
+    IDirectDrawClipper *pClipper;
     HRESULT hr;
     LPDIRECT3DRM pD3DRM;
-    LPDIRECTDRAWCLIPPER pClipper;
     LPDIRECT3DRMDEVICE pDevice;
     LPDIRECT3DRMWINDEVICE pWinDevice;
     GUID driver;

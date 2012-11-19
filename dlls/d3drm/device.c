@@ -223,9 +223,8 @@ static HRESULT WINAPI IDirect3DRMDevice2Impl_InitFromD3D(IDirect3DRMDevice2* ifa
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice2Impl_InitFromClipper(IDirect3DRMDevice2* iface,
-                                                             LPDIRECTDRAWCLIPPER lpDDClipper,
-                                                             LPGUID lpGUID, int width, int height)
+static HRESULT WINAPI IDirect3DRMDevice2Impl_InitFromClipper(IDirect3DRMDevice2 *iface,
+        IDirectDrawClipper *lpDDClipper, GUID *lpGUID, int width, int height)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
@@ -652,9 +651,8 @@ static HRESULT WINAPI IDirect3DRMDevice3Impl_InitFromD3D(IDirect3DRMDevice3* ifa
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice3Impl_InitFromClipper(IDirect3DRMDevice3* iface,
-                                                             LPDIRECTDRAWCLIPPER lpDDClipper,
-                                                             LPGUID lpGUID, int width, int height)
+static HRESULT WINAPI IDirect3DRMDevice3Impl_InitFromClipper(IDirect3DRMDevice3 *iface,
+        IDirectDrawClipper *lpDDClipper, GUID *lpGUID, int width, int height)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
 

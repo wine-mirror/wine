@@ -260,7 +260,9 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateDeviceFromD3D(IDirect3DRM* iface, LP
     return Direct3DRMDevice_create(&IID_IDirect3DRMDevice, (IUnknown**)ppDevice);
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateDeviceFromClipper(IDirect3DRM* iface, LPDIRECTDRAWCLIPPER pDDClipper, LPGUID pGUID, int width, int height, LPDIRECT3DRMDEVICE * ppDevice)
+static HRESULT WINAPI IDirect3DRMImpl_CreateDeviceFromClipper(IDirect3DRM *iface,
+        IDirectDrawClipper *pDDClipper, GUID *pGUID, int width, int height,
+        IDirect3DRMDevice **ppDevice)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
 
@@ -638,10 +640,9 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateDeviceFromD3D(IDirect3DRM2* iface, 
     return Direct3DRMDevice_create(&IID_IDirect3DRMDevice2, (IUnknown**)ppDevice);
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateDeviceFromClipper(IDirect3DRM2* iface,
-                                                               LPDIRECTDRAWCLIPPER pDDClipper,
-                                                               LPGUID pGUID, int width, int height,
-                                                               LPDIRECT3DRMDEVICE2 * ppDevice)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateDeviceFromClipper(IDirect3DRM2 *iface,
+        IDirectDrawClipper *pDDClipper, GUID *pGUID, int width, int height,
+        IDirect3DRMDevice2 **ppDevice)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
 
@@ -1083,14 +1084,13 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateDeviceFromD3D(IDirect3DRM3* iface, 
     return Direct3DRMDevice_create(&IID_IDirect3DRMDevice3, (IUnknown**)device);
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateDeviceFromClipper(IDirect3DRM3* iface,
-                                                               LPDIRECTDRAWCLIPPER clipper,
-                                                               LPGUID GUID, int width, int height,
-                                                               LPDIRECT3DRMDEVICE3* device)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateDeviceFromClipper(IDirect3DRM3 *iface,
+        IDirectDrawClipper *clipper, GUID *guid, int width, int height,
+        IDirect3DRMDevice3 **device)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
 
-    FIXME("(%p/%p)->(%p,%s,%d,%d,%p): partial stub\n", iface, This, clipper, debugstr_guid(GUID),
+    FIXME("(%p/%p)->(%p,%s,%d,%d,%p): partial stub\n", iface, This, clipper, debugstr_guid(guid),
           width, height, device);
 
     return Direct3DRMDevice_create(&IID_IDirect3DRMDevice3, (IUnknown**)device);

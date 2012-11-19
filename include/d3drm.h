@@ -72,8 +72,8 @@ DECLARE_INTERFACE_(IDirect3DRM,IUnknown)
     STDMETHOD(CreateDeviceFromSurface)(THIS_ GUID *guid, IDirectDraw *ddraw,
             IDirectDrawSurface *surface, IDirect3DRMDevice **device) PURE;
     STDMETHOD(CreateDeviceFromD3D)(THIS_ LPDIRECT3D pD3D, LPDIRECT3DDEVICE pD3DDev, LPDIRECT3DRMDEVICE *) PURE;
-    STDMETHOD(CreateDeviceFromClipper)(THIS_ LPDIRECTDRAWCLIPPER pDDClipper, LPGUID pGUID, int width, int height,
-        LPDIRECT3DRMDEVICE *) PURE;
+    STDMETHOD(CreateDeviceFromClipper)(THIS_ IDirectDrawClipper *clipper, GUID *guid,
+            int width, int height, IDirect3DRMDevice **device) PURE;
     STDMETHOD(CreateTextureFromSurface)(THIS_ IDirectDrawSurface *surface,
             IDirect3DRMTexture **texture) PURE;
     STDMETHOD(CreateShadow)(THIS_ LPDIRECT3DRMVISUAL, LPDIRECT3DRMLIGHT, D3DVALUE px, D3DVALUE py, D3DVALUE pz,
@@ -207,8 +207,8 @@ DECLARE_INTERFACE_(IDirect3DRM2,IUnknown)
     STDMETHOD(CreateDeviceFromSurface)(THIS_ GUID *guid, IDirectDraw *ddraw,
             IDirectDrawSurface *surface, IDirect3DRMDevice2 **device) PURE;
     STDMETHOD(CreateDeviceFromD3D)(THIS_ LPDIRECT3D2 pD3D, LPDIRECT3DDEVICE2 pD3DDev, LPDIRECT3DRMDEVICE2 *) PURE;
-    STDMETHOD(CreateDeviceFromClipper)(THIS_ LPDIRECTDRAWCLIPPER pDDClipper, LPGUID pGUID, int width, int height,
-        LPDIRECT3DRMDEVICE2 *) PURE;
+    STDMETHOD(CreateDeviceFromClipper)(THIS_ IDirectDrawClipper *clipper, GUID *guid,
+            int width, int height, IDirect3DRMDevice2 **device) PURE;
     STDMETHOD(CreateTextureFromSurface)(THIS_ IDirectDrawSurface *surface,
             IDirect3DRMTexture2 **texture) PURE;
     STDMETHOD(CreateShadow)(THIS_ LPDIRECT3DRMVISUAL, LPDIRECT3DRMLIGHT, D3DVALUE px, D3DVALUE py, D3DVALUE pz,
@@ -345,8 +345,8 @@ DECLARE_INTERFACE_(IDirect3DRM3,IUnknown)
     STDMETHOD(CreateDeviceFromSurface)(THIS_ GUID *guid, IDirectDraw *ddraw,
             IDirectDrawSurface *surface, IDirect3DRMDevice3 **device) PURE;
     STDMETHOD(CreateDeviceFromD3D)(THIS_ LPDIRECT3D2 pD3D, LPDIRECT3DDEVICE2 pD3DDev, LPDIRECT3DRMDEVICE3 *) PURE;
-    STDMETHOD(CreateDeviceFromClipper)(THIS_ LPDIRECTDRAWCLIPPER pDDClipper, LPGUID pGUID, int width, int height,
-        LPDIRECT3DRMDEVICE3 *) PURE;
+    STDMETHOD(CreateDeviceFromClipper)(THIS_ IDirectDrawClipper *clipper, GUID *guid,
+            int width, int height, IDirect3DRMDevice3 **device) PURE;
     STDMETHOD(CreateTextureFromSurface)(THIS_ IDirectDrawSurface *surface,
             IDirect3DRMTexture3 **texture) PURE;
     STDMETHOD(CreateShadow)(THIS_ LPUNKNOWN, LPDIRECT3DRMLIGHT, D3DVALUE px, D3DVALUE py, D3DVALUE pz,
