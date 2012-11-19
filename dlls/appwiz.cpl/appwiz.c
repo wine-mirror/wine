@@ -592,7 +592,7 @@ static void SetInfoDialogText(HKEY hKey, LPCWSTR lpKeyName, LPCWSTR lpAltMessage
  *              lParam  - additional parameter
  * Returns    : Depends on the message
  */
-static BOOL CALLBACK SupportInfoDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK SupportInfoDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     APPINFO *iter;
     HKEY hkey;
@@ -681,8 +681,7 @@ static BOOL CALLBACK SupportInfoDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
  */
 static void SupportInfo(HWND hWnd, int id)
 {
-    DialogBoxParamW(hInst, MAKEINTRESOURCEW(IDD_INFO), hWnd, (DLGPROC)
-        SupportInfoDlgProc, (LPARAM) id);
+    DialogBoxParamW(hInst, MAKEINTRESOURCEW(IDD_INFO), hWnd, SupportInfoDlgProc, id);
 }
 
 /* Definition of column headers for AddListViewColumns function */
@@ -822,7 +821,7 @@ static HIMAGELIST ResetApplicationList(BOOL bFirstRun, HWND hWnd, HIMAGELIST hIm
  *              lParam  - additional parameter
  * Returns    : Depends on the message
  */
-static BOOL CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     int selitem;
     static HIMAGELIST hImageList;
@@ -947,7 +946,7 @@ static void StartApplet(HWND hWnd)
     psp.hInstance = hInst;
     psp.u.pszTemplate = MAKEINTRESOURCEW (IDD_MAIN);
     psp.u2.pszIcon = NULL;
-    psp.pfnDlgProc = (DLGPROC) MainDlgProc;
+    psp.pfnDlgProc = MainDlgProc;
     psp.pszTitle = tab_title;
     psp.lParam = 0;
 
