@@ -987,8 +987,8 @@ static D3DCOLOR WINAPI IDirect3DRMFrame2Impl_GetSceneBackground(IDirect3DRMFrame
     return IDirect3DRMFrame3_GetSceneBackground(&This->IDirect3DRMFrame3_iface);
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetSceneBackgroundDepth(IDirect3DRMFrame2* iface,
-                                                                    LPDIRECTDRAWSURFACE * surface)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_GetSceneBackgroundDepth(IDirect3DRMFrame2 *iface,
+        IDirectDrawSurface **surface)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
@@ -1057,8 +1057,8 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSceneBackgroundRGB(IDirect3DRMFra
     return IDirect3DRMFrame3_SetSceneBackgroundRGB(&This->IDirect3DRMFrame3_iface, red, green, blue);
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSceneBackgroundDepth(IDirect3DRMFrame2* iface,
-                                                                    LPDIRECTDRAWSURFACE surface)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_SetSceneBackgroundDepth(IDirect3DRMFrame2 *iface,
+        IDirectDrawSurface *surface)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
@@ -2084,8 +2084,8 @@ static D3DCOLOR WINAPI IDirect3DRMFrame3Impl_GetSceneBackground(IDirect3DRMFrame
     return This->scenebackground;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetSceneBackgroundDepth(IDirect3DRMFrame3* iface,
-                                                                    LPDIRECTDRAWSURFACE * surface)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_GetSceneBackgroundDepth(IDirect3DRMFrame3 *iface,
+        IDirectDrawSurface **surface)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
 
@@ -2160,8 +2160,8 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneBackgroundRGB(IDirect3DRMFra
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneBackgroundDepth(IDirect3DRMFrame3* iface,
-                                                                    LPDIRECTDRAWSURFACE surface)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_SetSceneBackgroundDepth(IDirect3DRMFrame3 *iface,
+        IDirectDrawSurface *surface)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
 

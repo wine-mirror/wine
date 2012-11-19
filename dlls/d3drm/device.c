@@ -433,9 +433,8 @@ static HRESULT WINAPI IDirect3DRMDevice2Impl_InitFromD3D2(IDirect3DRMDevice2* if
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice2Impl_InitFromSurface(IDirect3DRMDevice2* iface,
-                                                             LPGUID lpGUID, LPDIRECTDRAW lpDD,
-                                                             LPDIRECTDRAWSURFACE lpDDSBack)
+static HRESULT WINAPI IDirect3DRMDevice2Impl_InitFromSurface(IDirect3DRMDevice2 *iface, GUID *lpGUID,
+        IDirectDraw *lpDD, IDirectDrawSurface *lpDDSBack)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
@@ -870,9 +869,8 @@ static HRESULT WINAPI IDirect3DRMDevice3Impl_InitFromD3D2(IDirect3DRMDevice3* if
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice3Impl_InitFromSurface(IDirect3DRMDevice3* iface,
-                                                             LPGUID lpGUID, LPDIRECTDRAW lpDD,
-                                                             LPDIRECTDRAWSURFACE lpDDSBack)
+static HRESULT WINAPI IDirect3DRMDevice3Impl_InitFromSurface(IDirect3DRMDevice3 *iface, GUID *lpGUID,
+        IDirectDraw *lpDD, IDirectDrawSurface *lpDDSBack)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
 

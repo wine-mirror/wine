@@ -182,7 +182,8 @@ static HRESULT WINAPI IDirect3DRMTexture2Impl_InitFromFile(IDirect3DRMTexture2* 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMTexture2Impl_InitFromSurface(IDirect3DRMTexture2* iface, LPDIRECTDRAWSURFACE surface)
+static HRESULT WINAPI IDirect3DRMTexture2Impl_InitFromSurface(IDirect3DRMTexture2 *iface,
+        IDirectDrawSurface *surface)
 {
     IDirect3DRMTextureImpl *This = impl_from_IDirect3DRMTexture2(iface);
 
@@ -558,7 +559,8 @@ static HRESULT WINAPI IDirect3DRMTexture3Impl_InitFromFile(IDirect3DRMTexture3* 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMTexture3Impl_InitFromSurface(IDirect3DRMTexture3* iface, LPDIRECTDRAWSURFACE surface)
+static HRESULT WINAPI IDirect3DRMTexture3Impl_InitFromSurface(IDirect3DRMTexture3 *iface,
+        IDirectDrawSurface *surface)
 {
     IDirect3DRMTextureImpl *This = impl_from_IDirect3DRMTexture3(iface);
 
@@ -748,7 +750,8 @@ static HRESULT WINAPI IDirect3DRMTexture3Impl_GenerateMIPMap(IDirect3DRMTexture3
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMTexture3Impl_GetSurface(IDirect3DRMTexture3* iface, DWORD flags, LPDIRECTDRAWSURFACE* surface)
+static HRESULT WINAPI IDirect3DRMTexture3Impl_GetSurface(IDirect3DRMTexture3 *iface,
+        DWORD flags, IDirectDrawSurface **surface)
 {
     IDirect3DRMTextureImpl *This = impl_from_IDirect3DRMTexture3(iface);
 
