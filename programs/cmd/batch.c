@@ -153,7 +153,7 @@ WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start,
                                    BOOL raw, BOOL wholecmdline, const WCHAR *delims)
 {
     int curParamNb = 0;
-    static WCHAR param[MAX_PATH];
+    static WCHAR param[MAXSTRING];
     WCHAR *p = s, *begin;
 
     if (start != NULL) *start = NULL;
