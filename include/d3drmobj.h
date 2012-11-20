@@ -835,7 +835,7 @@ DECLARE_INTERFACE_(IDirect3DRMViewport,IDirect3DRMObject)
     STDMETHOD_(D3DVALUE, GetBack)(THIS) PURE;
     STDMETHOD_(D3DVALUE, GetFront)(THIS) PURE;
     STDMETHOD_(D3DRMPROJECTIONTYPE, GetProjection)(THIS) PURE;
-    STDMETHOD(GetDirect3DViewport)(THIS_ LPDIRECT3DVIEWPORT *) PURE;
+    STDMETHOD(GetDirect3DViewport)(THIS_ IDirect3DViewport **viewport) PURE;
 };
 #undef INTERFACE
 
@@ -975,7 +975,7 @@ DECLARE_INTERFACE_(IDirect3DRMViewport2,IDirect3DRMObject)
     STDMETHOD_(D3DVALUE, GetBack)(THIS) PURE;
     STDMETHOD_(D3DVALUE, GetFront)(THIS) PURE;
     STDMETHOD_(D3DRMPROJECTIONTYPE, GetProjection)(THIS) PURE;
-    STDMETHOD(GetDirect3DViewport)(THIS_ LPDIRECT3DVIEWPORT *) PURE;
+    STDMETHOD(GetDirect3DViewport)(THIS_ IDirect3DViewport **viewport) PURE;
     STDMETHOD(TransformVectors)(THIS_ DWORD NumVectors, LPD3DRMVECTOR4D pDstVectors,
         LPD3DVECTOR pSrcVectors) PURE;
     STDMETHOD(InverseTransformVectors)(THIS_ DWORD NumVectors, LPD3DVECTOR pDstVectors,

@@ -448,8 +448,8 @@ static D3DRMPROJECTIONTYPE WINAPI IDirect3DRMViewportImpl_GetProjection(IDirect3
     return IDirect3DRMViewport2_GetProjection(&This->IDirect3DRMViewport2_iface);
 }
 
-static HRESULT WINAPI IDirect3DRMViewportImpl_GetDirect3DViewport(IDirect3DRMViewport* iface,
-                                                                  LPDIRECT3DVIEWPORT * viewport)
+static HRESULT WINAPI IDirect3DRMViewportImpl_GetDirect3DViewport(IDirect3DRMViewport *iface,
+        IDirect3DViewport **viewport)
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport(iface);
 
@@ -883,8 +883,8 @@ static D3DRMPROJECTIONTYPE WINAPI IDirect3DRMViewport2Impl_GetProjection(IDirect
     return This->projection;
 }
 
-static HRESULT WINAPI IDirect3DRMViewport2Impl_GetDirect3DViewport(IDirect3DRMViewport2* iface,
-                                                                  LPDIRECT3DVIEWPORT * viewport)
+static HRESULT WINAPI IDirect3DRMViewport2Impl_GetDirect3DViewport(IDirect3DRMViewport2 *iface,
+        IDirect3DViewport **viewport)
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport2(iface);
 
