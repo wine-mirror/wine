@@ -2906,8 +2906,9 @@ static LRESULT WINAPI DefIME_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
         {
            ImmHkl *immHkl = IMM_GetImmHkl(GetKeyboardLayout(0));
            if (immHkl->UIWnd)
-               PostMessageW(immHkl->UIWnd,uMsg,wParam,lParam);
-            return TRUE;
+                return SendMessageW(immHkl->UIWnd,uMsg,wParam,lParam);
+           else
+                return FALSE;
         }
         default:
             if ((uMsg == WM_MSIME_RECONVERTOPTIONS) ||
@@ -2920,8 +2921,9 @@ static LRESULT WINAPI DefIME_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
             {
                ImmHkl *immHkl = IMM_GetImmHkl(GetKeyboardLayout(0));
                if (immHkl->UIWnd)
-                   PostMessageW(immHkl->UIWnd,uMsg,wParam,lParam);
-                return TRUE;
+                   return SendMessageW(immHkl->UIWnd,uMsg,wParam,lParam);
+               else
+                   return FALSE;
             }
             return DefWindowProcW(hwnd, uMsg, wParam, lParam);
     }
