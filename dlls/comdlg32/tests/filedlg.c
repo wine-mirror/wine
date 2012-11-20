@@ -239,7 +239,7 @@ cleanup:
     return 0;
 }
 
-static LONG_PTR WINAPI template_hook(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static UINT_PTR WINAPI template_hook(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if (msg == WM_INITDIALOG)
     {
@@ -286,7 +286,7 @@ static void test_create_view_template(void)
     ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400A;
     ofn.lpstrFile = filename;
     ofn.nMaxFile = 1024;
-    ofn.lpfnHook = (LPOFNHOOKPROC)template_hook;
+    ofn.lpfnHook = template_hook;
     ofn.Flags = OFN_ENABLEHOOK | OFN_EXPLORER| OFN_ENABLETEMPLATE;
     ofn.hInstance = GetModuleHandleA(NULL);
     ofn.lpTemplateName = "template1";
@@ -318,7 +318,7 @@ static const struct {
     { 0xffffffff }
 };
 
-static LONG_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static UINT_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     static RECT initrc, rc;
     static int index, count;
@@ -538,7 +538,7 @@ static void test_resize(void)
 
     ofn.lpstrFile = filename;
     ofn.nMaxFile = 1024;
-    ofn.lpfnHook = (LPOFNHOOKPROC) resize_template_hook;
+    ofn.lpfnHook = resize_template_hook;
     ofn.hInstance = GetModuleHandle(NULL);
     ofn.lpTemplateName = "template_sz";
     for( i = 0; resize_testcases[i].flags != 0xffffffff; i++) {
@@ -581,7 +581,7 @@ static ok_wndproc_testcase ok_testcases[] = {
 
 /* test_ok_wndproc can be used as hook procedure or a subclass
  * window proc for the file dialog */
-static LONG_PTR WINAPI test_ok_wndproc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static UINT_PTR WINAPI test_ok_wndproc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     HWND parent = GetParent( dlg);
     static ok_wndproc_testcase *testcase = NULL;
@@ -624,7 +624,7 @@ static LONG_PTR WINAPI test_ok_wndproc(HWND dlg, UINT msg, WPARAM wParam, LPARAM
     return FALSE;
 }
 
-static LONG_PTR WINAPI ok_template_hook(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static UINT_PTR WINAPI ok_template_hook(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if (msg == WM_SETFONT)
         SetWindowLongPtrA( dlg, GWLP_WNDPROC, (LONG_PTR) test_ok_wndproc);
@@ -655,9 +655,7 @@ static void test_ok(void)
     for( i = 0; ok_testcases[i].retval != -1; i++) {
         strcpy( filename, tmpfilename);
         ofn.lCustData = (LPARAM)(ok_testcases + i);
-        ofn.lpfnHook = ok_testcases[i].do_subclass
-            ? (LPOFNHOOKPROC) ok_template_hook
-            : (LPOFNHOOKPROC) test_ok_wndproc;
+        ofn.lpfnHook = ok_testcases[i].do_subclass ? ok_template_hook : test_ok_wndproc;
         ret = GetOpenFileNameA(&ofn);
         ok( ok_testcases[i].expclose == ok_testcases[i].actclose,
                 "testid %d: Open File dialog should %shave closed.\n", i,
@@ -706,7 +704,7 @@ static struct {
     { -1 }
 };
 
-static LONG_PTR WINAPI template_hook_arrange(HWND dlgChild, UINT msg, WPARAM wParam, LPARAM lParam)
+static UINT_PTR WINAPI template_hook_arrange(HWND dlgChild, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     static int index, fixhelp;
     static posz posz0[2];
@@ -846,7 +844,7 @@ static void test_arrange(void)
     ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400A;
     ofn.lpstrFile = filename;
     ofn.nMaxFile = 1024;
-    ofn.lpfnHook = (LPOFNHOOKPROC)template_hook_arrange;
+    ofn.lpfnHook = template_hook_arrange;
     ofn.hInstance = hDlgTmpl;
     ofn.lpstrFilter="text\0*.txt\0All\0*\0\0";
     for( i = 0; arrange_tests[i].nrcontrols != -1; i++) {
@@ -996,7 +994,7 @@ static void test_mru(void)
     ofn.hInstance = GetModuleHandle(NULL);
     ofn.Flags =  OFN_ENABLEHOOK | OFN_EXPLORER | OFN_ENABLETEMPLATE | OFN_NOCHANGEDIR;
     ofn.lCustData = (LPARAM)&testcase;
-    ofn.lpfnHook = (LPOFNHOOKPROC)test_ok_wndproc;
+    ofn.lpfnHook = test_ok_wndproc;
 
     SetLastError(0xdeadbeef);
     ret = CreateDirectoryA(test_dir_name, NULL);
