@@ -71,7 +71,8 @@ DECLARE_INTERFACE_(IDirect3DRM,IUnknown)
     STDMETHOD(CreateDevice)(THIS_ DWORD, DWORD, LPDIRECT3DRMDEVICE *) PURE;
     STDMETHOD(CreateDeviceFromSurface)(THIS_ GUID *guid, IDirectDraw *ddraw,
             IDirectDrawSurface *surface, IDirect3DRMDevice **device) PURE;
-    STDMETHOD(CreateDeviceFromD3D)(THIS_ LPDIRECT3D pD3D, LPDIRECT3DDEVICE pD3DDev, LPDIRECT3DRMDEVICE *) PURE;
+    STDMETHOD(CreateDeviceFromD3D)(THIS_ IDirect3D *d3d, IDirect3DDevice *d3d_device,
+            IDirect3DRMDevice **device) PURE;
     STDMETHOD(CreateDeviceFromClipper)(THIS_ IDirectDrawClipper *clipper, GUID *guid,
             int width, int height, IDirect3DRMDevice **device) PURE;
     STDMETHOD(CreateTextureFromSurface)(THIS_ IDirectDrawSurface *surface,

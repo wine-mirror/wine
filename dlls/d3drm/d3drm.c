@@ -251,7 +251,8 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateDeviceFromSurface(IDirect3DRM *iface
     return Direct3DRMDevice_create(&IID_IDirect3DRMDevice, (IUnknown**)ppDevice);
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateDeviceFromD3D(IDirect3DRM* iface, LPDIRECT3D pD3D, LPDIRECT3DDEVICE pD3DDev, LPDIRECT3DRMDEVICE * ppDevice)
+static HRESULT WINAPI IDirect3DRMImpl_CreateDeviceFromD3D(IDirect3DRM *iface,
+        IDirect3D *pD3D, IDirect3DDevice *pD3DDev, IDirect3DRMDevice **ppDevice)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
 

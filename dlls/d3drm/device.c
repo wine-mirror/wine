@@ -212,9 +212,8 @@ static HRESULT WINAPI IDirect3DRMDevice2Impl_Init(IDirect3DRMDevice2* iface, ULO
 }
 
 /*** IDirect3DRMDevice2 methods ***/
-static HRESULT WINAPI IDirect3DRMDevice2Impl_InitFromD3D(IDirect3DRMDevice2* iface,
-                                                         LPDIRECT3D lpD3D,
-                                                         LPDIRECT3DDEVICE lpD3DDev)
+static HRESULT WINAPI IDirect3DRMDevice2Impl_InitFromD3D(IDirect3DRMDevice2 *iface,
+        IDirect3D *lpD3D, IDirect3DDevice *lpD3DDev)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
@@ -411,8 +410,8 @@ static D3DRMTEXTUREQUALITY WINAPI IDirect3DRMDevice2Impl_GetTextureQuality(IDire
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice2Impl_GetDirect3DDevice(IDirect3DRMDevice2* iface,
-                                                               LPDIRECT3DDEVICE * dev)
+static HRESULT WINAPI IDirect3DRMDevice2Impl_GetDirect3DDevice(IDirect3DRMDevice2 *iface,
+        IDirect3DDevice **dev)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
@@ -639,9 +638,8 @@ static HRESULT WINAPI IDirect3DRMDevice3Impl_Init(IDirect3DRMDevice3* iface, ULO
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice3Impl_InitFromD3D(IDirect3DRMDevice3* iface,
-                                                         LPDIRECT3D lpD3D,
-                                                         LPDIRECT3DDEVICE lpD3DDev)
+static HRESULT WINAPI IDirect3DRMDevice3Impl_InitFromD3D(IDirect3DRMDevice3 *iface,
+        IDirect3D *lpD3D, IDirect3DDevice *lpD3DDev)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
 
@@ -844,8 +842,8 @@ static D3DRMTEXTUREQUALITY WINAPI IDirect3DRMDevice3Impl_GetTextureQuality(IDire
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice3Impl_GetDirect3DDevice(IDirect3DRMDevice3* iface,
-                                                               LPDIRECT3DDEVICE * dev)
+static HRESULT WINAPI IDirect3DRMDevice3Impl_GetDirect3DDevice(IDirect3DRMDevice3 *iface,
+        IDirect3DDevice **dev)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
 
