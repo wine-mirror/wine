@@ -60,7 +60,7 @@ typedef struct tagCREATEMRULIST
     DWORD  dwFlags;       /* see below */
     HKEY   hKey;          /* root reg. key under which list is saved */
     LPCSTR lpszSubKey;    /* reg. subkey */
-    PROC   lpfnCompare;   /* item compare proc */
+    int (CALLBACK *lpfnCompare)(LPCVOID, LPCVOID, DWORD); /* item compare proc */
 } CREATEMRULISTA, *LPCREATEMRULISTA;
 
 /* dwFlags */
@@ -927,7 +927,7 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 	mymru.dwFlags = MRUF_BINARY_LIST | MRUF_DELAYED_SAVE;
 	mymru.hKey = HCUbasekey;
 	mymru.lpszSubKey = "RecentDocs";
-	mymru.lpfnCompare = (PROC)SHADD_compare_mru;
+        mymru.lpfnCompare = SHADD_compare_mru;
 	mruhandle = CreateMRUListA(&mymru);
 	if (!mruhandle) {
 	    /* MRU failed */
