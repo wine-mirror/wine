@@ -75,6 +75,7 @@ static SQLRETURN (*pSQLConnect)(SQLHDBC,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLIN
 static SQLRETURN (*pSQLConnectW)(SQLHDBC,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT);
 static SQLRETURN (*pSQLCopyDesc)(SQLHDESC,SQLHDESC);
 static SQLRETURN (*pSQLDataSources)(SQLHENV,SQLUSMALLINT,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*);
+static SQLRETURN (*pSQLDataSourcesA)(SQLHENV,SQLUSMALLINT,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*);
 static SQLRETURN (*pSQLDataSourcesW)(SQLHENV,SQLUSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*);
 static SQLRETURN (*pSQLDescribeCol)(SQLHSTMT,SQLUSMALLINT,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLSMALLINT*,SQLUINTEGER*,SQLSMALLINT*,SQLSMALLINT*);
 static SQLRETURN (*pSQLDescribeColW)(SQLHSTMT,SQLUSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLSMALLINT*,SQLULEN*,SQLSMALLINT*,SQLSMALLINT*);
@@ -584,6 +585,7 @@ static BOOL ODBC_LoadDMFunctions(void)
     LOAD_FUNC(SQLConnectW);
     LOAD_FUNC(SQLCopyDesc);
     LOAD_FUNC(SQLDataSources);
+    LOAD_FUNC(SQLDataSourcesA);
     LOAD_FUNC(SQLDataSourcesW);
     LOAD_FUNC(SQLDescribeCol);
     LOAD_FUNC(SQLDescribeColW);
@@ -969,6 +971,32 @@ SQLRETURN WINAPI SQLDataSources(SQLHENV EnvironmentHandle,
         return ret;
 }
 
+SQLRETURN WINAPI SQLDataSourcesA(SQLHENV EnvironmentHandle,
+             SQLUSMALLINT Direction, SQLCHAR *ServerName,
+             SQLSMALLINT BufferLength1, SQLSMALLINT *NameLength1,
+             SQLCHAR *Description, SQLSMALLINT BufferLength2,
+             SQLSMALLINT *NameLength2)
+{
+    SQLRETURN ret;
+
+    TRACE("EnvironmentHandle = %p\n", (void*)EnvironmentHandle);
+
+    if (!pSQLDataSourcesA) return SQL_ERROR;
+
+    ret = pSQLDataSourcesA(EnvironmentHandle, Direction, ServerName,
+                           BufferLength1, NameLength1, Description, BufferLength2, NameLength2);
+    if (TRACE_ON(odbc))
+    {
+       TRACE("returns: %d \t", ret);
+       if (NameLength1 && *NameLength1 > 0)
+         TRACE("DataSource = %s,", ServerName);
+       if (NameLength2 && *NameLength2 > 0)
+         TRACE(" Description = %s", Description);
+       TRACE("\n");
+    }
+
+    return ret;
+}
 
 /*************************************************************************
  *				SQLDescribeCol           [ODBC32.008]
