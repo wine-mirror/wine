@@ -2236,10 +2236,12 @@ void CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
     }
 }
 
-struct wined3d_buffer * CDECL wined3d_device_get_index_buffer(const struct wined3d_device *device)
+struct wined3d_buffer * CDECL wined3d_device_get_index_buffer(const struct wined3d_device *device,
+        enum wined3d_format_id *format)
 {
-    TRACE("device %p.\n", device);
+    TRACE("device %p, format %p.\n", device, format);
 
+    *format = device->stateBlock->state.index_format;
     return device->stateBlock->state.index_buffer;
 }
 

@@ -2125,7 +2125,8 @@ HRESULT __cdecl wined3d_device_get_front_buffer_data(const struct wined3d_device
 void __cdecl wined3d_device_get_gamma_ramp(const struct wined3d_device *device,
         UINT swapchain_idx, struct wined3d_gamma_ramp *ramp);
 struct wined3d_shader * __cdecl wined3d_device_get_geometry_shader(const struct wined3d_device *device);
-struct wined3d_buffer * __cdecl wined3d_device_get_index_buffer(const struct wined3d_device *device);
+struct wined3d_buffer * __cdecl wined3d_device_get_index_buffer(const struct wined3d_device *device,
+        enum wined3d_format_id *format);
 HRESULT __cdecl wined3d_device_get_light(const struct wined3d_device *device,
         UINT light_idx, struct wined3d_light *light);
 HRESULT __cdecl wined3d_device_get_light_enable(const struct wined3d_device *device, UINT light_idx, BOOL *enable);
