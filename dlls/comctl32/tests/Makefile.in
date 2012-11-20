@@ -12,6 +12,7 @@ C_SRCS = \
 	misc.c \
 	monthcal.c \
 	mru.c \
+	pager.c \
 	progress.c \
 	propsheet.c \
 	rebar.c \
