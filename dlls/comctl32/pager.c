@@ -314,9 +314,10 @@ PAGER_UpdateBtns(PAGER_INFO *infoPtr, INT scrollRange, BOOL hideGrayBtns)
     RECT rcTopLeft, rcBottomRight;
 
     /* get button rects */
-    PAGER_GetButtonRects(infoPtr, &rcTopLeft, &rcBottomRight, FALSE);
+    PAGER_GetButtonRects(infoPtr, &rcTopLeft, &rcBottomRight, TRUE);
 
     GetCursorPos(&pt);
+    ScreenToClient( infoPtr->hwndSelf, &pt );
 
     /* update states based on scroll position */
     if (infoPtr->nPos > 0)
@@ -324,7 +325,7 @@ PAGER_UpdateBtns(PAGER_INFO *infoPtr, INT scrollRange, BOOL hideGrayBtns)
         if (infoPtr->TLbtnState == PGF_INVISIBLE || infoPtr->TLbtnState == PGF_GRAYED)
             infoPtr->TLbtnState = PGF_NORMAL;
     }
-    else if (PtInRect(&rcTopLeft, pt))
+    else if (!hideGrayBtns && PtInRect(&rcTopLeft, pt))
         infoPtr->TLbtnState = PGF_GRAYED;
     else
         infoPtr->TLbtnState = PGF_INVISIBLE;
@@ -339,7 +340,7 @@ PAGER_UpdateBtns(PAGER_INFO *infoPtr, INT scrollRange, BOOL hideGrayBtns)
         if (infoPtr->BRbtnState == PGF_INVISIBLE || infoPtr->BRbtnState == PGF_GRAYED)
             infoPtr->BRbtnState = PGF_NORMAL;
     }
-    else if (PtInRect(&rcBottomRight, pt))
+    else if (!hideGrayBtns && PtInRect(&rcBottomRight, pt))
         infoPtr->BRbtnState = PGF_GRAYED;
     else
         infoPtr->BRbtnState = PGF_INVISIBLE;
