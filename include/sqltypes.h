@@ -46,7 +46,7 @@ typedef double          SQLDOUBLE;
 typedef double          SQLFLOAT;
 #endif
 
-typedef long            SQLINTEGER;
+typedef int             SQLINTEGER;
 
 #if (ODBCVER >= 0x0300)
 typedef unsigned char   SQLNUMERIC;
@@ -69,27 +69,23 @@ typedef unsigned char   SQLVARCHAR;
 
 typedef SQLSMALLINT     SQLRETURN;
 
-/* typedef void * 			SQLHANDLE; */
-
-typedef SQLINTEGER		SQLHANDLE;
 #if (ODBCVER >= 0x0300)
-
+typedef void *SQLHANDLE;
 typedef SQLHANDLE               SQLHENV;
 typedef SQLHANDLE               SQLHDBC;
 typedef SQLHANDLE               SQLHSTMT;
 typedef SQLHANDLE               SQLHDESC;
-
 #else
-typedef SQLINTEGER              SQLHENV;
-typedef SQLINTEGER              SQLHDBC;
-typedef SQLINTEGER              SQLHSTMT;
+typedef void *SQLHENV;
+typedef void *SQLHDBC;
+typedef void *SQLHSTMT;
 #endif
 
 typedef signed char             SCHAR;
 typedef SCHAR                   SQLSCHAR;
-typedef long int                SDWORD;
+typedef int                     SDWORD;
 typedef signed short int        SWORD;
-typedef unsigned long int       UDWORD;
+typedef unsigned int            UDWORD;
 typedef unsigned short int      UWORD;
 typedef UDWORD                  SQLUINTEGER;
 typedef signed long             SLONG;
@@ -207,7 +203,8 @@ typedef struct tagSQL_INTERVAL_STRUCT
 #endif
 
 #if (ODBCVER >= 0x0300)
-#define ODBCINT64	long
+#define ODBCINT64	__int64
+#define UODBCINT64	unsigned __int64
 #ifdef ODBCINT64
 typedef ODBCINT64	SQLBIGINT;
 typedef unsigned ODBCINT64	SQLUBIGINT;
@@ -240,7 +237,7 @@ typedef struct  tagSQLGUID
 #endif
 
 
-typedef unsigned long int       BOOKMARK;
+typedef SQLULEN BOOKMARK;
 
 #define SQL_WCHAR             (-8)
 #define SQL_C_WCHAR            SQL_WCHAR
