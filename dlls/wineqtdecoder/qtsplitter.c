@@ -168,6 +168,9 @@ typedef struct QTSplitter {
     TimeValue movie_time;
     TimeValue movie_start;
     TimeScale movie_scale;
+
+    HANDLE loaderThread;
+    HANDLE splitterThread;
 } QTSplitter;
 
 static const IPinVtbl QT_OutputPin_Vtbl;
@@ -293,6 +296,7 @@ static void QT_Destroy(QTSplitter *This)
 
     TRACE("Destroying\n");
 
+    EnterCriticalSection(&This->csReceive);
     /* Don't need to clean up output pins, disconnecting input pin will do that */
     IPin_ConnectedTo(&This->pInputPin.pin.IPin_iface, &connected);
     if (connected)
@@ -311,14 +315,31 @@ static void QT_Destroy(QTSplitter *This)
     }
 
     if (This->pQTMovie)
+    {
         DisposeMovie(This->pQTMovie);
+        This->pQTMovie = NULL;
+    }
     if (This->vContext)
         QTVisualContextRelease(This->vContext);
     if (This->aSession)
         MovieAudioExtractionEnd(This->aSession);
-    CloseHandle(This->runEvent);
 
     ExitMovies();
+    LeaveCriticalSection(&This->csReceive);
+
+    if (This->loaderThread)
+    {
+        WaitForSingleObject(This->loaderThread, INFINITE);
+        CloseHandle(This->loaderThread);
+    }
+    if (This->splitterThread)
+    {
+        SetEvent(This->runEvent);
+        WaitForSingleObject(This->splitterThread, INFINITE);
+        CloseHandle(This->splitterThread);
+    }
+
+    CloseHandle(This->runEvent);
 
     This->csReceive.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->csReceive);
@@ -495,13 +516,15 @@ static DWORD WINAPI QTSplitter_loading_thread(LPVOID data)
             to try to minimize that.
          */
 
-        while(GetMovieLoadState(This->pQTMovie) < kMovieLoadStateComplete)
+        EnterCriticalSection(&This->csReceive);
+        while(This->pQTMovie && GetMovieLoadState(This->pQTMovie) < kMovieLoadStateComplete)
         {
-            EnterCriticalSection(&This->csReceive);
             MoviesTask(This->pQTMovie, 100);
             LeaveCriticalSection(&This->csReceive);
             Sleep(0);
+            EnterCriticalSection(&This->csReceive);
         }
+        LeaveCriticalSection(&This->csReceive);
     }
     return 0;
 }
@@ -518,6 +541,12 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
     WaitForSingleObject(This->runEvent, -1);
 
     EnterCriticalSection(&This->csReceive);
+    if (!This->pQTMovie)
+    {
+        LeaveCriticalSection(&This->csReceive);
+        return 0;
+    }
+
     This->state = State_Running;
     /* Prime the pump:  Needed for MPEG streams */
     GetMovieNextInterestingTime(This->pQTMovie, nextTimeEdgeOK | nextTimeStep, 0, NULL, This->movie_time, 1, &next_time, NULL);
@@ -536,6 +565,12 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
         float time;
 
         EnterCriticalSection(&This->csReceive);
+        if (!This->pQTMovie)
+        {
+            LeaveCriticalSection(&This->csReceive);
+            return 0;
+        }
+
         GetMovieNextInterestingTime(This->pQTMovie, nextTimeStep, 0, NULL, This->movie_time, 1, &next_time, NULL);
 
         if (next_time == -1)
@@ -992,7 +1027,6 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
     Track trk;
     short id = 0;
     DWORD tid;
-    HANDLE thread;
     LONGLONG time;
 
     TRACE("Trying movie connect\n");
@@ -1039,18 +1073,12 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
 
     TRACE("Movie duration is %s\n",wine_dbgstr_longlong(filter->sourceSeeking.llDuration));
 
-    thread = CreateThread(NULL, 0, QTSplitter_loading_thread, filter, 0, &tid);
-    if (thread)
-    {
+    filter->loaderThread = CreateThread(NULL, 0, QTSplitter_loading_thread, filter, 0, &tid);
+    if (filter->loaderThread)
         TRACE("Created loading thread 0x%08x\n", tid);
-        CloseHandle(thread);
-    }
-    thread = CreateThread(NULL, 0, QTSplitter_thread, filter, 0, &tid);
-    if (thread)
-    {
+    filter->splitterThread = CreateThread(NULL, 0, QTSplitter_thread, filter, 0, &tid);
+    if (filter->splitterThread)
         TRACE("Created processing thread 0x%08x\n", tid);
-        CloseHandle(thread);
-    }
     else
         hr = HRESULT_FROM_WIN32(GetLastError());
 
