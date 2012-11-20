@@ -27,13 +27,15 @@
 #include "ole2.h"
 #include "msdasc.h"
 #include "oledberr.h"
-
+#include "initguid.h"
 #include "oledb_private.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
+DEFINE_GUID(DBPROPSET_DBINIT, 0xc8b522bc, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 
 typedef struct datainit
 {
@@ -288,14 +290,201 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *p
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, IUnknown *pDataSource,
-                                boolean fIncludePassword, LPWSTR *ppwszInitString)
+/* returns character length of string representation */
+static int get_propvalue_length(DBPROP *prop)
 {
+    VARIANT str;
+    HRESULT hr;
+
+    if (V_VT(&prop->vValue) == VT_BSTR) return SysStringLen(V_BSTR(&prop->vValue));
+
+    VariantInit(&str);
+    hr = VariantChangeType(&str, &prop->vValue, 0, VT_BSTR);
+    if (hr == S_OK)
+    {
+        int len = SysStringLen(V_BSTR(&str));
+        VariantClear(&str);
+        return len;
+    }
+
+    return 0;
+}
+
+static void write_propvalue_str(WCHAR *str, DBPROP *prop)
+{
+    VARIANT *v = &prop->vValue;
+    VARIANT vstr;
+    HRESULT hr;
+
+    if (V_VT(v) == VT_BSTR)
+    {
+        strcatW(str, V_BSTR(v));
+        return;
+    }
+
+    VariantInit(&vstr);
+    hr = VariantChangeType(&vstr, v, VARIANT_ALPHABOOL, VT_BSTR);
+    if (hr == S_OK)
+    {
+        strcatW(str, V_BSTR(&vstr));
+        VariantClear(&vstr);
+    }
+}
+
+static WCHAR *get_propinfo_descr(DBPROP *prop, DBPROPINFOSET *propinfoset)
+{
+    int i;
+
+    for (i = 0; i < propinfoset->cPropertyInfos; i++)
+        if (propinfoset->rgPropertyInfos[i].dwPropertyID == prop->dwPropertyID)
+            return propinfoset->rgPropertyInfos[i].pwszDescription;
+
+    return NULL;
+}
+
+static void free_dbpropset(ULONG count, DBPROPSET *propset)
+{
+    int i;
+
+    for (i = 0; i < count; i++)
+    {
+        int p;
+
+        for (p = 0; p < propset[i].cProperties; p++)
+        {
+            VariantClear(&propset[i].rgProperties[p].vValue);
+            CoTaskMemFree(&propset[i].rgProperties[p]);
+        }
+        CoTaskMemFree(&propset[i]);
+    }
+}
+
+static void free_dbpropinfoset(ULONG count, DBPROPINFOSET *propinfoset)
+{
+    int i;
+
+    for (i = 0; i < count; i++)
+    {
+        int p;
+
+        for (p = 0; p < propinfoset[i].cPropertyInfos; p++)
+        {
+            VariantClear(&propinfoset[i].rgPropertyInfos[p].vValues);
+            CoTaskMemFree(&propinfoset[i].rgPropertyInfos[p]);
+        }
+        CoTaskMemFree(&propinfoset[i]);
+    }
+}
+
+static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, IUnknown *datasource,
+                                boolean include_pass, LPWSTR *init_string)
+{
+    static const WCHAR provW[] = {'P','r','o','v','i','d','e','r','=',0};
+    static const WCHAR colW[] = {';',0};
     datainit *This = impl_from_IDataInitialize(iface);
+    DBPROPINFOSET *propinfoset;
+    IDBProperties *props;
+    DBPROPIDSET propidset;
+    ULONG count, infocount;
+    WCHAR *progid, *desc;
+    DBPROPSET *propset;
+    IPersist *persist;
+    HRESULT hr;
+    CLSID clsid;
+    int i, len;
 
-    FIXME("(%p)->(%p %d %p)\n", This, pDataSource, fIncludePassword, ppwszInitString);
+    TRACE("(%p)->(%p %d %p)\n", This, datasource, include_pass, init_string);
 
-    return E_NOTIMPL;
+    /* IPersist support is mandatory for data sources */
+    hr = IUnknown_QueryInterface(datasource, &IID_IPersist, (void**)&persist);
+    if (FAILED(hr)) return hr;
+
+    memset(&clsid, 0, sizeof(clsid));
+    hr = IPersist_GetClassID(persist, &clsid);
+    IPersist_Release(persist);
+    if (FAILED(hr)) return hr;
+
+    progid = NULL;
+    ProgIDFromCLSID(&clsid, &progid);
+    TRACE("clsid=%s, progid=%s\n", debugstr_guid(&clsid), debugstr_w(progid));
+
+    /* now get initialization properties */
+    hr = IUnknown_QueryInterface(datasource, &IID_IDBProperties, (void**)&props);
+    if (FAILED(hr))
+    {
+        WARN("IDBProperties not supported\n");
+        CoTaskMemFree(progid);
+        return hr;
+    }
+
+    propidset.rgPropertyIDs = NULL;
+    propidset.cPropertyIDs = 0;
+    propidset.guidPropertySet = DBPROPSET_DBINIT;
+    propset = NULL;
+    count = 0;
+    hr = IDBProperties_GetProperties(props, 1, &propidset, &count, &propset);
+    if (FAILED(hr))
+    {
+        WARN("failed to get data source properties, 0x%08x\n", hr);
+        CoTaskMemFree(progid);
+        return hr;
+    }
+
+    infocount = 0;
+    IDBProperties_GetPropertyInfo(props, 1, &propidset, &infocount, &propinfoset, &desc);
+    IDBProperties_Release(props);
+
+    /* check if we need to skip password */
+    len = strlenW(progid) + strlenW(provW) + 1; /* including ';' */
+    for (i = 0; i < count; i++)
+    {
+        WCHAR *descr = get_propinfo_descr(&propset->rgProperties[i], propinfoset);
+        if (descr)
+        {
+            /* include '=' and ';' */
+            len += strlenW(descr) + 2;
+            len += get_propvalue_length(&propset->rgProperties[i]);
+        }
+
+        if ((propset->rgProperties[i].dwPropertyID == DBPROP_AUTH_PERSIST_SENSITIVE_AUTHINFO) &&
+            (V_BOOL(&propset->rgProperties[i].vValue) == VARIANT_FALSE))
+           include_pass = FALSE;
+    }
+
+    len *= sizeof(WCHAR);
+    *init_string = CoTaskMemAlloc(len);
+    *init_string[0] = 0;
+
+    /* provider name */
+    strcatW(*init_string, provW);
+    strcatW(*init_string, progid);
+    strcatW(*init_string, colW);
+    CoTaskMemFree(progid);
+
+    for (i = 0; i < count; i++)
+    {
+        WCHAR *descr;
+
+        if (!include_pass && propset->rgProperties[i].dwPropertyID == DBPROP_AUTH_PASSWORD) continue;
+
+        descr = get_propinfo_descr(&propset->rgProperties[i], propinfoset);
+        if (descr)
+        {
+            static const WCHAR eqW[] = {'=',0};
+            strcatW(*init_string, descr);
+            strcatW(*init_string, eqW);
+            write_propvalue_str(*init_string, &propset->rgProperties[i]);
+            strcatW(*init_string, colW);
+        }
+    }
+
+    free_dbpropset(count, propset);
+    free_dbpropinfoset(infocount, propinfoset);
+    CoTaskMemFree(desc);
+
+    if (!include_pass)
+        TRACE("%s\n", debugstr_w(*init_string));
+    return S_OK;
 }
 
 static HRESULT WINAPI datainit_CreateDBInstance(IDataInitialize *iface, REFCLSID provider,
