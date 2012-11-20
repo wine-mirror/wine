@@ -1001,8 +1001,7 @@ static BOOL UITOOLS95_DrawFrameScroll(HDC dc, LPRECT r, UINT uFlags)
      * with the updown control.
      * Making sure that the arrow is as least 3 pixels wide (or high).
      */
-    if (tri == 0)
-      tri = 1;
+    tri = max( 2, tri );
 
     switch(uFlags & 0xff)
     {
