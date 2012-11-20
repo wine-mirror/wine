@@ -94,6 +94,8 @@ static const struct tiff_1bpp_data
 };
 #include "poppack.h"
 
+static IWICImagingFactory *factory;
+
 static const char *debugstr_guid(const GUID *guid)
 {
     static char buf[50];
@@ -106,23 +108,35 @@ static const char *debugstr_guid(const GUID *guid)
     return buf;
 }
 
-static IWICBitmapDecoder *create_decoder(IWICImagingFactory *factory,
-                                         const void *image_data, UINT image_size)
+static IStream *create_stream(const void *data, int data_size)
 {
-    HGLOBAL hmem;
-    BYTE *data;
     HRESULT hr;
-    IWICBitmapDecoder *decoder = NULL;
     IStream *stream;
+    HGLOBAL hdata;
+    void *locked_data;
+
+    hdata = GlobalAlloc(GMEM_MOVEABLE, data_size);
+    ok(hdata != 0, "GlobalAlloc failed\n");
+    if (!hdata) return NULL;
+
+    locked_data = GlobalLock(hdata);
+    memcpy(locked_data, data, data_size);
+    GlobalUnlock(hdata);
+
+    hr = CreateStreamOnHGlobal(hdata, TRUE, &stream);
+    ok(hr == S_OK, "CreateStreamOnHGlobal failed, hr=%x\n", hr);
+
+    return stream;
+}
+
+static IWICBitmapDecoder *create_decoder(const void *image_data, UINT image_size)
+{
+    HRESULT hr;
+    IStream *stream;
+    IWICBitmapDecoder *decoder = NULL;
     GUID guid;
 
-    hmem = GlobalAlloc(0, image_size);
-    data = GlobalLock(hmem);
-    memcpy(data, image_data, image_size);
-    GlobalUnlock(hmem);
-
-    hr = CreateStreamOnHGlobal(hmem, TRUE, &stream);
-    ok(hr == S_OK, "CreateStreamOnHGlobal error %#x\n", hr);
+    stream = create_stream(image_data, image_size);
 
     hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, &decoder);
     ok(hr == S_OK, "CreateDecoderFromStream error %#x\n", hr);
@@ -139,19 +153,14 @@ static IWICBitmapDecoder *create_decoder(IWICImagingFactory *factory,
 static void test_tiff_palette(void)
 {
     HRESULT hr;
-    IWICImagingFactory *factory;
     IWICBitmapDecoder *decoder;
     IWICBitmapFrameDecode *frame;
     IWICPalette *palette;
     GUID format;
 
-    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IWICImagingFactory, (void **)&factory);
-    ok(hr == S_OK, "CoCreateInstance error %#x\n", hr);
-    if (FAILED(hr)) return;
-
-    decoder = create_decoder(factory, &tiff_1bpp_data, sizeof(tiff_1bpp_data));
+    decoder = create_decoder(&tiff_1bpp_data, sizeof(tiff_1bpp_data));
     ok(decoder != 0, "Failed to load TIFF image data\n");
+
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
     ok(hr == S_OK, "GetFrame error %#x\n", hr);
 
@@ -169,14 +178,113 @@ static void test_tiff_palette(void)
     IWICPalette_Release(palette);
     IWICBitmapFrameDecode_Release(frame);
     IWICBitmapDecoder_Release(decoder);
-    IWICImagingFactory_Release(factory);
+}
+
+static void test_QueryCapability(void)
+{
+    HRESULT hr;
+    IStream *stream;
+    IWICBitmapDecoder *decoder;
+    static const DWORD exp_caps = WICBitmapDecoderCapabilityCanDecodeAllImages |
+                                  WICBitmapDecoderCapabilityCanDecodeSomeImages |
+                                  WICBitmapDecoderCapabilityCanEnumerateMetadata;
+    static const DWORD exp_caps_xp = WICBitmapDecoderCapabilityCanDecodeAllImages |
+                                     WICBitmapDecoderCapabilityCanDecodeSomeImages;
+    DWORD capability;
+    LARGE_INTEGER pos;
+    ULARGE_INTEGER cur_pos;
+    UINT frame_count;
+
+    stream = create_stream(&tiff_1bpp_data, sizeof(tiff_1bpp_data));
+    if (!stream) return;
+
+    hr = IWICImagingFactory_CreateDecoder(factory, &GUID_ContainerFormatTiff, NULL, &decoder);
+    ok(hr == S_OK, "CreateDecoder error %#x\n", hr);
+
+    frame_count = 0xdeadbeef;
+    hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
+todo_wine
+    ok(hr == S_OK || broken(hr == E_POINTER) /* XP */, "GetFrameCount error %#x\n", hr);
+todo_wine
+    ok(frame_count == 0, "expected 0, got %u\n", frame_count);
+
+    pos.QuadPart = 4;
+    hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
+    ok(hr == S_OK, "IStream_Seek error %#x\n", hr);
+
+    capability = 0xdeadbeef;
+    hr = IWICBitmapDecoder_QueryCapability(decoder, stream, &capability);
+todo_wine
+    ok(hr == S_OK, "QueryCapability error %#x\n", hr);
+todo_wine
+    ok(capability == exp_caps || capability == exp_caps_xp,
+       "expected %#x, got %#x\n", exp_caps, capability);
+
+    frame_count = 0xdeadbeef;
+    hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
+todo_wine
+    ok(hr == S_OK, "GetFrameCount error %#x\n", hr);
+todo_wine
+    ok(frame_count == 1, "expected 1, got %u\n", frame_count);
+
+    pos.QuadPart = 0;
+    hr = IStream_Seek(stream, pos, SEEK_CUR, &cur_pos);
+    ok(hr == S_OK, "IStream_Seek error %#x\n", hr);
+todo_wine
+    ok(cur_pos.QuadPart > 4 && cur_pos.QuadPart < sizeof(tiff_1bpp_data),
+       "current stream pos is at %x/%x\n", cur_pos.u.LowPart, cur_pos.u.HighPart);
+
+    hr = IWICBitmapDecoder_QueryCapability(decoder, stream, &capability);
+todo_wine
+    ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#x\n", hr);
+
+    hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnDemand);
+todo_wine
+    ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#x\n", hr);
+
+    IWICBitmapDecoder_Release(decoder);
+
+    hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, &decoder);
+todo_wine
+    ok(hr == WINCODEC_ERR_COMPONENTNOTFOUND, "expected WINCODEC_ERR_COMPONENTNOTFOUND, got %#x\n", hr);
+
+    pos.QuadPart = 0;
+    hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
+    ok(hr == S_OK, "IStream_Seek error %#x\n", hr);
+
+    hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, &decoder);
+    ok(hr == S_OK, "CreateDecoderFromStream error %#x\n", hr);
+
+    frame_count = 0xdeadbeef;
+    hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
+    ok(hr == S_OK, "GetFrameCount error %#x\n", hr);
+    ok(frame_count == 1, "expected 1, got %u\n", frame_count);
+
+    hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnDemand);
+    ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#x\n", hr);
+
+    hr = IWICBitmapDecoder_QueryCapability(decoder, stream, &capability);
+todo_wine
+    ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#x\n", hr);
+
+    IWICBitmapDecoder_Release(decoder);
+    IStream_Release(stream);
 }
 
 START_TEST(tiffformat)
 {
+    HRESULT hr;
+
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
-    test_tiff_palette();
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IWICImagingFactory, (void **)&factory);
+    ok(hr == S_OK, "CoCreateInstance error %#x\n", hr);
+    if (FAILED(hr)) return;
 
+    test_tiff_palette();
+    test_QueryCapability();
+
+    IWICImagingFactory_Release(factory);
     CoUninitialize();
 }
