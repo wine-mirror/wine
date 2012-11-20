@@ -48,7 +48,6 @@ static struct wined3d_resource *wined3d_resource_from_resource(ID3D10Resource *r
 static HRESULT set_dsdesc_from_resource(D3D10_DEPTH_STENCIL_VIEW_DESC *desc, ID3D10Resource *resource)
 {
     D3D10_RESOURCE_DIMENSION dimension;
-    HRESULT hr;
 
     ID3D10Resource_GetType(resource, &dimension);
 
@@ -59,7 +58,7 @@ static HRESULT set_dsdesc_from_resource(D3D10_DEPTH_STENCIL_VIEW_DESC *desc, ID3
             D3D10_TEXTURE1D_DESC texture_desc;
             ID3D10Texture1D *texture;
 
-            if (FAILED(hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture1D, (void **)&texture)))
+            if (FAILED(ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture1D, (void **)&texture)))
             {
                 ERR("Resource of type TEXTURE1D doesn't implement ID3D10Texture1D.\n");
                 return E_INVALIDARG;
@@ -90,7 +89,7 @@ static HRESULT set_dsdesc_from_resource(D3D10_DEPTH_STENCIL_VIEW_DESC *desc, ID3
             D3D10_TEXTURE2D_DESC texture_desc;
             ID3D10Texture2D *texture;
 
-            if (FAILED(hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture)))
+            if (FAILED(ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture)))
             {
                 ERR("Resource of type TEXTURE2D doesn't implement ID3D10Texture2D.\n");
                 return E_INVALIDARG;
@@ -262,7 +261,6 @@ static HRESULT set_rtdesc_from_resource(D3D10_RENDER_TARGET_VIEW_DESC *desc, ID3
 static HRESULT set_srdesc_from_resource(D3D10_SHADER_RESOURCE_VIEW_DESC *desc, ID3D10Resource *resource)
 {
     D3D10_RESOURCE_DIMENSION dimension;
-    HRESULT hr;
 
     ID3D10Resource_GetType(resource, &dimension);
 
@@ -273,7 +271,7 @@ static HRESULT set_srdesc_from_resource(D3D10_SHADER_RESOURCE_VIEW_DESC *desc, I
             D3D10_TEXTURE1D_DESC texture_desc;
             ID3D10Texture1D *texture;
 
-            if (FAILED(hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture1D, (void **)&texture)))
+            if (FAILED(ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture1D, (void **)&texture)))
             {
                 ERR("Resource of type TEXTURE1D doesn't implement ID3D10Texture1D.\n");
                 return E_INVALIDARG;
@@ -306,7 +304,7 @@ static HRESULT set_srdesc_from_resource(D3D10_SHADER_RESOURCE_VIEW_DESC *desc, I
             D3D10_TEXTURE2D_DESC texture_desc;
             ID3D10Texture2D *texture;
 
-            if (FAILED(hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture)))
+            if (FAILED(ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture)))
             {
                 ERR("Resource of type TEXTURE2D doesn't implement ID3D10Texture2D.\n");
                 return E_INVALIDARG;
@@ -355,7 +353,7 @@ static HRESULT set_srdesc_from_resource(D3D10_SHADER_RESOURCE_VIEW_DESC *desc, I
             D3D10_TEXTURE3D_DESC texture_desc;
             ID3D10Texture3D *texture;
 
-            if (FAILED(hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture3D, (void **)&texture)))
+            if (FAILED(ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture3D, (void **)&texture)))
             {
                 ERR("Resource of type TEXTURE3D doesn't implement ID3D10Texture3D.\n");
                 return E_INVALIDARG;
