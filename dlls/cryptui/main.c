@@ -1804,7 +1804,6 @@ static void add_icon_to_control(HWND hwnd, int id)
     DWORD conn;
     LPDATAOBJECT dataObject = NULL;
     HBITMAP bitmap = NULL;
-    RECT rect;
     STGMEDIUM stgm;
     LPOLECLIENTSITE clientSite = NULL;
     REOBJECT reObject;
@@ -1843,9 +1842,6 @@ static void add_icon_to_control(HWND hwnd, int id)
      LR_DEFAULTSIZE | LR_LOADTRANSPARENT);
     if (!bitmap)
         goto end;
-    rect.left = rect.top = 0;
-    rect.right = GetSystemMetrics(SM_CXICON);
-    rect.bottom = GetSystemMetrics(SM_CYICON);
     stgm.tymed = TYMED_GDI;
     stgm.u.hBitmap = bitmap;
     stgm.pUnkForRelease = NULL;
