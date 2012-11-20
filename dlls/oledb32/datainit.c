@@ -298,15 +298,16 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI datainit_CreateDBInstance(IDataInitialize *iface, REFCLSID clsidProvider,
-                                IUnknown *pUnkOuter, DWORD dwClsCtx, LPWSTR pwszReserved, REFIID riid,
-                                IUnknown **ppDataSource)
+static HRESULT WINAPI datainit_CreateDBInstance(IDataInitialize *iface, REFCLSID provider,
+                                IUnknown *outer, DWORD clsctx, LPWSTR reserved, REFIID riid,
+                                IUnknown **datasource)
 {
     datainit *This = impl_from_IDataInitialize(iface);
 
-    FIXME("(%p)->()\n", This);
+    TRACE("(%p)->(%s %p 0x%08x %s %s %p)\n", This, debugstr_guid(provider), outer, clsctx, debugstr_w(reserved),
+        debugstr_guid(riid), datasource);
 
-    return E_NOTIMPL;
+    return CoCreateInstance(provider, outer, clsctx, riid, (void**)datasource);
 }
 
 static HRESULT WINAPI datainit_RemoteCreateDBInstanceEx(IDataInitialize *iface, REFCLSID clsidProvider,
