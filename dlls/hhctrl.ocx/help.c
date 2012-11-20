@@ -266,7 +266,6 @@ static void DoSync(HHInfo *info)
 {
     WCHAR buf[INTERNET_MAX_URL_LENGTH];
     HRESULT hres;
-    DWORD len;
     BSTR url;
 
     hres = IWebBrowser2_get_LocationURL(info->web_browser, &url);
@@ -278,7 +277,7 @@ static void DoSync(HHInfo *info)
     }
 
     /* If we're not currently viewing a page in the active .chm file, abort */
-    if ((!AppendFullPathURL(info->WinType.pszFile, buf, NULL)) || (len = lstrlenW(buf) > lstrlenW(url)))
+    if ((!AppendFullPathURL(info->WinType.pszFile, buf, NULL)) || (lstrlenW(buf) > lstrlenW(url)))
     {
         SysFreeString(url);
         return;
