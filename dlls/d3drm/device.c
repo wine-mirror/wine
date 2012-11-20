@@ -421,9 +421,8 @@ static HRESULT WINAPI IDirect3DRMDevice2Impl_GetDirect3DDevice(IDirect3DRMDevice
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice2Impl_InitFromD3D2(IDirect3DRMDevice2* iface,
-                                                          LPDIRECT3D2 lpD3D,
-                                                          LPDIRECT3DDEVICE2 lpD3DDev)
+static HRESULT WINAPI IDirect3DRMDevice2Impl_InitFromD3D2(IDirect3DRMDevice2 *iface,
+        IDirect3D2 *lpD3D, IDirect3DDevice2 *lpD3DDev)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
@@ -460,8 +459,8 @@ static DWORD WINAPI IDirect3DRMDevice2Impl_GetRenderMode(IDirect3DRMDevice2* ifa
     return IDirect3DRMDevice3_GetRenderMode(&This->IDirect3DRMDevice3_iface);
 }
 
-static HRESULT WINAPI IDirect3DRMDevice2Impl_GetDirect3DDevice2(IDirect3DRMDevice2* iface,
-                                                                LPDIRECT3DDEVICE2 * dev)
+static HRESULT WINAPI IDirect3DRMDevice2Impl_GetDirect3DDevice2(IDirect3DRMDevice2 *iface,
+        IDirect3DDevice2 **dev)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
 
@@ -856,9 +855,8 @@ static HRESULT WINAPI IDirect3DRMDevice3Impl_GetDirect3DDevice(IDirect3DRMDevice
 }
 
 /*** IDirect3DRMDevice2 methods ***/
-static HRESULT WINAPI IDirect3DRMDevice3Impl_InitFromD3D2(IDirect3DRMDevice3* iface,
-                                                          LPDIRECT3D2 lpD3D,
-                                                          LPDIRECT3DDEVICE2 lpD3DDev)
+static HRESULT WINAPI IDirect3DRMDevice3Impl_InitFromD3D2(IDirect3DRMDevice3 *iface,
+        IDirect3D2 *lpD3D, IDirect3DDevice2 *lpD3DDev)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
 
@@ -897,8 +895,8 @@ static DWORD WINAPI IDirect3DRMDevice3Impl_GetRenderMode(IDirect3DRMDevice3* ifa
     return This->rendermode;
 }
 
-static HRESULT WINAPI IDirect3DRMDevice3Impl_GetDirect3DDevice2(IDirect3DRMDevice3* iface,
-                                                                LPDIRECT3DDEVICE2 * dev)
+static HRESULT WINAPI IDirect3DRMDevice3Impl_GetDirect3DDevice2(IDirect3DRMDevice3 *iface,
+        IDirect3DDevice2 **dev)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
 

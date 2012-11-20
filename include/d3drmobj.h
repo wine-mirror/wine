@@ -526,11 +526,11 @@ DECLARE_INTERFACE_(IDirect3DRMDevice2,IDirect3DRMDevice)
     STDMETHOD_(D3DRMTEXTUREQUALITY, GetTextureQuality)(THIS) PURE;
     STDMETHOD(GetDirect3DDevice)(THIS_ LPDIRECT3DDEVICE *) PURE;
     /*** IDirect3DRMDevice2 methods ***/
-    STDMETHOD(InitFromD3D2)(THIS_ LPDIRECT3D2 pD3D, LPDIRECT3DDEVICE2 pD3DDev) PURE;
+    STDMETHOD(InitFromD3D2)(THIS_ IDirect3D2 *d3d, IDirect3DDevice2 *device) PURE;
     STDMETHOD(InitFromSurface)(THIS_ GUID *guid, IDirectDraw *ddraw, IDirectDrawSurface *surface) PURE;
     STDMETHOD(SetRenderMode)(THIS_ DWORD flags) PURE;
     STDMETHOD_(DWORD, GetRenderMode)(THIS) PURE;
-    STDMETHOD(GetDirect3DDevice2)(THIS_ LPDIRECT3DDEVICE2 *) PURE;
+    STDMETHOD(GetDirect3DDevice2)(THIS_ IDirect3DDevice2 **device) PURE;
 };
 #undef INTERFACE
 
@@ -671,11 +671,11 @@ DECLARE_INTERFACE_(IDirect3DRMDevice3,IDirect3DRMObject)
     STDMETHOD_(D3DRMTEXTUREQUALITY, GetTextureQuality)(THIS) PURE;
     STDMETHOD(GetDirect3DDevice)(THIS_ LPDIRECT3DDEVICE *) PURE;
     /*** IDirect3DRMDevice2 methods ***/
-    STDMETHOD(InitFromD3D2)(THIS_ LPDIRECT3D2 pD3D, LPDIRECT3DDEVICE2 pD3DDev) PURE;
+    STDMETHOD(InitFromD3D2)(THIS_ IDirect3D2 *d3d, IDirect3DDevice2 *device) PURE;
     STDMETHOD(InitFromSurface)(THIS_ GUID *guid, IDirectDraw *ddraw, IDirectDrawSurface *surface) PURE;
     STDMETHOD(SetRenderMode)(THIS_ DWORD flags) PURE;
     STDMETHOD_(DWORD, GetRenderMode)(THIS) PURE;
-    STDMETHOD(GetDirect3DDevice2)(THIS_ LPDIRECT3DDEVICE2 *) PURE;
+    STDMETHOD(GetDirect3DDevice2)(THIS_ IDirect3DDevice2 **device) PURE;
     /*** IDirect3DRMDevice3 methods ***/
     STDMETHOD(FindPreferredTextureFormat)(THIS_ DWORD BitDepths, DWORD flags, LPDDPIXELFORMAT pDDPF) PURE;
     STDMETHOD(RenderStateChange)(THIS_ D3DRENDERSTATETYPE drsType, DWORD val, DWORD flags) PURE;

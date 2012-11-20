@@ -629,9 +629,8 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateDeviceFromSurface(IDirect3DRM2 *ifa
     return Direct3DRMDevice_create(&IID_IDirect3DRMDevice2, (IUnknown**)ppDevice);
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateDeviceFromD3D(IDirect3DRM2* iface, LPDIRECT3D2 pD3D,
-                                                           LPDIRECT3DDEVICE2 pD3DDev,
-                                                           LPDIRECT3DRMDEVICE2 * ppDevice)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateDeviceFromD3D(IDirect3DRM2 *iface,
+        IDirect3D2 *pD3D, IDirect3DDevice2 *pD3DDev, IDirect3DRMDevice2 **ppDevice)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
 
@@ -1073,9 +1072,8 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateDeviceFromSurface(IDirect3DRM3 *ifa
     return Direct3DRMDevice_create(&IID_IDirect3DRMDevice3, (IUnknown**)device);
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateDeviceFromD3D(IDirect3DRM3* iface, LPDIRECT3D2 d3d,
-                                                           LPDIRECT3DDEVICE2 d3ddev,
-                                                           LPDIRECT3DRMDEVICE3* device)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateDeviceFromD3D(IDirect3DRM3 *iface,
+        IDirect3D2 *d3d, IDirect3DDevice2 *d3ddev, IDirect3DRMDevice3 **device)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
 

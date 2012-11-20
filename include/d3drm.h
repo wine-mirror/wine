@@ -206,7 +206,8 @@ DECLARE_INTERFACE_(IDirect3DRM2,IUnknown)
     STDMETHOD(CreateDevice)(THIS_ DWORD, DWORD, LPDIRECT3DRMDEVICE2 *) PURE;
     STDMETHOD(CreateDeviceFromSurface)(THIS_ GUID *guid, IDirectDraw *ddraw,
             IDirectDrawSurface *surface, IDirect3DRMDevice2 **device) PURE;
-    STDMETHOD(CreateDeviceFromD3D)(THIS_ LPDIRECT3D2 pD3D, LPDIRECT3DDEVICE2 pD3DDev, LPDIRECT3DRMDEVICE2 *) PURE;
+    STDMETHOD(CreateDeviceFromD3D)(THIS_ IDirect3D2 *d3d, IDirect3DDevice2 *d3d_device,
+            IDirect3DRMDevice2 **device) PURE;
     STDMETHOD(CreateDeviceFromClipper)(THIS_ IDirectDrawClipper *clipper, GUID *guid,
             int width, int height, IDirect3DRMDevice2 **device) PURE;
     STDMETHOD(CreateTextureFromSurface)(THIS_ IDirectDrawSurface *surface,
@@ -344,7 +345,8 @@ DECLARE_INTERFACE_(IDirect3DRM3,IUnknown)
     STDMETHOD(CreateDevice)(THIS_ DWORD, DWORD, LPDIRECT3DRMDEVICE3 *) PURE;
     STDMETHOD(CreateDeviceFromSurface)(THIS_ GUID *guid, IDirectDraw *ddraw,
             IDirectDrawSurface *surface, IDirect3DRMDevice3 **device) PURE;
-    STDMETHOD(CreateDeviceFromD3D)(THIS_ LPDIRECT3D2 pD3D, LPDIRECT3DDEVICE2 pD3DDev, LPDIRECT3DRMDEVICE3 *) PURE;
+    STDMETHOD(CreateDeviceFromD3D)(THIS_ IDirect3D2 *d3d, IDirect3DDevice2 *d3d_device,
+            IDirect3DRMDevice3 **device) PURE;
     STDMETHOD(CreateDeviceFromClipper)(THIS_ IDirectDrawClipper *clipper, GUID *guid,
             int width, int height, IDirect3DRMDevice3 **device) PURE;
     STDMETHOD(CreateTextureFromSurface)(THIS_ IDirectDrawSurface *surface,
