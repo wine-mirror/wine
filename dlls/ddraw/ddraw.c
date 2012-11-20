@@ -5168,7 +5168,6 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
     struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
     MONITORINFO monitor_info;
     HMONITOR monitor;
-    BOOL ret;
     RECT *r;
 
     TRACE("device_parent %p.\n", device_parent);
@@ -5181,7 +5180,7 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
 
     monitor = MonitorFromWindow(ddraw->swapchain_window, MONITOR_DEFAULTTOPRIMARY);
     monitor_info.cbSize = sizeof(monitor_info);
-    if (!(ret = GetMonitorInfoW(monitor, &monitor_info)))
+    if (!GetMonitorInfoW(monitor, &monitor_info))
     {
         ERR("Failed to get monitor info.\n");
         return;
@@ -5190,8 +5189,8 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
     r = &monitor_info.rcMonitor;
     TRACE("Resizing window %p to %s.\n", ddraw->swapchain_window, wine_dbgstr_rect(r));
 
-    if (!(ret = SetWindowPos(ddraw->swapchain_window, HWND_TOP, r->left, r->top,
-            r->right - r->left, r->bottom - r->top, SWP_SHOWWINDOW | SWP_NOACTIVATE)))
+    if (!SetWindowPos(ddraw->swapchain_window, HWND_TOP, r->left, r->top,
+                      r->right - r->left, r->bottom - r->top, SWP_SHOWWINDOW | SWP_NOACTIVATE))
         ERR("Failed to resize window.\n");
 }
 
