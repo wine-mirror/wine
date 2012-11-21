@@ -69,7 +69,6 @@ static msi_file_state calculate_install_state( MSIPACKAGE *package, MSIFILE *fil
     VS_FIXEDFILEINFO *file_version;
     WCHAR *font_version;
     msi_file_state state;
-    DWORD file_size;
 
     comp->Action = msi_get_component_action( package, comp );
     if (comp->Action != INSTALLSTATE_LOCAL || (comp->assembly && comp->assembly->installed))
@@ -118,7 +117,7 @@ static msi_file_state calculate_install_state( MSIPACKAGE *package, MSIFILE *fil
             return state;
         }
     }
-    if ((file_size = msi_get_disk_file_size( file->TargetPath )) != file->FileSize)
+    if (msi_get_disk_file_size( file->TargetPath ) != file->FileSize)
     {
         return msifs_overwrite;
     }
@@ -781,7 +780,7 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
     LPWSTR sourcedir, destname = NULL, destdir = NULL, source = NULL, dest = NULL;
     int options;
     DWORD size;
-    BOOL ret, wildcards;
+    BOOL wildcards;
 
     component = MSI_RecordGetString(rec, 2);
     comp = msi_get_loaded_component(package, component);
@@ -863,7 +862,7 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
 
     if (GetFileAttributesW(destdir) == INVALID_FILE_ATTRIBUTES)
     {
-        if (!(ret = msi_create_full_path(destdir)))
+        if (!msi_create_full_path(destdir))
         {
             WARN("failed to create directory %u\n", GetLastError());
             goto done;
