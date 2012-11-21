@@ -207,12 +207,10 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
 {
     AM_MEDIA_TYPE amt;
     HRESULT hr = S_OK;
-    DDSURFACEDESC sdesc;
     BITMAPINFOHEADER *bmiHeader;
 
     TRACE("(%p)->(%p, %d)\n", This, data, size);
 
-    sdesc.dwSize = sizeof(sdesc);
     hr = IPin_ConnectionMediaType(&This->renderer.pInputPin->pin.IPin_iface, &amt);
     if (FAILED(hr)) {
         ERR("Unable to retrieve media type\n");
