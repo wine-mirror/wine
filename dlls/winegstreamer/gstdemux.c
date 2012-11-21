@@ -515,7 +515,7 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstBuffer *buf) {
 
     if (This->initial) {
         gst_buffer_unref(buf);
-        FIXME("Triggering %p %p\n", pad, pin->caps_event);
+        TRACE("Triggering %p %p\n", pad, pin->caps_event);
         SetEvent(pin->caps_event);
         return GST_FLOW_NOT_LINKED;
     }
@@ -539,7 +539,7 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstBuffer *buf) {
             ERR("Didn't get a GST_APP_BUFFER, and could not get a delivery buffer (%x), returning GST_FLOW_WRONG_STATE\n", hr);
             return GST_FLOW_WRONG_STATE;
         }
-        FIXME("Did not get a GST_APP_BUFFER, creating a sample\n");
+        TRACE("Did not get a GST_APP_BUFFER, creating a sample\n");
         IMediaSample_GetPointer(sample, &ptr);
         memcpy(ptr, GST_BUFFER_DATA(buf), GST_BUFFER_SIZE(buf));
     }
@@ -759,7 +759,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
     gst_segment_init(pin->segment, GST_FORMAT_TIME);
     ret = gst_pad_link(pad, mypad);
     gst_pad_activate_push(mypad, 1);
-    FIXME("Linking: %i\n", ret);
+    TRACE("Linking: %i\n", ret);
     if (ret >= 0) {
         pin->their_src = pad;
         gst_object_ref(pin->their_src);
@@ -859,7 +859,7 @@ static gboolean activate_push(GstPad *pad, gboolean activate) {
 }
 
 static void no_more_pads(GstElement *decodebin, GSTImpl *This) {
-    FIXME("Done\n");
+    TRACE("Done\n");
     SetEvent(This->event);
 }
 
