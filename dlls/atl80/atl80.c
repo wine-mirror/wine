@@ -19,17 +19,10 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
-#include "atliface.h"
-#include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(atl80);
-
-HRESULT WINAPI AtlCreateRegistrar(IRegistrar** ppReg)
-{
-    FIXME("(%p) stub\n", ppReg);
-    return E_NOTIMPL;
-}
-
+/***********************************************************************
+ *           AtlGetVersion              [atl80.@]
+ */
 DWORD WINAPI AtlGetVersion(void *pReserved)
 {
    return 0x0800;
