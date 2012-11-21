@@ -208,7 +208,7 @@ static HRESULT WINAPI HTMLStyle2_put_bottom(IHTMLStyle2 *iface, VARIANT v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_nsstyle_attr_var(This->nsstyle, STYLEID_BOTTOM, &v, 0);
+    return set_nsstyle_attr_var(This->nsstyle, STYLEID_BOTTOM, &v, ATTR_FIX_PX);
 }
 
 static HRESULT WINAPI HTMLStyle2_get_bottom(IHTMLStyle2 *iface, VARIANT *p)
