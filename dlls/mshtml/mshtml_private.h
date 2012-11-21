@@ -1102,6 +1102,36 @@ static inline char *heap_strdupWtoA(LPCWSTR str)
     return ret;
 }
 
+static inline WCHAR *heap_strdupUtoW(const char *str)
+{
+    WCHAR *ret = NULL;
+
+    if(str) {
+        size_t len;
+
+        len = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0);
+        ret = heap_alloc(len*sizeof(WCHAR));
+        if(ret)
+            MultiByteToWideChar(CP_UTF8, 0, str, -1, ret, len);
+    }
+
+    return ret;
+}
+
+static inline char *heap_strdupWtoU(const WCHAR *str)
+{
+    char *ret = NULL;
+
+    if(str) {
+        size_t size = WideCharToMultiByte(CP_UTF8, 0, str, -1, NULL, 0, NULL, NULL);
+        ret = heap_alloc(size);
+        if(ret)
+            WideCharToMultiByte(CP_UTF8, 0, str, -1, ret, size, NULL, NULL);
+    }
+
+    return ret;
+}
+
 static inline void windowref_addref(windowref_t *ref)
 {
     InterlockedIncrement(&ref->ref);
