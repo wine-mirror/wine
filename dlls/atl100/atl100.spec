@@ -1,8 +1,8 @@
-10 stub AtlAdvise
-11 stub AtlUnadvise
-12 stub AtlFreeMarshalStream
-13 stub AtlMarshalPtrInProc
-14 stub AtlUnmarshalPtr
+10 stdcall AtlAdvise(ptr ptr ptr ptr)
+11 stdcall AtlUnadvise(ptr ptr long)
+12 stdcall AtlFreeMarshalStream(ptr)
+13 stdcall AtlMarshalPtrInProc(ptr ptr ptr)
+14 stdcall AtlUnmarshalPtr(ptr ptr ptr)
 15 stub AtlComModuleGetClassObject
 17 stub AtlComModuleRegisterClassObjects
 20 stub AtlComModuleRevokeClassObjects
@@ -10,31 +10,31 @@
 23 stub AtlUpdateRegistryFromResourceD
 24 stub AtlWaitWithMessageLoop
 25 stub AtlSetErrorInfo
-26 stub AtlCreateTargetDC
-27 stub AtlHiMetricToPixel
-28 stub AtlPixelToHiMetric
+26 stdcall AtlCreateTargetDC(long ptr)
+27 stdcall AtlHiMetricToPixel(ptr ptr)
+28 stdcall AtlPixelToHiMetric(ptr ptr)
 29 stub AtlDevModeW2A
-30 stub AtlComPtrAssign
-31 stub AtlComQIPtrAssign
-32 stub AtlInternalQueryInterface
+30 stdcall AtlComPtrAssign(ptr ptr)
+31 stdcall AtlComQIPtrAssign(ptr ptr ptr)
+32 stdcall AtlInternalQueryInterface(ptr ptr ptr ptr)
 34 stdcall AtlGetVersion(ptr)
 35 stub AtlAxDialogBoxW
 36 stub AtlAxDialogBoxA
-37 stub AtlAxCreateDialogW
-38 stub AtlAxCreateDialogA
-39 stub AtlAxCreateControl
-40 stub AtlAxCreateControlEx
-41 stub AtlAxAttachControl
-42 stub AtlAxWinInit
+37 stdcall AtlAxCreateDialogW(long wstr long ptr long)
+38 stdcall AtlAxCreateDialogA(long str long ptr long)
+39 stdcall AtlAxCreateControl(ptr ptr ptr ptr)
+40 stdcall AtlAxCreateControlEx(ptr ptr ptr ptr ptr ptr ptr)
+41 stdcall AtlAxAttachControl(ptr ptr ptr)
+42 stdcall AtlAxWinInit()
 43 stub AtlWinModuleAddCreateWndData
 44 stub AtlWinModuleExtractCreateWndData
 45 stub AtlWinModuleRegisterWndClassInfoW
 46 stub AtlWinModuleRegisterWndClassInfoA
-47 stub AtlAxGetControl
-48 stub AtlAxGetHost
+47 stdcall AtlAxGetControl(long ptr)
+48 stdcall AtlAxGetHost(long ptr)
 49 stub AtlRegisterClassCategoriesHelper
-50 stub AtlIPersistStreamInit_Load
-51 stub AtlIPersistStreamInit_Save
+50 stdcall AtlIPersistStreamInit_Load(ptr ptr ptr ptr)
+51 stdcall AtlIPersistStreamInit_Save(ptr long ptr ptr ptr)
 52 stub AtlIPersistPropertyBag_Load
 53 stub AtlIPersistPropertyBag_Save
 54 stub AtlGetObjectSourceInterface

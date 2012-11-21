@@ -2,11 +2,11 @@
 2 stdcall -private DllGetClassObject(ptr ptr ptr)
 3 stdcall -private DllRegisterServer()
 4 stdcall -private DllUnregisterServer()
-10 stdcall AtlAdvise(ptr ptr ptr ptr)
-11 stdcall AtlUnadvise(ptr ptr long)
-12 stdcall AtlFreeMarshalStream(ptr)
-13 stdcall AtlMarshalPtrInProc(ptr ptr ptr)
-14 stdcall AtlUnmarshalPtr(ptr ptr ptr)
+10 stdcall AtlAdvise(ptr ptr ptr ptr) atl100.AtlAdvise
+11 stdcall AtlUnadvise(ptr ptr long) atl100.AtlUnadvise
+12 stdcall AtlFreeMarshalStream(ptr) atl100.AtlFreeMarshalStream
+13 stdcall AtlMarshalPtrInProc(ptr ptr ptr) atl100.AtlMarshalPtrInProc
+14 stdcall AtlUnmarshalPtr(ptr ptr ptr) atl100.AtlUnmarshalPtr
 15 stdcall AtlModuleGetClassObject(ptr ptr ptr ptr)
 16 stdcall AtlModuleInit(ptr long long)
 17 stdcall AtlModuleRegisterClassObjects(ptr long long)
@@ -18,31 +18,31 @@
 23 stdcall AtlModuleUpdateRegistryFromResourceD(ptr wstr long ptr ptr)
 24 stub AtlWaitWithMessageLoop
 25 stub AtlSetErrorInfo
-26 stdcall AtlCreateTargetDC(long ptr)
-27 stdcall AtlHiMetricToPixel(ptr ptr)
-28 stdcall AtlPixelToHiMetric(ptr ptr)
+26 stdcall AtlCreateTargetDC(long ptr) atl100.AtlCreateTargetDC
+27 stdcall AtlHiMetricToPixel(ptr ptr) atl100.AtlHiMetricToPixel
+28 stdcall AtlPixelToHiMetric(ptr ptr) atl100.AtlPixelToHiMetric
 29 stub AtlDevModeW2A
-30 stdcall AtlComPtrAssign(ptr ptr)
-31 stdcall AtlComQIPtrAssign(ptr ptr ptr)
-32 stdcall AtlInternalQueryInterface(ptr ptr ptr ptr)
+30 stdcall AtlComPtrAssign(ptr ptr) atl100.AtlComPtrAssign
+31 stdcall AtlComQIPtrAssign(ptr ptr ptr) atl100.AtlComQIPtrAssign
+32 stdcall AtlInternalQueryInterface(ptr ptr ptr ptr) atl100.AtlInternalQueryInterface
 34 stub AtlGetVersion
 35 stub AtlAxDialogBoxW
 36 stub AtlAxDialogBoxA
-37 stdcall AtlAxCreateDialogW(long wstr long ptr long)
-38 stdcall AtlAxCreateDialogA(long str long ptr long)
-39 stdcall AtlAxCreateControl(ptr ptr ptr ptr)
-40 stdcall AtlAxCreateControlEx(ptr ptr ptr ptr ptr ptr ptr)
-41 stdcall AtlAxAttachControl(ptr ptr ptr)
-42 stdcall AtlAxWinInit()
-43 stdcall AtlModuleAddCreateWndData(ptr ptr ptr)
-44 stdcall AtlModuleExtractCreateWndData(ptr)
-45 stdcall AtlModuleRegisterWndClassInfoW(ptr ptr ptr)
-46 stdcall AtlModuleRegisterWndClassInfoA(ptr ptr ptr)
-47 stdcall AtlAxGetControl(long ptr)
-48 stdcall AtlAxGetHost(long ptr)
+37 stdcall AtlAxCreateDialogW(long wstr long ptr long) atl100.AtlAxCreateDialogW
+38 stdcall AtlAxCreateDialogA(long str long ptr long) atl100.AtlAxCreateDialogA
+39 stdcall AtlAxCreateControl(ptr ptr ptr ptr) atl100.AtlAxCreateControl
+40 stdcall AtlAxCreateControlEx(ptr ptr ptr ptr ptr ptr ptr) atl100.AtlAxCreateControlEx
+41 stdcall AtlAxAttachControl(ptr ptr ptr) atl100.AtlAxAttachControl
+42 stdcall AtlAxWinInit() atl100.AtlAxWinInit
+43 stdcall AtlModuleAddCreateWndData(ptr ptr ptr) atl100.AtlModuleAddCreateWndData
+44 stdcall AtlModuleExtractCreateWndData(ptr) atl100.AtlModuleExtractCreateWndData
+45 stdcall AtlModuleRegisterWndClassInfoW(ptr ptr ptr) atl100.AtlModuleRegisterWndClassInfoW
+46 stdcall AtlModuleRegisterWndClassInfoA(ptr ptr ptr) atl100.AtlModuleRegisterWndClassInfoA
+47 stdcall AtlAxGetControl(long ptr) atl100.AtlAxGetControl
+48 stdcall AtlAxGetHost(long ptr) atl100.AtlAxGetHost
 49 stub AtlRegisterClassCategoriesHelper
-50 stdcall AtlIPersistStreamInit_Load(ptr ptr ptr ptr)
-51 stdcall AtlIPersistStreamInit_Save(ptr long ptr ptr ptr)
+50 stdcall AtlIPersistStreamInit_Load(ptr ptr ptr ptr) atl100.AtlIPersistStreamInit_Load
+51 stdcall AtlIPersistStreamInit_Save(ptr long ptr ptr ptr) atl100.AtlIPersistStreamInit_Save
 52 stub AtlIPersistPropertyBag_Load
 53 stub AtlIPersistPropertyBag_Save
 54 stub AtlGetObjectSourceInterface
