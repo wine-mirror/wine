@@ -182,5 +182,6 @@ HRESULT WINAPI AtlModuleUnregisterServerEx(_ATL_MODULEW* pM, BOOL bUnRegTypeLib,
 HRESULT WINAPI AtlModuleTerm(_ATL_MODULEW* pM);
 HRESULT WINAPI AtlUnadvise(IUnknown *pUnkCP, const IID * iid, DWORD dw);
 HRESULT WINAPI AtlUnmarshalPtr(IStream *pStream, const IID *iid, IUnknown **ppUnk);
+HRESULT WINAPI AtlCreateRegistrar(IRegistrar**);
 
 #endif /* __WINE_ATLBASE_H__ */

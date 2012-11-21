@@ -1,5 +1,9 @@
 MODULE = atl100.dll
+IMPORTLIB = atl100
+IMPORTS = uuid advapi32
 
-C_SRCS = atl.c
+C_SRCS = \
+	atl.c \
+	registrar.c
 
 @MAKE_DLL_RULES@

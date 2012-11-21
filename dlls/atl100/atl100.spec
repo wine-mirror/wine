@@ -42,7 +42,7 @@
 58 stub AtlModuleAddTermFunc
 59 stub AtlAxCreateControlLic
 60 stub AtlAxCreateControlLicEx
-61 stub AtlCreateRegistrar
+61 stdcall AtlCreateRegistrar(ptr)
 62 stub AtlWinModuleRegisterClassExW
 63 stub AtlWinModuleRegisterClassExA
 64 stub AtlCallTermFunc

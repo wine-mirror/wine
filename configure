@@ -15247,7 +15247,7 @@ wine_fn_config_test dlls/apphelp/tests apphelp_test
 wine_fn_config_dll appwiz.cpl enable_appwiz_cpl po
 wine_fn_config_dll atl enable_atl implib
 wine_fn_config_test dlls/atl/tests atl_test
-wine_fn_config_dll atl100 enable_atl100
+wine_fn_config_dll atl100 enable_atl100 implib
 wine_fn_config_dll atl80 enable_atl80
 wine_fn_config_dll authz enable_authz
 wine_fn_config_dll avicap32 enable_avicap32 implib
