@@ -668,14 +668,10 @@ static HRESULT WINAPI TiffDecoder_GetFrameCount(IWICBitmapDecoder *iface,
 {
     TiffDecoder *This = impl_from_IWICBitmapDecoder(iface);
 
-    if (!This->tiff)
-    {
-        WARN("(%p) <-- WINCODEC_ERR_WRONGSTATE\n", iface);
-        return WINCODEC_ERR_WRONGSTATE;
-    }
+    if (!pCount) return E_INVALIDARG;
 
     EnterCriticalSection(&This->lock);
-    *pCount = pTIFFNumberOfDirectories(This->tiff);
+    *pCount = This->tiff ? pTIFFNumberOfDirectories(This->tiff) : 0;
     LeaveCriticalSection(&This->lock);
 
     TRACE("(%p) <-- %i\n", iface, *pCount);

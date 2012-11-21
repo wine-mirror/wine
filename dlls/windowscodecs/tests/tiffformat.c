@@ -203,9 +203,7 @@ static void test_QueryCapability(void)
 
     frame_count = 0xdeadbeef;
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
-todo_wine
     ok(hr == S_OK || broken(hr == E_POINTER) /* XP */, "GetFrameCount error %#x\n", hr);
-todo_wine
     ok(frame_count == 0, "expected 0, got %u\n", frame_count);
 
     pos.QuadPart = 4;
@@ -222,7 +220,6 @@ todo_wine
 
     frame_count = 0xdeadbeef;
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
-todo_wine
     ok(hr == S_OK, "GetFrameCount error %#x\n", hr);
 todo_wine
     ok(frame_count == 1, "expected 1, got %u\n", frame_count);
