@@ -394,5 +394,5 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    return S_OK;
+    return S_FALSE;
 }
