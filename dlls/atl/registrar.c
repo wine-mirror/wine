@@ -16,19 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-
-#include <stdarg.h>
-
 #define COBJMACROS
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "winreg.h"
-#include "objbase.h"
 #include "oaidl.h"
 #include "rpcproxy.h"
-#include "atliface.h"
 #include "atlbase.h"
 
 #include "wine/debug.h"
