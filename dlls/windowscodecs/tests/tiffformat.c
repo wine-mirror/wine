@@ -212,31 +212,25 @@ static void test_QueryCapability(void)
 
     capability = 0xdeadbeef;
     hr = IWICBitmapDecoder_QueryCapability(decoder, stream, &capability);
-todo_wine
     ok(hr == S_OK, "QueryCapability error %#x\n", hr);
-todo_wine
     ok(capability == exp_caps || capability == exp_caps_xp,
        "expected %#x, got %#x\n", exp_caps, capability);
 
     frame_count = 0xdeadbeef;
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
     ok(hr == S_OK, "GetFrameCount error %#x\n", hr);
-todo_wine
     ok(frame_count == 1, "expected 1, got %u\n", frame_count);
 
     pos.QuadPart = 0;
     hr = IStream_Seek(stream, pos, SEEK_CUR, &cur_pos);
     ok(hr == S_OK, "IStream_Seek error %#x\n", hr);
-todo_wine
     ok(cur_pos.QuadPart > 4 && cur_pos.QuadPart < sizeof(tiff_1bpp_data),
        "current stream pos is at %x/%x\n", cur_pos.u.LowPart, cur_pos.u.HighPart);
 
     hr = IWICBitmapDecoder_QueryCapability(decoder, stream, &capability);
-todo_wine
     ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#x\n", hr);
 
     hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnDemand);
-todo_wine
     ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#x\n", hr);
 
     IWICBitmapDecoder_Release(decoder);
@@ -261,7 +255,6 @@ todo_wine
     ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#x\n", hr);
 
     hr = IWICBitmapDecoder_QueryCapability(decoder, stream, &capability);
-todo_wine
     ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#x\n", hr);
 
     IWICBitmapDecoder_Release(decoder);
