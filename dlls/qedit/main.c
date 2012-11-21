@@ -139,7 +139,7 @@ static const IClassFactoryVtbl DSCF_Vtbl =
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    return S_OK;
+    return S_FALSE;
 }
 
 /*******************************************************************************
