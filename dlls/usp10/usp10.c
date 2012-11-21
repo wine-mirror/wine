@@ -729,9 +729,61 @@ static inline BOOL heap_free(LPVOID mem)
     return HeapFree(GetProcessHeap(), 0, mem);
 }
 
-static inline WCHAR get_cache_default_char(SCRIPT_CACHE *psc)
+/* TODO Fix font properties on Arabic locale */
+static inline BOOL set_cache_font_properties(const HDC hdc, ScriptCache *sc)
 {
-    return ((ScriptCache *)*psc)->tm.tmDefaultChar;
+    if (!sc->sfnt)
+    {
+        sc->sfp.wgBlank = sc->tm.tmBreakChar;
+        sc->sfp.wgDefault = sc->tm.tmDefaultChar;
+        sc->sfp.wgInvalid = sc->sfp.wgBlank;
+        sc->sfp.wgKashida = 0xFFFF;
+        sc->sfp.iKashidaWidth = 0;
+    }
+    else
+    {
+        static const WCHAR chars[4] = {0x0020, 0x200B, 0xF71B, 0x0640};
+        /* U+0020: numeric space
+           U+200B: zero width space
+           U+F71B: unknow char found by black box testing
+           U+0640: kashida */
+        WORD gi[4];
+
+        if (GetGlyphIndicesW(hdc, chars, 4, gi, GGI_MARK_NONEXISTING_GLYPHS) != GDI_ERROR)
+        {
+            if(gi[0] != 0xFFFF) /* 0xFFFF: index of default non exist char */
+                sc->sfp.wgBlank = gi[0];
+            else
+                sc->sfp.wgBlank = 0;
+
+            sc->sfp.wgDefault = 0;
+
+            if (gi[2] != 0xFFFF)
+                sc->sfp.wgInvalid = gi[2];
+            else if (gi[1] != 0xFFFF)
+                sc->sfp.wgInvalid = gi[1];
+            else if (gi[0] != 0xFFFF)
+                sc->sfp.wgInvalid = gi[0];
+            else
+                sc->sfp.wgInvalid = 0;
+
+            sc->sfp.wgKashida = gi[3];
+
+            sc->sfp.iKashidaWidth = 0; /* TODO */
+        }
+        else
+            return FALSE;
+    }
+    return TRUE;
+}
+
+static inline void get_cache_font_properties(SCRIPT_FONTPROPERTIES *sfp, ScriptCache *sc)
+{
+    sfp->wgBlank = sc->sfp.wgBlank;
+    sfp->wgDefault = sc->sfp.wgDefault;
+    sfp->wgInvalid = sc->sfp.wgInvalid;
+    sfp->wgKashida = sc->sfp.wgKashida;
+    sfp->iKashidaWidth = sc->sfp.iKashidaWidth;
 }
 
 static inline LONG get_cache_height(SCRIPT_CACHE *psc)
@@ -813,6 +865,11 @@ static HRESULT init_script_cache(const HDC hdc, SCRIPT_CACHE *psc)
         return E_INVALIDARG;
     }
     sc->sfnt = (GetFontData(hdc, MS_MAKE_TAG('h','e','a','d'), 0, NULL, 0)!=GDI_ERROR);
+    if (!set_cache_font_properties(hdc, sc))
+    {
+        heap_free(sc);
+        return E_INVALIDARG;
+    }
     *psc = sc;
     TRACE("<- %p\n", sc);
     return S_OK;
@@ -1063,12 +1120,7 @@ HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPR
     if (sfp->cBytes != sizeof(SCRIPT_FONTPROPERTIES))
         return E_INVALIDARG;
 
-    /* return something sensible? */
-    sfp->wgBlank = 0;
-    sfp->wgDefault = get_cache_default_char(psc);
-    sfp->wgInvalid = 0;
-    sfp->wgKashida = 0xffff;
-    sfp->iKashidaWidth = 0;
+    get_cache_font_properties(sfp, *psc);
 
     return S_OK;
 }

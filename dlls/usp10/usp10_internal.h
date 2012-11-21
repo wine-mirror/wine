@@ -160,6 +160,7 @@ typedef struct {
     LOGFONTW lf;
     TEXTMETRICW tm;
     OUTLINETEXTMETRICW *otm;
+    SCRIPT_FONTPROPERTIES sfp;
     BOOL sfnt;
     CacheGlyphPage *page[0x10];
     ABC *widths[GLYPH_MAX / GLYPH_BLOCK_SIZE];
