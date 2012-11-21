@@ -87,7 +87,7 @@ BOOL WINAPI DllMain(
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-	return S_OK;
+	return S_FALSE;
 }
 
 /***********************************************************************
