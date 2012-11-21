@@ -288,7 +288,7 @@ static HRESULT fill_props(nsIDOMHTMLElement *nselem, PropertyBag *prop_bag)
 
     nsres = nsIDOMNodeList_GetLength(params, &length);
     if(NS_FAILED(nsres))
-        return S_OK;
+        length = 0;
 
     for(i=0; i < length; i++) {
         nsres = nsIDOMNodeList_Item(params, i, &nsnode);
@@ -330,6 +330,7 @@ static HRESULT fill_props(nsIDOMHTMLElement *nselem, PropertyBag *prop_bag)
         }
     }
 
+    nsIDOMNodeList_Release(params);
     return hres;
 }
 
