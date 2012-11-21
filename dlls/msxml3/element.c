@@ -736,7 +736,7 @@ static HRESULT encode_base64(const BYTE *buf, int len, BSTR *ret)
 {
     static const char b64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     const BYTE *d = buf;
-    int bytes, pad_bytes, div, i;
+    int bytes, pad_bytes, div;
     DWORD needed;
     WCHAR *ptr;
 
@@ -753,7 +753,6 @@ static HRESULT encode_base64(const BYTE *buf, int len, BSTR *ret)
     div = len / 3;
 
     ptr = *ret;
-    i = 0;
     while (div > 0)
     {
         /* first char is the first 6 bits of the first byte*/
@@ -766,7 +765,6 @@ static HRESULT encode_base64(const BYTE *buf, int len, BSTR *ret)
         *ptr++ = b64[ ((d[1] << 2) & 0x3c) | (d[2] >> 6 & 0x03)];
         /* fourth char is the remaining 6 bits of the third byte */
         *ptr++ = b64[   d[2]       & 0x3f];
-        i += 4;
         d += 3;
         div--;
     }
