@@ -21,9 +21,7 @@
 #ifndef __WINE_ATLBASE_H__
 #define __WINE_ATLBASE_H__
 
-#define COBJMACROS
-
-#include "atliface.h"
+#include <atliface.h>
 
 typedef HRESULT (WINAPI _ATL_CREATORFUNC)(void* pv, REFIID riid, LPVOID* ppv);
 typedef HRESULT (WINAPI _ATL_CREATORARGFUNC)(void* pv, REFIID riid, LPVOID* ppv, DWORD dw);
