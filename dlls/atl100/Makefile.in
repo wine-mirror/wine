@@ -1,0 +1,5 @@
+MODULE = atl100.dll
+
+C_SRCS = atl.c
+
+@MAKE_DLL_RULES@
