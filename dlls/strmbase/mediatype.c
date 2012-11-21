@@ -28,15 +28,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
-HRESULT WINAPI CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc)
+HRESULT WINAPI CopyMediaType(AM_MEDIA_TYPE *dest, const AM_MEDIA_TYPE *src)
 {
-    *pDest = *pSrc;
-    if (!pSrc->pbFormat) return S_OK;
-    if (!(pDest->pbFormat = CoTaskMemAlloc(pSrc->cbFormat)))
-        return E_OUTOFMEMORY;
-    memcpy(pDest->pbFormat, pSrc->pbFormat, pSrc->cbFormat);
-    if (pDest->pUnk)
-        IUnknown_AddRef(pDest->pUnk);
+    *dest = *src;
+    if (src->pbFormat)
+    {
+        dest->pbFormat = CoTaskMemAlloc(src->cbFormat);
+        if (!dest->pbFormat)
+            return E_OUTOFMEMORY;
+        memcpy(dest->pbFormat, src->pbFormat, src->cbFormat);
+    }
+    if (dest->pUnk)
+        IUnknown_AddRef(dest->pUnk);
     return S_OK;
 }
 
