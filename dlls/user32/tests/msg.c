@@ -6795,6 +6795,7 @@ static void test_interthread_messages(void)
     wnd_event.hwnd = CreateWindowExA(0, "TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                               100, 100, 200, 200, 0, 0, 0, NULL);
     ok (wnd_event.hwnd != 0, "Failed to create parent window\n");
+    flush_events();
     flush_sequence();
     log_all_parent_messages++;
     wnd_event.start_event = CreateEventA( NULL, TRUE, FALSE, NULL );
