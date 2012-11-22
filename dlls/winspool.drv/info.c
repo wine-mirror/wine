@@ -5582,7 +5582,6 @@ BOOL WINAPI EnumPrinterDriversW(LPWSTR pName, LPWSTR pEnvironment, DWORD Level,
     if (pEnvironment && !strcmpW(pEnvironment, allW))
     {
         DWORD i, needed, bufsize = cbBuf;
-        DWORD total_needed = 0;
         DWORD total_found = 0;
         DWORD data_offset;
 
@@ -5594,7 +5593,6 @@ BOOL WINAPI EnumPrinterDriversW(LPWSTR pName, LPWSTR pEnvironment, DWORD Level,
             ret = WINSPOOL_EnumPrinterDrivers(pName, all_printenv[i]->envname, Level,
                                               NULL, 0, 0, &needed, &found, 0);
             if (!ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER) return FALSE;
-            total_needed += needed;
             total_found += found;
         }
 
