@@ -742,7 +742,22 @@ static void STDMETHODCALLTYPE d3d10_device_RSGetViewports(ID3D10Device *iface,
 
 static void STDMETHODCALLTYPE d3d10_device_RSGetScissorRects(ID3D10Device *iface, UINT *rect_count, D3D10_RECT *rects)
 {
-    FIXME("iface %p, rect_count %p, rects %p stub!\n", iface, rect_count, rects);
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+
+    TRACE("iface %p, rect_count %p, rects %p.\n", iface, rect_count, rects);
+
+    if (!rects)
+    {
+        *rect_count = 1;
+        return;
+    }
+
+    if (!*rect_count)
+        return;
+
+    wined3d_device_get_scissor_rect(device->wined3d_device, rects);
+    if (*rect_count > 1)
+        memset(&rects[1], 0, (*rect_count - 1) * sizeof(*rects));
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_GetDeviceRemovedReason(ID3D10Device *iface)
