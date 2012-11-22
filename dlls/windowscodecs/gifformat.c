@@ -1241,13 +1241,14 @@ static HRESULT WINAPI GifDecoder_GetFrameCount(IWICBitmapDecoder *iface,
     UINT *pCount)
 {
     GifDecoder *This = impl_from_IWICBitmapDecoder(iface);
-    TRACE("(%p,%p)\n", iface, pCount);
 
-    if (!This->initialized) return WINCODEC_ERR_NOTINITIALIZED;
+    if (!pCount) return E_INVALIDARG;
 
-    *pCount = This->gif->ImageCount;
+    EnterCriticalSection(&This->lock);
+    *pCount = This->gif ? This->gif->ImageCount : 0;
+    LeaveCriticalSection(&This->lock);
 
-    TRACE("<- %u\n", *pCount);
+    TRACE("(%p) <-- %d\n", iface, *pCount);
 
     return S_OK;
 }
