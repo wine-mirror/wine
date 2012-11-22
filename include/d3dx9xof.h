@@ -125,9 +125,9 @@ DECLARE_INTERFACE_IID_(ID3DXFileEnumObject,IUnknown,"cef08cfc-7b4f-4429-9624-2a6
     /*** ID3DXFileEnumObject methods ***/
     STDMETHOD(GetFile)(THIS_ LPD3DXFILE*) PURE;
     STDMETHOD(GetChildren)(THIS_ SIZE_T*) PURE;
-    STDMETHOD(GetChild)(THIS_ SIZE_T, LPD3DXFILEDATA*) PURE;
-    STDMETHOD(GetDataObjectById)(THIS_ REFGUID, LPD3DXFILEDATA*) PURE;
-    STDMETHOD(GetDataObjectByName)(THIS_ LPCSTR, LPD3DXFILEDATA*) PURE;
+    STDMETHOD(GetChild)(THIS_ SIZE_T id, struct ID3DXFileData **child) PURE;
+    STDMETHOD(GetDataObjectById)(THIS_ REFGUID guid, struct ID3DXFileData **obj) PURE;
+    STDMETHOD(GetDataObjectByName)(THIS_ const char *name, struct ID3DXFileData **obj) PURE;
 };
 #undef INTERFACE
 
@@ -147,7 +147,7 @@ DECLARE_INTERFACE_IID_(ID3DXFileData,IUnknown,"cef08cfd-7b4f-4429-9624-2a690a933
     STDMETHOD(GetType)(THIS_ GUID*) PURE;
     STDMETHOD_(BOOL,IsReference)(THIS) PURE;
     STDMETHOD(GetChildren)(THIS_ SIZE_T*) PURE;
-    STDMETHOD(GetChild)(THIS_ SIZE_T, LPD3DXFILEDATA*) PURE;
+    STDMETHOD(GetChild)(THIS_ SIZE_T id, ID3DXFileData **child) PURE;
 };
 #undef INTERFACE
 

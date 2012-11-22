@@ -183,9 +183,9 @@ DECLARE_INTERFACE(ID3DXAllocateHierarchy)
 #define INTERFACE ID3DXLoadUserData
 DECLARE_INTERFACE(ID3DXLoadUserData)
 {
-    STDMETHOD(LoadTopLevelData)(LPD3DXFILEDATA child_data) PURE;
-    STDMETHOD(LoadFrameChildData)(LPD3DXFRAME frame, LPD3DXFILEDATA child_data) PURE;
-    STDMETHOD(LoadMeshChildData)(LPD3DXMESHCONTAINER mesh_container, LPD3DXFILEDATA child_data) PURE;
+    STDMETHOD(LoadTopLevelData)(ID3DXFileData *child_data) PURE;
+    STDMETHOD(LoadFrameChildData)(D3DXFRAME *frame, ID3DXFileData *child_data) PURE;
+    STDMETHOD(LoadMeshChildData)(D3DXMESHCONTAINER *mesh_container, ID3DXFileData *child_data) PURE;
 };
 #undef INTERFACE
 
