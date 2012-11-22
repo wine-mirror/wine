@@ -2814,7 +2814,7 @@ static DWORD wait_for_completion( struct winhttp_request *request )
 
 static HRESULT request_receive( struct winhttp_request *request )
 {
-    DWORD err, size, total_bytes_read, buflen = 4096;
+    DWORD err, size, buflen = 4096;
 
     wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE );
     if (!WinHttpReceiveResponse( request->hrequest, NULL ))
@@ -2829,7 +2829,7 @@ static HRESULT request_receive( struct winhttp_request *request )
     }
     if (!(request->buffer = heap_alloc( buflen ))) return E_OUTOFMEMORY;
     request->buffer[0] = 0;
-    size = total_bytes_read = 0;
+    size = 0;
     do
     {
         wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE );
@@ -2860,7 +2860,6 @@ static HRESULT request_receive( struct winhttp_request *request )
             goto error;
         }
         if ((err = wait_for_completion( request ))) goto error;
-        total_bytes_read += request->bytes_read;
         request->offset += request->bytes_read;
     } while (request->bytes_read);
 
@@ -2913,7 +2912,6 @@ static HRESULT request_send( struct winhttp_request *request )
     char *ptr = NULL;
     LONG size = 0;
     HRESULT hr;
-    BOOL ret;
     DWORD err;
 
     if ((err = request_set_parameters( request ))) return HRESULT_FROM_WIN32( err );
@@ -2952,7 +2950,7 @@ static HRESULT request_send( struct winhttp_request *request )
         }
     }
     wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_REQUEST_SENT );
-    if (!(ret = WinHttpSendRequest( request->hrequest, NULL, 0, ptr, size, size, 0 )))
+    if (!WinHttpSendRequest( request->hrequest, NULL, 0, ptr, size, size, 0 ))
     {
         err = get_last_error();
         goto error;

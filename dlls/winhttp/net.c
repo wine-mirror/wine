@@ -927,14 +927,13 @@ BOOL netconn_get_next_line( netconn_t *conn, char *buffer, DWORD *buflen )
 
 DWORD netconn_set_timeout( netconn_t *netconn, BOOL send, int value )
 {
-    int res;
     struct timeval tv;
 
     /* value is in milliseconds, convert to struct timeval */
     tv.tv_sec = value / 1000;
     tv.tv_usec = (value % 1000) * 1000;
 
-    if ((res = setsockopt( netconn->socket, SOL_SOCKET, send ? SO_SNDTIMEO : SO_RCVTIMEO, (void*)&tv, sizeof(tv) ) == -1))
+    if (setsockopt( netconn->socket, SOL_SOCKET, send ? SO_SNDTIMEO : SO_RCVTIMEO, (void*)&tv, sizeof(tv) ) == -1)
     {
         WARN("setsockopt failed (%s)\n", strerror( errno ));
         return sock_get_error( errno );
