@@ -198,7 +198,7 @@ DECLARE_INTERFACE(ID3DXSaveUserData)
             ID3DXFileSaveObject *save_obj, ID3DXFileSaveData *mesh_data) PURE;
     STDMETHOD(AddTopLevelDataObjectsPre)(ID3DXFileSaveObject *save_obj) PURE;
     STDMETHOD(AddTopLevelDataObjectsPost)(ID3DXFileSaveObject *save_obj) PURE;
-    STDMETHOD(RegisterTemplates)(LPD3DXFILE xfile) PURE;
+    STDMETHOD(RegisterTemplates)(ID3DXFile *file) PURE;
     STDMETHOD(SaveTemplates)(ID3DXFileSaveObject *save_obj) PURE;
 };
 #undef INTERFACE

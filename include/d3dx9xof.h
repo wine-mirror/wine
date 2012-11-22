@@ -66,7 +66,7 @@ typedef interface ID3DXFileSaveData *LPD3DXFILESAVEDATA, **LPLPD3DXFILESAVEDATA;
 typedef interface ID3DXFileEnumObject *LPD3DXFILEENUMOBJECT, **LPLPD3DXFILEENUMOBJECT;
 typedef interface ID3DXFileData *LPD3DXFILEDATA, **LPLPD3DXFILEDATA;
 
-STDAPI D3DXFileCreate(LPD3DXFILE*);
+STDAPI D3DXFileCreate(struct ID3DXFile **file);
 
 #define INTERFACE ID3DXFile
 DECLARE_INTERFACE_IID_(ID3DXFile,IUnknown,"cef08cf9-7b4f-4429-9624-2a690a933201")
@@ -93,7 +93,7 @@ DECLARE_INTERFACE_IID_(ID3DXFileSaveObject,IUnknown,"cef08cfa-7b4f-4429-9624-2a6
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** ID3DXFileSaveObject methods ***/
-    STDMETHOD(GetFile)(THIS_ LPD3DXFILE*) PURE;
+    STDMETHOD(GetFile)(THIS_ ID3DXFile **file) PURE;
     STDMETHOD(AddDataObject)(THIS_ REFGUID template_guid, const char *name, const GUID *guid,
             SIZE_T data_size, const void *data, struct ID3DXFileSaveData **obj) PURE;
     STDMETHOD(Save)(THIS) PURE;
@@ -127,7 +127,7 @@ DECLARE_INTERFACE_IID_(ID3DXFileEnumObject,IUnknown,"cef08cfc-7b4f-4429-9624-2a6
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** ID3DXFileEnumObject methods ***/
-    STDMETHOD(GetFile)(THIS_ LPD3DXFILE*) PURE;
+    STDMETHOD(GetFile)(THIS_ ID3DXFile **file) PURE;
     STDMETHOD(GetChildren)(THIS_ SIZE_T*) PURE;
     STDMETHOD(GetChild)(THIS_ SIZE_T id, struct ID3DXFileData **child) PURE;
     STDMETHOD(GetDataObjectById)(THIS_ REFGUID guid, struct ID3DXFileData **obj) PURE;
