@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Henri Verbeet for CodeWeavers
+ * Copyright 2008-2012 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -391,7 +391,17 @@ static void STDMETHODCALLTYPE d3d10_device_RSSetViewports(ID3D10Device *iface,
 static void STDMETHODCALLTYPE d3d10_device_RSSetScissorRects(ID3D10Device *iface,
         UINT rect_count, const D3D10_RECT *rects)
 {
-    FIXME("iface %p, rect_count %u, rects %p\n", iface, rect_count, rects);
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+
+    TRACE("iface %p, rect_count %u, rects %p.\n", iface, rect_count, rects);
+
+    if (rect_count > 1)
+        FIXME("Multiple scissor rects not implemented.\n");
+
+    if (!rect_count)
+        return;
+
+    wined3d_device_set_scissor_rect(device->wined3d_device, rects);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_CopySubresourceRegion(ID3D10Device *iface,
