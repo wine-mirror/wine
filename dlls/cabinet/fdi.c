@@ -2479,7 +2479,6 @@ BOOL __cdecl FDICopy(
   FDICABINETINFO    fdici;
   FDINOTIFICATION   fdin;
   INT_PTR           cabhf, filehf = 0;
-  int               idx;
   unsigned int      i;
   char              fullpath[MAX_PATH];
   size_t            pathlen, filenamelen;
@@ -2503,8 +2502,8 @@ BOOL __cdecl FDICopy(
   }
   ZeroMemory(decomp_state, sizeof(fdi_decomp_state));
 
-  pathlen = (pszCabPath) ? strlen(pszCabPath) : 0;
-  filenamelen = (pszCabinet) ? strlen(pszCabinet) : 0;
+  pathlen = pszCabPath ? strlen(pszCabPath) : 0;
+  filenamelen = pszCabinet ? strlen(pszCabinet) : 0;
 
   /* slight overestimation here to save CPU cycles in the developer's brain */
   if ((pathlen + filenamelen + 3) > MAX_PATH) {
@@ -2515,12 +2514,11 @@ BOOL __cdecl FDICopy(
   }
 
   /* paste the path and filename together */
-  idx = 0;
-  if (pathlen) {
-    for (i = 0; i < pathlen; i++) fullpath[idx++] = pszCabPath[i];
-  }
-  if (filenamelen) for (i = 0; i < filenamelen; i++) fullpath[idx++] = pszCabinet[i];
-  fullpath[idx] = '\0';
+  fullpath[0] = '\0';
+  if (pathlen)
+    strcpy(fullpath, pszCabPath);
+  if (filenamelen)
+    strcat(fullpath, pszCabinet);
 
   TRACE("full cab path/file name: %s\n", debugstr_a(fullpath));
 
@@ -2540,7 +2538,7 @@ BOOL __cdecl FDICopy(
     fdi->close(cabhf);
     return FALSE;
   }
-   
+
   /* cabinet notification */
   ZeroMemory(&fdin, sizeof(FDINOTIFICATION));
   fdin.setID = fdici.setID;
