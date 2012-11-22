@@ -34,10 +34,10 @@
 40 stdcall AtlAxCreateControlEx(ptr ptr ptr ptr ptr ptr ptr) atl100.AtlAxCreateControlEx
 41 stdcall AtlAxAttachControl(ptr ptr ptr) atl100.AtlAxAttachControl
 42 stdcall AtlAxWinInit() atl100.AtlAxWinInit
-43 stdcall AtlModuleAddCreateWndData(ptr ptr ptr) atl100.AtlModuleAddCreateWndData
-44 stdcall AtlModuleExtractCreateWndData(ptr) atl100.AtlModuleExtractCreateWndData
-45 stdcall AtlModuleRegisterWndClassInfoW(ptr ptr ptr) atl100.AtlModuleRegisterWndClassInfoW
-46 stdcall AtlModuleRegisterWndClassInfoA(ptr ptr ptr) atl100.AtlModuleRegisterWndClassInfoA
+43 stdcall AtlModuleAddCreateWndData(ptr ptr ptr)
+44 stdcall AtlModuleExtractCreateWndData(ptr)
+45 stdcall AtlModuleRegisterWndClassInfoW(ptr ptr ptr)
+46 stdcall AtlModuleRegisterWndClassInfoA(ptr ptr ptr)
 47 stdcall AtlAxGetControl(long ptr) atl100.AtlAxGetControl
 48 stdcall AtlAxGetHost(long ptr) atl100.AtlAxGetHost
 49 stub AtlRegisterClassCategoriesHelper
