@@ -30,8 +30,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
 
-static HINSTANCE hdnsapi;
-
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
     TRACE( "(%p, %d, %p)\n", hinst, reason, reserved );
@@ -41,7 +39,6 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     case DLL_WINE_PREATTACH:
         return FALSE;  /* prefer native version */
     case DLL_PROCESS_ATTACH:
-        hdnsapi = hinst;
         DisableThreadLibraryCalls( hinst );
         break;
     case DLL_PROCESS_DETACH:
