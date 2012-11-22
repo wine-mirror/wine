@@ -196,10 +196,10 @@ DECLARE_INTERFACE(ID3DXSaveUserData)
             ID3DXFileSaveObject *save_obj, ID3DXFileSaveData *frame_data) PURE;
     STDMETHOD(AddMeshChildData)(const D3DXMESHCONTAINER *mesh_container,
             ID3DXFileSaveObject *save_obj, ID3DXFileSaveData *mesh_data) PURE;
-    STDMETHOD(AddTopLevelDataObjectsPre)(LPD3DXFILESAVEOBJECT save_obj) PURE;
-    STDMETHOD(AddTopLevelDataObjectsPost)(LPD3DXFILESAVEOBJECT save_obj) PURE;
+    STDMETHOD(AddTopLevelDataObjectsPre)(ID3DXFileSaveObject *save_obj) PURE;
+    STDMETHOD(AddTopLevelDataObjectsPost)(ID3DXFileSaveObject *save_obj) PURE;
     STDMETHOD(RegisterTemplates)(LPD3DXFILE xfile) PURE;
-    STDMETHOD(SaveTemplates)(LPD3DXFILESAVEOBJECT save_obj) PURE;
+    STDMETHOD(SaveTemplates)(ID3DXFileSaveObject *save_obj) PURE;
 };
 #undef INTERFACE
 
