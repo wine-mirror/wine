@@ -41,6 +41,7 @@ static HRESULT (WINAPI * pCoGetObjectContext)(REFIID riid, LPVOID *ppv);
 static HRESULT (WINAPI * pCoSwitchCallContext)(IUnknown *pObject, IUnknown **ppOldObject);
 static HRESULT (WINAPI * pCoGetTreatAsClass)(REFCLSID clsidOld, LPCLSID pClsidNew);
 static HRESULT (WINAPI * pCoGetContextToken)(ULONG_PTR *token);
+static LONG (WINAPI * pRegOverridePredefKey)(HKEY key, HKEY override);
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
 #define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %d\n", cLocks)
@@ -715,6 +716,8 @@ static void test_CoGetPSClsid(void)
 {
     HRESULT hr;
     CLSID clsid;
+    HKEY hkey;
+    LONG res;
 
     hr = CoGetPSClsid(&IID_IClassFactory, &clsid);
     ok(hr == CO_E_NOTINITIALIZED,
@@ -736,6 +739,28 @@ static void test_CoGetPSClsid(void)
        "CoGetPSClsid for null clsid returned 0x%08x instead of E_INVALIDARG\n",
        hr);
 
+    if (!pRegOverridePredefKey)
+    {
+        win_skip("RegOverridePredefKey not available\n");
+        CoUninitialize();
+        return;
+    }
+    hr = CoGetPSClsid(&IID_IClassFactory, &clsid);
+    ok_ole_success(hr, "CoGetPSClsid");
+
+    res = RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Classes", 0, KEY_ALL_ACCESS, &hkey);
+    ok(!res, "RegOpenKeyExA returned %d\n", res);
+
+    res = pRegOverridePredefKey(HKEY_CLASSES_ROOT, hkey);
+    ok(!res, "RegOverridePredefKey returned %d\n", res);
+
+    hr = CoGetPSClsid(&IID_IClassFactory, &clsid);
+    todo_wine ok_ole_success(hr, "CoGetPSClsid");
+
+    res = pRegOverridePredefKey(HKEY_CLASSES_ROOT, NULL);
+    ok(!res, "RegOverridePredefKey returned %d\n", res);
+
+    RegCloseKey(hkey);
     CoUninitialize();
 }
 
@@ -1512,10 +1537,12 @@ static void test_CoInitializeEx(void)
 START_TEST(compobj)
 {
     HMODULE hOle32 = GetModuleHandle("ole32");
+    HMODULE hAdvapi32 = GetModuleHandle("advapi32");
     pCoGetObjectContext = (void*)GetProcAddress(hOle32, "CoGetObjectContext");
     pCoSwitchCallContext = (void*)GetProcAddress(hOle32, "CoSwitchCallContext");
     pCoGetTreatAsClass = (void*)GetProcAddress(hOle32,"CoGetTreatAsClass");
     pCoGetContextToken = (void*)GetProcAddress(hOle32, "CoGetContextToken");
+    pRegOverridePredefKey = (void*)GetProcAddress(hAdvapi32, "RegOverridePredefKey");
     if (!(pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx")))
     {
         trace("You need DCOM95 installed to run this test\n");
