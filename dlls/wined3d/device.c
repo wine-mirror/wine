@@ -1559,6 +1559,47 @@ UINT CDECL wined3d_device_get_available_texture_mem(const struct wined3d_device 
     return device->adapter->TextureRam - device->adapter->UsedTextureRam;
 }
 
+void CDECL wined3d_device_set_stream_output(struct wined3d_device *device, UINT idx,
+        struct wined3d_buffer *buffer, UINT offset)
+{
+    struct wined3d_buffer *prev_buffer;
+
+    TRACE("device %p, idx %u, buffer %p, offset %u.\n", device, idx, buffer, offset);
+
+    if (idx >= MAX_STREAM_OUT)
+    {
+        WARN("Invalid stream output %u.\n", idx);
+        return;
+    }
+
+    prev_buffer = device->updateStateBlock->state.stream_output[idx].buffer;
+    device->updateStateBlock->state.stream_output[idx].buffer = buffer;
+    device->updateStateBlock->state.stream_output[idx].offset = offset;
+
+    if (device->isRecordingState)
+    {
+        if (buffer)
+            wined3d_buffer_incref(buffer);
+        if (prev_buffer)
+            wined3d_buffer_decref(buffer);
+        return;
+    }
+
+    if (prev_buffer != buffer)
+    {
+        if (buffer)
+        {
+            InterlockedIncrement(&buffer->resource.bind_count);
+            wined3d_buffer_incref(buffer);
+        }
+        if (prev_buffer)
+        {
+            InterlockedDecrement(&prev_buffer->resource.bind_count);
+            wined3d_buffer_decref(prev_buffer);
+        }
+    }
+}
+
 HRESULT CDECL wined3d_device_set_stream_source(struct wined3d_device *device, UINT stream_idx,
         struct wined3d_buffer *buffer, UINT offset, UINT stride)
 {

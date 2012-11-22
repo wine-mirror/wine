@@ -347,7 +347,24 @@ static void STDMETHODCALLTYPE d3d10_device_OMSetDepthStencilState(ID3D10Device *
 static void STDMETHODCALLTYPE d3d10_device_SOSetTargets(ID3D10Device *iface,
         UINT target_count, ID3D10Buffer *const *targets, const UINT *offsets)
 {
-    FIXME("iface %p, target_count %u, targets %p, offsets %p stub!\n", iface, target_count, targets, offsets);
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+    unsigned int count, i;
+
+    TRACE("iface %p, target_count %u, targets %p, offsets %p.\n", iface, target_count, targets, offsets);
+
+    count = min(target_count, 4);
+    for (i = 0; i < count; ++i)
+    {
+        struct d3d10_buffer *buffer = unsafe_impl_from_ID3D10Buffer(targets[i]);
+
+        wined3d_device_set_stream_output(device->wined3d_device, i,
+                buffer ? buffer->wined3d_buffer : NULL, offsets[i]);
+    }
+
+    for (i = count; i < 4; ++i)
+    {
+        wined3d_device_set_stream_output(device->wined3d_device, i, NULL, 0);
+    }
 }
 
 static void STDMETHODCALLTYPE d3d10_device_DrawAuto(ID3D10Device *iface)
