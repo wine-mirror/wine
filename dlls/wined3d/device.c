@@ -1600,6 +1600,21 @@ void CDECL wined3d_device_set_stream_output(struct wined3d_device *device, UINT 
     }
 }
 
+struct wined3d_buffer * CDECL wined3d_device_get_stream_output(struct wined3d_device *device,
+        UINT idx, UINT *offset)
+{
+    TRACE("device %p, idx %u, offset %p.\n", device, idx, offset);
+
+    if (idx >= MAX_STREAM_OUT)
+    {
+        WARN("Invalid stream output %u.\n", idx);
+        return NULL;
+    }
+
+    *offset = device->stateBlock->state.stream_output[idx].offset;
+    return device->stateBlock->state.stream_output[idx].buffer;
+}
+
 HRESULT CDECL wined3d_device_set_stream_source(struct wined3d_device *device, UINT stream_idx,
         struct wined3d_buffer *buffer, UINT offset, UINT stride)
 {

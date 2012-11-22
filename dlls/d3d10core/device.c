@@ -713,8 +713,27 @@ static void STDMETHODCALLTYPE d3d10_device_OMGetDepthStencilState(ID3D10Device *
 static void STDMETHODCALLTYPE d3d10_device_SOGetTargets(ID3D10Device *iface,
         UINT buffer_count, ID3D10Buffer **buffers, UINT *offsets)
 {
-    FIXME("iface %p, buffer_count %u, buffers %p, offsets %p stub!\n",
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+    unsigned int i;
+
+    TRACE("iface %p, buffer_count %u, buffers %p, offsets %p.\n",
             iface, buffer_count, buffers, offsets);
+
+    for (i = 0; i < buffer_count; ++i)
+    {
+        struct wined3d_buffer *wined3d_buffer;
+        struct d3d10_buffer *buffer_impl;
+
+        if (!(wined3d_buffer = wined3d_device_get_stream_output(device->wined3d_device, i, &offsets[i])))
+        {
+            buffers[i] = NULL;
+            continue;
+        }
+
+        buffer_impl = wined3d_buffer_get_parent(wined3d_buffer);
+        buffers[i] = &buffer_impl->ID3D10Buffer_iface;
+        ID3D10Buffer_AddRef(buffers[i]);
+    }
 }
 
 static void STDMETHODCALLTYPE d3d10_device_RSGetState(ID3D10Device *iface, ID3D10RasterizerState **rasterizer_state)
