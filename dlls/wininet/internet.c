@@ -430,11 +430,11 @@ BOOL INTERNET_FindProxyForProtocol(LPCWSTR szProxy, LPCWSTR proto, WCHAR *foundP
         /* It wasn't found: look for no protocol */
         for (ptr = szProxy; !ret && ptr && *ptr; )
         {
-            LPCWSTR end, equal;
+            LPCWSTR end;
 
             if (!(end = strchrW(ptr, ' ')))
                 end = ptr + strlenW(ptr);
-            if (!(equal = strchrW(ptr, '=')))
+            if (!strchrW(ptr, '='))
             {
                 if (end - ptr + 1 > *foundProxyLen)
                 {
