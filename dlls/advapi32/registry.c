@@ -284,6 +284,8 @@ LSTATUS WINAPI RegOverridePredefKey( HKEY hkey, HKEY override )
     HKEY old_key;
     int idx;
 
+    TRACE("(%p %p)\n", hkey, override);
+
     if ((hkey < HKEY_SPECIAL_ROOT_FIRST) || (hkey > HKEY_SPECIAL_ROOT_LAST))
         return ERROR_INVALID_PARAMETER;
     idx = (UINT_PTR)hkey - (UINT_PTR)HKEY_SPECIAL_ROOT_FIRST;
