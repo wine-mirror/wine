@@ -93,7 +93,8 @@ DECLARE_INTERFACE_IID_(ID3DXFileSaveObject,IUnknown,"cef08cfa-7b4f-4429-9624-2a6
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** ID3DXFileSaveObject methods ***/
     STDMETHOD(GetFile)(THIS_ LPD3DXFILE*) PURE;
-    STDMETHOD(AddDataObject)(THIS_ REFGUID, LPCSTR, CONST GUID*, SIZE_T, LPCVOID, LPD3DXFILESAVEDATA*) PURE;
+    STDMETHOD(AddDataObject)(THIS_ REFGUID template_guid, const char *name, const GUID *guid,
+            SIZE_T data_size, const void *data, struct ID3DXFileSaveData **obj) PURE;
     STDMETHOD(Save)(THIS) PURE;
 };
 #undef INTERFACE
@@ -110,7 +111,8 @@ DECLARE_INTERFACE_IID_(ID3DXFileSaveData,IUnknown,"cef08cfb-7b4f-4429-9624-2a690
     STDMETHOD(GetName)(THIS_ LPSTR, SIZE_T*) PURE;
     STDMETHOD(GetId)(THIS_ LPGUID) PURE;
     STDMETHOD(GetType)(THIS_ GUID*) PURE;
-    STDMETHOD(AddDataObject)(THIS_ REFGUID, LPCSTR, CONST GUID*, SIZE_T, LPCVOID, LPD3DXFILESAVEDATA*) PURE;
+    STDMETHOD(AddDataObject)(THIS_ REFGUID template_guid, const char *name, const GUID *guid,
+            SIZE_T data_size, const void *data, ID3DXFileSaveData **obj) PURE;
     STDMETHOD(AddDataReference)(THIS_ LPCSTR, CONST GUID*) PURE;
 };
 #undef INTERFACE
