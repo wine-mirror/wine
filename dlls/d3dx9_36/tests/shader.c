@@ -334,7 +334,7 @@ static void test_find_shader_comment(void)
 
 static void test_get_shader_constant_table_ex(void)
 {
-    LPD3DXCONSTANTTABLE constant_table = NULL;
+    ID3DXConstantTable *constant_table = NULL;
     HRESULT hr;
     LPVOID data;
     DWORD size;
