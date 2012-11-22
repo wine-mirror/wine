@@ -595,7 +595,7 @@ HRESULT node_clone(xmlnode *This, VARIANT_BOOL deep, IXMLDOMNode **cloneNode)
     clone = xmlCopyNode(This->node, deep ? 1 : 2);
     if (clone)
     {
-        clone->doc = This->node->doc;
+        xmlSetTreeDoc(clone, This->node->doc);
         xmldoc_add_orphan(clone->doc, clone);
 
         node = create_node(clone);

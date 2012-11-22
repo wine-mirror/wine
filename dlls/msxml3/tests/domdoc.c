@@ -6073,7 +6073,7 @@ static void test_cloneNode(void )
     IXMLDOMNamedNodeMap *mapAttr;
     LONG length, length1;
     LONG attr_cnt, attr_cnt1;
-    IXMLDOMNode *node;
+    IXMLDOMNode *node, *attr;
     IXMLDOMNode *node_clone;
     IXMLDOMNode *node_first;
     HRESULT hr;
@@ -6134,6 +6134,11 @@ static void test_cloneNode(void )
     hr = IXMLDOMNamedNodeMap_get_length(mapAttr, &attr_cnt1);
     ok( hr == S_OK, "ret %08x\n", hr );
     ok(attr_cnt1 == 3, "got %d\n", attr_cnt1);
+    /* now really get some attributes from cloned element */
+    attr = NULL;
+    hr = IXMLDOMNamedNodeMap_getNamedItem(mapAttr, _bstr_("id"), &attr);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    IXMLDOMNode_Release(attr);
     IXMLDOMNamedNodeMap_Release(mapAttr);
 
     ok(length == length1, "wrong Child count (%d, %d)\n", length, length1);
