@@ -107,7 +107,6 @@ typedef struct {
 } codecvt_char;
 
 MSVCP_bool __thiscall codecvt_base_always_noconv(const codecvt_base*);
-int codecvt_char_unshift(const codecvt_char*, int*, char*, char*, char**);
 int __thiscall codecvt_char_out(const codecvt_char*, int*, const char*,
         const char*, const char**, char*, char*, char**);
 int __thiscall codecvt_char_in(const codecvt_char*, int*, const char*,
@@ -125,7 +124,6 @@ typedef struct {
     _Cvtvec cvt;
 } codecvt_wchar;
 
-int codecvt_wchar_unshift(const codecvt_wchar*, int*, char*, char*, char**);
 int __thiscall codecvt_wchar_out(const codecvt_wchar*, int*, const wchar_t*,
         const wchar_t*, const wchar_t**, char*, char*, char**);
 int __thiscall codecvt_wchar_in(const codecvt_wchar*, int*, const char*,
@@ -171,7 +169,6 @@ void __thiscall locale_dtor(locale*);
 void free_locale(void);
 locale* __thiscall locale__Addfac(locale*, locale_facet*, MSVCP_size_t, MSVCP_size_t);
 codecvt_char* codecvt_char_use_facet(const locale*);
-codecvt_wchar* codecvt_wchar_use_facet(const locale*);
 codecvt_wchar* codecvt_short_use_facet(const locale*);
 ctype_char* ctype_char_use_facet(const locale*);
 ctype_wchar* ctype_wchar_use_facet(const locale*);

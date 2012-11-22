@@ -2551,15 +2551,6 @@ int __thiscall codecvt_char_do_unshift(const codecvt_char *this,
     return CODECVT_noconv;
 }
 
-/* ?unshift@?$codecvt@DDH@std@@QBEHAAHPAD1AAPAD@Z */
-/* ?unshift@?$codecvt@DDH@std@@QEBAHAEAHPEAD1AEAPEAD@Z */
-int codecvt_char_unshift(const codecvt_char *this,
-        int *state, char *to, char *to_end, char **to_next)
-{
-    TRACE("(%p %p %p %p %p)\n", this, state, to, to_end, to_next);
-    return call_codecvt_char_do_unshift(this, state, to, to_end, to_next);
-}
-
 /* ?do_length@?$codecvt@DDH@std@@MBEHABHPBD1I@Z */
 /* ?do_length@?$codecvt@DDH@std@@MEBAHAEBHPEBD1_K@Z */
 #define call_codecvt_char_do_length(this, state, from, from_end, max) CALL_VTBL_FUNC(this, 28, \
@@ -2696,7 +2687,7 @@ static MSVCP_size_t codecvt_wchar__Getcat(const locale_facet **facet, const loca
     return LC_CTYPE;
 }
 
-codecvt_wchar* codecvt_wchar_use_facet(const locale *loc)
+static codecvt_wchar* codecvt_wchar_use_facet(const locale *loc)
 {
     static codecvt_wchar *obj = NULL;
 
@@ -2924,17 +2915,6 @@ int __thiscall codecvt_wchar_do_unshift(const codecvt_wchar *this,
 
     *to_next = to;
     return CODECVT_ok;
-}
-
-/* ?unshift@?$codecvt@GDH@std@@QBEHAAHPAD1AAPAD@Z */
-/* ?unshift@?$codecvt@GDH@std@@QEBAHAEAHPEAD1AEAPEAD@Z */
-/* ?unshift@?$codecvt@_WDH@std@@QBEHAAHPAD1AAPAD@Z */
-/* ?unshift@?$codecvt@_WDH@std@@QEBAHAEAHPEAD1AEAPEAD@Z */
-int codecvt_wchar_unshift(const codecvt_wchar *this,
-        int *state, char *to, char *to_end, char **to_next)
-{
-    TRACE("(%p %p %p %p %p)\n", this, state, to, to_end, to_next);
-    return call_codecvt_wchar_do_unshift(this, state, to, to_end, to_next);
 }
 
 /* ?do_length@?$codecvt@GDH@std@@MBEHABHPBD1I@Z */
