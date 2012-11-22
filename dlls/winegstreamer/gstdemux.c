@@ -1400,19 +1400,19 @@ static inline GSTOutPin *impl_from_IQualityControl( IQualityControl *iface )
     return (GSTOutPin*)CONTAINING_RECORD(iface, GSTOutPin, IQualityControl_iface);
 }
 
-HRESULT WINAPI GST_QualityControl_QueryInterface(IQualityControl *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI GST_QualityControl_QueryInterface(IQualityControl *iface, REFIID riid, void **ppv)
 {
     GSTOutPin *pin = impl_from_IQualityControl(iface);
     return IPin_QueryInterface((IPin*)pin, riid, ppv);
 }
 
-ULONG WINAPI GST_QualityControl_AddRef(IQualityControl *iface)
+static ULONG WINAPI GST_QualityControl_AddRef(IQualityControl *iface)
 {
     GSTOutPin *pin = impl_from_IQualityControl(iface);
     return IPin_AddRef((IPin*)pin);
 }
 
-ULONG WINAPI GST_QualityControl_Release(IQualityControl *iface)
+static ULONG WINAPI GST_QualityControl_Release(IQualityControl *iface)
 {
     GSTOutPin *pin = impl_from_IQualityControl(iface);
     return IPin_Release((IPin*)pin);
@@ -1427,7 +1427,7 @@ static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFil
     return S_OK;
 }
 
-HRESULT WINAPI GST_QualityControl_SetSink(IQualityControl *iface, IQualityControl *tonotify)
+static HRESULT WINAPI GST_QualityControl_SetSink(IQualityControl *iface, IQualityControl *tonotify)
 {
     /* Do nothing */
     return S_OK;
