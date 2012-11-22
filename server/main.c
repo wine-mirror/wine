@@ -46,18 +46,18 @@ const char *server_argv0;
 
 /* parse-line args */
 
-static void usage(void)
+static void usage( FILE *fh )
 {
-    fprintf(stderr, "Usage: %s [options]\n\n", server_argv0);
-    fprintf(stderr, "Options:\n");
-    fprintf(stderr, "   -d[n], --debug[=n]       set debug level to n or +1 if n not specified\n");
-    fprintf(stderr, "   -f,    --foreground      remain in the foreground for debugging\n");
-    fprintf(stderr, "   -h,    --help            display this help message\n");
-    fprintf(stderr, "   -k[n], --kill[=n]        kill the current wineserver, optionally with signal n\n");
-    fprintf(stderr, "   -p[n], --persistent[=n]  make server persistent, optionally for n seconds\n");
-    fprintf(stderr, "   -v,    --version         display version information and exit\n");
-    fprintf(stderr, "   -w,    --wait            wait until the current wineserver terminates\n");
-    fprintf(stderr, "\n");
+    fprintf(fh, "Usage: %s [options]\n\n", server_argv0);
+    fprintf(fh, "Options:\n");
+    fprintf(fh, "   -d[n], --debug[=n]       set debug level to n or +1 if n not specified\n");
+    fprintf(fh, "   -f,    --foreground      remain in the foreground for debugging\n");
+    fprintf(fh, "   -h,    --help            display this help message\n");
+    fprintf(fh, "   -k[n], --kill[=n]        kill the current wineserver, optionally with signal n\n");
+    fprintf(fh, "   -p[n], --persistent[=n]  make server persistent, optionally for n seconds\n");
+    fprintf(fh, "   -v,    --version         display version information and exit\n");
+    fprintf(fh, "   -w,    --wait            wait until the current wineserver terminates\n");
+    fprintf(fh, "\n");
 }
 
 static void parse_args( int argc, char *argv[] )
@@ -92,7 +92,7 @@ static void parse_args( int argc, char *argv[] )
                 foreground = 1;
                 break;
             case 'h':
-                usage();
+                usage(stdout);
                 exit(0);
                 break;
             case 'k':
@@ -114,7 +114,7 @@ static void parse_args( int argc, char *argv[] )
                 wait_for_lock();
                 exit(0);
             default:
-                usage();
+                usage(stderr);
                 exit(1);
         }
     }
