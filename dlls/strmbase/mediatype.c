@@ -147,7 +147,7 @@ HRESULT WINAPI EnumMediaTypes_Construct(BasePin *basePin, BasePin_GetMediaType e
 
 static HRESULT WINAPI IEnumMediaTypesImpl_QueryInterface(IEnumMediaTypes * iface, REFIID riid, LPVOID * ppv)
 {
-    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
 
     *ppv = NULL;
 
@@ -201,12 +201,13 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Next(IEnumMediaTypes * iface, ULONG cM
     ULONG cFetched;
     IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
 
+    TRACE("(%p)->(%u, %p, %p)\n", iface, cMediaTypes, ppMediaTypes, pcFetched);
+
     cFetched = min(This->enumMediaDetails.cMediaTypes, This->uIndex + cMediaTypes) - This->uIndex;
 
     if (This->currentVersion != This->mediaVersionFunction(This->basePin))
         return VFW_E_ENUM_OUT_OF_SYNC;
 
-    TRACE("(%u, %p, %p)\n", cMediaTypes, ppMediaTypes, pcFetched);
     TRACE("Next uIndex: %u, cFetched: %u\n", This->uIndex, cFetched);
 
     if (cFetched > 0)
@@ -236,7 +237,8 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Skip(IEnumMediaTypes * iface, ULONG cM
 {
     IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
 
-    TRACE("(%u)\n", cMediaTypes);
+    TRACE("(%p)->(%u)\n", iface, cMediaTypes);
+
     if (This->currentVersion != This->mediaVersionFunction(This->basePin))
         return VFW_E_ENUM_OUT_OF_SYNC;
 
@@ -254,7 +256,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Reset(IEnumMediaTypes * iface)
     AM_MEDIA_TYPE amt;
     IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
 
-    TRACE("()\n");
+    TRACE("(%p)->()\n", iface);
 
     for (i = 0; i < This->enumMediaDetails.cMediaTypes; i++)
         FreeMediaType(&This->enumMediaDetails.pMediaTypes[i]);
@@ -288,7 +290,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Clone(IEnumMediaTypes * iface, IEnumMe
     HRESULT hr;
     IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
 
-    TRACE("(%p)\n", ppEnum);
+    TRACE("(%p)->(%p)\n", iface, ppEnum);
 
     hr = EnumMediaTypes_Construct(This->basePin, This->enumMediaFunction, This->mediaVersionFunction, ppEnum);
     if (FAILED(hr))
