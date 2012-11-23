@@ -650,7 +650,7 @@ static HRESULT WINAPI PngDecoder_GetFrame(IWICBitmapDecoder *iface,
     PngDecoder *This = impl_from_IWICBitmapDecoder(iface);
     TRACE("(%p,%u,%p)\n", iface, index, ppIBitmapFrame);
 
-    if (!This->initialized) return WINCODEC_ERR_NOTINITIALIZED;
+    if (!This->initialized) return WINCODEC_ERR_FRAMEMISSING;
 
     if (index != 0) return E_INVALIDARG;
 

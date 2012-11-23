@@ -631,7 +631,7 @@ static HRESULT WINAPI IcoDecoder_GetFrame(IWICBitmapDecoder *iface,
 
     if (!This->initialized)
     {
-        hr = WINCODEC_ERR_NOTINITIALIZED;
+        hr = WINCODEC_ERR_FRAMEMISSING;
         goto fail;
     }
 

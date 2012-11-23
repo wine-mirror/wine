@@ -1271,7 +1271,7 @@ static HRESULT WINAPI GifDecoder_GetFrame(IWICBitmapDecoder *iface,
     GifFrameDecode *result;
     TRACE("(%p,%u,%p)\n", iface, index, ppIBitmapFrame);
 
-    if (!This->initialized) return WINCODEC_ERR_NOTINITIALIZED;
+    if (!This->initialized) return WINCODEC_ERR_FRAMEMISSING;
 
     if (index >= This->gif->ImageCount) return E_INVALIDARG;
 

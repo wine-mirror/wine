@@ -415,7 +415,7 @@ static HRESULT WINAPI TgaDecoder_GetFrame(IWICBitmapDecoder *iface,
     TgaDecoder *This = impl_from_IWICBitmapDecoder(iface);
     TRACE("(%p,%p)\n", iface, ppIBitmapFrame);
 
-    if (!This->initialized) return WINCODEC_ERR_NOTINITIALIZED;
+    if (!This->initialized) return WINCODEC_ERR_FRAMEMISSING;
 
     if (index != 0) return E_INVALIDARG;
 

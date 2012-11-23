@@ -1124,7 +1124,7 @@ static HRESULT WINAPI BmpDecoder_GetFrame(IWICBitmapDecoder *iface,
 
     if (index != 0) return E_INVALIDARG;
 
-    if (!This->stream) return WINCODEC_ERR_WRONGSTATE;
+    if (!This->stream) return WINCODEC_ERR_FRAMEMISSING;
 
     *ppIBitmapFrame = &This->IWICBitmapFrameDecode_iface;
     IWICBitmapDecoder_AddRef(iface);
