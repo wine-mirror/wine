@@ -170,21 +170,21 @@ static HRESULT WINAPI IEnumMediaTypesImpl_QueryInterface(IEnumMediaTypes * iface
 static ULONG WINAPI IEnumMediaTypesImpl_AddRef(IEnumMediaTypes * iface)
 {
     IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
-    ULONG refCount = InterlockedIncrement(&This->refCount);
+    ULONG ref = InterlockedIncrement(&This->refCount);
 
-    TRACE("(%p)->() AddRef from %d\n", iface, refCount - 1);
+    TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
-    return refCount;
+    return ref;
 }
 
 static ULONG WINAPI IEnumMediaTypesImpl_Release(IEnumMediaTypes * iface)
 {
     IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
-    ULONG refCount = InterlockedDecrement(&This->refCount);
+    ULONG ref = InterlockedDecrement(&This->refCount);
 
-    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
+    TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
-    if (!refCount)
+    if (!ref)
     {
         ULONG i;
         for (i = 0; i < This->enumMediaDetails.cMediaTypes; i++)
@@ -193,7 +193,7 @@ static ULONG WINAPI IEnumMediaTypesImpl_Release(IEnumMediaTypes * iface)
         IPin_Release(&This->basePin->IPin_iface);
         CoTaskMemFree(This);
     }
-    return refCount;
+    return ref;
 }
 
 static HRESULT WINAPI IEnumMediaTypesImpl_Next(IEnumMediaTypes * iface, ULONG cMediaTypes, AM_MEDIA_TYPE ** ppMediaTypes, ULONG * pcFetched)
