@@ -185,6 +185,7 @@ static void test_QueryCapability(void)
     HRESULT hr;
     IStream *stream;
     IWICBitmapDecoder *decoder;
+    IWICBitmapFrameDecode *frame;
     static const DWORD exp_caps = WICBitmapDecoderCapabilityCanDecodeAllImages |
                                   WICBitmapDecoderCapabilityCanDecodeSomeImages |
                                   WICBitmapDecoderCapabilityCanEnumerateMetadata;
@@ -206,6 +207,9 @@ static void test_QueryCapability(void)
     ok(hr == S_OK || broken(hr == E_POINTER) /* XP */, "GetFrameCount error %#x\n", hr);
     ok(frame_count == 0, "expected 0, got %u\n", frame_count);
 
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == WINCODEC_ERR_FRAMEMISSING || broken(hr == E_POINTER) /* XP */, "expected WINCODEC_ERR_FRAMEMISSING, got %#x\n", hr);
+
     pos.QuadPart = 4;
     hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek error %#x\n", hr);
@@ -220,6 +224,10 @@ static void test_QueryCapability(void)
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
     ok(hr == S_OK, "GetFrameCount error %#x\n", hr);
     ok(frame_count == 1, "expected 1, got %u\n", frame_count);
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+    IWICBitmapFrameDecode_Release(frame);
 
     pos.QuadPart = 0;
     hr = IStream_Seek(stream, pos, SEEK_CUR, &cur_pos);
@@ -250,6 +258,10 @@ todo_wine
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
     ok(hr == S_OK, "GetFrameCount error %#x\n", hr);
     ok(frame_count == 1, "expected 1, got %u\n", frame_count);
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+    IWICBitmapFrameDecode_Release(frame);
 
     hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnDemand);
     ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#x\n", hr);

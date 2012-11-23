@@ -702,7 +702,7 @@ static HRESULT WINAPI TiffDecoder_GetFrame(IWICBitmapDecoder *iface,
     TRACE("(%p,%u,%p)\n", iface, index, ppIBitmapFrame);
 
     if (!This->tiff)
-        return WINCODEC_ERR_WRONGSTATE;
+        return WINCODEC_ERR_FRAMEMISSING;
 
     EnterCriticalSection(&This->lock);
     res = pTIFFSetDirectory(This->tiff, index);
