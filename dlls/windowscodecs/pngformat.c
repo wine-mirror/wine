@@ -640,6 +640,8 @@ static HRESULT WINAPI PngDecoder_GetThumbnail(IWICBitmapDecoder *iface,
 static HRESULT WINAPI PngDecoder_GetFrameCount(IWICBitmapDecoder *iface,
     UINT *pCount)
 {
+    if (!pCount) return E_INVALIDARG;
+
     *pCount = 1;
     return S_OK;
 }
