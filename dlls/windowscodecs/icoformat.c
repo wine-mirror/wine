@@ -489,11 +489,20 @@ static ULONG WINAPI IcoDecoder_Release(IWICBitmapDecoder *iface)
     return ref;
 }
 
-static HRESULT WINAPI IcoDecoder_QueryCapability(IWICBitmapDecoder *iface, IStream *pIStream,
-    DWORD *pdwCapability)
+static HRESULT WINAPI IcoDecoder_QueryCapability(IWICBitmapDecoder *iface, IStream *stream,
+    DWORD *capability)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, pIStream, pdwCapability);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p,%p,%p)\n", iface, stream, capability);
+
+    if (!stream || !capability) return E_INVALIDARG;
+
+    hr = IWICBitmapDecoder_Initialize(iface, stream, WICDecodeMetadataCacheOnDemand);
+    if (hr != S_OK) return hr;
+
+    *capability = WICBitmapDecoderCapabilityCanDecodeAllImages;
+    return S_OK;
 }
 
 static HRESULT WINAPI IcoDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
