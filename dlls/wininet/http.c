@@ -2980,30 +2980,26 @@ done:
 
 static void HTTPREQ_AsyncReadFileExWProc(WORKREQUEST *workRequest)
 {
-    struct WORKREQ_INTERNETREADFILEEXW const *data = &workRequest->u.InternetReadFileExW;
+    struct WORKREQ_HTTPREADFILEEX const *data = &workRequest->u.HttpReadFileEx;
     http_request_t *req = (http_request_t*)workRequest->hdr;
     DWORD res;
 
     TRACE("INTERNETREADFILEEXW %p\n", workRequest->hdr);
 
-    res = HTTPREQ_Read(req, data->lpBuffersOut->lpvBuffer,
-            data->lpBuffersOut->dwBufferLength, &data->lpBuffersOut->dwBufferLength, TRUE);
+    res = HTTPREQ_Read(req, data->buf, data->size, data->ret_read, TRUE);
 
     send_request_complete(req, res == ERROR_SUCCESS, res);
 }
 
-static DWORD HTTPREQ_ReadFileExW(object_header_t *hdr, INTERNET_BUFFERSW *buffers,
+static DWORD HTTPREQ_ReadFileExW(object_header_t *hdr, void *buf, DWORD size, DWORD *ret_read,
         DWORD flags, DWORD_PTR context)
 {
 
     http_request_t *req = (http_request_t*)hdr;
-    DWORD res, size, read, error = ERROR_SUCCESS;
+    DWORD res, read, cread, error = ERROR_SUCCESS;
 
     if (flags & ~(IRF_ASYNC|IRF_NO_WAIT))
         FIXME("these dwFlags aren't implemented: 0x%x\n", flags & ~(IRF_ASYNC|IRF_NO_WAIT));
-
-    if (buffers->dwStructSize != sizeof(*buffers))
-        return ERROR_INVALID_PARAMETER;
 
     INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
@@ -3015,9 +3011,7 @@ static DWORD HTTPREQ_ReadFileExW(object_header_t *hdr, INTERNET_BUFFERSW *buffer
         {
             if (get_avail_data(req))
             {
-                res = HTTPREQ_Read(req, buffers->lpvBuffer, buffers->dwBufferLength,
-                                   &buffers->dwBufferLength, FALSE);
-                size = buffers->dwBufferLength;
+                res = HTTPREQ_Read(req, buf, size, &read, FALSE);
                 LeaveCriticalSection( &req->read_section );
                 goto done;
             }
@@ -3026,7 +3020,9 @@ static DWORD HTTPREQ_ReadFileExW(object_header_t *hdr, INTERNET_BUFFERSW *buffer
 
         workRequest.asyncproc = HTTPREQ_AsyncReadFileExWProc;
         workRequest.hdr = WININET_AddRef(&req->hdr);
-        workRequest.u.InternetReadFileExW.lpBuffersOut = buffers;
+        workRequest.u.HttpReadFileEx.buf = buf;
+        workRequest.u.HttpReadFileEx.size = size;
+        workRequest.u.HttpReadFileEx.ret_read = ret_read;
 
         INTERNET_AsyncCall(&workRequest);
 
@@ -3034,7 +3030,6 @@ static DWORD HTTPREQ_ReadFileExW(object_header_t *hdr, INTERNET_BUFFERSW *buffer
     }
 
     read = 0;
-    size = buffers->dwBufferLength;
 
     EnterCriticalSection( &req->read_section );
     if(hdr->dwError == ERROR_SUCCESS)
@@ -3043,19 +3038,18 @@ static DWORD HTTPREQ_ReadFileExW(object_header_t *hdr, INTERNET_BUFFERSW *buffer
         hdr->dwError = ERROR_INTERNET_INTERNAL_ERROR;
 
     while(1) {
-        res = HTTPREQ_Read(req, (char*)buffers->lpvBuffer+read, size-read,
-                &buffers->dwBufferLength, !(flags & IRF_NO_WAIT));
+        res = HTTPREQ_Read(req, (char*)buf+read, size-read, &cread, !(flags & IRF_NO_WAIT));
         if(res != ERROR_SUCCESS)
             break;
 
-        read += buffers->dwBufferLength;
+        read += cread;
         if(read == size || end_of_read_data(req))
             break;
 
         LeaveCriticalSection( &req->read_section );
 
         INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RESPONSE_RECEIVED,
-                &buffers->dwBufferLength, sizeof(buffers->dwBufferLength));
+                &cread, sizeof(cread));
         INTERNET_SendCallback(&req->hdr, req->hdr.dwContext,
                 INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
@@ -3068,13 +3062,12 @@ static DWORD HTTPREQ_ReadFileExW(object_header_t *hdr, INTERNET_BUFFERSW *buffer
         error = hdr->dwError;
 
     LeaveCriticalSection( &req->read_section );
-    size = buffers->dwBufferLength;
-    buffers->dwBufferLength = read;
 
 done:
+    *ret_read = read;
     if (res == ERROR_SUCCESS) {
         INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RESPONSE_RECEIVED,
-                &size, sizeof(size));
+                &read, sizeof(read));
     }
 
     return res==ERROR_SUCCESS ? error : res;

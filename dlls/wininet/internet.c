@@ -2269,14 +2269,20 @@ BOOL WINAPI InternetReadFileExW(HINTERNET hFile, LPINTERNET_BUFFERSW lpBuffer,
 
     TRACE("(%p %p 0x%x 0x%lx)\n", hFile, lpBuffer, dwFlags, dwContext);
 
+    if (lpBuffer->dwStructSize != sizeof(*lpBuffer)) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
     hdr = get_handle_object(hFile);
     if (!hdr) {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
-    if(hdr->vtbl->ReadFileExW)
-        res = hdr->vtbl->ReadFileExW(hdr, lpBuffer, dwFlags, dwContext);
+    if(hdr->vtbl->ReadFileEx)
+        res = hdr->vtbl->ReadFileEx(hdr, lpBuffer->lpvBuffer, lpBuffer->dwBufferLength, &lpBuffer->dwBufferLength,
+                dwFlags, dwContext);
 
     WININET_Release(hdr);
 
