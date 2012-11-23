@@ -603,12 +603,14 @@ static HRESULT WINAPI IcoDecoder_GetFrameCount(IWICBitmapDecoder *iface,
     UINT *pCount)
 {
     IcoDecoder *This = impl_from_IWICBitmapDecoder(iface);
-    TRACE("(%p,%p)\n", iface, pCount);
 
-    if (!This->initialized) return WINCODEC_ERR_NOTINITIALIZED;
+    if (!pCount) return E_INVALIDARG;
 
-    *pCount = This->header.idCount;
-    TRACE("<-- %u\n", *pCount);
+    EnterCriticalSection(&This->lock);
+    *pCount = This->initialized ? This->header.idCount : 0;
+    LeaveCriticalSection(&This->lock);
+
+    TRACE("(%p) <-- %d\n", iface, *pCount);
 
     return S_OK;
 }
