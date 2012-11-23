@@ -145,24 +145,21 @@ HRESULT WINAPI EnumMediaTypes_Construct(BasePin *basePin, BasePin_GetMediaType e
     return S_OK;
 }
 
-static HRESULT WINAPI IEnumMediaTypesImpl_QueryInterface(IEnumMediaTypes * iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI IEnumMediaTypesImpl_QueryInterface(IEnumMediaTypes * iface, REFIID riid, void ** ret_iface)
 {
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ret_iface);
 
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IEnumMediaTypes))
-        *ppv = iface;
-
-    if (*ppv)
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IEnumMediaTypes))
     {
-        IUnknown_AddRef((IUnknown *)(*ppv));
+        IEnumMediaTypes_AddRef(iface);
+        *ret_iface = iface;
         return S_OK;
     }
 
-    FIXME("No interface for %s!\n", debugstr_guid(riid));
+    *ret_iface = NULL;
+
+    WARN("No interface for %s\n", debugstr_guid(riid));
 
     return E_NOINTERFACE;
 }
