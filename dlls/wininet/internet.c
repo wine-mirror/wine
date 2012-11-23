@@ -927,7 +927,6 @@ static const object_vtbl_t APPINFOVtbl = {
     NULL,
     NULL,
     NULL,
-    NULL,
     NULL
 };
 
@@ -2237,14 +2236,20 @@ BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOu
 
     TRACE("(%p %p 0x%x 0x%lx)\n", hFile, lpBuffersOut, dwFlags, dwContext);
 
+    if (lpBuffersOut->dwStructSize != sizeof(*lpBuffersOut)) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
     hdr = get_handle_object(hFile);
     if (!hdr) {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
-    if(hdr->vtbl->ReadFileExA)
-        res = hdr->vtbl->ReadFileExA(hdr, lpBuffersOut, dwFlags, dwContext);
+    if(hdr->vtbl->ReadFileEx)
+        res = hdr->vtbl->ReadFileEx(hdr, lpBuffersOut->lpvBuffer, lpBuffersOut->dwBufferLength,
+                &lpBuffersOut->dwBufferLength, dwFlags, dwContext);
 
     WININET_Release(hdr);
 

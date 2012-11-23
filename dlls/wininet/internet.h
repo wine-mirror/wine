@@ -233,7 +233,6 @@ typedef struct {
     DWORD (*QueryOption)(object_header_t*,DWORD,void*,DWORD*,BOOL);
     DWORD (*SetOption)(object_header_t*,DWORD,void*,DWORD);
     DWORD (*ReadFile)(object_header_t*,void*,DWORD,DWORD*);
-    DWORD (*ReadFileExA)(object_header_t*,INTERNET_BUFFERSA*,DWORD,DWORD_PTR);
     DWORD (*ReadFileEx)(object_header_t*,void*,DWORD,DWORD*,DWORD,DWORD_PTR);
     DWORD (*WriteFile)(object_header_t*,const void*,DWORD,DWORD*);
     DWORD (*QueryDataAvailable)(object_header_t*,DWORD*,DWORD,DWORD_PTR);
@@ -462,11 +461,6 @@ struct WORKREQ_INTERNETOPENURLW
     DWORD_PTR dwContext;
 };
 
-struct WORKREQ_INTERNETREADFILEEXA
-{
-    LPINTERNET_BUFFERSA lpBuffersOut;
-};
-
 struct WORKREQ_HTTPREADFILEEX
 {
     void *buf;
@@ -495,7 +489,6 @@ typedef struct WORKREQ
         struct WORKREQ_HTTPENDREQUESTW          HttpEndRequestW;
         struct WORKREQ_SENDCALLBACK             SendCallback;
         struct WORKREQ_INTERNETOPENURLW         InternetOpenUrlW;
-        struct WORKREQ_INTERNETREADFILEEXA      InternetReadFileExA;
         struct WORKREQ_HTTPREADFILEEX           HttpReadFileEx;
     } u;
 
