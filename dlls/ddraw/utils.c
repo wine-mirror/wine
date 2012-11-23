@@ -446,6 +446,7 @@ enum wined3d_format_id PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat
 
                 }
                 WARN("32 bit RGB pixel format does not match.\n");
+                return WINED3DFMT_UNKNOWN;
 
             default:
                 WARN("Invalid dwRGBBitCount in Pixelformat structure.\n");
