@@ -548,7 +548,21 @@ static void STDMETHODCALLTYPE d3d10_device_PSGetConstantBuffers(ID3D10Device *if
 
 static void STDMETHODCALLTYPE d3d10_device_IAGetInputLayout(ID3D10Device *iface, ID3D10InputLayout **input_layout)
 {
-    FIXME("iface %p, input_layout %p stub!\n", iface, input_layout);
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+    struct wined3d_vertex_declaration *wined3d_declaration;
+    struct d3d10_input_layout *input_layout_impl;
+
+    TRACE("iface %p, input_layout %p.\n", iface, input_layout);
+
+    if (!(wined3d_declaration = wined3d_device_get_vertex_declaration(device->wined3d_device)))
+    {
+        *input_layout = NULL;
+        return;
+    }
+
+    input_layout_impl = wined3d_vertex_declaration_get_parent(wined3d_declaration);
+    *input_layout = &input_layout_impl->ID3D10InputLayout_iface;
+    ID3D10InputLayout_AddRef(*input_layout);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_IAGetVertexBuffers(ID3D10Device *iface,
