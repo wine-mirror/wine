@@ -711,7 +711,8 @@ HRESULT WINAPI D3DXCreatePRTBufferTex(UINT, UINT, UINT, UINT, LPD3DXPRTBUFFER *)
 HRESULT WINAPI D3DXCreatePRTCompBuffer(D3DXSHCOMPRESSQUALITYTYPE, UINT, UINT, LPD3DXSHPRTSIMCB, LPVOID, LPD3DXPRTBUFFER, LPD3DXPRTCOMPBUFFER *);
 HRESULT WINAPI D3DXCreateTextureGutterHelper(UINT width, UINT height, ID3DXMesh *mesh,
         float gutter_size, ID3DXTextureGutterHelper **gh);
-HRESULT WINAPI D3DXCreatePRTEngine(LPD3DXMESH, DWORD *, BOOL, LPD3DXMESH, LPD3DXPRTENGINE *);
+HRESULT WINAPI D3DXCreatePRTEngine(ID3DXMesh *mesh, DWORD *adjacency, BOOL extract_uv,
+        ID3DXMesh *blocker_mesh, ID3DXPRTEngine **engine);
 HRESULT WINAPI D3DXLoadMeshFromXA(const char *filename, DWORD flags, struct IDirect3DDevice9 *device,
         struct ID3DXBuffer **adjacency, struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
         DWORD *material_count, struct ID3DXMesh **mesh);
