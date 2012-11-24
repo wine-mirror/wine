@@ -565,7 +565,7 @@ DECLARE_INTERFACE_(ID3DXPRTBuffer, IUnknown)
     STDMETHOD(UnlockBuffer)(THIS) PURE;
     STDMETHOD(ScaleBuffer)(THIS_ FLOAT scale) PURE;
     STDMETHOD(AddBuffer)(THIS_ LPD3DXPRTBUFFER buffer) PURE;
-    STDMETHOD(AttachGH)(THIS_ LPD3DXTEXTUREGUTTERHELPER) PURE;
+    STDMETHOD(AttachGH)(THIS_ struct ID3DXTextureGutterHelper *gh) PURE;
     STDMETHOD(ReleaseGH)(THIS) PURE;
     STDMETHOD(EvalGH)(THIS) PURE;
     STDMETHOD(ExtractTexture)(THIS_ UINT channel, UINT start_coefficient,
@@ -709,7 +709,8 @@ HRESULT WINAPI D3DXCreatePatchMesh(const D3DXPATCHINFO *patch_info, DWORD patch_
 HRESULT WINAPI D3DXCreatePRTBuffer(UINT, UINT, UINT, LPD3DXPRTBUFFER *);
 HRESULT WINAPI D3DXCreatePRTBufferTex(UINT, UINT, UINT, UINT, LPD3DXPRTBUFFER *);
 HRESULT WINAPI D3DXCreatePRTCompBuffer(D3DXSHCOMPRESSQUALITYTYPE, UINT, UINT, LPD3DXSHPRTSIMCB, LPVOID, LPD3DXPRTBUFFER, LPD3DXPRTCOMPBUFFER *);
-HRESULT WINAPI D3DXCreateTextureGutterHelper(UINT, UINT, LPD3DXMESH, FLOAT, LPD3DXTEXTUREGUTTERHELPER *);
+HRESULT WINAPI D3DXCreateTextureGutterHelper(UINT width, UINT height, ID3DXMesh *mesh,
+        float gutter_size, ID3DXTextureGutterHelper **gh);
 HRESULT WINAPI D3DXCreatePRTEngine(LPD3DXMESH, DWORD *, BOOL, LPD3DXMESH, LPD3DXPRTENGINE *);
 HRESULT WINAPI D3DXLoadMeshFromXA(const char *filename, DWORD flags, struct IDirect3DDevice9 *device,
         struct ID3DXBuffer **adjacency, struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
