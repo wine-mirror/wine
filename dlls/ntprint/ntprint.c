@@ -36,8 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntprint);
 
-static HINSTANCE NTPRINT_hInstance = NULL;
-
 typedef struct {
   LPMONITOR_INFO_2W mi2;    /* Buffer for installed Monitors */
   DWORD installed;          /* Number of installed Monitors */
@@ -56,7 +54,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             return FALSE;           /* prefer native version */
 
         case DLL_PROCESS_ATTACH:
-            NTPRINT_hInstance = hinstDLL;
             DisableThreadLibraryCalls( hinstDLL );
             break;
     }
