@@ -43,8 +43,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
-static HMODULE opengl32_handle;
-
 extern struct opengl_funcs null_opengl_funcs;
 
 /* handle management */
@@ -1719,7 +1717,6 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        opengl32_handle = hinst;
         DisableThreadLibraryCalls(hinst);
         NtCurrentTeb()->glTable = &null_opengl_funcs;
         break;
