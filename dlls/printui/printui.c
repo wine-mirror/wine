@@ -38,8 +38,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(printui);
 
-static HINSTANCE PRINTUI_hInstance = NULL;
-
 /* ################################# */
 
 /* Must be in order with OPT_*      */
@@ -227,7 +225,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             return FALSE;           /* prefer native version */
 
         case DLL_PROCESS_ATTACH:
-            PRINTUI_hInstance = hinstDLL;
             DisableThreadLibraryCalls( hinstDLL );
             break;
     }
