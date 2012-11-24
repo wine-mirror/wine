@@ -146,7 +146,7 @@ static inline void *reader_alloc(xmlreader *reader, size_t len)
 
 static inline void reader_free(xmlreader *reader, void *mem)
 {
-    return m_free(reader->imalloc, mem);
+    m_free(reader->imalloc, mem);
 }
 
 /* reader input memory allocation functions */
@@ -162,7 +162,7 @@ static inline void *readerinput_realloc(xmlreaderinput *input, void *mem, size_t
 
 static inline void readerinput_free(xmlreaderinput *input, void *mem)
 {
-    return m_free(input->imalloc, mem);
+    m_free(input->imalloc, mem);
 }
 
 static inline WCHAR *readerinput_strdupW(xmlreaderinput *input, const WCHAR *str)
