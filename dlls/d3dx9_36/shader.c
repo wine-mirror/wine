@@ -185,13 +185,8 @@ HRESULT WINAPI D3DXFindShaderComment(CONST DWORD* byte_code, DWORD fourcc, LPCVO
     return S_FALSE;
 }
 
-HRESULT WINAPI D3DXAssembleShader(LPCSTR data,
-                                  UINT data_len,
-                                  CONST D3DXMACRO* defines,
-                                  LPD3DXINCLUDE include,
-                                  DWORD flags,
-                                  LPD3DXBUFFER* shader,
-                                  LPD3DXBUFFER* error_messages)
+HRESULT WINAPI D3DXAssembleShader(const char *data, UINT data_len, const D3DXMACRO *defines,
+        ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
     /* Forward to d3dcompiler: the parameter types aren't really different,
        the actual data types are equivalent */
@@ -276,12 +271,8 @@ struct D3DXIncludeImpl {
     ID3DXInclude ID3DXInclude_iface;
 };
 
-HRESULT WINAPI D3DXAssembleShaderFromFileA(LPCSTR filename,
-                                           CONST D3DXMACRO* defines,
-                                           LPD3DXINCLUDE include,
-                                           DWORD flags,
-                                           LPD3DXBUFFER* shader,
-                                           LPD3DXBUFFER* error_messages)
+HRESULT WINAPI D3DXAssembleShaderFromFileA(const char *filename, const D3DXMACRO *defines,
+        ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
     LPWSTR filename_w = NULL;
     DWORD len;
@@ -300,12 +291,8 @@ HRESULT WINAPI D3DXAssembleShaderFromFileA(LPCSTR filename,
     return ret;
 }
 
-HRESULT WINAPI D3DXAssembleShaderFromFileW(LPCWSTR filename,
-                                           CONST D3DXMACRO* defines,
-                                           LPD3DXINCLUDE include,
-                                           DWORD flags,
-                                           LPD3DXBUFFER* shader,
-                                           LPD3DXBUFFER* error_messages)
+HRESULT WINAPI D3DXAssembleShaderFromFileW(const WCHAR *filename, const D3DXMACRO *defines,
+        ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
     void *buffer;
     DWORD len;
@@ -328,13 +315,8 @@ HRESULT WINAPI D3DXAssembleShaderFromFileW(LPCWSTR filename,
     return hr;
 }
 
-HRESULT WINAPI D3DXAssembleShaderFromResourceA(HMODULE module,
-                                               LPCSTR resource,
-                                               CONST D3DXMACRO* defines,
-                                               LPD3DXINCLUDE include,
-                                               DWORD flags,
-                                               LPD3DXBUFFER* shader,
-                                               LPD3DXBUFFER* error_messages)
+HRESULT WINAPI D3DXAssembleShaderFromResourceA(HMODULE module, const char *resource, const D3DXMACRO *defines,
+        ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
     HRSRC res;
     LPCSTR buffer;
@@ -348,13 +330,8 @@ HRESULT WINAPI D3DXAssembleShaderFromResourceA(HMODULE module,
                               shader, error_messages);
 }
 
-HRESULT WINAPI D3DXAssembleShaderFromResourceW(HMODULE module,
-                                               LPCWSTR resource,
-                                               CONST D3DXMACRO* defines,
-                                               LPD3DXINCLUDE include,
-                                               DWORD flags,
-                                               LPD3DXBUFFER* shader,
-                                               LPD3DXBUFFER* error_messages)
+HRESULT WINAPI D3DXAssembleShaderFromResourceW(HMODULE module, const WCHAR *resource, const D3DXMACRO *defines,
+        ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
     HRSRC res;
     LPCSTR buffer;
@@ -479,12 +456,8 @@ HRESULT WINAPI D3DXCompileShaderFromResourceW(HMODULE module, const WCHAR *resou
                              flags, shader, error_messages, constant_table);
 }
 
-HRESULT WINAPI D3DXPreprocessShader(LPCSTR data,
-                                    UINT data_len,
-                                    CONST D3DXMACRO* defines,
-                                    LPD3DXINCLUDE include,
-                                    LPD3DXBUFFER* shader,
-                                    LPD3DXBUFFER* error_messages)
+HRESULT WINAPI D3DXPreprocessShader(const char *data, UINT data_len, const D3DXMACRO *defines,
+        ID3DXInclude *include, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
     TRACE("Forward to D3DPreprocess\n");
     return D3DPreprocess(data, data_len, NULL,
@@ -492,11 +465,8 @@ HRESULT WINAPI D3DXPreprocessShader(LPCSTR data,
                          (ID3DBlob **)shader, (ID3DBlob **)error_messages);
 }
 
-HRESULT WINAPI D3DXPreprocessShaderFromFileA(LPCSTR filename,
-                                             CONST D3DXMACRO* defines,
-                                             LPD3DXINCLUDE include,
-                                             LPD3DXBUFFER* shader,
-                                             LPD3DXBUFFER* error_messages)
+HRESULT WINAPI D3DXPreprocessShaderFromFileA(const char *filename, const D3DXMACRO *defines,
+        ID3DXInclude *include, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
     WCHAR *filename_w = NULL;
     DWORD len;
@@ -515,11 +485,8 @@ HRESULT WINAPI D3DXPreprocessShaderFromFileA(LPCSTR filename,
     return ret;
 }
 
-HRESULT WINAPI D3DXPreprocessShaderFromFileW(LPCWSTR filename,
-                                             CONST D3DXMACRO* defines,
-                                             LPD3DXINCLUDE include,
-                                             LPD3DXBUFFER* shader,
-                                             LPD3DXBUFFER* error_messages)
+HRESULT WINAPI D3DXPreprocessShaderFromFileW(const WCHAR *filename, const D3DXMACRO *defines,
+        ID3DXInclude *include, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
     void *buffer;
     DWORD len;
@@ -544,12 +511,8 @@ HRESULT WINAPI D3DXPreprocessShaderFromFileW(LPCWSTR filename,
     return hr;
 }
 
-HRESULT WINAPI D3DXPreprocessShaderFromResourceA(HMODULE module,
-                                                 LPCSTR resource,
-                                                 CONST D3DXMACRO* defines,
-                                                 LPD3DXINCLUDE include,
-                                                 LPD3DXBUFFER* shader,
-                                                 LPD3DXBUFFER* error_messages)
+HRESULT WINAPI D3DXPreprocessShaderFromResourceA(HMODULE module, const char *resource, const D3DXMACRO *defines,
+        ID3DXInclude *include, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
     HRSRC res;
     const char *buffer;
@@ -563,12 +526,8 @@ HRESULT WINAPI D3DXPreprocessShaderFromResourceA(HMODULE module,
                                 shader, error_messages);
 }
 
-HRESULT WINAPI D3DXPreprocessShaderFromResourceW(HMODULE module,
-                                                 LPCWSTR resource,
-                                                 CONST D3DXMACRO* defines,
-                                                 LPD3DXINCLUDE include,
-                                                 LPD3DXBUFFER* shader,
-                                                 LPD3DXBUFFER* error_messages)
+HRESULT WINAPI D3DXPreprocessShaderFromResourceW(HMODULE module, const WCHAR *resource, const D3DXMACRO *defines,
+        ID3DXInclude *include, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
     HRSRC res;
     const char *buffer;

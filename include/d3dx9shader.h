@@ -270,43 +270,20 @@ const char * WINAPI D3DXGetVertexShaderProfile(struct IDirect3DDevice9 *device);
 HRESULT WINAPI D3DXFindShaderComment(CONST DWORD* byte_code, DWORD fourcc, LPCVOID* data, UINT* size);
 HRESULT WINAPI D3DXGetShaderSamplers(CONST DWORD *byte_code, LPCSTR *samplers, UINT *count);
 
-HRESULT WINAPI D3DXAssembleShaderFromFileA(LPCSTR filename,
-                                           CONST D3DXMACRO* defines,
-                                           LPD3DXINCLUDE include,
-                                           DWORD flags,
-                                           LPD3DXBUFFER* shader,
-                                           LPD3DXBUFFER* error_messages);
-HRESULT WINAPI D3DXAssembleShaderFromFileW(LPCWSTR filename,
-                                           CONST D3DXMACRO* defines,
-                                           LPD3DXINCLUDE include,
-                                           DWORD flags,
-                                           LPD3DXBUFFER* shader,
-                                           LPD3DXBUFFER* error_messages);
+HRESULT WINAPI D3DXAssembleShaderFromFileA(const char *filename, const D3DXMACRO *defines,
+        ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages);
+HRESULT WINAPI D3DXAssembleShaderFromFileW(const WCHAR *filename, const D3DXMACRO *defines,
+        ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages);
 #define D3DXAssembleShaderFromFile WINELIB_NAME_AW(D3DXAssembleShaderFromFile)
 
-HRESULT WINAPI D3DXAssembleShaderFromResourceA(HMODULE module,
-                                               LPCSTR resource,
-                                               CONST D3DXMACRO* defines,
-                                               LPD3DXINCLUDE include,
-                                               DWORD flags,
-                                               LPD3DXBUFFER* shader,
-                                               LPD3DXBUFFER* error_messages);
-HRESULT WINAPI D3DXAssembleShaderFromResourceW(HMODULE module,
-                                               LPCWSTR resource,
-                                               CONST D3DXMACRO* defines,
-                                               LPD3DXINCLUDE include,
-                                               DWORD flags,
-                                               LPD3DXBUFFER* shader,
-                                               LPD3DXBUFFER* error_messages);
+HRESULT WINAPI D3DXAssembleShaderFromResourceA(HMODULE module, const char *resource, const D3DXMACRO *defines,
+        ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages);
+HRESULT WINAPI D3DXAssembleShaderFromResourceW(HMODULE module, const WCHAR *resource, const D3DXMACRO *defines,
+        ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages);
 #define D3DXAssembleShaderFromResource WINELIB_NAME_AW(D3DXAssembleShaderFromResource)
 
-HRESULT WINAPI D3DXAssembleShader(LPCSTR data,
-                                  UINT data_len,
-                                  CONST D3DXMACRO* defines,
-                                  LPD3DXINCLUDE include,
-                                  DWORD flags,
-                                  LPD3DXBUFFER* shader,
-                                  LPD3DXBUFFER* error_messages);
+HRESULT WINAPI D3DXAssembleShader(const char *data, UINT data_len, const D3DXMACRO *defines,
+        ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages);
 
 HRESULT WINAPI D3DXCompileShader(const char *src_data, UINT data_len, const D3DXMACRO *defines,
         ID3DXInclude *include, const char *function_name, const char *profile, DWORD flags,
@@ -328,37 +305,19 @@ HRESULT WINAPI D3DXCompileShaderFromResourceW(HMODULE module, const WCHAR *resou
         ID3DXBuffer **shader, ID3DXBuffer **error_messages, ID3DXConstantTable **constant_table);
 #define D3DXCompileShaderFromResource WINELIB_NAME_AW(D3DXCompileShaderFromResource)
 
-HRESULT WINAPI D3DXPreprocessShader(LPCSTR data,
-                                    UINT data_len,
-                                    CONST D3DXMACRO* defines,
-                                    LPD3DXINCLUDE include,
-                                    LPD3DXBUFFER* shader,
-                                    LPD3DXBUFFER* error_messages);
+HRESULT WINAPI D3DXPreprocessShader(const char *data, UINT data_len, const D3DXMACRO *defines,
+        ID3DXInclude *include, ID3DXBuffer **shader, ID3DXBuffer **error_messages);
 
-HRESULT WINAPI D3DXPreprocessShaderFromFileA(LPCSTR filename,
-                                             CONST D3DXMACRO* defines,
-                                             LPD3DXINCLUDE include,
-                                             LPD3DXBUFFER* shader,
-                                             LPD3DXBUFFER* error_messages);
-HRESULT WINAPI D3DXPreprocessShaderFromFileW(LPCWSTR filename,
-                                             CONST D3DXMACRO* defines,
-                                             LPD3DXINCLUDE include,
-                                             LPD3DXBUFFER* shader,
-                                             LPD3DXBUFFER* error_messages);
+HRESULT WINAPI D3DXPreprocessShaderFromFileA(const char *filename, const D3DXMACRO *defines,
+        ID3DXInclude *include, ID3DXBuffer **shader, ID3DXBuffer **error_messages);
+HRESULT WINAPI D3DXPreprocessShaderFromFileW(const WCHAR *filename, const D3DXMACRO *defines,
+        ID3DXInclude *include, ID3DXBuffer **shader, ID3DXBuffer **error_messages);
 #define D3DXPreprocessShaderFromFile WINELIB_NAME_AW(D3DXPreprocessShaderFromFile)
 
-HRESULT WINAPI D3DXPreprocessShaderFromResourceA(HMODULE module,
-                                                 LPCSTR resource,
-                                                 CONST D3DXMACRO* defines,
-                                                 LPD3DXINCLUDE include,
-                                                 LPD3DXBUFFER* shader,
-                                                 LPD3DXBUFFER* error_messages);
-HRESULT WINAPI D3DXPreprocessShaderFromResourceW(HMODULE module,
-                                                 LPCWSTR resource,
-                                                 CONST D3DXMACRO* defines,
-                                                 LPD3DXINCLUDE include,
-                                                 LPD3DXBUFFER* shader,
-                                                 LPD3DXBUFFER* error_messages);
+HRESULT WINAPI D3DXPreprocessShaderFromResourceA(HMODULE module, const char *resource, const D3DXMACRO *defines,
+        ID3DXInclude *include, ID3DXBuffer **shader, ID3DXBuffer **error_messages);
+HRESULT WINAPI D3DXPreprocessShaderFromResourceW(HMODULE module, const WCHAR *resource, const D3DXMACRO *defines,
+        ID3DXInclude *include, ID3DXBuffer **shader, ID3DXBuffer **error_messages);
 #define D3DXPreprocessShaderFromResource WINELIB_NAME_AW(D3DXPreprocessShaderFromResource)
 
 HRESULT WINAPI D3DXGetShaderConstantTableEx(const DWORD *byte_code, DWORD flags, ID3DXConstantTable **constant_table);
