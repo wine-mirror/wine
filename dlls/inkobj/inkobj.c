@@ -20,7 +20,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(inkobj);
 
 static LONG INKOBJ_refCount;
-static HINSTANCE INKOBJ_hInstance;
 
 /*****************************************************
  *    DllMain (INKOBJ.init)
@@ -35,7 +34,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
         return FALSE; /* prefer native version */
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( hinst );
-        INKOBJ_hInstance = hinst;
         break;
     }
     return TRUE;
