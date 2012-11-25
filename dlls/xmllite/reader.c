@@ -61,6 +61,7 @@ static const struct xml_encoding_data xml_encoding_map[] = {
 typedef struct
 {
     char *data;
+    char *cur;
     unsigned int allocated;
     unsigned int written;
 } encoded_buffer;
@@ -187,6 +188,7 @@ static HRESULT init_encoded_buffer(xmlreaderinput *input, encoded_buffer *buffer
     if (!buffer->data) return E_OUTOFMEMORY;
 
     memset(buffer->data, 0, 4);
+    buffer->cur = buffer->data;
     buffer->allocated = initial_len;
     buffer->written = 0;
 
@@ -198,18 +200,15 @@ static void free_encoded_buffer(xmlreaderinput *input, encoded_buffer *buffer)
     readerinput_free(input, buffer->data);
 }
 
-static HRESULT get_code_page(xml_encoding encoding, xmlreaderinput *input)
+static HRESULT get_code_page(xml_encoding encoding, UINT *cp)
 {
-    const struct xml_encoding_data *data;
-
     if (encoding == XmlEncoding_Unknown)
     {
         FIXME("unsupported encoding %d\n", encoding);
         return E_NOTIMPL;
     }
 
-    data = &xml_encoding_map[encoding];
-    input->buffer->code_page = data->cp;
+    *cp = xml_encoding_map[encoding].cp;
 
     return S_OK;
 }
@@ -324,31 +323,112 @@ static HRESULT readerinput_growraw(xmlreaderinput *readerinput)
     return hr;
 }
 
-static xml_encoding readerinput_detectencoding(xmlreaderinput *readerinput)
+/* grows UTF-16 buffer so it has at least 'length' bytes free on return */
+static void readerinput_grow(xmlreaderinput *readerinput, int length)
+{
+    encoded_buffer *buffer = &readerinput->buffer->utf16;
+
+    /* grow if needed, plus 4 bytes to be sure null terminator will fit in */
+    if (buffer->allocated < buffer->written + length + 4)
+    {
+        int grown_size = max(2*buffer->allocated, buffer->allocated + length);
+        buffer->data = readerinput_realloc(readerinput, buffer->data, grown_size);
+        buffer->allocated = grown_size;
+    }
+}
+
+static HRESULT readerinput_detectencoding(xmlreaderinput *readerinput, xml_encoding *enc)
 {
     encoded_buffer *buffer = &readerinput->buffer->encoded;
+    static char startA[] = {'<','?','x','m'};
+    static WCHAR startW[] = {'<','?'};
+    static char utf8bom[] = {0xef,0xbb,0xbf};
+    static char utf16lebom[] = {0xff,0xfe};
+
+    *enc = XmlEncoding_Unknown;
+
+    if (buffer->written <= 3) return MX_E_INPUTEND;
 
     /* try start symbols if we have enough data to do that, input buffer should contain
        first chunk already */
-    if (buffer->written >= 4)
-    {
-        static char startA[] = {'<','?','x','m'};
-        static WCHAR startW[] = {'<','?'};
-
-        if (!memcmp(buffer->data, startA, sizeof(startA))) return XmlEncoding_UTF8;
-        if (!memcmp(buffer->data, startW, sizeof(startW))) return XmlEncoding_UTF16;
-    }
-
+    if (!memcmp(buffer->data, startA, sizeof(startA)))
+        *enc = XmlEncoding_UTF8;
+    else if (!memcmp(buffer->data, startW, sizeof(startW)))
+        *enc = XmlEncoding_UTF16;
     /* try with BOM now */
-    if (buffer->written >= 3)
+    else if (!memcmp(buffer->data, utf8bom, sizeof(utf8bom)))
     {
-        static char utf8bom[] = {0xef,0xbb,0xbf};
-        static char utf16lebom[] = {0xff,0xfe};
-        if (!memcmp(buffer->data, utf8bom, sizeof(utf8bom))) return XmlEncoding_UTF8;
-        if (!memcmp(buffer->data, utf16lebom, sizeof(utf16lebom))) return XmlEncoding_UTF16;
+        buffer->cur += sizeof(utf8bom);
+        *enc = XmlEncoding_UTF8;
+    }
+    else if (!memcmp(buffer->data, utf16lebom, sizeof(utf16lebom)))
+    {
+        buffer->cur += sizeof(utf16lebom);
+        *enc = XmlEncoding_UTF16;
     }
 
-    return XmlEncoding_Unknown;
+    return S_OK;
+}
+
+static int readerinput_get_utf8_convlen(xmlreaderinput *readerinput)
+{
+    encoded_buffer *buffer = &readerinput->buffer->encoded;
+    int len = buffer->written;
+
+    /* complete single byte char */
+    if (!(buffer->data[len-1] & 0x80)) return len;
+
+    /* find start byte of multibyte char */
+    while (--len && !(buffer->data[len] & 0xc0))
+        ;
+
+    return len;
+}
+
+/* returns byte length of complete char sequence for specified code page, */
+static int readerinput_get_convlen(xmlreaderinput *readerinput, UINT cp)
+{
+    encoded_buffer *buffer = &readerinput->buffer->encoded;
+    int len = buffer->written;
+
+    if (cp == CP_UTF8)
+        len = readerinput_get_utf8_convlen(readerinput);
+    else
+        len = buffer->written;
+
+    return len - (buffer->cur - buffer->data);
+}
+
+/* note that raw buffer content is kept */
+static void readerinput_switchencoding(xmlreaderinput *readerinput, xml_encoding enc)
+{
+    encoded_buffer *src = &readerinput->buffer->encoded;
+    encoded_buffer *dest = &readerinput->buffer->utf16;
+    int len, dest_len;
+    HRESULT hr;
+    UINT cp;
+
+    hr = get_code_page(enc, &cp);
+    if (FAILED(hr)) return;
+
+    len = readerinput_get_convlen(readerinput, cp);
+
+    TRACE("switching to cp %d\n", cp);
+
+    /* just copy in this case */
+    if (enc == XmlEncoding_UTF16)
+    {
+        readerinput_grow(readerinput, len);
+        memcpy(dest->data, src->cur, len);
+        readerinput->buffer->code_page = cp;
+        return;
+    }
+
+    dest_len = MultiByteToWideChar(cp, 0, src->cur, len, NULL, 0);
+    readerinput_grow(readerinput, dest_len);
+    MultiByteToWideChar(cp, 0, src->cur, len, (WCHAR*)dest->data, dest_len);
+    dest->data[dest_len] = 0;
+    readerinput->buffer->code_page = cp;
 }
 
 static HRESULT WINAPI xmlreader_QueryInterface(IXmlReader *iface, REFIID riid, void** ppvObject)
@@ -505,9 +585,12 @@ static HRESULT WINAPI xmlreader_Read(IXmlReader* iface, XmlNodeType *node_type)
         if (FAILED(hr)) return hr;
 
         /* try to detect encoding by BOM or data and set input code page */
-        enc = readerinput_detectencoding(This->input);
-        TRACE("detected encoding %d\n", enc);
-        get_code_page(enc, This->input);
+        hr = readerinput_detectencoding(This->input, &enc);
+        TRACE("detected encoding %d, 0x%08x\n", enc, hr);
+        if (FAILED(hr)) return hr;
+
+        /* always switch first time cause we have to put something in */
+        readerinput_switchencoding(This->input, enc);
     }
 
     return E_NOTIMPL;

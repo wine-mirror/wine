@@ -52,7 +52,7 @@ static const char *debugstr_guid(REFIID riid)
     return buf;
 }
 
-static const char xmldecl_full[] = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
+static const char xmldecl_full[] = "\xef\xbb\xbf<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
 
 static IStream *create_stream_on_data(const char *data, int size)
 {
