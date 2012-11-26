@@ -10159,7 +10159,7 @@ msgid "Wine Command Prompt"
 msgstr ""
 
 #: cmd.rc:349
-msgid "CMD Version %1!S!\n"
+msgid "Wine CMD Version %1!S!\n"
 msgstr ""
 
 #: cmd.rc:350

@@ -2318,12 +2318,20 @@ int wmain (int argc, WCHAR *argvW[])
   static const WCHAR promptW[] = {'P','R','O','M','P','T','\0'};
   static const WCHAR defaultpromptW[] = {'$','P','$','G','\0'};
   CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
+  OSVERSIONINFOW osv;
+  char osver[50];
 
   srand(time(NULL));
 
+  /* Get the windows version being emulated */
+  osv.dwOSVersionInfoSize = sizeof(osv);
+  GetVersionExW(&osv);
+
   /* Pre initialize some messages */
   strcpyW(anykey, WCMD_LoadMessage(WCMD_ANYKEY));
-  cmd = WCMD_format_string(WCMD_LoadMessage(WCMD_VERSION), PACKAGE_VERSION);
+  sprintf(osver, "%d.%d.%d (%s)", osv.dwMajorVersion, osv.dwMinorVersion,
+          osv.dwBuildNumber, PACKAGE_VERSION);
+  cmd = WCMD_format_string(WCMD_LoadMessage(WCMD_VERSION), osver);
   strcpyW(version_string, cmd);
   LocalFree(cmd);
   cmd = NULL;

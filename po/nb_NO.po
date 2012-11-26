@@ -10336,7 +10336,7 @@ msgstr ""
 
 #: cmd.rc:349
 #, fuzzy
-msgid "CMD Version %1!S!\n"
+msgid "Wine CMD Version %1!S!\n"
 msgstr "CA-versjon"
 
 #: cmd.rc:350
