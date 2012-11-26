@@ -5630,6 +5630,16 @@ basic_ostream_char* __thiscall basic_ostream_char_print_bool(basic_ostream_char 
     return this;
 }
 
+/* ?ends@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@AAV21@@Z */
+/* ?ends@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@AEAV21@@Z */
+basic_ostream_char* __cdecl basic_ostream_char_ends(basic_ostream_char *ostr)
+{
+    TRACE("(%p)\n", ostr);
+
+    basic_ostream_char_put(ostr, 0);
+    return ostr;
+}
+
 /* ?endl@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@AAV21@@Z */
 /* ?endl@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@AEAV21@@Z */
 basic_ostream_char* __cdecl basic_ostream_char_endl(basic_ostream_char *ostr)
@@ -6427,6 +6437,18 @@ basic_ostream_wchar* __thiscall basic_ostream_short_print_bool(basic_ostream_wch
 {
     return basic_ostream_print_bool(this, val, num_put_short_use_facet(
                 &basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
+}
+
+/* ?ends@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@AAV21@@Z */
+/* ?ends@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@AEAV21@@Z */
+/* ?ends@std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@1@AAV21@@Z */
+/* ?ends@std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@1@AEAV21@@Z */
+basic_ostream_wchar* __cdecl basic_ostream_wchar_ends(basic_ostream_wchar *ostr)
+{
+    TRACE("(%p)\n", ostr);
+
+    basic_ostream_wchar_put(ostr, 0);
+    return ostr;
 }
 
 /* ?endl@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@AAV21@@Z */
