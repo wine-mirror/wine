@@ -5456,9 +5456,12 @@ DWORD WINAPI GetNamedSecurityInfoW( LPWSTR name, SE_OBJECT_TYPE type,
     SECURITY_INFORMATION info, PSID* owner, PSID* group, PACL* dacl,
     PACL* sacl, PSECURITY_DESCRIPTOR* descriptor )
 {
-    DWORD needed, offset;
-    SECURITY_DESCRIPTOR_RELATIVE *relative = NULL;
-    BYTE *buffer;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    IO_STATUS_BLOCK io;
+    DWORD access = 0;
+    HANDLE hFile;
+    DWORD status;
 
     TRACE( "%s %d %d %p %p %p %p %p\n", debugstr_w(name), type, info, owner,
            group, dacl, sacl, descriptor );
@@ -5473,85 +5476,28 @@ DWORD WINAPI GetNamedSecurityInfoW( LPWSTR name, SE_OBJECT_TYPE type,
     ||  ((info & DACL_SECURITY_INFORMATION)  && !dacl)
     ||  ((info & SACL_SECURITY_INFORMATION)  && !sacl)  ))
         return ERROR_INVALID_PARAMETER;
+    if (!RtlDosPathNameToNtPathName_U( name, &nameW, NULL, NULL ))
+        return ERROR_PATH_NOT_FOUND;
 
-    needed = !descriptor ? 0 : sizeof(SECURITY_DESCRIPTOR_RELATIVE);
-    if (info & OWNER_SECURITY_INFORMATION)
-        needed += sizeof(sidWorld);
-    if (info & GROUP_SECURITY_INFORMATION)
-        needed += sizeof(sidWorld);
-    if (info & DACL_SECURITY_INFORMATION)
-        needed += WINE_SIZE_OF_WORLD_ACCESS_ACL;
+    if (info & (OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION))
+        access |= READ_CONTROL;
     if (info & SACL_SECURITY_INFORMATION)
-        needed += WINE_SIZE_OF_WORLD_ACCESS_ACL;
+        access |= ACCESS_SYSTEM_SECURITY;
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nameW;
+    attr.SecurityDescriptor = NULL;
 
-    if(descriptor)
-    {
-        /* must be freed by caller */
-        *descriptor = HeapAlloc( GetProcessHeap(), 0, needed );
-        if (!*descriptor) return ERROR_NOT_ENOUGH_MEMORY;
-
-        if (!InitializeSecurityDescriptor( *descriptor, SECURITY_DESCRIPTOR_REVISION ))
-        {
-            HeapFree( GetProcessHeap(), 0, *descriptor );
-            return ERROR_INVALID_SECURITY_DESCR;
-        }
-
-        relative = *descriptor;
-        relative->Control |= SE_SELF_RELATIVE;
-
-        buffer = (BYTE *)relative;
-        offset = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
-    }
-    else
-    {
-        buffer = HeapAlloc( GetProcessHeap(), 0, needed );
-        if (!buffer) return ERROR_NOT_ENOUGH_MEMORY;
-        offset = 0;
-    }
-
-    if (info & OWNER_SECURITY_INFORMATION)
-    {
-        memcpy( buffer + offset, &sidWorld, sizeof(sidWorld) );
-        if(relative)
-            relative->Owner = offset;
-        if (owner)
-            *owner = buffer + offset;
-        offset += sizeof(sidWorld);
-    }
-    if (info & GROUP_SECURITY_INFORMATION)
-    {
-        memcpy( buffer + offset, &sidWorld, sizeof(sidWorld) );
-        if(relative)
-            relative->Group = offset;
-        if (group)
-            *group = buffer + offset;
-        offset += sizeof(sidWorld);
-    }
-    if (info & DACL_SECURITY_INFORMATION)
-    {
-        GetWorldAccessACL( (PACL)(buffer + offset) );
-        if(relative)
-        {
-            relative->Control |= SE_DACL_PRESENT;
-            relative->Dacl = offset;
-        }
-        if (dacl)
-            *dacl = (PACL)(buffer + offset);
-        offset += WINE_SIZE_OF_WORLD_ACCESS_ACL;
-    }
-    if (info & SACL_SECURITY_INFORMATION)
-    {
-        GetWorldAccessACL( (PACL)(buffer + offset) );
-        if(relative)
-        {
-            relative->Control |= SE_SACL_PRESENT;
-            relative->Sacl = offset;
-        }
-        if (sacl)
-            *sacl = (PACL)(buffer + offset);
-    }
-
-    return ERROR_SUCCESS;
+    status = NtCreateFile( &hFile, access, &attr, &io, NULL, FILE_FLAG_BACKUP_SEMANTICS,
+                           FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, FILE_OPEN,
+                           FILE_OPEN_FOR_BACKUP_INTENT, NULL, 0 );
+    RtlFreeUnicodeString( &nameW );
+    if (status != STATUS_SUCCESS)
+        return RtlNtStatusToDosError( status );
+    status = GetSecurityInfo( hFile, type, info, owner, group, dacl, sacl, descriptor );
+    CloseHandle( hFile );
+    return status;
 }
 
 /******************************************************************************
