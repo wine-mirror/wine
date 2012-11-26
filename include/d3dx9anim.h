@@ -86,7 +86,7 @@ typedef struct _D3DXMESHDATA
     {
         LPD3DXMESH pMesh;
         LPD3DXPMESH pPMesh;
-        LPD3DXPATCHMESH pPatchMesh;
+        ID3DXPatchMesh *pPatchMesh;
     } DUMMYUNIONNAME;
 } D3DXMESHDATA, *LPD3DXMESHDATA;
 
