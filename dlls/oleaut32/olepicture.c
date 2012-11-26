@@ -1757,6 +1757,12 @@ static HRESULT WINAPI OLEPictureImpl_Save(
     TRACE("%p %p %d\n", This, pStm, fClearDirty);
 
     switch (This->desc.picType) {
+    case PICTYPE_NONE:
+        header[0] = 0x0000746c;
+        header[1] = 0;
+        hResult = IStream_Write(pStm, header, 2 * sizeof(DWORD), &dummy);
+        break;
+
     case PICTYPE_ICON:
         if (This->bIsDirty || !This->data) {
             if (!serializeIcon(This->desc.u.icon.hicon, &pIconData, &iDataSize)) {

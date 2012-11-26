@@ -1095,11 +1095,9 @@ static void test_load_save_empty_picture(void)
     ok(hr == S_OK, "QueryInterface error %#x\n", hr);
 
     hr = IPersistStream_Save(src_stream, dst_stream, TRUE);
-todo_wine
     ok(hr == S_OK, "Save error %#x\n", hr);
 
     mem = GlobalLock(hmem);
-todo_wine
     ok(!memcmp(mem, "lt\0\0", 4), "got wrong stream header %04x\n", mem[0]);
     ok(mem[1] == 0, "expected stream size 0, got %u\n", mem[1]);
     GlobalUnlock(hmem);
