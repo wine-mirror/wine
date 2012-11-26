@@ -4041,6 +4041,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     DWORD stride = get_flexible_vertex_size(vb->fvf);
     WORD *LockedIndices;
     HRESULT hr;
+    UINT ib_pos = This->indexbuffer_pos;
 
     TRACE("iface %p, primitive_type %#x, vb %p, start_vertex %u, vertex_count %u, indices %p, index_count %u, flags %#x.\n",
             iface, PrimitiveType, D3DVertexBuf, StartVertex, NumVertices, Indices, IndexCount, Flags);
@@ -4075,14 +4076,18 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
         if (This->indexbuffer) wined3d_buffer_decref(This->indexbuffer);
         This->indexbuffer = buffer;
         This->indexbuffer_size = size;
+        ib_pos = 0;
     }
+
+    if (This->indexbuffer_size - IndexCount * sizeof(WORD) < ib_pos)
+        ib_pos = 0;
 
     /* Copy the index stream into the index buffer. A new IWineD3DDevice
      * method could be created which takes an user pointer containing the
      * indices or a SetData-Method for the index buffer, which overrides the
      * index buffer data with our pointer. */
-    hr = wined3d_buffer_map(This->indexbuffer, 0, IndexCount * sizeof(WORD),
-            (BYTE **)&LockedIndices, 0);
+    hr = wined3d_buffer_map(This->indexbuffer, ib_pos, IndexCount * sizeof(WORD),
+            (BYTE **)&LockedIndices, ib_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD);
     if (FAILED(hr))
     {
         ERR("Failed to map buffer, hr %#x.\n", hr);
@@ -4091,6 +4096,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     }
     memcpy(LockedIndices, Indices, IndexCount * sizeof(WORD));
     wined3d_buffer_unmap(This->indexbuffer);
+    This->indexbuffer_pos = ib_pos + IndexCount * sizeof(WORD);
 
     /* Set the index stream */
     wined3d_device_set_base_vertex_index(This->wined3d_device, StartVertex);
@@ -4107,7 +4113,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
 
     wined3d_device_set_primitive_type(This->wined3d_device, PrimitiveType);
-    hr = wined3d_device_draw_indexed_primitive(This->wined3d_device, 0, IndexCount);
+    hr = wined3d_device_draw_indexed_primitive(This->wined3d_device, ib_pos / sizeof(WORD), IndexCount);
 
     wined3d_mutex_unlock();
 
