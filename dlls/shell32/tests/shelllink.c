@@ -16,9 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- * This is a test program for the SHGet{Special}Folder{Path|Location} functions
- * of shell32, that get either a filesystem path or a LPITEMIDLIST (shell
- * namespace) path for a given folder (CSIDL value).
  *
  */
 
