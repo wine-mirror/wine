@@ -1059,6 +1059,58 @@ todo_wine
     IPicture_Release(pic);
 }
 
+static void test_load_save_empty_picture(void)
+{
+    IPicture *pic;
+    PICTDESC desc;
+    short type;
+    OLE_HANDLE handle;
+    HGLOBAL hmem;
+    DWORD *mem;
+    IPersistStream *src_stream;
+    IStream *dst_stream;
+    HRESULT hr;
+
+    memset(&pic, 0, sizeof(pic));
+    desc.cbSizeofstruct = sizeof(desc);
+    desc.picType = PICTYPE_NONE;
+    hr = OleCreatePictureIndirect(&desc, &IID_IPicture, FALSE, (void **)&pic);
+    ok(hr == S_OK, "OleCreatePictureIndirect error %#x\n", hr);
+
+    type = -1;
+    hr = IPicture_get_Type(pic, &type);
+    ok(hr == S_OK,"get_Type error %#8x\n", hr);
+    ok(type == PICTYPE_NONE,"expected picture type PICTYPE_NONE, got %d\n", type);
+
+    handle = (OLE_HANDLE)0xdeadbeef;
+    hr = IPicture_get_Handle(pic, &handle);
+    ok(hr == S_OK,"get_Handle error %#8x\n", hr);
+    ok(!handle, "get_Handle returned wrong handle %#x\n", handle);
+
+    hmem = GlobalAlloc(GMEM_ZEROINIT, 4096);
+    hr = CreateStreamOnHGlobal(hmem, FALSE, &dst_stream);
+    ok(hr == S_OK, "createstreamonhglobal error %#x\n", hr);
+
+    hr = IPicture_QueryInterface(pic, &IID_IPersistStream, (void **)&src_stream);
+    ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+
+    hr = IPersistStream_Save(src_stream, dst_stream, TRUE);
+todo_wine
+    ok(hr == S_OK, "Save error %#x\n", hr);
+
+    mem = GlobalLock(hmem);
+todo_wine
+    ok(!memcmp(mem, "lt\0\0", 4), "got wrong stream header %04x\n", mem[0]);
+    ok(mem[1] == 0, "expected stream size 0, got %u\n", mem[1]);
+    GlobalUnlock(hmem);
+
+    IPersistStream_Release(src_stream);
+    IStream_Release(dst_stream);
+
+    GlobalFree(hmem);
+    IPicture_Release(pic);
+}
+
 START_TEST(olepicture)
 {
     hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -1097,6 +1149,7 @@ START_TEST(olepicture)
     test_himetric();
     test_load_save_bmp();
     test_load_save_icon();
+    test_load_save_empty_picture();
 }
 
 
