@@ -9423,6 +9423,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 
   /* init item size to avoid division by 0 */
   LISTVIEW_UpdateItemSize (infoPtr);
+  LISTVIEW_UpdateSize (infoPtr);
 
   if (infoPtr->uView == LV_VIEW_DETAILS)
   {
