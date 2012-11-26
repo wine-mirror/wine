@@ -2771,8 +2771,6 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
             if (msg.message == WM_KEYDOWN) SetCursorPos( pt.x, pt.y );
             else
             {
-                WPARAM wpSizingHit = 0;
-
                 if(!iconic && !DragFullWindows) draw_moving_frame( parent, hdc, &sizingRect, thickframe );
                 if (hittest == HTCAPTION) OffsetRect( &sizingRect, dx, dy );
                 if (ON_LEFT_BORDER(hittest)) sizingRect.left += dx;
@@ -2782,9 +2780,16 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
                 capturePoint = pt;
 
                 /* determine the hit location */
-                if (hittest >= HTLEFT && hittest <= HTBOTTOMRIGHT)
-                    wpSizingHit = WMSZ_LEFT + (hittest - HTLEFT);
-                SendMessageW( hwnd, WM_SIZING, wpSizingHit, (LPARAM)&sizingRect );
+                if (syscommand == SC_SIZE)
+                {
+                    WPARAM wpSizingHit = 0;
+
+                    if (hittest >= HTLEFT && hittest <= HTBOTTOMRIGHT)
+                        wpSizingHit = WMSZ_LEFT + (hittest - HTLEFT);
+                    SendMessageW( hwnd, WM_SIZING, wpSizingHit, (LPARAM)&sizingRect );
+                }
+                else
+                    SendMessageW( hwnd, WM_MOVING, 0, (LPARAM)&sizingRect );
 
                 if (!iconic)
                 {
