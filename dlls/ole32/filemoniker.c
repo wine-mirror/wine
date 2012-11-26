@@ -973,10 +973,17 @@ FileMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOther,IMoniker** p
             return nb1;
         nb2=FileMonikerImpl_DecomposePath(pathOther,&stringTable2);
         if (FAILED(nb2))
+        {
+            free_stringtable(stringTable1);
             return nb2;
+        }
 
         if (nb1==0 || nb2==0)
+        {
+            free_stringtable(stringTable1);
+            free_stringtable(stringTable2);
             return MK_E_NOPREFIX;
+        }
 
         commonPath=HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(min(lstrlenW(pathThis),lstrlenW(pathOther))+1));
         if (!commonPath)
@@ -1136,10 +1143,15 @@ FileMonikerImpl_RelativePathTo(IMoniker* iface,IMoniker* pmOther, IMoniker** ppm
 	return res;
 
     len1=FileMonikerImpl_DecomposePath(str1,&tabStr1);
+    if (FAILED(len1))
+        return E_OUTOFMEMORY;
     len2=FileMonikerImpl_DecomposePath(str2,&tabStr2);
 
-    if (FAILED(len1) || FAILED(len2))
-	return E_OUTOFMEMORY;
+    if (FAILED(len2))
+    {
+        free_stringtable(tabStr1);
+        return E_OUTOFMEMORY;
+    }
 
     /* count the number of similar items from the begin of the two paths */
     for(sameIdx=0; ( (tabStr1[sameIdx]!=NULL) &&
