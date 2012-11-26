@@ -47,6 +47,8 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -134,6 +136,121 @@ static CRITICAL_SECTION_DEBUG class_cs_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": csRegisteredClassList") }
 };
 static CRITICAL_SECTION csRegisteredClassList = { &class_cs_debug, -1, 0, 0, 0, 0 };
+
+/* wrapper for NtCreateKey that creates the key recursively if necessary */
+static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr )
+{
+    NTSTATUS status = NtCreateKey( (HANDLE *)retkey, access, attr, 0, NULL, 0, NULL );
+
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
+        HANDLE subkey, root = attr->RootDirectory;
+        WCHAR *buffer = attr->ObjectName->Buffer;
+        DWORD attrs, pos = 0, i = 0, len = attr->ObjectName->Length / sizeof(WCHAR);
+        UNICODE_STRING str;
+
+        while (i < len && buffer[i] != '\\') i++;
+        if (i == len) return status;
+
+        attrs = attr->Attributes;
+        attr->ObjectName = &str;
+
+        while (i < len)
+        {
+            str.Buffer = buffer + pos;
+            str.Length = (i - pos) * sizeof(WCHAR);
+            status = NtCreateKey( &subkey, access, attr, 0, NULL, 0, NULL );
+            if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
+            if (status) return status;
+            attr->RootDirectory = subkey;
+            while (i < len && buffer[i] == '\\') i++;
+            pos = i;
+            while (i < len && buffer[i] != '\\') i++;
+        }
+        str.Buffer = buffer + pos;
+        str.Length = (i - pos) * sizeof(WCHAR);
+        attr->Attributes = attrs;
+        status = NtCreateKey( (PHANDLE)retkey, access, attr, 0, NULL, 0, NULL );
+        if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
+    }
+    return status;
+}
+
+static const WCHAR classes_rootW[] =
+    {'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\','C','l','a','s','s','e','s',0};
+
+static HKEY classes_root_hkey;
+
+/* create the special HKEY_CLASSES_ROOT key */
+static HKEY create_classes_root_hkey(void)
+{
+    HKEY hkey, ret = 0;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING name;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &name;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &name, classes_rootW );
+    if (create_key( &hkey, MAXIMUM_ALLOWED, &attr )) return 0;
+    TRACE( "%s -> %p\n", debugstr_w(attr.ObjectName->Buffer), hkey );
+
+    if (!(ret = InterlockedCompareExchangePointer( (void **)&classes_root_hkey, hkey, 0 )))
+        ret = hkey;
+    else
+        NtClose( hkey );  /* somebody beat us to it */
+    return ret;
+}
+
+/* map the hkey from special root to normal key if necessary */
+static inline HKEY get_classes_root_hkey( HKEY hkey )
+{
+    HKEY ret = hkey;
+
+    if (hkey == HKEY_CLASSES_ROOT && !(ret = classes_root_hkey))
+        ret = create_classes_root_hkey();
+
+    return ret;
+}
+
+LSTATUS create_classes_key( HKEY hkey, const WCHAR *name, REGSAM access, HKEY *retkey )
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+
+    if (!(hkey = get_classes_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = hkey;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, name );
+
+    return RtlNtStatusToDosError( create_key( retkey, access, &attr ) );
+}
+
+LSTATUS open_classes_key( HKEY hkey, const WCHAR *name, REGSAM access, HKEY *retkey )
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+
+    if (!(hkey = get_classes_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = hkey;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, name );
+
+    return RtlNtStatusToDosError( NtOpenKey( (HANDLE *)retkey, access, &attr ) );
+}
 
 /*****************************************************************************
  * This section contains OpenDllList definitions
@@ -2055,7 +2172,7 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
     strcpyW(path + ARRAYSIZE(wszInterface) - 1 + CHARS_IN_GUID - 1, wszPSC);
 
     /* Open the key.. */
-    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, path, 0, KEY_READ, &hkey))
+    if (open_classes_key(HKEY_CLASSES_ROOT, path, KEY_READ, &hkey))
     {
         WARN("No PSFactoryBuffer object is registered for IID %s\n", debugstr_guid(riid));
         return REGDB_E_IIDNOTREG;

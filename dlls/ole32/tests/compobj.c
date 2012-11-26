@@ -755,7 +755,7 @@ static void test_CoGetPSClsid(void)
     ok(!res, "RegOverridePredefKey returned %d\n", res);
 
     hr = CoGetPSClsid(&IID_IClassFactory, &clsid);
-    todo_wine ok_ole_success(hr, "CoGetPSClsid");
+    ok_ole_success(hr, "CoGetPSClsid");
 
     res = pRegOverridePredefKey(HKEY_CLASSES_ROOT, NULL);
     ok(!res, "RegOverridePredefKey returned %d\n", res);
