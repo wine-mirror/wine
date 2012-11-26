@@ -276,6 +276,7 @@ struct d3d_device
     struct wined3d_device *wined3d_device;
     struct ddraw *ddraw;
     struct wined3d_buffer *indexbuffer;
+    UINT indexbuffer_size;
     struct ddraw_surface *target;
 
     /* Viewport management */
