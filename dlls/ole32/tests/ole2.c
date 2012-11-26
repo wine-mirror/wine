@@ -726,6 +726,84 @@ static IRunnableObject OleObjectRunnable = { &OleObjectRunnableVtbl };
 
 static const CLSID CLSID_Equation3 = {0x0002CE02, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
 
+static HRESULT WINAPI viewobject_QueryInterface(IViewObject *iface, REFIID riid, void **obj)
+{
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IViewObject))
+    {
+        *obj = iface;
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI viewobject_AddRef(IViewObject *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI viewobject_Release(IViewObject *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI viewobject_Draw(IViewObject *iface, DWORD aspect, LONG index,
+    void *paspect, DVTARGETDEVICE *ptd, HDC hdcTargetDev, HDC hdcDraw,
+    LPCRECTL bounds, LPCRECTL wbounds, BOOL (STDMETHODCALLTYPE *pfnContinue)(ULONG_PTR dwContinue),
+    ULONG_PTR dwContinue)
+{
+    ok(index == -1, "index=%d\n", index);
+    return S_OK;
+}
+
+static HRESULT WINAPI viewobject_GetColorSet(IViewObject *iface, DWORD draw_aspect, LONG index,
+    void *aspect, DVTARGETDEVICE *ptd, HDC hicTargetDev, LOGPALETTE **colorset)
+{
+    ok(0, "unexpected call GetColorSet\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewobject_Freeze(IViewObject *iface, DWORD draw_aspect, LONG index,
+    void *aspect, DWORD *freeze)
+{
+    ok(0, "unexpected call Freeze\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewobject_Unfreeze(IViewObject *iface, DWORD freeze)
+{
+    ok(0, "unexpected call Unfreeze\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewobject_SetAdvise(IViewObject *iface, DWORD aspects, DWORD advf, IAdviseSink *sink)
+{
+    ok(0, "unexpected call SetAdvise\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewobject_GetAdvise(IViewObject *iface, DWORD *aspects, DWORD *advf,
+    IAdviseSink **sink)
+{
+    ok(0, "unexpected call GetAdvise\n");
+    return E_NOTIMPL;
+}
+
+static const struct IViewObjectVtbl viewobjectvtbl = {
+    viewobject_QueryInterface,
+    viewobject_AddRef,
+    viewobject_Release,
+    viewobject_Draw,
+    viewobject_GetColorSet,
+    viewobject_Freeze,
+    viewobject_Unfreeze,
+    viewobject_SetAdvise,
+    viewobject_GetAdvise
+};
+
+static IViewObject viewobject = { &viewobjectvtbl };
+
 static void test_OleCreate(IStorage *pStorage)
 {
     HRESULT hr;
@@ -1853,6 +1931,14 @@ static void test_OleLockRunning(void)
     ok(hr == S_OK, "OleLockRunning failed 0x%08x\n", hr);
 }
 
+static void test_OleDraw(void)
+{
+    HRESULT hr;
+
+    hr = OleDraw((IUnknown*)&viewobject, 0, (HDC)0x1, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+}
+
 START_TEST(ole2)
 {
     DWORD dwRegister;
@@ -1889,6 +1975,7 @@ START_TEST(ole2)
     test_default_handler();
     test_runnable();
     test_OleLockRunning();
+    test_OleDraw();
 
     CoUninitialize();
 }

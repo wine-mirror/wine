@@ -2554,7 +2554,7 @@ HRESULT WINAPI OleDraw(
 	IUnknown *pUnk,
 	DWORD dwAspect,
 	HDC hdcDraw,
-	LPCRECT lprcBounds)
+	LPCRECT rect)
 {
   HRESULT hres;
   IViewObject *viewobject;
@@ -2562,24 +2562,14 @@ HRESULT WINAPI OleDraw(
   hres = IUnknown_QueryInterface(pUnk,
 				 &IID_IViewObject,
 				 (void**)&viewobject);
-
   if (SUCCEEDED(hres))
   {
-    RECTL rectl;
-
-    rectl.left = lprcBounds->left;
-    rectl.right = lprcBounds->right;
-    rectl.top = lprcBounds->top;
-    rectl.bottom = lprcBounds->bottom;
-    hres = IViewObject_Draw(viewobject, dwAspect, -1, 0, 0, 0, hdcDraw, &rectl, 0, 0, 0);
-
+    hres = IViewObject_Draw(viewobject, dwAspect, -1, 0, 0, 0, hdcDraw, (RECTL*)rect, 0, 0, 0);
     IViewObject_Release(viewobject);
     return hres;
   }
   else
-  {
     return DV_E_NOIVIEWOBJECT;
-  }
 }
 
 /***********************************************************************
