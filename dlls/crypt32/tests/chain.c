@@ -4626,16 +4626,18 @@ static void testVerifyCertChainPolicy(void)
     ret = pCertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain, NULL,
      &policyStatus);
     ok(ret, "CertVerifyCertificateChainPolicy failed: %08x\n", GetLastError());
-    ok(policyStatus.dwError == CERT_E_UNTRUSTEDROOT,
-     "Expected CERT_E_UNTRUSTEDROOT, got %08x\n", policyStatus.dwError);
+    ok(policyStatus.dwError == CERT_E_UNTRUSTEDROOT ||
+        policyStatus.dwError == TRUST_E_CERT_SIGNATURE, /* win7 + win8 */
+        "Expected CERT_E_UNTRUSTEDROOT or TRUST_E_CERT_SIGNATURE, got %08x\n", policyStatus.dwError);
     ok(policyStatus.lChainIndex == 0 && policyStatus.lElementIndex == 0,
      "Expected both indexes 0, got %d, %d\n", policyStatus.lChainIndex,
      policyStatus.lElementIndex);
     ret = pCertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain,
      &policyPara, &policyStatus);
     ok(ret, "CertVerifyCertificateChainPolicy failed: %08x\n", GetLastError());
-    ok(policyStatus.dwError == CERT_E_UNTRUSTEDROOT,
-     "Expected CERT_E_UNTRUSTEDROOT, got %08x\n", policyStatus.dwError);
+    ok(policyStatus.dwError == CERT_E_UNTRUSTEDROOT ||
+        policyStatus.dwError == TRUST_E_CERT_SIGNATURE, /* win7 + win8 */
+        "Expected CERT_E_UNTRUSTEDROOT or TRUST_E_CERT_SIGNATURE, got %08x\n", policyStatus.dwError);
     ok(policyStatus.lChainIndex == 0 && policyStatus.lElementIndex == 0,
      "Expected both indexes 0, got %d, %d\n", policyStatus.lChainIndex,
      policyStatus.lElementIndex);
