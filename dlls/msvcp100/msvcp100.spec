@@ -176,10 +176,10 @@
 @ stub -arch=win64 ??0_Concurrent_queue_base_v4@details@Concurrency@@IEAA@_K@Z
 @ stub -arch=win32 ??0_Concurrent_queue_iterator_base_v4@details@Concurrency@@IAE@ABV_Concurrent_queue_base_v4@12@@Z
 @ stub -arch=win64 ??0_Concurrent_queue_iterator_base_v4@details@Concurrency@@IEAA@AEBV_Concurrent_queue_base_v4@12@@Z
-@ stub -arch=win32 ??0_Container_base12@std@@QAE@ABU01@@Z
-@ stub -arch=win64 ??0_Container_base12@std@@QEAA@AEBU01@@Z
-@ stub -arch=win32 ??0_Container_base12@std@@QAE@XZ
-@ stub -arch=win64 ??0_Container_base12@std@@QEAA@XZ
+@ thiscall -arch=win32 ??0_Container_base12@std@@QAE@ABU01@@Z(ptr ptr) _Container_base12_copy_ctor
+@ cdecl -arch=win64 ??0_Container_base12@std@@QEAA@AEBU01@@Z(ptr ptr) _Container_base12_copy_ctor
+@ thiscall -arch=win32 ??0_Container_base12@std@@QAE@XZ(ptr) _Container_base12_ctor
+@ cdecl -arch=win64 ??0_Container_base12@std@@QEAA@XZ(ptr) _Container_base12_ctor
 @ stub -arch=win32 ??0_Init_locks@std@@QAE@XZ
 @ stub -arch=win64 ??0_Init_locks@std@@QEAA@XZ
 @ thiscall -arch=win32 ??0_Locimp@locale@std@@AAE@ABV012@@Z(ptr ptr) locale__Locimp_copy_ctor
@@ -306,8 +306,8 @@
 @ stub -arch=win64 ??1_Concurrent_queue_iterator_base_v4@details@Concurrency@@IEAA@XZ
 @ stub -arch=win32 ??1_Concurrent_vector_base_v4@details@Concurrency@@IAE@XZ
 @ stub -arch=win64 ??1_Concurrent_vector_base_v4@details@Concurrency@@IEAA@XZ
-@ stub -arch=win32 ??1_Container_base12@std@@QAE@XZ
-@ stub -arch=win64 ??1_Container_base12@std@@QEAA@XZ
+@ thiscall -arch=win32 ??1_Container_base12@std@@QAE@XZ(ptr) _Container_base12_dtor
+@ cdecl -arch=win64 ??1_Container_base12@std@@QEAA@XZ(ptr) _Container_base12_dtor
 @ stub -arch=win32 ??1_Init_locks@std@@QAE@XZ
 @ stub -arch=win64 ??1_Init_locks@std@@QEAA@XZ
 @ thiscall -arch=win32 ??1_Locimp@locale@std@@MAE@XZ(ptr) locale__Locimp_dtor
@@ -402,8 +402,8 @@
 @ cdecl -arch=win64 ??4Init@ios_base@std@@QEAAAEAV012@AEBV012@@Z(ptr ptr) ios_base_Init_op_assign
 @ thiscall -arch=win32 ??4_Container_base0@std@@QAEAAU01@ABU01@@Z(ptr ptr) Container_base0_op_assign
 @ cdecl -arch=win64 ??4_Container_base0@std@@QEAAAEAU01@AEBU01@@Z(ptr ptr) Container_base0_op_assign
-@ stub -arch=win32 ??4_Container_base12@std@@QAEAAU01@ABU01@@Z
-@ stub -arch=win64 ??4_Container_base12@std@@QEAAAEAU01@AEBU01@@Z
+@ thiscall -arch=win32 ??4_Container_base12@std@@QAEAAU01@ABU01@@Z(ptr ptr) _Container_base12_op_assign
+@ cdecl -arch=win64 ??4_Container_base12@std@@QEAAAEAU01@AEBU01@@Z(ptr ptr) _Container_base12_op_assign
 @ stub -arch=win32 ??4_Init_locks@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4_Init_locks@std@@QEAAAEAV01@AEBV01@@Z
 @ thiscall -arch=win32 ??4_Num_base@std@@QAEAAU01@ABU01@@Z(ptr ptr) std_Num_base_op_assign
@@ -897,8 +897,8 @@
 @ cdecl -arch=win64 ?_Getmonths@_Locinfo@std@@QEBAPEBDXZ(ptr) _Locinfo__Getmonths
 @ stub -arch=win32 ?_Getname@_Locinfo@std@@QBEPBDXZ
 @ stub -arch=win64 ?_Getname@_Locinfo@std@@QEBAPEBDXZ
-@ stub -arch=win32 ?_Getpfirst@_Container_base12@std@@QBEPAPAU_Iterator_base12@2@XZ
-@ stub -arch=win64 ?_Getpfirst@_Container_base12@std@@QEBAPEAPEAU_Iterator_base12@2@XZ
+@ thiscall -arch=win32 ?_Getpfirst@_Container_base12@std@@QBEPAPAU_Iterator_base12@2@XZ(ptr) _Container_base12__Getpfirst
+@ cdecl -arch=win64 ?_Getpfirst@_Container_base12@std@@QEBAPEAPEAU_Iterator_base12@2@XZ(ptr) _Container_base12__Getpfirst
 @ thiscall -arch=win32 ?_Getptr@_Timevec@std@@QBEPAXXZ(ptr) _Timevec__Getptr
 @ cdecl -arch=win64 ?_Getptr@_Timevec@std@@QEBAPEAXXZ(ptr) _Timevec__Getptr
 @ thiscall -arch=win32 ?_Gettnames@_Locinfo@std@@QBE?AV_Timevec@2@XZ(ptr ptr) _Locinfo__Gettnames
@@ -1125,8 +1125,8 @@
 @ cdecl ?_Nomemory@std@@YAXXZ() _Nomemory
 @ thiscall -arch=win32 ?_Orphan_all@_Container_base0@std@@QAEXXZ(ptr) Container_base0_Orphan_all
 @ cdecl -arch=win64 ?_Orphan_all@_Container_base0@std@@QEAAXXZ(ptr) Container_base0_Orphan_all
-@ stub -arch=win32 ?_Orphan_all@_Container_base12@std@@QAEXXZ
-@ stub -arch=win64 ?_Orphan_all@_Container_base12@std@@QEAAXXZ
+@ thiscall -arch=win32 ?_Orphan_all@_Container_base12@std@@QAEXXZ(ptr) _Container_base12__Orphan_all
+@ cdecl -arch=win64 ?_Orphan_all@_Container_base12@std@@QEAAXXZ(ptr) _Container_base12__Orphan_all
 @ thiscall -arch=win32 ?_Osfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) basic_ostream_char__Osfx
 @ cdecl -arch=win64 ?_Osfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAXXZ(ptr) basic_ostream_char__Osfx
 @ thiscall -arch=win32 ?_Osfx@?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEXXZ(ptr) basic_ostream_wchar__Osfx
@@ -1204,8 +1204,8 @@
 @ cdecl -arch=win64 ?_Setgloballocale@locale@std@@CAXPEAX@Z(ptr) locale__Setgloballocale
 @ thiscall -arch=win32 ?_Swap_all@_Container_base0@std@@QAEXAAU12@@Z(ptr ptr) Container_base0_Swap_all
 @ cdecl -arch=win64 ?_Swap_all@_Container_base0@std@@QEAAXAEAU12@@Z(ptr ptr) Container_base0_Swap_all
-@ stub -arch=win32 ?_Swap_all@_Container_base12@std@@QAEXAAU12@@Z
-@ stub -arch=win64 ?_Swap_all@_Container_base12@std@@QEAAXAEAU12@@Z
+@ thiscall -arch=win32 ?_Swap_all@_Container_base12@std@@QAEXAAU12@@Z(ptr ptr) _Container_base12__Swap_all
+@ cdecl -arch=win64 ?_Swap_all@_Container_base12@std@@QEAAXAEAU12@@Z(ptr ptr) _Container_base12__Swap_all
 @ extern ?_Sync@ios_base@std@@0_NA ios_base_Sync
 @ thiscall -arch=win32 ?_Tidy@?$_Yarn@D@std@@AAEXXZ(ptr) _Yarn_char__Tidy
 @ cdecl -arch=win64 ?_Tidy@?$_Yarn@D@std@@AEAAXXZ(ptr) _Yarn_char__Tidy
