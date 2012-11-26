@@ -944,13 +944,8 @@ struct wined3d_stream_info
     WORD use_map; /* MAX_ATTRIBS, 16 */
 };
 
-/*****************************************************************************
- * Prototypes
- */
-
-/* Routine common to the draw primitive and draw indexed primitive routines */
-void drawPrimitive(struct wined3d_device *device, UINT index_count,
-        UINT start_idx, BOOL indexed, const void *idxData) DECLSPEC_HIDDEN;
+void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_count,
+        UINT start_instance, UINT instance_count, BOOL indexed, const void *idx_data) DECLSPEC_HIDDEN;
 DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) DECLSPEC_HIDDEN;
 
 typedef void (WINE_GLAPI *glAttribFunc)(const void *data);

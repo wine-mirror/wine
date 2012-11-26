@@ -49,6 +49,7 @@ enum wined3d_gl_extension
     ARB_DEPTH_TEXTURE,
     ARB_DRAW_BUFFERS,
     ARB_DRAW_ELEMENTS_BASE_VERTEX,
+    ARB_DRAW_INSTANCED,
     ARB_FRAGMENT_PROGRAM,
     ARB_FRAGMENT_SHADER,
     ARB_FRAMEBUFFER_OBJECT,
@@ -184,6 +185,9 @@ enum wined3d_gl_extension
     USE_GL_FUNC(glDrawElementsInstancedBaseVertex) \
     USE_GL_FUNC(glDrawRangeElementsBaseVertex) \
     USE_GL_FUNC(glMultiDrawElementsBaseVertex) \
+    /* GL_ARB_draw_instanced */ \
+    USE_GL_FUNC(glDrawArraysInstancedARB) \
+    USE_GL_FUNC(glDrawElementsInstancedARB) \
     /* GL_ARB_framebuffer_object */ \
     USE_GL_FUNC(glBindFramebuffer) \
     USE_GL_FUNC(glBindRenderbuffer) \

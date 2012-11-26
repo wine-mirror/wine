@@ -36,12 +36,27 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
 
 /* GL locking is done by the caller */
 static void drawStridedFast(const struct wined3d_gl_info *gl_info, GLenum primitive_type, UINT count, UINT idx_size,
-        const void *idx_data, UINT start_idx, INT base_vertex_index)
+        const void *idx_data, UINT start_idx, INT base_vertex_index, UINT start_instance, UINT instance_count)
 {
     if (idx_size)
     {
         GLenum idxtype = idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
-        if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
+        if (instance_count)
+        {
+            if (!gl_info->supported[ARB_DRAW_INSTANCED])
+            {
+                FIXME("Instanced drawing not supported.\n");
+            }
+            else
+            {
+                if (start_instance)
+                    FIXME("Start instance (%u) not supported.\n", start_instance);
+                GL_EXTCALL(glDrawElementsInstancedBaseVertex(primitive_type, count, idxtype,
+                        (const char *)idx_data + (idx_size * start_idx), instance_count, base_vertex_index));
+                checkGLcall("glDrawElementsInstancedBaseVertex");
+            }
+        }
+        else if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
         {
             GL_EXTCALL(glDrawElementsBaseVertex(primitive_type, count, idxtype,
                     (const char *)idx_data + (idx_size * start_idx), base_vertex_index));
@@ -577,7 +592,8 @@ static void remove_vbos(const struct wined3d_gl_info *gl_info,
 }
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
-void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartIdx, BOOL indexed, const void *idxData)
+void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_count,
+        UINT start_instance, UINT instance_count, BOOL indexed, const void *idx_data)
 {
     const struct wined3d_state *state = &device->stateBlock->state;
     struct wined3d_event_query *ib_query = NULL;
@@ -682,11 +698,11 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
             {
                 struct wined3d_buffer *index_buffer = state->index_buffer;
                 if (!index_buffer->buffer_object || !stream_info->all_vbo)
-                    idxData = index_buffer->resource.allocatedMemory;
+                    idx_data = index_buffer->resource.allocatedMemory;
                 else
                 {
                     ib_query = index_buffer->query;
-                    idxData = NULL;
+                    idx_data = NULL;
                 }
             }
 
@@ -744,24 +760,25 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
                 } else {
                     TRACE("Using immediate mode with vertex shaders for half float emulation\n");
                 }
-                drawStridedSlowVs(gl_info, state, stream_info,
-                        index_count, glPrimType, idxData, idx_size, StartIdx);
+                drawStridedSlowVs(gl_info, state, stream_info, index_count,
+                        glPrimType, idx_data, idx_size, start_idx);
             }
             else
             {
                 drawStridedSlow(device, context, stream_info, index_count,
-                        glPrimType, idxData, idx_size, StartIdx);
+                        glPrimType, idx_data, idx_size, start_idx);
             }
         }
         else if (device->instancedDraw)
         {
             /* Instancing emulation with mixing immediate mode and arrays */
-            drawStridedInstanced(gl_info, state, stream_info,
-                    index_count, glPrimType, idxData, idx_size, StartIdx, base_vertex_index);
+            drawStridedInstanced(gl_info, state, stream_info, index_count,
+                    glPrimType, idx_data, idx_size, start_idx, base_vertex_index);
         }
         else
         {
-            drawStridedFast(gl_info, glPrimType, index_count, idx_size, idxData, StartIdx, base_vertex_index);
+            drawStridedFast(gl_info, glPrimType, index_count, idx_size, idx_data,
+                    start_idx, base_vertex_index, start_instance, instance_count);
         }
     }
 

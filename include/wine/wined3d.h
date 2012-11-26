@@ -2088,6 +2088,8 @@ HRESULT __cdecl wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx,
 ULONG __cdecl wined3d_device_decref(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_delete_patch(struct wined3d_device *device, UINT handle);
 HRESULT __cdecl wined3d_device_draw_indexed_primitive(struct wined3d_device *device, UINT start_idx, UINT index_count);
+void __cdecl wined3d_device_draw_indexed_primitive_instanced(struct wined3d_device *device,
+        UINT start_idx, UINT index_count, UINT start_instance, UINT instance_count);
 HRESULT __cdecl wined3d_device_draw_indexed_primitive_strided(struct wined3d_device *device, UINT index_count,
         const struct wined3d_strided_data *strided_data, UINT vertex_count, const void *index_data,
         enum wined3d_format_id index_data_format_id);

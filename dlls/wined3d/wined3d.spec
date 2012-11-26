@@ -43,6 +43,7 @@
 @ cdecl wined3d_device_decref(ptr)
 @ cdecl wined3d_device_delete_patch(ptr long)
 @ cdecl wined3d_device_draw_indexed_primitive(ptr long long)
+@ cdecl wined3d_device_draw_indexed_primitive_instanced(ptr long long long long)
 @ cdecl wined3d_device_draw_indexed_primitive_strided(ptr long ptr long ptr long)
 @ cdecl wined3d_device_draw_indexed_primitive_up(ptr long ptr long ptr long)
 @ cdecl wined3d_device_draw_primitive(ptr long long)

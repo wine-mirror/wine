@@ -3868,7 +3868,7 @@ HRESULT CDECL wined3d_device_draw_primitive(struct wined3d_device *device, UINT 
 
     /* Account for the loading offset due to index buffers. Instead of
      * reloading all sources correct it with the startvertex parameter. */
-    drawPrimitive(device, vertex_count, start_vertex, FALSE, NULL);
+    draw_primitive(device, start_vertex, vertex_count, 0, 0, FALSE, NULL);
     return WINED3D_OK;
 }
 
@@ -3907,9 +3907,17 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *devic
         device_invalidate_state(device, STATE_BASEVERTEXINDEX);
     }
 
-    drawPrimitive(device, index_count, start_idx, TRUE, NULL);
+    draw_primitive(device, start_idx, index_count, 0, 0, TRUE, NULL);
 
     return WINED3D_OK;
+}
+
+void CDECL wined3d_device_draw_indexed_primitive_instanced(struct wined3d_device *device,
+        UINT start_idx, UINT index_count, UINT start_instance, UINT instance_count)
+{
+    TRACE("device %p, start_idx %u, index_count %u.\n", device, start_idx, index_count);
+
+    draw_primitive(device, start_idx, index_count, start_instance, instance_count, TRUE, NULL);
 }
 
 HRESULT CDECL wined3d_device_draw_primitive_up(struct wined3d_device *device, UINT vertex_count,
@@ -3945,7 +3953,7 @@ HRESULT CDECL wined3d_device_draw_primitive_up(struct wined3d_device *device, UI
     /* TODO: Only mark dirty if drawing from a different UP address */
     device_invalidate_state(device, STATE_STREAMSRC);
 
-    drawPrimitive(device, vertex_count, 0, FALSE, NULL);
+    draw_primitive(device, 0, vertex_count, 0, 0, FALSE, NULL);
 
     /* MSDN specifies stream zero settings must be set to NULL */
     stream->buffer = NULL;
@@ -3983,7 +3991,7 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive_up(struct wined3d_device *de
     device->stateBlock->state.user_stream = TRUE;
     device->stateBlock->state.index_format = index_data_format_id;
 
-    /* Set to 0 as per msdn. Do it now due to the stream source loading during drawPrimitive */
+    /* Set to 0 as per MSDN. Do it now due to the stream source loading during draw_primitive(). */
     device->stateBlock->state.base_vertex_index = 0;
     if (device->stateBlock->state.load_base_vertex_index)
     {
@@ -3994,7 +4002,7 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive_up(struct wined3d_device *de
     device_invalidate_state(device, STATE_STREAMSRC);
     device_invalidate_state(device, STATE_INDEXBUFFER);
 
-    drawPrimitive(device, index_count, 0, TRUE, index_data);
+    draw_primitive(device, 0, index_count, 0, 0, TRUE, index_data);
 
     /* MSDN specifies stream zero settings and index buffer must be set to NULL */
     stream->buffer = NULL;
@@ -4024,7 +4032,7 @@ HRESULT CDECL wined3d_device_draw_primitive_strided(struct wined3d_device *devic
 
     device->stateBlock->state.base_vertex_index = 0;
     device->up_strided = strided_data;
-    drawPrimitive(device, vertex_count, 0, FALSE, NULL);
+    draw_primitive(device, 0, vertex_count, 0, 0, FALSE, NULL);
     device->up_strided = NULL;
 
     /* Invalidate the states again to make sure the values from the stateblock
@@ -4056,7 +4064,7 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive_strided(struct wined3d_devic
     device->stateBlock->state.user_stream = TRUE;
     device->stateBlock->state.base_vertex_index = 0;
     device->up_strided = strided_data;
-    drawPrimitive(device, index_count, 0, TRUE, index_data);
+    draw_primitive(device, 0, index_count, 0, 0, TRUE, index_data);
     device->up_strided = NULL;
     device->stateBlock->state.index_format = prev_idx_format;
 
