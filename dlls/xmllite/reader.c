@@ -1,7 +1,7 @@
 /*
  * IXmlReader implementation
  *
- * Copyright 2010 Nikolay Sivov
+ * Copyright 2010, 2012 Nikolay Sivov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -48,7 +48,7 @@ static const WCHAR utf8W[] = {'U','T','F','-','8',0};
 
 struct xml_encoding_data
 {
-    const WCHAR *encoding;
+    const WCHAR *name;
     xml_encoding enc;
     UINT cp;
 };
@@ -213,11 +213,11 @@ static HRESULT get_code_page(xml_encoding encoding, UINT *cp)
     return S_OK;
 }
 
-static xml_encoding parse_encoding_name(const WCHAR *encoding)
+static xml_encoding parse_encoding_name(const WCHAR *name)
 {
     int min, max, n, c;
 
-    if (!encoding) return XmlEncoding_Unknown;
+    if (!name) return XmlEncoding_Unknown;
 
     min = 0;
     max = sizeof(xml_encoding_map)/sizeof(struct xml_encoding_data) - 1;
@@ -226,7 +226,7 @@ static xml_encoding parse_encoding_name(const WCHAR *encoding)
     {
         n = (min+max)/2;
 
-        c = strcmpiW(xml_encoding_map[n].encoding, encoding);
+        c = strcmpiW(xml_encoding_map[n].name, name);
         if (!c)
             return xml_encoding_map[n].enc;
 
@@ -431,6 +431,136 @@ static void readerinput_switchencoding(xmlreaderinput *readerinput, xml_encoding
     readerinput->buffer->code_page = cp;
 }
 
+static inline const WCHAR *reader_get_cur(xmlreader *reader)
+{
+    return (WCHAR*)reader->input->buffer->utf16.cur;
+}
+
+static int reader_cmp(xmlreader *reader, const WCHAR *str)
+{
+    const WCHAR *ptr = reader_get_cur(reader);
+    int i = 0;
+
+    return strncmpW(str, ptr, strlenW(str));
+
+    while (str[i]) {
+        if (ptr[i] != str[i]) return 0;
+        i++;
+    }
+
+    return 1;
+}
+
+/* moves cursor n WCHARs forward */
+static void reader_skipn(xmlreader *reader, int n)
+{
+    encoded_buffer *buffer = &reader->input->buffer->utf16;
+    const WCHAR *ptr = reader_get_cur(reader);
+
+    while (*ptr++ && n--)
+    {
+        buffer->cur += sizeof(WCHAR);
+        reader->pos++;
+    }
+}
+
+/* [3] S ::= (#x20 | #x9 | #xD | #xA)+ */
+static int reader_skipspaces(xmlreader *reader)
+{
+    encoded_buffer *buffer = &reader->input->buffer->utf16;
+    const WCHAR *ptr = reader_get_cur(reader), *start = ptr;
+
+    while (*ptr == ' ' || *ptr == '\t' || *ptr == '\r' || *ptr == '\n')
+    {
+        buffer->cur += sizeof(WCHAR);
+        if (*ptr == '\r')
+            reader->pos = 0;
+        else if (*ptr == '\n')
+        {
+            reader->line++;
+            reader->pos = 0;
+        }
+        else
+            reader->pos++;
+        ptr++;
+    }
+
+    return ptr - start;
+}
+
+/* [26] VersionNum ::= '1.' [0-9]+ */
+static HRESULT reader_parse_versionnum(xmlreader *reader)
+{
+    const WCHAR *ptr, *start = reader_get_cur(reader);
+    static const WCHAR onedotW[] = {'1','.',0};
+
+    if (reader_cmp(reader, onedotW)) return WC_E_XMLDECL;
+    /* skip "1." */
+    reader_skipn(reader, 2);
+
+    ptr = reader_get_cur(reader);
+    while (*ptr >= '0' && *ptr <= '9')
+        ptr++;
+
+    if (ptr == start) return WC_E_DIGIT;
+    TRACE("version=%s\n", debugstr_wn(start, ptr-start));
+    reader_skipn(reader, ptr-start);
+    return S_OK;
+}
+
+/* [24] VersionInfo ::= S 'version' Eq ("'" VersionNum "'" | '"' VersionNum '"') */
+static HRESULT reader_parse_versioninfo(xmlreader *reader)
+{
+    static const WCHAR versionW[] = {'v','e','r','s','i','o','n',0};
+    static const WCHAR dblquoteW[] = {'\"',0};
+    static const WCHAR quoteW[] = {'\'',0};
+    static const WCHAR eqW[] = {'=',0};
+    HRESULT hr;
+
+    if (!reader_skipspaces(reader)) return WC_E_WHITESPACE;
+
+    if (reader_cmp(reader, versionW)) return WC_E_XMLDECL;
+    /* skip 'version' */
+    reader_skipn(reader, 7);
+
+    if (reader_cmp(reader, eqW)) return WC_E_EQUAL;
+    /* skip '=' */
+    reader_skipn(reader, 1);
+
+    if (reader_cmp(reader, quoteW) && reader_cmp(reader, dblquoteW))
+        return WC_E_QUOTE;
+    /* skip "'"|'"' */
+    reader_skipn(reader, 1);
+
+    hr = reader_parse_versionnum(reader);
+    if (FAILED(hr)) return hr;
+
+    if (reader_cmp(reader, quoteW) && reader_cmp(reader, dblquoteW))
+        return WC_E_QUOTE;
+
+    /* skip "'"|'"' */
+    reader_skipn(reader, 1);
+
+    return S_OK;
+}
+
+/* [23] XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>' */
+static HRESULT reader_parse_xmldecl(xmlreader *reader)
+{
+    static const WCHAR xmldeclW[] = {'<','?','x','m','l',0};
+    HRESULT hr;
+
+    /* check if we have "<?xml" */
+    if (reader_cmp(reader, xmldeclW)) return S_OK;
+
+    reader_skipn(reader, 5);
+    hr = reader_parse_versioninfo(reader);
+    if (FAILED(hr))
+        return hr;
+
+    return E_NOTIMPL;
+}
+
 static HRESULT WINAPI xmlreader_QueryInterface(IXmlReader *iface, REFIID riid, void** ppvObject)
 {
     xmlreader *This = impl_from_IXmlReader(iface);
@@ -586,11 +716,17 @@ static HRESULT WINAPI xmlreader_Read(IXmlReader* iface, XmlNodeType *node_type)
 
         /* try to detect encoding by BOM or data and set input code page */
         hr = readerinput_detectencoding(This->input, &enc);
-        TRACE("detected encoding %d, 0x%08x\n", enc, hr);
+        TRACE("detected encoding %s, 0x%08x\n", debugstr_w(xml_encoding_map[enc].name), hr);
         if (FAILED(hr)) return hr;
 
         /* always switch first time cause we have to put something in */
         readerinput_switchencoding(This->input, enc);
+
+        /* parse xml declaration */
+        hr = reader_parse_xmldecl(This);
+        if (FAILED(hr)) return hr;
+
+        This->state = XmlReadState_Interactive;
     }
 
     return E_NOTIMPL;
