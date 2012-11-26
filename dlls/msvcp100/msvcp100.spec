@@ -400,8 +400,8 @@
 @ cdecl -arch=win64 ??4?$numeric_limits@_W@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) std_Num_base_op_assign
 @ thiscall -arch=win32 ??4Init@ios_base@std@@QAEAAV012@ABV012@@Z(ptr ptr) ios_base_Init_op_assign
 @ cdecl -arch=win64 ??4Init@ios_base@std@@QEAAAEAV012@AEBV012@@Z(ptr ptr) ios_base_Init_op_assign
-@ stub -arch=win32 ??4_Container_base0@std@@QAEAAU01@ABU01@@Z
-@ stub -arch=win64 ??4_Container_base0@std@@QEAAAEAU01@AEBU01@@Z
+@ thiscall -arch=win32 ??4_Container_base0@std@@QAEAAU01@ABU01@@Z(ptr ptr) Container_base0_op_assign
+@ cdecl -arch=win64 ??4_Container_base0@std@@QEAAAEAU01@AEBU01@@Z(ptr ptr) Container_base0_op_assign
 @ stub -arch=win32 ??4_Container_base12@std@@QAEAAU01@ABU01@@Z
 @ stub -arch=win64 ??4_Container_base12@std@@QEAAAEAU01@AEBU01@@Z
 @ stub -arch=win32 ??4_Init_locks@std@@QAEAAV01@ABV01@@Z

@@ -80,28 +80,6 @@ static void init_cxx_funcs(void)
     }
 }
 
-/* _Container_base0 is used by apps compiled without iterator checking
- * (i.e. with _ITERATOR_DEBUG_LEVEL=0 ).
- * It provides empty versions of methods used by visual c++'s stl's
- * iterator checking.
- * msvcr100 has to provide them in case apps are compiled with /Od
- * or the optimizer fails to inline those (empty) calls.
- */
-
-/* ?_Orphan_all@_Container_base0@std@@QAEXXZ */
-/* ?_Orphan_all@_Container_base0@std@@QEAAXXZ */
-DEFINE_THISCALL_WRAPPER(Container_base0_Orphan_all, 4)
-void __thiscall Container_base0_Orphan_all(void *this)
-{
-}
-
-/* ?_Swap_all@_Container_base0@std@@QAEXAAU12@@Z */
-/* ?_Swap_all@_Container_base0@std@@QEAAXAEAU12@@Z */
-DEFINE_THISCALL_WRAPPER(Container_base0_Swap_all, 8)
-void __thiscall Container_base0_Swap_all(void *this, void *that)
-{
-}
-
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
