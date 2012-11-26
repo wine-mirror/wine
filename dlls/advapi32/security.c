@@ -3919,9 +3919,41 @@ DWORD WINAPI SetNamedSecurityInfoW(LPWSTR pObjectName,
         SE_OBJECT_TYPE ObjectType, SECURITY_INFORMATION SecurityInfo,
         PSID psidOwner, PSID psidGroup, PACL pDacl, PACL pSacl)
 {
-    FIXME("%s %d %d %p %p %p %p\n", debugstr_w(pObjectName), ObjectType,
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    IO_STATUS_BLOCK io;
+    DWORD access = 0;
+    HANDLE hFile;
+    DWORD status;
+
+    TRACE( "%s %d %d %p %p %p %p\n", debugstr_w(pObjectName), ObjectType,
            SecurityInfo, psidOwner, psidGroup, pDacl, pSacl);
-    return ERROR_SUCCESS;
+
+    if (!pObjectName) return ERROR_INVALID_PARAMETER;
+    if (!RtlDosPathNameToNtPathName_U( pObjectName, &nameW, NULL, NULL ))
+        return ERROR_PATH_NOT_FOUND;
+
+    if (SecurityInfo & (OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION))
+        access |= WRITE_OWNER;
+    if (SecurityInfo & DACL_SECURITY_INFORMATION)
+        access |= WRITE_DAC;
+    if (SecurityInfo & SACL_SECURITY_INFORMATION)
+        access |= ACCESS_SYSTEM_SECURITY;
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nameW;
+    attr.SecurityDescriptor = NULL;
+
+    status = NtCreateFile( &hFile, access, &attr, &io, NULL, FILE_FLAG_BACKUP_SEMANTICS,
+                           FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, FILE_OPEN,
+                           FILE_OPEN_FOR_BACKUP_INTENT, NULL, 0 );
+    RtlFreeUnicodeString( &nameW );
+    if (status != STATUS_SUCCESS)
+        return RtlNtStatusToDosError( status );
+    status = SetSecurityInfo( hFile, ObjectType, SecurityInfo, psidOwner, psidGroup, pDacl, pSacl );
+    CloseHandle( hFile );
+    return status;
 }
 
 /******************************************************************************

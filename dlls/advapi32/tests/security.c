@@ -101,6 +101,8 @@ static BOOL (WINAPI *pSetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
 static DWORD (WINAPI *pGetNamedSecurityInfoA)(LPSTR, SE_OBJECT_TYPE, SECURITY_INFORMATION,
                                               PSID*, PSID*, PACL*, PACL*,
                                               PSECURITY_DESCRIPTOR*);
+static DWORD (WINAPI *pSetNamedSecurityInfoA)(LPTSTR, SE_OBJECT_TYPE, SECURITY_INFORMATION,
+                                              PSID, PSID, PACL, PACL);
 static PDWORD (WINAPI *pGetSidSubAuthority)(PSID, DWORD);
 static PUCHAR (WINAPI *pGetSidSubAuthorityCount)(PSID);
 static BOOL (WINAPI *pIsValidSid)(PSID);
@@ -170,6 +172,7 @@ static void init(void)
     pSetFileSecurityA = (void *)GetProcAddress(hmod, "SetFileSecurityA" );
     pCreateWellKnownSid = (void *)GetProcAddress( hmod, "CreateWellKnownSid" );
     pGetNamedSecurityInfoA = (void *)GetProcAddress(hmod, "GetNamedSecurityInfoA");
+    pSetNamedSecurityInfoA = (void *)GetProcAddress(hmod, "SetNamedSecurityInfoA");
     pGetSidSubAuthority = (void *)GetProcAddress(hmod, "GetSidSubAuthority");
     pGetSidSubAuthorityCount = (void *)GetProcAddress(hmod, "GetSidSubAuthorityCount");
     pIsValidSid = (void *)GetProcAddress(hmod, "IsValidSid");
@@ -3002,6 +3005,7 @@ static void test_SetEntriesInAclA(void)
 
 static void test_GetNamedSecurityInfoA(void)
 {
+    char invalid_path[] = "/an invalid file path";
     PSECURITY_DESCRIPTOR pSecDesc;
     DWORD revision;
     SECURITY_DESCRIPTOR_CONTROL control;
@@ -3014,9 +3018,9 @@ static void test_GetNamedSecurityInfoA(void)
     BOOL ret, isNT4;
     CHAR windows_dir[MAX_PATH];
 
-    if (!pGetNamedSecurityInfoA)
+    if (!pGetNamedSecurityInfoA || !pSetNamedSecurityInfoA)
     {
-        win_skip("GetNamedSecurityInfoA is not available\n");
+        win_skip("[Get|Set]NamedSecurityInfoA is not available\n");
         return;
     }
 
@@ -3072,6 +3076,13 @@ static void test_GetNamedSecurityInfoA(void)
     error = pGetNamedSecurityInfoA(windows_dir, SE_FILE_OBJECT,OWNER_SECURITY_INFORMATION,
         NULL, NULL, &dacl, NULL, NULL);
     ok(error==ERROR_INVALID_PARAMETER, "GetNamedSecurityInfo failed with error %d\n", error);
+
+    /* Test behavior of SetNamedSecurityInfo with an invalid path */
+    SetLastError(0xdeadbeef);
+    error = pSetNamedSecurityInfoA(invalid_path, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, NULL,
+                                   NULL, NULL, NULL);
+    ok(error == ERROR_FILE_NOT_FOUND, "Unexpected error returned: 0x%x\n", error);
+    ok(GetLastError() == 0xdeadbeef, "Expected last error to remain unchanged.\n");
 }
 
 static void test_ConvertStringSecurityDescriptor(void)
