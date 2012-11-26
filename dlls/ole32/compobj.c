@@ -1931,7 +1931,7 @@ HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY
 
     strcpyW(path, wszCLSIDSlash);
     StringFromGUID2(clsid, path + strlenW(wszCLSIDSlash), CHARS_IN_GUID);
-    res = RegOpenKeyExW(HKEY_CLASSES_ROOT, path, 0, keyname ? KEY_READ : access, &key);
+    res = open_classes_key(HKEY_CLASSES_ROOT, path, keyname ? KEY_READ : access, &key);
     if (res == ERROR_FILE_NOT_FOUND)
         return REGDB_E_CLASSNOTREG;
     else if (res != ERROR_SUCCESS)
@@ -1943,7 +1943,7 @@ HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY
         return S_OK;
     }
 
-    res = RegOpenKeyExW(key, keyname, 0, access, subkey);
+    res = open_classes_key(key, keyname, access, subkey);
     RegCloseKey(key);
     if (res == ERROR_FILE_NOT_FOUND)
         return REGDB_E_KEYMISSING;
@@ -1981,7 +1981,7 @@ HRESULT COM_OpenKeyForAppIdFromCLSID(REFCLSID clsid, REGSAM access, HKEY *subkey
 
     strcpyW(keyname, szAppIdKey);
     strcatW(keyname, buf);
-    res = RegOpenKeyExW(HKEY_CLASSES_ROOT, keyname, 0, access, subkey);
+    res = open_classes_key(HKEY_CLASSES_ROOT, keyname, access, subkey);
     if (res == ERROR_FILE_NOT_FOUND)
         return REGDB_E_KEYMISSING;
     else if (res != ERROR_SUCCESS)
@@ -2074,7 +2074,7 @@ HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID clsid)
     buf = HeapAlloc( GetProcessHeap(),0,(strlenW(progid)+8) * sizeof(WCHAR) );
     strcpyW( buf, progid );
     strcatW( buf, clsidW );
-    if (RegOpenKeyW(HKEY_CLASSES_ROOT,buf,&xhkey))
+    if (open_classes_key(HKEY_CLASSES_ROOT, buf, MAXIMUM_ALLOWED, &xhkey))
     {
         HeapFree(GetProcessHeap(),0,buf);
         WARN("couldn't open key for ProgID %s\n", debugstr_w(progid));

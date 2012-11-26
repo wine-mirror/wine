@@ -384,6 +384,8 @@ static void test_CoGetClassObject(void)
     IUnknown *pUnk;
     struct info info;
     REFCLSID rclsid = &CLSID_InternetZoneManager;
+    HKEY hkey;
+    LONG res;
 
     hr = CoGetClassObject(rclsid, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
     ok(hr == CO_E_NOTINITIALIZED, "CoGetClassObject should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
@@ -428,6 +430,30 @@ static void test_CoGetClassObject(void)
     CloseHandle(thread);
     CloseHandle(info.wait);
     CloseHandle(info.stop);
+
+    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    hr = CoGetClassObject(rclsid, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
+    if (hr == S_OK)
+    {
+        IUnknown_Release(pUnk);
+
+        res = RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Classes", 0, KEY_ALL_ACCESS, &hkey);
+        ok(!res, "RegOpenKeyExA returned %d\n", res);
+
+        res = pRegOverridePredefKey(HKEY_CLASSES_ROOT, hkey);
+        ok(!res, "RegOverridePredefKey returned %d\n", res);
+
+        hr = CoGetClassObject(rclsid, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
+        ok(hr == S_OK, "CoGetClassObject should have returned S_OK instead of 0x%08x\n", hr);
+
+        res = pRegOverridePredefKey(HKEY_CLASSES_ROOT, NULL);
+        ok(!res, "RegOverridePredefKey returned %d\n", res);
+
+        if (hr == S_OK) IUnknown_Release(pUnk);
+        RegCloseKey(hkey);
+    }
+    CoUninitialize();
 }
 
 static ATOM register_dummy_class(void)

@@ -52,6 +52,7 @@
 
 #include "winreg.h"
 #include "wine/wingdi16.h"
+#include "compobj_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
@@ -8850,7 +8851,7 @@ HRESULT OLECONVERT_CreateCompObjStream(LPSTORAGE pStorage, LPCSTR strOleTypeName
             HKEY hKey;
             LONG hErr;
             /* Get the CLSID Default Name from the Registry */
-            hErr = RegOpenKeyA(HKEY_CLASSES_ROOT, IStorageCompObj.strProgIDName, &hKey);
+            hErr = open_classes_key(HKEY_CLASSES_ROOT, bufferW, MAXIMUM_ALLOWED, &hKey);
             if(hErr == ERROR_SUCCESS)
             {
                 char strTemp[OLESTREAM_MAX_STR_LEN];
