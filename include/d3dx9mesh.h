@@ -564,7 +564,7 @@ DECLARE_INTERFACE_(ID3DXPRTBuffer, IUnknown)
     STDMETHOD(LockBuffer)(THIS_ UINT start, UINT num_samples, FLOAT **data) PURE;
     STDMETHOD(UnlockBuffer)(THIS) PURE;
     STDMETHOD(ScaleBuffer)(THIS_ FLOAT scale) PURE;
-    STDMETHOD(AddBuffer)(THIS_ LPD3DXPRTBUFFER buffer) PURE;
+    STDMETHOD(AddBuffer)(THIS_ ID3DXPRTBuffer *buffer) PURE;
     STDMETHOD(AttachGH)(THIS_ struct ID3DXTextureGutterHelper *gh) PURE;
     STDMETHOD(ReleaseGH)(THIS) PURE;
     STDMETHOD(EvalGH)(THIS) PURE;
@@ -613,7 +613,7 @@ DECLARE_INTERFACE_(ID3DXTextureGutterHelper, IUnknown)
 
     STDMETHOD(ApplyGuttersFloat)(THIS_ FLOAT *data_in, UINT num_coeffs, UINT width, UINT height) PURE;
     STDMETHOD(ApplyGuttersTex)(THIS_ struct IDirect3DTexture9 *texture) PURE;
-    STDMETHOD(ApplyGuttersPRT)(THIS_ LPD3DXPRTBUFFER buffer) PURE;
+    STDMETHOD(ApplyGuttersPRT)(THIS_ ID3DXPRTBuffer *buffer) PURE;
     STDMETHOD(ResampleTex)(THIS_ struct IDirect3DTexture9 *texture_in, struct ID3DXMesh *mesh_in,
         D3DDECLUSAGE usage, UINT usage_index, struct IDirect3DTexture9 *texture_out) PURE;
     STDMETHOD(GetFaceMap)(THIS_ UINT *face_data) PURE;
@@ -643,7 +643,7 @@ DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
     STDMETHOD(GetVertexAlbedo)(THIS_ D3DXCOLOR *vert_colors, UINT num_verts) PURE;
     STDMETHOD(SetPerTexelNormals)(THIS_ struct IDirect3DTexture9 *normal_texture) PURE;
     STDMETHOD(ExtractPerVertexAlbedo)(THIS_ LPD3DXMESH mesh, D3DDECLUSAGE usage, UINT num_channels) PURE;
-    STDMETHOD(ResampleBuffer)(THIS_ LPD3DXPRTBUFFER buffer_in, LPD3DXPRTBUFFER buffer_out) PURE;
+    STDMETHOD(ResampleBuffer)(THIS_ ID3DXPRTBuffer *buffer_in, ID3DXPRTBuffer *buffer_out) PURE;
     STDMETHOD(GetAdaptedMesh)(THIS_ struct IDirect3DDevice9 *device, UINT *face_remap,
             UINT *vert_remap, float *vert_weights, struct ID3DXMesh **mesh) PURE;
     STDMETHOD_(UINT, GetNumVerts)(THIS) PURE;
@@ -652,34 +652,34 @@ DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
     STDMETHOD(RobustMeshRefine)(THIS_ FLOAT min_edge_length, UINT max_subdiv) PURE;
     STDMETHOD(SetSamplingInfo)(THIS_ UINT num_rays, BOOL use_sphere,
         BOOL use_cosine, BOOL adaptive, FLOAT adpative_thresh) PURE;
-    STDMETHOD(ComputeDirectLightingSH)(THIS_ UINT sh_order, LPD3DXPRTBUFFER data_out) PURE;
-    STDMETHOD(ComputeDirectLightingSHAdaptive)(THIS_ UINT sh_order, FLOAT adaptive_thresh,
-        FLOAT min_edge_length, UINT max_subdiv, LPD3DXPRTBUFFER data_out) PURE;
+    STDMETHOD(ComputeDirectLightingSH)(THIS_ UINT sh_order, ID3DXPRTBuffer *data_out) PURE;
+    STDMETHOD(ComputeDirectLightingSHAdaptive)(THIS_ UINT sh_order, float adaptive_thresh,
+            float min_edge_length, UINT max_subdiv, ID3DXPRTBuffer *data_out) PURE;
     STDMETHOD(ComputeDirectLightingSHGPU)(THIS_ struct IDirect3DDevice9 *device, UINT flags,
             UINT sh_order, float zbias, float zangle_bias, struct ID3DXPRTBuffer *data_out) PURE;
-    STDMETHOD(ComputeSS)(THIS_ LPD3DXPRTBUFFER data_in, LPD3DXPRTBUFFER data_out,
-        LPD3DXPRTBUFFER data_total) PURE;
-    STDMETHOD(ComputeSSAdaptive)(THIS_ LPD3DXPRTBUFFER data_in, FLOAT adaptive_thres,
-        FLOAT min_edge_length, UINT max_subdiv, LPD3DXPRTBUFFER data_out, LPD3DXPRTBUFFER data_total) PURE;
-    STDMETHOD(ComputeBounce)(THIS_ LPD3DXPRTBUFFER data_in, LPD3DXPRTBUFFER data_out,
-        LPD3DXPRTBUFFER data_total) PURE;
-    STDMETHOD(ComputeBounceAdaptive)(THIS_ LPD3DXPRTBUFFER data_in, FLOAT adaptive_thres,
-        FLOAT min_edge_length, UINT max_subdiv, LPD3DXPRTBUFFER data_out, LPD3DXPRTBUFFER data_total) PURE;
+    STDMETHOD(ComputeSS)(THIS_ ID3DXPRTBuffer *data_in, ID3DXPRTBuffer *data_out,
+            ID3DXPRTBuffer *data_total) PURE;
+    STDMETHOD(ComputeSSAdaptive)(THIS_ ID3DXPRTBuffer *data_in, float adaptive_thres,
+            float min_edge_length, UINT max_subdiv, ID3DXPRTBuffer *data_out, ID3DXPRTBuffer *data_total) PURE;
+    STDMETHOD(ComputeBounce)(THIS_ ID3DXPRTBuffer *data_in, ID3DXPRTBuffer *data_out,
+            ID3DXPRTBuffer *data_total) PURE;
+    STDMETHOD(ComputeBounceAdaptive)(THIS_ ID3DXPRTBuffer *data_in, float adaptive_thres,
+            float min_edge_length, UINT max_subdiv, ID3DXPRTBuffer *data_out, ID3DXPRTBuffer *data_total) PURE;
     STDMETHOD(ComputeVolumeSamplesDirectSH)(THIS_ UINT sh_order_in, UINT sh_order_out,
-        UINT num_vol_samples, CONST D3DXVECTOR3 *sample_locs, LPD3DXPRTBUFFER data_out) PURE;
-    STDMETHOD(ComputeVolumeSamples)(THIS_ LPD3DXPRTBUFFER surf_data_in, UINT sh_order,
-        UINT num_vol_samples, CONST D3DXVECTOR3 *sample_locs, LPD3DXPRTBUFFER data_out) PURE;
+            UINT num_vol_samples, const D3DXVECTOR3 *sample_locs, ID3DXPRTBuffer *data_out) PURE;
+    STDMETHOD(ComputeVolumeSamples)(THIS_ ID3DXPRTBuffer *surf_data_in, UINT sh_order,
+            UINT num_vol_samples, const D3DXVECTOR3 *sample_locs, ID3DXPRTBuffer *data_out) PURE;
     STDMETHOD(ComputeSurfSamplesDirectSH)(THIS_ UINT sh_order, UINT num_samples,
-        CONST D3DXVECTOR3 *sample_locs, CONST D3DXVECTOR3 *sample_norms, LPD3DXPRTBUFFER data_out) PURE;
-    STDMETHOD(ComputeSurfSamplesBounce)(THIS_ LPD3DXPRTBUFFER surf_data_in, UINT num_samples,
-        CONST D3DXVECTOR3 *sample_locs, CONST D3DXVECTOR3 *sample_norms, LPD3DXPRTBUFFER data_out,
-        LPD3DXPRTBUFFER data_total) PURE;
+            const D3DXVECTOR3 *sample_locs, const D3DXVECTOR3 *sample_norms, ID3DXPRTBuffer *data_out) PURE;
+    STDMETHOD(ComputeSurfSamplesBounce)(THIS_ ID3DXPRTBuffer *surf_data_in, UINT num_samples,
+            const D3DXVECTOR3 *sample_locs, const D3DXVECTOR3 *sample_norms, ID3DXPRTBuffer *data_out,
+            ID3DXPRTBuffer *data_total) PURE;
     STDMETHOD(FreeSSData)(THIS) PURE;
     STDMETHOD(FreeBounceData)(THIS) PURE;
-    STDMETHOD(ComputeLDPRTCoeffs)(THIS_ LPD3DXPRTBUFFER data_in, UINT sh_order, D3DXVECTOR3 *norm_out,
-        LPD3DXPRTBUFFER data_out) PURE;
-    STDMETHOD(ScaleMeshChunk)(THIS_ UINT mesh_chunk, FLOAT scale, LPD3DXPRTBUFFER data_out) PURE;
-    STDMETHOD(MultiplyAlbedo)(THIS_ LPD3DXPRTBUFFER data_out) PURE;
+    STDMETHOD(ComputeLDPRTCoeffs)(THIS_ ID3DXPRTBuffer *data_in, UINT sh_order, D3DXVECTOR3 *norm_out,
+            ID3DXPRTBuffer *data_out) PURE;
+    STDMETHOD(ScaleMeshChunk)(THIS_ UINT mesh_chunk, float scale, ID3DXPRTBuffer *data_out) PURE;
+    STDMETHOD(MultiplyAlbedo)(THIS_ ID3DXPRTBuffer *data_out) PURE;
     STDMETHOD(SetCallback)(THIS_ LPD3DXSHPRTSIMCB cb, FLOAT frequency, LPVOID user_context) PURE;
     STDMETHOD_(BOOL, ShadowRayIntersects)(THIS_ CONST D3DXVECTOR3 *ray_pos, CONST D3DXVECTOR3 *ray_dir) PURE;
     STDMETHOD_(BOOL, ClosestRayIntersects)(THIS_ CONST D3DXVECTOR3 *ray_pos, CONST D3DXVECTOR3 *ray_dir,
@@ -706,8 +706,9 @@ HRESULT WINAPI D3DXCreateSkinInfoFromBlendedMesh(LPD3DXBASEMESH, DWORD, CONST D3
 HRESULT WINAPI D3DXCreatePatchMesh(const D3DXPATCHINFO *patch_info, DWORD patch_count,
         DWORD vertex_count, DWORD flags, const D3DVERTEXELEMENT9 *declaration,
         struct IDirect3DDevice9 *device, struct ID3DXPatchMesh **mesh);
-HRESULT WINAPI D3DXCreatePRTBuffer(UINT, UINT, UINT, LPD3DXPRTBUFFER *);
-HRESULT WINAPI D3DXCreatePRTBufferTex(UINT, UINT, UINT, UINT, LPD3DXPRTBUFFER *);
+HRESULT WINAPI D3DXCreatePRTBuffer(UINT sample_count, UINT coeff_count, UINT channel_count, ID3DXPRTBuffer **buffer);
+HRESULT WINAPI D3DXCreatePRTBufferTex(UINT width, UINT height, UINT coeff_count,
+        UINT channel_count, ID3DXPRTBuffer **buffer);
 HRESULT WINAPI D3DXCreatePRTCompBuffer(D3DXSHCOMPRESSQUALITYTYPE quality, UINT cluster_count, UINT pca_count,
         LPD3DXSHPRTSIMCB cb, void *ctx, ID3DXPRTBuffer *input, ID3DXPRTCompBuffer **buffer);
 HRESULT WINAPI D3DXCreateTextureGutterHelper(UINT width, UINT height, ID3DXMesh *mesh,
@@ -737,8 +738,8 @@ HRESULT WINAPI D3DXLoadPatchMeshFromXof(struct ID3DXFileData *file_data, DWORD f
 HRESULT WINAPI D3DXLoadSkinMeshFromXof(struct ID3DXFileData *file_data, DWORD flags, struct IDirect3DDevice9 *device,
         struct ID3DXBuffer **adjacency, struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
         DWORD *material_count, struct ID3DXSkinInfo **skin_info, struct ID3DXMesh **mesh);
-HRESULT WINAPI D3DXLoadPRTBufferFromFileA(LPCSTR, LPD3DXPRTBUFFER *);
-HRESULT WINAPI D3DXLoadPRTBufferFromFileW(LPCWSTR, LPD3DXPRTBUFFER *);
+HRESULT WINAPI D3DXLoadPRTBufferFromFileA(const char *filename, ID3DXPRTBuffer **buffer);
+HRESULT WINAPI D3DXLoadPRTBufferFromFileW(const WCHAR *filename, ID3DXPRTBuffer **buffer);
 #define D3DXLoadPRTBufferFromFile WINELIB_NAME_AW(D3DXLoadPRTBufferFromFile)
 HRESULT WINAPI D3DXLoadPRTCompBufferFromFileA(const char *filename, ID3DXPRTCompBuffer **buffer);
 HRESULT WINAPI D3DXLoadPRTCompBufferFromFileW(const WCHAR *filename, ID3DXPRTCompBuffer **buffer);
@@ -746,8 +747,8 @@ HRESULT WINAPI D3DXLoadPRTCompBufferFromFileW(const WCHAR *filename, ID3DXPRTCom
 HRESULT WINAPI D3DXSaveMeshToXA(LPCSTR, LPD3DXMESH, CONST DWORD *, CONST D3DXMATERIAL *, CONST D3DXEFFECTINSTANCE *, DWORD, DWORD);
 HRESULT WINAPI D3DXSaveMeshToXW(LPCWSTR, LPD3DXMESH, CONST DWORD *, CONST D3DXMATERIAL *, CONST D3DXEFFECTINSTANCE *, DWORD, DWORD);
 #define D3DXSaveMeshToX WINELIB_NAME_AW(D3DXSaveMeshToX)
-HRESULT WINAPI D3DXSavePRTBufferToFileA(LPCSTR, LPD3DXPRTBUFFER);
-HRESULT WINAPI D3DXSavePRTBufferToFileW(LPCWSTR, LPD3DXPRTBUFFER);
+HRESULT WINAPI D3DXSavePRTBufferToFileA(const char *filename, ID3DXPRTBuffer *buffer);
+HRESULT WINAPI D3DXSavePRTBufferToFileW(const WCHAR *filename, ID3DXPRTBuffer *buffer);
 #define D3DXSavePRTBufferToFile WINELIB_NAME_AW(D3DXSavePRTBufferToFile)
 HRESULT WINAPI D3DXSavePRTCompBufferToFileA(const char *filename, ID3DXPRTCompBuffer *buffer);
 HRESULT WINAPI D3DXSavePRTCompBufferToFileW(const WCHAR *filename, ID3DXPRTCompBuffer *buffer);
