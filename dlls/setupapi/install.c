@@ -242,7 +242,7 @@ static void append_multi_sz_value( HKEY hkey, const WCHAR *value, const WCHAR *s
         {
             memcpy( p, strings, len * sizeof(WCHAR) );
             p[len] = 0;
-            total += len;
+            total += len * sizeof(WCHAR);
         }
         strings += len;
     }
