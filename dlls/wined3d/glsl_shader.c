@@ -2878,7 +2878,7 @@ static void shader_glsl_conditional_move(const struct wined3d_shader_instruction
             break;
     }
 
-    if (shader_is_scalar(&ins->src[0].reg))
+    if (shader_is_scalar(&ins->dst[0].reg) || shader_is_scalar(&ins->src[0].reg))
     {
         write_mask = shader_glsl_append_dst(ins->ctx->buffer, ins);
         shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src0_param);
