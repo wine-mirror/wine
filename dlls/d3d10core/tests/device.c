@@ -383,7 +383,7 @@ static void test_create_shader_resource_view(void)
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-    srv_desc.ViewDimension = D3D10_RTV_DIMENSION_BUFFER;
+    srv_desc.ViewDimension = D3D10_SRV_DIMENSION_BUFFER;
     U(srv_desc).Buffer.ElementOffset = 0;
     U(srv_desc).Buffer.ElementWidth = 64;
 
