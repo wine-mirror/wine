@@ -1724,7 +1724,6 @@ static void widen_joint(const GpPointF *p1, const GpPointF *p2, const GpPointF *
     {
     case LineJoinMiter:
     case LineJoinMiterClipped:
-    {
         if ((p2->X - p1->X) * (p3->Y - p1->Y) > (p2->Y - p1->Y) * (p3->X - p1->X))
         {
             float distance = pen->width/2.0;
@@ -1752,7 +1751,6 @@ static void widen_joint(const GpPointF *p1, const GpPointF *p2, const GpPointF *
             /* else fall-through */
         }
         /* else fall-through */
-    }
     default:
     case LineJoinBevel:
         add_bevel_point(p2, p1, pen, 1, last_point);
