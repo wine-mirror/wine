@@ -893,20 +893,28 @@ static HWND fix_caret(HWND hWnd, const RECT *scroll_rect, INT dx, INT dy,
 HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
 {
     HRGN hrgn;
+    HDC hdc;
+    BOOL erase;
+    RECT rect;
     UINT flags = UPDATE_NONCLIENT | UPDATE_ERASE | UPDATE_PAINT | UPDATE_INTERNALPAINT | UPDATE_NOCHILDREN;
-
-    if (!lps) return 0;
 
     HideCaret( hwnd );
 
     if (!(hrgn = send_ncpaint( hwnd, NULL, &flags ))) return 0;
 
-    lps->fErase = send_erase( hwnd, flags, hrgn, &lps->rcPaint, &lps->hdc );
+    erase = send_erase( hwnd, flags, hrgn, &rect, &hdc );
 
-    TRACE("hdc = %p box = (%s), fErase = %d\n",
-          lps->hdc, wine_dbgstr_rect(&lps->rcPaint), lps->fErase);
+    TRACE("hdc = %p box = (%s), fErase = %d\n", hdc, wine_dbgstr_rect(&rect), erase);
 
-    return lps->hdc;
+    if (!lps)
+    {
+        release_dc( hwnd, hdc, TRUE );
+        return 0;
+    }
+    lps->fErase = erase;
+    lps->rcPaint = rect;
+    lps->hdc = hdc;
+    return hdc;
 }
 
 
@@ -915,10 +923,10 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
  */
 BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )
 {
-    if (!lps) return FALSE;
-    release_dc( hwnd, lps->hdc, TRUE );
     ShowCaret( hwnd );
     flush_window_surfaces( FALSE );
+    if (!lps) return FALSE;
+    release_dc( hwnd, lps->hdc, TRUE );
     return TRUE;
 }
 

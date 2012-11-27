@@ -9093,6 +9093,26 @@ static void test_DispatchMessage(void)
             if (++count > 10) break;
         }
     }
+
+    flush_sequence();
+    RedrawWindow( hwnd, &rect, 0, RDW_INVALIDATE|RDW_ERASE|RDW_FRAME );
+    count = 0;
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE ))
+    {
+        if (msg.message != WM_PAINT) DispatchMessage( &msg );
+        else
+        {
+            HDC hdc;
+
+            flush_sequence();
+            hdc = BeginPaint( hwnd, NULL );
+            ok( !hdc, "got valid hdc %p from BeginPaint\n", hdc );
+            ok( !EndPaint( hwnd, NULL ), "EndPaint succeeded\n" );
+            ok_sequence( WmDispatchPaint, "WmDispatchPaint", FALSE );
+            ok( !count, "Got multiple WM_PAINTs\n" );
+            if (++count > 10) break;
+        }
+    }
     DestroyWindow(hwnd);
 }
 
