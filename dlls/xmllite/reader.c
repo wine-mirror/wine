@@ -46,6 +46,10 @@ typedef enum
 static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
 static const WCHAR utf8W[] = {'U','T','F','-','8',0};
 
+static const WCHAR dblquoteW[] = {'\"',0};
+static const WCHAR quoteW[] = {'\'',0};
+static const WCHAR eqW[] = {'=',0};
+
 struct xml_encoding_data
 {
     const WCHAR *name;
@@ -213,7 +217,7 @@ static HRESULT get_code_page(xml_encoding encoding, UINT *cp)
     return S_OK;
 }
 
-static xml_encoding parse_encoding_name(const WCHAR *name)
+static xml_encoding parse_encoding_name(const WCHAR *name, int len)
 {
     int min, max, n, c;
 
@@ -226,7 +230,10 @@ static xml_encoding parse_encoding_name(const WCHAR *name)
     {
         n = (min+max)/2;
 
-        c = strcmpiW(xml_encoding_map[n].name, name);
+        if (len != -1)
+            c = strncmpiW(xml_encoding_map[n].name, name, len);
+        else
+            c = strcmpiW(xml_encoding_map[n].name, name);
         if (!c)
             return xml_encoding_map[n].enc;
 
@@ -491,20 +498,20 @@ static int reader_skipspaces(xmlreader *reader)
 /* [26] VersionNum ::= '1.' [0-9]+ */
 static HRESULT reader_parse_versionnum(xmlreader *reader)
 {
-    const WCHAR *ptr, *start = reader_get_cur(reader);
+    const WCHAR *ptr, *ptr2, *start = reader_get_cur(reader);
     static const WCHAR onedotW[] = {'1','.',0};
 
     if (reader_cmp(reader, onedotW)) return WC_E_XMLDECL;
     /* skip "1." */
     reader_skipn(reader, 2);
 
-    ptr = reader_get_cur(reader);
+    ptr2 = ptr = reader_get_cur(reader);
     while (*ptr >= '0' && *ptr <= '9')
         ptr++;
 
-    if (ptr == start) return WC_E_DIGIT;
-    TRACE("version=%s\n", debugstr_wn(start, ptr-start));
-    reader_skipn(reader, ptr-start);
+    if (ptr2 == ptr) return WC_E_DIGIT;
+    TRACE("version=%s", debugstr_wn(start, ptr-start));
+    reader_skipn(reader, ptr-ptr2);
     return S_OK;
 }
 
@@ -512,9 +519,6 @@ static HRESULT reader_parse_versionnum(xmlreader *reader)
 static HRESULT reader_parse_versioninfo(xmlreader *reader)
 {
     static const WCHAR versionW[] = {'v','e','r','s','i','o','n',0};
-    static const WCHAR dblquoteW[] = {'\"',0};
-    static const WCHAR quoteW[] = {'\'',0};
-    static const WCHAR eqW[] = {'=',0};
     HRESULT hr;
 
     if (!reader_skipspaces(reader)) return WC_E_WHITESPACE;
@@ -544,6 +548,75 @@ static HRESULT reader_parse_versioninfo(xmlreader *reader)
     return S_OK;
 }
 
+/* ([A-Za-z0-9._] | '-') */
+static inline int is_wchar_encname(WCHAR ch)
+{
+    return ((ch >= 'A' && ch <= 'Z') ||
+            (ch >= 'a' && ch <= 'z') ||
+            (ch >= '0' && ch <= '9') ||
+            (ch == '.') || (ch == '_') ||
+            (ch == '-'));
+}
+
+/* [81] EncName ::= [A-Za-z] ([A-Za-z0-9._] | '-')* */
+static HRESULT reader_parse_encname(xmlreader *reader)
+{
+    const WCHAR *start = reader_get_cur(reader), *ptr;
+    xml_encoding enc;
+    int len;
+
+    if ((*start < 'A' || *start > 'Z') && (*start < 'a' || *start > 'z'))
+        return WC_E_ENCNAME;
+
+    ptr = start;
+    while (is_wchar_encname(*++ptr))
+        ;
+
+    len = ptr - start;
+    enc = parse_encoding_name(start, len);
+    TRACE("encoding name %s\n", debugstr_wn(start, len));
+
+    if (enc == XmlEncoding_Unknown)
+        return WC_E_ENCNAME;
+
+    /* skip encoding name */
+    reader_skipn(reader, len);
+    return S_OK;
+}
+
+/* [80] EncodingDecl ::= S 'encoding' Eq ('"' EncName '"' | "'" EncName "'" ) */
+static HRESULT reader_parse_encdecl(xmlreader *reader)
+{
+    static const WCHAR encodingW[] = {'e','n','c','o','d','i','n','g',0};
+    HRESULT hr;
+
+    if (!reader_skipspaces(reader)) return WC_E_WHITESPACE;
+
+    if (reader_cmp(reader, encodingW)) return S_OK;
+    /* skip 'encoding' */
+    reader_skipn(reader, 8);
+
+    if (reader_cmp(reader, eqW)) return WC_E_EQUAL;
+    /* skip '=' */
+    reader_skipn(reader, 1);
+
+    if (reader_cmp(reader, quoteW) && reader_cmp(reader, dblquoteW))
+        return WC_E_QUOTE;
+    /* skip "'"|'"' */
+    reader_skipn(reader, 1);
+
+    hr = reader_parse_encname(reader);
+    if (FAILED(hr)) return hr;
+
+    if (reader_cmp(reader, quoteW) && reader_cmp(reader, dblquoteW))
+        return WC_E_QUOTE;
+
+    /* skip "'"|'"' */
+    reader_skipn(reader, 1);
+
+    return S_OK;
+}
+
 /* [23] XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>' */
 static HRESULT reader_parse_xmldecl(xmlreader *reader)
 {
@@ -555,6 +628,10 @@ static HRESULT reader_parse_xmldecl(xmlreader *reader)
 
     reader_skipn(reader, 5);
     hr = reader_parse_versioninfo(reader);
+    if (FAILED(hr))
+        return hr;
+
+    hr = reader_parse_encdecl(reader);
     if (FAILED(hr))
         return hr;
 
@@ -1028,7 +1105,7 @@ HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
     readerinput->imalloc = imalloc;
     readerinput->stream = NULL;
     if (imalloc) IMalloc_AddRef(imalloc);
-    readerinput->encoding = parse_encoding_name(encoding);
+    readerinput->encoding = parse_encoding_name(encoding, -1);
     readerinput->hint = hint;
     readerinput->baseuri = readerinput_strdupW(readerinput, base_uri);
 
