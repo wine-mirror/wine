@@ -815,21 +815,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
         release_dc_ptr( dc );
         return TRUE;
     }
-
-    while (dc->saveLevel)
-    {
-        DC *dcs = dc->saved_dc;
-        dc->saved_dc = dcs->saved_dc;
-        dc->saveLevel--;
-        free_dc_state( dcs );
-    }
-
-    AbortPath( hdc );
-    SelectObject( hdc, GetStockObject(BLACK_PEN) );
-    SelectObject( hdc, GetStockObject(WHITE_BRUSH) );
-    SelectObject( hdc, GetStockObject(SYSTEM_FONT) );
-    SelectObject( hdc, GetStockObject(DEFAULT_BITMAP) );
-
+    reset_dc_state( hdc );
     free_dc_ptr( dc );
     return TRUE;
 }
