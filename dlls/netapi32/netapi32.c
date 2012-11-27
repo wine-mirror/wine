@@ -25,8 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(netbios);
 
-static HMODULE NETAPI32_hModule;
-
 BOOL NETAPI_IsLocalComputer(LMCSTR ServerName);
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -37,7 +35,6 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_ATTACH:
         {
             DisableThreadLibraryCalls(hinstDLL);
-            NETAPI32_hModule = hinstDLL;
             NetBIOSInit();
             NetBTInit();
             break;
