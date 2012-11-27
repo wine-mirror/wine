@@ -297,7 +297,7 @@ static LPD3DXMATRIX WINAPI ID3DXSkinInfoImpl_GetBoneOffsetMatrix(ID3DXSkinInfo *
     return &This->bones[bone_num].transform;
 }
 
-static HRESULT WINAPI ID3DXSkinInfoImpl_Clone(ID3DXSkinInfo *iface, LPD3DXSKININFO *skin_info)
+static HRESULT WINAPI ID3DXSkinInfoImpl_Clone(ID3DXSkinInfo *iface, ID3DXSkinInfo **skin_info)
 {
     ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
 
@@ -449,8 +449,8 @@ static const struct ID3DXSkinInfoVtbl ID3DXSkinInfoImpl_Vtbl =
     ID3DXSkinInfoImpl_ConvertToIndexedBlendedMesh
 };
 
-HRESULT WINAPI D3DXCreateSkinInfo(DWORD num_vertices, CONST D3DVERTEXELEMENT9 *declaration,
-                                  DWORD num_bones, LPD3DXSKININFO *skin_info)
+HRESULT WINAPI D3DXCreateSkinInfo(DWORD num_vertices, const D3DVERTEXELEMENT9 *declaration,
+        DWORD num_bones, ID3DXSkinInfo **skin_info)
 {
     HRESULT hr;
     ID3DXSkinInfoImpl *object = NULL;
@@ -490,7 +490,7 @@ error:
     return hr;
 }
 
-HRESULT WINAPI D3DXCreateSkinInfoFVF(DWORD num_vertices, DWORD fvf, DWORD num_bones, LPD3DXSKININFO *skin_info)
+HRESULT WINAPI D3DXCreateSkinInfoFVF(DWORD num_vertices, DWORD fvf, DWORD num_bones, ID3DXSkinInfo **skin_info)
 {
     HRESULT hr;
     D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE];

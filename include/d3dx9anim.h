@@ -98,7 +98,7 @@ typedef struct _D3DXMESHCONTAINER
     LPD3DXEFFECTINSTANCE pEffects;
     DWORD NumMaterials;
     DWORD *pAdjacency;
-    LPD3DXSKININFO pSkinInfo;
+    ID3DXSkinInfo *pSkinInfo;
     struct _D3DXMESHCONTAINER *pNextMeshContainer;
 } D3DXMESHCONTAINER, *LPD3DXMESHCONTAINER;
 
@@ -171,10 +171,10 @@ typedef interface ID3DXAnimationController *LPD3DXANIMATIONCONTROLLER;
 DECLARE_INTERFACE(ID3DXAllocateHierarchy)
 {
     STDMETHOD(CreateFrame)(THIS_ LPCSTR Name, LPD3DXFRAME *new_frame) PURE;
-    STDMETHOD(CreateMeshContainer)(THIS_ LPCSTR Name, CONST D3DXMESHDATA *mesh_data,
-            CONST D3DXMATERIAL *materials, CONST D3DXEFFECTINSTANCE *effect_instances,
-            DWORD num_materials, CONST DWORD *adjacency, LPD3DXSKININFO skin_info,
-            LPD3DXMESHCONTAINER *new_mesh_container) PURE;
+    STDMETHOD(CreateMeshContainer)(THIS_ const char *name, const D3DXMESHDATA *mesh_data,
+            const D3DXMATERIAL *materials, const D3DXEFFECTINSTANCE *effect_instances,
+            DWORD num_materials, const DWORD *adjacency, ID3DXSkinInfo *skin_info,
+            D3DXMESHCONTAINER **new_mesh_container) PURE;
     STDMETHOD(DestroyFrame)(THIS_ LPD3DXFRAME frame) PURE;
     STDMETHOD(DestroyMeshContainer)(THIS_ LPD3DXMESHCONTAINER mesh_container) PURE;
 };

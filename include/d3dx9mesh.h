@@ -529,7 +529,7 @@ DECLARE_INTERFACE_(ID3DXSkinInfo, IUnknown)
     STDMETHOD_(LPCSTR, GetBoneName)(THIS_ DWORD bone) PURE;
     STDMETHOD(SetBoneOffsetMatrix)(THIS_ DWORD bone, CONST D3DXMATRIX* bone_transform) PURE;
     STDMETHOD_(LPD3DXMATRIX, GetBoneOffsetMatrix)(THIS_ DWORD bone) PURE;
-    STDMETHOD(Clone)(THIS_ LPD3DXSKININFO* skin_info) PURE;
+    STDMETHOD(Clone)(THIS_ ID3DXSkinInfo **skin_info) PURE;
     STDMETHOD(Remap)(THIS_ DWORD num_vertices, DWORD* vertex_remap) PURE;
     STDMETHOD(SetFVF)(THIS_ DWORD FVF) PURE;
     STDMETHOD(SetDeclaration)(THIS_ CONST D3DVERTEXELEMENT9* declaration) PURE;
@@ -700,9 +700,11 @@ HRESULT WINAPI D3DXCreateSPMesh(LPD3DXMESH, CONST DWORD *, CONST D3DXATTRIBUTEWE
 HRESULT WINAPI D3DXCreatePMeshFromStream(struct IStream *stream, DWORD flags, struct IDirect3DDevice9 *device,
         struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
         DWORD *material_count, struct ID3DXPMesh **mesh);
-HRESULT WINAPI D3DXCreateSkinInfo(DWORD, CONST D3DVERTEXELEMENT9 *, DWORD, LPD3DXSKININFO *);
-HRESULT WINAPI D3DXCreateSkinInfoFVF(DWORD, DWORD, DWORD, LPD3DXSKININFO *);
-HRESULT WINAPI D3DXCreateSkinInfoFromBlendedMesh(LPD3DXBASEMESH, DWORD, CONST D3DXBONECOMBINATION *, LPD3DXSKININFO *);
+HRESULT WINAPI D3DXCreateSkinInfo(DWORD vertex_count, const D3DVERTEXELEMENT9 *declaration,
+        DWORD bone_count, ID3DXSkinInfo **skin_info);
+HRESULT WINAPI D3DXCreateSkinInfoFVF(DWORD vertex_count, DWORD fvf, DWORD bone_count, ID3DXSkinInfo **skin_info);
+HRESULT WINAPI D3DXCreateSkinInfoFromBlendedMesh(ID3DXBaseMesh *mesh, DWORD bone_count,
+        const D3DXBONECOMBINATION *bone_combination_table, ID3DXSkinInfo **skin_info);
 HRESULT WINAPI D3DXCreatePatchMesh(const D3DXPATCHINFO *patch_info, DWORD patch_count,
         DWORD vertex_count, DWORD flags, const D3DVERTEXELEMENT9 *declaration,
         struct IDirect3DDevice9 *device, struct ID3DXPatchMesh **mesh);

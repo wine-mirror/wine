@@ -1859,9 +1859,9 @@ static CALLBACK HRESULT ID3DXAllocateHierarchyImpl_DestroyMeshContainer(ID3DXAll
 }
 
 static CALLBACK HRESULT ID3DXAllocateHierarchyImpl_CreateMeshContainer(ID3DXAllocateHierarchy *iface,
-        LPCSTR name, CONST D3DXMESHDATA *mesh_data, CONST D3DXMATERIAL *materials,
-        CONST D3DXEFFECTINSTANCE *effects, DWORD num_materials, CONST DWORD *adjacency,
-        LPD3DXSKININFO skin_info, LPD3DXMESHCONTAINER *new_mesh_container)
+        const char *name, const D3DXMESHDATA *mesh_data, const D3DXMATERIAL *materials,
+        const D3DXEFFECTINSTANCE *effects, DWORD num_materials, const DWORD *adjacency,
+        ID3DXSkinInfo *skin_info, D3DXMESHCONTAINER **new_mesh_container)
 {
     LPD3DXMESHCONTAINER mesh_container = NULL;
     int i;
