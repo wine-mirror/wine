@@ -1581,7 +1581,7 @@ static struct region *expose_window( struct window *win, const rectangle_t *old_
         }
     }
 
-    if (win->parent)
+    if (win->parent && !is_desktop_window( win->parent ))
     {
         /* make it relative to the old window pos for subtracting */
         offset_region( new_vis_rgn, win->window_rect.left - old_window_rect->left,
