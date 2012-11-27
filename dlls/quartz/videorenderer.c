@@ -796,7 +796,7 @@ static const IBaseFilterVtbl VideoRenderer_Vtbl =
 };
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI Basicvideo_QueryInterface(IBasicVideo *iface, REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI BasicVideo_QueryInterface(IBasicVideo *iface, REFIID riid, LPVOID *ppvObj)
 {
     VideoRendererImpl *This = impl_from_IBasicVideo(iface);
 
@@ -805,7 +805,8 @@ static HRESULT WINAPI Basicvideo_QueryInterface(IBasicVideo *iface, REFIID riid,
     return IUnknown_QueryInterface(This->outer_unk, riid, ppvObj);
 }
 
-static ULONG WINAPI Basicvideo_AddRef(IBasicVideo *iface) {
+static ULONG WINAPI BasicVideo_AddRef(IBasicVideo *iface)
+{
     VideoRendererImpl *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -813,7 +814,8 @@ static ULONG WINAPI Basicvideo_AddRef(IBasicVideo *iface) {
     return IUnknown_AddRef(This->outer_unk);
 }
 
-static ULONG WINAPI Basicvideo_Release(IBasicVideo *iface) {
+static ULONG WINAPI BasicVideo_Release(IBasicVideo *iface)
+{
     VideoRendererImpl *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -823,9 +825,9 @@ static ULONG WINAPI Basicvideo_Release(IBasicVideo *iface) {
 
 static const IBasicVideoVtbl IBasicVideo_VTable =
 {
-    Basicvideo_QueryInterface,
-    Basicvideo_AddRef,
-    Basicvideo_Release,
+    BasicVideo_QueryInterface,
+    BasicVideo_AddRef,
+    BasicVideo_Release,
     BaseControlVideoImpl_GetTypeInfoCount,
     BaseControlVideoImpl_GetTypeInfo,
     BaseControlVideoImpl_GetIDsOfNames,
@@ -866,7 +868,7 @@ static const IBasicVideoVtbl IBasicVideo_VTable =
 
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI Videowindow_QueryInterface(IVideoWindow *iface, REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI VideoWindow_QueryInterface(IVideoWindow *iface, REFIID riid, LPVOID *ppvObj)
 {
     VideoRendererImpl *This = impl_from_IVideoWindow(iface);
 
@@ -875,7 +877,8 @@ static HRESULT WINAPI Videowindow_QueryInterface(IVideoWindow *iface, REFIID rii
     return IUnknown_QueryInterface(This->outer_unk, riid, ppvObj);
 }
 
-static ULONG WINAPI Videowindow_AddRef(IVideoWindow *iface) {
+static ULONG WINAPI VideoWindow_AddRef(IVideoWindow *iface)
+{
     VideoRendererImpl *This = impl_from_IVideoWindow(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -883,7 +886,8 @@ static ULONG WINAPI Videowindow_AddRef(IVideoWindow *iface) {
     return IUnknown_AddRef(This->outer_unk);
 }
 
-static ULONG WINAPI Videowindow_Release(IVideoWindow *iface) {
+static ULONG WINAPI VideoWindow_Release(IVideoWindow *iface)
+{
     VideoRendererImpl *This = impl_from_IVideoWindow(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -891,8 +895,9 @@ static ULONG WINAPI Videowindow_Release(IVideoWindow *iface) {
     return IUnknown_Release(This->outer_unk);
 }
 
-static HRESULT WINAPI Videowindow_get_FullScreenMode(IVideoWindow *iface,
-                                                     LONG *FullScreenMode) {
+static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface,
+                                                     LONG *FullScreenMode)
+{
     VideoRendererImpl *This = impl_from_IVideoWindow(iface);
 
     FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, FullScreenMode);
@@ -900,8 +905,9 @@ static HRESULT WINAPI Videowindow_get_FullScreenMode(IVideoWindow *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Videowindow_put_FullScreenMode(IVideoWindow *iface,
-                                                     LONG FullScreenMode) {
+static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface,
+                                                     LONG FullScreenMode)
+{
     VideoRendererImpl *This = impl_from_IVideoWindow(iface);
 
     FIXME("(%p/%p)->(%d): stub !!!\n", This, iface, FullScreenMode);
@@ -928,9 +934,9 @@ static HRESULT WINAPI Videowindow_put_FullScreenMode(IVideoWindow *iface,
 
 static const IVideoWindowVtbl IVideoWindow_VTable =
 {
-    Videowindow_QueryInterface,
-    Videowindow_AddRef,
-    Videowindow_Release,
+    VideoWindow_QueryInterface,
+    VideoWindow_AddRef,
+    VideoWindow_Release,
     BaseControlWindowImpl_GetTypeInfoCount,
     BaseControlWindowImpl_GetTypeInfo,
     BaseControlWindowImpl_GetIDsOfNames,
@@ -963,8 +969,8 @@ static const IVideoWindowVtbl IVideoWindow_VTable =
     BaseControlWindowImpl_get_MessageDrain,
     BaseControlWindowImpl_get_BorderColor,
     BaseControlWindowImpl_put_BorderColor,
-    Videowindow_get_FullScreenMode,
-    Videowindow_put_FullScreenMode,
+    VideoWindow_get_FullScreenMode,
+    VideoWindow_put_FullScreenMode,
     BaseControlWindowImpl_SetWindowForeground,
     BaseControlWindowImpl_NotifyOwnerMessage,
     BaseControlWindowImpl_SetWindowPosition,
