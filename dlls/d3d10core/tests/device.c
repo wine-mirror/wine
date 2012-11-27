@@ -74,10 +74,18 @@ cleanup:
     return device;
 }
 
-static void test_device_interfaces(ID3D10Device *device)
+static void test_device_interfaces(void)
 {
+    ID3D10Device *device;
+    ULONG refcount;
     IUnknown *obj;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     if (SUCCEEDED(hr = ID3D10Device_QueryInterface(device, &IID_IUnknown, (void **)&obj)))
         IUnknown_Release(obj);
@@ -94,14 +102,25 @@ static void test_device_interfaces(ID3D10Device *device)
     if (SUCCEEDED(hr = ID3D10Device_QueryInterface(device, &IID_ID3D10Device, (void **)&obj)))
         IUnknown_Release(obj);
     ok(SUCCEEDED(hr), "ID3D10Device does not implement ID3D10Device\n");
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left\n", refcount);
 }
 
-static void test_create_texture2d(ID3D10Device *device)
+static void test_create_texture2d(void)
 {
     D3D10_TEXTURE2D_DESC desc;
     ID3D10Texture2D *texture;
     IDXGISurface *surface;
+    ID3D10Device *device;
+    ULONG refcount;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     desc.Width = 512;
     desc.Height = 512;
@@ -154,14 +173,25 @@ static void test_create_texture2d(ID3D10Device *device)
     ok(FAILED(hr), "Texture should not implement IDXGISurface\n");
     if (SUCCEEDED(hr)) IDXGISurface_Release(surface);
     ID3D10Texture2D_Release(texture);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_create_texture3d(ID3D10Device *device)
+static void test_create_texture3d(void)
 {
     D3D10_TEXTURE3D_DESC desc;
     ID3D10Texture3D *texture;
     IDXGISurface *surface;
+    ID3D10Device *device;
+    ULONG refcount;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     desc.Width = 64;
     desc.Height = 64;
@@ -200,15 +230,26 @@ static void test_create_texture3d(ID3D10Device *device)
     ok(FAILED(hr), "Texture should not implement IDXGISurface.\n");
     if (SUCCEEDED(hr)) IDXGISurface_Release(surface);
     ID3D10Texture3D_Release(texture);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_create_depthstencil_view(ID3D10Device *device)
+static void test_create_depthstencil_view(void)
 {
     D3D10_DEPTH_STENCIL_VIEW_DESC dsv_desc;
     D3D10_TEXTURE2D_DESC texture_desc;
     ID3D10DepthStencilView *dsview;
     ID3D10Texture2D *texture;
+    ID3D10Device *device;
+    ULONG refcount;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     texture_desc.Width = 512;
     texture_desc.Height = 512;
@@ -236,9 +277,12 @@ static void test_create_depthstencil_view(ID3D10Device *device)
 
     ID3D10DepthStencilView_Release(dsview);
     ID3D10Texture2D_Release(texture);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_create_rendertarget_view(ID3D10Device *device)
+static void test_create_rendertarget_view(void)
 {
     D3D10_RENDER_TARGET_VIEW_DESC rtv_desc;
     D3D10_TEXTURE2D_DESC texture_desc;
@@ -246,7 +290,15 @@ static void test_create_rendertarget_view(ID3D10Device *device)
     ID3D10RenderTargetView *rtview;
     ID3D10Texture2D *texture;
     ID3D10Buffer *buffer;
+    ID3D10Device *device;
+    ULONG refcount;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     buffer_desc.ByteWidth = 1024;
     buffer_desc.Usage = D3D10_USAGE_DEFAULT;
@@ -295,9 +347,12 @@ static void test_create_rendertarget_view(ID3D10Device *device)
 
     ID3D10RenderTargetView_Release(rtview);
     ID3D10Texture2D_Release(texture);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_create_shader_resource_view(ID3D10Device *device)
+static void test_create_shader_resource_view(void)
 {
     D3D10_SHADER_RESOURCE_VIEW_DESC srv_desc;
     D3D10_TEXTURE2D_DESC texture_desc;
@@ -305,7 +360,15 @@ static void test_create_shader_resource_view(ID3D10Device *device)
     D3D10_BUFFER_DESC buffer_desc;
     ID3D10Texture2D *texture;
     ID3D10Buffer *buffer;
+    ID3D10Device *device;
+    ULONG refcount;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     buffer_desc.ByteWidth = 1024;
     buffer_desc.Usage = D3D10_USAGE_DEFAULT;
@@ -358,9 +421,12 @@ static void test_create_shader_resource_view(ID3D10Device *device)
 
     ID3D10ShaderResourceView_Release(srview);
     ID3D10Texture2D_Release(texture);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_create_shader(ID3D10Device *device)
+static void test_create_shader(void)
 {
 #if 0
 float4 light;
@@ -471,7 +537,15 @@ float4 main(const float4 color : COLOR) : SV_TARGET
 
     ID3D10VertexShader *vs = NULL;
     ID3D10PixelShader *ps = NULL;
+    ID3D10Device *device;
+    ULONG refcount;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     hr = ID3D10Device_CreateVertexShader(device, vs_4_0, sizeof(vs_4_0), &vs);
     ok(SUCCEEDED(hr), "Failed to create SM4 vertex shader, hr %#x\n", hr);
@@ -491,28 +565,18 @@ float4 main(const float4 color : COLOR) : SV_TARGET
     ok(SUCCEEDED(hr), "Failed to create SM4 vertex shader, hr %#x\n", hr);
     if (ps)
         ID3D10PixelShader_Release(ps);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 START_TEST(device)
 {
-    ID3D10Device *device;
-    ULONG refcount;
-
-    device = create_device();
-    if (!device)
-    {
-        skip("Failed to create device, skipping tests\n");
-        return;
-    }
-
-    test_device_interfaces(device);
-    test_create_texture2d(device);
-    test_create_texture3d(device);
-    test_create_depthstencil_view(device);
-    test_create_rendertarget_view(device);
-    test_create_shader_resource_view(device);
-    test_create_shader(device);
-
-    refcount = ID3D10Device_Release(device);
-    ok(!refcount, "Device has %u references left\n", refcount);
+    test_device_interfaces();
+    test_create_texture2d();
+    test_create_texture3d();
+    test_create_depthstencil_view();
+    test_create_rendertarget_view();
+    test_create_shader_resource_view();
+    test_create_shader();
 }
