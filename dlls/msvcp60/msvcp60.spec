@@ -2148,8 +2148,8 @@
 @ cdecl -arch=win64 ?_Getcvt@_Locinfo@std@@QEBA?AU_Cvtvec@@XZ(ptr ptr) _Locinfo__Getcvt
 @ thiscall -arch=win32 ?_Getdays@_Locinfo@std@@QBEPBDXZ(ptr) _Locinfo__Getdays
 @ cdecl -arch=win64 ?_Getdays@_Locinfo@std@@QEBAPEBDXZ(ptr) _Locinfo__Getdays
-@ stub -arch=win32 ?_Getfacet@locale@std@@QBEPBVfacet@12@I_N@Z
-@ stub -arch=win64 ?_Getfacet@locale@std@@QEBAPEBVfacet@12@_K_N@Z
+@ thiscall -arch=win32 ?_Getfacet@locale@std@@QBEPBVfacet@12@I_N@Z(ptr long long) locale__Getfacet
+@ cdecl -arch=win64 ?_Getfacet@locale@std@@QEBAPEBVfacet@12@_K_N@Z(ptr long long) locale__Getfacet
 @ thiscall -arch=win32 ?_Getfalse@_Locinfo@std@@QBEPBDXZ(ptr) _Locinfo__Getfalse
 @ cdecl -arch=win64 ?_Getfalse@_Locinfo@std@@QEBAPEBDXZ(ptr) _Locinfo__Getfalse
 @ stub -arch=win32 ?_Getffld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@CAHPADAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1ABVlocale@2@@Z

@@ -42,7 +42,7 @@ char* __cdecl _Getmonths(void);
 void* __cdecl _Gettnames(void);
 unsigned int __cdecl ___lc_codepage_func(void);
 LCID* __cdecl ___lc_handle_func(void);
-static const locale_facet* locale__Getfacet(const locale*, MSVCP_size_t);
+const locale_facet* __thiscall locale__Getfacet(const locale*, MSVCP_size_t, MSVCP_bool);
 
 typedef int category;
 
@@ -1318,7 +1318,7 @@ ctype_char* ctype_char_use_facet(const locale *loc)
     const locale_facet *fac;
 
     _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
-    fac = locale__Getfacet(loc, locale_id_operator_size_t(&ctype_char_id));
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&ctype_char_id), TRUE);
     if(fac) {
         _Lockit_dtor(&lock);
         return (ctype_char*)fac;
@@ -1965,7 +1965,7 @@ ctype_wchar* ctype_wchar_use_facet(const locale *loc)
     const locale_facet *fac;
 
     _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
-    fac = locale__Getfacet(loc, locale_id_operator_size_t(&ctype_wchar_id));
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&ctype_wchar_id), TRUE);
     if(fac) {
         _Lockit_dtor(&lock);
         return (ctype_wchar*)fac;
@@ -1993,7 +1993,7 @@ ctype_wchar* ctype_short_use_facet(const locale *loc)
     const locale_facet *fac;
 
     _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
-    fac = locale__Getfacet(loc, locale_id_operator_size_t(&ctype_short_id));
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&ctype_short_id), TRUE);
     if(fac) {
         _Lockit_dtor(&lock);
         return (ctype_wchar*)fac;
@@ -2460,7 +2460,7 @@ codecvt_char* codecvt_char_use_facet(const locale *loc)
     const locale_facet *fac;
 
     _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
-    fac = locale__Getfacet(loc, locale_id_operator_size_t(&codecvt_char_id));
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&codecvt_char_id), TRUE);
     if(fac) {
         _Lockit_dtor(&lock);
         return (codecvt_char*)fac;
@@ -2698,7 +2698,7 @@ static codecvt_wchar* codecvt_wchar_use_facet(const locale *loc)
     const locale_facet *fac;
 
     _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
-    fac = locale__Getfacet(loc, locale_id_operator_size_t(&codecvt_wchar_id));
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&codecvt_wchar_id), TRUE);
     if(fac) {
         _Lockit_dtor(&lock);
         return (codecvt_wchar*)fac;
@@ -2750,7 +2750,7 @@ codecvt_wchar* codecvt_short_use_facet(const locale *loc)
     const locale_facet *fac;
 
     _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
-    fac = locale__Getfacet(loc, locale_id_operator_size_t(&codecvt_short_id));
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&codecvt_short_id), TRUE);
     if(fac) {
         _Lockit_dtor(&lock);
         return (codecvt_wchar*)fac;
@@ -3120,7 +3120,7 @@ static numpunct_char* numpunct_char_use_facet(const locale *loc)
     const locale_facet *fac;
 
     _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
-    fac = locale__Getfacet(loc, locale_id_operator_size_t(&numpunct_char_id));
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&numpunct_char_id), TRUE);
     if(fac) {
         _Lockit_dtor(&lock);
         return (numpunct_char*)fac;
@@ -3456,7 +3456,7 @@ static numpunct_wchar* numpunct_wchar_use_facet(const locale *loc)
     const locale_facet *fac;
 
     _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
-    fac = locale__Getfacet(loc, locale_id_operator_size_t(&numpunct_wchar_id));
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&numpunct_wchar_id), TRUE);
     if(fac) {
         _Lockit_dtor(&lock);
         return (numpunct_wchar*)fac;
@@ -3504,7 +3504,7 @@ static numpunct_wchar* numpunct_short_use_facet(const locale *loc)
     const locale_facet *fac;
 
     _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
-    fac = locale__Getfacet(loc, locale_id_operator_size_t(&numpunct_short_id));
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&numpunct_short_id), TRUE);
     if(fac) {
         _Lockit_dtor(&lock);
         return (numpunct_wchar*)fac;
@@ -3866,7 +3866,7 @@ static num_get* num_get_wchar_use_facet(const locale *loc)
         const locale_facet *fac;
 
         _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
-        fac = locale__Getfacet(loc, locale_id_operator_size_t(&num_get_wchar_id));
+        fac = locale__Getfacet(loc, locale_id_operator_size_t(&num_get_wchar_id), TRUE);
         if(fac) {
             _Lockit_dtor(&lock);
             return (num_get*)fac;
@@ -3906,7 +3906,7 @@ num_get* num_get_short_use_facet(const locale *loc)
     const locale_facet *fac;
 
     _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
-    fac = locale__Getfacet(loc, locale_id_operator_size_t(&num_get_short_id));
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&num_get_short_id), TRUE);
     if(fac) {
         _Lockit_dtor(&lock);
         return (num_get*)fac;
@@ -4878,7 +4878,7 @@ num_get* num_get_char_use_facet(const locale *loc)
     const locale_facet *fac;
 
     _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
-    fac = locale__Getfacet(loc, locale_id_operator_size_t(&num_get_char_id));
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&num_get_char_id), TRUE);
     if(fac) {
         _Lockit_dtor(&lock);
         return (num_get*)fac;
@@ -5632,7 +5632,7 @@ num_put* num_put_char_use_facet(const locale *loc)
     const locale_facet *fac;
 
     _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
-    fac = locale__Getfacet(loc, locale_id_operator_size_t(&num_put_char_id));
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&num_put_char_id), TRUE);
     if(fac) {
         _Lockit_dtor(&lock);
         return (num_put*)fac;
@@ -6242,7 +6242,7 @@ static num_put* num_put_wchar_use_facet(const locale *loc)
     const locale_facet *fac;
 
     _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
-    fac = locale__Getfacet(loc, locale_id_operator_size_t(&num_put_wchar_id));
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&num_put_wchar_id), TRUE);
     if(fac) {
         _Lockit_dtor(&lock);
         return (num_put*)fac;
@@ -6270,7 +6270,7 @@ num_put* num_put_short_use_facet(const locale *loc)
     const locale_facet *fac;
 
     _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
-    fac = locale__Getfacet(loc, locale_id_operator_size_t(&num_put_short_id));
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&num_put_short_id), TRUE);
     if(fac) {
         _Lockit_dtor(&lock);
         return (num_put*)fac;
@@ -7559,16 +7559,18 @@ locale* __thiscall locale__Addfac(locale *this, locale_facet *facet, MSVCP_size_
     return this;
 }
 
-/* ?_Getfacet@locale@std@@QBEPBVfacet@12@I@Z */
-/* ?_Getfacet@locale@std@@QEBAPEBVfacet@12@_K@Z */
-static const locale_facet* locale__Getfacet(const locale *this, MSVCP_size_t id)
+/* ?_Getfacet@locale@std@@QBEPBVfacet@12@I_N@Z */
+/* ?_Getfacet@locale@std@@QEBAPEBVfacet@12@_K_N@Z */
+DEFINE_THISCALL_WRAPPER(locale__Getfacet, 12)
+const locale_facet* __thiscall locale__Getfacet(const locale *this,
+        MSVCP_size_t id, MSVCP_bool allow_transparent)
 {
     locale_facet *fac;
 
     TRACE("(%p %lu)\n", this, id);
 
     fac = id < this->ptr->facet_cnt ? this->ptr->facetvec[id] : NULL;
-    if(fac || !this->ptr->transparent)
+    if(fac || !this->ptr->transparent || !allow_transparent)
         return fac;
 
     return id < global_locale->facet_cnt ? global_locale->facetvec[id] : NULL;
