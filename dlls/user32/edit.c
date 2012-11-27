@@ -640,7 +640,9 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 				current_line->net_length = prev;
 				EDIT_InvalidateUniscribeData_linedef(current_line);
 				EDIT_UpdateUniscribeData_linedef(es, NULL, current_line);
-				sz = ScriptString_pSize(current_line->ssa);
+				if (current_line->ssa)
+					sz = ScriptString_pSize(current_line->ssa);
+				else sz = 0;
 				if (sz)
 					current_line->width = sz->cx;
 				else
@@ -697,8 +699,13 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 			if (current_line->net_length > 0)
 			{
 				EDIT_UpdateUniscribeData_linedef(es, NULL, current_line);
-				sz = ScriptString_pSize(current_line->ssa);
-				current_line->width = sz->cx;
+				if (current_line->ssa)
+				{
+					sz = ScriptString_pSize(current_line->ssa);
+					current_line->width = sz->cx;
+				}
+				else
+					current_line->width = 0;
 			}
 			else current_line->width = 0;
 		    }
