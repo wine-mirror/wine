@@ -718,46 +718,45 @@ static HRESULT WINAPI PersistStreamInit_IsDirty(
     return S_FALSE;
 }
 
-static HRESULT WINAPI PersistStreamInit_Load(
-    IPersistStreamInit *iface, LPSTREAM pStm)
+static HRESULT domdoc_load_from_stream(domdoc *doc, ISequentialStream *stream)
 {
-    domdoc *This = impl_from_IPersistStreamInit(iface);
-    HRESULT hr;
-    HGLOBAL hglobal;
     DWORD read, written, len;
-    BYTE buf[4096];
-    char *ptr;
     xmlDocPtr xmldoc = NULL;
+    HGLOBAL hglobal;
+    BYTE buf[4096];
+    HRESULT hr;
+    char *ptr;
 
-    TRACE("(%p)->(%p)\n", This, pStm);
+    if (doc->stream)
+    {
+        IStream_Release(doc->stream);
+        doc->stream = NULL;
+    }
 
-    if (!pStm)
-        return E_INVALIDARG;
-
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &This->stream);
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &doc->stream);
     if (FAILED(hr))
         return hr;
 
     do
     {
-        IStream_Read(pStm, buf, sizeof(buf), &read);
-        hr = IStream_Write(This->stream, buf, read, &written);
+        ISequentialStream_Read(stream, buf, sizeof(buf), &read);
+        hr = IStream_Write(doc->stream, buf, read, &written);
     } while(SUCCEEDED(hr) && written != 0 && read != 0);
 
     if (FAILED(hr))
     {
-        ERR("Failed to copy stream\n");
+        ERR("failed to copy stream 0x%08x\n", hr);
         return hr;
     }
 
-    hr = GetHGlobalFromStream(This->stream, &hglobal);
+    hr = GetHGlobalFromStream(doc->stream, &hglobal);
     if (FAILED(hr))
         return hr;
 
     len = GlobalSize(hglobal);
     ptr = GlobalLock(hglobal);
-    if (len != 0)
-        xmldoc = doparse(This, ptr, len, XML_CHAR_ENCODING_NONE);
+    if (len)
+        xmldoc = doparse(doc, ptr, len, XML_CHAR_ENCODING_NONE);
     GlobalUnlock(hglobal);
 
     if (!xmldoc)
@@ -768,7 +767,19 @@ static HRESULT WINAPI PersistStreamInit_Load(
 
     xmldoc->_private = create_priv();
 
-    return attach_xmldoc(This, xmldoc);
+    return attach_xmldoc(doc, xmldoc);
+}
+
+static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, IStream *stream)
+{
+    domdoc *This = impl_from_IPersistStreamInit(iface);
+
+    TRACE("(%p)->(%p)\n", This, stream);
+
+    if (!stream)
+        return E_INVALIDARG;
+
+    return domdoc_load_from_stream(This, (ISequentialStream*)stream);
 }
 
 static HRESULT WINAPI PersistStreamInit_Save(
@@ -2140,7 +2151,7 @@ static HRESULT WINAPI domdoc_load(
         else
         {
             /* ISequentialStream */
-            FIXME("Unknown type not supported (%d) (%p)(%p)\n", hr, pNewDoc, V_UNKNOWN(&source)->lpVtbl);
+            FIXME("Unknown type not supported (0x%08x) (%p)(%p)\n", hr, pNewDoc, V_UNKNOWN(&source)->lpVtbl);
         }
         break;
      default:
