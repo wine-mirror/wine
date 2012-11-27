@@ -870,6 +870,7 @@ static HRESULT WINAPI convert_CanConvert(IDataConvert* iface,
 
     case DBTYPE_BOOL:
         if(dst_base_type == DBTYPE_DATE) return S_OK;
+        /* fall through */
     case DBTYPE_NUMERIC:
     case DBTYPE_CY:
         if(common_class(dst_class)) return S_OK;
