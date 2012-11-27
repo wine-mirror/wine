@@ -696,7 +696,8 @@ HRESULT WINAPI D3DXCreateMesh(DWORD face_count, DWORD vertex_count, DWORD flags,
 HRESULT WINAPI D3DXCreateMeshFVF(DWORD face_count, DWORD vertex_count, DWORD flags,
         DWORD fvf, struct IDirect3DDevice9 *device, struct ID3DXMesh **mesh);
 HRESULT WINAPI D3DXCreateBuffer(DWORD, LPD3DXBUFFER*);
-HRESULT WINAPI D3DXCreateSPMesh(LPD3DXMESH, CONST DWORD *, CONST D3DXATTRIBUTEWEIGHTS, CONST FLOAT *, LPD3DXSPMESH *);
+HRESULT WINAPI D3DXCreateSPMesh(ID3DXMesh *mesh, const DWORD *adjacency,
+        const D3DXATTRIBUTEWEIGHTS *attribute_weights, const float *vertex_weights, ID3DXSPMesh **spmesh);
 HRESULT WINAPI D3DXCreatePMeshFromStream(struct IStream *stream, DWORD flags, struct IDirect3DDevice9 *device,
         struct ID3DXBuffer **materials, struct ID3DXBuffer **effect_instances,
         DWORD *material_count, struct ID3DXPMesh **mesh);
