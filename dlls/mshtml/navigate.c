@@ -800,15 +800,16 @@ HRESULT start_binding(HTMLInnerWindow *inner_window, BSCallback *bscallback, IBi
     /* NOTE: IE7 calls IsSystemMoniker here*/
 
     if(bctx) {
-        RegisterBindStatusCallback(bctx, &bscallback->IBindStatusCallback_iface, NULL, 0);
-        IBindCtx_AddRef(bctx);
+        hres = RegisterBindStatusCallback(bctx, &bscallback->IBindStatusCallback_iface, NULL, 0);
+        if(SUCCEEDED(hres))
+            IBindCtx_AddRef(bctx);
     }else {
         hres = CreateAsyncBindCtx(0, &bscallback->IBindStatusCallback_iface, NULL, &bctx);
-        if(FAILED(hres)) {
-            WARN("CreateAsyncBindCtx failed: %08x\n", hres);
-            bscallback->vtbl->stop_binding(bscallback, hres);
-            return hres;
-        }
+    }
+
+    if(FAILED(hres)) {
+        bscallback->vtbl->stop_binding(bscallback, hres);
+        return hres;
     }
 
     hres = IMoniker_BindToStorage(bscallback->mon, bctx, NULL, &IID_IStream, (void**)&str);
@@ -1473,7 +1474,6 @@ static void handle_navigation_error(nsChannelBSC *This, DWORD result)
         return;
 
     if(!doc->client_cmdtrg)
-    if(FAILED(hres))
         return;
 
     bound.lLbound = 0;

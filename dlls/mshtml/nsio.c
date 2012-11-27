@@ -1042,10 +1042,16 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         return NS_ERROR_FAILURE;
 
     if(TRACE_ON(mshtml)) {
+        HRESULT hres;
         BSTR uri_str;
-        IUri_GetDisplayUri(This->uri->uri, &uri_str);
-        TRACE("opening %s\n", debugstr_w(uri_str));
-        SysFreeString(uri_str);
+
+        hres = IUri_GetDisplayUri(This->uri->uri, &uri_str);
+        if(SUCCEEDED(hres)) {
+            TRACE("opening %s\n", debugstr_w(uri_str));
+            SysFreeString(uri_str);
+        }else {
+            WARN("GetDisplayUri failed: %08x\n", hres);
+        }
     }
 
     if(This->uri->is_doc_uri) {

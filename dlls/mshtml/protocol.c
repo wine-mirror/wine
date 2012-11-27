@@ -218,6 +218,7 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
     LPCWSTR text = NULL;
     DWORD data_len;
     BYTE *data;
+    HRESULT hres;
 
     static const WCHAR html_begin[] = {0xfeff,'<','H','T','M','L','>',0};
     static const WCHAR html_end[] = {'<','/','H','T','M','L','>',0};
@@ -237,7 +238,9 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
 
     memset(&bindinfo, 0, sizeof(bindinfo));
     bindinfo.cbSize = sizeof(BINDINFO);
-    IInternetBindInfo_GetBindInfo(pOIBindInfo, &grfBINDF, &bindinfo);
+    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &grfBINDF, &bindinfo);
+    if(FAILED(hres))
+        return hres;
     ReleaseBindInfo(&bindinfo);
 
     TRACE("bindf %x\n", grfBINDF);
@@ -605,7 +608,9 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     memset(&bindinfo, 0, sizeof(bindinfo));
     bindinfo.cbSize = sizeof(BINDINFO);
-    IInternetBindInfo_GetBindInfo(pOIBindInfo, &grfBINDF, &bindinfo);
+    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &grfBINDF, &bindinfo);
+    if(FAILED(hres))
+        return hres;
     ReleaseBindInfo(&bindinfo);
 
     len = strlenW(szUrl)+16;

@@ -1301,8 +1301,10 @@ static HRESULT WINAPI PHInPlaceSite_GetWindowContext(IOleInPlaceSiteEx *iface,
         return hres;
 
     hres = create_ip_window(ppDoc);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        IOleInPlaceFrame_Release(ip_frame);
         return hres;
+    }
 
     *ppFrame = ip_frame;
     *lprcPosRect = This->rect;

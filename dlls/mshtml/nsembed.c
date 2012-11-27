@@ -280,6 +280,7 @@ static nsresult NSAPI nsDirectoryServiceProvider2_GetFile(nsIDirectoryServicePro
                 return nsres;
         }
 
+        assert(profile_directory != NULL);
         return nsIFile_Clone(profile_directory, _retval);
     }
 
