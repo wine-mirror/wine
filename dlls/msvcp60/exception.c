@@ -149,6 +149,8 @@ DEFINE_CXX_DATA0(exception, MSVCP_exception_dtor)
 /* ?_Doraise@out_of_range@std@@MEBAXXZ */
 /* ?_Doraise@runtime_error@std@@MBEXXZ */
 /* ?_Doraise@runtime_error@std@@MEBAXXZ */
+/* ?_Doraise@bad_cast@std@@MBEXXZ */
+/* ?_Doraise@bad_cast@std@@MEBAXXZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_exception__Doraise, 4)
 void __thiscall MSVCP_exception__Doraise(exception *this)
 {
