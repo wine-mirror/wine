@@ -200,6 +200,7 @@ HANDLE thread_init(void)
     SIZE_T size, info_size;
     HANDLE exe_file = 0;
     LARGE_INTEGER now;
+    NTSTATUS status;
     struct ntdll_thread_data *thread_data;
     static struct debug_info debug_info;  /* debug info for initial thread */
 
@@ -209,7 +210,13 @@ HANDLE thread_init(void)
 
     addr = (void *)0x7ffe0000;
     size = 0x10000;
-    NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE );
+    status = NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &size,
+                                      MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE );
+    if (status)
+    {
+        MESSAGE( "wine: failed to map the shared user data: %08x\n", status );
+        exit(1);
+    }
     user_shared_data = addr;
 
     /* allocate and initialize the PEB */
