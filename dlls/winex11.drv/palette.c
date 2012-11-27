@@ -146,6 +146,7 @@ int X11DRV_PALETTE_Init(void)
     {
     case DirectColor:
 	X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_VIRTUAL;
+        /* fall through */
     case GrayScale:
     case PseudoColor:
 	if (private_color_map)
@@ -175,6 +176,7 @@ int X11DRV_PALETTE_Init(void)
 
     case TrueColor:
 	X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_VIRTUAL;
+        /* fall through */
     case StaticColor:
         X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
         X11DRV_PALETTE_ComputeColorShifts(&X11DRV_PALETTE_default_shifts, default_visual.red_mask, default_visual.green_mask, default_visual.blue_mask);

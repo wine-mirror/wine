@@ -1112,6 +1112,7 @@ static void UploadGlyph(struct xrender_physdev *physDev, int glyph)
 
             default:
                 ERR("aa = %d - not implemented\n", format);
+                /* fall through */
             case AA_None:
                 wxr_format = WXR_FORMAT_MONO;
                 break;
