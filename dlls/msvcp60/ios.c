@@ -1260,8 +1260,8 @@ locale* __thiscall basic_streambuf_char_pubimbue(basic_streambuf_char *this, loc
     return ret;
 }
 
-/* ?seekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z */
-/* ?seekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
+/* ?seekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@JW4seekdir@ios_base@2@H@Z */
+/* ?seekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@_JW4seekdir@ios_base@2@H@Z */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_seekoff, 20)
 #define call_basic_streambuf_char_seekoff(this, ret, off, way, mode) CALL_VTBL_FUNC(this, 32, \
         fpos_int*, (basic_streambuf_char*, fpos_int*, streamoff, int, int), (this, ret, off, way, mode))
@@ -1987,10 +1987,8 @@ locale* __thiscall basic_streambuf_wchar_pubimbue(basic_streambuf_wchar *this, l
     return ret;
 }
 
-/* ?seekoff@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z */
-/* ?seekoff@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
-/* ?seekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z */
-/* ?seekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
+/* ?seekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAE?AV?$fpos@H@2@JW4seekdir@ios_base@2@H@Z */
+/* ?seekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAA?AV?$fpos@H@2@_JW4seekdir@ios_base@2@H@Z */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_seekoff, 20)
 #define call_basic_streambuf_wchar_seekoff(this, ret, off, way, mode) CALL_VTBL_FUNC(this, 32, \
         fpos_int*, (basic_streambuf_wchar*, fpos_int*, streamoff, int, int), (this, ret, off, way, mode))
@@ -2709,8 +2707,8 @@ int __thiscall basic_filebuf_char_underflow(basic_filebuf_char *this)
     return ret;
 }
 
-/* ?seekoff@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z */
-/* ?seekoff@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
+/* ?seekoff@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@JW4seekdir@ios_base@2@H@Z */
+/* ?seekoff@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@_JW4seekdir@ios_base@2@H@Z */
 DEFINE_THISCALL_WRAPPER(basic_filebuf_char_seekoff, 20)
 fpos_int* __thiscall basic_filebuf_char_seekoff(basic_filebuf_char *this,
         fpos_int *ret, streamoff off, int way, int mode)
@@ -3173,10 +3171,8 @@ unsigned short __thiscall basic_filebuf_wchar_underflow(basic_filebuf_wchar *thi
     return ret;
 }
 
-/* ?seekoff@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z */
-/* ?seekoff@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
-/* ?seekoff@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z */
-/* ?seekoff@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
+/* ?seekoff@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAE?AV?$fpos@H@2@JW4seekdir@ios_base@2@H@Z */
+/* ?seekoff@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MEAA?AV?$fpos@H@2@_JW4seekdir@ios_base@2@H@Z */
 DEFINE_THISCALL_WRAPPER(basic_filebuf_wchar_seekoff, 20)
 fpos_int* __thiscall basic_filebuf_wchar_seekoff(basic_filebuf_wchar *this,
         fpos_int *ret, streamoff off, int way, int mode)
@@ -3533,8 +3529,8 @@ int __thiscall basic_stringbuf_char_underflow(basic_stringbuf_char *this)
     return EOF;
 }
 
-/* ?seekoff@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@MAE?AV?$fpos@H@2@JHH@Z */
-/* ?seekoff@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
+/* ?seekoff@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@MAE?AV?$fpos@H@2@JW4seekdir@ios_base@2@H@Z */
+/* ?seekoff@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@MEAA?AV?$fpos@H@2@_JW4seekdir@ios_base@2@H@Z */
 DEFINE_THISCALL_WRAPPER(basic_stringbuf_char_seekoff, 20)
 fpos_int* __thiscall basic_stringbuf_char_seekoff(basic_stringbuf_char *this,
         fpos_int *ret, streamoff off, int way, int mode)
@@ -3934,10 +3930,8 @@ unsigned short __thiscall basic_stringbuf_wchar_underflow(basic_stringbuf_wchar 
     return WEOF;
 }
 
-/* ?seekoff@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@MAE?AV?$fpos@H@2@JHH@Z */
-/* ?seekoff@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
-/* ?seekoff@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@MAE?AV?$fpos@H@2@JHH@Z */
-/* ?seekoff@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
+/* ?seekoff@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@MAE?AV?$fpos@H@2@JW4seekdir@ios_base@2@H@Z */
+/* ?seekoff@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@MEAA?AV?$fpos@H@2@_JW4seekdir@ios_base@2@H@Z */
 DEFINE_THISCALL_WRAPPER(basic_stringbuf_wchar_seekoff, 20)
 fpos_int* __thiscall basic_stringbuf_wchar_seekoff(basic_stringbuf_wchar *this,
         fpos_int *ret, streamoff off, int way, int mode)
@@ -11653,8 +11647,8 @@ int __thiscall strstreambuf_pbackfail(strstreambuf *this, int c)
     return (unsigned char)(ptr[0] = c);
 }
 
-/* ?seekoff@strstreambuf@std@@MAE?AV?$fpos@H@2@JHH@Z */
-/* ?seekoff@strstreambuf@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
+/* ?seekoff@strstreambuf@std@@MAE?AV?$fpos@H@2@JW4seekdir@ios_base@2@H@Z */
+/* ?seekoff@strstreambuf@std@@MEAA?AV?$fpos@H@2@_JW4seekdir@ios_base@2@H@Z */
 DEFINE_THISCALL_WRAPPER(strstreambuf_seekoff, 20)
 fpos_int* __thiscall strstreambuf_seekoff(strstreambuf *this, fpos_int *ret, streamoff off, int way, int mode)
 {
