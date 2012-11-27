@@ -454,6 +454,7 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val, IServi
             vdisp_release(&vthis);
             return hres;
         }
+        /* fall through */
     case PROP_PROTREF:
         prop->type = PROP_JSVAL;
         prop->flags = PROPF_ENUM;

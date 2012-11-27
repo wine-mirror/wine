@@ -325,7 +325,7 @@ static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, cons
     TRACE("= %s\n", debugstr_jsstr(ret));
 
     if(r)
-        *r = ret ? jsval_string(ret) : jsval_string(jsstr_empty());
+        *r = jsval_string(ret);
     else
         jsstr_release(ret);
     return S_OK;

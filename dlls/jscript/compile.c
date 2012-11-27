@@ -1395,6 +1395,8 @@ static HRESULT compile_continue_statement(compiler_ctx_t *ctx, branch_statement_
             WARN("Label is not a loop\n");
             return JS_E_INVALID_CONTINUE;
         }
+
+        assert(pop_ctx != NULL);
     }else {
         for(pop_ctx = ctx->stat_ctx; pop_ctx; pop_ctx = pop_ctx->next) {
             if(pop_ctx->continue_label)
