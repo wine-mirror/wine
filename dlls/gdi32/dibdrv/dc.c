@@ -342,6 +342,7 @@ static BOOL dibdrv_DeleteDC( PHYSDEV dev )
     TRACE("(%p)\n", dev);
     free_pattern_brush( &pdev->brush );
     free_pattern_brush( &pdev->pen_brush );
+    release_cached_font( pdev->font );
     HeapFree( GetProcessHeap(), 0, pdev );
     return TRUE;
 }

@@ -63,6 +63,7 @@ typedef struct
 } rop_mask_bits;
 
 struct dibdrv_physdev;
+struct cached_font;
 
 typedef struct dib_brush
 {
@@ -92,6 +93,7 @@ typedef struct dibdrv_physdev
 
     HRGN clip;
     RECT *bounds;
+    struct cached_font *font;
 
     /* pen */
     DWORD pen_style, pen_endcap, pen_join;
@@ -250,6 +252,7 @@ extern int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, st
 extern void add_clipped_bounds( dibdrv_physdev *dev, const RECT *rect, HRGN clip ) DECLSPEC_HIDDEN;
 extern int clip_line(const POINT *start, const POINT *end, const RECT *clip,
                      const bres_params *params, POINT *pt1, POINT *pt2) DECLSPEC_HIDDEN;
+extern void release_cached_font( struct cached_font *font ) DECLSPEC_HIDDEN;
 
 static inline void init_clipped_rects( struct clipped_rects *clip_rects )
 {
