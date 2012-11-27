@@ -333,7 +333,6 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
 }
 
 
-static void (WINAPI *pInitCommonControls) (void);
 static HPROPSHEETPAGE (WINAPI *pCreatePropertySheetPage) (LPCPROPSHEETPAGEW);
 static int (WINAPI *pPropertySheet) (LPCPROPSHEETHEADERW);
 
@@ -456,8 +455,6 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
     static const WCHAR SetupW[] = {'S','e','t','u','p','\0'};
 
     hinstComctl32 = LoadLibraryA("comctl32.dll");
-    pInitCommonControls = (void*)GetProcAddress(hinstComctl32,
-						"InitCommonControls");
     pCreatePropertySheetPage = (void*)GetProcAddress(hinstComctl32,
 						    "CreatePropertySheetPageW");
     pPropertySheet = (void*)GetProcAddress(hinstComctl32, "PropertySheetW");
