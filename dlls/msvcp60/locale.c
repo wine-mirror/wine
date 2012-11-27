@@ -98,8 +98,11 @@ typedef struct {
 /* ?_Id_cnt@id@locale@std@@0HA */
 int locale_id__Id_cnt = 0;
 
-static locale__Locimp *global_locale;
 static locale classic_locale;
+
+/* ?_Global@_Locimp@locale@std@@0PAV123@A */
+/* ?_Global@_Locimp@locale@std@@0PEAV123@EA */
+locale__Locimp *global_locale = NULL;
 
 /* ?_Clocptr@_Locimp@locale@std@@0PAV123@A */
 /* ?_Clocptr@_Locimp@locale@std@@0PEAV123@EA */

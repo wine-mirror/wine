@@ -2184,8 +2184,8 @@
 @ cdecl -arch=win64 ?_Gettrue@_Locinfo@std@@QEBAPEBDXZ(ptr) _Locinfo__Gettrue
 @ stub -arch=win32 ?_Getyes@_Locinfo@std@@QBEPBDXZ
 @ stub -arch=win64 ?_Getyes@_Locinfo@std@@QEBAPEBDXZ
-# extern -arch=win32 ?_Global@_Locimp@locale@std@@0PAV123@A
-# extern -arch=win64 ?_Global@_Locimp@locale@std@@0PEAV123@EA
+@ extern -arch=win32 ?_Global@_Locimp@locale@std@@0PAV123@A global_locale
+@ extern -arch=win64 ?_Global@_Locimp@locale@std@@0PEAV123@EA global_locale
 @ thiscall -arch=win32 ?_Gndec@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEPADXZ(ptr) basic_streambuf_char__Gndec
 @ cdecl -arch=win64 ?_Gndec@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAPEADXZ(ptr) basic_streambuf_char__Gndec
 @ thiscall -arch=win32 ?_Gndec@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEPAGXZ(ptr) basic_streambuf_wchar__Gndec
