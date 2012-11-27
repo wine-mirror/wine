@@ -2041,7 +2041,7 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
       /* outlen=0 means this block was the last contiguous part
          of a split block, continued in the next cabinet */
       if (outlen == 0) {
-        int pathlen, filenamelen, idx, i;
+        int pathlen, filenamelen, i;
         INT_PTR cabhf;
         char fullpath[MAX_PATH], userpath[256];
         FDINOTIFICATION fdin;
@@ -2060,23 +2060,21 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
 
           if (!((cab->next = CAB(fdi)->alloc(sizeof(fdi_decomp_state)))))
             return DECR_NOMEMORY;
-        
+
           ZeroMemory(cab->next, sizeof(fdi_decomp_state));
 
           /* copy pszCabPath to userpath */
           ZeroMemory(userpath, 256);
-          pathlen = (pszCabPath) ? strlen(pszCabPath) : 0;
+          pathlen = pszCabPath ? strlen(pszCabPath) : 0;
           if (pathlen) {
-            if (pathlen < 256) {
-              for (i = 0; i <= pathlen; i++)
-                userpath[i] = pszCabPath[i];
-            } /* else we are in a weird place... let's leave it blank and see if the user fixes it */
-          } 
+            if (pathlen < 256) /* else we are in a weird place... let's leave it blank and see if the user fixes it */
+              strcpy(userpath, pszCabPath);
+          }
 
           /* initial fdintNEXT_CABINET notification */
           ZeroMemory(&fdin, sizeof(FDINOTIFICATION));
-          fdin.psz1 = (cab->mii.nextname) ? cab->mii.nextname : &emptystring;
-          fdin.psz2 = (cab->mii.nextinfo) ? cab->mii.nextinfo : &emptystring;
+          fdin.psz1 = cab->mii.nextname ? cab->mii.nextname : &emptystring;
+          fdin.psz2 = cab->mii.nextinfo ? cab->mii.nextinfo : &emptystring;
           fdin.psz3 = userpath;
           fdin.fdie = FDIERROR_NONE;
           fdin.pv = pvUser;
@@ -2086,7 +2084,7 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
           do {
 
             pathlen = strlen(userpath);
-            filenamelen = (cab->mii.nextname) ? strlen(cab->mii.nextname) : 0;
+            filenamelen = cab->mii.nextname ? strlen(cab->mii.nextname) : 0;
 
             /* slight overestimation here to save CPU cycles in the developer's brain */
             if ((pathlen + filenamelen + 3) > MAX_PATH) {
@@ -2095,16 +2093,17 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
             }
 
             /* paste the path and filename together */
-            idx = 0;
+            fullpath[0] = '\0';
             if (pathlen) {
-              for (i = 0; i < pathlen; i++) fullpath[idx++] = userpath[i];
-              if (fullpath[idx - 1] != '\\') fullpath[idx++] = '\\';
+              strcpy(fullpath, userpath);
+              if (fullpath[pathlen - 1] != '\\')
+                strcat(fullpath, "\\");
             }
-            if (filenamelen) for (i = 0; i < filenamelen; i++) fullpath[idx++] = cab->mii.nextname[i];
-            fullpath[idx] = '\0';
-        
+            if (filenamelen)
+              strcat(fullpath, cab->mii.nextname);
+
             TRACE("full cab path/file name: %s\n", debugstr_a(fullpath));
-        
+
             /* try to get a handle to the cabfile */
             cabhf = CAB(fdi)->open(fullpath, _O_RDONLY|_O_BINARY, _S_IREAD | _S_IWRITE);
             if (cabhf == -1) {
@@ -2113,14 +2112,14 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
               if (((*pfnfdin)(fdintNEXT_CABINET, &fdin))) return DECR_USERABORT;
               continue;
             }
-        
+
             if (cabhf == 0) {
               ERR("PFDI_OPEN returned zero for %s.\n", fullpath);
               fdin.fdie = FDIERROR_CABINET_NOT_FOUND;
               if (((*pfnfdin)(fdintNEXT_CABINET, &fdin))) return DECR_USERABORT;
               continue;
             }
- 
+
             /* check if it's really a cabfile. Note that this doesn't implement the bug */
             if (!FDI_read_entries(CAB(fdi), cabhf, &fdici, &(cab->next->mii))) {
               WARN("FDIIsCabinet failed.\n");
