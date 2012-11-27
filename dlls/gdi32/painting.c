@@ -152,12 +152,11 @@ BOOL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types, DWOR
         case PT_LINETO:
             break;
         case PT_BEZIERTO:
-            if((i + 2 < count) && (types[i + 1] == PT_BEZIERTO) &&
-               ((types[i + 2] & ~PT_CLOSEFIGURE) == PT_BEZIERTO))
-            {
-                i += 2;
-                break;
-            }
+            if (i + 2 >= count) return FALSE;
+            if (types[i + 1] != PT_BEZIERTO) return FALSE;
+            if ((types[i + 2] & ~PT_CLOSEFIGURE) != PT_BEZIERTO) return FALSE;
+            i += 2;
+            break;
         default:
             return FALSE;
         }
