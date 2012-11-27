@@ -7396,6 +7396,15 @@ locale__Locimp* __cdecl locale__Init(void)
     return global_locale;
 }
 
+/* ?_Iscloc@locale@std@@QBE_NXZ */
+/* ?_Iscloc@locale@std@@QEBA_NXZ */
+DEFINE_THISCALL_WRAPPER(locale__Iscloc, 4)
+MSVCP_bool __thiscall locale__Iscloc(const locale *this)
+{
+    TRACE("(%p)\n", this);
+    return this->ptr == locale__Locimp__Clocptr;
+}
+
 /* ??0locale@std@@QAE@ABV01@0H@Z */
 /* ??0locale@std@@QEAA@AEBV01@0H@Z */
 DEFINE_THISCALL_WRAPPER(locale_ctor_locale_locale, 16)

@@ -2291,8 +2291,8 @@
 @ stub -arch=win64 ?_Iput@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@KA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DPEAD_K@Z
 @ stub -arch=win32 ?_Iput@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@KA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AAVios_base@2@GPADI@Z
 @ stub -arch=win64 ?_Iput@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@KA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AEAVios_base@2@GPEAD_K@Z
-@ stub -arch=win32 ?_Iscloc@locale@std@@QBE_NXZ
-@ stub -arch=win64 ?_Iscloc@locale@std@@QEBA_NXZ
+@ thiscall -arch=win32 ?_Iscloc@locale@std@@QBE_NXZ(ptr) locale__Iscloc
+@ cdecl -arch=win64 ?_Iscloc@locale@std@@QEBA_NXZ(ptr) locale__Iscloc
 @ stub ?_Isinf@?$_Ctr@M@std@@SA_NM@Z
 @ stub ?_Isinf@?$_Ctr@N@std@@SA_NN@Z
 @ stub ?_Isinf@?$_Ctr@O@std@@SA_NO@Z
