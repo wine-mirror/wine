@@ -1100,8 +1100,8 @@ BOOL is_gecko_path(const char *path)
     WCHAR *buf, *ptr;
     BOOL ret;
 
-    buf = heap_strdupAtoW(path);
-    if(strlenW(buf) < gecko_path_len)
+    buf = heap_strdupUtoW(path);
+    if(!buf || strlenW(buf) < gecko_path_len)
         return FALSE;
 
     buf[gecko_path_len] = 0;
