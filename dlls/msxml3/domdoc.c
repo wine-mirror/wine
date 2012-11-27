@@ -132,9 +132,6 @@ struct domdoc
     bsc_t *bsc;
     HRESULT error;
 
-    /* IPersistStream */
-    IStream *stream;
-
     /* IObjectWithSite*/
     IUnknown *site;
 
@@ -722,34 +719,31 @@ static HRESULT domdoc_load_from_stream(domdoc *doc, ISequentialStream *stream)
 {
     DWORD read, written, len;
     xmlDocPtr xmldoc = NULL;
+    IStream *hstream;
     HGLOBAL hglobal;
     BYTE buf[4096];
     HRESULT hr;
     char *ptr;
 
-    if (doc->stream)
-    {
-        IStream_Release(doc->stream);
-        doc->stream = NULL;
-    }
-
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &doc->stream);
+    hstream = NULL;
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &hstream);
     if (FAILED(hr))
         return hr;
 
     do
     {
         ISequentialStream_Read(stream, buf, sizeof(buf), &read);
-        hr = IStream_Write(doc->stream, buf, read, &written);
+        hr = IStream_Write(hstream, buf, read, &written);
     } while(SUCCEEDED(hr) && written != 0 && read != 0);
 
     if (FAILED(hr))
     {
         ERR("failed to copy stream 0x%08x\n", hr);
+        IStream_Release(hstream);
         return hr;
     }
 
-    hr = GetHGlobalFromStream(doc->stream, &hglobal);
+    hr = GetHGlobalFromStream(hstream, &hglobal);
     if (FAILED(hr))
         return hr;
 
@@ -922,8 +916,6 @@ static ULONG WINAPI domdoc_Release( IXMLDOMDocument3 *iface )
         if (This->site)
             IUnknown_Release( This->site );
         destroy_xmlnode(&This->node);
-        if (This->stream)
-            IStream_Release(This->stream);
 
         for (eid = 0; eid < EVENTID_LAST; eid++)
             if (This->events[eid]) IDispatch_Release(This->events[eid]);
@@ -3493,7 +3485,6 @@ HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
     doc->resolving = 0;
     doc->properties = properties_from_xmlDocPtr(xmldoc);
     doc->error = S_OK;
-    doc->stream = NULL;
     doc->site = NULL;
     doc->safeopt = 0;
     doc->bsc = NULL;
