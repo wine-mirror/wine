@@ -666,16 +666,16 @@ __ASM_VTABLE(__non_rtti_object,
 }
 #endif
 
-DEFINE_RTTI_DATA0( type_info, 0, ".?AVtype_info@@" );
-DEFINE_RTTI_DATA0( exception, 0, ".?AVexception@@" );
-DEFINE_RTTI_DATA1( bad_typeid, 0, &exception_rtti_base_descriptor, ".?AVbad_typeid@@" );
-DEFINE_RTTI_DATA1( bad_cast, 0, &exception_rtti_base_descriptor, ".?AVbad_cast@@" );
-DEFINE_RTTI_DATA2( __non_rtti_object, 0, &bad_typeid_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AV__non_rtti_object@@" );
+DEFINE_RTTI_DATA0( type_info, 0, ".?AVtype_info@@" )
+DEFINE_RTTI_DATA0( exception, 0, ".?AVexception@@" )
+DEFINE_RTTI_DATA1( bad_typeid, 0, &exception_rtti_base_descriptor, ".?AVbad_typeid@@" )
+DEFINE_RTTI_DATA1( bad_cast, 0, &exception_rtti_base_descriptor, ".?AVbad_cast@@" )
+DEFINE_RTTI_DATA2( __non_rtti_object, 0, &bad_typeid_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AV__non_rtti_object@@" )
 
-DEFINE_EXCEPTION_TYPE_INFO( exception, 0, NULL, NULL );
-DEFINE_EXCEPTION_TYPE_INFO( bad_typeid, 1, &exception_cxx_type_info, NULL );
-DEFINE_EXCEPTION_TYPE_INFO( bad_cast, 1, &exception_cxx_type_info, NULL );
-DEFINE_EXCEPTION_TYPE_INFO( __non_rtti_object, 2, &bad_typeid_cxx_type_info, &exception_cxx_type_info );
+DEFINE_EXCEPTION_TYPE_INFO( exception, 0, NULL, NULL )
+DEFINE_EXCEPTION_TYPE_INFO( bad_typeid, 1, &exception_cxx_type_info, NULL )
+DEFINE_EXCEPTION_TYPE_INFO( bad_cast, 1, &exception_cxx_type_info, NULL )
+DEFINE_EXCEPTION_TYPE_INFO( __non_rtti_object, 2, &bad_typeid_cxx_type_info, &exception_cxx_type_info )
 
 void msvcrt_init_exception(void *base)
 {

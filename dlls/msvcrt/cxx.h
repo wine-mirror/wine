@@ -107,7 +107,7 @@ const rtti_object_locator name ## _rtti = { \
     0, \
     &name ## _type_info, \
     &name ## _hierarchy \
-}
+};
 
 #else
 
