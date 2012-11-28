@@ -771,6 +771,8 @@ LONG WINAPI mmioRead(HMMIO hmmio, HPSTR pch, LONG cch)
 	return send_message(wm->ioProc, &wm->info, MMIOM_READ, (LPARAM)pch, cch, FALSE);
 
     /* first try from current buffer */
+    if (cch && wm->info.fccIOProc != FOURCC_MEM && wm->info.pchNext == wm->info.pchEndRead)
+	MMIO_GrabNextBuffer(wm, TRUE);
     if (wm->info.pchNext != wm->info.pchEndRead) {
 	count = wm->info.pchEndRead - wm->info.pchNext;
 	if (count > cch || count < 0) count = cch;
@@ -796,6 +798,8 @@ LONG WINAPI mmioRead(HMMIO hmmio, HPSTR pch, LONG cch)
 	    cch -= size;
 	    count += size;
 	}
+	wm->bBufferLoaded = FALSE;
+	mmioSeek(hmmio, 0, SEEK_CUR);
     }
 
     TRACE("count=%d\n", count);
@@ -887,35 +891,27 @@ LONG WINAPI mmioSeek(HMMIO hmmio, LONG lOffset, INT iOrigin)
 	return -1;
     }
 
-    if (offset && offset >= wm->dwFileSize && wm->info.fccIOProc != FOURCC_MEM) {
-        /* should check that write mode exists */
-        if (MMIO_Flush(wm, 0) != MMSYSERR_NOERROR)
-            return -1;
-        wm->info.lBufOffset = offset;
-        wm->info.pchEndRead = wm->info.pchBuffer;
-        wm->info.pchEndWrite = wm->info.pchBuffer + wm->info.cchBuffer;
-        if ((wm->info.dwFlags & MMIO_RWMODE) == MMIO_READ) {
-            wm->info.lDiskOffset = wm->dwFileSize;
-        }
-    } else if ((wm->info.cchBuffer > 0) &&
+    /* stay in same buffer ? */
+    /* some memory mapped buffers are defined with -1 as a size */
+    if ((wm->info.cchBuffer > 0) &&
 	((offset < wm->info.lBufOffset) ||
 	 (offset >= wm->info.lBufOffset + wm->info.cchBuffer) ||
+	 (offset > wm->dwFileSize && wm->info.fccIOProc != FOURCC_MEM) ||
 	 !wm->bBufferLoaded)) {
-        /* stay in same buffer ? */
-        /* some memory mapped buffers are defined with -1 as a size */
 
 	/* condition to change buffer */
 	if ((wm->info.fccIOProc == FOURCC_MEM) ||
 	    MMIO_Flush(wm, 0) != MMSYSERR_NOERROR ||
 	    /* this also sets the wm->info.lDiskOffset field */
 	    send_message(wm->ioProc, &wm->info, MMIOM_SEEK,
-                         (offset / wm->info.cchBuffer) * wm->info.cchBuffer,
-                         SEEK_SET, FALSE) == -1)
+                         offset, SEEK_SET, FALSE) == -1)
 	    return -1;
-	MMIO_GrabNextBuffer(wm, TRUE);
+	wm->info.lBufOffset = offset;
+	wm->bBufferLoaded = FALSE;
+	wm->info.pchNext = wm->info.pchEndRead = wm->info.pchBuffer;
     }
-
-    wm->info.pchNext = wm->info.pchBuffer + (offset - wm->info.lBufOffset);
+    else
+	wm->info.pchNext = wm->info.pchBuffer + (offset - wm->info.lBufOffset);
 
     TRACE("=> %d\n", offset);
     return offset;

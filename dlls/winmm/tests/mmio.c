@@ -812,14 +812,14 @@ static void test_mmio_end_of_file(void)
     ok(sizeof(RIFF_buf) == ret, "got %d\n", ret);
 
     ret = mmioRead(hmmio, data, sizeof(data));
-    todo_wine ok(ret == 0, "expected %d, got %d\n", 0, ret);
+    ok(ret == 0, "expected %d, got %d\n", 0, ret);
 
     res = mmioGetInfo(hmmio, &mmio, 0);
     ok(res == MMSYSERR_NOERROR, "expected 0, got %d\n", res);
 
     res = mmioAdvance(hmmio, &mmio, MMIO_READ);
     ok(res == MMSYSERR_NOERROR, "expected 0, got %d\n", res);
-    todo_wine ok(mmio.pchNext == mmio.pchEndRead, "expected %p, got %p\n", mmio.pchEndRead, mmio.pchNext);
+    ok(mmio.pchNext == mmio.pchEndRead, "expected %p, got %p\n", mmio.pchEndRead, mmio.pchNext);
 
     mmioClose(hmmio, 0);
     DeleteFileA(test_file);
@@ -874,18 +874,18 @@ static void test_mmio_buffer_pointer(void)
     ok(pos == size, "failed to seek, got %d\n", pos);
     res = mmioGetInfo(hmmio, &mmio, 0);
     ok(res == MMSYSERR_NOERROR, "expected 0, got %d\n", res);
-    todo_wine ok(mmio.lBufOffset == size, "expected %d, got %d\n", size, mmio.lBufOffset);
-    todo_wine ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
-    todo_wine ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
+    ok(mmio.lBufOffset == size, "expected %d, got %d\n", size, mmio.lBufOffset);
+    ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+    ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
 
     /* reading a lot (as sizeof(data) > mmio.cchBuffer), the buffer is empty */
     size = mmioRead(hmmio, data, sizeof(data));
     ok(size == sizeof(data), "failed to read, got %d\n", size);
     res = mmioGetInfo(hmmio, &mmio, 0);
     ok(res == MMSYSERR_NOERROR, "expected 0, got %d\n", res);
-    todo_wine ok(mmio.lBufOffset == pos+size, "expected %d, got %d\n", pos+size, mmio.lBufOffset);
-    todo_wine ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
-    todo_wine ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
+    ok(mmio.lBufOffset == pos+size, "expected %d, got %d\n", pos+size, mmio.lBufOffset);
+    ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
+    ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
 
     mmioClose(hmmio, 0);
     DeleteFileA(test_file);
