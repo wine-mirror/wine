@@ -123,9 +123,11 @@ static HRESULT WINAPI HTMLEvents_Invoke(IDispatch *iface, DISPID dispIdMember, R
 {
     if(dispIdMember == DISPID_HTMLDOCUMENTEVENTS2_ONREADYSTATECHANGE) {
         static const WCHAR completeW[] = {'c','o','m','p','l','e','t','e',0};
+        HRESULT hr;
         BSTR state;
 
-        IHTMLDocument2_get_readyState(html_doc, &state);
+        hr = IHTMLDocument2_get_readyState(html_doc, &state);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
         if(!memcmp(state, completeW, sizeof(completeW)))
             loaded = TRUE;
     }
