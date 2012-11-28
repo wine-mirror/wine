@@ -1191,6 +1191,7 @@ static HRESULT WINAPI contentHandler_skippedEntity(
     init_call_entry(locator, &call);
     call.id = CH_SKIPPEDENTITY;
     call.arg1W = SysAllocStringLen(name, len);
+    add_call(sequences, CONTENT_HANDLER_INDEX, &call);
 
     return get_expected_ret();
 }
