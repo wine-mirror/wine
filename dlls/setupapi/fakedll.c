@@ -770,7 +770,7 @@ static BOOL CALLBACK register_resource( HMODULE module, LPCWSTR type, LPWSTR nam
 
 static void register_fake_dll( const WCHAR *name, const void *data, size_t size )
 {
-    static const WCHAR atlW[] = {'a','t','l','.','d','l','l',0};
+    static const WCHAR atlW[] = {'a','t','l','1','0','0','.','d','l','l',0};
     static const WCHAR moduleW[] = {'M','O','D','U','L','E',0};
     static const WCHAR regtypeW[] = {'W','I','N','E','_','R','E','G','I','S','T','R','Y',0};
     static const WCHAR manifestW[] = {'W','I','N','E','_','M','A','N','I','F','E','S','T',0};
@@ -791,20 +791,14 @@ static void register_fake_dll( const WCHAR *name, const void *data, size_t size 
 
     if (!registrar)
     {
-        /* create the object by hand since we can't guarantee that atl and ole32 are registered */
-        IClassFactory *cf;
-        HRESULT (WINAPI *pDllGetClassObject)( REFCLSID clsid, REFIID iid, LPVOID *ppv );
+        HRESULT (WINAPI *pAtlCreateRegistrar)(IRegistrar**);
         HMODULE atl = LoadLibraryW( atlW );
 
-        if ((pDllGetClassObject = (void *)GetProcAddress( atl, "DllGetClassObject" )))
-        {
-            hr = pDllGetClassObject( &CLSID_Registrar, &IID_IClassFactory, (void **)&cf );
-            if (SUCCEEDED( hr ))
-            {
-                hr = IClassFactory_CreateInstance( cf, NULL, &IID_IRegistrar, (void **)&registrar );
-                IClassFactory_Release( cf );
-            }
-        }
+        if ((pAtlCreateRegistrar = (void *)GetProcAddress( atl, "AtlCreateRegistrar" )))
+            hr = pAtlCreateRegistrar( &registrar );
+        else
+            hr = E_NOINTERFACE;
+
         if (!registrar)
         {
             ERR( "failed to create IRegistrar: %x\n", hr );
