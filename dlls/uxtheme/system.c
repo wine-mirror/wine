@@ -57,7 +57,6 @@ static const WCHAR szDllName[] = {'D','l','l','N','a','m','e','\0'};
 
 static const WCHAR szIniDocumentation[] = {'d','o','c','u','m','e','n','t','a','t','i','o','n','\0'};
 
-DECLSPEC_HIDDEN HINSTANCE hDllInst;
 DECLSPEC_HIDDEN ATOM atDialogThemeEnabled;
 
 static DWORD dwThemeAppProperties = STAP_ALLOW_NONCLIENT | STAP_ALLOW_CONTROLS;
@@ -536,8 +535,6 @@ void UXTHEME_InitSystem(HINSTANCE hInst)
     static const WCHAR szDialogThemeEnabled[] = {
         'u','x','_','d','i','a','l','o','g','t','h','e','m','e','\0'
     };
-
-    hDllInst = hInst;
 
     atWindowTheme        = GlobalAddAtomW(szWindowTheme);
     atSubAppName         = GlobalAddAtomW(szSubAppName);
