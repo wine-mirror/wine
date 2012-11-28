@@ -877,7 +877,7 @@ D3DXMATRIX* WINAPI D3DXMatrixTranspose(D3DXMATRIX *pout, CONST D3DXMATRIX *pm)
 
 static const unsigned int INITIAL_STACK_SIZE = 32;
 
-HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, LPD3DXMATRIXSTACK *ppstack)
+HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, ID3DXMatrixStack **ppstack)
 {
     struct ID3DXMatrixStackImpl *object;
 
