@@ -54,7 +54,6 @@ static PALETTEENTRY *COLOR_sysPal; /* current system palette */
 
 static int COLOR_gapStart = 256;
 static int COLOR_gapEnd = -1;
-static int COLOR_gapFilled = 0;
 
 UINT16   X11DRV_PALETTE_PaletteFlags     = 0;
 
@@ -670,7 +669,6 @@ static void X11DRV_PALETTE_FillDefaultColors( const PALETTEENTRY *sys_pal_templa
 	     if( --max <= 0 ) break;
 	  }
 	}
-    COLOR_gapFilled = idx - COLOR_gapStart;
   }
 }
 
