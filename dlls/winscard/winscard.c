@@ -26,7 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winscard);
 
-static HMODULE WINSCARD_hModule;
 static HANDLE g_startedEvent = NULL;
 
 const SCARD_IO_REQUEST g_rgSCardT0Pci = { SCARD_PROTOCOL_T0, 8 };
@@ -43,7 +42,6 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_ATTACH:
         {
             DisableThreadLibraryCalls(hinstDLL);
-            WINSCARD_hModule = hinstDLL;
             /* FIXME: for now, we act as if the pcsc daemon is always started */
             g_startedEvent = CreateEventA(NULL,TRUE,TRUE,NULL);
             break;
