@@ -1910,15 +1910,12 @@ static void x11drv_surface_flush( struct window_surface *window_surface )
 
 #ifdef HAVE_LIBXXSHM
         if (surface->shminfo.shmid != -1)
-        {
             XShmPutImage( gdi_display, surface->window, surface->gc, surface->image,
                           coords.visrect.left, coords.visrect.top,
                           surface->header.rect.left + coords.visrect.left,
                           surface->header.rect.top + coords.visrect.top,
                           coords.visrect.right - coords.visrect.left,
                           coords.visrect.bottom - coords.visrect.top, False );
-            XSync( gdi_display, False );
-        }
         else
 #endif
         XPutImage( gdi_display, surface->window, surface->gc, surface->image,
