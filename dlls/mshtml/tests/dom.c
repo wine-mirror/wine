@@ -2946,6 +2946,49 @@ static void _test_input_put_value(unsigned line, IUnknown *unk, const char *val)
     _test_input_value(line, unk, val);
 }
 
+#define test_input_defaultValue(o,t) _test_input_defaultValue(__LINE__,o,t)
+static void _test_input_defaultValue(unsigned line, IUnknown *unk, const char *exval)
+{
+    IHTMLInputElement *input;
+    BSTR str;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLInputElement, (void**)&input);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLInputElement: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IHTMLInputElement_get_defaultValue(input, &str);
+    ok_(__FILE__,line) (hres == S_OK, "get_defaultValue failed: %08x\n", hres);
+    if(exval)
+        ok_(__FILE__,line) (!strcmp_wa(str, exval), "defaultValue=%s\n", wine_dbgstr_w(str));
+    else
+        ok_(__FILE__,line) (!str, "exval != NULL\n");
+    SysFreeString(str);
+    IHTMLInputElement_Release(input);
+}
+
+#define test_input_put_defaultValue(o,v) _test_input_put_defaultValue(__LINE__,o,v)
+static void _test_input_put_defaultValue(unsigned line, IUnknown *unk, const char *val)
+{
+    IHTMLInputElement *input;
+    BSTR str;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLInputElement, (void**)&input);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLInputElement: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    str = a2bstr(val);
+    hres = IHTMLInputElement_put_defaultValue(input, str);
+    ok_(__FILE__,line) (hres == S_OK, "get_defaultValue failed: %08x\n", hres);
+    SysFreeString(str);
+    IHTMLInputElement_Release(input);
+
+    _test_input_defaultValue(line, unk, val);
+}
+
 #define test_input_src(i,s) _test_input_src(__LINE__,i,s)
 static void _test_input_src(unsigned line, IHTMLInputElement *input, const char *exsrc)
 {
@@ -5882,7 +5925,9 @@ static void test_elems(IHTMLDocument2 *doc)
         test_node_put_value_str((IUnknown*)elem, "test");
         test_node_get_value_str((IUnknown*)elem, NULL);
         test_input_value((IUnknown*)elem, NULL);
+        test_input_defaultValue((IUnknown*)elem, NULL);
         test_input_put_value((IUnknown*)elem, "test");
+        test_input_defaultValue((IUnknown*)elem, NULL);
         test_elem_class((IUnknown*)elem, "testclass");
         test_elem_tabindex((IUnknown*)elem, 2);
         test_elem_set_tabindex((IUnknown*)elem, 3);
@@ -6303,6 +6348,17 @@ static void test_elems2(IHTMLDocument2 *doc)
         test_textarea_put_readonly((IUnknown*)elem, VARIANT_TRUE);
         test_textarea_put_readonly((IUnknown*)elem, VARIANT_FALSE);
         test_textarea_type((IUnknown*)elem);
+        IHTMLElement_Release(elem);
+    }
+
+    test_elem_set_innerhtml((IUnknown*)div,
+            "<input value=\"val\" id =\"inputid\"  />");
+    elem = get_elem_by_id(doc, "inputid", TRUE);
+    if(elem) {
+        test_input_defaultValue((IUnknown*)elem, "val");
+        test_input_put_value((IUnknown*)elem, "test");
+        test_input_put_defaultValue((IUnknown*)elem, "new val");
+        test_input_value((IUnknown*)elem, "test");
         IHTMLElement_Release(elem);
     }
 
