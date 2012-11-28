@@ -294,8 +294,8 @@ typedef struct
     saxreader *saxreader;
     HRESULT ret;
     xmlParserCtxtPtr pParserCtxt;
-    WCHAR *publicId;
-    WCHAR *systemId;
+    BSTR publicId;
+    BSTR systemId;
     int line;
     int column;
     BOOL vbInterface;
@@ -2132,7 +2132,7 @@ static HRESULT WINAPI isaxlocator_getPublicId(
 
     publicId = bstr_from_xmlChar(xmlSAX2GetPublicId(This->pParserCtxt));
     if(SysStringLen(publicId))
-        This->publicId = (WCHAR*)&publicId;
+        This->publicId = publicId;
     else
     {
         SysFreeString(publicId);
@@ -2154,7 +2154,7 @@ static HRESULT WINAPI isaxlocator_getSystemId(
 
     systemId = bstr_from_xmlChar(xmlSAX2GetSystemId(This->pParserCtxt));
     if(SysStringLen(systemId))
-        This->systemId = (WCHAR*)&systemId;
+        This->systemId = systemId;
     else
     {
         SysFreeString(systemId);
