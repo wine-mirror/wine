@@ -710,7 +710,7 @@ static BOOL FDI_read_entries(
 }
 
 /***********************************************************************
- *		FDIIsCabinet (CABINET.21)
+ * FDIIsCabinet (CABINET.21)
  *
  * Informs the caller as to whether or not the provided file handle is
  * really a cabinet or not, filling out the provided PFDICABINETINFO
@@ -725,7 +725,7 @@ static BOOL FDI_read_entries(
  *               be filled out with information about the cabinet
  *               file indicated by hf if, indeed, it is determined
  *               to be a cabinet.
- * 
+ *
  * RETURNS
  *   TRUE  if the file is a cabinet.  The info pointed to by pfdici will
  *         be provided.
@@ -736,10 +736,7 @@ static BOOL FDI_read_entries(
  * INCLUDES
  *   fdi.c
  */
-BOOL __cdecl FDIIsCabinet(
-	HFDI            hfdi,
-	INT_PTR         hf,
-	PFDICABINETINFO pfdici)
+BOOL __cdecl FDIIsCabinet(HFDI hfdi, INT_PTR hf, PFDICABINETINFO pfdici)
 {
   BOOL rv;
   FDI_Int *fdi = get_fdi_ptr( hfdi );
@@ -749,13 +746,11 @@ BOOL __cdecl FDIIsCabinet(
   if (!fdi) return FALSE;
 
   if (!hf) {
-    ERR("(!hf)!\n");
     SetLastError(ERROR_INVALID_HANDLE);
     return FALSE;
   }
 
   if (!pfdici) {
-    ERR("(!pfdici)!\n");
     SetLastError(ERROR_BAD_ARGUMENTS);
     return FALSE;
   }
@@ -2533,7 +2528,7 @@ BOOL __cdecl FDICopy(
 
   /* check if it's really a cabfile. Note that this doesn't implement the bug */
   if (!FDI_read_entries(fdi, cabhf, &fdici, &(CAB(mii)))) {
-    ERR("FDIIsCabinet failed: %u.\n", fdi->perf->erfOper);
+    WARN("FDI_read_entries failed: %u\n", fdi->perf->erfOper);
     fdi->free(decomp_state);
     fdi->close(cabhf);
     return FALSE;
