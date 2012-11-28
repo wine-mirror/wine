@@ -5213,6 +5213,9 @@ todo_wine {
     EXPECT_REF(obj_site, 1);
 }
 
+    hr = IObjectWithSite_SetSite(obj_site, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
     IObjectWithSite_AddRef(obj_site);
 todo_wine {
     EXPECT_REF(obj_site, 2);

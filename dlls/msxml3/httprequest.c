@@ -1444,34 +1444,37 @@ static HRESULT WINAPI httprequest_ObjectWithSite_GetSite( IObjectWithSite *iface
 static HRESULT WINAPI httprequest_ObjectWithSite_SetSite( IObjectWithSite *iface, IUnknown *punk )
 {
     httprequest *This = impl_from_IObjectWithSite(iface);
-    IServiceProvider *provider;
-    HRESULT hr;
 
-    TRACE("(%p)->(%p)\n", iface, punk);
-
-    if (punk)
-        IUnknown_AddRef( punk );
+    TRACE("(%p)->(%p)\n", This, punk);
 
     if(This->site)
         IUnknown_Release( This->site );
 
+    SysFreeString(This->siteurl);
+    This->siteurl = NULL;
     This->site = punk;
 
-    hr = IUnknown_QueryInterface(This->site, &IID_IServiceProvider, (void**)&provider);
-    if (hr == S_OK)
+    if (punk)
     {
-        IHTMLDocument2 *doc;
+        IServiceProvider *provider;
+        HRESULT hr;
 
-        hr = IServiceProvider_QueryService(provider, &SID_SContainerDispatch, &IID_IHTMLDocument2, (void**)&doc);
+        IUnknown_AddRef( punk );
+
+        hr = IUnknown_QueryInterface(This->site, &IID_IServiceProvider, (void**)&provider);
         if (hr == S_OK)
         {
-            SysFreeString(This->siteurl);
+            IHTMLDocument2 *doc;
 
-            hr = IHTMLDocument2_get_URL(doc, &This->siteurl);
-            IHTMLDocument2_Release(doc);
-            TRACE("host url %s, 0x%08x\n", debugstr_w(This->siteurl), hr);
+            hr = IServiceProvider_QueryService(provider, &SID_SContainerDispatch, &IID_IHTMLDocument2, (void**)&doc);
+            if (hr == S_OK)
+            {
+                hr = IHTMLDocument2_get_URL(doc, &This->siteurl);
+                IHTMLDocument2_Release(doc);
+                TRACE("host url %s, 0x%08x\n", debugstr_w(This->siteurl), hr);
+            }
+            IServiceProvider_Release(provider);
         }
-        IServiceProvider_Release(provider);
     }
 
     return S_OK;
