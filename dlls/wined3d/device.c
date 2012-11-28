@@ -1581,7 +1581,7 @@ void CDECL wined3d_device_set_stream_output(struct wined3d_device *device, UINT 
         if (buffer)
             wined3d_buffer_incref(buffer);
         if (prev_buffer)
-            wined3d_buffer_decref(buffer);
+            wined3d_buffer_decref(prev_buffer);
         return;
     }
 
