@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-11-03 18:42+0300\n"
+"PO-Revision-Date: 2012-11-28 22:47+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -10101,10 +10101,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine komandų interpretatorius"
 
 #: cmd.rc:349
-#, fuzzy
-#| msgid "CMD Version %1!S!\n"
 msgid "Wine CMD Version %1!S!\n"
-msgstr "CMD versija %1!S!\n"
+msgstr "Wine CMD versija %1!S!\n"
 
 #: cmd.rc:350
 msgid "More? "
