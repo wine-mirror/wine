@@ -50,8 +50,6 @@ extern LONG SHDOCVW_refCount DECLSPEC_HIDDEN;
 static inline void SHDOCVW_LockModule(void) { InterlockedIncrement( &SHDOCVW_refCount ); }
 static inline void SHDOCVW_UnlockModule(void) { InterlockedDecrement( &SHDOCVW_refCount ); }
 
-extern HINSTANCE shdocvw_hinstance DECLSPEC_HIDDEN;
-
 
 /* memory allocation functions */
 

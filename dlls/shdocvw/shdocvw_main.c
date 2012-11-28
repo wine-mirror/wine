@@ -41,7 +41,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 LONG SHDOCVW_refCount = 0;
 
-HINSTANCE shdocvw_hinstance = 0;
 static HMODULE SHDOCVW_hshell32 = 0;
 static HINSTANCE ieframe_instance;
 
@@ -148,7 +147,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
-        shdocvw_hinstance = hinst;
         break;
     case DLL_PROCESS_DETACH:
         if (SHDOCVW_hshell32) FreeLibrary(SHDOCVW_hshell32);
