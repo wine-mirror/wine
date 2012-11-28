@@ -48,7 +48,6 @@ static const WCHAR utf8W[] = {'U','T','F','-','8',0};
 
 static const WCHAR dblquoteW[] = {'\"',0};
 static const WCHAR quoteW[] = {'\'',0};
-static const WCHAR eqW[] = {'=',0};
 
 struct xml_encoding_data
 {
@@ -515,6 +514,18 @@ static HRESULT reader_parse_versionnum(xmlreader *reader)
     return S_OK;
 }
 
+/* [25] Eq ::= S? '=' S? */
+static HRESULT reader_parse_eq(xmlreader *reader)
+{
+    static const WCHAR eqW[] = {'=',0};
+    reader_skipspaces(reader);
+    if (reader_cmp(reader, eqW)) return WC_E_EQUAL;
+    /* skip '=' */
+    reader_skipn(reader, 1);
+    reader_skipspaces(reader);
+    return S_OK;
+}
+
 /* [24] VersionInfo ::= S 'version' Eq ("'" VersionNum "'" | '"' VersionNum '"') */
 static HRESULT reader_parse_versioninfo(xmlreader *reader)
 {
@@ -527,9 +538,8 @@ static HRESULT reader_parse_versioninfo(xmlreader *reader)
     /* skip 'version' */
     reader_skipn(reader, 7);
 
-    if (reader_cmp(reader, eqW)) return WC_E_EQUAL;
-    /* skip '=' */
-    reader_skipn(reader, 1);
+    hr = reader_parse_eq(reader);
+    if (FAILED(hr)) return hr;
 
     if (reader_cmp(reader, quoteW) && reader_cmp(reader, dblquoteW))
         return WC_E_QUOTE;
@@ -596,9 +606,8 @@ static HRESULT reader_parse_encdecl(xmlreader *reader)
     /* skip 'encoding' */
     reader_skipn(reader, 8);
 
-    if (reader_cmp(reader, eqW)) return WC_E_EQUAL;
-    /* skip '=' */
-    reader_skipn(reader, 1);
+    hr = reader_parse_eq(reader);
+    if (FAILED(hr)) return hr;
 
     if (reader_cmp(reader, quoteW) && reader_cmp(reader, dblquoteW))
         return WC_E_QUOTE;
@@ -624,6 +633,7 @@ static HRESULT reader_parse_sddecl(xmlreader *reader)
     static const WCHAR yesW[] = {'y','e','s',0};
     static const WCHAR noW[] = {'n','o',0};
     const WCHAR *start, *ptr;
+    HRESULT hr;
 
     if (!reader_skipspaces(reader)) return WC_E_WHITESPACE;
 
@@ -631,9 +641,8 @@ static HRESULT reader_parse_sddecl(xmlreader *reader)
     /* skip 'standalone' */
     reader_skipn(reader, 10);
 
-    if (reader_cmp(reader, eqW)) return WC_E_EQUAL;
-    /* skip '=' */
-    reader_skipn(reader, 1);
+    hr = reader_parse_eq(reader);
+    if (FAILED(hr)) return hr;
 
     if (reader_cmp(reader, quoteW) && reader_cmp(reader, dblquoteW))
         return WC_E_QUOTE;
