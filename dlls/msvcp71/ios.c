@@ -500,8 +500,8 @@ static const int strstream_vbtable1[] = {0, sizeof(strstream)};
 static const int strstream_vbtable2[] = {0, sizeof(strstream)-FIELD_OFFSET(strstream, base.base2)};
 extern const vtable_ptr MSVCP_strstream_vtable;
 
-DEFINE_RTTI_DATA0(iosb, 0, ".?AV?$_Iosb@H@std@@");
-DEFINE_RTTI_DATA1(ios_base, 0, &iosb_rtti_base_descriptor, ".?AV?$_Iosb@H@std@@");
+DEFINE_RTTI_DATA0(iosb, 0, ".?AV?$_Iosb@H@std@@")
+DEFINE_RTTI_DATA1(ios_base, 0, &iosb_rtti_base_descriptor, ".?AV?$_Iosb@H@std@@")
 DEFINE_RTTI_DATA2(basic_ios_char, 0, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         ".?AV?$basic_ios@DU?$char_traits@D@std@@@std@@");
 DEFINE_RTTI_DATA2(basic_ios_wchar, 0, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,

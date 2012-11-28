@@ -108,7 +108,7 @@ const rtti_object_locator name ## _rtti = { \
     0, \
     &name ## _type_info, \
     &name ## _hierarchy \
-}
+};
 
 #define DEFINE_CXX_DATA(type, base_no, cl1, cl2, dtor)  \
 \

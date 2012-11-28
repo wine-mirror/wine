@@ -221,8 +221,8 @@ extern const vtable_ptr MSVCP_basic_iostream_wchar_vtable;
 /* ??_7?$basic_iostream@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_iostream_short_vtable;
 
-DEFINE_RTTI_DATA0(iosb, 0, ".?AV?$_Iosb@H@std@@");
-DEFINE_RTTI_DATA1(ios_base, 0, &iosb_rtti_base_descriptor, ".?AV?$_Iosb@H@std@@");
+DEFINE_RTTI_DATA0(iosb, 0, ".?AV?$_Iosb@H@std@@")
+DEFINE_RTTI_DATA1(ios_base, 0, &iosb_rtti_base_descriptor, ".?AV?$_Iosb@H@std@@")
 DEFINE_RTTI_DATA2(basic_ios_char, 0, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         ".?AV?$basic_ios@DU?$char_traits@D@std@@@std@@");
 DEFINE_RTTI_DATA2(basic_ios_wchar, 0, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,

@@ -7800,27 +7800,27 @@ wint_t __cdecl towctrans(wint_t c, wctrans_t category)
     return towlower(c);
 }
 
-DEFINE_RTTI_DATA0(locale_facet, 0, ".?AVfacet@locale@std@@");
-DEFINE_RTTI_DATA1(collate_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$collate@D@std@@");
-DEFINE_RTTI_DATA1(collate_wchar, 0, &locale_facet_rtti_base_descriptor, ".?AV?$collate@_W@std@@");
-DEFINE_RTTI_DATA1(collate_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$collate@G@std@@");
-DEFINE_RTTI_DATA1(ctype_base, 0, &locale_facet_rtti_base_descriptor, ".?AUctype_base@std@@");
-DEFINE_RTTI_DATA2(ctype_char, 0, &ctype_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$ctype@D@std@@");
-DEFINE_RTTI_DATA2(ctype_wchar, 0, &ctype_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$ctype@_W@std@@");
-DEFINE_RTTI_DATA2(ctype_short, 0, &ctype_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$ctype@G@std@@");
-DEFINE_RTTI_DATA1(codecvt_base, 0, &locale_facet_rtti_base_descriptor, ".?AVcodecvt_base@std@@");
-DEFINE_RTTI_DATA2(codecvt_char, 0, &codecvt_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$codecvt@DDH@std@@");
-DEFINE_RTTI_DATA2(codecvt_wchar, 0, &codecvt_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$codecvt@_WDH@std@@");
-DEFINE_RTTI_DATA2(codecvt_short, 0, &codecvt_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$codecvt@GDH@std@@");
-DEFINE_RTTI_DATA1(numpunct_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$numpunct@D@std@@");
-DEFINE_RTTI_DATA1(numpunct_wchar, 0, &locale_facet_rtti_base_descriptor, ".?AV?$numpunct@_W@std@@");
-DEFINE_RTTI_DATA1(numpunct_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$numpunct@G@std@@");
-DEFINE_RTTI_DATA1(num_get_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@");
-DEFINE_RTTI_DATA1(num_get_wchar, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@");
-DEFINE_RTTI_DATA1(num_get_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@");
-DEFINE_RTTI_DATA1(num_put_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@");
-DEFINE_RTTI_DATA1(num_put_wchar, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@");
-DEFINE_RTTI_DATA1(num_put_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@");
+DEFINE_RTTI_DATA0(locale_facet, 0, ".?AVfacet@locale@std@@")
+DEFINE_RTTI_DATA1(collate_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$collate@D@std@@")
+DEFINE_RTTI_DATA1(collate_wchar, 0, &locale_facet_rtti_base_descriptor, ".?AV?$collate@_W@std@@")
+DEFINE_RTTI_DATA1(collate_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$collate@G@std@@")
+DEFINE_RTTI_DATA1(ctype_base, 0, &locale_facet_rtti_base_descriptor, ".?AUctype_base@std@@")
+DEFINE_RTTI_DATA2(ctype_char, 0, &ctype_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$ctype@D@std@@")
+DEFINE_RTTI_DATA2(ctype_wchar, 0, &ctype_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$ctype@_W@std@@")
+DEFINE_RTTI_DATA2(ctype_short, 0, &ctype_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$ctype@G@std@@")
+DEFINE_RTTI_DATA1(codecvt_base, 0, &locale_facet_rtti_base_descriptor, ".?AVcodecvt_base@std@@")
+DEFINE_RTTI_DATA2(codecvt_char, 0, &codecvt_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$codecvt@DDH@std@@")
+DEFINE_RTTI_DATA2(codecvt_wchar, 0, &codecvt_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$codecvt@_WDH@std@@")
+DEFINE_RTTI_DATA2(codecvt_short, 0, &codecvt_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$codecvt@GDH@std@@")
+DEFINE_RTTI_DATA1(numpunct_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$numpunct@D@std@@")
+DEFINE_RTTI_DATA1(numpunct_wchar, 0, &locale_facet_rtti_base_descriptor, ".?AV?$numpunct@_W@std@@")
+DEFINE_RTTI_DATA1(numpunct_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$numpunct@G@std@@")
+DEFINE_RTTI_DATA1(num_get_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@")
+DEFINE_RTTI_DATA1(num_get_wchar, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@")
+DEFINE_RTTI_DATA1(num_get_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@")
+DEFINE_RTTI_DATA1(num_put_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@")
+DEFINE_RTTI_DATA1(num_put_wchar, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@")
+DEFINE_RTTI_DATA1(num_put_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@")
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
