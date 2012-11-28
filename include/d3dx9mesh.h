@@ -371,8 +371,8 @@ DECLARE_INTERFACE_(ID3DXMesh, ID3DXBaseMesh)
     /*** ID3DXMesh ***/
     STDMETHOD(LockAttributeBuffer)(THIS_ DWORD flags, DWORD** data) PURE;
     STDMETHOD(UnlockAttributeBuffer)(THIS) PURE;
-    STDMETHOD(Optimize)(THIS_ DWORD flags, CONST DWORD* adjacency_in, DWORD* adjacency_out,
-        DWORD* face_remap, LPD3DXBUFFER* vertex_remap, LPD3DXMESH* opt_mesh) PURE;
+    STDMETHOD(Optimize)(THIS_ DWORD flags, const DWORD *adjacency_in, DWORD *adjacency_out,
+            DWORD *face_remap, ID3DXBuffer **vertex_remap, ID3DXMesh **opt_mesh) PURE;
     STDMETHOD(OptimizeInplace)(THIS_ DWORD flags, CONST DWORD* adjacency_in, DWORD* adjacency_out,
                      DWORD* face_remap, LPD3DXBUFFER* vertex_remap) PURE;
     STDMETHOD(SetAttributeTable)(THIS_ CONST D3DXATTRIBUTERANGE* attrib_table, DWORD attrib_table_size) PURE;
@@ -422,8 +422,8 @@ DECLARE_INTERFACE_(ID3DXPMesh, ID3DXBaseMesh)
     STDMETHOD_(DWORD, GetMaxVertices)(THIS) PURE;
     STDMETHOD_(DWORD, GetMinVertices)(THIS) PURE;
     STDMETHOD(Save)(THIS_ IStream *stream, CONST D3DXMATERIAL* material, CONST D3DXEFFECTINSTANCE* effect_instance, DWORD num_materials) PURE;
-    STDMETHOD(Optimize)(THIS_ DWORD flags, DWORD* adjacency_out, DWORD* face_remap,
-        LPD3DXBUFFER* vertex_remap, LPD3DXMESH* opt_mesh) PURE;
+    STDMETHOD(Optimize)(THIS_ DWORD flags, DWORD *adjacency_out, DWORD *face_remap,
+            ID3DXBuffer **vertex_remap, ID3DXMesh **opt_mesh) PURE;
     STDMETHOD(OptimizeBaseLOD)(THIS_ DWORD flags, DWORD* face_remap) PURE;
     STDMETHOD(TrimByFaces)(THIS_ DWORD new_faces_min, DWORD new_faces_max, DWORD* face_remap, DWORD* vertex_remap) PURE;
     STDMETHOD(TrimByVertices)(THIS_ DWORD new_vertices_min, DWORD new_vertices_max, DWORD* face_remap, DWORD* vertex_remap) PURE;
@@ -500,8 +500,9 @@ DECLARE_INTERFACE_(ID3DXPatchMesh, IUnknown)
     STDMETHOD(GetDisplaceParam)(THIS_ struct IDirect3DBaseTexture9 **texture, D3DTEXTUREFILTERTYPE *min_filter,
             D3DTEXTUREFILTERTYPE *mag_filter, D3DTEXTUREFILTERTYPE *mip_filter, D3DTEXTUREADDRESS *wrap,
             DWORD *lod_bias) PURE;
-    STDMETHOD(Tessellate)(THIS_ FLOAT tess_level, LPD3DXMESH mesh) PURE;
-    STDMETHOD(TessellateAdaptive)(THIS_ CONST D3DXVECTOR4* trans, DWORD max_tess_level, DWORD min_tess_level, LPD3DXMESH mesh) PURE;
+    STDMETHOD(Tessellate)(THIS_ float tess_level, ID3DXMesh *mesh) PURE;
+    STDMETHOD(TessellateAdaptive)(THIS_ const D3DXVECTOR4 *trans, DWORD max_tess_level,
+            DWORD min_tess_level, ID3DXMesh *mesh) PURE;
 };
 #undef INTERFACE
 
@@ -537,12 +538,12 @@ DECLARE_INTERFACE_(ID3DXSkinInfo, IUnknown)
     STDMETHOD(GetDeclaration)(THIS_ D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE]) PURE;
     STDMETHOD(UpdateSkinnedMesh)(THIS_ CONST D3DXMATRIX* bone_transforms,
         CONST D3DXMATRIX* bone_inv_transpose_transforms, LPCVOID vertices_src, PVOID vertices_dest) PURE;
-    STDMETHOD(ConvertToBlendedMesh)(THIS_ LPD3DXMESH mesh_in, DWORD options, CONST DWORD *adjacency_in,
-        LPDWORD adjacency_out, DWORD* face_remap, LPD3DXBUFFER* vertex_remap, DWORD* max_face_infl,
-        DWORD* num_bone_combinations, LPD3DXBUFFER* bone_combination_table, LPD3DXMESH* mesh_out) PURE;
-    STDMETHOD(ConvertToIndexedBlendedMesh)(THIS_ LPD3DXMESH mesh_in, DWORD options, CONST DWORD *adjacency_in,
-        LPDWORD adjacency_out, DWORD* face_remap, LPD3DXBUFFER* vertex_remap, DWORD* max_face_infl,
-        DWORD* num_bone_combinations, LPD3DXBUFFER* bone_combination_table, LPD3DXMESH* mesh_out) PURE;
+    STDMETHOD(ConvertToBlendedMesh)(THIS_ ID3DXMesh *mesh_in, DWORD options, const DWORD *adjacency_in,
+            DWORD *adjacency_out, DWORD *face_remap, ID3DXBuffer **vertex_remap, DWORD *max_face_infl,
+            DWORD *num_bone_combinations, ID3DXBuffer **bone_combination_table, ID3DXMesh **mesh_out) PURE;
+    STDMETHOD(ConvertToIndexedBlendedMesh)(THIS_ ID3DXMesh *mesh_in, DWORD options, const DWORD *adjacency_in,
+            DWORD *adjacency_out, DWORD *face_remap, ID3DXBuffer **vertex_remap, DWORD *max_face_infl,
+            DWORD *num_bone_combinations, ID3DXBuffer **bone_combination_table, ID3DXMesh **mesh_out) PURE;
 };
 #undef INTERFACE
 
@@ -571,7 +572,7 @@ DECLARE_INTERFACE_(ID3DXPRTBuffer, IUnknown)
     STDMETHOD(ExtractTexture)(THIS_ UINT channel, UINT start_coefficient,
         UINT num_coefficients, struct IDirect3DTexture9 *texture) PURE;
     STDMETHOD(ExtractToMesh)(THIS_ UINT num_coefficients, D3DDECLUSAGE usage,
-        UINT usage_index_start, LPD3DXMESH scene) PURE;
+            UINT usage_index_start, ID3DXMesh *scene) PURE;
 };
 #undef INTERFACE
 
@@ -596,7 +597,7 @@ DECLARE_INTERFACE_(ID3DXPRTCompBuffer, IUnknown)
     STDMETHOD(ExtractClusterIDs)(THIS_ UINT *cluster_ids) PURE;
     STDMETHOD(ExtractPCA)(THIS_ UINT start_pca, UINT num_extract, FLOAT *pca_coefficients) PURE;
     STDMETHOD(ExtractTexture)(THIS_ UINT start_pca, UINT num_pca, struct IDirect3DTexture9 *texture) PURE;
-    STDMETHOD(ExtractToMesh)(THIS_ UINT num_pca, D3DDECLUSAGE usage, UINT usage_index_start, LPD3DXMESH scene) PURE;
+    STDMETHOD(ExtractToMesh)(THIS_ UINT num_pca, D3DDECLUSAGE usage, UINT usage_index_start, ID3DXMesh *scene) PURE;
 };
 #undef INTERFACE
 
@@ -642,7 +643,7 @@ DECLARE_INTERFACE_(ID3DXPRTEngine, IUnknown)
             UINT num_channels, struct ID3DXTextureGutterHelper *gh) PURE;
     STDMETHOD(GetVertexAlbedo)(THIS_ D3DXCOLOR *vert_colors, UINT num_verts) PURE;
     STDMETHOD(SetPerTexelNormals)(THIS_ struct IDirect3DTexture9 *normal_texture) PURE;
-    STDMETHOD(ExtractPerVertexAlbedo)(THIS_ LPD3DXMESH mesh, D3DDECLUSAGE usage, UINT num_channels) PURE;
+    STDMETHOD(ExtractPerVertexAlbedo)(THIS_ ID3DXMesh *mesh, D3DDECLUSAGE usage, UINT num_channels) PURE;
     STDMETHOD(ResampleBuffer)(THIS_ ID3DXPRTBuffer *buffer_in, ID3DXPRTBuffer *buffer_out) PURE;
     STDMETHOD(GetAdaptedMesh)(THIS_ struct IDirect3DDevice9 *device, UINT *face_remap,
             UINT *vert_remap, float *vert_weights, struct ID3DXMesh **mesh) PURE;
@@ -747,8 +748,10 @@ HRESULT WINAPI D3DXLoadPRTBufferFromFileW(const WCHAR *filename, ID3DXPRTBuffer 
 HRESULT WINAPI D3DXLoadPRTCompBufferFromFileA(const char *filename, ID3DXPRTCompBuffer **buffer);
 HRESULT WINAPI D3DXLoadPRTCompBufferFromFileW(const WCHAR *filename, ID3DXPRTCompBuffer **buffer);
 #define D3DXLoadPRTCompBufferFromFile WINELIB_NAME_AW(D3DXLoadPRTCompBufferFromFile)
-HRESULT WINAPI D3DXSaveMeshToXA(LPCSTR, LPD3DXMESH, CONST DWORD *, CONST D3DXMATERIAL *, CONST D3DXEFFECTINSTANCE *, DWORD, DWORD);
-HRESULT WINAPI D3DXSaveMeshToXW(LPCWSTR, LPD3DXMESH, CONST DWORD *, CONST D3DXMATERIAL *, CONST D3DXEFFECTINSTANCE *, DWORD, DWORD);
+HRESULT WINAPI D3DXSaveMeshToXA(const char *filename, ID3DXMesh *mesh, const DWORD *adjacency,
+        const D3DXMATERIAL *materials, const D3DXEFFECTINSTANCE *effect_instances, DWORD material_count, DWORD format);
+HRESULT WINAPI D3DXSaveMeshToXW(const WCHAR *filename, ID3DXMesh *mesh, const DWORD *adjacency,
+        const D3DXMATERIAL *materials, const D3DXEFFECTINSTANCE *effect_instances, DWORD material_count, DWORD format);
 #define D3DXSaveMeshToX WINELIB_NAME_AW(D3DXSaveMeshToX)
 HRESULT WINAPI D3DXSavePRTBufferToFileA(const char *filename, ID3DXPRTBuffer *buffer);
 HRESULT WINAPI D3DXSavePRTBufferToFileW(const WCHAR *filename, ID3DXPRTBuffer *buffer);
@@ -761,20 +764,32 @@ UINT    WINAPI D3DXGetDeclVertexSize(const D3DVERTEXELEMENT9 *decl, DWORD stream
 UINT    WINAPI D3DXGetFVFVertexSize(DWORD);
 BOOL    WINAPI D3DXBoxBoundProbe(CONST D3DXVECTOR3 *, CONST D3DXVECTOR3 *, CONST D3DXVECTOR3 *, CONST D3DXVECTOR3 *);
 BOOL    WINAPI D3DXSphereBoundProbe(CONST D3DXVECTOR3 *,FLOAT,CONST D3DXVECTOR3 *,CONST D3DXVECTOR3 *);
-HRESULT WINAPI D3DXCleanMesh(D3DXCLEANTYPE, LPD3DXMESH, CONST DWORD *, LPD3DXMESH *, DWORD *, LPD3DXBUFFER *);
+HRESULT WINAPI D3DXCleanMesh(D3DXCLEANTYPE clean_type, ID3DXMesh *mesh_in, const DWORD *adjacency_in,
+        ID3DXMesh **mesh_out, DWORD *adjacency_out, ID3DXBuffer **errors);
 HRESULT WINAPI D3DXConcatenateMeshes(struct ID3DXMesh **meshes, UINT mesh_count, DWORD flags,
         const D3DXMATRIX *geometry_matrices, const D3DXMATRIX *texture_matrices,
         const D3DVERTEXELEMENT9 *declaration, struct IDirect3DDevice9 *device, struct ID3DXMesh **mesh);
 HRESULT WINAPI D3DXComputeBoundingBox(CONST D3DXVECTOR3 *, DWORD, DWORD, D3DXVECTOR3 *, D3DXVECTOR3 *);
 HRESULT WINAPI D3DXComputeBoundingSphere(CONST D3DXVECTOR3 *, DWORD, DWORD, D3DXVECTOR3 *, FLOAT *);
-HRESULT WINAPI D3DXComputeIMTFromPerTexelSignal(LPD3DXMESH, DWORD, FLOAT *, UINT, UINT, UINT, UINT, DWORD, LPD3DXUVATLASCB, LPVOID, LPD3DXBUFFER *);
-HRESULT WINAPI D3DXComputeIMTFromPerVertexSignal(LPD3DXMESH, CONST FLOAT *, UINT, UINT, DWORD, LPD3DXUVATLASCB, LPVOID, LPD3DXBUFFER *);
-HRESULT WINAPI D3DXComputeIMTFromSignal(LPD3DXMESH, DWORD, UINT, FLOAT, DWORD, LPD3DXIMTSIGNALCALLBACK, VOID *, LPD3DXUVATLASCB, LPVOID, LPD3DXBUFFER *);
+HRESULT WINAPI D3DXComputeIMTFromPerTexelSignal(ID3DXMesh *mesh, DWORD texture_idx, float *texel_signal,
+        UINT width, UINT height, UINT signal_dimension, UINT component_count, DWORD flags,
+        LPD3DXUVATLASCB cb, void *ctx, ID3DXBuffer **buffer);
+HRESULT WINAPI D3DXComputeIMTFromPerVertexSignal(ID3DXMesh *mesh, const float *vertex_signal,
+        UINT signal_dimension, UINT signal_stride, DWORD flags,
+        LPD3DXUVATLASCB cb, void *ctx, ID3DXBuffer **buffer);
+HRESULT WINAPI D3DXComputeIMTFromSignal(ID3DXMesh *mesh, DWORD texture_idx, UINT signal_dimension,
+        float max_uv_distance, DWORD flags, LPD3DXIMTSIGNALCALLBACK signal_cb, void *signal_ctx,
+        LPD3DXUVATLASCB status_cb, void *status_ctx, ID3DXBuffer **buffer);
 HRESULT WINAPI D3DXComputeIMTFromTexture(struct ID3DXMesh *mesh, struct IDirect3DTexture9 *texture,
         DWORD texture_idx, DWORD options, LPD3DXUVATLASCB cb, void *ctx, struct ID3DXBuffer **out);
 HRESULT WINAPI D3DXComputeNormals(LPD3DXBASEMESH, CONST DWORD *);
-HRESULT WINAPI D3DXComputeTangentFrameEx(LPD3DXMESH, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, CONST DWORD *, FLOAT, FLOAT, FLOAT, LPD3DXMESH *, LPD3DXBUFFER *);
-HRESULT WINAPI D3DXComputeTangent(LPD3DXMESH, DWORD, DWORD, DWORD, DWORD, CONST DWORD *);
+HRESULT WINAPI D3DXComputeTangentFrameEx(ID3DXMesh *mesh_in, DWORD texture_in_semantic, DWORD texture_in_idx,
+        DWORD u_partial_out_semantic, DWORD u_partial_out_idx, DWORD v_partial_out_semantic,
+        DWORD v_partial_out_idx, DWORD normal_out_semantic, DWORD normal_out_idx, DWORD flags,
+        const DWORD *adjacency, float partial_edge_threshold, float singular_point_threshold,
+        float normal_edge_threshold, ID3DXMesh **mesh_out, ID3DXBuffer **buffer);
+HRESULT WINAPI D3DXComputeTangent(ID3DXMesh *mesh, DWORD stage, DWORD tangent_idx,
+        DWORD binorm_idx, DWORD wrap, const DWORD *adjacency);
 HRESULT WINAPI D3DXConvertMeshSubsetToSingleStrip(struct ID3DXBaseMesh *mesh_in, DWORD attribute_id,
         DWORD ib_flags, struct IDirect3DIndexBuffer9 **index_buffer, DWORD *index_count);
 HRESULT WINAPI D3DXConvertMeshSubsetToStrips(struct ID3DXBaseMesh *mesh_in, DWORD attribute_id,
@@ -792,23 +807,37 @@ BOOL    WINAPI D3DXIntersectTri(CONST D3DXVECTOR3 *, CONST D3DXVECTOR3 *, CONST 
 HRESULT WINAPI D3DXOptimizeFaces(LPCVOID, UINT, UINT, BOOL, DWORD *);
 HRESULT WINAPI D3DXOptimizeVertices(LPCVOID, UINT, UINT, BOOL, DWORD *);
 HRESULT WINAPI D3DXRectPatchSize(CONST FLOAT *, DWORD *, DWORD *);
-HRESULT WINAPI D3DXSHPRTCompSuperCluster(UINT *, LPD3DXMESH, UINT, UINT, UINT *, UINT *);
+HRESULT WINAPI D3DXSHPRTCompSuperCluster(UINT *cluster_ids, ID3DXMesh *scene, UINT max_cluster_count,
+        UINT cluster_count, UINT *scluster_ids, UINT *scluster_count);
 HRESULT WINAPI D3DXSHPRTCompSplitMeshSC(UINT *, UINT, UINT, UINT *, UINT, LPVOID, BOOL, UINT, LPD3DXBUFFER *, UINT *, BOOL, LPD3DXBUFFER *, LPD3DXBUFFER *, UINT *, UINT *, D3DXSHPRTSPLITMESHCLUSTERDATA *);
-HRESULT WINAPI D3DXSimplifyMesh(LPD3DXMESH, CONST DWORD *, CONST D3DXATTRIBUTEWEIGHTS, CONST FLOAT *, DWORD, DWORD, LPD3DXMESH *);
-HRESULT WINAPI D3DXSplitMesh(LPD3DXMESH, CONST DWORD *, CONST DWORD, CONST DWORD, DWORD *, LPD3DXBUFFER *, LPD3DXBUFFER *, LPD3DXBUFFER *, LPD3DXBUFFER *);
-HRESULT WINAPI D3DXTesselateNPatches(LPD3DXMESH, CONST DWORD *, FLOAT, BOOL, LPD3DXMESH *, LPD3DXBUFFER *);
+HRESULT WINAPI D3DXSimplifyMesh(ID3DXMesh *mesh_in, const DWORD *adjacency,
+        const D3DXATTRIBUTEWEIGHTS *attribute_weights, const float *vertex_weights, DWORD min_value,
+        DWORD flags, ID3DXMesh **mesh_out);
+HRESULT WINAPI D3DXSplitMesh(ID3DXMesh *mesh_in, const DWORD *adjacency_in, const DWORD max_size,
+        const DWORD flags, DWORD *mesh_out_count, ID3DXBuffer **mesh_out, ID3DXBuffer **adjacency_out,
+        ID3DXBuffer **face_remap_out, ID3DXBuffer **vertex_remap_out);
+HRESULT WINAPI D3DXTesselateNPatches(ID3DXMesh *mesh_in, const DWORD *adjacency_in, float segment_count,
+        BOOL quad_interp, ID3DXMesh **mesh_out, ID3DXBuffer **adjacency_out);
 HRESULT WINAPI D3DXTesselateRectPatch(struct IDirect3DVertexBuffer9 *buffer, const float *segment_count,
         const D3DVERTEXELEMENT9 *declaration, const D3DRECTPATCH_INFO *patch_info, struct ID3DXMesh *mesh);
 HRESULT WINAPI D3DXTesselateTriPatch(struct IDirect3DVertexBuffer9 *buffer, const float *segment_count,
         const D3DVERTEXELEMENT9 *declaration, const D3DTRIPATCH_INFO *patch_info, struct ID3DXMesh *mesh);
 HRESULT WINAPI D3DXTriPatchSize(CONST FLOAT *, DWORD *, DWORD *);
-HRESULT WINAPI D3DXUVAtlasCreate(LPD3DXMESH, UINT, FLOAT, UINT, UINT, FLOAT, DWORD, CONST DWORD *, CONST FLOAT *, LPD3DXUVATLASCB, FLOAT, LPVOID, DWORD, LPD3DXMESH *, LPD3DXBUFFER *, LPD3DXBUFFER *, FLOAT *, UINT *);
+HRESULT WINAPI D3DXUVAtlasCreate(ID3DXMesh *mesh_in, UINT max_chart_count, float max_stretch_in,
+        UINT width, UINT height, float gutter, DWORD texture_idx, const DWORD *adjacency, const DWORD *false_edges,
+        const float *imt_array, LPD3DXUVATLASCB cb, float cb_freq, void *ctx, DWORD flags, ID3DXMesh **mesh_out,
+        ID3DXBuffer **face_partitioning_out, ID3DXBuffer **vertex_remap_out, float *max_stretch_out, UINT *chart_count);
 HRESULT WINAPI D3DXUVAtlasPack(ID3DXMesh *, UINT, UINT, FLOAT, DWORD, CONST DWORD *, LPD3DXUVATLASCB, FLOAT, LPVOID, DWORD, LPD3DXBUFFER);
-HRESULT WINAPI D3DXUVAtlasPartition(LPD3DXMESH, UINT, FLOAT, DWORD, CONST DWORD *, CONST DWORD *, CONST FLOAT *, LPD3DXUVATLASCB, FLOAT, LPVOID, DWORD, LPD3DXMESH *, LPD3DXBUFFER *, LPD3DXBUFFER *, LPD3DXBUFFER *, FLOAT *, UINT *);
-HRESULT WINAPI D3DXValidMesh(LPD3DXMESH, CONST DWORD *, LPD3DXBUFFER *);
+HRESULT WINAPI D3DXUVAtlasPartition(ID3DXMesh *mesh_in, UINT max_chart_count, float max_stretch_in,
+        DWORD texture_idx, const DWORD *adjacency, const DWORD *false_edges, const float *imt_array,
+        LPD3DXUVATLASCB cb, float cb_freq, void *ctx, DWORD flags, ID3DXMesh **mesh_out,
+        ID3DXBuffer **face_partitioning_out, ID3DXBuffer **vertex_remap_out, ID3DXBuffer **adjacency_out,
+        float *max_stretch_out, UINT *chart_count);
+HRESULT WINAPI D3DXValidMesh(ID3DXMesh *mesh, const DWORD *adjacency, ID3DXBuffer **errors);
 HRESULT WINAPI D3DXValidPatchMesh(ID3DXPatchMesh *mesh, DWORD *degenerate_vertex_count,
         DWORD *degenerate_patch_count, ID3DXBuffer **errors);
-HRESULT WINAPI D3DXWeldVertices(LPD3DXMESH, DWORD, CONST D3DXWELDEPSILONS *, CONST DWORD *, DWORD *, DWORD *, LPD3DXBUFFER *);
+HRESULT WINAPI D3DXWeldVertices(ID3DXMesh *mesh, DWORD flags, const D3DXWELDEPSILONS *epsilons,
+        const DWORD *adjacency_in, DWORD *adjacency_out, DWORD *face_remap_out, ID3DXBuffer **vertex_remap_out);
 
 #ifdef __cplusplus
 }

@@ -1459,8 +1459,8 @@ static HRESULT WINAPI ID3DXMeshImpl_UnlockAttributeBuffer(ID3DXMesh *iface)
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_Optimize(ID3DXMesh *iface, DWORD flags, CONST DWORD *adjacency_in, DWORD *adjacency_out,
-                                             DWORD *face_remap, LPD3DXBUFFER *vertex_remap, LPD3DXMESH *opt_mesh)
+static HRESULT WINAPI ID3DXMeshImpl_Optimize(ID3DXMesh *iface, DWORD flags, const DWORD *adjacency_in,
+        DWORD *adjacency_out, DWORD *face_remap, ID3DXBuffer **vertex_remap, ID3DXMesh **opt_mesh)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
     HRESULT hr;
@@ -3795,8 +3795,8 @@ cleanup:
     return hr;
 }
 
-HRESULT WINAPI D3DXCleanMesh(D3DXCLEANTYPE clean_type, LPD3DXMESH mesh_in, const DWORD *adjacency_in,
-                             LPD3DXMESH *mesh_out, DWORD *adjacency_out, LPD3DXBUFFER *errors_and_warnings)
+HRESULT WINAPI D3DXCleanMesh(D3DXCLEANTYPE clean_type, ID3DXMesh *mesh_in, const DWORD *adjacency_in,
+        ID3DXMesh **mesh_out, DWORD *adjacency_out, ID3DXBuffer **errors_and_warnings)
 {
     FIXME("(%u, %p, %p, %p, %p, %p)\n", clean_type, mesh_in, adjacency_in, mesh_out, adjacency_out, errors_and_warnings);
 
@@ -5890,7 +5890,7 @@ error:
     return hr;
 }
 
-HRESULT WINAPI D3DXValidMesh(LPD3DXMESH mesh, CONST DWORD *adjacency, LPD3DXBUFFER *errors_and_warnings)
+HRESULT WINAPI D3DXValidMesh(ID3DXMesh *mesh, const DWORD *adjacency, ID3DXBuffer **errors_and_warnings)
 {
     FIXME("(%p, %p, %p): stub\n", mesh, adjacency, *errors_and_warnings);
 
@@ -6461,13 +6461,8 @@ static inline void write_ib(void *index_buffer, BOOL indices_are_32bit,
  *   Attribute sorting not implemented.
  *
  */
-HRESULT WINAPI D3DXWeldVertices(LPD3DXMESH mesh,
-                                DWORD flags,
-                                CONST D3DXWELDEPSILONS *epsilons,
-                                CONST DWORD *adjacency,
-                                DWORD *adjacency_out,
-                                DWORD *face_remap_out,
-                                LPD3DXBUFFER *vertex_remap_out)
+HRESULT WINAPI D3DXWeldVertices(ID3DXMesh *mesh, DWORD flags, const D3DXWELDEPSILONS *epsilons,
+        const DWORD *adjacency, DWORD *adjacency_out, DWORD *face_remap_out, ID3DXBuffer **vertex_remap_out)
 {
     DWORD *adjacency_generated = NULL;
     const DWORD *adjacency_ptr;
