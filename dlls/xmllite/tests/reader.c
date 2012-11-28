@@ -611,13 +611,12 @@ static void test_read_xmldeclaration(void)
 
     type = -1;
     hr = IXmlReader_Read(reader, &type);
-todo_wine {
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(type == XmlNodeType_XmlDeclaration,
                      "Expected XmlNodeType_XmlDeclaration, got %s\n", type_to_str(type));
-}
     /* new version 1.2.x and 1.3.x properly update position for <?xml ?> */
     ok_pos(reader, 1, 3, -1, 55, TRUE);
+    test_read_state(reader, XmlReadState_Interactive, -1, 0);
 
     /* check attributes */
     hr = IXmlReader_MoveToNextAttribute(reader);

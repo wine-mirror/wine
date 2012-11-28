@@ -510,7 +510,7 @@ static HRESULT reader_parse_versionnum(xmlreader *reader)
         ptr++;
 
     if (ptr2 == ptr) return WC_E_DIGIT;
-    TRACE("version=%s", debugstr_wn(start, ptr-start));
+    TRACE("version=%s\n", debugstr_wn(start, ptr-start));
     reader_skipn(reader, ptr-ptr2);
     return S_OK;
 }
@@ -592,7 +592,7 @@ static HRESULT reader_parse_encdecl(xmlreader *reader)
 
     if (!reader_skipspaces(reader)) return WC_E_WHITESPACE;
 
-    if (reader_cmp(reader, encodingW)) return S_OK;
+    if (reader_cmp(reader, encodingW)) return S_FALSE;
     /* skip 'encoding' */
     reader_skipn(reader, 8);
 
@@ -617,14 +617,55 @@ static HRESULT reader_parse_encdecl(xmlreader *reader)
     return S_OK;
 }
 
+/* [32] SDDecl ::= S 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"')) */
+static HRESULT reader_parse_sddecl(xmlreader *reader)
+{
+    static const WCHAR standaloneW[] = {'s','t','a','n','d','a','l','o','n','e',0};
+    static const WCHAR yesW[] = {'y','e','s',0};
+    static const WCHAR noW[] = {'n','o',0};
+    const WCHAR *start, *ptr;
+
+    if (!reader_skipspaces(reader)) return WC_E_WHITESPACE;
+
+    if (reader_cmp(reader, standaloneW)) return S_FALSE;
+    /* skip 'standalone' */
+    reader_skipn(reader, 10);
+
+    if (reader_cmp(reader, eqW)) return WC_E_EQUAL;
+    /* skip '=' */
+    reader_skipn(reader, 1);
+
+    if (reader_cmp(reader, quoteW) && reader_cmp(reader, dblquoteW))
+        return WC_E_QUOTE;
+    /* skip "'"|'"' */
+    reader_skipn(reader, 1);
+
+    if (reader_cmp(reader, yesW) && reader_cmp(reader, noW))
+        return WC_E_XMLDECL;
+
+    start = reader_get_cur(reader);
+    /* skip 'yes'|'no' */
+    reader_skipn(reader, reader_cmp(reader, yesW) ? 2 : 3);
+    ptr = reader_get_cur(reader);
+    TRACE("standalone=%s\n", debugstr_wn(start, ptr-start));
+
+    if (reader_cmp(reader, quoteW) && reader_cmp(reader, dblquoteW))
+        return WC_E_QUOTE;
+    /* skip "'"|'"' */
+    reader_skipn(reader, 1);
+
+    return S_OK;
+}
+
 /* [23] XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>' */
 static HRESULT reader_parse_xmldecl(xmlreader *reader)
 {
     static const WCHAR xmldeclW[] = {'<','?','x','m','l',0};
+    static const WCHAR declcloseW[] = {'?','>',0};
     HRESULT hr;
 
     /* check if we have "<?xml" */
-    if (reader_cmp(reader, xmldeclW)) return S_OK;
+    if (reader_cmp(reader, xmldeclW)) return S_FALSE;
 
     reader_skipn(reader, 5);
     hr = reader_parse_versioninfo(reader);
@@ -635,7 +676,15 @@ static HRESULT reader_parse_xmldecl(xmlreader *reader)
     if (FAILED(hr))
         return hr;
 
-    return E_NOTIMPL;
+    hr = reader_parse_sddecl(reader);
+    if (FAILED(hr))
+        return hr;
+
+    reader_skipspaces(reader);
+    if (reader_cmp(reader, declcloseW)) return WC_E_XMLDECL;
+    reader_skipn(reader, 2);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlreader_QueryInterface(IXmlReader *iface, REFIID riid, void** ppvObject)
@@ -803,7 +852,12 @@ static HRESULT WINAPI xmlreader_Read(IXmlReader* iface, XmlNodeType *node_type)
         hr = reader_parse_xmldecl(This);
         if (FAILED(hr)) return hr;
 
-        This->state = XmlReadState_Interactive;
+        if (hr == S_OK)
+        {
+            This->state = XmlReadState_Interactive;
+            This->nodetype = *node_type = XmlNodeType_XmlDeclaration;
+            return S_OK;
+        }
     }
 
     return E_NOTIMPL;
