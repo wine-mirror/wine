@@ -195,6 +195,7 @@ static LRESULT UIINSOBJDLG_OnWMCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     case IDC_ADDCONTROL:
       UIINSERTOBJECTDLG_AddControl(pdlgInfo);
+      break;
 
     case IDC_OBJTYPELIST:
       if (wNotifyCode == LBN_SELCHANGE)
