@@ -1009,6 +1009,7 @@ static INT_PTR CALLBACK DialogProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
                         InitializeDialog(hwndDlg);
                         break;
                 }
+                break;
             }
         case WM_COMMAND:
             switch (HIWORD(wParam))
