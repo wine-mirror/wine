@@ -782,7 +782,7 @@ HRESULT WINAPI D3DXComputeIMTFromSignal(ID3DXMesh *mesh, DWORD texture_idx, UINT
         LPD3DXUVATLASCB status_cb, void *status_ctx, ID3DXBuffer **buffer);
 HRESULT WINAPI D3DXComputeIMTFromTexture(struct ID3DXMesh *mesh, struct IDirect3DTexture9 *texture,
         DWORD texture_idx, DWORD options, LPD3DXUVATLASCB cb, void *ctx, struct ID3DXBuffer **out);
-HRESULT WINAPI D3DXComputeNormals(LPD3DXBASEMESH, CONST DWORD *);
+HRESULT WINAPI D3DXComputeNormals(ID3DXBaseMesh *mesh, const DWORD *adjacency);
 HRESULT WINAPI D3DXComputeTangentFrameEx(ID3DXMesh *mesh_in, DWORD texture_in_semantic, DWORD texture_in_idx,
         DWORD u_partial_out_semantic, DWORD u_partial_out_idx, DWORD v_partial_out_semantic,
         DWORD v_partial_out_idx, DWORD normal_out_semantic, DWORD normal_out_idx, DWORD flags,
@@ -801,8 +801,11 @@ HRESULT WINAPI D3DXGenerateOutputDecl(D3DVERTEXELEMENT9 *, CONST D3DVERTEXELEMEN
 HRESULT WINAPI D3DXGeneratePMesh(ID3DXMesh *mesh, const DWORD *adjacency,
         const D3DXATTRIBUTEWEIGHTS *attribute_weights, const float *vertex_weights,
         DWORD min_value, DWORD flags, ID3DXPMesh **pmesh);
-HRESULT WINAPI D3DXIntersect(LPD3DXBASEMESH, CONST D3DXVECTOR3 *, CONST D3DXVECTOR3 *, BOOL *, DWORD *, FLOAT *, FLOAT *, FLOAT *, LPD3DXBUFFER *, DWORD *);
-HRESULT WINAPI D3DXIntersectSubset(LPD3DXBASEMESH, DWORD, CONST D3DXVECTOR3 *, CONST D3DXVECTOR3 *, BOOL *, DWORD *, FLOAT *, FLOAT *, FLOAT *, LPD3DXBUFFER *, DWORD *);
+HRESULT WINAPI D3DXIntersect(ID3DXBaseMesh *mesh, const D3DXVECTOR3 *ray_position, const D3DXVECTOR3 *ray_direction,
+        BOOL *hit, DWORD *face_idx, float *u, float *v, float *distance, ID3DXBuffer **hits, DWORD *hit_count);
+HRESULT WINAPI D3DXIntersectSubset(ID3DXBaseMesh *mesh, DWORD attribute_id, const D3DXVECTOR3 *ray_position,
+        const D3DXVECTOR3 *ray_direction, BOOL *hit, DWORD *face_idx, float *u, float *v, float *distance,
+        ID3DXBuffer **hits, DWORD *hit_count);
 BOOL    WINAPI D3DXIntersectTri(CONST D3DXVECTOR3 *, CONST D3DXVECTOR3 *, CONST D3DXVECTOR3 *, CONST D3DXVECTOR3 *, CONST D3DXVECTOR3*, FLOAT *, FLOAT *, FLOAT *);
 HRESULT WINAPI D3DXOptimizeFaces(LPCVOID, UINT, UINT, BOOL, DWORD *);
 HRESULT WINAPI D3DXOptimizeVertices(LPCVOID, UINT, UINT, BOOL, DWORD *);
