@@ -491,6 +491,15 @@ void stateblock_unbind_resources(struct wined3d_stateblock *stateblock)
         }
     }
 
+    for (i = 0; i < MAX_STREAM_OUT; ++i)
+    {
+        if ((buffer = state->stream_output[i].buffer))
+        {
+            state->stream_output[i].buffer = NULL;
+            wined3d_buffer_decref(buffer);
+        }
+    }
+
     for (i = 0; i < MAX_STREAMS; ++i)
     {
         if ((buffer = state->streams[i].buffer))
@@ -509,6 +518,12 @@ void stateblock_unbind_resources(struct wined3d_stateblock *stateblock)
     if ((shader = state->vertex_shader))
     {
         state->vertex_shader = NULL;
+        wined3d_shader_decref(shader);
+    }
+
+    if ((shader = state->geometry_shader))
+    {
+        state->geometry_shader = NULL;
         wined3d_shader_decref(shader);
     }
 
