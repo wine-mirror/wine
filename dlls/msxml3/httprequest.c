@@ -699,13 +699,13 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
             size++;
             break;
         }
+        default:
+            FIXME("unsupported body data type %d\n", V_VT(body));
+            /* fall through */
         case VT_EMPTY:
         case VT_ERROR:
             ptr = NULL;
             size = 0;
-            break;
-        default:
-            FIXME("unsupported body data type %d\n", V_VT(body));
             break;
         }
 
