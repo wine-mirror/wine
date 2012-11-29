@@ -140,7 +140,7 @@ static void test_create_effect_and_pool(IDirect3DDevice9 *device)
     ID3DXBaseEffect *base;
     ULONG count;
     IDirect3DDevice9 *device2;
-    LPD3DXEFFECTSTATEMANAGER manager = (LPD3DXEFFECTSTATEMANAGER)0xdeadbeef;
+    ID3DXEffectStateManager *manager = (ID3DXEffectStateManager *)0xdeadbeef;
     ID3DXEffectPool *pool = (ID3DXEffectPool *)0xdeadbeef, *pool2;
 
     hr = D3DXCreateEffect(NULL, effect_desc, sizeof(effect_desc), NULL, NULL, 0, NULL, NULL, NULL);
@@ -169,7 +169,7 @@ static void test_create_effect_and_pool(IDirect3DDevice9 *device)
     ok(!manager, "GetStateManager failed, got %p\n", manager);
 
     /* this works, but it is not recommended! */
-    hr = effect->lpVtbl->SetStateManager(effect, (LPD3DXEFFECTSTATEMANAGER) device);
+    hr = effect->lpVtbl->SetStateManager(effect, (ID3DXEffectStateManager *)device);
     ok(hr == D3D_OK, "SetStateManager failed, got %x, expected 0 (D3D_OK)\n", hr);
 
     hr = effect->lpVtbl->GetStateManager(effect, &manager);

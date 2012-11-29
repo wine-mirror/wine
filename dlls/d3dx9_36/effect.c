@@ -3609,7 +3609,7 @@ static HRESULT WINAPI ID3DXEffectImpl_OnResetDevice(ID3DXEffect* iface)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ID3DXEffectImpl_SetStateManager(ID3DXEffect *iface, LPD3DXEFFECTSTATEMANAGER manager)
+static HRESULT WINAPI ID3DXEffectImpl_SetStateManager(ID3DXEffect *iface, ID3DXEffectStateManager *manager)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
 
@@ -3623,7 +3623,7 @@ static HRESULT WINAPI ID3DXEffectImpl_SetStateManager(ID3DXEffect *iface, LPD3DX
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXEffectImpl_GetStateManager(ID3DXEffect *iface, LPD3DXEFFECTSTATEMANAGER *manager)
+static HRESULT WINAPI ID3DXEffectImpl_GetStateManager(ID3DXEffect *iface, ID3DXEffectStateManager **manager)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
 

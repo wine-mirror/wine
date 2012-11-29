@@ -272,8 +272,8 @@ DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
     STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice9 **device) PURE;
     STDMETHOD(OnLostDevice)(THIS) PURE;
     STDMETHOD(OnResetDevice)(THIS) PURE;
-    STDMETHOD(SetStateManager)(THIS_ LPD3DXEFFECTSTATEMANAGER manager) PURE;
-    STDMETHOD(GetStateManager)(THIS_ LPD3DXEFFECTSTATEMANAGER* manager) PURE;
+    STDMETHOD(SetStateManager)(THIS_ ID3DXEffectStateManager *manager) PURE;
+    STDMETHOD(GetStateManager)(THIS_ ID3DXEffectStateManager **manager) PURE;
     STDMETHOD(BeginParameterBlock)(THIS) PURE;
     STDMETHOD_(D3DXHANDLE, EndParameterBlock)(THIS) PURE;
     STDMETHOD(ApplyParameterBlock)(THIS_ D3DXHANDLE parameter_block) PURE;
