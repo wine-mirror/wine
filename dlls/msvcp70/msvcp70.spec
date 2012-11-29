@@ -447,10 +447,10 @@
 @ stub -arch=win64 ??0__non_rtti_object@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0__non_rtti_object@std@@QAE@PBD@Z
 @ stub -arch=win64 ??0__non_rtti_object@std@@QEAA@PEBD@Z
-@ stub -arch=win32 ??0bad_cast@std@@QAE@ABV01@@Z
-@ stub -arch=win64 ??0bad_cast@std@@QEAA@AEBV01@@Z
-@ stub -arch=win32 ??0bad_cast@std@@QAE@PBD@Z
-@ stub -arch=win64 ??0bad_cast@std@@QEAA@PEBD@Z
+@ thiscall -arch=win32 ??0bad_cast@std@@QAE@ABV01@@Z(ptr ptr) msvcrt.??0bad_cast@@QAE@ABV0@@Z
+@ cdecl -arch=win64 ??0bad_cast@std@@QEAA@AEBV01@@Z(ptr ptr) msvcrt.??0bad_cast@@QEAA@AEBV0@@Z
+@ thiscall -arch=win32 ??0bad_cast@std@@QAE@PBD@Z(ptr str) msvcrt.??0bad_cast@@QAE@PBD@Z
+@ cdecl -arch=win64 ??0bad_cast@std@@QEAA@PEBD@Z(ptr str) msvcrt.??0bad_cast@@QEAA@PEBD@Z
 @ stub -arch=win32 ??0bad_typeid@std@@QAE@ABV01@@Z
 @ stub -arch=win64 ??0bad_typeid@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0bad_typeid@std@@QAE@PBD@Z
@@ -673,8 +673,8 @@
 @ cdecl -arch=win64 ??1_Winit@std@@QEAA@XZ(ptr) msvcp90.??1_Winit@std@@QEAA@XZ
 @ stub -arch=win32 ??1__non_rtti_object@std@@UAE@XZ
 @ stub -arch=win64 ??1__non_rtti_object@std@@UEAA@XZ
-@ stub -arch=win32 ??1bad_cast@std@@UAE@XZ
-@ stub -arch=win64 ??1bad_cast@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1bad_cast@std@@UAE@XZ(ptr) msvcrt.??1bad_cast@@UAE@XZ
+@ cdecl -arch=win64 ??1bad_cast@std@@UEAA@XZ(ptr) msvcrt.??1bad_cast@@UEAA@XZ
 @ stub -arch=win32 ??1bad_typeid@std@@UAE@XZ
 @ stub -arch=win64 ??1bad_typeid@std@@UEAA@XZ
 @ thiscall -arch=win32 ??1codecvt_base@std@@UAE@XZ(ptr) msvcp90.??1codecvt_base@std@@UAE@XZ
@@ -813,8 +813,8 @@
 @ cdecl -arch=win64 ??4_Winit@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4_Winit@std@@QEAAAEAV01@AEBV01@@Z
 @ stub -arch=win32 ??4__non_rtti_object@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4__non_rtti_object@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4bad_cast@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4bad_cast@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4bad_cast@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcrt.??4bad_cast@@QAEAAV0@ABV0@@Z
+@ cdecl -arch=win64 ??4bad_cast@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcrt.??4bad_cast@@QEAAAEAV0@AEBV0@@Z
 @ stub -arch=win32 ??4bad_typeid@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4bad_typeid@std@@QEAAAEAV01@AEBV01@@Z
 @ thiscall -arch=win32 ??4ios_base@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4ios_base@std@@QAEAAV01@ABV01@@Z
@@ -1727,8 +1727,8 @@
 @ cdecl -arch=win64 ??_F_Locinfo@std@@QEAAXXZ(ptr) msvcp90.??_F_Locinfo@std@@QEAAXXZ
 @ thiscall -arch=win32 ??_F_Timevec@std@@QAEXXZ(ptr) msvcp90.??_F_Timevec@std@@QAEXXZ
 @ cdecl -arch=win64 ??_F_Timevec@std@@QEAAXXZ(ptr) msvcp90.??_F_Timevec@std@@QEAAXXZ
-@ stub -arch=win32 ??_Fbad_cast@std@@QAEXXZ
-@ stub -arch=win64 ??_Fbad_cast@std@@QEAAXXZ
+@ thiscall -arch=win32 ??_Fbad_cast@std@@QAEXXZ(ptr) msvcrt.??_Fbad_cast@@QAEXXZ
+@ cdecl -arch=win64 ??_Fbad_cast@std@@QEAAXXZ(ptr) msvcrt.??_Fbad_cast@@QEAAXXZ
 @ stub -arch=win32 ??_Fbad_typeid@std@@QAEXXZ
 @ stub -arch=win64 ??_Fbad_typeid@std@@QEAAXXZ
 @ thiscall -arch=win32 ??_Fcodecvt_base@std@@QAEXXZ(ptr) msvcp90.??_Fcodecvt_base@std@@QAEXXZ
