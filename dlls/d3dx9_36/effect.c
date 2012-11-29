@@ -3406,7 +3406,7 @@ static HRESULT WINAPI ID3DXEffectImpl_SetArrayRange(ID3DXEffect *iface, D3DXHAND
 }
 
 /*** ID3DXEffect methods ***/
-static HRESULT WINAPI ID3DXEffectImpl_GetPool(ID3DXEffect *iface, LPD3DXEFFECTPOOL *pool)
+static HRESULT WINAPI ID3DXEffectImpl_GetPool(ID3DXEffect *iface, ID3DXEffectPool **pool)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
 
@@ -5969,7 +5969,7 @@ static const struct ID3DXEffectPoolVtbl ID3DXEffectPool_Vtbl =
     ID3DXEffectPoolImpl_Release
 };
 
-HRESULT WINAPI D3DXCreateEffectPool(LPD3DXEFFECTPOOL *pool)
+HRESULT WINAPI D3DXCreateEffectPool(ID3DXEffectPool **pool)
 {
     struct ID3DXEffectPoolImpl *object;
 

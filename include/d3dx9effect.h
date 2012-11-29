@@ -258,7 +258,7 @@ DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
     STDMETHOD(GetVertexShader)(THIS_ D3DXHANDLE parameter, struct IDirect3DVertexShader9 **shader) PURE;
     STDMETHOD(SetArrayRange)(THIS_ D3DXHANDLE parameter, UINT start, UINT end) PURE;
     /*** ID3DXEffect methods ***/
-    STDMETHOD(GetPool)(THIS_ LPD3DXEFFECTPOOL* pool) PURE;
+    STDMETHOD(GetPool)(THIS_ ID3DXEffectPool **pool) PURE;
     STDMETHOD(SetTechnique)(THIS_ D3DXHANDLE technique) PURE;
     STDMETHOD_(D3DXHANDLE, GetCurrentTechnique)(THIS) PURE;
     STDMETHOD(ValidateTechnique)(THIS_ D3DXHANDLE technique) PURE;
@@ -363,7 +363,7 @@ DECLARE_INTERFACE_(ID3DXEffectCompiler, ID3DXBaseEffect)
 extern "C" {
 #endif
 
-HRESULT WINAPI D3DXCreateEffectPool(LPD3DXEFFECTPOOL* pool);
+HRESULT WINAPI D3DXCreateEffectPool(ID3DXEffectPool **pool);
 HRESULT WINAPI D3DXCreateEffect(struct IDirect3DDevice9 *device, const void *srcdata, UINT srcdatalen,
         const D3DXMACRO *defines, struct ID3DXInclude *include, DWORD flags,
         struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilation_errors);
