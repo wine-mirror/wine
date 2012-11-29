@@ -1995,7 +1995,7 @@ int CDECL MSVCRT_mbtowc_l(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n,
     /* return the number of bytes from src that have been used */
     if(!*str)
         return 0;
-    if(n >= 2 && MSVCRT__isleadbyte_l(*str, locale) && str[1])
+    if(n >= 2 && MSVCRT__isleadbyte_l((unsigned char)*str, locale) && str[1])
         return 2;
     return 1;
 }
@@ -2006,6 +2006,53 @@ int CDECL MSVCRT_mbtowc_l(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n,
 int CDECL MSVCRT_mbtowc(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n)
 {
     return MSVCRT_mbtowc_l(dst, str, n, NULL);
+}
+
+/*********************************************************************
+ *              mbrtowc(MSVCRT.@)
+ */
+MSVCRT_size_t CDECL MSVCRT_mbrtowc(MSVCRT_wchar_t *dst, const char *str,
+        MSVCRT_size_t n, MSVCRT_mbstate_t *state)
+{
+    MSVCRT_pthreadlocinfo locinfo = get_locinfo();
+    MSVCRT_mbstate_t s = (state ? *state : 0);
+    char tmpstr[2];
+    int len = 0;
+
+    if(dst)
+        *dst = 0;
+
+    if(!n || !str || !*str)
+        return 0;
+
+    if(locinfo->mb_cur_max == 1) {
+        tmpstr[len++] = *str;
+    }else if(!s && MSVCRT_isleadbyte((unsigned char)*str)) {
+        if(n == 1) {
+            s = (unsigned char)*str;
+            len = -2;
+        }else {
+            tmpstr[0] = str[0];
+            tmpstr[1] = str[1];
+            len = 2;
+        }
+    }else if(!s) {
+        tmpstr[len++] = *str;
+    }else {
+        tmpstr[0] = s;
+        tmpstr[1] = *str;
+        len = 2;
+        s = 0;
+    }
+
+    if(len > 0) {
+        if(!MultiByteToWideChar(locinfo->lc_codepage, 0, tmpstr, len, dst, dst ? 1 : 0))
+            len = -1;
+    }
+
+    if(state)
+        *state = s;
+    return len;
 }
 
 /*********************************************************************

@@ -1329,7 +1329,7 @@
 @ cdecl malloc(long) MSVCRT_malloc
 @ cdecl mblen(ptr long) MSVCRT_mblen
 @ cdecl mbrlen(ptr long ptr) MSVCRT_mbrlen
-# stub mbrtowc(ptr str long ptr)
+@ cdecl mbrtowc(ptr str long ptr) MSVCRT_mbrtowc
 # stub mbsdup_dbg(wstr long ptr long)
 # stub mbsrtowcs(ptr ptr long ptr)
 # stub mbsrtowcs_s(ptr ptr long ptr long ptr)
