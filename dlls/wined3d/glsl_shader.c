@@ -5126,8 +5126,10 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
         {
             case WINED3D_TOP_BUMPENVMAP_LUMINANCE:
                 lum_map |= 1 << stage;
+                /* fall through */
             case WINED3D_TOP_BUMPENVMAP:
                 bump_map |= 1 << stage;
+                /* fall through */
             case WINED3D_TOP_BLEND_TEXTURE_ALPHA:
             case WINED3D_TOP_BLEND_TEXTURE_ALPHA_PM:
                 tex_map |= 1 << stage;
