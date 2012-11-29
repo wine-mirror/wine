@@ -1232,17 +1232,17 @@
 @ stub ?_XLgamma@tr1@std@@YAOO@Z
 @ stub ?_Xbad@tr1@std@@YAXW4error_type@regex_constants@12@@Z
 @ stub ?_Xfunc@tr1@std@@YAXXZ
-@ stub -arch=win32 ?_Xinvalid_argument@std@@YAXPBD@Z
-@ stub -arch=win64 ?_Xinvalid_argument@std@@YAXPEBD@Z
-@ stub -arch=win32 ?_Xlength_error@std@@YAXPBD@Z
-@ stub -arch=win64 ?_Xlength_error@std@@YAXPEBD@Z
-@ stub ?_Xmem@tr1@std@@YAXXZ
-@ stub -arch=win32 ?_Xout_of_range@std@@YAXPBD@Z
-@ stub -arch=win64 ?_Xout_of_range@std@@YAXPEBD@Z
+@ cdecl -arch=win32 ?_Xinvalid_argument@std@@YAXPBD@Z(str) _Xinvalid_argument
+@ cdecl -arch=win64 ?_Xinvalid_argument@std@@YAXPEBD@Z(str) _Xinvalid_argument
+@ cdecl -arch=win32 ?_Xlength_error@std@@YAXPBD@Z(str) _Xlength_error
+@ cdecl -arch=win64 ?_Xlength_error@std@@YAXPEBD@Z(str) _Xlength_error
+@ cdecl ?_Xmem@tr1@std@@YAXXZ() _Xmem
+@ cdecl -arch=win32 ?_Xout_of_range@std@@YAXPBD@Z(str) _Xout_of_range
+@ cdecl -arch=win64 ?_Xout_of_range@std@@YAXPEBD@Z(str) _Xout_of_range
 @ stub -arch=win32 ?_Xoverflow_error@std@@YAXPBD@Z
 @ stub -arch=win64 ?_Xoverflow_error@std@@YAXPEBD@Z
-@ stub -arch=win32 ?_Xruntime_error@std@@YAXPBD@Z
-@ stub -arch=win64 ?_Xruntime_error@std@@YAXPEBD@Z
+@ cdecl -arch=win32 ?_Xruntime_error@std@@YAXPBD@Z(str) _Xruntime_error
+@ cdecl -arch=win64 ?_Xruntime_error@std@@YAXPEBD@Z(str) _Xruntime_error
 @ thiscall -arch=win32 ?always_noconv@codecvt_base@std@@QBE_NXZ(ptr) codecvt_base_always_noconv
 @ cdecl -arch=win64 ?always_noconv@codecvt_base@std@@QEBA_NXZ(ptr) codecvt_base_always_noconv
 @ thiscall -arch=win32 ?bad@ios_base@std@@QBE_NXZ(ptr) ios_base_bad
