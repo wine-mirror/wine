@@ -1902,9 +1902,41 @@ int CDECL MSVCRT_mblen(const char* str, MSVCRT_size_t size)
     if(get_locinfo()->mb_cur_max == 1)
       return 1; /* ASCII CP */
 
-    return !MSVCRT_isleadbyte(*str) ? 1 : (size>1 ? 2 : -1);
+    return !MSVCRT_isleadbyte((unsigned char)*str) ? 1 : (size>1 ? 2 : -1);
   }
   return 0;
+}
+
+/*********************************************************************
+ *              mbrlen(MSVCRT.@)
+ */
+MSVCRT_size_t CDECL MSVCRT_mbrlen(const char *str, MSVCRT_size_t len, MSVCRT_mbstate_t *state)
+{
+    MSVCRT_mbstate_t s = (state ? *state : 0);
+    MSVCRT_size_t ret;
+
+    if(!len || !str || !*str)
+        return 0;
+
+    if(get_locinfo()->mb_cur_max == 1) {
+        return 1;
+    }else if(!s && MSVCRT_isleadbyte((unsigned char)*str)) {
+        if(len == 1) {
+            s = (unsigned char)*str;
+            ret = -2;
+        }else {
+            ret = 2;
+        }
+    }else if(!s) {
+        ret = 1;
+    }else {
+        s = 0;
+        ret = 2;
+    }
+
+    if(state)
+        *state = s;
+    return ret;
 }
 
 /*********************************************************************

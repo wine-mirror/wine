@@ -1328,7 +1328,7 @@
 @ cdecl -arch=i386,x86_64 longjmp(ptr long) MSVCRT_longjmp
 @ cdecl malloc(long) MSVCRT_malloc
 @ cdecl mblen(ptr long) MSVCRT_mblen
-# stub mbrlen(ptr long ptr)
+@ cdecl mbrlen(ptr long ptr) MSVCRT_mbrlen
 # stub mbrtowc(ptr str long ptr)
 # stub mbsdup_dbg(wstr long ptr long)
 # stub mbsrtowcs(ptr ptr long ptr)
