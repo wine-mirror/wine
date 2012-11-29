@@ -4309,11 +4309,11 @@
 # extern _Xbig
 @ stub __Wcrtomb_lk
 @ cdecl btowc(long) msvcrt.btowc
-@ stub mbrlen # msvcrt.mbrlen
-@ stub mbrtowc # msvcrt.mbrtowc
-@ stub mbsrtowcs # msvcrt.mbsrtowcs
+@ cdecl mbrlen(ptr long ptr) msvcrt.mbrlen # msvcrt.mbrlen
+@ cdecl mbrtowc(ptr str long ptr) msvcrt.mbrtowc # msvcrt.mbrtowc
+@ cdecl mbsrtowcs(ptr ptr long ptr) msvcrt.mbsrtowcs # msvcrt.mbsrtowcs
 @ cdecl towctrans(long long)
-@ stub wcrtomb # msvcrt.wcrtomb
+@ cdecl wcrtomb(ptr long ptr) msvcrt.wcrtomb # msvcrt.wcrtomb
 @ cdecl wcsrtombs(ptr ptr long ptr) msvcrt.wcsrtombs
 @ cdecl wctob(long) msvcrt.wctob
 @ cdecl wctrans(str)

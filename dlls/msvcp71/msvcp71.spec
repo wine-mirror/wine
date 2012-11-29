@@ -5158,11 +5158,11 @@
 # extern _Zero
 @ stub __Wcrtomb_lk
 @ cdecl btowc(long) msvcrt.btowc
-@ stub mbrlen
-@ stub mbrtowc
-@ stub mbsrtowcs
+@ cdecl mbrlen(ptr long ptr) msvcrt.mbrlen
+@ cdecl mbrtowc(ptr str long ptr) msvcrt.mbrtowc
+@ cdecl mbsrtowcs(ptr ptr long ptr) msvcrt.mbsrtowcs
 @ cdecl towctrans(long long)
-@ stub wcrtomb
+@ cdecl wcrtomb(ptr long ptr) msvcrt.wcrtomb
 @ cdecl wcsrtombs(ptr ptr long ptr) msvcrt.wcsrtombs
 @ cdecl wctob(long) msvcrt.wctob
 @ cdecl wctrans(str)
