@@ -85,6 +85,7 @@ static int (__cdecl *p_wcslwr_s)(wchar_t*,size_t);
 static errno_t (__cdecl *p_mbsupr_s)(unsigned char *str, size_t numberOfElements);
 static errno_t (__cdecl *p_mbslwr_s)(unsigned char *str, size_t numberOfElements);
 static int (__cdecl *p_wctob)(wint_t);
+static size_t (__cdecl *p_wcrtomb)(char*, wchar_t, mbstate_t*);
 static int (__cdecl *p_tolower)(int);
 static size_t (__cdecl *p_mbrlen)(const char*, size_t, mbstate_t*);
 static size_t (__cdecl *p_mbrtowc)(wchar_t*, const char*, size_t, mbstate_t*);
@@ -2301,6 +2302,44 @@ static void test_wctob(void)
     ret = p_wctob(0xe0);
     ok(ret == (int)(char)0xe0, "ret = %x\n", ret);
 }
+static void test_wctomb(void)
+{
+    mbstate_t state;
+    unsigned char dst[10];
+    size_t ret;
+
+    if(!p_wcrtomb || !setlocale(LC_ALL, "Japanese_Japan.932")) {
+        win_skip("wcrtomb tests\n");
+        return;
+    }
+
+    ret = p_wcrtomb(NULL, 0x3042, NULL);
+    ok(ret == 2, "wcrtomb did not return 2\n");
+
+    state = 1;
+    dst[2] = 'a';
+    ret = p_wcrtomb((char*)dst, 0x3042, &state);
+    ok(ret == 2, "wcrtomb did not return 2\n");
+    ok(state == 0, "state != 0\n");
+    ok(dst[0] == 0x82, "dst[0] = %x, expected 0x82\n", dst[0]);
+    ok(dst[1] == 0xa0, "dst[1] = %x, expected 0xa0\n", dst[1]);
+    ok(dst[2] == 'a', "dst[2] != 'a'\n");
+
+    ret = p_wcrtomb((char*)dst, 0x3043, NULL);
+    ok(ret == 2, "wcrtomb did not return 2\n");
+    ok(dst[0] == 0x82, "dst[0] = %x, expected 0x82\n", dst[0]);
+    ok(dst[1] == 0xa1, "dst[1] = %x, expected 0xa1\n", dst[1]);
+
+    ret = p_wcrtomb((char*)dst, 0x20, NULL);
+    ok(ret == 1, "wcrtomb did not return 1\n");
+    ok(dst[0] == 0x20, "dst[0] = %x, expected 0x20\n", dst[0]);
+
+    ret = p_wcrtomb((char*)dst, 0xffff, NULL);
+    ok(ret == -1, "wcrtomb did not return -1\n");
+    ok(dst[0] == 0x3f, "dst[0] = %x, expected 0x20\n", dst[0]);
+
+    setlocale(LC_ALL, "C");
+}
 
 static void test_tolower(void)
 {
@@ -2376,6 +2415,7 @@ START_TEST(string)
     p_mbsupr_s = (void*)GetProcAddress(hMsvcrt, "_mbsupr_s");
     p_mbslwr_s = (void*)GetProcAddress(hMsvcrt, "_mbslwr_s");
     p_wctob = (void*)GetProcAddress(hMsvcrt, "wctob");
+    p_wcrtomb = (void*)GetProcAddress(hMsvcrt, "wcrtomb");
     p_tolower = (void*)GetProcAddress(hMsvcrt, "tolower");
     p_mbrlen = (void*)GetProcAddress(hMsvcrt, "mbrlen");
     p_mbrtowc = (void*)GetProcAddress(hMsvcrt, "mbrtowc");
@@ -2427,5 +2467,6 @@ START_TEST(string)
     test__mbsupr_s();
     test__mbslwr_s();
     test_wctob();
+    test_wctomb();
     test_tolower();
 }
