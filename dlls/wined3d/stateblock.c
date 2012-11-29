@@ -521,6 +521,15 @@ void stateblock_unbind_resources(struct wined3d_stateblock *stateblock)
         wined3d_shader_decref(shader);
     }
 
+    for (i = 0; i < MAX_CONSTANT_BUFFERS; ++i)
+    {
+        if ((buffer = state->vs_cb[i]))
+        {
+            state->vs_cb[i] = NULL;
+            wined3d_buffer_decref(buffer);
+        }
+    }
+
     if ((shader = state->geometry_shader))
     {
         state->geometry_shader = NULL;

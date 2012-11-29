@@ -162,6 +162,7 @@ void wined3d_rb_free(void *ptr) DECLSPEC_HIDDEN;
 #define MAX_COMBINED_SAMPLERS   (MAX_FRAGMENT_SAMPLERS + MAX_VERTEX_SAMPLERS)
 #define MAX_ACTIVE_LIGHTS       8
 #define MAX_CLIPPLANES          WINED3DMAXUSERCLIPPLANES
+#define MAX_CONSTANT_BUFFERS    15
 
 struct min_lookup
 {
@@ -2299,6 +2300,7 @@ struct wined3d_state
     GLenum gl_primitive_type;
 
     struct wined3d_shader *vertex_shader;
+    struct wined3d_buffer *vs_cb[MAX_CONSTANT_BUFFERS];
     BOOL vs_consts_b[MAX_CONST_B];
     INT vs_consts_i[MAX_CONST_I * 4];
     float *vs_consts_f;
