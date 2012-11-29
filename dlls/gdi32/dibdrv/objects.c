@@ -108,6 +108,13 @@ static inline void calc_rop_masks(INT rop, DWORD color, rop_mask *masks)
     calc_and_xor_masks( rop, color, &masks->and, &masks->xor );
 }
 
+static inline BOOL rop_needs_and_mask( INT rop )
+{
+    struct rop_codes codes;
+    get_rop_codes( rop, &codes );
+    return codes.a1 || codes.a2;
+}
+
 static inline RGBQUAD rgbquad_from_colorref(COLORREF c)
 {
     RGBQUAD ret;
@@ -1768,8 +1775,8 @@ static BOOL alloc_brush_mask_bits( dib_brush *brush )
     assert(brush->masks.xor == NULL);
     assert(brush->dib.stride > 0);
 
-    if (!(brush->masks.and = HeapAlloc(GetProcessHeap(), 0, 2 * size))) return FALSE;
-    brush->masks.xor = (char *)brush->masks.and + size;
+    if (!(brush->masks.xor = HeapAlloc(GetProcessHeap(), 0, 2 * size))) return FALSE;
+    brush->masks.and = (char *)brush->masks.xor + size;
     return TRUE;
 }
 
@@ -1980,7 +1987,7 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
         brush->rop = rop;
     }
 
-    if(brush->masks.and == NULL)
+    if(brush->masks.xor == NULL)
     {
         switch(brush->style)
         {
@@ -2005,6 +2012,7 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
             ERR("Unexpected brush style %d\n", brush->style);
             return FALSE;
         }
+        if (!rop_needs_and_mask( brush->rop )) brush->masks.and = NULL;  /* ignore the and mask */
     }
 
     GetBrushOrgEx(pdev->dev.hdc, &origin);
