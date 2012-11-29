@@ -72,6 +72,7 @@ static __int64 (__cdecl *p_strtoi64)(const char *, char **, int);
 static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
 static int (__cdecl *pwcstombs_s)(size_t*,char*,size_t,const wchar_t*,size_t);
 static int (__cdecl *pmbstowcs_s)(size_t*,wchar_t*,size_t,const char*,size_t);
+static size_t (__cdecl *p_mbsrtowcs)(wchar_t*, const char**, size_t, mbstate_t*);
 static size_t (__cdecl *pwcsrtombs)(char*, const wchar_t**, size_t, int*);
 static errno_t (__cdecl *p_gcvt_s)(char*,size_t,double,int);
 static errno_t (__cdecl *p_itoa_s)(int,char*,size_t,int);
@@ -1582,6 +1583,8 @@ static void test_mbstowcs(void)
     char mOut[6];
     size_t ret;
     int err;
+    const char *pmbstr;
+    mbstate_t state;
 
     wOut[4] = '!'; wOut[5] = '\0';
     mOut[4] = '!'; mOut[5] = '\0';
@@ -1671,6 +1674,38 @@ static void test_mbstowcs(void)
     ok(ret == 4, "wcsrtombs did not return 4\n");
     ok(pwstr == NULL, "pwstr != NULL\n");
     ok(!memcmp(mOut, mSimple, sizeof(mSimple)), "mOut = %s\n", mOut);
+
+    if(!p_mbsrtowcs) {
+        setlocale(LC_ALL, "C");
+        win_skip("mbsrtowcs not available\n");
+        return;
+    }
+
+    pmbstr = mHiragana;
+    ret = p_mbsrtowcs(wOut, &pmbstr, 6, NULL);
+    ok(ret == 2, "mbsrtowcs did not return 2\n");
+    ok(!memcmp(wOut, wHiragana, sizeof(wHiragana)), "wOut = %s\n", wine_dbgstr_w(wOut));
+    ok(!pmbstr, "pmbstr != NULL\n");
+
+    state = mHiragana[0];
+    pmbstr = mHiragana+1;
+    ret = p_mbsrtowcs(wOut, &pmbstr, 6, &state);
+    ok(ret == 2, "mbsrtowcs did not return 2\n");
+    ok(wOut[0] == 0x3042, "wOut[0] = %x\n", wOut[0]);
+    ok(wOut[1] == 0xff61, "wOut[1] = %x\n", wOut[1]);
+    ok(wOut[2] == 0, "wOut[2] = %x\n", wOut[2]);
+    ok(!pmbstr, "pmbstr != NULL\n");
+
+    if (p_set_invalid_parameter_handler)
+        ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+                "Invalid parameter handler was already set\n");
+    errno = EBADF;
+    ret = p_mbsrtowcs(wOut, NULL, 6, &state);
+    ok(ret == -1, "mbsrtowcs did not return -1\n");
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    if (p_set_invalid_parameter_handler)
+        ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+                "Cannot reset invalid parameter handler\n");
 
     setlocale(LC_ALL, "C");
 }
@@ -2344,6 +2379,7 @@ START_TEST(string)
     p_tolower = (void*)GetProcAddress(hMsvcrt, "tolower");
     p_mbrlen = (void*)GetProcAddress(hMsvcrt, "mbrlen");
     p_mbrtowc = (void*)GetProcAddress(hMsvcrt, "mbrtowc");
+    p_mbsrtowcs = (void*)GetProcAddress(hMsvcrt, "mbsrtowcs");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
