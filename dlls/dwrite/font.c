@@ -930,6 +930,13 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
 
     ret = GetOutlineTextMetricsW(hdc, 0, NULL);
     otm = heap_alloc(ret);
+    if (!otm)
+    {
+        heap_free(This);
+        DeleteDC(hdc);
+        DeleteObject(hfont);
+        return E_OUTOFMEMORY;
+    }
     otm->otmSize = ret;
     ret = GetOutlineTextMetricsW(hdc, otm->otmSize, otm);
 
