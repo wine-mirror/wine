@@ -1782,7 +1782,7 @@ static BOOL alloc_brush_mask_bits( dib_brush *brush )
 
 static void free_brush_mask_bits( dib_brush *brush )
 {
-    HeapFree(GetProcessHeap(), 0, brush->masks.and);
+    if (brush->masks.xor != brush->dib.bits.ptr) HeapFree(GetProcessHeap(), 0, brush->masks.xor);
     brush->masks.and = brush->masks.xor = NULL;
 }
 
@@ -1797,6 +1797,12 @@ static BOOL create_pattern_brush_bits( dib_brush *brush )
     DWORD size = brush->dib.height * abs(brush->dib.stride);
     DWORD *brush_bits = brush->dib.bits.ptr;
     DWORD *and_bits, *xor_bits;
+
+    if (brush->rop == R2_COPYPEN)
+    {
+        brush->masks.xor = brush_bits;  /* use the pattern bits directly */
+        return TRUE;
+    }
 
     if (!alloc_brush_mask_bits( brush )) return FALSE;
 
