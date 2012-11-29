@@ -256,6 +256,16 @@ static inline void do_rop_codes_line_rev_1(BYTE *dst, int dst_x, const BYTE *src
     }
 }
 
+static inline void memset_32( DWORD *start, DWORD val, DWORD size )
+{
+    while (size--) *start++ = val;
+}
+
+static inline void memset_16( WORD *start, WORD val, DWORD size )
+{
+    while (size--) *start++ = val;
+}
+
 static void solid_rects_32(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor)
 {
     DWORD *ptr, *start;
@@ -263,10 +273,16 @@ static void solid_rects_32(const dib_info *dib, int num, const RECT *rc, DWORD a
 
     for(i = 0; i < num; i++, rc++)
     {
+        assert( !is_rect_empty( rc ));
+
         start = get_pixel_ptr_32(dib, rc->left, rc->top);
-        for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 4)
-            for(x = rc->left, ptr = start; x < rc->right; x++)
-                do_rop_32(ptr++, and, xor);
+        if (and)
+            for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 4)
+                for(x = rc->left, ptr = start; x < rc->right; x++)
+                    do_rop_32(ptr++, and, xor);
+        else
+            for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 4)
+                memset_32( start, xor, rc->right - rc->left );
     }
 }
 
@@ -289,7 +305,7 @@ static void solid_rects_24(const dib_info *dib, int num, const RECT *rc, DWORD a
         int left = dib->rect.left + rc->left;
         int right = dib->rect.left + rc->right;
 
-        if (left >= right) continue;
+        assert( !is_rect_empty( rc ));
 
         if ((left & ~3) == (right & ~3)) /* Special case for lines that start and end in the same DWORD triplet */
         {
@@ -304,7 +320,7 @@ static void solid_rects_24(const dib_info *dib, int num, const RECT *rc, DWORD a
                 }
             }
         }
-        else
+        else if (and)
         {
             start = get_pixel_ptr_24_dword(dib, rc->left, rc->top);
             for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 4)
@@ -351,6 +367,53 @@ static void solid_rects_24(const dib_info *dib, int num, const RECT *rc, DWORD a
                 }
             }
         }
+        else
+        {
+            start = get_pixel_ptr_24_dword(dib, rc->left, rc->top);
+            for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 4)
+            {
+                ptr = start;
+
+                switch(left & 3)
+                {
+                case 1:
+                    do_rop_32(ptr++, 0x00ffffff, xor_masks[0] & 0xff000000);
+                    *ptr++ = xor_masks[1];
+                    *ptr++ = xor_masks[2];
+                    break;
+                case 2:
+                    do_rop_32(ptr++, 0x0000ffff, xor_masks[1] & 0xffff0000);
+                    *ptr++ = xor_masks[2];
+                    break;
+                case 3:
+                    do_rop_32(ptr++, 0x000000ff, xor_masks[2] & 0xffffff00);
+                    break;
+                }
+
+                for(x = (left + 3) & ~3; x < (right & ~3); x += 4)
+                {
+                    *ptr++ = xor_masks[0];
+                    *ptr++ = xor_masks[1];
+                    *ptr++ = xor_masks[2];
+                }
+
+                switch(right & 3)
+                {
+                case 1:
+                    do_rop_32(ptr, 0xff000000, xor_masks[0] & 0x00ffffff);
+                    break;
+                case 2:
+                    *ptr++ = xor_masks[0];
+                    do_rop_32(ptr, 0xffff0000, xor_masks[1] & 0x0000ffff);
+                    break;
+                case 3:
+                    *ptr++ = xor_masks[0];
+                    *ptr++ = xor_masks[1];
+                    do_rop_32(ptr, 0xffffff00, xor_masks[2] & 0x000000ff);
+                    break;
+                }
+            }
+        }
     }
 }
 
@@ -361,10 +424,16 @@ static void solid_rects_16(const dib_info *dib, int num, const RECT *rc, DWORD a
 
     for(i = 0; i < num; i++, rc++)
     {
+        assert( !is_rect_empty( rc ));
+
         start = get_pixel_ptr_16(dib, rc->left, rc->top);
-        for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 2)
-            for(x = rc->left, ptr = start; x < rc->right; x++)
-                do_rop_16(ptr++, and, xor);
+        if (and)
+            for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 2)
+                for(x = rc->left, ptr = start; x < rc->right; x++)
+                    do_rop_16(ptr++, and, xor);
+        else
+            for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 2)
+                memset_16( start, xor, rc->right - rc->left );
     }
 }
 
@@ -375,10 +444,16 @@ static void solid_rects_8(const dib_info *dib, int num, const RECT *rc, DWORD an
 
     for(i = 0; i < num; i++, rc++)
     {
+        assert( !is_rect_empty( rc ));
+
         start = get_pixel_ptr_8(dib, rc->left, rc->top);
-        for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
-            for(x = rc->left, ptr = start; x < rc->right; x++)
-                do_rop_8(ptr++, and, xor);
+        if (and)
+            for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
+                for(x = rc->left, ptr = start; x < rc->right; x++)
+                    do_rop_8(ptr++, and, xor);
+        else
+            for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
+                memset( start, xor, rc->right - rc->left );
     }
 }
 
@@ -394,19 +469,39 @@ static void solid_rects_4(const dib_info *dib, int num, const RECT *rc, DWORD an
         int left = dib->rect.left + rc->left;
         int right = dib->rect.left + rc->right;
 
-        if (left >= right) continue;
+        assert( !is_rect_empty( rc ));
+
         start = get_pixel_ptr_4(dib, rc->left, rc->top);
-        for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
+        if (and)
         {
-            ptr = start;
-            if(left & 1) /* upper nibble untouched */
-                do_rop_8(ptr++, byte_and | 0xf0, byte_xor & 0x0f);
+            for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
+            {
+                ptr = start;
+                if(left & 1) /* upper nibble untouched */
+                    do_rop_8(ptr++, byte_and | 0xf0, byte_xor & 0x0f);
 
-            for(x = (left + 1) & ~1; x < (right & ~1); x += 2)
-                do_rop_8(ptr++, byte_and, byte_xor);
+                for(x = (left + 1) & ~1; x < (right & ~1); x += 2)
+                    do_rop_8(ptr++, byte_and, byte_xor);
 
-            if(right & 1) /* lower nibble untouched */
-                do_rop_8(ptr, byte_and | 0x0f, byte_xor & 0xf0);
+                if(right & 1) /* lower nibble untouched */
+                    do_rop_8(ptr, byte_and | 0x0f, byte_xor & 0xf0);
+            }
+        }
+        else
+        {
+            for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
+            {
+                unsigned int byte_len = (right - ((left + 1) & ~1)) / 2;
+
+                ptr = start;
+                if(left & 1) /* upper nibble untouched */
+                    do_rop_8(ptr++, 0xf0, byte_xor & 0x0f);
+
+                memset( ptr, byte_xor, byte_len );
+
+                if(right & 1) /* lower nibble untouched */
+                    do_rop_8(ptr + byte_len, 0x0f, byte_xor & 0xf0);
+            }
         }
     }
 }
@@ -417,7 +512,6 @@ static void solid_rects_1(const dib_info *dib, int num, const RECT *rc, DWORD an
     int x, y, i;
     BYTE byte_and = (and & 1) ? 0xff : 0;
     BYTE byte_xor = (xor & 1) ? 0xff : 0;
-    BYTE start_and, start_xor, end_and, end_xor, mask;
     static const BYTE masks[8] = {0xff, 0x7f, 0x3f, 0x1f, 0x0f, 0x07, 0x03, 0x01};
 
     for(i = 0; i < num; i++, rc++)
@@ -425,44 +519,51 @@ static void solid_rects_1(const dib_info *dib, int num, const RECT *rc, DWORD an
         int left = dib->rect.left + rc->left;
         int right = dib->rect.left + rc->right;
 
-        if (left >= right) continue;
+        assert( !is_rect_empty( rc ));
 
         start = get_pixel_ptr_1(dib, rc->left, rc->top);
 
         if ((left & ~7) == (right & ~7)) /* Special case for lines that start and end in the same byte */
         {
-            mask = masks[left & 7] & ~masks[right & 7];
+            BYTE mask = masks[left & 7] & ~masks[right & 7];
 
-            start_and = byte_and | ~mask;
-            start_xor = byte_xor & mask;
             for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
             {
-                do_rop_8(start, start_and, start_xor);
+                do_rop_8(start, byte_and | ~mask, byte_xor & mask);
             }
         }
-        else
+        else if (and)
         {
-            mask = masks[left & 7];
-            start_and = byte_and | ~mask;
-            start_xor = byte_xor & mask;
-
-            mask = masks[right & 7];
-            /* This is inverted wrt to start mask, so end_and/xor assignments reflect this */
-            end_and = byte_and | mask;
-            end_xor = byte_xor & ~mask;
-
             for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
             {
                 ptr = start;
 
                 if(left & 7)
-                    do_rop_8(ptr++, start_and, start_xor);
+                    do_rop_8(ptr++, byte_and | ~masks[left & 7], byte_xor & masks[left & 7]);
 
                 for(x = (left + 7) & ~7; x < (right & ~7); x += 8)
                     do_rop_8(ptr++, byte_and, byte_xor);
 
                 if(right & 7)
-                    do_rop_8(ptr, end_and, end_xor);
+                    /* this is inverted wrt start mask */
+                    do_rop_8(ptr, byte_and | masks[right & 7], byte_xor & ~masks[right & 7]);
+            }
+        }
+        else
+        {
+            for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
+            {
+                unsigned int byte_len = (right - ((left + 7) & ~7)) / 8;
+
+                ptr = start;
+
+                if(left & 7)
+                    do_rop_8(ptr++, ~masks[left & 7], byte_xor & masks[left & 7]);
+
+                memset( ptr, byte_xor, byte_len );
+
+                if(right & 7)
+                    do_rop_8(ptr + byte_len, masks[right & 7], byte_xor & ~masks[right & 7]);
             }
         }
     }
