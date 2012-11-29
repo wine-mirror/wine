@@ -86,6 +86,7 @@ static errno_t (__cdecl *p_mbslwr_s)(unsigned char *str, size_t numberOfElements
 static int (__cdecl *p_wctob)(wint_t);
 static int (__cdecl *p_tolower)(int);
 static size_t (__cdecl *p_mbrlen)(const char*, size_t, mbstate_t*);
+static size_t (__cdecl *p_mbrtowc)(wchar_t*, const char*, size_t, mbstate_t*);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -318,6 +319,28 @@ static void test_mbcp(void)
         expect_eq(p_mbrlen((const char*)mbstring, 1, &state), -2, int, "%d");
         ok(state == mbstring[0], "incorrect state value (%x)\n", state);
         expect_eq(p_mbrlen((const char*)&mbstring[1], 1, &state), 2, int, "%d");
+    }
+
+    /* mbrtowc */
+    if(!setlocale(LC_ALL, ".936") || !p_mbrtowc) {
+        win_skip("mbrtowc tests\n");
+    }else {
+        mbstate_t state = 0;
+        wchar_t dst;
+        expect_eq(p_mbrtowc(&dst, (const char*)mbstring, 2, NULL), 2, int, "%d");
+        ok(dst == 0x6c28, "dst = %x, expected 0x6c28\n", dst);
+        expect_eq(p_mbrtowc(&dst, (const char*)mbstring+2, 2, NULL), 2, int, "%d");
+        ok(dst == 0x3f, "dst = %x, expected 0x3f\n", dst);
+        expect_eq(p_mbrtowc(&dst, (const char*)mbstring+3, 2, NULL), 1, int, "%d");
+        ok(dst == 0x20, "dst = %x, expected 0x20\n", dst);
+        expect_eq(p_mbrtowc(&dst, (const char*)mbstring, 1, NULL), -2, int, "%d");
+        ok(dst == 0, "dst = %x, expected 0\n", dst);
+        expect_eq(p_mbrtowc(&dst, (const char*)mbstring, 1, &state), -2, int, "%d");
+        ok(dst == 0, "dst = %x, expected 0\n", dst);
+        ok(state == mbstring[0], "incorrect state value (%x)\n", state);
+        expect_eq(p_mbrtowc(&dst, (const char*)mbstring+1, 1, &state), 2, int, "%d");
+        ok(dst == 0x6c28, "dst = %x, expected 0x6c28\n", dst);
+        ok(state == 0, "incorrect state value (%x)\n", state);
     }
     setlocale(LC_ALL, "C");
 
@@ -2320,6 +2343,7 @@ START_TEST(string)
     p_wctob = (void*)GetProcAddress(hMsvcrt, "wctob");
     p_tolower = (void*)GetProcAddress(hMsvcrt, "tolower");
     p_mbrlen = (void*)GetProcAddress(hMsvcrt, "mbrlen");
+    p_mbrtowc = (void*)GetProcAddress(hMsvcrt, "mbrtowc");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
