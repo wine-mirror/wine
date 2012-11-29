@@ -355,8 +355,8 @@ static void free_dbpropset(ULONG count, DBPROPSET *propset)
             VariantClear(&propset[i].rgProperties[p].vValue);
             CoTaskMemFree(&propset[i].rgProperties[p]);
         }
-        CoTaskMemFree(&propset[i]);
     }
+    CoTaskMemFree(propset);
 }
 
 static void free_dbpropinfoset(ULONG count, DBPROPINFOSET *propinfoset)
@@ -372,8 +372,8 @@ static void free_dbpropinfoset(ULONG count, DBPROPINFOSET *propinfoset)
             VariantClear(&propinfoset[i].rgPropertyInfos[p].vValues);
             CoTaskMemFree(&propinfoset[i].rgPropertyInfos[p]);
         }
-        CoTaskMemFree(&propinfoset[i]);
     }
+    CoTaskMemFree(propinfoset);
 }
 
 static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, IUnknown *datasource,
