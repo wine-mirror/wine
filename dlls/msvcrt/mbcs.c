@@ -2077,7 +2077,7 @@ MSVCRT_size_t CDECL MSVCRT__mbstowcs_l(MSVCRT_wchar_t *wcstr, const char *mbstr,
         if(mbstr[size] == '\0')
             break;
 
-        size += (MSVCRT__isleadbyte_l(mbstr[size], locale) ? 2 : 1);
+        size += (MSVCRT__isleadbyte_l((unsigned char)mbstr[size], locale) ? 2 : 1);
     }
 
     size = MultiByteToWideChar(locinfo->lc_codepage, 0,
@@ -2149,4 +2149,36 @@ int CDECL MSVCRT__mbstowcs_s(MSVCRT_size_t *ret, MSVCRT_wchar_t *wcstr,
         MSVCRT_size_t size, const char *mbstr, MSVCRT_size_t count)
 {
     return MSVCRT__mbstowcs_s_l(ret, wcstr, size, mbstr, count, NULL);
+}
+
+/*********************************************************************
+ *              mbsrtowcs(MSVCRT.@)
+ */
+MSVCRT_size_t CDECL MSVCRT_mbsrtowcs(MSVCRT_wchar_t *wcstr,
+        const char **pmbstr, MSVCRT_size_t count, MSVCRT_mbstate_t *state)
+{
+    MSVCRT_mbstate_t s = (state ? *state : 0);
+    MSVCRT_wchar_t tmpdst;
+    MSVCRT_size_t ret = 0;
+
+    if(!MSVCRT_CHECK_PMT(pmbstr != NULL))
+        return -1;
+
+    while(!wcstr || count>ret) {
+        int ch_len = MSVCRT_mbrtowc(&tmpdst, *pmbstr, 2, &s);
+        if(wcstr)
+            wcstr[ret] = tmpdst;
+
+        if(ch_len < 0) {
+            return -1;
+        }else if(ch_len == 0) {
+            *pmbstr = NULL;
+            return ret;
+        }
+
+        *pmbstr += ch_len;
+        ret++;
+    }
+
+    return ret;
 }
