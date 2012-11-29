@@ -121,15 +121,15 @@ static HRESULT WINAPI xmlelem_GetTypeInfoCount(IXMLElement *iface, UINT* pctinfo
 }
 
 static HRESULT WINAPI xmlelem_GetTypeInfo(IXMLElement *iface, UINT iTInfo,
-                                          LCID lcid, ITypeInfo** ti)
+                                          LCID lcid, ITypeInfo** ppTInfo)
 {
     xmlelem *This = impl_from_IXMLElement(iface);
     HRESULT hr;
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ti);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    hr = get_typeinfo(IXMLElement_tid, ti);
-    ITypeInfo_AddRef(*ti);
+    hr = get_typeinfo(IXMLElement_tid, ppTInfo);
+
     return hr;
 }
 
@@ -149,7 +149,10 @@ static HRESULT WINAPI xmlelem_GetIDsOfNames(IXMLElement *iface, REFIID riid,
 
     hr = get_typeinfo(IXMLElement_tid, &typeinfo);
     if(SUCCEEDED(hr))
+    {
         hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
 
     return hr;
 }
@@ -168,8 +171,11 @@ static HRESULT WINAPI xmlelem_Invoke(IXMLElement *iface, DISPID dispIdMember,
 
     hr = get_typeinfo(IXMLElement_tid, &typeinfo);
     if(SUCCEEDED(hr))
+    {
         hr = ITypeInfo_Invoke(typeinfo, &This->IXMLElement_iface, dispIdMember, wFlags, pDispParams,
                 pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
 
     return hr;
 }

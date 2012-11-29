@@ -1233,16 +1233,13 @@ static HRESULT WINAPI XMLHTTPRequest_GetTypeInfoCount(IXMLHTTPRequest *iface, UI
 }
 
 static HRESULT WINAPI XMLHTTPRequest_GetTypeInfo(IXMLHTTPRequest *iface, UINT iTInfo,
-        LCID lcid, ITypeInfo **ti)
+        LCID lcid, ITypeInfo **ppTInfo)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
-    HRESULT hr;
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ti);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    hr = get_typeinfo(IXMLHTTPRequest_tid, ti);
-    ITypeInfo_AddRef(*ti);
-    return hr;
+    return get_typeinfo(IXMLHTTPRequest_tid, ppTInfo);
 }
 
 static HRESULT WINAPI XMLHTTPRequest_GetIDsOfNames(IXMLHTTPRequest *iface, REFIID riid,
@@ -1260,7 +1257,10 @@ static HRESULT WINAPI XMLHTTPRequest_GetIDsOfNames(IXMLHTTPRequest *iface, REFII
 
     hr = get_typeinfo(IXMLHTTPRequest_tid, &typeinfo);
     if(SUCCEEDED(hr))
+    {
         hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
 
     return hr;
 }
@@ -1278,8 +1278,11 @@ static HRESULT WINAPI XMLHTTPRequest_Invoke(IXMLHTTPRequest *iface, DISPID dispI
 
     hr = get_typeinfo(IXMLHTTPRequest_tid, &typeinfo);
     if(SUCCEEDED(hr))
+    {
         hr = ITypeInfo_Invoke(typeinfo, &This->IXMLHTTPRequest_iface, dispIdMember, wFlags,
                 pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
 
     return hr;
 }
@@ -1606,16 +1609,13 @@ static HRESULT WINAPI ServerXMLHTTPRequest_GetTypeInfoCount(IServerXMLHTTPReques
 }
 
 static HRESULT WINAPI ServerXMLHTTPRequest_GetTypeInfo(IServerXMLHTTPRequest *iface, UINT iTInfo,
-        LCID lcid, ITypeInfo **ti)
+        LCID lcid, ITypeInfo **ppTInfo)
 {
     serverhttp *This = impl_from_IServerXMLHTTPRequest( iface );
-    HRESULT hr;
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ti);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    hr = get_typeinfo(IServerXMLHTTPRequest_tid, ti);
-    ITypeInfo_AddRef(*ti);
-    return hr;
+    return get_typeinfo(IServerXMLHTTPRequest_tid, ppTInfo);
 }
 
 static HRESULT WINAPI ServerXMLHTTPRequest_GetIDsOfNames(IServerXMLHTTPRequest *iface, REFIID riid,
@@ -1633,7 +1633,10 @@ static HRESULT WINAPI ServerXMLHTTPRequest_GetIDsOfNames(IServerXMLHTTPRequest *
 
     hr = get_typeinfo(IServerXMLHTTPRequest_tid, &typeinfo);
     if(SUCCEEDED(hr))
+    {
         hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
 
     return hr;
 }
@@ -1651,8 +1654,11 @@ static HRESULT WINAPI ServerXMLHTTPRequest_Invoke(IServerXMLHTTPRequest *iface, 
 
     hr = get_typeinfo(IServerXMLHTTPRequest_tid, &typeinfo);
     if(SUCCEEDED(hr))
+    {
         hr = ITypeInfo_Invoke(typeinfo, &This->IServerXMLHTTPRequest_iface, dispIdMember, wFlags,
                 pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
 
     return hr;
 }
