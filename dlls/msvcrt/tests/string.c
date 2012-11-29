@@ -23,6 +23,7 @@
 #include "winnls.h"
 #include <string.h>
 #include <mbstring.h>
+#include <wchar.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <mbctype.h>
@@ -84,6 +85,7 @@ static errno_t (__cdecl *p_mbsupr_s)(unsigned char *str, size_t numberOfElements
 static errno_t (__cdecl *p_mbslwr_s)(unsigned char *str, size_t numberOfElements);
 static int (__cdecl *p_wctob)(wint_t);
 static int (__cdecl *p_tolower)(int);
+static size_t (__cdecl *p_mbrlen)(const char*, size_t, mbstate_t*);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -303,6 +305,21 @@ static void test_mbcp(void)
     expect_eq(_mbslen(mbstring2), 4, int, "%d");
     expect_eq(_mbslen(mbsonlylead), 0, int, "%d");          /* lead + NUL not counted as character */
     expect_eq(_mbslen(mbstring), 4, int, "%d");             /* lead + invalid trail counted */
+
+    /* mbrlen */
+    if(!setlocale(LC_ALL, ".936") || !p_mbrlen) {
+        win_skip("mbrlen tests\n");
+    }else {
+        mbstate_t state = 0;
+        expect_eq(p_mbrlen((const char*)mbstring, 2, NULL), 2, int, "%d");
+        expect_eq(p_mbrlen((const char*)&mbstring[2], 2, NULL), 2, int, "%d");
+        expect_eq(p_mbrlen((const char*)&mbstring[3], 2, NULL), 1, int, "%d");
+        expect_eq(p_mbrlen((const char*)mbstring, 1, NULL), -2, int, "%d");
+        expect_eq(p_mbrlen((const char*)mbstring, 1, &state), -2, int, "%d");
+        ok(state == mbstring[0], "incorrect state value (%x)\n", state);
+        expect_eq(p_mbrlen((const char*)&mbstring[1], 1, &state), 2, int, "%d");
+    }
+    setlocale(LC_ALL, "C");
 
     /* _mbccpy/_mbsncpy */
     memset(buf, 0xff, sizeof(buf));
@@ -2302,6 +2319,7 @@ START_TEST(string)
     p_mbslwr_s = (void*)GetProcAddress(hMsvcrt, "_mbslwr_s");
     p_wctob = (void*)GetProcAddress(hMsvcrt, "wctob");
     p_tolower = (void*)GetProcAddress(hMsvcrt, "tolower");
+    p_mbrlen = (void*)GetProcAddress(hMsvcrt, "mbrlen");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
