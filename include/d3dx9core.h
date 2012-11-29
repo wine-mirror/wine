@@ -146,8 +146,10 @@ DECLARE_INTERFACE_(ID3DXFont, IUnknown)
     STDMETHOD(PreloadTextA)(THIS_ LPCSTR string, INT count) PURE;
     STDMETHOD(PreloadTextW)(THIS_ LPCWSTR string, INT count) PURE;
 
-    STDMETHOD_(INT, DrawTextA)(THIS_ LPD3DXSPRITE sprite, LPCSTR string, INT count, LPRECT rect, DWORD format, D3DCOLOR color) PURE;
-    STDMETHOD_(INT, DrawTextW)(THIS_ LPD3DXSPRITE sprite, LPCWSTR string, INT count, LPRECT rect, DWORD format, D3DCOLOR color) PURE;
+    STDMETHOD_(INT, DrawTextA)(THIS_ struct ID3DXSprite *sprite, const char *string,
+            INT count, RECT *rect, DWORD format, D3DCOLOR color) PURE;
+    STDMETHOD_(INT, DrawTextW)(THIS_ struct ID3DXSprite *sprite, const WCHAR *string,
+            INT count, RECT *rect, DWORD format, D3DCOLOR color) PURE;
 
     STDMETHOD(OnLostDevice)(THIS) PURE;
     STDMETHOD(OnResetDevice)(THIS) PURE;
