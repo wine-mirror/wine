@@ -5153,7 +5153,7 @@ static void draw_glyph_null( const dib_info *dib, const RECT *rect, const dib_in
     return;
 }
 
-static DWORD blend_subpixel( BYTE r, BYTE g, BYTE b, DWORD text, DWORD alpha )
+static inline DWORD blend_subpixel( BYTE r, BYTE g, BYTE b, DWORD text, DWORD alpha )
 {
     return blend_color( r, text >> 16, (BYTE)(alpha >> 16) ) << 16 |
            blend_color( g, text >> 8,  (BYTE)(alpha >> 8) )  << 8  |
