@@ -220,7 +220,7 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
         return hres;
     }
 
-    hres = jsdisp_propput_name(var_disp, argumentsW, jsval_obj(arg_disp));
+    hres = jsdisp_propput(var_disp, argumentsW, PROPF_DONTDELETE, jsval_obj(arg_disp));
     if(SUCCEEDED(hres)) {
         hres = scope_push(function->scope_chain, var_disp, to_disp(var_disp), &scope);
         if(SUCCEEDED(hres)) {

@@ -95,11 +95,12 @@ typedef struct jsdisp_t jsdisp_t;
 
 extern HINSTANCE jscript_hinstance DECLSPEC_HIDDEN;
 
-#define PROPF_ARGMASK 0x00ff
-#define PROPF_METHOD  0x0100
-#define PROPF_ENUM    0x0200
-#define PROPF_CONSTR  0x0400
-#define PROPF_CONST   0x0800
+#define PROPF_ARGMASK     0x00ff
+#define PROPF_METHOD      0x0100
+#define PROPF_ENUM        0x0200
+#define PROPF_CONSTR      0x0400
+#define PROPF_CONST       0x0800
+#define PROPF_DONTDELETE  0x1000
 
 /* NOTE: Keep in sync with names in Object.toString implementation */
 typedef enum {
@@ -268,6 +269,7 @@ HRESULT jsdisp_call_name(jsdisp_t*,const WCHAR*,WORD,unsigned,jsval_t*,jsval_t*)
 HRESULT disp_propget(script_ctx_t*,IDispatch*,DISPID,jsval_t*) DECLSPEC_HIDDEN;
 HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,jsval_t) DECLSPEC_HIDDEN;
 HRESULT jsdisp_propget(jsdisp_t*,DISPID,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT jsdisp_propput(jsdisp_t*,const WCHAR*,DWORD,jsval_t) DECLSPEC_HIDDEN;
 HRESULT jsdisp_propput_name(jsdisp_t*,const WCHAR*,jsval_t) DECLSPEC_HIDDEN;
 HRESULT jsdisp_propput_const(jsdisp_t*,const WCHAR*,jsval_t) DECLSPEC_HIDDEN;
 HRESULT jsdisp_propput_dontenum(jsdisp_t*,const WCHAR*,jsval_t) DECLSPEC_HIDDEN;

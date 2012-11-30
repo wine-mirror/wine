@@ -86,6 +86,10 @@ function testFunc1(x, y) {
     ok(this === test, "this !== test");
     eval('ok(this === test, "this !== test");');
 
+    tmp = delete arguments;
+    ok(tmp === false, "arguments deleted");
+    ok(typeof(arguments) === "object", "typeof(arguments) = " + typeof(arguments));
+
     return true;
 }
 

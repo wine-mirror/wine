@@ -740,8 +740,15 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     return hres;
 }
 
-static HRESULT delete_prop(dispex_prop_t *prop)
+static HRESULT delete_prop(dispex_prop_t *prop, BOOL *ret)
 {
+    if(prop->flags & PROPF_DONTDELETE) {
+        *ret = FALSE;
+        return S_OK;
+    }
+
+    *ret = TRUE; /* FIXME: not exactly right */
+
     if(prop->type == PROP_JSVAL) {
         jsval_release(prop->u.val);
         prop->type = PROP_DELETED;
@@ -753,6 +760,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bst
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
     dispex_prop_t *prop;
+    BOOL b;
     HRESULT hres;
 
     TRACE("(%p)->(%s %x)\n", This, debugstr_w(bstrName), grfdex);
@@ -768,13 +776,14 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bst
         return S_OK;
     }
 
-    return delete_prop(prop);
+    return delete_prop(prop, &b);
 }
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
     dispex_prop_t *prop;
+    BOOL b;
 
     TRACE("(%p)->(%x)\n", This, id);
 
@@ -784,7 +793,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID
         return DISP_E_MEMBERNOTFOUND;
     }
 
-    return delete_prop(prop);
+    return delete_prop(prop, &b);
 }
 
 static HRESULT WINAPI DispatchEx_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
@@ -1266,16 +1275,21 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
     return hres;
 }
 
-HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, jsval_t val)
+HRESULT jsdisp_propput(jsdisp_t *obj, const WCHAR *name, DWORD flags, jsval_t val)
 {
     dispex_prop_t *prop;
     HRESULT hres;
 
-    hres = ensure_prop_name(obj, name, FALSE, PROPF_ENUM, &prop);
+    hres = ensure_prop_name(obj, name, FALSE, flags, &prop);
     if(FAILED(hres))
         return hres;
 
     return prop_put(obj, prop, val, NULL);
+}
+
+HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, jsval_t val)
+{
+    return jsdisp_propput(obj, name, PROPF_ENUM, val);
 }
 
 HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, jsval_t val)
@@ -1292,14 +1306,7 @@ HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, jsval_t val)
 
 HRESULT jsdisp_propput_dontenum(jsdisp_t *obj, const WCHAR *name, jsval_t val)
 {
-    dispex_prop_t *prop;
-    HRESULT hres;
-
-    hres = ensure_prop_name(obj, name, FALSE, 0, &prop);
-    if(FAILED(hres))
-        return hres;
-
-    return prop_put(obj, prop, val, NULL);
+    return jsdisp_propput(obj, name, 0, val);
 }
 
 HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, jsval_t val)
@@ -1451,6 +1458,7 @@ HRESULT jsdisp_delete_idx(jsdisp_t *obj, DWORD idx)
     static const WCHAR formatW[] = {'%','d',0};
     WCHAR buf[12];
     dispex_prop_t *prop;
+    BOOL b;
     HRESULT hres;
 
     sprintfW(buf, formatW, idx);
@@ -1459,7 +1467,7 @@ HRESULT jsdisp_delete_idx(jsdisp_t *obj, DWORD idx)
     if(FAILED(hres) || !prop)
         return hres;
 
-    return delete_prop(prop);
+    return delete_prop(prop, &b);
 }
 
 HRESULT disp_delete(IDispatch *disp, DISPID id, BOOL *ret)
@@ -1472,10 +1480,9 @@ HRESULT disp_delete(IDispatch *disp, DISPID id, BOOL *ret)
     if(jsdisp) {
         dispex_prop_t *prop;
 
-        *ret = TRUE;
         prop = get_prop(jsdisp, id);
         if(prop)
-            hres = delete_prop(prop);
+            hres = delete_prop(prop, ret);
         else
             hres = DISP_E_MEMBERNOTFOUND;
 
@@ -1508,10 +1515,9 @@ HRESULT disp_delete_name(script_ctx_t *ctx, IDispatch *disp, jsstr_t *name, BOOL
     if(jsdisp) {
         dispex_prop_t *prop;
 
-        *ret = TRUE;
         hres = find_prop_name(jsdisp, string_hash(name->str), name->str, &prop);
         if(prop)
-            hres = delete_prop(prop);
+            hres = delete_prop(prop, ret);
         else
             hres = DISP_E_MEMBERNOTFOUND;
 
