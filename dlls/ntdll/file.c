@@ -1594,9 +1594,13 @@ static NTSTATUS set_file_times( int fd, const LARGE_INTEGER *mtime, const LARGE_
             tv[1].tv_sec = st.st_mtime;
 #ifdef HAVE_STRUCT_STAT_ST_ATIM
             tv[0].tv_usec = st.st_atim.tv_nsec / 1000;
+#elif defined(HAVE_STRUCT_STAT_ST_ATIMESPEC)
+            tv[0].tv_usec = st.st_atimespec.tv_nsec / 1000;
 #endif
 #ifdef HAVE_STRUCT_STAT_ST_MTIM
             tv[1].tv_usec = st.st_mtim.tv_nsec / 1000;
+#elif defined(HAVE_STRUCT_STAT_ST_MTIMESPEC)
+            tv[1].tv_usec = st.st_mtimespec.tv_nsec / 1000;
 #endif
         }
     }
@@ -1631,12 +1635,18 @@ static inline void get_file_times( const struct stat *st, LARGE_INTEGER *mtime, 
     RtlSecondsSince1970ToTime( st->st_atime, atime );
 #ifdef HAVE_STRUCT_STAT_ST_MTIM
     mtime->QuadPart += st->st_mtim.tv_nsec / 100;
+#elif defined(HAVE_STRUCT_STAT_ST_MTIMESPEC)
+    mtime->QuadPart += st->st_mtimespec.tv_nsec / 100;
 #endif
 #ifdef HAVE_STRUCT_STAT_ST_CTIM
     ctime->QuadPart += st->st_ctim.tv_nsec / 100;
+#elif defined(HAVE_STRUCT_STAT_ST_CTIMESPEC)
+    ctime->QuadPart += st->st_ctimespec.tv_nsec / 100;
 #endif
 #ifdef HAVE_STRUCT_STAT_ST_ATIM
     atime->QuadPart += st->st_atim.tv_nsec / 100;
+#elif defined(HAVE_STRUCT_STAT_ST_ATIMESPEC)
+    atime->QuadPart += st->st_atimespec.tv_nsec / 100;
 #endif
     *creation = *mtime;
 }
