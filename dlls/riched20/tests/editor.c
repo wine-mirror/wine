@@ -5173,7 +5173,7 @@ static void test_EM_StreamIn_Undo(void)
   char buffer[1024] = {0};
   const char randomtext[] = "Some text";
 
-  es.pfnCallback = (EDITSTREAMCALLBACK) EditStreamCallback;
+  es.pfnCallback = EditStreamCallback;
 
   /* StreamIn, no SFF_SELECTION */
   es.dwCookie = nCallbackCount;
