@@ -1396,6 +1396,35 @@ static void String_destructor(jsdisp_t *dispex)
     heap_free(This);
 }
 
+static unsigned String_idx_length(jsdisp_t *jsdisp)
+{
+    StringInstance *string = (StringInstance*)jsdisp;
+
+    /*
+     * NOTE: For invoke version < 2, indexed array is not implemented at all.
+     * Newer jscript.dll versions implement it on string type, not class,
+     * which is not how it should work according to spec. IE9 implements it
+     * properly, but it uses its own JavaScript engine inside MSHTML. We
+     * implement it here, but in the way IE9 and spec work.
+     */
+    return string->dispex.ctx->version < 2 ? 0 : jsstr_length(string->str);
+}
+
+static HRESULT String_idx_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
+{
+    StringInstance *string = (StringInstance*)jsdisp;
+    jsstr_t *ret;
+
+    TRACE("%p[%u] = %s\n", string, idx, debugstr_wn(string->str->str+idx, 1));
+
+    ret = jsstr_alloc_len(string->str->str+idx, 1);
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    *r = jsval_string(ret);
+    return S_OK;
+}
+
 static const builtin_prop_t String_props[] = {
     {anchorW,                String_anchor,                PROPF_METHOD|1},
     {bigW,                   String_big,                   PROPF_METHOD},
@@ -1451,7 +1480,9 @@ static const builtin_info_t StringInst_info = {
     sizeof(StringInst_props)/sizeof(*StringInst_props),
     StringInst_props,
     String_destructor,
-    NULL
+    NULL,
+    String_idx_length,
+    String_idx_get
 };
 
 /* ECMA-262 3rd Edition    15.5.3.2 */

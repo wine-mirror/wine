@@ -1785,6 +1785,9 @@ function callTest(argc) {
     ok(arguments.length === argc+1, "arguments.length = " + arguments.length + " expected " + (argc+1));
     for(var i=1; i <= argc; i++)
         ok(arguments[i] === i, "arguments[i] = " + arguments[i]);
+    var a = arguments;
+    for(var i=1; i <= argc; i++)
+        ok(a[i] === i, "a[i] = " + a[i]);
 }
 
 callTest.call(tmp, 1, 1);
