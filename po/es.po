@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-02-23 09:23+0100\n"
+"PO-Revision-Date: 2012-11-30 11:26-0600\n"
 "Last-Translator: Eduardo García <eduardo.garcia@gmx.com>\n"
 "Language-Team: none\n"
 "Language: Spanish\n"
@@ -3511,10 +3511,8 @@ msgid ""
 msgstr ""
 
 #: joy.rc:28
-#, fuzzy
-#| msgid "Create Control"
 msgid "Game Controllers"
-msgstr "Crear control"
+msgstr "Mandos de juego"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
