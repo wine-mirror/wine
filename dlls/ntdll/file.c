@@ -1648,7 +1648,21 @@ static inline void get_file_times( const struct stat *st, LARGE_INTEGER *mtime, 
 #elif defined(HAVE_STRUCT_STAT_ST_ATIMESPEC)
     atime->QuadPart += st->st_atimespec.tv_nsec / 100;
 #endif
+#ifdef HAVE_STRUCT_STAT_ST_BIRTHTIME
+    RtlSecondsSince1970ToTime( st->st_birthtime, creation );
+#ifdef HAVE_STRUCT_STAT_ST_BIRTHTIM
+    creation->QuadPart += st->st_birthtim.tv_nsec / 100;
+#elif defined(HAVE_STRUCT_STAT_ST_BIRTHTIMESPEC)
+    creation->QuadPart += st->st_birthtimespec.tv_nsec / 100;
+#endif
+#elif defined(HAVE_STRUCT_STAT___ST_BIRTHTIME)
+    RtlSecondsSince1970ToTime( st->__st_birthtime, creation );
+#ifdef HAVE_STRUCT_STAT___ST_BIRTHTIM
+    creation->QuadPart += st->__st_birthtim.tv_nsec / 100;
+#endif
+#else
     *creation = *mtime;
+#endif
 }
 
 /* fill in the file information that depends on the stat info */

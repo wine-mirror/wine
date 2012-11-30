@@ -14177,6 +14177,51 @@ _ACEOF
 
 
 fi
+ac_fn_c_check_member "$LINENO" "struct stat" "st_birthtime" "ac_cv_member_struct_stat_st_birthtime" "$ac_includes_default"
+if test "x$ac_cv_member_struct_stat_st_birthtime" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_BIRTHTIME 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "st_birthtim" "ac_cv_member_struct_stat_st_birthtim" "$ac_includes_default"
+if test "x$ac_cv_member_struct_stat_st_birthtim" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_BIRTHTIM 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "st_birthtimespec" "ac_cv_member_struct_stat_st_birthtimespec" "$ac_includes_default"
+if test "x$ac_cv_member_struct_stat_st_birthtimespec" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_BIRTHTIMESPEC 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "__st_birthtime" "ac_cv_member_struct_stat___st_birthtime" "$ac_includes_default"
+if test "x$ac_cv_member_struct_stat___st_birthtime" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT___ST_BIRTHTIME 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "__st_birthtim" "ac_cv_member_struct_stat___st_birthtim" "$ac_includes_default"
+if test "x$ac_cv_member_struct_stat___st_birthtim" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT___ST_BIRTHTIM 1
+_ACEOF
+
+
+fi
 
 
 ac_fn_c_check_member "$LINENO" "struct sockaddr_in6" "sin6_scope_id" "ac_cv_member_struct_sockaddr_in6_sin6_scope_id" "#ifdef HAVE_SYS_TYPES_H
