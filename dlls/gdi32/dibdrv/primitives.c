@@ -4520,7 +4520,7 @@ static BOOL gradient_rect_8888( const dib_info *dib, const RECT *rc, const TRIVE
         for (y = rc->top; y < rc->bottom; y++, ptr += dib->stride / 4)
         {
             DWORD val = gradient_rgb_8888( v, y - v[0].y, v[1].y - v[0].y );
-            for (x = 0; x < rc->right - rc->left; x++) ptr[x] = val;
+            memset_32( ptr, val, rc->right - rc->left );
         }
         break;
 
@@ -4570,7 +4570,7 @@ static BOOL gradient_rect_32( const dib_info *dib, const RECT *rc, const TRIVERT
         break;
 
     case GRADIENT_FILL_RECT_V:
-        for (y = rc->top; y < rc->bottom; y++)
+        for (y = rc->top; y < rc->bottom; y++, ptr += dib->stride / 4)
         {
             DWORD val = gradient_rgb_24( v, y - v[0].y, v[1].y - v[0].y );
             if (dib->red_len == 8 && dib->green_len == 8 && dib->blue_len == 8)
@@ -4582,8 +4582,7 @@ static BOOL gradient_rect_32( const dib_info *dib, const RECT *rc, const TRIVERT
                        put_field( val >> 8,  dib->green_shift, dib->green_len ) |
                        put_field( val,       dib->blue_shift,  dib->blue_len ));
 
-            for (x = 0; x < rc->right - rc->left; x++) ptr[x] = val;
-            ptr += dib->stride / 4;
+            memset_32( ptr, val, rc->right - rc->left );
         }
         break;
 
