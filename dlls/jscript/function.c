@@ -221,25 +221,35 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
     }
 
     hres = jsdisp_propput(var_disp, argumentsW, PROPF_DONTDELETE, jsval_obj(arg_disp));
+    if(FAILED(hres)) {
+        jsdisp_release(arg_disp);
+        jsdisp_release(var_disp);
+        return hres;
+    }
+
+    hres = scope_push(function->scope_chain, var_disp, to_disp(var_disp), &scope);
     if(SUCCEEDED(hres)) {
-        hres = scope_push(function->scope_chain, var_disp, to_disp(var_disp), &scope);
+        hres = create_exec_ctx(ctx, this_obj, var_disp, scope, FALSE, &exec_ctx);
+        scope_release(scope);
+
         if(SUCCEEDED(hres)) {
-            hres = create_exec_ctx(ctx, this_obj, var_disp, scope, FALSE, &exec_ctx);
-            scope_release(scope);
+            jsdisp_t *prev_args;
+
+            prev_args = function->arguments;
+            function->arguments = arg_disp;
+            hres = exec_source(exec_ctx, function->code, function->func_code, FALSE, r);
+            function->arguments = prev_args;
+
+            exec_release(exec_ctx);
         }
     }
-    jsdisp_release(var_disp);
-    if(SUCCEEDED(hres)) {
-        jsdisp_t *prev_args;
 
-        prev_args = function->arguments;
-        function->arguments = arg_disp;
-        hres = exec_source(exec_ctx, function->code, function->func_code, FALSE, r);
-        function->arguments = prev_args;
-    }
+    /* Reset arguments value to cut the reference cycle. Note that since all activation contexts have
+     * their own arguments property, it's impossible to use prototype's one during name lookup */
+    jsdisp_propput_name(var_disp, argumentsW, jsval_undefined());
 
     jsdisp_release(arg_disp);
-    exec_release(exec_ctx);
+    jsdisp_release(var_disp);
     return hres;
 }
 
