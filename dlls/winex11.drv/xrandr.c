@@ -24,7 +24,9 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xrandr);
+#ifdef HAVE_XRRGETSCREENRESOURCES
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
+#endif
 
 #ifdef SONAME_LIBXRANDR
 
