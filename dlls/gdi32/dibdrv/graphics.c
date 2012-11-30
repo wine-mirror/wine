@@ -574,18 +574,18 @@ static struct cached_glyph *get_cached_glyph( struct cached_font *font, UINT ind
  *
  * See the comment above get_pen_bkgnd_masks
  */
-static inline void get_text_bkgnd_masks( dibdrv_physdev *pdev, rop_mask *mask )
+static inline void get_text_bkgnd_masks( HDC hdc, const dib_info *dib, rop_mask *mask )
 {
-    COLORREF bg = GetBkColor( pdev->dev.hdc );
+    COLORREF bg = GetBkColor( hdc );
 
     mask->and = 0;
 
-    if (pdev->dib.bit_count != 1)
-        mask->xor = get_pixel_color( pdev, bg, FALSE );
+    if (dib->bit_count != 1)
+        mask->xor = get_pixel_color( hdc, dib, bg, FALSE );
     else
     {
-        COLORREF fg = GetTextColor( pdev->dev.hdc );
-        mask->xor = get_pixel_color( pdev, fg, TRUE );
+        COLORREF fg = GetTextColor( hdc );
+        mask->xor = get_pixel_color( hdc, dib, fg, TRUE );
         if (fg != bg) mask->xor = ~mask->xor;
     }
 }
@@ -717,19 +717,25 @@ done:
 }
 
 static void render_string( HDC hdc, dib_info *dib, struct cached_font *font, INT x, INT y,
-                           UINT flags, const WCHAR *str, UINT count, const INT *dx, DWORD text_color,
-                           const struct intensity_range *ranges, const struct clipped_rects *clipped_rects,
-                           RECT *bounds )
+                           UINT flags, const WCHAR *str, UINT count, const INT *dx,
+                           const struct clipped_rects *clipped_rects, RECT *bounds )
 {
     UINT i;
     struct cached_glyph *glyph;
     dib_info glyph_dib;
+    DWORD text_color;
+    struct intensity_range ranges[17];
 
     glyph_dib.bit_count    = get_glyph_depth( font->aa_flags );
     glyph_dib.rect.left    = 0;
     glyph_dib.rect.top     = 0;
     glyph_dib.bits.is_copy = FALSE;
     glyph_dib.bits.free    = NULL;
+
+    text_color = get_pixel_color( hdc, dib, GetTextColor( hdc ), TRUE );
+
+    if (glyph_dib.bit_count == 8)
+        get_aa_ranges( dib->funcs->pixel_to_colorref( dib, text_color ), ranges );
 
     EnterCriticalSection( &font_cache_cs );
     for (i = 0; i < count; i++)
@@ -770,10 +776,6 @@ BOOL render_aa_text_bitmapinfo( HDC hdc, BITMAPINFO *info, struct gdi_image_bits
                                 UINT aa_flags, LPCWSTR str, UINT count, const INT *dx )
 {
     dib_info dib;
-    BOOL got_pixel;
-    COLORREF fg, bg;
-    DWORD fg_pixel, bg_pixel;
-    struct intensity_range glyph_intensities[17];
     struct clipped_rects visrect;
     struct cached_font *font;
 
@@ -784,27 +786,16 @@ BOOL render_aa_text_bitmapinfo( HDC hdc, BITMAPINFO *info, struct gdi_image_bits
     visrect.count = 1;
     visrect.rects = &src->visrect;
 
-    fg = make_rgb_colorref( hdc, &dib, GetTextColor( hdc ), &got_pixel, &fg_pixel);
-    if (!got_pixel) fg_pixel = dib.funcs->colorref_to_pixel( &dib, fg );
-
-    get_aa_ranges( fg, glyph_intensities );
-
     if (flags & ETO_OPAQUE)
     {
         rop_mask bkgnd_color;
-
-        bg = make_rgb_colorref( hdc, &dib, GetBkColor( hdc ), &got_pixel, &bg_pixel);
-        if (!got_pixel) bg_pixel = dib.funcs->colorref_to_pixel( &dib, bg );
-
-        bkgnd_color.and = 0;
-        bkgnd_color.xor = bg_pixel;
+        get_text_bkgnd_masks( hdc, &dib, &bkgnd_color );
         dib.funcs->solid_rects( &dib, 1, &src->visrect, bkgnd_color.and, bkgnd_color.xor );
     }
 
     if (!(font = add_cached_font( hdc, GetCurrentObject( hdc, OBJ_FONT ), aa_flags ))) return FALSE;
 
-    render_string( hdc, &dib, font, x, y, flags, str, count, dx,
-                   fg_pixel, glyph_intensities, &visrect, NULL );
+    render_string( hdc, &dib, font, x, y, flags, str, count, dx, &visrect, NULL );
     release_cached_font( font );
     return TRUE;
 }
@@ -817,10 +808,7 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     struct clipped_rects clipped_rects;
-    DC *dc;
     RECT bounds;
-    DWORD text_color;
-    struct intensity_range ranges[17];
 
     if (!pdev->font) return FALSE;
 
@@ -830,7 +818,7 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     if (flags & ETO_OPAQUE)
     {
         rop_mask bkgnd_color;
-        get_text_bkgnd_masks( pdev, &bkgnd_color );
+        get_text_bkgnd_masks( dev->hdc, &pdev->dib, &bkgnd_color );
         add_bounds_rect( &bounds, rect );
         get_clipped_rects( &pdev->dib, rect, pdev->clip, &clipped_rects );
         pdev->dib.funcs->solid_rects( &pdev->dib, clipped_rects.count, clipped_rects.rects,
@@ -851,13 +839,8 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     }
     if (!clipped_rects.count) goto done;
 
-    text_color = get_pixel_color( pdev, GetTextColor( pdev->dev.hdc ), TRUE );
-    get_aa_ranges( pdev->dib.funcs->pixel_to_colorref( &pdev->dib, text_color ), ranges );
-
-    dc = get_dc_ptr( dev->hdc );
     render_string( dev->hdc, &pdev->dib, pdev->font, x, y, flags, str, count, dx,
-                   text_color, ranges, &clipped_rects, &bounds );
-    release_dc_ptr( dc );
+                   &clipped_rects, &bounds );
 
 done:
     add_clipped_bounds( pdev, &bounds, pdev->clip );
@@ -975,7 +958,7 @@ static void fill_row( dib_info *dib, HRGN clip, RECT *row, DWORD pixel, UINT typ
 BOOL dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
-    DWORD pixel = get_pixel_color( pdev, color, FALSE );
+    DWORD pixel = get_pixel_color( dev->hdc, &pdev->dib, color, FALSE );
     RECT row;
     HRGN rgn;
 
@@ -1008,7 +991,7 @@ COLORREF dibdrv_GetNearestColor( PHYSDEV dev, COLORREF color )
 
     TRACE( "(%p, %08x)\n", dev, color );
 
-    pixel = get_pixel_color( pdev, color, FALSE );
+    pixel = get_pixel_color( dev->hdc, &pdev->dib, color, FALSE );
     return pdev->dib.funcs->pixel_to_colorref( &pdev->dib, pixel );
 }
 
@@ -1481,7 +1464,7 @@ COLORREF dibdrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
     add_clipped_bounds( pdev, &rect, pdev->clip );
 
     /* SetPixel doesn't do the 1bpp massaging like other fg colors */
-    pixel = get_pixel_color( pdev, color, FALSE );
+    pixel = get_pixel_color( dev->hdc, &pdev->dib, color, FALSE );
     color = pdev->dib.funcs->pixel_to_colorref( &pdev->dib, pixel );
 
     if (!get_clipped_rects( &pdev->dib, &rect, pdev->clip, &clipped_rects )) return color;
