@@ -2509,6 +2509,7 @@ static const IUnknownVtbl TLB_PEFile_Vtable =
 static HRESULT TLB_PEFile_Open(LPCWSTR path, INT index, LPVOID *ppBase, DWORD *pdwTLBLength, IUnknown **ppFile)
 {
     TLB_PEFile *This;
+    HRESULT hr = TYPE_E_CANTLOADLIBRARY;
 
     This = heap_alloc(sizeof(TLB_PEFile));
     if (!This)
@@ -2543,11 +2544,13 @@ static HRESULT TLB_PEFile_Open(LPCWSTR path, INT index, LPVOID *ppBase, DWORD *p
                     return S_OK;
                 }
             }
+
+            hr = E_FAIL;
         }
     }
 
     TLB_PEFile_Release((IUnknown *)&This->lpvtbl);
-    return TYPE_E_CANTLOADLIBRARY;
+    return hr;
 }
 
 typedef struct TLB_NEFile
@@ -2946,6 +2949,8 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
             ret = TYPE_E_CANTLOADLIBRARY;
         IUnknown_Release(pFile);
     }
+    else
+        ret = TYPE_E_CANTLOADLIBRARY;
 
     if(*ppTypeLib) {
 	ITypeLibImpl *impl = (ITypeLibImpl*)*ppTypeLib;
