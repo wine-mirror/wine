@@ -351,9 +351,9 @@
 @ stub GetSiteSidFromToken
 # @ stub GetThreadWaitChain
 @ stdcall GetTokenInformation(long long ptr long ptr)
-# @ stub GetTraceEnableFlags
-# @ stub GetTraceEnableLevel
-# @ stub GetTraceLoggerHandle
+@ stub GetTraceEnableFlags
+@ stub GetTraceEnableLevel
+@ stub GetTraceLoggerHandle
 @ stdcall GetTrusteeFormA(ptr) 
 @ stdcall GetTrusteeFormW(ptr) 
 @ stdcall GetTrusteeNameA(ptr) 
