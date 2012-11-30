@@ -37,6 +37,12 @@ typedef struct {
     jsdisp_t *arguments;
 } FunctionInstance;
 
+typedef struct {
+    jsdisp_t jsdisp;
+    FunctionInstance *function;
+    jsdisp_t *var_obj;
+} ArgumentsInstance;
+
 static inline FunctionInstance *function_from_vdisp(vdisp_t *vdisp)
 {
     return (FunctionInstance*)vdisp->u.jsdisp;
@@ -77,61 +83,102 @@ static HRESULT Arguments_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     return E_NOTIMPL;
 }
 
+static void Arguments_destructor(jsdisp_t *jsdisp)
+{
+    ArgumentsInstance *arguments = (ArgumentsInstance*)jsdisp;
+
+    jsdisp_release(&arguments->function->dispex);
+    jsdisp_release(arguments->var_obj);
+    heap_free(arguments);
+}
+
+static unsigned Arguments_idx_length(jsdisp_t *jsdisp)
+{
+    ArgumentsInstance *arguments = (ArgumentsInstance*)jsdisp;
+    return arguments->function->length;
+}
+
+static HRESULT Arguments_idx_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *res)
+{
+    ArgumentsInstance *arguments = (ArgumentsInstance*)jsdisp;
+
+    TRACE("%p[%u]\n", arguments, idx);
+
+    /* FIXME: Accessing by name won't work for duplicated argument names */
+    return jsdisp_propget_name(arguments->var_obj, arguments->function->func_code->params[idx], res);
+}
+
+static HRESULT Arguments_idx_put(jsdisp_t *jsdisp, unsigned idx, jsval_t val)
+{
+    ArgumentsInstance *arguments = (ArgumentsInstance*)jsdisp;
+
+    TRACE("%p[%u] = %s\n", arguments, idx, debugstr_jsval(val));
+
+    /* FIXME: Accessing by name won't work for duplicated argument names */
+    return jsdisp_propput_name(arguments->var_obj, arguments->function->func_code->params[idx], val);
+}
+
 static const builtin_info_t Arguments_info = {
     JSCLASS_ARGUMENTS,
     {NULL, Arguments_value, 0},
     0, NULL,
+    Arguments_destructor,
     NULL,
-    NULL
+    Arguments_idx_length,
+    Arguments_idx_get,
+    Arguments_idx_put
 };
 
-static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, unsigned argc, jsval_t *argv, jsdisp_t **ret)
+static HRESULT create_arguments(script_ctx_t *ctx, FunctionInstance *calee, jsdisp_t *var_obj,
+        unsigned argc, jsval_t *argv, jsdisp_t **ret)
 {
-    jsdisp_t *args;
-    DWORD i;
+    ArgumentsInstance *args;
+    unsigned i;
     HRESULT hres;
 
     static const WCHAR caleeW[] = {'c','a','l','l','e','e',0};
 
-    args = heap_alloc_zero(sizeof(jsdisp_t));
+    args = heap_alloc_zero(sizeof(*args));
     if(!args)
         return E_OUTOFMEMORY;
 
-    hres = init_dispex_from_constr(args, ctx, &Arguments_info, ctx->object_constr);
+    hres = init_dispex_from_constr(&args->jsdisp, ctx, &Arguments_info, ctx->object_constr);
     if(FAILED(hres)) {
         heap_free(args);
         return hres;
     }
 
-    for(i=0; i < argc; i++) {
+    jsdisp_addref(&calee->dispex);
+    args->function = calee;
+    args->var_obj = jsdisp_addref(var_obj);
+
+    /* Store unnamed arguments directly in arguments object */
+    for(i = calee->length; i < argc; i++) {
         WCHAR buf[12];
 
         static const WCHAR formatW[] = {'%','d',0};
 
         sprintfW(buf, formatW, i);
-        hres = jsdisp_propput_dontenum(args, buf, argv[i]);
+        hres = jsdisp_propput_dontenum(&args->jsdisp, buf, argv[i]);
         if(FAILED(hres))
             break;
     }
 
     if(SUCCEEDED(hres)) {
-        hres = jsdisp_propput_dontenum(args, lengthW, jsval_number(argc));
-
+        hres = jsdisp_propput_dontenum(&args->jsdisp, lengthW, jsval_number(argc));
         if(SUCCEEDED(hres))
-            hres = jsdisp_propput_dontenum(args, caleeW, jsval_disp(calee));
+            hres = jsdisp_propput_dontenum(&args->jsdisp, caleeW, jsval_disp(to_disp(&calee->dispex)));
     }
-
     if(FAILED(hres)) {
-        jsdisp_release(args);
+        jsdisp_release(&args->jsdisp);
         return hres;
     }
 
-    *ret = args;
+    *ret = &args->jsdisp;
     return S_OK;
 }
 
-static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, jsdisp_t *arg_disp,
-        unsigned argc, jsval_t *argv, jsdisp_t **ret)
+static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, unsigned argc, jsval_t *argv, jsdisp_t **ret)
 {
     jsdisp_t *var_disp;
     HRESULT hres;
@@ -140,9 +187,7 @@ static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, js
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_propput_name(var_disp, argumentsW, jsval_obj(arg_disp));
-    if(SUCCEEDED(hres))
-        hres = init_parameters(var_disp, function, argc, argv);
+    hres = init_parameters(var_disp, function, argc, argv);
     if(FAILED(hres)) {
         jsdisp_release(var_disp);
         return hres;
@@ -165,20 +210,23 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
         return E_FAIL;
     }
 
-    hres = create_arguments(ctx, to_disp(&function->dispex), argc, argv, &arg_disp);
+    hres = create_var_disp(ctx, function, argc, argv, &var_disp);
     if(FAILED(hres))
         return hres;
 
-    hres = create_var_disp(ctx, function, arg_disp, argc, argv, &var_disp);
+    hres = create_arguments(ctx, function, var_disp, argc, argv, &arg_disp);
     if(FAILED(hres)) {
-        jsdisp_release(arg_disp);
+        jsdisp_release(var_disp);
         return hres;
     }
 
-    hres = scope_push(function->scope_chain, var_disp, to_disp(var_disp), &scope);
+    hres = jsdisp_propput_name(var_disp, argumentsW, jsval_obj(arg_disp));
     if(SUCCEEDED(hres)) {
-        hres = create_exec_ctx(ctx, this_obj, var_disp, scope, FALSE, &exec_ctx);
-        scope_release(scope);
+        hres = scope_push(function->scope_chain, var_disp, to_disp(var_disp), &scope);
+        if(SUCCEEDED(hres)) {
+            hres = create_exec_ctx(ctx, this_obj, var_disp, scope, FALSE, &exec_ctx);
+            scope_release(scope);
+        }
     }
     jsdisp_release(var_disp);
     if(SUCCEEDED(hres)) {

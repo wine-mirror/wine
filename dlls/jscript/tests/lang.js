@@ -74,6 +74,15 @@ function testFunc1(x, y) {
     ok(arguments.callee === testFunc1, "arguments.calee !== testFunc1");
     ok(testFunc1.arguments === arguments, "testFunc1.arguments = " + testFunc1.arguments);
 
+    x = false;
+    ok(arguments[0] === false, "arguments[0] is not false");
+    arguments[1] = "x";
+    ok(y === "x", "y = " + y);
+    ok(arguments[1] === "x", "arguments[1] = " + arguments[1]);
+
+    ok(arguments["0x0"] === undefined, "arguments['0x0'] = " + arguments["0x0"]);
+    ok(arguments["x"] === undefined, "arguments['x'] = " + arguments["x"]);
+
     ok(this === test, "this !== test");
     eval('ok(this === test, "this !== test");');
 

@@ -200,6 +200,9 @@ typedef struct {
     const builtin_prop_t *props;
     void (*destructor)(jsdisp_t*);
     void (*on_put)(jsdisp_t*,const WCHAR*);
+    unsigned (*idx_length)(jsdisp_t*);
+    HRESULT (*idx_get)(jsdisp_t*,unsigned,jsval_t*);
+    HRESULT (*idx_put)(jsdisp_t*,unsigned,jsval_t);
 } builtin_info_t;
 
 struct jsdisp_t {

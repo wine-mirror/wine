@@ -39,7 +39,8 @@ typedef enum {
     PROP_JSVAL,
     PROP_BUILTIN,
     PROP_PROTREF,
-    PROP_DELETED
+    PROP_DELETED,
+    PROP_IDX
 } prop_type_t;
 
 struct _dispex_prop_t {
@@ -52,6 +53,7 @@ struct _dispex_prop_t {
         jsval_t val;
         const builtin_prop_t *p;
         DWORD ref;
+        unsigned idx;
     } u;
 
     int bucket_head;
@@ -219,6 +221,23 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
         return S_OK;
     }
 
+    if(This->builtin_info->idx_length) {
+        const WCHAR *ptr;
+        unsigned idx = 0;
+
+        for(ptr = name; isdigitW(*ptr) && idx < 0x10000; ptr++)
+            idx = idx*10 + (*ptr-'0');
+        if(!*ptr && idx < This->builtin_info->idx_length(This)) {
+            prop = alloc_prop(This, name, PROP_IDX, This->builtin_info->idx_put ? 0 : PROPF_CONST);
+            if(!prop)
+                return E_OUTOFMEMORY;
+
+            prop->u.idx = idx;
+            *ret = prop;
+            return S_OK;
+        }
+    }
+
     *ret = NULL;
     return S_OK;
 }
@@ -383,10 +402,14 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
 
         return disp_call_value(This->ctx, get_object(prop->u.val), jsthis, flags, argc, argv, r);
     }
-    default:
-        ERR("type %d\n", prop->type);
+    case PROP_IDX:
+        FIXME("Invoking PROP_IDX not yet supported\n");
+        return E_NOTIMPL;
+    case PROP_DELETED:
+        assert(0);
     }
 
+    assert(0);
     return E_FAIL;
 }
 
@@ -422,6 +445,9 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop, DISPPARAMS *dp,
         break;
     case PROP_JSVAL:
         hres = jsval_copy(prop->u.val, r);
+        break;
+    case PROP_IDX:
+        hres = This->builtin_info->idx_get(This, prop->u.idx, r);
         break;
     default:
         ERR("type %d\n", prop->type);
@@ -463,6 +489,8 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val, IServi
     case PROP_JSVAL:
         jsval_release(prop->u.val);
         break;
+    case PROP_IDX:
+        return This->builtin_info->idx_put(This, prop->u.idx, val);
     default:
         ERR("type %d\n", prop->type);
         return E_FAIL;
@@ -479,7 +507,6 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val, IServi
     if(This->builtin_info->on_put)
         This->builtin_info->on_put(This, prop->name);
 
-    TRACE("%s = %s\n", debugstr_w(prop->name), debugstr_jsval(val));
     return S_OK;
 }
 
