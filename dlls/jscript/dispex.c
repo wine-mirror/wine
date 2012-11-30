@@ -1498,6 +1498,49 @@ HRESULT disp_delete(IDispatch *disp, DISPID id, BOOL *ret)
     return S_OK;
 }
 
+HRESULT disp_delete_name(script_ctx_t *ctx, IDispatch *disp, jsstr_t *name, BOOL *ret)
+{
+    IDispatchEx *dispex;
+    jsdisp_t *jsdisp;
+    HRESULT hres;
+
+    jsdisp = iface_to_jsdisp((IUnknown*)disp);
+    if(jsdisp) {
+        dispex_prop_t *prop;
+
+        *ret = TRUE;
+        hres = find_prop_name(jsdisp, string_hash(name->str), name->str, &prop);
+        if(prop)
+            hres = delete_prop(prop);
+        else
+            hres = DISP_E_MEMBERNOTFOUND;
+
+        jsdisp_release(jsdisp);
+        return hres;
+    }
+
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    if(SUCCEEDED(hres)) {
+        BSTR bstr;
+
+        bstr = SysAllocStringLen(name->str, jsstr_length(name));
+        if(bstr) {
+            hres = IDispatchEx_DeleteMemberByName(dispex, bstr, make_grfdex(ctx, fdexNameCaseSensitive));
+            SysFreeString(bstr);
+            *ret = TRUE;
+        }else {
+            hres = E_OUTOFMEMORY;
+        }
+
+        IDispatchEx_Release(dispex);
+    }else {
+        hres = S_OK;
+        ret = FALSE;
+    }
+
+    return hres;
+}
+
 HRESULT jsdisp_is_own_prop(jsdisp_t *obj, const WCHAR *name, BOOL *ret)
 {
     dispex_prop_t *prop;

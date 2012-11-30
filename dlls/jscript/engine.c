@@ -1592,7 +1592,6 @@ static HRESULT interp_mod(exec_ctx_t *ctx)
 static HRESULT interp_delete(exec_ctx_t *ctx)
 {
     jsval_t objv, namev;
-    IDispatchEx *dispex;
     IDispatch *obj;
     jsstr_t *name;
     BOOL ret;
@@ -1617,25 +1616,7 @@ static HRESULT interp_delete(exec_ctx_t *ctx)
         return hres;
     }
 
-    hres = IDispatch_QueryInterface(obj, &IID_IDispatchEx, (void**)&dispex);
-    if(SUCCEEDED(hres)) {
-        BSTR bstr;
-
-        bstr = SysAllocStringLen(name->str, jsstr_length(name));
-        if(bstr) {
-            hres = IDispatchEx_DeleteMemberByName(dispex, bstr, make_grfdex(ctx->script, fdexNameCaseSensitive));
-            SysFreeString(bstr);
-            ret = TRUE;
-        }else {
-            hres = E_OUTOFMEMORY;
-        }
-
-        IDispatchEx_Release(dispex);
-    }else {
-        hres = S_OK;
-        ret = FALSE;
-    }
-
+    hres = disp_delete_name(ctx->script, obj, name, &ret);
     IDispatch_Release(obj);
     jsstr_release(name);
     if(FAILED(hres))
