@@ -1462,6 +1462,42 @@ HRESULT jsdisp_delete_idx(jsdisp_t *obj, DWORD idx)
     return delete_prop(prop);
 }
 
+HRESULT disp_delete(IDispatch *disp, DISPID id, BOOL *ret)
+{
+    IDispatchEx *dispex;
+    jsdisp_t *jsdisp;
+    HRESULT hres;
+
+    jsdisp = iface_to_jsdisp((IUnknown*)disp);
+    if(jsdisp) {
+        dispex_prop_t *prop;
+
+        *ret = TRUE;
+        prop = get_prop(jsdisp, id);
+        if(prop)
+            hres = delete_prop(prop);
+        else
+            hres = DISP_E_MEMBERNOTFOUND;
+
+        jsdisp_release(jsdisp);
+        return hres;
+    }
+
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    if(FAILED(hres)) {
+        *ret = FALSE;
+        return S_OK;
+    }
+
+    hres = IDispatchEx_DeleteMemberByDispID(dispex, id);
+    IDispatchEx_Release(dispex);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = TRUE;
+    return S_OK;
+}
+
 HRESULT jsdisp_is_own_prop(jsdisp_t *obj, const WCHAR *name, BOOL *ret)
 {
     dispex_prop_t *prop;

@@ -1648,9 +1648,8 @@ static HRESULT interp_delete(exec_ctx_t *ctx)
 static HRESULT interp_delete_ident(exec_ctx_t *ctx)
 {
     const BSTR arg = get_op_bstr(ctx, 0);
-    IDispatchEx *dispex;
     exprval_t exprval;
-    BOOL ret = FALSE;
+    BOOL ret;
     HRESULT hres;
 
     TRACE("%s\n", debugstr_w(arg));
@@ -1665,16 +1664,10 @@ static HRESULT interp_delete_ident(exec_ctx_t *ctx)
         return E_NOTIMPL;
     }
 
-    hres = IDispatch_QueryInterface(exprval.u.idref.disp, &IID_IDispatchEx, (void**)&dispex);
+    hres = disp_delete(exprval.u.idref.disp, exprval.u.idref.id, &ret);
     IDispatch_Release(exprval.u.idref.disp);
-    if(SUCCEEDED(hres)) {
-        hres = IDispatchEx_DeleteMemberByDispID(dispex, exprval.u.idref.id);
-        IDispatchEx_Release(dispex);
-        if(FAILED(hres))
-            return hres;
-
-        ret = TRUE;
-    }
+    if(FAILED(hres))
+        return ret;
 
     return stack_push(ctx, jsval_bool(ret));
 }
