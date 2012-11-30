@@ -64,6 +64,7 @@ dlls/jscript/parser.tab.c
 dlls/jscript/parser.tab.h
 dlls/libd3dcompiler.def
 dlls/libd3dx9.def
+dlls/libhtmlhelp.def
 dlls/libkernel.def
 dlls/libwinspool.def
 dlls/libxinput.def
