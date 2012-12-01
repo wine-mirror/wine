@@ -784,9 +784,9 @@ static void *cupshandle;
     DO_FUNC(cupsGetOption); \
     DO_FUNC(cupsGetPPD); \
     DO_FUNC(cupsParseOptions); \
-    DO_FUNC(cupsPrintFile);
+    DO_FUNC(cupsPrintFile)
 #define CUPS_OPT_FUNCS \
-    DO_FUNC(cupsGetPPD3);
+    DO_FUNC(cupsGetPPD3)
 
 #define DO_FUNC(f) static typeof(f) *p##f
 CUPS_FUNCS;
@@ -894,10 +894,10 @@ static BOOL CUPS_LoadPrinters(void)
     }
     TRACE("%p: %s loaded\n", cupshandle, SONAME_LIBCUPS);
 
-#define DO_FUNC(x) p##x = wine_dlsym( cupshandle, #x, NULL, 0 ); if (!p##x) return FALSE;
+#define DO_FUNC(x) p##x = wine_dlsym( cupshandle, #x, NULL, 0 ); if (!p##x) return FALSE
     CUPS_FUNCS;
 #undef DO_FUNC
-#define DO_FUNC(x) p##x = wine_dlsym( cupshandle, #x, NULL, 0 );
+#define DO_FUNC(x) p##x = wine_dlsym( cupshandle, #x, NULL, 0 )
     CUPS_OPT_FUNCS;
 #undef DO_FUNC
 
