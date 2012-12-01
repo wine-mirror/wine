@@ -203,7 +203,7 @@ static	BOOL	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam1, LPARAM lPar
  *
  * Tries to load a 16 bit driver whose DLL's (module) name is lpFileName.
  */
-static	LPWINE_DRIVER	DRIVER_TryOpenDriver16(LPCSTR lpFileName, LPARAM lParam2)
+static	LPWINE_DRIVER	DRIVER_TryOpenDriver16(LPSTR lpFileName, LPARAM lParam2)
 {
     static	WORD	DRIVER_hDrvr16Counter /* = 0 */;
     LPWINE_DRIVER 	lpDrv = NULL;
