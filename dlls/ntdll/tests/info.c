@@ -1336,7 +1336,7 @@ static void test_mapprotection(void)
     status = pNtQueryVirtualMemory( GetCurrentProcess(), addr, MemoryBasicInformation, &info, sizeof(info), &retlen );
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( retlen == sizeof(info), "Expected STATUS_SUCCESS, got %08x\n", status);
-    ok(info.Protect == PAGE_READWRITE, "addr.Protect is not PAGE_READWRITE, but 0x%x\n", info.Protect);
+    ok((info.Protect & ~PAGE_NOCACHE) == PAGE_READWRITE, "addr.Protect is not PAGE_READWRITE, but 0x%x\n", info.Protect);
 
     status = pNtUnmapViewOfSection (GetCurrentProcess(), addr);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
