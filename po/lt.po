@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-11-28 22:47+0300\n"
+"PO-Revision-Date: 2012-12-01 13:07+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -115,7 +115,7 @@ msgstr "Komentarai:"
 
 #: appwiz.rc:97
 msgid "Wine Gecko Installer"
-msgstr "Wine Gecko diegimo programa"
+msgstr "„Wine“ „Gecko“ diegimo programa"
 
 #: appwiz.rc:100
 msgid ""
@@ -127,8 +127,9 @@ msgid ""
 "href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
-"Wine nepavyko rasti Gecko paketo reikalingo programoms, įterpiančioms HTML, "
-"teisingai veikti. Wine gali automatiškai atsiųsti ir įdiegti šį paketą.\n"
+"„Wine“ nepavyko rasti „Gecko“ paketo reikalingo programoms, įterpiančioms "
+"HTML, teisingai veikti. „Wine“ gali automatiškai atsiųsti ir įdiegti šį "
+"paketą.\n"
 "\n"
 "Pastaba: rekomenduojama naudoti distribucijos paketus. Daugiau informacijos "
 "<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a>."
@@ -159,7 +160,7 @@ msgstr "Atsisakyti"
 
 #: appwiz.rc:112
 msgid "Wine Mono Installer"
-msgstr "Wine Mono diegimo programa"
+msgstr "„Wine“ „Mono“ diegimo programa"
 
 #: appwiz.rc:115
 msgid ""
@@ -170,8 +171,8 @@ msgid ""
 "href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> for "
 "details."
 msgstr ""
-"Wine nepavyko rasti Mono paketo reikalingo .NET programoms teisingai veikti. "
-"Wine gali automatiškai atsiųsti ir įdiegti šį paketą.\n"
+"„Wine“ nepavyko rasti „Mono“ paketo reikalingo .NET programoms teisingai "
+"veikti. „Wine“ gali automatiškai atsiųsti ir įdiegti šį paketą.\n"
 "\n"
 "Pastaba: rekomenduojama naudoti distribucijos paketus. Daugiau informacijos "
 "<a href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a>."
@@ -185,8 +186,8 @@ msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
-"Leidžia įdiegti naują programinę įrangą, ar pašalinti jau įdiegtą iš jūsų "
-"kompiuterio."
+"Leidžia įdiegti naują programinę įrangą, ar pašalinti kompiuteryje jau "
+"įdiegtą."
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
@@ -295,7 +296,7 @@ msgstr "garsas"
 
 #: avifil32.rc:33
 msgid "Wine AVI-default-filehandler"
-msgstr "Wine numatyta-AVI-doroklė"
+msgstr "„Wine“ numatytoji-AVI-doroklė"
 
 #: avifil32.rc:34
 msgid "uncompressed"
@@ -809,7 +810,7 @@ msgstr "Failas nerastas"
 
 #: comdlg32.rc:30
 msgid "Please verify that the correct file name was given"
-msgstr "Prašome patikrinti ar buvo pateiktas korektiškas failo vardas"
+msgstr "Patikrinkite, ar pateiktas korektiškas failo vardas"
 
 #: comdlg32.rc:31
 msgid ""
@@ -957,7 +958,7 @@ msgid ""
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Ši reikšmė nepatenka į puslapių rėžį.\n"
-"Prašome įvesti reikšmę tarp %1!d! ir %2!d!."
+"Įveskite reikšmę tarp %1!d! ir %2!d!."
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -969,7 +970,7 @@ msgid ""
 "Please reenter margins."
 msgstr ""
 "Paraštės persidengia arba išeina už popieriaus ribų.\n"
-"Prašome įvesti paraštes iš naujo."
+"Įveskite paraštes iš naujo."
 
 #: comdlg32.rc:60
 msgid "The 'Number of copies' field cannot be empty."
@@ -980,8 +981,8 @@ msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
 msgstr ""
-"Toks didelis kopijų skaičius yra nepalaikomas jūsų spausdintuvo.\n"
-"Prašome įvesti reikšmę tarp 1 ir %d."
+"Toks didelis kopijų skaičius nepalaikomas spausdintuvo.\n"
+"Įveskite reikšmę tarp 1 ir %d."
 
 #: comdlg32.rc:63
 msgid "A printer error occurred."
@@ -1014,7 +1015,7 @@ msgid ""
 msgstr ""
 "Prieš atlikdami su spausdintuvu susijusius veiksmus, tokius kaip puslapio "
 "nuostatų keitimas ar dokumento spausdinimas, turite įdiegti spausdintuvą. "
-"Prašome įdiegti spausdintuvą ir pakartoti."
+"Įdiekite spausdintuvą ir pakartokite."
 
 #: comdlg32.rc:137
 msgid "Select a font size between %1!d! and %2!d! points."
@@ -1171,7 +1172,7 @@ msgstr "&Slaptažodis:"
 
 #: credui.rc:47
 msgid "&Remember my password"
-msgstr "Į&siminti mano slaptažodį"
+msgstr "Į&siminti slaptažodį"
 
 #: credui.rc:27
 msgid "Connect to %s"
@@ -1191,7 +1192,7 @@ msgid ""
 "and password are correct."
 msgstr ""
 "Įsitikinkite, kad naudotojo vardas\n"
-"ir slaptažodis yra teisingi."
+"ir slaptažodis teisingi."
 
 #: credui.rc:32
 msgid ""
@@ -1225,11 +1226,11 @@ msgstr "Rakto naudojimo ribojimai"
 
 #: crypt32.rc:30
 msgid "Subject Alternative Name"
-msgstr "Subjekto alternatyvus vardas"
+msgstr "Subjekto alternatyvusis vardas"
 
 #: crypt32.rc:31
 msgid "Issuer Alternative Name"
-msgstr "Išdavėjo alternatyvus vardas"
+msgstr "Išdavėjo alternatyvusis vardas"
 
 #: crypt32.rc:32
 msgid "Basic Constraints"
@@ -1446,7 +1447,7 @@ msgstr "Pagrindinis pavadinimas"
 
 #: crypt32.rc:85
 msgid "Windows Product Update"
-msgstr "Windows produktų naujinimas"
+msgstr "„Windows“ produktų naujinimas"
 
 #: crypt32.rc:86
 msgid "Enrollment Name Value Pair"
@@ -1690,19 +1691,19 @@ msgstr "Failų šifravimo sistema"
 
 #: crypt32.rc:146 cryptui.rc:130
 msgid "Windows Hardware Driver Verification"
-msgstr "Windows tvarkyklių patikra"
+msgstr "„Windows“ tvarkyklių patikra"
 
 #: crypt32.rc:147 cryptui.rc:131
 msgid "Windows System Component Verification"
-msgstr "Windows sistemos komponentų patikra"
+msgstr "„Windows“ sistemos komponentų patikra"
 
 #: crypt32.rc:148 cryptui.rc:132
 msgid "OEM Windows System Component Verification"
-msgstr "OEM Windows sistemos komponentų patikra"
+msgstr "OEM „Windows“ sistemos komponentų patikra"
 
 #: crypt32.rc:149 cryptui.rc:133
 msgid "Embedded Windows System Component Verification"
-msgstr "Įtaisytų Windows sistemos komponentų patikra"
+msgstr "Įtaisytų „Windows“ sistemos komponentų patikra"
 
 #: crypt32.rc:150 cryptui.rc:140
 msgid "Key Pack Licenses"
@@ -1885,7 +1886,7 @@ msgstr "Nežinomas prieigos metodas"
 
 #: crypt32.rc:202
 msgid "Alternative Name"
-msgstr "Alternatyvus vardas"
+msgstr "Alternatyvusis vardas"
 
 #: crypt32.rc:203
 msgid "CRL Distribution Point"
@@ -2182,15 +2183,15 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"Šis vediklis padeda jums importuoti liudijimus, atšauktų liudijimų sąrašus "
-"ir patikintų liudijimų sąrašus iš failo į liudijimų saugyklą.\n"
+"Šis vediklis padeda importuoti liudijimus, atšauktų liudijimų sąrašus ir "
+"patikintų liudijimų sąrašus iš failo į liudijimų saugyklą.\n"
 "\n"
-"Liudijimas gali būti naudojamas nustatyti jūsų ar kompiuterio su kuriuo "
-"esate užmezgę ryšį tapatumą. Jis taip pat gali būti naudojamas tapatumo "
-"nustatymui ir pranešimų pasirašymui. Liudijimų saugyklos yra liudijimų, "
-"atšauktų liudijimų sąrašų ir patikintų liudijimų sąrašų rinkiniai.\n"
+"Liudijimas gali būti naudojamas atpažinti jus ar kompiuterį su kuriuo esate "
+"užmezgę ryšį. Jis taip pat gali būti naudojamas tapatumo nustatymui ir "
+"pranešimų pasirašymui. Liudijimų saugyklos yra liudijimų, atšauktų liudijimų "
+"sąrašų ir patikintų liudijimų sąrašų rinkiniai.\n"
 "\n"
-"Jei norite tęsti, spauskite Kitas."
+"Jei norite tęsti, spauskite „Kitas“."
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
@@ -2226,7 +2227,7 @@ msgid ""
 "Wine can automatically select the certificate store, or you can specify a "
 "location for the certificates."
 msgstr ""
-"Wine gali automatiškai parinkti liudijimų saugyklą arba jūs galite nurodyti "
+"„Wine“ gali automatiškai parinkti liudijimų saugyklą arba galite nurodyti "
 "vietą liudijimams."
 
 #: cryptui.rc:310
@@ -2243,11 +2244,11 @@ msgstr "Liudijimo importo vediklio pabaiga"
 
 #: cryptui.rc:324
 msgid "You have successfully completed the Certificate Import Wizard."
-msgstr "Jūs sėkmingai baigėte liudijimo importo vediklį."
+msgstr "Sėkmingai baigėte liudijimo importo vediklį."
 
 #: cryptui.rc:326 cryptui.rc:440
 msgid "You have specified the following settings:"
-msgstr "Jūs nurodėte šias nuostatas:"
+msgstr "Nurodėte šias nuostatas:"
 
 #: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
@@ -2290,9 +2291,7 @@ msgstr "Liudijimo paskirtis"
 #: cryptui.rc:356
 msgid ""
 "Select one or more purposes to be listed when Advanced Purposes is selected."
-msgstr ""
-"Išrinkite vieną ar daugiau paskirčių rodymui, kai yra pasirinkta „papildomos "
-"paskirtys“."
+msgstr "Išrinkite paskirčių rodymui, kai pasirinkta „papildomos paskirtys“."
 
 #: cryptui.rc:358
 msgid "&Certificate purposes:"
@@ -2319,15 +2318,15 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"Šis vediklis padeda jums eksportuoti liudijimus, atšauktų liudijimų sąrašus "
-"ir patikintų liudijimų sąrašus iš liudijimų saugyklos į failą.\n"
+"Šis vediklis padeda eksportuoti liudijimus, atšauktų liudijimų sąrašus ir "
+"patikintų liudijimų sąrašus iš liudijimų saugyklos į failą.\n"
 "\n"
-"Liudijimas gali būti naudojamas nustatyti jūsų ar kompiuterio su kuriuo "
-"esate užmezgę ryšį tapatumą. Jis taip pat gali būti naudojamas tapatumo "
-"nustatymui ir pranešimų pasirašymui. Liudijimų saugyklos yra liudijimų, "
-"atšauktų liudijimų sąrašų ir patikintų liudijimų sąrašų rinkiniai.\n"
+"Liudijimas gali būti naudojamas atpažinti jus ar kompiuterį su kuriuo esate "
+"užmezgę ryšį. Jis taip pat gali būti naudojamas tapatumo nustatymui ir "
+"pranešimų pasirašymui. Liudijimų saugyklos yra liudijimų, atšauktų liudijimų "
+"sąrašų ir patikintų liudijimų sąrašų rinkiniai.\n"
 "\n"
-"Jei norite tęsti, spauskite Kitas."
+"Jei norite tęsti, spauskite „Kitas“."
 
 #: cryptui.rc:381
 msgid ""
@@ -2388,7 +2387,7 @@ msgstr "Įjungti stiprų &šifravimą"
 
 #: cryptui.rc:419
 msgid "Delete the private &key if the export is successful"
-msgstr "Iš&trinti privatųjį raktą, kai eksportas sėkmingas"
+msgstr "Pašalin&ti privatųjį raktą, jei eksportas sėkmingas"
 
 #: cryptui.rc:436
 msgid "Completing the Certificate Export Wizard"
@@ -2396,7 +2395,7 @@ msgstr "Liudijimo eksporto vediklio pabaiga"
 
 #: cryptui.rc:438
 msgid "You have successfully completed the Certificate Export Wizard."
-msgstr "Jūs sėkmingai baigėte liudijimo eksporto vediklį."
+msgstr "Sėkmingai baigėte liudijimo eksporto vediklį."
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
@@ -2419,8 +2418,8 @@ msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
-"Šis vyriausiasis liudijimas yra nepatikimas. Norėdami juo pasitikėti "
-"įtraukite jį į sistemos patikimų vyriausiųjų liudijimų saugyklą."
+"Šis vyriausiasis liudijimas nepatikimas. Norėdami juo pasitikėti įtraukite "
+"jį į sistemos patikimų vyriausiųjų liudijimų saugyklą."
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
@@ -2437,7 +2436,7 @@ msgstr "Nepavyko patikrinti visų šio liudijimo paskirties tikslų."
 
 #: cryptui.rc:34
 msgid "This certificate is intended for the following purposes:"
-msgstr "Šis liudijimas yra skirtas šiems tikslams:"
+msgstr "Šis liudijimas skirtas šiems tikslams:"
 
 #: cryptui.rc:35
 msgid "Issued to: "
@@ -2465,15 +2464,15 @@ msgstr "Šis liudijimas jau nebegalioja arba dar negalioja."
 
 #: cryptui.rc:41
 msgid "This certificate's validity period exceeds that of its issuer."
-msgstr "Šio liudijimo galiojimo periodas yra didesnis už išdavėjo."
+msgstr "Šio liudijimo galiojimo periodas didesnis už išdavėjo."
 
 #: cryptui.rc:42
 msgid "This certificate was revoked by its issuer."
-msgstr "Šis liudijimas buvo panaikintas išdavėjo."
+msgstr "Šis liudijimas panaikintas išdavėjo."
 
 #: cryptui.rc:43
 msgid "This certificate is OK."
-msgstr "Šis liudijimas yra geras."
+msgstr "Šis liudijimas geras."
 
 #: cryptui.rc:44
 msgid "Field"
@@ -2701,8 +2700,7 @@ msgid ""
 "sign messages with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"Su šiuo liudijimu jūs daugiau nebegalėsite iššifruoti pranešimų ar "
-"pasirašyti pranešimų.\n"
+"Su šiuo liudijimu daugiau nebegalėsite iššifruoti ar pasirašyti pranešimų.\n"
 "Ar tikrai norite pašalinti šį liudijimą?"
 
 #: cryptui.rc:108
@@ -2711,8 +2709,8 @@ msgid ""
 "sign messages with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Su šiuo liudijimu jūs daugiau nebegalėsite iššifruoti pranešimų ar "
-"pasirašyti pranešimų.\n"
+"Su šiais liudijimais daugiau nebegalėsite iššifruoti ar pasirašyti "
+"pranešimų.\n"
 "Ar tikrai norite pašalinti šiuos liudijimus?"
 
 #: cryptui.rc:109
@@ -2721,8 +2719,8 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"Su šiuo liudijimu jūs daugiau nebegalėsite iššifruoti pranešimų ar "
-"patikrinti pasirašytų pranešimų.\n"
+"Su šiuo liudijimu daugiau nebegalėsite užšifruoti pranešimų ar patikrinti su "
+"juo pasirašytų pranešimų.\n"
 "Ar tikrai norite pašalinti šį liudijimą?"
 
 #: cryptui.rc:110
@@ -2731,8 +2729,8 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Su šiuo liudijimu jūs daugiau nebegalėsite iššifruoti pranešimų ar "
-"patikrinti pasirašytų pranešimų.\n"
+"Su šiais liudijimais daugiau nebegalėsite užšifruoti pranešimų ar patikrinti "
+"su jais pasirašytų pranešimų.\n"
 "Ar tikrai norite pašalinti šiuos liudijimus?"
 
 #: cryptui.rc:111
@@ -2803,7 +2801,7 @@ msgstr "Garantuoja nutolusio kompiuterio tapatumą"
 
 #: cryptui.rc:122
 msgid "Proves your identity to a remote computer"
-msgstr "Įrodo jūsų tapatumą nutolusiam kompiuteriui"
+msgstr "Įrodo Jūsų tapatumą nutolusiam kompiuteriui"
 
 #: cryptui.rc:123
 msgid ""
@@ -2911,7 +2909,7 @@ msgstr "Įveskite slaptažodį"
 
 #: cryptui.rc:170
 msgid "You may password-protect a private key."
-msgstr "Jūs galite apsaugoti privatųjį raktą slaptažodžiu."
+msgstr "Galite apsaugoti privatųjį raktą slaptažodžiu."
 
 #: cryptui.rc:171
 msgid "The passwords do not match."
@@ -2927,19 +2925,19 @@ msgstr "Pastaba: šio liudijimo privatusis raktas neišeksportuojamas."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
-msgstr "Numatytasis DirectSound"
+msgstr "Numatytasis „DirectSound“"
 
 #: devenum.rc:33
 msgid "DirectSound: %s"
-msgstr "DirectSound: %s"
+msgstr "„DirectSound“: %s"
 
 #: devenum.rc:34
 msgid "Default WaveOut Device"
-msgstr "Numatytasis WaveOut įrenginys"
+msgstr "Numatytasis „WaveOut“ įrenginys"
 
 #: devenum.rc:35
 msgid "Default MidiOut Device"
-msgstr "Numatytasis MidiOut įrenginys"
+msgstr "Numatytasis „MidiOut“ įrenginys"
 
 #: dinput.rc:40
 msgid "Configure Devices"
@@ -3087,7 +3085,7 @@ msgstr "Perduodama"
 
 #: gphoto2.rc:43
 msgid "Transferring... Please Wait"
-msgstr "Perduodama... Prašome palaukti"
+msgstr "Perduodama... Palaukite"
 
 #: gphoto2.rc:48
 msgid "Connecting to camera"
@@ -3095,7 +3093,7 @@ msgstr "Jungiamasi prie kameros"
 
 #: gphoto2.rc:52
 msgid "Connecting to camera... Please Wait"
-msgstr "Jungiamasi prie kameros... Prašome palaukti"
+msgstr "Jungiamasi prie kameros... Palaukite"
 
 #: hhctrl.rc:56
 msgid "S&ync"
@@ -3297,8 +3295,7 @@ msgstr "Pradžios tinklalapis"
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
 msgstr ""
-"Galite pasirinkti adresą, kuris bus naudojamas kaip jūsų pradžios "
-"tinklalapis."
+"Galite pasirinkti adresą, kuris bus naudojamas kaip pradžios tinklalapis."
 
 #: inetcpl.rc:50
 msgid "&Current page"
@@ -3318,7 +3315,7 @@ msgstr "Naršymo istorija"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr "Jūs galite pašalinti puslapius podėlyje, slapukus ir kitus duomenis."
+msgstr "Galite pašalinti puslapius podėlyje, slapukus ir kitus duomenis."
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
@@ -3387,8 +3384,7 @@ msgid ""
 "Certificates are used for your personal identification and to identify "
 "certificate authorities and publishers."
 msgstr ""
-"Liudijimai yra naudojami jūsų tapatumo nustatymui ir liudijimo įstaigų bei "
-"publikuotojų tapatumui nustatyti."
+"Liudijimai naudojami Jūsų ir liudijimo įstaigų bei publikuotojų atpažinimui."
 
 #: inetcpl.rc:111
 msgid "Certificates..."
@@ -3404,7 +3400,7 @@ msgstr "Interneto nuostatos"
 
 #: inetcpl.rc:29
 msgid "Configure Wine Internet Browser and related settings"
-msgstr "Konfigūruokite Wine interneto naršyklės ir susijusias nuostatas"
+msgstr "Konfigūruokite „Wine“ interneto naršyklės ir susijusias nuostatas"
 
 #: inetcpl.rc:30
 msgid "Security settings for zone: "
@@ -3564,7 +3560,7 @@ msgstr "Žymė nerasta"
 
 #: jscript.rc:43
 msgid "Conditional compilation is turned off"
-msgstr "Sąlyginis kompiliavimas yra išjungtas"
+msgstr "Sąlyginis kompiliavimas išjungtas"
 
 #: jscript.rc:46
 msgid "Number expected"
@@ -3588,7 +3584,7 @@ msgstr "Neleistinas priskyrimas"
 
 #: jscript.rc:49
 msgid "'|' is undefined"
-msgstr "„|“ yra neapibrėžtas"
+msgstr "„|“ neapibrėžtas"
 
 #: jscript.rc:50
 msgid "Boolean object expected"
@@ -3616,7 +3612,7 @@ msgstr "Koduotiname URI yra netinkamų simbolių"
 
 #: jscript.rc:55
 msgid "URI to be decoded is incorrect"
-msgstr "Dekoduojamas URI yra neteisingas"
+msgstr "Dekoduojamas URI neteisingas"
 
 #: jscript.rc:57
 msgid "Number of fraction digits is out of range"
@@ -4040,7 +4036,7 @@ msgstr "Kaupiklis jau prijungtas su JOIN.\n"
 
 #: winerror.mc:541
 msgid "Drive is already SUBSTed.\n"
-msgstr "Kaupiklis jau yra pakeistas su SUBST.\n"
+msgstr "Kaupiklis jau pakeistas su SUBST.\n"
 
 #: winerror.mc:546
 msgid "Drive is not JOINed.\n"
@@ -4476,11 +4472,11 @@ msgstr "Nepavyko įrašyti registro rakto.\n"
 
 #: winerror.mc:1086
 msgid "Registry has been recovered.\n"
-msgstr "Registras buvo atkurtas.\n"
+msgstr "Registras atkurtas.\n"
 
 #: winerror.mc:1091
 msgid "Registry is corrupt.\n"
-msgstr "Registras yra pažeistas.\n"
+msgstr "Registras pažeistas.\n"
 
 #: winerror.mc:1096
 msgid "I/O to registry failed.\n"
@@ -4492,7 +4488,7 @@ msgstr "Ne registro failas.\n"
 
 #: winerror.mc:1106
 msgid "Key deleted.\n"
-msgstr "Raktas ištrintas.\n"
+msgstr "Raktas pašalintas.\n"
 
 #: winerror.mc:1111
 msgid "No registry log space.\n"
@@ -4512,7 +4508,7 @@ msgstr "Vyksta pranešimo apie pasikeitimus užklausa.\n"
 
 #: winerror.mc:1131
 msgid "Dependent services are running.\n"
-msgstr "Priklausomos tarnybos yra vykdomos.\n"
+msgstr "Priklausomos tarnybos vykdomos.\n"
 
 #: winerror.mc:1136
 msgid "Invalid service control.\n"
@@ -4790,7 +4786,7 @@ msgstr "Per daug nuorodų.\n"
 
 #: winerror.mc:1476
 msgid "Newer windows version needed.\n"
-msgstr "Reikalinga naujesnė windows versija.\n"
+msgstr "Reikalinga naujesnė „windows“ versija.\n"
 
 #: winerror.mc:1481
 msgid "Wrong operating system.\n"
@@ -4898,7 +4894,7 @@ msgstr "Pakeitimo failo perkėlimas nepavyko.\n"
 
 #: winerror.mc:1611
 msgid "The journal is being deleted.\n"
-msgstr "Žurnalas yra šalinamas.\n"
+msgstr "Žurnalas šalinamas.\n"
 
 #: winerror.mc:1616
 msgid "The journal is not active.\n"
@@ -4910,7 +4906,7 @@ msgstr "Rastas galimas atitinkantis failas.\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted.\n"
-msgstr "Žurnalo įrašas buvo pašalintas.\n"
+msgstr "Žurnalo įrašas pašalintas.\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name.\n"
@@ -5058,7 +5054,7 @@ msgstr "Sujungimas nutrauktas.\n"
 
 #: winerror.mc:1816
 msgid "Please retry operation.\n"
-msgstr "Prašome pakartoti operaciją.\n"
+msgstr "Pakartokite operaciją.\n"
 
 #: winerror.mc:1821
 msgid "Connection count limit reached.\n"
@@ -5122,7 +5118,7 @@ msgstr "Vykdyti operaciją, net jei niekas nepasikeitė.\n"
 
 #: winerror.mc:1896
 msgid "The user profile is invalid.\n"
-msgstr "Naudotojo profilis yra netinkamas.\n"
+msgstr "Naudotojo profilis netinkamas.\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server.\n"
@@ -5410,15 +5406,15 @@ msgstr "Saugumo duomenų bazės nusiuntimo klaida.\n"
 
 #: winerror.mc:2256
 msgid "Account is built-in.\n"
-msgstr "Paskyra yra įtaisyta.\n"
+msgstr "Įtaisyta paskyra.\n"
 
 #: winerror.mc:2261
 msgid "Group is built-in.\n"
-msgstr "Grupė yra įtaisyta.\n"
+msgstr "Įtaisyta grupė.\n"
 
 #: winerror.mc:2266
 msgid "User is built-in.\n"
-msgstr "Naudotojas yra įtaisytas.\n"
+msgstr "Įtaisytas naudotojas.\n"
 
 #: winerror.mc:2271
 msgid "Group is primary for user.\n"
@@ -5494,7 +5490,7 @@ msgstr "Failas ar katalogas pažeisti.\n"
 
 #: winerror.mc:2366
 msgid "Disk is corrupt.\n"
-msgstr "Diskas yra pažeistas.\n"
+msgstr "Diskas pažeistas.\n"
 
 #: winerror.mc:2371
 msgid "No user session key.\n"
@@ -6422,7 +6418,7 @@ msgstr "Ne RPC klaida.\n"
 
 #: winerror.mc:3531
 msgid "UUID is local only.\n"
-msgstr "UUID yra tik vietinis.\n"
+msgstr "UUID tik vietinis.\n"
 
 #: winerror.mc:3536
 msgid "Security package error.\n"
@@ -6486,7 +6482,7 @@ msgstr "Jau laukiama spausdintuvo rodyklės.\n"
 
 #: winerror.mc:3611
 msgid "Printer deleted.\n"
-msgstr "Spausdintuvas ištrintas.\n"
+msgstr "Spausdintuvas pašalintas.\n"
 
 #: winerror.mc:3616
 msgid "Invalid printer state.\n"
@@ -6618,7 +6614,7 @@ msgstr "&Perdavimo pakartojimas:"
 
 #: localui.rc:29
 msgid "'%s' is not a valid port name"
-msgstr "„%s“ yra netinkamas prievado vardas"
+msgstr "„%s“ nėra tinkamas prievado vardas"
 
 #: localui.rc:30
 msgid "Port %s already exists"
@@ -6756,7 +6752,7 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
-"Windows diegimo programa %s\n"
+"„Windows“ diegimo programa %s\n"
 "\n"
 "Naudojimas:\n"
 "msiexec komanda {būtinas parametras} [nebūtinas parametras]\n"
@@ -6809,15 +6805,15 @@ msgstr "parinkite aplanką, kuris turi %s"
 
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
-msgstr "Wine MS-RLE vaizdo kodekas"
+msgstr "„Wine“ MS-RLE vaizdo kodekas"
 
 #: msrle32.rc:29
 msgid ""
 "Wine MS-RLE video codec\n"
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
-"Wine MS-RLE vaizdo kodekas\n"
-"Autoriaus teisės Michael Günnewig, 2002"
+"„Wine“ MS-RLE vaizdo kodekas\n"
+"Autoriaus teisės Michael Günnewig, 2002 m."
 
 #: msvfw32.rc:30
 msgid "Video Compression"
@@ -6857,7 +6853,7 @@ msgstr "Pilni kadrai (neglaudinti)"
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
-msgstr "Wine Video 1 vaizdo kodekas"
+msgstr "„Wine“ Video 1 vaizdo kodekas"
 
 #: oleacc.rc:27
 msgid "unknown object"
@@ -7206,15 +7202,15 @@ msgstr "Keisti &piktogramą..."
 
 #: oledlg.rc:25
 msgid "Insert a new %s object into your document"
-msgstr "Įterpia naują objektą „%s“ į jūsų dokumentą"
+msgstr "Įterpia naują objektą „%s“ į dokumentą"
 
 #: oledlg.rc:26
 msgid ""
 "Insert the contents of the file as an object into your document so that you "
 "may activate it using the program which created it."
 msgstr ""
-"Įterpia failo turinį kaip objektą į jūsų dokumentą, kad galėtumėte jį "
-"aktyvuoti naudodami programą, kuri jį sukūrė."
+"Įterpia failo turinį kaip objektą į dokumentą, kad galėtumėte jį aktyvuoti "
+"naudodami programą, kuri jį sukūrė."
 
 #: oledlg.rc:27 shell32.rc:194
 msgid "Browse"
@@ -7234,23 +7230,23 @@ msgstr "Pridėti valdiklį"
 
 #: oledlg.rc:34
 msgid "Inserts the contents of the clipboard into your document as %s."
-msgstr "Įterpia iškarpinės turinį į jūsų dokumentą kaip %s."
+msgstr "Įterpia iškarpinės turinį į dokumentą kaip %s."
 
 #: oledlg.rc:35
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
 msgstr ""
-"Įterpia iškarpinės turinį į jūsų dokumentą, kad galėtumėte jį aktyvuoti "
-"naudodami %s."
+"Įterpia iškarpinės turinį į dokumentą, kad galėtumėte jį aktyvuoti naudodami "
+"%s."
 
 #: oledlg.rc:36
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
-"Įterpia iškarpinės turinį į jūsų dokumentą, kad galėtumėte jį aktyvuoti "
-"naudodami %s. Jis bus rodomas kaip piktograma."
+"Įterpia iškarpinės turinį į dokumentą, kad galėtumėte jį aktyvuoti naudodami "
+"%s. Jis bus rodomas kaip piktograma."
 
 #: oledlg.rc:37
 msgid ""
@@ -7258,8 +7254,8 @@ msgid ""
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
-"Įterpia iškarpinės turinį į jūsų dokumentą kaip %s. Duomenys yra susieti su "
-"šaltinio failu, todėl failo pakeitimai bus atspindėti jūsų dokumente."
+"Įterpia iškarpinės turinį į dokumentą kaip %s. Duomenys yra susieti su "
+"šaltinio failu, todėl failo pakeitimai bus atspindėti dokumente."
 
 #: oledlg.rc:38
 msgid ""
@@ -7267,9 +7263,8 @@ msgid ""
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
-"Įterpia iškarpinės turinio paveikslą į jūsų dokumentą. Paveikslas yra "
-"susietas su šaltinio failu, todėl failo pakeitimai bus atspindėti jūsų "
-"dokumente."
+"Įterpia iškarpinės turinio paveikslą į dokumentą. Paveikslas susietas su "
+"šaltinio failu, todėl failo pakeitimai bus atspindėti dokumente."
 
 #: oledlg.rc:39
 msgid ""
@@ -7277,12 +7272,12 @@ msgid ""
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
-"Įterpia nuorodą, kuri rodo į iškarpinės turinį. Nuoroda yra susieta su "
-"šaltinio failu, todėl failo pakeitimai bus atspindėti jūsų dokumente."
+"Įterpia nuorodą, kuri rodo į iškarpinės turinį. Nuoroda susieta su šaltinio "
+"failu, todėl failo pakeitimai bus atspindėti dokumente."
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
-msgstr "Įterpia iškarpinės turinį į jūsų dokumentą."
+msgstr "Įterpia iškarpinės turinį į dokumentą."
 
 #: oledlg.rc:41
 msgid "Unknown Type"
@@ -7302,7 +7297,7 @@ msgstr "Skaitoma"
 
 #: sane.rc:44
 msgid "SCANNING... Please Wait"
-msgstr "SKAITOMA... Prašome palaukti"
+msgstr "SKAITOMA... Palaukite"
 
 #: sane.rc:31
 msgctxt "unit: pixels"
@@ -7678,7 +7673,7 @@ msgstr "Slinkti dešinėn"
 
 #: shdoclc.rc:25
 msgid "Wine Internet Explorer"
-msgstr "Wine interneto naršyklė"
+msgstr "„Wine“ interneto naršyklė"
 
 #: shdoclc.rc:30
 msgid "&w&bPage &p"
@@ -7819,7 +7814,7 @@ msgstr "Apie %s"
 
 #: shell32.rc:320
 msgid "Wine &license"
-msgstr "Wine &licencija"
+msgstr "„Wine“ &licencija"
 
 #: shell32.rc:325
 msgid "Running on %s"
@@ -7827,7 +7822,7 @@ msgstr "Paleista su %s"
 
 #: shell32.rc:326
 msgid "Wine was brought to you by:"
-msgstr "Prie Wine kūrimo prisidėjo:"
+msgstr "Prie „Wine“ kūrimo prisidėjo:"
 
 #: shell32.rc:334
 msgid ""
@@ -7835,7 +7830,7 @@ msgid ""
 "will open it for you."
 msgstr ""
 "Įrašykite programos pavadinimą, aplanką, dokumentą ar interneto resursą ir "
-"Wine jums jį atvers."
+"„Wine“ jums jį atvers."
 
 #: shell32.rc:335
 msgid "&Open:"
@@ -7909,7 +7904,7 @@ msgstr "Paleisti iš naujo"
 
 #: shell32.rc:187
 msgid "Do you want to simulate a Windows reboot?"
-msgstr "Ar norite simuliuoti Windows paleidimą iš naujo?"
+msgstr "Ar norite simuliuoti „Windows“ paleidimą iš naujo?"
 
 #: shell32.rc:188
 msgid "Shutdown"
@@ -7917,7 +7912,7 @@ msgstr "Stabdyti"
 
 #: shell32.rc:189
 msgid "Do you want to shutdown your Wine session?"
-msgstr "Ar norite sustabdyti šį Wine seansą?"
+msgstr "Ar norite sustabdyti šį „Wine“ seansą?"
 
 #: shell32.rc:200 progman.rc:80
 msgid "Programs"
@@ -8135,8 +8130,7 @@ msgid ""
 msgstr ""
 "Šis aplankas jau turi aplanką vardu „%1“.\n"
 "\n"
-"Jei failai paskirties aplanke yra pavadinti tais pačiais vardais kaip ir "
-"failai\n"
+"Jei failai paskirties aplanke pavadinti tais pačiais vardais kaip ir failai\n"
 "išrinktame aplanke, tai jie bus pakeisti. Ar vis dar norite perkelti ar "
 "kopijuoti\n"
 "šį aplanką?"
@@ -8147,7 +8141,7 @@ msgstr "Naujas aplankas"
 
 #: shell32.rc:237
 msgid "Wine Control Panel"
-msgstr "Wine valdymo skydelis"
+msgstr "„Wine“ valdymo skydelis"
 
 #: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
@@ -8163,7 +8157,7 @@ msgstr "Vykdomieji failai (*.exe)"
 
 #: shell32.rc:241
 msgid "There is no Windows program configured to open this type of file."
-msgstr "Jokia Windows programa nėra sukonfigūruota atidaryti šio tipo failų."
+msgstr "Jokia „Windows“ programa nėra sukonfigūruota atidaryti šio tipo failų."
 
 #: shell32.rc:243
 msgid "Are you sure you wish to permanently delete '%1'?"
@@ -8217,22 +8211,22 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"Wine yra laisva programinė įranga; galite ją platinti ir/ar modifikuoti GNU "
-"laisvosios bendrosios viešosios licencijos (LGPL) sąlygomis, kurios "
-"paskelbtos Laisvosios programinės įrangos fondo (FSF); 2.1-osios arba (jūsų "
+"„Wine“ yra laisva programinė įranga; galite ją platinti ir/ar modifikuoti "
+"GNU laisvosios bendrosios viešosios licencijos (LGPL) sąlygomis, kurios "
+"paskelbtos Laisvosios programinės įrangos fondo (FSF); 2.1-osios arba (Jūsų "
 "pasirinkimu) bet kurios vėlesnės licencijos versijos sąlygomis.\n"
 "\n"
-"Wine yra platinama tikintis, kad ji bus naudinga, bet BE JOKIŲ GARANTIJŲ; "
-"net be numanomų PERKAMUMO ar TINKAMUMO KONKREČIAI UŽDUOČIAI garantijų. "
-"Išsamią informaciją rasite GNU laisvojoje bendrojoje viešojoje licencijoje.\n"
+"„Wine“ platinama tikintis, kad ji bus naudinga, bet BE JOKIŲ GARANTIJŲ; net "
+"be numanomų PERKAMUMO ar TINKAMUMO KONKREČIAI UŽDUOČIAI garantijų. Išsamią "
+"informaciją rasite GNU laisvojoje bendrojoje viešojoje licencijoje.\n"
 "\n"
 "Jūs turėjote gauti GNU laisvosios bendrosios viešosios licencijos kopiją "
-"kartu su Wine; jei negavote, rašykite adresu Free Software Foundation, Inc., "
-"51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+"kartu su „Wine“; jei negavote, rašykite adresu Free Software Foundation, "
+"Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
 #: shell32.rc:253
 msgid "Wine License"
-msgstr "Wine licencija"
+msgstr "„Wine“ licencija"
 
 #: shell32.rc:155
 msgid "Trash"
@@ -8328,7 +8322,7 @@ msgstr "&Užverti\tAlt+F4"
 
 #: user32.rc:35
 msgid "&About Wine"
-msgstr "Apie &Wine"
+msgstr "Apie „&Wine“"
 
 #: user32.rc:46
 msgid "&Close\tCtrl+F4"
@@ -8400,11 +8394,11 @@ msgstr "Vietinio tinklo ryšys"
 
 #: wininet.rc:26
 msgid "The certificate is issued by an unknown or untrusted publisher."
-msgstr "Liudijimas yra išduotas nežinomo arba nepatikimo leidėjo."
+msgstr "Liudijimas išduotas nežinomo arba nepatikimo leidėjo."
 
 #: wininet.rc:27
 msgid "The date on the certificate is invalid."
-msgstr "Liudijimo data yra neteisinga."
+msgstr "Liudijimo data neteisinga."
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
@@ -8417,7 +8411,7 @@ msgstr "Yra mažiausiai viena nenustatyta saugumo problema su šiuo liudijimu."
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
-msgstr "Nurodyta komanda buvo atlikta."
+msgstr "Nurodyta komanda įvykdyta."
 
 #: winmm.rc:29
 msgid "Undefined external error."
@@ -8443,7 +8437,7 @@ msgstr ""
 
 #: winmm.rc:33
 msgid "The specified device handle is invalid."
-msgstr "Nurodyta įrenginio rodyklė yra netinkama."
+msgstr "Nurodyta įrenginio rodyklė netinkama."
 
 #: winmm.rc:34
 msgid "There is no driver installed on your system!"
@@ -8454,36 +8448,36 @@ msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
 msgstr ""
-"Trūksta atminties šiai užduočiai. Išeikite iš vienos ar daugiau programų "
-"laisvos atminties kiekiui padidinti ir mėginkite vėl."
+"Trūksta atminties šiai užduočiai. Baikite vieną ar daugiau programų laisvos "
+"atminties kiekiui padidinti ir mėginkite vėl."
 
 #: winmm.rc:36
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
 msgstr ""
-"Ši funkcija yra nepalaikoma. Naudokite gebėjimų (Capabilities) funkciją, kad "
+"Ši funkcija nepalaikoma. Naudokite gebėjimų („Capabilities“) funkciją, kad "
 "nustatytumėte, kurias funkcijas ir pranešimus tvarkyklė palaiko."
 
 #: winmm.rc:37
 msgid "An error number was specified that is not defined in the system."
-msgstr "Buvo nurodytas klaidos kodas, kuris yra neapibrėžtas sistemoje."
+msgstr "Nurodytas klaidos kodas, kuris nėra apibrėžtas sistemoje."
 
 #: winmm.rc:38
 msgid "An invalid flag was passed to a system function."
-msgstr "Sisteminei funkcijai buvo perduotas neteisingas žymos bitas."
+msgstr "Sisteminei funkcijai perduotas neteisingas žymos bitas."
 
 #: winmm.rc:39
 msgid "An invalid parameter was passed to a system function."
-msgstr "Sisteminei funkcijai buvo perduotas neteisingas parametras."
+msgstr "Sisteminei funkcijai perduotas neteisingas parametras."
 
 #: winmm.rc:42
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
 msgstr ""
-"Nurodytas formatas yra nepalaikomas arba negali būti perskaičiuotas. "
-"Naudokite gebėjimų (Capabilities) funkciją palaikomiems formatams nustatyti."
+"Nurodytas formatas nepalaikomas arba negali būti perskaičiuotas. Naudokite "
+"gebėjimų (Capabilities) funkciją palaikomiems formatams nustatyti."
 
 #: winmm.rc:43 winmm.rc:49
 msgid ""
@@ -8498,7 +8492,7 @@ msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"Wave antraštė nebuvo paruošta. Naudokite paruošimo (Prepare) funkciją "
+"„Wave“ antraštė neparuošta. Naudokite paruošimo („Prepare“) funkciją "
 "antraštei paruošti ir mėginkite vėl."
 
 #: winmm.rc:45
@@ -8506,7 +8500,7 @@ msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
-"Negalima atverti įrenginio nenaudojat WAVE_ALLOWSYNC žymos bito. Naudokite "
+"Negalima atverti įrenginio nenaudojat „WAVE_ALLOWSYNC“ žymos bito. Naudokite "
 "žymos bitą ir mėginkite vėl."
 
 #: winmm.rc:48
@@ -8523,7 +8517,7 @@ msgid ""
 "MIDIMAP.CFG file may be corrupt or missing."
 msgstr ""
 "MIDI atvaizdis nerastas. Tai gali būti problema su tvarkykle arba trūksta "
-"MIDIMAP.CFG failo arba jis yra pažeistas."
+"MIDIMAP.CFG failo, arba jis pažeistas."
 
 #: winmm.rc:51
 msgid ""
@@ -8546,8 +8540,8 @@ msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
 msgstr ""
-"Dabartinė MIDI konfigūracija yra pažeista. Nukopijuokite originalų MIDIMAP."
-"CFG failą į Windows SYSTEM katalogą ir mėginkite vėl."
+"Dabartinė MIDI konfigūracija pažeista. Nukopijuokite originalų MIDIMAP.CFG "
+"failą į „Windows“ SYSTEM katalogą ir mėginkite vėl."
 
 #: winmm.rc:56
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
@@ -8568,8 +8562,8 @@ msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
 msgstr ""
-"Iškilo problema su jūsų medijos įrenginiu. Įsitikinkite, kad jis veikia "
-"teisingai arba kreipkitės į įrenginio gamintoją."
+"Iškilo problema su medijos įrenginiu. Įsitikinkite, kad jis veikia teisingai "
+"arba kreipkitės į įrenginio gamintoją."
 
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
@@ -8580,8 +8574,8 @@ msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
 msgstr ""
-"Įrenginio vardas jau yra naudojamas programos kaip alternatyvus vardas. "
-"Naudokite unikalų alternatyvų vardą."
+"Įrenginio vardas jau naudojamas programos kaip alternatyvusis vardas. "
+"Naudokite unikalų alternatyvųjį vardą."
 
 #: winmm.rc:63
 msgid ""
@@ -8597,19 +8591,18 @@ msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
 msgstr ""
-"Išvedimo eilutė buvo per ilga, kad tilptų į buferį. Padidinkite buferio dydį."
+"Išvedimo eilutė per ilga, kad tilptų į buferį. Padidinkite buferio dydį."
 
 #: winmm.rc:66
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
 msgstr ""
-"Nurodytai komandai reikalingas simbolių eilutės parametras. Prašome jį "
-"nurodyti."
+"Nurodytai komandai reikalingas simbolių eilutės parametras. Jį nurodykite."
 
 #: winmm.rc:67
 msgid "The specified integer is invalid for this command."
-msgstr "Nurodytas sveikasis skaičius yra klaidingas šiai komandai."
+msgstr "Nurodytas sveikasis skaičius klaidingas šiai komandai."
 
 #: winmm.rc:68
 msgid ""
@@ -8629,17 +8622,17 @@ msgstr ""
 
 #: winmm.rc:70
 msgid "The specified command requires a parameter. Please supply one."
-msgstr "Nurodytai komandai yra privalomas parametras. Prašome jį nurodyti."
+msgstr "Nurodytai komandai reikia parametro. Jį pateikite."
 
 #: winmm.rc:71
 msgid "The MCI device you are using does not support the specified command."
-msgstr "MCI įrenginys, kurį jūs naudojate, nepalaiko nurodytos komandos."
+msgstr "MCI įrenginys, kurį naudojate, nepalaiko nurodytos komandos."
 
 #: winmm.rc:72
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
 msgstr ""
-"Nepavyko rasti nurodyto failo. Įsitikinkite, kad kelias ir failo vardas yra "
+"Nepavyko rasti nurodyto failo. Įsitikinkite, kad kelias ir failo vardas "
 "teisingi."
 
 #: winmm.rc:73
@@ -8648,14 +8641,14 @@ msgstr "Įrenginio tvarkyklė neparengta."
 
 #: winmm.rc:74
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
-msgstr "Įvyko klaida inicijuojant MCI. Mėginkite perkrauti Windows."
+msgstr "Įvyko klaida inicijuojant MCI. Mėginkite paleisti „Windows“ iš naujo."
 
 #: winmm.rc:75
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
 msgstr ""
-"Yra problema su įrenginio tvarkykle. Tvarkyklė buvo užverta. Nepavyko gauti "
+"Yra problema su įrenginio tvarkykle. Tvarkyklė užverta. Nepavyko gauti "
 "klaidos."
 
 #: winmm.rc:76
@@ -8703,20 +8696,19 @@ msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
 msgstr ""
-"Nurodytas įrenginys yra užveriamas. Palaukite kelias sekundes ir mėginkite "
-"vėl."
+"Nurodytas įrenginys užveriamas. Palaukite kelias sekundes ir mėginkite vėl."
 
 #: winmm.rc:84
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
 msgstr ""
-"Nurodytas alternatyvus vardas jau yra naudojamas šioje programoje. Naudokite "
-"unikalų alternatyvų vardą."
+"Nurodytas alternatyvusis vardas jau naudojamas šioje programoje. Naudokite "
+"unikalų alternatyvųjį vardą."
 
 #: winmm.rc:85
 msgid "The specified parameter is invalid for this command."
-msgstr "Nurodytas parametras yra klaidingas šiai komandai."
+msgstr "Nurodytas parametras klaidingas šiai komandai."
 
 #: winmm.rc:86
 msgid ""
@@ -8731,15 +8723,15 @@ msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
 msgstr ""
-"Nurodytai komandai reikalingas alternatyvus vardas, failo, tvarkyklės ar "
-"įrenginio vardas. Prašome jį pateikti."
+"Nurodytai komandai reikalingas alternatyvusis vardas, failo, tvarkyklės ar "
+"įrenginio vardas. Jį pateikite."
 
 #: winmm.rc:88
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
 msgstr ""
-"Nurodyta reikšmė laiko formatui yra klaidinga. Skaitykite MCI dokumentaciją "
+"Nurodyta klaidinga reikšmė laiko formatui. Skaitykite MCI dokumentaciją "
 "tinkamiems formatams rasti."
 
 #: winmm.rc:89
@@ -8747,13 +8739,12 @@ msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
 msgstr ""
-"Parametro reikšmei trūksta reikalingų užveriančių dvigubų kabučių. Prašome "
-"jas pateikti."
+"Parametro reikšmei trūksta reikalingų užveriančių dvigubų kabučių. Jas "
+"pateikite."
 
 #: winmm.rc:90
 msgid "A parameter or value was specified twice. Only specify it once."
-msgstr ""
-"Parametras ar reikšmė buvo nurodyta du kartus. Nurodykite tik vieną kartą."
+msgstr "Parametras ar reikšmė nurodyta du kartus. Nurodykite tik vieną kartą."
 
 #: winmm.rc:91
 msgid ""
@@ -8765,7 +8756,7 @@ msgstr ""
 
 #: winmm.rc:92
 msgid "A null parameter block was passed to MCI."
-msgstr "Nulinis parametrų blokas buvo perduotas į MCI."
+msgstr "Nulinis parametrų blokas perduotas į MCI."
 
 #: winmm.rc:93
 msgid "Cannot save an unnamed file. Supply a filename."
@@ -8773,8 +8764,7 @@ msgstr "Negalima išsaugoti bevardžio failo. Nurodykite failo vardą."
 
 #: winmm.rc:94
 msgid "You must specify an alias when using the 'new' parameter."
-msgstr ""
-"Jūs privalote pateikti alternatyvų vardą, kai naudojate parametrą „new“."
+msgstr "Privalote pateikti alternatyvųjį vardą, kai naudojate parametrą „new“."
 
 #: winmm.rc:95
 msgid "Cannot use the 'notify' flag with auto-opened devices."
@@ -8806,8 +8796,8 @@ msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
 msgstr ""
-"Netinkamas failo vardas. Įsitikinkite, kad failo vardas yra neilgesnis kaip "
-"8 simbolių, o po jų seka taškas ir plėtinys."
+"Netinkamas failo vardas. Įsitikinkite, kad failo vardas neilgesnis kaip 8 "
+"simbolių, o po jų seka taškas ir plėtinys."
 
 #: winmm.rc:100
 msgid ""
@@ -8855,63 +8845,61 @@ msgstr ""
 #: winmm.rc:106
 msgid "Specify a device or driver name that is less than 69 characters."
 msgstr ""
-"Nurodykite įrenginio ar tvarkyklės vardą, kuris yra trumpesnis nei 69 "
-"simboliai."
+"Nurodykite įrenginio ar tvarkyklės vardą, kuris trumpesnis nei 69 simboliai."
 
 #: winmm.rc:107
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr ""
-"Nurodytai komandai reikalingas sveikojo skaičiaus parametras. Prašome jį "
-"pateikti."
+"Nurodytai komandai reikalingas sveikojo skaičiaus parametras. Jį pateikite."
 
 #: winmm.rc:108
 msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
 msgstr ""
-"Visi wave įrenginiai, kurie gali groti dabartinio formato failus yra "
-"naudojami. Palaukite kol wave įrenginys bus laisvas ir mėginkite vėl."
+"Visi „wave“ įrenginiai, kurie gali groti dabartinio formato failus, "
+"naudojami. Palaukite kol „wave“ įrenginys bus laisvas ir mėginkite vėl."
 
 #: winmm.rc:109
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Negalima nustatyti dabartinio wave įrenginio grojimui, nes jis yra "
-"naudojamas. Palaukite kol wave įrenginys bus laisvas ir mėginkite vėl."
+"Negalima nustatyti dabartinio „wave“ įrenginio grojimui, nes jis naudojamas. "
+"Palaukite kol „wave“ įrenginys bus laisvas ir mėginkite vėl."
 
 #: winmm.rc:110
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
-"Visi wave įrenginiai, kurie gali įrašyti failus dabartiniu formatu yra "
-"naudojami. Palaukite kol wave įrenginys bus laisvas ir mėginkite vėl."
+"Visi „wave“ įrenginiai, kurie gali įrašyti failus dabartiniu formatu, "
+"naudojami. Palaukite kol „wave“ įrenginys bus laisvas ir mėginkite vėl."
 
 #: winmm.rc:111
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Negalima nustatyti dabartinio wave įrenginio įrašymui, nes jis yra "
-"naudojamas. Palaukite kol wave įrenginys bus laisvas ir mėginkite vėl."
+"Negalima nustatyti dabartinio „wave“ įrenginio įrašymui, nes jis naudojamas. "
+"Palaukite kol „wave“ įrenginys bus laisvas ir mėginkite vėl."
 
 #: winmm.rc:112
 msgid "Any compatible waveform playback device may be used."
-msgstr "Bet kuris derantis wave tipo grojimo įrenginys gali būti naudojamas."
+msgstr "Bet kuris derantis „wave“ tipo grojimo įrenginys gali būti naudojamas."
 
 #: winmm.rc:113
 msgid "Any compatible waveform recording device may be used."
-msgstr "Bet kuris derantis wave tipo įrašymo įrenginys gali būti naudojamas."
+msgstr "Bet kuris derantis „wave“ tipo įrašymo įrenginys gali būti naudojamas."
 
 #: winmm.rc:114
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"Nėra įdiegtas joks wave įrenginys galintis groti dabartinio formato failus. "
-"Naudokite tvarkyklių parinktį wave įrenginiui įdiegti."
+"Nėra įdiegtas joks „wave“ įrenginys galintis groti dabartinio formato "
+"failus. Naudokite tvarkyklių parinktį „wave“ įrenginiui įdiegti."
 
 #: winmm.rc:115
 msgid ""
@@ -8925,8 +8913,8 @@ msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"Nėra įdiegtas joks wave įrenginys galintis įrašyti dabartinio formato "
-"failus. Naudokite tvarkyklių parinktį wave įrenginiui įdiegti."
+"Nėra įdiegtas joks „wave“ įrenginys galintis įrašyti dabartinio formato "
+"failus. Naudokite tvarkyklių parinktį „wave“ įrenginiui įdiegti."
 
 #: winmm.rc:117
 msgid ""
@@ -8941,8 +8929,8 @@ msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
 msgstr ""
-"„Dainos rodyklės“ ir SMPTE laiko formatai yra nesuderinami. Negalite jų "
-"naudoti kartu."
+"„Dainos rodyklės“ ir SMPTE laiko formatai nesuderinami. Negalite jų naudoti "
+"kartu."
 
 #: winmm.rc:124
 msgid ""
@@ -8957,8 +8945,8 @@ msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
 msgstr ""
-"Nurodytas MIDI įrenginys yra neįdiegtas sistemoje. Naudokite tvarkyklių "
-"nuostatą valdymo skydelyje MIDI įrenginiui įdiegti."
+"Nurodytas MIDI įrenginys neįdiegtas sistemoje. Naudokite tvarkyklių nuostatą "
+"valdymo skydelyje MIDI įrenginiui įdiegti."
 
 #: winmm.rc:125
 msgid ""
@@ -9128,7 +9116,7 @@ msgstr "Neteisinga DN sintaksė"
 
 #: wldap32.rc:62
 msgid "Is Leaf"
-msgstr "Objektas yra lapas"
+msgstr "Yra lapas"
 
 #: wldap32.rc:63
 msgid "Alias Dereference Problem"
@@ -9368,13 +9356,13 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
-"CALL <komandųfailovardas> yra naudojama komandų failo viduje komandoms iš\n"
+"CALL <komandųfailovardas> naudojama komandų failo viduje komandoms iš\n"
 "kito komandų failo vykdyti. Kai komandų failas egzistuoja, valdymas\n"
 "grąžinamas kvietusiam failui. CALL komanda gali pateikti parametrus\n"
 "kviečiamai procedūrai.\n"
 "\n"
 "Numatytojo katalogo, aplinkos kintamųjų ir pan. pakeitimai atlikti\n"
-"iškviestoje procedūroje yra paveldimi kviečiančiosios procedūros.\n"
+"iškviestoje procedūroje paveldimi kviečiančiosios procedūros.\n"
 
 #: cmd.rc:40
 msgid ""
@@ -9428,7 +9416,7 @@ msgstr ""
 "ECHO ON priverčia visas vėlesnes komandų failo komandas būti parodytas\n"
 "terminale prieš įvykdymą.\n"
 "\n"
-"ECHO OFF panaikina ankstesnės ECHO ON komandos veikimą (ECHO OFF yra\n"
+"ECHO OFF panaikina ankstesnės ECHO ON komandos veikimą (ECHO OFF –\n"
 "numatyta). ECHO OFF komandos rodymo galima išvengti prieš ją pridedant\n"
 "simbolį @.\n"
 
@@ -9445,13 +9433,12 @@ msgid ""
 "The requirement to double the % sign when using FOR in a batch file does\n"
 "not exist in wine's cmd.\n"
 msgstr ""
-"FOR komanda yra naudojama įvykdyti komandą kiekvienam failų aibės "
-"elementui.\n"
+"FOR komanda naudojama įvykdyti komandą kiekvienam failų aibės elementui.\n"
 "\n"
 "Sintaksė: FOR %kintamasis IN (aibė) DO komanda\n"
 "\n"
-"Reikalavimas dubliuoti % simbolį naudojant FOR komandų faile neegzistuoja\n"
-"wine komandų interpretatoriuje.\n"
+"„Wine“ komandų interpretatoriuje reikalavimas dubliuoti % simbolį naudojant\n"
+"FOR komandų faile neegzistuoja.\n"
 
 #: cmd.rc:81
 msgid ""
@@ -9495,7 +9482,7 @@ msgid ""
 "In the second form of the command, string1 and string2 must be in double\n"
 "quotes. The comparison is not case-sensitive.\n"
 msgstr ""
-"IF yra naudojama vykdyti komandą su sąlyga.\n"
+"IF naudojama vykdyti komandą su sąlyga.\n"
 "\n"
 "Sintaksė: IF [NOT] EXIST failas komanda\n"
 "          IF [NOT] eilutė1==eilutė2 komanda\n"
@@ -9512,7 +9499,7 @@ msgid ""
 "The command will prompt you for the new volume label for the given drive.\n"
 "You can display the disk volume label with the VOL command.\n"
 msgstr ""
-"LABEL yra naudojamas disko tomo vardui nustatyti.\n"
+"LABEL naudojama disko tomo vardui nustatyti.\n"
 "\n"
 "Sintaksė: LABEL [diskas:]\n"
 "Komanda paklaus naujo tomo vardo duotam diskui.\n"
@@ -9541,7 +9528,8 @@ msgstr ""
 "Jei perkeliamas objektas yra katalogas, tai taip pat perkeliami visi\n"
 "katalogo failai ir pakatalogiai.\n"
 "\n"
-"MOVE nepavyksta jei sena ir nauja vietos yra su skirtingomis DOS raidėmis.\n"
+"MOVE nepavyksta, jei sena ir nauja vietos yra su skirtingais DOS disko "
+"vardais.\n"
 
 #: cmd.rc:122
 msgid ""
@@ -9669,14 +9657,14 @@ msgstr ""
 "\n"
 "SET be parametrų parodo visą dabartinę aplinką.\n"
 "\n"
-"Aplinkos kintamojo sukūrimo ar modifikavimo sintaksė yra:\n"
+"Aplinkos kintamojo sukūrimo ar modifikavimo sintaksė:\n"
 "\n"
 "SET <kintamasis>=<reikšmė>\n"
 "\n"
 "kur <kintamasis> ir <reikšmė> yra simbolių eilutės. Prieš lygybės ženklą\n"
 "neturi būti tarpų, taip pat kintamojo vardas negali turėti įterptų tarpų.\n"
 "\n"
-"Naudojant Wine, pagrindinės operacinės sistemos aplinka yra įtraukiama į\n"
+"Naudojant „Wine“, pagrindinės operacinės sistemos aplinka įtraukiama į\n"
 "Win32 aplinką, todėl paprastai bus žymiai daugiau reikšmių negu savoje\n"
 "Win32 realizacijoje. Pastebėkite, kad neįmanoma įtakoti operacinės sistemos\n"
 "aplinkos iš komandų interpretatoriaus.\n"
@@ -9687,7 +9675,7 @@ msgid ""
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
 "if called from the command line.\n"
 msgstr ""
-"SHIFT yra naudojamas komandų faile pašalinti vienam parametrui iš sąrašo\n"
+"SHIFT naudojama komandų faile pašalinti vienam parametrui iš sąrašo\n"
 "priekio, taip parametras 2 tampa parametru 1 ir t. t. Ši komanda neturi\n"
 "jokio poveikio, kai kviečiama iš komandos eilutės.\n"
 
@@ -9743,7 +9731,7 @@ msgstr ""
 "/affinity mask Paleisti programą su nurodyta atitikimo kauke.\n"
 "/wait        Laukti kol paleista programa baigs darbą, tada išeiti su jos "
 "išėjimo kodu.\n"
-"/unix        Naudoti Unix failo vardą ir paleisti failą kaip windows "
+"/unix        Naudoti Unix failo vardą ir paleisti failą kaip „windows“ "
 "naršyklėje.\n"
 "/ProgIDOpen  Atverti dokumentą naudojant nurodytą progID.\n"
 "/?           Parodyti šį pranešimą ir išeiti.\n"
@@ -9762,7 +9750,7 @@ msgid ""
 "if redirected). No check is made that the file is readable text.\n"
 msgstr ""
 "TYPE <failas> nukopijuoja <failą> į pulto įrenginį (arba kitur, jei\n"
-"nukreipta). Nėra tikrinama ar faile yra skaitomas tekstas.\n"
+"nukreipta). Nėra tikrinama, ar faile yra skaitomas tekstas.\n"
 
 #: cmd.rc:226
 msgid ""
@@ -9774,14 +9762,14 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"VERIFY yra naudojama nustatyti, išvalyti ar testuoti tikrinimo žymos bitą.\n"
-"Galimos formos yra:\n"
+"VERIFY naudojama nustatyti, išvalyti ar testuoti tikrinimo žymos bitą.\n"
+"Galimos formos:\n"
 "\n"
 "VERIFY ON\tNustatyti žymos bitą.\n"
 "VERIFY OFF\tIšvalyti žymos bitą.\n"
 "VERIFY\t\tParodo ON arba OFF, kuris tinkamas.\n"
 "\n"
-"Tikrinimo žymos bitas neturi jokios funkcijos Wine.\n"
+"Tikrinimo žymos bitas neturi jokios funkcijos „Wine“.\n"
 
 #: cmd.rc:229
 msgid "VER displays the version of cmd you are running.\n"
@@ -9796,8 +9784,8 @@ msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
-"ENDLOCAL komandų faile baigia aplinkos pakeitimų lokalizavimą,\n"
-"kuris buvo padarytas ankstesnio SETLOCAL.\n"
+"ENDLOCAL komandų faile baigia aplinkos pakeitimų, kurie padaryti\n"
+"ankstesnio SETLOCAL, lokalizavimą.\n"
 
 #: cmd.rc:243
 msgid ""
@@ -9810,7 +9798,7 @@ msgid ""
 msgstr ""
 "SETLOCAL pradeda aplinkos pakeitimų lokalizavimą komandų faile.\n"
 "\n"
-"Aplinkos pakeitimai padaryti po SETLOCAL yra lokalūs komandų faile ir yra\n"
+"Aplinkos pakeitimai padaryti po SETLOCAL yra lokalūs komandų faile ir\n"
 "išlaikomi iki kol sutinkamas kitas ENDLOCAL (arba failo pabaiga, kas\n"
 "pasitaiko pirmiau), tada atkuriami ankstesnės aplinkos nustatymai.\n"
 
@@ -9890,7 +9878,7 @@ msgid ""
 "to the operating system or shell from which you invoked cmd.\n"
 msgstr ""
 "EXIT baigia dabartinį komandų seansą ir grįžta į operacinę sistemą\n"
-"ar apvalkalą iš kur CMD buvo iškviestas.\n"
+"ar apvalkalą iš kur CMD iškviestas.\n"
 
 #: cmd.rc:315
 msgid ""
@@ -10062,11 +10050,11 @@ msgstr "Šalinti %1?"
 
 #: cmd.rc:340
 msgid "Echo is %1\n"
-msgstr "Echo yra %1\n"
+msgstr "„Echo“ yra %1\n"
 
 #: cmd.rc:341
 msgid "Verify is %1\n"
-msgstr "Verify yra %1\n"
+msgstr "„Verify“ yra %1\n"
 
 #: cmd.rc:342
 msgid "Verify must be ON or OFF\n"
@@ -10098,11 +10086,11 @@ msgstr "Norėdami tęsti spauskite bet kurį klavišą... "
 
 #: cmd.rc:348
 msgid "Wine Command Prompt"
-msgstr "Wine komandų interpretatorius"
+msgstr "„Wine“ komandų interpretatorius"
 
 #: cmd.rc:349
 msgid "Wine CMD Version %1!S!\n"
-msgstr "Wine CMD versija %1!S!\n"
+msgstr "„Wine“ CMD versija %1!S!\n"
 
 #: cmd.rc:350
 msgid "More? "
@@ -10145,7 +10133,7 @@ msgstr "Naudojimas: dxdiag [/whql:off | /whql:on] [/t failas | /x failas]"
 
 #: explorer.rc:28
 msgid "Wine Explorer"
-msgstr "Wine naršyklė"
+msgstr "„Wine“ naršyklė"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
@@ -10233,7 +10221,7 @@ msgid ""
 "\n"
 "Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
-"Šios komandos sintaksė yra:\n"
+"Šios komandos sintaksė:\n"
 "\n"
 "NET komanda [argumentai]\n"
 "    -arba-\n"
@@ -10250,7 +10238,7 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
-"Šios komandos sintaksė yra:\n"
+"Šios komandos sintaksė:\n"
 "\n"
 "NET START [tarnyba]\n"
 "\n"
@@ -10265,7 +10253,7 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
-"Šios komandos sintaksė yra:\n"
+"Šios komandos sintaksė:\n"
 "\n"
 "NET STOP tarnyba\n"
 "\n"
@@ -10289,7 +10277,7 @@ msgstr "Nepavyko gauti tarnybos rodyklės.\n"
 
 #: net.rc:34
 msgid "The %1 service is starting.\n"
-msgstr "Tarnyba %1 yra paleidžiama.\n"
+msgstr "Tarnyba %1 paleidžiama.\n"
 
 #: net.rc:35
 msgid "The %1 service was started successfully.\n"
@@ -10351,7 +10339,7 @@ msgstr "Jungiamasi iš naujo"
 
 #: net.rc:40
 msgid "The following services are running:\n"
-msgstr "Šios tarnybos yra vykdomos:\n"
+msgstr "Šios tarnybos vykdomos:\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -10553,7 +10541,7 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"Failas „%s“ buvo pakeistas.\n"
+"Failas „%s“ pakeistas.\n"
 "\n"
 "Ar norite išsaugoti pakeitimus?"
 
@@ -10715,7 +10703,7 @@ msgid ""
 "They have no effect on Wine performance."
 msgstr ""
 "Šios nuostatos keičia tik registro reikšmes.\n"
-"Tai neturi jokios įtakos Wine našumui."
+"Tai neturi jokios įtakos „Wine“ našumui."
 
 #: oleview.rc:178
 msgid "Default Interface Viewer"
@@ -10783,7 +10771,7 @@ msgstr "Keisti paskirstytojo COM kompiuterio nustatymus"
 
 #: oleview.rc:106
 msgid "Run the Wine registry editor"
-msgstr "Paleisti Wine registro tvarkytuvę"
+msgstr "Paleisti „Wine“ registro tvarkytuvę"
 
 #: oleview.rc:107
 msgid "Quit the application. Prompts to save changes"
@@ -11149,7 +11137,7 @@ msgid ""
 "REG [ ADD | DELETE | QUERY ]\n"
 "REG command /?\n"
 msgstr ""
-"Šios komandos sintaksė yra:\n"
+"Šios komandos sintaksė:\n"
 "\n"
 "REG [ ADD | DELETE | QUERY ]\n"
 "REG komanda /?\n"
@@ -11574,7 +11562,7 @@ msgstr "Klaida: parinkčiai %1 reikalingas komandos eilutės parametras.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr "Klaida: parinktys /im ir /pid yra nesuderinamos.\n"
+msgstr "Klaida: parinktys /im ir /pid nesuderinamos.\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
@@ -11591,11 +11579,11 @@ msgstr ""
 
 #: taskkill.rc:35
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "Procesas, kurio PID %1!u!, buvo priverstinai nutrauktas.\n"
+msgstr "Procesas, kurio PID %1!u!, priverstinai nutrauktas.\n"
 
 #: taskkill.rc:36
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "Procesas „%1“, kurio PID %2!u!, buvo priverstinai nutrauktas.\n"
+msgstr "Procesas „%1“, kurio PID %2!u!, priverstinai nutrauktas.\n"
 
 #: taskkill.rc:37
 msgid "Error: Could not find process \"%1\".\n"
@@ -12101,7 +12089,7 @@ msgstr ""
 #: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
 msgstr ""
-"Užduočių tvarkytuvė yra suskleidžiama, kai įvykdoma operacija „perjungti į“"
+"Užduočių tvarkytuvė suskleidžiama, kai įvykdoma operacija „perjungti į“"
 
 #: taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
@@ -12414,7 +12402,7 @@ msgstr "Užduotis"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
-msgstr "Wine programų šalinimo programa"
+msgstr "„Wine“ programų šalinimo programa"
 
 #: uninstaller.rc:27
 msgid ""
@@ -12471,7 +12459,7 @@ msgstr "Wine"
 
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr "Wine konfigūracija (%s) yra atnaujinama, prašome palaukti..."
+msgstr "„Wine“ konfigūracija (%s) atnaujinama, palaukite..."
 
 #: winecfg.rc:132
 msgid ""
@@ -12487,7 +12475,7 @@ msgstr ""
 
 #: winecfg.rc:134
 msgid "Windows registration information"
-msgstr "Windows registracijos informacija"
+msgstr "„Windows“ registracijos informacija"
 
 #: winecfg.rc:135
 msgid "&Owner:"
@@ -12507,8 +12495,8 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine gali pamėgdžioti skirtingas Windows versijas kiekvienai programai. Ši "
-"kortelė yra susijusi su bibliotekų ir grafikos kortelėmis, kuriose taip pat "
+"„Wine“ gali pamėgdžioti skirtingas „Windows“ versijas kiekvienai programai. "
+"Ši kortelė susijusi su bibliotekų ir grafikos kortelėmis, kuriose taip pat "
 "galima keisti sistemines nuostatas ar kiekvienos programos nuostatas "
 "atskirai."
 
@@ -12522,7 +12510,7 @@ msgstr "Pa&šalinti programą"
 
 #: winecfg.rc:152
 msgid "&Windows Version:"
-msgstr "Windows &versija:"
+msgstr "„Windows“ &versija:"
 
 #: winecfg.rc:160
 msgid "Window settings"
@@ -12566,8 +12554,8 @@ msgid ""
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
-"Kiekviena dinaminė biblioteka gali būti įtaisyta (pateikta su Wine) ar sava "
-"(paimta iš Windows ar pateikta programos)."
+"Kiekviena dinaminė biblioteka gali būti įtaisyta (pateikta su „Wine“) ar "
+"sava (paimta iš „Windows“ ar pateikta programos)."
 
 #: winecfg.rc:185
 msgid "&New override for library:"
@@ -12595,11 +12583,11 @@ msgstr "Įkėlimo tvarka"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
-msgstr "&Įtaisyta (Wine)"
+msgstr "&Įtaisyta („Wine“)"
 
 #: winecfg.rc:201
 msgid "&Native (Windows)"
-msgstr "&Sava (Windows)"
+msgstr "&Sava („Windows“)"
 
 #: winecfg.rc:202
 msgid "Bui&ltin then Native"
@@ -12727,7 +12715,7 @@ msgstr "Diskai"
 
 #: winecfg.rc:33
 msgid "Select the Unix target directory, please."
-msgstr "Prašome išrinkti Unix paskirties aplanką."
+msgstr "Išrinkite Unix paskirties aplanką."
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
@@ -12755,7 +12743,7 @@ msgstr "Apie"
 
 #: winecfg.rc:41
 msgid "Wine configuration"
-msgstr "Wine konfigūravimas"
+msgstr "„Wine“ konfigūravimas"
 
 #: winecfg.rc:43
 msgid "Theme files (*.msstyles; *.theme)"
@@ -12775,7 +12763,7 @@ msgstr "Susietas su"
 
 #: winecfg.rc:42
 msgid "Wine configuration for %s"
-msgstr "Wine konfigūravimas: %s"
+msgstr "„Wine“ konfigūravimas: %s"
 
 #: winecfg.rc:81
 msgid "Selected driver: %s"
@@ -12798,7 +12786,7 @@ msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
 msgstr ""
-"Keisti šios bibliotekos įkėlimo tvarką yra nerekomenduojama.\n"
+"Keisti šios bibliotekos įkėlimo tvarką nerekomenduojama.\n"
 "Ar tikrai norite tai padaryti?"
 
 #: winecfg.rc:52
@@ -12831,7 +12819,7 @@ msgstr "Numatytosios nuostatos"
 
 #: winecfg.rc:59
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Wine programos (*.exe; *.exe.so)"
+msgstr "„Wine“ programos (*.exe; *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
@@ -12883,10 +12871,10 @@ msgid ""
 "Most Windows applications expect drive C to exist, and will die messily if "
 "it doesn't. If you proceed remember to recreate it!"
 msgstr ""
-"Ar tikrai norite pašalinti C diską?\n"
+"Ar tikrai norite pašalinti „C“ diską?\n"
 "\n"
-"Daugelis Windows programų mano, kad C diskas egzistuoja ir neveikia, kai jis "
-"neegzistuoja. Jei tęsite, nepamirškite atkurti C disko!"
+"Daugelis „Windows“ programų tikisi, kad „C“ diskas egzistuoja, ir neveikia, "
+"kai jis neegzistuoja. Jei tęsite, nepamirškite jo sukurti iš naujo!"
 
 #: winecfg.rc:74
 msgctxt "Drive letter"
@@ -13186,30 +13174,30 @@ msgstr ""
 
 #: wineconsole.rc:35
 msgid "This is a test"
-msgstr "Čia yra testas"
+msgstr "Tai yra testas"
 
 #: wineconsole.rc:41
 msgid "wineconsole: Couldn't parse event id\n"
-msgstr "wineconsole: nepavyko išnagrinėti įvykio identifikatoriaus\n"
+msgstr "„Wine“ pultas: nepavyko išnagrinėti įvykio identifikatoriaus\n"
 
 #: wineconsole.rc:42
 msgid "wineconsole: Invalid backend\n"
-msgstr "wineconsole: neteisinga posistemė\n"
+msgstr "„Wine“ pultas: neteisinga posistemė\n"
 
 #: wineconsole.rc:43
 msgid "wineconsole: Unrecognized command line option\n"
-msgstr "wineconsole: neatpažintas komandos eilutės parametras\n"
+msgstr "„Wine“ pultas: neatpažintas komandos eilutės parametras\n"
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
-msgstr "Paleidžia programą Wine pulte\n"
+msgstr "Paleidžia programą „Wine“ pulte\n"
 
 #: wineconsole.rc:45
 msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
 msgstr ""
-"wineconsole: nepavyko paleisti programos %s.\n"
+"„Wine“ pultas: nepavyko paleisti programos %s.\n"
 "Neteisinga komanda.\n"
 
 #: wineconsole.rc:47
@@ -13234,12 +13222,12 @@ msgid ""
 "console.\n"
 msgstr ""
 "  --backend={user|curses}  „User“ sukurs naują langą, „curses“ mėgins\n"
-"                            sukonfigūruoti dabartinį terminalą kaip Wine "
+"                            sukonfigūruoti dabartinį terminalą kaip „Wine“ "
 "pultą.\n"
 
 #: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr "  <komanda>                Wine programa paleidimui pulte.\n"
+msgstr "  <komanda>                „Wine“ programa paleidimui pulte.\n"
 
 #: wineconsole.rc:51
 msgid ""
@@ -13252,7 +13240,7 @@ msgstr ""
 "\n"
 "Pavyzdys:\n"
 "  wineconsole cmd\n"
-"Paleidžia Wine komandų interpretatorių Wine pulte.\n"
+"Paleidžia „Wine“ komandų interpretatorių „Wine“ pulte.\n"
 "\n"
 
 #: winedbg.rc:46
@@ -13273,9 +13261,9 @@ msgid ""
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
-"Programos problemos ar Wine trūkumai gali būti to priežastimi. Jūs turbūt "
+"Programos problemos ar „Wine“ trūkumai gali būti to priežastimi. Turbūt "
 "norėsite patikrinti <a href=\"http://appdb.winehq.org\">programų duomenų "
-"bazę</a> dėl patarimų apie šios programos vykdymą."
+"bazę</a> dėl patarimų šios programos vykdymui."
 
 #: winedbg.rc:58
 msgid "Show &Details"
@@ -13292,14 +13280,14 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
-"Jei šios problemos nėra Windows sistemoje ir apie ją dar nebuvo pranešta, "
+"Jei šios problemos nėra „Windows“ sistemoje ir apie ją dar nebuvo pranešta, "
 "galite išsaugoti išsamią informaciją į failą naudodami mygtuką „Išsaugoti "
 "kaip“, tada <a href=\"http://wiki.winehq.org/Bugs\">užregistruoti klaidą</a> "
 "ir prikabinti tą failą prie pranešimo."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
-msgstr "Wine programos strigtis"
+msgstr "„Wine“ programos strigtis"
 
 #: winedbg.rc:36
 msgid "Internal errors - invalid parameters received"
@@ -13315,7 +13303,7 @@ msgstr "Nepavyko išsaugoti"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr "Įkeliama išsami informacija, prašome palaukti..."
+msgstr "Įkeliama išsami informacija, palaukite..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
@@ -13399,7 +13387,7 @@ msgstr "Iškloti &stačiai\tVald+F4"
 
 #: winefile.rc:81
 msgid "&About Wine File Manager"
-msgstr "&Apie Wine failų tvarkytuvę"
+msgstr "&Apie „Wine“ failų tvarkytuvę"
 
 #: winefile.rc:122
 msgid "Select destination"
@@ -13488,7 +13476,7 @@ msgstr "Klaida parenkant naują šriftą."
 
 #: winefile.rc:93
 msgid "Wine File Manager"
-msgstr "Wine failų tvarkytuvė"
+msgstr "„Wine“ failų tvarkytuvė"
 
 #: winefile.rc:95
 msgid "root fs"
@@ -13575,7 +13563,7 @@ msgstr "&Geriausi laikai"
 
 #: winemine.rc:49
 msgid "&About WineMine"
-msgstr "&Apie Wine minas"
+msgstr "&Apie „Wine“ minas"
 
 #: winemine.rc:56
 msgid "Fastest Times"
@@ -13623,7 +13611,7 @@ msgstr "Minos"
 
 #: winemine.rc:27
 msgid "WineMine"
-msgstr "WineMine"
+msgstr "„Wine“ minos"
 
 #: winemine.rc:28
 msgid "Nobody"
@@ -13631,7 +13619,7 @@ msgstr "Niekas"
 
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
-msgstr "Autoriaus teisės 2000 Joshua Thielen"
+msgstr "Autoriaus teisės Joshua Thielen, 2000 m."
 
 #: winhlp32.rc:32
 msgid "Printer &setup..."
@@ -13675,7 +13663,7 @@ msgstr "&Visada viršuje"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Apie Wine žinyną"
+msgstr "&Apie „Wine“ žinyną"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -13695,7 +13683,7 @@ msgstr "Paieška"
 
 #: winhlp32.rc:78
 msgid "Wine Help"
-msgstr "Wine žinynas"
+msgstr "„Wine“ žinynas"
 
 #: winhlp32.rc:83
 msgid "Error while reading the help file `%s'"
@@ -13827,15 +13815,15 @@ msgstr "&Fonas"
 
 #: wordpad.rc:87
 msgid "&System\tCtrl+1"
-msgstr "&Sistemos\tVald+1"
+msgstr "&sistemos\tVald+1"
 
 #: wordpad.rc:88
 msgid "&Pale yellow\tCtrl+2"
-msgstr "&Gelsvas\tVald+2"
+msgstr "&gelsvas\tVald+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
-msgstr "&Apie Wine Wordpad"
+msgstr "&Apie „Wine“ Wordpad"
 
 #: wordpad.rc:130
 msgid "Automatic"
@@ -14060,7 +14048,7 @@ msgid ""
 "You have chosen to save in plain text format, which will cause all "
 "formatting to be lost. Are you sure that you wish to do this?"
 msgstr ""
-"Jūs pasirinkote išsaugoti paprasto teksto formatu, todėl bus prarastas visas "
+"Pasirinkote išsaugoti paprasto teksto formatu, todėl bus prarastas visas "
 "formatavimas. Ar tikrai norite tai padaryti?"
 
 #: wordpad.rc:187
@@ -14069,7 +14057,7 @@ msgstr "Neteisingas skaičiaus formatas."
 
 #: wordpad.rc:188
 msgid "OLE storage documents are not supported."
-msgstr "OLE saugyklos dokumentai yra nepalaikomi."
+msgstr "OLE saugyklos dokumentai nepalaikomi."
 
 #: wordpad.rc:189
 msgid "Could not save the file."
@@ -14077,7 +14065,7 @@ msgstr "Nepavyko išsaugoti failo."
 
 #: wordpad.rc:190
 msgid "You do not have access to save the file."
-msgstr "Jūs neturite prieigos failui išsaugoti."
+msgstr "Neturite prieigos failui išsaugoti."
 
 #: wordpad.rc:191
 msgid "Could not open the file."
@@ -14085,7 +14073,7 @@ msgstr "Nepavyko atverti failo."
 
 #: wordpad.rc:192
 msgid "You do not have access to open the file."
-msgstr "Jūs neturite prieigos failui atverti."
+msgstr "Neturite prieigos failui atverti."
 
 #: wordpad.rc:193
 msgid "Printing not implemented."
