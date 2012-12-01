@@ -503,161 +503,161 @@ extern const vtable_ptr MSVCP_strstream_vtable;
 DEFINE_RTTI_DATA0(iosb, 0, ".?AV?$_Iosb@H@std@@")
 DEFINE_RTTI_DATA1(ios_base, 0, &iosb_rtti_base_descriptor, ".?AV?$_Iosb@H@std@@")
 DEFINE_RTTI_DATA2(basic_ios_char, 0, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ios@DU?$char_traits@D@std@@@std@@");
+        ".?AV?$basic_ios@DU?$char_traits@D@std@@@std@@")
 DEFINE_RTTI_DATA2(basic_ios_wchar, 0, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ios@_WU?$char_traits@_W@std@@@std@@");
+        ".?AV?$basic_ios@_WU?$char_traits@_W@std@@@std@@")
 DEFINE_RTTI_DATA2(basic_ios_short, 0, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ios@GU?$char_traits@G@std@@@std@@");
+        ".?AV?$basic_ios@GU?$char_traits@G@std@@@std@@")
 DEFINE_RTTI_DATA0(basic_streambuf_char, 0,
-        ".?AV?$basic_streambuf@DU?$char_traits@D@std@@@std@@");
+        ".?AV?$basic_streambuf@DU?$char_traits@D@std@@@std@@")
 DEFINE_RTTI_DATA0(basic_streambuf_wchar, 0,
-        ".?AV?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@");
+        ".?AV?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@")
 DEFINE_RTTI_DATA0(basic_streambuf_short, 0,
-        ".?AV?$basic_streambuf@GU?$char_traits@G@std@@@std@@");
+        ".?AV?$basic_streambuf@GU?$char_traits@G@std@@@std@@")
 DEFINE_RTTI_DATA1(basic_filebuf_char, 0, &basic_streambuf_char_rtti_base_descriptor,
-        ".?AV?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@");
+        ".?AV?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@")
 DEFINE_RTTI_DATA1(basic_filebuf_wchar, 0, &basic_streambuf_wchar_rtti_base_descriptor,
-        ".?AV?$basic_filebuf@GU?$char_traits@G@std@@@std@@");
+        ".?AV?$basic_filebuf@GU?$char_traits@G@std@@@std@@")
 DEFINE_RTTI_DATA1(basic_filebuf_short, 0, &basic_streambuf_short_rtti_base_descriptor,
-        ".?AV?$basic_filebuf@DU?$char_traits@D@std@@@std@@");
+        ".?AV?$basic_filebuf@DU?$char_traits@D@std@@@std@@")
 DEFINE_RTTI_DATA1(basic_stringbuf_char, 0, &basic_streambuf_char_rtti_base_descriptor,
-        ".?AV?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@");
+        ".?AV?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@")
 DEFINE_RTTI_DATA1(basic_stringbuf_wchar, 0, &basic_streambuf_wchar_rtti_base_descriptor,
-        ".?AV?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@");
+        ".?AV?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@")
 DEFINE_RTTI_DATA1(basic_stringbuf_short, 0, &basic_streambuf_short_rtti_base_descriptor,
-        ".?AV?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@");
+        ".?AV?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@")
 DEFINE_RTTI_DATA3(basic_ostream_char, sizeof(basic_ostream_char), &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ostream@DU?$char_traits@D@std@@@std@@");
+        ".?AV?$basic_ostream@DU?$char_traits@D@std@@@std@@")
 DEFINE_RTTI_DATA3(basic_ostream_wchar, sizeof(basic_ostream_wchar), &basic_ios_wchar_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ostream@_WU?$char_traits@_W@std@@@std@@");
+        ".?AV?$basic_ostream@_WU?$char_traits@_W@std@@@std@@")
 DEFINE_RTTI_DATA3(basic_ostream_short, sizeof(basic_ostream_wchar), &basic_ios_short_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ostream@GU?$char_traits@G@std@@@std@@");
+        ".?AV?$basic_ostream@GU?$char_traits@G@std@@@std@@")
 DEFINE_RTTI_DATA3(basic_istream_char, sizeof(basic_istream_char), &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_istream@DU?$char_traits@D@std@@@std@@");
+        ".?AV?$basic_istream@DU?$char_traits@D@std@@@std@@")
 DEFINE_RTTI_DATA3(basic_istream_wchar, sizeof(basic_istream_wchar), &basic_ios_wchar_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_istream@_WU?$char_traits@_W@std@@@std@@");
+        ".?AV?$basic_istream@_WU?$char_traits@_W@std@@@std@@")
 DEFINE_RTTI_DATA3(basic_istream_short, sizeof(basic_istream_wchar), &basic_ios_short_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_istream@GU?$char_traits@G@std@@@std@@");
+        ".?AV?$basic_istream@GU?$char_traits@G@std@@@std@@")
 DEFINE_RTTI_DATA8(basic_iostream_char, sizeof(basic_iostream_char),
         &basic_istream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_iostream@DU?$char_traits@D@std@@@std@@");
+        ".?AV?$basic_iostream@DU?$char_traits@D@std@@@std@@")
 DEFINE_RTTI_DATA8(basic_iostream_wchar, sizeof(basic_iostream_wchar),
         &basic_istream_wchar_rtti_base_descriptor, &basic_ios_wchar_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         &basic_ostream_wchar_rtti_base_descriptor, &basic_ios_wchar_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_iostream@_WU?$char_traits@_W@std@@@std@@");
+        ".?AV?$basic_iostream@_WU?$char_traits@_W@std@@@std@@")
 DEFINE_RTTI_DATA8(basic_iostream_short, sizeof(basic_iostream_wchar),
         &basic_istream_short_rtti_base_descriptor, &basic_ios_short_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         &basic_ostream_short_rtti_base_descriptor, &basic_ios_short_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_iostream@GU?$char_traits@G@std@@@std@@");
+        ".?AV?$basic_iostream@GU?$char_traits@G@std@@@std@@")
 DEFINE_RTTI_DATA4(basic_ofstream_char, sizeof(basic_ofstream_char),
         &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ofstream@DU?$char_traits@D@std@@@std@@");
+        ".?AV?$basic_ofstream@DU?$char_traits@D@std@@@std@@")
 DEFINE_RTTI_DATA4(basic_ofstream_wchar, sizeof(basic_ofstream_wchar),
         &basic_ostream_wchar_rtti_base_descriptor, &basic_ios_wchar_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@");
+        ".?AV?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@")
 DEFINE_RTTI_DATA4(basic_ofstream_short, sizeof(basic_ofstream_wchar),
         &basic_ostream_short_rtti_base_descriptor, &basic_ios_short_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ofstream@GU?$char_traits@G@std@@@std@@");
+        ".?AV?$basic_ofstream@GU?$char_traits@G@std@@@std@@")
 DEFINE_RTTI_DATA4(basic_ifstream_char, sizeof(basic_ifstream_char),
         &basic_istream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ifstream@DU?$char_traits@D@std@@@std@@");
+        ".?AV?$basic_ifstream@DU?$char_traits@D@std@@@std@@")
 DEFINE_RTTI_DATA4(basic_ifstream_wchar, sizeof(basic_ifstream_wchar),
         &basic_istream_wchar_rtti_base_descriptor, &basic_ios_wchar_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@");
+        ".?AV?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@")
 DEFINE_RTTI_DATA4(basic_ifstream_short, sizeof(basic_ifstream_wchar),
         &basic_istream_short_rtti_base_descriptor, &basic_ios_short_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ifstream@GU?$char_traits@G@std@@@std@@");
+        ".?AV?$basic_ifstream@GU?$char_traits@G@std@@@std@@")
 DEFINE_RTTI_DATA8(basic_fstream_char, sizeof(basic_fstream_char),
         &basic_istream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_fstream@DU?$char_traits@D@std@@@std@@");
+        ".?AV?$basic_fstream@DU?$char_traits@D@std@@@std@@")
 DEFINE_RTTI_DATA8(basic_fstream_wchar, sizeof(basic_fstream_wchar),
         &basic_istream_wchar_rtti_base_descriptor, &basic_ios_wchar_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         &basic_ostream_wchar_rtti_base_descriptor, &basic_ios_wchar_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_fstream@_WU?$char_traits@_W@std@@@std@@");
+        ".?AV?$basic_fstream@_WU?$char_traits@_W@std@@@std@@")
 DEFINE_RTTI_DATA8(basic_fstream_short, sizeof(basic_fstream_wchar),
         &basic_istream_short_rtti_base_descriptor, &basic_ios_short_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         &basic_ostream_short_rtti_base_descriptor, &basic_ios_short_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_fstream@GU?$char_traits@G@std@@@std@@");
+        ".?AV?$basic_fstream@GU?$char_traits@G@std@@@std@@")
 DEFINE_RTTI_DATA4(basic_ostringstream_char, sizeof(basic_ostringstream_char),
         &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@");
+        ".?AV?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@")
 DEFINE_RTTI_DATA4(basic_ostringstream_wchar, sizeof(basic_ostringstream_wchar),
         &basic_ostream_wchar_rtti_base_descriptor, &basic_ios_wchar_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@");
+        ".?AV?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@")
 DEFINE_RTTI_DATA4(basic_ostringstream_short, sizeof(basic_ostringstream_wchar),
         &basic_ostream_short_rtti_base_descriptor, &basic_ios_short_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@");
+        ".?AV?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@")
 DEFINE_RTTI_DATA4(basic_istringstream_char, sizeof(basic_istringstream_char),
         &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@");
+        ".?AV?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@")
 DEFINE_RTTI_DATA4(basic_istringstream_wchar, sizeof(basic_istringstream_wchar),
         &basic_ostream_wchar_rtti_base_descriptor, &basic_ios_wchar_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@");
+        ".?AV?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@")
 DEFINE_RTTI_DATA4(basic_istringstream_short, sizeof(basic_istringstream_wchar),
         &basic_ostream_short_rtti_base_descriptor, &basic_ios_short_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@");
+        ".?AV?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@")
 DEFINE_RTTI_DATA8(basic_stringstream_char, sizeof(basic_stringstream_char),
         &basic_istream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@");
+        ".?AV?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@")
 DEFINE_RTTI_DATA8(basic_stringstream_wchar, sizeof(basic_stringstream_wchar),
         &basic_istream_wchar_rtti_base_descriptor, &basic_ios_wchar_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         &basic_ostream_wchar_rtti_base_descriptor, &basic_ios_wchar_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@");
+        ".?AV?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@")
 DEFINE_RTTI_DATA8(basic_stringstream_short, sizeof(basic_stringstream_wchar),
         &basic_istream_short_rtti_base_descriptor, &basic_ios_short_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         &basic_ostream_short_rtti_base_descriptor, &basic_ios_short_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        ".?AV?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@");
+        ".?AV?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@")
 DEFINE_RTTI_DATA1(strstreambuf, sizeof(strstreambuf),
-        &basic_streambuf_char_rtti_base_descriptor, ".?AVstrstreambuf@std@@");
+        &basic_streambuf_char_rtti_base_descriptor, ".?AVstrstreambuf@std@@")
 DEFINE_RTTI_DATA4(ostrstream, sizeof(ostrstream),
         &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        "?AVostrstream@std@@");
+        "?AVostrstream@std@@")
 DEFINE_RTTI_DATA8(strstream, sizeof(strstream),
         &basic_istream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         &basic_ostream_char_rtti_base_descriptor, &basic_ios_char_rtti_base_descriptor,
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
-        "?AVstrstream@std@@");
+        "?AVstrstream@std@@")
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
