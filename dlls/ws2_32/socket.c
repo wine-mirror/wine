@@ -6793,4 +6793,4 @@ INT WINAPI WSANSPIoctl( HANDLE hLookup, DWORD dwControlCode, LPVOID lpvInBuffer,
     lpvInBuffer, cbInBuffer, lpvOutBuffer, cbOutBuffer, lpcbBytesReturned, lpCompletion);
     WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
     return SOCKET_ERROR;
-};
+}
