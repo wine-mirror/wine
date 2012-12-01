@@ -1895,8 +1895,8 @@ static char find_html_symbol(const char *entity, int entity_len)
  */
 WCHAR *decode_html(const char *html_fragment, int html_fragment_len, UINT code_page)
 {
-    const char *h = html_fragment;
-    char *amp, *sem, symbol, *tmp;
+    const char *h = html_fragment, *amp, *sem;
+    char symbol, *tmp;
     int len, tmp_len = 0;
     WCHAR *unicode_text;
 
