@@ -123,7 +123,7 @@ static void assembleshader_test(void) {
         "#error \"wrong include\"\n"
     };
     HRESULT hr;
-    LPD3DXBUFFER shader, messages;
+    ID3DXBuffer *shader, *messages;
     D3DXMACRO defines[] = {
         {
             "DEF1", "10 + 15"
@@ -347,7 +347,7 @@ static void d3dxpreprocess_test(void) {
         "#error \"wrong include\"\n"
     };
     HRESULT hr;
-    LPD3DXBUFFER shader, messages;
+    ID3DXBuffer *shader, *messages;
     HRESULT shader_vsh_res;
     struct D3DXIncludeImpl include = {{&D3DXInclude_Vtbl}};
 

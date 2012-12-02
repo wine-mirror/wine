@@ -1628,8 +1628,8 @@ static HRESULT remap_faces_for_attrsort(ID3DXMeshImpl *This, const DWORD *indice
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMeshImpl_OptimizeInplace(ID3DXMesh *iface, DWORD flags, CONST DWORD *adjacency_in, DWORD *adjacency_out,
-                                                    DWORD *face_remap_out, LPD3DXBUFFER *vertex_remap_out)
+static HRESULT WINAPI ID3DXMeshImpl_OptimizeInplace(ID3DXMesh *iface, DWORD flags, const DWORD *adjacency_in,
+        DWORD *adjacency_out, DWORD *face_remap_out, ID3DXBuffer **vertex_remap_out)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
     void *indices = NULL;

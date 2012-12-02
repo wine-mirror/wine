@@ -268,8 +268,8 @@ DECLARE_INTERFACE_(ID3DXKeyframedAnimationSet, ID3DXAnimationSet)
             UINT num_rotation_keys, UINT num_translation_keys, CONST D3DXKEY_VECTOR3 *scale_keys,
             CONST D3DXKEY_QUATERNION *rotation_keys, CONST D3DXKEY_VECTOR3 *translation_keys,
             DWORD *animation_index) PURE;
-    STDMETHOD(Compress)(THIS_ DWORD flags, FLOAT lossiness, LPD3DXFRAME hierarchy,
-            LPD3DXBUFFER *compressed_data) PURE;
+    STDMETHOD(Compress)(THIS_ DWORD flags, float lossiness, D3DXFRAME *hierarchy,
+            ID3DXBuffer **compressed_data) PURE;
     STDMETHOD(UnregisterAnimation)(THIS_ UINT index) PURE;
 };
 #undef INTERFACE
@@ -295,7 +295,7 @@ DECLARE_INTERFACE_(ID3DXCompressedAnimationSet, ID3DXAnimationSet)
     /*** ID3DXCompressedAnimationSet methods ***/
     STDMETHOD_(D3DXPLAYBACK_TYPE, GetPlaybackType)(THIS) PURE;
     STDMETHOD_(DOUBLE, GetSourceTicksPerSecond)(THIS) PURE;
-    STDMETHOD(GetCompressedData)(THIS_ LPD3DXBUFFER *compressed_data) PURE;
+    STDMETHOD(GetCompressedData)(THIS_ ID3DXBuffer **compressed_data) PURE;
     STDMETHOD_(UINT, GetNumCallbackKeys)(THIS) PURE;
     STDMETHOD(GetCallbackKeys)(THIS_ LPD3DXKEY_CALLBACK callback_keys) PURE;
 };
@@ -388,7 +388,9 @@ HRESULT WINAPI D3DXFrameRegisterNamedMatrices(LPD3DXFRAME, LPD3DXANIMATIONCONTRO
 UINT WINAPI D3DXFrameNumNamedMatrices(CONST D3DXFRAME *frame_root);
 HRESULT WINAPI D3DXFrameCalculateBoundingSphere(CONST D3DXFRAME*, LPD3DXVECTOR3, FLOAT*);
 HRESULT WINAPI D3DXCreateKeyframedAnimationSet(LPCSTR, DOUBLE, D3DXPLAYBACK_TYPE, UINT, UINT, CONST D3DXKEY_CALLBACK*, LPD3DXKEYFRAMEDANIMATIONSET*);
-HRESULT WINAPI D3DXCreateCompressedAnimationSet(LPCSTR, DOUBLE, D3DXPLAYBACK_TYPE, LPD3DXBUFFER, UINT, CONST D3DXKEY_CALLBACK*, LPD3DXCOMPRESSEDANIMATIONSET*);
+HRESULT WINAPI D3DXCreateCompressedAnimationSet(const char *name, double ticks_per_second,
+        D3DXPLAYBACK_TYPE playback_type, ID3DXBuffer *compressed_data, UINT callback_key_count,
+        const D3DXKEY_CALLBACK *callback_keys, ID3DXCompressedAnimationSet **animation_set);
 HRESULT WINAPI D3DXCreateAnimationController(UINT, UINT, UINT, UINT, LPD3DXANIMATIONCONTROLLER*);
 
 #ifdef __cplusplus

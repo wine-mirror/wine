@@ -373,8 +373,8 @@ DECLARE_INTERFACE_(ID3DXMesh, ID3DXBaseMesh)
     STDMETHOD(UnlockAttributeBuffer)(THIS) PURE;
     STDMETHOD(Optimize)(THIS_ DWORD flags, const DWORD *adjacency_in, DWORD *adjacency_out,
             DWORD *face_remap, ID3DXBuffer **vertex_remap, ID3DXMesh **opt_mesh) PURE;
-    STDMETHOD(OptimizeInplace)(THIS_ DWORD flags, CONST DWORD* adjacency_in, DWORD* adjacency_out,
-                     DWORD* face_remap, LPD3DXBUFFER* vertex_remap) PURE;
+    STDMETHOD(OptimizeInplace)(THIS_ DWORD flags, const DWORD *adjacency_in, DWORD *adjacency_out,
+                     DWORD *face_remap, ID3DXBuffer **vertex_remap) PURE;
     STDMETHOD(SetAttributeTable)(THIS_ CONST D3DXATTRIBUTERANGE* attrib_table, DWORD attrib_table_size) PURE;
 };
 #undef INTERFACE
@@ -696,7 +696,7 @@ HRESULT WINAPI D3DXCreateMesh(DWORD face_count, DWORD vertex_count, DWORD flags,
         const D3DVERTEXELEMENT9 *declaration, struct IDirect3DDevice9 *device, struct ID3DXMesh **mesh);
 HRESULT WINAPI D3DXCreateMeshFVF(DWORD face_count, DWORD vertex_count, DWORD flags,
         DWORD fvf, struct IDirect3DDevice9 *device, struct ID3DXMesh **mesh);
-HRESULT WINAPI D3DXCreateBuffer(DWORD, LPD3DXBUFFER*);
+HRESULT WINAPI D3DXCreateBuffer(DWORD size, ID3DXBuffer **buffer);
 HRESULT WINAPI D3DXCreateSPMesh(ID3DXMesh *mesh, const DWORD *adjacency,
         const D3DXATTRIBUTEWEIGHTS *attribute_weights, const float *vertex_weights, ID3DXSPMesh **spmesh);
 HRESULT WINAPI D3DXCreatePMeshFromStream(struct IStream *stream, DWORD flags, struct IDirect3DDevice9 *device,
@@ -812,7 +812,10 @@ HRESULT WINAPI D3DXOptimizeVertices(LPCVOID, UINT, UINT, BOOL, DWORD *);
 HRESULT WINAPI D3DXRectPatchSize(CONST FLOAT *, DWORD *, DWORD *);
 HRESULT WINAPI D3DXSHPRTCompSuperCluster(UINT *cluster_ids, ID3DXMesh *scene, UINT max_cluster_count,
         UINT cluster_count, UINT *scluster_ids, UINT *scluster_count);
-HRESULT WINAPI D3DXSHPRTCompSplitMeshSC(UINT *, UINT, UINT, UINT *, UINT, LPVOID, BOOL, UINT, LPD3DXBUFFER *, UINT *, BOOL, LPD3DXBUFFER *, LPD3DXBUFFER *, UINT *, UINT *, D3DXSHPRTSPLITMESHCLUSTERDATA *);
+HRESULT WINAPI D3DXSHPRTCompSplitMeshSC(UINT *cluster_idx, UINT vertex_count, UINT cluster_count, UINT *scluster_ids,
+        UINT scluster_count, void *index_buffer_in, BOOL ib_in_32bit, UINT face_count, ID3DXBuffer **index_buffer_out,
+        UINT *index_buffer_size, BOOL ib_out_32bit, ID3DXBuffer **face_remap, ID3DXBuffer **vertex_data,
+        UINT *vertex_data_length, UINT *sc_cluster_list, D3DXSHPRTSPLITMESHCLUSTERDATA *sc_data);
 HRESULT WINAPI D3DXSimplifyMesh(ID3DXMesh *mesh_in, const DWORD *adjacency,
         const D3DXATTRIBUTEWEIGHTS *attribute_weights, const float *vertex_weights, DWORD min_value,
         DWORD flags, ID3DXMesh **mesh_out);
@@ -830,7 +833,9 @@ HRESULT WINAPI D3DXUVAtlasCreate(ID3DXMesh *mesh_in, UINT max_chart_count, float
         UINT width, UINT height, float gutter, DWORD texture_idx, const DWORD *adjacency, const DWORD *false_edges,
         const float *imt_array, LPD3DXUVATLASCB cb, float cb_freq, void *ctx, DWORD flags, ID3DXMesh **mesh_out,
         ID3DXBuffer **face_partitioning_out, ID3DXBuffer **vertex_remap_out, float *max_stretch_out, UINT *chart_count);
-HRESULT WINAPI D3DXUVAtlasPack(ID3DXMesh *, UINT, UINT, FLOAT, DWORD, CONST DWORD *, LPD3DXUVATLASCB, FLOAT, LPVOID, DWORD, LPD3DXBUFFER);
+HRESULT WINAPI D3DXUVAtlasPack(ID3DXMesh *mesh, UINT width, UINT height, float gutter, DWORD texture_idx,
+        const DWORD *partition_result_adjacency, LPD3DXUVATLASCB cb, float cb_freq, void *ctx, DWORD flags,
+        ID3DXBuffer *face_partitioning);
 HRESULT WINAPI D3DXUVAtlasPartition(ID3DXMesh *mesh_in, UINT max_chart_count, float max_stretch_in,
         DWORD texture_idx, const DWORD *adjacency, const DWORD *false_edges, const float *imt_array,
         LPD3DXUVATLASCB cb, float cb_freq, void *ctx, DWORD flags, ID3DXMesh **mesh_out,

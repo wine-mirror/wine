@@ -132,7 +132,7 @@ static HRESULT d3dx9_buffer_init(struct ID3DXBufferImpl *buffer, DWORD size)
     return D3D_OK;
 }
 
-HRESULT WINAPI D3DXCreateBuffer(DWORD size, LPD3DXBUFFER *buffer)
+HRESULT WINAPI D3DXCreateBuffer(DWORD size, ID3DXBuffer **buffer)
 {
     struct ID3DXBufferImpl *object;
     HRESULT hr;

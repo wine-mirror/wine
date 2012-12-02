@@ -353,7 +353,7 @@ DECLARE_INTERFACE_(ID3DXEffectCompiler, ID3DXBaseEffect)
     /*** ID3DXEffectCompiler methods ***/
     STDMETHOD(SetLiteral)(THIS_ D3DXHANDLE parameter, BOOL literal) PURE;
     STDMETHOD(GetLiteral)(THIS_ D3DXHANDLE parameter, BOOL* literal) PURE;
-    STDMETHOD(CompileEffect)(THIS_ DWORD flags, LPD3DXBUFFER* effect, LPD3DXBUFFER* error_msgs) PURE;
+    STDMETHOD(CompileEffect)(THIS_ DWORD flags, ID3DXBuffer **effect, ID3DXBuffer **error_msgs) PURE;
     STDMETHOD(CompileShader)(THIS_ D3DXHANDLE function, const char *target, DWORD flags,
             ID3DXBuffer **shader, ID3DXBuffer **error_msgs, ID3DXConstantTable **constant_table) PURE;
 };

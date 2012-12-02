@@ -4395,7 +4395,7 @@ static HRESULT WINAPI ID3DXEffectCompilerImpl_GetLiteral(ID3DXEffectCompiler *if
 }
 
 static HRESULT WINAPI ID3DXEffectCompilerImpl_CompileEffect(ID3DXEffectCompiler *iface, DWORD flags,
-        LPD3DXBUFFER *effect, LPD3DXBUFFER *error_msgs)
+        ID3DXBuffer **effect, ID3DXBuffer **error_msgs)
 {
     struct ID3DXEffectCompilerImpl *This = impl_from_ID3DXEffectCompiler(iface);
 
