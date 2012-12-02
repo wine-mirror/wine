@@ -3758,8 +3758,6 @@ static void test_GetSecurityInfo(void)
         ok(ace->Mask == 0x1f01ff, "Administators Group ACE has unexpected mask (0x%x != 0x1f01ff)\n",
                                   ace->Mask);
     }
-    LocalFree(pSD);
-
     CloseHandle(obj);
 }
 
