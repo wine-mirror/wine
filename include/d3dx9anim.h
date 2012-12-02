@@ -359,7 +359,7 @@ DECLARE_INTERFACE_(ID3DXAnimationController, IUnknown)
     STDMETHOD(ValidateEvent)(THIS_ D3DXEVENTHANDLE event) PURE;
     STDMETHOD(GetEventDesc)(THIS_ D3DXEVENTHANDLE event, LPD3DXEVENT_DESC desc) PURE;
     STDMETHOD(CloneAnimationController)(THIS_ UINT max_num_anim_outputs, UINT max_num_anim_sets,
-            UINT max_num_tracks, UINT max_num_events, LPD3DXANIMATIONCONTROLLER *anim_controller) PURE;
+            UINT max_num_tracks, UINT max_num_events, ID3DXAnimationController **anim_controller) PURE;
 };
 #undef INTERFACE
 
@@ -378,20 +378,25 @@ HRESULT WINAPI D3DXLoadMeshHierarchyFromXInMemory(const void *data, DWORD data_s
         struct IDirect3DDevice9 *device, struct ID3DXAllocateHierarchy *alloc,
         struct ID3DXLoadUserData *user_data_loader, D3DXFRAME **frame_hierarchy,
         struct ID3DXAnimationController **animation_controller);
-HRESULT WINAPI D3DXSaveMeshHierarchyToFileA(LPCSTR, DWORD, CONST D3DXFRAME*, LPD3DXANIMATIONCONTROLLER, LPD3DXSAVEUSERDATA);
-HRESULT WINAPI D3DXSaveMeshHierarchyToFileW(LPCWSTR, DWORD, CONST D3DXFRAME*, LPD3DXANIMATIONCONTROLLER, LPD3DXSAVEUSERDATA);
+HRESULT WINAPI D3DXSaveMeshHierarchyToFileA(const char *filename, DWORD format,
+        const D3DXFRAME *frame_root, ID3DXAnimationController *animation_controller,
+        ID3DXSaveUserData *user_data_saver);
+HRESULT WINAPI D3DXSaveMeshHierarchyToFileW(const WCHAR *filename, DWORD format,
+        const D3DXFRAME *frame_root, ID3DXAnimationController *animation_controller,
+        ID3DXSaveUserData *user_data_saver);
 #define D3DXSaveMeshHierarchyToFile WINELIB_NAME_AW(D3DXSaveMeshHierarchyToFile)
 HRESULT WINAPI D3DXFrameDestroy(LPD3DXFRAME, LPD3DXALLOCATEHIERARCHY);
 HRESULT WINAPI D3DXFrameAppendChild(LPD3DXFRAME, CONST D3DXFRAME*);
 LPD3DXFRAME WINAPI D3DXFrameFind(CONST D3DXFRAME*, LPCSTR);
-HRESULT WINAPI D3DXFrameRegisterNamedMatrices(LPD3DXFRAME, LPD3DXANIMATIONCONTROLLER);
+HRESULT WINAPI D3DXFrameRegisterNamedMatrices(D3DXFRAME *frame_root, ID3DXAnimationController *animation_controller);
 UINT WINAPI D3DXFrameNumNamedMatrices(CONST D3DXFRAME *frame_root);
 HRESULT WINAPI D3DXFrameCalculateBoundingSphere(CONST D3DXFRAME*, LPD3DXVECTOR3, FLOAT*);
 HRESULT WINAPI D3DXCreateKeyframedAnimationSet(LPCSTR, DOUBLE, D3DXPLAYBACK_TYPE, UINT, UINT, CONST D3DXKEY_CALLBACK*, LPD3DXKEYFRAMEDANIMATIONSET*);
 HRESULT WINAPI D3DXCreateCompressedAnimationSet(const char *name, double ticks_per_second,
         D3DXPLAYBACK_TYPE playback_type, ID3DXBuffer *compressed_data, UINT callback_key_count,
         const D3DXKEY_CALLBACK *callback_keys, ID3DXCompressedAnimationSet **animation_set);
-HRESULT WINAPI D3DXCreateAnimationController(UINT, UINT, UINT, UINT, LPD3DXANIMATIONCONTROLLER*);
+HRESULT WINAPI D3DXCreateAnimationController(UINT max_animation_output_count, UINT max_animation_set_count,
+        UINT max_track_count, UINT max_event_count, ID3DXAnimationController **animation_controller);
 
 #ifdef __cplusplus
 }
