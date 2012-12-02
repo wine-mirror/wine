@@ -3928,6 +3928,11 @@ DWORD WINAPI SetNamedSecurityInfoW(LPWSTR pObjectName,
 
     TRACE( "%s %d %d %p %p %p %p\n", debugstr_w(pObjectName), ObjectType,
            SecurityInfo, psidOwner, psidGroup, pDacl, pSacl);
+    if (ObjectType != SE_FILE_OBJECT)
+    {
+        FIXME( "Object type %d is not currently supported.\n", ObjectType );
+        return ERROR_SUCCESS;
+    }
 
     if (!pObjectName) return ERROR_INVALID_PARAMETER;
     if (!RtlDosPathNameToNtPathName_U( pObjectName, &nameW, NULL, NULL ))
@@ -5465,6 +5470,16 @@ DWORD WINAPI GetNamedSecurityInfoW( LPWSTR name, SE_OBJECT_TYPE type,
 
     TRACE( "%s %d %d %p %p %p %p %p\n", debugstr_w(name), type, info, owner,
            group, dacl, sacl, descriptor );
+    if (type != SE_FILE_OBJECT)
+    {
+        FIXME( "Object type %d is not currently supported.\n", type );
+        if (owner) *owner = NULL;
+        if (group) *group = NULL;
+        if (dacl) *dacl = NULL;
+        if (sacl) *sacl = NULL;
+        if (descriptor) *descriptor = NULL;
+        return ERROR_SUCCESS;
+    }
 
     /* A NULL descriptor is allowed if any one of the other pointers is not NULL */
     if (!name || !(owner||group||dacl||sacl||descriptor) ) return ERROR_INVALID_PARAMETER;
