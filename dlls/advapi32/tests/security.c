@@ -3005,9 +3005,8 @@ static void test_SetEntriesInAclA(void)
 
 static void test_GetNamedSecurityInfoA(void)
 {
-    char b[sizeof(TOKEN_USER) + sizeof(SID) + sizeof(DWORD)*SID_MAX_SUB_AUTHORITIES];
-    char admin_ptr[sizeof(SID)+sizeof(ULONG)*SID_MAX_SUB_AUTHORITIES], dacl[100];
-    DWORD sid_size = sizeof(admin_ptr), l = sizeof(b);
+    char admin_ptr[sizeof(SID)+sizeof(ULONG)*SID_MAX_SUB_AUTHORITIES], dacl[100], *user;
+    DWORD sid_size = sizeof(admin_ptr), user_size;
     char invalid_path[] = "/an invalid file path";
     PSID admin_sid = (PSID) admin_ptr, user_sid;
     char sd[SECURITY_DESCRIPTOR_MIN_LENGTH];
@@ -3041,9 +3040,14 @@ static void test_GetNamedSecurityInfoA(void)
         win_skip("Failed to get current user token\n");
         return;
     }
-    GetTokenInformation(token, TokenUser, b, l, &l);
+    bret = GetTokenInformation(token, TokenUser, NULL, 0, &user_size);
+    ok(!bret && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+        "GetTokenInformation(TokenUser) failed with error %d\n", GetLastError());
+    user = HeapAlloc(GetProcessHeap(), 0, user_size);
+    bret = GetTokenInformation(token, TokenUser, user, user_size, &user_size);
+    ok(bret, "GetTokenInformation(TokenUser) failed with error %d\n", GetLastError());
     CloseHandle( token );
-    user_sid = ((TOKEN_USER *)b)->User.Sid;
+    user_sid = ((TOKEN_USER *)user)->User.Sid;
 
     bret = GetWindowsDirectoryA(windows_dir, MAX_PATH);
     ok(bret, "GetWindowsDirectory failed with error %d\n", GetLastError());
@@ -3055,6 +3059,7 @@ static void test_GetNamedSecurityInfoA(void)
     if (error != ERROR_SUCCESS && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
         win_skip("GetNamedSecurityInfoA is not implemented\n");
+        HeapFree(GetProcessHeap(), 0, user);
         return;
     }
     ok(!error, "GetNamedSecurityInfo failed with error %d\n", error);
@@ -3082,6 +3087,7 @@ static void test_GetNamedSecurityInfoA(void)
     if(isNT4)
     {
         win_skip("NT4 does not support GetNamedSecutityInfo with a NULL descriptor\n");
+        HeapFree(GetProcessHeap(), 0, user);
         return;
     }
 
@@ -3113,6 +3119,7 @@ static void test_GetNamedSecurityInfoA(void)
     bret = InitializeAcl(pDacl, sizeof(dacl), ACL_REVISION);
     ok(bret, "Failed to initialize ACL.\n");
     bret = pAddAccessAllowedAceEx(pDacl, ACL_REVISION, 0, GENERIC_ALL, user_sid);
+    HeapFree(GetProcessHeap(), 0, user);
     ok(bret, "Failed to add Current User to ACL.\n");
     bret = pAddAccessAllowedAceEx(pDacl, ACL_REVISION, 0, GENERIC_ALL, admin_sid);
     ok(bret, "Failed to add Administrator Group to ACL.\n");
