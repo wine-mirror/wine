@@ -446,22 +446,25 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
 
         case WINED3D_TOP_BUMPENVMAP_LUMINANCE:
         case WINED3D_TOP_BUMPENVMAP:
-            if (gl_info->supported[NV_TEXTURE_SHADER])
+            if (!gl_info->supported[NV_TEXTURE_SHADER])
             {
-                /* The bump map stage itself isn't exciting, just read the texture. But tell the next stage to
-                 * perform bump mapping and source from the current stage. Pretty much a SELECTARG2.
-                 * ARG2 is passed through unmodified(apps will most likely use D3DTA_CURRENT for arg2, arg1
-                 * (which will most likely be D3DTA_TEXTURE) is available as a texture shader input for the next stage
-                 */
-                GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
-                           tex_op_args.input[1], tex_op_args.mapping[1], tex_op_args.component_usage[1]));
-                GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_B_NV,
-                           GL_ZERO, GL_UNSIGNED_INVERT_NV, portion));
-                /* Always pass through to CURRENT, ignore temp arg */
-                GL_EXTCALL(glCombinerOutputNV(target, portion, GL_SPARE0_NV, GL_DISCARD_NV,
-                           GL_DISCARD_NV, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
+                WARN("BUMPENVMAP requires GL_NV_texture_shader in this codepath\n");
                 break;
             }
+
+            /* The bump map stage itself isn't exciting, just read the texture. But tell the next stage to
+             * perform bump mapping and source from the current stage. Pretty much a SELECTARG2.
+             * ARG2 is passed through unmodified(apps will most likely use D3DTA_CURRENT for arg2, arg1
+             * (which will most likely be D3DTA_TEXTURE) is available as a texture shader input for the
+             * next stage */
+            GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
+                        tex_op_args.input[1], tex_op_args.mapping[1], tex_op_args.component_usage[1]));
+            GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_B_NV,
+                        GL_ZERO, GL_UNSIGNED_INVERT_NV, portion));
+            /* Always pass through to CURRENT, ignore temp arg */
+            GL_EXTCALL(glCombinerOutputNV(target, portion, GL_SPARE0_NV, GL_DISCARD_NV,
+                        GL_DISCARD_NV, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
+            break;
 
         default:
             FIXME("Unhandled texture op: stage %d, is_alpha %d, op %s (%#x), arg1 %#x, arg2 %#x, arg3 %#x, texture_idx %d.\n",

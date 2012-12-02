@@ -2628,6 +2628,8 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             case WINED3D_TOP_BUMPENVMAP:
             case WINED3D_TOP_BUMPENVMAP_LUMINANCE:
                 FIXME("Implement bump environment mapping in GL_NV_texture_env_combine4 path\n");
+                Handled = FALSE;
+                break;
 
             default:
                 Handled = FALSE;
@@ -3090,6 +3092,9 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                  */
                 FIXME("Implement bump mapping with GL_NV_texture_shader in non register combiner path\n");
             }
+            Handled = FALSE;
+            break;
+
         default:
             Handled = FALSE;
     }
