@@ -494,12 +494,12 @@ static void drawStridedSlowVs(const struct wined3d_gl_info *gl_info, const struc
 /* GL locking is done by the caller */
 static void drawStridedInstanced(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
         const struct wined3d_stream_info *si, UINT numberOfVertices, GLenum glPrimitiveType,
-        const void *idxData, UINT idxSize, UINT startIdx, UINT base_vertex_index)
+        const void *idxData, UINT idxSize, UINT startIdx, UINT base_vertex_index, UINT instance_count)
 {
-    UINT numInstances = 0, i;
     int numInstancedAttribs = 0, j;
     UINT instancedData[sizeof(si->elements) / sizeof(*si->elements) /* 16 */];
     GLenum idxtype = idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
+    UINT i;
 
     if (!idxSize)
     {
@@ -513,22 +513,6 @@ static void drawStridedInstanced(const struct wined3d_gl_info *gl_info, const st
         return;
     }
 
-    /* First, figure out how many instances we have to draw */
-    for (i = 0; i < MAX_STREAMS; ++i)
-    {
-        /* Look at the streams and take the first one which matches */
-        if (state->streams[i].buffer
-                && ((state->streams[i].flags & WINED3DSTREAMSOURCE_INSTANCEDATA)
-                || (state->streams[i].flags & WINED3DSTREAMSOURCE_INDEXEDDATA)))
-        {
-            /* Use the specified number of instances from the first matched
-             * stream. A streamFreq of 0 (with INSTANCEDATA or INDEXEDDATA)
-             * is handled as 1. See d3d9/tests/visual.c-> stream_test(). */
-            numInstances = state->streams[i].frequency ? state->streams[i].frequency : 1;
-            break;
-        }
-    }
-
     for (i = 0; i < sizeof(si->elements) / sizeof(*si->elements); ++i)
     {
         if (!(si->use_map & (1 << i))) continue;
@@ -540,8 +524,8 @@ static void drawStridedInstanced(const struct wined3d_gl_info *gl_info, const st
         }
     }
 
-    /* now draw numInstances instances :-) */
-    for(i = 0; i < numInstances; i++) {
+    for (i = 0; i < instance_count; ++i)
+    {
         /* Specify the instanced attributes using immediate mode calls */
         for(j = 0; j < numInstancedAttribs; j++) {
             const BYTE *ptr = si->elements[instancedData[j]].data.addr
@@ -769,11 +753,11 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
                         glPrimType, idx_data, idx_size, start_idx);
             }
         }
-        else if (device->instancedDraw)
+        else if (device->instance_count)
         {
             /* Instancing emulation with mixing immediate mode and arrays */
-            drawStridedInstanced(gl_info, state, stream_info, index_count,
-                    glPrimType, idx_data, idx_size, start_idx, base_vertex_index);
+            drawStridedInstanced(gl_info, state, stream_info, index_count, glPrimType,
+                    idx_data, idx_size, start_idx, base_vertex_index, device->instance_count);
         }
         else
         {

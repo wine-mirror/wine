@@ -1724,6 +1724,7 @@ struct wined3d_device
     UINT vs_version, gs_version, ps_version;
     DWORD d3d_vshader_constantF, d3d_pshader_constantF; /* Advertised d3d caps, not GL ones */
     DWORD vs_clipping;
+    UINT instance_count;
 
     WORD view_ident : 1;                /* true iff view matrix is identity */
     WORD vertexBlendUsed : 1;           /* To avoid needless setting of the blend matrices */
@@ -1734,9 +1735,8 @@ struct wined3d_device
     WORD inScene : 1;                   /* A flag to check for proper BeginScene / EndScene call pairs */
     WORD softwareVertexProcessing : 1;  /* process vertex shaders using software or hardware */
     WORD useDrawStridedSlow : 1;
-    WORD instancedDraw : 1;
     WORD filter_messages : 1;
-    WORD padding : 5;
+    WORD padding : 6;
 
     BYTE fixed_function_usage_map;      /* MAX_TEXTURES, 8 */
 
