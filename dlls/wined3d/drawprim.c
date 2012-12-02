@@ -676,6 +676,9 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         struct wined3d_stream_info stridedlcl;
         UINT idx_size = 0;
 
+        if (device->instance_count)
+            instance_count = device->instance_count;
+
         if (indexed)
         {
             if (!state->user_stream)
@@ -753,11 +756,11 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
                         glPrimType, idx_data, idx_size, start_idx);
             }
         }
-        else if (device->instance_count)
+        else if (!gl_info->supported[ARB_INSTANCED_ARRAYS] && instance_count)
         {
             /* Instancing emulation with mixing immediate mode and arrays */
             drawStridedInstanced(gl_info, state, stream_info, index_count, glPrimType,
-                    idx_data, idx_size, start_idx, base_vertex_index, device->instance_count);
+                    idx_data, idx_size, start_idx, base_vertex_index, instance_count);
         }
         else
         {

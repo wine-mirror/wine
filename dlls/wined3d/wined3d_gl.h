@@ -57,6 +57,7 @@ enum wined3d_gl_extension
     ARB_GEOMETRY_SHADER4,
     ARB_HALF_FLOAT_PIXEL,
     ARB_HALF_FLOAT_VERTEX,
+    ARB_INSTANCED_ARRAYS,
     ARB_MAP_BUFFER_ALIGNMENT,
     ARB_MAP_BUFFER_RANGE,
     ARB_MULTISAMPLE,
@@ -214,6 +215,8 @@ enum wined3d_gl_extension
     USE_GL_FUNC(glFramebufferTextureFaceARB) \
     USE_GL_FUNC(glFramebufferTextureLayerARB) \
     USE_GL_FUNC(glProgramParameteriARB) \
+    /* GL_ARB_instanced_arrays */ \
+    USE_GL_FUNC(glVertexAttribDivisorARB) \
     /* GL_ARB_map_buffer_range */ \
     USE_GL_FUNC(glFlushMappedBufferRange) \
     USE_GL_FUNC(glMapBufferRange) \

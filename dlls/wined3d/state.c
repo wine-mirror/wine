@@ -4101,6 +4101,8 @@ static inline void unload_numbered_array(struct wined3d_context *context, int i)
 
     GL_EXTCALL(glDisableVertexAttribArrayARB(i));
     checkGLcall("glDisableVertexAttribArrayARB(reg)");
+    if (gl_info->supported[ARB_INSTANCED_ARRAYS])
+        GL_EXTCALL(glVertexAttribDivisorARB(i, 0));
 
     context->numbered_array_mask &= ~(1 << i);
 }
@@ -4143,13 +4145,25 @@ static void load_numbered_arrays(struct wined3d_context *context,
 
         stream = &state->streams[stream_info->elements[i].stream_idx];
 
-        /* Do not load instance data. It will be specified using glTexCoord by drawprim */
         if (stream->flags & WINED3DSTREAMSOURCE_INSTANCEDATA)
         {
             if (!device->instance_count)
                 device->instance_count = state->streams[0].frequency ? state->streams[0].frequency : 1;
-            if (context->numbered_array_mask & (1 << i)) unload_numbered_array(context, i);
-            continue;
+
+            if (!gl_info->supported[ARB_INSTANCED_ARRAYS])
+            {
+                /* Unload instanced arrays, they will be loaded using
+                 * immediate mode instead. */
+                if (context->numbered_array_mask & (1 << i))
+                    unload_numbered_array(context, i);
+                continue;
+            }
+
+            GL_EXTCALL(glVertexAttribDivisorARB(i, 1));
+        }
+        else if (gl_info->supported[ARB_INSTANCED_ARRAYS])
+        {
+            GL_EXTCALL(glVertexAttribDivisorARB(i, 0));
         }
 
         TRACE_(d3d_shader)("Loading array %u [VBO=%u]\n", i, stream_info->elements[i].data.buffer_object);
