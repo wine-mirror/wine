@@ -10044,10 +10044,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine 명령 프롬프트"
 
 #: cmd.rc:349
-#, fuzzy
-#| msgid "CMD Version %1!S!\n"
 msgid "Wine CMD Version %1!S!\n"
-msgstr "CMD 버젼 %1!S!\n"
+msgstr "Wine CMD 버젼 %1!S!\n"
 
 #: cmd.rc:350
 msgid "More? "
