@@ -271,8 +271,19 @@ static void STDMETHODCALLTYPE d3d10_device_DrawInstanced(ID3D10Device *iface,
 static void STDMETHODCALLTYPE d3d10_device_GSSetConstantBuffers(ID3D10Device *iface,
         UINT start_slot, UINT buffer_count, ID3D10Buffer *const *buffers)
 {
-    FIXME("iface %p, start_slot %u, buffer_count %u, buffers %p stub!\n",
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+    unsigned int i;
+
+    TRACE("iface %p, start_slot %u, buffer_count %u, buffers %p.\n",
             iface, start_slot, buffer_count, buffers);
+
+    for (i = 0; i < buffer_count; ++i)
+    {
+        struct d3d10_buffer *buffer = unsafe_impl_from_ID3D10Buffer(buffers[i]);
+
+        wined3d_device_set_gs_cb(device->wined3d_device, start_slot + i,
+                buffer ? buffer->wined3d_buffer : NULL);
+    }
 }
 
 static void STDMETHODCALLTYPE d3d10_device_GSSetShader(ID3D10Device *iface, ID3D10GeometryShader *shader)

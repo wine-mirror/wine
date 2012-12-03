@@ -2306,6 +2306,7 @@ struct wined3d_state
     float *vs_consts_f;
 
     struct wined3d_shader *geometry_shader;
+    struct wined3d_buffer *gs_cb[MAX_CONSTANT_BUFFERS];
 
     struct wined3d_shader *pixel_shader;
     BOOL ps_consts_b[MAX_CONST_B];
