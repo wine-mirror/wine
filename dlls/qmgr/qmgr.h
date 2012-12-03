@@ -81,7 +81,7 @@ typedef struct
 /* Background copy manager vtbl and related data */
 typedef struct
 {
-    const IBackgroundCopyManagerVtbl *lpVtbl;
+    IBackgroundCopyManager IBackgroundCopyManager_iface;
     /* Protects job list, job states, and jobEvent  */
     CRITICAL_SECTION cs;
     HANDLE jobEvent;
