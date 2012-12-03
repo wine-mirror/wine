@@ -327,7 +327,7 @@ DECLARE_INTERFACE_(ID3DXAnimationController, IUnknown)
     STDMETHOD_(UINT, GetNumAnimationSets)(THIS) PURE;
     STDMETHOD(GetAnimationSet)(THIS_ UINT index, LPD3DXANIMATIONSET *anim_set) PURE;
     STDMETHOD(GetAnimationSetByName)(THIS_ LPCSTR name, LPD3DXANIMATIONSET *anim_set) PURE;
-    STDMETHOD(AdvanceTime)(THIS_ DOUBLE time_delta, LPD3DXANIMATIONCALLBACKHANDLER *callback_handler) PURE;
+    STDMETHOD(AdvanceTime)(THIS_ double time_delta, ID3DXAnimationCallbackHandler **callback_handler) PURE;
     STDMETHOD(ResetTime)(THIS) PURE;
     STDMETHOD_(DOUBLE, GetTime)(THIS) PURE;
     STDMETHOD(SetTrackAnimationSet)(THIS_ UINT track, LPD3DXANIMATIONSET anim_set) PURE;
