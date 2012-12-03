@@ -1131,6 +1131,12 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         if( duration < 3 * period)
             duration = 3 * period;
     }else{
+        if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
+            if(((WAVEFORMATEXTENSIBLE*)fmt)->dwChannelMask == 0 ||
+                    ((WAVEFORMATEXTENSIBLE*)fmt)->dwChannelMask & SPEAKER_RESERVED)
+                return AUDCLNT_E_UNSUPPORTED_FORMAT;
+        }
+
         if(!period)
             period = DefaultPeriod; /* not minimum */
         if(period < MinimumPeriod || period > 5000000)
@@ -1445,12 +1451,31 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
 
     dump_fmt(pwfx);
 
-    if(outpwfx)
+    if(outpwfx){
         *outpwfx = NULL;
+        if(mode != AUDCLNT_SHAREMODE_SHARED)
+            outpwfx = NULL;
+    }
 
-    if(pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-            fmtex->dwChannelMask != 0 &&
-            fmtex->dwChannelMask != get_channel_mask(pwfx->nChannels))
+    if(pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
+        if(pwfx->nAvgBytesPerSec == 0 ||
+                pwfx->nBlockAlign == 0 ||
+                fmtex->Samples.wValidBitsPerSample > pwfx->wBitsPerSample)
+            return E_INVALIDARG;
+        if(fmtex->Samples.wValidBitsPerSample < pwfx->wBitsPerSample)
+            goto unsupported;
+        if(mode == AUDCLNT_SHAREMODE_EXCLUSIVE){
+            if(fmtex->dwChannelMask == 0 ||
+                    fmtex->dwChannelMask & SPEAKER_RESERVED)
+                goto unsupported;
+        }
+    }
+
+    if(pwfx->nBlockAlign != pwfx->nChannels * pwfx->wBitsPerSample / 8 ||
+            pwfx->nAvgBytesPerSec != pwfx->nBlockAlign * pwfx->nSamplesPerSec)
+        goto unsupported;
+
+    if(pwfx->nChannels == 0)
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
 
     OSSpinLockLock(&This->lock);
@@ -1462,10 +1487,20 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
         TRACE("returning %08x\n", S_OK);
         return S_OK;
     }
-
     OSSpinLockUnlock(&This->lock);
+    if(hr != AUDCLNT_E_UNSUPPORTED_FORMAT){
+        TRACE("returning %08x\n", hr);
+        return hr;
+    }
 
-    TRACE("returning %08x\n", AUDCLNT_E_UNSUPPORTED_FORMAT);
+unsupported:
+    if(outpwfx){
+        hr = IAudioClient_GetMixFormat(&This->IAudioClient_iface, outpwfx);
+        if(FAILED(hr))
+            return hr;
+        return S_FALSE;
+    }
+
     return AUDCLNT_E_UNSUPPORTED_FORMAT;
 }
 
