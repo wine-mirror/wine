@@ -620,6 +620,7 @@ int wmain( int argc, WCHAR *argv[] )
 
     WCHAR *p, *command;
     char buffer[MAX_PATH];
+    char filename[MAX_PATH];
     char *cab_file, *file_part;
     int i;
 
@@ -688,14 +689,15 @@ int wmain( int argc, WCHAR *argv[] )
         WINE_ERR( "cannot get full name for %s\n", wine_dbgstr_a( cab_file ));
         return 1;
     }
-    file_part[-1] = 0;
+    strcpy(filename, file_part);
+    file_part[0] = 0;
 
     /* map slash to backslash in all file arguments */
     for (i = 1; i < argc; i++)
         for (p = argv[i]; *p; p++)
             if (*p == '/') *p = '\\';
     opt_files = argv + 1;
-    opt_cab_file = file_part;
+    opt_cab_file = filename;
 
     switch (*command)
     {
