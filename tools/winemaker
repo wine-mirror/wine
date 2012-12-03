@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+use utf8;
 use strict;
 
 # Copyright 2000-2004 Francois Gouget for CodeWeavers
@@ -2387,6 +2388,7 @@ sub generate_project_files($)
     print STDERR "       $!\n";
     return;
   }
+  binmode( FILEO, ':utf8' );
 
   my $cpp_to_object;
   if (@$project_settings[$T_FLAGS] & $TF_HASCXX) {
