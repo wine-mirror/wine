@@ -55,6 +55,7 @@
 #include <libkern/OSAtomic.h>
 #include <CoreAudio/CoreAudio.h>
 #include <AudioToolbox/AudioQueue.h>
+#include <AudioToolbox/AudioFormat.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
 
@@ -281,6 +282,19 @@ int WINAPI AUDDRV_GetPriority(void)
     return Priority_Neutral;
 }
 
+static HRESULT osstatus_to_hresult(OSStatus sc)
+{
+    switch(sc){
+    case kAudioFormatUnsupportedDataFormatError:
+    case kAudioFormatUnknownFormatError:
+    case kAudioDeviceUnsupportedFormatError:
+        return AUDCLNT_E_UNSUPPORTED_FORMAT;
+    case kAudioHardwareBadDeviceError:
+        return AUDCLNT_E_DEVICE_INVALIDATED;
+    }
+    return E_FAIL;
+}
+
 static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
         GUID *guid)
 {
@@ -390,7 +404,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
             NULL, &devsize);
     if(sc != noErr){
         WARN("Getting _Devices property size failed: %lx\n", sc);
-        return E_FAIL;
+        return osstatus_to_hresult(sc);
     }
 
     devices = HeapAlloc(GetProcessHeap(), 0, devsize);
@@ -402,7 +416,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
     if(sc != noErr){
         WARN("Getting _Devices property failed: %lx\n", sc);
         HeapFree(GetProcessHeap(), 0, devices);
-        return E_FAIL;
+        return osstatus_to_hresult(sc);
     }
 
     ndevices = devsize / sizeof(AudioDeviceID);
@@ -959,7 +973,7 @@ static HRESULT ca_setup_aqueue(AudioDeviceID did, EDataFlow flow,
     sc = AudioObjectGetPropertyData(did, &addr, 0, NULL, &size, &uid);
     if(sc != noErr){
         WARN("Unable to get _DeviceUID property: %lx\n", sc);
-        return E_FAIL;
+        return osstatus_to_hresult(sc);
     }
 
     hr = ca_get_audiodesc(&desc, fmt);
@@ -981,14 +995,15 @@ static HRESULT ca_setup_aqueue(AudioDeviceID did, EDataFlow flow,
     if(sc != noErr){
         WARN("Unable to create AudioQueue: %lx\n", sc);
         CFRelease(uid);
-        return E_FAIL;
+        return osstatus_to_hresult(sc);
     }
 
     sc = AudioQueueSetProperty(*aqueue, kAudioQueueProperty_CurrentDevice,
             &uid, sizeof(uid));
     if(sc != noErr){
+        WARN("Unable to change AQueue device: %lx\n", sc);
         CFRelease(uid);
-        return E_FAIL;
+        return osstatus_to_hresult(sc);
     }
 
     CFRelease(uid);
@@ -1183,7 +1198,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
                 This->fmt = NULL;
                 OSSpinLockUnlock(&This->lock);
                 WARN("Couldn't allocate buffer: %lx\n", sc);
-                return E_FAIL;
+                return osstatus_to_hresult(sc);
             }
 
             buf->buf->mUserData = buf;
@@ -1280,7 +1295,7 @@ static HRESULT ca_get_max_stream_latency(ACImpl *This, UInt32 *max)
             &size);
     if(sc != noErr){
         WARN("Unable to get size for _Streams property: %lx\n", sc);
-        return E_FAIL;
+        return osstatus_to_hresult(sc);
     }
 
     ids = HeapAlloc(GetProcessHeap(), 0, size);
@@ -1291,7 +1306,7 @@ static HRESULT ca_get_max_stream_latency(ACImpl *This, UInt32 *max)
     if(sc != noErr){
         WARN("Unable to get _Streams property: %lx\n", sc);
         HeapFree(GetProcessHeap(), 0, ids);
-        return E_FAIL;
+        return osstatus_to_hresult(sc);
     }
 
     nstreams = size / sizeof(AudioStreamID);
@@ -1349,7 +1364,7 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient *iface,
     if(sc != noErr){
         WARN("Couldn't get _Latency property: %lx\n", sc);
         OSSpinLockUnlock(&This->lock);
-        return E_FAIL;
+        return osstatus_to_hresult(sc);
     }
 
     hr = ca_get_max_stream_latency(This, &stream_latency);
@@ -1486,7 +1501,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
     if(sc != noErr){
         CoTaskMemFree(fmt);
         WARN("Unable to get size for _StreamConfiguration property: %lx\n", sc);
-        return E_FAIL;
+        return osstatus_to_hresult(sc);
     }
 
     buffers = HeapAlloc(GetProcessHeap(), 0, size);
@@ -1501,7 +1516,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
         CoTaskMemFree(fmt);
         HeapFree(GetProcessHeap(), 0, buffers);
         WARN("Unable to get _StreamConfiguration property: %lx\n", sc);
-        return E_FAIL;
+        return osstatus_to_hresult(sc);
     }
 
     fmt->Format.nChannels = 0;
@@ -1518,7 +1533,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
     if(sc != noErr){
         CoTaskMemFree(fmt);
         WARN("Unable to get _NominalSampleRate property: %lx\n", sc);
-        return E_FAIL;
+        return osstatus_to_hresult(sc);
     }
     fmt->Format.nSamplesPerSec = rate;
 
@@ -1609,7 +1624,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
     if(sc != noErr){
         OSSpinLockUnlock(&This->lock);
         WARN("Unable to start audio queue: %lx\n", sc);
-        return E_FAIL;
+        return osstatus_to_hresult(sc);
     }
 
     This->playing = StatePlaying;
@@ -1672,7 +1687,7 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
     if(sc != noErr){
         OSSpinLockUnlock(&This->lock);
         WARN("Unable to pause audio queue: %lx\n", sc);
-        return E_FAIL;
+        return osstatus_to_hresult(sc);
     }
 
     This->playing = StateStopped;
@@ -1724,7 +1739,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
     if(sc != noErr){
         OSSpinLockUnlock(&This->lock);
         WARN("Unable to reset audio queue: %lx\n", sc);
-        return E_FAIL;
+        return osstatus_to_hresult(sc);
     }
 
     /* AQReset is synchronous */
