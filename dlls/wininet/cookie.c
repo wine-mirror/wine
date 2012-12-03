@@ -657,12 +657,12 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
 BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
     LPSTR lpCookieData, LPDWORD lpdwSize)
 {
+    WCHAR *url, *name;
     DWORD len;
-    LPWSTR szCookieData = NULL, url, name;
     BOOL r;
 
-    TRACE("(%s,%s,%p)\n", debugstr_a(lpszUrl), debugstr_a(lpszCookieName),
-        lpCookieData);
+    TRACE("(%s %s %p %p(%u))\n", debugstr_a(lpszUrl), debugstr_a(lpszCookieName),
+          lpCookieData, lpdwSize, lpdwSize ? *lpdwSize : 0);
 
     url = heap_strdupAtoW(lpszUrl);
     name = heap_strdupAtoW(lpszCookieName);
@@ -670,6 +670,8 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
     r = InternetGetCookieW( url, name, NULL, &len );
     if( r )
     {
+        WCHAR *szCookieData;
+
         szCookieData = heap_alloc(len * sizeof(WCHAR));
         if( !szCookieData )
         {
@@ -680,10 +682,11 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
             r = InternetGetCookieW( url, name, szCookieData, &len );
 
             *lpdwSize = WideCharToMultiByte( CP_ACP, 0, szCookieData, len,
-                                    lpCookieData, *lpdwSize, NULL, NULL );
+                                             lpCookieData, lpCookieData ? *lpdwSize : 0, NULL, NULL );
+
+            heap_free( szCookieData );
         }
     }
-    heap_free( szCookieData );
     heap_free( name );
     heap_free( url );
     return r;
