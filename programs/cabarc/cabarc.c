@@ -458,6 +458,9 @@ static INT_PTR CDECL extract_notify( FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION
         WINE_TRACE("Next cab: status %u, path '%s', file '%s'\n", pfdin->fdie, pfdin->psz3, pfdin->psz1);
         return pfdin->fdie == FDIERROR_NONE ? 0 : -1;
 
+    case fdintENUMERATE:
+        return 0;
+
     default:
         WINE_FIXME( "Unexpected notification type %d.\n", fdint );
         return 0;
