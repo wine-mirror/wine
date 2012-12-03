@@ -1230,12 +1230,11 @@ DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
     else
     {
         int merged_rows = 0;
-        int faster_mode = mode;
 
         while (v_params.length--)
         {
-            if (hstretch) faster_mode = merged_rows ? mode : STRETCH_DELETESCANS;
-            row_fn( &dst_dib, &dst_start, &src_dib, &src_start, &h_params, faster_mode, merged_rows != 0 );
+            if (mode != STRETCH_DELETESCANS || !merged_rows)
+                row_fn( &dst_dib, &dst_start, &src_dib, &src_start, &h_params, mode, merged_rows != 0 );
             merged_rows++;
 
             if (err > 0)

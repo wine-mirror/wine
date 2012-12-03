@@ -5698,7 +5698,7 @@ static void stretch_row_32(const dib_info *dst_dib, const POINT *dst_start,
     int err = params->err_start;
     int width;
 
-    if (mode == STRETCH_DELETESCANS)
+    if (mode == STRETCH_DELETESCANS || !keep_dst)
     {
         for (width = params->length; width; width--)
         {
@@ -5741,7 +5741,7 @@ static void stretch_row_24(const dib_info *dst_dib, const POINT *dst_start,
     int err = params->err_start;
     int width;
 
-    if (mode == STRETCH_DELETESCANS)
+    if (mode == STRETCH_DELETESCANS || !keep_dst)
     {
         for (width = params->length; width; width--)
         {
@@ -5788,7 +5788,7 @@ static void stretch_row_16(const dib_info *dst_dib, const POINT *dst_start,
     int err = params->err_start;
     int width;
 
-    if (mode == STRETCH_DELETESCANS)
+    if (mode == STRETCH_DELETESCANS || !keep_dst)
     {
         for (width = params->length; width; width--)
         {
@@ -5831,7 +5831,7 @@ static void stretch_row_8(const dib_info *dst_dib, const POINT *dst_start,
     int err = params->err_start;
     int width;
 
-    if (mode == STRETCH_DELETESCANS)
+    if (mode == STRETCH_DELETESCANS || !keep_dst)
     {
         for (width = params->length; width; width--)
         {
@@ -5876,6 +5876,7 @@ static void stretch_row_4(const dib_info *dst_dib, const POINT *dst_start,
     struct rop_codes codes;
     BYTE src_val;
 
+    if (!keep_dst) mode = STRETCH_DELETESCANS;
     rop_codes_from_stretch_mode( mode, &codes );
     for (width = params->length; width; width--)
     {
@@ -5911,6 +5912,7 @@ static void stretch_row_1(const dib_info *dst_dib, const POINT *dst_start,
     struct rop_codes codes;
     BYTE src_val;
 
+    if (!keep_dst) mode = STRETCH_DELETESCANS;
     rop_codes_from_stretch_mode( mode, &codes );
     for (width = params->length; width; width--)
     {
