@@ -4083,6 +4083,55 @@ static void test_measured_extra_space(void)
     GdipDeleteStringFormat(format);
 }
 
+static void test_alpha_hdc(void)
+{
+    GpStatus status;
+    HDC hdc;
+    HBITMAP hbm, old_hbm;
+    GpGraphics *graphics;
+    ULONG *bits;
+    BITMAPINFO bmi;
+
+    hdc = CreateCompatibleDC(0);
+    ok(hdc != NULL, "CreateCompatibleDC failed\n");
+    bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
+    bmi.bmiHeader.biHeight = 5;
+    bmi.bmiHeader.biWidth = 5;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biCompression = BI_RGB;
+    bmi.bmiHeader.biClrUsed = 0;
+
+    hbm = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(hbm != NULL, "CreateDIBSection failed\n");
+
+    old_hbm = SelectObject(hdc, hbm);
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    bits[0] = 0xdeadbeef;
+
+    status = GdipGraphicsClear(graphics, 0xffaaaaaa);
+    expect(Ok, status);
+
+    todo_wine expect(0xffaaaaaa, bits[0]);
+
+    SelectObject(hdc, old_hbm);
+
+    bits[0] = 0xdeadbeef;
+
+    status = GdipGraphicsClear(graphics, 0xffbbbbbb);
+    expect(Ok, status);
+
+    todo_wine expect(0xffbbbbbb, bits[0]);
+
+    GdipDeleteGraphics(graphics);
+
+    DeleteObject(hbm);
+    DeleteDC(hdc);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -4149,6 +4198,7 @@ START_TEST(graphics)
     test_get_set_interpolation();
     test_get_set_textrenderinghint();
     test_getdc_scaled();
+    test_alpha_hdc();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow( hwnd );
