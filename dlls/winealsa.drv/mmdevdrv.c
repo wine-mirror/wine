@@ -1230,6 +1230,12 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         if( duration < 3 * period)
             duration = 3 * period;
     }else{
+        if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
+            if(((WAVEFORMATEXTENSIBLE*)fmt)->dwChannelMask == 0 ||
+                    ((WAVEFORMATEXTENSIBLE*)fmt)->dwChannelMask & SPEAKER_RESERVED)
+                return AUDCLNT_E_UNSUPPORTED_FORMAT;
+        }
+
         if(!period)
             period = DefaultPeriod; /* not minimum */
         if(period < MinimumPeriod || period > 5000000)
@@ -1587,6 +1593,15 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
             out = NULL;
     }
 
+    if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+            (fmt->nAvgBytesPerSec == 0 ||
+             fmt->nBlockAlign == 0 ||
+             ((WAVEFORMATEXTENSIBLE*)fmt)->Samples.wValidBitsPerSample > fmt->wBitsPerSample))
+        return E_INVALIDARG;
+
+    if(fmt->nChannels == 0)
+        return AUDCLNT_E_UNSUPPORTED_FORMAT;
+
     EnterCriticalSection(&This->lock);
 
     if((err = snd_pcm_hw_params_any(This->pcm_handle, This->hw_params)) < 0){
@@ -1664,6 +1679,19 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
     if(closest->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
         ((WAVEFORMATEXTENSIBLE*)closest)->dwChannelMask = get_channel_mask(closest->nChannels);
 
+    if(fmt->nBlockAlign != fmt->nChannels * fmt->wBitsPerSample / 8 ||
+            fmt->nAvgBytesPerSec != fmt->nBlockAlign * fmt->nSamplesPerSec ||
+            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             ((WAVEFORMATEXTENSIBLE*)fmt)->Samples.wValidBitsPerSample < fmt->wBitsPerSample))
+        hr = S_FALSE;
+
+    if(mode == AUDCLNT_SHAREMODE_EXCLUSIVE &&
+            fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
+        if(((WAVEFORMATEXTENSIBLE*)fmt)->dwChannelMask == 0 ||
+                ((WAVEFORMATEXTENSIBLE*)fmt)->dwChannelMask & SPEAKER_RESERVED)
+            hr = S_FALSE;
+    }
+
 exit:
     LeaveCriticalSection(&This->lock);
     HeapFree(GetProcessHeap(), 0, formats);
@@ -1676,6 +1704,8 @@ exit:
             closest->nChannels * closest->wBitsPerSample / 8;
         closest->nAvgBytesPerSec =
             closest->nBlockAlign * closest->nSamplesPerSec;
+        if(closest->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+            ((WAVEFORMATEXTENSIBLE*)closest)->Samples.wValidBitsPerSample = closest->wBitsPerSample;
         *out = closest;
     } else
         CoTaskMemFree(closest);
