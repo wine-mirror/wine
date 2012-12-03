@@ -322,16 +322,16 @@ DECLARE_INTERFACE_(ID3DXAnimationController, IUnknown)
     STDMETHOD_(UINT, GetMaxNumEvents)(THIS) PURE;
     STDMETHOD(RegisterAnimationOutput)(THIS_ LPCSTR name, D3DXMATRIX *matrix,
             D3DXVECTOR3 *scale, D3DXQUATERNION *rotation, D3DXVECTOR3 *translation) PURE;
-    STDMETHOD(RegisterAnimationSet)(THIS_ LPD3DXANIMATIONSET anim_set) PURE;
-    STDMETHOD(UnregisterAnimationSet)(THIS_ LPD3DXANIMATIONSET anim_set) PURE;
+    STDMETHOD(RegisterAnimationSet)(THIS_ ID3DXAnimationSet *anim_set) PURE;
+    STDMETHOD(UnregisterAnimationSet)(THIS_ ID3DXAnimationSet *anim_set) PURE;
     STDMETHOD_(UINT, GetNumAnimationSets)(THIS) PURE;
-    STDMETHOD(GetAnimationSet)(THIS_ UINT index, LPD3DXANIMATIONSET *anim_set) PURE;
-    STDMETHOD(GetAnimationSetByName)(THIS_ LPCSTR name, LPD3DXANIMATIONSET *anim_set) PURE;
+    STDMETHOD(GetAnimationSet)(THIS_ UINT index, ID3DXAnimationSet **anim_set) PURE;
+    STDMETHOD(GetAnimationSetByName)(THIS_ const char *name, ID3DXAnimationSet **anim_set) PURE;
     STDMETHOD(AdvanceTime)(THIS_ double time_delta, ID3DXAnimationCallbackHandler **callback_handler) PURE;
     STDMETHOD(ResetTime)(THIS) PURE;
     STDMETHOD_(DOUBLE, GetTime)(THIS) PURE;
-    STDMETHOD(SetTrackAnimationSet)(THIS_ UINT track, LPD3DXANIMATIONSET anim_set) PURE;
-    STDMETHOD(GetTrackAnimationSet)(THIS_ UINT track, LPD3DXANIMATIONSET *anim_set) PURE;
+    STDMETHOD(SetTrackAnimationSet)(THIS_ UINT track, ID3DXAnimationSet *anim_set) PURE;
+    STDMETHOD(GetTrackAnimationSet)(THIS_ UINT track, ID3DXAnimationSet **anim_set) PURE;
     STDMETHOD(GetTrackPriority)(THIS_ UINT track, D3DXPRIORITY_TYPE *priority) PURE;
     STDMETHOD(SetTrackSpeed)(THIS_ UINT track, FLOAT speed) PURE;
     STDMETHOD(SetTrackWeight)(THIS_ UINT track, FLOAT weight) PURE;
