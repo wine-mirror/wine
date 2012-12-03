@@ -837,13 +837,12 @@ static WAVEFORMATEX *clone_format(const WAVEFORMATEX *fmt)
     return ret;
 }
 
-static HRESULT setup_oss_device(int fd, const WAVEFORMATEX *fmt,
-        WAVEFORMATEX **out, BOOL query)
+static HRESULT setup_oss_device(AUDCLNT_SHAREMODE mode, int fd,
+        const WAVEFORMATEX *fmt, WAVEFORMATEX **out)
 {
     int tmp, oss_format;
     double tenth;
     HRESULT ret = S_OK;
-    WAVEFORMATEXTENSIBLE *fmtex = (void*)fmt;
     WAVEFORMATEX *closest = NULL;
 
     tmp = oss_format = get_oss_format(fmt);
@@ -857,6 +856,15 @@ static HRESULT setup_oss_device(int fd, const WAVEFORMATEX *fmt,
         TRACE("Format unsupported by this OSS version: %x\n", oss_format);
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
     }
+
+    if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+            (fmt->nAvgBytesPerSec == 0 ||
+             fmt->nBlockAlign == 0 ||
+             ((WAVEFORMATEXTENSIBLE*)fmt)->Samples.wValidBitsPerSample > fmt->wBitsPerSample))
+        return E_INVALIDARG;
+
+    if(fmt->nChannels == 0)
+        return AUDCLNT_E_UNSUPPORTED_FORMAT;
 
     closest = clone_format(fmt);
     if(!closest)
@@ -885,14 +893,19 @@ static HRESULT setup_oss_device(int fd, const WAVEFORMATEX *fmt,
         closest->nChannels = tmp;
     }
 
-    if(closest->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
-        DWORD mask = get_channel_mask(closest->nChannels);
+    if(closest->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        ((WAVEFORMATEXTENSIBLE*)closest)->dwChannelMask = get_channel_mask(closest->nChannels);
 
-        ((WAVEFORMATEXTENSIBLE*)closest)->dwChannelMask = mask;
+    if(fmt->nBlockAlign != fmt->nChannels * fmt->wBitsPerSample / 8 ||
+            fmt->nAvgBytesPerSec != fmt->nBlockAlign * fmt->nSamplesPerSec ||
+            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             ((WAVEFORMATEXTENSIBLE*)fmt)->Samples.wValidBitsPerSample < fmt->wBitsPerSample))
+        ret = S_FALSE;
 
-        if(query && fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-                fmtex->dwChannelMask != 0 &&
-                fmtex->dwChannelMask != mask)
+    if(mode == AUDCLNT_SHAREMODE_EXCLUSIVE &&
+            fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
+        if(((WAVEFORMATEXTENSIBLE*)fmt)->dwChannelMask == 0 ||
+                ((WAVEFORMATEXTENSIBLE*)fmt)->dwChannelMask & SPEAKER_RESERVED)
             ret = S_FALSE;
     }
 
@@ -904,6 +917,8 @@ static HRESULT setup_oss_device(int fd, const WAVEFORMATEX *fmt,
             closest->nChannels * closest->wBitsPerSample / 8;
         closest->nAvgBytesPerSec =
             closest->nBlockAlign * closest->nSamplesPerSec;
+        if(closest->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+            ((WAVEFORMATEXTENSIBLE*)closest)->Samples.wValidBitsPerSample = closest->wBitsPerSample;
         *out = closest;
     } else
         CoTaskMemFree(closest);
@@ -1055,7 +1070,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
-    hr = setup_oss_device(This->fd, fmt, NULL, FALSE);
+    hr = setup_oss_device(mode, This->fd, fmt, NULL);
     if(FAILED(hr)){
         LeaveCriticalSection(&This->lock);
         return hr;
@@ -1237,7 +1252,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
         return AUDCLNT_E_DEVICE_INVALIDATED;
     }
 
-    ret = setup_oss_device(fd, pwfx, outpwfx, TRUE);
+    ret = setup_oss_device(mode, fd, pwfx, outpwfx);
 
     close(fd);
 
