@@ -641,11 +641,11 @@ msgstr "Kryptis"
 
 #: comdlg32.rc:318 view.rc:39
 msgid "&Up"
-msgstr "&Žemyn"
+msgstr "&Aukštyn"
 
 #: comdlg32.rc:319 view.rc:40
 msgid "&Down"
-msgstr "&Aukštyn"
+msgstr "&Žemyn"
 
 #: comdlg32.rc:321 comdlg32.rc:339
 msgid "&Find Next"
@@ -12424,11 +12424,11 @@ msgstr "&Sutalpinti į langą"
 
 #: view.rc:37
 msgid "&Left"
-msgstr "&Dešinėn"
+msgstr "&Kairėn"
 
 #: view.rc:38
 msgid "&Right"
-msgstr "&Kairėn"
+msgstr "&Dešinėn"
 
 #: view.rc:46
 msgid "Regular Metafile Viewer"
