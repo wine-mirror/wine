@@ -85,7 +85,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyManager_EnumJobs(IBackgroundCopyManage
         DWORD dwFlags, IEnumBackgroundCopyJobs **ppEnum)
 {
     TRACE("\n");
-    return EnumBackgroundCopyJobsConstructor((LPVOID *) ppEnum, iface);
+    return enum_copy_job_create(&globalMgr, ppEnum);
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyManager_GetErrorDescription(IBackgroundCopyManager *iface,

@@ -100,8 +100,8 @@ extern BackgroundCopyManagerImpl globalMgr DECLSPEC_HIDDEN;
 HRESULT BackgroundCopyManagerConstructor(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
                                      GUID *pJobId, LPVOID *ppObj) DECLSPEC_HIDDEN;
-HRESULT EnumBackgroundCopyJobsConstructor(LPVOID *ppObj,
-                                          IBackgroundCopyManager* copyManager) DECLSPEC_HIDDEN;
+HRESULT enum_copy_job_create(BackgroundCopyManagerImpl *qmgr,
+        IEnumBackgroundCopyJobs **enumjob) DECLSPEC_HIDDEN;
 HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
                                       LPCWSTR remoteName, LPCWSTR localName,
                                       LPVOID *ppObj) DECLSPEC_HIDDEN;

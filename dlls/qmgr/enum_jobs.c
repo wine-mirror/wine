@@ -163,15 +163,13 @@ static const IEnumBackgroundCopyJobsVtbl BITS_IEnumBackgroundCopyJobs_Vtbl =
     BITS_IEnumBackgroundCopyJobs_GetCount
 };
 
-HRESULT EnumBackgroundCopyJobsConstructor(LPVOID *ppObj,
-                                          IBackgroundCopyManager* copyManager)
+HRESULT enum_copy_job_create(BackgroundCopyManagerImpl *qmgr, IEnumBackgroundCopyJobs **enumjob)
 {
-    BackgroundCopyManagerImpl *qmgr = (BackgroundCopyManagerImpl *) copyManager;
     EnumBackgroundCopyJobsImpl *This;
     BackgroundCopyJobImpl *job;
     ULONG i;
 
-    TRACE("%p, %p)\n", ppObj, copyManager);
+    TRACE("%p, %p)\n", qmgr, enumjob);
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof *This);
     if (!This)
@@ -208,6 +206,6 @@ HRESULT EnumBackgroundCopyJobsConstructor(LPVOID *ppObj,
     }
     LeaveCriticalSection(&qmgr->cs);
 
-    *ppObj = &This->lpVtbl;
+    *enumjob = (IEnumBackgroundCopyJobs *)&This->lpVtbl;
     return S_OK;
 }
