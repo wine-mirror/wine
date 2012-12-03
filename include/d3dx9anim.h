@@ -391,7 +391,9 @@ LPD3DXFRAME WINAPI D3DXFrameFind(CONST D3DXFRAME*, LPCSTR);
 HRESULT WINAPI D3DXFrameRegisterNamedMatrices(D3DXFRAME *frame_root, ID3DXAnimationController *animation_controller);
 UINT WINAPI D3DXFrameNumNamedMatrices(CONST D3DXFRAME *frame_root);
 HRESULT WINAPI D3DXFrameCalculateBoundingSphere(CONST D3DXFRAME*, LPD3DXVECTOR3, FLOAT*);
-HRESULT WINAPI D3DXCreateKeyframedAnimationSet(LPCSTR, DOUBLE, D3DXPLAYBACK_TYPE, UINT, UINT, CONST D3DXKEY_CALLBACK*, LPD3DXKEYFRAMEDANIMATIONSET*);
+HRESULT WINAPI D3DXCreateKeyframedAnimationSet(const char *name, double ticks_per_second,
+        D3DXPLAYBACK_TYPE playback_type, UINT animation_count, UINT callback_key_count,
+        const D3DXKEY_CALLBACK *callback_keys, ID3DXKeyframedAnimationSet **animation_set);
 HRESULT WINAPI D3DXCreateCompressedAnimationSet(const char *name, double ticks_per_second,
         D3DXPLAYBACK_TYPE playback_type, ID3DXBuffer *compressed_data, UINT callback_key_count,
         const D3DXKEY_CALLBACK *callback_keys, ID3DXCompressedAnimationSet **animation_set);
