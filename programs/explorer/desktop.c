@@ -85,6 +85,11 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
         if (!using_root) PaintDesktop( (HDC)wp );
         return TRUE;
 
+    case WM_SETTINGCHANGE:
+        if (wp == SPI_SETDESKWALLPAPER)
+            SystemParametersInfoW( SPI_SETDESKWALLPAPER, 0, NULL, FALSE );
+        return 0;
+
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
@@ -311,7 +316,7 @@ void manage_desktop( WCHAR *arg )
         SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_wnd_proc );
         SendMessageW( hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconW( 0, MAKEINTRESOURCEW(OIC_WINLOGO)));
         if (name) set_desktop_window_title( hwnd, name );
-        SystemParametersInfoA( SPI_SETDESKPATTERN, -1, NULL, FALSE );
+        SystemParametersInfoW( SPI_SETDESKWALLPAPER, 0, NULL, FALSE );
         ClipCursor( NULL );
         initialize_display_settings( hwnd );
         initialize_appbar();

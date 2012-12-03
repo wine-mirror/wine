@@ -56,12 +56,10 @@ const struct builtin_class_descr DESKTOP_builtin_class =
 /***********************************************************************
  *           DESKTOP_LoadBitmap
  */
-static HBITMAP DESKTOP_LoadBitmap(void)
+static HBITMAP DESKTOP_LoadBitmap( const WCHAR *filename )
 {
     HBITMAP hbitmap;
-    WCHAR filename[MAX_PATH];
 
-    if (!SystemParametersInfoW( SPI_GETDESKWALLPAPER, MAX_PATH, filename, 0 )) return 0;
     if (!filename[0]) return 0;
     hbitmap = LoadImageW( 0, filename, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADFROMFILE );
     if (!hbitmap)
@@ -78,9 +76,9 @@ static HBITMAP DESKTOP_LoadBitmap(void)
 /***********************************************************************
  *           init_wallpaper
  */
-static void init_wallpaper(void)
+static void init_wallpaper( const WCHAR *wallpaper )
 {
-    HBITMAP hbitmap = DESKTOP_LoadBitmap();
+    HBITMAP hbitmap = DESKTOP_LoadBitmap( wallpaper );
 
     if (hbitmapWallPaper) DeleteObject( hbitmapWallPaper );
     hbitmapWallPaper = hbitmap;
@@ -172,11 +170,9 @@ BOOL WINAPI SetDeskWallPaper( LPCSTR filename )
 
 
 /***********************************************************************
- *           DESKTOP_SetPattern
- *
- * Set the desktop pattern.
+ *           update_wallpaper
  */
-BOOL DESKTOP_SetPattern( LPCWSTR pattern )
+BOOL update_wallpaper( const WCHAR *wallpaper, const WCHAR *pattern )
 {
     int pat[8];
 
@@ -201,6 +197,7 @@ BOOL DESKTOP_SetPattern( LPCWSTR pattern )
             DeleteObject( hbitmap );
         }
     }
-    init_wallpaper();
+    init_wallpaper( wallpaper );
+    RedrawWindow( GetDesktopWindow(), 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_NOCHILDREN );
     return TRUE;
 }

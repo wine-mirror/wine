@@ -148,7 +148,7 @@ extern struct dce *set_class_dce( struct tagCLASS *class, struct dce *dce ) DECL
 extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType ) DECLSPEC_HIDDEN;
 
 /* desktop */
-extern BOOL DESKTOP_SetPattern( LPCWSTR pattern ) DECLSPEC_HIDDEN;
+extern BOOL update_wallpaper( const WCHAR *wallpaper, const WCHAR *pattern ) DECLSPEC_HIDDEN;
 
 /* icon title */
 extern HWND ICONTITLE_Create( HWND hwnd ) DECLSPEC_HIDDEN;
