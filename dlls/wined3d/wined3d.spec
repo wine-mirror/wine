@@ -66,6 +66,7 @@
 @ cdecl wined3d_device_get_front_buffer_data(ptr long ptr)
 @ cdecl wined3d_device_get_gamma_ramp(ptr long ptr)
 @ cdecl wined3d_device_get_geometry_shader(ptr)
+@ cdecl wined3d_device_get_gs_cb(ptr long)
 @ cdecl wined3d_device_get_index_buffer(ptr ptr)
 @ cdecl wined3d_device_get_light(ptr long ptr)
 @ cdecl wined3d_device_get_light_enable(ptr long ptr)

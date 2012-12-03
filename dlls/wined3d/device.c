@@ -3168,6 +3168,19 @@ void CDECL wined3d_device_set_gs_cb(struct wined3d_device *device, UINT idx, str
     }
 }
 
+struct wined3d_buffer * CDECL wined3d_device_get_gs_cb(const struct wined3d_device *device, UINT idx)
+{
+    TRACE("device %p, idx %u.\n", device, idx);
+
+    if (idx >= MAX_CONSTANT_BUFFERS)
+    {
+        WARN("Invalid constant buffer index %u.\n", idx);
+        return NULL;
+    }
+
+    return device->stateBlock->state.gs_cb[idx];
+}
+
 /* Context activation is done by the caller. */
 /* Do not call while under the GL lock. */
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
