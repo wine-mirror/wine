@@ -816,7 +816,8 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
     XExposeEvent *event = &xev->xexpose;
     RECT rect;
     struct x11drv_win_data *data;
-    int flags = RDW_INVALIDATE | RDW_ERASE | RDW_FRAME;
+    HRGN surface_region = 0;
+    UINT flags = RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN;
 
     TRACE( "win %p (%lx) %d,%d %dx%d\n",
            hwnd, event->window, event->x, event->y, event->width, event->height );
@@ -830,9 +831,8 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
 
     if (data->surface)
     {
-        data->surface->funcs->lock( data->surface );
-        add_bounds_rect( data->surface->funcs->get_bounds( data->surface ), &rect );
-        data->surface->funcs->unlock( data->surface );
+        surface_region = expose_surface( data->surface, &rect );
+        if (!surface_region) flags = 0;
         if (data->vis.visualid != default_visual.visualid)
             data->surface->funcs->flush( data->surface );
     }
@@ -841,6 +841,8 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
     {
         OffsetRect( &rect, data->whole_rect.left - data->client_rect.left,
                     data->whole_rect.top - data->client_rect.top );
+        if (surface_region) OffsetRgn( surface_region, data->whole_rect.left - data->client_rect.left,
+                                       data->whole_rect.top - data->client_rect.top );
 
         if (GetWindowLongW( data->hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
             mirror_rect( &data->client_rect, &rect );
@@ -855,15 +857,16 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
             wine_server_call( req );
         }
         SERVER_END_REQ;
-
-        flags |= RDW_ALLCHILDREN;
     }
-    else OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
-
-    if (data->surface) flags = 0;
+    else
+    {
+        OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
+        flags &= ~RDW_ALLCHILDREN;
+    }
     release_win_data( data );
 
-    if (flags) RedrawWindow( hwnd, &rect, 0, flags );
+    if (flags) RedrawWindow( hwnd, &rect, surface_region, flags );
+    if (surface_region) DeleteObject( surface_region );
 }
 
 

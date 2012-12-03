@@ -2062,3 +2062,26 @@ void set_surface_color_key( struct window_surface *window_surface, COLORREF colo
     if (surface->color_key != prev) update_surface_region( surface );
     window_surface->funcs->unlock( window_surface );
 }
+
+/***********************************************************************
+ *           expose_surface
+ */
+HRGN expose_surface( struct window_surface *window_surface, const RECT *rect )
+{
+    struct x11drv_window_surface *surface = get_x11_surface( window_surface );
+    HRGN region = 0;
+
+    window_surface->funcs->lock( window_surface );
+    add_bounds_rect( &surface->bounds, rect );
+    if (surface->region)
+    {
+        region = CreateRectRgnIndirect( rect );
+        if (CombineRgn( region, region, surface->region, RGN_DIFF ) <= NULLREGION)
+        {
+            DeleteObject( region );
+            region = 0;
+        }
+    }
+    window_surface->funcs->unlock( window_surface );
+    return region;
+}
