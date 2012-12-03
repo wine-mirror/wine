@@ -317,7 +317,8 @@ todo_wine
     ret = pGetMappedFileNameA(GetCurrentProcess(), base, map_name, 0);
     ok(!ret, "GetMappedFileName should fail\n");
 todo_wine
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "wrong error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetMappedFileNameA(GetCurrentProcess(), base, 0, sizeof(map_name));
