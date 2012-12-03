@@ -1565,6 +1565,7 @@ struct x11drv_window_surface
     BOOL                  byteswap;
     BOOL                  is_argb;
     COLORREF              color_key;
+    HRGN                  region;
     void                 *bits;
 #ifdef HAVE_LIBXXSHM
     XShmSegmentInfo       shminfo;
@@ -1857,16 +1858,25 @@ static void x11drv_surface_set_region( struct window_surface *window_surface, HR
 
     TRACE( "updating surface %p with %p\n", surface, region );
 
+    window_surface->funcs->lock( window_surface );
     if (!region)
     {
+        if (surface->region) DeleteObject( surface->region );
+        surface->region = 0;
         XSetClipMask( gdi_display, surface->gc, None );
     }
-    else if ((data = X11DRV_GetRegionData( region, 0 )))
+    else
     {
-        XSetClipRectangles( gdi_display, surface->gc, 0, 0,
-                            (XRectangle *)data->Buffer, data->rdh.nCount, YXBanded );
-        HeapFree( GetProcessHeap(), 0, data );
+        if (!surface->region) surface->region = CreateRectRgn( 0, 0, 0, 0 );
+        CombineRgn( surface->region, region, 0, RGN_COPY );
+        if ((data = X11DRV_GetRegionData( surface->region, 0 )))
+        {
+            XSetClipRectangles( gdi_display, surface->gc, 0, 0,
+                                (XRectangle *)data->Buffer, data->rdh.nCount, YXBanded );
+            HeapFree( GetProcessHeap(), 0, data );
+        }
     }
+    window_surface->funcs->unlock( window_surface );
 }
 
 /***********************************************************************
@@ -1955,6 +1965,7 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
     }
     surface->crit.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &surface->crit );
+    if (surface->region) DeleteObject( surface->region );
     HeapFree( GetProcessHeap(), 0, surface );
 }
 
