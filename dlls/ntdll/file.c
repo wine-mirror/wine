@@ -81,6 +81,7 @@
 
 #include "winternl.h"
 #include "winioctl.h"
+#include "ddk/ntddk.h"
 #include "ddk/ntddser.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
@@ -2243,6 +2244,36 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
 
     case FileAllInformation:
         io->u.Status = STATUS_INVALID_INFO_CLASS;
+        break;
+
+    case FileValidDataLengthInformation:
+        if (len >= sizeof(FILE_VALID_DATA_LENGTH_INFORMATION))
+        {
+            struct stat st;
+            const FILE_VALID_DATA_LENGTH_INFORMATION *info = ptr;
+
+            if ((io->u.Status = server_get_unix_fd( handle, FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL )))
+                return io->u.Status;
+
+            if (fstat( fd, &st ) == -1) io->u.Status = FILE_GetNtStatus();
+            else if (info->ValidDataLength.QuadPart <= 0 || (off_t)info->ValidDataLength.QuadPart > st.st_size)
+                io->u.Status = STATUS_INVALID_PARAMETER;
+            else
+            {
+#ifdef HAVE_FALLOCATE
+                if (fallocate( fd, 0, 0, (off_t)info->ValidDataLength.QuadPart ) == -1)
+                {
+                    NTSTATUS status = FILE_GetNtStatus();
+                    if (status == STATUS_NOT_SUPPORTED) WARN( "fallocate not supported on this filesystem\n" );
+                    else io->u.Status = status;
+                }
+#else
+                FIXME( "setting valid data length not supported\n" );
+#endif
+            }
+            if (needs_close) close( fd );
+        }
+        else io->u.Status = STATUS_INVALID_PARAMETER_3;
         break;
 
     default:

@@ -42,6 +42,7 @@ static BOOL (WINAPI *pGetVolumeNameForVolumeMountPointA)(LPCSTR, LPSTR, DWORD);
 static DWORD (WINAPI *pQueueUserAPC)(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData);
 static BOOL (WINAPI *pGetFileInformationByHandleEx)(HANDLE, FILE_INFO_BY_HANDLE_CLASS, LPVOID, DWORD);
 static HANDLE (WINAPI *pOpenFileById)(HANDLE, LPFILE_ID_DESCRIPTOR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD);
+static BOOL (WINAPI *pSetFileValidData)(HANDLE, LONGLONG);
 
 /* keep filename and filenameW the same */
 static const char filename[] = "testfile.xxx";
@@ -78,6 +79,7 @@ static void InitFunctionPointers(void)
     pQueueUserAPC = (void *) GetProcAddress(hkernel32, "QueueUserAPC");
     pGetFileInformationByHandleEx = (void *) GetProcAddress(hkernel32, "GetFileInformationByHandleEx");
     pOpenFileById = (void *) GetProcAddress(hkernel32, "OpenFileById");
+    pSetFileValidData = (void *) GetProcAddress(hkernel32, "SetFileValidData");
 }
 
 static void test__hread( void )
@@ -3438,6 +3440,139 @@ static void test_OpenFileById(void)
     DeleteFile(tempFileName);
 }
 
+static void test_SetFileValidData(void)
+{
+    BOOL ret;
+    HANDLE handle;
+    DWORD error, count;
+    char path[MAX_PATH], filename[MAX_PATH];
+    TOKEN_PRIVILEGES privs;
+    HANDLE token = NULL;
+
+    if (!pSetFileValidData)
+    {
+        win_skip("SetFileValidData is missing\n");
+        return;
+    }
+    GetTempPathA(sizeof(path), path);
+    GetTempFileNameA(path, "tst", 0, filename);
+    handle = CreateFileA(filename, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    WriteFile(handle, "test", sizeof("test") - 1, &count, NULL);
+    CloseHandle(handle);
+
+    SetLastError(0xdeadbeef);
+    ret = pSetFileValidData(INVALID_HANDLE_VALUE, 0);
+    error = GetLastError();
+    ok(!ret, "SetFileValidData succeeded\n");
+    ok(error == ERROR_INVALID_HANDLE, "got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pSetFileValidData(INVALID_HANDLE_VALUE, -1);
+    error = GetLastError();
+    ok(!ret, "SetFileValidData succeeded\n");
+    ok(error == ERROR_INVALID_HANDLE, "got %u\n", error);
+
+    /* file opened for reading */
+    handle = CreateFileA(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+
+    SetLastError(0xdeadbeef);
+    ret = pSetFileValidData(handle, 0);
+    ok(!ret, "SetFileValidData succeeded\n");
+    error = GetLastError();
+    ok(error == ERROR_ACCESS_DENIED, "got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pSetFileValidData(handle, -1);
+    error = GetLastError();
+    ok(!ret, "SetFileValidData succeeded\n");
+    ok(error == ERROR_ACCESS_DENIED, "got %u\n", error);
+    CloseHandle(handle);
+
+    handle = CreateFileA(filename, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+
+    SetLastError(0xdeadbeef);
+    ret = pSetFileValidData(handle, 0);
+    error = GetLastError();
+    ok(!ret, "SetFileValidData succeeded\n");
+    todo_wine ok(error == ERROR_PRIVILEGE_NOT_HELD, "got %u\n", error);
+    CloseHandle(handle);
+
+    privs.PrivilegeCount = 1;
+    privs.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &token) ||
+        !LookupPrivilegeValue(NULL, SE_MANAGE_VOLUME_NAME, &privs.Privileges[0].Luid) ||
+        !AdjustTokenPrivileges(token, FALSE, &privs, sizeof(privs), NULL, NULL))
+    {
+        win_skip("cannot enable SE_MANAGE_VOLUME_NAME privilege\n");
+        CloseHandle(token);
+        return;
+    }
+    handle = CreateFileA(filename, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+
+    SetLastError(0xdeadbeef);
+    ret = pSetFileValidData(handle, 0);
+    error = GetLastError();
+    ok(!ret, "SetFileValidData succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER, "got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pSetFileValidData(handle, -1);
+    error = GetLastError();
+    ok(!ret, "SetFileValidData succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER, "got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pSetFileValidData(handle, 2);
+    error = GetLastError();
+    todo_wine ok(!ret, "SetFileValidData succeeded\n");
+    todo_wine ok(error == ERROR_INVALID_PARAMETER, "got %u\n", error);
+
+    ret = pSetFileValidData(handle, 4);
+    ok(ret, "SetFileValidData failed %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pSetFileValidData(handle, 8);
+    error = GetLastError();
+    ok(!ret, "SetFileValidData succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER, "got %u\n", error);
+
+    count = SetFilePointer(handle, 1024, NULL, FILE_END);
+    ok(count != INVALID_SET_FILE_POINTER, "SetFilePointer failed %u\n", GetLastError());
+    ret = SetEndOfFile(handle);
+    ok(ret, "SetEndOfFile failed %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pSetFileValidData(handle, 2);
+    error = GetLastError();
+    todo_wine ok(!ret, "SetFileValidData succeeded\n");
+    todo_wine ok(error == ERROR_INVALID_PARAMETER, "got %u\n", error);
+
+    ret = pSetFileValidData(handle, 4);
+    ok(ret, "SetFileValidData failed %u\n", GetLastError());
+
+    ret = pSetFileValidData(handle, 8);
+    ok(ret, "SetFileValidData failed %u\n", GetLastError());
+
+    ret = pSetFileValidData(handle, 4);
+    error = GetLastError();
+    todo_wine ok(!ret, "SetFileValidData succeeded\n");
+    todo_wine ok(error == ERROR_INVALID_PARAMETER, "got %u\n", error);
+
+    ret = pSetFileValidData(handle, 1024);
+    ok(ret, "SetFileValidData failed %u\n", GetLastError());
+
+    ret = pSetFileValidData(handle, 2048);
+    error = GetLastError();
+    ok(!ret, "SetFileValidData succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER, "got %u\n", error);
+
+    privs.Privileges[0].Attributes = 0;
+    AdjustTokenPrivileges(token, FALSE, &privs, sizeof(privs), NULL, NULL);
+    CloseHandle(token);
+    DeleteFile(filename);
+}
+
 START_TEST(file)
 {
     InitFunctionPointers();
@@ -3479,4 +3614,5 @@ START_TEST(file)
     test_ReplaceFileW();
     test_GetFileInformationByHandleEx();
     test_OpenFileById();
+    test_SetFileValidData();
 }

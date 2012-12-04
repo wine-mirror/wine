@@ -40,6 +40,7 @@
 #include "winternl.h"
 #include "winioctl.h"
 #include "wincon.h"
+#include "ddk/ntddk.h"
 #include "kernel_private.h"
 
 #include "wine/exception.h"
@@ -1086,8 +1087,15 @@ error:
  */
 BOOL WINAPI SetFileValidData( HANDLE hFile, LONGLONG ValidDataLength )
 {
-    FIXME("stub: %p, %s\n", hFile, wine_dbgstr_longlong(ValidDataLength));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    FILE_VALID_DATA_LENGTH_INFORMATION info;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    info.ValidDataLength.QuadPart = ValidDataLength;
+    status = NtSetInformationFile( hFile, &io, &info, sizeof(info), FileValidDataLengthInformation );
+
+    if (status == STATUS_SUCCESS) return TRUE;
+    SetLastError( RtlNtStatusToDosError(status) );
     return FALSE;
 }
 

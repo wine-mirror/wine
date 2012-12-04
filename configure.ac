@@ -1976,6 +1976,7 @@ AC_CHECK_FUNCS(\
 	chsize \
 	dlopen \
 	epoll_create \
+	fallocate \
 	ffs \
 	finite \
 	fnmatch \
