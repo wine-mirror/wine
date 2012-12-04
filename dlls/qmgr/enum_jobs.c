@@ -37,17 +37,6 @@ static inline EnumBackgroundCopyJobsImpl *impl_from_IEnumBackgroundCopyJobs(IEnu
     return CONTAINING_RECORD(iface, EnumBackgroundCopyJobsImpl, IEnumBackgroundCopyJobs_iface);
 }
 
-static void EnumBackgroundCopyJobsDestructor(EnumBackgroundCopyJobsImpl *This)
-{
-    ULONG i;
-
-    for(i = 0; i < This->numJobs; i++)
-        IBackgroundCopyJob_Release(This->jobs[i]);
-
-    HeapFree(GetProcessHeap(), 0, This->jobs);
-    HeapFree(GetProcessHeap(), 0, This);
-}
-
 static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_QueryInterface(IEnumBackgroundCopyJobs *iface,
         REFIID riid, void **ppv)
 {
@@ -78,11 +67,16 @@ static ULONG WINAPI BITS_IEnumBackgroundCopyJobs_Release(IEnumBackgroundCopyJobs
 {
     EnumBackgroundCopyJobsImpl *This = impl_from_IEnumBackgroundCopyJobs(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
+    ULONG i;
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if (ref == 0)
-        EnumBackgroundCopyJobsDestructor(This);
+    if (ref == 0) {
+        for(i = 0; i < This->numJobs; i++)
+            IBackgroundCopyJob_Release(This->jobs[i]);
+        HeapFree(GetProcessHeap(), 0, This->jobs);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
