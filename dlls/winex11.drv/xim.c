@@ -478,7 +478,7 @@ XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
     XVaNestedList preedit = NULL;
     XVaNestedList status = NULL;
     XIC xic;
-    XICCallback destroy = {(XPointer)data, (XICProc)X11DRV_DestroyIC};
+    XICCallback destroy = {(XPointer)data, X11DRV_DestroyIC};
     XICCallback P_StateNotifyCB, P_StartCB, P_DoneCB, P_DrawCB, P_CaretCB;
     LANGID langid = PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale()));
     Window win = data->whole_window;
@@ -507,8 +507,8 @@ XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
     P_DoneCB.client_data = NULL;
     P_DrawCB.client_data = NULL;
     P_CaretCB.client_data = NULL;
-    P_StateNotifyCB.callback = (XICProc)XIMPreEditStateNotifyCallback;
-    P_StartCB.callback = (XICProc)XIMPreEditStartCallback;
+    P_StateNotifyCB.callback = XIMPreEditStateNotifyCallback;
+    P_StartCB.callback = XIMPreEditStartCallback;
     P_DoneCB.callback = (XICProc)XIMPreEditDoneCallback;
     P_DrawCB.callback = (XICProc)XIMPreEditDrawCallback;
     P_CaretCB.callback = (XICProc)XIMPreEditCaretCallback;
