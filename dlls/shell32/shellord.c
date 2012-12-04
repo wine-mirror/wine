@@ -1626,14 +1626,47 @@ DWORD WINAPI DoEnvironmentSubstA(LPSTR pszString, UINT cchString)
 }
 
 /************************************************************************
- *	DoEnvironmentSubstW			[SHELL32.@]
+ * DoEnvironmentSubstW [SHELL32.@]
  *
- * See DoEnvironmentSubstA.  
+ * Replace all %KEYWORD% in the string with the value of the named
+ * environment variable. If the buffer is too small, the string is not modified.
+ *
+ * PARAMS
+ *  pszString  [I] '\0' terminated string with %keyword%.
+ *             [O] '\0' terminated string with %keyword% substituted.
+ *  cchString  [I] size of str.
+ *
+ * RETURNS
+ *  Success:  The string in the buffer is updated
+ *            HIWORD: TRUE
+ *            LOWORD: characters used in the buffer, including space for the terminating 0
+ *  Failure:  buffer too small. The string is not modified.
+ *            HIWORD: FALSE
+ *            LOWORD: provided size of the buffer in characters
  */
 DWORD WINAPI DoEnvironmentSubstW(LPWSTR pszString, UINT cchString)
 {
-	FIXME("(%s, %d): stub\n", debugstr_w(pszString), cchString);
-	return MAKELONG(FALSE,cchString);
+    LPWSTR dst;
+    BOOL res = FALSE;
+    DWORD len = cchString;
+
+    TRACE("(%s, %d)\n", debugstr_w(pszString), cchString);
+
+    if ((cchString < MAXLONG) && (dst = HeapAlloc(GetProcessHeap(), 0, cchString * sizeof(WCHAR))))
+    {
+        len = ExpandEnvironmentStringsW(pszString, dst, cchString);
+        /* len includes the terminating 0 */
+        if (len && len <= cchString)
+        {
+            res = TRUE;
+            memcpy(pszString, dst, len * sizeof(WCHAR));
+        }
+        else
+            len = cchString;
+
+        HeapFree(GetProcessHeap(), 0, dst);
+    }
+    return MAKELONG(len, res);
 }
 
 /************************************************************************
