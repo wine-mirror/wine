@@ -179,6 +179,8 @@ wine_fn_all_dir_rules ()
     then
         dnl makedep is in tools so tools makefile cannot depend on it
         ac_alldeps="$[2] $ac_makedep"
+    else
+        ac_alldeps="$[2] include/config.h"
     fi
     case $[2] in
       *.in) ac_input=$ac_input:$[2] ;;
