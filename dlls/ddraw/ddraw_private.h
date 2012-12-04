@@ -527,6 +527,8 @@ struct d3d_vertex_buffer
     /*** Storage for D3D7 specific things ***/
     DWORD                Caps;
     DWORD                fvf;
+    DWORD                size;
+    BOOL                 dynamic;
 };
 
 HRESULT d3d_vertex_buffer_create(struct d3d_vertex_buffer **buffer, struct ddraw *ddraw,
