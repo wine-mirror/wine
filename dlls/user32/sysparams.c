@@ -977,7 +977,6 @@ static BOOL get_path_entry( union sysparam_all_entry *entry, UINT int_param, voi
 
         if (load_entry( &entry->hdr, buffer, sizeof(buffer) ))
             lstrcpynW( entry->path.path, buffer, MAX_PATH );
-        HeapFree( GetProcessHeap(), 0, buffer );
     }
     lstrcpynW( ptr_param, entry->path.path, int_param );
     return TRUE;
@@ -996,7 +995,6 @@ static BOOL set_path_entry( union sysparam_all_entry *entry, UINT int_param, voi
         strcpyW( entry->path.path, buffer );
         entry->hdr.loaded = TRUE;
     }
-    HeapFree( GetProcessHeap(), 0, buffer );
     return ret;
 }
 
