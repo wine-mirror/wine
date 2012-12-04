@@ -22,7 +22,8 @@ C_SRCS = \
 	pdb.c \
 	pe.c \
 	search.c \
-	symbol.c
+	symbol.c \
+	tlb.c
 
 INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
