@@ -3803,7 +3803,7 @@ HRESULT WINAPI D3DXCleanMesh(D3DXCLEANTYPE clean_type, ID3DXMesh *mesh_in, const
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI D3DXFrameDestroy(LPD3DXFRAME frame, LPD3DXALLOCATEHIERARCHY alloc_hier)
+HRESULT WINAPI D3DXFrameDestroy(D3DXFRAME *frame, ID3DXAllocateHierarchy *alloc_hier)
 {
     HRESULT hr;
     BOOL last = FALSE;

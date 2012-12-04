@@ -385,7 +385,7 @@ HRESULT WINAPI D3DXSaveMeshHierarchyToFileW(const WCHAR *filename, DWORD format,
         const D3DXFRAME *frame_root, ID3DXAnimationController *animation_controller,
         ID3DXSaveUserData *user_data_saver);
 #define D3DXSaveMeshHierarchyToFile WINELIB_NAME_AW(D3DXSaveMeshHierarchyToFile)
-HRESULT WINAPI D3DXFrameDestroy(LPD3DXFRAME, LPD3DXALLOCATEHIERARCHY);
+HRESULT WINAPI D3DXFrameDestroy(D3DXFRAME *frame_root, ID3DXAllocateHierarchy *alloc);
 HRESULT WINAPI D3DXFrameAppendChild(LPD3DXFRAME, CONST D3DXFRAME*);
 LPD3DXFRAME WINAPI D3DXFrameFind(CONST D3DXFRAME*, LPCSTR);
 HRESULT WINAPI D3DXFrameRegisterNamedMatrices(D3DXFRAME *frame_root, ID3DXAnimationController *animation_controller);
