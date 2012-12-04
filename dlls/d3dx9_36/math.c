@@ -631,20 +631,37 @@ D3DXMATRIX* WINAPI D3DXMatrixRotationY(D3DXMATRIX *pout, FLOAT angle)
     return pout;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixRotationYawPitchRoll(D3DXMATRIX *pout, FLOAT yaw, FLOAT pitch, FLOAT roll)
+D3DXMATRIX * WINAPI D3DXMatrixRotationYawPitchRoll(D3DXMATRIX *out, FLOAT yaw, FLOAT pitch, FLOAT roll)
 {
-    D3DXMATRIX m;
+    FLOAT sroll, croll, spitch, cpitch, syaw, cyaw;
 
-    TRACE("(%p, %f, %f, %f)\n", pout, yaw, pitch, roll);
+    TRACE("out %p, yaw %f, pitch %f, roll %f\n", out, yaw, pitch, roll);
 
-    D3DXMatrixIdentity(pout);
-    D3DXMatrixRotationZ(&m, roll);
-    D3DXMatrixMultiply(pout, pout, &m);
-    D3DXMatrixRotationX(&m, pitch);
-    D3DXMatrixMultiply(pout, pout, &m);
-    D3DXMatrixRotationY(&m, yaw);
-    D3DXMatrixMultiply(pout, pout, &m);
-    return pout;
+    sroll = sinf(roll);
+    croll = cosf(roll);
+    spitch = sinf(pitch);
+    cpitch = cosf(pitch);
+    syaw = sinf(yaw);
+    cyaw = cosf(yaw);
+
+    out->u.m[0][0] = sroll * spitch * syaw + croll * cyaw;
+    out->u.m[0][1] = sroll * cpitch;
+    out->u.m[0][2] = sroll * spitch * cyaw - croll * syaw;
+    out->u.m[0][3] = 0.0f;
+    out->u.m[1][0] = croll * spitch * syaw - sroll * cyaw;
+    out->u.m[1][1] = croll * cpitch;
+    out->u.m[1][2] = croll * spitch * cyaw + sroll * syaw;
+    out->u.m[1][3] = 0.0f;
+    out->u.m[2][0] = cpitch * syaw;
+    out->u.m[2][1] = -spitch;
+    out->u.m[2][2] = cpitch * cyaw;
+    out->u.m[2][3] = 0.0f;
+    out->u.m[3][0] = 0.0f;
+    out->u.m[3][1] = 0.0f;
+    out->u.m[3][2] = 0.0f;
+    out->u.m[3][3] = 1.0f;
+
+    return out;
 }
 
 D3DXMATRIX* WINAPI D3DXMatrixRotationZ(D3DXMATRIX *pout, FLOAT angle)
