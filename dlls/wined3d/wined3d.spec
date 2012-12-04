@@ -74,6 +74,7 @@
 @ cdecl wined3d_device_get_npatch_mode(ptr)
 @ cdecl wined3d_device_get_pixel_shader(ptr)
 @ cdecl wined3d_device_get_primitive_type(ptr ptr)
+@ cdecl wined3d_device_get_ps_cb(ptr long)
 @ cdecl wined3d_device_get_ps_consts_b(ptr long ptr long)
 @ cdecl wined3d_device_get_ps_consts_f(ptr long ptr long)
 @ cdecl wined3d_device_get_ps_consts_i(ptr long ptr long)

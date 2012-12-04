@@ -2138,6 +2138,7 @@ float __cdecl wined3d_device_get_npatch_mode(const struct wined3d_device *device
 struct wined3d_shader * __cdecl wined3d_device_get_pixel_shader(const struct wined3d_device *device);
 void __cdecl wined3d_device_get_primitive_type(const struct wined3d_device *device,
         enum wined3d_primitive_type *primitive_topology);
+struct wined3d_buffer * __cdecl wined3d_device_get_ps_cb(const struct wined3d_device *device, UINT idx);
 HRESULT __cdecl wined3d_device_get_ps_consts_b(const struct wined3d_device *device,
         UINT start_register, BOOL *constants, UINT bool_count);
 HRESULT __cdecl wined3d_device_get_ps_consts_f(const struct wined3d_device *device,
