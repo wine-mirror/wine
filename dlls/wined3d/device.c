@@ -2966,6 +2966,45 @@ struct wined3d_shader * CDECL wined3d_device_get_pixel_shader(const struct wined
     return device->stateBlock->state.pixel_shader;
 }
 
+void CDECL wined3d_device_set_ps_cb(struct wined3d_device *device, UINT idx, struct wined3d_buffer *buffer)
+{
+    struct wined3d_buffer *prev;
+
+    TRACE("device %p, idx %u, buffer %p.\n", device, idx, buffer);
+
+    if (idx >= MAX_CONSTANT_BUFFERS)
+    {
+        WARN("Invalid constant buffer index %u.\n", idx);
+        return;
+    }
+
+    prev = device->updateStateBlock->state.ps_cb[idx];
+    device->updateStateBlock->state.ps_cb[idx] = buffer;
+
+    if (device->isRecordingState)
+    {
+        if (buffer)
+            wined3d_buffer_incref(buffer);
+        if (prev)
+            wined3d_buffer_decref(prev);
+        return;
+    }
+
+    if (prev != buffer)
+    {
+        if (buffer)
+        {
+            InterlockedIncrement(&buffer->resource.bind_count);
+            wined3d_buffer_incref(buffer);
+        }
+        if (prev)
+        {
+            InterlockedDecrement(&prev->resource.bind_count);
+            wined3d_buffer_decref(prev);
+        }
+    }
+}
+
 HRESULT CDECL wined3d_device_set_ps_consts_b(struct wined3d_device *device,
         UINT start_register, const BOOL *constants, UINT bool_count)
 {

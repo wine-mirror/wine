@@ -550,6 +550,15 @@ void stateblock_unbind_resources(struct wined3d_stateblock *stateblock)
         state->pixel_shader = NULL;
         wined3d_shader_decref(shader);
     }
+
+    for (i = 0; i < MAX_CONSTANT_BUFFERS; ++i)
+    {
+        if ((buffer = state->ps_cb[i]))
+        {
+            state->ps_cb[i] = NULL;
+            wined3d_buffer_decref(buffer);
+        }
+    }
 }
 
 ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
