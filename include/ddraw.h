@@ -1455,7 +1455,7 @@ DECLARE_INTERFACE_(IDirectDraw2,IUnknown)
 /*54*/    STDMETHOD(SetDisplayMode)(THIS_ DWORD dwWidth, DWORD dwHeight, DWORD dwBPP, DWORD dwRefreshRate, DWORD dwFlags) PURE;
 /*58*/    STDMETHOD(WaitForVerticalBlank)(THIS_ DWORD dwFlags, HANDLE hEvent) PURE;
           /* added in v2 */
-/*5c*/    STDMETHOD(GetAvailableVidMem)(THIS_ LPDDSCAPS lpDDCaps, LPDWORD lpdwTotal, LPDWORD lpdwFree) PURE;
+/*5c*/    STDMETHOD(GetAvailableVidMem)(THIS_ DDSCAPS *caps, DWORD *total, DWORD *free) PURE;
 };
 #undef INTERFACE
 
@@ -1553,7 +1553,7 @@ DECLARE_INTERFACE_(IDirectDraw3,IUnknown)
 /*54*/    STDMETHOD(SetDisplayMode)(THIS_ DWORD dwWidth, DWORD dwHeight, DWORD dwBPP, DWORD dwRefreshRate, DWORD dwFlags) PURE;
 /*58*/    STDMETHOD(WaitForVerticalBlank)(THIS_ DWORD dwFlags, HANDLE hEvent) PURE;
           /* added in v2 */
-/*5c*/    STDMETHOD(GetAvailableVidMem)(THIS_ LPDDSCAPS lpDDCaps, LPDWORD lpdwTotal, LPDWORD lpdwFree) PURE;
+/*5c*/    STDMETHOD(GetAvailableVidMem)(THIS_ DDSCAPS *caps, DWORD *total, DWORD *free) PURE;
           /* added in v3 */
 /*60*/    STDMETHOD(GetSurfaceFromDC)(THIS_ HDC dc, struct IDirectDrawSurface **surface) PURE;
 };
@@ -1884,7 +1884,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown)
 /*2c*/    STDMETHOD(Flip)(THIS_ IDirectDrawSurface *dst_surface, DWORD flags) PURE;
 /*30*/    STDMETHOD(GetAttachedSurface)(THIS_ DDSCAPS *caps, IDirectDrawSurface **attachment) PURE;
 /*34*/    STDMETHOD(GetBltStatus)(THIS_ DWORD dwFlags) PURE;
-/*38*/    STDMETHOD(GetCaps)(THIS_ LPDDSCAPS lpDDSCaps) PURE;
+/*38*/    STDMETHOD(GetCaps)(THIS_ DDSCAPS *caps) PURE;
 /*3c*/    STDMETHOD(GetClipper)(THIS_ IDirectDrawClipper **clipper) PURE;
 /*40*/    STDMETHOD(GetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
 /*44*/    STDMETHOD(GetDC)(THIS_ HDC *lphDC) PURE;
@@ -2018,7 +2018,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface2,IUnknown)
     STDMETHOD(Flip)(THIS_ IDirectDrawSurface2 *dst_surface, DWORD flags) PURE;
     STDMETHOD(GetAttachedSurface)(THIS_ DDSCAPS *caps, IDirectDrawSurface2 **attachment) PURE;
     STDMETHOD(GetBltStatus)(THIS_ DWORD dwFlags) PURE;
-    STDMETHOD(GetCaps)(THIS_ LPDDSCAPS lpDDSCaps) PURE;
+    STDMETHOD(GetCaps)(THIS_ DDSCAPS *caps) PURE;
     STDMETHOD(GetClipper)(THIS_ IDirectDrawClipper **clipper) PURE;
     STDMETHOD(GetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
     STDMETHOD(GetDC)(THIS_ HDC *lphDC) PURE;
@@ -2164,7 +2164,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown)
     STDMETHOD(Flip)(THIS_ IDirectDrawSurface3 *dst_surface, DWORD flags) PURE;
     STDMETHOD(GetAttachedSurface)(THIS_ DDSCAPS *caps, IDirectDrawSurface3 **attachment) PURE;
     STDMETHOD(GetBltStatus)(THIS_ DWORD dwFlags) PURE;
-    STDMETHOD(GetCaps)(THIS_ LPDDSCAPS lpDDSCaps) PURE;
+    STDMETHOD(GetCaps)(THIS_ DDSCAPS *caps) PURE;
     STDMETHOD(GetClipper)(THIS_ IDirectDrawClipper **clipper) PURE;
     STDMETHOD(GetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
     STDMETHOD(GetDC)(THIS_ HDC *lphDC) PURE;
