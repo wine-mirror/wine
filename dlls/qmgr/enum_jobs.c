@@ -23,6 +23,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 
+typedef struct
+{
+    IEnumBackgroundCopyJobs IEnumBackgroundCopyJobs_iface;
+    LONG ref;
+    IBackgroundCopyJob **jobs;
+    ULONG numJobs;
+    ULONG indexJobs;
+} EnumBackgroundCopyJobsImpl;
+
+static inline EnumBackgroundCopyJobsImpl *impl_from_IEnumBackgroundCopyJobs(IEnumBackgroundCopyJobs *iface)
+{
+    return CONTAINING_RECORD(iface, EnumBackgroundCopyJobsImpl, IEnumBackgroundCopyJobs_iface);
+}
+
 static void EnumBackgroundCopyJobsDestructor(EnumBackgroundCopyJobsImpl *This)
 {
     ULONG i;
@@ -34,38 +48,38 @@ static void EnumBackgroundCopyJobsDestructor(EnumBackgroundCopyJobsImpl *This)
     HeapFree(GetProcessHeap(), 0, This);
 }
 
-static ULONG WINAPI BITS_IEnumBackgroundCopyJobs_AddRef(
-    IEnumBackgroundCopyJobs* iface)
+static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_QueryInterface(IEnumBackgroundCopyJobs *iface,
+        REFIID riid, void **ppv)
 {
-    EnumBackgroundCopyJobsImpl *This = (EnumBackgroundCopyJobsImpl *) iface;
-    return InterlockedIncrement(&This->ref);
-}
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppv);
 
-static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_QueryInterface(
-    IEnumBackgroundCopyJobs* iface,
-    REFIID riid,
-    void **ppvObject)
-{
-    EnumBackgroundCopyJobsImpl *This = (EnumBackgroundCopyJobsImpl *) iface;
-    TRACE("IID: %s\n", debugstr_guid(riid));
-
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IEnumBackgroundCopyJobs))
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IEnumBackgroundCopyJobs))
     {
-        *ppvObject = &This->lpVtbl;
-        BITS_IEnumBackgroundCopyJobs_AddRef(iface);
+        *ppv = iface;
+        IEnumBackgroundCopyJobs_AddRef(iface);
         return S_OK;
     }
 
-    *ppvObject = NULL;
+    *ppv = NULL;
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI BITS_IEnumBackgroundCopyJobs_Release(
-    IEnumBackgroundCopyJobs* iface)
+static ULONG WINAPI BITS_IEnumBackgroundCopyJobs_AddRef(IEnumBackgroundCopyJobs *iface)
 {
-    EnumBackgroundCopyJobsImpl *This = (EnumBackgroundCopyJobsImpl *) iface;
+    EnumBackgroundCopyJobsImpl *This = impl_from_IEnumBackgroundCopyJobs(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI BITS_IEnumBackgroundCopyJobs_Release(IEnumBackgroundCopyJobs *iface)
+{
+    EnumBackgroundCopyJobsImpl *This = impl_from_IEnumBackgroundCopyJobs(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
 
     if (ref == 0)
         EnumBackgroundCopyJobsDestructor(This);
@@ -73,13 +87,10 @@ static ULONG WINAPI BITS_IEnumBackgroundCopyJobs_Release(
     return ref;
 }
 
-static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_Next(
-    IEnumBackgroundCopyJobs* iface,
-    ULONG celt,
-    IBackgroundCopyJob **rgelt,
-    ULONG *pceltFetched)
+static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_Next(IEnumBackgroundCopyJobs *iface, ULONG celt,
+        IBackgroundCopyJob **rgelt, ULONG *pceltFetched)
 {
-    EnumBackgroundCopyJobsImpl *This = (EnumBackgroundCopyJobsImpl *) iface;
+    EnumBackgroundCopyJobsImpl *This = impl_from_IEnumBackgroundCopyJobs(iface);
     ULONG fetched;
     ULONG i;
     IBackgroundCopyJob *job;
@@ -110,11 +121,9 @@ static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_Next(
     return fetched == celt ? S_OK : S_FALSE;
 }
 
-static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_Skip(
-    IEnumBackgroundCopyJobs* iface,
-    ULONG celt)
+static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_Skip(IEnumBackgroundCopyJobs *iface, ULONG celt)
 {
-    EnumBackgroundCopyJobsImpl *This = (EnumBackgroundCopyJobsImpl *) iface;
+    EnumBackgroundCopyJobsImpl *This = impl_from_IEnumBackgroundCopyJobs(iface);
 
     if (This->numJobs - This->indexJobs < celt)
     {
@@ -126,27 +135,24 @@ static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_Skip(
     return S_OK;
 }
 
-static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_Reset(
-    IEnumBackgroundCopyJobs* iface)
+static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_Reset(IEnumBackgroundCopyJobs *iface)
 {
-    EnumBackgroundCopyJobsImpl *This = (EnumBackgroundCopyJobsImpl *) iface;
+    EnumBackgroundCopyJobsImpl *This = impl_from_IEnumBackgroundCopyJobs(iface);
     This->indexJobs = 0;
     return S_OK;
 }
 
-static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_Clone(
-    IEnumBackgroundCopyJobs* iface,
-    IEnumBackgroundCopyJobs **ppenum)
+static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_Clone(IEnumBackgroundCopyJobs *iface,
+        IEnumBackgroundCopyJobs **ppenum)
 {
     FIXME("Not implemented\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_GetCount(
-    IEnumBackgroundCopyJobs* iface,
+static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_GetCount(IEnumBackgroundCopyJobs *iface,
     ULONG *puCount)
 {
-    EnumBackgroundCopyJobsImpl *This = (EnumBackgroundCopyJobsImpl *) iface;
+    EnumBackgroundCopyJobsImpl *This = impl_from_IEnumBackgroundCopyJobs(iface);
     *puCount = This->numJobs;
     return S_OK;
 }
@@ -174,7 +180,7 @@ HRESULT enum_copy_job_create(BackgroundCopyManagerImpl *qmgr, IEnumBackgroundCop
     This = HeapAlloc(GetProcessHeap(), 0, sizeof *This);
     if (!This)
         return E_OUTOFMEMORY;
-    This->lpVtbl = &BITS_IEnumBackgroundCopyJobs_Vtbl;
+    This->IEnumBackgroundCopyJobs_iface.lpVtbl = &BITS_IEnumBackgroundCopyJobs_Vtbl;
     This->ref = 1;
 
     /* Create array of jobs */
@@ -206,6 +212,6 @@ HRESULT enum_copy_job_create(BackgroundCopyManagerImpl *qmgr, IEnumBackgroundCop
     }
     LeaveCriticalSection(&qmgr->cs);
 
-    *enumjob = (IEnumBackgroundCopyJobs *)&This->lpVtbl;
+    *enumjob = &This->IEnumBackgroundCopyJobs_iface;
     return S_OK;
 }
