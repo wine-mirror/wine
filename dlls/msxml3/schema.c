@@ -838,7 +838,7 @@ static BOOL link_datatypes(xmlDocPtr schema)
     xmlNodePtr root, next, child;
     xmlNsPtr ns;
 
-    assert((void*)xmlGetExternalEntityLoader() == (void*)external_entity_loader);
+    assert(xmlGetExternalEntityLoader() == external_entity_loader);
     root = xmlDocGetRootElement(schema);
     if (!root)
         return FALSE;
