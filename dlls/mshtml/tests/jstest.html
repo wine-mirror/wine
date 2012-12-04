@@ -139,6 +139,13 @@ function test_getter_call() {
     ok(e.onmousedown_called === "test", "e.onmousedown_called = " + e.onmousedown_called);
 }
 
+function test_arg_conv() {
+    /* this call would throw if the argument wasn't converted by JScript */
+    window.clearInterval("");
+
+    navigator.javaEnabled();
+}
+
 function test_override_functions() {
     function override_func() { return "test"; }
 
@@ -176,6 +183,7 @@ function runTests() {
     test_getter_call();
     test_setAttribute();
     test_attribute_collection();
+    test_arg_conv();
     test_override_functions();
 
     var r = window.execScript("globalVar = true;");

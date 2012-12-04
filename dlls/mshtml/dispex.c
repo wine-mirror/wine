@@ -20,6 +20,7 @@
 #include <assert.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "windef.h"
 #include "winbase.h"
@@ -31,6 +32,8 @@
 #include "mshtml_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
+
+#define MAX_ARGS 16
 
 static CRITICAL_SECTION cs_dispex_static_data;
 static CRITICAL_SECTION_DEBUG cs_dispex_static_data_dbg =
@@ -48,10 +51,13 @@ typedef struct {
     DISPID id;
     BSTR name;
     tid_t tid;
+    SHORT call_vtbl_off;
     SHORT put_vtbl_off;
     SHORT get_vtbl_off;
     SHORT func_disp_idx;
+    USHORT argc;
     VARTYPE prop_vt;
+    VARTYPE *arg_types;
 } func_info_t;
 
 struct dispex_data_t {
@@ -193,6 +199,32 @@ HRESULT get_htmldoc_classinfo(ITypeInfo **typeinfo)
     return hres;
 }
 
+/* Not all argument types are supported yet */
+#define BUILTIN_ARG_TYPES_SWITCH                        \
+    CASE_VT(VT_I2, INT16, V_I2);                        \
+    CASE_VT(VT_I4, INT32, V_I4);                        \
+    CASE_VT(VT_R4, float, V_R4);                        \
+    CASE_VT(VT_BSTR, BSTR, V_BSTR);                     \
+    CASE_VT(VT_BOOL, VARIANT_BOOL, V_BOOL)
+
+/* List all types used by IDispatchEx-based properties */
+#define BUILTIN_TYPES_SWITCH                            \
+    BUILTIN_ARG_TYPES_SWITCH;                           \
+    CASE_VT(VT_VARIANT, VARIANT, *);                    \
+    CASE_VT(VT_PTR, void*, V_BYREF);                    \
+    CASE_VT(VT_UNKNOWN, IUnknown*, V_UNKNOWN);          \
+    CASE_VT(VT_DISPATCH, IDispatch*, V_DISPATCH)
+
+static BOOL is_arg_type_supported(VARTYPE vt)
+{
+    switch(vt) {
+#define CASE_VT(x,a,b) case x: return TRUE
+    BUILTIN_ARG_TYPES_SWITCH;
+#undef CASE_VT
+    }
+    return FALSE;
+}
+
 static void add_func_info(dispex_data_t *data, DWORD *size, tid_t tid, const FUNCDESC *desc, ITypeInfo *dti)
 {
     func_info_t *info;
@@ -202,7 +234,7 @@ static void add_func_info(dispex_data_t *data, DWORD *size, tid_t tid, const FUN
         info = data->funcs+data->func_cnt-1;
     }else {
         if(data->func_cnt == *size)
-            data->funcs = heap_realloc(data->funcs, (*size <<= 1)*sizeof(func_info_t));
+            data->funcs = heap_realloc_zero(data->funcs, (*size <<= 1)*sizeof(func_info_t));
 
         info = data->funcs+data->func_cnt;
         hres = ITypeInfo_GetDocumentation(dti, desc->memid, &info->name, NULL, NULL, NULL);
@@ -215,12 +247,50 @@ static void add_func_info(dispex_data_t *data, DWORD *size, tid_t tid, const FUN
         info->tid = tid;
         info->func_disp_idx = -1;
         info->prop_vt = VT_EMPTY;
-        info->put_vtbl_off = 0;
-        info->get_vtbl_off = 0;
     }
 
     if(desc->invkind & DISPATCH_METHOD) {
+        unsigned i;
+
         info->func_disp_idx = data->func_disp_cnt++;
+        info->argc = desc->cParams;
+
+        assert(info->argc < MAX_ARGS);
+        assert(desc->funckind == FUNC_DISPATCH);
+
+        info->arg_types = heap_alloc(sizeof(*info->arg_types) * info->argc);
+        if(!info->arg_types)
+            return; /* FIXME: real error instead of fallback */
+
+        for(i=0; i < info->argc; i++)
+            info->arg_types[i] = desc->lprgelemdescParam[i].tdesc.vt;
+
+        info->prop_vt = desc->elemdescFunc.tdesc.vt;
+        if(info->prop_vt != VT_VOID && !is_arg_type_supported(info->prop_vt)) {
+            TRACE("%s: return type %d\n", debugstr_w(info->name), info->arg_types[i]);
+            return; /* Fallback to ITypeInfo::Invoke */
+        }
+
+        if(desc->cParamsOpt) {
+            TRACE("%s: optional params\n", debugstr_w(info->name));
+            return; /* Fallback to ITypeInfo::Invoke */
+        }
+
+        for(i=0; i < info->argc; i++) {
+            if(!is_arg_type_supported(info->arg_types[i])) {
+                return; /* Fallback to ITypeInfo for unsupported arg types */
+            }
+
+            if(desc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT) {
+                TRACE("%s param %d: default value\n", debugstr_w(info->name), i);
+                return; /* Fallback to ITypeInfo::Invoke */
+            }
+        }
+
+        assert(info->argc <= MAX_ARGS);
+        assert(desc->callconv == CC_STDCALL);
+
+        info->call_vtbl_off = desc->oVft/sizeof(void*);
     }else if(desc->invkind & (DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYGET)) {
         VARTYPE vt = VT_EMPTY;
 
@@ -271,7 +341,7 @@ static dispex_data_t *preprocess_dispex_data(DispatchEx *This)
     data = heap_alloc(sizeof(dispex_data_t));
     data->func_cnt = 0;
     data->func_disp_cnt = 0;
-    data->funcs = heap_alloc(size*sizeof(func_info_t));
+    data->funcs = heap_alloc_zero(size*sizeof(func_info_t));
     list_add_tail(&dispex_data_list, &data->entry);
 
     while(*tid) {
@@ -744,95 +814,6 @@ static HRESULT get_func_obj_entry(DispatchEx *This, func_info_t *func, func_obj_
     return S_OK;
 }
 
-static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, DISPPARAMS *dp, VARIANT *res,
-        EXCEPINFO *ei)
-{
-    HRESULT hres;
-
-    switch(flags) {
-    case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
-        if(!res)
-            return E_INVALIDARG;
-        /* fall through */
-    case DISPATCH_METHOD:
-        if(This->dynamic_data && This->dynamic_data->func_disps
-           && This->dynamic_data->func_disps[func->func_disp_idx].func_obj) {
-            func_obj_entry_t *entry = This->dynamic_data->func_disps + func->func_disp_idx;
-
-            if((IDispatch*)&entry->func_obj->dispex.IDispatchEx_iface != entry->val) {
-                if(!entry->val) {
-                    FIXME("Calling null\n");
-                    return E_FAIL;
-                }
-
-                hres = invoke_disp_value(This, entry->val, 0, flags, dp, res, ei, NULL);
-                break;
-            }
-        }
-
-        hres = typeinfo_invoke(This, func, flags, dp, res, ei);
-        break;
-    case DISPATCH_PROPERTYGET: {
-        func_obj_entry_t *entry;
-
-        if(func->id == DISPID_VALUE) {
-            BSTR ret;
-
-            ret = SysAllocString(objectW);
-            if(!ret)
-                return E_OUTOFMEMORY;
-
-            V_VT(res) = VT_BSTR;
-            V_BSTR(res) = ret;
-            return S_OK;
-        }
-
-        hres = get_func_obj_entry(This, func, &entry);
-        if(FAILED(hres))
-            return hres;
-
-        V_VT(res) = VT_DISPATCH;
-        V_DISPATCH(res) = entry->val;
-        if(V_DISPATCH(res))
-            IDispatch_AddRef(V_DISPATCH(res));
-        hres = S_OK;
-        break;
-    }
-    case DISPATCH_PROPERTYPUT: {
-        func_obj_entry_t *entry;
-        VARIANT *v;
-
-        if(dp->cArgs != 1 || (dp->cNamedArgs == 1 && *dp->rgdispidNamedArgs != DISPID_PROPERTYPUT)
-           || dp->cNamedArgs > 1) {
-            FIXME("invalid args\n");
-            return E_INVALIDARG;
-        }
-
-        v = dp->rgvarg;
-        /* FIXME: not exactly right */
-        if(V_VT(v) != VT_DISPATCH)
-            return E_NOTIMPL;
-
-        hres = get_func_obj_entry(This, func, &entry);
-        if(FAILED(hres))
-            return hres;
-
-        if(entry->val)
-            IDispatch_Release(entry->val);
-        entry->val = V_DISPATCH(v);
-        if(entry->val)
-            IDispatch_AddRef(entry->val);
-        hres = S_OK;
-        break;
-    }
-    default:
-        FIXME("Unimplemented flags %x\n", flags);
-        hres = E_NOTIMPL;
-    }
-
-    return hres;
-}
-
 static HRESULT get_builtin_func(dispex_data_t *data, DISPID id, func_info_t **ret)
 {
     int min, max, n;
@@ -898,18 +879,6 @@ static HRESULT get_builtin_id(DispatchEx *This, BSTR name, DWORD grfdex, DISPID 
 
     return DISP_E_UNKNOWNNAME;
 }
-
-/* List all types used by IDispatchEx-based properties */
-#define BUILTIN_TYPES_SWITCH                            \
-    CASE_VT(VT_I2, INT16, V_I2);                        \
-    CASE_VT(VT_I4, INT32, V_I4);                        \
-    CASE_VT(VT_R4, float, V_R4);                        \
-    CASE_VT(VT_BSTR, BSTR, V_BSTR);                     \
-    CASE_VT(VT_BOOL, VARIANT_BOOL, V_BOOL);             \
-    CASE_VT(VT_VARIANT, VARIANT, *);                    \
-    CASE_VT(VT_PTR, void*, V_BYREF);                    \
-    CASE_VT(VT_UNKNOWN, IUnknown*, V_UNKNOWN);          \
-    CASE_VT(VT_DISPATCH, IDispatch*, V_DISPATCH)
 
 static HRESULT change_type(VARIANT *dst, VARIANT *src, VARTYPE vt, IServiceProvider *caller)
 {
@@ -1027,6 +996,171 @@ static HRESULT builtin_propput(DispatchEx *This, func_info_t *func, DISPPARAMS *
     return hres;
 }
 
+static HRESULT invoke_builtin_function(DispatchEx *This, func_info_t *func, DISPPARAMS *dp, VARIANT *res, IServiceProvider *caller)
+{
+    VARIANT arg_buf[MAX_ARGS], *arg_ptrs[MAX_ARGS], *arg, retv, ret_ref, vhres;
+    unsigned i, nconv = 0;
+    IUnknown *iface;
+    HRESULT hres;
+
+    if(dp->cNamedArgs) {
+        FIXME("Named arguments not supported\n");
+        return E_NOTIMPL;
+    }
+
+    if(dp->cArgs != func->argc) {
+        FIXME("Invalid argument count (expected %u, got %u)\n", func->argc, dp->cArgs);
+        return E_INVALIDARG;
+    }
+
+    hres = IUnknown_QueryInterface(This->outer, tid_ids[func->tid], (void**)&iface);
+    if(FAILED(hres))
+        return hres;
+
+    for(i=0; i < func->argc; i++) {
+        arg = dp->rgvarg+dp->cArgs-i-1;
+        if(func->arg_types[i] == V_VT(arg)) {
+            arg_ptrs[i] = arg;
+        }else {
+            hres = change_type(arg_buf+nconv, arg, func->arg_types[i], caller);
+            if(FAILED(hres))
+                break;
+            arg_ptrs[i] = arg_buf + nconv++;
+        }
+    }
+
+    if(SUCCEEDED(hres)) {
+        if(func->prop_vt == VT_VOID) {
+            V_VT(&retv) = VT_EMPTY;
+        }else {
+            V_VT(&retv) = func->prop_vt;
+            arg_ptrs[func->argc] = &ret_ref;
+            V_VT(&ret_ref) = VT_BYREF|func->prop_vt;
+
+            switch(func->prop_vt) {
+#define CASE_VT(vt,type,access)                         \
+            case vt:                                    \
+                V_BYREF(&ret_ref) = &access(&retv);     \
+                break
+            BUILTIN_TYPES_SWITCH;
+#undef CASE_VT
+            default:
+                assert(0);
+            }
+        }
+
+        V_VT(&vhres) = VT_ERROR;
+        hres = DispCallFunc(iface, func->call_vtbl_off*sizeof(void*), CC_STDCALL, VT_HRESULT,
+                    func->argc + (func->prop_vt == VT_VOID ? 0 : 1), func->arg_types, arg_ptrs, &vhres);
+    }
+
+    while(nconv--)
+        VariantClear(arg_buf+nconv);
+    IUnknown_Release(iface);
+    if(FAILED(hres))
+        return hres;
+    if(FAILED(V_ERROR(&vhres)))
+        return V_ERROR(&vhres);
+
+    if(res)
+        *res = retv;
+    else
+        VariantClear(&retv);
+    return V_ERROR(&vhres);
+}
+
+static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, DISPPARAMS *dp, VARIANT *res,
+        EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HRESULT hres;
+
+    switch(flags) {
+    case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
+        if(!res)
+            return E_INVALIDARG;
+        /* fall through */
+    case DISPATCH_METHOD:
+        if(This->dynamic_data && This->dynamic_data->func_disps
+           && This->dynamic_data->func_disps[func->func_disp_idx].func_obj) {
+            func_obj_entry_t *entry = This->dynamic_data->func_disps + func->func_disp_idx;
+
+            if((IDispatch*)&entry->func_obj->dispex.IDispatchEx_iface != entry->val) {
+                if(!entry->val) {
+                    FIXME("Calling null\n");
+                    return E_FAIL;
+                }
+
+                hres = invoke_disp_value(This, entry->val, 0, flags, dp, res, ei, NULL);
+                break;
+            }
+        }
+
+        if(func->call_vtbl_off)
+            hres = invoke_builtin_function(This, func, dp, res, caller);
+        else
+            hres = typeinfo_invoke(This, func, flags, dp, res, ei);
+        break;
+    case DISPATCH_PROPERTYGET: {
+        func_obj_entry_t *entry;
+
+        if(func->id == DISPID_VALUE) {
+            BSTR ret;
+
+            ret = SysAllocString(objectW);
+            if(!ret)
+                return E_OUTOFMEMORY;
+
+            V_VT(res) = VT_BSTR;
+            V_BSTR(res) = ret;
+            return S_OK;
+        }
+
+        hres = get_func_obj_entry(This, func, &entry);
+        if(FAILED(hres))
+            return hres;
+
+        V_VT(res) = VT_DISPATCH;
+        V_DISPATCH(res) = entry->val;
+        if(V_DISPATCH(res))
+            IDispatch_AddRef(V_DISPATCH(res));
+        hres = S_OK;
+        break;
+    }
+    case DISPATCH_PROPERTYPUT: {
+        func_obj_entry_t *entry;
+        VARIANT *v;
+
+        if(dp->cArgs != 1 || (dp->cNamedArgs == 1 && *dp->rgdispidNamedArgs != DISPID_PROPERTYPUT)
+           || dp->cNamedArgs > 1) {
+            FIXME("invalid args\n");
+            return E_INVALIDARG;
+        }
+
+        v = dp->rgvarg;
+        /* FIXME: not exactly right */
+        if(V_VT(v) != VT_DISPATCH)
+            return E_NOTIMPL;
+
+        hres = get_func_obj_entry(This, func, &entry);
+        if(FAILED(hres))
+            return hres;
+
+        if(entry->val)
+            IDispatch_Release(entry->val);
+        entry->val = V_DISPATCH(v);
+        if(entry->val)
+            IDispatch_AddRef(entry->val);
+        hres = S_OK;
+        break;
+    }
+    default:
+        FIXME("Unimplemented flags %x\n", flags);
+        hres = E_NOTIMPL;
+    }
+
+    return hres;
+}
+
 static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -1045,7 +1179,7 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
         return hres;
 
     if(func->func_disp_idx != -1)
-        return function_invoke(This, func, flags, dp, res, ei);
+        return function_invoke(This, func, flags, dp, res, ei, caller);
 
     switch(flags) {
     case DISPATCH_PROPERTYPUT:
