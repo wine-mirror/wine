@@ -288,10 +288,8 @@ typedef struct tagFamily {
 
 typedef struct {
     GLYPHMETRICS gm;
-    INT adv; /* These three hold to widths of the unrotated chars */
-    INT lsb;
-    INT bbx;
-    BOOL init;
+    ABC          abc;  /* metrics of the unrotated char */
+    BOOL         init;
 } GM;
 
 typedef struct {
@@ -5852,7 +5850,7 @@ static inline BYTE get_max_level( UINT format )
 static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 
 static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
-                               LPGLYPHMETRICS lpgm, DWORD buflen, LPVOID buf,
+                               LPGLYPHMETRICS lpgm, ABC *abc, DWORD buflen, LPVOID buf,
                                const MAT2* lpmat)
 {
     static const FT_Matrix identityMat = {(1 << 16), 0, 0, (1 << 16)};
@@ -5862,7 +5860,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     DWORD width, height, pitch, needed = 0;
     FT_Bitmap ft_bitmap;
     FT_Error err;
-    INT left, right, top = 0, bottom = 0, adv, lsb, bbx;
+    INT left, right, top = 0, bottom = 0, adv;
     FT_Angle angle = 0;
     FT_Int load_flags = FT_LOAD_DEFAULT | FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
     double widthRatio = 1.0;
@@ -5907,6 +5905,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             FONT_GM(font,original_index)->init && is_identity_MAT2(lpmat))
         {
             *lpgm = FONT_GM(font,original_index)->gm;
+            *abc = FONT_GM(font,original_index)->abc;
             TRACE("cached: %u,%u,%s,%d,%d\n", lpgm->gmBlackBoxX, lpgm->gmBlackBoxY,
                   wine_dbgstr_point(&lpgm->gmptGlyphOrigin),
                   lpgm->gmCellIncX, lpgm->gmCellIncY);
@@ -6059,12 +6058,13 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         adv = (vec.x+63) >> 6;
     }
 
-    lsb = left >> 6;
-    bbx = (right - left) >> 6;
     lpgm->gmBlackBoxX = (right - left) >> 6;
     lpgm->gmBlackBoxY = (top - bottom) >> 6;
     lpgm->gmptGlyphOrigin.x = left >> 6;
     lpgm->gmptGlyphOrigin.y = top >> 6;
+    abc->abcA = left >> 6;
+    abc->abcB = (right - left) >> 6;
+    abc->abcC = adv - abc->abcA - abc->abcB;
 
     TRACE("%u,%u,%s,%d,%d\n", lpgm->gmBlackBoxX, lpgm->gmBlackBoxY,
           wine_dbgstr_point(&lpgm->gmptGlyphOrigin),
@@ -6074,9 +6074,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         is_identity_MAT2(lpmat)) /* don't cache custom transforms */
     {
         FONT_GM(font,original_index)->gm = *lpgm;
-        FONT_GM(font,original_index)->adv = adv;
-        FONT_GM(font,original_index)->lsb = lsb;
-        FONT_GM(font,original_index)->bbx = bbx;
+        FONT_GM(font,original_index)->abc = *abc;
         FONT_GM(font,original_index)->init = TRUE;
     }
 
@@ -7058,6 +7056,7 @@ static DWORD freetype_GetGlyphOutline( PHYSDEV dev, UINT glyph, UINT format,
 {
     struct freetype_physdev *physdev = get_freetype_dev( dev );
     DWORD ret;
+    ABC abc;
 
     if (!physdev->font)
     {
@@ -7067,7 +7066,7 @@ static DWORD freetype_GetGlyphOutline( PHYSDEV dev, UINT glyph, UINT format,
 
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
-    ret = get_glyph_outline( physdev->font, glyph, format, lpgm, buflen, buf, lpmat );
+    ret = get_glyph_outline( physdev->font, glyph, format, lpgm, &abc, buflen, buf, lpmat );
     LeaveCriticalSection( &freetype_cs );
     return ret;
 }
@@ -7197,8 +7196,7 @@ static BOOL freetype_GetCharWidth( PHYSDEV dev, UINT firstChar, UINT lastChar, L
     static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
     UINT c;
     GLYPHMETRICS gm;
-    FT_UInt glyph_index;
-    GdiFont *linked_font;
+    ABC abc;
     struct freetype_physdev *physdev = get_freetype_dev( dev );
 
     if (!physdev->font)
@@ -7212,10 +7210,8 @@ static BOOL freetype_GetCharWidth( PHYSDEV dev, UINT firstChar, UINT lastChar, L
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
     for(c = firstChar; c <= lastChar; c++) {
-        get_glyph_index_linked(physdev->font, c, &linked_font, &glyph_index);
-        get_glyph_outline(linked_font, glyph_index, GGO_METRICS | GGO_GLYPH_INDEX,
-                          &gm, 0, NULL, &identity);
-	buffer[c - firstChar] = FONT_GM(linked_font,glyph_index)->adv;
+        get_glyph_outline( physdev->font, c, GGO_METRICS, &gm, &abc, 0, NULL, &identity );
+        buffer[c - firstChar] = abc.abcA + abc.abcB + abc.abcC;
     }
     LeaveCriticalSection( &freetype_cs );
     return TRUE;
@@ -7229,8 +7225,6 @@ static BOOL freetype_GetCharABCWidths( PHYSDEV dev, UINT firstChar, UINT lastCha
     static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
     UINT c;
     GLYPHMETRICS gm;
-    FT_UInt glyph_index;
-    GdiFont *linked_font;
     struct freetype_physdev *physdev = get_freetype_dev( dev );
 
     if (!physdev->font)
@@ -7244,15 +7238,9 @@ static BOOL freetype_GetCharABCWidths( PHYSDEV dev, UINT firstChar, UINT lastCha
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
-    for(c = firstChar; c <= lastChar; c++) {
-        get_glyph_index_linked(physdev->font, c, &linked_font, &glyph_index);
-        get_glyph_outline(linked_font, glyph_index, GGO_METRICS | GGO_GLYPH_INDEX,
-                          &gm, 0, NULL, &identity);
-	buffer[c - firstChar].abcA = FONT_GM(linked_font,glyph_index)->lsb;
-	buffer[c - firstChar].abcB = FONT_GM(linked_font,glyph_index)->bbx;
-	buffer[c - firstChar].abcC = FONT_GM(linked_font,glyph_index)->adv - FONT_GM(linked_font,glyph_index)->lsb -
-            FONT_GM(linked_font,glyph_index)->bbx;
-    }
+    for(c = firstChar; c <= lastChar; c++, buffer++)
+        get_glyph_outline( physdev->font, c, GGO_METRICS, &gm, buffer, 0, NULL, &identity );
+
     LeaveCriticalSection( &freetype_cs );
     return TRUE;
 }
@@ -7265,8 +7253,6 @@ static BOOL freetype_GetCharABCWidthsI( PHYSDEV dev, UINT firstChar, UINT count,
     static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
     UINT c;
     GLYPHMETRICS gm;
-    FT_UInt glyph_index;
-    GdiFont *linked_font;
     struct freetype_physdev *physdev = get_freetype_dev( dev );
 
     if (!physdev->font)
@@ -7281,25 +7267,9 @@ static BOOL freetype_GetCharABCWidthsI( PHYSDEV dev, UINT firstChar, UINT count,
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
-    get_glyph_index_linked(physdev->font, 'a', &linked_font, &glyph_index);
-    if (!pgi)
-        for(c = firstChar; c < firstChar+count; c++) {
-            get_glyph_outline(linked_font, c, GGO_METRICS | GGO_GLYPH_INDEX,
-                              &gm, 0, NULL, &identity);
-            buffer[c - firstChar].abcA = FONT_GM(linked_font,c)->lsb;
-            buffer[c - firstChar].abcB = FONT_GM(linked_font,c)->bbx;
-            buffer[c - firstChar].abcC = FONT_GM(linked_font,c)->adv - FONT_GM(linked_font,c)->lsb
-                - FONT_GM(linked_font,c)->bbx;
-        }
-    else
-        for(c = 0; c < count; c++) {
-            get_glyph_outline(linked_font, pgi[c], GGO_METRICS | GGO_GLYPH_INDEX,
-                              &gm, 0, NULL, &identity);
-            buffer[c].abcA = FONT_GM(linked_font,pgi[c])->lsb;
-            buffer[c].abcB = FONT_GM(linked_font,pgi[c])->bbx;
-            buffer[c].abcC = FONT_GM(linked_font,pgi[c])->adv
-                - FONT_GM(linked_font,pgi[c])->lsb - FONT_GM(linked_font,pgi[c])->bbx;
-        }
+    for(c = 0; c < count; c++, buffer++)
+        get_glyph_outline( physdev->font, pgi ? pgi[c] : firstChar + c, GGO_METRICS | GGO_GLYPH_INDEX,
+                           &gm, buffer, 0, NULL, &identity );
 
     LeaveCriticalSection( &freetype_cs );
     return TRUE;
@@ -7314,10 +7284,9 @@ static BOOL freetype_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR wstr, INT count,
     static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
     INT idx;
     INT nfit = 0, ext;
+    ABC abc;
     GLYPHMETRICS gm;
     TEXTMETRICW tm;
-    FT_UInt glyph_index;
-    GdiFont *linked_font;
     struct freetype_physdev *physdev = get_freetype_dev( dev );
 
     if (!physdev->font)
@@ -7336,10 +7305,8 @@ static BOOL freetype_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR wstr, INT count,
     size->cy = tm.tmHeight;
 
     for(idx = 0; idx < count; idx++) {
-        get_glyph_index_linked( physdev->font, wstr[idx], &linked_font, &glyph_index );
-        get_glyph_outline(linked_font, glyph_index, GGO_METRICS | GGO_GLYPH_INDEX,
-                          &gm, 0, NULL, &identity);
-	size->cx += FONT_GM(linked_font,glyph_index)->adv;
+        get_glyph_outline( physdev->font, wstr[idx], GGO_METRICS, &gm, &abc, 0, NULL, &identity );
+        size->cx += abc.abcA + abc.abcB + abc.abcC;
         ext = size->cx;
         if (! pnfit || ext <= max_ext) {
             ++nfit;
@@ -7365,6 +7332,7 @@ static BOOL freetype_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, IN
     static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
     INT idx;
     INT nfit = 0, ext;
+    ABC abc;
     GLYPHMETRICS gm;
     TEXTMETRICW tm;
     struct freetype_physdev *physdev = get_freetype_dev( dev );
@@ -7385,8 +7353,9 @@ static BOOL freetype_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, IN
     size->cy = tm.tmHeight;
 
     for(idx = 0; idx < count; idx++) {
-        get_glyph_outline(physdev->font, indices[idx], GGO_METRICS | GGO_GLYPH_INDEX, &gm, 0, NULL, &identity);
-        size->cx += FONT_GM(physdev->font,indices[idx])->adv;
+        get_glyph_outline( physdev->font, indices[idx], GGO_METRICS | GGO_GLYPH_INDEX,
+                           &gm, &abc, 0, NULL, &identity );
+        size->cx += abc.abcA + abc.abcB + abc.abcC;
         ext = size->cx;
         if (! pnfit || ext <= max_ext) {
             ++nfit;
