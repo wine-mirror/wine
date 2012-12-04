@@ -3,6 +3,7 @@ IMPORTS   = oleaut32 ole32 user32
 
 C_SRCS = \
 	domdoc.c \
+	httpreq.c \
 	saxreader.c \
 	schema.c \
 	xmldoc.c \
