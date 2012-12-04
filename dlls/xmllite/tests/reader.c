@@ -607,6 +607,10 @@ static void test_read_xmldeclaration(void)
     hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
+    hr = IXmlReader_GetAttributeCount(reader, &count);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(count == 0, "got %d\n", count);
+
     ok_pos(reader, 0, 0, -1, -1, FALSE);
 
     type = -1;
@@ -627,11 +631,13 @@ static void test_read_xmldeclaration(void)
     todo_wine ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok_pos(reader, 1, 7, -1, 55, TRUE);
 
+    hr = IXmlReader_GetAttributeCount(reader, NULL);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
     hr = IXmlReader_GetAttributeCount(reader, &count);
-todo_wine {
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
     ok(count == 3, "Expected 3, got %d\n", count);
-}
+
     hr = IXmlReader_GetDepth(reader, &count);
 todo_wine {
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
