@@ -1443,8 +1443,41 @@ static void wave_out_tests(void)
         wave_out_test_device(WAVE_MAPPER);
 }
 
+static void test_sndPlaySound(void)
+{
+    BOOL br;
+
+    static const WCHAR not_existW[] = {'C',':','\\','n','o','t','_','e','x','i','s','t','.','w','a','v',0};
+    static const WCHAR SystemAsteriskW[] = {'S','y','s','t','e','m','A','s','t','e','r','i','s','k',0};
+
+    br = sndPlaySoundA((LPCSTR)SND_ALIAS_SYSTEMASTERISK, SND_ALIAS_ID|SND_SYNC);
+    ok(br == TRUE || br == FALSE, "sndPlaySound gave strange return: %u\n", br);
+
+    br = sndPlaySoundW((LPCWSTR)SND_ALIAS_SYSTEMASTERISK, SND_ALIAS_ID|SND_SYNC);
+    ok(br == TRUE || br == FALSE, "sndPlaySound gave strange return: %u\n", br);
+
+    br = sndPlaySoundA((LPCSTR)sndAlias('X','Y'), SND_ALIAS_ID|SND_SYNC);
+    ok(br == TRUE || br == FALSE, "sndPlaySound gave strange return: %u\n", br);
+
+    br = sndPlaySoundW((LPCWSTR)sndAlias('X','Y'), SND_ALIAS_ID|SND_SYNC);
+    ok(br == TRUE || br == FALSE, "sndPlaySound gave strange return: %u\n", br);
+
+    br = sndPlaySoundA("SystemAsterisk", SND_ALIAS|SND_SYNC);
+    ok(br == TRUE || br == FALSE, "sndPlaySound gave strange return: %u\n", br);
+
+    br = sndPlaySoundW(SystemAsteriskW, SND_ALIAS|SND_SYNC);
+    ok(br == TRUE || br == FALSE, "sndPlaySound gave strange return: %u\n", br);
+
+    br = sndPlaySoundA("C:\not_exist.wav", SND_FILENAME|SND_SYNC);
+    ok(br == TRUE || br == FALSE, "sndPlaySound gave strange return: %u\n", br);
+
+    br = sndPlaySoundW(not_existW, SND_FILENAME|SND_SYNC);
+    ok(br == TRUE || br == FALSE, "sndPlaySound gave strange return: %u\n", br);
+}
+
 START_TEST(wave)
 {
     test_multiple_waveopens();
     wave_out_tests();
+    test_sndPlaySound();
 }
