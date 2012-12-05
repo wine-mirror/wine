@@ -132,6 +132,8 @@ typedef struct
 
 #define INITIAL_REALIZED_BUF_SIZE 128
 
+enum glyph_type { GLYPH_INDEX, GLYPH_WCHAR, GLYPH_NBTYPES };
+
 typedef enum { AA_None = 0, AA_Grey, AA_RGB, AA_BGR, AA_VRGB, AA_VBGR, AA_MAXVALUE } AA_Type;
 
 typedef struct
@@ -146,7 +148,7 @@ typedef struct
 typedef struct
 {
     LFANDSIZE lfsz;
-    gsCacheEntryFormat * format[AA_MAXVALUE];
+    gsCacheEntryFormat *format[GLYPH_NBTYPES][AA_MAXVALUE];
     INT count;
     INT next;
 } gsCacheEntry;
@@ -639,30 +641,33 @@ static int LookupEntry(LFANDSIZE *plfsz)
 
 static void FreeEntry(int entry)
 {
-    int format;
+    int type, format;
 
-    for(format = 0; format < AA_MAXVALUE; format++) {
-        gsCacheEntryFormat * formatEntry;
+    for (type = 0; type < GLYPH_NBTYPES; type++)
+    {
+        for(format = 0; format < AA_MAXVALUE; format++) {
+            gsCacheEntryFormat * formatEntry;
 
-        if( !glyphsetCache[entry].format[format] )
-            continue;
+            if( !glyphsetCache[entry].format[type][format] )
+                continue;
 
-        formatEntry = glyphsetCache[entry].format[format];
+            formatEntry = glyphsetCache[entry].format[type][format];
 
-        if(formatEntry->glyphset) {
-            pXRenderFreeGlyphSet(gdi_display, formatEntry->glyphset);
-            formatEntry->glyphset = 0;
+            if(formatEntry->glyphset) {
+                pXRenderFreeGlyphSet(gdi_display, formatEntry->glyphset);
+                formatEntry->glyphset = 0;
+            }
+            if(formatEntry->nrealized) {
+                HeapFree(GetProcessHeap(), 0, formatEntry->realized);
+                formatEntry->realized = NULL;
+                HeapFree(GetProcessHeap(), 0, formatEntry->gis);
+                formatEntry->gis = NULL;
+                formatEntry->nrealized = 0;
+            }
+
+            HeapFree(GetProcessHeap(), 0, formatEntry);
+            glyphsetCache[entry].format[type][format] = NULL;
         }
-        if(formatEntry->nrealized) {
-            HeapFree(GetProcessHeap(), 0, formatEntry->realized);
-            formatEntry->realized = NULL;
-            HeapFree(GetProcessHeap(), 0, formatEntry->gis);
-            formatEntry->gis = NULL;
-            formatEntry->nrealized = 0;
-        }
-
-        HeapFree(GetProcessHeap(), 0, formatEntry);
-        glyphsetCache[entry].format[format] = NULL;
     }
 }
 
@@ -736,7 +741,6 @@ static int AllocEntry(void)
 static int GetCacheEntry( LFANDSIZE *plfsz )
 {
     int ret;
-    int format;
     gsCacheEntry *entry;
 
     if((ret = LookupEntry(plfsz)) != -1) return ret;
@@ -744,10 +748,6 @@ static int GetCacheEntry( LFANDSIZE *plfsz )
     ret = AllocEntry();
     entry = glyphsetCache + ret;
     entry->lfsz = *plfsz;
-    for( format = 0; format < AA_MAXVALUE; format++ ) {
-        assert( !entry->format[format] );
-    }
-
     return ret;
 }
 
@@ -1026,7 +1026,7 @@ static void xrenderdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
  *
  * Helper to ExtTextOut.  Must be called inside xrender_cs
  */
-static void UploadGlyph(struct xrender_physdev *physDev, int glyph)
+static void UploadGlyph(struct xrender_physdev *physDev, UINT glyph, enum glyph_type type)
 {
     unsigned int buflen;
     char *buf;
@@ -1035,18 +1035,19 @@ static void UploadGlyph(struct xrender_physdev *physDev, int glyph)
     XGlyphInfo gi;
     gsCacheEntry *entry = glyphsetCache + physDev->cache_index;
     gsCacheEntryFormat *formatEntry;
-    UINT ggo_format = GGO_GLYPH_INDEX | physDev->aa_flags;
+    UINT ggo_format = physDev->aa_flags;
     AA_Type format = aa_type_from_flags( physDev->aa_flags );
     enum wxr_format wxr_format;
     static const char zero[4];
     static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
 
+    if (type == GLYPH_INDEX) ggo_format |= GGO_GLYPH_INDEX;
     buflen = GetGlyphOutlineW(physDev->dev.hdc, glyph, ggo_format, &gm, 0, NULL, &identity);
     if(buflen == GDI_ERROR) {
         if(format != AA_None) {
             format = AA_None;
             physDev->aa_flags = GGO_BITMAP;
-            ggo_format = GGO_GLYPH_INDEX | GGO_BITMAP;
+            ggo_format = (ggo_format & GGO_GLYPH_INDEX) | GGO_BITMAP;
             buflen = GetGlyphOutlineW(physDev->dev.hdc, glyph, ggo_format, &gm, 0, NULL, &identity);
         }
         if(buflen == GDI_ERROR) {
@@ -1065,12 +1066,12 @@ static void UploadGlyph(struct xrender_physdev *physDev, int glyph)
     }
 
     /* If there is nothing for the current type, we create the entry. */
-    if( !entry->format[format] ) {
-        entry->format[format] = HeapAlloc(GetProcessHeap(),
+    if( !entry->format[type][format] ) {
+        entry->format[type][format] = HeapAlloc(GetProcessHeap(),
                                           HEAP_ZERO_MEMORY,
                                           sizeof(gsCacheEntryFormat));
     }
-    formatEntry = entry->format[format];
+    formatEntry = entry->format[type][format];
 
     if(formatEntry->nrealized <= glyph) {
         formatEntry->nrealized = (glyph / 128 + 1) * 128;
@@ -1315,6 +1316,7 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     int render_op = PictOpOver;
     XRenderColor col;
     RECT rect, bounds;
+    enum glyph_type type = (flags & ETO_GLYPH_INDEX) ? GLYPH_INDEX : GLYPH_WCHAR;
 
     get_xrender_color( physdev, GetTextColor( physdev->dev.hdc ), &col );
     pict = get_xrender_picture( physdev, 0, (flags & ETO_CLIPPED) ? lprect : NULL );
@@ -1343,15 +1345,15 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     EnterCriticalSection(&xrender_cs);
 
     entry = glyphsetCache + physdev->cache_index;
-    formatEntry = entry->format[aa_type_from_flags( physdev->aa_flags )];
+    formatEntry = entry->format[type][aa_type_from_flags( physdev->aa_flags )];
 
     for(idx = 0; idx < count; idx++) {
         if( !formatEntry ) {
-	    UploadGlyph(physdev, wstr[idx]);
+	    UploadGlyph(physdev, wstr[idx], type);
             /* re-evaluate format entry since aa_flags may have changed */
-            formatEntry = entry->format[aa_type_from_flags( physdev->aa_flags )];
+            formatEntry = entry->format[type][aa_type_from_flags( physdev->aa_flags )];
         } else if( wstr[idx] >= formatEntry->nrealized || formatEntry->realized[wstr[idx]] == FALSE) {
-	    UploadGlyph(physdev, wstr[idx]);
+	    UploadGlyph(physdev, wstr[idx], type);
 	}
     }
     if (!formatEntry)
