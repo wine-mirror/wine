@@ -3685,13 +3685,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH PeekMessageW( MSG *msg_out, HWND hwnd, UINT first,
     {
         DWORD ret;
 
-        flush_window_surfaces( !(flags & PM_NOYIELD) );
-
-        if (flags & PM_NOYIELD)
-            ret = USER_Driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
-        else
-            ret = wow_handlers.wait_message( 0, NULL, 0, QS_ALLINPUT, 0 );
-
+        flush_window_surfaces( TRUE );
+        ret = wow_handlers.wait_message( 0, NULL, 0, QS_ALLINPUT, 0 );
         /* if we received driver events, check again for a pending message */
         if (ret == WAIT_TIMEOUT || !peek_message( &msg, hwnd, first, last, flags, 0 )) return FALSE;
     }
