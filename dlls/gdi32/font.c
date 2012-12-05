@@ -2371,79 +2371,8 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         }
     }
 
-    if(FontIsLinked(hdc) && !(flags & ETO_GLYPH_INDEX))
-    {
-        HFONT orig_font = dc->hFont, cur_font;
-        UINT glyph;
-        INT span = 0;
-        POINT *offsets = NULL;
-        unsigned int i;
-
-        glyphs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WORD));
-        for(i = 0; i < count; i++)
-        {
-            WineEngGetLinkedHFont(dc, reordered_str[i], &cur_font, &glyph);
-            if(cur_font != dc->hFont)
-            {
-                if(!offsets)
-                {
-                    unsigned int j;
-                    offsets = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*deltas));
-                    offsets[0].x = offsets[0].y = 0;
-
-                    if(!deltas)
-                    {
-                        SIZE tmpsz;
-                        for(j = 1; j < count; j++)
-                        {
-                            GetTextExtentPointW(hdc, reordered_str + j - 1, 1, &tmpsz);
-                            offsets[j].x = offsets[j - 1].x + abs(INTERNAL_XWSTODS(dc, tmpsz.cx));
-                            offsets[j].y = 0;
-                        }
-                    }
-                    else
-                    {
-                        for(j = 1; j < count; j++)
-                        {
-                            offsets[j].x = offsets[j - 1].x + deltas[j].x;
-                            offsets[j].y = offsets[j - 1].y + deltas[j].y;
-                        }
-                    }
-                }
-                if(span)
-                {
-                    physdev->funcs->pExtTextOut( physdev, x + offsets[i - span].x,
-                                                 y + offsets[i - span].y,
-                                                 (flags & ~ETO_OPAQUE) | ETO_GLYPH_INDEX, &rc, glyphs,
-                                                 span, deltas ? (INT*)(deltas + (i - span)) : NULL);
-                    span = 0;
-                }
-                SelectObject(hdc, cur_font);
-            }
-            glyphs[span++] = glyph;
-
-            if(i == count - 1)
-            {
-                ret = physdev->funcs->pExtTextOut(physdev, x + (offsets ? offsets[count - span].x : 0),
-                                                  y + (offsets ? offsets[count - span].y : 0),
-                                                  (flags & ~ETO_OPAQUE) | ETO_GLYPH_INDEX, &rc, glyphs,
-                                                  span, deltas ? (INT*)(deltas + (count - span)) : NULL);
-                SelectObject(hdc, orig_font);
-                HeapFree(GetProcessHeap(), 0, offsets);
-           }
-        }
-    }
-    else
-    {
-        if(!(flags & ETO_GLYPH_INDEX) && dc->gdiFont)
-        {
-            glyphs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WORD));
-            GetGlyphIndicesW(hdc, reordered_str, count, glyphs, 0);
-            flags |= ETO_GLYPH_INDEX;
-        }
-        ret = physdev->funcs->pExtTextOut( physdev, x, y, (flags & ~ETO_OPAQUE), &rc,
-                                           glyphs ? glyphs : reordered_str, count, (INT*)deltas );
-    }
+    ret = physdev->funcs->pExtTextOut( physdev, x, y, (flags & ~ETO_OPAQUE), &rc,
+                                       glyphs ? glyphs : reordered_str, count, (INT*)deltas );
 
 done:
     HeapFree(GetProcessHeap(), 0, deltas);

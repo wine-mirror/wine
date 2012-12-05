@@ -7431,27 +7431,6 @@ static UINT freetype_GetTextCharsetInfo( PHYSDEV dev, LPFONTSIGNATURE fs, DWORD 
     return physdev->font->charset;
 }
 
-BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)
-{
-    GdiFont *font = dc->gdiFont, *linked_font;
-    struct list *first_hfont;
-    BOOL ret;
-
-    GDI_CheckNotLock();
-    EnterCriticalSection( &freetype_cs );
-    ret = get_glyph_index_linked(font, c, &linked_font, glyph);
-    TRACE("get_glyph_index_linked glyph %d font %p\n", *glyph, linked_font);
-    if(font == linked_font)
-        *new_hfont = dc->hFont;
-    else
-    {
-        first_hfont = list_head(&linked_font->hfontlist);
-        *new_hfont = LIST_ENTRY(first_hfont, struct tagHFONTLIST, entry)->hfont;
-    }
-    LeaveCriticalSection( &freetype_cs );
-    return ret;
-}
-    
 /* Retrieve a list of supported Unicode ranges for a given font.
  * Can be called with NULL gs to calculate the buffer size. Returns
  * the number of ranges found.
@@ -8017,11 +7996,6 @@ BOOL WineEngCreateScalableFontResource( DWORD hidden, LPCWSTR resource,
                                         LPCWSTR font_file, LPCWSTR font_path )
 {
     FIXME("stub\n");
-    return FALSE;
-}
-
-BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)
-{
     return FALSE;
 }
 
