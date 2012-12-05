@@ -152,6 +152,7 @@ struct GpGraphics{
     HDC hdc;
     HWND hwnd;
     BOOL owndc;
+    BOOL alpha_hdc;
     GpImage *image;
     SmoothingMode smoothing;
     CompositingQuality compqual;

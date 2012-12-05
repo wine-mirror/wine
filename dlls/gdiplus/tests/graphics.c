@@ -4115,7 +4115,7 @@ static void test_alpha_hdc(void)
     status = GdipGraphicsClear(graphics, 0xffaaaaaa);
     expect(Ok, status);
 
-    todo_wine expect(0xffaaaaaa, bits[0]);
+    expect(0xffaaaaaa, bits[0]);
 
     SelectObject(hdc, old_hbm);
 
