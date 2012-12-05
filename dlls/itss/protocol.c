@@ -469,7 +469,9 @@ static HRESULT WINAPI ITSProtocolInfo_CombineUrl(IInternetProtocolInfo *iface,
     if(strchrW(pwzRelativeUrl, ':'))
         return STG_E_INVALIDNAME;
 
-    if(pwzRelativeUrl[0] != '/') {
+    if(pwzRelativeUrl[0] == '#') {
+        base_end += strlenW(base_end);
+    }else if(pwzRelativeUrl[0] != '/') {
         ptr = strrchrW(base_end, '/');
         if(ptr)
             base_end = ptr+1;

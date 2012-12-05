@@ -483,6 +483,12 @@ static const struct {
     {"mk:@MSITStore:test.chm::/dir/blank.html", "test.html", 0, S_OK, "mk:@MSITStore:test.chm::/dir/test.html"},
     {"xxx:test.chm::/dir/blank.html", "test.html", 0, INET_E_USE_DEFAULT_PROTOCOLHANDLER, NULL},
     {"its:test.chm::/dir/blank.html", "/test.html", 0, S_OK, "its:test.chm::/test.html"},
+    {"its:test.chm::/blank.html", "#frag", 0, S_OK, "its:test.chm::/blank.html#frag"},
+    {"its:test.chm::/blank.html#hash", "#frag", 0, S_OK, "its:test.chm::/blank.html#hash#frag"},
+    {"its:test.chm::/blank.html", "test.html#frag", 0, S_OK, "its:test.chm::/test.html#frag"},
+    {"its:test.chm::/blank.html", "/test.html#frag", 0, S_OK, "its:test.chm::/test.html#frag"},
+    {"its:test.chm::/blank.html", "?query", 0, S_OK, "its:test.chm::/?query"},
+    {"its:test.chm::/blank.html#frag/blank", "test.html", 0, S_OK, "its:test.chm::/blank.html#frag/test.html"},
 };
 
 static void test_its_protocol_info(IInternetProtocol *protocol)
