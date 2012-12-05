@@ -32,17 +32,6 @@ typedef struct
     ULONG indexFiles;
 } EnumBackgroundCopyFilesImpl;
 
-static void EnumBackgroundCopyFilesDestructor(EnumBackgroundCopyFilesImpl *This)
-{
-    ULONG i;
-
-    for(i = 0; i < This->numFiles; i++)
-        IBackgroundCopyFile_Release(This->files[i]);
-
-    HeapFree(GetProcessHeap(), 0, This->files);
-    HeapFree(GetProcessHeap(), 0, This);
-}
-
 static inline EnumBackgroundCopyFilesImpl *impl_from_IEnumBackgroundCopyFiles(IEnumBackgroundCopyFiles *iface)
 {
     return CONTAINING_RECORD(iface, EnumBackgroundCopyFilesImpl, IEnumBackgroundCopyFiles_iface);
@@ -77,9 +66,15 @@ static ULONG WINAPI BITS_IEnumBackgroundCopyFiles_Release(IEnumBackgroundCopyFil
 {
     EnumBackgroundCopyFilesImpl *This = impl_from_IEnumBackgroundCopyFiles(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
+    ULONG i;
 
     if (ref == 0)
-        EnumBackgroundCopyFilesDestructor(This);
+    {
+        for(i = 0; i < This->numFiles; i++)
+            IBackgroundCopyFile_Release(This->files[i]);
+        HeapFree(GetProcessHeap(), 0, This->files);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
