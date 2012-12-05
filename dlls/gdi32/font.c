@@ -1710,10 +1710,9 @@ BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
 
 
 /* helper for nulldrv_ExtTextOut */
-static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT aa_flags,
+static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT flags, UINT aa_flags,
                                GLYPHMETRICS *metrics, struct gdi_image_bits *image )
 {
-    UINT ggo_flags = aa_flags | GGO_GLYPH_INDEX;
     static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
     UINT indices[3] = {0, 0, 0x20};
     int i;
@@ -1721,11 +1720,12 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT aa_flags,
     int stride;
 
     indices[0] = index;
+    if (flags & ETO_GLYPH_INDEX) aa_flags |= GGO_GLYPH_INDEX;
 
     for (i = 0; i < sizeof(indices) / sizeof(indices[0]); i++)
     {
         index = indices[i];
-        ret = GetGlyphOutlineW( hdc, index, ggo_flags, metrics, 0, NULL, &identity );
+        ret = GetGlyphOutlineW( hdc, index, aa_flags, metrics, 0, NULL, &identity );
         if (ret != GDI_ERROR) break;
     }
 
@@ -1743,7 +1743,7 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT aa_flags,
     image->is_copy = TRUE;
     image->free = free_heap_bits;
 
-    ret = GetGlyphOutlineW( hdc, index, ggo_flags, metrics, size, image->ptr, &identity );
+    ret = GetGlyphOutlineW( hdc, index, aa_flags, metrics, size, image->ptr, &identity );
     if (ret == GDI_ERROR)
     {
         HeapFree( GetProcessHeap(), 0, image->ptr );
@@ -1764,7 +1764,7 @@ static RECT get_total_extents( HDC hdc, INT x, INT y, UINT flags, UINT aa_flags,
     {
         GLYPHMETRICS metrics;
 
-        if (get_glyph_bitmap( hdc, (UINT)str[i], aa_flags, &metrics, NULL )) continue;
+        if (get_glyph_bitmap( hdc, str[i], flags, aa_flags, &metrics, NULL )) continue;
 
         rect.left   = x + metrics.gmptGlyphOrigin.x;
         rect.top    = y - metrics.gmptGlyphOrigin.y;
@@ -1949,7 +1949,7 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
         GLYPHMETRICS metrics;
         struct gdi_image_bits image;
 
-        err = get_glyph_bitmap( dev->hdc, (UINT)str[i], GGO_BITMAP, &metrics, &image );
+        err = get_glyph_bitmap( dev->hdc, str[i], flags, GGO_BITMAP, &metrics, &image );
         if (err) continue;
 
         if (image.ptr) draw_glyph( dev->hdc, x, y, &metrics, &image, (flags & ETO_CLIPPED) ? rect : NULL );
