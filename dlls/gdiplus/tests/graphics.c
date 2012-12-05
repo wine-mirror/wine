@@ -4091,6 +4091,7 @@ static void test_alpha_hdc(void)
     GpGraphics *graphics;
     ULONG *bits;
     BITMAPINFO bmi;
+    GpRectF bounds;
 
     hdc = CreateCompatibleDC(0);
     ok(hdc != NULL, "CreateCompatibleDC failed\n");
@@ -4109,6 +4110,13 @@ static void test_alpha_hdc(void)
 
     status = GdipCreateFromHDC(hdc, &graphics);
     expect(Ok, status);
+
+    status = GdipGetVisibleClipBounds(graphics, &bounds);
+    expect(Ok, status);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    expectf(5.0, bounds.Width);
+    expectf(5.0, bounds.Height);
 
     bits[0] = 0xdeadbeef;
 

@@ -2113,6 +2113,25 @@ static GpStatus get_graphics_bounds(GpGraphics* graphics, GpRectF* rect)
         stat = GdipGetImageBounds(graphics->image, rect, &unit);
         if (stat == Ok && unit != UnitPixel)
             FIXME("need to convert from unit %i\n", unit);
+    }else if (GetObjectType(graphics->hdc) == OBJ_MEMDC){
+        HBITMAP hbmp;
+        BITMAP bmp;
+
+        rect->X = 0;
+        rect->Y = 0;
+
+        hbmp = GetCurrentObject(graphics->hdc, OBJ_BITMAP);
+        if (hbmp && GetObjectW(hbmp, sizeof(bmp), &bmp))
+        {
+            rect->Width = bmp.bmWidth;
+            rect->Height = bmp.bmHeight;
+        }
+        else
+        {
+            /* FIXME: ??? */
+            rect->Width = 1;
+            rect->Height = 1;
+        }
     }else{
         rect->X = 0;
         rect->Y = 0;
