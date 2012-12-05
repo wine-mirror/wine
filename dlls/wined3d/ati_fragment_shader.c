@@ -857,7 +857,7 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
         {
             if (settings.op[i].cop == WINED3D_TOP_DISABLE)
                 break;
-            new_desc->num_textures_used = i;
+            new_desc->num_textures_used = i + 1;
         }
 
         memcpy(&new_desc->parent.settings, &settings, sizeof(settings));
