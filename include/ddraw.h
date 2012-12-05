@@ -1886,7 +1886,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown)
 /*34*/    STDMETHOD(GetBltStatus)(THIS_ DWORD dwFlags) PURE;
 /*38*/    STDMETHOD(GetCaps)(THIS_ DDSCAPS *caps) PURE;
 /*3c*/    STDMETHOD(GetClipper)(THIS_ IDirectDrawClipper **clipper) PURE;
-/*40*/    STDMETHOD(GetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
+/*40*/    STDMETHOD(GetColorKey)(THIS_ DWORD flags, DDCOLORKEY *color_key) PURE;
 /*44*/    STDMETHOD(GetDC)(THIS_ HDC *lphDC) PURE;
 /*48*/    STDMETHOD(GetFlipStatus)(THIS_ DWORD dwFlags) PURE;
 /*4c*/    STDMETHOD(GetOverlayPosition)(THIS_ LPLONG lplX, LPLONG lplY) PURE;
@@ -1899,7 +1899,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown)
 /*68*/    STDMETHOD(ReleaseDC)(THIS_ HDC hDC) PURE;
 /*6c*/    STDMETHOD(Restore)(THIS) PURE;
 /*70*/    STDMETHOD(SetClipper)(THIS_ IDirectDrawClipper *clipper) PURE;
-/*74*/    STDMETHOD(SetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
+/*74*/    STDMETHOD(SetColorKey)(THIS_ DWORD flags, DDCOLORKEY *color_key) PURE;
 /*78*/    STDMETHOD(SetOverlayPosition)(THIS_ LONG lX, LONG lY) PURE;
 /*7c*/    STDMETHOD(SetPalette)(THIS_ IDirectDrawPalette *palette) PURE;
 /*80*/    STDMETHOD(Unlock)(THIS_ LPVOID lpSurfaceData) PURE;
@@ -2020,7 +2020,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface2,IUnknown)
     STDMETHOD(GetBltStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetCaps)(THIS_ DDSCAPS *caps) PURE;
     STDMETHOD(GetClipper)(THIS_ IDirectDrawClipper **clipper) PURE;
-    STDMETHOD(GetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
+    STDMETHOD(GetColorKey)(THIS_ DWORD flags, DDCOLORKEY *color_key) PURE;
     STDMETHOD(GetDC)(THIS_ HDC *lphDC) PURE;
     STDMETHOD(GetFlipStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetOverlayPosition)(THIS_ LPLONG lplX, LPLONG lplY) PURE;
@@ -2033,7 +2033,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface2,IUnknown)
     STDMETHOD(ReleaseDC)(THIS_ HDC hDC) PURE;
     STDMETHOD(Restore)(THIS) PURE;
     STDMETHOD(SetClipper)(THIS_ IDirectDrawClipper *clipper) PURE;
-    STDMETHOD(SetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
+    STDMETHOD(SetColorKey)(THIS_ DWORD flags, DDCOLORKEY *color_key) PURE;
     STDMETHOD(SetOverlayPosition)(THIS_ LONG lX, LONG lY) PURE;
     STDMETHOD(SetPalette)(THIS_ IDirectDrawPalette *palette) PURE;
     STDMETHOD(Unlock)(THIS_ LPVOID lpSurfaceData) PURE;
@@ -2166,7 +2166,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown)
     STDMETHOD(GetBltStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetCaps)(THIS_ DDSCAPS *caps) PURE;
     STDMETHOD(GetClipper)(THIS_ IDirectDrawClipper **clipper) PURE;
-    STDMETHOD(GetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
+    STDMETHOD(GetColorKey)(THIS_ DWORD flags, DDCOLORKEY *color_key) PURE;
     STDMETHOD(GetDC)(THIS_ HDC *lphDC) PURE;
     STDMETHOD(GetFlipStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetOverlayPosition)(THIS_ LPLONG lplX, LPLONG lplY) PURE;
@@ -2179,7 +2179,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown)
     STDMETHOD(ReleaseDC)(THIS_ HDC hDC) PURE;
     STDMETHOD(Restore)(THIS) PURE;
     STDMETHOD(SetClipper)(THIS_ IDirectDrawClipper *clipper) PURE;
-    STDMETHOD(SetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
+    STDMETHOD(SetColorKey)(THIS_ DWORD flags, DDCOLORKEY *color_key) PURE;
     STDMETHOD(SetOverlayPosition)(THIS_ LONG lX, LONG lY) PURE;
     STDMETHOD(SetPalette)(THIS_ IDirectDrawPalette *palette) PURE;
     STDMETHOD(Unlock)(THIS_ LPVOID lpSurfaceData) PURE;
@@ -2317,7 +2317,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface4,IUnknown)
     STDMETHOD(GetBltStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetCaps)(THIS_ DDSCAPS2 *caps) PURE;
     STDMETHOD(GetClipper)(THIS_ IDirectDrawClipper **clipper) PURE;
-    STDMETHOD(GetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
+    STDMETHOD(GetColorKey)(THIS_ DWORD flags, DDCOLORKEY *color_key) PURE;
     STDMETHOD(GetDC)(THIS_ HDC *lphDC) PURE;
     STDMETHOD(GetFlipStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetOverlayPosition)(THIS_ LPLONG lplX, LPLONG lplY) PURE;
@@ -2330,7 +2330,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface4,IUnknown)
     STDMETHOD(ReleaseDC)(THIS_ HDC hDC) PURE;
     STDMETHOD(Restore)(THIS) PURE;
     STDMETHOD(SetClipper)(THIS_ IDirectDrawClipper *clipper) PURE;
-    STDMETHOD(SetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
+    STDMETHOD(SetColorKey)(THIS_ DWORD flags, DDCOLORKEY *color_key) PURE;
     STDMETHOD(SetOverlayPosition)(THIS_ LONG lX, LONG lY) PURE;
     STDMETHOD(SetPalette)(THIS_ IDirectDrawPalette *palette) PURE;
     STDMETHOD(Unlock)(THIS_ LPRECT lpSurfaceData) PURE;
@@ -2484,7 +2484,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface7,IUnknown)
     STDMETHOD(GetBltStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetCaps)(THIS_ DDSCAPS2 *caps) PURE;
     STDMETHOD(GetClipper)(THIS_ IDirectDrawClipper **clipper) PURE;
-    STDMETHOD(GetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
+    STDMETHOD(GetColorKey)(THIS_ DWORD flags, DDCOLORKEY *color_key) PURE;
     STDMETHOD(GetDC)(THIS_ HDC *lphDC) PURE;
     STDMETHOD(GetFlipStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetOverlayPosition)(THIS_ LPLONG lplX, LPLONG lplY) PURE;
@@ -2497,7 +2497,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface7,IUnknown)
     STDMETHOD(ReleaseDC)(THIS_ HDC hDC) PURE;
     STDMETHOD(Restore)(THIS) PURE;
     STDMETHOD(SetClipper)(THIS_ IDirectDrawClipper *clipper) PURE;
-    STDMETHOD(SetColorKey)(THIS_ DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) PURE;
+    STDMETHOD(SetColorKey)(THIS_ DWORD flags, DDCOLORKEY *color_key) PURE;
     STDMETHOD(SetOverlayPosition)(THIS_ LONG lX, LONG lY) PURE;
     STDMETHOD(SetPalette)(THIS_ IDirectDrawPalette *palette) PURE;
     STDMETHOD(Unlock)(THIS_ LPRECT lpSurfaceData) PURE;
