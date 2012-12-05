@@ -471,6 +471,7 @@ void stateblock_unbind_resources(struct wined3d_stateblock *stateblock)
 {
     struct wined3d_state *state = &stateblock->state;
     struct wined3d_vertex_declaration *decl;
+    struct wined3d_sampler *sampler;
     struct wined3d_texture *texture;
     struct wined3d_buffer *buffer;
     struct wined3d_shader *shader;
@@ -527,6 +528,15 @@ void stateblock_unbind_resources(struct wined3d_stateblock *stateblock)
         {
             state->vs_cb[i] = NULL;
             wined3d_buffer_decref(buffer);
+        }
+    }
+
+    for (i = 0; i < MAX_SAMPLER_OBJECTS; ++i)
+    {
+        if ((sampler = state->vs_sampler[i]))
+        {
+            state->vs_sampler[i] = NULL;
+            wined3d_sampler_decref(sampler);
         }
     }
 

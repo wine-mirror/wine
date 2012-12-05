@@ -163,6 +163,7 @@ void wined3d_rb_free(void *ptr) DECLSPEC_HIDDEN;
 #define MAX_ACTIVE_LIGHTS       8
 #define MAX_CLIPPLANES          WINED3DMAXUSERCLIPPLANES
 #define MAX_CONSTANT_BUFFERS    15
+#define MAX_SAMPLER_OBJECTS     16
 
 struct min_lookup
 {
@@ -2210,6 +2211,12 @@ enum wined3d_conversion_type
 
 void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[256][4], BOOL colorkey) DECLSPEC_HIDDEN;
 
+struct wined3d_sampler
+{
+    LONG refcount;
+    void *parent;
+};
+
 struct wined3d_vertex_declaration_element
 {
     const struct wined3d_format *format;
@@ -2301,6 +2308,7 @@ struct wined3d_state
 
     struct wined3d_shader *vertex_shader;
     struct wined3d_buffer *vs_cb[MAX_CONSTANT_BUFFERS];
+    struct wined3d_sampler *vs_sampler[MAX_SAMPLER_OBJECTS];
     BOOL vs_consts_b[MAX_CONST_B];
     INT vs_consts_i[MAX_CONST_I * 4];
     float *vs_consts_f;

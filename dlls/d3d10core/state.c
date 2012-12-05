@@ -445,6 +445,7 @@ static ULONG STDMETHODCALLTYPE d3d10_sampler_state_Release(ID3D10SamplerState *i
 
     if (!refcount)
     {
+        wined3d_sampler_decref(This->wined3d_sampler);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -509,8 +510,25 @@ static const struct ID3D10SamplerStateVtbl d3d10_sampler_state_vtbl =
 
 HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state)
 {
+    HRESULT hr;
+
     state->ID3D10SamplerState_iface.lpVtbl = &d3d10_sampler_state_vtbl;
     state->refcount = 1;
 
+    if (FAILED(hr = wined3d_sampler_create(state, &state->wined3d_sampler)))
+    {
+        WARN("Failed to create wined3d sampler, hr %#x.\n", hr);
+        return hr;
+    }
+
     return S_OK;
+}
+
+struct d3d10_sampler_state *unsafe_impl_from_ID3D10SamplerState(ID3D10SamplerState *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d10_sampler_state_vtbl);
+
+    return impl_from_ID3D10SamplerState(iface);
 }

@@ -1981,6 +1981,7 @@ struct wined3d_palette;
 struct wined3d_query;
 struct wined3d_rendertarget_view;
 struct wined3d_resource;
+struct wined3d_sampler;
 struct wined3d_shader;
 struct wined3d_stateblock;
 struct wined3d_surface;
@@ -2256,6 +2257,7 @@ HRESULT __cdecl wined3d_device_set_vs_consts_f(struct wined3d_device *device,
         UINT start_register, const float *constants, UINT vector4f_count);
 HRESULT __cdecl wined3d_device_set_vs_consts_i(struct wined3d_device *device,
         UINT start_register, const int *constants, UINT vector4i_count);
+void __cdecl wined3d_device_set_vs_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler);
 void __cdecl wined3d_device_setup_fullscreen_window(struct wined3d_device *device, HWND window, UINT w, UINT h);
 BOOL __cdecl wined3d_device_show_cursor(struct wined3d_device *device, BOOL show);
 HRESULT __cdecl wined3d_device_uninit_3d(struct wined3d_device *device);
@@ -2301,6 +2303,11 @@ ULONG __cdecl wined3d_rendertarget_view_decref(struct wined3d_rendertarget_view 
 void * __cdecl wined3d_rendertarget_view_get_parent(const struct wined3d_rendertarget_view *view);
 struct wined3d_resource * __cdecl wined3d_rendertarget_view_get_resource(const struct wined3d_rendertarget_view *view);
 ULONG __cdecl wined3d_rendertarget_view_incref(struct wined3d_rendertarget_view *view);
+
+HRESULT __cdecl wined3d_sampler_create(void *parent, struct wined3d_sampler **sampler);
+ULONG __cdecl wined3d_sampler_decref(struct wined3d_sampler *sampler);
+void * __cdecl wined3d_sampler_get_parent(const struct wined3d_sampler *sampler);
+ULONG __cdecl wined3d_sampler_incref(struct wined3d_sampler *sampler);
 
 HRESULT __cdecl wined3d_shader_create_gs(struct wined3d_device *device, const DWORD *byte_code,
         const struct wined3d_shader_signature *output_signature, void *parent,

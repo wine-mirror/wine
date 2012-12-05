@@ -2584,6 +2584,27 @@ struct wined3d_buffer * CDECL wined3d_device_get_vs_cb(const struct wined3d_devi
     return device->stateBlock->state.vs_cb[idx];
 }
 
+void CDECL wined3d_device_set_vs_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler)
+{
+    struct wined3d_sampler *prev;
+
+    TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
+
+    if (idx >= MAX_SAMPLER_OBJECTS)
+    {
+        WARN("Invalid sampler index %u.\n", idx);
+        return;
+    }
+
+    prev = device->updateStateBlock->state.vs_sampler[idx];
+    device->updateStateBlock->state.vs_sampler[idx] = sampler;
+
+    if (sampler)
+        wined3d_sampler_incref(sampler);
+    if (prev)
+        wined3d_sampler_decref(prev);
+}
+
 HRESULT CDECL wined3d_device_set_vs_consts_b(struct wined3d_device *device,
         UINT start_register, const BOOL *constants, UINT bool_count)
 {

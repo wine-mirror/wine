@@ -246,9 +246,12 @@ struct d3d10_sampler_state
 {
     ID3D10SamplerState ID3D10SamplerState_iface;
     LONG refcount;
+
+    struct wined3d_sampler *wined3d_sampler;
 };
 
 HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state) DECLSPEC_HIDDEN;
+struct d3d10_sampler_state *unsafe_impl_from_ID3D10SamplerState(ID3D10SamplerState *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10Query */
 struct d3d10_query

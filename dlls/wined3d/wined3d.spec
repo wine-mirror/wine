@@ -149,6 +149,7 @@
 @ cdecl wined3d_device_set_vs_consts_b(ptr long ptr long)
 @ cdecl wined3d_device_set_vs_consts_f(ptr long ptr long)
 @ cdecl wined3d_device_set_vs_consts_i(ptr long ptr long)
+@ cdecl wined3d_device_set_vs_sampler(ptr long ptr);
 @ cdecl wined3d_device_setup_fullscreen_window(ptr ptr long long)
 @ cdecl wined3d_device_show_cursor(ptr long)
 @ cdecl wined3d_device_uninit_3d(ptr)
@@ -184,6 +185,11 @@
 @ cdecl wined3d_rendertarget_view_get_parent(ptr)
 @ cdecl wined3d_rendertarget_view_get_resource(ptr)
 @ cdecl wined3d_rendertarget_view_incref(ptr)
+
+@ cdecl wined3d_sampler_create(ptr ptr)
+@ cdecl wined3d_sampler_decref(ptr)
+@ cdecl wined3d_sampler_get_parent(ptr)
+@ cdecl wined3d_sampler_incref(ptr)
 
 @ cdecl wined3d_shader_create_gs(ptr ptr ptr ptr ptr ptr long)
 @ cdecl wined3d_shader_create_ps(ptr ptr ptr ptr ptr ptr long)
