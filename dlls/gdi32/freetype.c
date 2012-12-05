@@ -374,7 +374,6 @@ struct enum_charset_list {
 static struct list gdi_font_list = LIST_INIT(gdi_font_list);
 static struct list unused_gdi_font_list = LIST_INIT(unused_gdi_font_list);
 #define UNUSED_CACHE_SIZE 10
-static struct list child_font_list = LIST_INIT(child_font_list);
 static struct list system_links = LIST_INIT(system_links);
 
 static struct list font_subst_list = LIST_INIT(font_subst_list);
@@ -4058,7 +4057,6 @@ static void free_font(GdiFont *font)
     LIST_FOR_EACH_SAFE(cursor, cursor2, &font->hfontlist)
     {
         HFONTLIST *hfontlist = LIST_ENTRY(cursor, HFONTLIST, entry);
-        DeleteObject(hfontlist->hfont);
         list_remove(&hfontlist->entry);
         HeapFree(GetProcessHeap(), 0, hfontlist);
     }
@@ -4287,19 +4285,6 @@ static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const FMAT2 *pma
     fd.matrix = *pmat;
     fd.can_use_bitmap = can_use_bitmap;
     calc_hash(&fd);
-
-    /* try the child list */
-    LIST_FOR_EACH(font_elem_ptr, &child_font_list) {
-        ret = LIST_ENTRY(font_elem_ptr, struct tagGdiFont, entry);
-        if(!fontcmp(ret, &fd)) {
-            if(!can_use_bitmap && !FT_IS_SCALABLE(ret->ft_face)) continue;
-            LIST_FOR_EACH(hfontlist_elem_ptr, &ret->hfontlist) {
-                hflist = LIST_ENTRY(hfontlist_elem_ptr, struct tagHFONTLIST, entry);
-                if(hflist->hfont == hfont)
-                    return ret;
-            }
-        }
-    }
 
     /* try the in-use list */
     LIST_FOR_EACH(font_elem_ptr, &gdi_font_list) {
@@ -5051,13 +5036,6 @@ static void dump_gdi_font_list(void)
         TRACE("gdiFont=%p %s %d\n",
               gdiFont, debugstr_w(gdiFont->font_desc.lf.lfFaceName), gdiFont->font_desc.lf.lfHeight);
     }
-
-    TRACE("---------- Child gdiFont Cache ----------\n");
-    LIST_FOR_EACH(elem_ptr, &child_font_list) {
-        gdiFont = LIST_ENTRY(elem_ptr, struct tagGdiFont, entry);
-        TRACE("gdiFont=%p %s %d\n",
-              gdiFont, debugstr_w(gdiFont->font_desc.lf.lfFaceName), gdiFont->font_desc.lf.lfHeight);
-    }
 }
 
 /*************************************************************
@@ -5076,21 +5054,6 @@ BOOL WineEngDestroyFontInstance(HFONT handle)
 
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
-
-    LIST_FOR_EACH_ENTRY(gdiFont, &child_font_list, struct tagGdiFont, entry)
-    {
-        hfontlist_elem_ptr = list_head(&gdiFont->hfontlist);
-        while(hfontlist_elem_ptr) {
-            hflist = LIST_ENTRY(hfontlist_elem_ptr, struct tagHFONTLIST, entry);
-            hfontlist_elem_ptr = list_next(&gdiFont->hfontlist, hfontlist_elem_ptr);
-            if(hflist->hfont == handle) {
-                TRACE("removing child font %p from child list\n", gdiFont);
-                list_remove(&gdiFont->entry);
-                LeaveCriticalSection( &freetype_cs );
-                return TRUE;
-            }
-        }
-    }
 
     TRACE("destroying hfont=%p\n", handle);
     if(TRACE_ON(font))
@@ -7128,7 +7091,6 @@ static UINT freetype_GetOutlineTextMetrics( PHYSDEV dev, UINT cbSize, OUTLINETEX
 
 static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
 {
-    HFONTLIST *hfontlist;
     child->font = alloc_font();
     child->font->ft_face = OpenFontFace(child->font, child->face, 0, -font->ppem);
     if(!child->font->ft_face)
@@ -7142,13 +7104,9 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
     child->font->ntmFlags = child->face->ntmFlags;
     child->font->orientation = font->orientation;
     child->font->scale_y = font->scale_y;
-    hfontlist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hfontlist));
-    hfontlist->hfont = CreateFontIndirectW(&font->font_desc.lf);
     child->font->name = strdupW(child->face->family->FamilyName);
-    list_add_head(&child->font->hfontlist, &hfontlist->entry);
     child->font->base_font = font;
-    list_add_head(&child_font_list, &child->font->entry);
-    TRACE("created child font hfont %p for base %p child %p\n", hfontlist->hfont, font, child->font);
+    TRACE("created child font %p for base %p\n", child->font, font);
     return TRUE;
 }
 
