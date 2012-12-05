@@ -409,7 +409,6 @@ INT nulldrv_SaveDC( PHYSDEV dev )
     newdc->vportExtY        = dc->vportExtY;
     newdc->virtual_res      = dc->virtual_res;
     newdc->virtual_size     = dc->virtual_size;
-    newdc->gdiFont          = dc->gdiFont;
 
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
 

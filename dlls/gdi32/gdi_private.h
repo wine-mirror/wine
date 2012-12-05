@@ -57,8 +57,6 @@ struct gdi_obj_funcs
     BOOL    (*pDeleteObject)( HGDIOBJ handle );
 };
 
-typedef struct tagGdiFont GdiFont;
-
 typedef struct tagDC
 {
     HDC          hSelf;            /* Handle to this DC */
@@ -103,7 +101,6 @@ typedef struct tagDC
     HBITMAP       hBitmap;
     HPALETTE      hPalette;
 
-    GdiFont      *gdiFont;
     struct gdi_path *path;
 
     UINT          font_code_page;

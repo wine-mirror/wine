@@ -309,6 +309,8 @@ typedef struct tagHFONTLIST {
     HFONT hfont;
 } HFONTLIST;
 
+typedef struct tagGdiFont GdiFont;
+
 typedef struct {
     struct list entry;
     Face *face;
@@ -4552,7 +4554,6 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 
     if (!hfont)  /* notification that the font has been changed by another driver */
     {
-        dc->gdiFont = NULL;
         physdev->font = NULL;
         release_dc_ptr( dc );
         return 0;
@@ -5010,7 +5011,6 @@ done:
             }
         }
         TRACE( "%p %s %d aa %x\n", hfont, debugstr_w(lf.lfFaceName), lf.lfHeight, *aa_flags );
-        dc->gdiFont = ret;
         physdev->font = ret;
     }
     LeaveCriticalSection( &freetype_cs );
