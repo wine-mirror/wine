@@ -366,6 +366,7 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
 
         ENTER_GL();
         context_apply_fbo_state_blit(context2, GL_FRAMEBUFFER, swapchain->front_buffer, NULL, SFLAG_INDRAWABLE);
+        context_bind_texture(context2, backbuffer->texture_target, backbuffer->texture_name);
 
         /* Set up the texture. The surface is not in a wined3d_texture
          * container, so there are no D3D texture settings to dirtify. */
