@@ -46,16 +46,6 @@ typedef struct
     struct list entryFromQmgr;
 } BackgroundCopyJobImpl;
 
-/* Enum background copy files vtbl and related data */
-typedef struct
-{
-    const IEnumBackgroundCopyFilesVtbl *lpVtbl;
-    LONG ref;
-    IBackgroundCopyFile **files;
-    ULONG numFiles;
-    ULONG indexFiles;
-} EnumBackgroundCopyFilesImpl;
-
 /* Background copy file vtbl and related data */
 typedef struct
 {
