@@ -315,6 +315,18 @@ HRESULT variant_to_jsval(VARIANT *var, jsval_t *r)
     case VT_INT:
         *r = jsval_number(V_INT(var));
         return S_OK;
+    case VT_UNKNOWN:
+        if(V_UNKNOWN(var)) {
+            IDispatch *disp;
+            HRESULT hres;
+
+            hres = IUnknown_QueryInterface(V_UNKNOWN(var), &IID_IDispatch, (void**)&disp);
+            if(SUCCEEDED(hres)) {
+                *r = jsval_disp(disp);
+                return S_OK;
+            }
+        }
+        /* fall through */
     default:
         return jsval_variant(r, var);
     }
