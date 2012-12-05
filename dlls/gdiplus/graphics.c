@@ -465,7 +465,7 @@ static GpStatus alpha_blend_pixels_hrgn(GpGraphics *graphics, INT dst_x, INT dst
 
         GetRegionData(hrgn, size, rgndata);
 
-        rects = (RECT*)&rgndata->Buffer;
+        rects = (RECT*)rgndata->Buffer;
 
         for (i=0; stat == Ok && i<rgndata->rdh.nCount; i++)
         {
