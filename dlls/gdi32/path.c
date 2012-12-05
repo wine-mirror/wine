@@ -1511,10 +1511,11 @@ static BOOL pathdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const REC
                                 LPCWSTR str, UINT count, const INT *dx )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
-    unsigned int idx;
+    unsigned int idx, ggo_flags = GGO_NATIVE;
     POINT offset = {0, 0};
 
     if (!count) return TRUE;
+    if (flags & ETO_GLYPH_INDEX) ggo_flags |= GGO_GLYPH_INDEX;
 
     for (idx = 0; idx < count; idx++)
     {
@@ -1523,8 +1524,7 @@ static BOOL pathdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const REC
         DWORD dwSize;
         void *outline;
 
-        dwSize = GetGlyphOutlineW(dev->hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE,
-                                  &gm, 0, NULL, &identity);
+        dwSize = GetGlyphOutlineW(dev->hdc, str[idx], ggo_flags, &gm, 0, NULL, &identity);
         if (dwSize == GDI_ERROR) return FALSE;
 
         /* add outline only if char is printable */
@@ -1533,9 +1533,7 @@ static BOOL pathdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const REC
             outline = HeapAlloc(GetProcessHeap(), 0, dwSize);
             if (!outline) return FALSE;
 
-            GetGlyphOutlineW(dev->hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE,
-                             &gm, dwSize, outline, &identity);
-
+            GetGlyphOutlineW(dev->hdc, str[idx], ggo_flags, &gm, dwSize, outline, &identity);
             PATH_add_outline(physdev, x + offset.x, y + offset.y, outline, dwSize);
 
             HeapFree(GetProcessHeap(), 0, outline);
