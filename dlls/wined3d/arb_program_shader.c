@@ -4315,7 +4315,7 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
     {
         GLint native;
 
-        GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &native));
+        GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &native));
         checkGLcall("glGetProgramivARB()");
         if (!native) WARN("Program exceeds native resource limits.\n");
 
