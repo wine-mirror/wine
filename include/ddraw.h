@@ -1332,7 +1332,7 @@ DECLARE_INTERFACE_(IDirectDraw,IUnknown)
     STDMETHOD(EnumDisplayModes)(THIS_ DWORD dwFlags, LPDDSURFACEDESC lpDDSurfaceDesc, LPVOID lpContext, LPDDENUMMODESCALLBACK lpEnumModesCallback) PURE;
     STDMETHOD(EnumSurfaces)(THIS_ DWORD dwFlags, LPDDSURFACEDESC lpDDSD, LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpEnumSurfacesCallback) PURE;
     STDMETHOD(FlipToGDISurface)(THIS) PURE;
-    STDMETHOD(GetCaps)(THIS_ LPDDCAPS lpDDDriverCaps, LPDDCAPS lpDDHELCaps) PURE;
+    STDMETHOD(GetCaps)(THIS_ DDCAPS *driver_caps, DDCAPS *hel_caps) PURE;
     STDMETHOD(GetDisplayMode)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
     STDMETHOD(GetFourCCCodes)(THIS_ LPDWORD lpNumCodes, LPDWORD lpCodes) PURE;
     STDMETHOD(GetGDISurface)(THIS_ struct IDirectDrawSurface **surface) PURE;
@@ -1442,7 +1442,7 @@ DECLARE_INTERFACE_(IDirectDraw2,IUnknown)
 /*20*/    STDMETHOD(EnumDisplayModes)(THIS_ DWORD dwFlags, LPDDSURFACEDESC lpDDSurfaceDesc, LPVOID lpContext, LPDDENUMMODESCALLBACK lpEnumModesCallback) PURE;
 /*24*/    STDMETHOD(EnumSurfaces)(THIS_ DWORD dwFlags, LPDDSURFACEDESC lpDDSD, LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpEnumSurfacesCallback) PURE;
 /*28*/    STDMETHOD(FlipToGDISurface)(THIS) PURE;
-/*2c*/    STDMETHOD(GetCaps)(THIS_ LPDDCAPS lpDDDriverCaps, LPDDCAPS lpDDHELCaps) PURE;
+/*2c*/    STDMETHOD(GetCaps)(THIS_ DDCAPS *driver_caps, DDCAPS *hel_caps) PURE;
 /*30*/    STDMETHOD(GetDisplayMode)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
 /*34*/    STDMETHOD(GetFourCCCodes)(THIS_ LPDWORD lpNumCodes, LPDWORD lpCodes) PURE;
 /*38*/    STDMETHOD(GetGDISurface)(THIS_ struct IDirectDrawSurface **surface) PURE;
@@ -1540,7 +1540,7 @@ DECLARE_INTERFACE_(IDirectDraw3,IUnknown)
 /*20*/    STDMETHOD(EnumDisplayModes)(THIS_ DWORD dwFlags, LPDDSURFACEDESC lpDDSurfaceDesc, LPVOID lpContext, LPDDENUMMODESCALLBACK lpEnumModesCallback) PURE;
 /*24*/    STDMETHOD(EnumSurfaces)(THIS_ DWORD dwFlags, LPDDSURFACEDESC lpDDSD, LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpEnumSurfacesCallback) PURE;
 /*28*/    STDMETHOD(FlipToGDISurface)(THIS) PURE;
-/*2c*/    STDMETHOD(GetCaps)(THIS_ LPDDCAPS lpDDDriverCaps, LPDDCAPS lpDDHELCaps) PURE;
+/*2c*/    STDMETHOD(GetCaps)(THIS_ DDCAPS *driver_caps, DDCAPS *hel_caps) PURE;
 /*30*/    STDMETHOD(GetDisplayMode)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
 /*34*/    STDMETHOD(GetFourCCCodes)(THIS_ LPDWORD lpNumCodes, LPDWORD lpCodes) PURE;
 /*38*/    STDMETHOD(GetGDISurface)(THIS_ struct IDirectDrawSurface **surface) PURE;
@@ -1644,7 +1644,7 @@ DECLARE_INTERFACE_(IDirectDraw4,IUnknown)
 /*20*/    STDMETHOD(EnumDisplayModes)(THIS_ DWORD dwFlags, LPDDSURFACEDESC2 lpDDSurfaceDesc, LPVOID lpContext, LPDDENUMMODESCALLBACK2 lpEnumModesCallback) PURE;
 /*24*/    STDMETHOD(EnumSurfaces)(THIS_ DWORD dwFlags, LPDDSURFACEDESC2 lpDDSD, LPVOID lpContext, LPDDENUMSURFACESCALLBACK2 lpEnumSurfacesCallback) PURE;
 /*28*/    STDMETHOD(FlipToGDISurface)(THIS) PURE;
-/*2c*/    STDMETHOD(GetCaps)(THIS_ LPDDCAPS lpDDDriverCaps, LPDDCAPS lpDDHELCaps) PURE;
+/*2c*/    STDMETHOD(GetCaps)(THIS_ DDCAPS *driver_caps, DDCAPS *hel_caps) PURE;
 /*30*/    STDMETHOD(GetDisplayMode)(THIS_ LPDDSURFACEDESC2 lpDDSurfaceDesc) PURE;
 /*34*/    STDMETHOD(GetFourCCCodes)(THIS_ LPDWORD lpNumCodes, LPDWORD lpCodes) PURE;
 /*38*/    STDMETHOD(GetGDISurface)(THIS_ struct IDirectDrawSurface4 **surface) PURE;
@@ -1760,7 +1760,7 @@ DECLARE_INTERFACE_(IDirectDraw7,IUnknown)
 /*20*/    STDMETHOD(EnumDisplayModes)(THIS_ DWORD dwFlags, LPDDSURFACEDESC2 lpDDSurfaceDesc, LPVOID lpContext, LPDDENUMMODESCALLBACK2 lpEnumModesCallback) PURE;
 /*24*/    STDMETHOD(EnumSurfaces)(THIS_ DWORD dwFlags, LPDDSURFACEDESC2 lpDDSD, LPVOID lpContext, LPDDENUMSURFACESCALLBACK7 lpEnumSurfacesCallback) PURE;
 /*28*/    STDMETHOD(FlipToGDISurface)(THIS) PURE;
-/*2c*/    STDMETHOD(GetCaps)(THIS_ LPDDCAPS lpDDDriverCaps, LPDDCAPS lpDDHELCaps) PURE;
+/*2c*/    STDMETHOD(GetCaps)(THIS_ DDCAPS *driver_caps, DDCAPS *hel_caps) PURE;
 /*30*/    STDMETHOD(GetDisplayMode)(THIS_ LPDDSURFACEDESC2 lpDDSurfaceDesc) PURE;
 /*34*/    STDMETHOD(GetFourCCCodes)(THIS_ LPDWORD lpNumCodes, LPDWORD lpCodes) PURE;
 /*38*/    STDMETHOD(GetGDISurface)(THIS_ struct IDirectDrawSurface7 **surface) PURE;
