@@ -280,7 +280,7 @@ void MergeChmProperties(HH_WINTYPEW *src, HHInfo *info, BOOL override)
     if (merge & HHWIN_PARAM_TB_FLAGS) dst->fsToolBarFlags = src->fsToolBarFlags;
     if (merge & HHWIN_PARAM_EXPANSION) dst->fNotExpanded = src->fNotExpanded;
     if (merge & HHWIN_PARAM_TABPOS) dst->tabpos = src->tabpos;
-    if (merge & HHWIN_PARAM_TABORDER) memcpy(&dst->tabOrder, &src->tabOrder, sizeof(src->tabOrder));
+    if (merge & HHWIN_PARAM_TABORDER) memcpy(dst->tabOrder, src->tabOrder, sizeof(src->tabOrder));
     if (merge & HHWIN_PARAM_HISTORY_COUNT) dst->cHistory = src->cHistory;
     if (merge & HHWIN_PARAM_CUR_TAB) dst->curNavType = src->curNavType;
 
