@@ -157,6 +157,7 @@ static const char *debug_rep(GLuint rep) {
         case GL_RED:                    return "GL_RED";
         case GL_GREEN:                  return "GL_GREEN";
         case GL_BLUE:                   return "GL_BLUE";
+        case GL_ALPHA:                  return "GL_ALPHA";
         default:                        return "unknown argrep";
     }
 }
