@@ -100,14 +100,18 @@ static BOOL PSDRV_Text(PHYSDEV dev, INT x, INT y, UINT flags, LPCWSTR str,
     if (!count)
 	return TRUE;
 
-    if(physDev->font.fontloc == Download)
-        glyphs = (LPWORD)str;
+    if(physDev->font.fontloc == Download && !(flags & ETO_GLYPH_INDEX))
+    {
+        glyphs = HeapAlloc( GetProcessHeap(), 0, count * sizeof(WORD) );
+        GetGlyphIndicesW( dev->hdc, str, count, glyphs, 0 );
+        str = glyphs;
+    }
 
     PSDRV_WriteMoveTo(dev, x, y);
 
     if(!lpDx) {
         if(physDev->font.fontloc == Download)
-	    PSDRV_WriteDownloadGlyphShow(dev, glyphs, count);
+	    PSDRV_WriteDownloadGlyphShow(dev, str, count);
 	else
 	    PSDRV_WriteBuiltinGlyphShow(dev, str, count);
     }
@@ -117,7 +121,7 @@ static BOOL PSDRV_Text(PHYSDEV dev, INT x, INT y, UINT flags, LPCWSTR str,
 
         for(i = 0; i < count-1; i++) {
 	    if(physDev->font.fontloc == Download)
-	        PSDRV_WriteDownloadGlyphShow(dev, glyphs + i, 1);
+	        PSDRV_WriteDownloadGlyphShow(dev, str + i, 1);
 	    else
 	        PSDRV_WriteBuiltinGlyphShow(dev, str + i, 1);
             if(flags & ETO_PDY)
@@ -130,10 +134,11 @@ static BOOL PSDRV_Text(PHYSDEV dev, INT x, INT y, UINT flags, LPCWSTR str,
 	    PSDRV_WriteMoveTo(dev, x + offset.x, y + offset.y);
 	}
 	if(physDev->font.fontloc == Download)
-	    PSDRV_WriteDownloadGlyphShow(dev, glyphs + i, 1);
+	    PSDRV_WriteDownloadGlyphShow(dev, str + i, 1);
 	else
 	    PSDRV_WriteBuiltinGlyphShow(dev, str + i, 1);
     }
 
+    HeapFree( GetProcessHeap(), 0, glyphs );
     return TRUE;
 }

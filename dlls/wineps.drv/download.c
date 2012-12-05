@@ -366,7 +366,7 @@ void get_glyph_name(HDC hdc, WORD index, char *name)
  *  Download and write out a number of glyphs
  *
  */
-BOOL PSDRV_WriteDownloadGlyphShow(PHYSDEV dev, WORD *glyphs,
+BOOL PSDRV_WriteDownloadGlyphShow(PHYSDEV dev, const WORD *glyphs,
 				  UINT count)
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
