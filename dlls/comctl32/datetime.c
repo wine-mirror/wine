@@ -178,7 +178,7 @@ static BOOL DATETIME_IsDateInValidRange(const DATETIME_INFO *infoPtr, const SYST
         (MONTHCAL_CompareSystemTime(date, &min_allowed_date) == -1))
         return FALSE;
 
-    limits = SendMessageW (infoPtr->hMonthCal, MCM_GETRANGE, 0, (LPARAM) &range);
+    limits = SendMessageW (infoPtr->hMonthCal, MCM_GETRANGE, 0, (LPARAM)range);
 
     if (limits & GDTR_MAX)
     {
@@ -585,7 +585,7 @@ DATETIME_IncreaseField (DATETIME_INFO *infoPtr, int number, int delta)
     }
 
     /* Ensure time is within bounds */
-    limits = SendMessageW (infoPtr->hMonthCal, MCM_GETRANGE, 0, (LPARAM) &range);
+    limits = SendMessageW (infoPtr->hMonthCal, MCM_GETRANGE, 0, (LPARAM)range);
     min = delta < 0;
 
     if (limits & (min ? GDTR_MIN : GDTR_MAX))
