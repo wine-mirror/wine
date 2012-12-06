@@ -329,7 +329,9 @@ static void test_authentication(void)
     {
         ok( pi->fCapabilities == NTLM_BASE_CAPS ||
             pi->fCapabilities == (NTLM_BASE_CAPS|SECPKG_FLAG_READONLY_WITH_CHECKSUM) ||
-            pi->fCapabilities == (NTLM_BASE_CAPS|SECPKG_FLAG_RESTRICTED_TOKENS),
+            pi->fCapabilities == (NTLM_BASE_CAPS|SECPKG_FLAG_RESTRICTED_TOKENS) ||
+            pi->fCapabilities == (NTLM_BASE_CAPS|SECPKG_FLAG_RESTRICTED_TOKENS|
+                                  SECPKG_FLAG_APPCONTAINER_CHECKS),
             "got %08x\n", pi->fCapabilities );
         ok( pi->wVersion == 1, "got %u\n", pi->wVersion );
         ok( pi->wRPCID == RPC_C_AUTHN_WINNT, "got %u\n", pi->wRPCID );
@@ -372,7 +374,9 @@ START_TEST(negotiate)
     }
     ok( info->fCapabilities == NEGOTIATE_BASE_CAPS ||
         info->fCapabilities == (NEGOTIATE_BASE_CAPS|SECPKG_FLAG_READONLY_WITH_CHECKSUM) ||
-        info->fCapabilities == (NEGOTIATE_BASE_CAPS|SECPKG_FLAG_RESTRICTED_TOKENS),
+        info->fCapabilities == (NEGOTIATE_BASE_CAPS|SECPKG_FLAG_RESTRICTED_TOKENS) ||
+        info->fCapabilities == (NEGOTIATE_BASE_CAPS|SECPKG_FLAG_RESTRICTED_TOKENS|
+                                SECPKG_FLAG_APPCONTAINER_CHECKS),
         "got %08x\n", info->fCapabilities );
     ok( info->wVersion == 1, "got %u\n", info->wVersion );
     ok( info->wRPCID == RPC_C_AUTHN_GSS_NEGOTIATE, "got %u\n", info->wRPCID );
