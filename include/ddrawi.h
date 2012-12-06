@@ -820,7 +820,7 @@ typedef struct _DDRAWI_DIRECTDRAW_GBL {
     /* DirectX 6.0 */
     ULONG_PTR			lpD3DHALCallbacks3;
     DWORD			dwNumZPixelFormats;
-    LPDDPIXELFORMAT		lpZPixelFormats;
+    DDPIXELFORMAT              *lpZPixelFormats;
     LPDDRAWI_DDMOTIONCOMP_INT	mcList;
     DWORD			hDDVxd;
     DDSCAPSEX			ddsCapsMore;

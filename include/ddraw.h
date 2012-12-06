@@ -1891,7 +1891,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown)
 /*48*/    STDMETHOD(GetFlipStatus)(THIS_ DWORD dwFlags) PURE;
 /*4c*/    STDMETHOD(GetOverlayPosition)(THIS_ LPLONG lplX, LPLONG lplY) PURE;
 /*50*/    STDMETHOD(GetPalette)(THIS_ IDirectDrawPalette **palette) PURE;
-/*54*/    STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT lpDDPixelFormat) PURE;
+/*54*/    STDMETHOD(GetPixelFormat)(THIS_ DDPIXELFORMAT *format) PURE;
 /*58*/    STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
 /*5c*/    STDMETHOD(Initialize)(THIS_ IDirectDraw *ddraw, DDSURFACEDESC *surface_desc) PURE;
 /*60*/    STDMETHOD(IsLost)(THIS) PURE;
@@ -2025,7 +2025,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface2,IUnknown)
     STDMETHOD(GetFlipStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetOverlayPosition)(THIS_ LPLONG lplX, LPLONG lplY) PURE;
     STDMETHOD(GetPalette)(THIS_ IDirectDrawPalette **palette) PURE;
-    STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT lpDDPixelFormat) PURE;
+    STDMETHOD(GetPixelFormat)(THIS_ DDPIXELFORMAT *format) PURE;
     STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
     STDMETHOD(Initialize)(THIS_ IDirectDraw *ddraw, DDSURFACEDESC *surface_desc) PURE;
     STDMETHOD(IsLost)(THIS) PURE;
@@ -2171,7 +2171,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown)
     STDMETHOD(GetFlipStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetOverlayPosition)(THIS_ LPLONG lplX, LPLONG lplY) PURE;
     STDMETHOD(GetPalette)(THIS_ IDirectDrawPalette **palette) PURE;
-    STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT lpDDPixelFormat) PURE;
+    STDMETHOD(GetPixelFormat)(THIS_ DDPIXELFORMAT *format) PURE;
     STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
     STDMETHOD(Initialize)(THIS_ IDirectDraw *ddraw, DDSURFACEDESC *surface_desc) PURE;
     STDMETHOD(IsLost)(THIS) PURE;
@@ -2322,7 +2322,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface4,IUnknown)
     STDMETHOD(GetFlipStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetOverlayPosition)(THIS_ LPLONG lplX, LPLONG lplY) PURE;
     STDMETHOD(GetPalette)(THIS_ IDirectDrawPalette **palette) PURE;
-    STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT lpDDPixelFormat) PURE;
+    STDMETHOD(GetPixelFormat)(THIS_ DDPIXELFORMAT *format) PURE;
     STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC2 lpDDSurfaceDesc) PURE;
     STDMETHOD(Initialize)(THIS_ IDirectDraw *ddraw, DDSURFACEDESC2 *surface_desc) PURE;
     STDMETHOD(IsLost)(THIS) PURE;
@@ -2489,7 +2489,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface7,IUnknown)
     STDMETHOD(GetFlipStatus)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(GetOverlayPosition)(THIS_ LPLONG lplX, LPLONG lplY) PURE;
     STDMETHOD(GetPalette)(THIS_ IDirectDrawPalette **palette) PURE;
-    STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT lpDDPixelFormat) PURE;
+    STDMETHOD(GetPixelFormat)(THIS_ DDPIXELFORMAT *format) PURE;
     STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC2 lpDDSurfaceDesc) PURE;
     STDMETHOD(Initialize)(THIS_ IDirectDraw *ddraw, DDSURFACEDESC2 *surface_desc) PURE;
     STDMETHOD(IsLost)(THIS) PURE;
