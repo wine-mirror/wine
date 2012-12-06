@@ -14132,6 +14132,7 @@ START_TEST(visual)
         loop_index_test(device_ptr);
         sincos_test(device_ptr);
         sgn_test(device_ptr);
+        clip_planes_test(device_ptr);
         if (caps.VertexShaderVersion >= D3DVS_VERSION(3, 0)) {
             test_vshader_input(device_ptr);
             test_vshader_float16(device_ptr);
@@ -14188,7 +14189,6 @@ START_TEST(visual)
     fp_special_test(device_ptr);
     depth_bounds_test(device_ptr);
     srgbwrite_format_test(device_ptr);
-    clip_planes_test(device_ptr);
     update_surface_test(device_ptr);
     multisample_get_rtdata_test(device_ptr);
     zenable_test(device_ptr);
