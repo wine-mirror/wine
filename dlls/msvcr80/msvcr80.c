@@ -37,3 +37,13 @@ BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
     }
     return TRUE;
 }
+
+void * CDECL MSVCR80__decode_pointer(void * ptr)
+{
+    return DecodePointer(ptr);
+}
+
+void * CDECL MSVCR80__encode_pointer(void * ptr)
+{
+    return EncodePointer(ptr);
+}

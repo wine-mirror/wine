@@ -415,7 +415,7 @@
 @ varargs _cwscanf_s(wstr) msvcrt._cwscanf_s
 @ varargs _cwscanf_s_l(wstr ptr) msvcrt._cwscanf_s_l
 @ extern _daylight msvcrt._daylight
-@ cdecl _decode_pointer(ptr) msvcr90._decode_pointer
+@ cdecl _decode_pointer(ptr) MSVCR80__decode_pointer
 @ cdecl _difftime32(long long) msvcrt._difftime32
 @ cdecl _difftime64(long long) msvcrt._difftime64
 @ stub _dosmaperr
@@ -425,7 +425,7 @@
 @ cdecl _dupenv_s(ptr ptr str) msvcrt._dupenv_s
 @ cdecl _ecvt(double long ptr ptr) msvcrt._ecvt
 @ cdecl _ecvt_s(str long double long ptr ptr) msvcrt._ecvt_s
-@ cdecl _encode_pointer(ptr) msvcr90._encode_pointer
+@ cdecl _encode_pointer(ptr) MSVCR80__encode_pointer
 @ cdecl _encoded_null() msvcr100._encoded_null
 @ cdecl _endthread() msvcrt._endthread
 @ cdecl _endthreadex(long) msvcrt._endthreadex
