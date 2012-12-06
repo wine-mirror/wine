@@ -1116,7 +1116,8 @@ struct block_file_arg
 {
     FILE *read;
     FILE *write;
-    HANDLE blocked;
+    HANDLE init;
+    HANDLE finish;
 };
 
 static DWORD WINAPI block_file(void *arg)
@@ -1125,8 +1126,8 @@ static DWORD WINAPI block_file(void *arg)
 
     p_lock_file(files->read);
     p_lock_file(files->write);
-    SetEvent(files->blocked);
-    WaitForSingleObject(files->blocked, INFINITE);
+    SetEvent(files->init);
+    WaitForSingleObject(files->finish, INFINITE);
     p_unlock_file(files->read);
     p_unlock_file(files->write);
     return 0;
@@ -1158,24 +1159,13 @@ static void test_nonblocking_file_access(void)
 
     arg.read = filer;
     arg.write = filew;
-    arg.blocked = CreateEvent(NULL, FALSE, FALSE, NULL);
-    ok(arg.blocked != NULL, "CreateEvent failed\n");
-    if(!arg.blocked) {
-        p_fclose(filer);
-        p_fclose(filew);
-        p_unlink("test_file");
-        return;
-    }
+    arg.init = CreateEvent(NULL, FALSE, FALSE, NULL);
+    arg.finish = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ok(arg.init != NULL, "CreateEvent failed\n");
+    ok(arg.finish != NULL, "CreateEvent failed\n");
     thread = CreateThread(NULL, 0, block_file, (void*)&arg, 0, NULL);
     ok(thread != NULL, "CreateThread failed\n");
-    if(!thread) {
-        CloseHandle(arg.blocked);
-        p_fclose(filer);
-        p_fclose(filew);
-        p_unlink("test_file");
-        return;
-    }
-    WaitForSingleObject(arg.blocked, INFINITE);
+    WaitForSingleObject(arg.init, INFINITE);
 
     ret = p_fileno(filer);
     ok(ret, "_fileno(filer) returned %d\n", ret);
@@ -1197,9 +1187,10 @@ static void test_nonblocking_file_access(void)
     ret = p_flsbuf('a', filew);
     ok(ret=='a', "_flsbuf(filew) returned %d\n", ret);
 
-    SetEvent(arg.blocked);
+    SetEvent(arg.finish);
     WaitForSingleObject(thread, INFINITE);
-    CloseHandle(arg.blocked);
+    CloseHandle(arg.init);
+    CloseHandle(arg.finish);
     CloseHandle(thread);
     p_fclose(filer);
     p_fclose(filew);
