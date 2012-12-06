@@ -3288,6 +3288,19 @@ void CDECL wined3d_device_set_gs_sampler(struct wined3d_device *device, UINT idx
         wined3d_sampler_decref(prev);
 }
 
+struct wined3d_sampler * CDECL wined3d_device_get_gs_sampler(const struct wined3d_device *device, UINT idx)
+{
+    TRACE("device %p, idx %u.\n", device, idx);
+
+    if (idx >= MAX_SAMPLER_OBJECTS)
+    {
+        WARN("Invalid sampler index %u.\n", idx);
+        return NULL;
+    }
+
+    return device->stateBlock->state.gs_sampler[idx];
+}
+
 /* Context activation is done by the caller. */
 /* Do not call while under the GL lock. */
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
