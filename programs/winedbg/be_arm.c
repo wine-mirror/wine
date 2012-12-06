@@ -1118,6 +1118,35 @@ static UINT thumb2_disasm_coprocdatatrans(UINT inst, ADDRESS64 *addr)
     return 0;
 }
 
+static UINT thumb2_disasm_ldrstrmul(UINT inst, ADDRESS64 *addr)
+{
+    short load      = (inst >> 20) & 0x01;
+    short writeback = (inst >> 21) & 0x01;
+    short decbefore = (inst >> 24) & 0x01;
+    short i;
+    short last=15;
+    for (i=15;i>=0;i--)
+        if ((inst>>i) & 1)
+        {
+            last = i;
+            break;
+        }
+
+    if (writeback && get_nibble(inst, 4) == 13)
+        dbg_printf("\n\t%s\t{", load ? "pop" : "push");
+    else
+        dbg_printf("\n\t%s%s\t%s%s, {", load ? "ldm" : "stm", decbefore ? "db" : "ia",
+                   tbl_regs[get_nibble(inst, 4)], writeback ? "!" : "");
+    for (i=0;i<=15;i++)
+        if ((inst>>i) & 1)
+        {
+            if (i == last) dbg_printf("%s", tbl_regs[i]);
+            else dbg_printf("%s, ", tbl_regs[i]);
+        }
+    dbg_printf("}");
+    return 0;
+}
+
 struct inst_arm
 {
         UINT mask;
@@ -1196,6 +1225,7 @@ static const struct inst_arm tbl_thumb32[] = {
     { 0xef000010, 0xee000010, thumb2_disasm_coprocmov1 },
     { 0xefe00000, 0xec400000, thumb2_disasm_coprocmov2 },
     { 0xee000000, 0xec000000, thumb2_disasm_coprocdatatrans },
+    { 0xfe402000, 0xe8000000, thumb2_disasm_ldrstrmul },
     { 0x00000000, 0x00000000, NULL }
 };
 
