@@ -642,6 +642,12 @@ todo_wine
     /* check attributes */
     hr = IXmlReader_MoveToNextAttribute(reader);
     ok(hr == S_OK, "got %08x\n", hr);
+
+    type = XmlNodeType_None;
+    hr = IXmlReader_GetNodeType(reader, &type);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(type == XmlNodeType_Attribute, "got %d\n", type);
+
     ok_pos(reader, 1, 7, -1, 55, TRUE);
 
     /* try to move from last attribute */
@@ -651,6 +657,11 @@ todo_wine
     ok(hr == S_OK, "got %08x\n", hr);
     hr = IXmlReader_MoveToNextAttribute(reader);
     ok(hr == S_FALSE, "got %08x\n", hr);
+
+    type = XmlNodeType_None;
+    hr = IXmlReader_GetNodeType(reader, &type);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(type == XmlNodeType_Attribute, "got %d\n", type);
 
     hr = IXmlReader_MoveToFirstAttribute(reader);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -671,6 +682,11 @@ todo_wine {
 
     hr = IXmlReader_MoveToElement(reader);
     ok(hr == S_OK, "got %08x\n", hr);
+
+    type = XmlNodeType_None;
+    hr = IXmlReader_GetNodeType(reader, &type);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(type == XmlNodeType_XmlDeclaration, "got %d\n", type);
 
     IStream_Release(stream);
     IXmlReader_Release(reader);

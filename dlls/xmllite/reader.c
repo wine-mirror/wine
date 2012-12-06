@@ -937,7 +937,11 @@ static HRESULT WINAPI xmlreader_GetNodeType(IXmlReader* iface, XmlNodeType *node
 {
     xmlreader *This = impl_from_IXmlReader(iface);
     TRACE("(%p)->(%p)\n", This, node_type);
-    *node_type = This->nodetype;
+
+    /* When we're on attribute always return attribute type, container node type is kept.
+       Note that container is not necessarily an element, and attribute doesn't mean it's
+       an attribute in XML spec terms. */
+    *node_type = This->attr ? XmlNodeType_Attribute : This->nodetype;
     return This->state == XmlReadState_Closed ? S_FALSE : S_OK;
 }
 
