@@ -2315,6 +2315,7 @@ struct wined3d_state
 
     struct wined3d_shader *geometry_shader;
     struct wined3d_buffer *gs_cb[MAX_CONSTANT_BUFFERS];
+    struct wined3d_sampler *gs_sampler[MAX_SAMPLER_OBJECTS];
 
     struct wined3d_shader *pixel_shader;
     struct wined3d_buffer *ps_cb[MAX_CONSTANT_BUFFERS];

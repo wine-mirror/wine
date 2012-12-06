@@ -555,6 +555,15 @@ void stateblock_unbind_resources(struct wined3d_stateblock *stateblock)
         }
     }
 
+    for (i = 0; i < MAX_SAMPLER_OBJECTS; ++i)
+    {
+        if ((sampler = state->gs_sampler[i]))
+        {
+            state->gs_sampler[i] = NULL;
+            wined3d_sampler_decref(sampler);
+        }
+    }
+
     if ((shader = state->pixel_shader))
     {
         state->pixel_shader = NULL;
