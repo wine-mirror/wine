@@ -5460,6 +5460,7 @@ static BOOL InitAdapters(struct wined3d *wined3d)
 #define USE_GL_FUNC(f) gl_info->gl_ops.gl.p_##f = (void *)GetProcAddress(mod_gl, #f);
         ALL_WGL_FUNCS
 #undef USE_GL_FUNC
+        gl_info->gl_ops.wgl.p_wglSwapBuffers = (void *)GetProcAddress(mod_gl, "wglSwapBuffers");
     }
 #else
     /* To bypass the opengl32 thunks retrieve functions from the WGL driver instead of opengl32 */
@@ -5468,6 +5469,7 @@ static BOOL InitAdapters(struct wined3d *wined3d)
         const struct opengl_funcs *wgl_driver = __wine_get_wgl_driver( hdc, WINE_WGL_DRIVER_VERSION );
         ReleaseDC( 0, hdc );
         if (!wgl_driver || wgl_driver == (void *)-1) goto nogl_adapter;
+        gl_info->gl_ops.wgl = wgl_driver->wgl;
         gl_info->gl_ops.gl = wgl_driver->gl;
     }
 #endif
