@@ -1022,7 +1022,7 @@ static HRESULT WINAPI JpegEncoder_Frame_WritePixels(IWICBitmapFrameEncode *iface
         HeapFree(GetProcessHeap(), 0, swapped_data);
         return E_FAIL;
     }
-    This->cinfo.client_data = &jmpbuf;
+    This->cinfo.client_data = jmpbuf;
 
     if (!This->started_compress)
     {
@@ -1189,7 +1189,7 @@ static HRESULT WINAPI JpegEncoder_Frame_Commit(IWICBitmapFrameEncode *iface)
         LeaveCriticalSection(&This->lock);
         return E_FAIL;
     }
-    This->cinfo.client_data = &jmpbuf;
+    This->cinfo.client_data = jmpbuf;
 
     pjpeg_finish_compress(&This->cinfo);
 
@@ -1299,7 +1299,7 @@ static HRESULT WINAPI JpegEncoder_Initialize(IWICBitmapEncoder *iface,
 
     This->cinfo.err = &This->jerr;
 
-    This->cinfo.client_data = &jmpbuf;
+    This->cinfo.client_data = jmpbuf;
 
     if (setjmp(jmpbuf))
     {

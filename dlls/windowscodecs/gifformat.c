@@ -1362,7 +1362,7 @@ static HRESULT WINAPI GifDecoder_Block_GetReaderByIndex(IWICMetadataBlockReader 
     if (!reader) return E_INVALIDARG;
 
     if (index == 0)
-        return create_metadata_reader(&This->LSD_data, sizeof(This->LSD_data),
+        return create_metadata_reader(This->LSD_data, sizeof(This->LSD_data),
                                       &CLSID_WICLSDMetadataReader, reader);
 
     for (i = 0; i < This->gif->Extensions.ExtensionBlockCount; i++)
