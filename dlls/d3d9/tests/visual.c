@@ -3878,12 +3878,25 @@ static void projected_textures_test(IDirect3DDevice9 *device,
     };
     IDirect3DVertexShader9 *vs = NULL;
     IDirect3DPixelShader9 *ps = NULL;
+    IDirect3D9 *d3d;
+    D3DCAPS9 caps;
     HRESULT hr;
 
-    hr = IDirect3DDevice9_CreateVertexShader(device, vertex_shader, &vs);
-    ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
-    hr = IDirect3DDevice9_CreatePixelShader(device, pixel_shader, &ps);
-    ok(SUCCEEDED(hr), "CreatePixelShader failed (%08x)\n", hr);
+    IDirect3DDevice9_GetDirect3D(device, &d3d);
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "GetDeviceCaps failed (%08x)\n", hr);
+    IDirect3D9_Release(d3d);
+
+    if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
+    {
+        hr = IDirect3DDevice9_CreateVertexShader(device, vertex_shader, &vs);
+        ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
+    }
+    if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 3))
+    {
+        hr = IDirect3DDevice9_CreatePixelShader(device, pixel_shader, &ps);
+        ok(SUCCEEDED(hr), "CreatePixelShader failed (%08x)\n", hr);
+    }
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff203040, 0.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
@@ -3920,12 +3933,26 @@ static void projected_textures_test(IDirect3DDevice9 *device,
         };
 
         if (tests[i].vs)
+        {
+            if (!vs)
+            {
+                skip("Vertex shaders not supported, skipping\n");
+                continue;
+            }
             hr = IDirect3DDevice9_SetVertexShader(device, vs);
+        }
         else
             hr = IDirect3DDevice9_SetVertexShader(device, NULL);
         ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
         if (tests[i].ps)
+        {
+            if (!ps)
+            {
+                skip("Pixel shaders not supported, skipping\n");
+                continue;
+            }
             hr = IDirect3DDevice9_SetPixelShader(device, ps);
+        }
         else
             hr = IDirect3DDevice9_SetPixelShader(device, NULL);
         ok(SUCCEEDED(hr), "SetPixelShader failed (%08x)\n", hr);
@@ -3949,11 +3976,14 @@ static void projected_textures_test(IDirect3DDevice9 *device,
 
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
     hr = IDirect3DDevice9_SetPixelShader(device, NULL);
-    IDirect3DVertexShader9_Release(vs);
-    IDirect3DPixelShader9_Release(ps);
+    if (vs) IDirect3DVertexShader9_Release(vs);
+    if (ps) IDirect3DPixelShader9_Release(ps);
 
     for (i = 0; i < 4; ++i)
-        check_rect(device, tests[i].rect, tests[i].message);
+    {
+        if ((!tests[i].vs || vs) && (!tests[i].ps || ps))
+            check_rect(device, tests[i].rect, tests[i].message);
+    }
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
