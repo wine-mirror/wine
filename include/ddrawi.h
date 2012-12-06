@@ -951,7 +951,7 @@ typedef struct _DDRAWI_DDRAWSURFACE_MORE {
     DWORD			qwDDrawReserved8[2];
     LPVOID			lpDDrawReserved9;
     DWORD			cSurfaces;
-    LPDDSURFACEDESC2		pCreatedDDSurfaceDesc2;
+    DDSURFACEDESC2             *pCreatedDDSurfaceDesc2;
     LPDDRAWI_DDRAWSURFACE_LCL	*slist;
     DWORD			dwFVF;
     LPVOID			lpVB;

@@ -3078,7 +3078,7 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
         if (TRACE_ON(ddraw))
         {
             TRACE(" (%p) Requesting surface desc :\n", iface);
-            DDRAW_dump_surface_desc((LPDDSURFACEDESC2)surface_desc);
+            DDRAW_dump_surface_desc((DDSURFACEDESC2 *)surface_desc);
         }
 
         WARN("Application tried to create an explicit front or back buffer\n");
