@@ -505,7 +505,7 @@ typedef struct _DDHAL_SETMODEDATA {
 
 typedef struct _DDHAL_CREATESURFACEDATA {
     LPDDRAWI_DIRECTDRAW_GBL	lpDD;
-    LPDDSURFACEDESC		lpDDSurfaceDesc;
+    DDSURFACEDESC              *lpDDSurfaceDesc;
     LPDDRAWI_DDRAWSURFACE_LCL *	lplpSList;
     DWORD			dwSCnt;
     HRESULT			ddRVal;
@@ -514,7 +514,7 @@ typedef struct _DDHAL_CREATESURFACEDATA {
 
 typedef struct _DDHAL_CANCREATESURFACEDATA {
     LPDDRAWI_DIRECTDRAW_GBL	lpDD;
-    LPDDSURFACEDESC		lpDDSurfaceDesc;
+    DDSURFACEDESC              *lpDDSurfaceDesc;
     DWORD			bIsDifferentPixelFormat;
     HRESULT			ddRVal;
     LPDDHAL_CANCREATESURFACE	CanCreateSurface;

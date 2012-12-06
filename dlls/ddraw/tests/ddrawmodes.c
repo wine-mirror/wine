@@ -36,7 +36,7 @@ static WNDCLASS wc;
 static HWND hwnd, hwnd2;
 static int modes_cnt;
 static int modes_size;
-static LPDDSURFACEDESC modes;
+static DDSURFACEDESC *modes;
 static RECT rect_before_create;
 static RECT rect_after_delete;
 static int modes16bpp_cnt;
@@ -292,7 +292,7 @@ static void test_DirectDrawEnumerateExW(void)
     ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %d\n", ret);
 }
 
-static void adddisplaymode(LPDDSURFACEDESC lpddsd)
+static void adddisplaymode(DDSURFACEDESC *lpddsd)
 {
     if (!modes)
         modes = HeapAlloc(GetProcessHeap(), 0, (modes_size = 2) * sizeof(DDSURFACEDESC));
@@ -309,7 +309,7 @@ static void flushdisplaymodes(void)
     modes_cnt = modes_size = 0;
 }
 
-static HRESULT WINAPI enummodescallback(LPDDSURFACEDESC lpddsd, LPVOID lpContext)
+static HRESULT WINAPI enummodescallback(DDSURFACEDESC *lpddsd, void *lpContext)
 {
     trace("Width = %i, Height = %i, bpp = %i, Refresh Rate = %i, Pitch = %i, flags =%02X\n",
         lpddsd->dwWidth, lpddsd->dwHeight, U1(lpddsd->ddpfPixelFormat).dwRGBBitCount,
@@ -338,7 +338,7 @@ static HRESULT WINAPI enummodescallback(LPDDSURFACEDESC lpddsd, LPVOID lpContext
     return DDENUMRET_OK;
 }
 
-static HRESULT WINAPI enummodescallback_16bit(LPDDSURFACEDESC lpddsd, LPVOID lpContext)
+static HRESULT WINAPI enummodescallback_16bit(DDSURFACEDESC *lpddsd, void *lpContext)
 {
     trace("Width = %i, Height = %i, bpp = %i, Refresh Rate = %i, Pitch = %i, flags =%02X\n",
         lpddsd->dwWidth, lpddsd->dwHeight, U1(lpddsd->ddpfPixelFormat).dwRGBBitCount,
@@ -376,7 +376,7 @@ static HRESULT WINAPI enummodescallback_16bit(LPDDSURFACEDESC lpddsd, LPVOID lpC
     return DDENUMRET_OK;
 }
 
-static HRESULT WINAPI enummodescallback_count(LPDDSURFACEDESC lpddsd, LPVOID lpContext)
+static HRESULT WINAPI enummodescallback_count(DDSURFACEDESC *lpddsd, void *lpContext)
 {
     ok(lpddsd->dwFlags == (DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_PITCH|DDSD_REFRESHRATE),
             "Wrong surface description flags %02X\n", lpddsd->dwFlags);

@@ -1341,7 +1341,7 @@ out:
                          ptr = ((D3DTRIANGLE*)(ptr))+1;\
                         } while (0)
 
-static HRESULT CALLBACK TextureFormatEnumCallback(LPDDSURFACEDESC lpDDSD, LPVOID lpContext)
+static HRESULT CALLBACK TextureFormatEnumCallback(DDSURFACEDESC *lpDDSD, void *lpContext)
 {
     if (lpDDSD->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
         *(BOOL*)lpContext = TRUE;
