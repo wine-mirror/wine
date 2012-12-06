@@ -113,6 +113,7 @@ typedef struct _xmlreader
     DtdProcessing dtdmode;
     UINT line, pos;           /* reader position in XML stream */
     struct list attrs; /* attributes list for current node */
+    struct attribute *attr; /* current attribute */
     UINT attr_count;
 } xmlreader;
 
@@ -942,14 +943,32 @@ static HRESULT WINAPI xmlreader_GetNodeType(IXmlReader* iface, XmlNodeType *node
 
 static HRESULT WINAPI xmlreader_MoveToFirstAttribute(IXmlReader* iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    xmlreader *This = impl_from_IXmlReader(iface);
+
+    TRACE("(%p)\n", This);
+
+    if (!This->attr_count) return S_FALSE;
+    This->attr = LIST_ENTRY(list_head(&This->attrs), struct attribute, entry);
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlreader_MoveToNextAttribute(IXmlReader* iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    xmlreader *This = impl_from_IXmlReader(iface);
+    const struct list *next;
+
+    TRACE("(%p)\n", This);
+
+    if (!This->attr_count) return S_FALSE;
+
+    if (!This->attr)
+        return IXmlReader_MoveToFirstAttribute(iface);
+
+    next = list_next(&This->attrs, &This->attr->entry);
+    if (next)
+        This->attr = LIST_ENTRY(next, struct attribute, entry);
+
+    return next ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI xmlreader_MoveToAttributeByName(IXmlReader* iface,
@@ -962,8 +981,13 @@ static HRESULT WINAPI xmlreader_MoveToAttributeByName(IXmlReader* iface,
 
 static HRESULT WINAPI xmlreader_MoveToElement(IXmlReader* iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    xmlreader *This = impl_from_IXmlReader(iface);
+
+    TRACE("(%p)\n", This);
+
+    if (!This->attr_count) return S_FALSE;
+    This->attr = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlreader_GetQualifiedName(IXmlReader* iface, LPCWSTR *qualifiedName,
@@ -1202,6 +1226,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
     reader->nodetype = XmlNodeType_None;
     list_init(&reader->attrs);
     reader->attr_count = 0;
+    reader->attr = NULL;
 
     *obj = &reader->IXmlReader_iface;
 

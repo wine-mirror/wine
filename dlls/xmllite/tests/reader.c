@@ -591,6 +591,7 @@ static void test_read_xmldeclaration(void)
     HRESULT hr;
     XmlNodeType type;
     UINT count = 0;
+    const WCHAR *val;
 
     hr = pCreateXmlReader(&IID_IXmlReader, (LPVOID*)&reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -611,6 +612,16 @@ static void test_read_xmldeclaration(void)
     ok(hr == S_OK, "got %08x\n", hr);
     ok(count == 0, "got %d\n", count);
 
+    /* try to move without attributes */
+    hr = IXmlReader_MoveToElement(reader);
+    ok(hr == S_FALSE, "got %08x\n", hr);
+
+    hr = IXmlReader_MoveToNextAttribute(reader);
+    ok(hr == S_FALSE, "got %08x\n", hr);
+
+    hr = IXmlReader_MoveToFirstAttribute(reader);
+    ok(hr == S_FALSE, "got %08x\n", hr);
+
     ok_pos(reader, 0, 0, -1, -1, FALSE);
 
     type = -1;
@@ -622,13 +633,27 @@ static void test_read_xmldeclaration(void)
     ok_pos(reader, 1, 3, -1, 55, TRUE);
     test_read_state(reader, XmlReadState_Interactive, -1, 0);
 
+    hr = IXmlReader_GetValue(reader, &val, NULL);
+todo_wine
+    ok(hr == S_OK, "got %08x\n", hr);
+    if (hr == S_OK)
+        ok(*val == 0, "got %s\n", wine_dbgstr_w(val));
+
     /* check attributes */
     hr = IXmlReader_MoveToNextAttribute(reader);
-    todo_wine ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
     ok_pos(reader, 1, 7, -1, 55, TRUE);
 
+    /* try to move from last attribute */
+    hr = IXmlReader_MoveToNextAttribute(reader);
+    ok(hr == S_OK, "got %08x\n", hr);
+    hr = IXmlReader_MoveToNextAttribute(reader);
+    ok(hr == S_OK, "got %08x\n", hr);
+    hr = IXmlReader_MoveToNextAttribute(reader);
+    ok(hr == S_FALSE, "got %08x\n", hr);
+
     hr = IXmlReader_MoveToFirstAttribute(reader);
-    todo_wine ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
     ok_pos(reader, 1, 7, -1, 55, TRUE);
 
     hr = IXmlReader_GetAttributeCount(reader, NULL);
@@ -643,6 +668,9 @@ todo_wine {
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(count == 1, "Expected 1, got %d\n", count);
 }
+
+    hr = IXmlReader_MoveToElement(reader);
+    ok(hr == S_OK, "got %08x\n", hr);
 
     IStream_Release(stream);
     IXmlReader_Release(reader);
