@@ -5184,7 +5184,7 @@ static HRESULT WINAPI PersistStream_Load(IPersistStream *iface, IStream *pStm)
     data = heap_alloc(size);
     if(!data)
         return E_OUTOFMEMORY;
-    hr = IStream_Read(pStm, &data->unk1, size-sizeof(DWORD)-2, NULL);
+    hr = IStream_Read(pStm, data->unk1, size-sizeof(DWORD)-2, NULL);
     if(FAILED(hr)) {
         heap_free(data);
         return hr;
