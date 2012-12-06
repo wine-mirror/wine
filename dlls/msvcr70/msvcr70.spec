@@ -107,7 +107,7 @@
 @ cdecl -arch=i386 _CIsqrt() msvcrt._CIsqrt
 @ cdecl -arch=i386 _CItan() msvcrt._CItan
 @ cdecl -arch=i386 _CItanh() msvcrt._CItanh
-@ cdecl _CRT_RTC_INIT(ptr ptr long long long) msvcr90._CRT_RTC_INIT
+@ cdecl _CRT_RTC_INIT(ptr ptr long long long) msvcr100._CRT_RTC_INIT
 @ stdcall _CxxThrowException(long long) msvcrt._CxxThrowException
 @ cdecl -i386 -norelay _EH_prolog() msvcrt._EH_prolog
 @ cdecl _Getdays() msvcrt._Getdays

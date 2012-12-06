@@ -427,8 +427,8 @@
 @ cdecl -arch=win64 ?_invalid_parameter@@YAXPEBG00I_K@Z(wstr wstr wstr long long) msvcrt._invalid_parameter
 @ stub -arch=win32 ?_is_exception_typeof@@YAHABVtype_info@@PAU_EXCEPTION_POINTERS@@@Z  # int __cdecl _is_exception_typeof(class type_info const &,struct _EXCEPTION_POINTERS *)
 @ stub -arch=win64 ?_is_exception_typeof@@YAHAEBVtype_info@@PEAU_EXCEPTION_POINTERS@@@Z  # int __cdecl _is_exception_typeof(class type_info const & __ptr64,struct _EXCEPTION_POINTERS * __ptr64)
-@ thiscall -arch=win32 ?_name_internal_method@type_info@@QBEPBDPAU__type_info_node@@@Z(ptr ptr) msvcr90.?_name_internal_method@type_info@@QBEPBDPAU__type_info_node@@@Z
-@ cdecl -arch=win64 ?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z(ptr ptr) msvcr90.?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z
+@ thiscall -arch=win32 ?_name_internal_method@type_info@@QBEPBDPAU__type_info_node@@@Z(ptr ptr) type_info_name_internal_method
+@ cdecl -arch=win64 ?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z(ptr ptr) type_info_name_internal_method
 @ varargs -arch=win32 ?_open@@YAHPBDHH@Z(str long) msvcrt._open
 @ varargs -arch=win64 ?_open@@YAHPEBDHH@Z(str long) msvcrt._open
 @ cdecl -arch=win32 ?_query_new_handler@@YAP6AHI@ZXZ() msvcrt.?_query_new_handler@@YAP6AHI@ZXZ
@@ -515,8 +515,8 @@
 @ cdecl -arch=i386 _CIsqrt() msvcrt._CIsqrt
 @ cdecl -arch=i386 _CItan() msvcrt._CItan
 @ cdecl -arch=i386 _CItanh() msvcrt._CItanh
-@ cdecl _CRT_RTC_INIT(ptr ptr long long long) msvcr90._CRT_RTC_INIT
-@ cdecl _CRT_RTC_INITW(ptr ptr long long long) msvcr90._CRT_RTC_INITW
+@ cdecl _CRT_RTC_INIT(ptr ptr long long long)
+@ cdecl _CRT_RTC_INITW(ptr ptr long long long)
 @ stub _CreateFrameInfo
 @ stdcall _CxxThrowException(long long) msvcrt._CxxThrowException
 @ cdecl -i386 -norelay _EH_prolog() msvcrt._EH_prolog
@@ -569,7 +569,7 @@
 @ extern __argc msvcrt.__argc
 @ extern __argv msvcrt.__argv
 ### extern __badioinfo #don't forward to msvcrt.__badioinfo, it has different size
-@ cdecl __clean_type_info_names_internal(ptr) msvcr90.__clean_type_info_names_internal
+@ cdecl __clean_type_info_names_internal(ptr)
 @ cdecl -arch=i386 __control87_2(long long ptr ptr) msvcrt.__control87_2
 @ stub __create_locale
 @ cdecl __crtCompareStringA(long long str long str long) msvcrt.__crtCompareStringA
@@ -653,8 +653,8 @@
 @ cdecl __setusermatherr(ptr) msvcrt.__setusermatherr
 @ stub __strncnt
 @ stub __swprintf_l
-@ cdecl __sys_errlist() msvcr90.__sys_errlist
-@ cdecl __sys_nerr() msvcr90.__sys_nerr
+@ cdecl __sys_errlist()
+@ cdecl __sys_nerr()
 @ cdecl __threadhandle() msvcrt.__threadhandle
 @ cdecl __threadid() msvcrt.__threadid
 @ cdecl __timezone() msvcrt.__p__timezone
@@ -689,7 +689,7 @@
 @ cdecl _atodbl(ptr str) msvcrt._atodbl
 @ stub _atodbl_l
 @ cdecl _atof_l(str ptr) msvcrt._atof_l
-@ cdecl _atoflt(ptr str) msvcr90._atoflt
+@ cdecl _atoflt(ptr str)
 @ cdecl _atoflt_l(ptr str ptr) msvcrt._atoflt_l
 @ cdecl -ret64 _atoi64(str) msvcrt._atoi64
 @ stub _atoi64_l
@@ -700,9 +700,9 @@
 @ cdecl _beep(long long) msvcrt._beep
 @ cdecl _beginthread(ptr long ptr) msvcrt._beginthread
 @ cdecl _beginthreadex(ptr long ptr ptr long ptr) msvcrt._beginthreadex
-@ cdecl _byteswap_uint64(int64) msvcr90._byteswap_uint64
-@ cdecl _byteswap_ulong(long) msvcr90._byteswap_ulong
-@ cdecl _byteswap_ushort(long) msvcr90._byteswap_ushort
+@ cdecl _byteswap_uint64(int64)
+@ cdecl _byteswap_ulong(long)
+@ cdecl _byteswap_ushort(long)
 @ cdecl _c_exit() msvcrt._c_exit
 @ cdecl _cabs(long) msvcrt._cabs
 @ cdecl _callnewh(long) msvcrt._callnewh
@@ -770,7 +770,7 @@
 @ cdecl _dupenv_s(ptr ptr str) msvcrt._dupenv_s
 @ cdecl _ecvt(double long ptr ptr) msvcrt._ecvt
 @ cdecl _ecvt_s(str long double long ptr ptr) msvcrt._ecvt_s
-@ cdecl _encoded_null() msvcr90._encoded_null
+@ cdecl _encoded_null()
 @ cdecl _endthread() msvcrt._endthread
 @ cdecl _endthreadex(long) msvcrt._endthreadex
 @ extern _environ msvcrt._environ
@@ -839,10 +839,10 @@
 @ cdecl _fseeki64(ptr int64 long) msvcrt._fseeki64
 @ stub _fseeki64_nolock
 @ cdecl _fsopen(str str long) msvcrt._fsopen
-@ cdecl _fstat32(long ptr) msvcr90._fstat32
+@ cdecl _fstat32(long ptr)
 @ stub _fstat32i64
 @ cdecl _fstat64(long ptr) msvcrt._fstat64
-@ cdecl _fstat64i32(long ptr) msvcr90._fstat64i32
+@ cdecl _fstat64i32(long ptr)
 @ stub _ftell_nolock
 @ cdecl -ret64 _ftelli64(ptr) msvcrt._ftelli64
 @ stub _ftelli64_nolock
@@ -929,7 +929,7 @@
 @ cdecl -arch=i386 _inpd(long) msvcrt._inpd
 @ cdecl -arch=i386 _inpw(long) msvcrt._inpw
 @ cdecl _invalid_parameter(wstr wstr wstr long long) msvcrt._invalid_parameter
-@ cdecl _invalid_parameter_noinfo() msvcr90._invalid_parameter_noinfo
+@ cdecl _invalid_parameter_noinfo()
 @ stub _invalid_parameter_noinfo_noreturn
 @ stub _invoke_watson
 @ extern _iob msvcrt._iob
@@ -1235,7 +1235,7 @@
 # extern _pwctype
 @ cdecl _read(long ptr long) msvcrt._read
 @ cdecl _realloc_crt(ptr long) msvcrt.realloc
-@ cdecl _recalloc(ptr long long) msvcr90._recalloc
+@ cdecl _recalloc(ptr long long)
 @ stub _recalloc_crt
 @ cdecl _resetstkoflw() msvcrt._resetstkoflw
 @ cdecl _rmdir(str) msvcrt._rmdir
@@ -1317,10 +1317,10 @@
 @ stub _sprintf_s_l
 @ varargs _sscanf_l(str str ptr) msvcrt._sscanf_l
 @ varargs _sscanf_s_l(str str ptr) msvcrt._sscanf_s_l
-@ cdecl _stat32(str ptr) msvcr90._stat32
+@ cdecl _stat32(str ptr)
 @ stub _stat32i64
 @ cdecl _stat64(str ptr) msvcrt._stat64
-@ cdecl _stat64i32(str ptr) msvcr90._stat64i32
+@ cdecl _stat64i32(str ptr)
 @ cdecl _statusfp() msvcrt._statusfp
 @ cdecl -arch=i386 _statusfp2(ptr ptr) msvcrt._statusfp2
 @ cdecl _strcoll_l(str str ptr) msvcrt._strcoll_l
@@ -1460,7 +1460,7 @@
 @ cdecl _vswprintf_c(ptr long wstr ptr) msvcrt._vswprintf_c
 @ cdecl _vswprintf_c_l(ptr long wstr ptr ptr) msvcrt._vswprintf_c_l
 @ cdecl _vswprintf_l(ptr wstr ptr ptr) msvcrt._vswprintf_l
-@ cdecl _vswprintf_p(ptr long wstr ptr) msvcr90._vswprintf_p
+@ cdecl _vswprintf_p(ptr long wstr ptr)
 @ cdecl _vswprintf_p_l(ptr long wstr ptr ptr) msvcrt._vswprintf_p_l
 @ cdecl _vswprintf_s_l(ptr long wstr ptr ptr) msvcrt._vswprintf_s_l
 @ stub _vwprintf_l
@@ -1587,10 +1587,10 @@
 @ cdecl _wspawnvpe(long wstr ptr ptr) msvcrt._wspawnvpe
 @ cdecl _wsplitpath(wstr ptr ptr ptr ptr) msvcrt._wsplitpath
 @ cdecl _wsplitpath_s(wstr ptr long ptr long ptr long ptr long) msvcrt._wsplitpath_s
-@ cdecl _wstat32(wstr ptr) msvcr90._wstat32
+@ cdecl _wstat32(wstr ptr)
 @ stub _wstat32i64
 @ cdecl _wstat64(wstr ptr) msvcrt._wstat64
-@ cdecl _wstat64i32(wstr ptr) msvcr90._wstat64i32
+@ cdecl _wstat64i32(wstr ptr)
 @ cdecl _wstrdate(ptr) msvcrt._wstrdate
 @ cdecl _wstrdate_s(ptr long) msvcrt._wstrdate_s
 @ cdecl _wstrtime(ptr) msvcrt._wstrtime
