@@ -1123,7 +1123,7 @@ static BOOL set_entry( void *ptr, UINT int_param, void *ptr_param, UINT flags )
 
 #define BINARY_ENTRY(name,data) \
     struct sysparam_binary_entry entry_##name = { { get_binary_entry, set_binary_entry, init_binary_entry, \
-                                                    name ##_VALNAME }, &(data), sizeof(data) }
+                                                    name ##_VALNAME }, data, sizeof(data) }
 
 #define PATH_ENTRY(name) \
     struct sysparam_binary_entry entry_##name = { { get_path_entry, set_path_entry, init_path_entry, \
