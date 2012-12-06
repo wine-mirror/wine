@@ -2104,6 +2104,22 @@ static void test_ui(void)
     IActiveScriptSiteUIControl_Release(ui_control);
 }
 
+static void test_sp(void)
+{
+    IServiceProvider *sp;
+    IUnknown *unk;
+    HRESULT hres;
+
+    hres = IActiveScriptSite_QueryInterface(site, &IID_IServiceProvider, (void**)&sp);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08x\n", hres);
+
+    hres = IServiceProvider_QueryService(sp, &SID_SContainerDispatch, &IID_IHTMLDocument, (void**)&unk);
+    ok(hres == S_OK, "Could not get SID_SContainerDispatch service: %08x\n", hres);
+    IUnknown_Release(unk);
+
+    IServiceProvider_Release(sp);
+}
+
 static void test_script_run(void)
 {
     IDispatchEx *document, *dispex;
@@ -2329,6 +2345,7 @@ static void test_script_run(void)
 
     test_security();
     test_ui();
+    test_sp();
 }
 
 static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *iface,

@@ -649,6 +649,15 @@ static HRESULT WINAPI ASServiceProvider_QueryService(IServiceProvider *iface, RE
                 riid, ppv);
     }
 
+    if(IsEqualGUID(&SID_SContainerDispatch, guidService)) {
+        TRACE("(%p)->(SID_SContainerDispatch)\n", This);
+
+        if(!This->window || !This->window->doc)
+            return E_NOINTERFACE;
+
+        return IHTMLDocument2_QueryInterface(&This->window->doc->basedoc.IHTMLDocument2_iface, riid, ppv);
+    }
+
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
     return E_NOINTERFACE;
 }
