@@ -203,7 +203,7 @@ static void test_context(void)
 
     /* NULL GUID */
     ret = pCryptCATAdminAcquireContext(&hca, NULL, 0);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
     ok(hca != NULL, "Expected a context handle, got NULL\n");
 
     /* All NULL */
@@ -273,23 +273,23 @@ static void test_context(void)
     }
 
     ret = pCryptCATAdminReleaseContext(hca, 0);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
 
     /* Correct context handle and GUID */
     ret = pCryptCATAdminAcquireContext(&hca, &unknown, 0);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
     ok(hca != NULL, "Expected a context handle, got NULL\n");
 
     ret = pCryptCATAdminReleaseContext(hca, 0);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
 
     /* Flags not equal to 0 */
     ret = pCryptCATAdminAcquireContext(&hca, &unknown, 1);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
     ok(hca != NULL, "Expected a context handle, got NULL\n");
 
     ret = pCryptCATAdminReleaseContext(hca, 0);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
 }
 
 /* TODO: Check whether SHA-1 is the algorithm that's always used */
@@ -340,7 +340,7 @@ static void test_calchash(void)
     ok(file != INVALID_HANDLE_VALUE, "CreateFile failed %u\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminCalcHashFromFileHandle(file, &hashsize, NULL, 0);
-    ok(ret, "Expected success %u\n", GetLastError());
+    ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
     ok(hashsize == 20," Expected a hash size of 20, got %d\n", hashsize);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
@@ -354,7 +354,7 @@ static void test_calchash(void)
     hash = HeapAlloc(GetProcessHeap(), 0, hashsize);
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminCalcHashFromFileHandle(file, &hashsize, hash, 0);
-    ok(ret, "Expected success %u\n", GetLastError());
+    ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
     ok(hashsize == 20," Expected a hash size of 20, got %d\n", hashsize);
     ok(GetLastError() == ERROR_SUCCESS,
        "Expected ERROR_SUCCESS, got %d\n", GetLastError());
@@ -376,7 +376,7 @@ static void test_calchash(void)
     hash = HeapAlloc(GetProcessHeap(), 0, hashsize);
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminCalcHashFromFileHandle(file, &hashsize, hash, 0);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
     ok(GetLastError() == ERROR_SUCCESS,
        "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok(hashsize == sizeof(expectedhash) &&
@@ -766,7 +766,7 @@ static void test_create_catalog_file(void)
     ret = pCryptCATCDFClose(catcdf);
     todo_wine
     {
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
     ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     }
 
