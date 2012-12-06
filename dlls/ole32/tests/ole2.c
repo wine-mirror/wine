@@ -1934,9 +1934,16 @@ static void test_OleLockRunning(void)
 static void test_OleDraw(void)
 {
     HRESULT hr;
+    RECT rect;
 
     hr = OleDraw((IUnknown*)&viewobject, 0, (HDC)0x1, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = OleDraw(NULL, 0, (HDC)0x1, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = OleDraw(NULL, 0, (HDC)0x1, &rect);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 }
 
 START_TEST(ole2)

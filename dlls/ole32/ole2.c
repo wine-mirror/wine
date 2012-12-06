@@ -2546,6 +2546,8 @@ HRESULT WINAPI OleDraw(
   HRESULT hres;
   IViewObject *viewobject;
 
+  if (!pUnk) return E_INVALIDARG;
+
   hres = IUnknown_QueryInterface(pUnk,
 				 &IID_IViewObject,
 				 (void**)&viewobject);
