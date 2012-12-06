@@ -351,16 +351,18 @@ static LPWSTR fix_url_value(LPCWSTR val)
     return ret;
 }
 
-HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, LPCWSTR value, DWORD flags)
+HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, const WCHAR *value, DWORD flags)
 {
     nsAString str_name, str_value, str_empty;
     LPWSTR val = NULL;
     nsresult nsres;
 
-    if(flags & ATTR_FIX_PX)
-        val = fix_px_value(value);
-    if(flags & ATTR_FIX_URL)
-        val = fix_url_value(value);
+    if(value) {
+        if(flags & ATTR_FIX_PX)
+            val = fix_px_value(value);
+        if(flags & ATTR_FIX_URL)
+            val = fix_url_value(value);
+    }
 
     nsAString_InitDepend(&str_name, style_tbl[sid].name);
     nsAString_InitDepend(&str_value, val ? val : value);

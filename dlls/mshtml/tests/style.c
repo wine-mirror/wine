@@ -1052,6 +1052,19 @@ static void test_body_style(IHTMLStyle *style)
     ok(!strcmp_wa(V_BSTR(&v), "70px"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = NULL;
+    hres = IHTMLStyle_put_height(style, v);
+    ok(hres == S_OK, "put_height failed: %08x\n", hres);
+    VariantClear(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle_get_height(style, &v);
+    ok(hres == S_OK, "get_height failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!V_BSTR(&v), "V_BSTR(v) = %s, expected NULL\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
     V_VT(&v) = VT_I4;
     V_I4(&v) = 64;
     hres = IHTMLStyle_put_height(style, v);
