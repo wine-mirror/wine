@@ -1638,48 +1638,6 @@ static HRESULT Global_vbSystemModal(vbdisp_t *This, VARIANT *arg, unsigned args_
     return E_NOTIMPL;
 }
 
-static HRESULT Global_vbOK(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, IDOK);
-}
-
-static HRESULT Global_vbCancel(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, IDCANCEL);
-}
-
-static HRESULT Global_vbAbort(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, IDABORT);
-}
-
-static HRESULT Global_vbRetry(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, IDRETRY);
-}
-
-static HRESULT Global_vbIgnore(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, IDIGNORE);
-}
-
-static HRESULT Global_vbYes(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, IDYES);
-}
-
-static HRESULT Global_vbNo(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    TRACE("\n");
-    return return_short(res, IDNO);
-}
-
 static HRESULT Global_vbTrue(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
@@ -1907,13 +1865,13 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_VBDEFAULTBUTTON4,   Global_vbDefaultButton4, BP_GET},
     {DISPID_GLOBAL_VBAPPLICATIONMODAL, Global_vbApplicationModal, BP_GET},
     {DISPID_GLOBAL_VBSYSTEMMODAL,      Global_vbSystemModal, BP_GET},
-    {DISPID_GLOBAL_VBOK,               Global_vbOK, BP_GET},
-    {DISPID_GLOBAL_VBCANCEL,           Global_vbCancel, BP_GET},
-    {DISPID_GLOBAL_VBABORT,            Global_vbAbort, BP_GET},
-    {DISPID_GLOBAL_VBRETRY,            Global_vbRetry, BP_GET},
-    {DISPID_GLOBAL_VBIGNORE,           Global_vbIgnore, BP_GET},
-    {DISPID_GLOBAL_VBYES,              Global_vbYes, BP_GET},
-    {DISPID_GLOBAL_VBNO,               Global_vbNo, BP_GET},
+    {DISPID_GLOBAL_VBOK,               NULL, BP_GET, IDOK},
+    {DISPID_GLOBAL_VBCANCEL,           NULL, BP_GET, IDCANCEL},
+    {DISPID_GLOBAL_VBABORT,            NULL, BP_GET, IDABORT},
+    {DISPID_GLOBAL_VBRETRY,            NULL, BP_GET, IDRETRY},
+    {DISPID_GLOBAL_VBIGNORE,           NULL, BP_GET, IDIGNORE},
+    {DISPID_GLOBAL_VBYES,              NULL, BP_GET, IDYES},
+    {DISPID_GLOBAL_VBNO,               NULL, BP_GET, IDNO},
     {DISPID_GLOBAL_VBEMPTY,            NULL, BP_GET, VT_EMPTY},
     {DISPID_GLOBAL_VBNULL,             NULL, BP_GET, VT_NULL},
     {DISPID_GLOBAL_VBINTEGER,          NULL, BP_GET, VT_I2},
