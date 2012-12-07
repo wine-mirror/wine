@@ -127,6 +127,21 @@ static void free_bstrs(void)
     alloced_bstrs_count = 0;
 }
 
+static BSTR a2bstr(const char *str)
+{
+    BSTR ret;
+    int len;
+
+    if(!str)
+        return NULL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = SysAllocStringLen(NULL, len);
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+
+    return ret;
+}
+
 typedef struct
 {
     IServiceProvider IServiceProvider_iface;
@@ -537,7 +552,7 @@ static HRESULT WINAPI htmldoc2_put_URL(IHTMLDocument2 *iface, BSTR v)
 static HRESULT WINAPI htmldoc2_get_URL(IHTMLDocument2 *iface, BSTR *p)
 {
     CHECK_EXPECT2(htmldoc2_get_url);
-    *p = SysAllocString(NULL);
+    *p = a2bstr("http://test.winehq.org/");
     return S_OK;
 }
 
@@ -1317,6 +1332,92 @@ static IDispatch* create_dispevent(void)
     return (IDispatch*)&event->IDispatch_iface;
 }
 
+static IXMLHttpRequest *create_xhr(void)
+{
+    IXMLHttpRequest *ret;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_XMLHTTPRequest, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IXMLHttpRequest, (void**)&ret);
+
+    return SUCCEEDED(hr) ? ret : NULL;
+}
+
+static void set_safety_opt(IUnknown *unk, DWORD mask, DWORD opts)
+{
+    IObjectSafety *obj_safety;
+    HRESULT hr;
+
+    hr = IUnknown_QueryInterface(unk, &IID_IObjectSafety, (void**)&obj_safety);
+    ok(hr == S_OK, "Could not get IObjectSafety iface: %08x\n", hr);
+
+    hr = IObjectSafety_SetInterfaceSafetyOptions(obj_safety, &IID_IDispatch, mask, mask&opts);
+    ok(hr == S_OK, "SetInterfaceSafetyOptions failed: %08x\n", hr);
+
+    IObjectSafety_Release(obj_safety);
+}
+
+static void set_xhr_site(IXMLHttpRequest *xhr)
+{
+    IObjectWithSite *obj_site;
+    HRESULT hr;
+
+    hr = IXMLHttpRequest_QueryInterface(xhr, &IID_IObjectWithSite, (void**)&obj_site);
+    ok(hr == S_OK, "Could not get IObjectWithSite iface: %08x\n", hr);
+
+    SET_EXPECT(site_qi_IServiceProvider);
+    SET_EXPECT(sp_queryservice_SID_SBindHost);
+    SET_EXPECT(sp_queryservice_SID_SContainerDispatch_htmldoc2);
+    SET_EXPECT(sp_queryservice_SID_secmgr_htmldoc2);
+    SET_EXPECT(sp_queryservice_SID_secmgr_xmldomdoc);
+    SET_EXPECT(sp_queryservice_SID_secmgr_secmgr);
+
+    /* calls to IHTMLDocument2 */
+    SET_EXPECT(htmldoc2_get_all);
+    SET_EXPECT(collection_get_length);
+    SET_EXPECT(htmldoc2_get_url);
+
+    SET_EXPECT(site_qi_IXMLDOMDocument);
+    SET_EXPECT(site_qi_IOleClientSite);
+
+    hr = IObjectWithSite_SetSite(obj_site, &testsite.IUnknown_iface);
+    EXPECT_HR(hr, S_OK);
+
+    CHECK_CALLED(site_qi_IServiceProvider);
+todo_wine
+    CHECK_CALLED(sp_queryservice_SID_SBindHost);
+    CHECK_CALLED(sp_queryservice_SID_SContainerDispatch_htmldoc2);
+todo_wine {
+    CHECK_CALLED(sp_queryservice_SID_secmgr_htmldoc2);
+    CHECK_CALLED(sp_queryservice_SID_secmgr_xmldomdoc);
+    /* this one isn't very reliable
+    CHECK_CALLED(sp_queryservice_SID_secmgr_secmgr); */
+
+    CHECK_CALLED(htmldoc2_get_all);
+    CHECK_CALLED(collection_get_length);
+    CHECK_CALLED(htmldoc2_get_url);
+
+    CHECK_CALLED(site_qi_IXMLDOMDocument);
+    CHECK_CALLED(site_qi_IOleClientSite);
+}
+
+    IObjectWithSite_Release(obj_site);
+}
+
+#define test_open(a,b,c,d) _test_open(__LINE__,a,b,c,d)
+static void _test_open(unsigned line, IXMLHttpRequest *xhr, const char *method, const char *url, HRESULT exhres)
+{
+    VARIANT empty, vfalse;
+    HRESULT hr;
+
+    V_VT(&empty) = VT_EMPTY;
+    V_VT(&vfalse) = VT_BOOL;
+    V_BOOL(&vfalse) = VARIANT_FALSE;
+
+    hr = IXMLHttpRequest_open(xhr, _bstr_(method), _bstr_(url), vfalse, empty, empty);
+    ok_(__FILE__,line)(hr == exhres, "open(%s %s) failed: %08x, expected %08x\n", method, url, hr, exhres);
+}
+
 static void test_XMLHTTP(void)
 {
     static const char bodyA[] = "mode=Test";
@@ -1337,13 +1438,7 @@ static void test_XMLHTTP(void)
     HRESULT hr;
     HGLOBAL g;
 
-    hr = CoCreateInstance(&CLSID_XMLHTTPRequest, NULL, CLSCTX_INPROC_SERVER,
-        &IID_IXMLHttpRequest, (void**)&xhr);
-    if (FAILED(hr))
-    {
-        win_skip("IXMLHTTPRequest is not available (0x%08x)\n", hr);
-        return;
-    }
+    xhr = create_xhr();
 
     VariantInit(&dummy);
     V_VT(&dummy) = VT_ERROR;
@@ -1629,42 +1724,9 @@ todo_wine {
     EXPECT_REF(obj_site2, 1);
     ok(obj_site != obj_site2, "expected new instance\n");
 }
-    SET_EXPECT(site_qi_IServiceProvider);
-    SET_EXPECT(sp_queryservice_SID_SBindHost);
-    SET_EXPECT(sp_queryservice_SID_SContainerDispatch_htmldoc2);
-    SET_EXPECT(sp_queryservice_SID_secmgr_htmldoc2);
-    SET_EXPECT(sp_queryservice_SID_secmgr_xmldomdoc);
-    SET_EXPECT(sp_queryservice_SID_secmgr_secmgr);
-
-    /* calls to IHTMLDocument2 */
-    SET_EXPECT(htmldoc2_get_all);
-    SET_EXPECT(collection_get_length);
-    SET_EXPECT(htmldoc2_get_url);
-
-    SET_EXPECT(site_qi_IXMLDOMDocument);
-    SET_EXPECT(site_qi_IOleClientSite);
-
-    hr = IObjectWithSite_SetSite(obj_site, &testsite.IUnknown_iface);
-    EXPECT_HR(hr, S_OK);
-
-    CHECK_CALLED(site_qi_IServiceProvider);
-todo_wine
-    CHECK_CALLED(sp_queryservice_SID_SBindHost);
-    CHECK_CALLED(sp_queryservice_SID_SContainerDispatch_htmldoc2);
-todo_wine {
-    CHECK_CALLED(sp_queryservice_SID_secmgr_htmldoc2);
-    CHECK_CALLED(sp_queryservice_SID_secmgr_xmldomdoc);
-    /* this one isn't very reliable
-    CHECK_CALLED(sp_queryservice_SID_secmgr_secmgr); */
-
-    CHECK_CALLED(htmldoc2_get_all);
-    CHECK_CALLED(collection_get_length);
-    CHECK_CALLED(htmldoc2_get_url);
-
-    CHECK_CALLED(site_qi_IXMLDOMDocument);
-    CHECK_CALLED(site_qi_IOleClientSite);
-}
     IObjectWithSite_Release(obj_site);
+
+    set_xhr_site(xhr);
 
     /* try to set site another time */
 
@@ -1691,11 +1753,39 @@ todo_wine {
     free_bstrs();
 }
 
+static void test_safe_httpreq(void)
+{
+    IXMLHttpRequest *xhr;
+
+    xhr = create_xhr();
+
+    set_safety_opt((IUnknown*)xhr, INTERFACESAFE_FOR_UNTRUSTED_DATA, -1);
+    set_xhr_site(xhr);
+
+    /* different scheme */
+    test_open(xhr, "GET", "https://test.winehq.org/tests/hello.html", E_ACCESSDENIED);
+
+    /* different host */
+    test_open(xhr, "GET", "http://tests.winehq.org/tests/hello.html", E_ACCESSDENIED);
+    test_open(xhr, "GET", "http://www.test.winehq.org/tests/hello.html", E_ACCESSDENIED);
+
+    IXMLHttpRequest_Release(xhr);
+}
+
 START_TEST(httpreq)
 {
+    IXMLHttpRequest *xhr;
+
     CoInitialize(NULL);
 
-    test_XMLHTTP();
+    if((xhr = create_xhr())) {
+        IXMLHttpRequest_Release(xhr);
+
+        test_XMLHTTP();
+        test_safe_httpreq();
+    }else {
+        win_skip("IXMLHTTPRequest is not available\n");
+    }
 
     CoUninitialize();
 }
