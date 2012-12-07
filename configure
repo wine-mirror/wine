@@ -12931,7 +12931,6 @@ for ac_func in \
 	chsize \
 	dlopen \
 	epoll_create \
-	fallocate \
 	ffs \
 	finite \
 	fnmatch \
@@ -13491,6 +13490,40 @@ if test "$wine_cv_have_sched_setaffinity" = "yes"
 then
 
 $as_echo "#define HAVE_SCHED_SETAFFINITY 1" >>confdefs.h
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for fallocate" >&5
+$as_echo_n "checking for fallocate... " >&6; }
+if ${wine_cv_have_fallocate+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#define _GNU_SOURCE
+#include <fcntl.h>
+int
+main ()
+{
+fallocate(-1, 0, 0, 0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  wine_cv_have_fallocate=yes
+else
+  wine_cv_have_fallocate=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_fallocate" >&5
+$as_echo "$wine_cv_have_fallocate" >&6; }
+if test "$wine_cv_have_fallocate" = "yes"
+then
+
+$as_echo "#define HAVE_FALLOCATE 1" >>confdefs.h
 
 fi
 

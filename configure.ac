@@ -1976,7 +1976,6 @@ AC_CHECK_FUNCS(\
 	chsize \
 	dlopen \
 	epoll_create \
-	fallocate \
 	ffs \
 	finite \
 	fnmatch \
@@ -2115,6 +2114,15 @@ AC_CACHE_CHECK([for sched_setaffinity],wine_cv_have_sched_setaffinity,
 if test "$wine_cv_have_sched_setaffinity" = "yes"
 then
   AC_DEFINE(HAVE_SCHED_SETAFFINITY, 1, [Define to 1 if you have the `sched_setaffinity' function.])
+fi
+
+AC_CACHE_CHECK([for fallocate],wine_cv_have_fallocate,
+                AC_LINK_IFELSE([AC_LANG_PROGRAM(
+[[#define _GNU_SOURCE
+#include <fcntl.h>]], [[fallocate(-1, 0, 0, 0);]])],[wine_cv_have_fallocate=yes],[wine_cv_have_fallocate=no]))
+if test "$wine_cv_have_fallocate" = "yes"
+then
+  AC_DEFINE(HAVE_FALLOCATE, 1, [Define to 1 if you have the `fallocate' function.])
 fi
 
 dnl **** Check for types ****
