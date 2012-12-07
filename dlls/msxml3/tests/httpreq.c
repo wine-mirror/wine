@@ -114,6 +114,9 @@ static int alloced_bstrs_count;
 
 static BSTR _bstr_(const char *str)
 {
+    if(!str)
+        return NULL;
+
     assert(alloced_bstrs_count < sizeof(alloced_bstrs)/sizeof(alloced_bstrs[0]));
     alloced_bstrs[alloced_bstrs_count] = alloc_str_from_narrow(str);
     return alloced_bstrs[alloced_bstrs_count++];
@@ -1431,7 +1434,6 @@ static void test_XMLHTTP(void)
     BSTR bstrResponse, str, str1;
     VARIANT varbody, varbody_ref;
     VARIANT dummy;
-    VARIANT async;
     LONG state, status, bound;
     IDispatch *event;
     void *ptr;
@@ -1443,9 +1445,6 @@ static void test_XMLHTTP(void)
     VariantInit(&dummy);
     V_VT(&dummy) = VT_ERROR;
     V_ERROR(&dummy) = DISP_E_MEMBERNOTFOUND;
-    VariantInit(&async);
-    V_VT(&async) = VT_BOOL;
-    V_BOOL(&async) = VARIANT_FALSE;
 
     hr = IXMLHttpRequest_put_onreadystatechange(xhr, NULL);
     EXPECT_HR(hr, S_OK);
@@ -1484,14 +1483,9 @@ static void test_XMLHTTP(void)
     ok(hr == E_FAIL, "got 0x%08x\n", hr);
 
     /* invalid parameters */
-    hr = IXMLHttpRequest_open(xhr, NULL, NULL, async, dummy, dummy);
-    EXPECT_HR(hr, E_INVALIDARG);
-
-    hr = IXMLHttpRequest_open(xhr, _bstr_("POST"), NULL, async, dummy, dummy);
-    EXPECT_HR(hr, E_INVALIDARG);
-
-    hr = IXMLHttpRequest_open(xhr, NULL, _bstr_(urlA), async, dummy, dummy);
-    EXPECT_HR(hr, E_INVALIDARG);
+    test_open(xhr, NULL, NULL, E_INVALIDARG);
+    test_open(xhr, "POST", NULL, E_INVALIDARG);
+    test_open(xhr, NULL, urlA, E_INVALIDARG);
 
     hr = IXMLHttpRequest_setRequestHeader(xhr, NULL, NULL);
     EXPECT_HR(hr, E_INVALIDARG);
@@ -1522,8 +1516,7 @@ static void test_XMLHTTP(void)
 
     g_unexpectedcall = g_expectedcall = 0;
 
-    hr = IXMLHttpRequest_open(xhr, _bstr_("POST"), _bstr_(urlA), async, dummy, dummy);
-    EXPECT_HR(hr, S_OK);
+    test_open(xhr, "POST", urlA, S_OK);
 
     ok(g_unexpectedcall == 0, "unexpected disp event call\n");
     ok(g_expectedcall == 1 || broken(g_expectedcall == 0) /* win2k */, "no expected disp event call\n");
@@ -1548,8 +1541,7 @@ static void test_XMLHTTP(void)
     ok(state == READYSTATE_UNINITIALIZED || broken(state == READYSTATE_LOADING) /* win2k */,
         "got %d, expected READYSTATE_UNINITIALIZED\n", state);
 
-    hr = IXMLHttpRequest_open(xhr, _bstr_("POST"), _bstr_(urlA), async, dummy, dummy);
-    EXPECT_HR(hr, S_OK);
+    test_open(xhr, "POST", urlA, S_OK);
 
     hr = IXMLHttpRequest_setRequestHeader(xhr, _bstr_("header1"), _bstr_("value1"));
     EXPECT_HR(hr, S_OK);
@@ -1628,16 +1620,15 @@ static void test_XMLHTTP(void)
     }
 
     /* POST: VT_VARIANT|VT_BYREF body */
+    test_open(xhr, "POST", urlA, S_OK);
+
     V_VT(&varbody_ref) = VT_VARIANT|VT_BYREF;
     V_VARIANTREF(&varbody_ref) = &varbody;
-    hr = IXMLHttpRequest_open(xhr, _bstr_("POST"), _bstr_(urlA), async, dummy, dummy);
-    EXPECT_HR(hr, S_OK);
     hr = IXMLHttpRequest_send(xhr, varbody_ref);
     EXPECT_HR(hr, S_OK);
 
     /* GET request */
-    hr = IXMLHttpRequest_open(xhr, _bstr_("GET"), _bstr_(xmltestA), async, dummy, dummy);
-    EXPECT_HR(hr, S_OK);
+    test_open(xhr, "GET", xmltestA, S_OK);
 
     V_VT(&varbody) = VT_EMPTY;
 
