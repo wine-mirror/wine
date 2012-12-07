@@ -375,6 +375,7 @@ struct enum_charset_list {
 
 static struct list gdi_font_list = LIST_INIT(gdi_font_list);
 static struct list unused_gdi_font_list = LIST_INIT(unused_gdi_font_list);
+static unsigned int unused_font_count;
 #define UNUSED_CACHE_SIZE 10
 static struct list system_links = LIST_INIT(system_links);
 
@@ -4307,6 +4308,7 @@ static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const FMAT2 *pma
         hflist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hflist));
         hflist->hfont = hfont;
         list_add_head(&ret->hfontlist, &hflist->entry);
+        unused_font_count--;
         return ret;
     }
     return NULL;
@@ -5021,7 +5023,6 @@ BOOL WineEngDestroyFontInstance(HFONT handle)
     GdiFont *gdiFont, *next;
     HFONTLIST *hflist, *hfnext;
     BOOL ret = FALSE;
-    int i = 0;
 
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
@@ -5044,16 +5045,15 @@ BOOL WineEngDestroyFontInstance(HFONT handle)
             TRACE("Moving to Unused list\n");
             list_remove(&gdiFont->entry);
             list_add_head(&unused_gdi_font_list, &gdiFont->entry);
+            if (unused_font_count > UNUSED_CACHE_SIZE)
+            {
+                gdiFont = LIST_ENTRY( list_tail( &unused_gdi_font_list ), struct tagGdiFont, entry );
+                TRACE("freeing %p\n", gdiFont);
+                list_remove(&gdiFont->entry);
+                free_font(gdiFont);
+            }
+            else unused_font_count++;
         }
-    }
-
-
-    LIST_FOR_EACH_ENTRY_SAFE( gdiFont, next, &unused_gdi_font_list, struct tagGdiFont, entry )
-    {
-        if (i++ < UNUSED_CACHE_SIZE) continue;
-        TRACE("freeing %p\n", gdiFont);
-        list_remove(&gdiFont->entry);
-        free_font(gdiFont);
     }
     LeaveCriticalSection( &freetype_cs );
     return ret;
