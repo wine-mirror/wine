@@ -758,6 +758,53 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
     return hr;
 }
 
+static HRESULT verify_uri(httprequest *This, IUri *uri)
+{
+    DWORD scheme, base_scheme;
+    BSTR host, base_host;
+    HRESULT hr;
+
+    if(!(This->safeopt & INTERFACESAFE_FOR_UNTRUSTED_DATA))
+        return S_OK;
+
+    if(!This->base_uri)
+        return E_ACCESSDENIED;
+
+    hr = IUri_GetScheme(uri, &scheme);
+    if(FAILED(hr))
+        return hr;
+
+    hr = IUri_GetScheme(This->base_uri, &base_scheme);
+    if(FAILED(hr))
+        return hr;
+
+    if(scheme != base_scheme) {
+        WARN("Schemes don't match\n");
+        return E_ACCESSDENIED;
+    }
+
+    if(scheme == INTERNET_SCHEME_UNKNOWN) {
+        FIXME("Unknown scheme\n");
+        return E_ACCESSDENIED;
+    }
+
+    hr = IUri_GetHost(uri, &host);
+    if(FAILED(hr))
+        return hr;
+
+    hr = IUri_GetHost(This->base_uri, &base_host);
+    if(SUCCEEDED(hr)) {
+        if(strcmpiW(host, base_host)) {
+            WARN("Hosts don't match\n");
+            hr = E_ACCESSDENIED;
+        }
+        SysFreeString(base_host);
+    }
+
+    SysFreeString(host);
+    return hr;
+}
+
 static HRESULT httprequest_open(httprequest *This, BSTR method, BSTR url,
         VARIANT async, VARIANT user, VARIANT password)
 {
@@ -767,6 +814,7 @@ static HRESULT httprequest_open(httprequest *This, BSTR method, BSTR url,
     static const WCHAR MethodDeleteW[] = {'D','E','L','E','T','E',0};
     static const WCHAR MethodPropFindW[] = {'P','R','O','P','F','I','N','D',0};
     VARIANT str, is_async;
+    IUri *uri;
     HRESULT hr;
 
     if (!method || !url) return E_INVALIDARG;
@@ -807,13 +855,21 @@ static HRESULT httprequest_open(httprequest *This, BSTR method, BSTR url,
     }
 
     if(This->base_uri)
-        hr = CoInternetCombineUrlEx(This->base_uri, url, 0, &This->uri, 0);
+        hr = CoInternetCombineUrlEx(This->base_uri, url, 0, &uri, 0);
     else
-        hr = CreateUri(url, 0, 0, &This->uri);
+        hr = CreateUri(url, 0, 0, &uri);
     if(FAILED(hr)) {
         WARN("Could not create IUri object: %08x\n", hr);
         return hr;
     }
+
+    hr = verify_uri(This, uri);
+    if(FAILED(hr)) {
+        IUri_Release(uri);
+        return hr;
+    }
+
+    This->uri = uri;
 
     VariantInit(&is_async);
     hr = VariantChangeType(&is_async, &async, 0, VT_BOOL);
