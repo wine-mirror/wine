@@ -135,7 +135,7 @@ static inline BOOL rgbquad_equal(const RGBQUAD *a, const RGBQUAD *b)
     return FALSE;
 }
 
-COLORREF make_rgb_colorref( HDC hdc, const dib_info *dib, COLORREF color, BOOL *got_pixel, DWORD *pixel )
+static COLORREF make_rgb_colorref( HDC hdc, const dib_info *dib, COLORREF color, BOOL *got_pixel, DWORD *pixel )
 {
     *pixel = 0;
     *got_pixel = FALSE;
