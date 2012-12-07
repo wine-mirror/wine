@@ -716,7 +716,7 @@ static LPWSTR get_key_name_for_target(LPCWSTR target_name, DWORD type)
     return key_name;
 }
 
-static BOOL credential_matches_filter(HKEY hkeyCred, LPCWSTR filter)
+static BOOL registry_credential_matches_filter(HKEY hkeyCred, LPCWSTR filter)
 {
     LPWSTR target_name;
     DWORD ret;
@@ -777,7 +777,7 @@ static DWORD registry_enumerate_credentials(HKEY hkeyMgr, LPCWSTR filter,
         ret = RegOpenKeyExW(hkeyMgr, target_name, 0, KEY_QUERY_VALUE, &hkeyCred);
         if (ret != ERROR_SUCCESS)
             continue;
-        if (!credential_matches_filter(hkeyCred, filter))
+        if (!registry_credential_matches_filter(hkeyCred, filter))
         {
             RegCloseKey(hkeyCred);
             continue;
@@ -801,6 +801,30 @@ static DWORD registry_enumerate_credentials(HKEY hkeyMgr, LPCWSTR filter,
 }
 
 #ifdef __APPLE__
+static BOOL mac_credential_matches_filter(void *data, UInt32 data_len, const WCHAR *filter)
+{
+    int len;
+    WCHAR *target_name;
+    const WCHAR *p;
+    BOOL ret;
+
+    if (!filter) return TRUE;
+
+    len = MultiByteToWideChar(CP_UTF8, 0, data, data_len, NULL, 0);
+    if (!(target_name = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR)))) return FALSE;
+    MultiByteToWideChar(CP_UTF8, 0, data, data_len, target_name, len);
+    target_name[len] = 0;
+
+    TRACE("comparing filter %s to target name %s\n", debugstr_w(filter), debugstr_w(target_name));
+
+    p = strchrW(filter, '*');
+    ret = CompareStringW(GetThreadLocale(), 0, filter,
+                         (p && !p[1] ? p - filter : -1), target_name,
+                         (p && !p[1] ? p - filter : -1)) == CSTR_EQUAL;
+    HeapFree(GetProcessHeap(), 0, target_name);
+    return ret;
+}
+
 static DWORD mac_enumerate_credentials(LPCWSTR filter, PCREDENTIALW *credentials,
                                        char *buffer, DWORD *len, DWORD *count)
 {
@@ -821,6 +845,8 @@ static DWORD mac_enumerate_credentials(LPCWSTR filter, PCREDENTIALW *credentials
             SecKeychainAttributeInfo info;
             SecKeychainAttributeList *attr_list;
             UInt32 info_tags[] = { kSecServerItemAttr };
+            BOOL match;
+
             info.count = sizeof(info_tags)/sizeof(info_tags[0]);
             info.tag = info_tags;
             info.format = NULL;
@@ -837,10 +863,15 @@ static DWORD mac_enumerate_credentials(LPCWSTR filter, PCREDENTIALW *credentials
             }
             else
                 *len += sizeof(CREDENTIALW);
-            if (attr_list->count != 1 || attr_list->attr[0].tag != kSecServerItemAttr) continue;
+            if (attr_list->count != 1 || attr_list->attr[0].tag != kSecServerItemAttr)
+            {
+                SecKeychainItemFreeAttributesAndData(attr_list, NULL);
+                continue;
+            }
             TRACE("server item: %.*s\n", (int)attr_list->attr[0].length, (char *)attr_list->attr[0].data);
-            /* FIXME: filter based on attr_list->attr[0].data */
+            match = mac_credential_matches_filter(attr_list->attr[0].data, attr_list->attr[0].length, filter);
             SecKeychainItemFreeAttributesAndData(attr_list, NULL);
+            if (!match) continue;
             ret = mac_read_credential_from_item(item, FALSE,
                                                 buffer ? credentials[*count] : NULL,
                                                 buffer ? buffer + sizeof(CREDENTIALW) : NULL,
