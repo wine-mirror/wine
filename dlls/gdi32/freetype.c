@@ -1961,13 +1961,10 @@ static void DumpFontList(void)
 {
     Family *family;
     Face *face;
-    struct list *family_elem_ptr, *face_elem_ptr;
 
-    LIST_FOR_EACH(family_elem_ptr, &font_list) {
-        family = LIST_ENTRY(family_elem_ptr, Family, entry); 
+    LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
         TRACE("Family: %s\n", debugstr_w(family->FamilyName));
-        LIST_FOR_EACH(face_elem_ptr, &family->faces) {
-            face = LIST_ENTRY(face_elem_ptr, Face, entry);
+        LIST_FOR_EACH_ENTRY( face, &family->faces, Face, entry ) {
             TRACE("\t%s\t%08x", debugstr_w(face->StyleName), face->fs.fsCsb[0]);
             if(!face->scalable)
                 TRACE(" %d", face->size.height);
@@ -2706,7 +2703,6 @@ static void update_reg_entries(void)
     DWORD len;
     Family *family;
     Face *face;
-    struct list *family_elem_ptr, *face_elem_ptr;
     WCHAR *file, *path;
     static const WCHAR TrueType[] = {' ','(','T','r','u','e','T','y','p','e',')','\0'};
 
@@ -2730,11 +2726,9 @@ static void update_reg_entries(void)
 
     /* enumerate the fonts and add external ones to the two keys */
 
-    LIST_FOR_EACH(family_elem_ptr, &font_list) {
-        family = LIST_ENTRY(family_elem_ptr, Family, entry); 
-        LIST_FOR_EACH(face_elem_ptr, &family->faces) {
+    LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
+        LIST_FOR_EACH_ENTRY( face, &family->faces, Face, entry ) {
             char *buffer;
-            face = LIST_ENTRY(face_elem_ptr, Face, entry);
             if(!face->external) continue;
 
             if(face->FullName)
@@ -4044,21 +4038,20 @@ static GdiFont *alloc_font(void)
 
 static void free_font(GdiFont *font)
 {
-    struct list *cursor, *cursor2;
+    CHILD_FONT *child, *child_next;
+    HFONTLIST *hfontlist, *hfnext;
     DWORD i;
 
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &font->child_fonts)
+    LIST_FOR_EACH_ENTRY_SAFE( child, child_next, &font->child_fonts, CHILD_FONT, entry )
     {
-        CHILD_FONT *child = LIST_ENTRY(cursor, CHILD_FONT, entry);
-        list_remove(cursor);
+        list_remove(&child->entry);
         if(child->font)
             free_font(child->font);
         HeapFree(GetProcessHeap(), 0, child);
     }
 
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &font->hfontlist)
+    LIST_FOR_EACH_ENTRY_SAFE( hfontlist, hfnext, &font->hfontlist, HFONTLIST, entry )
     {
-        HFONTLIST *hfontlist = LIST_ENTRY(cursor, HFONTLIST, entry);
         list_remove(&hfontlist->entry);
         HeapFree(GetProcessHeap(), 0, hfontlist);
     }
@@ -4278,10 +4271,9 @@ static void calc_hash(FONT_DESC *pfd)
 
 static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const FMAT2 *pmat, BOOL can_use_bitmap)
 {
-    GdiFont *ret;
+    GdiFont *ret, *next;
     FONT_DESC fd;
     HFONTLIST *hflist;
-    struct list *font_elem_ptr, *hfontlist_elem_ptr;
 
     fd.lf = *plf;
     fd.matrix = *pmat;
@@ -4289,38 +4281,33 @@ static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const FMAT2 *pma
     calc_hash(&fd);
 
     /* try the in-use list */
-    LIST_FOR_EACH(font_elem_ptr, &gdi_font_list) {
-        ret = LIST_ENTRY(font_elem_ptr, struct tagGdiFont, entry);
-        if(!fontcmp(ret, &fd)) {
-            if(!can_use_bitmap && !FT_IS_SCALABLE(ret->ft_face)) continue;
-            LIST_FOR_EACH(hfontlist_elem_ptr, &ret->hfontlist) {
-                hflist = LIST_ENTRY(hfontlist_elem_ptr, struct tagHFONTLIST, entry);
-                if(hflist->hfont == hfont)
-                    return ret;
-            }
-            hflist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hflist));
-            hflist->hfont = hfont;
-            list_add_head(&ret->hfontlist, &hflist->entry);
-            return ret;
-        }
+    LIST_FOR_EACH_ENTRY( ret, &gdi_font_list, struct tagGdiFont, entry )
+    {
+        if(fontcmp(ret, &fd)) continue;
+        if(!can_use_bitmap && !FT_IS_SCALABLE(ret->ft_face)) continue;
+        LIST_FOR_EACH_ENTRY( hflist, &ret->hfontlist, struct tagHFONTLIST, entry )
+            if(hflist->hfont == hfont) return ret;
+
+        hflist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hflist));
+        hflist->hfont = hfont;
+        list_add_head(&ret->hfontlist, &hflist->entry);
+        return ret;
     }
- 
+
     /* then the unused list */
-    font_elem_ptr = list_head(&unused_gdi_font_list);
-    while(font_elem_ptr) {
-        ret = LIST_ENTRY(font_elem_ptr, struct tagGdiFont, entry);
-        font_elem_ptr = list_next(&unused_gdi_font_list, font_elem_ptr);
-        if(!fontcmp(ret, &fd)) {
-            if(!can_use_bitmap && !FT_IS_SCALABLE(ret->ft_face)) continue;
-            assert(list_empty(&ret->hfontlist));
-            TRACE("Found %p in unused list\n", ret);
-            list_remove(&ret->entry);
-            list_add_head(&gdi_font_list, &ret->entry);
-            hflist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hflist));
-            hflist->hfont = hfont;
-            list_add_head(&ret->hfontlist, &hflist->entry);
-            return ret;
-        }
+    LIST_FOR_EACH_ENTRY_SAFE( ret, next, &unused_gdi_font_list, struct tagGdiFont, entry )
+    {
+        if(fontcmp(ret, &fd)) continue;
+        if(!can_use_bitmap && !FT_IS_SCALABLE(ret->ft_face)) continue;
+
+        assert(list_empty(&ret->hfontlist));
+        TRACE("Found %p in unused list\n", ret);
+        list_remove(&ret->entry);
+        list_add_head(&gdi_font_list, &ret->entry);
+        hflist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hflist));
+        hflist->hfont = hfont;
+        list_add_head(&ret->hfontlist, &hflist->entry);
+        return ret;
     }
     return NULL;
 }
@@ -4539,7 +4526,7 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     GdiFont *ret;
     Face *face, *best, *best_bitmap;
     Family *family, *last_resort_family;
-    const struct list *family_elem_ptr, *face_list, *face_elem_ptr;
+    const struct list *face_list;
     INT height, width = 0;
     unsigned int score = 0, new_score;
     signed int diff = 0, newdiff;
@@ -4664,15 +4651,13 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 	   where we'll either use the charset of the current ansi codepage
 	   or if that's unavailable the first charset that the font supports.
 	*/
-        LIST_FOR_EACH(family_elem_ptr, &font_list) {
-            family = LIST_ENTRY(family_elem_ptr, Family, entry);
+        LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
             if (!strcmpiW(family->FamilyName, FaceName) ||
                 (psub && !strcmpiW(family->FamilyName, psub->to.name)))
             {
                 font_link = find_font_link(family->FamilyName);
                 face_list = get_face_list_from_family(family);
-                LIST_FOR_EACH(face_elem_ptr, face_list) {
-                    face = LIST_ENTRY(face_elem_ptr, Face, entry);
+                LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
                     if (!(face->scalable || can_use_bitmap))
                         continue;
                     if (csi.fs.fsCsb[0] & face->fs.fsCsb[0])
@@ -4687,11 +4672,9 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 	}
 
         /* Search by full face name. */
-        LIST_FOR_EACH(family_elem_ptr, &font_list) {
-            family = LIST_ENTRY(family_elem_ptr, Family, entry);
+        LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
             face_list = get_face_list_from_family(family);
-            LIST_FOR_EACH(face_elem_ptr, face_list) {
-                face = LIST_ENTRY(face_elem_ptr, Face, entry);
+            LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
                 if(face->FullName && !strcmpiW(face->FullName, FaceName) &&
                    (face->scalable || can_use_bitmap))
                 {
@@ -4761,13 +4744,11 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
         strcpyW(lf.lfFaceName, defSans);
     else
         strcpyW(lf.lfFaceName, defSans);
-    LIST_FOR_EACH(family_elem_ptr, &font_list) {
-        family = LIST_ENTRY(family_elem_ptr, Family, entry);
+    LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
         if(!strcmpiW(family->FamilyName, lf.lfFaceName)) {
             font_link = find_font_link(family->FamilyName);
             face_list = get_face_list_from_family(family);
-            LIST_FOR_EACH(face_elem_ptr, face_list) {
-                face = LIST_ENTRY(face_elem_ptr, Face, entry);
+            LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
                 if (!(face->scalable || can_use_bitmap))
                     continue;
                 if (csi.fs.fsCsb[0] & face->fs.fsCsb[0])
@@ -4779,12 +4760,10 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     }
 
     last_resort_family = NULL;
-    LIST_FOR_EACH(family_elem_ptr, &font_list) {
-        family = LIST_ENTRY(family_elem_ptr, Family, entry);
+    LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
         font_link = find_font_link(family->FamilyName);
         face_list = get_face_list_from_family(family);
-        LIST_FOR_EACH(face_elem_ptr, face_list) {
-            face = LIST_ENTRY(face_elem_ptr, Face, entry);
+        LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
             if(face->vertical == want_vertical &&
                (csi.fs.fsCsb[0] & face->fs.fsCsb[0] ||
                 (font_link != NULL && csi.fs.fsCsb[0] & font_link->fs.fsCsb[0]))) {
@@ -4802,11 +4781,9 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
         goto found;
     }
 
-    LIST_FOR_EACH(family_elem_ptr, &font_list) {
-        family = LIST_ENTRY(family_elem_ptr, Family, entry);
+    LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
         face_list = get_face_list_from_family(family);
-        LIST_FOR_EACH(face_elem_ptr, face_list) {
-            face = LIST_ENTRY(face_elem_ptr, Face, entry);
+        LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
             if(face->scalable && face->vertical == want_vertical) {
                 csi.fs.fsCsb[0] = 0;
                 WARN("just using first face for now\n");
@@ -5021,21 +4998,16 @@ done:
 static void dump_gdi_font_list(void)
 {
     GdiFont *gdiFont;
-    struct list *elem_ptr;
 
     TRACE("---------- gdiFont Cache ----------\n");
-    LIST_FOR_EACH(elem_ptr, &gdi_font_list) {
-        gdiFont = LIST_ENTRY(elem_ptr, struct tagGdiFont, entry);
+    LIST_FOR_EACH_ENTRY( gdiFont, &gdi_font_list, struct tagGdiFont, entry )
         TRACE("gdiFont=%p %s %d\n",
               gdiFont, debugstr_w(gdiFont->font_desc.lf.lfFaceName), gdiFont->font_desc.lf.lfHeight);
-    }
 
     TRACE("---------- Unused gdiFont Cache ----------\n");
-    LIST_FOR_EACH(elem_ptr, &unused_gdi_font_list) {
-        gdiFont = LIST_ENTRY(elem_ptr, struct tagGdiFont, entry);
+    LIST_FOR_EACH_ENTRY( gdiFont, &unused_gdi_font_list, struct tagGdiFont, entry )
         TRACE("gdiFont=%p %s %d\n",
               gdiFont, debugstr_w(gdiFont->font_desc.lf.lfFaceName), gdiFont->font_desc.lf.lfHeight);
-    }
 }
 
 /*************************************************************
@@ -5046,10 +5018,9 @@ static void dump_gdi_font_list(void)
  */
 BOOL WineEngDestroyFontInstance(HFONT handle)
 {
-    GdiFont *gdiFont;
-    HFONTLIST *hflist;
+    GdiFont *gdiFont, *next;
+    HFONTLIST *hflist, *hfnext;
     BOOL ret = FALSE;
-    struct list *font_elem_ptr, *hfontlist_elem_ptr;
     int i = 0;
 
     GDI_CheckNotLock();
@@ -5059,15 +5030,10 @@ BOOL WineEngDestroyFontInstance(HFONT handle)
     if(TRACE_ON(font))
 	dump_gdi_font_list();
 
-    font_elem_ptr = list_head(&gdi_font_list);
-    while(font_elem_ptr) {
-        gdiFont = LIST_ENTRY(font_elem_ptr, struct tagGdiFont, entry);
-        font_elem_ptr = list_next(&gdi_font_list, font_elem_ptr);
-
-        hfontlist_elem_ptr = list_head(&gdiFont->hfontlist);
-        while(hfontlist_elem_ptr) {
-            hflist = LIST_ENTRY(hfontlist_elem_ptr, struct tagHFONTLIST, entry);
-            hfontlist_elem_ptr = list_next(&gdiFont->hfontlist, hfontlist_elem_ptr);
+    LIST_FOR_EACH_ENTRY_SAFE( gdiFont, next, &gdi_font_list, struct tagGdiFont, entry )
+    {
+        LIST_FOR_EACH_ENTRY_SAFE( hflist, hfnext, &gdiFont->hfontlist, struct tagHFONTLIST, entry )
+        {
             if(hflist->hfont == handle) {
                 list_remove(&hflist->entry);
                 HeapFree(GetProcessHeap(), 0, hflist);
@@ -5082,12 +5048,9 @@ BOOL WineEngDestroyFontInstance(HFONT handle)
     }
 
 
-    font_elem_ptr = list_head(&unused_gdi_font_list);
-    while(font_elem_ptr && i++ < UNUSED_CACHE_SIZE)
-        font_elem_ptr = list_next(&unused_gdi_font_list, font_elem_ptr);
-    while(font_elem_ptr) {
-        gdiFont = LIST_ENTRY(font_elem_ptr, struct tagGdiFont, entry);
-        font_elem_ptr = list_next(&unused_gdi_font_list, font_elem_ptr);
+    LIST_FOR_EACH_ENTRY_SAFE( gdiFont, next, &unused_gdi_font_list, struct tagGdiFont, entry )
+    {
+        if (i++ < UNUSED_CACHE_SIZE) continue;
         TRACE("freeing %p\n", gdiFont);
         list_remove(&gdiFont->entry);
         free_font(gdiFont);
@@ -5294,17 +5257,14 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
 
 static BOOL family_matches(Family *family, const LOGFONTW *lf)
 {
-    const struct list *face_list, *face_elem_ptr;
+    Face *face;
+    const struct list *face_list;
 
     if (!strcmpiW(lf->lfFaceName, family->FamilyName)) return TRUE;
 
     face_list = get_face_list_from_family(family);
-    LIST_FOR_EACH(face_elem_ptr, face_list)
-    {
-        Face *face = LIST_ENTRY(face_elem_ptr, Face, entry);
-
+    LIST_FOR_EACH_ENTRY(face, face_list, Face, entry)
         if (face->FullName && !strcmpiW(lf->lfFaceName, face->FullName)) return TRUE;
-    }
 
     return FALSE;
 }
@@ -5372,7 +5332,7 @@ static BOOL freetype_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc,
 {
     Family *family;
     Face *face;
-    const struct list *family_elem_ptr, *face_list, *face_elem_ptr;
+    const struct list *face_list;
     LOGFONTW lf;
     struct enum_charset_list enum_charsets;
 
@@ -5402,23 +5362,18 @@ static BOOL freetype_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc,
             plf = &lf;
         }
 
-        LIST_FOR_EACH(family_elem_ptr, &font_list) {
-            family = LIST_ENTRY(family_elem_ptr, Family, entry);
-            if(family_matches(family, plf)) {
-                face_list = get_face_list_from_family(family);
-                LIST_FOR_EACH(face_elem_ptr, face_list) {
-                    face = LIST_ENTRY(face_elem_ptr, Face, entry);
-                    if (!face_matches(family->FamilyName, face, plf)) continue;
-                    if (!enum_face_charsets(family, face, &enum_charsets, proc, lparam)) return FALSE;
-		}
+        LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
+            if (!family_matches(family, plf)) continue;
+            face_list = get_face_list_from_family(family);
+            LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
+                if (!face_matches(family->FamilyName, face, plf)) continue;
+                if (!enum_face_charsets(family, face, &enum_charsets, proc, lparam)) return FALSE;
 	    }
 	}
     } else {
-        LIST_FOR_EACH(family_elem_ptr, &font_list) {
-            family = LIST_ENTRY(family_elem_ptr, Family, entry);
+        LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
             face_list = get_face_list_from_family(family);
-            face_elem_ptr = list_head(face_list);
-            face = LIST_ENTRY(face_elem_ptr, Face, entry);
+            face = LIST_ENTRY(list_head(face_list), Face, entry);
             if (!enum_face_charsets(family, face, &enum_charsets, proc, lparam)) return FALSE;
 	}
     }
