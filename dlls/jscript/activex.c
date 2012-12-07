@@ -70,6 +70,8 @@ static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
     GUID guid;
     HRESULT hres;
 
+    TRACE("%s\n", debugstr_w(progid));
+
     hres = CLSIDFromProgID(progid, &guid);
     if(FAILED(hres))
         return NULL;

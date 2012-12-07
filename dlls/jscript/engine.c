@@ -2458,7 +2458,7 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, bytecode_t *code, function_code
         op = code->instrs[exec_ctx->ip].op;
         hres = op_funcs[op](exec_ctx);
         if(FAILED(hres)) {
-            TRACE("EXCEPTION\n");
+            TRACE("EXCEPTION %08x\n", hres);
 
             if(!exec_ctx->except_frame)
                 break;
