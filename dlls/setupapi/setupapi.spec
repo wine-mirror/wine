@@ -249,7 +249,7 @@
 @ stdcall SetupAddToDiskSpaceListA(long str int64 long ptr long)
 @ stdcall SetupAddToDiskSpaceListW(long wstr int64 long ptr long)
 @ stdcall SetupAddToSourceListA(long str)
-@ stub SetupAddToSourceListW
+@ stdcall SetupAddToSourceListW(long wstr)
 @ stub SetupAdjustDiskSpaceListA
 @ stub SetupAdjustDiskSpaceListW
 @ stub SetupCancelTemporarySourceList
