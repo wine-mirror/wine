@@ -72,7 +72,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
     DO_FUNC(dbus_message_iter_next); \
     DO_FUNC(dbus_message_iter_recurse); \
     DO_FUNC(dbus_message_new_method_call); \
-    DO_FUNC(dbus_message_unref);
+    DO_FUNC(dbus_message_unref)
 
 #define DO_FUNC(f) static typeof(f) * p_##f
 DBUS_FUNCS;
