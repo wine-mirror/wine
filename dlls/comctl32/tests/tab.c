@@ -352,6 +352,7 @@ static LRESULT WINAPI parentWindowProcess(HWND hwnd, UINT message, WPARAM wParam
         if (defwndproc_counter) msg.flags |= defwinproc;
         msg.wParam = wParam;
         msg.lParam = lParam;
+        msg.id = 0;
         add_message(sequences, PARENT_SEQ_INDEX, &msg);
     }
 
@@ -419,6 +420,7 @@ static LRESULT WINAPI tabSubclassProcess(HWND hwnd, UINT message, WPARAM wParam,
         if (defwndproc_counter) msg.flags |= defwinproc;
         msg.wParam = wParam;
         msg.lParam = lParam;
+        msg.id = 0;
         add_message(sequences, TAB_SEQ_INDEX, &msg);
     }
 

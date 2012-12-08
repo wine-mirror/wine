@@ -292,6 +292,7 @@ static LRESULT WINAPI TreeviewWndProc(HWND hwnd, UINT message, WPARAM wParam, LP
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    msg.id = 0;
     add_message(sequences, TREEVIEW_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
@@ -1001,7 +1002,10 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
-    if (message == WM_NOTIFY && lParam) msg.id = ((NMHDR*)lParam)->code;
+    if (message == WM_NOTIFY && lParam)
+        msg.id = ((NMHDR*)lParam)->code;
+    else
+        msg.id = 0;
 
     /* log system messages, except for painting */
     if (message < WM_USER &&

@@ -155,6 +155,7 @@ static LRESULT WINAPI syslink_subclass_proc(HWND hwnd, UINT message, WPARAM wPar
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    msg.id = 0;
     add_message(sequences, SYSLINK_SEQ_INDEX, &msg);
 
     defwndproc_counter++;

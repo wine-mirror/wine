@@ -626,6 +626,7 @@ static LRESULT WINAPI editbox_subclass_proc(HWND hwnd, UINT message, WPARAM wPar
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    msg.id = 0;
 
     /* all we need is sizing */
     if (message == WM_WINDOWPOSCHANGING ||
