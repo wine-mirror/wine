@@ -4954,6 +4954,8 @@ static void LISTVIEW_RefreshReportGrid(LISTVIEW_INFO *infoPtr, HDC hdc)
         SelectObject( hdc, hOldPen );
         DeleteObject( hPen );
     }
+    else
+        ranges_destroy(colRanges);
 }
 
 /***
