@@ -5012,22 +5012,20 @@ static void test_header_notification2(void)
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
     parent_header_notify_seq[0].id = HDN_ENDTRACKA;
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_header_notify_seq,
-                "header notify, parent", TRUE);
-    todo_wine
+                "header notify, parent", FALSE);
     ok(nmhdr.hdr.code == HDN_ENDTRACKA, "Expected ANSI notification code\n");
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_TRACKW;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
     parent_header_notify_seq[0].id = HDN_TRACKA;
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_header_notify_seq,
-                "header notify, parent", TRUE);
-    todo_wine
+                "header notify, parent", FALSE);
     ok(nmhdr.hdr.code == HDN_TRACKA, "Expected ANSI notification code\n");
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_BEGINDRAG;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
-                "header notify, parent", TRUE);
+                "header notify, parent", FALSE);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_ENDDRAG;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);

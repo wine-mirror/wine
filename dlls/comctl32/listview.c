@@ -10272,26 +10272,25 @@ static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, NMHDR *lpnmhdr)
             LISTVIEW_GetOrigin(infoPtr, &ptOrigin);
             infoPtr->xTrackLine = x + ptOrigin.x;
             LISTVIEW_DrawTrackLine(infoPtr);
-            break;
+            return notify_forward_header(infoPtr, lpnmh);
 	}
-	
+
 	case HDN_ENDTRACKA:
 	case HDN_ENDTRACKW:
 	    /* remove the track line (if any) */
 	    LISTVIEW_DrawTrackLine(infoPtr);
 	    infoPtr->xTrackLine = -1;
-	    break;
+            return notify_forward_header(infoPtr, lpnmh);
 
         case HDN_BEGINDRAG:
-            notify_forward_header(infoPtr, lpnmh);
-            return (infoPtr->dwLvExStyle & LVS_EX_HEADERDRAGDROP) == 0;
+            if ((infoPtr->dwLvExStyle & LVS_EX_HEADERDRAGDROP) == 0) return 1;
+            return notify_forward_header(infoPtr, lpnmh);
 
         case HDN_ENDDRAG:
             infoPtr->colRectsDirty = TRUE;
             LISTVIEW_InvalidateList(infoPtr);
-            notify_forward_header(infoPtr, lpnmh);
-            return FALSE;
-            
+            return notify_forward_header(infoPtr, lpnmh);
+
 	case HDN_ITEMCHANGEDW:
 	case HDN_ITEMCHANGEDA:
 	{
@@ -10371,8 +10370,8 @@ static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, NMHDR *lpnmhdr)
 		    LISTVIEW_InvalidateRect(infoPtr, &rcCol);
 		}
 	    }
-	}
-	break;
+	    break;
+        }
 
 	case HDN_ITEMCLICKW:
 	case HDN_ITEMCLICKA:
@@ -10384,9 +10383,8 @@ static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, NMHDR *lpnmhdr)
             nmlv.iItem = -1;
             nmlv.iSubItem = lpnmh->iItem;
             notify_listview(infoPtr, LVN_COLUMNCLICK, &nmlv);
-            notify_forward_header(infoPtr, lpnmh);
+            return notify_forward_header(infoPtr, lpnmh);
         }
-	break;
 
 	case HDN_DIVIDERDBLCLICKW:
 	case HDN_DIVIDERDBLCLICKA:
@@ -10394,10 +10392,8 @@ static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, NMHDR *lpnmhdr)
                       we should use LVSCW_AUTOSIZE_USEHEADER, helper rework or
                       split needed for that */
             LISTVIEW_SetColumnWidth(infoPtr, lpnmh->iItem, LVSCW_AUTOSIZE);
-            notify_forward_header(infoPtr, lpnmh);
-            break;
+            return notify_forward_header(infoPtr, lpnmh);
     }
-
     return 0;
 }
 
