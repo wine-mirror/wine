@@ -567,11 +567,72 @@ static void VOLUME_GetSuperblockLabel( const UNICODE_STRING *device, HANDLE hand
 
 
 /**************************************************************************
+ *                              UDF_Find_FSD_Sector
+ * Find the File Set Descriptor used to compute the serial of a UDF volume
+ */
+static int UDF_Find_FSD_Sector( HANDLE handle, BYTE block[] )
+{
+    int i, PVD_sector, PD_sector, PD_length;
+
+    if(!UDF_Find_PVD(handle,block))
+        goto default_sector;
+
+    /* Retrieve the tag location of the PVD -- [E] 3/7.2 */
+    PVD_sector  = block[12 + 0];
+    PVD_sector |= block[12 + 1] << 8;
+    PVD_sector |= block[12 + 2] << 16;
+    PVD_sector |= block[12 + 3] << 24;
+
+    /* Find the Partition Descriptor */
+    for(i=PVD_sector+1; ; i++)
+    {
+        if(!VOLUME_ReadCDBlock(handle, block, i*BLOCK_SIZE))
+            goto default_sector;
+
+        /* Partition Descriptor Tag Id -- [E] 3/10.5.1 */
+        if(block[0]==5 && block[1]==0)
+            break;
+
+        /* Terminating Descriptor Tag Id -- [E] 3/10.9.1 */
+        if(block[0]==8 && block[1]==0)
+            goto default_sector;
+    }
+
+    /* Find the partition starting location -- [E] 3/10.5.8 */
+    PD_sector  = block[188 + 0];
+    PD_sector |= block[188 + 1] << 8;
+    PD_sector |= block[188 + 2] << 16;
+    PD_sector |= block[188 + 3] << 24;
+
+    /* Find the partition length -- [E] 3/10.5.9 */
+    PD_length  = block[192 + 0];
+    PD_length |= block[192 + 1] << 8;
+    PD_length |= block[192 + 2] << 16;
+    PD_length |= block[192 + 3] << 24;
+
+    for(i=PD_sector; i<PD_sector+PD_length; i++)
+    {
+        if(!VOLUME_ReadCDBlock(handle, block, i*BLOCK_SIZE))
+            goto default_sector;
+
+        /* File Set Descriptor Tag Id -- [E] 3/14.1.1 */
+        if(block[0]==0 && block[1]==1)
+            return i;
+    }
+
+default_sector:
+    WARN("FSD sector not found, serial may be incorrect\n");
+    return 257;
+}
+
+
+/**************************************************************************
  *                              VOLUME_GetSuperblockSerial
  */
 static DWORD VOLUME_GetSuperblockSerial( const UNICODE_STRING *device, HANDLE handle,
                                          enum fs_type type, const BYTE *superblock )
 {
+    int FSD_sector;
     BYTE block[BLOCK_SIZE];
 
     switch(type)
@@ -585,7 +646,8 @@ static DWORD VOLUME_GetSuperblockSerial( const UNICODE_STRING *device, HANDLE ha
     case FS_FAT32:
         return GETLONG( superblock, 0x33 );
     case FS_UDF:
-        if (!VOLUME_ReadCDBlock(handle, block, 257*BLOCK_SIZE))
+        FSD_sector = UDF_Find_FSD_Sector(handle, block);
+        if (!VOLUME_ReadCDBlock(handle, block, FSD_sector*BLOCK_SIZE))
             break;
         superblock = block;
         /* fallthrough */
