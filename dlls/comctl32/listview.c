@@ -774,13 +774,11 @@ static int get_ansi_notification(UINT unicodeNotificationCode)
 }
 
 /* forwards header notifications to listview parent */
-static LRESULT notify_forward_header(const LISTVIEW_INFO *infoPtr, const NMHEADERW *lpnmh)
+static LRESULT notify_forward_header(const LISTVIEW_INFO *infoPtr, NMHEADERW *lpnmhW)
 {
-    NMHEADERA nmhA;
-    HDITEMA hditema;
-    HD_TEXTFILTERA textfilter;
-    LPSTR text = NULL, filter = NULL;
+    LPCWSTR text = NULL, filter = NULL;
     LRESULT ret;
+    NMHEADERA *lpnmh = (NMHEADERA*) lpnmhW;
 
     /* on unicode format exit earlier */
     if (infoPtr->notifyFormat == NFR_UNICODE)
@@ -789,37 +787,38 @@ static LRESULT notify_forward_header(const LISTVIEW_INFO *infoPtr, const NMHEADE
 
     /* header always supplies unicode notifications,
        all we have to do is to convert strings to ANSI */
-    nmhA = *(const NMHEADERA*)lpnmh;
     if (lpnmh->pitem)
     {
-        hditema = *(HDITEMA*)lpnmh->pitem;
-        nmhA.pitem = &hditema;
         /* convert item text */
         if (lpnmh->pitem->mask & HDI_TEXT)
         {
-            hditema.pszText = NULL;
-            Str_SetPtrWtoA(&hditema.pszText, lpnmh->pitem->pszText);
-            text = hditema.pszText;
+            text = (LPCWSTR)lpnmh->pitem->pszText;
+            Str_SetPtrWtoA(&lpnmh->pitem->pszText, text);
         }
         /* convert filter text */
         if ((lpnmh->pitem->mask & HDI_FILTER) && (lpnmh->pitem->type == HDFT_ISSTRING) &&
              lpnmh->pitem->pvFilter)
         {
-            hditema.pvFilter = &textfilter;
-            textfilter = *(HD_TEXTFILTERA*)(lpnmh->pitem->pvFilter);
-            textfilter.pszText = NULL;
-            Str_SetPtrWtoA(&textfilter.pszText, ((HD_TEXTFILTERW*)lpnmh->pitem->pvFilter)->pszText);
-            filter = textfilter.pszText;
+            filter = (LPCWSTR)((HD_TEXTFILTERA*)lpnmh->pitem->pvFilter)->pszText;
+            Str_SetPtrWtoA(&((HD_TEXTFILTERA*)lpnmh->pitem->pvFilter)->pszText, filter);
         }
     }
-    nmhA.hdr.code = get_ansi_notification(lpnmh->hdr.code);
+    lpnmh->hdr.code = get_ansi_notification(lpnmh->hdr.code);
 
-    ret = SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmhA.hdr.idFrom,
-                       (LPARAM)&nmhA);
+    ret = SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, lpnmh->hdr.idFrom,
+                       (LPARAM)lpnmh);
 
     /* cleanup */
-    Free(text);
-    Free(filter);
+    if(text)
+    {
+        Free(lpnmh->pitem->pszText);
+        lpnmh->pitem->pszText = (LPSTR)text;
+    }
+    if(filter)
+    {
+        Free(((HD_TEXTFILTERA*)lpnmh->pitem->pvFilter)->pszText);
+        ((HD_TEXTFILTERA*)lpnmh->pitem->pvFilter)->pszText = (LPSTR)filter;
+    }
 
     return ret;
 }
@@ -10238,9 +10237,9 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
  * RETURN:
  * Zero
  */
-static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, const NMHDR *lpnmhdr)
+static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, NMHDR *lpnmhdr)
 {
-    const NMHEADERW *lpnmh;
+    NMHEADERW *lpnmh;
     
     TRACE("(lpnmhdr=%p)\n", lpnmhdr);
 
@@ -10248,7 +10247,7 @@ static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, const NMHDR *lpnmhdr)
 
     /* remember: HDN_LAST < HDN_FIRST */
     if (lpnmhdr->code > HDN_FIRST || lpnmhdr->code < HDN_LAST) return 0;
-    lpnmh = (const NMHEADERW *)lpnmhdr;
+    lpnmh = (NMHEADERW *)lpnmhdr;
 
     if (lpnmh->iItem < 0 || lpnmh->iItem >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return 0;
 

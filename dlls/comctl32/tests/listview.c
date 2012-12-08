@@ -4988,7 +4988,6 @@ static void test_header_notification2(void)
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_header_click_seq,
                 "header notify, parent", FALSE);
-    todo_wine
     ok(nmhdr.hdr.code == HDN_ITEMCLICKA, "Expected ANSI notification code\n");
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_ITEMDBLCLICKW;
@@ -5001,7 +5000,6 @@ static void test_header_notification2(void)
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_header_divider_dclick_seq,
                 "header notify, parent", TRUE);
-    todo_wine
     ok(nmhdr.hdr.code == HDN_DIVIDERDBLCLICKA, "Expected ANSI notification code\n");
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_BEGINTRACKW;
