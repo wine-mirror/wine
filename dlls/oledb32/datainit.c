@@ -351,10 +351,9 @@ static void free_dbpropset(ULONG count, DBPROPSET *propset)
         int p;
 
         for (p = 0; p < propset[i].cProperties; p++)
-        {
             VariantClear(&propset[i].rgProperties[p].vValue);
-            CoTaskMemFree(&propset[i].rgProperties[p]);
-        }
+
+        CoTaskMemFree(propset[i].rgProperties);
     }
     CoTaskMemFree(propset);
 }
@@ -368,10 +367,9 @@ static void free_dbpropinfoset(ULONG count, DBPROPINFOSET *propinfoset)
         int p;
 
         for (p = 0; p < propinfoset[i].cPropertyInfos; p++)
-        {
             VariantClear(&propinfoset[i].rgPropertyInfos[p].vValues);
-            CoTaskMemFree(&propinfoset[i].rgPropertyInfos[p]);
-        }
+
+        CoTaskMemFree(propinfoset[i].rgPropertyInfos);
     }
     CoTaskMemFree(propinfoset);
 }
