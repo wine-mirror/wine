@@ -1100,7 +1100,9 @@ void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
         }
 
         GL_EXTCALL(glUnmapBuffer(buffer->buffer_type_hint));
-        if (wined3d_settings.strict_draw_ordering)
+        if (wined3d_settings.cs_multithreaded)
+            gl_info->gl_ops.gl.p_glFinish();
+        else if (wined3d_settings.strict_draw_ordering)
             gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
         context_release(context);
 

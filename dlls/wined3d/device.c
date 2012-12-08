@@ -463,7 +463,9 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         }
     }
 
-    if (wined3d_settings.strict_draw_ordering || (flags & WINED3DCLEAR_TARGET
+    if (wined3d_settings.cs_multithreaded)
+        gl_info->gl_ops.gl.p_glFinish();
+    else if (wined3d_settings.strict_draw_ordering || (flags & WINED3DCLEAR_TARGET
             && target->container->swapchain && target->container->swapchain->front_buffer == target->container))
         gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
@@ -3259,7 +3261,10 @@ HRESULT CDECL wined3d_device_end_scene(struct wined3d_device *device)
 
     context = context_acquire(device, NULL);
     /* We only have to do this if we need to read the, swapbuffers performs a flush for us */
-    context->gl_info->gl_ops.gl.p_glFlush();
+    if (wined3d_settings.cs_multithreaded)
+        context->gl_info->gl_ops.gl.p_glFinish();
+    else
+        context->gl_info->gl_ops.gl.p_glFlush();
     /* No checkGLcall here to avoid locking the lock just for checking a call that hardly ever
      * fails. */
     context_release(context);
