@@ -2231,6 +2231,7 @@ HRESULT __cdecl wined3d_device_set_ps_consts_f(struct wined3d_device *device,
         UINT start_register, const float *constants, UINT vector4f_count);
 HRESULT __cdecl wined3d_device_set_ps_consts_i(struct wined3d_device *device,
         UINT start_register, const int *constants, UINT vector4i_count);
+void __cdecl wined3d_device_set_ps_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler);
 void __cdecl wined3d_device_set_render_state(struct wined3d_device *device,
         enum wined3d_render_state state, DWORD value);
 HRESULT __cdecl wined3d_device_set_render_target(struct wined3d_device *device,

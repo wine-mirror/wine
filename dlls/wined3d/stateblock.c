@@ -570,6 +570,15 @@ void stateblock_unbind_resources(struct wined3d_stateblock *stateblock)
         wined3d_shader_decref(shader);
     }
 
+    for (i = 0; i < MAX_SAMPLER_OBJECTS; ++i)
+    {
+        if ((sampler = state->ps_sampler[i]))
+        {
+            state->ps_sampler[i] = NULL;
+            wined3d_sampler_decref(sampler);
+        }
+    }
+
     for (i = 0; i < MAX_CONSTANT_BUFFERS; ++i)
     {
         if ((buffer = state->ps_cb[i]))

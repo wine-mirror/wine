@@ -134,6 +134,7 @@
 @ cdecl wined3d_device_set_ps_consts_b(ptr long ptr long)
 @ cdecl wined3d_device_set_ps_consts_f(ptr long ptr long)
 @ cdecl wined3d_device_set_ps_consts_i(ptr long ptr long)
+@ cdecl wined3d_device_set_ps_sampler(ptr long ptr)
 @ cdecl wined3d_device_set_render_state(ptr long long)
 @ cdecl wined3d_device_set_render_target(ptr long ptr long)
 @ cdecl wined3d_device_set_sampler_state(ptr long long long)
