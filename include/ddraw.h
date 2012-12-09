@@ -2694,8 +2694,8 @@ DECLARE_INTERFACE_(IDirectDrawGammaControl,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirectDrawGammaControl methods ***/
-    STDMETHOD(GetGammaRamp)(THIS_ DWORD dwFlags, LPDDGAMMARAMP lpGammaRamp) PURE;
-    STDMETHOD(SetGammaRamp)(THIS_ DWORD dwFlags, LPDDGAMMARAMP lpGammaRamp) PURE;
+    STDMETHOD(GetGammaRamp)(THIS_ DWORD flags, DDGAMMARAMP *gamma_ramp) PURE;
+    STDMETHOD(SetGammaRamp)(THIS_ DWORD flags, DDGAMMARAMP *gamma_ramp) PURE;
 };
 #undef INTERFACE
 
