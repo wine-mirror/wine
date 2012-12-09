@@ -1816,6 +1816,12 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient *iface,
         return AUDCLNT_E_EVENTHANDLE_NOT_EXPECTED;
     }
 
+    if (This->event){
+        OSSpinLockUnlock(&This->lock);
+        FIXME("called twice\n");
+        return HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
+    }
+
     This->event = event;
 
     OSSpinLockUnlock(&This->lock);

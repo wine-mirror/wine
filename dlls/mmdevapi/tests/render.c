@@ -634,7 +634,7 @@ static void test_event(void)
     ok(hr == S_OK, "SetEventHandle failed: %08x\n", hr);
 
     hr = IAudioClient_SetEventHandle(ac, event);
-    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "SetEventHandle returns %08x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "SetEventHandle returns %08x\n", hr);
 
     r = WaitForSingleObject(event, 40);
     ok(r == WAIT_TIMEOUT, "Wait(event) before Start gave %x\n", r);
