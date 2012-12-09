@@ -936,7 +936,7 @@ typedef struct _DDRAWI_DDRAWSURFACE_MORE {
     DWORD			dwOverlayFlags;
     VOID			*rgjunc;
     LPDDRAWI_DDVIDEOPORT_LCL	lpVideoPort;
-    LPDDOVERLAYFX		lpddOverlayFX;
+    DDOVERLAYFX                *lpddOverlayFX;
     DDSCAPSEX			ddsCapsEx;
     DWORD			dwTextureStage;
     LPVOID			lpDDRAWReserved;

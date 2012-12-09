@@ -794,8 +794,8 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_UpdateOverlay(IDirectDrawSurface4 
 }
 
 static HRESULT WINAPI IDirectDrawSurface3Impl_UpdateOverlay(IDirectDrawSurface3 *iface,
-        LPRECT SrcRect, IDirectDrawSurface3 *DstSurface, LPRECT DstRect, DWORD Flags,
-        LPDDOVERLAYFX FX)
+        RECT *SrcRect, IDirectDrawSurface3 *DstSurface, RECT *DstRect, DWORD Flags,
+        DDOVERLAYFX *FX)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     IDirectDrawSurfaceImpl *Dst = unsafe_impl_from_IDirectDrawSurface3(DstSurface);
