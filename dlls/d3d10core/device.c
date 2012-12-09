@@ -607,8 +607,27 @@ static void STDMETHODCALLTYPE d3d10_device_PSGetShader(ID3D10Device *iface, ID3D
 static void STDMETHODCALLTYPE d3d10_device_PSGetSamplers(ID3D10Device *iface,
         UINT start_slot, UINT sampler_count, ID3D10SamplerState **samplers)
 {
-    FIXME("iface %p, start_slot %u, sampler_count %u, samplers %p stub!\n",
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+    unsigned int i;
+
+    TRACE("iface %p, start_slot %u, sampler_count %u, samplers %p.\n",
             iface, start_slot, sampler_count, samplers);
+
+    for (i = 0; i < sampler_count; ++i)
+    {
+        struct d3d10_sampler_state *sampler_impl;
+        struct wined3d_sampler *wined3d_sampler;
+
+        if (!(wined3d_sampler = wined3d_device_get_ps_sampler(device->wined3d_device, start_slot + i)))
+        {
+            samplers[i] = NULL;
+            continue;
+        }
+
+        sampler_impl = wined3d_sampler_get_parent(wined3d_sampler);
+        samplers[i] = &sampler_impl->ID3D10SamplerState_iface;
+        ID3D10SamplerState_AddRef(samplers[i]);
+    }
 }
 
 static void STDMETHODCALLTYPE d3d10_device_VSGetShader(ID3D10Device *iface, ID3D10VertexShader **shader)
