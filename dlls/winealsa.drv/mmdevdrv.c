@@ -2137,12 +2137,12 @@ static void CALLBACK alsa_push_buffer_data(void *user, BOOLEAN timer)
             alsa_write_data(This);
         else if(This->dataflow == eCapture)
             alsa_read_data(This);
-
-        if(This->event)
-            SetEvent(This->event);
     }
 
     LeaveCriticalSection(&This->lock);
+
+    if(This->event)
+        SetEvent(This->event);
 }
 
 static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
