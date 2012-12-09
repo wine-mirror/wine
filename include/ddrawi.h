@@ -906,7 +906,7 @@ typedef struct _DDRAWI_DDRAWSURFACE_GBL_MORE {
     DWORD			cPageUnlocks;
     ULONG_PTR			hKernelSurface;
     DWORD			dwKernelRefCnt;
-    LPDDCOLORCONTROL		lpColorInfo;
+    DDCOLORCONTROL             *lpColorInfo;
     FLATPTR			fpNTAlias;
     DWORD			dwContentsStamp;
     LPVOID			lpvUnswappedDriverReserved;

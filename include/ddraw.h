@@ -2660,8 +2660,8 @@ DECLARE_INTERFACE_(IDirectDrawColorControl,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirectDrawColorControl methods ***/
-    STDMETHOD(GetColorControls)(THIS_ LPDDCOLORCONTROL lpColorControl) PURE;
-    STDMETHOD(SetColorControls)(THIS_ LPDDCOLORCONTROL lpColorControl) PURE;
+    STDMETHOD(GetColorControls)(THIS_ DDCOLORCONTROL *color_control) PURE;
+    STDMETHOD(SetColorControls)(THIS_ DDCOLORCONTROL *color_control) PURE;
 };
 #undef INTERFACE
 
