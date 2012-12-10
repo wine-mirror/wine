@@ -46,6 +46,8 @@ static errno_t    (__cdecl *p_localtime32_s)(struct tm*, __time32_t*);
 static errno_t    (__cdecl *p_localtime64_s)(struct tm*, __time64_t*);
 static int*       (__cdecl *p__daylight)(void);
 static int*       (__cdecl *p___p__daylight)(void);
+static long*      (__cdecl *p___p__dstbias)(void);
+static long*      (__cdecl *p___p__timezone)(void);
 static size_t     (__cdecl *p_strftime)(char *, size_t, const char *, const struct tm *);
 static size_t     (__cdecl *p_wcsftime)(wchar_t *, size_t, const wchar_t *, const struct tm *);
 static char*      (__cdecl *p_asctime)(const struct tm *);
@@ -64,6 +66,8 @@ static void init(void)
     p_localtime64_s = (void*)GetProcAddress(hmod, "_localtime64_s");
     p__daylight = (void*)GetProcAddress(hmod, "__daylight");
     p___p__daylight = (void*)GetProcAddress(hmod, "__p__daylight");
+    p___p__dstbias = (void*)GetProcAddress(hmod, "__p__dstbias");
+    p___p__timezone = (void*)GetProcAddress(hmod, "__p__timezone");
     p_strftime = (void*)GetProcAddress(hmod, "strftime");
     p_wcsftime = (void*)GetProcAddress(hmod, "wcsftime");
     p_asctime = (void*)GetProcAddress(hmod, "asctime");
@@ -804,10 +808,52 @@ static void test_asctime(void)
     ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
 }
 
+static void test__tzset(void)
+{
+    char TZ_env[256];
+    int ret;
+
+    if(!p___p__daylight || !p___p__timezone || !p___p__dstbias) {
+        win_skip("__p__daylight, __p__timezone or __p__dstbias is not available\n");
+        return;
+    }
+
+    _snprintf(TZ_env,255,"TZ=%s",(getenv("TZ")?getenv("TZ"):""));
+
+    ret = *p___p__daylight();
+    ok(ret == 1, "*__p__daylight() = %d\n", ret);
+    ret = *p___p__timezone();
+    ok(ret == 28800, "*__p__timezone() = %d\n", ret);
+    ret = *p___p__dstbias();
+    ok(ret == -3600, "*__p__dstbias() = %d\n", ret);
+
+    _putenv("TZ=xxx+1yyy");
+    _tzset();
+    ret = *p___p__daylight();
+    ok(ret == 121, "*__p__daylight() = %d\n", ret);
+    ret = *p___p__timezone();
+    ok(ret == 3600, "*__p__timezone() = %d\n", ret);
+    ret = *p___p__dstbias();
+    ok(ret == -3600, "*__p__dstbias() = %d\n", ret);
+
+    *p___p__dstbias() = 0;
+    _putenv("TZ=xxx+1:3:5zzz");
+    _tzset();
+    ret = *p___p__daylight();
+    ok(ret == 122, "*__p__daylight() = %d\n", ret);
+    ret = *p___p__timezone();
+    ok(ret == 3785, "*__p__timezone() = %d\n", ret);
+    ret = *p___p__dstbias();
+    ok(ret == 0, "*__p__dstbias() = %d\n", ret);
+
+    _putenv(TZ_env);
+}
+
 START_TEST(time)
 {
     init();
 
+    test__tzset();
     test_strftime();
     test_ctime();
     test_gmtime();
