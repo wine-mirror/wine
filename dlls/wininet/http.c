@@ -3141,7 +3141,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     }
 
     request->verb = heap_strdupW(lpszVerb && *lpszVerb ? lpszVerb : szGET);
-    request->version = heap_strdupW(lpszVersion ? lpszVersion : g_szHttp1_1);
+    request->version = heap_strdupW(lpszVersion && *lpszVersion ? lpszVersion : g_szHttp1_1);
 
     HTTP_ProcessHeader(request, hostW, request->server->canon_host_port, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
 
