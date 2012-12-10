@@ -21,6 +21,8 @@
 #ifndef __WINE_SERVER_LIST_H
 #define __WINE_SERVER_LIST_H
 
+#include <stddef.h>
+
 struct list
 {
     struct list *next;
@@ -227,6 +229,6 @@ static inline void list_move_head( struct list *dst, struct list *src )
 /* get pointer to object containing list element */
 #undef LIST_ENTRY
 #define LIST_ENTRY(elem, type, field) \
-    ((type *)((char *)(elem) - (size_t)(&((type *)0)->field)))
+    ((type *)((char *)(elem) - offsetof(type, field)))
 
 #endif  /* __WINE_SERVER_LIST_H */
