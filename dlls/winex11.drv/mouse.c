@@ -1384,6 +1384,7 @@ void move_resize_window( HWND hwnd, int dir )
     }
 
     TRACE( "hwnd %p/%lx done\n", hwnd, win );
+    SendMessageW( hwnd, WM_EXITSIZEMOVE, 0, 0 );
 }
 
 
