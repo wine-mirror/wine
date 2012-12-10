@@ -2074,7 +2074,7 @@ FILE* __cdecl _Fiopen_wchar(const wchar_t *name, int mode, int prot)
     };
 
     int real_mode = mode & ~(OPENMODE_ate|OPENMODE__Nocreate|OPENMODE__Noreplace|OPENMODE_binary);
-    int mode_idx;
+    size_t mode_idx;
     FILE *f = NULL;
 
     TRACE("(%s %d %d)\n", debugstr_w(name), mode, prot);
@@ -2218,7 +2218,8 @@ int __thiscall basic_filebuf_char_uflow(basic_filebuf_char *this)
 {
     char ch, buf[128], *to_next;
     const char *buf_next;
-    int c, i;
+    int c;
+    size_t i;
 
     TRACE("(%p)\n", this);
 
@@ -2247,8 +2248,12 @@ int __thiscall basic_filebuf_char_uflow(basic_filebuf_char *this)
                 continue;
             }
 
-            for(i--; i>=buf_next-buf; i--)
-                ungetc(buf[i], this->file);
+            {
+                ptrdiff_t j;
+
+                for(j = --i; j >= buf_next-buf; j--)
+                    ungetc(buf[j], this->file);
+            }
             return ch;
         case CODECVT_noconv:
             return (unsigned char)buf[0];
@@ -2666,7 +2671,8 @@ unsigned short __thiscall basic_filebuf_wchar_uflow(basic_filebuf_wchar *this)
     wchar_t ch, *to_next;
     char buf[128];
     const char *buf_next;
-    int c, i;
+    int c;
+    size_t i;
 
     TRACE("(%p)\n", this);
 
@@ -2692,8 +2698,12 @@ unsigned short __thiscall basic_filebuf_wchar_uflow(basic_filebuf_wchar *this)
             if(to_next == &ch)
                 continue;
 
-            for(i--; i>=buf_next-buf; i--)
-                ungetc(buf[i], this->file);
+            {
+                ptrdiff_t j;
+
+                for(j = --i; j >= buf_next-buf; j--)
+                    ungetc(buf[j], this->file);
+            }
             return ch;
         case CODECVT_noconv:
             if(i+1 < sizeof(wchar_t))
