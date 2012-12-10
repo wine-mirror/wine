@@ -1885,7 +1885,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface,IUnknown)
 /*10*/    STDMETHOD(AddOverlayDirtyRect)(THIS_ LPRECT lpRect) PURE;
 /*14*/    STDMETHOD(Blt)(THIS_ RECT *dst_rect, IDirectDrawSurface *src_surface, RECT *src_rect,
                 DWORD flags, DDBLTFX *fx) PURE;
-/*18*/    STDMETHOD(BltBatch)(THIS_ LPDDBLTBATCH lpDDBltBatch, DWORD dwCount, DWORD dwFlags) PURE;
+/*18*/    STDMETHOD(BltBatch)(THIS_ DDBLTBATCH *batch, DWORD count, DWORD flags) PURE;
 /*1c*/    STDMETHOD(BltFast)(THIS_ DWORD x, DWORD y, IDirectDrawSurface *src_surface,
                 RECT *src_rect, DWORD flags) PURE;
 /*20*/    STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD flags, IDirectDrawSurface *attachment) PURE;
@@ -2019,7 +2019,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface2,IUnknown)
     STDMETHOD(AddOverlayDirtyRect)(THIS_ LPRECT lpRect) PURE;
     STDMETHOD(Blt)(THIS_ RECT *dst_rect, IDirectDrawSurface2 *src_surface, RECT *src_rect,
             DWORD flags, DDBLTFX *fx) PURE;
-    STDMETHOD(BltBatch)(THIS_ LPDDBLTBATCH lpDDBltBatch, DWORD dwCount, DWORD dwFlags) PURE;
+    STDMETHOD(BltBatch)(THIS_ DDBLTBATCH *batch, DWORD count, DWORD flags) PURE;
     STDMETHOD(BltFast)(THIS_ DWORD x, DWORD y, IDirectDrawSurface2 *src_surface,
             RECT *src_rect, DWORD flags) PURE;
     STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD flags, IDirectDrawSurface2 *attachment) PURE;
@@ -2165,7 +2165,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface3,IUnknown)
     STDMETHOD(AddOverlayDirtyRect)(THIS_ LPRECT lpRect) PURE;
     STDMETHOD(Blt)(THIS_ RECT *dst_rest, IDirectDrawSurface3 *src_surface, RECT *src_rect,
             DWORD flags, DDBLTFX *fx) PURE;
-    STDMETHOD(BltBatch)(THIS_ LPDDBLTBATCH lpDDBltBatch, DWORD dwCount, DWORD dwFlags) PURE;
+    STDMETHOD(BltBatch)(THIS_ DDBLTBATCH *batch, DWORD count, DWORD flags) PURE;
     STDMETHOD(BltFast)(THIS_ DWORD x, DWORD y, IDirectDrawSurface3 *src_surface,
             RECT *src_rect, DWORD flags) PURE;
     STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD flags, IDirectDrawSurface3 *attachment) PURE;
@@ -2316,7 +2316,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface4,IUnknown)
     STDMETHOD(AddOverlayDirtyRect)(THIS_ LPRECT lpRect) PURE;
     STDMETHOD(Blt)(THIS_ RECT *dst_rect, IDirectDrawSurface4 *src_surface, RECT *src_rect,
             DWORD flags, DDBLTFX *fx) PURE;
-    STDMETHOD(BltBatch)(THIS_ LPDDBLTBATCH lpDDBltBatch, DWORD dwCount, DWORD dwFlags) PURE;
+    STDMETHOD(BltBatch)(THIS_ DDBLTBATCH *batch, DWORD count, DWORD flags) PURE;
     STDMETHOD(BltFast)(THIS_ DWORD x, DWORD y, IDirectDrawSurface4 *src_surface,
             RECT *src_rect, DWORD flags) PURE;
     STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD flags, IDirectDrawSurface4 *attachment) PURE;
@@ -2483,7 +2483,7 @@ DECLARE_INTERFACE_(IDirectDrawSurface7,IUnknown)
     STDMETHOD(AddOverlayDirtyRect)(THIS_ LPRECT lpRect) PURE;
     STDMETHOD(Blt)(THIS_ RECT *dst_rect, IDirectDrawSurface7 *src_surface, RECT *src_rect,
             DWORD flags, DDBLTFX *fx) PURE;
-    STDMETHOD(BltBatch)(THIS_ LPDDBLTBATCH lpDDBltBatch, DWORD dwCount, DWORD dwFlags) PURE;
+    STDMETHOD(BltBatch)(THIS_ DDBLTBATCH *batch, DWORD count, DWORD flags) PURE;
     STDMETHOD(BltFast)(THIS_ DWORD x, DWORD y, IDirectDrawSurface7 *src_surface,
             RECT *src_rect, DWORD flags) PURE;
     STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD flags, IDirectDrawSurface7 *attachment) PURE;
