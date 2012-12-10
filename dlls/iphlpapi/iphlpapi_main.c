@@ -1505,10 +1505,8 @@ DWORD WINAPI GetIpAddrTable(PMIB_IPADDRTABLE pIpAddrTable, PULONG pdwSize, BOOL 
     ret = getIPAddrTable(&table, GetProcessHeap(), 0);
     if (ret == NO_ERROR)
     {
-      ULONG size = sizeof(MIB_IPADDRTABLE);
+      ULONG size = FIELD_OFFSET(MIB_IPADDRTABLE, table[table->dwNumEntries]);
 
-      if (table->dwNumEntries > 1)
-        size += (table->dwNumEntries - 1) * sizeof(MIB_IPADDRROW);
       if (!pIpAddrTable || *pdwSize < size) {
         *pdwSize = size;
         ret = ERROR_INSUFFICIENT_BUFFER;

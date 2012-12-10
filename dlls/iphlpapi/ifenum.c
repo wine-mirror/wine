@@ -211,13 +211,10 @@ InterfaceIndexTable *getInterfaceIndexTable(void)
 
   if (indexes) {
     struct if_nameindex *p;
-    DWORD size = sizeof(InterfaceIndexTable);
 
     for (p = indexes, numInterfaces = 0; p && p->if_name; p++)
       numInterfaces++;
-    if (numInterfaces > 1)
-      size += (numInterfaces - 1) * sizeof(DWORD);
-    ret = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(InterfaceIndexTable, indexes[numInterfaces]));
     if (ret) {
       ret->numIndexes = 0;
       for (p = indexes; p && p->if_name; p++)
@@ -241,14 +238,11 @@ InterfaceIndexTable *getNonLoopbackInterfaceIndexTable(void)
 
     if (indexes) {
       struct if_nameindex *p;
-      DWORD size = sizeof(InterfaceIndexTable);
 
       for (p = indexes, numInterfaces = 0; p && p->if_name; p++)
         if (!isLoopbackInterface(fd, p->if_name))
           numInterfaces++;
-      if (numInterfaces > 1)
-        size += (numInterfaces - 1) * sizeof(DWORD);
-      ret = HeapAlloc(GetProcessHeap(), 0, size);
+      ret = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(InterfaceIndexTable, indexes[numInterfaces]));
       if (ret) {
         ret->numIndexes = 0;
         for (p = indexes; p && p->if_name; p++)
