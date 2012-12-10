@@ -45,7 +45,7 @@
 55 stub AtlModuleUnRegisterTypeLib
 56 stdcall AtlModuleLoadTypeLib(ptr wstr ptr ptr) atl.AtlModuleLoadTypeLib
 57 stdcall AtlModuleUnregisterServerEx(ptr long ptr) atl.AtlModuleUnregisterServerEx
-58 stdcall AtlModuleAddTermFunc(ptr) atl.AtlModuleAddTermFunc # don't forward to atl100.dll
+58 stdcall AtlModuleAddTermFunc(ptr ptr long) atl100.AtlModuleAddTermFunc
 59 stub AtlAxCreateControlLic
 60 stub AtlAxCreateControlLicEx
 61 stdcall AtlCreateRegistrar(ptr) atl100.AtlCreateRegistrar

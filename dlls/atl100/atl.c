@@ -22,7 +22,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(atl);
+WINE_DEFAULT_DEBUG_CHANNEL(atl100);
 
 /***********************************************************************
  *           AtlAdvise         [atl100.@]
@@ -222,6 +222,25 @@ HRESULT WINAPI AtlIPersistStreamInit_Save(LPSTREAM pStm, BOOL fClearDirty,
                                           IUnknown *pUnk)
 {
     FIXME("(%p, %d, %p, %p, %p)\n", pStm, fClearDirty, pMap, pThis, pUnk);
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *           AtlModuleAddTermFunc            [atl100.@]
+ */
+HRESULT WINAPI AtlModuleAddTermFunc(_ATL_MODULE *pM, _ATL_TERMFUNC *pFunc, DWORD_PTR dw)
+{
+    _ATL_TERMFUNC_ELEM *termfunc_elem;
+
+    TRACE("(%p %p %ld)\n", pM, pFunc, dw);
+
+    termfunc_elem = HeapAlloc(GetProcessHeap(), 0, sizeof(_ATL_TERMFUNC_ELEM));
+    termfunc_elem->pFunc = pFunc;
+    termfunc_elem->dw = dw;
+    termfunc_elem->pNext = pM->m_pTermFuncs;
+
+    pM->m_pTermFuncs = termfunc_elem;
 
     return S_OK;
 }
