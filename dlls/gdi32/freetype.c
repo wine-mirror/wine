@@ -304,11 +304,6 @@ typedef struct {
     BOOL can_use_bitmap;
 } FONT_DESC;
 
-typedef struct tagHFONTLIST {
-    struct list entry;
-    HFONT hfont;
-} HFONTLIST;
-
 typedef struct tagGdiFont GdiFont;
 
 typedef struct {
@@ -319,9 +314,10 @@ typedef struct {
 
 struct tagGdiFont {
     struct list entry;
+    struct list unused_entry;
+    unsigned int refcount;
     GM **gm;
     DWORD gmsize;
-    struct list hfontlist;
     OUTLINETEXTMETRICW *potm;
     DWORD total_kern_pairs;
     KERNINGPAIR *kern_pairs;
@@ -4025,6 +4021,7 @@ static int get_nearest_charset(const WCHAR *family_name, Face *face, int *cp)
 static GdiFont *alloc_font(void)
 {
     GdiFont *ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
+    ret->refcount = 1;
     ret->gmsize = 1;
     ret->gm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(GM*));
     ret->gm[0] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(GM) * GM_BLOCK_SIZE);
@@ -4032,7 +4029,6 @@ static GdiFont *alloc_font(void)
     ret->font_desc.matrix.eM11 = ret->font_desc.matrix.eM22 = 1.0;
     ret->total_kern_pairs = (DWORD)-1;
     ret->kern_pairs = NULL;
-    list_init(&ret->hfontlist);
     list_init(&ret->child_fonts);
     return ret;
 }
@@ -4040,7 +4036,6 @@ static GdiFont *alloc_font(void)
 static void free_font(GdiFont *font)
 {
     CHILD_FONT *child, *child_next;
-    HFONTLIST *hfontlist, *hfnext;
     DWORD i;
 
     LIST_FOR_EACH_ENTRY_SAFE( child, child_next, &font->child_fonts, CHILD_FONT, entry )
@@ -4049,12 +4044,6 @@ static void free_font(GdiFont *font)
         if(child->font)
             free_font(child->font);
         HeapFree(GetProcessHeap(), 0, child);
-    }
-
-    LIST_FOR_EACH_ENTRY_SAFE( hfontlist, hfnext, &font->hfontlist, HFONTLIST, entry )
-    {
-        list_remove(&hfontlist->entry);
-        HeapFree(GetProcessHeap(), 0, hfontlist);
     }
 
     if (font->ft_face) pFT_Done_Face(font->ft_face);
@@ -4236,6 +4225,48 @@ static LONG load_VDMX(GdiFont *font, LONG height)
     return ppem;
 }
 
+static void dump_gdi_font_list(void)
+{
+    GdiFont *font;
+
+    TRACE("---------- Font Cache ----------\n");
+    LIST_FOR_EACH_ENTRY( font, &gdi_font_list, struct tagGdiFont, entry )
+        TRACE("font=%p ref=%u %s %d\n", font, font->refcount,
+              debugstr_w(font->font_desc.lf.lfFaceName), font->font_desc.lf.lfHeight);
+}
+
+static void grab_font( GdiFont *font )
+{
+    if (!font->refcount++)
+    {
+        list_remove( &font->unused_entry );
+        unused_font_count--;
+    }
+}
+
+static void release_font( GdiFont *font )
+{
+    if (!font) return;
+    if (!--font->refcount)
+    {
+        TRACE( "font %p\n", font );
+
+        /* add it to the unused list */
+        list_add_head( &unused_gdi_font_list, &font->unused_entry );
+        if (unused_font_count > UNUSED_CACHE_SIZE)
+        {
+            font = LIST_ENTRY( list_tail( &unused_gdi_font_list ), struct tagGdiFont, unused_entry );
+            TRACE( "freeing %p\n", font );
+            list_remove( &font->entry );
+            list_remove( &font->unused_entry );
+            free_font( font );
+        }
+        else unused_font_count++;
+
+        if (TRACE_ON(font)) dump_gdi_font_list();
+    }
+}
+
 static BOOL fontcmp(const GdiFont *font, FONT_DESC *fd)
 {
     if(font->font_desc.hash != fd->hash) return TRUE;
@@ -4272,9 +4303,8 @@ static void calc_hash(FONT_DESC *pfd)
 
 static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const FMAT2 *pmat, BOOL can_use_bitmap)
 {
-    GdiFont *ret, *next;
+    GdiFont *ret;
     FONT_DESC fd;
-    HFONTLIST *hflist;
 
     fd.lf = *plf;
     fd.matrix = *pmat;
@@ -4286,29 +4316,9 @@ static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const FMAT2 *pma
     {
         if(fontcmp(ret, &fd)) continue;
         if(!can_use_bitmap && !FT_IS_SCALABLE(ret->ft_face)) continue;
-        LIST_FOR_EACH_ENTRY( hflist, &ret->hfontlist, struct tagHFONTLIST, entry )
-            if(hflist->hfont == hfont) return ret;
-
-        hflist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hflist));
-        hflist->hfont = hfont;
-        list_add_head(&ret->hfontlist, &hflist->entry);
-        return ret;
-    }
-
-    /* then the unused list */
-    LIST_FOR_EACH_ENTRY_SAFE( ret, next, &unused_gdi_font_list, struct tagGdiFont, entry )
-    {
-        if(fontcmp(ret, &fd)) continue;
-        if(!can_use_bitmap && !FT_IS_SCALABLE(ret->ft_face)) continue;
-
-        assert(list_empty(&ret->hfontlist));
-        TRACE("Found %p in unused list\n", ret);
-        list_remove(&ret->entry);
-        list_add_head(&gdi_font_list, &ret->entry);
-        hflist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hflist));
-        hflist->hfont = hfont;
-        list_add_head(&ret->hfontlist, &hflist->entry);
-        unused_font_count--;
+        list_remove( &ret->entry );
+        list_add_head( &gdi_font_list, &ret->entry );
+        grab_font( ret );
         return ret;
     }
     return NULL;
@@ -4320,6 +4330,7 @@ static void add_to_cache(GdiFont *font)
 
     font->cache_num = cache_num++;
     list_add_head(&gdi_font_list, &font->entry);
+    TRACE( "font %p\n", font );
 }
 
 /*************************************************************
@@ -4452,6 +4463,7 @@ static BOOL freetype_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
 static BOOL freetype_DeleteDC( PHYSDEV dev )
 {
     struct freetype_physdev *physdev = get_freetype_dev( dev );
+    release_font( physdev->font );
     HeapFree( GetProcessHeap(), 0, physdev );
     return TRUE;
 }
@@ -4535,7 +4547,6 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     BOOL bd, it, can_use_bitmap, want_vertical;
     LOGFONTW lf;
     CHARSETINFO csi;
-    HFONTLIST *hflist;
     FMAT2 dcmat;
     FontSubst *psub = NULL;
     DC *dc = get_dc_ptr( dev->hdc );
@@ -4543,6 +4554,7 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 
     if (!hfont)  /* notification that the font has been changed by another driver */
     {
+        release_font( physdev->font );
         physdev->font = NULL;
         release_dc_ptr( dc );
         return 0;
@@ -4596,12 +4608,6 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
         goto done;
     }
 
-    if(list_empty(&font_list)) /* No fonts installed */
-    {
-	TRACE("No fonts installed\n");
-        goto done;
-    }
-
     TRACE("not in cache\n");
     ret = alloc_font();
 
@@ -4609,9 +4615,6 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     ret->font_desc.lf = lf;
     ret->font_desc.can_use_bitmap = can_use_bitmap;
     calc_hash(&ret->font_desc);
-    hflist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hflist));
-    hflist->hfont = hfont;
-    list_add_head(&ret->hfontlist, &hflist->entry);
 
     /* If lfFaceName is "Symbol" then Windows fixes up lfCharSet to
        SYMBOL_CHARSET so that Symbol gets picked irrespective of the
@@ -4990,73 +4993,12 @@ done:
             }
         }
         TRACE( "%p %s %d aa %x\n", hfont, debugstr_w(lf.lfFaceName), lf.lfHeight, *aa_flags );
+        release_font( physdev->font );
         physdev->font = ret;
     }
     LeaveCriticalSection( &freetype_cs );
     release_dc_ptr( dc );
     return ret ? hfont : 0;
-}
-
-static void dump_gdi_font_list(void)
-{
-    GdiFont *gdiFont;
-
-    TRACE("---------- gdiFont Cache ----------\n");
-    LIST_FOR_EACH_ENTRY( gdiFont, &gdi_font_list, struct tagGdiFont, entry )
-        TRACE("gdiFont=%p %s %d\n",
-              gdiFont, debugstr_w(gdiFont->font_desc.lf.lfFaceName), gdiFont->font_desc.lf.lfHeight);
-
-    TRACE("---------- Unused gdiFont Cache ----------\n");
-    LIST_FOR_EACH_ENTRY( gdiFont, &unused_gdi_font_list, struct tagGdiFont, entry )
-        TRACE("gdiFont=%p %s %d\n",
-              gdiFont, debugstr_w(gdiFont->font_desc.lf.lfFaceName), gdiFont->font_desc.lf.lfHeight);
-}
-
-/*************************************************************
- * WineEngDestroyFontInstance
- *
- * free the gdiFont associated with this handle
- *
- */
-BOOL WineEngDestroyFontInstance(HFONT handle)
-{
-    GdiFont *gdiFont, *next;
-    HFONTLIST *hflist, *hfnext;
-    BOOL ret = FALSE;
-
-    GDI_CheckNotLock();
-    EnterCriticalSection( &freetype_cs );
-
-    TRACE("destroying hfont=%p\n", handle);
-    if(TRACE_ON(font))
-	dump_gdi_font_list();
-
-    LIST_FOR_EACH_ENTRY_SAFE( gdiFont, next, &gdi_font_list, struct tagGdiFont, entry )
-    {
-        LIST_FOR_EACH_ENTRY_SAFE( hflist, hfnext, &gdiFont->hfontlist, struct tagHFONTLIST, entry )
-        {
-            if(hflist->hfont == handle) {
-                list_remove(&hflist->entry);
-                HeapFree(GetProcessHeap(), 0, hflist);
-                ret = TRUE;
-            }
-        }
-        if(list_empty(&gdiFont->hfontlist)) {
-            TRACE("Moving to Unused list\n");
-            list_remove(&gdiFont->entry);
-            list_add_head(&unused_gdi_font_list, &gdiFont->entry);
-            if (unused_font_count > UNUSED_CACHE_SIZE)
-            {
-                gdiFont = LIST_ENTRY( list_tail( &unused_gdi_font_list ), struct tagGdiFont, entry );
-                TRACE("freeing %p\n", gdiFont);
-                list_remove(&gdiFont->entry);
-                free_font(gdiFont);
-            }
-            else unused_font_count++;
-        }
-    }
-    LeaveCriticalSection( &freetype_cs );
-    return ret;
 }
 
 static INT load_script_name( UINT id, WCHAR buffer[LF_FACESIZE] )
@@ -7879,10 +7821,6 @@ static const struct gdi_dc_funcs freetype_funcs =
 /*************************************************************************/
 
 BOOL WineEngInit(void)
-{
-    return FALSE;
-}
-BOOL WineEngDestroyFontInstance(HFONT hfont)
 {
     return FALSE;
 }

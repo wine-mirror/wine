@@ -290,7 +290,6 @@ typedef struct
 extern INT WineEngAddFontResourceEx(LPCWSTR, DWORD, PVOID) DECLSPEC_HIDDEN;
 extern HANDLE WineEngAddFontMemResourceEx(PVOID, DWORD, PVOID, LPDWORD) DECLSPEC_HIDDEN;
 extern BOOL WineEngCreateScalableFontResource(DWORD, LPCWSTR, LPCWSTR, LPCWSTR) DECLSPEC_HIDDEN;
-extern BOOL WineEngDestroyFontInstance(HFONT handle) DECLSPEC_HIDDEN;
 extern BOOL WineEngInit(void) DECLSPEC_HIDDEN;
 extern BOOL WineEngRemoveFontResourceEx(LPCWSTR, DWORD, PVOID) DECLSPEC_HIDDEN;
 

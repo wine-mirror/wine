@@ -644,8 +644,6 @@ static BOOL FONT_DeleteObject( HGDIOBJ handle )
 {
     FONTOBJ *obj;
 
-    WineEngDestroyFontInstance( handle );
-
     if (!(obj = free_gdi_handle( handle ))) return FALSE;
     return HeapFree( GetProcessHeap(), 0, obj );
 }
