@@ -152,7 +152,7 @@ static int TIME_DayLightCompareDate( const SYSTEMTIME *date,
 static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
     FILETIME *lpFileTime, BOOL islocal )
 {
-    int ret;
+    int ret, year;
     BOOL beforeStandardDate, afterDaylightDate;
     DWORD retval = TIME_ZONE_ID_INVALID;
     LONGLONG llTime = 0; /* initialized to prevent gcc complaining */
@@ -177,20 +177,29 @@ static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
 
         if (!islocal) {
             FILETIME2LL( lpFileTime, llTime );
-            llTime -= ( pTZinfo->Bias + pTZinfo->DaylightBias )
-                * (LONGLONG)600000000;
+            llTime -= pTZinfo->Bias * (LONGLONG)600000000;
             LL2FILETIME( llTime, &ftTemp)
             lpFileTime = &ftTemp;
         }
 
         FileTimeToSystemTime(lpFileTime, &SysTime);
-        
-         /* check for daylight savings */
-        ret = TIME_DayLightCompareDate( &SysTime, &pTZinfo->StandardDate);
-        if (ret == -2)
-          return TIME_ZONE_ID_INVALID;
+        year = SysTime.wYear;
 
-        beforeStandardDate = ret < 0;
+        if (!islocal) {
+            llTime -= pTZinfo->DaylightBias * (LONGLONG)600000000;
+            LL2FILETIME( llTime, &ftTemp)
+            FileTimeToSystemTime(lpFileTime, &SysTime);
+        }
+
+        /* check for daylight savings */
+        if(year == SysTime.wYear) {
+            ret = TIME_DayLightCompareDate( &SysTime, &pTZinfo->StandardDate);
+            if (ret == -2)
+                return TIME_ZONE_ID_INVALID;
+
+            beforeStandardDate = ret < 0;
+        } else
+            beforeStandardDate = SysTime.wYear < year;
 
         if (!islocal) {
             llTime -= ( pTZinfo->StandardBias - pTZinfo->DaylightBias )
@@ -199,11 +208,14 @@ static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
             FileTimeToSystemTime(lpFileTime, &SysTime);
         }
 
-        ret = TIME_DayLightCompareDate( &SysTime, &pTZinfo->DaylightDate);
-        if (ret == -2)
-          return TIME_ZONE_ID_INVALID;
+        if(year == SysTime.wYear) {
+            ret = TIME_DayLightCompareDate( &SysTime, &pTZinfo->DaylightDate);
+            if (ret == -2)
+                return TIME_ZONE_ID_INVALID;
 
-        afterDaylightDate = ret >= 0;
+            afterDaylightDate = ret >= 0;
+        } else
+            afterDaylightDate = SysTime.wYear > year;
 
         retval = TIME_ZONE_ID_STANDARD;
         if( pTZinfo->DaylightDate.wMonth <  pTZinfo->StandardDate.wMonth ) {
