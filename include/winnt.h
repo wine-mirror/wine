@@ -749,7 +749,7 @@ typedef struct _MEMORY_BASIC_INFORMATION
 #define FIELD_OFFSET(type, field) ((LONG)offsetof(type, field))
 
 #define CONTAINING_RECORD(address, type, field) \
-  ((type *)((PCHAR)(address) - (PCHAR)(&((type *)0)->field)))
+  ((type *)((PCHAR)(address) - offsetof(type, field)))
 
 /* Types */
 
