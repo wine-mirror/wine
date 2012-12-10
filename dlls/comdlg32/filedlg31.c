@@ -201,11 +201,11 @@ static BOOL FD31_ScanDir(const OPENFILENAMEW *ofn, HWND hWnd, LPCWSTR newPath)
 	while (filter) {
 	    scptr = strchrW(filter, ';');
 	    if (scptr)	*scptr = 0;
-            while (*filter == ' ') filter++;
+	    while (*filter == ' ') filter++;
 	    TRACE("Using file spec %s\n", debugstr_w(filter));
 	    SendMessageW(hdlg, LB_DIR, 0, (LPARAM)filter);
 	    if (scptr) *scptr = ';';
-	        filter = (scptr) ? (scptr + 1) : 0;
+	    filter = (scptr) ? (scptr + 1) : 0;
 	 }
     }
 
