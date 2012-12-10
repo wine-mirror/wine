@@ -1670,7 +1670,7 @@ DECLARE_INTERFACE_(IDirectDraw4,IUnknown)
 /*60*/    STDMETHOD(GetSurfaceFromDC)(THIS_ HDC dc, struct IDirectDrawSurface4 **surface) PURE;
 /*64*/    STDMETHOD(RestoreAllSurfaces)(THIS) PURE;
 /*68*/    STDMETHOD(TestCooperativeLevel)(THIS) PURE;
-/*6c*/    STDMETHOD(GetDeviceIdentifier)(THIS_ LPDDDEVICEIDENTIFIER pDDDI, DWORD dwFlags) PURE;
+/*6c*/    STDMETHOD(GetDeviceIdentifier)(THIS_ DDDEVICEIDENTIFIER *identifier, DWORD flags) PURE;
 };
 #undef INTERFACE
 
