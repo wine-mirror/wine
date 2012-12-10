@@ -488,7 +488,7 @@ int CDECL MSVCRT__gmtime64_s(struct MSVCRT_tm *res, const MSVCRT___time64_t *sec
     SYSTEMTIME st;
     ULONGLONG time;
 
-    if (!res || !secs || *secs < 0) {
+    if (!res || !secs || *secs < 0 || *secs > _MAX__TIME64_T) {
         if (res) {
             write_invalid_msvcrt_tm(res);
         }
