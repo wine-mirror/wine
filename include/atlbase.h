@@ -23,6 +23,16 @@
 
 #include <atliface.h>
 
+/* Wine extention: we (ab)use _ATL_VER to handle truct layout differences between ATL versions. */
+#define _ATL_VER_30  0x0300
+#define _ATL_VER_70  0x0700
+#define _ATL_VER_80  0x0800
+#define _ATL_VER_100 0x0a00
+
+#ifndef _ATL_VER
+#define _ATL_VER _ATL_VER_100
+#endif
+
 typedef HRESULT (WINAPI _ATL_CREATORFUNC)(void* pv, REFIID riid, LPVOID* ppv);
 typedef HRESULT (WINAPI _ATL_CREATORARGFUNC)(void* pv, REFIID riid, LPVOID* ppv, DWORD dw);
 typedef HRESULT (WINAPI _ATL_MODULEFUNC)(DWORD dw);
@@ -30,6 +40,8 @@ typedef LPCSTR (WINAPI _ATL_DESCRIPTIONFUNCA)(void);
 typedef LPCWSTR (WINAPI _ATL_DESCRIPTIONFUNCW)(void);
 typedef const struct _ATL_CATMAP_ENTRY* (_ATL_CATMAPFUNC)(void);
 typedef void (WINAPI _ATL_TERMFUNC)(DWORD dw);
+
+typedef CRITICAL_SECTION CComCriticalSection;
 
 typedef struct _ATL_OBJMAP_ENTRYA_V1_TAG
 {
@@ -147,6 +159,20 @@ typedef struct _ATL_MODULEW_TAG
     int m_nHeap;
     _ATL_TERMFUNC_ELEM* m_pTermFuncs;
 } _ATL_MODULEW;
+
+typedef struct _ATL_MODULE70
+{
+    UINT cbSize;
+    LONG m_nLockCnt;
+    _ATL_TERMFUNC_ELEM *m_pTermFuncs;
+    CComCriticalSection m_csStaticDataInitAndTypeInfo;
+} _ATL_MODULE70;
+
+#if _ATL_VER >= _ATL_VER_70
+typedef _ATL_MODULE70 _ATL_MODULE;
+#else
+typedef _ATL_MODULEW _ATL_MODULE;
+#endif
 
 typedef struct _ATL_INTMAP_ENTRY_TAG
 {

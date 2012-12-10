@@ -1,4 +1,6 @@
-MODULE = atl80.dll
+MODULE    = atl80.dll
+EXTRADEFS = -D_ATL_VER=_ATL_VER_80
+
 
 C_SRCS = atl80.c
 

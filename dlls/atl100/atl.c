@@ -231,5 +231,5 @@ HRESULT WINAPI AtlIPersistStreamInit_Save(LPSTREAM pStm, BOOL fClearDirty,
  */
 DWORD WINAPI AtlGetVersion(void *pReserved)
 {
-   return 0x0a00;
+   return _ATL_VER;
 }

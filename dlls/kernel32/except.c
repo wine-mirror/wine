@@ -154,7 +154,7 @@ static int format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, in
         len = snprintf( buffer, size, "Unhandled PIC return in vm86 mode");
         break;
     default:
-        len = snprintf( buffer, size, "Unhandled exception 0x%08x", rec->ExceptionCode);
+        len = snprintf( buffer, size, "Unhandled exception 0x%08x in thread %x", rec->ExceptionCode, GetCurrentThreadId());
         break;
     }
     if ((len<0) || (len>=size))

@@ -478,5 +478,5 @@ void* WINAPI AtlModuleExtractCreateWndData(_ATL_MODULEW *pM)
  */
 DWORD WINAPI AtlGetVersion(void *pReserved)
 {
-   return 0x0300;
+   return _ATL_VER;
 }

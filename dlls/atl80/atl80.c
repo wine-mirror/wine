@@ -19,11 +19,12 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "atlbase.h"
 
 /***********************************************************************
  *           AtlGetVersion              [atl80.@]
  */
 DWORD WINAPI AtlGetVersion(void *pReserved)
 {
-   return 0x0800;
+   return _ATL_VER;
 }
