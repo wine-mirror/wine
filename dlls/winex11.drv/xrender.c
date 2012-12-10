@@ -884,8 +884,12 @@ static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     TRACE("font transform %f %f %f %f\n", lfsz.xform.eM11, lfsz.xform.eM12,
           lfsz.xform.eM21, lfsz.xform.eM22);
 
-    if (GetGraphicsMode( dev->hdc ) == GM_COMPATIBLE && lfsz.xform.eM11 * lfsz.xform.eM22 < 0)
-        lfsz.lf.lfOrientation = -lfsz.lf.lfOrientation;
+    if (GetGraphicsMode( dev->hdc ) == GM_COMPATIBLE)
+    {
+        lfsz.lf.lfOrientation = lfsz.lf.lfEscapement;
+        if (lfsz.xform.eM11 * lfsz.xform.eM22 < 0)
+            lfsz.lf.lfOrientation = -lfsz.lf.lfOrientation;
+    }
 
     /* Not used fields, would break hashing */
     lfsz.xform.eDx = lfsz.xform.eDy = 0;

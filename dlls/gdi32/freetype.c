@@ -4578,7 +4578,7 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
         {
             lf.lfHeight *= fabs(dcmat.eM11);
             lf.lfWidth *= fabs(dcmat.eM11);
-            dcmat.eM11 = dcmat.eM22 = 1.0;
+            dcmat.eM11 = dcmat.eM22 = dcmat.eM11 < 0 ? -1 : 1;
         }
     }
     else
@@ -4587,6 +4587,7 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
            font scaling abilities. */
         dcmat.eM11 = dcmat.eM22 = 1.0;
         dcmat.eM21 = dcmat.eM12 = 0;
+        lf.lfOrientation = lf.lfEscapement;
         if (dc->vport2WorldValid)
         {
             if (dc->xformWorld2Vport.eM11 * dc->xformWorld2Vport.eM22 < 0)

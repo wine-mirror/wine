@@ -499,8 +499,12 @@ static struct cached_font *add_cached_font( HDC hdc, HFONT hfont, UINT aa_flags 
     GetObjectW( hfont, sizeof(font.lf), &font.lf );
     GetTransform( hdc, 0x204, &font.xform );
     font.xform.eDx = font.xform.eDy = 0;  /* unused, would break hashing */
-    if (GetGraphicsMode( hdc ) == GM_COMPATIBLE && font.xform.eM11 * font.xform.eM22 < 0)
-        font.lf.lfOrientation = -font.lf.lfOrientation;
+    if (GetGraphicsMode( hdc ) == GM_COMPATIBLE)
+    {
+        font.lf.lfOrientation = font.lf.lfEscapement;
+        if (font.xform.eM11 * font.xform.eM22 < 0)
+            font.lf.lfOrientation = -font.lf.lfOrientation;
+    }
     font.lf.lfWidth = abs( font.lf.lfWidth );
     font.aa_flags = aa_flags;
     font.hash = font_cache_hash( &font );

@@ -395,15 +395,6 @@ HFONT WINAPI CreateFontIndirectExW( const ENUMLOGFONTEXDVW *penumex )
 
     fontPtr->logfont = *plf;
 
-    if (plf->lfEscapement != plf->lfOrientation)
-    {
-        /* this should really depend on whether GM_ADVANCED is set */
-        fontPtr->logfont.lfOrientation = fontPtr->logfont.lfEscapement;
-        WARN("orientation angle %f set to "
-             "escapement angle %f for new font %p\n",
-             plf->lfOrientation/10., plf->lfEscapement/10., fontPtr);
-    }
-
     if (!(hFont = alloc_gdi_handle( fontPtr, OBJ_FONT, &font_funcs )))
     {
         HeapFree( GetProcessHeap(), 0, fontPtr );
@@ -2274,10 +2265,6 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                 if (dc->vport2WorldValid && dc->xformWorld2Vport.eM22 < 0)
                     desired[1].y = -desired[1].y;
             }
-            else
-            {
-                if (layout & LAYOUT_RTL) desired[1].x = -desired[1].x;
-            }
 
             deltas[i].x = desired[1].x - width.x;
             deltas[i].y = desired[1].y - width.y;
@@ -2288,6 +2275,8 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     }
     else
     {
+        POINT desired[2];
+
         if(!done_extents)
         {
             if(flags & ETO_GLYPH_INDEX)
@@ -2296,8 +2285,21 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                 GetTextExtentPointW(hdc, reordered_str, count, &sz);
             done_extents = TRUE;
         }
-        width.x = abs(INTERNAL_XWSTODS(dc, sz.cx));
-        width.y = 0;
+        desired[0].x = desired[0].y = 0;
+        desired[1].x = sz.cx;
+        desired[1].y = 0;
+        LPtoDP(hdc, desired, 2);
+        desired[1].x -= desired[0].x;
+        desired[1].y -= desired[0].y;
+
+        if (dc->GraphicsMode == GM_COMPATIBLE)
+        {
+            if (dc->vport2WorldValid && dc->xformWorld2Vport.eM11 < 0)
+                desired[1].x = -desired[1].x;
+            if (dc->vport2WorldValid && dc->xformWorld2Vport.eM22 < 0)
+                desired[1].y = -desired[1].y;
+        }
+        width = desired[1];
     }
 
     tm.tmAscent = abs(INTERNAL_YWSTODS(dc, tm.tmAscent));
