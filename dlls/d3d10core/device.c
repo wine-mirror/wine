@@ -1314,7 +1314,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShader(ID3D10Device 
     struct d3d10_geometry_shader *object;
     HRESULT hr;
 
-    FIXME("iface %p, byte_code %p, byte_code_length %lu, shader %p stub!\n",
+    TRACE("iface %p, byte_code %p, byte_code_length %lu, shader %p.\n",
             iface, byte_code, byte_code_length, shader);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
