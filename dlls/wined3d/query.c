@@ -61,8 +61,6 @@ static enum wined3d_event_query_result wined3d_event_query_test(const struct win
     context = context_acquire(device, query->context->current_rt);
     gl_info = context->gl_info;
 
-    ENTER_GL();
-
     if (gl_info->supported[ARB_SYNC])
     {
         GLenum gl_ret = GL_EXTCALL(glClientWaitSync(query->object.sync, 0, 0));
@@ -105,8 +103,6 @@ static enum wined3d_event_query_result wined3d_event_query_test(const struct win
         ret = WINED3D_EVENT_QUERY_ERROR;
     }
 
-    LEAVE_GL();
-
     context_release(context);
     return ret;
 }
@@ -138,7 +134,6 @@ enum wined3d_event_query_result wined3d_event_query_finish(const struct wined3d_
 
     context = context_acquire(device, query->context->current_rt);
 
-    ENTER_GL();
     if (gl_info->supported[ARB_SYNC])
     {
         /* Apple seems to be into arbitrary limits, and timeouts larger than
@@ -177,7 +172,6 @@ enum wined3d_event_query_result wined3d_event_query_finish(const struct wined3d_
         ERR("Event query created without GL support\n");
         ret = WINED3D_EVENT_QUERY_ERROR;
     }
-    LEAVE_GL();
 
     context_release(context);
     return ret;
@@ -209,8 +203,6 @@ void wined3d_event_query_issue(struct wined3d_event_query *query, const struct w
 
     gl_info = context->gl_info;
 
-    ENTER_GL();
-
     if (gl_info->supported[ARB_SYNC])
     {
         if (query->object.sync) GL_EXTCALL(glDeleteSync(query->object.sync));
@@ -228,8 +220,6 @@ void wined3d_event_query_issue(struct wined3d_event_query *query, const struct w
         GL_EXTCALL(glSetFenceNV(query->object.id, GL_ALL_COMPLETED_NV));
         checkGLcall("glSetFenceNV");
     }
-
-    LEAVE_GL();
 
     context_release(context);
 }
@@ -345,8 +335,6 @@ static HRESULT wined3d_occlusion_query_ops_get_data(struct wined3d_query *query,
 
     context = context_acquire(query->device, oq->context->current_rt);
 
-    ENTER_GL();
-
     GL_EXTCALL(glGetQueryObjectuivARB(oq->id, GL_QUERY_RESULT_AVAILABLE_ARB, &available));
     checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT_AVAILABLE)");
     TRACE("available %#x.\n", available);
@@ -366,8 +354,6 @@ static HRESULT wined3d_occlusion_query_ops_get_data(struct wined3d_query *query,
     {
         res = S_FALSE;
     }
-
-    LEAVE_GL();
 
     context_release(context);
 
@@ -480,10 +466,8 @@ static HRESULT wined3d_occlusion_query_ops_issue(struct wined3d_query *query, DW
                 {
                     context = context_acquire(query->device, oq->context->current_rt);
 
-                    ENTER_GL();
                     GL_EXTCALL(glEndQueryARB(GL_SAMPLES_PASSED_ARB));
                     checkGLcall("glEndQuery()");
-                    LEAVE_GL();
                 }
             }
             else
@@ -493,10 +477,8 @@ static HRESULT wined3d_occlusion_query_ops_issue(struct wined3d_query *query, DW
                 context_alloc_occlusion_query(context, oq);
             }
 
-            ENTER_GL();
             GL_EXTCALL(glBeginQueryARB(GL_SAMPLES_PASSED_ARB, oq->id));
             checkGLcall("glBeginQuery()");
-            LEAVE_GL();
 
             context_release(context);
         }
@@ -516,10 +498,8 @@ static HRESULT wined3d_occlusion_query_ops_issue(struct wined3d_query *query, DW
                 {
                     context = context_acquire(query->device, oq->context->current_rt);
 
-                    ENTER_GL();
                     GL_EXTCALL(glEndQueryARB(GL_SAMPLES_PASSED_ARB));
                     checkGLcall("glEndQuery()");
-                    LEAVE_GL();
 
                     context_release(context);
                 }

@@ -57,8 +57,6 @@ static void surface_cleanup(struct wined3d_surface *surface)
         context = context_acquire(surface->resource.device, NULL);
         gl_info = context->gl_info;
 
-        ENTER_GL();
-
         if (surface->texture_name)
         {
             TRACE("Deleting texture %u.\n", surface->texture_name);
@@ -89,8 +87,6 @@ static void surface_cleanup(struct wined3d_surface *surface)
             gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
             HeapFree(GetProcessHeap(), 0, entry);
         }
-
-        LEAVE_GL();
 
         context_release(context);
     }
@@ -313,7 +309,7 @@ static void surface_get_rect(const struct wined3d_surface *surface, const RECT *
     }
 }
 
-/* GL locking and context activation is done by the caller */
+/* Context activation is done by the caller. */
 void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3d_context *context,
         const RECT *src_rect, const RECT *dst_rect, enum wined3d_texture_filter_type filter)
 {
@@ -532,7 +528,6 @@ static void surface_load_pbo(struct wined3d_surface *surface, const struct wined
     GLenum error;
 
     context = context_acquire(surface->resource.device, NULL);
-    ENTER_GL();
 
     GL_EXTCALL(glGenBuffersARB(1, &surface->pbo));
     error = gl_info->gl_ops.gl.p_glGetError();
@@ -559,7 +554,6 @@ static void surface_load_pbo(struct wined3d_surface *surface, const struct wined
     }
     surface->resource.allocatedMemory = NULL;
     surface->flags |= SFLAG_PBO;
-    LEAVE_GL();
     context_release(context);
 }
 
@@ -622,8 +616,6 @@ static void surface_bind(struct wined3d_surface *surface, struct wined3d_context
         if (srgb)
             ERR("Trying to bind standalone surface %p as sRGB.\n", surface);
 
-        ENTER_GL();
-
         if (!surface->texture_name)
         {
             gl_info->gl_ops.gl.p_glGenTextures(1, &surface->texture_name);
@@ -643,8 +635,6 @@ static void surface_bind(struct wined3d_surface *surface, struct wined3d_context
         {
             context_bind_texture(context, surface->texture_target, surface->texture_name);
         }
-
-        LEAVE_GL();
     }
 }
 
@@ -681,7 +671,6 @@ static void surface_release_client_storage(struct wined3d_surface *surface)
     struct wined3d_context *context = context_acquire(surface->resource.device, NULL);
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    ENTER_GL();
     gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
     if (surface->texture_name)
     {
@@ -696,7 +685,6 @@ static void surface_release_client_storage(struct wined3d_surface *surface)
                 GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     }
     gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-    LEAVE_GL();
 
     context_release(context);
 
@@ -922,7 +910,6 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;
 
-        ENTER_GL();
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
         checkGLcall("glBindBufferARB");
 
@@ -939,7 +926,6 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
         checkGLcall("glBindBufferARB");
 
-        LEAVE_GL();
         context_release(context);
     }
 
@@ -981,12 +967,10 @@ static void surface_unmap(struct wined3d_surface *surface)
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;
 
-        ENTER_GL();
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
         GL_EXTCALL(glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB));
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
         checkGLcall("glUnmapBufferARB");
-        LEAVE_GL();
         context_release(context);
 
         surface->resource.allocatedMemory = NULL;
@@ -1108,8 +1092,6 @@ static void wined3d_surface_depth_blt_fbo(const struct wined3d_device *device, s
 
     gl_info = context->gl_info;
 
-    ENTER_GL();
-
     context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, NULL, src_surface, SFLAG_INTEXTURE);
     gl_info->gl_ops.gl.p_glReadBuffer(GL_NONE);
     checkGLcall("glReadBuffer()");
@@ -1142,8 +1124,6 @@ static void wined3d_surface_depth_blt_fbo(const struct wined3d_device *device, s
     gl_info->fbo_ops.glBlitFramebuffer(src_rect->left, src_rect->top, src_rect->right, src_rect->bottom,
             dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, gl_mask, GL_NEAREST);
     checkGLcall("glBlitFramebuffer()");
-
-    LEAVE_GL();
 
     if (wined3d_settings.strict_draw_ordering)
         gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
@@ -1226,12 +1206,10 @@ static void surface_blt_fbo(const struct wined3d_device *device, enum wined3d_te
         buffer = GL_COLOR_ATTACHMENT0;
     }
 
-    ENTER_GL();
     context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, src_surface, NULL, src_location);
     gl_info->gl_ops.gl.p_glReadBuffer(buffer);
     checkGLcall("glReadBuffer()");
     context_check_fbo_status(context, GL_READ_FRAMEBUFFER);
-    LEAVE_GL();
 
     if (dst_location == SFLAG_INDRAWABLE)
     {
@@ -1245,7 +1223,6 @@ static void surface_blt_fbo(const struct wined3d_device *device, enum wined3d_te
         buffer = GL_COLOR_ATTACHMENT0;
     }
 
-    ENTER_GL();
     context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, dst_surface, NULL, dst_location);
     context_set_draw_buffer(context, buffer);
     context_check_fbo_status(context, GL_DRAW_FRAMEBUFFER);
@@ -1263,8 +1240,6 @@ static void surface_blt_fbo(const struct wined3d_device *device, enum wined3d_te
     gl_info->fbo_ops.glBlitFramebuffer(src_rect.left, src_rect.top, src_rect.right, src_rect.bottom,
             dst_rect.left, dst_rect.top, dst_rect.right, dst_rect.bottom, GL_COLOR_BUFFER_BIT, gl_filter);
     checkGLcall("glBlitFramebuffer()");
-
-    LEAVE_GL();
 
     if (wined3d_settings.strict_draw_ordering
             || (dst_location == SFLAG_INDRAWABLE
@@ -1791,7 +1766,6 @@ static void surface_remove_pbo(struct wined3d_surface *surface, const struct win
                 + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
     }
 
-    ENTER_GL();
     GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
     checkGLcall("glBindBufferARB(GL_PIXEL_UNPACK_BUFFER, surface->pbo)");
     GL_EXTCALL(glGetBufferSubDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0,
@@ -1799,7 +1773,6 @@ static void surface_remove_pbo(struct wined3d_surface *surface, const struct win
     checkGLcall("glGetBufferSubDataARB");
     GL_EXTCALL(glDeleteBuffersARB(1, &surface->pbo));
     checkGLcall("glDeleteBuffersARB");
-    LEAVE_GL();
 
     surface->pbo = 0;
     surface->flags &= ~SFLAG_PBO;
@@ -1891,16 +1864,12 @@ static void surface_unload(struct wined3d_resource *resource)
      */
     LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &surface->renderbuffers, struct wined3d_renderbuffer_entry, entry)
     {
-        ENTER_GL();
         gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
-        LEAVE_GL();
         list_remove(&entry->entry);
         HeapFree(GetProcessHeap(), 0, entry);
     }
     list_init(&surface->renderbuffers);
     surface->current_renderbuffer = NULL;
-
-    ENTER_GL();
 
     /* If we're in a texture, the texture name belongs to the texture.
      * Otherwise, destroy it. */
@@ -1921,8 +1890,6 @@ static void surface_unload(struct wined3d_resource *resource)
         gl_info->fbo_ops.glDeleteRenderbuffers(1, &surface->rb_resolved);
         surface->rb_resolved = 0;
     }
-
-    LEAVE_GL();
 
     context_release(context);
 
@@ -2138,8 +2105,6 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         return;
     }
 
-    ENTER_GL();
-
     if (format->flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         TRACE("(%p) : Calling glGetCompressedTexImageARB level %d, format %#x, type %#x, data %p.\n",
@@ -2161,8 +2126,6 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
                     surface->texture_level, surface->resource.allocatedMemory));
             checkGLcall("glGetCompressedTexImageARB");
         }
-
-        LEAVE_GL();
     }
     else
     {
@@ -2213,7 +2176,6 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
                     gl_format, gl_type, mem);
             checkGLcall("glGetTexImage");
         }
-        LEAVE_GL();
 
         if (surface->flags & SFLAG_NONPOW2)
         {
@@ -2314,8 +2276,6 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
         update_h /= format->height_scale.denominator;
     }
 
-    ENTER_GL();
-
     if (data->buffer_object)
     {
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, data->buffer_object));
@@ -2387,8 +2347,6 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
         checkGLcall("glBindBufferARB");
     }
-
-    LEAVE_GL();
 
     if (wined3d_settings.strict_draw_ordering)
         gl_info->gl_ops.gl.p_glFlush();
@@ -2705,8 +2663,6 @@ static void surface_allocate_surface(struct wined3d_surface *surface, const stru
             surface, surface->texture_target, surface->texture_level, debug_d3dformat(format->id),
             internal, width, height, format->glFormat, format->glType);
 
-    ENTER_GL();
-
     if (gl_info->supported[APPLE_CLIENT_STORAGE])
     {
         if (surface->flags & (SFLAG_NONPOW2 | SFLAG_DIBSECTION | SFLAG_CONVERTED)
@@ -2753,13 +2709,12 @@ static void surface_allocate_surface(struct wined3d_surface *surface, const stru
         gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
         checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
     }
-    LEAVE_GL();
 }
 
 /* In D3D the depth stencil dimensions have to be greater than or equal to the
  * render target dimensions. With FBOs, the dimensions have to be an exact match. */
 /* TODO: We should synchronize the renderbuffer's content with the texture's content. */
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, const struct wined3d_surface *rt)
 {
     const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
@@ -4156,9 +4111,7 @@ void surface_internal_preload(struct wined3d_surface *surface, enum WINED3DSRGB 
             /* Tell opengl to try and keep this texture in video ram (well mostly) */
             GLclampf tmp;
             tmp = 0.9f;
-            ENTER_GL();
             context->gl_info->gl_ops.gl.p_glPrioritizeTextures(1, &surface->texture_name, &tmp);
-            LEAVE_GL();
         }
 
         context_release(context);
@@ -4186,8 +4139,6 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
     context = context_acquire(device, surface);
     context_apply_blit_state(context, device);
     gl_info = context->gl_info;
-
-    ENTER_GL();
 
     /* Select the correct read buffer, and give some debug output.
      * There is no need to keep track of the current read buffer or reset it, every part of the code
@@ -4255,7 +4206,6 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
                 if (!mem)
                 {
                     ERR("Out of memory\n");
-                    LEAVE_GL();
                     return;
                 }
                 bpp = surface->resource.format->byte_count * 3;
@@ -4344,7 +4294,6 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
             ERR("Out of memory\n");
             if (surface->resource.format->id == WINED3DFMT_P8_UINT)
                 HeapFree(GetProcessHeap(), 0, mem);
-            LEAVE_GL();
             return;
         }
 
@@ -4367,7 +4316,6 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
         }
     }
 
-    LEAVE_GL();
     context_release(context);
 
     /* For P8 textures we need to perform an inverse palette lookup. This is
@@ -4432,8 +4380,6 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb)
 
     TRACE("Reading back offscreen render target %p.\n", surface);
 
-    ENTER_GL();
-
     if (surface_is_offscreen(surface))
         gl_info->gl_ops.gl.p_glReadBuffer(device->offscreenBuffer);
     else
@@ -4443,8 +4389,6 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb)
     gl_info->gl_ops.gl.p_glCopyTexSubImage2D(surface->texture_target, surface->texture_level,
             0, 0, 0, 0, surface->resource.width, surface->resource.height);
     checkGLcall("glCopyTexSubImage2D");
-
-    LEAVE_GL();
 
     context_release(context);
 }
@@ -4539,8 +4483,6 @@ static void flush_to_framebuffer_drawpixels(struct wined3d_surface *surface,
     context_apply_blit_state(context, device);
     gl_info = context->gl_info;
 
-    ENTER_GL();
-
     if (!surface_is_offscreen(surface))
     {
         GLenum buffer = surface_get_gl_buffer(surface);
@@ -4582,8 +4524,6 @@ static void flush_to_framebuffer_drawpixels(struct wined3d_surface *surface,
 
     gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     checkGLcall("glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)");
-
-    LEAVE_GL();
 
     if (wined3d_settings.strict_draw_ordering
             || (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
@@ -4923,7 +4863,6 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
     gl_info = context->gl_info;
     context_apply_blit_state(context, device);
     surface_internal_preload(dst_surface, SRGB_RGB);
-    ENTER_GL();
 
     /* Bind the target texture */
     context_bind_texture(context, dst_target, dst_surface->texture_name);
@@ -4999,7 +4938,6 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
     }
     checkGLcall("glCopyTexSubImage2D");
 
-    LEAVE_GL();
     context_release(context);
 
     /* The texture is now most up to date - If the surface is a render target and has a drawable, this
@@ -5041,7 +4979,6 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
         /* Get it a description */
         surface_internal_preload(src_surface, SRGB_RGB);
     }
-    ENTER_GL();
 
     /* Try to use an aux buffer for drawing the rectangle. This way it doesn't need restoring.
      * This way we don't have to wait for the 2nd readback to finish to leave this function.
@@ -5274,8 +5211,6 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
         checkGLcall("glDeleteTextures(1, &backup)");
     }
 
-    LEAVE_GL();
-
     if (wined3d_settings.strict_draw_ordering)
         gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
@@ -5343,8 +5278,6 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
 
     device->blitter->set_shader(device->blit_priv, context, src_surface);
 
-    ENTER_GL();
-
     if (color_key)
     {
         gl_info->gl_ops.gl.p_glEnable(GL_ALPHA_TEST);
@@ -5374,8 +5307,6 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
         gl_info->gl_ops.gl.p_glDisable(GL_ALPHA_TEST);
         checkGLcall("glDisable(GL_ALPHA_TEST)");
     }
-
-    LEAVE_GL();
 
     /* Leave the opengl state valid for blitting */
     device->blitter->unset_shader(context->gl_info);
@@ -5597,7 +5528,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
     return WINED3DERR_INVALIDCALL;
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void surface_depth_blt(const struct wined3d_surface *surface, struct wined3d_context *context,
         GLuint texture, GLint x, GLint y, GLsizei w, GLsizei h, GLenum target)
 {
@@ -5766,8 +5697,6 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
 
         TRACE("Copying onscreen depth buffer to depth texture.\n");
 
-        ENTER_GL();
-
         if (!device->depth_blt_texture)
             gl_info->gl_ops.gl.p_glGenTextures(1, &device->depth_blt_texture);
 
@@ -5813,16 +5742,12 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
 
         context_invalidate_state(context, STATE_FRAMEBUFFER);
 
-        LEAVE_GL();
-
         if (wined3d_settings.strict_draw_ordering)
             gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
     }
     else if (location == SFLAG_INDRAWABLE)
     {
         TRACE("Copying depth texture to onscreen depth buffer.\n");
-
-        ENTER_GL();
 
         context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,
                 context->swapchain->front_buffer, NULL, SFLAG_INDRAWABLE);
@@ -5831,8 +5756,6 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
         checkGLcall("depth_blt");
 
         context_invalidate_state(context, STATE_FRAMEBUFFER);
-
-        LEAVE_GL();
 
         if (wined3d_settings.strict_draw_ordering)
             gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
@@ -6366,9 +6289,7 @@ static void ffp_blit_p8_upload_palette(const struct wined3d_surface *surface, co
     d3dfmt_p8_init_palette(surface, table, colorkey_active);
 
     TRACE("Using GL_EXT_PALETTED_TEXTURE for 8-bit paletted texture support\n");
-    ENTER_GL();
     GL_EXTCALL(glColorTableEXT(target, GL_RGBA, 256, GL_RGBA, GL_UNSIGNED_BYTE, table));
-    LEAVE_GL();
 }
 
 /* Context activation is done by the caller. */
@@ -6390,17 +6311,15 @@ static HRESULT ffp_blit_set(void *blit_priv, struct wined3d_context *context, co
             && gl_info->supported[EXT_PALETTED_TEXTURE])
         ffp_blit_p8_upload_palette(surface, gl_info);
 
-    ENTER_GL();
     gl_info->gl_ops.gl.p_glEnable(target);
     checkGLcall("glEnable(target)");
-    LEAVE_GL();
+
     return WINED3D_OK;
 }
 
 /* Context activation is done by the caller. */
 static void ffp_blit_unset(const struct wined3d_gl_info *gl_info)
 {
-    ENTER_GL();
     gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
     checkGLcall("glDisable(GL_TEXTURE_2D)");
     if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
@@ -6413,7 +6332,6 @@ static void ffp_blit_unset(const struct wined3d_gl_info *gl_info)
         gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
         checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
     }
-    LEAVE_GL();
 }
 
 static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,

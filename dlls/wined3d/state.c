@@ -38,7 +38,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
 
-/* GL locking for state handlers is done by the caller. */
+/* Context activation for state handler is done by the caller. */
 
 static void state_undefined(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
@@ -5657,7 +5657,7 @@ static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
     {0 /* Terminate */,                                   { 0,                                                  0                   }, WINED3D_GL_EXT_NONE             },
 };
 
-/* Context activation and GL locking are done by the caller. */
+/* Context activation is done by the caller. */
 static void ffp_enable(const struct wined3d_gl_info *gl_info, BOOL enable) {}
 
 static void ffp_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)

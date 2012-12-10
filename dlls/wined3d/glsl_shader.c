@@ -245,8 +245,7 @@ static char *get_info_log_line(char **ptr)
     return p;
 }
 
-/** Prints the GLSL info log which will contain error messages if they exist */
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLhandleARB obj)
 {
     int infologLength = 0;
@@ -288,7 +287,7 @@ static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLhandleA
     }
 }
 
-/* GL locking is done by the caller. */
+/* Context activation is done by the caller. */
 static void shader_glsl_compile(const struct wined3d_gl_info *gl_info, GLhandleARB shader, const char *src)
 {
     TRACE("Compiling shader object %u.\n", shader);
@@ -299,7 +298,7 @@ static void shader_glsl_compile(const struct wined3d_gl_info *gl_info, GLhandleA
     print_glsl_info_log(gl_info, shader);
 }
 
-/* GL locking is done by the caller. */
+/* Context activation is done by the caller. */
 static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_info, GLhandleARB program)
 {
     GLint i, object_count, source_size = -1;
@@ -353,7 +352,7 @@ static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_inf
     HeapFree(GetProcessHeap(), 0, objects);
 }
 
-/* GL locking is done by the caller. */
+/* Context activation is done by the caller. */
 static void shader_glsl_validate_link(const struct wined3d_gl_info *gl_info, GLhandleARB program)
 {
     GLint tmp;
@@ -374,10 +373,7 @@ static void shader_glsl_validate_link(const struct wined3d_gl_info *gl_info, GLh
     print_glsl_info_log(gl_info, program);
 }
 
-/**
- * Loads (pixel shader) samplers
- */
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void shader_glsl_load_psamplers(const struct wined3d_gl_info *gl_info,
         const DWORD *tex_unit_map, GLhandleARB programId)
 {
@@ -403,7 +399,7 @@ static void shader_glsl_load_psamplers(const struct wined3d_gl_info *gl_info,
     }
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void shader_glsl_load_vsamplers(const struct wined3d_gl_info *gl_info,
         const DWORD *tex_unit_map, GLhandleARB programId)
 {
@@ -429,7 +425,7 @@ static void shader_glsl_load_vsamplers(const struct wined3d_gl_info *gl_info,
     }
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static inline void walk_constant_heap(const struct wined3d_gl_info *gl_info, const float *constants,
         const GLint *constant_locations, const struct constant_heap *heap, unsigned char *stack, DWORD version)
 {
@@ -489,7 +485,7 @@ static inline void walk_constant_heap(const struct wined3d_gl_info *gl_info, con
     checkGLcall("walk_constant_heap()");
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static inline void apply_clamped_constant(const struct wined3d_gl_info *gl_info, GLint location, const GLfloat *data)
 {
     GLfloat clamped_constant[4];
@@ -504,7 +500,7 @@ static inline void apply_clamped_constant(const struct wined3d_gl_info *gl_info,
     GL_EXTCALL(glUniform4fvARB(location, 1, clamped_constant));
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static inline void walk_constant_heap_clamped(const struct wined3d_gl_info *gl_info, const float *constants,
         const GLint *constant_locations, const struct constant_heap *heap, unsigned char *stack, DWORD version)
 {
@@ -562,8 +558,7 @@ static inline void walk_constant_heap_clamped(const struct wined3d_gl_info *gl_i
     checkGLcall("walk_constant_heap_clamped()");
 }
 
-/* Loads floating point constants (aka uniforms) into the currently set GLSL program. */
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void shader_glsl_load_constantsF(const struct wined3d_shader *shader, const struct wined3d_gl_info *gl_info,
         const float *constants, const GLint *constant_locations, const struct constant_heap *heap,
         unsigned char *stack, UINT version)
@@ -593,8 +588,7 @@ static void shader_glsl_load_constantsF(const struct wined3d_shader *shader, con
     checkGLcall("glUniform4fvARB()");
 }
 
-/* Loads integer constants (aka uniforms) into the currently set GLSL program. */
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void shader_glsl_load_constantsI(const struct wined3d_shader *shader, const struct wined3d_gl_info *gl_info,
         const GLint locations[MAX_CONST_I], const int *constants, WORD constants_set)
 {
@@ -631,8 +625,7 @@ static void shader_glsl_load_constantsI(const struct wined3d_shader *shader, con
     }
 }
 
-/* Loads boolean constants (aka uniforms) into the currently set GLSL program. */
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void shader_glsl_load_constantsB(const struct wined3d_shader *shader, const struct wined3d_gl_info *gl_info,
         GLhandleARB programId, const BOOL *constants, WORD constants_set)
 {
@@ -690,10 +683,7 @@ static void reset_program_constant_version(struct wine_rb_entry *entry, void *co
     WINE_RB_ENTRY_VALUE(entry, struct glsl_shader_prog_link, program_lookup_entry)->constant_version = 0;
 }
 
-/**
- * Loads the texture dimensions for NP2 fixup into the currently set GLSL program.
- */
-/* GL locking is done by the caller (state handler) */
+/* Context activation is done by the caller (state handler). */
 static void shader_glsl_load_np2fixup_constants(void *shader_priv,
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state)
 {
@@ -741,10 +731,7 @@ static void shader_glsl_load_np2fixup_constants(void *shader_priv,
     }
 }
 
-/**
- * Loads the app-supplied constants into the currently set GLSL program.
- */
-/* GL locking is done by the caller (state handler) */
+/* Context activation is done by the caller (state handler). */
 static void shader_glsl_load_constants(const struct wined3d_context *context,
         BOOL usePixelShader, BOOL useVertexShader)
 {
@@ -4201,7 +4188,7 @@ static struct glsl_shader_prog_link *get_glsl_program_entry(const struct shader_
     return entry ? WINE_RB_ENTRY_VALUE(entry, struct glsl_shader_prog_link, program_lookup_entry) : NULL;
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struct wined3d_gl_info *gl_info,
         struct glsl_shader_prog_link *entry)
 {
@@ -4317,7 +4304,7 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer,
     HeapFree(GetProcessHeap(), 0, set);
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer *buffer,
         const struct wined3d_shader *vs, const struct wined3d_shader *ps,
         const struct wined3d_gl_info *gl_info)
@@ -4468,7 +4455,7 @@ static void shader_glsl_generate_fog_code(struct wined3d_shader_buffer *buffer, 
     shader_addline(buffer, "gl_FragData[0].xyz = mix(gl_Fog.color.xyz, gl_FragData[0].xyz, clamp(Fog, 0.0, 1.0));\n");
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void hardcode_local_constants(const struct wined3d_shader *shader,
         const struct wined3d_gl_info *gl_info, GLhandleARB programId, const char *prefix)
 {
@@ -4487,7 +4474,7 @@ static void hardcode_local_constants(const struct wined3d_shader *shader,
     checkGLcall("Hardcoding local constants");
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context,
         struct wined3d_shader_buffer *buffer, const struct wined3d_shader *shader,
         const struct ps_compile_args *args, struct ps_np2fixup_info *np2fixup_info)
@@ -4550,7 +4537,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     return shader_obj;
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context,
         struct wined3d_shader_buffer *buffer, const struct wined3d_shader *shader,
         const struct vs_compile_args *args)
@@ -4622,7 +4609,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     return shader_obj;
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static GLhandleARB shader_glsl_generate_geometry_shader(const struct wined3d_context *context,
         struct wined3d_shader_buffer *buffer, const struct wined3d_shader *shader)
 {
@@ -5531,16 +5518,7 @@ static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *
     ps->ycorrection_location = GL_EXTCALL(glGetUniformLocationARB(program_id, "ycorrection"));
 }
 
-/** Sets the GLSL program ID for the given pixel and vertex shader combination.
- * It sets the programId on the current StateBlock (because it should be called
- * inside of the DrawPrimitive() part of the render loop).
- *
- * If a program for the given combination does not exist, create one, and store
- * the program in the hash table.  If it creates a program, it will link the
- * given objects, too.
- */
-
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void set_glsl_shader_program(const struct wined3d_context *context, struct wined3d_device *device,
         enum wined3d_shader_mode vertex_mode, enum wined3d_shader_mode fragment_mode)
 {
@@ -5740,7 +5718,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, struc
         hardcode_local_constants(vshader, gl_info, programId, "vs");
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info, enum tex_types tex_type, BOOL masked)
 {
     GLhandleARB program_id;
@@ -5850,7 +5828,7 @@ static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info,
     return program_id;
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void shader_glsl_select(const struct wined3d_context *context, enum wined3d_shader_mode vertex_mode,
         enum wined3d_shader_mode fragment_mode)
 {
@@ -5890,7 +5868,7 @@ static void shader_glsl_select(const struct wined3d_context *context, enum wined
     }
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void shader_glsl_select_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info,
         enum tex_types tex_type, const SIZE *ds_mask_size)
 {
@@ -5919,7 +5897,7 @@ static void shader_glsl_select_depth_blt(void *shader_priv, const struct wined3d
     }
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void shader_glsl_deselect_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info)
 {
     struct shader_glsl_priv *priv = shader_priv;
@@ -5957,8 +5935,6 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
     {
         struct glsl_shader_prog_link *entry, *entry2;
         UINT i;
-
-        ENTER_GL();
 
         switch (shader->reg_maps.shader_version.type)
         {
@@ -6035,8 +6011,6 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
                 ERR("Unhandled shader type %#x.\n", shader->reg_maps.shader_version.type);
                 break;
         }
-
-        LEAVE_GL();
     }
 
     HeapFree(GetProcessHeap(), 0, shader->backend_data);
@@ -6165,7 +6139,6 @@ static void shader_glsl_free(struct wined3d_device *device)
     struct shader_glsl_priv *priv = device->shader_priv;
     int i;
 
-    ENTER_GL();
     for (i = 0; i < tex_type_count; ++i)
     {
         if (priv->depth_blt_program_full[i])
@@ -6177,7 +6150,6 @@ static void shader_glsl_free(struct wined3d_device *device)
             GL_EXTCALL(glDeleteObjectARB(priv->depth_blt_program_masked[i]));
         }
     }
-    LEAVE_GL();
 
     wine_rb_destroy(&priv->program_lookup, NULL, NULL);
     constant_heap_free(&priv->pconst_heap);

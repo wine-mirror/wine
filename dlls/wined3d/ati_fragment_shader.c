@@ -29,7 +29,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
-/* GL locking for state handlers is done by the caller. */
+/* Context activation for state handlers is done by the caller. */
 
 /* Some private defines, Constant associations, etc.
  * Env bump matrix and per stage constant should be independent,
@@ -1085,7 +1085,7 @@ static const struct StateEntryTemplate atifs_fragmentstate_template[] = {
     {0 /* Terminate */,                                   { 0,                                                  0                       }, WINED3D_GL_EXT_NONE             },
 };
 
-/* Context activation and GL locking are done by the caller. */
+/* Context activation is done by the caller. */
 static void atifs_enable(const struct wined3d_gl_info *gl_info, BOOL enable)
 {
     if (enable)
@@ -1173,11 +1173,9 @@ static void atifs_free_ffpshader(struct wine_rb_entry *entry, void *context)
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct atifs_ffp_desc *entry_ati = WINE_RB_ENTRY_VALUE(entry, struct atifs_ffp_desc, parent.entry);
 
-    ENTER_GL();
     GL_EXTCALL(glDeleteFragmentShaderATI(entry_ati->shader));
     checkGLcall("glDeleteFragmentShaderATI(entry->shader)");
     HeapFree(GetProcessHeap(), 0, entry_ati);
-    LEAVE_GL();
 }
 
 /* Context activation is done by the caller. */

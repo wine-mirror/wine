@@ -29,7 +29,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
-/* GL locking for state handlers is done by the caller. */
+/* Context activation for state handlers is done by the caller. */
 
 static void nvts_activate_dimensions(const struct wined3d_state *state, DWORD stage, struct wined3d_context *context)
 {
@@ -652,7 +652,7 @@ static void nvrc_enable(const struct wined3d_gl_info *gl_info, BOOL enable)
     }
 }
 
-/* Context activation and GL locking are done by the caller. */
+/* Context activation is done by the caller. */
 static void nvts_enable(const struct wined3d_gl_info *gl_info, BOOL enable)
 {
     nvrc_enable(gl_info, enable);

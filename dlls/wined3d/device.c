@@ -710,8 +710,6 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         return;
     }
 
-    ENTER_GL();
-
     /* Only set the values up once, as they are not changing. */
     if (flags & WINED3DCLEAR_STENCIL)
     {
@@ -815,8 +813,6 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
             checkGLcall("glClear");
         }
     }
-
-    LEAVE_GL();
 
     if (wined3d_settings.strict_draw_ordering || (flags & WINED3DCLEAR_TARGET
             && target->container.type == WINED3D_CONTAINER_SWAPCHAIN
@@ -978,7 +974,6 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
      * OpenGL will only allow that when a valid texture is bound.
      * We emulate this by creating dummy textures and binding them
      * to each texture stage when the currently set D3D texture is NULL. */
-    ENTER_GL();
 
     if (gl_info->supported[APPLE_CLIENT_STORAGE])
     {
@@ -1057,8 +1052,6 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
         gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
         checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
     }
-
-    LEAVE_GL();
 }
 
 /* Context activation is done by the caller. */
@@ -1066,7 +1059,6 @@ static void destroy_dummy_textures(struct wined3d_device *device, const struct w
 {
     unsigned int count = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers);
 
-    ENTER_GL();
     if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
     {
         gl_info->gl_ops.gl.p_glDeleteTextures(count, device->dummy_texture_cube);
@@ -1087,7 +1079,6 @@ static void destroy_dummy_textures(struct wined3d_device *device, const struct w
 
     gl_info->gl_ops.gl.p_glDeleteTextures(count, device->dummy_texture_2d);
     checkGLcall("glDeleteTextures(count, device->dummy_texture_2d)");
-    LEAVE_GL();
 
     memset(device->dummy_texture_cube, 0, gl_info->limits.textures * sizeof(*device->dummy_texture_cube));
     memset(device->dummy_texture_3d, 0, gl_info->limits.textures * sizeof(*device->dummy_texture_3d));
@@ -1297,8 +1288,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
 
     create_dummy_textures(device, context);
 
-    ENTER_GL();
-
     /* Initialize the current view state */
     device->view_ident = 1;
     device->contexts[0]->last_was_rhw = 0;
@@ -1325,7 +1314,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     }
 
     TRACE("All defaults now set up, leaving 3D init.\n");
-    LEAVE_GL();
 
     context_release(context);
 
@@ -1438,9 +1426,7 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     /* Delete the mouse cursor texture */
     if (device->cursorTexture)
     {
-        ENTER_GL();
         gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->cursorTexture);
-        LEAVE_GL();
         device->cursorTexture = 0;
     }
 
@@ -1449,9 +1435,7 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
      */
     if (device->depth_blt_texture)
     {
-        ENTER_GL();
         gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->depth_blt_texture);
-        LEAVE_GL();
         device->depth_blt_texture = 0;
     }
 
@@ -3657,10 +3641,8 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
             struct wined3d_buffer *vb = state->streams[e->stream_idx].buffer;
             e->data.buffer_object = 0;
             e->data.addr = (BYTE *)((ULONG_PTR)e->data.addr + (ULONG_PTR)buffer_get_sysmem(vb, gl_info));
-            ENTER_GL();
             GL_EXTCALL(glDeleteBuffersARB(1, &vb->buffer_object));
             vb->buffer_object = 0;
-            LEAVE_GL();
         }
         if (e->data.addr)
             e->data.addr += e->stride * src_start_idx;
@@ -4970,9 +4952,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
     if (device->cursorTexture)
     {
         struct wined3d_context *context = context_acquire(device, NULL);
-        ENTER_GL();
         context->gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->cursorTexture);
-        LEAVE_GL();
         context_release(context);
         device->cursorTexture = 0;
     }
@@ -5037,8 +5017,6 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
 
             context = context_acquire(device, NULL);
 
-            ENTER_GL();
-
             if (gl_info->supported[APPLE_CLIENT_STORAGE])
             {
                 gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
@@ -5060,8 +5038,6 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
                 gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
                 checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
             }
-
-            LEAVE_GL();
 
             context_release(context);
         }
@@ -5219,7 +5195,6 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
         device->shader_backend->shader_destroy(shader);
     }
 
-    ENTER_GL();
     if (device->depth_blt_texture)
     {
         gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->depth_blt_texture);
@@ -5230,7 +5205,6 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
         gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->cursorTexture);
         device->cursorTexture = 0;
     }
-    LEAVE_GL();
 
     device->blitter->free_private(device);
     device->shader_backend->shader_free_private(device);

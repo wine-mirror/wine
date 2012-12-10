@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
 #include <stdio.h>
 #include <math.h>
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void drawStridedFast(const struct wined3d_gl_info *gl_info, GLenum primitive_type, UINT count, UINT idx_size,
         const void *idx_data, UINT start_idx, INT base_vertex_index, UINT start_instance, UINT instance_count)
 {
@@ -81,7 +81,7 @@ static void drawStridedFast(const struct wined3d_gl_info *gl_info, GLenum primit
  * Slower GL version which extracts info about each vertex in turn
  */
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void drawStridedSlow(const struct wined3d_device *device, const struct wined3d_context *context,
         const struct wined3d_stream_info *si, UINT NumVertexes, GLenum glPrimType,
         const void *idxData, UINT idxSize, UINT startIdx)
@@ -325,7 +325,7 @@ static void drawStridedSlow(const struct wined3d_device *device, const struct wi
     checkGLcall("glEnd and previous calls");
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static inline void send_attribute(const struct wined3d_gl_info *gl_info,
         enum wined3d_format_id format, const UINT index, const void *ptr)
 {
@@ -435,7 +435,7 @@ static inline void send_attribute(const struct wined3d_gl_info *gl_info,
     }
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void drawStridedSlowVs(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
         const struct wined3d_stream_info *si, UINT numberOfVertices, GLenum glPrimitiveType,
         const void *idxData, UINT idxSize, UINT startIdx)
@@ -491,7 +491,7 @@ static void drawStridedSlowVs(const struct wined3d_gl_info *gl_info, const struc
     gl_info->gl_ops.gl.p_glEnd();
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void drawStridedInstanced(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
         const struct wined3d_stream_info *si, UINT numberOfVertices, GLenum glPrimitiveType,
         const void *idxData, UINT idxSize, UINT startIdx, UINT base_vertex_index, UINT instance_count)
@@ -666,8 +666,6 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         FIXME("Point sprite coordinate origin switching not supported.\n");
     }
 
-    /* Ok, we will be updating the screen from here onwards so grab the lock */
-    ENTER_GL();
     {
         GLenum glPrimType = state->gl_primitive_type;
         INT base_vertex_index = state->base_vertex_index;
@@ -768,9 +766,6 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
                     start_idx, base_vertex_index, start_instance, instance_count);
         }
     }
-
-    /* Finished updating the screen, restore lock */
-    LEAVE_GL();
 
     if (ib_query)
         wined3d_event_query_issue(ib_query, device);
@@ -894,8 +889,6 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct wined3d_rect_pat
     FIXME("Cannot find data to generate. Only generating position and normals\n");
     patch->has_normals = TRUE;
     patch->has_texcoords = FALSE;
-
-    ENTER_GL();
 
     gl_info->gl_ops.gl.p_glMatrixMode(GL_PROJECTION);
     checkGLcall("glMatrixMode(GL_PROJECTION)");
@@ -1033,18 +1026,20 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct wined3d_rect_pat
     i = gl_info->gl_ops.gl.p_glRenderMode(GL_RENDER);
     if (i == -1)
     {
-        LEAVE_GL();
         ERR("Feedback failed. Expected %d elements back\n", buffer_size);
         HeapFree(GetProcessHeap(), 0, feedbuffer);
         context_release(context);
         return WINED3DERR_DRIVERINTERNALERROR;
-    } else if(i != buffer_size) {
-        LEAVE_GL();
+    }
+    else if (i != buffer_size)
+    {
         ERR("Unexpected amount of elements returned. Expected %d, got %d\n", buffer_size, i);
         HeapFree(GetProcessHeap(), 0, feedbuffer);
         context_release(context);
         return WINED3DERR_DRIVERINTERNALERROR;
-    } else {
+    }
+    else
+    {
         TRACE("Got %d elements as expected\n", i);
     }
 
@@ -1155,7 +1150,6 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct wined3d_rect_pat
     gl_info->gl_ops.gl.p_glDisable(GL_MAP2_NORMAL);
     gl_info->gl_ops.gl.p_glDisable(GL_MAP2_TEXTURE_COORD_4);
     checkGLcall("glDisable vertex attrib generation");
-    LEAVE_GL();
 
     context_release(context);
 

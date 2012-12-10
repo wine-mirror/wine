@@ -991,8 +991,6 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
     GLenum status;
     GLuint tex;
 
-    ENTER_GL();
-
     while (gl_info->gl_ops.gl.p_glGetError());
     gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
 
@@ -1194,8 +1192,6 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
         format->flags |= WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB;
 
     gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex);
-
-    LEAVE_GL();
 }
 
 /* Context activation is done by the caller. */
@@ -1206,14 +1202,10 @@ static void init_format_fbo_compat_info(struct wined3d_gl_info *gl_info)
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        ENTER_GL();
-
         gl_info->fbo_ops.glGenFramebuffers(1, &fbo);
         gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
         gl_info->gl_ops.gl.p_glDrawBuffer(GL_COLOR_ATTACHMENT0);
         gl_info->gl_ops.gl.p_glReadBuffer(GL_COLOR_ATTACHMENT0);
-
-        LEAVE_GL();
     }
 
     for (i = 0; i < sizeof(formats) / sizeof(*formats); ++i)
@@ -1248,13 +1240,7 @@ static void init_format_fbo_compat_info(struct wined3d_gl_info *gl_info)
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-    {
-        ENTER_GL();
-
         gl_info->fbo_ops.glDeleteFramebuffers(1, &fbo);
-
-        LEAVE_GL();
-    }
 }
 
 static BOOL init_format_texture_info(struct wined3d_gl_info *gl_info)
@@ -1345,7 +1331,6 @@ static BOOL check_filter(const struct wined3d_gl_info *gl_info, GLenum internal)
      * than Wine. The Linux binary <= r500 driver is not maintained any more anyway
      */
 
-    ENTER_GL();
     while (gl_info->gl_ops.gl.p_glGetError());
 
     gl_info->gl_ops.gl.p_glGenTextures(1, &buffer);
@@ -1423,7 +1408,7 @@ static BOOL check_filter(const struct wined3d_gl_info *gl_info, GLenum internal)
         FIXME("Error during filtering test for format %x, returning no filtering\n", internal);
         ret = FALSE;
     }
-    LEAVE_GL();
+
     return ret;
 }
 
@@ -2524,8 +2509,8 @@ BOOL is_invalid_op(const struct wined3d_state *state, int stage,
     return FALSE;
 }
 
-/* Setup this textures matrix according to the texture flags*/
-/* GL locking is done by the caller (state handler) */
+/* Setup this textures matrix according to the texture flags. */
+/* Context activation is done by the caller (state handler). */
 void set_texture_matrix(const struct wined3d_gl_info *gl_info, const float *smat, DWORD flags,
         BOOL calculatedCoords, BOOL transformed, enum wined3d_format_id vtx_fmt, BOOL ffp_proj_control)
 {
@@ -3174,11 +3159,10 @@ void add_ffp_frag_shader(struct wine_rb_tree *shaders, struct ffp_frag_desc *des
     }
 }
 
-/* Activates the texture dimension according to the bound D3D texture.
- * Does not care for the colorop or correct gl texture unit(when using nvrc)
- * Requires the caller to activate the correct unit before
- */
-/* GL locking is done by the caller (state handler) */
+/* Activates the texture dimension according to the bound D3D texture. Does
+ * not care for the colorop or correct gl texture unit (when using nvrc).
+ * Requires the caller to activate the correct unit. */
+/* Context activation is done by the caller (state handler). */
 void texture_activate_dimensions(const struct wined3d_texture *texture, const struct wined3d_gl_info *gl_info)
 {
     if (texture)
@@ -3265,7 +3249,7 @@ void texture_activate_dimensions(const struct wined3d_texture *texture, const st
     }
 }
 
-/* GL locking is done by the caller (state handler) */
+/* Context activation is done by the caller (state handler). */
 void sampler_texdim(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     DWORD sampler = state_id - STATE_SAMPLER(0);

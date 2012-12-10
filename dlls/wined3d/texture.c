@@ -77,9 +77,7 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
 /* A GL context is provided by the caller */
 static void gltexture_delete(const struct wined3d_gl_info *gl_info, struct gl_texture *tex)
 {
-    ENTER_GL();
     gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex->name);
-    LEAVE_GL();
     tex->name = 0;
 }
 
@@ -153,7 +151,6 @@ static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
     gl_tex = wined3d_texture_get_gl_texture(texture, context->gl_info, srgb);
     target = texture->target;
 
-    ENTER_GL();
     /* Generate a texture name if we don't already have one. */
     if (!gl_tex->name)
     {
@@ -233,11 +230,10 @@ static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
         hr = WINED3DERR_INVALIDCALL;
     }
 
-    LEAVE_GL();
     return hr;
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void apply_wrap(const struct wined3d_gl_info *gl_info, GLenum target,
         enum wined3d_texture_address d3d_wrap, GLenum param, BOOL cond_np2)
 {
@@ -261,7 +257,7 @@ static void apply_wrap(const struct wined3d_gl_info *gl_info, GLenum target,
     checkGLcall("glTexParameteri(target, param, gl_wrap)");
 }
 
-/* GL locking is done by the caller (state handler) */
+/* Context activation is done by the caller (state handler). */
 void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
         const DWORD sampler_states[WINED3D_HIGHEST_SAMPLER_STATE + 1],
         const struct wined3d_gl_info *gl_info)
@@ -628,7 +624,6 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
         {
             GLenum target = texture->target;
 
-            ENTER_GL();
             gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             checkGLcall("glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)");
             gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -637,7 +632,6 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
             checkGLcall("glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)");
             gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             checkGLcall("glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)");
-            LEAVE_GL();
             gl_tex->states[WINED3DTEXSTA_ADDRESSU] = WINED3D_TADDRESS_CLAMP;
             gl_tex->states[WINED3DTEXSTA_ADDRESSV] = WINED3D_TADDRESS_CLAMP;
             gl_tex->states[WINED3DTEXSTA_MAGFILTER] = WINED3D_TEXF_POINT;

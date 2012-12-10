@@ -412,8 +412,8 @@ ULONG CDECL wined3d_decref(struct wined3d *wined3d)
     return refcount;
 }
 
-/* GL locking is done by the caller */
-static inline BOOL test_arb_vs_offset_limit(const struct wined3d_gl_info *gl_info)
+/* Context activation is done by the caller. */
+static BOOL test_arb_vs_offset_limit(const struct wined3d_gl_info *gl_info)
 {
     GLuint prog;
     BOOL ret = FALSE;
@@ -523,8 +523,6 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
     /* No PBO -> No point in testing them. */
     if (!gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]) return;
 
-    ENTER_GL();
-
     while (gl_info->gl_ops.gl.p_glGetError());
     gl_info->gl_ops.gl.p_glGenTextures(1, &texture);
     gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, texture);
@@ -542,20 +540,16 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
     checkGLcall("Loading the PBO test texture");
 
     GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-    LEAVE_GL();
 
     gl_info->gl_ops.gl.p_glFinish(); /* just to be sure */
 
     memset(check, 0, sizeof(check));
-    ENTER_GL();
     gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, check);
     checkGLcall("Reading back the PBO test texture");
 
     gl_info->gl_ops.gl.p_glDeleteTextures(1, &texture);
     GL_EXTCALL(glDeleteBuffersARB(1, &pbo));
     checkGLcall("PBO test cleanup");
-
-    LEAVE_GL();
 
     if (memcmp(check, pattern, sizeof(check)))
     {
@@ -613,11 +607,9 @@ static BOOL match_allows_spec_alpha(const struct wined3d_gl_info *gl_info, const
     if (!gl_info->supported[EXT_SECONDARY_COLOR])
         return FALSE;
 
-    ENTER_GL();
     while (gl_info->gl_ops.gl.p_glGetError());
     GL_EXTCALL(glSecondaryColorPointerEXT)(4, GL_UNSIGNED_BYTE, 4, data);
     error = gl_info->gl_ops.gl.p_glGetError();
-    LEAVE_GL();
 
     if (error == GL_NO_ERROR)
     {
@@ -648,14 +640,12 @@ static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, const ch
 
     if (!gl_info->supported[NV_VERTEX_PROGRAM2_OPTION]) return FALSE;
 
-    ENTER_GL();
     while (gl_info->gl_ops.gl.p_glGetError());
 
     GL_EXTCALL(glGenProgramsARB(1, &prog));
     if(!prog)
     {
         ERR("Failed to create the NVvp clip test program\n");
-        LEAVE_GL();
         return FALSE;
     }
     GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, prog));
@@ -675,7 +665,6 @@ static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, const ch
     GL_EXTCALL(glDeleteProgramsARB(1, &prog));
     checkGLcall("GL_NV_vertex_program2_option result.clip[] test cleanup");
 
-    LEAVE_GL();
     return ret;
 }
 
@@ -690,8 +679,6 @@ static BOOL match_fbo_tex_update(const struct wined3d_gl_info *gl_info, const ch
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) return FALSE;
 
     memset(data, 0xcc, sizeof(data));
-
-    ENTER_GL();
 
     gl_info->gl_ops.gl.p_glGenTextures(1, &tex);
     gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, tex);
@@ -729,8 +716,6 @@ static BOOL match_fbo_tex_update(const struct wined3d_gl_info *gl_info, const ch
     gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex);
     checkGLcall("glDeleteTextures");
 
-    LEAVE_GL();
-
     return *(DWORD *)data == 0x11111111;
 }
 
@@ -742,8 +727,6 @@ static BOOL match_broken_rgba16(const struct wined3d_gl_info *gl_info, const cha
      * This leads to graphical bugs in Half Life 2 and Unreal engine games. */
     GLuint tex;
     GLint size;
-
-    ENTER_GL();
 
     gl_info->gl_ops.gl.p_glGenTextures(1, &tex);
     gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, tex);
@@ -758,8 +741,6 @@ static BOOL match_broken_rgba16(const struct wined3d_gl_info *gl_info, const cha
     checkGLcall("glBindTexture");
     gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex);
     checkGLcall("glDeleteTextures");
-
-    LEAVE_GL();
 
     return size < 16;
 }
@@ -2608,13 +2589,10 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 
     TRACE("adapter %p.\n", adapter);
 
-    ENTER_GL();
-
     gl_renderer_str = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_RENDERER);
     TRACE("GL_RENDERER: %s.\n", debugstr_a(gl_renderer_str));
     if (!gl_renderer_str)
     {
-        LEAVE_GL();
         ERR("Received a NULL GL_RENDERER.\n");
         return FALSE;
     }
@@ -2623,7 +2601,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     TRACE("GL_VENDOR: %s.\n", debugstr_a(gl_vendor_str));
     if (!gl_vendor_str)
     {
-        LEAVE_GL();
         ERR("Received a NULL GL_VENDOR.\n");
         return FALSE;
     }
@@ -2633,7 +2610,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     TRACE("GL_VERSION: %s.\n", debugstr_a(gl_version_str));
     if (!gl_version_str)
     {
-        LEAVE_GL();
         ERR("Received a NULL GL_VERSION.\n");
         return FALSE;
     }
@@ -2643,12 +2619,9 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     GL_Extensions = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_EXTENSIONS);
     if (!GL_Extensions)
     {
-        LEAVE_GL();
         ERR("Received a NULL GL_EXTENSIONS.\n");
         return FALSE;
     }
-
-    LEAVE_GL();
 
     memset(gl_info->supported, 0, sizeof(gl_info->supported));
     gl_info->supported[WINED3D_GL_EXT_NONE] = TRUE;
@@ -2792,8 +2765,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         gl_info->supported[ARB_FRAMEBUFFER_SRGB] = FALSE;
     }
 
-    ENTER_GL();
-
     wined3d_adapter_init_limits(gl_info);
 
     if (gl_info->supported[ARB_VERTEX_PROGRAM] && test_arb_vs_offset_limit(gl_info))
@@ -2812,8 +2783,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     }
 
     checkGLcall("extension detection");
-
-    LEAVE_GL();
 
     adapter->fragment_pipe = select_fragment_implementation(gl_info);
     adapter->shader_backend = select_shader_backend(gl_info);

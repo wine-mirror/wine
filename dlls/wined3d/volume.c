@@ -88,12 +88,10 @@ void volume_load(const struct wined3d_volume *volume, struct wined3d_context *co
 
     volume_bind_and_dirtify(volume, context);
 
-    ENTER_GL();
     GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, level, format->glInternal,
             volume->resource.width, volume->resource.height, volume->resource.depth,
             0, format->glFormat, format->glType, volume->resource.allocatedMemory));
     checkGLcall("glTexImage3D");
-    LEAVE_GL();
 
     /* When adding code releasing volume->resource.allocatedMemory to save
      * data keep in mind that GL_UNPACK_CLIENT_STORAGE_APPLE is enabled by

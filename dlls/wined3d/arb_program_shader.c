@@ -330,7 +330,8 @@ struct shader_arb_priv
     const struct fragment_pipeline *fragment_pipe;
 };
 
-/* GL locking for state handlers is done by the caller. */
+/* Context activation for state handlers is done by the caller. */
+
 static BOOL need_rel_addr_const(const struct arb_vshader_private *shader_data,
         const struct wined3d_shader_reg_maps *reg_maps, const struct wined3d_gl_info *gl_info)
 {
@@ -377,7 +378,7 @@ static unsigned int reserved_vs_const(const struct arb_vshader_private *shader_d
  * @target_type should be either GL_VERTEX_PROGRAM_ARB (for vertex shaders)
  *  or GL_FRAGMENT_PROGRAM_ARB (for pixel shaders)
  */
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static unsigned int shader_arb_load_constantsF(const struct wined3d_shader *shader,
         const struct wined3d_gl_info *gl_info, GLuint target_type, unsigned int max_constants,
         const float *constants, char *dirty_consts)
@@ -543,7 +544,7 @@ static void shader_arb_load_np2fixup_constants(void *shader_priv,
     }
 }
 
-/* GL locking is done by the caller. */
+/* Context activation is done by the caller. */
 static void shader_arb_ps_local_constants(const struct arb_ps_compiled_shader *gl_shader,
         const struct wined3d_context *context, const struct wined3d_state *state, UINT rt_height)
 {
@@ -607,7 +608,7 @@ static void shader_arb_ps_local_constants(const struct arb_ps_compiled_shader *g
     checkGLcall("Load ps int consts");
 }
 
-/* GL locking is done by the caller. */
+/* Context activation is done by the caller. */
 static void shader_arb_vs_local_constants(const struct arb_vs_compiled_shader *gl_shader,
         const struct wined3d_context *context, const struct wined3d_state *state)
 {
@@ -646,7 +647,7 @@ static void shader_arb_select(const struct wined3d_context *context, enum wined3
  * We only support float constants in ARB at the moment, so don't
  * worry about the Integers or Booleans
  */
-/* GL locking is done by the caller (state handler) */
+/* Context activation is done by the caller (state handler). */
 static void shader_arb_load_constants_internal(const struct wined3d_context *context,
         BOOL usePixelShader, BOOL useVertexShader, BOOL from_shader_select)
 {
@@ -3302,7 +3303,7 @@ static void shader_hw_call(const struct wined3d_shader_instruction *ins)
     shader_addline(buffer, "CAL l%u;\n", ins->src[0].reg.idx[0].offset);
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static GLuint create_arb_blt_vertex_program(const struct wined3d_gl_info *gl_info)
 {
     GLuint program_id = 0;
@@ -3341,7 +3342,7 @@ static GLuint create_arb_blt_vertex_program(const struct wined3d_gl_info *gl_inf
     return program_id;
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_info,
         enum tex_types tex_type, BOOL masked)
 {
@@ -3577,7 +3578,7 @@ static void init_ps_input(const struct wined3d_shader *shader,
     }
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
         const struct wined3d_gl_info *gl_info, struct wined3d_shader_buffer *buffer,
         const struct arb_ps_compile_args *args, struct arb_ps_compiled_shader *compiled)
@@ -4166,7 +4167,7 @@ static void init_output_registers(const struct wined3d_shader *shader, DWORD sig
     }
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
         const struct wined3d_gl_info *gl_info, struct wined3d_shader_buffer *buffer,
         const struct arb_vs_compile_args *args, struct arb_vs_compiled_shader *compiled)
@@ -4334,7 +4335,7 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
     return ret;
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static struct arb_ps_compiled_shader *find_arb_pshader(struct wined3d_shader *shader,
         const struct arb_ps_compile_args *args)
 {
@@ -4648,7 +4649,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
     }
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void shader_arb_select(const struct wined3d_context *context, enum wined3d_shader_mode vertex_mode,
         enum wined3d_shader_mode fragment_mode)
 {
@@ -4766,7 +4767,7 @@ static void shader_arb_select(const struct wined3d_context *context, enum wined3
     }
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void shader_arb_select_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info,
         enum tex_types tex_type, const SIZE *ds_mask_size)
 {
@@ -4786,7 +4787,7 @@ static void shader_arb_select_depth_blt(void *shader_priv, const struct wined3d_
     gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
-/* GL locking is done by the caller */
+/* Context activation is done by the caller. */
 static void shader_arb_deselect_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info)
 {
     struct shader_arb_priv *priv = shader_priv;
@@ -4832,13 +4833,11 @@ static void shader_arb_destroy(struct wined3d_shader *shader)
         {
             struct wined3d_context *context = context_acquire(device, NULL);
 
-            ENTER_GL();
             for (i = 0; i < shader_data->num_gl_shaders; ++i)
             {
                 GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId));
                 checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId))");
             }
-            LEAVE_GL();
 
             context_release(context);
         }
@@ -4858,13 +4857,11 @@ static void shader_arb_destroy(struct wined3d_shader *shader)
         {
             struct wined3d_context *context = context_acquire(device, NULL);
 
-            ENTER_GL();
             for (i = 0; i < shader_data->num_gl_shaders; ++i)
             {
                 GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId));
                 checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId))");
             }
-            LEAVE_GL();
 
             context_release(context);
         }
@@ -4952,10 +4949,9 @@ static void shader_arb_free(struct wined3d_device *device)
     struct shader_arb_priv *priv = device->shader_priv;
     int i;
 
-    ENTER_GL();
-    if(priv->depth_blt_vprogram_id) {
+    if (priv->depth_blt_vprogram_id)
         GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_vprogram_id));
-    }
+
     for (i = 0; i < tex_type_count; ++i)
     {
         if (priv->depth_blt_fprogram_id_full[i])
@@ -4967,7 +4963,6 @@ static void shader_arb_free(struct wined3d_device *device)
             GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_fprogram_id_masked[i]));
         }
     }
-    LEAVE_GL();
 
     wine_rb_destroy(&priv->signature_tree, release_signature, NULL);
     HeapFree(GetProcessHeap(), 0, priv->pshader_const_dirty);
@@ -5669,7 +5664,7 @@ struct arbfp_ffp_desc
     GLuint shader;
 };
 
-/* Context activation and GL locking are done by the caller. */
+/* Context activation is done by the caller. */
 static void arbfp_enable(const struct wined3d_gl_info *gl_info, BOOL enable)
 {
     if (enable)
@@ -5715,11 +5710,9 @@ static void arbfp_free_ffpshader(struct wine_rb_entry *entry, void *context)
     const struct wined3d_gl_info *gl_info = context;
     struct arbfp_ffp_desc *entry_arb = WINE_RB_ENTRY_VALUE(entry, struct arbfp_ffp_desc, parent.entry);
 
-    ENTER_GL();
     GL_EXTCALL(glDeleteProgramsARB(1, &entry_arb->shader));
     checkGLcall("glDeleteProgramsARB(1, &entry_arb->shader)");
     HeapFree(GetProcessHeap(), 0, entry_arb);
-    LEAVE_GL();
 }
 
 /* Context activation is done by the caller. */
@@ -6707,7 +6700,6 @@ static void arbfp_blit_free(struct wined3d_device *device)
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct arbfp_blit_priv *priv = device->blit_priv;
 
-    ENTER_GL();
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->yuy2_rect_shader));
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->yuy2_2d_shader));
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->uyvy_rect_shader));
@@ -6720,7 +6712,6 @@ static void arbfp_blit_free(struct wined3d_device *device)
 
     if (priv->palette_texture)
         gl_info->gl_ops.gl.p_glDeleteTextures(1, &priv->palette_texture);
-    LEAVE_GL();
 
     HeapFree(GetProcessHeap(), 0, device->blit_priv);
     device->blit_priv = NULL;
@@ -6974,11 +6965,10 @@ static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
         return 0;
     }
 
-    ENTER_GL();
     GL_EXTCALL(glGenProgramsARB(1, &shader));
     GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader));
-    LEAVE_GL();
-    if(!shader) {
+    if (!shader)
+    {
         shader_buffer_free(&buffer);
         return 0;
     }
@@ -7002,7 +6992,6 @@ static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
     shader_addline(&buffer, "TEX result.color, index.a, texture[1], 1D;\n");
     shader_addline(&buffer, "END\n");
 
-    ENTER_GL();
     GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
             strlen(buffer.buffer), buffer.buffer));
     checkGLcall("glProgramStringARB()");
@@ -7021,7 +7010,6 @@ static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
         priv->p8_2d_shader = shader;
 
     shader_buffer_free(&buffer);
-    LEAVE_GL();
 
     return shader;
 }
@@ -7036,8 +7024,6 @@ static void upload_palette(const struct wined3d_surface *surface, struct wined3d
     BOOL colorkey = (surface->CKeyFlags & WINEDDSD_CKSRCBLT) != 0;
 
     d3dfmt_p8_init_palette(surface, table, colorkey);
-
-    ENTER_GL();
 
     if (gl_info->supported[APPLE_CLIENT_STORAGE])
     {
@@ -7069,7 +7055,6 @@ static void upload_palette(const struct wined3d_surface *surface, struct wined3d
 
     /* Switch back to unit 0 in which the 2D texture will be stored. */
     context_active_texture(context, gl_info, 0);
-    LEAVE_GL();
 }
 
 /* Context activation is done by the caller. */
@@ -7088,13 +7073,12 @@ static GLuint gen_yuv_shader(struct arbfp_blit_priv *priv, const struct wined3d_
         return 0;
     }
 
-    ENTER_GL();
     GL_EXTCALL(glGenProgramsARB(1, &shader));
     checkGLcall("GL_EXTCALL(glGenProgramsARB(1, &shader))");
     GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader));
     checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader)");
-    LEAVE_GL();
-    if(!shader) {
+    if (!shader)
+    {
         shader_buffer_free(&buffer);
         return 0;
     }
@@ -7181,7 +7165,6 @@ static GLuint gen_yuv_shader(struct arbfp_blit_priv *priv, const struct wined3d_
     shader_addline(&buffer, "MAD result.color.z, chroma.y, yuv_coef.w, luminance.%c;\n", luminance_component);
     shader_addline(&buffer, "END\n");
 
-    ENTER_GL();
     GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
             strlen(buffer.buffer), buffer.buffer));
     checkGLcall("glProgramStringARB()");
@@ -7203,7 +7186,6 @@ static GLuint gen_yuv_shader(struct arbfp_blit_priv *priv, const struct wined3d_
     }
 
     shader_buffer_free(&buffer);
-    LEAVE_GL();
 
     switch (yuv_fixup)
     {
@@ -7245,10 +7227,8 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
 
     if (surface->flags & SFLAG_CONVERTED)
     {
-        ENTER_GL();
         gl_info->gl_ops.gl.p_glEnable(textype);
         checkGLcall("glEnable(textype)");
-        LEAVE_GL();
         return WINED3D_OK;
     }
 
@@ -7257,10 +7237,8 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
         TRACE("Fixup:\n");
         dump_color_fixup_desc(surface->resource.format->color_fixup);
         /* Don't bother setting up a shader for unconverted formats */
-        ENTER_GL();
         gl_info->gl_ops.gl.p_glEnable(textype);
         checkGLcall("glEnable(textype)");
-        LEAVE_GL();
         return WINED3D_OK;
     }
 
@@ -7289,23 +7267,19 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
 
         default:
             FIXME("Unsupported complex fixup %#x, not setting a shader\n", fixup);
-            ENTER_GL();
             gl_info->gl_ops.gl.p_glEnable(textype);
             checkGLcall("glEnable(textype)");
-            LEAVE_GL();
             return E_NOTIMPL;
     }
 
     if (!shader) shader = gen_yuv_shader(priv, gl_info, fixup, textype);
 
-    ENTER_GL();
     gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
     checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB)");
     GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader));
     checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader)");
     GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0, size));
     checkGLcall("glProgramLocalParameter4fvARB");
-    LEAVE_GL();
 
     return WINED3D_OK;
 }
@@ -7313,7 +7287,6 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
 /* Context activation is done by the caller. */
 static void arbfp_blit_unset(const struct wined3d_gl_info *gl_info)
 {
-    ENTER_GL();
     gl_info->gl_ops.gl.p_glDisable(GL_FRAGMENT_PROGRAM_ARB);
     checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
     gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
@@ -7328,7 +7301,6 @@ static void arbfp_blit_unset(const struct wined3d_gl_info *gl_info)
         gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
         checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
     }
-    LEAVE_GL();
 }
 
 static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
@@ -7425,12 +7397,8 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
 
     arbfp_blit_set(device->blit_priv, context, src_surface);
 
-    ENTER_GL();
-
     /* Draw a textured quad */
     draw_textured_quad(src_surface, context, &src_rect, &dst_rect, filter);
-
-    LEAVE_GL();
 
     /* Leave the opengl state valid for blitting */
     arbfp_blit_unset(context->gl_info);

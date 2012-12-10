@@ -316,7 +316,6 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
             surface_load_location(backbuffer, location, NULL);
         }
 
-        ENTER_GL();
         context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, backbuffer, NULL, location);
         gl_info->gl_ops.gl.p_glReadBuffer(GL_COLOR_ATTACHMENT0);
         context_check_fbo_status(context, GL_READ_FRAMEBUFFER);
@@ -339,7 +338,6 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
                 dst_rect->left, win_h - dst_rect->top, dst_rect->right, win_h - dst_rect->bottom,
                 GL_COLOR_BUFFER_BIT, gl_filter);
         checkGLcall("Swapchain present blit(EXT_framebuffer_blit)\n");
-        LEAVE_GL();
     }
     else
     {
@@ -364,7 +362,6 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
         if (is_complex_fixup(backbuffer->resource.format->color_fixup))
             gl_filter = GL_NEAREST;
 
-        ENTER_GL();
         context_apply_fbo_state_blit(context2, GL_FRAMEBUFFER, swapchain->front_buffer, NULL, SFLAG_INDRAWABLE);
         context_bind_texture(context2, backbuffer->texture_target, backbuffer->texture_name);
 
@@ -414,7 +411,6 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
 
         device->blitter->unset_shader(context->gl_info);
         checkGLcall("Swapchain present blit(manual)\n");
-        LEAVE_GL();
 
         context_release(context2);
     }
