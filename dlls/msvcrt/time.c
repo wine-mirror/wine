@@ -25,12 +25,6 @@
 #include "config.h"
 
 #include <stdlib.h>
-#define _POSIX_PTHREAD_SEMANTICS /* switch to a 2 arg style asctime_r on Solaris */
-#include <time.h>
-#ifdef HAVE_SYS_TIMES_H
-# include <sys/times.h>
-#endif
-#include <limits.h>
 
 #include "msvcrt.h"
 #include "mtdll.h"
@@ -50,20 +44,6 @@ static const int MonthLengths[2][12] =
 static inline int IsLeapYear(int Year)
 {
     return Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0);
-}
-
-static inline void unix_tm_to_msvcrt( struct MSVCRT_tm *dest, const struct tm *src )
-{
-    memset( dest, 0, sizeof(*dest) );
-    dest->tm_sec   = src->tm_sec;
-    dest->tm_min   = src->tm_min;
-    dest->tm_hour  = src->tm_hour;
-    dest->tm_mday  = src->tm_mday;
-    dest->tm_mon   = src->tm_mon;
-    dest->tm_year  = src->tm_year;
-    dest->tm_wday  = src->tm_wday;
-    dest->tm_yday  = src->tm_yday;
-    dest->tm_isdst = src->tm_isdst;
 }
 
 static inline void write_invalid_msvcrt_tm( struct MSVCRT_tm *tm )
@@ -378,32 +358,48 @@ MSVCRT___time32_t CDECL MSVCRT__mkgmtime(struct MSVCRT_tm *time)
 /*********************************************************************
  *      _localtime64_s (MSVCRT.@)
  */
-int CDECL _localtime64_s(struct MSVCRT_tm *time, const MSVCRT___time64_t *secs)
+int CDECL _localtime64_s(struct MSVCRT_tm *res, const MSVCRT___time64_t *secs)
 {
-    struct tm *tm;
-    time_t seconds;
+    int i;
+    FILETIME ft;
+    SYSTEMTIME st;
+    ULONGLONG time;
 
-    if (!time || !secs || *secs < 0 || *secs > _MAX__TIME64_T)
+    if (!res || !secs || *secs < 0 || *secs > _MAX__TIME64_T)
     {
-        if (time)
-            write_invalid_msvcrt_tm(time);
+        if (res)
+            write_invalid_msvcrt_tm(res);
 
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return MSVCRT_EINVAL;
     }
 
-    seconds = *secs;
+    _tzset_init();
+    time = (*secs - MSVCRT___timezone) * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
 
-    _mlock(_TIME_LOCK);
-    if (!(tm = localtime(&seconds)))
-    {
-        _munlock(_TIME_LOCK);
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return MSVCRT_EINVAL;
+    ft.dwHighDateTime = (UINT)(time >> 32);
+    ft.dwLowDateTime  = (UINT)time;
+    FileTimeToSystemTime(&ft, &st);
+
+    res->tm_isdst = is_dst(&st) ? 1 : 0;
+    if(res->tm_isdst) {
+        time -= MSVCRT__dstbias * (ULONGLONG)TICKSPERSEC;
+        ft.dwHighDateTime = (UINT)(time >> 32);
+        ft.dwLowDateTime  = (UINT)time;
+        FileTimeToSystemTime(&ft, &st);
     }
 
-    unix_tm_to_msvcrt(time, tm);
-    _munlock(_TIME_LOCK);
+    res->tm_sec  = st.wSecond;
+    res->tm_min  = st.wMinute;
+    res->tm_hour = st.wHour;
+    res->tm_mday = st.wDay;
+    res->tm_year = st.wYear - 1900;
+    res->tm_mon  = st.wMonth - 1;
+    res->tm_wday = st.wDayOfWeek;
+    for (i = res->tm_yday = 0; i < st.wMonth - 1; i++)
+        res->tm_yday += MonthLengths[IsLeapYear(st.wYear)][i];
+    res->tm_yday += st.wDay - 1;
+
     return 0;
 }
 

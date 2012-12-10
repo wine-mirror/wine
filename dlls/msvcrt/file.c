@@ -29,7 +29,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <time.h>
 #include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H

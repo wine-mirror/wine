@@ -25,7 +25,6 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
-#include <time.h>
 
 #include "windef.h"
 #include "winbase.h"
