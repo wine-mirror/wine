@@ -630,8 +630,12 @@ static HRESULT WINAPI PngDecoder_GetMetadataQueryReader(IWICBitmapDecoder *iface
 static HRESULT WINAPI PngDecoder_GetPreview(IWICBitmapDecoder *iface,
     IWICBitmapSource **ppIBitmapSource)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIBitmapSource);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIBitmapSource);
+
+    if (!ppIBitmapSource) return E_INVALIDARG;
+
+    *ppIBitmapSource = NULL;
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 }
 
 static HRESULT WINAPI PngDecoder_GetColorContexts(IWICBitmapDecoder *iface,
