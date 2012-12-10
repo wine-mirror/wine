@@ -901,6 +901,12 @@ static void test_rtti(void)
     { {RTTI_REF(child_class_rtti, base_descriptor[0]), RTTI_REF(child_class_rtti, base_descriptor[1])} },
     {0, 0, 2, RTTI_REF(child_class_rtti, base_array)},
     {1, 0, 0, RTTI_REF(child_class_rtti, type_info[1]), RTTI_REF(child_class_rtti, object_hierarchy), RTTI_REF(child_class_rtti, object_locator)}
+  }, virtual_base_class_rtti = {
+    { {NULL, NULL, "simple_class"}, {NULL, NULL, "child_class"} },
+    { {RTTI_REF(virtual_base_class_rtti, type_info[1]), 0, {0x10, sizeof(void*), sizeof(int)}, 0}, {RTTI_REF(virtual_base_class_rtti, type_info[0]), 0, {8, -1, 0}, 0} },
+    { {RTTI_REF(virtual_base_class_rtti, base_descriptor[0]), RTTI_REF(virtual_base_class_rtti, base_descriptor[1])} },
+    {0, 0, 2, RTTI_REF(virtual_base_class_rtti, base_array)},
+    {1, 0, 0, RTTI_REF(virtual_base_class_rtti, type_info[1]), RTTI_REF(virtual_base_class_rtti, object_hierarchy), RTTI_REF(virtual_base_class_rtti, object_locator)}
   };
   static struct rtti_data simple_class_sig0_rtti, child_class_sig0_rtti;
 
@@ -912,6 +918,9 @@ static void test_rtti(void)
   void *simple_class_sig0 = &simple_class_sig0_vtbl[1];
   void *child_class_sig0_vtbl[2] = {&child_class_sig0_rtti.object_locator};
   void *child_class_sig0 = &child_class_sig0_vtbl[1];
+  void *virtual_base_class_vtbl[2] = {&virtual_base_class_rtti.object_locator};
+  int virtual_base_class_vbtbl[2] = {0, 0x100};
+  void *virtual_base_class[2] = {&virtual_base_class_vtbl[1], virtual_base_class_vbtbl};
 
   static const char* e_name = "name";
   type_info *ti,*bti;
@@ -1026,6 +1035,9 @@ static void test_rtti(void)
 
   casted = p__RTDynamicCast(&child_class, 0, &child_class_rtti.type_info[0], &child_class_rtti.type_info[1], 0);
   ok(casted == (char*)&child_class+4, "failed cast to child class (%p %p)\n", casted, &child_class);
+
+  casted = p__RTDynamicCast(&virtual_base_class, 0, &virtual_base_class_rtti.type_info[0], &virtual_base_class_rtti.type_info[1], 0);
+  ok(casted == (char*)&virtual_base_class+0x110+sizeof(void*), "failed cast to child class (%p %p)\n", casted, &virtual_base_class);
 }
 
 struct _demangle {
