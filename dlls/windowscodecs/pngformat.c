@@ -645,6 +645,10 @@ static HRESULT WINAPI PngDecoder_GetThumbnail(IWICBitmapDecoder *iface,
     IWICBitmapSource **ppIThumbnail)
 {
     TRACE("(%p,%p)\n", iface, ppIThumbnail);
+
+    if (!ppIThumbnail) return E_INVALIDARG;
+
+    *ppIThumbnail = NULL;
     return WINCODEC_ERR_CODECNOTHUMBNAIL;
 }
 
