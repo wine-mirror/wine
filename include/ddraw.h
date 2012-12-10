@@ -1788,7 +1788,7 @@ DECLARE_INTERFACE_(IDirectDraw7,IUnknown)
 /*60*/    STDMETHOD(GetSurfaceFromDC)(THIS_ HDC dc, struct IDirectDrawSurface7 **surface) PURE;
 /*64*/    STDMETHOD(RestoreAllSurfaces)(THIS) PURE;
 /*68*/    STDMETHOD(TestCooperativeLevel)(THIS) PURE;
-/*6c*/    STDMETHOD(GetDeviceIdentifier)(THIS_ LPDDDEVICEIDENTIFIER2 pDDDI, DWORD dwFlags) PURE;
+/*6c*/    STDMETHOD(GetDeviceIdentifier)(THIS_ DDDEVICEIDENTIFIER2 *identifier, DWORD flags) PURE;
           /* added in v7 */
 /*70*/    STDMETHOD(StartModeTest)(THIS_ LPSIZE pModes, DWORD dwNumModes, DWORD dwFlags) PURE;
 /*74*/    STDMETHOD(EvaluateMode)(THIS_ DWORD dwFlags, DWORD  *pTimeout) PURE;
