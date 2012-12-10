@@ -40,6 +40,9 @@ enum glyph_type
     GLYPH_NBTYPES
 };
 
+#define GLYPH_CACHE_PAGE_SIZE  0x100
+#define GLYPH_CACHE_PAGES      (0x10000 / GLYPH_CACHE_PAGE_SIZE)
+
 struct cached_font
 {
     struct list           entry;
@@ -48,8 +51,7 @@ struct cached_font
     LOGFONTW              lf;
     XFORM                 xform;
     UINT                  aa_flags;
-    UINT                  nb_glyphs[GLYPH_NBTYPES];
-    struct cached_glyph **glyphs[GLYPH_NBTYPES];
+    struct cached_glyph **glyphs[GLYPH_NBTYPES][GLYPH_CACHE_PAGES];
 };
 
 static struct list font_cache = LIST_INIT( font_cache );
@@ -494,7 +496,7 @@ static int font_cache_cmp( const struct cached_font *p1, const struct cached_fon
 static struct cached_font *add_cached_font( HDC hdc, HFONT hfont, UINT aa_flags )
 {
     struct cached_font font, *ptr, *last_unused = NULL;
-    UINT i = 0, j;
+    UINT i = 0, j, k;
 
     GetObjectW( hfont, sizeof(font.lf), &font.lf );
     GetTransform( hdc, 0x204, &font.xform );
@@ -530,8 +532,13 @@ static struct cached_font *add_cached_font( HDC hdc, HFONT hfont, UINT aa_flags 
         ptr = last_unused;
         for (i = 0; i < GLYPH_NBTYPES; i++)
         {
-            for (j = 0; j < ptr->nb_glyphs[i]; j++) HeapFree( GetProcessHeap(), 0, ptr->glyphs[i][j] );
-            HeapFree( GetProcessHeap(), 0, ptr->glyphs[i] );
+            for (j = 0; j < GLYPH_CACHE_PAGES; j++)
+            {
+                if (!ptr->glyphs[i][j]) continue;
+                for (k = 0; k < GLYPH_CACHE_PAGE_SIZE; k++)
+                    HeapFree( GetProcessHeap(), 0, ptr->glyphs[i][j][k] );
+                HeapFree( GetProcessHeap(), 0, ptr->glyphs[i][j] );
+            }
         }
         list_remove( &ptr->entry );
     }
@@ -543,11 +550,7 @@ static struct cached_font *add_cached_font( HDC hdc, HFONT hfont, UINT aa_flags 
 
     *ptr = font;
     ptr->ref = 1;
-    for (i = 0; i < GLYPH_NBTYPES; i++)
-    {
-        ptr->glyphs[i] = NULL;
-        ptr->nb_glyphs[i] = 0;
-    }
+    memset( ptr->glyphs, 0, sizeof(ptr->glyphs) );
 done:
     list_add_head( &font_cache, &ptr->entry );
     LeaveCriticalSection( &font_cache_cs );
@@ -560,33 +563,40 @@ void release_cached_font( struct cached_font *font )
     if (font) InterlockedDecrement( &font->ref );
 }
 
-static void add_cached_glyph( struct cached_font *font, UINT index, UINT flags, struct cached_glyph *glyph )
+static struct cached_glyph *add_cached_glyph( struct cached_font *font, UINT index, UINT flags,
+                                              struct cached_glyph *glyph )
 {
+    struct cached_glyph *ret;
     enum glyph_type type = (flags & ETO_GLYPH_INDEX) ? GLYPH_INDEX : GLYPH_WCHAR;
+    UINT page = index / GLYPH_CACHE_PAGE_SIZE;
+    UINT entry = index % GLYPH_CACHE_PAGE_SIZE;
 
-    if (index >= font->nb_glyphs[type])
+    if (!font->glyphs[type][page])
     {
-        UINT new_count = (index + 128) & ~127;
-        struct cached_glyph **new;
+        struct cached_glyph **ptr;
 
-        if (font->glyphs[type])
-            new = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                               font->glyphs[type], new_count * sizeof(*new) );
-        else
-            new = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, new_count * sizeof(*new) );
-        if (!new) return;
-        font->glyphs[type] = new;
-        font->nb_glyphs[type] = new_count;
+        ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, GLYPH_CACHE_PAGE_SIZE * sizeof(*ptr) );
+        if (!ptr)
+        {
+            HeapFree( GetProcessHeap(), 0, glyph );
+            return NULL;
+        }
+        if (InterlockedCompareExchangePointer( (void **)&font->glyphs[type][page], ptr, NULL ))
+            HeapFree( GetProcessHeap(), 0, ptr );
     }
-    font->glyphs[type][index] = glyph;
+    ret = InterlockedCompareExchangePointer( (void **)&font->glyphs[type][page][entry], glyph, NULL );
+    if (!ret) ret = glyph;
+    else HeapFree( GetProcessHeap(), 0, glyph );
+    return ret;
 }
 
 static struct cached_glyph *get_cached_glyph( struct cached_font *font, UINT index, UINT flags )
 {
     enum glyph_type type = (flags & ETO_GLYPH_INDEX) ? GLYPH_INDEX : GLYPH_WCHAR;
+    UINT page = index / GLYPH_CACHE_PAGE_SIZE;
 
-    if (index < font->nb_glyphs[type]) return font->glyphs[type][index];
-    return NULL;
+    if (!font->glyphs[type][page]) return NULL;
+    return font->glyphs[type][page][index % GLYPH_CACHE_PAGE_SIZE];
 }
 
 /**********************************************************************
@@ -733,8 +743,7 @@ static struct cached_glyph *cache_glyph_bitmap( HDC hdc, struct cached_font *fon
 
 done:
     glyph->metrics = metrics;
-    add_cached_glyph( font, index, flags, glyph );
-    return glyph;
+    return add_cached_glyph( font, index, flags, glyph );
 }
 
 static void render_string( HDC hdc, dib_info *dib, struct cached_font *font, INT x, INT y,
@@ -758,7 +767,6 @@ static void render_string( HDC hdc, dib_info *dib, struct cached_font *font, INT
     if (glyph_dib.bit_count == 8)
         get_aa_ranges( dib->funcs->pixel_to_colorref( dib, text_color ), ranges );
 
-    EnterCriticalSection( &font_cache_cs );
     for (i = 0; i < count; i++)
     {
         if (!(glyph = get_cached_glyph( font, str[i], flags )) &&
@@ -789,7 +797,6 @@ static void render_string( HDC hdc, dib_info *dib, struct cached_font *font, INT
             y += glyph->metrics.gmCellIncY;
         }
     }
-    LeaveCriticalSection( &font_cache_cs );
 }
 
 BOOL render_aa_text_bitmapinfo( HDC hdc, BITMAPINFO *info, struct gdi_image_bits *bits,
