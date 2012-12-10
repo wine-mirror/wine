@@ -376,33 +376,6 @@ MSVCRT___time32_t CDECL MSVCRT__mkgmtime(struct MSVCRT_tm *time)
 #endif
 
 /*********************************************************************
- *      _localtime64 (MSVCRT.@)
- */
-struct MSVCRT_tm* CDECL MSVCRT__localtime64(const MSVCRT___time64_t* secs)
-{
-    struct tm *tm;
-    thread_data_t *data;
-    time_t seconds = *secs;
-
-    if (seconds < 0) return NULL;
-
-    _mlock(_TIME_LOCK);
-    if (!(tm = localtime( &seconds))) {
-        _munlock(_TIME_LOCK);
-        return NULL;
-    }
-
-    data = msvcrt_get_thread_data();
-    if(!data->time_buffer)
-        data->time_buffer = MSVCRT_malloc(sizeof(struct MSVCRT_tm));
-
-    unix_tm_to_msvcrt( data->time_buffer, tm );
-    _munlock(_TIME_LOCK);
-
-    return data->time_buffer;
-}
-
-/*********************************************************************
  *      _localtime64_s (MSVCRT.@)
  */
 int CDECL _localtime64_s(struct MSVCRT_tm *time, const MSVCRT___time64_t *secs)
@@ -435,11 +408,31 @@ int CDECL _localtime64_s(struct MSVCRT_tm *time, const MSVCRT___time64_t *secs)
 }
 
 /*********************************************************************
+ *      _localtime64 (MSVCRT.@)
+ */
+struct MSVCRT_tm* CDECL MSVCRT__localtime64(const MSVCRT___time64_t* secs)
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+
+    if(!data->time_buffer)
+        data->time_buffer = MSVCRT_malloc(sizeof(struct MSVCRT_tm));
+
+    if(_localtime64_s(data->time_buffer, secs))
+        return NULL;
+    return data->time_buffer;
+}
+
+/*********************************************************************
  *      _localtime32 (MSVCRT.@)
  */
 struct MSVCRT_tm* CDECL MSVCRT__localtime32(const MSVCRT___time32_t* secs)
 {
-    MSVCRT___time64_t secs64 = *secs;
+    MSVCRT___time64_t secs64;
+
+    if(!secs)
+        return NULL;
+
+    secs64 = *secs;
     return MSVCRT__localtime64( &secs64 );
 }
 
