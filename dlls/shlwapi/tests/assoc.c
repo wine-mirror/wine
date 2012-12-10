@@ -78,7 +78,8 @@ static void test_getstring_bad(void)
     hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotBad, open, NULL,
                            &len);
     ok(hr == E_FAIL ||
-       hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
+       hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */ ||
+       hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), /* Win8 */
        "Unexpected result : %08x\n", hr);
     hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, invalid, NULL,
                            &len);
@@ -133,7 +134,8 @@ static void test_getstring_basic(void)
     hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open, NULL,
                            &len);
     ok(hr == S_FALSE ||
-       hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), /* Win9x/NT4 */
+       hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* Win9x/NT4 */ ||
+       hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), /* Win8 */
        "Unexpected result : %08x\n", hr);
     if (hr != S_FALSE)
     {
