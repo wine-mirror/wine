@@ -132,7 +132,7 @@ HRESULT WINAPI AtlModuleLoadTypeLib(_ATL_MODULEW *pM, LPCOLESTR lpszIndex,
     return S_OK;
 }
 
-HRESULT WINAPI AtlModuleTerm(_ATL_MODULEW* pM)
+HRESULT WINAPI AtlModuleTerm(_ATL_MODULE *pM)
 {
     _ATL_TERMFUNC_ELEM *iter = pM->m_pTermFuncs, *tmp;
 
@@ -144,8 +144,6 @@ HRESULT WINAPI AtlModuleTerm(_ATL_MODULEW* pM)
         iter = iter->pNext;
         HeapFree(GetProcessHeap(), 0, tmp);
     }
-
-    HeapFree(GetProcessHeap(), 0, pM);
 
     return S_OK;
 }
