@@ -1562,7 +1562,7 @@ TREEVIEW_DeleteItem(TREEVIEW_INFO *infoPtr, HTREEITEM item)
 	       newFirstVisible = item->prevSibling;
 	    else if (item->parent != infoPtr->root)
 	       newFirstVisible = item->parent;
-	       TREEVIEW_SetFirstVisible(infoPtr, NULL, TRUE);
+	    TREEVIEW_SetFirstVisible(infoPtr, NULL, TRUE);
 	}
 	else
 	    newFirstVisible = infoPtr->firstVisible;
