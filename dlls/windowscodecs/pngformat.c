@@ -903,8 +903,12 @@ static HRESULT WINAPI PngDecoder_Frame_GetColorContexts(IWICBitmapFrameDecode *i
 static HRESULT WINAPI PngDecoder_Frame_GetThumbnail(IWICBitmapFrameDecode *iface,
     IWICBitmapSource **ppIThumbnail)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIThumbnail);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIThumbnail);
+
+    if (!ppIThumbnail) return E_INVALIDARG;
+
+    *ppIThumbnail = NULL;
+    return WINCODEC_ERR_CODECNOTHUMBNAIL;
 }
 
 static const IWICBitmapFrameDecodeVtbl PngDecoder_FrameVtbl = {
