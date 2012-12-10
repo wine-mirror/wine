@@ -165,7 +165,7 @@ static const IDWriteBitmapRenderTargetVtbl rendertargetvtbl = {
 
 static HRESULT create_rendertarget(HDC hdc, UINT32 width, UINT32 height, IDWriteBitmapRenderTarget **target)
 {
-    char bmibuf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
+    char bmibuf[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
     BITMAPINFO *bmi = (BITMAPINFO*)bmibuf;
     struct rendertarget *This;
     HBITMAP dib;
