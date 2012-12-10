@@ -51,6 +51,6 @@
 61 stdcall AtlCreateRegistrar(ptr) atl100.AtlCreateRegistrar
 62 stub AltWinModuleRegisterClassExW
 63 stub AltWinModuleRegisterClassExA
-64 stub AltCallTermFunc
+64 stdcall AltCallTermFunc(ptr) atl100.AltCallTermFunc
 65 stub AltWinModuleInit
 66 stub AltWinModuleTerm

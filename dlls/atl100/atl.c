@@ -246,6 +246,25 @@ HRESULT WINAPI AtlModuleAddTermFunc(_ATL_MODULE *pM, _ATL_TERMFUNC *pFunc, DWORD
 }
 
 /***********************************************************************
+ *           AtlCallTermFunc              [atl100.@]
+ */
+void WINAPI AtlCallTermFunc(_ATL_MODULE *pM)
+{
+    _ATL_TERMFUNC_ELEM *iter = pM->m_pTermFuncs, *tmp;
+
+    TRACE("(%p)\n", pM);
+
+    while(iter) {
+        iter->pFunc(iter->dw);
+        tmp = iter;
+        iter = iter->pNext;
+        HeapFree(GetProcessHeap(), 0, tmp);
+    }
+
+    pM->m_pTermFuncs = NULL;
+}
+
+/***********************************************************************
  *           AtlGetVersion              [atl100.@]
  */
 DWORD WINAPI AtlGetVersion(void *pReserved)
