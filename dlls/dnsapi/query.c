@@ -563,7 +563,7 @@ static DNS_STATUS dns_get_serverlist( PIP4_ARRAY addrs, PDWORD len )
     unsigned int size;
     int i;
 
-    size = sizeof(IP4_ARRAY) + sizeof(IP4_ADDRESS) * (_res.nscount - 1);
+    size = FIELD_OFFSET(IP4_ARRAY, AddrArray[_res.nscount]);
     if (!addrs || *len < size)
     {
         *len = size;
