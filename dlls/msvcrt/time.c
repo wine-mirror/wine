@@ -24,6 +24,7 @@
 
 #include "config.h"
 
+#include <stdlib.h>
 #define _POSIX_PTHREAD_SEMANTICS /* switch to a 2 arg style asctime_r on Solaris */
 #include <time.h>
 #ifdef HAVE_SYS_TIMES_H
@@ -90,6 +91,90 @@ static inline void write_invalid_msvcrt_tm( struct MSVCRT_tm *tm )
     tm->tm_wday = -1;
     tm->tm_yday = -1;
     tm->tm_isdst = -1;
+}
+
+/*********************************************************************
+ *		_daylight (MSVCRT.@)
+ */
+int MSVCRT___daylight = 1;
+
+/*********************************************************************
+ *		_timezone (MSVCRT.@)
+ */
+MSVCRT_long MSVCRT___timezone = 28800;
+
+/*********************************************************************
+ *		_dstbias (MSVCRT.@)
+ */
+int MSVCRT__dstbias = -3600;
+
+/*********************************************************************
+ *		_tzname (MSVCRT.@)
+ * NOTES
+ *  Some apps (notably Mozilla) insist on writing to these, so the buffer
+ *  must be large enough.
+ */
+static char tzname_std[64] = "PST";
+static char tzname_dst[64] = "PDT";
+char *MSVCRT__tzname[2] = { tzname_std, tzname_dst };
+
+static TIME_ZONE_INFORMATION tzi = {0};
+/*********************************************************************
+ *		_tzset (MSVCRT.@)
+ */
+void CDECL MSVCRT__tzset(void)
+{
+    char *tz = MSVCRT_getenv("TZ");
+    BOOL error;
+
+    _mlock(_TIME_LOCK);
+    if(tz && tz[0]) {
+        BOOL neg_zone = FALSE;
+
+        memset(&tzi, 0, sizeof(tzi));
+
+        /* Parse timezone information: tzn[+|-]hh[:mm[:ss]][dzn] */
+        lstrcpynA(MSVCRT__tzname[0], tz, 3);
+        tz += 3;
+
+        if(*tz == '-') {
+            neg_zone = TRUE;
+            tz++;
+        }else if(*tz == '+') {
+            tz++;
+        }
+        MSVCRT___timezone = strtol(tz, &tz, 10)*3600;
+        if(*tz == ':') {
+            MSVCRT___timezone += strtol(tz+1, &tz, 10)*60;
+            if(*tz == ':')
+                MSVCRT___timezone += strtol(tz+1, &tz, 10);
+        }
+        if(neg_zone)
+            MSVCRT___timezone = -MSVCRT___timezone;
+
+        MSVCRT___daylight = *tz;
+        lstrcpynA(MSVCRT__tzname[1], tz, 3);
+    }else if(GetTimeZoneInformation(&tzi) != TIME_ZONE_ID_INVALID) {
+        MSVCRT___timezone = tzi.Bias*60;
+        if(tzi.StandardDate.wMonth)
+            MSVCRT___timezone += tzi.StandardBias*60;
+
+        if(tzi.DaylightDate.wMonth) {
+            MSVCRT___daylight = 1;
+            MSVCRT__dstbias = (tzi.DaylightBias-tzi.StandardBias)*60;
+        }else {
+            MSVCRT___daylight = 0;
+            MSVCRT__dstbias = 0;
+        }
+
+        if(!WideCharToMultiByte(CP_ACP, 0, tzi.StandardName, -1, MSVCRT__tzname[0],
+                    sizeof(tzname_std), NULL, &error) || error)
+            *MSVCRT__tzname[0] = 0;
+        if(!WideCharToMultiByte(CP_ACP, 0, tzi.DaylightName, -1, MSVCRT__tzname[1],
+                    sizeof(tzname_dst), NULL, &error) || error)
+            *MSVCRT__tzname[0] = 0;
+    }
+    _munlock(_TIME_LOCK);
 }
 
 #define SECSPERDAY        86400
@@ -701,22 +786,12 @@ MSVCRT___time32_t CDECL MSVCRT_time(MSVCRT___time32_t* buf)
 #endif
 
 /*********************************************************************
- *		_daylight (MSVCRT.@)
- */
-int MSVCRT___daylight = 0;
-
-/*********************************************************************
  *		__p_daylight (MSVCRT.@)
  */
 int * CDECL MSVCRT___p__daylight(void)
 {
 	return &MSVCRT___daylight;
 }
-
-/*********************************************************************
- *		_dstbias (MSVCRT.@)
- */
-int MSVCRT__dstbias = 0;
 
 /*********************************************************************
  *		__p_dstbias (MSVCRT.@)
@@ -727,28 +802,12 @@ int * CDECL __p__dstbias(void)
 }
 
 /*********************************************************************
- *		_timezone (MSVCRT.@)
- */
-MSVCRT_long MSVCRT___timezone = 0;
-
-/*********************************************************************
  *		__p_timezone (MSVCRT.@)
  */
 MSVCRT_long * CDECL MSVCRT___p__timezone(void)
 {
 	return &MSVCRT___timezone;
 }
-
-/*********************************************************************
- *		_tzname (MSVCRT.@)
- * NOTES
- *  Some apps (notably Mozilla) insist on writing to these, so the buffer
- *  must be large enough.  The size is picked based on observation of
- *  Windows XP.
- */
-static char tzname_std[64] = "PST";
-static char tzname_dst[64] = "PDT";
-char *MSVCRT__tzname[2] = { tzname_std, tzname_dst };
 
 /*********************************************************************
  *		_get_tzname (MSVCRT.@)
@@ -790,41 +849,6 @@ int CDECL MSVCRT__get_tzname(MSVCRT_size_t *ret, char *buf, MSVCRT_size_t bufsiz
 char ** CDECL __p__tzname(void)
 {
 	return MSVCRT__tzname;
-}
-
-/*********************************************************************
- *		_tzset (MSVCRT.@)
- */
-void CDECL MSVCRT__tzset(void)
-{
-    tzset();
-#if defined(HAVE_TIMEZONE) && defined(HAVE_DAYLIGHT)
-    MSVCRT___daylight = daylight;
-    MSVCRT___timezone = timezone;
-#else
-    {
-        static const time_t seconds_in_year = (365 * 24 + 6) * 3600;
-        time_t t;
-        struct tm *tmp;
-        int zone_january, zone_july;
-
-        _mlock(_TIME_LOCK);
-        t = (time(NULL) / seconds_in_year) * seconds_in_year;
-        tmp = localtime(&t);
-        zone_january = -tmp->tm_gmtoff;
-        t += seconds_in_year / 2;
-        tmp = localtime(&t);
-        zone_july = -tmp->tm_gmtoff;
-        _munlock(_TIME_LOCK);
-
-        MSVCRT___daylight = (zone_january != zone_july);
-        MSVCRT___timezone = max(zone_january, zone_july);
-    }
-#endif
-    lstrcpynA(tzname_std, tzname[0], sizeof(tzname_std));
-    tzname_std[sizeof(tzname_std) - 1] = '\0';
-    lstrcpynA(tzname_dst, tzname[1], sizeof(tzname_dst));
-    tzname_dst[sizeof(tzname_dst) - 1] = '\0';
 }
 
 static inline BOOL strftime_date(char *str, MSVCRT_size_t *pos, MSVCRT_size_t max,
