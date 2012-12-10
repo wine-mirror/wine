@@ -121,6 +121,9 @@ static const WCHAR de_engb2[] ={'E','n','g','l','i','s','c','h',' ',
                                 'K',0xF6,'n','i','g','r','e','i','c',0};
 static const WCHAR de_enus[] = {'E','n','g','l','i','s','c','h',' ',
                                 '(','U','S','A',')',0};
+static const WCHAR de_enus2[] ={'E','n','g','l','i','s','c','h',' ',
+                                '(','V','e','r','e','i','n','i','g','t','e',' ',
+                                'S','t','a','a','t','e','n',')',0};
 static const WCHAR de_de[] =   {'D','e','u','t','s','c','h',' ',
                                 '(','D','e','u','t','s','c','h','l','a','n','d',')',0};
 static const WCHAR de_deat[] = {'D','e','u','t','s','c','h',' ',
@@ -184,11 +187,11 @@ static const info_table_entry  info_table[] = {
     {MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),        MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
          TODO_NAME, "en", de_en},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),        MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
-         TODO_NAME, "en-us", de_enus},
+         TODO_NAME, "en-us", de_enus, de_enus2},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK),     MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
          TODO_NAME, "en-gb", de_engb, de_engb2},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),     MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
-         TODO_NAME, "en-us", de_enus},
+         TODO_NAME, "en-us", de_enus, de_enus2},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_CAN),    MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
          TODO_NAME, "en-ca", de_enca},
 
