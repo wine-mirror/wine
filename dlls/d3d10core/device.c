@@ -1476,6 +1476,9 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device *i
 
     TRACE("iface %p, desc %p, sampler_state %p.\n", iface, desc, sampler_state);
 
+    if (!desc)
+        return E_INVALIDARG;
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
@@ -1483,8 +1486,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device *i
         return E_OUTOFMEMORY;
     }
 
-    hr = d3d10_sampler_state_init(object);
-    if (FAILED(hr))
+    if (FAILED(hr = d3d10_sampler_state_init(object, desc)))
     {
         WARN("Failed to initialize sampler state, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);

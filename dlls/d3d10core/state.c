@@ -490,7 +490,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_sampler_state_SetPrivateDataInterface(ID3
 static void STDMETHODCALLTYPE d3d10_sampler_state_GetDesc(ID3D10SamplerState *iface,
         D3D10_SAMPLER_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d10_sampler_state *state = impl_from_ID3D10SamplerState(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    *desc = state->desc;
 }
 
 static const struct ID3D10SamplerStateVtbl d3d10_sampler_state_vtbl =
@@ -508,12 +512,13 @@ static const struct ID3D10SamplerStateVtbl d3d10_sampler_state_vtbl =
     d3d10_sampler_state_GetDesc,
 };
 
-HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state)
+HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state, const D3D10_SAMPLER_DESC *desc)
 {
     HRESULT hr;
 
     state->ID3D10SamplerState_iface.lpVtbl = &d3d10_sampler_state_vtbl;
     state->refcount = 1;
+    state->desc = *desc;
 
     if (FAILED(hr = wined3d_sampler_create(state, &state->wined3d_sampler)))
     {
