@@ -110,6 +110,7 @@ typedef struct tagTREEVIEW_INFO
   HFONT         hDefaultFont;
   HFONT         hBoldFont;
   HFONT         hUnderlineFont;
+  HFONT         hBoldUnderlineFont;
   HCURSOR       hcurHand;
   HWND          hwndToolTip;
 
@@ -303,11 +304,22 @@ TREEVIEW_CreateUnderlineFont(HFONT hOrigFont)
     return CreateFontIndirectW(&font);
 }
 
+static HFONT
+TREEVIEW_CreateBoldUnderlineFont(HFONT hfont)
+{
+    LOGFONTW font;
+
+    GetObjectW(hfont, sizeof(font), &font);
+    font.lfWeight = FW_BOLD;
+    font.lfUnderline = TRUE;
+    return CreateFontIndirectW(&font);
+}
+
 static inline HFONT
 TREEVIEW_FontForItem(const TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *item)
 {
     if ((infoPtr->dwStyle & TVS_TRACKSELECT) && (item == infoPtr->hotItem))
-        return infoPtr->hUnderlineFont;
+        return item->state & TVIS_BOLD ? infoPtr->hBoldUnderlineFont : infoPtr->hUnderlineFont;
     if (item->state & TVIS_BOLD)
         return infoPtr->hBoldFont;
     return infoPtr->hFont;
@@ -1903,8 +1915,10 @@ TREEVIEW_SetFont(TREEVIEW_INFO *infoPtr, HFONT hFont, BOOL bRedraw)
 
     DeleteObject(infoPtr->hBoldFont);
     DeleteObject(infoPtr->hUnderlineFont);
+    DeleteObject(infoPtr->hBoldUnderlineFont);
     infoPtr->hBoldFont = TREEVIEW_CreateBoldFont(infoPtr->hFont);
     infoPtr->hUnderlineFont = TREEVIEW_CreateUnderlineFont(infoPtr->hFont);
+    infoPtr->hBoldUnderlineFont = TREEVIEW_CreateBoldUnderlineFont(infoPtr->hFont);
 
     if (!infoPtr->bHeightSet)
 	infoPtr->uItemHeight = TREEVIEW_NaturalHeight(infoPtr);
@@ -5059,6 +5073,7 @@ TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
     infoPtr->hFont = infoPtr->hDefaultFont = CreateFontIndirectW(&lf);
     infoPtr->hBoldFont = TREEVIEW_CreateBoldFont(infoPtr->hFont);
     infoPtr->hUnderlineFont = TREEVIEW_CreateUnderlineFont(infoPtr->hFont);
+    infoPtr->hBoldUnderlineFont = TREEVIEW_CreateBoldUnderlineFont(infoPtr->hFont);
     infoPtr->hcurHand = LoadCursorW(NULL, (LPWSTR)IDC_HAND);
 
     infoPtr->uItemHeight = TREEVIEW_NaturalHeight(infoPtr);
@@ -5118,6 +5133,7 @@ TREEVIEW_Destroy(TREEVIEW_INFO *infoPtr)
     DeleteObject(infoPtr->hDefaultFont);
     DeleteObject(infoPtr->hBoldFont);
     DeleteObject(infoPtr->hUnderlineFont);
+    DeleteObject(infoPtr->hBoldUnderlineFont);
     Free(infoPtr);
 
     return 0;
