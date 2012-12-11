@@ -108,63 +108,16 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, LPVOID *ppvObject)
 
 extern HINSTANCE hInst;
 
-static HRESULT do_register_dll_server(IRegistrar *pRegistrar, LPCOLESTR wszDll,
-                                      LPCOLESTR wszId, BOOL do_register,
-                                      const struct _ATL_REGMAP_ENTRY* pMapEntries)
-{
-    IRegistrar *registrar;
-    HRESULT hres;
-    const struct _ATL_REGMAP_ENTRY *pMapEntry;
-
-    static const WCHAR wszModule[] = {'M','O','D','U','L','E',0};
-    static const WCHAR wszRegistry[] = {'R','E','G','I','S','T','R','Y',0};
-
-    if(pRegistrar) {
-        registrar = pRegistrar;
-    }else {
-        hres = AtlCreateRegistrar(&registrar);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    IRegistrar_AddReplacement(registrar, wszModule, wszDll);
-
-    for (pMapEntry = pMapEntries; pMapEntry && pMapEntry->szKey; pMapEntry++)
-        IRegistrar_AddReplacement(registrar, pMapEntry->szKey, pMapEntry->szData);
-
-    if(do_register)
-        hres = IRegistrar_ResourceRegisterSz(registrar, wszDll, wszId, wszRegistry);
-    else
-        hres = IRegistrar_ResourceUnregisterSz(registrar, wszDll, wszId, wszRegistry);
-
-    if(registrar != pRegistrar)
-        IRegistrar_Release(registrar);
-    return hres;
-}
-
 /***********************************************************************
  *           AtlModuleUpdateRegistryFromResourceD         [ATL.@]
  *
  */
 HRESULT WINAPI AtlModuleUpdateRegistryFromResourceD(_ATL_MODULEW* pM, LPCOLESTR lpszRes,
-		BOOL bRegister, struct _ATL_REGMAP_ENTRY* pMapEntries, IRegistrar* pReg)
+        BOOL bRegister, struct _ATL_REGMAP_ENTRY* pMapEntries, IRegistrar* pReg)
 {
-    HINSTANCE lhInst = pM->m_hInst;
-    /* everything inside this function below this point
-     * should go into atl71.AtlUpdateRegistryFromResourceD
-     */
-    WCHAR module_name[MAX_PATH];
+    TRACE("(%p %s %d %p %p)\n", pM, debugstr_w(lpszRes), bRegister, pMapEntries, pReg);
 
-    if(!GetModuleFileNameW(lhInst, module_name, MAX_PATH)) {
-        FIXME("hinst %p: did not get module name\n",
-        lhInst);
-        return E_FAIL;
-    }
-
-    TRACE("%p (%s), %s, %d, %p, %p\n", hInst, debugstr_w(module_name),
-	debugstr_w(lpszRes), bRegister, pMapEntries, pReg);
-
-    return do_register_dll_server(pReg, module_name, lpszRes, bRegister, pMapEntries);
+    return AtlUpdateRegistryFromResourceD(pM->m_hInst, lpszRes, bRegister, pMapEntries, pReg);
 }
 
 /***********************************************************************
