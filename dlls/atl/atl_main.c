@@ -111,25 +111,12 @@ static _ATL_OBJMAP_ENTRYW_V1 *get_objmap_entry( _ATL_MODULEW *mod, unsigned int 
 HRESULT WINAPI AtlModuleLoadTypeLib(_ATL_MODULEW *pM, LPCOLESTR lpszIndex,
                                     BSTR *pbstrPath, ITypeLib **ppTypeLib)
 {
-    HRESULT hRes;
-    OLECHAR path[MAX_PATH+8]; /* leave some space for index */
-
     TRACE("(%p, %s, %p, %p)\n", pM, debugstr_w(lpszIndex), pbstrPath, ppTypeLib);
 
     if (!pM)
         return E_INVALIDARG;
 
-    GetModuleFileNameW(pM->m_hInstTypeLib, path, MAX_PATH);
-    if (lpszIndex)
-        lstrcatW(path, lpszIndex);
-
-    hRes = LoadTypeLib(path, ppTypeLib);
-    if (FAILED(hRes))
-        return hRes;
-
-    *pbstrPath = SysAllocString(path);
-
-    return S_OK;
+    return AtlLoadTypeLib(pM->m_hInstTypeLib, lpszIndex, pbstrPath, ppTypeLib);
 }
 
 HRESULT WINAPI AtlModuleTerm(_ATL_MODULE *pM)
