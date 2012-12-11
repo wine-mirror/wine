@@ -1350,6 +1350,8 @@ void move_resize_window( HWND hwnd, int dir )
     /* (some apps don't like it if we return before the size/move is done) */
 
     if (!button) return;
+    SendMessageW( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
+
     for (;;)
     {
         MSG msg;
