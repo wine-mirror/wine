@@ -782,22 +782,21 @@ static void check_ilhead_data(const char *ilh_data, INT cx, INT cy, INT cur, INT
 static HBITMAP create_bitmap(INT cx, INT cy, COLORREF color, const char *comment)
 {
     HDC hdc;
-    char bmibuf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
-    BITMAPINFO *bmi = (BITMAPINFO *)bmibuf;
+    BITMAPINFO bmi;
     HBITMAP hbmp, hbmp_old;
     HBRUSH hbrush;
     RECT rc = { 0, 0, cx, cy };
 
     hdc = CreateCompatibleDC(0);
 
-    memset(bmi, 0, sizeof(*bmi));
-    bmi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
-    bmi->bmiHeader.biHeight = cx;
-    bmi->bmiHeader.biWidth = cy;
-    bmi->bmiHeader.biBitCount = 24;
-    bmi->bmiHeader.biPlanes = 1;
-    bmi->bmiHeader.biCompression = BI_RGB;
-    hbmp = CreateDIBSection(hdc, bmi, DIB_RGB_COLORS, NULL, NULL, 0);
+    memset(&bmi, 0, sizeof(bmi));
+    bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
+    bmi.bmiHeader.biHeight = cx;
+    bmi.bmiHeader.biWidth = cy;
+    bmi.bmiHeader.biBitCount = 24;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biCompression = BI_RGB;
+    hbmp = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, NULL, NULL, 0);
 
     hbmp_old = SelectObject(hdc, hbmp);
 
