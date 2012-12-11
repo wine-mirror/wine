@@ -407,9 +407,8 @@ static BOOL NetBTFindNameAnswerCallback(void *pVoid, WORD answerCount,
     {
         if (queryData->cacheEntry == NULL)
         {
-            queryData->cacheEntry = HeapAlloc(
-             GetProcessHeap(), 0, sizeof(NBNameCacheEntry) +
-             (answerCount - 1) * sizeof(DWORD));
+            queryData->cacheEntry = HeapAlloc(GetProcessHeap(), 0,
+             FIELD_OFFSET(NBNameCacheEntry, addresses[answerCount]));
             if (queryData->cacheEntry)
                 queryData->cacheEntry->numAddresses = 0;
             else
@@ -541,8 +540,8 @@ static UCHAR NetBTinetResolve(const UCHAR name[NCBNAMSZ],
 
             if (addr != INADDR_NONE)
             {
-                *cacheEntry = HeapAlloc(GetProcessHeap(),
-                 0, sizeof(NBNameCacheEntry));
+                *cacheEntry = HeapAlloc(GetProcessHeap(), 0,
+                 FIELD_OFFSET(NBNameCacheEntry, addresses[1]));
                 if (*cacheEntry)
                 {
                     memcpy((*cacheEntry)->name, name, NCBNAMSZ);
@@ -566,9 +565,8 @@ static UCHAR NetBTinetResolve(const UCHAR name[NCBNAMSZ],
                     ;
                 if (host->h_addr_list && host->h_addr_list[0])
                 {
-                    *cacheEntry = HeapAlloc(
-                     GetProcessHeap(), 0, sizeof(NBNameCacheEntry) +
-                     (i - 1) * sizeof(DWORD));
+                    *cacheEntry = HeapAlloc(GetProcessHeap(), 0,
+                     FIELD_OFFSET(NBNameCacheEntry, addresses[i]));
                     if (*cacheEntry)
                     {
                         memcpy((*cacheEntry)->name, name, NCBNAMSZ);
