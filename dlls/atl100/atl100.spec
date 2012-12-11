@@ -7,7 +7,7 @@
 17 stub AtlComModuleRegisterClassObjects
 20 stub AtlComModuleRevokeClassObjects
 22 stub AtlComModuleUnregisterServer
-23 stub AtlUpdateRegistryFromResourceD
+23 stdcall AtlUpdateRegistryFromResourceD(long wstr long ptr ptr)
 24 stub AtlWaitWithMessageLoop
 25 stub AtlSetErrorInfo
 26 stdcall AtlCreateTargetDC(long ptr)

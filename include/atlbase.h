@@ -210,5 +210,6 @@ HRESULT WINAPI AtlModuleTerm(_ATL_MODULEW* pM);
 HRESULT WINAPI AtlUnadvise(IUnknown *pUnkCP, const IID * iid, DWORD dw);
 HRESULT WINAPI AtlUnmarshalPtr(IStream *pStream, const IID *iid, IUnknown **ppUnk);
 HRESULT WINAPI AtlCreateRegistrar(IRegistrar**);
+HRESULT WINAPI AtlUpdateRegistryFromResourceD(HINSTANCE,LPCOLESTR,BOOL,struct _ATL_REGMAP_ENTRY*,IRegistrar*);
 
 #endif /* __WINE_ATLBASE_H__ */
