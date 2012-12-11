@@ -823,7 +823,8 @@ static void test_get_value(void)
 
     /* Query REG_EXPAND_SZ using RRF_RT_REG_EXPAND_SZ (not allowed without RRF_NOEXPAND) */
     ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_EXPAND_SZ, NULL, NULL, NULL);
-    ok(ret == ERROR_INVALID_PARAMETER, "ret=%d\n", ret);
+    /* before win8: ERROR_INVALID_PARAMETER, win8: ERROR_UNSUPPORTED_TYPE */
+    ok(ret == ERROR_INVALID_PARAMETER || ret == ERROR_UNSUPPORTED_TYPE, "ret=%d\n", ret);
 
     /* Query REG_EXPAND_SZ using RRF_RT_ANY */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
