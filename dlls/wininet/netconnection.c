@@ -222,25 +222,19 @@ static DWORD netconn_verify_cert(netconn_t *conn, PCCERT_CONTEXT cert, HCERTSTOR
     PCCERT_CHAIN_CONTEXT chain;
     char oid_server_auth[] = szOID_PKIX_KP_SERVER_AUTH;
     char *server_auth[] = { oid_server_auth };
-    DWORD err = ERROR_SUCCESS, chainFlags = 0, errors;
+    DWORD err = ERROR_SUCCESS, errors;
 
     static const DWORD supportedErrors =
         CERT_TRUST_IS_NOT_TIME_VALID |
         CERT_TRUST_IS_UNTRUSTED_ROOT |
         CERT_TRUST_IS_PARTIAL_CHAIN |
-        CERT_TRUST_IS_OFFLINE_REVOCATION |
-        CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
-        CERT_TRUST_IS_REVOKED |
         CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
 
     TRACE("verifying %s\n", debugstr_w(conn->server->name));
 
     chainPara.RequestedUsage.Usage.cUsageIdentifier = 1;
     chainPara.RequestedUsage.Usage.rgpszUsageIdentifier = server_auth;
-    if (!(conn->security_flags & SECURITY_FLAG_IGNORE_REVOCATION))
-        chainFlags |= CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT;
-
-    if (!(ret = CertGetCertificateChain(NULL, cert, NULL, store, &chainPara, chainFlags, NULL, &chain))) {
+    if (!(ret = CertGetCertificateChain(NULL, cert, NULL, store, &chainPara, 0, NULL, &chain))) {
         TRACE("failed\n");
         return GetLastError();
     }
@@ -249,7 +243,7 @@ static DWORD netconn_verify_cert(netconn_t *conn, PCCERT_CONTEXT cert, HCERTSTOR
 
     do {
         /* This seems strange, but that's what tests show */
-        if(errors & (CERT_TRUST_IS_PARTIAL_CHAIN|CERT_TRUST_IS_OFFLINE_REVOCATION)) {
+        if(errors & CERT_TRUST_IS_PARTIAL_CHAIN) {
             WARN("ERROR_INTERNET_SEC_CERT_REV_FAILED\n");
             err = ERROR_INTERNET_SEC_CERT_REV_FAILED;
             if(conn->mask_errors)
@@ -298,28 +292,6 @@ static DWORD netconn_verify_cert(netconn_t *conn, PCCERT_CONTEXT cert, HCERTSTOR
                 conn->security_flags |= _SECURITY_FLAG_CERT_INVALID_CA;
             }
             errors &= ~CERT_TRUST_IS_PARTIAL_CHAIN;
-        }
-
-        if(errors & (CERT_TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN)) {
-            WARN("CERT_TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN\n");
-            if(!(conn->security_flags & SECURITY_FLAG_IGNORE_REVOCATION)) {
-                err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_SEC_CERT_NO_REV;
-                if(!conn->mask_errors)
-                    break;
-                conn->security_flags |= _SECURITY_FLAG_CERT_REV_FAILED;
-            }
-            errors &= ~(CERT_TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN);
-        }
-
-        if(errors & CERT_TRUST_IS_REVOKED) {
-            WARN("CERT_TRUST_IS_REVOKED\n");
-            if(!(conn->security_flags & SECURITY_FLAG_IGNORE_REVOCATION)) {
-                err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_SEC_CERT_REVOKED;
-                if(!conn->mask_errors)
-                    break;
-                WARN("TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN, unknown error flags\n");
-            }
-            errors &= ~CERT_TRUST_IS_REVOKED;
         }
 
         if(errors & CERT_TRUST_IS_NOT_VALID_FOR_USAGE) {
