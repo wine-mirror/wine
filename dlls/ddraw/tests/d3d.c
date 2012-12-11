@@ -624,7 +624,8 @@ static HRESULT WINAPI enumDevicesCallback(GUID *Guid,LPSTR DeviceDescription,LPS
     return DDENUMRET_OK;
 }
 
-static HRESULT WINAPI enumDevicesCallbackTest7(LPSTR DeviceDescription, LPSTR DeviceName, LPD3DDEVICEDESC7 lpdd7, LPVOID Context)
+static HRESULT WINAPI enumDevicesCallbackTest7(char *DeviceDescription, char *DeviceName,
+        D3DDEVICEDESC7 *lpdd7, void *Context)
 {
     D3D7ETest *d3d7et = Context;
     if(IsEqualGUID(&lpdd7->deviceGUID, &IID_IDirect3DRGBDevice))
@@ -641,7 +642,8 @@ static HRESULT WINAPI enumDevicesCallbackTest7(LPSTR DeviceDescription, LPSTR De
     return DDENUMRET_OK;
 }
 
-static HRESULT WINAPI enumDevicesCancelTest7(LPSTR DeviceDescription, LPSTR DeviceName, LPD3DDEVICEDESC7 lpdd7, LPVOID Context)
+static HRESULT WINAPI enumDevicesCancelTest7(char *DeviceDescription, char *DeviceName,
+        D3DDEVICEDESC7 *lpdd7, void *Context)
 {
     D3D7ECancelTest *d3d7et = Context;
 
@@ -650,7 +652,8 @@ static HRESULT WINAPI enumDevicesCancelTest7(LPSTR DeviceDescription, LPSTR Devi
     return d3d7et->desired_ret;
 }
 
-static HRESULT WINAPI enumDevicesLifetimeTest7(LPSTR DeviceDescription, LPSTR DeviceName, LPD3DDEVICEDESC7 lpdd7, LPVOID Context)
+static HRESULT WINAPI enumDevicesLifetimeTest7(char *DeviceDescription, char *DeviceName,
+        D3DDEVICEDESC7 *lpdd7, void *Context)
 {
     D3D7ELifetimeTest *ctx = Context;
 

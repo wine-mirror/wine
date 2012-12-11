@@ -349,7 +349,7 @@ typedef struct _D3DDeviceDesc7 {
 
 typedef HRESULT (CALLBACK *LPD3DENUMDEVICESCALLBACK)(GUID *guid, char *description, char *name,
         D3DDEVICEDESC *hal_desc, D3DDEVICEDESC *hel_desc, void *ctx);
-typedef HRESULT (CALLBACK *LPD3DENUMDEVICESCALLBACK7)(LPSTR lpDeviceDescription, LPSTR lpDeviceName, LPD3DDEVICEDESC7, LPVOID);
+typedef HRESULT (CALLBACK *LPD3DENUMDEVICESCALLBACK7)(char *description, char *name, D3DDEVICEDESC7 *desc, void *ctx);
 
 #define D3DFDS_COLORMODEL          0x00000001
 #define D3DFDS_GUID                0x00000002
