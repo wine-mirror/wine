@@ -72,15 +72,16 @@ static ULONG STDMETHODCALLTYPE d3d10_device_inner_AddRef(IUnknown *iface)
 
 static ULONG STDMETHODCALLTYPE d3d10_device_inner_Release(IUnknown *iface)
 {
-    struct d3d10_device *This = impl_from_IUnknown(iface);
-    ULONG refcount = InterlockedDecrement(&This->refcount);
+    struct d3d10_device *device = impl_from_IUnknown(iface);
+    ULONG refcount = InterlockedDecrement(&device->refcount);
 
-    TRACE("%p decreasing refcount to %u\n", This, refcount);
+    TRACE("%p decreasing refcount to %u.\n", device, refcount);
 
     if (!refcount)
     {
-        if (This->wined3d_device)
-            wined3d_device_decref(This->wined3d_device);
+        if (device->wined3d_device)
+            wined3d_device_decref(device->wined3d_device);
+        wine_rb_destroy(&device->sampler_states, NULL, NULL);
     }
 
     return refcount;
@@ -1471,13 +1472,26 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRasterizerState(ID3D10Device
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device *iface,
         const D3D10_SAMPLER_DESC *desc, ID3D10SamplerState **sampler_state)
 {
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
     struct d3d10_sampler_state *object;
+    struct wine_rb_entry *entry;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, sampler_state %p.\n", iface, desc, sampler_state);
 
     if (!desc)
         return E_INVALIDARG;
+
+    if ((entry = wine_rb_get(&device->sampler_states, desc)))
+    {
+        object = WINE_RB_ENTRY_VALUE(entry, struct d3d10_sampler_state, entry);
+
+        TRACE("Returning existing sampler state %p.\n", object);
+        *sampler_state = &object->ID3D10SamplerState_iface;
+        ID3D10SamplerState_AddRef(*sampler_state);
+
+        return S_OK;
+    }
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1486,7 +1500,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device *i
         return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr = d3d10_sampler_state_init(object, desc)))
+    if (FAILED(hr = d3d10_sampler_state_init(object, device, desc)))
     {
         WARN("Failed to initialize sampler state, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -1908,7 +1922,38 @@ static const struct wined3d_device_parent_ops d3d10_wined3d_device_parent_ops =
     device_parent_create_swapchain,
 };
 
-void d3d10_device_init(struct d3d10_device *device, void *outer_unknown)
+static void *d3d10_rb_alloc(size_t size)
+{
+    return HeapAlloc(GetProcessHeap(), 0, size);
+}
+
+static void *d3d10_rb_realloc(void *ptr, size_t size)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
+}
+
+static void d3d10_rb_free(void *ptr)
+{
+    HeapFree(GetProcessHeap(), 0, ptr);
+}
+
+static int d3d10_sampler_state_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    const D3D10_SAMPLER_DESC *ka = key;
+    const D3D10_SAMPLER_DESC *kb = &WINE_RB_ENTRY_VALUE(entry, const struct d3d10_sampler_state, entry)->desc;
+
+    return memcmp(ka, kb, sizeof(*ka));
+}
+
+static const struct wine_rb_functions d3d10_sampler_state_rb_ops =
+{
+    d3d10_rb_alloc,
+    d3d10_rb_realloc,
+    d3d10_rb_free,
+    d3d10_sampler_state_compare,
+};
+
+HRESULT d3d10_device_init(struct d3d10_device *device, void *outer_unknown)
 {
     device->ID3D10Device_iface.lpVtbl = &d3d10_device_vtbl;
     device->IUnknown_inner.lpVtbl = &d3d10_device_inner_unknown_vtbl;
@@ -1917,4 +1962,12 @@ void d3d10_device_init(struct d3d10_device *device, void *outer_unknown)
     device->refcount = 1;
     /* COM aggregation always takes place */
     device->outer_unk = outer_unknown;
+
+    if (wine_rb_init(&device->sampler_states, &d3d10_sampler_state_rb_ops) == -1)
+    {
+        WARN("Failed to initialize sampler state rbtree.\n");
+        return E_FAIL;
+    }
+
+    return S_OK;
 }

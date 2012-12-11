@@ -35,6 +35,7 @@
 #endif
 #include "wine/wined3d.h"
 #include "wine/winedxgi.h"
+#include "wine/rbtree.h"
 
 #define MAKE_TAG(ch0, ch1, ch2, ch3) \
     ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
@@ -247,11 +248,14 @@ struct d3d10_sampler_state
     ID3D10SamplerState ID3D10SamplerState_iface;
     LONG refcount;
 
+    struct d3d10_device *device;
     struct wined3d_sampler *wined3d_sampler;
     D3D10_SAMPLER_DESC desc;
+    struct wine_rb_entry entry;
 };
 
-HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state, const D3D10_SAMPLER_DESC *desc) DECLSPEC_HIDDEN;
+HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state, struct d3d10_device *device,
+        const D3D10_SAMPLER_DESC *desc) DECLSPEC_HIDDEN;
 struct d3d10_sampler_state *unsafe_impl_from_ID3D10SamplerState(ID3D10SamplerState *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10Query */
@@ -275,6 +279,8 @@ struct d3d10_device
     struct wined3d_device_parent device_parent;
     struct wined3d_device *wined3d_device;
 
+    struct wine_rb_tree sampler_states;
+
     struct d3d10_blend_state *blend_state;
     float blend_factor[4];
     UINT sample_mask;
@@ -283,7 +289,7 @@ struct d3d10_device
     struct d3d10_rasterizer_state *rasterizer_state;
 };
 
-void d3d10_device_init(struct d3d10_device *device, void *outer_unknown) DECLSPEC_HIDDEN;
+HRESULT d3d10_device_init(struct d3d10_device *device, void *outer_unknown) DECLSPEC_HIDDEN;
 
 /* Layered device */
 enum dxgi_device_layer_id

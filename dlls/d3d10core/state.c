@@ -438,15 +438,16 @@ static ULONG STDMETHODCALLTYPE d3d10_sampler_state_AddRef(ID3D10SamplerState *if
 
 static ULONG STDMETHODCALLTYPE d3d10_sampler_state_Release(ID3D10SamplerState *iface)
 {
-    struct d3d10_sampler_state *This = impl_from_ID3D10SamplerState(iface);
-    ULONG refcount = InterlockedDecrement(&This->refcount);
+    struct d3d10_sampler_state *state = impl_from_ID3D10SamplerState(iface);
+    ULONG refcount = InterlockedDecrement(&state->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", This, refcount);
+    TRACE("%p decreasing refcount to %u.\n", state, refcount);
 
     if (!refcount)
     {
-        wined3d_sampler_decref(This->wined3d_sampler);
-        HeapFree(GetProcessHeap(), 0, This);
+        wined3d_sampler_decref(state->wined3d_sampler);
+        wine_rb_remove(&state->device->sampler_states, &state->desc);
+        HeapFree(GetProcessHeap(), 0, state);
     }
 
     return refcount;
@@ -512,18 +513,27 @@ static const struct ID3D10SamplerStateVtbl d3d10_sampler_state_vtbl =
     d3d10_sampler_state_GetDesc,
 };
 
-HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state, const D3D10_SAMPLER_DESC *desc)
+HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state, struct d3d10_device *device,
+        const D3D10_SAMPLER_DESC *desc)
 {
     HRESULT hr;
 
     state->ID3D10SamplerState_iface.lpVtbl = &d3d10_sampler_state_vtbl;
     state->refcount = 1;
+    state->device = device;
     state->desc = *desc;
 
     if (FAILED(hr = wined3d_sampler_create(state, &state->wined3d_sampler)))
     {
         WARN("Failed to create wined3d sampler, hr %#x.\n", hr);
         return hr;
+    }
+
+    if (wine_rb_put(&device->sampler_states, desc, &state->entry) == -1)
+    {
+        ERR("Failed to insert sampler state entry.\n");
+        wined3d_sampler_decref(state->wined3d_sampler);
+        return E_FAIL;
     }
 
     return S_OK;
