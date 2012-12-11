@@ -1,0 +1,3 @@
+MODULE    = d3d11.dll
+
+@MAKE_DLL_RULES@
