@@ -1189,7 +1189,7 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
     /* Perform device size to world size transformations.  */
     if (ret)
     {
-	INT extra      = dc->charExtra,
+	INT extra = abs(INTERNAL_XWSTODS(dc, dc->charExtra)),
         breakExtra = dc->breakExtra,
         breakRem   = dc->breakRem,
         i;
@@ -1198,7 +1198,6 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
 	{
 	    for (i = 0; i < count; ++i)
 	    {
-		dxs[i] = abs(INTERNAL_XDSTOWS(dc, dxs[i]));
 		dxs[i] += (i+1) * extra;
                 if (count > 1 && (breakExtra || breakRem) && str[i] == tm.tmBreakChar)
                 {
@@ -1209,15 +1208,12 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
                         dxs[i]++;
                     }
                 }
+		dxs[i] = abs(INTERNAL_XDSTOWS(dc, dxs[i]));
 		if (dxs[i] <= maxExt)
 		    ++nFit;
 	    }
-            breakRem = dc->breakRem;
 	}
-	size->cx = abs(INTERNAL_XDSTOWS(dc, size->cx));
-	size->cy = abs(INTERNAL_YDSTOWS(dc, size->cy));
-
-        if (!dxs && count > 1 && (breakExtra || breakRem))
+        else if (count > 1 && (breakExtra || breakRem))
         {
             for (i = 0; i < count; i++)
             {
@@ -1232,6 +1228,9 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
                 }
             }
         }
+        size->cx += count * extra;
+	size->cx = abs(INTERNAL_XDSTOWS(dc, size->cx));
+	size->cy = abs(INTERNAL_YDSTOWS(dc, size->cy));
     }
 
     if (lpnFit)

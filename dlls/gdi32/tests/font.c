@@ -1753,18 +1753,17 @@ static void testJustification(HDC hdc, PSTR str, RECT *clientArea)
 {
     INT         y,
                 breakCount,
-                justifiedWidth = 0, /* to test GetTextExtentExPointW() */
                 areaWidth = clientArea->right - clientArea->left,
                 nErrors = 0, e;
-    BOOL        lastExtent = FALSE;
     PSTR        pFirstChar, pLastChar;
     SIZE        size;
     TEXTMETRICA tm;
     struct err
     {
-        char extent[100];
+        char *start;
+        int  len;
         int  GetTextExtentExPointWWidth;
-    } error[10];
+    } error[20];
 
     GetTextMetricsA(hdc, &tm);
     y = clientArea->top;
@@ -1803,18 +1802,16 @@ static void testJustification(HDC hdc, PSTR str, RECT *clientArea)
         {
             SetTextJustification(hdc, areaWidth - size.cx, breakCount);
             GetTextExtentPoint32(hdc, pFirstChar, pLastChar - pFirstChar, &size);
-            justifiedWidth = size.cx;
+            if (size.cx != areaWidth && nErrors < sizeof(error)/sizeof(error[0]) - 1)
+            {
+                error[nErrors].start = pFirstChar;
+                error[nErrors].len = pLastChar - pFirstChar;
+                error[nErrors].GetTextExtentExPointWWidth = size.cx;
+                nErrors++;
+            }
         }
-        else lastExtent = TRUE;
 
-        /* catch errors and report them */
-        if (!lastExtent && (justifiedWidth != areaWidth))
-        {
-            memset(error[nErrors].extent, 0, 100);
-            memcpy(error[nErrors].extent, pFirstChar, pLastChar - pFirstChar);
-            error[nErrors].GetTextExtentExPointWWidth = justifiedWidth;
-            nErrors++;
-        }
+        trace( "%u %.*s\n", size.cx, (int)(pLastChar - pFirstChar), pFirstChar);
 
         y += size.cy;
         str = pLastChar;
@@ -1825,8 +1822,8 @@ static void testJustification(HDC hdc, PSTR str, RECT *clientArea)
         /* The width returned by GetTextExtentPoint32() is exactly the same
            returned by GetTextExtentExPointW() - see dlls/gdi32/font.c */
         ok(error[e].GetTextExtentExPointWWidth == areaWidth,
-            "GetTextExtentPointW() for \"%s\" should have returned a width of %d, not %d.\n",
-            error[e].extent, areaWidth, error[e].GetTextExtentExPointWWidth);
+            "GetTextExtentPointW() for \"%.*s\" should have returned a width of %d, not %d.\n",
+           error[e].len, error[e].start, areaWidth, error[e].GetTextExtentExPointWWidth);
     }
 }
 
@@ -1860,6 +1857,17 @@ static void test_SetTextJustification(void)
     hfont = create_font("Times New Roman", &lf);
     SelectObject(hdc, hfont);
 
+    testJustification(hdc, testText, &clientArea);
+
+    SetMapMode( hdc, MM_ANISOTROPIC );
+    SetWindowExtEx( hdc, 2, 2, NULL );
+    GetClientRect( hwnd, &clientArea );
+    DPtoLP( hdc, (POINT *)&clientArea, 2 );
+    testJustification(hdc, testText, &clientArea);
+
+    SetViewportExtEx( hdc, 3, 3, NULL );
+    GetClientRect( hwnd, &clientArea );
+    DPtoLP( hdc, (POINT *)&clientArea, 2 );
     testJustification(hdc, testText, &clientArea);
 
     DeleteObject(hfont);

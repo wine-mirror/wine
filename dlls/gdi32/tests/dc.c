@@ -58,6 +58,7 @@ static void test_dc_values(void)
 {
     HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
     COLORREF color;
+    int extra;
 
     ok( hdc != NULL, "CreateDC failed\n" );
     color = SetBkColor( hdc, 0x12345678 );
@@ -85,6 +86,18 @@ static void test_dc_values(void)
     ok( color == 0xffffffff, "wrong color %08x\n", color );
     color = GetTextColor( hdc );
     ok( color == 0, "wrong color %08x\n", color );
+
+    extra = GetTextCharacterExtra( hdc );
+    ok( extra == 0, "initial extra %d\n", extra );
+    SetTextCharacterExtra( hdc, 123 );
+    extra = GetTextCharacterExtra( hdc );
+    ok( extra == 123, "initial extra %d\n", extra );
+    SetMapMode( hdc, MM_LOMETRIC );
+    extra = GetTextCharacterExtra( hdc );
+    ok( extra == 123, "initial extra %d\n", extra );
+    SetMapMode( hdc, MM_TEXT );
+    extra = GetTextCharacterExtra( hdc );
+    ok( extra == 123, "initial extra %d\n", extra );
 
     DeleteDC( hdc );
 }
