@@ -211,5 +211,6 @@ HRESULT WINAPI AtlUnadvise(IUnknown *pUnkCP, const IID * iid, DWORD dw);
 HRESULT WINAPI AtlUnmarshalPtr(IStream *pStream, const IID *iid, IUnknown **ppUnk);
 HRESULT WINAPI AtlCreateRegistrar(IRegistrar**);
 HRESULT WINAPI AtlUpdateRegistryFromResourceD(HINSTANCE,LPCOLESTR,BOOL,struct _ATL_REGMAP_ENTRY*,IRegistrar*);
+HRESULT WINAPI AtlLoadTypeLib(HINSTANCE,LPCOLESTR,BSTR*,ITypeLib**);
 
 #endif /* __WINE_ATLBASE_H__ */

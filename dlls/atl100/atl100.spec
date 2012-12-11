@@ -38,7 +38,7 @@
 52 stub AtlIPersistPropertyBag_Load
 53 stub AtlIPersistPropertyBag_Save
 54 stub AtlGetObjectSourceInterface
-56 stub AtlLoadTypeLib
+56 stdcall AtlLoadTypeLib(long wstr ptr ptr)
 58 stdcall AtlModuleAddTermFunc(ptr ptr long)
 59 stub AtlAxCreateControlLic
 60 stub AtlAxCreateControlLicEx

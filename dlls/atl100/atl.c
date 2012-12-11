@@ -265,6 +265,29 @@ void WINAPI AtlCallTermFunc(_ATL_MODULE *pM)
 }
 
 /***********************************************************************
+ *           AtlLoadTypeLib             [atl100.@]
+ */
+HRESULT WINAPI AtlLoadTypeLib(HINSTANCE inst, LPCOLESTR lpszIndex,
+        BSTR *pbstrPath, ITypeLib **ppTypeLib)
+{
+    OLECHAR path[MAX_PATH+8]; /* leave some space for index */
+    HRESULT hres;
+
+    TRACE("(%p %s %p %p)\n", inst, debugstr_w(lpszIndex), pbstrPath, ppTypeLib);
+
+    GetModuleFileNameW(inst, path, MAX_PATH);
+    if(lpszIndex)
+        lstrcatW(path, lpszIndex);
+
+    hres = LoadTypeLib(path, ppTypeLib);
+    if(FAILED(hres))
+        return hres;
+
+    *pbstrPath = SysAllocString(path);
+    return S_OK;
+}
+
+/***********************************************************************
  *           AtlGetVersion              [atl100.@]
  */
 DWORD WINAPI AtlGetVersion(void *pReserved)
