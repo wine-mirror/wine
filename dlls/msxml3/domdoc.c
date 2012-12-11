@@ -803,7 +803,7 @@ static HRESULT WINAPI PersistStreamInit_GetSizeMax(
     IPersistStreamInit *iface, ULARGE_INTEGER *pcbSize)
 {
     domdoc *This = impl_from_IPersistStreamInit(iface);
-    TRACE("(%p)->(%p): stub!\n", This, pcbSize);
+    TRACE("(%p)->(%p)\n", This, pcbSize);
     return E_NOTIMPL;
 }
 

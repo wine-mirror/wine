@@ -1755,16 +1755,20 @@ static void test_persiststreaminit(void)
 {
     IXMLDOMDocument *doc;
     IPersistStreamInit *streaminit;
+    ULARGE_INTEGER size;
     HRESULT hr;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
     hr = IXMLDOMDocument_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&streaminit);
-    ok( hr == S_OK, "failed with 0x%08x\n", hr );
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IPersistStreamInit_InitNew(streaminit);
-    ok( hr == S_OK, "failed with 0x%08x\n", hr );
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IPersistStreamInit_GetSizeMax(streaminit, &size);
+    ok(hr == E_NOTIMPL, "got 0x%08x\n", hr);
 
     IXMLDOMDocument_Release(doc);
 }
