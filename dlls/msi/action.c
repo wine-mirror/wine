@@ -1784,7 +1784,7 @@ static BOOL process_overrides( MSIPACKAGE *package, int level )
     ret |= process_state_property( package, level, szReinstall, INSTALLSTATE_UNKNOWN );
     ret |= process_state_property( package, level, szAdvertise, INSTALLSTATE_ADVERTISED );
 
-    if (ret)
+    if (ret && !package->full_reinstall)
         msi_set_property( package->db, szPreselected, szOne, -1 );
 
     return ret;
@@ -7785,6 +7785,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     {
         TRACE("setting REINSTALL property to ALL\n");
         msi_set_property( package->db, szReinstall, szAll, -1 );
+        package->full_reinstall = 1;
     }
 
     /* properties may have been added by a transform */
