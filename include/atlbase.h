@@ -23,7 +23,7 @@
 
 #include <atliface.h>
 
-/* Wine extention: we (ab)use _ATL_VER to handle truct layout differences between ATL versions. */
+/* Wine extension: we (ab)use _ATL_VER to handle struct layout differences between ATL versions. */
 #define _ATL_VER_30  0x0300
 #define _ATL_VER_70  0x0700
 #define _ATL_VER_80  0x0800
