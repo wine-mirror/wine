@@ -216,7 +216,7 @@ DECLARE_INTERFACE_(IDirect3D,IUnknown)
     STDMETHOD(CreateLight)(THIS_ struct IDirect3DLight **light, IUnknown *outer) PURE;
     STDMETHOD(CreateMaterial)(THIS_ struct IDirect3DMaterial **material, IUnknown *outer) PURE;
     STDMETHOD(CreateViewport)(THIS_ struct IDirect3DViewport **viewport, IUnknown *outer) PURE;
-    STDMETHOD(FindDevice)(THIS_ LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lplpD3DDevice) PURE;
+    STDMETHOD(FindDevice)(THIS_ D3DFINDDEVICESEARCH *search, D3DFINDDEVICERESULT *result) PURE;
 };
 #undef INTERFACE
 
@@ -262,7 +262,7 @@ DECLARE_INTERFACE_(IDirect3D2,IUnknown)
     STDMETHOD(CreateLight)(THIS_ struct IDirect3DLight **light, IUnknown *outer) PURE;
     STDMETHOD(CreateMaterial)(THIS_ struct IDirect3DMaterial2 **material, IUnknown *outer) PURE;
     STDMETHOD(CreateViewport)(THIS_ struct IDirect3DViewport2 **viewport, IUnknown *outer) PURE;
-    STDMETHOD(FindDevice)(THIS_ LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lpD3DFDR) PURE;
+    STDMETHOD(FindDevice)(THIS_ D3DFINDDEVICESEARCH *search, D3DFINDDEVICERESULT *result) PURE;
     STDMETHOD(CreateDevice)(THIS_ REFCLSID rclsid, IDirectDrawSurface *surface,
             struct IDirect3DDevice2 **device) PURE;
 };
@@ -310,7 +310,7 @@ DECLARE_INTERFACE_(IDirect3D3,IUnknown)
     STDMETHOD(CreateLight)(THIS_ struct IDirect3DLight **light, IUnknown *outer) PURE;
     STDMETHOD(CreateMaterial)(THIS_ struct IDirect3DMaterial3 **material, IUnknown *outer) PURE;
     STDMETHOD(CreateViewport)(THIS_ struct IDirect3DViewport3 **viewport, IUnknown *outer) PURE;
-    STDMETHOD(FindDevice)(THIS_ LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lpD3DFDR) PURE;
+    STDMETHOD(FindDevice)(THIS_ D3DFINDDEVICESEARCH *search, D3DFINDDEVICERESULT *result) PURE;
     STDMETHOD(CreateDevice)(THIS_ REFCLSID rclsid, IDirectDrawSurface4 *surface,
             struct IDirect3DDevice3 **device, IUnknown *outer) PURE;
     STDMETHOD(CreateVertexBuffer)(THIS_ D3DVERTEXBUFFERDESC *desc, struct IDirect3DVertexBuffer **buffer,
