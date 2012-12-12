@@ -3543,90 +3543,94 @@ msgid "Unterminated string constant"
 msgstr "Nebaigta eilutės konstanta"
 
 #: jscript.rc:39
+msgid "'return' statement outside of function"
+msgstr ""
+
+#: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
 msgstr "Negalima turėti „break“ ne cikle"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Can't have 'continue' outside of loop"
 msgstr "Negalima turėti „continue“ ne cikle"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Label redefined"
 msgstr "Žymė apibrėžta iš naujo"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Label not found"
 msgstr "Žymė nerasta"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Conditional compilation is turned off"
 msgstr "Sąlyginis kompiliavimas išjungtas"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Number expected"
 msgstr "Tikėtasi skaičiaus"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "Function expected"
 msgstr "Tikėtasi funkcijos"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "'[object]' is not a date object"
 msgstr "„[objektas]“ nėra datos objektas"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Object expected"
 msgstr "Tikėtasi objekto"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Illegal assignment"
 msgstr "Neleistinas priskyrimas"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "'|' is undefined"
 msgstr "„|“ neapibrėžtas"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Boolean object expected"
 msgstr "Tikėtasi loginio objekto"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Cannot delete '|'"
 msgstr "Negalima pašalinti „|“"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "VBArray object expected"
 msgstr "Tikėtasi VBArray objekto"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "JScript object expected"
 msgstr "Tikėtasi JScript objekto"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Syntax error in regular expression"
 msgstr "Sintaksės klaida reguliariajame reiškinyje"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "URI to be encoded contains invalid characters"
 msgstr "Koduotiname URI yra netinkamų simbolių"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "URI to be decoded is incorrect"
 msgstr "Dekoduojamas URI neteisingas"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "Number of fraction digits is out of range"
 msgstr "Trupmeninės dalies skaitmenų skaičius nepatenka į rėžius"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Precision is out of range"
 msgstr "Tikslumas nepatenka į rėžius"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array length must be a finite positive integer"
 msgstr "Masyvo dydis turi būti teigiamas sveikasis skaičius"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "Array object expected"
 msgstr "Tikėtasi masyvo objekto"
 

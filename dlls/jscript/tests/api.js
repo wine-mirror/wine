@@ -2227,6 +2227,7 @@ var exception_array = {
     E_INVALID_CONTINUE:  { type: "SyntaxError",  number: -2146827268 },
     E_LABEL_NOT_FOUND:   { type: "SyntaxError",  number: -2146827262 },
     E_LABEL_REDEFINED:   { type: "SyntaxError",  number: -2146827263 },
+    E_MISPLACED_RETURN:  { type: "SyntaxError",  number: -2146827270 },
 
     E_ILLEGAL_ASSIGN:  { type: "ReferenceError", number: -2146823280 },
 
@@ -2345,6 +2346,7 @@ testSyntaxError("ok(false, 'unexpected execution'); some_label: continue some_la
 testSyntaxError("ok(false, 'unexpected execution'); while(true) continue some_label;", "E_LABEL_NOT_FOUND");
 testSyntaxError("ok(false, 'unexpected execution'); some_label: { while(true) continue some_label; }", "E_INVALID_CONTINUE");
 testSyntaxError("ok(false, 'unexpected execution'); some_label: { some_label: while(true); }", "E_LABEL_REDEFINED");
+testSyntaxError("return;", "E_MISPLACED_RETURN");
 
 // ReferenceError tests
 testException(function() {test = function() {}}, "E_ILLEGAL_ASSIGN");

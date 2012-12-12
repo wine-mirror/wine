@@ -3546,90 +3546,94 @@ msgid "Unterminated string constant"
 msgstr "Незавершённая строковая константа"
 
 #: jscript.rc:39
+msgid "'return' statement outside of function"
+msgstr ""
+
+#: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
 msgstr "Выражение 'break' не может находится вне цикла"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Can't have 'continue' outside of loop"
 msgstr "Выражение 'continue' не может находится вне цикла"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Label redefined"
 msgstr "Метка переопределена"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Label not found"
 msgstr "Метка не найдена"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Conditional compilation is turned off"
 msgstr "Условная компиляция отключена"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Number expected"
 msgstr "Ожидается число"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "Function expected"
 msgstr "Ожидается функция"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "'[object]' is not a date object"
 msgstr "'[object]' не объект типа 'date'"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Object expected"
 msgstr "Ожидается объект"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Illegal assignment"
 msgstr "Неверное присваивание"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "'|' is undefined"
 msgstr "'|' не определён"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Boolean object expected"
 msgstr "Ожидается объект типа 'bool'"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Cannot delete '|'"
 msgstr "Невозможно удалить '|'"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "VBArray object expected"
 msgstr "Ожидается объект типа 'VBArray'"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "JScript object expected"
 msgstr "Ожидается объект типа 'JScript'"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Syntax error in regular expression"
 msgstr "Синтаксическая ошибка в регулярном выражении"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "URI to be encoded contains invalid characters"
 msgstr "В кодируемом URI обнаружен неверный символ"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "URI to be decoded is incorrect"
 msgstr "Декодируемый URI неверен"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "Number of fraction digits is out of range"
 msgstr "Количество знаков после запятой вне диапазона"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Precision is out of range"
 msgstr "Точность представления вне диапазона"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array length must be a finite positive integer"
 msgstr "Длиной массива должно быть конечное положительное число"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "Array object expected"
 msgstr "Ожидается объект типа 'Array'"
 

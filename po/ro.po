@@ -3546,94 +3546,98 @@ msgid "Unterminated string constant"
 msgstr "Șir constant neterminat"
 
 #: jscript.rc:39
-msgid "Can't have 'break' outside of loop"
+msgid "'return' statement outside of function"
 msgstr ""
 
 #: jscript.rc:40
-msgid "Can't have 'continue' outside of loop"
+msgid "Can't have 'break' outside of loop"
 msgstr ""
 
 #: jscript.rc:41
-msgid "Label redefined"
+msgid "Can't have 'continue' outside of loop"
 msgstr ""
 
 #: jscript.rc:42
+msgid "Label redefined"
+msgstr ""
+
+#: jscript.rc:43
 msgid "Label not found"
 msgstr "Eticheta nu a fost găsită"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Conditional compilation is turned off"
 msgstr ""
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Number expected"
 msgstr "Se așteaptă un număr"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "Function expected"
 msgstr "Se așteaptă o funcție"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "'[object]' is not a date object"
 msgstr "„[obiect]” nu este un obiect de tip dată"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Object expected"
 msgstr "Se așteaptă un obiect"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Illegal assignment"
 msgstr "Atribuire ilegală"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "'|' is undefined"
 msgstr "„|” nu este definit"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Boolean object expected"
 msgstr "Se așteaptă un obiect boolean"
 
-#: jscript.rc:51
+#: jscript.rc:52
 #, fuzzy
 msgid "Cannot delete '|'"
 msgstr "Data ștergerii"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "VBArray object expected"
 msgstr "Se așteaptă un obiect VBArray"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "JScript object expected"
 msgstr "Se așteaptă un obiect JScript"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Syntax error in regular expression"
 msgstr "Eroare de sintaxă în expresia regulată"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI care trebuie codificat conține caractere nevalide"
 
-#: jscript.rc:55
+#: jscript.rc:56
 #, fuzzy
 msgid "URI to be decoded is incorrect"
 msgstr "URI care trebuie codificat conține caractere nevalide"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "Number of fraction digits is out of range"
 msgstr ""
 
-#: jscript.rc:58
+#: jscript.rc:59
 #, fuzzy
 #| msgid "Print range"
 msgid "Precision is out of range"
 msgstr "Interval tipărire"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array length must be a finite positive integer"
 msgstr "Lungimea unei matrice trebuie să fie un număr întreg pozitiv"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "Array object expected"
 msgstr "Se așteaptă un obiect matrice"
 

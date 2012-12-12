@@ -3579,94 +3579,98 @@ msgid "Unterminated string constant"
 msgstr "Nedoločena konstanta niza"
 
 #: jscript.rc:39
+msgid "'return' statement outside of function"
+msgstr ""
+
+#: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
 msgstr "Ni mogoče imeti 'premora' izven zanke"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Can't have 'continue' outside of loop"
 msgstr "Izven zanke ni mogoče imeti 'continue'"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Label redefined"
 msgstr "Ponovna definicija oznake"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Label not found"
 msgstr "Oznake ni mogoče najti"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Conditional compilation is turned off"
 msgstr "Pogojno kodno prevajanje je izklopljeno"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Number expected"
 msgstr "Pričakovano je bilo število"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "Function expected"
 msgstr "Pričakovana je bila funkcija"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "'[object]' is not a date object"
 msgstr "'[object]' ni predmet datuma"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Object expected"
 msgstr "Pričakovan je bil predmet"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Illegal assignment"
 msgstr "Neveljavna dodelitev"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "'|' is undefined"
 msgstr "'|' ni določen"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Boolean object expected"
 msgstr "Pričakovan je bil Boolov predmet"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Cannot delete '|'"
 msgstr "Ni mogoče izbrisati '|'"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "VBArray object expected"
 msgstr "Pričakovan je bil predmet VBArray"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "JScript object expected"
 msgstr "Pričakovan je bil predmet JScript"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Syntax error in regular expression"
 msgstr "Napaka skladnje v logičnem izrazu"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI za kodiranje vsebuje neveljavne znake"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "URI to be decoded is incorrect"
 msgstr "URI za odkodiranje je nepravilen"
 
-#: jscript.rc:57
+#: jscript.rc:58
 #, fuzzy
 #| msgid "Enumeration value out of range.\n"
 msgid "Number of fraction digits is out of range"
 msgstr "Vrednost oštevilčenja je izven obsega.\n"
 
-#: jscript.rc:58
+#: jscript.rc:59
 #, fuzzy
 #| msgid "Subscript out of range"
 msgid "Precision is out of range"
 msgstr "Podskript je izven obsega"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array length must be a finite positive integer"
 msgstr "Dolžina polja mora bit pozitivno celo število"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "Array object expected"
 msgstr "Pričakovan je bil predmet polja"
 

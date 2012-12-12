@@ -44,6 +44,8 @@ typedef struct {
     parser_ctx_t *parser;
     bytecode_t *code;
 
+    BOOL from_eval;
+
     unsigned code_off;
     unsigned code_size;
 
@@ -1464,6 +1466,11 @@ static HRESULT compile_return_statement(compiler_ctx_t *ctx, expression_statemen
 {
     HRESULT hres;
 
+    if(ctx->from_eval) {
+        WARN("misplaced return statement\n");
+        return JS_E_MISPLACED_RETURN;
+    }
+
     hres = pop_to_stat(ctx, TRUE, FALSE, NULL);
     if(FAILED(hres))
         return hres;
@@ -1866,6 +1873,7 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
 
     ctx->var_head = ctx->var_tail = NULL;
     ctx->func_head = ctx->func_tail = NULL;
+    ctx->from_eval = from_eval;
 
     off = ctx->code_off;
     ctx->func = func;

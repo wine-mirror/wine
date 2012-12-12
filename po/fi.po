@@ -3534,90 +3534,94 @@ msgid "Unterminated string constant"
 msgstr "Päättymätön merkkijonovakio"
 
 #: jscript.rc:39
+msgid "'return' statement outside of function"
+msgstr ""
+
+#: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
 msgstr "'break' ei voi esiintyä silmukan ulkopuolella"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Can't have 'continue' outside of loop"
 msgstr "'continue' ei voi esiintyä silmukan ulkopuolella"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Label redefined"
 msgstr "Nimiö määritelty toistamiseen"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Label not found"
 msgstr "Nimiötä ei löydy"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Conditional compilation is turned off"
 msgstr "Ehdollinen kääntäminen on pois käytöstä"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Number expected"
 msgstr "Odotettiin lukua"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "Function expected"
 msgstr "Odotettiin funktiota"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "'[object]' is not a date object"
 msgstr "'[objekti]' ei ole päivämääräobjekti"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Object expected"
 msgstr "Odotettiin objektia"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Illegal assignment"
 msgstr "Virheellinen sijoitus"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "'|' is undefined"
 msgstr "'|' on määrittelemätön"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Boolean object expected"
 msgstr "Odotettiin totuusarvoa"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Cannot delete '|'"
 msgstr "Ei voida poistaa '|':tä"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "VBArray object expected"
 msgstr "Odotettiin VBArray-objektia"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "JScript object expected"
 msgstr "Odotettiin JScript-objektia"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Syntax error in regular expression"
 msgstr "Syntaksivirhe säännöllisessä lausekkeessa"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "URI to be encoded contains invalid characters"
 msgstr "Enkoodattava URI sisältää virheellisiä merkkejä"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "URI to be decoded is incorrect"
 msgstr "Dekoodattava URI on virheellinen"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "Number of fraction digits is out of range"
 msgstr "Desimaalien määrä ei kelpaa"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Precision is out of range"
 msgstr "Tarkkuus ei kelpaa"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array length must be a finite positive integer"
 msgstr "Taulukon pituuden täytyy olla positiivinen kokonaisluku"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "Array object expected"
 msgstr "Odotettiin taulukkoa"
 

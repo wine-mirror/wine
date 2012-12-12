@@ -36,6 +36,7 @@
 #define IDS_RBRACKET                        0x03EE
 #define IDS_INVALID_CHAR                    0x03F6
 #define IDS_UNTERMINATED_STR                0x03F7
+#define IDS_MISPLACED_RETURN                0x03FA
 #define IDS_INVALID_BREAK                   0x03FB
 #define IDS_INVALID_CONTINUE                0x03FC
 #define IDS_LABEL_REDEFINED                 0x0401

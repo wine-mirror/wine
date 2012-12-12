@@ -3689,98 +3689,102 @@ msgid "Unterminated string constant"
 msgstr "Uavsluttet strengkonstant"
 
 #: jscript.rc:39
-msgid "Can't have 'break' outside of loop"
+msgid "'return' statement outside of function"
 msgstr ""
 
 #: jscript.rc:40
-msgid "Can't have 'continue' outside of loop"
+msgid "Can't have 'break' outside of loop"
 msgstr ""
 
 #: jscript.rc:41
-msgid "Label redefined"
+msgid "Can't have 'continue' outside of loop"
 msgstr ""
 
 #: jscript.rc:42
+msgid "Label redefined"
+msgstr ""
+
+#: jscript.rc:43
 #, fuzzy
 msgid "Label not found"
 msgstr "Fant ikke filen"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Conditional compilation is turned off"
 msgstr ""
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Number expected"
 msgstr "Forventet nummer"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "Function expected"
 msgstr "Forventet funksjon"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "'[object]' is not a date object"
 msgstr "'[object]' er ikke et dataobjekt"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Object expected"
 msgstr "Forventet objekt"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Illegal assignment"
 msgstr "Ugyldig tilordning"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "'|' is undefined"
 msgstr "'|' er udefinert"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Boolean object expected"
 msgstr "Forventet boolsk verdi"
 
-#: jscript.rc:51
+#: jscript.rc:52
 #, fuzzy
 msgid "Cannot delete '|'"
 msgstr "Klarte ikke fullføre\n"
 
-#: jscript.rc:52
+#: jscript.rc:53
 #, fuzzy
 msgid "VBArray object expected"
 msgstr "Forventet rekke-objekt"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "JScript object expected"
 msgstr "Forventet JScript-objekt"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Syntax error in regular expression"
 msgstr "Syntaksfeil i regulært uttrykk"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI'en som skulle kodes inneholder ugyldige tegn"
 
-#: jscript.rc:55
+#: jscript.rc:56
 #, fuzzy
 msgid "URI to be decoded is incorrect"
 msgstr "URI'en som skulle kodes inneholder ugyldige tegn"
 
-#: jscript.rc:57
+#: jscript.rc:58
 #, fuzzy
 #| msgid "Enumeration value out of range.\n"
 msgid "Number of fraction digits is out of range"
 msgstr "Enum-verdien er utenfor rekkevidde.\n"
 
-#: jscript.rc:58
+#: jscript.rc:59
 #, fuzzy
 #| msgid "Enumeration value out of range.\n"
 msgid "Precision is out of range"
 msgstr "Enum-verdien er utenfor rekkevidde.\n"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array length must be a finite positive integer"
 msgstr "Rekkens lengde må være et endelig, positivt tall"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "Array object expected"
 msgstr "Forventet rekke-objekt"
 

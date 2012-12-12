@@ -36,6 +36,7 @@ STRINGTABLE
     IDS_RBRACKET            "Expected ')'"
     IDS_INVALID_CHAR        "Invalid character"
     IDS_UNTERMINATED_STR    "Unterminated string constant"
+    IDS_MISPLACED_RETURN    "'return' statement outside of function"
     IDS_INVALID_BREAK       "Can't have 'break' outside of loop"
     IDS_INVALID_CONTINUE    "Can't have 'continue' outside of loop"
     IDS_LABEL_REDEFINED     "Label redefined"
