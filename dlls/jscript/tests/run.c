@@ -141,7 +141,7 @@ static const WCHAR test_valW[] = {'t','e','s','t','V','a','l',0};
 static const CHAR test_valA[] = "testVal";
 static const WCHAR emptyW[] = {0};
 
-static BOOL strict_dispid_check;
+static BOOL strict_dispid_check, testing_expr;
 static const char *test_name = "(null)";
 static IDispatch *script_disp;
 static int invoke_version;
@@ -652,7 +652,8 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
         ok(pdp->cArgs == 0, "cArgs = %d\n", pdp->cArgs);
         ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
-        ok(!pvarRes, "pvarRes != NULL\n");
+        if(!testing_expr)
+            ok(!pvarRes, "pvarRes != NULL\n");
         ok(pei != NULL, "pei == NULL\n");
 
         return S_OK;
@@ -1695,6 +1696,82 @@ static void test_isvisible(BOOL global_members)
     IActiveScriptParse_Release(parser);
 }
 
+static HRESULT parse_script_expr(const char *expr, VARIANT *res)
+{
+    IActiveScriptParse *parser;
+    IActiveScript *engine;
+    BSTR str;
+    HRESULT hres;
+
+    engine = create_script();
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+
+    hres = IActiveScriptParse_InitNew(parser);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+
+    SET_EXPECT(GetItemInfo_testVal);
+    hres = IActiveScript_AddNamedItem(engine, test_valW,
+            SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
+    ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
+    CHECK_CALLED(GetItemInfo_testVal);
+
+    hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+
+    str = a2bstr(expr);
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, res, NULL);
+    SysFreeString(str);
+
+    IActiveScript_Release(engine);
+    IActiveScriptParse_Release(parser);
+
+    return hres;
+}
+
+static void test_script_exprs(void)
+{
+    VARIANT v;
+    HRESULT hres;
+
+    testing_expr = TRUE;
+
+    hres = parse_script_expr("true", &v);
+    ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_BOOL(&v) == VARIANT_TRUE, "V_BOOL(v) = %x\n", V_BOOL(&v));
+
+    hres = parse_script_expr("false, true", &v);
+    ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_BOOL(&v) == VARIANT_TRUE, "V_BOOL(v) = %x\n", V_BOOL(&v));
+
+    SET_EXPECT(global_success_d);
+    SET_EXPECT(global_success_i);
+    hres = parse_script_expr("reportSuccess(); true", &v);
+    ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_BOOL(&v) == VARIANT_TRUE, "V_BOOL(v) = %x\n", V_BOOL(&v));
+    CHECK_CALLED(global_success_d);
+    CHECK_CALLED(global_success_i);
+
+    hres = parse_script_expr("if(false) true", &v);
+    ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_EMPTY, "V_VT(v) = %d\n", V_VT(&v));
+
+    hres = parse_script_expr("return testPropGet", &v);
+    ok(hres == 0x800a03fa, "parse_script_expr failed: %08x\n", hres);
+
+    hres = parse_script_expr("reportSuccess(); return true", &v);
+    ok(hres == 0x800a03fa, "parse_script_expr failed: %08x\n", hres);
+
+    testing_expr = FALSE;
+}
+
 static BOOL run_tests(void)
 {
     HRESULT hres;
@@ -1891,6 +1968,8 @@ static BOOL run_tests(void)
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
     hres = parse_htmlscript_a("var a=1;\nif(a\n-->0) a=5;\n");
     ok(hres != S_OK, "ParseScriptText have not failed\n");
+
+    test_script_exprs();
 
     parse_script_with_error_a(
         "?",
