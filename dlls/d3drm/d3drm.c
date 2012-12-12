@@ -1272,6 +1272,8 @@ static HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPI
 
     TRACE("Found object type whose GUID = %s\n", debugstr_guid(guid));
 
+    /* Load object only if it is top level and requested or if it is part of another object */
+
     if (IsEqualGUID(guid, &TID_D3DRMMesh))
     {
         TRACE("Found TID_D3DRMMesh\n");
@@ -1285,30 +1287,34 @@ static HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPI
                 break;
             }
 
-        if (requested)
+        if (requested || parent_frame)
         {
-            LPDIRECT3DRMMESHBUILDER3 meshbuilder;
+            IDirect3DRMMeshBuilder3 *meshbuilder;
 
-            TRACE("Load mesh data and notify application\n");
+            TRACE("Load mesh data\n");
 
             hr = IDirect3DRM3_CreateMeshBuilder(iface, &meshbuilder);
             if (SUCCEEDED(hr))
             {
-                LPDIRECT3DRMOBJECT object = NULL;
-
-                hr = IDirect3DRMMeshBuilder3_QueryInterface(meshbuilder, GUIDs[i], (void**)&object);
+                hr = load_mesh_data(meshbuilder, data_object);
                 if (SUCCEEDED(hr))
                 {
-                    hr = load_mesh_data(meshbuilder, data_object);
-                    if (SUCCEEDED(hr))
+                    /* Only top level objects are notified */
+                    if (!parent_frame)
                     {
-                        /* Only top level objects are notified */
-                        if (parent_frame)
-                            IDirect3DRMFrame3_AddVisual(parent_frame, (IUnknown*)meshbuilder);
-                        else
+                        IDirect3DRMObject *object;
+
+                        hr = IDirect3DRMMeshBuilder3_QueryInterface(meshbuilder, GUIDs[i], (void**)&object);
+                        if (SUCCEEDED(hr))
+                        {
                             LoadProc(object, GUIDs[i], ArgLP);
+                            IDirect3DRMObject_Release(object);
+                        }
                     }
-                    IDirect3DRMObject_Release(object);
+                    else
+                    {
+                        IDirect3DRMFrame3_AddVisual(parent_frame, (IUnknown*)meshbuilder);
+                    }
                 }
                 IDirect3DRMMeshBuilder3_Release(meshbuilder);
             }
@@ -1330,68 +1336,69 @@ static HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPI
                 break;
             }
 
-        if (requested)
+        if (requested || parent_frame)
         {
-            LPDIRECT3DRMFRAME3 frame;
+            IDirect3DRMFrame3 *frame;
 
-            TRACE("Load frame data and notify application\n");
+            TRACE("Load frame data\n");
 
             hr = IDirect3DRM3_CreateFrame(iface, parent_frame, &frame);
             if (SUCCEEDED(hr))
             {
-                LPDIRECT3DRMOBJECT object;
+                IDirectXFileObject *child;
 
-                hr = IDirect3DRMFrame3_QueryInterface(frame, GUIDs[i], (void**)&object);
-                if (SUCCEEDED(hr))
+                while (SUCCEEDED(hr = IDirectXFileData_GetNextObject(data_object, &child)))
                 {
-                    LPDIRECTXFILEOBJECT child;
+                    IDirectXFileData *data;
+                    IDirectXFileDataReference *reference;
+                    IDirectXFileBinary *binary;
 
-                    while (SUCCEEDED(hr = IDirectXFileData_GetNextObject(data_object, &child)))
+                    hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileBinary, (void **)&binary);
+                    if (SUCCEEDED(hr))
                     {
-                        LPDIRECTXFILEDATA data;
-                        LPDIRECTXFILEDATAREFERENCE reference;
-                        LPDIRECTXFILEBINARY binary;
-
-                        hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileBinary, (void **)&binary);
-                        if (SUCCEEDED(hr))
-                        {
-                            FIXME("Binary Object not supported yet\n");
-                            IDirectXFileBinary_Release(binary);
-                            continue;
-                        }
-
-                        hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileData, (void **)&data);
-                        if (SUCCEEDED(hr))
-                        {
-                            TRACE("Found Data Object\n");
-                            hr = load_data(iface, data, GUIDs, nb_GUIDs, LoadProc, ArgLP, LoadTextureProc, ArgLTP, frame);
-                            IDirectXFileData_Release(data);
-                            continue;
-                        }
-                        hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileDataReference, (void **)&reference);
-                        if (SUCCEEDED(hr))
-                        {
-                            TRACE("Found Data Object Reference\n");
-                            IDirectXFileDataReference_Resolve(reference, &data);
-                            hr = load_data(iface, data, GUIDs, nb_GUIDs, LoadProc, ArgLP, LoadTextureProc, ArgLTP, frame);
-                            IDirectXFileData_Release(data);
-                            IDirectXFileDataReference_Release(reference);
-                            continue;
-                        }
+                        FIXME("Binary Object not supported yet\n");
+                        IDirectXFileBinary_Release(binary);
+                        continue;
                     }
 
-                    if (hr != DXFILEERR_NOMOREOBJECTS)
+                    hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileData, (void **)&data);
+                    if (SUCCEEDED(hr))
                     {
-                        IDirect3DRMObject_Release(object);
-                        IDirect3DRMFrame3_Release(frame);
-                        goto end;
+                        TRACE("Found Data Object\n");
+                        hr = load_data(iface, data, GUIDs, nb_GUIDs, LoadProc, ArgLP, LoadTextureProc, ArgLTP, frame);
+                        IDirectXFileData_Release(data);
+                        continue;
                     }
-                    hr = S_OK;
+                    hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileDataReference, (void **)&reference);
+                    if (SUCCEEDED(hr))
+                    {
+                        TRACE("Found Data Object Reference\n");
+                        IDirectXFileDataReference_Resolve(reference, &data);
+                        hr = load_data(iface, data, GUIDs, nb_GUIDs, LoadProc, ArgLP, LoadTextureProc, ArgLTP, frame);
+                        IDirectXFileData_Release(data);
+                        IDirectXFileDataReference_Release(reference);
+                        continue;
+                    }
+                }
 
-                    /* Only top level objects are notified */
-                    if (!parent_frame)
+                if (hr != DXFILEERR_NOMOREOBJECTS)
+                {
+                    IDirect3DRMFrame3_Release(frame);
+                    goto end;
+                }
+                hr = S_OK;
+
+                /* Only top level objects are notified */
+                if (!parent_frame)
+                {
+                    IDirect3DRMObject *object;
+
+                    hr = IDirect3DRMFrame3_QueryInterface(frame, GUIDs[i], (void**)&object);
+                    if (SUCCEEDED(hr))
+                    {
                         LoadProc(object, GUIDs[i], ArgLP);
-                    IDirect3DRMObject_Release(object);
+                        IDirect3DRMObject_Release(object);
+                    }
                 }
                 IDirect3DRMFrame3_Release(frame);
             }
@@ -1402,12 +1409,15 @@ static HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPI
     }
     else if (IsEqualGUID(guid, &TID_D3DRMMaterial))
     {
-        TRACE("Found TID_D3DRMMaterial => Will be taken into account when a mesh will reference it\n");
+        TRACE("Found TID_D3DRMMaterial\n");
+
+        /* Cannot be requested so nothing to do */
     }
     else if (IsEqualGUID(guid, &TID_D3DRMFrameTransformMatrix))
     {
         TRACE("Found TID_D3DRMFrameTransformMatrix\n");
 
+        /* Cannot be requested */
         if (parent_frame)
         {
             D3DRMMATRIX4D matrix;
