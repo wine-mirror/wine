@@ -1030,85 +1030,108 @@ for /L %%i in (2,2,1) do (
   echo %%i
   echo FAILED
 )
-echo --- for /a
+echo --- set /a
+goto :testseta
+
+Rem Ideally for /f can be used rather than building a command to execute
+rem but that does not work on NT4
+:checkenvvars
+if "%1"=="" goto :eof
+call :executecmd set wine_result=%%%1%%
+if "%wine_result%"=="%2" (
+  echo %1 correctly %2
+) else echo ERROR: %1 incorrectly %wine_result% [%2]
+set %1=
+shift
+shift
+rem shift
+goto :checkenvvars
+:executecmd
+%*
+goto :eof
+
+:testseta
 rem No output when using "set expr" syntax, unless in interactive mode
 rem Need to use "set envvar=expr" to use in a batch script
 echo ------ individual operations
-set WINE_var=0
-set /a WINE_var=1 +2 & echo %WINE_var%
-set /a WINE_var=1 +-2 & echo %WINE_var%
-set /a WINE_var=1 --2 & echo %WINE_var%
-set /a WINE_var=2* 3 & echo %WINE_var%
-set /a WINE_var=-2* -5 & echo %WINE_var%
-set /a WINE_var=12/3 & echo %WINE_var%
-set /a WINE_var=13/3 & echo %WINE_var%
-set /a WINE_var=-13/3 & echo %WINE_var%
+set WINE_foo=0
+set /a WINE_foo=1 +2 & call :checkenvvars WINE_foo 3
+set /a WINE_foo=1 +-2 & call :checkenvvars WINE_foo -1
+set /a WINE_foo=1 --2 & call :checkenvvars WINE_foo 3
+set /a WINE_foo=2* 3 & call :checkenvvars WINE_foo 6
+set /a WINE_foo=-2* -5 & call :checkenvvars WINE_foo 10
+set /a WINE_foo=12/3 & call :checkenvvars WINE_foo 4
+set /a WINE_foo=13/3 & call :checkenvvars WINE_foo 4
+set /a WINE_foo=-13/3 & call :checkenvvars WINE_foo -4
 rem FIXME Divide by zero should return an error, but error messages cannot be tested with current infrastructure
-set /a WINE_var=5 %% 5 & echo %WINE_var%
-set /a WINE_var=5 %% 3 & echo %WINE_var%
-set /a WINE_var=5 %% -3 & echo %WINE_var%
-set /a WINE_var=-5 %% -3 & echo %WINE_var%
-set /a WINE_var=1 ^<^< 0 & echo %WINE_var%
-set /a WINE_var=1 ^<^< 2 & echo %WINE_var%
-set /a WINE_var=1 ^<^< -2 & echo %WINE_var%
-set /a WINE_var=-1 ^<^< -2 & echo %WINE_var%
-set /a WINE_var=-1 ^<^< 2 & echo %WINE_var%
-set /a WINE_var=9 ^>^> 0 & echo %WINE_var%
-set /a WINE_var=9 ^>^> 2 & echo %WINE_var%
-set /a WINE_var=9 ^>^> -2 & echo %WINE_var%
-set /a WINE_var=-9 ^>^> -2 & echo %WINE_var%
-set /a WINE_var=-9 ^>^> 2 & echo %WINE_var%
-set /a WINE_var=5 ^& 0 & echo %WINE_var%
-set /a WINE_var=5 ^& 1 & echo %WINE_var%
-set /a WINE_var=5 ^& 3 & echo %WINE_var%
-set /a WINE_var=5 ^& 4 & echo %WINE_var%
-set /a WINE_var=5 ^& 1 & echo %WINE_var%
-set /a WINE_var=5 ^| 0 & echo %WINE_var%
-set /a WINE_var=5 ^| 1 & echo %WINE_var%
-set /a WINE_var=5 ^| 3 & echo %WINE_var%
-set /a WINE_var=5 ^| 4 & echo %WINE_var%
-set /a WINE_var=5 ^| 1 & echo %WINE_var%
-set /a WINE_var=5 ^^ 0 & echo %WINE_var%
-set /a WINE_var=5 ^^ 1 & echo %WINE_var%
-set /a WINE_var=5 ^^ 3 & echo %WINE_var%
-set /a WINE_var=5 ^^ 4 & echo %WINE_var%
-set /a WINE_var=5 ^^ 1 & echo %WINE_var%
+set /a WINE_foo=5 %% 5 & call :checkenvvars WINE_foo 0
+set /a WINE_foo=5 %% 3 & call :checkenvvars WINE_foo 2
+set /a WINE_foo=5 %% -3 & call :checkenvvars WINE_foo 2
+set /a WINE_foo=-5 %% -3 & call :checkenvvars WINE_foo -2
+set /a WINE_foo=1 ^<^< 0 & call :checkenvvars WINE_foo 1
+set /a WINE_foo=1 ^<^< 2 & call :checkenvvars WINE_foo 4
+set /a WINE_foo=1 ^<^< -2 & call :checkenvvars WINE_foo 0
+set /a WINE_foo=-1 ^<^< -2 & call :checkenvvars WINE_foo 0
+set /a WINE_foo=-1 ^<^< 2 & call :checkenvvars WINE_foo -4
+set /a WINE_foo=9 ^>^> 0 & call :checkenvvars WINE_foo 9
+set /a WINE_foo=9 ^>^> 2 & call :checkenvvars WINE_foo 2
+set /a WINE_foo=9 ^>^> -2 & call :checkenvvars WINE_foo 0
+set /a WINE_foo=-9 ^>^> -2 & call :checkenvvars WINE_foo -1
+set /a WINE_foo=-9 ^>^> 2 & call :checkenvvars WINE_foo -3
+set /a WINE_foo=5 ^& 0 & call :checkenvvars WINE_foo 0
+set /a WINE_foo=5 ^& 1 & call :checkenvvars WINE_foo 1
+set /a WINE_foo=5 ^& 3 & call :checkenvvars WINE_foo 1
+set /a WINE_foo=5 ^& 4 & call :checkenvvars WINE_foo 4
+set /a WINE_foo=5 ^& 1 & call :checkenvvars WINE_foo 1
+set /a WINE_foo=5 ^| 0 & call :checkenvvars WINE_foo 5
+set /a WINE_foo=5 ^| 1 & call :checkenvvars WINE_foo 5
+set /a WINE_foo=5 ^| 3 & call :checkenvvars WINE_foo 7
+set /a WINE_foo=5 ^| 4 & call :checkenvvars WINE_foo 5
+set /a WINE_foo=5 ^| 1 & call :checkenvvars WINE_foo 5
+set /a WINE_foo=5 ^^ 0 & call :checkenvvars WINE_foo 5
+set /a WINE_foo=5 ^^ 1 & call :checkenvvars WINE_foo 4
+set /a WINE_foo=5 ^^ 3 & call :checkenvvars WINE_foo 6
+set /a WINE_foo=5 ^^ 4 & call :checkenvvars WINE_foo 1
+set /a WINE_foo=5 ^^ 1 & call :checkenvvars WINE_foo 4
 echo ------ precedence and grouping
-set /a WINE_var=4 + 2*3 & echo %WINE_var%
-set /a WINE_var=(4+2)*3 & echo %WINE_var%
-set /a WINE_var=4 * 3/5 & echo %WINE_var%
-set /a WINE_var=(4 * 3)/5 & echo %WINE_var%
-set /a WINE_var=4 * 5 %% 4 & echo %WINE_var%
-set /a WINE_var=4 * (5 %% 4) & echo %WINE_var%
-set /a WINE_var=3 %% (5 + 8 %% 3 ^^ 2) & echo %WINE_var%
-set /a WINE_var=3 %% (5 + 8 %% 3 ^^ -2) & echo %WINE_var%
+set /a WINE_foo=4 + 2*3 & call :checkenvvars WINE_foo 10
+set /a WINE_foo=(4+2)*3 & call :checkenvvars WINE_foo 18
+set /a WINE_foo=4 * 3/5 & call :checkenvvars WINE_foo 2
+set /a WINE_foo=(4 * 3)/5 & call :checkenvvars WINE_foo 2
+set /a WINE_foo=4 * 5 %% 4 & call :checkenvvars WINE_foo 0
+set /a WINE_foo=4 * (5 %% 4) & call :checkenvvars WINE_foo 4
+set /a WINE_foo=3 %% (5 + 8 %% 3 ^^ 2) & call :checkenvvars WINE_foo 3
+set /a WINE_foo=3 %% (5 + 8 %% 3 ^^ -2) & call :checkenvvars WINE_foo 3
 echo ------ octal and hexadecimal
-set /a WINE_var=0xf + 3 & echo %WINE_var%
-set /a WINE_var=0xF + 3 & echo %WINE_var%
-set /a WINE_var=015 + 2 & echo %WINE_var%
-set /a WINE_var=3, 8+3,0 & echo %WINE_var%
+set /a WINE_foo=0xf + 3 & call :checkenvvars WINE_foo 18
+set /a WINE_foo=0xF + 3 & call :checkenvvars WINE_foo 18
+set /a WINE_foo=015 + 2 & call :checkenvvars WINE_foo 15
+set /a WINE_foo=3, 8+3,0 & call :checkenvvars WINE_foo 3
 echo ------ variables
-set /a WINE_var=WINE_foo=3, WINE_foo+1 & echo %WINE_var%
-if defined WINE_foo (echo %WINE_foo%) else (
-    echo WINE_foo not defined
-)
-set /a WINE_var=WINE_foo=3, WINE_foo+=1 & echo %WINE_var%
-set /a WINE_var=WINE_foo=3, WINE_bar=1, WINE_bar+=WINE_foo, WINE_bar & echo %WINE_var%
-set /a WINE_var=WINE_foo*= WINE_foo & echo %WINE_var%
-set /a WINE_var=WINE_whateverNonExistingVar & echo %WINE_var%
-set /a WINE_var=WINE_whateverNonExistingVar + WINE_bar & echo %WINE_var%
-set /a WINE_var=WINE_foo -= WINE_foo + 7 & echo %WINE_var%
-set /a WINE_var=WINE_foo /= 3 + 2 & echo %WINE_var%
-set /a WINE_var=WINE_foo=5, WINE_foo %%=2 & echo %WINE_var%
-set /a WINE_var=WINE_foo ^<^<= 2 & echo %WINE_var%
-set /a WINE_var=WINE_foo ^>^>= 2 & echo %WINE_var%
-set /a WINE_var=WINE_foo ^&= 2 & echo %WINE_var%
-set /a WINE_var=WINE_foo=5, WINE_foo ^|= 2 & echo %WINE_var%
-set /a WINE_var=WINE_foo=5, WINE_foo ^^= 2 & echo %WINE_var%
-set /a WINE_var=WINE_foo=19, WINE_foo %%= 4 + (WINE_bar %%= 7) & echo.
-set WINE_foo=
-set WINE_bar=
-set WINE_var=
+set /a WINE_foo=WINE_bar=3, WINE_bar+1 & call :checkenvvars WINE_foo 3 WINE_bar 3
+set /a WINE_foo=WINE_bar=3, WINE_bar+=1 & call :checkenvvars WINE_foo 3 WINE_bar 4
+set /a WINE_foo=WINE_bar=3, WINE_baz=1, WINE_baz+=WINE_bar, WINE_baz & call :checkenvvars WINE_foo 3 WINE_bar 3 WINE_baz 4
+set WINE_bar=3
+set /a WINE_foo=WINE_bar*= WINE_bar & call :checkenvvars WINE_foo 9 WINE_bar 9
+set /a WINE_foo=WINE_whateverNonExistingVar & call :checkenvvars WINE_foo 0
+set WINE_bar=4
+set /a WINE_foo=WINE_whateverNonExistingVar + WINE_bar & call :checkenvvars WINE_foo 4 WINE_bar 4
+set WINE_bar=4
+set /a WINE_foo=WINE_bar -= WINE_bar + 7 & call :checkenvvars WINE_foo -7 WINE_bar -7
+set WINE_bar=-7
+set /a WINE_foo=WINE_bar /= 3 + 2 & call :checkenvvars WINE_foo -1 WINE_bar -1
+set /a WINE_foo=WINE_bar=5, WINE_bar %%=2 & call :checkenvvars WINE_foo 5 WINE_bar 1
+set WINE_bar=1
+set /a WINE_foo=WINE_bar ^<^<= 2 & call :checkenvvars WINE_foo 4 WINE_bar 4
+set WINE_bar=4
+set /a WINE_foo=WINE_bar ^>^>= 2 & call :checkenvvars WINE_foo 1 WINE_bar 1
+set WINE_bar=1
+set /a WINE_foo=WINE_bar ^&= 2 & call :checkenvvars WINE_foo 0 WINE_bar 0
+set /a WINE_foo=WINE_bar=5, WINE_bar ^|= 2 & call :checkenvvars WINE_foo 5 WINE_bar 7
+set /a WINE_foo=WINE_bar=5, WINE_bar ^^= 2 & call :checkenvvars WINE_foo 5 WINE_bar 7
+set WINE_baz=4
+set /a WINE_foo=WINE_bar=19, WINE_bar %%= 4 + (WINE_baz %%= 7) & call :checkenvvars WINE_foo 19 WINE_bar 3 WINE_baz 4
+
 echo --- for /F
 mkdir foobar & cd foobar
 echo ------ string argument

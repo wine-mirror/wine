@@ -715,76 +715,91 @@ ErrorLevel 0
 -1
 1
 3
---- for /a
+--- set /a
 ------ individual operations
-0
-@todo_wine@3
-@todo_wine@-1
-@todo_wine@3
-@todo_wine@6
-@todo_wine@10
-@todo_wine@4
-@todo_wine@4
-@todo_wine@-4
-0
-@todo_wine@2
-@todo_wine@2
-@todo_wine@-2
-@todo_wine@1
-@todo_wine@4
-0@or_broken@1073741824
-0@or_broken@-1073741824
-@todo_wine@-4
-@todo_wine@9
-@todo_wine@2
-0
-@todo_wine@-1
-@todo_wine@-3
-0
-@todo_wine@1
-@todo_wine@1
-@todo_wine@4
-@todo_wine@1
-@todo_wine@5
-@todo_wine@5
-@todo_wine@7
-@todo_wine@5
-@todo_wine@5
-@todo_wine@5
-@todo_wine@4
-@todo_wine@6
-@todo_wine@1
+@todo_wine@WINE_foo correctly 3
+@todo_wine@WINE_foo correctly -1
+@todo_wine@WINE_foo correctly 3
+@todo_wine@WINE_foo correctly 6
+@todo_wine@WINE_foo correctly 10
+@todo_wine@WINE_foo correctly 4
+@todo_wine@WINE_foo correctly 4
+@todo_wine@WINE_foo correctly -4
+@todo_wine@WINE_foo correctly 0
+@todo_wine@WINE_foo correctly 2
+@todo_wine@WINE_foo correctly 2
+@todo_wine@WINE_foo correctly -2
+@todo_wine@WINE_foo correctly 1
+@todo_wine@WINE_foo correctly 4
+@todo_wine@WINE_foo correctly 0@or_broken@ERROR: WINE_foo incorrectly 1073741824 [0]
+@todo_wine@WINE_foo correctly 0@or_broken@ERROR: WINE_foo incorrectly -1073741824 [0]
+@todo_wine@WINE_foo correctly -4
+@todo_wine@WINE_foo correctly 9
+@todo_wine@WINE_foo correctly 2
+@todo_wine@WINE_foo correctly 0
+@todo_wine@WINE_foo correctly -1
+@todo_wine@WINE_foo correctly -3
+@todo_wine@WINE_foo correctly 0
+@todo_wine@WINE_foo correctly 1
+@todo_wine@WINE_foo correctly 1
+@todo_wine@WINE_foo correctly 4
+@todo_wine@WINE_foo correctly 1
+@todo_wine@WINE_foo correctly 5
+@todo_wine@WINE_foo correctly 5
+@todo_wine@WINE_foo correctly 7
+@todo_wine@WINE_foo correctly 5
+@todo_wine@WINE_foo correctly 5
+@todo_wine@WINE_foo correctly 5
+@todo_wine@WINE_foo correctly 4
+@todo_wine@WINE_foo correctly 6
+@todo_wine@WINE_foo correctly 1
+@todo_wine@WINE_foo correctly 4
 ------ precedence and grouping
-@todo_wine@4
-@todo_wine@10
-@todo_wine@18@or_broken@10
-@todo_wine@2@or_broken@0
-@todo_wine@2@or_broken@0
-0@or_broken@4
-@todo_wine@4
-@todo_wine@3@or_broken@4
+@todo_wine@WINE_foo correctly 10
+@todo_wine@WINE_foo correctly 18@or_broken@ERROR: WINE_foo incorrectly  [18]
+@todo_wine@WINE_foo correctly 2@or_broken@ERROR: WINE_foo incorrectly 0 [2]
+@todo_wine@WINE_foo correctly 2@or_broken@ERROR: WINE_foo incorrectly  [2]
+@todo_wine@WINE_foo correctly 0@or_broken@ERROR: WINE_foo incorrectly 4 [0]
+@todo_wine@WINE_foo correctly 4@or_broken@ERROR: WINE_foo incorrectly  [4]
+@todo_wine@WINE_foo correctly 3@or_broken@ERROR: WINE_foo incorrectly  [3]
+@todo_wine@WINE_foo correctly 3@or_broken@ERROR: WINE_foo incorrectly  [3]
 ------ octal and hexadecimal
-@todo_wine@3@or_broken@4
-@todo_wine@18
-@todo_wine@18
-@todo_wine@15
+@todo_wine@WINE_foo correctly 18
+@todo_wine@WINE_foo correctly 18
+@todo_wine@WINE_foo correctly 15
+@todo_wine@WINE_foo correctly 3
 ------ variables
-@todo_wine@3
-@todo_wine@3@or_broken@WINE_foo not defined
-@todo_wine@3@or_broken@0
-@todo_wine@3@or_broken@0
-@todo_wine@3@or_broken@0
-@todo_wine@9@or_broken@0
-0
-@todo_wine@4@or_broken@0
-@todo_wine@-7@or_broken@0
-@todo_wine@-1@or_broken@0
-@todo_wine@5@or_broken@0
-@todo_wine@4@or_broken@0
-@todo_wine@1@or_broken@0
-0
-@todo_wine@5@or_broken@0
-
+@todo_wine@WINE_foo correctly 3@or_broken@ERROR: WINE_foo incorrectly 0 [3]
+@todo_wine@WINE_bar correctly 3@or_broken@ERROR: WINE_bar incorrectly  [3]
+@todo_wine@WINE_foo correctly 3@or_broken@ERROR: WINE_foo incorrectly 0 [3]
+@todo_wine@WINE_bar correctly 4@or_broken@ERROR: WINE_bar incorrectly  [4]
+@todo_wine@WINE_foo correctly 3@or_broken@ERROR: WINE_foo incorrectly 0 [3]
+@todo_wine@WINE_bar correctly 3@or_broken@ERROR: WINE_bar incorrectly  [3]
+@todo_wine@WINE_baz correctly 4@or_broken@ERROR: WINE_baz incorrectly  [4]
+@todo_wine@WINE_foo correctly 9@or_broken@ERROR: WINE_foo incorrectly 3 [9]
+@todo_wine@WINE_bar correctly 9@or_broken@ERROR: WINE_bar incorrectly 3 [9]
+@todo_wine@WINE_foo correctly 0
+@todo_wine@WINE_foo correctly 4
+WINE_bar correctly 4
+@todo_wine@WINE_foo correctly -7@or_broken@ERROR: WINE_foo incorrectly 4 [-7]
+@todo_wine@WINE_bar correctly -7@or_broken@ERROR: WINE_bar incorrectly 4 [-7]
+@todo_wine@WINE_foo correctly -1@or_broken@ERROR: WINE_foo incorrectly -7 [-1]
+@todo_wine@WINE_bar correctly -1@or_broken@ERROR: WINE_bar incorrectly -7 [-1]
+@todo_wine@WINE_foo correctly 5@or_broken@ERROR: WINE_foo incorrectly 0 [5]
+@todo_wine@WINE_bar correctly 1@or_broken@ERROR: WINE_bar incorrectly  [1]
+@todo_wine@WINE_foo correctly 4@or_broken@ERROR: WINE_foo incorrectly 1 [4]
+@todo_wine@WINE_bar correctly 4@or_broken@ERROR: WINE_bar incorrectly 1 [4]
+@todo_wine@WINE_foo correctly 1@or_broken@ERROR: WINE_foo incorrectly 4 [1]
+@todo_wine@WINE_bar correctly 1@or_broken@ERROR: WINE_bar incorrectly 4 [1]
+@todo_wine@WINE_foo correctly 0@or_broken@ERROR: WINE_foo incorrectly 1 [0]
+@todo_wine@WINE_bar correctly 0@or_broken@ERROR: WINE_bar incorrectly 1 [0]
+@todo_wine@WINE_foo correctly 5@or_broken@ERROR: WINE_foo incorrectly 0 [5]
+@todo_wine@WINE_bar correctly 7@or_broken@ERROR: WINE_bar incorrectly  [7]
+@todo_wine@WINE_foo correctly 5@or_broken@ERROR: WINE_foo incorrectly 0 [5]
+@todo_wine@WINE_bar correctly 7@or_broken@ERROR: WINE_bar incorrectly  [7]
+@todo_wine@WINE_foo correctly 19@or_broken@ERROR: WINE_foo incorrectly 0 [19]
+@todo_wine@WINE_bar correctly 3@or_broken@ERROR: WINE_bar incorrectly  [3]
+WINE_baz correctly 4
 --- for /F
 ------ string argument
 a
