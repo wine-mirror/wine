@@ -8096,6 +8096,8 @@ static BOOL schedule_pipe(LPCWSTR cmd, LPCWSTR filename)
         goto end;
     }
 
+    close(fds[0]);
+    fds[0] = -1;
     while((no_read = read(file_fd, buf, sizeof(buf))) > 0)
         write(fds[1], buf, no_read);
 
