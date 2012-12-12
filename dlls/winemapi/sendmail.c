@@ -155,7 +155,12 @@ ULONG WINAPI MAPISendMail(LHANDLE session, ULONG_PTR uiparam,
     }
 
     if (message->nFileCount)
-        FIXME("Ignoring attachments\n");
+    {
+        FIXME("Ignoring %u attachments:\n", message->nFileCount);
+        for (i = 0; i < message->nFileCount; i++)
+            FIXME("\t%s (%s)\n", debugstr_a(message->lpFiles[i].lpszPathName),
+                  debugstr_a(message->lpFiles[i].lpszFileName));
+    }
 
     /* Escape subject and body */
     subject = escape_string(message->lpszSubject, empty_string);
