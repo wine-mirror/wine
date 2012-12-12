@@ -766,9 +766,33 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(This->thread_id != GetCurrentThreadId() || This->ctx->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
-    hres = compile_script(This->ctx, pstrCode, NULL, pstrDelimiter, FALSE, This->is_encode, &code);
+    hres = compile_script(This->ctx, pstrCode, NULL, pstrDelimiter, (dwFlags & SCRIPTTEXT_ISEXPRESSION) != 0,
+            This->is_encode, &code);
     if(FAILED(hres))
         return hres;
+
+    if(dwFlags & SCRIPTTEXT_ISEXPRESSION) {
+        exec_ctx_t *exec_ctx;
+
+        hres = create_exec_ctx(This->ctx, NULL, This->ctx->global, NULL, TRUE, &exec_ctx);
+        if(SUCCEEDED(hres)) {
+            jsval_t r;
+
+            IActiveScriptSite_OnEnterScript(This->site);
+
+            clear_ei(This->ctx);
+            hres = exec_source(exec_ctx, code, &code->global_code, TRUE, &r);
+            if(SUCCEEDED(hres)) {
+                hres = jsval_to_variant(r, pvarResult);
+                jsval_release(r);
+            }
+            exec_release(exec_ctx);
+
+            IActiveScriptSite_OnLeaveScript(This->site);
+        }
+
+        return hres;
+    }
 
     if(!is_started(This->ctx)) {
         if(This->queue_tail)
