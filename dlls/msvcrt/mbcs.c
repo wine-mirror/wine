@@ -766,28 +766,44 @@ int CDECL _mbscmp(const unsigned char* str, const unsigned char* cmp)
 }
 
 /*********************************************************************
+ *              _mbsnbicoll_l(MSVCRT.@)
+ */
+int CDECL _mbsnbicoll_l(const unsigned char *str1, const unsigned char *str2, MSVCRT_size_t len, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadmbcinfo mbcinfo;
+
+    if(!locale)
+        mbcinfo = get_mbcinfo();
+    else
+        mbcinfo = locale->mbcinfo;
+
+    if(!mbcinfo->ismbcodepage)
+        return MSVCRT__strnicoll_l((const char*)str1, (const char*)str2, len, locale);
+    return CompareStringA(mbcinfo->mblcid, NORM_IGNORECASE, (const char*)str1, len, (const char*)str2, len)-CSTR_EQUAL;
+}
+
+/*********************************************************************
+ *              _mbsicoll_l(MSVCRT.@)
+ */
+int CDECL _mbsicoll_l(const unsigned char *str1, const unsigned char *str2, MSVCRT__locale_t locale)
+{
+    return _mbsnbicoll_l(str1, str2, -1, locale);
+}
+
+/*********************************************************************
+ *              _mbsnbicoll(MSVCRT.@)
+ */
+int CDECL _mbsnbicoll(const unsigned char *str1, const unsigned char *str2, MSVCRT_size_t len)
+{
+    return _mbsnbicoll_l(str1, str2, len, NULL);
+}
+
+/*********************************************************************
  *		_mbsicoll(MSVCRT.@)
- * FIXME: handle locales.
  */
 int CDECL _mbsicoll(const unsigned char* str, const unsigned char* cmp)
 {
-  if(get_mbcinfo()->ismbcodepage)
-  {
-    unsigned int strc, cmpc;
-    do {
-      if(!*str)
-        return *cmp ? -1 : 0;
-      if(!*cmp)
-        return 1;
-      strc = _mbctolower(_mbsnextc(str));
-      cmpc = _mbctolower(_mbsnextc(cmp));
-      if(strc != cmpc)
-        return strc < cmpc ? -1 : 1;
-      str +=(strc > 255) ? 2 : 1;
-      cmp +=(strc > 255) ? 2 : 1; /* equal, use same increment */
-    } while(1);
-  }
-  return u_strcasecmp(str, cmp); /* ASCII CP */
+    return _mbsnbicoll_l(str, cmp, -1, NULL);
 }
 
 /*********************************************************************

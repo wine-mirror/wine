@@ -952,6 +952,7 @@ void __cdecl MSVCRT__invalid_parameter(const MSVCRT_wchar_t *expr, const MSVCRT_
                                        const MSVCRT_wchar_t *file, unsigned int line, MSVCRT_uintptr_t arg);
 int __cdecl      MSVCRT__toupper_l(int,MSVCRT__locale_t);
 int __cdecl      MSVCRT__tolower_l(int,MSVCRT__locale_t);
+int __cdecl      MSVCRT__strnicoll_l(const char*, const char*, MSVCRT_size_t, MSVCRT__locale_t);
 
 /* Maybe one day we'll enable the invalid parameter handlers with the full set of information (msvcrXXd)
  *      #define MSVCRT_INVALID_PMT(x) MSVCRT_call_invalid_parameter_handler(x, __FUNCTION__, __FILE__, __LINE__, 0)
