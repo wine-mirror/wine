@@ -1312,7 +1312,7 @@
 @ cdecl _splitpath(str ptr ptr ptr ptr) msvcrt._splitpath
 @ cdecl _splitpath_s(str ptr long ptr long ptr long ptr long) msvcrt._splitpath_s
 @ stub _sprintf_l
-@ stub _sprintf_p
+@ varargs _sprintf_p(ptr long str)
 @ varargs _sprintf_p_l(ptr long str ptr) msvcrt._sprintf_p_l
 @ stub _sprintf_s_l
 @ varargs _sscanf_l(str str ptr) msvcrt._sscanf_l

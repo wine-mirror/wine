@@ -125,6 +125,7 @@ int    __cdecl _scprintf(const char*,...);
 int    __cdecl _vscprintf(const char*,__ms_va_list);
 int    __cdecl _vsnprintf(char*,size_t,const char*,__ms_va_list);
 int    __cdecl _vsnprintf_s(char*,size_t,size_t,const char*,__ms_va_list);
+int    __cdecl _vsprintf_p_l(char*,size_t,const char*,_locale_t,__ms_va_list);
 
 void   __cdecl clearerr(FILE*);
 int    __cdecl fclose(FILE*);

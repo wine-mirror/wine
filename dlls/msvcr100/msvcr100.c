@@ -458,6 +458,21 @@ size_t CDECL fread_s(void *buf, size_t buf_size, size_t elem_size, size_t count,
 }
 
 /*********************************************************************
+ * _sprintf_p (MSVCR100.@)
+ */
+int CDECL _sprintf_p(char *buffer, size_t length, const char *format, ...)
+{
+    __ms_va_list valist;
+    int r;
+
+    __ms_va_start(valist, format);
+    r = _vsprintf_p_l(buffer, length, format, NULL, valist);
+    __ms_va_end(valist);
+
+    return r;
+}
+
+/*********************************************************************
  *  DllMain (MSVCR100.@)
  */
 BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
