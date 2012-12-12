@@ -216,9 +216,11 @@ struct d3d10_blend_state
 {
     ID3D10BlendState ID3D10BlendState_iface;
     LONG refcount;
+
+    D3D10_BLEND_DESC desc;
 };
 
-HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state) DECLSPEC_HIDDEN;
+HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state, const D3D10_BLEND_DESC *desc) DECLSPEC_HIDDEN;
 struct d3d10_blend_state *unsafe_impl_from_ID3D10BlendState(ID3D10BlendState *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10DepthStencilState */

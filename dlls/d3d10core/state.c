@@ -114,7 +114,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_blend_state_SetPrivateDataInterface(ID3D1
 static void STDMETHODCALLTYPE d3d10_blend_state_GetDesc(ID3D10BlendState *iface,
         D3D10_BLEND_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d10_blend_state *state = impl_from_ID3D10BlendState(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    *desc = state->desc;
 }
 
 static const struct ID3D10BlendStateVtbl d3d10_blend_state_vtbl =
@@ -132,10 +136,11 @@ static const struct ID3D10BlendStateVtbl d3d10_blend_state_vtbl =
     d3d10_blend_state_GetDesc,
 };
 
-HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state)
+HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state, const D3D10_BLEND_DESC *desc)
 {
     state->ID3D10BlendState_iface.lpVtbl = &d3d10_blend_state_vtbl;
     state->refcount = 1;
+    state->desc = *desc;
 
     return S_OK;
 }
