@@ -1199,7 +1199,7 @@
 @ cdecl _wtoi(wstr) ntdll._wtoi
 @ cdecl -ret64 _wtoi64(wstr) ntdll._wtoi64
 # stub -ret64 _wtoi64_l(wstr ptr)
-# stub _wtoi_l(wstr ptr)
+@ cdecl _wtoi_l(wstr ptr) MSVCRT__wtoi_l
 @ cdecl _wtol(wstr) ntdll._wtol
 # stub _wtol_l(wstr ptr)
 @ cdecl _wunlink(wstr) MSVCRT__wunlink
