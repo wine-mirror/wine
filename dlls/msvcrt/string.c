@@ -915,6 +915,23 @@ __int64 CDECL MSVCRT_strtoi64(const char *nptr, char **endptr, int base)
 }
 
 /*********************************************************************
+ *  _atoi_l (MSVCRT.@)
+ */
+int MSVCRT__atoi_l(const char *str, MSVCRT__locale_t locale)
+{
+    __int64 ret = MSVCRT_strtoi64_l(str, NULL, 10, locale);
+
+    if(ret > INT_MAX) {
+        ret = INT_MAX;
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+    } else if(ret < INT_MIN) {
+        ret = INT_MIN;
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+    }
+    return ret;
+}
+
+/*********************************************************************
  *  _strtoui64_l (MSVCRT.@)
  *
  * FIXME: locale parameter is ignored
