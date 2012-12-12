@@ -807,33 +807,45 @@ int CDECL _mbsicoll(const unsigned char* str, const unsigned char* cmp)
 }
 
 /*********************************************************************
+ *              _mbsnbcoll_l(MSVCRT.@)
+ */
+int CDECL _mbsnbcoll_l(const unsigned char *str1, const unsigned char *str2, MSVCRT_size_t len, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadmbcinfo mbcinfo;
+
+    if(!locale)
+        mbcinfo = get_mbcinfo();
+    else
+        mbcinfo = locale->mbcinfo;
+
+    if(!mbcinfo->ismbcodepage)
+        return MSVCRT_strncoll_l((const char*)str1, (const char*)str2, len, locale);
+    return CompareStringA(mbcinfo->mblcid, 0, (const char*)str1, len, (const char*)str2, len)-CSTR_EQUAL;
+}
+
+/*********************************************************************
+ *              _mbscoll_l(MSVCRT.@)
+ */
+int CDECL _mbscoll_l(const unsigned char *str1, const unsigned char *str2, MSVCRT__locale_t locale)
+{
+    return _mbsnbcoll_l(str1, str2, -1, locale);
+}
+
+/*********************************************************************
+ *              _mbsnbcoll(MSVCRT.@)
+ */
+int CDECL _mbsnbcoll(const unsigned char *str1, const unsigned char *str2, MSVCRT_size_t len)
+{
+    return _mbsnbcoll_l(str1, str2, len, NULL);
+}
+
+/*********************************************************************
  *		_mbscoll(MSVCRT.@)
- * Performs a case-sensitive comparison according to the current code page
- * RETURN
- *   _NLSCMPERROR if error
- * FIXME: handle locales.
  */
 int CDECL _mbscoll(const unsigned char* str, const unsigned char* cmp)
 {
-  if(get_mbcinfo()->ismbcodepage)
-  {
-    unsigned int strc, cmpc;
-    do {
-      if(!*str)
-        return *cmp ? -1 : 0;
-      if(!*cmp)
-        return 1;
-      strc = _mbsnextc(str);
-      cmpc = _mbsnextc(cmp);
-      if(strc != cmpc)
-        return strc < cmpc ? -1 : 1;
-      str +=(strc > 255) ? 2 : 1;
-      cmp +=(strc > 255) ? 2 : 1; /* equal, use same increment */
-    } while(1);
-  }
-  return u_strcmp(str, cmp); /* ASCII CP */
+    return _mbsnbcoll_l(str, cmp, -1, NULL);
 }
-
 
 /*********************************************************************
  *		_mbsicmp(MSVCRT.@)

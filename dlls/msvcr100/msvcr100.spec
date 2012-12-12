@@ -1095,7 +1095,7 @@
 @ cdecl _mbscmp(str str) msvcrt._mbscmp
 @ stub _mbscmp_l
 @ cdecl _mbscoll(str str) msvcrt._mbscoll
-@ stub _mbscoll_l
+@ cdecl _mbscoll_l(str str ptr) msvcrt._mbscoll_l
 @ stub _mbscpy_s
 @ stub _mbscpy_s_l
 @ cdecl _mbscspn(str str) msvcrt._mbscspn
@@ -1123,7 +1123,7 @@
 @ cdecl _mbsnbcnt(ptr long) msvcrt._mbsnbcnt
 @ stub _mbsnbcnt_l
 @ cdecl _mbsnbcoll(str str long) msvcrt._mbsnbcoll
-@ stub _mbsnbcoll_l
+@ cdecl _mbsnbcoll_l(str str long ptr) msvcrt._mbsnbcoll_l
 @ cdecl _mbsnbcpy(ptr str long) msvcrt._mbsnbcpy
 @ stub _mbsnbcpy_l
 @ cdecl _mbsnbcpy_s(ptr long str long) msvcrt._mbsnbcpy_s
