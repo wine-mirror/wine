@@ -78,7 +78,7 @@ static HRESULT WINAPI BasePinImpl_CheckMediaType(BasePin *This, const AM_MEDIA_T
 {
     IMediaStreamFilterImpl *filter = impl_from_IMediaStreamFilter((IMediaStreamFilter*)This->pinInfo.pFilter);
     MSPID purpose_id;
-    int i;
+    ULONG i;
 
     TRACE("Checking media type %s - %s\n", debugstr_guid(&pmt->majortype), debugstr_guid(&pmt->subtype));
 
@@ -130,7 +130,7 @@ static HRESULT WINAPI BasePinImp_GetMediaType(BasePin *This, int index, AM_MEDIA
 {
     IMediaStreamFilterImpl *filter = (IMediaStreamFilterImpl*)This->pinInfo.pFilter;
     MSPID purpose_id;
-    int i;
+    ULONG i;
 
     /* FIXME: Reset structure as we only fill majortype and minortype for now */
     ZeroMemory(amt, sizeof(*amt));
@@ -245,7 +245,7 @@ static ULONG WINAPI MediaStreamFilterImpl_Release(IMediaStreamFilter *iface)
 
     if (!ref)
     {
-        int i;
+        ULONG i;
         for (i = 0; i < This->nb_streams; i++)
         {
             IMediaStream_Release(This->streams[i]);
