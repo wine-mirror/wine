@@ -20,6 +20,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <wchar.h>
+#include <stdio.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -68,6 +69,9 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
 static int* (__cdecl *p_errno)(void);
 static int (__cdecl *p_wmemcpy_s)(wchar_t *dest, size_t numberOfElements, const wchar_t *src, size_t count);
 static int (__cdecl *p_wmemmove_s)(wchar_t *dest, size_t numberOfElements, const wchar_t *src, size_t count);
+static FILE* (__cdecl *p_fopen)(const char*,const char*);
+static int (__cdecl *p_fclose)(FILE*);
+static size_t (__cdecl *p_fread_s)(void*,size_t,size_t,size_t,FILE*);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -91,6 +95,9 @@ static BOOL init(void)
     SET(p_set_invalid_parameter_handler, "_set_invalid_parameter_handler");
     SET(p_wmemcpy_s, "wmemcpy_s");
     SET(p_wmemmove_s, "wmemmove_s");
+    SET(p_fopen, "fopen");
+    SET(p_fclose, "fclose");
+    SET(p_fread_s, "fread_s");
 
     return TRUE;
 }
@@ -247,6 +254,78 @@ static void test_wmemmove_s(void)
             "Cannot reset invalid parameter handler\n");
 }
 
+static void test_fread_s(void)
+{
+    static const char test_file[] = "fread_s.tst";
+    int ret;
+    char buf[10];
+
+    FILE *f = fopen(test_file, "w");
+    if(!f) {
+        skip("Error creating test file\n");
+        return;
+    }
+    fwrite("test", 1, 4, f);
+    fclose(f);
+
+    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+            "Invalid parameter handler was already set\n");
+
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    ret = p_fread_s(buf, sizeof(buf), 1, 1, NULL);
+    ok(ret == 0, "fread_s returned %d, expected 0\n", ret);
+    ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    f = p_fopen(test_file, "r");
+    errno = 0xdeadbeef;
+    ret = p_fread_s(NULL, sizeof(buf), 0, 1, f);
+    ok(ret == 0, "fread_s returned %d, expected 0\n", ret);
+    ok(errno == 0xdeadbeef, "errno = %d, expected 0xdeadbeef\n", errno);
+    ret = p_fread_s(NULL, sizeof(buf), 1, 0, f);
+    ok(ret == 0, "fread_s returned %d, expected 0\n", ret);
+    ok(errno == 0xdeadbeef, "errno = %d, expected 0xdeadbeef\n", errno);
+
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    ret = p_fread_s(NULL, sizeof(buf), 1, 1, f);
+    ok(ret == 0, "fread_s returned %d, expected 0\n", ret);
+    ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    buf[1] = 'a';
+    ret = p_fread_s(buf, 3, 1, 10, f);
+    ok(ret == 0, "fread_s returned %d, expected 0\n", ret);
+    ok(buf[0] == 0, "buf[0] = '%c', expected 0\n", buf[0]);
+    ok(buf[1] == 0, "buf[1] = '%c', expected 0\n", buf[1]);
+    ok(errno == ERANGE, "errno = %d, expected ERANGE\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    ret = p_fread_s(buf, 2, 1, 10, f);
+    ok(ret == 0, "fread_s returned %d, expected 0\n", ret);
+    ok(buf[0] == 0, "buf[0] = '%c', expected 0\n", buf[0]);
+    ok(errno == ERANGE, "errno = %d, expected ERANGE\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    memset(buf, 'a', sizeof(buf));
+    ret = p_fread_s(buf, sizeof(buf), 3, 10, f);
+    ok(ret==1, "fread_s returned %d, expected 1\n", ret);
+    ok(buf[0] == 'e', "buf[0] = '%c', expected 'e'\n", buf[0]);
+    ok(buf[1] == 's', "buf[1] = '%c', expected 's'\n", buf[1]);
+    ok(buf[2] == 't', "buf[2] = '%c', expected 't'\n", buf[2]);
+    ok(buf[3] == 'a', "buf[3] = '%c', expected 'a'\n", buf[3]);
+    p_fclose(f);
+
+    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+            "Cannot reset invalid parameter handler\n");
+    unlink(test_file);
+}
+
 START_TEST(msvcr100)
 {
     if (!init())
@@ -254,4 +333,5 @@ START_TEST(msvcr100)
 
     test_wmemcpy_s();
     test_wmemmove_s();
+    test_fread_s();
 }

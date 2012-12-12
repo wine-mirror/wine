@@ -25,6 +25,7 @@
 #include "stdlib.h"
 #include "errno.h"
 #include "malloc.h"
+#include "limits.h"
 #include "sys/stat.h"
 #include "windef.h"
 #include "winbase.h"
@@ -401,6 +402,59 @@ unsigned __int64 CDECL _byteswap_uint64(unsigned __int64 i)
 {
     return (i<<56) + ((i&0xFF00)<<40) + ((i&0xFF0000)<<24) + ((i&0xFF000000)<<8) +
         ((i>>8)&0xFF000000) + ((i>>24)&0xFF0000) + ((i>>40)&0xFF00) + (i>>56);
+}
+
+/*********************************************************************
+ * fread_s (MSVCR100.@)
+ */
+size_t CDECL fread_s(void *buf, size_t buf_size, size_t elem_size, size_t count, FILE *stream)
+{
+    size_t bytes_left, buf_pos;
+
+    TRACE("(%p %lu %lu %lu %p\n", buf, (unsigned long)buf_size,
+            (unsigned long)elem_size, (unsigned long)count, stream);
+
+
+    if(!CHECK_PMT(stream != NULL)) {
+        if(buf && buf_size)
+            memset(buf, 0, buf_size);
+        return 0;
+    }
+    if(!elem_size || !count) return 0;
+    if(!CHECK_PMT(buf != NULL)) return 0;
+    if(!CHECK_PMT(SIZE_MAX/count >= elem_size)) return 0;
+
+    bytes_left = elem_size*count;
+    buf_pos = 0;
+    while(bytes_left) {
+        if(stream->_cnt > 0) {
+            size_t size = bytes_left<stream->_cnt ? bytes_left : stream->_cnt;
+
+            if(!CHECK_PMT_ERR(size <= buf_size-buf_pos, ERANGE)) {
+                memset(buf, 0, buf_size);
+                return 0;
+            }
+
+            fread((char*)buf+buf_pos, 1, size, stream);
+            buf_pos += size;
+            bytes_left -= size;
+        }else {
+            int c = _filbuf(stream);
+
+            if(c == EOF)
+                break;
+
+            if(!CHECK_PMT_ERR(buf_size-buf_pos > 0, ERANGE)) {
+                memset(buf, 0, buf_size);
+                return 0;
+            }
+
+            ((char*)buf)[buf_pos++] = c;
+            bytes_left--;
+        }
+    }
+
+    return buf_pos/elem_size;
 }
 
 /*********************************************************************

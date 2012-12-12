@@ -1323,7 +1323,7 @@
 @ cdecl fputwc(long ptr) msvcrt.fputwc
 @ cdecl fputws(wstr ptr) msvcrt.fputws
 @ cdecl fread(ptr long long ptr) msvcrt.fread
-@ stub fread_s
+@ cdecl fread_s(ptr long long long ptr) msvcr100.fread_s
 @ cdecl free(ptr) msvcrt.free
 @ cdecl freopen(str str ptr) msvcrt.freopen
 @ cdecl freopen_s(ptr str str ptr) msvcrt.freopen_s
