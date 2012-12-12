@@ -297,20 +297,12 @@ static LRESULT LISTBOX_SetTopItem( LB_DESCR *descr, INT index, BOOL scroll )
     if (index < 0) index = 0;
     if (descr->style & LBS_MULTICOLUMN) index -= index % descr->page_size;
     if (descr->top_item == index) return LB_OKAY;
-    if (descr->style & LBS_MULTICOLUMN)
-    {
-        INT diff = (descr->top_item - index) / descr->page_size * descr->column_width;
-        if (scroll && (abs(diff) < descr->width))
-            ScrollWindowEx( descr->self, diff, 0, NULL, NULL, 0, NULL,
-                              SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
-
-        else
-            scroll = FALSE;
-    }
-    else if (scroll)
+    if (scroll)
     {
         INT diff;
-        if (descr->style & LBS_OWNERDRAWVARIABLE)
+        if (descr->style & LBS_MULTICOLUMN)
+            diff = (descr->top_item - index) / descr->page_size * descr->column_width;
+        else if (descr->style & LBS_OWNERDRAWVARIABLE)
         {
             INT i;
             diff = 0;
@@ -328,11 +320,8 @@ static LRESULT LISTBOX_SetTopItem( LB_DESCR *descr, INT index, BOOL scroll )
         else
             diff = (descr->top_item - index) * descr->item_height;
 
-        if (abs(diff) < descr->height)
-            ScrollWindowEx( descr->self, 0, diff, NULL, NULL, 0, NULL,
-                            SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
-        else
-            scroll = FALSE;
+        ScrollWindowEx( descr->self, 0, diff, NULL, NULL, 0, NULL,
+                        SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
     }
     if (!scroll) InvalidateRect( descr->self, NULL, TRUE );
     descr->top_item = index;
