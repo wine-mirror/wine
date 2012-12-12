@@ -3671,6 +3671,16 @@ void WINAPI PostQuitMessage( INT exit_code )
     SERVER_END_REQ;
 }
 
+/* check for driver events if we detect that the app is not properly consuming messages */
+static inline void check_for_driver_events(void)
+{
+    if (get_user_thread_info()->message_count > 200)
+    {
+        flush_window_surfaces( FALSE );
+        USER_Driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
+    }
+    else get_user_thread_info()->message_count++;
+}
 
 /***********************************************************************
  *		PeekMessageW  (USER32.@)
@@ -3680,6 +3690,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH PeekMessageW( MSG *msg_out, HWND hwnd, UINT first,
     MSG msg;
 
     USER_CheckNotLock();
+    check_for_driver_events();
 
     if (!peek_message( &msg, hwnd, first, last, flags, 0 ))
     {
@@ -3726,6 +3737,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT
     unsigned int mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
 
     USER_CheckNotLock();
+    check_for_driver_events();
 
     if (first || last)
     {

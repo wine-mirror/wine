@@ -1126,6 +1126,7 @@ static DWORD wait_message( DWORD count, CONST HANDLE *handles, DWORD timeout, DW
 {
     DWORD ret = USER_Driver->pMsgWaitForMultipleObjectsEx( count, handles, timeout, mask, flags );
     if (ret == WAIT_TIMEOUT && !count && !timeout) NtYieldExecution();
+    if ((mask & QS_INPUT) == QS_INPUT) get_user_thread_info()->message_count = 0;
     return ret;
 }
 

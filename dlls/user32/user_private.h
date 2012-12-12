@@ -172,7 +172,8 @@ struct wm_char_mapping_data
 struct user_thread_info
 {
     HANDLE                        server_queue;           /* Handle to server-side queue */
-    DWORD                         recursion_count;        /* SendMessage recursion counter */
+    WORD                          recursion_count;        /* SendMessage recursion counter */
+    WORD                          message_count;          /* Get/PeekMessage loop counter */
     BOOL                          hook_unicode;           /* Is current hook unicode? */
     HHOOK                         hook;                   /* Current hook */
     struct received_message_info *receive_info;           /* Message being currently received */
