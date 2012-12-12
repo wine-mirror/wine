@@ -18,7 +18,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(servicemodelreg);
+WINE_DEFAULT_DEBUG_CHANNEL(svcmodelreg);
 
 int wmain(int argc, WCHAR *argv[])
 {
