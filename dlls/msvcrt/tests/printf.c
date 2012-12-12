@@ -515,6 +515,26 @@ static void test_sprintf( void )
     ok(!strcmp(buffer,"8.6000e+000"), "failed\n");
     ok( r==11, "return count wrong\n");
 
+    format = "% 2.4e";
+    r = sprintf(buffer, format,8.6);
+    ok(!strcmp(buffer," 8.6000e+000"), "failed: %s\n", buffer);
+    ok( r==12, "return count wrong\n");
+
+    format = "% 014.4e";
+    r = sprintf(buffer, format,8.6);
+    ok(!strcmp(buffer," 008.6000e+000"), "failed: %s\n", buffer);
+    ok( r==14, "return count wrong\n");
+
+    format = "% 2.4e";
+    r = sprintf(buffer, format,-8.6);
+    ok(!strcmp(buffer,"-8.6000e+000"), "failed: %s\n", buffer);
+    ok( r==12, "return count wrong\n");
+
+    format = "%+2.4e";
+    r = sprintf(buffer, format,8.6);
+    ok(!strcmp(buffer,"+8.6000e+000"), "failed: %s\n", buffer);
+    ok( r==12, "return count wrong\n");
+
     format = "%2.4g";
     r = sprintf(buffer, format,8.6);
     ok(!strcmp(buffer,"8.6"), "failed\n");

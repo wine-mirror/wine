@@ -78,7 +78,7 @@ static inline int FUNC_NAME(pf_fill)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ct
 {
     int i, r = 0, written;
 
-    if(flags->Sign && !(flags->Format=='d' || flags->Format=='i'))
+    if(flags->Sign && !strchr("diaeEfgG", flags->Format))
         flags->Sign = 0;
 
     if(left && flags->Sign) {
@@ -228,18 +228,8 @@ static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void
 static inline void FUNC_NAME(pf_rebuild_format_string)(char *p, FUNC_NAME(pf_flags) *flags)
 {
     *p++ = '%';
-    if(flags->Sign)
-        *p++ = flags->Sign;
-    if(flags->LeftAlign)
-        *p++ = flags->LeftAlign;
     if(flags->Alternate)
         *p++ = flags->Alternate;
-    if(flags->PadZero)
-        *p++ = flags->PadZero;
-    if(flags->FieldLength) {
-        sprintf(p, "%d", flags->FieldLength);
-        p += strlen(p);
-    }
     if(flags->Precision >= 0) {
         sprintf(p, ".%d", flags->Precision);
         p += strlen(p);
@@ -541,8 +531,9 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 HeapFree(GetProcessHeap(), 0, tmp);
         } else if(flags.Format && strchr("aeEfgG", flags.Format)) {
             char float_fmt[20], buf_a[32], *tmp = buf_a, *decimal_point;
-            int max_len = (flags.FieldLength>flags.Precision ? flags.FieldLength : flags.Precision) + 10;
+            int len = flags.Precision + 10;
             double val = pf_args(args_ctx, pos, VT_R8, valist).get_double;
+            int r;
 
             if(flags.Format=='f') {
                 if(val>-10.0 && val<10.0)
@@ -552,16 +543,20 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 /* Default precision is 6, additional space for sign, separator and nullbyte is required */
                 i += (flags.Precision==-1 ? 6 : flags.Precision) + 3;
 
-                if(i > max_len)
-                    max_len = i;
+                if(i > len)
+                    len = i;
             }
 
-            if(max_len > sizeof(buf_a))
-                tmp = HeapAlloc(GetProcessHeap(), 0, max_len);
+            if(len > sizeof(buf_a))
+                tmp = HeapAlloc(GetProcessHeap(), 0, len);
             if(!tmp)
                 return -1;
 
             FUNC_NAME(pf_rebuild_format_string)(float_fmt, &flags);
+            if(val < 0) {
+                flags.Sign = '-';
+                val = -val;
+            }
 
             sprintf(tmp, float_fmt, val);
             if(toupper(flags.Format)=='E' || toupper(flags.Format)=='G')
@@ -571,9 +566,20 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             if(decimal_point)
                 *decimal_point = *locinfo->lconv->decimal_point;
 
-            i = FUNC_NAME(pf_output_str)(pf_puts, puts_ctx, tmp, strlen(tmp), locinfo);
+            len = strlen(tmp);
+            i = FUNC_NAME(pf_fill)(pf_puts, puts_ctx, len, &flags, TRUE);
+            if(i < 0)
+                return i;
+            r = FUNC_NAME(pf_output_str)(pf_puts, puts_ctx, tmp, len, locinfo);
+            if(r < 0)
+                return r;
+            i += r;
             if(tmp != buf_a)
                 HeapFree(GetProcessHeap(), 0, tmp);
+            r = FUNC_NAME(pf_fill)(pf_puts, puts_ctx, len, &flags, FALSE);
+            if(r < 0)
+                return r;
+            i += r;
         } else {
             if(invoke_invalid_param_handler) {
                 MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
