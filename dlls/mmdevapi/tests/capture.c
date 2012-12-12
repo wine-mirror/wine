@@ -559,7 +559,7 @@ static void test_audioclient(void)
     ok(hr == AUDCLNT_E_NOT_INITIALIZED, "Initialize with invalid sharemode returns %08x\n", hr);
 
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0xffffffff, 5000000, 0, pwfx, NULL);
-    ok(hr == E_INVALIDARG, "Initialize with invalid flags returns %08x\n", hr);
+    ok(hr == E_INVALIDARG || hr == AUDCLNT_E_INVALID_STREAM_FLAG, "Initialize with invalid flags returns %08x\n", hr);
 
     /* A period != 0 is ignored and the call succeeds.
      * Since we can only initialize successfully once, skip those tests.
