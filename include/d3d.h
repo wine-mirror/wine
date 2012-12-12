@@ -887,7 +887,7 @@ DECLARE_INTERFACE_(IDirect3DExecuteBuffer,IUnknown)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3DExecuteBuffer methods ***/
     STDMETHOD(Initialize)(THIS_ struct IDirect3DDevice *device, D3DEXECUTEBUFFERDESC *desc) PURE;
-    STDMETHOD(Lock)(THIS_ LPD3DEXECUTEBUFFERDESC lpDesc) PURE;
+    STDMETHOD(Lock)(THIS_ D3DEXECUTEBUFFERDESC *desc) PURE;
     STDMETHOD(Unlock)(THIS) PURE;
     STDMETHOD(SetExecuteData)(THIS_ LPD3DEXECUTEDATA lpData) PURE;
     STDMETHOD(GetExecuteData)(THIS_ LPD3DEXECUTEDATA lpData) PURE;
