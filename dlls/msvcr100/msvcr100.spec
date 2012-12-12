@@ -877,7 +877,7 @@
 @ cdecl _get_printf_count_output() msvcrt._get_printf_count_output
 @ stub _get_purecall_handler
 @ cdecl _get_terminate() msvcrt._get_terminate
-@ stub _get_timezone
+@ cdecl _get_timezone(ptr)
 @ cdecl _get_tzname(ptr str long long) msvcrt._get_tzname
 @ cdecl _get_unexpected() msvcrt._get_unexpected
 @ cdecl _get_wpgmptr(ptr) msvcrt._get_wpgmptr

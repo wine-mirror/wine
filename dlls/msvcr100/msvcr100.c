@@ -473,6 +473,17 @@ int CDECL _sprintf_p(char *buffer, size_t length, const char *format, ...)
 }
 
 /*********************************************************************
+ * _get_timezone (MSVCR100.@)
+ */
+int CDECL _get_timezone(LONG *timezone)
+{
+    if(!CHECK_PMT(timezone != NULL)) return EINVAL;
+
+    *timezone = *(LONG*)GetProcAddress(GetModuleHandleA("msvcrt.dll"), "_timezone");
+    return 0;
+}
+
+/*********************************************************************
  *  DllMain (MSVCR100.@)
  */
 BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
