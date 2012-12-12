@@ -854,7 +854,7 @@
 @ cdecl _fullpath(ptr str long) msvcrt._fullpath
 @ cdecl _futime32(long ptr) msvcrt._futime32
 @ cdecl _futime64(long ptr) msvcrt._futime64
-@ stub _fwprintf_l
+@ varargs _fwprintf_l(ptr wstr ptr) msvcrt._fwprintf_l
 @ stub _fwprintf_p
 @ stub _fwprintf_p_l
 @ stub _fwprintf_s_l

@@ -462,7 +462,7 @@
 @ cdecl _futime(long ptr)
 @ cdecl _futime32(long ptr)
 @ cdecl _futime64(long ptr)
-# stub _fwprintf_l(ptr wstr ptr)
+@ varargs _fwprintf_l(ptr wstr ptr) MSVCRT__fwprintf_l
 # stub _fwprintf_p(ptr wstr)
 # stub _fwprintf_p_l(ptr wstr ptr)
 # stub _fwprintf_s_l(ptr wstr ptr)

@@ -3959,6 +3959,19 @@ int CDECL MSVCRT_fwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, ...
 }
 
 /*********************************************************************
+ *              _fwprintf_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__fwprintf_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, ...)
+{
+    __ms_va_list valist;
+    int res;
+    __ms_va_start(valist, locale);
+    res = MSVCRT__vfwprintf_l(file, format, locale, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
  *		printf (MSVCRT.@)
  */
 int CDECL MSVCRT_printf(const char *format, ...)
