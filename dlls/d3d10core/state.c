@@ -63,14 +63,15 @@ static ULONG STDMETHODCALLTYPE d3d10_blend_state_AddRef(ID3D10BlendState *iface)
 
 static ULONG STDMETHODCALLTYPE d3d10_blend_state_Release(ID3D10BlendState *iface)
 {
-    struct d3d10_blend_state *This = impl_from_ID3D10BlendState(iface);
-    ULONG refcount = InterlockedDecrement(&This->refcount);
+    struct d3d10_blend_state *state = impl_from_ID3D10BlendState(iface);
+    ULONG refcount = InterlockedDecrement(&state->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", This, refcount);
+    TRACE("%p decreasing refcount to %u.\n", state, refcount);
 
     if (!refcount)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        wine_rb_remove(&state->device->blend_states, &state->desc);
+        HeapFree(GetProcessHeap(), 0, state);
     }
 
     return refcount;
@@ -136,11 +137,19 @@ static const struct ID3D10BlendStateVtbl d3d10_blend_state_vtbl =
     d3d10_blend_state_GetDesc,
 };
 
-HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state, const D3D10_BLEND_DESC *desc)
+HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state, struct d3d10_device *device,
+        const D3D10_BLEND_DESC *desc)
 {
     state->ID3D10BlendState_iface.lpVtbl = &d3d10_blend_state_vtbl;
     state->refcount = 1;
+    state->device = device;
     state->desc = *desc;
+
+    if (wine_rb_put(&device->blend_states, desc, &state->entry) == -1)
+    {
+        ERR("Failed to insert blend state entry.\n");
+        return E_FAIL;
+    }
 
     return S_OK;
 }
