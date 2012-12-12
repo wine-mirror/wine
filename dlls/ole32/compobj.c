@@ -3871,6 +3871,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
             if (res == WAIT_OBJECT_0 + cHandles)  /* messages available */
             {
                 MSG msg;
+                int count = 0;
 
                 /* call message filter */
 
@@ -3900,7 +3901,9 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
                     }
                 }
 
-                while (COM_PeekMessage(apt, &msg))
+                /* some apps (e.g. Visio 2010) don't handle WM_PAINT properly and loop forever,
+                 * so after processing 100 messages we go back to checking the wait handles */
+                while (count++ < 100 && COM_PeekMessage(apt, &msg))
                 {
                     TRACE("received message whilst waiting for RPC: 0x%04x\n", msg.message);
                     TranslateMessage(&msg);
