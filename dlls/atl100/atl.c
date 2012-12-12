@@ -288,6 +288,22 @@ HRESULT WINAPI AtlLoadTypeLib(HINSTANCE inst, LPCOLESTR lpszIndex,
 }
 
 /***********************************************************************
+ *           AtlWinModuleAddCreateWndData              [atl100.43]
+ */
+void WINAPI AtlWinModuleAddCreateWndData(_ATL_WIN_MODULE *pM, _AtlCreateWndData *pData, void *pvObject)
+{
+    TRACE("(%p, %p, %p)\n", pM, pData, pvObject);
+
+    pData->m_pThis = pvObject;
+    pData->m_dwThreadID = GetCurrentThreadId();
+
+    EnterCriticalSection(&pM->m_csWindowCreate);
+    pData->m_pNext = pM->m_pCreateWndList;
+    pM->m_pCreateWndList = pData;
+    LeaveCriticalSection(&pM->m_csWindowCreate);
+}
+
+/***********************************************************************
  *           AtlGetVersion              [atl100.@]
  */
 DWORD WINAPI AtlGetVersion(void *pReserved)

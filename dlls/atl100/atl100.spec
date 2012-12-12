@@ -26,7 +26,7 @@
 40 stdcall AtlAxCreateControlEx(ptr ptr ptr ptr ptr ptr ptr)
 41 stdcall AtlAxAttachControl(ptr ptr ptr)
 42 stdcall AtlAxWinInit()
-43 stub AtlWinModuleAddCreateWndData
+43 stdcall AtlWinModuleAddCreateWndData(ptr ptr ptr)
 44 stub AtlWinModuleExtractCreateWndData
 45 stub AtlWinModuleRegisterWndClassInfoW
 46 stub AtlWinModuleRegisterWndClassInfoA

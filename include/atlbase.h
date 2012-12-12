@@ -160,6 +160,13 @@ typedef struct _ATL_MODULEW_TAG
     _ATL_TERMFUNC_ELEM* m_pTermFuncs;
 } _ATL_MODULEW;
 
+typedef struct
+{
+    void *m_aT;
+    int m_nSize;
+    int m_nAllocSize;
+} CSimpleArray;
+
 typedef struct _ATL_MODULE70
 {
     UINT cbSize;
@@ -168,10 +175,20 @@ typedef struct _ATL_MODULE70
     CComCriticalSection m_csStaticDataInitAndTypeInfo;
 } _ATL_MODULE70;
 
+typedef struct _ATL_WIN_MODULE70
+{
+    UINT cbSize;
+    CComCriticalSection m_csWindowCreate;
+    _AtlCreateWndData *m_pCreateWndList;
+    CSimpleArray /* <ATOM> */ m_rgWindowClassAtoms;
+} _ATL_WIN_MODULE70;
+
 #if _ATL_VER >= _ATL_VER_70
 typedef _ATL_MODULE70 _ATL_MODULE;
+typedef _ATL_WIN_MODULE70 _ATL_WIN_MODULE;
 #else
 typedef _ATL_MODULEW _ATL_MODULE;
+typedef _ATL_MODULEW _ATL_WIN_MODULE;
 #endif
 
 typedef struct _ATL_INTMAP_ENTRY_TAG
@@ -195,6 +212,7 @@ HRESULT WINAPI AtlFreeMarshalStream(IStream *pStream);
 HRESULT WINAPI AtlInternalQueryInterface(void* pThis, const _ATL_INTMAP_ENTRY* pEntries, REFIID iid, void** ppvObject);
 HRESULT WINAPI AtlMarshalPtrInProc(IUnknown *pUnk, const IID *iid, IStream **ppStream);
 void    WINAPI AtlModuleAddCreateWndData(_ATL_MODULEW *pM, _AtlCreateWndData *pData, void* pvObject);
+void    WINAPI AtlWinModuleAddCreateWndData(_ATL_WIN_MODULE*,_AtlCreateWndData*,void*);
 HRESULT WINAPI AtlModuleAddTermFunc(_ATL_MODULE *pM, _ATL_TERMFUNC *pFunc, DWORD_PTR dw);
 void WINAPI AtlCallTermFunc(_ATL_MODULE*);
 void*  WINAPI AtlModuleExtractCreateWndData(_ATL_MODULEW *pM);
