@@ -3858,6 +3858,23 @@ int CDECL MSVCRT_vfwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __
 }
 
 /*********************************************************************
+ *              _vfwprintf_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__vfwprintf_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format,
+        MSVCRT__locale_t locale, __ms_va_list valist)
+{
+    int ret;
+
+    if (!MSVCRT_CHECK_PMT( file != NULL )) return -1;
+
+    MSVCRT__lock_file(file);
+    ret = pf_printf_w(puts_clbk_file_w, file, format, locale, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
+    MSVCRT__unlock_file(file);
+
+    return ret;
+}
+
+/*********************************************************************
  *		vprintf (MSVCRT.@)
  */
 int CDECL MSVCRT_vprintf(const char *format, __ms_va_list valist)

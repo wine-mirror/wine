@@ -1426,7 +1426,7 @@
 @ stub _vfprintf_p
 @ stub _vfprintf_p_l
 @ stub _vfprintf_s_l
-@ stub _vfwprintf_l
+@ cdecl _vfwprintf_l(ptr wstr ptr ptr) msvcrt._vfwprintf_l
 @ stub _vfwprintf_p
 @ stub _vfwprintf_p_l
 @ stub _vfwprintf_s_l

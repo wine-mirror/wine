@@ -1018,7 +1018,7 @@
 # stub _vfprintf_p(ptr str ptr)
 # stub _vfprintf_p_l(ptr str ptr ptr)
 # stub _vfprintf_s_l(ptr str ptr ptr)
-# stub _vfwprintf_l(ptr wstr ptr ptr)
+@ cdecl _vfwprintf_l(ptr wstr ptr ptr) MSVCRT__vfwprintf_l
 # stub _vfwprintf_p(ptr wstr ptr)
 # stub _vfwprintf_p_l(ptr wstr ptr ptr)
 # stub _vfwprintf_s_l(ptr wstr ptr ptr)
