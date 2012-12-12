@@ -428,8 +428,11 @@ void WINAPI AtlModuleAddCreateWndData(_ATL_MODULEW *pM, _AtlCreateWndData *pData
 
     pData->m_pThis = pvObject;
     pData->m_dwThreadID = GetCurrentThreadId();
+
+    EnterCriticalSection(&pM->m_csWindowCreate);
     pData->m_pNext = pM->m_pCreateWndList;
     pM->m_pCreateWndList = pData;
+    LeaveCriticalSection(&pM->m_csWindowCreate);
 }
 
 /***********************************************************************
