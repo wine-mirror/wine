@@ -25,6 +25,8 @@
 #include "d3dx9tex.h"
 #include "resources.h"
 
+static int has_dxt5;
+
 /* 2x2 16-bit dds, no mipmaps */
 static const unsigned char dds_16bit[] = {
 0x44,0x44,0x53,0x20,0x7c,0x00,0x00,0x00,0x07,0x10,0x08,0x00,0x02,0x00,0x00,0x00,
@@ -1444,6 +1446,11 @@ static void test_D3DXCreateTextureFromFileInMemory(IDirect3DDevice9 *device)
 
     /* Check that D3DXCreateTextureFromFileInMemory accepts cube texture dds file (only first face texture is loaded) */
     hr = D3DXCreateTextureFromFileInMemory(device, dds_cube_map, sizeof(dds_cube_map), &texture);
+    if (!has_dxt5 && hr == E_NOTIMPL)
+    {
+        skip("DXT5 is not supported, skipping the D3DXCreateTextureFromFileInMemory() tests\n");
+        return;
+    }
     ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
     if (SUCCEEDED(hr))
     {
@@ -1542,6 +1549,11 @@ static void test_D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
 
     hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, dds_cube_map, sizeof(dds_cube_map), D3DX_DEFAULT, D3DX_DEFAULT,
         D3DUSAGE_DYNAMIC | D3DUSAGE_AUTOGENMIPMAP, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &cube_texture);
+    if (!has_dxt5 && hr == E_NOTIMPL)
+    {
+        skip("DXT5 is not supported, skipping the D3DXCreateCubeTextureFromFileInMemoryEx() tests\n");
+        return;
+    }
     ok(hr == D3D_OK, "D3DXCreateCubeTextureFromFileInMemoryEx returned %#x, expected %#x\n", hr, D3D_OK);
     if (SUCCEEDED(hr)) IDirect3DCubeTexture9_Release(cube_texture);
 }
@@ -1567,6 +1579,11 @@ static void test_D3DXCreateVolumeTextureFromFileInMemory(IDirect3DDevice9 *devic
     ok(hr == D3DERR_INVALIDCALL, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateVolumeTextureFromFileInMemory(device, dds_volume_map, sizeof(dds_volume_map), &volume_texture);
+    if (!has_dxt5 && hr == E_NOTIMPL)
+    {
+        skip("DXT5 is not supported, skipping the D3DXCreateVolumeTextureFromFileInMemory() tests\n");
+        return;
+    }
     ok(hr == D3D_OK, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
     if (SUCCEEDED(hr))
     {
@@ -1810,6 +1827,11 @@ START_TEST(texture)
         DestroyWindow(wnd);
         return;
     }
+
+    /* Check whether DXT5 textures are supported */
+    hr = IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, D3DFMT_DXT5);
+    has_dxt5 = SUCCEEDED(hr);
 
     test_D3DXCheckTextureRequirements(device);
     test_D3DXCheckCubeTextureRequirements(device);
