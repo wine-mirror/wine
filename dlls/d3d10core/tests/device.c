@@ -672,6 +672,53 @@ static void test_create_blend_state(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_create_depthstencil_state(void)
+{
+    ID3D10DepthStencilState *ds_state1, *ds_state2;
+    D3D10_DEPTH_STENCIL_DESC ds_desc;
+    ID3D10Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = ID3D10Device_CreateDepthStencilState(device, NULL, &ds_state1);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    ds_desc.DepthEnable = TRUE;
+    ds_desc.DepthWriteMask = D3D10_DEPTH_WRITE_MASK_ALL;
+    ds_desc.DepthFunc = D3D10_COMPARISON_LESS;
+    ds_desc.StencilEnable = FALSE;
+    ds_desc.StencilReadMask = D3D10_DEFAULT_STENCIL_READ_MASK;
+    ds_desc.StencilWriteMask = D3D10_DEFAULT_STENCIL_WRITE_MASK;
+    ds_desc.FrontFace.StencilFailOp = D3D10_STENCIL_OP_KEEP;
+    ds_desc.FrontFace.StencilDepthFailOp = D3D10_STENCIL_OP_KEEP;
+    ds_desc.FrontFace.StencilPassOp = D3D10_STENCIL_OP_KEEP;
+    ds_desc.FrontFace.StencilFunc = D3D10_COMPARISON_ALWAYS;
+    ds_desc.BackFace.StencilFailOp = D3D10_STENCIL_OP_KEEP;
+    ds_desc.BackFace.StencilDepthFailOp = D3D10_STENCIL_OP_KEEP;
+    ds_desc.BackFace.StencilPassOp = D3D10_STENCIL_OP_KEEP;
+    ds_desc.BackFace.StencilFunc = D3D10_COMPARISON_ALWAYS;
+
+    hr = ID3D10Device_CreateDepthStencilState(device, &ds_desc, &ds_state1);
+    ok(SUCCEEDED(hr), "Failed to create depthstencil state, hr %#x.\n", hr);
+    hr = ID3D10Device_CreateDepthStencilState(device, &ds_desc, &ds_state2);
+    ok(SUCCEEDED(hr), "Failed to create depthstencil state, hr %#x.\n", hr);
+    ok(ds_state1 == ds_state2, "Got different depthstencil state objects.\n");
+
+    refcount = ID3D10DepthStencilState_Release(ds_state2);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    refcount = ID3D10DepthStencilState_Release(ds_state1);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(device)
 {
     test_device_interfaces();
@@ -683,4 +730,5 @@ START_TEST(device)
     test_create_shader();
     test_create_sampler_state();
     test_create_blend_state();
+    test_create_depthstencil_state();
 }
