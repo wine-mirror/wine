@@ -60,6 +60,12 @@ typedef struct {
 } Coords2d;
 
 typedef struct {
+    D3DCOLOR color;
+    IDirect3DRMMaterial2 *material;
+    IDirect3DRMTexture3 *texture;
+} mesh_material;
+
+typedef struct {
     IDirect3DRMMeshBuilder2 IDirect3DRMMeshBuilder2_iface;
     IDirect3DRMMeshBuilder3 IDirect3DRMMeshBuilder3_iface;
     LONG ref;
@@ -72,10 +78,13 @@ typedef struct {
     DWORD face_data_size;
     LPVOID pFaceData;
     DWORD nb_coords2d;
-    Coords2d* pCoords2d;
+    Coords2d *pCoords2d;
     D3DCOLOR color;
-    IDirect3DRMMaterial2* material;
-    IDirect3DRMTexture3* texture;
+    IDirect3DRMMaterial2 *material;
+    IDirect3DRMTexture3 *texture;
+    DWORD nb_materials;
+    mesh_material *materials;
+    DWORD *material_indices;
 } IDirect3DRMMeshBuilderImpl;
 
 char templates[] = {
@@ -316,6 +325,8 @@ static inline IDirect3DRMMeshBuilderImpl *impl_from_IDirect3DRMMeshBuilder3(IDir
 
 static void clean_mesh_builder_data(IDirect3DRMMeshBuilderImpl *mesh_builder)
 {
+    int i;
+
     HeapFree(GetProcessHeap(), 0, mesh_builder->name);
     mesh_builder->name = NULL;
     HeapFree(GetProcessHeap(), 0, mesh_builder->pVertices);
@@ -331,6 +342,16 @@ static void clean_mesh_builder_data(IDirect3DRMMeshBuilderImpl *mesh_builder)
     HeapFree(GetProcessHeap(), 0, mesh_builder->pCoords2d);
     mesh_builder->pCoords2d = NULL;
     mesh_builder->nb_coords2d = 0;
+    for (i = 0; i < mesh_builder->nb_materials; i++)
+    {
+        if (mesh_builder->materials[i].material)
+            IDirect3DRMMaterial2_Release(mesh_builder->materials[i].material);
+        if (mesh_builder->materials[i].texture)
+            IDirect3DRMTexture3_Release(mesh_builder->materials[i].texture);
+    }
+    mesh_builder->nb_materials = 0;
+    HeapFree(GetProcessHeap(), 0, mesh_builder->materials);
+    HeapFree(GetProcessHeap(), 0, mesh_builder->material_indices);
 }
 
 /*** IUnknown methods ***/
@@ -1251,23 +1272,24 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
             if (size != data_size)
                 WARN("Returned size %u does not match expected one %u\n", size, data_size);
 
-            if (nb_materials > 1)
-                FIXME("Only one material per mesh supported, first one applies to all faces\n");
+            This->material_indices = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->material_indices) * nb_face_indices);
+            if (!This->material_indices)
+                goto end;
+            memcpy(This->material_indices, ptr + 2 * sizeof(DWORD), sizeof(*This->material_indices) * nb_face_indices),
+
+            This->materials = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->materials) * nb_materials);
+            if (!This->materials)
+            {
+                HeapFree(GetProcessHeap(), 0, This->material_indices);
+                goto end;
+            }
+            This->nb_materials = nb_materials;
 
             while (SUCCEEDED(hr = IDirectXFileData_GetNextObject(pData2, &child)) && (i < nb_materials))
             {
                 LPDIRECTXFILEDATA data;
                 LPDIRECTXFILEDATAREFERENCE reference;
-                LPDIRECT3DRMMATERIAL2 material;
                 LPDIRECTXFILEOBJECT material_child;
-
-                if (i >= 1)
-                {
-                    /* FIXME: Only handle first material but enum all of them */
-                    IDirectXFileObject_Release(child);
-                    i++;
-                    continue;
-                }
 
                 hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileData, (void **)&data);
                 if (FAILED(hr))
@@ -1287,7 +1309,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
                     IDirectXFileObject_Release(child);
                 }
 
-                hr = Direct3DRMMaterial_create(&material);
+                hr = Direct3DRMMaterial_create(&This->materials[i].material);
                 if (FAILED(hr))
                 {
                     IDirectXFileData_Release(data);
@@ -1306,20 +1328,20 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
 
                 values = (float*)ptr;
 
-                IDirect3DRMMeshBuilder3_SetColorRGB(iface, values[0], values [1], values[2]); /* Alpha ignored */
+                This->materials[i].color = D3DCOLOR_ARGB((BYTE)(values[3] * 255.0f), (BYTE)(values[0] * 255.0f),
+                                                         (BYTE)(values[1] * 255.0f), (BYTE)(values[2] * 255.0f));
 
-                IDirect3DRMMaterial2_SetAmbient(material, values[0], values [1], values[2]); /* Alpha ignored */
-                IDirect3DRMMaterial2_SetPower(material, values[4]);
-                IDirect3DRMMaterial2_SetSpecular(material, values[5], values[6], values[7]);
-                IDirect3DRMMaterial2_SetEmissive(material, values[8], values[9], values[10]);
+                IDirect3DRMMaterial2_SetAmbient(This->materials[i].material, values[0], values [1], values[2]); /* Alpha ignored */
+                IDirect3DRMMaterial2_SetPower(This->materials[i].material, values[4]);
+                IDirect3DRMMaterial2_SetSpecular(This->materials[i].material, values[5], values[6], values[7]);
+                IDirect3DRMMaterial2_SetEmissive(This->materials[i].material, values[8], values[9], values[10]);
 
-                This->material = material;
+                This->materials[i].texture = NULL;
 
                 hr = IDirectXFileData_GetNextObject(data, &material_child);
                 if (hr == S_OK)
                 {
                     LPDIRECTXFILEDATA data;
-                    LPDIRECT3DRMTEXTURE3 texture;
                     char** filename;
 
                     hr = IDirectXFileObject_QueryInterface(material_child, &IID_IDirectXFileData, (void **)&data);
@@ -1352,16 +1374,18 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
                     {
                         HANDLE file;
 
+                        /* If the texture file is not found, no texture is associated with the material */
                         file = CreateFileA(*filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
                         if (file != INVALID_HANDLE_VALUE)
                         {
-                            hr = Direct3DRMTexture_create(&IID_IDirect3DRMTexture3, (LPUNKNOWN*)&texture);
+                            CloseHandle(file);
+
+                            hr = Direct3DRMTexture_create(&IID_IDirect3DRMTexture3, (LPUNKNOWN*)&This->materials[i].texture);
                             if (FAILED(hr))
                             {
                                 IDirectXFileData_Release(data);
                                 goto end;
                             }
-                            This->texture = texture;
                         }
                     }
                 }
@@ -2048,7 +2072,6 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
     HRESULT hr;
     D3DRMGROUPINDEX group;
-    ULONG vertex_per_face = 0;
 
     TRACE("(%p)->(%p)\n", This, mesh);
 
@@ -2062,10 +2085,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
     /* If there is mesh data, create a group and put data inside */
     if (This->nb_vertices)
     {
-        unsigned* face_data;
-        unsigned* out_ptr;
-        DWORD* in_ptr = This->pFaceData;
-        int i, j;
+        int i, j, k;
         D3DRMVERTEX* vertices;
 
         vertices = HeapAlloc(GetProcessHeap(), 0, This->nb_vertices * sizeof(D3DRMVERTEX));
@@ -2079,63 +2099,103 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
         hr = IDirect3DRMMesh_SetVertices(*mesh, 0, 0, This->nb_vertices, vertices);
         HeapFree(GetProcessHeap(), 0, vertices);
 
-        face_data = HeapAlloc(GetProcessHeap(), 0, This->face_data_size * sizeof(DWORD));
-        if (!face_data)
+        /* Groups are in reverse order compared to materials list in X file */
+        for (k = This->nb_materials - 1; k >= 0; k--)
         {
-            IDirect3DRMMesh_Release(*mesh);
-            return E_OUTOFMEMORY;
-        }
-        out_ptr = face_data;
+            unsigned* face_data;
+            unsigned* out_ptr;
+            DWORD* in_ptr = This->pFaceData;
+            ULONG vertex_per_face = 0;
+            BOOL* used_vertices;
+            unsigned nb_vertices = 0;
+            unsigned nb_faces = 0;
 
-        /* If all faces have the same number of vertex, set vertex_per_face */
-        for (i = 0; i < This->nb_faces; i++)
-        {
-            if (vertex_per_face && (vertex_per_face != *in_ptr))
-                break;
-            vertex_per_face = *in_ptr;
-            in_ptr += 1 + *in_ptr * 2;
-        }
-        if (i != This->nb_faces)
-            vertex_per_face = 0;
-
-        /* Put only vertex indices */
-        in_ptr = This->pFaceData;
-        for (i = 0; i < This->nb_faces; i++)
-        {
-            DWORD nb_indices = *in_ptr++;
-
-            /* Don't put nb indices when vertex_per_face is set */
-            if (vertex_per_face)
-                *out_ptr++ = nb_indices;
-
-            for (j = 0; j < nb_indices; j++)
+            used_vertices = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->face_data_size * sizeof(*used_vertices));
+            if (!used_vertices)
             {
-                *out_ptr++ = *in_ptr++;
-                /* Skip normal index */
-                in_ptr++;
+                IDirect3DRMMesh_Release(*mesh);
+                return E_OUTOFMEMORY;
+            }
+
+            face_data = HeapAlloc(GetProcessHeap(), 0, This->face_data_size * sizeof(*face_data));
+            if (!face_data)
+            {
+                IDirect3DRMMesh_Release(*mesh);
+                return E_OUTOFMEMORY;
+            }
+            out_ptr = face_data;
+
+            /* If all faces have the same number of vertex, set vertex_per_face */
+            for (i = 0; i < This->nb_faces; i++)
+            {
+                /* Process only faces belonging to the group */
+                if (This->material_indices[i] == k)
+                {
+                    if (vertex_per_face && (vertex_per_face != *in_ptr))
+                        break;
+                    vertex_per_face = *in_ptr;
+                }
+                in_ptr += 1 + *in_ptr * 2;
+            }
+            if (i != This->nb_faces)
+                vertex_per_face = 0;
+
+            /* Put only vertex indices */
+            in_ptr = This->pFaceData;
+            for (i = 0; i < This->nb_faces; i++)
+            {
+                DWORD nb_indices = *in_ptr++;
+
+                /* Skip faces not belonging to the group */
+                if (This->material_indices[i] != k)
+                {
+                    in_ptr += 2 * nb_indices;
+                    continue;
+                }
+
+                /* Don't put nb indices when vertex_per_face is set */
+                if (vertex_per_face)
+                    *out_ptr++ = nb_indices;
+
+                for (j = 0; j < nb_indices; j++)
+                {
+                    *out_ptr = *in_ptr++;
+                    used_vertices[*out_ptr++] = TRUE;
+                    /* Skip normal index */
+                    in_ptr++;
+                }
+
+                nb_faces++;
+            }
+
+            for (i = 0; i < This->nb_vertices; i++)
+                if (used_vertices[i])
+                    nb_vertices++;
+
+            hr = IDirect3DRMMesh_AddGroup(*mesh, nb_vertices, nb_faces, vertex_per_face, face_data, &group);
+            HeapFree(GetProcessHeap(), 0, used_vertices);
+            HeapFree(GetProcessHeap(), 0, face_data);
+            if (SUCCEEDED(hr))
+                hr = IDirect3DRMMesh_SetGroupColor(*mesh, group, This->materials[k].color);
+            if (SUCCEEDED(hr))
+                hr = IDirect3DRMMesh_SetGroupMaterial(*mesh, group, (LPDIRECT3DRMMATERIAL)This->materials[k].material);
+            if (SUCCEEDED(hr) && This->materials[k].texture)
+            {
+                LPDIRECT3DRMTEXTURE texture;
+
+                IDirect3DRMTexture3_QueryInterface(This->materials[k].texture, &IID_IDirect3DRMTexture, (LPVOID*)&texture);
+                hr = IDirect3DRMMesh_SetGroupTexture(*mesh, group, texture);
+                IDirect3DRMTexture_Release(texture);
+            }
+            if (FAILED(hr))
+            {
+                IDirect3DRMMesh_Release(*mesh);
+                return hr;
             }
         }
-
-        hr = IDirect3DRMMesh_AddGroup(*mesh, This->nb_vertices, This->nb_faces, vertex_per_face, face_data, &group);
-        HeapFree(GetProcessHeap(), 0, face_data);
-
-        if (SUCCEEDED(hr))
-            hr = IDirect3DRMMesh_SetGroupColor(*mesh, 0, This->color);
-        if (SUCCEEDED(hr))
-            hr = IDirect3DRMMesh_SetGroupMaterial(*mesh, 0, (LPDIRECT3DRMMATERIAL)This->material);
-        if (SUCCEEDED(hr) && This->texture)
-        {
-             LPDIRECT3DRMTEXTURE texture;
-
-             IDirect3DRMTexture3_QueryInterface(This->texture, &IID_IDirect3DRMTexture, (LPVOID*)&texture);
-             hr = IDirect3DRMMesh_SetGroupTexture(*mesh, 0, texture);
-             IDirect3DRMTexture_Release(texture);
-        }
-        if (FAILED(hr))
-            IDirect3DRMMesh_Release(*mesh);
     }
 
-    return hr;
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetFace(IDirect3DRMMeshBuilder3* iface,

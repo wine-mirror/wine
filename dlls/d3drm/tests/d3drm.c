@@ -180,6 +180,48 @@ static char data_d3drm_load[] =
 " 0.9, 1.0, 1.1;;\n"
 "}\n";
 
+static char data_frame_mesh_materials[] =
+"xof 0302txt 0064\n"
+"Header { 1; 0; 1; }\n"
+"Frame {\n"
+" Mesh mesh1 {\n"
+"  5;\n"
+"  0.1; 0.2; 0.3;,\n"
+"  0.4; 0.5; 0.6;,\n"
+"  0.7; 0.8; 0.9;,\n"
+"  1.1; 1.2; 1.3;,\n"
+"  1.4; 1.5; 1.6;;\n"
+"  6;\n"
+"  3; 0, 1, 2;,\n"
+"  3; 0, 2, 1;,\n"
+"  3; 1, 2, 3;,\n"
+"  3; 1, 3, 2;,\n"
+"  3; 2, 3, 4;,\n"
+"  3; 2, 4, 3;;\n"
+"  MeshMaterialList {\n"
+"   3; 6; 0, 1, 1, 2, 2, 2;\n"
+"   Material mat1 {\n"
+"    1.0; 0.0; 0.0; 0.1;;\n"
+"    10.0;\n"
+"    0.11; 0.12; 0.13;;\n"
+"    0.14; 0.15; 0.16;;\n"
+"   }\n"
+"   Material mat2 {\n"
+"    0.0; 1.0; 0.0; 0.2;;\n"
+"    20.0;\n"
+"    0.21; 0.22; 0.23;;\n"
+"    0.24; 0.25; 0.26;;\n"
+"   }\n"
+"   Material mat3 {\n"
+"    0.0; 0.0; 1.0; 0.3;;\n"
+"    30.0;\n"
+"    0.31; 0.32; 0.33;;\n"
+"    0.34; 0.35; 0.36;;\n"
+"   }\n"
+"  }\n"
+" }\n"
+"}\n";
+
 static void test_MeshBuilder(void)
 {
     HRESULT hr;
@@ -1304,6 +1346,131 @@ static void test_d3drm_load(void)
     IDirect3DRM_Release(pD3DRM);
 }
 
+IDirect3DRMMeshBuilder *mesh_builder = NULL;
+
+static void __cdecl object_load_callback_frame(IDirect3DRMObject *object, REFIID object_guid, void *arg)
+{
+    HRESULT hr;
+    IDirect3DRMFrame *frame;
+    IDirect3DRMVisualArray *array;
+    IDirect3DRMVisual *visual;
+    ULONG size;
+    char name[128];
+
+    hr = IDirect3DRMObject_QueryInterface(object, &IID_IDirect3DRMFrame, (void**)&frame);
+    ok(hr == D3DRM_OK, "IDirect3DRMObject_QueryInterface returned %x\n", hr);
+
+    hr = IDirect3DRMFrame_GetVisuals(frame, &array);
+    ok(hr == D3DRM_OK, "IDirect3DRMFrame_GetVisuals returned %x\n", hr);
+
+    size = IDirect3DRMVisualArray_GetSize(array);
+    ok(size == 1, "Wrong size %u returned, expected 1\n", size);
+
+    hr = IDirect3DRMVisualArray_GetElement(array, 0, &visual);
+    ok(hr == D3DRM_OK, "IDirect3DRMVisualArray_GetElement returned %x\n", hr);
+
+    hr = IDirect3DRMVisual_QueryInterface(visual, &IID_IDirect3DRMMeshBuilder, (void**)&mesh_builder);
+    ok(hr == D3DRM_OK, "IDirect3DRMVisualArray_GetSize returned %x\n", hr);
+
+    size = sizeof(name);
+    hr = IDirect3DRMMeshBuilder_GetName(mesh_builder, &size, name);
+    ok(hr == D3DRM_OK, "IDirect3DRMMeshBuilder_GetName returned %x\n", hr);
+    ok(!strcmp(name, "mesh1"), "Wrong name %s, expected mesh1\n", name);
+
+    IDirect3DRMVisual_Release(visual);
+    IDirect3DRMVisualArray_Release(array);
+    IDirect3DRMFrame_Release(frame);
+}
+
+struct {
+    int vertex_count;
+    int face_count;
+    int vertex_per_face;
+    int face_data_size;
+    DWORD color;
+    float power;
+    float specular[3];
+    float emissive[3];
+} groups[3] = {
+    { 4, 3, 3, 9, 0x4c0000ff, 30.0f, { 0.31f, 0.32f, 0.33f }, { 0.34f, 0.35f, 0.36f } },
+    { 4, 2, 3, 6, 0x3300ff00, 20.0f, { 0.21f, 0.22f, 0.23f }, { 0.24f, 0.25f, 0.26f } },
+    { 3, 1, 3, 3, 0x19ff0000, 10.0f, { 0.11f, 0.12f, 0.13f }, { 0.14f, 0.15f, 0.16f } }
+};
+
+static void test_frame_mesh_materials(void)
+{
+    HRESULT hr;
+    IDirect3DRM *d3drm;
+    D3DRMLOADMEMORY info;
+    const GUID *req_refiids[] = { &IID_IDirect3DRMFrame };
+    IDirect3DRMMesh *mesh;
+    ULONG size;
+    IDirect3DRMMaterial *material;
+    IDirect3DRMTexture *texture;
+    int i;
+
+    hr = pDirect3DRMCreate(&d3drm);
+    ok(hr == D3DRM_OK, "Direct3DRMCreate returned %x\n", hr);
+
+    info.lpMemory = data_frame_mesh_materials;
+    info.dSize = strlen(data_frame_mesh_materials);
+    hr = IDirect3DRM_Load(d3drm, &info, NULL, (GUID**)req_refiids, 1, D3DRMLOAD_FROMMEMORY, object_load_callback_frame, (void*)0xdeadbeef, NULL, NULL, NULL);
+    ok(hr == D3DRM_OK, "Cannot load data (hr = %x)\n", hr);
+
+    hr = IDirect3DRMMeshBuilder_CreateMesh(mesh_builder, &mesh);
+    ok(hr == D3DRM_OK, "IDirect3DRMMeshBuilder_CreateMesh returned %x\n", hr);
+
+    size = IDirect3DRMMesh_GetGroupCount(mesh);
+    ok(size == 3, "Wrong size %u returned, expected 3\n", size);
+
+    for (i = 0; i < size; i++)
+    {
+        D3DVALUE red, green, blue, power;
+        D3DCOLOR color;
+        unsigned vertex_count, face_count, vertex_per_face;
+        DWORD face_data_size;
+
+        hr = IDirect3DRMMesh_GetGroup(mesh, i, &vertex_count, &face_count, &vertex_per_face, &face_data_size, NULL);
+        ok(hr == D3DRM_OK, "Group %d: IDirect3DRMMesh_GetGroup returned %x\n", i, hr);
+        ok(vertex_count == groups[i].vertex_count, "Group %d: Wrong vertex count %d, expected %d\n", i, vertex_count, groups[i].vertex_count);
+        ok(face_count == groups[i].face_count, "Group %d: Wrong face count %d; expected %d\n", i, face_count, groups[i].face_count);
+        ok(vertex_per_face == groups[i].vertex_per_face, "Group %d: Wrong vertex per face %d, expected %d\n", i, vertex_per_face, groups[i].vertex_per_face);
+        ok(face_data_size == groups[i].face_data_size, "Group %d: Wrong face data size %d, expected %d\n", i, face_data_size, groups[i].face_data_size);
+
+        color = IDirect3DRMMesh_GetGroupColor(mesh, i);
+        ok(color == groups[i].color, "Group %d: Wrong color %x, expected %x\n", i, color, groups[i].color);
+
+        hr = IDirect3DRMMesh_GetGroupMaterial(mesh, i, &material);
+        ok(hr == D3DRM_OK, "Group %d: IDirect3DRMMesh_GetGroupMaterial returned %x\n", i, hr);
+        ok(material != NULL, "Group %d: No material\n", i);
+        power = IDirect3DRMMaterial_GetPower(material);
+        ok(power == groups[i].power, "Group %d: Wrong power %f, expected %f\n", i, power,  groups[i].power);
+        hr = IDirect3DRMMaterial_GetSpecular(material, &red, &green, &blue);
+        ok(hr == D3DRM_OK, "Group %d: IDirect3DRMMaterial_GetSpecular returned %x\n", i, hr);
+        ok(red == groups[i].specular[0], "Group %d: Wrong specular red %f, expected %f\n", i, red, groups[i].specular[0]);
+        ok(green == groups[i].specular[1], "Group %d: Wrong specular green %f, pD3DRMexpected %f\n", i, green, groups[i].specular[1]);
+        ok(blue == groups[i].specular[2], "Group %d: Wrong specular blue %f, expected %f\n", i, blue, groups[i].specular[2]);
+        hr = IDirect3DRMMaterial_GetEmissive(material, &red, &green, &blue);
+        ok(hr == D3DRM_OK, "Group %d: IDirect3DRMMaterial_GetEmissive returned %x\n", i, hr);
+        ok(red == groups[i].emissive[0], "Group %d: Wrong emissive red %f, expected %f\n", i, red, groups[i].emissive[0]);
+        ok(green == groups[i].emissive[1], "Group %d: Wrong emissive green %f, expected %f\n", i, green, groups[i].emissive[1]);
+        ok(blue == groups[i].emissive[2], "Group %d: Wrong emissive blue %f, expected %f\n", i, blue, groups[i].emissive[2]);
+
+        hr = IDirect3DRMMesh_GetGroupTexture(mesh, i, &texture);
+        ok(hr == D3DRM_OK, "Group %d: IDirect3DRMMesh_GetGroupTexture returned %x\n", i, hr);
+        ok(!texture, "Group %d: Unexpected texture\n", i);
+
+        if (material)
+            IDirect3DRMMaterial_Release(material);
+        if (texture)
+            IDirect3DRMTexture_Release(texture);
+    }
+
+    IDirect3DRMMesh_Release(mesh);
+    IDirect3DRMMeshBuilder_Release(mesh_builder);
+    IDirect3DRM_Release(d3drm);
+}
+
 START_TEST(d3drm)
 {
     if (!InitFunctionPtrs())
@@ -1320,6 +1487,7 @@ START_TEST(d3drm)
     test_Texture();
     test_frame_transform();
     test_d3drm_load();
+    test_frame_mesh_materials();
 
     FreeLibrary(d3drm_handle);
 }
