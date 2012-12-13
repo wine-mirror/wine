@@ -3,9 +3,7 @@ IMPORTLIB = atl
 IMPORTS   = uuid atl100 oleaut32 ole32 user32
 EXTRADEFS = -D_ATL_VER=_ATL_VER_30
 
-C_SRCS = \
-	atl_main.c \
-	registrar.c
+C_SRCS = atl_main.c
 
 IDL_R_SRCS = atl_classes.idl
 
