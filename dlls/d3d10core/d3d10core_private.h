@@ -231,9 +231,12 @@ struct d3d10_depthstencil_state
 {
     ID3D10DepthStencilState ID3D10DepthStencilState_iface;
     LONG refcount;
+
+    D3D10_DEPTH_STENCIL_DESC desc;
 };
 
-HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state) DECLSPEC_HIDDEN;
+HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state,
+        const D3D10_DEPTH_STENCIL_DESC *desc) DECLSPEC_HIDDEN;
 struct d3d10_depthstencil_state *unsafe_impl_from_ID3D10DepthStencilState(
         ID3D10DepthStencilState *iface) DECLSPEC_HIDDEN;
 
