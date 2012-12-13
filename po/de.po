@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-11-05 11:27+0100\n"
+"PO-Revision-Date: 2012-12-13 02:22+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -3548,7 +3548,7 @@ msgstr "konstante Zeichenkette nicht terminiert"
 
 #: jscript.rc:39
 msgid "'return' statement outside of function"
-msgstr ""
+msgstr "'return'-Anweisung außerhalb einer Funktion"
 
 #: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
@@ -10160,10 +10160,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine Befehlsprozessor"
 
 #: cmd.rc:349
-#, fuzzy
-#| msgid "CMD Version %1!S!\n"
 msgid "Wine CMD Version %1!S!\n"
-msgstr "CMD Version %1!S!\n"
+msgstr "Wine CMD Version %1!S!\n"
 
 #: cmd.rc:350
 msgid "More? "
@@ -13101,7 +13099,7 @@ msgstr "Menühervorhebung"
 
 #: winecfg.rc:121
 msgid "Menu Bar"
-msgstr "Menütitelleiste"
+msgstr "Menüleiste"
 
 #: wineconsole.rc:60
 msgid "Cursor size"
