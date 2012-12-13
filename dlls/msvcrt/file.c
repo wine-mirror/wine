@@ -3434,23 +3434,13 @@ int CDECL MSVCRT_fgetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
  */
 int CDECL MSVCRT_fputs(const char *s, MSVCRT_FILE* file)
 {
-    MSVCRT_size_t i, len = strlen(s);
+    MSVCRT_size_t len = strlen(s);
     int ret;
 
     MSVCRT__lock_file(file);
-    if (!(msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT)) {
-      ret = MSVCRT_fwrite(s,sizeof(*s),len,file) == len ? 0 : MSVCRT_EOF;
-      MSVCRT__unlock_file(file);
-      return ret;
-    }
-    for (i=0; i<len; i++)
-      if (MSVCRT_fputc(s[i], file) == MSVCRT_EOF)  {
-        MSVCRT__unlock_file(file);
-        return MSVCRT_EOF;
-      }
-
+    ret = MSVCRT_fwrite(s, sizeof(*s), len, file) == len ? 0 : MSVCRT_EOF;
     MSVCRT__unlock_file(file);
-    return 0;
+    return ret;
 }
 
 /*********************************************************************
