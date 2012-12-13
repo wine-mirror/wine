@@ -1183,7 +1183,8 @@ DECLARE_INTERFACE_(IDirect3DDevice3,IUnknown)
             DWORD start_vertex, DWORD vertex_count, DWORD flags) PURE;
     STDMETHOD(DrawIndexedPrimitiveVB)(THIS_ D3DPRIMITIVETYPE primitive_type, struct IDirect3DVertexBuffer *vb,
             WORD *indices, DWORD index_count, DWORD flags) PURE;
-    STDMETHOD(ComputeSphereVisibility)(THIS_ LPD3DVECTOR lpCenters,LPD3DVALUE lpRadii,DWORD dwNumSpheres,DWORD dwFlags,LPDWORD lpdwReturnValues) PURE;
+    STDMETHOD(ComputeSphereVisibility)(THIS_ D3DVECTOR *centers, D3DVALUE *radii, DWORD sphere_count,
+            DWORD flags, DWORD *ret) PURE;
     STDMETHOD(GetTexture)(THIS_ DWORD stage, IDirect3DTexture2 **texture) PURE;
     STDMETHOD(SetTexture)(THIS_ DWORD stage, IDirect3DTexture2 *texture) PURE;
     STDMETHOD(GetTextureStageState)(THIS_ DWORD dwStage,D3DTEXTURESTAGESTATETYPE d3dTexStageStateType,LPDWORD lpdwState) PURE;
@@ -1327,7 +1328,8 @@ DECLARE_INTERFACE_(IDirect3DDevice7,IUnknown)
             DWORD start_vertex, DWORD vertex_count, DWORD flags) PURE;
     STDMETHOD(DrawIndexedPrimitiveVB)(THIS_ D3DPRIMITIVETYPE primitive_type, struct IDirect3DVertexBuffer7 *vb,
             DWORD start_vertex, DWORD vertex_count, WORD *indices, DWORD index_count, DWORD flags) PURE;
-    STDMETHOD(ComputeSphereVisibility)(THIS_ LPD3DVECTOR lpCenters,LPD3DVALUE lpRadii,DWORD dwNumSpheres,DWORD dwFlags,LPDWORD lpdwReturnValues) PURE;
+    STDMETHOD(ComputeSphereVisibility)(THIS_ D3DVECTOR *centers, D3DVALUE *radii, DWORD sphere_count,
+            DWORD flags, DWORD *ret) PURE;
     STDMETHOD(GetTexture)(THIS_ DWORD stage, IDirectDrawSurface7 **surface) PURE;
     STDMETHOD(SetTexture)(THIS_ DWORD stage, IDirectDrawSurface7 *surface) PURE;
     STDMETHOD(GetTextureStageState)(THIS_ DWORD dwStage,D3DTEXTURESTAGESTATETYPE d3dTexStageStateType,LPDWORD lpdwState) PURE;
