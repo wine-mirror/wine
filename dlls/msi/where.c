@@ -1068,7 +1068,7 @@ static UINT WHERE_sort(struct tagMSIVIEW *view, column_info *columns)
     if (count == 0)
         return ERROR_SUCCESS;
 
-    orderinfo = msi_alloc(sizeof(MSIORDERINFO) + (count - 1) * sizeof(union ext_column));
+    orderinfo = msi_alloc(FIELD_OFFSET(MSIORDERINFO, columns[count]));
     if (!orderinfo)
         return ERROR_OUTOFMEMORY;
 

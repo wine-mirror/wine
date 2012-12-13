@@ -1135,7 +1135,7 @@ static UINT msi_dialog_line_control( msi_dialog *dialog, MSIRECORD *rec )
 
     msi_dialog_map_events(dialog, name);
 
-    control = msi_alloc( sizeof(*control) + strlenW(name) * sizeof(WCHAR) );
+    control = msi_alloc( FIELD_OFFSET(msi_control, name[strlenW( name ) + 1] ));
     if (!control)
         return ERROR_OUTOFMEMORY;
 
@@ -3735,7 +3735,7 @@ msi_dialog *msi_dialog_create( MSIPACKAGE* package,
         msi_dialog_register_class();
 
     /* allocate the structure for the dialog to use */
-    dialog = msi_alloc_zero( sizeof *dialog + sizeof(WCHAR)*strlenW(szDialogName) );
+    dialog = msi_alloc_zero( FIELD_OFFSET( msi_dialog, name[strlenW( szDialogName ) + 1] ));
     if( !dialog )
         return NULL;
     strcpyW( dialog->name, szDialogName );
