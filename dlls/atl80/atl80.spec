@@ -46,8 +46,8 @@
 59 stub AtlAxCreateControlLic
 60 stub AtlAxCreateControlLicEx
 61 stdcall AtlCreateRegistrar(ptr) atl100.AtlCreateRegistrar
-62 stub AltWinModuleRegisterClassExW
-63 stub AltWinModuleRegisterClassExA
-64 stdcall AltCallTermFunc(ptr) atl100.AltCallTermFunc
-65 stub AltWinModuleInit
-66 stub AltWinModuleTerm
+62 stub AtlWinModuleRegisterClassExW
+63 stub AtlWinModuleRegisterClassExA
+64 stdcall AtlCallTermFunc(ptr) atl100.AtlCallTermFunc
+65 stub AtlWinModuleInit
+66 stub AtlWinModuleTerm
