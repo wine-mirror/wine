@@ -126,6 +126,8 @@ DEFINE_EXPECT(DeleteMemberByDispID);
 #define DISPID_GLOBAL_TESTARGTYPES  0x1015
 #define DISPID_GLOBAL_INTPROP       0x1016
 #define DISPID_GLOBAL_DISPUNK       0x1017
+#define DISPID_GLOBAL_TESTRES       0x1018
+#define DISPID_GLOBAL_TESTNORES     0x1019
 
 #define DISPID_GLOBAL_TESTPROPDELETE  0x2000
 
@@ -598,6 +600,16 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         return S_OK;
     }
 
+    if(!strcmp_wa(bstrName, "testRes")) {
+        *pid = DISPID_GLOBAL_TESTRES;
+        return S_OK;
+    }
+
+    if(!strcmp_wa(bstrName, "testNoRes")) {
+        *pid = DISPID_GLOBAL_TESTNORES;
+        return S_OK;
+    }
+
     if(strict_dispid_check && strcmp_wa(bstrName, "t"))
         ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
@@ -733,6 +745,18 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
             return E_FAIL;
         }
 
+        return S_OK;
+
+    case DISPID_GLOBAL_TESTRES:
+        ok(pvarRes != NULL, "pvarRes = NULL\n");
+        if(pvarRes)
+            V_VT(pvarRes) = VT_NULL;
+        return S_OK;
+
+    case DISPID_GLOBAL_TESTNORES:
+        ok(!pvarRes, "pvarRes != NULL\n");
+        if(pvarRes)
+            V_VT(pvarRes) = VT_NULL;
         return S_OK;
 
     case DISPID_GLOBAL_TESTOBJ:

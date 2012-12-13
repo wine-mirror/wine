@@ -105,6 +105,7 @@ typedef struct {
     X(typeofident,1, 0,0)                  \
     X(refval,     1, 0,0)                  \
     X(ret,        0, 0,0)                  \
+    X(setret,     1, 0,0)                  \
     X(sub,        1, 0,0)                  \
     X(undefined,  1, 0,0)                  \
     X(var_set,    1, ARG_BSTR,   0)        \
@@ -238,6 +239,7 @@ struct _exec_ctx_t {
     unsigned stack_size;
     unsigned top;
     except_frame_t *except_frame;
+    jsval_t ret;
 
     unsigned ip;
 };
