@@ -30,6 +30,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 int MSVCRT___argc = 0;
+static int argc_expand;
 unsigned int MSVCRT_basemajor = 0;/* FIXME: */
 unsigned int MSVCRT_baseminor = 0;/* FIXME: */
 unsigned int MSVCRT_baseversion = 0; /* FIXME: */
@@ -48,6 +49,7 @@ unsigned int MSVCRT___setlc_active = 0;
 unsigned int MSVCRT___unguarded_readlc_active = 0;
 double MSVCRT__HUGE = 0;
 char **MSVCRT___argv = NULL;
+static char **argv_expand;
 MSVCRT_wchar_t **MSVCRT___wargv = NULL;
 char *MSVCRT__acmdln = NULL;
 MSVCRT_wchar_t *MSVCRT__wcmdln = NULL;
@@ -348,7 +350,6 @@ void msvcrt_init_args(void)
   }
 }
 
-
 /* INTERNAL: free memory used by args */
 void msvcrt_free_args(void)
 {
@@ -359,6 +360,51 @@ void msvcrt_free_args(void)
   HeapFree(GetProcessHeap(), 0, MSVCRT__wenviron);
   HeapFree(GetProcessHeap(), 0, MSVCRT__pgmptr);
   HeapFree(GetProcessHeap(), 0, MSVCRT__wpgmptr);
+  HeapFree(GetProcessHeap(), 0, argv_expand);
+}
+
+static int build_expanded_argv(int *argc, char **argv)
+{
+    int i, size=0, args_no=0;
+    HANDLE h;
+
+    args_no = 0;
+    for(i=0; i<__wine_main_argc; i++) {
+        WIN32_FIND_DATAA data;
+        int len = 0;
+
+        h = FindFirstFileA(__wine_main_argv[i], &data);
+        if(h != INVALID_HANDLE_VALUE) {
+            do {
+                if(data.cFileName[0]=='.' && (data.cFileName[1]=='\0' ||
+                            (data.cFileName[1]=='.' && data.cFileName[2]=='\0')))
+                    continue;
+
+                len = strlen(data.cFileName)+1;
+                if(argv) {
+                    argv[args_no] = (char*)(argv+*argc)+size;
+                    memcpy(argv[args_no], data.cFileName, len*sizeof(char));
+                }
+                args_no++;
+                size += len;
+            }while(FindNextFileA(h, &data));
+            CloseHandle(h);
+        }
+
+        if(!len) {
+            len = strlen(__wine_main_argv[i])+1;
+            if(argv) {
+                argv[args_no] = (char*)(argv+*argc)+size;
+                memcpy(argv[args_no], __wine_main_argv[i], len*sizeof(char));
+            }
+            args_no++;
+            size += len;
+        }
+    }
+
+    size += args_no*sizeof(char*);
+    *argc = args_no;
+    return size;
 }
 
 /*********************************************************************
@@ -367,12 +413,34 @@ void msvcrt_free_args(void)
 void CDECL __getmainargs(int *argc, char** *argv, char** *envp,
                          int expand_wildcards, int *new_mode)
 {
-  TRACE("(%p,%p,%p,%d,%p).\n", argc, argv, envp, expand_wildcards, new_mode);
-  *argc = MSVCRT___argc;
-  *argv = MSVCRT___argv;
-  *envp = MSVCRT___initenv;
-  if (new_mode)
-    MSVCRT__set_new_mode( *new_mode );
+    TRACE("(%p,%p,%p,%d,%p).\n", argc, argv, envp, expand_wildcards, new_mode);
+
+    if (expand_wildcards) {
+        HeapFree(GetProcessHeap(), 0, argv_expand);
+        argv_expand = NULL;
+
+        argv_expand = HeapAlloc(GetProcessHeap(), 0,
+                build_expanded_argv(&argc_expand, NULL));
+        if (argv_expand) {
+            build_expanded_argv(&argc_expand, argv_expand);
+
+            MSVCRT___argc = argc_expand;
+            MSVCRT___argv = argv_expand;
+        }else {
+            expand_wildcards = 0;
+        }
+    }
+    if (!expand_wildcards) {
+        MSVCRT___argc = __wine_main_argc;
+        MSVCRT___argv = __wine_main_argv;
+    }
+
+    *argc = MSVCRT___argc;
+    *argv = MSVCRT___argv;
+    *envp = MSVCRT___initenv;
+
+    if (new_mode)
+        MSVCRT__set_new_mode( *new_mode );
 }
 
 /*********************************************************************
