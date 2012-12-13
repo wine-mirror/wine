@@ -1804,7 +1804,6 @@ static void msi_mask_control_change( struct msi_maskedit_info *info )
     if( i == info->num_groups )
     {
         TRACE("Set property %s to %s\n", debugstr_w(info->prop), debugstr_w(val));
-        CharUpperBuffW( val, info->num_chars );
         msi_dialog_set_property( info->dialog->package, info->prop, val );
         msi_dialog_evaluate_control_conditions( info->dialog );
     }
