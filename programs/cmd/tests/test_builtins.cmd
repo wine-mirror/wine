@@ -1131,6 +1131,141 @@ set /a WINE_foo=WINE_bar=5, WINE_bar ^|= 2 & call :checkenvvars WINE_foo 5 WINE_
 set /a WINE_foo=WINE_bar=5, WINE_bar ^^= 2 & call :checkenvvars WINE_foo 5 WINE_bar 7
 set WINE_baz=4
 set /a WINE_foo=WINE_bar=19, WINE_bar %%= 4 + (WINE_baz %%= 7) & call :checkenvvars WINE_foo 19 WINE_bar 3 WINE_baz 4
+echo --- quotes
+set /a WINE_foo=1
+call :checkenvvars WINE_foo 1
+set /a "WINE_foo=1"
+call :checkenvvars WINE_foo 1
+set /a WINE_foo=1,WINE_bar=2
+call :checkenvvars WINE_foo 1 WINE_bar 2
+set /a "WINE_foo=1,WINE_bar=2"
+call :checkenvvars WINE_foo 1 WINE_bar 2
+set /a "WINE_foo=1","WINE_bar=2"
+call :checkenvvars WINE_foo 1 WINE_bar 2
+set /a ""WINE_foo=1","WINE_bar=2""
+call :checkenvvars WINE_foo 1 WINE_bar 2
+set /a WINE_foo=1,WINE_bar=2,WINE_baz=3
+call :checkenvvars WINE_foo 1 WINE_bar 2 WINE_baz 3
+set /a "WINE_foo=1,WINE_bar=2,WINE_baz=3"
+call :checkenvvars WINE_foo 1 WINE_bar 2 WINE_baz 3
+set /a "WINE_foo=1","WINE_bar=2","WINE_baz=3"
+call :checkenvvars WINE_foo 1 WINE_bar 2 WINE_baz 3
+set /a ""WINE_foo=1","WINE_bar=2","WINE_baz=3""
+call :checkenvvars WINE_foo 1 WINE_bar 2 WINE_baz 3
+set /a ""WINE_foo=1","WINE_bar=2"","WINE_baz=3"
+call :checkenvvars WINE_foo 1 WINE_bar 2 WINE_baz 3
+set /a """"""WINE_foo=1""""""
+call :checkenvvars WINE_foo 1
+set /a """"""WINE_foo=1","WINE_bar=5""","WINE_baz=2""
+call :checkenvvars WINE_foo 1 WINE_bar 5 WINE_baz 2
+set /a WINE_foo="3"+"4"+"5+6"
+call :checkenvvars WINE_foo 18
+set WINE_foo=3
+set /a WINE_bar="WINE_""foo"+4
+call :checkenvvars WINE_foo 3 WINE_bar 7
+echo --- whitespace are ignored between double char operators
+set WINE_foo=4
+set WINE_bar=5
+set /a     WINE_foo   +    = 6
+set /a     WINE_bar     *    = WINE_foo
+call :checkenvvars WINE_foo 10 WINE_bar 50
+set WINE_foo=4
+set WINE_bar=5
+set /a     WINE_foo   +    = "6  < < 7"
+set /a     WINE_bar     *    = WINE_foo  +  WINE_foo
+call :checkenvvars WINE_foo 772 WINE_bar 7720
+set /a     WINE_foo=6 7
+set /a     WINE_ var1=8
+set WINE_foo=
+echo --- invalid operator sequence
+set WINE_foo=4
+set /a =4
+set /a *=4
+set /a ^>=4"
+set /a ^<=4"
+set /a WINE_foo^>^<=4
+echo %WINE_foo%
+set /a WINE_foo^>^>^>=4
+echo %WINE_foo%
+echo ----- negative prefix
+set /a WINE_foo=-1
+call :checkenvvars WINE_foo -1
+set /a WINE_foo=--1
+call :checkenvvars WINE_foo 1
+set /a WINE_foo=3--3
+call :checkenvvars WINE_foo 6
+set /a WINE_foo=3---3
+call :checkenvvars WINE_foo 0
+set /a WINE_foo=3----3
+call :checkenvvars WINE_foo 6
+set /a WINE_foo=-~1
+call :checkenvvars WINE_foo 2
+set /a WINE_foo=~-1
+call :checkenvvars WINE_foo 0
+set /a WINE_foo=3+-~1
+call :checkenvvars WINE_foo 5
+set /a WINE_foo=3+~-1
+call :checkenvvars WINE_foo 3
+echo ----- assignment tests involving the end destination
+set WINE_foo=3
+set /a WINE_foo+=3+(WINE_foo=4)
+call :checkenvvars WINE_foo 11
+set WINE_foo=2
+set /a WINE_bar=3+(WINE_foo=6)
+call :checkenvvars WINE_foo 6 WINE_bar 9
+set WINE_foo=2
+set /a WINE_bar=3+(WINE_foo=6,WINE_baz=7)
+call :checkenvvars WINE_foo 6 WINE_bar 10 WINE_baz 7
+set WINE_foo=2
+set /a WINE_bar=WINE_foo=7
+call :checkenvvars WINE_foo 7 WINE_bar 7
+echo ----- equal precedence on stack
+rem Unary - dont reduce if precedence is equal
+set /a WINE_foo=!!1
+call :checkenvvars WINE_foo 1
+set /a WINE_foo=!!0
+call :checkenvvars WINE_foo 0
+set /a WINE_foo=~~1
+call :checkenvvars WINE_foo 1
+set /a WINE_foo=~~0
+call :checkenvvars WINE_foo 0
+set /a WINE_foo=--1
+call :checkenvvars WINE_foo 1
+set /a WINE_foo=+-1
+call :checkenvvars WINE_foo -1
+set /a WINE_foo=-+1
+call :checkenvvars WINE_foo -1
+set /a WINE_foo=++1
+call :checkenvvars WINE_foo 1
+set /a WINE_foo=!~1
+call :checkenvvars WINE_foo 0
+set /a WINE_foo=~!1
+call :checkenvvars WINE_foo -1
+set /a WINE_foo=!-1
+call :checkenvvars WINE_foo 0
+set /a WINE_foo=-!1
+call :checkenvvars WINE_foo 0
+set /a WINE_foo=!-0
+call :checkenvvars WINE_foo 1
+set /a WINE_foo=-!0
+call :checkenvvars WINE_foo -1
+rem Aritmatic - Reduce if precedence is equal
+set /a WINE_foo=10*5/2
+call :checkenvvars WINE_foo 25
+set /a WINE_foo=5/2*10
+call :checkenvvars WINE_foo 20
+set /a WINE_foo=10/5/2
+call :checkenvvars WINE_foo 1
+set /a WINE_foo=5%%2*4
+call :checkenvvars WINE_foo 4
+set /a WINE_foo=10-5+2
+call :checkenvvars WINE_foo 7
+set /a WINE_foo=1^<^<4^>^>1
+call :checkenvvars WINE_foo 8
+rem Assignment - dont reduce if precedence is equal
+set /a WINE_foo=5
+set /a WINE_bar=WINE_foo=6
+call :checkenvvars WINE_foo 6 WINE_bar 6
 
 echo --- for /F
 mkdir foobar & cd foobar
