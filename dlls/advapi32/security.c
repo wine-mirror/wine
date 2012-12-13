@@ -3046,7 +3046,26 @@ DWORD WINAPI GetSecurityInfo(
     ULONG n1, n2;
     BOOL present, defaulted;
 
-    status = NtQuerySecurityObject(hObject, SecurityInfo, NULL, 0, &n1);
+    /* A NULL descriptor is allowed if any one of the other pointers is not NULL */
+    if (!(ppsidOwner||ppsidGroup||ppDacl||ppSacl||ppSecurityDescriptor)) return ERROR_INVALID_PARAMETER;
+
+    /* If no descriptor, we have to check that there's a pointer for the requested information */
+    if( !ppSecurityDescriptor && (
+        ((SecurityInfo & OWNER_SECURITY_INFORMATION) && !ppsidOwner)
+    ||  ((SecurityInfo & GROUP_SECURITY_INFORMATION) && !ppsidGroup)
+    ||  ((SecurityInfo & DACL_SECURITY_INFORMATION)  && !ppDacl)
+    ||  ((SecurityInfo & SACL_SECURITY_INFORMATION)  && !ppSacl)  ))
+        return ERROR_INVALID_PARAMETER;
+
+    switch (ObjectType)
+    {
+    case SE_SERVICE:
+        status = SERV_QueryServiceObjectSecurity(hObject, SecurityInfo, NULL, 0, &n1);
+        break;
+    default:
+        status = NtQuerySecurityObject(hObject, SecurityInfo, NULL, 0, &n1);
+        break;
+    }
     if (status != STATUS_BUFFER_TOO_SMALL && status != STATUS_SUCCESS)
         return RtlNtStatusToDosError(status);
 
@@ -3054,7 +3073,15 @@ DWORD WINAPI GetSecurityInfo(
     if (!sd)
         return ERROR_NOT_ENOUGH_MEMORY;
 
-    status = NtQuerySecurityObject(hObject, SecurityInfo, sd, n1, &n2);
+    switch (ObjectType)
+    {
+    case SE_SERVICE:
+        status = SERV_QueryServiceObjectSecurity(hObject, SecurityInfo, sd, n1, &n2);
+        break;
+    default:
+        status = NtQuerySecurityObject(hObject, SecurityInfo, sd, n1, &n2);
+        break;
+    }
     if (status != STATUS_SUCCESS)
     {
         LocalFree(sd);

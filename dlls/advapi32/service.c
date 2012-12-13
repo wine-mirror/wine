@@ -28,6 +28,8 @@
 #include <time.h>
 #include <assert.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winsvc.h"
@@ -2147,17 +2149,14 @@ BOOL WINAPI ChangeServiceConfig2W( SC_HANDLE hService, DWORD dwInfoLevel,
     return err == ERROR_SUCCESS;
 }
 
-/******************************************************************************
- * QueryServiceObjectSecurity [ADVAPI32.@]
- */
-BOOL WINAPI QueryServiceObjectSecurity(SC_HANDLE hService,
+NTSTATUS SERV_QueryServiceObjectSecurity(SC_HANDLE hService,
        SECURITY_INFORMATION dwSecurityInformation,
        PSECURITY_DESCRIPTOR lpSecurityDescriptor,
        DWORD cbBufSize, LPDWORD pcbBytesNeeded)
 {
     SECURITY_DESCRIPTOR descriptor;
+    NTSTATUS status;
     DWORD size;
-    BOOL succ;
     ACL acl;
 
     FIXME("%p %d %p %u %p - semi-stub\n", hService, dwSecurityInformation,
@@ -2172,9 +2171,27 @@ BOOL WINAPI QueryServiceObjectSecurity(SC_HANDLE hService,
     SetSecurityDescriptorDacl(&descriptor, TRUE, &acl, TRUE);
 
     size = cbBufSize;
-    succ = MakeSelfRelativeSD(&descriptor, lpSecurityDescriptor, &size);
+    status = RtlMakeSelfRelativeSD(&descriptor, lpSecurityDescriptor, &size);
     *pcbBytesNeeded = size;
-    return succ;
+    return status;
+}
+
+/******************************************************************************
+ * QueryServiceObjectSecurity [ADVAPI32.@]
+ */
+BOOL WINAPI QueryServiceObjectSecurity(SC_HANDLE hService,
+       SECURITY_INFORMATION dwSecurityInformation,
+       PSECURITY_DESCRIPTOR lpSecurityDescriptor,
+       DWORD cbBufSize, LPDWORD pcbBytesNeeded)
+{
+    NTSTATUS status = SERV_QueryServiceObjectSecurity(hService, dwSecurityInformation, lpSecurityDescriptor,
+                                                      cbBufSize, pcbBytesNeeded);
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError(RtlNtStatusToDosError(status));
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /******************************************************************************
