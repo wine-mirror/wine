@@ -304,6 +304,15 @@ void WINAPI AtlWinModuleAddCreateWndData(_ATL_WIN_MODULE *pM, _AtlCreateWndData 
 }
 
 /***********************************************************************
+ *           AtlRegisterClassCategoriesHelper          [atl100.49]
+ */
+HRESULT WINAPI AtlRegisterClassCategoriesHelper(REFCLSID clsid, const struct _ATL_CATMAP_ENTRY *catmap, BOOL reg)
+{
+    FIXME("(%s %p %x)\n", debugstr_guid(clsid), catmap, reg);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
  *           AtlGetVersion              [atl100.@]
  */
 DWORD WINAPI AtlGetVersion(void *pReserved)

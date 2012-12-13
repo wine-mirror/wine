@@ -40,7 +40,7 @@
 46 stdcall AtlModuleRegisterWndClassInfoA(ptr ptr ptr)
 47 stdcall AtlAxGetControl(long ptr) atl100.AtlAxGetControl
 48 stdcall AtlAxGetHost(long ptr) atl100.AtlAxGetHost
-49 stub AtlRegisterClassCategoriesHelper
+49 stdcall AtlRegisterClassCategoriesHelper(ptr ptr long) atl100.AtlRegisterClassCategoriesHelper
 50 stdcall AtlIPersistStreamInit_Load(ptr ptr ptr ptr) atl100.AtlIPersistStreamInit_Load
 51 stdcall AtlIPersistStreamInit_Save(ptr long ptr ptr ptr) atl100.AtlIPersistStreamInit_Save
 52 stub AtlIPersistPropertyBag_Load
