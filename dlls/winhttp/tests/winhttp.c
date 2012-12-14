@@ -2417,14 +2417,14 @@ static void test_IWinHttpRequest(void)
     status = 0;
     hr = IWinHttpRequest_get_Status( req, &status );
     ok( hr == S_OK, "got %08x\n", hr );
-    trace("%d\n", status);
+    trace("Status=%d\n", status);
 
     hr = IWinHttpRequest_get_StatusText( req, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     hr = IWinHttpRequest_get_StatusText( req, &status_text );
     ok( hr == S_OK, "got %08x\n", hr );
-    trace("%s\n", wine_dbgstr_w(status_text));
+    trace("StatusText=%s\n", wine_dbgstr_w(status_text));
     SysFreeString( status_text );
 
     hr = IWinHttpRequest_get_ResponseBody( req, NULL );
@@ -2608,10 +2608,10 @@ static void test_WinHttpGetIEProxyConfigForCurrentUser(void)
 
     ret = WinHttpGetIEProxyConfigForCurrentUser( &cfg );
     ok( ret, "expected success\n" );
-    trace("%d\n", cfg.fAutoDetect);
-    trace("%s\n", wine_dbgstr_w(cfg.lpszAutoConfigUrl));
-    trace("%s\n", wine_dbgstr_w(cfg.lpszProxy));
-    trace("%s\n", wine_dbgstr_w(cfg.lpszProxyBypass));
+    trace("IEProxy.AutoDetect=%d\n", cfg.fAutoDetect);
+    trace("IEProxy.AutoConfigUrl=%s\n", wine_dbgstr_w(cfg.lpszAutoConfigUrl));
+    trace("IEProxy.Proxy=%s\n", wine_dbgstr_w(cfg.lpszProxy));
+    trace("IEProxy.ProxyBypass=%s\n", wine_dbgstr_w(cfg.lpszProxyBypass));
     GlobalFree( cfg.lpszAutoConfigUrl );
     GlobalFree( cfg.lpszProxy );
     GlobalFree( cfg.lpszProxyBypass );
@@ -2700,9 +2700,9 @@ static void test_WinHttpGetProxyForUrl(void)
     if (!ret) ok( error == ERROR_WINHTTP_AUTODETECTION_FAILED, "got %u\n", error );
     else
     {
-        trace("%u\n", info.dwAccessType);
-        trace("%s\n", wine_dbgstr_w(info.lpszProxy));
-        trace("%s\n", wine_dbgstr_w(info.lpszProxyBypass));
+        trace("Proxy.AccessType=%u\n", info.dwAccessType);
+        trace("Proxy.Proxy=%s\n", wine_dbgstr_w(info.lpszProxy));
+        trace("Proxy.ProxyBypass=%s\n", wine_dbgstr_w(info.lpszProxyBypass));
         GlobalFree( info.lpszProxy );
         GlobalFree( info.lpszProxyBypass );
     }
@@ -2718,9 +2718,9 @@ static void test_WinHttpGetProxyForUrl(void)
     if (!ret) ok( error == ERROR_WINHTTP_UNABLE_TO_DOWNLOAD_SCRIPT, "got %u\n", error );
     else
     {
-        trace("%u\n", info.dwAccessType);
-        trace("%s\n", wine_dbgstr_w(info.lpszProxy));
-        trace("%s\n", wine_dbgstr_w(info.lpszProxyBypass));
+        trace("Proxy.AccessType=%u\n", info.dwAccessType);
+        trace("Proxy.Proxy=%s\n", wine_dbgstr_w(info.lpszProxy));
+        trace("Proxy.ProxyBypass=%s\n", wine_dbgstr_w(info.lpszProxyBypass));
         GlobalFree( info.lpszProxy );
         GlobalFree( info.lpszProxyBypass );
     }
