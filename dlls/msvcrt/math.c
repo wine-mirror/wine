@@ -629,6 +629,15 @@ double CDECL _CItanh(void)
   return MSVCRT_tanh(x);
 }
 
+/*********************************************************************
+ *                  _ftol   (MSVCRT.@)
+ */
+LONGLONG CDECL MSVCRT__ftol(void)
+{
+    FPU_DOUBLE(x);
+    return (LONGLONG)x;
+}
+
 #endif /* defined(__GNUC__) && defined(__i386__) */
 
 /*********************************************************************

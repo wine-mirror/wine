@@ -453,9 +453,9 @@
 @ cdecl _ftime32_s(ptr) MSVCRT__ftime32_s
 @ cdecl _ftime64(ptr) MSVCRT__ftime64
 @ cdecl _ftime64_s(ptr) MSVCRT__ftime64_s
-@ cdecl -ret64 _ftol() ntdll._ftol
-@ cdecl -ret64 _ftol2() ntdll._ftol
-@ cdecl -ret64 _ftol2_sse() ntdll._ftol #FIXME: SSE variant should be implemented
+@ cdecl -arch=i386 -ret64 _ftol() MSVCRT__ftol
+@ cdecl -arch=i386 -ret64 _ftol2() MSVCRT__ftol
+@ cdecl -arch=i386 -ret64 _ftol2_sse() MSVCRT__ftol #FIXME: SSE variant should be implemented
 # stub _ftol2_sse_excpt
 @ cdecl _fullpath(ptr str long)
 # stub _fullpath_dbg(ptr str long long str long)
