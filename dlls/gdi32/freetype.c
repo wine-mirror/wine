@@ -5836,8 +5836,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     {
         FT_Matrix worldMat;
         worldMat.xx = FT_FixedFromFloat(font->font_desc.matrix.eM11);
-        worldMat.xy = FT_FixedFromFloat(font->font_desc.matrix.eM12);
-        worldMat.yx = FT_FixedFromFloat(font->font_desc.matrix.eM21);
+        worldMat.xy = -FT_FixedFromFloat(font->font_desc.matrix.eM21);
+        worldMat.yx = -FT_FixedFromFloat(font->font_desc.matrix.eM12);
         worldMat.yy = FT_FixedFromFloat(font->font_desc.matrix.eM22);
         pFT_Matrix_Multiply(&worldMat, &transMat);
         pFT_Matrix_Multiply(&worldMat, &transMatUnrotated);
@@ -5849,8 +5849,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     {
         FT_Matrix extraMat;
         extraMat.xx = FT_FixedFromFIXED(lpmat->eM11);
-        extraMat.xy = FT_FixedFromFIXED(lpmat->eM12);
-        extraMat.yx = FT_FixedFromFIXED(lpmat->eM21);
+        extraMat.xy = FT_FixedFromFIXED(lpmat->eM21);
+        extraMat.yx = FT_FixedFromFIXED(lpmat->eM12);
         extraMat.yy = FT_FixedFromFIXED(lpmat->eM22);
         pFT_Matrix_Multiply(&extraMat, &transMat);
         pFT_Matrix_Multiply(&extraMat, &transMatUnrotated);
