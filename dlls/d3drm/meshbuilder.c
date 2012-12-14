@@ -2943,7 +2943,7 @@ static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroup(IDirect3DRMMesh* iface,
     if (face_data_size)
         *face_data_size = This->groups[id].face_data_size;
     if (face_data)
-        memcpy(face_data, This->groups[id].face_data, This->groups[id].face_data_size);
+        memcpy(face_data, This->groups[id].face_data, This->groups[id].face_data_size * sizeof(DWORD));
 
     return D3DRM_OK;
 }
