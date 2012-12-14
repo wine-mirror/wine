@@ -474,18 +474,15 @@ static HRESULT compile_increment_expression(compiler_ctx_t *ctx, unary_expressio
 }
 
 /* ECMA-262 3rd Edition    11.14 */
-static HRESULT compile_comma_expression(compiler_ctx_t *ctx, binary_expression_t *expr)
+static HRESULT compile_comma_expression(compiler_ctx_t *ctx, binary_expression_t *expr, BOOL emit_ret)
 {
     HRESULT hres;
 
-    hres = compile_expression(ctx, expr->expression1, TRUE);
+    hres = compile_expression(ctx, expr->expression1, FALSE);
     if(FAILED(hres))
         return hres;
 
-    if(!push_instr(ctx, OP_pop))
-        return E_OUTOFMEMORY;
-
-    return compile_expression(ctx, expr->expression2, TRUE);
+    return compile_expression(ctx, expr->expression2, emit_ret);
 }
 
 /* ECMA-262 3rd Edition    11.11 */
@@ -938,8 +935,7 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr, BOOL 
     case EXPR_CALL:
         return compile_call_expression(ctx, (call_expression_t*)expr, emit_ret);
     case EXPR_COMMA:
-        hres = compile_comma_expression(ctx, (binary_expression_t*)expr);
-        break;
+        return compile_comma_expression(ctx, (binary_expression_t*)expr, emit_ret);
     case EXPR_COND:
         hres = compile_conditional_expression(ctx, (conditional_expression_t*)expr);
         break;

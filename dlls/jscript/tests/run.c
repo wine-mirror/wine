@@ -749,8 +749,10 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
     case DISPID_GLOBAL_TESTRES:
         ok(pvarRes != NULL, "pvarRes = NULL\n");
-        if(pvarRes)
-            V_VT(pvarRes) = VT_NULL;
+        if(pvarRes) {
+            V_VT(pvarRes) = VT_BOOL;
+            V_BOOL(pvarRes) = VARIANT_TRUE;
+        }
         return S_OK;
 
     case DISPID_GLOBAL_TESTNORES:

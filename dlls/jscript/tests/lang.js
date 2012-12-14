@@ -189,14 +189,19 @@ tmp = eval("1;");
 ok(tmp === 1, "tmp = " + tmp);
 tmp = eval("1,2;");
 ok(tmp === 2, "tmp = " + tmp);
+tmp = eval("testNoRes(),2;");
+ok(tmp === 2, "tmp = " + tmp);
 tmp = eval("if(true) {3}");
 ok(tmp === 3, "tmp = " + tmp);
-testNoRes();
 eval("testRes(); testRes()");
 tmp = eval("3; if(false) {4;} else {};;;")
 ok(tmp === 3, "tmp = " + tmp);
 
-tmp = (function(){ return testRes();})();
+testNoRes();
+testRes() && testRes();
+testNoRes(), testNoRes();
+
+tmp = (function(){ return testNoRes(), testRes();})();
 
 var obj1 = new Object();
 ok(typeof(obj1) === "object", "typeof(obj1) is not object");
