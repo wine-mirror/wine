@@ -365,7 +365,8 @@ void msvcrt_free_args(void)
 
 static int build_expanded_argv(int *argc, char **argv)
 {
-    int i, size=0, args_no=0;
+    int i, size=0, args_no=0, path_len;
+    BOOL is_expandable;
     HANDLE h;
 
     args_no = 0;
@@ -373,7 +374,20 @@ static int build_expanded_argv(int *argc, char **argv)
         WIN32_FIND_DATAA data;
         int len = 0;
 
-        h = FindFirstFileA(__wine_main_argv[i], &data);
+        is_expandable = FALSE;
+        for(path_len = strlen(__wine_main_argv[i])-1; path_len>=0; path_len--) {
+            if(__wine_main_argv[i][path_len]=='*' || __wine_main_argv[i][path_len]=='?')
+                is_expandable = TRUE;
+            else if(__wine_main_argv[i][path_len]=='\\' || __wine_main_argv[i][path_len]=='/')
+                break;
+        }
+        path_len++;
+
+        if(is_expandable)
+            h = FindFirstFileA(__wine_main_argv[i], &data);
+        else
+            h = INVALID_HANDLE_VALUE;
+
         if(h != INVALID_HANDLE_VALUE) {
             do {
                 if(data.cFileName[0]=='.' && (data.cFileName[1]=='\0' ||
@@ -383,10 +397,11 @@ static int build_expanded_argv(int *argc, char **argv)
                 len = strlen(data.cFileName)+1;
                 if(argv) {
                     argv[args_no] = (char*)(argv+*argc)+size;
-                    memcpy(argv[args_no], data.cFileName, len*sizeof(char));
+                    memcpy(argv[args_no], __wine_main_argv[i], path_len*sizeof(char));
+                    memcpy(argv[args_no]+path_len, data.cFileName, len*sizeof(char));
                 }
                 args_no++;
-                size += len;
+                size += len+path_len;
             }while(FindNextFileA(h, &data));
             CloseHandle(h);
         }
