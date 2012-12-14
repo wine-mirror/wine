@@ -108,18 +108,7 @@ static RECT get_device_rect( HDC hdc, int left, int top, int right, int bottom, 
         rect.right--;
     }
     LPtoDP( hdc, (POINT *)&rect, 2 );
-    if (rect.left > rect.right)
-    {
-        int tmp = rect.left;
-        rect.left = rect.right;
-        rect.right = tmp;
-    }
-    if (rect.top > rect.bottom)
-    {
-        int tmp = rect.top;
-        rect.top = rect.bottom;
-        rect.bottom = tmp;
-    }
+    order_rect( &rect );
     return rect;
 }
 

@@ -439,6 +439,22 @@ static inline void offset_rect( RECT *rect, int offset_x, int offset_y )
     rect->bottom += offset_y;
 }
 
+static inline void order_rect( RECT *rect )
+{
+    if (rect->left > rect->right)
+    {
+        int tmp = rect->left;
+        rect->left = rect->right;
+        rect->right = tmp;
+    }
+    if (rect->top > rect->bottom)
+    {
+        int tmp = rect->top;
+        rect->top = rect->bottom;
+        rect->bottom = tmp;
+    }
+}
+
 static inline void get_bounding_rect( RECT *rect, int x, int y, int width, int height )
 {
     rect->left   = x;

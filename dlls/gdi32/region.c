@@ -1114,20 +1114,8 @@ BOOL WINAPI RectInRegion( HRGN hrgn, const RECT *rect )
 
     /* swap the coordinates to make right >= left and bottom >= top */
     /* (region building rectangles are normalized the same way) */
-    if( rect->top > rect->bottom) {
-        rc.top = rect->bottom;
-        rc.bottom = rect->top;
-    } else {
-        rc.top = rect->top;
-        rc.bottom = rect->bottom;
-    }
-    if( rect->right < rect->left) {
-        rc.right = rect->left;
-        rc.left = rect->right;
-    } else {
-        rc.right = rect->right;
-        rc.left = rect->left;
-    }
+    rc = *rect;
+    order_rect( &rc );
 
     if ((obj = GDI_GetObjPtr( hrgn, OBJ_REGION )))
     {

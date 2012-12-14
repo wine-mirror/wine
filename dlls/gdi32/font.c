@@ -2181,9 +2181,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         }
 
         LPtoDP(hdc, (POINT*)&rc, 2);
-
-        if(rc.left > rc.right) {INT tmp = rc.left; rc.left = rc.right; rc.right = tmp;}
-        if(rc.top > rc.bottom) {INT tmp = rc.top; rc.top = rc.bottom; rc.bottom = tmp;}
+        order_rect( &rc );
     }
 
     if (lprect && (flags & ETO_OPAQUE))
