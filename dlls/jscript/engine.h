@@ -84,7 +84,7 @@ typedef struct {
     X(null,       1, 0,0)                  \
     X(obj_prop,   1, ARG_BSTR,   0)        \
     X(or,         1, 0,0)                  \
-    X(pop,        1, 0,0)                  \
+    X(pop,        1, ARG_UINT,   0)        \
     X(pop_except, 1, 0,0)                  \
     X(pop_scope,  1, 0,0)                  \
     X(postinc,    1, ARG_INT,    0)        \

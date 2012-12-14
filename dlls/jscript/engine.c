@@ -2339,9 +2339,11 @@ static HRESULT interp_jmp_z(exec_ctx_t *ctx)
 
 static HRESULT interp_pop(exec_ctx_t *ctx)
 {
-    TRACE("\n");
+    const unsigned arg = get_op_uint(ctx, 0);
 
-    stack_popn(ctx, 1);
+    TRACE("%u\n", arg);
+
+    stack_popn(ctx, arg);
     return S_OK;
 }
 
