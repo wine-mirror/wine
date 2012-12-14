@@ -89,7 +89,7 @@ typedef struct _ATL_OBJMAP_ENTRYW_TAG
     _ATL_DESCRIPTIONFUNCW* pfnGetObjectDescription;
     _ATL_CATMAPFUNC* pfnGetCategoryMap;
     void (WINAPI *pfnObjectMain)(BOOL bStarting);
-} _ATL_OBJMAP_ENTRYW;
+} _ATL_OBJMAP_ENTRYW, _ATL_OBJMAP_ENTRY30, _ATL_OBJMAP_ENTRY;
 
 
 typedef struct _ATL_TERMFUNC_ELEM_TAG
@@ -183,6 +183,15 @@ typedef struct _ATL_WIN_MODULE70
     CSimpleArray /* <ATOM> */ m_rgWindowClassAtoms;
 } _ATL_WIN_MODULE70;
 
+typedef struct _ATL_COM_MODULE70
+{
+    UINT cbSize;
+    HINSTANCE m_hInstTypeLib;
+    _ATL_OBJMAP_ENTRY **m_ppAutoObjMapFirst;
+    _ATL_OBJMAP_ENTRY **m_ppAutoObjMapLast;
+    CComCriticalSection m_csObjMap;
+} _ATL_COM_MODULE70, _ATL_COM_MODULE;
+
 #if _ATL_VER >= _ATL_VER_70
 typedef _ATL_MODULE70 _ATL_MODULE;
 typedef _ATL_WIN_MODULE70 _ATL_WIN_MODULE;
@@ -231,5 +240,6 @@ HRESULT WINAPI AtlCreateRegistrar(IRegistrar**);
 HRESULT WINAPI AtlUpdateRegistryFromResourceD(HINSTANCE,LPCOLESTR,BOOL,struct _ATL_REGMAP_ENTRY*,IRegistrar*);
 HRESULT WINAPI AtlLoadTypeLib(HINSTANCE,LPCOLESTR,BSTR*,ITypeLib**);
 HRESULT WINAPI AtlRegisterClassCategoriesHelper(REFCLSID,const struct _ATL_CATMAP_ENTRY*,BOOL);
+HRESULT WINAPI AtlComModuleGetClassObject(_ATL_COM_MODULE*,REFCLSID,REFIID,void**);
 
 #endif /* __WINE_ATLBASE_H__ */

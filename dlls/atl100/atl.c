@@ -304,6 +304,34 @@ void WINAPI AtlWinModuleAddCreateWndData(_ATL_WIN_MODULE *pM, _AtlCreateWndData 
 }
 
 /***********************************************************************
+ *           AtlComModuleGetClassObject                [atl100.15]
+ */
+HRESULT WINAPI AtlComModuleGetClassObject(_ATL_COM_MODULE *pm, REFCLSID rclsid, REFIID riid, void **ppv)
+{
+    _ATL_OBJMAP_ENTRY **iter;
+    HRESULT hres;
+
+    TRACE("(%p %s %s %p)\n", pm, debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+
+    if(!pm)
+        return E_INVALIDARG;
+
+    for(iter = pm->m_ppAutoObjMapFirst; iter < pm->m_ppAutoObjMapLast; iter++) {
+        if(IsEqualCLSID((*iter)->pclsid, rclsid) && (*iter)->pfnGetClassObject) {
+            if(!(*iter)->pCF)
+                hres = (*iter)->pfnGetClassObject((*iter)->pfnCreateInstance, &IID_IUnknown, (void**)&(*iter)->pCF);
+            if((*iter)->pCF)
+                hres = IUnknown_QueryInterface((*iter)->pCF, riid, ppv);
+            TRACE("returning %p (%08x)\n", *ppv, hres);
+            return hres;
+        }
+    }
+
+    WARN("Class %s not found\n", debugstr_guid(rclsid));
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+/***********************************************************************
  *           AtlRegisterClassCategoriesHelper          [atl100.49]
  */
 HRESULT WINAPI AtlRegisterClassCategoriesHelper(REFCLSID clsid, const struct _ATL_CATMAP_ENTRY *catmap, BOOL reg)

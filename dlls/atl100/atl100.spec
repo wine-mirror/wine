@@ -3,7 +3,7 @@
 12 stdcall AtlFreeMarshalStream(ptr)
 13 stdcall AtlMarshalPtrInProc(ptr ptr ptr)
 14 stdcall AtlUnmarshalPtr(ptr ptr ptr)
-15 stub AtlComModuleGetClassObject
+15 stdcall AtlComModuleGetClassObject(ptr ptr ptr ptr)
 17 stub AtlComModuleRegisterClassObjects
 20 stub AtlComModuleRevokeClassObjects
 22 stub AtlComModuleUnregisterServer

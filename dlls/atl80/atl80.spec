@@ -3,7 +3,7 @@
 12 stdcall AtlFreeMarshalStream(ptr) atl100.AtlFreeMarshalStream
 13 stdcall AtlMarshalPtrInProc(ptr ptr ptr) atl100.AtlMarshalPtrInProc
 14 stdcall AtlUnmarshalPtr(ptr ptr ptr) atl100.AtlUnmarshalPtr
-15 stub AtlComModuleGetClassObject
+15 stdcall AtlComModuleGetClassObject(ptr ptr ptr ptr) atl100.AtlComModuleGetClassObject
 17 stub AtlComModuleRegisterClassObjects
 18 stub AtlComModuleRegisterServer(ptr long ptr)
 19 stub AtlRegisterTypeLib(ptr wstr)
