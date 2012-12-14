@@ -392,6 +392,7 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
 
     tmpRect = *rect;
     LPtoDP( hdc, (POINT *)&tmpRect, 2 );
+    order_rect( &tmpRect );
 
     update_dc( dc );
     ret = (!get_dc_device_rect( dc, &visrect ) || intersect_rect( &visrect, &visrect, &tmpRect ));
