@@ -1605,3 +1605,11 @@ int CDECL MSVCRT_I10_OUTPUT(MSVCRT__LDOUBLE ld80, int prec, int flag, struct _I1
     return 1;
 }
 #undef I10_OUTPUT_MAX_PREC
+
+/*********************************************************************
+ *                  memcpy   (NTDLL.@)
+ */
+void * __cdecl MSVCRT_memcpy( void *dst, const void *src, size_t n )
+{
+    return memmove( dst, src, n );
+}
