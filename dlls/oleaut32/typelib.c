@@ -2544,9 +2544,10 @@ static HRESULT TLB_PEFile_Open(LPCWSTR path, INT index, LPVOID *ppBase, DWORD *p
                     return S_OK;
                 }
             }
-
-            hr = E_FAIL;
         }
+
+        TRACE("No TYPELIB resource found\n");
+        hr = E_FAIL;
     }
 
     TLB_PEFile_Release((IUnknown *)&This->lpvtbl);
@@ -2949,8 +2950,6 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
             ret = TYPE_E_CANTLOADLIBRARY;
         IUnknown_Release(pFile);
     }
-    else
-        ret = TYPE_E_CANTLOADLIBRARY;
 
     if(*ppTypeLib) {
 	ITypeLibImpl *impl = (ITypeLibImpl*)*ppTypeLib;
@@ -2966,8 +2965,15 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
         list_add_head(&tlb_cache, &impl->entry);
         LeaveCriticalSection(&cache_section);
         ret = S_OK;
-    } else
-	ERR("Loading of typelib %s failed with error %d\n", debugstr_w(pszFileName), GetLastError());
+    }
+    else
+    {
+        if(ret != E_FAIL)
+            ERR("Loading of typelib %s failed with error %d\n", debugstr_w(pszFileName), GetLastError());
+
+        ret = TYPE_E_CANTLOADLIBRARY;
+    }
+
 
     return ret;
 }
