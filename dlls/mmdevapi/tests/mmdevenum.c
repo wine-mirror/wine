@@ -118,6 +118,73 @@ static void test_collection(IMMDeviceEnumerator *mme, IMMDeviceCollection *col)
     IMMDeviceCollection_Release(col);
 }
 
+static HRESULT WINAPI notif_QueryInterface(IMMNotificationClient *iface,
+        const GUID *riid, void **obj)
+{
+    ok(0, "Unexpected QueryInterface call\n");
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI notif_AddRef(IMMNotificationClient *iface)
+{
+    ok(0, "Unexpected AddRef call\n");
+    return 2;
+}
+
+static ULONG WINAPI notif_Release(IMMNotificationClient *iface)
+{
+    ok(0, "Unexpected Release call\n");
+    return 1;
+}
+
+static HRESULT WINAPI notif_OnDeviceStateChanged(IMMNotificationClient *iface,
+        const WCHAR *device_id, DWORD new_state)
+{
+    ok(0, "Unexpected OnDeviceStateChanged call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI notif_OnDeviceAdded(IMMNotificationClient *iface,
+        const WCHAR *device_id)
+{
+    ok(0, "Unexpected OnDeviceAdded call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI notif_OnDeviceRemoved(IMMNotificationClient *iface,
+        const WCHAR *device_id)
+{
+    ok(0, "Unexpected OnDeviceRemoved call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI notif_OnDefaultDeviceChanged(IMMNotificationClient *iface,
+        EDataFlow flow, ERole role, const WCHAR *device_id)
+{
+    ok(0, "Unexpected OnDefaultDeviceChanged call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI notif_OnPropertyValueChanged(IMMNotificationClient *iface,
+        const WCHAR *device_id, const PROPERTYKEY key)
+{
+    ok(0, "Unexpected OnPropertyValueChanged call\n");
+    return E_NOTIMPL;
+}
+
+static IMMNotificationClientVtbl notif_vtbl = {
+    notif_QueryInterface,
+    notif_AddRef,
+    notif_Release,
+    notif_OnDeviceStateChanged,
+    notif_OnDeviceAdded,
+    notif_OnDeviceRemoved,
+    notif_OnDefaultDeviceChanged,
+    notif_OnPropertyValueChanged
+};
+
+static IMMNotificationClient notif = { &notif_vtbl };
+
 /* Only do parameter tests here, the actual MMDevice testing should be a separate test */
 START_TEST(mmdevenum)
 {
@@ -191,6 +258,30 @@ START_TEST(mmdevenum)
         if (col)
             test_collection(mme, col);
     }
+
+    hr = IMMDeviceEnumerator_RegisterEndpointNotificationCallback(mme, NULL);
+    ok(hr == E_POINTER, "RegisterEndpointNotificationCallback failed: %08x\n", hr);
+
+    hr = IMMDeviceEnumerator_RegisterEndpointNotificationCallback(mme, &notif);
+    ok(hr == S_OK, "RegisterEndpointNotificationCallback failed: %08x\n", hr);
+
+    hr = IMMDeviceEnumerator_RegisterEndpointNotificationCallback(mme, &notif);
+    ok(hr == S_OK, "RegisterEndpointNotificationCallback failed: %08x\n", hr);
+
+    hr = IMMDeviceEnumerator_UnregisterEndpointNotificationCallback(mme, NULL);
+    ok(hr == E_POINTER, "UnregisterEndpointNotificationCallback failed: %08x\n", hr);
+
+    hr = IMMDeviceEnumerator_UnregisterEndpointNotificationCallback(mme, (IMMNotificationClient*)0xdeadbeef);
+    ok(hr == E_NOTFOUND, "UnregisterEndpointNotificationCallback failed: %08x\n", hr);
+
+    hr = IMMDeviceEnumerator_UnregisterEndpointNotificationCallback(mme, &notif);
+    ok(hr == S_OK, "UnregisterEndpointNotificationCallback failed: %08x\n", hr);
+
+    hr = IMMDeviceEnumerator_UnregisterEndpointNotificationCallback(mme, &notif);
+    ok(hr == S_OK, "UnregisterEndpointNotificationCallback failed: %08x\n", hr);
+
+    hr = IMMDeviceEnumerator_UnregisterEndpointNotificationCallback(mme, &notif);
+    ok(hr == E_NOTFOUND, "UnregisterEndpointNotificationCallback failed: %08x\n", hr);
 
     IMMDeviceEnumerator_Release(mme);
 }

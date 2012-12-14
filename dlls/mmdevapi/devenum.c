@@ -27,6 +27,7 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 #include "wine/unicode.h"
 
 #include "initguid.h"
@@ -1035,20 +1036,72 @@ static HRESULT WINAPI MMDevEnum_GetDevice(IMMDeviceEnumerator *iface, const WCHA
     return E_INVALIDARG;
 }
 
+struct NotificationClientWrapper {
+    IMMNotificationClient *client;
+    struct list entry;
+};
+
+static struct list g_notif_clients = LIST_INIT(g_notif_clients);
+
+static CRITICAL_SECTION g_notif_lock;
+static CRITICAL_SECTION_DEBUG g_notif_lock_debug =
+{
+    0, 0, &g_notif_lock,
+    { &g_notif_lock_debug.ProcessLocksList, &g_notif_lock_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": g_notif_lock") }
+};
+static CRITICAL_SECTION g_notif_lock = { &g_notif_lock_debug, -1, 0, 0, 0, 0 };
+
 static HRESULT WINAPI MMDevEnum_RegisterEndpointNotificationCallback(IMMDeviceEnumerator *iface, IMMNotificationClient *client)
 {
     MMDevEnumImpl *This = impl_from_IMMDeviceEnumerator(iface);
+    struct NotificationClientWrapper *wrapper;
+
     TRACE("(%p)->(%p)\n", This, client);
-    FIXME("stub\n");
+
+    if(!client)
+        return E_POINTER;
+
+    wrapper = HeapAlloc(GetProcessHeap(), 0, sizeof(*wrapper));
+    if(!wrapper)
+        return E_OUTOFMEMORY;
+
+    wrapper->client = client;
+
+    EnterCriticalSection(&g_notif_lock);
+
+    list_add_tail(&g_notif_clients, &wrapper->entry);
+
+    LeaveCriticalSection(&g_notif_lock);
+
     return S_OK;
 }
 
 static HRESULT WINAPI MMDevEnum_UnregisterEndpointNotificationCallback(IMMDeviceEnumerator *iface, IMMNotificationClient *client)
 {
     MMDevEnumImpl *This = impl_from_IMMDeviceEnumerator(iface);
+    struct NotificationClientWrapper *wrapper, *wrapper2;
+
     TRACE("(%p)->(%p)\n", This, client);
-    FIXME("stub\n");
-    return S_OK;
+
+    if(!client)
+        return E_POINTER;
+
+    EnterCriticalSection(&g_notif_lock);
+
+    LIST_FOR_EACH_ENTRY_SAFE(wrapper, wrapper2, &g_notif_clients,
+            struct NotificationClientWrapper, entry){
+        if(wrapper->client == client){
+            list_remove(&wrapper->entry);
+            HeapFree(GetProcessHeap(), 0, wrapper);
+            LeaveCriticalSection(&g_notif_lock);
+            return S_OK;
+        }
+    }
+
+    LeaveCriticalSection(&g_notif_lock);
+
+    return E_NOTFOUND;
 }
 
 static const IMMDeviceEnumeratorVtbl MMDevEnumVtbl =
