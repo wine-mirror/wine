@@ -59,6 +59,11 @@ static const WCHAR reg_devicestate[] =
     { 'D','e','v','i','c','e','S','t','a','t','e',0 };
 static const WCHAR reg_properties[] =
     { 'P','r','o','p','e','r','t','i','e','s',0 };
+static const WCHAR slashW[] = {'\\',0};
+static const WCHAR reg_out_nameW[] = {'D','e','f','a','u','l','t','O','u','t','p','u','t',0};
+static const WCHAR reg_vout_nameW[] = {'D','e','f','a','u','l','t','V','o','i','c','e','O','u','t','p','u','t',0};
+static const WCHAR reg_in_nameW[] = {'D','e','f','a','u','l','t','I','n','p','u','t',0};
+static const WCHAR reg_vin_nameW[] = {'D','e','f','a','u','l','t','V','o','i','c','e','I','n','p','u','t',0};
 
 static HKEY key_render;
 static HKEY key_capture;
@@ -916,12 +921,6 @@ static HRESULT WINAPI MMDevEnum_GetDefaultAudioEndpoint(IMMDeviceEnumerator *ifa
     HKEY key;
     HRESULT hr;
 
-    static const WCHAR slashW[] = {'\\',0};
-    static const WCHAR reg_out_nameW[] = {'D','e','f','a','u','l','t','O','u','t','p','u','t',0};
-    static const WCHAR reg_vout_nameW[] = {'D','e','f','a','u','l','t','V','o','i','c','e','O','u','t','p','u','t',0};
-    static const WCHAR reg_in_nameW[] = {'D','e','f','a','u','l','t','I','n','p','u','t',0};
-    static const WCHAR reg_vin_nameW[] = {'D','e','f','a','u','l','t','V','o','i','c','e','I','n','p','u','t',0};
-
     TRACE("(%p)->(%u,%u,%p)\n", This, flow, role, device);
 
     if (!device)
@@ -1042,6 +1041,7 @@ struct NotificationClientWrapper {
 };
 
 static struct list g_notif_clients = LIST_INIT(g_notif_clients);
+static HANDLE g_notif_thread;
 
 static CRITICAL_SECTION g_notif_lock;
 static CRITICAL_SECTION_DEBUG g_notif_lock_debug =
@@ -1051,6 +1051,147 @@ static CRITICAL_SECTION_DEBUG g_notif_lock_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": g_notif_lock") }
 };
 static CRITICAL_SECTION g_notif_lock = { &g_notif_lock_debug, -1, 0, 0, 0, 0 };
+
+static void notify_clients(EDataFlow flow, ERole role, const WCHAR *id)
+{
+    struct NotificationClientWrapper *wrapper;
+    LIST_FOR_EACH_ENTRY(wrapper, &g_notif_clients,
+            struct NotificationClientWrapper, entry)
+        IMMNotificationClient_OnDefaultDeviceChanged(wrapper->client, flow,
+                role, id);
+
+    /* Windows 7 treats changes to eConsole as changes to eMultimedia */
+    if(role == eConsole)
+        notify_clients(flow, eMultimedia, id);
+}
+
+static int notify_if_changed(EDataFlow flow, ERole role, HKEY key,
+        const WCHAR *val_name, WCHAR *old_val, IMMDevice *def_dev)
+{
+    WCHAR new_val[64], *id;
+    DWORD size;
+    HRESULT hr;
+
+    size = sizeof(new_val);
+    if(RegQueryValueExW(key, val_name, 0, NULL,
+                (BYTE*)new_val, &size) != ERROR_SUCCESS){
+        if(old_val[0] != 0){
+            /* set by user -> system default */
+            if(def_dev){
+                hr = IMMDevice_GetId(def_dev, &id);
+                if(FAILED(hr)){
+                    ERR("GetId failed: %08x\n", hr);
+                    return 0;
+                }
+            }else
+                id = NULL;
+
+            notify_clients(flow, role, id);
+            old_val[0] = 0;
+            CoTaskMemFree(id);
+
+            return 1;
+        }
+
+        /* system default -> system default, noop */
+        return 0;
+    }
+
+    if(!lstrcmpW(old_val, new_val)){
+        /* set by user -> same value */
+        return 0;
+    }
+
+    if(new_val[0] != 0){
+        /* set by user -> different value */
+        notify_clients(flow, role, new_val);
+        memcpy(old_val, new_val, sizeof(new_val));
+        return 1;
+    }
+
+    /* set by user -> system default */
+    if(def_dev){
+        hr = IMMDevice_GetId(def_dev, &id);
+        if(FAILED(hr)){
+            ERR("GetId failed: %08x\n", hr);
+            return 0;
+        }
+    }else
+        id = NULL;
+
+    notify_clients(flow, role, id);
+    old_val[0] = 0;
+    CoTaskMemFree(id);
+
+    return 1;
+}
+
+static DWORD WINAPI notif_thread_proc(void *user)
+{
+    HKEY key;
+    WCHAR reg_key[256];
+    WCHAR out_name[64], vout_name[64], in_name[64], vin_name[64];
+    DWORD size;
+
+    lstrcpyW(reg_key, drv_keyW);
+    lstrcatW(reg_key, slashW);
+    lstrcatW(reg_key, drvs.module_name);
+
+    if(RegCreateKeyExW(HKEY_CURRENT_USER, reg_key, 0, NULL, 0,
+                MAXIMUM_ALLOWED, NULL, &key, NULL) != ERROR_SUCCESS){
+        ERR("RegCreateKeyEx failed: %u\n", GetLastError());
+        return 1;
+    }
+
+    size = sizeof(out_name);
+    if(RegQueryValueExW(key, reg_out_nameW, 0, NULL,
+                (BYTE*)out_name, &size) != ERROR_SUCCESS)
+        out_name[0] = 0;
+
+    size = sizeof(vout_name);
+    if(RegQueryValueExW(key, reg_vout_nameW, 0, NULL,
+                (BYTE*)vout_name, &size) != ERROR_SUCCESS)
+        vout_name[0] = 0;
+
+    size = sizeof(in_name);
+    if(RegQueryValueExW(key, reg_in_nameW, 0, NULL,
+                (BYTE*)in_name, &size) != ERROR_SUCCESS)
+        in_name[0] = 0;
+
+    size = sizeof(vin_name);
+    if(RegQueryValueExW(key, reg_vin_nameW, 0, NULL,
+                (BYTE*)vin_name, &size) != ERROR_SUCCESS)
+        vin_name[0] = 0;
+
+    while(1){
+        if(RegNotifyChangeKeyValue(key, FALSE, REG_NOTIFY_CHANGE_LAST_SET,
+                    NULL, FALSE) != ERROR_SUCCESS){
+            ERR("RegNotifyChangeKeyValue failed: %u\n", GetLastError());
+            RegCloseKey(key);
+            g_notif_thread = NULL;
+            return 1;
+        }
+
+        EnterCriticalSection(&g_notif_lock);
+
+        notify_if_changed(eRender, eConsole, key, reg_out_nameW,
+                out_name, &MMDevice_def_play->IMMDevice_iface);
+        notify_if_changed(eRender, eCommunications, key, reg_vout_nameW,
+                vout_name, &MMDevice_def_play->IMMDevice_iface);
+        notify_if_changed(eCapture, eConsole, key, reg_in_nameW,
+                in_name, &MMDevice_def_rec->IMMDevice_iface);
+        notify_if_changed(eCapture, eCommunications, key, reg_vin_nameW,
+                vin_name, &MMDevice_def_rec->IMMDevice_iface);
+
+        LeaveCriticalSection(&g_notif_lock);
+    }
+
+    RegCloseKey(key);
+
+    g_notif_thread = NULL;
+
+    return 0;
+}
 
 static HRESULT WINAPI MMDevEnum_RegisterEndpointNotificationCallback(IMMDeviceEnumerator *iface, IMMNotificationClient *client)
 {
@@ -1071,6 +1212,12 @@ static HRESULT WINAPI MMDevEnum_RegisterEndpointNotificationCallback(IMMDeviceEn
     EnterCriticalSection(&g_notif_lock);
 
     list_add_tail(&g_notif_clients, &wrapper->entry);
+
+    if(!g_notif_thread){
+        g_notif_thread = CreateThread(NULL, 0, notif_thread_proc, NULL, 0, NULL);
+        if(!g_notif_thread)
+            ERR("CreateThread failed: %u\n", GetLastError());
+    }
 
     LeaveCriticalSection(&g_notif_lock);
 
