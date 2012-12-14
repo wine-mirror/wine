@@ -1129,7 +1129,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetClassName(IDirect3DRMMeshBu
     return D3DRM_OK;
 }
 
-HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
+HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, IDirectXFileData *pData, D3DRMLOADTEXTURECALLBACK load_texture_proc, void *arg)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
     LPDIRECTXFILEOBJECT pObject = NULL;
@@ -1372,19 +1372,33 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData)
                     hr = IDirectXFileData_GetData(data, NULL, &size, (void**)&filename);
                     if (SUCCEEDED(hr))
                     {
-                        HANDLE file;
-
-                        /* If the texture file is not found, no texture is associated with the material */
-                        file = CreateFileA(*filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-                        if (file != INVALID_HANDLE_VALUE)
+                        if (load_texture_proc)
                         {
-                            CloseHandle(file);
+                            IDirect3DRMTexture *texture;
 
-                            hr = Direct3DRMTexture_create(&IID_IDirect3DRMTexture3, (LPUNKNOWN*)&This->materials[i].texture);
-                            if (FAILED(hr))
+                            hr = load_texture_proc(*filename, arg, &texture);
+                            if (SUCCEEDED(hr))
                             {
-                                IDirectXFileData_Release(data);
-                                goto end;
+                                hr = IDirect3DTexture_QueryInterface(texture, &IID_IDirect3DRMTexture3, (void**)&This->materials[i].texture);
+                                IDirect3DTexture_Release(texture);
+                            }
+                        }
+                        else
+                        {
+                            HANDLE file;
+
+                            /* If the texture file is not found, no texture is associated with the material */
+                            file = CreateFileA(*filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+                            if (file != INVALID_HANDLE_VALUE)
+                            {
+                                CloseHandle(file);
+
+                                hr = Direct3DRMTexture_create(&IID_IDirect3DRMTexture3, (IUnknown**)&This->materials[i].texture);
+                                if (FAILED(hr))
+                                {
+                                    IDirectXFileData_Release(data);
+                                    goto end;
+                                }
                             }
                         }
                     }
@@ -1630,7 +1644,8 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
         goto end;
     }
 
-    hr = load_mesh_data(iface, pData);
+    /* We don't care about the texture interface version since we rely on QueryInterface */
+    hr = load_mesh_data(iface, pData, (D3DRMLOADTEXTURECALLBACK)cb, arg);
     if (hr == S_OK)
         ret = D3DRM_OK;
 

@@ -1257,8 +1257,8 @@ static HRESULT WINAPI IDirect3DRM3Impl_EnumerateObjects(IDirect3DRM3* iface, D3D
     return E_NOTIMPL;
 }
 
-static HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPIID* GUIDs, DWORD nb_GUIDs, D3DRMLOADCALLBACK LoadProc,
-                  LPVOID ArgLP, D3DRMLOADTEXTURECALLBACK LoadTextureProc, LPVOID ArgLTP, LPDIRECT3DRMFRAME3 parent_frame)
+static HRESULT load_data(IDirect3DRM3 *iface, IDirectXFileData *data_object, IID **GUIDs, DWORD nb_GUIDs, D3DRMLOADCALLBACK LoadProc,
+                         void *ArgLP, D3DRMLOADTEXTURECALLBACK LoadTextureProc, void *ArgLTP, IDirect3DRMFrame3 *parent_frame)
 {
     HRESULT ret = D3DRMERR_BADOBJECT;
     HRESULT hr;
@@ -1296,7 +1296,7 @@ static HRESULT load_data(IDirect3DRM3* iface, LPDIRECTXFILEDATA data_object, LPI
             hr = IDirect3DRM3_CreateMeshBuilder(iface, &meshbuilder);
             if (SUCCEEDED(hr))
             {
-                hr = load_mesh_data(meshbuilder, data_object);
+                hr = load_mesh_data(meshbuilder, data_object, LoadTextureProc, ArgLTP);
                 if (SUCCEEDED(hr))
                 {
                     /* Only top level objects are notified */
