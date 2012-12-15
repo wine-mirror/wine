@@ -3164,10 +3164,10 @@ TREEVIEW_Sort(TREEVIEW_INFO *infoPtr, HTREEITEM parent,
 	{
 	    int visOrder = infoPtr->firstVisible->visibleOrder;
 
-        if (parent == infoPtr->root)
-            TREEVIEW_RecalculateVisibleOrder(infoPtr, NULL);
-        else
-            TREEVIEW_RecalculateVisibleOrder(infoPtr, parent);
+	    if (parent == infoPtr->root)
+	        TREEVIEW_RecalculateVisibleOrder(infoPtr, NULL);
+	    else
+	        TREEVIEW_RecalculateVisibleOrder(infoPtr, parent);
 
 	    if (TREEVIEW_IsChildOf(parent, infoPtr->firstVisible))
 	    {
