@@ -1793,8 +1793,8 @@ static LRESULT FILEDLG95_ResizeControls(HWND hwnd, WPARAM wParam, LPARAM lParam)
       flags |= SWP_NOSIZE;
       SetRectEmpty(&rc);
     }
-      SetWindowPos(fodInfos->DlgInfos.hwndCustomDlg, HWND_BOTTOM,
-          0, 0, rc.right, rc.bottom, flags);
+    SetWindowPos(fodInfos->DlgInfos.hwndCustomDlg, HWND_BOTTOM,
+                 0, 0, rc.right, rc.bottom, flags);
   }
   else
   {
