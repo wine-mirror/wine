@@ -678,11 +678,11 @@ static void elf_finish_stabs_info(struct module* module, const struct hash_table
                                          ((struct symt_data*)sym)->container);
                 if (symp)
                 {
-                if (((struct symt_data*)sym)->u.var.offset != elf_info->elf_addr &&
-                    ((struct symt_data*)sym)->u.var.offset != elf_info->elf_addr + symp->st_value)
-                    FIXME("Changing address for %p/%s!%s from %08lx to %08lx\n",
-                          sym, debugstr_w(module->module.ModuleName), sym->hash_elt.name,
-                          ((struct symt_function*)sym)->address, elf_info->elf_addr + symp->st_value);
+                    if (((struct symt_data*)sym)->u.var.offset != elf_info->elf_addr &&
+                        ((struct symt_data*)sym)->u.var.offset != elf_info->elf_addr + symp->st_value)
+                        FIXME("Changing address for %p/%s!%s from %08lx to %08lx\n",
+                              sym, debugstr_w(module->module.ModuleName), sym->hash_elt.name,
+                              ((struct symt_function*)sym)->address, elf_info->elf_addr + symp->st_value);
                     ((struct symt_data*)sym)->u.var.offset = elf_info->elf_addr + symp->st_value;
                     ((struct symt_data*)sym)->kind = (ELF32_ST_BIND(symp->st_info) == STB_LOCAL) ?
                         DataIsFileStatic : DataIsGlobal;
