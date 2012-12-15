@@ -736,44 +736,44 @@ SCODE WINAPI ScCountProps(INT iCount, LPSPropValue lpProps, ULONG *pcBytes)
             lpProps[i].ulPropTag == PROP_ID_INVALID)
             return MAPI_E_INVALID_PARAMETER;
 
-            if (PROP_TYPE(lpProps[i].ulPropTag) != PT_OBJECT)
-            {
-                ulPropSize = UlPropSize(&lpProps[i]);
-                if (!ulPropSize)
-                    return MAPI_E_INVALID_PARAMETER;
-            }
+        if (PROP_TYPE(lpProps[i].ulPropTag) != PT_OBJECT)
+        {
+            ulPropSize = UlPropSize(&lpProps[i]);
+            if (!ulPropSize)
+                return MAPI_E_INVALID_PARAMETER;
+        }
 
-            switch (PROP_TYPE(lpProps[i].ulPropTag))
-            {
-            case PT_STRING8:
-            case PT_UNICODE:
-            case PT_CLSID:
-            case PT_BINARY:
-            case PT_MV_I2:
-            case PT_MV_I4:
-            case PT_MV_I8:
-            case PT_MV_R4:
-            case PT_MV_R8:
-            case PT_MV_CURRENCY:
-            case PT_MV_SYSTIME:
-            case PT_MV_APPTIME:
-                ulPropSize += sizeof(SPropValue);
-                break;
-            case PT_MV_CLSID:
-                ulPropSize += lpProps[i].Value.MVszA.cValues * sizeof(char*) + sizeof(SPropValue);
-                break;
-            case PT_MV_STRING8:
-            case PT_MV_UNICODE:
-                ulPropSize += lpProps[i].Value.MVszA.cValues * sizeof(char*) + sizeof(SPropValue);
-                break;
-            case PT_MV_BINARY:
-                ulPropSize += lpProps[i].Value.MVbin.cValues * sizeof(SBinary) + sizeof(SPropValue);
-                break;
-            default:
-                ulPropSize = sizeof(SPropValue);
-                break;
-            }
-            ulBytes += ulPropSize;
+        switch (PROP_TYPE(lpProps[i].ulPropTag))
+        {
+        case PT_STRING8:
+        case PT_UNICODE:
+        case PT_CLSID:
+        case PT_BINARY:
+        case PT_MV_I2:
+        case PT_MV_I4:
+        case PT_MV_I8:
+        case PT_MV_R4:
+        case PT_MV_R8:
+        case PT_MV_CURRENCY:
+        case PT_MV_SYSTIME:
+        case PT_MV_APPTIME:
+            ulPropSize += sizeof(SPropValue);
+            break;
+        case PT_MV_CLSID:
+            ulPropSize += lpProps[i].Value.MVszA.cValues * sizeof(char*) + sizeof(SPropValue);
+            break;
+        case PT_MV_STRING8:
+        case PT_MV_UNICODE:
+            ulPropSize += lpProps[i].Value.MVszA.cValues * sizeof(char*) + sizeof(SPropValue);
+            break;
+        case PT_MV_BINARY:
+            ulPropSize += lpProps[i].Value.MVbin.cValues * sizeof(SBinary) + sizeof(SPropValue);
+            break;
+        default:
+            ulPropSize = sizeof(SPropValue);
+            break;
+        }
+        ulBytes += ulPropSize;
     }
     if (pcBytes)
         *pcBytes = ulBytes;
