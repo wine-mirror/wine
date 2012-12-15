@@ -607,11 +607,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(IDirectSoundBuffer8 *iface, 
 	if (!p2)
 		x2 = 0;
 
-    if((p1 && ((BYTE*)p1 < This->buffer->memory ||
-                    (BYTE*)p1 >= This->buffer->memory + This->buflen)) ||
-            (p2 && ((BYTE*)p2 < This->buffer->memory ||
-                    (BYTE*)p2 >= This->buffer->memory + This->buflen)))
-        return DSERR_INVALIDPARAM;
+	if((p1 && ((BYTE*)p1 < This->buffer->memory || (BYTE*)p1 >= This->buffer->memory + This->buflen)) ||
+	   (p2 && ((BYTE*)p2 < This->buffer->memory || (BYTE*)p2 >= This->buffer->memory + This->buflen)))
+		return DSERR_INVALIDPARAM;
 
 	if (x1 || x2)
 	{

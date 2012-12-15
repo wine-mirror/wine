@@ -293,9 +293,9 @@ HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
     else
         device->normfunction = normfunctions[device->pwfx->wBitsPerSample/8 - 1];
 
-	FillMemory(device->buffer, device->buflen, (device->pwfx->wBitsPerSample == 8) ? 128 : 0);
-	FillMemory(device->mix_buffer, device->mix_buffer_len, 0);
-	device->playpos = 0;
+    FillMemory(device->buffer, device->buflen, (device->pwfx->wBitsPerSample == 8) ? 128 : 0);
+    FillMemory(device->mix_buffer, device->mix_buffer_len, 0);
+    device->playpos = 0;
 
     if (device->pwfx->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
 	 (device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
@@ -1085,11 +1085,9 @@ static HRESULT WINAPI PrimaryBufferImpl_Unlock(IDirectSoundBuffer *iface, void *
 		return DSERR_PRIOLEVELNEEDED;
 	}
 
-    if((p1 && ((BYTE*)p1 < device->buffer ||
-                    (BYTE*)p1 >= device->buffer + device->buflen)) ||
-            (p2 && ((BYTE*)p2 < device->buffer ||
-                    (BYTE*)p2 >= device->buffer + device->buflen)))
-        return DSERR_INVALIDPARAM;
+	if ((p1 && ((BYTE*)p1 < device->buffer || (BYTE*)p1 >= device->buffer + device->buflen)) ||
+	    (p2 && ((BYTE*)p2 < device->buffer || (BYTE*)p2 >= device->buffer + device->buflen)))
+		return DSERR_INVALIDPARAM;
 
 	return DS_OK;
 }
