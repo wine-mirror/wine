@@ -915,9 +915,9 @@ static BOOL get_font_entry( union sysparam_all_entry *entry, UINT int_param, voi
         switch (load_entry( &entry->hdr, &font, sizeof(font) ))
         {
         case sizeof(font):
-            entry->font.val = font;
             if (font.lfHeight > 0) /* positive height value means points ( inch/72 ) */
                 font.lfHeight = -MulDiv( font.lfHeight, get_display_dpi(), 72 );
+            entry->font.val = font;
             break;
         case sizeof(LOGFONT16): /* win9x-winME format */
             SYSPARAMS_LogFont16To32W( (LOGFONT16 *)&font, &entry->font.val );
