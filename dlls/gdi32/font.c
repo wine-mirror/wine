@@ -3127,13 +3127,13 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
  */
 DWORD WINAPI
 GetCharacterPlacementW(
-		HDC hdc,		/* [in] Device context for which the rendering is to be done */
-		LPCWSTR lpString,	/* [in] The string for which information is to be returned */
-		INT uCount,		/* [in] Number of WORDS in string. */
-		INT nMaxExtent,		/* [in] Maximum extent the string is to take (in HDC logical units) */
-		GCP_RESULTSW *lpResults,/* [in/out] A pointer to a GCP_RESULTSW struct */
-		DWORD dwFlags 		/* [in] Flags specifying how to process the string */
-		)
+        HDC hdc,                    /* [in] Device context for which the rendering is to be done */
+        LPCWSTR lpString,           /* [in] The string for which information is to be returned */
+        INT uCount,                 /* [in] Number of WORDS in string. */
+        INT nMaxExtent,             /* [in] Maximum extent the string is to take (in HDC logical units) */
+        GCP_RESULTSW *lpResults,    /* [in/out] A pointer to a GCP_RESULTSW struct */
+        DWORD dwFlags               /* [in] Flags specifying how to process the string */
+        )
 {
     DWORD ret=0;
     SIZE size;
@@ -3144,66 +3144,69 @@ GetCharacterPlacementW(
 
     TRACE("lStructSize=%d, lpOutString=%p, lpOrder=%p, lpDx=%p, lpCaretPos=%p\n"
           "lpClass=%p, lpGlyphs=%p, nGlyphs=%u, nMaxFit=%d\n",
-	    lpResults->lStructSize, lpResults->lpOutString, lpResults->lpOrder,
-	    lpResults->lpDx, lpResults->lpCaretPos, lpResults->lpClass,
-	    lpResults->lpGlyphs, lpResults->nGlyphs, lpResults->nMaxFit);
+          lpResults->lStructSize, lpResults->lpOutString, lpResults->lpOrder,
+          lpResults->lpDx, lpResults->lpCaretPos, lpResults->lpClass,
+          lpResults->lpGlyphs, lpResults->nGlyphs, lpResults->nMaxFit);
 
-    if(dwFlags&(~GCP_REORDER))			FIXME("flags 0x%08x ignored\n", dwFlags);
-    if(lpResults->lpClass)	FIXME("classes not implemented\n");
+    if(dwFlags&(~GCP_REORDER))
+        FIXME("flags 0x%08x ignored\n", dwFlags);
+    if(lpResults->lpClass)
+        FIXME("classes not implemented\n");
     if (lpResults->lpCaretPos && (dwFlags & GCP_REORDER))
         FIXME("Caret positions for complex scripts not implemented\n");
 
-	nSet = (UINT)uCount;
-	if(nSet > lpResults->nGlyphs)
-		nSet = lpResults->nGlyphs;
+    nSet = (UINT)uCount;
+    if(nSet > lpResults->nGlyphs)
+        nSet = lpResults->nGlyphs;
 
-	/* return number of initialized fields */
-	lpResults->nGlyphs = nSet;
+    /* return number of initialized fields */
+    lpResults->nGlyphs = nSet;
 
-	if((dwFlags&GCP_REORDER)==0 )
-	{
-		/* Treat the case where no special handling was requested in a fastpath way */
-		/* copy will do if the GCP_REORDER flag is not set */
-		if(lpResults->lpOutString)
-                    memcpy( lpResults->lpOutString, lpString, nSet * sizeof(WCHAR));
+    if((dwFlags&GCP_REORDER)==0 )
+    {
+        /* Treat the case where no special handling was requested in a fastpath way */
+        /* copy will do if the GCP_REORDER flag is not set */
+        if(lpResults->lpOutString)
+            memcpy( lpResults->lpOutString, lpString, nSet * sizeof(WCHAR));
 
-		if(lpResults->lpOrder)
-		{
-			for(i = 0; i < nSet; i++)
-				lpResults->lpOrder[i] = i;
-		}
-	} else
-	{
-            BIDI_Reorder(NULL, lpString, uCount, dwFlags, WINE_GCPW_FORCE_LTR, lpResults->lpOutString,
-                          nSet, lpResults->lpOrder, NULL, NULL );
-	}
+        if(lpResults->lpOrder)
+        {
+            for(i = 0; i < nSet; i++)
+                lpResults->lpOrder[i] = i;
+        }
+    }
+    else
+    {
+        BIDI_Reorder(NULL, lpString, uCount, dwFlags, WINE_GCPW_FORCE_LTR, lpResults->lpOutString,
+                     nSet, lpResults->lpOrder, NULL, NULL );
+    }
 
-	/* FIXME: Will use the placement chars */
-	if (lpResults->lpDx)
-	{
-		int c;
-		for (i = 0; i < nSet; i++)
-		{
-			if (GetCharWidth32W(hdc, lpString[i], lpString[i], &c))
-				lpResults->lpDx[i]= c;
-		}
-	}
+    /* FIXME: Will use the placement chars */
+    if (lpResults->lpDx)
+    {
+        int c;
+        for (i = 0; i < nSet; i++)
+        {
+            if (GetCharWidth32W(hdc, lpString[i], lpString[i], &c))
+                lpResults->lpDx[i]= c;
+        }
+    }
 
     if (lpResults->lpCaretPos && !(dwFlags & GCP_REORDER))
     {
         int pos = 0;
-       
+
         lpResults->lpCaretPos[0] = 0;
         for (i = 1; i < nSet; i++)
             if (GetTextExtentPoint32W(hdc, &(lpString[i - 1]), 1, &size))
                 lpResults->lpCaretPos[i] = (pos += size.cx);
     }
-   
+
     if(lpResults->lpGlyphs)
-	GetGlyphIndicesW(hdc, lpString, nSet, lpResults->lpGlyphs, 0);
+        GetGlyphIndicesW(hdc, lpString, nSet, lpResults->lpGlyphs, 0);
 
     if (GetTextExtentPoint32W(hdc, lpString, uCount, &size))
-      ret = MAKELONG(size.cx, size.cy);
+        ret = MAKELONG(size.cx, size.cy);
 
     return ret;
 }
