@@ -1007,12 +1007,12 @@ void VGA_SetPalette(PALETTEENTRY*pal,int start,int len)
 /* set a single [char wide] color in 16 color mode. */
 void VGA_SetColor16(int reg,int color)
 {
-	PALETTEENTRY *pal;
+    PALETTEENTRY *pal;
 
     if (!lpddraw) return;
-	pal= &vga_def64_palette[color];
-        IDirectDrawPalette_SetEntries(lpddpal,0,reg,1,pal);
-	vga_16_palette[reg]=(char)color;
+    pal= &vga_def64_palette[color];
+    IDirectDrawPalette_SetEntries(lpddpal,0,reg,1,pal);
+    vga_16_palette[reg]=(char)color;
 }
 
 /* Get a single [char wide] color in 16 color mode. */
@@ -1020,7 +1020,7 @@ char VGA_GetColor16(int reg)
 {
 
     if (!lpddraw) return 0;
-	return vga_16_palette[reg];
+    return vga_16_palette[reg];
 }
 
 /* set all 17 [char wide] colors at once in 16 color mode. */

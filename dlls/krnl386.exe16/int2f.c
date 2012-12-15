@@ -278,7 +278,7 @@ void WINAPI DOSVM_Int2fHandler( CONTEXT *context )
            if(BX_reg(context) == 0x5145 && CX_reg(context) == 0x4D4D
              && DX_reg(context) == 0x3432)
                TRACE("Check for QEMM v5.0+ (not installed)\n");
-               break;
+           break;
        default:
            INT_BARF( context, 0x2f );
            break;
@@ -302,7 +302,7 @@ void WINAPI DOSVM_Int2fHandler( CONTEXT *context )
            if(BX_reg(context) == 0x4450 && CX_reg(context) == 0x4d49
              && DX_reg(context) == 0x8f4f)
                TRACE("Check for QDPMI.SYS (not installed)\n");
-               break;
+           break;
        default:
            INT_BARF( context, 0x2f );
            break;
