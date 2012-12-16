@@ -2729,7 +2729,7 @@ static HRESULT WINAPI IServiceProvider_fnQueryService(IServiceProvider *iface,
                                                       REFIID riid, void **ppv)
 {
     FileDialogImpl *This = impl_from_IServiceProvider(iface);
-    HRESULT hr = E_FAIL;
+    HRESULT hr = E_NOTIMPL;
     TRACE("%p (%s, %s, %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
 
     *ppv = NULL;

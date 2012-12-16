@@ -277,17 +277,26 @@ static BOOL test_instantiation(void)
         IExplorerBrowser *peb;
         IShellBrowser *psb;
 
-        hr = IServiceProvider_QueryService(psp, &SID_STopLevelBrowser, &IID_IExplorerBrowser, (void**)&peb);
-        ok(hr == E_FAIL, "got 0x%08x.\n", hr);
-        if(SUCCEEDED(hr)) IExplorerBrowser_Release(peb);
-        hr = IServiceProvider_QueryService(psp, &SID_STopLevelBrowser, &IID_IShellBrowser, (void**)&psb);
-        ok(hr == E_FAIL, "got 0x%08x.\n", hr);
-        if(SUCCEEDED(hr)) IShellBrowser_Release(psb);
-        hr = IServiceProvider_QueryService(psp, &SID_STopLevelBrowser, &IID_ICommDlgBrowser, (void**)&punk);
-        ok(hr == E_FAIL, "got 0x%08x.\n", hr);
-        if(SUCCEEDED(hr)) IUnknown_Release(punk);
         hr = IServiceProvider_QueryService(psp, &SID_SExplorerBrowserFrame, &IID_ICommDlgBrowser, (void**)&punk);
         ok(hr == S_OK, "got 0x%08x.\n", hr);
+        if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+        /* since win8, the result is E_NOTIMPL for all other services */
+        hr = IServiceProvider_QueryService(psp, &SID_STopLevelBrowser, &IID_IExplorerBrowser, (void**)&peb);
+        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08x (expected E_NOTIMPL)\n", hr);
+        if(SUCCEEDED(hr)) IExplorerBrowser_Release(peb);
+        hr = IServiceProvider_QueryService(psp, &SID_STopLevelBrowser, &IID_IShellBrowser, (void**)&psb);
+        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08x (expected E_NOTIMPL)\n", hr);
+        if(SUCCEEDED(hr)) IShellBrowser_Release(psb);
+        hr = IServiceProvider_QueryService(psp, &SID_STopLevelBrowser, &IID_ICommDlgBrowser, (void**)&punk);
+        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08x (expected E_NOTIMPL)\n", hr);
+        if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+        hr = IServiceProvider_QueryService(psp, &SID_STopLevelBrowser, &IID_IUnknown, (void**)&punk);
+        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08x (expected E_NOTIMPL)\n", hr);
+        if(SUCCEEDED(hr)) IUnknown_Release(punk);
+        hr = IServiceProvider_QueryService(psp, &IID_IUnknown, &IID_IUnknown, (void**)&punk);
+        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08x (expected E_NOTIMPL)\n", hr);
         if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
         IServiceProvider_Release(psp);
