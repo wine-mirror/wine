@@ -1541,7 +1541,7 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3* iface, LPVOID ObjSourc
         }
         else if (hr != DXFILE_OK)
         {
-            ret = D3DRMERR_NOTFOUND;
+            ret = D3DRMERR_BADFILE;
             goto end;
         }
 
