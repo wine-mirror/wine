@@ -1121,6 +1121,8 @@ ok(typeof(tmp.test) === "undefined", "tmp.test type = " + typeof(tmp.test));
 ok(!("test" in tmp), "test is still in tmp after delete?");
 for(iter in tmp)
     ok(false, "tmp has prop " + iter);
+ok((delete tmp.test) === true, "deleting test didn't return true");
+ok((delete tmp.nonexistent) === true, "deleting nonexistent didn't return true");
 
 tmp = new Object();
 tmp.test = false;

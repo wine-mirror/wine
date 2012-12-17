@@ -1516,10 +1516,12 @@ HRESULT disp_delete_name(script_ctx_t *ctx, IDispatch *disp, jsstr_t *name, BOOL
         dispex_prop_t *prop;
 
         hres = find_prop_name(jsdisp, string_hash(name->str), name->str, &prop);
-        if(prop)
+        if(prop) {
             hres = delete_prop(prop, ret);
-        else
-            hres = DISP_E_MEMBERNOTFOUND;
+        }else {
+            *ret = TRUE;
+            hres = S_OK;
+        }
 
         jsdisp_release(jsdisp);
         return hres;
