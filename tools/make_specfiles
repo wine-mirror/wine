@@ -116,6 +116,10 @@ my @dll_groups =
   "atl",
   "atl80",
  ],
+ [
+  "advapi32",
+  "api-ms-win-downlevel-advapi32-l1-1-0",
+ ],
 );
 
 my $update_flags = 0;
