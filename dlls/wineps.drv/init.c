@@ -355,6 +355,8 @@ static INT PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
+    TRACE("%p,%d\n", dev->hdc, cap);
+
     switch(cap)
     {
     case DRIVERVERSION:
