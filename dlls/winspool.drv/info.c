@@ -2248,6 +2248,8 @@ INT WINAPI DeviceCapabilitiesA(LPCSTR pDevice,LPCSTR pPort, WORD cap,
 {
     INT ret;
 
+    TRACE("%s,%s,%u,%p,%p\n", debugstr_a(pDevice), debugstr_a(pPort), cap, pOutput, lpdm);
+
     if (!GDI_CallDeviceCapabilities16)
     {
         GDI_CallDeviceCapabilities16 = (void*)GetProcAddress( GetModuleHandleA("gdi32"),
@@ -2287,6 +2289,8 @@ INT WINAPI DeviceCapabilitiesW(LPCWSTR pDevice, LPCWSTR pPort,
     LPSTR pDeviceA = strdupWtoA(pDevice);
     LPSTR pPortA = strdupWtoA(pPort);
     INT ret;
+
+    TRACE("%s,%s,%u,%p,%p\n", debugstr_w(pDevice), debugstr_w(pPort), fwCapability, pOutput, pDevMode);
 
     if(pOutput && (fwCapability == DC_BINNAMES ||
 		   fwCapability == DC_FILEDEPENDENCIES ||
@@ -2453,6 +2457,8 @@ BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
     PRINTER_DEFAULTSW DefaultW, *pDefaultW = NULL;
     PWSTR pwstrPrinterNameW;
     BOOL ret;
+
+    TRACE("%s,%p,%p\n", debugstr_a(lpPrinterName), phPrinter, pDefault);
 
     pwstrPrinterNameW = asciitounicode(&lpPrinterNameW,lpPrinterName);
 
