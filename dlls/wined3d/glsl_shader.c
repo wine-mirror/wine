@@ -43,7 +43,7 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define WINED3D_GLSL_SAMPLE_PROJECTED   0x1
-#define WINED3D_GLSL_SAMPLE_RECT        0x2
+#define WINED3D_GLSL_SAMPLE_NPOT        0x2
 #define WINED3D_GLSL_SAMPLE_LOD         0x4
 #define WINED3D_GLSL_SAMPLE_GRAD        0x8
 
@@ -1861,7 +1861,7 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
     BOOL shadow = ctx->reg_maps->shader_version.type == WINED3D_SHADER_TYPE_PIXEL
             && (((const struct shader_glsl_ctx_priv *)ctx->backend_data)->cur_ps_args->shadow & (1 << sampler_idx));
     BOOL projected = flags & WINED3D_GLSL_SAMPLE_PROJECTED;
-    BOOL texrect = flags & WINED3D_GLSL_SAMPLE_RECT;
+    BOOL texrect = flags & WINED3D_GLSL_SAMPLE_NPOT && gl_info->supported[ARB_TEXTURE_RECTANGLE];
     BOOL lod = flags & WINED3D_GLSL_SAMPLE_LOD;
     BOOL grad = flags & WINED3D_GLSL_SAMPLE_GRAD;
 
@@ -3449,15 +3449,13 @@ static void shader_glsl_ret(const struct wined3d_shader_instruction *ins)
  ********************************************/
 static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 {
-    const struct wined3d_shader *shader = ins->ctx->shader;
-    struct wined3d_device *device = shader->device;
     DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
             ins->ctx->reg_maps->shader_version.minor);
     struct glsl_sample_function sample_function;
-    const struct wined3d_texture *texture;
     DWORD sample_flags = 0;
     DWORD sampler_idx;
     DWORD mask = 0, swizzle;
+    const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
 
     /* 1.0-1.4: Use destination register as sampler source.
      * 2.0+: Use provided sampler source. */
@@ -3465,11 +3463,9 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
         sampler_idx = ins->dst[0].reg.idx[0].offset;
     else
         sampler_idx = ins->src[1].reg.idx[0].offset;
-    texture = device->stateBlock->state.textures[sampler_idx];
 
     if (shader_version < WINED3D_SHADER_VERSION(1,4))
     {
-        const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
         DWORD flags = (priv->cur_ps_args->tex_transform >> sampler_idx * WINED3D_PSARGS_TEXTRANSFORM_SHIFT)
                 & WINED3D_PSARGS_TEXTRANSFORM_MASK;
         enum wined3d_sampler_texture_type sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
@@ -3516,8 +3512,8 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
         }
     }
 
-    if (texture && texture->target == GL_TEXTURE_RECTANGLE_ARB)
-        sample_flags |= WINED3D_GLSL_SAMPLE_RECT;
+    if (priv->cur_ps_args->np2_fixup & (1 << sampler_idx))
+        sample_flags |= WINED3D_GLSL_SAMPLE_NPOT;
 
     shader_glsl_get_sample_function(ins->ctx, sampler_idx, sample_flags, &sample_function);
     mask |= sample_function.coord_mask;
@@ -3553,15 +3549,13 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 {
-    const struct wined3d_shader *shader = ins->ctx->shader;
-    struct wined3d_device *device = shader->device;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     struct glsl_src_param coord_param, dx_param, dy_param;
     DWORD sample_flags = WINED3D_GLSL_SAMPLE_GRAD;
     struct glsl_sample_function sample_function;
     DWORD sampler_idx;
     DWORD swizzle = ins->src[1].swizzle;
-    const struct wined3d_texture *texture;
+    const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
 
     if (!gl_info->supported[ARB_SHADER_TEXTURE_LOD] && !gl_info->supported[EXT_GPU_SHADER4])
     {
@@ -3571,9 +3565,8 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
     }
 
     sampler_idx = ins->src[1].reg.idx[0].offset;
-    texture = device->stateBlock->state.textures[sampler_idx];
-    if (texture && texture->target == GL_TEXTURE_RECTANGLE_ARB)
-        sample_flags |= WINED3D_GLSL_SAMPLE_RECT;
+    if (priv->cur_ps_args->np2_fixup & (1 << sampler_idx))
+        sample_flags |= WINED3D_GLSL_SAMPLE_NPOT;
 
     shader_glsl_get_sample_function(ins->ctx, sampler_idx, sample_flags, &sample_function);
     shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask, &coord_param);
@@ -3586,20 +3579,18 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
 {
-    const struct wined3d_shader *shader = ins->ctx->shader;
-    struct wined3d_device *device = shader->device;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     struct glsl_src_param coord_param, lod_param;
     DWORD sample_flags = WINED3D_GLSL_SAMPLE_LOD;
     struct glsl_sample_function sample_function;
     DWORD sampler_idx;
     DWORD swizzle = ins->src[1].swizzle;
-    const struct wined3d_texture *texture;
+    const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
 
     sampler_idx = ins->src[1].reg.idx[0].offset;
-    texture = device->stateBlock->state.textures[sampler_idx];
-    if (texture && texture->target == GL_TEXTURE_RECTANGLE_ARB)
-        sample_flags |= WINED3D_GLSL_SAMPLE_RECT;
+    if (ins->ctx->reg_maps->shader_version.type == WINED3D_SHADER_TYPE_PIXEL
+            && priv->cur_ps_args->np2_fixup & (1 << sampler_idx))
+        sample_flags |= WINED3D_GLSL_SAMPLE_NPOT;
 
     shader_glsl_get_sample_function(ins->ctx, sampler_idx, sample_flags, &sample_function);
     shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask, &coord_param);
