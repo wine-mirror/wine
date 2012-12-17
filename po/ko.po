@@ -3530,7 +3530,7 @@ msgstr "끝나지 않은 문자열 상수"
 
 #: jscript.rc:39
 msgid "'return' statement outside of function"
-msgstr ""
+msgstr "함수 밖에 'return'문장이 있음 "
 
 #: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
@@ -3542,7 +3542,7 @@ msgstr "루프 바깥에는 'continue'를 사용할 수 없음"
 
 #: jscript.rc:42
 msgid "Label redefined"
-msgstr "라벨이 정의되지 않음"
+msgstr "라벨이 중복정의됨"
 
 #: jscript.rc:43
 msgid "Label not found"
