@@ -2,6 +2,7 @@ MODULE    = winemac.drv
 IMPORTS   = user32 gdi32 advapi32
 
 C_SRCS = \
+	gdi.c \
 	macdrv_main.c
 
 @MAKE_DLL_RULES@
