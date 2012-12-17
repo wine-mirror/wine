@@ -120,6 +120,10 @@ my @dll_groups =
   "advapi32",
   "api-ms-win-downlevel-advapi32-l1-1-0",
  ],
+ [
+  "shlwapi",
+  "api-ms-win-downlevel-shlwapi-l1-1-0",
+ ],
 );
 
 my $update_flags = 0;
