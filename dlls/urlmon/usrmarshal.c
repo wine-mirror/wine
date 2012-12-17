@@ -26,30 +26,30 @@ HRESULT CALLBACK IWinInetHttpInfo_QueryInfo_Proxy(IWinInetHttpInfo* This,
     DWORD dwOption, LPVOID pBuffer, DWORD *pcbBuf, DWORD *pdwFlags,
     DWORD *pdwReserved)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p %x %p %p %p %p)\n", This, dwOption, pBuffer, pcbBuf, pdwFlags, pdwReserved);
+    return IWinInetHttpInfo_RemoteQueryInfo_Proxy(This, dwOption, pBuffer, pcbBuf, pdwFlags, pdwReserved);
 }
 
 HRESULT __RPC_STUB IWinInetHttpInfo_QueryInfo_Stub(IWinInetHttpInfo* This,
     DWORD dwOption, BYTE *pBuffer, DWORD *pcbBuf, DWORD *pdwFlags,
     DWORD *pdwReserved)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p %x %p %p %p %p)\n", This, dwOption, pBuffer, pcbBuf, pdwFlags, pdwReserved);
+    return IWinInetHttpInfo_QueryInfo(This, dwOption, pBuffer, pcbBuf, pdwFlags, pdwReserved);
 }
 
 HRESULT CALLBACK IWinInetInfo_QueryOption_Proxy(IWinInetInfo* This,
         DWORD dwOption, LPVOID pBuffer, DWORD *pcbBuf)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p %x %p %p)\n", This, dwOption, pBuffer, pcbBuf);
+    return IWinInetInfo_RemoteQueryOption_Proxy(This, dwOption, pBuffer, pcbBuf);
 }
 
 HRESULT __RPC_STUB IWinInetInfo_QueryOption_Stub(IWinInetInfo* This,
         DWORD dwOption, BYTE *pBuffer, DWORD *pcbBuf)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p %x %p %p)\n", This, dwOption, pBuffer, pcbBuf);
+    return IWinInetInfo_QueryOption(This, dwOption, pBuffer, pcbBuf);
 }
 
 HRESULT CALLBACK IBindHost_MonikerBindToStorage_Proxy(IBindHost* This,
