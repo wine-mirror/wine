@@ -933,7 +933,7 @@
 @ cdecl _fsopen(str str long) msvcrt._fsopen
 @ cdecl _fstat(long ptr) msvcrt._fstat
 @ cdecl _ftime(ptr) msvcrt._ftime
-@ cdecl -ret64 _ftol() msvcrt._ftol
+@ cdecl -arch=i386 -ret64 _ftol() msvcrt._ftol
 @ cdecl _fullpath(ptr str long) msvcrt._fullpath
 @ cdecl _futime(long ptr) msvcrt._futime
 @ cdecl _gcvt(double long str) msvcrt._gcvt

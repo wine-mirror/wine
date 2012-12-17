@@ -343,7 +343,7 @@
 @ cdecl _amsg_exit(long) msvcrt._amsg_exit
 @ cdecl _assert(str str long) msvcrt._assert
 @ cdecl _atodbl(ptr str) msvcrt._atodbl
-@ stub _atodbl_l
+@ cdecl _atodbl_l(ptr str ptr) msvcrt._atodbl_l
 @ cdecl _atof_l(str ptr) msvcrt._atof_l
 @ cdecl _atoflt(ptr str) msvcr100._atoflt
 @ cdecl _atoflt_l(ptr str ptr) msvcrt._atoflt_l
@@ -504,7 +504,7 @@
 @ cdecl _ftime32_s(ptr) msvcrt._ftime32_s
 @ cdecl _ftime64(ptr) msvcrt._ftime64
 @ cdecl _ftime64_s(ptr) msvcrt._ftime64_s
-@ cdecl -ret64 _ftol() msvcrt._ftol
+@ cdecl -arch=i386 -ret64 _ftol() msvcrt._ftol
 @ cdecl _fullpath(ptr str long) msvcrt._fullpath
 @ cdecl _futime32(long ptr) msvcrt._futime32
 @ cdecl _futime64(long ptr) msvcrt._futime64

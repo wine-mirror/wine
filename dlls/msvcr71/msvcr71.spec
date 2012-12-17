@@ -317,7 +317,7 @@
 @ cdecl _fstati64(long ptr) msvcrt._fstati64
 @ cdecl _ftime(ptr) msvcrt._ftime
 @ cdecl _ftime64(ptr) msvcrt._ftime64
-@ cdecl -ret64 _ftol() msvcrt._ftol
+@ cdecl -arch=i386 -ret64 _ftol() msvcrt._ftol
 @ cdecl _fullpath(ptr str long) msvcrt._fullpath
 @ cdecl _futime(long ptr) msvcrt._futime
 @ cdecl _futime64(long ptr) msvcrt._futime64
