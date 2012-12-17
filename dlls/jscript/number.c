@@ -99,15 +99,17 @@ static inline jsstr_t *number_to_fixed(double val, int prec)
     jsstr_t *ret;
     WCHAR *str;
 
+    TRACE("%lf %d\n", val, prec);
+
     if(val < 0) {
         neg = TRUE;
         val = -val;
     }
 
-    if(val<=-1 || val>=1)
+    if(val >= 1)
         buf_size = log10(val)+prec+2;
     else
-        buf_size = prec+1;
+        buf_size = prec ? prec+1 : 2;
     if(buf_size > NUMBER_DTOA_SIZE)
         buf_size = NUMBER_DTOA_SIZE;
 

@@ -1204,6 +1204,14 @@ ok(tmp === "101.1", "num(5.5).toString(2) = " + tmp);
 
 tmp = (new Number(3)).toFixed(3);
 ok(tmp === "3.000", "num(3).toFixed(3) = " + tmp);
+tmp = (new Number(3)).toFixed();
+ok(tmp === "3", "Number(3).toFixed() = " + tmp);
+tmp = (new Number(0)).toFixed();
+ok(tmp === "0", "Number(0).toFixed() = " + tmp);
+tmp = (new Number(0)).toFixed(1);
+ok(tmp === "0.0", "Number(0).toFixed(1) = " + tmp);
+tmp = (new Number(0)).toFixed(2);
+ok(tmp === "0.00", "Number(0).toFixed(2) = " + tmp);
 tmp = (new Number(1.76)).toFixed(1);
 ok(tmp === "1.8", "num(1.76).toFixed(1) = " + tmp);
 tmp = (new Number(7.92)).toFixed(5);
