@@ -140,6 +140,7 @@ typedef int (__cdecl *_onexit_t)(void);
 
 
 int           __cdecl _atodbl(_CRT_DOUBLE*,char*);
+int           __cdecl _atodbl_l(_CRT_DOUBLE*,char*,_locale_t);
 int           __cdecl _atoflt(_CRT_FLOAT*,char*);
 int           __cdecl _atoflt_l(_CRT_FLOAT*,char*,_locale_t);
 __int64       __cdecl _atoi64(const char*);
