@@ -393,6 +393,24 @@ static void test_MeshBuilder(void)
     val = IDirect3DRMMeshBuilder_GetFaceCount(pMeshBuilder);
     ok(val == 1, "Wrong number of faces %d (must be 1)\n", val);
 
+    /* Check no buffer size and too small buffer size errors */
+    val1 = 1; val2 = 3; val3 = 8;
+    hr = IDirect3DRMMeshBuilder_GetVertices(pMeshBuilder, &val1, v, &val2, n, &val3, f);
+    ok(hr == D3DRMERR_BADVALUE, "IDirect3DRMMeshBuilder_GetVertices returned %#x\n", hr);
+    hr = IDirect3DRMMeshBuilder_GetVertices(pMeshBuilder, NULL, v, &val2, n, &val3, f);
+    ok(hr == D3DRMERR_BADVALUE, "IDirect3DRMMeshBuilder_GetVertices returned %#x\n", hr);
+    val1 = 3; val2 = 1; val3 = 8;
+    hr = IDirect3DRMMeshBuilder_GetVertices(pMeshBuilder, &val1, v, &val2, n, &val3, f);
+    ok(hr == D3DRMERR_BADVALUE, "IDirect3DRMMeshBuilder_GetVertices returned %#x\n", hr);
+    hr = IDirect3DRMMeshBuilder_GetVertices(pMeshBuilder, &val1, v, NULL, n, &val3, f);
+    ok(hr == D3DRMERR_BADVALUE, "IDirect3DRMMeshBuilder_GetVertices returned %#x\n", hr);
+    val1 = 3; val2 = 3; val3 = 1;
+    hr = IDirect3DRMMeshBuilder_GetVertices(pMeshBuilder, &val1, v, &val2, n, &val3, f);
+    ok(hr == D3DRMERR_BADVALUE, "IDirect3DRMMeshBuilder_GetVertices returned %#x\n", hr);
+    hr = IDirect3DRMMeshBuilder_GetVertices(pMeshBuilder, &val1, v, &val2, n, NULL, f);
+    ok(hr == D3DRMERR_BADVALUE, "IDirect3DRMMeshBuilder_GetVertices returned %#x\n", hr);
+
+    val1 = 3; val2 = 3; val3 = 8;
     hr = IDirect3DRMMeshBuilder_GetVertices(pMeshBuilder, &val1, v, &val2, n, &val3, f);
     ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);
     ok(val1 == 3, "Wrong number of vertices %d (must be 3)\n", val1);

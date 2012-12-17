@@ -801,14 +801,22 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetVertices(IDirect3DRMMeshBui
 
     TRACE("(%p)->(%p,%p,%p,%p,%p,%p)\n", This, vcount, vertices, ncount, normals, face_data_size, face_data);
 
+    if (vertices && (!vcount || (*vcount < This->nb_vertices)))
+        return D3DRMERR_BADVALUE;
     if (vcount)
         *vcount = This->nb_vertices;
     if (vertices && This->nb_vertices)
         memcpy(vertices, This->pVertices, This->nb_vertices * sizeof(D3DVECTOR));
+
+    if (normals && (!ncount || (*ncount < This->nb_normals)))
+        return D3DRMERR_BADVALUE;
     if (ncount)
         *ncount = This->nb_normals;
     if (normals && This->nb_normals)
         memcpy(normals, This->pNormals, This->nb_normals * sizeof(D3DVECTOR));
+
+    if (face_data && (!face_data_size || (*face_data_size < This->face_data_size)))
+        return D3DRMERR_BADVALUE;
     if (face_data_size)
         *face_data_size = This->face_data_size;
     if (face_data && This->face_data_size)
