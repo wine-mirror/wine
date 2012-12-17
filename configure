@@ -6673,7 +6673,7 @@ done
     then
         CARBONLIB="-framework Carbon"
 
-        enable_winequartz_drv=${enable_winequartz_drv:-yes}
+        enable_winemac_drv=${enable_winemac_drv:-yes}
     fi
         if test "x$enable_win16" = "xyes"
     then
@@ -7129,7 +7129,7 @@ $as_echo "$ac_cv_c_dll_hpux" >&6; }
 esac
 
 enable_wineqtdecoder=${enable_wineqtdecoder:-no}
-enable_winequartz_drv=${enable_winequartz_drv:-no}
+enable_winemac_drv=${enable_winemac_drv:-no}
 
 if test "$LIBEXT" = "a"; then
   as_fn_error $? "could not find a way to build shared libraries.
@@ -15866,13 +15866,13 @@ wine_fn_config_lib winecrt0
 wine_fn_config_dll wined3d enable_wined3d implib
 wine_fn_config_dll winegstreamer enable_winegstreamer
 wine_fn_config_dll winejoystick.drv enable_winejoystick_drv
+wine_fn_config_dll winemac.drv enable_winemac_drv
 wine_fn_config_dll winemapi enable_winemapi
 wine_fn_config_dll winemp3.acm enable_winemp3_acm
 wine_fn_config_dll wineoss.drv enable_wineoss_drv
 wine_fn_config_dll wineps.drv enable_wineps_drv install-lib,po
 wine_fn_config_dll wineps16.drv16 enable_win16
 wine_fn_config_dll wineqtdecoder enable_wineqtdecoder
-wine_fn_config_dll winequartz.drv enable_winequartz_drv
 wine_fn_config_dll winex11.drv enable_winex11_drv
 wine_fn_config_dll wing.dll16 enable_win16
 wine_fn_config_dll wing32 enable_wing32

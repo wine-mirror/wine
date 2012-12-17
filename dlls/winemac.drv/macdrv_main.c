@@ -1,5 +1,5 @@
 /*
- * QUARTZDRV initialization code
+ * MACDRV initialization code
  *
  * Copyright 1998 Patrik Stridvall
  * Copyright 2000 Alexandre Julliard
@@ -27,7 +27,7 @@
 #include "winreg.h"
 
 /***********************************************************************
- *           QUARTZDRV initialisation routine
+ *           MACDRV initialisation routine
  */
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {

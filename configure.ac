@@ -796,11 +796,11 @@ case $host_os in
     else
         WINE_NOTICE([QuickTime ${notice_platform}development files not found, video decoding won't be supported.])
     fi
-    dnl Enable quartz driver on Mac OS X
+    dnl Enable Mac driver on Mac OS X
     if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
     then
         AC_SUBST(CARBONLIB,"-framework Carbon")
-        enable_winequartz_drv=${enable_winequartz_drv:-yes}
+        enable_winemac_drv=${enable_winemac_drv:-yes}
     fi
     dnl Check for Xcode 3.x broken 16-bit support
     if test "x$enable_win16" = "xyes"
@@ -899,7 +899,7 @@ case $host_os in
 esac
 
 enable_wineqtdecoder=${enable_wineqtdecoder:-no}
-enable_winequartz_drv=${enable_winequartz_drv:-no}
+enable_winemac_drv=${enable_winemac_drv:-no}
 
 if test "$LIBEXT" = "a"; then
   AC_MSG_ERROR(
@@ -3045,13 +3045,13 @@ WINE_CONFIG_LIB(winecrt0)
 WINE_CONFIG_DLL(wined3d,,[implib])
 WINE_CONFIG_DLL(winegstreamer)
 WINE_CONFIG_DLL(winejoystick.drv)
+WINE_CONFIG_DLL(winemac.drv)
 WINE_CONFIG_DLL(winemapi)
 WINE_CONFIG_DLL(winemp3.acm)
 WINE_CONFIG_DLL(wineoss.drv)
 WINE_CONFIG_DLL(wineps.drv,,[install-lib,po])
 WINE_CONFIG_DLL(wineps16.drv16,enable_win16)
 WINE_CONFIG_DLL(wineqtdecoder)
-WINE_CONFIG_DLL(winequartz.drv)
 WINE_CONFIG_DLL(winex11.drv)
 WINE_CONFIG_DLL(wing.dll16,enable_win16)
 WINE_CONFIG_DLL(wing32)

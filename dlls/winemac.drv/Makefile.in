@@ -1,7 +1,7 @@
-MODULE    = winequartz.drv
+MODULE    = winemac.drv
 IMPORTS   = user32 gdi32 advapi32
 
 C_SRCS = \
-	quartzdrv_main.c
+	macdrv_main.c
 
 @MAKE_DLL_RULES@
