@@ -1126,8 +1126,8 @@ static BOOL set_entry( void *ptr, UINT int_param, void *ptr_param, UINT flags )
                                                     name ##_VALNAME }, data, sizeof(data) }
 
 #define PATH_ENTRY(name) \
-    struct sysparam_binary_entry entry_##name = { { get_path_entry, set_path_entry, init_path_entry, \
-                                                    name ##_VALNAME } }
+    struct sysparam_path_entry entry_##name = { { get_path_entry, set_path_entry, init_path_entry, \
+                                                  name ##_VALNAME } }
 
 #define FONT_ENTRY(name,weight) \
     struct sysparam_font_entry entry_##name = { { get_font_entry, set_font_entry, init_font_entry, \
