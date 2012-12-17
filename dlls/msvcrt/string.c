@@ -455,6 +455,29 @@ int CDECL MSVCRT__atoflt_l( MSVCRT__CRT_FLOAT *value, char *str, MSVCRT__locale_
 }
 
 /*********************************************************************
+ *              _atodbl_l  (MSVCRT.@)
+ */
+int CDECL MSVCRT__atodbl_l(MSVCRT__CRT_DOUBLE *value, char *str, MSVCRT__locale_t locale)
+{
+    int err;
+
+    value->x = strtod_helper(str, NULL, locale, &err);
+    if(isinf(value->x))
+        return MSVCRT__OVERFLOW;
+    if((value->x!=0 || err) && value->x>-MSVCRT_DBL_MIN && value->x<MSVCRT_DBL_MIN)
+        return MSVCRT__UNDERFLOW;
+    return 0;
+}
+
+/*********************************************************************
+ *              _atodbl  (MSVCRT.@)
+ */
+int CDECL MSVCRT__atodbl(MSVCRT__CRT_DOUBLE *value, char *str)
+{
+    return MSVCRT__atodbl_l(value, str, NULL);
+}
+
+/*********************************************************************
  *		_strcoll_l (MSVCRT.@)
  */
 int CDECL MSVCRT_strcoll_l( const char* str1, const char* str2, MSVCRT__locale_t locale )

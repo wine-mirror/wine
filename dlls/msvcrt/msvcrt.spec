@@ -300,8 +300,8 @@
 # stub _aligned_realloc_dbg(ptr long long str long)
 @ cdecl _amsg_exit(long)
 @ cdecl _assert(str str long) MSVCRT__assert
-@ stub _atodbl(ptr str)
-# stub _atodbl_l(ptr str ptr)
+@ cdecl _atodbl(ptr str) MSVCRT__atodbl
+@ cdecl _atodbl_l(ptr str ptr) MSVCRT__atodbl_l
 @ cdecl _atof_l(str ptr) MSVCRT__atof_l
 @ cdecl _atoflt_l(ptr str ptr) MSVCRT__atoflt_l
 @ cdecl -ret64 _atoi64(str) ntdll._atoi64

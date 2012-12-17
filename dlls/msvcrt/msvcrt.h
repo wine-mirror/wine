@@ -986,6 +986,7 @@ int pf_printf_w(puts_clbk_w, void*, const MSVCRT_wchar_t*, MSVCRT__locale_t,
 printf_arg arg_clbk_valist(void*, int, int, __ms_va_list*) DECLSPEC_HIDDEN;
 
 #define MSVCRT_FLT_MIN 1.175494351e-38F
+#define MSVCRT_DBL_MIN 2.2250738585072014e-308
 #define MSVCRT__OVERFLOW  3
 #define MSVCRT__UNDERFLOW 4
 
@@ -993,5 +994,10 @@ typedef struct
 {
     float f;
 } MSVCRT__CRT_FLOAT;
+
+typedef struct
+{
+    double x;
+} MSVCRT__CRT_DOUBLE;
 
 #endif /* __WINE_MSVCRT_H */
