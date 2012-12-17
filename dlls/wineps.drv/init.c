@@ -48,28 +48,29 @@ static const PSDRV_DEVMODE DefaultDevmode =
 /* dmDriverVersion */	0x001,
 /* dmSize */		sizeof(DEVMODEW),
 /* dmDriverExtra */	sizeof(PSDRV_DEVMODE)-sizeof(DEVMODEW),
-/* dmFields */		DM_ORIENTATION | DM_PAPERSIZE | DM_SCALE |
-			DM_COPIES | DM_DEFAULTSOURCE | DM_COLOR |
-		        DM_YRESOLUTION | DM_TTOPTION,
+/* dmFields */		DM_ORIENTATION | DM_PAPERSIZE | DM_PAPERLENGTH | DM_PAPERWIDTH |
+			DM_SCALE | DM_COPIES | DM_DEFAULTSOURCE | DM_PRINTQUALITY |
+			DM_COLOR | DM_DUPLEX | DM_YRESOLUTION | DM_TTOPTION |
+			DM_COLLATE | DM_FORMNAME,
    { /* u1 */
      { /* s1 */
 /* dmOrientation */	DMORIENT_PORTRAIT,
 /* dmPaperSize */	DMPAPER_LETTER,
 /* dmPaperLength */	2794,
 /* dmPaperWidth */      2159,
-/* dmScale */		100, /* ?? */
+/* dmScale */		100,
 /* dmCopies */		1,
 /* dmDefaultSource */	DMBIN_AUTO,
-/* dmPrintQuality */	0
+/* dmPrintQuality */	300
      }
    },
 /* dmColor */		DMCOLOR_COLOR,
 /* dmDuplex */		DMDUP_SIMPLEX,
-/* dmYResolution */	0,
+/* dmYResolution */	300,
 /* dmTTOption */	DMTT_SUBDEV,
-/* dmCollate */		0,
-/* dmFormName */        {},
-/* dmUnusedPadding */   0,
+/* dmCollate */		DMCOLLATE_FALSE,
+/* dmFormName */	{'L','e','t','t','e','r',0},
+/* dmLogPixels */	0,
 /* dmBitsPerPel */	0,
 /* dmPelsWidth */	0,
 /* dmPelsHeight */	0,
