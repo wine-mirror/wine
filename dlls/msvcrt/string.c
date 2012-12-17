@@ -280,10 +280,7 @@ void CDECL MSVCRT__swab(char* src, char* dst, int len)
   }
 }
 
-/*********************************************************************
- *		strtod_l  (MSVCRT.@)
- */
-double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t locale)
+static double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale, int *err)
 {
     MSVCRT_pthreadlocinfo locinfo;
     unsigned __int64 d=0, hlp;
@@ -294,7 +291,10 @@ double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t loca
     long double lret=1, expcnt = 10;
     BOOL found_digit = FALSE, negexp;
 
-    if (!MSVCRT_CHECK_PMT(str != NULL)) return 0;
+    if(err)
+        *err = 0;
+    else
+        if(!MSVCRT_CHECK_PMT(str != NULL)) return 0;
 
     if(!locale)
         locinfo = get_locinfo();
@@ -392,13 +392,25 @@ double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t loca
 
     _control87(fpcontrol, 0xffffffff);
 
-    if((d && ret==0.0) || isinf(ret))
-        *MSVCRT__errno() = MSVCRT_ERANGE;
+    if((d && ret==0.0) || isinf(ret)) {
+        if(err)
+            *err = MSVCRT_ERANGE;
+        else
+            *MSVCRT__errno() = MSVCRT_ERANGE;
+    }
 
     if(end)
         *end = (char*)p;
 
     return ret;
+}
+
+/*********************************************************************
+ *		strtod_l  (MSVCRT.@)
+ */
+double CDECL MSVCRT_strtod_l(const char *str, char **end, MSVCRT__locale_t locale)
+{
+    return strtod_helper(str, end, locale, NULL);
 }
 
 /*********************************************************************
@@ -430,107 +442,16 @@ double CDECL MSVCRT__atof_l( const char *str, MSVCRT__locale_t locale)
  */
 int CDECL MSVCRT__atoflt_l( MSVCRT__CRT_FLOAT *value, char *str, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
-    unsigned __int64 d=0, hlp;
-    unsigned fpcontrol;
-    int exp=0, sign=1;
-    const char *p;
-    int ret=0;
-    BOOL found_digit = FALSE;
+    double d;
+    int err;
 
-    if(!locale)
-        locinfo = get_locinfo();
-    else
-        locinfo = locale->locinfo;
-
-    /* FIXME: use *_l functions */
-    p = str;
-    while(isspace(*p))
-        p++;
-
-    if(*p == '-') {
-        sign = -1;
-        p++;
-    } else if(*p == '+')
-        p++;
-
-    while(isdigit(*p)) {
-        found_digit = TRUE;
-        hlp = d*10+*(p++)-'0';
-        if(d>MSVCRT_UI64_MAX/10 || hlp<d) {
-            exp++;
-            break;
-        } else
-            d = hlp;
-    }
-    while(isdigit(*p)) {
-        exp++;
-        p++;
-    }
-
-    if(*p == *locinfo->lconv->decimal_point)
-        p++;
-
-    while(isdigit(*p)) {
-        found_digit = TRUE;
-        hlp = d*10+*(p++)-'0';
-        if(d>MSVCRT_UI64_MAX/10 || hlp<d)
-            break;
-
-        d = hlp;
-        exp--;
-    }
-    while(isdigit(*p))
-        p++;
-
-    if(!found_digit) {
-        value->f = 0.0;
-        return 0;
-    }
-
-    if(*p=='e' || *p=='E' || *p=='d' || *p=='D') {
-        int e=0, s=1;
-
-        p++;
-        if(*p == '-') {
-            s = -1;
-            p++;
-        } else if(*p == '+')
-            p++;
-
-        if(isdigit(*p)) {
-            while(isdigit(*p)) {
-                if(e>INT_MAX/10 || (e=e*10+*p-'0')<0)
-                    e = INT_MAX;
-                p++;
-            }
-            e *= s;
-
-            if(exp<0 && e<0 && exp+e>=0) exp = INT_MIN;
-            else if(exp>0 && e>0 && exp+e<0) exp = INT_MAX;
-            else exp += e;
-        } else {
-            if(*p=='-' || *p=='+')
-                p--;
-            p--;
-        }
-    }
-
-    fpcontrol = _control87(0, 0);
-    _control87(MSVCRT__EM_DENORMAL|MSVCRT__EM_INVALID|MSVCRT__EM_ZERODIVIDE
-            |MSVCRT__EM_OVERFLOW|MSVCRT__EM_UNDERFLOW|MSVCRT__EM_INEXACT, 0xffffffff);
-
-    if(exp>0)
-        value->f = (double)sign*d*pow(10, exp);
-    else
-        value->f = (double)sign*d/pow(10, -exp);
-
-    _control87(fpcontrol, 0xffffffff);
-
-    if((d && value->f>-MSVCRT_FLT_MIN && value->f<MSVCRT_FLT_MIN) || isinf(value->f))
-        ret = exp > 0 ? MSVCRT__OVERFLOW : MSVCRT__UNDERFLOW;
-
-    return ret;
+    d = strtod_helper(str, NULL, locale, &err);
+    value->f = d;
+    if(isinf(value->f))
+        return MSVCRT__OVERFLOW;
+    if((d!=0 || err) && value->f>-MSVCRT_FLT_MIN && value->f<MSVCRT_FLT_MIN)
+        return MSVCRT__UNDERFLOW;
+    return 0;
 }
 
 /*********************************************************************
