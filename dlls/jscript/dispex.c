@@ -1501,7 +1501,7 @@ HRESULT disp_delete(IDispatch *disp, DISPID id, BOOL *ret)
     if(FAILED(hres))
         return hres;
 
-    *ret = TRUE;
+    *ret = hres == S_OK;
     return S_OK;
 }
 

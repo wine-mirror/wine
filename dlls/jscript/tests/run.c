@@ -81,6 +81,7 @@ DEFINE_EXPECT(global_propget_i);
 DEFINE_EXPECT(global_propput_d);
 DEFINE_EXPECT(global_propput_i);
 DEFINE_EXPECT(global_propdelete_d);
+DEFINE_EXPECT(global_nopropdelete_d);
 DEFINE_EXPECT(global_success_d);
 DEFINE_EXPECT(global_success_i);
 DEFINE_EXPECT(global_notexists_d);
@@ -102,6 +103,7 @@ DEFINE_EXPECT(GetItemInfo_testVal);
 DEFINE_EXPECT(ActiveScriptSite_OnScriptError);
 DEFINE_EXPECT(invoke_func);
 DEFINE_EXPECT(DeleteMemberByDispID);
+DEFINE_EXPECT(DeleteMemberByDispID_false);
 
 #define DISPID_GLOBAL_TESTPROPGET   0x1000
 #define DISPID_GLOBAL_TESTPROPPUT   0x1001
@@ -130,7 +132,8 @@ DEFINE_EXPECT(DeleteMemberByDispID);
 #define DISPID_GLOBAL_TESTRES       0x1018
 #define DISPID_GLOBAL_TESTNORES     0x1019
 
-#define DISPID_GLOBAL_TESTPROPDELETE  0x2000
+#define DISPID_GLOBAL_TESTPROPDELETE    0x2000
+#define DISPID_GLOBAL_TESTNOPROPDELETE  0x2001
 
 #define DISPID_TESTOBJ_PROP         0x2000
 #define DISPID_TESTOBJ_ONLYDISPID   0x2001
@@ -495,6 +498,12 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         CHECK_EXPECT(global_propdelete_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTPROPDELETE;
+        return S_OK;
+    }
+    if(!strcmp_wa(bstrName, "testNoPropDelete")) {
+        CHECK_EXPECT(global_nopropdelete_d);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        *pid = DISPID_GLOBAL_TESTNOPROPDELETE;
         return S_OK;
     }
     if(!strcmp_wa(bstrName, "getVT")) {
@@ -1082,9 +1091,18 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
 static HRESULT WINAPI Global_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
 {
-    CHECK_EXPECT(DeleteMemberByDispID);
-    ok(id == DISPID_GLOBAL_TESTPROPDELETE, "id = %d\n", id);
-    return S_OK;
+    switch(id) {
+    case DISPID_GLOBAL_TESTPROPDELETE:
+        CHECK_EXPECT(DeleteMemberByDispID);
+        return S_OK;
+    case DISPID_GLOBAL_TESTNOPROPDELETE:
+        CHECK_EXPECT(DeleteMemberByDispID_false);
+        return S_FALSE;
+    default:
+        ok(0, "id = %d\n", id);
+    }
+
+    return E_FAIL;
 }
 
 static IDispatchExVtbl GlobalVtbl = {
@@ -1855,9 +1873,15 @@ static BOOL run_tests(void)
 
     SET_EXPECT(global_propdelete_d);
     SET_EXPECT(DeleteMemberByDispID);
-    parse_script_a("delete testPropDelete;");
+    parse_script_a("ok((delete testPropDelete) === true, 'delete testPropDelete did not return true');");
     CHECK_CALLED(global_propdelete_d);
     CHECK_CALLED(DeleteMemberByDispID);
+
+    SET_EXPECT(global_nopropdelete_d);
+    SET_EXPECT(DeleteMemberByDispID_false);
+    parse_script_a("ok((delete testNoPropDelete) === false, 'delete testPropDelete did not return false');");
+    CHECK_CALLED(global_nopropdelete_d);
+    CHECK_CALLED(DeleteMemberByDispID_false);
 
     SET_EXPECT(puredisp_prop_d);
     parse_script_a("ok((delete pureDisp.prop) === false, 'delete pureDisp.prop did not return true');");
