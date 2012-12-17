@@ -1535,7 +1535,8 @@ HRESULT disp_delete_name(script_ctx_t *ctx, IDispatch *disp, jsstr_t *name, BOOL
         if(bstr) {
             hres = IDispatchEx_DeleteMemberByName(dispex, bstr, make_grfdex(ctx, fdexNameCaseSensitive));
             SysFreeString(bstr);
-            *ret = TRUE;
+            if(SUCCEEDED(hres))
+                *ret = hres == S_OK;
         }else {
             hres = E_OUTOFMEMORY;
         }

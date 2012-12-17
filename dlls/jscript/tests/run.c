@@ -89,7 +89,8 @@ DEFINE_EXPECT(global_propargput_i);
 DEFINE_EXPECT(global_testargtypes_i);
 DEFINE_EXPECT(puredisp_prop_d);
 DEFINE_EXPECT(puredisp_noprop_d);
-DEFINE_EXPECT(testobj_delete);
+DEFINE_EXPECT(testobj_delete_test);
+DEFINE_EXPECT(testobj_delete_nodelete);
 DEFINE_EXPECT(testobj_value);
 DEFINE_EXPECT(testobj_prop_d);
 DEFINE_EXPECT(testobj_withprop_d);
@@ -402,11 +403,19 @@ static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid,
 
 static HRESULT WINAPI testObj_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
 {
-    CHECK_EXPECT(testobj_delete);
+    if(!strcmp_wa(bstrName, "deleteTest")) {
+        CHECK_EXPECT(testobj_delete_test);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        return S_OK;
+    }
+    if(!strcmp_wa(bstrName, "noDeleteTest")) {
+        CHECK_EXPECT(testobj_delete_nodelete);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        return S_FALSE;
+    }
 
-    ok(!strcmp_wa(bstrName, "deleteTest"), "unexpected name %s\n", wine_dbgstr_w(bstrName));
-    test_grfdex(grfdex, fdexNameCaseSensitive);
-    return S_OK;
+    ok(0, "unexpected name %s\n", wine_dbgstr_w(bstrName));
+    return E_FAIL;
 }
 
 static IDispatchExVtbl testObjVtbl = {
@@ -1836,9 +1845,13 @@ static BOOL run_tests(void)
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
 
-    SET_EXPECT(testobj_delete);
-    parse_script_a("delete testObj.deleteTest;");
-    CHECK_CALLED(testobj_delete);
+    SET_EXPECT(testobj_delete_test);
+    parse_script_a("ok((delete testObj.deleteTest) === true, 'delete testObj.deleteTest did not return true');");
+    CHECK_CALLED(testobj_delete_test);
+
+    SET_EXPECT(testobj_delete_nodelete);
+    parse_script_a("ok((delete testObj.noDeleteTest) === false, 'delete testObj.noDeleteTest did not return false');");
+    CHECK_CALLED(testobj_delete_nodelete);
 
     SET_EXPECT(global_propdelete_d);
     SET_EXPECT(DeleteMemberByDispID);
