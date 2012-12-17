@@ -1846,6 +1846,14 @@ static BOOL run_tests(void)
     CHECK_CALLED(global_propdelete_d);
     CHECK_CALLED(DeleteMemberByDispID);
 
+    SET_EXPECT(puredisp_prop_d);
+    parse_script_a("ok((delete pureDisp.prop) === false, 'delete pureDisp.prop did not return true');");
+    CHECK_CALLED(puredisp_prop_d);
+
+    SET_EXPECT(puredisp_noprop_d);
+    parse_script_a("ok((delete pureDisp.noprop) === true, 'delete pureDisp.noprop did not return false');");
+    CHECK_CALLED(puredisp_noprop_d);
+
     parse_script_a("(function reportSuccess() {})()");
 
     parse_script_a("ok(typeof(test) === 'object', \"typeof(test) != 'object'\");");

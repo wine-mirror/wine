@@ -1542,8 +1542,18 @@ HRESULT disp_delete_name(script_ctx_t *ctx, IDispatch *disp, jsstr_t *name, BOOL
 
         IDispatchEx_Release(dispex);
     }else {
-        hres = S_OK;
-        ret = FALSE;
+        WCHAR *name_str = name->str;
+        DISPID id;
+
+        hres = IDispatch_GetIDsOfNames(disp, &IID_NULL, &name_str, 1, 0, &id);
+        if(SUCCEEDED(hres)) {
+            /* Property exists and we can't delete it from pure IDispatch interface, so return false. */
+            *ret = FALSE;
+        }else if(hres == DISP_E_UNKNOWNNAME) {
+            /* Property doesn't exist, so nothing to delete */
+            *ret = TRUE;
+            hres = S_OK;
+        }
     }
 
     return hres;
