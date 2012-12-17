@@ -1123,6 +1123,7 @@ for(iter in tmp)
     ok(false, "tmp has prop " + iter);
 ok((delete tmp.test) === true, "deleting test didn't return true");
 ok((delete tmp.nonexistent) === true, "deleting nonexistent didn't return true");
+ok((delete nonexistent) === true, "deleting nonexistent didn't return true");
 
 tmp = new Object();
 tmp.test = false;

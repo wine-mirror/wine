@@ -1631,16 +1631,22 @@ static HRESULT interp_delete_ident(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    if(exprval.type != EXPRVAL_IDREF) {
+    switch(exprval.type) {
+    case EXPRVAL_IDREF:
+        hres = disp_delete(exprval.u.idref.disp, exprval.u.idref.id, &ret);
+        IDispatch_Release(exprval.u.idref.disp);
+        if(FAILED(hres))
+            return ret;
+        break;
+    case EXPRVAL_INVALID:
+        ret = TRUE;
+        break;
+    default:
         FIXME("Unsupported exprval\n");
         exprval_release(&exprval);
         return E_NOTIMPL;
     }
 
-    hres = disp_delete(exprval.u.idref.disp, exprval.u.idref.id, &ret);
-    IDispatch_Release(exprval.u.idref.disp);
-    if(FAILED(hres))
-        return ret;
 
     return stack_push(ctx, jsval_bool(ret));
 }
