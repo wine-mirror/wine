@@ -308,6 +308,83 @@ static UINT get_default_smoothing( HKEY key )
     return GGO_GRAY4_BITMAP;
 }
 
+/* compute positions for text rendering, in device coords */
+static BOOL get_char_positions( DC *dc, const WCHAR *str, INT count, INT *dx, SIZE *size )
+{
+    TEXTMETRICW tm;
+    PHYSDEV dev = GET_DC_PHYSDEV( dc, pGetTextExtentExPoint );
+
+    size->cx = size->cy = 0;
+    if (!count) return TRUE;
+
+    dev = GET_DC_PHYSDEV( dc, pGetTextMetrics );
+    dev->funcs->pGetTextMetrics( dev, &tm );
+
+    if (!dev->funcs->pGetTextExtentExPoint( dev, str, count, 0, NULL, dx, size )) return FALSE;
+
+    if (dc->breakExtra || dc->breakRem)
+    {
+        int i, space = 0, rem = dc->breakRem;
+
+        for (i = 0; i < count; i++)
+        {
+            if (str[i] == tm.tmBreakChar)
+            {
+                space += dc->breakExtra;
+                if (rem > 0)
+                {
+                    space++;
+                    rem--;
+                }
+            }
+            dx[i] += space;
+        }
+    }
+    size->cx = dx[count - 1];
+    size->cy = tm.tmHeight;
+    return TRUE;
+}
+
+/* compute positions for text rendering, in device coords */
+static BOOL get_char_positions_indices( DC *dc, const WORD *indices, INT count, INT *dx, SIZE *size )
+{
+    TEXTMETRICW tm;
+    PHYSDEV dev = GET_DC_PHYSDEV( dc, pGetTextExtentExPoint );
+
+    size->cx = size->cy = 0;
+    if (!count) return TRUE;
+
+    dev = GET_DC_PHYSDEV( dc, pGetTextMetrics );
+    dev->funcs->pGetTextMetrics( dev, &tm );
+
+    if (!dev->funcs->pGetTextExtentExPointI( dev, indices, count, 0, NULL, dx, size )) return FALSE;
+
+    if (dc->breakExtra || dc->breakRem)
+    {
+        WORD space_index;
+        int i, space = 0, rem = dc->breakRem;
+
+        dev = GET_DC_PHYSDEV( dc, pGetGlyphIndices );
+        dev->funcs->pGetGlyphIndices( dev, &tm.tmBreakChar, 1, &space_index, 0 );
+
+        for (i = 0; i < count; i++)
+        {
+            if (indices[i] == space_index)
+            {
+                space += dc->breakExtra;
+                if (rem > 0)
+                {
+                    space++;
+                    rem--;
+                }
+            }
+            dx[i] += space;
+        }
+    }
+    size->cx = dx[count - 1];
+    size->cy = tm.tmHeight;
+    return TRUE;
+}
 
 /***********************************************************************
  *           GdiGetCodePage   (GDI32.@)
@@ -1015,20 +1092,45 @@ BOOL WINAPI GetTextExtentPoint32W(
 BOOL WINAPI GetTextExtentExPointI( HDC hdc, const WORD *indices, INT count, INT max_ext,
                                    LPINT nfit, LPINT dxs, LPSIZE size )
 {
-    PHYSDEV dev;
-    BOOL ret;
     DC *dc;
+    int i;
+    BOOL ret;
+    INT buffer[256], *pos = dxs;
 
     if (count < 0) return FALSE;
 
     dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
 
-    dev = GET_DC_PHYSDEV( dc, pGetTextExtentExPointI );
-    ret = dev->funcs->pGetTextExtentExPointI( dev, indices, count, max_ext, nfit, dxs, size );
-    size->cx = abs(INTERNAL_XDSTOWS(dc, size->cx));
-    size->cy = abs(INTERNAL_YDSTOWS(dc, size->cy));
-    size->cx += count * dc->charExtra;
+    if (!dxs)
+    {
+        pos = buffer;
+        if (count > 256 && !(pos = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*pos) )))
+        {
+            release_dc_ptr( dc );
+            return FALSE;
+        }
+    }
+
+    ret = get_char_positions_indices( dc, indices, count, pos, size );
+    if (ret)
+    {
+        if (dxs || nfit)
+        {
+            for (i = 0; i < count; i++)
+            {
+                unsigned int dx = abs( INTERNAL_XDSTOWS( dc, pos[i] )) + (i + 1) * dc->charExtra;
+                if (dx > (unsigned int)max_ext) break;
+                if (dxs) dxs[i] = dx;
+            }
+            if (nfit) *nfit = i;
+        }
+
+        size->cx = abs( INTERNAL_XDSTOWS( dc, size->cx )) + count * dc->charExtra;
+        size->cy = abs( INTERNAL_YDSTOWS( dc, size->cy ));
+    }
+
+    if (pos != buffer && pos != dxs) HeapFree( GetProcessHeap(), 0, pos );
     release_dc_ptr( dc );
 
     TRACE("(%p %p %d %p): returning %d x %d\n",
@@ -1091,6 +1193,7 @@ BOOL WINAPI GetTextExtentExPointA( HDC hdc, LPCSTR str, INT count,
     LPWSTR p = NULL;
 
     if (count < 0) return FALSE;
+    if (maxExt < -1) return FALSE;
 
     if (alpDx)
     {
@@ -1122,126 +1225,52 @@ BOOL WINAPI GetTextExtentExPointA( HDC hdc, LPCSTR str, INT count,
  *
  * Return the size of the string as it would be if it was output properly by
  * e.g. TextOut.
- *
- * This should include
- * - Intercharacter spacing
- * - justification spacing (not yet done)
- * - kerning? see below
- *
- * Kerning.  Since kerning would be carried out by the rendering code it should
- * be done by the driver.  However they don't support it yet.  Also I am not
- * yet persuaded that (certainly under Win95) any kerning is actually done.
- *
- * str: According to MSDN this should be null-terminated.  That is not true; a
- *      null will not terminate it early.
- * size: Certainly under Win95 this appears buggy or weird if *lpnFit is less
- *       than count.  I have seen it be either the size of the full string or
- *       1 less than the size of the full string.  I have not seen it bear any
- *       resemblance to the portion that would fit.
- * lpnFit: What exactly is fitting?  Stupidly, in my opinion, it includes the
- *         trailing intercharacter spacing and any trailing justification.
- *
- * FIXME
- * Currently we do this by measuring each character etc.  We should do it by
- * passing the request to the driver, perhaps by extending the
- * pGetTextExtentPoint function to take the alpDx argument.  That would avoid
- * thinking about kerning issues and rounding issues in the justification.
  */
-
-BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
-				   INT maxExt, LPINT lpnFit,
-				   LPINT alpDx, LPSIZE size )
+BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count, INT max_ext,
+                                   LPINT nfit, LPINT dxs, LPSIZE size )
 {
-    INT nFit = 0;
-    LPINT dxs = NULL;
     DC *dc;
-    BOOL ret = FALSE;
-    TEXTMETRICW tm;
-    PHYSDEV dev;
-
-    TRACE("(%p, %s, %d)\n",hdc,debugstr_wn(str,count),maxExt);
+    int i;
+    BOOL ret;
+    INT buffer[256], *pos = dxs;
 
     if (count < 0) return FALSE;
 
     dc = get_dc_ptr(hdc);
     if (!dc) return FALSE;
 
-    GetTextMetricsW(hdc, &tm);
-
-    /* If we need to calculate nFit, then we need the partial extents even if
-       the user hasn't provided us with an array.  */
-    if (lpnFit)
+    if (!dxs)
     {
-	dxs = alpDx ? alpDx : HeapAlloc(GetProcessHeap(), 0, count * sizeof alpDx[0]);
-	if (! dxs)
-	{
-	    release_dc_ptr(dc);
-	    SetLastError(ERROR_OUTOFMEMORY);
-	    return FALSE;
-	}
+        pos = buffer;
+        if (count > 256 && !(pos = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*pos) )))
+        {
+            release_dc_ptr( dc );
+            return FALSE;
+        }
     }
-    else
-	dxs = alpDx;
 
-    dev = GET_DC_PHYSDEV( dc, pGetTextExtentExPoint );
-    ret = dev->funcs->pGetTextExtentExPoint(dev, str, count, 0, NULL, dxs, size);
-
-    /* Perform device size to world size transformations.  */
+    ret = get_char_positions( dc, str, count, pos, size );
     if (ret)
     {
-	INT extra = abs(INTERNAL_XWSTODS(dc, dc->charExtra)),
-        breakExtra = dc->breakExtra,
-        breakRem   = dc->breakRem,
-        i;
-
-	if (dxs)
-	{
-	    for (i = 0; i < count; ++i)
-	    {
-		dxs[i] += (i+1) * extra;
-                if (count > 1 && (breakExtra || breakRem) && str[i] == tm.tmBreakChar)
-                {
-                    dxs[i] += breakExtra;
-                    if (breakRem > 0)
-                    {
-                        breakRem--;
-                        dxs[i]++;
-                    }
-                }
-		dxs[i] = abs(INTERNAL_XDSTOWS(dc, dxs[i]));
-		if (dxs[i] <= maxExt)
-		    ++nFit;
-	    }
-	}
-        else if (count > 1 && (breakExtra || breakRem))
+        if (dxs || nfit)
         {
             for (i = 0; i < count; i++)
             {
-                if (str[i] == tm.tmBreakChar)
-                {
-                    size->cx += breakExtra;
-                    if (breakRem > 0)
-                    {
-                        breakRem--;
-                        (size->cx)++;
-                    }
-                }
+                unsigned int dx = abs( INTERNAL_XDSTOWS( dc, pos[i] )) + (i + 1) * dc->charExtra;
+                if (dx > (unsigned int)max_ext) break;
+		if (dxs) dxs[i] = dx;
             }
+            if (nfit) *nfit = i;
         }
-        size->cx += count * extra;
-	size->cx = abs(INTERNAL_XDSTOWS(dc, size->cx));
-	size->cy = abs(INTERNAL_YDSTOWS(dc, size->cy));
+
+        size->cx = abs( INTERNAL_XDSTOWS( dc, size->cx )) + count * dc->charExtra;
+        size->cy = abs( INTERNAL_YDSTOWS( dc, size->cy ));
     }
 
-    if (lpnFit)
-	*lpnFit = nFit;
-
-    if (! alpDx)
-        HeapFree(GetProcessHeap(), 0, dxs);
-
+    if (pos != buffer && pos != dxs) HeapFree( GetProcessHeap(), 0, pos );
     release_dc_ptr( dc );
 
-    TRACE("returning %d %d x %d\n",nFit,size->cx,size->cy);
+    TRACE("(%p, %s, %d) returning %dx%d\n", hdc, debugstr_wn(str,count), max_ext, size->cx, size->cy );
     return ret;
 }
 

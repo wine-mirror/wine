@@ -3074,7 +3074,7 @@ static void test_string_functions(void)
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
     expectf_(char_bounds.Width, bounds.Width, 0.01);
-    todo_wine expectf_(char_bounds.Height + char_height * 3, bounds.Height, 0.05);
+    expectf_(char_bounds.Height + char_height * 3, bounds.Height, 0.05);
     expect(6, codepointsfitted);
     todo_wine expect(4, linesfilled);
 

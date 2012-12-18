@@ -45,6 +45,8 @@ static BOOL  (WINAPI *pGetCharABCWidthsFloatW)(HDC hdc, UINT first, UINT last, L
 static DWORD (WINAPI *pGetFontUnicodeRanges)(HDC hdc, LPGLYPHSET lpgs);
 static DWORD (WINAPI *pGetGlyphIndicesA)(HDC hdc, LPCSTR lpstr, INT count, LPWORD pgi, DWORD flags);
 static DWORD (WINAPI *pGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags);
+static BOOL  (WINAPI *pGetTextExtentExPointI)(HDC hdc, const WORD *indices, INT count, INT max_ext,
+                                              LPINT nfit, LPINT dxs, LPSIZE size );
 static BOOL  (WINAPI *pGdiRealizationInfo)(HDC hdc, DWORD *);
 static HFONT (WINAPI *pCreateFontIndirectExA)(const ENUMLOGFONTEXDV *);
 static HANDLE (WINAPI *pAddFontMemResourceEx)(PVOID, DWORD, PVOID, DWORD *);
@@ -69,6 +71,7 @@ static void init(void)
     pGetFontUnicodeRanges = (void *)GetProcAddress(hgdi32, "GetFontUnicodeRanges");
     pGetGlyphIndicesA = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesA");
     pGetGlyphIndicesW = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesW");
+    pGetTextExtentExPointI = (void *)GetProcAddress(hgdi32, "GetTextExtentExPointI");
     pGdiRealizationInfo = (void *)GetProcAddress(hgdi32, "GdiRealizationInfo");
     pCreateFontIndirectExA = (void *)GetProcAddress(hgdi32, "CreateFontIndirectExA");
     pAddFontMemResourceEx = (void *)GetProcAddress(hgdi32, "AddFontMemResourceEx");
@@ -1294,20 +1297,20 @@ static void test_text_extents(void)
     fit1 = fit2 = -215;
     ret = GetTextExtentExPointA(hdc, "One", 3, -1, &fit1, NULL, &sz);
     ok(ret == TRUE, "got %d\n", ret);
-    todo_wine ok(fit1 == 3, "fit = %d\n", fit1);
+    ok(fit1 == 3, "fit = %d\n", fit1);
     ret = GetTextExtentExPointW(hdc, wt, 3, -1, &fit2, NULL, &sz);
     ok(ret == TRUE, "got %d\n", ret);
-    todo_wine ok(fit2 == 3, "fit = %d\n", fit2);
+    ok(fit2 == 3, "fit = %d\n", fit2);
 
     /* max_extent = -2 is interpreted similarly, but the Ansi version
      * rejects it while the Unicode one accepts it */
     fit1 = fit2 = -215;
     ret = GetTextExtentExPointA(hdc, "One", 3, -2, &fit1, NULL, &sz);
-    todo_wine ok(ret == FALSE, "got %d\n", ret);
-    todo_wine ok(fit1 == -215, "fit = %d\n", fit1);
+    ok(ret == FALSE, "got %d\n", ret);
+    ok(fit1 == -215, "fit = %d\n", fit1);
     ret = GetTextExtentExPointW(hdc, wt, 3, -2, &fit2, NULL, &sz);
     ok(ret == TRUE, "got %d\n", ret);
-    todo_wine ok(fit2 == 3, "fit = %d\n", fit2);
+    ok(fit2 == 3, "fit = %d\n", fit2);
 
     hfont = SelectObject(hdc, hfont);
     DeleteObject(hfont);
@@ -1834,6 +1837,9 @@ static void test_SetTextJustification(void)
     LOGFONTA lf;
     HFONT hfont;
     HWND hwnd;
+    SIZE size, expect;
+    int i;
+    WORD indices[2];
     static char testText[] =
             "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do "
             "eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut "
@@ -1859,17 +1865,74 @@ static void test_SetTextJustification(void)
 
     testJustification(hdc, testText, &clientArea);
 
+    if (!pGetGlyphIndicesA || !pGetTextExtentExPointI) goto done;
+    pGetGlyphIndicesA( hdc, "A ", 2, indices, 0 );
+
+    SetTextJustification(hdc, 0, 0);
+    GetTextExtentPoint32(hdc, " ", 1, &expect);
+    GetTextExtentPoint32(hdc, "   ", 3, &size);
+    ok( size.cx == 3 * expect.cx, "wrong size %d/%d\n", size.cx, expect.cx );
+    SetTextJustification(hdc, 4, 1);
+    GetTextExtentPoint32(hdc, " ", 1, &size);
+    ok( size.cx == expect.cx + 4, "wrong size %d/%d\n", size.cx, expect.cx );
+    SetTextJustification(hdc, 9, 2);
+    GetTextExtentPoint32(hdc, "  ", 2, &size);
+    ok( size.cx == 2 * expect.cx + 9, "wrong size %d/%d\n", size.cx, expect.cx );
+    SetTextJustification(hdc, 7, 3);
+    GetTextExtentPoint32(hdc, "   ", 3, &size);
+    ok( size.cx == 3 * expect.cx + 7, "wrong size %d/%d\n", size.cx, expect.cx );
+    SetTextJustification(hdc, 7, 3);
+    SetTextCharacterExtra(hdc, 2 );
+    GetTextExtentPoint32(hdc, "   ", 3, &size);
+    ok( size.cx == 3 * (expect.cx + 2) + 7, "wrong size %d/%d\n", size.cx, expect.cx );
+    SetTextJustification(hdc, 0, 0);
+    SetTextCharacterExtra(hdc, 0);
+    size.cx = size.cy = 1234;
+    GetTextExtentPoint32(hdc, " ", 0, &size);
+    ok( size.cx == 0 && size.cy == 0, "wrong size %d,%d\n", size.cx, size.cy );
+    pGetTextExtentExPointI(hdc, indices, 2, -1, NULL, NULL, &expect);
+    SetTextJustification(hdc, 5, 1);
+    pGetTextExtentExPointI(hdc, indices, 2, -1, NULL, NULL, &size);
+    ok( size.cx == expect.cx + 5, "wrong size %d/%d\n", size.cx, expect.cx );
+    SetTextJustification(hdc, 0, 0);
+
     SetMapMode( hdc, MM_ANISOTROPIC );
     SetWindowExtEx( hdc, 2, 2, NULL );
     GetClientRect( hwnd, &clientArea );
     DPtoLP( hdc, (POINT *)&clientArea, 2 );
     testJustification(hdc, testText, &clientArea);
 
+    GetTextExtentPoint32(hdc, "A", 1, &expect);
+    for (i = 0; i < 10; i++)
+    {
+        SetTextCharacterExtra(hdc, i);
+        GetTextExtentPoint32(hdc, "A", 1, &size);
+        ok( size.cx == expect.cx + i, "wrong size %d/%d+%d\n", size.cx, expect.cx, i );
+    }
+    SetTextCharacterExtra(hdc, 0);
+    pGetTextExtentExPointI(hdc, indices, 1, -1, NULL, NULL, &expect);
+    for (i = 0; i < 10; i++)
+    {
+        SetTextCharacterExtra(hdc, i);
+        pGetTextExtentExPointI(hdc, indices, 1, -1, NULL, NULL, &size);
+        ok( size.cx == expect.cx + i, "wrong size %d/%d+%d\n", size.cx, expect.cx, i );
+    }
+    SetTextCharacterExtra(hdc, 0);
+
     SetViewportExtEx( hdc, 3, 3, NULL );
     GetClientRect( hwnd, &clientArea );
     DPtoLP( hdc, (POINT *)&clientArea, 2 );
     testJustification(hdc, testText, &clientArea);
 
+    GetTextExtentPoint32(hdc, "A", 1, &expect);
+    for (i = 0; i < 10; i++)
+    {
+        SetTextCharacterExtra(hdc, i);
+        GetTextExtentPoint32(hdc, "A", 1, &size);
+        ok( size.cx == expect.cx + i, "wrong size %d/%d+%d\n", size.cx, expect.cx, i );
+    }
+
+done:
     DeleteObject(hfont);
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
