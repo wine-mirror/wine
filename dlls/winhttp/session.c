@@ -1939,7 +1939,7 @@ static BSTR download_script( const WCHAR *url )
     HINTERNET ses, con = NULL, req = NULL;
     WCHAR *hostname;
     URL_COMPONENTSW uc;
-    DWORD size = 4096, offset, to_read, bytes_read, flags = 0;
+    DWORD status, size = sizeof(status), offset, to_read, bytes_read, flags = 0;
     char *tmp, *buffer = NULL;
     BSTR script = NULL;
     int len;
@@ -1956,8 +1956,12 @@ static BSTR download_script( const WCHAR *url )
     if (uc.nScheme == INTERNET_SCHEME_HTTPS) flags |= WINHTTP_FLAG_SECURE;
     if (!(req = WinHttpOpenRequest( con, NULL, uc.lpszUrlPath, NULL, NULL, acceptW, flags ))) goto done;
     if (!WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 )) goto done;
-    if (!(WinHttpReceiveResponse( req, 0 ))) goto done;
 
+    if (!(WinHttpReceiveResponse( req, 0 ))) goto done;
+    if (!WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status,
+        &size, NULL ) || status != HTTP_STATUS_OK) goto done;
+
+    size = 4096;
     if (!(buffer = heap_alloc( size ))) goto done;
     to_read = size;
     offset = 0;
