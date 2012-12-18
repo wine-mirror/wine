@@ -2727,83 +2727,82 @@ HRESULT WINAPI CoResumeClassObjects(void)
  *  CoGetClassObject()
  */
 HRESULT WINAPI CoCreateInstance(
-	REFCLSID rclsid,
-	LPUNKNOWN pUnkOuter,
-	DWORD dwClsContext,
-	REFIID iid,
-	LPVOID *ppv)
+    REFCLSID rclsid,
+    LPUNKNOWN pUnkOuter,
+    DWORD dwClsContext,
+    REFIID iid,
+    LPVOID *ppv)
 {
-  HRESULT hres;
-  LPCLASSFACTORY lpclf = 0;
-  APARTMENT *apt;
+    HRESULT hres;
+    LPCLASSFACTORY lpclf = 0;
+    APARTMENT *apt;
 
-  TRACE("(rclsid=%s, pUnkOuter=%p, dwClsContext=%08x, riid=%s, ppv=%p)\n", debugstr_guid(rclsid),
-        pUnkOuter, dwClsContext, debugstr_guid(iid), ppv);
+    TRACE("(rclsid=%s, pUnkOuter=%p, dwClsContext=%08x, riid=%s, ppv=%p)\n", debugstr_guid(rclsid),
+          pUnkOuter, dwClsContext, debugstr_guid(iid), ppv);
 
-  /*
-   * Sanity check
-   */
-  if (ppv==0)
-    return E_POINTER;
+    if (ppv==0)
+        return E_POINTER;
 
-  /*
-   * Initialize the "out" parameter
-   */
-  *ppv = 0;
+    *ppv = 0;
 
-  if (!(apt = COM_CurrentApt()))
-  {
-    if (!(apt = apartment_find_multi_threaded()))
+    if (!(apt = COM_CurrentApt()))
     {
-      ERR("apartment not initialised\n");
-      return CO_E_NOTINITIALIZED;
-    }
-    apartment_release(apt);
-  }
-
-  /*
-   * The Standard Global Interface Table (GIT) object is a process-wide singleton.
-   * Rather than create a class factory, we can just check for it here
-   */
-  if (IsEqualIID(rclsid, &CLSID_StdGlobalInterfaceTable)) {
-    if (StdGlobalInterfaceTableInstance == NULL)
-      StdGlobalInterfaceTableInstance = StdGlobalInterfaceTable_Construct();
-    hres = IGlobalInterfaceTable_QueryInterface( (IGlobalInterfaceTable*) StdGlobalInterfaceTableInstance, iid, ppv);
-    if (hres) return hres;
-
-    TRACE("Retrieved GIT (%p)\n", *ppv);
-    return S_OK;
-  }
-
-  if (IsEqualCLSID(rclsid, &CLSID_ManualResetEvent))
-      return ManualResetEvent_Construct(pUnkOuter, iid, ppv);
-
-  /*
-   * Get a class factory to construct the object we want.
-   */
-  hres = CoGetClassObject(rclsid,
-			  dwClsContext,
-			  NULL,
-			  &IID_IClassFactory,
-			  (LPVOID)&lpclf);
-
-  if (FAILED(hres))
-    return hres;
-
-  /*
-   * Create the object and don't forget to release the factory
-   */
-	hres = IClassFactory_CreateInstance(lpclf, pUnkOuter, iid, ppv);
-	IClassFactory_Release(lpclf);
-	if(FAILED(hres))
+        if (!(apt = apartment_find_multi_threaded()))
         {
-          if (hres == CLASS_E_NOAGGREGATION && pUnkOuter)
-              FIXME("Class %s does not support aggregation\n", debugstr_guid(rclsid));
-          else
-              FIXME("no instance created for interface %s of class %s, hres is 0x%08x\n", debugstr_guid(iid), debugstr_guid(rclsid),hres);
+            ERR("apartment not initialised\n");
+            return CO_E_NOTINITIALIZED;
         }
+        apartment_release(apt);
+    }
 
-	return hres;
+    /*
+     * The Standard Global Interface Table (GIT) object is a process-wide singleton.
+     * Rather than create a class factory, we can just check for it here
+     */
+    if (IsEqualIID(rclsid, &CLSID_StdGlobalInterfaceTable))
+    {
+        if (StdGlobalInterfaceTableInstance == NULL)
+            StdGlobalInterfaceTableInstance = StdGlobalInterfaceTable_Construct();
+        hres = IGlobalInterfaceTable_QueryInterface((IGlobalInterfaceTable*)StdGlobalInterfaceTableInstance,
+                                                    iid,
+                                                    ppv);
+        if (hres) return hres;
+
+        TRACE("Retrieved GIT (%p)\n", *ppv);
+        return S_OK;
+    }
+
+    if (IsEqualCLSID(rclsid, &CLSID_ManualResetEvent))
+        return ManualResetEvent_Construct(pUnkOuter, iid, ppv);
+
+    /*
+     * Get a class factory to construct the object we want.
+     */
+    hres = CoGetClassObject(rclsid,
+                            dwClsContext,
+                            NULL,
+                            &IID_IClassFactory,
+                            (LPVOID)&lpclf);
+
+    if (FAILED(hres))
+        return hres;
+
+    /*
+     * Create the object and don't forget to release the factory
+     */
+    hres = IClassFactory_CreateInstance(lpclf, pUnkOuter, iid, ppv);
+    IClassFactory_Release(lpclf);
+    if (FAILED(hres))
+    {
+        if (hres == CLASS_E_NOAGGREGATION && pUnkOuter)
+            FIXME("Class %s does not support aggregation\n", debugstr_guid(rclsid));
+        else
+            FIXME("no instance created for interface %s of class %s, hres is 0x%08x\n",
+                  debugstr_guid(iid),
+                  debugstr_guid(rclsid),hres);
+    }
+
+    return hres;
 }
 
 /***********************************************************************
