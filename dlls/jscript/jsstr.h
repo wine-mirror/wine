@@ -60,6 +60,7 @@ static inline BOOL jsstr_eq(jsstr_t *str1, jsstr_t *str2)
 }
 
 int jsstr_cmp(jsstr_t*,jsstr_t*) DECLSPEC_HIDDEN;
+jsstr_t *jsstr_concat(jsstr_t*,jsstr_t*) DECLSPEC_HIDDEN;
 
 jsstr_t *jsstr_nan(void) DECLSPEC_HIDDEN;
 jsstr_t *jsstr_empty(void) DECLSPEC_HIDDEN;

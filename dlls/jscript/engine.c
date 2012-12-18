@@ -1447,22 +1447,13 @@ static HRESULT add_eval(script_ctx_t *ctx, jsval_t lval, jsval_t rval, jsval_t *
             hres = to_string(ctx, r, &rstr);
 
         if(SUCCEEDED(hres)) {
-            unsigned len1, len2;
             jsstr_t *ret_str;
 
-            len1 = jsstr_length(lstr);
-            len2 = jsstr_length(rstr);
-
-            ret_str = jsstr_alloc_buf(len1+len2);
-            if(ret_str) {
-                if(len1)
-                    memcpy(ret_str->str, lstr->str, len1*sizeof(WCHAR));
-                if(len2)
-                    memcpy(ret_str->str+len1, rstr->str, len2*sizeof(WCHAR));
+            ret_str = jsstr_concat(lstr, rstr);
+            if(ret_str)
                 *ret = jsval_string(ret_str);
-            }else {
+            else
                 hres = E_OUTOFMEMORY;
-            }
         }
 
         jsstr_release(lstr);

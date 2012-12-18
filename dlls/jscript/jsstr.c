@@ -66,6 +66,25 @@ int jsstr_cmp(jsstr_t *str1, jsstr_t *str2)
     return ret;
 }
 
+jsstr_t *jsstr_concat(jsstr_t *str1, jsstr_t *str2)
+{
+    unsigned len1, len2;
+    jsstr_t *ret;
+
+    len1 = jsstr_length(str1);
+    len2 = jsstr_length(str2);
+
+    ret = jsstr_alloc_buf(len1+len2);
+    if(!ret)
+        return NULL;
+
+    if(len1)
+        memcpy(ret->str, str1->str, len1*sizeof(WCHAR));
+    if(len2)
+        memcpy(ret->str+len1, str2->str, len2*sizeof(WCHAR));
+    return ret;
+}
+
 static jsstr_t *empty_str, *nan_str;
 
 jsstr_t *jsstr_nan(void)
