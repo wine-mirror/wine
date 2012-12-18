@@ -275,10 +275,15 @@ struct d3d_device
     IUnknown *outer_unknown;
     struct wined3d_device *wined3d_device;
     struct ddraw *ddraw;
+    struct ddraw_surface *target;
+
     struct wined3d_buffer *index_buffer;
     UINT index_buffer_size;
     UINT index_buffer_pos;
-    struct ddraw_surface *target;
+
+    struct wined3d_buffer *vertex_buffer;
+    UINT vertex_buffer_size;
+    UINT vertex_buffer_pos;
 
     /* Viewport management */
     struct list viewport_list;
@@ -299,7 +304,7 @@ struct d3d_device
     DWORD vertex_type;
     DWORD render_flags;
     DWORD nb_vertices;
-    LPBYTE vertex_buffer;
+    LPBYTE sysmem_vertex_buffer;
     DWORD vertex_size;
     DWORD buffer_size;
 
