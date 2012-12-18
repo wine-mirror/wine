@@ -288,6 +288,21 @@ HRESULT WINAPI AtlLoadTypeLib(HINSTANCE inst, LPCOLESTR lpszIndex,
 }
 
 /***********************************************************************
+ *           AtlWinModuleInit                          [atl100.65]
+ */
+HRESULT WINAPI AtlWinModuleInit(_ATL_WIN_MODULE *winmod)
+{
+    TRACE("(%p\n", winmod);
+
+    if(winmod->cbSize != sizeof(*winmod))
+        return E_INVALIDARG;
+
+    InitializeCriticalSection(&winmod->m_csWindowCreate);
+    winmod->m_pCreateWndList = NULL;
+    return S_OK;
+}
+
+/***********************************************************************
  *           AtlWinModuleAddCreateWndData              [atl100.43]
  */
 void WINAPI AtlWinModuleAddCreateWndData(_ATL_WIN_MODULE *pM, _AtlCreateWndData *pData, void *pvObject)

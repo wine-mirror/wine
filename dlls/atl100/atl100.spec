@@ -46,7 +46,7 @@
 62 stub AtlWinModuleRegisterClassExW
 63 stub AtlWinModuleRegisterClassExA
 64 stdcall AtlCallTermFunc(ptr)
-65 stub AtlWinModuleInit
+65 stdcall AtlWinModuleInit(ptr)
 66 stub AtlWinModuleTerm
 67 stub AtlSetPerUserRegistration
 68 stub AtlGetPerUserRegistration
