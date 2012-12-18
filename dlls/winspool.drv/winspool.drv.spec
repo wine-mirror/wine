@@ -99,8 +99,8 @@
 @ stdcall DeviceCapabilitiesW(wstr wstr long ptr ptr)
 @ stub DeviceMode
 @ stub DocumentEvent
-@ stdcall DocumentPropertiesA(long long ptr ptr ptr long)
-@ stdcall DocumentPropertiesW(long long ptr ptr ptr long)
+@ stdcall DocumentPropertiesA(long long str ptr ptr long)
+@ stdcall DocumentPropertiesW(long long wstr ptr ptr long)
 @ stub EXTDEVICEMODE
 @ stdcall EndDocPrinter(long)
 @ stdcall EndPagePrinter(long)
