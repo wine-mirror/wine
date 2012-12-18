@@ -21,11 +21,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
 
-static HRESULT DMUSIC_InitLoaderSettings (LPDIRECTMUSICLOADER8 iface);
-static HRESULT DMUSIC_GetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pClassID, WCHAR* wszSearchPath, LPBOOL pbCache);
-static HRESULT DMUSIC_SetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pClassID, WCHAR* wszSearchPath, LPBOOL pbCache);
+static inline IDirectMusicLoaderImpl* impl_from_IDirectMusicLoader8(IDirectMusicLoader8 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicLoaderImpl, IDirectMusicLoader8_iface);
+}
 
-static HRESULT DMUSIC_CopyDescriptor (LPDMUS_OBJECTDESC pDst, LPDMUS_OBJECTDESC pSrc) {
+static HRESULT DMUSIC_InitLoaderSettings(IDirectMusicLoader8 *iface);
+static HRESULT DMUSIC_GetLoaderSettings(IDirectMusicLoader8 *iface, REFGUID class_id, WCHAR *search_path, BOOL *cache);
+static HRESULT DMUSIC_SetLoaderSettings(IDirectMusicLoader8 *iface, REFGUID class_id, WCHAR *search_path, BOOL *cache);
+
+static HRESULT DMUSIC_CopyDescriptor(DMUS_OBJECTDESC *pDst, DMUS_OBJECTDESC *pSrc)
+{
 	TRACE(": copy\n%s\n", debugstr_DMUS_OBJECTDESC(pSrc));
 	/* copy field by field */
 	if (pSrc->dwValidData & DMUS_OBJ_CLASS) pDst->guidClass = pSrc->guidClass;
@@ -69,8 +75,9 @@ static BOOL DMUSIC_IsValidLoadableClass (REFCLSID pClassID) {
  */
 /* IUnknown/IDirectMusicLoader(8) part: */
 
-static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_QueryInterface (LPDIRECTMUSICLOADER8 iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
+static HRESULT WINAPI IDirectMusicLoaderImpl_QueryInterface(IDirectMusicLoader8 *iface, REFIID riid, void **ppobj)
+{
+	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 
 	TRACE("(%p, %s, %p)\n",This, debugstr_dmguid(riid), ppobj);
 	if (IsEqualIID (riid, &IID_IUnknown) || 
@@ -85,30 +92,37 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_QueryInterface (
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_AddRef (LPDIRECTMUSICLOADER8 iface) {
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
-	TRACE("(%p): AddRef from %d\n", This, This->dwRef);
-	return InterlockedIncrement (&This->dwRef);
+static ULONG WINAPI IDirectMusicLoaderImpl_AddRef(IDirectMusicLoader8 *iface)
+{
+    IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+
+    return ref;
 }
 
-static ULONG WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_Release (LPDIRECTMUSICLOADER8 iface) {
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
-	
-	DWORD dwRef = InterlockedDecrement (&This->dwRef);
-	TRACE("(%p): ReleaseRef to %d\n", This, This->dwRef);
-	if (dwRef == 0) {
-            /* firstly, release the cache */
-            IDirectMusicLoader8_ClearCache (iface, &GUID_DirectMusicAllTypes);
-            /* FIXME: release all allocated entries */
-            HeapFree (GetProcessHeap(), 0, This);
-            unlock_module();
-	}
+static ULONG WINAPI IDirectMusicLoaderImpl_Release(IDirectMusicLoader8 *iface)
+{
+    IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-	return dwRef;
+    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+
+    if (!ref) {
+        /* Firstly, release the cache */
+        IDirectMusicLoader8_ClearCache(iface, &GUID_DirectMusicAllTypes);
+        /* FIXME: Release all allocated entries */
+        HeapFree(GetProcessHeap(), 0, This);
+        unlock_module();
+    }
+
+    return ref;
 }
 
-static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject (LPDIRECTMUSICLOADER8 iface, LPDMUS_OBJECTDESC pDesc, REFIID riid, LPVOID* ppv) {
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
+static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDESC *pDesc, REFIID riid, void **ppv)
+{
+	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	HRESULT result = S_OK;
 	HRESULT ret = S_OK; /* used at the end of function, to determine whether everything went OK */
 	
@@ -361,8 +375,9 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject (LPDIR
 		return result;
 }
 
-static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_SetObject (LPDIRECTMUSICLOADER8 iface, LPDMUS_OBJECTDESC pDesc) {
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
+static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDESC *pDesc)
+{
+	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	LPSTREAM pStream;
 	LPDIRECTMUSICOBJECT pObject;
 	DMUS_OBJECTDESC Desc;
@@ -483,9 +498,10 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_SetObject (LPDIR
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_SetSearchDirectory (LPDIRECTMUSICLOADER8 iface, REFGUID rguidClass, WCHAR* pwzPath, BOOL fClear) {
+static HRESULT WINAPI IDirectMusicLoaderImpl_SetSearchDirectory(IDirectMusicLoader8 *iface, REFGUID rguidClass, WCHAR *pwzPath, BOOL fClear)
+{
+	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	WCHAR wszCurrentPath[MAX_PATH];
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
 	TRACE("(%p, %s, %s, %d)\n", This, debugstr_dmguid(rguidClass), debugstr_w(pwzPath), fClear);
 	FIXME(": fClear ignored\n");
 	DMUSIC_GetLoaderSettings (iface, rguidClass, wszCurrentPath, NULL);
@@ -496,14 +512,15 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_SetSearchDirecto
 	return DMUSIC_SetLoaderSettings (iface, rguidClass, pwzPath, NULL);
 }
 
-static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_ScanDirectory (LPDIRECTMUSICLOADER8 iface, REFGUID rguidClass, WCHAR* pwzFileExtension, WCHAR* pwzScanFileName) {
+static HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory(IDirectMusicLoader8 *iface, REFGUID rguidClass, WCHAR *pwzFileExtension, WCHAR *pwzScanFileName)
+{
+	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	static const WCHAR wszAny[] = {'*',0};
 	WIN32_FIND_DATAW FileData;
 	HANDLE hSearch;
 	WCHAR wszSearchString[MAX_PATH];
 	WCHAR *p;
 	HRESULT result;
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
 	TRACE("(%p, %s, %p, %p)\n", This, debugstr_dmguid(rguidClass), pwzFileExtension, pwzScanFileName);
 	if (IsEqualGUID (rguidClass, &GUID_DirectMusicAllTypes) || !DMUSIC_IsValidLoadableClass(rguidClass)) {
 		ERR(": rguidClass invalid CLSID\n");
@@ -550,13 +567,14 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_ScanDirectory (L
 	} while (1);
 }
 
-static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_CacheObject (LPDIRECTMUSICLOADER8 iface, IDirectMusicObject* pObject) {
+static HRESULT WINAPI IDirectMusicLoaderImpl_CacheObject(IDirectMusicLoader8 *iface, IDirectMusicObject *pObject)
+{
+	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	DMUS_OBJECTDESC Desc;
 	HRESULT result = DMUS_E_LOADER_OBJECTNOTFOUND;
 	struct list *pEntry;
 	LPWINE_LOADER_ENTRY  pObjectEntry = NULL;
 
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
 	TRACE("(%p, %p)\n", This, pObject);
 	
 	/* get descriptor */
@@ -630,13 +648,14 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_CacheObject (LPD
 	return result;
 }
 
-static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_ReleaseObject (LPDIRECTMUSICLOADER8 iface, IDirectMusicObject* pObject) {
+static HRESULT WINAPI IDirectMusicLoaderImpl_ReleaseObject(IDirectMusicLoader8 *iface, IDirectMusicObject *pObject)
+{
+	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	DMUS_OBJECTDESC Desc;
 	struct list *pEntry;
 	LPWINE_LOADER_ENTRY pObjectEntry = NULL;
 	HRESULT result = S_FALSE;
 
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
 	TRACE("(%p, %p)\n", This, pObject);
 	
 	if(!pObject) return E_POINTER;
@@ -695,10 +714,11 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_ReleaseObject (L
 	return result;
 }
 
-static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_ClearCache (LPDIRECTMUSICLOADER8 iface, REFGUID rguidClass) {
+static HRESULT WINAPI IDirectMusicLoaderImpl_ClearCache(IDirectMusicLoader8 *iface, REFGUID rguidClass)
+{
+	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	struct list *pEntry;
 	LPWINE_LOADER_ENTRY pObjectEntry;
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
 	TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidClass));
 	
 	LIST_FOR_EACH (pEntry, This->pObjects) {
@@ -714,8 +734,9 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_ClearCache (LPDI
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_EnableCache (LPDIRECTMUSICLOADER8 iface, REFGUID rguidClass, BOOL fEnable) {
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
+static HRESULT WINAPI IDirectMusicLoaderImpl_EnableCache(IDirectMusicLoader8 *iface, REFGUID rguidClass, BOOL fEnable)
+{
+	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	BOOL bCurrent;
 	TRACE("(%p, %s, %d)\n", This, debugstr_dmguid(rguidClass), fEnable);
 	DMUSIC_GetLoaderSettings (iface, rguidClass, NULL, &bCurrent);
@@ -725,11 +746,12 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_EnableCache (LPD
 		return DMUSIC_SetLoaderSettings (iface, rguidClass, NULL, &fEnable);
 }
 
-static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_EnumObject (LPDIRECTMUSICLOADER8 iface, REFGUID rguidClass, DWORD dwIndex, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT WINAPI IDirectMusicLoaderImpl_EnumObject(IDirectMusicLoader8 *iface, REFGUID rguidClass, DWORD dwIndex, DMUS_OBJECTDESC *pDesc)
+{
+	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	DWORD dwCount = 0;
 	struct list *pEntry;
 	LPWINE_LOADER_ENTRY pObjectEntry;
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
 	TRACE("(%p, %s, %d, %p)\n", This, debugstr_dmguid(rguidClass), dwIndex, pDesc);
 
 	DM_STRUCT_INIT(pDesc);
@@ -755,13 +777,14 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_EnumObject (LPDI
 	return S_FALSE;
 }
 
-static void WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_CollectGarbage (LPDIRECTMUSICLOADER8 iface) {
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
-	FIXME("(%p): stub\n", This);
+static void WINAPI IDirectMusicLoaderImpl_CollectGarbage(IDirectMusicLoader8 *iface)
+{
+    FIXME("(%p)->(): stub\n", iface);
 }
 
-static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_ReleaseObjectByUnknown (LPDIRECTMUSICLOADER8 iface, IUnknown* pObject) {
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
+static HRESULT WINAPI IDirectMusicLoaderImpl_ReleaseObjectByUnknown(IDirectMusicLoader8 *iface, IUnknown *pObject)
+{
+	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	HRESULT result;
 	LPDIRECTMUSICOBJECT pObjectInterface;
 	
@@ -781,8 +804,9 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_ReleaseObjectByU
 	return result;
 }
 
-static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_LoadObjectFromFile (LPDIRECTMUSICLOADER8 iface, REFGUID rguidClassID, REFIID iidInterfaceID, WCHAR* pwzFilePath, void** ppObject) {
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
+static HRESULT WINAPI IDirectMusicLoaderImpl_LoadObjectFromFile(IDirectMusicLoader8 *iface, REFGUID rguidClassID, REFIID iidInterfaceID, WCHAR *pwzFilePath, void **ppObject)
+{
+	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	DMUS_OBJECTDESC ObjDesc;
 	WCHAR wszLoaderSearchPath[MAX_PATH];
 
@@ -808,25 +832,25 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_LoadObjectFromFi
 	
 	TRACE(": full file path = %s\n", debugstr_w (ObjDesc.wszFileName));
 	
-	return IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject (iface, &ObjDesc, iidInterfaceID, ppObject);
+	return IDirectMusicLoader_GetObject(iface, &ObjDesc, iidInterfaceID, ppObject);
 }
 
 static const IDirectMusicLoader8Vtbl DirectMusicLoader_Loader_Vtbl = {
-	IDirectMusicLoaderImpl_IDirectMusicLoader_QueryInterface,
-	IDirectMusicLoaderImpl_IDirectMusicLoader_AddRef,
-	IDirectMusicLoaderImpl_IDirectMusicLoader_Release,
-	IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject,
-	IDirectMusicLoaderImpl_IDirectMusicLoader_SetObject,
-	IDirectMusicLoaderImpl_IDirectMusicLoader_SetSearchDirectory,
-	IDirectMusicLoaderImpl_IDirectMusicLoader_ScanDirectory,
-	IDirectMusicLoaderImpl_IDirectMusicLoader_CacheObject,
-	IDirectMusicLoaderImpl_IDirectMusicLoader_ReleaseObject,
-	IDirectMusicLoaderImpl_IDirectMusicLoader_ClearCache,
-	IDirectMusicLoaderImpl_IDirectMusicLoader_EnableCache,
-	IDirectMusicLoaderImpl_IDirectMusicLoader_EnumObject,
-	IDirectMusicLoaderImpl_IDirectMusicLoader_CollectGarbage,
-	IDirectMusicLoaderImpl_IDirectMusicLoader_ReleaseObjectByUnknown,
-	IDirectMusicLoaderImpl_IDirectMusicLoader_LoadObjectFromFile
+    IDirectMusicLoaderImpl_QueryInterface,
+    IDirectMusicLoaderImpl_AddRef,
+    IDirectMusicLoaderImpl_Release,
+    IDirectMusicLoaderImpl_GetObject,
+    IDirectMusicLoaderImpl_SetObject,
+    IDirectMusicLoaderImpl_SetSearchDirectory,
+    IDirectMusicLoaderImpl_ScanDirectory,
+    IDirectMusicLoaderImpl_CacheObject,
+    IDirectMusicLoaderImpl_ReleaseObject,
+    IDirectMusicLoaderImpl_ClearCache,
+    IDirectMusicLoaderImpl_EnableCache,
+    IDirectMusicLoaderImpl_EnumObject,
+    IDirectMusicLoaderImpl_CollectGarbage,
+    IDirectMusicLoaderImpl_ReleaseObjectByUnknown,
+    IDirectMusicLoaderImpl_LoadObjectFromFile
 };
 
 /* help function for DMUSIC_SetDefaultDLS */
@@ -847,7 +871,8 @@ static HRESULT DMUSIC_GetDefaultGMPath (WCHAR wszPath[MAX_PATH]) {
 }
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderImpl(const GUID *lpcGUID, void **ppobj, IUnknown *pUnkOuter)
+{
 	IDirectMusicLoaderImpl *obj;
 	DMUS_OBJECTDESC Desc;
 	LPWINE_LOADER_ENTRY pDefaultDLSEntry;
@@ -859,15 +884,15 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderImpl (LPCGUID lpcGUID, LPVOID *ppob
 		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
-	obj->LoaderVtbl = &DirectMusicLoader_Loader_Vtbl;
-	obj->dwRef = 0; /* will be inited with QueryInterface */
+	obj->IDirectMusicLoader8_iface.lpVtbl = &DirectMusicLoader_Loader_Vtbl;
+	obj->ref = 0; /* Will be inited with QueryInterface */
 	/* init cache/alias list */
 	obj->pObjects = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(struct list));
 	list_init (obj->pObjects);
 	/* init settings */
 	obj->pClassSettings = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(struct list));
 	list_init (obj->pClassSettings);
-	DMUSIC_InitLoaderSettings ((LPDIRECTMUSICLOADER8)obj);
+	DMUSIC_InitLoaderSettings(&obj->IDirectMusicLoader8_iface);
 
 	/* set default DLS collection (via SetObject... so that loading via DMUS_OBJ_OBJECT is possible) */
 	DM_STRUCT_INIT(&Desc);
@@ -875,7 +900,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderImpl (LPCGUID lpcGUID, LPVOID *ppob
 	Desc.guidClass = CLSID_DirectMusicCollection;
 	Desc.guidObject = GUID_DefaultGMCollection;
 	DMUSIC_GetDefaultGMPath (Desc.wszFileName);
-	IDirectMusicLoader_SetObject ((LPDIRECTMUSICLOADER8)obj, &Desc);
+	IDirectMusicLoader_SetObject(&obj->IDirectMusicLoader8_iface, &Desc);
 	/* and now the workaroundTM for "invalid" default DLS; basically, 
 	   my tests showed that if GUID chunk is present in default DLS 
 	   collection, loader treats it as "invalid" and returns 
@@ -889,12 +914,13 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderImpl (LPCGUID lpcGUID, LPVOID *ppob
 
         lock_module();
 
-	return IDirectMusicLoaderImpl_IDirectMusicLoader_QueryInterface ((LPDIRECTMUSICLOADER8)obj, lpcGUID, ppobj);
+	return IDirectMusicLoader_QueryInterface(&obj->IDirectMusicLoader8_iface, lpcGUID, ppobj);
 }
 
 /* help function for retrieval of search path and caching option for certain class */
-static HRESULT DMUSIC_GetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pClassID, WCHAR* wszSearchPath, LPBOOL pbCache) {
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
+static HRESULT DMUSIC_GetLoaderSettings(IDirectMusicLoader8 *iface, REFGUID pClassID, WCHAR *wszSearchPath, BOOL *pbCache)
+{
+	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	struct list *pEntry;
 	TRACE(": (%p, %s, %p, %p)\n", This, debugstr_dmguid(pClassID), wszSearchPath, pbCache);
 	
@@ -912,8 +938,9 @@ static HRESULT DMUSIC_GetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pCl
 }
 
 /* help function for setting search path and caching option for certain class */
-static HRESULT DMUSIC_SetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pClassID, WCHAR* wszSearchPath, LPBOOL pbCache) {
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
+static HRESULT DMUSIC_SetLoaderSettings(IDirectMusicLoader8 *iface, REFGUID pClassID, WCHAR *wszSearchPath, BOOL *pbCache)
+{
+	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	struct list *pEntry;
 	HRESULT result = S_FALSE; /* in case pClassID != GUID_DirectMusicAllTypes and not a valid CLSID */
 	TRACE(": (%p, %s, %p, %p)\n", This, debugstr_dmguid(pClassID), wszSearchPath, pbCache);
@@ -935,9 +962,10 @@ static HRESULT DMUSIC_SetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pCl
 	return result;
 }
 
-static HRESULT DMUSIC_InitLoaderSettings (LPDIRECTMUSICLOADER8 iface) {
-	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
-	
+static HRESULT DMUSIC_InitLoaderSettings(IDirectMusicLoader8 *iface)
+{
+	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
+
 	/* hard-coded list of classes */
 	static REFCLSID classes[] = {
 		&CLSID_DirectMusicAudioPathConfig,

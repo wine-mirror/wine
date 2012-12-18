@@ -91,14 +91,12 @@ typedef struct _WINE_LOADER_OPTION {
  * IDirectMusicLoaderImpl implementation structure
  */
 struct IDirectMusicLoaderImpl {
-	/* VTABLEs */
-	const IDirectMusicLoader8Vtbl *LoaderVtbl;
-	/* reference counter */
-	LONG dwRef;	
-	/* simple cache (linked list) */
-	struct list *pObjects;
-	/* settings for certain object classes */
-	struct list *pClassSettings;
+    IDirectMusicLoader8 IDirectMusicLoader8_iface;
+    LONG ref;
+    /* simple cache (linked list) */
+    struct list *pObjects;
+    /* settings for certain object classes */
+    struct list *pClassSettings;
 };
 
 /* contained object entry */
