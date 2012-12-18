@@ -211,7 +211,7 @@ find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LO
 extern int atoi(const char *);
 
 /* Internal: Find the LCID for a locale specification */
-LCID MSVCRT_locale_to_LCID(const char *locale)
+LCID MSVCRT_locale_to_LCID(const char *locale, unsigned short *codepage)
 {
     LCID lcid;
     locale_search_t search;
@@ -256,7 +256,7 @@ LCID MSVCRT_locale_to_LCID(const char *locale)
     lcid =  MAKELCID(search.found_lang_id, SORT_DEFAULT);
 
     /* Populate partial locale, translating LCID to locale string elements */
-    if (!search.found_codepage[0]) {
+    if (!(search.match_flags & FOUND_CODEPAGE)) {
         /* Even if a codepage is not enumerated for a locale
          * it can be set if valid */
         if (search.search_codepage[0]) {
@@ -264,10 +264,10 @@ LCID MSVCRT_locale_to_LCID(const char *locale)
                 memcpy(search.found_codepage,search.search_codepage,MAX_ELEM_LEN);
             else {
                 /* Special codepage values: OEM & ANSI */
-                if (strcasecmp(search.search_codepage,"OCP")) {
+                if (!strcasecmp(search.search_codepage,"OCP")) {
                     GetLocaleInfoA(lcid, LOCALE_IDEFAULTCODEPAGE,
                             search.found_codepage, MAX_ELEM_LEN);
-                } else if (strcasecmp(search.search_codepage,"ACP")) {
+                } else if (!strcasecmp(search.search_codepage,"ACP")) {
                     GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE,
                             search.found_codepage, MAX_ELEM_LEN);
                 } else
@@ -285,12 +285,15 @@ LCID MSVCRT_locale_to_LCID(const char *locale)
                         search.found_codepage, MAX_ELEM_LEN);
         }
     }
+    if (codepage)
+        *codepage = atoi(search.found_codepage);
 
     return lcid;
 }
 
 /* INTERNAL: Set lc_handle, lc_id and lc_category in threadlocinfo struct */
-static BOOL update_threadlocinfo_category(LCID lcid, MSVCRT__locale_t loc, int category)
+static BOOL update_threadlocinfo_category(LCID lcid, unsigned short cp,
+        MSVCRT__locale_t loc, int category)
 {
     char buf[256], *p;
     int len;
@@ -314,9 +317,7 @@ static BOOL update_threadlocinfo_category(LCID lcid, MSVCRT__locale_t loc, int c
             loc->locinfo->lc_id[category].wLanguage;
     }
 
-    if(GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE
-                |LOCALE_NOUSEROVERRIDE, buf, 256))
-        loc->locinfo->lc_id[category].wCodePage = atoi(buf);
+    loc->locinfo->lc_id[category].wCodePage = cp;
 
     loc->locinfo->lc_handle[category] = lcid;
 
@@ -327,8 +328,8 @@ static BOOL update_threadlocinfo_category(LCID lcid, MSVCRT__locale_t loc, int c
     len += GetLocaleInfoA(lcid, LOCALE_SENGCOUNTRY
             |LOCALE_NOUSEROVERRIDE, &buf[len], 256-len);
     buf[len-1] = '.';
-    len += GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE
-            |LOCALE_NOUSEROVERRIDE, &buf[len], 256-len);
+    sprintf(buf+len, "%d", cp);
+    len += strlen(buf+len)+1;
 
     loc->locinfo->lc_category[category].locale = MSVCRT_malloc(len);
     loc->locinfo->lc_category[category].refcount = MSVCRT_malloc(sizeof(int));
@@ -757,6 +758,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 
     MSVCRT__locale_t loc;
     LCID lcid[6] = { 0 }, lcid_tmp;
+    unsigned short cp[6] = { 0 };
     char buf[256];
     int i, ret, size;
 
@@ -765,11 +767,20 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
     if(category<MSVCRT_LC_MIN || category>MSVCRT_LC_MAX || !locale)
         return NULL;
 
-    if(locale[0]=='C' && !locale[1])
-        lcid[0] = CP_ACP;
-    else if(!locale[0])
+    if(locale[0]=='C' && !locale[1]) {
+        lcid[0] = 0;
+        cp[0] = CP_ACP;
+    } else if(!locale[0]) {
         lcid[0] = GetSystemDefaultLCID();
-    else if (locale[0] == 'L' && locale[1] == 'C' && locale[2] == '_') {
+        GetLocaleInfoA(lcid[0], LOCALE_IDEFAULTANSICODEPAGE
+                |LOCALE_NOUSEROVERRIDE, buf, sizeof(buf));
+        cp[0] = atoi(buf);
+
+        for(i=1; i<6; i++) {
+            lcid[i] = lcid[0];
+            cp[i] = cp[0];
+        }
+    } else if (locale[0] == 'L' && locale[1] == 'C' && locale[2] == '_') {
         const char *p;
 
         while(1) {
@@ -793,14 +804,15 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
                 return NULL;
 
             p = strchr(locale, ';');
-            if(locale[0]=='C' && (locale[1]==';' || locale[1]=='\0'))
+            if(locale[0]=='C' && (locale[1]==';' || locale[1]=='\0')) {
                 lcid[i] = 0;
-            else if(p) {
+                cp[i] = CP_ACP;
+            } else if(p) {
                 memcpy(buf, locale, p-locale);
                 buf[p-locale] = '\0';
-                lcid[i] = MSVCRT_locale_to_LCID(buf);
+                lcid[i] = MSVCRT_locale_to_LCID(buf, &cp[i]);
             } else
-                lcid[i] = MSVCRT_locale_to_LCID(locale);
+                lcid[i] = MSVCRT_locale_to_LCID(locale, &cp[i]);
 
             if(lcid[i] == -1)
                 return NULL;
@@ -811,14 +823,14 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
             locale = p+1;
         }
     } else {
-        lcid[0] = MSVCRT_locale_to_LCID(locale);
+        lcid[0] = MSVCRT_locale_to_LCID(locale, &cp[0]);
         if(lcid[0] == -1)
             return NULL;
-    }
 
-    for(i=1; i<6; i++) {
-        if(!lcid[i])
+        for(i=1; i<6; i++) {
             lcid[i] = lcid[0];
+            cp[i] = cp[0];
+        }
     }
 
     loc = MSVCRT_malloc(sizeof(MSVCRT__locale_tstruct));
@@ -857,7 +869,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
     }
 
     if(lcid[MSVCRT_LC_COLLATE] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_COLLATE)) {
-        if(update_threadlocinfo_category(lcid[MSVCRT_LC_COLLATE], loc, MSVCRT_LC_COLLATE)) {
+        if(update_threadlocinfo_category(lcid[MSVCRT_LC_COLLATE], cp[MSVCRT_LC_COLLATE], loc, MSVCRT_LC_COLLATE)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
@@ -867,21 +879,21 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
         loc->locinfo->lc_category[MSVCRT_LC_COLLATE].locale = MSVCRT__strdup("C");
 
     if(lcid[MSVCRT_LC_CTYPE] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_CTYPE)) {
-        CPINFO cp;
+        CPINFO cp_info;
         int j;
 
-        if(update_threadlocinfo_category(lcid[MSVCRT_LC_CTYPE], loc, MSVCRT_LC_CTYPE)) {
+        if(update_threadlocinfo_category(lcid[MSVCRT_LC_CTYPE], cp[MSVCRT_LC_CTYPE], loc, MSVCRT_LC_CTYPE)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
 
         loc->locinfo->lc_codepage = loc->locinfo->lc_id[MSVCRT_LC_CTYPE].wCodePage;
         loc->locinfo->lc_clike = 1;
-        if(!GetCPInfo(loc->locinfo->lc_codepage, &cp)) {
+        if(!GetCPInfo(loc->locinfo->lc_codepage, &cp_info)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
-        loc->locinfo->mb_cur_max = cp.MaxCharSize;
+        loc->locinfo->mb_cur_max = cp_info.MaxCharSize;
 
         loc->locinfo->ctype1_refcount = MSVCRT_malloc(sizeof(int));
         loc->locinfo->ctype1 = MSVCRT_malloc(sizeof(short[257]));
@@ -905,8 +917,8 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
                     1, loc->locinfo->ctype1+i);
         }
 
-        for(i=0; cp.LeadByte[i+1]!=0; i+=2)
-            for(j=cp.LeadByte[i]; j<=cp.LeadByte[i+1]; j++)
+        for(i=0; cp_info.LeadByte[i+1]!=0; i+=2)
+            for(j=cp_info.LeadByte[i]; j<=cp_info.LeadByte[i+1]; j++)
                 loc->locinfo->ctype1[j+1] |= MSVCRT__LEADBYTE;
     } else {
         loc->locinfo->lc_clike = 1;
@@ -938,7 +950,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
     _setmbcp_l(loc->locinfo->lc_id[MSVCRT_LC_CTYPE].wCodePage, lcid[MSVCRT_LC_CTYPE], loc->mbcinfo);
 
     if(lcid[MSVCRT_LC_MONETARY] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_MONETARY)) {
-        if(update_threadlocinfo_category(lcid[MSVCRT_LC_MONETARY], loc, MSVCRT_LC_MONETARY)) {
+        if(update_threadlocinfo_category(lcid[MSVCRT_LC_MONETARY], cp[MSVCRT_LC_MONETARY], loc, MSVCRT_LC_MONETARY)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
@@ -1122,7 +1134,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
     }
 
     if(lcid[MSVCRT_LC_NUMERIC] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_NUMERIC)) {
-        if(update_threadlocinfo_category(lcid[MSVCRT_LC_NUMERIC], loc, MSVCRT_LC_NUMERIC)) {
+        if(update_threadlocinfo_category(lcid[MSVCRT_LC_NUMERIC], cp[MSVCRT_LC_NUMERIC], loc, MSVCRT_LC_NUMERIC)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
@@ -1189,7 +1201,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
     }
 
     if(lcid[MSVCRT_LC_TIME] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_TIME)) {
-        if(update_threadlocinfo_category(lcid[MSVCRT_LC_TIME], loc, MSVCRT_LC_TIME)) {
+        if(update_threadlocinfo_category(lcid[MSVCRT_LC_TIME], cp[MSVCRT_LC_TIME], loc, MSVCRT_LC_TIME)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
