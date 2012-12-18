@@ -153,6 +153,9 @@ struct d3d9_device
     struct wined3d_buffer *vertex_buffer;
     UINT vertex_buffer_size;
     UINT vertex_buffer_pos;
+    struct wined3d_buffer *index_buffer;
+    UINT index_buffer_size;
+    UINT index_buffer_pos;
 
     BOOL in_destruction;
     BOOL not_reset;
