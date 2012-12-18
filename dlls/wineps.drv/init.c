@@ -153,6 +153,19 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
     PAGESIZE *page;
     INT width = 0, height = 0;
 
+    if (physDev->Devmode->dmPublic.dmFields & DM_PRINTQUALITY)
+    {
+        physDev->logPixelsX = physDev->Devmode->dmPublic.u1.s1.dmPrintQuality;
+        physDev->logPixelsY = physDev->logPixelsX;
+    }
+    else
+    {
+        physDev->logPixelsX = physDev->pi->ppd->DefaultResolution;
+        physDev->logPixelsY = physDev->logPixelsX;
+    }
+    if (physDev->Devmode->dmPublic.dmFields & DM_YRESOLUTION)
+        physDev->logPixelsY = physDev->Devmode->dmPublic.dmYResolution;
+
     if(physDev->Devmode->dmPublic.dmFields & DM_PAPERSIZE) {
         LIST_FOR_EACH_ENTRY(page, &physDev->pi->ppd->PageSizes, PAGESIZE, entry) {
 	    if(page->WinPage == physDev->Devmode->dmPublic.u1.s1.dmPaperSize)
