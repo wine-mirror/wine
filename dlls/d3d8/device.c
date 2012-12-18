@@ -357,6 +357,9 @@ static ULONG WINAPI d3d8_device_Release(IDirect3DDevice8 *iface)
         }
         HeapFree(GetProcessHeap(), 0, device->decls);
 
+        if (device->vertex_buffer)
+            wined3d_buffer_decref(device->vertex_buffer);
+
         wined3d_device_uninit_3d(device->wined3d_device);
         wined3d_device_release_focus_window(device->wined3d_device);
         wined3d_device_decref(device->wined3d_device);
@@ -595,6 +598,14 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
     TRACE("iface %p, present_parameters %p.\n", iface, present_parameters);
 
     wined3d_mutex_lock();
+
+    if (device->vertex_buffer)
+    {
+        wined3d_buffer_decref(device->vertex_buffer);
+        device->vertex_buffer = NULL;
+        device->vertex_buffer_size = 0;
+    }
+
     wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, present_parameters);
     if (SUCCEEDED(hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc,
             NULL, reset_enum_callback, TRUE)))
@@ -1887,23 +1898,94 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitive(IDirect3DDevice8 *iface,
     return hr;
 }
 
+static void STDMETHODCALLTYPE d3d8_null_wined3d_object_destroyed(void *parent) {}
+
+static const struct wined3d_parent_ops d3d8_null_wined3d_parent_ops =
+{
+    d3d8_null_wined3d_object_destroyed,
+};
+
+/* The caller is responsible for wined3d locking */
+static HRESULT d3d8_device_prepare_vertex_buffer(struct d3d8_device *device, UINT min_size)
+{
+    HRESULT hr;
+
+    if (device->vertex_buffer_size < min_size || !device->vertex_buffer)
+    {
+        UINT size = max(device->vertex_buffer_size * 2, min_size);
+        struct wined3d_buffer *buffer;
+
+        TRACE("Growing vertex buffer to %u bytes\n", size);
+
+        hr = wined3d_buffer_create_vb(device->wined3d_device, size, WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_WRITEONLY,
+                WINED3D_POOL_DEFAULT, NULL, &d3d8_null_wined3d_parent_ops, &buffer);
+        if (FAILED(hr))
+        {
+            ERR("(%p) wined3d_buffer_create_vb failed with hr = %08x\n", device, hr);
+            return hr;
+        }
+
+        if (device->vertex_buffer)
+            wined3d_buffer_decref(device->vertex_buffer);
+
+        device->vertex_buffer = buffer;
+        device->vertex_buffer_size = size;
+        device->vertex_buffer_pos = 0;
+    }
+    return D3D_OK;
+}
+
 static HRESULT WINAPI d3d8_device_DrawPrimitiveUP(IDirect3DDevice8 *iface,
         D3DPRIMITIVETYPE primitive_type, UINT primitive_count, const void *data,
         UINT stride)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     HRESULT hr;
+    UINT vtx_count = vertex_count_from_primitive_count(primitive_type, primitive_count);
+    UINT size = vtx_count * stride;
+    UINT vb_pos, align;
+    BYTE *buffer_data;
 
     TRACE("iface %p, primitive_type %#x, primitive_count %u, data %p, stride %u.\n",
             iface, primitive_type, primitive_count, data, stride);
 
-    wined3d_mutex_lock();
-    wined3d_device_set_primitive_type(device->wined3d_device, primitive_type);
-    hr = wined3d_device_draw_primitive_up(device->wined3d_device,
-            vertex_count_from_primitive_count(primitive_type, primitive_count),
-            data, stride);
-    wined3d_mutex_unlock();
+    if (!primitive_count)
+    {
+        WARN("primitive_count is 0, returning D3D_OK\n");
+        return D3D_OK;
+    }
 
+    wined3d_mutex_lock();
+    hr = d3d8_device_prepare_vertex_buffer(device, size);
+    if (FAILED(hr))
+        goto done;
+
+    vb_pos = device->vertex_buffer_pos;
+    align = vb_pos % stride;
+    if (align) align = stride - align;
+    if (vb_pos + size + align > device->vertex_buffer_size)
+        vb_pos = 0;
+    else
+        vb_pos += align;
+
+    hr = wined3d_buffer_map(device->vertex_buffer, vb_pos, size, &buffer_data,
+            vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD);
+    if (FAILED(hr))
+        goto done;
+    memcpy(buffer_data, data, size);
+    wined3d_buffer_unmap(device->vertex_buffer);
+    device->vertex_buffer_pos = vb_pos + size;
+
+    hr = wined3d_device_set_stream_source(device->wined3d_device, 0, device->vertex_buffer, 0, stride);
+    if (FAILED(hr))
+        goto done;
+
+    wined3d_device_set_primitive_type(device->wined3d_device, primitive_type);
+    hr = wined3d_device_draw_primitive(device->wined3d_device, vb_pos / stride, vtx_count);
+    wined3d_device_set_stream_source(device->wined3d_device, 0, NULL, 0, 0);
+
+done:
+    wined3d_mutex_unlock();
     return hr;
 }
 
