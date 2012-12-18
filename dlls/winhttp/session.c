@@ -1170,18 +1170,34 @@ static void printf_addr( const WCHAR *fmt, WCHAR *buf, struct sockaddr_in *addr 
               (unsigned int)(ntohl( addr->sin_addr.s_addr ) & 0xff) );
 }
 
-static WCHAR *build_wpad_url( const struct addrinfo *ai )
+static int reverse_lookup( const struct addrinfo *ai, char *hostname, size_t len )
 {
-    static const WCHAR fmtW[] =
-        {'h','t','t','p',':','/','/','%','u','.','%','u','.','%','u','.','%','u',
-         '/','w','p','a','d','.','d','a','t',0};
-    WCHAR *ret;
+    int ret = -1;
+#ifdef HAVE_GETNAMEINFO
+    ret = getnameinfo( ai->ai_addr, ai->ai_addrlen, hostname, len, NULL, 0, 0 );
+#endif
+    return ret;
+}
 
-    while (ai && ai->ai_family != AF_INET) ai = ai->ai_next;
+static WCHAR *build_wpad_url( const char *hostname, const struct addrinfo *ai )
+{
+    static const WCHAR httpW[] = {'h','t','t','p',':','/','/',0};
+    static const WCHAR wpadW[] = {'/','w','p','a','d','.','d','a','t',0};
+    char name[NI_MAXHOST];
+    WCHAR *ret, *p;
+    int len;
+
+    while (ai && ai->ai_family != AF_INET && ai->ai_family != AF_INET6) ai = ai->ai_next;
     if (!ai) return NULL;
 
-    if (!(ret = GlobalAlloc( 0, sizeof(fmtW) + 12 * sizeof(WCHAR) ))) return NULL;
-    printf_addr( fmtW, ret, (struct sockaddr_in *)ai->ai_addr );
+    if (!reverse_lookup( ai, name, sizeof(name) )) hostname = name;
+
+    len = strlenW( httpW ) + strlen( hostname ) + strlenW( wpadW );
+    if (!(ret = p = GlobalAlloc( 0, (len + 1) * sizeof(WCHAR) ))) return NULL;
+    strcpyW( p, httpW );
+    p += strlenW( httpW );
+    while (*hostname) { *p++ = *hostname++; }
+    strcpyW( p, wpadW );
     return ret;
 }
 
@@ -1234,7 +1250,7 @@ BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
             heap_free( name );
             if (!res)
             {
-                *url = build_wpad_url( ai );
+                *url = build_wpad_url( name, ai );
                 freeaddrinfo( ai );
                 if (*url)
                 {
