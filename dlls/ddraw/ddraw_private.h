@@ -275,9 +275,9 @@ struct d3d_device
     IUnknown *outer_unknown;
     struct wined3d_device *wined3d_device;
     struct ddraw *ddraw;
-    struct wined3d_buffer *indexbuffer;
-    UINT indexbuffer_size;
-    UINT indexbuffer_pos;
+    struct wined3d_buffer *index_buffer;
+    UINT index_buffer_size;
+    UINT index_buffer_pos;
     struct ddraw_surface *target;
 
     /* Viewport management */
