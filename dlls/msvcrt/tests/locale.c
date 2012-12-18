@@ -575,6 +575,27 @@ static void test_setlocale(void)
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
         ok(!strcmp(ret, "English_United States.1252"), "ret = %s\n", ret);
+
+    ret = setlocale(LC_ALL, "English_United States.ACP");
+    ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
+    if(ret) {
+        strcpy(buf, "English_United States.");
+        GetLocaleInfoA(MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT),
+                LOCALE_IDEFAULTANSICODEPAGE, buf+strlen(buf), 80);
+        ok(!strcmp(ret, buf), "ret = %s, expected %s\n", ret, buf);
+    }
+
+    ret = setlocale(LC_ALL, "English_United States.OCP");
+    ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
+    if(ret) {
+        strcpy(buf, "English_United States.");
+        GetLocaleInfoA(MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT),
+                LOCALE_IDEFAULTCODEPAGE, buf+strlen(buf), 80);
+        ok(!strcmp(ret, buf), "ret = %s, expected %s\n", ret, buf);
+    }
+
+    ret = setlocale(LC_ALL, "English_United States.UTF8");
+    ok(ret == NULL, "ret != NULL\n");
 }
 
 static void test_crtGetStringTypeW(void)
