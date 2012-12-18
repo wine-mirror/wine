@@ -3578,6 +3578,10 @@ static HRESULT d3d_device7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
     HRESULT hr;
+    UINT stride = get_flexible_vertex_size(fvf);
+    UINT vtx_size = stride * vertex_count, idx_size = index_count * sizeof(*indices);
+    UINT vb_pos, ib_pos;
+    BYTE *data;
 
     TRACE("iface %p, primitive_type %#x, fvf %#x, vertices %p, vertex_count %u, "
             "indices %p, index_count %u, flags %#x.\n",
@@ -3585,12 +3589,51 @@ static HRESULT d3d_device7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
 
     /* Set the D3DDevice's FVF */
     wined3d_mutex_lock();
+
+    hr = d3d_device_prepare_vertex_buffer(device, vtx_size);
+    if (FAILED(hr))
+        goto done;
+
+    /* TODO: Align the map position to the vertex size and use the draw start vertex
+     * parameter instead of the per-stream offset */
+    vb_pos = device->vertex_buffer_pos;
+    if (device->vertex_buffer_size - vtx_size < vb_pos)
+        vb_pos = 0;
+
+    hr = wined3d_buffer_map(device->vertex_buffer, vb_pos, vtx_size, &data,
+            vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD);
+    if (FAILED(hr))
+        goto done;
+    memcpy(data, vertices, vtx_size);
+    wined3d_buffer_unmap(device->vertex_buffer);
+    device->vertex_buffer_pos = vb_pos + vtx_size;
+
+    hr = d3d_device_prepare_index_buffer(device, idx_size);
+    if (FAILED(hr))
+        goto done;
+    ib_pos = device->index_buffer_pos;
+    if (device->index_buffer_size - idx_size < ib_pos)
+        ib_pos = 0;
+
+    hr = wined3d_buffer_map(device->index_buffer, ib_pos, idx_size, &data,
+            ib_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD);
+    if (FAILED(hr))
+        goto done;
+    memcpy(data, indices, idx_size);
+    wined3d_buffer_unmap(device->index_buffer);
+    device->index_buffer_pos = ib_pos + idx_size;
+
+    hr = wined3d_device_set_stream_source(device->wined3d_device, 0, device->vertex_buffer, vb_pos, stride);
+    if (FAILED(hr))
+        goto done;
+    wined3d_device_set_index_buffer(device->wined3d_device, device->index_buffer, WINED3DFMT_R16_UINT);
+
     wined3d_device_set_vertex_declaration(device->wined3d_device, ddraw_find_decl(device->ddraw, fvf));
     wined3d_device_set_primitive_type(device->wined3d_device, primitive_type);
-    hr = wined3d_device_draw_indexed_primitive_up(device->wined3d_device, index_count, indices,
-            WINED3DFMT_R16_UINT, vertices, get_flexible_vertex_size(fvf));
-    wined3d_mutex_unlock();
+    hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / sizeof(*indices), index_count);
 
+done:
+    wined3d_mutex_unlock();
     return hr;
 }
 
