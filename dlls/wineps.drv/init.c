@@ -421,14 +421,13 @@ static INT PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
     case RASTERCAPS:
         return (RC_BITBLT | RC_BITMAP64 | RC_GDI20_OUTPUT | RC_DIBTODEV |
                 RC_STRETCHBLT | RC_STRETCHDIB); /* psdrv 0x6e99 */
-    /* Are aspect[XY] and logPixels[XY] correct? */
-    /* Need to handle different res in x and y => fix ppd */
     case ASPECTX:
+        return physDev->logPixelsX;
     case ASPECTY:
-        return physDev->pi->ppd->DefaultResolution;
+        return physDev->logPixelsY;
     case ASPECTXY:
-        return (int)hypot( (double)physDev->pi->ppd->DefaultResolution,
-                           (double)physDev->pi->ppd->DefaultResolution );
+        return (int)hypot( (double)physDev->logPixelsX,
+                           (double)physDev->logPixelsY );
     case LOGPIXELSX:
         return MulDiv(physDev->logPixelsX,
 		      physDev->Devmode->dmPublic.u1.s1.dmScale, 100);
