@@ -2094,14 +2094,9 @@ void __cdecl wined3d_device_draw_indexed_primitive_instanced(struct wined3d_devi
 HRESULT __cdecl wined3d_device_draw_indexed_primitive_strided(struct wined3d_device *device, UINT index_count,
         const struct wined3d_strided_data *strided_data, UINT vertex_count, const void *index_data,
         enum wined3d_format_id index_data_format_id);
-HRESULT __cdecl wined3d_device_draw_indexed_primitive_up(struct wined3d_device *device,
-        UINT index_count, const void *index_data, enum wined3d_format_id index_data_format_id,
-        const void *stream_data, UINT stream_stride);
 HRESULT __cdecl wined3d_device_draw_primitive(struct wined3d_device *device, UINT start_vertex, UINT vertex_count);
 HRESULT __cdecl wined3d_device_draw_primitive_strided(struct wined3d_device *device,
         UINT vertex_count, const struct wined3d_strided_data *strided_data);
-HRESULT __cdecl wined3d_device_draw_primitive_up(struct wined3d_device *device,
-        UINT vertex_count, const void *stream_data, UINT stream_stride);
 HRESULT __cdecl wined3d_device_draw_rect_patch(struct wined3d_device *device, UINT handle,
         const float *num_segs, const struct wined3d_rect_patch_info *rect_patch_info);
 HRESULT __cdecl wined3d_device_draw_tri_patch(struct wined3d_device *device, UINT handle,
