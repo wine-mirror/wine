@@ -136,22 +136,22 @@ INT16 WINAPI SysReAllocString16(LPBSTR16 pbstr,LPCOLESTR16 oleStr)
  */
 BSTR16 WINAPI SysAllocStringLen16(const char *oleStr, int len)
 {
-	BSTR16 out=BSTR_AllocBytes(len+1);
+    BSTR16 out=BSTR_AllocBytes(len+1);
 
-	if (!out)
-		return 0;
+    if (!out)
+        return 0;
 
     /*
-     * Copy the information in the buffer.
-     * Since it is valid to pass a NULL pointer here, we'll initialize the
-     * buffer to nul if it is the case.
-     */
+    * Copy the information in the buffer.
+    * Since it is valid to pass a NULL pointer here, we'll initialize the
+    * buffer to nul if it is the case.
+    */
     if (oleStr != 0)
-	strcpy(BSTR_GetAddr(out),oleStr);
+        strcpy(BSTR_GetAddr(out),oleStr);
     else
-      memset(BSTR_GetAddr(out), 0, len+1);
+        memset(BSTR_GetAddr(out), 0, len+1);
 
-	return out;
+    return out;
 }
 
 /******************************************************************************
