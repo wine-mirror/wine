@@ -423,14 +423,12 @@ static UINT nulldrv_GetTextCharsetInfo( PHYSDEV dev, LPFONTSIGNATURE fs, DWORD f
     return DEFAULT_CHARSET;
 }
 
-static BOOL nulldrv_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR str, INT count, INT max_ext,
-                                          INT *fit, INT *dx, SIZE *size )
+static BOOL nulldrv_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR str, INT count, INT *dx )
 {
     return FALSE;
 }
 
-static BOOL nulldrv_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, INT count, INT max_ext,
-                                           INT *fit, INT *dx, SIZE *size )
+static BOOL nulldrv_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, INT count, INT *dx )
 {
     return FALSE;
 }

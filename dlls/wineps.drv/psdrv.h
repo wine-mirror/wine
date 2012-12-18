@@ -425,8 +425,7 @@ extern BOOL PSDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                               const RECT *lprect, LPCWSTR str, UINT count, const INT *lpDx ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_FillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_GetCharWidth(PHYSDEV dev, UINT firstChar, UINT lastChar, LPINT buffer) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_GetTextExtentExPoint(PHYSDEV dev, LPCWSTR str, INT count,
-                                       INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_GetTextExtentExPoint(PHYSDEV dev, LPCWSTR str, INT count, LPINT alpDx) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_GetTextMetrics(PHYSDEV dev, TEXTMETRICW *metrics) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_LineTo(PHYSDEV dev, INT x, INT y) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;

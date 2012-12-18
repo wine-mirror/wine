@@ -317,43 +317,25 @@ const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm)
 /***********************************************************************
  *           PSDRV_GetTextExtentExPoint
  */
-BOOL PSDRV_GetTextExtentExPoint(PHYSDEV dev, LPCWSTR str, INT count,
-                                INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size)
+BOOL PSDRV_GetTextExtentExPoint(PHYSDEV dev, LPCWSTR str, INT count, LPINT alpDx)
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-    int     	    nfit = 0;
     int     	    i;
     float   	    width = 0.0;
-    float   	    scale;
 
     if (physDev->font.fontloc == Download)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetTextExtentExPoint );
-        return dev->funcs->pGetTextExtentExPoint( dev, str, count, maxExt, lpnFit, alpDx, size );
+        return dev->funcs->pGetTextExtentExPoint( dev, str, count, alpDx );
     }
 
     TRACE("%s %i\n", debugstr_wn(str, count), count);
 
-    scale = physDev->font.fontinfo.Builtin.scale;
-    for (i = 0; i < count && str[i] != '\0'; ++i)
+    for (i = 0; i < count; ++i)
     {
-	float scaled_width;
 	width += PSDRV_UVMetrics(str[i], physDev->font.fontinfo.Builtin.afm)->WX;
-	scaled_width = width * scale;
-	if (alpDx)
-	    alpDx[i] = scaled_width;
-	if (scaled_width <= maxExt)
-	    ++nfit;
+        alpDx[i] = width * physDev->font.fontinfo.Builtin.scale;
     }
-
-    size->cx = width * physDev->font.fontinfo.Builtin.scale;
-    size->cy = physDev->font.fontinfo.Builtin.tm.tmHeight;
-
-    if (lpnFit)
-	*lpnFit = nfit;
-
-    TRACE("cx=%i cy=%i\n", size->cx, size->cy);
-
     return TRUE;
 }
 

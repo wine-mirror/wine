@@ -116,8 +116,8 @@ struct gdi_dc_funcs
     COLORREF (*pGetPixel)(PHYSDEV,INT,INT);
     UINT     (*pGetSystemPaletteEntries)(PHYSDEV,UINT,UINT,LPPALETTEENTRY);
     UINT     (*pGetTextCharsetInfo)(PHYSDEV,LPFONTSIGNATURE,DWORD);
-    BOOL     (*pGetTextExtentExPoint)(PHYSDEV,LPCWSTR,INT,INT,LPINT,LPINT,LPSIZE);
-    BOOL     (*pGetTextExtentExPointI)(PHYSDEV,const WORD*,INT,INT,LPINT,LPINT,LPSIZE);
+    BOOL     (*pGetTextExtentExPoint)(PHYSDEV,LPCWSTR,INT,LPINT);
+    BOOL     (*pGetTextExtentExPointI)(PHYSDEV,const WORD*,INT,LPINT);
     INT      (*pGetTextFace)(PHYSDEV,INT,LPWSTR);
     BOOL     (*pGetTextMetrics)(PHYSDEV,TEXTMETRICW*);
     BOOL     (*pGradientFill)(PHYSDEV,TRIVERTEX*,ULONG,void*,ULONG,ULONG);
@@ -197,7 +197,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 45
+#define WINE_GDI_DRIVER_VERSION 46
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

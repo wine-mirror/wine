@@ -7134,97 +7134,67 @@ static BOOL freetype_GetCharABCWidthsI( PHYSDEV dev, UINT firstChar, UINT count,
 /*************************************************************
  * freetype_GetTextExtentExPoint
  */
-static BOOL freetype_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR wstr, INT count,
-                                           INT max_ext, LPINT pnfit, LPINT dxs, LPSIZE size)
+static BOOL freetype_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR wstr, INT count, LPINT dxs )
 {
     static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
-    INT idx;
-    INT nfit = 0, ext;
+    INT idx, pos;
     ABC abc;
     GLYPHMETRICS gm;
-    TEXTMETRICW tm;
     struct freetype_physdev *physdev = get_freetype_dev( dev );
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetTextExtentExPoint );
-        return dev->funcs->pGetTextExtentExPoint( dev, wstr, count, max_ext, pnfit, dxs, size );
+        return dev->funcs->pGetTextExtentExPoint( dev, wstr, count, dxs );
     }
 
-    TRACE("%p, %s, %d, %d, %p\n", physdev->font, debugstr_wn(wstr, count), count, max_ext, size);
+    TRACE("%p, %s, %d\n", physdev->font, debugstr_wn(wstr, count), count);
 
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
-    size->cx = 0;
-    get_text_metrics( physdev->font, &tm );
-    size->cy = tm.tmHeight;
-
-    for(idx = 0; idx < count; idx++) {
+    for (idx = pos = 0; idx < count; idx++)
+    {
         get_glyph_outline( physdev->font, wstr[idx], GGO_METRICS, &gm, &abc, 0, NULL, &identity );
-        size->cx += abc.abcA + abc.abcB + abc.abcC;
-        ext = size->cx;
-        if (! pnfit || ext <= max_ext) {
-            ++nfit;
-            if (dxs)
-                dxs[idx] = ext;
-        }
+        pos += abc.abcA + abc.abcB + abc.abcC;
+        dxs[idx] = pos;
     }
 
-    if (pnfit)
-        *pnfit = nfit;
-
     LeaveCriticalSection( &freetype_cs );
-    TRACE("return %d, %d, %d\n", size->cx, size->cy, nfit);
     return TRUE;
 }
 
 /*************************************************************
  * freetype_GetTextExtentExPointI
  */
-static BOOL freetype_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, INT count,
-                                            INT max_ext, LPINT pnfit, LPINT dxs, LPSIZE size )
+static BOOL freetype_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, INT count, LPINT dxs )
 {
     static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
-    INT idx;
-    INT nfit = 0, ext;
+    INT idx, pos;
     ABC abc;
     GLYPHMETRICS gm;
-    TEXTMETRICW tm;
     struct freetype_physdev *physdev = get_freetype_dev( dev );
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetTextExtentExPointI );
-        return dev->funcs->pGetTextExtentExPointI( dev, indices, count, max_ext, pnfit, dxs, size );
+        return dev->funcs->pGetTextExtentExPointI( dev, indices, count, dxs );
     }
 
-    TRACE("%p, %p, %d, %d, %p\n", physdev->font, indices, count, max_ext, size);
+    TRACE("%p, %p, %d\n", physdev->font, indices, count);
 
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
-    size->cx = 0;
-    get_text_metrics(physdev->font, &tm);
-    size->cy = tm.tmHeight;
-
-    for(idx = 0; idx < count; idx++) {
+    for (idx = pos = 0; idx < count; idx++)
+    {
         get_glyph_outline( physdev->font, indices[idx], GGO_METRICS | GGO_GLYPH_INDEX,
                            &gm, &abc, 0, NULL, &identity );
-        size->cx += abc.abcA + abc.abcB + abc.abcC;
-        ext = size->cx;
-        if (! pnfit || ext <= max_ext) {
-            ++nfit;
-            if (dxs)
-                dxs[idx] = ext;
-        }
+        pos += abc.abcA + abc.abcB + abc.abcC;
+        dxs[idx] = pos;
     }
 
-    if (pnfit)
-        *pnfit = nfit;
-
     LeaveCriticalSection( &freetype_cs );
-    TRACE("return %d, %d, %d\n", size->cx, size->cy, nfit);
     return TRUE;
 }
 

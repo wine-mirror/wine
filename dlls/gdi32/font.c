@@ -320,7 +320,7 @@ static BOOL get_char_positions( DC *dc, const WCHAR *str, INT count, INT *dx, SI
     dev = GET_DC_PHYSDEV( dc, pGetTextMetrics );
     dev->funcs->pGetTextMetrics( dev, &tm );
 
-    if (!dev->funcs->pGetTextExtentExPoint( dev, str, count, 0, NULL, dx, size )) return FALSE;
+    if (!dev->funcs->pGetTextExtentExPoint( dev, str, count, dx )) return FALSE;
 
     if (dc->breakExtra || dc->breakRem)
     {
@@ -357,7 +357,7 @@ static BOOL get_char_positions_indices( DC *dc, const WORD *indices, INT count, 
     dev = GET_DC_PHYSDEV( dc, pGetTextMetrics );
     dev->funcs->pGetTextMetrics( dev, &tm );
 
-    if (!dev->funcs->pGetTextExtentExPointI( dev, indices, count, 0, NULL, dx, size )) return FALSE;
+    if (!dev->funcs->pGetTextExtentExPointI( dev, indices, count, dx )) return FALSE;
 
     if (dc->breakExtra || dc->breakRem)
     {
