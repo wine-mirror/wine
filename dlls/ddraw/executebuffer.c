@@ -133,7 +133,8 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                     instr += size;
                 }
                 IDirect3DDevice7_DrawIndexedPrimitive(&device->IDirect3DDevice7_iface,
-                        D3DPT_TRIANGLELIST, D3DFVF_TLVERTEX, tl_vx, 0, buffer->indices, count * 3, 0);
+                        D3DPT_TRIANGLELIST, D3DFVF_TLVERTEX, tl_vx, buffer->nb_vertices,
+                        buffer->indices, count * 3, 0);
 	    } break;
 
 	    case D3DOP_MATRIXLOAD:
@@ -711,6 +712,7 @@ static HRESULT WINAPI d3d_execute_buffer_SetExecuteData(IDirect3DExecuteBuffer *
     /* Prepares the transformed vertex buffer */
     HeapFree(GetProcessHeap(), 0, buffer->vertex_data);
     buffer->vertex_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nbvert * sizeof(D3DTLVERTEX));
+    buffer->nb_vertices = nbvert;
 
     if (TRACE_ON(ddraw))
         _dump_executedata(data);
