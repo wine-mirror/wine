@@ -130,9 +130,12 @@ static int compare_info(LCID lcid, DWORD flags, char* buff, const char* cmp, BOO
 {
   int len;
 
+  if(!cmp[0])
+      return 0;
+
   buff[0] = 0;
   GetLocaleInfoA(lcid, flags|LOCALE_NOUSEROVERRIDE, buff, MAX_ELEM_LEN);
-  if (!buff[0] || !cmp[0])
+  if (!buff[0])
     return 0;
 
   /* Partial matches are only allowed on language/country names */
@@ -175,7 +178,7 @@ find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LO
     TRACE("Found country:%s->%s\n", res->search_country, buff);
     flags |= FOUND_COUNTRY;
   }
-  else if (res->match_flags & FOUND_COUNTRY)
+  else if (!flags && (res->match_flags & FOUND_COUNTRY))
   {
     return CONTINUE_LOOKING;
   }
@@ -188,7 +191,7 @@ find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LO
     flags |= FOUND_CODEPAGE;
     memcpy(res->found_codepage,res->search_codepage,MAX_ELEM_LEN);
   }
-  else if (res->match_flags & FOUND_CODEPAGE)
+  else if (!flags && (res->match_flags & FOUND_CODEPAGE))
   {
     return CONTINUE_LOOKING;
   }
