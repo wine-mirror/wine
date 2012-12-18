@@ -644,22 +644,22 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
                      CIMTYPE *type, LONG *flavor )
 {
     HRESULT hr;
-    UINT column, row = view->result[index];
+    UINT column, row;
     VARTYPE vartype;
     void *val_ptr = NULL;
     LONGLONG val;
 
     if (is_system_prop( name )) return get_system_propval( view, index, name, ret, type, flavor );
-    if (!is_selected_prop( view, name )) return WBEM_E_NOT_FOUND;
+    if (!view->result || !is_selected_prop( view, name )) return WBEM_E_NOT_FOUND;
 
     hr = get_column_index( view->table, name, &column );
     if (hr != S_OK || is_method( view->table, column )) return WBEM_E_NOT_FOUND;
 
-    vartype = view->table->columns[column].vartype;
-
+    row = view->result[index];
     hr = get_value( view->table, row, column, &val );
     if (hr != S_OK) return hr;
 
+    vartype = view->table->columns[column].vartype;
     if (view->table->columns[column].type & CIM_FLAG_ARRAY)
     {
         CIMTYPE basetype = view->table->columns[column].type & CIM_TYPE_MASK;
