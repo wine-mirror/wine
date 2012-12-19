@@ -440,7 +440,6 @@ static BOOL WCMD_ManualCopy(WCHAR *srcname, WCHAR *dstname, BOOL ascii, BOOL app
     }
 
     /* Loop copying data from source to destination until EOF read */
-    ok = TRUE;
     do
     {
       char buffer[MAXSTRING];

@@ -1157,8 +1157,6 @@ void WCMD_run_program (WCHAR *command, BOOL called)
       static const WCHAR batExt[] = {'.','b','a','t','\0'};
       static const WCHAR cmdExt[] = {'.','c','m','d','\0'};
 
-      launched = TRUE;
-
       /* Special case BAT and CMD */
       if (ext && (!strcmpiW(ext, batExt) || !strcmpiW(ext, cmdExt))) {
         BOOL oldinteractive = interactive;
@@ -2403,9 +2401,6 @@ int wmain (int argc, WCHAR *argvW[])
       /* Handle very edge case error scenario, "cmd.exe /c" ie when there are no
        * parameters after the /C or /K by pretending there was a single space     */
       if (argPos == NULL) argPos = (WCHAR *)spaceW;
-
-      /* Build the command to execute - It is what is left in argPos */
-      len = strlenW(argPos);
 
       /* Take a copy */
       cmd = heap_strdupW(argPos);
