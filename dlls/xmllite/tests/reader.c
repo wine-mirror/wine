@@ -721,10 +721,9 @@ static void test_read_comment(void)
 
     type = XmlNodeType_None;
     hr = IXmlReader_Read(reader, &type);
-todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(type == XmlNodeType_Comment, "got %d\n", type);
-}
+
     IStream_Release(stream);
 
     stream = create_stream_on_data(xml_comment1, sizeof(xml_comment1));
@@ -733,10 +732,9 @@ todo_wine {
 
     type = XmlNodeType_None;
     hr = IXmlReader_Read(reader, &type);
-todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(type == XmlNodeType_Comment, "got %d\n", type);
-}
+
     IStream_Release(stream);
 
     stream = create_stream_on_data(xml_comment2, sizeof(xml_comment2));
@@ -745,7 +743,6 @@ todo_wine {
 
     type = XmlNodeType_None;
     hr = IXmlReader_Read(reader, &type);
-todo_wine
     ok(hr == WC_E_COMMENT || broken(hr == WC_E_GREATERTHAN), "got %08x\n", hr);
     ok(type == XmlNodeType_None, "got %d\n", type);
     IStream_Release(stream);

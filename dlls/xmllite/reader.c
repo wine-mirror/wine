@@ -777,8 +777,35 @@ static HRESULT reader_parse_xmldecl(xmlreader *reader)
 /* [15] Comment ::= '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->' */
 static HRESULT reader_parse_comment(xmlreader *reader)
 {
-    FIXME("comments not supported\n");
-    return E_NOTIMPL;
+    const WCHAR *start, *ptr;
+
+    /* skip '<!--' */
+    reader_skipn(reader, 4);
+    ptr = start = reader_get_cur(reader);
+
+    while (*ptr)
+    {
+        if (ptr[0] == '-' && ptr[1] == '-')
+        {
+            if (ptr[2] == '>')
+            {
+                TRACE("%s\n", debugstr_wn(start, ptr-start));
+                /* skip '-->' */
+                reader_skipn(reader, 3);
+                reader->nodetype = XmlNodeType_Comment;
+                return S_OK;
+            }
+            else
+                return WC_E_COMMENT;
+        }
+        else
+        {
+            reader_skipn(reader, 1);
+            ptr = reader_get_cur(reader);
+        }
+    }
+
+    return MX_E_INPUTEND;
 }
 
 /* [16] PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>' */
@@ -1014,7 +1041,7 @@ static HRESULT WINAPI xmlreader_Read(IXmlReader* iface, XmlNodeType *nodetype)
     XmlNodeType oldtype = This->nodetype;
     HRESULT hr;
 
-    FIXME("(%p)->(%p): stub\n", This, nodetype);
+    TRACE("(%p)->(%p)\n", This, nodetype);
 
     if (This->state == XmlReadState_Closed) return S_FALSE;
 
