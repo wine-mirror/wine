@@ -118,7 +118,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_GetInstr
         if (patch == inst_patch) {
             *instrument = inst_entry->pInstrument;
             IDirectMusicInstrument_AddRef(inst_entry->pInstrument);
-            IDirectMusicInstrumentImpl_Custom_Load(inst_entry->pInstrument, This->pStm);
+            IDirectMusicInstrumentImpl_CustomLoad(inst_entry->pInstrument, This->pStm);
             TRACE(": returning instrument %p\n", *instrument);
             return S_OK;
         }
@@ -665,10 +665,11 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load(LPPERSISTST
                                             DMUSIC_CreateDirectMusicInstrumentImpl(&IID_IDirectMusicInstrument, (LPVOID*)&new_instrument->pInstrument, NULL);
                                             {
                                                 IDirectMusicInstrumentImpl *instrument = impl_from_IDirectMusicInstrument(new_instrument->pInstrument);
+                                                /* Store offset and length, they will be needed when loading the instrument */
                                                 liMove.QuadPart = 0;
                                                 IStream_Seek(stream, liMove, STREAM_SEEK_CUR, &dlibInstrumentPosition);
-                                                /* Store offset, it'll be needed later */
-                                                instrument->liInstrumentPosition.QuadPart = dlibInstrumentPosition.QuadPart - (2 * sizeof(FOURCC) + sizeof(DWORD));
+                                                instrument->liInstrumentPosition.QuadPart = dlibInstrumentPosition.QuadPart;
+                                                instrument->length = ListSize[1];
                                                 do {
                                                     IStream_Read(stream, &chunk, sizeof(FOURCC) + sizeof(DWORD), NULL);
                                                     ListCount[1] += sizeof(FOURCC) + sizeof(DWORD) + chunk.dwSize;

@@ -156,140 +156,68 @@ static inline DWORD subtract_bytes(DWORD len, DWORD bytes)
     return len - bytes;
 }
 
-static HRESULT load_instrument(IDirectMusicInstrumentImpl *This, IStream *stream, DWORD length)
+static inline HRESULT advance_stream(IStream *stream, ULONG bytes)
 {
-    HRESULT hr;
-    FOURCC fourcc;
-    DWORD bytes;
     LARGE_INTEGER move;
+    HRESULT ret;
 
-    while(length){
-        hr = read_from_stream(stream, &fourcc, sizeof(fourcc));
-        if(FAILED(hr))
-            return hr;
+    move.QuadPart = bytes;
 
-        hr = read_from_stream(stream, &bytes, sizeof(bytes));
-        if(FAILED(hr))
-            return hr;
+    ret = IStream_Seek(stream, move, STREAM_SEEK_CUR, NULL);
+    if (FAILED(ret))
+        WARN("IStream_Seek failed: %08x\n", ret);
 
-        length = subtract_bytes(length, sizeof(fourcc) + sizeof(bytes));
-
-        switch(fourcc){
-        case FOURCC_INSH:
-            TRACE("INSH chunk: %u bytes\n", bytes);
-            hr = read_from_stream(stream, This->pHeader, sizeof(*This->pHeader));
-            if(FAILED(hr))
-                return hr;
-
-            move.QuadPart = bytes - sizeof(*This->pHeader);
-            hr = IStream_Seek(stream, move, STREAM_SEEK_CUR, NULL);
-            if(FAILED(hr)){
-                WARN("IStream_Seek failed: %08x\n", hr);
-                return hr;
-            }
-
-            length = subtract_bytes(length, bytes);
-            break;
-
-        case FOURCC_DLID:
-            TRACE("DLID chunk: %u bytes\n", bytes);
-            hr = read_from_stream(stream, This->pInstrumentID, sizeof(*This->pInstrumentID));
-            if(FAILED(hr))
-                return hr;
-
-            move.QuadPart = bytes - sizeof(*This->pInstrumentID);
-            hr = IStream_Seek(stream, move, STREAM_SEEK_CUR, NULL);
-            if(FAILED(hr)){
-                WARN("IStream_Seek failed: %08x\n", hr);
-                return hr;
-            }
-
-            length = subtract_bytes(length, bytes);
-            break;
-
-        default:
-            TRACE("Unknown chunk %s: %u bytes\n", debugstr_fourcc(fourcc), bytes);
-
-            move.QuadPart = bytes;
-            hr = IStream_Seek(stream, move, STREAM_SEEK_CUR, NULL);
-            if(FAILED(hr)){
-                WARN("IStream_Seek failed: %08x\n", hr);
-                return hr;
-            }
-
-            length = subtract_bytes(length, bytes);
-            break;
-        }
-    }
-
-    return S_OK;
+    return ret;
 }
 
-/* aux. function that completely loads instrument; my tests indicate that it's 
-   called somewhere around IDirectMusicCollection_GetInstrument */
-HRESULT IDirectMusicInstrumentImpl_Custom_Load(LPDIRECTMUSICINSTRUMENT iface, LPSTREAM stream)
+/* Function that loads all instrument data and which is called from IDirectMusicCollection_GetInstrument as in native */
+HRESULT IDirectMusicInstrumentImpl_CustomLoad(IDirectMusicInstrument *iface, IStream *stream)
 {
     IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
-    LARGE_INTEGER move;
-    FOURCC fourcc;
-    DWORD bytes;
     HRESULT hr;
+    DMUS_PRIVATE_CHUNK chunk;
+    ULONG length = This->length;
 
-    TRACE("(%p, %p, offset = %s)\n", This, stream, wine_dbgstr_longlong(This->liInstrumentPosition.QuadPart));
+    TRACE("(%p, %p): offset = 0x%s, length = %u)\n", This, stream, wine_dbgstr_longlong(This->liInstrumentPosition.QuadPart), This->length);
 
     hr = IStream_Seek(stream, This->liInstrumentPosition, STREAM_SEEK_SET, NULL);
-    if(FAILED(hr)){
+    if (FAILED(hr))
+    {
         WARN("IStream_Seek failed: %08x\n", hr);
-        goto load_failure;
+        return DMUS_E_UNSUPPORTED_STREAM;
     }
 
-    hr = read_from_stream(stream, &fourcc, sizeof(fourcc));
-    if(FAILED(hr))
-        goto load_failure;
+    while (length)
+    {
+        hr = read_from_stream(stream, &chunk, sizeof(chunk));
+        if (FAILED(hr))
+            return DMUS_E_UNSUPPORTED_STREAM;
 
-    if(fourcc != FOURCC_LIST){
-        WARN("Loading failed: Expected LIST chunk, got: %s\n", debugstr_fourcc(fourcc));
-        goto load_failure;
-    }
+        length = subtract_bytes(length, sizeof(chunk) + chunk.dwSize);
 
-    hr = read_from_stream(stream, &bytes, sizeof(bytes));
-    if(FAILED(hr))
-        goto load_failure;
+        switch (chunk.fccID)
+        {
+            case FOURCC_INSH:
+            case FOURCC_DLID:
+                TRACE("Chunk %s: %u bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
 
-    TRACE("LIST chunk: %u bytes\n", bytes);
-    while(1){
-        hr = read_from_stream(stream, &fourcc, sizeof(fourcc));
-        if(FAILED(hr))
-            goto load_failure;
+                /* Instrument header and id are already set so just skip */
+                hr = advance_stream(stream, chunk.dwSize);
+                if (FAILED(hr))
+                    return DMUS_E_UNSUPPORTED_STREAM;
 
-        switch(fourcc){
-        case FOURCC_INS:
-            TRACE("INS  chunk: (no byte count)\n");
-            hr = load_instrument(This, stream, bytes - sizeof(FOURCC));
-            if(FAILED(hr))
-                goto load_failure;
-            break;
+                break;
 
-        default:
-            hr = read_from_stream(stream, &bytes, sizeof(bytes));
-            if(FAILED(hr))
-                goto load_failure;
+            default:
+                TRACE("Unknown chunk %s: %u bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
 
-            TRACE("Unknown chunk %s: %u bytes\n", debugstr_fourcc(fourcc), bytes);
+                hr = advance_stream(stream, chunk.dwSize);
+                if (FAILED(hr))
+                    return DMUS_E_UNSUPPORTED_STREAM;
 
-            move.QuadPart = bytes;
-            hr = IStream_Seek(stream, move, STREAM_SEEK_CUR, NULL);
-            if(FAILED(hr)){
-                WARN("IStream_Seek failed: %08x\n", hr);
-                return hr;
-            }
-
-            break;
+                break;
         }
     }
 
     return S_OK;
-
-load_failure:
-    return DMUS_E_UNSUPPORTED_STREAM;
 }

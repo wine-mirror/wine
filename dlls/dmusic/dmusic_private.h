@@ -230,6 +230,7 @@ struct IDirectMusicInstrumentImpl {
 
   /* IDirectMusicInstrumentImpl fields */
   LARGE_INTEGER liInstrumentPosition; /* offset in a stream where instrument chunk can be found */
+  ULONG length; /* Length of the instrument in the stream */
   LPGUID pInstrumentID;
   LPINSTHEADER pHeader;
   WCHAR wszName[DMUS_MAX_NAME];
@@ -242,7 +243,7 @@ static inline IDirectMusicInstrumentImpl *impl_from_IDirectMusicInstrument(IDire
 }
 
 /* custom :) */
-extern HRESULT IDirectMusicInstrumentImpl_Custom_Load (LPDIRECTMUSICINSTRUMENT iface, LPSTREAM pStm) DECLSPEC_HIDDEN;
+extern HRESULT IDirectMusicInstrumentImpl_CustomLoad(IDirectMusicInstrument *iface, IStream *stream) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dmusic.dll
