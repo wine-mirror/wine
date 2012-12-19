@@ -1198,6 +1198,10 @@ static INT GPOS_apply_PairAdjustment(const OT_LookupTable *look, const WORD *gly
         if (GET_BE_WORD(ppf1->PosFormat) == 1)
         {
             int index;
+            WORD ValueFormat1 = GET_BE_WORD(ppf1->ValueFormat1);
+            WORD ValueFormat2 = GET_BE_WORD(ppf1->ValueFormat2);
+            INT val_fmt1_size = GPOS_get_value_record( ValueFormat1, NULL, NULL );
+            INT val_fmt2_size = GPOS_get_value_record( ValueFormat2, NULL, NULL );
             offset = GET_BE_WORD(ppf1->Coverage);
             index = GSUB_is_glyph_covered((const BYTE*)ppf1+offset, glyphs[glyph_index]);
             if (index != -1 && index < GET_BE_WORD(ppf1->PairSetCount))
@@ -1205,24 +1209,24 @@ static INT GPOS_apply_PairAdjustment(const OT_LookupTable *look, const WORD *gly
                 int k;
                 int pair_count;
                 const GPOS_PairSet *ps;
+                const GPOS_PairValueRecord *pair_val_rec;
                 offset = GET_BE_WORD(ppf1->PairSetOffset[index]);
                 ps = (const GPOS_PairSet*)((const BYTE*)ppf1+offset);
                 pair_count = GET_BE_WORD(ps->PairValueCount);
+                pair_val_rec = ps->PairValueRecord;
                 for (k = 0; k < pair_count; k++)
                 {
-                    WORD second_glyph = GET_BE_WORD(ps->PairValueRecord[k].SecondGlyph);
+                    WORD second_glyph = GET_BE_WORD(pair_val_rec->SecondGlyph);
                     if (glyphs[glyph_index+write_dir] == second_glyph)
                     {
                         int next = 1;
                         GPOS_ValueRecord ValueRecord1 = {0,0,0,0,0,0,0,0};
                         GPOS_ValueRecord ValueRecord2 = {0,0,0,0,0,0,0,0};
-                        WORD ValueFormat1 = GET_BE_WORD(ppf1->ValueFormat1);
-                        WORD ValueFormat2 = GET_BE_WORD(ppf1->ValueFormat2);
 
                         TRACE("Format 1: Found Pair %x,%x\n",glyphs[glyph_index],glyphs[glyph_index+write_dir]);
 
-                        offset = GPOS_get_value_record(ValueFormat1, ps->PairValueRecord[k].Value1, &ValueRecord1);
-                        GPOS_get_value_record(ValueFormat2, (WORD*)((const BYTE*)(ps->PairValueRecord[k].Value2)+offset), &ValueRecord2);
+                        GPOS_get_value_record(ValueFormat1, pair_val_rec->Value1, &ValueRecord1);
+                        GPOS_get_value_record(ValueFormat2, pair_val_rec->Value1 + val_fmt1_size, &ValueRecord2);
                         if (ValueFormat1)
                         {
                             GPOS_get_value_record_offsets((const BYTE*)ppf1, &ValueRecord1,  ValueFormat1, ppem, &ptAdjust[0], &ptAdvance[0]);
@@ -1239,6 +1243,7 @@ static INT GPOS_apply_PairAdjustment(const OT_LookupTable *look, const WORD *gly
                         if (next)
                             return glyph_index + next;
                     }
+                    pair_val_rec = (const GPOS_PairValueRecord *)(pair_val_rec->Value1 + val_fmt1_size + val_fmt2_size);
                 }
             }
         }
