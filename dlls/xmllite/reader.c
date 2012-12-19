@@ -449,7 +449,7 @@ static int readerinput_get_utf8_convlen(xmlreaderinput *readerinput)
 static int readerinput_get_convlen(xmlreaderinput *readerinput, UINT cp)
 {
     encoded_buffer *buffer = &readerinput->buffer->encoded;
-    int len = buffer->written;
+    int len;
 
     if (cp == CP_UTF8)
         len = readerinput_get_utf8_convlen(readerinput);
