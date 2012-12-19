@@ -1,5 +1,5 @@
 MODULE    = scrrun.dll
-IMPORTS   = uuid oleaut32
+IMPORTS   = uuid oleaut32 version
 
 C_SRCS = \
 	dictionary.c \

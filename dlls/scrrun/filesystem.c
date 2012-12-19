@@ -30,6 +30,7 @@
 #include "scrrun_private.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
 
@@ -933,12 +934,53 @@ static HRESULT WINAPI filesys_GetStandardStream(IFileSystem3 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI filesys_GetFileVersion(IFileSystem3 *iface, BSTR FileName,
-                                            BSTR *FileVersion)
+static void get_versionstring(VS_FIXEDFILEINFO *info, WCHAR *ver)
 {
-    FIXME("%p %s %p\n", iface, debugstr_w(FileName), FileVersion);
+    static WCHAR fmtW[] = {'%','d','.','%','d','.','%','d','.','%','d',0};
+    DWORDLONG version;
+    WORD a, b, c, d;
 
-    return E_NOTIMPL;
+    version = (((DWORDLONG)info->dwFileVersionMS) << 32) + info->dwFileVersionLS;
+    a = (WORD)( version >> 48);
+    b = (WORD)((version >> 32) & 0xffff);
+    c = (WORD)((version >> 16) & 0xffff);
+    d = (WORD)( version & 0xffff);
+
+    sprintfW(ver, fmtW, a, b, c, d);
+}
+
+static HRESULT WINAPI filesys_GetFileVersion(IFileSystem3 *iface, BSTR name, BSTR *version)
+{
+    static const WCHAR rootW[] = {'\\',0};
+    VS_FIXEDFILEINFO *info;
+    WCHAR ver[30];
+    void *ptr;
+    DWORD len;
+    BOOL ret;
+
+    TRACE("%p %s %p\n", iface, debugstr_w(name), version);
+
+    len = GetFileVersionInfoSizeW(name, NULL);
+    if (!len)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    ptr = heap_alloc(len);
+    if (!GetFileVersionInfoW(name, 0, len, ptr))
+    {
+        heap_free(ptr);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    ret = VerQueryValueW(ptr, rootW, (void**)&info, &len);
+    heap_free(ptr);
+    if (!ret)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    get_versionstring(info, ver);
+    *version = SysAllocString(ver);
+    TRACE("version=%s\n", debugstr_w(ver));
+
+    return S_OK;
 }
 
 static const struct IFileSystem3Vtbl filesys_vtbl =

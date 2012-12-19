@@ -217,6 +217,43 @@ todo_wine {
     DeleteFileW(testfileW);
 }
 
+static void test_GetFileVersion(void)
+{
+    static const WCHAR k32W[] = {'\\','k','e','r','n','e','l','3','2','.','d','l','l',0};
+    static const WCHAR k33W[] = {'\\','k','e','r','n','e','l','3','3','.','d','l','l',0};
+    WCHAR pathW[MAX_PATH], filenameW[MAX_PATH];
+    BSTR path, version;
+    HRESULT hr;
+
+    GetSystemDirectoryW(pathW, sizeof(pathW)/sizeof(WCHAR));
+
+    lstrcpyW(filenameW, pathW);
+    lstrcatW(filenameW, k32W);
+
+    path = SysAllocString(filenameW);
+    hr = IFileSystem3_GetFileVersion(fs3, path, &version);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(*version != 0, "got %s\n", wine_dbgstr_w(version));
+    SysFreeString(version);
+    SysFreeString(path);
+
+    lstrcpyW(filenameW, pathW);
+    lstrcatW(filenameW, k33W);
+
+    path = SysAllocString(filenameW);
+    version = (void*)0xdeadbeef;
+    hr = IFileSystem3_GetFileVersion(fs3, path, &version);
+    ok(broken(hr == S_OK) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08x\n", hr);
+    if (hr == S_OK)
+    {
+        ok(*version == 0, "got %s\n", wine_dbgstr_w(version));
+        SysFreeString(version);
+    }
+    else
+        ok(version == (void*)0xdeadbeef, "got %p\n", version);
+    SysFreeString(path);
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -233,6 +270,7 @@ START_TEST(filesystem)
     test_interfaces();
     test_createfolder();
     test_textstream();
+    test_GetFileVersion();
 
     IFileSystem3_Release(fs3);
 
