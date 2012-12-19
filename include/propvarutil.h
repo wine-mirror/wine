@@ -81,6 +81,7 @@ HRESULT WINAPI PropVariantToUInt64(REFPROPVARIANT propvarIn, ULONGLONG *ret);
 
 HRESULT InitPropVariantFromBoolean(BOOL fVal, PROPVARIANT *ppropvar);
 HRESULT InitPropVariantFromString(PCWSTR psz, PROPVARIANT *ppropvar);
+HRESULT InitPropVariantFromInt64(LONGLONG llVal, PROPVARIANT *ppropvar);
 
 #ifndef NO_PROPVAR_INLINES
 
@@ -102,6 +103,13 @@ inline HRESULT InitPropVariantFromString(PCWSTR psz, PROPVARIANT *ppropvar)
         PropVariantInit(ppropvar);
 
     return hres;
+}
+
+inline HRESULT InitPropVariantFromInt64(LONGLONG llVal, PROPVARIANT *ppropvar)
+{
+    ppropvar->vt = VT_I8;
+    ppropvar->hVal.QuadPart = llVal;
+    return S_OK;
 }
 
 #endif
