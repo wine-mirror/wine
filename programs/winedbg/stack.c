@@ -447,7 +447,11 @@ void stack_backtrace(DWORD tid)
     /* backtrace every thread in every process except the debugger itself,
      * invoking via "bt all"
      */
-    if (tid == -1) return backtrace_all();
+    if (tid == -1)
+    {
+        backtrace_all();
+        return;
+    }
 
     if (!dbg_curr_process) 
     {
