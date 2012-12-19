@@ -57,7 +57,7 @@ extern const char *debugstr_dmguid (const GUID *id) DECLSPEC_HIDDEN;
 extern const char *debugstr_dmreturn (DWORD code) DECLSPEC_HIDDEN;
 
 /* dump whole DMUS_OBJECTDESC struct */
-extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) DECLSPEC_HIDDEN;
+extern void dump_DMUS_OBJECTDESC(DMUS_OBJECTDESC *desc) DECLSPEC_HIDDEN;
 extern const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeader) DECLSPEC_HIDDEN;
 extern const char *debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER (LPDMUS_IO_CONTAINED_OBJECT_HEADER pHeader) DECLSPEC_HIDDEN;
 

@@ -1,4 +1,5 @@
-/* IDirectMusicLoaderImpl
+/*
+ * IDirectMusicLoaderImpl
  *
  * Copyright (C) 2003-2004 Rok Mandeljc
  *
@@ -32,7 +33,9 @@ static HRESULT DMUSIC_SetLoaderSettings(IDirectMusicLoader8 *iface, REFGUID clas
 
 static HRESULT DMUSIC_CopyDescriptor(DMUS_OBJECTDESC *pDst, DMUS_OBJECTDESC *pSrc)
 {
-	TRACE(": copy\n%s\n", debugstr_DMUS_OBJECTDESC(pSrc));
+	if (TRACE_ON(dmloader))
+		dump_DMUS_OBJECTDESC(pSrc);
+
 	/* copy field by field */
 	if (pSrc->dwValidData & DMUS_OBJ_CLASS) pDst->guidClass = pSrc->guidClass;
 	if (pSrc->dwValidData & DMUS_OBJ_OBJECT) pDst->guidObject = pSrc->guidObject;
@@ -135,7 +138,10 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
 	DMUS_OBJECTDESC GotDesc;
 	BOOL bCache;
 
-	TRACE("(%p, %p, %s, %p): pDesc:\n%s\n", This, pDesc, debugstr_dmguid(riid), ppv, debugstr_DMUS_OBJECTDESC(pDesc));
+	TRACE("(%p)->(%p, %s, %p)\n", This, pDesc, debugstr_dmguid(riid), ppv);
+
+	if (TRACE_ON(dmloader))
+	  dump_DMUS_OBJECTDESC(pDesc);
 	
 	/* sometimes it happens that guidClass is missing... which is a BadThingTM */
 	if (!(pDesc->dwValidData & DMUS_OBJ_CLASS)) {
@@ -385,7 +391,10 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
 	LPWINE_LOADER_ENTRY pObjectEntry, pNewEntry;
 	HRESULT hr;
 
-	TRACE("(%p, %p): pDesc:\n%s\n", This, pDesc, debugstr_DMUS_OBJECTDESC(pDesc));
+	TRACE("(%p)->(%p)\n", This, pDesc);
+
+	if (TRACE_ON(dmloader))
+		dump_DMUS_OBJECTDESC(pDesc);
 
 	/* create stream and load additional info from it */
 	if (pDesc->dwValidData & DMUS_OBJ_FILENAME) {
@@ -488,7 +497,9 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
 	}		
 	
 	/* add new entry */
-	TRACE(": adding alias entry with following info:\n%s\n", debugstr_DMUS_OBJECTDESC(pDesc));
+	TRACE(": adding alias entry with following info:\n");
+	if (TRACE_ON(dmloader))
+		dump_DMUS_OBJECTDESC(pDesc);
 	pNewEntry = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(WINE_LOADER_ENTRY));
 	/* use this function instead of pure memcpy due to streams (memcpy just copies pointer), 
 	   which is basically used further by app that called SetDescriptor... better safety than exception */
@@ -671,7 +682,9 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ReleaseObject(IDirectMusicLoader8 *
 		if ((Desc.dwValidData & DMUS_OBJ_OBJECT) &&
 			(pObjectEntry->Desc.dwValidData & (DMUS_OBJ_OBJECT | DMUS_OBJ_LOADED)) &&
 			IsEqualGUID (&Desc.guidObject, &pObjectEntry->Desc.guidObject)) {
-			TRACE(": found it by object GUID\n%s\n", debugstr_DMUS_OBJECTDESC(&pObjectEntry->Desc));
+			TRACE(": found it by object GUID\n");
+			if (TRACE_ON(dmloader))
+				dump_DMUS_OBJECTDESC(&pObjectEntry->Desc);
 			result = S_OK;
 			break;
 		}

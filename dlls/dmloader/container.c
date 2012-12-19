@@ -420,8 +420,10 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_ParseDescript
 		}
 	}	
 	
-	TRACE(": returning descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC(pDesc));
-	return S_OK;	
+	TRACE(": returning descriptor:\n");
+	if (TRACE_ON(dmloader))
+		dump_DMUS_OBJECTDESC(pDesc);
+	return S_OK;
 }
 
 static const IDirectMusicObjectVtbl DirectMusicContainer_Object_Vtbl = {
