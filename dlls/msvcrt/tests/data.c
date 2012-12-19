@@ -197,12 +197,14 @@ static void test___getmainargs_parent(char *name)
     STARTUPINFO startup;
     PROCESS_INFORMATION proc;
     FILE *f;
+    int ret;
 
     ok(GetTempPathA(MAX_PATH, tmppath) != 0, "GetTempPath failed\n");
     sprintf(cmdline, "%s data %s*\\* %swine_test/*", name, tmppath, tmppath);
 
     sprintf(filepath, "%swine_test", tmppath);
-    ok(!_mkdir(filepath), "_mkdir failed: %d\n", errno);
+    ret = _mkdir(filepath);
+    ok(!ret, "_mkdir failed: %d\n", errno);
     sprintf(filepath, "%swine_test\\a", tmppath);
     f = fopen(filepath, "w");
     ok(f != NULL, "fopen(%s) failed: %d\n", filepath, errno);
