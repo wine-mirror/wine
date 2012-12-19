@@ -219,7 +219,12 @@ sub update_spec_file($)
             goto done;
         }
 
-        my $flags = ($parent{callconv} ne "stub" || $update_flags) ? $parent{flags} : $descr{flags};
+        my $flags = $descr{flags};
+        if ($parent{callconv} ne "stub" || $update_flags)
+        {
+            $flags = $parent{flags};
+            $flags =~ s/-ordinal\s*// if $descr{ordinal} eq "@";
+        }
 
         if ($parent{callconv} ne "stub" || $parent{args})
         {
