@@ -670,14 +670,13 @@ ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
     TRACE("(%p) ref was %u\n", device, ref + 1);
     if (!ref) {
         int i;
-        timeKillEvent(device->timerID);
-        timeEndPeriod(DS_TIME_RES);
 
-        /* The kill event should have allowed the timer process to expire
-         * but try to grab the lock just in case. Can't hold lock because
-         * secondarybuffer_destroy also grabs the lock */
-        RtlAcquireResourceShared(&(device->buffer_list_lock), TRUE);
-        RtlReleaseResource(&(device->buffer_list_lock));
+        SetEvent(device->sleepev);
+        if (device->thread) {
+            WaitForSingleObject(device->thread, INFINITE);
+            CloseHandle(device->thread);
+        }
+        CloseHandle(device->sleepev);
 
         EnterCriticalSection(&DSOUND_renderers_lock);
         list_remove(&device->entry);
@@ -813,6 +812,7 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
 
     device->mmdevice = mmdevice;
     device->guid = devGUID;
+    device->sleepev = CreateEventW(0, 0, 0, 0);
 
     hr = DSOUND_ReopenDevice(device, FALSE);
     if (FAILED(hr))
@@ -869,9 +869,10 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
     ZeroMemory(&device->volpan, sizeof(device->volpan));
 
     hr = DSOUND_PrimaryCreate(device);
-    if (hr == DS_OK)
-        device->timerID = DSOUND_create_timer(DSOUND_timer, (DWORD_PTR)device);
-    else
+    if (hr == DS_OK) {
+        device->thread = CreateThread(0, 0, DSOUND_mixthread, device, 0, 0);
+        SetThreadPriority(device->thread, THREAD_PRIORITY_TIME_CRITICAL);
+    } else
         WARN("DSOUND_PrimaryCreate failed: %08x\n", hr);
 
     *ppDevice = device;

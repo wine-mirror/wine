@@ -68,9 +68,9 @@ struct DirectSoundDevice
 
     GUID                        guid;
     DSCAPS                      drvcaps;
-    DWORD                       priolevel;
+    DWORD                       priolevel, sleeptime;
     PWAVEFORMATEX               pwfx, primary_pwfx;
-    UINT                        timerID, playing_offs_bytes, in_mmdev_bytes, prebuf;
+    UINT                        playing_offs_bytes, in_mmdev_bytes, prebuf;
     DWORD                       fraglen;
     LPBYTE                      buffer;
     DWORD                       writelead, buflen, state, playpos, mixpos;
@@ -97,6 +97,7 @@ struct DirectSoundDevice
     IAudioStreamVolume *volume;
     IAudioRenderClient *render;
 
+    HANDLE sleepev, thread;
     struct list entry;
 };
 
@@ -226,7 +227,7 @@ void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan) DECLSPEC_HIDDEN;
 void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb) DECLSPEC_HIDDEN;
 DWORD DSOUND_secpos_to_bufpos(const IDirectSoundBufferImpl *dsb, DWORD secpos, DWORD secmixpos, float *overshot) DECLSPEC_HIDDEN;
 
-void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2) DECLSPEC_HIDDEN;
+DWORD CALLBACK DSOUND_mixthread(void *ptr) DECLSPEC_HIDDEN;
 
 /* sound3d.c */
 
