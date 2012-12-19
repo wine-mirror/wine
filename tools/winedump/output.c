@@ -237,10 +237,10 @@ void  output_c_preamble (void)
   }
 
   fprintf (cfile,
-           "BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID "
-           "lpvReserved)\n{\n"
-           "    TRACE(\"(0x%%p, %%d, %%p)\\n\", hinstDLL, fdwReason, lpvReserved);\n\n"
-           "    switch (fdwReason)\n"
+           "BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID "
+           "reserved)\n{\n"
+           "    TRACE(\"(%%p, %%u, %%p)\\n\", instance, reason, reserved);\n\n"
+           "    switch (reason)\n"
            "    {\n"
            "        case DLL_WINE_PREATTACH:\n"
            "            return FALSE;    /* prefer native version */\n"
@@ -253,7 +253,7 @@ void  output_c_preamble (void)
            globals.forward_dll, globals.forward_dll);
   else
     fprintf (cfile,
-           "            DisableThreadLibraryCalls(hinstDLL);\n");
+           "            DisableThreadLibraryCalls(instance);\n");
 
   fprintf (cfile,
            "            break;\n"
