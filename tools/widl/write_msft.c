@@ -2026,8 +2026,10 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
         return;
     }
 
-    if (is_attr(interface->attrs, ATTR_DISPINTERFACE))
-        return add_dispinterface_typeinfo(typelib, interface);
+    if (is_attr(interface->attrs, ATTR_DISPINTERFACE)) {
+        add_dispinterface_typeinfo(typelib, interface);
+        return;
+    }
 
     /* midl adds the parent interface first, unless the parent itself
        has no parent (i.e. it stops before IUnknown). */
