@@ -646,7 +646,7 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
         }
     }
     if(result == -1)
-        return sock_get_error(errno);
+        return ERROR_INTERNET_CANNOT_CONNECT;
 
 #ifdef TCP_NODELAY
     flag = 1;

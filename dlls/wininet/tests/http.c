@@ -4041,6 +4041,32 @@ static void test_InternetCloseHandle(void)
        closetest_req, res, GetLastError());
 }
 
+static void test_connection_failure(void)
+{
+    HINTERNET session, connect, request;
+    DWORD error;
+    BOOL ret;
+
+    session = InternetOpenA("winetest", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+    ok(session != NULL, "failed to get session handle\n");
+
+    connect = InternetConnectA(session, "localhost", 1, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(connect != NULL, "failed to get connection handle\n");
+
+    request = HttpOpenRequestA(connect, NULL, "/", NULL, NULL, NULL, 0, 0);
+    ok(request != NULL, "failed to get request handle\n");
+
+    SetLastError(0xdeadbeef);
+    ret = HttpSendRequest(request, NULL, 0, NULL, 0);
+    error = GetLastError();
+    ok(!ret, "unexpected success\n");
+    ok(error == ERROR_INTERNET_CANNOT_CONNECT, "wrong error %u\n", error);
+
+    InternetCloseHandle(request);
+    InternetCloseHandle(connect);
+    InternetCloseHandle(session);
+}
+
 static void init_status_tests(void)
 {
     memset(expect, 0, sizeof(expect));
@@ -4117,4 +4143,5 @@ START_TEST(http)
     InternetReadFile_chunked_test();
     HttpSendRequestEx_test();
     InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[3]);
+    test_connection_failure();
 }
