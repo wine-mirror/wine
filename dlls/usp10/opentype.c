@@ -1110,14 +1110,14 @@ static void GPOS_convert_design_units_to_device(LPOUTLINETEXTMETRICW lpotm, LPLO
 static INT GPOS_get_value_record(WORD ValueFormat, const WORD data[], GPOS_ValueRecord *record)
 {
     INT offset = 0;
-    if (ValueFormat & 0x0001) record->XPlacement = GET_BE_WORD(data[offset++]);
-    if (ValueFormat & 0x0002) record->YPlacement = GET_BE_WORD(data[offset++]);
-    if (ValueFormat & 0x0004) record->XAdvance = GET_BE_WORD(data[offset++]);
-    if (ValueFormat & 0x0008) record->YAdvance = GET_BE_WORD(data[offset++]);
-    if (ValueFormat & 0x0010) record->XPlaDevice = GET_BE_WORD(data[offset++]);
-    if (ValueFormat & 0x0020) record->YPlaDevice = GET_BE_WORD(data[offset++]);
-    if (ValueFormat & 0x0040) record->XAdvDevice = GET_BE_WORD(data[offset++]);
-    if (ValueFormat & 0x0080) record->YAdvDevice = GET_BE_WORD(data[offset++]);
+    if (ValueFormat & 0x0001) { if (data) record->XPlacement = GET_BE_WORD(data[offset]); offset++; }
+    if (ValueFormat & 0x0002) { if (data) record->YPlacement = GET_BE_WORD(data[offset]); offset++; }
+    if (ValueFormat & 0x0004) { if (data) record->XAdvance   = GET_BE_WORD(data[offset]); offset++; }
+    if (ValueFormat & 0x0008) { if (data) record->YAdvance   = GET_BE_WORD(data[offset]); offset++; }
+    if (ValueFormat & 0x0010) { if (data) record->XPlaDevice = GET_BE_WORD(data[offset]); offset++; }
+    if (ValueFormat & 0x0020) { if (data) record->YPlaDevice = GET_BE_WORD(data[offset]); offset++; }
+    if (ValueFormat & 0x0040) { if (data) record->XAdvDevice = GET_BE_WORD(data[offset]); offset++; }
+    if (ValueFormat & 0x0080) { if (data) record->YAdvDevice = GET_BE_WORD(data[offset]); offset++; }
     return offset;
 }
 
