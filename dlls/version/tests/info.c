@@ -194,8 +194,6 @@ static void VersionDwordLong2String(DWORDLONG Version, LPSTR lpszVerString)
     d = (WORD)(Version & 0xffff);
 
     sprintf(lpszVerString, "%d.%d.%d.%d", a, b, c, d);
-
-    return;
 }
 
 static void test_info(void)
