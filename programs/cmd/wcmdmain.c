@@ -1196,8 +1196,6 @@ void WCMD_run_program (WCHAR *command, BOOL called)
         if (!status)
           break;
 
-        called = FALSE; /* No need to retry as we launched something */
-
         if (!assumeInternal && !console) errorlevel = 0;
         else
         {
