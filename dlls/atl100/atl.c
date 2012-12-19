@@ -319,6 +319,34 @@ void WINAPI AtlWinModuleAddCreateWndData(_ATL_WIN_MODULE *pM, _AtlCreateWndData 
 }
 
 /***********************************************************************
+ *           AtlWinModuleExtractCreateWndData          [atl100.44]
+ */
+void* WINAPI AtlWinModuleExtractCreateWndData(_ATL_WIN_MODULE *winmod)
+{
+    _AtlCreateWndData *iter, *prev = NULL;
+    DWORD thread_id;
+
+    TRACE("(%p)\n", winmod);
+
+    thread_id = GetCurrentThreadId();
+
+    EnterCriticalSection(&winmod->m_csWindowCreate);
+
+    for(iter = winmod->m_pCreateWndList; iter && iter->m_dwThreadID != thread_id; iter = iter->m_pNext)
+        prev = iter;
+    if(iter) {
+        if(prev)
+            prev->m_pNext = iter->m_pNext;
+        else
+            winmod->m_pCreateWndList = iter->m_pNext;
+    }
+
+    LeaveCriticalSection(&winmod->m_csWindowCreate);
+
+    return iter ? iter->m_pThis : NULL;
+}
+
+/***********************************************************************
  *           AtlComModuleGetClassObject                [atl100.15]
  */
 HRESULT WINAPI AtlComModuleGetClassObject(_ATL_COM_MODULE *pm, REFCLSID rclsid, REFIID riid, void **ppv)

@@ -223,6 +223,7 @@ HRESULT WINAPI AtlMarshalPtrInProc(IUnknown *pUnk, const IID *iid, IStream **ppS
 void    WINAPI AtlModuleAddCreateWndData(_ATL_MODULEW *pM, _AtlCreateWndData *pData, void* pvObject);
 HRESULT WINAPI AtlWinModuleInit(_ATL_WIN_MODULE*);
 void    WINAPI AtlWinModuleAddCreateWndData(_ATL_WIN_MODULE*,_AtlCreateWndData*,void*);
+void*   WINAPI AtlWinModuleExtractCreateWndData(_ATL_WIN_MODULE*);
 HRESULT WINAPI AtlModuleAddTermFunc(_ATL_MODULE *pM, _ATL_TERMFUNC *pFunc, DWORD_PTR dw);
 void WINAPI AtlCallTermFunc(_ATL_MODULE*);
 void*  WINAPI AtlModuleExtractCreateWndData(_ATL_MODULEW *pM);
