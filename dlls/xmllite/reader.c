@@ -501,16 +501,7 @@ static inline const WCHAR *reader_get_cur(xmlreader *reader)
 static int reader_cmp(xmlreader *reader, const WCHAR *str)
 {
     const WCHAR *ptr = reader_get_cur(reader);
-    int i = 0;
-
     return strncmpW(str, ptr, strlenW(str));
-
-    while (str[i]) {
-        if (ptr[i] != str[i]) return 0;
-        i++;
-    }
-
-    return 1;
 }
 
 /* moves cursor n WCHARs forward */
