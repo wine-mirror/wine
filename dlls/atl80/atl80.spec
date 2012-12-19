@@ -29,7 +29,7 @@
 41 stdcall AtlAxAttachControl(ptr ptr ptr) atl100.AtlAxAttachControl
 42 stdcall AtlAxWinInit() atl100.AtlAxWinInit
 43 stdcall AtlWinModuleAddCreateWndData(ptr ptr ptr) atl100.AtlWinModuleAddCreateWndData
-44 stub AtlWinModuleExtractCreateWndData
+44 stdcall AtlWinModuleExtractCreateWndData(ptr) atl100.AtlWinModuleExtractCreateWndData
 45 stub AtlWinModuleRegisterWndClassInfoW
 46 stub AtlWinModuleRegisterWndClassInfoA
 47 stdcall AtlAxGetControl(long ptr) atl100.AtlAxGetControl
@@ -49,5 +49,5 @@
 62 stub AtlWinModuleRegisterClassExW
 63 stub AtlWinModuleRegisterClassExA
 64 stdcall AtlCallTermFunc(ptr) atl100.AtlCallTermFunc
-65 stub AtlWinModuleInit
+65 stdcall AtlWinModuleInit(ptr) atl100.AtlWinModuleInit
 66 stub AtlWinModuleTerm
