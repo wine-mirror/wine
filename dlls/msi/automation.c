@@ -1616,7 +1616,7 @@ static HRESULT session_invoke(
 static void variant_from_registry_value(VARIANT *pVarResult, DWORD dwType, LPBYTE lpData, DWORD dwSize)
 {
     static const WCHAR szREG_BINARY[] = { '(','R','E','G','_','B','I','N','A','R','Y',')',0 };
-    static const WCHAR szREG_[] = { '(','R','E','G','_',']',0 };
+    static const WCHAR szREG_[] = { '(','R','E','G','_','?','?',')',0 };
     WCHAR *szString = (WCHAR *)lpData;
     LPWSTR szNewString = NULL;
     DWORD dwNewSize = 0;
