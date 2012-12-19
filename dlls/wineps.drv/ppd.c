@@ -659,6 +659,7 @@ PPD *PSDRV_ParsePPD( char *fname, HANDLE printer )
 
     ppd->ColorDevice = CD_NotSpecified;
 
+    list_init( &ppd->Resolutions );
     list_init( &ppd->InstalledFonts );
     list_init( &ppd->PageSizes );
     list_init( &ppd->Constraints );
@@ -712,6 +713,26 @@ PPD *PSDRV_ParsePPD( char *fname, HANDLE printer )
             else
                 WARN("failed to parse DefaultResolution %s\n", debugstr_a(tuple.value));
 	}
+
+        else if(!strcmp("*Resolution", tuple.key))
+        {
+            SIZE sz;
+            if (parse_resolution(tuple.option, &sz))
+            {
+                RESOLUTION *res;
+
+                TRACE("Resolution %dx%d, invocation %s\n", sz.cx, sz.cy, tuple.value);
+
+                res = HeapAlloc( GetProcessHeap(), 0, sizeof(*res) );
+                res->resx = sz.cx;
+                res->resy = sz.cy;
+                res->InvocationString = tuple.value;
+                tuple.value = NULL;
+                list_add_tail( &ppd->Resolutions, &res->entry );
+            }
+            else
+                WARN("failed to parse Resolution %s\n", debugstr_a(tuple.option));
+        }
 
         else if(!strcmp("*Font", tuple.key))
         {

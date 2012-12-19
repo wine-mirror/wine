@@ -638,14 +638,22 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
 
   case DC_ENUMRESOLUTIONS:
     {
-      LONG *lp = (LONG*)lpszOutput;
+        RESOLUTION *res;
+        LONG *lp = (LONG *)lpszOutput;
+        int i = 0;
 
-      if(lpszOutput != NULL) {
-	lp[0] = pi->ppd->DefaultResolution;
-	lp[1] = pi->ppd->DefaultResolution;
-      }
-      ret = 1;
-      break;
+        LIST_FOR_EACH_ENTRY(res, &pi->ppd->Resolutions, RESOLUTION, entry)
+        {
+            i++;
+            if (lpszOutput != NULL)
+            {
+                lp[0] = res->resx;
+                lp[1] = res->resy;
+                lp += 2;
+            }
+        }
+        ret = i;
+        break;
     }
 
   /* Windows returns 9999 too */
