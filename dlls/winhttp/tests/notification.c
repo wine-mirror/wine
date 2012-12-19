@@ -292,6 +292,8 @@ static void test_connection_cache( void )
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
     WinHttpCloseHandle( ses );
+
+    Sleep(2000); /* make sure connection is evicted from cache */
 }
 
 static const struct notification redirect_test[] =
