@@ -3296,7 +3296,8 @@ static void test_GetFileInformationByHandleEx(void)
     /* ensure the existence of a file in the temp folder */
     ret2 = GetTempFileNameA(tempPath, "abc", 0, tempFileName);
     ok(ret2, "GetFileInformationByHandleEx: GetTempFileNameA failed, got error %u.\n", GetLastError());
-    ok(GetFileAttributesA(tempFileName) != INVALID_FILE_ATTRIBUTES, "GetFileInformationByHandleEx: "
+    ret2 = GetFileAttributesA(tempFileName);
+    ok(ret2 != INVALID_FILE_ATTRIBUTES, "GetFileInformationByHandleEx: "
         "GetFileAttributesA failed to find the temp file, got error %u.\n", GetLastError());
 
     directory = CreateFileA(tempPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
@@ -3359,7 +3360,8 @@ static void test_OpenFileById(void)
     /* ensure the existence of a file in the temp folder */
     ret2 = GetTempFileNameA(tempPath, "abc", 0, tempFileName);
     ok(ret2, "OpenFileById: GetTempFileNameA failed, got error %u.\n", GetLastError());
-    ok(GetFileAttributesA(tempFileName) != INVALID_FILE_ATTRIBUTES,
+    ret2 = GetFileAttributesA(tempFileName);
+    ok(ret2 != INVALID_FILE_ATTRIBUTES,
         "OpenFileById: GetFileAttributesA failed to find the temp file, got error %u\n", GetLastError());
 
     ret2 = MultiByteToWideChar(CP_ACP, 0, tempFileName + strlen(tempPath), -1, tempFileNameW, sizeof(tempFileNameW)/sizeof(tempFileNameW[0]));
