@@ -3040,6 +3040,7 @@ static HRESULT WINAPI winhttp_request_get_Status(
     if (!WinHttpQueryHeaders( request->hrequest, flags, NULL, &status_code, &len, &index ))
     {
         err = get_last_error();
+        goto done;
     }
     *status = status_code;
 
