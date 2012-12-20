@@ -3726,7 +3726,7 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
         float y_offset = context->render_offscreen
                 ? (center_offset - (2.0f * y) - h) / h
                 : (center_offset - (2.0f * y) - h) / -h;
-        enum wined3d_depth_buffer_type zenable = state->fb->depth_stencil ?
+        enum wined3d_depth_buffer_type zenable = state->fb.depth_stencil ?
                 state->render_states[WINED3D_RS_ZENABLE] : WINED3D_ZB_FALSE;
         float z_scale = zenable ? 2.0f : 0.0f;
         float z_offset = zenable ? -1.0f : 0.0f;
@@ -4382,7 +4382,7 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
     unsigned int i;
     DWORD ttff;
     DWORD cop, aop, carg0, carg1, carg2, aarg0, aarg1, aarg2;
-    unsigned int rt_fmt_flags = state->fb->render_targets[0]->format_flags;
+    unsigned int rt_fmt_flags = state->fb.render_targets[0]->format_flags;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
 

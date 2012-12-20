@@ -2404,7 +2404,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     memset(args, 0, sizeof(*args)); /* FIXME: Make sure all bits are set. */
     if (!gl_info->supported[ARB_FRAMEBUFFER_SRGB] && state->render_states[WINED3D_RS_SRGBWRITEENABLE])
     {
-        unsigned int rt_fmt_flags = state->fb->render_targets[0]->format_flags;
+        unsigned int rt_fmt_flags = state->fb.render_targets[0]->format_flags;
         if (rt_fmt_flags & WINED3DFMT_FLAG_SRGB_WRITE)
         {
             static unsigned int warned = 0;

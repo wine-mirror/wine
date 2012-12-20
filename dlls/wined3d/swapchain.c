@@ -421,7 +421,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
 {
     struct wined3d_surface *back_buffer = surface_from_resource(
             wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0));
-    const struct wined3d_fb_state *fb = &swapchain->device->fb;
+    const struct wined3d_fb_state *fb = &swapchain->device->state.fb;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     struct wined3d_surface *front;

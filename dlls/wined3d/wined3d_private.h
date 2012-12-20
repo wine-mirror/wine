@@ -1138,6 +1138,36 @@ struct wined3d_timestamp_query
 void context_alloc_timestamp_query(struct wined3d_context *context, struct wined3d_timestamp_query *query) DECLSPEC_HIDDEN;
 void context_free_timestamp_query(struct wined3d_timestamp_query *query) DECLSPEC_HIDDEN;
 
+struct wined3d_fb_state
+{
+    struct wined3d_rendertarget_view **render_targets;
+    struct wined3d_rendertarget_view *depth_stencil;
+    UINT rt_size;
+};
+
+static inline BOOL wined3d_fb_equal(const struct wined3d_fb_state *fb1, const struct wined3d_fb_state *fb2)
+{
+    UINT i;
+
+    if (fb1->depth_stencil != fb2->depth_stencil)
+        return FALSE;
+    if (fb1->rt_size != fb2->rt_size)
+        return FALSE;
+    for (i = 0; i < fb1->rt_size; i++)
+        if (fb1->render_targets[i] != fb2->render_targets[i])
+            return FALSE;
+    return TRUE;
+}
+
+static inline void wined3d_fb_copy(struct wined3d_fb_state *dst, const struct wined3d_fb_state *src)
+{
+    UINT i;
+
+    dst->depth_stencil = src->depth_stencil;
+    for (i = 0; i < min(dst->rt_size, src->rt_size); i++)
+        dst->render_targets[i] = src->render_targets[i];
+}
+
 struct wined3d_context
 {
     const struct wined3d_gl_info *gl_info;
@@ -1152,6 +1182,7 @@ struct wined3d_context
     DWORD                   dirtyArray[STATE_HIGHEST + 1]; /* Won't get bigger than that, a state is never marked dirty 2 times */
     DWORD                   numDirtyEntries;
     DWORD isStateDirty[STATE_HIGHEST / (sizeof(DWORD) * CHAR_BIT) + 1]; /* Bitmap to find out quickly if a state is dirty */
+    struct wined3d_fb_state current_fb;
 
     struct wined3d_swapchain *swapchain;
     struct wined3d_surface *current_rt;
@@ -1251,12 +1282,6 @@ struct wined3d_context
     GLfloat                 fog_coord_value;
     GLfloat                 color[4], fogstart, fogend, fogcolor[4];
     GLuint                  dummy_arbfp_prog;
-};
-
-struct wined3d_fb_state
-{
-    struct wined3d_rendertarget_view **render_targets;
-    struct wined3d_rendertarget_view *depth_stencil;
 };
 
 typedef void (*APPLYSTATEFUNC)(struct wined3d_context *ctx, const struct wined3d_state *state, DWORD state_id);
@@ -1969,7 +1994,7 @@ struct wined3d_stream_state
 struct wined3d_state
 {
     DWORD flags;
-    const struct wined3d_fb_state *fb;
+    struct wined3d_fb_state fb;
 
     struct wined3d_vertex_declaration *vertex_declaration;
     struct wined3d_stream_output stream_output[MAX_STREAM_OUT];
@@ -2075,7 +2100,6 @@ struct wined3d_device
     struct wine_rb_tree samplers;
 
     /* Render Target Support */
-    struct wined3d_fb_state fb;
     struct wined3d_surface *onscreen_depth_stencil;
     struct wined3d_rendertarget_view *auto_depth_stencil_view;
 
@@ -2581,9 +2605,8 @@ struct wined3d_stateblock
 void stateblock_init_contained_states(struct wined3d_stateblock *stateblock) DECLSPEC_HIDDEN;
 
 void state_cleanup(struct wined3d_state *state) DECLSPEC_HIDDEN;
-HRESULT state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
-        const struct wined3d_gl_info *gl_info, const struct wined3d_d3d_info *d3d_info,
-        DWORD flags) DECLSPEC_HIDDEN;
+HRESULT state_init(struct wined3d_state *state, const struct wined3d_gl_info *gl_info,
+        const struct wined3d_d3d_info *d3d_info, DWORD flags) DECLSPEC_HIDDEN;
 void state_unbind_resources(struct wined3d_state *state) DECLSPEC_HIDDEN;
 
 struct wined3d_cs_ops
@@ -2596,7 +2619,6 @@ struct wined3d_cs
 {
     const struct wined3d_cs_ops *ops;
     struct wined3d_device *device;
-    struct wined3d_fb_state fb;
     struct wined3d_state state;
 
     size_t data_size;

@@ -290,7 +290,7 @@ static void wined3d_cs_exec_clear(struct wined3d_cs *cs, const void *data)
     device = cs->device;
     wined3d_get_draw_rect(&device->state, &draw_rect);
     device_clear_render_targets(device, device->adapter->gl_info.limits.buffers,
-            &device->fb, op->rect_count, op->rects, &draw_rect, op->flags,
+            &cs->state.fb, op->rect_count, op->rects, &draw_rect, op->flags,
             op->color, op->depth, op->stencil);
 }
 
@@ -397,7 +397,7 @@ static void wined3d_cs_exec_set_rendertarget_view(struct wined3d_cs *cs, const v
 {
     const struct wined3d_cs_set_rendertarget_view *op = data;
 
-    cs->state.fb->render_targets[op->view_idx] = op->view;
+    cs->state.fb.render_targets[op->view_idx] = op->view;
     device_invalidate_state(cs->device, STATE_FRAMEBUFFER);
 }
 
@@ -420,7 +420,7 @@ static void wined3d_cs_exec_set_depth_stencil_view(struct wined3d_cs *cs, const 
     struct wined3d_device *device = cs->device;
     struct wined3d_rendertarget_view *prev;
 
-    if ((prev = cs->state.fb->depth_stencil))
+    if ((prev = cs->state.fb.depth_stencil))
     {
         struct wined3d_surface *prev_surface = wined3d_rendertarget_view_get_surface(prev);
 
@@ -436,7 +436,7 @@ static void wined3d_cs_exec_set_depth_stencil_view(struct wined3d_cs *cs, const 
         }
     }
 
-    cs->fb.depth_stencil = op->view;
+    cs->state.fb.depth_stencil = op->view;
 
     if (!prev != !op->view)
     {
@@ -1005,7 +1005,7 @@ static void wined3d_cs_exec_reset_state(struct wined3d_cs *cs, const void *data)
 
     state_cleanup(&cs->state);
     memset(&cs->state, 0, sizeof(cs->state));
-    if (FAILED(hr = state_init(&cs->state, &cs->fb, &adapter->gl_info, &adapter->d3d_info,
+    if (FAILED(hr = state_init(&cs->state, &adapter->gl_info, &adapter->d3d_info,
             WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT)))
         ERR("Failed to initialize CS state, hr %#x.\n", hr);
 }
@@ -1088,17 +1088,9 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
     if (!(cs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*cs))))
         return NULL;
 
-    if (!(cs->fb.render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(*cs->fb.render_targets) * gl_info->limits.buffers)))
-    {
-        HeapFree(GetProcessHeap(), 0, cs);
-        return NULL;
-    }
-
-    if (FAILED(state_init(&cs->state, &cs->fb, gl_info, &device->adapter->d3d_info,
+    if (FAILED(state_init(&cs->state, gl_info, &device->adapter->d3d_info,
             WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT)))
     {
-        HeapFree(GetProcessHeap(), 0, cs->fb.render_targets);
         HeapFree(GetProcessHeap(), 0, cs);
         return NULL;
     }
@@ -1119,7 +1111,6 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
 void wined3d_cs_destroy(struct wined3d_cs *cs)
 {
     state_cleanup(&cs->state);
-    HeapFree(GetProcessHeap(), 0, cs->fb.render_targets);
     HeapFree(GetProcessHeap(), 0, cs->data);
     HeapFree(GetProcessHeap(), 0, cs);
 }
