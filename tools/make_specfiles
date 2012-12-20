@@ -121,6 +121,10 @@ my @dll_groups =
   "api-ms-win-downlevel-advapi32-l1-1-0",
  ],
  [
+  "kernel32",
+  "api-ms-win-downlevel-normaliz-l1-1-0",
+ ],
+ [
   "shlwapi",
   "api-ms-win-downlevel-shlwapi-l1-1-0",
  ],
