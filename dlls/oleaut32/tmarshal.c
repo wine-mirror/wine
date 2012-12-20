@@ -1208,7 +1208,7 @@ deserialize_param(
 		);
 	    return S_OK;
 	}
-    case VT_SAFEARRAY: {
+        case VT_SAFEARRAY: {
 	    if (readit)
 	    {
 		ULONG flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
@@ -1630,7 +1630,7 @@ static ULONG WINAPI TMarshalDispatchChannel_Release(LPRPCCHANNELBUFFER iface)
     if (ref)
         return ref;
 
-	IRpcChannelBuffer_Release(This->pDelegateChannel);
+    IRpcChannelBuffer_Release(This->pDelegateChannel);
     HeapFree(GetProcessHeap(), 0, This);
     return 0;
 }
