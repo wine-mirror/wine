@@ -2232,46 +2232,49 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     if(char_extra || dc->breakExtra || breakRem || lpDx || lf.lfEscapement != 0)
     {
         UINT i;
-        SIZE tmpsz;
         POINT total = {0, 0}, desired[2];
 
         deltas = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*deltas));
-        for(i = 0; i < count; i++)
+        if (lpDx)
         {
-            if(lpDx)
+            if (flags & ETO_PDY)
             {
-                if(flags & ETO_PDY)
+                for (i = 0; i < count; i++)
                 {
                     deltas[i].x = lpDx[i * 2] + char_extra;
                     deltas[i].y = -lpDx[i * 2 + 1];
                 }
-                else
+            }
+            else
+            {
+                for (i = 0; i < count; i++)
                 {
                     deltas[i].x = lpDx[i] + char_extra;
                     deltas[i].y = 0;
                 }
-
             }
-            else
-            {
-                if(flags & ETO_GLYPH_INDEX)
-                    GetTextExtentPointI(hdc, glyphs + i, 1, &tmpsz);
-                else
-                    GetTextExtentPointW(hdc, reordered_str + i, 1, &tmpsz);
+        }
+        else
+        {
+            INT *dx = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*dx) );
 
-                deltas[i].x = tmpsz.cx;
+            if (flags & ETO_GLYPH_INDEX)
+                GetTextExtentExPointI( hdc, glyphs, count, -1, NULL, dx, &sz );
+            else
+                GetTextExtentExPointW( hdc, reordered_str, count, -1, NULL, dx, &sz );
+
+            deltas[0].x = dx[0];
+            deltas[0].y = 0;
+            for (i = 1; i < count; i++)
+            {
+                deltas[i].x = dx[i] - dx[i - 1];
                 deltas[i].y = 0;
             }
-            
-            if (!(flags & ETO_GLYPH_INDEX) && (dc->breakExtra || breakRem) && reordered_str[i] == tm.tmBreakChar)
-            {
-                deltas[i].x = deltas[i].x + dc->breakExtra;
-                if (breakRem > 0)
-                {
-                    breakRem--;
-                    deltas[i].x++;
-                }
-            }
+            HeapFree( GetProcessHeap(), 0, dx );
+        }
+
+        for(i = 0; i < count; i++)
+        {
             total.x += deltas[i].x;
             total.y += deltas[i].y;
 
