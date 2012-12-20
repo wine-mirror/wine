@@ -111,6 +111,62 @@ static HINSTANCE hinst;
 struct env_stack *saved_environment;
 static BOOL verify_mode = FALSE;
 
+/* set /a routines work from single character operators, but some of the
+   operators are multiple character ones, especially the assignment ones.
+   Temporarily represent these using the values below on the operator stack */
+#define OP_POSITIVE     'P'
+#define OP_NEGATIVE     'N'
+#define OP_ASSSIGNMUL   'a'
+#define OP_ASSSIGNDIV   'b'
+#define OP_ASSSIGNMOD   'c'
+#define OP_ASSSIGNADD   'd'
+#define OP_ASSSIGNSUB   'e'
+#define OP_ASSSIGNAND   'f'
+#define OP_ASSSIGNNOT   'g'
+#define OP_ASSSIGNOR    'h'
+#define OP_ASSSIGNSHL   'i'
+#define OP_ASSSIGNSHR   'j'
+
+/* This maintains a stack of operators, holding both the operator precedence
+   and the single character representation of the operator in question       */
+typedef struct _OPSTACK
+{
+  int              precedence;
+  WCHAR            op;
+  struct _OPSTACK *next;
+} OPSTACK;
+
+/* This maintains a stack of values, where each value can either be a
+   numeric value, or a string represeting an environment variable     */
+typedef struct _VARSTACK
+{
+  BOOL              isnum;
+  WCHAR            *variable;
+  int               value;
+  struct _VARSTACK *next;
+} VARSTACK;
+
+/* This maintains a mapping between the calculated operator and the
+   single character representation for the assignment operators.    */
+static struct
+{
+  WCHAR op;
+  WCHAR calculatedop;
+} calcassignments[] =
+{
+  {'*', OP_ASSSIGNMUL},
+  {'/', OP_ASSSIGNDIV},
+  {'%', OP_ASSSIGNMOD},
+  {'+', OP_ASSSIGNADD},
+  {'-', OP_ASSSIGNSUB},
+  {'&', OP_ASSSIGNAND},
+  {'^', OP_ASSSIGNNOT},
+  {'|', OP_ASSSIGNOR},
+  {'<', OP_ASSSIGNSHL},
+  {'>', OP_ASSSIGNSHR},
+  {' ',' '}
+};
+
 /**************************************************************************
  * WCMD_ask_confirm
  *
@@ -3403,6 +3459,521 @@ static int WCMD_setshow_sortenv(const WCHAR *s, const WCHAR *stub)
 }
 
 /****************************************************************************
+ * WCMD_getprecedence
+ * Return the precedence of a particular operator
+ */
+static int WCMD_getprecedence(const WCHAR in)
+{
+  switch (in) {
+    case '!':
+    case '~':
+    case OP_POSITIVE:
+    case OP_NEGATIVE:
+      return 8;
+    case '*':
+    case '/':
+    case '%':
+      return 7;
+    case '+':
+    case '-':
+      return 6;
+    case '<':
+    case '>':
+      return 5;
+    case '&':
+      return 4;
+    case '^':
+      return 3;
+    case '|':
+      return 2;
+    case '=':
+    case OP_ASSSIGNMUL:
+    case OP_ASSSIGNDIV:
+    case OP_ASSSIGNMOD:
+    case OP_ASSSIGNADD:
+    case OP_ASSSIGNSUB:
+    case OP_ASSSIGNAND:
+    case OP_ASSSIGNNOT:
+    case OP_ASSSIGNOR:
+    case OP_ASSSIGNSHL:
+    case OP_ASSSIGNSHR:
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+/****************************************************************************
+ * WCMD_pushnumber
+ * Push either a number or name (environment variable) onto the supplied
+ * stack
+ */
+static void WCMD_pushnumber(WCHAR *var, int num, VARSTACK **varstack) {
+  VARSTACK *thisstack = heap_alloc(sizeof(VARSTACK));
+  thisstack->isnum = (var == NULL);
+  if (var) {
+    thisstack->variable = var;
+    WINE_TRACE("Pushed variable %s\n", wine_dbgstr_w(var));
+  } else {
+    thisstack->value = num;
+    WINE_TRACE("Pushed number %d\n", num);
+  }
+  thisstack->next = *varstack;
+  *varstack = thisstack;
+}
+
+/****************************************************************************
+ * WCMD_peeknumber
+ * Returns the value of the top number or environment variable on the stack
+ * and leaves the item on the stack.
+ */
+static int WCMD_peeknumber(VARSTACK **varstack) {
+  int result = 0;
+  VARSTACK *thisvar;
+
+  if (varstack) {
+    thisvar = *varstack;
+    if (!thisvar->isnum) {
+      WCHAR tmpstr[MAXSTRING];
+      if (GetEnvironmentVariableW(thisvar->variable, tmpstr, MAXSTRING)) {
+        result = strtoulW(tmpstr,NULL,0);
+      }
+      WINE_TRACE("Envvar %s converted to %d\n", wine_dbgstr_w(thisvar->variable), result);
+    } else {
+      result = thisvar->value;
+    }
+  }
+  WINE_TRACE("Peeked number %d\n", result);
+  return result;
+}
+
+/****************************************************************************
+ * WCMD_popnumber
+ * Returns the value of the top number or environment variable on the stack
+ * and removes the item from the stack.
+ */
+static int WCMD_popnumber(VARSTACK **varstack) {
+  int result = 0;
+  VARSTACK *thisvar;
+
+  if (varstack) {
+    thisvar = *varstack;
+    result = WCMD_peeknumber(varstack);
+    if (!thisvar->isnum) heap_free(thisvar->variable);
+    *varstack = thisvar->next;
+    heap_free(thisvar);
+  }
+  WINE_TRACE("Popped number %d\n", result);
+  return result;
+}
+
+/****************************************************************************
+ * WCMD_pushoperator
+ * Push an operator onto the supplied stack
+ */
+static void WCMD_pushoperator(WCHAR op, int precedence, OPSTACK **opstack) {
+  OPSTACK *thisstack = heap_alloc(sizeof(OPSTACK));
+  thisstack->precedence = precedence;
+  thisstack->op = op;
+  thisstack->next = *opstack;
+  WINE_TRACE("Pushed operator %c\n", op);
+  *opstack = thisstack;
+}
+
+/****************************************************************************
+ * WCMD_popoperator
+ * Returns the operator from the top of the stack and removes the item from
+ * the stack.
+ */
+static WCHAR WCMD_popoperator(OPSTACK **opstack) {
+  WCHAR result = 0;
+  OPSTACK *thisop;
+
+  if (opstack) {
+    thisop = *opstack;
+    result = thisop->op;
+    *opstack = thisop->next;
+    heap_free(thisop);
+  }
+  WINE_TRACE("Popped operator %c\n", result);
+  return result;
+}
+
+/****************************************************************************
+ * WCMD_reduce
+ * Actions the top operator on the stack against the first and sometimes
+ * second value on the variable stack, and pushes the result
+ * Returns non-zero on error.
+ */
+static int WCMD_reduce(OPSTACK **opstack, VARSTACK **varstack) {
+  OPSTACK *thisop;
+  int var1,var2;
+  int rc = 0;
+
+  if (!*opstack || !*varstack) {
+    WINE_TRACE("No operators for the reduce\n");
+    return WCMD_NOOPERATOR;
+  }
+
+  /* Remove the top operator */
+  thisop = *opstack;
+  *opstack = (*opstack)->next;
+  WINE_TRACE("Reducing the stacks - processing operator %c\n", thisop->op);
+
+  /* One variable operators */
+  var1 = WCMD_popnumber(varstack);
+  switch (thisop->op) {
+  case '!': WCMD_pushnumber(NULL, !var1, varstack);
+            break;
+  case '~': WCMD_pushnumber(NULL, ~var1, varstack);
+            break;
+  case OP_POSITIVE: WCMD_pushnumber(NULL, var1, varstack);
+            break;
+  case OP_NEGATIVE: WCMD_pushnumber(NULL, -var1, varstack);
+            break;
+  }
+
+  /* Two variable operators */
+  if (!*varstack) {
+    WINE_TRACE("No operands left for the reduce?\n");
+    return WCMD_NOOPERAND;
+  }
+  switch (thisop->op) {
+  case '!':
+  case '~':
+  case OP_POSITIVE:
+  case OP_NEGATIVE:
+            break; /* Handled above */
+  case '*': var2 = WCMD_popnumber(varstack);
+            WCMD_pushnumber(NULL, var2*var1, varstack);
+            break;
+  case '/': var2 = WCMD_popnumber(varstack);
+            if (var1 == 0) return WCMD_DIVIDEBYZERO;
+            WCMD_pushnumber(NULL, var2/var1, varstack);
+            break;
+  case '+': var2 = WCMD_popnumber(varstack);
+            WCMD_pushnumber(NULL, var2+var1, varstack);
+            break;
+  case '-': var2 = WCMD_popnumber(varstack);
+            WCMD_pushnumber(NULL, var2-var1, varstack);
+            break;
+  case '&': var2 = WCMD_popnumber(varstack);
+            WCMD_pushnumber(NULL, var2&var1, varstack);
+            break;
+  case '%': var2 = WCMD_popnumber(varstack);
+            WCMD_pushnumber(NULL, var2%var1, varstack);
+            break;
+  case '^': var2 = WCMD_popnumber(varstack);
+            WCMD_pushnumber(NULL, var2^var1, varstack);
+            break;
+  case '<': var2 = WCMD_popnumber(varstack);
+            /* Shift left has to be a positive number, 0-31 otherwise 0 is returned,
+               which differs from the compiler (for example gcc) so being explicit. */
+            if (var1 < 0 || var1 >= (8 * sizeof(INT))) {
+              WCMD_pushnumber(NULL, 0, varstack);
+            } else {
+              WCMD_pushnumber(NULL, var2<<var1, varstack);
+            }
+            break;
+  case '>': var2 = WCMD_popnumber(varstack);
+            WCMD_pushnumber(NULL, var2>>var1, varstack);
+            break;
+  case '|': var2 = WCMD_popnumber(varstack);
+            WCMD_pushnumber(NULL, var2|var1, varstack);
+            break;
+
+  case OP_ASSSIGNMUL:
+  case OP_ASSSIGNDIV:
+  case OP_ASSSIGNMOD:
+  case OP_ASSSIGNADD:
+  case OP_ASSSIGNSUB:
+  case OP_ASSSIGNAND:
+  case OP_ASSSIGNNOT:
+  case OP_ASSSIGNOR:
+  case OP_ASSSIGNSHL:
+  case OP_ASSSIGNSHR:
+        {
+          int i = 0;
+
+          /* The left of an equals must be one variable */
+          if (!(*varstack) || (*varstack)->isnum) {
+            return WCMD_NOOPERAND;
+          }
+
+          /* Make the number stack grow by inserting the value of the variable */
+          var2 = WCMD_peeknumber(varstack);
+          WCMD_pushnumber(NULL, var2, varstack);
+          WCMD_pushnumber(NULL, var1, varstack);
+
+          /* Make the operand stack grow by pushing the assign operator plus the
+             operator to perform                                                 */
+          while (calcassignments[i].op != ' ' &&
+                 calcassignments[i].calculatedop != thisop->op) {
+            i++;
+          }
+          if (calcassignments[i].calculatedop == ' ') {
+            WINE_ERR("Unexpected operator %c\n", thisop->op);
+            return WCMD_NOOPERATOR;
+          }
+          WCMD_pushoperator('=', WCMD_getprecedence('='), opstack);
+          WCMD_pushoperator(calcassignments[i].op,
+                            WCMD_getprecedence(calcassignments[i].op), opstack);
+          break;
+        }
+
+  case '=':
+        {
+          WCHAR  intFormat[] = {'%','d','\0'};
+          WCHAR  result[MAXSTRING];
+
+          /* Build the result, then push it onto the stack */
+          sprintfW(result, intFormat, var1);
+          WINE_TRACE("Assigning %s a value %s\n", wine_dbgstr_w((*varstack)->variable),
+                     wine_dbgstr_w(result));
+          SetEnvironmentVariableW((*varstack)->variable, result);
+          var2 = WCMD_popnumber(varstack);
+          WCMD_pushnumber(NULL, var1, varstack);
+          break;
+        }
+
+  default:  WINE_ERR("Unrecognized operator %c\n", thisop->op);
+  }
+
+  heap_free(thisop);
+  return rc;
+}
+
+
+/****************************************************************************
+ * WCMD_handleExpression
+ * Handles an expression provided to set /a - If it finds brackets, it uses
+ * recursion to process the parts in brackets.
+ */
+static int WCMD_handleExpression(WCHAR **expr, int *ret, int depth)
+{
+  static const WCHAR mathDelims[] = {' ','\t','(',')','!','~','-','*','/','%',
+                                     '+','<','>','&','^','|','=',',','\0' };
+  int       rc = 0;
+  WCHAR    *pos;
+  BOOL      lastwasnumber = FALSE;  /* FALSE makes a minus at the start of the expression easier to handle */
+  OPSTACK  *opstackhead = NULL;
+  VARSTACK *varstackhead = NULL;
+  WCHAR     foundhalf = 0;
+
+  /* Initialize */
+  WINE_TRACE("Handling expression '%s'\n", wine_dbgstr_w(*expr));
+  pos = *expr;
+
+  /* Iterate through until whole expression is processed */
+  while (pos && *pos) {
+    BOOL treatasnumber;
+
+    /* Skip whitespace to get to the next character to process*/
+    while (*pos && (*pos==' ' || *pos=='\t')) pos++;
+    if (!*pos) goto exprreturn;
+
+    /* If we have found anything other than an operator then its a number/variable */
+    if (strchrW(mathDelims, *pos) == NULL) {
+      WCHAR *parmstart, *parm, *dupparm;
+      WCHAR *nextpos;
+
+      /* Cannot have an expression with var/number twice, without an operator
+         inbetween, nor or number following a half constructed << or >> operator */
+      if (lastwasnumber || foundhalf) {
+        rc = WCMD_NOOPERATOR;
+        goto exprerrorreturn;
+      }
+      lastwasnumber = TRUE;
+
+      if (isdigitW(*pos)) {
+        /* For a number - just push it onto the stack */
+        int num = strtoulW(pos, &nextpos, 0);
+        WCMD_pushnumber(NULL, num, &varstackhead);
+        pos = nextpos;
+
+        /* Verify the number was validly formed */
+        if (*nextpos && (strchrW(mathDelims, *nextpos) == NULL)) {
+          rc = WCMD_BADHEXOCT;
+          goto exprerrorreturn;
+        }
+      } else {
+
+        /* For a variable - just push it onto the stack */
+        parm = WCMD_parameter_with_delims(pos, 0, &parmstart, FALSE, FALSE, mathDelims);
+        dupparm = heap_strdupW(parm);
+        WCMD_pushnumber(dupparm, 0, &varstackhead);
+        pos = parmstart + strlenW(dupparm);
+      }
+      continue;
+    }
+
+    /* We have found an operator. Some operators are one character, some two, and the minus
+       and plus signs need special processing as they can be either operators or just influence
+       the parameter which follows them                                                         */
+    if (foundhalf && (*pos != foundhalf)) {
+      /* Badly constructed operator pair */
+      rc = WCMD_NOOPERATOR;
+      goto exprerrorreturn;
+    }
+
+    treatasnumber = FALSE; /* We are processing an operand */
+    switch (*pos) {
+
+    /* > and < are special as they are double character operators (and spaces can be between them!)
+       If we see these for the first time, set a flag, and second time around we continue.
+       Note these double character operators are stored as just one of the characters on the stack */
+    case '>':
+    case '<': if (!foundhalf) {
+                foundhalf = *pos;
+                pos++;
+                break;
+              }
+              /* We have found the rest, so clear up the knowledge of the half completed part and
+                 drop through to normal operator processing                                       */
+              foundhalf = 0;
+              /* drop through */
+
+    case '=': if (*pos=='=') {
+                /* = is special cased as if the last was an operator then we may have e.g. += or
+                   *= etc which we need to handle by replacing the operator that is on the stack
+                   with a calculated assignment equivalent                                       */
+                if (!lastwasnumber && opstackhead) {
+                  int i = 0;
+                  while (calcassignments[i].op != ' ' && calcassignments[i].op != opstackhead->op) {
+                    i++;
+                  }
+                  if (calcassignments[i].op == ' ') {
+                    rc = WCMD_NOOPERAND;
+                    goto exprerrorreturn;
+                  } else {
+                    /* Remove the operator on the stack, it will be replaced with a ?= equivalent
+                       when the general operator handling happens further down.                   */
+                    *pos = calcassignments[i].calculatedop;
+                    WCMD_popoperator(&opstackhead);
+                  }
+                }
+              }
+              /* Drop though */
+
+    /* + and - are slightly special as they can be a numeric prefix, if they follow an operator
+       so if they do, convert the +/- (arithmetic) to +/- (numeric prefix for positive/negative) */
+    case '+': if (!lastwasnumber && *pos=='+') *pos = OP_POSITIVE;
+              /* drop through */
+    case '-': if (!lastwasnumber && *pos=='-') *pos = OP_NEGATIVE;
+              /* drop through */
+
+    /* Normal operators - push onto stack unless precedence means we have to calculate it now */
+    case '!': /* drop through */
+    case '~': /* drop through */
+    case '/': /* drop through */
+    case '%': /* drop through */
+    case '&': /* drop through */
+    case '^': /* drop through */
+    case '*': /* drop through */
+    case '|':
+               /* General code for handling most of the operators - look at the
+                  precedence of the top item on the stack, and see if we need to
+                  action the stack before we push something else onto it.        */
+               {
+                 int precedence = WCMD_getprecedence(*pos);
+                 WINE_TRACE("Found operator %c precedence %d (head is %d)\n", *pos,
+                            precedence, !opstackhead?-1:opstackhead->precedence);
+
+                 /* In general, for things with the same precedence, reduce immediately
+                    except for assignments and unary operators which do not             */
+                 while (!rc && opstackhead &&
+                        ((opstackhead->precedence > precedence) ||
+                         ((opstackhead->precedence == precedence) &&
+                            (precedence != 1) && (precedence != 8)))) {
+                   rc = WCMD_reduce(&opstackhead, &varstackhead);
+                 }
+                 if (rc) goto exprerrorreturn;
+                 WCMD_pushoperator(*pos, precedence, &opstackhead);
+                 pos++;
+                 break;
+               }
+
+    /* comma means start a new expression, ie calculate what we have */
+    case ',':
+               {
+                 int prevresult = -1;
+                 WINE_TRACE("Found expression delimiter - reducing exising stacks\n");
+                 while (!rc && opstackhead) {
+                   rc = WCMD_reduce(&opstackhead, &varstackhead);
+                 }
+                 if (rc) goto exprerrorreturn;
+                 /* If we have anything other than one number left, error
+                    otherwise throw the number away                      */
+                 if (!varstackhead || varstackhead->next) {
+                   rc = WCMD_NOOPERATOR;
+                   goto exprerrorreturn;
+                 }
+                 prevresult = WCMD_popnumber(&varstackhead);
+                 WINE_TRACE("Expression resolved to %d\n", prevresult);
+                 heap_free(varstackhead);
+                 varstackhead = NULL;
+                 pos++;
+                 break;
+               }
+
+    /* Open bracket - use iteration to parse the inner expression, then continue */
+    case '(' : {
+                 int exprresult = 0;
+                 pos++;
+                 rc = WCMD_handleExpression(&pos, &exprresult, depth+1);
+                 if (rc) goto exprerrorreturn;
+                 WCMD_pushnumber(NULL, exprresult, &varstackhead);
+                 break;
+               }
+
+    /* Close bracket - we have finished this depth, calculate and return */
+    case ')' : {
+                 pos++;
+                 treatasnumber = TRUE; /* Things in brackets result in a number */
+                 if (depth == 0) {
+                   rc = WCMD_BADPAREN;
+                   goto exprerrorreturn;
+                 }
+                 goto exprreturn;
+               }
+
+    default:
+        WINE_ERR("Unrecognized operator %c\n", *pos);
+        pos++;
+    }
+    lastwasnumber = treatasnumber;
+  }
+
+exprreturn:
+  *expr = pos;
+
+  /* We need to reduce until we have a single number (or variable) on the
+     stack and set the return value to that                               */
+  while (!rc && opstackhead) {
+    rc = WCMD_reduce(&opstackhead, &varstackhead);
+  }
+  if (rc) goto exprerrorreturn;
+
+  /* If we have anything other than one number left, error
+      otherwise throw the number away                      */
+  if (!varstackhead || varstackhead->next) {
+    rc = WCMD_NOOPERATOR;
+    goto exprerrorreturn;
+  }
+
+  /* Now get the number (and convert if its just a variable name) */
+  *ret = WCMD_popnumber(&varstackhead);
+
+exprerrorreturn:
+  /* Free all remaining memory */
+  while (opstackhead) WCMD_popoperator(&opstackhead);
+  while (varstackhead) WCMD_popnumber(&varstackhead);
+
+  WINE_TRACE("Returning result %d, rc %d\n", *ret, rc);
+  return rc;
+}
+
+/****************************************************************************
  * WCMD_setshow_env
  *
  * Set/Show the environment variables
@@ -3414,6 +3985,8 @@ void WCMD_setshow_env (WCHAR *s) {
   WCHAR *p;
   int status;
   static const WCHAR parmP[] = {'/','P','\0'};
+  static const WCHAR parmA[] = {'/','A','\0'};
+  WCHAR string[MAXSTRING];
 
   if (param1[0] == 0x00 && quals[0] == 0x00) {
     env = GetEnvironmentStringsW();
@@ -3425,7 +3998,6 @@ void WCMD_setshow_env (WCHAR *s) {
   if (CompareStringW(LOCALE_USER_DEFAULT,
                      NORM_IGNORECASE | SORT_STRINGSORT,
                      s, 2, parmP, -1) == CSTR_EQUAL) {
-    WCHAR string[MAXSTRING];
     DWORD count;
 
     s += 2;
@@ -3451,6 +4023,46 @@ void WCMD_setshow_env (WCHAR *s) {
       WINE_TRACE("set /p: Setting var '%s' to '%s'\n", wine_dbgstr_w(s),
                  wine_dbgstr_w(string));
       status = SetEnvironmentVariableW(s, string);
+    }
+
+  /* See if /A supplied, and if so calculate the results of all the expressions */
+  } else if (CompareStringW(LOCALE_USER_DEFAULT,
+                            NORM_IGNORECASE | SORT_STRINGSORT,
+                            s, 2, parmA, -1) == CSTR_EQUAL) {
+    /* /A supplied, so evaluate expressions and set variables appropriately */
+    /* Syntax is set /a var=1,var2=var+4 etc, and it echos back the result  */
+    /* of the final computation                                             */
+    int result = 0;
+    int rc = 0;
+    WCHAR *thisexpr;
+    WCHAR *src,*dst;
+
+    /* Remove all quotes before doing any calculations */
+    thisexpr = heap_alloc((strlenW(s+2)+1) * sizeof(WCHAR));
+    src = s+2;
+    dst = thisexpr;
+    while (*src) {
+      if (*src != '"') *dst++ = *src;
+      src++;
+    }
+    *dst = 0;
+
+    /* Now calculate the results of the expression */
+    src = thisexpr;
+    rc = WCMD_handleExpression(&src, &result, 0);
+    heap_free(thisexpr);
+
+    /* If parsing failed, issue the error message */
+    if (rc > 0) {
+      WCMD_output_stderr(WCMD_LoadMessage(rc));
+      return;
+    }
+
+    /* If we have no context (interactive or cmd.exe /c) print the final result */
+    if (!context) {
+      static const WCHAR fmt[] = {'%','d','\0'};
+      sprintfW(string, fmt, result);
+      WCMD_output_asis(string);
     }
 
   } else {

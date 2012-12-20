@@ -10080,6 +10080,30 @@ msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr "'%1'을 내부나 외부 명령어,나 배치 스크립트로 인식할 수 없습니다.\n"
 
+#: cmd.rc:357
+msgid "Division by zero error.\n"
+msgstr ""
+
+#: cmd.rc:358
+msgid "Expected an operand.\n"
+msgstr ""
+
+#: cmd.rc:359
+#, fuzzy
+#| msgid "Unexpected network error.\n"
+msgid "Expected an operator.\n"
+msgstr "예기치 않은 네트워크 오류.\n"
+
+#: cmd.rc:360
+msgid "Mismatch in parentheses.\n"
+msgstr ""
+
+#: cmd.rc:361
+msgid ""
+"Badly formed number - must be one of decimal (12),\n"
+" hexadecimal (0x34) or octal (056).\n"
+msgstr ""
+
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
 msgstr "다이렉트엑스 진단 도구"

@@ -9622,6 +9622,28 @@ msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
 
+#: cmd.rc:357
+msgid "Division by zero error.\n"
+msgstr ""
+
+#: cmd.rc:358
+msgid "Expected an operand.\n"
+msgstr ""
+
+#: cmd.rc:359
+msgid "Expected an operator.\n"
+msgstr ""
+
+#: cmd.rc:360
+msgid "Mismatch in parentheses.\n"
+msgstr ""
+
+#: cmd.rc:361
+msgid ""
+"Badly formed number - must be one of decimal (12),\n"
+" hexadecimal (0x34) or octal (056).\n"
+msgstr ""
+
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
 msgstr ""

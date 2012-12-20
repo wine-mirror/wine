@@ -317,3 +317,8 @@ extern WCHAR version_string[];
 #define WCMD_YESNO            1038
 #define WCMD_YESNOALL         1039
 #define WCMD_NO_COMMAND_FOUND 1040
+#define WCMD_DIVIDEBYZERO     1041
+#define WCMD_NOOPERAND        1042
+#define WCMD_NOOPERATOR       1043
+#define WCMD_BADPAREN         1044
+#define WCMD_BADHEXOCT        1045
