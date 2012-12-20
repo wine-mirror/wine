@@ -2097,7 +2097,6 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     INT char_extra;
     SIZE sz;
     RECT rc;
-    BOOL done_extents = FALSE;
     POINT *deltas = NULL, width = {0, 0};
     DWORD type;
     DC * dc = get_dc_ptr( hdc );
@@ -2124,9 +2123,6 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         release_dc_ptr( dc );
         return ret;
     }
-
-    if (!lprect)
-        flags &= ~ETO_CLIPPED;
 
     if (flags & ETO_RTLREADING) align |= TA_RTLREADING;
     if (layout & LAYOUT_RTL)
@@ -2189,32 +2185,15 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         sinEsc = 0;
     }
 
-    if(flags & (ETO_CLIPPED | ETO_OPAQUE))
+    if (lprect)
     {
-        if(!lprect)
-        {
-            if(flags & ETO_GLYPH_INDEX)
-                GetTextExtentPointI(hdc, glyphs, count, &sz);
-            else
-                GetTextExtentPointW(hdc, reordered_str, count, &sz);
-
-            done_extents = TRUE;
-            rc.left = x;
-            rc.top = y;
-            rc.right = x + sz.cx;
-            rc.bottom = y + sz.cy;
-        }
-        else
-        {
-            rc = *lprect;
-        }
-
+        rc = *lprect;
         LPtoDP(hdc, (POINT*)&rc, 2);
         order_rect( &rc );
+        if (flags & ETO_OPAQUE)
+            physdev->funcs->pExtTextOut( physdev, 0, 0, ETO_OPAQUE, &rc, NULL, 0, NULL );
     }
-
-    if (lprect && (flags & ETO_OPAQUE))
-        physdev->funcs->pExtTextOut( physdev, 0, 0, ETO_OPAQUE, &rc, NULL, 0, NULL );
+    else flags &= ~ETO_CLIPPED;
 
     if(count == 0)
     {
@@ -2306,14 +2285,10 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     {
         POINT desired[2];
 
-        if(!done_extents)
-        {
-            if(flags & ETO_GLYPH_INDEX)
-                GetTextExtentPointI(hdc, glyphs, count, &sz);
-            else
-                GetTextExtentPointW(hdc, reordered_str, count, &sz);
-            done_extents = TRUE;
-        }
+        if(flags & ETO_GLYPH_INDEX)
+            GetTextExtentPointI(hdc, glyphs, count, &sz);
+        else
+            GetTextExtentPointW(hdc, reordered_str, count, &sz);
         desired[0].x = desired[0].y = 0;
         desired[1].x = sz.cx;
         desired[1].y = 0;
