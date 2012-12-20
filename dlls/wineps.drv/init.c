@@ -151,20 +151,43 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 {
     PAGESIZE *page;
-    INT width = 0, height = 0;
+    RESOLUTION *res;
+    INT width = 0, height = 0, resx = 0, resy = 0;
 
-    if (physDev->Devmode->dmPublic.dmFields & DM_PRINTQUALITY)
+    if (physDev->Devmode->dmPublic.dmFields & (DM_PRINTQUALITY | DM_YRESOLUTION | DM_LOGPIXELS))
     {
-        physDev->logPixelsX = physDev->Devmode->dmPublic.u1.s1.dmPrintQuality;
-        physDev->logPixelsY = physDev->logPixelsX;
+        if (physDev->Devmode->dmPublic.dmFields & DM_PRINTQUALITY)
+            resx = resy = physDev->Devmode->dmPublic.u1.s1.dmPrintQuality;
+
+        if (physDev->Devmode->dmPublic.dmFields & DM_YRESOLUTION)
+            resy = physDev->Devmode->dmPublic.dmYResolution;
+
+        if (physDev->Devmode->dmPublic.dmFields & DM_LOGPIXELS)
+            resx = resy = physDev->Devmode->dmPublic.dmLogPixels;
+
+        LIST_FOR_EACH_ENTRY(res, &physDev->pi->ppd->Resolutions, RESOLUTION, entry)
+        {
+            if (res->resx == resx && res->resy == resy)
+            {
+                physDev->logPixelsX = resx;
+                physDev->logPixelsY = resy;
+                break;
+            }
+        }
+
+        if (&res->entry == &physDev->pi->ppd->Resolutions)
+        {
+            WARN("Requested resolution %dx%d is not supported by device\n", resx, resy);
+            physDev->logPixelsX = physDev->pi->ppd->DefaultResolution;
+            physDev->logPixelsY = physDev->logPixelsX;
+        }
     }
     else
     {
+        WARN("Using default device resolution %d\n", physDev->pi->ppd->DefaultResolution);
         physDev->logPixelsX = physDev->pi->ppd->DefaultResolution;
         physDev->logPixelsY = physDev->logPixelsX;
     }
-    if (physDev->Devmode->dmPublic.dmFields & DM_YRESOLUTION)
-        physDev->logPixelsY = physDev->Devmode->dmPublic.dmYResolution;
 
     if(physDev->Devmode->dmPublic.dmFields & DM_PAPERSIZE) {
         LIST_FOR_EACH_ENTRY(page, &physDev->pi->ppd->PageSizes, PAGESIZE, entry) {
