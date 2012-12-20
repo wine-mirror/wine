@@ -124,6 +124,10 @@ my @dll_groups =
   "shlwapi",
   "api-ms-win-downlevel-shlwapi-l1-1-0",
  ],
+ [
+  "version",
+  "api-ms-win-downlevel-version-l1-1-0",
+ ],
 );
 
 my $update_flags = 0;
