@@ -131,6 +131,7 @@ my @dll_groups =
  [
   "shlwapi",
   "api-ms-win-downlevel-shlwapi-l1-1-0",
+  "api-ms-win-downlevel-shlwapi-l2-1-0",
  ],
  [
   "user32",
