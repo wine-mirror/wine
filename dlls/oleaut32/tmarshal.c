@@ -409,15 +409,15 @@ static HRESULT num_of_funcs(ITypeInfo *tinfo, unsigned int *num,
 #include "pshpack1.h"
 
 typedef struct _TMAsmProxy {
-    BYTE	popleax;
+    DWORD	lealeax;
+    BYTE	pushleax;
     BYTE	pushlval;
     DWORD	nr;
-    BYTE	pushleax;
     BYTE	lcall;
     DWORD	xcall;
     BYTE	lret;
     WORD	bytestopop;
-    BYTE	nop;
+    WORD	nop;
 } TMAsmProxy;
 
 #include "poppack.h"
@@ -1330,10 +1330,10 @@ static inline BOOL is_out_elem(const ELEMDESC *elem)
     return (elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT || !elem->u.paramdesc.wParamFlags);
 }
 
-static DWORD
-xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
+static DWORD WINAPI xCall(int method, void **args)
 {
-    DWORD		*args = ((DWORD*)&tpinfo)+1, *xargs;
+    TMProxyImpl *tpinfo = args[0];
+    DWORD *xargs;
     const FUNCDESC	*fdesc;
     HRESULT		hres;
     int			i, relaydeb = TRACE_ON(olerelay);
@@ -1393,7 +1393,7 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
     if (nrofnames > sizeof(names)/sizeof(names[0]))
 	ERR("Need more names!\n");
 
-    xargs = args;
+    xargs = (DWORD *)(args + 1);
     for (i=0;i<fdesc->cParams;i++) {
 	ELEMDESC	*elem = fdesc->lprgelemdescParam+i;
 	if (relaydeb) {
@@ -1460,7 +1460,7 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
     buf.curoff = 0;
 
     /* generic deserializer using typelib description */
-    xargs = args;
+    xargs = (DWORD *)(args + 1);
     status = S_OK;
     for (i=0;i<fdesc->cParams;i++) {
 	ELEMDESC	*elem = fdesc->lprgelemdescParam+i;
@@ -1719,8 +1719,8 @@ static inline HRESULT get_facbuf_for_iid(REFIID riid, IPSFactoryBuffer **facbuf)
 static HRESULT init_proxy_entry_point(TMProxyImpl *proxy, unsigned int num)
 {
     int j;
-    /* nrofargs without This */
-    int nrofargs;
+    /* nrofargs including This */
+    int nrofargs = 1;
     ITypeInfo *tinfo2;
     TMAsmProxy	*xasm = proxy->asmstubs + num;
     HRESULT hres;
@@ -1733,7 +1733,6 @@ static HRESULT init_proxy_entry_point(TMProxyImpl *proxy, unsigned int num)
     }
     ITypeInfo_Release(tinfo2);
     /* some args take more than 4 byte on the stack */
-    nrofargs = 0;
     for (j=0;j<fdesc->cParams;j++)
         nrofargs += _argsize(&fdesc->lprgelemdescParam[j].tdesc, proxy->tinfo);
 
@@ -1742,25 +1741,21 @@ static HRESULT init_proxy_entry_point(TMProxyImpl *proxy, unsigned int num)
         ERR("calling convention is not stdcall????\n");
         return E_FAIL;
     }
-/* popl %eax	-	return ptr
- * pushl <nr>
+/* leal 4(%esp),%eax
  * pushl %eax
+ * pushl <nr>
  * call xCall
- * lret <nr> (+4)
- *
- *
- * arg3 arg2 arg1 <method> <returnptr>
+ * lret <nr>
  */
-    xasm->popleax       = 0x58;
+    xasm->lealeax       = 0x0424448d;
+    xasm->pushleax      = 0x50;
     xasm->pushlval      = 0x68;
     xasm->nr            = num;
-    xasm->pushleax      = 0x50;
-    xasm->lcall         = 0xe8; /* relative jump */
-    xasm->xcall         = (DWORD)xCall;
-    xasm->xcall        -= (DWORD)&(xasm->lret);
+    xasm->lcall         = 0xe8;
+    xasm->xcall         = (char *)xCall - (char *)&xasm->lret;
     xasm->lret          = 0xc2;
-    xasm->bytestopop    = (nrofargs+2)*4; /* pop args, This, iMethod */
-    xasm->nop           = 0x90;
+    xasm->bytestopop    = nrofargs * 4;
+    xasm->nop           = 0x9090;
     proxy->lpvtbl[fdesc->oVft / sizeof(void *)] = xasm;
 #else
     FIXME("not implemented on non i386\n");
@@ -1799,8 +1794,6 @@ PSFacBuf_CreateProxy(
 
     proxy = CoTaskMemAlloc(sizeof(TMProxyImpl));
     if (!proxy) return E_OUTOFMEMORY;
-
-    assert(sizeof(TMAsmProxy) == 16);
 
     proxy->dispatch = NULL;
     proxy->dispatch_proxy = NULL;
@@ -1863,40 +1856,23 @@ PSFacBuf_CreateProxy(
 		proxy->lpvtbl[i] = ProxyIUnknown_Release;
 		break;
         case 3:
-                if(!defer_to_dispatch)
-                {
-                    hres = init_proxy_entry_point(proxy, i);
-                    if(FAILED(hres)) return hres;
-                }
+                if(!defer_to_dispatch) hres = init_proxy_entry_point(proxy, i);
                 else proxy->lpvtbl[3] = ProxyIDispatch_GetTypeInfoCount;
                 break;
         case 4:
-                if(!defer_to_dispatch)
-                {
-                    hres = init_proxy_entry_point(proxy, i);
-                    if(FAILED(hres)) return hres;
-                }
+                if(!defer_to_dispatch) hres = init_proxy_entry_point(proxy, i);
                 else proxy->lpvtbl[4] = ProxyIDispatch_GetTypeInfo;
                 break;
         case 5:
-                if(!defer_to_dispatch)
-                {
-                    hres = init_proxy_entry_point(proxy, i);
-                    if(FAILED(hres)) return hres;
-                }
+                if(!defer_to_dispatch) hres = init_proxy_entry_point(proxy, i);
                 else proxy->lpvtbl[5] = ProxyIDispatch_GetIDsOfNames;
                 break;
         case 6:
-                if(!defer_to_dispatch)
-                {
-                    hres = init_proxy_entry_point(proxy, i);
-                    if(FAILED(hres)) return hres;
-                }
+                if(!defer_to_dispatch) hres = init_proxy_entry_point(proxy, i);
                 else proxy->lpvtbl[6] = ProxyIDispatch_Invoke;
                 break;
 	default:
                 hres = init_proxy_entry_point(proxy, i);
-                if(FAILED(hres)) return hres;
 	}
     }
 
