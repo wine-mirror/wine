@@ -1463,8 +1463,11 @@ static void test_obj_dispex(IUnknown *obj)
 static void test_dispex(void)
 {
     IXMLDOMSchemaCollection *cache;
+    IDispatchEx *dispex;
     IUnknown *unk;
     HRESULT hr;
+    DISPPARAMS dispparams;
+    VARIANT arg, ret;
 
     cache = create_cache(&IID_IXMLDOMSchemaCollection);
     if (!cache) return;
@@ -1473,6 +1476,25 @@ static void test_dispex(void)
     EXPECT_HR(hr, S_OK);
     test_obj_dispex(unk);
     IUnknown_Release(unk);
+
+    hr = IXMLDOMSchemaCollection_QueryInterface(cache, &IID_IDispatchEx, (void**)&dispex);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&arg) = VT_I4;
+    V_I4(&arg) = 0;
+    dispparams.cArgs = 1;
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = &arg;
+
+    V_VT(&ret) = VT_EMPTY;
+    V_DISPATCH(&ret) = (void*)0x1;
+    hr = IDispatchEx_Invoke(dispex, DISPID_VALUE, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &ret, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "got 0x%08x\n", hr);
+    ok(V_VT(&ret) == VT_EMPTY, "got %d\n", V_VT(&ret));
+    ok(V_DISPATCH(&ret) == (void*)0x1, "got %p\n", V_DISPATCH(&ret));
+
+    IDispatchEx_Release(dispex);
 
     IXMLDOMSchemaCollection_Release(cache);
 }

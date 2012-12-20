@@ -9475,6 +9475,10 @@ static void test_mxnamespacemanager(void)
     hr = IVBMXNamespaceManager_getDeclaredPrefixes(mgr2, &prefixes);
     if (hr == S_OK)
     {
+        IDispatchEx *dispex;
+        VARIANT arg, ret;
+        DISPPARAMS dispparams;
+
         ok(prefixes != NULL, "got %p\n", prefixes);
         EXPECT_REF(nsmgr, 2);
         EXPECT_REF(mgr2, 2);
@@ -9488,6 +9492,25 @@ static void test_mxnamespacemanager(void)
 
         IUnknown_Release(unk1);
         IUnknown_Release(unk2);
+
+        hr = IMXNamespacePrefixes_QueryInterface(prefixes, &IID_IDispatchEx, (void**)&dispex);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        V_VT(&arg) = VT_I4;
+        V_I4(&arg) = 0;
+        dispparams.cArgs = 1;
+        dispparams.cNamedArgs = 0;
+        dispparams.rgdispidNamedArgs = NULL;
+        dispparams.rgvarg = &arg;
+
+        V_VT(&ret) = VT_EMPTY;
+        V_DISPATCH(&ret) = (void*)0x1;
+        hr = IDispatchEx_Invoke(dispex, DISPID_VALUE, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &ret, NULL, NULL);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&ret) == VT_DISPATCH, "got %d\n", V_VT(&ret));
+        ok(V_DISPATCH(&ret) == NULL, "got %p\n", V_DISPATCH(&ret));
+
+        IDispatchEx_Release(dispex);
         IMXNamespacePrefixes_Release(prefixes);
     }
     IVBMXNamespaceManager_Release(mgr2);
@@ -10004,7 +10027,7 @@ static void test_dispex(void)
     ok(did == DISPID_VALUE, "got %d\n", did);
 
     V_VT(&arg) = VT_I4;
-    V_I2(&arg) = 0;
+    V_I4(&arg) = 0;
     dispparams.cArgs = 0;
     dispparams.cNamedArgs = 0;
     dispparams.rgdispidNamedArgs = NULL;
@@ -10018,7 +10041,7 @@ static void test_dispex(void)
     ok(V_DISPATCH(&ret) == (void*)0x1, "got %p\n", V_DISPATCH(&ret));
 
     V_VT(&arg) = VT_I4;
-    V_I2(&arg) = 0;
+    V_I4(&arg) = 0;
     dispparams.cArgs = 2;
     dispparams.cNamedArgs = 0;
     dispparams.rgdispidNamedArgs = NULL;
@@ -10032,7 +10055,7 @@ static void test_dispex(void)
     ok(V_DISPATCH(&ret) == (void*)0x1, "got %p\n", V_DISPATCH(&ret));
 
     V_VT(&arg) = VT_I4;
-    V_I2(&arg) = 0;
+    V_I4(&arg) = 0;
     dispparams.cArgs = 1;
     dispparams.cNamedArgs = 0;
     dispparams.rgdispidNamedArgs = NULL;
@@ -10090,6 +10113,26 @@ static void test_dispex(void)
     EXPECT_HR(hr, S_OK);
     IXMLDOMParseError_QueryInterface(error, &IID_IUnknown, (void**)&unk);
     test_domobj_dispex(unk);
+
+    hr = IXMLDOMParseError_QueryInterface(error, &IID_IDispatchEx, (void**)&dispex);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&arg) = VT_I4;
+    V_I4(&arg) = 0;
+    dispparams.cArgs = 1;
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = &arg;
+
+    V_VT(&ret) = VT_EMPTY;
+    V_DISPATCH(&ret) = (void*)0x1;
+    hr = IDispatchEx_Invoke(dispex, DISPID_VALUE, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &ret, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "got 0x%08x\n", hr);
+    ok(V_VT(&ret) == VT_EMPTY, "got %d\n", V_VT(&ret));
+    ok(V_DISPATCH(&ret) == (void*)0x1, "got %p\n", V_DISPATCH(&ret));
+
+    IDispatchEx_Release(dispex);
+
     IUnknown_Release(unk);
     IXMLDOMParseError_Release(error);
 
@@ -10142,6 +10185,95 @@ static void test_dispex(void)
     ok(did == DISPID_DOM_COLLECTION_BASE+1, "got 0x%08x\n", did);
     IDispatchEx_Release(dispex);
 
+    did = -1;
+    hr = IDispatchEx_GetDispID(dispex, _bstr_("item"), 0, &did);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(did == DISPID_VALUE, "got %d\n", did);
+
+    V_VT(&arg) = VT_I4;
+    V_I4(&arg) = 0;
+    dispparams.cArgs = 0;
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = &arg;
+
+    V_VT(&ret) = VT_EMPTY;
+    V_DISPATCH(&ret) = (void*)0x1;
+    hr = IDispatchEx_Invoke(dispex, DISPID_VALUE, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &ret, NULL, NULL);
+todo_wine {
+    ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08x\n", hr);
+    ok(V_VT(&ret) == VT_EMPTY, "got %d\n", V_VT(&ret));
+    ok(V_DISPATCH(&ret) == (void*)0x1, "got %p\n", V_DISPATCH(&ret));
+}
+    V_VT(&arg) = VT_I4;
+    V_I4(&arg) = 0;
+    dispparams.cArgs = 2;
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = &arg;
+
+    V_VT(&ret) = VT_EMPTY;
+    V_DISPATCH(&ret) = (void*)0x1;
+    hr = IDispatchEx_Invoke(dispex, DISPID_VALUE, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &ret, NULL, NULL);
+todo_wine {
+    ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08x\n", hr);
+    ok(V_VT(&ret) == VT_EMPTY, "got %d\n", V_VT(&ret));
+    ok(V_DISPATCH(&ret) == (void*)0x1, "got %p\n", V_DISPATCH(&ret));
+}
+    V_VT(&arg) = VT_I4;
+    V_I4(&arg) = 0;
+    dispparams.cArgs = 1;
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = &arg;
+
+    V_VT(&ret) = VT_EMPTY;
+    V_DISPATCH(&ret) = (void*)0x1;
+    hr = IDispatchEx_Invoke(dispex, DISPID_VALUE, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &ret, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&ret) == VT_DISPATCH, "got %d\n", V_VT(&ret));
+    ok(V_DISPATCH(&ret) == NULL, "got %p\n", V_DISPATCH(&ret));
+
+    V_VT(&ret) = VT_EMPTY;
+    V_DISPATCH(&ret) = (void*)0x1;
+    hr = IDispatchEx_Invoke(dispex, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dispparams, &ret, NULL, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&ret) == VT_DISPATCH, "got %d\n", V_VT(&ret));
+    ok(V_DISPATCH(&ret) == NULL, "got %p\n", V_DISPATCH(&ret));
+
+    V_VT(&ret) = VT_EMPTY;
+    V_DISPATCH(&ret) = (void*)0x1;
+    hr = IDispatchEx_Invoke(dispex, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dispparams, &ret, NULL, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&ret) == VT_DISPATCH, "got %d\n", V_VT(&ret));
+    ok(V_DISPATCH(&ret) == NULL, "got %p\n", V_DISPATCH(&ret));
+
+    dispparams.cArgs = 0;
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = NULL;
+
+    V_VT(&ret) = VT_EMPTY;
+    V_I4(&ret) = 1;
+    hr = IDispatchEx_Invoke(dispex, DISPID_DOM_NODELIST_LENGTH, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dispparams, &ret, NULL, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&ret) == VT_I4, "got %d\n", V_VT(&ret));
+    ok(V_I4(&ret) == 0, "got %d\n", V_I4(&ret));
+
+    dispparams.cArgs = 0;
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = NULL;
+
+    V_VT(&ret) = VT_EMPTY;
+    V_I4(&ret) = 1;
+    hr = IDispatchEx_Invoke(dispex, DISPID_DOM_NODELIST_LENGTH, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &ret, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "got 0x%08x\n", hr);
+todo_wine {
+    ok(V_VT(&ret) == VT_EMPTY, "got %d\n", V_VT(&ret));
+    ok(V_I4(&ret) == 1, "got %d\n", V_I4(&ret));
+}
     IXMLDOMNamedNodeMap_Release(map);
     IXMLDOMElement_Release(elem);
 
