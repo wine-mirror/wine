@@ -45,8 +45,8 @@ BOOL AddToEnumList(IEnumIDListImpl *This, LPITEMIDLIST pidl)
 
 	TRACE("(%p)->(pidl=%p)\n",This,pidl);
 
-    if (!This || !pidl)
-        return FALSE;
+        if (!This || !pidl)
+          return FALSE;
 
         pNew = SHAlloc(sizeof(*pNew));
 	if(pNew)

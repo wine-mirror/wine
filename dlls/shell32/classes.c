@@ -56,9 +56,9 @@ BOOL HCR_MapTypeToValueW(LPCWSTR szExtension, LPWSTR szFileType, LONG len, BOOL 
 
 	TRACE("%s %p\n", debugstr_w(szExtension), szFileType);
 
-    /* added because we do not want to have double dots */
-    if (szExtension[0] == '.')
-        bPrependDot = 0;
+        /* added because we do not want to have double dots */
+        if (szExtension[0] == '.')
+          bPrependDot = 0;
 
 	if (bPrependDot)
 	  szTemp[0] = '.';
@@ -90,9 +90,9 @@ BOOL HCR_MapTypeToValueA(LPCSTR szExtension, LPSTR szFileType, LONG len, BOOL bP
 
 	TRACE("%s %p\n", szExtension, szFileType);
 
-    /* added because we do not want to have double dots */
-    if (szExtension[0] == '.')
-        bPrependDot = 0;
+        /* added because we do not want to have double dots */
+        if (szExtension[0] == '.')
+          bPrependDot = 0;
 
 	if (bPrependDot)
 	  szTemp[0] = '.';
@@ -252,7 +252,7 @@ static BOOL HCR_RegGetDefaultIconA(HKEY hkey, LPSTR szDest, DWORD len, int* pico
 
 	if (!RegQueryValueExA(hkey, NULL, 0, &dwType, (LPBYTE)szDest, &len))
 	{
-      if (dwType == REG_EXPAND_SZ)
+          if (dwType == REG_EXPAND_SZ)
 	  {
 	    ExpandEnvironmentStringsA(szDest, sTemp, MAX_PATH);
 	    lstrcpynA(szDest, sTemp, len);

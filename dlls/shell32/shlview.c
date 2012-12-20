@@ -380,19 +380,19 @@ static BOOL ShellView_CreateList (IShellViewImpl * This)
         This->ListViewSortInfo.nHeaderID = -1;
         This->ListViewSortInfo.nLastHeaderID = -1;
 
-       if (This->FolderSettings.fFlags & FWF_DESKTOP) {
-         /*
-          * FIXME: look at the registry value
-          * HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ListviewShadow
-          * and activate drop shadows if necessary
-          */
-         if (0)
-           SendMessageW(This->hWndList, LVM_SETTEXTBKCOLOR, 0, CLR_NONE);
-         else
-           SendMessageW(This->hWndList, LVM_SETTEXTBKCOLOR, 0, GetSysColor(COLOR_DESKTOP));
+        if (This->FolderSettings.fFlags & FWF_DESKTOP) {
+          /*
+           * FIXME: look at the registry value
+           * HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ListviewShadow
+           * and activate drop shadows if necessary
+           */
+           if (0)
+             SendMessageW(This->hWndList, LVM_SETTEXTBKCOLOR, 0, CLR_NONE);
+           else
+             SendMessageW(This->hWndList, LVM_SETTEXTBKCOLOR, 0, GetSysColor(COLOR_DESKTOP));
 
-         SendMessageW(This->hWndList, LVM_SETTEXTCOLOR, 0, RGB(255,255,255));
-       }
+           SendMessageW(This->hWndList, LVM_SETTEXTCOLOR, 0, RGB(255,255,255));
+        }
 
         /*  UpdateShellSettings(); */
 	return TRUE;

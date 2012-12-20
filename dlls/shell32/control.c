@@ -759,7 +759,7 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
                     }
                 }
                 if (ch == '\0') break;
-		    beg = end + 1;
+                beg = end + 1;
                 if (ch == ' ') while (end[1] == ' ') end++;
             }
             end++;

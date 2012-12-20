@@ -259,21 +259,21 @@ void _dbg_ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
 
 void pdump (LPCITEMIDLIST pidl)
 {
-	LPCITEMIDLIST pidltemp = pidl;
+    LPCITEMIDLIST pidltemp = pidl;
 
-	if (!TRACE_ON(pidl)) return;
+    if (!TRACE_ON(pidl)) return;
 
-	if (! pidltemp)
-	{
-	  MESSAGE ("-------- pidl=NULL (Desktop)\n");
-	}
-	else
-	{
-	  MESSAGE ("-------- pidl=%p\n", pidl);
-	  if (pidltemp->mkid.cb)
-	  {
-	    do
-	    {
+    if (! pidltemp)
+    {
+      MESSAGE ("-------- pidl=NULL (Desktop)\n");
+    }
+    else
+    {
+      MESSAGE ("-------- pidl=%p\n", pidl);
+      if (pidltemp->mkid.cb)
+      {
+        do
+        {
           if (_ILIsUnicode(pidltemp))
           {
               DWORD dwAttrib = 0;
@@ -309,16 +309,16 @@ void pdump (LPCITEMIDLIST pidl)
                            debugstr_a(szName), debugstr_a(szLongName), debugstr_a(szShortName));
           }
 
-	      pidltemp = _dbg_ILGetNext(pidltemp);
+          pidltemp = _dbg_ILGetNext(pidltemp);
 
-	    } while (pidltemp && pidltemp->mkid.cb);
-	  }
-	  else
-	  {
-	    MESSAGE ("empty pidl (Desktop)\n");
-	  }
-	  pcheck(pidl);
-	}
+        } while (pidltemp && pidltemp->mkid.cb);
+      }
+      else
+      {
+        MESSAGE ("empty pidl (Desktop)\n");
+      }
+      pcheck(pidl);
+    }
 }
 
 static void dump_pidl_hex( LPCITEMIDLIST pidl )
