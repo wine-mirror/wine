@@ -352,6 +352,18 @@ typedef struct {
 } GPOS_PairPosFormat1;
 
 typedef struct {
+    WORD PosFormat;
+    WORD Coverage;
+    WORD ValueFormat1;
+    WORD ValueFormat2;
+    WORD ClassDef1;
+    WORD ClassDef2;
+    WORD Class1Count;
+    WORD Class2Count;
+    WORD Class1Record[1];
+} GPOS_PairPosFormat2;
+
+typedef struct {
     WORD SecondGlyph;
     WORD Value1[1];
     WORD Value2[1];
@@ -1252,6 +1264,37 @@ static INT GPOS_apply_PairAdjustment(const OT_LookupTable *look, const WORD *gly
                         return glyph_index + next;
                     }
                     pair_val_rec = (const GPOS_PairValueRecord *)(pair_val_rec->Value1 + val_fmt1_size + val_fmt2_size);
+                }
+            }
+        }
+        else if (GET_BE_WORD(ppf1->PosFormat) == 2)
+        {
+            const GPOS_PairPosFormat2 *ppf2 = (const GPOS_PairPosFormat2*)((const BYTE*)look + offset);
+            int index;
+            WORD ValueFormat1 = GET_BE_WORD( ppf2->ValueFormat1 );
+            WORD ValueFormat2 = GET_BE_WORD( ppf2->ValueFormat2 );
+            INT val_fmt1_size = GPOS_get_value_record( ValueFormat1, NULL, NULL );
+            INT val_fmt2_size = GPOS_get_value_record( ValueFormat2, NULL, NULL );
+            WORD class1_count = GET_BE_WORD( ppf2->Class1Count );
+            WORD class2_count = GET_BE_WORD( ppf2->Class2Count );
+
+            offset = GET_BE_WORD( ppf2->Coverage );
+            index = GSUB_is_glyph_covered( (const BYTE*)ppf2 + offset, glyphs[glyph_index] );
+            if (index != -1)
+            {
+                WORD class1, class2;
+                class1 = OT_get_glyph_class( (const BYTE *)ppf2 + GET_BE_WORD(ppf2->ClassDef1), glyphs[glyph_index] );
+                class2 = OT_get_glyph_class( (const BYTE *)ppf2 + GET_BE_WORD(ppf2->ClassDef2), glyphs[glyph_index + write_dir] );
+                if (class1 < class1_count && class2 < class2_count)
+                {
+                    const WORD *pair_val = ppf2->Class1Record + (class1 * class2_count + class2) * (val_fmt1_size + val_fmt2_size);
+                    int next = 1;
+
+                    TRACE( "Format 2: Found Pair %x,%x\n", glyphs[glyph_index], glyphs[glyph_index + write_dir] );
+
+                    apply_pair_value( ppf2, ValueFormat1, ValueFormat2, pair_val, ppem, ptAdjust, ptAdvance );
+                    if (ValueFormat2) next++;
+                    return glyph_index + next;
                 }
             }
         }
