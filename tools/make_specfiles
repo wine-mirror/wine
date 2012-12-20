@@ -129,6 +129,10 @@ my @dll_groups =
   "api-ms-win-downlevel-ole32-l1-1-0",
  ],
  [
+  "shell32",
+  "api-ms-win-downlevel-shell32-l1-1-0",
+ ],
+ [
   "shlwapi",
   "api-ms-win-downlevel-shlwapi-l1-1-0",
   "api-ms-win-downlevel-shlwapi-l2-1-0",
