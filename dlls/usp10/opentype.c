@@ -93,19 +93,19 @@ typedef struct {
     WORD StartGlyph;
     WORD GlyphCount;
     WORD ClassValueArray[1];
-} GDEF_ClassDefFormat1;
+} OT_ClassDefFormat1;
 
 typedef struct {
     WORD Start;
     WORD End;
     WORD Class;
-} GDEF_ClassRangeRecord;
+} OT_ClassRangeRecord;
 
 typedef struct {
     WORD ClassFormat;
     WORD ClassRangeCount;
-    GDEF_ClassRangeRecord ClassRangeRecord[1];
-} GDEF_ClassDefFormat2;
+    OT_ClassRangeRecord ClassRangeRecord[1];
+} OT_ClassDefFormat2;
 
 /* These are all structures needed for the GSUB table */
 
@@ -525,20 +525,13 @@ DWORD OpenType_CMAP_GetGlyphIndex(HDC hdc, ScriptCache *psc, DWORD utf32c, LPWOR
  * GDEF
  **********/
 
-static WORD GDEF_get_glyph_class(const GDEF_Header *header, WORD glyph)
+static WORD OT_get_glyph_class(const void *table, WORD glyph)
 {
-    int offset;
     WORD class = 0;
-    const GDEF_ClassDefFormat1 *cf1;
+    const OT_ClassDefFormat1 *cf1 = table;
 
-    if (!header)
-        return 0;
+    if (!table) return 0;
 
-    offset = GET_BE_WORD(header->GlyphClassDef);
-    if (!offset)
-        return 0;
-
-    cf1 = (GDEF_ClassDefFormat1*)(((BYTE*)header)+offset);
     if (GET_BE_WORD(cf1->ClassFormat) == 1)
     {
         if (glyph >= GET_BE_WORD(cf1->StartGlyph))
@@ -550,7 +543,7 @@ static WORD GDEF_get_glyph_class(const GDEF_Header *header, WORD glyph)
     }
     else if (GET_BE_WORD(cf1->ClassFormat) == 2)
     {
-        const GDEF_ClassDefFormat2 *cf2 = (GDEF_ClassDefFormat2*)cf1;
+        const OT_ClassDefFormat2 *cf2 = table;
         int i, top;
         top = GET_BE_WORD(cf2->ClassRangeCount);
         for (i = 0; i < top; i++)
@@ -585,9 +578,18 @@ static VOID *load_gdef_table(HDC hdc)
 void OpenType_GDEF_UpdateGlyphProps(HDC hdc, ScriptCache *psc, const WORD *pwGlyphs, const WORD cGlyphs, WORD* pwLogClust, const WORD cChars, SCRIPT_GLYPHPROP *pGlyphProp)
 {
     int i;
+    void *glyph_class_table = NULL;
 
     if (!psc->GDEF_Table)
         psc->GDEF_Table = load_gdef_table(hdc);
+
+    if (psc->GDEF_Table)
+    {
+        const GDEF_Header *header = psc->GDEF_Table;
+        WORD offset = GET_BE_WORD( header->GlyphClassDef );
+        if (offset)
+            glyph_class_table = (BYTE *)psc->GDEF_Table + offset;
+    }
 
     for (i = 0; i < cGlyphs; i++)
     {
@@ -602,7 +604,7 @@ void OpenType_GDEF_UpdateGlyphProps(HDC hdc, ScriptCache *psc, const WORD *pwGly
                 char_count++;
         }
 
-        class = GDEF_get_glyph_class(psc->GDEF_Table, pwGlyphs[i]);
+        class = OT_get_glyph_class( glyph_class_table, pwGlyphs[i] );
 
         switch (class)
         {
