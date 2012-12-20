@@ -385,17 +385,11 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
         ;
 
     endkey = cp;
-    if(*cp == ':') { /* <key>: */
+    while (isspace(*cp)) cp++;
+    if (*cp == ':') /* <key>: */
         gotoption = FALSE;
-    } else {
-	while(isspace(*cp))
-	    cp++;
-	if(*cp == ':') { /* <key>  : */
-	    gotoption = FALSE;
-	} else { /* <key> <option> */
-	    opt = cp;
-	}
-    }
+    else /* <key> <option> */
+        opt = cp;
 
     tuple->key = HeapAlloc( PSDRV_Heap, 0, endkey - line + 1 );
     if(!tuple->key) return FALSE;
@@ -434,7 +428,7 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
     }
 
     /* cp should point to a ':', so we increment past it */
-        cp++;
+    cp++;
 
     while(isspace(*cp))
         cp++;
