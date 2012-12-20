@@ -125,6 +125,10 @@ my @dll_groups =
   "api-ms-win-downlevel-shlwapi-l1-1-0",
  ],
  [
+  "user32",
+  "api-ms-win-downlevel-user32-l1-1-0",
+ ],
+ [
   "version",
   "api-ms-win-downlevel-version-l1-1-0",
  ],
