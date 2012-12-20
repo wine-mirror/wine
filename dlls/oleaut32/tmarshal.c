@@ -1336,7 +1336,7 @@ static DWORD WINAPI xCall(int method, void **args)
     DWORD *xargs;
     const FUNCDESC	*fdesc;
     HRESULT		hres;
-    int			i, relaydeb = TRACE_ON(olerelay);
+    int			i;
     marshal_state	buf;
     RPCOLEMESSAGE	msg;
     ULONG		status;
@@ -1368,7 +1368,7 @@ static DWORD WINAPI xCall(int method, void **args)
 
     LeaveCriticalSection(&tpinfo->crit);
 
-    if (relaydeb) {
+    if (TRACE_ON(olerelay)) {
        TRACE_(olerelay)("->");
 	if (iname)
 	    TRACE_(olerelay)("%s:",relaystr(iname));
@@ -1396,7 +1396,7 @@ static DWORD WINAPI xCall(int method, void **args)
     xargs = (DWORD *)(args + 1);
     for (i=0;i<fdesc->cParams;i++) {
 	ELEMDESC	*elem = fdesc->lprgelemdescParam+i;
-	if (relaydeb) {
+	if (TRACE_ON(olerelay)) {
 	    if (i) TRACE_(olerelay)(",");
 	    if (i+1<nrofnames && names[i+1])
 		TRACE_(olerelay)("%s=",relaystr(names[i+1]));
@@ -1407,7 +1407,7 @@ static DWORD WINAPI xCall(int method, void **args)
             if (elem->tdesc.vt != VT_PTR)
             {
                 xargs+=_argsize(&elem->tdesc, tinfo);
-                if (relaydeb) TRACE_(olerelay)("[out]");
+                TRACE_(olerelay)("[out]");
                 continue;
             }
             else
@@ -1419,7 +1419,7 @@ static DWORD WINAPI xCall(int method, void **args)
 	hres = serialize_param(
 	    tinfo,
 	    is_in_elem(elem),
-	    relaydeb,
+	    TRACE_ON(olerelay),
 	    FALSE,
 	    &elem->tdesc,
 	    xargs,
@@ -1432,7 +1432,7 @@ static DWORD WINAPI xCall(int method, void **args)
 	}
 	xargs+=_argsize(&elem->tdesc, tinfo);
     }
-    if (relaydeb) TRACE_(olerelay)(")");
+    TRACE_(olerelay)(")");
 
     memset(&msg,0,sizeof(msg));
     msg.cbBuffer = buf.curoff;
@@ -1443,14 +1443,14 @@ static DWORD WINAPI xCall(int method, void **args)
 	goto exit;
     }
     memcpy(msg.Buffer,buf.base,buf.curoff);
-    if (relaydeb) TRACE_(olerelay)("\n");
+    TRACE_(olerelay)("\n");
     hres = IRpcChannelBuffer_SendReceive(chanbuf,&msg,&status);
     if (hres) {
 	ERR("RpcChannelBuffer SendReceive failed, %x\n",hres);
 	goto exit;
     }
 
-    if (relaydeb) TRACE_(olerelay)(" status = %08x (",status);
+    TRACE_(olerelay)(" status = %08x (",status);
     if (buf.base)
 	buf.base = HeapReAlloc(GetProcessHeap(),0,buf.base,msg.cbBuffer);
     else
@@ -1465,20 +1465,19 @@ static DWORD WINAPI xCall(int method, void **args)
     for (i=0;i<fdesc->cParams;i++) {
 	ELEMDESC	*elem = fdesc->lprgelemdescParam+i;
 
-	if (relaydeb) {
-	    if (i) TRACE_(olerelay)(",");
-	    if (i+1<nrofnames && names[i+1]) TRACE_(olerelay)("%s=",relaystr(names[i+1]));
-	}
+        if (i) TRACE_(olerelay)(",");
+        if (i+1<nrofnames && names[i+1]) TRACE_(olerelay)("%s=",relaystr(names[i+1]));
+
 	/* No need to marshal other data than FOUT and any VT_PTR */
 	if (!is_out_elem(elem) && (elem->tdesc.vt != VT_PTR)) {
 	    xargs += _argsize(&elem->tdesc, tinfo);
-	    if (relaydeb) TRACE_(olerelay)("[in]");
+	    TRACE_(olerelay)("[in]");
 	    continue;
 	}
 	hres = deserialize_param(
 	    tinfo,
 	    is_out_elem(elem),
-	    relaydeb,
+	    TRACE_ON(olerelay),
 	    FALSE,
 	    &(elem->tdesc),
 	    xargs,
@@ -1495,7 +1494,7 @@ static DWORD WINAPI xCall(int method, void **args)
     hres = xbuf_get(&buf, (LPBYTE)&remoteresult, sizeof(DWORD));
     if (hres != S_OK)
         goto exit;
-    if (relaydeb) TRACE_(olerelay)(") = %08x\n", remoteresult);
+    TRACE_(olerelay)(") = %08x\n", remoteresult);
 
     hres = remoteresult;
 
