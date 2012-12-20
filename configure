@@ -15350,6 +15350,7 @@ wine_fn_config_dll advpack enable_advpack implib
 wine_fn_config_test dlls/advpack/tests advpack_test
 wine_fn_config_dll amstream enable_amstream
 wine_fn_config_test dlls/amstream/tests amstream_test
+wine_fn_config_dll api-ms-win-core-winrt-error-l1-1-0 enable_api_ms_win_core_winrt_error_l1_1_0
 wine_fn_config_dll api-ms-win-core-winrt-string-l1-1-0 enable_api_ms_win_core_winrt_string_l1_1_0
 wine_fn_config_dll api-ms-win-downlevel-advapi32-l1-1-0 enable_api_ms_win_downlevel_advapi32_l1_1_0
 wine_fn_config_dll api-ms-win-downlevel-advapi32-l2-1-0 enable_api_ms_win_downlevel_advapi32_l2_1_0
