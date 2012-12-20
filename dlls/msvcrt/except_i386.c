@@ -1014,17 +1014,18 @@ void CDECL MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval)
 
     if (jmp->Registration)
     {
-        if (!IsBadReadPtr(&jmp->Cookie, sizeof(long)) &&
-            jmp->Cookie == MSVCRT_JMP_MAGIC && jmp->UnwindFunc)
+        if (IsBadReadPtr(&jmp->Cookie, sizeof(long)) || jmp->Cookie != MSVCRT_JMP_MAGIC)
+        {
+            msvcrt_local_unwind2((MSVCRT_EXCEPTION_FRAME*)jmp->Registration,
+                                 jmp->TryLevel, (void *)jmp->Ebp);
+        }
+        else if(jmp->UnwindFunc)
         {
             MSVCRT_unwind_function unwind_func;
 
             unwind_func=(MSVCRT_unwind_function)jmp->UnwindFunc;
             unwind_func(jmp);
         }
-        else
-            msvcrt_local_unwind2((MSVCRT_EXCEPTION_FRAME*)jmp->Registration,
-                                 jmp->TryLevel, (void *)jmp->Ebp);
     }
 
     if (!retval)
