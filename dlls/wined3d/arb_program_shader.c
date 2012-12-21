@@ -2034,7 +2034,7 @@ static void pshader_hw_texcoord(const struct wined3d_shader_instruction *ins)
         shader_arb_get_src_param(ins, &ins->src[0], 0, reg_src);
         shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
         shader_addline(buffer, "MOV %s, %s;\n", dst_str, reg_src);
-   }
+    }
 }
 
 static void pshader_hw_texreg2ar(const struct wined3d_shader_instruction *ins)
@@ -6210,7 +6210,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
     if(tfactor_used) {
         shader_addline(&buffer, "PARAM tfactor = program.env[%u];\n", ARB_FFP_CONST_TFACTOR);
     }
-        shader_addline(&buffer, "PARAM specular_enable = program.env[%u];\n", ARB_FFP_CONST_SPECULAR_ENABLE);
+    shader_addline(&buffer, "PARAM specular_enable = program.env[%u];\n", ARB_FFP_CONST_SPECULAR_ENABLE);
 
     if(settings->sRGB_write) {
         shader_addline(&buffer, "PARAM srgb_consts1 = {%f, %f, %f, %f};\n",
