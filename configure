@@ -6669,12 +6669,24 @@ done
     else
         as_fn_append wine_notices "|QuickTime ${notice_platform}development files not found, video decoding won't be supported."
     fi
-        if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
+    if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
     then
         CARBONLIB="-framework Carbon"
 
-        enable_winemac_drv=${enable_winemac_drv:-yes}
     fi
+
+        if test "$ac_cv_header_ApplicationServices_ApplicationServices_h" = "yes"
+    then
+        ac_save_LIBS="$LIBS"
+        LIBS="$LIBS $APPLICATIONSERVICESLIB"
+        ac_fn_c_check_func "$LINENO" "CGDisplayModeGetWidth" "ac_cv_func_CGDisplayModeGetWidth"
+if test "x$ac_cv_func_CGDisplayModeGetWidth" = xyes; then :
+  enable_winemac_drv=${enable_winemac_drv:-yes}
+fi
+
+        LIBS="$ac_save_LIBS"
+    fi
+
         if test "x$enable_win16" = "xyes"
     then
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether 16-bit code can be built correctly" >&5

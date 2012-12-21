@@ -796,12 +796,20 @@ case $host_os in
     else
         WINE_NOTICE([QuickTime ${notice_platform}development files not found, video decoding won't be supported.])
     fi
-    dnl Enable Mac driver on Mac OS X
     if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
     then
         AC_SUBST(CARBONLIB,"-framework Carbon")
-        enable_winemac_drv=${enable_winemac_drv:-yes}
     fi
+
+    dnl Enable Mac driver on Mac OS X 10.6 or later
+    if test "$ac_cv_header_ApplicationServices_ApplicationServices_h" = "yes"
+    then
+        ac_save_LIBS="$LIBS"
+        LIBS="$LIBS $APPLICATIONSERVICESLIB"
+        AC_CHECK_FUNC(CGDisplayModeGetWidth,enable_winemac_drv=${enable_winemac_drv:-yes})
+        LIBS="$ac_save_LIBS"
+    fi
+
     dnl Check for Xcode 3.x broken 16-bit support
     if test "x$enable_win16" = "xyes"
     then
