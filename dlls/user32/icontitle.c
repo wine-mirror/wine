@@ -222,7 +222,7 @@ LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
 	case WM_CLOSE:
 	     return 0;
 	case WM_SHOWWINDOW:
-            if (wParam) ICONTITLE_SetTitlePos( hWnd, owner );
+             if (wParam) ICONTITLE_SetTitlePos( hWnd, owner );
 	     return 0;
 	case WM_ERASEBKGND:
             if( GetWindowLongW( owner, GWL_STYLE ) & WS_CHILD )

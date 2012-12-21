@@ -872,7 +872,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     TRACE("%s, %d, [%s] %08x\n", debugstr_wn (str, count), count,
         wine_dbgstr_rect(rect), flags);
 
-   if (dtp) TRACE("Params: iTabLength=%d, iLeftMargin=%d, iRightMargin=%d\n",
+    if (dtp) TRACE("Params: iTabLength=%d, iLeftMargin=%d, iRightMargin=%d\n",
           dtp->iTabLength, dtp->iLeftMargin, dtp->iRightMargin);
 
     if (!str) return 0;
