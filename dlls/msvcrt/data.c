@@ -186,6 +186,31 @@ int CDECL _get_wpgmptr(WCHAR** p)
 unsigned int* CDECL __p__fmode(void) { return &MSVCRT__fmode; }
 
 /***********************************************************************
+ *              _set_fmode (MSVCRT.@)
+ */
+int CDECL _set_fmode(int mode)
+{
+    /* TODO: support _O_WTEXT */
+    if(!MSVCRT_CHECK_PMT(mode==MSVCRT__O_TEXT || mode==MSVCRT__O_BINARY))
+        return MSVCRT_EINVAL;
+
+    MSVCRT__fmode = mode;
+    return 0;
+}
+
+/***********************************************************************
+ *              _get_fmode (MSVCRT.@)
+ */
+int CDECL _get_fmode(int *mode)
+{
+    if(!MSVCRT_CHECK_PMT(mode))
+        return MSVCRT_EINVAL;
+
+    *mode = MSVCRT__fmode;
+    return 0;
+}
+
+/***********************************************************************
  *		__p__osver (MSVCRT.@)
  */
 unsigned int* CDECL __p__osver(void) { return &MSVCRT__osver; }

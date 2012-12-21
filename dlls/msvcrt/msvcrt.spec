@@ -474,7 +474,7 @@
 # stub _get_environ(ptr)
 @ cdecl _get_errno(ptr)
 # stub _get_fileinfo(ptr)
-# stub _get_fmode(ptr)
+@ cdecl _get_fmode(ptr)
 @ cdecl _get_heap_handle()
 @ cdecl _get_osfhandle(long) MSVCRT__get_osfhandle
 @ cdecl _get_osplatform(ptr) MSVCRT__get_osplatform
@@ -867,7 +867,7 @@
 @ cdecl _set_errno(long)
 @ cdecl _set_error_mode(long)
 # stub _set_fileinfo(long)
-# stub _set_fmode(long)
+@ cdecl _set_fmode(long)
 # stub _set_output_format(long)
 @ cdecl _set_sbh_threshold(long)
 @ cdecl _seterrormode(long)

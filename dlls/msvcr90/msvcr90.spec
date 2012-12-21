@@ -518,7 +518,7 @@
 @ cdecl _get_doserrno(ptr) msvcrt._get_doserrno
 @ stub _get_dstbias
 @ cdecl _get_errno(ptr) msvcrt._get_errno
-@ stub _get_fmode
+@ cdecl _get_fmode(ptr) msvcrt._get_fmode
 @ cdecl _get_heap_handle() msvcrt._get_heap_handle
 @ cdecl _get_invalid_parameter_handler() msvcrt._get_invalid_parameter_handler
 @ cdecl _get_osfhandle(long) msvcrt._get_osfhandle
@@ -921,7 +921,7 @@
 @ cdecl _set_doserrno(long) msvcrt._set_doserrno
 @ cdecl _set_errno(long) msvcrt._set_errno
 @ cdecl _set_error_mode(long) msvcrt._set_error_mode
-@ stub _set_fmode
+@ cdecl _set_fmode(long) msvcrt._set_fmode
 @ cdecl _set_invalid_parameter_handler(ptr) msvcrt._set_invalid_parameter_handler
 @ stub _set_malloc_crt_max_wait
 @ stub _set_output_format
