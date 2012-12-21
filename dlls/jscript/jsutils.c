@@ -820,6 +820,10 @@ HRESULT to_object(script_ctx_t *ctx, jsval_t val, IDispatch **disp)
 
         *disp = to_disp(dispex);
         break;
+    case JSV_UNDEFINED:
+    case JSV_NULL:
+        WARN("object expected\n");
+        return throw_type_error(ctx, JS_E_OBJECT_EXPECTED, NULL);
     case JSV_VARIANT:
         switch(V_VT(get_variant(val))) {
         case VT_ARRAY|VT_VARIANT:
@@ -835,9 +839,6 @@ HRESULT to_object(script_ctx_t *ctx, jsval_t val, IDispatch **disp)
             return E_NOTIMPL;
         }
         break;
-    default:
-        FIXME("unsupported %s\n", debugstr_jsval(val));
-        return E_NOTIMPL;
     }
 
     return S_OK;

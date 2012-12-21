@@ -2300,6 +2300,8 @@ testException(function() {+nullDisp.prop;}, "E_OBJECT_REQUIRED");
 testException(function() {+nullDisp["prop"];}, "E_OBJECT_REQUIRED");
 testException(function() {delete (new Object());}, "E_INVALID_DELETE");
 testException(function() {delete false;}, "E_INVALID_DELETE");
+testException(function() {undefined.toString();}, "E_OBJECT_EXPECTED");
+testException(function() {null.toString();}, "E_OBJECT_EXPECTED");
 
 obj = new Object();
 obj.prop = 1;
