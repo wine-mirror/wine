@@ -75,7 +75,10 @@ static ULONG WINAPI IDirectMusicInstrumentImpl_Release(LPDIRECTMUSICINSTRUMENT i
     TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
     if (!ref)
+    {
+        HeapFree(GetProcessHeap(), 0, This->regions);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     DMUSIC_UnlockModule();
 
@@ -170,15 +173,89 @@ static inline HRESULT advance_stream(IStream *stream, ULONG bytes)
     return ret;
 }
 
+static HRESULT load_region(IDirectMusicInstrumentImpl *This, IStream *stream, instrument_region *region, ULONG length)
+{
+    HRESULT ret;
+    DMUS_PRIVATE_CHUNK chunk;
+
+    TRACE("(%p, %p, %p, %u)\n", This, stream, region, length);
+
+    while (length)
+    {
+        ret = read_from_stream(stream, &chunk, sizeof(chunk));
+        if (FAILED(ret))
+            return ret;
+
+        length = subtract_bytes(length, sizeof(chunk));
+
+        switch (chunk.fccID)
+        {
+            case FOURCC_RGNH:
+                TRACE("RGNH chunk (region header): %u bytes\n", chunk.dwSize);
+
+                ret = read_from_stream(stream, &region->header, sizeof(region->header));
+                if (FAILED(ret))
+                    return ret;
+
+                length = subtract_bytes(length, sizeof(region->header));
+                break;
+
+            case FOURCC_WSMP:
+                TRACE("WSMP chunk (wave sample): %u bytes\n", chunk.dwSize);
+
+                ret = read_from_stream(stream, &region->wave_sample, sizeof(region->wave_sample));
+                if (FAILED(ret))
+                    return ret;
+                length = subtract_bytes(length, sizeof(region->wave_sample));
+
+                if (!(region->loop_present = (chunk.dwSize != sizeof(region->wave_sample))))
+                    break;
+
+                ret = read_from_stream(stream, &region->wave_loop, sizeof(region->wave_loop));
+                if (FAILED(ret))
+                    return ret;
+
+                length = subtract_bytes(length, sizeof(region->wave_loop));
+                break;
+
+            case FOURCC_WLNK:
+                TRACE("WLNK chunk (wave link): %u bytes\n", chunk.dwSize);
+
+                ret = read_from_stream(stream, &region->wave_link, sizeof(region->wave_link));
+                if (FAILED(ret))
+                    return ret;
+
+                length = subtract_bytes(length, sizeof(region->wave_link));
+                break;
+
+            default:
+                TRACE("Unknown chunk %s (skipping): %u bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
+
+                ret = advance_stream(stream, chunk.dwSize);
+                if (FAILED(ret))
+                    return ret;
+
+                length = subtract_bytes(length, chunk.dwSize);
+                break;
+        }
+    }
+
+    return S_OK;
+}
+
 /* Function that loads all instrument data and which is called from IDirectMusicCollection_GetInstrument as in native */
 HRESULT IDirectMusicInstrumentImpl_CustomLoad(IDirectMusicInstrument *iface, IStream *stream)
 {
     IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
     HRESULT hr;
     DMUS_PRIVATE_CHUNK chunk;
+    ULONG i = 0;
     ULONG length = This->length;
 
     TRACE("(%p, %p): offset = 0x%s, length = %u)\n", This, stream, wine_dbgstr_longlong(This->liInstrumentPosition.QuadPart), This->length);
+
+    if (This->loaded)
+        return S_OK;
 
     hr = IStream_Seek(stream, This->liInstrumentPosition, STREAM_SEEK_SET, NULL);
     if (FAILED(hr))
@@ -187,11 +264,15 @@ HRESULT IDirectMusicInstrumentImpl_CustomLoad(IDirectMusicInstrument *iface, ISt
         return DMUS_E_UNSUPPORTED_STREAM;
     }
 
+    This->regions = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->regions) * This->pHeader->cRegions);
+    if (!This->regions)
+        return E_OUTOFMEMORY;
+
     while (length)
     {
         hr = read_from_stream(stream, &chunk, sizeof(chunk));
         if (FAILED(hr))
-            return DMUS_E_UNSUPPORTED_STREAM;
+            goto error;
 
         length = subtract_bytes(length, sizeof(chunk) + chunk.dwSize);
 
@@ -204,20 +285,90 @@ HRESULT IDirectMusicInstrumentImpl_CustomLoad(IDirectMusicInstrument *iface, ISt
                 /* Instrument header and id are already set so just skip */
                 hr = advance_stream(stream, chunk.dwSize);
                 if (FAILED(hr))
-                    return DMUS_E_UNSUPPORTED_STREAM;
+                    goto error;
 
                 break;
+
+            case FOURCC_LIST: {
+                DWORD size = chunk.dwSize;
+
+                TRACE("LIST chunk: %u bytes\n", chunk.dwSize);
+
+                hr = read_from_stream(stream, &chunk.fccID, sizeof(chunk.fccID));
+                if (FAILED(hr))
+                    goto error;
+
+                size = subtract_bytes(size, sizeof(chunk.fccID));
+
+                switch (chunk.fccID)
+                {
+                    case FOURCC_LRGN:
+                        TRACE("LRGN chunk (regions list): %u bytes\n", size);
+
+                        while (size)
+                        {
+                            hr = read_from_stream(stream, &chunk, sizeof(chunk));
+                            if (FAILED(hr))
+                                goto error;
+
+                            if (chunk.fccID != FOURCC_LIST)
+                            {
+                                TRACE("Unknown chunk %s: %u bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
+                                goto error;
+                            }
+
+                            hr = read_from_stream(stream, &chunk.fccID, sizeof(chunk.fccID));
+                            if (FAILED(hr))
+                                goto error;
+
+                            if (chunk.fccID == FOURCC_RGN)
+                            {
+                                TRACE("RGN chunk (region list): %u bytes\n", chunk.dwSize);
+                                hr = load_region(This, stream, &This->regions[i++], chunk.dwSize - sizeof(chunk.fccID));
+                            }
+                            else
+                            {
+                                TRACE("Unknown chunk %s: %u bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
+                                hr = advance_stream(stream, chunk.dwSize - sizeof(chunk.fccID));
+                            }
+                            if (FAILED(hr))
+                                goto error;
+
+                            size = subtract_bytes(size, chunk.dwSize + sizeof(chunk));
+                        }
+                        break;
+
+                    default:
+                        TRACE("Unknown chunk %s: %u bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
+
+                        hr = advance_stream(stream, chunk.dwSize - sizeof(chunk.fccID));
+                        if (FAILED(hr))
+                            goto error;
+
+                        size = subtract_bytes(size, chunk.dwSize - sizeof(chunk.fccID));
+                        break;
+                }
+                break;
+            }
 
             default:
                 TRACE("Unknown chunk %s: %u bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
 
                 hr = advance_stream(stream, chunk.dwSize);
                 if (FAILED(hr))
-                    return DMUS_E_UNSUPPORTED_STREAM;
+                    goto error;
 
                 break;
         }
     }
 
+    This->loaded = TRUE;
+
     return S_OK;
+
+error:
+    HeapFree(GetProcessHeap(), 0, This->regions);
+    This->regions = NULL;
+
+    return DMUS_E_UNSUPPORTED_STREAM;
 }

@@ -77,6 +77,13 @@ typedef struct port_info {
     ULONG device;
 } port_info;
 
+typedef struct instrument_region {
+    RGNHEADER header;
+    WAVELINK wave_link;
+    WSMPL wave_sample;
+    WLOOP wave_loop;
+    BOOL loop_present;
+} instrument_region;
 
 /*****************************************************************************
  * ClassFactory
@@ -224,17 +231,19 @@ struct IDirectMusicCollectionImpl {
  * IDirectMusicInstrumentImpl implementation structure
  */
 struct IDirectMusicInstrumentImpl {
-  /* IUnknown fields */
-  IDirectMusicInstrument IDirectMusicInstrument_iface;
-  LONG           ref;
+    /* IUnknown fields */
+    IDirectMusicInstrument IDirectMusicInstrument_iface;
+    LONG ref;
 
-  /* IDirectMusicInstrumentImpl fields */
-  LARGE_INTEGER liInstrumentPosition; /* offset in a stream where instrument chunk can be found */
-  ULONG length; /* Length of the instrument in the stream */
-  LPGUID pInstrumentID;
-  LPINSTHEADER pHeader;
-  WCHAR wszName[DMUS_MAX_NAME];
-  /* instrument data */
+    /* IDirectMusicInstrumentImpl fields */
+    LARGE_INTEGER liInstrumentPosition; /* offset in a stream where instrument chunk can be found */
+    ULONG length; /* Length of the instrument in the stream */
+    LPGUID pInstrumentID;
+    LPINSTHEADER pHeader;
+    WCHAR wszName[DMUS_MAX_NAME];
+    /* instrument data */
+    BOOL loaded;
+    instrument_region *regions;
 };
 
 static inline IDirectMusicInstrumentImpl *impl_from_IDirectMusicInstrument(IDirectMusicInstrument *iface)
