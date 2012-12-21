@@ -170,11 +170,12 @@ static BOOL load_persistent_cookie(LPCWSTR domain, LPCWSTR path)
     if(!cookie)
         return FALSE;
 
-    if(!(str = heap_alloc(size)) || !ReadUrlCacheEntryStream(cookie, 0, str, &size, 0)) {
+    if(!(str = heap_alloc(size+1)) || !ReadUrlCacheEntryStream(cookie, 0, str, &size, 0)) {
         UnlockUrlCacheEntryStream(cookie, 0);
         heap_free(str);
         return FALSE;
     }
+    str[size] = 0;
     UnlockUrlCacheEntryStream(cookie, 0);
 
     LIST_FOR_EACH(iter, &domain_list)
