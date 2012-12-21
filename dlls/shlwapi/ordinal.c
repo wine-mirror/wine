@@ -2657,7 +2657,7 @@ DWORD WINAPI SHGetRestriction(LPCWSTR lpSubKey, LPCWSTR lpSubName, LPCWSTR lpVal
 	  lpSubKey = strRegistryPolicyW;
 
 	retval = RegOpenKeyW(HKEY_LOCAL_MACHINE, lpSubKey, &hKey);
-    if (retval != ERROR_SUCCESS)
+        if (retval != ERROR_SUCCESS)
 	  retval = RegOpenKeyW(HKEY_CURRENT_USER, lpSubKey, &hKey);
 	if (retval != ERROR_SUCCESS)
 	  return 0;
@@ -2705,7 +2705,7 @@ DWORD WINAPI SHRestrictionLookup(
 	    /* we have a known policy */
 
 	    /* check if this policy has been cached */
-		if (*polArr == SHELL_NO_POLICY)
+            if (*polArr == SHELL_NO_POLICY)
 	      *polArr = SHGetRestriction(initial, polTable->appstr, polTable->keystr);
 	    return *polArr;
 	  }
