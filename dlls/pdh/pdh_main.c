@@ -220,14 +220,27 @@ static const struct source counter_sources[] =
     { 674,  path_uptime,            collect_uptime,             TYPE_UPTIME,            -3,     1000 }
 };
 
+static BOOL is_local_machine( const WCHAR *name, DWORD len )
+{
+    WCHAR buf[MAX_COMPUTERNAME_LENGTH + 1];
+    DWORD buflen = sizeof(buf) / sizeof(buf[0]);
+
+    if (!GetComputerNameW( buf, &buflen )) return FALSE;
+    return len == buflen && !memicmpW( name, buf, buflen );
+}
+
 static BOOL pdh_match_path( LPCWSTR fullpath, LPCWSTR path )
 {
     const WCHAR *p;
 
-    if (strchrW( path, '\\')) p = fullpath;
+    if (path[0] == '\\' && path[1] == '\\' && (p = strchrW( path + 2, '\\' )) &&
+        is_local_machine( path + 2, p - path - 2 ))
+    {
+        path += p - path;
+    }
+    if (strchrW( path, '\\' )) p = fullpath;
     else p = strrchrW( fullpath, '\\' ) + 1;
-    if (strcmpW( p, path )) return FALSE;
-    return TRUE;
+    return !strcmpW( p, path );
 }
 
 /***********************************************************************
