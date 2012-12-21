@@ -2853,7 +2853,6 @@ static void test_DeviceCapabilities(void)
 
     fields = DeviceCapabilities(device, port, DC_FIELDS, NULL, NULL);
     ok(fields != (DWORD)-1, "DeviceCapabilities DC_FIELDS failed\n");
-    todo_wine
     ok(fields == (dm->dmFields | DM_FORMNAME) ||
        fields == ((dm->dmFields | DM_FORMNAME | DM_PAPERSIZE) & ~(DM_PAPERLENGTH|DM_PAPERWIDTH)) ||
         broken(fields == dm->dmFields), /* Win9x/WinMe */
