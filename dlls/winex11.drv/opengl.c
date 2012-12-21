@@ -682,7 +682,7 @@ static BOOL has_opengl(void)
          * enable this function when the Xserver understand GLX 1.3 or newer
          */
         pglXQueryDrawable = NULL;
-     } else if(strcmp("ATI", WineGLInfo.glxClientVendor) == 0) {
+    } else if(strcmp("ATI", WineGLInfo.glxClientVendor) == 0) {
         TRACE("Overriding ATI GLX capabilities!\n");
         pglXChooseFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfig");
         pglXGetFBConfigAttrib = pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttrib");
@@ -2570,9 +2570,9 @@ static BOOL X11DRV_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int 
                 if (!fmt) goto pix_error;
                 hTest = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, curGLXAttr, &tmp);
                 if (hTest) goto get_error;
-                    piValues[i] = GL_FALSE;
+                piValues[i] = GL_FALSE;
                 if (GLX_NONE != tmp) piValues[i] = GL_TRUE;
-                    continue;
+                continue;
 
             case WGL_PIXEL_TYPE_ARB:
                 curGLXAttr = GLX_RENDER_TYPE;

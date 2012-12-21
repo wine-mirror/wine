@@ -736,7 +736,7 @@ COLORREF X11DRV_PALETTE_ToLogical(X11DRV_PDEVICE *physDev, int pixel)
          if (shifts->logicalBlue.scale<8)
              color.blue= color.blue  << (8-shifts->logicalBlue.scale)  |
                          color.blue  >> (2*shifts->logicalBlue.scale-8);
-                 return RGB(color.red,color.green,color.blue);
+         return RGB(color.red,color.green,color.blue);
     }
 
     /* check if we can bypass X */
