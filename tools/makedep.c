@@ -653,8 +653,9 @@ static void parse_c_file( INCL_FILE *pFile, FILE *file )
         while (*p && isspace(*p)) p++;
         if (*p++ != '#') continue;
         while (*p && isspace(*p)) p++;
-        if (strncmp( p, "include", 7 )) continue;
-        p += 7;
+        if (!strncmp( p, "include", 7 )) p += 7;
+        else if (!strncmp( p, "import", 6 )) p += 6;
+        else continue;
         while (*p && isspace(*p)) p++;
         if (*p != '\"' && *p != '<' ) continue;
         quote = *p++;
@@ -805,6 +806,7 @@ static void parse_file( INCL_FILE *pFile, int src )
     else if (strendswith( pFile->filename, ".idl" ))
         parse_idl_file( pFile, file, 0 );
     else if (strendswith( pFile->filename, ".c" ) ||
+             strendswith( pFile->filename, ".m" ) ||
              strendswith( pFile->filename, ".h" ) ||
              strendswith( pFile->filename, ".l" ) ||
              strendswith( pFile->filename, ".y" ))
