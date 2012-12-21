@@ -5,6 +5,6 @@ C_SRCS = \
 	main.c \
 	statuscode.c
 
-IDL_R_SRCS = wmiutils.idl
+IDL_R_SRCS = wmiutils_classes.idl
 
 @MAKE_DLL_RULES@
