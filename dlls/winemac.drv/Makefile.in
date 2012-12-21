@@ -1,5 +1,6 @@
 MODULE    = winemac.drv
 IMPORTS   = user32 gdi32 advapi32
+EXTRALIBS = @APPLICATIONSERVICESLIB@
 
 C_SRCS = \
 	gdi.c \
