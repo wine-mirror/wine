@@ -27,69 +27,34 @@
 # error You must include config.h to use this header
 #endif
 
-#define GetCurrentProcess MacGetCurrentProcess
-#define GetCurrentThread MacGetCurrentThread
-#define LoadResource MacLoadResource
-#define AnimatePalette MacAnimatePalette
-#define EqualRgn MacEqualRgn
-#define FillRgn MacFillRgn
-#define FrameRgn MacFrameRgn
-#define GetPixel MacGetPixel
-#define InvertRgn MacInvertRgn
-#define LineTo MacLineTo
-#define OffsetRgn MacOffsetRgn
-#define PaintRgn MacPaintRgn
-#define Polygon MacPolygon
-#define ResizePalette MacResizePalette
-#define SetRectRgn MacSetRectRgn
-#define EqualRect MacEqualRect
-#define FillRect MacFillRect
-#define FrameRect MacFrameRect
-#define GetCursor MacGetCursor
-#define InvertRect MacInvertRect
-#define OffsetRect MacOffsetRect
-#define PtInRect MacPtInRect
-#define SetCursor MacSetCursor
-#define SetRect MacSetRect
-#define ShowCursor MacShowCursor
-#define UnionRect MacUnionRect
-
-#include <ApplicationServices/ApplicationServices.h>
-
-#undef GetCurrentProcess
-#undef GetCurrentThread
-#undef LoadResource
-#undef AnimatePalette
-#undef EqualRgn
-#undef FillRgn
-#undef FrameRgn
-#undef GetPixel
-#undef InvertRgn
-#undef LineTo
-#undef OffsetRgn
-#undef PaintRgn
-#undef Polygon
-#undef ResizePalette
-#undef SetRectRgn
-#undef EqualRect
-#undef FillRect
-#undef FrameRect
-#undef GetCursor
-#undef InvertRect
-#undef OffsetRect
-#undef PtInRect
-#undef SetCursor
-#undef SetRect
-#undef ShowCursor
-#undef UnionRect
-#undef DPRINTF
-
+#include "macdrv_cocoa.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/debug.h"
 #include "wine/gdi_driver.h"
 
+
+static inline CGRect cgrect_from_rect(RECT rect)
+{
+    if (rect.left >= rect.right || rect.top >= rect.bottom)
+        return CGRectNull;
+    return CGRectMake(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+}
+
+static inline RECT rect_from_cgrect(CGRect cgrect)
+{
+    static const RECT empty;
+
+    if (!CGRectIsNull(cgrect))
+    {
+        RECT rect = { CGRectGetMinX(cgrect), CGRectGetMinY(cgrect),
+                      CGRectGetMaxX(cgrect), CGRectGetMaxY(cgrect) };
+        return rect;
+    }
+
+    return empty;
+}
 
 static inline const char *wine_dbgstr_cgrect(CGRect cgrect)
 {

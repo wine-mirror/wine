@@ -1,9 +1,13 @@
 MODULE    = winemac.drv
 IMPORTS   = user32 gdi32 advapi32
-EXTRALIBS = @APPLICATIONSERVICESLIB@
+EXTRALIBS = -framework AppKit
 
 C_SRCS = \
+	display.c \
 	gdi.c \
 	macdrv_main.c
+
+OBJC_SRCS = \
+	cocoa_display.m
 
 @MAKE_DLL_RULES@
