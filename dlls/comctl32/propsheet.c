@@ -2561,16 +2561,11 @@ static LRESULT PROPSHEET_IndexToHwnd(HWND hwndDlg, int iPageIndex)
  */
 static LRESULT PROPSHEET_PageToIndex(HWND hwndDlg, HPROPSHEETPAGE hPage)
 {
-    int index;
     PropSheetInfo * psInfo = GetPropW(hwndDlg, PropSheetInfoStr);
 
     TRACE("(%p, %p)\n", hwndDlg, hPage);
 
-    for (index = 0; index < psInfo->nPages; index++)
-        if (psInfo->proppage[index].hpage == hPage)
-            return index;
-    WARN("%p not found\n", hPage);
-    return -1;
+    return PROPSHEET_GetPageIndex(hPage, psInfo, -1);
 }
 
 /******************************************************************************
