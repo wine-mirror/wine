@@ -92,7 +92,7 @@ static HRESULT WINAPI IDirectMusicInstrumentImpl_GetPatch(LPDIRECTMUSICINSTRUMEN
 
     TRACE("(%p)->(%p)\n", This, pdwPatch);
 
-    *pdwPatch = MIDILOCALE2Patch(&This->pHeader->Locale);
+    *pdwPatch = MIDILOCALE2Patch(&This->header.Locale);
 
     return S_OK;
 }
@@ -103,7 +103,7 @@ static HRESULT WINAPI IDirectMusicInstrumentImpl_SetPatch(LPDIRECTMUSICINSTRUMEN
 
     TRACE("(%p)->(%d): stub\n", This, dwPatch);
 
-    Patch2MIDILOCALE(dwPatch, &This->pHeader->Locale);
+    Patch2MIDILOCALE(dwPatch, &This->header.Locale);
 
     return S_OK;
 }
@@ -264,7 +264,7 @@ HRESULT IDirectMusicInstrumentImpl_CustomLoad(IDirectMusicInstrument *iface, ISt
         return DMUS_E_UNSUPPORTED_STREAM;
     }
 
-    This->regions = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->regions) * This->pHeader->cRegions);
+    This->regions = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->regions) * This->header.cRegions);
     if (!This->regions)
         return E_OUTOFMEMORY;
 

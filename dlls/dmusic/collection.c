@@ -662,7 +662,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load(LPPERSISTST
                                             LPDMUS_PRIVATE_INSTRUMENTENTRY new_instrument = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_INSTRUMENTENTRY));
                                             TRACE_(dmfile)(": instrument list\n");
                                             /* Only way to create this one... even M$ does it discretely */
-                                            DMUSIC_CreateDirectMusicInstrumentImpl(&IID_IDirectMusicInstrument, (LPVOID*)&new_instrument->pInstrument, NULL);
+                                            DMUSIC_CreateDirectMusicInstrumentImpl(&IID_IDirectMusicInstrument, (void**)&new_instrument->pInstrument, NULL);
                                             {
                                                 IDirectMusicInstrumentImpl *instrument = impl_from_IDirectMusicInstrument(new_instrument->pInstrument);
                                                 /* Store offset and length, they will be needed when loading the instrument */
@@ -677,14 +677,12 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load(LPPERSISTST
                                                     switch (chunk.fccID) {
                                                         case FOURCC_INSH: {
                                                             TRACE_(dmfile)(": instrument header chunk\n");
-                                                            instrument->pHeader = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, chunk.dwSize);
-                                                            IStream_Read(stream, instrument->pHeader, chunk.dwSize, NULL);
+                                                            IStream_Read(stream, &instrument->header, chunk.dwSize, NULL);
                                                             break;
                                                         }
                                                         case FOURCC_DLID: {
                                                             TRACE_(dmfile)(": DLID (GUID) chunk\n");
-                                                            instrument->pInstrumentID = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, chunk.dwSize);
-                                                            IStream_Read(stream, instrument->pInstrumentID, chunk.dwSize, NULL);
+                                                            IStream_Read(stream, &instrument->id, chunk.dwSize, NULL);
                                                             break;
                                                         }
                                                         case FOURCC_LIST: {
@@ -712,14 +710,14 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load(LPPERSISTST
                                                 /* DEBUG: dumps whole instrument object tree: */
                                                 if (TRACE_ON(dmusic)) {
                                                     TRACE("*** IDirectMusicInstrument (%p) ***\n", instrument);
-                                                    if (instrument->pInstrumentID)
-                                                        TRACE(" - GUID = %s\n", debugstr_dmguid(instrument->pInstrumentID));
+                                                    if (!IsEqualGUID(&instrument->id, &GUID_NULL))
+                                                        TRACE(" - GUID = %s\n", debugstr_dmguid(&instrument->id));
                                                     TRACE(" - Instrument header:\n");
-                                                    TRACE("    - cRegions: %d\n", instrument->pHeader->cRegions);
+                                                    TRACE("    - cRegions: %d\n", instrument->header.cRegions);
                                                     TRACE("    - Locale:\n");
-                                                    TRACE("       - ulBank: %d\n", instrument->pHeader->Locale.ulBank);
-                                                    TRACE("       - ulInstrument: %d\n", instrument->pHeader->Locale.ulInstrument);
-                                                    TRACE("       => dwPatch: %d\n", MIDILOCALE2Patch(&instrument->pHeader->Locale));
+                                                    TRACE("       - ulBank: %d\n", instrument->header.Locale.ulBank);
+                                                    TRACE("       - ulInstrument: %d\n", instrument->header.Locale.ulInstrument);
+                                                    TRACE("       => dwPatch: %d\n", MIDILOCALE2Patch(&instrument->header.Locale));
                                                 }
                                                 list_add_tail(&This->Instruments, &new_instrument->entry);
                                             }

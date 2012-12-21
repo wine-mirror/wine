@@ -238,8 +238,8 @@ struct IDirectMusicInstrumentImpl {
     /* IDirectMusicInstrumentImpl fields */
     LARGE_INTEGER liInstrumentPosition; /* offset in a stream where instrument chunk can be found */
     ULONG length; /* Length of the instrument in the stream */
-    LPGUID pInstrumentID;
-    LPINSTHEADER pHeader;
+    GUID id;
+    INSTHEADER header;
     WCHAR wszName[DMUS_MAX_NAME];
     /* instrument data */
     BOOL loaded;
