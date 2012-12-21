@@ -1070,23 +1070,23 @@ static void test_set_default_proxy_config(void)
     info.lpszProxy = wideString;
     SetLastError(0xdeadbeef);
     ret = WinHttpSetDefaultProxyConfiguration(&info);
-    ok((!ret && GetLastError() == ERROR_INVALID_PARAMETER) ||
-        broken(ret), /* Earlier winhttp versions on W2K/XP */
-        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+        skip("couldn't set default proxy configuration: access denied\n");
+    else
+        ok((!ret && GetLastError() == ERROR_INVALID_PARAMETER) ||
+           broken(ret), /* Earlier winhttp versions on W2K/XP */
+           "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     info.lpszProxy = normalString;
     SetLastError(0xdeadbeef);
     ret = WinHttpSetDefaultProxyConfiguration(&info);
-    if (ret)
-    {
-        ok(ret, "always true\n");
-        set_default_proxy_reg_value( saved_proxy_settings, len, type );
-    }
-    else if (GetLastError() == ERROR_ACCESS_DENIED)
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
         skip("couldn't set default proxy configuration: access denied\n");
     else
         ok(ret, "WinHttpSetDefaultProxyConfiguration failed: %d\n",
            GetLastError());
+
+    set_default_proxy_reg_value( saved_proxy_settings, len, type );
 }
 
 static void test_Timeouts (void)
