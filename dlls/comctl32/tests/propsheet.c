@@ -821,7 +821,7 @@ if (0)
     ok(r == 4, "got %d\n", r);
 
     /* select page that can't be created */
-    ret = SendMessageA(hdlg, PSM_SETCURSEL, 3, 0);
+    ret = SendMessageA(hdlg, PSM_SETCURSEL, 3, 1);
     ok(ret == TRUE, "got %d\n", ret);
 
     r = SendMessageA(tab, TCM_GETITEMCOUNT, 0, 0);
