@@ -72,6 +72,9 @@ static int (__cdecl *p_wmemmove_s)(wchar_t *dest, size_t numberOfElements, const
 static FILE* (__cdecl *p_fopen)(const char*,const char*);
 static int (__cdecl *p_fclose)(FILE*);
 static size_t (__cdecl *p_fread_s)(void*,size_t,size_t,size_t,FILE*);
+static void* (__cdecl *p__aligned_offset_malloc)(size_t, size_t, size_t);
+static void (__cdecl *p__aligned_free)(void*);
+static size_t (__cdecl *p__aligned_msize)(void*, size_t, size_t);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -98,6 +101,9 @@ static BOOL init(void)
     SET(p_fopen, "fopen");
     SET(p_fclose, "fclose");
     SET(p_fread_s, "fread_s");
+    SET(p__aligned_offset_malloc, "_aligned_offset_malloc");
+    SET(p__aligned_free, "_aligned_free");
+    SET(p__aligned_msize, "_aligned_msize");
 
     return TRUE;
 }
@@ -326,6 +332,32 @@ static void test_fread_s(void)
     unlink(test_file);
 }
 
+static void test__aligned_msize(void)
+{
+    void *mem;
+    int ret;
+
+    mem = p__aligned_offset_malloc(23, 16, 7);
+    ret = p__aligned_msize(mem, 16, 7);
+    ok(ret == 23, "_aligned_msize returned %d\n", ret);
+    ret = p__aligned_msize(mem, 15, 7);
+    ok(ret == 24, "_aligned_msize returned %d\n", ret);
+    ret = p__aligned_msize(mem, 11, 7);
+    ok(ret == 28, "_aligned_msize returned %d\n", ret);
+    ret = p__aligned_msize(mem, 1, 7);
+    ok(ret == 39-sizeof(void*), "_aligned_msize returned %d\n", ret);
+    ret = p__aligned_msize(mem, 8, 0);
+    todo_wine ok(ret == 32, "_aligned_msize returned %d\n", ret);
+    p__aligned_free(mem);
+
+    mem = p__aligned_offset_malloc(3, 16, 0);
+    ret = p__aligned_msize(mem, 16, 0);
+    ok(ret == 3, "_aligned_msize returned %d\n", ret);
+    ret = p__aligned_msize(mem, 11, 0);
+    ok(ret == 8, "_aligned_msize returned %d\n", ret);
+    p__aligned_free(mem);
+}
+
 START_TEST(msvcr100)
 {
     if (!init())
@@ -334,4 +366,5 @@ START_TEST(msvcr100)
     test_wmemcpy_s();
     test_wmemmove_s();
     test_fread_s();
+    test__aligned_msize();
 }

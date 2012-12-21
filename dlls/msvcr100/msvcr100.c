@@ -483,6 +483,26 @@ int CDECL _get_timezone(LONG *timezone)
     return 0;
 }
 
+/* copied from dlls/msvcrt/heap.c */
+#define SAVED_PTR(x) ((void *)((DWORD_PTR)((char *)x - sizeof(void *)) & \
+                               ~(sizeof(void *) - 1)))
+
+/*********************************************************************
+ * _aligned_msize (MSVCR100.@)
+ */
+size_t CDECL _aligned_msize(void *p, size_t alignment, size_t offset)
+{
+    void **alloc_ptr;
+
+    if(!CHECK_PMT(p)) return -1;
+
+    if(alignment < sizeof(void*))
+        alignment = sizeof(void*);
+
+    alloc_ptr = SAVED_PTR(p);
+    return _msize(*alloc_ptr)-alignment-sizeof(void*);
+}
+
 /*********************************************************************
  *  DllMain (MSVCR100.@)
  */

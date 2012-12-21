@@ -326,7 +326,7 @@
 @ extern _aexit_rtn msvcrt._aexit_rtn
 @ cdecl _aligned_free(ptr) msvcrt._aligned_free
 @ cdecl _aligned_malloc(long long) msvcrt._aligned_malloc
-@ stub _aligned_msize
+@ cdecl _aligned_msize(ptr long long) msvcr100._aligned_msize
 @ cdecl _aligned_offset_malloc(long long long) msvcrt._aligned_offset_malloc
 @ cdecl _aligned_offset_realloc(ptr long long long) msvcrt._aligned_offset_realloc
 @ stub _aligned_offset_recalloc
