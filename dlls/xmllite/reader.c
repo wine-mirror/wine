@@ -481,6 +481,7 @@ static void readerinput_switchencoding(xmlreaderinput *readerinput, xml_encoding
     {
         readerinput_grow(readerinput, len);
         memcpy(dest->data, src->cur, len);
+        dest->written += len*sizeof(WCHAR);
         readerinput->buffer->code_page = cp;
         return;
     }
@@ -491,6 +492,22 @@ static void readerinput_switchencoding(xmlreaderinput *readerinput, xml_encoding
     MultiByteToWideChar(cp, 0, src->cur, len, ptr, dest_len);
     ptr[dest_len] = 0;
     readerinput->buffer->code_page = cp;
+    dest->written += dest_len*sizeof(WCHAR);
+}
+
+/* shrinks parsed data a buffer begins with */
+static void reader_shrink(xmlreader *reader)
+{
+    encoded_buffer *buffer = &reader->input->buffer->utf16;
+
+    /* avoid to move too often using threshold shrink length */
+    if (buffer->cur - buffer->data > buffer->written / 2)
+    {
+        buffer->written -= buffer->cur - buffer->data;
+        memmove(buffer->data, buffer->cur, buffer->written);
+        buffer->cur = buffer->data;
+        *(WCHAR*)&buffer->cur[buffer->written] = 0;
+    }
 }
 
 static inline const WCHAR *reader_get_cur(xmlreader *reader)
@@ -772,6 +789,7 @@ static HRESULT reader_parse_comment(xmlreader *reader)
 
     /* skip '<!--' */
     reader_skipn(reader, 4);
+    reader_shrink(reader);
     ptr = start = reader_get_cur(reader);
 
     while (*ptr)
