@@ -112,6 +112,7 @@ PUBLIC_IDL_H_SRCS = \
 	wine/itss.idl \
 	wine/svcctl.idl \
 	winsxs.idl \
+	wmiutils.idl \
 	wmsbuffer.idl \
 	wmsdkidl.idl \
 	wpcapi.idl \
