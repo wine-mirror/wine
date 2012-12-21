@@ -105,3 +105,54 @@ BOOL CDECL macdrv_EnumDisplayMonitors(HDC hdc, LPRECT rect, MONITORENUMPROC proc
 
     return ret;
 }
+
+
+/***********************************************************************
+ *              GetMonitorInfo  (MACDRV.@)
+ */
+BOOL CDECL macdrv_GetMonitorInfo(HMONITOR monitor, LPMONITORINFO info)
+{
+    static const WCHAR adapter_name[] = { '\\','\\','.','\\','D','I','S','P','L','A','Y','1',0 };
+    struct macdrv_display *displays;
+    int num_displays;
+    CGDirectDisplayID display_id;
+    int i;
+
+    TRACE("%p, %p\n", monitor, info);
+
+    if (macdrv_get_displays(&displays, &num_displays))
+    {
+        ERR("couldn't get display list\n");
+        SetLastError(ERROR_GEN_FAILURE);
+        return FALSE;
+    }
+
+    display_id = monitor_to_display_id(monitor);
+    for (i = 0; i < num_displays; i++)
+    {
+        if (displays[i].displayID == display_id)
+            break;
+    }
+
+    if (i < num_displays)
+    {
+        info->rcMonitor = rect_from_cgrect(displays[i].frame);
+        info->rcWork    = rect_from_cgrect(displays[i].work_frame);
+
+        info->dwFlags = (i == 0) ? MONITORINFOF_PRIMARY : 0;
+
+        if (info->cbSize >= sizeof(MONITORINFOEXW))
+            lstrcpyW(((MONITORINFOEXW*)info)->szDevice, adapter_name);
+
+        TRACE(" -> rcMonitor %s rcWork %s dwFlags %08x\n", wine_dbgstr_rect(&info->rcMonitor),
+              wine_dbgstr_rect(&info->rcWork), info->dwFlags);
+    }
+    else
+    {
+        ERR("invalid monitor handle\n");
+        SetLastError(ERROR_INVALID_HANDLE);
+    }
+
+    macdrv_free_displays(displays);
+    return (i < num_displays);
+}

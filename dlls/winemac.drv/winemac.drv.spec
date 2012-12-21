@@ -5,3 +5,4 @@
 # USER driver
 
 @ cdecl EnumDisplayMonitors(long ptr ptr long) macdrv_EnumDisplayMonitors
+@ cdecl GetMonitorInfo(long ptr) macdrv_GetMonitorInfo
