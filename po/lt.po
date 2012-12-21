@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-12-13 21:48+0300\n"
+"PO-Revision-Date: 2012-12-21 19:24+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -10129,27 +10129,27 @@ msgstr ""
 
 #: cmd.rc:357
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "Dalybos iš nulio klaida.\n"
 
 #: cmd.rc:358
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "Tikėtasi operando.\n"
 
 #: cmd.rc:359
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Expected an operator.\n"
-msgstr "Netikėta tinklo klaida.\n"
+msgstr "Tikėtasi operacijos ženklo.\n"
 
 #: cmd.rc:360
 msgid "Mismatch in parentheses.\n"
-msgstr ""
+msgstr "Skliaustų neatitiktis.\n"
 
 #: cmd.rc:361
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
+"Blogai sudarytas skaičius – privalo būti dešimtainis (12),\n"
+" šešioliktainis (0x34) arba aštuntainis (056).\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
