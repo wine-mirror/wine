@@ -24,6 +24,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ole2.h"
+#include "wbemcli.h"
 #include "wmiutils.h"
 
 #include "wine/debug.h"
@@ -36,6 +37,8 @@ struct path
 {
     IWbemPath IWbemPath_iface;
     LONG refs;
+    WCHAR *text;
+    int len;
 };
 
 static inline struct path *impl_from_IWbemPath( IWbemPath *iface )
@@ -58,6 +61,7 @@ static ULONG WINAPI path_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", path);
+        HeapFree( GetProcessHeap(), 0, path->text );
         HeapFree( GetProcessHeap(), 0, path );
     }
     return refs;
@@ -91,8 +95,20 @@ static HRESULT WINAPI path_SetText(
     ULONG uMode,
     LPCWSTR pszPath)
 {
-    FIXME("%p, %u, %s\n", iface, uMode, debugstr_w(pszPath));
-    return E_NOTIMPL;
+    struct path *path = impl_from_IWbemPath( iface );
+    int len;
+
+    TRACE("%p, %u, %s\n", iface, uMode, debugstr_w(pszPath));
+
+    if (uMode) FIXME("igoring mode %u\n", uMode);
+
+    len = strlenW( pszPath );
+    if (!(path->text = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
+        return E_OUTOFMEMORY;
+
+    strcpyW( path->text, pszPath );
+    path->len = len;
+    return S_OK;
 }
 
 static HRESULT WINAPI path_GetText(
@@ -101,8 +117,23 @@ static HRESULT WINAPI path_GetText(
     ULONG *puBufferLength,
     LPWSTR pszText)
 {
-    FIXME("%p, 0x%x, %p, %p\n", iface, lFlags, puBufferLength, pszText);
-    return E_NOTIMPL;
+    struct path *path = impl_from_IWbemPath( iface );
+
+    TRACE("%p, 0x%x, %p, %p\n", iface, lFlags, puBufferLength, pszText);
+
+    if (lFlags != WBEMPATH_GET_ORIGINAL)
+    {
+        FIXME("flags 0x%x not supported\n", lFlags);
+        return WBEM_E_INVALID_PARAMETER;
+    }
+    if (*puBufferLength < path->len + 1)
+    {
+        *puBufferLength = path->len + 1;
+        return S_OK;
+    }
+    if (pszText) strcpyW( pszText, path->text );
+    *puBufferLength = path->len + 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI path_GetInfo(

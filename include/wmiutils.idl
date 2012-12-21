@@ -21,6 +21,24 @@ import "oaidl.idl";
 interface IWbemPath;
 interface IWbemPathKeyList;
 
+typedef [v1_enum] enum tag_WBEM_PATH_CREATE_FLAG
+{
+    WBEMPATH_CREATE_ACCEPT_RELATIVE     = 0x1,
+    WBEMPATH_CREATE_ACCEPT_ABSOLUTE     = 0x2,
+    WBEMPATH_CREATE_ACCEPT_ALL          = 0x4,
+    WBEMPATH_TREAT_SINGLE_IDENT_AS_NS   = 0x8
+} tag_WBEM_PATH_CREATE_FLAG;
+
+typedef [v1_enum] enum tag_WBEM_GET_TEXT_FLAGS
+{
+    WBEMPATH_COMPRESSED                     = 0x1,
+    WBEMPATH_GET_RELATIVE_ONLY              = 0x2,
+    WBEMPATH_GET_SERVER_TOO                 = 0x4,
+    WBEMPATH_GET_SERVER_AND_NAMESPACE_ONLY  = 0x8,
+    WBEMPATH_GET_NAMESPACE_ONLY             = 0x10,
+    WBEMPATH_GET_ORIGINAL                   = 0x20
+} tag_WBEM_GET_TEXT_FLAGS;
+
 [
     local,
     object,
