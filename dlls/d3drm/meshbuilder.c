@@ -2143,6 +2143,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
             face_data = HeapAlloc(GetProcessHeap(), 0, This->face_data_size * sizeof(*face_data));
             if (!face_data)
             {
+                HeapFree(GetProcessHeap(), 0, used_vertices);
                 IDirect3DRMMesh_Release(*mesh);
                 return E_OUTOFMEMORY;
             }
