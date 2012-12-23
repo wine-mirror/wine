@@ -145,59 +145,6 @@ static BSTR a2bstr(const char *str)
     return ret;
 }
 
-typedef struct
-{
-    IServiceProvider IServiceProvider_iface;
-} testprov_t;
-
-testprov_t testprov;
-
-static HRESULT WINAPI site_QueryInterface(IUnknown *iface, REFIID riid, void **ppvObject)
-{
-    *ppvObject = NULL;
-
-    if (IsEqualGUID(riid, &IID_IServiceProvider))
-        CHECK_EXPECT2(site_qi_IServiceProvider);
-
-    if (IsEqualGUID(riid, &IID_IXMLDOMDocument))
-        CHECK_EXPECT2(site_qi_IXMLDOMDocument);
-
-    if (IsEqualGUID(riid, &IID_IOleClientSite))
-        CHECK_EXPECT2(site_qi_IOleClientSite);
-
-    if (IsEqualGUID(riid, &IID_IUnknown))
-         *ppvObject = iface;
-    else if (IsEqualGUID(riid, &IID_IServiceProvider))
-         *ppvObject = &testprov.IServiceProvider_iface;
-
-    if (*ppvObject) IUnknown_AddRef(iface);
-
-    return *ppvObject ? S_OK : E_NOINTERFACE;
-}
-
-static ULONG WINAPI site_AddRef(IUnknown *iface)
-{
-    return 2;
-}
-
-static ULONG WINAPI site_Release(IUnknown *iface)
-{
-    return 1;
-}
-
-static const IUnknownVtbl testsiteVtbl =
-{
-    site_QueryInterface,
-    site_AddRef,
-    site_Release
-};
-
-typedef struct
-{
-    IUnknown IUnknown_iface;
-} testsite_t;
-
-static testsite_t testsite = { { &testsiteVtbl } };
 
 /* test IHTMLElementCollection */
 static HRESULT WINAPI htmlecoll_QueryInterface(IHTMLElementCollection *iface, REFIID riid, void **ppvObject)
@@ -290,7 +237,6 @@ static const IHTMLElementCollectionVtbl TestHTMLECollectionVtbl = {
     htmlecoll_GetTypeInfo,
     htmlecoll_GetIDsOfNames,
     htmlecoll_Invoke,
-
     htmlecoll_toString,
     htmlecoll_put_length,
     htmlecoll_get_length,
@@ -299,12 +245,7 @@ static const IHTMLElementCollectionVtbl TestHTMLECollectionVtbl = {
     htmlecoll_tags
 };
 
-typedef struct
-{
-    IHTMLElementCollection IHTMLElementCollection_iface;
-} testhtmlecoll_t;
-
-static testhtmlecoll_t htmlecoll = { { &TestHTMLECollectionVtbl } };
+static IHTMLElementCollection htmlecoll = { &TestHTMLECollectionVtbl };
 
 /* test IHTMLDocument2 */
 static HRESULT WINAPI htmldoc2_QueryInterface(IHTMLDocument2 *iface, REFIID riid, void **ppvObject)
@@ -362,7 +303,7 @@ static HRESULT WINAPI htmldoc2_get_Script(IHTMLDocument2 *iface, IDispatch **p)
 static HRESULT WINAPI htmldoc2_get_all(IHTMLDocument2 *iface, IHTMLElementCollection **p)
 {
     CHECK_EXPECT2(htmldoc2_get_all);
-    *p = &htmlecoll.IHTMLElementCollection_iface;
+    *p = &htmlecoll;
     return S_OK;
 }
 
@@ -1141,12 +1082,7 @@ static const IHTMLDocument2Vtbl TestHTMLDocumentVtbl = {
     htmldoc2_createStyleSheet
 };
 
-typedef struct
-{
-    IHTMLDocument2 IHTMLDocument2_iface;
-} testhtmldoc2_t;
-
-static testhtmldoc2_t htmldoc2 = { { &TestHTMLDocumentVtbl } };
+static IHTMLDocument2 htmldoc2 = { &TestHTMLDocumentVtbl };
 
 static HRESULT WINAPI sp_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppvObject)
 {
@@ -1193,7 +1129,7 @@ static HRESULT WINAPI sp_QueryService(IServiceProvider *iface, REFGUID service, 
              IsEqualGUID(riid, &IID_IHTMLDocument2))
     {
         CHECK_EXPECT2(sp_queryservice_SID_secmgr_htmldoc2);
-        *obj = &htmldoc2.IHTMLDocument2_iface;
+        *obj = &htmldoc2;
         return S_OK;
     }
     else if (IsEqualGUID(service, &SID_SInternetHostSecurityManager) &&
@@ -1225,7 +1161,49 @@ static const IServiceProviderVtbl testprovVtbl =
     sp_QueryService
 };
 
-testprov_t testprov = { { &testprovVtbl } };
+static IServiceProvider testprov = { &testprovVtbl };
+
+static HRESULT WINAPI site_QueryInterface(IUnknown *iface, REFIID riid, void **ppvObject)
+{
+    *ppvObject = NULL;
+
+    if (IsEqualGUID(riid, &IID_IServiceProvider))
+        CHECK_EXPECT2(site_qi_IServiceProvider);
+
+    if (IsEqualGUID(riid, &IID_IXMLDOMDocument))
+        CHECK_EXPECT2(site_qi_IXMLDOMDocument);
+
+    if (IsEqualGUID(riid, &IID_IOleClientSite))
+        CHECK_EXPECT2(site_qi_IOleClientSite);
+
+    if (IsEqualGUID(riid, &IID_IUnknown))
+         *ppvObject = iface;
+    else if (IsEqualGUID(riid, &IID_IServiceProvider))
+         *ppvObject = &testprov;
+
+    if (*ppvObject) IUnknown_AddRef(iface);
+
+    return *ppvObject ? S_OK : E_NOINTERFACE;
+}
+
+static ULONG WINAPI site_AddRef(IUnknown *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI site_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static const IUnknownVtbl testsiteVtbl =
+{
+    site_QueryInterface,
+    site_AddRef,
+    site_Release
+};
+
+static IUnknown testsite = { &testsiteVtbl };
 
 typedef struct
 {
@@ -1402,7 +1380,7 @@ static void set_xhr_site(IXMLHttpRequest *xhr)
     SET_EXPECT(site_qi_IXMLDOMDocument);
     SET_EXPECT(site_qi_IOleClientSite);
 
-    hr = IObjectWithSite_SetSite(obj_site, &testsite.IUnknown_iface);
+    hr = IObjectWithSite_SetSite(obj_site, &testsite);
     EXPECT_HR(hr, S_OK);
 
     CHECK_CALLED(site_qi_IServiceProvider);
@@ -1745,7 +1723,7 @@ todo_wine {
     SET_EXPECT(site_qi_IServiceProvider);
     SET_EXPECT(sp_queryservice_SID_SContainerDispatch_htmldoc2);
 
-    hr = IObjectWithSite_SetSite(obj_site2, &testsite.IUnknown_iface);
+    hr = IObjectWithSite_SetSite(obj_site2, &testsite);
     EXPECT_HR(hr, S_OK);
 
     todo_wine EXPECT_REF(xhr, 1);
@@ -1757,7 +1735,7 @@ todo_wine {
     SET_EXPECT(site_qi_IServiceProvider);
     SET_EXPECT(sp_queryservice_SID_SContainerDispatch_htmldoc2);
 
-    hr = IObjectWithSite_SetSite(obj_site2, &testsite.IUnknown_iface);
+    hr = IObjectWithSite_SetSite(obj_site2, &testsite);
     EXPECT_HR(hr, S_OK);
     IObjectWithSite_Release(obj_site2);
 
