@@ -141,8 +141,16 @@ static inline serverhttp *impl_from_IServerXMLHTTPRequest(IServerXMLHTTPRequest 
 static void httprequest_setreadystate(httprequest *This, READYSTATE state)
 {
     READYSTATE last = This->state;
+    static const char* readystates[] = {
+        "READYSTATE_UNINITIALIZED",
+        "READYSTATE_LOADING",
+        "READYSTATE_LOADED",
+        "READYSTATE_INTERACTIVE",
+        "READYSTATE_COMPLETE"};
 
     This->state = state;
+
+    TRACE("state %s\n", readystates[state]);
 
     if (This->sink && last != state)
     {
@@ -206,6 +214,7 @@ static void BindStatusCallback_Detach(BindStatusCallback *bsc)
     if (bsc)
     {
         if (bsc->binding) IBinding_Abort(bsc->binding);
+        bsc->request->bsc = NULL;
         bsc->request = NULL;
         IBindStatusCallback_Release(&bsc->IBindStatusCallback_iface);
     }
@@ -340,7 +349,11 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
     }
 
     if (hr == S_OK)
+    {
+        BindStatusCallback_Detach(This->request->bsc);
+        This->request->bsc = This;
         httprequest_setreadystate(This->request, READYSTATE_COMPLETE);
+    }
 
     return S_OK;
 }
@@ -984,10 +997,9 @@ static HRESULT httprequest_send(httprequest *This, VARIANT body)
     if (This->state != READYSTATE_LOADING) return E_FAIL;
 
     hr = BindStatusCallback_create(This, &bsc, &body);
-    if (FAILED(hr)) return hr;
-
-    BindStatusCallback_Detach(This->bsc);
-    This->bsc = bsc;
+    if (FAILED(hr))
+        /* success path to detach it is OnStopBinding call */
+        BindStatusCallback_Detach(bsc);
 
     return hr;
 }
@@ -995,7 +1007,6 @@ static HRESULT httprequest_send(httprequest *This, VARIANT body)
 static HRESULT httprequest_abort(httprequest *This)
 {
     BindStatusCallback_Detach(This->bsc);
-    This->bsc = NULL;
 
     httprequest_setreadystate(This, READYSTATE_UNINITIALIZED);
 

@@ -1233,6 +1233,8 @@ typedef struct
     LONG ref;
 } dispevent;
 
+static IXMLHttpRequest *httpreq;
+
 static inline dispevent *impl_from_IDispatch( IDispatch *iface )
 {
     return CONTAINING_RECORD(iface, dispevent, IDispatch_iface);
@@ -1297,6 +1299,9 @@ static HRESULT WINAPI dispevent_Invoke(IDispatch *iface, DISPID member, REFIID r
         LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *result,
         EXCEPINFO *excepInfo, UINT *argErr)
 {
+    LONG state;
+    HRESULT hr;
+
     ok(member == 0, "expected 0 member, got %d\n", member);
     ok(lcid == LOCALE_SYSTEM_DEFAULT, "expected LOCALE_SYSTEM_DEFAULT, got lcid %x\n", lcid);
     ok(flags == DISPATCH_METHOD, "expected DISPATCH_METHOD, got %d\n", flags);
@@ -1311,6 +1316,20 @@ static HRESULT WINAPI dispevent_Invoke(IDispatch *iface, DISPID member, REFIID r
     ok(argErr == NULL, "got %p\n", argErr);
 
     g_expectedcall++;
+
+    state = READYSTATE_UNINITIALIZED;
+    hr = IXMLHttpRequest_get_readyState(httpreq, &state);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (state == READYSTATE_COMPLETE)
+    {
+        BSTR text = NULL;
+
+        hr = IXMLHttpRequest_get_responseText(httpreq, &text);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(*text != 0, "got %s\n", wine_dbgstr_w(text));
+        SysFreeString(text);
+    }
+
     return E_FAIL;
 }
 
@@ -1332,7 +1351,7 @@ static IDispatch* create_dispevent(void)
     event->IDispatch_iface.lpVtbl = &dispeventVtbl;
     event->ref = 1;
 
-    return (IDispatch*)&event->IDispatch_iface;
+    return &event->IDispatch_iface;
 }
 
 static IXMLHttpRequest *create_xhr(void)
@@ -1507,6 +1526,7 @@ static void test_XMLHTTP(void)
     EXPECT_HR(hr, S_OK);
     ok(state == READYSTATE_UNINITIALIZED, "got %d, expected READYSTATE_UNINITIALIZED\n", state);
 
+    httpreq = xhr;
     event = create_dispevent();
 
     EXPECT_REF(event, 1);
