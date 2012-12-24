@@ -1551,9 +1551,46 @@ int CDECL MSVCRT_I10_OUTPUT(MSVCRT__LDOUBLE ld80, int prec, int flag, struct _I1
 #undef I10_OUTPUT_MAX_PREC
 
 /*********************************************************************
- *                  memcpy   (NTDLL.@)
+ *                  memcpy   (MSVCRT.@)
  */
 void * __cdecl MSVCRT_memcpy( void *dst, const void *src, size_t n )
 {
     return memmove( dst, src, n );
+}
+
+/*********************************************************************
+ *                  _stricmp_l   (MSVCRT.@)
+ */
+int __cdecl MSVCRT__stricmp_l(const char *s1, const char *s2, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadlocinfo locinfo;
+    char c1, c2;
+
+    if(!MSVCRT_CHECK_PMT(s1!=NULL && s2!=NULL))
+        return MSVCRT__NLSCMPERROR;
+
+    if(!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    if(!locinfo->lc_handle[MSVCRT_LC_CTYPE])
+        return strcasecmp(s1, s2);
+
+    do {
+        c1 = MSVCRT__tolower_l(*s1++, locale);
+        c2 = MSVCRT__tolower_l(*s2++, locale);
+        if(c1 != c2)
+            break;
+    }while(c1 && c1==c2);
+
+    return c1-c2;
+}
+
+/*********************************************************************
+ *                  _stricmp   (MSVCRT.@)
+ */
+int __cdecl MSVCRT__stricmp(const char *s1, const char *s2)
+{
+    return MSVCRT__stricmp_l(s1, s2, NULL);
 }

@@ -986,7 +986,7 @@
 @ stub _strerror_s
 @ stub _strftime_l
 @ cdecl _stricmp(str str) msvcrt._stricmp
-@ stub _stricmp_l
+@ cdecl _stricmp_l(str str ptr) msvcrt._stricmp_l
 @ cdecl _stricoll(str str) msvcrt._stricoll
 @ cdecl _stricoll_l(str str ptr) msvcrt._stricoll_l
 @ cdecl _strlwr(str) msvcrt._strlwr

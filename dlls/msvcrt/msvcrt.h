@@ -863,6 +863,8 @@ typedef void (__cdecl *MSVCRT___sighandler_t)(int);
 /* _get_output_format return code */
 #define MSVCRT__TWO_DIGIT_EXPONENT 0x1
 
+#define MSVCRT__NLSCMPERROR ((unsigned int)0x7fffffff)
+
 void  __cdecl    MSVCRT_free(void*);
 void* __cdecl    MSVCRT_malloc(MSVCRT_size_t);
 void* __cdecl    MSVCRT_calloc(MSVCRT_size_t,MSVCRT_size_t);

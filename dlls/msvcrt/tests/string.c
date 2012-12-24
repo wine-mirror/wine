@@ -2438,6 +2438,36 @@ static void test__atodbl(void)
     ok(ret == _OVERFLOW, "_atodbl(&d, \"1e309\") returned %d, expected _OVERFLOW\n", ret);
 }
 
+static void test__stricmp(void)
+{
+    int ret;
+
+    ret = _stricmp("test", "test");
+    ok(ret == 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("a", "z");
+    ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("z", "a");
+    ok(ret > 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("\xa5", "\xb9");
+    ok(ret < 0, "_stricmp returned %d\n", ret);
+
+    if(!setlocale(LC_ALL, "polish")) {
+        win_skip("stricmp tests");
+        return;
+    }
+
+    ret = _stricmp("test", "test");
+    ok(ret == 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("a", "z");
+    ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("z", "a");
+    ok(ret > 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("\xa5", "\xb9");
+    ok(ret == 0, "_stricmp returned %d\n", ret);
+
+    setlocale(LC_ALL, "C");
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -2533,4 +2563,5 @@ START_TEST(string)
     test_wctomb();
     test_tolower();
     test__atodbl();
+    test__stricmp();
 }
