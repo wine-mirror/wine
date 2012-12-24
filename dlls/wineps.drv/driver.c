@@ -336,6 +336,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
         }
         TRACE("Setting pagesize to item %d Winpage = %d\n", Cursel, ps->WinPage);
         di->dlgdm->dmPublic.u1.s1.dmPaperSize = ps->WinPage;
+        di->dlgdm->dmPublic.dmFields |= DM_PAPERSIZE;
         SendMessageW(GetParent(hwnd), PSM_CHANGED, 0, 0);
       }
       break;
@@ -345,6 +346,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
             "portrait" : "landscape");
       di->dlgdm->dmPublic.u1.s1.dmOrientation = wParam == IDD_ORIENT_PORTRAIT ?
         DMORIENT_PORTRAIT : DMORIENT_LANDSCAPE;
+      di->dlgdm->dmPublic.dmFields |= DM_ORIENTATION;
       SendMessageW(GetParent(hwnd), PSM_CHANGED, 0, 0);
       break;
     case IDD_DUPLEX:
@@ -358,6 +360,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
         }
         TRACE("Setting duplex to item %d Winduplex = %d\n", Cursel, duplex->WinDuplex);
         di->dlgdm->dmPublic.dmDuplex = duplex->WinDuplex;
+        di->dlgdm->dmPublic.dmFields |= DM_DUPLEX;
         SendMessageW(GetParent(hwnd), PSM_CHANGED, 0, 0);
       }
       break;
