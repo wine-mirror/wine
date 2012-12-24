@@ -95,7 +95,6 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicCollectionImpl(LPCGUID lpcGUID, LP
 
 /* Internal */
 extern HRESULT DMUSIC_CreateDirectMusicBufferImpl(LPDMUS_BUFFERDESC desc, LPVOID* ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT DMUSIC_CreateDirectMusicDownloadedInstrumentImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 extern HRESULT DMUSIC_CreateDirectMusicDownloadImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 extern HRESULT DMUSIC_CreateReferenceClockImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 extern HRESULT DMUSIC_CreateDirectMusicInstrumentImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
@@ -136,11 +135,11 @@ struct IDirectMusicBufferImpl {
  * IDirectMusicDownloadedInstrumentImpl implementation structure
  */
 struct IDirectMusicDownloadedInstrumentImpl {
-  /* IUnknown fields */
-  const IDirectMusicDownloadedInstrumentVtbl *lpVtbl;
-  LONG           ref;
+    /* IUnknown fields */
+    IDirectMusicDownloadedInstrument IDirectMusicDownloadedInstrument_iface;
+    LONG ref;
 
-  /* IDirectMusicDownloadedInstrumentImpl fields */
+    /* IDirectMusicDownloadedInstrumentImpl fields */
 };
 
 /*****************************************************************************

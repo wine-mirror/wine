@@ -23,6 +23,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
+static inline IDirectMusicDownloadedInstrumentImpl* impl_from_IDirectMusicDownloadedInstrument(IDirectMusicDownloadedInstrument *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicDownloadedInstrumentImpl, IDirectMusicDownloadedInstrument_iface);
+}
+
 static inline SynthPortImpl *impl_from_SynthPortImpl_IDirectMusicPort(IDirectMusicPort *iface)
 {
     return CONTAINING_RECORD(iface, SynthPortImpl, IDirectMusicPort_iface);
@@ -36,6 +41,77 @@ static inline SynthPortImpl *impl_from_SynthPortImpl_IDirectMusicPortDownload(ID
 static inline SynthPortImpl *impl_from_SynthPortImpl_IDirectMusicThru(IDirectMusicThru *iface)
 {
     return CONTAINING_RECORD(iface, SynthPortImpl, IDirectMusicThru_iface);
+}
+
+/* IDirectMusicDownloadedInstrument IUnknown part follows: */
+static HRESULT WINAPI IDirectMusicDownloadedInstrumentImpl_QueryInterface(IDirectMusicDownloadedInstrument *iface, REFIID riid, VOID **ret_iface)
+{
+    TRACE("(%p, %s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IDirectMusicDownloadedInstrument) ||
+        IsEqualIID(riid, &IID_IDirectMusicDownloadedInstrument8))
+    {
+        IDirectMusicDownloadedInstrument_AddRef(iface);
+        *ret_iface = iface;
+        return S_OK;
+    }
+
+    WARN("(%p, %s, %p): not found\n", iface, debugstr_dmguid(riid), ret_iface);
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_AddRef(LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface)
+{
+    IDirectMusicDownloadedInstrumentImpl *This = impl_from_IDirectMusicDownloadedInstrument(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+
+    DMUSIC_LockModule();
+
+    return ref;
+}
+
+static ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_Release(LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface)
+{
+    IDirectMusicDownloadedInstrumentImpl *This = impl_from_IDirectMusicDownloadedInstrument(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    DMUSIC_UnlockModule();
+
+    return ref;
+}
+
+static const IDirectMusicDownloadedInstrumentVtbl DirectMusicDownloadedInstrument_Vtbl = {
+    IDirectMusicDownloadedInstrumentImpl_QueryInterface,
+    IDirectMusicDownloadedInstrumentImpl_AddRef,
+    IDirectMusicDownloadedInstrumentImpl_Release
+};
+
+HRESULT DMUSIC_CreateDirectMusicDownloadedInstrumentImpl(IDirectMusicDownloadedInstrument **instrument)
+{
+    IDirectMusicDownloadedInstrumentImpl *object;
+
+    object = HeapAlloc(GetProcessHeap(), 0, sizeof(*object));
+    if (!object)
+    {
+        *instrument = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    object->IDirectMusicDownloadedInstrument_iface.lpVtbl = &DirectMusicDownloadedInstrument_Vtbl;
+    object->ref = 1;
+
+    *instrument = &object->IDirectMusicDownloadedInstrument_iface;
+
+    return S_OK;
 }
 
 /* SynthPortImpl IDirectMusicPort IUnknown part follows: */
@@ -157,7 +233,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_DownloadInstrument(LPDIRECT
     if (!instrument || !downloaded_instrument || (num_note_ranges && !note_ranges))
         return E_POINTER;
 
-    return DMUSIC_CreateDirectMusicDownloadedInstrumentImpl(&IID_IDirectMusicDownloadedInstrument, (LPVOID*)downloaded_instrument, NULL);
+    return DMUSIC_CreateDirectMusicDownloadedInstrumentImpl(downloaded_instrument);
 }
 
 static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_UnloadInstrument(LPDIRECTMUSICPORT iface, IDirectMusicDownloadedInstrument *downloaded_instrument)
