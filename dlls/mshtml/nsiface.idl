@@ -3094,27 +3094,6 @@ interface nsITooltipTextProvider : nsISupports
 
 [
     object,
-    uuid(02b0625a-e7f3-11d2-9f5a-006008a6efe9),
-    local
-]
-interface nsIProfile : nsISupports
-{
-    nsresult GetProfileCount(int32_t *aProfileCount);
-    nsresult GetProfileList(uint32_t *length, PRUnichar ***profileNames);
-    nsresult ProfileExists(const PRUnichar *profileName, bool *_retval);
-    nsresult GetCurrentProfile(PRUnichar **aCurrentProfile);
-    nsresult SetCurrentProfile(const PRUnichar *aCurrentProfile);
-    nsresult ShutDownCurrentProfile(uint32_t shutDownType);
-    nsresult CreateNewProfile(const PRUnichar *profileName,
-            const PRUnichar *nativeProfileDir, const PRUnichar *langcode,
-            bool useExistingDir);
-    nsresult RenameProfile(const PRUnichar *oldName, const PRUnichar *newName);
-    nsresult DeleteProfile(const PRUnichar *name, bool canDeleteFiles);
-    nsresult CloneProfile(const PRUnichar *profileName);
-}
-
-[
-    object,
     uuid(24f3f4da-18a4-448d-876d-7360fefac029),
     local
 ]
