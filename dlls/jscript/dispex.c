@@ -1205,6 +1205,12 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
     if(r && argc)
         flags |= DISPATCH_PROPERTYGET;
 
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    if(FAILED(hres)) {
+        TRACE("using IDispatch\n");
+        dispex = NULL;
+        jsthis = NULL;
+    }
 
     if(jsthis) {
         static DISPID this_id = DISPID_THIS;
@@ -1220,8 +1226,11 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
 
     if(dp.cArgs > sizeof(buf)/sizeof(*buf)) {
         dp.rgvarg = heap_alloc(dp.cArgs*sizeof(VARIANT));
-        if(!dp.rgvarg)
+        if(!dp.rgvarg) {
+            if(dispex)
+                IDispatchEx_Release(dispex);
             return E_OUTOFMEMORY;
+        }
     }else {
         dp.rgvarg = buf;
     }
@@ -1233,6 +1242,8 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
                 VariantClear(dp.rgvarg+dp.cArgs-i-1);
             if(dp.rgvarg != buf)
                 heap_free(dp.rgvarg);
+            if(dispex)
+                IDispatchEx_Release(dispex);
             return hres;
         }
     }
@@ -1243,8 +1254,7 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
 
     V_VT(&retv) = VT_EMPTY;
     clear_ei(ctx);
-    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
-    if(SUCCEEDED(hres)) {
+    if(dispex) {
         hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, ctx->lcid, flags, &dp, r ? &retv : NULL, &ctx->ei.ei,
                 &ctx->jscaller->IServiceProvider_iface);
         IDispatchEx_Release(dispex);
@@ -1256,7 +1266,6 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
             return DISP_E_MEMBERNOTFOUND;
         }
 
-        TRACE("using IDispatch\n");
         hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, ctx->lcid, flags, &dp, r ? &retv : NULL, &ctx->ei.ei, &err);
     }
 
