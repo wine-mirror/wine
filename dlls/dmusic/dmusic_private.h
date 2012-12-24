@@ -140,6 +140,8 @@ struct IDirectMusicDownloadedInstrumentImpl {
     LONG ref;
 
     /* IDirectMusicDownloadedInstrumentImpl fields */
+    BOOL downloaded;
+    void *data;
 };
 
 /*****************************************************************************
