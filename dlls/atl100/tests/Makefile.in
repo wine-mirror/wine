@@ -1,5 +1,5 @@
 TESTDLL   = atl100.dll
-IMPORTS   = ole32 atl100
+IMPORTS   = atl100 ole32 advapi32
 EXTRADEFS = -D_ATL_VER=_ATL_VER_100
 
 C_SRCS = \

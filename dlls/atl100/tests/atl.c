@@ -25,6 +25,18 @@
 
 #include <wine/test.h>
 
+static const GUID CLSID_Test =
+    {0x178fc163,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x46}};
+#define CLSID_TEST_STR "178fc163-0000-0000-0000-000000000046"
+
+static const GUID CATID_CatTest1 =
+    {0x178fc163,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x46}};
+#define CATID_CATTEST1_STR "178fc163-0000-0000-0000-000000000146"
+
+static const GUID CATID_CatTest2 =
+    {0x178fc163,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x46}};
+#define CATID_CATTEST2_STR "178fc163-0000-0000-0000-000000000246"
+
 static void test_winmodule(void)
 {
     _AtlCreateWndData create_data[3];
@@ -95,11 +107,61 @@ static void test_winmodule(void)
     ok(winmod.m_pCreateWndList == create_data+1, "winmod.m_pCreateWndList != create_data\n");
 }
 
+#define test_key_exists(a,b) _test_key_exists(__LINE__,a,b)
+static void _test_key_exists(unsigned line, HKEY root, const char *key_name)
+{
+    HKEY key;
+    DWORD res;
+
+    res = RegOpenKeyA(root, key_name, &key);
+    ok_(__FILE__,line)(res == ERROR_SUCCESS, "Could not open key %s\n", key_name);
+    if(res == ERROR_SUCCESS)
+        RegCloseKey(key);
+}
+
+#define test_key_not_exists(a,b) _test_key_not_exists(__LINE__,a,b)
+static void _test_key_not_exists(unsigned line, HKEY root, const char *key_name)
+{
+    HKEY key;
+    DWORD res;
+
+    res = RegOpenKeyA(root, key_name, &key);
+    ok_(__FILE__,line)(res == ERROR_FILE_NOT_FOUND, "Attempting to open %s returned %u\n", key_name, res);
+    if(res == ERROR_SUCCESS)
+        RegCloseKey(key);
+}
+
+static void test_regcat(void)
+{
+    HRESULT hres;
+
+    const struct _ATL_CATMAP_ENTRY catmap[] = {
+        {_ATL_CATMAP_ENTRY_IMPLEMENTED, &CATID_CatTest1},
+        {_ATL_CATMAP_ENTRY_REQUIRED, &CATID_CatTest2},
+        {_ATL_CATMAP_ENTRY_END}
+    };
+
+    hres = AtlRegisterClassCategoriesHelper(&CLSID_Test, catmap, TRUE);
+    ok(hres == S_OK, "AtlRegisterClassCategoriesHelper failed: %08x\n", hres);
+
+    test_key_exists(HKEY_CLASSES_ROOT, "CLSID\\{" CLSID_TEST_STR "}");
+    test_key_exists(HKEY_CLASSES_ROOT, "CLSID\\{" CLSID_TEST_STR "}\\Implemented Categories\\{" CATID_CATTEST1_STR "}");
+    test_key_exists(HKEY_CLASSES_ROOT, "CLSID\\{" CLSID_TEST_STR "}\\Required Categories\\{" CATID_CATTEST2_STR "}");
+
+    hres = AtlRegisterClassCategoriesHelper(&CLSID_Test, catmap, FALSE);
+    ok(hres == S_OK, "AtlRegisterClassCategoriesHelper failed: %08x\n", hres);
+
+    test_key_not_exists(HKEY_CLASSES_ROOT, "CLSID\\{" CLSID_TEST_STR "}\\Implemented Categories");
+    test_key_not_exists(HKEY_CLASSES_ROOT, "CLSID\\{" CLSID_TEST_STR "}\\Required Categories");
+    test_key_exists(HKEY_CLASSES_ROOT, "CLSID\\{" CLSID_TEST_STR "}");
+}
+
 START_TEST(atl)
 {
     CoInitialize(NULL);
 
     test_winmodule();
+    test_regcat();
 
     CoUninitialize();
 }

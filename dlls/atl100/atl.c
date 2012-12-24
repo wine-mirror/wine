@@ -1,5 +1,6 @@
 /*
  * Copyright 2012 Stefan Leichter
+ * Copyright 2012 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,6 +24,8 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl100);
+
+static ICatRegister *catreg;
 
 /***********************************************************************
  *           AtlAdvise         [atl100.@]
@@ -379,8 +382,60 @@ HRESULT WINAPI AtlComModuleGetClassObject(_ATL_COM_MODULE *pm, REFCLSID rclsid, 
  */
 HRESULT WINAPI AtlRegisterClassCategoriesHelper(REFCLSID clsid, const struct _ATL_CATMAP_ENTRY *catmap, BOOL reg)
 {
-    FIXME("(%s %p %x)\n", debugstr_guid(clsid), catmap, reg);
-    return E_NOTIMPL;
+    const struct _ATL_CATMAP_ENTRY *iter;
+    HRESULT hres;
+
+    TRACE("(%s %p %x)\n", debugstr_guid(clsid), catmap, reg);
+
+    if(!catreg) {
+        ICatRegister *new_catreg;
+
+        hres = CoCreateInstance(&CLSID_StdComponentCategoriesMgr, NULL, CLSCTX_INPROC_SERVER,
+                &IID_ICatRegister, (void**)&new_catreg);
+        if(FAILED(hres))
+            return hres;
+
+        if(InterlockedCompareExchangePointer((void**)&catreg, new_catreg, NULL))
+            ICatRegister_Release(new_catreg);
+    }
+
+    for(iter = catmap; iter->iType != _ATL_CATMAP_ENTRY_END; iter++) {
+        CATID catid = *iter->pcatid; /* For stupid lack of const in ICatRegister declaration. */
+
+        if(iter->iType == _ATL_CATMAP_ENTRY_IMPLEMENTED) {
+            if(reg)
+                hres = ICatRegister_RegisterClassImplCategories(catreg, clsid, 1, &catid);
+            else
+                hres = ICatRegister_UnRegisterClassImplCategories(catreg, clsid, 1, &catid);
+        }else {
+            if(reg)
+                hres = ICatRegister_RegisterClassReqCategories(catreg, clsid, 1, &catid);
+            else
+                hres = ICatRegister_UnRegisterClassReqCategories(catreg, clsid, 1, &catid);
+        }
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(!reg) {
+        WCHAR reg_path[256] = {'C','L','S','I','D','\\'}, *ptr = reg_path+6;
+
+        static const WCHAR implemented_catW[] =
+            {'I','m','p','l','e','m','e','n','t','e','d',' ','C','a','t','e','g','o','r','i','e','s',0};
+        static const WCHAR required_catW[] =
+            {'R','e','q','u','i','r','e','d',' ','C','a','t','e','g','o','r','i','e','s',0};
+
+        ptr += StringFromGUID2(clsid, ptr, 64)-1;
+        *ptr++ = '\\';
+
+        memcpy(ptr, implemented_catW, sizeof(implemented_catW));
+        RegDeleteKeyW(HKEY_CLASSES_ROOT, reg_path);
+
+        memcpy(ptr, required_catW, sizeof(required_catW));
+        RegDeleteKeyW(HKEY_CLASSES_ROOT, reg_path);
+    }
+
+    return S_OK;
 }
 
 /***********************************************************************
@@ -389,4 +444,20 @@ HRESULT WINAPI AtlRegisterClassCategoriesHelper(REFCLSID clsid, const struct _AT
 DWORD WINAPI AtlGetVersion(void *pReserved)
 {
    return _ATL_VER;
+}
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+
+    switch(fdwReason) {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hinstDLL);
+        break;
+    case DLL_PROCESS_DETACH:
+        if(catreg)
+            ICatRegister_Release(catreg);
+    }
+
+    return TRUE;
 }

@@ -22,6 +22,7 @@
 #define __WINE_ATLBASE_H__
 
 #include <atliface.h>
+#include <comcat.h>
 
 /* Wine extension: we (ab)use _ATL_VER to handle struct layout differences between ATL versions. */
 #define _ATL_VER_30  0x0300
@@ -212,6 +213,16 @@ struct _ATL_REGMAP_ENTRY
     LPCOLESTR szKey;
     LPCOLESTR szData;
 };
+
+struct _ATL_CATMAP_ENTRY
+{
+    int iType;
+    const CATID *pcatid;
+};
+
+#define _ATL_CATMAP_ENTRY_END 0
+#define _ATL_CATMAP_ENTRY_IMPLEMENTED 1
+#define _ATL_CATMAP_ENTRY_REQUIRED 2
 
 HRESULT WINAPI AtlAdvise(IUnknown *pUnkCP, IUnknown *pUnk, const IID * iid, LPDWORD dpw);
 HRESULT WINAPI AtlAxAttachControl(IUnknown*,HWND,IUnknown**);
