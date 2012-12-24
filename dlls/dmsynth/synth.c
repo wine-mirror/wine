@@ -126,9 +126,14 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_SetNumChannelGroups(LPDIRECTMUSICSY
 static HRESULT WINAPI IDirectMusicSynth8Impl_Download(LPDIRECTMUSICSYNTH8 iface, LPHANDLE hDownload, LPVOID data, LPBOOL free)
 {
     IDirectMusicSynth8Impl *This = impl_from_IDirectMusicSynth8(iface);
-    DMUS_DOWNLOADINFO* info = (DMUS_DOWNLOADINFO*)data;
+    LPBYTE buffer = (LPBYTE)data;
+    DMUS_DOWNLOADINFO *info = (DMUS_DOWNLOADINFO*)buffer;
+    ULONG *offsets = ((DMUS_OFFSETTABLE*)(buffer + sizeof(DMUS_DOWNLOADINFO)))->ulOffsetTable;
+    LPBYTE object = buffer + sizeof(DMUS_DOWNLOADINFO) + info->dwNumOffsetTableEntries * sizeof(ULONG);
 
     FIXME("(%p)->(%p, %p, %p): stub\n", This, hDownload, data, free);
+
+    /* FIXME: Currently we only dump data which is very useful to known how native dmusic behave and debug builtin dmusic */
 
     if (!hDownload || !data || !free)
         return E_POINTER;
@@ -142,17 +147,94 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_Download(LPDIRECTMUSICSYNTH8 iface,
         TRACE(" - cbSize                  = %u\n", info->cbSize);
     }
 
+    /* The struct should have at least one offset corresponding to the donwload object itself */
+    if (!info->dwNumOffsetTableEntries)
+    {
+        FIXME("Offset table is empty\n");
+        return DMUS_E_BADOFFSETTABLE;
+    }
+
+    /* First offset should point to the download object */
+    if ((buffer + offsets[0]) != object)
+    {
+        FIXME("Object is not at the beginning\n");
+        return DMUS_E_BADOFFSETTABLE;
+    }
+
     if (info->dwDLType == DMUS_DOWNLOADINFO_INSTRUMENT)
     {
         FIXME("Download type DMUS_DOWNLOADINFO_INSTRUMENT not yet supported\n");
     }
     else if (info->dwDLType == DMUS_DOWNLOADINFO_WAVE)
     {
-        FIXME("Download type DMUS_DOWNLOADINFO_WAVE not yet supported\n");
+        DMUS_WAVE *wave = (DMUS_WAVE*)object;
+        DMUS_WAVEDATA *wave_data;
+
+        TRACE("Processing download type DMUS_DOWNLOADINFO_WAVE\n");
+
+        if (TRACE_ON(dmsynth))
+        {
+            TRACE("Dump DMUS_WAVE struct\n");
+            TRACE(" - ulFirstExtCkIdx   = %u\n", wave->ulFirstExtCkIdx);
+            TRACE(" - ulCopyrightIdx    = %u\n", wave->ulCopyrightIdx);
+            TRACE(" - ulWaveDataIdx     = %u\n", wave->ulWaveDataIdx);
+            TRACE(" - WaveformatEx:\n");
+            TRACE("   - wFormatTag      = %u\n", wave->WaveformatEx.wFormatTag);
+            TRACE("   - nChannels       = %u\n", wave->WaveformatEx.nChannels);
+            TRACE("   - nSamplesPerSec  = %u\n", wave->WaveformatEx.nSamplesPerSec);
+            TRACE("   - nAvgBytesPerSec = %u\n", wave->WaveformatEx.nAvgBytesPerSec);
+            TRACE("   - nBlockAlign     = %u\n", wave->WaveformatEx.nBlockAlign);
+            TRACE("   - wBitsPerSample  = %u\n", wave->WaveformatEx.wBitsPerSample);
+            TRACE("   - cbSize          = %u\n", wave->WaveformatEx.cbSize);
+
+            if (wave->ulCopyrightIdx)
+            {
+                DMUS_COPYRIGHT *copyright = (DMUS_COPYRIGHT*)(buffer + offsets[wave->ulCopyrightIdx]);
+                TRACE("Copyright = '%s'\n",  (char*)copyright->byCopyright);
+            }
+
+            wave_data = (DMUS_WAVEDATA*)(buffer + offsets[wave->ulWaveDataIdx]);
+            TRACE("Found %u bytes of wave data\n", wave_data->cbSize);
+        }
     }
     else if (info->dwDLType == DMUS_DOWNLOADINFO_INSTRUMENT2)
     {
-        FIXME("Download type DMUS_DOWNLOADINFO_INSTRUMENT2 not yet supported\n");
+        DMUS_INSTRUMENT *instrument = (DMUS_INSTRUMENT*)object;
+        ULONG nb_regions = 0;
+
+        TRACE("Processing download type DMUS_DOWNLOADINFO_INSTRUMENT2\n");
+
+        if (TRACE_ON(dmsynth))
+        {
+            TRACE("Dump DMUS_INSTRUMENT struct\n");
+            TRACE(" - ulPatch          = %u\n", instrument->ulPatch);
+            TRACE(" - ulFirstRegionIdx = %u\n", instrument->ulFirstRegionIdx);
+            TRACE(" - ulGlobalArtIdx   = %u\n", instrument->ulGlobalArtIdx);
+            TRACE(" - ulFirstExtCkIdx  = %u\n", instrument->ulFirstExtCkIdx);
+            TRACE(" - ulCopyrightIdx   = %u\n", instrument->ulCopyrightIdx);
+            TRACE(" - ulFlags          = %u\n", instrument->ulFlags);
+
+            if (instrument->ulCopyrightIdx)
+            {
+                DMUS_COPYRIGHT *copyright = (DMUS_COPYRIGHT*)(buffer + offsets[instrument->ulCopyrightIdx]);
+                TRACE("Copyright = '%s'\n",  (char*)copyright->byCopyright);
+            }
+        }
+
+        if (instrument->ulFirstRegionIdx)
+        {
+            ULONG region_idx = instrument->ulFirstRegionIdx;
+
+            while (region_idx)
+            {
+                DMUS_REGION *region = (DMUS_REGION*)(buffer + offsets[region_idx]);
+
+                region_idx = region->ulNextRegionIdx;
+                nb_regions++;
+            }
+        }
+
+        TRACE("Number of regions = %u\n", nb_regions);
     }
     else if (info->dwDLType == DMUS_DOWNLOADINFO_WAVEARTICULATION)
     {
