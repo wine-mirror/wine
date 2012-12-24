@@ -117,6 +117,12 @@ void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, PSDRV_DEVMODE *dm2, PRINTERINFO *p
 	    TRACE("Changing page to %s %d x %d\n", page->FullName,
 		  dm1->dmPublic.u1.s1.dmPaperWidth,
 		  dm1->dmPublic.u1.s1.dmPaperLength );
+
+            if (dm1->dmPublic.dmSize >= FIELD_OFFSET(DEVMODEW, dmFormName) + CCHFORMNAME * sizeof(WCHAR))
+            {
+                MultiByteToWideChar(CP_ACP, 0, page->FullName, -1, dm1->dmPublic.dmFormName, CCHFORMNAME);
+                dm1->dmPublic.dmFields |= DM_FORMNAME;
+            }
 	}
         else
             TRACE("Trying to change to unsupported pagesize %d\n", dm2->dmPublic.u1.s1.dmPaperSize);
