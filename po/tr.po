@@ -455,7 +455,7 @@ msgstr "&Başlangıç:"
 msgid "&To:"
 msgstr "Biti&ş:"
 
-#: comdlg32.rc:209
+#: comdlg32.rc:209 wineps.rc:39
 msgid "Print &Quality:"
 msgstr "Baskı &Kalitesi:"
 
@@ -7175,7 +7175,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr ""
 
-#: sane.rc:34 winecfg.rc:174
+#: sane.rc:34 wineps.rc:46 winecfg.rc:174
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr ""

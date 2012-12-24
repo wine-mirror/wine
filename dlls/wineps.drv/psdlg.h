@@ -29,4 +29,8 @@
 #define IDD_ORIENT_LANDSCAPE 102
 #define IDD_DUPLEX 110
 #define IDD_DUPLEX_NAME 111
+#define IDD_QUALITY 112
+
+#define IDS_DPI 1000
+
 #endif /* __WINE_PSDLG_H */
