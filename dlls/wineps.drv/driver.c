@@ -337,6 +337,12 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
         TRACE("Setting pagesize to item %d Winpage = %d\n", Cursel, ps->WinPage);
         di->dlgdm->dmPublic.u1.s1.dmPaperSize = ps->WinPage;
         di->dlgdm->dmPublic.dmFields |= DM_PAPERSIZE;
+
+        if (di->dlgdm->dmPublic.dmSize >= FIELD_OFFSET(DEVMODEW, dmFormName) + CCHFORMNAME * sizeof(WCHAR))
+        {
+            MultiByteToWideChar(CP_ACP, 0, ps->FullName, -1, di->dlgdm->dmPublic.dmFormName, CCHFORMNAME);
+            di->dlgdm->dmPublic.dmFields |= DM_FORMNAME;
+        }
         SendMessageW(GetParent(hwnd), PSM_CHANGED, 0, 0);
       }
       break;
