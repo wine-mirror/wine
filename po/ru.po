@@ -734,11 +734,11 @@ msgstr "&Источник:"
 
 #: comdlg32.rc:417
 msgid "P&ortrait"
-msgstr "&Портрет"
+msgstr "&Книжная"
 
 #: comdlg32.rc:418
 msgid "L&andscape"
-msgstr "Л&андшафт"
+msgstr "&Альбомная"
 
 #: comdlg32.rc:423
 msgid "Setup Page"
