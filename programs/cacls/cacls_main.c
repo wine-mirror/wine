@@ -26,6 +26,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(cacls);
 
 int main(int argc, char** argv)
 {
+    int i;
+
     WINE_FIXME("This is dummy cacls, not performing ACL manipulations\n");
+    WINE_FIXME("stub:");
+    for (i = 0; i < argc; i++)
+        WINE_FIXME(" %s", wine_dbgstr_a(argv[i]));
+    WINE_FIXME("\n");
+
     return 0;
 }
