@@ -17,7 +17,8 @@ C_SRCS = \
 	surface.c \
 	texture.c \
 	util.c \
-	volume.c
+	volume.c \
+	xfile.c
 
 RC_SRCS = version.rc
 

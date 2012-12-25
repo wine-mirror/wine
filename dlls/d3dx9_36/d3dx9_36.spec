@@ -121,7 +121,7 @@
 @ stdcall D3DXDeclaratorFromFVF(long ptr)
 @ stub D3DXDisassembleEffect(ptr long ptr)
 @ stub D3DXDisassembleShader(ptr long ptr ptr)
-@ stub D3DXFileCreate(ptr)
+@ stdcall D3DXFileCreate(ptr)
 @ stdcall D3DXFillCubeTexture(ptr ptr ptr)
 @ stub D3DXFillCubeTextureTX(ptr ptr)
 @ stdcall D3DXFillTexture(ptr ptr ptr)

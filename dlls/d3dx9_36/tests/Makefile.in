@@ -11,7 +11,8 @@ C_SRCS = \
 	shader.c \
 	surface.c \
 	texture.c \
-	volume.c
+	volume.c \
+	xfile.c
 
 RC_SRCS = rsrc.rc
 
