@@ -732,7 +732,7 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
     if (FAILED(hr)) {
         if ((datasize >= 2) && (!strncmp(data, "P3", 2) || !strncmp(data, "P6", 2)))
             FIXME("File type PPM is not supported yet\n");
-        else if ((datasize >= 2) && !strncmp(data, "BM", 2))
+        else if ((datasize >= 4) && (*(DWORD*)data == sizeof(BITMAPINFOHEADER)))
             FIXME("File type DIB is not supported yet\n");
         else if ((datasize >= 10) && !strncmp(data, "#?RADIANCE", 10))
             FIXME("File type HDR is not supported yet\n");
