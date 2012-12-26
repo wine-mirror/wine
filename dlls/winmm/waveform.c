@@ -60,7 +60,7 @@ static const WCHAR muteW[] = {'M','u','t','e',0};
  * X = unused (must be 0)
  * 1 = the bit is set to 1, to avoid all-zero HWAVEs
  * F = flow direction (0 = IN, 1 = OUT)
- * D = index into g_out_mmdevices
+ * D = index into g_out_mmdevices, or all 1s for the MAPPER device
  * I = index in the mmdevice's devices array
  *
  * Two reasons that we don't just use pointers:
@@ -68,7 +68,10 @@ static const WCHAR muteW[] = {'M','u','t','e',0};
  *   - We must be able to identify bad devices without crashing.
  */
 
+/* buffer size = 10 * 100000 (100 ns) = 0.1 seconds */
+#define AC_BUFLEN (10 * 100000)
 #define MAX_DEVICES 256
+#define MAPPER_INDEX 0x3F
 
 typedef struct _WINMM_CBInfo {
     DWORD_PTR callback;
@@ -136,10 +139,12 @@ struct _WINMM_MMDevice {
 static WINMM_MMDevice *g_out_mmdevices;
 static WINMM_MMDevice **g_out_map;
 static UINT g_outmmdevices_count;
+static WINMM_Device *g_out_mapper_devices[MAX_DEVICES];
 
 static WINMM_MMDevice *g_in_mmdevices;
 static WINMM_MMDevice **g_in_map;
 static UINT g_inmmdevices_count;
+static WINMM_Device *g_in_mapper_devices[MAX_DEVICES];
 
 static IMMDeviceEnumerator *g_devenum;
 
@@ -293,48 +298,35 @@ static inline WINMM_MMDevice *read_map(WINMM_MMDevice **map, UINT index)
  * IMPORTANT: it is the caller's responsibility to release the device's lock
  * on success
  */
-static WINMM_Device *WINMM_FindUnusedDevice(BOOL is_out, UINT mmdevice_index)
+static WINMM_Device *WINMM_FindUnusedDevice(WINMM_Device **devices,
+        WINMM_MMDevice *parent, UINT internal_index, BOOL is_out)
 {
-    WINMM_MMDevice *mmdevice;
     UINT i;
 
-    if(is_out)
-        mmdevice = read_map(g_out_map, mmdevice_index);
-    else
-        mmdevice = read_map(g_in_map, mmdevice_index);
-
-    EnterCriticalSection(&mmdevice->lock);
     for(i = 0; i < MAX_DEVICES; ++i){
-        WINMM_Device *device = mmdevice->devices[i];
+        WINMM_Device *device = devices[i];
 
         if(!device){
-            device = mmdevice->devices[i] = HeapAlloc(GetProcessHeap(),
+            device = devices[i] = HeapAlloc(GetProcessHeap(),
                     HEAP_ZERO_MEMORY, sizeof(WINMM_Device));
-            if(!device){
-                LeaveCriticalSection(&mmdevice->lock);
+            if(!device)
                 return NULL;
-            }
 
-            WINMM_InitDevice(device, mmdevice,
-                    WINMM_MakeHWAVE(mmdevice->index, is_out, i));
+            WINMM_InitDevice(device, parent,
+                    WINMM_MakeHWAVE(internal_index, is_out, i));
             EnterCriticalSection(&device->lock);
         }else
             EnterCriticalSection(&device->lock);
 
         if(!device->open){
-            LeaveCriticalSection(&mmdevice->lock);
             device->open = TRUE;
-            TRACE("Found free device: mmdevice: %u, device id: %u\n",
-                    mmdevice->index, i);
             return device;
         }
 
         LeaveCriticalSection(&device->lock);
     }
 
-    LeaveCriticalSection(&mmdevice->lock);
-
-    TRACE("All devices in use: mmdevice: %u\n", mmdevice->index);
+    TRACE("All devices in use: mmdevice: %u\n", internal_index);
 
     return NULL;
 }
@@ -365,6 +357,16 @@ static WINMM_Device *WINMM_GetDeviceFromHWAVE(HWAVE hwave)
 
     if(junk != 0x1)
         return NULL;
+
+    if(mmdevice_index == MAPPER_INDEX){
+        EnterCriticalSection(&g_devthread_lock);
+        if(is_out)
+            device = g_out_mapper_devices[device_index];
+        else
+            device = g_in_mapper_devices[device_index];
+        LeaveCriticalSection(&g_devthread_lock);
+        return device;
+    }
 
     if(mmdevice_index >= (is_out ? g_outmmdevices_count : g_inmmdevices_count))
         return NULL;
@@ -792,13 +794,12 @@ static inline BOOL WINMM_IsMapper(UINT device)
     return (device == WAVE_MAPPER || device == (UINT16)WAVE_MAPPER);
 }
 
-static MMRESULT WINMM_TryDeviceMapping(WINMM_OpenInfo *info, WORD channels,
-        DWORD freq, DWORD bits_per_samp, BOOL is_out)
+static MMRESULT WINMM_TryDeviceMapping(WINMM_Device *device, WAVEFORMATEX *fmt,
+        WORD channels, DWORD freq, DWORD bits_per_samp, BOOL is_out)
 {
-    WINMM_Device *device;
-    WAVEFORMATEX target;
+    WAVEFORMATEX target, *closer_fmt = NULL;
+    HRESULT hr;
     MMRESULT mr;
-    UINT i;
 
     TRACE("format: %u, channels: %u, sample rate: %u, bit depth: %u\n",
             WAVE_FORMAT_PCM, channels, freq, bits_per_samp);
@@ -811,237 +812,155 @@ static MMRESULT WINMM_TryDeviceMapping(WINMM_OpenInfo *info, WORD channels,
     target.nAvgBytesPerSec = target.nSamplesPerSec * target.nBlockAlign;
     target.cbSize = 0;
 
-    if(is_out)
-        mr = acmStreamOpen(NULL, NULL, info->format, &target, NULL, 0,
-                0, ACM_STREAMOPENF_QUERY);
-    else
-        mr = acmStreamOpen(NULL, NULL, &target, info->format, NULL, 0,
-                0, ACM_STREAMOPENF_QUERY);
-    if(mr != MMSYSERR_NOERROR)
-        return mr;
-
-    /* ACM can convert from src->dst, so try to find a device
-     * that supports dst */
-    if(is_out){
-        if(WINMM_IsMapper(info->req_device)){
-            for(i = 0; i < g_outmmdevices_count; ++i){
-                WINMM_OpenInfo l_info = *info;
-                l_info.req_device = i;
-                l_info.format = &target;
-                mr = WOD_Open(&l_info);
-                if(mr == MMSYSERR_NOERROR){
-                    info->handle = l_info.handle;
-                    break;
-                }
-            }
-        }else{
-            WINMM_OpenInfo l_info = *info;
-            l_info.flags &= ~WAVE_MAPPED;
-            l_info.format = &target;
-            mr = WOD_Open(&l_info);
-            if(mr == MMSYSERR_NOERROR)
-                info->handle = l_info.handle;
-        }
-    }else{
-        if(WINMM_IsMapper(info->req_device)){
-            for(i = 0; i < g_inmmdevices_count; ++i){
-                WINMM_OpenInfo l_info = *info;
-                l_info.req_device = i;
-                l_info.format = &target;
-                mr = WID_Open(&l_info);
-                if(mr == MMSYSERR_NOERROR){
-                    info->handle = l_info.handle;
-                    break;
-                }
-            }
-        }else{
-            WINMM_OpenInfo l_info = *info;
-            l_info.flags &= ~WAVE_MAPPED;
-            l_info.format = &target;
-            mr = WID_Open(&l_info);
-            if(mr == MMSYSERR_NOERROR)
-                info->handle = l_info.handle;
-        }
-    }
-    if(mr != MMSYSERR_NOERROR)
+    hr = IAudioClient_IsFormatSupported(device->client,
+            AUDCLNT_SHAREMODE_SHARED, &target, &closer_fmt);
+    if(closer_fmt)
+        CoTaskMemFree(closer_fmt);
+    if(hr != S_OK)
         return WAVERR_BADFORMAT;
 
-    device = WINMM_GetDeviceFromHWAVE(info->handle);
-    if(!device)
-        return MMSYSERR_INVALHANDLE;
-
-    /* set up the ACM stream */
+    /* device supports our target format, so see if MSACM can
+     * do the conversion */
     if(is_out)
-        mr = acmStreamOpen(&device->acm_handle, NULL, info->format, &target,
-                NULL, 0, 0, 0);
+        mr = acmStreamOpen(&device->acm_handle, NULL, fmt, &target, NULL,
+                0, 0, 0);
     else
-        mr = acmStreamOpen(&device->acm_handle, NULL, &target, info->format,
-                NULL, 0, 0, 0);
-    if(mr != MMSYSERR_NOERROR){
-        if(is_out)
-            WOD_Close((HWAVEOUT)info->handle);
-        else
-            WID_Close((HWAVEIN)info->handle);
+        mr = acmStreamOpen(&device->acm_handle, NULL, &target, fmt, NULL,
+                0, 0, 0);
+    if(mr != MMSYSERR_NOERROR)
         return mr;
+
+    /* yes it can. initialize the audioclient and return success */
+    hr = IAudioClient_Initialize(device->client, AUDCLNT_SHAREMODE_SHARED,
+            AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST,
+            AC_BUFLEN, 0, &target, &device->parent->session);
+    if(hr != S_OK){
+        WARN("Initialize failed: %08x\n", hr);
+        acmStreamClose(device->acm_handle, 0);
+        device->acm_handle = NULL;
+        return MMSYSERR_ERROR;
     }
 
-    TRACE("Success\n");
+    device->bytes_per_frame = target.nBlockAlign;
+    device->samples_per_sec = target.nSamplesPerSec;
+
+    TRACE("Success!\n");
+
     return MMSYSERR_NOERROR;
 }
 
-static MMRESULT WINMM_MapDevice(WINMM_OpenInfo *info, BOOL is_out)
+static MMRESULT WINMM_MapDevice(WINMM_Device *device, WAVEFORMATEX *fmt,
+        BOOL is_out)
 {
-    UINT i;
     MMRESULT mr;
-    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)info->format;
+    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)fmt;
 
-    TRACE("(%p, %d)\n", info, is_out);
+    TRACE("(%p, %p, %u)\n", device, fmt, is_out);
 
-    /* try to find a direct match */
-    if(is_out){
-        WINMM_OpenInfo l_info = *info;
-        if(WINMM_IsMapper(info->req_device)){
-            for(i = 0; i < g_outmmdevices_count; ++i){
-                l_info.req_device = i;
-                mr = WOD_Open(&l_info);
-                if(mr == MMSYSERR_NOERROR){
-                    info->handle = l_info.handle;
-                    return mr;
-                }
-            }
-        }else{
-            l_info.flags &= ~WAVE_MAPPED;
-            mr = WOD_Open(&l_info);
-            if(mr == MMSYSERR_NOERROR){
-                info->handle = l_info.handle;
-                return mr;
-            }
-        }
-    }else{
-        WINMM_OpenInfo l_info = *info;
-        if(WINMM_IsMapper(info->req_device)){
-            for(i = 0; i < g_inmmdevices_count; ++i){
-                l_info.req_device = i;
-                mr = WID_Open(&l_info);
-                if(mr == MMSYSERR_NOERROR){
-                    info->handle = l_info.handle;
-                    return mr;
-                }
-            }
-        }else{
-            l_info.flags &= ~WAVE_MAPPED;
-            mr = WID_Open(&l_info);
-            if(mr == MMSYSERR_NOERROR){
-                info->handle = l_info.handle;
-                return mr;
-            }
-        }
-    }
-
-    /* no direct match, so set up the ACM stream */
-    if(info->format->wFormatTag != WAVE_FORMAT_PCM &&
-            !(info->format->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+    /* set up the ACM stream */
+    if(fmt->wFormatTag != WAVE_FORMAT_PCM &&
+            !(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
               IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
         /* convert to PCM format if it's not already */
-        mr = WINMM_TryDeviceMapping(info, info->format->nChannels,
-                info->format->nSamplesPerSec, 16, is_out);
+        mr = WINMM_TryDeviceMapping(device, fmt, fmt->nChannels,
+                fmt->nSamplesPerSec, 16, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
 
-        mr = WINMM_TryDeviceMapping(info, info->format->nChannels,
-                info->format->nSamplesPerSec, 8, is_out);
+        mr = WINMM_TryDeviceMapping(device, fmt, fmt->nChannels,
+                fmt->nSamplesPerSec, 8, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
     }else{
         WORD channels;
 
         /* first try just changing bit depth and channels */
-        channels = info->format->nChannels;
-        mr = WINMM_TryDeviceMapping(info, channels,
-                info->format->nSamplesPerSec, 16, is_out);
+        channels = fmt->nChannels;
+        mr = WINMM_TryDeviceMapping(device, fmt, channels,
+                fmt->nSamplesPerSec, 16, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
-        mr = WINMM_TryDeviceMapping(info, channels,
-                info->format->nSamplesPerSec, 8, is_out);
+        mr = WINMM_TryDeviceMapping(device, fmt, channels,
+                fmt->nSamplesPerSec, 8, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
 
         channels = (channels == 2) ? 1 : 2;
-        mr = WINMM_TryDeviceMapping(info, channels,
-                info->format->nSamplesPerSec, 16, is_out);
+        mr = WINMM_TryDeviceMapping(device, fmt, channels,
+                fmt->nSamplesPerSec, 16, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
-        mr = WINMM_TryDeviceMapping(info, channels,
-                info->format->nSamplesPerSec, 8, is_out);
+        mr = WINMM_TryDeviceMapping(device, fmt, channels,
+                fmt->nSamplesPerSec, 8, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
 
         /* that didn't work, so now try different sample rates */
-        channels = info->format->nChannels;
-        mr = WINMM_TryDeviceMapping(info, channels, 96000, 16, is_out);
+        channels = fmt->nChannels;
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 96000, 16, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 48000, 16, is_out);
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 48000, 16, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 44100, 16, is_out);
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 44100, 16, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 22050, 16, is_out);
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 22050, 16, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 11025, 16, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-
-        channels = (channels == 2) ? 1 : 2;
-        mr = WINMM_TryDeviceMapping(info, channels, 96000, 16, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 48000, 16, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 44100, 16, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 22050, 16, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 11025, 16, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-
-        channels = info->format->nChannels;
-        mr = WINMM_TryDeviceMapping(info, channels, 96000, 8, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 48000, 8, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 44100, 8, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 22050, 8, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 11025, 8, is_out);
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 11025, 16, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
 
         channels = (channels == 2) ? 1 : 2;
-        mr = WINMM_TryDeviceMapping(info, channels, 96000, 8, is_out);
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 96000, 16, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 48000, 8, is_out);
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 48000, 16, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 44100, 8, is_out);
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 44100, 16, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 22050, 8, is_out);
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 22050, 16, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
-        mr = WINMM_TryDeviceMapping(info, channels, 11025, 8, is_out);
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 11025, 16, is_out);
+        if(mr == MMSYSERR_NOERROR)
+            return mr;
+
+        channels = fmt->nChannels;
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 96000, 8, is_out);
+        if(mr == MMSYSERR_NOERROR)
+            return mr;
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 48000, 8, is_out);
+        if(mr == MMSYSERR_NOERROR)
+            return mr;
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 44100, 8, is_out);
+        if(mr == MMSYSERR_NOERROR)
+            return mr;
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 22050, 8, is_out);
+        if(mr == MMSYSERR_NOERROR)
+            return mr;
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 11025, 8, is_out);
+        if(mr == MMSYSERR_NOERROR)
+            return mr;
+
+        channels = (channels == 2) ? 1 : 2;
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 96000, 8, is_out);
+        if(mr == MMSYSERR_NOERROR)
+            return mr;
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 48000, 8, is_out);
+        if(mr == MMSYSERR_NOERROR)
+            return mr;
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 44100, 8, is_out);
+        if(mr == MMSYSERR_NOERROR)
+            return mr;
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 22050, 8, is_out);
+        if(mr == MMSYSERR_NOERROR)
+            return mr;
+        mr = WINMM_TryDeviceMapping(device, fmt, channels, 11025, 8, is_out);
         if(mr == MMSYSERR_NOERROR)
             return mr;
     }
@@ -1050,19 +969,19 @@ static MMRESULT WINMM_MapDevice(WINMM_OpenInfo *info, BOOL is_out)
     return WAVERR_BADFORMAT;
 }
 
-static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
-        WINMM_OpenInfo *info)
+static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_OpenInfo *info,
+        BOOL is_out)
 {
     WAVEFORMATEX fmt, *passed_fmt;
     LRESULT ret = MMSYSERR_NOMEM;
     HRESULT hr;
 
-    hr = IMMDeviceEnumerator_GetDevice(g_devenum, mmdevice->dev_id,
+    hr = IMMDeviceEnumerator_GetDevice(g_devenum, device->parent->dev_id,
             &device->device);
     if(FAILED(hr)){
         WARN("Device %s (%s) unavailable: %08x\n",
-                wine_dbgstr_w(mmdevice->dev_id),
-                wine_dbgstr_w(mmdevice->out_caps.szPname), hr);
+                wine_dbgstr_w(device->parent->dev_id),
+                wine_dbgstr_w(device->parent->out_caps.szPname), hr);
         ret = MMSYSERR_NODRIVER;
         goto error;
     }
@@ -1111,15 +1030,22 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
         goto error;
     }
 
-    /* buffer size = 10 * 100000 (100 ns) = 0.1 seconds */
     hr = IAudioClient_Initialize(device->client, AUDCLNT_SHAREMODE_SHARED,
             AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST,
-            10 * 100000, 0, passed_fmt, &device->parent->session);
+            AC_BUFLEN, 0, passed_fmt, &device->parent->session);
     if(FAILED(hr)){
-        if(hr != AUDCLNT_E_UNSUPPORTED_FORMAT)
+        if(hr == AUDCLNT_E_UNSUPPORTED_FORMAT){
+            ret = WINMM_MapDevice(device, passed_fmt, is_out);
+            if(ret != MMSYSERR_NOERROR || info->flags & WAVE_FORMAT_QUERY)
+                goto error;
+        }else{
             WARN("Initialize failed: %08x\n", hr);
-        ret = hr2mmr(hr);
-        goto error;
+            ret = hr2mmr(hr);
+            goto error;
+        }
+    }else{
+        device->bytes_per_frame = passed_fmt->nBlockAlign;
+        device->samples_per_sec = passed_fmt->nSamplesPerSec;
     }
 
     hr = IAudioClient_GetService(device->client, &IID_IAudioClock,
@@ -1159,9 +1085,6 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
         goto error;
     }
 
-    device->bytes_per_frame = passed_fmt->nBlockAlign;
-    device->samples_per_sec = passed_fmt->nSamplesPerSec;
-
     device->played_frames = 0;
     device->last_clock_pos = 0;
     device->ofs_bytes = 0;
@@ -1193,29 +1116,43 @@ error:
 
 static LRESULT WOD_Open(WINMM_OpenInfo *info)
 {
+    WINMM_Device *device, **devices;
     WINMM_MMDevice *mmdevice;
-    WINMM_Device *device = NULL;
-    LRESULT ret;
+    CRITICAL_SECTION *lock;
+    UINT internal_index;
+    LRESULT ret = MMSYSERR_ERROR;
     HRESULT hr;
 
-    TRACE("(%u, %p, %08x)\n", info->req_device, info, info->flags);
+    if(WINMM_IsMapper(info->req_device)){
+        devices = g_out_mapper_devices;
+        mmdevice = read_map(g_out_map, 0);
+        lock = &g_devthread_lock;
+        internal_index = MAPPER_INDEX;
+    }else{
+        if(info->req_device >= g_outmmdevices_count)
+            return MMSYSERR_BADDEVICEID;
 
-    if(WINMM_IsMapper(info->req_device) || (info->flags & WAVE_MAPPED))
-        return WINMM_MapDevice(info, TRUE);
+        mmdevice = read_map(g_out_map, info->req_device);
 
-    if(info->req_device >= g_outmmdevices_count)
-        return MMSYSERR_BADDEVICEID;
+        if(!mmdevice->out_caps.szPname[0])
+            return MMSYSERR_NOTENABLED;
 
-    mmdevice = read_map(g_out_map, info->req_device);
+        devices = mmdevice->devices;
+        lock = &mmdevice->lock;
+        internal_index = mmdevice->index;
+    }
 
-    if(!mmdevice->out_caps.szPname[0])
-        return MMSYSERR_NOTENABLED;
+    EnterCriticalSection(lock);
 
-    device = WINMM_FindUnusedDevice(TRUE, info->req_device);
-    if(!device)
+    device = WINMM_FindUnusedDevice(devices, mmdevice, internal_index, TRUE);
+    if(!device){
+        LeaveCriticalSection(lock);
         return MMSYSERR_ALLOCATED;
+    }
 
-    ret = WINMM_OpenDevice(device, mmdevice, info);
+    LeaveCriticalSection(lock);
+
+    ret = WINMM_OpenDevice(device, info, TRUE);
     if((info->flags & WAVE_FORMAT_QUERY) || ret != MMSYSERR_NOERROR)
         goto error;
     ret = MMSYSERR_ERROR;
@@ -1223,14 +1160,14 @@ static LRESULT WOD_Open(WINMM_OpenInfo *info)
     hr = IAudioClient_GetService(device->client, &IID_IAudioRenderClient,
             (void**)&device->render);
     if(FAILED(hr)){
-        WARN("GetService(RenderClient) failed: %08x\n", hr);
+        ERR("GetService failed: %08x\n", hr);
         goto error;
     }
 
     hr = IAudioClient_GetService(device->client, &IID_IAudioStreamVolume,
             (void**)&device->volume);
     if(FAILED(hr)){
-        WARN("GetService(StreamVolume) failed: %08x\n", hr);
+        ERR("GetService failed: %08x\n", hr);
         goto error;
     }
 
@@ -1266,29 +1203,43 @@ error:
 
 static LRESULT WID_Open(WINMM_OpenInfo *info)
 {
+    WINMM_Device *device, **devices;
     WINMM_MMDevice *mmdevice;
-    WINMM_Device *device = NULL;
-    LRESULT ret;
+    UINT internal_index;
+    CRITICAL_SECTION *lock;
+    LRESULT ret = MMSYSERR_ERROR;
     HRESULT hr;
 
-    TRACE("(%u, %p, %08x)\n", info->req_device, info, info->flags);
+    if(WINMM_IsMapper(info->req_device)){
+        devices = g_in_mapper_devices;
+        mmdevice = read_map(g_in_map, 0);
+        lock = &g_devthread_lock;
+        internal_index = MAPPER_INDEX;
+    }else{
+        if(info->req_device >= g_inmmdevices_count)
+            return MMSYSERR_BADDEVICEID;
 
-    if(WINMM_IsMapper(info->req_device) || info->flags & WAVE_MAPPED)
-        return WINMM_MapDevice(info, FALSE);
+        mmdevice = read_map(g_in_map, info->req_device);
 
-    if(info->req_device >= g_inmmdevices_count)
-        return MMSYSERR_BADDEVICEID;
+        if(!mmdevice->in_caps.szPname[0])
+            return MMSYSERR_NOTENABLED;
 
-    mmdevice = read_map(g_in_map, info->req_device);
+        devices = mmdevice->devices;
+        lock = &mmdevice->lock;
+        internal_index = mmdevice->index;
+    }
 
-    if(!mmdevice->in_caps.szPname[0])
-        return MMSYSERR_NOTENABLED;
+    EnterCriticalSection(lock);
 
-    device = WINMM_FindUnusedDevice(FALSE, info->req_device);
-    if(!device)
+    device = WINMM_FindUnusedDevice(devices, mmdevice, internal_index, FALSE);
+    if(!device){
+        LeaveCriticalSection(lock);
         return MMSYSERR_ALLOCATED;
+    }
 
-    ret = WINMM_OpenDevice(device, mmdevice, info);
+    LeaveCriticalSection(lock);
+
+    ret = WINMM_OpenDevice(device, info, FALSE);
     if((info->flags & WAVE_FORMAT_QUERY) || ret != MMSYSERR_NOERROR)
         goto error;
     ret = MMSYSERR_ERROR;
