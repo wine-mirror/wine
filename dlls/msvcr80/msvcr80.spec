@@ -1003,7 +1003,7 @@
 @ cdecl _strncoll(str str long) msvcrt._strncoll
 @ cdecl _strncoll_l(str str long ptr) msvcrt._strncoll_l
 @ cdecl _strnicmp(str str long) msvcrt._strnicmp
-@ stub _strnicmp_l
+@ cdecl _strnicmp_l(str str long ptr) msvcrt._strnicmp_l
 @ cdecl _strnicoll(str str long) msvcrt._strnicoll
 @ cdecl _strnicoll_l(str str long ptr) msvcrt._strnicoll_l
 @ cdecl _strnset(str long long) msvcrt._strnset
