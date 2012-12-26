@@ -942,7 +942,10 @@ HRESULT XDG_UserDirLookup(const char * const *xdg_dirs, const unsigned int num_d
         if (FAILED(hr))
         {
             if (hr == E_OUTOFMEMORY)
+            {
+                fclose(file);
                 goto xdg_user_dir_lookup_error;
+            }
             continue;
         }
     }
