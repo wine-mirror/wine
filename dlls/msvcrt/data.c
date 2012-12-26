@@ -424,7 +424,7 @@ static int build_expanded_argv(int *argc, char **argv)
 
                 len = strlen(data.cFileName)+1;
                 if(argv) {
-                    argv[args_no] = (char*)(argv+*argc)+size;
+                    argv[args_no] = (char*)(argv+*argc+1)+size;
                     memcpy(argv[args_no], __wine_main_argv[i], path_len*sizeof(char));
                     memcpy(argv[args_no]+path_len, data.cFileName, len*sizeof(char));
                 }
@@ -437,7 +437,7 @@ static int build_expanded_argv(int *argc, char **argv)
         if(!len) {
             len = strlen(__wine_main_argv[i])+1;
             if(argv) {
-                argv[args_no] = (char*)(argv+*argc)+size;
+                argv[args_no] = (char*)(argv+*argc+1)+size;
                 memcpy(argv[args_no], __wine_main_argv[i], len*sizeof(char));
             }
             args_no++;
@@ -445,7 +445,9 @@ static int build_expanded_argv(int *argc, char **argv)
         }
     }
 
-    size += args_no*sizeof(char*);
+    if(argv)
+        argv[args_no] = NULL;
+    size += (args_no+1)*sizeof(char*);
     *argc = args_no;
     return size;
 }
@@ -519,7 +521,7 @@ static int build_expanded_wargv(int *argc, MSVCRT_wchar_t **argv)
 
                 len = strlenW(data.cFileName)+1;
                 if(argv) {
-                    argv[args_no] = (MSVCRT_wchar_t*)(argv+*argc)+size;
+                    argv[args_no] = (MSVCRT_wchar_t*)(argv+*argc+1)+size;
                     memcpy(argv[args_no], __wine_main_wargv[i], path_len*sizeof(MSVCRT_wchar_t));
                     memcpy(argv[args_no]+path_len, data.cFileName, len*sizeof(MSVCRT_wchar_t));
                 }
@@ -532,7 +534,7 @@ static int build_expanded_wargv(int *argc, MSVCRT_wchar_t **argv)
         if(!len) {
             len = strlenW(__wine_main_wargv[i])+1;
             if(argv) {
-                argv[args_no] = (MSVCRT_wchar_t*)(argv+*argc)+size;
+                argv[args_no] = (MSVCRT_wchar_t*)(argv+*argc+1)+size;
                 memcpy(argv[args_no], __wine_main_wargv[i], len*sizeof(MSVCRT_wchar_t));
             }
             args_no++;
@@ -540,8 +542,10 @@ static int build_expanded_wargv(int *argc, MSVCRT_wchar_t **argv)
         }
     }
 
+    if(argv)
+        argv[args_no] = NULL;
     size *= sizeof(MSVCRT_wchar_t);
-    size += args_no*sizeof(MSVCRT_wchar_t*);
+    size += (args_no+1)*sizeof(MSVCRT_wchar_t*);
     *argc = args_no;
     return size;
 }

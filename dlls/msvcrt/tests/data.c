@@ -146,6 +146,7 @@ static void test___getmainargs(void)
     ok(!strcmp(argv[2], filepath), "argv[2] = %s\n", argv[2]);
     sprintf(filepath, "%swine_test/*", tmppath);
     ok(!strcmp(argv[3], filepath), "argv[3] = %s\n", argv[3]);
+    ok(!argv[4], "argv[4] != NULL\n");
 
     if(p___p___argc && p___p___argv) {
         new_argc = *p___p___argc();
@@ -172,6 +173,7 @@ static void test___getmainargs(void)
         sprintf(filepath, "%swine_test/test", tmppath);
         ok(!strcmp(argv[3], filepath), "argv[3] = %s\n", argv[3]);
     }
+    ok(!argv[5], "argv[5] != NULL\n");
 
     if(p___p___argc && p___p___argv) {
         new_argc = *p___p___argc();
