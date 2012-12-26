@@ -1114,7 +1114,7 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
     /* buffer size = 10 * 100000 (100 ns) = 0.1 seconds */
     hr = IAudioClient_Initialize(device->client, AUDCLNT_SHAREMODE_SHARED,
             AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST,
-            10 * 100000, 50000, passed_fmt, &device->parent->session);
+            10 * 100000, 0, passed_fmt, &device->parent->session);
     if(FAILED(hr)){
         if(hr != AUDCLNT_E_UNSUPPORTED_FORMAT)
             WARN("Initialize failed: %08x\n", hr);
