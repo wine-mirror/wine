@@ -31,6 +31,7 @@
 @ stdcall DeleteUrlCacheEntryA(str)
 @ stdcall DeleteUrlCacheEntryW(wstr)
 @ stdcall DeleteUrlCacheGroup(int64 long ptr)
+@ stdcall DeleteWpadCacheForNetworks(long)
 @ stdcall DetectAutoProxyUrl(str long long)
 @ stdcall -private DllInstall(long wstr)
 @ stdcall FindCloseUrlCache(long)
