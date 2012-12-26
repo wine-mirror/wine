@@ -314,6 +314,7 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
 err:
     RegCloseKey(hkeyApp);
     if (info) FreeAppInfo(info);
+    HeapFree(GetProcessHeap(), 0, command);
     return FALSE;
 }
 
