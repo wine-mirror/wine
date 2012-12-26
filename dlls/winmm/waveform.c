@@ -278,6 +278,15 @@ static void WINMM_InitDevice(WINMM_Device *device,
     device->parent = parent;
 }
 
+static inline WINMM_MMDevice *read_map(WINMM_MMDevice **map, UINT index)
+{
+    WINMM_MMDevice *ret;
+    EnterCriticalSection(&g_devthread_lock);
+    ret = map[index];
+    LeaveCriticalSection(&g_devthread_lock);
+    return ret;
+}
+
 /* finds the first unused Device, marks it as "open", and returns
  * a pointer to the device
  *
@@ -290,9 +299,9 @@ static WINMM_Device *WINMM_FindUnusedDevice(BOOL is_out, UINT mmdevice_index)
     UINT i;
 
     if(is_out)
-        mmdevice = g_out_map[mmdevice_index];
+        mmdevice = read_map(g_out_map, mmdevice_index);
     else
-        mmdevice = g_in_map[mmdevice_index];
+        mmdevice = read_map(g_in_map, mmdevice_index);
 
     EnterCriticalSection(&mmdevice->lock);
     for(i = 0; i < MAX_DEVICES; ++i){
@@ -629,6 +638,112 @@ static HRESULT WINMM_EnumDevices(WINMM_MMDevice **devices,
     return S_OK;
 }
 
+static HRESULT WINAPI notif_QueryInterface(IMMNotificationClient *iface,
+        const GUID *riid, void **obj)
+{
+    ERR("Unexpected QueryInterface call: %s\n", wine_dbgstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI notif_AddRef(IMMNotificationClient *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI notif_Release(IMMNotificationClient *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI notif_OnDeviceStateChanged(IMMNotificationClient *iface,
+        const WCHAR *device_id, DWORD new_state)
+{
+    TRACE("Ignoring OnDeviceStateChanged callback\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI notif_OnDeviceAdded(IMMNotificationClient *iface,
+        const WCHAR *device_id)
+{
+    TRACE("Ignoring OnDeviceAdded callback\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI notif_OnDeviceRemoved(IMMNotificationClient *iface,
+        const WCHAR *device_id)
+{
+    TRACE("Ignoring OnDeviceRemoved callback\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI notif_OnDefaultDeviceChanged(IMMNotificationClient *iface,
+        EDataFlow flow, ERole role, const WCHAR *device_id)
+{
+    WINMM_MMDevice ***map;
+    WINMM_MMDevice *prev;
+    UINT count, i;
+
+    TRACE("%u %u %s\n", flow, role, wine_dbgstr_w(device_id));
+
+    if(role != eConsole)
+        return S_OK;
+
+    EnterCriticalSection(&g_devthread_lock);
+
+    if(flow == eRender){
+        map = &g_out_map;
+        count = g_outmmdevices_count;
+    }else{
+        map = &g_in_map;
+        count = g_inmmdevices_count;
+    }
+
+    prev = (*map)[0];
+    for(i = 0; i < count; ++i){
+        WINMM_MMDevice *tmp;
+
+        if(!lstrcmpW((*map)[i]->dev_id, device_id)){
+            (*map)[0] = (*map)[i];
+            (*map)[i] = prev;
+
+            LeaveCriticalSection(&g_devthread_lock);
+
+            return S_OK;
+        }
+
+        tmp = (*map)[i];
+        (*map)[i] = prev;
+        prev = tmp;
+    }
+
+    WARN("Couldn't find new default device! Rearranged map for no reason.\n");
+    (*map)[0] = prev;
+
+    LeaveCriticalSection(&g_devthread_lock);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI notif_OnPropertyValueChanged(IMMNotificationClient *iface,
+        const WCHAR *device_id, const PROPERTYKEY key)
+{
+    TRACE("Ignoring OnPropertyValueChanged callback\n");
+    return S_OK;
+}
+
+static IMMNotificationClientVtbl g_notif_vtbl = {
+    notif_QueryInterface,
+    notif_AddRef,
+    notif_Release,
+    notif_OnDeviceStateChanged,
+    notif_OnDeviceAdded,
+    notif_OnDeviceRemoved,
+    notif_OnDefaultDeviceChanged,
+    notif_OnPropertyValueChanged
+};
+
+static IMMNotificationClient g_notif = { &g_notif_vtbl };
+
 static HRESULT WINMM_InitMMDevices(void)
 {
     HRESULT hr, init_hr;
@@ -643,6 +758,10 @@ static HRESULT WINMM_InitMMDevices(void)
             CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&devenum);
     if(FAILED(hr))
         goto exit;
+
+    hr = IMMDeviceEnumerator_RegisterEndpointNotificationCallback(devenum, &g_notif);
+    if(FAILED(hr))
+        WARN("RegisterEndpointNotificationCallback failed: %08x\n", hr);
 
     hr = WINMM_EnumDevices(&g_out_mmdevices, &g_out_map, &g_outmmdevices_count,
             eRender, devenum);
@@ -1087,7 +1206,7 @@ static LRESULT WOD_Open(WINMM_OpenInfo *info)
     if(info->req_device >= g_outmmdevices_count)
         return MMSYSERR_BADDEVICEID;
 
-    mmdevice = g_out_map[info->req_device];
+    mmdevice = read_map(g_out_map, info->req_device);
 
     if(!mmdevice->out_caps.szPname[0])
         return MMSYSERR_NOTENABLED;
@@ -1160,7 +1279,7 @@ static LRESULT WID_Open(WINMM_OpenInfo *info)
     if(info->req_device >= g_inmmdevices_count)
         return MMSYSERR_BADDEVICEID;
 
-    mmdevice = g_in_map[info->req_device];
+    mmdevice = read_map(g_in_map, info->req_device);
 
     if(!mmdevice->in_caps.szPname[0])
         return MMSYSERR_NOTENABLED;
@@ -1900,10 +2019,10 @@ static WINMM_MMDevice *WINMM_GetMixerMMDevice(HMIXEROBJ hmix, DWORD flags,
     case MIXER_OBJECTF_MIXER: /* == 0 */
         *out = HandleToULong(hmix);
         if(*out < g_outmmdevices_count)
-            return g_out_map[*out];
+            return read_map(g_out_map, *out);
         if(*out - g_outmmdevices_count < g_inmmdevices_count){
             *out -= g_outmmdevices_count;
-            return g_in_map[*out];
+            return read_map(g_in_map, *out);
         }
         /* fall through -- if it's not a valid mixer device, then
          * it could be a valid mixer handle. windows seems to do
@@ -1916,17 +2035,17 @@ static WINMM_MMDevice *WINMM_GetMixerMMDevice(HMIXEROBJ hmix, DWORD flags,
                (!is_out && *out >= g_inmmdevices_count))
             return NULL;
         if(is_out)
-            return g_out_map[*out];
-        return g_in_map[*out];
+            return read_map(g_out_map, *out);
+        return read_map(g_in_map, *out);
     case MIXER_OBJECTF_WAVEOUT:
         *out = HandleToULong(hmix);
         if(*out < g_outmmdevices_count)
-            return g_out_map[*out];
+            return read_map(g_out_map, *out);
         return NULL;
     case MIXER_OBJECTF_WAVEIN:
         *out = HandleToULong(hmix);
         if(*out < g_inmmdevices_count)
-            return g_in_map[*out];
+            return read_map(g_in_map, *out);
         return NULL;
     }
 
@@ -2440,7 +2559,7 @@ UINT WINAPI waveOutGetDevCapsW(UINT_PTR uDeviceID, LPWAVEOUTCAPSW lpCaps,
         if(uDeviceID >= g_outmmdevices_count)
             return MMSYSERR_BADDEVICEID;
 
-        caps = &g_out_map[uDeviceID]->out_caps;
+        caps = &read_map(g_out_map, uDeviceID)->out_caps;
     }
 
     memcpy(lpCaps, caps, min(uSize, sizeof(*lpCaps)));
@@ -2939,7 +3058,9 @@ static UINT WINMM_QueryInstanceIDSize(UINT device, DWORD_PTR *len, BOOL is_out)
     if(device >= count)
         return MMSYSERR_INVALHANDLE;
 
+    EnterCriticalSection(&g_devthread_lock);
     *len = (lstrlenW(devices[device]->dev_id) + 1) * sizeof(WCHAR);
+    LeaveCriticalSection(&g_devthread_lock);
 
     return MMSYSERR_NOERROR;
 }
@@ -2963,11 +3084,15 @@ static UINT WINMM_QueryInstanceID(UINT device, WCHAR *str, DWORD_PTR len,
     if(device >= count)
         return MMSYSERR_INVALHANDLE;
 
+    EnterCriticalSection(&g_devthread_lock);
     id_len = (lstrlenW(devices[device]->dev_id) + 1) * sizeof(WCHAR);
-    if(len < id_len)
+    if(len < id_len){
+        LeaveCriticalSection(&g_devthread_lock);
         return MMSYSERR_ERROR;
+    }
 
     memcpy(str, devices[device]->dev_id, id_len);
+    LeaveCriticalSection(&g_devthread_lock);
 
     return MMSYSERR_NOERROR;
 }
@@ -3082,7 +3207,7 @@ UINT WINAPI waveInGetDevCapsW(UINT_PTR uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSi
         if(uDeviceID >= g_inmmdevices_count)
             return MMSYSERR_BADDEVICEID;
 
-        caps = &g_in_map[uDeviceID]->in_caps;
+        caps = &read_map(g_in_map, uDeviceID)->in_caps;
     }
 
     memcpy(lpCaps, caps, min(uSize, sizeof(*lpCaps)));
@@ -3495,10 +3620,10 @@ UINT WINAPI mixerGetDevCapsW(UINT_PTR uDeviceID, LPMIXERCAPSW lpCaps, UINT uSize
         return MMSYSERR_BADDEVICEID;
 
     if(uDeviceID < g_outmmdevices_count){
-        mmdevice = g_out_map[uDeviceID];
+        mmdevice = read_map(g_out_map, uDeviceID);
         memcpy(caps.szPname, mmdevice->out_caps.szPname, sizeof(caps.szPname));
     }else{
-        mmdevice = g_in_map[uDeviceID - g_outmmdevices_count];
+        mmdevice = read_map(g_in_map, uDeviceID - g_outmmdevices_count);
         memcpy(caps.szPname, mmdevice->in_caps.szPname, sizeof(caps.szPname));
     }
 
@@ -3541,11 +3666,11 @@ UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
         return MMSYSERR_BADDEVICEID;
 
     if(uDeviceID < g_outmmdevices_count){
-        mmdevice = g_out_map[uDeviceID];
+        mmdevice = read_map(g_out_map, uDeviceID);
         *lphMix = (HMIXER)WINMM_MakeHWAVE(uDeviceID, TRUE,
                 mmdevice->mixer_count);
     }else{
-        mmdevice = g_in_map[uDeviceID - g_outmmdevices_count];
+        mmdevice = read_map(g_in_map, uDeviceID - g_outmmdevices_count);
         *lphMix = (HMIXER)WINMM_MakeHWAVE(uDeviceID - g_outmmdevices_count,
                 FALSE, mmdevice->mixer_count);
     }
