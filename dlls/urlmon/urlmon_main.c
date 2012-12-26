@@ -1166,6 +1166,15 @@ int WINAPI MapBrowserEmulationModeToUserAgent(DWORD unk1, DWORD unk2)
 }
 
 /***********************************************************************
+ *           FlushUrlmonZonesCache (URLMON.455)
+ *    Undocumented, added in IE8
+ */
+void WINAPI FlushUrlmonZonesCache(void)
+{
+    FIXME("stub\n");
+}
+
+/***********************************************************************
  *            RegisterMediaTypes
  *    Added in IE3, registers known MIME-type strings.
  */
