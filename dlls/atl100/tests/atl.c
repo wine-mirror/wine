@@ -100,7 +100,7 @@ static void test_winmodule(void)
     ok(p == (void*)0xdead0001, "unexpected AtlWinModuleExtractCreateWndData result %p\n", p);
     ok(winmod.m_pCreateWndList == create_data+1, "winmod.m_pCreateWndList != create_data\n");
     ok(!create_data[0].m_pNext, "unexpected create_data[0].m_pNext %p\n", create_data[0].m_pNext);
-    ok(!create_data[1].m_pNext+1, "unexpected create_data[1].m_pNext %p\n", create_data[1].m_pNext);
+    ok(!create_data[1].m_pNext, "unexpected create_data[1].m_pNext %p\n", create_data[1].m_pNext);
 
     p = AtlWinModuleExtractCreateWndData(&winmod);
     ok(!p, "unexpected AtlWinModuleExtractCreateWndData result %p\n", p);
