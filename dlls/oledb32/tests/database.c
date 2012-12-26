@@ -30,22 +30,17 @@
 
 #include "wine/test.h"
 
-
-static void test_database(void)
+static void test_GetDataSource(WCHAR *initstring)
 {
-    HRESULT hr;
-    IDBInitialize *dbinit = NULL;
     IDataInitialize *datainit = NULL;
+    IDBInitialize *dbinit = NULL;
+    HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_MSDAINITIALIZE, NULL, CLSCTX_INPROC_SERVER, &IID_IDataInitialize,(void**)&datainit);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to load oledb library\n");
-        return;
-    }
-
-    hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, NULL, &IID_IDBInitialize, (IUnknown **)&dbinit);
     ok(hr == S_OK, "got %08x\n", hr);
+
+    /* a failure to create data source here may indicate provider is simply not present */
+    hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, initstring, &IID_IDBInitialize, (IUnknown**)&dbinit);
     if(SUCCEEDED(hr))
     {
         IDBProperties *props = NULL;
@@ -53,14 +48,33 @@ static void test_database(void)
         hr = IDBInitialize_QueryInterface(dbinit, &IID_IDBProperties, (void**)&props);
         ok(hr == S_OK, "got %08x\n", hr);
         if(SUCCEEDED(hr))
-        {
             IDBProperties_Release(props);
-        }
-
         IDBInitialize_Release(dbinit);
     }
 
     IDataInitialize_Release(datainit);
+}
+
+static void test_database(void)
+{
+    static WCHAR initstring_jet[] = {'P','r','o','v','i','d','e','r','=','M','i','c','r','o','s','o','f','t','.',
+         'J','e','t','.','O','L','E','D','B','.','4','.','0',';',0,
+         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',0};
+    static WCHAR initstring_default[] = {'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',0};
+    IDataInitialize *datainit = NULL;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_MSDAINITIALIZE, NULL, CLSCTX_INPROC_SERVER, &IID_IDataInitialize,(void**)&datainit);
+    if (FAILED(hr))
+    {
+        win_skip("Unable to load oledb library\n");
+        return;
+    }
+    IDataInitialize_Release(datainit);
+
+    test_GetDataSource(NULL);
+    test_GetDataSource(initstring_jet);
+    test_GetDataSource(initstring_default);
 }
 
 START_TEST(database)

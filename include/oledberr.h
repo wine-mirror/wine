@@ -35,6 +35,8 @@
 
 #define DB_E_DATAOVERFLOW                   0x80040e57
 
+#define DB_E_MISMATCHEDPROVIDER             0x80040e75
+
 #define DB_S_ERRORSOCCURRED                 0x00040eda
 
 #endif /* __WINE_OLEDBERR_H */
