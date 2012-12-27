@@ -1,4 +1,3 @@
-EXTRADEFS = -D__WINESRC__
 MODULE    = rpcss.exe
 APPMODE   = -mconsole
 IMPORTS   = rpcrt4
