@@ -1,5 +1,6 @@
 /*
  * Copyright 2012 Vincent Povirk for CodeWeavers
+ * Copyright 2012 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -418,6 +419,85 @@ static void test_createbitmapfromsource(void)
     IWICBitmap_Release(bitmap2);
 }
 
+static void test_CreateBitmapFromMemory(void)
+{
+    BYTE data3x3[27] = {
+        128,128,255, 128,128,128, 128,255,128,
+        128,128,128, 128,128,128, 255,255,255,
+        255,128,128, 255,255,255, 255,255,255 };
+    BYTE data3x2[27] = {
+        128,128,255, 128,128,128, 128,255,128,
+        0,0,0, 0,128,128, 255,255,255,
+        255,128,128, 255,0,0, 0,0,0 };
+    BYTE data[27];
+    HRESULT hr;
+    IWICBitmap *bitmap;
+    UINT width, height, i;
+
+    hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
+                                                   0, 0, NULL, &bitmap);
+todo_wine
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
+                                                   0, sizeof(data3x3), data3x3, &bitmap);
+todo_wine
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
+                                                   6, sizeof(data3x3), data3x3, &bitmap);
+todo_wine
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
+                                                   12, sizeof(data3x3), data3x3, &bitmap);
+todo_wine
+    ok(hr == WINCODEC_ERR_INSUFFICIENTBUFFER, "expected WINCODEC_ERR_INSUFFICIENTBUFFER, got %#x\n", hr);
+
+    hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
+                                                   9, sizeof(data3x3) - 1, data3x3, &bitmap);
+todo_wine
+    ok(hr == WINCODEC_ERR_INSUFFICIENTBUFFER, "expected WINCODEC_ERR_INSUFFICIENTBUFFER, got %#x\n", hr);
+
+    hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
+                                                   9, sizeof(data3x3), data3x3, &bitmap);
+todo_wine
+    ok(hr == S_OK, "IWICImagingFactory_CreateBitmapFromMemory error %#x\n", hr);
+    if (hr != S_OK) return;
+
+    hr = IWICBitmap_GetSize(bitmap, &width, &height);
+    ok(hr == S_OK, "IWICBitmap_GetSize error %#x\n", hr);
+    ok(width == 3, "expected 3, got %u\n", width);
+    ok(height == 3, "expected 3, got %u\n", height);
+
+    memset(data, 0, sizeof(data));
+    hr = IWICBitmap_CopyPixels(bitmap, NULL, 9, sizeof(data), data);
+    ok(hr == S_OK, "IWICBitmap_CopyPixels error %#x\n", hr);
+    for (i = 0; i < sizeof(data); i++)
+        ok(data[i] == data3x3[i], "%u: expected %u, got %u\n", i, data[i], data3x3[i]);
+
+    IWICBitmap_Release(bitmap);
+
+    hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 2, &GUID_WICPixelFormat24bppBGR,
+                                                   13, sizeof(data3x3), data3x3, &bitmap);
+    ok(hr == S_OK, "IWICImagingFactory_CreateBitmapFromMemory error %#x\n", hr);
+    if (hr != S_OK) return;
+
+    hr = IWICBitmap_GetSize(bitmap, &width, &height);
+    ok(hr == S_OK, "IWICBitmap_GetSize error %#x\n", hr);
+    ok(width == 3, "expected 3, got %u\n", width);
+    ok(height == 2, "expected 2, got %u\n", height);
+
+    memset(data, 0, sizeof(data));
+    hr = IWICBitmap_CopyPixels(bitmap, NULL, 13, sizeof(data), data);
+    ok(hr == S_OK, "IWICBitmap_CopyPixels error %#x\n", hr);
+    for (i = 0; i < sizeof(data); i++)
+        ok(data[i] == data3x2[i], "%u: expected %u, got %u\n", i, data3x2[i], data[i]);
+
+    IWICBitmap_Release(bitmap);
+}
+
+
 START_TEST(bitmap)
 {
     HRESULT hr;
@@ -430,6 +510,7 @@ START_TEST(bitmap)
 
     test_createbitmap();
     test_createbitmapfromsource();
+    test_CreateBitmapFromMemory();
 
     IWICImagingFactory_Release(factory);
 
