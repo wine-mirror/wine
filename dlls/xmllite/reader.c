@@ -845,7 +845,6 @@ static HRESULT reader_parse_misc(xmlreader *reader)
             break;
 
         if (FAILED(hr)) return hr;
-        cur = reader_get_cur(reader);
     }
 
     return hr;
