@@ -2159,10 +2159,20 @@ int CDECL MSVCRT_stat64(const char* path, struct MSVCRT__stat64 * buf)
 
   TRACE(":file (%s) buf(%p)\n",path,buf);
 
+  plen = strlen(path);
+  while (plen && path[plen-1]==' ')
+    plen--;
+
+  if (plen && (path[plen-1]=='\\' || path[plen-1]=='/'))
+  {
+    *MSVCRT__errno() = MSVCRT_ENOENT;
+    return -1;
+  }
+
   if (!GetFileAttributesExA(path, GetFileExInfoStandard, &hfi))
   {
       TRACE("failed (%d)\n",GetLastError());
-      msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
+      *MSVCRT__errno() = MSVCRT_ENOENT;
       return -1;
   }
 
@@ -2178,11 +2188,8 @@ int CDECL MSVCRT_stat64(const char* path, struct MSVCRT__stat64 * buf)
   else
     buf->st_dev = buf->st_rdev = MSVCRT__getdrive() - 1;
 
-  plen = strlen(path);
-
   /* Dir, or regular file? */
-  if ((hfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
-      (path[plen-1] == '\\'))
+  if (hfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
     mode |= (MSVCRT__S_IFDIR | ALL_S_IEXEC);
   else
   {
@@ -2252,10 +2259,20 @@ int CDECL MSVCRT__wstat64(const MSVCRT_wchar_t* path, struct MSVCRT__stat64 * bu
 
   TRACE(":file (%s) buf(%p)\n",debugstr_w(path),buf);
 
+  plen = strlenW(path);
+  while (plen && path[plen-1]==' ')
+    plen--;
+
+  if(plen && (path[plen-1]=='\\' || path[plen-1]=='/'))
+  {
+    *MSVCRT__errno() = MSVCRT_ENOENT;
+    return -1;
+  }
+
   if (!GetFileAttributesExW(path, GetFileExInfoStandard, &hfi))
   {
       TRACE("failed (%d)\n",GetLastError());
-      msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
+      *MSVCRT__errno() = MSVCRT_ENOENT;
       return -1;
   }
 
@@ -2267,11 +2284,8 @@ int CDECL MSVCRT__wstat64(const MSVCRT_wchar_t* path, struct MSVCRT__stat64 * bu
   else
     buf->st_dev = buf->st_rdev = MSVCRT__getdrive() - 1;
 
-  plen = strlenW(path);
-
   /* Dir, or regular file? */
-  if ((hfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
-      (path[plen-1] == '\\'))
+  if (hfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
     mode |= (MSVCRT__S_IFDIR | ALL_S_IEXEC);
   else
   {

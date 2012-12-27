@@ -1444,6 +1444,11 @@ static void test_stat(void)
         ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n", buf.st_nlink);
         ok(buf.st_size == 0, "st_size is %d, expected 0\n", buf.st_size);
 
+        errno = 0xdeadbeef;
+        ret = stat("stat.tst\\", &buf);
+        ok(ret == -1, "stat returned %d\n", ret);
+        ok(errno == ENOENT, "errno = %d\n", errno);
+
         close(fd);
         remove("stat.tst");
     }
@@ -1483,6 +1488,25 @@ static void test_stat(void)
     }
     else
         skip("pipe failed with errno %d\n", errno);
+
+    /* Tests for directory */
+    if(mkdir("stat.tst") == 0)
+    {
+        ret = stat("stat.tst                         ", &buf);
+        ok(!ret, "stat(directory) failed: errno=%d\n", errno);
+        ok((buf.st_mode & _S_IFMT) == _S_IFDIR, "bad format = %06o\n", buf.st_mode);
+        ok((buf.st_mode & 0777) == 0777, "bad st_mode = %06o\n", buf.st_mode);
+        ok(buf.st_dev == buf.st_rdev, "st_dev (%d) and st_rdev (%d) differ\n", buf.st_dev, buf.st_rdev);
+        ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n", buf.st_nlink);
+
+        errno = 0xdeadbeef;
+        ret = stat("stat.tst\\ ", &buf);
+        ok(ret == -1, "stat returned %d\n", ret);
+        ok(errno == ENOENT, "errno = %d\n", errno);
+        rmdir( "stat.tst" );
+    }
+    else
+        skip("mkdir failed with errno %d\n", errno);
 }
 
 static const char* pipe_string="Hello world";
