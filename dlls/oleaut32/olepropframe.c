@@ -140,7 +140,7 @@ static HRESULT WINAPI PropertyPageSite_TranslateAccelerator(
     return E_NOTIMPL;
 }
 
-IPropertyPageSiteVtbl PropertyPageSiteVtbl = {
+static IPropertyPageSiteVtbl PropertyPageSiteVtbl = {
     PropertyPageSite_QueryInterface,
     PropertyPageSite_AddRef,
     PropertyPageSite_Release,
