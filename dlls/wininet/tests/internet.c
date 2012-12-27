@@ -426,6 +426,13 @@ static void test_complicated_cookie(void)
   ok(len == 19, "len = %u\n", len);
   ok(lstrlenW(wbuf) == 18, "strlenW(wbuf) = %u\n", lstrlenW(wbuf));
 
+  len = 10;
+  memset(wbuf, 0xac, sizeof(wbuf));
+  ret = InternetGetCookieW(testing_example_comW, NULL, wbuf, &len);
+  ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+     "InternetGetCookieW returned: %x(%u), expected ERROR_INSUFFICIENT_BUFFER\n", ret, GetLastError());
+  ok(len == 38, "len = %u\n", len);
+
   len = 1024;
   ret = InternetGetCookie("http://testing.example.com/foobar", NULL, buffer, &len);
   ok(ret == TRUE,"InternetGetCookie failed\n");

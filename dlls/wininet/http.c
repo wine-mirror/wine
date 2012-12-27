@@ -4008,7 +4008,7 @@ static void HTTP_InsertCookies(http_request_t *request)
     if(!host)
         return;
 
-    if(!get_cookie(host->lpszValue, request->path, NULL, &cookie_size))
+    if(get_cookie(host->lpszValue, request->path, NULL, &cookie_size) != ERROR_SUCCESS)
         return;
 
     size = sizeof(cookieW) + cookie_size * sizeof(WCHAR) + sizeof(szCrLf);
