@@ -1247,7 +1247,6 @@ BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
             strcpy( name, "wpad" );
             strcat( name, p );
             res = getaddrinfo( name, NULL, NULL, &ai );
-            heap_free( name );
             if (!res)
             {
                 *url = build_wpad_url( name, ai );
@@ -1255,10 +1254,12 @@ BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
                 if (*url)
                 {
                     TRACE("returning %s\n", debugstr_w(*url));
+                    heap_free( name );
                     ret = TRUE;
                     break;
                 }
             }
+            heap_free( name );
             p++;
         }
         heap_free( domain );
