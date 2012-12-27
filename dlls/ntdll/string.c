@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <search.h>
 
 #include "windef.h"
 #include "winternl.h"
