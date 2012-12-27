@@ -53,7 +53,7 @@ HRESULT WINAPI AtlModuleInit(_ATL_MODULEW* pM, _ATL_OBJMAP_ENTRYW* p, HINSTANCE 
     INT i;
     UINT size;
 
-    FIXME("SEMI-STUB (%p %p %p)\n",pM,p,h);
+    TRACE("(%p %p %p)\n", pM, p, h);
 
     size = pM->cbSize;
     switch (size)
