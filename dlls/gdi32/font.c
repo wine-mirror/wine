@@ -312,7 +312,7 @@ static UINT get_default_smoothing( HKEY key )
 static BOOL get_char_positions( DC *dc, const WCHAR *str, INT count, INT *dx, SIZE *size )
 {
     TEXTMETRICW tm;
-    PHYSDEV dev = GET_DC_PHYSDEV( dc, pGetTextExtentExPoint );
+    PHYSDEV dev;
 
     size->cx = size->cy = 0;
     if (!count) return TRUE;
@@ -320,6 +320,7 @@ static BOOL get_char_positions( DC *dc, const WCHAR *str, INT count, INT *dx, SI
     dev = GET_DC_PHYSDEV( dc, pGetTextMetrics );
     dev->funcs->pGetTextMetrics( dev, &tm );
 
+    dev = GET_DC_PHYSDEV( dc, pGetTextExtentExPoint );
     if (!dev->funcs->pGetTextExtentExPoint( dev, str, count, dx )) return FALSE;
 
     if (dc->breakExtra || dc->breakRem)
@@ -349,7 +350,7 @@ static BOOL get_char_positions( DC *dc, const WCHAR *str, INT count, INT *dx, SI
 static BOOL get_char_positions_indices( DC *dc, const WORD *indices, INT count, INT *dx, SIZE *size )
 {
     TEXTMETRICW tm;
-    PHYSDEV dev = GET_DC_PHYSDEV( dc, pGetTextExtentExPoint );
+    PHYSDEV dev;
 
     size->cx = size->cy = 0;
     if (!count) return TRUE;
@@ -357,6 +358,7 @@ static BOOL get_char_positions_indices( DC *dc, const WORD *indices, INT count, 
     dev = GET_DC_PHYSDEV( dc, pGetTextMetrics );
     dev->funcs->pGetTextMetrics( dev, &tm );
 
+    dev = GET_DC_PHYSDEV( dc, pGetTextExtentExPoint );
     if (!dev->funcs->pGetTextExtentExPointI( dev, indices, count, dx )) return FALSE;
 
     if (dc->breakExtra || dc->breakRem)
