@@ -1,0 +1,10 @@
+MODULE    = netstat.exe
+APPMODE   = -mconsole -municode
+IMPORTS   = iphlpapi user32 ws2_32
+
+C_SRCS = netstat.c
+
+RC_SRCS = netstat.rc
+PO_SRCS = netstat.rc
+
+@MAKE_PROG_RULES@

@@ -10216,6 +10216,82 @@ msgstr "正在重新連線"
 msgid "The following services are running:\n"
 msgstr "下列服務正在執行：\n"
 
+#: netstat.rc:27
+msgid "CLOSED"
+msgstr ""
+
+#: netstat.rc:28
+msgid "LISTENING"
+msgstr ""
+
+#: netstat.rc:29
+msgid "SYN_SENT"
+msgstr ""
+
+#: netstat.rc:30
+msgid "SYN_RCVD"
+msgstr ""
+
+#: netstat.rc:31
+msgid "ESTABLISHED"
+msgstr ""
+
+#: netstat.rc:32
+msgid "FIN_WAIT1"
+msgstr ""
+
+#: netstat.rc:33
+msgid "FIN_WAIT2"
+msgstr ""
+
+#: netstat.rc:34
+msgid "CLOSE_WAIT"
+msgstr ""
+
+#: netstat.rc:35
+msgid "CLOSING"
+msgstr ""
+
+#: netstat.rc:36
+msgid "LAST_ACK"
+msgstr ""
+
+#: netstat.rc:37
+msgid "TIME_WAIT"
+msgstr ""
+
+#: netstat.rc:38
+msgid "DELETE_TCB"
+msgstr ""
+
+#: netstat.rc:40
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Active Connections"
+msgstr "區域網路連線"
+
+#: netstat.rc:41
+msgid "Proto"
+msgstr ""
+
+#: netstat.rc:42
+#, fuzzy
+#| msgid "Email Address"
+msgid "Local Address"
+msgstr "電子郵件地址"
+
+#: netstat.rc:43
+#, fuzzy
+#| msgid "Street Address"
+msgid "Foreign Address"
+msgstr "街道地址"
+
+#: netstat.rc:44
+#, fuzzy
+#| msgid "Status"
+msgid "State"
+msgstr "狀態"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "新增(&N)\tCtrl+N"

@@ -15979,6 +15979,7 @@ wine_fn_config_program mshta enable_mshta install
 wine_fn_config_program msiexec enable_msiexec install,installbin,manpage
 wine_fn_config_program net enable_net install,po
 wine_fn_config_program netsh enable_netsh install
+wine_fn_config_program netstat enable_netstat install,po
 wine_fn_config_program ngen enable_ngen install
 wine_fn_config_program notepad enable_notepad install,installbin,manpage,po
 wine_fn_config_program oleview enable_oleview install,po
