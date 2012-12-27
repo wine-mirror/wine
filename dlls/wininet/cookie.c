@@ -678,7 +678,7 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
     LPSTR lpCookieData, LPDWORD lpdwSize)
 {
     WCHAR *url, *name;
-    DWORD len;
+    DWORD len, size;
     BOOL r;
 
     TRACE("(%s %s %p %p(%u))\n", debugstr_a(lpszUrl), debugstr_a(lpszCookieName),
@@ -701,8 +701,18 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
         {
             r = InternetGetCookieW( url, name, szCookieData, &len );
 
-            *lpdwSize = WideCharToMultiByte( CP_ACP, 0, szCookieData, len,
-                                             lpCookieData, lpCookieData ? *lpdwSize : 0, NULL, NULL );
+            if(r) {
+                size = WideCharToMultiByte( CP_ACP, 0, szCookieData, len, NULL, 0, NULL, NULL);
+                if(lpCookieData) {
+                    if(*lpdwSize >= size) {
+                        WideCharToMultiByte( CP_ACP, 0, szCookieData, len, lpCookieData, *lpdwSize, NULL, NULL);
+                    }else {
+                        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                        r = FALSE;
+                    }
+                }
+                *lpdwSize = size;
+            }
 
             heap_free( szCookieData );
         }
