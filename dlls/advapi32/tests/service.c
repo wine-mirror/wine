@@ -1853,7 +1853,7 @@ static void test_sequence(void)
 
             /* Test using QueryServiceObjectSecurity to obtain security information */
             SetLastError(0xdeadbeef);
-            bret = pQueryServiceObjectSecurity(svc_handle, DACL_SECURITY_INFORMATION, pSD, 0, &n1);
+            bret = pQueryServiceObjectSecurity(svc_handle, DACL_SECURITY_INFORMATION, NULL, 0, &n1);
             error = GetLastError();
             ok(!bret, "Expected QueryServiceObjectSecurity to fail: result %d\n", bret);
             ok(error == ERROR_INSUFFICIENT_BUFFER, "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", error);
