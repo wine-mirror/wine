@@ -440,16 +440,18 @@ void WINAPI AtlModuleAddCreateWndData(_ATL_MODULEW *pM, _AtlCreateWndData *pData
 /***********************************************************************
  *           AtlModuleExtractCreateWndData      [ATL.@]
  *
- *  NOTE: I failed to find any good description of this function.
- *        Tests show that this function extracts one of _AtlCreateWndData
+ *  NOTE: Tests show that this function extracts one of _AtlCreateWndData
  *        records from the current thread from a list
  *
  */
 void* WINAPI AtlModuleExtractCreateWndData(_ATL_MODULEW *pM)
 {
     _AtlCreateWndData **ppData;
+    void *ret = NULL;
 
     TRACE("(%p)\n", pM);
+
+    EnterCriticalSection(&pM->m_csWindowCreate);
 
     for(ppData = &pM->m_pCreateWndList; *ppData!=NULL; ppData = &(*ppData)->m_pNext)
     {
@@ -457,10 +459,13 @@ void* WINAPI AtlModuleExtractCreateWndData(_ATL_MODULEW *pM)
         {
             _AtlCreateWndData *pData = *ppData;
             *ppData = pData->m_pNext;
-            return pData->m_pThis;
+            ret = pData->m_pThis;
+            break;
         }
     }
-    return NULL;
+
+    LeaveCriticalSection(&pM->m_csWindowCreate);
+    return ret;
 }
 
 /***********************************************************************
