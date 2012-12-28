@@ -156,12 +156,57 @@ static void test_regcat(void)
     test_key_exists(HKEY_CLASSES_ROOT, "CLSID\\{" CLSID_TEST_STR "}");
 }
 
+static void test_typelib(void)
+{
+    ITypeLib *typelib;
+    HINSTANCE inst;
+    size_t len;
+    BSTR path;
+    HRESULT hres;
+
+    static const WCHAR scrrun_dll_suffixW[] = {'\\','s','c','r','r','u','n','.','d','l','l',0};
+    static const WCHAR mshtml_tlb_suffixW[] = {'\\','m','s','h','t','m','l','.','t','l','b',0};
+
+    inst = LoadLibraryA("scrrun.dll");
+    ok(inst != NULL, "Could not load scrrun.dll\n");
+
+    typelib = NULL;
+    hres = AtlLoadTypeLib(inst, NULL, &path, &typelib);
+    ok(hres == S_OK, "AtlLoadTypeLib failed: %08x\n", hres);
+    FreeLibrary(inst);
+
+    len = SysStringLen(path);
+    ok(len > sizeof(scrrun_dll_suffixW)/sizeof(WCHAR)
+       && lstrcmpiW(path+len-sizeof(scrrun_dll_suffixW)/sizeof(WCHAR), scrrun_dll_suffixW),
+       "unexpected path %s\n", wine_dbgstr_w(path));
+    SysFreeString(path);
+    ok(typelib != NULL, "typelib == NULL\n");
+    ITypeLib_Release(typelib);
+
+    inst = LoadLibraryA("mshtml.dll");
+    ok(inst != NULL, "Could not load mshtml.dll\n");
+
+    typelib = NULL;
+    hres = AtlLoadTypeLib(inst, NULL, &path, &typelib);
+    ok(hres == S_OK, "AtlLoadTypeLib failed: %08x\n", hres);
+    FreeLibrary(inst);
+
+    len = SysStringLen(path);
+    ok(len > sizeof(mshtml_tlb_suffixW)/sizeof(WCHAR)
+       && lstrcmpiW(path+len-sizeof(mshtml_tlb_suffixW)/sizeof(WCHAR), mshtml_tlb_suffixW),
+       "unexpected path %s\n", wine_dbgstr_w(path));
+    SysFreeString(path);
+    ok(typelib != NULL, "typelib == NULL\n");
+    ITypeLib_Release(typelib);
+}
+
 START_TEST(atl)
 {
     CoInitialize(NULL);
 
     test_winmodule();
     test_regcat();
+    test_typelib();
 
     CoUninitialize();
 }

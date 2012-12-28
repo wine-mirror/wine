@@ -22,8 +22,19 @@
 #include "atlbase.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl100);
+
+static inline void *heap_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline BOOL heap_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
 
 static ICatRegister *catreg;
 
@@ -268,25 +279,56 @@ void WINAPI AtlCallTermFunc(_ATL_MODULE *pM)
 }
 
 /***********************************************************************
- *           AtlLoadTypeLib             [atl100.@]
+ *           AtlLoadTypeLib             [atl100.56]
  */
 HRESULT WINAPI AtlLoadTypeLib(HINSTANCE inst, LPCOLESTR lpszIndex,
         BSTR *pbstrPath, ITypeLib **ppTypeLib)
 {
-    OLECHAR path[MAX_PATH+8]; /* leave some space for index */
+    size_t path_len, index_len;
+    ITypeLib *typelib = NULL;
+    WCHAR *path;
     HRESULT hres;
+
+    static const WCHAR tlb_extW[] = {'.','t','l','b',0};
 
     TRACE("(%p %s %p %p)\n", inst, debugstr_w(lpszIndex), pbstrPath, ppTypeLib);
 
-    GetModuleFileNameW(inst, path, MAX_PATH);
-    if(lpszIndex)
-        lstrcatW(path, lpszIndex);
+    index_len = lpszIndex ? strlenW(lpszIndex) : 0;
+    path = heap_alloc((MAX_PATH+index_len)*sizeof(WCHAR) + sizeof(tlb_extW));
+    if(!path)
+        return E_OUTOFMEMORY;
 
-    hres = LoadTypeLib(path, ppTypeLib);
+    path_len = GetModuleFileNameW(inst, path, MAX_PATH);
+    if(!path_len)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    if(index_len)
+        memcpy(path+path_len, lpszIndex, (index_len+1)*sizeof(WCHAR));
+
+    hres = LoadTypeLib(path, &typelib);
+    if(FAILED(hres)) {
+        WCHAR *ptr;
+
+        for(ptr = path+path_len-1; ptr > path && *ptr != '\\' && *ptr != '.'; ptr--);
+        if(*ptr != '.')
+            ptr = path+path_len;
+        memcpy(ptr, tlb_extW, sizeof(tlb_extW));
+        hres = LoadTypeLib(path, &typelib);
+    }
+
+    if(SUCCEEDED(hres)) {
+        *pbstrPath = SysAllocString(path);
+        if(!*pbstrPath) {
+            ITypeLib_Release(typelib);
+            hres = E_OUTOFMEMORY;
+        }
+    }
+
+    heap_free(path);
     if(FAILED(hres))
         return hres;
 
-    *pbstrPath = SysAllocString(path);
+    *ppTypeLib = typelib;
     return S_OK;
 }
 
