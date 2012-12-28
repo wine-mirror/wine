@@ -2437,7 +2437,7 @@ static BOOL file_protocol_start(IInternetProtocol *protocol, LPCWSTR url,
 
     CHECK_CALLED(GetBindInfo);
     if(!(bindf & BINDF_FROMURLMON))
-       CHECK_CALLED(ReportProgress_DIRECTBIND);
+        CLEAR_CALLED(ReportProgress_DIRECTBIND); /* Not called by IE10 */
     if(is_first) {
         CHECK_CALLED(ReportProgress_SENDINGREQUEST);
         CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
