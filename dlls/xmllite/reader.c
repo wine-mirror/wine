@@ -361,7 +361,9 @@ static HRESULT readerinput_query_for_stream(xmlreaderinput *readerinput)
 static HRESULT readerinput_growraw(xmlreaderinput *readerinput)
 {
     encoded_buffer *buffer = &readerinput->buffer->encoded;
-    ULONG len = buffer->allocated - buffer->written, read;
+    /* to make sure aligned length won't exceed allocated length */
+    ULONG len = buffer->allocated - buffer->written - 4;
+    ULONG read;
     HRESULT hr;
 
     /* always try to get aligned to 4 bytes, so the only case we can get partialy read characters is
@@ -445,18 +447,35 @@ static int readerinput_get_utf8_convlen(xmlreaderinput *readerinput)
     return len;
 }
 
-/* returns byte length of complete char sequence for specified code page, */
-static int readerinput_get_convlen(xmlreaderinput *readerinput, UINT cp)
+/* Returns byte length of complete char sequence for buffer code page,
+   it's relative to current buffer position which is currently used for BOM handling
+   only. */
+static int readerinput_get_convlen(xmlreaderinput *readerinput)
 {
     encoded_buffer *buffer = &readerinput->buffer->encoded;
     int len;
 
-    if (cp == CP_UTF8)
+    if (readerinput->buffer->code_page == CP_UTF8)
         len = readerinput_get_utf8_convlen(readerinput);
     else
         len = buffer->written;
 
+    TRACE("%d\n", len - (int)(buffer->cur - buffer->data));
     return len - (buffer->cur - buffer->data);
+}
+
+/* It's possbile that raw buffer has some leftovers from last conversion - some char
+   sequence that doesn't represent a full code point. Length argument should be calculated with
+   readerinput_get_convlen(). */
+static void readerinput_shrinkraw(xmlreaderinput *readerinput, int len)
+{
+    encoded_buffer *buffer = &readerinput->buffer->encoded;
+    memmove(buffer->data, buffer->cur + (buffer->written - len), len);
+    /* everything lower cur is lost too */
+    buffer->written -= len + (buffer->cur - buffer->data);
+    /* after this point we don't need cur pointer really,
+       it's used only to mark where actual data begins when first chunk is read */
+    buffer->cur = buffer->data;
 }
 
 /* note that raw buffer content is kept */
@@ -472,7 +491,8 @@ static void readerinput_switchencoding(xmlreaderinput *readerinput, xml_encoding
     hr = get_code_page(enc, &cp);
     if (FAILED(hr)) return;
 
-    len = readerinput_get_convlen(readerinput, cp);
+    readerinput->buffer->code_page = cp;
+    len = readerinput_get_convlen(readerinput);
 
     TRACE("switching to cp %d\n", cp);
 
@@ -482,7 +502,6 @@ static void readerinput_switchencoding(xmlreaderinput *readerinput, xml_encoding
         readerinput_grow(readerinput, len);
         memcpy(dest->data, src->cur, len);
         dest->written += len*sizeof(WCHAR);
-        readerinput->buffer->code_page = cp;
         return;
     }
 
@@ -491,7 +510,6 @@ static void readerinput_switchencoding(xmlreaderinput *readerinput, xml_encoding
     ptr = (WCHAR*)dest->data;
     MultiByteToWideChar(cp, 0, src->cur, len, ptr, dest_len);
     ptr[dest_len] = 0;
-    readerinput->buffer->code_page = cp;
     dest->written += dest_len*sizeof(WCHAR);
 }
 
@@ -510,9 +528,45 @@ static void reader_shrink(xmlreader *reader)
     }
 }
 
+/* This is a normal way for reader to get new data converted from raw buffer to utf16 buffer.
+   It won't attempt to shrink but will grow destination buffer if needed */
+static void reader_more(xmlreader *reader)
+{
+    xmlreaderinput *readerinput = reader->input;
+    encoded_buffer *src = &readerinput->buffer->encoded;
+    encoded_buffer *dest = &readerinput->buffer->utf16;
+    UINT cp = readerinput->buffer->code_page;
+    int len, dest_len;
+    WCHAR *ptr;
+
+    /* get some raw data from stream first */
+    readerinput_growraw(readerinput);
+    len = readerinput_get_convlen(readerinput);
+
+    /* just copy for UTF-16 case */
+    if (cp == ~0)
+    {
+        readerinput_grow(readerinput, len);
+        memcpy(dest->data, src->cur, len);
+        dest->written += len*sizeof(WCHAR);
+        return;
+    }
+
+    dest_len = MultiByteToWideChar(cp, 0, src->cur, len, NULL, 0);
+    readerinput_grow(readerinput, dest_len);
+    ptr = (WCHAR*)dest->data;
+    MultiByteToWideChar(cp, 0, src->cur, len, ptr, dest_len);
+    ptr[dest_len] = 0;
+    dest->written += dest_len*sizeof(WCHAR);
+    /* get rid of processed data */
+    readerinput_shrinkraw(readerinput, len);
+}
+
 static inline const WCHAR *reader_get_cur(xmlreader *reader)
 {
-    return (WCHAR*)reader->input->buffer->utf16.cur;
+    WCHAR *ptr = (WCHAR*)reader->input->buffer->utf16.cur;
+    if (!*ptr) reader_more(reader);
+    return ptr;
 }
 
 static int reader_cmp(xmlreader *reader, const WCHAR *str)
@@ -794,18 +848,26 @@ static HRESULT reader_parse_comment(xmlreader *reader)
 
     while (*ptr)
     {
-        if (ptr[0] == '-' && ptr[1] == '-')
+        if (ptr[0] == '-')
         {
-            if (ptr[2] == '>')
+            if (ptr[1] == '-')
             {
-                TRACE("%s\n", debugstr_wn(start, ptr-start));
-                /* skip '-->' */
-                reader_skipn(reader, 3);
-                reader->nodetype = XmlNodeType_Comment;
-                return S_OK;
+                if (ptr[2] == '>')
+                {
+                    TRACE("%s\n", debugstr_wn(start, ptr-start));
+                    /* skip '-->' */
+                    reader_skipn(reader, 3);
+                    reader->nodetype = XmlNodeType_Comment;
+                    return S_OK;
+                }
+                else
+                    return WC_E_COMMENT;
             }
             else
-                return WC_E_COMMENT;
+            {
+                ptr++;
+                reader_more(reader);
+            }
         }
         else
         {
