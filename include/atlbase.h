@@ -252,6 +252,7 @@ HRESULT WINAPI AtlUnmarshalPtr(IStream *pStream, const IID *iid, IUnknown **ppUn
 HRESULT WINAPI AtlCreateRegistrar(IRegistrar**);
 HRESULT WINAPI AtlUpdateRegistryFromResourceD(HINSTANCE,LPCOLESTR,BOOL,struct _ATL_REGMAP_ENTRY*,IRegistrar*);
 HRESULT WINAPI AtlLoadTypeLib(HINSTANCE,LPCOLESTR,BSTR*,ITypeLib**);
+HRESULT WINAPI AtlRegisterTypeLib(HINSTANCE,LPCOLESTR);
 HRESULT WINAPI AtlRegisterClassCategoriesHelper(REFCLSID,const struct _ATL_CATMAP_ENTRY*,BOOL);
 HRESULT WINAPI AtlComModuleGetClassObject(_ATL_COM_MODULE*,REFCLSID,REFIID,void**);
 

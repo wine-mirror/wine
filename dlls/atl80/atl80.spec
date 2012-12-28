@@ -6,7 +6,7 @@
 15 stdcall AtlComModuleGetClassObject(ptr ptr ptr ptr) atl100.AtlComModuleGetClassObject
 17 stub AtlComModuleRegisterClassObjects
 18 stub AtlComModuleRegisterServer(ptr long ptr)
-19 stub AtlRegisterTypeLib(ptr wstr)
+19 stdcall AtlRegisterTypeLib(ptr wstr)
 20 stub AtlComModuleRevokeClassObjects
 22 stub AtlComModuleUnregisterServer
 23 stdcall AtlUpdateRegistryFromResourceD(long wstr long ptr ptr) atl100.AtlUpdateRegistryFromResourceD

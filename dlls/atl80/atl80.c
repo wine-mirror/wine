@@ -16,10 +16,35 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-#include "windef.h"
-#include "winbase.h"
+#define COBJMACROS
+
 #include "atlbase.h"
+
+#include "wine/debug.h"
+#include "wine/unicode.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(atl);
+
+/***********************************************************************
+ *           AtlRegisterTypeLib         [atl80.19]
+ */
+HRESULT WINAPI AtlRegisterTypeLib(HINSTANCE inst, const WCHAR *index)
+{
+    ITypeLib *typelib;
+    BSTR path;
+    HRESULT hres;
+
+    TRACE("(%p %s)\n", inst, debugstr_w(index));
+
+    hres = AtlLoadTypeLib(inst, index, &path, &typelib);
+    if(FAILED(hres))
+        return hres;
+
+    hres = RegisterTypeLib(typelib, path, NULL); /* FIXME: pass help directory */
+    ITypeLib_Release(typelib);
+    SysFreeString(path);
+    return hres;
+}
 
 /***********************************************************************
  *           AtlGetVersion              [atl80.@]
