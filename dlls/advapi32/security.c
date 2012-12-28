@@ -4785,7 +4785,7 @@ static BOOL DumpAce(LPVOID pace, WCHAR **pwptr, ULONG *plen)
 static BOOL DumpAcl(PACL pacl, WCHAR **pwptr, ULONG *plen, BOOL protected, BOOL autoInheritReq, BOOL autoInherited)
 {
     WORD count;
-    int i;
+    UINT i;
 
     if (protected)
         DumpString(SDDL_PROTECTED, -1, pwptr, plen);
