@@ -58,7 +58,7 @@ static void test_GetDataSource(WCHAR *initstring)
 static void test_database(void)
 {
     static WCHAR initstring_jet[] = {'P','r','o','v','i','d','e','r','=','M','i','c','r','o','s','o','f','t','.',
-         'J','e','t','.','O','L','E','D','B','.','4','.','0',';',0,
+         'J','e','t','.','O','L','E','D','B','.','4','.','0',';',
          'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',0};
     static WCHAR initstring_default[] = {'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',0};
     IDataInitialize *datainit = NULL;

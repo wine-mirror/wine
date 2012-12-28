@@ -289,6 +289,32 @@ static void free_dbpropset(ULONG count, DBPROPSET *propset)
     CoTaskMemFree(propset);
 }
 
+static HRESULT set_dbpropset(BSTR name, BSTR value, DBPROPSET **propset)
+{
+    static const WCHAR datasourceW[] = {'D','a','t','a',' ','S','o','u','r','c','e',0};
+
+    *propset = CoTaskMemAlloc(sizeof(DBPROPSET));
+    (*propset)->rgProperties = CoTaskMemAlloc(sizeof(DBPROP));
+
+    if (!strcmpW(datasourceW, name))
+    {
+        (*propset)->cProperties = 1;
+        (*propset)->guidPropertySet = DBPROPSET_DBINIT;
+        (*propset)->rgProperties[0].dwPropertyID = DBPROP_INIT_DATASOURCE;
+        (*propset)->rgProperties[0].dwOptions = DBPROPOPTIONS_REQUIRED;
+        (*propset)->rgProperties[0].dwStatus = 0;
+        memset(&(*propset)->rgProperties[0].colid, 0, sizeof(DBID));
+        V_VT(&(*propset)->rgProperties[0].vValue) = VT_BSTR;
+        V_BSTR(&(*propset)->rgProperties[0].vValue) = SysAllocString(value);
+        return S_OK;
+    }
+    else
+    {
+        FIXME("unsupported property %s\n", debugstr_w(name));
+        return E_FAIL;
+    }
+}
+
 /*** IDataInitialize methods ***/
 static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *outer, DWORD clsctx,
                                 LPWSTR initstring, REFIID riid, IUnknown **datasource)
@@ -296,11 +322,13 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
     static const WCHAR providerW[] = {'P','r','o','v','i','d','e','r','=',0};
     static const WCHAR msdasqlW[] = {'M','S','D','A','S','Q','L',0};
     datainit *This = impl_from_IDataInitialize(iface);
+    IDBProperties *dbprops;
+    DBPROPSET *propset;
     WCHAR *prov = NULL;
     CLSID provclsid;
     HRESULT hr;
 
-    FIXME("(%p)->(%p 0x%x %s %s %p): semi-stub\n", This, outer, clsctx, debugstr_w(initstring), debugstr_guid(riid), datasource);
+    TRACE("(%p)->(%p 0x%x %s %s %p)\n", This, outer, clsctx, debugstr_w(initstring), debugstr_guid(riid), datasource);
 
     /* first get provider name */
     provclsid = IID_NULL;
@@ -340,9 +368,7 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
     /* check for provider mismatch if it was specified in init string */
     if (*datasource && prov)
     {
-        IDBProperties *dbprops;
         DBPROPIDSET propidset;
-        DBPROPSET *propset;
         enum DBPROPENUM prop;
         CLSID initprov;
         ULONG count;
@@ -385,7 +411,57 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
             hr = create_db_init((void**)datasource);
     }
 
-    /* FIXME: set properties from init string */
+    /* now set properties */
+    if (initstring)
+    {
+        static const WCHAR scolW[] = {';',0};
+        static const WCHAR eqW[] = {'=',0};
+        WCHAR *eq, *start;
+
+        hr = IUnknown_QueryInterface(*datasource, &IID_IDBProperties, (void**)&dbprops);
+        if (FAILED(hr))
+        {
+            WARN("provider doesn't support IDBProperties\n");
+            return hr;
+        }
+
+        start = initstring;
+        while ((eq = strstrW(start, eqW)))
+        {
+            static const WCHAR providerW[] = {'P','r','o','v','i','d','e','r',0};
+            WCHAR *scol = strstrW(eq+1, scolW);
+            BSTR value, name;
+
+            name = SysAllocStringLen(start, eq - start);
+            /* skip equal sign to get value */
+            eq++;
+            value = SysAllocStringLen(eq, scol ? scol - eq : -1);
+
+            /* skip semicolon if present */
+            if (scol) scol++;
+            start = scol;
+
+            if (!strcmpW(name, providerW))
+            {
+                SysFreeString(name);
+                SysFreeString(value);
+                continue;
+            }
+
+            TRACE("property (name=%s, value=%s)\n", debugstr_w(name), debugstr_w(value));
+
+            hr = set_dbpropset(name, value, &propset);
+            SysFreeString(name);
+            SysFreeString(value);
+            if (FAILED(hr)) return hr;
+
+            hr = IDBProperties_SetProperties(dbprops, 1, propset);
+            free_dbpropset(1, propset);
+            TRACE("provider ret 0x%08x\n", hr);
+        }
+
+        IDBProperties_Release(dbprops);
+    }
 
     return hr;
 }
