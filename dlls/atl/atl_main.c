@@ -225,7 +225,7 @@ HRESULT WINAPI AtlModuleRegisterServer(_ATL_MODULEW* pM, BOOL bRegTypeLib, const
 
     if (bRegTypeLib)
     {
-        hRes = AtlModuleRegisterTypeLib(pM, NULL);
+        hRes = AtlRegisterTypeLib(pM->m_hInstTypeLib, NULL);
         if (FAILED(hRes))
             return hRes;
     }
@@ -276,25 +276,12 @@ HRESULT WINAPI AtlModuleGetClassObject(_ATL_MODULEW *pm, REFCLSID rclsid,
  */
 HRESULT WINAPI AtlModuleRegisterTypeLib(_ATL_MODULEW *pm, LPCOLESTR lpszIndex)
 {
-    HRESULT hRes;
-    BSTR path;
-    ITypeLib *typelib;
-
     TRACE("%p %s\n", pm, debugstr_w(lpszIndex));
 
     if (!pm)
         return E_INVALIDARG;
 
-    hRes = AtlModuleLoadTypeLib(pm, lpszIndex, &path, &typelib);
-
-    if (SUCCEEDED(hRes))
-    {
-        hRes = RegisterTypeLib(typelib, path, NULL); /* FIXME: pass help directory */
-        ITypeLib_Release(typelib);
-        SysFreeString(path);
-    }
-
-    return hRes;
+    return AtlRegisterTypeLib(pm->m_hInstTypeLib, lpszIndex);
 }
 
 /***********************************************************************

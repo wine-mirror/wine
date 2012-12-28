@@ -15380,7 +15380,7 @@ wine_fn_config_dll atl enable_atl implib
 wine_fn_config_test dlls/atl/tests atl_test
 wine_fn_config_dll atl100 enable_atl100 implib
 wine_fn_config_test dlls/atl100/tests atl100_test
-wine_fn_config_dll atl80 enable_atl80
+wine_fn_config_dll atl80 enable_atl80 implib
 wine_fn_config_dll authz enable_authz
 wine_fn_config_dll avicap32 enable_avicap32 implib
 wine_fn_config_dll avifil32 enable_avifil32 implib,po

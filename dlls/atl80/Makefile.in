@@ -1,4 +1,5 @@
 MODULE    = atl80.dll
+IMPORTLIB = atl80
 IMPORTS   = atl100 oleaut32
 EXTRADEFS = -D_ATL_VER=_ATL_VER_80
 
