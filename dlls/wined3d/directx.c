@@ -1711,6 +1711,7 @@ static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_in
             {"HD 6630M",CARD_AMD_RADEON_HD6600M},
             {"HD 6600M",CARD_AMD_RADEON_HD6600M},
             {"HD 6600", CARD_AMD_RADEON_HD6600},
+            {"HD 6570", CARD_AMD_RADEON_HD6600},
             {"HD 6500M",CARD_AMD_RADEON_HD6600M},
             {"HD 6500", CARD_AMD_RADEON_HD6600},
             {"HD 6400", CARD_AMD_RADEON_HD6400},
