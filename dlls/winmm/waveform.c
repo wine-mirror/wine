@@ -1137,7 +1137,7 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_OpenInfo *info,
             AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST,
             AC_BUFLEN, 0, device->orig_fmt, &device->parent->session);
     if(FAILED(hr)){
-        if(hr == AUDCLNT_E_UNSUPPORTED_FORMAT){
+        if(hr == AUDCLNT_E_UNSUPPORTED_FORMAT && !(info->flags & WAVE_FORMAT_DIRECT)){
             ret = WINMM_MapDevice(device, is_out);
             if(ret != MMSYSERR_NOERROR || info->flags & WAVE_FORMAT_QUERY)
                 goto error;
