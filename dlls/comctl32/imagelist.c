@@ -2235,7 +2235,7 @@ HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
     void *image_bits, *mask_bits = NULL;
     ILHEAD	ilHead;
     HIMAGELIST	himl;
-    int		i;
+    unsigned int i;
 
     TRACE("%p\n", pstm);
 
