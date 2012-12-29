@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-12-21 19:24+0300\n"
+"PO-Revision-Date: 2012-12-29 09:34+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -10371,77 +10371,69 @@ msgstr "Šios tarnybos vykdomos:\n"
 
 #: netstat.rc:27
 msgid "CLOSED"
-msgstr ""
+msgstr "NUTRAUKTAS"
 
 #: netstat.rc:28
 msgid "LISTENING"
-msgstr ""
+msgstr "KLAUSOMASI"
 
 #: netstat.rc:29
 msgid "SYN_SENT"
-msgstr ""
+msgstr "SYN_IŠSIŲSTAS"
 
 #: netstat.rc:30
 msgid "SYN_RCVD"
-msgstr ""
+msgstr "SYN_GAUTAS"
 
 #: netstat.rc:31
 msgid "ESTABLISHED"
-msgstr ""
+msgstr "UŽMEGZTAS"
 
 #: netstat.rc:32
 msgid "FIN_WAIT1"
-msgstr ""
+msgstr "FIN_LAUKIMAS1"
 
 #: netstat.rc:33
 msgid "FIN_WAIT2"
-msgstr ""
+msgstr "FIN_LAUKIMAS2"
 
 #: netstat.rc:34
 msgid "CLOSE_WAIT"
-msgstr ""
+msgstr "NUTRAUKIMO_LAUKIMAS"
 
 #: netstat.rc:35
 msgid "CLOSING"
-msgstr ""
+msgstr "NUTRAUKIAMA"
 
 #: netstat.rc:36
 msgid "LAST_ACK"
-msgstr ""
+msgstr "PASKUTINIS_ACK"
 
 #: netstat.rc:37
 msgid "TIME_WAIT"
-msgstr ""
+msgstr "PERIODO_LAUKIMAS"
 
 #: netstat.rc:38
 msgid "DELETE_TCB"
-msgstr ""
+msgstr "TCB_PAŠALINTAS"
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Connections"
-msgstr "Vietinio tinklo ryšys"
+msgstr "Aktyvūs ryšiai"
 
 #: netstat.rc:41
 msgid "Proto"
-msgstr ""
+msgstr "Prot."
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "Email Address"
 msgid "Local Address"
-msgstr "Elektroninio pašto adresas"
+msgstr "Vietinis adresas"
 
 #: netstat.rc:43
-#, fuzzy
-#| msgid "Street Address"
 msgid "Foreign Address"
-msgstr "Adresas"
+msgstr "Svetimas adresas"
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "Status"
 msgid "State"
 msgstr "Būsena"
 
