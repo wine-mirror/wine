@@ -160,6 +160,9 @@ static const crack_url_test_t crack_url_tests[] = {
     {"file:///C:/Program%20Files/Atmel/./Asdf.xml",
         0, 4, INTERNET_SCHEME_FILE, -1, 0, -1, 0, -1, 0, -1, 0, 7, 36, -1, 0,
         "file", "", "", "", "C:\\Program Files\\Atmel\\.\\Asdf.xml", ""},
+    {"C:\\file.txt",
+        0, 1, INTERNET_SCHEME_UNKNOWN, -1, 0, -1, 0, -1, 0, -1, 0, 2, 9, -1, 0,
+        "C", "", "", "", "\\file.txt", ""}
 };
 
 static const WCHAR *w_str_of(const char *str)
@@ -541,6 +544,7 @@ static void InternetCrackUrl_test(void)
   SetLastError(0xdeadbeef);
   urlComponents.dwStructSize = 0;
   ret = InternetCrackUrlA(TEST_URL, 0, 0, &urlComponents);
+  GLE = GetLastError();
   ok(ret == FALSE, "Expected InternetCrackUrl to fail\n");
   ok(GLE != 0xdeadbeef && GLE != ERROR_SUCCESS, "Expected GLE to represent a failure\n");
 
@@ -551,8 +555,25 @@ static void InternetCrackUrl_test(void)
   SetLastError(0xdeadbeef);
   urlComponents.dwStructSize = sizeof(urlComponents) + 1;
   ret = InternetCrackUrlA(TEST_URL, 0, 0, &urlComponents);
+  GLE = GetLastError();
   ok(ret == FALSE, "Expected InternetCrackUrl to fail\n");
   ok(GLE != 0xdeadbeef && GLE != ERROR_SUCCESS, "Expected GLE to represent a failure\n");
+
+  SetLastError(0xdeadbeef);
+  memset(&urlComponents, 0, sizeof(urlComponents));
+  urlComponents.dwStructSize = sizeof(urlComponents);
+  ret = InternetCrackUrlA("file.txt", 0, 0, &urlComponents);
+  GLE = GetLastError();
+  ok(ret == FALSE, "Expected InternetCrackUrl to fail\n");
+  ok(GLE == ERROR_INTERNET_UNRECOGNIZED_SCHEME, "Expected GLE to represent a failure\n");
+
+  SetLastError(0xdeadbeef);
+  memset(&urlComponents, 0, sizeof(urlComponents));
+  urlComponents.dwStructSize = sizeof(urlComponents);
+  ret = InternetCrackUrlA("www.winehq.org", 0, 0, &urlComponents);
+  GLE = GetLastError();
+  ok(ret == FALSE, "Expected InternetCrackUrl to fail\n");
+  ok(GLE == ERROR_INTERNET_UNRECOGNIZED_SCHEME, "Expected GLE to represent a failure\n");
 }
 
 static void InternetCrackUrlW_test(void)
@@ -690,12 +711,10 @@ static void InternetCrackUrlW_test(void)
     comp.dwExtraInfoLength = sizeof(extra)/sizeof(extra[0]);
 
     r = InternetCrackUrlW(url2, 0, 0, &comp);
-    todo_wine {
     ok(!r, "InternetCrackUrl should have failed\n");
     ok(GetLastError() == ERROR_INTERNET_UNRECOGNIZED_SCHEME,
         "InternetCrackUrl should have failed with error ERROR_INTERNET_UNRECOGNIZED_SCHEME instead of error %d\n",
         GetLastError());
-    }
 
     /* Test to see whether cracking a URL without a filename initializes urlpart */
     urlpart[0]=0xba;

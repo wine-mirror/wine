@@ -1647,9 +1647,9 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
    *
    */
     LPCWSTR lpszParam    = NULL;
-    BOOL  bIsAbsolute = FALSE;
+    BOOL  found_colon = FALSE;
     LPCWSTR lpszap, lpszUrl = lpszUrl_orig;
-    LPCWSTR lpszcp = NULL;
+    LPCWSTR lpszcp = NULL, lpszNetLoc;
     LPWSTR  lpszUrl_decode = NULL;
     DWORD dwUrlLength = dwUrlLength_orig;
 
@@ -1699,9 +1699,9 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
             lpszap++;
             continue;
         }
-        if ((*lpszap == ':') && (lpszap - lpszUrl >= 2))
+        if (*lpszap == ':')
         {
-            bIsAbsolute = TRUE;
+            found_colon = TRUE;
             lpszcp = lpszap;
         }
         else
@@ -1710,6 +1710,11 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
         }
 
         break;
+    }
+
+    if(!found_colon){
+        SetLastError(ERROR_INTERNET_UNRECOGNIZED_SCHEME);
+        return 0;
     }
 
     lpUC->nScheme = INTERNET_SCHEME_UNKNOWN;
@@ -1723,142 +1728,131 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
     SetUrlComponentValueW(&lpUC->lpszExtraInfo, &lpUC->dwExtraInfoLength,
                           lpszParam, lpszParam ? dwUrlLength-(lpszParam-lpszUrl) : 0);
 
-    if (bIsAbsolute) /* Parse <protocol>:[//<net_loc>] */
+
+    /* Get scheme first. */
+    lpUC->nScheme = GetInternetSchemeW(lpszUrl, lpszcp - lpszUrl);
+    SetUrlComponentValueW(&lpUC->lpszScheme, &lpUC->dwSchemeLength,
+                               lpszUrl, lpszcp - lpszUrl);
+
+    /* Eat ':' in protocol. */
+    lpszcp++;
+
+    /* double slash indicates the net_loc portion is present */
+    if ((lpszcp[0] == '/') && (lpszcp[1] == '/'))
     {
-        LPCWSTR lpszNetLoc;
+        lpszcp += 2;
 
-        /* Get scheme first. */
-        lpUC->nScheme = GetInternetSchemeW(lpszUrl, lpszcp - lpszUrl);
-        SetUrlComponentValueW(&lpUC->lpszScheme, &lpUC->dwSchemeLength,
-                                   lpszUrl, lpszcp - lpszUrl);
-
-        /* Eat ':' in protocol. */
-        lpszcp++;
-
-        /* double slash indicates the net_loc portion is present */
-        if ((lpszcp[0] == '/') && (lpszcp[1] == '/'))
+        lpszNetLoc = memchrW(lpszcp, '/', dwUrlLength - (lpszcp - lpszUrl));
+        if (lpszParam)
         {
-            lpszcp += 2;
-
-            lpszNetLoc = memchrW(lpszcp, '/', dwUrlLength - (lpszcp - lpszUrl));
-            if (lpszParam)
-            {
-                if (lpszNetLoc)
-                    lpszNetLoc = min(lpszNetLoc, lpszParam);
-                else
-                    lpszNetLoc = lpszParam;
-            }
-            else if (!lpszNetLoc)
-                lpszNetLoc = lpszcp + dwUrlLength-(lpszcp-lpszUrl);
-
-            /* Parse net-loc */
             if (lpszNetLoc)
+                lpszNetLoc = min(lpszNetLoc, lpszParam);
+            else
+                lpszNetLoc = lpszParam;
+        }
+        else if (!lpszNetLoc)
+            lpszNetLoc = lpszcp + dwUrlLength-(lpszcp-lpszUrl);
+
+        /* Parse net-loc */
+        if (lpszNetLoc)
+        {
+            LPCWSTR lpszHost;
+            LPCWSTR lpszPort;
+
+            /* [<user>[<:password>]@]<host>[:<port>] */
+            /* First find the user and password if they exist */
+
+            lpszHost = memchrW(lpszcp, '@', dwUrlLength - (lpszcp - lpszUrl));
+            if (lpszHost == NULL || lpszHost > lpszNetLoc)
             {
-                LPCWSTR lpszHost;
-                LPCWSTR lpszPort;
+                /* username and password not specified. */
+                SetUrlComponentValueW(&lpUC->lpszUserName, &lpUC->dwUserNameLength, NULL, 0);
+                SetUrlComponentValueW(&lpUC->lpszPassword, &lpUC->dwPasswordLength, NULL, 0);
+            }
+            else /* Parse out username and password */
+            {
+                LPCWSTR lpszUser = lpszcp;
+                LPCWSTR lpszPasswd = lpszHost;
 
-                /* [<user>[<:password>]@]<host>[:<port>] */
-                /* First find the user and password if they exist */
-
-                lpszHost = memchrW(lpszcp, '@', dwUrlLength - (lpszcp - lpszUrl));
-                if (lpszHost == NULL || lpszHost > lpszNetLoc)
+                while (lpszcp < lpszHost)
                 {
-                    /* username and password not specified. */
-                    SetUrlComponentValueW(&lpUC->lpszUserName, &lpUC->dwUserNameLength, NULL, 0);
-                    SetUrlComponentValueW(&lpUC->lpszPassword, &lpUC->dwPasswordLength, NULL, 0);
-                }
-                else /* Parse out username and password */
-                {
-                    LPCWSTR lpszUser = lpszcp;
-                    LPCWSTR lpszPasswd = lpszHost;
+                    if (*lpszcp == ':')
+                        lpszPasswd = lpszcp;
 
-                    while (lpszcp < lpszHost)
-                    {
-                        if (*lpszcp == ':')
-                            lpszPasswd = lpszcp;
-
-                        lpszcp++;
-                    }
-
-                    SetUrlComponentValueW(&lpUC->lpszUserName, &lpUC->dwUserNameLength,
-                                          lpszUser, lpszPasswd - lpszUser);
-
-                    if (lpszPasswd != lpszHost)
-                        lpszPasswd++;
-                    SetUrlComponentValueW(&lpUC->lpszPassword, &lpUC->dwPasswordLength,
-                                          lpszPasswd == lpszHost ? NULL : lpszPasswd,
-                                          lpszHost - lpszPasswd);
-
-                    lpszcp++; /* Advance to beginning of host */
+                    lpszcp++;
                 }
 
-                /* Parse <host><:port> */
+                SetUrlComponentValueW(&lpUC->lpszUserName, &lpUC->dwUserNameLength,
+                                      lpszUser, lpszPasswd - lpszUser);
 
-                lpszHost = lpszcp;
-                lpszPort = lpszNetLoc;
+                if (lpszPasswd != lpszHost)
+                    lpszPasswd++;
+                SetUrlComponentValueW(&lpUC->lpszPassword, &lpUC->dwPasswordLength,
+                                      lpszPasswd == lpszHost ? NULL : lpszPasswd,
+                                      lpszHost - lpszPasswd);
 
-                /* special case for res:// URLs: there is no port here, so the host is the
-                   entire string up to the first '/' */
-                if(lpUC->nScheme==INTERNET_SCHEME_RES)
+                lpszcp++; /* Advance to beginning of host */
+            }
+
+            /* Parse <host><:port> */
+
+            lpszHost = lpszcp;
+            lpszPort = lpszNetLoc;
+
+            /* special case for res:// URLs: there is no port here, so the host is the
+               entire string up to the first '/' */
+            if(lpUC->nScheme==INTERNET_SCHEME_RES)
+            {
+                SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength,
+                                      lpszHost, lpszPort - lpszHost);
+                lpszcp=lpszNetLoc;
+            }
+            else
+            {
+                while (lpszcp < lpszNetLoc)
+                {
+                    if (*lpszcp == ':')
+                        lpszPort = lpszcp;
+
+                    lpszcp++;
+                }
+
+                /* If the scheme is "file" and the host is just one letter, it's not a host */
+                if(lpUC->nScheme==INTERNET_SCHEME_FILE && lpszPort <= lpszHost+1)
+                {
+                    lpszcp=lpszHost;
+                    SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength,
+                                          NULL, 0);
+                }
+                else
                 {
                     SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength,
                                           lpszHost, lpszPort - lpszHost);
-                    lpszcp=lpszNetLoc;
-                }
-                else
-                {
-                    while (lpszcp < lpszNetLoc)
+                    if (lpszPort != lpszNetLoc)
+                        lpUC->nPort = atoiW(++lpszPort);
+                    else switch (lpUC->nScheme)
                     {
-                        if (*lpszcp == ':')
-                            lpszPort = lpszcp;
-
-                        lpszcp++;
-                    }
-
-                    /* If the scheme is "file" and the host is just one letter, it's not a host */
-                    if(lpUC->nScheme==INTERNET_SCHEME_FILE && lpszPort <= lpszHost+1)
-                    {
-                        lpszcp=lpszHost;
-                        SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength,
-                                              NULL, 0);
-                    }
-                    else
-                    {
-                        SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength,
-                                              lpszHost, lpszPort - lpszHost);
-                        if (lpszPort != lpszNetLoc)
-                            lpUC->nPort = atoiW(++lpszPort);
-                        else switch (lpUC->nScheme)
-                        {
-                        case INTERNET_SCHEME_HTTP:
-                            lpUC->nPort = INTERNET_DEFAULT_HTTP_PORT;
-                            break;
-                        case INTERNET_SCHEME_HTTPS:
-                            lpUC->nPort = INTERNET_DEFAULT_HTTPS_PORT;
-                            break;
-                        case INTERNET_SCHEME_FTP:
-                            lpUC->nPort = INTERNET_DEFAULT_FTP_PORT;
-                            break;
-                        case INTERNET_SCHEME_GOPHER:
-                            lpUC->nPort = INTERNET_DEFAULT_GOPHER_PORT;
-                            break;
-                        default:
-                            break;
-                        }
+                    case INTERNET_SCHEME_HTTP:
+                        lpUC->nPort = INTERNET_DEFAULT_HTTP_PORT;
+                        break;
+                    case INTERNET_SCHEME_HTTPS:
+                        lpUC->nPort = INTERNET_DEFAULT_HTTPS_PORT;
+                        break;
+                    case INTERNET_SCHEME_FTP:
+                        lpUC->nPort = INTERNET_DEFAULT_FTP_PORT;
+                        break;
+                    case INTERNET_SCHEME_GOPHER:
+                        lpUC->nPort = INTERNET_DEFAULT_GOPHER_PORT;
+                        break;
+                    default:
+                        break;
                     }
                 }
             }
-        }
-        else
-        {
-            SetUrlComponentValueW(&lpUC->lpszUserName, &lpUC->dwUserNameLength, NULL, 0);
-            SetUrlComponentValueW(&lpUC->lpszPassword, &lpUC->dwPasswordLength, NULL, 0);
-            SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength, NULL, 0);
         }
     }
     else
     {
-        SetUrlComponentValueW(&lpUC->lpszScheme, &lpUC->dwSchemeLength, NULL, 0);
         SetUrlComponentValueW(&lpUC->lpszUserName, &lpUC->dwUserNameLength, NULL, 0);
         SetUrlComponentValueW(&lpUC->lpszPassword, &lpUC->dwPasswordLength, NULL, 0);
         SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength, NULL, 0);

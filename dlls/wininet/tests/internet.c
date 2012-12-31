@@ -655,9 +655,7 @@ static void test_null(void)
   ok(r == FALSE, "return wrong\n");
 
   r = InternetSetCookieW(szServer, NULL, szServer);
-  todo_wine {
   ok(GetLastError() == ERROR_INTERNET_UNRECOGNIZED_SCHEME, "wrong error\n");
-  }
   ok(r == FALSE, "return wrong\n");
 
   sz = 0;
