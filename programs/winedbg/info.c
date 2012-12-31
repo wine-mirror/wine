@@ -449,30 +449,95 @@ void info_win32_window(HWND hWnd, BOOL detailed)
     dbg_printf("\n");
 }
 
+struct dump_proc_entry
+{
+    PROCESSENTRY32         proc;
+    unsigned               children; /* index in dump_proc.entries of first child */
+    unsigned               sibling;  /* index in dump_proc.entries of next sibling */
+};
+
+struct dump_proc
+{
+    struct dump_proc_entry*entries;
+    unsigned               count;
+    unsigned               alloc;
+};
+
+static unsigned get_parent(const struct dump_proc* dp, unsigned idx)
+{
+    unsigned i;
+
+    for (i = 0; i < dp->count; i++)
+    {
+        if (i != idx && dp->entries[i].proc.th32ProcessID == dp->entries[idx].proc.th32ParentProcessID)
+            return i;
+    }
+    return -1;
+}
+
+static void dump_proc_info(const struct dump_proc* dp, unsigned idx, unsigned depth)
+{
+    struct dump_proc_entry* dpe;
+    for ( ; idx != -1; idx = dp->entries[idx].sibling)
+    {
+        assert(idx < dp->count);
+        dpe = &dp->entries[idx];
+        dbg_printf("%c%08x %-8d ",
+                   (dpe->proc.th32ProcessID == (dbg_curr_process ?
+                                                dbg_curr_process->pid : 0)) ? '>' : ' ',
+                   dpe->proc.th32ProcessID, dpe->proc.cntThreads);
+        if (depth)
+        {
+            unsigned i;
+            for (i = 3 * (depth - 1); i > 0; i--) dbg_printf(" ");
+            dbg_printf("\\_ ");
+        }
+        dbg_printf("'%s'\n", dpe->proc.szExeFile);
+        dump_proc_info(dp, dpe->children, depth + 1);
+    }
+}
+
 void info_win32_processes(void)
 {
     HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (snap != INVALID_HANDLE_VALUE)
     {
-        PROCESSENTRY32  entry;
-        DWORD           current = dbg_curr_process ? dbg_curr_process->pid : 0;
-        BOOL            ok;
+        struct dump_proc  dp;
+        unsigned          i, first = -1;
+        BOOL              ok;
 
-        entry.dwSize = sizeof(entry);
-        ok = Process32First(snap, &entry);
+        dp.count   = 0;
+        dp.alloc   = 16;
+        dp.entries = HeapAlloc(GetProcessHeap(), 0, sizeof(*dp.entries) * dp.alloc);
+        if (!dp.entries) return;
+        dp.entries[dp.count].proc.dwSize = sizeof(dp.entries[dp.count].proc);
+        ok = Process32First(snap, &dp.entries[dp.count].proc);
 
-        dbg_printf(" %-8.8s %-8.8s %-8.8s %s (all id:s are in hex)\n",
-                   "pid", "threads", "parent", "executable");
+        /* fetch all process information into dp (skipping this debugger) */
         while (ok)
         {
-            if (entry.th32ProcessID != GetCurrentProcessId())
-                dbg_printf("%c%08x %-8d %08x '%s'\n",
-                           (entry.th32ProcessID == current) ? '>' : ' ',
-                           entry.th32ProcessID, entry.cntThreads,
-                           entry.th32ParentProcessID, entry.szExeFile);
-            ok = Process32Next(snap, &entry);
+            if (dp.entries[dp.count].proc.th32ProcessID != GetCurrentProcessId())
+                dp.entries[dp.count++].children = -1;
+            if (dp.count >= dp.alloc)
+            {
+                dp.entries = HeapReAlloc(GetProcessHeap(), 0, dp.entries, sizeof(*dp.entries) * (dp.alloc *= 2));
+                if (!dp.entries) return;
+            }
+            dp.entries[dp.count].proc.dwSize = sizeof(dp.entries[dp.count].proc);
+            ok = Process32Next(snap, &dp.entries[dp.count].proc);
         }
         CloseHandle(snap);
+        /* chain the siblings wrt. their parent */
+        for (i = 0; i < dp.count; i++)
+        {
+            unsigned parent = get_parent(&dp, i);
+            unsigned *chain = parent == -1 ? &first : &dp.entries[parent].children;
+            dp.entries[i].sibling = *chain;
+            *chain = i;
+        }
+        dbg_printf(" %-8.8s %-8.8s %s (all id:s are in hex)\n", "pid", "threads", "executable");
+        dump_proc_info(&dp, first, 0);
+        HeapFree(GetProcessHeap(), 0, dp.entries);
     }
 }
 
