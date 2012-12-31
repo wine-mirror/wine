@@ -429,6 +429,9 @@ HRESULT WINAPI AtlRegisterClassCategoriesHelper(REFCLSID clsid, const struct _AT
 
     TRACE("(%s %p %x)\n", debugstr_guid(clsid), catmap, reg);
 
+    if(!catmap)
+        return S_OK;
+
     if(!catreg) {
         ICatRegister *new_catreg;
 

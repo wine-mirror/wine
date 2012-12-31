@@ -154,6 +154,13 @@ static void test_regcat(void)
     test_key_not_exists(HKEY_CLASSES_ROOT, "CLSID\\{" CLSID_TEST_STR "}\\Implemented Categories");
     test_key_not_exists(HKEY_CLASSES_ROOT, "CLSID\\{" CLSID_TEST_STR "}\\Required Categories");
     test_key_exists(HKEY_CLASSES_ROOT, "CLSID\\{" CLSID_TEST_STR "}");
+
+    ok(RegDeleteKeyA(HKEY_CLASSES_ROOT, "CLSID\\{" CLSID_TEST_STR "}") == ERROR_SUCCESS, "Could not delete key\n");
+
+    hres = AtlRegisterClassCategoriesHelper(&CLSID_Test, NULL, TRUE);
+    ok(hres == S_OK, "AtlRegisterClassCategoriesHelper failed: %08x\n", hres);
+
+    test_key_not_exists(HKEY_CLASSES_ROOT, "CLSID\\{" CLSID_TEST_STR "}");
 }
 
 static void test_typelib(void)
