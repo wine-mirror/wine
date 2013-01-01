@@ -609,7 +609,7 @@ static void write_declarations(struct bc_writer *This,
 }
 
 static void write_const(struct constant **consts, int num, DWORD opcode, DWORD reg_type, struct bytecode_buffer *buffer, BOOL len) {
-    DWORD i;
+    int i;
     DWORD instr_def = opcode;
     const DWORD reg = (1<<31) |
                       ((reg_type << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK) |
