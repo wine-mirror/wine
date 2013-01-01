@@ -2836,7 +2836,7 @@ static const struct v1_field v1_fields[] = {
 
 static void add_v1_fields(HWND hwnd, struct detail_data *data)
 {
-    int i;
+    unsigned int i;
     PCCERT_CONTEXT cert = data->pCertViewInfo->pCertContext;
 
     /* The last item in v1_fields is the public key, which is not in the loop
@@ -3768,7 +3768,7 @@ static void show_edit_cert_properties_dialog(HWND parent,
 
 static void free_detail_fields(struct detail_data *data)
 {
-    DWORD i;
+    int i;
 
     for (i = 0; i < data->cFields; i++)
         HeapFree(GetProcessHeap(), 0, data->fields[i].detailed_value);
