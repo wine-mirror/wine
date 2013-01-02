@@ -686,7 +686,6 @@ static HRESULT WINAPI ID3DXMeshImpl_CloneMesh(struct ID3DXMesh *iface, DWORD opt
     void *data_in, *data_out;
     DWORD vertex_size;
     HRESULT hr;
-    int i;
     BOOL same_declaration;
 
     TRACE("(%p)->(%x,%p,%p,%p)\n", This, options, declaration, device, clone_mesh_out);
@@ -738,6 +737,7 @@ static HRESULT WINAPI ID3DXMeshImpl_CloneMesh(struct ID3DXMesh *iface, DWORD opt
         goto error;
     }
     if ((options ^ This->options) & D3DXMESH_32BIT) {
+        DWORD i;
         if (options & D3DXMESH_32BIT) {
             for (i = 0; i < This->numfaces * 3; i++)
                 ((DWORD*)data_out)[i] = ((WORD*)data_in)[i];
@@ -1230,7 +1230,7 @@ static HRESULT WINAPI ID3DXMeshImpl_GenerateAdjacency(ID3DXMesh *iface, FLOAT ep
      * that adjacency checks can be limited to faces sharing a vertex */
     DWORD *shared_indices = NULL;
     const FLOAT epsilon_sq = epsilon * epsilon;
-    int i;
+    DWORD i;
 
     TRACE("(%p)->(%f,%p)\n", This, epsilon, adjacency);
 
@@ -1279,7 +1279,7 @@ static HRESULT WINAPI ID3DXMeshImpl_GenerateAdjacency(ID3DXMesh *iface, FLOAT ep
         DWORD shared_index_a = sorted_vertex_a->first_shared_index;
 
         while (shared_index_a != -1) {
-            int j = i;
+            DWORD j = i;
             DWORD shared_index_b = shared_indices[shared_index_a];
             struct vertex_metadata *sorted_vertex_b = sorted_vertex_a;
 
@@ -2763,7 +2763,7 @@ static HRESULT parse_material(IDirectXFileData *filedata, D3DXMATERIAL *material
 
 static void destroy_materials(struct mesh_data *mesh)
 {
-    int i;
+    DWORD i;
     for (i = 0; i < mesh->num_materials; i++)
         HeapFree(GetProcessHeap(), 0, mesh->materials[i].pTextureFilename);
     HeapFree(GetProcessHeap(), 0, mesh->materials);
@@ -2781,7 +2781,7 @@ static HRESULT parse_material_list(IDirectXFileData *filedata, struct mesh_data 
     const GUID *type;
     IDirectXFileData *child;
     DWORD num_materials;
-    int i;
+    DWORD i;
 
     destroy_materials(mesh);
 
@@ -2902,7 +2902,7 @@ static HRESULT parse_vertex_colors(IDirectXFileData *filedata, struct mesh_data 
     DWORD data_size;
     BYTE *data;
     DWORD num_colors;
-    int i;
+    DWORD i;
 
     HeapFree(GetProcessHeap(), 0, mesh->vertex_colors);
     mesh->vertex_colors = NULL;
@@ -2969,7 +2969,7 @@ static HRESULT parse_normals(IDirectXFileData *filedata, struct mesh_data *mesh)
     DWORD data_size;
     BYTE *data;
     DWORD *index_out_ptr;
-    int i;
+    DWORD i;
     DWORD num_face_indices = mesh->num_poly_faces * 2 + mesh->num_tri_faces;
 
     HeapFree(GetProcessHeap(), 0, mesh->normals);
@@ -3065,7 +3065,7 @@ static HRESULT parse_mesh(IDirectXFileData *filedata, struct mesh_data *mesh_dat
     DWORD *index_out_ptr;
     const GUID *type;
     IDirectXFileData *child;
-    int i;
+    DWORD i;
 
     /*
      * template Mesh {
@@ -3201,7 +3201,7 @@ static HRESULT generate_effects(ID3DXBuffer *materials, DWORD num_materials,
     };
     static const char texture_paramname[] = "Texture0@Name";
     DWORD buffer_size;
-    int i;
+    DWORD i;
 
     /* effects buffer layout:
      *
@@ -3238,7 +3238,7 @@ static HRESULT generate_effects(ID3DXBuffer *materials, DWORD num_materials,
 
     for (i = 0; i < num_materials; i++)
     {
-        int j;
+        DWORD j;
         D3DXEFFECTDEFAULT *defaults = (D3DXEFFECTDEFAULT*)out_ptr;
 
         effect_ptr->pDefaults = defaults;
@@ -3292,7 +3292,7 @@ static HRESULT load_skin_mesh_from_xof(struct IDirectXFileData *filedata, DWORD 
         DWORD normal_index;
         struct list entry;
     } *duplications = NULL;
-    int i;
+    DWORD i;
     void *vertices = NULL;
     void *indices = NULL;
     BYTE *out_ptr;
@@ -3983,7 +3983,6 @@ HRESULT WINAPI D3DXLoadMeshFromXInMemory(const void *memory, DWORD memory_size, 
     DWORD num_materials;
     DWORD num_faces, num_vertices;
     D3DXMATRIX identity;
-    int i;
     DWORD provide_flags = 0;
     DWORD fvf;
     ID3DXMesh *concat_mesh = NULL;
@@ -4087,6 +4086,7 @@ HRESULT WINAPI D3DXLoadMeshFromXInMemory(const void *memory, DWORD memory_size, 
         DWORD num_mesh_vertices = mesh->lpVtbl->GetNumVertices(mesh);
         DWORD mesh_vertex_size;
         const BYTE *mesh_vertices;
+        DWORD i;
 
         hr = mesh->lpVtbl->GetDeclaration(mesh, mesh_decl);
         if (FAILED(hr)) goto cleanup;
@@ -4139,7 +4139,7 @@ HRESULT WINAPI D3DXLoadMeshFromXInMemory(const void *memory, DWORD memory_size, 
         ID3DXMesh *mesh = container_ptr->mesh;
         const void *mesh_indices;
         DWORD num_mesh_faces = mesh->lpVtbl->GetNumFaces(mesh);
-        int i;
+        DWORD i;
 
         hr = mesh->lpVtbl->LockIndexBuffer(mesh, D3DLOCK_READONLY, (void**)&mesh_indices);
         if (FAILED(hr)) goto cleanup;
@@ -4215,6 +4215,7 @@ HRESULT WINAPI D3DXLoadMeshFromXInMemory(const void *memory, DWORD memory_size, 
             LIST_FOR_EACH_ENTRY(container_ptr, &container_list, struct mesh_container, entry)
             {
                 if (container_ptr->materials) {
+                    DWORD i;
                     const D3DXMATERIAL *in_ptr = ID3DXBuffer_GetBufferPointer(container_ptr->materials);
                     for (i = 0; i < container_ptr->num_materials; i++)
                     {
@@ -4233,6 +4234,7 @@ HRESULT WINAPI D3DXLoadMeshFromXInMemory(const void *memory, DWORD memory_size, 
             LIST_FOR_EACH_ENTRY(container_ptr, &container_list, struct mesh_container, entry)
             {
                 if (container_ptr->materials) {
+                    DWORD i;
                     const D3DXMATERIAL *in_ptr = ID3DXBuffer_GetBufferPointer(container_ptr->materials);
                     for (i = 0; i < container_ptr->num_materials; i++)
                     {
@@ -4275,8 +4277,9 @@ HRESULT WINAPI D3DXLoadMeshFromXInMemory(const void *memory, DWORD memory_size, 
             out_ptr = ID3DXBuffer_GetBufferPointer(adjacency);
             LIST_FOR_EACH_ENTRY(container_ptr, &container_list, struct mesh_container, entry)
             {
+                DWORD i;
+                DWORD count = 3 * container_ptr->mesh->lpVtbl->GetNumFaces(container_ptr->mesh);
                 DWORD *in_ptr = ID3DXBuffer_GetBufferPointer(container_ptr->adjacency);
-                int count = 3 * container_ptr->mesh->lpVtbl->GetNumFaces(container_ptr->mesh);
 
                 for (i = 0; i < count; i++)
                     *out_ptr++ = offset + *in_ptr++;
@@ -4389,8 +4392,7 @@ HRESULT WINAPI D3DXCreateSphere(struct IDirect3DDevice9 *device, float radius, U
     float phi_step, phi_start;
     struct sincos_table phi;
     float theta_step, theta, sin_theta, cos_theta;
-    DWORD vertex, face;
-    int slice, stack;
+    DWORD vertex, face, stack, slice;
 
     TRACE("(%p, %f, %u, %u, %p, %p)\n", device, radius, slices, stacks, mesh, adjacency);
 
@@ -4561,8 +4563,7 @@ HRESULT WINAPI D3DXCreateCylinder(struct IDirect3DDevice9 *device, float radius1
     struct sincos_table theta;
     float delta_radius, radius, radius_step;
     float z, z_step, z_normal;
-    DWORD vertex, face;
-    int slice, stack;
+    DWORD vertex, face, slice, stack;
 
     TRACE("(%p, %f, %f, %f, %u, %u, %p, %p)\n", device, radius1, radius2, length, slices, stacks, mesh, adjacency);
 
@@ -5060,6 +5061,7 @@ static HRESULT create_outline(struct glyphinfo *glyph, void *raw_outline, int da
         {
             D3DXVECTOR2 bezier_start = outline->items[outline->count - 1].pos;
             BOOL to_curve = curve->wType != TT_PRIM_LINE && curve->cpfx > 1;
+            unsigned int j2 = 0;
 
             if (!curve->cpfx) {
                 curve = (TTPOLYCURVE *)&curve->apfx[curve->cpfx];
@@ -5074,37 +5076,36 @@ static HRESULT create_outline(struct glyphinfo *glyph, void *raw_outline, int da
             {
                 HRESULT hr;
                 int count = curve->cpfx;
-                j = 0;
 
                 while (count > 2)
                 {
                     D3DXVECTOR2 bezier_end;
 
-                    D3DXVec2Scale(&bezier_end, D3DXVec2Add(&bezier_end, &pt_flt[j], &pt_flt[j+1]), 0.5f);
-                    hr = add_bezier_points(outline, &bezier_start, &pt_flt[j], &bezier_end, max_deviation_sq);
+                    D3DXVec2Scale(&bezier_end, D3DXVec2Add(&bezier_end, &pt_flt[j2], &pt_flt[j2+1]), 0.5f);
+                    hr = add_bezier_points(outline, &bezier_start, &pt_flt[j2], &bezier_end, max_deviation_sq);
                     if (hr != S_OK)
                         return hr;
                     bezier_start = bezier_end;
                     count--;
-                    j++;
+                    j2++;
                 }
-                hr = add_bezier_points(outline, &bezier_start, &pt_flt[j], &pt_flt[j+1], max_deviation_sq);
+                hr = add_bezier_points(outline, &bezier_start, &pt_flt[j2], &pt_flt[j2+1], max_deviation_sq);
                 if (hr != S_OK)
                     return hr;
 
                 pt = add_points(outline, 1);
                 if (!pt)
                     return E_OUTOFMEMORY;
-                j++;
-                pt->pos = pt_flt[j];
+                j2++;
+                pt->pos = pt_flt[j2];
                 pt->corner = POINTTYPE_CURVE_END;
             } else {
                 pt = add_points(outline, curve->cpfx);
                 if (!pt)
                     return E_OUTOFMEMORY;
-                for (j = 0; j < curve->cpfx; j++)
+                for (j2 = 0; j2 < curve->cpfx; j2++)
                 {
-                    pt->pos = pt_flt[j];
+                    pt->pos = pt_flt[j2];
                     pt->corner = POINTTYPE_CORNER;
                     pt++;
                 }
