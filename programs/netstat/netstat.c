@@ -107,7 +107,7 @@ static int __cdecl NETSTAT_wprintf(const WCHAR *format, ...)
     return nOut;
 }
 
-WCHAR *NETSTAT_load_message(UINT id) {
+static WCHAR *NETSTAT_load_message(UINT id) {
     static WCHAR msg[2048];
     static const WCHAR failedW[]  = {'F','a','i','l','e','d','!','\0'};
 
@@ -118,14 +118,14 @@ WCHAR *NETSTAT_load_message(UINT id) {
     return msg;
 }
 
-WCHAR *NETSTAT_port_name(UINT port, WCHAR name[])
+static WCHAR *NETSTAT_port_name(UINT port, WCHAR name[])
 {
     /* FIXME: can we get the name? */
     sprintfW(name, fmtport, htons((WORD)port));
     return name;
 }
 
-WCHAR *NETSTAT_host_name(UINT ip, WCHAR name[])
+static WCHAR *NETSTAT_host_name(UINT ip, WCHAR name[])
 {
     UINT nip;
 
@@ -135,7 +135,7 @@ WCHAR *NETSTAT_host_name(UINT ip, WCHAR name[])
     return name;
 }
 
-void NETSTAT_tcp_table(void)
+static void NETSTAT_tcp_table(void)
 {
     PMIB_TCPTABLE table;
     DWORD err, size, i;
