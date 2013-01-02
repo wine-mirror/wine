@@ -1133,6 +1133,79 @@ static UINT thumb2_disasm_dataprocessing(UINT inst, ADDRESS64 *addr)
     return inst;
 }
 
+static UINT thumb2_disasm_dataprocessingmod(UINT inst, ADDRESS64 *addr)
+{
+    WORD op = (inst >> 21) & 0x0f;
+    WORD sf = (inst >> 20) & 0x01;
+    WORD offset = ((inst >> 15) & 0x0800) + ((inst >>  4) & 0x0700) + (inst & 0xff);
+
+    /* FIXME: use ThumbExpandImm_C */
+
+    switch (op)
+    {
+    case 0:
+        if (get_nibble(inst, 2) == 15)
+            dbg_printf("\n\ttst\t%s, #%u", tbl_regs[get_nibble(inst, 4)], offset);
+        else
+            dbg_printf("\n\tand%s\t%s, %s, #%u", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], offset);
+        return 0;
+    case 1:
+        dbg_printf("\n\tbic%s\t%s, %s, #%u", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                   tbl_regs[get_nibble(inst, 4)], offset);
+        return 0;
+    case 2:
+        if (get_nibble(inst, 4) == 15)
+            dbg_printf("\n\tmov%s\t%s, #%u", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)], offset);
+        else
+            dbg_printf("\n\torr%s\t%s, %s, #%u", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], offset);
+        return 0;
+    case 3:
+        if (get_nibble(inst, 4) == 15)
+            dbg_printf("\n\tmvn%s\t%s, #%u", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)], offset);
+        else
+            dbg_printf("\n\torn%s\t%s, %s, #%u", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], offset);
+        return 0;
+    case 4:
+        if (get_nibble(inst, 2) == 15)
+            dbg_printf("\n\tteq\t%s, #%u", tbl_regs[get_nibble(inst, 4)], offset);
+        else
+            dbg_printf("\n\teor%s\t%s, %s, #%u", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], offset);
+        return 0;
+    case 8:
+        if (get_nibble(inst, 2) == 15)
+            dbg_printf("\n\tcmn\t%s, #%u", tbl_regs[get_nibble(inst, 4)], offset);
+        else
+            dbg_printf("\n\tadd%s\t%s, %s, #%u", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], offset);
+        return 0;
+    case 10:
+        dbg_printf("\n\tadc%s\t%s, %s, #%u", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                   tbl_regs[get_nibble(inst, 4)], offset);
+        return 0;
+    case 11:
+        dbg_printf("\n\tsbc%s\t%s, %s, #%u", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                   tbl_regs[get_nibble(inst, 4)], offset);
+        return 0;
+    case 13:
+        if (get_nibble(inst, 2) == 15)
+            dbg_printf("\n\tcmp\t%s, #%u", tbl_regs[get_nibble(inst, 4)], offset);
+        else
+            dbg_printf("\n\tsub%s\t%s, %s, #%u", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], offset);
+        return 0;
+    case 14:
+        dbg_printf("\n\trsb%s\t%s, %s, #%u", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                   tbl_regs[get_nibble(inst, 4)], offset);
+        return 0;
+    default:
+        return inst;
+    }
+}
+
 static UINT thumb2_disasm_coprocdat(UINT inst, ADDRESS64 *addr)
 {
     WORD opc2 = (inst >> 5) & 0x07;
@@ -1370,6 +1443,7 @@ static const struct inst_arm tbl_thumb32[] = {
     { 0xfe70f000, 0xf810f000, thumb2_disasm_preload },
     { 0xfe500000, 0xf8100000, thumb2_disasm_ldrnonword },
     { 0xfa008000, 0xf2000000, thumb2_disasm_dataprocessing },
+    { 0xfa008000, 0xf0000000, thumb2_disasm_dataprocessingmod },
     { 0xef000010, 0xee000000, thumb2_disasm_coprocdat },
     { 0xef000010, 0xee000010, thumb2_disasm_coprocmov1 },
     { 0xefe00000, 0xec400000, thumb2_disasm_coprocmov2 },
