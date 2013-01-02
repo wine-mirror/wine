@@ -489,10 +489,7 @@ static void test_CreateBitmapFromMemory(void)
     hr = IWICBitmap_CopyPixels(bitmap, NULL, 13, sizeof(data), data);
     ok(hr == S_OK, "IWICBitmap_CopyPixels error %#x\n", hr);
     for (i = 0; i < sizeof(data); i++)
-        if ((i % 13) < 9)
-            ok(data[i] == data3x2[i], "%u: expected %u, got %u\n", i, data3x2[i], data[i]);
-        else
-            todo_wine ok(data[i] == data3x2[i], "%u: expected %u, got %u\n", i, data3x2[i], data[i]);
+        ok(data[i] == data3x2[i], "%u: expected %u, got %u\n", i, data3x2[i], data[i]);
 
     IWICBitmap_Release(bitmap);
 }
