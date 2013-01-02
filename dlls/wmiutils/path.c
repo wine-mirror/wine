@@ -100,6 +100,8 @@ static HRESULT WINAPI path_SetText(
 
     TRACE("%p, %u, %s\n", iface, uMode, debugstr_w(pszPath));
 
+    if (!pszPath) return WBEM_E_INVALID_PARAMETER;
+
     if (uMode) FIXME("igoring mode %u\n", uMode);
 
     len = strlenW( pszPath );
@@ -119,6 +121,8 @@ static HRESULT WINAPI path_GetText(
     struct path *path = impl_from_IWbemPath( iface );
 
     TRACE("%p, 0x%x, %p, %p\n", iface, lFlags, puBufferLength, pszText);
+
+    if (!puBufferLength || !pszText) return WBEM_E_INVALID_PARAMETER;
 
     if (lFlags != WBEMPATH_GET_ORIGINAL)
     {
