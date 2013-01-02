@@ -28,7 +28,6 @@
 #include "wmiutils.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wmiutils_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmiutils);
@@ -211,6 +210,163 @@ static HRESULT WINAPI path_SetText(
     return S_OK;
 }
 
+static WCHAR *build_namespace( struct path *path, int *len )
+{
+    WCHAR *ret, *p;
+    int i;
+
+    *len = 0;
+    for (i = 0; i < path->num_namespaces; i++)
+    {
+        if (i > 0) *len += 1;
+        *len += path->len_namespaces[i];
+    }
+    if (!(p = ret = heap_alloc( (*len + 1) * sizeof(WCHAR) ))) return NULL;
+    for (i = 0; i < path->num_namespaces; i++)
+    {
+        if (i > 0) *p++ = '\\';
+        memcpy( p, path->namespaces[i], path->len_namespaces[i] * sizeof(WCHAR) );
+        p += path->len_namespaces[i];
+    }
+    *p = 0;
+    return ret;
+}
+
+static WCHAR *build_server( struct path *path, int *len )
+{
+    WCHAR *ret, *p;
+
+    *len = 0;
+    if (path->server) *len += 2 + path->len_server;
+    else *len += 4;
+    if (!(p = ret = heap_alloc( (*len + 1) * sizeof(WCHAR) ))) return NULL;
+    if (path->server)
+    {
+        p[0] = p[1] = '\\';
+        strcpyW( p + 2, path->server );
+    }
+    else
+    {
+        p[0] = p[1] = p[3] = '\\';
+        p[2] = '.';
+    }
+    return ret;
+}
+
+static WCHAR *build_path( struct path *path, LONG flags, int *len )
+{
+    switch (flags)
+    {
+    case 0:
+    {
+        int len_namespace;
+        WCHAR *ret, *namespace = build_namespace( path, &len_namespace );
+
+        if (!namespace) return NULL;
+
+        *len = len_namespace;
+        if (path->class) *len += 1 + path->len_class;
+        if (!(ret = heap_alloc( (*len + 1) * sizeof(WCHAR) )))
+        {
+            heap_free( namespace );
+            return NULL;
+        }
+        strcpyW( ret, namespace );
+        if (path->class)
+        {
+            ret[len_namespace] = ':';
+            strcpyW( ret + len_namespace + 1, path->class );
+        }
+        heap_free( namespace );
+        return ret;
+
+    }
+    case WBEMPATH_GET_RELATIVE_ONLY:
+        if (!path->class)
+        {
+            *len = 0;
+            return NULL;
+        }
+        *len = path->len_class;
+        return strdupW( path->class );
+
+    case WBEMPATH_GET_SERVER_TOO:
+    {
+        int len_namespace, len_server;
+        WCHAR *p, *ret, *namespace = build_namespace( path, &len_namespace );
+        WCHAR *server = build_server( path, &len_server );
+
+        if (!namespace || !server)
+        {
+            heap_free( namespace );
+            heap_free( server );
+            return NULL;
+        }
+        *len = len_namespace + len_server;
+        if (path->class) *len += 1 + path->len_class;
+        if (!(p = ret = heap_alloc( (*len + 1) * sizeof(WCHAR) )))
+        {
+            heap_free( namespace );
+            heap_free( server );
+            return NULL;
+        }
+        strcpyW( p, server );
+        p += len_server;
+        strcpyW( p, namespace );
+        p += len_namespace;
+        if (path->class)
+        {
+            *p = ':';
+            strcpyW( p + 1, path->class );
+        }
+        heap_free( namespace );
+        heap_free( server );
+        return ret;
+    }
+    case WBEMPATH_GET_SERVER_AND_NAMESPACE_ONLY:
+    {
+        int len_namespace, len_server;
+        WCHAR *p, *ret, *namespace = build_namespace( path, &len_namespace );
+        WCHAR *server = build_server( path, &len_server );
+
+        if (!namespace || !server)
+        {
+            heap_free( namespace );
+            heap_free( server );
+            return NULL;
+        }
+        *len = len_namespace + len_server;
+        if (!(p = ret = heap_alloc( (*len + 1) * sizeof(WCHAR) )))
+        {
+            heap_free( namespace );
+            heap_free( server );
+            return NULL;
+        }
+        strcpyW( p, server );
+        p += len_server;
+        strcpyW( p, namespace );
+        heap_free( namespace );
+        heap_free( server );
+        return ret;
+    }
+    case WBEMPATH_GET_NAMESPACE_ONLY:
+        return build_namespace( path, len );
+
+    case WBEMPATH_GET_ORIGINAL:
+        if (!path->text)
+        {
+            *len = 0;
+            return NULL;
+        }
+        *len = path->len_text;
+        return strdupW( path->text );
+
+    default:
+        ERR("unhandled flags 0x%x\n", flags);
+        return NULL;
+    }
+}
+
 static HRESULT WINAPI path_GetText(
     IWbemPath *iface,
     LONG lFlags,
@@ -218,23 +374,27 @@ static HRESULT WINAPI path_GetText(
     LPWSTR pszText)
 {
     struct path *path = impl_from_IWbemPath( iface );
+    WCHAR *str;
+    int len;
 
     TRACE("%p, 0x%x, %p, %p\n", iface, lFlags, puBufferLength, pszText);
 
     if (!puBufferLength || !pszText) return WBEM_E_INVALID_PARAMETER;
 
-    if (lFlags != WBEMPATH_GET_ORIGINAL)
+    str = build_path( path, lFlags, &len );
+
+    if (*puBufferLength < len + 1)
     {
-        FIXME("flags 0x%x not supported\n", lFlags);
-        return WBEM_E_INVALID_PARAMETER;
-    }
-    if (*puBufferLength < path->len_text + 1)
-    {
-        *puBufferLength = path->len_text + 1;
+        *puBufferLength = len + 1;
         return S_OK;
     }
-    if (pszText) strcpyW( pszText, path->text );
-    *puBufferLength = path->len_text + 1;
+    if (pszText)
+    {
+        if (str) strcpyW( pszText, str );
+        else pszText[0] = 0;
+    }
+    *puBufferLength = len + 1;
+    heap_free( str );
     return S_OK;
 }
 

@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/unicode.h"
+
 HRESULT WbemPath_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT WbemStatusCodeText_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
 
@@ -28,4 +30,12 @@ static inline void *heap_alloc( size_t len )
 static inline BOOL heap_free( void *mem )
 {
     return HeapFree( GetProcessHeap(), 0, mem );
+}
+
+static inline WCHAR *strdupW( const WCHAR *src )
+{
+    WCHAR *dst;
+    if (!src) return NULL;
+    if ((dst = heap_alloc( (strlenW( src ) + 1) * sizeof(WCHAR) ))) strcpyW( dst, src );
+    return dst;
 }
