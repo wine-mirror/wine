@@ -2697,7 +2697,8 @@ static void test_WinHttpGetProxyForUrl(void)
     SetLastError(0xdeadbeef);
     ret = WinHttpGetProxyForUrl( session, urlW, &options, &info );
     error = GetLastError();
-    if (!ret) ok( error == ERROR_WINHTTP_AUTODETECTION_FAILED, "got %u\n", error );
+    if (!ret) ok( error == ERROR_WINHTTP_AUTODETECTION_FAILED ||
+                  error == ERROR_WINHTTP_UNABLE_TO_DOWNLOAD_SCRIPT, "got %u\n", error );
     else
     {
         trace("Proxy.AccessType=%u\n", info.dwAccessType);
