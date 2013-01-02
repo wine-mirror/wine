@@ -1,0 +1,7 @@
+TESTDLL   = wmiutils.dll
+IMPORTS   = ole32
+
+C_SRCS = \
+	path.c
+
+@MAKE_TEST_RULES@

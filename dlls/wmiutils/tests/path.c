@@ -1,0 +1,249 @@
+/*
+ * Copyright 2012 Hans Leidekker for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#define COBJMACROS
+
+#include <stdarg.h>
+#include "windows.h"
+#include "initguid.h"
+#include "wmiutils.h"
+#include "wbemcli.h"
+#include "wine/test.h"
+
+static const WCHAR path1[] = {0};
+static const WCHAR path2[] = {'\\',0};
+static const WCHAR path3[] = {'\\','\\','s','e','r','v','e','r',0};
+static const WCHAR path4[] = {'\\','\\','s','e','r','v','e','r','\\',0};
+static const WCHAR path5[] = {'\\','\\','.','\\',0};
+static const WCHAR path6[] = {'/','/','.','/','r','o','o','t','/','c','i','m','v','2',0};
+static const WCHAR path7[] =
+    {'/','/','.','/','r','o','o','t','/','c','i','m','v','2',':','W','i','n','3','2','_',
+     'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
+static const WCHAR path8[] =
+    {'/','r','o','o','t','/','c','i','m','v','2',':','W','i','n','3','2','_',
+     'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
+static const WCHAR path9[] =
+    {'\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',':','W','i','n','3','2','_',
+     'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
+static const WCHAR path10[] =
+    {'/','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',':','W','i','n','3','2','_',
+     'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
+static const WCHAR path11[] =
+    {'/','/','.','\\','r','o','o','t','\\','c','i','m','v','2',':','W','i','n','3','2','_',
+     'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
+static const WCHAR path12[] =
+    {'r','o','o','t','\\','c','i','m','v','2',':','W','i','n','3','2','_',
+     'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
+static const WCHAR path13[] =
+    {'\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',0};
+static const WCHAR path14[] =
+    {'W','i','n','3','2','_','O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
+static const WCHAR path15[] =
+    {'r','o','o','t','\\','c','i','m','v','2',0};
+
+static void test_IWbemPath_SetText(void)
+{
+    static const struct
+    {
+        const WCHAR *path;
+        ULONG        mode;
+        HRESULT      ret;
+        int          todo;
+    } test[] =
+    {
+        { path1, 0, WBEM_E_INVALID_PARAMETER },
+        { path1, WBEMPATH_CREATE_ACCEPT_ALL, S_OK },
+        { path2, 0, WBEM_E_INVALID_PARAMETER },
+        { path2, WBEMPATH_CREATE_ACCEPT_ALL, S_OK },
+        { path3, 0, WBEM_E_INVALID_PARAMETER },
+        { path3, WBEMPATH_CREATE_ACCEPT_ALL, S_OK },
+        { path4, 0, WBEM_E_INVALID_PARAMETER },
+        { path4, WBEMPATH_CREATE_ACCEPT_ALL, S_OK },
+        { path5, 0, WBEM_E_INVALID_PARAMETER },
+        { path5, WBEMPATH_CREATE_ACCEPT_ALL, S_OK },
+        { path6, 0, WBEM_E_INVALID_PARAMETER },
+        { path6, WBEMPATH_CREATE_ACCEPT_ALL, S_OK },
+        { path7, 0, WBEM_E_INVALID_PARAMETER },
+        { path7, WBEMPATH_CREATE_ACCEPT_RELATIVE, S_OK },
+        { path7, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, S_OK },
+        { path7, WBEMPATH_CREATE_ACCEPT_ALL, S_OK },
+        { path7, WBEMPATH_TREAT_SINGLE_IDENT_AS_NS, WBEM_E_INVALID_PARAMETER, 1 },
+        { path7, WBEMPATH_TREAT_SINGLE_IDENT_AS_NS + 1, S_OK },
+        { path8, WBEMPATH_CREATE_ACCEPT_RELATIVE, S_OK },
+        { path8, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, WBEM_E_INVALID_PARAMETER, 1 },
+        { path8, WBEMPATH_CREATE_ACCEPT_ALL, S_OK },
+        { path8, WBEMPATH_TREAT_SINGLE_IDENT_AS_NS, WBEM_E_INVALID_PARAMETER, 1 },
+        { path8, WBEMPATH_TREAT_SINGLE_IDENT_AS_NS + 1, S_OK },
+        { path9, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, S_OK },
+        { path10, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, WBEM_E_INVALID_PARAMETER, 1 },
+        { path11, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, S_OK }
+    };
+    IWbemPath *path;
+    HRESULT hr;
+    UINT i;
+
+    CoInitialize( NULL );
+    hr = CoCreateInstance( &CLSID_WbemDefPath, NULL, CLSCTX_INPROC_SERVER, &IID_IWbemPath, (void **)&path );
+    if (hr != S_OK)
+    {
+        win_skip( "can't create WbemDefPath instance, skipping tests\n" );
+        return;
+    }
+
+    hr = IWbemPath_SetText( path, 0, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+
+    hr = IWbemPath_SetText( path, WBEMPATH_CREATE_ACCEPT_ALL, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+
+    for (i = 0; i < sizeof(test)/sizeof(test[0]); i++)
+    {
+        hr = IWbemPath_SetText( path, test[i].mode, test[i].path );
+        if (test[i].todo) todo_wine ok( hr == test[i].ret, "%u got %08x\n", i, hr );
+        else ok( hr == test[i].ret, "%u got %08x\n", i, hr );
+
+        if (test[i].ret == S_OK)
+        {
+            WCHAR buf[128];
+            ULONG len;
+
+            memset( buf, 0x55, sizeof(buf) );
+            len = sizeof(buf)/sizeof(buf[0]);
+            hr = IWbemPath_GetText( path, WBEMPATH_GET_ORIGINAL, &len, buf );
+            ok( hr == S_OK, "%u got %08x\n", i, hr );
+            ok( !lstrcmpW( buf, test[i].path ), "%u unexpected path %s\n", i, wine_dbgstr_w(buf) );
+            ok( len == lstrlenW( test[i].path ) + 1, "%u unexpected length %u\n", i, len );
+        }
+    }
+
+    IWbemPath_Release( path );
+    CoUninitialize();
+}
+
+static void test_IWbemPath_GetText(void)
+{
+    IWbemPath *path;
+    WCHAR buf[128];
+    ULONG len, count;
+    HRESULT hr;
+
+    CoInitialize( NULL );
+    hr = CoCreateInstance( &CLSID_WbemDefPath, NULL, CLSCTX_INPROC_SERVER, &IID_IWbemPath, (void **)&path );
+    if (hr != S_OK)
+    {
+        win_skip( "can't create WbemDefPath instance, skipping tests\n" );
+        return;
+    }
+
+    hr = IWbemPath_GetText( path, 0, NULL, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+
+    len = sizeof(buf)/sizeof(buf[0]);
+    hr = IWbemPath_GetText( path, 0, &len, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+    ok( len == sizeof(buf)/sizeof(buf[0]), "unexpected length %u\n", len );
+
+    len = sizeof(buf)/sizeof(buf[0]);
+    memset( buf, 0x55, sizeof(buf) );
+    hr = IWbemPath_GetText( path, 0, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !buf[0], "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == 1, "unexpected length %u\n", len );
+
+    hr = IWbemPath_GetText( path, WBEMPATH_GET_ORIGINAL, NULL, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+
+    len = sizeof(buf)/sizeof(buf[0]);
+    hr = IWbemPath_GetText( path, WBEMPATH_GET_ORIGINAL, &len, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+    ok( len == sizeof(buf)/sizeof(buf[0]), "unexpected length %u\n", len );
+
+    len = sizeof(buf)/sizeof(buf[0]);
+    memset( buf, 0x55, sizeof(buf) );
+    hr = IWbemPath_GetText( path, WBEMPATH_GET_ORIGINAL, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !buf[0], "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == 1, "unexpected length %u\n", len );
+
+    len = sizeof(buf)/sizeof(buf[0]);
+    memset( buf, 0x55, sizeof(buf) );
+    hr = IWbemPath_GetText( path, WBEMPATH_GET_SERVER_TOO, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( !buf[0], "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    todo_wine ok( len == 1, "unexpected length %u\n", len );
+
+    hr = IWbemPath_SetText( path, WBEMPATH_CREATE_ACCEPT_ALL, path8 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    count = 0xdeadbeef;
+    hr = IWbemPath_GetNamespaceCount( path, &count );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( count == 2, "got %u\n", count );
+
+    len = sizeof(buf)/sizeof(buf[0]);
+    memset( buf, 0x55, sizeof(buf) );
+    hr = IWbemPath_GetText( path, WBEMPATH_GET_SERVER_TOO, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( buf, path9 ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( path9 ) + 1, "unexpected length %u\n", len );
+
+    len = sizeof(buf)/sizeof(buf[0]);
+    memset( buf, 0x55, sizeof(buf) );
+    hr = IWbemPath_GetText( path, WBEMPATH_GET_SERVER_AND_NAMESPACE_ONLY, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( buf, path13 ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( path13 ) + 1, "unexpected length %u\n", len );
+
+    len = sizeof(buf)/sizeof(buf[0]);
+    memset( buf, 0x55, sizeof(buf) );
+    hr = IWbemPath_GetText( path, WBEMPATH_GET_RELATIVE_ONLY, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( buf, path14 ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( path14 ) + 1, "unexpected length %u\n", len );
+
+    len = sizeof(buf)/sizeof(buf[0]);
+    memset( buf, 0x55, sizeof(buf) );
+    hr = IWbemPath_GetText( path, WBEMPATH_GET_NAMESPACE_ONLY, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( buf, path15 ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( path15 ) + 1, "unexpected length %u\n", len );
+
+    len = sizeof(buf)/sizeof(buf[0]);
+    memset( buf, 0x55, sizeof(buf) );
+    hr = IWbemPath_GetText( path, 0, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( buf, path12 ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( path12 ) + 1, "unexpected length %u\n", len );
+
+    hr = IWbemPath_SetText( path, WBEMPATH_CREATE_ACCEPT_ALL, path1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    count = 0xdeadbeef;
+    hr = IWbemPath_GetNamespaceCount( path, &count );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !count, "got %u\n", count );
+
+    IWbemPath_Release( path );
+    CoUninitialize();
+}
+
+START_TEST (path)
+{
+    test_IWbemPath_SetText();
+    test_IWbemPath_GetText();
+}

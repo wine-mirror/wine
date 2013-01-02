@@ -15923,6 +15923,7 @@ wine_fn_config_dll wldap32 enable_wldap32 implib,po
 wine_fn_config_test dlls/wldap32/tests wldap32_test
 wine_fn_config_dll wmi enable_wmi
 wine_fn_config_dll wmiutils enable_wmiutils
+wine_fn_config_test dlls/wmiutils/tests wmiutils_test
 wine_fn_config_dll wmvcore enable_wmvcore
 wine_fn_config_dll wnaspi32 enable_wnaspi32 implib
 wine_fn_config_dll wow32 enable_win16 implib
