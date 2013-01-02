@@ -268,8 +268,13 @@ static HRESULT WINAPI path_GetNamespaceCount(
     IWbemPath *iface,
     ULONG *puCount)
 {
-    FIXME("%p, %p\n", iface, puCount);
-    return E_NOTIMPL;
+    struct path *path = impl_from_IWbemPath( iface );
+
+    TRACE("%p, %p\n", iface, puCount);
+
+    if (!puCount) return WBEM_E_INVALID_PARAMETER;
+    *puCount = path->num_namespaces;
+    return S_OK;
 }
 
 static HRESULT WINAPI path_SetNamespaceAt(
