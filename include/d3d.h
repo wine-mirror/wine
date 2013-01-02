@@ -661,7 +661,7 @@ DECLARE_INTERFACE_(IDirect3DViewport,IUnknown)
     STDMETHOD(GetBackground)(THIS_ D3DMATERIALHANDLE *material, BOOL *valid) PURE;
     STDMETHOD(SetBackgroundDepth)(THIS_ IDirectDrawSurface *surface) PURE;
     STDMETHOD(GetBackgroundDepth)(THIS_ IDirectDrawSurface **surface, BOOL *valid) PURE;
-    STDMETHOD(Clear)(THIS_ DWORD dwCount, LPD3DRECT lpRects, DWORD dwFlags) PURE;
+    STDMETHOD(Clear)(THIS_ DWORD count, D3DRECT *rects, DWORD flags) PURE;
     STDMETHOD(AddLight)(THIS_ IDirect3DLight *light) PURE;
     STDMETHOD(DeleteLight)(THIS_ IDirect3DLight *light) PURE;
     STDMETHOD(NextLight)(THIS_ IDirect3DLight *ref, IDirect3DLight **light, DWORD flags) PURE;
@@ -729,7 +729,7 @@ DECLARE_INTERFACE_(IDirect3DViewport2,IDirect3DViewport)
     STDMETHOD(GetBackground)(THIS_ D3DMATERIALHANDLE *material, BOOL *valid) PURE;
     STDMETHOD(SetBackgroundDepth)(THIS_ IDirectDrawSurface *surface) PURE;
     STDMETHOD(GetBackgroundDepth)(THIS_ IDirectDrawSurface **surface, BOOL *valid) PURE;
-    STDMETHOD(Clear)(THIS_ DWORD dwCount, LPD3DRECT lpRects, DWORD dwFlags) PURE;
+    STDMETHOD(Clear)(THIS_ DWORD count, D3DRECT *rects, DWORD flags) PURE;
     STDMETHOD(AddLight)(THIS_ IDirect3DLight *light) PURE;
     STDMETHOD(DeleteLight)(THIS_ IDirect3DLight *light) PURE;
     STDMETHOD(NextLight)(THIS_ IDirect3DLight *ref, IDirect3DLight **light, DWORD flags) PURE;
@@ -805,7 +805,7 @@ DECLARE_INTERFACE_(IDirect3DViewport3,IDirect3DViewport2)
     STDMETHOD(GetBackground)(THIS_ D3DMATERIALHANDLE *material, BOOL *valid) PURE;
     STDMETHOD(SetBackgroundDepth)(THIS_ IDirectDrawSurface *surface) PURE;
     STDMETHOD(GetBackgroundDepth)(THIS_ IDirectDrawSurface **surface, BOOL *valid) PURE;
-    STDMETHOD(Clear)(THIS_ DWORD dwCount, LPD3DRECT lpRects, DWORD dwFlags) PURE;
+    STDMETHOD(Clear)(THIS_ DWORD count, D3DRECT *rects, DWORD flags) PURE;
     STDMETHOD(AddLight)(THIS_ IDirect3DLight *light) PURE;
     STDMETHOD(DeleteLight)(THIS_ IDirect3DLight *light) PURE;
     STDMETHOD(NextLight)(THIS_ IDirect3DLight *ref, IDirect3DLight **light, DWORD flags) PURE;
@@ -815,7 +815,7 @@ DECLARE_INTERFACE_(IDirect3DViewport3,IDirect3DViewport2)
     /*** IDirect3DViewport3 methods ***/
     STDMETHOD(SetBackgroundDepth2)(THIS_ IDirectDrawSurface4 *surface) PURE;
     STDMETHOD(GetBackgroundDepth2)(THIS_ IDirectDrawSurface4 **surface, BOOL *valid) PURE;
-    STDMETHOD(Clear2)(THIS_ DWORD dwCount,LPD3DRECT lpRects,DWORD dwFlags,DWORD dwColor,D3DVALUE dvZ,DWORD dwStencil) PURE;
+    STDMETHOD(Clear2)(THIS_ DWORD count, D3DRECT *rects, DWORD flags, DWORD color, D3DVALUE z, DWORD stencil) PURE;
 };
 #undef INTERFACE
 
@@ -1303,7 +1303,7 @@ DECLARE_INTERFACE_(IDirect3DDevice7,IUnknown)
     STDMETHOD(GetDirect3D)(THIS_ IDirect3D7 **d3d) PURE;
     STDMETHOD(SetRenderTarget)(THIS_ IDirectDrawSurface7 *surface, DWORD flags) PURE;
     STDMETHOD(GetRenderTarget)(THIS_ IDirectDrawSurface7 **surface) PURE;
-    STDMETHOD(Clear)(THIS_ DWORD dwCount,LPD3DRECT lpRects,DWORD dwFlags,D3DCOLOR dwColor,D3DVALUE dvZ,DWORD dwStencil) PURE;
+    STDMETHOD(Clear)(THIS_ DWORD count, D3DRECT *rects, DWORD flags, D3DCOLOR color, D3DVALUE z, DWORD stencil) PURE;
     STDMETHOD(SetTransform)(THIS_ D3DTRANSFORMSTATETYPE dtstTransformStateType, LPD3DMATRIX lpD3DMatrix) PURE;
     STDMETHOD(GetTransform)(THIS_ D3DTRANSFORMSTATETYPE dtstTransformStateType, LPD3DMATRIX lpD3DMatrix) PURE;
     STDMETHOD(SetViewport)(THIS_ LPD3DVIEWPORT7 lpData) PURE;
