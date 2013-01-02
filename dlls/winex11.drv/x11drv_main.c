@@ -81,6 +81,7 @@ int private_color_map = 0;
 int primary_monitor = 0;
 int client_side_graphics = 1;
 int client_side_with_render = 1;
+int shape_layered_windows = 1;
 int copy_default_colors = 128;
 int alloc_system_colors = 256;
 DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
@@ -396,6 +397,9 @@ static void setup_options(void)
 
     if (!get_config_key( hkey, appkey, "UseXIM", buffer, sizeof(buffer) ))
         use_xim = IS_OPTION_TRUE( buffer[0] );
+
+    if (!get_config_key( hkey, appkey, "ShapeLayeredWindows", buffer, sizeof(buffer) ))
+        shape_layered_windows = IS_OPTION_TRUE( buffer[0] );
 
     if (!get_config_key( hkey, appkey, "PrivateColorMap", buffer, sizeof(buffer) ))
         private_color_map = IS_OPTION_TRUE( buffer[0] );

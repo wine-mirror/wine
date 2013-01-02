@@ -1621,6 +1621,8 @@ static void update_surface_region( struct x11drv_window_surface *surface )
     int x, y, start, width;
     HRGN rgn;
 
+    if (!shape_layered_windows) return;
+
     if (!surface->is_argb && surface->color_key == CLR_INVALID)
     {
         XShapeCombineMask( gdi_display, surface->window, ShapeBounding, 0, 0, None, ShapeSet );
