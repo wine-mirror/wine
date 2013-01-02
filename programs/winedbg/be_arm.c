@@ -1,7 +1,7 @@
 /*
  * Debugger ARM specific functions
  *
- * Copyright 2010-2012 André Hentschel
+ * Copyright 2010-2013 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1052,6 +1052,87 @@ static UINT thumb2_disasm_ldrnonword(UINT inst, ADDRESS64 *addr)
     return inst;
 }
 
+static UINT thumb2_disasm_dataprocessing(UINT inst, ADDRESS64 *addr)
+{
+    WORD op = (inst >> 20) & 0x1f;
+    WORD imm5 = ((inst >> 10) & 0x1c) + ((inst >> 6) & 0x03);
+
+    if (op == 0)
+    {
+        WORD offset = ((inst >> 15) & 0x0800) + ((inst >> 4) & 0x0700) + (inst & 0xff);
+        if (get_nibble(inst, 4) == 15)
+        {
+            dbg_printf("\n\tadr\t%s, ", tbl_regs[get_nibble(inst, 2)]);
+            db_printsym(addr->Offset + offset + 4);
+        }
+        else
+            dbg_printf("\n\taddw\t%s, %s, #%u", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], offset);
+        return 0;
+    }
+
+    if (op == 4 || op == 12)
+    {
+        WORD offset = ((inst >> 15) & 0x0800) + ((inst >> 4) & 0xf000) +
+                      ((inst >>  4) & 0x0700) + (inst & 0xff);
+        dbg_printf("\n\t%s\t%s, #%u", op == 12 ? "movt" : "movw", tbl_regs[get_nibble(inst, 2)],
+                   offset);
+        return 0;
+    }
+
+    if (op == 10)
+    {
+        int offset = ((inst >> 15) & 0x0800) + ((inst >> 4) & 0x0700) + (inst & 0xff);
+        if (get_nibble(inst, 4) == 15)
+        {
+            offset *= -1;
+            dbg_printf("\n\tadr\t%s, ", tbl_regs[get_nibble(inst, 2)]);
+            db_printsym(addr->Offset + offset + 4);
+        }
+        else
+            dbg_printf("\n\tsubw\t%s, %s, #%u", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], offset);
+        return 0;
+    }
+
+    if (op == 16 || op == 18 || op == 24 || op == 26)
+    {
+        BOOL sign = op < 24;
+        WORD sh = (inst >> 21) & 0x01;
+        WORD sat = (inst & 0x1f);
+        if (sign) sat++;
+        if (imm5)
+            dbg_printf("\n\t%s\t%s, #%u, %s, %s #%u", sign ? "ssat" : "usat",
+                       tbl_regs[get_nibble(inst, 2)], sat, tbl_regs[get_nibble(inst, 4)],
+                       sh ? "asr" : "lsl", imm5);
+        else
+            dbg_printf("\n\t%s\t%s, #%u, %s", sign ? "ssat" : "usat", tbl_regs[get_nibble(inst, 2)],
+                       sat, tbl_regs[get_nibble(inst, 4)]);
+        return 0;
+    }
+
+    if (op == 20 || op == 28)
+    {
+        WORD width = (inst & 0x1f) + 1;
+        dbg_printf("\n\t%s\t%s, %s, #%u, #%u", op == 28 ? "ubfx" : "sbfx",
+                   tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 4)], imm5, width);
+        return 0;
+    }
+
+    if (op == 22)
+    {
+        WORD msb = (inst & 0x1f) + 1 - imm5;
+        if (get_nibble(inst, 4) == 15)
+            dbg_printf("\n\tbfc\t%s, #%u, #%u", tbl_regs[get_nibble(inst, 2)], imm5, msb);
+        else
+            dbg_printf("\n\tbfi\t%s, %s, #%u, #%u", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], imm5, msb);
+        return 0;
+    }
+
+    return inst;
+}
+
 static UINT thumb2_disasm_coprocdat(UINT inst, ADDRESS64 *addr)
 {
     WORD opc2 = (inst >> 5) & 0x07;
@@ -1288,6 +1369,7 @@ static const struct inst_arm tbl_thumb32[] = {
     { 0xff700000, 0xf8500000, thumb2_disasm_ldrword },
     { 0xfe70f000, 0xf810f000, thumb2_disasm_preload },
     { 0xfe500000, 0xf8100000, thumb2_disasm_ldrnonword },
+    { 0xfa008000, 0xf2000000, thumb2_disasm_dataprocessing },
     { 0xef000010, 0xee000000, thumb2_disasm_coprocdat },
     { 0xef000010, 0xee000010, thumb2_disasm_coprocmov1 },
     { 0xefe00000, 0xec400000, thumb2_disasm_coprocmov2 },
