@@ -1497,15 +1497,13 @@ DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *ppIpForw
              continue;
           }
 
-          /* Ignore all entries except for gateway routes which aren't
-             multicast */
-          if (!(rtm->rtm_flags & RTF_GATEWAY) ||
-              (rtm->rtm_flags & RTF_MULTICAST))
+          /* Ignore gateway routes which are multicast */
+          if ((rtm->rtm_flags & RTF_GATEWAY) && (rtm->rtm_flags & RTF_MULTICAST))
              continue;
 
           memset( &row, 0, sizeof(row) );
           row.dwForwardIfIndex = rtm->rtm_index;
-          row.u1.ForwardType = MIB_IPROUTE_TYPE_INDIRECT;
+          row.u1.ForwardType = (rtm->rtm_flags & RTF_GATEWAY) ? MIB_IPROUTE_TYPE_INDIRECT : MIB_IPROUTE_TYPE_DIRECT;
           row.dwForwardMetric1 = rtm->rtm_rmx.rmx_hopcount;
           row.u2.ForwardProto = MIB_IPPROTO_LOCAL;
 
@@ -1523,19 +1521,29 @@ DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *ppIpForw
              ADVANCE (addrPtr, sa);
 
              /* default routes are encoded by length-zero sockaddr */
-             if (sa->sa_len == 0)
+             if (sa->sa_len == 0) {
                 addr = 0;
-             else if (sa->sa_family != AF_INET)
-             {
-                WARN ("Received unsupported sockaddr family 0x%x\n",
-                     sa->sa_family);
-                addr = 0;
-             }
-             else
-             {
-                struct sockaddr_in *sin = (struct sockaddr_in *)sa;
-
-                addr = sin->sin_addr.s_addr;
+             }else {
+                 switch(sa->sa_family) {
+                 case AF_INET: {
+                     struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+                     addr = sin->sin_addr.s_addr;
+                     break;
+                 }
+#ifdef AF_LINK
+                 case AF_LINK:
+                     if(i == RTA_GATEWAY && row.u1.ForwardType == MIB_IPROUTE_TYPE_DIRECT) {
+                         /* For direct route we may simply use dest addr as next hop */
+                         C_ASSERT(RTA_DST < RTA_GATEWAY);
+                         addr = row.dwForwardDest;
+                         break;
+                     }
+                     /* fallthrough */
+#endif
+                 default:
+                     WARN ("Received unsupported sockaddr family 0x%x\n", sa->sa_family);
+                     addr = 0;
+                 }
              }
 
              switch (i)
