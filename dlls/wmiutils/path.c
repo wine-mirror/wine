@@ -61,8 +61,8 @@ static ULONG WINAPI path_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", path);
-        HeapFree( GetProcessHeap(), 0, path->text );
-        HeapFree( GetProcessHeap(), 0, path );
+        heap_free( path->text );
+        heap_free( path );
     }
     return refs;
 }
@@ -103,8 +103,7 @@ static HRESULT WINAPI path_SetText(
     if (uMode) FIXME("igoring mode %u\n", uMode);
 
     len = strlenW( pszPath );
-    if (!(path->text = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
-        return E_OUTOFMEMORY;
+    if (!(path->text = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
 
     strcpyW( path->text, pszPath );
     path->len = len;
@@ -382,7 +381,7 @@ HRESULT WbemPath_create( IUnknown *pUnkOuter, LPVOID *ppObj )
 
     TRACE("%p, %p\n", pUnkOuter, ppObj);
 
-    if (!(path = HeapAlloc( GetProcessHeap(), 0, sizeof(*path) ))) return E_OUTOFMEMORY;
+    if (!(path = heap_alloc( sizeof(*path) ))) return E_OUTOFMEMORY;
 
     path->IWbemPath_iface.lpVtbl = &path_vtbl;
     path->refs = 1;

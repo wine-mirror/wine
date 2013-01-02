@@ -18,3 +18,14 @@
 
 HRESULT WbemPath_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT WbemStatusCodeText_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
+
+static void *heap_alloc( size_t len ) __WINE_ALLOC_SIZE(1);
+static inline void *heap_alloc( size_t len )
+{
+    return HeapAlloc( GetProcessHeap(), 0, len );
+}
+
+static inline BOOL heap_free( void *mem )
+{
+    return HeapFree( GetProcessHeap(), 0, mem );
+}

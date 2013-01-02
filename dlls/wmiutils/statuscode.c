@@ -59,7 +59,7 @@ static ULONG WINAPI status_code_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", status_code);
-        HeapFree( GetProcessHeap(), 0, status_code );
+        heap_free( status_code );
     }
     return refs;
 }
@@ -138,8 +138,7 @@ HRESULT WbemStatusCodeText_create( IUnknown *pUnkOuter, LPVOID *ppObj )
 
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
 
-    sc = HeapAlloc( GetProcessHeap(), 0, sizeof(*sc) );
-    if (!sc) return E_OUTOFMEMORY;
+    if (!(sc = heap_alloc( sizeof(*sc) ))) return E_OUTOFMEMORY;
 
     sc->IWbemStatusCodeText_iface.lpVtbl = &status_code_vtbl;
     sc->refs = 1;
