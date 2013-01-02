@@ -15962,6 +15962,7 @@ wine_fn_config_program cacls enable_cacls install
 wine_fn_config_program clock enable_clock install,po
 wine_fn_config_program cmd enable_cmd install,po
 wine_fn_config_test programs/cmd/tests cmd.exe_test
+wine_fn_config_program conhost enable_conhost install
 wine_fn_config_program control enable_control install
 wine_fn_config_program cscript enable_cscript install
 wine_fn_config_program dxdiag enable_dxdiag install,po
