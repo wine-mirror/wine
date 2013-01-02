@@ -1,3 +1,5 @@
 MODULE = api-ms-win-downlevel-user32-l1-1-0.dll
 
+RC_SRCS = version.rc
+
 @MAKE_DLL_RULES@
