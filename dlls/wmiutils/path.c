@@ -36,10 +36,40 @@ WINE_DEFAULT_DEBUG_CHANNEL(wmiutils);
 struct path
 {
     IWbemPath IWbemPath_iface;
-    LONG refs;
-    WCHAR *text;
-    int len;
+    LONG    refs;
+    WCHAR  *text;
+    int     len_text;
+    WCHAR  *server;
+    int     len_server;
+    WCHAR **namespaces;
+    int    *len_namespaces;
+    int     num_namespaces;
+    WCHAR  *class;
+    int     len_class;
 };
+
+static void init_path( struct path *path )
+{
+    path->text           = NULL;
+    path->len_text       = 0;
+    path->server         = NULL;
+    path->len_server     = 0;
+    path->namespaces     = NULL;
+    path->len_namespaces = NULL;
+    path->num_namespaces = 0;
+    path->class          = NULL;
+    path->len_class      = 0;
+}
+
+static void clear_path( struct path *path )
+{
+    heap_free( path->text );
+    heap_free( path->server );
+    heap_free( path->namespaces );
+    heap_free( path->len_namespaces );
+    heap_free( path->class );
+    init_path( path );
+}
 
 static inline struct path *impl_from_IWbemPath( IWbemPath *iface )
 {
@@ -61,7 +91,7 @@ static ULONG WINAPI path_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", path);
-        heap_free( path->text );
+        clear_path( path );
         heap_free( path );
     }
     return refs;
@@ -90,25 +120,94 @@ static HRESULT WINAPI path_QueryInterface(
     return S_OK;
 }
 
+static HRESULT parse_text( struct path *path, ULONG mode, const WCHAR *text )
+{
+    HRESULT hr = E_OUTOFMEMORY;
+    const WCHAR *p, *q;
+    unsigned int i, len;
+
+    p = q = text;
+    if ((p[0] == '\\' && p[1] == '\\') || (p[0] == '/' && p[1] == '/'))
+    {
+        p += 2;
+        q = p;
+        while (*q && *q != '\\' && *q != '/') q++;
+        len = q - p;
+        if (!(path->server = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto done;
+        memcpy( path->server, p, len * sizeof(WCHAR) );
+        path->server[len] = 0;
+        path->len_server = len;
+    }
+    p = q;
+    while (*q && *q != ':')
+    {
+        if (*q == '\\' || *q == '/') path->num_namespaces++;
+        q++;
+    }
+    if (path->num_namespaces)
+    {
+        if (!(path->namespaces = heap_alloc( path->num_namespaces * sizeof(WCHAR *) ))) goto done;
+        if (!(path->len_namespaces = heap_alloc( path->num_namespaces * sizeof(int) ))) goto done;
+
+        i = 0;
+        q = p;
+        while (*q && *q != ':')
+        {
+            if (*q == '\\' || *q == '/')
+            {
+                p = q + 1;
+                while (*p && *p != '\\' && *p != '/' && *p != ':') p++;
+                len = p - q - 1;
+                if (!(path->namespaces[i] = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto done;
+                memcpy( path->namespaces[i], q + 1, len * sizeof(WCHAR) );
+                path->namespaces[i][len] = 0;
+                path->len_namespaces[i] = len;
+                i++;
+            }
+            q++;
+        }
+    }
+    if (*q == ':') q++;
+    p = q;
+    while (*q && *q != '.') q++;
+    len = q - p;
+    if (!(path->class = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto done;
+    memcpy( path->class, p, len * sizeof(WCHAR) );
+    path->class[len] = 0;
+    path->len_class = len;
+
+    if (*q == '.') FIXME("handle key list\n");
+    hr = S_OK;
+
+done:
+    if (hr != S_OK) clear_path( path );
+    return hr;
+}
+
 static HRESULT WINAPI path_SetText(
     IWbemPath *iface,
     ULONG uMode,
     LPCWSTR pszPath)
 {
     struct path *path = impl_from_IWbemPath( iface );
+    HRESULT hr;
     int len;
 
     TRACE("%p, %u, %s\n", iface, uMode, debugstr_w(pszPath));
 
-    if (!pszPath) return WBEM_E_INVALID_PARAMETER;
+    if (!uMode || !pszPath) return WBEM_E_INVALID_PARAMETER;
 
-    if (uMode) FIXME("igoring mode %u\n", uMode);
+    clear_path( path );
+    if ((hr = parse_text( path, uMode, pszPath )) != S_OK) return hr;
 
     len = strlenW( pszPath );
-    if (!(path->text = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
-
+    if (!(path->text = heap_alloc( (len + 1) * sizeof(WCHAR) )))
+    {
+        clear_path( path );
+        return E_OUTOFMEMORY;
+    }
     strcpyW( path->text, pszPath );
-    path->len = len;
+    path->len_text = len;
     return S_OK;
 }
 
@@ -129,13 +228,13 @@ static HRESULT WINAPI path_GetText(
         FIXME("flags 0x%x not supported\n", lFlags);
         return WBEM_E_INVALID_PARAMETER;
     }
-    if (*puBufferLength < path->len + 1)
+    if (*puBufferLength < path->len_text + 1)
     {
-        *puBufferLength = path->len + 1;
+        *puBufferLength = path->len_text + 1;
         return S_OK;
     }
     if (pszText) strcpyW( pszText, path->text );
-    *puBufferLength = path->len + 1;
+    *puBufferLength = path->len_text + 1;
     return S_OK;
 }
 
@@ -389,6 +488,7 @@ HRESULT WbemPath_create( IUnknown *pUnkOuter, LPVOID *ppObj )
 
     path->IWbemPath_iface.lpVtbl = &path_vtbl;
     path->refs = 1;
+    init_path( path );
 
     *ppObj = &path->IWbemPath_iface;
 
