@@ -20,6 +20,12 @@
 
 [
     threading(both),
+    uuid(cf4cc405-e2c5-4ddd-b3ce-5e7582d8c9fa)
+]
+coclass WbemDefPath { interface IWbemPath; }
+
+[
+    threading(both),
     uuid(eb87e1bd-3233-11d2-aec9-00c04fb68820)
 ]
 coclass WbemStatusCode { interface IWbemStatusCodeText; }
