@@ -24,7 +24,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(netstat);
 
+static const WCHAR ipW[] = {'I', 'P', 0};
+static const WCHAR ipv6W[] = {'I', 'P', 'v', '6', 0};
+static const WCHAR icmpW[] = {'I', 'C', 'M', 'P', 0};
+static const WCHAR icmpv6W[] = {'I', 'C', 'M', 'P', 'v', '6', 0};
 static const WCHAR tcpW[] = {'T', 'C', 'P', 0};
+static const WCHAR tcpv6W[] = {'T', 'C', 'P', 'v', '6', 0};
+static const WCHAR udpW[] = {'U', 'D', 'P', 0};
+static const WCHAR udpv6W[] = {'U', 'D', 'P', 'v', '6', 0};
+
 static const WCHAR fmtport[] = {'%', 'd', 0};
 static const WCHAR fmtip[] = {'%', 'd', '.', '%', 'd', '.', '%', 'd', '.', '%', 'd', 0};
 static const WCHAR fmtn[] = {'\n', 0};
@@ -181,18 +189,22 @@ static void NETSTAT_tcp_table(void)
     HeapFree(GetProcessHeap(), 0, table);
 }
 
+static NETSTATPROTOCOLS NETSTAT_get_protocol(WCHAR name[])
+{
+    if (!strcmpiW(name, ipW)) return PROT_IP;
+    if (!strcmpiW(name, ipv6W)) return PROT_IPV6;
+    if (!strcmpiW(name, icmpW)) return PROT_ICMP;
+    if (!strcmpiW(name, icmpv6W)) return PROT_ICMPV6;
+    if (!strcmpiW(name, tcpW)) return PROT_TCP;
+    if (!strcmpiW(name, tcpv6W)) return PROT_TCPV6;
+    if (!strcmpiW(name, udpW)) return PROT_UDP;
+    if (!strcmpiW(name, udpv6W)) return PROT_UDPV6;
+    return PROT_UNKNOWN;
+}
+
 int wmain(int argc, WCHAR *argv[])
 {
     WSADATA wsa_data;
-
-    if (argc > 1)
-    {
-        int i;
-        WINE_FIXME("stub:");
-        for (i = 0; i < argc; i++)
-            WINE_FIXME(" %s", wine_dbgstr_w(argv[i]));
-        WINE_FIXME("\n");
-    }
 
     if (WSAStartup(MAKEWORD(2, 2), &wsa_data))
     {
@@ -200,7 +212,35 @@ int wmain(int argc, WCHAR *argv[])
         return 1;
     }
 
-    NETSTAT_tcp_table();
+    if (argc == 1)
+    {
+        /* No options */
+        NETSTAT_tcp_table();
+        return 0;
+    }
+
+    while (argv[1] && argv[1][0] == '-')
+    {
+        switch (argv[1][1])
+        {
+        case 'p':
+            argv++; argc--;
+            if (argc == 1) return 1;
+            switch (NETSTAT_get_protocol(argv[1]))
+            {
+                case PROT_TCP:
+                    NETSTAT_tcp_table();
+                    break;
+                default:
+                    WINE_FIXME("Protocol not yet implemented: %s\n", debugstr_w(argv[1]));
+            }
+            break;
+        default:
+            WINE_FIXME("Unknown option: %s\n", debugstr_w(argv[1]));
+            return 1;
+        }
+        argv++; argc--;
+    }
 
     return 0;
 }

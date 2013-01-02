@@ -18,6 +18,18 @@
 
 #include <windows.h>
 
+typedef enum _NETSTATPROTOCOLS {
+  PROT_UNKNOWN,
+  PROT_IP,
+  PROT_IPV6,
+  PROT_ICMP,
+  PROT_ICMPV6,
+  PROT_TCP,
+  PROT_TCPV6,
+  PROT_UDP,
+  PROT_UDPV6,
+} NETSTATPROTOCOLS;
+
 #define IDS_TCP_CLOSED      1
 #define IDS_TCP_LISTENING   2
 #define IDS_TCP_SYN_SENT    3
