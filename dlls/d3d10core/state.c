@@ -392,7 +392,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_rasterizer_state_SetPrivateDataInterface(
 static void STDMETHODCALLTYPE d3d10_rasterizer_state_GetDesc(ID3D10RasterizerState *iface,
         D3D10_RASTERIZER_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d10_rasterizer_state *state = impl_from_ID3D10RasterizerState(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    *desc = state->desc;
 }
 
 static const struct ID3D10RasterizerStateVtbl d3d10_rasterizer_state_vtbl =
@@ -410,10 +414,11 @@ static const struct ID3D10RasterizerStateVtbl d3d10_rasterizer_state_vtbl =
     d3d10_rasterizer_state_GetDesc,
 };
 
-HRESULT d3d10_rasterizer_state_init(struct d3d10_rasterizer_state *state)
+HRESULT d3d10_rasterizer_state_init(struct d3d10_rasterizer_state *state, const D3D10_RASTERIZER_DESC *desc)
 {
     state->ID3D10RasterizerState_iface.lpVtbl = &d3d10_rasterizer_state_vtbl;
     state->refcount = 1;
+    state->desc = *desc;
 
     return S_OK;
 }

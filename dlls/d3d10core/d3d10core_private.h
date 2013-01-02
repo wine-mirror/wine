@@ -247,9 +247,12 @@ struct d3d10_rasterizer_state
 {
     ID3D10RasterizerState ID3D10RasterizerState_iface;
     LONG refcount;
+
+    D3D10_RASTERIZER_DESC desc;
 };
 
-HRESULT d3d10_rasterizer_state_init(struct d3d10_rasterizer_state *state) DECLSPEC_HIDDEN;
+HRESULT d3d10_rasterizer_state_init(struct d3d10_rasterizer_state *state,
+        const D3D10_RASTERIZER_DESC *desc) DECLSPEC_HIDDEN;
 struct d3d10_rasterizer_state *unsafe_impl_from_ID3D10RasterizerState(ID3D10RasterizerState *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10SamplerState */
