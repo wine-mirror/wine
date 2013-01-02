@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2012 André Hentschel
+ * Copyright 2011-2013 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -39,6 +39,7 @@ static const WCHAR fmtn[] = {'\n', 0};
 static const WCHAR fmtnn[] = {'\n', '%', 's', '\n', 0};
 static const WCHAR fmtcolon[] = {'%', 's', ':', '%', 's', 0};
 static const WCHAR fmttcpout[] = {' ', ' ', '%', '-', '6', 's', ' ', '%', '-', '2', '2', 's', ' ', '%', '-', '2', '2', 's', ' ', '%', 's', '\n', 0};
+static const WCHAR fmtudpout[] = {' ', ' ', '%', '-', '6', 's', ' ', '%', '-', '2', '2', 's', ' ', '*', ':', '*', '\n', 0};
 
 /* =========================================================================
  *  Output a unicode string. Ideally this will go to the console
@@ -143,11 +144,21 @@ static WCHAR *NETSTAT_host_name(UINT ip, WCHAR name[])
     return name;
 }
 
+static void NETSTAT_tcp_header(void)
+{
+    WCHAR local[22], remote[22], state[22];
+    NETSTAT_wprintf(fmtnn, NETSTAT_load_message(IDS_TCP_ACTIVE_CONN));
+    NETSTAT_wprintf(fmtn);
+    strcpyW(local, NETSTAT_load_message(IDS_TCP_LOCAL_ADDR));
+    strcpyW(remote, NETSTAT_load_message(IDS_TCP_REMOTE_ADDR));
+    strcpyW(state, NETSTAT_load_message(IDS_TCP_STATE));
+    NETSTAT_wprintf(fmttcpout, NETSTAT_load_message(IDS_TCP_PROTO), local, remote, state);
+}
+
 static void NETSTAT_tcp_table(void)
 {
     PMIB_TCPTABLE table;
     DWORD err, size, i;
-    WCHAR local[22], remote[22], state[22];
     WCHAR HostIp[MAX_HOSTNAME_LEN], HostPort[32];
     WCHAR RemoteIp[MAX_HOSTNAME_LEN], RemotePort[32];
     WCHAR Host[MAX_HOSTNAME_LEN + 32];
@@ -163,12 +174,7 @@ static void NETSTAT_tcp_table(void)
 
     if (err) return;
 
-    NETSTAT_wprintf(fmtnn, NETSTAT_load_message(IDS_TCP_ACTIVE_CONN));
-    NETSTAT_wprintf(fmtn);
-    strcpyW(local, NETSTAT_load_message(IDS_TCP_LOCAL_ADDR));
-    strcpyW(remote, NETSTAT_load_message(IDS_TCP_REMOTE_ADDR));
-    strcpyW(state, NETSTAT_load_message(IDS_TCP_STATE));
-    NETSTAT_wprintf(fmttcpout, NETSTAT_load_message(IDS_TCP_PROTO), local, remote, state);
+    NETSTAT_tcp_header();
 
     for (i = 0; i < table->dwNumEntries; i++)
     {
@@ -185,6 +191,36 @@ static void NETSTAT_tcp_table(void)
             sprintfW(Remote, fmtcolon, RemoteIp, RemotePort);
             NETSTAT_wprintf(fmttcpout, tcpW, Host, Remote, NETSTAT_load_message(table->table[i].dwState));
         }
+    }
+    HeapFree(GetProcessHeap(), 0, table);
+}
+
+static void NETSTAT_udp_table(void)
+{
+    PMIB_UDPTABLE table;
+    DWORD err, size, i;
+    WCHAR HostIp[MAX_HOSTNAME_LEN], HostPort[32];
+    WCHAR Host[MAX_HOSTNAME_LEN + 32];
+
+    size = sizeof(MIB_UDPTABLE);
+    do
+    {
+        table = (PMIB_UDPTABLE)HeapAlloc(GetProcessHeap(), 0, size);
+        err = GetUdpTable(table, &size, TRUE);
+        if (err != NO_ERROR) HeapFree(GetProcessHeap(), 0, table);
+    } while (err == ERROR_INSUFFICIENT_BUFFER);
+
+    if (err) return;
+
+    NETSTAT_tcp_header();
+
+    for (i = 0; i < table->dwNumEntries; i++)
+    {
+        NETSTAT_host_name(table->table[i].dwLocalAddr, HostIp);
+        NETSTAT_port_name(table->table[i].dwLocalPort, HostPort);
+
+        sprintfW(Host, fmtcolon, HostIp, HostPort);
+        NETSTAT_wprintf(fmtudpout, udpW, Host);
     }
     HeapFree(GetProcessHeap(), 0, table);
 }
@@ -230,6 +266,9 @@ int wmain(int argc, WCHAR *argv[])
             {
                 case PROT_TCP:
                     NETSTAT_tcp_table();
+                    break;
+                case PROT_UDP:
+                    NETSTAT_udp_table();
                     break;
                 default:
                     WINE_FIXME("Protocol not yet implemented: %s\n", debugstr_w(argv[1]));
