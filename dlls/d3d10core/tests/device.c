@@ -719,6 +719,49 @@ static void test_create_depthstencil_state(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_create_rasterizer_state(void)
+{
+    ID3D10RasterizerState *rast_state1, *rast_state2;
+    D3D10_RASTERIZER_DESC rast_desc;
+    ID3D10Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = ID3D10Device_CreateRasterizerState(device, NULL, &rast_state1);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    rast_desc.FillMode = D3D10_FILL_SOLID;
+    rast_desc.CullMode = D3D10_CULL_BACK;
+    rast_desc.FrontCounterClockwise = FALSE;
+    rast_desc.DepthBias = 0;
+    rast_desc.DepthBiasClamp = 0.0f;
+    rast_desc.SlopeScaledDepthBias = 0.0f;
+    rast_desc.DepthClipEnable = TRUE;
+    rast_desc.ScissorEnable = FALSE;
+    rast_desc.MultisampleEnable = FALSE;
+    rast_desc.AntialiasedLineEnable = FALSE;
+
+    hr = ID3D10Device_CreateRasterizerState(device, &rast_desc, &rast_state1);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    hr = ID3D10Device_CreateRasterizerState(device, &rast_desc, &rast_state2);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ok(rast_state1 == rast_state2, "Got different rasterizer state objects.\n");
+
+    refcount = ID3D10RasterizerState_Release(rast_state2);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    refcount = ID3D10RasterizerState_Release(rast_state1);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(device)
 {
     test_device_interfaces();
@@ -731,4 +774,5 @@ START_TEST(device)
     test_create_sampler_state();
     test_create_blend_state();
     test_create_depthstencil_state();
+    test_create_rasterizer_state();
 }
