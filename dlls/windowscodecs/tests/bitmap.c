@@ -421,10 +421,11 @@ static void test_createbitmapfromsource(void)
 
 static void test_CreateBitmapFromMemory(void)
 {
-    BYTE data3x3[27] = {
+    BYTE orig_data3x3[27] = {
         128,128,255, 128,128,128, 128,255,128,
         128,128,128, 128,128,128, 255,255,255,
         255,128,128, 255,255,255, 255,255,255 };
+    BYTE data3x3[27];
     BYTE data3x2[27] = {
         128,128,255, 128,128,128, 128,255,128,
         0,0,0, 0,128,128, 255,255,255,
@@ -433,6 +434,8 @@ static void test_CreateBitmapFromMemory(void)
     HRESULT hr;
     IWICBitmap *bitmap;
     UINT width, height, i;
+
+    memcpy(data3x3, orig_data3x3, sizeof(data3x3));
 
     hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
                                                    0, 0, NULL, &bitmap);
@@ -470,16 +473,18 @@ todo_wine
     ok(width == 3, "expected 3, got %u\n", width);
     ok(height == 3, "expected 3, got %u\n", height);
 
+    data3x3[2] = 192;
+
     memset(data, 0, sizeof(data));
     hr = IWICBitmap_CopyPixels(bitmap, NULL, 9, sizeof(data), data);
     ok(hr == S_OK, "IWICBitmap_CopyPixels error %#x\n", hr);
     for (i = 0; i < sizeof(data); i++)
-        ok(data[i] == data3x3[i], "%u: expected %u, got %u\n", i, data[i], data3x3[i]);
+        ok(data[i] == orig_data3x3[i], "%u: expected %u, got %u\n", i, data[i], data3x3[i]);
 
     IWICBitmap_Release(bitmap);
 
     hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 2, &GUID_WICPixelFormat24bppBGR,
-                                                   13, sizeof(data3x3), data3x3, &bitmap);
+                                                   13, sizeof(orig_data3x3), orig_data3x3, &bitmap);
     ok(hr == S_OK, "IWICImagingFactory_CreateBitmapFromMemory error %#x\n", hr);
     if (hr != S_OK) return;
 
