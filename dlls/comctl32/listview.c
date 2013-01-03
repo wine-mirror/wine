@@ -6,7 +6,7 @@
  * Copyright 2000 Jason Mawdsley
  * Copyright 2001 CodeWeavers Inc.
  * Copyright 2002 Dimitrie O. Paun
- * Copyright 2009-2012 Nikolay Sivov
+ * Copyright 2009-2013 Nikolay Sivov
  * Copyright 2009 Owen Rudge for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -6536,7 +6536,7 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     HDPA hdpaSubItems;
     INT isubitem;
 
-    TRACE("(lpLVItem=%s, isW=%d)\n", debuglvitem_t(lpLVItem, isW), isW);
+    TRACE("(item=%s, isW=%d)\n", debuglvitem_t(lpLVItem, isW), isW);
 
     if (!lpLVItem || lpLVItem->iItem < 0 || lpLVItem->iItem >= infoPtr->nItemCount)
 	return FALSE;
@@ -7027,65 +7027,61 @@ static BOOL LISTVIEW_GetItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT
  * 
  * NOTE: for subItem = 0, we should return the bounds of the _entire_ item,
  *       not only those of the first column.
- *       Fortunately, LISTVIEW_GetItemMetrics does the right thing.
  * 
  * RETURN:
  *     TRUE: success
  *     FALSE: failure
  */
-static BOOL LISTVIEW_GetSubItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
+static BOOL LISTVIEW_GetSubItemRect(const LISTVIEW_INFO *infoPtr, INT item, LPRECT lprc)
 {
-    POINT Position, Origin;
-    LVITEMW lvItem;
-    INT nColumn;
+    RECT rect = { 0, 0, 0, 0 };
+    POINT origin;
+    INT y;
     
     if (!lprc) return FALSE;
 
-    nColumn = lprc->top;
-
-    TRACE("(nItem=%d, nSubItem=%d, type=%d)\n", nItem, lprc->top, lprc->left);
-    /* On WinNT, a subitem of '0' calls LISTVIEW_GetItemRect */
+    TRACE("(item=%d, subitem=%d, type=%d)\n", item, lprc->top, lprc->left);
+    /* Subitem of '0' means item itself, and this works for all control view modes */
     if (lprc->top == 0)
-        return LISTVIEW_GetItemRect(infoPtr, nItem, lprc);
+        return LISTVIEW_GetItemRect(infoPtr, item, lprc);
 
     if (infoPtr->uView != LV_VIEW_DETAILS) return FALSE;
 
-    /* special case for header items */
-    if (nItem == -1)
-    {
-        if (lprc->left != LVIR_BOUNDS)
-        {
-            FIXME("Only LVIR_BOUNDS is implemented for header, got %d\n", lprc->left);
-            return FALSE;
-        }
+    LISTVIEW_GetOrigin(infoPtr, &origin);
+    /* this works for any item index, no matter if it exists or not */
+    y = item * infoPtr->nItemHeight + origin.y;
 
-        if (infoPtr->hwndHeader)
-            return SendMessageW(infoPtr->hwndHeader, HDM_GETITEMRECT, lprc->top, (LPARAM)lprc);
-        else
-        {
-            memset(lprc, 0, sizeof(RECT));
-            return TRUE;
-        }
+    if (infoPtr->hwndHeader && SendMessageW(infoPtr->hwndHeader, HDM_GETITEMRECT, lprc->top, (LPARAM)&rect))
+    {
+        rect.top = 0;
+        rect.bottom = infoPtr->nItemHeight;
+    }
+    else
+    {
+        /* Native implementation is broken for this case and garbage is left for left and right fields,
+           we zero them to get predictable output */
+        lprc->left = lprc->right = lprc->top = 0;
+        lprc->bottom = infoPtr->nItemHeight;
+        OffsetRect(lprc, origin.x, y);
+        TRACE("return rect %s\n", wine_dbgstr_rect(lprc));
+        return TRUE;
     }
 
-    if (!LISTVIEW_GetItemPosition(infoPtr, nItem, &Position)) return FALSE;
-    LISTVIEW_GetOrigin(infoPtr, &Origin);
-
-    if (nColumn < 0 || nColumn >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return FALSE;
-
-    lvItem.mask = 0;
-    lvItem.iItem = nItem;
-    lvItem.iSubItem = nColumn;
-    
-    switch(lprc->left)
+    switch (lprc->left)
     {
     case LVIR_ICON:
-	LISTVIEW_GetItemMetrics(infoPtr, &lvItem, NULL, NULL, lprc, NULL, NULL);
-        break;
+    {
+        /* it doesn't matter if main item actually has an icon, if imagelist is set icon width is returned */
+        if (infoPtr->himlSmall)
+            rect.right = rect.left + infoPtr->iconSize.cx;
+        else
+            rect.right = rect.left;
 
+        rect.bottom = rect.top + infoPtr->iconSize.cy;
+        break;
+    }
     case LVIR_LABEL:
     case LVIR_BOUNDS:
-	LISTVIEW_GetItemMetrics(infoPtr, &lvItem, lprc, NULL, NULL, NULL, NULL);
         break;
 
     default:
@@ -7093,7 +7089,8 @@ static BOOL LISTVIEW_GetSubItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPR
 	return FALSE;
     }
 
-    OffsetRect(lprc, Origin.x, Position.y);
+    OffsetRect(&rect, origin.x, y);
+    *lprc = rect;
     TRACE("return rect %s\n", wine_dbgstr_rect(lprc));
 
     return TRUE;

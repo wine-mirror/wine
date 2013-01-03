@@ -247,6 +247,18 @@ static const struct message getitemposition_seq2[] = {
     { 0 }
 };
 
+static const struct message getsubitemrect_seq[] = {
+    { LVM_GETSUBITEMRECT, sent|id|wparam, -1, 0, LISTVIEW_ID },
+    { HDM_GETITEMRECT, sent|id, 0, 0, HEADER_ID },
+    { LVM_GETSUBITEMRECT, sent|id|wparam, 0, 0, LISTVIEW_ID },
+    { HDM_GETITEMRECT, sent|id, 0, 0, HEADER_ID },
+    { LVM_GETSUBITEMRECT, sent|id|wparam, -10, 0, LISTVIEW_ID },
+    { HDM_GETITEMRECT, sent|id, 0, 0, HEADER_ID },
+    { LVM_GETSUBITEMRECT, sent|id|wparam, 20, 0, LISTVIEW_ID },
+    { HDM_GETITEMRECT, sent|id, 0, 0, HEADER_ID },
+    { 0 }
+};
+
 static const struct message editbox_create_pos[] = {
     /* sequence sent after LVN_BEGINLABELEDIT */
     /* next two are 4.7x specific */
@@ -1602,6 +1614,8 @@ static void test_create(void)
     rect.top  = 1;
     rect.right = rect.bottom = -10;
     r = SendMessage(hList, LVM_GETSUBITEMRECT, -1, (LPARAM)&rect);
+    /* right value contains garbage, probably because header columns are not set up */
+    expect(0, rect.bottom);
     expect(1, r);
 
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
@@ -2473,6 +2487,36 @@ todo_wine
 
     SendMessage(hwnd, LVM_SCROLL, -10, 0);
 
+    /* test header interaction */
+    subclass_header(hwnd);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    rect.left = LVIR_BOUNDS;
+    rect.top  = 1;
+    rect.right = rect.bottom = 0;
+    r = SendMessage(hwnd, LVM_GETSUBITEMRECT, -1, (LPARAM)&rect);
+    expect(1, r);
+
+    rect.left = LVIR_BOUNDS;
+    rect.top  = 1;
+    rect.right = rect.bottom = 0;
+    r = SendMessage(hwnd, LVM_GETSUBITEMRECT, 0, (LPARAM)&rect);
+    expect(1, r);
+
+    rect.left = LVIR_BOUNDS;
+    rect.top  = 1;
+    rect.right = rect.bottom = 0;
+    r = SendMessage(hwnd, LVM_GETSUBITEMRECT, -10, (LPARAM)&rect);
+    expect(1, r);
+
+    rect.left = LVIR_BOUNDS;
+    rect.top  = 1;
+    rect.right = rect.bottom = 0;
+    r = SendMessage(hwnd, LVM_GETSUBITEMRECT, 20, (LPARAM)&rect);
+    expect(1, r);
+
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, getsubitemrect_seq, "LVM_GETSUBITEMRECT negative index", FALSE);
+
     DestroyWindow(hwnd);
 
     /* test subitem rects after re-arranging columns */
@@ -2514,13 +2558,11 @@ todo_wine
     rect2.top  = 1;
     rect2.right = rect2.bottom = -1;
     r = SendMessage(hwnd, LVM_GETSUBITEMRECT, 2, (LPARAM)&rect2);
-todo_wine {
     expect(TRUE, r);
     expect(rect.right, rect2.right);
     expect(rect.left, rect2.left);
     expect(rect.bottom, rect2.top);
     ok(rect2.bottom > rect2.top, "expected not zero height\n");
-}
 
     arr[0] = 1; arr[1] = 0; arr[2] = 2;
     r = SendMessage(hwnd, LVM_SETCOLUMNORDERARRAY, 3, (LPARAM)arr);
