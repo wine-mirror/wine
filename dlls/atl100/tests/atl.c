@@ -242,18 +242,22 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoi
     return E_NOTIMPL;
 }
 
+static int advise_cnt;
+
 static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *pUnkSink,
                                              DWORD *pdwCookie)
 {
     ok(pUnkSink == (IUnknown*)0xdead0000, "pUnkSink = %p\n", pUnkSink);
     *pdwCookie = 0xdeadbeef;
+    advise_cnt++;
     return S_OK;
 }
 
 static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD dwCookie)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    ok(dwCookie == 0xdeadbeef, "dwCookie = %x\n", dwCookie);
+    advise_cnt--;
+    return S_OK;
 }
 
 static HRESULT WINAPI ConnectionPoint_EnumConnections(IConnectionPoint *iface,
@@ -332,6 +336,11 @@ static void test_cp(void)
     hres = AtlAdvise((IUnknown*)&ConnectionPointContainer, (IUnknown*)0xdead0000, &CLSID_Test, &cookie);
     ok(hres == S_OK, "AtlAdvise failed: %08x\n", hres);
     ok(cookie == 0xdeadbeef, "cookie = %x\n", cookie);
+    ok(advise_cnt == 1, "advise_cnt = %d\n", advise_cnt);
+
+    hres = AtlUnadvise((IUnknown*)&ConnectionPointContainer, &CLSID_Test, 0xdeadbeef);
+    ok(hres == S_OK, "AtlUnadvise failed: %08x\n", hres);
+    ok(!advise_cnt, "advise_cnt = %d\n", advise_cnt);
 }
 
 START_TEST(atl)

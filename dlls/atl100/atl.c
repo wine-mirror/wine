@@ -68,8 +68,24 @@ HRESULT WINAPI AtlAdvise(IUnknown *pUnkCP, IUnknown *pUnk, const IID *iid, DWORD
  */
 HRESULT WINAPI AtlUnadvise(IUnknown *pUnkCP, const IID *iid, DWORD dw)
 {
-    FIXME("%p %p %d\n", pUnkCP, iid, dw);
-    return S_OK;
+    IConnectionPointContainer *container;
+    IConnectionPoint *cp;
+    HRESULT hres;
+
+    TRACE("%p %p %d\n", pUnkCP, iid, dw);
+
+    hres = IUnknown_QueryInterface(pUnkCP, &IID_IConnectionPointContainer, (void**)&container);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IConnectionPointContainer_FindConnectionPoint(container, iid, &cp);
+    IConnectionPointContainer_Release(container);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IConnectionPoint_Unadvise(cp, dw);
+    IConnectionPoint_Release(cp);
+    return hres;
 }
 
 /***********************************************************************
