@@ -210,7 +210,7 @@ static HRESULT WINAPI path_SetText(
     return S_OK;
 }
 
-static WCHAR *build_namespace( struct path *path, int *len )
+static WCHAR *build_namespace( struct path *path, int *len, BOOL leading_slash )
 {
     WCHAR *ret, *p;
     int i;
@@ -218,13 +218,13 @@ static WCHAR *build_namespace( struct path *path, int *len )
     *len = 0;
     for (i = 0; i < path->num_namespaces; i++)
     {
-        if (i > 0) *len += 1;
+        if (i > 0 || leading_slash) *len += 1;
         *len += path->len_namespaces[i];
     }
     if (!(p = ret = heap_alloc( (*len + 1) * sizeof(WCHAR) ))) return NULL;
     for (i = 0; i < path->num_namespaces; i++)
     {
-        if (i > 0) *p++ = '\\';
+        if (i > 0 || leading_slash) *p++ = '\\';
         memcpy( p, path->namespaces[i], path->len_namespaces[i] * sizeof(WCHAR) );
         p += path->len_namespaces[i];
     }
@@ -238,7 +238,7 @@ static WCHAR *build_server( struct path *path, int *len )
 
     *len = 0;
     if (path->len_server) *len += 2 + path->len_server;
-    else *len += 4;
+    else *len += 3;
     if (!(p = ret = heap_alloc( (*len + 1) * sizeof(WCHAR) ))) return NULL;
     if (path->len_server)
     {
@@ -247,7 +247,7 @@ static WCHAR *build_server( struct path *path, int *len )
     }
     else
     {
-        p[0] = p[1] = p[3] = '\\';
+        p[0] = p[1] = '\\';
         p[2] = '.';
     }
     return ret;
@@ -260,7 +260,7 @@ static WCHAR *build_path( struct path *path, LONG flags, int *len )
     case 0:
     {
         int len_namespace;
-        WCHAR *ret, *namespace = build_namespace( path, &len_namespace );
+        WCHAR *ret, *namespace = build_namespace( path, &len_namespace, FALSE );
 
         if (!namespace) return NULL;
 
@@ -293,7 +293,7 @@ static WCHAR *build_path( struct path *path, LONG flags, int *len )
     case WBEMPATH_GET_SERVER_TOO:
     {
         int len_namespace, len_server;
-        WCHAR *p, *ret, *namespace = build_namespace( path, &len_namespace );
+        WCHAR *p, *ret, *namespace = build_namespace( path, &len_namespace, TRUE );
         WCHAR *server = build_server( path, &len_server );
 
         if (!namespace || !server)
@@ -326,7 +326,7 @@ static WCHAR *build_path( struct path *path, LONG flags, int *len )
     case WBEMPATH_GET_SERVER_AND_NAMESPACE_ONLY:
     {
         int len_namespace, len_server;
-        WCHAR *p, *ret, *namespace = build_namespace( path, &len_namespace );
+        WCHAR *p, *ret, *namespace = build_namespace( path, &len_namespace, TRUE );
         WCHAR *server = build_server( path, &len_server );
 
         if (!namespace || !server)
@@ -350,7 +350,7 @@ static WCHAR *build_path( struct path *path, LONG flags, int *len )
         return ret;
     }
     case WBEMPATH_GET_NAMESPACE_ONLY:
-        return build_namespace( path, len );
+        return build_namespace( path, len, FALSE );
 
     case WBEMPATH_GET_ORIGINAL:
         if (!path->len_text)
