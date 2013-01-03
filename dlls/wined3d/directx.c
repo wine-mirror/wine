@@ -1879,141 +1879,96 @@ static enum wined3d_pci_device select_card_intel(const struct wined3d_gl_info *g
 static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer)
 {
-    UINT d3d_level;
     unsigned int i;
 
-    /* See http://developer.amd.com/drivers/pc_vendor_id/Pages/default.aspx
+    /* 20101109 - These are never returned by current Gallium radeon
+     * drivers: R700, RV790, R680, RV535, RV516, R410, RS485, RV360, RV351.
      *
-     * Beware: renderer string do not match exact card model,
-     * eg HD 4800 is returned for multiple cards, even for RV790 based ones. */
-    if (strstr(gl_renderer, "Gallium"))
+     * These are returned but not handled: RC410, RV380. */
+    static const struct
     {
-        /* 20101109 - These are never returned by current Gallium radeon
-         * drivers: R700, RV790, R680, RV535, RV516, R410, RS485, RV360, RV351.
-         *
-         * These are returned but not handled: RC410, RV380. */
-        static const struct
-        {
-            const char *renderer;
-            enum wined3d_pci_device id;
-        }
-        cards[] =
-        {
-            /* Southern Islands */
-            {"TAHITI",     CARD_AMD_RADEON_HD7900},
-            {"PITCAIRN",   CARD_AMD_RADEON_HD7800},
-            {"CAPE VERDE", CARD_AMD_RADEON_HD7700},
-            /* Northern Islands */
-            {"CAYMAN",  CARD_AMD_RADEON_HD6900},
-            {"BARTS",   CARD_AMD_RADEON_HD6800},
-            {"TURKS",   CARD_AMD_RADEON_HD6600},
-            {"SUMO2",   CARD_AMD_RADEON_HD6410D},   /* SUMO2 first, because we do a strstr(). */
-            {"SUMO",    CARD_AMD_RADEON_HD6550D},
-            {"CAICOS",  CARD_AMD_RADEON_HD6400},
-            {"PALM",    CARD_AMD_RADEON_HD6300},
-            /* Evergreen */
-            {"HEMLOCK", CARD_AMD_RADEON_HD5900},
-            {"CYPRESS", CARD_AMD_RADEON_HD5800},
-            {"JUNIPER", CARD_AMD_RADEON_HD5700},
-            {"REDWOOD", CARD_AMD_RADEON_HD5600},
-            {"CEDAR",   CARD_AMD_RADEON_HD5400},
-            /* R700 */
-            {"R700",    CARD_AMD_RADEON_HD4800},    /* HD4800 - highend */
-            {"RV790",   CARD_AMD_RADEON_HD4800},
-            {"RV770",   CARD_AMD_RADEON_HD4800},
-            {"RV740",   CARD_AMD_RADEON_HD4700},    /* HD4700 - midend */
-            {"RV730",   CARD_AMD_RADEON_HD4600},    /* HD4600 - midend */
-            {"RV710",   CARD_AMD_RADEON_HD4350},    /* HD4500/HD4350 - lowend */
-            /* R600/R700 integrated */
-            {"RS880",   CARD_AMD_RADEON_HD3200},
-            {"RS780",   CARD_AMD_RADEON_HD3200},
-            /* R600 */
-            {"R680",    CARD_AMD_RADEON_HD2900},    /* HD2900/HD3800 - highend */
-            {"R600",    CARD_AMD_RADEON_HD2900},
-            {"RV670",   CARD_AMD_RADEON_HD2900},
-            {"RV635",   CARD_AMD_RADEON_HD2600},    /* HD2600/HD3600 - midend; HD3830 is China-only midend */
-            {"RV630",   CARD_AMD_RADEON_HD2600},
-            {"RV620",   CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
-            {"RV610",   CARD_AMD_RADEON_HD2350},
-            /* R500 */
-            {"R580",    CARD_AMD_RADEON_X1600},
-            {"R520",    CARD_AMD_RADEON_X1600},
-            {"RV570",   CARD_AMD_RADEON_X1600},
-            {"RV560",   CARD_AMD_RADEON_X1600},
-            {"RV535",   CARD_AMD_RADEON_X1600},
-            {"RV530",   CARD_AMD_RADEON_X1600},
-            {"RV516",   CARD_AMD_RADEON_X700},      /* X700 is actually R400. */
-            {"RV515",   CARD_AMD_RADEON_X700},
-            /* R400 */
-            {"R481",    CARD_AMD_RADEON_X700},
-            {"R480",    CARD_AMD_RADEON_X700},
-            {"R430",    CARD_AMD_RADEON_X700},
-            {"R423",    CARD_AMD_RADEON_X700},
-            {"R420",    CARD_AMD_RADEON_X700},
-            {"R410",    CARD_AMD_RADEON_X700},
-            {"RV410",   CARD_AMD_RADEON_X700},
-            /* Radeon Xpress - onboard, DX9b, Shader 2.0, 300-400MHz */
-            {"RS740",   CARD_AMD_RADEON_XPRESS_200M},
-            {"RS690",   CARD_AMD_RADEON_XPRESS_200M},
-            {"RS600",   CARD_AMD_RADEON_XPRESS_200M},
-            {"RS485",   CARD_AMD_RADEON_XPRESS_200M},
-            {"RS482",   CARD_AMD_RADEON_XPRESS_200M},
-            {"RS480",   CARD_AMD_RADEON_XPRESS_200M},
-            {"RS400",   CARD_AMD_RADEON_XPRESS_200M},
-            /* R300 */
-            {"R360",    CARD_AMD_RADEON_9500},
-            {"R350",    CARD_AMD_RADEON_9500},
-            {"R300",    CARD_AMD_RADEON_9500},
-            {"RV370",   CARD_AMD_RADEON_9500},
-            {"RV360",   CARD_AMD_RADEON_9500},
-            {"RV351",   CARD_AMD_RADEON_9500},
-            {"RV350",   CARD_AMD_RADEON_9500},
-        };
+        const char *renderer;
+        enum wined3d_pci_device id;
+    }
+    cards[] =
+    {
+        /* Southern Islands */
+        {"TAHITI",      CARD_AMD_RADEON_HD7900},
+        {"PITCAIRN",    CARD_AMD_RADEON_HD7800},
+        {"CAPE VERDE",  CARD_AMD_RADEON_HD7700},
+        /* Northern Islands */
+        {"CAYMAN",      CARD_AMD_RADEON_HD6900},
+        {"BARTS",       CARD_AMD_RADEON_HD6800},
+        {"TURKS",       CARD_AMD_RADEON_HD6600},
+        {"SUMO2",       CARD_AMD_RADEON_HD6410D},   /* SUMO2 first, because we do a strstr(). */
+        {"SUMO",        CARD_AMD_RADEON_HD6550D},
+        {"CAICOS",      CARD_AMD_RADEON_HD6400},
+        {"PALM",        CARD_AMD_RADEON_HD6300},
+        /* Evergreen */
+        {"HEMLOCK",     CARD_AMD_RADEON_HD5900},
+        {"CYPRESS",     CARD_AMD_RADEON_HD5800},
+        {"JUNIPER",     CARD_AMD_RADEON_HD5700},
+        {"REDWOOD",     CARD_AMD_RADEON_HD5600},
+        {"CEDAR",       CARD_AMD_RADEON_HD5400},
+        /* R700 */
+        {"R700",        CARD_AMD_RADEON_HD4800},
+        {"RV790",       CARD_AMD_RADEON_HD4800},
+        {"RV770",       CARD_AMD_RADEON_HD4800},
+        {"RV740",       CARD_AMD_RADEON_HD4700},
+        {"RV730",       CARD_AMD_RADEON_HD4600},
+        {"RV710",       CARD_AMD_RADEON_HD4350},
+        /* R600/R700 integrated */
+        {"RS880",       CARD_AMD_RADEON_HD3200},
+        {"RS780",       CARD_AMD_RADEON_HD3200},
+        /* R600 */
+        {"R680",        CARD_AMD_RADEON_HD2900},
+        {"R600",        CARD_AMD_RADEON_HD2900},
+        {"RV670",       CARD_AMD_RADEON_HD2900},
+        {"RV635",       CARD_AMD_RADEON_HD2600},
+        {"RV630",       CARD_AMD_RADEON_HD2600},
+        {"RV620",       CARD_AMD_RADEON_HD2350},
+        {"RV610",       CARD_AMD_RADEON_HD2350},
+        /* R500 */
+        {"R580",        CARD_AMD_RADEON_X1600},
+        {"R520",        CARD_AMD_RADEON_X1600},
+        {"RV570",       CARD_AMD_RADEON_X1600},
+        {"RV560",       CARD_AMD_RADEON_X1600},
+        {"RV535",       CARD_AMD_RADEON_X1600},
+        {"RV530",       CARD_AMD_RADEON_X1600},
+        {"RV516",       CARD_AMD_RADEON_X700},
+        {"RV515",       CARD_AMD_RADEON_X700},
+        /* R400 */
+        {"R481",        CARD_AMD_RADEON_X700},
+        {"R480",        CARD_AMD_RADEON_X700},
+        {"R430",        CARD_AMD_RADEON_X700},
+        {"R423",        CARD_AMD_RADEON_X700},
+        {"R420",        CARD_AMD_RADEON_X700},
+        {"R410",        CARD_AMD_RADEON_X700},
+        {"RV410",       CARD_AMD_RADEON_X700},
+        /* Radeon Xpress - onboard, DX9b, Shader 2.0, 300-400MHz */
+        {"RS740",       CARD_AMD_RADEON_XPRESS_200M},
+        {"RS690",       CARD_AMD_RADEON_XPRESS_200M},
+        {"RS600",       CARD_AMD_RADEON_XPRESS_200M},
+        {"RS485",       CARD_AMD_RADEON_XPRESS_200M},
+        {"RS482",       CARD_AMD_RADEON_XPRESS_200M},
+        {"RS480",       CARD_AMD_RADEON_XPRESS_200M},
+        {"RS400",       CARD_AMD_RADEON_XPRESS_200M},
+        /* R300 */
+        {"R360",        CARD_AMD_RADEON_9500},
+        {"R350",        CARD_AMD_RADEON_9500},
+        {"R300",        CARD_AMD_RADEON_9500},
+        {"RV370",       CARD_AMD_RADEON_9500},
+        {"RV360",       CARD_AMD_RADEON_9500},
+        {"RV351",       CARD_AMD_RADEON_9500},
+        {"RV350",       CARD_AMD_RADEON_9500},
+    };
 
-        for (i = 0; i < sizeof(cards) / sizeof(*cards); ++i)
-        {
-            if (strstr(gl_renderer, cards[i].renderer))
-                return cards[i].id;
-        }
-        return PCI_DEVICE_NONE;
+    for (i = 0; i < sizeof(cards) / sizeof(*cards); ++i)
+    {
+        if (strstr(gl_renderer, cards[i].renderer))
+            return cards[i].id;
     }
 
-    d3d_level = d3d_level_from_gl_info(gl_info);
-    if (d3d_level >= 9)
-    {
-        static const struct
-        {
-            const char *renderer;
-            enum wined3d_pci_device id;
-        }
-        cards[] =
-        {
-            /* R700 */
-            {"(R700",   CARD_AMD_RADEON_HD4800},    /* HD4800 - highend */
-            {"(RV790",  CARD_AMD_RADEON_HD4800},
-            {"(RV770",  CARD_AMD_RADEON_HD4800},
-            {"(RV740",  CARD_AMD_RADEON_HD4700},    /* HD4700 - midend */
-            {"(RV730",  CARD_AMD_RADEON_HD4600},    /* HD4600 - midend */
-            {"(RV710",  CARD_AMD_RADEON_HD4350},    /* HD4500/HD4350 - lowend */
-            /* R600/R700 integrated */
-            {"RS880",   CARD_AMD_RADEON_HD3200},
-            {"RS780",   CARD_AMD_RADEON_HD3200},
-            /* R600 */
-            {"(R680",   CARD_AMD_RADEON_HD2900},    /* HD2900/HD3800 - highend */
-            {"(R600",   CARD_AMD_RADEON_HD2900},
-            {"(RV670",  CARD_AMD_RADEON_HD2900},
-            {"(RV635",  CARD_AMD_RADEON_HD2600},    /* HD2600/HD3600 - midend; HD3830 is China-only midend */
-            {"(RV630",  CARD_AMD_RADEON_HD2600},
-            {"(RV620",  CARD_AMD_RADEON_HD2350},    /* HD2300/HD2400/HD3400 - lowend */
-            {"(RV610",  CARD_AMD_RADEON_HD2350},
-        };
-
-        for (i = 0; i < sizeof(cards) / sizeof(*cards); ++i)
-        {
-            if (strstr(gl_renderer, cards[i].renderer))
-                return cards[i].id;
-        }
-    }
     return PCI_DEVICE_NONE;
 }
 
