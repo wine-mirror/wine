@@ -580,9 +580,13 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         UINT start_instance, UINT instance_count, BOOL indexed, const void *idx_data)
 {
     const struct wined3d_state *state = &device->stateBlock->state;
+    const struct wined3d_stream_info *stream_info;
     struct wined3d_event_query *ib_query = NULL;
+    struct wined3d_stream_info si_emulated;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
+    BOOL emulation = FALSE;
+    UINT idx_size = 0;
     unsigned int i;
 
     if (!index_count) return;
@@ -666,105 +670,96 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         FIXME("Point sprite coordinate origin switching not supported.\n");
     }
 
+    stream_info = &device->strided_streams;
+    if (device->instance_count)
+        instance_count = device->instance_count;
+
+    if (indexed)
     {
-        GLenum glPrimType = state->gl_primitive_type;
-        INT base_vertex_index = state->base_vertex_index;
-        BOOL emulation = FALSE;
-        const struct wined3d_stream_info *stream_info = &device->strided_streams;
-        struct wined3d_stream_info stridedlcl;
-        UINT idx_size = 0;
-
-        if (device->instance_count)
-            instance_count = device->instance_count;
-
-        if (indexed)
+        if (!state->user_stream)
         {
-            if (!state->user_stream)
-            {
-                struct wined3d_buffer *index_buffer = state->index_buffer;
-                if (!index_buffer->buffer_object || !stream_info->all_vbo)
-                    idx_data = index_buffer->resource.allocatedMemory;
-                else
-                {
-                    ib_query = index_buffer->query;
-                    idx_data = NULL;
-                }
-            }
-
-            if (state->index_format == WINED3DFMT_R16_UINT)
-                idx_size = 2;
-            else
-                idx_size = 4;
-        }
-
-        if (!use_vs(state))
-        {
-            if (!stream_info->position_transformed && context->num_untracked_materials
-                    && state->render_states[WINED3D_RS_LIGHTING])
-            {
-                static BOOL warned;
-                if (!warned) {
-                    FIXME("Using software emulation because not all material properties could be tracked\n");
-                    warned = TRUE;
-                } else {
-                    TRACE("Using software emulation because not all material properties could be tracked\n");
-                }
-                emulation = TRUE;
-            }
-            else if (context->fog_coord && state->render_states[WINED3D_RS_FOGENABLE])
-            {
-                /* Either write a pipeline replacement shader or convert the specular alpha from unsigned byte
-                 * to a float in the vertex buffer
-                 */
-                static BOOL warned;
-                if (!warned) {
-                    FIXME("Using software emulation because manual fog coordinates are provided\n");
-                    warned = TRUE;
-                } else {
-                    TRACE("Using software emulation because manual fog coordinates are provided\n");
-                }
-                emulation = TRUE;
-            }
-
-            if(emulation) {
-                stream_info = &stridedlcl;
-                memcpy(&stridedlcl, &device->strided_streams, sizeof(stridedlcl));
-                remove_vbos(gl_info, state, &stridedlcl);
-            }
-        }
-
-        if (device->useDrawStridedSlow || emulation)
-        {
-            /* Immediate mode drawing */
-            if (use_vs(state))
-            {
-                static BOOL warned;
-                if (!warned) {
-                    FIXME("Using immediate mode with vertex shaders for half float emulation\n");
-                    warned = TRUE;
-                } else {
-                    TRACE("Using immediate mode with vertex shaders for half float emulation\n");
-                }
-                drawStridedSlowVs(gl_info, state, stream_info, index_count,
-                        glPrimType, idx_data, idx_size, start_idx);
-            }
+            struct wined3d_buffer *index_buffer = state->index_buffer;
+            if (!index_buffer->buffer_object || !stream_info->all_vbo)
+                idx_data = index_buffer->resource.allocatedMemory;
             else
             {
-                drawStridedSlow(device, context, stream_info, index_count,
-                        glPrimType, idx_data, idx_size, start_idx);
+                ib_query = index_buffer->query;
+                idx_data = NULL;
             }
         }
-        else if (!gl_info->supported[ARB_INSTANCED_ARRAYS] && instance_count)
+
+        if (state->index_format == WINED3DFMT_R16_UINT)
+            idx_size = 2;
+        else
+            idx_size = 4;
+    }
+
+    if (!use_vs(state))
+    {
+        if (!stream_info->position_transformed && context->num_untracked_materials
+                && state->render_states[WINED3D_RS_LIGHTING])
         {
-            /* Instancing emulation with mixing immediate mode and arrays */
-            drawStridedInstanced(gl_info, state, stream_info, index_count, glPrimType,
-                    idx_data, idx_size, start_idx, base_vertex_index, instance_count);
+            static BOOL warned;
+
+            if (!warned++)
+                FIXME("Using software emulation because not all material properties could be tracked.\n");
+            else
+                WARN("Using software emulation because not all material properties could be tracked.\n");
+            emulation = TRUE;
+        }
+        else if (context->fog_coord && state->render_states[WINED3D_RS_FOGENABLE])
+        {
+            static BOOL warned;
+
+            /* Either write a pipeline replacement shader or convert the
+             * specular alpha from unsigned byte to a float in the vertex
+             * buffer. */
+            if (!warned++)
+                FIXME("Using software emulation because manual fog coordinates are provided.\n");
+            else
+                WARN("Using software emulation because manual fog coordinates are provided.\n");
+            emulation = TRUE;
+        }
+
+        if (emulation)
+        {
+            si_emulated = device->strided_streams;
+            remove_vbos(gl_info, state, &si_emulated);
+            stream_info = &si_emulated;
+        }
+    }
+
+    if (device->useDrawStridedSlow || emulation)
+    {
+        /* Immediate mode drawing. */
+        if (use_vs(state))
+        {
+            static BOOL warned;
+
+            if (!warned++)
+                FIXME("Using immediate mode with vertex shaders for half float emulation.\n");
+            else
+                WARN("Using immediate mode with vertex shaders for half float emulation.\n");
+
+            drawStridedSlowVs(gl_info, state, stream_info, index_count,
+                    state->gl_primitive_type, idx_data, idx_size, start_idx);
         }
         else
         {
-            drawStridedFast(gl_info, glPrimType, index_count, idx_size, idx_data,
-                    start_idx, base_vertex_index, start_instance, instance_count);
+            drawStridedSlow(device, context, stream_info, index_count,
+                    state->gl_primitive_type, idx_data, idx_size, start_idx);
         }
+    }
+    else if (!gl_info->supported[ARB_INSTANCED_ARRAYS] && instance_count)
+    {
+        /* Instancing emulation by mixing immediate mode and arrays. */
+        drawStridedInstanced(gl_info, state, stream_info, index_count, state->gl_primitive_type,
+                idx_data, idx_size, start_idx, state->base_vertex_index, instance_count);
+    }
+    else
+    {
+        drawStridedFast(gl_info, state->gl_primitive_type, index_count, idx_size, idx_data,
+                start_idx, state->base_vertex_index, start_instance, instance_count);
     }
 
     if (ib_query)
