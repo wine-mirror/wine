@@ -2360,11 +2360,11 @@ static BOOL X11DRV_CLIPBOARD_ReadProperty(Display *display, Window w, Atom prop,
     if (prop == None)
         return FALSE;
 
-    if (!X11DRV_CLIPBOARD_GetProperty(display, w, prop, &atype, data, datasize))
-        return FALSE;
-
     while (XCheckTypedWindowEvent(display, w, PropertyNotify, &xe))
         ;
+
+    if (!X11DRV_CLIPBOARD_GetProperty(display, w, prop, &atype, data, datasize))
+        return FALSE;
 
     if (atype == x11drv_atom(INCR))
     {
