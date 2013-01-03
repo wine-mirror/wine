@@ -55,6 +55,11 @@ static const WCHAR path14[] =
     {'W','i','n','3','2','_','O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
 static const WCHAR path15[] =
     {'r','o','o','t','\\','c','i','m','v','2',0};
+static const WCHAR path16[] =
+    {'\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',0};
+static const WCHAR path17[] =
+    {'\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',':','W','i','n','3','2','_',
+     'L','o','g','i','c','a','l','D','i','s','k','.','D','e','v','i','c','e','I','d','=','"','C',':','"',0};
 
 static void test_IWbemPath_SetText(void)
 {
@@ -237,6 +242,36 @@ static void test_IWbemPath_GetText(void)
     hr = IWbemPath_GetNamespaceCount( path, &count );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( !count, "got %u\n", count );
+
+    hr = IWbemPath_SetText( path, WBEMPATH_CREATE_ACCEPT_ALL, path6 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    count = 0xdeadbeef;
+    hr = IWbemPath_GetNamespaceCount( path, &count );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( count == 2, "got %u\n", count );
+
+    len = 0;
+    hr = IWbemPath_GetText( path, WBEMPATH_GET_SERVER_TOO, &len, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( len == lstrlenW( path16 ) + 1, "unexpected length %u\n", len );
+
+    len = sizeof(buf)/sizeof(buf[0]);
+    memset( buf, 0x55, sizeof(buf) );
+    hr = IWbemPath_GetText( path, WBEMPATH_GET_SERVER_TOO, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( buf, path16 ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( path16 ) + 1, "unexpected length %u\n", len );
+
+    hr = IWbemPath_SetText( path, WBEMPATH_CREATE_ACCEPT_ALL, path17 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    len = sizeof(buf)/sizeof(buf[0]);
+    memset( buf, 0x55, sizeof(buf) );
+    hr = IWbemPath_GetText( path, WBEMPATH_GET_SERVER_TOO, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( !lstrcmpW( buf, path17 ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    todo_wine ok( len == lstrlenW( path17 ) + 1, "unexpected length %u\n", len );
 
     IWbemPath_Release( path );
     CoUninitialize();
