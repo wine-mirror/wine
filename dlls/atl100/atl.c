@@ -41,10 +41,26 @@ static ICatRegister *catreg;
 /***********************************************************************
  *           AtlAdvise         [atl100.@]
  */
-HRESULT WINAPI AtlAdvise(IUnknown *pUnkCP, IUnknown *pUnk, const IID *iid, LPDWORD pdw)
+HRESULT WINAPI AtlAdvise(IUnknown *pUnkCP, IUnknown *pUnk, const IID *iid, DWORD *pdw)
 {
-    FIXME("%p %p %p %p\n", pUnkCP, pUnk, iid, pdw);
-    return E_FAIL;
+    IConnectionPointContainer *container;
+    IConnectionPoint *cp;
+    HRESULT hres;
+
+    TRACE("%p %p %p %p\n", pUnkCP, pUnk, iid, pdw);
+
+    hres = IUnknown_QueryInterface(pUnkCP, &IID_IConnectionPointContainer, (void**)&container);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IConnectionPointContainer_FindConnectionPoint(container, iid, &cp);
+    IConnectionPointContainer_Release(container);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IConnectionPoint_Advise(cp, pUnk, pdw);
+    IConnectionPoint_Release(cp);
+    return hres;
 }
 
 /***********************************************************************
