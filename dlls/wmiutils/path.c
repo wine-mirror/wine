@@ -237,10 +237,10 @@ static WCHAR *build_server( struct path *path, int *len )
     WCHAR *ret, *p;
 
     *len = 0;
-    if (path->server) *len += 2 + path->len_server;
+    if (path->len_server) *len += 2 + path->len_server;
     else *len += 4;
     if (!(p = ret = heap_alloc( (*len + 1) * sizeof(WCHAR) ))) return NULL;
-    if (path->server)
+    if (path->len_server)
     {
         p[0] = p[1] = '\\';
         strcpyW( p + 2, path->server );
@@ -265,14 +265,14 @@ static WCHAR *build_path( struct path *path, LONG flags, int *len )
         if (!namespace) return NULL;
 
         *len = len_namespace;
-        if (path->class) *len += 1 + path->len_class;
+        if (path->len_class) *len += 1 + path->len_class;
         if (!(ret = heap_alloc( (*len + 1) * sizeof(WCHAR) )))
         {
             heap_free( namespace );
             return NULL;
         }
         strcpyW( ret, namespace );
-        if (path->class)
+        if (path->len_class)
         {
             ret[len_namespace] = ':';
             strcpyW( ret + len_namespace + 1, path->class );
@@ -282,7 +282,7 @@ static WCHAR *build_path( struct path *path, LONG flags, int *len )
 
     }
     case WBEMPATH_GET_RELATIVE_ONLY:
-        if (!path->class)
+        if (!path->len_class)
         {
             *len = 0;
             return NULL;
@@ -303,7 +303,7 @@ static WCHAR *build_path( struct path *path, LONG flags, int *len )
             return NULL;
         }
         *len = len_namespace + len_server;
-        if (path->class) *len += 1 + path->len_class;
+        if (path->len_class) *len += 1 + path->len_class;
         if (!(p = ret = heap_alloc( (*len + 1) * sizeof(WCHAR) )))
         {
             heap_free( namespace );
@@ -314,7 +314,7 @@ static WCHAR *build_path( struct path *path, LONG flags, int *len )
         p += len_server;
         strcpyW( p, namespace );
         p += len_namespace;
-        if (path->class)
+        if (path->len_class)
         {
             *p = ':';
             strcpyW( p + 1, path->class );
@@ -353,7 +353,7 @@ static WCHAR *build_path( struct path *path, LONG flags, int *len )
         return build_namespace( path, len );
 
     case WBEMPATH_GET_ORIGINAL:
-        if (!path->text)
+        if (!path->len_text)
         {
             *len = 0;
             return NULL;
@@ -379,7 +379,7 @@ static HRESULT WINAPI path_GetText(
 
     TRACE("%p, 0x%x, %p, %p\n", iface, lFlags, puBufferLength, pszText);
 
-    if (!puBufferLength || !pszText) return WBEM_E_INVALID_PARAMETER;
+    if (!puBufferLength) return WBEM_E_INVALID_PARAMETER;
 
     str = build_path( path, lFlags, &len );
 
@@ -388,12 +388,16 @@ static HRESULT WINAPI path_GetText(
         *puBufferLength = len + 1;
         return S_OK;
     }
-    if (pszText)
+    if (!pszText)
     {
-        if (str) strcpyW( pszText, str );
-        else pszText[0] = 0;
+        heap_free( str );
+        return WBEM_E_INVALID_PARAMETER;
     }
+    if (str) strcpyW( pszText, str );
+    else pszText[0] = 0;
     *puBufferLength = len + 1;
+
+    TRACE("<-- %s\n", debugstr_w(pszText));
     heap_free( str );
     return S_OK;
 }
