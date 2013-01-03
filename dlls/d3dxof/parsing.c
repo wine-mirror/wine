@@ -124,7 +124,7 @@ static const char* get_primitive_string(WORD token)
 
 static void dump_template(xtemplate* templates_array, xtemplate* ptemplate)
 {
-  int j, k;
+  ULONG j, k;
   GUID* clsid;
 
   clsid = &ptemplate->class_id;
@@ -1171,15 +1171,15 @@ static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional);
 static BOOL parse_object_members_list(parse_buffer * buf)
 {
   DWORD token;
-  int i;
+  ULONG i;
   xtemplate* pt = buf->pxt[buf->level];
 
   buf->pxo->nb_members = pt->nb_members;
 
   for (i = 0; i < pt->nb_members; i++)
   {
-    int k;
-    int nb_elems = 1;
+    ULONG k;
+    ULONG nb_elems = 1;
 
     buf->pxo->members[i].name = pt->members[i].name;
     buf->pxo->members[i].start = buf->cur_pos_data;
@@ -1192,7 +1192,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
         nb_elems *= *(DWORD*)(buf->pxo->root->pdata + buf->pxo->members[pt->members[i].dim_value[k]].start);
     }
 
-    TRACE("Elements to consider: %d\n", nb_elems);
+    TRACE("Elements to consider: %u\n", nb_elems);
 
     for (k = 0; k < nb_elems; k++)
     {
@@ -1213,7 +1213,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
 
       if (pt->members[i].type == TOKEN_NAME)
       {
-        int j;
+        ULONG j;
 
         TRACE("Found sub-object %s\n", buf->pdxf->xtemplates[pt->members[i].idx_template].name);
         buf->level++;
@@ -1351,7 +1351,7 @@ static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional)
     {
       if (check_TOKEN(buf) == TOKEN_OBRACE)
       {
-        int i, j;
+        ULONG i, j;
         get_TOKEN(buf);
         if (get_TOKEN(buf) != TOKEN_NAME)
           return FALSE;
@@ -1423,7 +1423,7 @@ _exit:
 
 BOOL parse_object(parse_buffer * buf)
 {
-  int i;
+  ULONG i;
 
   buf->pxo->pos_data = buf->cur_pos_data;
   buf->pxo->ptarget = NULL;

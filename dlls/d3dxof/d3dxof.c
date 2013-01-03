@@ -248,7 +248,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
 
   if (TRACE_ON(d3dxof))
   {
-    int i;
+    ULONG i;
     TRACE("Registered templates (%d):\n", This->nb_xtemplates);
     for (i = 0; i < This->nb_xtemplates; i++)
       DPRINTF("%s - %s\n", This->xtemplates[i].name, debugstr_guid(&This->xtemplates[i].class_id));
@@ -326,7 +326,7 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
 
   if (TRACE_ON(d3dxof))
   {
-    int i;
+    ULONG i;
     TRACE("Registered templates (%d):\n", This->nb_xtemplates);
     for (i = 0; i < This->nb_xtemplates; i++)
       DPRINTF("%s - %s\n", This->xtemplates[i].name, debugstr_guid(&This->xtemplates[i].class_id));
@@ -616,7 +616,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetData(IDirectXFileData* iface, LPCS
 
   if (szMember)
   {
-    int i;
+    ULONG i;
     for (i = 0; i < This->pobj->nb_members; i++)
       if (!strcmp(This->pobj->members[i].name, szMember))
         break;
@@ -968,7 +968,7 @@ static ULONG WINAPI IDirectXFileEnumObjectImpl_Release(IDirectXFileEnumObject* i
 
   if (!ref)
   {
-    int i;
+    ULONG i;
     for (i = 0; i < This->nb_xobjects; i++)
       IDirectXFileData_Release(This->pRefObjects[i]);
     if (This->mapped_memory)
