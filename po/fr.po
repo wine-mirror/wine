@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-12-19 21:13+0100\n"
+"PO-Revision-Date: 2013-01-03 21:13+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -3564,7 +3564,7 @@ msgstr "Constante chaîne de caractères non clôturée"
 
 #: jscript.rc:39
 msgid "'return' statement outside of function"
-msgstr ""
+msgstr "Instruction « return » en dehors d'une fonction"
 
 #: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
@@ -8320,6 +8320,9 @@ msgid ""
 "When installed, ActiveX has full access to your computer.Do not click "
 "install unless you have absolute trust in the above source."
 msgstr ""
+"Lorsqu'il est installé, ActiveX a un accès complet à votre ordinateur. Ne "
+"cliquez pas sur le bouton d'installation à moins d'avoir une confiance "
+"absolue dans la source ci-dessus."
 
 #: urlmon.rc:47
 msgid "Installation of component failed: %08x"
@@ -10231,32 +10234,32 @@ msgstr " (Oui|Non|Tous)"
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
-"Ne reconnaît pas « %1 » comme commande interne ou externe, ou fichier de "
+"Ne reconnaît pas « %1 » comme commande interne ou externe, ou fichier de "
 "traitement par lots.\n"
 
 #: cmd.rc:357
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "Erreur de division par zéro.\n"
 
 #: cmd.rc:358
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "Opérande attendu.\n"
 
 #: cmd.rc:359
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Expected an operator.\n"
-msgstr "Erreur réseau inattendue.\n"
+msgstr "Opérateur attendu.\n"
 
 #: cmd.rc:360
 msgid "Mismatch in parentheses.\n"
-msgstr ""
+msgstr "Discordance des parenthèses.\n"
 
 #: cmd.rc:361
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
+"Nombre mal formé : doit être décimal (12),\n"
+" hexadécimal (0x34) ou octal (056).\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10527,32 +10530,24 @@ msgid "DELETE_TCB"
 msgstr ""
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Connections"
-msgstr "Connexion réseau local (LAN)"
+msgstr "Connexions actives"
 
 #: netstat.rc:41
 msgid "Proto"
-msgstr ""
+msgstr "Proto"
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "Email Address"
 msgid "Local Address"
-msgstr "Adresse électronique"
+msgstr "Adresse locale"
 
 #: netstat.rc:43
-#, fuzzy
-#| msgid "Street Address"
 msgid "Foreign Address"
-msgstr "Adresse"
+msgstr "Adresse distante"
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "Status"
 msgid "State"
-msgstr "Statut"
+msgstr "État"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
