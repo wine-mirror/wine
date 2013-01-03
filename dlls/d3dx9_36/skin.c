@@ -83,7 +83,7 @@ static ULONG WINAPI ID3DXSkinInfoImpl_Release(ID3DXSkinInfo *iface)
     TRACE("%p decreasing refcount to %u\n", This, ref);
 
     if (ref == 0) {
-        int i;
+        DWORD i;
         for (i = 0; i < This->num_bones; i++) {
             HeapFree(GetProcessHeap(), 0, This->bones[i].name);
             HeapFree(GetProcessHeap(), 0, This->bones[i].vertices);

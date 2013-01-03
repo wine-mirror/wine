@@ -49,7 +49,7 @@ static const struct
 
 static D3DFORMAT wic_guid_to_d3dformat(const GUID *guid)
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < sizeof(wic_pixel_formats) / sizeof(wic_pixel_formats[0]); i++)
     {
@@ -62,7 +62,7 @@ static D3DFORMAT wic_guid_to_d3dformat(const GUID *guid)
 
 static const GUID *d3dformat_to_wic_guid(D3DFORMAT format)
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < sizeof(wic_pixel_formats) / sizeof(wic_pixel_formats[0]); i++)
     {
@@ -143,7 +143,7 @@ struct dds_header
 
 static D3DFORMAT dds_fourcc_to_d3dformat(DWORD fourcc)
 {
-    int i;
+    unsigned int i;
     static const DWORD known_fourcc[] = {
         MAKEFOURCC('U','Y','V','Y'),
         MAKEFOURCC('Y','U','Y','2'),
@@ -193,7 +193,7 @@ static const struct {
 
 static D3DFORMAT dds_rgb_to_d3dformat(const struct dds_pixel_format *pixel_format)
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < sizeof(rgb_pixel_formats) / sizeof(rgb_pixel_formats[0]); i++)
     {
@@ -278,7 +278,7 @@ static D3DFORMAT dds_pixel_format_to_d3dformat(const struct dds_pixel_format *pi
 
 static HRESULT d3dformat_to_dds_pixel_format(struct dds_pixel_format *pixel_format, D3DFORMAT d3dformat)
 {
-    int i;
+    unsigned int i;
 
     memset(pixel_format, 0, sizeof(*pixel_format));
 
@@ -575,7 +575,7 @@ HRESULT load_cube_texture_from_dds(IDirect3DCubeTexture9 *cube_texture, const vo
 {
     HRESULT hr;
     int face;
-    int mip_level;
+    UINT mip_level;
     UINT size;
     RECT src_rect;
     UINT src_pitch;
