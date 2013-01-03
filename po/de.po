@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-12-13 02:22+0100\n"
+"PO-Revision-Date: 2013-01-03 05:17+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -10196,27 +10196,27 @@ msgstr ""
 
 #: cmd.rc:357
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "'Division durch Null'-Fehler.\n"
 
 #: cmd.rc:358
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "Operand erwartet.\n"
 
 #: cmd.rc:359
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Expected an operator.\n"
-msgstr "Unerwarteter Netzwerkfehler.\n"
+msgstr "Operator erwartet.\n"
 
 #: cmd.rc:360
 msgid "Mismatch in parentheses.\n"
-msgstr ""
+msgstr "Klammern stimmen nicht überein.\n"
 
 #: cmd.rc:361
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
+"Zahl ungültig formatiert - muss dezimal (12),\n"
+" hexadezimal (0x34) oder oktal (056) sein.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10438,79 +10438,71 @@ msgstr "Die folgenden Dienste laufen:\n"
 
 #: netstat.rc:27
 msgid "CLOSED"
-msgstr ""
+msgstr "GESCHLOSSEN"
 
 #: netstat.rc:28
 msgid "LISTENING"
-msgstr ""
+msgstr "LAUSCHEND"
 
 #: netstat.rc:29
 msgid "SYN_SENT"
-msgstr ""
+msgstr "SYN_GSNDT"
 
 #: netstat.rc:30
 msgid "SYN_RCVD"
-msgstr ""
+msgstr "SYN_EMPF"
 
 #: netstat.rc:31
 msgid "ESTABLISHED"
-msgstr ""
+msgstr "HERGESTELLT"
 
 #: netstat.rc:32
 msgid "FIN_WAIT1"
-msgstr ""
+msgstr "ABSCH_WARTEN1"
 
 #: netstat.rc:33
 msgid "FIN_WAIT2"
-msgstr ""
+msgstr "ABSCH_WARTEN2"
 
 #: netstat.rc:34
 msgid "CLOSE_WAIT"
-msgstr ""
+msgstr "SCHLIESSEN_WARTEN"
 
 #: netstat.rc:35
 msgid "CLOSING"
-msgstr ""
+msgstr "SCHLIESSEND"
 
 #: netstat.rc:36
 msgid "LAST_ACK"
-msgstr ""
+msgstr "LETZTES_ACK"
 
 #: netstat.rc:37
 msgid "TIME_WAIT"
-msgstr ""
+msgstr "ZEIT_WARTEN"
 
 #: netstat.rc:38
 msgid "DELETE_TCB"
-msgstr ""
+msgstr "TCB_LOESCHEN"
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Connections"
-msgstr "LAN-Verbindung"
+msgstr "Aktive Verbindungen"
 
 #: netstat.rc:41
 msgid "Proto"
-msgstr ""
+msgstr "Proto"
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "Email Address"
 msgid "Local Address"
-msgstr "E-Mail-Adresse"
+msgstr "Lokale Adresse"
 
 #: netstat.rc:43
-#, fuzzy
-#| msgid "Street Address"
 msgid "Foreign Address"
-msgstr "Straße"
+msgstr "Entfernte Adresse"
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "Status"
 msgid "State"
-msgstr "Status"
+msgstr "Zustand"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
