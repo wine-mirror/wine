@@ -61,7 +61,7 @@
 *PageRegion EnvMonarch/Envelope Monarch: "<</PageSize[279 540]/ImagingBBox null>>setpagedevice"
 *CloseUI: *PageRegion
 
-*DefaultImageableArea: Letter
+*DefaultImageableArea: A4
 *ImageableArea Letter/US Letter:	"18 18 594 774"
 *ImageableArea Legal/US Legal:		"18 18 594 990"
 *ImageableArea Executive/Executive:	"18 18 504 738"
@@ -75,7 +75,7 @@
 *ImageableArea EnvDL/EnvDL:		"18 36 294 588"
 *ImageableArea EnvMonarch/Envelope Monarch: "18 36 261 504"
 
-*DefaultPaperDimension: Letter
+*DefaultPaperDimension: A4
 *PaperDimension Letter/Letter:		"612 792"
 *PaperDimension Legal/Legal:		"612 1008"
 *PaperDimension Executive/Executive:	"522 756"
