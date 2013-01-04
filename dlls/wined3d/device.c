@@ -3575,7 +3575,6 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
     struct wined3d_state *state = &device->stateBlock->state;
     struct wined3d_stream_info stream_info;
     const struct wined3d_gl_info *gl_info;
-    BOOL streamWasUP = state->user_stream;
     struct wined3d_context *context;
     struct wined3d_shader *vs;
     unsigned int i;
@@ -3593,14 +3592,9 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
     context = context_acquire(device, NULL);
     gl_info = context->gl_info;
 
-    /* ProcessVertices reads from vertex buffers, which have to be assigned.
-     * DrawPrimitive and DrawPrimitiveUP control the streamIsUP flag, thus
-     * restore it afterwards. */
     vs = state->vertex_shader;
     state->vertex_shader = NULL;
-    state->user_stream = FALSE;
     device_stream_info_from_declaration(device, &stream_info);
-    state->user_stream = streamWasUP;
     state->vertex_shader = vs;
 
     /* We can't convert FROM a VBO, and vertex buffers used to source into
