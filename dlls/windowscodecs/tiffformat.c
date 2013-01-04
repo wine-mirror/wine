@@ -1304,6 +1304,7 @@ struct tiff_encode_format {
 
 static const struct tiff_encode_format formats[] = {
     {&GUID_WICPixelFormat24bppBGR, 2, 8, 3, 24, 0, 0, 1},
+    {&GUID_WICPixelFormat24bppRGB, 2, 8, 3, 24, 0, 0, 0},
     {&GUID_WICPixelFormatBlackWhite, 1, 1, 1, 1, 0, 0, 0},
     {&GUID_WICPixelFormat4bppGray, 1, 4, 1, 4, 0, 0, 0},
     {&GUID_WICPixelFormat8bppGray, 1, 8, 1, 8, 0, 0, 0},
