@@ -439,34 +439,27 @@ static void test_CreateBitmapFromMemory(void)
 
     hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
                                                    0, 0, NULL, &bitmap);
-todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
                                                    0, sizeof(data3x3), data3x3, &bitmap);
-todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
                                                    6, sizeof(data3x3), data3x3, &bitmap);
-todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
                                                    12, sizeof(data3x3), data3x3, &bitmap);
-todo_wine
     ok(hr == WINCODEC_ERR_INSUFFICIENTBUFFER, "expected WINCODEC_ERR_INSUFFICIENTBUFFER, got %#x\n", hr);
 
     hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
                                                    9, sizeof(data3x3) - 1, data3x3, &bitmap);
-todo_wine
     ok(hr == WINCODEC_ERR_INSUFFICIENTBUFFER, "expected WINCODEC_ERR_INSUFFICIENTBUFFER, got %#x\n", hr);
 
     hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 3, &GUID_WICPixelFormat24bppBGR,
                                                    9, sizeof(data3x3), data3x3, &bitmap);
-todo_wine
     ok(hr == S_OK, "IWICImagingFactory_CreateBitmapFromMemory error %#x\n", hr);
-    if (hr != S_OK) return;
 
     hr = IWICBitmap_GetSize(bitmap, &width, &height);
     ok(hr == S_OK, "IWICBitmap_GetSize error %#x\n", hr);
@@ -486,7 +479,6 @@ todo_wine
     hr = IWICImagingFactory_CreateBitmapFromMemory(factory, 3, 2, &GUID_WICPixelFormat24bppBGR,
                                                    13, sizeof(orig_data3x3), orig_data3x3, &bitmap);
     ok(hr == S_OK, "IWICImagingFactory_CreateBitmapFromMemory error %#x\n", hr);
-    if (hr != S_OK) return;
 
     hr = IWICBitmap_GetSize(bitmap, &width, &height);
     ok(hr == S_OK, "IWICBitmap_GetSize error %#x\n", hr);
@@ -497,7 +489,10 @@ todo_wine
     hr = IWICBitmap_CopyPixels(bitmap, NULL, 13, sizeof(data), data);
     ok(hr == S_OK, "IWICBitmap_CopyPixels error %#x\n", hr);
     for (i = 0; i < sizeof(data); i++)
-        ok(data[i] == data3x2[i], "%u: expected %u, got %u\n", i, data3x2[i], data[i]);
+        if ((i % 13) < 9)
+            ok(data[i] == data3x2[i], "%u: expected %u, got %u\n", i, data3x2[i], data[i]);
+        else
+            todo_wine ok(data[i] == data3x2[i], "%u: expected %u, got %u\n", i, data3x2[i], data[i]);
 
     IWICBitmap_Release(bitmap);
 }
