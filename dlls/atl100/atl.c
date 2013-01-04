@@ -331,8 +331,10 @@ HRESULT WINAPI AtlLoadTypeLib(HINSTANCE inst, LPCOLESTR lpszIndex,
         return E_OUTOFMEMORY;
 
     path_len = GetModuleFileNameW(inst, path, MAX_PATH);
-    if(!path_len)
+    if(!path_len) {
+        heap_free(path);
         return HRESULT_FROM_WIN32(GetLastError());
+    }
 
     if(index_len)
         memcpy(path+path_len, lpszIndex, (index_len+1)*sizeof(WCHAR));
