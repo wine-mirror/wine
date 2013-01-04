@@ -142,6 +142,134 @@ static HRESULT setup_dll(install_ctx_t *ctx)
     return hres;
 }
 
+static void expand_command(install_ctx_t *ctx, const WCHAR *cmd, WCHAR *buf, size_t *size)
+{
+    const WCHAR *ptr = cmd, *prev_ptr = cmd;
+    size_t len = 0, len2;
+
+    static const WCHAR expand_dirW[] = {'%','E','X','T','R','A','C','T','_','D','I','R','%'};
+
+    while((ptr = strchrW(ptr, '%'))) {
+        if(buf)
+            memcpy(buf+len, prev_ptr, ptr-prev_ptr);
+        len += ptr-prev_ptr;
+
+        if(!strncmpiW(ptr, expand_dirW, sizeof(expand_dirW)/sizeof(WCHAR))) {
+            len2 = strlenW(ctx->tmp_dir);
+            if(buf)
+                memcpy(buf+len, ctx->tmp_dir, len2*sizeof(WCHAR));
+            len += len2;
+            ptr += sizeof(expand_dirW)/sizeof(WCHAR);
+        }else {
+            FIXME("Can't expand %s\n", debugstr_w(ptr));
+            if(buf)
+                buf[len] = '%';
+            len++;
+            ptr++;
+        }
+
+        prev_ptr = ptr;
+    }
+
+    if(buf)
+        strcpyW(buf+len, prev_ptr);
+    *size = len + strlenW(prev_ptr) + 1;
+}
+
+static HRESULT process_hook_section(install_ctx_t *ctx, const WCHAR *sect_name)
+{
+    WCHAR buf[2048], val[2*MAX_PATH];
+    const WCHAR *key;
+    DWORD len;
+    HRESULT hres;
+
+    static const WCHAR runW[] = {'r','u','n',0};
+
+    len = GetPrivateProfileStringW(sect_name, NULL, NULL, buf, sizeof(buf)/sizeof(*buf), ctx->install_file);
+    if(!len)
+        return S_OK;
+
+    for(key = buf; *key; key += strlenW(key)+1) {
+        if(!strcmpiW(key, runW)) {
+            WCHAR *cmd;
+            size_t size;
+
+            len = GetPrivateProfileStringW(sect_name, runW, NULL, val, sizeof(val)/sizeof(*val), ctx->install_file);
+
+            TRACE("Run %s\n", debugstr_w(val));
+
+            expand_command(ctx, val, NULL, &size);
+
+            cmd = heap_alloc(size*sizeof(WCHAR));
+            if(!cmd)
+                heap_free(cmd);
+
+            expand_command(ctx, val, cmd, &size);
+            hres = RunSetupCommandW(ctx->hwnd, cmd, NULL, ctx->tmp_dir, NULL, NULL, 0, NULL);
+            heap_free(cmd);
+            if(FAILED(hres))
+                return hres;
+        }else {
+            FIXME("Unsupported hook %s\n", debugstr_w(key));
+            return E_NOTIMPL;
+        }
+    }
+
+    return S_OK;
+}
+
+static HRESULT install_inf_file(install_ctx_t *ctx)
+{
+    WCHAR buf[2048], sect_name[128];
+    BOOL default_install = TRUE;
+    const WCHAR *key;
+    DWORD len;
+    HRESULT hres;
+
+    static const WCHAR setup_hooksW[] = {'S','e','t','u','p',' ','H','o','o','k','s',0};
+    static const WCHAR add_codeW[] = {'A','d','d','.','C','o','d','e',0};
+
+    len = GetPrivateProfileStringW(setup_hooksW, NULL, NULL, buf, sizeof(buf)/sizeof(*buf), ctx->install_file);
+    if(len) {
+        default_install = FALSE;
+
+        for(key = buf; *key; key += strlenW(key)+1) {
+            TRACE("[Setup Hooks] key: %s\n", debugstr_w(key));
+
+            len = GetPrivateProfileStringW(setup_hooksW, key, NULL, sect_name, sizeof(sect_name)/sizeof(*sect_name),
+                    ctx->install_file);
+            if(!len) {
+                WARN("Could not get key value\n");
+                return E_FAIL;
+            }
+
+            hres = process_hook_section(ctx, sect_name);
+            if(FAILED(hres))
+                return hres;
+        }
+    }
+
+    len = GetPrivateProfileStringW(add_codeW, NULL, NULL, buf, sizeof(buf)/sizeof(*buf), ctx->install_file);
+    if(len) {
+        FIXME("[Add.Code] section not supported\n");
+
+        /* Don't throw an error if we successfully ran setup hooks;
+           installation is likely to be complete enough */
+        if(default_install)
+            return E_NOTIMPL;
+    }
+
+    if(default_install) {
+        hres = RunSetupCommandW(ctx->hwnd, ctx->install_file, NULL, ctx->tmp_dir, NULL, NULL, RSC_FLAG_INF, NULL);
+        if(FAILED(hres)) {
+            WARN("RunSetupCommandW failed: %08x\n", hres);
+            return hres;
+        }
+    }
+
+    return S_OK;
+}
+
 static HRESULT install_cab_file(install_ctx_t *ctx)
 {
     WCHAR tmp_path[MAX_PATH], tmp_dir[MAX_PATH];
@@ -169,9 +297,7 @@ static HRESULT install_cab_file(install_ctx_t *ctx)
 
         switch(ctx->install_type) {
         case INSTALL_INF:
-            hres = RunSetupCommandW(ctx->hwnd, ctx->install_file, NULL, ctx->tmp_dir, NULL, NULL, RSC_FLAG_INF, NULL);
-            if(FAILED(hres))
-                WARN("RunSetupCommandW failed: %08x\n", hres);
+            hres = install_inf_file(ctx);
             break;
         case INSTALL_DLL:
             FIXME("Installing DLL, registering in temporary location\n");
