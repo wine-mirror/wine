@@ -653,8 +653,8 @@ DECLARE_INTERFACE_(IDirect3DViewport,IUnknown)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3DViewport methods ***/
     STDMETHOD(Initialize)(THIS_ IDirect3D *d3d) PURE;
-    STDMETHOD(GetViewport)(THIS_ LPD3DVIEWPORT lpData) PURE;
-    STDMETHOD(SetViewport)(THIS_ LPD3DVIEWPORT lpData) PURE;
+    STDMETHOD(GetViewport)(THIS_ D3DVIEWPORT *data) PURE;
+    STDMETHOD(SetViewport)(THIS_ D3DVIEWPORT *data) PURE;
     STDMETHOD(TransformVertices)(THIS_ DWORD dwVertexCount, LPD3DTRANSFORMDATA lpData, DWORD dwFlags, LPDWORD lpOffScreen) PURE;
     STDMETHOD(LightElements)(THIS_ DWORD dwElementCount, LPD3DLIGHTDATA lpData) PURE;
     STDMETHOD(SetBackground)(THIS_ D3DMATERIALHANDLE hMat) PURE;
@@ -721,8 +721,8 @@ DECLARE_INTERFACE_(IDirect3DViewport2,IDirect3DViewport)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3DViewport methods ***/
     STDMETHOD(Initialize)(THIS_ IDirect3D *d3d) PURE;
-    STDMETHOD(GetViewport)(THIS_ LPD3DVIEWPORT lpData) PURE;
-    STDMETHOD(SetViewport)(THIS_ LPD3DVIEWPORT lpData) PURE;
+    STDMETHOD(GetViewport)(THIS_ D3DVIEWPORT *data) PURE;
+    STDMETHOD(SetViewport)(THIS_ D3DVIEWPORT *data) PURE;
     STDMETHOD(TransformVertices)(THIS_ DWORD dwVertexCount, LPD3DTRANSFORMDATA lpData, DWORD dwFlags, LPDWORD lpOffScreen) PURE;
     STDMETHOD(LightElements)(THIS_ DWORD dwElementCount, LPD3DLIGHTDATA lpData) PURE;
     STDMETHOD(SetBackground)(THIS_ D3DMATERIALHANDLE hMat) PURE;
@@ -797,8 +797,8 @@ DECLARE_INTERFACE_(IDirect3DViewport3,IDirect3DViewport2)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3DViewport methods ***/
     STDMETHOD(Initialize)(THIS_ IDirect3D *d3d) PURE;
-    STDMETHOD(GetViewport)(THIS_ LPD3DVIEWPORT lpData) PURE;
-    STDMETHOD(SetViewport)(THIS_ LPD3DVIEWPORT lpData) PURE;
+    STDMETHOD(GetViewport)(THIS_ D3DVIEWPORT *data) PURE;
+    STDMETHOD(SetViewport)(THIS_ D3DVIEWPORT *data) PURE;
     STDMETHOD(TransformVertices)(THIS_ DWORD dwVertexCount, LPD3DTRANSFORMDATA lpData, DWORD dwFlags, LPDWORD lpOffScreen) PURE;
     STDMETHOD(LightElements)(THIS_ DWORD dwElementCount, LPD3DLIGHTDATA lpData) PURE;
     STDMETHOD(SetBackground)(THIS_ D3DMATERIALHANDLE hMat) PURE;
