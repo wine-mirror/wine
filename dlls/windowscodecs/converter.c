@@ -49,6 +49,7 @@ enum pixelformat {
     format_16bppBGR565,
     format_16bppBGRA5551,
     format_24bppBGR,
+    format_24bppRGB,
     format_32bppBGR,
     format_32bppBGRA,
     format_32bppPBGRA,
@@ -602,6 +603,54 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
             return res;
         }
         return S_OK;
+    case format_24bppRGB:
+        if (prc)
+        {
+            HRESULT res;
+            UINT x, y;
+            BYTE *srcdata;
+            UINT srcstride, srcdatasize;
+            const BYTE *srcrow;
+            const BYTE *srcpixel;
+            BYTE *dstrow;
+            BYTE *dstpixel;
+            BYTE tmppixel[3];
+
+            srcstride = 3 * prc->Width;
+            srcdatasize = srcstride * prc->Height;
+
+            srcdata = HeapAlloc(GetProcessHeap(), 0, srcdatasize);
+            if (!srcdata) return E_OUTOFMEMORY;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+
+            if (SUCCEEDED(res))
+            {
+                srcrow = srcdata;
+                dstrow = pbBuffer;
+                for (y=0; y<prc->Height; y++) {
+                    srcpixel=srcrow;
+                    dstpixel=dstrow;
+                    for (x=0; x<prc->Width; x++) {
+                        tmppixel[0]=*srcpixel++; /* red */
+                        tmppixel[1]=*srcpixel++; /* green */
+                        tmppixel[2]=*srcpixel++; /* blue */
+
+                        *dstpixel++=tmppixel[2]; /* blue */
+                        *dstpixel++=tmppixel[1]; /* green */
+                        *dstpixel++=tmppixel[0]; /* red */
+                        *dstpixel++=255; /* alpha */
+                    }
+                    srcrow += srcstride;
+                    dstrow += cbStride;
+                }
+            }
+
+            HeapFree(GetProcessHeap(), 0, srcdata);
+
+            return res;
+        }
+        return S_OK;
     case format_32bppBGR:
         if (prc)
         {
@@ -807,6 +856,144 @@ static HRESULT copypixels_to_32bppPBGRA(struct FormatConverter *This, const WICR
     }
 }
 
+static HRESULT copypixels_to_24bppBGR(struct FormatConverter *This, const WICRect *prc,
+    UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
+{
+    HRESULT hr;
+
+    switch (source_format)
+    {
+    case format_24bppBGR:
+    case format_24bppRGB:
+        if (prc)
+        {
+            hr = IWICBitmapSource_CopyPixels(This->source, prc, cbStride, cbBufferSize, pbBuffer);
+            if (SUCCEEDED(hr) && source_format == format_24bppRGB)
+              reverse_bgr8(3, pbBuffer, prc->Width, prc->Height, cbStride);
+            return hr;
+        }
+        return S_OK;
+    case format_32bppBGR:
+    case format_32bppBGRA:
+    case format_32bppPBGRA:
+        if (prc)
+        {
+            HRESULT res;
+            UINT x, y;
+            BYTE *srcdata;
+            UINT srcstride, srcdatasize;
+            const BYTE *srcrow;
+            const BYTE *srcpixel;
+            BYTE *dstrow;
+            BYTE *dstpixel;
+
+            srcstride = 4 * prc->Width;
+            srcdatasize = srcstride * prc->Height;
+
+            srcdata = HeapAlloc(GetProcessHeap(), 0, srcdatasize);
+            if (!srcdata) return E_OUTOFMEMORY;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+
+            if (SUCCEEDED(res))
+            {
+                srcrow = srcdata;
+                dstrow = pbBuffer;
+                for (y=0; y<prc->Height; y++) {
+                    srcpixel=srcrow;
+                    dstpixel=dstrow;
+                    for (x=0; x<prc->Width; x++) {
+                        *dstpixel++=*srcpixel++; /* blue */
+                        *dstpixel++=*srcpixel++; /* green */
+                        *dstpixel++=*srcpixel++; /* red */
+                        srcpixel++; /* alpha */
+                    }
+                    srcrow += srcstride;
+                    dstrow += cbStride;
+                }
+            }
+
+            HeapFree(GetProcessHeap(), 0, srcdata);
+
+            return res;
+        }
+        return S_OK;
+    default:
+        FIXME("Unimplemented conversion path!\n");
+        return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+    }
+}
+
+static HRESULT copypixels_to_24bppRGB(struct FormatConverter *This, const WICRect *prc,
+    UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
+{
+    HRESULT hr;
+
+    switch (source_format)
+    {
+    case format_24bppBGR:
+    case format_24bppRGB:
+        if (prc)
+        {
+            hr = IWICBitmapSource_CopyPixels(This->source, prc, cbStride, cbBufferSize, pbBuffer);
+            if (SUCCEEDED(hr) && source_format == format_24bppBGR)
+              reverse_bgr8(3, pbBuffer, prc->Width, prc->Height, cbStride);
+            return hr;
+        }
+        return S_OK;
+    case format_32bppBGR:
+    case format_32bppBGRA:
+    case format_32bppPBGRA:
+        if (prc)
+        {
+            HRESULT res;
+            UINT x, y;
+            BYTE *srcdata;
+            UINT srcstride, srcdatasize;
+            const BYTE *srcrow;
+            const BYTE *srcpixel;
+            BYTE *dstrow;
+            BYTE *dstpixel;
+
+            srcstride = 4 * prc->Width;
+            srcdatasize = srcstride * prc->Height;
+
+            srcdata = HeapAlloc(GetProcessHeap(), 0, srcdatasize);
+            if (!srcdata) return E_OUTOFMEMORY;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+
+            if (SUCCEEDED(res))
+            {
+                srcrow = srcdata;
+                dstrow = pbBuffer;
+                for (y=0; y<prc->Height; y++) {
+                    srcpixel=srcrow;
+                    dstpixel=dstrow;
+                    for (x=0; x<prc->Width; x++) {
+                        *dstpixel++=*srcpixel++; /* blue */
+                        *dstpixel++=*srcpixel++; /* green */
+                        *dstpixel++=*srcpixel++; /* red */
+                        srcpixel++; /* alpha */
+                    }
+                    srcrow += srcstride;
+                    dstrow += cbStride;
+                }
+
+                reverse_bgr8(3, pbBuffer, prc->Width, prc->Height, cbStride);
+            }
+
+            HeapFree(GetProcessHeap(), 0, srcdata);
+
+            return res;
+        }
+        return S_OK;
+    default:
+        FIXME("Unimplemented conversion path!\n");
+        return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+    }
+}
+
 static const struct pixelformatinfo supported_formats[] = {
     {format_1bppIndexed, &GUID_WICPixelFormat1bppIndexed, NULL},
     {format_2bppIndexed, &GUID_WICPixelFormat2bppIndexed, NULL},
@@ -820,7 +1007,8 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_16bppBGR555, &GUID_WICPixelFormat16bppBGR555, NULL},
     {format_16bppBGR565, &GUID_WICPixelFormat16bppBGR565, NULL},
     {format_16bppBGRA5551, &GUID_WICPixelFormat16bppBGRA5551, NULL},
-    {format_24bppBGR, &GUID_WICPixelFormat24bppBGR, NULL},
+    {format_24bppBGR, &GUID_WICPixelFormat24bppBGR, copypixels_to_24bppBGR},
+    {format_24bppRGB, &GUID_WICPixelFormat24bppRGB, copypixels_to_24bppRGB},
     {format_32bppBGR, &GUID_WICPixelFormat32bppBGR, copypixels_to_32bppBGR},
     {format_32bppBGRA, &GUID_WICPixelFormat32bppBGRA, copypixels_to_32bppBGRA},
     {format_32bppPBGRA, &GUID_WICPixelFormat32bppPBGRA, copypixels_to_32bppPBGRA},

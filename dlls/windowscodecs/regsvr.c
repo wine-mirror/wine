@@ -1467,6 +1467,7 @@ static GUID const * const converter_formats[] = {
     &GUID_WICPixelFormat16bppBGR565,
     &GUID_WICPixelFormat16bppBGRA5551,
     &GUID_WICPixelFormat24bppBGR,
+    &GUID_WICPixelFormat24bppRGB,
     &GUID_WICPixelFormat32bppBGR,
     &GUID_WICPixelFormat32bppBGRA,
     &GUID_WICPixelFormat32bppPBGRA,
@@ -1848,6 +1849,17 @@ static struct regsvr_pixelformat const pixelformat_list[] = {
     {   &GUID_WICPixelFormat24bppBGR,
         "The Wine Project",
         "24bpp BGR",
+        NULL, /* no version */
+        &GUID_VendorMicrosoft,
+        24, /* bitsperpixel */
+        3, /* channel count */
+        channel_masks_8bit,
+        WICPixelFormatNumericRepresentationUnsignedInteger,
+        0
+    },
+    {   &GUID_WICPixelFormat24bppRGB,
+        "The Wine Project",
+        "24bpp RGB",
         NULL, /* no version */
         &GUID_VendorMicrosoft,
         24, /* bitsperpixel */
