@@ -1563,7 +1563,6 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
     LPDIRECTXFILE pDXFile = NULL;
     LPDIRECTXFILEENUMOBJECT pEnumObject = NULL;
     LPDIRECTXFILEDATA pData = NULL;
-    LPDIRECTXFILEDATA pData2 = NULL;
     const GUID* pGuid;
     DWORD size;
     Header* pHeader;
@@ -1659,8 +1658,6 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
 
 end:
 
-    if (pData2)
-        IDirectXFileData_Release(pData2);
     if (pData)
         IDirectXFileData_Release(pData);
     if (pEnumObject)
