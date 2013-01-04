@@ -4067,13 +4067,6 @@ HRESULT CDECL wined3d_device_draw_primitive(struct wined3d_device *device, UINT 
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* The index buffer is not needed here, but restore it, otherwise it is hell to keep track of */
-    if (device->stateBlock->state.user_stream)
-    {
-        device_invalidate_state(device, STATE_INDEXBUFFER);
-        device->stateBlock->state.user_stream = FALSE;
-    }
-
     if (device->stateBlock->state.load_base_vertex_index)
     {
         device->stateBlock->state.load_base_vertex_index = 0;
@@ -4106,12 +4099,6 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *devic
     {
         WARN("Called without a valid vertex declaration set.\n");
         return WINED3DERR_INVALIDCALL;
-    }
-
-    if (device->stateBlock->state.user_stream)
-    {
-        device_invalidate_state(device, STATE_INDEXBUFFER);
-        device->stateBlock->state.user_stream = FALSE;
     }
 
     if (!gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX] &&
@@ -4180,6 +4167,7 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive_strided(struct wined3d_devic
     device->up_strided = strided_data;
     draw_primitive(device, 0, index_count, 0, 0, TRUE, index_data);
     device->up_strided = NULL;
+    device->stateBlock->state.user_stream = FALSE;
     device->stateBlock->state.index_format = prev_idx_format;
 
     device_invalidate_state(device, STATE_VDECL);
