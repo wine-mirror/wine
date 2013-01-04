@@ -563,9 +563,7 @@ void DDRAW_dump_cooperativelevel(DWORD cooplevel) DECLSPEC_HIDDEN;
 void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out) DECLSPEC_HIDDEN;
 void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out) DECLSPEC_HIDDEN;
 
-/* This only needs to be here as long the processvertices functionality of
- * IDirect3DExecuteBuffer isn't in WineD3D */
-void multiply_matrix(LPD3DMATRIX dest, const D3DMATRIX *src1, const D3DMATRIX *src2) DECLSPEC_HIDDEN;
+void multiply_matrix(D3DMATRIX *dst, const D3DMATRIX *src1, const D3DMATRIX *src2) DECLSPEC_HIDDEN;
 
 /* Used for generic dumping */
 struct flag_info
