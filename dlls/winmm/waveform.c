@@ -757,12 +757,14 @@ static HRESULT reroute_mapper_device(WINMM_Device *device, BOOL is_out)
     hr = IAudioClock_GetFrequency(device->clock, &clock_freq);
     if(FAILED(hr)){
         WARN("GetFrequency failed: %08x\n", hr);
+        LeaveCriticalSection(&device->lock);
         return hr;
     }
 
     hr = IAudioClock_GetPosition(device->clock, &clock_pos, NULL);
     if(FAILED(hr)){
         WARN("GetPosition failed: %08x\n", hr);
+        LeaveCriticalSection(&device->lock);
         return hr;
     }
 
