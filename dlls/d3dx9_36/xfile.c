@@ -21,12 +21,33 @@
 
 #include "d3dx9.h"
 #include "d3dx9xof.h"
+#undef MAKE_DDHRESULT
+#include "dxfile.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
+
+HRESULT error_dxfile_to_d3dxfile(HRESULT error)
+{
+    switch (error)
+    {
+        case DXFILEERR_BADFILETYPE:
+            return D3DXFERR_BADFILETYPE;
+        case DXFILEERR_BADFILEVERSION:
+            return D3DXFERR_BADFILEVERSION;
+        case DXFILEERR_BADFILEFLOATSIZE:
+            return D3DXFERR_BADFILEFLOATSIZE;
+        case DXFILEERR_PARSEERROR:
+            return D3DXFERR_PARSEERROR;
+        default:
+            FIXME("Cannot map error %#x\n", error);
+            return E_FAIL;
+    }
+}
 
 typedef struct {
     ID3DXFile ID3DXFile_iface;
     LONG ref;
+    IDirectXFile *dxfile;
 } ID3DXFileImpl;
 
 
@@ -75,7 +96,10 @@ static ULONG WINAPI ID3DXFileImpl_Release(ID3DXFile *iface)
     TRACE("(%p)->(): new ref %d\n", iface, ref);
 
     if (!ref)
+    {
+        IDirectXFile_Release(This->dxfile);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -101,9 +125,19 @@ static HRESULT WINAPI ID3DXFileImpl_CreateSaveObject(ID3DXFile *iface, const voi
 
 static HRESULT WINAPI ID3DXFileImpl_RegisterTemplates(ID3DXFile *iface, const void *data, SIZE_T size)
 {
-    FIXME("(%p)->(%p, %lu): stub\n", iface, data, size);
+    ID3DXFileImpl *This = impl_from_ID3DXFile(iface);
+    HRESULT ret;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %lu)\n", iface, data, size);
+
+    ret = IDirectXFile_RegisterTemplates(This->dxfile, (void*)data, size);
+    if (ret != DXFILE_OK)
+    {
+        WARN("Error %#x\n", ret);
+        return error_dxfile_to_d3dxfile(ret);
+    }
+
+    return S_OK;
 }
 
 
@@ -129,6 +163,7 @@ static const ID3DXFileVtbl ID3DXFile_Vtbl =
 HRESULT WINAPI D3DXFileCreate(ID3DXFile **d3dxfile)
 {
     ID3DXFileImpl *object;
+    HRESULT ret;
 
     TRACE("(%p)\n", d3dxfile);
 
@@ -140,6 +175,15 @@ HRESULT WINAPI D3DXFileCreate(ID3DXFile **d3dxfile)
     object = HeapAlloc(GetProcessHeap(), 0, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
+
+    ret = DirectXFileCreate(&object->dxfile);
+    if (ret != S_OK)
+    {
+        HeapFree(GetProcessHeap(), 0, object);
+        if (ret == E_OUTOFMEMORY)
+            return ret;
+        return E_FAIL;
+    }
 
     object->ID3DXFile_iface.lpVtbl = &ID3DXFile_Vtbl;
     object->ref = 1;
