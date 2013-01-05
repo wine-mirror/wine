@@ -3144,6 +3144,7 @@ static void test_GetNamedSecurityInfoA(void)
     if (error != ERROR_SUCCESS && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
         win_skip("GetNamedSecurityInfoA is not implemented\n");
+        CloseHandle(hTemp);
         return;
     }
     ok(!error, "GetNamedSecurityInfo failed with error %d\n", error);
