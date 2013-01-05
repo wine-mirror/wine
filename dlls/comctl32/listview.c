@@ -1670,6 +1670,10 @@ static INT LISTVIEW_CreateHeader(LISTVIEW_INFO *infoPtr)
     /* set header font */
     SendMessageW(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)infoPtr->hFont, TRUE);
 
+    /* set header image list */
+    if (infoPtr->himlSmall)
+        SendMessageW(infoPtr->hwndHeader, HDM_SETIMAGELIST, 0, (LPARAM)infoPtr->himlSmall);
+
     LISTVIEW_UpdateSize(infoPtr);
 
     return 0;
@@ -8631,6 +8635,8 @@ static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *infoPtr, INT nType, HIMAG
         himlOld = infoPtr->himlSmall;
         infoPtr->himlSmall = himl;
         if (infoPtr->uView != LV_VIEW_ICON) set_icon_size(&infoPtr->iconSize, himl, TRUE);
+        if (infoPtr->hwndHeader)
+            SendMessageW(infoPtr->hwndHeader, HDM_SETIMAGELIST, 0, (LPARAM)himl);
     break;
 
     case LVSIL_STATE:
