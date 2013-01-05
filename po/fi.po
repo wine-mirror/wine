@@ -8269,22 +8269,26 @@ msgid "Don't install"
 msgstr "Älä asenna"
 
 #: urlmon.rc:40
+#, fuzzy
+#| msgid ""
+#| "When installed, ActiveX has full access to your computer.Do not click "
+#| "install unless you have absolute trust in the above source."
 msgid ""
-"When installed, ActiveX has full access to your computer.Do not click "
-"install unless you have absolute trust in the above source."
+"When installed, an ActiveX component has full access to your computer. Do "
+"not click install unless you have absolute trust in the above source."
 msgstr ""
 "Asennuksen jälkeen ActiveX voi täysin hallita tietokonettasi. Asenna vain, "
 "jos luotat yllä mainittuun lähteeseen täysin."
 
-#: urlmon.rc:47
+#: urlmon.rc:48
 msgid "Installation of component failed: %08x"
 msgstr "Komponentin asennus epäonnistui: %08x"
 
-#: urlmon.rc:48
+#: urlmon.rc:49
 msgid "Install (%d)"
 msgstr "Asenna (%d)"
 
-#: urlmon.rc:49
+#: urlmon.rc:50
 msgid "Install"
 msgstr "Asenna"
 

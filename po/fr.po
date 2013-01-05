@@ -8316,23 +8316,27 @@ msgid "Don't install"
 msgstr "Ne pas installer"
 
 #: urlmon.rc:40
+#, fuzzy
+#| msgid ""
+#| "When installed, ActiveX has full access to your computer.Do not click "
+#| "install unless you have absolute trust in the above source."
 msgid ""
-"When installed, ActiveX has full access to your computer.Do not click "
-"install unless you have absolute trust in the above source."
+"When installed, an ActiveX component has full access to your computer. Do "
+"not click install unless you have absolute trust in the above source."
 msgstr ""
 "Lorsqu'il est installé, ActiveX a un accès complet à votre ordinateur. Ne "
 "cliquez pas sur le bouton d'installation à moins d'avoir une confiance "
 "absolue dans la source ci-dessus."
 
-#: urlmon.rc:47
+#: urlmon.rc:48
 msgid "Installation of component failed: %08x"
 msgstr "Échec de l'installation du composant : %08x"
 
-#: urlmon.rc:48
+#: urlmon.rc:49
 msgid "Install (%d)"
 msgstr "Installer (%d)"
 
-#: urlmon.rc:49
+#: urlmon.rc:50
 msgid "Install"
 msgstr "Installer"
 

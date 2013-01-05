@@ -37,8 +37,9 @@ FONT 8, "MS Shell Dlg"
     PUSHBUTTON "", ID_AXINSTALL_INSTALL_BTN, 144, 48, 50, 14, WS_GROUP | WS_TABSTOP | WS_DISABLED
     CONTROL "", 102, "static", SS_ETCHEDHORZ, 10, 70, 240, 1
     ICON    "", ID_AXINSTALL_ICON, 10, 82, 32, 32, WS_CHILD | WS_VISIBLE
-    CONTROL "When installed, ActiveX has full access to your computer." \
-            "Do not click install unless you have absolute trust in the above source.",
+    CONTROL "When installed, an ActiveX component has full access to your " \
+            "computer. Do not click install unless you have absolute trust " \
+            "in the above source.",
             22002, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 46, 80, 194, 23
 }
 

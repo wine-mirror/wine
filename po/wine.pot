@@ -8064,19 +8064,19 @@ msgstr ""
 
 #: urlmon.rc:40
 msgid ""
-"When installed, ActiveX has full access to your computer.Do not click "
-"install unless you have absolute trust in the above source."
-msgstr ""
-
-#: urlmon.rc:47
-msgid "Installation of component failed: %08x"
+"When installed, an ActiveX component has full access to your computer. Do "
+"not click install unless you have absolute trust in the above source."
 msgstr ""
 
 #: urlmon.rc:48
-msgid "Install (%d)"
+msgid "Installation of component failed: %08x"
 msgstr ""
 
 #: urlmon.rc:49
+msgid "Install (%d)"
+msgstr ""
+
+#: urlmon.rc:50
 msgid "Install"
 msgstr ""
 

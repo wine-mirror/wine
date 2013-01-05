@@ -8310,23 +8310,23 @@ msgstr "Instalar/Desinstalar"
 
 #: urlmon.rc:40
 msgid ""
-"When installed, ActiveX has full access to your computer.Do not click "
-"install unless you have absolute trust in the above source."
+"When installed, an ActiveX component has full access to your computer. Do "
+"not click install unless you have absolute trust in the above source."
 msgstr ""
 
-#: urlmon.rc:47
+#: urlmon.rc:48
 #, fuzzy
 #| msgid "Installation transform failed to apply.\n"
 msgid "Installation of component failed: %08x"
 msgstr "Falha na aplicação da operaçao de instalação.\n"
 
-#: urlmon.rc:48
+#: urlmon.rc:49
 #, fuzzy
 #| msgid "&Install"
 msgid "Install (%d)"
 msgstr "&Instalar"
 
-#: urlmon.rc:49
+#: urlmon.rc:50
 #, fuzzy
 #| msgid "&Install"
 msgid "Install"
