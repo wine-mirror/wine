@@ -2432,7 +2432,6 @@ static void test_subitem_rect(void)
 
     expect(100, rect.left);
     expect(250, rect.right);
-todo_wine
     expect(3, rect.top);
 
     rect.left = LVIR_BOUNDS;
@@ -2443,7 +2442,6 @@ todo_wine
 
     expect(250, rect.left);
     expect(450, rect.right);
-todo_wine
     expect(3, rect.top);
 
     /* item LVS_REPORT padding isn't applied to subitems */

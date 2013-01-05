@@ -2954,15 +2954,12 @@ static INT LISTVIEW_CalculateItemHeight(const LISTVIEW_INFO *infoPtr)
 	nItemHeight = infoPtr->iconSpacing.cy;
     else
     {
-	nItemHeight = infoPtr->ntmHeight; 
-        if (infoPtr->uView == LV_VIEW_DETAILS && infoPtr->dwLvExStyle & LVS_EX_GRIDLINES)
-            nItemHeight++;
+	nItemHeight = infoPtr->ntmHeight;
 	if (infoPtr->himlState)
 	    nItemHeight = max(nItemHeight, infoPtr->iconStateSize.cy);
 	if (infoPtr->himlSmall)
 	    nItemHeight = max(nItemHeight, infoPtr->iconSize.cy);
-	if (infoPtr->himlState || infoPtr->himlSmall)
-	    nItemHeight += HEIGHT_PADDING;
+	nItemHeight += HEIGHT_PADDING;
     if (infoPtr->nMeasureItemHeight > 0)
         nItemHeight = infoPtr->nMeasureItemHeight;
     }
