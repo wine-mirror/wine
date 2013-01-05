@@ -2452,7 +2452,7 @@ static void test__stricmp(void)
     ok(ret < 0, "_stricmp returned %d\n", ret);
 
     if(!setlocale(LC_ALL, "polish")) {
-        win_skip("stricmp tests");
+        win_skip("stricmp tests\n");
         return;
     }
 
