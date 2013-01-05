@@ -1,7 +1,7 @@
 /*
- * XMLLite IXmlReader tests
+ * IXmlReader tests
  *
- * Copyright 2010 (C) Nikolay Sivov
+ * Copyright 2010, 2012-2013 Nikolay Sivov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -750,6 +750,56 @@ static void test_read_comment(void)
     IXmlReader_Release(reader);
 }
 
+struct test_entry {
+    const char *xml;
+    HRESULT hr;
+    HRESULT hr_broken; /* this is set to older version results */
+};
+
+static struct test_entry pi_tests[] = {
+    { "<?pi?>", S_OK },
+    { "<?pi ?>", S_OK },
+    { "<?pi:pi?>", NC_E_NAMECOLON, WC_E_NAMECHARACTER },
+    { "<?:pi ?>", WC_E_PI, WC_E_NAMECHARACTER },
+    { "<?-pi ?>", WC_E_PI, WC_E_NAMECHARACTER },
+    { "<?xml-stylesheet ?>", S_OK },
+    { NULL }
+};
+
+static void test_read_pi(void)
+{
+    struct test_entry *test = pi_tests;
+    IXmlReader *reader;
+    HRESULT hr;
+
+    hr = pCreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
+    ok(hr == S_OK, "S_OK, got %08x\n", hr);
+
+    while (test->xml)
+    {
+        XmlNodeType type;
+        IStream *stream;
+
+        stream = create_stream_on_data(test->xml, strlen(test->xml)+1);
+        hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        type = XmlNodeType_None;
+        hr = IXmlReader_Read(reader, &type);
+        if (test->hr_broken)
+            ok(hr == test->hr || broken(hr == test->hr_broken), "got %08x for %s\n", hr, test->xml);
+        else
+            ok(hr == test->hr, "got %08x for %s\n", hr, test->xml);
+        if (hr == S_OK)
+            ok(type == XmlNodeType_ProcessingInstruction, "got %d for %s\n", type, test->xml);
+
+        IStream_Release(stream);
+        test++;
+    }
+
+    IXmlReader_Release(reader);
+}
+
 START_TEST(reader)
 {
     HRESULT r;
@@ -767,6 +817,7 @@ START_TEST(reader)
     test_readerinput();
     test_reader_state();
     test_read_comment();
+    test_read_pi();
     test_read_xmldeclaration();
 
     CoUninitialize();

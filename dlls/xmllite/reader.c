@@ -1,7 +1,7 @@
 /*
  * IXmlReader implementation
  *
- * Copyright 2010, 2012 Nikolay Sivov
+ * Copyright 2010, 2012-2013 Nikolay Sivov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -80,7 +80,7 @@ typedef struct
 
 typedef struct input_buffer input_buffer;
 
-typedef struct _xmlreaderinput
+typedef struct
 {
     IXmlReaderInput IXmlReaderInput_iface;
     LONG ref;
@@ -110,7 +110,7 @@ struct attribute
     strval value;
 };
 
-typedef struct _xmlreader
+typedef struct
 {
     IXmlReader IXmlReader_iface;
     LONG ref;
@@ -402,7 +402,7 @@ static void readerinput_grow(xmlreaderinput *readerinput, int length)
 static HRESULT readerinput_detectencoding(xmlreaderinput *readerinput, xml_encoding *enc)
 {
     encoded_buffer *buffer = &readerinput->buffer->encoded;
-    static char startA[] = {'<','?','x','m'};
+    static char startA[] = {'<','?'};
     static WCHAR startW[] = {'<','?'};
     static char utf8bom[] = {0xef,0xbb,0xbf};
     static char utf16lebom[] = {0xff,0xfe};
@@ -807,11 +807,11 @@ static HRESULT reader_parse_sddecl(xmlreader *reader)
 /* [23] XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>' */
 static HRESULT reader_parse_xmldecl(xmlreader *reader)
 {
-    static const WCHAR xmldeclW[] = {'<','?','x','m','l',0};
+    static const WCHAR xmldeclW[] = {'<','?','x','m','l',' ',0};
     static const WCHAR declcloseW[] = {'?','>',0};
     HRESULT hr;
 
-    /* check if we have "<?xml" */
+    /* check if we have "<?xml " */
     if (reader_cmp(reader, xmldeclW)) return S_FALSE;
 
     reader_skipn(reader, 5);
@@ -879,11 +879,155 @@ static HRESULT reader_parse_comment(xmlreader *reader)
     return MX_E_INPUTEND;
 }
 
+static inline int is_namestartchar(WCHAR ch)
+{
+    return (ch == ':') || (ch >= 'A' && ch <= 'Z') ||
+           (ch == '_') || (ch >= 'a' && ch <= 'z') ||
+           (ch >= 0xc0   && ch <= 0xd6)   ||
+           (ch >= 0xd8   && ch <= 0xf6)   ||
+           (ch >= 0xf8   && ch <= 0x2ff)  ||
+           (ch >= 0x370  && ch <= 0x37d)  ||
+           (ch >= 0x37f  && ch <= 0x1fff) ||
+           (ch >= 0x200c && ch <= 0x200d) ||
+           (ch >= 0x2070 && ch <= 0x218f) ||
+           (ch >= 0x2c00 && ch <= 0x2fef) ||
+           (ch >= 0x3001 && ch <= 0xd7ff) ||
+           (ch >= 0xd800 && ch <= 0xdbff) || /* high surrogate */
+           (ch >= 0xdc00 && ch <= 0xdfff) || /* low surrogate */
+           (ch >= 0xf900 && ch <= 0xfdcf) ||
+           (ch >= 0xfdf0 && ch <= 0xfffd);
+}
+
+static inline int is_namechar(WCHAR ch)
+{
+    return (ch == ':') || (ch >= 'A' && ch <= 'Z') ||
+           (ch == '_') || (ch >= 'a' && ch <= 'z') ||
+           (ch == '-') || (ch == '.') ||
+           (ch >= '0'    && ch <= '9')    ||
+           (ch == 0xb7)                   ||
+           (ch >= 0xc0   && ch <= 0xd6)   ||
+           (ch >= 0xd8   && ch <= 0xf6)   ||
+           (ch >= 0xf8   && ch <= 0x2ff)  ||
+           (ch >= 0x300  && ch <= 0x36f)  ||
+           (ch >= 0x370  && ch <= 0x37d)  ||
+           (ch >= 0x37f  && ch <= 0x1fff) ||
+           (ch >= 0x200c && ch <= 0x200d) ||
+           (ch >= 0x203f && ch <= 0x2040) ||
+           (ch >= 0x2070 && ch <= 0x218f) ||
+           (ch >= 0x2c00 && ch <= 0x2fef) ||
+           (ch >= 0x3001 && ch <= 0xd7ff) ||
+           (ch >= 0xd800 && ch <= 0xdbff) || /* high surrogate */
+           (ch >= 0xdc00 && ch <= 0xdfff) || /* low surrogate */
+           (ch >= 0xf900 && ch <= 0xfdcf) ||
+           (ch >= 0xfdf0 && ch <= 0xfffd);
+}
+
+/* [4] NameStartChar ::= ":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] | [#x370-#x37D] |
+                            [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] |
+                            [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
+   [4a] NameChar ::= NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F] | [#x203F-#x2040]
+   [5]  Name     ::= NameStartChar (NameChar)* */
+static HRESULT reader_parse_name(xmlreader *reader, strval *name)
+{
+    const WCHAR *ptr, *start = reader_get_cur(reader);
+
+    ptr = start;
+    if (!is_namestartchar(*ptr)) return WC_E_NAMECHARACTER;
+
+    while (is_namechar(*ptr))
+    {
+        reader_skipn(reader, 1);
+        ptr = reader_get_cur(reader);
+    }
+
+    TRACE("name %s:%d\n", debugstr_wn(start, ptr-start), (int)(ptr-start));
+    name->str = start;
+    name->len = ptr-start;
+
+    return S_OK;
+}
+
+/* [17] PITarget ::= Name - (('X' | 'x') ('M' | 'm') ('L' | 'l')) */
+static HRESULT reader_parse_pitarget(xmlreader *reader, strval *target)
+{
+    static const WCHAR xmlW[] = {'x','m','l'};
+    strval name;
+    HRESULT hr;
+    int i;
+
+    hr = reader_parse_name(reader, &name);
+    if (FAILED(hr)) return WC_E_PI;
+
+    /* now that we got name check for illegal content */
+    if (name.len == 3 && !strncmpiW(name.str, xmlW, 3))
+        return WC_E_LEADINGXML;
+
+    /* PITarget can't be a qualified name */
+    for (i = 0; i < name.len; i++)
+        if (name.str[i] == ':')
+            return i ? NC_E_NAMECOLON : WC_E_PI;
+
+    TRACE("pitarget %s:%d\n", debugstr_wn(name.str, name.len), name.len);
+    *target = name;
+    return S_OK;
+}
+
 /* [16] PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>' */
 static HRESULT reader_parse_pi(xmlreader *reader)
 {
-    FIXME("PI not supported\n");
-    return E_NOTIMPL;
+    const WCHAR *ptr, *start;
+    strval target;
+    HRESULT hr;
+
+    /* skip '<?' */
+    reader_skipn(reader, 2);
+    reader_shrink(reader);
+
+    hr = reader_parse_pitarget(reader, &target);
+    if (FAILED(hr)) return hr;
+
+    ptr = reader_get_cur(reader);
+    /* exit earlier if there's no content */
+    if (ptr[0] == '?' && ptr[1] == '>')
+    {
+        /* skip '?>' */
+        reader_skipn(reader, 2);
+        reader->nodetype = XmlNodeType_ProcessingInstruction;
+        return S_OK;
+    }
+
+    /* now at least a single space char should be there */
+    if (!is_wchar_space(*ptr)) return WC_E_WHITESPACE;
+    reader_skipspaces(reader);
+
+    ptr = start = reader_get_cur(reader);
+
+    while (*ptr)
+    {
+        if (ptr[0] == '?')
+        {
+            if (ptr[1] == '>')
+            {
+                TRACE("%s\n", debugstr_wn(start, ptr-start));
+                /* skip '?>' */
+                reader_skipn(reader, 2);
+                reader->nodetype = XmlNodeType_ProcessingInstruction;
+                return S_OK;
+            }
+            else
+            {
+                ptr++;
+                reader_more(reader);
+            }
+        }
+        else
+        {
+            reader_skipn(reader, 1);
+            ptr = reader_get_cur(reader);
+        }
+    }
+
+    return S_OK;
 }
 
 /* [27] Misc ::= Comment | PI | S */
