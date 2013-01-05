@@ -7104,7 +7104,7 @@ msgstr "clock"
 msgid "split button"
 msgstr "split button"
 
-#: oleacc.rc:90 ipconfig.rc:33
+#: oleacc.rc:90
 msgid "IP address"
 msgstr "IP address"
 
@@ -10190,6 +10190,10 @@ msgstr "Ethernet"
 msgid "Connection-specific DNS suffix"
 msgstr "Connection-specific DNS suffix"
 
+#: ipconfig.rc:33
+msgid "IPv4 address"
+msgstr "IPv4 address"
+
 #: ipconfig.rc:34
 msgid "Hostname"
 msgstr "Hostname"
@@ -10229,6 +10233,10 @@ msgstr "DHCP enabled"
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr "Default gateway"
+
+#: ipconfig.rc:47
+msgid "IPv6 address"
+msgstr "IPv6 address"
 
 #: net.rc:27
 msgid ""

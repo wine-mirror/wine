@@ -7056,7 +7056,7 @@ msgstr "時鐘"
 msgid "split button"
 msgstr "分割按鈕"
 
-#: oleacc.rc:90 ipconfig.rc:33
+#: oleacc.rc:90
 msgid "IP address"
 msgstr "IP 位址"
 
@@ -10046,6 +10046,12 @@ msgstr "乙太網路"
 msgid "Connection-specific DNS suffix"
 msgstr "特定連線的 DNS 字尾"
 
+#: ipconfig.rc:33
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv4 address"
+msgstr "IP 位址"
+
 #: ipconfig.rc:34
 msgid "Hostname"
 msgstr "主機名稱"
@@ -10085,6 +10091,12 @@ msgstr "DHCP 已啟用"
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr "預設閘道"
+
+#: ipconfig.rc:47
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv6 address"
+msgstr "IP 位址"
 
 #: net.rc:27
 msgid ""

@@ -7213,7 +7213,7 @@ msgstr "klok"
 msgid "split button"
 msgstr "splitsknop"
 
-#: oleacc.rc:90 ipconfig.rc:33
+#: oleacc.rc:90
 msgid "IP address"
 msgstr "IP-adres"
 
@@ -10363,6 +10363,12 @@ msgstr "Ethernet"
 msgid "Connection-specific DNS suffix"
 msgstr "Verbindings-specifiek DNS-achtervoegsel"
 
+#: ipconfig.rc:33
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv4 address"
+msgstr "IP-adres"
+
 #: ipconfig.rc:34
 msgid "Hostname"
 msgstr "Hostnaam"
@@ -10402,6 +10408,12 @@ msgstr "DHCP geactiveerd"
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr "Standaard gateway"
+
+#: ipconfig.rc:47
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv6 address"
+msgstr "IP-adres"
 
 #: net.rc:27
 msgid ""

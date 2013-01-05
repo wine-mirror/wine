@@ -7111,7 +7111,7 @@ msgstr "laikrodis"
 msgid "split button"
 msgstr "išskleidimo mygtukas"
 
-#: oleacc.rc:90 ipconfig.rc:33
+#: oleacc.rc:90
 msgid "IP address"
 msgstr "IP adresas"
 
@@ -10203,6 +10203,12 @@ msgstr "Eterneto"
 msgid "Connection-specific DNS suffix"
 msgstr "Ryšiui būdingas DNS sufiksas"
 
+#: ipconfig.rc:33
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv4 address"
+msgstr "IP adresas"
+
 #: ipconfig.rc:34
 msgid "Hostname"
 msgstr "Kompiuterio vardas"
@@ -10242,6 +10248,12 @@ msgstr "DHCP įjungta"
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr "Numatytasis šliuzas"
+
+#: ipconfig.rc:47
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv6 address"
+msgstr "IP adresas"
 
 #: net.rc:27
 msgid ""

@@ -41,3 +41,4 @@
 #define STRING_YES              118
 #define STRING_NO               119
 #define STRING_DEFAULT_GATEWAY  120
+#define STRING_IP6_ADDRESS      121

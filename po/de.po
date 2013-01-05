@@ -7116,7 +7116,7 @@ msgstr "Uhr"
 msgid "split button"
 msgstr "Split-Knopf"
 
-#: oleacc.rc:90 ipconfig.rc:33
+#: oleacc.rc:90
 msgid "IP address"
 msgstr "IP-Adresse"
 
@@ -10270,6 +10270,12 @@ msgstr "Ethernet"
 msgid "Connection-specific DNS suffix"
 msgstr "Verbindungsspezifisches DNS-Suffix"
 
+#: ipconfig.rc:33
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv4 address"
+msgstr "IP-Adresse"
+
 #: ipconfig.rc:34
 msgid "Hostname"
 msgstr "Hostname"
@@ -10309,6 +10315,12 @@ msgstr "DHCP aktiviert"
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr "Standard Gateway"
+
+#: ipconfig.rc:47
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv6 address"
+msgstr "IP-Adresse"
 
 #: net.rc:27
 msgid ""

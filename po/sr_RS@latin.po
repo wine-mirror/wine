@@ -7477,7 +7477,7 @@ msgstr "časovnik"
 msgid "split button"
 msgstr "dugme za deljenje"
 
-#: oleacc.rc:90 ipconfig.rc:33
+#: oleacc.rc:90
 msgid "IP address"
 msgstr "IP adresa"
 
@@ -10268,6 +10268,12 @@ msgstr "Eternet"
 msgid "Connection-specific DNS suffix"
 msgstr "Veza određena DNS sufiksom"
 
+#: ipconfig.rc:33
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv4 address"
+msgstr "IP adresa"
+
 #: ipconfig.rc:34
 msgid "Hostname"
 msgstr "Naziv domaćina"
@@ -10307,6 +10313,12 @@ msgstr "DHCP je omogućen"
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr "Podrazumevani mrežni prolaz"
+
+#: ipconfig.rc:47
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv6 address"
+msgstr "IP adresa"
 
 #: net.rc:27
 msgid ""

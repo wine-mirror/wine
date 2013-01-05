@@ -7100,7 +7100,7 @@ msgstr "kello"
 msgid "split button"
 msgstr "jaettu painike"
 
-#: oleacc.rc:90 ipconfig.rc:33
+#: oleacc.rc:90
 msgid "IP address"
 msgstr "IP-osoite"
 
@@ -10176,6 +10176,12 @@ msgstr "Ethernet"
 msgid "Connection-specific DNS suffix"
 msgstr "Yhteysspesifinen DNS-pääte"
 
+#: ipconfig.rc:33
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv4 address"
+msgstr "IP-osoite"
+
 #: ipconfig.rc:34
 msgid "Hostname"
 msgstr "Isäntänimi"
@@ -10215,6 +10221,12 @@ msgstr "DHCP käytössä"
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr "Oletusyhdyskäytävä"
+
+#: ipconfig.rc:47
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv6 address"
+msgstr "IP-osoite"
 
 #: net.rc:27
 msgid ""

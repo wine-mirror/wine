@@ -7161,7 +7161,7 @@ msgstr "Ur"
 msgid "split button"
 msgstr "Opdel knap"
 
-#: oleacc.rc:90 ipconfig.rc:33
+#: oleacc.rc:90
 msgid "IP address"
 msgstr "IP adresse"
 
@@ -10223,6 +10223,12 @@ msgstr "Ethernet"
 msgid "Connection-specific DNS suffix"
 msgstr "Forbindelsespecifikt DNS suffiks"
 
+#: ipconfig.rc:33
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv4 address"
+msgstr "IP adresse"
+
 #: ipconfig.rc:34
 msgid "Hostname"
 msgstr "Værtsnavn"
@@ -10262,6 +10268,12 @@ msgstr "DHCP aktiveret"
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr "Standard gateway"
+
+#: ipconfig.rc:47
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv6 address"
+msgstr "IP adresse"
 
 #: net.rc:27
 msgid ""

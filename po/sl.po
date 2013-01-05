@@ -7180,7 +7180,7 @@ msgstr "ura"
 msgid "split button"
 msgstr "deljeni gumb"
 
-#: oleacc.rc:90 ipconfig.rc:33
+#: oleacc.rc:90
 msgid "IP address"
 msgstr "Naslov IP"
 
@@ -10254,6 +10254,12 @@ msgstr "Eternet"
 msgid "Connection-specific DNS suffix"
 msgstr "S povezavo določena pripona DNS"
 
+#: ipconfig.rc:33
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv4 address"
+msgstr "Naslov IP"
+
 #: ipconfig.rc:34
 msgid "Hostname"
 msgstr "Ime gostitelja"
@@ -10293,6 +10299,12 @@ msgstr "DHCP je omogočen"
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr "Privzeti prehod"
+
+#: ipconfig.rc:47
+#, fuzzy
+#| msgid "IP address"
+msgid "IPv6 address"
+msgstr "Naslov IP"
 
 #: net.rc:27
 msgid ""

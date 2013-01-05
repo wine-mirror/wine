@@ -7097,7 +7097,7 @@ msgstr ""
 msgid "split button"
 msgstr ""
 
-#: oleacc.rc:90 ipconfig.rc:33
+#: oleacc.rc:90
 msgid "IP address"
 msgstr ""
 
@@ -9819,6 +9819,10 @@ msgstr ""
 msgid "Connection-specific DNS suffix"
 msgstr ""
 
+#: ipconfig.rc:33
+msgid "IPv4 address"
+msgstr ""
+
 #: ipconfig.rc:34
 msgid "Hostname"
 msgstr ""
@@ -9857,6 +9861,10 @@ msgstr ""
 
 #: ipconfig.rc:46
 msgid "Default gateway"
+msgstr ""
+
+#: ipconfig.rc:47
+msgid "IPv6 address"
 msgstr ""
 
 #: net.rc:27

@@ -7278,7 +7278,7 @@ msgstr "Hodiny"
 msgid "split button"
 msgstr ""
 
-#: oleacc.rc:90 ipconfig.rc:33
+#: oleacc.rc:90
 msgid "IP address"
 msgstr ""
 
@@ -10336,6 +10336,12 @@ msgstr ""
 msgid "Connection-specific DNS suffix"
 msgstr ""
 
+#: ipconfig.rc:33
+#, fuzzy
+#| msgid "Address"
+msgid "IPv4 address"
+msgstr "Adresa"
+
 #: ipconfig.rc:34
 msgid "Hostname"
 msgstr ""
@@ -10375,6 +10381,12 @@ msgstr ""
 #: ipconfig.rc:46
 msgid "Default gateway"
 msgstr ""
+
+#: ipconfig.rc:47
+#, fuzzy
+#| msgid "Address"
+msgid "IPv6 address"
+msgstr "Adresa"
 
 #: net.rc:27
 msgid ""

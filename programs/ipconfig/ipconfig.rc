@@ -30,7 +30,7 @@ STRINGTABLE
     STRING_ETHERNET, "Ethernet"
     STRING_UNKNOWN, "Unknown"
     STRING_CONN_DNS_SUFFIX, "Connection-specific DNS suffix"
-    STRING_IP_ADDRESS, "IP address"
+    STRING_IP_ADDRESS, "IPv4 address"
     STRING_HOSTNAME, "Hostname"
     STRING_NODE_TYPE, "Node type"
     STRING_BROADCAST, "Broadcast"
@@ -44,4 +44,5 @@ STRINGTABLE
     STRING_YES, "Yes"
     STRING_NO, "No"
     STRING_DEFAULT_GATEWAY, "Default gateway"
+    STRING_IP6_ADDRESS, "IPv6 address"
 }
