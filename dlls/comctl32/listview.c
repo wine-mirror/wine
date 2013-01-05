@@ -5621,9 +5621,8 @@ static void LISTVIEW_ScrollOnInsert(LISTVIEW_INFO *infoPtr, INT nItem, INT dir)
     TRACE("rcScroll=%s, dx=%d\n", wine_dbgstr_rect(&rcScroll), dir * infoPtr->nItemHeight);
     if (IntersectRect(&rcScroll, &rcScroll, &infoPtr->rcList))
     {
-	TRACE("Scrolling rcScroll=%s, rcList=%s\n", wine_dbgstr_rect(&rcScroll), wine_dbgstr_rect(&infoPtr->rcList));
-	ScrollWindowEx(infoPtr->hwndSelf, 0, dir * infoPtr->nItemHeight, 
-		       &rcScroll, &rcScroll, 0, 0, SW_ERASE | SW_INVALIDATE);
+	TRACE("Invalidating rcScroll=%s, rcList=%s\n", wine_dbgstr_rect(&rcScroll), wine_dbgstr_rect(&infoPtr->rcList));
+	InvalidateRect(infoPtr->hwndSelf, &rcScroll, TRUE);
     }
 
     /* report has only that column, so we're done */
@@ -5636,8 +5635,7 @@ static void LISTVIEW_ScrollOnInsert(LISTVIEW_INFO *infoPtr, INT nItem, INT dir)
     rcScroll.bottom = nPerCol * infoPtr->nItemHeight;
     OffsetRect(&rcScroll, Origin.x, Origin.y);
     if (IntersectRect(&rcScroll, &rcScroll, &infoPtr->rcList))
-	ScrollWindowEx(infoPtr->hwndSelf, 0, dir * infoPtr->nItemHeight,
-		       &rcScroll, &rcScroll, 0, 0, SW_ERASE | SW_INVALIDATE);
+	InvalidateRect(infoPtr->hwndSelf, &rcScroll, TRUE);
 }
 
 /***
