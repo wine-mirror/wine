@@ -1591,7 +1591,7 @@ static void test_D3DXCreateVolumeTextureFromFileInMemory(IDirect3DDevice9 *devic
         ok(levelcount == 3, "GetLevelCount returned %u, expected 3\n", levelcount);
 
         hr = IDirect3DVolumeTexture9_GetLevelDesc(volume_texture, 0, &volume_desc);
-        ok(hr == D3D_OK, "GetLevelDesc returend %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "GetLevelDesc returned %#x, expected %#x\n", hr, D3D_OK);
         ok(volume_desc.Width == 4, "Got width %u, expected 4\n", volume_desc.Width);
         ok(volume_desc.Height == 4, "Got height %u, expected 4\n", volume_desc.Height);
         ok(volume_desc.Depth == 2, "Got depth %u, expected 2\n", volume_desc.Depth);

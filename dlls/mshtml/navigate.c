@@ -1248,7 +1248,7 @@ static nsresult NSAPI nsAsyncVerifyRedirectCallback_QueryInterface(nsIAsyncVerif
     nsRedirectCallback *This = impl_from_nsIAsyncVerifyRedirectCallback(iface);
 
     if(IsEqualGUID(&IID_nsISupports, riid)) {
-        TRACE("(%p)->(IID_nsISuports %p)\n", This, result);
+        TRACE("(%p)->(IID_nsISupports %p)\n", This, result);
         *result = &This->nsIAsyncVerifyRedirectCallback_iface;
     }else if(IsEqualGUID(&IID_nsIAsyncVerifyRedirectCallback, riid)) {
         TRACE("(%p)->(IID_nsIAsyncVerifyRedirectCallback %p)\n", This, result);

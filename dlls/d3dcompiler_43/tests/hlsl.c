@@ -642,7 +642,7 @@ static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_ge
             "function names\n");
     ok(errors != NULL, "No errors returned for a shader with invalid variable and function "
             "names\n");
-    ok(compiled == NULL, "A shader blob was returend for a shader with invalid variable and "
+    ok(compiled == NULL, "A shader blob was returned for a shader with invalid variable and "
             "function names\n");
 
     IUnknown_Release(errors);

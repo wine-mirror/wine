@@ -366,7 +366,7 @@ static HRESULT readerinput_growraw(xmlreaderinput *readerinput)
     ULONG read;
     HRESULT hr;
 
-    /* always try to get aligned to 4 bytes, so the only case we can get partialy read characters is
+    /* always try to get aligned to 4 bytes, so the only case we can get partially read characters is
        variable width encodings like UTF-8 */
     len = (len + 3) & ~3;
     /* try to use allocated space or grow */

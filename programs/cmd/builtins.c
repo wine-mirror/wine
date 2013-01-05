@@ -3778,7 +3778,7 @@ static int WCMD_handleExpression(WCHAR **expr, int *ret, int depth)
       WCHAR *nextpos;
 
       /* Cannot have an expression with var/number twice, without an operator
-         inbetween, nor or number following a half constructed << or >> operator */
+         in-between, nor or number following a half constructed << or >> operator */
       if (lastwasnumber || foundhalf) {
         rc = WCMD_NOOPERATOR;
         goto exprerrorreturn;

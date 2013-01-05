@@ -1220,7 +1220,7 @@ set WINE_foo=2
 set /a WINE_bar=WINE_foo=7
 call :checkenvvars WINE_foo 7 WINE_bar 7
 echo ----- equal precedence on stack
-rem Unary - dont reduce if precedence is equal
+rem Unary - don't reduce if precedence is equal
 set /a WINE_foo=!!1
 call :checkenvvars WINE_foo 1
 set /a WINE_foo=!!0
@@ -1262,7 +1262,7 @@ set /a WINE_foo=10-5+2
 call :checkenvvars WINE_foo 7
 set /a WINE_foo=1^<^<4^>^>1
 call :checkenvvars WINE_foo 8
-rem Assignment - dont reduce if precedence is equal
+rem Assignment - don't reduce if precedence is equal
 set /a WINE_foo=5
 set /a WINE_bar=WINE_foo=6
 call :checkenvvars WINE_foo 6 WINE_bar 6

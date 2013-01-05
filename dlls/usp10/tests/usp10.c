@@ -1860,7 +1860,7 @@ static void test_ScriptGetFontProperties(HDC hdc)
     static const WCHAR invalids[] = {0x0020, 0x200B, 0xF71B};
     /* U+0020: numeric space
        U+200B: zero width space
-       U+F71B: unkown, found by black box testing */
+       U+F71B: unknown, found by black box testing */
     BOOL is_terminal, is_arial, is_times_new_roman, is_arabic = (system_lang_id == LANG_ARABIC);
 
     /* Some sanity checks for ScriptGetFontProperties */

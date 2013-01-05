@@ -707,7 +707,7 @@ static void test_CoRegisterPSClsid(void)
     CLSID clsid;
 
     hr = CoRegisterPSClsid(&IID_IWineTest, &CLSID_WineTestPSFactoryBuffer);
-    ok(hr == CO_E_NOTINITIALIZED, "CoRegisterPSClsid should have returened CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
+    ok(hr == CO_E_NOTINITIALIZED, "CoRegisterPSClsid should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
 
     pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
