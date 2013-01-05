@@ -10750,6 +10750,7 @@ static LRESULT LISTVIEW_SetFocus(LISTVIEW_INFO *infoPtr, HWND hwndLoseFocus)
 static LRESULT LISTVIEW_SetFont(LISTVIEW_INFO *infoPtr, HFONT hFont, WORD fRedraw)
 {
     HFONT oldFont = infoPtr->hFont;
+    INT oldHeight = infoPtr->nItemHeight;
 
     TRACE("(hfont=%p,redraw=%hu)\n", hFont, fRedraw);
 
@@ -10758,12 +10759,16 @@ static LRESULT LISTVIEW_SetFont(LISTVIEW_INFO *infoPtr, HFONT hFont, WORD fRedra
     
     LISTVIEW_SaveTextMetrics(infoPtr);
 
+    infoPtr->nItemHeight = LISTVIEW_CalculateItemHeight(infoPtr);
+
     if (infoPtr->uView == LV_VIEW_DETAILS)
     {
 	SendMessageW(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(fRedraw, 0));
         LISTVIEW_UpdateSize(infoPtr);
         LISTVIEW_UpdateScroll(infoPtr);
     }
+    else if (infoPtr->nItemHeight != oldHeight)
+        LISTVIEW_UpdateScroll(infoPtr);
 
     if (fRedraw) LISTVIEW_InvalidateList(infoPtr);
 
