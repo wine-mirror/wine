@@ -509,7 +509,11 @@ void info_win32_processes(void)
         dp.count   = 0;
         dp.alloc   = 16;
         dp.entries = HeapAlloc(GetProcessHeap(), 0, sizeof(*dp.entries) * dp.alloc);
-        if (!dp.entries) return;
+        if (!dp.entries)
+        {
+             CloseHandle(snap);
+             return;
+        }
         dp.entries[dp.count].proc.dwSize = sizeof(dp.entries[dp.count].proc);
         ok = Process32First(snap, &dp.entries[dp.count].proc);
 
