@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define NONAMELESSUNION
 #include "netstat.h"
 #include <winsock2.h>
 #include <iphlpapi.h>
@@ -178,9 +179,9 @@ static void NETSTAT_tcp_table(void)
 
     for (i = 0; i < table->dwNumEntries; i++)
     {
-        if ((table->table[i].dwState ==  MIB_TCP_STATE_CLOSE_WAIT) ||
-            (table->table[i].dwState ==  MIB_TCP_STATE_ESTAB) ||
-            (table->table[i].dwState ==  MIB_TCP_STATE_TIME_WAIT))
+        if ((table->table[i].u.dwState ==  MIB_TCP_STATE_CLOSE_WAIT) ||
+            (table->table[i].u.dwState ==  MIB_TCP_STATE_ESTAB) ||
+            (table->table[i].u.dwState ==  MIB_TCP_STATE_TIME_WAIT))
         {
             NETSTAT_host_name(table->table[i].dwLocalAddr, HostIp);
             NETSTAT_port_name(table->table[i].dwLocalPort, HostPort);
@@ -189,7 +190,7 @@ static void NETSTAT_tcp_table(void)
 
             sprintfW(Host, fmtcolon, HostIp, HostPort);
             sprintfW(Remote, fmtcolon, RemoteIp, RemotePort);
-            NETSTAT_wprintf(fmttcpout, tcpW, Host, Remote, NETSTAT_load_message(table->table[i].dwState));
+            NETSTAT_wprintf(fmttcpout, tcpW, Host, Remote, NETSTAT_load_message(table->table[i].u.dwState));
         }
     }
     HeapFree(GetProcessHeap(), 0, table);
