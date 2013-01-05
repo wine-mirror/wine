@@ -701,60 +701,52 @@ todo_wine {
     IXmlReader_Release(reader);
 }
 
-static const char xml_comment[] = "\xef\xbb\xbf<!-- comment -->";
-static const char xml_comment1[] = "\xef\xbb\xbf<!-- - comment-->";
-static const char xml_comment2[] = "\xef\xbb\xbf<!-- -- comment-->";
-
-static void test_read_comment(void)
-{
-    HRESULT hr;
-    IStream *stream;
-    IXmlReader *reader;
-    XmlNodeType type;
-
-    hr = pCreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
-    ok(hr == S_OK, "S_OK, got %08x\n", hr);
-
-    stream = create_stream_on_data(xml_comment, sizeof(xml_comment));
-    hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
-    ok(hr == S_OK, "got %08x\n", hr);
-
-    type = XmlNodeType_None;
-    hr = IXmlReader_Read(reader, &type);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(type == XmlNodeType_Comment, "got %d\n", type);
-
-    IStream_Release(stream);
-
-    stream = create_stream_on_data(xml_comment1, sizeof(xml_comment1));
-    hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
-    ok(hr == S_OK, "got %08x\n", hr);
-
-    type = XmlNodeType_None;
-    hr = IXmlReader_Read(reader, &type);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(type == XmlNodeType_Comment, "got %d\n", type);
-
-    IStream_Release(stream);
-
-    stream = create_stream_on_data(xml_comment2, sizeof(xml_comment2));
-    hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
-    ok(hr == S_OK, "got %08x\n", hr);
-
-    type = XmlNodeType_None;
-    hr = IXmlReader_Read(reader, &type);
-    ok(hr == WC_E_COMMENT || broken(hr == WC_E_GREATERTHAN), "got %08x\n", hr);
-    ok(type == XmlNodeType_None, "got %d\n", type);
-    IStream_Release(stream);
-
-    IXmlReader_Release(reader);
-}
-
 struct test_entry {
     const char *xml;
     HRESULT hr;
     HRESULT hr_broken; /* this is set to older version results */
 };
+
+static struct test_entry comment_tests[] = {
+    { "<!-- comment -->", S_OK },
+    { "<!-- - comment-->", S_OK },
+    { "<!-- -- comment-->", WC_E_COMMENT, WC_E_GREATERTHAN },
+    { NULL }
+};
+
+static void test_read_comment(void)
+{
+    struct test_entry *test = comment_tests;
+    IXmlReader *reader;
+    HRESULT hr;
+
+    hr = pCreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
+    ok(hr == S_OK, "S_OK, got %08x\n", hr);
+
+    while (test->xml)
+    {
+        XmlNodeType type;
+        IStream *stream;
+
+        stream = create_stream_on_data(test->xml, strlen(test->xml)+1);
+        hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        type = XmlNodeType_None;
+        hr = IXmlReader_Read(reader, &type);
+        if (test->hr_broken)
+            ok(hr == test->hr || broken(hr == test->hr_broken), "got %08x for %s\n", hr, test->xml);
+        else
+            ok(hr == test->hr, "got %08x for %s\n", hr, test->xml);
+        if (hr == S_OK)
+            ok(type == XmlNodeType_Comment, "got %d for %s\n", type, test->xml);
+
+        IStream_Release(stream);
+        test++;
+    }
+
+    IXmlReader_Release(reader);
+}
 
 static struct test_entry pi_tests[] = {
     { "<?pi?>", S_OK },

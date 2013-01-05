@@ -403,7 +403,9 @@ static HRESULT readerinput_detectencoding(xmlreaderinput *readerinput, xml_encod
 {
     encoded_buffer *buffer = &readerinput->buffer->encoded;
     static char startA[] = {'<','?'};
+    static char commentA[] = {'<','!'};
     static WCHAR startW[] = {'<','?'};
+    static WCHAR commentW[] = {'<','!'};
     static char utf8bom[] = {0xef,0xbb,0xbf};
     static char utf16lebom[] = {0xff,0xfe};
 
@@ -413,9 +415,11 @@ static HRESULT readerinput_detectencoding(xmlreaderinput *readerinput, xml_encod
 
     /* try start symbols if we have enough data to do that, input buffer should contain
        first chunk already */
-    if (!memcmp(buffer->data, startA, sizeof(startA)))
+    if (!memcmp(buffer->data, startA, sizeof(startA)) ||
+        !memcmp(buffer->data, commentA, sizeof(commentA)))
         *enc = XmlEncoding_UTF8;
-    else if (!memcmp(buffer->data, startW, sizeof(startW)))
+    else if (!memcmp(buffer->data, startW, sizeof(startW)) ||
+             !memcmp(buffer->data, commentW, sizeof(commentW)))
         *enc = XmlEncoding_UTF16;
     /* try with BOM now */
     else if (!memcmp(buffer->data, utf8bom, sizeof(utf8bom)))
