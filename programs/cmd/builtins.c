@@ -3661,6 +3661,7 @@ static int WCMD_reduce(OPSTACK **opstack, VARSTACK **varstack) {
             WCMD_pushnumber(NULL, var2&var1, varstack);
             break;
   case '%': var2 = WCMD_popnumber(varstack);
+            if (var1 == 0) return WCMD_DIVIDEBYZERO;
             WCMD_pushnumber(NULL, var2%var1, varstack);
             break;
   case '^': var2 = WCMD_popnumber(varstack);
