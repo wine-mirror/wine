@@ -339,6 +339,17 @@ static const struct message parent_header_divider_dclick_seq[] = {
     { 0 }
 };
 
+static const struct message listview_set_imagelist[] = {
+    { LVM_SETIMAGELIST, sent|id, 0, 0, LISTVIEW_ID },
+    { 0 }
+};
+
+static const struct message listview_header_set_imagelist[] = {
+    { LVM_SETIMAGELIST, sent|id, 0, 0, LISTVIEW_ID },
+    { HDM_SETIMAGELIST, sent|id, 0, 0, HEADER_ID },
+    { 0 }
+};
+
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
@@ -5195,6 +5206,91 @@ static void test_LVM_SETITEMTEXT(void)
     DestroyWindow(hwnd);
 }
 
+static void test_imagelists(void)
+{
+    HWND hwnd, header;
+    HIMAGELIST himl1, himl2, himl3;
+    LRESULT ret;
+
+    himl1 = ImageList_Create(40, 40, 0, 4, 4);
+    himl2 = ImageList_Create(40, 40, 0, 4, 4);
+    himl3 = ImageList_Create(40, 40, 0, 4, 4);
+    ok(himl1 != NULL, "Failed to create imagelist\n");
+    ok(himl2 != NULL, "Failed to create imagelist\n");
+    ok(himl3 != NULL, "Failed to create imagelist\n");
+
+    hwnd = create_listview_control(LVS_REPORT | LVS_SHAREIMAGELISTS);
+    header = subclass_header(hwnd);
+
+    ok(header != NULL, "Expected header\n");
+    ret = SendMessage(header, HDM_GETIMAGELIST, 0, 0);
+    ok(ret == 0, "Expected no imagelist, got %p\n", (HIMAGELIST)ret);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SendMessageW(hwnd, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)himl1);
+    ok(ret == 0, "Expected no imagelist, got %p\n", (HIMAGELIST)ret);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_set_imagelist,
+                "set normal image list", FALSE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SendMessageW(hwnd, LVM_SETIMAGELIST, LVSIL_STATE, (LPARAM)himl2);
+    ok(ret == 0, "Expected no imagelist, got %p\n", (HIMAGELIST)ret);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_set_imagelist,
+                "set state image list", TRUE);
+
+    ret = SendMessage(header, HDM_GETIMAGELIST, 0, 0);
+    ok(ret == 0, "Expected no imagelist, got %p\n", (HIMAGELIST)ret);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SendMessageW(hwnd, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)himl3);
+    ok(ret == 0, "Expected no imagelist, got %p\n", (HIMAGELIST)ret);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_header_set_imagelist,
+                "set small image list", FALSE);
+
+    ret = SendMessage(header, HDM_GETIMAGELIST, 0, 0);
+    ok((HIMAGELIST)ret == himl3, "Expected imagelist %p, got %p\n", himl3, (HIMAGELIST)ret);
+    DestroyWindow(hwnd);
+
+    hwnd = create_listview_control(WS_VISIBLE | LVS_ICON);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SendMessageW(hwnd, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)himl1);
+    ok(ret == 0, "Expected no imagelist, got %p\n", (HIMAGELIST)ret);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_set_imagelist,
+                "set normal image list", FALSE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SendMessageW(hwnd, LVM_SETIMAGELIST, LVSIL_STATE, (LPARAM)himl2);
+    ok(ret == 0, "Expected no imagelist, got %p\n", (HIMAGELIST)ret);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_set_imagelist,
+                "set state image list", FALSE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SendMessageW(hwnd, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)himl3);
+    ok(ret == 0, "Expected no imagelist, got %p\n", (HIMAGELIST)ret);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_set_imagelist,
+                "set small image list", FALSE);
+
+    header = ListView_GetHeader(hwnd);
+    ok(header == NULL, "Expected no header, got %p\n", header);
+
+    SetWindowLongPtr(hwnd, GWL_STYLE, GetWindowLongPtr(hwnd, GWL_STYLE) | LVS_REPORT);
+
+    header = (HWND)SendMessage(hwnd, LVM_GETHEADER, 0, 0);
+    ok(header != NULL, "Expected header, got NULL\n");
+
+    ret = SendMessage(header, HDM_GETIMAGELIST, 0, 0);
+    ok((HIMAGELIST)ret == himl3, "Expected imagelist %p, got %p\n", himl3, (HIMAGELIST)ret);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -5261,6 +5357,7 @@ START_TEST(listview)
     test_createdragimage();
     test_dispinfo();
     test_LVM_SETITEMTEXT();
+    test_imagelists();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
