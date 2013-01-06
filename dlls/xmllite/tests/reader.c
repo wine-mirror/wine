@@ -52,6 +52,19 @@ static const char *debugstr_guid(REFIID riid)
     return buf;
 }
 
+static WCHAR *a2w(const char *str)
+{
+    int len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    WCHAR *ret = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    return ret;
+}
+
+static void free_str(WCHAR *str)
+{
+    HeapFree(GetProcessHeap(), 0, str);
+}
+
 static const char xmldecl_full[] = "\xef\xbb\xbf<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
 
 static IStream *create_stream_on_data(const char *data, int size)
@@ -703,14 +716,15 @@ todo_wine {
 
 struct test_entry {
     const char *xml;
+    const char *name;
     HRESULT hr;
     HRESULT hr_broken; /* this is set to older version results */
 };
 
 static struct test_entry comment_tests[] = {
-    { "<!-- comment -->", S_OK },
-    { "<!-- - comment-->", S_OK },
-    { "<!-- -- comment-->", WC_E_COMMENT, WC_E_GREATERTHAN },
+    { "<!-- comment -->", "", S_OK },
+    { "<!-- - comment-->", "", S_OK },
+    { "<!-- -- comment-->", NULL, WC_E_COMMENT, WC_E_GREATERTHAN },
     { NULL }
 };
 
@@ -739,7 +753,31 @@ static void test_read_comment(void)
         else
             ok(hr == test->hr, "got %08x for %s\n", hr, test->xml);
         if (hr == S_OK)
+        {
+            const WCHAR *name;
+            WCHAR *name_exp;
+            UINT len;
+
             ok(type == XmlNodeType_Comment, "got %d for %s\n", type, test->xml);
+
+            len = 1;
+            name = NULL;
+            hr = IXmlReader_GetLocalName(reader, &name, &len);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(len == strlen(test->name), "got %u\n", len);
+            name_exp = a2w(test->name);
+            ok(!lstrcmpW(name, name_exp), "got %s\n", wine_dbgstr_w(name));
+            free_str(name_exp);
+
+            len = 1;
+            name = NULL;
+            hr = IXmlReader_GetQualifiedName(reader, &name, &len);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(len == strlen(test->name), "got %u\n", len);
+            name_exp = a2w(test->name);
+            ok(!lstrcmpW(name, name_exp), "got %s\n", wine_dbgstr_w(name));
+            free_str(name_exp);
+        }
 
         IStream_Release(stream);
         test++;
@@ -749,12 +787,12 @@ static void test_read_comment(void)
 }
 
 static struct test_entry pi_tests[] = {
-    { "<?pi?>", S_OK },
-    { "<?pi ?>", S_OK },
-    { "<?pi:pi?>", NC_E_NAMECOLON, WC_E_NAMECHARACTER },
-    { "<?:pi ?>", WC_E_PI, WC_E_NAMECHARACTER },
-    { "<?-pi ?>", WC_E_PI, WC_E_NAMECHARACTER },
-    { "<?xml-stylesheet ?>", S_OK },
+    { "<?pi?>", "pi", S_OK },
+    { "<?pi ?>", "pi", S_OK },
+    { "<?pi:pi?>", NULL, NC_E_NAMECOLON, WC_E_NAMECHARACTER },
+    { "<?:pi ?>", NULL, WC_E_PI, WC_E_NAMECHARACTER },
+    { "<?-pi ?>", NULL, WC_E_PI, WC_E_NAMECHARACTER },
+    { "<?xml-stylesheet ?>", "xml-stylesheet", S_OK },
     { NULL }
 };
 
@@ -783,7 +821,31 @@ static void test_read_pi(void)
         else
             ok(hr == test->hr, "got %08x for %s\n", hr, test->xml);
         if (hr == S_OK)
+        {
+            const WCHAR *name;
+            WCHAR *name_exp;
+            UINT len;
+
             ok(type == XmlNodeType_ProcessingInstruction, "got %d for %s\n", type, test->xml);
+
+            len = 0;
+            name = NULL;
+            hr = IXmlReader_GetLocalName(reader, &name, &len);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(len == strlen(test->name), "got %u\n", len);
+            name_exp = a2w(test->name);
+            ok(!lstrcmpW(name, name_exp), "got %s\n", wine_dbgstr_w(name));
+            free_str(name_exp);
+
+            len = 0;
+            name = NULL;
+            hr = IXmlReader_GetQualifiedName(reader, &name, &len);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(len == strlen(test->name), "got %u\n", len);
+            name_exp = a2w(test->name);
+            ok(!lstrcmpW(name, name_exp), "got %s\n", wine_dbgstr_w(name));
+            free_str(name_exp);
+        }
 
         IStream_Release(stream);
         test++;
