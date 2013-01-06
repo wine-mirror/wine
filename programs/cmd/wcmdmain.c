@@ -41,6 +41,7 @@ DWORD errorlevel;
 WCHAR quals[MAX_PATH], param1[MAXSTRING], param2[MAXSTRING];
 BOOL  interactive;
 FOR_CONTEXT forloopcontext; /* The 'for' loop context */
+BOOL delayedsubst = FALSE; /* The current delayed substitution setting */
 
 int defaultColor = 7;
 BOOL echo_mode = TRUE;
@@ -548,7 +549,7 @@ static inline BOOL WCMD_is_magic_envvar(const WCHAR *s, const WCHAR *magicvar)
  *
  *	Expands environment variables, allowing for WCHARacter substitution
  */
-static WCHAR *WCMD_expand_envvar(WCHAR *start)
+static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
 {
     WCHAR *endOfVar = NULL, *s;
     WCHAR *colonpos = NULL;
@@ -562,11 +563,12 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start)
     static const WCHAR Time[]      = {'T','I','M','E','\0'};
     static const WCHAR Cd[]        = {'C','D','\0'};
     static const WCHAR Random[]    = {'R','A','N','D','O','M','\0'};
-    static const WCHAR Delims[]    = {'%',':','\0'};
+    WCHAR Delims[]    = {'%',':','\0'}; /* First char gets replaced appropriately */
 
-    WINE_TRACE("Expanding: %s\n", wine_dbgstr_w(start));
+    WINE_TRACE("Expanding: %s (%c)\n", wine_dbgstr_w(start), startchar);
 
     /* Find the end of the environment variable, and extract name */
+    Delims[0] = startchar;
     endOfVar = strpbrkW(start+1, Delims);
 
     if (endOfVar == NULL || *endOfVar==' ') {
@@ -587,7 +589,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start)
     /* If ':' found, process remaining up until '%' (or stop at ':' if
        a missing '%' */
     if (*endOfVar==':') {
-        WCHAR *endOfVar2 = strchrW(endOfVar+1, '%');
+        WCHAR *endOfVar2 = strchrW(endOfVar+1, startchar);
         if (endOfVar2 != NULL) endOfVar = endOfVar2;
     }
 
@@ -598,11 +600,18 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start)
     /* If there's complex substitution, just need %var% for now
        to get the expanded data to play with                    */
     if (colonpos) {
-        *colonpos = '%';
+        *colonpos = startchar;
         savedchar = *(colonpos+1);
         *(colonpos+1) = 0x00;
     }
 
+    /* By now, we know the variable we want to expand but it may be
+       surrounded by '!' if we are in delayed expansion - if so convert
+       to % signs.                                                      */
+    if (startchar=='!') {
+      thisVar[0]                  = '%';
+      thisVar[(endOfVar - start)] = '%';
+    }
     WINE_TRACE("Retrieving contents of %s\n", wine_dbgstr_w(thisVar));
 
     /* Expand to contents, if unchanged, return */
@@ -788,8 +797,11 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start)
  * Expand the command. Native expands lines from batch programs as they are
  * read in and not again, except for 'for' variable substitution.
  * eg. As evidence, "echo %1 && shift && echo %1" or "echo %%path%%"
+ * atExecute is TRUE when the expansion is occuring as the command is executed
+ * rather than at parse time, ie delayed expansion and for loops need to be
+ * processed
  */
-static void handleExpansion(WCHAR *cmd, BOOL justFors) {
+static void handleExpansion(WCHAR *cmd, BOOL atExecute, BOOL delayed) {
 
   /* For commands in a context (batch program):                  */
   /*   Expand environment variables in a batch file %{0-9} first */
@@ -803,6 +815,9 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors) {
   WCHAR *p = cmd;
   WCHAR *t;
   int   i;
+  WCHAR *delayedp = NULL;
+  WCHAR  startchar = '%';
+  WCHAR *normalp;
 
   /* Display the FOR variables in effect */
   for (i=0;i<52;i++) {
@@ -813,14 +828,22 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors) {
     }
   }
 
-  while ((p = strchrW(p, '%'))) {
+  /* Find the next environment variable delimiter */
+  normalp = strchrW(p, '%');
+  if (delayed) delayedp = strchrW(p, '!');
+  if (!normalp) p = delayedp;
+  else if (!delayedp) p = normalp;
+  else p = min(p,delayedp);
+  if (p) startchar = *p;
+
+  while (p) {
 
     WINE_TRACE("Translate command:%s %d (at: %s)\n",
-                   wine_dbgstr_w(cmd), justFors, wine_dbgstr_w(p));
+                   wine_dbgstr_w(cmd), atExecute, wine_dbgstr_w(p));
     i = *(p+1) - '0';
 
     /* Don't touch %% unless its in Batch */
-    if (!justFors && *(p+1) == '%') {
+    if (!atExecute && *(p+1) == startchar) {
       if (context) {
         WCMD_strsubstW(p, p+1, NULL, 0);
       }
@@ -828,17 +851,17 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors) {
 
     /* Replace %~ modifications if in batch program */
     } else if (*(p+1) == '~') {
-      WCMD_HandleTildaModifiers(&p, justFors);
+      WCMD_HandleTildaModifiers(&p, atExecute);
       p++;
 
     /* Replace use of %0...%9 if in batch program*/
-    } else if (!justFors && context && (i >= 0) && (i <= 9)) {
+    } else if (!atExecute && context && (i >= 0) && (i <= 9) && startchar == '%') {
       t = WCMD_parameter(context -> command, i + context -> shift_count[i],
                          NULL, TRUE, TRUE);
       WCMD_strsubstW(p, p+2, t, -1);
 
     /* Replace use of %* if in batch program*/
-    } else if (!justFors && context && *(p+1)=='*') {
+    } else if (!atExecute && context && *(p+1)=='*' && startchar == '%') {
       WCHAR *startOfParms = NULL;
       WCHAR *thisParm = WCMD_parameter(context -> command, 0, &startOfParms, TRUE, TRUE);
       if (startOfParms != NULL) {
@@ -850,17 +873,25 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors) {
 
     } else {
       int forvaridx = FOR_VAR_IDX(*(p+1));
-      if (forvaridx != -1 && forloopcontext.variable[forvaridx]) {
+      if (startchar == '%' && forvaridx != -1 && forloopcontext.variable[forvaridx]) {
         /* Replace the 2 characters, % and for variable character */
         WCMD_strsubstW(p, p + 2, forloopcontext.variable[forvaridx], -1);
-      } else if (!justFors) {
-        p = WCMD_expand_envvar(p);
+      } else if (!atExecute || (atExecute && startchar == '!')) {
+        p = WCMD_expand_envvar(p, startchar);
 
       /* In a FOR loop, see if this is the variable to replace */
       } else { /* Ignore %'s on second pass of batch program */
         p++;
       }
     }
+
+    /* Find the next environment variable delimiter */
+    normalp = strchrW(p, '%');
+    if (delayed) delayedp = strchrW(p, '!');
+    if (!normalp) p = delayedp;
+    else if (!delayedp) p = normalp;
+    else p = min(p,delayedp);
+    if (p) startchar = *p;
   }
 
   return;
@@ -1303,8 +1334,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
 
     /* Expand variables in command line mode only (batch mode will
        be expanded as the line is read in, except for 'for' loops) */
-    handleExpansion(new_cmd, (context != NULL));
-    handleExpansion(new_redir, (context != NULL));
+    handleExpansion(new_cmd, (context != NULL), delayedsubst);
+    handleExpansion(new_redir, (context != NULL), delayedsubst);
     cmd = new_cmd;
 
 /*
@@ -1825,7 +1856,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     }
 
     /* Replace env vars if in a batch context */
-    if (context) handleExpansion(extraSpace, FALSE);
+    if (context) handleExpansion(extraSpace, FALSE, FALSE);
 
     /* Skip preceding whitespace */
     while (*curPos == ' ' || *curPos == '\t') curPos++;
@@ -2222,7 +2253,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
 
         } while (*extraData == 0x00);
         curPos = extraSpace;
-        if (context) handleExpansion(extraSpace, FALSE);
+        if (context) handleExpansion(extraSpace, FALSE, FALSE);
         /* Continue to echo commands IF echo is on and in batch program */
         if (context && echo_mode && extraSpace[0] && (extraSpace[0] != '@')) {
           WCMD_output_asis(extraSpace);
@@ -2313,6 +2344,7 @@ int wmain (int argc, WCHAR *argvW[])
   WCHAR envvar[4];
   BOOL opt_q;
   int opt_t = 0;
+  static const WCHAR offW[] = {'O','F','F','\0'};
   static const WCHAR promptW[] = {'P','R','O','M','P','T','\0'};
   static const WCHAR defaultpromptW[] = {'$','P','$','G','\0'};
   CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
@@ -2366,13 +2398,17 @@ int wmain (int argc, WCHAR *argvW[])
           unicodeOutput = FALSE;
       } else if (tolowerW(c)=='u') {
           unicodeOutput = TRUE;
+      } else if (tolowerW(c)=='v' && argPos[2]==':') {
+          delayedsubst = strncmpiW(&argPos[3], offW, 3);
+          if (delayedsubst) WINE_TRACE("Delayed substitution is on\n");
       } else if (tolowerW(c)=='t' && argPos[2]==':') {
           opt_t=strtoulW(&argPos[3], NULL, 16);
       } else if (tolowerW(c)=='x' || tolowerW(c)=='y') {
           /* Ignored for compatibility with Windows */
       }
 
-      if (argPos[2]==0 || argPos[2]==' ' || argPos[2]=='\t') {
+      if (argPos[2]==0 || argPos[2]==' ' || argPos[2]=='\t' ||
+          tolowerW(c)=='v') {
           args++;
           WCMD_parameter(cmdLine, args, &argPos, TRUE, TRUE);
       }
@@ -2387,8 +2423,7 @@ int wmain (int argc, WCHAR *argvW[])
   }
 
   if (opt_q) {
-    static const WCHAR eoff[] = {'O','F','F','\0'};
-    WCMD_echo(eoff);
+    WCMD_echo(offW);
   }
 
   /* Until we start to read from the keyboard, stay as non-interactive */

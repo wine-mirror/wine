@@ -112,7 +112,7 @@ WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start, BOOL raw,
                                    BOOL wholecmdline, const WCHAR *delims);
 WCHAR *WCMD_skip_leading_spaces (WCHAR *string);
 BOOL WCMD_keyword_ws_found(const WCHAR *keyword, int len, const WCHAR *ptr);
-void WCMD_HandleTildaModifiers(WCHAR **start, BOOL justFors);
+void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute);
 
 void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext);
 void WCMD_strip_quotes(WCHAR *cmd);
@@ -171,6 +171,7 @@ struct env_stack
   } u;
   WCHAR *strings;
   HANDLE batchhandle;        /* Used to ensure set/endlocals stay in scope */
+  BOOL delayedsubst;         /* Is delayed substitution in effect */
 };
 
 /* Data structure to save setlocal and pushd information */
@@ -201,6 +202,7 @@ extern WCHAR quals[MAX_PATH], param1[MAXSTRING], param2[MAXSTRING];
 extern DWORD errorlevel;
 extern BATCH_CONTEXT *context;
 extern FOR_CONTEXT forloopcontext;
+extern BOOL delayedsubst;
 
 #endif /* !RC_INVOKED */
 

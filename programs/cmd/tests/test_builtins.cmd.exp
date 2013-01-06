@@ -354,16 +354,16 @@ foo
 foo
 --- runtime (delayed) expansion mode
 foo
-@todo_wine@foo@or_broken@!WINE_FOO!
+foo@or_broken@!WINE_FOO!
 foo
-@todo_wine@bar@or_broken@foo
+bar@or_broken@foo
 0
 0@or_broken@1
 foo
 !WINE_FOO!
 --- using /V cmd flag
 foo
-@todo_wine@foo@or_broken@!WINE_FOO!
+foo@or_broken@!WINE_FOO!
 foo
 !WINE_FOO!
 ------------ Testing conditional execution ------------

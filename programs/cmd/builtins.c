@@ -3150,11 +3150,29 @@ void WCMD_setlocal (const WCHAR *s) {
   WCHAR *env;
   struct env_stack *env_copy;
   WCHAR cwd[MAX_PATH];
+  BOOL newdelay;
+  static const WCHAR ondelayW[]     = {'E','N','A','B','L','E','D','E','L','A',
+                                       'Y','E','D','E','X','P','A','N','S','I',
+                                       'O','N','\0'};
+  static const WCHAR offdelayW[]    = {'D','I','S','A','B','L','E','D','E','L',
+                                       'A','Y','E','D','E','X','P','A','N','S',
+                                       'I','O','N','\0'};
 
   /* setlocal does nothing outside of batch programs */
   if (!context) return;
 
   /* DISABLEEXTENSIONS ignored */
+
+  /* ENABLEDELAYEDEXPANSION / DISABLEDELAYEDEXPANSION could be parm1 or parm2
+     (if both ENABLEEXTENSIONS and ENABLEDELAYEDEXPANSION supplied for example) */
+  if (!strcmpiW(param1, ondelayW) || !strcmpiW(param2, ondelayW)) {
+    newdelay = TRUE;
+  } else if (!strcmpiW(param1, offdelayW) || !strcmpiW(param2, offdelayW)) {
+    newdelay = FALSE;
+  } else {
+    newdelay = delayedsubst;
+  }
+  WINE_TRACE("Setting delayed expansion to %d\n", newdelay);
 
   env_copy = LocalAlloc (LMEM_FIXED, sizeof (struct env_stack));
   if( !env_copy )
@@ -3169,6 +3187,8 @@ void WCMD_setlocal (const WCHAR *s) {
   {
     env_copy->batchhandle = context->h;
     env_copy->next = saved_environment;
+    env_copy->delayedsubst = delayedsubst;
+    delayedsubst = newdelay;
     saved_environment = env_copy;
 
     /* Save the current drive letter */
@@ -3226,6 +3246,8 @@ void WCMD_endlocal (void) {
   /* restore old environment */
   env = temp->strings;
   len = 0;
+  delayedsubst = temp->delayedsubst;
+  WINE_TRACE("Delayed expansion now %d\n", delayedsubst);
   while (env[len]) {
     n = strlenW(&env[len]) + 1;
     p = strchrW(&env[len] + 1, '=');

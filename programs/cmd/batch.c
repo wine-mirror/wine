@@ -386,7 +386,7 @@ void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHA
  *  Hence search forwards until find an invalid modifier, and then
  *  backwards until find for variable or 0-9
  */
-void WCMD_HandleTildaModifiers(WCHAR **start, BOOL justFors)
+void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
 {
 
 #define NUMMODIFIERS 11
@@ -444,7 +444,7 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL justFors)
     WINE_TRACE("Looking backwards for parameter id: %s\n",
                wine_dbgstr_w(lastModifier));
 
-    if (!justFors && context && (*lastModifier >= '0' && *lastModifier <= '9')) {
+    if (!atExecute && context && (*lastModifier >= '0' && *lastModifier <= '9')) {
       /* Its a valid parameter identifier - OK */
       break;
 
