@@ -1206,6 +1206,100 @@ static UINT thumb2_disasm_dataprocessingmod(UINT inst, ADDRESS64 *addr)
     }
 }
 
+static UINT thumb2_disasm_dataprocessingshift(UINT inst, ADDRESS64 *addr)
+{
+    WORD op = (inst >> 21) & 0x0f;
+    WORD sf = (inst >> 20) & 0x01;
+    WORD imm5 = ((inst >> 10) & 0x1c) + ((inst >> 6) & 0x03);
+    WORD type = (inst >> 4) & 0x03;
+
+    if (!imm5 && (type == 1 || type == 2)) imm5 = 32;
+    else if (!imm5 && type == 3) type = 4;
+
+    switch (op)
+    {
+    case 0:
+        if (get_nibble(inst, 2) == 15)
+            dbg_printf("\n\ttst\t%s, %s", tbl_regs[get_nibble(inst, 4)],
+                       tbl_regs[get_nibble(inst, 0)]);
+        else
+            dbg_printf("\n\tand%s\t%s, %s, %s", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+        break;
+    case 1:
+        dbg_printf("\n\tbic%s\t%s, %s, %s", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                   tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+        break;
+    case 2:
+        if (get_nibble(inst, 4) == 15)
+        {
+            if (type == 4)
+                dbg_printf("\n\trrx%s\t%s, %s", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 0)]);
+            else if (!type && !imm5)
+                dbg_printf("\n\tmov%s\t%s, %s", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 0)]);
+            else
+                dbg_printf("\n\t%s%s\t%s, %s, #%u", tbl_shifts[type], sf ? "s" : "", tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 0)], imm5);
+            return 0;
+        }
+        else
+            dbg_printf("\n\torr%s\t%s, %s, %s", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+        break;
+    case 3:
+        if (get_nibble(inst, 4) == 15)
+            dbg_printf("\n\tmvn%s\t%s, %s, %s", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+        else
+            dbg_printf("\n\torn%s\t%s, %s, %s", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+        break;
+    case 4:
+        if (get_nibble(inst, 2) == 15)
+            dbg_printf("\n\tteq\t%s, %s", tbl_regs[get_nibble(inst, 4)],
+                       tbl_regs[get_nibble(inst, 0)]);
+        else
+            dbg_printf("\n\teor%s\t%s, %s, %s", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+        break;
+    case 8:
+        if (get_nibble(inst, 2) == 15)
+            dbg_printf("\n\tcmn\t%s, %s", tbl_regs[get_nibble(inst, 4)],
+                       tbl_regs[get_nibble(inst, 0)]);
+        else
+            dbg_printf("\n\tadd%s\t%s, %s, %s", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+        break;
+    case 10:
+        dbg_printf("\n\tadc%s\t%s, %s, %s", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                   tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+        break;
+    case 11:
+        dbg_printf("\n\tsbc%s\t%s, %s, %s", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                   tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+        break;
+    case 13:
+        if (get_nibble(inst, 2) == 15)
+            dbg_printf("\n\tcmp\t%s, %s", tbl_regs[get_nibble(inst, 4)],
+                       tbl_regs[get_nibble(inst, 0)]);
+        else
+            dbg_printf("\n\tsub%s\t%s, %s, %s", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                       tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+        break;
+    case 14:
+        dbg_printf("\n\trsb%s\t%s, %s, %s", sf ? "s" : "", tbl_regs[get_nibble(inst, 2)],
+                   tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+        break;
+    default:
+        return inst;
+    }
+
+    if (type == 4)
+        dbg_printf(", rrx");
+    else if (type || imm5)
+        dbg_printf(", %s #%u", tbl_shifts[type], imm5);
+    return 0;
+}
+
 static UINT thumb2_disasm_coprocdat(UINT inst, ADDRESS64 *addr)
 {
     WORD opc2 = (inst >> 5) & 0x07;
@@ -1444,6 +1538,7 @@ static const struct inst_arm tbl_thumb32[] = {
     { 0xfe500000, 0xf8100000, thumb2_disasm_ldrnonword },
     { 0xfa008000, 0xf2000000, thumb2_disasm_dataprocessing },
     { 0xfa008000, 0xf0000000, thumb2_disasm_dataprocessingmod },
+    { 0xfe008000, 0xea000000, thumb2_disasm_dataprocessingshift },
     { 0xef000010, 0xee000000, thumb2_disasm_coprocdat },
     { 0xef000010, 0xee000010, thumb2_disasm_coprocmov1 },
     { 0xefe00000, 0xec400000, thumb2_disasm_coprocmov2 },
