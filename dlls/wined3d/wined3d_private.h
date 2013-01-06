@@ -2296,7 +2296,6 @@ struct wined3d_state
     struct wined3d_vertex_declaration *vertex_declaration;
     struct wined3d_stream_output stream_output[MAX_STREAM_OUT];
     struct wined3d_stream_state streams[MAX_STREAMS + 1 /* tesselated pseudo-stream */];
-    BOOL user_stream;
     struct wined3d_buffer *index_buffer;
     enum wined3d_format_id index_format;
     INT base_vertex_index;

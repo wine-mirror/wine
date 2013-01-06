@@ -4162,12 +4162,10 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive_strided(struct wined3d_devic
 
     prev_idx_format = device->stateBlock->state.index_format;
     device->stateBlock->state.index_format = index_data_format_id;
-    device->stateBlock->state.user_stream = TRUE;
     device->stateBlock->state.base_vertex_index = 0;
     device->up_strided = strided_data;
     draw_primitive(device, 0, index_count, 0, 0, TRUE, index_data);
     device->up_strided = NULL;
-    device->stateBlock->state.user_stream = FALSE;
     device->stateBlock->state.index_format = prev_idx_format;
 
     device_invalidate_state(device, STATE_VDECL);
