@@ -1057,7 +1057,9 @@ static UINT thumb2_disasm_dataprocessing(UINT inst, ADDRESS64 *addr)
     WORD op = (inst >> 20) & 0x1f;
     WORD imm5 = ((inst >> 10) & 0x1c) + ((inst >> 6) & 0x03);
 
-    if (op == 0)
+    switch (op)
+    {
+    case 0:
     {
         WORD offset = ((inst >> 15) & 0x0800) + ((inst >> 4) & 0x0700) + (inst & 0xff);
         if (get_nibble(inst, 4) == 15)
@@ -1070,8 +1072,8 @@ static UINT thumb2_disasm_dataprocessing(UINT inst, ADDRESS64 *addr)
                        tbl_regs[get_nibble(inst, 4)], offset);
         return 0;
     }
-
-    if (op == 4 || op == 12)
+    case 4:
+    case 12:
     {
         WORD offset = ((inst >> 15) & 0x0800) + ((inst >> 4) & 0xf000) +
                       ((inst >>  4) & 0x0700) + (inst & 0xff);
@@ -1079,8 +1081,7 @@ static UINT thumb2_disasm_dataprocessing(UINT inst, ADDRESS64 *addr)
                    offset);
         return 0;
     }
-
-    if (op == 10)
+    case 10:
     {
         int offset = ((inst >> 15) & 0x0800) + ((inst >> 4) & 0x0700) + (inst & 0xff);
         if (get_nibble(inst, 4) == 15)
@@ -1094,8 +1095,10 @@ static UINT thumb2_disasm_dataprocessing(UINT inst, ADDRESS64 *addr)
                        tbl_regs[get_nibble(inst, 4)], offset);
         return 0;
     }
-
-    if (op == 16 || op == 18 || op == 24 || op == 26)
+    case 16:
+    case 18:
+    case 24:
+    case 26:
     {
         BOOL sign = op < 24;
         WORD sh = (inst >> 21) & 0x01;
@@ -1110,16 +1113,15 @@ static UINT thumb2_disasm_dataprocessing(UINT inst, ADDRESS64 *addr)
                        sat, tbl_regs[get_nibble(inst, 4)]);
         return 0;
     }
-
-    if (op == 20 || op == 28)
+    case 20:
+    case 28:
     {
         WORD width = (inst & 0x1f) + 1;
         dbg_printf("\n\t%s\t%s, %s, #%u, #%u", op == 28 ? "ubfx" : "sbfx",
                    tbl_regs[get_nibble(inst, 2)], tbl_regs[get_nibble(inst, 4)], imm5, width);
         return 0;
     }
-
-    if (op == 22)
+    case 22:
     {
         WORD msb = (inst & 0x1f) + 1 - imm5;
         if (get_nibble(inst, 4) == 15)
@@ -1129,15 +1131,16 @@ static UINT thumb2_disasm_dataprocessing(UINT inst, ADDRESS64 *addr)
                        tbl_regs[get_nibble(inst, 4)], imm5, msb);
         return 0;
     }
-
-    return inst;
+    default:
+        return inst;
+    }
 }
 
 static UINT thumb2_disasm_dataprocessingmod(UINT inst, ADDRESS64 *addr)
 {
     WORD op = (inst >> 21) & 0x0f;
     WORD sf = (inst >> 20) & 0x01;
-    WORD offset = ((inst >> 15) & 0x0800) + ((inst >>  4) & 0x0700) + (inst & 0xff);
+    WORD offset = ((inst >> 15) & 0x0800) + ((inst >> 4) & 0x0700) + (inst & 0xff);
 
     /* FIXME: use ThumbExpandImm_C */
 
