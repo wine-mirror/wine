@@ -734,8 +734,8 @@ DECLARE_INTERFACE_(IDirect3DViewport2,IDirect3DViewport)
     STDMETHOD(DeleteLight)(THIS_ IDirect3DLight *light) PURE;
     STDMETHOD(NextLight)(THIS_ IDirect3DLight *ref, IDirect3DLight **light, DWORD flags) PURE;
     /*** IDirect3DViewport2 methods ***/
-    STDMETHOD(GetViewport2)(THIS_ LPD3DVIEWPORT2 lpData) PURE;
-    STDMETHOD(SetViewport2)(THIS_ LPD3DVIEWPORT2 lpData) PURE;
+    STDMETHOD(GetViewport2)(THIS_ D3DVIEWPORT2 *data) PURE;
+    STDMETHOD(SetViewport2)(THIS_ D3DVIEWPORT2 *data) PURE;
 };
 #undef INTERFACE
 
@@ -810,8 +810,8 @@ DECLARE_INTERFACE_(IDirect3DViewport3,IDirect3DViewport2)
     STDMETHOD(DeleteLight)(THIS_ IDirect3DLight *light) PURE;
     STDMETHOD(NextLight)(THIS_ IDirect3DLight *ref, IDirect3DLight **light, DWORD flags) PURE;
     /*** IDirect3DViewport2 methods ***/
-    STDMETHOD(GetViewport2)(THIS_ LPD3DVIEWPORT2 lpData) PURE;
-    STDMETHOD(SetViewport2)(THIS_ LPD3DVIEWPORT2 lpData) PURE;
+    STDMETHOD(GetViewport2)(THIS_ D3DVIEWPORT2 *data) PURE;
+    STDMETHOD(SetViewport2)(THIS_ D3DVIEWPORT2 *data) PURE;
     /*** IDirect3DViewport3 methods ***/
     STDMETHOD(SetBackgroundDepth2)(THIS_ IDirectDrawSurface4 *surface) PURE;
     STDMETHOD(GetBackgroundDepth2)(THIS_ IDirectDrawSurface4 **surface, BOOL *valid) PURE;
