@@ -463,7 +463,11 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
 	}
 
 	/* create object */
-	CoCreateInstance (&pDesc->guidClass, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicObject, (LPVOID*)&pObject);
+	hr = CoCreateInstance (&pDesc->guidClass, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicObject, (LPVOID*)&pObject);
+        if (FAILED(hr)) {
+		ERR("Object creation of %s failed 0x%08x\n", debugstr_guid(&pDesc->guidClass),hr);
+		return DMUS_E_LOADER_FAILEDOPEN;
+        }
 
 	/* *sigh*... some ms objects have lousy implementation of ParseDescriptor that clears input descriptor :( */
 #ifdef NOW_WE_ARE_FREE
