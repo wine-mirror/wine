@@ -1,7 +1,7 @@
 /*
  * MACDRV Cocoa interface declarations
  *
- * Copyright 2011, 2012 Ken Thomases for CodeWeavers Inc.
+ * Copyright 2011, 2012, 2013 Ken Thomases for CodeWeavers Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -102,6 +102,10 @@ struct macdrv_display {
     CGRect frame;
     CGRect work_frame;
 };
+
+
+/* main */
+extern int macdrv_start_cocoa_app(void) DECLSPEC_HIDDEN;
 
 
 /* display */

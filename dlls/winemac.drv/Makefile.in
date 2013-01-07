@@ -10,6 +10,7 @@ C_SRCS = \
 
 OBJC_SRCS = \
 	cocoa_app.m \
-	cocoa_display.m
+	cocoa_display.m \
+	cocoa_main.m
 
 @MAKE_DLL_RULES@

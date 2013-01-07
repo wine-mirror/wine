@@ -3,6 +3,7 @@
  *
  * Copyright 1998 Patrik Stridvall
  * Copyright 2000 Alexandre Julliard
+ * Copyright 2011, 2012, 2013 Ken Thomases for CodeWeavers Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,11 +21,10 @@
  */
 #include "config.h"
 
-#include <stdarg.h>
+#include "macdrv.h"
 
-#include "windef.h"
-#include "winbase.h"
-#include "winreg.h"
+WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
+
 
 /***********************************************************************
  *           MACDRV initialisation routine
@@ -36,7 +36,11 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        /* Do attach */
+        if (macdrv_start_cocoa_app())
+        {
+            ERR("Failed to start Cocoa app main loop\n");
+            ret = FALSE;
+        }
         break;
     case DLL_THREAD_DETACH:
         /* do thread detach */
