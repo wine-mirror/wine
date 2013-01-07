@@ -4,5 +4,6 @@
 
 # USER driver
 
+@ cdecl CreateDesktopWindow(long) macdrv_CreateDesktopWindow
 @ cdecl EnumDisplayMonitors(long ptr ptr long) macdrv_EnumDisplayMonitors
 @ cdecl GetMonitorInfo(long ptr) macdrv_GetMonitorInfo

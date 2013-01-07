@@ -3,7 +3,7 @@
  *
  * Copyright 1996 Alexandre Julliard
  * Copyright 1999 Patrik Stridvall
- * Copyright 2011, 2012 Ken Thomases for CodeWeavers Inc.
+ * Copyright 2011, 2012, 2013 Ken Thomases for CodeWeavers Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -61,6 +61,13 @@ static inline const char *wine_dbgstr_cgrect(CGRect cgrect)
     return wine_dbg_sprintf("(%g,%g)-(%g,%g)", CGRectGetMinX(cgrect), CGRectGetMinY(cgrect),
                             CGRectGetMaxX(cgrect), CGRectGetMaxY(cgrect));
 }
+
+
+/**************************************************************************
+ * Mac GDI driver
+ */
+
+extern CGRect macdrv_get_desktop_rect(void) DECLSPEC_HIDDEN;
 
 
 #endif  /* __WINE_MACDRV_H */

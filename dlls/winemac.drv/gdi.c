@@ -99,7 +99,7 @@ static DWORD get_dpi(void)
  *
  * Returns the rectangle encompassing all the screens.
  */
-static CGRect macdrv_get_desktop_rect(void)
+CGRect macdrv_get_desktop_rect(void)
 {
     CGRect ret;
     CGDirectDisplayID displayIDs[32];

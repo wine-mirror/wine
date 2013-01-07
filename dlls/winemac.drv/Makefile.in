@@ -5,7 +5,8 @@ EXTRALIBS = -framework AppKit
 C_SRCS = \
 	display.c \
 	gdi.c \
-	macdrv_main.c
+	macdrv_main.c \
+	window.c
 
 OBJC_SRCS = \
 	cocoa_display.m
