@@ -1866,7 +1866,10 @@ static void test_sequence(void)
         }
     }
 
-    if (!svc_handle) return;
+    if (!svc_handle) {
+        CloseServiceHandle(scm_handle);
+        return;
+    }
 
     /* TODO:
      * Before we do a QueryServiceConfig we should check the registry. This will make sure
