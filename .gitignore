@@ -274,6 +274,7 @@ loader/wine-installed
 loader/wine-preloader
 loader/wine64
 loader/wine64-preloader
+loader/wine_info.plist
 msg.pot
 po/*.mo
 programs/Makeprog.rules

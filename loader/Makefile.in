@@ -39,11 +39,14 @@ LDEXECFLAGS = @LDEXECFLAGS@
 wine-preloader wine64-preloader: preloader.o Makefile.in
 	$(CC) -o $@ -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c400000 preloader.o $(LIBPORT) $(LDFLAGS)
 
-$(MAIN_BINARY): main.o Makefile.in
+$(MAIN_BINARY): main.o Makefile.in wine_info.plist
 	$(CC) -o $@ $(LDEXECFLAGS) main.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
 
-wine-installed: main.o Makefile.in
+wine-installed: main.o Makefile.in wine_info.plist
 	$(CC) -o $@ $(LDEXECFLAGS) main.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
+
+wine_info.plist: wine_info.plist.in
+	LC_ALL=C sed -e 's,@PACKAGE_VERSION\@,@PACKAGE_VERSION@,g' $< >$@ || ($(RM) $@ && false)
 
 $(EXTRA_BINARIES:%=__install__%): $(EXTRA_BINARIES) $(DESTDIR)$(bindir) dummy
 	f=`expr $@ : '__install__\(.*\)'` && $(INSTALL_PROGRAM) $$f $(DESTDIR)$(bindir)/$$f
