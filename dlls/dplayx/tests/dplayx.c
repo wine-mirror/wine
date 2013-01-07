@@ -658,8 +658,10 @@ static void init_TCPIP_provider( LPDIRECTPLAY4 pDP,
     LPDIRECTPLAYLOBBY3 pDPL;
     HRESULT hr;
 
-    CoCreateInstance( &CLSID_DirectPlayLobby, NULL, CLSCTX_ALL,
-                      &IID_IDirectPlayLobby3A, (LPVOID*) &pDPL );
+    hr = CoCreateInstance( &CLSID_DirectPlayLobby, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlayLobby3A, (LPVOID*) &pDPL );
+    ok (SUCCEEDED (hr), "CCI of CLSID_DirectPlayLobby / IID_IDirectPlayLobby3A failed\n");
+    if (FAILED (hr)) return;
 
     /* Service provider */
     addressElements[0].guidDataType = DPAID_ServiceProvider;
@@ -801,6 +803,7 @@ static BOOL CALLBACK EnumConnections_cb( LPCGUID lpguidSP,
 
     lpCallbackData callbackData = (lpCallbackData) lpContext;
     LPDIRECTPLAYLOBBY pDPL;
+    HRESULT hr;
 
 
     if (!callbackData->dwFlags)
@@ -811,8 +814,11 @@ static BOOL CALLBACK EnumConnections_cb( LPCGUID lpguidSP,
     checkFlags( callbackData->dwFlags, dwFlags, FLAGS_DPCONNECTION );
 
     /* Get info from lpConnection */
-    CoCreateInstance( &CLSID_DirectPlayLobby, NULL, CLSCTX_ALL,
-                      &IID_IDirectPlayLobby3A, (LPVOID*) &pDPL );
+    hr = CoCreateInstance( &CLSID_DirectPlayLobby, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlayLobby3A, (LPVOID*) &pDPL );
+    ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlayLobby / IID_IDirectPlayLobby3A failed\n");
+    if (FAILED(hr))
+        return FALSE;
 
     callbackData->dwCounter2 = 0;
     IDirectPlayLobby_EnumAddress( pDPL, EnumAddress_cb2, lpConnection,
@@ -832,9 +838,11 @@ static void test_EnumConnections(void)
     HRESULT hr;
 
 
-    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlay4A, (LPVOID*) &pDP );
 
+    ok (SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n");
+    if (FAILED(hr)) return;
 
     callbackData.dwCounter1 = 0;
     callbackData.dwFlags = 0;
@@ -929,9 +937,13 @@ static void test_InitializeConnection(void)
 {
 
     LPDIRECTPLAY4 pDP;
+    HRESULT hr;
 
-    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlay4A, (LPVOID*) &pDP );
+
+    ok (SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n");
+    if (FAILED(hr)) return;
 
     IDirectPlayX_EnumConnections( pDP, &appGuid, EnumConnections_cb2, pDP, 0 );
 
@@ -949,8 +961,11 @@ static void test_GetCaps(void)
     HRESULT hr;
 
 
-    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    ok (SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n");
+    if (FAILED(hr)) return;
+
     ZeroMemory( &dpcaps, sizeof(DPCAPS) );
 
     /* Service provider not ininitialized */
@@ -1058,10 +1073,16 @@ static void test_Open(void)
     HRESULT hr;
 
 
-    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                      &IID_IDirectPlay4A, (LPVOID*) &pDP_server );
-    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlay4A, (LPVOID*) &pDP_server );
+    ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+    if (FAILED(hr)) return;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+    if (FAILED(hr)) return;
+
     ZeroMemory( &dpsd_server, sizeof(DPSESSIONDESC2) );
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
 
@@ -1215,8 +1236,10 @@ static LPDIRECTPLAY4 create_session(DPSESSIONDESC2 *lpdpsd)
     DPID dpid;
     HRESULT hr;
 
-    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+    if (FAILED(hr)) return NULL;
 
     init_TCPIP_provider( pDP, "127.0.0.1", 0 );
 
@@ -1250,8 +1273,11 @@ static void test_EnumSessions(void)
     UINT i;
 
 
-    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+    if (FAILED(hr)) return;
+
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
     callbackData.dwCounter1 = -1; /* So that after a call to EnumSessions
                                      we get the exact number of sessions */
@@ -1337,6 +1363,7 @@ static void test_EnumSessions(void)
     for (i=0; i<N_SESSIONS; i++)
     {
         pDPserver[i] = create_session( &dpsd_server[i] );
+        if (!pDPserver[i]) return;
     }
 
 
@@ -1622,8 +1649,10 @@ static void test_SessionDesc(void)
 
     for (i=0; i<2; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                               &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
     }
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
 
@@ -1792,10 +1821,16 @@ static void test_CreatePlayer(void)
     HRESULT hr;
 
 
-    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                      &IID_IDirectPlay4A, (LPVOID*) &pDP[0] );
-    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                      &IID_IDirectPlay4A, (LPVOID*) &pDP[1] );
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlay4A, (LPVOID*) &pDP[0] );
+    ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+    if (FAILED(hr)) return;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlay4A, (LPVOID*) &pDP[1] );
+    ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+    if (FAILED(hr)) return;
+
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
     ZeroMemory( &name, sizeof(DPNAME) );
 
@@ -1964,8 +1999,10 @@ static void test_GetPlayerCaps(void)
 
     for (i=0; i<2; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr= CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                              &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
     }
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
     dpsd.dwSize = sizeof(DPSESSIONDESC2);
@@ -2132,8 +2169,10 @@ static void test_PlayerData(void)
     DWORD dwDataSizeGet   = dwDataSizeFake;
 
 
-    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+    if (FAILED(hr)) return;
 
     /* No service provider */
     hr = IDirectPlayX_SetPlayerData( pDP, 0, (LPVOID) lpData,
@@ -2390,8 +2429,10 @@ static void test_PlayerName(void)
 
     for (i=0; i<2; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr= CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                              &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
     }
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
     ZeroMemory( &playerName, sizeof(DPNAME) );
@@ -2666,8 +2707,10 @@ static void test_GetPlayerAccount(void)
 
     for (i=0; i<2; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                               &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
     }
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
     dpsd.dwSize = sizeof(DPSESSIONDESC2);
@@ -2850,13 +2893,16 @@ static void test_GetPlayerAddress(void)
 
     for (i=0; i<2; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                               &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
     }
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
-    CoCreateInstance( &CLSID_DirectPlayLobby, NULL, CLSCTX_ALL,
-                      &IID_IDirectPlayLobby3A, (LPVOID*) &pDPL );
-
+    hr = CoCreateInstance( &CLSID_DirectPlayLobby, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlayLobby3A, (LPVOID*) &pDPL );
+    ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlayLobby / IID_IDirectPlayLobby3A failed\n" );
+    if (FAILED(hr)) return;
 
     /* Uninitialized service provider */
     hr = IDirectPlayX_GetPlayerAddress( pDP[0], 0, lpData, &dwDataSize );
@@ -2982,8 +3028,10 @@ static void test_GetPlayerFlags(void)
 
     for (i=0; i<2; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr= CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                              &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
     }
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
     dpsd.dwSize = sizeof(DPSESSIONDESC2);
@@ -3093,8 +3141,10 @@ static void test_CreateGroup(void)
     CallbackData callbackData;
 
 
-    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    hr= CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+    if (FAILED(hr)) return;
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
     dpsd.dwSize = sizeof(DPSESSIONDESC2);
     dpsd.guidApplication = appGuid;
@@ -3393,8 +3443,10 @@ static void test_GroupOwner(void)
 
     for (i=0; i<2; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                               &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
     }
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
     dpsd.dwSize = sizeof(DPSESSIONDESC2);
@@ -3560,8 +3612,10 @@ static void test_EnumPlayers(void)
 
     for (i=0; i<3; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                               &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
 
         ZeroMemory( &dpsd[i], sizeof(DPSESSIONDESC2) );
         dpsd[i].dwSize = sizeof(DPSESSIONDESC2);
@@ -3881,8 +3935,10 @@ static void test_EnumGroups(void)
 
     for (i=0; i<3; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                               &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
 
         ZeroMemory( &dpsd[i], sizeof(DPSESSIONDESC2) );
         dpsd[i].dwSize = sizeof(DPSESSIONDESC2);
@@ -4106,8 +4162,10 @@ static void test_EnumGroupsInGroup(void)
 
     for (i=0; i<2; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                               &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
 
         ZeroMemory( &dpsd[i], sizeof(DPSESSIONDESC2) );
         dpsd[i].dwSize = sizeof(DPSESSIONDESC2);
@@ -4342,8 +4400,10 @@ static void test_groups_p2p(void)
 
     for (i=0; i<2; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                               &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
     }
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
     dpsd.dwSize = sizeof(DPSESSIONDESC2);
@@ -4575,8 +4635,10 @@ static void test_groups_cs(void)
 
     for (i=0; i<2; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                               &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
     }
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
     dpsd.dwSize = sizeof(DPSESSIONDESC2);
@@ -4812,8 +4874,10 @@ static void test_Send(void)
 
     for (i=0; i<2; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                               &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
     }
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
 
@@ -5146,8 +5210,10 @@ static void test_Receive(void)
     UINT i;
 
 
-    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+    if (FAILED(hr)) return;
 
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
     dpsd.dwSize = sizeof(DPSESSIONDESC2);
@@ -5427,8 +5493,10 @@ static void test_GetMessageCount(void)
 
     for (i=0; i<2; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                               &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
     }
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
 
@@ -5648,8 +5716,10 @@ static void test_GetMessageQueue(void)
 
     for (i=0; i<2; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                               &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
     }
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
 
@@ -5966,8 +6036,10 @@ static void test_remote_data_replication(void)
 
     for (i=0; i<2; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                               &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
         init_TCPIP_provider( pDP[i], "127.0.0.1", 0 );
     }
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
@@ -6182,8 +6254,10 @@ static void test_host_migration(void)
 
     for (i=0; i<2; i++)
     {
-        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
-                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                               &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+        if (FAILED(hr)) return;
         init_TCPIP_provider( pDP[i], "127.0.0.1", 0 );
     }
     ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
