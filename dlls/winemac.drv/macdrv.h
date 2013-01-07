@@ -70,4 +70,20 @@ static inline const char *wine_dbgstr_cgrect(CGRect cgrect)
 extern CGRect macdrv_get_desktop_rect(void) DECLSPEC_HIDDEN;
 
 
+/**************************************************************************
+ * Mac USER driver
+ */
+
+/* macdrv private window data */
+struct macdrv_win_data
+{
+    HWND                hwnd;                   /* hwnd that this private data belongs to */
+    macdrv_window       cocoa_window;
+    RECT                window_rect;            /* USER window rectangle relative to parent */
+    RECT                whole_rect;             /* Mac window rectangle for the whole window relative to parent */
+    RECT                client_rect;            /* client area relative to parent */
+    BOOL                on_screen : 1;          /* is window ordered in? */
+};
+
+
 #endif  /* __WINE_MACDRV_H */

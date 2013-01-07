@@ -1,5 +1,5 @@
 /*
- * MACDRV Cocoa application class declaration
+ * MACDRV Cocoa window declarations
  *
  * Copyright 2011, 2012, 2013 Ken Thomases for CodeWeavers Inc.
  *
@@ -20,14 +20,6 @@
 
 #import <AppKit/AppKit.h>
 
-#include "macdrv_cocoa.h"
 
-
-@interface WineApplication : NSApplication <NSApplicationDelegate>
-
-    - (void) transformProcessToForeground;
-
+@interface WineWindow : NSPanel <NSWindowDelegate>
 @end
-
-void OnMainThread(dispatch_block_t block);
-void OnMainThreadAsync(dispatch_block_t block);

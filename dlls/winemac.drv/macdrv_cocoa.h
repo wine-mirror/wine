@@ -97,6 +97,8 @@
 #endif
 
 
+typedef struct macdrv_opaque_window* macdrv_window;
+
 struct macdrv_display {
     CGDirectDisplayID displayID;
     CGRect frame;
@@ -111,5 +113,28 @@ extern int macdrv_start_cocoa_app(void) DECLSPEC_HIDDEN;
 /* display */
 extern int macdrv_get_displays(struct macdrv_display** displays, int* count) DECLSPEC_HIDDEN;
 extern void macdrv_free_displays(struct macdrv_display* displays) DECLSPEC_HIDDEN;
+
+
+/* window */
+struct macdrv_window_features {
+    unsigned int    title_bar:1;
+    unsigned int    close_button:1;
+    unsigned int    minimize_button:1;
+    unsigned int    resizable:1;
+    unsigned int    utility:1;
+    unsigned int    shadow:1;
+};
+
+extern macdrv_window macdrv_create_cocoa_window(const struct macdrv_window_features* wf,
+        CGRect frame) DECLSPEC_HIDDEN;
+extern void macdrv_destroy_cocoa_window(macdrv_window w) DECLSPEC_HIDDEN;
+extern void macdrv_set_cocoa_window_features(macdrv_window w,
+        const struct macdrv_window_features* wf) DECLSPEC_HIDDEN;
+extern void macdrv_set_cocoa_window_title(macdrv_window w, const UniChar* title,
+        size_t length) DECLSPEC_HIDDEN;
+extern int macdrv_order_cocoa_window(macdrv_window w, macdrv_window prev,
+        macdrv_window next) DECLSPEC_HIDDEN;
+extern void macdrv_hide_cocoa_window(macdrv_window w) DECLSPEC_HIDDEN;
+extern int macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_frame) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_MACDRV_COCOA_H */

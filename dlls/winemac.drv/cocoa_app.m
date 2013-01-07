@@ -56,3 +56,23 @@
     }
 
 @end
+
+/***********************************************************************
+ *              OnMainThread
+ *
+ * Run a block on the main thread synchronously.
+ */
+void OnMainThread(dispatch_block_t block)
+{
+    dispatch_sync(dispatch_get_main_queue(), block);
+}
+
+/***********************************************************************
+ *              OnMainThreadAsync
+ *
+ * Run a block on the main thread asynchronously.
+ */
+void OnMainThreadAsync(dispatch_block_t block)
+{
+    dispatch_async(dispatch_get_main_queue(), block);
+}
