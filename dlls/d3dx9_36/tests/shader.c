@@ -20,6 +20,12 @@
 #include "wine/test.h"
 #include "d3dx9.h"
 
+static const DWORD shader_zero[] = {0x0};
+
+static const DWORD shader_invalid[] = {0xeeee0100};
+
+static const DWORD shader_empty[] = {0xfffeffff, 0x0000ffff};
+
 static const DWORD simple_vs[] = {
     0xfffe0101,                                                             /* vs_1_1                       */
     0x0000001f, 0x80000000, 0x900f0000,                                     /* dcl_position0 v0             */
@@ -330,6 +336,21 @@ static void test_find_shader_comment(void)
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
     ok(data == (LPCVOID)(shader_with_ctab + 6), "Got result %p, expected %p\n", data, shader_with_ctab + 6);
     ok(size == 28, "Got result %d, expected 28\n", size);
+
+    hr = D3DXFindShaderComment(shader_zero, MAKEFOURCC('C','T','A','B'), &data, &size);
+    ok(hr == D3DXERR_INVALIDDATA, "Got result %x, expected %x (D3DXERR_INVALIDDATA)\n", hr, D3DXERR_INVALIDDATA);
+    ok(!data, "Got %p, expected NULL\n", data);
+    ok(!size, "Got %u, expected 0\n", size);
+
+    hr = D3DXFindShaderComment(shader_invalid, MAKEFOURCC('C','T','A','B'), &data, &size);
+    ok(hr == D3DXERR_INVALIDDATA, "Got result %x, expected %x (D3DXERR_INVALIDDATA)\n", hr, D3DXERR_INVALIDDATA);
+    ok(!data, "Got %p, expected NULL\n", data);
+    ok(!size, "Got %u, expected 0\n", size);
+
+    hr = D3DXFindShaderComment(shader_empty, MAKEFOURCC('C','T','A','B'), &data, &size);
+    ok(hr == S_FALSE, "Got result %x, expected %x (S_FALSE)\n", hr, S_FALSE);
+    ok(!data, "Got %p, expected NULL\n", data);
+    ok(!size, "Got %u, expected 0\n", size);
 }
 
 static void test_get_shader_constant_table_ex(void)

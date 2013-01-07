@@ -40,6 +40,11 @@ HRESULT WINAPI D3DAssemble(LPCVOID data, SIZE_T datasize, LPCSTR filename,
                            UINT flags,
                            ID3DBlob **shader, ID3DBlob **error_messages);
 
+static inline BOOL is_valid_bytecode(DWORD token)
+{
+    return (token & 0xfffe0000) == 0xfffe0000;
+}
+
 const char * WINAPI D3DXGetPixelShaderProfile(struct IDirect3DDevice9 *device)
 {
     D3DCAPS9 caps;
@@ -147,17 +152,17 @@ const char * WINAPI D3DXGetVertexShaderProfile(struct IDirect3DDevice9 *device)
     return NULL;
 }
 
-HRESULT WINAPI D3DXFindShaderComment(CONST DWORD* byte_code, DWORD fourcc, LPCVOID* data, UINT* size)
+HRESULT WINAPI D3DXFindShaderComment(const DWORD *byte_code, DWORD fourcc, const void **data, UINT *size)
 {
-    CONST DWORD *ptr = byte_code;
+    const DWORD *ptr = byte_code;
 
-    TRACE("(%p, %x, %p, %p)\n", byte_code, fourcc, data, size);
+    TRACE("byte_code %p, fourcc %x, data %p, size %p\n", byte_code, fourcc, data, size);
 
     if (data) *data = NULL;
     if (size) *size = 0;
 
-    if (!byte_code)
-        return D3DERR_INVALIDCALL;
+    if (!byte_code) return D3DERR_INVALIDCALL;
+    if (!is_valid_bytecode(*byte_code)) return D3DXERR_INVALIDDATA;
 
     while (*++ptr != D3DSIO_END)
     {
