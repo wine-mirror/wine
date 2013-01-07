@@ -145,7 +145,7 @@ static WCHAR *NETSTAT_host_name(UINT ip, WCHAR name[])
     return name;
 }
 
-static void NETSTAT_tcp_header(void)
+static void NETSTAT_conn_header(void)
 {
     WCHAR local[22], remote[22], state[22];
     NETSTAT_wprintf(fmtnn, NETSTAT_load_message(IDS_TCP_ACTIVE_CONN));
@@ -174,8 +174,6 @@ static void NETSTAT_tcp_table(void)
     } while (err == ERROR_INSUFFICIENT_BUFFER);
 
     if (err) return;
-
-    NETSTAT_tcp_header();
 
     for (i = 0; i < table->dwNumEntries; i++)
     {
@@ -212,8 +210,6 @@ static void NETSTAT_udp_table(void)
     } while (err == ERROR_INSUFFICIENT_BUFFER);
 
     if (err) return;
-
-    NETSTAT_tcp_header();
 
     for (i = 0; i < table->dwNumEntries; i++)
     {
@@ -252,6 +248,7 @@ int wmain(int argc, WCHAR *argv[])
     if (argc == 1)
     {
         /* No options */
+        NETSTAT_conn_header();
         NETSTAT_tcp_table();
         return 0;
     }
@@ -260,21 +257,28 @@ int wmain(int argc, WCHAR *argv[])
     {
         switch (argv[1][1])
         {
+        case 'a':
+            NETSTAT_conn_header();
+            NETSTAT_tcp_table();
+            NETSTAT_udp_table();
+            return 0;
         case 'p':
             argv++; argc--;
             if (argc == 1) return 1;
             switch (NETSTAT_get_protocol(argv[1]))
             {
                 case PROT_TCP:
+                    NETSTAT_conn_header();
                     NETSTAT_tcp_table();
                     break;
                 case PROT_UDP:
+                    NETSTAT_conn_header();
                     NETSTAT_udp_table();
                     break;
                 default:
                     WINE_FIXME("Protocol not yet implemented: %s\n", debugstr_w(argv[1]));
             }
-            break;
+            return 0;
         default:
             WINE_FIXME("Unknown option: %s\n", debugstr_w(argv[1]));
             return 1;
