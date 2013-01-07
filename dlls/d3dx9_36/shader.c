@@ -1625,8 +1625,8 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(const DWORD *byte_code, DWORD flags,
     HRESULT hr;
     LPCVOID data;
     UINT size;
-    const D3DXSHADER_CONSTANTTABLE* ctab_header;
-    D3DXSHADER_CONSTANTINFO* constant_info;
+    const D3DXSHADER_CONSTANTTABLE *ctab_header;
+    D3DXSHADER_CONSTANTINFO *constant_info;
     DWORD i;
 
     TRACE("byte_code %p, flags %x, constant_table %p\n", byte_code, flags, constant_table);
@@ -1654,14 +1654,14 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(const DWORD *byte_code, DWORD flags,
         return D3DXERR_INVALIDDATA;
     }
 
-    if (size < sizeof(D3DXSHADER_CONSTANTTABLE))
+    if (size < sizeof(*ctab_header))
     {
         WARN("Invalid CTAB size.\n");
         return D3DXERR_INVALIDDATA;
     }
 
     ctab_header = (const D3DXSHADER_CONSTANTTABLE *)data;
-    if (ctab_header->Size != sizeof(D3DXSHADER_CONSTANTTABLE))
+    if (ctab_header->Size != sizeof(*ctab_header))
     {
         WARN("Invalid D3DXSHADER_CONSTANTTABLE size.\n");
         return D3DXERR_INVALIDDATA;
@@ -1750,7 +1750,7 @@ HRESULT WINAPI D3DXGetShaderSamplers(CONST DWORD *byte_code, LPCSTR *samplers, U
     hr = D3DXFindShaderComment(byte_code, MAKEFOURCC('C','T','A','B'), (LPCVOID *)&data, &size);
     if (hr != D3D_OK) return D3D_OK;
 
-    if (size < sizeof(D3DXSHADER_CONSTANTTABLE)) return D3D_OK;
+    if (size < sizeof(*ctab_header)) return D3D_OK;
 
     ctab_header = (const D3DXSHADER_CONSTANTTABLE *)data;
     if (ctab_header->Size != sizeof(*ctab_header)) return D3D_OK;
