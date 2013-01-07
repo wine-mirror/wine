@@ -637,7 +637,7 @@ static HRESULT get_nsstyle_pos(HTMLStyle *This, styleid_t sid, float *p)
             {
                 nsAString_Finish(&str_value);
                 FIXME("only px values are currently supported\n");
-                return E_FAIL;
+                hres = E_FAIL;
             }
         }
     }
@@ -645,7 +645,6 @@ static HRESULT get_nsstyle_pos(HTMLStyle *This, styleid_t sid, float *p)
     TRACE("ret %f\n", *p);
 
     nsAString_Finish(&str_value);
-
     return hres;
 }
 
