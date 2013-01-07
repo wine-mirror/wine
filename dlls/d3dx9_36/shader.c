@@ -1626,7 +1626,7 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(const DWORD *byte_code, DWORD flags,
     LPCVOID data;
     UINT size;
     const D3DXSHADER_CONSTANTTABLE *ctab_header;
-    D3DXSHADER_CONSTANTINFO *constant_info;
+    const D3DXSHADER_CONSTANTINFO *constant_info;
     DWORD i;
 
     TRACE("byte_code %p, flags %x, constant_table %p\n", byte_code, flags, constant_table);
@@ -1703,7 +1703,7 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(const DWORD *byte_code, DWORD flags,
          goto error;
     }
 
-    constant_info = (LPD3DXSHADER_CONSTANTINFO)(object->ctab + ctab_header->ConstantInfo);
+    constant_info = (const D3DXSHADER_CONSTANTINFO *)(object->ctab + ctab_header->ConstantInfo);
     for (i = 0; i < ctab_header->Constants; i++)
     {
         DWORD offset = constant_info[i].DefaultValue;
@@ -1734,7 +1734,7 @@ HRESULT WINAPI D3DXGetShaderConstantTable(const DWORD *byte_code, ID3DXConstantT
     return D3DXGetShaderConstantTableEx(byte_code, 0, constant_table);
 }
 
-HRESULT WINAPI D3DXGetShaderSamplers(CONST DWORD *byte_code, LPCSTR *samplers, UINT *count)
+HRESULT WINAPI D3DXGetShaderSamplers(const DWORD *byte_code, const char **samplers, UINT *count)
 {
     HRESULT hr;
     UINT i, sampler_count = 0;
@@ -1755,14 +1755,14 @@ HRESULT WINAPI D3DXGetShaderSamplers(CONST DWORD *byte_code, LPCSTR *samplers, U
     ctab_header = (const D3DXSHADER_CONSTANTTABLE *)data;
     if (ctab_header->Size != sizeof(*ctab_header)) return D3D_OK;
 
-    constant_info = (D3DXSHADER_CONSTANTINFO *)(data + ctab_header->ConstantInfo);
+    constant_info = (const D3DXSHADER_CONSTANTINFO *)(data + ctab_header->ConstantInfo);
     for (i = 0; i < ctab_header->Constants; i++)
     {
         const D3DXSHADER_TYPEINFO *type;
 
         TRACE("name = %s\n", data + constant_info[i].Name);
 
-        type = (D3DXSHADER_TYPEINFO *)(data + constant_info[i].TypeInfo);
+        type = (const D3DXSHADER_TYPEINFO *)(data + constant_info[i].TypeInfo);
 
         if (type->Type == D3DXPT_SAMPLER
                 || type->Type == D3DXPT_SAMPLER1D
