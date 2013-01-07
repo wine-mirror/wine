@@ -30,21 +30,8 @@ typedef enum _NETSTATPROTOCOLS {
   PROT_UDPV6,
 } NETSTATPROTOCOLS;
 
-#define IDS_TCP_CLOSED      1
-#define IDS_TCP_LISTENING   2
-#define IDS_TCP_SYN_SENT    3
-#define IDS_TCP_SYN_RCVD    4
-#define IDS_TCP_ESTABLISHED 5
-#define IDS_TCP_FIN_WAIT1   6
-#define IDS_TCP_FIN_WAIT2   7
-#define IDS_TCP_CLOSE_WAIT  8
-#define IDS_TCP_CLOSING     9
-#define IDS_TCP_LAST_ACK    10
-#define IDS_TCP_TIME_WAIT   11
-#define IDS_TCP_DELETE_TCB  12
-
-#define IDS_TCP_ACTIVE_CONN 13
-#define IDS_TCP_PROTO       14
-#define IDS_TCP_LOCAL_ADDR  15
-#define IDS_TCP_REMOTE_ADDR 16
-#define IDS_TCP_STATE       17
+#define IDS_TCP_ACTIVE_CONN 1
+#define IDS_TCP_PROTO       2
+#define IDS_TCP_LOCAL_ADDR  3
+#define IDS_TCP_REMOTE_ADDR 4
+#define IDS_TCP_STATE       5

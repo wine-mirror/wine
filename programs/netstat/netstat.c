@@ -42,6 +42,22 @@ static const WCHAR fmtcolon[] = {'%', 's', ':', '%', 's', 0};
 static const WCHAR fmttcpout[] = {' ', ' ', '%', '-', '6', 's', ' ', '%', '-', '2', '2', 's', ' ', '%', '-', '2', '2', 's', ' ', '%', 's', '\n', 0};
 static const WCHAR fmtudpout[] = {' ', ' ', '%', '-', '6', 's', ' ', '%', '-', '2', '2', 's', ' ', '*', ':', '*', '\n', 0};
 
+static const WCHAR tcpstatesW[][16] = {
+    {'?', '?', '?', 0},
+    {'C', 'L', 'O', 'S', 'E', 'D', 0},
+    {'L', 'I', 'S', 'T', 'E', 'N', 'I', 'N', 'G', 0},
+    {'S', 'Y', 'N', '_', 'S', 'E', 'N', 'T', 0},
+    {'S', 'Y', 'N', '_', 'R', 'C', 'V', 'D', 0},
+    {'E', 'S', 'T', 'A', 'B', 'L', 'I', 'S', 'H', 'E', 'D', 0},
+    {'F', 'I', 'N', '_', 'W', 'A', 'I', 'T', '1', 0},
+    {'F', 'I', 'N', '_', 'W', 'A', 'I', 'T', '2', 0},
+    {'C', 'L', 'O', 'S', 'E', '_', 'W', 'A', 'I', 'T', 0},
+    {'C', 'L', 'O', 'S', 'I', 'N', 'G', 0},
+    {'L', 'A', 'S', 'T', '_', 'A', 'C', 'K', 0},
+    {'T', 'I', 'M', 'E', '_', 'W', 'A', 'I', 'T', 0},
+    {'D', 'E', 'L', 'E', 'T', 'E', '_', 'T', 'C', 'B', 0},
+};
+
 /* =========================================================================
  *  Output a unicode string. Ideally this will go to the console
  *  and hence required WriteConsoleW to output it, however if file i/o is
@@ -188,7 +204,7 @@ static void NETSTAT_tcp_table(void)
 
             sprintfW(Host, fmtcolon, HostIp, HostPort);
             sprintfW(Remote, fmtcolon, RemoteIp, RemotePort);
-            NETSTAT_wprintf(fmttcpout, tcpW, Host, Remote, NETSTAT_load_message(table->table[i].u.dwState));
+            NETSTAT_wprintf(fmttcpout, tcpW, Host, Remote, tcpstatesW[table->table[i].u.dwState]);
         }
     }
     HeapFree(GetProcessHeap(), 0, table);

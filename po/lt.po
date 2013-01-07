@@ -10378,70 +10378,22 @@ msgid "The following services are running:\n"
 msgstr "Šios tarnybos vykdomos:\n"
 
 #: netstat.rc:27
-msgid "CLOSED"
-msgstr "NUTRAUKTAS"
-
-#: netstat.rc:28
-msgid "LISTENING"
-msgstr "KLAUSOMASI"
-
-#: netstat.rc:29
-msgid "SYN_SENT"
-msgstr "SYN_IŠSIŲSTAS"
-
-#: netstat.rc:30
-msgid "SYN_RCVD"
-msgstr "SYN_GAUTAS"
-
-#: netstat.rc:31
-msgid "ESTABLISHED"
-msgstr "UŽMEGZTAS"
-
-#: netstat.rc:32
-msgid "FIN_WAIT1"
-msgstr "FIN_LAUKIMAS1"
-
-#: netstat.rc:33
-msgid "FIN_WAIT2"
-msgstr "FIN_LAUKIMAS2"
-
-#: netstat.rc:34
-msgid "CLOSE_WAIT"
-msgstr "NUTRAUKIMO_LAUKIMAS"
-
-#: netstat.rc:35
-msgid "CLOSING"
-msgstr "NUTRAUKIAMA"
-
-#: netstat.rc:36
-msgid "LAST_ACK"
-msgstr "PASKUTINIS_ACK"
-
-#: netstat.rc:37
-msgid "TIME_WAIT"
-msgstr "PERIODO_LAUKIMAS"
-
-#: netstat.rc:38
-msgid "DELETE_TCB"
-msgstr "TCB_PAŠALINTAS"
-
-#: netstat.rc:40
 msgid "Active Connections"
 msgstr "Aktyvūs ryšiai"
 
-#: netstat.rc:41
+#: netstat.rc:28
 msgid "Proto"
 msgstr "Prot."
 
-#: netstat.rc:42
+#: netstat.rc:29
 msgid "Local Address"
 msgstr "Vietinis adresas"
 
-#: netstat.rc:43
+#: netstat.rc:30
 msgid "Foreign Address"
 msgstr "Svetimas adresas"
 
-#: netstat.rc:44
+#: netstat.rc:31
 msgid "State"
 msgstr "Būsena"
 

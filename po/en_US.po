@@ -10369,70 +10369,22 @@ msgid "The following services are running:\n"
 msgstr "The following services are running:\n"
 
 #: netstat.rc:27
-msgid "CLOSED"
-msgstr "CLOSED"
-
-#: netstat.rc:28
-msgid "LISTENING"
-msgstr "LISTENING"
-
-#: netstat.rc:29
-msgid "SYN_SENT"
-msgstr "SYN_SENT"
-
-#: netstat.rc:30
-msgid "SYN_RCVD"
-msgstr "SYN_RCVD"
-
-#: netstat.rc:31
-msgid "ESTABLISHED"
-msgstr "ESTABLISHED"
-
-#: netstat.rc:32
-msgid "FIN_WAIT1"
-msgstr "FIN_WAIT1"
-
-#: netstat.rc:33
-msgid "FIN_WAIT2"
-msgstr "FIN_WAIT2"
-
-#: netstat.rc:34
-msgid "CLOSE_WAIT"
-msgstr "CLOSE_WAIT"
-
-#: netstat.rc:35
-msgid "CLOSING"
-msgstr "CLOSING"
-
-#: netstat.rc:36
-msgid "LAST_ACK"
-msgstr "LAST_ACK"
-
-#: netstat.rc:37
-msgid "TIME_WAIT"
-msgstr "TIME_WAIT"
-
-#: netstat.rc:38
-msgid "DELETE_TCB"
-msgstr "DELETE_TCB"
-
-#: netstat.rc:40
 msgid "Active Connections"
 msgstr "Active Connections"
 
-#: netstat.rc:41
+#: netstat.rc:28
 msgid "Proto"
 msgstr "Proto"
 
-#: netstat.rc:42
+#: netstat.rc:29
 msgid "Local Address"
 msgstr "Local Address"
 
-#: netstat.rc:43
+#: netstat.rc:30
 msgid "Foreign Address"
 msgstr "Foreign Address"
 
-#: netstat.rc:44
+#: netstat.rc:31
 msgid "State"
 msgstr "State"
 
