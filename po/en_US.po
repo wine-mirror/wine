@@ -10388,6 +10388,42 @@ msgstr "Foreign Address"
 msgid "State"
 msgstr "State"
 
+#: netstat.rc:32
+msgid "Interface Statistics"
+msgstr "Interface Statistics"
+
+#: netstat.rc:33
+msgid "Sent"
+msgstr "Sent"
+
+#: netstat.rc:34
+msgid "Received"
+msgstr "Received"
+
+#: netstat.rc:35
+msgid "Bytes"
+msgstr "Bytes"
+
+#: netstat.rc:36
+msgid "Unicast packets"
+msgstr "Unicast packets"
+
+#: netstat.rc:37
+msgid "Non-unicast packets"
+msgstr "Non-unicast packets"
+
+#: netstat.rc:38
+msgid "Discards"
+msgstr "Discards"
+
+#: netstat.rc:39
+msgid "Errors"
+msgstr "Errors"
+
+#: netstat.rc:40
+msgid "Unknown protocols"
+msgstr "Unknown protocols"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&New\tCtrl+N"

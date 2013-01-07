@@ -10386,6 +10386,52 @@ msgstr "Katuosoite"
 msgid "State"
 msgstr "Tila"
 
+#: netstat.rc:32
+#, fuzzy
+#| msgid "Interfaces"
+msgid "Interface Statistics"
+msgstr "Rajapinnat"
+
+#: netstat.rc:33
+msgid "Sent"
+msgstr ""
+
+#: netstat.rc:34
+msgid "Received"
+msgstr ""
+
+#: netstat.rc:35
+#, fuzzy
+#| msgid "bytes"
+msgid "Bytes"
+msgstr "tavua"
+
+#: netstat.rc:36
+msgid "Unicast packets"
+msgstr ""
+
+#: netstat.rc:37
+msgid "Non-unicast packets"
+msgstr ""
+
+#: netstat.rc:38
+#, fuzzy
+#| msgid "Disclaimer"
+msgid "Discards"
+msgstr "Vastuuvapaus"
+
+#: netstat.rc:39
+#, fuzzy
+#| msgid "Error"
+msgid "Errors"
+msgstr "Virhe"
+
+#: netstat.rc:40
+#, fuzzy
+#| msgid "Unknown port.\n"
+msgid "Unknown protocols"
+msgstr "Tuntematon portti.\n"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Uusi\tCtrl+N"

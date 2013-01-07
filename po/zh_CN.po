@@ -9933,6 +9933,50 @@ msgstr ""
 msgid "State"
 msgstr "状态"
 
+#: netstat.rc:32
+#, fuzzy
+#| msgid "Interfaces"
+msgid "Interface Statistics"
+msgstr "界面"
+
+#: netstat.rc:33
+msgid "Sent"
+msgstr ""
+
+#: netstat.rc:34
+msgid "Received"
+msgstr ""
+
+#: netstat.rc:35
+#, fuzzy
+#| msgid "bytes"
+msgid "Bytes"
+msgstr "字节"
+
+#: netstat.rc:36
+msgid "Unicast packets"
+msgstr ""
+
+#: netstat.rc:37
+msgid "Non-unicast packets"
+msgstr ""
+
+#: netstat.rc:38
+msgid "Discards"
+msgstr ""
+
+#: netstat.rc:39
+#, fuzzy
+#| msgid "Error"
+msgid "Errors"
+msgstr "错误"
+
+#: netstat.rc:40
+#, fuzzy
+#| msgid "Unknown port.\n"
+msgid "Unknown protocols"
+msgstr "未知端口。\n"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "新建(&N)\tCtrl+N"

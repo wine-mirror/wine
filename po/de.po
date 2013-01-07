@@ -10472,6 +10472,52 @@ msgstr "Entfernte Adresse"
 msgid "State"
 msgstr "Zustand"
 
+#: netstat.rc:32
+#, fuzzy
+#| msgid "Interfaces"
+msgid "Interface Statistics"
+msgstr "Schnittstellen"
+
+#: netstat.rc:33
+msgid "Sent"
+msgstr ""
+
+#: netstat.rc:34
+msgid "Received"
+msgstr ""
+
+#: netstat.rc:35
+#, fuzzy
+#| msgid "bytes"
+msgid "Bytes"
+msgstr "Bytes"
+
+#: netstat.rc:36
+msgid "Unicast packets"
+msgstr ""
+
+#: netstat.rc:37
+msgid "Non-unicast packets"
+msgstr ""
+
+#: netstat.rc:38
+#, fuzzy
+#| msgid "Disclaimer"
+msgid "Discards"
+msgstr "Haftungsausschluss"
+
+#: netstat.rc:39
+#, fuzzy
+#| msgid "Error"
+msgid "Errors"
+msgstr "Fehler"
+
+#: netstat.rc:40
+#, fuzzy
+#| msgid "Unknown port.\n"
+msgid "Unknown protocols"
+msgstr "Unbekannter Anschluss.\n"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Neu\tStrg+N"

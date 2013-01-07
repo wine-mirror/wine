@@ -41,6 +41,11 @@ static const WCHAR fmtnn[] = {'\n', '%', 's', '\n', 0};
 static const WCHAR fmtcolon[] = {'%', 's', ':', '%', 's', 0};
 static const WCHAR fmttcpout[] = {' ', ' ', '%', '-', '6', 's', ' ', '%', '-', '2', '2', 's', ' ', '%', '-', '2', '2', 's', ' ', '%', 's', '\n', 0};
 static const WCHAR fmtudpout[] = {' ', ' ', '%', '-', '6', 's', ' ', '%', '-', '2', '2', 's', ' ', '*', ':', '*', '\n', 0};
+static const WCHAR fmtethout[] = {'%', '-', '2', '0', 's', ' ', '%', '1', '4', 'l', 'u', ' ', '%', '1', '5', 'l', 'u', '\n', 0};
+static const WCHAR fmtethoutu[] = {'%', '-', '2', '0', 's', ' ', '%', '1', '4', 'l', 'u', '\n', '\n', 0};
+static const WCHAR fmtethheader[] = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+                                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+                                     ' ', '%', '-', '1', '9', 's', ' ', '%', 's', '\n', '\n', 0};
 
 static const WCHAR tcpstatesW[][16] = {
     {'?', '?', '?', 0},
@@ -172,6 +177,61 @@ static void NETSTAT_conn_header(void)
     NETSTAT_wprintf(fmttcpout, NETSTAT_load_message(IDS_TCP_PROTO), local, remote, state);
 }
 
+static void NETSTAT_eth_stats(void)
+{
+    PMIB_IFTABLE table;
+    DWORD err, size, i;
+    DWORD octets[2], ucastpkts[2], nucastpkts[2], discards[2], errors[2], unknown;
+    WCHAR recv[19];
+
+    size = sizeof(MIB_IFTABLE);
+    do
+    {
+        table = (PMIB_IFTABLE)HeapAlloc(GetProcessHeap(), 0, size);
+        err = GetIfTable(table, &size, FALSE);
+        if (err != NO_ERROR) HeapFree(GetProcessHeap(), 0, table);
+    } while (err == ERROR_INSUFFICIENT_BUFFER);
+
+    if (err) return;
+
+    NETSTAT_wprintf(NETSTAT_load_message(IDS_ETH_STAT));
+    NETSTAT_wprintf(fmtn);
+    NETSTAT_wprintf(fmtn);
+    strcpyW(recv, NETSTAT_load_message(IDS_ETH_RECV));
+    NETSTAT_wprintf(fmtethheader, recv, NETSTAT_load_message(IDS_ETH_SENT));
+
+    octets[0] = octets[1] = 0;
+    ucastpkts[0] = ucastpkts[1] = 0;
+    nucastpkts[0] = nucastpkts[1] = 0;
+    discards[0] = discards[1] = 0;
+    errors[0] = errors[1] = 0;
+    unknown = 0;
+
+    for (i = 0; i < table->dwNumEntries; i++)
+    {
+        octets[0] += table->table[i].dwInOctets;
+        octets[1] += table->table[i].dwOutOctets;
+        ucastpkts[0] += table->table[i].dwInUcastPkts;
+        ucastpkts[1] += table->table[i].dwOutUcastPkts;
+        nucastpkts[0] += table->table[i].dwInNUcastPkts;
+        nucastpkts[1] += table->table[i].dwOutNUcastPkts;
+        discards[0] += table->table[i].dwInDiscards;
+        discards[1] += table->table[i].dwOutDiscards;
+        errors[0] += table->table[i].dwInErrors;
+        errors[1] += table->table[i].dwOutErrors;
+        unknown += table->table[i].dwInUnknownProtos;
+    }
+
+    NETSTAT_wprintf(fmtethout, NETSTAT_load_message(IDS_ETH_BYTES), octets[0], octets[1]);
+    NETSTAT_wprintf(fmtethout, NETSTAT_load_message(IDS_ETH_UNICAST), ucastpkts[0], ucastpkts[1]);
+    NETSTAT_wprintf(fmtethout, NETSTAT_load_message(IDS_ETH_NUNICAST), nucastpkts[0], nucastpkts[1]);
+    NETSTAT_wprintf(fmtethout, NETSTAT_load_message(IDS_ETH_DISCARDS), discards[0], discards[1]);
+    NETSTAT_wprintf(fmtethout, NETSTAT_load_message(IDS_ETH_ERRORS), errors[0], errors[1]);
+    NETSTAT_wprintf(fmtethoutu, NETSTAT_load_message(IDS_ETH_UNKNOWN), unknown);
+
+    HeapFree(GetProcessHeap(), 0, table);
+}
+
 static void NETSTAT_tcp_table(void)
 {
     PMIB_TCPTABLE table;
@@ -277,6 +337,9 @@ int wmain(int argc, WCHAR *argv[])
             NETSTAT_conn_header();
             NETSTAT_tcp_table();
             NETSTAT_udp_table();
+            return 0;
+        case 'e':
+            NETSTAT_eth_stats();
             return 0;
         case 'p':
             argv++; argc--;

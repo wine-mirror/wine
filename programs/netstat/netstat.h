@@ -35,3 +35,12 @@ typedef enum _NETSTATPROTOCOLS {
 #define IDS_TCP_LOCAL_ADDR  3
 #define IDS_TCP_REMOTE_ADDR 4
 #define IDS_TCP_STATE       5
+#define IDS_ETH_STAT        6
+#define IDS_ETH_SENT        7
+#define IDS_ETH_RECV        8
+#define IDS_ETH_BYTES       9
+#define IDS_ETH_UNICAST     10
+#define IDS_ETH_NUNICAST    11
+#define IDS_ETH_DISCARDS    12
+#define IDS_ETH_ERRORS      13
+#define IDS_ETH_UNKNOWN     14

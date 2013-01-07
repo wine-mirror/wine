@@ -10151,6 +10151,50 @@ msgstr "Sokak Adresi"
 msgid "State"
 msgstr "Durum"
 
+#: netstat.rc:32
+#, fuzzy
+#| msgid "Internet Settings"
+msgid "Interface Statistics"
+msgstr "İnternet Ayarları"
+
+#: netstat.rc:33
+msgid "Sent"
+msgstr ""
+
+#: netstat.rc:34
+msgid "Received"
+msgstr ""
+
+#: netstat.rc:35
+#, fuzzy
+#| msgid "%d bytes"
+msgid "Bytes"
+msgstr "%d bayt"
+
+#: netstat.rc:36
+msgid "Unicast packets"
+msgstr ""
+
+#: netstat.rc:37
+msgid "Non-unicast packets"
+msgstr ""
+
+#: netstat.rc:38
+msgid "Discards"
+msgstr ""
+
+#: netstat.rc:39
+#, fuzzy
+#| msgid "Error"
+msgid "Errors"
+msgstr "Hata"
+
+#: netstat.rc:40
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown protocols"
+msgstr "Bilinmeyen hata"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Yeni\tCtrl+N"

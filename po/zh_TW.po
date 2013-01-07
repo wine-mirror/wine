@@ -10256,6 +10256,52 @@ msgstr "街道地址"
 msgid "State"
 msgstr "狀態"
 
+#: netstat.rc:32
+#, fuzzy
+#| msgid "Interfaces"
+msgid "Interface Statistics"
+msgstr "介面"
+
+#: netstat.rc:33
+msgid "Sent"
+msgstr ""
+
+#: netstat.rc:34
+msgid "Received"
+msgstr ""
+
+#: netstat.rc:35
+#, fuzzy
+#| msgid "bytes"
+msgid "Bytes"
+msgstr "位元組"
+
+#: netstat.rc:36
+msgid "Unicast packets"
+msgstr ""
+
+#: netstat.rc:37
+msgid "Non-unicast packets"
+msgstr ""
+
+#: netstat.rc:38
+#, fuzzy
+#| msgid "Disclaimer"
+msgid "Discards"
+msgstr "免責聲明"
+
+#: netstat.rc:39
+#, fuzzy
+#| msgid "Error"
+msgid "Errors"
+msgstr "錯誤"
+
+#: netstat.rc:40
+#, fuzzy
+#| msgid "Unknown port.\n"
+msgid "Unknown protocols"
+msgstr "不明通訊埠。\n"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "新增(&N)\tCtrl+N"

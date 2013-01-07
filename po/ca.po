@@ -10522,6 +10522,52 @@ msgstr "Direcció de Correu"
 msgid "State"
 msgstr "Estat"
 
+#: netstat.rc:32
+#, fuzzy
+#| msgid "Interfaces"
+msgid "Interface Statistics"
+msgstr "Interfícies"
+
+#: netstat.rc:33
+msgid "Sent"
+msgstr ""
+
+#: netstat.rc:34
+msgid "Received"
+msgstr ""
+
+#: netstat.rc:35
+#, fuzzy
+#| msgid "%d bytes"
+msgid "Bytes"
+msgstr "%d bytes"
+
+#: netstat.rc:36
+msgid "Unicast packets"
+msgstr ""
+
+#: netstat.rc:37
+msgid "Non-unicast packets"
+msgstr ""
+
+#: netstat.rc:38
+#, fuzzy
+#| msgid "Disclaimer"
+msgid "Discards"
+msgstr "Renúncia"
+
+#: netstat.rc:39
+#, fuzzy
+#| msgid "Error"
+msgid "Errors"
+msgstr "Error"
+
+#: netstat.rc:40
+#, fuzzy
+#| msgid "Unknown port.\n"
+msgid "Unknown protocols"
+msgstr "Port desconegut.\n"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Nou\tCtrl+N"

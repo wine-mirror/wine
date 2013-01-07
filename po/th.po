@@ -10030,6 +10030,46 @@ msgstr ""
 msgid "State"
 msgstr "อาการเครื่อง:"
 
+#: netstat.rc:32
+#, fuzzy
+msgid "Interface Statistics"
+msgstr "ไม่พบแฟ้ม"
+
+#: netstat.rc:33
+msgid "Sent"
+msgstr ""
+
+#: netstat.rc:34
+msgid "Received"
+msgstr ""
+
+#: netstat.rc:35
+msgid "Bytes"
+msgstr ""
+
+#: netstat.rc:36
+msgid "Unicast packets"
+msgstr ""
+
+#: netstat.rc:37
+msgid "Non-unicast packets"
+msgstr ""
+
+#: netstat.rc:38
+msgid "Discards"
+msgstr ""
+
+#: netstat.rc:39
+#, fuzzy
+#| msgid "Error; "
+msgid "Errors"
+msgstr "ความปิด; "
+
+#: netstat.rc:40
+#, fuzzy
+msgid "Unknown protocols"
+msgstr "ไม่รู้จักดไร์เวอร์์เครื่องพิมพ์.\n"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "สร้างใหม่\tCtrl+N"

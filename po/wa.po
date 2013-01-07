@@ -9962,6 +9962,42 @@ msgstr ""
 msgid "State"
 msgstr ""
 
+#: netstat.rc:32
+msgid "Interface Statistics"
+msgstr ""
+
+#: netstat.rc:33
+msgid "Sent"
+msgstr ""
+
+#: netstat.rc:34
+msgid "Received"
+msgstr ""
+
+#: netstat.rc:35
+msgid "Bytes"
+msgstr ""
+
+#: netstat.rc:36
+msgid "Unicast packets"
+msgstr ""
+
+#: netstat.rc:37
+msgid "Non-unicast packets"
+msgstr ""
+
+#: netstat.rc:38
+msgid "Discards"
+msgstr ""
+
+#: netstat.rc:39
+msgid "Errors"
+msgstr ""
+
+#: netstat.rc:40
+msgid "Unknown protocols"
+msgstr ""
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Novea\tCtrl+N"

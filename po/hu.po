@@ -10436,6 +10436,52 @@ msgstr "Utca cím"
 msgid "State"
 msgstr "Állapot"
 
+#: netstat.rc:32
+#, fuzzy
+#| msgid "Interfaces"
+msgid "Interface Statistics"
+msgstr "Interfészek"
+
+#: netstat.rc:33
+msgid "Sent"
+msgstr ""
+
+#: netstat.rc:34
+msgid "Received"
+msgstr ""
+
+#: netstat.rc:35
+#, fuzzy
+#| msgid "bytes"
+msgid "Bytes"
+msgstr "bájt"
+
+#: netstat.rc:36
+msgid "Unicast packets"
+msgstr ""
+
+#: netstat.rc:37
+msgid "Non-unicast packets"
+msgstr ""
+
+#: netstat.rc:38
+#, fuzzy
+#| msgid "Disclaimer"
+msgid "Discards"
+msgstr "Eltávolítás"
+
+#: netstat.rc:39
+#, fuzzy
+#| msgid "Error"
+msgid "Errors"
+msgstr "Hiba"
+
+#: netstat.rc:40
+#, fuzzy
+#| msgid "Unknown port.\n"
+msgid "Unknown protocols"
+msgstr "Ismeretlen port.\n"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "Ú&j\tCtrl+N"

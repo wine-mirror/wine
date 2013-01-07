@@ -10364,6 +10364,48 @@ msgstr "Физичка адреса"
 msgid "State"
 msgstr "Стање"
 
+#: netstat.rc:32
+#, fuzzy
+#| msgid "Internet Settings"
+msgid "Interface Statistics"
+msgstr "Поставке интернета"
+
+#: netstat.rc:33
+msgid "Sent"
+msgstr ""
+
+#: netstat.rc:34
+msgid "Received"
+msgstr ""
+
+#: netstat.rc:35
+#, fuzzy
+msgid "Bytes"
+msgstr "%ld бајтова"
+
+#: netstat.rc:36
+msgid "Unicast packets"
+msgstr ""
+
+#: netstat.rc:37
+msgid "Non-unicast packets"
+msgstr ""
+
+#: netstat.rc:38
+msgid "Discards"
+msgstr ""
+
+#: netstat.rc:39
+#, fuzzy
+#| msgid "Error"
+msgid "Errors"
+msgstr "Грешка"
+
+#: netstat.rc:40
+#, fuzzy
+msgid "Unknown protocols"
+msgstr "Непознат извор.\n"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Ново\tCtrl+N"

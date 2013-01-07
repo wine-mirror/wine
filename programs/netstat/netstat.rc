@@ -29,4 +29,13 @@ STRINGTABLE
   IDS_TCP_LOCAL_ADDR,  "Local Address"
   IDS_TCP_REMOTE_ADDR, "Foreign Address"
   IDS_TCP_STATE,       "State"
+  IDS_ETH_STAT,        "Interface Statistics"
+  IDS_ETH_SENT,        "Sent"
+  IDS_ETH_RECV,        "Received"
+  IDS_ETH_BYTES,       "Bytes"
+  IDS_ETH_UNICAST,     "Unicast packets"
+  IDS_ETH_NUNICAST,    "Non-unicast packets"
+  IDS_ETH_DISCARDS,    "Discards"
+  IDS_ETH_ERRORS,      "Errors"
+  IDS_ETH_UNKNOWN,     "Unknown protocols"
 }

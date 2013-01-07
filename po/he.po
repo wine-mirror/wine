@@ -10482,6 +10482,49 @@ msgstr "כתובת"
 msgid "State"
 msgstr "מצב"
 
+#: netstat.rc:32
+#, fuzzy
+#| msgid "Interfaces"
+msgid "Interface Statistics"
+msgstr "מנשקים"
+
+#: netstat.rc:33
+msgid "Sent"
+msgstr ""
+
+#: netstat.rc:34
+msgid "Received"
+msgstr ""
+
+#: netstat.rc:35
+#, fuzzy
+#| msgid "bytes"
+msgid "Bytes"
+msgstr "בתים"
+
+#: netstat.rc:36
+msgid "Unicast packets"
+msgstr ""
+
+#: netstat.rc:37
+msgid "Non-unicast packets"
+msgstr ""
+
+#: netstat.rc:38
+msgid "Discards"
+msgstr ""
+
+#: netstat.rc:39
+#, fuzzy
+#| msgid "Error"
+msgid "Errors"
+msgstr "שגיאה"
+
+#: netstat.rc:40
+#, fuzzy
+msgid "Unknown protocols"
+msgstr "שגיאה בלתי ידוע.\n"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&חדש\tCtrl+N"
