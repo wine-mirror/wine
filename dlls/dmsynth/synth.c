@@ -126,7 +126,7 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_SetNumChannelGroups(LPDIRECTMUSICSY
 static HRESULT WINAPI IDirectMusicSynth8Impl_Download(LPDIRECTMUSICSYNTH8 iface, LPHANDLE hDownload, LPVOID data, LPBOOL free)
 {
     IDirectMusicSynth8Impl *This = impl_from_IDirectMusicSynth8(iface);
-    LPBYTE buffer = (LPBYTE)data;
+    LPBYTE buffer = data;
     DMUS_DOWNLOADINFO *info = (DMUS_DOWNLOADINFO*)buffer;
     ULONG *offsets = ((DMUS_OFFSETTABLE*)(buffer + sizeof(DMUS_DOWNLOADINFO)))->ulOffsetTable;
     LPBYTE object = buffer + sizeof(DMUS_DOWNLOADINFO) + info->dwNumOffsetTableEntries * sizeof(ULONG);
@@ -135,7 +135,7 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_Download(LPDIRECTMUSICSYNTH8 iface,
 
     /* FIXME: Currently we only dump data which is very useful to known how native dmusic behave and debug builtin dmusic */
 
-    if (!hDownload || !data || !free)
+    if (!hDownload || !free)
         return E_POINTER;
 
     if (TRACE_ON(dmsynth))
