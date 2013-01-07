@@ -465,6 +465,7 @@ static void test_body_style(IHTMLStyle *style)
     float f;
     BSTR sOverflowDefault;
     BSTR sDefault;
+    LONG l;
     VARIANT vDefault;
 
     test_style_csstext(style, NULL);
@@ -904,6 +905,11 @@ static void test_body_style(IHTMLStyle *style)
     ok(!V_BSTR(&v), "V_BSTR(v) != NULL\n");
     VariantClear(&v);
 
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelLeft(style, &l);
+    ok(hres == S_OK, "get_pixelLeft failed: %08x\n", hres);
+    ok(!l, "pixelLeft = %d\n", l);
+
     /* Test posLeft */
     hres = IHTMLStyle_get_posLeft(style, NULL);
     ok(hres == E_POINTER, "get_posLeft failed: %08x\n", hres);
@@ -943,6 +949,11 @@ static void test_body_style(IHTMLStyle *style)
     ok(hres == S_OK, "get_posLeft failed: %08x\n", hres);
     ok(f == 3.0, "expected 3.0 got %f\n", f);
 
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelLeft(style, &l);
+    ok(hres == S_OK, "get_pixelLeft failed: %08x\n", hres);
+    ok(l == 3, "pixelLeft = %d\n", l);
+
     V_VT(&v) = VT_EMPTY;
     hres = IHTMLStyle_get_left(style, &v);
     ok(hres == S_OK, "get_left failed: %08x\n", hres);
@@ -967,6 +978,11 @@ static void test_body_style(IHTMLStyle *style)
     ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
     ok(!V_BSTR(&v), "V_BSTR(v) != NULL\n");
     VariantClear(&v);
+
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelLeft(style, &l);
+    ok(hres == S_OK, "get_pixelLeft failed: %08x\n", hres);
+    ok(!l, "pixelLeft = %d\n", l);
 
     /* Test posTop */
     hres = IHTMLStyle_get_posTop(style, NULL);

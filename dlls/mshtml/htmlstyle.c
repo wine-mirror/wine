@@ -180,6 +180,9 @@ static const WCHAR attrWordWrap[] =
 static const WCHAR attrZIndex[] =
     {'z','-','i','n','d','e','x',0};
 
+
+static const WCHAR pxW[] = {'p','x',0};
+
 typedef struct {
     const WCHAR *name;
     DISPID dispid;
@@ -612,7 +615,6 @@ static HRESULT get_nsstyle_pos(HTMLStyle *This, styleid_t sid, float *p)
 {
     nsAString str_value;
     HRESULT hres;
-    WCHAR pxW[] = {'p','x',0};
 
     TRACE("%p %d %p\n", This, sid, p);
 
@@ -644,6 +646,36 @@ static HRESULT get_nsstyle_pos(HTMLStyle *This, styleid_t sid, float *p)
 
     nsAString_Finish(&str_value);
 
+    return hres;
+}
+
+static HRESULT get_nsstyle_pixel_val(HTMLStyle *This, styleid_t sid, LONG *p)
+{
+    nsAString str_value;
+    HRESULT hres;
+
+    nsAString_Init(&str_value, NULL);
+
+    hres = get_nsstyle_attr_nsval(This->nsstyle, sid, &str_value);
+    if(hres == S_OK) {
+        WCHAR *ptr;
+        const PRUnichar *value;
+
+        nsAString_GetData(&str_value, &value);
+        if(value) {
+            *p = strtolW(value, &ptr, 10);
+
+            if(*ptr && strcmpW(ptr, pxW)) {
+                nsAString_Finish(&str_value);
+                FIXME("only px values are currently supported\n");
+                hres = E_NOTIMPL;
+            }
+        }else {
+            *p = 0;
+        }
+    }
+
+    nsAString_Finish(&str_value);
     return hres;
 }
 
@@ -2387,8 +2419,10 @@ static HRESULT WINAPI HTMLStyle_put_pixelLeft(IHTMLStyle *iface, LONG v)
 static HRESULT WINAPI HTMLStyle_get_pixelLeft(IHTMLStyle *iface, LONG *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_nsstyle_pixel_val(This, STYLEID_LEFT, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_pixelWidth(IHTMLStyle *iface, LONG v)
