@@ -1554,18 +1554,18 @@ end:
 
 /*** IDirect3DRMMeshBuilder3 methods ***/
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* iface,
-                                                       LPVOID filename, LPVOID name,
+                                                       void *filename, void *name,
                                                        D3DRMLOADOPTIONS loadflags,
-                                                       D3DRMLOADTEXTURE3CALLBACK cb, LPVOID arg)
+                                                       D3DRMLOADTEXTURE3CALLBACK cb, void *arg)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
     DXFILELOADOPTIONS load_options;
-    LPDIRECTXFILE pDXFile = NULL;
-    LPDIRECTXFILEENUMOBJECT pEnumObject = NULL;
-    LPDIRECTXFILEDATA pData = NULL;
-    const GUID* pGuid;
+    IDirectXFile *dxfile = NULL;
+    IDirectXFileEnumObject *enum_object = NULL;
+    IDirectXFileData *data = NULL;
+    const GUID* guid;
     DWORD size;
-    Header* pHeader;
+    Header* header;
     HRESULT hr;
     HRESULT ret = D3DRMERR_BADOBJECT;
 
@@ -1588,82 +1588,82 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
         return E_NOTIMPL;
     }
 
-    hr = DirectXFileCreate(&pDXFile);
+    hr = DirectXFileCreate(&dxfile);
     if (hr != DXFILE_OK)
         goto end;
 
-    hr = IDirectXFile_RegisterTemplates(pDXFile, templates, strlen(templates));
+    hr = IDirectXFile_RegisterTemplates(dxfile, templates, strlen(templates));
     if (hr != DXFILE_OK)
         goto end;
 
-    hr = IDirectXFile_CreateEnumObject(pDXFile, filename, load_options, &pEnumObject);
+    hr = IDirectXFile_CreateEnumObject(dxfile, filename, load_options, &enum_object);
     if (hr != DXFILE_OK)
         goto end;
 
-    hr = IDirectXFileEnumObject_GetNextDataObject(pEnumObject, &pData);
+    hr = IDirectXFileEnumObject_GetNextDataObject(enum_object, &data);
     if (hr != DXFILE_OK)
         goto end;
 
-    hr = IDirectXFileData_GetType(pData, &pGuid);
+    hr = IDirectXFileData_GetType(data, &guid);
     if (hr != DXFILE_OK)
         goto end;
 
-    TRACE("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
+    TRACE("Found object type whose GUID = %s\n", debugstr_guid(guid));
 
-    if (!IsEqualGUID(pGuid, &TID_DXFILEHeader))
+    if (!IsEqualGUID(guid, &TID_DXFILEHeader))
     {
         ret = D3DRMERR_BADFILE;
         goto end;
     }
 
-    hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&pHeader);
+    hr = IDirectXFileData_GetData(data, NULL, &size, (void**)&header);
     if ((hr != DXFILE_OK) || (size != sizeof(Header)))
         goto end;
 
-    TRACE("Version is %d %d %d\n", pHeader->major, pHeader->minor, pHeader->flags);
+    TRACE("Version is %d %d %d\n", header->major, header->minor, header->flags);
 
     /* Version must be 1.0.x */
-    if ((pHeader->major != 1) || (pHeader->minor != 0))
+    if ((header->major != 1) || (header->minor != 0))
     {
         ret = D3DRMERR_BADFILE;
         goto end;
     }
 
-    IDirectXFileData_Release(pData);
-    pData = NULL;
+    IDirectXFileData_Release(data);
+    data = NULL;
 
-    hr = IDirectXFileEnumObject_GetNextDataObject(pEnumObject, &pData);
+    hr = IDirectXFileEnumObject_GetNextDataObject(enum_object, &data);
     if (hr != DXFILE_OK)
     {
         ret = D3DRMERR_NOTFOUND;
         goto end;
     }
 
-    hr = IDirectXFileData_GetType(pData, &pGuid);
+    hr = IDirectXFileData_GetType(data, &guid);
     if (hr != DXFILE_OK)
         goto end;
 
-    TRACE("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
+    TRACE("Found object type whose GUID = %s\n", debugstr_guid(guid));
 
-    if (!IsEqualGUID(pGuid, &TID_D3DRMMesh))
+    if (!IsEqualGUID(guid, &TID_D3DRMMesh))
     {
         ret = D3DRMERR_NOTFOUND;
         goto end;
     }
 
     /* We don't care about the texture interface version since we rely on QueryInterface */
-    hr = load_mesh_data(iface, pData, (D3DRMLOADTEXTURECALLBACK)cb, arg);
+    hr = load_mesh_data(iface, data, (D3DRMLOADTEXTURECALLBACK)cb, arg);
     if (hr == S_OK)
         ret = D3DRM_OK;
 
 end:
 
-    if (pData)
-        IDirectXFileData_Release(pData);
-    if (pEnumObject)
-        IDirectXFileEnumObject_Release(pEnumObject);
-    if (pDXFile)
-        IDirectXFile_Release(pDXFile);
+    if (data)
+        IDirectXFileData_Release(data);
+    if (enum_object)
+        IDirectXFileEnumObject_Release(enum_object);
+    if (dxfile)
+        IDirectXFile_Release(dxfile);
 
     if (ret != D3DRM_OK)
         clean_mesh_builder_data(This);
