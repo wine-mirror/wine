@@ -791,7 +791,9 @@ HRESULT WINAPI D3DXCreateTextureFromResourceExA(struct IDirect3DDevice9 *device,
     if (!device || !texture)
         return D3DERR_INVALIDCALL;
 
-    resinfo = FindResourceA(srcmodule, resource, (LPCSTR) RT_RCDATA);
+    resinfo = FindResourceA(srcmodule, resource, (const char *)RT_RCDATA);
+    if (!resinfo) /* Try loading the resource as bitmap data (which is in DIB format D3DXIFF_DIB) */
+        resinfo = FindResourceA(srcmodule, resource, (const char *)RT_BITMAP);
 
     if (resinfo)
     {
@@ -808,15 +810,6 @@ HRESULT WINAPI D3DXCreateTextureFromResourceExA(struct IDirect3DDevice9 *device,
                                                    height, miplevels, usage, format,
                                                    pool, filter, mipfilter, colorkey,
                                                    srcinfo, palette, texture);
-    }
-
-    /* Try loading the resource as bitmap data */
-    resinfo = FindResourceA(srcmodule, resource, (LPCSTR) RT_BITMAP);
-
-    if (resinfo)
-    {
-        FIXME("Implement loading bitmaps from resource type RT_BITMAP\n");
-        return E_NOTIMPL;
     }
 
     return D3DXERR_INVALIDDATA;
@@ -834,7 +827,9 @@ HRESULT WINAPI D3DXCreateTextureFromResourceExW(struct IDirect3DDevice9 *device,
     if (!device || !texture)
         return D3DERR_INVALIDCALL;
 
-    resinfo = FindResourceW(srcmodule, resource, (LPCWSTR) RT_RCDATA);
+    resinfo = FindResourceW(srcmodule, resource, (const WCHAR *)RT_RCDATA);
+    if (!resinfo) /* Try loading the resource as bitmap data (which is in DIB format D3DXIFF_DIB) */
+        resinfo = FindResourceW(srcmodule, resource, (const WCHAR *)RT_BITMAP);
 
     if (resinfo)
     {
@@ -851,15 +846,6 @@ HRESULT WINAPI D3DXCreateTextureFromResourceExW(struct IDirect3DDevice9 *device,
                                                    height, miplevels, usage, format,
                                                    pool, filter, mipfilter, colorkey,
                                                    srcinfo, palette, texture);
-    }
-
-    /* Try loading the resource as bitmap data */
-    resinfo = FindResourceW(srcmodule, resource, (LPCWSTR) RT_BITMAP);
-
-    if (resinfo)
-    {
-        FIXME("Implement loading bitmaps from resource type RT_BITMAP\n");
-        return E_NOTIMPL;
     }
 
     return D3DXERR_INVALIDDATA;

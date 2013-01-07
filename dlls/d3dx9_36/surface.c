@@ -878,8 +878,12 @@ HRESULT WINAPI D3DXGetImageInfoFromResourceA(HMODULE module, LPCSTR resource, D3
 
     TRACE("(%p, %s, %p)\n", module, debugstr_a(resource), info);
 
-    resinfo = FindResourceA(module, resource, (LPCSTR)RT_RCDATA);
-    if(resinfo) {
+    resinfo = FindResourceA(module, resource, (const char *)RT_RCDATA);
+    if (!resinfo) /* Try loading the resource as bitmap data (which is in DIB format D3DXIFF_DIB) */
+        resinfo = FindResourceA(module, resource, (const char *)RT_BITMAP);
+
+    if (resinfo)
+    {
         LPVOID buffer;
         HRESULT hr;
         DWORD size;
@@ -889,11 +893,6 @@ HRESULT WINAPI D3DXGetImageInfoFromResourceA(HMODULE module, LPCSTR resource, D3
         return D3DXGetImageInfoFromFileInMemory(buffer, size, info);
     }
 
-    resinfo = FindResourceA(module, resource, (LPCSTR)RT_BITMAP);
-    if(resinfo) {
-        FIXME("Implement loading bitmaps from resource type RT_BITMAP\n");
-        return E_NOTIMPL;
-    }
     return D3DXERR_INVALIDDATA;
 }
 
@@ -903,8 +902,12 @@ HRESULT WINAPI D3DXGetImageInfoFromResourceW(HMODULE module, LPCWSTR resource, D
 
     TRACE("(%p, %s, %p)\n", module, debugstr_w(resource), info);
 
-    resinfo = FindResourceW(module, resource, (LPCWSTR)RT_RCDATA);
-    if(resinfo) {
+    resinfo = FindResourceW(module, resource, (const WCHAR *)RT_RCDATA);
+    if (!resinfo) /* Try loading the resource as bitmap data (which is in DIB format D3DXIFF_DIB) */
+        resinfo = FindResourceW(module, resource, (const WCHAR *)RT_BITMAP);
+
+    if (resinfo)
+    {
         LPVOID buffer;
         HRESULT hr;
         DWORD size;
@@ -914,11 +917,6 @@ HRESULT WINAPI D3DXGetImageInfoFromResourceW(HMODULE module, LPCWSTR resource, D
         return D3DXGetImageInfoFromFileInMemory(buffer, size, info);
     }
 
-    resinfo = FindResourceW(module, resource, (LPCWSTR)RT_BITMAP);
-    if(resinfo) {
-        FIXME("Implement loading bitmaps from resource type RT_BITMAP\n");
-        return E_NOTIMPL;
-    }
     return D3DXERR_INVALIDDATA;
 }
 
@@ -1138,7 +1136,11 @@ HRESULT WINAPI D3DXLoadSurfaceFromResourceA(IDirect3DSurface9 *dst_surface,
     if (!dst_surface)
         return D3DERR_INVALIDCALL;
 
-    if ((hResInfo = FindResourceA(src_module, resource, (const char *)RT_RCDATA)))
+    hResInfo = FindResourceA(src_module, resource, (const char *)RT_RCDATA);
+    if (!hResInfo) /* Try loading the resource as bitmap data (which is in DIB format D3DXIFF_DIB) */
+        hResInfo = FindResourceA(src_module, resource, (const char *)RT_BITMAP);
+
+    if (hResInfo)
     {
         UINT data_size;
         void *data;
@@ -1148,12 +1150,6 @@ HRESULT WINAPI D3DXLoadSurfaceFromResourceA(IDirect3DSurface9 *dst_surface,
 
         return D3DXLoadSurfaceFromFileInMemory(dst_surface, dst_palette, dst_rect,
                 data, data_size, src_rect, filter, color_key, src_info);
-    }
-
-    if ((hResInfo = FindResourceA(src_module, resource, (const char *)RT_BITMAP)))
-    {
-        FIXME("Implement loading bitmaps from resource type RT_BITMAP.\n");
-        return E_NOTIMPL;
     }
 
     return D3DXERR_INVALIDDATA;
@@ -1173,7 +1169,11 @@ HRESULT WINAPI D3DXLoadSurfaceFromResourceW(IDirect3DSurface9 *dst_surface,
     if (!dst_surface)
         return D3DERR_INVALIDCALL;
 
-    if ((hResInfo = FindResourceW(src_module, resource, (const WCHAR *)RT_RCDATA)))
+    hResInfo = FindResourceW(src_module, resource, (const WCHAR *)RT_RCDATA);
+    if (!hResInfo) /* Try loading the resource as bitmap data (which is in DIB format D3DXIFF_DIB) */
+        hResInfo = FindResourceW(src_module, resource, (const WCHAR *)RT_BITMAP);
+
+    if (hResInfo)
     {
         UINT data_size;
         void *data;
@@ -1183,12 +1183,6 @@ HRESULT WINAPI D3DXLoadSurfaceFromResourceW(IDirect3DSurface9 *dst_surface,
 
         return D3DXLoadSurfaceFromFileInMemory(dst_surface, dst_palette, dst_rect,
                 data, data_size, src_rect, filter, color_key, src_info);
-    }
-
-    if ((hResInfo = FindResourceW(src_module, resource, (const WCHAR *)RT_BITMAP)))
-    {
-        FIXME("Implement loading bitmaps from resource type RT_BITMAP.\n");
-        return E_NOTIMPL;
     }
 
     return D3DXERR_INVALIDDATA;
