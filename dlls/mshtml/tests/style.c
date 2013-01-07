@@ -984,6 +984,21 @@ static void test_body_style(IHTMLStyle *style)
     ok(hres == S_OK, "get_pixelLeft failed: %08x\n", hres);
     ok(!l, "pixelLeft = %d\n", l);
 
+    hres = IHTMLStyle_put_pixelLeft(style, 6);
+    ok(hres == S_OK, "put_pixelLeft failed: %08x\n", hres);
+
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelLeft(style, &l);
+    ok(hres == S_OK, "get_pixelLeft failed: %08x\n", hres);
+    ok(l == 6, "pixelLeft = %d\n", l);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle_get_left(style, &v);
+    ok(hres == S_OK, "get_left failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "6px"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
     /* Test posTop */
     hres = IHTMLStyle_get_posTop(style, NULL);
     ok(hres == E_POINTER, "get_posTop failed: %08x\n", hres);
