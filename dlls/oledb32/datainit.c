@@ -414,8 +414,6 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
     /* now set properties */
     if (initstring)
     {
-        static const WCHAR scolW[] = {';',0};
-        static const WCHAR eqW[] = {'=',0};
         WCHAR *eq, *start;
 
         hr = IUnknown_QueryInterface(*datasource, &IID_IDBProperties, (void**)&dbprops);
@@ -426,10 +424,10 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
         }
 
         start = initstring;
-        while ((eq = strstrW(start, eqW)))
+        while (start && (eq = strchrW(start, '=')))
         {
             static const WCHAR providerW[] = {'P','r','o','v','i','d','e','r',0};
-            WCHAR *scol = strstrW(eq+1, scolW);
+            WCHAR *scol = strchrW(eq+1, ';');
             BSTR value, name;
 
             name = SysAllocStringLen(start, eq - start);
