@@ -1243,23 +1243,30 @@ static void test_initonce(void)
     ok(initonce.Ptr == (void*)0xdeadbee2, "got %p\n", initonce.Ptr);
 }
 
-static CONDITION_VARIABLE buffernotempty,buffernotfull;
+static CONDITION_VARIABLE buffernotempty = CONDITION_VARIABLE_INIT;
+static CONDITION_VARIABLE buffernotfull = CONDITION_VARIABLE_INIT;
 static CRITICAL_SECTION   buffercrit;
 static BOOL condvar_stop = FALSE, condvar_sleeperr = FALSE;
 static LONG bufferlen,totalproduced,totalconsumed;
 static LONG condvar_producer_sleepcnt,condvar_consumer_sleepcnt;
 
-#define BUFFER_SIZE 10
+#define BUFFER_SIZE 5
 
 static DWORD WINAPI condvar_producer(LPVOID x) {
+    DWORD sleepinterval = 50;
+
     while (1) {
-        Sleep(rand() % 10);
+        Sleep(sleepinterval);
+        if (sleepinterval > 10)
+            sleepinterval -= 10;
 
         EnterCriticalSection(&buffercrit);
         while ((bufferlen == BUFFER_SIZE) && !condvar_stop) {
             condvar_producer_sleepcnt++;
-            if (!pSleepConditionVariableCS(&buffernotfull, &buffercrit, 2000))
-                condvar_sleeperr = TRUE;
+            if (!pSleepConditionVariableCS(&buffernotfull, &buffercrit, sleepinterval)) {
+                if (GetLastError() != ERROR_TIMEOUT)
+                    condvar_sleeperr = TRUE;
+            }
         }
         if (condvar_stop) {
             LeaveCriticalSection(&buffercrit);
@@ -1275,13 +1282,16 @@ static DWORD WINAPI condvar_producer(LPVOID x) {
 
 static DWORD WINAPI condvar_consumer(LPVOID x) {
     DWORD *cnt = (DWORD*)x;
+    DWORD sleepinterval = 10;
 
     while (1) {
         EnterCriticalSection(&buffercrit);
         while ((bufferlen == 0) && !condvar_stop) {
             condvar_consumer_sleepcnt++;
-            if (!pSleepConditionVariableCS (&buffernotempty, &buffercrit, 2000))
-                condvar_sleeperr = TRUE;
+            if (!pSleepConditionVariableCS (&buffernotempty, &buffercrit, sleepinterval)) {
+                if (GetLastError() != ERROR_TIMEOUT)
+                    condvar_sleeperr = TRUE;
+            }
         }
         if (condvar_stop && (bufferlen == 0)) {
             LeaveCriticalSection(&buffercrit);
@@ -1292,16 +1302,17 @@ static DWORD WINAPI condvar_consumer(LPVOID x) {
         (*cnt)++;
         LeaveCriticalSection(&buffercrit);
         pWakeConditionVariable(&buffernotfull);
-        Sleep(rand() % 10);
+        Sleep(sleepinterval);
+        if (sleepinterval < 50) sleepinterval += 10;
     }
     return 0;
 }
 
 static void test_condvars(void)
 {
-    HANDLE hp1,hp2,hc1,hc2;
+    HANDLE hp1,hp2,hp3,hc1,hc2,hc3;
     DWORD dummy;
-    DWORD cnt1,cnt2;
+    DWORD cnt1,cnt2,cnt3;
 
     if (!pInitializeConditionVariable) {
         /* function is not yet in XP, only in newer Windows */
@@ -1311,15 +1322,22 @@ static void test_condvars(void)
     }
 
     /* Implement a producer / consumer scheme with non-full / non-empty triggers */
-    pInitializeConditionVariable(&buffernotfull);
+
+    /* If we have static initialized condition variables, InitializeConditionVariable
+     * is not strictly necessary.
+     * pInitializeConditionVariable(&buffernotfull);
+     */
     pInitializeConditionVariable(&buffernotempty);
+
     InitializeCriticalSection(&buffercrit);
-    bufferlen = totalproduced = totalconsumed = cnt1 = cnt2 = 0;
+    bufferlen = totalproduced = totalconsumed = cnt1 = cnt2 = cnt3 = 0;
 
     hp1 = CreateThread(NULL, 0, condvar_producer, NULL, 0, &dummy);
     hp2 = CreateThread(NULL, 0, condvar_producer, NULL, 0, &dummy);
+    hp3 = CreateThread(NULL, 0, condvar_producer, NULL, 0, &dummy);
     hc1 = CreateThread(NULL, 0, condvar_consumer, (PVOID)&cnt1, 0, &dummy);
     hc2 = CreateThread(NULL, 0, condvar_consumer, (PVOID)&cnt2, 0, &dummy);
+    hc3 = CreateThread(NULL, 0, condvar_consumer, (PVOID)&cnt3, 0, &dummy);
 
     /* Limit run to 0.5 seconds. */
     Sleep(500);
@@ -1331,10 +1349,14 @@ static void test_condvars(void)
     pWakeAllConditionVariable (&buffernotfull);
     pWakeAllConditionVariable (&buffernotempty);
 
+    ok(buffernotfull.Ptr == NULL, "buffernotfull.Ptr is %p\n", buffernotfull.Ptr);
+
     WaitForSingleObject(hp1, 1000);
     WaitForSingleObject(hp2, 1000);
+    WaitForSingleObject(hp3, 1000);
     WaitForSingleObject(hc1, 1000);
     WaitForSingleObject(hc2, 1000);
+    WaitForSingleObject(hc3, 1000);
 
     ok(totalconsumed == totalproduced,
        "consumed %d != produced %d\n", totalconsumed, totalproduced);
@@ -1342,7 +1364,7 @@ static void test_condvars(void)
 
     /* Checking cnt1 - cnt2 for non-0 would be not good, the case where
      * one consumer does not get anything to do is possible. */
-    trace("produced %d, c1 %d, c2 %d\n", totalproduced, cnt1, cnt2);
+    trace("produced %d, c1 %d, c2 %d, c3 %d\n", totalproduced, cnt1, cnt2, cnt3);
     /* The sleeps of the producer or consumer should not go above 100* produced count,
      * otherwise the implementation does not sleep correctly. But yet again, this is
      * not hard defined. */
