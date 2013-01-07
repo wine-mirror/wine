@@ -1736,10 +1736,9 @@ HRESULT WINAPI D3DXGetShaderConstantTable(const DWORD *byte_code, ID3DXConstantT
 
 HRESULT WINAPI D3DXGetShaderSamplers(const DWORD *byte_code, const char **samplers, UINT *count)
 {
-    HRESULT hr;
     UINT i, sampler_count = 0;
     UINT size;
-    LPCSTR data;
+    const char *data;
     const D3DXSHADER_CONSTANTTABLE *ctab_header;
     const D3DXSHADER_CONSTANTINFO *constant_info;
 
@@ -1747,8 +1746,8 @@ HRESULT WINAPI D3DXGetShaderSamplers(const DWORD *byte_code, const char **sample
 
     if (count) *count = 0;
 
-    hr = D3DXFindShaderComment(byte_code, MAKEFOURCC('C','T','A','B'), (LPCVOID *)&data, &size);
-    if (hr != D3D_OK) return D3D_OK;
+    if (D3DXFindShaderComment(byte_code, MAKEFOURCC('C','T','A','B'), (const void **)&data, &size) != D3D_OK)
+        return D3D_OK;
 
     if (size < sizeof(*ctab_header)) return D3D_OK;
 
