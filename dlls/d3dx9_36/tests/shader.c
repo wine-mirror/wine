@@ -355,18 +355,22 @@ static void test_find_shader_comment(void)
 
 static void test_get_shader_constant_table_ex(void)
 {
-    ID3DXConstantTable *constant_table = NULL;
+    ID3DXConstantTable *constant_table;
     HRESULT hr;
     LPVOID data;
     DWORD size;
     D3DXCONSTANTTABLE_DESC desc;
 
+    constant_table = (ID3DXConstantTable *)0xdeadbeef;
     hr = D3DXGetShaderConstantTableEx(NULL, 0, &constant_table);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(constant_table == NULL, "D3DXGetShaderConstantTableEx() failed, got %p\n", constant_table);
 
     /* No CTAB data */
+    constant_table = (ID3DXConstantTable *)0xdeadbeef;
     hr = D3DXGetShaderConstantTableEx(simple_ps, 0, &constant_table);
     ok(hr == D3DXERR_INVALIDDATA, "Got result %x, expected %x (D3DXERR_INVALIDDATA)\n", hr, D3DXERR_INVALIDDATA);
+    ok(constant_table == NULL, "D3DXGetShaderConstantTableEx() failed, got %p\n", constant_table);
 
     /* With invalid CTAB data */
     hr = D3DXGetShaderConstantTableEx(shader_with_invalid_ctab, 0, &constant_table);
@@ -376,6 +380,7 @@ static void test_get_shader_constant_table_ex(void)
 
     hr = D3DXGetShaderConstantTableEx(shader_with_ctab, 0, &constant_table);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(constant_table != NULL, "D3DXGetShaderConstantTableEx() failed, got NULL\n");
 
     if (constant_table)
     {
@@ -399,8 +404,9 @@ static void test_get_shader_constant_table_ex(void)
 
     hr = D3DXGetShaderConstantTableEx(shader_with_ctab_constants, 0, &constant_table);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(constant_table != NULL, "D3DXGetShaderConstantTableEx() failed, got NULL\n");
 
-    if (SUCCEEDED(hr))
+    if (constant_table)
     {
         D3DXHANDLE constant;
         D3DXCONSTANT_DESC constant_desc;

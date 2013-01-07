@@ -1629,7 +1629,9 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(const DWORD *byte_code, DWORD flags,
     D3DXSHADER_CONSTANTINFO* constant_info;
     DWORD i;
 
-    TRACE("(%p, %x, %p)\n", byte_code, flags, constant_table);
+    TRACE("byte_code %p, flags %x, constant_table %p\n", byte_code, flags, constant_table);
+
+    if (constant_table) *constant_table = NULL;
 
     if (!byte_code || !constant_table)
     {
