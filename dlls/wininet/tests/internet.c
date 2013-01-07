@@ -164,6 +164,12 @@ static void test_InternetQueryOptionA(void)
   int retval;
   BOOL res;
 
+  SetLastError(0xdeadbeef);
+  len = 0xdeadbeef;
+  retval = InternetQueryOptionA(NULL, INTERNET_OPTION_PROXY, NULL, &len);
+  ok(!retval && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got wrong error %x(%u)\n", retval, GetLastError());
+  ok(len >= sizeof(INTERNET_PROXY_INFO) && len != 0xdeadbeef,"len = %u\n", len);
+
   hinet = InternetOpenA(useragent,INTERNET_OPEN_TYPE_DIRECT,NULL,NULL, 0);
   ok((hinet != 0x0),"InternetOpen Failed\n");
 

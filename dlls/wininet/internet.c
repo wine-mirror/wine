@@ -821,7 +821,7 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
                 proxyBytesRequired = (lstrlenW(ai->proxy) + 1) * sizeof(WCHAR);
             if (ai->proxyBypass)
                 proxyBypassBytesRequired = (lstrlenW(ai->proxyBypass) + 1) * sizeof(WCHAR);
-            if (*size < sizeof(INTERNET_PROXY_INFOW) + proxyBytesRequired + proxyBypassBytesRequired)
+            if (!pi || *size < sizeof(INTERNET_PROXY_INFOW) + proxyBytesRequired + proxyBypassBytesRequired)
             {
                 *size = sizeof(INTERNET_PROXY_INFOW) + proxyBytesRequired + proxyBypassBytesRequired;
                 return ERROR_INSUFFICIENT_BUFFER;
@@ -854,7 +854,7 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             if (ai->proxyBypass)
                 proxyBypassBytesRequired = WideCharToMultiByte(CP_ACP, 0, ai->proxyBypass, -1,
                         NULL, 0, NULL, NULL);
-            if (*size < sizeof(INTERNET_PROXY_INFOA) + proxyBytesRequired + proxyBypassBytesRequired)
+            if (!pi || *size < sizeof(INTERNET_PROXY_INFOA) + proxyBytesRequired + proxyBypassBytesRequired)
             {
                 *size = sizeof(INTERNET_PROXY_INFOA) + proxyBytesRequired + proxyBypassBytesRequired;
                 return ERROR_INSUFFICIENT_BUFFER;
