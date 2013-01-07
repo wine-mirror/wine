@@ -9,6 +9,7 @@ C_SRCS = \
 	window.c
 
 OBJC_SRCS = \
+	cocoa_app.m \
 	cocoa_display.m
 
 @MAKE_DLL_RULES@
