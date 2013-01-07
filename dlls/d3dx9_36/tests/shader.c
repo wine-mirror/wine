@@ -366,6 +366,21 @@ static void test_get_shader_constant_table_ex(void)
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
     ok(constant_table == NULL, "D3DXGetShaderConstantTableEx() failed, got %p\n", constant_table);
 
+    constant_table = (ID3DXConstantTable *)0xdeadbeef;
+    hr = D3DXGetShaderConstantTableEx(shader_zero, 0, &constant_table);
+    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(constant_table == NULL, "D3DXGetShaderConstantTableEx() failed, got %p\n", constant_table);
+
+    constant_table = (ID3DXConstantTable *)0xdeadbeef;
+    hr = D3DXGetShaderConstantTableEx(shader_invalid, 0, &constant_table);
+    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(constant_table == NULL, "D3DXGetShaderConstantTableEx() failed, got %p\n", constant_table);
+
+    constant_table = (ID3DXConstantTable *)0xdeadbeef;
+    hr = D3DXGetShaderConstantTableEx(shader_empty, 0, &constant_table);
+    ok(hr == D3DXERR_INVALIDDATA, "Got result %x, expected %x (D3DXERR_INVALIDDATA)\n", hr, D3DXERR_INVALIDDATA);
+    ok(constant_table == NULL, "D3DXGetShaderConstantTableEx() failed, got %p\n", constant_table);
+
     /* No CTAB data */
     constant_table = (ID3DXConstantTable *)0xdeadbeef;
     hr = D3DXGetShaderConstantTableEx(simple_ps, 0, &constant_table);
