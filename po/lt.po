@@ -1,11 +1,11 @@
 # Lithuanian translations for Wine
-# Aurimas Fišeras <aurimas@members.fsf.org>, 2011, 2012.
+# Aurimas Fišeras <aurimas@members.fsf.org>, 2011, 2012, 2013.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-12-29 09:34+0300\n"
+"PO-Revision-Date: 2013-01-07 21:59+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -8280,16 +8280,12 @@ msgid "Don't install"
 msgstr "Nediegti"
 
 #: urlmon.rc:40
-#, fuzzy
-#| msgid ""
-#| "When installed, ActiveX has full access to your computer.Do not click "
-#| "install unless you have absolute trust in the above source."
 msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
-"Kai įdiegta, ActiveX turi visišką prieigą prie kompiuterio. Nespauskite "
-"„Įdiegti“, nebent visiškai pasitikite šaltiniu aukščiau."
+"Kai įdiegtas, ActiveX komponentas turi visišką prieigą prie kompiuterio. "
+"Nespauskite „Įdiegti“, nebent visiškai pasitikite šaltiniu aukščiau."
 
 #: urlmon.rc:48
 msgid "Installation of component failed: %08x"
@@ -10204,10 +10200,8 @@ msgid "Connection-specific DNS suffix"
 msgstr "Ryšiui būdingas DNS sufiksas"
 
 #: ipconfig.rc:33
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv4 address"
-msgstr "IP adresas"
+msgstr "IPv4 adresas"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -10250,10 +10244,8 @@ msgid "Default gateway"
 msgstr "Numatytasis šliuzas"
 
 #: ipconfig.rc:47
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv6 address"
-msgstr "IP adresas"
+msgstr "IPv6 adresas"
 
 #: net.rc:27
 msgid ""
