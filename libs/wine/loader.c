@@ -39,20 +39,25 @@
 # include <unistd.h>
 #endif
 
+#ifdef __APPLE__
+#include <crt_externs.h>
+#define environ (*_NSGetEnviron())
+#include <CoreFoundation/CoreFoundation.h>
+#define LoadResource MacLoadResource
+#define GetCurrentThread MacGetCurrentThread
+#include <CoreServices/CoreServices.h>
+#undef LoadResource
+#undef GetCurrentThread
+#include <pthread.h>
+#else
+extern char **environ;
+#endif
+
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "wine/library.h"
-
-#ifdef __APPLE__
-#include <crt_externs.h>
-#define environ (*_NSGetEnviron())
-#include <CoreFoundation/CoreFoundation.h>
-#include <pthread.h>
-#else
-extern char **environ;
-#endif
 
 /* argc/argv for the Windows application */
 int __wine_main_argc = 0;
@@ -755,6 +760,11 @@ static void apple_main_thread( void (*init_func)(void) )
 {
     CFRunLoopSourceContext source_context = { 0 };
     CFRunLoopSourceRef source;
+
+    /* Multi-processing Services can get confused about the main thread if the
+     * first time it's used is on a secondary thread.  Use it here to make sure
+     * that doesn't happen. */
+    MPTaskIsPreemptive(MPCurrentTaskID());
 
     /* Give ourselves the best chance of having the distributed notification
      * center scheduled on this thread's run loop.  In theory, it's scheduled
