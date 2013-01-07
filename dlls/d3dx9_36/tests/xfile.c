@@ -47,7 +47,7 @@ char templates[] =
 "}\n";
 
 
-void test_templates(void)
+static void test_templates(void)
 {
     ID3DXFile *d3dxfile;
     HRESULT ret;

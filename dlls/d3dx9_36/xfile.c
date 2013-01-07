@@ -26,7 +26,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
-HRESULT error_dxfile_to_d3dxfile(HRESULT error)
+static HRESULT error_dxfile_to_d3dxfile(HRESULT error)
 {
     switch (error)
     {
