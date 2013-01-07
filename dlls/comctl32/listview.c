@@ -3594,9 +3594,15 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 	POINT ptItem;
 	
 	rcItem.left = LVIR_BOUNDS;
-	if (!LISTVIEW_GetItemRect(infoPtr, nItem, &rcItem)) return;
+	if (!LISTVIEW_GetItemRect(infoPtr, nItem, &rcItem)) {
+	     ranges_destroy (selection);
+	     return;
+	}
 	rcSelMark.left = LVIR_BOUNDS;
-	if (!LISTVIEW_GetItemRect(infoPtr, infoPtr->nSelectionMark, &rcSelMark)) return;
+	if (!LISTVIEW_GetItemRect(infoPtr, infoPtr->nSelectionMark, &rcSelMark)) {
+	     ranges_destroy (selection);
+	     return;
+	}
 	UnionRect(&rcSel, &rcItem, &rcSelMark);
 	iterator_frameditems(&i, infoPtr, &rcSel);
 	while(iterator_next(&i))
