@@ -7,7 +7,6 @@ C_SRCS = \
 	fstatvfs.c \
 	getopt.c \
 	getopt1.c \
-	getpagesize.c \
 	interlocked.c \
 	isinf.c \
 	isnan.c \

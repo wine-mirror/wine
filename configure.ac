@@ -1999,7 +1999,6 @@ AC_CHECK_FUNCS(\
 	getattrlist \
 	getdirentries \
 	getopt_long_only \
-	getpagesize \
 	getpwuid \
 	gettimeofday \
 	getuid \

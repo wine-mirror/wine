@@ -44,6 +44,7 @@
 # include <process.h>
 #endif
 #include <string.h>
+#include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -257,10 +258,6 @@ extern int getopt_long_only (int ___argc, char *const *___argv,
 int ffs( int x );
 #endif
 
-#ifndef HAVE_GETPAGESIZE
-size_t getpagesize(void);
-#endif  /* HAVE_GETPAGESIZE */
-
 #ifndef HAVE_ISINF
 int isinf(double x);
 #endif
@@ -453,7 +450,6 @@ extern unsigned char interlocked_cmpxchg128( __int64 *dest, __int64 xchg_high,
 #define fstatvfs                __WINE_NOT_PORTABLE(fstatvfs)
 #define getopt_long             __WINE_NOT_PORTABLE(getopt_long)
 #define getopt_long_only        __WINE_NOT_PORTABLE(getopt_long_only)
-#define getpagesize             __WINE_NOT_PORTABLE(getpagesize)
 #define interlocked_cmpxchg     __WINE_NOT_PORTABLE(interlocked_cmpxchg)
 #define interlocked_cmpxchg_ptr __WINE_NOT_PORTABLE(interlocked_cmpxchg_ptr)
 #define interlocked_xchg        __WINE_NOT_PORTABLE(interlocked_xchg)
