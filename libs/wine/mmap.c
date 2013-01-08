@@ -104,7 +104,7 @@ static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
                            int fildes, off_t off)
 {
     char * volatile result = NULL;
-    int pagesize = getpagesize();
+    const size_t pagesize = sysconf( _SC_PAGESIZE );
     pid_t pid, wret;
 
     /* We only try to map to a fixed address if
@@ -255,7 +255,7 @@ static inline void reserve_area( void *addr, void *end )
 #if (defined(__svr4__) || defined(__NetBSD__)) && !defined(MAP_TRYFIXED)
     /* try_mmap_fixed is inefficient when using vfork, so we need a different algorithm here */
     /* we assume no other thread is running at this point */
-    size_t i, pagesize = getpagesize();
+    size_t i, pagesize = sysconf( _SC_PAGESIZE );
     char vec;
 
     while (size)
@@ -321,19 +321,19 @@ static inline void reserve_malloc_space( size_t size )
  */
 static inline void reserve_dos_area(void)
 {
-    const size_t page_size = getpagesize();
+    const size_t first_page = 0x1000;
     const size_t dos_area_size = 0x110000;
     void *ptr;
 
     /* first page has to be handled specially */
-    ptr = wine_anon_mmap( (void *)page_size, dos_area_size - page_size, PROT_NONE, MAP_NORESERVE );
-    if (ptr != (void *)page_size)
+    ptr = wine_anon_mmap( (void *)first_page, dos_area_size - first_page, PROT_NONE, MAP_NORESERVE );
+    if (ptr != (void *)first_page)
     {
-        if (ptr != (void *)-1) munmap( ptr, dos_area_size - page_size );
+        if (ptr != (void *)-1) munmap( ptr, dos_area_size - first_page );
         return;
     }
     /* now add first page with MAP_FIXED */
-    wine_anon_mmap( NULL, page_size, PROT_NONE, MAP_NORESERVE|MAP_FIXED );
+    wine_anon_mmap( NULL, first_page, PROT_NONE, MAP_NORESERVE|MAP_FIXED );
     wine_mmap_add_reserved_area( NULL, dos_area_size );
 }
 

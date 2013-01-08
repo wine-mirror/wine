@@ -380,7 +380,7 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
     IMAGE_SECTION_HEADER *sec;
     BYTE *addr;
     DWORD code_start, data_start, data_end;
-    const size_t page_size = getpagesize();
+    const size_t page_size = sysconf( _SC_PAGESIZE );
     const size_t page_mask = page_size - 1;
     int delta, nb_sections = 2;  /* code + data */
     unsigned int i;
