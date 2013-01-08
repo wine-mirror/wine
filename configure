@@ -7255,7 +7255,11 @@ fi
 
 if test "$ac_cv_header_pthread_h" = "yes"
 then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_create in -lpthread" >&5
+    ac_fn_c_check_func "$LINENO" "pthread_create" "ac_cv_func_pthread_create"
+if test "x$ac_cv_func_pthread_create" = xyes; then :
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_create in -lpthread" >&5
 $as_echo_n "checking for pthread_create in -lpthread... " >&6; }
 if ${ac_cv_lib_pthread_pthread_create+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -7297,7 +7301,9 @@ if test "x$ac_cv_lib_pthread_pthread_create" = xyes; then :
 fi
 
 fi
-if test "x$LIBPTHREAD" = "x"; then :
+
+fi
+if test "x$ac_cv_func_pthread_create" != xyes -a "x$LIBPTHREAD" = x; then :
   case "x$with_pthread" in
   xno) ;;
   *)   as_fn_error $? "pthread ${notice_platform}development files not found.

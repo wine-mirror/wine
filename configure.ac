@@ -954,9 +954,10 @@ dnl **** Check for pthread ****
 
 if test "$ac_cv_header_pthread_h" = "yes"
 then
-    AC_CHECK_LIB(pthread,pthread_create,[AC_SUBST(LIBPTHREAD,"-lpthread")])
+    AC_CHECK_FUNC(pthread_create,,[AC_CHECK_LIB(pthread,pthread_create,[AC_SUBST(LIBPTHREAD,"-lpthread")])])
 fi
-WINE_ERROR_WITH(pthread,[test "x$LIBPTHREAD" = "x"],[pthread ${notice_platform}development files not found.
+WINE_ERROR_WITH(pthread,[test "x$ac_cv_func_pthread_create" != xyes -a "x$LIBPTHREAD" = x],
+[pthread ${notice_platform}development files not found.
 Wine cannot support threads without libpthread.])
 
 dnl **** Check for X11 ****
