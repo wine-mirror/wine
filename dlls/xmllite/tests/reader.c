@@ -799,6 +799,8 @@ static void test_read_comment(void)
 static struct test_entry pi_tests[] = {
     { "<?pi?>", "pi", "", S_OK },
     { "<?pi ?>", "pi", "", S_OK },
+    { "<?pi pi data?>", "pi", "pi data", S_OK },
+    { "<?pi pi data  ?>", "pi", "pi data  ", S_OK },
     { "<?pi:pi?>", NULL, NULL, NC_E_NAMECOLON, WC_E_NAMECHARACTER },
     { "<?:pi ?>", NULL, NULL, WC_E_PI, WC_E_NAMECHARACTER },
     { "<?-pi ?>", NULL, NULL, WC_E_PI, WC_E_NAMECHARACTER },
@@ -832,29 +834,39 @@ static void test_read_pi(void)
             ok(hr == test->hr, "got %08x for %s\n", hr, test->xml);
         if (hr == S_OK)
         {
-            const WCHAR *name;
-            WCHAR *name_exp;
+            const WCHAR *str;
+            WCHAR *str_exp;
             UINT len;
 
             ok(type == XmlNodeType_ProcessingInstruction, "got %d for %s\n", type, test->xml);
 
             len = 0;
-            name = NULL;
-            hr = IXmlReader_GetLocalName(reader, &name, &len);
+            str = NULL;
+            hr = IXmlReader_GetLocalName(reader, &str, &len);
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(len == strlen(test->name), "got %u\n", len);
-            name_exp = a2w(test->name);
-            ok(!lstrcmpW(name, name_exp), "got %s\n", wine_dbgstr_w(name));
-            free_str(name_exp);
+            str_exp = a2w(test->name);
+            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+            free_str(str_exp);
 
             len = 0;
-            name = NULL;
-            hr = IXmlReader_GetQualifiedName(reader, &name, &len);
+            str = NULL;
+            hr = IXmlReader_GetQualifiedName(reader, &str, &len);
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(len == strlen(test->name), "got %u\n", len);
-            name_exp = a2w(test->name);
-            ok(!lstrcmpW(name, name_exp), "got %s\n", wine_dbgstr_w(name));
-            free_str(name_exp);
+            str_exp = a2w(test->name);
+            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+            free_str(str_exp);
+
+            /* value */
+            len = !strlen(test->value);
+            str = NULL;
+            hr = IXmlReader_GetValue(reader, &str, &len);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(len == strlen(test->value), "got %u\n", len);
+            str_exp = a2w(test->value);
+            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+            free_str(str_exp);
         }
 
         IStream_Release(stream);

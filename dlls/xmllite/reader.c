@@ -1031,7 +1031,7 @@ static HRESULT reader_parse_pitarget(xmlreader *reader, strval *target)
 /* [16] PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>' */
 static HRESULT reader_parse_pi(xmlreader *reader)
 {
-    const WCHAR *ptr, *start;
+    WCHAR *ptr, *start;
     strval target;
     HRESULT hr;
 
@@ -1051,6 +1051,7 @@ static HRESULT reader_parse_pi(xmlreader *reader)
         reader->nodetype = XmlNodeType_ProcessingInstruction;
         reader_set_strvalue(reader, StringValue_LocalName, &target);
         reader_set_strvalue(reader, StringValue_QualifiedName, &target);
+        reader_set_strvalue(reader, StringValue_Value, &strval_empty);
         return S_OK;
     }
 
@@ -1066,12 +1067,15 @@ static HRESULT reader_parse_pi(xmlreader *reader)
         {
             if (ptr[1] == '>')
             {
+                strval value = { start, ptr-start };
+
                 TRACE("%s\n", debugstr_wn(start, ptr-start));
                 /* skip '?>' */
                 reader_skipn(reader, 2);
                 reader->nodetype = XmlNodeType_ProcessingInstruction;
                 reader_set_strvalue(reader, StringValue_LocalName, &target);
                 reader_set_strvalue(reader, StringValue_QualifiedName, &target);
+                reader_set_strvalue(reader, StringValue_Value, &value);
                 return S_OK;
             }
             else
