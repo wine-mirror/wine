@@ -119,134 +119,78 @@ static inline struct ddraw *impl_from_IDirect3D7(IDirect3D7 *iface)
     return CONTAINING_RECORD(iface, struct ddraw, IDirect3D7_iface);
 }
 
-/*****************************************************************************
- * IUnknown Methods
- *****************************************************************************/
-
-/*****************************************************************************
- * IDirectDraw7::QueryInterface
- *
- * Queries different interfaces of the DirectDraw object. It can return
- * IDirectDraw interfaces in version 1, 2, 4 and 7, and IDirect3D interfaces
- * in version 1, 2, 3 and 7. An IDirect3DDevice can be created with this
- * method.
- * The returned interface is AddRef()-ed before it's returned
- *
- * Used for version 1, 2, 4 and 7
- *
- * Params:
- *  refiid: Interface ID asked for
- *  obj: Used to return the interface pointer
- *
- * Returns:
- *  S_OK if an interface was found
- *  E_NOINTERFACE if the requested interface wasn't found
- *
- *****************************************************************************/
-static HRESULT WINAPI ddraw7_QueryInterface(IDirectDraw7 *iface, REFIID refiid, void **obj)
+static HRESULT WINAPI ddraw7_QueryInterface(IDirectDraw7 *iface, REFIID riid, void **out)
 {
-    struct ddraw *This = impl_from_IDirectDraw7(iface);
+    struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
 
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(refiid), obj);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    /* Can change surface impl type */
-    wined3d_mutex_lock();
-
-    /* According to COM docs, if the QueryInterface fails, obj should be set to NULL */
-    *obj = NULL;
-
-    if(!refiid)
+    if (!riid)
     {
-        wined3d_mutex_unlock();
+        *out = NULL;
         return DDERR_INVALIDPARAMS;
     }
 
-    /* Check DirectDraw Interfaces */
-    if ( IsEqualGUID( &IID_IUnknown, refiid ) ||
-         IsEqualGUID( &IID_IDirectDraw7, refiid ) )
+    /* The refcount unit test revealed that an IDirect3D7 interface can only
+     * be queried from a DirectDraw object that was created as an IDirectDraw7
+     * interface. The older interfaces can query any IDirect3D version except
+     * 7, because they are all initially created as IDirectDraw. This isn't
+     * really crucial behavior, and messy to implement with the common
+     * creation function, so it has been left out here. */
+    if (IsEqualGUID(&IID_IDirectDraw7, riid)
+            || IsEqualGUID(&IID_IUnknown, riid))
     {
-        *obj = &This->IDirectDraw7_iface;
-        TRACE("(%p) Returning IDirectDraw7 interface at %p\n", This, *obj);
+        *out = &ddraw->IDirectDraw7_iface;
+        TRACE("Returning IDirectDraw7 interface %p.\n", *out);
     }
-    else if ( IsEqualGUID( &IID_IDirectDraw4, refiid ) )
+    else if (IsEqualGUID(&IID_IDirectDraw4, riid))
     {
-        *obj = &This->IDirectDraw4_iface;
-        TRACE("(%p) Returning IDirectDraw4 interface at %p\n", This, *obj);
+        *out = &ddraw->IDirectDraw4_iface;
+        TRACE("Returning IDirectDraw4 interface %p.\n", *out);
     }
-    else if ( IsEqualGUID( &IID_IDirectDraw3, refiid ) )
+    else if (IsEqualGUID(&IID_IDirectDraw2, riid))
     {
-        /* This Interface exists in ddrawex.dll, it is implemented in a wrapper */
-        WARN("IDirectDraw3 is not valid in ddraw.dll\n");
-        *obj = NULL;
-        wined3d_mutex_unlock();
-        return E_NOINTERFACE;
+        *out = &ddraw->IDirectDraw2_iface;
+        TRACE("Returning IDirectDraw2 interface %p.\n", *out);
     }
-    else if ( IsEqualGUID( &IID_IDirectDraw2, refiid ) )
+    else if (IsEqualGUID(&IID_IDirectDraw, riid))
     {
-        *obj = &This->IDirectDraw2_iface;
-        TRACE("(%p) Returning IDirectDraw2 interface at %p\n", This, *obj);
+        *out = &ddraw->IDirectDraw_iface;
+        TRACE("Returning IDirectDraw interface %p.\n", *out);
     }
-    else if ( IsEqualGUID( &IID_IDirectDraw, refiid ) )
+    else if (IsEqualGUID(&IID_IDirect3D7, riid))
     {
-        *obj = &This->IDirectDraw_iface;
-        TRACE("(%p) Returning IDirectDraw interface at %p\n", This, *obj);
+        ddraw->d3dversion = 7;
+        *out = &ddraw->IDirect3D7_iface;
+        TRACE("Returning Direct3D7 interface %p.\n", *out);
     }
-
-    /* Direct3D
-     * The refcount unit test revealed that an IDirect3D7 interface can only be queried
-     * from a DirectDraw object that was created as an IDirectDraw7 interface. No idea
-     * who had this idea and why. The older interfaces can query and IDirect3D version
-     * because they are all created as IDirectDraw(1). This isn't really crucial behavior,
-     * and messy to implement with the common creation function, so it has been left out here.
-     */
-    else if ( IsEqualGUID( &IID_IDirect3D  , refiid ) ||
-              IsEqualGUID( &IID_IDirect3D2 , refiid ) ||
-              IsEqualGUID( &IID_IDirect3D3 , refiid ) ||
-              IsEqualGUID( &IID_IDirect3D7 , refiid ) )
+    else if (IsEqualGUID(&IID_IDirect3D3, riid))
     {
-        /* Check the surface implementation */
-        if (DefaultSurfaceType != WINED3D_SURFACE_TYPE_OPENGL)
-        {
-            WARN("The app requests a Direct3D interface, but non-opengl surfaces where set in winecfg\n");
-            /* Do not abort here, only reject 3D Device creation */
-        }
-
-        if ( IsEqualGUID( &IID_IDirect3D  , refiid ) )
-        {
-            This->d3dversion = 1;
-            *obj = &This->IDirect3D_iface;
-            TRACE(" returning Direct3D interface at %p.\n", *obj);
-        }
-        else if ( IsEqualGUID( &IID_IDirect3D2  , refiid ) )
-        {
-            This->d3dversion = 2;
-            *obj = &This->IDirect3D2_iface;
-            TRACE(" returning Direct3D2 interface at %p.\n", *obj);
-        }
-        else if ( IsEqualGUID( &IID_IDirect3D3  , refiid ) )
-        {
-            This->d3dversion = 3;
-            *obj = &This->IDirect3D3_iface;
-            TRACE(" returning Direct3D3 interface at %p.\n", *obj);
-        }
-        else if(IsEqualGUID( &IID_IDirect3D7  , refiid ))
-        {
-            This->d3dversion = 7;
-            *obj = &This->IDirect3D7_iface;
-            TRACE(" returning Direct3D7 interface at %p.\n", *obj);
-        }
+        ddraw->d3dversion = 3;
+        *out = &ddraw->IDirect3D3_iface;
+        TRACE("Returning Direct3D3 interface %p.\n", *out);
+    }
+    else if (IsEqualGUID(&IID_IDirect3D2, riid))
+    {
+        ddraw->d3dversion = 2;
+        *out = &ddraw->IDirect3D2_iface;
+        TRACE("Returning Direct3D2 interface %p.\n", *out);
+    }
+    else if (IsEqualGUID(&IID_IDirect3D, riid))
+    {
+        ddraw->d3dversion = 1;
+        *out = &ddraw->IDirect3D_iface;
+        TRACE("Returning Direct3D interface %p.\n", *out);
     }
     /* Unknown interface */
     else
     {
-        ERR("(%p)->(%s, %p): No interface found\n", This, debugstr_guid(refiid), obj);
-        wined3d_mutex_unlock();
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+        *out = NULL;
         return E_NOINTERFACE;
     }
 
-    IUnknown_AddRef( (IUnknown *) *obj );
-    wined3d_mutex_unlock();
-
+    IUnknown_AddRef((IUnknown *)*out);
     return S_OK;
 }
 
