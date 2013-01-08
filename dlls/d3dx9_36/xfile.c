@@ -50,11 +50,118 @@ typedef struct {
     IDirectXFile *dxfile;
 } ID3DXFileImpl;
 
+typedef struct {
+    ID3DXFileEnumObject ID3DXFileEnumObject_iface;
+    LONG ref;
+} ID3DXFileEnumObjectImpl;
 
 static inline ID3DXFileImpl* impl_from_ID3DXFile(ID3DXFile *iface)
 {
     return CONTAINING_RECORD(iface, ID3DXFileImpl, ID3DXFile_iface);
 }
+
+static inline ID3DXFileEnumObjectImpl* impl_from_ID3DXFileEnumObject(ID3DXFileEnumObject *iface)
+{
+    return CONTAINING_RECORD(iface, ID3DXFileEnumObjectImpl, ID3DXFileEnumObject_iface);
+}
+
+
+/*** IUnknown methods ***/
+
+static HRESULT WINAPI ID3DXFileEnumObjectImpl_QueryInterface(ID3DXFileEnumObject *iface, REFIID riid, void **ret_iface)
+{
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ret_iface);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_ID3DXFileEnumObject))
+    {
+        iface->lpVtbl->AddRef(iface);
+        *ret_iface = iface;
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s, %p), not found\n", iface, debugstr_guid(riid), ret_iface);
+    *ret_iface = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ID3DXFileEnumObjectImpl_AddRef(ID3DXFileEnumObject *iface)
+{
+    ID3DXFileEnumObjectImpl *This = impl_from_ID3DXFileEnumObject(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->(): new ref %u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI ID3DXFileEnumObjectImpl_Release(ID3DXFileEnumObject *iface)
+{
+    ID3DXFileEnumObjectImpl *This = impl_from_ID3DXFileEnumObject(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(): new ref %u\n", iface, ref);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+
+/*** ID3DXFileEnumObject methods ***/
+
+static HRESULT WINAPI ID3DXFileEnumObjectImpl_GetFile(ID3DXFileEnumObject *iface, ID3DXFile **file)
+{
+    FIXME("(%p)->(%p): stub\n", iface, file);
+
+    return E_NOTIMPL;
+}
+
+
+static HRESULT WINAPI ID3DXFileEnumObjectImpl_GetChildren(ID3DXFileEnumObject *iface, SIZE_T *children)
+{
+    FIXME("(%p)->(%p): stub\n", iface, children);
+
+    return E_NOTIMPL;
+}
+
+
+static HRESULT WINAPI ID3DXFileEnumObjectImpl_GetChild(ID3DXFileEnumObject *iface, SIZE_T id, ID3DXFileData **object)
+{
+    FIXME("(%p)->(%lu, %p): stub\n", iface, id, object);
+
+    return E_NOTIMPL;
+}
+
+
+static HRESULT WINAPI ID3DXFileEnumObjectImpl_GetDataObjectById(ID3DXFileEnumObject *iface, REFGUID guid, ID3DXFileData **object)
+{
+    FIXME("(%p)->(%s, %p): stub\n", iface, debugstr_guid(guid), object);
+
+    return E_NOTIMPL;
+}
+
+
+static HRESULT WINAPI ID3DXFileEnumObjectImpl_GetDataObjectByName(ID3DXFileEnumObject *iface, const char *name, ID3DXFileData **object)
+{
+    FIXME("(%p)->(%s, %p): stub\n", iface, debugstr_a(name), object);
+
+    return E_NOTIMPL;
+}
+
+
+static const ID3DXFileEnumObjectVtbl ID3DXFileEnumObject_Vtbl =
+{
+    ID3DXFileEnumObjectImpl_QueryInterface,
+    ID3DXFileEnumObjectImpl_AddRef,
+    ID3DXFileEnumObjectImpl_Release,
+    ID3DXFileEnumObjectImpl_GetFile,
+    ID3DXFileEnumObjectImpl_GetChildren,
+    ID3DXFileEnumObjectImpl_GetChild,
+    ID3DXFileEnumObjectImpl_GetDataObjectById,
+    ID3DXFileEnumObjectImpl_GetDataObjectByName
+};
 
 
 /*** IUnknown methods ***/
@@ -109,9 +216,25 @@ static ULONG WINAPI ID3DXFileImpl_Release(ID3DXFile *iface)
 
 static HRESULT WINAPI ID3DXFileImpl_CreateEnumObject(ID3DXFile *iface, const void *source, D3DXF_FILELOADOPTIONS options, ID3DXFileEnumObject **enum_object)
 {
-    FIXME("(%p)->(%p, %x, %p): stub\n", iface, source, options, enum_object);
+    ID3DXFileEnumObjectImpl *object;
 
-    return E_NOTIMPL;
+    FIXME("(%p)->(%p, %x, %p): partial stub\n", iface, source, options, enum_object);
+
+    if (!enum_object)
+        return E_POINTER;
+
+    *enum_object = NULL;
+
+    object = HeapAlloc(GetProcessHeap(), 0, sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->ID3DXFileEnumObject_iface.lpVtbl = &ID3DXFileEnumObject_Vtbl;
+    object->ref = 1;
+
+    *enum_object = &object->ID3DXFileEnumObject_iface;
+
+    return S_OK;
 }
 
 
