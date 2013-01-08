@@ -3,7 +3,6 @@ IMPORTS   = user32
 
 C_SRCS = \
 	buffer.c \
-	d3d8_main.c \
 	device.c \
 	stateblock.c \
 	surface.c \

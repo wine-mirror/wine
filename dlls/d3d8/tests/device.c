@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2006 Vitaliy Margolen
  * Copyright (C) 2006 Chris Robinson
+ * Copyright (C) 2006 Louis Lenders
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,6 +27,8 @@
 static INT screen_width;
 static INT screen_height;
 
+static HRESULT (WINAPI *ValidateVertexShader)(DWORD *, DWORD *, DWORD *, int, DWORD *);
+static HRESULT (WINAPI *ValidatePixelShader)(DWORD *, DWORD *, int, DWORD *);
 static IDirect3D8 *(WINAPI *pDirect3DCreate8)(UINT);
 
 static BOOL (WINAPI *pGetCursorInfo)(PCURSORINFO);
@@ -3374,6 +3377,94 @@ static void test_set_rt_vp_scissor(void)
     DestroyWindow(window);
 }
 
+static void test_validate_vs(void)
+{
+    static DWORD vs[] =
+    {
+        0xfffe0101,                                                             /* vs_1_1                       */
+        0x00000009, 0xc0010000, 0x90e40000, 0xa0e40000,                         /* dp4 oPos.x, v0, c0           */
+        0x00000009, 0xc0020000, 0x90e40000, 0xa0e40001,                         /* dp4 oPos.y, v0, c1           */
+        0x00000009, 0xc0040000, 0x90e40000, 0xa0e40002,                         /* dp4 oPos.z, v0, c2           */
+        0x00000009, 0xc0080000, 0x90e40000, 0xa0e40003,                         /* dp4 oPos.w, v0, c3           */
+        0x0000ffff,                                                             /* end                          */
+    };
+    HRESULT hr;
+
+    hr = ValidateVertexShader(0, 0, 0, 0, 0);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = ValidateVertexShader(0, 0, 0, 1, 0);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = ValidateVertexShader(vs, 0, 0, 0, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = ValidateVertexShader(vs, 0, 0, 1, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    /* Seems to do some version checking. */
+    *vs = 0xfffe0100;                                                           /* vs_1_0                       */
+    hr = ValidateVertexShader(vs, 0, 0, 0, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    *vs = 0xfffe0102;                                                           /* bogus version                */
+    hr = ValidateVertexShader(vs, 0, 0, 1, 0);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    /* I've seen that applications always pass the 2nd and 3rd parameter as 0.
+     * Simple test with non-zero parameters. */
+    *vs = 0xfffe0101;                                                           /* vs_1_1                       */
+    hr = ValidateVertexShader(vs, vs, 0, 1, 0);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+
+    hr = ValidateVertexShader(vs, 0, vs, 1, 0);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    /* I've seen the 4th parameter always passed as either 0 or 1, but passing
+     * other values doesn't seem to hurt. */
+    hr = ValidateVertexShader(vs, 0, 0, 12345, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    /* What is the 5th parameter? The following seems to work ok. */
+    hr = ValidateVertexShader(vs, 0, 0, 1, vs);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+}
+
+static void test_validate_ps(void)
+{
+    static DWORD ps[] =
+    {
+        0xffff0101,                                                             /* ps_1_1                       */
+        0x00000051, 0xa00f0001, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c1 = 1.0, 0.0, 0.0, 0.0  */
+        0x00000042, 0xb00f0000,                                                 /* tex t0                       */
+        0x00000008, 0x800f0000, 0xa0e40001, 0xa0e40000,                         /* dp3 r0, c1, c0               */
+        0x00000005, 0x800f0000, 0x90e40000, 0x80e40000,                         /* mul r0, v0, r0               */
+        0x00000005, 0x800f0000, 0xb0e40000, 0x80e40000,                         /* mul r0, t0, r0               */
+        0x0000ffff,                                                             /* end                          */
+    };
+    HRESULT hr;
+
+    hr = ValidatePixelShader(0, 0, 0, 0);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = ValidatePixelShader(0, 0, 1, 0);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = ValidatePixelShader(ps, 0, 0, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = ValidatePixelShader(ps, 0, 1, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    /* Seems to do some version checking. */
+    *ps = 0xffff0105;                                                           /* bogus version                */
+    hr = ValidatePixelShader(ps, 0, 1, 0);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    /* I've seen that applications always pass the 2nd parameter as 0.
+     * Simple test with a non-zero parameter. */
+    *ps = 0xffff0101;                                                           /* ps_1_1                       */
+    hr = ValidatePixelShader(ps, ps, 1, 0);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    /* I've seen th 3rd parameter always passed as either 0 or 1, but passing
+     * other values doesn't seem to hurt. */
+    hr = ValidatePixelShader(ps, 0, 12345, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    /* What is the 4th parameter? The following seems to work ok. */
+    hr = ValidatePixelShader(ps, 0, 1, ps);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -3388,6 +3479,8 @@ START_TEST(device)
     wc.lpszClassName = "d3d8_test_wc";
     RegisterClass(&wc);
 
+    ValidateVertexShader = (void *)GetProcAddress(d3d8_handle, "ValidateVertexShader");
+    ValidatePixelShader = (void *)GetProcAddress(d3d8_handle, "ValidatePixelShader");
     pDirect3DCreate8 = (void *)GetProcAddress( d3d8_handle, "Direct3DCreate8" );
     ok(pDirect3DCreate8 != NULL, "Failed to get address of Direct3DCreate8\n");
     if (pDirect3DCreate8)
@@ -3431,6 +3524,8 @@ START_TEST(device)
         test_reset_resources();
         depth_blit_test();
         test_set_rt_vp_scissor();
+        test_validate_vs();
+        test_validate_ps();
     }
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
