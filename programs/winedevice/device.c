@@ -66,7 +66,7 @@ static HMODULE load_driver_module( const WCHAR *name )
 {
     IMAGE_NT_HEADERS *nt;
     const IMAGE_IMPORT_DESCRIPTOR *imports;
-    size_t page_size = getpagesize();
+    SYSTEM_BASIC_INFORMATION info;
     int i;
     INT_PTR delta;
     ULONG size;
@@ -80,7 +80,8 @@ static HMODULE load_driver_module( const WCHAR *name )
     /* the loader does not apply relocations to non page-aligned binaries or executables,
      * we have to do it ourselves */
 
-    if (nt->OptionalHeader.SectionAlignment < page_size ||
+    NtQuerySystemInformation( SystemBasicInformation, &info, sizeof(info), NULL );
+    if (nt->OptionalHeader.SectionAlignment < info.PageSize ||
         !(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
     {
         DWORD old;
@@ -94,10 +95,10 @@ static HMODULE load_driver_module( const WCHAR *name )
             while (rel < end && rel->SizeOfBlock)
             {
                 void *page = (char *)module + rel->VirtualAddress;
-                VirtualProtect( page, page_size, PAGE_EXECUTE_READWRITE, &old );
+                VirtualProtect( page, info.PageSize, PAGE_EXECUTE_READWRITE, &old );
                 rel = LdrProcessRelocationBlock( page, (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT),
                                                  (USHORT *)(rel + 1), delta );
-                if (old != PAGE_EXECUTE_READWRITE) VirtualProtect( page, page_size, old, NULL );
+                if (old != PAGE_EXECUTE_READWRITE) VirtualProtect( page, info.PageSize, old, NULL );
                 if (!rel) goto error;
             }
             /* make sure we don't try again */
