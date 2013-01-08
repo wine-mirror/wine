@@ -522,7 +522,6 @@ AC_CHECK_HEADERS(\
 	sys/timeout.h \
 	sys/times.h \
 	sys/uio.h \
-	sys/un.h \
 	sys/utsname.h \
 	sys/vm86.h \
 	sys/wait.h \
@@ -559,6 +558,7 @@ AC_CHECK_HEADERS(\
 	netinet/ip_var.h \
 	netinet/udp.h \
 	netipx/ipx.h \
+	sys/un.h \
 ,,,[#include <sys/types.h>
      #ifdef HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
