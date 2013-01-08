@@ -56,6 +56,7 @@ typedef enum
 {
     StringValue_LocalName,
     StringValue_QualifiedName,
+    StringValue_Value,
     StringValue_Last
 } XmlReaderStringValue;
 
@@ -889,7 +890,7 @@ static HRESULT reader_parse_xmldecl(xmlreader *reader)
 /* [15] Comment ::= '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->' */
 static HRESULT reader_parse_comment(xmlreader *reader)
 {
-    const WCHAR *start, *ptr;
+    WCHAR *start, *ptr;
 
     /* skip '<!--' */
     reader_skipn(reader, 4);
@@ -904,11 +905,14 @@ static HRESULT reader_parse_comment(xmlreader *reader)
             {
                 if (ptr[2] == '>')
                 {
+                    strval value = { start, ptr-start };
+
                     TRACE("%s\n", debugstr_wn(start, ptr-start));
                     /* skip '-->' */
                     reader_skipn(reader, 3);
                     reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
                     reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
+                    reader_set_strvalue(reader, StringValue_Value, &value);
                     reader->nodetype = XmlNodeType_Comment;
                     return S_OK;
                 }
@@ -1421,12 +1425,14 @@ static HRESULT WINAPI xmlreader_GetPrefix(IXmlReader* iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmlreader_GetValue(IXmlReader* iface,
-                                         LPCWSTR *value,
-                                         UINT *value_length)
+static HRESULT WINAPI xmlreader_GetValue(IXmlReader* iface, LPCWSTR *value, UINT *len)
 {
-    FIXME("(%p %p %p): stub\n", iface, value, value_length);
-    return E_NOTIMPL;
+    xmlreader *This = impl_from_IXmlReader(iface);
+
+    TRACE("(%p)->(%p %p)\n", This, value, len);
+    *value = This->strvalues[StringValue_Value].str;
+    if (len) *len = This->strvalues[StringValue_Value].len;
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlreader_ReadValueChunk(IXmlReader* iface,
@@ -1600,6 +1606,7 @@ static const struct IUnknownVtbl xmlreaderinput_vtbl =
 HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
 {
     xmlreader *reader;
+    int i;
 
     TRACE("(%s, %p, %p)\n", wine_dbgstr_guid(riid), obj, imalloc);
 
@@ -1628,7 +1635,9 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
     list_init(&reader->attrs);
     reader->attr_count = 0;
     reader->attr = NULL;
-    memset(&reader->strvalues, 0, sizeof(reader->strvalues));
+
+    for (i = 0; i < StringValue_Last; i++)
+        reader->strvalues[i] = strval_empty;
 
     *obj = &reader->IXmlReader_iface;
 

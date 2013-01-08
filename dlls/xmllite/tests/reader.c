@@ -648,10 +648,8 @@ static void test_read_xmldeclaration(void)
     test_read_state(reader, XmlReadState_Interactive, -1, 0);
 
     hr = IXmlReader_GetValue(reader, &val, NULL);
-todo_wine
     ok(hr == S_OK, "got %08x\n", hr);
-    if (hr == S_OK)
-        ok(*val == 0, "got %s\n", wine_dbgstr_w(val));
+    ok(*val == 0, "got %s\n", wine_dbgstr_w(val));
 
     /* check attributes */
     hr = IXmlReader_MoveToNextAttribute(reader);
@@ -717,14 +715,16 @@ todo_wine {
 struct test_entry {
     const char *xml;
     const char *name;
+    const char *value;
     HRESULT hr;
     HRESULT hr_broken; /* this is set to older version results */
 };
 
 static struct test_entry comment_tests[] = {
-    { "<!-- comment -->", "", S_OK },
-    { "<!-- - comment-->", "", S_OK },
-    { "<!-- -- comment-->", NULL, WC_E_COMMENT, WC_E_GREATERTHAN },
+    { "<!-- comment -->", "", " comment ", S_OK },
+    { "<!-- - comment-->", "", " - comment", S_OK },
+    { "<!-- -- comment-->", NULL, NULL, WC_E_COMMENT, WC_E_GREATERTHAN },
+    { "<!-- -- comment--->", NULL, NULL, WC_E_COMMENT, WC_E_GREATERTHAN },
     { NULL }
 };
 
@@ -754,29 +754,39 @@ static void test_read_comment(void)
             ok(hr == test->hr, "got %08x for %s\n", hr, test->xml);
         if (hr == S_OK)
         {
-            const WCHAR *name;
-            WCHAR *name_exp;
+            const WCHAR *str;
+            WCHAR *str_exp;
             UINT len;
 
             ok(type == XmlNodeType_Comment, "got %d for %s\n", type, test->xml);
 
             len = 1;
-            name = NULL;
-            hr = IXmlReader_GetLocalName(reader, &name, &len);
+            str = NULL;
+            hr = IXmlReader_GetLocalName(reader, &str, &len);
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(len == strlen(test->name), "got %u\n", len);
-            name_exp = a2w(test->name);
-            ok(!lstrcmpW(name, name_exp), "got %s\n", wine_dbgstr_w(name));
-            free_str(name_exp);
+            str_exp = a2w(test->name);
+            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+            free_str(str_exp);
 
             len = 1;
-            name = NULL;
-            hr = IXmlReader_GetQualifiedName(reader, &name, &len);
+            str = NULL;
+            hr = IXmlReader_GetQualifiedName(reader, &str, &len);
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(len == strlen(test->name), "got %u\n", len);
-            name_exp = a2w(test->name);
-            ok(!lstrcmpW(name, name_exp), "got %s\n", wine_dbgstr_w(name));
-            free_str(name_exp);
+            str_exp = a2w(test->name);
+            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+            free_str(str_exp);
+
+            /* value */
+            len = 1;
+            str = NULL;
+            hr = IXmlReader_GetValue(reader, &str, &len);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(len == strlen(test->value), "got %u\n", len);
+            str_exp = a2w(test->value);
+            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+            free_str(str_exp);
         }
 
         IStream_Release(stream);
@@ -787,12 +797,12 @@ static void test_read_comment(void)
 }
 
 static struct test_entry pi_tests[] = {
-    { "<?pi?>", "pi", S_OK },
-    { "<?pi ?>", "pi", S_OK },
-    { "<?pi:pi?>", NULL, NC_E_NAMECOLON, WC_E_NAMECHARACTER },
-    { "<?:pi ?>", NULL, WC_E_PI, WC_E_NAMECHARACTER },
-    { "<?-pi ?>", NULL, WC_E_PI, WC_E_NAMECHARACTER },
-    { "<?xml-stylesheet ?>", "xml-stylesheet", S_OK },
+    { "<?pi?>", "pi", "", S_OK },
+    { "<?pi ?>", "pi", "", S_OK },
+    { "<?pi:pi?>", NULL, NULL, NC_E_NAMECOLON, WC_E_NAMECHARACTER },
+    { "<?:pi ?>", NULL, NULL, WC_E_PI, WC_E_NAMECHARACTER },
+    { "<?-pi ?>", NULL, NULL, WC_E_PI, WC_E_NAMECHARACTER },
+    { "<?xml-stylesheet ?>", "xml-stylesheet", "", S_OK },
     { NULL }
 };
 
