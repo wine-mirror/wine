@@ -182,6 +182,7 @@ static OPENTYPE_FEATURE_RECORD arabic_gpos_features[] =
 
 static OPENTYPE_FEATURE_RECORD hebrew_features[] =
 {
+    { MS_MAKE_TAG('c','c','m','p'), 1},
     { MS_MAKE_TAG('d','l','i','g'), 0},
 };
 
@@ -457,7 +458,7 @@ static const ScriptShapeData ShapingData[] =
     {{ latin_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
     {{ arabic_features, 6}, {arabic_gpos_features, 4}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
     {{ arabic_features, 6}, {arabic_gpos_features, 4}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
-    {{ hebrew_features, 1}, {hebrew_gpos_features, 2}, NULL, 0, ContextualShape_Hebrew, ShapeCharGlyphProp_Hebrew},
+    {{ hebrew_features, 2}, {hebrew_gpos_features, 2}, NULL, 0, ContextualShape_Hebrew, ShapeCharGlyphProp_Hebrew},
     {{ syriac_features, 4}, {syriac_gpos_features, 3}, required_syriac_features, 0, ContextualShape_Syriac, ShapeCharGlyphProp_None},
     {{ arabic_features, 6}, {arabic_gpos_features, 4}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
     {{ NULL, 0}, {NULL, 0}, NULL, 0, ContextualShape_Thaana, ShapeCharGlyphProp_None},
@@ -528,7 +529,7 @@ static const ScriptShapeData ShapingData[] =
     {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ hebrew_features, 1}, {hebrew_gpos_features, 2}, NULL, 0, ContextualShape_Hebrew, NULL},
+    {{ hebrew_features, 2}, {hebrew_gpos_features, 2}, NULL, 0, ContextualShape_Hebrew, NULL},
     {{ latin_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
     {{ thai_features, 1}, {thai_gpos_features, 3}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
 };
