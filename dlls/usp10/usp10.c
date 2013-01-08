@@ -3253,41 +3253,19 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
         fuOptions |= ETO_GLYPH_INDEX;                             /* Say don't do translation to glyph */
 
     lpDx = heap_alloc(cGlyphs * sizeof(INT) * 2);
+    fuOptions |= ETO_PDY;
 
-    if (pGoffset)
-    {
-        for (i = 0; i < cGlyphs; i++)
-            if (!(fuOptions&ETO_PDY) && pGoffset[i].dv)
-                fuOptions |= ETO_PDY;
-    }
     for (i = 0; i < cGlyphs; i++)
     {
-        int idx = i;
-        if (fuOptions&ETO_PDY)
+        lpDx[i * 2] = piAdvance[i];
+        lpDx[i * 2 + 1] = 0;
+
+        if (pGoffset && i > 0)
         {
-            idx *=2;
-            lpDx[idx+1] = 0;
-        }
-        lpDx[idx] = piAdvance[i];
-    }
-    if (pGoffset)
-    {
-        for (i = 1; i < cGlyphs; i++)
-        {
-            int idx = i;
-            int prev_idx = i-1;
-            if (fuOptions&ETO_PDY)
-            {
-                idx*=2;
-                prev_idx = idx-2;
-            }
-            lpDx[prev_idx] += pGoffset[i].du;
-            lpDx[idx] -= pGoffset[i].du;
-            if (fuOptions&ETO_PDY)
-            {
-                lpDx[prev_idx+1] += pGoffset[i].dv;
-                lpDx[idx+1] -= pGoffset[i].dv;
-            }
+            lpDx[(i - 1) * 2]     += pGoffset[i].du;
+            lpDx[(i - 1) * 2 + 1] += pGoffset[i].dv;
+            lpDx[i * 2]           -= pGoffset[i].du;
+            lpDx[i * 2 + 1]       -= pGoffset[i].dv;
         }
     }
 
