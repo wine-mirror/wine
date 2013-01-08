@@ -108,36 +108,7 @@ static const struct fd_ops mapping_fd_ops =
 
 static struct list shared_list = LIST_INIT(shared_list);
 
-#ifdef __i386__
-
-/* These are always the same on an i386, and it will be faster this way */
-# define page_mask  0xfff
-# define page_shift 12
-# define init_page_size() do { /* nothing */ } while(0)
-
-#else  /* __i386__ */
-
-static int page_shift, page_mask;
-
-static void init_page_size(void)
-{
-    int page_size;
-# ifdef HAVE_GETPAGESIZE
-    page_size = getpagesize();
-# else
-#  ifdef __svr4__
-    page_size = sysconf(_SC_PAGESIZE);
-#  else
-#   error Cannot get the page size on this platform
-#  endif
-# endif
-    page_mask = page_size - 1;
-    /* Make sure we have a power of 2 */
-    assert( !(page_size & page_mask) );
-    page_shift = 0;
-    while ((1 << page_shift) != page_size) page_shift++;
-}
-#endif  /* __i386__ */
+static size_t page_mask;
 
 #define ROUND_SIZE(size)  (((size) + page_mask) & ~page_mask)
 
@@ -474,7 +445,7 @@ static struct object *create_mapping( struct directory *root, const struct unico
     int unix_fd;
     struct stat st;
 
-    if (!page_mask) init_page_size();
+    if (!page_mask) page_mask = sysconf( _SC_PAGESIZE ) - 1;
 
     if (!(mapping = create_named_object_dir( root, name, attr, &mapping_ops )))
         return NULL;
@@ -647,7 +618,7 @@ static enum server_fd_type mapping_get_fd_type( struct fd *fd )
 
 int get_page_size(void)
 {
-    if (!page_mask) init_page_size();
+    if (!page_mask) page_mask = sysconf( _SC_PAGESIZE ) - 1;
     return page_mask + 1;
 }
 
