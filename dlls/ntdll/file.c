@@ -765,7 +765,6 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
                                    PIO_STATUS_BLOCK io_status, FILE_SEGMENT_ELEMENT *segments,
                                    ULONG length, PLARGE_INTEGER offset, PULONG key )
 {
-    size_t page_size = getpagesize();
     int result, unix_handle, needs_close;
     unsigned int options;
     NTSTATUS status;
@@ -1097,7 +1096,6 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
                                    PIO_STATUS_BLOCK io_status, FILE_SEGMENT_ELEMENT *segments,
                                    ULONG length, PLARGE_INTEGER offset, PULONG key )
 {
-    size_t page_size = getpagesize();
     int result, unix_handle, needs_close;
     unsigned int options;
     NTSTATUS status;

@@ -33,6 +33,12 @@
 
 #define MAX_DOS_DRIVES 26
 
+#if defined(__i386__) || defined(__x86_64__)
+static const UINT_PTR page_size = 0x1000;
+#else
+extern UINT_PTR page_size DECLSPEC_HIDDEN;
+#endif
+
 struct drive_info
 {
     dev_t dev;

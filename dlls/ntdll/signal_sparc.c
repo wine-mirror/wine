@@ -725,7 +725,7 @@ NTSTATUS signal_alloc_thread( TEB **teb )
 
     if (!sigstack_zero_bits)
     {
-        size_t min_size = getpagesize();  /* this is just for the TEB, we don't use a signal stack yet */
+        size_t min_size = page_size;
         /* find the first power of two not smaller than min_size */
         while ((1u << sigstack_zero_bits) < min_size) sigstack_zero_bits++;
         assert( sizeof(TEB) <= min_size );

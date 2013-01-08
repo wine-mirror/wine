@@ -112,26 +112,23 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 static RTL_CRITICAL_SECTION csVirtual = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 #ifdef __i386__
-/* These are always the same on an i386, and it will be faster this way */
-# define page_mask  0xfff
-# define page_shift 12
-# define page_size  0x1000
+static const UINT page_shift = 12;
+static const UINT_PTR page_mask = 0xfff;
 /* Note: these are Windows limits, you cannot change them. */
 static void *address_space_limit = (void *)0xc0000000;  /* top of the total available address space */
 static void *user_space_limit    = (void *)0x7fff0000;  /* top of the user address space */
 static void *working_set_limit   = (void *)0x7fff0000;  /* top of the current working set */
 static void *address_space_start = (void *)0x110000;    /* keep DOS area clear */
 #elif defined(__x86_64__)
-# define page_mask  0xfff
-# define page_shift 12
-# define page_size  0x1000
+static const UINT page_shift = 12;
+static const UINT_PTR page_mask = 0xfff;
 static void *address_space_limit = (void *)0x7fffffff0000;
 static void *user_space_limit    = (void *)0x7fffffff0000;
 static void *working_set_limit   = (void *)0x7fffffff0000;
 static void *address_space_start = (void *)0x10000;
 #else
+UINT_PTR page_size = 0;
 static UINT page_shift;
-static UINT_PTR page_size;
 static UINT_PTR page_mask;
 static void *address_space_limit;
 static void *user_space_limit;
@@ -1416,8 +1413,8 @@ void virtual_init(void)
     size_t size;
     struct file_view *heap_view;
 
-#ifndef page_mask
-    page_size = getpagesize();
+#if !defined(__i386__) && !defined(__x86_64__)
+    page_size = sysconf( _SC_PAGESIZE );
     page_mask = page_size - 1;
     /* Make sure we have a power of 2 */
     assert( !(page_size & page_mask) );

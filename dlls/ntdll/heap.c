@@ -40,6 +40,7 @@
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
+#include "ntdll_misc.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 #include "wine/server.h"
@@ -806,7 +807,7 @@ static BOOL validate_large_arena( HEAP *heap, const ARENA_LARGE *arena, BOOL qui
 {
     DWORD flags = heap->flags;
 
-    if ((ULONG_PTR)arena % getpagesize())
+    if ((ULONG_PTR)arena % page_size)
     {
         if (quiet == NOISY)
         {

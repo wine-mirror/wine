@@ -1384,7 +1384,6 @@ static KERNEL_DIRENT *start_vfat_ioctl( int fd )
 
     if (!de)
     {
-        const size_t page_size = getpagesize();
         SIZE_T size = 2 * sizeof(*de) + page_size;
         void *addr = NULL;
 

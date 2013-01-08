@@ -773,7 +773,7 @@ static BOOL is_dll_native_subsystem( HMODULE module, const IMAGE_NT_HEADERS *nt,
     WCHAR buffer[16];
 
     if (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_NATIVE) return FALSE;
-    if (nt->OptionalHeader.SectionAlignment < getpagesize()) return TRUE;
+    if (nt->OptionalHeader.SectionAlignment < page_size) return TRUE;
 
     if ((imports = RtlImageDirectoryEntryToData( module, TRUE,
                                                  IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))

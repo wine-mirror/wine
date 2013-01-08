@@ -1980,9 +1980,9 @@ static NTSTATUS CDROM_ScsiGetCaps(int fd, PIO_SCSI_CAPABILITIES caps)
 #ifdef SG_SCATTER_SZ
     caps->Length = sizeof(*caps);
     caps->MaximumTransferLength = SG_SCATTER_SZ; /* FIXME */
-    caps->MaximumPhysicalPages = SG_SCATTER_SZ / getpagesize();
+    caps->MaximumPhysicalPages = SG_SCATTER_SZ / page_size;
     caps->SupportedAsynchronousEvents = TRUE;
-    caps->AlignmentMask = getpagesize();
+    caps->AlignmentMask = page_size;
     caps->TaggedQueuing = FALSE; /* we could check that it works and answer TRUE */
     caps->AdapterScansDown = FALSE; /* FIXME ? */
     caps->AdapterUsesPio = FALSE; /* FIXME ? */
@@ -1997,7 +1997,7 @@ static NTSTATUS CDROM_ScsiGetCaps(int fd, PIO_SCSI_CAPABILITIES caps)
     if (io != 0) return CDROM_GetStatusCode(io);
     caps->Length = sizeof(*caps);
     caps->MaximumTransferLength = bytesr < bytesw ? bytesr : bytesw;
-    caps->MaximumPhysicalPages = caps->MaximumTransferLength / getpagesize();
+    caps->MaximumPhysicalPages = caps->MaximumTransferLength / page_size;
     caps->SupportedAsynchronousEvents = TRUE;
     caps->AlignmentMask = align-1;
     caps->TaggedQueuing = FALSE; /* we could check that it works and answer TRUE */
