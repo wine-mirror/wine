@@ -2,6 +2,8 @@
  * Copyright (C) 2006 Vitaliy Margolen
  * Copyright (C) 2006 Chris Robinson
  * Copyright (C) 2006 Louis Lenders
+ * Copyright 2006 Henri Verbeet
+ * Copyright 2013 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -3465,6 +3467,92 @@ static void test_validate_ps(void)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 }
 
+static void test_volume_get_container(void)
+{
+    IDirect3DVolumeTexture8 *texture = NULL;
+    IDirect3DVolume8 *volume = NULL;
+    IDirect3DDevice8 *device;
+    IUnknown *container;
+    IDirect3D8 *d3d8;
+    ULONG refcount;
+    D3DCAPS8 caps;
+    HWND window;
+    HRESULT hr;
+
+    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create d3d8 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d8, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d8);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP))
+    {
+        skip("No volume texture support, skipping tests.\n");
+        IDirect3DDevice8_Release(device);
+        IDirect3D8_Release(d3d8);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice8_CreateVolumeTexture(device, 128, 128, 128, 1, 0,
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &texture);
+    ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#x.\n", hr);
+    ok(!!texture, "Got unexpected texture %p.\n", texture);
+
+    hr = IDirect3DVolumeTexture8_GetVolumeLevel(texture, 0, &volume);
+    ok(SUCCEEDED(hr), "Failed to get volume level, hr %#x.\n", hr);
+    ok(!!volume, "Got unexpected volume %p.\n", volume);
+
+    /* These should work... */
+    container = NULL;
+    hr = IDirect3DVolume8_GetContainer(volume, &IID_IUnknown, (void **)&container);
+    ok(SUCCEEDED(hr), "Failed to get volume container, hr %#x.\n", hr);
+    ok(container == (IUnknown *)texture, "Got unexpected container %p, expected %p.\n", container, texture);
+    IUnknown_Release(container);
+
+    container = NULL;
+    hr = IDirect3DVolume8_GetContainer(volume, &IID_IDirect3DResource8, (void **)&container);
+    ok(SUCCEEDED(hr), "Failed to get volume container, hr %#x.\n", hr);
+    ok(container == (IUnknown *)texture, "Got unexpected container %p, expected %p.\n", container, texture);
+    IUnknown_Release(container);
+
+    container = NULL;
+    hr = IDirect3DVolume8_GetContainer(volume, &IID_IDirect3DBaseTexture8, (void **)&container);
+    ok(SUCCEEDED(hr), "Failed to get volume container, hr %#x.\n", hr);
+    ok(container == (IUnknown *)texture, "Got unexpected container %p, expected %p.\n", container, texture);
+    IUnknown_Release(container);
+
+    container = NULL;
+    hr = IDirect3DVolume8_GetContainer(volume, &IID_IDirect3DVolumeTexture8, (void **)&container);
+    ok(SUCCEEDED(hr), "Failed to get volume container, hr %#x.\n", hr);
+    ok(container == (IUnknown *)texture, "Got unexpected container %p, expected %p.\n", container, texture);
+    IUnknown_Release(container);
+
+    /* ...and this one shouldn't. This should return E_NOINTERFACE and set container to NULL. */
+    hr = IDirect3DVolume8_GetContainer(volume, &IID_IDirect3DVolume8, (void **)&container);
+    ok(hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
+    ok(!container, "Got unexpected container %p.\n", container);
+
+    IDirect3DVolume8_Release(volume);
+    IDirect3DVolumeTexture8_Release(texture);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d8);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -3526,6 +3614,7 @@ START_TEST(device)
         test_set_rt_vp_scissor();
         test_validate_vs();
         test_validate_ps();
+        test_volume_get_container();
     }
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
