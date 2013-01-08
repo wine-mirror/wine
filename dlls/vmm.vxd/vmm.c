@@ -119,6 +119,8 @@ static const char * const VMM_Service_Name[N_VMM_SERVICE] =
 #define PCC_NOLIN     0x10000000 /* don't map to any linear address */
 
 
+static const DWORD page_size = 0x1000;  /* we only care about x86 */
+
 /* Pop a DWORD from the 32-bit stack */
 static inline DWORD stack32_pop( CONTEXT *context )
 {
@@ -141,7 +143,6 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT *context )
     {
         LPVOID address;
         LPVOID ret;
-        DWORD psize = getpagesize();
         ULONG page   = stack32_pop( context );
         ULONG npages = stack32_pop( context );
         ULONG flags  = stack32_pop( context );
@@ -157,8 +158,8 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT *context )
            address-spaces we now have */
         if ( page == PR_PRIVATE || page == PR_SHARED ) page = 0;
         /* FIXME: Handle flags in some way */
-        address = (LPVOID )(page * psize);
-        ret = VirtualAlloc ( address, ( npages * psize ), MEM_RESERVE, 0 );
+        address = (LPVOID )(page * page_size);
+        ret = VirtualAlloc ( address, npages * page_size, MEM_RESERVE, 0 );
         TRACE("PageReserve: returning: %p\n", ret );
         if ( ret == NULL )
           return -1;
@@ -171,7 +172,6 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT *context )
         LPVOID address;
         LPVOID ret;
         DWORD virt_perm;
-        DWORD psize = getpagesize();
         ULONG page   = stack32_pop( context );
         ULONG npages = stack32_pop( context );
         ULONG hpd  = stack32_pop( context );
@@ -190,8 +190,8 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT *context )
         else
           virt_perm = PAGE_NOACCESS;
 
-        address = (LPVOID )(page * psize);
-        ret = VirtualAlloc ( address, ( npages * psize ), MEM_COMMIT, virt_perm );
+        address = (LPVOID )(page * page_size);
+        ret = VirtualAlloc ( address, npages * page_size, MEM_COMMIT, virt_perm );
         TRACE("PageCommit: Returning: %p\n", ret );
         return (DWORD )ret;
 
@@ -201,15 +201,14 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT *context )
     {
         LPVOID address;
         BOOL ret;
-        DWORD psize = getpagesize();
         ULONG page = stack32_pop( context );
         ULONG npages = stack32_pop( context );
         ULONG flags = stack32_pop( context );
 
         TRACE("PageDecommit: page: %08x, npages: %08x, flags: %08x partial stub\n",
               page, npages, flags );
-        address = (LPVOID )( page * psize );
-        ret = VirtualFree ( address, ( npages * psize ), MEM_DECOMMIT );
+        address = (LPVOID )( page * page_size );
+        ret = VirtualFree ( address, npages * page_size, MEM_DECOMMIT );
         TRACE("PageDecommit: Returning: %s\n", ret ? "TRUE" : "FALSE" );
         return ret;
     }
@@ -222,7 +221,6 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT *context )
         DWORD virt_new_perm;
         MEMORY_BASIC_INFORMATION mbi;
         LPVOID address;
-        DWORD psize = getpagesize();
         ULONG page = stack32_pop ( context );
         ULONG npages = stack32_pop ( context );
         ULONG permand = stack32_pop ( context );
@@ -230,7 +228,7 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT *context )
 
         TRACE("PageModifyPermissions %08x %08x %08x %08x partial stub\n",
               page, npages, permand, permor );
-        address = (LPVOID )( page * psize );
+        address = (LPVOID )( page * page_size );
 
         VirtualQuery ( address, &mbi, sizeof ( MEMORY_BASIC_INFORMATION ));
         virt_old_perm = mbi.Protect;
@@ -265,7 +263,7 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT *context )
             virt_new_perm |= PAGE_EXECUTE_READ;
         }
 
-        if ( ! VirtualProtect ( address, ( npages * psize ), virt_new_perm, &virt_old_perm ) ) {
+        if ( ! VirtualProtect ( address, npages * page_size, virt_new_perm, &virt_old_perm ) ) {
           ERR("Can't change page permissions for %p\n", address );
           return 0xffffffff;
         }
