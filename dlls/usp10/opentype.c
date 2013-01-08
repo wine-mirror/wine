@@ -1949,6 +1949,7 @@ static void GSUB_initialize_feature_cache(LPCVOID table, LoadedLanguage *languag
                 language->features[i].lookups = HeapAlloc(GetProcessHeap(),0,sizeof(WORD) * language->features[i].lookup_count);
                 for (j = 0; j < language->features[i].lookup_count; j++)
                     language->features[i].lookups[j] = GET_BE_WORD(feature->LookupListIndex[j]);
+                language->features[i].tableType = FEATURE_GSUB_TABLE;
             }
         }
     }
@@ -1989,6 +1990,7 @@ static void GPOS_expand_feature_cache(LPCVOID table, LoadedLanguage *language)
                 language->features[i].lookups = HeapAlloc(GetProcessHeap(),0,sizeof(WORD) * language->features[i].lookup_count);
                 for (j = 0; j < language->features[i].lookup_count; j++)
                     language->features[i].lookups[j] = GET_BE_WORD(feature->LookupListIndex[j]);
+                language->features[i].tableType = FEATURE_GPOS_TABLE;
             }
         }
     }
@@ -2010,6 +2012,7 @@ static void GPOS_expand_feature_cache(LPCVOID table, LoadedLanguage *language)
             language->features[idx].lookups = HeapAlloc(GetProcessHeap(),0,sizeof(WORD) * language->features[idx].lookup_count);
             for (j = 0; j < language->features[idx].lookup_count; j++)
                 language->features[idx].lookups[j] = GET_BE_WORD(feature->LookupListIndex[j]);
+            language->features[idx].tableType = FEATURE_GPOS_TABLE;
         }
         language->feature_count += count;
     }
@@ -2024,7 +2027,7 @@ static void _initialize_feature_cache(ScriptCache *psc, LoadedLanguage *language
     }
 }
 
-HRESULT OpenType_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG language_tag, BOOL filtered, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pFeatureTags, int *pcTags, LoadedFeature** feature)
+HRESULT OpenType_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG language_tag, BOOL filtered, OPENTYPE_TAG searchingFor, char tableType, int cMaxTags, OPENTYPE_TAG *pFeatureTags, int *pcTags, LoadedFeature** feature)
 {
     int i;
     HRESULT rc = S_OK;
@@ -2075,7 +2078,15 @@ HRESULT OpenType_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_tag, O
 
     _initialize_feature_cache(psc, language);
 
-    *pcTags = language->feature_count;
+    if (tableType)
+    {
+        *pcTags = 0;
+        for (i = 0; i < language->feature_count; i++)
+            if (language->features[i].tableType == tableType)
+                *pcTags = (*pcTags)+1;
+    }
+    else
+        *pcTags = language->feature_count;
 
     if (!searchingFor && cMaxTags < *pcTags)
         rc = E_OUTOFMEMORY;
@@ -2085,11 +2096,15 @@ HRESULT OpenType_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_tag, O
     for (i = 0; i < language->feature_count; i++)
     {
         if (i < cMaxTags)
-            pFeatureTags[i] = language->features[i].tag;
+        {
+            if (!tableType || language->features[i].tableType == tableType)
+                pFeatureTags[i] = language->features[i].tag;
+        }
 
         if (searchingFor)
         {
-            if (searchingFor == language->features[i].tag)
+            if ((searchingFor == language->features[i].tag) &&
+                (!tableType || language->features[i].tableType == tableType))
             {
                 pFeatureTags[0] = language->features[i].tag;
                 *pcTags = 1;
