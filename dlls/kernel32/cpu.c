@@ -39,9 +39,10 @@
 #include "winnt.h"
 #include "winternl.h"
 #include "psapi.h"
-#include "wine/unicode.h"
-#include "wine/debug.h"
 #include "ddk/wdm.h"
+#include "wine/unicode.h"
+#include "kernel_private.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
@@ -104,13 +105,11 @@ VOID WINAPI GetSystemInfo(
 	LPSYSTEM_INFO si	/* [out] Destination for system information, may not be NULL */)
 {
     NTSTATUS                 nts;
-    SYSTEM_BASIC_INFORMATION sbi;
     SYSTEM_CPU_INFORMATION   sci;
 
     TRACE("si=0x%p\n", si);
 
-    if ((nts = NtQuerySystemInformation( SystemBasicInformation, &sbi, sizeof(sbi), NULL )) != STATUS_SUCCESS ||
-        (nts = NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL )) != STATUS_SUCCESS)
+    if ((nts = NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL )) != STATUS_SUCCESS)
     {
         SetLastError(RtlNtStatusToDosError(nts));
         return;
@@ -118,11 +117,11 @@ VOID WINAPI GetSystemInfo(
 
     si->u.s.wProcessorArchitecture  = sci.Architecture;
     si->u.s.wReserved               = 0;
-    si->dwPageSize                  = sbi.PageSize;
-    si->lpMinimumApplicationAddress = sbi.LowestUserAddress;
-    si->lpMaximumApplicationAddress = sbi.HighestUserAddress;
-    si->dwActiveProcessorMask       = sbi.ActiveProcessorsAffinityMask;
-    si->dwNumberOfProcessors        = sbi.NumberOfProcessors;
+    si->dwPageSize                  = system_info.PageSize;
+    si->lpMinimumApplicationAddress = system_info.LowestUserAddress;
+    si->lpMaximumApplicationAddress = system_info.HighestUserAddress;
+    si->dwActiveProcessorMask       = system_info.ActiveProcessorsAffinityMask;
+    si->dwNumberOfProcessors        = system_info.NumberOfProcessors;
 
     switch (sci.Architecture)
     {
@@ -162,7 +161,7 @@ VOID WINAPI GetSystemInfo(
         FIXME("Unknown processor architecture %x\n", sci.Architecture);
         si->dwProcessorType = 0;
     }
-    si->dwAllocationGranularity     = sbi.AllocationGranularity;
+    si->dwAllocationGranularity     = system_info.AllocationGranularity;
     si->wProcessorLevel             = sci.Level;
     si->wProcessorRevision          = sci.Revision;
 }

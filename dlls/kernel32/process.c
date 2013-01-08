@@ -87,6 +87,7 @@ static BOOL is_wow64;
 static const int is_win64 = (sizeof(void *) > sizeof(int));
 
 HMODULE kernel32_handle = 0;
+SYSTEM_BASIC_INFORMATION system_info = { 0 };
 
 const WCHAR *DIR_Windows = NULL;
 const WCHAR *DIR_System = NULL;
@@ -1146,6 +1147,7 @@ void CDECL __wine_kernel_init(void)
     setbuf(stderr,NULL);
     kernel32_handle = GetModuleHandleW(kernel32W);
     IsWow64Process( GetCurrentProcess(), &is_wow64 );
+    NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
 
     LOCALE_Init();
 

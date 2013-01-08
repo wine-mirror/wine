@@ -48,8 +48,6 @@
 WINE_DECLARE_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(file);
 
-static unsigned int page_size;
-
 
 /***********************************************************************
  *             VirtualAlloc   (KERNEL32.@)
@@ -648,19 +646,17 @@ BOOL WINAPI IsBadReadPtr( LPCVOID ptr, UINT size )
 {
     if (!size) return FALSE;  /* handle 0 size case w/o reference */
     if (!ptr) return TRUE;
-    
-    if (!page_size) page_size = getpagesize();
     __TRY
     {
         volatile const char *p = ptr;
         char dummy __attribute__((unused));
         UINT count = size;
 
-        while (count > page_size)
+        while (count > system_info.PageSize)
         {
             dummy = *p;
-            p += page_size;
-            count -= page_size;
+            p += system_info.PageSize;
+            count -= system_info.PageSize;
         }
         dummy = p[0];
         dummy = p[count - 1];
@@ -692,18 +688,16 @@ BOOL WINAPI IsBadWritePtr( LPVOID ptr, UINT size )
 {
     if (!size) return FALSE;  /* handle 0 size case w/o reference */
     if (!ptr) return TRUE;
-    
-    if (!page_size) page_size = getpagesize();
     __TRY
     {
         volatile char *p = ptr;
         UINT count = size;
 
-        while (count > page_size)
+        while (count > system_info.PageSize)
         {
             *p |= 0;
-            p += page_size;
-            count -= page_size;
+            p += system_info.PageSize;
+            count -= system_info.PageSize;
         }
         p[0] |= 0;
         p[count - 1] |= 0;
