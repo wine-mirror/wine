@@ -597,7 +597,7 @@ typedef struct _D3DLIGHT2 {
 
 typedef struct _D3DLIGHTDATA {
   DWORD                dwSize;
-  LPD3DLIGHTINGELEMENT lpIn;
+  D3DLIGHTINGELEMENT   *lpIn;
   DWORD                dwInSize;
   D3DTLVERTEX          *lpOut;
   DWORD                dwOutSize;
