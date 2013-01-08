@@ -767,13 +767,11 @@ static int be_i386_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
     if (!memory_read_value(lvalue, size, tmp)) return FALSE;
 
     /* float & double types have to be promoted to a long double */
-    switch (size)
-    {
-    case sizeof(float):         *ret = *(float*)tmp;            break;
-    case sizeof(double):        *ret = *(double*)tmp;           break;
-    case sizeof(long double):   *ret = *(long double*)tmp;      break;
-    default:                    return FALSE;
-    }
+    if (size == sizeof(float)) *ret = *(float*)tmp;
+    else if (size == sizeof(double)) *ret = *(double*)tmp;
+    else if (size == sizeof(long double)) *ret = *(long double*)tmp;
+    else return FALSE;
+
     return TRUE;
 }
 

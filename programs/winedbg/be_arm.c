@@ -1875,12 +1875,11 @@ static int be_arm_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
      */
     if (!memory_read_value(lvalue, size, tmp)) return FALSE;
 
-    switch (size)
-    {
-    case sizeof(float):         *ret = *(float*)tmp;            break;
-    case sizeof(double):        *ret = *(double*)tmp;           break;
-    default:                    return FALSE;
-    }
+    if (size == sizeof(float)) *ret = *(float*)tmp;
+    else if (size == sizeof(double)) *ret = *(double*)tmp;
+    else if (size == sizeof(long double)) *ret = *(long double*)tmp;
+    else return FALSE;
+
     return TRUE;
 }
 
