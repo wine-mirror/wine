@@ -1312,6 +1312,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
         TRACE("get free memory information\n");
         {
             MEMORYSTATUS status;
+            SYSTEM_BASIC_INFORMATION sbi;
 
             /* the layout is just the same as MEMMANINFO, but without
              * the dwSize entry.
@@ -1331,7 +1332,9 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
             } *info = CTX_SEG_OFF_TO_LIN( context, context->SegEs, context->Edi );
 
             GlobalMemoryStatus( &status );
-            info->wPageSize            = getpagesize();
+            NtQuerySystemInformation( SystemBasicInformation, &sbi, sizeof(sbi), NULL );
+
+            info->wPageSize            = sbi.PageSize;
             info->dwLargestFreeBlock   = status.dwAvailVirtual;
             info->dwMaxPagesAvailable  = info->dwLargestFreeBlock / info->wPageSize;
             info->dwMaxPagesLockable   = info->dwMaxPagesAvailable;
@@ -1418,11 +1421,14 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
         break;
 
     case 0x0604:  /* Get page size */
+    {
+        SYSTEM_BASIC_INFORMATION info;
         TRACE("get pagesize\n");
-        SET_BX( context, HIWORD(getpagesize()) );
-        SET_CX( context, LOWORD(getpagesize()) );
+        NtQuerySystemInformation( SystemBasicInformation, &info, sizeof(info), NULL );
+        SET_BX( context, HIWORD(info.PageSize) );
+        SET_CX( context, LOWORD(info.PageSize) );
         break;
-
+    }
     case 0x0700: /* Mark pages as paging candidates */
         TRACE( "mark pages as paging candidates - ignored (no paging)\n" );
         break;

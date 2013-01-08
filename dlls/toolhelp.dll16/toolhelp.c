@@ -491,6 +491,7 @@ BOOL16 WINAPI TaskFindHandle16( TASKENTRY *lpte, HTASK16 hTask )
  */
 BOOL16 WINAPI MemManInfo16( MEMMANINFO *info )
 {
+    SYSTEM_BASIC_INFORMATION sbi;
     MEMORYSTATUS status;
 
     /*
@@ -498,8 +499,9 @@ BOOL16 WINAPI MemManInfo16( MEMMANINFO *info )
      * _must_ provide the size in the dwSize field, this function
      * (under Windows) always fills the structure and returns true.
      */
+    NtQuerySystemInformation( SystemBasicInformation, &sbi, sizeof(sbi), NULL );
     GlobalMemoryStatus( &status );
-    info->wPageSize            = getpagesize();
+    info->wPageSize            = sbi.PageSize;
     info->dwLargestFreeBlock   = status.dwAvailVirtual;
     info->dwMaxPagesAvailable  = info->dwLargestFreeBlock / info->wPageSize;
     info->dwMaxPagesLockable   = info->dwMaxPagesAvailable;

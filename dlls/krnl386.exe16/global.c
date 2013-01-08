@@ -963,9 +963,12 @@ WORD WINAPI GlobalHandleToSel16( HGLOBAL16 handle )
  */
 DWORD WINAPI GetFreeMemInfo16(void)
 {
+    SYSTEM_BASIC_INFORMATION info;
     MEMORYSTATUS status;
+
+    NtQuerySystemInformation( SystemBasicInformation, &info, sizeof(info), NULL );
     GlobalMemoryStatus( &status );
-    return MAKELONG( status.dwTotalVirtual/getpagesize(), status.dwAvailVirtual/getpagesize() );
+    return MAKELONG( status.dwTotalVirtual / info.PageSize, status.dwAvailVirtual / info.PageSize );
 }
 
 /***********************************************************************
