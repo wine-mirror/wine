@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-01-07 21:59+0300\n"
+"PO-Revision-Date: 2013-01-08 22:47+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -10398,50 +10398,40 @@ msgid "State"
 msgstr "Būsena"
 
 #: netstat.rc:32
-#, fuzzy
-#| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "Sąsajos"
+msgstr "Sąsajos statistika"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "Išsiųsta"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "Gauta"
 
 #: netstat.rc:35
-#, fuzzy
-#| msgid "bytes"
 msgid "Bytes"
-msgstr "baitai"
+msgstr "Baitų"
 
 #: netstat.rc:36
 msgid "Unicast packets"
-msgstr ""
+msgstr "„Unicast“ paketų"
 
 #: netstat.rc:37
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "Ne „unicast“ paketų"
 
 #: netstat.rc:38
-#, fuzzy
-#| msgid "Disclaimer"
 msgid "Discards"
-msgstr "Garantijų nedavimas"
+msgstr "Atmetimai"
 
 #: netstat.rc:39
-#, fuzzy
-#| msgid "Error"
 msgid "Errors"
-msgstr "Klaida"
+msgstr "Klaidos"
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "Unknown port.\n"
 msgid "Unknown protocols"
-msgstr "Nežinomas prievadas.\n"
+msgstr "Nežinomi protokolai"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
