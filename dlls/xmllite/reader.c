@@ -883,6 +883,9 @@ static HRESULT reader_parse_xmldecl(xmlreader *reader)
     reader_skipn(reader, 2);
 
     reader->nodetype = XmlNodeType_XmlDeclaration;
+    reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
+    reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
+    reader_set_strvalue(reader, StringValue_Value, &strval_empty);
 
     return S_OK;
 }
