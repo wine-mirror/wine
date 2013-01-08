@@ -102,9 +102,7 @@ struct elf_module_info
 const char* elf_map_section(struct image_section_map* ism)
 {
     struct elf_file_map*        fmap = &ism->fmap->u.elf;
-
-    unsigned long pgsz = getpagesize();
-    unsigned long ofst, size;
+    size_t ofst, size, pgsz = sysconf( _SC_PAGESIZE );
 
     assert(ism->fmap->modtype == DMT_ELF);
     if (ism->sidx < 0 || ism->sidx >= ism->fmap->u.elf.elfhdr.e_shnum ||
@@ -174,12 +172,10 @@ void elf_unmap_section(struct image_section_map* ism)
     if (ism->sidx >= 0 && ism->sidx < fmap->elfhdr.e_shnum && !fmap->target_copy &&
         fmap->sect[ism->sidx].mapped != IMAGE_NO_MAP)
     {
-        unsigned long pgsz = getpagesize();
-        unsigned long ofst, size;
-
-        ofst = fmap->sect[ism->sidx].shdr.sh_offset & ~(pgsz - 1);
-        size = ((fmap->sect[ism->sidx].shdr.sh_offset +
-             fmap->sect[ism->sidx].shdr.sh_size + pgsz - 1) & ~(pgsz - 1)) - ofst;
+        size_t pgsz = sysconf( _SC_PAGESIZE );
+        size_t ofst = fmap->sect[ism->sidx].shdr.sh_offset & ~(pgsz - 1);
+        size_t size = ((fmap->sect[ism->sidx].shdr.sh_offset +
+                 fmap->sect[ism->sidx].shdr.sh_size + pgsz - 1) & ~(pgsz - 1)) - ofst;
         if (munmap((char*)fmap->sect[ism->sidx].mapped, size) < 0)
             WARN("Couldn't unmap the section\n");
         fmap->sect[ism->sidx].mapped = IMAGE_NO_MAP;
@@ -279,7 +275,7 @@ static BOOL elf_map_file(struct elf_map_file_data* emfd, struct image_file_map* 
     struct stat	        statbuf;
     int                 i;
     Elf_Phdr            phdr;
-    unsigned long       tmp, page_mask = getpagesize() - 1;
+    size_t              tmp, page_mask = sysconf( _SC_PAGESIZE ) - 1;
     char*               filename;
     unsigned            len;
     BOOL                ret = FALSE;
