@@ -655,7 +655,7 @@ DECLARE_INTERFACE_(IDirect3DViewport,IUnknown)
     STDMETHOD(Initialize)(THIS_ IDirect3D *d3d) PURE;
     STDMETHOD(GetViewport)(THIS_ D3DVIEWPORT *data) PURE;
     STDMETHOD(SetViewport)(THIS_ D3DVIEWPORT *data) PURE;
-    STDMETHOD(TransformVertices)(THIS_ DWORD dwVertexCount, LPD3DTRANSFORMDATA lpData, DWORD dwFlags, LPDWORD lpOffScreen) PURE;
+    STDMETHOD(TransformVertices)(THIS_ DWORD vertex_count, D3DTRANSFORMDATA *data, DWORD flags, DWORD *offscreen) PURE;
     STDMETHOD(LightElements)(THIS_ DWORD dwElementCount, LPD3DLIGHTDATA lpData) PURE;
     STDMETHOD(SetBackground)(THIS_ D3DMATERIALHANDLE hMat) PURE;
     STDMETHOD(GetBackground)(THIS_ D3DMATERIALHANDLE *material, BOOL *valid) PURE;
@@ -723,7 +723,7 @@ DECLARE_INTERFACE_(IDirect3DViewport2,IDirect3DViewport)
     STDMETHOD(Initialize)(THIS_ IDirect3D *d3d) PURE;
     STDMETHOD(GetViewport)(THIS_ D3DVIEWPORT *data) PURE;
     STDMETHOD(SetViewport)(THIS_ D3DVIEWPORT *data) PURE;
-    STDMETHOD(TransformVertices)(THIS_ DWORD dwVertexCount, LPD3DTRANSFORMDATA lpData, DWORD dwFlags, LPDWORD lpOffScreen) PURE;
+    STDMETHOD(TransformVertices)(THIS_ DWORD vertex_count, D3DTRANSFORMDATA *data, DWORD flags, DWORD *offscreen) PURE;
     STDMETHOD(LightElements)(THIS_ DWORD dwElementCount, LPD3DLIGHTDATA lpData) PURE;
     STDMETHOD(SetBackground)(THIS_ D3DMATERIALHANDLE hMat) PURE;
     STDMETHOD(GetBackground)(THIS_ D3DMATERIALHANDLE *material, BOOL *valid) PURE;
@@ -799,7 +799,7 @@ DECLARE_INTERFACE_(IDirect3DViewport3,IDirect3DViewport2)
     STDMETHOD(Initialize)(THIS_ IDirect3D *d3d) PURE;
     STDMETHOD(GetViewport)(THIS_ D3DVIEWPORT *data) PURE;
     STDMETHOD(SetViewport)(THIS_ D3DVIEWPORT *data) PURE;
-    STDMETHOD(TransformVertices)(THIS_ DWORD dwVertexCount, LPD3DTRANSFORMDATA lpData, DWORD dwFlags, LPDWORD lpOffScreen) PURE;
+    STDMETHOD(TransformVertices)(THIS_ DWORD vertex_count, D3DTRANSFORMDATA *data, DWORD flags, DWORD *offscreen) PURE;
     STDMETHOD(LightElements)(THIS_ DWORD dwElementCount, LPD3DLIGHTDATA lpData) PURE;
     STDMETHOD(SetBackground)(THIS_ D3DMATERIALHANDLE hMat) PURE;
     STDMETHOD(GetBackground)(THIS_ D3DMATERIALHANDLE *material, BOOL *valid) PURE;
