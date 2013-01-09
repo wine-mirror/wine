@@ -3,6 +3,7 @@
  * Copyright (C) 2006 Chris Robinson
  * Copyright (C) 2006 Louis Lenders
  * Copyright 2006 Henri Verbeet
+ * Copyright 2010 Stefan Dösinger for CodeWeavers
  * Copyright 2013 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -3553,6 +3554,73 @@ static void test_volume_get_container(void)
     DestroyWindow(window);
 }
 
+static void test_vb_lock_flags(void)
+{
+    static const struct
+    {
+        DWORD flags;
+        const char *debug_string;
+        HRESULT result;
+    }
+    test_data[] =
+    {
+        {D3DLOCK_READONLY,                          "D3DLOCK_READONLY",                         D3D_OK            },
+        {D3DLOCK_DISCARD,                           "D3DLOCK_DISCARD",                          D3D_OK            },
+        {D3DLOCK_NOOVERWRITE,                       "D3DLOCK_NOOVERWRITE",                      D3D_OK            },
+        {D3DLOCK_NOOVERWRITE | D3DLOCK_DISCARD,     "D3DLOCK_NOOVERWRITE | D3DLOCK_DISCARD",    D3D_OK            },
+        {D3DLOCK_NOOVERWRITE | D3DLOCK_READONLY,    "D3DLOCK_NOOVERWRITE | D3DLOCK_READONLY",   D3D_OK            },
+        {D3DLOCK_READONLY    | D3DLOCK_DISCARD,     "D3DLOCK_READONLY | D3DLOCK_DISCARD",       D3D_OK            },
+        /* Completely bogus flags aren't an error. */
+        {0xdeadbeef,                                "0xdeadbeef",                               D3D_OK            },
+    };
+    IDirect3DVertexBuffer8 *buffer;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d8;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    BYTE *data;
+
+    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create d3d8 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d8, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d8);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice8_CreateVertexBuffer(device, 1024, D3DUSAGE_DYNAMIC, 0, D3DPOOL_DEFAULT, &buffer);
+    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+
+    for (i = 0; i < (sizeof(test_data) / sizeof(*test_data)); ++i)
+    {
+        hr = IDirect3DVertexBuffer8_Lock(buffer, 0, 0, &data, test_data[i].flags);
+        ok(hr == test_data[i].result, "Got unexpected hr %#x for %s.\n",
+                hr, test_data[i].debug_string);
+        if (SUCCEEDED(hr))
+        {
+            ok(!!data, "Got unexpected data %p.\n", data);
+            hr = IDirect3DVertexBuffer8_Unlock(buffer);
+            ok(SUCCEEDED(hr), "Failed to unlock vertex buffer, hr %#x.\n", hr);
+        }
+    }
+
+    IDirect3DVertexBuffer8_Release(buffer);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d8);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -3615,6 +3683,7 @@ START_TEST(device)
         test_validate_vs();
         test_validate_ps();
         test_volume_get_container();
+        test_vb_lock_flags();
     }
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
