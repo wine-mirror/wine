@@ -138,9 +138,7 @@ static void test_decode_24bpp(void)
 
                 hr = IWICBitmapFrameDecode_GetResolution(framedecode, &dpiX, &dpiY);
                 ok(SUCCEEDED(hr), "GetResolution failed, hr=%x\n", hr);
-todo_wine
                 ok(dpiX == 96.0, "expected dpiX=96.0, got %f\n", dpiX);
-todo_wine
                 ok(dpiY == 96.0, "expected dpiY=96.0, got %f\n", dpiY);
 
                 hr = IWICBitmapFrameDecode_GetPixelFormat(framedecode, &guidresult);
