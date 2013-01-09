@@ -27,9 +27,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-#ifdef HAVE_STRINGS_H
-# include <strings.h>
-#endif
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif

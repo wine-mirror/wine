@@ -483,7 +483,6 @@ AC_CHECK_HEADERS(\
 	scsi/sg.h \
 	stdbool.h \
 	stdint.h \
-	strings.h \
 	stropts.h \
 	sys/asoundlib.h \
 	sys/attr.h \
