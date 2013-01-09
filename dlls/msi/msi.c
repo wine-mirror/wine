@@ -2918,6 +2918,123 @@ end:
     return r;
 }
 
+static UINT query_feature_state( const WCHAR *product, const WCHAR *squashed, const WCHAR *usersid,
+                                 MSIINSTALLCONTEXT ctx, const WCHAR *feature, INSTALLSTATE *state )
+{
+    UINT r;
+    HKEY hkey;
+    WCHAR *parent, *components, *path;
+    const WCHAR *p;
+    BOOL missing = FALSE, source = FALSE;
+    WCHAR comp[GUID_SIZE];
+    GUID guid;
+
+    if (ctx != MSIINSTALLCONTEXT_MACHINE) SetLastError( ERROR_SUCCESS );
+
+    if (MSIREG_OpenFeaturesKey( product, usersid, ctx, &hkey, FALSE )) return ERROR_UNKNOWN_PRODUCT;
+
+    parent = msi_reg_get_val_str( hkey, feature );
+    RegCloseKey( hkey );
+    if (!parent) return ERROR_UNKNOWN_FEATURE;
+
+    *state = (parent[0] == 6) ? INSTALLSTATE_ABSENT : INSTALLSTATE_LOCAL;
+    msi_free( parent );
+    if (*state == INSTALLSTATE_ABSENT)
+        return ERROR_SUCCESS;
+
+    r = MSIREG_OpenUserDataFeaturesKey( product, usersid, ctx, &hkey, FALSE );
+    if (r != ERROR_SUCCESS)
+    {
+        *state = INSTALLSTATE_ADVERTISED;
+        return ERROR_SUCCESS;
+    }
+    components = msi_reg_get_val_str( hkey, feature );
+    RegCloseKey( hkey );
+
+    TRACE("buffer = %s\n", debugstr_w(components));
+
+    if (!components)
+    {
+        *state = INSTALLSTATE_ADVERTISED;
+        return ERROR_SUCCESS;
+    }
+    for (p = components; *p && *p != 2 ; p += 20)
+    {
+        if (!decode_base85_guid( p, &guid ))
+        {
+            if (p != components) break;
+            msi_free( components );
+            *state = INSTALLSTATE_BADCONFIG;
+            return ERROR_BAD_CONFIGURATION;
+        }
+        StringFromGUID2( &guid, comp, GUID_SIZE );
+        if (ctx == MSIINSTALLCONTEXT_MACHINE)
+            r = MSIREG_OpenUserDataComponentKey( comp, szLocalSid, &hkey, FALSE );
+        else
+            r = MSIREG_OpenUserDataComponentKey( comp, usersid, &hkey, FALSE );
+
+        if (r != ERROR_SUCCESS)
+        {
+            msi_free( components );
+            *state = INSTALLSTATE_ADVERTISED;
+            return ERROR_SUCCESS;
+        }
+        path = msi_reg_get_val_str( hkey, squashed );
+        if (!path) missing = TRUE;
+        else if (strlenW( path ) > 2 &&
+                 path[0] >= '0' && path[0] <= '9' &&
+                 path[1] >= '0' && path[1] <= '9')
+        {
+            source = TRUE;
+        }
+        msi_free( path );
+    }
+    msi_free( components );
+
+    if (missing)
+        *state = INSTALLSTATE_ADVERTISED;
+    else if (source)
+        *state = INSTALLSTATE_SOURCE;
+    else
+        *state = INSTALLSTATE_LOCAL;
+
+    TRACE("returning state %d\n", *state);
+    return ERROR_SUCCESS;
+}
+
+UINT WINAPI MsiQueryFeatureStateExA( LPCSTR product, LPCSTR usersid, MSIINSTALLCONTEXT ctx,
+                                     LPCSTR feature, INSTALLSTATE *state )
+{
+    UINT r;
+    WCHAR *productW = NULL, *usersidW = NULL, *featureW = NULL;
+
+    if (product && !(productW = strdupAtoW( product ))) return ERROR_OUTOFMEMORY;
+    if (usersid && !(usersidW = strdupAtoW( usersid )))
+    {
+        msi_free( productW );
+        return ERROR_OUTOFMEMORY;
+    }
+    if (feature && !(featureW = strdupAtoW( feature )))
+    {
+        msi_free( productW );
+        msi_free( usersidW );
+        return ERROR_OUTOFMEMORY;
+    }
+    r = MsiQueryFeatureStateExW( productW, usersidW, ctx, featureW, state );
+    msi_free( productW );
+    msi_free( usersidW );
+    msi_free( featureW );
+    return r;
+}
+
+UINT WINAPI MsiQueryFeatureStateExW( LPCWSTR product, LPCWSTR usersid, MSIINSTALLCONTEXT ctx,
+                                     LPCWSTR feature, INSTALLSTATE *state )
+{
+    WCHAR squashed[33];
+    if (!squash_guid( product, squashed )) return ERROR_INVALID_PARAMETER;
+    return query_feature_state( product, squashed, usersid, ctx, feature, state );
+}
+
 /******************************************************************
  * MsiQueryFeatureStateA      [MSI.@]
  */
@@ -2962,117 +3079,25 @@ end:
  */
 INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
 {
-    WCHAR squishProduct[33], comp[GUID_SIZE];
-    GUID guid;
-    LPWSTR components, p, parent_feature, path;
-    UINT rc;
-    HKEY hkey;
-    INSTALLSTATE r;
-    BOOL missing = FALSE;
-    BOOL machine = FALSE;
-    BOOL source = FALSE;
+    UINT r;
+    INSTALLSTATE state;
+    WCHAR squashed[33];
 
     TRACE("%s %s\n", debugstr_w(szProduct), debugstr_w(szFeature));
 
-    if (!szProduct || !szFeature)
+    if (!szProduct || !szFeature || !squash_guid( szProduct, squashed ))
         return INSTALLSTATE_INVALIDARG;
 
-    if (!squash_guid( szProduct, squishProduct ))
-        return INSTALLSTATE_INVALIDARG;
+    r = query_feature_state( szProduct, squashed, NULL, MSIINSTALLCONTEXT_USERMANAGED, szFeature, &state );
+    if (r == ERROR_SUCCESS || r == ERROR_BAD_CONFIGURATION) return state;
 
-    SetLastError( ERROR_SUCCESS );
+    r = query_feature_state( szProduct, squashed, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, szFeature, &state );
+    if (r == ERROR_SUCCESS || r == ERROR_BAD_CONFIGURATION) return state;
 
-    if (MSIREG_OpenFeaturesKey(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED,
-                               &hkey, FALSE) != ERROR_SUCCESS &&
-        MSIREG_OpenFeaturesKey(szProduct, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                               &hkey, FALSE) != ERROR_SUCCESS)
-    {
-        rc = MSIREG_OpenFeaturesKey(szProduct, NULL, MSIINSTALLCONTEXT_MACHINE,
-                                    &hkey, FALSE);
-        if (rc != ERROR_SUCCESS)
-            return INSTALLSTATE_UNKNOWN;
+    r = query_feature_state( szProduct, squashed, NULL, MSIINSTALLCONTEXT_MACHINE, szFeature, &state );
+    if (r == ERROR_SUCCESS || r == ERROR_BAD_CONFIGURATION) return state;
 
-        machine = TRUE;
-    }
-
-    parent_feature = msi_reg_get_val_str( hkey, szFeature );
-    RegCloseKey(hkey);
-
-    if (!parent_feature)
-        return INSTALLSTATE_UNKNOWN;
-
-    r = (parent_feature[0] == 6) ? INSTALLSTATE_ABSENT : INSTALLSTATE_LOCAL;
-    msi_free(parent_feature);
-    if (r == INSTALLSTATE_ABSENT)
-        return r;
-
-    if (machine)
-        rc = MSIREG_OpenUserDataFeaturesKey(szProduct, NULL,
-                                            MSIINSTALLCONTEXT_MACHINE,
-                                            &hkey, FALSE);
-    else
-        rc = MSIREG_OpenUserDataFeaturesKey(szProduct, NULL,
-                                            MSIINSTALLCONTEXT_USERUNMANAGED,
-                                            &hkey, FALSE);
-
-    if (rc != ERROR_SUCCESS)
-        return INSTALLSTATE_ADVERTISED;
-
-    components = msi_reg_get_val_str( hkey, szFeature );
-    RegCloseKey(hkey);
-
-    TRACE("rc = %d buffer = %s\n", rc, debugstr_w(components));
-
-    if (!components)
-        return INSTALLSTATE_ADVERTISED;
-
-    for( p = components; *p && *p != 2 ; p += 20)
-    {
-        if (!decode_base85_guid( p, &guid ))
-        {
-            if (p != components)
-                break;
-
-            msi_free(components);
-            return INSTALLSTATE_BADCONFIG;
-        }
-
-        StringFromGUID2(&guid, comp, GUID_SIZE);
-
-        if (machine)
-            rc = MSIREG_OpenUserDataComponentKey(comp, szLocalSid, &hkey, FALSE);
-        else
-            rc = MSIREG_OpenUserDataComponentKey(comp, NULL, &hkey, FALSE);
-
-        if (rc != ERROR_SUCCESS)
-        {
-            msi_free(components);
-            return INSTALLSTATE_ADVERTISED;
-        }
-
-        path = msi_reg_get_val_str(hkey, squishProduct);
-        if (!path)
-            missing = TRUE;
-        else if (lstrlenW(path) > 2 &&
-                 path[0] >= '0' && path[0] <= '9' &&
-                 path[1] >= '0' && path[1] <= '9')
-        {
-            source = TRUE;
-        }
-
-        msi_free(path);
-    }
-    msi_free(components);
-
-    if (missing)
-        r = INSTALLSTATE_ADVERTISED;
-    else if (source)
-        r = INSTALLSTATE_SOURCE;
-    else
-        r = INSTALLSTATE_LOCAL;
-
-    TRACE("-> %d\n", r);
-    return r;
+    return INSTALLSTATE_UNKNOWN;
 }
 
 /******************************************************************
