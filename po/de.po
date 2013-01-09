@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-01-03 05:17+0100\n"
+"PO-Revision-Date: 2013-01-09 01:25+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -8294,16 +8294,12 @@ msgid "Don't install"
 msgstr "Nicht installieren"
 
 #: urlmon.rc:40
-#, fuzzy
-#| msgid ""
-#| "When installed, ActiveX has full access to your computer.Do not click "
-#| "install unless you have absolute trust in the above source."
 msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
-"Wenn ActiveX installiert ist, hat es Vollzugriff auf ihren Computer. Klicken "
-"Sie nicht auf Installieren, wenn Sie der obigen Quelle nicht absolut "
+"Eine installierte ActiveX-Komponente hat Vollzugriff auf ihren Computer. "
+"Klicken Sie nicht auf Installieren, wenn Sie der obigen Quelle nicht absolut "
 "vertrauen."
 
 #: urlmon.rc:48
@@ -10271,10 +10267,8 @@ msgid "Connection-specific DNS suffix"
 msgstr "Verbindungsspezifisches DNS-Suffix"
 
 #: ipconfig.rc:33
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv4 address"
-msgstr "IP-Adresse"
+msgstr "IPv4 Adresse"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -10317,10 +10311,8 @@ msgid "Default gateway"
 msgstr "Standard Gateway"
 
 #: ipconfig.rc:47
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv6 address"
-msgstr "IP-Adresse"
+msgstr "IPv6 Adresse"
 
 #: net.rc:27
 msgid ""
@@ -10473,50 +10465,40 @@ msgid "State"
 msgstr "Zustand"
 
 #: netstat.rc:32
-#, fuzzy
-#| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "Schnittstellen"
+msgstr "Schnittstellen-Statistik"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "Gesendet"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "Empfangen"
 
 #: netstat.rc:35
-#, fuzzy
-#| msgid "bytes"
 msgid "Bytes"
 msgstr "Bytes"
 
 #: netstat.rc:36
 msgid "Unicast packets"
-msgstr ""
+msgstr "Unicast Pakete"
 
 #: netstat.rc:37
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "Nicht-Unicast Pakete"
 
 #: netstat.rc:38
-#, fuzzy
-#| msgid "Disclaimer"
 msgid "Discards"
-msgstr "Haftungsausschluss"
+msgstr "Verworfen"
 
 #: netstat.rc:39
-#, fuzzy
-#| msgid "Error"
 msgid "Errors"
 msgstr "Fehler"
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "Unknown port.\n"
 msgid "Unknown protocols"
-msgstr "Unbekannter Anschluss.\n"
+msgstr "Unbekannte Protokolle"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
