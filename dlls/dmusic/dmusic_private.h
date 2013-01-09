@@ -148,11 +148,11 @@ struct IDirectMusicDownloadedInstrumentImpl {
  * IDirectMusicDownloadImpl implementation structure
  */
 struct IDirectMusicDownloadImpl {
-  /* IUnknown fields */
-  const IDirectMusicDownloadVtbl *lpVtbl;
-  LONG           ref;
+    /* IUnknown fields */
+    IDirectMusicDownload IDirectMusicDownload_iface;
+    LONG ref;
 
-  /* IDirectMusicDownloadImpl fields */
+    /* IDirectMusicDownloadImpl fields */
 };
 
 /*****************************************************************************
