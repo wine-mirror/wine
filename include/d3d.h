@@ -448,8 +448,8 @@ DECLARE_INTERFACE_(IDirect3DMaterial,IUnknown)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3DMaterial methods ***/
     STDMETHOD(Initialize)(THIS_ IDirect3D *d3d) PURE;
-    STDMETHOD(SetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE;
-    STDMETHOD(GetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE;
+    STDMETHOD(SetMaterial)(THIS_ D3DMATERIAL *data) PURE;
+    STDMETHOD(GetMaterial)(THIS_ D3DMATERIAL *data) PURE;
     STDMETHOD(GetHandle)(THIS_ struct IDirect3DDevice *device, D3DMATERIALHANDLE *handle) PURE;
     STDMETHOD(Reserve)(THIS) PURE;
     STDMETHOD(Unreserve)(THIS) PURE;
@@ -494,8 +494,8 @@ DECLARE_INTERFACE_(IDirect3DMaterial2,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3DMaterial2 methods ***/
-    STDMETHOD(SetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE;
-    STDMETHOD(GetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE;
+    STDMETHOD(SetMaterial)(THIS_ D3DMATERIAL *data) PURE;
+    STDMETHOD(GetMaterial)(THIS_ D3DMATERIAL *data) PURE;
     STDMETHOD(GetHandle)(THIS_ struct IDirect3DDevice2 *device, D3DMATERIALHANDLE *handle) PURE;
 };
 #undef INTERFACE
@@ -532,8 +532,8 @@ DECLARE_INTERFACE_(IDirect3DMaterial3,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3DMaterial3 methods ***/
-    STDMETHOD(SetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE;
-    STDMETHOD(GetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE;
+    STDMETHOD(SetMaterial)(THIS_ D3DMATERIAL *data) PURE;
+    STDMETHOD(GetMaterial)(THIS_ D3DMATERIAL *data) PURE;
     STDMETHOD(GetHandle)(THIS_ struct IDirect3DDevice3 *device, D3DMATERIALHANDLE *handle) PURE;
 };
 #undef INTERFACE
