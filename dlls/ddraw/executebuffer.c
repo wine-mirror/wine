@@ -92,7 +92,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 	    } break;
 
 	    case D3DOP_TRIANGLE: {
-	        int i;
+                DWORD i;
                 D3DTLVERTEX *tl_vx = buffer->vertex_data;
 		TRACE("TRIANGLE         (%d)\n", count);
 
@@ -143,7 +143,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 	        break;
 
 	    case D3DOP_MATRIXMULTIPLY: {
-	        int i;
+                DWORD  i;
 		TRACE("MATRIXMULTIPLY   (%d)\n", count);
 		
                 for (i = 0; i < count; ++i)
@@ -171,7 +171,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 	    } break;
 
 	    case D3DOP_STATETRANSFORM: {
-	        int i;
+                DWORD i;
 		TRACE("STATETRANSFORM   (%d)\n", count);
 		
                 for (i = 0; i < count; ++i)
@@ -201,7 +201,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 	    } break;
 
 	    case D3DOP_STATELIGHT: {
-		int i;
+                DWORD i;
 		TRACE("STATELIGHT       (%d)\n", count);
 
 		for (i = 0; i < count; i++) {
@@ -267,7 +267,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 	    } break;
 
 	    case D3DOP_STATERENDER: {
-	        int i;
+                DWORD i;
                 IDirect3DDevice2 *d3d_device2 = &device->IDirect3DDevice2_iface;
 		TRACE("STATERENDER      (%d)\n", count);
 
@@ -285,7 +285,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                 /* TODO: Share code with IDirect3DVertexBuffer::ProcessVertices and / or
                  * IWineD3DDevice::ProcessVertices
                  */
-                int i;
+                DWORD i;
                 D3DMATRIX view_mat, world_mat, proj_mat;
                 TRACE("PROCESSVERTICES  (%d)\n", count);
 
@@ -466,7 +466,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 	    } break;
 
 	    case D3DOP_BRANCHFORWARD: {
-	        int i;
+                DWORD i;
 		TRACE("BRANCHFORWARD    (%d)\n", count);
 
 		for (i = 0; i < count; i++) {
@@ -503,7 +503,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 	    } break;
 
 	    case D3DOP_SETSTATUS: {
-	        int i;
+                DWORD i;
 		TRACE("SETSTATUS        (%d)\n", count);
 
 		for (i = 0; i < count; i++) {
