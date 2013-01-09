@@ -533,6 +533,11 @@ static void NSAPI nsDocumentObserver_AttributeChanged(nsIDocumentObserver *iface
 {
 }
 
+static void NSAPI nsDocumentObserver_AttributeSetToCurrentValue(nsIDocumentObserver *iface, nsIDocument *aDocument,
+        void *aElement, PRInt32 aNameSpaceID, nsIAtom *aAttribute)
+{
+}
+
 static void NSAPI nsDocumentObserver_ContentAppended(nsIDocumentObserver *iface, nsIDocument *aDocument,
         nsIContent *aContainer, nsIContent *aFirstNewContent, PRInt32 aNewIndexInContainer)
 {
@@ -715,6 +720,7 @@ static const nsIDocumentObserverVtbl nsDocumentObserverVtbl = {
     nsDocumentObserver_CharacterDataChanged,
     nsDocumentObserver_AttributeWillChange,
     nsDocumentObserver_AttributeChanged,
+    nsDocumentObserver_AttributeSetToCurrentValue,
     nsDocumentObserver_ContentAppended,
     nsDocumentObserver_ContentInserted,
     nsDocumentObserver_ContentRemoved,

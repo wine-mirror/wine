@@ -1143,7 +1143,7 @@ static nsresult NSAPI HTMLDOMNode_traverse(void *ccp, void *p, nsCycleCollection
 
     TRACE("%p\n", This);
 
-    describe_cc_node(&This->ccref, sizeof(*This), "HTMLDOMNode", cb);
+    describe_cc_node(&This->ccref, "HTMLDOMNode", cb);
 
     if(This->nsnode)
         note_cc_edge((nsISupports*)This->nsnode, "This->nsnode", cb);

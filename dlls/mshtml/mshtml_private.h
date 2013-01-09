@@ -254,7 +254,7 @@ nsrefcnt (__cdecl *ccref_decr)(nsCycleCollectingAutoRefCnt*,nsISupports*);
 void (__cdecl *ccref_init)(nsCycleCollectingAutoRefCnt*,nsrefcnt);
 void (__cdecl *ccref_unmark_if_purple)(nsCycleCollectingAutoRefCnt*);
 void (__cdecl *ccp_init)(nsXPCOMCycleCollectionParticipant*,const CCObjCallback*);
-void (__cdecl *describe_cc_node)(nsCycleCollectingAutoRefCnt*,size_t,const char*,nsCycleCollectionTraversalCallback*);
+void (__cdecl *describe_cc_node)(nsCycleCollectingAutoRefCnt*,const char*,nsCycleCollectionTraversalCallback*);
 void (__cdecl *note_cc_edge)(nsISupports*,const char*,nsCycleCollectionTraversalCallback*);
 
 void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*) DECLSPEC_HIDDEN;

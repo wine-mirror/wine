@@ -1134,7 +1134,21 @@ static nsresult NSAPI nsChannel_GetContentDisposition(nsIHttpChannel *iface, PRU
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+static nsresult NSAPI nsChannel_SetContentDisposition(nsIHttpChannel *iface, PRUint32 aContentDisposition)
+{
+    nsChannel *This = impl_from_nsIHttpChannel(iface);
+    FIXME("(%p)->(%u)\n", This, aContentDisposition);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 static nsresult NSAPI nsChannel_GetContentDispositionFilename(nsIHttpChannel *iface, nsAString *aContentDispositionFilename)
+{
+    nsChannel *This = impl_from_nsIHttpChannel(iface);
+    FIXME("(%p)->(%p)\n", This, aContentDispositionFilename);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsChannel_SetContentDispositionFilename(nsIHttpChannel *iface, const nsAString *aContentDispositionFilename)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
     FIXME("(%p)->(%p)\n", This, aContentDispositionFilename);
@@ -1399,7 +1413,9 @@ static const nsIHttpChannelVtbl nsChannelVtbl = {
     nsChannel_Open,
     nsChannel_AsyncOpen,
     nsChannel_GetContentDisposition,
+    nsChannel_SetContentDisposition,
     nsChannel_GetContentDispositionFilename,
+    nsChannel_SetContentDispositionFilename,
     nsChannel_GetContentDispositionHeader,
     nsChannel_GetRequestMethod,
     nsChannel_SetRequestMethod,
@@ -1447,7 +1463,7 @@ static nsrefcnt NSAPI nsUploadChannel_Release(nsIUploadChannel *iface)
 }
 
 static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
-        nsIInputStream *aStream, const nsACString *aContentType, PRInt32 aContentLength)
+        nsIInputStream *aStream, const nsACString *aContentType, PRInt64 aContentLength)
 {
     nsChannel *This = impl_from_nsIUploadChannel(iface);
     const char *content_type;
@@ -1455,7 +1471,7 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
     static const WCHAR content_typeW[] =
         {'C','o','n','t','e','n','t','-','T','y','p','e',0};
 
-    TRACE("(%p)->(%p %s %d)\n", This, aStream, debugstr_nsacstr(aContentType), aContentLength);
+    TRACE("(%p)->(%p %s %s)\n", This, aStream, debugstr_nsacstr(aContentType), wine_dbgstr_longlong(aContentLength));
 
     This->post_data_contains_headers = TRUE;
 
@@ -1479,7 +1495,7 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
         nsIInputStream_Release(This->post_data_stream);
 
     if(aContentLength != -1)
-        FIXME("Unsupported acontentLength = %d\n", aContentLength);
+        FIXME("Unsupported acontentLength = %s\n", wine_dbgstr_longlong(aContentLength));
 
     if(This->post_data_stream)
         nsIInputStream_Release(This->post_data_stream);
