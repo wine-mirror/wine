@@ -1160,6 +1160,7 @@ static void test_shell_imagelist(void)
     if (!pSHGetImageList)
     {
         win_skip("SHGetImageList not available, skipping test\n");
+        FreeLibrary(hShell32);
         return;
     }
 
@@ -1168,8 +1169,10 @@ static void test_shell_imagelist(void)
 
     ok(SUCCEEDED(hr), "SHGetImageList failed, hr=%x\n", hr);
 
-    if (hr != S_OK)
+    if (hr != S_OK) {
+        FreeLibrary(hShell32);
         return;
+    }
 
     IImageList_GetImageCount(iml, &out);
     ok(out > 0, "IImageList_GetImageCount returned out <= 0\n");
