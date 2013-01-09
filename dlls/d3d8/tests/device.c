@@ -3621,6 +3621,161 @@ static void test_vb_lock_flags(void)
     DestroyWindow(window);
 }
 
+/* Test the default texture stage state values */
+static void test_texture_stage_states(void)
+{
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d8;
+    unsigned int i;
+    ULONG refcount;
+    D3DCAPS8 caps;
+    DWORD value;
+    HWND window;
+    HRESULT hr;
+
+    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create d3d8 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d8, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d8);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+
+    for (i = 0; i < caps.MaxTextureBlendStages; ++i)
+    {
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_COLOROP, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(value == (i ? D3DTOP_DISABLE : D3DTOP_MODULATE),
+                "Got unexpected value %#x for D3DTSS_COLOROP, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_COLORARG1, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(value == D3DTA_TEXTURE, "Got unexpected value %#x for D3DTSS_COLORARG1, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_COLORARG2, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(value == D3DTA_CURRENT, "Got unexpected value %#x for D3DTSS_COLORARG2, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_ALPHAOP, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(value == (i ? D3DTOP_DISABLE : D3DTOP_SELECTARG1),
+                "Got unexpected value %#x for D3DTSS_ALPHAOP, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_ALPHAARG1, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(value == D3DTA_TEXTURE, "Got unexpected value %#x for D3DTSS_ALPHAARG1, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_ALPHAARG2, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(value == D3DTA_CURRENT, "Got unexpected value %#x for D3DTSS_ALPHAARG2, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_BUMPENVMAT00, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(!value, "Got unexpected value %#x for D3DTSS_BUMPENVMAT00, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_BUMPENVMAT01, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(!value, "Got unexpected value %#x for D3DTSS_BUMPENVMAT01, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_BUMPENVMAT10, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(!value, "Got unexpected value %#x for D3DTSS_BUMPENVMAT10, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_BUMPENVMAT11, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(!value, "Got unexpected value %#x for D3DTSS_BUMPENVMAT11, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_TEXCOORDINDEX, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(value == i, "Got unexpected value %#x for D3DTSS_TEXCOORDINDEX, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_BUMPENVLSCALE, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(!value, "Got unexpected value %#x for D3DTSS_BUMPENVLSCALE, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_BUMPENVLOFFSET, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(!value, "Got unexpected value %#x for D3DTSS_BUMPENVLOFFSET, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_TEXTURETRANSFORMFLAGS, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(value == D3DTTFF_DISABLE,
+                "Got unexpected value %#x for D3DTSS_TEXTURETRANSFORMFLAGS, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_COLORARG0, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(value == D3DTA_CURRENT, "Got unexpected value %#x for D3DTSS_COLORARG0, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_ALPHAARG0, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(value == D3DTA_CURRENT, "Got unexpected value %#x for D3DTSS_ALPHAARG0, stage %u.\n", value, i);
+        hr = IDirect3DDevice8_GetTextureStageState(device, i, D3DTSS_RESULTARG, &value);
+        ok(SUCCEEDED(hr), "Failed to get texture stage state, hr %#x.\n", hr);
+        ok(value == D3DTA_CURRENT, "Got unexpected value %#x for D3DTSS_RESULTARG, stage %u.\n", value, i);
+    }
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d8);
+    DestroyWindow(window);
+}
+
+static void test_cube_textures(void)
+{
+    IDirect3DCubeTexture8 *texture;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d8;
+    ULONG refcount;
+    D3DCAPS8 caps;
+    HWND window;
+    HRESULT hr;
+
+    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create d3d8 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d8, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d8);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+
+    if (caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP)
+    {
+        hr = IDirect3DDevice8_CreateCubeTexture(device, 512, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture);
+        ok(hr == D3D_OK, "Failed to create D3DPOOL_DEFAULT cube texture, hr %#x.\n", hr);
+        IDirect3DCubeTexture8_Release(texture);
+        hr = IDirect3DDevice8_CreateCubeTexture(device, 512, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_MANAGED, &texture);
+        ok(hr == D3D_OK, "Failed to create D3DPOOL_MANAGED cube texture, hr %#x.\n", hr);
+        IDirect3DCubeTexture8_Release(texture);
+        hr = IDirect3DDevice8_CreateCubeTexture(device, 512, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_SYSTEMMEM, &texture);
+        ok(hr == D3D_OK, "Failed to create D3DPOOL_SYSTEMMEM cube texture, hr %#x.\n", hr);
+        IDirect3DCubeTexture8_Release(texture);
+    }
+    else
+    {
+        hr = IDirect3DDevice8_CreateCubeTexture(device, 512, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for D3DPOOL_DEFAULT cube texture.\n", hr);
+        hr = IDirect3DDevice8_CreateCubeTexture(device, 512, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_MANAGED, &texture);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for D3DPOOL_MANAGED cube texture.\n", hr);
+        hr = IDirect3DDevice8_CreateCubeTexture(device, 512, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_SYSTEMMEM, &texture);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for D3DPOOL_SYSTEMMEM cube texture.\n", hr);
+    }
+    hr = IDirect3DDevice8_CreateCubeTexture(device, 512, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_SCRATCH, &texture);
+    ok(hr == D3D_OK, "Failed to create D3DPOOL_SCRATCH cube texture, hr %#x.\n", hr);
+    IDirect3DCubeTexture8_Release(texture);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d8);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -3684,6 +3839,8 @@ START_TEST(device)
         test_validate_ps();
         test_volume_get_container();
         test_vb_lock_flags();
+        test_texture_stage_states();
+        test_cube_textures();
     }
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
