@@ -318,7 +318,7 @@ sub parse_makefile($)
             push @{$make{"=flags"}}, "manpage" if $var eq "MANPAGE";
             next;
         }
-        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|MC_SRCS|RC_SRCS|PO_SRCS|SVG_SRCS|PROGRAMS)\s*=\s*(.*)/)
+        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|PO_SRCS|SVG_SRCS|PROGRAMS)\s*=\s*(.*)/)
         {
             my $var = $1;
             my @list = split(/\s+/, $2);
@@ -389,6 +389,7 @@ sub assign_sources_to_makefiles(@)
         else
         {
             if ($name =~ /\.c$/) { push @{${$make}{"=C_SRCS"}}, $name; }
+            elsif ($name =~ /\.m$/) { push @{${$make}{"=OBJC_SRCS"}}, $name; }
             elsif ($name =~ /\.l$/) { push @{${$make}{"=LEX_SRCS"}}, $name; }
             elsif ($name =~ /\.y$/) { push @{${$make}{"=BISON_SRCS"}}, $name; }
             elsif ($name =~ /\.rc$/) { push @{${$make}{"=RC_SRCS"}}, $name; }
@@ -501,6 +502,7 @@ sub update_makefiles(@)
         replace_makefile_variable( $file, "MC_SRCS" );
         replace_makefile_variable( $file, "SVG_SRCS" );
         replace_makefile_variable( $file, "C_SRCS" );
+        replace_makefile_variable( $file, "OBJC_SRCS" );
         replace_makefile_variable( $file, "RC_SRCS" );
         replace_makefile_variable( $file, "PRIVATE_IDL_H_SRCS" );
         replace_makefile_variable( $file, "PUBLIC_IDL_H_SRCS" );
