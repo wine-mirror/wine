@@ -885,10 +885,10 @@ extern UINT MSIREG_OpenUninstallKey(const WCHAR *, enum platform, HKEY *, BOOL) 
 extern UINT MSIREG_DeleteUninstallKey(const WCHAR *, enum platform) DECLSPEC_HIDDEN;
 extern UINT MSIREG_OpenProductKey(LPCWSTR szProduct, LPCWSTR szUserSid,
                                   MSIINSTALLCONTEXT context, HKEY* key, BOOL create) DECLSPEC_HIDDEN;
-extern UINT MSIREG_OpenFeaturesKey(LPCWSTR szProduct, MSIINSTALLCONTEXT context,
+extern UINT MSIREG_OpenFeaturesKey(LPCWSTR szProduct, LPCWSTR szUserSid, MSIINSTALLCONTEXT context,
                                    HKEY *key, BOOL create) DECLSPEC_HIDDEN;
 extern UINT MSIREG_OpenUserPatchesKey(LPCWSTR szPatch, HKEY* key, BOOL create) DECLSPEC_HIDDEN;
-UINT MSIREG_OpenUserDataFeaturesKey(LPCWSTR szProduct, MSIINSTALLCONTEXT context,
+UINT MSIREG_OpenUserDataFeaturesKey(LPCWSTR szProduct, LPCWSTR szUserSid, MSIINSTALLCONTEXT context,
                                     HKEY *key, BOOL create) DECLSPEC_HIDDEN;
 extern UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create) DECLSPEC_HIDDEN;
 extern UINT MSIREG_OpenUserDataComponentKey(LPCWSTR szComponent, LPCWSTR szUserSid,

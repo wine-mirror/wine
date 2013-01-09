@@ -4852,12 +4852,12 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
     if (!msi_check_publish(package))
         return ERROR_SUCCESS;
 
-    rc = MSIREG_OpenFeaturesKey(package->ProductCode, package->Context,
+    rc = MSIREG_OpenFeaturesKey(package->ProductCode, NULL, package->Context,
                                 &hkey, TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    rc = MSIREG_OpenUserDataFeaturesKey(package->ProductCode, package->Context,
+    rc = MSIREG_OpenUserDataFeaturesKey(package->ProductCode, NULL, package->Context,
                                         &userdata, TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
@@ -4957,7 +4957,7 @@ static UINT msi_unpublish_feature(MSIPACKAGE *package, MSIFEATURE *feature)
 
     TRACE("unpublishing feature %s\n", debugstr_w(feature->Feature));
 
-    r = MSIREG_OpenFeaturesKey(package->ProductCode, package->Context,
+    r = MSIREG_OpenFeaturesKey(package->ProductCode, NULL, package->Context,
                                &hkey, FALSE);
     if (r == ERROR_SUCCESS)
     {
@@ -4965,7 +4965,7 @@ static UINT msi_unpublish_feature(MSIPACKAGE *package, MSIFEATURE *feature)
         RegCloseKey(hkey);
     }
 
-    r = MSIREG_OpenUserDataFeaturesKey(package->ProductCode, package->Context,
+    r = MSIREG_OpenUserDataFeaturesKey(package->ProductCode, NULL, package->Context,
                                        &hkey, FALSE);
     if (r == ERROR_SUCCESS)
     {

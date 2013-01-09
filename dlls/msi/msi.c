@@ -2982,12 +2982,12 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
 
     SetLastError( ERROR_SUCCESS );
 
-    if (MSIREG_OpenFeaturesKey(szProduct, MSIINSTALLCONTEXT_USERMANAGED,
+    if (MSIREG_OpenFeaturesKey(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED,
                                &hkey, FALSE) != ERROR_SUCCESS &&
-        MSIREG_OpenFeaturesKey(szProduct, MSIINSTALLCONTEXT_USERUNMANAGED,
+        MSIREG_OpenFeaturesKey(szProduct, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
                                &hkey, FALSE) != ERROR_SUCCESS)
     {
-        rc = MSIREG_OpenFeaturesKey(szProduct, MSIINSTALLCONTEXT_MACHINE,
+        rc = MSIREG_OpenFeaturesKey(szProduct, NULL, MSIINSTALLCONTEXT_MACHINE,
                                     &hkey, FALSE);
         if (rc != ERROR_SUCCESS)
             return INSTALLSTATE_UNKNOWN;
@@ -3007,11 +3007,11 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
         return r;
 
     if (machine)
-        rc = MSIREG_OpenUserDataFeaturesKey(szProduct,
+        rc = MSIREG_OpenUserDataFeaturesKey(szProduct, NULL,
                                             MSIINSTALLCONTEXT_MACHINE,
                                             &hkey, FALSE);
     else
-        rc = MSIREG_OpenUserDataFeaturesKey(szProduct,
+        rc = MSIREG_OpenUserDataFeaturesKey(szProduct, NULL,
                                             MSIINSTALLCONTEXT_USERUNMANAGED,
                                             &hkey, FALSE);
 
