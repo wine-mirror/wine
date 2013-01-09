@@ -639,6 +639,8 @@ HKLM,Software\Microsoft\Transaction Server,,16
 HKLM,Software\Policies,,16
 HKLM,Software\Registered Applications,,16
 HKLM,System\CurrentControlSet\Control\Lsa,,16
+HKLM,System\CurrentControlSet\Control\TimeZoneInformation,"StandardName",2,""
+HKLM,System\CurrentControlSet\Control\TimeZoneInformation,"TimeZoneKeyName",2,""
 HKLM,System\CurrentControlSet\Control\VirtualDeviceDrivers,,16
 HKLM,System\CurrentControlSet\Control\VMM32Files,,16
 HKCU,AppEvents\Schemes\Apps\Explorer\Navigating\.Current,,,""
