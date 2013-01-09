@@ -404,6 +404,29 @@ typedef struct {
 
 typedef struct {
     WORD PosFormat;
+    WORD MarkCoverage;
+    WORD LigatureCoverage;
+    WORD ClassCount;
+    WORD MarkArray;
+    WORD LigatureArray;
+} GPOS_MarkLigPosFormat1;
+
+typedef struct {
+    WORD LigatureCount;
+    WORD LigatureAttach[1];
+} GPOS_LigatureArray;
+
+typedef struct {
+    WORD LigatureAnchor[1];
+} GPOS_ComponentRecord;
+
+typedef struct {
+    WORD ComponentCount;
+    GPOS_ComponentRecord ComponentRecord[1];
+} GPOS_LigatureAttach;
+
+typedef struct {
+    WORD PosFormat;
     WORD Mark1Coverage;
     WORD Mark2Coverage;
     WORD ClassCount;
@@ -1369,6 +1392,97 @@ static VOID GPOS_apply_MarkToBase(const OT_LookupTable *look, const WORD *glyphs
     }
 }
 
+static VOID GPOS_apply_MarkToLigature(const OT_LookupTable *look, const WORD *glyphs, INT glyph_index, INT write_dir, INT glyph_count, INT ppem, LPPOINT pt)
+{
+    int j;
+
+    TRACE("MarkToLigature Attachment Positioning Subtable\n");
+
+    for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
+    {
+        int offset;
+        const GPOS_MarkLigPosFormat1 *mlpf1;
+        offset = GET_BE_WORD(look->SubTable[j]);
+        mlpf1 = (const GPOS_MarkLigPosFormat1*)((const BYTE*)look+offset);
+        if (GET_BE_WORD(mlpf1->PosFormat) == 1)
+        {
+            int offset = GET_BE_WORD(mlpf1->MarkCoverage);
+            int mark_index;
+            mark_index = GSUB_is_glyph_covered((const BYTE*)mlpf1+offset, glyphs[glyph_index]);
+            if (mark_index != -1)
+            {
+                int ligature_index;
+                offset = GET_BE_WORD(mlpf1->LigatureCoverage);
+                ligature_index = GSUB_is_glyph_covered((const BYTE*)mlpf1+offset, glyphs[glyph_index - write_dir]);
+                if (ligature_index != -1)
+                {
+                    const GPOS_MarkArray *ma;
+                    const GPOS_MarkRecord *mr;
+
+                    const GPOS_LigatureArray *la;
+                    const GPOS_LigatureAttach *lt;
+                    int mark_class;
+                    int class_count = GET_BE_WORD(mlpf1->ClassCount);
+                    int component_count;
+                    int component_size;
+                    int i;
+                    POINT ligature_pt;
+                    POINT mark_pt;
+
+                    TRACE("Mark %x(%i) and ligature %x(%i)\n",glyphs[glyph_index], mark_index, glyphs[glyph_index - write_dir], ligature_index);
+                    offset = GET_BE_WORD(mlpf1->MarkArray);
+                    ma = (const GPOS_MarkArray*)((const BYTE*)mlpf1 + offset);
+                    if (mark_index > GET_BE_WORD(ma->MarkCount))
+                    {
+                        ERR("Mark index exeeded mark count\n");
+                        return;
+                    }
+                    mr = &ma->MarkRecord[mark_index];
+                    mark_class = GET_BE_WORD(mr->Class);
+                    TRACE("Mark Class %i total classes %i\n",mark_class,class_count);
+                    offset = GET_BE_WORD(mlpf1->LigatureArray);
+                    la = (const GPOS_LigatureArray*)((const BYTE*)mlpf1 + offset);
+                    if (ligature_index > GET_BE_WORD(la->LigatureCount))
+                    {
+                        ERR("Ligature index exeeded ligature count\n");
+                        return;
+                    }
+                    offset = GET_BE_WORD(la->LigatureAttach[ligature_index]);
+                    lt = (const GPOS_LigatureAttach*)((const BYTE*)la + offset);
+
+                    component_count = GET_BE_WORD(lt->ComponentCount);
+                    component_size = class_count * sizeof(WORD);
+                    offset = 0;
+                    for (i = 0; i < component_count && !offset; i++)
+                    {
+                        int k;
+                        const GPOS_ComponentRecord *cr = (const GPOS_ComponentRecord*)((const BYTE*)lt->ComponentRecord + (component_size * i));
+                        for (k = 0; k < class_count && !offset; k++)
+                            offset = GET_BE_WORD(cr->LigatureAnchor[k]);
+                        cr = (const GPOS_ComponentRecord*)((const BYTE*)cr + component_size);
+                    }
+                    if (!offset)
+                    {
+                        ERR("Failed to find avalible ligature connection point\n");
+                        return;
+                    }
+
+                    GPOS_get_anchor_values((const BYTE*)lt + offset, &ligature_pt, ppem);
+                    offset = GET_BE_WORD(mr->MarkAnchor);
+                    GPOS_get_anchor_values((const BYTE*)ma + offset, &mark_pt, ppem);
+                    TRACE("Offset on ligature is %i,%i design units\n",ligature_pt.x,ligature_pt.y);
+                    TRACE("Offset on mark is %i,%i design units\n",mark_pt.x, mark_pt.y);
+                    pt->x += ligature_pt.x - mark_pt.x;
+                    pt->y += ligature_pt.y - mark_pt.y;
+                    TRACE("Resulting cumulative offset is %i,%i design units\n",pt->x,pt->y);
+                }
+            }
+        }
+        else
+            FIXME("Unhandled Mark To Ligature Format %i\n",GET_BE_WORD(mlpf1->PosFormat));
+    }
+}
+
 static VOID GPOS_apply_MarkToMark(const OT_LookupTable *look, const WORD *glyphs, INT glyph_index, INT write_dir, INT glyph_count, INT ppem, LPPOINT pt)
 {
     int j;
@@ -1598,6 +1712,19 @@ static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, I
             double devX, devY;
             POINT desU = {0,0};
             GPOS_apply_MarkToBase(look, glyphs, glyph_index, write_dir, glyph_count, ppem, &desU);
+            if (desU.x || desU.y)
+            {
+                GPOS_convert_design_units_to_device(lpotm, lplogfont, desU.x, desU.y, &devX, &devY);
+                pGoffset[glyph_index].du += (round(devX) - piAdvance[glyph_index-1]);
+                pGoffset[glyph_index].dv += round(devY);
+            }
+            break;
+        }
+        case 5:
+        {
+            double devX, devY;
+            POINT desU = {0,0};
+            GPOS_apply_MarkToLigature(look, glyphs, glyph_index, write_dir, glyph_count, ppem, &desU);
             if (desU.x || desU.y)
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, desU.x, desU.y, &devX, &devY);
