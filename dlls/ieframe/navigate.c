@@ -566,6 +566,8 @@ static void on_before_navigate2(DocHost *This, LPCWSTR url, SAFEARRAY *post_data
     VARIANT var_url, var_flags, var_frame_name, var_post_data, var_post_data2, var_headers;
     DISPPARAMS dispparams;
     VARIANTARG params[7];
+    WCHAR file_path[MAX_PATH];
+    DWORD file_path_len = sizeof(file_path) / sizeof(*file_path);
 
     dispparams.cArgs = 7;
     dispparams.cNamedArgs = 0;
@@ -607,7 +609,10 @@ static void on_before_navigate2(DocHost *This, LPCWSTR url, SAFEARRAY *post_data
     V_VT(params+5) = (VT_BYREF|VT_VARIANT);
     V_VARIANTREF(params+5) = &var_url;
     V_VT(&var_url) = VT_BSTR;
-    V_BSTR(&var_url) = SysAllocString(url);
+    if(PathCreateFromUrlW(url, file_path, &file_path_len, 0) == S_OK)
+        V_BSTR(&var_url) = SysAllocString(file_path);
+    else
+        V_BSTR(&var_url) = SysAllocString(url);
 
     V_VT(params+6) = (VT_DISPATCH);
     V_DISPATCH(params+6) = (IDispatch*)This->wb;

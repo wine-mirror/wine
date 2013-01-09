@@ -2542,6 +2542,7 @@ static void test_ConnectionPoint(IWebBrowser2 *unk, BOOL init)
 static void test_Navigate2(IWebBrowser2 *webbrowser, const char *nav_url)
 {
     VARIANT url;
+    BOOL is_file;
     HRESULT hres;
 
     test_LocationURL(webbrowser, is_first_load ? "" : current_url);
@@ -2550,6 +2551,9 @@ static void test_Navigate2(IWebBrowser2 *webbrowser, const char *nav_url)
     is_http = !memcmp(nav_url, "http:", 5);
     V_VT(&url) = VT_BSTR;
     V_BSTR(&url) = a2bstr(current_url = nav_url);
+
+    if((is_file = !strncasecmp(nav_url, "file://", 7)))
+        current_url = nav_url + 7;
 
     if(is_first_load) {
         SET_EXPECT(Invoke_AMBIENT_USERMODE);
@@ -2578,6 +2582,7 @@ static void test_Navigate2(IWebBrowser2 *webbrowser, const char *nav_url)
         SET_EXPECT(Invoke_COMMANDSTATECHANGE);
         SET_EXPECT(EnableModeless_TRUE);
         if (!use_container_olecmd) SET_EXPECT(Invoke_DOWNLOADCOMPLETE);
+        if (is_file) SET_EXPECT(Invoke_PROGRESSCHANGE);
     }
 
     hres = IWebBrowser2_Navigate2(webbrowser, &url, NULL, NULL, NULL, NULL);
@@ -2609,6 +2614,7 @@ static void test_Navigate2(IWebBrowser2 *webbrowser, const char *nav_url)
         todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
         if (use_container_olecmd) todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
         CHECK_CALLED(EnableModeless_TRUE);
+        if (is_file) todo_wine CHECK_CALLED(Invoke_PROGRESSCHANGE);
     }
 
     VariantClear(&url);
@@ -3511,6 +3517,48 @@ static BOOL is_ie_hardened(void)
     return ie_harden != 0;
 }
 
+static void test_FileProtocol(void)
+{
+    IWebBrowser2 *webbrowser;
+    HANDLE file;
+    ULONG ref;
+    char file_path[MAX_PATH];
+    char file_url[MAX_PATH] = "File://";
+
+    static const char test_file[] = "wine_test.html";
+
+    GetTempPathA(MAX_PATH, file_path);
+    strcat(file_path, test_file);
+    GetLongPathNameA(file_path, file_path, sizeof(file_path));
+    strcat(file_url, file_path);
+
+    webbrowser = create_webbrowser();
+    if(!webbrowser)
+        return;
+
+    init_test(webbrowser, 0);
+
+    file = CreateFileA(file_path, GENERIC_WRITE, 0, NULL,
+            CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    if(file == INVALID_HANDLE_VALUE && GetLastError() != ERROR_FILE_EXISTS){
+        ok(0, "CreateFile failed\n");
+        return;
+    }
+    CloseHandle(file);
+
+    test_ConnectionPoint(webbrowser, TRUE);
+    test_ClientSite(webbrowser, &ClientSite, TRUE);
+    test_DoVerb(webbrowser);
+    test_Navigate2(webbrowser, file_url);
+    test_ClientSite(webbrowser, NULL, TRUE);
+
+    ref = IWebBrowser2_Release(webbrowser);
+    ok(ref == 0, "ref=%u, expected 0\n", ref);
+
+    if(file != INVALID_HANDLE_VALUE)
+        DeleteFileA(file_path);
+}
+
 START_TEST(webbrowser)
 {
     OleInitialize(NULL);
@@ -3536,6 +3584,7 @@ START_TEST(webbrowser)
     test_WebBrowser_slim_container();
     trace("Testing WebBrowserV1...\n");
     test_WebBrowserV1();
+    test_FileProtocol();
 
     OleUninitialize();
 }
