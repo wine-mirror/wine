@@ -1368,10 +1368,8 @@ static void test_monthrange(void)
 
     hwnd = create_monthcal_control(0);
 
-    st_visible[0].wYear = 0;
-    st_visible[0].wMonth = 0;
-    st_visible[0].wDay = 0;
-    st_daystate[1] = st_daystate[0] = st_visible[1] = st_visible[0];
+    memset(&st_visible, 0, sizeof(st_visible));
+    memset(&st_daystate, 0, sizeof(st_daystate));
 
     st.wYear = 2000;
     st.wMonth = 11;
