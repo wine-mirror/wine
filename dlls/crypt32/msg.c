@@ -1450,6 +1450,7 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
         if (!ret)
         {
             CSignedEncodeMsg_Close(msg);
+            CryptMemFree(msg);
             msg = NULL;
         }
     }
