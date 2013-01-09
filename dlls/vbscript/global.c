@@ -1578,66 +1578,6 @@ static HRESULT Global_vbFirstFullWeek(vbdisp_t *This, VARIANT *arg, unsigned arg
     return E_NOTIMPL;
 }
 
-static HRESULT Global_vbCritical(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbQuestion(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbExclamation(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbInformation(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbDefaultButton1(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbDefaultButton2(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbDefaultButton3(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbDefaultButton4(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbApplicationModal(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbSystemModal(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
 static HRESULT Global_vbTrue(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
@@ -1855,16 +1795,16 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_VBYESNOCANCEL,      NULL, BP_GET, MB_YESNOCANCEL},
     {DISPID_GLOBAL_VBYESNO,            NULL, BP_GET, MB_YESNO},
     {DISPID_GLOBAL_VBRETRYCANCEL,      NULL, BP_GET, MB_RETRYCANCEL},
-    {DISPID_GLOBAL_VBCRITICAL,         Global_vbCritical, BP_GET},
-    {DISPID_GLOBAL_VBQUESTION,         Global_vbQuestion, BP_GET},
-    {DISPID_GLOBAL_VBEXCLAMATION,      Global_vbExclamation, BP_GET},
-    {DISPID_GLOBAL_VBINFORMATION,      Global_vbInformation, BP_GET},
-    {DISPID_GLOBAL_VBDEFAULTBUTTON1,   Global_vbDefaultButton1, BP_GET},
-    {DISPID_GLOBAL_VBDEFAULTBUTTON2,   Global_vbDefaultButton2, BP_GET},
-    {DISPID_GLOBAL_VBDEFAULTBUTTON3,   Global_vbDefaultButton3, BP_GET},
-    {DISPID_GLOBAL_VBDEFAULTBUTTON4,   Global_vbDefaultButton4, BP_GET},
-    {DISPID_GLOBAL_VBAPPLICATIONMODAL, Global_vbApplicationModal, BP_GET},
-    {DISPID_GLOBAL_VBSYSTEMMODAL,      Global_vbSystemModal, BP_GET},
+    {DISPID_GLOBAL_VBCRITICAL,         NULL, BP_GET, MB_ICONHAND},
+    {DISPID_GLOBAL_VBQUESTION,         NULL, BP_GET, MB_ICONQUESTION},
+    {DISPID_GLOBAL_VBEXCLAMATION,      NULL, BP_GET, MB_ICONEXCLAMATION},
+    {DISPID_GLOBAL_VBINFORMATION,      NULL, BP_GET, MB_ICONASTERISK},
+    {DISPID_GLOBAL_VBDEFAULTBUTTON1,   NULL, BP_GET, MB_DEFBUTTON1},
+    {DISPID_GLOBAL_VBDEFAULTBUTTON2,   NULL, BP_GET, MB_DEFBUTTON2},
+    {DISPID_GLOBAL_VBDEFAULTBUTTON3,   NULL, BP_GET, MB_DEFBUTTON3},
+    {DISPID_GLOBAL_VBDEFAULTBUTTON4,   NULL, BP_GET, MB_DEFBUTTON4},
+    {DISPID_GLOBAL_VBAPPLICATIONMODAL, NULL, BP_GET, MB_APPLMODAL},
+    {DISPID_GLOBAL_VBSYSTEMMODAL,      NULL, BP_GET, MB_SYSTEMMODAL},
     {DISPID_GLOBAL_VBOK,               NULL, BP_GET, IDOK},
     {DISPID_GLOBAL_VBCANCEL,           NULL, BP_GET, IDCANCEL},
     {DISPID_GLOBAL_VBABORT,            NULL, BP_GET, IDABORT},
