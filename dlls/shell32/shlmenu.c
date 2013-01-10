@@ -372,7 +372,7 @@ static BOOL FileMenu_AppendItemW(
 	if ((menudata == 0) || (MenuInfo.cbSize != sizeof(MENUINFO)))
 	{
 	  ERR("menudata corrupt: %p %u\n", menudata, MenuInfo.cbSize);
-	  return 0;
+	  return FALSE;
 	}
 
 	menudata->bFixedItems = TRUE;
@@ -549,7 +549,7 @@ BOOL WINAPI FileMenu_GetLastSelectedItemPidls(
 	LPCITEMIDLIST	*ppidlItem)
 {
 	FIXME("0x%08x %p %p\n",uReserved, ppidlFolder, ppidlItem);
-	return 0;
+	return FALSE;
 }
 
 #define FM_ICON_SIZE	16
@@ -758,7 +758,7 @@ BOOL WINAPI FileMenu_DeleteItemByFirstID(
 	UINT	uID)
 {
 	TRACE("%p 0x%08x\n", hMenu, uID);
-	return 0;
+	return FALSE;
 }
 
 /*************************************************************************
@@ -767,7 +767,7 @@ BOOL WINAPI FileMenu_DeleteItemByFirstID(
 BOOL WINAPI FileMenu_DeleteSeparator(HMENU hMenu)
 {
 	TRACE("%p\n", hMenu);
-	return 0;
+	return FALSE;
 }
 
 /*************************************************************************
@@ -779,7 +779,7 @@ BOOL WINAPI FileMenu_EnableItemByCmd(
 	BOOL	bEnable)
 {
 	TRACE("%p 0x%08x 0x%08x\n", hMenu, uID,bEnable);
-	return 0;
+	return FALSE;
 }
 
 /*************************************************************************

@@ -230,7 +230,7 @@ BOOL WINAPI SHChangeNotifyUpdateEntryList(DWORD unknown1, DWORD unknown2,
     FIXME("(0x%08x, 0x%08x, 0x%08x, 0x%08x)\n",
           unknown1, unknown2, unknown3, unknown4);
 
-    return -1;
+    return TRUE;
 }
 
 struct new_delivery_notification

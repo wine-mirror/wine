@@ -1190,7 +1190,7 @@ void WINAPI SHFreeUnusedLibraries (void)
 BOOL WINAPI DAD_AutoScroll(HWND hwnd, AUTO_SCROLL_DATA *samples, LPPOINT pt)
 {
     FIXME("hwnd = %p %p %p\n",hwnd,samples,pt);
-    return 0;
+    return FALSE;
 }
 /*************************************************************************
  * DAD_DragEnter				[SHELL32.130]
@@ -1238,8 +1238,8 @@ BOOL WINAPI DAD_SetDragImage(
 	HIMAGELIST himlTrack,
 	LPPOINT lppt)
 {
-	FIXME("%p %p stub\n",himlTrack, lppt);
-  return 0;
+    FIXME("%p %p stub\n",himlTrack, lppt);
+    return FALSE;
 }
 /*************************************************************************
  * DAD_ShowDragImage				[SHELL32.137]
@@ -1249,8 +1249,8 @@ BOOL WINAPI DAD_SetDragImage(
  */
 BOOL WINAPI DAD_ShowDragImage(BOOL bShow)
 {
-	FIXME("0x%08x stub\n",bShow);
-	return 0;
+    FIXME("0x%08x stub\n",bShow);
+    return FALSE;
 }
 
 static const WCHAR szwCabLocation[] = {
@@ -1344,7 +1344,7 @@ BOOL WINAPI WriteCabinetState(CABINETSTATE *cs)
  */
 BOOL WINAPI FileIconInit(BOOL bFullInit)
 {	FIXME("(%s)\n", bFullInit ? "true" : "false");
-	return 0;
+	return FALSE;
 }
 
 /*************************************************************************
@@ -1551,7 +1551,7 @@ BOOL WINAPI SHWaitForFileToOpen(
 	DWORD dwTimeout)
 {
 	FIXME("%p 0x%08x 0x%08x stub\n", pidl, dwFlags, dwTimeout);
-	return 0;
+	return FALSE;
 }
 
 /************************************************************************

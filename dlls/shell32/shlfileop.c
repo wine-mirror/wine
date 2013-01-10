@@ -1134,7 +1134,7 @@ static BOOL copy_file_to_file(FILE_OPERATION *op, const WCHAR *szFrom, const WCH
     if (!(op->req->fFlags & FOF_NOCONFIRMATION) && PathFileExistsW(szTo))
     {
         if (!SHELL_ConfirmDialogW(op->req->hwnd, ASK_OVERWRITE_FILE, PathFindFileNameW(szTo), op))
-            return 0;
+            return FALSE;
     }
 
     return SHNotifyCopyFileW(szFrom, szTo, FALSE) == 0;

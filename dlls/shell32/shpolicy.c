@@ -900,14 +900,14 @@ BOOL WINAPI SHInitRestricted(LPCVOID unused, LPCVOID inpRegKey)
             if (lstrcmpiW(inpRegKey, strRegistryPolicyW) &&
                 lstrcmpiW(inpRegKey, strPolicyW))
 	      /* doesn't match, fail */
-	      return 0;
+	      return FALSE;
 	  }
 	  else
 	  {
             if (lstrcmpiA(inpRegKey, strRegistryPolicyA) &&
                 lstrcmpiA(inpRegKey, strPolicyA))
 	      /* doesn't match, fail */
-	      return 0;
+	      return FALSE;
 	  }
 	}
 

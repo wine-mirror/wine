@@ -647,7 +647,7 @@ int WINAPI PathCleanupSpec( LPCWSTR lpszPathW, LPWSTR lpszFileW )
 static BOOL PathQualifyA(LPCSTR pszPath)
 {
 	FIXME("%s\n",pszPath);
-	return 0;
+	return FALSE;
 }
 
 /*************************************************************************
@@ -656,7 +656,7 @@ static BOOL PathQualifyA(LPCSTR pszPath)
 static BOOL PathQualifyW(LPCWSTR pszPath)
 {
 	FIXME("%s\n",debugstr_w(pszPath));
-	return 0;
+	return FALSE;
 }
 
 /*************************************************************************

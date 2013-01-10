@@ -957,7 +957,7 @@ static BOOL BrsFolder_OnSetSelectionA(browse_info *info, LPVOID selection, BOOL 
     return result;
 }
 
-static BOOL BrsFolder_OnWindowPosChanging(browse_info *info, WINDOWPOS *pos)
+static LRESULT BrsFolder_OnWindowPosChanging(browse_info *info, WINDOWPOS *pos)
 {
     if ((info->lpBrowseInfo->ulFlags & BIF_NEWDIALOGSTYLE) && !(pos->flags & SWP_NOSIZE))
     {
