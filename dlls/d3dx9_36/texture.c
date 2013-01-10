@@ -1206,18 +1206,57 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
     return D3D_OK;
 }
 
+static inline void fill_texture(const struct pixel_format_desc *format, BYTE *pos, const D3DXVECTOR4 *value)
+{
+    DWORD c;
+
+    for (c = 0; c < format->bytes_per_pixel; c++)
+        pos[c] = 0;
+
+    for (c = 0; c < 4; c++)
+    {
+        float comp_value;
+        DWORD i, v;
+
+        switch (c)
+        {
+            case 0: /* Alpha */
+                comp_value = value->w;
+                break;
+            case 1: /* Red */
+                comp_value = value->x;
+                break;
+            case 2: /* Green */
+                comp_value = value->y;
+                break;
+            case 3: /* Blue */
+                comp_value = value->z;
+                break;
+        }
+
+        v = comp_value * ((1 << format->bits[c]) - 1) + 0.5f;
+
+        for (i = 0; i < format->bits[c] + format->shift[c]; i += 8)
+        {
+            BYTE byte, mask;
+
+            mask = ((1 << format->bits[c]) - 1) << format->shift[c] >> i;
+            byte = (v << format->shift[c] >> i) & mask;
+            pos[i / 8] |= byte;
+        }
+    }
+}
+
 HRESULT WINAPI D3DXFillTexture(struct IDirect3DTexture9 *texture, LPD3DXFILL2D function, void *funcdata)
 {
     DWORD miplevels;
-    DWORD m, i, x, y, c, v;
+    DWORD m, x, y;
     D3DSURFACE_DESC desc;
     D3DLOCKED_RECT lock_rect;
     D3DXVECTOR4 value;
     D3DXVECTOR2 coord, size;
     const struct pixel_format_desc *format;
-    BYTE *data, *pos;
-    BYTE byte, mask;
-    float comp_value;
+    BYTE *data;
 
     if (texture == NULL || function == NULL)
         return D3DERR_INVALIDCALL;
@@ -1256,38 +1295,7 @@ HRESULT WINAPI D3DXFillTexture(struct IDirect3DTexture9 *texture, LPD3DXFILL2D f
 
                 function(&value, &coord, &size, funcdata);
 
-                pos = data + y * lock_rect.Pitch + x * format->bytes_per_pixel;
-
-                for (i = 0; i < format->bytes_per_pixel; i++)
-                    pos[i] = 0;
-
-                for (c = 0; c < 4; c++)
-                {
-                    switch (c)
-                    {
-                        case 0: /* Alpha */
-                            comp_value = value.w;
-                            break;
-                        case 1: /* Red */
-                            comp_value = value.x;
-                            break;
-                        case 2: /* Green */
-                            comp_value = value.y;
-                            break;
-                        case 3: /* Blue */
-                            comp_value = value.z;
-                            break;
-                    }
-
-                    v = comp_value * ((1 << format->bits[c]) - 1) + 0.5f;
-
-                    for (i = 0; i < format->bits[c] + format->shift[c]; i += 8)
-                    {
-                        mask = ((1 << format->bits[c]) - 1) << format->shift[c] >> i;
-                        byte = (v << format->shift[c] >> i) & mask;
-                        pos[i / 8] |= byte;
-                    }
-                }
+                fill_texture(format, data + y * lock_rect.Pitch + x * format->bytes_per_pixel, &value);
             }
         }
         IDirect3DTexture9_UnlockRect(texture, m);
@@ -1600,15 +1608,13 @@ static float get_cube_coord(enum cube_coord coord, unsigned int x, unsigned int 
 HRESULT WINAPI D3DXFillCubeTexture(struct IDirect3DCubeTexture9 *texture, LPD3DXFILL3D function, void *funcdata)
 {
     DWORD miplevels;
-    DWORD m, i, x, y, c, f, v;
+    DWORD m, x, y, f;
     D3DSURFACE_DESC desc;
     D3DLOCKED_RECT lock_rect;
     D3DXVECTOR4 value;
     D3DXVECTOR3 coord, size;
     const struct pixel_format_desc *format;
-    BYTE *data, *pos;
-    BYTE byte, mask;
-    float comp_value;
+    BYTE *data;
     static const enum cube_coord coordmap[6][3] =
         {
             {ONE, YCOORDINV, XCOORDINV},
@@ -1657,38 +1663,7 @@ HRESULT WINAPI D3DXFillCubeTexture(struct IDirect3DCubeTexture9 *texture, LPD3DX
 
                     function(&value, &coord, &size, funcdata);
 
-                    pos = data + y * lock_rect.Pitch + x * format->bytes_per_pixel;
-
-                    for (i = 0; i < format->bytes_per_pixel; i++)
-                        pos[i] = 0;
-
-                    for (c = 0; c < 4; c++)
-                    {
-                        switch (c)
-                        {
-                            case 0: /* Alpha */
-                                comp_value = value.w;
-                                break;
-                            case 1: /* Red */
-                                comp_value = value.x;
-                                break;
-                            case 2: /* Green */
-                                comp_value = value.y;
-                                break;
-                            case 3: /* Blue */
-                                comp_value = value.z;
-                                break;
-                        }
-
-                        v = comp_value * ((1 << format->bits[c]) - 1) + 0.5f;
-
-                        for (i = 0; i < format->bits[c] + format->shift[c]; i += 8)
-                        {
-                            mask = ((1 << format->bits[c]) - 1) << format->shift[c] >> i;
-                            byte = (v << format->shift[c] >> i) & mask;
-                            pos[i / 8] |= byte;
-                        }
-                    }
+                    fill_texture(format, data + y * lock_rect.Pitch + x * format->bytes_per_pixel, &value);
                 }
             }
             IDirect3DCubeTexture9_UnlockRect(texture, f, m);
@@ -1701,15 +1676,13 @@ HRESULT WINAPI D3DXFillCubeTexture(struct IDirect3DCubeTexture9 *texture, LPD3DX
 HRESULT WINAPI D3DXFillVolumeTexture(struct IDirect3DVolumeTexture9 *texture, LPD3DXFILL3D function, void *funcdata)
 {
     DWORD miplevels;
-    DWORD m, i, x, y, z, c, v;
+    DWORD m, x, y, z;
     D3DVOLUME_DESC desc;
     D3DLOCKED_BOX lock_box;
     D3DXVECTOR4 value;
     D3DXVECTOR3 coord, size;
     const struct pixel_format_desc *format;
-    BYTE *data, *pos;
-    BYTE byte, mask;
-    float comp_value;
+    BYTE *data;
 
     if (texture == NULL || function == NULL)
         return D3DERR_INVALIDCALL;
@@ -1753,38 +1726,8 @@ HRESULT WINAPI D3DXFillVolumeTexture(struct IDirect3DVolumeTexture9 *texture, LP
 
                     function(&value, &coord, &size, funcdata);
 
-                    pos = data + z * lock_box.SlicePitch + y * lock_box.RowPitch + x * format->bytes_per_pixel;
-
-                    for (i = 0; i < format->bytes_per_pixel; i++)
-                        pos[i] = 0;
-
-                    for (c = 0; c < 4; c++)
-                    {
-                        switch (c)
-                        {
-                            case 0: /* Alpha */
-                                comp_value = value.w;
-                                break;
-                            case 1: /* Red */
-                                comp_value = value.x;
-                                break;
-                            case 2: /* Green */
-                                comp_value = value.y;
-                                break;
-                            case 3: /* Blue */
-                                comp_value = value.z;
-                                break;
-                        }
-
-                        v = comp_value * ((1 << format->bits[c]) - 1) + 0.5f;
-
-                        for (i = 0; i < format->bits[c] + format->shift[c]; i += 8)
-                        {
-                            mask = ((1 << format->bits[c]) - 1) << format->shift[c] >> i;
-                            byte = (v << format->shift[c] >> i) & mask;
-                            pos[i / 8] |= byte;
-                        }
-                    }
+                    fill_texture(format, data + z * lock_box.SlicePitch + y * lock_box.RowPitch
+                            + x * format->bytes_per_pixel, &value);
                 }
             }
         }
