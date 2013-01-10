@@ -2103,6 +2103,185 @@ int CDECL MSVCRT__rmtmp(void)
   return num_removed;
 }
 
+static inline int get_utf8_char_len(char ch)
+{
+    if((ch&0xf8) == 0xf0)
+        return 4;
+    else if((ch&0xf0) == 0xe0)
+        return 3;
+    else if((ch&0xe0) == 0xc0)
+        return 2;
+    return 1;
+}
+
+/*********************************************************************
+ * (internal) read_utf8
+ */
+static int read_utf8(int fd, MSVCRT_wchar_t *buf, unsigned int count)
+{
+    ioinfo *fdinfo = msvcrt_get_ioinfo(fd);
+    HANDLE hand = fdinfo->handle;
+    char min_buf[4], *readbuf, lookahead;
+    DWORD readbuf_size, pos=0, num_read=1, char_len, i, j;
+
+    /* make the buffer big enough to hold at least one character */
+    /* read bytes have to fit to output and lookahead buffers */
+    count /= 2;
+    readbuf_size = count < 4 ? 4 : count;
+    if(readbuf_size<=4 || !(readbuf = MSVCRT_malloc(readbuf_size))) {
+        readbuf_size = 4;
+        readbuf = min_buf;
+    }
+
+    if(fdinfo->lookahead[0] != '\n') {
+        readbuf[pos++] = fdinfo->lookahead[0];
+        fdinfo->lookahead[0] = '\n';
+
+        if(fdinfo->lookahead[1] != '\n') {
+            readbuf[pos++] = fdinfo->lookahead[1];
+            fdinfo->lookahead[1] = '\n';
+
+            if(fdinfo->lookahead[2] != '\n') {
+                readbuf[pos++] = fdinfo->lookahead[2];
+                fdinfo->lookahead[2] = '\n';
+            }
+        }
+    }
+
+    /* NOTE: this case is broken in native dll, reading
+     *        sometimes fails when small buffer is passed
+     */
+    if(count < 4) {
+        if(!pos && !ReadFile(hand, readbuf, 1, &num_read, NULL)) {
+            if (GetLastError() == ERROR_BROKEN_PIPE) {
+                fdinfo->wxflag |= WX_ATEOF;
+                return 0;
+            }else {
+                msvcrt_set_errno(GetLastError());
+                return -1;
+            }
+        }else if(!num_read) {
+            fdinfo->wxflag |= WX_ATEOF;
+            return 0;
+        }else {
+            pos++;
+        }
+
+        char_len = get_utf8_char_len(readbuf[0]);
+        if(char_len>pos) {
+            if(ReadFile(hand, readbuf+pos, char_len-pos, &num_read, NULL))
+                pos += num_read;
+        }
+
+        if(readbuf[0] == '\n')
+            fdinfo->wxflag |= WX_READNL;
+        else
+            fdinfo->wxflag &= ~WX_READNL;
+
+        if(readbuf[0] == 0x1a) {
+            fdinfo->wxflag |= WX_ATEOF;
+            return 0;
+        }
+
+        if(readbuf[0] == '\r') {
+            if(!ReadFile(hand, &lookahead, 1, &num_read, NULL) || num_read!=1)
+                buf[0] = '\r';
+            else if(lookahead == '\n')
+                buf[0] = '\n';
+            else {
+                buf[0] = '\r';
+                if(fdinfo->wxflag & WX_PIPE)
+                    fdinfo->lookahead[0] = lookahead;
+                else
+                    SetFilePointer(fdinfo->handle, -1, NULL, FILE_CURRENT);
+            }
+            return 2;
+        }
+
+        if(!(num_read = MultiByteToWideChar(CP_UTF8, 0, readbuf, pos, buf, count))) {
+            msvcrt_set_errno(GetLastError());
+            return -1;
+        }
+
+        return num_read*2;
+    }
+
+    if(!ReadFile(hand, readbuf+pos, readbuf_size-pos, &num_read, NULL)) {
+        if(pos) {
+            num_read = 0;
+        }else if(GetLastError() == ERROR_BROKEN_PIPE) {
+            fdinfo->wxflag |= WX_ATEOF;
+            return 0;
+        }else {
+            msvcrt_set_errno(GetLastError());
+            return -1;
+        }
+    }else if(!pos && !num_read) {
+        fdinfo->wxflag |= WX_ATEOF;
+        return 0;
+    }
+
+    pos += num_read;
+    if(readbuf[0] == '\n')
+        fdinfo->wxflag |= WX_READNL;
+    else
+        fdinfo->wxflag &= ~WX_READNL;
+
+    /* Find first byte of last character (may be incomplete) */
+    for(i=pos-1; i>0 && i>pos-4; i--)
+        if((readbuf[i]&0xc0) != 0x80)
+            break;
+    char_len = get_utf8_char_len(readbuf[i]);
+    if(char_len+i <= pos)
+        i += char_len;
+
+    if(fdinfo->wxflag & WX_PIPE) {
+        if(i < pos)
+            fdinfo->lookahead[0] = readbuf[i];
+        if(i+1 < pos)
+            fdinfo->lookahead[1] = readbuf[i+1];
+        if(i+2 < pos)
+            fdinfo->lookahead[2] = readbuf[i+2];
+    }else if(i < pos) {
+        SetFilePointer(fdinfo->handle, i-pos, NULL, FILE_CURRENT);
+    }
+    pos = i;
+
+    for(i=0, j=0; i<pos; i++) {
+        if(readbuf[i] == 0x1a) {
+            fdinfo->wxflag |= WX_ATEOF;
+            break;
+        }
+
+        /* strip '\r' if followed by '\n' */
+        if(readbuf[i] == '\r' && i+1==pos) {
+            if(fdinfo->lookahead[0] != '\n' || !ReadFile(hand, &lookahead, 1, &num_read, NULL) || !num_read) {
+                readbuf[j++] = '\r';
+            }else if(lookahead == '\n' && j==0) {
+                readbuf[j++] = '\n';
+            }else {
+                if(lookahead != '\n')
+                    readbuf[j++] = '\r';
+
+                if(fdinfo->wxflag & WX_PIPE)
+                    fdinfo->lookahead[0] = lookahead;
+                else
+                    SetFilePointer(fdinfo->handle, -1, NULL, FILE_CURRENT);
+            }
+        }else if(readbuf[i]!='\r' || readbuf[i+1]!='\n') {
+            readbuf[j++] = readbuf[i];
+        }
+    }
+    pos = j;
+
+    if(!(num_read = MultiByteToWideChar(CP_UTF8, 0, readbuf, pos, buf, count))) {
+        msvcrt_set_errno(GetLastError());
+        return -1;
+    }
+
+    return num_read*2;
+}
+
 /*********************************************************************
  * (internal) read_i
  *
@@ -2139,6 +2318,9 @@ static int read_i(int fd, void *buf, unsigned int count)
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return -1;
     }
+
+    if((fdinfo->wxflag&WX_TEXT) && (fdinfo->exflag&EF_UTF8))
+        return read_utf8(fd, buf, count);
 
     if (fdinfo->lookahead[0]!='\n' || ReadFile(hand, bufstart, count, &num_read, NULL))
     {
