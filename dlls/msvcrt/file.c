@@ -1169,19 +1169,10 @@ int CDECL MSVCRT__fseeki64(MSVCRT_FILE* file, __int64 offset, int whence)
 	msvcrt_flush_buffer(file);
 
   if(whence == SEEK_CUR && file->_flag & MSVCRT__IOREAD ) {
-	offset -= file->_cnt;
-	if (msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT) {
-		/* Black magic correction for CR removal */
-		int i;
-		for (i=0; i<file->_cnt; i++) {
-			if (file->_ptr[i] == '\n')
-				offset--;
-		}
-		/* Black magic when reading CR at buffer boundary*/
-		if(msvcrt_get_ioinfo(file->_file)->wxflag & WX_READCR)
-		    offset--;
-	}
+      whence = SEEK_SET;
+      offset += MSVCRT__ftelli64(file);
   }
+
   /* Discard buffered input */
   file->_cnt = 0;
   file->_ptr = file->_base;
