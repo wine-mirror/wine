@@ -975,7 +975,7 @@ static void test_file_write_read( void )
   free(tempf);
 
   tempf=_tempnam(".","wne");
-  tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_BINARY|_O_RDWR,0);
+  tempfd = _open(tempf, _O_CREAT|_O_TRUNC|_O_BINARY|_O_RDWR, _S_IWRITE);
   ok( tempfd != -1,
      "Can't open '%s': %d\n", tempf, errno); /* open in BINARY mode */
   ok(_write(tempfd,dostext,strlen(dostext)) == lstrlenA(dostext),
@@ -1010,6 +1010,46 @@ static void test_file_write_read( void )
   i = _read(tempfd,btext, strlen(mytext));
   ok(i == strlen(mytext)-1, "_read_i %d\n", i);
   _close(tempfd);
+
+  /* test read/write in unicode mode */
+  if(p_fopen_s)
+  {
+      tempfd = _open(tempf, _O_CREAT|_O_TRUNC|_O_WRONLY|_O_WTEXT, _S_IWRITE);
+      ok(tempfd != -1, "_open failed with error: %d\n", errno);
+      ret = _write(tempfd, "a", 1);
+      ok(ret == -1, "_write returned %d, expected -1\n", ret);
+      ret = _write(tempfd, "a\x00\n\x00\xff\xff", 6);
+      ok(ret == 6, "_write returned %d, expected 6\n", ret);
+      _close(tempfd);
+
+      tempfd = _open(tempf, _O_RDONLY|_O_BINARY, 0);
+      ok(tempfd != -1, "_open failed with error: %d\n", errno);
+      ret = _read(tempfd, btext, sizeof(btext));
+      ok(ret == 10, "_read returned %d, expected 10\n", ret);
+      ok(!memcmp(btext, "\xff\xfe\x61\x00\r\x00\n\x00\xff\xff", 10), "btext is incorrect\n");
+      _close(tempfd);
+
+      tempfd = _open(tempf, _O_CREAT|_O_TRUNC|_O_WRONLY|_O_U8TEXT, _S_IWRITE);
+      ok(tempfd != -1, "_open failed with error: %d\n", errno);
+      errno = 0xdeadbeef;
+      ret = _write(tempfd, "a", 1);
+      ok(ret == -1, "_write returned %d, expected -1\n", ret);
+      ok(errno == 22, "errno = %d\n", errno);
+      ret = _write(tempfd, "a\x00\n\x00\x62\x00", 6);
+      ok(ret == 6, "_write returned %d, expected 6\n", ret);
+      _close(tempfd);
+
+      tempfd = _open(tempf, _O_RDONLY|_O_BINARY, 0);
+      ok(tempfd != -1, "_open failed with error: %d\n", errno);
+      ret = _read(tempfd, btext, sizeof(btext));
+      ok(ret == 7, "_read returned %d, expected 7\n", ret);
+      ok(!memcmp(btext, "\xef\xbb\xbf\x61\r\n\x62", 7), "btext is incorrect\n");
+      _close(tempfd);
+  }
+  else
+  {
+      win_skip("unicode mode tests on file\n");
+  }
 
   ret =_chmod (tempf, _S_IREAD | _S_IWRITE);
   ok( ret == 0,
