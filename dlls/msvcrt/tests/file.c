@@ -1034,6 +1034,17 @@ static void test_file_write_read( void )
       ok(!memcmp(btext, "\xff\xfe\x61\x00\r\x00\n\x00\xff\xff", 10), "btext is incorrect\n");
       _close(tempfd);
 
+      tempfd = _open(tempf, _O_RDONLY|_O_WTEXT, 0);
+      ok(tempfd != -1, "_open failed with error: %d\n", errno);
+      errno = 0xdeadbeef;
+      ret = _read(tempfd, btext, 3);
+      ok(ret == -1, "_read returned %d, expected -1\n", ret);
+      ok(errno == 22, "errno = %d\n", errno);
+      ret = _read(tempfd, btext, sizeof(btext));
+      ok(ret == 6, "_read returned %d, expected 6\n", ret);
+      ok(!memcmp(btext, "\x61\x00\n\x00\xff\xff", 6), "btext is incorrect\n");
+      _close(tempfd);
+
       tempfd = _open(tempf, _O_CREAT|_O_TRUNC|_O_WRONLY|_O_U8TEXT, _S_IWRITE);
       ok(tempfd != -1, "_open failed with error: %d\n", errno);
       errno = 0xdeadbeef;
@@ -1049,6 +1060,44 @@ static void test_file_write_read( void )
       ret = _read(tempfd, btext, sizeof(btext));
       ok(ret == 7, "_read returned %d, expected 7\n", ret);
       ok(!memcmp(btext, "\xef\xbb\xbf\x61\r\n\x62", 7), "btext is incorrect\n");
+      _close(tempfd);
+
+      tempfd = _open(tempf, _O_RDONLY|_O_WTEXT, 0);
+      ok(tempfd != -1, "_open failed with error: %d\n", errno);
+      ret = _read(tempfd, btext, sizeof(btext));
+      ok(ret == 6, "_read returned %d, expected 6\n", ret);
+      ok(!memcmp(btext, "\x61\x00\n\x00\x62\x00", 6), "btext is incorrect\n");
+
+      /* when buffer is small read sometimes fails in native implementation */
+      lseek(tempfd, 3 /* skip bom */, SEEK_SET);
+      ret = _read(tempfd, btext, 4);
+      todo_wine ok(ret == -1, "_read returned %d, expected -1\n", ret);
+
+      lseek(tempfd, 6, SEEK_SET);
+      ret = _read(tempfd, btext, 2);
+      ok(ret == 2, "_read returned %d, expected 2\n", ret);
+      ok(!memcmp(btext, "\x62\x00", 2), "btext is incorrect\n");
+      _close(tempfd);
+
+      tempfd = _open(tempf, _O_CREAT|_O_TRUNC|_O_WRONLY|_O_BINARY, _S_IWRITE);
+      ok(tempfd != -1, "_open failed with error: %d\n", errno);
+      ret = _write(tempfd, "\xef\xbb\xbf\x61\xc4\x85\x62\xc5\xbc\r\r\n", 12);
+      ok(ret == 12, "_write returned %d, expected 9\n", ret);
+      _close(tempfd);
+
+      tempfd = _open(tempf, _O_RDONLY|_O_WTEXT, 0);
+      ok(tempfd != -1, "_open failed with error: %d\n", errno);
+      ret = _read(tempfd, btext, sizeof(btext));
+      ok(ret == 12, "_read returned %d, expected 12\n", ret);
+      ok(!memcmp(btext, "\x61\x00\x05\x01\x62\x00\x7c\x01\x0d\x00\x0a\x00", 12), "btext is incorrect\n");
+
+      /* test invalid utf8 sequence */
+      lseek(tempfd, 5, SEEK_SET);
+      ret = _read(tempfd, btext, sizeof(btext));
+      todo_wine ok(ret == 10, "_read returned %d, expected 10\n", ret);
+      /* invalid char should be replaced by U+FFFD in MultiByteToWideChar */
+      todo_wine ok(!memcmp(btext, "\xfd\xff", 2), "invalid UTF8 character was not replaced by U+FFFD\n");
+      ok(!memcmp(btext+ret-8, "\x62\x00\x7c\x01\x0d\x00\x0a\x00", 8), "btext is incorrect\n");
       _close(tempfd);
   }
   else
@@ -1790,6 +1839,7 @@ static void test_pipes(const char* selfname)
     i=fclose(file);
     ok(!i, "unable to close the pipe: %d\n", errno);
 
+    /* test \r handling when it's the last character read */
     if (_pipe(pipes, 1024, O_BINARY) < 0)
     {
         ok(0, "pipe failed with errno %d\n", errno);
@@ -1810,6 +1860,31 @@ static void test_pipes(const char* selfname)
     r = read(pipes[0], buf, 1);
     ok(r == 1, "read returned %d, expected 1\n", r);
     ok(buf[0] == 'b', "buf[0] = %x, expected 'b'\n", buf[0]);
+
+    if (p_fopen_s)
+    {
+        /* test utf16 read with insufficient data */
+        r = write(pipes[1], "a\0b", 3);
+        ok(r == 3, "write returned %d, errno = %d\n", r, errno);
+        buf[2] = 'z';
+        buf[3] = 'z';
+        setmode(pipes[0], _O_WTEXT);
+        r = read(pipes[0], buf, 4);
+        ok(r == 2, "read returned %d, expected 2\n", r);
+        ok(!memcmp(buf, "a\0bz", 4), "read returned incorrect data\n");
+        r = write(pipes[1], "\0", 1);
+        ok(r == 1, "write returned %d, errno = %d\n", r, errno);
+        buf[0] = 'z';
+        buf[1] = 'z';
+        r = read(pipes[0], buf, 2);
+        ok(r == 0, "read returned %d, expected 0\n", r);
+        ok(!memcmp(buf, "\0z", 2), "read returned incorrect data\n");
+    }
+    else
+    {
+        win_skip("unicode mode tests on pipe\n");
+    }
+
     close(pipes[1]);
     close(pipes[0]);
 }
