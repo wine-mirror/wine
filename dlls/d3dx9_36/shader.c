@@ -597,9 +597,9 @@ static inline struct ID3DXConstantTableImpl *impl_from_ID3DXConstantTable(ID3DXC
     return CONTAINING_RECORD(iface, struct ID3DXConstantTableImpl, ID3DXConstantTable_iface);
 }
 
-static inline int is_vertex_shader(DWORD version)
+static inline BOOL is_vertex_shader(DWORD version)
 {
-    return (version & 0xFFFF0000) == 0xFFFE0000;
+    return (version & 0xffff0000) == 0xfffe0000;
 }
 
 static inline struct ctab_constant *constant_from_handle(D3DXHANDLE handle)
