@@ -2271,7 +2271,7 @@ static void test_multiselect(void)
     item.state = 0;
     item.stateMask = LVIS_SELECTED;
     SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "deselect all notification 2", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "deselect all notification 2", FALSE);
 
     /* any non-zero state value does the same */
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -3111,7 +3111,7 @@ static void test_ownerdata(void)
     res = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
     expect(TRUE, res);
 
-    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "ownerdata deselect all notification", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "ownerdata deselect all notification", FALSE);
 
     /* select one, then deselect all */
     item.stateMask = LVIS_SELECTED;

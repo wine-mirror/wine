@@ -8857,6 +8857,10 @@ static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, const LVITE
         UINT oldstate = 0;
         BOOL notify;
 
+        /* special case optimization for recurring attemp to deselect all */
+        if (lvItem.state == 0 && lvItem.stateMask == LVIS_SELECTED && !LISTVIEW_GetSelectedCount(infoPtr))
+            return TRUE;
+
 	/* select all isn't allowed in LVS_SINGLESEL */
 	if ((lvItem.state & lvItem.stateMask & LVIS_SELECTED) && (infoPtr->dwStyle & LVS_SINGLESEL))
 	    return FALSE;
