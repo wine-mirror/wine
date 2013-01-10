@@ -66,6 +66,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define WX_APPEND         0x20
 #define WX_TEXT           0x80
 
+/* values for exflag - it's used differently in msvcr90.dll*/
+#define EF_UTF8           0x01
+#define EF_UTF16          0x02
+#define EF_CRIT_INIT      0x04
+#define EF_UNK_UNICODE    0x08
+
+static char utf8_bom[3] = { 0xef, 0xbb, 0xbf };
+static char utf16_bom[2] = { 0xff, 0xfe };
+
 /* FIXME: this should be allocated dynamically */
 #define MSVCRT_MAX_FILES 2048
 #define MSVCRT_FD_BLOCK_SIZE 32
@@ -75,7 +84,7 @@ typedef struct {
     HANDLE              handle;
     unsigned char       wxflag;
     char                unk1;
-    BOOL                crit_init;
+    int                 exflag;
     CRITICAL_SECTION    crit;
 } ioinfo;
 
@@ -311,6 +320,7 @@ static int msvcrt_alloc_fd_from(HANDLE hand, int flag, int fd)
 
   fdinfo->handle = hand;
   fdinfo->wxflag = WX_OPEN | (flag & (WX_DONTINHERIT | WX_APPEND | WX_TEXT));
+  fdinfo->exflag = 0;
 
   /* locate next free slot */
   if (fd == MSVCRT_fdstart && fd == MSVCRT_fdend)
@@ -484,6 +494,7 @@ void msvcrt_init_io(void)
                                                          GetCurrentProcess(), &fdinfo->handle,
                                                          0, TRUE, DUPLICATE_SAME_ACCESS))
           fdinfo->wxflag = WX_OPEN | WX_TEXT;
+      fdinfo->exflag = 0;
   }
 
   fdinfo = msvcrt_get_ioinfo(1);
@@ -494,6 +505,7 @@ void msvcrt_init_io(void)
                                                          GetCurrentProcess(), &fdinfo->handle,
                                                          0, TRUE, DUPLICATE_SAME_ACCESS))
           fdinfo->wxflag = WX_OPEN | WX_TEXT;
+      fdinfo->exflag = 0;
   }
 
   fdinfo = msvcrt_get_ioinfo(2);
@@ -504,6 +516,7 @@ void msvcrt_init_io(void)
                                                          GetCurrentProcess(), &fdinfo->handle,
                                                          0, TRUE, DUPLICATE_SAME_ACCESS))
           fdinfo->wxflag = WX_OPEN | WX_TEXT;
+      fdinfo->exflag = 0;
   }
 
   TRACE(":handles (%p)(%p)(%p)\n", msvcrt_get_ioinfo(0)->handle,
@@ -1859,6 +1872,29 @@ int CDECL MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
   return fd;
 }
 
+static int check_bom(HANDLE h, int oflags, BOOL seek)
+{
+    char bom[sizeof(utf8_bom)];
+    DWORD r;
+
+    oflags &= ~(MSVCRT__O_WTEXT|MSVCRT__O_U16TEXT|MSVCRT__O_U8TEXT);
+
+    if (!ReadFile(h, bom, sizeof(utf8_bom), &r, NULL))
+        return oflags;
+
+    if (r==sizeof(utf8_bom) && !memcmp(bom, utf8_bom, sizeof(utf8_bom))) {
+        oflags |= MSVCRT__O_U8TEXT;
+    }else if (r>=sizeof(utf16_bom) && !memcmp(bom, utf16_bom, sizeof(utf16_bom))) {
+        if (seek && r>2)
+            SetFilePointer(h, 2, NULL, FILE_BEGIN);
+        oflags |= MSVCRT__O_U16TEXT;
+    }else if (seek) {
+        SetFilePointer(h, 0, NULL, FILE_BEGIN);
+    }
+
+    return oflags;
+}
+
 /*********************************************************************
  *              _wsopen_s (MSVCRT.@)
  */
@@ -1937,16 +1973,78 @@ int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int
   sa.lpSecurityDescriptor = NULL;
   sa.bInheritHandle       = !(oflags & MSVCRT__O_NOINHERIT);
 
-  hand = CreateFileW(path, access, sharing, &sa, creation, attrib, 0);
+  if ((oflags&(MSVCRT__O_WTEXT|MSVCRT__O_U16TEXT|MSVCRT__O_U8TEXT))
+          && (creation==OPEN_ALWAYS || creation==OPEN_EXISTING)
+          && !(access&GENERIC_READ))
+  {
+      hand = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
+              &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+      if (hand != INVALID_HANDLE_VALUE)
+      {
+          oflags = check_bom(hand, oflags, FALSE);
+          CloseHandle(hand);
+      }
+      else
+          oflags &= ~(MSVCRT__O_WTEXT|MSVCRT__O_U16TEXT|MSVCRT__O_U8TEXT);
+  }
 
+  hand = CreateFileW(path, access, sharing, &sa, creation, attrib, 0);
   if (hand == INVALID_HANDLE_VALUE)  {
     WARN(":failed-last error (%d)\n",GetLastError());
-    msvcrt_set_errno(GetLastError());
     msvcrt_set_errno(GetLastError());
     return *MSVCRT__errno();
   }
 
+  if (oflags & (MSVCRT__O_WTEXT|MSVCRT__O_U16TEXT|MSVCRT__O_U8TEXT))
+  {
+      if ((access & GENERIC_WRITE) && (creation==CREATE_NEW
+                  || creation==CREATE_ALWAYS || creation==TRUNCATE_EXISTING
+                  || (creation==OPEN_ALWAYS && GetLastError()==ERROR_ALREADY_EXISTS)))
+      {
+          if (oflags & MSVCRT__O_U8TEXT)
+          {
+              DWORD written = 0, tmp;
+
+              while(written!=sizeof(utf8_bom) && WriteFile(hand, (char*)utf8_bom+written,
+                          sizeof(utf8_bom)-written, &tmp, NULL))
+                  written += tmp;
+              if (written != sizeof(utf8_bom)) {
+                  WARN("error writting BOM\n");
+                  CloseHandle(hand);
+                  msvcrt_set_errno(GetLastError());
+                  return *MSVCRT__errno();
+              }
+          }
+          else
+          {
+              DWORD written = 0, tmp;
+
+              while(written!=sizeof(utf16_bom) && WriteFile(hand, (char*)utf16_bom+written,
+                          sizeof(utf16_bom)-written, &tmp, NULL))
+                  written += tmp;
+              if (written != sizeof(utf16_bom))
+              {
+                  WARN("error writting BOM\n");
+                  CloseHandle(hand);
+                  msvcrt_set_errno(GetLastError());
+                  return *MSVCRT__errno();
+              }
+          }
+      }
+      else if (access & GENERIC_READ)
+          oflags = check_bom(hand, oflags, TRUE);
+  }
+
   *fd = msvcrt_alloc_fd(hand, wxflag);
+  if (*fd == -1)
+      return *MSVCRT__errno();
+
+  if (oflags & MSVCRT__O_WTEXT)
+      msvcrt_get_ioinfo(*fd)->exflag |= EF_UTF16|EF_UNK_UNICODE;
+  else if (oflags & MSVCRT__O_U16TEXT)
+      msvcrt_get_ioinfo(*fd)->exflag |= EF_UTF16;
+  else if (oflags & MSVCRT__O_U8TEXT)
+      msvcrt_get_ioinfo(*fd)->exflag |= EF_UTF8;
 
   TRACE(":fd (%d) handle (%p)\n", *fd, hand);
   return 0;
