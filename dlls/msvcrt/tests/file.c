@@ -1320,6 +1320,7 @@ static void test_fopen_s( void )
 {
     const char name[] = "empty1";
     char buff[16];
+    unsigned char *ubuff = (unsigned char*)buff;
     FILE *file;
     int ret;
     int len;
@@ -1347,6 +1348,69 @@ static void test_fopen_s( void )
 
     ret = fclose(file);
     ok(ret != EOF, "File failed to close\n");
+
+    ret = p_fopen_s(&file, name, "w,  ccs=UNIcode");
+    ok(ret == 0, "fopen_s failed with %d\n", ret);
+    ret = fwrite("a", 1, 2, file);
+    ok(ret == 2, "fwrite returned %d\n", ret);
+    fclose(file);
+
+    ret = p_fopen_s(&file, name, "r");
+    ok(ret == 0, "fopen_s failed with %d\n", ret);
+    len = fread(buff, 1, 2, file);
+    ok(len == 2, "len = %d\n", len);
+    ok(ubuff[0]==0xff && ubuff[1]==0xfe, "buff[0]=%02x, buff[1]=%02x\n",
+            ubuff[0], ubuff[1]);
+    fclose(file);
+
+    ret = p_fopen_s(&file, name, "r,ccs=unicode");
+    ok(ret == 0, "fopen_s failed with %d\n", ret);
+    len = fread(buff, 1, 2, file);
+    ok(len == 2, "len = %d\n", len);
+    ok(ubuff[0]=='a' && ubuff[1]==0, "buff[0]=%02x, buff[1]=%02x\n",
+            ubuff[0], ubuff[1]);
+    fclose(file);
+
+    ret = p_fopen_s(&file, name, "r,ccs=utf-16le");
+    ok(ret == 0, "fopen_s failed with %d\n", ret);
+    len = fread(buff, 1, 2, file);
+    ok(len == 2, "len = %d\n", len);
+    ok(ubuff[0]=='a' && ubuff[1]==0, "buff[0]=%02x, buff[1]=%02x\n",
+            ubuff[0], ubuff[1]);
+    fclose(file);
+
+    ret = p_fopen_s(&file, name, "r,ccs=utf-8");
+    ok(ret == 0, "fopen_s failed with %d\n", ret);
+    len = fread(buff, 1, 2, file);
+    ok(len == 2, "len = %d\n", len);
+    ok(ubuff[0]=='a' && ubuff[1]==0, "buff[0]=%02x, buff[1]=%02x\n",
+            ubuff[0], ubuff[1]);
+    fclose(file);
+
+    ret = p_fopen_s(&file, name, "w,ccs=utf-16le");
+    ok(ret == 0, "fopen_s failed with %d\n", ret);
+    fclose(file);
+
+    ret = p_fopen_s(&file, name, "r");
+    ok(ret == 0, "fopen_s failed with %d\n", ret);
+    len = fread(buff, 1, 3, file);
+    ok(len == 2, "len = %d\n", len);
+    ok(ubuff[0]==0xff && ubuff[1]==0xfe, "buff[0]=%02x, buff[1]=%02x\n",
+            ubuff[0], ubuff[1]);
+    fclose(file);
+
+    ret = p_fopen_s(&file, name, "w,ccs=utf-8");
+    ok(ret == 0, "fopen_s failed with %d\n", ret);
+    fclose(file);
+
+    ret = p_fopen_s(&file, name, "r");
+    ok(ret == 0, "fopen_s failed with %d\n", ret);
+    len = fread(buff, 1, 4, file);
+    ok(len == 3, "len = %d\n", len);
+    ok(ubuff[0]==0xef && ubuff[1]==0xbb && ubuff[2]==0xbf,
+            "buff[0]=%02x, buff[1]=%02x, buff[2]=%02x\n",
+            ubuff[0], ubuff[1], ubuff[2]);
+    fclose(file);
 
     ok(_unlink(name) == 0, "Couldn't unlink file named '%s'\n", name);
 }

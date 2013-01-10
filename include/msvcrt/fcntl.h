@@ -27,6 +27,9 @@
 #define _O_BINARY      0x8000
 #define _O_RAW         _O_BINARY
 
+#define _O_WTEXT       0x10000
+#define _O_U16TEXT     0x20000
+#define _O_U8TEXT      0x40000
 
 #define O_RDONLY    _O_RDONLY
 #define O_WRONLY    _O_WRONLY
