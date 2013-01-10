@@ -2232,14 +2232,31 @@ int CDECL MSVCRT__read(int fd, void *buf, unsigned int count)
  */
 int CDECL MSVCRT__setmode(int fd,int mode)
 {
-  int ret = msvcrt_get_ioinfo(fd)->wxflag & WX_TEXT ? MSVCRT__O_TEXT : MSVCRT__O_BINARY;
-  if (mode & (~(MSVCRT__O_TEXT|MSVCRT__O_BINARY)))
-    FIXME("fd (%d) mode (0x%08x) unknown\n",fd,mode);
-  if ((mode & MSVCRT__O_TEXT) == MSVCRT__O_TEXT)
+    int ret = msvcrt_get_ioinfo(fd)->wxflag & WX_TEXT ? MSVCRT__O_TEXT : MSVCRT__O_BINARY;
+    if(ret==MSVCRT__O_TEXT && (msvcrt_get_ioinfo(fd)->exflag & (EF_UTF8|EF_UTF16)))
+        ret = MSVCRT__O_WTEXT;
+
+    if(mode!=MSVCRT__O_TEXT && mode!=MSVCRT__O_BINARY && mode!=MSVCRT__O_WTEXT
+                && mode!=MSVCRT__O_U16TEXT && mode!=MSVCRT__O_U8TEXT) {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return -1;
+    }
+
+    if(mode == MSVCRT__O_BINARY) {
+        msvcrt_get_ioinfo(fd)->wxflag &= ~WX_TEXT;
+        msvcrt_get_ioinfo(fd)->exflag &= ~(EF_UTF8|EF_UTF16);
+        return ret;
+    }
+
     msvcrt_get_ioinfo(fd)->wxflag |= WX_TEXT;
-  else
-    msvcrt_get_ioinfo(fd)->wxflag &= ~WX_TEXT;
-  return ret;
+    if(mode == MSVCRT__O_TEXT)
+        msvcrt_get_ioinfo(fd)->exflag &= ~(EF_UTF8|EF_UTF16);
+    else if(mode == MSVCRT__O_U8TEXT)
+        msvcrt_get_ioinfo(fd)->exflag = (msvcrt_get_ioinfo(fd)->exflag & ~EF_UTF16) | EF_UTF8;
+    else
+        msvcrt_get_ioinfo(fd)->exflag = (msvcrt_get_ioinfo(fd)->exflag & ~EF_UTF8) | EF_UTF16;
+
+    return ret;
 }
 
 /*********************************************************************
