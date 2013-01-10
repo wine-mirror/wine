@@ -2145,24 +2145,29 @@ static void test_multiselect(void)
 
     hwnd = create_listview_control(LVS_REPORT);
 
-    for (i=0;i<items;i++) {
-	    insert_item(hwnd, 0);
-    }
+    for (i = 0; i < items; i++)
+        insert_item(hwnd, 0);
 
     item_count = (int)SendMessage(hwnd, LVM_GETITEMCOUNT, 0, 0);
+    expect(items, item_count);
 
-    expect(items,item_count);
+    for (i = 0; i < 4; i++) {
+        LVITEMA item;
 
-    for (i=0;i<4;i++) {
         task = task_list[i];
 
 	/* deselect all items */
-	ListView_SetItemState(hwnd, -1, 0, LVIS_SELECTED);
+        item.state = 0;
+        item.stateMask = LVIS_SELECTED;
+        SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
 	SendMessage(hwnd, LVM_SETSELECTIONMARK, 0, -1);
 
 	/* set initial position */
 	SendMessage(hwnd, LVM_SETSELECTIONMARK, 0, (task.initPos == -1 ? item_count -1 : task.initPos));
-	ListView_SetItemState(hwnd,(task.initPos == -1 ? item_count -1 : task.initPos),LVIS_SELECTED ,LVIS_SELECTED);
+
+        item.state = LVIS_SELECTED;
+        item.stateMask = LVIS_SELECTED;
+        SendMessageA(hwnd, LVM_SETITEMSTATE, task.initPos == -1 ? item_count-1 : task.initPos, (LPARAM)&item);
 
 	selected_count = (int)SendMessage(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
 
@@ -2204,7 +2209,9 @@ static void test_multiselect(void)
     expect(FALSE, r);
 
     /* select all, check notifications */
-    ListView_SetItemState(hwnd, -1, 0, LVIS_SELECTED);
+    item.state = 0;
+    item.stateMask = LVIS_SELECTED;
+    SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -2217,10 +2224,15 @@ static void test_multiselect(void)
                 "select all notification", FALSE);
 
     /* deselect all items */
-    ListView_SetItemState(hwnd, -1, 0, LVIS_SELECTED);
+    item.state = 0;
+    item.stateMask = LVIS_SELECTED;
+    SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+
     SendMessage(hwnd, LVM_SETSELECTIONMARK, 0, -1);
     for (i=0;i<3;i++) {
-        ListView_SetItemState(hwnd, i, LVIS_SELECTED, LVIS_SELECTED);
+        item.state = LVIS_SELECTED;
+        item.stateMask = LVIS_SELECTED;
+        SendMessageA(hwnd, LVM_SETITEMSTATE, i, (LPARAM)&item);
     }
 
     r = SendMessage(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
@@ -2245,7 +2257,9 @@ static void test_multiselect(void)
     expect(3, r);
 
     /* select one more */
-    ListView_SetItemState(hwnd, 3, LVIS_SELECTED, LVIS_SELECTED);
+    item.state = LVIS_SELECTED;
+    item.stateMask = LVIS_SELECTED;
+    SendMessageA(hwnd, LVM_SETITEMSTATE, 3, (LPARAM)&item);
 
     for (i=0;i<3;i++) {
         r = ListView_GetItemState(hwnd, i, LVIS_SELECTED);
