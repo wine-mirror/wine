@@ -60,7 +60,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 /* values for wxflag in file descriptor */
 #define WX_OPEN           0x01
 #define WX_ATEOF          0x02
-#define WX_READCR         0x04  /* underlying file is at \r */
+#define WX_READNL         0x04  /* read started with \n */
 #define WX_PIPE           0x08
 #define WX_DONTINHERIT    0x10
 #define WX_APPEND         0x20
@@ -2151,21 +2151,12 @@ static int read_i(int fd, void *buf, unsigned int count)
         else if (fdinfo->wxflag & WX_TEXT)
         {
             DWORD i, j;
-            if (bufstart[num_read-1] == '\r')
-            {
-                if(count == 1)
-                {
-                    fdinfo->wxflag  &=  ~WX_READCR;
-                    ReadFile(hand, bufstart, 1, &num_read, NULL);
-                }
-                else
-                {
-                    fdinfo->wxflag  |= WX_READCR;
-                    num_read--;
-                }
-            }
-	    else
-	      fdinfo->wxflag  &=  ~WX_READCR;
+
+            if (bufstart[0] == '\n')
+                fdinfo->wxflag |= WX_READNL;
+            else
+                fdinfo->wxflag &= ~WX_READNL;
+
             for (i=0, j=0; i<num_read; i++)
             {
                 /* in text mode, a ctrl-z signals EOF */
@@ -3536,8 +3527,6 @@ int CDECL MSVCRT_fsetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
  */
 __int64 CDECL MSVCRT__ftelli64(MSVCRT_FILE* file)
 {
-    /* TODO: just call fgetpos and return lower half of result */
-    int off=0;
     __int64 pos;
 
     MSVCRT__lock_file(file);
@@ -3547,26 +3536,42 @@ __int64 CDECL MSVCRT__ftelli64(MSVCRT_FILE* file)
         return -1;
     }
     if(file->_bufsiz)  {
-        if( file->_flag & MSVCRT__IOWRT ) {
-            off = file->_ptr - file->_base;
+        if(file->_flag & MSVCRT__IOWRT) {
+            pos += file->_ptr - file->_base;
+        } else if(!file->_cnt) { /* nothing to do */
+        } else if(MSVCRT__lseeki64(file->_file, 0, SEEK_END)==pos) {
+            int i;
+
+            pos -= file->_cnt;
+            if(msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT) {
+                for(i=0; i<file->_cnt; i++)
+                    if(file->_ptr[i] == '\n')
+                        pos--;
+            }
         } else {
-            off = -file->_cnt;
-            if (msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT) {
-                /* Black magic correction for CR removal */
-                int i;
-                for (i=0; i<file->_cnt; i++) {
-                    if (file->_ptr[i] == '\n')
-                        off--;
-                }
-                /* Black magic when reading CR at buffer boundary*/
-                if(msvcrt_get_ioinfo(file->_file)->wxflag & WX_READCR)
-                    off--;
+            char *p;
+
+            if(MSVCRT__lseeki64(file->_file, pos, SEEK_SET) != pos) {
+                MSVCRT__unlock_file(file);
+                return -1;
+            }
+
+            pos -= file->_bufsiz;
+            pos += file->_ptr - file->_base;
+
+            if(msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT) {
+                if(msvcrt_get_ioinfo(file->_file)->wxflag & WX_READNL)
+                    pos--;
+
+                for(p=file->_base; p<file->_ptr; p++)
+                    if(*p == '\n')
+                        pos++;
             }
         }
     }
 
     MSVCRT__unlock_file(file);
-    return off + pos;
+    return pos;
 }
 
 /*********************************************************************
