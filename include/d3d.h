@@ -1311,8 +1311,8 @@ DECLARE_INTERFACE_(IDirect3DDevice7,IUnknown)
     STDMETHOD(GetViewport)(THIS_ D3DVIEWPORT7 *data) PURE;
     STDMETHOD(SetMaterial)(THIS_ D3DMATERIAL7 *data) PURE;
     STDMETHOD(GetMaterial)(THIS_ D3DMATERIAL7 *data) PURE;
-    STDMETHOD(SetLight)(THIS_ DWORD dwLightIndex,LPD3DLIGHT7 lpLight) PURE;
-    STDMETHOD(GetLight)(THIS_ DWORD dwLightIndex,LPD3DLIGHT7 lpLight) PURE;
+    STDMETHOD(SetLight)(THIS_ DWORD idx, D3DLIGHT7 *data) PURE;
+    STDMETHOD(GetLight)(THIS_ DWORD idx, D3DLIGHT7 *data) PURE;
     STDMETHOD(SetRenderState)(THIS_ D3DRENDERSTATETYPE dwRenderStateType, DWORD dwRenderState) PURE;
     STDMETHOD(GetRenderState)(THIS_ D3DRENDERSTATETYPE dwRenderStateType, LPDWORD lpdwRenderState) PURE;
     STDMETHOD(BeginStateBlock)(THIS) PURE;
