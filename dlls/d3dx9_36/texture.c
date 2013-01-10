@@ -1216,7 +1216,7 @@ static inline void fill_texture(const struct pixel_format_desc *format, BYTE *po
     for (c = 0; c < 4; c++)
     {
         float comp_value;
-        DWORD i, v;
+        DWORD i, v, mask32 = format->bits[c] == 32 ? ~0U : ((1 << format->bits[c]) - 1);
 
         switch (c)
         {
@@ -1242,12 +1242,12 @@ static inline void fill_texture(const struct pixel_format_desc *format, BYTE *po
 
             if (format->shift[c] > i)
             {
-                mask = ((1 << format->bits[c]) - 1) << (format->shift[c] - i);
+                mask = mask32 << (format->shift[c] - i);
                 byte = (v << (format->shift[c] - i)) & mask;
             }
             else
             {
-                mask = ((1 << format->bits[c]) - 1) >> (i - format->shift[c]);
+                mask = mask32 >> (i - format->shift[c]);
                 byte = (v >> (i - format->shift[c])) & mask;
             }
             pos[i / 8] |= byte;
