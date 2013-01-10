@@ -2665,6 +2665,85 @@ static void test_coop_level_surf_create(void)
     IDirectDraw7_Release(ddraw);
 }
 
+static void test_vb_discard(void)
+{
+    static const struct vec4 quad[] =
+    {
+        {  0.0f, 480.0f, 0.0f, 1.0f},
+        {  0.0f,   0.0f, 0.0f, 1.0f},
+        {640.0f, 480.0f, 0.0f, 1.0f},
+        {640.0f,   0.0f, 0.0f, 1.0f},
+    };
+
+    IDirect3DDevice7 *device;
+    IDirect3D7 *d3d;
+    IDirect3DVertexBuffer7 *buffer;
+    HWND window;
+    HRESULT hr;
+    D3DVERTEXBUFFERDESC desc;
+    BYTE *data;
+    static const unsigned int vbsize = 16;
+    unsigned int i;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwCaps = D3DVBCAPS_WRITEONLY;
+    desc.dwFVF = D3DFVF_XYZRHW;
+    desc.dwNumVertices = vbsize;
+    hr = IDirect3D7_CreateVertexBuffer(d3d, &desc, &buffer, 0);
+    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer7_Lock(buffer, DDLOCK_DISCARDCONTENTS, (void **)&data, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock vertex buffer, hr %#x.\n", hr);
+    memcpy(data, quad, sizeof(quad));
+    hr = IDirect3DVertexBuffer7_Unlock(buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock vertex buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawPrimitiveVB(device, D3DPT_TRIANGLESTRIP, buffer, 0, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer7_Lock(buffer, DDLOCK_DISCARDCONTENTS, (void **)&data, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock vertex buffer, hr %#x.\n", hr);
+    memset(data, 0xaa, sizeof(struct vec4) * vbsize);
+    hr = IDirect3DVertexBuffer7_Unlock(buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock vertex buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer7_Lock(buffer, DDLOCK_DISCARDCONTENTS, (void **)&data, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock vertex buffer, hr %#x.\n", hr);
+    for (i = 0; i < sizeof(struct vec4) * vbsize; i++)
+    {
+        if (data[i] != 0xaa)
+        {
+            ok(FALSE, "Vertex buffer data byte %u is 0x%02x, expected 0xaa\n", i, data[i]);
+            break;
+        }
+    }
+    hr = IDirect3DVertexBuffer7_Unlock(buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock vertex buffer, hr %#x.\n", hr);
+
+    IDirect3DVertexBuffer7_Release(buffer);
+    IDirect3D7_Release(d3d);
+    IDirect3DDevice7_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -2695,4 +2774,5 @@ START_TEST(ddraw7)
     test_coop_level_mode_set_multi();
     test_initialize();
     test_coop_level_surf_create();
+    test_vb_discard();
 }
