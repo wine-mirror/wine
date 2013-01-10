@@ -961,6 +961,17 @@ static void test_body_style(IHTMLStyle *style)
     ok(!strcmp_wa(V_BSTR(&v), "3px"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("4.99");
+    hres = IHTMLStyle_put_left(style, v);
+    ok(hres == S_OK, "put_left failed: %08x\n", hres);
+    VariantClear(&v);
+
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelLeft(style, &l);
+    ok(hres == S_OK, "get_pixelLeft failed: %08x\n", hres);
+    ok(l == 4, "pixelLeft = %d\n", l);
+
     V_VT(&v) = VT_NULL;
     hres = IHTMLStyle_put_left(style, v);
     ok(hres == S_OK, "put_left failed: %08x\n", hres);

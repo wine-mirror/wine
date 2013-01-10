@@ -664,9 +664,14 @@ static HRESULT get_nsstyle_pixel_val(HTMLStyle *This, styleid_t sid, LONG *p)
         if(value) {
             *p = strtolW(value, &ptr, 10);
 
+            if(*ptr == '.') {
+                /* Skip all digits. We have tests showing that we should not round the value. */
+                while(isdigitW(*++ptr));
+            }
+
             if(*ptr && strcmpW(ptr, pxW)) {
                 nsAString_Finish(&str_value);
-                FIXME("only px values are currently supported\n");
+                FIXME("%s: only px values are currently supported\n", debugstr_w(value));
                 hres = E_NOTIMPL;
             }
         }else {
