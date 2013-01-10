@@ -139,14 +139,14 @@ static IDirect3DDevice9 *init_d3d9(IDirect3DVertexDeclaration9 **vdeclaration,
     {
         skip("not compiling vertex shader due to lacking wine HLSL support!\n");
         if (errors)
-            IUnknown_Release(errors);
+            ID3D10Blob_Release(errors);
         return NULL;
     }
 
     hr = IDirect3DDevice9_CreateVertexShader(device_ptr, ID3D10Blob_GetBufferPointer(compiled),
             vshader_passthru);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexShader returned: %08x\n", hr);
-    IUnknown_Release(compiled);
+    ID3D10Blob_Release(compiled);
 
     return device_ptr;
 }
@@ -184,7 +184,7 @@ static IDirect3DPixelShader9 *compile_pixel_shader9(IDirect3DDevice9 *device, co
 
     hr = IDirect3DDevice9_CreatePixelShader(device, ID3D10Blob_GetBufferPointer(compiled), &pshader);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_CreatePixelShader returned: %08x\n", hr);
-    IUnknown_Release(compiled);
+    ID3D10Blob_Release(compiled);
     return pshader;
 }
 
@@ -287,8 +287,8 @@ static void compute_shader_probe9(IDirect3DDevice9 *device, IDirect3DVertexShade
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present returned: %08x\n", hr);
 
-    IUnknown_Release(render_target);
-    IUnknown_Release(readback);
+    IDirect3DSurface9_Release(render_target);
+    IDirect3DSurface9_Release(readback);
 }
 
 /* Now the actual test functions */
@@ -321,8 +321,8 @@ static void test_swizzle(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_
         compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry,
                 probes, sizeof(probes) / sizeof(*probes), 1, 1, __LINE__);
 
-        IUnknown_Release(constants);
-        IUnknown_Release(pshader);
+        ID3DXConstantTable_Release(constants);
+        IDirect3DPixelShader9_Release(pshader);
     }
 }
 
@@ -364,8 +364,8 @@ static void test_math(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
         compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry,
                 probes, sizeof(probes) / sizeof(*probes), 1, 1, __LINE__);
 
-        IUnknown_Release(constants);
-        IUnknown_Release(pshader);
+        ID3DXConstantTable_Release(constants);
+        IDirect3DPixelShader9_Release(pshader);
     }
 }
 
@@ -418,8 +418,8 @@ static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *
         compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry, if_greater_probes,
                 sizeof(if_greater_probes) / sizeof(*if_greater_probes), 32, 1, __LINE__);
 
-        IUnknown_Release(constants);
-        IUnknown_Release(pshader);
+        ID3DXConstantTable_Release(constants);
+        IDirect3DPixelShader9_Release(pshader);
     }
 
     pshader = compile_pixel_shader9(device, ternary_operator_shader, "ps_2_0", &constants);
@@ -428,8 +428,8 @@ static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *
         compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry, ternary_operator_probes,
                 sizeof(ternary_operator_probes) / sizeof(*ternary_operator_probes), 8, 1, __LINE__);
 
-        IUnknown_Release(constants);
-        IUnknown_Release(pshader);
+        ID3DXConstantTable_Release(constants);
+        IDirect3DPixelShader9_Release(pshader);
     }
 }
 
@@ -477,8 +477,8 @@ static void test_float_vectors(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 
         compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry, vec4_indexing_test1_probes,
                 sizeof(vec4_indexing_test1_probes) / sizeof(*vec4_indexing_test1_probes), 1, 1, __LINE__);
 
-        IUnknown_Release(constants);
-        IUnknown_Release(pshader);
+        ID3DXConstantTable_Release(constants);
+        IDirect3DPixelShader9_Release(pshader);
     }
 
     pshader = compile_pixel_shader9(device, vec4_indexing_test2_shader, "ps_2_0", &constants);
@@ -489,8 +489,8 @@ static void test_float_vectors(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 
         compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry, vec4_indexing_test2_probes,
                 sizeof(vec4_indexing_test2_probes) / sizeof(*vec4_indexing_test2_probes), 32, 1, __LINE__);
 
-        IUnknown_Release(constants);
-        IUnknown_Release(pshader);
+        ID3DXConstantTable_Release(constants);
+        IDirect3DPixelShader9_Release(pshader);
     }
 }
 
@@ -551,8 +551,8 @@ static void test_trig(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
         compute_shader_probe9(device, vshader_passthru, pshader, quad_geometry, sincos_probes,
                 sizeof(sincos_probes) / sizeof(*sincos_probes), 32, 1, __LINE__);
 
-        IUnknown_Release(constants);
-        IUnknown_Release(pshader);
+        ID3DXConstantTable_Release(constants);
+        IDirect3DPixelShader9_Release(pshader);
     }
 }
 
@@ -604,7 +604,7 @@ static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_ge
     ok(errors != NULL, "No errors returned for a shader with undefined variables\n");
     ok(compiled == NULL, "A shader blob was returned for a shader with undefined variables\n");
 
-    IUnknown_Release(errors);
+    ID3D10Blob_Release(errors);
     errors = NULL;
 
     hr = D3DCompile(invalid_swizzle_shader, strlen(invalid_swizzle_shader), NULL, NULL, NULL,
@@ -613,7 +613,7 @@ static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_ge
     ok(errors != NULL, "No errors returned for a shader with an invalid swizzle mask\n");
     ok(compiled == NULL, "A shader blob was returned for a shader with an invalid swizzle mask\n");
 
-    IUnknown_Release(errors);
+    ID3D10Blob_Release(errors);
     errors = NULL;
 
     hr = D3DCompile(invalid_conversion_shader, strlen(invalid_conversion_shader), NULL, NULL, NULL,
@@ -623,7 +623,7 @@ static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_ge
     ok(errors != NULL, "No errors returned for a shader with invalid type conversions\n");
     ok(compiled == NULL, "A shader blob was returned for a shader with invalid type conversions\n");
 
-    IUnknown_Release(errors);
+    ID3D10Blob_Release(errors);
     errors = NULL;
 
     hr = D3DCompile(invalid_syntax_shader, strlen(invalid_syntax_shader), NULL, NULL, NULL, "test",
@@ -633,7 +633,7 @@ static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_ge
     ok(errors != NULL, "No errors returned for a shader with invalid syntax\n");
     ok(compiled == NULL, "A shader blob was returned for a shader with invalid syntax\n");
 
-    IUnknown_Release(errors);
+    ID3D10Blob_Release(errors);
     errors = NULL;
 
     hr = D3DCompile(invalid_identifiers_shader, strlen(invalid_identifiers_shader), NULL, NULL,
@@ -645,7 +645,7 @@ static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_ge
     ok(compiled == NULL, "A shader blob was returned for a shader with invalid variable and "
             "function names\n");
 
-    IUnknown_Release(errors);
+    ID3D10Blob_Release(errors);
 }
 
 START_TEST(hlsl)
@@ -679,16 +679,16 @@ START_TEST(hlsl)
     /* Reference counting sanity checks */
     if (vshader_passthru)
     {
-        refcount = IUnknown_Release(vshader_passthru);
+        refcount = IDirect3DVertexShader9_Release(vshader_passthru);
         ok(!refcount, "Pass-through vertex shader has %u references left\n", refcount);
     }
 
-    refcount = IUnknown_Release(quad_geometry);
+    refcount = IDirect3DVertexBuffer9_Release(quad_geometry);
     ok(!refcount, "Vertex buffer has %u references left\n", refcount);
 
-    refcount = IUnknown_Release(vdeclaration);
+    refcount = IDirect3DVertexDeclaration9_Release(vdeclaration);
     ok(!refcount, "Vertex declaration has %u references left\n", refcount);
 
-    refcount = IUnknown_Release(device);
+    refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left\n", refcount);
 }

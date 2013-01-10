@@ -64,7 +64,7 @@ static void test_create_blob(void)
     hr = D3DCreateBlob(0, &blob);
     ok(hr == S_OK, "D3DCreateBlob failed with %x\n", hr);
 
-    refcount = blob->lpVtbl->Release(blob);
+    refcount = ID3D10Blob_Release(blob);
     ok(!refcount, "ID3DBlob has %u references left\n", refcount);
 }
 
