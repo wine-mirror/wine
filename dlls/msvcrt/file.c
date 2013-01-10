@@ -3245,7 +3245,7 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
  */
 MSVCRT_FILE* CDECL MSVCRT__wfreopen(const MSVCRT_wchar_t *path, const MSVCRT_wchar_t *mode, MSVCRT_FILE* file)
 {
-  int open_flags, stream_flags, fd;
+  int fd;
 
   TRACE(":path (%s) mode (%s) file (%p) fd (%d)\n", debugstr_w(path), debugstr_w(mode), file, file->_file);
 
@@ -3255,22 +3255,7 @@ MSVCRT_FILE* CDECL MSVCRT__wfreopen(const MSVCRT_wchar_t *path, const MSVCRT_wch
   else
   {
     MSVCRT_fclose(file);
-    /* map mode string to open() flags. "man fopen" for possibilities. */
-    if (msvcrt_get_flags(mode, &open_flags, &stream_flags) == -1)
-      file = NULL;
-    else
-    {
-      fd = MSVCRT__wopen(path, open_flags, MSVCRT__S_IREAD | MSVCRT__S_IWRITE);
-      if (fd < 0)
-        file = NULL;
-      else if (msvcrt_init_fp(file, fd, stream_flags) == -1)
-      {
-          file->_flag = 0;
-          WARN(":failed-last error (%d)\n",GetLastError());
-          msvcrt_set_errno(GetLastError());
-          file = NULL;
-      }
-    }
+    file = MSVCRT__wfsopen(path, mode, MSVCRT__SH_DENYNO);
   }
   UNLOCK_FILES();
   return file;
