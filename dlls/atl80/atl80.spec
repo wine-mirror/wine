@@ -10,7 +10,7 @@
 20 stub AtlComModuleRevokeClassObjects
 22 stub AtlComModuleUnregisterServer
 23 stdcall AtlUpdateRegistryFromResourceD(long wstr long ptr ptr) atl100.AtlUpdateRegistryFromResourceD
-24 stub AtlWaitWithMessageLoop
+24 stdcall AtlWaitWithMessageLoop(long) atl100.AtlWaitWithMessageLoop
 25 stub AtlSetErrorInfo
 26 stdcall AtlCreateTargetDC(long ptr) atl100.AtlCreateTargetDC
 27 stdcall AtlHiMetricToPixel(ptr ptr) atl100.AtlHiMetricToPixel

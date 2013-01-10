@@ -16,7 +16,7 @@
 21 stdcall AtlModuleTerm(ptr)
 22 stdcall AtlModuleUnregisterServer(ptr ptr)
 23 stdcall AtlModuleUpdateRegistryFromResourceD(ptr wstr long ptr ptr)
-24 stub AtlWaitWithMessageLoop
+24 stdcall AtlWaitWithMessageLoop(long) atl100.AtlWaitWithMessageLoop
 25 stub AtlSetErrorInfo
 26 stdcall AtlCreateTargetDC(long ptr) atl100.AtlCreateTargetDC
 27 stdcall AtlHiMetricToPixel(ptr ptr) atl100.AtlHiMetricToPixel

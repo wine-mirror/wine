@@ -518,6 +518,34 @@ HRESULT WINAPI AtlRegisterClassCategoriesHelper(REFCLSID clsid, const struct _AT
 }
 
 /***********************************************************************
+ *           AtlWaitWithMessageLoop     [atl100.24]
+ */
+BOOL WINAPI AtlWaitWithMessageLoop(HANDLE handle)
+{
+    MSG msg;
+    DWORD res;
+
+    TRACE("(%p)\n", handle);
+
+    while(1) {
+        res = MsgWaitForMultipleObjects(1, &handle, FALSE, INFINITE, QS_ALLINPUT);
+        switch(res) {
+        case WAIT_OBJECT_0:
+            return TRUE;
+        case WAIT_OBJECT_0+1:
+            if(GetMessageW(&msg, NULL, 0, 0) < 0)
+                return FALSE;
+
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+            break;
+        default:
+            return FALSE;
+        }
+    }
+}
+
+/***********************************************************************
  *           AtlGetVersion              [atl100.@]
  */
 DWORD WINAPI AtlGetVersion(void *pReserved)
