@@ -956,6 +956,11 @@ static void test_file_write_read( void )
   _lseek(tempfd, -2, FILE_END);
   ret = _read(tempfd,btext,LLEN);
   ok(ret == 1 && *btext == '\n', "_read expected '\\n' got bad length: %d\n", ret);
+  _lseek(tempfd, -2, FILE_END);
+  ret = _read(tempfd,btext,1);
+  ok(ret == 1 && *btext == '\n', "_read returned %d, buf: %d\n", ret, *btext);
+  ret = read(tempfd,btext,1);
+  ok(ret == 0, "_read returned %d, expected 0\n", ret);
   _lseek(tempfd, -3, FILE_END);
   ret = _read(tempfd,btext,1);
   ok(ret == 1 && *btext == 'e', "_read expected 'e' got \"%.*s\" bad length: %d\n", ret, btext, ret);
@@ -1784,6 +1789,29 @@ static void test_pipes(const char* selfname)
 
     i=fclose(file);
     ok(!i, "unable to close the pipe: %d\n", errno);
+
+    if (_pipe(pipes, 1024, O_BINARY) < 0)
+    {
+        ok(0, "pipe failed with errno %d\n", errno);
+        return;
+    }
+    r = write(pipes[1], "\r\n\rab", 5);
+    ok(r == 5, "write returned %d, errno = %d\n", r, errno);
+    setmode(pipes[0], O_TEXT);
+    r = read(pipes[0], buf, 1);
+    ok(r == 1, "read returned %d, expected 1\n", r);
+    ok(buf[0] == '\n', "buf[0] = %x, expected '\\n'\n", buf[0]);
+    r = read(pipes[0], buf, 1);
+    ok(r == 1, "read returned %d, expected 1\n", r);
+    ok(buf[0] == '\r', "buf[0] = %x, expected '\\r'\n", buf[0]);
+    r = read(pipes[0], buf, 1);
+    ok(r == 1, "read returned %d, expected 1\n", r);
+    ok(buf[0] == 'a', "buf[0] = %x, expected 'a'\n", buf[0]);
+    r = read(pipes[0], buf, 1);
+    ok(r == 1, "read returned %d, expected 1\n", r);
+    ok(buf[0] == 'b', "buf[0] = %x, expected 'b'\n", buf[0]);
+    close(pipes[1]);
+    close(pipes[0]);
 }
 
 static void test_unlink(void)
