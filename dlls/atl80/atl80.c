@@ -37,18 +37,19 @@ HRESULT WINAPI AtlComModuleRegisterServer(_ATL_COM_MODULE *mod, BOOL bRegTypeLib
     TRACE("(%p %x %s)\n", mod, bRegTypeLib, debugstr_guid(clsid));
 
     for(iter = mod->m_ppAutoObjMapFirst; iter < mod->m_ppAutoObjMapLast; iter++) {
-        if(!clsid || IsEqualCLSID((*iter)->pclsid, clsid)) {
-            TRACE("Registering clsid %s\n", debugstr_guid((*iter)->pclsid));
-            hres = (*iter)->pfnUpdateRegistry(TRUE);
+        if(!*iter || (clsid && !IsEqualCLSID((*iter)->pclsid, clsid)))
+            continue;
+
+        TRACE("Registering clsid %s\n", debugstr_guid((*iter)->pclsid));
+        hres = (*iter)->pfnUpdateRegistry(TRUE);
+        if(FAILED(hres))
+            return hres;
+
+        catmap = (*iter)->pfnGetCategoryMap();
+        if(catmap) {
+            hres = AtlRegisterClassCategoriesHelper((*iter)->pclsid, catmap, TRUE);
             if(FAILED(hres))
                 return hres;
-
-            catmap = (*iter)->pfnGetCategoryMap();
-            if(catmap) {
-                hres = AtlRegisterClassCategoriesHelper((*iter)->pclsid, catmap, TRUE);
-                if(FAILED(hres))
-                    return hres;
-            }
         }
     }
 
