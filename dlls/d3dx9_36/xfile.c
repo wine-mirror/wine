@@ -169,9 +169,19 @@ static HRESULT WINAPI ID3DXFileDataImpl_Unlock(ID3DXFileData *iface)
 
 static HRESULT WINAPI ID3DXFileDataImpl_GetType(ID3DXFileData *iface, GUID *guid)
 {
-    FIXME("(%p)->(%p): stub\n", iface, guid);
+    ID3DXFileDataImpl *This = impl_from_ID3DXFileData(iface);
+    const GUID *dxfile_guid;
+    HRESULT ret;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, guid);
+
+    ret = IDirectXFileData_GetType(This->dxfile_data, &dxfile_guid);
+    if (ret != DXFILE_OK)
+        return error_dxfile_to_d3dxfile(ret);
+
+    *guid = *dxfile_guid;
+
+    return S_OK;
 }
 
 
