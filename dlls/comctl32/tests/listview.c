@@ -63,6 +63,8 @@ static LVITEMA g_itema;
 static BOOL g_disp_A_to_W;
 /* dispinfo data sent with LVN_LVN_ENDLABELEDIT */
 static NMLVDISPINFO g_editbox_disp_info;
+/* when this is set focus will be tested on LVN_DELETEITEM */
+static BOOL g_focus_test_LVN_DELETEITEM;
 
 static HWND subclass_editbox(HWND hwndListview);
 
@@ -452,6 +454,16 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
                       ok(dispinfo->item.cchTextMax == 260 ||
                          broken(dispinfo->item.cchTextMax == 264) /* NT4 reports aligned size */,
                       "buffer size %d\n", dispinfo->item.cchTextMax);
+              }
+              break;
+          case LVN_DELETEITEM:
+              if (g_focus_test_LVN_DELETEITEM)
+              {
+                  NMLISTVIEW *nmlv = (NMLISTVIEW*)lParam;
+                  UINT state;
+
+                  state = SendMessageA(((NMHDR*)lParam)->hwndFrom, LVM_GETITEMSTATE, nmlv->iItem, LVIS_FOCUSED);
+                  ok(state == 0, "got state %x\n", state);
               }
               break;
           case NM_HOVER:
@@ -5291,6 +5303,61 @@ static void test_imagelists(void)
     DestroyWindow(hwnd);
 }
 
+static void test_deleteitem(void)
+{
+    LVITEMA item;
+    UINT state;
+    HWND hwnd;
+    BOOL ret;
+
+    hwnd = create_listview_control(LVS_REPORT);
+
+    insert_item(hwnd, 0);
+    insert_item(hwnd, 0);
+    insert_item(hwnd, 0);
+    insert_item(hwnd, 0);
+    insert_item(hwnd, 0);
+
+    g_focus_test_LVN_DELETEITEM = TRUE;
+
+    /* delete focused item (not the last index) */
+    item.stateMask = LVIS_FOCUSED;
+    item.state = LVIS_FOCUSED;
+    ret = SendMessageA(hwnd, LVM_SETITEMSTATE, 2, (LPARAM)&item);
+    ok(ret == TRUE, "got %d\n", ret);
+    ret = SendMessageA(hwnd, LVM_DELETEITEM, 2, 0);
+    ok(ret == TRUE, "got %d\n", ret);
+    /* next item gets focus */
+    state = SendMessageA(hwnd, LVM_GETITEMSTATE, 2, LVIS_FOCUSED);
+    ok(state == LVIS_FOCUSED, "got %x\n", state);
+
+    /* focus last item and delete it */
+    item.stateMask = LVIS_FOCUSED;
+    item.state = LVIS_FOCUSED;
+    ret = SendMessageA(hwnd, LVM_SETITEMSTATE, 3, (LPARAM)&item);
+    ok(ret == TRUE, "got %d\n", ret);
+    ret = SendMessageA(hwnd, LVM_DELETEITEM, 3, 0);
+    ok(ret == TRUE, "got %d\n", ret);
+    /* new last item gets focus */
+    state = SendMessageA(hwnd, LVM_GETITEMSTATE, 2, LVIS_FOCUSED);
+    ok(state == LVIS_FOCUSED, "got %x\n", state);
+
+    /* focus first item and delete it */
+    item.stateMask = LVIS_FOCUSED;
+    item.state = LVIS_FOCUSED;
+    ret = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+    ok(ret == TRUE, "got %d\n", ret);
+    ret = SendMessageA(hwnd, LVM_DELETEITEM, 0, 0);
+    ok(ret == TRUE, "got %d\n", ret);
+    /* new first item gets focus */
+    state = SendMessageA(hwnd, LVM_GETITEMSTATE, 0, LVIS_FOCUSED);
+    ok(state == LVIS_FOCUSED, "got %x\n", state);
+
+    g_focus_test_LVN_DELETEITEM = FALSE;
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -5358,6 +5425,7 @@ START_TEST(listview)
     test_dispinfo();
     test_LVM_SETITEMTEXT();
     test_imagelists();
+    test_deleteitem();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
@@ -5387,6 +5455,7 @@ START_TEST(listview)
     test_scrollnotify();
     test_LVS_EX_TRANSPARENTBKGND();
     test_LVS_EX_HEADERINALLVIEWS();
+    test_deleteitem();
 
     unload_v6_module(ctx_cookie, hCtx);
 

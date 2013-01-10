@@ -3447,7 +3447,6 @@ static inline BOOL LISTVIEW_SetItemFocus(LISTVIEW_INFO *infoPtr, INT nItem)
     return oldFocus != infoPtr->nFocusedItem;
 }
 
-/* Helper function for LISTVIEW_ShiftIndices *only* */
 static INT shift_item(const LISTVIEW_INFO *infoPtr, INT nShiftItem, INT nItem, INT direction)
 {
     if (nShiftItem < nItem) return nShiftItem;
@@ -3457,6 +3456,24 @@ static INT shift_item(const LISTVIEW_INFO *infoPtr, INT nShiftItem, INT nItem, I
     if (direction > 0) return nShiftItem + direction;
 
     return min(nShiftItem, infoPtr->nItemCount - 1);
+}
+
+/* This function updates focus index.
+
+Parameters:
+   focus : current focus index
+   item : index of item to be added/removed
+   direction : add/remove flag
+*/
+static void LISTVIEW_ShiftFocus(LISTVIEW_INFO *infoPtr, INT focus, INT item, INT direction)
+{
+    BOOL old_change = infoPtr->bDoChangeNotify;
+
+    infoPtr->bDoChangeNotify = FALSE;
+    focus = shift_item(infoPtr, focus, item, direction);
+    if (focus != infoPtr->nFocusedItem)
+        LISTVIEW_SetItemFocus(infoPtr, focus);
+    infoPtr->bDoChangeNotify = old_change;
 }
 
 /**
@@ -3473,24 +3490,19 @@ static INT shift_item(const LISTVIEW_INFO *infoPtr, INT nShiftItem, INT nItem, I
 */
 static void LISTVIEW_ShiftIndices(LISTVIEW_INFO *infoPtr, INT nItem, INT direction)
 {
-    INT nNewFocus;
     BOOL bOldChange;
 
     /* temporarily disable change notification while shifting items */
     bOldChange = infoPtr->bDoChangeNotify;
     infoPtr->bDoChangeNotify = FALSE;
 
-    TRACE("Shifting %iu, %i steps\n", nItem, direction);
+    TRACE("Shifting %i, %i steps\n", nItem, direction);
 
     ranges_shift(infoPtr->selectionRanges, nItem, direction, infoPtr->nItemCount);
 
     assert(abs(direction) == 1);
 
     infoPtr->nSelectionMark = shift_item(infoPtr, infoPtr->nSelectionMark, nItem, direction);
-
-    nNewFocus = shift_item(infoPtr, infoPtr->nFocusedItem, nItem, direction);
-    if (nNewFocus != infoPtr->nFocusedItem)
-        LISTVIEW_SetItemFocus(infoPtr, nNewFocus);
     
     /* But we are not supposed to modify nHotItem! */
 
@@ -5664,6 +5676,7 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 {
     LVITEMW item;
     const BOOL is_icon = (infoPtr->uView == LV_VIEW_SMALLICON || infoPtr->uView == LV_VIEW_ICON);
+    INT focus = infoPtr->nFocusedItem;
 
     TRACE("(nItem=%d)\n", nItem);
 
@@ -5673,7 +5686,7 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
     item.state = 0;
     item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
     LISTVIEW_SetItemState(infoPtr, nItem, &item);
-	    
+
     /* send LVN_DELETEITEM notification. */
     if (!notify_deleteitem(infoPtr, nItem)) return FALSE;
 
@@ -5714,6 +5727,7 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 
     infoPtr->nItemCount--;
     LISTVIEW_ShiftIndices(infoPtr, nItem, -1);
+    LISTVIEW_ShiftFocus(infoPtr, focus, nItem, -1);
 
     /* now is the invalidation fun */
     if (!is_icon)
@@ -7721,6 +7735,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
 
     /* shift indices first so they don't get tangled */
     LISTVIEW_ShiftIndices(infoPtr, nItem, 1);
+    LISTVIEW_ShiftFocus(infoPtr, infoPtr->nFocusedItem, nItem, 1);
 
     /* set the item attributes */
     if (lpLVItem->mask & (LVIF_GROUPID|LVIF_COLUMNS))
@@ -7787,6 +7802,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
 
 undo:
     LISTVIEW_ShiftIndices(infoPtr, nItem, -1);
+    LISTVIEW_ShiftFocus(infoPtr, infoPtr->nFocusedItem, nItem, -1);
     DPA_DeletePtr(infoPtr->hdpaItems, nItem);
     infoPtr->nItemCount--;
 fail:
