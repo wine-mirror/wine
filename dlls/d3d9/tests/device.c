@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2006 Vitaliy Margolen
  * Copyright (C) 2006 Chris Robinson
- * Copyright (C) 2006-2007 Stefan Dösinger(For CodeWeavers)
+ * Copyright 2006-2007, 2010 Stefan Dösinger for CodeWeavers
  * Copyright 2006, 2007 Henri Verbeet
  * Copyright 2013 Henri Verbeet for CodeWeavers
  * Copyright (C) 2008 Rico Schüller
@@ -3820,6 +3820,154 @@ static void test_volume_resource(void)
     DestroyWindow(window);
 }
 
+static void test_vb_lock_flags(void)
+{
+    static const struct
+    {
+        DWORD flags;
+        const char *debug_string;
+        HRESULT win7_result;
+    }
+    test_data[] =
+    {
+        {D3DLOCK_READONLY,                          "D3DLOCK_READONLY",                         D3D_OK            },
+        {D3DLOCK_DISCARD,                           "D3DLOCK_DISCARD",                          D3D_OK            },
+        {D3DLOCK_NOOVERWRITE,                       "D3DLOCK_NOOVERWRITE",                      D3D_OK            },
+        {D3DLOCK_NOOVERWRITE | D3DLOCK_DISCARD,     "D3DLOCK_NOOVERWRITE | D3DLOCK_DISCARD",    D3D_OK            },
+        {D3DLOCK_NOOVERWRITE | D3DLOCK_READONLY,    "D3DLOCK_NOOVERWRITE | D3DLOCK_READONLY",   D3D_OK            },
+        {D3DLOCK_READONLY | D3DLOCK_DISCARD,        "D3DLOCK_READONLY | D3DLOCK_DISCARD",       D3DERR_INVALIDCALL},
+        /* Completely bogus flags aren't an error. */
+        {0xdeadbeef,                                "0xdeadbeef",                               D3DERR_INVALIDCALL},
+    };
+    IDirect3DVertexBuffer9 *buffer;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    void *data;
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create d3d9 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d9, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, 1024, D3DUSAGE_DYNAMIC, 0, D3DPOOL_DEFAULT, &buffer, NULL);
+    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+
+    for (i = 0; i < (sizeof(test_data) / sizeof(*test_data)); ++i)
+    {
+        hr = IDirect3DVertexBuffer9_Lock(buffer, 0, 0, &data, test_data[i].flags);
+        /* Windows XP always returns D3D_OK even with flags that don't make
+         * sense. Windows 7 returns an error. At least one game (Shaiya)
+         * depends on the Windows XP result, so mark the Windows 7 behavior as
+         * broken. */
+        ok(hr == D3D_OK || broken(hr == test_data[i].win7_result), "Got unexpected hr %#x for %s.\n",
+                hr, test_data[i].debug_string);
+        if (SUCCEEDED(hr))
+        {
+            ok(!!data, "Got unexpected data %p.\n", data);
+            hr = IDirect3DVertexBuffer9_Unlock(buffer);
+            ok(SUCCEEDED(hr), "Failed to unlock vertex buffer, hr %#x.\n", hr);
+        }
+    }
+
+    IDirect3DVertexBuffer9_Release(buffer);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
+static const char *debug_d3dpool(D3DPOOL pool)
+{
+    switch (pool)
+    {
+        case D3DPOOL_DEFAULT:
+            return "D3DPOOL_DEFAULT";
+        case D3DPOOL_SYSTEMMEM:
+            return "D3DPOOL_SYSTEMMEM";
+        case D3DPOOL_SCRATCH:
+            return "D3DPOOL_SCRATCH";
+        case D3DPOOL_MANAGED:
+            return "D3DPOOL_MANAGED";
+        default:
+            return "unknown pool";
+    }
+}
+
+static void test_vertex_buffer_alignment(void)
+{
+    static const D3DPOOL pools[] = {D3DPOOL_DEFAULT, D3DPOOL_SYSTEMMEM, D3DPOOL_SCRATCH, D3DPOOL_MANAGED};
+    static const DWORD sizes[] = {1, 4, 16, 17, 32, 33, 64, 65, 1024, 1025, 1048576, 1048577};
+    IDirect3DVertexBuffer9 *buffer = NULL;
+    const unsigned int align = 16;
+    IDirect3DDevice9 *device;
+    unsigned int i, j;
+    IDirect3D9 *d3d9;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    void *data;
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create d3d9 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d9, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    for (i = 0; i < (sizeof(sizes) / sizeof(*sizes)); ++i)
+    {
+        for (j = 0; j < (sizeof(pools) / sizeof(*pools)); ++j)
+        {
+            hr = IDirect3DDevice9_CreateVertexBuffer(device, sizes[i], 0, 0, pools[j], &buffer, NULL);
+            if (pools[j] == D3DPOOL_SCRATCH)
+                ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x trying to create a D3DPOOL_SCRATCH buffer.\n", hr);
+            else
+                ok(SUCCEEDED(hr), "Failed to create vertex buffer in pool %s with size %u, hr %#x.\n",
+                        debug_d3dpool(pools[j]), sizes[i], hr);
+            if (FAILED(hr))
+                continue;
+
+            hr = IDirect3DVertexBuffer9_Lock(buffer, 0, 0, &data, 0);
+            ok(SUCCEEDED(hr), "Failed to lock vertex buffer, hr %#x.\n", hr);
+            ok(!((DWORD_PTR)data & (align - 1)),
+                    "Vertex buffer start address %p is not %u byte aligned (size %u, pool %s).\n",
+                    data, align, sizes[i], debug_d3dpool(pools[j]));
+            hr = IDirect3DVertexBuffer9_Unlock(buffer);
+            ok(SUCCEEDED(hr), "Failed to unlock vertex buffer, hr %#x.\n", hr);
+            IDirect3DVertexBuffer9_Release(buffer);
+        }
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -3880,6 +4028,8 @@ START_TEST(device)
         test_set_rt_vp_scissor();
         test_volume_get_container();
         test_volume_resource();
+        test_vb_lock_flags();
+        test_vertex_buffer_alignment();
     }
 
 out:
