@@ -4233,20 +4233,19 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
     if ((lpLVItem->mask & LVIF_TEXT) && textcmpWT(lpItem->hdr.pszText, lpLVItem->pszText, isW))
 	uChanged |= LVIF_TEXT;
    
-    TRACE("uChanged=0x%x\n", uChanged); 
-    if (!uChanged) return TRUE;
-    *bChanged = TRUE;
+    TRACE("change mask=0x%x\n", uChanged);
     
-    ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
+    memset(&nmlv, 0, sizeof(NMLISTVIEW));
     nmlv.iItem = lpLVItem->iItem;
     nmlv.uNewState = (item.state & ~stateMask) | (lpLVItem->state & stateMask);
     nmlv.uOldState = item.state;
-    nmlv.uChanged = uChanged;
+    nmlv.uChanged = uChanged ? uChanged : lpLVItem->mask;
     nmlv.lParam = item.lParam;
-    
-    /* send LVN_ITEMCHANGING notification, if the item is not being inserted */
-    /* and we are _NOT_ virtual (LVS_OWNERDATA), and change notifications */
-    /* are enabled */
+
+    /* Send LVN_ITEMCHANGING notification, if the item is not being inserted
+       and we are _NOT_ virtual (LVS_OWNERDATA), and change notifications
+       are enabled. Even nothing really changed we still need to send this,
+       in this case uChanged mask is just set to passed item mask. */
     if(lpItem && !isNew && infoPtr->bDoChangeNotify)
     {
       HWND hwndSelf = infoPtr->hwndSelf;
@@ -4256,6 +4255,9 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
       if (!IsWindow(hwndSelf))
 	return FALSE;
     }
+
+    if (!uChanged) return TRUE;
+    *bChanged = TRUE;
 
     /* copy information */
     if (lpLVItem->mask & LVIF_TEXT)

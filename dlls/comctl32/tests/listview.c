@@ -3,7 +3,7 @@
  *
  * Copyright 2006 Mike McCormack for CodeWeavers
  * Copyright 2007 George Gov
- * Copyright 2009-2012 Nikolay Sivov
+ * Copyright 2009-2013 Nikolay Sivov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -52,6 +52,8 @@ static BOOL blockEdit;
 static BOOL g_block_hover;
 /* notification data for LVN_ITEMCHANGED */
 static NMLISTVIEW g_nmlistview;
+/* notification data for LVN_ITEMCHANGING */
+static NMLISTVIEW g_nmlistview_changing;
 /* format reported to control:
    -1 falls to defproc, anything else returned */
 static INT notifyFormat;
@@ -209,7 +211,7 @@ static const struct message ownerdata_deselect_all_parent_seq[] = {
     { 0 }
 };
 
-static const struct message select_all_parent_seq[] = {
+static const struct message change_all_parent_seq[] = {
     { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
     { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
 
@@ -224,6 +226,15 @@ static const struct message select_all_parent_seq[] = {
 
     { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
     { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+    { 0 }
+};
+
+static const struct message changing_all_parent_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
     { 0 }
 };
 
@@ -428,6 +439,12 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
 
               trace("LVN_%sSCROLL: (%d,%d)\n", pScroll->hdr.code == LVN_BEGINSCROLL ?
                                                "BEGIN" : "END", pScroll->dx, pScroll->dy);
+              }
+              break;
+          case LVN_ITEMCHANGING:
+              {
+                  NMLISTVIEW *nmlv = (NMLISTVIEW*)lParam;
+                  g_nmlistview_changing = *nmlv;
               }
               break;
           case LVN_ITEMCHANGED:
@@ -2169,9 +2186,8 @@ static void test_multiselect(void)
         item.stateMask = LVIS_SELECTED;
         SendMessageA(hwnd, LVM_SETITEMSTATE, task.initPos == -1 ? item_count-1 : task.initPos, (LPARAM)&item);
 
-	selected_count = (int)SendMessage(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
-
-	ok(selected_count == 1, "There should be only one selected item at the beginning (is %d)\n",selected_count);
+	selected_count = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
+	ok(selected_count == 1, "expected 1, got %d\n", selected_count);
 
 	/* Set SHIFT key pressed */
         GetKeyboardState(kstate);
@@ -2220,16 +2236,62 @@ static void test_multiselect(void)
     r = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
     expect(TRUE, r);
 
-    ok_sequence(sequences, PARENT_SEQ_INDEX, select_all_parent_seq,
+    ok_sequence(sequences, PARENT_SEQ_INDEX, change_all_parent_seq,
                 "select all notification", FALSE);
 
+    /* select all again (all selected already) */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    memset(&g_nmlistview_changing, 0xcc, sizeof(g_nmlistview_changing));
+
+    item.stateMask = LVIS_SELECTED;
+    item.state     = LVIS_SELECTED;
+    r = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, r);
+
+    ok(g_nmlistview_changing.uNewState == LVIS_SELECTED, "got 0x%x\n", g_nmlistview_changing.uNewState);
+    ok(g_nmlistview_changing.uOldState == LVIS_SELECTED, "got 0x%x\n", g_nmlistview_changing.uOldState);
+    ok(g_nmlistview_changing.uChanged == LVIF_STATE, "got 0x%x\n", g_nmlistview_changing.uChanged);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, changing_all_parent_seq,
+                "select all notification 2", FALSE);
+
     /* deselect all items */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
     item.state = 0;
     item.stateMask = LVIS_SELECTED;
     SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
 
+    ok_sequence(sequences, PARENT_SEQ_INDEX, change_all_parent_seq,
+                "deselect all notification", FALSE);
+
+    /* deselect all items again */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    item.state = 0;
+    item.stateMask = LVIS_SELECTED;
+    SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "deselect all notification 2", TRUE);
+
+    /* any non-zero state value does the same */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    memset(&g_nmlistview_changing, 0xcc, sizeof(g_nmlistview_changing));
+
+    item.stateMask = LVIS_SELECTED;
+    item.state     = LVIS_CUT;
+    r = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, r);
+
+    ok(g_nmlistview_changing.uNewState == 0, "got 0x%x\n", g_nmlistview_changing.uNewState);
+    ok(g_nmlistview_changing.uOldState == 0, "got 0x%x\n", g_nmlistview_changing.uOldState);
+    ok(g_nmlistview_changing.uChanged == LVIF_STATE, "got 0x%x\n", g_nmlistview_changing.uChanged);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, changing_all_parent_seq,
+                "set state all notification 3", FALSE);
+
     SendMessage(hwnd, LVM_SETSELECTIONMARK, 0, -1);
-    for (i=0;i<3;i++) {
+    for (i = 0; i < 3; i++) {
         item.state = LVIS_SELECTED;
         item.stateMask = LVIS_SELECTED;
         SendMessageA(hwnd, LVM_SETITEMSTATE, i, (LPARAM)&item);
@@ -5470,6 +5532,7 @@ START_TEST(listview)
     test_LVS_EX_TRANSPARENTBKGND();
     test_LVS_EX_HEADERINALLVIEWS();
     test_deleteitem();
+    test_multiselect();
 
     unload_v6_module(ctx_cookie, hCtx);
 
