@@ -1240,8 +1240,16 @@ static inline void fill_texture(const struct pixel_format_desc *format, BYTE *po
         {
             BYTE byte, mask;
 
-            mask = ((1 << format->bits[c]) - 1) << format->shift[c] >> i;
-            byte = (v << format->shift[c] >> i) & mask;
+            if (format->shift[c] > i)
+            {
+                mask = ((1 << format->bits[c]) - 1) << (format->shift[c] - i);
+                byte = (v << (format->shift[c] - i)) & mask;
+            }
+            else
+            {
+                mask = ((1 << format->bits[c]) - 1) >> (i - format->shift[c]);
+                byte = (v >> (i - format->shift[c])) & mask;
+            }
             pos[i / 8] |= byte;
         }
     }
