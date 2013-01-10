@@ -1245,6 +1245,8 @@ static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* st
 {
   int plus = strchrW(mode, '+') != NULL;
 
+  TRACE("%s\n", debugstr_w(mode));
+
   switch(*mode++)
   {
   case 'R': case 'r':
@@ -1260,12 +1262,11 @@ static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* st
     *stream_flags = plus ? MSVCRT__IORW : MSVCRT__IOWRT;
     break;
   default:
-    MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
-    *MSVCRT__errno() = MSVCRT_EINVAL;
+    MSVCRT_INVALID_PMT(0, MSVCRT_EINVAL);
     return -1;
   }
 
-  while (*mode)
+  while (*mode && *mode!=',')
     switch (*mode++)
     {
     case 'B': case 'b':
@@ -1286,8 +1287,54 @@ static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* st
     case ' ':
       break;
     default:
-      FIXME(":unknown flag %c not supported\n",mode[-1]);
+      MSVCRT_INVALID_PMT(0, MSVCRT_EINVAL);
+      return -1;
     }
+
+  if(*mode == ',')
+  {
+    static const WCHAR ccs[] = {'c','c','s'};
+    static const WCHAR utf8[] = {'u','t','f','-','8'};
+    static const WCHAR utf16le[] = {'u','t','f','-','1','6','l','e'};
+    static const WCHAR unicode[] = {'u','n','i','c','o','d','e'};
+
+    mode++;
+    while(*mode == ' ') mode++;
+    if(!MSVCRT_CHECK_PMT(!strncmpW(ccs, mode, sizeof(ccs)/sizeof(ccs[0]))))
+      return -1;
+    mode += sizeof(ccs)/sizeof(ccs[0]);
+    while(*mode == ' ') mode++;
+    if(!MSVCRT_CHECK_PMT(*mode == '='))
+        return -1;
+    mode++;
+    while(*mode == ' ') mode++;
+
+    if(!strncmpiW(utf8, mode, sizeof(utf8)/sizeof(utf8[0])))
+    {
+      *open_flags |= MSVCRT__O_U8TEXT;
+      mode += sizeof(utf8)/sizeof(utf8[0]);
+    }
+    else if(!strncmpiW(utf16le, mode, sizeof(utf16le)/sizeof(utf16le[0])))
+    {
+      *open_flags |= MSVCRT__O_U16TEXT;
+      mode += sizeof(utf16le)/sizeof(utf16le[0]);
+    }
+    else if(!strncmpiW(unicode, mode, sizeof(unicode)/sizeof(unicode[0])))
+    {
+      *open_flags |= MSVCRT__O_WTEXT;
+      mode += sizeof(unicode)/sizeof(unicode[0]);
+    }
+    else
+    {
+      MSVCRT_INVALID_PMT(0, MSVCRT_EINVAL);
+      return -1;
+    }
+
+    while(*mode == ' ') mode++;
+  }
+
+  if(!MSVCRT_CHECK_PMT(*mode == 0))
+    return -1;
   return 0;
 }
 
@@ -1623,6 +1670,9 @@ static unsigned split_oflags(unsigned oflags)
     if (oflags & MSVCRT__O_APPEND)              wxflags |= WX_APPEND;
     if (oflags & MSVCRT__O_BINARY)              {/* Nothing to do */}
     else if (oflags & MSVCRT__O_TEXT)           wxflags |= WX_TEXT;
+    else if (oflags & MSVCRT__O_WTEXT)          wxflags |= WX_TEXT;
+    else if (oflags & MSVCRT__O_U16TEXT)        wxflags |= WX_TEXT;
+    else if (oflags & MSVCRT__O_U8TEXT)         wxflags |= WX_TEXT;
     else if (*__p__fmode() & MSVCRT__O_BINARY)  {/* Nothing to do */}
     else                                        wxflags |= WX_TEXT; /* default to TEXT*/
     if (oflags & MSVCRT__O_NOINHERIT)           wxflags |= WX_DONTINHERIT;
@@ -1632,7 +1682,8 @@ static unsigned split_oflags(unsigned oflags)
                     MSVCRT__O_TRUNC|MSVCRT__O_EXCL|MSVCRT__O_CREAT|
                     MSVCRT__O_RDWR|MSVCRT__O_WRONLY|MSVCRT__O_TEMPORARY|
                     MSVCRT__O_NOINHERIT|
-                    MSVCRT__O_SEQUENTIAL|MSVCRT__O_RANDOM|MSVCRT__O_SHORT_LIVED
+                    MSVCRT__O_SEQUENTIAL|MSVCRT__O_RANDOM|MSVCRT__O_SHORT_LIVED|
+                    MSVCRT__O_WTEXT|MSVCRT__O_U16TEXT|MSVCRT__O_U8TEXT
                     )))
         ERR(":unsupported oflags 0x%04x\n",unsupp);
 

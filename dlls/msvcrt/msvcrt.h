@@ -750,6 +750,9 @@ struct MSVCRT__stat64 {
 #define MSVCRT__O_TEXT          0x4000
 #define MSVCRT__O_BINARY        0x8000
 #define MSVCRT__O_RAW           MSVCRT__O_BINARY
+#define MSVCRT__O_WTEXT         0x10000
+#define MSVCRT__O_U16TEXT       0x20000
+#define MSVCRT__O_U8TEXT        0x40000
 
 /* _statusfp bit flags */
 #define MSVCRT__SW_INEXACT      0x00000001 /* inexact (precision) */
