@@ -1758,120 +1758,6 @@ int CDECL MSVCRT__pipe(int *pfds, unsigned int psize, int textmode)
   return ret;
 }
 
-/*********************************************************************
- *              _sopen_s (MSVCRT.@)
- */
-int CDECL MSVCRT__sopen_s( int *fd, const char *path, int oflags, int shflags, int pmode )
-{
-  DWORD access = 0, creation = 0, attrib;
-  DWORD sharing;
-  int wxflag;
-  HANDLE hand;
-  SECURITY_ATTRIBUTES sa;
-
-  TRACE("fd*: %p file: (%s) oflags: 0x%04x shflags: 0x%04x pmode: 0x%04x\n",
-        fd, path, oflags, shflags, pmode);
-
-  if (!MSVCRT_CHECK_PMT( fd != NULL )) return MSVCRT_EINVAL;
-
-  *fd = -1;
-  wxflag = split_oflags(oflags);
-  switch (oflags & (MSVCRT__O_RDONLY | MSVCRT__O_WRONLY | MSVCRT__O_RDWR))
-  {
-  case MSVCRT__O_RDONLY: access |= GENERIC_READ; break;
-  case MSVCRT__O_WRONLY: access |= GENERIC_WRITE; break;
-  case MSVCRT__O_RDWR:   access |= GENERIC_WRITE | GENERIC_READ; break;
-  }
-
-  if (oflags & MSVCRT__O_CREAT)
-  {
-    if(pmode & ~(MSVCRT__S_IREAD | MSVCRT__S_IWRITE))
-      FIXME(": pmode 0x%04x ignored\n", pmode);
-    else
-      WARN(": pmode 0x%04x ignored\n", pmode);
-
-    if (oflags & MSVCRT__O_EXCL)
-      creation = CREATE_NEW;
-    else if (oflags & MSVCRT__O_TRUNC)
-      creation = CREATE_ALWAYS;
-    else
-      creation = OPEN_ALWAYS;
-  }
-  else  /* no MSVCRT__O_CREAT */
-  {
-    if (oflags & MSVCRT__O_TRUNC)
-      creation = TRUNCATE_EXISTING;
-    else
-      creation = OPEN_EXISTING;
-  }
-  
-  switch( shflags )
-  {
-    case MSVCRT__SH_DENYRW:
-      sharing = 0L;
-      break;
-    case MSVCRT__SH_DENYWR:
-      sharing = FILE_SHARE_READ;
-      break;
-    case MSVCRT__SH_DENYRD:
-      sharing = FILE_SHARE_WRITE;
-      break;
-    case MSVCRT__SH_DENYNO:
-      sharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
-      break;
-    default:
-      ERR( "Unhandled shflags 0x%x\n", shflags );
-      return MSVCRT_EINVAL;
-  }
-  attrib = FILE_ATTRIBUTE_NORMAL;
-
-  if (oflags & MSVCRT__O_TEMPORARY)
-  {
-      attrib |= FILE_FLAG_DELETE_ON_CLOSE;
-      access |= DELETE;
-      sharing |= FILE_SHARE_DELETE;
-  }
-
-  sa.nLength              = sizeof( SECURITY_ATTRIBUTES );
-  sa.lpSecurityDescriptor = NULL;
-  sa.bInheritHandle       = !(oflags & MSVCRT__O_NOINHERIT);
-
-  hand = CreateFileA(path, access, sharing, &sa, creation, attrib, 0);
-  if (hand == INVALID_HANDLE_VALUE)  {
-    WARN(":failed-last error (%d)\n", GetLastError());
-    msvcrt_set_errno(GetLastError());
-    return *MSVCRT__errno();
-  }
-
-  *fd = msvcrt_alloc_fd(hand, wxflag);
-
-  TRACE(":fd (%d) handle (%p)\n", *fd, hand);
-  return 0;
-}
-
-/*********************************************************************
- *              _sopen (MSVCRT.@)
- */
-int CDECL MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
-{
-  int pmode;
-  int fd;
-
-  if (oflags & MSVCRT__O_CREAT)
-  {
-    __ms_va_list ap;
-
-    __ms_va_start(ap, shflags);
-    pmode = va_arg(ap, int);
-    __ms_va_end(ap);
-  }
-  else
-    pmode = 0;
-
-  MSVCRT__sopen_s(&fd, path, oflags, shflags, pmode);
-  return fd;
-}
-
 static int check_bom(HANDLE h, int oflags, BOOL seek)
 {
     char bom[sizeof(utf8_bom)];
@@ -2070,6 +1956,45 @@ int CDECL MSVCRT__wsopen( const MSVCRT_wchar_t *path, int oflags, int shflags, .
     pmode = 0;
 
   MSVCRT__wsopen_s(&fd, path, oflags, shflags, pmode);
+  return fd;
+}
+
+/*********************************************************************
+ *              _sopen_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__sopen_s( int *fd, const char *path, int oflags, int shflags, int pmode )
+{
+    MSVCRT_wchar_t *pathW;
+    int ret;
+
+    if(!MSVCRT_CHECK_PMT(path && (pathW = msvcrt_wstrdupa(path))))
+        return MSVCRT_EINVAL;
+
+    ret = MSVCRT__wsopen_s(fd, pathW, oflags, shflags, pmode);
+    MSVCRT_free(pathW);
+    return ret;
+}
+
+/*********************************************************************
+ *              _sopen (MSVCRT.@)
+ */
+int CDECL MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
+{
+  int pmode;
+  int fd;
+
+  if (oflags & MSVCRT__O_CREAT)
+  {
+    __ms_va_list ap;
+
+    __ms_va_start(ap, shflags);
+    pmode = va_arg(ap, int);
+    __ms_va_end(ap);
+  }
+  else
+    pmode = 0;
+
+  MSVCRT__sopen_s(&fd, path, oflags, shflags, pmode);
   return fd;
 }
 
