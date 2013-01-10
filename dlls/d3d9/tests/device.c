@@ -3968,6 +3968,177 @@ static void test_vertex_buffer_alignment(void)
     DestroyWindow(window);
 }
 
+static void test_query_support(void)
+{
+    static const D3DQUERYTYPE queries[] =
+    {
+        D3DQUERYTYPE_VCACHE,
+        D3DQUERYTYPE_RESOURCEMANAGER,
+        D3DQUERYTYPE_VERTEXSTATS,
+        D3DQUERYTYPE_EVENT,
+        D3DQUERYTYPE_OCCLUSION,
+        D3DQUERYTYPE_TIMESTAMP,
+        D3DQUERYTYPE_TIMESTAMPDISJOINT,
+        D3DQUERYTYPE_TIMESTAMPFREQ,
+        D3DQUERYTYPE_PIPELINETIMINGS,
+        D3DQUERYTYPE_INTERFACETIMINGS,
+        D3DQUERYTYPE_VERTEXTIMINGS,
+        D3DQUERYTYPE_PIXELTIMINGS,
+        D3DQUERYTYPE_BANDWIDTHTIMINGS,
+        D3DQUERYTYPE_CACHEUTILIZATION,
+    };
+    IDirect3DQuery9 *query = NULL;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
+    unsigned int i;
+    ULONG refcount;
+    BOOL supported;
+    HWND window;
+    HRESULT hr;
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create d3d9 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d9, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    for (i = 0; i < sizeof(queries) / sizeof(*queries); ++i)
+    {
+        hr = IDirect3DDevice9_CreateQuery(device, queries[i], NULL);
+        ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x for query %#x.\n", hr, queries[i]);
+
+        supported = hr == D3D_OK;
+
+        hr = IDirect3DDevice9_CreateQuery(device, queries[i], &query);
+        ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x for query %#x.\n", hr, queries[i]);
+
+        ok(!supported || query, "Query %#x was claimed to be supported, but can't be created.\n", queries[i]);
+        ok(supported || !query, "Query %#x was claimed not to be supported, but can be created.\n", queries[i]);
+
+        if (query)
+        {
+            IDirect3DQuery9_Release(query);
+            query = NULL;
+        }
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
+static void test_occlusion_query_states(void)
+{
+    static const float point[3] = {0.0, 0.0, 0.0};
+    IDirect3DQuery9 *query = NULL;
+    unsigned int data_size, i;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    BYTE *data;
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create d3d9 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d9, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateQuery(device, D3DQUERYTYPE_OCCLUSION, &query);
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
+    if (!query)
+    {
+        skip("Occlusion queries are not supported, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    data_size = IDirect3DQuery9_GetDataSize(query);
+    data = HeapAlloc(GetProcessHeap(), 0, data_size);
+
+    hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DQuery9_GetData(query, data, data_size, D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DQuery9_Issue(query, D3DISSUE_BEGIN);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DQuery9_Issue(query, D3DISSUE_BEGIN);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    *((DWORD *)data) = 0x12345678;
+    hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH);
+    ok(hr == S_FALSE || hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DQuery9_GetData(query, data, data_size, D3DGETDATA_FLUSH);
+    ok(hr == S_FALSE || hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    if (hr == D3D_OK)
+        ok(!*(DWORD *)data, "Got unexpected query result %u.\n", *(DWORD *)data);
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, point, 3 * sizeof(float));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DQuery9_GetData(query, data, data_size, D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DQuery9_GetData(query, data, data_size, D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DQuery9_Issue(query, D3DISSUE_BEGIN);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    HeapFree(GetProcessHeap(), 0, data);
+    IDirect3DQuery9_Release(query);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -4030,6 +4201,8 @@ START_TEST(device)
         test_volume_resource();
         test_vb_lock_flags();
         test_vertex_buffer_alignment();
+        test_query_support();
+        test_occlusion_query_states();
     }
 
 out:
