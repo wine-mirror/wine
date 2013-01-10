@@ -60,8 +60,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 /* values for wxflag in file descriptor */
 #define WX_OPEN           0x01
 #define WX_ATEOF          0x02
-#define WX_READEOF        0x04  /* like ATEOF, but for underlying file rather than buffer */
-#define WX_READCR         0x08  /* underlying file is at \r */
+#define WX_READCR         0x04  /* underlying file is at \r */
+#define WX_PIPE           0x08
 #define WX_DONTINHERIT    0x10
 #define WX_APPEND         0x20
 #define WX_TEXT           0x80
@@ -83,7 +83,7 @@ static char utf16_bom[2] = { 0xff, 0xfe };
 typedef struct {
     HANDLE              handle;
     unsigned char       wxflag;
-    char                unk1;
+    char                lookahead[3];
     int                 exflag;
     CRITICAL_SECTION    crit;
 } ioinfo;
@@ -319,7 +319,10 @@ static int msvcrt_alloc_fd_from(HANDLE hand, int flag, int fd)
   }
 
   fdinfo->handle = hand;
-  fdinfo->wxflag = WX_OPEN | (flag & (WX_DONTINHERIT | WX_APPEND | WX_TEXT));
+  fdinfo->wxflag = WX_OPEN | (flag & (WX_DONTINHERIT | WX_APPEND | WX_TEXT | WX_PIPE));
+  fdinfo->lookahead[0] = '\n';
+  fdinfo->lookahead[1] = '\n';
+  fdinfo->lookahead[2] = '\n';
   fdinfo->exflag = 0;
 
   /* locate next free slot */
@@ -494,6 +497,9 @@ void msvcrt_init_io(void)
                                                          GetCurrentProcess(), &fdinfo->handle,
                                                          0, TRUE, DUPLICATE_SAME_ACCESS))
           fdinfo->wxflag = WX_OPEN | WX_TEXT;
+      fdinfo->lookahead[0] = '\n';
+      fdinfo->lookahead[1] = '\n';
+      fdinfo->lookahead[2] = '\n';
       fdinfo->exflag = 0;
   }
 
@@ -505,6 +511,9 @@ void msvcrt_init_io(void)
                                                          GetCurrentProcess(), &fdinfo->handle,
                                                          0, TRUE, DUPLICATE_SAME_ACCESS))
           fdinfo->wxflag = WX_OPEN | WX_TEXT;
+      fdinfo->lookahead[0] = '\n';
+      fdinfo->lookahead[1] = '\n';
+      fdinfo->lookahead[2] = '\n';
       fdinfo->exflag = 0;
   }
 
@@ -516,6 +525,9 @@ void msvcrt_init_io(void)
                                                          GetCurrentProcess(), &fdinfo->handle,
                                                          0, TRUE, DUPLICATE_SAME_ACCESS))
           fdinfo->wxflag = WX_OPEN | WX_TEXT;
+      fdinfo->lookahead[0] = '\n';
+      fdinfo->lookahead[1] = '\n';
+      fdinfo->lookahead[2] = '\n';
       fdinfo->exflag = 0;
   }
 
@@ -1050,7 +1062,7 @@ __int64 CDECL MSVCRT__lseeki64(int fd, __int64 offset, int whence)
   if ((ofs.u.LowPart = SetFilePointer(hand, ofs.u.LowPart, &ofs.u.HighPart, whence)) != INVALID_SET_FILE_POINTER ||
       GetLastError() == ERROR_SUCCESS)
   {
-    msvcrt_get_ioinfo(fd)->wxflag &= ~(WX_ATEOF|WX_READEOF);
+    msvcrt_get_ioinfo(fd)->wxflag &= ~WX_ATEOF;
     /* FIXME: What if we seek _to_ EOF - is EOF set? */
 
     return ofs.QuadPart;
@@ -1727,11 +1739,11 @@ int CDECL MSVCRT__pipe(int *pfds, unsigned int psize, int textmode)
     int fd;
 
     LOCK_FILES();
-    fd = msvcrt_alloc_fd(readHandle, wxflags);
+    fd = msvcrt_alloc_fd(readHandle, wxflags|WX_PIPE);
     if (fd != -1)
     {
       pfds[0] = fd;
-      fd = msvcrt_alloc_fd(writeHandle, wxflags);
+      fd = msvcrt_alloc_fd(writeHandle, wxflags|WX_PIPE);
       if (fd != -1)
       {
         pfds[1] = fd;
@@ -2109,33 +2121,40 @@ int CDECL MSVCRT__rmtmp(void)
  */
 static int read_i(int fd, void *buf, unsigned int count)
 {
-  DWORD num_read;
-  char *bufstart = buf;
-  HANDLE hand = msvcrt_fdtoh(fd);
-  ioinfo *fdinfo = msvcrt_get_ioinfo(fd);
+    DWORD num_read;
+    char *bufstart = buf;
+    HANDLE hand = msvcrt_fdtoh(fd);
+    ioinfo *fdinfo = msvcrt_get_ioinfo(fd);
 
-  if (count == 0)
-    return 0;
+    if (count == 0)
+        return 0;
 
-  if (fdinfo->wxflag & WX_READEOF) {
-     fdinfo->wxflag |= WX_ATEOF;
-     TRACE("already at EOF, returning 0\n");
-     return 0;
-  }
-  /* Don't trace small reads, it gets *very* annoying */
-  if (count > 4)
-    TRACE(":fd (%d) handle (%p) buf (%p) len (%d)\n",fd,hand,buf,count);
-  if (hand == INVALID_HANDLE_VALUE)
-    return -1;
+    if (fdinfo->wxflag & WX_ATEOF) {
+        TRACE("already at EOF, returning 0\n");
+        return 0;
+    }
+    /* Don't trace small reads, it gets *very* annoying */
+    if (count > 4)
+        TRACE(":fd (%d) handle (%p) buf (%p) len (%d)\n",fd,hand,buf,count);
+    if (hand == INVALID_HANDLE_VALUE)
+        return -1;
 
-  /* Reading single bytes in O_TEXT mode makes things slow
-   * So read big chunks
-   */
-    if (ReadFile(hand, bufstart, count, &num_read, NULL))
+    if (fdinfo->lookahead[0]!='\n' || ReadFile(hand, bufstart, count, &num_read, NULL))
     {
+        if (fdinfo->lookahead[0] != '\n')
+        {
+            bufstart[0] = fdinfo->lookahead[0];
+            fdinfo->lookahead[0] = '\n';
+
+            if(count>1 && ReadFile(hand, bufstart+1, count-1, &num_read, NULL))
+                num_read++;
+            else
+                num_read = 1;
+        }
+
         if (count != 0 && num_read == 0)
         {
-            fdinfo->wxflag |= (WX_ATEOF|WX_READEOF);
+            fdinfo->wxflag |= WX_ATEOF;
             TRACE(":EOF %s\n",debugstr_an(buf,num_read));
         }
         else if (fdinfo->wxflag & WX_TEXT)
@@ -2161,16 +2180,36 @@ static int read_i(int fd, void *buf, unsigned int count)
                 /* in text mode, a ctrl-z signals EOF */
                 if (bufstart[i] == 0x1a)
                 {
-                    fdinfo->wxflag |= (WX_ATEOF|WX_READEOF);
+                    fdinfo->wxflag |= WX_ATEOF;
                     TRACE(":^Z EOF %s\n",debugstr_an(buf,num_read));
                     break;
                 }
-                /* in text mode, strip \r if followed by \n.
-                 * BUG: should save state across calls somehow, so CR LF that
-                 * straddles buffer boundary gets recognized properly?
-                 */
-		if ((bufstart[i] != '\r')
-                ||  ((i+1) < num_read && bufstart[i+1] != '\n'))
+
+                /* in text mode, strip \r if followed by \n */
+                if (bufstart[i]=='\r' && i+1==num_read)
+                {
+                    char lookahead;
+                    DWORD len;
+
+                    if (ReadFile(hand, &lookahead, 1, &len, NULL) && len)
+                    {
+                        if(lookahead=='\n' && j==0)
+                            bufstart[j++] = '\n';
+                        else
+                        {
+                            if(lookahead != '\n')
+                                bufstart[j++] = '\r';
+
+                            if (fdinfo->wxflag & WX_PIPE)
+                                fdinfo->lookahead[0] = lookahead;
+                            else
+                                SetFilePointer(fdinfo->handle, -1, NULL, FILE_CURRENT);
+                        }
+                    }
+                    else
+                        bufstart[j++] = '\r';
+                }
+                else if(bufstart[i]!='\r' || bufstart[i+1]!='\n')
 		    bufstart[j++] = bufstart[i];
             }
             num_read = j;
@@ -2181,7 +2220,7 @@ static int read_i(int fd, void *buf, unsigned int count)
         if (GetLastError() == ERROR_BROKEN_PIPE)
         {
             TRACE(":end-of-pipe\n");
-            fdinfo->wxflag |= (WX_ATEOF|WX_READEOF);
+            fdinfo->wxflag |= WX_ATEOF;
             return 0;
         }
         else
@@ -2191,9 +2230,9 @@ static int read_i(int fd, void *buf, unsigned int count)
         }
     }
 
-  if (count > 4)
-      TRACE("(%u), %s\n",num_read,debugstr_an(buf, num_read));
-  return num_read;
+    if (count > 4)
+        TRACE("(%u), %s\n",num_read,debugstr_an(buf, num_read));
+    return num_read;
 }
 
 /*********************************************************************
