@@ -2086,7 +2086,7 @@ D3DXVECTOR4* WINAPI D3DXVec4TransformArray(D3DXVECTOR4* out, UINT outstride, CON
     return out;
 }
 
-static inline unsigned short float_32_to_16(const float in)
+unsigned short float_32_to_16(const float in)
 {
     int exp = 0, origexp;
     float tmp = fabs(in);

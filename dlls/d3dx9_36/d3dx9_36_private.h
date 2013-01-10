@@ -47,6 +47,7 @@ struct volume
 /* for internal use */
 enum format_type {
     FORMAT_ARGB,   /* unsigned */
+    FORMAT_ARGBF16,/* float 16 */
     FORMAT_DXT,
     FORMAT_UNKNOWN
 };
@@ -93,6 +94,8 @@ HRESULT load_volume_from_dds(IDirect3DVolume9 *dst_volume, const PALETTEENTRY *d
     const D3DXIMAGE_INFO *src_info) DECLSPEC_HIDDEN;
 HRESULT load_volume_texture_from_dds(IDirect3DVolumeTexture9 *volume_texture, const void *src_data,
     const PALETTEENTRY *palette, DWORD filter, DWORD color_key, const D3DXIMAGE_INFO *src_info) DECLSPEC_HIDDEN;
+
+unsigned short float_32_to_16(const float in) DECLSPEC_HIDDEN;
 
 /* debug helpers */
 const char *debug_d3dxparameter_class(D3DXPARAMETER_CLASS c) DECLSPEC_HIDDEN;

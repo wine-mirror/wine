@@ -1216,7 +1216,7 @@ static inline void fill_texture(const struct pixel_format_desc *format, BYTE *po
     for (c = 0; c < 4; c++)
     {
         float comp_value;
-        DWORD i, v, mask32 = format->bits[c] == 32 ? ~0U : ((1 << format->bits[c]) - 1);
+        DWORD i, v = 0, mask32 = format->bits[c] == 32 ? ~0U : ((1 << format->bits[c]) - 1);
 
         switch (c)
         {
@@ -1234,7 +1234,12 @@ static inline void fill_texture(const struct pixel_format_desc *format, BYTE *po
                 break;
         }
 
-        v = comp_value * ((1 << format->bits[c]) - 1) + 0.5f;
+        if (format->type == FORMAT_ARGBF16)
+            v = float_32_to_16(comp_value);
+        else if (format->type == FORMAT_ARGB)
+            v = comp_value * ((1 << format->bits[c]) - 1) + 0.5f;
+        else
+            FIXME("Unhandled format type %#x\n", format->type);
 
         for (i = 0; i < format->bits[c] + format->shift[c]; i += 8)
         {
@@ -1277,7 +1282,7 @@ HRESULT WINAPI D3DXFillTexture(struct IDirect3DTexture9 *texture, LPD3DXFILL2D f
             return D3DERR_INVALIDCALL;
 
         format = get_format_info(desc.Format);
-        if (format->type != FORMAT_ARGB)
+        if (format->type != FORMAT_ARGB && format->type != FORMAT_ARGBF16)
         {
             FIXME("Unsupported texture format %#x\n", desc.Format);
             return D3DERR_INVALIDCALL;
@@ -1644,7 +1649,7 @@ HRESULT WINAPI D3DXFillCubeTexture(struct IDirect3DCubeTexture9 *texture, LPD3DX
             return D3DERR_INVALIDCALL;
 
         format = get_format_info(desc.Format);
-        if (format->type != FORMAT_ARGB)
+        if (format->type != FORMAT_ARGB && format->type != FORMAT_ARGBF16)
         {
             FIXME("Unsupported texture format %#x\n", desc.Format);
             return D3DERR_INVALIDCALL;
@@ -1703,7 +1708,7 @@ HRESULT WINAPI D3DXFillVolumeTexture(struct IDirect3DVolumeTexture9 *texture, LP
             return D3DERR_INVALIDCALL;
 
         format = get_format_info(desc.Format);
-        if (format->type != FORMAT_ARGB)
+        if (format->type != FORMAT_ARGB && format->type != FORMAT_ARGBF16)
         {
             FIXME("Unsupported texture format %#x\n", desc.Format);
             return D3DERR_INVALIDCALL;
