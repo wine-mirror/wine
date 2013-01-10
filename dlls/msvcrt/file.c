@@ -2112,7 +2112,7 @@ int CDECL MSVCRT__rmtmp(void)
  */
 static int read_i(int fd, void *buf, unsigned int count)
 {
-    DWORD num_read;
+    DWORD num_read, utf16;
     char *bufstart = buf;
     HANDLE hand = msvcrt_fdtoh(fd);
     ioinfo *fdinfo = msvcrt_get_ioinfo(fd);
@@ -2128,7 +2128,17 @@ static int read_i(int fd, void *buf, unsigned int count)
     if (count > 4)
         TRACE(":fd (%d) handle (%p) buf (%p) len (%d)\n",fd,hand,buf,count);
     if (hand == INVALID_HANDLE_VALUE)
+    {
+        *MSVCRT__errno() = MSVCRT_EBADF;
         return -1;
+    }
+
+    utf16 = (fdinfo->exflag & EF_UTF16) != 0;
+    if (((fdinfo->exflag&EF_UTF8) || utf16) && count&1)
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return -1;
+    }
 
     if (fdinfo->lookahead[0]!='\n' || ReadFile(hand, bufstart, count, &num_read, NULL))
     {
@@ -2137,10 +2147,24 @@ static int read_i(int fd, void *buf, unsigned int count)
             bufstart[0] = fdinfo->lookahead[0];
             fdinfo->lookahead[0] = '\n';
 
-            if(count>1 && ReadFile(hand, bufstart+1, count-1, &num_read, NULL))
-                num_read++;
+            if (utf16)
+            {
+                bufstart[1] =  fdinfo->lookahead[1];
+                fdinfo->lookahead[1] = '\n';
+            }
+
+            if(count>1+utf16 && ReadFile(hand, bufstart+1+utf16, count-1-utf16, &num_read, NULL))
+                num_read += 1+utf16;
             else
-                num_read = 1;
+                num_read = 1+utf16;
+        }
+
+        if(utf16 && (num_read&1))
+        {
+            /* msvcr90 uses uninitialized value from the buffer in this case */
+            /* msvcrt ignores additional data */
+            ERR("got odd number of bytes in UTF16 mode\n");
+            num_read--;
         }
 
         if (count != 0 && num_read == 0)
@@ -2152,15 +2176,15 @@ static int read_i(int fd, void *buf, unsigned int count)
         {
             DWORD i, j;
 
-            if (bufstart[0] == '\n')
+            if (bufstart[0]=='\n' && (!utf16 || bufstart[1]==0))
                 fdinfo->wxflag |= WX_READNL;
             else
                 fdinfo->wxflag &= ~WX_READNL;
 
-            for (i=0, j=0; i<num_read; i++)
+            for (i=0, j=0; i<num_read; i+=1+utf16)
             {
                 /* in text mode, a ctrl-z signals EOF */
-                if (bufstart[i] == 0x1a)
+                if (bufstart[i]==0x1a && (!utf16 || bufstart[i+1]==0))
                 {
                     fdinfo->wxflag |= WX_ATEOF;
                     TRACE(":^Z EOF %s\n",debugstr_an(buf,num_read));
@@ -2168,31 +2192,48 @@ static int read_i(int fd, void *buf, unsigned int count)
                 }
 
                 /* in text mode, strip \r if followed by \n */
-                if (bufstart[i]=='\r' && i+1==num_read)
+                if (bufstart[i]=='\r' && (!utf16 || bufstart[i+1]==0) && i+1+utf16==num_read)
                 {
-                    char lookahead;
+                    char lookahead[2];
                     DWORD len;
 
-                    if (ReadFile(hand, &lookahead, 1, &len, NULL) && len)
+                    lookahead[1] = '\n';
+                    if (ReadFile(hand, lookahead, 1+utf16, &len, NULL) && len)
                     {
-                        if(lookahead=='\n' && j==0)
+                        if(lookahead[0]=='\n' && (!utf16 || lookahead[1]==0) && j==0)
+                        {
                             bufstart[j++] = '\n';
+                            if(utf16) bufstart[j++] = 0;
+                        }
                         else
                         {
-                            if(lookahead != '\n')
+                            if(lookahead[0]!='\n' || (utf16 && lookahead[1]!=0))
+                            {
                                 bufstart[j++] = '\r';
+                                if(utf16) bufstart[j++] = 0;
+                            }
 
                             if (fdinfo->wxflag & WX_PIPE)
-                                fdinfo->lookahead[0] = lookahead;
+                            {
+                                fdinfo->lookahead[0] = lookahead[0];
+                                fdinfo->lookahead[1] = lookahead[1];
+                            }
                             else
-                                SetFilePointer(fdinfo->handle, -1, NULL, FILE_CURRENT);
+                                SetFilePointer(fdinfo->handle, -1-utf16, NULL, FILE_CURRENT);
                         }
                     }
                     else
+                    {
                         bufstart[j++] = '\r';
+                        if(utf16) bufstart[j++] = 0;
+                    }
                 }
-                else if(bufstart[i]!='\r' || bufstart[i+1]!='\n')
-		    bufstart[j++] = bufstart[i];
+                else if((bufstart[i]!='\r' || (utf16 && bufstart[i+1]!=0))
+                        || (bufstart[i+1+utf16]!='\n' || (utf16 && bufstart[i+3]!=0)))
+                {
+                    bufstart[j++] = bufstart[i];
+                    if(utf16) bufstart[j++] = bufstart[i+1];
+                }
             }
             num_read = j;
         }
