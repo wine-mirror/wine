@@ -11,7 +11,6 @@ C_SRCS = \
 	surface.c \
 	texture.c \
 	vertexdeclaration.c \
-	visual.c \
-	volume.c
+	visual.c
 
 @MAKE_TEST_RULES@

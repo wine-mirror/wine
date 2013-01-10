@@ -2,7 +2,8 @@
  * Copyright (C) 2006 Vitaliy Margolen
  * Copyright (C) 2006 Chris Robinson
  * Copyright (C) 2006-2007 Stefan Dösinger(For CodeWeavers)
- * Copyright 2007 Henri Verbeet
+ * Copyright 2006, 2007 Henri Verbeet
+ * Copyright 2013 Henri Verbeet for CodeWeavers
  * Copyright (C) 2008 Rico Schüller
  *
  * This library is free software; you can redistribute it and/or
@@ -3677,6 +3678,148 @@ static void test_set_rt_vp_scissor(void)
     DestroyWindow(window);
 }
 
+static void test_volume_get_container(void)
+{
+    IDirect3DVolumeTexture9 *texture = NULL;
+    IDirect3DVolume9 *volume = NULL;
+    IDirect3DDevice9 *device;
+    IUnknown *container;
+    IDirect3D9 *d3d9;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create d3d9 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d9, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP))
+    {
+        skip("No volume texture support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, 128, 128, 128, 1, 0,
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &texture, 0);
+    ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#x.\n", hr);
+    ok(!!texture, "Got unexpected texture %p.\n", texture);
+
+    hr = IDirect3DVolumeTexture9_GetVolumeLevel(texture, 0, &volume);
+    ok(SUCCEEDED(hr), "Failed to get volume level, hr %#x.\n", hr);
+    ok(!!volume, "Got unexpected volume %p.\n", volume);
+
+    /* These should work... */
+    container = NULL;
+    hr = IDirect3DVolume9_GetContainer(volume, &IID_IUnknown, (void **)&container);
+    ok(SUCCEEDED(hr), "Failed to get volume container, hr %#x.\n", hr);
+    ok(container == (IUnknown *)texture, "Got unexpected container %p, expected %p.\n", container, texture);
+    IUnknown_Release(container);
+
+    container = NULL;
+    hr = IDirect3DVolume9_GetContainer(volume, &IID_IDirect3DResource9, (void **)&container);
+    ok(SUCCEEDED(hr), "Failed to get volume container, hr %#x.\n", hr);
+    ok(container == (IUnknown *)texture, "Got unexpected container %p, expected %p.\n", container, texture);
+    IUnknown_Release(container);
+
+    container = NULL;
+    hr = IDirect3DVolume9_GetContainer(volume, &IID_IDirect3DBaseTexture9, (void **)&container);
+    ok(SUCCEEDED(hr), "Failed to get volume container, hr %#x.\n", hr);
+    ok(container == (IUnknown *)texture, "Got unexpected container %p, expected %p.\n", container, texture);
+    IUnknown_Release(container);
+
+    container = NULL;
+    hr = IDirect3DVolume9_GetContainer(volume, &IID_IDirect3DVolumeTexture9, (void **)&container);
+    ok(SUCCEEDED(hr), "Failed to get volume container, hr %#x.\n", hr);
+    ok(container == (IUnknown *)texture, "Got unexpected container %p, expected %p.\n", container, texture);
+    IUnknown_Release(container);
+
+    /* ...and this one shouldn't. This should return E_NOINTERFACE and set container to NULL. */
+    hr = IDirect3DVolume9_GetContainer(volume, &IID_IDirect3DVolume9, (void **)&container);
+    ok(hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
+    ok(!container, "Got unexpected container %p.\n", container);
+
+    IDirect3DVolume9_Release(volume);
+    IDirect3DVolumeTexture9_Release(texture);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
+static void test_volume_resource(void)
+{
+    IDirect3DVolumeTexture9 *texture;
+    IDirect3DResource9 *resource;
+    IDirect3DVolume9 *volume;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create d3d9 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d9, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP))
+    {
+        skip("No volume texture support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, 128, 128, 128, 1, 0,
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &texture, 0);
+    ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#x.\n", hr);
+    hr = IDirect3DVolumeTexture9_GetVolumeLevel(texture, 0, &volume);
+    ok(SUCCEEDED(hr), "Failed to get volume level, hr %#x.\n", hr);
+    IDirect3DVolumeTexture9_Release(texture);
+
+    hr = IDirect3DVolume9_QueryInterface(volume, &IID_IDirect3DResource9, (void **)&resource);
+    ok(hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
+
+    IDirect3DVolume9_Release(volume);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -3735,6 +3878,8 @@ START_TEST(device)
         test_device_window_reset();
         test_reset_resources();
         test_set_rt_vp_scissor();
+        test_volume_get_container();
+        test_volume_resource();
     }
 
 out:
