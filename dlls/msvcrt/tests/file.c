@@ -1496,6 +1496,61 @@ static void test__wfopen_s( void )
     ok(_unlink(name) == 0, "Couldn't unlink file named '%s'\n", name);
 }
 
+static void test_setmode(void)
+{
+    const char name[] = "empty1";
+    int fd, ret;
+
+    if(!p_fopen_s) {
+        win_skip("unicode file modes are not available, skipping setmode tests\n");
+        return;
+    }
+
+    fd = _open(name, _O_CREAT|_O_WRONLY, _S_IWRITE);
+    ok(fd != -1, "failed to open file\n");
+
+    errno = 0xdeadbeef;
+    ret = _setmode(fd, 0xffffffff);
+    ok(ret == -1, "_setmode returned %x, expected -1\n", ret);
+    ok(errno == EINVAL, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = _setmode(fd, 0);
+    ok(ret == -1, "_setmode returned %x, expected -1\n", ret);
+    ok(errno == EINVAL, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = _setmode(fd, _O_BINARY|_O_TEXT);
+    ok(ret == -1, "_setmode returned %x, expected -1\n", ret);
+    ok(errno == EINVAL, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = _setmode(fd, _O_WTEXT|_O_U16TEXT);
+    ok(ret == -1, "_setmode returned %x, expected -1\n", ret);
+    ok(errno == EINVAL, "errno = %d\n", errno);
+
+    ret = _setmode(fd, _O_BINARY);
+    ok(ret == _O_TEXT, "_setmode returned %x, expected _O_TEXT\n", ret);
+
+    ret = _setmode(fd, _O_WTEXT);
+    ok(ret == _O_BINARY, "_setmode returned %x, expected _O_BINARY\n", ret);
+
+    ret = _setmode(fd, _O_TEXT);
+    ok(ret == _O_WTEXT, "_setmode returned %x, expected _O_WTEXT\n", ret);
+
+    ret = _setmode(fd, _O_U16TEXT);
+    ok(ret == _O_TEXT, "_setmode returned %x, expected _O_TEXT\n", ret);
+
+    ret = _setmode(fd, _O_U8TEXT);
+    ok(ret == _O_WTEXT, "_setmode returned %x, expected _O_WTEXT\n", ret);
+
+    ret = _setmode(fd, _O_TEXT);
+    ok(ret == _O_WTEXT, "_setmode returned %x, expected _O_WTEXT\n", ret);
+
+    _close(fd);
+    _unlink(name);
+}
+
 static void test_get_osfhandle(void)
 {
     int fd;
@@ -1784,6 +1839,7 @@ START_TEST(file)
     test_fopen_fclose_fcloseall();
     test_fopen_s();
     test__wfopen_s();
+    test_setmode();
     test_fileops();
     test_asciimode();
     test_asciimode2();
