@@ -3591,34 +3591,9 @@ LONG CDECL MSVCRT_ftell(MSVCRT_FILE* file)
  */
 int CDECL MSVCRT_fgetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
 {
-    int off=0;
-
-    MSVCRT__lock_file(file);
-    *pos = MSVCRT__lseeki64(file->_file,0,SEEK_CUR);
-    if(*pos == -1) {
-        MSVCRT__unlock_file(file);
+    *pos = MSVCRT__ftelli64(file);
+    if(*pos == -1)
         return -1;
-    }
-    if(file->_bufsiz)  {
-        if( file->_flag & MSVCRT__IOWRT ) {
-            off = file->_ptr - file->_base;
-        } else {
-            off = -file->_cnt;
-            if (msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT) {
-                /* Black magic correction for CR removal */
-                int i;
-                for (i=0; i<file->_cnt; i++) {
-                    if (file->_ptr[i] == '\n')
-                        off--;
-                }
-                /* Black magic when reading CR at buffer boundary*/
-                if(msvcrt_get_ioinfo(file->_file)->wxflag & WX_READCR)
-                    off--;
-            }
-        }
-    }
-    *pos += off;
-    MSVCRT__unlock_file(file);
     return 0;
 }
 
