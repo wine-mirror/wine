@@ -410,8 +410,8 @@ DECLARE_INTERFACE_(IDirect3DLight,IUnknown)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3DLight methods ***/
     STDMETHOD(Initialize)(THIS_ IDirect3D *d3d) PURE;
-    STDMETHOD(SetLight)(THIS_ LPD3DLIGHT lpLight) PURE;
-    STDMETHOD(GetLight)(THIS_ LPD3DLIGHT lpLight) PURE;
+    STDMETHOD(SetLight)(THIS_ D3DLIGHT *data) PURE;
+    STDMETHOD(GetLight)(THIS_ D3DLIGHT *data) PURE;
 };
 #undef INTERFACE
 
