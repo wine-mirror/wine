@@ -3798,6 +3798,14 @@ __int64 CDECL MSVCRT__ftelli64(MSVCRT_FILE* file)
     if(file->_bufsiz)  {
         if(file->_flag & MSVCRT__IOWRT) {
             pos += file->_ptr - file->_base;
+
+            if(msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT) {
+                char *p;
+
+                for(p=file->_base; p<file->_ptr; p++)
+                    if(*p == '\n')
+                        pos++;
+            }
         } else if(!file->_cnt) { /* nothing to do */
         } else if(MSVCRT__lseeki64(file->_file, 0, SEEK_END)==pos) {
             int i;
