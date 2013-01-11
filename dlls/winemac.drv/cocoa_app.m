@@ -51,7 +51,18 @@
             [item setSubmenu:submenu];
             [mainMenu addItem:item];
 
+            submenu = [[[NSMenu alloc] initWithTitle:@"Window"] autorelease];
+            [submenu addItemWithTitle:@"Minimize" action:@selector(performMiniaturize:) keyEquivalent:@""];
+            [submenu addItemWithTitle:@"Zoom" action:@selector(performZoom:) keyEquivalent:@""];
+            [submenu addItem:[NSMenuItem separatorItem]];
+            [submenu addItemWithTitle:@"Bring All to Front" action:@selector(arrangeInFront:) keyEquivalent:@""];
+            item = [[[NSMenuItem alloc] init] autorelease];
+            [item setTitle:@"Window"];
+            [item setSubmenu:submenu];
+            [mainMenu addItem:item];
+
             [self setMainMenu:mainMenu];
+            [self setWindowsMenu:submenu];
         }
     }
 

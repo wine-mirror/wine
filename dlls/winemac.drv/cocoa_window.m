@@ -172,9 +172,17 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         else
             behavior |= NSWindowCollectionBehaviorManaged;
         if (state->excluded_by_cycle)
+        {
             behavior |= NSWindowCollectionBehaviorIgnoresCycle;
+            if ([self isVisible])
+                [NSApp removeWindowsItem:self];
+        }
         else
+        {
             behavior |= NSWindowCollectionBehaviorParticipatesInCycle;
+            if ([self isVisible])
+                [NSApp addWindowsItem:self title:[self title] filename:NO];
+        }
         [self setCollectionBehavior:behavior];
     }
 
@@ -196,6 +204,9 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
                 [latentParentWindow addChildWindow:self ordered:NSWindowAbove];
                 self.latentParentWindow = nil;
             }
+
+            if (![self isExcludedFromWindowsMenu])
+                [NSApp addWindowsItem:self title:[self title] filename:NO];
         }
 
         return on_screen;
@@ -206,6 +217,7 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         self.latentParentWindow = [self parentWindow];
         [latentParentWindow removeChildWindow:self];
         [self orderOut:nil];
+        [NSApp removeWindowsItem:self];
     }
 
     - (BOOL) setFrameIfOnScreen:(NSRect)contentRect
@@ -275,6 +287,18 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
     - (BOOL) canBecomeMainWindow
     {
         return [self canBecomeKeyWindow];
+    }
+
+    - (BOOL) isExcludedFromWindowsMenu
+    {
+        return !([self collectionBehavior] & NSWindowCollectionBehaviorParticipatesInCycle);
+    }
+
+    - (BOOL) validateMenuItem:(NSMenuItem *)menuItem
+    {
+        if ([menuItem action] == @selector(makeKeyAndOrderFront:))
+            return [self isKeyWindow] || (!self.disabled && !self.noActivate);
+        return [super validateMenuItem:menuItem];
     }
 
 
@@ -372,6 +396,8 @@ void macdrv_set_cocoa_window_title(macdrv_window w, const unsigned short* title,
         titleString = @"";
     OnMainThreadAsync(^{
         [window setTitle:titleString];
+        if ([window isVisible] && ![window isExcludedFromWindowsMenu])
+            [NSApp changeWindowsItem:window title:titleString filename:NO];
     });
 
     [pool release];
