@@ -847,15 +847,23 @@ static HRESULT WINAPI class_object_GetMethod(
     IWbemClassObject **ppOutSignature )
 {
     struct class_object *co = impl_from_IWbemClassObject( iface );
+    IWbemClassObject *in, *out;
     HRESULT hr;
 
     TRACE("%p, %s, %08x, %p, %p\n", iface, debugstr_w(wszName), lFlags, ppInSignature, ppOutSignature);
 
-    hr = create_signature( co->name, wszName, PARAM_IN, ppInSignature );
-    if (hr != S_OK || !ppOutSignature) return hr;
+    hr = create_signature( co->name, wszName, PARAM_IN, &in );
+    if (hr != S_OK) return hr;
 
-    hr = create_signature( co->name, wszName, PARAM_OUT, ppOutSignature );
-    if (hr != S_OK) IWbemClassObject_Release( *ppInSignature );
+    hr = create_signature( co->name, wszName, PARAM_OUT, &out );
+    if (hr == S_OK)
+    {
+        if (ppInSignature) *ppInSignature = in;
+        else IWbemClassObject_Release( in );
+        if (ppOutSignature) *ppOutSignature = out;
+        else IWbemClassObject_Release( out );
+    }
+    else IWbemClassObject_Release( in );
     return hr;
 }
 
