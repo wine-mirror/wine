@@ -3275,12 +3275,20 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
         lpDx[i * 2] = piAdvance[i];
         lpDx[i * 2 + 1] = 0;
 
-        if (pGoffset && i > 0)
+        if (pGoffset)
         {
-            lpDx[(i - 1) * 2]     += pGoffset[i].du;
-            lpDx[(i - 1) * 2 + 1] += pGoffset[i].dv;
-            lpDx[i * 2]           -= pGoffset[i].du;
-            lpDx[i * 2 + 1]       -= pGoffset[i].dv;
+            if (i == 0)
+            {
+                x += pGoffset[i].du;
+                y += pGoffset[i].dv;
+            }
+            else
+            {
+                lpDx[(i - 1) * 2]     += pGoffset[i].du;
+                lpDx[(i - 1) * 2 + 1] += pGoffset[i].dv;
+            }
+            lpDx[i * 2]     -= pGoffset[i].du;
+            lpDx[i * 2 + 1] -= pGoffset[i].dv;
         }
     }
 
