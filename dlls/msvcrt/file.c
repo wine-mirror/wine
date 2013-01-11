@@ -4208,7 +4208,25 @@ static int puts_clbk_file_a(void *file, int len, const char *str)
 
 static int puts_clbk_file_w(void *file, int len, const MSVCRT_wchar_t *str)
 {
-    return MSVCRT_fwrite(str, sizeof(MSVCRT_wchar_t), len, file);
+    int i, ret;
+
+    MSVCRT__lock_file(file);
+
+    if(!(msvcrt_get_ioinfo(((MSVCRT_FILE*)file)->_file)->wxflag & WX_TEXT)) {
+        ret = MSVCRT_fwrite(str, sizeof(MSVCRT_wchar_t), len, file);
+        MSVCRT__unlock_file(file);
+        return ret;
+    }
+
+    for(i=0; i<len; i++) {
+        if(MSVCRT_fputwc(str[i], file) == MSVCRT_WEOF) {
+            MSVCRT__unlock_file(file);
+            return -1;
+        }
+    }
+
+    MSVCRT__unlock_file(file);
+    return len;
 }
 
 /*********************************************************************
