@@ -61,6 +61,7 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 @interface WineWindow ()
 
 @property (nonatomic) BOOL disabled;
+@property (nonatomic) BOOL noActivate;
 
     + (void) flipRect:(NSRect*)rect;
 
@@ -79,7 +80,7 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 
 @implementation WineWindow
 
-    @synthesize disabled;
+    @synthesize disabled, noActivate;
 
     + (WineWindow*) createWindowWithFeatures:(const struct macdrv_window_features*)wf
                                  windowFrame:(NSRect)window_frame
@@ -147,6 +148,7 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
     - (void) setMacDrvState:(const struct macdrv_window_state*)state
     {
         self.disabled = state->disabled;
+        self.noActivate = state->no_activate;
     }
 
     /* Returns whether or not the window was ordered in, which depends on if
@@ -214,7 +216,8 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
      */
     - (BOOL) canBecomeKeyWindow
     {
-        return !self.disabled;
+        if (self.disabled || self.noActivate) return NO;
+        return YES;
     }
 
     - (BOOL) canBecomeMainWindow

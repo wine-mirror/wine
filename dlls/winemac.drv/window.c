@@ -73,6 +73,26 @@ static void get_cocoa_window_features(struct macdrv_win_data *data,
 }
 
 
+/*******************************************************************
+ *              can_activate_window
+ *
+ * Check if we can activate the specified window.
+ */
+static inline BOOL can_activate_window(HWND hwnd)
+{
+    LONG style = GetWindowLongW(hwnd, GWL_STYLE);
+    RECT rect;
+
+    if (!(style & WS_VISIBLE)) return FALSE;
+    if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD) return FALSE;
+    if (style & WS_MINIMIZE) return FALSE;
+    if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_NOACTIVATE) return FALSE;
+    if (hwnd == GetDesktopWindow()) return FALSE;
+    if (GetWindowRect(hwnd, &rect) && IsRectEmpty(&rect)) return FALSE;
+    return !(style & WS_DISABLED);
+}
+
+
 /***********************************************************************
  *              get_cocoa_window_state
  */
@@ -82,6 +102,7 @@ static void get_cocoa_window_state(struct macdrv_win_data *data,
 {
     memset(state, 0, sizeof(*state));
     state->disabled = (style & WS_DISABLED) != 0;
+    state->no_activate = !can_activate_window(data->hwnd);
 }
 
 

@@ -25,6 +25,7 @@
 {
     NSUInteger normalStyleMask;
     BOOL disabled;
+    BOOL noActivate;
 }
 
 @end
