@@ -3882,8 +3882,7 @@ int CDECL MSVCRT_fputws(const MSVCRT_wchar_t *s, MSVCRT_FILE* file)
         return ret;
     }
     for (i=0; i<len; i++) {
-        if (((s[i] == '\n') && (MSVCRT_fputc('\r', file) == MSVCRT_EOF))
-                || MSVCRT_fputwc(s[i], file) == MSVCRT_WEOF) {
+        if(MSVCRT_fputwc(s[i], file) == MSVCRT_WEOF) {
             MSVCRT__unlock_file(file);
             return MSVCRT_WEOF;
         }
