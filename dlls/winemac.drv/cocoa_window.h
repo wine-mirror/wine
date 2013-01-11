@@ -22,4 +22,9 @@
 
 
 @interface WineWindow : NSPanel <NSWindowDelegate>
+{
+    NSUInteger normalStyleMask;
+    BOOL disabled;
+}
+
 @end

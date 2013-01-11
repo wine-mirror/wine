@@ -60,6 +60,8 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 
 @interface WineWindow ()
 
+@property (nonatomic) BOOL disabled;
+
     + (void) flipRect:(NSRect*)rect;
 
 @end
@@ -77,6 +79,8 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 
 @implementation WineWindow
 
+    @synthesize disabled;
+
     + (WineWindow*) createWindowWithFeatures:(const struct macdrv_window_features*)wf
                                  windowFrame:(NSRect)window_frame
     {
@@ -89,6 +93,9 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
                                           styleMask:style_mask_for_features(wf)
                                             backing:NSBackingStoreBuffered
                                               defer:YES] autorelease];
+
+        if (!window) return nil;
+        window->normalStyleMask = [window styleMask];
 
         /* Standardize windows to eliminate differences between titled and
            borderless windows and between NSWindow and NSPanel. */
@@ -115,10 +122,31 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         rect->origin.y = NSMaxY([[[NSScreen screens] objectAtIndex:0] frame]) - NSMaxY(*rect);
     }
 
+    - (void) adjustFeaturesForState
+    {
+        NSUInteger style = normalStyleMask;
+
+        if (self.disabled)
+            style &= ~NSResizableWindowMask;
+        if (style != [self styleMask])
+            [self setStyleMask:style];
+
+        if (style & NSClosableWindowMask)
+            [[self standardWindowButton:NSWindowCloseButton] setEnabled:!self.disabled];
+        if (style & NSMiniaturizableWindowMask)
+            [[self standardWindowButton:NSWindowMiniaturizeButton] setEnabled:!self.disabled];
+    }
+
     - (void) setWindowFeatures:(const struct macdrv_window_features*)wf
     {
-        [self setStyleMask:style_mask_for_features(wf)];
+        normalStyleMask = style_mask_for_features(wf);
+        [self adjustFeaturesForState];
         [self setHasShadow:wf->shadow];
+    }
+
+    - (void) setMacDrvState:(const struct macdrv_window_state*)state
+    {
+        self.disabled = state->disabled;
     }
 
     /* Returns whether or not the window was ordered in, which depends on if
@@ -171,13 +199,22 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         return on_screen;
     }
 
+    - (void) setDisabled:(BOOL)newValue
+    {
+        if (disabled != newValue)
+        {
+            disabled = newValue;
+            [self adjustFeaturesForState];
+        }
+    }
+
 
     /*
      * ---------- NSWindow method overrides ----------
      */
     - (BOOL) canBecomeKeyWindow
     {
-        return YES;
+        return !self.disabled;
     }
 
     - (BOOL) canBecomeMainWindow
@@ -244,6 +281,21 @@ void macdrv_set_cocoa_window_features(macdrv_window w,
 
     OnMainThread(^{
         [window setWindowFeatures:wf];
+    });
+}
+
+/***********************************************************************
+ *              macdrv_set_cocoa_window_state
+ *
+ * Update a Cocoa window's state.
+ */
+void macdrv_set_cocoa_window_state(macdrv_window w,
+        const struct macdrv_window_state* state)
+{
+    WineWindow* window = (WineWindow*)w;
+
+    OnMainThread(^{
+        [window setMacDrvState:state];
     });
 }
 

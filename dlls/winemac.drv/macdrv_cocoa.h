@@ -125,11 +125,17 @@ struct macdrv_window_features {
     unsigned int    shadow:1;
 };
 
+struct macdrv_window_state {
+    unsigned int    disabled:1;
+};
+
 extern macdrv_window macdrv_create_cocoa_window(const struct macdrv_window_features* wf,
         CGRect frame) DECLSPEC_HIDDEN;
 extern void macdrv_destroy_cocoa_window(macdrv_window w) DECLSPEC_HIDDEN;
 extern void macdrv_set_cocoa_window_features(macdrv_window w,
         const struct macdrv_window_features* wf) DECLSPEC_HIDDEN;
+extern void macdrv_set_cocoa_window_state(macdrv_window w,
+        const struct macdrv_window_state* state) DECLSPEC_HIDDEN;
 extern void macdrv_set_cocoa_window_title(macdrv_window w, const UniChar* title,
         size_t length) DECLSPEC_HIDDEN;
 extern int macdrv_order_cocoa_window(macdrv_window w, macdrv_window prev,

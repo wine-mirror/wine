@@ -74,6 +74,18 @@ static void get_cocoa_window_features(struct macdrv_win_data *data,
 
 
 /***********************************************************************
+ *              get_cocoa_window_state
+ */
+static void get_cocoa_window_state(struct macdrv_win_data *data,
+                                   DWORD style, DWORD ex_style,
+                                   struct macdrv_window_state* state)
+{
+    memset(state, 0, sizeof(*state));
+    state->disabled = (style & WS_DISABLED) != 0;
+}
+
+
+/***********************************************************************
  *              get_mac_rect_offset
  *
  * Helper for macdrv_window_to_mac_rect and macdrv_mac_to_window_rect.
@@ -268,12 +280,16 @@ static void set_cocoa_window_properties(struct macdrv_win_data *data)
 {
     DWORD style, ex_style;
     struct macdrv_window_features wf;
+    struct macdrv_window_state state;
 
     style = GetWindowLongW(data->hwnd, GWL_STYLE);
     ex_style = GetWindowLongW(data->hwnd, GWL_EXSTYLE);
 
     get_cocoa_window_features(data, style, ex_style, &wf);
     macdrv_set_cocoa_window_features(data->cocoa_window, &wf);
+
+    get_cocoa_window_state(data, style, ex_style, &state);
+    macdrv_set_cocoa_window_state(data->cocoa_window, &state);
 }
 
 
