@@ -3237,7 +3237,7 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
                              const int *piJustify, const GOFFSET *pGoffset)
 {
     HRESULT hr = S_OK;
-    INT i;
+    INT i, dir = 1;
     INT *lpDx;
     WORD *reordered_glyphs = (WORD *)pwGlyphs;
 
@@ -3268,27 +3268,29 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
 
         for (i = 0; i < cGlyphs; i++)
             reordered_glyphs[i] = pwGlyphs[cGlyphs - 1 - i];
+        dir = -1;
     }
 
     for (i = 0; i < cGlyphs; i++)
     {
-        lpDx[i * 2] = piAdvance[i];
+        int orig_index = (dir > 0) ? i : cGlyphs - 1 - i;
+        lpDx[i * 2] = piAdvance[orig_index];
         lpDx[i * 2 + 1] = 0;
 
         if (pGoffset)
         {
             if (i == 0)
             {
-                x += pGoffset[i].du;
-                y += pGoffset[i].dv;
+                x += pGoffset[orig_index].du * dir;
+                y += pGoffset[orig_index].dv * dir;
             }
             else
             {
-                lpDx[(i - 1) * 2]     += pGoffset[i].du;
-                lpDx[(i - 1) * 2 + 1] += pGoffset[i].dv;
+                lpDx[(i - 1) * 2]     += pGoffset[orig_index].du * dir;
+                lpDx[(i - 1) * 2 + 1] += pGoffset[orig_index].dv * dir;
             }
-            lpDx[i * 2]     -= pGoffset[i].du;
-            lpDx[i * 2 + 1] -= pGoffset[i].dv;
+            lpDx[i * 2]     -= pGoffset[orig_index].du * dir;
+            lpDx[i * 2 + 1] -= pGoffset[orig_index].dv * dir;
         }
     }
 
