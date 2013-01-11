@@ -188,45 +188,45 @@ static const float zero_value[] = {
     0.0, 0.0, 0.0, 0.0
 };
 
-static HRESULT WINAPI d3d_light_SetLight(IDirect3DLight *iface, D3DLIGHT *lpLight)
+static HRESULT WINAPI d3d_light_SetLight(IDirect3DLight *iface, D3DLIGHT *data)
 {
     struct d3d_light *light = impl_from_IDirect3DLight(iface);
     D3DLIGHT7 *light7 = &light->light7;
 
-    TRACE("iface %p, light %p.\n", iface, lpLight);
+    TRACE("iface %p, data %p.\n", iface, data);
 
     if (TRACE_ON(ddraw))
     {
         TRACE("  Light definition :\n");
-        dump_light((LPD3DLIGHT2) lpLight);
+        dump_light((D3DLIGHT2 *)data);
     }
 
-    if ( (lpLight->dltType == 0) || (lpLight->dltType > D3DLIGHT_PARALLELPOINT) )
+    if ((!data->dltType) || (data->dltType > D3DLIGHT_PARALLELPOINT))
          return DDERR_INVALIDPARAMS;
 
-    if ( lpLight->dltType == D3DLIGHT_PARALLELPOINT )
-        FIXME("D3DLIGHT_PARALLELPOINT not supported\n");
+    if (data->dltType == D3DLIGHT_PARALLELPOINT)
+        FIXME("D3DLIGHT_PARALLELPOINT not implemented.\n");
 
-    /* Translate D3DLIGH2 structure to D3DLIGHT7 */
-    light7->dltType        = lpLight->dltType;
-    light7->dcvDiffuse     = lpLight->dcvColor;
-    if ((((LPD3DLIGHT2)lpLight)->dwFlags & D3DLIGHT_NO_SPECULAR) != 0)
-      light7->dcvSpecular    = lpLight->dcvColor;
+    /* Translate D3DLIGHT2 structure to D3DLIGHT7. */
+    light7->dltType = data->dltType;
+    light7->dcvDiffuse = data->dcvColor;
+    if (((D3DLIGHT2 *)data)->dwFlags & D3DLIGHT_NO_SPECULAR)
+        light7->dcvSpecular = data->dcvColor;
     else
-      light7->dcvSpecular    = *(const D3DCOLORVALUE*)zero_value;
-    light7->dcvAmbient     = lpLight->dcvColor;
-    light7->dvPosition     = lpLight->dvPosition;
-    light7->dvDirection    = lpLight->dvDirection;
-    light7->dvRange        = lpLight->dvRange;
-    light7->dvFalloff      = lpLight->dvFalloff;
-    light7->dvAttenuation0 = lpLight->dvAttenuation0;
-    light7->dvAttenuation1 = lpLight->dvAttenuation1;
-    light7->dvAttenuation2 = lpLight->dvAttenuation2;
-    light7->dvTheta        = lpLight->dvTheta;
-    light7->dvPhi          = lpLight->dvPhi;
+        light7->dcvSpecular = *(const D3DCOLORVALUE *)zero_value;
+    light7->dcvAmbient = data->dcvColor;
+    light7->dvPosition = data->dvPosition;
+    light7->dvDirection = data->dvDirection;
+    light7->dvRange = data->dvRange;
+    light7->dvFalloff = data->dvFalloff;
+    light7->dvAttenuation0 = data->dvAttenuation0;
+    light7->dvAttenuation1 = data->dvAttenuation1;
+    light7->dvAttenuation2 = data->dvAttenuation2;
+    light7->dvTheta = data->dvTheta;
+    light7->dvPhi = data->dvPhi;
 
     wined3d_mutex_lock();
-    memcpy(&light->light, lpLight, lpLight->dwSize);
+    memcpy(&light->light, data, data->dwSize);
     if (light->light.dwFlags & D3DLIGHT_ACTIVE)
         light_update(light);
     wined3d_mutex_unlock();
