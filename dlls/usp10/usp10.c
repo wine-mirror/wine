@@ -3239,6 +3239,7 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
     HRESULT hr = S_OK;
     INT i;
     INT *lpDx;
+    WORD *reordered_glyphs = (WORD *)pwGlyphs;
 
     TRACE("(%p, %p, %d, %d, %04x, %p, %p, %p, %d, %p, %d, %p, %p, %p)\n",
          hdc, psc, x, y, fuOptions, lprc, psa, pwcReserved, iReserved, pwGlyphs, cGlyphs,
@@ -3253,7 +3254,21 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
         fuOptions |= ETO_GLYPH_INDEX;                             /* Say don't do translation to glyph */
 
     lpDx = heap_alloc(cGlyphs * sizeof(INT) * 2);
+    if (!lpDx) return E_OUTOFMEMORY;
     fuOptions |= ETO_PDY;
+
+    if (psa->fRTL && psa->fLogicalOrder)
+    {
+        reordered_glyphs = heap_alloc( cGlyphs * sizeof(WORD) );
+        if (!reordered_glyphs)
+        {
+            heap_free( lpDx );
+            return E_OUTOFMEMORY;
+        }
+
+        for (i = 0; i < cGlyphs; i++)
+            reordered_glyphs[i] = pwGlyphs[cGlyphs - 1 - i];
+    }
 
     for (i = 0; i < cGlyphs; i++)
     {
@@ -3269,29 +3284,10 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
         }
     }
 
-    if (psa->fRTL && psa->fLogicalOrder)
-    {
-        int i;
-        WORD *rtlGlyphs;
+    if (!ExtTextOutW(hdc, x, y, fuOptions, lprc, reordered_glyphs, cGlyphs, lpDx))
+        hr = S_FALSE;
 
-        rtlGlyphs = heap_alloc(cGlyphs * sizeof(WORD));
-        if (!rtlGlyphs)
-        {
-            heap_free(lpDx);
-            return E_OUTOFMEMORY;
-        }
-
-        for (i = 0; i < cGlyphs; i++)
-            rtlGlyphs[i] = pwGlyphs[cGlyphs-1-i];
-
-        if (!ExtTextOutW(hdc, x, y, fuOptions, lprc, rtlGlyphs, cGlyphs, lpDx))
-            hr = S_FALSE;
-        heap_free(rtlGlyphs);
-    }
-    else
-        if (!ExtTextOutW(hdc, x, y, fuOptions, lprc, pwGlyphs, cGlyphs, lpDx))
-            hr = S_FALSE;
-
+    if (reordered_glyphs != pwGlyphs) heap_free( reordered_glyphs );
     heap_free(lpDx);
 
     return hr;
