@@ -128,6 +128,7 @@ struct macdrv_window_features {
 struct macdrv_window_state {
     unsigned int    disabled:1;
     unsigned int    no_activate:1;
+    unsigned int    floating:1;
 };
 
 extern macdrv_window macdrv_create_cocoa_window(const struct macdrv_window_features* wf,

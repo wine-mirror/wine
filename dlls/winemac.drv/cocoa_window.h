@@ -26,6 +26,7 @@
     NSUInteger normalStyleMask;
     BOOL disabled;
     BOOL noActivate;
+    BOOL floating;
 }
 
 @end

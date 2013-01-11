@@ -103,6 +103,7 @@ static void get_cocoa_window_state(struct macdrv_win_data *data,
     memset(state, 0, sizeof(*state));
     state->disabled = (style & WS_DISABLED) != 0;
     state->no_activate = !can_activate_window(data->hwnd);
+    state->floating = (ex_style & WS_EX_TOPMOST) != 0;
 }
 
 

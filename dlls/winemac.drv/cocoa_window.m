@@ -62,6 +62,7 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 
 @property (nonatomic) BOOL disabled;
 @property (nonatomic) BOOL noActivate;
+@property (nonatomic) BOOL floating;
 
     + (void) flipRect:(NSRect*)rect;
 
@@ -80,7 +81,7 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 
 @implementation WineWindow
 
-    @synthesize disabled, noActivate;
+    @synthesize disabled, noActivate, floating;
 
     + (WineWindow*) createWindowWithFeatures:(const struct macdrv_window_features*)wf
                                  windowFrame:(NSRect)window_frame
@@ -147,8 +148,15 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 
     - (void) setMacDrvState:(const struct macdrv_window_state*)state
     {
+        NSInteger level;
+
         self.disabled = state->disabled;
         self.noActivate = state->no_activate;
+
+        self.floating = state->floating;
+        level = state->floating ? NSFloatingWindowLevel : NSNormalWindowLevel;
+        if (level != [self level])
+            [self setLevel:level];
     }
 
     /* Returns whether or not the window was ordered in, which depends on if
