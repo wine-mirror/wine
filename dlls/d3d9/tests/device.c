@@ -2,7 +2,7 @@
  * Copyright (C) 2006 Vitaliy Margolen
  * Copyright (C) 2006 Chris Robinson
  * Copyright 2006-2007, 2010 Stefan Dösinger for CodeWeavers
- * Copyright 2006, 2007 Henri Verbeet
+ * Copyright 2005, 2006, 2007 Henri Verbeet
  * Copyright 2013 Henri Verbeet for CodeWeavers
  * Copyright (C) 2008 Rico Schüller
  *
@@ -30,6 +30,28 @@ static INT screen_width;
 static INT screen_height;
 
 static IDirect3D9 *(WINAPI *pDirect3DCreate9)(UINT);
+
+static const DWORD simple_vs[] =
+{
+    0xfffe0101,                                                             /* vs_1_1                       */
+    0x0000001f, 0x80000000, 0x900f0000,                                     /* dcl_position0 v0             */
+    0x00000009, 0xc0010000, 0x90e40000, 0xa0e40000,                         /* dp4 oPos.x, v0, c0           */
+    0x00000009, 0xc0020000, 0x90e40000, 0xa0e40001,                         /* dp4 oPos.y, v0, c1           */
+    0x00000009, 0xc0040000, 0x90e40000, 0xa0e40002,                         /* dp4 oPos.z, v0, c2           */
+    0x00000009, 0xc0080000, 0x90e40000, 0xa0e40003,                         /* dp4 oPos.w, v0, c3           */
+    0x0000ffff,                                                             /* end                          */
+};
+
+static DWORD simple_ps[] =
+{
+    0xffff0101,                                                             /* ps_1_1                       */
+    0x00000051, 0xa00f0001, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c1 = 1.0, 0.0, 0.0, 0.0  */
+    0x00000042, 0xb00f0000,                                                 /* tex t0                       */
+    0x00000008, 0x800f0000, 0xa0e40001, 0xa0e40000,                         /* dp3 r0, c1, c0               */
+    0x00000005, 0x800f0000, 0x90e40000, 0x80e40000,                         /* mul r0, v0, r0               */
+    0x00000005, 0x800f0000, 0xb0e40000, 0x80e40000,                         /* mul r0, t0, r0               */
+    0x0000ffff,                                                             /* end                          */
+};
 
 static int get_refcount(IUnknown *object)
 {
@@ -411,15 +433,6 @@ cleanup:
     DestroyWindow( hwnd );
 }
 
-/* Shared between two functions */
-static const DWORD simple_vs[] = {0xFFFE0101,       /* vs_1_1               */
-    0x0000001F, 0x80000000, 0x900F0000,             /* dcl_position0 v0     */
-    0x00000009, 0xC0010000, 0x90E40000, 0xA0E40000, /* dp4 oPos.x, v0, c0   */
-    0x00000009, 0xC0020000, 0x90E40000, 0xA0E40001, /* dp4 oPos.y, v0, c1   */
-    0x00000009, 0xC0040000, 0x90E40000, 0xA0E40002, /* dp4 oPos.z, v0, c2   */
-    0x00000009, 0xC0080000, 0x90E40000, 0xA0E40003, /* dp4 oPos.w, v0, c3   */
-    0x0000FFFF};                                    /* END                  */
-
 static void test_refcount(void)
 {
     HRESULT                      hr;
@@ -455,14 +468,6 @@ static void test_refcount(void)
     {
         D3DDECL_END()
     };
-    static DWORD simple_ps[] = {0xFFFF0101,                                     /* ps_1_1                       */
-        0x00000051, 0xA00F0001, 0x3F800000, 0x00000000, 0x00000000, 0x00000000, /* def c1 = 1.0, 0.0, 0.0, 0.0  */
-        0x00000042, 0xB00F0000,                                                 /* tex t0                       */
-        0x00000008, 0x800F0000, 0xA0E40001, 0xA0E40000,                         /* dp3 r0, c1, c0               */
-        0x00000005, 0x800F0000, 0x90E40000, 0x80E40000,                         /* mul r0, v0, r0               */
-        0x00000005, 0x800F0000, 0xB0E40000, 0x80E40000,                         /* mul r0, t0, r0               */
-        0x0000FFFF};                                                            /* END                          */
-
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
@@ -4139,6 +4144,352 @@ static void test_occlusion_query_states(void)
     DestroyWindow(window);
 }
 
+static void test_get_set_vertex_shader(void)
+{
+    IDirect3DVertexShader9 *current_shader = NULL;
+    IDirect3DVertexShader9 *shader = NULL;
+    IDirect3DDevice9 *device;
+    ULONG refcount, i;
+    IDirect3D9 *d3d;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create D3D object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (!(caps.VertexShaderVersion & 0xffff))
+    {
+        skip("No vertex shader support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateVertexShader(device, simple_vs, &shader);
+    ok(SUCCEEDED(hr), "Failed to create shader, hr %#x.\n", hr);
+    ok(!!shader, "Got unexpected shader %p.\n", shader);
+
+    /* SetVertexShader() should not touch the shader's refcount. */
+    i = get_refcount((IUnknown *)shader);
+    hr = IDirect3DDevice9_SetVertexShader(device, shader);
+    refcount = get_refcount((IUnknown *)shader);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+    ok(refcount == i, "Got unexpected refcount %u, expected %u.\n", refcount, i);
+
+    /* GetVertexShader() should increase the shader's refcount by one. */
+    i = refcount + 1;
+    hr = IDirect3DDevice9_GetVertexShader(device, &current_shader);
+    refcount = get_refcount((IUnknown *)shader);
+    ok(SUCCEEDED(hr), "Failed to get vertex shader, hr %#x.\n", hr);
+    ok(refcount == i, "Got unexpected refcount %u, expected %u.\n", refcount, i);
+    ok(current_shader == shader, "Got unexpected shader %p, expected %p.\n", current_shader, shader);
+    IDirect3DVertexShader9_Release(current_shader);
+
+    IDirect3DVertexShader9_Release(shader);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
+static void test_vertex_shader_constant(void)
+{
+    static const float d[16] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    static const float c[4] = {0.0, 0.0, 0.0, 0.0};
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    DWORD consts;
+    HWND window;
+    HRESULT hr;
+
+    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create D3D object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (!(caps.VertexShaderVersion & 0xffff))
+    {
+        skip("No vertex shader support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+    consts = caps.MaxVertexShaderConst;
+
+    /* A simple check that the stuff works at all. */
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, c, 1);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* Test corner cases: Write to const MAX - 1, MAX, MAX + 1, and writing 4
+     * consts from MAX - 1. */
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, consts - 1, c, 1);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, consts + 0, c, 1);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, consts + 1, c, 1);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, consts - 1, d, 4);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    /* Constant -1. */
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, -1, c, 1);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
+static void test_get_set_pixel_shader(void)
+{
+    IDirect3DPixelShader9 *current_shader = NULL;
+    IDirect3DPixelShader9 *shader = NULL;
+    IDirect3DDevice9 *device;
+    ULONG refcount, i;
+    IDirect3D9 *d3d;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create D3D object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (!(caps.PixelShaderVersion & 0xffff))
+    {
+        skip("No pixel shader support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreatePixelShader(device, simple_ps, &shader);
+    ok(SUCCEEDED(hr), "Failed to create shader, hr %#x.\n", hr);
+    ok(!!shader, "Got unexpected shader %p.\n", shader);
+
+    /* SetPixelShader() should not touch the shader's refcount. */
+    i = get_refcount((IUnknown *)shader);
+    hr = IDirect3DDevice9_SetPixelShader(device, shader);
+    refcount = get_refcount((IUnknown *)shader);
+    ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
+    ok(refcount == i, "Got unexpected refcount %u, expected %u.\n", refcount, i);
+
+    /* GetPixelShader() should increase the shader's refcount by one. */
+    i = refcount + 1;
+    hr = IDirect3DDevice9_GetPixelShader(device, &current_shader);
+    refcount = get_refcount((IUnknown *)shader);
+    ok(SUCCEEDED(hr), "Failed to get pixel shader, hr %#x.\n", hr);
+    ok(refcount == i, "Got unexpected refcount %u, expected %u.\n", refcount, i);
+    ok(current_shader == shader, "Got unexpected shader %p, expected %p.\n", current_shader, shader);
+    IDirect3DPixelShader9_Release(current_shader);
+
+    IDirect3DPixelShader9_Release(shader);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
+static void test_pixel_shader_constant(void)
+{
+    static const float d[16] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    static const float c[4] = {0.0, 0.0, 0.0, 0.0};
+    IDirect3DDevice9 *device;
+    DWORD consts = 0;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create D3D object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (!(caps.PixelShaderVersion & 0xffff))
+    {
+        skip("No pixel shader support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    /* A simple check that the stuff works at all. */
+    hr = IDirect3DDevice9_SetPixelShaderConstantF(device, 0, c, 1);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* Is there really no max pixel shader constant value??? Test how far I can go. */
+    while (SUCCEEDED(IDirect3DDevice9_SetPixelShaderConstantF(device, consts++, c, 1)));
+    consts = consts - 1;
+    trace("SetPixelShaderConstantF was able to set %u shader constants.\n", consts);
+
+    /* Test corner cases: Write 4 consts from MAX - 1, everything else is
+     * pointless given the way the constant limit was determined. */
+    hr = IDirect3DDevice9_SetPixelShaderConstantF(device, consts - 1, d, 4);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    /* Constant -1. */
+    hr = IDirect3DDevice9_SetPixelShaderConstantF(device, -1, c, 1);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
+static void test_wrong_shader(void)
+{
+    static const DWORD vs_3_0[] =
+    {
+        0xfffe0300,                             /* vs_3_0               */
+        0x0200001f, 0x80000000, 0x900f0000,     /* dcl_position v0      */
+        0x0200001f, 0x80000000, 0xe00f0000,     /* dcl_position o0      */
+        0x02000001, 0xe00f0000, 0x90e40000,     /* mov o0, v0           */
+        0x0000ffff,                             /* end                  */
+    };
+
+#if 0
+float4 main(const float4 color : COLOR) : SV_TARGET
+{
+    float4 o;
+
+    o = color;
+
+    return o;
+}
+#endif
+    static const DWORD ps_4_0[] =
+    {
+        0x43425844, 0x4da9446f, 0xfbe1f259, 0x3fdb3009, 0x517521fa, 0x00000001, 0x000001ac, 0x00000005,
+        0x00000034, 0x0000008c, 0x000000bc, 0x000000f0, 0x00000130, 0x46454452, 0x00000050, 0x00000000,
+        0x00000000, 0x00000000, 0x0000001c, 0xffff0400, 0x00000100, 0x0000001c, 0x7263694d, 0x666f736f,
+        0x52282074, 0x4c482029, 0x53204c53, 0x65646168, 0x6f432072, 0x6c69706d, 0x39207265, 0x2e39322e,
+        0x2e323539, 0x31313133, 0xababab00, 0x4e475349, 0x00000028, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x4f4c4f43, 0xabab0052, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x00000038, 0x00000040, 0x0000000e,
+        0x03001062, 0x001010f2, 0x00000000, 0x03000065, 0x001020f2, 0x00000000, 0x05000036, 0x001020f2,
+        0x00000000, 0x00101e46, 0x00000000, 0x0100003e, 0x54415453, 0x00000074, 0x00000002, 0x00000000,
+        0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000,
+    };
+
+    IDirect3DVertexShader9 *vs = NULL;
+    IDirect3DPixelShader9 *ps = NULL;
+    IDirect3DDevice9 *device;
+    IDirect3D9 * d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create D3D object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    /* These should always fail, regardless of supported shader version. */
+    hr = IDirect3DDevice9_CreateVertexShader(device, simple_ps, &vs);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreatePixelShader(device, simple_vs, &ps);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreatePixelShader(device, ps_4_0, &ps);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(3, 0))
+    {
+        hr = IDirect3DDevice9_CreateVertexShader(device, vs_3_0, &vs);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    }
+    else
+        skip("This GPU supports SM3, skipping unsupported shader test.\n");
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -4203,6 +4554,11 @@ START_TEST(device)
         test_vertex_buffer_alignment();
         test_query_support();
         test_occlusion_query_states();
+        test_get_set_vertex_shader();
+        test_vertex_shader_constant();
+        test_get_set_pixel_shader();
+        test_pixel_shader_constant();
+        test_wrong_shader();
     }
 
 out:

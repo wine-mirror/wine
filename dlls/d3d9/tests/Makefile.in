@@ -4,7 +4,6 @@ IMPORTS   = user32
 C_SRCS = \
 	d3d9ex.c \
 	device.c \
-	shader.c \
 	stateblock.c \
 	surface.c \
 	texture.c \
