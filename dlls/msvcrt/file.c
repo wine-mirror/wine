@@ -3375,10 +3375,30 @@ MSVCRT_size_t CDECL MSVCRT_fwrite(const void *ptr, MSVCRT_size_t size, MSVCRT_si
  */
 MSVCRT_wint_t CDECL MSVCRT_fputwc(MSVCRT_wint_t wc, MSVCRT_FILE* file)
 {
-  MSVCRT_wchar_t mwc=wc;
-  if (MSVCRT_fwrite( &mwc, sizeof(mwc), 1, file) != 1)
-    return MSVCRT_WEOF;
-  return wc;
+    MSVCRT_wchar_t mwc=wc;
+    ioinfo *fdinfo;
+    MSVCRT_wint_t ret;
+
+    MSVCRT__lock_file(file);
+    fdinfo = msvcrt_get_ioinfo(file->_file);
+
+    if((fdinfo->wxflag&WX_TEXT) && !(fdinfo->exflag&(EF_UTF8|EF_UTF16))) {
+        char buf[MSVCRT_MB_LEN_MAX];
+        int char_len;
+
+        char_len = wctomb(buf, mwc);
+        if(char_len!=-1 && MSVCRT_fwrite(buf, char_len, 1, file)==1)
+            ret = wc;
+        else
+            ret = MSVCRT_WEOF;
+    }else if(MSVCRT_fwrite(&mwc, sizeof(mwc), 1, file) == 1) {
+        ret = wc;
+    }else {
+        ret = MSVCRT_WEOF;
+    }
+
+    MSVCRT__unlock_file(file);
+    return ret;
 }
 
 /*********************************************************************
