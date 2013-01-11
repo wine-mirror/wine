@@ -63,6 +63,7 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 @property (nonatomic) BOOL disabled;
 @property (nonatomic) BOOL noActivate;
 @property (nonatomic) BOOL floating;
+@property (retain, nonatomic) NSWindow* latentParentWindow;
 
     + (void) flipRect:(NSRect*)rect;
 
@@ -81,7 +82,7 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 
 @implementation WineWindow
 
-    @synthesize disabled, noActivate, floating;
+    @synthesize disabled, noActivate, floating, latentParentWindow;
 
     + (WineWindow*) createWindowWithFeatures:(const struct macdrv_window_features*)wf
                                  windowFrame:(NSRect)window_frame
@@ -117,6 +118,12 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         [window setContentView:contentView];
 
         return window;
+    }
+
+    - (void) dealloc
+    {
+        [latentParentWindow release];
+        [super dealloc];
     }
 
     + (void) flipRect:(NSRect*)rect
@@ -172,9 +179,21 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
                 [self orderWindow:NSWindowBelow relativeTo:[prev windowNumber]];
             else
                 [self orderWindow:NSWindowAbove relativeTo:[next windowNumber]];
+            if (latentParentWindow)
+            {
+                [latentParentWindow addChildWindow:self ordered:NSWindowAbove];
+                self.latentParentWindow = nil;
+            }
         }
 
         return on_screen;
+    }
+
+    - (void) doOrderOut
+    {
+        self.latentParentWindow = [self parentWindow];
+        [latentParentWindow removeChildWindow:self];
+        [self orderOut:nil];
     }
 
     - (BOOL) setFrameIfOnScreen:(NSRect)contentRect
@@ -193,7 +212,7 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         {
             on_screen = frame_intersects_screens(contentRect, screens);
             if (!on_screen)
-                [self orderOut:nil];
+                [self doOrderOut];
         }
 
         oldFrame = [self frame];
@@ -207,6 +226,19 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         }
 
         return on_screen;
+    }
+
+    - (void) setMacDrvParentWindow:(WineWindow*)parent
+    {
+        if ([self parentWindow] != parent)
+        {
+            [[self parentWindow] removeChildWindow:self];
+            self.latentParentWindow = nil;
+            if ([self isVisible] && parent)
+                [parent addChildWindow:self ordered:NSWindowAbove];
+            else
+                self.latentParentWindow = parent;
+        }
     }
 
     - (void) setDisabled:(BOOL)newValue
@@ -368,7 +400,7 @@ void macdrv_hide_cocoa_window(macdrv_window w)
     WineWindow* window = (WineWindow*)w;
 
     OnMainThread(^{
-        [window orderOut:nil];
+        [window doOrderOut];
     });
 }
 
@@ -391,4 +423,19 @@ int macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_frame)
     });
 
     return on_screen;
+}
+
+/***********************************************************************
+ *              macdrv_set_cocoa_parent_window
+ *
+ * Sets the parent window for a Cocoa window.  If parent is NULL, clears
+ * the parent window.
+ */
+void macdrv_set_cocoa_parent_window(macdrv_window w, macdrv_window parent)
+{
+    WineWindow* window = (WineWindow*)w;
+
+    OnMainThread(^{
+        [window setMacDrvParentWindow:(WineWindow*)parent];
+    });
 }

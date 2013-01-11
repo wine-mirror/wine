@@ -27,6 +27,7 @@
     BOOL disabled;
     BOOL noActivate;
     BOOL floating;
+    WineWindow* latentParentWindow;
 }
 
 @end

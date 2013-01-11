@@ -144,5 +144,6 @@ extern int macdrv_order_cocoa_window(macdrv_window w, macdrv_window prev,
         macdrv_window next) DECLSPEC_HIDDEN;
 extern void macdrv_hide_cocoa_window(macdrv_window w) DECLSPEC_HIDDEN;
 extern int macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_frame) DECLSPEC_HIDDEN;
+extern void macdrv_set_cocoa_parent_window(macdrv_window w, macdrv_window parent) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_MACDRV_COCOA_H */

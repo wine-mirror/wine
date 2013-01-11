@@ -301,11 +301,17 @@ static macdrv_window macdrv_get_cocoa_window(HWND hwnd)
 static void set_cocoa_window_properties(struct macdrv_win_data *data)
 {
     DWORD style, ex_style;
+    HWND owner;
+    macdrv_window owner_win;
     struct macdrv_window_features wf;
     struct macdrv_window_state state;
 
     style = GetWindowLongW(data->hwnd, GWL_STYLE);
     ex_style = GetWindowLongW(data->hwnd, GWL_EXSTYLE);
+
+    owner = GetWindow(data->hwnd, GW_OWNER);
+    owner_win = macdrv_get_cocoa_window(owner);
+    macdrv_set_cocoa_parent_window(data->cocoa_window, owner_win);
 
     get_cocoa_window_features(data, style, ex_style, &wf);
     macdrv_set_cocoa_window_features(data->cocoa_window, &wf);
