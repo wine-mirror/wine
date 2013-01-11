@@ -656,7 +656,7 @@ DECLARE_INTERFACE_(IDirect3DViewport,IUnknown)
     STDMETHOD(GetViewport)(THIS_ D3DVIEWPORT *data) PURE;
     STDMETHOD(SetViewport)(THIS_ D3DVIEWPORT *data) PURE;
     STDMETHOD(TransformVertices)(THIS_ DWORD vertex_count, D3DTRANSFORMDATA *data, DWORD flags, DWORD *offscreen) PURE;
-    STDMETHOD(LightElements)(THIS_ DWORD dwElementCount, LPD3DLIGHTDATA lpData) PURE;
+    STDMETHOD(LightElements)(THIS_ DWORD element_count, D3DLIGHTDATA *data) PURE;
     STDMETHOD(SetBackground)(THIS_ D3DMATERIALHANDLE hMat) PURE;
     STDMETHOD(GetBackground)(THIS_ D3DMATERIALHANDLE *material, BOOL *valid) PURE;
     STDMETHOD(SetBackgroundDepth)(THIS_ IDirectDrawSurface *surface) PURE;
@@ -724,7 +724,7 @@ DECLARE_INTERFACE_(IDirect3DViewport2,IDirect3DViewport)
     STDMETHOD(GetViewport)(THIS_ D3DVIEWPORT *data) PURE;
     STDMETHOD(SetViewport)(THIS_ D3DVIEWPORT *data) PURE;
     STDMETHOD(TransformVertices)(THIS_ DWORD vertex_count, D3DTRANSFORMDATA *data, DWORD flags, DWORD *offscreen) PURE;
-    STDMETHOD(LightElements)(THIS_ DWORD dwElementCount, LPD3DLIGHTDATA lpData) PURE;
+    STDMETHOD(LightElements)(THIS_ DWORD element_count, D3DLIGHTDATA *data) PURE;
     STDMETHOD(SetBackground)(THIS_ D3DMATERIALHANDLE hMat) PURE;
     STDMETHOD(GetBackground)(THIS_ D3DMATERIALHANDLE *material, BOOL *valid) PURE;
     STDMETHOD(SetBackgroundDepth)(THIS_ IDirectDrawSurface *surface) PURE;
@@ -800,7 +800,7 @@ DECLARE_INTERFACE_(IDirect3DViewport3,IDirect3DViewport2)
     STDMETHOD(GetViewport)(THIS_ D3DVIEWPORT *data) PURE;
     STDMETHOD(SetViewport)(THIS_ D3DVIEWPORT *data) PURE;
     STDMETHOD(TransformVertices)(THIS_ DWORD vertex_count, D3DTRANSFORMDATA *data, DWORD flags, DWORD *offscreen) PURE;
-    STDMETHOD(LightElements)(THIS_ DWORD dwElementCount, LPD3DLIGHTDATA lpData) PURE;
+    STDMETHOD(LightElements)(THIS_ DWORD element_count, D3DLIGHTDATA *data) PURE;
     STDMETHOD(SetBackground)(THIS_ D3DMATERIALHANDLE hMat) PURE;
     STDMETHOD(GetBackground)(THIS_ D3DMATERIALHANDLE *material, BOOL *valid) PURE;
     STDMETHOD(SetBackgroundDepth)(THIS_ IDirectDrawSurface *surface) PURE;
