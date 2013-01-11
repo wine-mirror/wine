@@ -4452,6 +4452,15 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 
     if (setsockopt(fd, level, optname, optval, optlen) == 0)
     {
+#ifdef __APPLE__
+        if (level == SOL_SOCKET && optname == SO_REUSEADDR &&
+            setsockopt(fd, level, SO_REUSEPORT, optval, optlen) != 0)
+        {
+            SetLastError(wsaErrno());
+            release_sock_fd( s, fd );
+            return SOCKET_ERROR;
+        }
+#endif
         release_sock_fd( s, fd );
         return 0;
     }
