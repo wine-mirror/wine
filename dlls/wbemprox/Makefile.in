@@ -5,6 +5,7 @@ C_SRCS = \
 	builtin.c \
 	class.c \
 	main.c \
+	process.c \
 	query.c \
 	reg.c \
 	service.c \

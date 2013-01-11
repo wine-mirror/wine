@@ -61,8 +61,6 @@ static const WCHAR class_osW[] =
     {'W','i','n','3','2','_','O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
 static const WCHAR class_paramsW[] =
     {'_','_','P','A','R','A','M','E','T','E','R','S',0};
-static const WCHAR class_processW[] =
-    {'W','i','n','3','2','_','P','r','o','c','e','s','s',0};
 static const WCHAR class_processorW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR class_sounddeviceW[] =
@@ -268,7 +266,9 @@ static const struct column col_process[] =
     { prop_handleW,      CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_pprocessidW,  CIM_UINT32, VT_I4 },
     { prop_processidW,   CIM_UINT32, VT_I4 },
-    { prop_threadcountW, CIM_UINT32, VT_I4 }
+    { prop_threadcountW, CIM_UINT32, VT_I4 },
+    /* methods */
+    { method_getownerW,  CIM_FLAG_ARRAY|COL_FLAG_METHOD }
 };
 static const struct column col_processor[] =
 {
@@ -451,6 +451,8 @@ struct record_process
     UINT32       pprocess_id;
     UINT32       process_id;
     UINT32       thread_count;
+    /* methods */
+    class_method *get_owner;
 };
 struct record_processor
 {
@@ -520,6 +522,9 @@ static const struct record_diskdrive data_diskdrive[] =
 };
 static const struct record_params data_params[] =
 {
+    { class_processW, method_getownerW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
+    { class_processW, method_getownerW, -1, param_userW, CIM_STRING },
+    { class_processW, method_getownerW, -1, param_domainW, CIM_STRING },
     { class_serviceW, method_pauseserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
     { class_serviceW, method_resumeserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
     { class_serviceW, method_startserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
@@ -812,6 +817,7 @@ static void fill_process( struct table *table )
         rec->process_id   = entry.th32ProcessID;
         rec->pprocess_id  = entry.th32ParentProcessID;
         rec->thread_count = entry.cntThreads;
+        rec->get_owner    = process_get_owner;
         offset += sizeof(*rec);
         num_rows++;
     } while (Process32NextW( snap, &entry ));
