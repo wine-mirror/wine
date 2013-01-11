@@ -156,6 +156,7 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
     - (void) setMacDrvState:(const struct macdrv_window_state*)state
     {
         NSInteger level;
+        NSWindowCollectionBehavior behavior;
 
         self.disabled = state->disabled;
         self.noActivate = state->no_activate;
@@ -164,6 +165,17 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         level = state->floating ? NSFloatingWindowLevel : NSNormalWindowLevel;
         if (level != [self level])
             [self setLevel:level];
+
+        behavior = NSWindowCollectionBehaviorDefault;
+        if (state->excluded_by_expose)
+            behavior |= NSWindowCollectionBehaviorTransient;
+        else
+            behavior |= NSWindowCollectionBehaviorManaged;
+        if (state->excluded_by_cycle)
+            behavior |= NSWindowCollectionBehaviorIgnoresCycle;
+        else
+            behavior |= NSWindowCollectionBehaviorParticipatesInCycle;
+        [self setCollectionBehavior:behavior];
     }
 
     /* Returns whether or not the window was ordered in, which depends on if

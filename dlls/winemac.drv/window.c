@@ -104,6 +104,9 @@ static void get_cocoa_window_state(struct macdrv_win_data *data,
     state->disabled = (style & WS_DISABLED) != 0;
     state->no_activate = !can_activate_window(data->hwnd);
     state->floating = (ex_style & WS_EX_TOPMOST) != 0;
+    state->excluded_by_expose = state->excluded_by_cycle =
+        !(ex_style & WS_EX_APPWINDOW) &&
+        (GetWindow(data->hwnd, GW_OWNER) || (ex_style & (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE)));
 }
 
 
