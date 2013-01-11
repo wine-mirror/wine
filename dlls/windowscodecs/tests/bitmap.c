@@ -18,6 +18,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <math.h>
 
 #define COBJMACROS
@@ -28,6 +29,18 @@
 #include "wine/test.h"
 
 static IWICImagingFactory *factory;
+
+static const char *debugstr_guid(const GUID *guid)
+{
+    static char buf[50];
+
+    if (!guid) return "(null)";
+    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+            guid->Data1, guid->Data2, guid->Data3, guid->Data4[0],
+            guid->Data4[1], guid->Data4[2], guid->Data4[3], guid->Data4[4],
+            guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+    return buf;
+}
 
 static void test_createbitmap(void)
 {
@@ -494,6 +507,84 @@ static void test_CreateBitmapFromMemory(void)
     IWICBitmap_Release(bitmap);
 }
 
+static void test_CreateBitmapFromHICON(void)
+{
+    static const char bits[4096];
+    HICON icon;
+    ICONINFO info;
+    HRESULT hr;
+    IWICBitmap *bitmap;
+    UINT width, height;
+    WICPixelFormatGUID format;
+
+    /* 1 bpp mask */
+    info.fIcon = 1;
+    info.xHotspot = 0;
+    info.yHotspot = 0;
+    info.hbmColor = 0;
+    info.hbmMask = CreateBitmap(16, 32, 1, 1, bits);
+    ok(info.hbmMask != 0, "CreateBitmap failed\n");
+    icon = CreateIconIndirect(&info);
+    ok(icon != 0, "CreateIconIndirect failed\n");
+    DeleteObject(info.hbmMask);
+
+    hr = IWICImagingFactory_CreateBitmapFromHICON(factory, 0, NULL);
+todo_wine
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    hr = IWICImagingFactory_CreateBitmapFromHICON(factory, 0, &bitmap);
+todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_CURSOR_HANDLE), "expected ERROR_INVALID_CURSOR_HANDLE, got %#x\n", hr);
+
+    hr = IWICImagingFactory_CreateBitmapFromHICON(factory, icon, NULL);
+todo_wine
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    hr = IWICImagingFactory_CreateBitmapFromHICON(factory, icon, &bitmap);
+todo_wine
+    ok(hr == S_OK, "CreateBitmapFromHICON error %#x\n", hr);
+    DestroyIcon(icon);
+    if (hr != S_OK) return;
+
+    IWICBitmap_GetPixelFormat(bitmap, &format);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGRA),
+       "unexpected pixel format %s\n", debugstr_guid(&format));
+
+    IWICBitmap_GetSize(bitmap, &width, &height);
+    ok(hr == S_OK, "IWICBitmap_GetSize error %#x\n", hr);
+    ok(width == 16, "expected 16, got %u\n", width);
+    ok(height == 16, "expected 16, got %u\n", height);
+
+    IWICBitmap_Release(bitmap);
+
+    /* 24 bpp color, 1 bpp mask */
+    info.fIcon = 1;
+    info.xHotspot = 0;
+    info.yHotspot = 0;
+    info.hbmColor = CreateBitmap(16, 16, 1, 24, bits);
+    ok(info.hbmColor != 0, "CreateBitmap failed\n");
+    info.hbmMask = CreateBitmap(16, 16, 1, 1, bits);
+    ok(info.hbmMask != 0, "CreateBitmap failed\n");
+    icon = CreateIconIndirect(&info);
+    ok(icon != 0, "CreateIconIndirect failed\n");
+    DeleteObject(info.hbmColor);
+    DeleteObject(info.hbmMask);
+
+    hr = IWICImagingFactory_CreateBitmapFromHICON(factory, icon, &bitmap);
+    ok(hr == S_OK, "CreateBitmapFromHICON error %#x\n", hr);
+    DestroyIcon(icon);
+
+    IWICBitmap_GetPixelFormat(bitmap, &format);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGRA),
+       "unexpected pixel format %s\n", debugstr_guid(&format));
+
+    IWICBitmap_GetSize(bitmap, &width, &height);
+    ok(hr == S_OK, "IWICBitmap_GetSize error %#x\n", hr);
+    ok(width == 16, "expected 16, got %u\n", width);
+    ok(height == 16, "expected 16, got %u\n", height);
+
+    IWICBitmap_Release(bitmap);
+}
 
 START_TEST(bitmap)
 {
@@ -508,6 +599,7 @@ START_TEST(bitmap)
     test_createbitmap();
     test_createbitmapfromsource();
     test_CreateBitmapFromMemory();
+    test_CreateBitmapFromHICON();
 
     IWICImagingFactory_Release(factory);
 
