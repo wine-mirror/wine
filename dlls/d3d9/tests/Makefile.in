@@ -5,7 +5,6 @@ C_SRCS = \
 	d3d9ex.c \
 	device.c \
 	stateblock.c \
-	surface.c \
 	vertexdeclaration.c \
 	visual.c
 
