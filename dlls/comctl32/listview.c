@@ -4164,7 +4164,7 @@ static inline BOOL is_assignable_item(const LVITEMW *lpLVItem, LONG lStyle)
 
 /***
  * DESCRIPTION:
- * Helper for LISTVIEW_SetItemT *only*: sets item attributes.
+ * Helper for LISTVIEW_SetItemT and LISTVIEW_InsertItemT: sets item attributes.
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
@@ -4256,6 +4256,15 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 	return FALSE;
     }
 
+    /* When item is inserted we need to shift existing focus index if new item has lower index. */
+    if (isNew && (stateMask & ~infoPtr->uCallbackMask & LVIS_FOCUSED) &&
+        /* this means we won't hit a focus change path later */
+        ((uChanged & LVIF_STATE) == 0 || (!(lpLVItem->state & LVIS_FOCUSED) && (infoPtr->nFocusedItem != lpLVItem->iItem))))
+    {
+        if (infoPtr->nFocusedItem != -1 && (lpLVItem->iItem <= infoPtr->nFocusedItem))
+            infoPtr->nFocusedItem++;
+    }
+
     if (!uChanged) return TRUE;
     *bChanged = TRUE;
 
@@ -4288,7 +4297,14 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 	{
 	    ranges_delitem(infoPtr->selectionRanges, lpLVItem->iItem);
 	}
-	/* if we are asked to change focus, and we manage it, do it */
+	/* If we are asked to change focus, and we manage it, do it.
+           It's important to have all new item data stored at this point,
+           cause changing existing focus could result in redrawing operation,
+           which in turn could ask for disp data, application should see all data
+           for inserted item when processing LVN_GETDISPINFO.
+
+           The way this works application will see nested item change notifications -
+           changed item notifications interrupted by ones from item loosing focus. */
 	if (stateMask & ~infoPtr->uCallbackMask & LVIS_FOCUSED)
 	{
 	    if (lpLVItem->state & LVIS_FOCUSED)
@@ -4320,7 +4336,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 
     /* if we're inserting the item, we're done */
     if (isNew) return TRUE;
-    
+
     /* send LVN_ITEMCHANGED notification */
     if (lpLVItem->mask & LVIF_PARAM) nmlv.lParam = lpLVItem->lParam;
     if (infoPtr->bDoChangeNotify) notify_listview(infoPtr, LVN_ITEMCHANGED, &nmlv);
@@ -7680,7 +7696,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
     LVITEMW item;
     HWND hwndSelf = infoPtr->hwndSelf;
 
-    TRACE("(lpLVItem=%s, isW=%d)\n", debuglvitem_t(lpLVItem, isW), isW);
+    TRACE("(item=%s, isW=%d)\n", debuglvitem_t(lpLVItem, isW), isW);
 
     if (infoPtr->dwStyle & LVS_OWNERDATA) return infoPtr->nItemCount++;
 
@@ -7730,14 +7746,13 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
     else
         nItem = min(lpLVItem->iItem, infoPtr->nItemCount);
 
-    TRACE(" inserting at %d, sorted=%d, count=%d, iItem=%d\n", nItem, is_sorted, infoPtr->nItemCount, lpLVItem->iItem);
+    TRACE("inserting at %d, sorted=%d, count=%d, iItem=%d\n", nItem, is_sorted, infoPtr->nItemCount, lpLVItem->iItem);
     nItem = DPA_InsertPtr( infoPtr->hdpaItems, nItem, hdpaSubItems );
     if (nItem == -1) goto fail;
     infoPtr->nItemCount++;
 
     /* shift indices first so they don't get tangled */
     LISTVIEW_ShiftIndices(infoPtr, nItem, 1);
-    LISTVIEW_ShiftFocus(infoPtr, infoPtr->nFocusedItem, nItem, 1);
 
     /* set the item attributes */
     if (lpLVItem->mask & (LVIF_GROUPID|LVIF_COLUMNS))
@@ -7763,6 +7778,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
         item.state &= ~LVIS_STATEIMAGEMASK;
         item.state |= INDEXTOSTATEIMAGEMASK(1);
     }
+
     if (!set_main_item(infoPtr, &item, TRUE, isW, &has_changed)) goto undo;
 
     /* make room for the position, if we are in the right mode */
@@ -7776,9 +7792,9 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
 	    goto undo;
 	}
     }
-    
+
     /* send LVN_INSERTITEM notification */
-    ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
+    memset(&nmlv, 0, sizeof(NMLISTVIEW));
     nmlv.iItem = nItem;
     nmlv.lParam = lpItem->lParam;
     notify_listview(infoPtr, LVN_INSERTITEM, &nmlv);

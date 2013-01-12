@@ -363,6 +363,15 @@ static const struct message listview_header_set_imagelist[] = {
     { 0 }
 };
 
+static const struct message parent_insert_focused_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_INSERTITEM },
+    { 0 }
+};
+
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
@@ -5434,6 +5443,58 @@ static void test_deleteitem(void)
     DestroyWindow(hwnd);
 }
 
+static void test_insertitem(void)
+{
+    LVITEMA item;
+    UINT state;
+    HWND hwnd;
+    INT ret;
+
+    hwnd = create_listview_control(LVS_REPORT);
+
+    /* insert item 0 focused */
+    item.mask = LVIF_STATE;
+    item.state = LVIS_FOCUSED;
+    item.stateMask = LVIS_FOCUSED;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    ret = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
+    ok(ret == 0, "got %d\n", ret);
+
+    state = SendMessageA(hwnd, LVM_GETITEMSTATE, 0, LVIS_FOCUSED);
+    ok(state == LVIS_FOCUSED, "got %x\n", state);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    /* insert item 1, focus shift */
+    item.mask = LVIF_STATE;
+    item.state = LVIS_FOCUSED;
+    item.stateMask = LVIS_FOCUSED;
+    item.iItem = 1;
+    item.iSubItem = 0;
+    ret = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
+    ok(ret == 1, "got %d\n", ret);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_insert_focused_seq, "insert focused", TRUE);
+
+    state = SendMessageA(hwnd, LVM_GETITEMSTATE, 1, LVIS_FOCUSED);
+    ok(state == LVIS_FOCUSED, "got %x\n", state);
+
+    /* insert item 2, no focus shift */
+    item.mask = LVIF_STATE;
+    item.state = 0;
+    item.stateMask = LVIS_FOCUSED;
+    item.iItem = 2;
+    item.iSubItem = 0;
+    ret = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
+    ok(ret == 2, "got %d\n", ret);
+
+    state = SendMessageA(hwnd, LVM_GETITEMSTATE, 1, LVIS_FOCUSED);
+    ok(state == LVIS_FOCUSED, "got %x\n", state);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -5502,6 +5563,7 @@ START_TEST(listview)
     test_LVM_SETITEMTEXT();
     test_imagelists();
     test_deleteitem();
+    test_insertitem();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
@@ -5533,6 +5595,7 @@ START_TEST(listview)
     test_LVS_EX_HEADERINALLVIEWS();
     test_deleteitem();
     test_multiselect();
+    test_insertitem();
 
     unload_v6_module(ctx_cookie, hCtx);
 
