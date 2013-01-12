@@ -3490,25 +3490,14 @@ static void LISTVIEW_ShiftFocus(LISTVIEW_INFO *infoPtr, INT focus, INT item, INT
 */
 static void LISTVIEW_ShiftIndices(LISTVIEW_INFO *infoPtr, INT nItem, INT direction)
 {
-    BOOL bOldChange;
-
-    /* temporarily disable change notification while shifting items */
-    bOldChange = infoPtr->bDoChangeNotify;
-    infoPtr->bDoChangeNotify = FALSE;
-
     TRACE("Shifting %i, %i steps\n", nItem, direction);
 
     ranges_shift(infoPtr->selectionRanges, nItem, direction, infoPtr->nItemCount);
-
     assert(abs(direction) == 1);
-
     infoPtr->nSelectionMark = shift_item(infoPtr, infoPtr->nSelectionMark, nItem, direction);
-    
+
     /* But we are not supposed to modify nHotItem! */
-
-    infoPtr->bDoChangeNotify = bOldChange;
 }
-
 
 /**
  * DESCRIPTION:
