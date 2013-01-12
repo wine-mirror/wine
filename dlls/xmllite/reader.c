@@ -49,7 +49,9 @@ typedef enum
     XmlReadInState_Initial,
     XmlReadInState_XmlDecl,
     XmlReadInState_Misc_DTD,
-    XmlReadInState_DTD
+    XmlReadInState_DTD,
+    XmlReadInState_DTD_Misc,
+    XmlReadInState_Element
 } XmlReaderInternalState;
 
 typedef enum
@@ -1117,10 +1119,20 @@ static HRESULT reader_parse_misc(xmlreader *reader)
         else
             break;
 
-        if (FAILED(hr)) return hr;
+        if (hr != S_FALSE) return hr;
     }
 
     return hr;
+}
+
+/* [28] doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' intSubset ']' S?)? '>' */
+static HRESULT reader_parse_dtd(xmlreader *reader)
+{
+    static const WCHAR doctypeW[] = {'D','O','C','T','Y','P','E',0};
+    /* check if we have "<!DOCTYPE" */
+    if (reader_cmp(reader, doctypeW)) return S_FALSE;
+    FIXME("DTD parsing not implemented\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT reader_parse_nextnode(xmlreader *reader)
@@ -1158,15 +1170,30 @@ static HRESULT reader_parse_nextnode(xmlreader *reader)
         case XmlReadInState_Misc_DTD:
             hr = reader_parse_misc(reader);
             if (FAILED(hr)) return hr;
-            if (hr == S_FALSE)
-            {
+            if (hr == S_FALSE) {
                 reader->instate = XmlReadInState_DTD;
-                return S_OK;
+                continue;
             }
+            else if (hr == S_OK) return hr;
             break;
         case XmlReadInState_DTD:
-            FIXME("DTD parsing not supported\n");
-            return E_NOTIMPL;
+            hr = reader_parse_dtd(reader);
+            if (FAILED(hr)) return hr;
+            if (hr == S_FALSE) {
+                reader->instate = XmlReadInState_DTD_Misc;
+                continue;
+            }
+            else if (hr == S_OK) return hr;
+            break;
+        case XmlReadInState_DTD_Misc:
+            hr = reader_parse_misc(reader);
+            if (FAILED(hr)) return hr;
+            if (hr == S_FALSE) {
+                reader->instate = XmlReadInState_Element;
+                continue;
+            }
+            else if (hr == S_OK) return hr;
+            break;
         default:
             FIXME("internal state %d not handled\n", reader->instate);
             return E_NOTIMPL;
