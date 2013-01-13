@@ -210,7 +210,7 @@ static HRESULT WINAPI d3d_light_SetLight(IDirect3DLight *iface, D3DLIGHT *data)
     /* Translate D3DLIGHT2 structure to D3DLIGHT7. */
     light7->dltType = data->dltType;
     light7->dcvDiffuse = data->dcvColor;
-    if (((D3DLIGHT2 *)data)->dwFlags & D3DLIGHT_NO_SPECULAR)
+    if (data->dwSize >= sizeof(D3DLIGHT2) && (((D3DLIGHT2 *)data)->dwFlags & D3DLIGHT_NO_SPECULAR))
         light7->dcvSpecular = data->dcvColor;
     else
         light7->dcvSpecular = *(const D3DCOLORVALUE *)zero_value;
