@@ -166,24 +166,6 @@ static HRESULT WINAPI d3d_light_Initialize(IDirect3DLight *iface, IDirect3D *d3d
     return D3D_OK;
 }
 
-/*****************************************************************************
- * IDirect3DLight::SetLight
- *
- * Assigns a lighting value to this object
- *
- * Params:
- *  Light: Lighting parameter to set
- *
- * Returns:
- *  D3D_OK on success
- *  DDERR_INVALIDPARAMS if Light is NULL
- *
- *****************************************************************************/
-static void dump_light(const D3DLIGHT2 *light)
-{
-    TRACE("    - dwSize : %d\n", light->dwSize);
-}
-
 static const float zero_value[] = {
     0.0, 0.0, 0.0, 0.0
 };
@@ -194,12 +176,6 @@ static HRESULT WINAPI d3d_light_SetLight(IDirect3DLight *iface, D3DLIGHT *data)
     D3DLIGHT7 *light7 = &light->light7;
 
     TRACE("iface %p, data %p.\n", iface, data);
-
-    if (TRACE_ON(ddraw))
-    {
-        TRACE("  Light definition :\n");
-        dump_light((D3DLIGHT2 *)data);
-    }
 
     if ((!data->dltType) || (data->dltType > D3DLIGHT_PARALLELPOINT))
          return DDERR_INVALIDPARAMS;
@@ -251,12 +227,6 @@ static HRESULT WINAPI d3d_light_GetLight(IDirect3DLight *iface, D3DLIGHT *lpLigh
     struct d3d_light *light = impl_from_IDirect3DLight(iface);
 
     TRACE("iface %p, light %p.\n", iface, lpLight);
-
-    if (TRACE_ON(ddraw))
-    {
-        TRACE("  Returning light definition :\n");
-        dump_light(&light->light);
-    }
 
     wined3d_mutex_lock();
     memcpy(lpLight, &light->light, lpLight->dwSize);
