@@ -5406,7 +5406,7 @@ static BOOL InitAdapters(struct wined3d *wined3d)
         HDC hdc = GetDC( 0 );
         const struct opengl_funcs *wgl_driver = __wine_get_wgl_driver( hdc, WINE_WGL_DRIVER_VERSION );
         ReleaseDC( 0, hdc );
-        if (!wgl_driver || wgl_driver == (void *)-1) goto nogl_adapter;
+        if (!wgl_driver || wgl_driver == (void *)-1) return FALSE;
         gl_info->gl_ops.wgl = wgl_driver->wgl;
         gl_info->gl_ops.gl = wgl_driver->gl;
     }
@@ -5433,7 +5433,7 @@ static BOOL InitAdapters(struct wined3d *wined3d)
         {
             DWORD err = GetLastError();
             ERR("Failed to set adapter LUID (%#x).\n", err);
-            goto nogl_adapter;
+            return FALSE;
         }
         TRACE("Allocated LUID %08x:%08x for adapter.\n",
                 adapter->luid.HighPart, adapter->luid.LowPart);
@@ -5441,20 +5441,20 @@ static BOOL InitAdapters(struct wined3d *wined3d)
         if (!WineD3D_CreateFakeGLContext(&fake_gl_ctx))
         {
             ERR("Failed to get a gl context for default adapter\n");
-            goto nogl_adapter;
+            return FALSE;
         }
 
         ret = wined3d_adapter_init_gl_caps(adapter);
         if(!ret) {
             ERR("Failed to initialize gl caps for default adapter\n");
             WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
-            goto nogl_adapter;
+            return FALSE;
         }
         ret = initPixelFormats(&adapter->gl_info, adapter->driver_info.vendor);
         if(!ret) {
             ERR("Failed to init gl formats\n");
             WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
-            goto nogl_adapter;
+            return FALSE;
         }
 
         hdc = fake_gl_ctx.dc;
@@ -5595,7 +5595,7 @@ static BOOL InitAdapters(struct wined3d *wined3d)
 
                 WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
                 HeapFree(GetProcessHeap(), 0, adapter->cfgs);
-                goto nogl_adapter;
+                return FALSE;
             }
         }
 
@@ -5609,26 +5609,23 @@ static BOOL InitAdapters(struct wined3d *wined3d)
     TRACE("%u adapters successfully initialized.\n", wined3d->adapter_count);
 
     return TRUE;
+}
 
-nogl_adapter:
-    /* Initialize an adapter for ddraw-only memory counting */
-    memset(wined3d->adapters, 0, sizeof(wined3d->adapters));
-    wined3d->adapters[0].ordinal = 0;
-    wined3d->adapters[0].opengl = FALSE;
-    wined3d->adapters[0].monitorPoint.x = -1;
-    wined3d->adapters[0].monitorPoint.y = -1;
+static void wined3d_adapter_init_nogl(struct wined3d_adapter *adapter, UINT ordinal)
+{
+    memset(adapter, 0, sizeof(*adapter));
+    adapter->ordinal = ordinal;
+    adapter->monitorPoint.x = -1;
+    adapter->monitorPoint.y = -1;
 
-    wined3d->adapters[0].driver_info.name = "Display";
-    wined3d->adapters[0].driver_info.description = "WineD3D DirectDraw Emulation";
+    adapter->driver_info.name = "Display";
+    adapter->driver_info.description = "WineD3D DirectDraw Emulation";
     if (wined3d_settings.emulated_textureram)
-        wined3d->adapters[0].TextureRam = wined3d_settings.emulated_textureram;
+        adapter->TextureRam = wined3d_settings.emulated_textureram;
     else
-        wined3d->adapters[0].TextureRam = 8 * 1024 * 1024; /* This is plenty for a DDraw-only card */
+        adapter->TextureRam = 128 * 1024 * 1024;
 
-    initPixelFormatsNoGL(&wined3d->adapters[0].gl_info);
-
-    wined3d->adapter_count = 1;
-    return FALSE;
+    initPixelFormatsNoGL(&adapter->gl_info);
 }
 
 static void STDMETHODCALLTYPE wined3d_null_wined3d_object_destroyed(void *parent) {}
@@ -5645,14 +5642,17 @@ HRESULT wined3d_init(struct wined3d *wined3d, UINT version, DWORD flags)
     wined3d->ref = 1;
     wined3d->flags = flags;
 
+    if (flags & WINED3D_NO3D)
+    {
+        wined3d_adapter_init_nogl(&wined3d->adapters[0], 0);
+        wined3d->adapter_count = 1;
+        return WINED3D_OK;
+    }
+
     if (!InitAdapters(wined3d))
     {
         WARN("Failed to initialize adapters.\n");
-        if (version > 7)
-        {
-            MESSAGE("Direct3D%u is not available without OpenGL.\n", version);
-            return E_FAIL;
-        }
+        return E_FAIL;
     }
 
     return WINED3D_OK;

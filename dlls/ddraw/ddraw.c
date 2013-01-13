@@ -5267,11 +5267,15 @@ HRESULT ddraw_init(struct ddraw *ddraw, enum wined3d_device_type device_type)
     ddraw->numIfaces = 1;
     ddraw->ref7 = 1;
 
-    ddraw->wined3d = wined3d_create(7, WINED3D_LEGACY_DEPTH_BIAS);
-    if (!ddraw->wined3d)
+    if (!(ddraw->wined3d = wined3d_create(7, WINED3D_LEGACY_DEPTH_BIAS)))
     {
-        WARN("Failed to create a wined3d object.\n");
-        return E_OUTOFMEMORY;
+        if (!(ddraw->wined3d = wined3d_create(7, WINED3D_LEGACY_DEPTH_BIAS | WINED3D_NO3D)))
+        {
+            WARN("Failed to create a wined3d object.\n");
+            return E_FAIL;
+        }
+
+        WARN("Created a wined3d object without 3D support.\n");
     }
 
     hr = wined3d_device_create(ddraw->wined3d, WINED3DADAPTER_DEFAULT, device_type,
