@@ -71,8 +71,9 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
     if (TRACE_ON(ddraw))
         _dump_executedata(&(buffer->data));
 
-    while (1) {
-        LPD3DINSTRUCTION current = (LPD3DINSTRUCTION) instr;
+    for (;;)
+    {
+        D3DINSTRUCTION *current = (D3DINSTRUCTION *)instr;
 	BYTE size;
 	WORD count;
 	
