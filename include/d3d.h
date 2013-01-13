@@ -950,7 +950,7 @@ DECLARE_INTERFACE_(IDirect3DDevice,IUnknown)
             IDirect3DViewport **viewport, DWORD flags) PURE;
     STDMETHOD(Pick)(THIS_ IDirect3DExecuteBuffer *buffer, IDirect3DViewport *viewport,
             DWORD flags, D3DRECT *rect) PURE;
-    STDMETHOD(GetPickRecords)(THIS_ LPDWORD lpCount, LPD3DPICKRECORD lpD3DPickRec) PURE;
+    STDMETHOD(GetPickRecords)(THIS_ DWORD *count, D3DPICKRECORD *records) PURE;
     STDMETHOD(EnumTextureFormats)(THIS_ LPD3DENUMTEXTUREFORMATSCALLBACK lpD3DEnumTextureProc, LPVOID lpArg) PURE;
     STDMETHOD(CreateMatrix)(THIS_ D3DMATRIXHANDLE *matrix) PURE;
     STDMETHOD(SetMatrix)(THIS_ D3DMATRIXHANDLE handle, D3DMATRIX *matrix) PURE;
