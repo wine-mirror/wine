@@ -876,6 +876,66 @@ static void test_read_pi(void)
     IXmlReader_Release(reader);
 }
 
+struct nodes_test {
+    const char *xml;
+    XmlNodeType types[10];
+};
+
+static const char misc_test_xml[] =
+    "<!-- comment1 -->"
+    "<!-- comment2 -->"
+    "<?pi1 pi1body ?>"
+    "<!-- comment3 -->"
+    " \t \r \n"
+    "<!-- comment4 -->"
+;
+
+static struct nodes_test misc_test = {
+    misc_test_xml,
+    {
+        XmlNodeType_Comment,
+        XmlNodeType_Comment,
+        XmlNodeType_ProcessingInstruction,
+        XmlNodeType_Comment,
+        XmlNodeType_Whitespace,
+        XmlNodeType_Comment,
+        XmlNodeType_None
+    }
+};
+
+static void test_read_full(void)
+{
+    struct nodes_test *test = &misc_test;
+    IXmlReader *reader;
+    XmlNodeType type;
+    IStream *stream;
+    HRESULT hr;
+    int i;
+
+    hr = pCreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
+    ok(hr == S_OK, "S_OK, got %08x\n", hr);
+
+    stream = create_stream_on_data(test->xml, strlen(test->xml)+1);
+    hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    i = 0;
+    type = XmlNodeType_None;
+    hr = IXmlReader_Read(reader, &type);
+    while (hr == S_OK)
+    {
+        ok(test->types[i] != XmlNodeType_None, "%d: unexpected end of test data\n", i);
+        if (test->types[i] == XmlNodeType_None) break;
+        ok(type == test->types[i], "%d: got wrong type %d, expected %d\n", i, type, test->types[i]);
+        hr = IXmlReader_Read(reader, &type);
+        i++;
+    }
+    ok(test->types[i] == XmlNodeType_None, "incomplete sequence\n");
+
+    IStream_Release(stream);
+    IXmlReader_Release(reader);
+}
+
 START_TEST(reader)
 {
     HRESULT r;
@@ -894,6 +954,7 @@ START_TEST(reader)
     test_reader_state();
     test_read_comment();
     test_read_pi();
+    test_read_full();
     test_read_xmldeclaration();
 
     CoUninitialize();

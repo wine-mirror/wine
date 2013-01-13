@@ -517,14 +517,18 @@ static int readerinput_get_convlen(xmlreaderinput *readerinput)
     return len - (buffer->cur - buffer->data);
 }
 
-/* It's possbile that raw buffer has some leftovers from last conversion - some char
+/* It's possible that raw buffer has some leftovers from last conversion - some char
    sequence that doesn't represent a full code point. Length argument should be calculated with
-   readerinput_get_convlen(). */
+   readerinput_get_convlen(), if it's -1 it will be calculated here. */
 static void readerinput_shrinkraw(xmlreaderinput *readerinput, int len)
 {
     encoded_buffer *buffer = &readerinput->buffer->encoded;
+
+    if (len == -1)
+        len = readerinput_get_convlen(readerinput);
+
     memmove(buffer->data, buffer->cur + (buffer->written - len), len);
-    /* everything lower cur is lost too */
+    /* everything below cur is lost too */
     buffer->written -= len + (buffer->cur - buffer->data);
     /* after this point we don't need cur pointer really,
        it's used only to mark where actual data begins when first chunk is read */
@@ -1099,6 +1103,25 @@ static HRESULT reader_parse_pi(xmlreader *reader)
     return S_OK;
 }
 
+/* This one is used to parse significant whitespace nodes, like in Misc production */
+static HRESULT reader_parse_whitespace(xmlreader *reader)
+{
+    WCHAR *start, *ptr;
+
+    reader_shrink(reader);
+    start = reader_get_cur(reader);
+
+    reader_skipspaces(reader);
+    ptr = reader_get_cur(reader);
+    TRACE("%s\n", debugstr_wn(start, ptr-start));
+
+    reader->nodetype = XmlNodeType_Whitespace;
+    reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
+    reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
+    reader_set_strvalue(reader, StringValue_Value, &strval_empty);
+    return S_OK;
+}
+
 /* [27] Misc ::= Comment | PI | S */
 static HRESULT reader_parse_misc(xmlreader *reader)
 {
@@ -1111,7 +1134,7 @@ static HRESULT reader_parse_misc(xmlreader *reader)
         const WCHAR *cur = reader_get_cur(reader);
 
         if (is_wchar_space(*cur))
-            reader_skipspaces(reader);
+            hr = reader_parse_whitespace(reader);
         else if (!reader_cmp(reader, commentW))
             hr = reader_parse_comment(reader);
         else if (!reader_cmp(reader, piW))
@@ -1163,6 +1186,7 @@ static HRESULT reader_parse_nextnode(xmlreader *reader)
                 hr = reader_parse_xmldecl(reader);
                 if (FAILED(hr)) return hr;
 
+                readerinput_shrinkraw(reader->input, -1);
                 reader->instate = XmlReadInState_Misc_DTD;
                 if (hr == S_OK) return hr;
             }
