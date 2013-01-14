@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2006 Vitaliy Margolen
  * Copyright (C) 2006 Chris Robinson
- * Copyright 2006-2007, 2010, 2011 Stefan Dösinger for CodeWeavers
+ * Copyright 2006-2008, 2010-2011, 2013 Stefan Dösinger for CodeWeavers
  * Copyright 2005, 2006, 2007 Henri Verbeet
  * Copyright 2013 Henri Verbeet for CodeWeavers
  * Copyright (C) 2008 Rico Schüller
@@ -5968,6 +5968,68 @@ static void test_surface_lockrect_blocks(void)
     DestroyWindow(window);
 }
 
+static void test_set_palette(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
+    UINT refcount;
+    HWND window;
+    HRESULT hr;
+    PALETTEENTRY pal[256];
+    unsigned int i;
+    D3DCAPS9 caps;
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D9 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d9, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    for (i = 0; i < sizeof(pal) / sizeof(*pal); i++)
+    {
+        pal[i].peRed = i;
+        pal[i].peGreen = i;
+        pal[i].peBlue = i;
+        pal[i].peFlags = 0xff;
+    }
+    hr = IDirect3DDevice9_SetPaletteEntries(device, 0, pal);
+    ok(SUCCEEDED(hr), "Failed to set palette entries, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    for (i = 0; i < sizeof(pal) / sizeof(*pal); i++)
+    {
+        pal[i].peRed = i;
+        pal[i].peGreen = i;
+        pal[i].peBlue = i;
+        pal[i].peFlags = i;
+    }
+    if (caps.TextureCaps & D3DPTEXTURECAPS_ALPHAPALETTE)
+    {
+        hr = IDirect3DDevice9_SetPaletteEntries(device, 0, pal);
+        ok(SUCCEEDED(hr), "Failed to set palette entries, hr %#x.\n", hr);
+    }
+    else
+    {
+        hr = IDirect3DDevice9_SetPaletteEntries(device, 0, pal);
+        ok(hr == D3DERR_INVALIDCALL, "SetPaletteEntries returned %#x, expected D3DERR_INVALIDCALL.\n", hr);
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -6053,6 +6115,7 @@ START_TEST(device)
         test_surface_format_null();
         test_surface_double_unlock();
         test_surface_lockrect_blocks();
+        test_set_palette();
     }
 
 out:

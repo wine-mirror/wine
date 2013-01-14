@@ -1832,9 +1832,14 @@ static HRESULT WINAPI d3d9_device_ValidateDevice(IDirect3DDevice9Ex *iface, DWOR
 static HRESULT WINAPI d3d9_device_SetPaletteEntries(IDirect3DDevice9Ex *iface,
         UINT palette_idx, const PALETTEENTRY *entries)
 {
-    FIXME("iface %p, palette_idx %u, entries %p unimplemented.\n", iface, palette_idx, entries);
+    WARN("iface %p, palette_idx %u, entries %p unimplemented.\n", iface, palette_idx, entries);
 
-    return D3DERR_INVALIDCALL;
+    /* The d3d9 palette API is non-functional on Windows. Getters and setters are implemented,
+     * and some drivers allow the creation of P8 surfaces. These surfaces can be copied to
+     * other P8 surfaces with StretchRect, but cannot be converted to (A)RGB.
+     *
+     * Some older(dx7) cards may have support for P8 textures, but games cannot rely on this. */
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_GetPaletteEntries(IDirect3DDevice9Ex *iface,
@@ -1847,9 +1852,9 @@ static HRESULT WINAPI d3d9_device_GetPaletteEntries(IDirect3DDevice9Ex *iface,
 
 static HRESULT WINAPI d3d9_device_SetCurrentTexturePalette(IDirect3DDevice9Ex *iface, UINT palette_idx)
 {
-    FIXME("iface %p, palette_idx %u unimplemented.\n", iface, palette_idx);
+    WARN("iface %p, palette_idx %u unimplemented.\n", iface, palette_idx);
 
-    return D3DERR_INVALIDCALL;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_GetCurrentTexturePalette(IDirect3DDevice9Ex *iface, UINT *palette_idx)
