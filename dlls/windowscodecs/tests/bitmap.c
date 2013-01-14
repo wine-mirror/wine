@@ -529,19 +529,15 @@ static void test_CreateBitmapFromHICON(void)
     DeleteObject(info.hbmMask);
 
     hr = IWICImagingFactory_CreateBitmapFromHICON(factory, 0, NULL);
-todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     hr = IWICImagingFactory_CreateBitmapFromHICON(factory, 0, &bitmap);
-todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_CURSOR_HANDLE), "expected ERROR_INVALID_CURSOR_HANDLE, got %#x\n", hr);
 
     hr = IWICImagingFactory_CreateBitmapFromHICON(factory, icon, NULL);
-todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     hr = IWICImagingFactory_CreateBitmapFromHICON(factory, icon, &bitmap);
-todo_wine
     ok(hr == S_OK, "CreateBitmapFromHICON error %#x\n", hr);
     DestroyIcon(icon);
     if (hr != S_OK) return;
