@@ -137,9 +137,24 @@ static HRESULT WINAPI ID3DXFileDataImpl_GetEnum(ID3DXFileData *iface, ID3DXFileE
 
 static HRESULT WINAPI ID3DXFileDataImpl_GetName(ID3DXFileData *iface, char *name, SIZE_T *size)
 {
-    FIXME("(%p)->(%p, %p): stub\n", iface, name, size);
+    ID3DXFileDataImpl *This = impl_from_ID3DXFileData(iface);
+    DWORD dxfile_size;
+    HRESULT ret;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %p)\n", iface, name, size);
+
+    if (!name || !size)
+        return E_POINTER;
+
+    dxfile_size = *size;
+
+    ret = IDirectXFileData_GetName(This->dxfile_data, name, &dxfile_size);
+    if (ret != DXFILE_OK)
+        return error_dxfile_to_d3dxfile(ret);
+
+    *size = dxfile_size;
+
+    return S_OK;
 }
 
 
