@@ -547,11 +547,18 @@ static HRESULT WINAPI path_SetClassName(
 
 static HRESULT WINAPI path_GetClassName(
     IWbemPath *iface,
-    ULONG *puBufferLength,
-    LPWSTR pszName)
+    ULONG *len,
+    LPWSTR name)
 {
-    FIXME("%p,%p, %p\n", iface, puBufferLength, pszName);
-    return E_NOTIMPL;
+    struct path *path = impl_from_IWbemPath( iface );
+
+    TRACE("%p, %p, %p\n", iface, len, name);
+
+    if (!len || (*len && !name)) return WBEM_E_INVALID_PARAMETER;
+    if (!path->class) return WBEM_E_INVALID_OBJECT_PATH;
+    if (*len > path->len_class) strcpyW( name, path->class );
+    *len = path->len_class + 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI path_GetKeyList(

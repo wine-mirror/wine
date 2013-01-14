@@ -61,6 +61,20 @@ static const WCHAR path17[] =
     {'\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',':','W','i','n','3','2','_',
      'L','o','g','i','c','a','l','D','i','s','k','.','D','e','v','i','c','e','I','d','=','"','C',':','"',0};
 
+static IWbemPath *create_path(void)
+{
+    HRESULT hr;
+    IWbemPath *path;
+
+    hr = CoCreateInstance( &CLSID_WbemDefPath, NULL, CLSCTX_INPROC_SERVER, &IID_IWbemPath, (void **)&path );
+    if (hr != S_OK)
+    {
+        win_skip( "can't create WbemDefPath instance, skipping tests\n" );
+        return NULL;
+    }
+    return path;
+}
+
 static void test_IWbemPath_SetText(void)
 {
     static const struct
@@ -102,13 +116,7 @@ static void test_IWbemPath_SetText(void)
     HRESULT hr;
     UINT i;
 
-    CoInitialize( NULL );
-    hr = CoCreateInstance( &CLSID_WbemDefPath, NULL, CLSCTX_INPROC_SERVER, &IID_IWbemPath, (void **)&path );
-    if (hr != S_OK)
-    {
-        win_skip( "can't create WbemDefPath instance, skipping tests\n" );
-        return;
-    }
+    if (!(path = create_path())) return;
 
     hr = IWbemPath_SetText( path, 0, NULL );
     ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
@@ -135,25 +143,17 @@ static void test_IWbemPath_SetText(void)
             ok( len == lstrlenW( test[i].path ) + 1, "%u unexpected length %u\n", i, len );
         }
     }
-
     IWbemPath_Release( path );
-    CoUninitialize();
 }
 
 static void test_IWbemPath_GetText(void)
 {
-    IWbemPath *path;
     WCHAR buf[128];
     ULONG len, count;
+    IWbemPath *path;
     HRESULT hr;
 
-    CoInitialize( NULL );
-    hr = CoCreateInstance( &CLSID_WbemDefPath, NULL, CLSCTX_INPROC_SERVER, &IID_IWbemPath, (void **)&path );
-    if (hr != S_OK)
-    {
-        win_skip( "can't create WbemDefPath instance, skipping tests\n" );
-        return;
-    }
+    if (!(path = create_path())) return;
 
     hr = IWbemPath_GetText( path, 0, NULL, NULL );
     ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
@@ -274,11 +274,62 @@ static void test_IWbemPath_GetText(void)
     todo_wine ok( len == lstrlenW( path17 ) + 1, "unexpected length %u\n", len );
 
     IWbemPath_Release( path );
-    CoUninitialize();
+}
+
+static void test_IWbemPath_GetClassName(void)
+{
+    static const WCHAR classW[] = {'W','i','n','3','2','_','L','o','g','i','c','a','l','D','i','s','k',0};
+    IWbemPath *path;
+    HRESULT hr;
+    WCHAR buf[32];
+    ULONG len;
+
+    if (!(path = create_path())) return;
+
+    hr = IWbemPath_GetClassName( path, NULL, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+
+    len = 0;
+    hr = IWbemPath_GetClassName( path, &len, NULL );
+    ok( hr == WBEM_E_INVALID_OBJECT_PATH, "got %08x\n", hr );
+
+    len = sizeof(buf) / sizeof(buf[0]);
+    hr = IWbemPath_GetClassName( path, &len, buf );
+    ok( hr == WBEM_E_INVALID_OBJECT_PATH, "got %08x\n", hr );
+
+    len = sizeof(buf) / sizeof(buf[0]);
+    hr = IWbemPath_GetClassName( path, &len, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+    ok( len == sizeof(buf) / sizeof(buf[0]), "unexpected length %u\n", len );
+
+    hr = IWbemPath_SetText( path, WBEMPATH_CREATE_ACCEPT_ALL, path17 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    len = 0;
+    hr = IWbemPath_GetClassName( path, &len, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    len = sizeof(buf) / sizeof(buf[0]);
+    hr = IWbemPath_GetClassName( path, &len, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+    ok( len == sizeof(buf) / sizeof(buf[0]), "unexpected length %u\n", len );
+
+    len = sizeof(buf) / sizeof(buf[0]);
+    hr = IWbemPath_GetClassName( path, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( buf, classW ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( classW ) + 1, "unexpected length %u\n", len );
+
+    IWbemPath_Release( path );
 }
 
 START_TEST (path)
 {
+    CoInitialize( NULL );
+
     test_IWbemPath_SetText();
     test_IWbemPath_GetText();
+    test_IWbemPath_GetClassName();
+
+    CoUninitialize();
 }
