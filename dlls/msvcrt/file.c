@@ -1263,6 +1263,8 @@ static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* st
 
   TRACE("%s\n", debugstr_w(mode));
 
+  while(*mode == ' ') mode++;
+
   switch(*mode++)
   {
   case 'R': case 'r':
@@ -1301,6 +1303,8 @@ static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* st
       break;
     case '+':
     case ' ':
+    case 'a':
+    case 'w':
       break;
     default:
       MSVCRT_INVALID_PMT(0, MSVCRT_EINVAL);
