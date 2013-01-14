@@ -273,7 +273,7 @@ static BOOL elf_map_file(struct elf_map_file_data* emfd, struct image_file_map* 
 {
     static const BYTE   elf_signature[4] = { ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3 };
     struct stat	        statbuf;
-    int                 i;
+    unsigned int        i;
     Elf_Phdr            phdr;
     size_t              tmp, page_mask = sysconf( _SC_PAGESIZE ) - 1;
     char*               filename;

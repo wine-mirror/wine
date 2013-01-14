@@ -1370,7 +1370,8 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
 {
     const BYTE*                 ptr = linetab;
     int				nfile, nseg;
-    int				i, j, k;
+    int                         i, j;
+    unsigned int                k;
     const unsigned int*         filetab;
     const unsigned int*         lt_ptr;
     const unsigned short*       linenos;
