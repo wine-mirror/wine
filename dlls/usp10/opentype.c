@@ -1253,6 +1253,8 @@ static INT GPOS_apply_PairAdjustment(const OT_LookupTable *look, const SCRIPT_AN
     int j;
     int write_dir = (analysis->fRTL && !analysis->fLogicalOrder) ? -1 : 1;
 
+    if (glyph_index + write_dir < 0 || glyph_index + write_dir >= glyph_count) return glyph_index + 1;
+
     TRACE("Pair Adjustment Positioning Subtable\n");
 
     for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
