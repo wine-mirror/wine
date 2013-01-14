@@ -945,6 +945,7 @@ int*    __cdecl  __p___mb_cur_max(void);
 unsigned int*  __cdecl __p__fmode(void);
 MSVCRT_wchar_t* __cdecl MSVCRT__wcsdup(const MSVCRT_wchar_t*);
 MSVCRT_wchar_t*** __cdecl MSVCRT___p__wenviron(void);
+INT     __cdecl MSVCRT_wctomb(char*,MSVCRT_wchar_t);
 char*   __cdecl MSVCRT__strdate(char* date);
 char*   __cdecl MSVCRT__strtime(char* date);
 int     __cdecl _setmbcp(int);

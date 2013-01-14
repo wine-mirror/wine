@@ -3390,7 +3390,7 @@ MSVCRT_wint_t CDECL MSVCRT_fputwc(MSVCRT_wint_t wc, MSVCRT_FILE* file)
         char buf[MSVCRT_MB_LEN_MAX];
         int char_len;
 
-        char_len = wctomb(buf, mwc);
+        char_len = MSVCRT_wctomb(buf, mwc);
         if(char_len!=-1 && MSVCRT_fwrite(buf, char_len, 1, file)==1)
             ret = wc;
         else
