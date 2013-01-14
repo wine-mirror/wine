@@ -1680,7 +1680,7 @@ static HRESULT create_server(REFCLSID rclsid, HANDLE *process)
 
     /* FIXME: Win2003 supports a ServerExecutable value that is passed into
      * CreateProcess */
-    if (!CreateProcessW(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &sinfo, &pinfo)) {
+    if (!CreateProcessW(NULL, command, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &sinfo, &pinfo)) {
         WARN("failed to run local server %s\n", debugstr_w(command));
         return HRESULT_FROM_WIN32(GetLastError());
     }

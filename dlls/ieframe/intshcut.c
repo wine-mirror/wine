@@ -108,7 +108,7 @@ static BOOL run_winemenubuilder( const WCHAR *args )
     si.cb = sizeof(si);
 
     Wow64DisableWow64FsRedirection( &redir );
-    ret = CreateProcessW( app, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi );
+    ret = CreateProcessW( app, buffer, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi );
     Wow64RevertWow64FsRedirection( redir );
 
     heap_free( buffer );

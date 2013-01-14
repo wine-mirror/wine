@@ -656,7 +656,7 @@ static HRESULT WINAPI IDirectInputAImpl_RunControlPanel(LPDIRECTINPUT7A iface,
     if (!This->initialized)
         return DIERR_NOTINITIALIZED;
 
-    if (!CreateProcessW(NULL, control_exeW, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+    if (!CreateProcessW(NULL, control_exeW, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
         return HRESULT_FROM_WIN32(GetLastError());
 
     return DI_OK;

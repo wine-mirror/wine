@@ -630,7 +630,7 @@ static void run_winebrowser(const WCHAR *url)
 
     memset(&si, 0, sizeof(si));
     si.cb = sizeof(si);
-    ret = CreateProcessW(app, args, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ret = CreateProcessW(app, args, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi);
     heap_free(args);
     if (ret) {
         CloseHandle(pi.hThread);
