@@ -409,9 +409,9 @@ extern HINSTANCE PSDRV_hInstance DECLSPEC_HIDDEN;
 extern HANDLE PSDRV_Heap DECLSPEC_HIDDEN;
 extern char *PSDRV_ANSIVector[256] DECLSPEC_HIDDEN;
 
-extern INPUTSLOT *find_slot( PPD *ppd, PSDRV_DEVMODE *dm );
-extern PAGESIZE *find_pagesize( PPD *ppd, PSDRV_DEVMODE *dm );
-extern DUPLEX *find_duplex( PPD *ppd, PSDRV_DEVMODE *dm );
+extern INPUTSLOT *find_slot( PPD *ppd, const PSDRV_DEVMODE *dm );
+extern PAGESIZE *find_pagesize( PPD *ppd, const PSDRV_DEVMODE *dm );
+extern DUPLEX *find_duplex( PPD *ppd, const PSDRV_DEVMODE *dm );
 
 /* GDI driver functions */
 extern BOOL PSDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
@@ -462,7 +462,7 @@ extern INT PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 
-extern void PSDRV_MergeDevmodes(PSDRV_DEVMODE *dm1, PSDRV_DEVMODE *dm2,
+extern void PSDRV_MergeDevmodes(PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2,
 			 PRINTERINFO *pi) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_GetFontMetrics(void) DECLSPEC_HIDDEN;
 extern PPD *PSDRV_ParsePPD(char *fname, HANDLE printer) DECLSPEC_HIDDEN;

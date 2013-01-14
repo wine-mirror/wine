@@ -324,7 +324,7 @@ static BOOL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
     if (output && *output) physDev->job.output = strdupW( output );
 
     if(initData)
-        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODE *)initData, pi);
+        PSDRV_MergeDevmodes(physDev->Devmode, (const PSDRV_DEVMODE *)initData, pi);
 
     PSDRV_UpdateDevCaps(physDev);
     SelectObject( (*pdev)->hdc, PSDRV_DefaultFont );
@@ -379,7 +379,7 @@ static HDC PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData )
 
     if (lpInitData)
     {
-        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODE *)lpInitData, physDev->pi);
+        PSDRV_MergeDevmodes(physDev->Devmode, (const PSDRV_DEVMODE *)lpInitData, physDev->pi);
         PSDRV_UpdateDevCaps(physDev);
     }
     return dev->hdc;

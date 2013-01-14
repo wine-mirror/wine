@@ -45,7 +45,7 @@ static inline int paper_size_from_points( float size )
     return size * 254 / 72;
 }
 
-INPUTSLOT *find_slot( PPD *ppd, PSDRV_DEVMODE *dm )
+INPUTSLOT *find_slot( PPD *ppd, const PSDRV_DEVMODE *dm )
 {
     INPUTSLOT *slot;
 
@@ -56,7 +56,7 @@ INPUTSLOT *find_slot( PPD *ppd, PSDRV_DEVMODE *dm )
     return NULL;
 }
 
-PAGESIZE *find_pagesize( PPD *ppd, PSDRV_DEVMODE *dm )
+PAGESIZE *find_pagesize( PPD *ppd, const PSDRV_DEVMODE *dm )
 {
     PAGESIZE *page;
 
@@ -67,7 +67,7 @@ PAGESIZE *find_pagesize( PPD *ppd, PSDRV_DEVMODE *dm )
     return NULL;
 }
 
-DUPLEX *find_duplex( PPD *ppd, PSDRV_DEVMODE *dm )
+DUPLEX *find_duplex( PPD *ppd, const PSDRV_DEVMODE *dm )
 {
     DUPLEX *duplex;
     WORD win_duplex = dm->dmPublic.dmFields & DM_DUPLEX ? dm->dmPublic.dmDuplex : 0;
@@ -88,7 +88,7 @@ DUPLEX *find_duplex( PPD *ppd, PSDRV_DEVMODE *dm )
  * Updates dm1 with some fields from dm2
  *
  */
-void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, PSDRV_DEVMODE *dm2, PRINTERINFO *pi )
+void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2, PRINTERINFO *pi )
 {
     /* some sanity checks here on dm2 */
 
