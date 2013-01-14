@@ -3,7 +3,7 @@
  * Copyright (C) 2006 Chris Robinson
  * Copyright (C) 2006 Louis Lenders
  * Copyright 2006-2007 Henri Verbeet
- * Copyright 2010, 2011 Stefan Dösinger for CodeWeavers
+ * Copyright 2006-2007, 2011-2013 Stefan Dösinger for CodeWeavers
  * Copyright 2013 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -4469,6 +4469,69 @@ static void test_surface_lockrect_blocks(void)
     DestroyWindow(window);
 }
 
+static void test_set_palette(void)
+{
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d8;
+    UINT refcount;
+    HWND window;
+    HRESULT hr;
+    PALETTEENTRY pal[256];
+    unsigned int i;
+    D3DCAPS8 caps;
+
+    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create d3d8 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d8, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d8);
+        DestroyWindow(window);
+        return;
+    }
+
+    for (i = 0; i < sizeof(pal) / sizeof(*pal); i++)
+    {
+        pal[i].peRed = i;
+        pal[i].peGreen = i;
+        pal[i].peBlue = i;
+        pal[i].peFlags = 0xff;
+    }
+    hr = IDirect3DDevice8_SetPaletteEntries(device, 0, pal);
+    ok(SUCCEEDED(hr), "Failed to set palette entries, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    for (i = 0; i < sizeof(pal) / sizeof(*pal); i++)
+    {
+        pal[i].peRed = i;
+        pal[i].peGreen = i;
+        pal[i].peBlue = i;
+        pal[i].peFlags = i;
+    }
+    if (caps.TextureCaps & D3DPTEXTURECAPS_ALPHAPALETTE)
+    {
+        hr = IDirect3DDevice8_SetPaletteEntries(device, 0, pal);
+        ok(SUCCEEDED(hr), "Failed to set palette entries, hr %#x.\n", hr);
+    }
+    else
+    {
+        hr = IDirect3DDevice8_SetPaletteEntries(device, 0, pal);
+        ok(hr == D3DERR_INVALIDCALL, "SetPaletteEntries returned %#x, expected D3DERR_INVALIDCALL.\n", hr);
+    }
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d8);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -4542,6 +4605,7 @@ START_TEST(device)
         test_surface_format_null();
         test_surface_double_unlock();
         test_surface_lockrect_blocks();
+        test_set_palette();
     }
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }

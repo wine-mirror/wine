@@ -1839,12 +1839,12 @@ static HRESULT WINAPI d3d8_device_GetInfo(IDirect3DDevice8 *iface,
 static HRESULT WINAPI d3d8_device_SetPaletteEntries(IDirect3DDevice8 *iface,
         UINT palette_idx, const PALETTEENTRY *entries)
 {
-    FIXME("iface %p, palette_idx %u, entries %p unimplemented\n", iface, palette_idx, entries);
+    WARN("iface %p, palette_idx %u, entries %p unimplemented\n", iface, palette_idx, entries);
 
     /* GPUs stopped supporting palettized textures with the Shader Model 1 generation. Wined3d
      * does not have a d3d8/9-style palette API */
 
-    return D3DERR_INVALIDCALL;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_device_GetPaletteEntries(IDirect3DDevice8 *iface,
@@ -1857,9 +1857,9 @@ static HRESULT WINAPI d3d8_device_GetPaletteEntries(IDirect3DDevice8 *iface,
 
 static HRESULT WINAPI d3d8_device_SetCurrentTexturePalette(IDirect3DDevice8 *iface, UINT palette_idx)
 {
-    FIXME("iface %p, palette_idx %u unimplemented.\n", iface, palette_idx);
+    WARN("iface %p, palette_idx %u unimplemented.\n", iface, palette_idx);
 
-    return D3DERR_INVALIDCALL;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_device_GetCurrentTexturePalette(IDirect3DDevice8 *iface, UINT *palette_idx)
