@@ -6,7 +6,7 @@
 15 stdcall AtlComModuleGetClassObject(ptr ptr ptr ptr)
 17 stub AtlComModuleRegisterClassObjects
 20 stub AtlComModuleRevokeClassObjects
-22 stub AtlComModuleUnregisterServer
+22 stdcall AtlComModuleUnregisterServer(ptr long ptr)
 23 stdcall AtlUpdateRegistryFromResourceD(long wstr long ptr ptr)
 24 stdcall AtlWaitWithMessageLoop(long)
 25 stub AtlSetErrorInfo

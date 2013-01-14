@@ -454,6 +454,56 @@ HRESULT WINAPI AtlComModuleGetClassObject(_ATL_COM_MODULE *pm, REFCLSID rclsid, 
 }
 
 /***********************************************************************
+ *           AtlComModuleUnregisterServer       [atl100.22]
+ */
+HRESULT WINAPI AtlComModuleUnregisterServer(_ATL_COM_MODULE *mod, BOOL bRegTypeLib, const CLSID *clsid)
+{
+    const struct _ATL_CATMAP_ENTRY *catmap;
+    _ATL_OBJMAP_ENTRY **iter;
+    HRESULT hres;
+
+    TRACE("(%p %x %s)\n", mod, bRegTypeLib, debugstr_guid(clsid));
+
+    for(iter = mod->m_ppAutoObjMapFirst; iter < mod->m_ppAutoObjMapLast; iter++) {
+        if(!*iter || (clsid && !IsEqualCLSID((*iter)->pclsid, clsid)))
+            continue;
+
+        TRACE("Unregistering clsid %s\n", debugstr_guid((*iter)->pclsid));
+
+        catmap = (*iter)->pfnGetCategoryMap();
+        if(catmap) {
+            hres = AtlRegisterClassCategoriesHelper((*iter)->pclsid, catmap, FALSE);
+            if(FAILED(hres))
+                return hres;
+        }
+
+        hres = (*iter)->pfnUpdateRegistry(FALSE);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(bRegTypeLib) {
+        ITypeLib *typelib;
+        TLIBATTR *attr;
+        BSTR path;
+
+        hres = AtlLoadTypeLib(mod->m_hInstTypeLib, NULL, &path, &typelib);
+        if(FAILED(hres))
+            return hres;
+
+        SysFreeString(path);
+        hres = ITypeLib_GetLibAttr(typelib, &attr);
+        if(SUCCEEDED(hres))
+            hres = UnRegisterTypeLib(&attr->guid, attr->wMajorVerNum, attr->wMinorVerNum, attr->lcid, attr->syskind);
+        ITypeLib_Release(typelib);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return S_OK;
+}
+
+/***********************************************************************
  *           AtlRegisterClassCategoriesHelper          [atl100.49]
  */
 HRESULT WINAPI AtlRegisterClassCategoriesHelper(REFCLSID clsid, const struct _ATL_CATMAP_ENTRY *catmap, BOOL reg)
