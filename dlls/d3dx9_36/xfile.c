@@ -160,9 +160,19 @@ static HRESULT WINAPI ID3DXFileDataImpl_GetName(ID3DXFileData *iface, char *name
 
 static HRESULT WINAPI ID3DXFileDataImpl_GetId(ID3DXFileData *iface, GUID *guid)
 {
-    FIXME("(%p)->(%p): stub\n", iface, guid);
+    ID3DXFileDataImpl *This = impl_from_ID3DXFileData(iface);
+    HRESULT ret;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, guid);
+
+    if (!guid)
+        return E_POINTER;
+
+    ret = IDirectXFileData_GetId(This->dxfile_data, guid);
+    if (ret != DXFILE_OK)
+        return error_dxfile_to_d3dxfile(ret);
+
+    return S_OK;
 }
 
 
