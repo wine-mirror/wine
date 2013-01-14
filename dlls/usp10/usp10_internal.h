@@ -244,7 +244,8 @@ void BREAK_line(const WCHAR *chars, int count, const SCRIPT_ANALYSIS *sa, SCRIPT
 DWORD OpenType_CMAP_GetGlyphIndex(HDC hdc, ScriptCache *psc, DWORD utf32c, LPWORD pgi, DWORD flags) DECLSPEC_HIDDEN;
 void OpenType_GDEF_UpdateGlyphProps(HDC hdc, ScriptCache *psc, const WORD *pwGlyphs, const WORD cGlyphs, WORD* pwLogClust, const WORD cChars, SCRIPT_GLYPHPROP *pGlyphProp) DECLSPEC_HIDDEN;
 INT OpenType_apply_GSUB_lookup(LPCVOID table, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count) DECLSPEC_HIDDEN;
-INT OpenType_apply_GPOS_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, INT* piAdvance, LPCVOID table, INT lookup_index, const WORD *glyphs, INT glyph_index, INT write_dir, INT glyph_count, GOFFSET *pGoffset) DECLSPEC_HIDDEN;
+INT OpenType_apply_GPOS_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, const SCRIPT_ANALYSIS *analysis, INT* piAdvance,
+                               LPCVOID table, INT lookup_index, const WORD *glyphs, INT glyph_index, INT glyph_count, GOFFSET *pGoffset) DECLSPEC_HIDDEN;
 HRESULT OpenType_GetFontScriptTags(ScriptCache *psc, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags) DECLSPEC_HIDDEN;
 HRESULT OpenType_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pLanguageTags, int *pcTags) DECLSPEC_HIDDEN;
 HRESULT OpenType_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG language_tag, BOOL filtered, OPENTYPE_TAG searchingFor, char tableType, int cMaxTags, OPENTYPE_TAG *pFeatureTags, int *pcTags, LoadedFeature** feature) DECLSPEC_HIDDEN;

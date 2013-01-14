@@ -860,7 +860,8 @@ static int apply_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, W
     return GSUB_E_NOFEATURE;
 }
 
-static VOID GPOS_apply_feature(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, INT* piAdvance, LPCVOID header, LoadedFeature *feature, const WORD *glyphs, INT write_dir, INT glyph_count, GOFFSET *pGoffset)
+static VOID GPOS_apply_feature(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, const SCRIPT_ANALYSIS *analysis, INT* piAdvance,
+                               LPCVOID header, LoadedFeature *feature, const WORD *glyphs, INT glyph_count, GOFFSET *pGoffset)
 {
     int i;
 
@@ -869,7 +870,7 @@ static VOID GPOS_apply_feature(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont,
     {
         int j;
         for (j = 0; j < glyph_count; )
-            j = OpenType_apply_GPOS_lookup(lpotm, lplogfont, piAdvance, header, feature->lookups[i], glyphs, j, write_dir, glyph_count, pGoffset);
+            j = OpenType_apply_GPOS_lookup(lpotm, lplogfont, analysis, piAdvance, header, feature->lookups[i], glyphs, j, glyph_count, pGoffset);
     }
 }
 
@@ -3285,7 +3286,6 @@ void SHAPE_ApplyOpenTypePositions(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
 {
     const TEXTRANGE_PROPERTIES *rpRangeProperties;
     int i;
-    INT dirL;
 
     rpRangeProperties = &ShapingData[psa->eScript].defaultGPOSTextRange;
 
@@ -3297,11 +3297,6 @@ void SHAPE_ApplyOpenTypePositions(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     if (!psc->GPOS_Table || !psc->otm)
         return;
 
-    if (!psa->fLogicalOrder && psa->fRTL)
-        dirL = -1;
-    else
-        dirL = 1;
-
     for (i = 0; i < rpRangeProperties->cotfRecords; i++)
     {
         if (rpRangeProperties->potfRecords[i].lParameter > 0)
@@ -3312,7 +3307,7 @@ void SHAPE_ApplyOpenTypePositions(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
             if (!feature)
                 continue;
 
-            GPOS_apply_feature(psc->otm, &psc->lf, piAdvance, psc->GPOS_Table, feature, pwGlyphs, dirL, cGlyphs, pGoffset);
+            GPOS_apply_feature(psc->otm, &psc->lf, psa, piAdvance, psc->GPOS_Table, feature, pwGlyphs, cGlyphs, pGoffset);
         }
     }
 }
