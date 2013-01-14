@@ -1548,48 +1548,6 @@ static HRESULT Global_GetRef(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VA
     return E_NOTIMPL;
 }
 
-static HRESULT Global_vbUseSystem(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbUseSystemDayOfWeek(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbFirstJan1(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbFirstFourDays(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbFirstFullWeek(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbTrue(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbFalse(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
 static HRESULT Global_vbUseDefault(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
@@ -1777,8 +1735,8 @@ static HRESULT Global_vbMsgBoxRtlReading(vbdisp_t *This, VARIANT *arg, unsigned 
 }
 
 static const builtin_prop_t global_props[] = {
-    {DISPID_GLOBAL_VBUSESYSTEM,        Global_vbUseSystem, BP_GET},
-    {DISPID_GLOBAL_USESYSTEMDAYOFWEEK, Global_vbUseSystemDayOfWeek, BP_GET},
+    {DISPID_GLOBAL_VBUSESYSTEM,        NULL, BP_GET, 0},
+    {DISPID_GLOBAL_USESYSTEMDAYOFWEEK, NULL, BP_GET, 0},
     {DISPID_GLOBAL_VBSUNDAY,           NULL, BP_GET, 1},
     {DISPID_GLOBAL_VBMONDAY,           NULL, BP_GET, 2},
     {DISPID_GLOBAL_VBTUESDAY,          NULL, BP_GET, 3},
@@ -1786,9 +1744,9 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_VBTHURSDAY,         NULL, BP_GET, 5},
     {DISPID_GLOBAL_VBFRIDAY,           NULL, BP_GET, 6},
     {DISPID_GLOBAL_VBSATURDAY,         NULL, BP_GET, 7},
-    {DISPID_GLOBAL_VBFIRSTJAN1,        Global_vbFirstJan1, BP_GET},
-    {DISPID_GLOBAL_VBFIRSTFOURDAYS,    Global_vbFirstFourDays, BP_GET},
-    {DISPID_GLOBAL_VBFIRSTFULLWEEK,    Global_vbFirstFullWeek, BP_GET},
+    {DISPID_GLOBAL_VBFIRSTJAN1,        NULL, BP_GET, 1},
+    {DISPID_GLOBAL_VBFIRSTFOURDAYS,    NULL, BP_GET, 2},
+    {DISPID_GLOBAL_VBFIRSTFULLWEEK,    NULL, BP_GET, 3},
     {DISPID_GLOBAL_VBOKONLY,           NULL, BP_GET, MB_OK},
     {DISPID_GLOBAL_VBOKCANCEL,         NULL, BP_GET, MB_OKCANCEL},
     {DISPID_GLOBAL_VBABORTRETRYIGNORE, NULL, BP_GET, MB_ABORTRETRYIGNORE},
@@ -1829,8 +1787,8 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_VBDECIMAL,          NULL, BP_GET, VT_DECIMAL},
     {DISPID_GLOBAL_VBBYTE,             NULL, BP_GET, VT_UI1},
     {DISPID_GLOBAL_VBARRAY,            NULL, BP_GET, VT_ARRAY},
-    {DISPID_GLOBAL_VBTRUE,             Global_vbTrue, BP_GET},
-    {DISPID_GLOBAL_VBFALSE,            Global_vbFalse, BP_GET},
+    {DISPID_GLOBAL_VBTRUE,             NULL, BP_GET, VARIANT_TRUE},
+    {DISPID_GLOBAL_VBFALSE,            NULL, BP_GET, VARIANT_FALSE},
     {DISPID_GLOBAL_VBUSEDEFAULT,       Global_vbUseDefault, BP_GET},
     {DISPID_GLOBAL_VBBINARYCOMPARE,    Global_vbBinaryCompare, BP_GET},
     {DISPID_GLOBAL_VBTEXTCOMPARE,      Global_vbTextCompare, BP_GET},

@@ -69,6 +69,13 @@ TestConstant "vbDefaultButton3", vbDefaultButton3, 512
 TestConstant "vbDefaultButton4", vbDefaultButton4, 768
 TestConstant "vbApplicationModal", vbApplicationModal, 0
 TestConstant "vbSystemModal", vbSystemModal, 4096
+TestConstant "vbUseSystem", vbUseSystem, 0
+TestConstant "vbUseSystemDayOfWeek", vbUseSystemDayOfWeek, 0
+TestConstant "vbFirstJan1", vbFirstJan1, 1
+TestConstant "vbFirstFourDays", vbFirstFourDays, 2
+TestConstant "vbFirstFullWeek", vbFirstFullWeek, 3
+TestConstant "vbTrue", vbTrue, -1
+TestConstant "vbFalse", vbFalse, 0
 
 Sub TestCStr(arg, exval)
     dim x
