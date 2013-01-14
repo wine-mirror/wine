@@ -259,6 +259,7 @@ struct enum_data
 
 typedef struct tagFace {
     struct list entry;
+    unsigned int refcount;
     WCHAR *StyleName;
     WCHAR *FullName;
     WCHAR *file;
@@ -280,6 +281,7 @@ typedef struct tagFace {
 
 typedef struct tagFamily {
     struct list entry;
+    unsigned int refcount;
     WCHAR *FamilyName;
     WCHAR *EnglishName;
     struct list faces;
@@ -966,7 +968,9 @@ static Face *find_face_from_filename(const WCHAR *file_name, const WCHAR *face_n
                 file = face->file;
             else
                 file++;
-            if(!strcmpiW(file, file_name)) return face;
+            if(strcmpiW(file, file_name)) continue;
+            face->refcount++;
+            return face;
 	}
     }
     return NULL;
@@ -1233,27 +1237,29 @@ static inline BOOL faces_equal( const Face *f1, const Face *f2 )
     return !memcmp( &f1->fs, &f2->fs, sizeof(f1->fs) );
 }
 
-static inline void free_face( Face *face )
+static void release_family( Family *family )
 {
+    if (--family->refcount) return;
+    assert( list_empty( &family->faces ));
+    list_remove( &family->entry );
+    HeapFree( GetProcessHeap(), 0, family->FamilyName );
+    HeapFree( GetProcessHeap(), 0, family->EnglishName );
+    HeapFree( GetProcessHeap(), 0, family );
+}
+
+static void release_face( Face *face )
+{
+    if (--face->refcount) return;
+    if (face->family)
+    {
+        list_remove( &face->entry );
+        release_family( face->family );
+    }
     HeapFree( GetProcessHeap(), 0, face->file );
     HeapFree( GetProcessHeap(), 0, face->StyleName );
     HeapFree( GetProcessHeap(), 0, face->FullName );
     HeapFree( GetProcessHeap(), 0, face->cached_enum_data );
     HeapFree( GetProcessHeap(), 0, face );
-}
-
-static inline void free_family( Family *family )
-{
-    Face *face, *cursor2;
-
-    LIST_FOR_EACH_ENTRY_SAFE( face, cursor2, &family->faces, Face, entry )
-    {
-        list_remove( &face->entry );
-        free_face( face );
-    }
-    HeapFree( GetProcessHeap(), 0, family->FamilyName );
-    HeapFree( GetProcessHeap(), 0, family->EnglishName );
-    HeapFree( GetProcessHeap(), 0, family );
 }
 
 static inline int style_order(const Face *face)
@@ -1301,8 +1307,9 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
                       debugstr_w(cursor->file), debugstr_w(face->file));
                 list_add_before( &cursor->entry, &face->entry );
                 face->family = family;
-                list_remove( &cursor->entry);
-                free_face( cursor );
+                family->refcount++;
+                face->refcount++;
+                release_face( cursor );
                 return TRUE;
             }
         }
@@ -1314,6 +1321,8 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
 
     list_add_before( &cursor->entry, &face->entry );
     face->family = family;
+    family->refcount++;
+    face->refcount++;
     return TRUE;
 }
 
@@ -1324,10 +1333,12 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
 static Family *create_family( WCHAR *name, WCHAR *english_name )
 {
     Family * const family = HeapAlloc( GetProcessHeap(), 0, sizeof(*family) );
+    family->refcount = 1;
     family->FamilyName = name;
     family->EnglishName = english_name;
     list_init( &family->faces );
     family->replacement = &family->faces;
+    list_add_tail( &font_list, &family->entry );
 
     return family;
 }
@@ -1363,7 +1374,9 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family, void *bu
         Face *face;
         face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
         face->cached_enum_data = NULL;
+        face->family = NULL;
 
+        face->refcount = 1;
         face->file = strdupW( buffer );
         face->StyleName = strdupW(face_name);
 
@@ -1406,9 +1419,10 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family, void *bu
               face->fs.fsUsb[0], face->fs.fsUsb[1],
               face->fs.fsUsb[2], face->fs.fsUsb[3]);
 
-        insert_face_in_family_list(face, family);
+        if (insert_face_in_family_list(face, family))
+            TRACE("Added font %s %s\n", debugstr_w(family->FamilyName), debugstr_w(face->StyleName));
 
-        TRACE("Added font %s %s\n", debugstr_w(family->FamilyName), debugstr_w(face->StyleName));
+        release_face( face );
     }
 
     /* load bitmap strikes */
@@ -1446,7 +1460,6 @@ static void load_font_list_from_cache(HKEY hkey_font_cache)
             english_family = strdupW( buffer );
 
         family = create_family(family_name, english_family);
-        list_add_tail(&font_list, &family->entry);
 
         if(english_family)
         {
@@ -1473,6 +1486,7 @@ static void load_font_list_from_cache(HKEY hkey_font_cache)
             size = sizeof(buffer);
         }
         RegCloseKey(hkey_family);
+        release_family( family );
         size = sizeof(buffer);
     }
 }
@@ -1601,8 +1615,6 @@ static Family *get_family( FT_Face ft_face, BOOL vertical )
     if (!family)
     {
         family = create_family( name, english_name );
-        list_add_tail( &font_list, &family->entry );
-
         if (english_name)
         {
             FontSubst *subst = HeapAlloc( GetProcessHeap(), 0, sizeof(*subst) );
@@ -1617,6 +1629,7 @@ static Family *get_family( FT_Face ft_face, BOOL vertical )
     {
         HeapFree( GetProcessHeap(), 0, name );
         HeapFree( GetProcessHeap(), 0, english_name );
+        family->refcount++;
     }
 
     return family;
@@ -1733,6 +1746,7 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
     Face *face = HeapAlloc( GetProcessHeap(), 0, sizeof(*face) );
     My_FT_Bitmap_Size *size = (My_FT_Bitmap_Size *)ft_face->available_sizes;
 
+    face->refcount = 1;
     face->StyleName = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, GetSystemDefaultLangID() );
     if (!face->StyleName)
         face->StyleName = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, TT_MS_LANGID_ENGLISH_UNITED_STATES );
@@ -1806,17 +1820,16 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
 
     face = create_face( ft_face, face_index, file, font_data_ptr, font_data_size, flags, vertical, aa_flags );
     family = get_family( ft_face, vertical );
-    if (!insert_face_in_family_list( face, family ))
+    if (insert_face_in_family_list( face, family ))
     {
-        free_face( face );
-        return;
+        if (flags & ADDFONT_ADD_TO_CACHE)
+            add_face_to_cache( face );
+
+        TRACE("Added font %s %s\n", debugstr_w(family->FamilyName),
+              debugstr_w(face->StyleName));
     }
-
-    if (flags & ADDFONT_ADD_TO_CACHE)
-        add_face_to_cache( face );
-
-    TRACE("Added font %s %s\n", debugstr_w(family->FamilyName),
-          debugstr_w(face->StyleName));
+    release_face( face );
+    release_family( family );
 }
 
 static FT_Face new_ft_face( const char *file, void *font_data_ptr, DWORD font_data_size,
@@ -2323,6 +2336,7 @@ skip_internal:
             new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
             new_child->face = font_link_entry->face;
             new_child->font = NULL;
+            new_child->face->refcount++;
             system_font_link->fs.fsCsb[0] |= font_link_entry->face->fs.fsCsb[0];
             system_font_link->fs.fsCsb[1] |= font_link_entry->face->fs.fsCsb[1];
             list_add_tail(&system_font_link->links, &new_child->entry);
@@ -3001,7 +3015,7 @@ static BOOL get_fontdir( const char *unix_name, struct fontdir *fd )
     pFT_Done_Face( ft_face );
 
     GetEnumStructs( face, name, &elf, &ntm, &type );
-    free_face( face );
+    release_face( face );
     HeapFree( GetProcessHeap(), 0, name );
     HeapFree( GetProcessHeap(), 0, english_name );
 
@@ -4042,6 +4056,7 @@ static void free_font(GdiFont *font)
         list_remove(&child->entry);
         if(child->font)
             free_font(child->font);
+        release_face( child->face );
         HeapFree(GetProcessHeap(), 0, child);
     }
 
@@ -4354,6 +4369,7 @@ static BOOL create_child_font_list(GdiFont *font)
             new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
             new_child->face = font_link_entry->face;
             new_child->font = NULL;
+            new_child->face->refcount++;
             list_add_tail(&font->child_fonts, &new_child->entry);
             TRACE("font %s %ld\n", debugstr_w(new_child->face->file), new_child->face->face_index);
         }
@@ -4376,6 +4392,7 @@ static BOOL create_child_font_list(GdiFont *font)
                 new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
                 new_child->face = font_link_entry->face;
                 new_child->font = NULL;
+                new_child->face->refcount++;
                 list_add_tail(&font->child_fonts, &new_child->entry);
                 TRACE("font %s %ld\n", debugstr_w(new_child->face->file), new_child->face->face_index);
             }
