@@ -3282,15 +3282,15 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
             if (i == 0)
             {
                 x += pGoffset[orig_index].du * dir;
-                y += pGoffset[orig_index].dv * dir;
+                y += pGoffset[orig_index].dv;
             }
             else
             {
                 lpDx[(i - 1) * 2]     += pGoffset[orig_index].du * dir;
-                lpDx[(i - 1) * 2 + 1] += pGoffset[orig_index].dv * dir;
+                lpDx[(i - 1) * 2 + 1] += pGoffset[orig_index].dv;
             }
             lpDx[i * 2]     -= pGoffset[orig_index].du * dir;
-            lpDx[i * 2 + 1] -= pGoffset[orig_index].dv * dir;
+            lpDx[i * 2 + 1] -= pGoffset[orig_index].dv;
         }
     }
 
