@@ -421,11 +421,18 @@ static HRESULT WINAPI path_SetServer(
 
 static HRESULT WINAPI path_GetServer(
     IWbemPath *iface,
-    ULONG *puNameBufLength,
-    LPWSTR pName)
+    ULONG *len,
+    LPWSTR name)
 {
-    FIXME("%p, %p, %p\n", iface, puNameBufLength, pName);
-    return E_NOTIMPL;
+    struct path *path = impl_from_IWbemPath( iface );
+
+    TRACE("%p, %p, %p\n", iface, len, name);
+
+    if (!len || (*len && !name)) return WBEM_E_INVALID_PARAMETER;
+    if (!path->class) return WBEM_E_NOT_AVAILABLE;
+    if (*len > path->len_server) strcpyW( name, path->server );
+    *len = path->len_server + 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI path_GetNamespaceCount(
