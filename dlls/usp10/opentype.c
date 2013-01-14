@@ -1699,11 +1699,13 @@ static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, c
             double devX, devY;
             int index;
             int write_dir = (analysis->fRTL && !analysis->fLogicalOrder) ? -1 : 1;
+            int offset_sign = (analysis->fRTL && analysis->fLogicalOrder) ? -1 : 1;
+
             index = GPOS_apply_PairAdjustment(look, analysis, glyphs, glyph_index, glyph_count, ppem, adjust, advance);
             if (adjust[0].x || adjust[0].y)
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, adjust[0].x, adjust[0].y, &devX, &devY);
-                pGoffset[glyph_index].du += round(devX);
+                pGoffset[glyph_index].du += round(devX) * offset_sign;
                 pGoffset[glyph_index].dv += round(devY);
             }
             if (advance[0].x || advance[0].y)
@@ -1714,7 +1716,7 @@ static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, c
             if (adjust[1].x || adjust[1].y)
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, adjust[1].x, adjust[1].y, &devX, &devY);
-                pGoffset[glyph_index + write_dir].du += round(devX);
+                pGoffset[glyph_index + write_dir].du += round(devX) * offset_sign;
                 pGoffset[glyph_index + write_dir].dv += round(devY);
             }
             if (advance[1].x || advance[1].y)
