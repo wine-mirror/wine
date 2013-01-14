@@ -482,7 +482,8 @@ HRESULT WINAPI JoystickWGenericImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
                                                    DWORD dwFlags)
 {
     JoystickGenericImpl *This = impl_from_IDirectInputDevice8W(iface);
-    int i, j, has_actions = 0;
+    unsigned int i, j;
+    int has_actions = 0;
     DWORD object_types[] = { DIDFT_AXIS, DIDFT_BUTTON };
     DWORD type_map[] = { DIDFT_RELAXIS, DIDFT_PSHBUTTON };
 

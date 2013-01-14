@@ -331,7 +331,7 @@ static void assign_action(HWND dialog)
 
 static void copy_actions(LPDIACTIONFORMATW to, LPDIACTIONFORMATW from)
 {
-    int i;
+    DWORD i;
     for (i=0; i < from->dwNumActions; i++)
     {
         to->rgoAction[i].guidInstance = from->rgoAction[i].guidInstance;
