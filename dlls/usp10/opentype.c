@@ -1758,12 +1758,14 @@ static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, c
         {
             double devX, devY;
             POINT desU = {0,0};
+            int write_dir = (analysis->fRTL && !analysis->fLogicalOrder) ? -1 : 1;
             GPOS_apply_MarkToMark(look, analysis, glyphs, glyph_index, glyph_count, ppem, &desU);
             if (desU.x || desU.y)
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, desU.x, desU.y, &devX, &devY);
-                pGoffset[glyph_index].du += round(devX) + pGoffset[glyph_index-1].du;
-                pGoffset[glyph_index].dv += round(devY) + pGoffset[glyph_index-1].dv;
+                if (analysis->fRTL && analysis->fLogicalOrder) devX *= -1;
+                pGoffset[glyph_index].du += round(devX) + pGoffset[glyph_index - write_dir].du;
+                pGoffset[glyph_index].dv += round(devY) + pGoffset[glyph_index - write_dir].dv;
             }
             break;
         }
