@@ -2983,14 +2983,13 @@ struct fontdir
 
 #include <poppack.h>
 
-static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
+static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEXW pelf,
                            NEWTEXTMETRICEXW *pntm, LPDWORD ptype);
 
 static BOOL get_fontdir( const char *unix_name, struct fontdir *fd )
 {
     FT_Face ft_face = new_ft_face( unix_name, NULL, 0, 0, FALSE );
     Face *face;
-    Family *family;
     WCHAR *name, *english_name;
     ENUMLOGFONTEXW elf;
     NEWTEXTMETRICEXW ntm;
@@ -2999,12 +2998,12 @@ static BOOL get_fontdir( const char *unix_name, struct fontdir *fd )
     if (!ft_face) return FALSE;
     face = create_face( ft_face, 0, unix_name, NULL, 0, 0, FALSE, 0 );
     get_family_names( ft_face, &name, &english_name, FALSE );
-    family = create_family( name, english_name );
-    insert_face_in_family_list( face, family );
     pFT_Done_Face( ft_face );
 
-    GetEnumStructs( face, &elf, &ntm, &type );
-    free_family( family );
+    GetEnumStructs( face, name, &elf, &ntm, &type );
+    free_face( face );
+    HeapFree( GetProcessHeap(), 0, name );
+    HeapFree( GetProcessHeap(), 0, english_name );
 
     if ((type & TRUETYPE_FONTTYPE) == 0) return FALSE;
 
@@ -5091,7 +5090,7 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset_list *l
     return n;
 }
 
-static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
+static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEXW pelf,
 			   NEWTEXTMETRICEXW *pntm, LPDWORD ptype)
 {
     GdiFont *font;
@@ -5123,7 +5122,7 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
         return;
     }
 
-    font->name = strdupW(face->family->FamilyName);
+    font->name = strdupW( family_name );
     font->ntmFlags = face->ntmFlags;
 
     if (get_outline_text_metrics(font))
@@ -5152,11 +5151,11 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
         pntm->ntmTm.ntmCellHeight = pntm->ntmTm.tmHeight;
         pntm->ntmTm.ntmAvgWidth = pntm->ntmTm.tmAveCharWidth;
 
-        lstrcpynW(pelf->elfLogFont.lfFaceName, face->family->FamilyName, LF_FACESIZE);
+        lstrcpynW(pelf->elfLogFont.lfFaceName, family_name, LF_FACESIZE);
         if (face->FullName)
             lstrcpynW(pelf->elfFullName, face->FullName, LF_FULLFACESIZE);
         else
-            lstrcpynW(pelf->elfFullName, face->family->FamilyName, LF_FULLFACESIZE);
+            lstrcpynW(pelf->elfFullName, family_name, LF_FULLFACESIZE);
         lstrcpynW(pelf->elfStyle, face->StyleName, LF_FACESIZE);
     }
 
@@ -5227,7 +5226,7 @@ static BOOL enum_face_charsets(const Family *family, Face *face, struct enum_cha
     DWORD type = 0;
     int i;
 
-    GetEnumStructs(face, &elf, &ntm, &type);
+    GetEnumStructs(face, face->family->FamilyName, &elf, &ntm, &type);
     for(i = 0; i < list->total; i++) {
         if(!face->scalable && face->fs.fsCsb[0] == 0) { /* OEM bitmap */
             elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = OEM_CHARSET;
