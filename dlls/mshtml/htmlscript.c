@@ -192,8 +192,38 @@ static HRESULT WINAPI HTMLScriptElement_get_event(IHTMLScriptElement *iface, BST
 static HRESULT WINAPI HTMLScriptElement_put_text(IHTMLScriptElement *iface, BSTR v)
 {
     HTMLScriptElement *This = impl_from_IHTMLScriptElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    HTMLInnerWindow *window;
+    nsIDOMNode *parent;
+    nsAString text_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    if(!This->element.node.doc || !This->element.node.doc->window) {
+        WARN("no windoow\n");
+        return E_UNEXPECTED;
+    }
+
+    window = This->element.node.doc->window;
+
+    nsAString_InitDepend(&text_str, v);
+    nsres = nsIDOMHTMLScriptElement_SetText(This->nsscript, &text_str);
+    nsAString_Finish(&text_str);
+    if(NS_FAILED(nsres)) {
+        ERR("SetSrc failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMHTMLScriptElement_GetParentNode(This->nsscript, &parent);
+    if(NS_FAILED(nsres) || !parent) {
+        TRACE("No parent, not executing\n");
+        This->parse_on_bind = TRUE;
+        return S_OK;
+    }
+
+    nsIDOMNode_Release(parent);
+    doc_insert_script(window, This);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLScriptElement_get_text(IHTMLScriptElement *iface, BSTR *p)
