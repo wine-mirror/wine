@@ -3703,10 +3703,6 @@ static void init_font_list(void)
     char *unixname;
     const char *data_dir;
 
-#ifdef SONAME_LIBFONTCONFIG
-    init_fontconfig();
-#endif
-
     delete_external_font_keys();
 
     /* load the system bitmap fonts */
@@ -3884,6 +3880,10 @@ BOOL WineEngInit(void)
     update_font_info();
 
     if(!init_freetype()) return FALSE;
+
+#ifdef SONAME_LIBFONTCONFIG
+    init_fontconfig();
+#endif
 
     if((font_mutex = CreateMutexW(NULL, FALSE, font_mutex_nameW)) == NULL)
     {
