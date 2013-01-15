@@ -1691,7 +1691,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
 
     bih.biSize = sizeof(bih);
     bih.biWidth = width;
-    bih.biHeight = -height;
+    bih.biHeight = iinfo.hbmColor ? -height: -height * 2;
     bih.biPlanes = 1;
     bih.biBitCount = 32;
     bih.biCompression = BI_RGB;
