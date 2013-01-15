@@ -1101,7 +1101,7 @@ static void test_D3DXFillTexture(IDirect3DDevice9 *device)
     if (SUCCEEDED(hr))
     {
         hr = D3DXFillTexture(tex, fillfunc, NULL);
-        todo_wine ok(hr == D3D_OK, "D3DXFillTexture returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXFillTexture returned %#x, expected %#x\n", hr, D3D_OK);
 
         hr = IDirect3DTexture9_LockRect(tex, 0, &lock_rect, NULL, D3DLOCK_READONLY);
         if (SUCCEEDED(hr))
@@ -1124,7 +1124,7 @@ static void test_D3DXFillTexture(IDirect3DDevice9 *device)
                     expected.z = 1.0f / 4.0f;
                     expected.w = 1.0f;
 
-                    todo_wine expect_vec4(&expected, &got);
+                    expect_vec4(&expected, &got);
                 }
             }
 

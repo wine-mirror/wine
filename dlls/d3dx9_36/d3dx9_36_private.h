@@ -48,6 +48,7 @@ struct volume
 enum format_type {
     FORMAT_ARGB,   /* unsigned */
     FORMAT_ARGBF16,/* float 16 */
+    FORMAT_ARGBF,  /* float */
     FORMAT_DXT,
     FORMAT_UNKNOWN
 };
