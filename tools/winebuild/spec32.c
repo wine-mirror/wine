@@ -39,6 +39,7 @@
 #define IMAGE_FILE_MACHINE_ARMNT   0x01C4
 /* Wine extension */
 #define IMAGE_FILE_MACHINE_SPARC   0x2000
+#define IMAGE_FILE_MACHINE_ARM64   0x01C5
 
 #define IMAGE_SIZEOF_NT_OPTIONAL32_HEADER 224
 #define IMAGE_SIZEOF_NT_OPTIONAL64_HEADER 240
@@ -447,6 +448,7 @@ static void output_asm_constructor( const char *constructor )
             output( "\n\t.section \".text\",\"ax\"\n" );
             output( "\tblx %s\n", asm_name(constructor) );
             break;
+        case CPU_ARM64:
         case CPU_POWERPC:
             output( "\n\t.section \".init\",\"ax\"\n" );
             output( "\tbl %s\n", asm_name(constructor) );
@@ -494,6 +496,7 @@ void output_module( DLLSPEC *spec )
             output( "\n\t.section \".text\",\"ax\"\n" );
             output( "\tb 1f\n" );
             break;
+        case CPU_ARM64:
         case CPU_POWERPC:
             output( "\n\t.section \".init\",\"ax\"\n" );
             output( "\tb 1f\n" );
@@ -518,6 +521,7 @@ void output_module( DLLSPEC *spec )
     case CPU_x86:     machine = IMAGE_FILE_MACHINE_I386; break;
     case CPU_x86_64:  machine = IMAGE_FILE_MACHINE_AMD64; break;
     case CPU_ARM:     machine = IMAGE_FILE_MACHINE_ARMNT; break;
+    case CPU_ARM64:   machine = IMAGE_FILE_MACHINE_ARM64; break;
     case CPU_POWERPC: machine = IMAGE_FILE_MACHINE_POWERPC; break;
     case CPU_SPARC:   machine = IMAGE_FILE_MACHINE_SPARC; break;
     }
@@ -707,6 +711,7 @@ void output_fake_module( DLLSPEC *spec )
     case CPU_POWERPC: put_word( IMAGE_FILE_MACHINE_POWERPC ); break;
     case CPU_SPARC:   put_word( IMAGE_FILE_MACHINE_SPARC ); break;
     case CPU_ARM:     put_word( IMAGE_FILE_MACHINE_ARMNT ); break;
+    case CPU_ARM64:   put_word( IMAGE_FILE_MACHINE_ARM64 ); break;
     }
     put_word( nb_sections );                         /* NumberOfSections */
     put_dword( 0 );                                  /* TimeDateStamp */

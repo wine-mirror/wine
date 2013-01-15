@@ -675,6 +675,17 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         output( "\tldr PC,[IP,#%d]\n", pos);
         output( "\t.long %s\n", table );
         break;
+    case CPU_ARM64:
+        output( "\tadr x9, 1f\n" );
+        output( "\tldur x9, [x9, #0]\n" );
+        if (pos & 0xf000) output( "\tadd x9, x9, #%u\n", pos & 0xf000 );
+        if (pos & 0x0f00) output( "\tadd x9, x9, #%u\n", pos & 0x0f00 );
+        if (pos & 0x00f0) output( "\tadd x9, x9, #%u\n", pos & 0x00f0 );
+        if (pos & 0x000f) output( "\tadd x9, x9, #%u\n", pos & 0x000f );
+        output( "\tldur x9, [x9, #0]\n" );
+        output( "\tbr x9\n" );
+        output( "1:\t.quad %s\n", table );
+        break;
     case CPU_POWERPC:
         output( "\tmr %s, %s\n", ppc_reg(0), ppc_reg(31) );
         if (target_platform == PLATFORM_APPLE)
@@ -994,6 +1005,21 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "\tldmfd  SP!, {r0-r3}\n" );
         output( "\tmov PC,IP\n");
         break;
+    case CPU_ARM64:
+        output( "\tstp x29, x30, [sp,#-16]!\n" );
+        output( "\tmov x29, sp\n" );
+        output( "\tadr x9, 1f\n" );
+        output( "\tldur x9, [x9, #0]\n" );
+        output( "\tblr x9\n" );
+        output( "\tmov x9, x0\n" );
+        output( "\tldp x29, x30, [sp],#16\n" );
+        output( "\tldp x0, x1, [sp,#16]\n" );
+        output( "\tldp x2, x3, [sp,#32]\n" );
+        output( "\tldp x4, x5, [sp,#48]\n" );
+        output( "\tldp x6, x7, [sp],#80\n" );
+        output( "\tbr x9\n" ); /* or "ret x9" */
+        output( "1:\t.quad %s\n", asm_name("__wine_spec_delay_load") );
+        break;
     case CPU_POWERPC:
         if (target_platform == PLATFORM_APPLE) extra_stack_storage = 56;
 
@@ -1085,6 +1111,24 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                 output( "\tadd r0, #%d\n", j );
                 output( "\tldr PC,[PC,#-4]\n");
                 output( "\t.long %s\n", asm_name("__wine_delay_load_asm") );
+                break;
+            case CPU_ARM64:
+                output( "\tstp x6, x7, [sp,#-80]!\n" );
+                output( "\tstp x4, x5, [sp,#48]\n" );
+                output( "\tstp x2, x3, [sp,#32]\n" );
+                output( "\tstp x0, x1, [sp,#16]\n" );
+                output( "\tmov x0, #%d\n", idx );
+                output( "\tmov x1, #16384\n" );
+                output( "\tmul x1, x0, x1\n" );
+                output( "\tmov x0, x1\n" );
+                output( "\tmov x1, #4\n" );
+                output( "\tmul x1, x0, x1\n" );
+                output( "\tmov x0, x1\n" );
+                output( "\tadd x0, x0, #%d\n", j );
+                output( "\tadr x9, 1f\n" );
+                output( "\tldur x9, [x9, #0]\n" );
+                output( "\tbr x9\n" );
+                output( "1:\t.quad %s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_POWERPC:
                 switch(target_platform)

@@ -59,6 +59,8 @@ enum target_cpu target_cpu = CPU_SPARC;
 enum target_cpu target_cpu = CPU_POWERPC;
 #elif defined(__arm__)
 enum target_cpu target_cpu = CPU_ARM;
+#elif defined(__aarch64__)
+enum target_cpu target_cpu = CPU_ARM64;
 #else
 #error Unsupported CPU
 #endif
