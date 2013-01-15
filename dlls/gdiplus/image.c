@@ -4694,28 +4694,21 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
         if (retval == Ok)
         {
             HDC hdc;
-            BITMAPINFO *pbmi;
+            char bmibuf[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
+            BITMAPINFO *pbmi = (BITMAPINFO *)bmibuf;
             INT src_height;
 
             hdc = CreateCompatibleDC(NULL);
-            pbmi = GdipAlloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
 
-            if (pbmi)
-            {
-                pbmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-                pbmi->bmiHeader.biBitCount = 0;
+            pbmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+            pbmi->bmiHeader.biBitCount = 0;
 
-                GetDIBits(hdc, hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
+            GetDIBits(hdc, hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
 
-                src_height = abs(pbmi->bmiHeader.biHeight);
-                pbmi->bmiHeader.biHeight = -src_height;
+            src_height = abs(pbmi->bmiHeader.biHeight);
+            pbmi->bmiHeader.biHeight = -src_height;
 
-                GetDIBits(hdc, hbm, 0, src_height, lockeddata.Scan0, pbmi, DIB_RGB_COLORS);
-
-                GdipFree(pbmi);
-            }
-            else
-                retval = OutOfMemory;
+            GetDIBits(hdc, hbm, 0, src_height, lockeddata.Scan0, pbmi, DIB_RGB_COLORS);
 
             DeleteDC(hdc);
 
