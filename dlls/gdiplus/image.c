@@ -4724,28 +4724,17 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
 
         if (retval == Ok && hpal)
         {
-            WORD num_palette_entries;
-            PALETTEENTRY *palette_entries=NULL;
+            PALETTEENTRY entry[256];
             ColorPalette *palette=NULL;
-            int i;
+            int i, num_palette_entries;
 
-            if (!GetObjectW(hpal, sizeof(num_palette_entries), &num_palette_entries))
+            num_palette_entries = GetPaletteEntries(hpal, 0, 256, entry);
+            if (!num_palette_entries)
                 retval = GenericError;
 
-            if (retval == Ok)
-            {
-                palette_entries = GdipAlloc(sizeof(PALETTEENTRY) * num_palette_entries);
-                palette = GdipAlloc(sizeof(ColorPalette) + sizeof(ARGB) * (num_palette_entries-1));
-
-                if (!palette_entries || !palette)
-                    retval = OutOfMemory;
-            }
-
-            if (retval == Ok)
-            {
-                if (!GetPaletteEntries(hpal, 0, num_palette_entries, palette_entries))
-                    retval = GenericError;
-            }
+            palette = GdipAlloc(sizeof(ColorPalette) + sizeof(ARGB) * (num_palette_entries-1));
+            if (!palette)
+                retval = OutOfMemory;
 
             if (retval == Ok)
             {
@@ -4754,15 +4743,13 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
 
                 for (i=0; i<num_palette_entries; i++)
                 {
-                    PALETTEENTRY * entry = &palette_entries[i];
-                    palette->Entries[i] = 0xff000000 | entry->peRed << 16 |
-                        entry->peGreen << 8 | entry->peBlue;
+                    palette->Entries[i] = 0xff000000 | entry[i].peRed << 16 |
+                                          entry[i].peGreen << 8 | entry[i].peBlue;
                 }
 
                 retval = GdipSetImagePalette((GpImage*)*bitmap, palette);
             }
 
-            GdipFree(palette_entries);
             GdipFree(palette);
         }
 
