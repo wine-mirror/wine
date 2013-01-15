@@ -376,6 +376,8 @@ static void destroy_cocoa_window(struct macdrv_win_data *data)
     macdrv_destroy_cocoa_window(data->cocoa_window);
     data->cocoa_window = 0;
     data->on_screen = FALSE;
+    if (data->surface) window_surface_release(data->surface);
+    data->surface = NULL;
 }
 
 
@@ -411,6 +413,73 @@ static struct macdrv_win_data *macdrv_create_win_data(HWND hwnd, const RECT *win
                wine_dbgstr_rect(&data->whole_rect), wine_dbgstr_rect(&data->client_rect));
     }
 
+    return data;
+}
+
+
+/***********************************************************************
+ *              get_region_data
+ *
+ * Calls GetRegionData on the given region and converts the rectangle
+ * array to CGRect format. The returned buffer must be freed by
+ * caller using HeapFree(GetProcessHeap(),...).
+ * If hdc_lptodp is not 0, the rectangles are converted through LPtoDP.
+ */
+RGNDATA *get_region_data(HRGN hrgn, HDC hdc_lptodp)
+{
+    RGNDATA *data;
+    DWORD size;
+    int i;
+    RECT *rect;
+    CGRect *cgrect;
+
+    if (!hrgn || !(size = GetRegionData(hrgn, 0, NULL))) return NULL;
+    if (sizeof(CGRect) > sizeof(RECT))
+    {
+        /* add extra size for CGRect array */
+        int count = (size - sizeof(RGNDATAHEADER)) / sizeof(RECT);
+        size += count * (sizeof(CGRect) - sizeof(RECT));
+    }
+    if (!(data = HeapAlloc(GetProcessHeap(), 0, size))) return NULL;
+    if (!GetRegionData(hrgn, size, data))
+    {
+        HeapFree(GetProcessHeap(), 0, data);
+        return NULL;
+    }
+
+    rect = (RECT *)data->Buffer;
+    cgrect = (CGRect *)data->Buffer;
+    if (hdc_lptodp)  /* map to device coordinates */
+    {
+        LPtoDP(hdc_lptodp, (POINT *)rect, data->rdh.nCount * 2);
+        for (i = 0; i < data->rdh.nCount; i++)
+        {
+            if (rect[i].right < rect[i].left)
+            {
+                INT tmp = rect[i].right;
+                rect[i].right = rect[i].left;
+                rect[i].left = tmp;
+            }
+            if (rect[i].bottom < rect[i].top)
+            {
+                INT tmp = rect[i].bottom;
+                rect[i].bottom = rect[i].top;
+                rect[i].top = tmp;
+            }
+        }
+    }
+
+    if (sizeof(CGRect) > sizeof(RECT))
+    {
+        /* need to start from the end */
+        for (i = data->rdh.nCount-1; i >= 0; i--)
+            cgrect[i] = cgrect_from_rect(rect[i]);
+    }
+    else
+    {
+        for (i = 0; i < data->rdh.nCount; i++)
+            cgrect[i] = cgrect_from_rect(rect[i]);
+    }
     return data;
 }
 
@@ -637,6 +706,21 @@ void CDECL macdrv_SetWindowText(HWND hwnd, LPCWSTR text)
 }
 
 
+static inline RECT get_surface_rect(const RECT *visible_rect)
+{
+    RECT rect;
+    RECT desktop_rect = rect_from_cgrect(macdrv_get_desktop_rect());
+
+    IntersectRect(&rect, visible_rect, &desktop_rect);
+    OffsetRect(&rect, -visible_rect->left, -visible_rect->top);
+    rect.left &= ~127;
+    rect.top  &= ~127;
+    rect.right  = max(rect.left + 128, (rect.right + 127) & ~127);
+    rect.bottom = max(rect.top + 128, (rect.bottom + 127) & ~127);
+    return rect;
+}
+
+
 /***********************************************************************
  *              WindowPosChanging   (MACDRV.@)
  */
@@ -646,6 +730,7 @@ void CDECL macdrv_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags
 {
     struct macdrv_win_data *data = get_win_data(hwnd);
     DWORD style = GetWindowLongW(hwnd, GWL_STYLE);
+    RECT surface_rect;
 
     TRACE("%p after %p swp %04x window %s client %s visible %s surface %p\n", hwnd, insert_after,
           swp_flags, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
@@ -658,12 +743,27 @@ void CDECL macdrv_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags
     TRACE("visible_rect %s -> %s\n", wine_dbgstr_rect(window_rect),
           wine_dbgstr_rect(visible_rect));
 
-    /* release the window surface if necessary */
+    /* create the window surface if necessary */
     if (!data->cocoa_window) goto done;
     if (swp_flags & SWP_HIDEWINDOW) goto done;
 
     if (*surface) window_surface_release(*surface);
     *surface = NULL;
+
+    surface_rect = get_surface_rect(visible_rect);
+    if (data->surface)
+    {
+        if (!memcmp(&data->surface->rect, &surface_rect, sizeof(surface_rect)))
+        {
+            /* existing surface is good enough */
+            window_surface_add_ref(data->surface);
+            *surface = data->surface;
+            goto done;
+        }
+    }
+    else if (!(swp_flags & SWP_SHOWWINDOW) && !(style & WS_VISIBLE)) goto done;
+
+    *surface = create_surface(data->cocoa_window, &surface_rect);
 
 done:
     release_win_data(data);
@@ -690,6 +790,11 @@ void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
     data->window_rect = *window_rect;
     data->whole_rect  = *visible_rect;
     data->client_rect = *client_rect;
+    if (surface)
+        window_surface_add_ref(surface);
+    set_window_surface(data->cocoa_window, surface);
+    if (data->surface) window_surface_release(data->surface);
+    data->surface = surface;
 
     TRACE("win %p/%p window %s whole %s client %s style %08x flags %08x surface %p\n",
            hwnd, data->cocoa_window, wine_dbgstr_rect(window_rect),

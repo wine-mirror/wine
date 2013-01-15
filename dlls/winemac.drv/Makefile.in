@@ -6,6 +6,7 @@ C_SRCS = \
 	display.c \
 	gdi.c \
 	macdrv_main.c \
+	surface.c \
 	window.c
 
 OBJC_SRCS = \

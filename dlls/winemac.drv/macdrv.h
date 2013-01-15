@@ -83,7 +83,11 @@ struct macdrv_win_data
     RECT                whole_rect;             /* Mac window rectangle for the whole window relative to parent */
     RECT                client_rect;            /* client area relative to parent */
     BOOL                on_screen : 1;          /* is window ordered in? */
+    struct window_surface *surface;
 };
 
+extern RGNDATA *get_region_data(HRGN hrgn, HDC hdc_lptodp) DECLSPEC_HIDDEN;
+extern struct window_surface *create_surface(macdrv_window window, const RECT *rect) DECLSPEC_HIDDEN;
+extern void set_window_surface(macdrv_window window, struct window_surface *window_surface) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_MACDRV_H */

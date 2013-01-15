@@ -28,6 +28,9 @@
     BOOL noActivate;
     BOOL floating;
     WineWindow* latentParentWindow;
+
+    void* surface;
+    pthread_mutex_t* surface_mutex;
 }
 
 @end

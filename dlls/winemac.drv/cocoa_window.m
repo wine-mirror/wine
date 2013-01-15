@@ -65,6 +65,9 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 @property (nonatomic) BOOL floating;
 @property (retain, nonatomic) NSWindow* latentParentWindow;
 
+@property (nonatomic) void* surface;
+@property (nonatomic) pthread_mutex_t* surface_mutex;
+
     + (void) flipRect:(NSRect*)rect;
 
 @end
@@ -77,12 +80,56 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         return YES;
     }
 
+    - (void) drawRect:(NSRect)rect
+    {
+        WineWindow* window = (WineWindow*)[self window];
+
+        if (window.surface && window.surface_mutex &&
+            !pthread_mutex_lock(window.surface_mutex))
+        {
+            const CGRect* rects;
+            int count;
+
+            if (!get_surface_region_rects(window.surface, &rects, &count) || count)
+            {
+                CGRect imageRect;
+                CGImageRef image;
+
+                imageRect = NSRectToCGRect(rect);
+                image = create_surface_image(window.surface, &imageRect, FALSE);
+
+                if (image)
+                {
+                    CGContextRef context;
+
+                    if (rects && count)
+                    {
+                        NSBezierPath* surfaceClip = [NSBezierPath bezierPath];
+                        int i;
+                        for (i = 0; i < count; i++)
+                            [surfaceClip appendBezierPathWithRect:NSRectFromCGRect(rects[i])];
+                        [surfaceClip addClip];
+                    }
+
+                    context = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
+                    CGContextSetBlendMode(context, kCGBlendModeCopy);
+                    CGContextDrawImage(context, imageRect, image);
+
+                    CGImageRelease(image);
+                }
+            }
+
+            pthread_mutex_unlock(window.surface_mutex);
+        }
+    }
+
 @end
 
 
 @implementation WineWindow
 
     @synthesize disabled, noActivate, floating, latentParentWindow;
+    @synthesize surface, surface_mutex;
 
     + (WineWindow*) createWindowWithFeatures:(const struct macdrv_window_features*)wf
                                  windowFrame:(NSRect)window_frame
@@ -108,6 +155,7 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         [window disableCursorRects];
         [window setShowsResizeIndicator:NO];
         [window setHasShadow:wf->shadow];
+        [window setColorSpace:[NSColorSpace genericRGBColorSpace]];
         [window setDelegate:window];
 
         contentView = [[[WineContentView alloc] initWithFrame:NSZeroRect] autorelease];
@@ -476,4 +524,38 @@ void macdrv_set_cocoa_parent_window(macdrv_window w, macdrv_window parent)
     OnMainThread(^{
         [window setMacDrvParentWindow:(WineWindow*)parent];
     });
+}
+
+/***********************************************************************
+ *              macdrv_set_window_surface
+ */
+void macdrv_set_window_surface(macdrv_window w, void *surface, pthread_mutex_t *mutex)
+{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    WineWindow* window = (WineWindow*)w;
+
+    OnMainThread(^{
+        window.surface = surface;
+        window.surface_mutex = mutex;
+    });
+
+    [pool release];
+}
+
+/***********************************************************************
+ *              macdrv_window_needs_display
+ *
+ * Mark a window as needing display in a specified rect (in non-client
+ * area coordinates).
+ */
+void macdrv_window_needs_display(macdrv_window w, CGRect rect)
+{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    WineWindow* window = (WineWindow*)w;
+
+    OnMainThreadAsync(^{
+        [[window contentView] setNeedsDisplayInRect:NSRectFromCGRect(rect)];
+    });
+
+    [pool release];
 }
