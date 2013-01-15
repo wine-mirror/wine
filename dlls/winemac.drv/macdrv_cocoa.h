@@ -154,5 +154,10 @@ extern CGImageRef create_surface_image(void *window_surface, CGRect *rect, int c
 extern int get_surface_region_rects(void *window_surface, const CGRect **rects, int *count) DECLSPEC_HIDDEN;
 extern void macdrv_window_needs_display(macdrv_window w, CGRect rect) DECLSPEC_HIDDEN;
 extern void macdrv_set_window_shape(macdrv_window w, const CGRect *rects, int count) DECLSPEC_HIDDEN;
+extern void macdrv_set_window_alpha(macdrv_window w, CGFloat alpha) DECLSPEC_HIDDEN;
+extern void macdrv_set_window_color_key(macdrv_window w, CGFloat keyRed, CGFloat keyGreen,
+                                        CGFloat keyBlue) DECLSPEC_HIDDEN;
+extern void macdrv_clear_window_color_key(macdrv_window w) DECLSPEC_HIDDEN;
+extern void macdrv_window_use_per_pixel_alpha(macdrv_window w, int use_per_pixel_alpha) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_MACDRV_COCOA_H */

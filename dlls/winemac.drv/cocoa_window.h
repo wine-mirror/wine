@@ -34,6 +34,11 @@
 
     NSBezierPath* shape;
     BOOL shapeChangedSinceLastDraw;
+
+    BOOL colorKeyed;
+    CGFloat colorKeyRed, colorKeyGreen, colorKeyBlue;
+
+    BOOL usePerPixelAlpha;
 }
 
 @end

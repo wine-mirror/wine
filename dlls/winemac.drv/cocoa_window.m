@@ -72,6 +72,10 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 @property (nonatomic) BOOL shapeChangedSinceLastDraw;
 @property (readonly, nonatomic) BOOL needsTransparency;
 
+@property (nonatomic) BOOL colorKeyed;
+@property (nonatomic) CGFloat colorKeyRed, colorKeyGreen, colorKeyBlue;
+@property (nonatomic) BOOL usePerPixelAlpha;
+
     + (void) flipRect:(NSRect*)rect;
 
 @end
@@ -117,13 +121,28 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 
                     [window.shape addClip];
 
+                    if (window.colorKeyed)
+                    {
+                        CGImageRef maskedImage;
+                        CGFloat components[] = { window.colorKeyRed - 0.5, window.colorKeyRed + 0.5,
+                                                 window.colorKeyGreen - 0.5, window.colorKeyGreen + 0.5,
+                                                 window.colorKeyBlue - 0.5, window.colorKeyBlue + 0.5 };
+                        maskedImage = CGImageCreateWithMaskingColors(image, components);
+                        if (maskedImage)
+                        {
+                            CGImageRelease(image);
+                            image = maskedImage;
+                        }
+                    }
+
                     context = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
                     CGContextSetBlendMode(context, kCGBlendModeCopy);
                     CGContextDrawImage(context, imageRect, image);
 
                     CGImageRelease(image);
 
-                    if (window.shapeChangedSinceLastDraw)
+                    if (window.shapeChangedSinceLastDraw || window.colorKeyed ||
+                        window.usePerPixelAlpha)
                     {
                         window.shapeChangedSinceLastDraw = FALSE;
                         [window invalidateShadow];
@@ -143,6 +162,8 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
     @synthesize disabled, noActivate, floating, latentParentWindow;
     @synthesize surface, surface_mutex;
     @synthesize shape, shapeChangedSinceLastDraw;
+    @synthesize colorKeyed, colorKeyRed, colorKeyGreen, colorKeyBlue;
+    @synthesize usePerPixelAlpha;
 
     + (WineWindow*) createWindowWithFeatures:(const struct macdrv_window_features*)wf
                                  windowFrame:(NSRect)window_frame
@@ -338,7 +359,7 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 
     - (BOOL) needsTransparency
     {
-        return (self.shape != nil);
+        return self.shape || self.colorKeyed || self.usePerPixelAlpha;
     }
 
     - (void) checkTransparency
@@ -636,6 +657,71 @@ void macdrv_set_window_shape(macdrv_window w, const CGRect *rects, int count)
                 [path appendBezierPathWithRect:NSRectFromCGRect(rects[i])];
             window.shape = path;
         }
+    });
+
+    [pool release];
+}
+
+/***********************************************************************
+ *              macdrv_set_window_alpha
+ */
+void macdrv_set_window_alpha(macdrv_window w, CGFloat alpha)
+{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    WineWindow* window = (WineWindow*)w;
+
+    [window setAlphaValue:alpha];
+
+    [pool release];
+}
+
+/***********************************************************************
+ *              macdrv_set_window_color_key
+ */
+void macdrv_set_window_color_key(macdrv_window w, CGFloat keyRed, CGFloat keyGreen,
+                                 CGFloat keyBlue)
+{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    WineWindow* window = (WineWindow*)w;
+
+    OnMainThread(^{
+        window.colorKeyed       = TRUE;
+        window.colorKeyRed      = keyRed;
+        window.colorKeyGreen    = keyGreen;
+        window.colorKeyBlue     = keyBlue;
+        [window checkTransparency];
+    });
+
+    [pool release];
+}
+
+/***********************************************************************
+ *              macdrv_clear_window_color_key
+ */
+void macdrv_clear_window_color_key(macdrv_window w)
+{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    WineWindow* window = (WineWindow*)w;
+
+    OnMainThread(^{
+        window.colorKeyed = FALSE;
+        [window checkTransparency];
+    });
+
+    [pool release];
+}
+
+/***********************************************************************
+ *              macdrv_window_use_per_pixel_alpha
+ */
+void macdrv_window_use_per_pixel_alpha(macdrv_window w, int use_per_pixel_alpha)
+{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    WineWindow* window = (WineWindow*)w;
+
+    OnMainThread(^{
+        window.usePerPixelAlpha = use_per_pixel_alpha;
+        [window checkTransparency];
     });
 
     [pool release];

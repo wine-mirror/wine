@@ -9,10 +9,12 @@
 @ cdecl DestroyWindow(long) macdrv_DestroyWindow
 @ cdecl EnumDisplayMonitors(long ptr ptr long) macdrv_EnumDisplayMonitors
 @ cdecl GetMonitorInfo(long ptr) macdrv_GetMonitorInfo
+@ cdecl SetLayeredWindowAttributes(long long long long) macdrv_SetLayeredWindowAttributes
 @ cdecl SetParent(long long long) macdrv_SetParent
 @ cdecl SetWindowRgn(long long long) macdrv_SetWindowRgn
 @ cdecl SetWindowStyle(ptr long ptr) macdrv_SetWindowStyle
 @ cdecl SetWindowText(long wstr) macdrv_SetWindowText
+@ cdecl UpdateLayeredWindow(long ptr ptr) macdrv_UpdateLayeredWindow
 @ cdecl WindowMessage(long long long long) macdrv_WindowMessage
 @ cdecl WindowPosChanged(long long long ptr ptr ptr ptr ptr) macdrv_WindowPosChanged
 @ cdecl WindowPosChanging(long long long ptr ptr ptr ptr) macdrv_WindowPosChanging

@@ -61,6 +61,7 @@ struct macdrv_window_surface
     struct window_surface   header;
     macdrv_window           window;
     RECT                    bounds;
+    BOOL                    use_alpha;
     RGNDATA                *region_data;
     BYTE                   *bits;
     pthread_mutex_t         mutex;
@@ -184,7 +185,7 @@ static const struct window_surface_funcs macdrv_surface_funcs =
 /***********************************************************************
  *              create_surface
  */
-struct window_surface *create_surface(macdrv_window window, const RECT *rect)
+struct window_surface *create_surface(macdrv_window window, const RECT *rect, BOOL use_alpha)
 {
     struct macdrv_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
@@ -229,6 +230,7 @@ struct window_surface *create_surface(macdrv_window window, const RECT *rect)
     surface->header.ref   = 1;
     surface->window = window;
     reset_bounds(&surface->bounds);
+    surface->use_alpha = use_alpha;
     surface->bits = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, surface->info.bmiHeader.biSizeImage);
     if (!surface->bits) goto failed;
 
@@ -240,6 +242,15 @@ struct window_surface *create_surface(macdrv_window window, const RECT *rect)
 failed:
     macdrv_surface_destroy(&surface->header);
     return NULL;
+}
+
+/***********************************************************************
+ *              set_surface_use_alpha
+ */
+void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha)
+{
+    struct macdrv_window_surface *surface = get_mac_surface(window_surface);
+    surface->use_alpha = use_alpha;
 }
 
 /***********************************************************************
@@ -310,6 +321,7 @@ CGImageRef create_surface_image(void *window_surface, CGRect *rect, int copy_dat
         CGColorSpaceRef colorspace;
         CGDataProviderRef provider;
         int bytes_per_row, offset, size;
+        CGImageAlphaInfo alphaInfo;
 
         visrect = CGRectOffset(*rect, -surface->header.rect.left, -surface->header.rect.top);
 
@@ -328,9 +340,10 @@ CGImageRef create_surface_image(void *window_surface, CGRect *rect, int copy_dat
         else
             provider = CGDataProviderCreateWithData(NULL, surface->bits + offset, size, NULL);
 
+        alphaInfo = surface->use_alpha ? kCGImageAlphaPremultipliedFirst : kCGImageAlphaNoneSkipFirst;
         cgimage = CGImageCreate(CGRectGetWidth(visrect), CGRectGetHeight(visrect),
                                 8, 32, bytes_per_row, colorspace,
-                                kCGImageAlphaNoneSkipFirst | kCGBitmapByteOrder32Little,
+                                alphaInfo | kCGBitmapByteOrder32Little,
                                 provider, NULL, FALSE, kCGRenderingIntentDefault);
         CGDataProviderRelease(provider);
         CGColorSpaceRelease(colorspace);
