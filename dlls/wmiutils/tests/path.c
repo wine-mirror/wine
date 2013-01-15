@@ -370,6 +370,69 @@ static void test_IWbemPath_GetServer(void)
     IWbemPath_Release( path );
 }
 
+static void test_IWbemPath_GetInfo(void)
+{
+    IWbemPath *path;
+    HRESULT hr;
+    ULONGLONG resp;
+
+    if (!(path = create_path())) return;
+
+    hr = IWbemPath_GetInfo( path, 0, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+
+    hr = IWbemPath_GetInfo( path, 1, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+
+    resp = 0xdeadbeef;
+    hr = IWbemPath_GetInfo( path, 0, &resp );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( resp == (WBEMPATH_INFO_ANON_LOCAL_MACHINE | WBEMPATH_INFO_SERVER_NAMESPACE_ONLY),
+        "got %lx%08lx\n", (unsigned long)(resp >> 32), (unsigned long)resp );
+
+    hr = IWbemPath_SetText( path, WBEMPATH_CREATE_ACCEPT_ALL, path17 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWbemPath_GetInfo( path, 0, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+
+    hr = IWbemPath_GetInfo( path, 1, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+
+    resp = 0xdeadbeef;
+    hr = IWbemPath_GetInfo( path, 0, &resp );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( resp == (WBEMPATH_INFO_ANON_LOCAL_MACHINE | WBEMPATH_INFO_IS_INST_REF |
+                 WBEMPATH_INFO_HAS_SUBSCOPES | WBEMPATH_INFO_V2_COMPLIANT |
+                 WBEMPATH_INFO_CIM_COMPLIANT | WBEMPATH_INFO_PATH_HAD_SERVER),
+        "got %lx%08lx\n", (unsigned long)(resp >> 32), (unsigned long)resp );
+
+    IWbemPath_Release( path );
+    if (!(path = create_path())) return;
+
+    hr = IWbemPath_SetText( path, WBEMPATH_CREATE_ACCEPT_ALL, path12 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    resp = 0xdeadbeef;
+    hr = IWbemPath_GetInfo( path, 0, &resp );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( resp == (WBEMPATH_INFO_ANON_LOCAL_MACHINE | WBEMPATH_INFO_IS_CLASS_REF |
+                 WBEMPATH_INFO_HAS_SUBSCOPES | WBEMPATH_INFO_V2_COMPLIANT |
+                 WBEMPATH_INFO_CIM_COMPLIANT),
+        "got %lx%08lx\n", (unsigned long)(resp >> 32), (unsigned long)resp );
+
+    hr = IWbemPath_SetText( path, WBEMPATH_CREATE_ACCEPT_ALL, path1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    resp = 0xdeadbeef;
+    hr = IWbemPath_GetInfo( path, 0, &resp );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( resp == (WBEMPATH_INFO_ANON_LOCAL_MACHINE | WBEMPATH_INFO_SERVER_NAMESPACE_ONLY),
+        "got %lx%08lx\n", (unsigned long)(resp >> 32), (unsigned long)resp );
+
+    IWbemPath_Release( path );
+}
+
 START_TEST (path)
 {
     CoInitialize( NULL );
@@ -378,6 +441,7 @@ START_TEST (path)
     test_IWbemPath_GetText();
     test_IWbemPath_GetClassName();
     test_IWbemPath_GetServer();
+    test_IWbemPath_GetInfo();
 
     CoUninitialize();
 }

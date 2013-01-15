@@ -35,16 +35,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(wmiutils);
 struct path
 {
     IWbemPath IWbemPath_iface;
-    LONG    refs;
-    WCHAR  *text;
-    int     len_text;
-    WCHAR  *server;
-    int     len_server;
-    WCHAR **namespaces;
-    int    *len_namespaces;
-    int     num_namespaces;
-    WCHAR  *class;
-    int     len_class;
+    LONG      refs;
+    WCHAR    *text;
+    int       len_text;
+    WCHAR    *server;
+    int       len_server;
+    WCHAR   **namespaces;
+    int      *len_namespaces;
+    int       num_namespaces;
+    WCHAR    *class;
+    int       len_class;
+    ULONGLONG flags;
 };
 
 static void init_path( struct path *path )
@@ -58,6 +59,7 @@ static void init_path( struct path *path )
     path->num_namespaces = 0;
     path->class          = NULL;
     path->len_class      = 0;
+    path->flags          = 0;
 }
 
 static void clear_path( struct path *path )
@@ -136,6 +138,7 @@ static HRESULT parse_text( struct path *path, ULONG mode, const WCHAR *text )
         memcpy( path->server, p, len * sizeof(WCHAR) );
         path->server[len] = 0;
         path->len_server = len;
+        path->flags |= WBEMPATH_INFO_PATH_HAD_SERVER;
     }
     p = q;
     while (*q && *q != ':')
@@ -180,6 +183,7 @@ static HRESULT parse_text( struct path *path, ULONG mode, const WCHAR *text )
 
 done:
     if (hr != S_OK) clear_path( path );
+    else path->flags |= WBEMPATH_INFO_CIM_COMPLIANT | WBEMPATH_INFO_V2_COMPLIANT;
     return hr;
 }
 
@@ -197,6 +201,7 @@ static HRESULT WINAPI path_SetText(
     if (!uMode || !pszPath) return WBEM_E_INVALID_PARAMETER;
 
     clear_path( path );
+    if (!pszPath[0]) return S_OK;
     if ((hr = parse_text( path, uMode, pszPath )) != S_OK) return hr;
 
     len = strlenW( pszPath );
@@ -404,11 +409,34 @@ static HRESULT WINAPI path_GetText(
 
 static HRESULT WINAPI path_GetInfo(
     IWbemPath *iface,
-    ULONG uRequestedInfo,
-    ULONGLONG *puResponse)
+    ULONG info,
+    ULONGLONG *response)
 {
-    FIXME("%p, %d, %p\n", iface, uRequestedInfo, puResponse);
-    return E_NOTIMPL;
+    struct path *path = impl_from_IWbemPath( iface );
+
+    TRACE("%p, %u, %p\n", iface, info, response);
+
+    if (info || !response) return WBEM_E_INVALID_PARAMETER;
+
+    FIXME("some flags are not implemented\n");
+
+    *response = path->flags;
+    if (!path->server || (path->len_server == 1 && path->server[0] == '.'))
+        *response |= WBEMPATH_INFO_ANON_LOCAL_MACHINE;
+    else
+        *response |= WBEMPATH_INFO_HAS_MACHINE_NAME;
+
+    if (!path->class)
+        *response |= WBEMPATH_INFO_SERVER_NAMESPACE_ONLY;
+    else
+    {
+        *response |= WBEMPATH_INFO_HAS_SUBSCOPES;
+        if (path->text && strchrW( path->text, '=' )) /* FIXME */
+            *response |= WBEMPATH_INFO_IS_INST_REF;
+        else
+            *response |= WBEMPATH_INFO_IS_CLASS_REF;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI path_SetServer(
