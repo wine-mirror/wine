@@ -1672,6 +1672,75 @@ typedef struct _CONTEXT {
 
 #endif /* __arm__ */
 
+#ifdef __aarch64__
+/*
+ * FIXME:
+ *
+ * There is not yet an official CONTEXT structure defined for the AArch64
+ * architecture, so I just made one up.
+ *
+ */
+
+#define CONTEXT_ARM64           0x2000000
+#define CONTEXT_CONTROL         (CONTEXT_ARM64 | 0x00000001)
+#define CONTEXT_INTEGER         (CONTEXT_ARM64 | 0x00000002)
+#define CONTEXT_FLOATING_POINT  (CONTEXT_ARM64 | 0x00000004)
+#define CONTEXT_DEBUG_REGISTERS (CONTEXT_ARM64 | 0x00000008)
+
+#define CONTEXT_FULL (CONTEXT_CONTROL | CONTEXT_INTEGER)
+
+#define EXCEPTION_READ_FAULT    0
+#define EXCEPTION_WRITE_FAULT   1
+#define EXCEPTION_EXECUTE_FAULT 8
+
+typedef struct _CONTEXT {
+    ULONG ContextFlags;
+
+    /* This section is specified/returned if the ContextFlags word contains
+       the flag CONTEXT_INTEGER. */
+    ULONGLONG X0;
+    ULONGLONG X1;
+    ULONGLONG X2;
+    ULONGLONG X3;
+    ULONGLONG X4;
+    ULONGLONG X5;
+    ULONGLONG X6;
+    ULONGLONG X7;
+    ULONGLONG X8;
+    ULONGLONG X9;
+    ULONGLONG X10;
+    ULONGLONG X11;
+    ULONGLONG X12;
+    ULONGLONG X13;
+    ULONGLONG X14;
+    ULONGLONG X15;
+    ULONGLONG X16;
+    ULONGLONG X17;
+    ULONGLONG X18;
+    ULONGLONG X19;
+    ULONGLONG X20;
+    ULONGLONG X21;
+    ULONGLONG X22;
+    ULONGLONG X23;
+    ULONGLONG X24;
+    ULONGLONG X25;
+    ULONGLONG X26;
+    ULONGLONG X27;
+    ULONGLONG X28;
+    ULONGLONG X29;
+    ULONGLONG X30;
+
+    /* These are selected by CONTEXT_CONTROL */
+    ULONGLONG Sp;
+    ULONGLONG Pc;
+    ULONGLONG PState;
+
+    /* These are selected by CONTEXT_FLOATING_POINT */
+    /* FIXME */
+} CONTEXT;
+
+#endif /* __aarch64__ */
+
 
 /* Mips context definitions */
 #if defined(_MIPS_) || defined(__MIPS__) || defined(__mips__)
@@ -2449,6 +2518,7 @@ typedef struct _IMAGE_VXD_HEADER {
 
 /* Wine extension */
 #define	IMAGE_FILE_MACHINE_SPARC	0x2000
+#define	IMAGE_FILE_MACHINE_ARM64	0x01c5
 
 #define	IMAGE_SIZEOF_FILE_HEADER		20
 #define IMAGE_SIZEOF_ROM_OPTIONAL_HEADER	56
