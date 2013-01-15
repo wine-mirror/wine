@@ -557,6 +557,48 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
         if (ctx.flags & SERVER_CTX_INTEGER)
             for (i = 0; i < 13; i++) fprintf( stderr, ",r%u=%08x", i, ctx.integer.arm_regs.r[i] );
         break;
+    case CPU_ARM64:
+        if (ctx.flags & SERVER_CTX_CONTROL)
+        {
+            dump_uint64( ",sp=", &ctx.ctl.arm64_regs.sp );
+            dump_uint64( ",pc=", &ctx.ctl.arm64_regs.pc );
+            dump_uint64( ",pstate=", &ctx.ctl.arm64_regs.pstate );
+        }
+        if (ctx.flags & SERVER_CTX_INTEGER)
+        {
+            dump_uint64( ",x0=",  &ctx.integer.arm64_regs.x[0] );
+            dump_uint64( ",x1=",  &ctx.integer.arm64_regs.x[1] );
+            dump_uint64( ",x2=",  &ctx.integer.arm64_regs.x[2] );
+            dump_uint64( ",x3=",  &ctx.integer.arm64_regs.x[3] );
+            dump_uint64( ",x4=",  &ctx.integer.arm64_regs.x[4] );
+            dump_uint64( ",x5=",  &ctx.integer.arm64_regs.x[5] );
+            dump_uint64( ",x6=",  &ctx.integer.arm64_regs.x[6] );
+            dump_uint64( ",x7=",  &ctx.integer.arm64_regs.x[7] );
+            dump_uint64( ",x8=",  &ctx.integer.arm64_regs.x[8] );
+            dump_uint64( ",x9=",  &ctx.integer.arm64_regs.x[9] );
+            dump_uint64( ",x10=", &ctx.integer.arm64_regs.x[10] );
+            dump_uint64( ",x11=", &ctx.integer.arm64_regs.x[11] );
+            dump_uint64( ",x12=", &ctx.integer.arm64_regs.x[12] );
+            dump_uint64( ",x13=", &ctx.integer.arm64_regs.x[13] );
+            dump_uint64( ",x14=", &ctx.integer.arm64_regs.x[14] );
+            dump_uint64( ",x15=", &ctx.integer.arm64_regs.x[15] );
+            dump_uint64( ",x16=", &ctx.integer.arm64_regs.x[16] );
+            dump_uint64( ",x17=", &ctx.integer.arm64_regs.x[17] );
+            dump_uint64( ",x18=", &ctx.integer.arm64_regs.x[18] );
+            dump_uint64( ",x19=", &ctx.integer.arm64_regs.x[19] );
+            dump_uint64( ",x20=", &ctx.integer.arm64_regs.x[20] );
+            dump_uint64( ",x21=", &ctx.integer.arm64_regs.x[21] );
+            dump_uint64( ",x22=", &ctx.integer.arm64_regs.x[22] );
+            dump_uint64( ",x23=", &ctx.integer.arm64_regs.x[23] );
+            dump_uint64( ",x24=", &ctx.integer.arm64_regs.x[24] );
+            dump_uint64( ",x25=", &ctx.integer.arm64_regs.x[25] );
+            dump_uint64( ",x26=", &ctx.integer.arm64_regs.x[26] );
+            dump_uint64( ",x27=", &ctx.integer.arm64_regs.x[27] );
+            dump_uint64( ",x28=", &ctx.integer.arm64_regs.x[28] );
+            dump_uint64( ",x29=", &ctx.integer.arm64_regs.x[29] );
+            dump_uint64( ",x30=", &ctx.integer.arm64_regs.x[30] );
+        }
+        break;
     case CPU_SPARC:
         if (ctx.flags & SERVER_CTX_CONTROL)
             fprintf( stderr, ",psr=%08x,pc=%08x,npc=%08x,y=%08x,wim=%08x,tbr=%08x",
