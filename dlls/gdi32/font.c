@@ -3565,7 +3565,25 @@ BOOL WINAPI RemoveFontResourceExA( LPCSTR str, DWORD fl, PVOID pdv )
  */
 BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
 {
-    return WineEngRemoveFontResourceEx(str, fl, pdv);
+    int ret = WineEngRemoveFontResourceEx( str, fl, pdv );
+    WCHAR *filename;
+
+    if (ret == 0)
+    {
+        /* FreeType <2.3.5 has problems reading resources wrapped in PE files. */
+        HMODULE hModule = LoadLibraryExW(str, NULL, LOAD_LIBRARY_AS_DATAFILE);
+        if (hModule != NULL)
+        {
+            WARN("Can't unload resources from PE file %s\n", wine_dbgstr_w(str));
+            FreeLibrary(hModule);
+        }
+        else if ((filename = get_scalable_filename( str )) != NULL)
+        {
+            ret = WineEngRemoveFontResourceEx( filename, fl, pdv );
+            HeapFree( GetProcessHeap(), 0, filename );
+        }
+    }
+    return ret;
 }
 
 /***********************************************************************
