@@ -61,6 +61,7 @@ typedef struct BaseOutputPin
 	/* inheritance C style! */
 	BasePin pin;
 	IMemInputPin * pMemInputPin;
+	IMemAllocator * pAllocator;
 
 	const struct BaseOutputPinFuncTable* pFuncsTable;
 } BaseOutputPin;

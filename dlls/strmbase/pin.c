@@ -402,6 +402,9 @@ ULONG WINAPI BaseOutputPinImpl_Release(IPin * iface)
     if (!refCount)
     {
         FreeMediaType(&This->pin.mtCurrent);
+        if (This->pAllocator)
+            IMemAllocator_Release(This->pAllocator);
+        This->pAllocator = NULL;
         CoTaskMemFree(This);
         return 0;
     }
@@ -584,18 +587,10 @@ HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(BaseOutputPin *This, IMediaSa
         hr = VFW_E_NOT_CONNECTED;
     else
     {
-        IMemAllocator * pAlloc = NULL;
-
-        hr = IMemInputPin_GetAllocator(This->pMemInputPin, &pAlloc);
-
-        if (SUCCEEDED(hr))
-            hr = IMemAllocator_GetBuffer(pAlloc, ppSample, tStart, tStop, dwFlags);
+        hr = IMemAllocator_GetBuffer(This->pAllocator, ppSample, tStart, tStop, dwFlags);
 
         if (SUCCEEDED(hr))
             hr = IMediaSample_SetTime(*ppSample, tStart, tStop);
-
-        if (pAlloc)
-            IMemAllocator_Release(pAlloc);
     }
 
     return hr;
@@ -653,17 +648,7 @@ HRESULT WINAPI BaseOutputPinImpl_Active(BaseOutputPin *This)
         if (!This->pin.pConnectedTo || !This->pMemInputPin)
             hr = VFW_E_NOT_CONNECTED;
         else
-        {
-            IMemAllocator * pAlloc = NULL;
-
-            hr = IMemInputPin_GetAllocator(This->pMemInputPin, &pAlloc);
-
-            if (SUCCEEDED(hr))
-                hr = IMemAllocator_Commit(pAlloc);
-
-            if (pAlloc)
-                IMemAllocator_Release(pAlloc);
-        }
+            hr = IMemAllocator_Commit(This->pAllocator);
     }
     LeaveCriticalSection(This->pin.pCritSec);
 
@@ -683,17 +668,7 @@ HRESULT WINAPI BaseOutputPinImpl_Inactive(BaseOutputPin *This)
         if (!This->pin.pConnectedTo || !This->pMemInputPin)
             hr = VFW_E_NOT_CONNECTED;
         else
-        {
-            IMemAllocator * pAlloc = NULL;
-
-            hr = IMemInputPin_GetAllocator(This->pMemInputPin, &pAlloc);
-
-            if (SUCCEEDED(hr))
-                hr = IMemAllocator_Decommit(pAlloc);
-
-            if (pAlloc)
-                IMemAllocator_Release(pAlloc);
-        }
+            hr = IMemAllocator_Decommit(This->pAllocator);
     }
     LeaveCriticalSection(This->pin.pCritSec);
 
@@ -714,15 +689,7 @@ HRESULT WINAPI BaseOutputPinImpl_BreakConnect(BaseOutputPin *This)
             hr = VFW_E_NOT_CONNECTED;
         else
         {
-            IMemAllocator * pAlloc = NULL;
-
-            hr = IMemInputPin_GetAllocator(This->pMemInputPin, &pAlloc);
-
-            if (SUCCEEDED(hr))
-                hr = IMemAllocator_Decommit(pAlloc);
-
-            if (pAlloc)
-                IMemAllocator_Release(pAlloc);
+            hr = IMemAllocator_Decommit(This->pAllocator);
 
             if (SUCCEEDED(hr))
                 hr = IPin_Disconnect(This->pin.pConnectedTo);
@@ -795,7 +762,9 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(BasePin* iface, IPin * pRecei
         if (SUCCEEDED(hr))
         {
             hr = This->pFuncsTable->pfnDecideAllocator(This, This->pMemInputPin, &pMemAlloc);
-            if (pMemAlloc)
+            if (SUCCEEDED(hr))
+                This->pAllocator = pMemAlloc;
+            else if (pMemAlloc)
                 IMemAllocator_Release(pMemAlloc);
         }
 
@@ -839,6 +808,7 @@ static HRESULT OutputPin_Init(const IPinVtbl *OutputPin_Vtbl, const PIN_INFO * p
 
     /* Output pin attributes */
     pPinImpl->pMemInputPin = NULL;
+    pPinImpl->pAllocator = NULL;
     pPinImpl->pFuncsTable = pBaseOutputFuncsTable;
 
     return S_OK;
