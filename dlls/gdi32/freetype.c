@@ -270,7 +270,6 @@ typedef struct tagFace {
     DWORD ntmFlags;
     FT_Fixed font_version;
     BOOL scalable;
-    BOOL vertical;
     Bitmap_Size size;     /* set if face is a bitmap */
     DWORD flags;          /* ADDFONT flags */
     struct tagFamily *family;
@@ -282,6 +281,7 @@ typedef struct tagFace {
 #define ADDFONT_ALLOW_BITMAP  0x02
 #define ADDFONT_ADD_TO_CACHE  0x04
 #define ADDFONT_ADD_RESOURCE  0x08  /* added through AddFontResource */
+#define ADDFONT_VERTICAL_FONT 0x10
 #define ADDFONT_AA_FLAGS(flags) ((flags) << 16)
 
 typedef struct tagFamily {
@@ -493,7 +493,6 @@ static const WCHAR english_name_value[] = {'E','n','g','l','i','s','h',' ','N','
 static const WCHAR face_index_value[] = {'I','n','d','e','x',0};
 static const WCHAR face_ntmflags_value[] = {'N','t','m','f','l','a','g','s',0};
 static const WCHAR face_version_value[] = {'V','e','r','s','i','o','n',0};
-static const WCHAR face_vertical_value[] = {'V','e','r','t','i','c','a','l',0};
 static const WCHAR face_height_value[] = {'H','e','i','g','h','t',0};
 static const WCHAR face_width_value[] = {'W','i','d','t','h',0};
 static const WCHAR face_size_value[] = {'S','i','z','e',0};
@@ -1394,7 +1393,6 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family, void *bu
         reg_load_dword(hkey_face, face_index_value, (DWORD*)&face->face_index);
         reg_load_dword(hkey_face, face_ntmflags_value, &face->ntmFlags);
         reg_load_dword(hkey_face, face_version_value, (DWORD*)&face->font_version);
-        reg_load_dword(hkey_face, face_vertical_value, (DWORD*)&face->vertical);
         reg_load_dword(hkey_face, face_flags_value, (DWORD*)&face->flags);
 
         needed = sizeof(face->fs);
@@ -1551,7 +1549,6 @@ static void add_face_to_cache(Face *face)
     reg_save_dword(hkey_face, face_index_value, face->face_index);
     reg_save_dword(hkey_face, face_ntmflags_value, face->ntmFlags);
     reg_save_dword(hkey_face, face_version_value, face->font_version);
-    if (face->vertical) reg_save_dword(hkey_face, face_vertical_value, face->vertical);
     if (face->flags) reg_save_dword(hkey_face, face_flags_value, face->flags);
 
     RegSetValueExW(hkey_face, face_font_sig_value, 0, REG_BINARY, (BYTE*)&face->fs, sizeof(face->fs));
@@ -1741,7 +1738,7 @@ static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
 }
 
 static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file, void *font_data_ptr, DWORD font_data_size,
-                          DWORD flags, BOOL vertical )
+                          DWORD flags )
 {
     Face *face = HeapAlloc( GetProcessHeap(), 0, sizeof(*face) );
     My_FT_Bitmap_Size *size = (My_FT_Bitmap_Size *)ft_face->available_sizes;
@@ -1758,7 +1755,7 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
     face->FullName = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, GetSystemDefaultLangID() );
     if (!face->FullName)
         face->FullName = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, TT_MS_LANGID_ENGLISH_UNITED_STATES );
-    if (vertical)
+    if (flags & ADDFONT_VERTICAL_FONT)
         face->FullName = prepend_at( face->FullName );
 
     if (file)
@@ -1799,7 +1796,6 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
     }
 
     if (!HIWORD( flags )) flags |= ADDFONT_AA_FLAGS( default_aa_flags );
-    face->vertical = vertical;
     face->flags  = flags;
     face->family = NULL;
     face->cached_enum_data = NULL;
@@ -1813,13 +1809,13 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
 }
 
 static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr, DWORD font_data_size,
-                          FT_Long face_index, DWORD flags, BOOL vertical )
+                          FT_Long face_index, DWORD flags )
 {
     Face *face;
     Family *family;
 
-    face = create_face( ft_face, face_index, file, font_data_ptr, font_data_size, flags, vertical );
-    family = get_family( ft_face, vertical );
+    face = create_face( ft_face, face_index, file, font_data_ptr, font_data_size, flags );
+    family = get_family( ft_face, flags & ADDFONT_VERTICAL_FONT );
     if (insert_face_in_family_list( face, family ))
     {
         if (flags & ADDFONT_ADD_TO_CACHE)
@@ -1949,12 +1945,13 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             return 0;
         }
 
-        AddFaceToList(ft_face, file, font_data_ptr, font_data_size, face_index, flags, FALSE);
+        AddFaceToList(ft_face, file, font_data_ptr, font_data_size, face_index, flags);
         ++ret;
 
         if (FT_HAS_VERTICAL(ft_face))
         {
-            AddFaceToList(ft_face, file, font_data_ptr, font_data_size, face_index, flags, TRUE);
+            AddFaceToList(ft_face, file, font_data_ptr, font_data_size, face_index,
+                          flags | ADDFONT_VERTICAL_FONT);
             ++ret;
         }
 
@@ -3007,7 +3004,7 @@ static BOOL get_fontdir( const char *unix_name, struct fontdir *fd )
     DWORD type;
 
     if (!ft_face) return FALSE;
-    face = create_face( ft_face, 0, unix_name, NULL, 0, 0, FALSE );
+    face = create_face( ft_face, 0, unix_name, NULL, 0, 0 );
     get_family_names( ft_face, &name, &english_name, FALSE );
     pFT_Done_Face( ft_face );
 
@@ -4783,7 +4780,7 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
         font_link = find_font_link(family->FamilyName);
         face_list = get_face_list_from_family(family);
         LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
-            if(face->vertical == want_vertical &&
+            if(!(face->flags & ADDFONT_VERTICAL_FONT) == !want_vertical &&
                (csi.fs.fsCsb[0] & face->fs.fsCsb[0] ||
                 (font_link != NULL && csi.fs.fsCsb[0] & font_link->fs.fsCsb[0]))) {
                 if(face->scalable)
@@ -4803,7 +4800,7 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
         face_list = get_face_list_from_family(family);
         LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
-            if(face->scalable && face->vertical == want_vertical) {
+            if(face->scalable && !(face->flags & ADDFONT_VERTICAL_FONT) == !want_vertical) {
                 csi.fs.fsCsb[0] = 0;
                 WARN("just using first face for now\n");
                 goto found;
@@ -4948,7 +4945,7 @@ found_face:
     ret->strikeout = lf.lfStrikeOut ? 0xff : 0;
     create_child_font_list(ret);
 
-    if (face->vertical) /* We need to try to load the GSUB table */
+    if (face->flags & ADDFONT_VERTICAL_FONT) /* We need to try to load the GSUB table */
     {
         int length = get_font_data(ret, GSUB_TAG , 0, NULL, 0);
         if (length != GDI_ERROR)
