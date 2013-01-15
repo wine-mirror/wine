@@ -301,8 +301,9 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                 wined3d_device_get_transform(device->wined3d_device,
                         WINED3D_TS_WORLD_MATRIX(0), (struct wined3d_matrix *)&world_mat);
 
-		for (i = 0; i < count; i++) {
-		    LPD3DPROCESSVERTICES ci = (LPD3DPROCESSVERTICES) instr;
+                for (i = 0; i < count; ++i)
+                {
+                    D3DPROCESSVERTICES *ci = (D3DPROCESSVERTICES *)instr;
 
                     TRACE("  Start : %d Dest : %d Count : %d\n",
 			  ci->wStart, ci->wDest, ci->dwCount);
