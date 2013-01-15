@@ -2651,7 +2651,7 @@ static void test_coop_level_multi_window(void)
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window2, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
-    todo_wine ok(IsWindow(window1), "Window 1 was destroyed.\n");
+    ok(IsWindow(window1), "Window 1 was destroyed.\n");
     ok(IsWindow(window2), "Window 2 was destroyed.\n");
 
     IDirectDraw_Release(ddraw);

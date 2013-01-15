@@ -551,9 +551,6 @@ static HRESULT ddraw_set_focus_window(struct ddraw *ddraw, HWND window)
 
     ddraw->focuswindow = window;
 
-    /* Use the focus window for drawing too. */
-    ddraw->dest_window = ddraw->focuswindow;
-
     return DD_OK;
 }
 
@@ -852,10 +849,6 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
         }
     }
 
-    /* Don't override focus windows or private device windows */
-    if (hwnd && !This->focuswindow && !This->devicewindow && (hwnd != window))
-        This->dest_window = hwnd;
-
     if (cooplevel & DDSCL_MULTITHREADED && !(This->cooperative_level & DDSCL_MULTITHREADED))
         wined3d_device_set_multithreaded(This->wined3d_device);
 
@@ -886,7 +879,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
         ddraw_destroy_swapchain(This);
     }
 
-    if (FAILED(hr = ddraw_create_swapchain(This, This->dest_window, !(cooplevel & DDSCL_FULLSCREEN))))
+    if (FAILED(hr = ddraw_create_swapchain(This, hwnd, !(cooplevel & DDSCL_FULLSCREEN))))
         ERR("Failed to create swapchain, hr %#x.\n", hr);
 
     if (restore_state)
@@ -922,6 +915,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
 
     /* Store the cooperative_level */
     This->cooperative_level = cooplevel;
+    This->dest_window = hwnd;
     TRACE("SetCooperativeLevel retuning DD_OK\n");
     wined3d_mutex_unlock();
 
