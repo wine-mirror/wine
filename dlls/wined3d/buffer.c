@@ -1207,6 +1207,15 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
     TRACE("size %#x, usage %#x, format %s, memory @ %p, iface @ %p.\n", buffer->resource.size, buffer->resource.usage,
             debug_d3dformat(buffer->resource.format->id), buffer->resource.allocatedMemory, buffer);
 
+    if (device->create_parms.flags & WINED3DCREATE_SOFTWARE_VERTEXPROCESSING)
+    {
+        /* SWvp always returns the same pointer in buffer maps and retains data in DISCARD maps.
+         * Keep a system memory copy of the buffer to provide the same behavior to the application.
+         * Still use a VBO to support OpenGL 3 core contexts. */
+        TRACE("Using doublebuffer mode because of software vertex processing\n");
+        buffer->flags |= WINED3D_BUFFER_DOUBLEBUFFER;
+    }
+
     dynamic_buffer_ok = gl_info->supported[APPLE_FLUSH_BUFFER_RANGE] || gl_info->supported[ARB_MAP_BUFFER_RANGE];
 
     /* Observations show that drawStridedSlow is faster on dynamic VBs than converting +
