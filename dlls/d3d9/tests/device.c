@@ -6030,6 +6030,101 @@ static void test_set_palette(void)
     DestroyWindow(window);
 }
 
+static void test_swvp_buffer(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
+    UINT refcount;
+    HWND window;
+    HRESULT hr;
+    unsigned int i;
+    IDirect3DVertexBuffer9 *buffer;
+    static const unsigned int bufsize = 1024;
+    D3DVERTEXBUFFER_DESC desc;
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    struct
+    {
+        float x, y, z;
+    } *ptr, *ptr2;
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D9 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    present_parameters.Windowed = TRUE;
+    present_parameters.hDeviceWindow = window;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.BackBufferWidth = screen_width;
+    present_parameters.BackBufferHeight = screen_height;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.EnableAutoDepthStencil = FALSE;
+    if (FAILED(IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        DestroyWindow(window);
+        IDirect3D9_Release(d3d9);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, bufsize * sizeof(*ptr), D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0,
+            D3DPOOL_DEFAULT, &buffer, NULL);
+    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    hr = IDirect3DVertexBuffer9_GetDesc(buffer, &desc);
+    ok(SUCCEEDED(hr), "Failed to get desc, hr %#x.\n", hr);
+    ok(desc.Pool == D3DPOOL_DEFAULT, "Got pool %u, expected D3DPOOL_DEFAULT\n", desc.Pool);
+    ok(desc.Usage == (D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY),
+            "Got usage %u, expected D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY\n", desc.Usage);
+
+    hr = IDirect3DVertexBuffer9_Lock(buffer, 0, bufsize * sizeof(*ptr), (void **)&ptr, D3DLOCK_DISCARD);
+    ok(SUCCEEDED(hr), "Failed to lock buffer, hr %#x.\n", hr);
+    for (i = 0; i < bufsize; i++)
+    {
+        ptr[i].x = i * 1.0f;
+        ptr[i].y = i * 2.0f;
+        ptr[i].z = i * 3.0f;
+    }
+    hr = IDirect3DVertexBuffer9_Unlock(buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(SUCCEEDED(hr), "Failed to set fvf, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, buffer, 0, sizeof(*ptr));
+    ok(SUCCEEDED(hr), "Failed to set stream source, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLELIST, 0, 2);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer9_Lock(buffer, 0, bufsize * sizeof(*ptr2), (void **)&ptr2, D3DLOCK_DISCARD);
+    ok(SUCCEEDED(hr), "Failed to lock buffer, hr %#x.\n", hr);
+    ok(ptr == ptr2, "Lock returned two different pointers: %p, %p\n", ptr, ptr2);
+    for (i = 0; i < bufsize; i++)
+    {
+        if (ptr2[i].x != i * 1.0f || ptr2[i].y != i * 2.0f || ptr2[i].z != i * 3.0f)
+        {
+            ok(FALSE, "Vertex %u is %f,%f,%f, expected %f,%f,%f\n", i,
+                    ptr2[i].x, ptr2[i].y, ptr2[i].z, i * 1.0f, i * 2.0f, i * 3.0f);
+            break;
+        }
+    }
+    hr = IDirect3DVertexBuffer9_Unlock(buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock buffer, hr %#x.\n", hr);
+
+    IDirect3DVertexBuffer9_Release(buffer);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -6116,6 +6211,7 @@ START_TEST(device)
         test_surface_double_unlock();
         test_surface_lockrect_blocks();
         test_set_palette();
+        test_swvp_buffer();
     }
 
 out:
