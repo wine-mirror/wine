@@ -251,7 +251,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_DownloadInstrument(LPDIRECT
     ULONG offset;
     ULONG nb_regions;
     ULONG size;
-    int i;
+    ULONG i;
 
     TRACE("(%p/%p)->(%p, %p, %p, %d)\n", iface, This, instrument, downloaded_instrument, note_ranges, num_note_ranges);
 
@@ -684,7 +684,7 @@ HRESULT DMUSIC_CreateSynthPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkou
 {
     SynthPortImpl *obj;
     HRESULT hr = E_FAIL;
-    UINT i;
+    int i;
 
     TRACE("(%p,%p,%p,%p,%p%d)\n", guid, object, unkouter, port_params, port_caps, device);
 

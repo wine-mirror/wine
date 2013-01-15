@@ -316,7 +316,7 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
     MIDIINCAPSW caps_in;
     IDirectMusicSynth8* synth;
     HRESULT hr;
-    int i;
+    ULONG i;
 
     TRACE("(%p)\n", object);
 
