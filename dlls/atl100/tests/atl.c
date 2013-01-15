@@ -23,6 +23,7 @@
 #define CONST_VTABLE
 
 #include <atlbase.h>
+#include <mshtml.h>
 
 #include <wine/test.h>
 
@@ -37,6 +38,21 @@ static const GUID CATID_CatTest1 =
 static const GUID CATID_CatTest2 =
     {0x178fc163,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x46}};
 #define CATID_CATTEST2_STR "178fc163-0000-0000-0000-000000000246"
+
+static const char *debugstr_guid(REFIID riid)
+{
+    static char buf[50];
+
+    if(!riid)
+        return "(null)";
+
+    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
+            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
+            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
+
+    return buf;
+}
 
 static void test_winmodule(void)
 {
@@ -343,6 +359,203 @@ static void test_cp(void)
     ok(!advise_cnt, "advise_cnt = %d\n", advise_cnt);
 }
 
+static CLSID persist_clsid;
+
+static HRESULT WINAPI Persist_QueryInterface(IPersist *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Persist_AddRef(IPersist *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Persist_Release(IPersist *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI Persist_GetClassID(IPersist *iface, CLSID *pClassID)
+{
+    *pClassID = persist_clsid;
+    return S_OK;
+}
+
+static const IPersistVtbl PersistVtbl = {
+    Persist_QueryInterface,
+    Persist_AddRef,
+    Persist_Release,
+    Persist_GetClassID
+};
+
+static IPersist Persist = { &PersistVtbl };
+
+static HRESULT WINAPI ProvideClassInfo2_QueryInterface(IProvideClassInfo2 *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ProvideClassInfo2_AddRef(IProvideClassInfo2 *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ProvideClassInfo2_Release(IProvideClassInfo2 *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ProvideClassInfo2_GetClassInfo(IProvideClassInfo2 *iface, ITypeInfo **ppTI)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProvideClassInfo2_GetGUID(IProvideClassInfo2 *iface, DWORD dwGuidKind, GUID *pGUID)
+{
+    ok(dwGuidKind == GUIDKIND_DEFAULT_SOURCE_DISP_IID, "unexpected dwGuidKind %x\n", dwGuidKind);
+    *pGUID = DIID_DispHTMLBody;
+    return S_OK;
+}
+
+static const IProvideClassInfo2Vtbl ProvideClassInfo2Vtbl = {
+    ProvideClassInfo2_QueryInterface,
+    ProvideClassInfo2_AddRef,
+    ProvideClassInfo2_Release,
+    ProvideClassInfo2_GetClassInfo,
+    ProvideClassInfo2_GetGUID
+};
+
+static IProvideClassInfo2 ProvideClassInfo2 = { &ProvideClassInfo2Vtbl };
+static BOOL support_classinfo2;
+
+static HRESULT WINAPI Dispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IDispatch, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(&IID_IProvideClassInfo2, riid)) {
+        if(!support_classinfo2)
+            return E_NOINTERFACE;
+        *ppv = &ProvideClassInfo2;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(&IID_IPersist, riid)) {
+        *ppv = &Persist;
+        return S_OK;
+    }
+
+    ok(0, "unexpected riid: %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Dispatch_AddRef(IDispatch *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Dispatch_Release(IDispatch *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI Dispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Dispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID lcid,
+        ITypeInfo **ppTInfo)
+{
+    ITypeLib *typelib;
+    HRESULT hres;
+
+    static const WCHAR mshtml_tlbW[] = {'m','s','h','t','m','l','.','t','l','b',0};
+
+    ok(!iTInfo, "iTInfo = %d\n", iTInfo);
+    ok(!lcid, "lcid = %x\n", lcid);
+
+    hres = LoadTypeLib(mshtml_tlbW, &typelib);
+    ok(hres == S_OK, "LoadTypeLib failed: %08x\n", hres);
+
+    hres = ITypeLib_GetTypeInfoOfGuid(typelib, &IID_IHTMLElement, ppTInfo);
+    ok(hres == S_OK, "GetTypeInfoOfGuid failed: %08x\n", hres);
+
+    ITypeLib_Release(typelib);
+    return S_OK;
+}
+
+static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IDispatchVtbl DispatchVtbl = {
+    Dispatch_QueryInterface,
+    Dispatch_AddRef,
+    Dispatch_Release,
+    Dispatch_GetTypeInfoCount,
+    Dispatch_GetTypeInfo,
+    Dispatch_GetIDsOfNames,
+    Dispatch_Invoke
+};
+
+static IDispatch Dispatch = { &DispatchVtbl };
+
+static void test_source_iface(void)
+{
+    unsigned short maj_ver, min_ver;
+    IID libid, iid;
+    HRESULT hres;
+
+    support_classinfo2 = TRUE;
+
+    maj_ver = min_ver = 0xdead;
+    hres = AtlGetObjectSourceInterface((IUnknown*)&Dispatch, &libid, &iid, &maj_ver, &min_ver);
+    ok(hres == S_OK, "AtlGetObjectSourceInterface failed: %08x\n", hres);
+    ok(IsEqualGUID(&libid, &LIBID_MSHTML), "libid = %s\n", debugstr_guid(&libid));
+    ok(IsEqualGUID(&iid, &DIID_DispHTMLBody), "iid = %s\n", debugstr_guid(&iid));
+    ok(maj_ver == 4 && min_ver == 0, "ver = %d.%d\n", maj_ver, min_ver);
+
+    support_classinfo2 = FALSE;
+    persist_clsid = CLSID_HTMLDocument;
+
+    maj_ver = min_ver = 0xdead;
+    hres = AtlGetObjectSourceInterface((IUnknown*)&Dispatch, &libid, &iid, &maj_ver, &min_ver);
+    ok(hres == S_OK, "AtlGetObjectSourceInterface failed: %08x\n", hres);
+    ok(IsEqualGUID(&libid, &LIBID_MSHTML), "libid = %s\n", debugstr_guid(&libid));
+    ok(IsEqualGUID(&iid, &DIID_HTMLDocumentEvents), "iid = %s\n", debugstr_guid(&iid));
+    ok(maj_ver == 4 && min_ver == 0, "ver = %d.%d\n", maj_ver, min_ver);
+
+    persist_clsid = CLSID_HTMLStyle;
+
+    maj_ver = min_ver = 0xdead;
+    hres = AtlGetObjectSourceInterface((IUnknown*)&Dispatch, &libid, &iid, &maj_ver, &min_ver);
+    ok(hres == S_OK, "AtlGetObjectSourceInterface failed: %08x\n", hres);
+    ok(IsEqualGUID(&libid, &LIBID_MSHTML), "libid = %s\n", debugstr_guid(&libid));
+    ok(IsEqualGUID(&iid, &IID_NULL), "iid = %s\n", debugstr_guid(&iid));
+    ok(maj_ver == 4 && min_ver == 0, "ver = %d.%d\n", maj_ver, min_ver);
+}
+
 START_TEST(atl)
 {
     CoInitialize(NULL);
@@ -351,6 +564,7 @@ START_TEST(atl)
     test_regcat();
     test_typelib();
     test_cp();
+    test_source_iface();
 
     CoUninitialize();
 }
