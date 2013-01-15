@@ -266,7 +266,8 @@ static void set_target( const char *target )
         { "sparc",   SYS_WIN32 },
         { "alpha",   SYS_WIN32 },
         { "powerpc", SYS_WIN32 },
-        { "arm",     SYS_WIN32 }
+        { "arm",     SYS_WIN32 },
+        { "aarch64", SYS_WIN64 }
     };
 
     unsigned int i;
