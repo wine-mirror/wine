@@ -1734,10 +1734,13 @@ static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, c
             if (desU.x || desU.y)
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, desU.x, desU.y, &devX, &devY);
-                if (!analysis->fRTL) pGoffset[glyph_index].du -= piAdvance[glyph_index-1];
-                else if (analysis->fLogicalOrder) devX *= -1;
-                pGoffset[glyph_index].du += round(devX);
-                pGoffset[glyph_index].dv += round(devY);
+                if (!analysis->fRTL) pGoffset[glyph_index].du = round(devX) - piAdvance[glyph_index-1];
+                else
+                {
+                    if (analysis->fLogicalOrder) devX *= -1;
+                    pGoffset[glyph_index].du = round(devX);
+                }
+                pGoffset[glyph_index].dv = round(devY);
             }
             break;
         }
@@ -1749,8 +1752,8 @@ static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, c
             if (desU.x || desU.y)
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, desU.x, desU.y, &devX, &devY);
-                pGoffset[glyph_index].du += (round(devX) - piAdvance[glyph_index-1]);
-                pGoffset[glyph_index].dv += round(devY);
+                pGoffset[glyph_index].du = (round(devX) - piAdvance[glyph_index-1]);
+                pGoffset[glyph_index].dv = round(devY);
             }
             break;
         }
@@ -1764,8 +1767,8 @@ static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, c
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, desU.x, desU.y, &devX, &devY);
                 if (analysis->fRTL && analysis->fLogicalOrder) devX *= -1;
-                pGoffset[glyph_index].du += round(devX) + pGoffset[glyph_index - write_dir].du;
-                pGoffset[glyph_index].dv += round(devY) + pGoffset[glyph_index - write_dir].dv;
+                pGoffset[glyph_index].du = round(devX) + pGoffset[glyph_index - write_dir].du;
+                pGoffset[glyph_index].dv = round(devY) + pGoffset[glyph_index - write_dir].dv;
             }
             break;
         }
