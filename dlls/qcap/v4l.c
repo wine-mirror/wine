@@ -47,7 +47,8 @@
 #endif
 #ifdef HAVE_LIBV4L1_H
 #include <libv4l1.h>
-#elif defined(HAVE_LINUX_VIDEODEV_H)
+#endif
+#ifdef HAVE_LINUX_VIDEODEV_H
 #include <linux/videodev.h>
 #endif
 #ifdef HAVE_UNISTD_H
