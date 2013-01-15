@@ -684,7 +684,6 @@ HRESULT qcap_driver_run(Capture *capBox, FILTER_STATE *state)
         *state = State_Running;
         if (!capBox->iscommitted++)
         {
-            IMemAllocator * pAlloc = NULL;
             ALLOCATOR_PROPERTIES ap, actual;
             BaseOutputPin *out;
 
@@ -698,16 +697,11 @@ HRESULT qcap_driver_run(Capture *capBox, FILTER_STATE *state)
             ap.cbPrefix = 0;
 
             out = (BaseOutputPin *)capBox->pOut;
-            hr = IMemInputPin_GetAllocator(out->pMemInputPin, &pAlloc);
+
+            hr = IMemAllocator_SetProperties(out->pAllocator, &ap, &actual);
 
             if (SUCCEEDED(hr))
-                hr = IMemAllocator_SetProperties(pAlloc, &ap, &actual);
-
-            if (SUCCEEDED(hr))
-                hr = IMemAllocator_Commit(pAlloc);
-
-            if (pAlloc)
-                IMemAllocator_Release(pAlloc);
+                hr = IMemAllocator_Commit(out->pAllocator);
 
             TRACE("Committing allocator: %x\n", hr);
         }
@@ -765,32 +759,14 @@ HRESULT qcap_driver_stop(Capture *capBox, FILTER_STATE *state)
         capBox->thread = 0;
         if (capBox->iscommitted)
         {
-            IMemInputPin *pMem = NULL;
-            IMemAllocator * pAlloc = NULL;
-            IPin *pConnect = NULL;
+            BaseOutputPin *out;
             HRESULT hr;
 
             capBox->iscommitted = 0;
 
-            hr = IPin_ConnectedTo(capBox->pOut, &pConnect);
+            out = (BaseOutputPin*)capBox->pOut;
 
-            if (SUCCEEDED(hr))
-                hr = IPin_QueryInterface(pConnect, &IID_IMemInputPin, (void **) &pMem);
-
-            if (SUCCEEDED(hr))
-                hr = IMemInputPin_GetAllocator(pMem, &pAlloc);
-
-            if (SUCCEEDED(hr))
-                hr = IMemAllocator_Decommit(pAlloc);
-
-            if (pAlloc)
-                IMemAllocator_Release(pAlloc);
-
-            if (pMem)
-                IMemInputPin_Release(pMem);
-
-            if (pConnect)
-                IPin_Release(pConnect);
+            hr = IMemAllocator_Decommit(out->pAllocator);
 
             if (hr != S_OK && hr != VFW_E_NOT_COMMITTED)
                 WARN("Decommitting allocator: %x\n", hr);
