@@ -3405,16 +3405,41 @@ static void *map_file( const WCHAR *filename, LARGE_INTEGER *size )
     return ptr;
 }
 
-static WCHAR *get_scalable_filename( const WCHAR *res )
+static void *find_resource( BYTE *ptr, WORD type, DWORD rsrc_off, DWORD size, DWORD *len )
+{
+    WORD align, type_id, count;
+    DWORD res_off;
+
+    if (size < rsrc_off + 10) return NULL;
+    align = *(WORD *)(ptr + rsrc_off);
+    rsrc_off += 2;
+    type_id = *(WORD *)(ptr + rsrc_off);
+    while (type_id && type_id != type)
+    {
+        count = *(WORD *)(ptr + rsrc_off + 2);
+        rsrc_off += 8 + count * 12;
+        if (size < rsrc_off + 8) return NULL;
+        type_id = *(WORD *)(ptr + rsrc_off);
+    }
+    if (!type_id) return NULL;
+    count = *(WORD *)(ptr + rsrc_off + 2);
+    if (size < rsrc_off + 8 + count * 12) return NULL;
+    res_off = *(WORD *)(ptr + rsrc_off + 8) << align;
+    *len = *(WORD *)(ptr + rsrc_off + 10) << align;
+    if (size < res_off + *len) return NULL;
+    return ptr + res_off;
+}
+
+static WCHAR *get_scalable_filename( const WCHAR *res, BOOL *hidden )
 {
     LARGE_INTEGER size;
     BYTE *ptr = map_file( res, &size );
     const IMAGE_DOS_HEADER *dos;
     const IMAGE_OS2_HEADER *ne;
+    WORD *fontdir;
+    char *data;
     WCHAR *name = NULL;
-    WORD rsrc_off, align, type_id, count;
-    DWORD res_off, res_len, i;
-    int len;
+    DWORD len;
 
     if (!ptr) return NULL;
 
@@ -3423,33 +3448,18 @@ static WCHAR *get_scalable_filename( const WCHAR *res )
     if (dos->e_magic != IMAGE_DOS_SIGNATURE) goto fail;
     if (size.u.LowPart < dos->e_lfanew + sizeof( *ne )) goto fail;
     ne = (const IMAGE_OS2_HEADER *)(ptr + dos->e_lfanew);
-    rsrc_off = dos->e_lfanew + ne->ne_rsrctab;
-    if (size.u.LowPart < rsrc_off + 10) goto fail;
-    align = *(WORD *)(ptr + rsrc_off);
-    rsrc_off += 2;
-    type_id = *(WORD *)(ptr + rsrc_off);
-    while (type_id && type_id != 0x80cc)
-    {
-        count = *(WORD *)(ptr + rsrc_off + 2);
-        rsrc_off += 8 + count * 12;
-        if (size.u.LowPart < rsrc_off + 8) goto fail;
-        type_id = *(WORD *)(ptr + rsrc_off);
-    }
-    if (!type_id) goto fail;
-    count = *(WORD *)(ptr + rsrc_off + 2);
-    if (size.u.LowPart < rsrc_off + 8 + count * 12) goto fail;
 
-    res_off = *(WORD *)(ptr + rsrc_off + 8) << align;
-    res_len = *(WORD *)(ptr + rsrc_off + 10) << align;
-    if (size.u.LowPart < res_off + res_len) goto fail;
+    fontdir = find_resource( ptr, 0x8007, dos->e_lfanew + ne->ne_rsrctab, size.u.LowPart, &len );
+    if (!fontdir) goto fail;
+    *hidden = (fontdir[35] & 0x80) != 0;  /* fontdir->dfType */
 
-    for (i = 0; i < res_len; i++)
-        if (ptr[ res_off + i ] == 0) break;
-    if (i == res_len) goto fail;
+    data = find_resource( ptr, 0x80cc, dos->e_lfanew + ne->ne_rsrctab, size.u.LowPart, &len );
+    if (!data) goto fail;
+    if (!memchr( data, 0, len )) goto fail;
 
-    len = MultiByteToWideChar( CP_ACP, 0, (char *)ptr + res_off, -1, NULL, 0 );
+    len = MultiByteToWideChar( CP_ACP, 0, data, -1, NULL, 0 );
     name = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-    if (name) MultiByteToWideChar( CP_ACP, 0, (char *)ptr + res_off, -1, name, len );
+    if (name) MultiByteToWideChar( CP_ACP, 0, data, -1, name, len );
 
 fail:
     UnmapViewOfFile( ptr );
@@ -3463,6 +3473,7 @@ INT WINAPI AddFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
 {
     int ret = WineEngAddFontResourceEx(str, fl, pdv);
     WCHAR *filename;
+    BOOL hidden;
 
     if (ret == 0)
     {
@@ -3479,8 +3490,9 @@ INT WINAPI AddFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
                 ret = num_resources;
             FreeLibrary(hModule);
         }
-        else if ((filename = get_scalable_filename( str )) != NULL)
+        else if ((filename = get_scalable_filename( str, &hidden )) != NULL)
         {
+            if (hidden) fl |= FR_PRIVATE | FR_NOT_ENUM;
             ret = WineEngAddFontResourceEx( filename, fl, pdv );
             HeapFree( GetProcessHeap(), 0, filename );
         }
@@ -3567,6 +3579,7 @@ BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
 {
     int ret = WineEngRemoveFontResourceEx( str, fl, pdv );
     WCHAR *filename;
+    BOOL hidden;
 
     if (ret == 0)
     {
@@ -3577,8 +3590,9 @@ BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
             WARN("Can't unload resources from PE file %s\n", wine_dbgstr_w(str));
             FreeLibrary(hModule);
         }
-        else if ((filename = get_scalable_filename( str )) != NULL)
+        else if ((filename = get_scalable_filename( str, &hidden )) != NULL)
         {
+            if (hidden) fl |= FR_PRIVATE | FR_NOT_ENUM;
             ret = WineEngRemoveFontResourceEx( filename, fl, pdv );
             HeapFree( GetProcessHeap(), 0, filename );
         }

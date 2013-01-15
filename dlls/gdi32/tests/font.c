@@ -4504,15 +4504,12 @@ static void test_CreateScalableFontResource(void)
     /* XP allows removing a private font added with 0 flags */
     SetLastError(0xdeadbeef);
     ret = pRemoveFontResourceExA(fot_name, FR_PRIVATE, 0);
-    todo_wine
     ok(ret, "RemoveFontResourceEx() error %d\n", GetLastError());
 
     ret = is_truetype_font_installed("wine_test");
-    todo_wine
     ok(!ret, "font wine_test should not be enumerated\n");
 
     ret = pRemoveFontResourceExA(fot_name, 0, 0);
-    todo_wine
     ok(!ret, "RemoveFontResourceEx() should fail\n");
 
     DeleteFile(fot_name);
