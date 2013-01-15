@@ -677,6 +677,13 @@ enum CV_HREG_e
     CV_SPARC_Y          = 45,
     CV_SPARC_WIM        = 46,
     CV_SPARC_TBR        = 47,
+
+    /* Wine extension */
+    CV_ARM64_NOREG        = CV_REG_NONE,
+    CV_ARM64_X0           = 10, /* this includes X0 to X30 */
+    CV_ARM64_SP           = 41,
+    CV_ARM64_PC           = 42,
+    CV_ARM64_PSTATE       = 43,
 };
 
 typedef enum
