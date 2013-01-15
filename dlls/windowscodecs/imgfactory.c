@@ -642,7 +642,7 @@ static HRESULT WINAPI ComponentFactory_CreateBitmapFromHICON(IWICComponentFactor
     memset(&bi, 0, sizeof(bi));
     bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
     bi.bmiHeader.biWidth = width;
-    bi.bmiHeader.biHeight = -height;
+    bi.bmiHeader.biHeight = info.hbmColor ? -height: -height * 2;
     bi.bmiHeader.biPlanes = 1;
     bi.bmiHeader.biBitCount = 32;
     bi.bmiHeader.biCompression = BI_RGB;
@@ -701,8 +701,6 @@ static HRESULT WINAPI ComponentFactory_CreateBitmapFromHICON(IWICComponentFactor
 
                 for (x = 0; x < width; x++, rgba++, bits++)
                 {
-                    if (!info.hbmColor) *rgba = ~*rgba;
-
                     if (*bits)
                         *rgba = 0;
                     else
