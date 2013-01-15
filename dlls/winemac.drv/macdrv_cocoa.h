@@ -153,5 +153,6 @@ extern void macdrv_set_window_surface(macdrv_window w, void *surface, pthread_mu
 extern CGImageRef create_surface_image(void *window_surface, CGRect *rect, int copy_data) DECLSPEC_HIDDEN;
 extern int get_surface_region_rects(void *window_surface, const CGRect **rects, int *count) DECLSPEC_HIDDEN;
 extern void macdrv_window_needs_display(macdrv_window w, CGRect rect) DECLSPEC_HIDDEN;
+extern void macdrv_set_window_shape(macdrv_window w, const CGRect *rects, int count) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_MACDRV_COCOA_H */

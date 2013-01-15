@@ -68,6 +68,10 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 @property (nonatomic) void* surface;
 @property (nonatomic) pthread_mutex_t* surface_mutex;
 
+@property (copy, nonatomic) NSBezierPath* shape;
+@property (nonatomic) BOOL shapeChangedSinceLastDraw;
+@property (readonly, nonatomic) BOOL needsTransparency;
+
     + (void) flipRect:(NSRect*)rect;
 
 @end
@@ -111,11 +115,19 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
                         [surfaceClip addClip];
                     }
 
+                    [window.shape addClip];
+
                     context = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
                     CGContextSetBlendMode(context, kCGBlendModeCopy);
                     CGContextDrawImage(context, imageRect, image);
 
                     CGImageRelease(image);
+
+                    if (window.shapeChangedSinceLastDraw)
+                    {
+                        window.shapeChangedSinceLastDraw = FALSE;
+                        [window invalidateShadow];
+                    }
                 }
             }
 
@@ -130,6 +142,7 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 
     @synthesize disabled, noActivate, floating, latentParentWindow;
     @synthesize surface, surface_mutex;
+    @synthesize shape, shapeChangedSinceLastDraw;
 
     + (WineWindow*) createWindowWithFeatures:(const struct macdrv_window_features*)wf
                                  windowFrame:(NSRect)window_frame
@@ -171,6 +184,7 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
     - (void) dealloc
     {
         [latentParentWindow release];
+        [shape release];
         [super dealloc];
     }
 
@@ -320,6 +334,44 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
             disabled = newValue;
             [self adjustFeaturesForState];
         }
+    }
+
+    - (BOOL) needsTransparency
+    {
+        return (self.shape != nil);
+    }
+
+    - (void) checkTransparency
+    {
+        if (![self isOpaque] && !self.needsTransparency)
+        {
+            [self setBackgroundColor:[NSColor windowBackgroundColor]];
+            [self setOpaque:YES];
+        }
+        else if ([self isOpaque] && self.needsTransparency)
+        {
+            [self setBackgroundColor:[NSColor clearColor]];
+            [self setOpaque:NO];
+        }
+    }
+
+    - (void) setShape:(NSBezierPath*)newShape
+    {
+        if (shape == newShape) return;
+        if (shape && newShape && [shape isEqual:newShape]) return;
+
+        if (shape)
+        {
+            [[self contentView] setNeedsDisplayInRect:[shape bounds]];
+            [shape release];
+        }
+        if (newShape)
+            [[self contentView] setNeedsDisplayInRect:[newShape bounds]];
+
+        shape = [newShape copy];
+        self.shapeChangedSinceLastDraw = TRUE;
+
+        [self checkTransparency];
     }
 
 
@@ -555,6 +607,35 @@ void macdrv_window_needs_display(macdrv_window w, CGRect rect)
 
     OnMainThreadAsync(^{
         [[window contentView] setNeedsDisplayInRect:NSRectFromCGRect(rect)];
+    });
+
+    [pool release];
+}
+
+/***********************************************************************
+ *              macdrv_set_window_shape
+ *
+ * Sets the shape of a Cocoa window from an array of rectangles.  If
+ * rects is NULL, resets the window's shape to its frame.
+ */
+void macdrv_set_window_shape(macdrv_window w, const CGRect *rects, int count)
+{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    WineWindow* window = (WineWindow*)w;
+
+    OnMainThread(^{
+        if (!rects || !count)
+            window.shape = nil;
+        else
+        {
+            NSBezierPath* path;
+            unsigned int i;
+
+            path = [NSBezierPath bezierPath];
+            for (i = 0; i < count; i++)
+                [path appendBezierPathWithRect:NSRectFromCGRect(rects[i])];
+            window.shape = path;
+        }
     });
 
     [pool release];

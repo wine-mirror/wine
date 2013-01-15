@@ -57,17 +57,20 @@ static void get_cocoa_window_features(struct macdrv_win_data *data,
     if ((style & WS_CAPTION) == WS_CAPTION && !(ex_style & WS_EX_LAYERED))
     {
         wf->shadow = 1;
-        wf->title_bar = 1;
-        if (style & WS_SYSMENU) wf->close_button = 1;
-        if (style & WS_MINIMIZEBOX) wf->minimize_button = 1;
-        if (style & WS_MAXIMIZEBOX) wf->resizable = 1;
-        if (ex_style & WS_EX_TOOLWINDOW) wf->utility = 1;
+        if (!data->shaped)
+        {
+            wf->title_bar = 1;
+            if (style & WS_SYSMENU) wf->close_button = 1;
+            if (style & WS_MINIMIZEBOX) wf->minimize_button = 1;
+            if (style & WS_MAXIMIZEBOX) wf->resizable = 1;
+            if (ex_style & WS_EX_TOOLWINDOW) wf->utility = 1;
+        }
     }
     if (ex_style & WS_EX_DLGMODALFRAME) wf->shadow = 1;
     else if (style & WS_THICKFRAME)
     {
         wf->shadow = 1;
-        wf->resizable = 1;
+        if (!data->shaped) wf->resizable = 1;
     }
     else if ((style & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME) wf->shadow = 1;
 }
@@ -118,25 +121,28 @@ static void get_cocoa_window_state(struct macdrv_win_data *data,
 static void get_mac_rect_offset(struct macdrv_win_data *data, DWORD style, RECT *rect)
 {
     DWORD ex_style, style_mask = 0, ex_style_mask = 0;
-    struct macdrv_window_features wf;
 
     rect->top = rect->bottom = rect->left = rect->right = 0;
 
     ex_style = GetWindowLongW(data->hwnd, GWL_EXSTYLE);
 
-    get_cocoa_window_features(data, style, ex_style, &wf);
-
-    if (wf.title_bar) style_mask |= WS_CAPTION;
-    if (wf.shadow)
+    if (!data->shaped)
     {
-        style_mask |= WS_DLGFRAME | WS_THICKFRAME;
-        ex_style_mask |= WS_EX_DLGMODALFRAME;
+        struct macdrv_window_features wf;
+        get_cocoa_window_features(data, style, ex_style, &wf);
+
+        if (wf.title_bar) style_mask |= WS_CAPTION;
+        if (wf.shadow)
+        {
+            style_mask |= WS_DLGFRAME | WS_THICKFRAME;
+            ex_style_mask |= WS_EX_DLGMODALFRAME;
+        }
     }
 
     AdjustWindowRectEx(rect, style & style_mask, FALSE, ex_style & ex_style_mask);
 
-    TRACE("%p/%p style %08x ex_style %08x -> %s\n", data->hwnd, data->cocoa_window,
-          style, ex_style, wine_dbgstr_rect(rect));
+    TRACE("%p/%p style %08x ex_style %08x shaped %d -> %s\n", data->hwnd, data->cocoa_window,
+          style, ex_style, data->shaped, wine_dbgstr_rect(rect));
 }
 
 
@@ -324,6 +330,70 @@ static void set_cocoa_window_properties(struct macdrv_win_data *data)
 }
 
 
+/***********************************************************************
+ *              sync_window_region
+ *
+ * Update the window region.
+ */
+static void sync_window_region(struct macdrv_win_data *data, HRGN win_region)
+{
+    HRGN hrgn = win_region;
+    RGNDATA *region_data;
+    const CGRect* rects;
+    int count;
+
+    if (!data->cocoa_window) return;
+    data->shaped = FALSE;
+
+    if (hrgn == (HRGN)1)  /* hack: win_region == 1 means retrieve region from server */
+    {
+        if (!(hrgn = CreateRectRgn(0, 0, 0, 0))) return;
+        if (GetWindowRgn(data->hwnd, hrgn) == ERROR)
+        {
+            DeleteObject(hrgn);
+            hrgn = 0;
+        }
+    }
+
+    if (hrgn && GetWindowLongW(data->hwnd, GWL_EXSTYLE) & WS_EX_LAYOUTRTL)
+        MirrorRgn(data->hwnd, hrgn);
+    if (hrgn)
+    {
+        OffsetRgn(hrgn, data->window_rect.left - data->whole_rect.left,
+                  data->window_rect.top - data->whole_rect.top);
+    }
+    region_data = get_region_data(hrgn, 0);
+    if (region_data)
+    {
+        rects = (CGRect*)region_data->Buffer;
+        count = region_data->rdh.nCount;
+        /* Special case optimization.  If the region entirely encloses the Cocoa
+           window, it's the same as there being no region.  It's potentially
+           hard/slow to test this for arbitrary regions, so we just check for
+           very simple regions. */
+        if (count == 1 && CGRectContainsRect(rects[0], cgrect_from_rect(data->whole_rect)))
+        {
+            TRACE("optimizing for simple region that contains Cocoa content rect\n");
+            rects = NULL;
+            count = 0;
+        }
+    }
+    else
+    {
+        rects = NULL;
+        count = 0;
+    }
+
+    TRACE("win %p/%p win_region %p rects %p count %d\n", data->hwnd, data->cocoa_window, win_region, rects, count);
+    macdrv_set_window_shape(data->cocoa_window, rects, count);
+
+    HeapFree(GetProcessHeap(), 0, region_data);
+    data->shaped = (region_data != NULL);
+
+    if (hrgn && hrgn != win_region) DeleteObject(hrgn);
+}
+
+
 /**********************************************************************
  *              create_cocoa_window
  *
@@ -335,6 +405,15 @@ static void create_cocoa_window(struct macdrv_win_data *data)
     struct macdrv_window_features wf;
     CGRect frame;
     DWORD style, ex_style;
+    HRGN win_rgn;
+
+    if ((win_rgn = CreateRectRgn(0, 0, 0, 0)) &&
+        GetWindowRgn(data->hwnd, win_rgn) == ERROR)
+    {
+        DeleteObject(win_rgn);
+        win_rgn = 0;
+    }
+    data->shaped = (win_rgn != 0);
 
     style = GetWindowLongW(data->hwnd, GWL_STYLE);
     ex_style = GetWindowLongW(data->hwnd, GWL_EXSTYLE);
@@ -352,13 +431,19 @@ static void create_cocoa_window(struct macdrv_win_data *data)
           wine_dbgstr_rect(&data->whole_rect), wine_dbgstr_rect(&data->client_rect));
 
     data->cocoa_window = macdrv_create_cocoa_window(&wf, frame);
-    if (!data->cocoa_window) return;
+    if (!data->cocoa_window) goto done;
 
     set_cocoa_window_properties(data);
 
     /* set the window text */
     if (!InternalGetWindowText(data->hwnd, text, sizeof(text)/sizeof(WCHAR))) text[0] = 0;
     macdrv_set_cocoa_window_title(data->cocoa_window, text, strlenW(text));
+
+    /* set the window region */
+    if (win_rgn) sync_window_region(data, win_rgn);
+
+done:
+    if (win_rgn) DeleteObject(win_rgn);
 }
 
 
@@ -495,6 +580,7 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags)
     constrain_window_frame(&frame);
 
     data->on_screen = macdrv_set_cocoa_window_frame(data->cocoa_window, &frame);
+    if (data->shaped) sync_window_region(data, (HRGN)1);
 
     TRACE("win %p/%p pos %s\n", data->hwnd, data->cocoa_window,
           wine_dbgstr_rect(&data->whole_rect));
@@ -672,6 +758,35 @@ void CDECL macdrv_SetParent(HWND hwnd, HWND parent, HWND old_parent)
 
 
 /***********************************************************************
+ *              SetWindowRgn  (MACDRV.@)
+ *
+ * Assign specified region to window (for non-rectangular windows)
+ */
+int CDECL macdrv_SetWindowRgn(HWND hwnd, HRGN hrgn, BOOL redraw)
+{
+    struct macdrv_win_data *data;
+
+    TRACE("%p, %p, %d\n", hwnd, hrgn, redraw);
+
+    if ((data = get_win_data(hwnd)))
+    {
+        sync_window_region(data, hrgn);
+        release_win_data(data);
+    }
+    else
+    {
+        DWORD procid;
+
+        GetWindowThreadProcessId(hwnd, &procid);
+        if (procid != GetCurrentProcessId())
+            SendMessageW(hwnd, WM_MACDRV_SET_WIN_REGION, 0, 0);
+    }
+
+    return TRUE;
+}
+
+
+/***********************************************************************
  *              SetWindowStyle   (MACDRV.@)
  *
  * Update the state of the Cocoa window to reflect a style change
@@ -703,6 +818,31 @@ void CDECL macdrv_SetWindowText(HWND hwnd, LPCWSTR text)
 
     if ((win = macdrv_get_cocoa_window(hwnd)))
         macdrv_set_cocoa_window_title(win, text, strlenW(text));
+}
+
+
+/**********************************************************************
+ *              WindowMessage   (MACDRV.@)
+ */
+LRESULT CDECL macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    struct macdrv_win_data *data;
+
+    TRACE("%p, %u, %u, %lu\n", hwnd, msg, (unsigned)wp, lp);
+
+    switch(msg)
+    {
+    case WM_MACDRV_SET_WIN_REGION:
+        if ((data = get_win_data(hwnd)))
+        {
+            sync_window_region(data, (HRGN)1);
+            release_win_data(data);
+        }
+        return 0;
+    }
+
+    FIXME("unrecognized window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, wp, lp);
+    return 0;
 }
 
 

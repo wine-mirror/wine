@@ -31,6 +31,9 @@
 
     void* surface;
     pthread_mutex_t* surface_mutex;
+
+    NSBezierPath* shape;
+    BOOL shapeChangedSinceLastDraw;
 }
 
 @end

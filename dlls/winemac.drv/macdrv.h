@@ -74,6 +74,12 @@ extern CGRect macdrv_get_desktop_rect(void) DECLSPEC_HIDDEN;
  * Mac USER driver
  */
 
+/* Mac driver private messages, must be in the range 0x80001000..0x80001fff */
+enum macdrv_window_messages
+{
+    WM_MACDRV_SET_WIN_REGION = 0x80001000,
+};
+
 /* macdrv private window data */
 struct macdrv_win_data
 {
@@ -83,6 +89,7 @@ struct macdrv_win_data
     RECT                whole_rect;             /* Mac window rectangle for the whole window relative to parent */
     RECT                client_rect;            /* client area relative to parent */
     BOOL                on_screen : 1;          /* is window ordered in? */
+    BOOL                shaped : 1;             /* is window using a custom region shape? */
     struct window_surface *surface;
 };
 
