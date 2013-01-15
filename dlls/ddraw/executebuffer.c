@@ -205,8 +205,9 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                 DWORD i;
 		TRACE("STATELIGHT       (%d)\n", count);
 
-		for (i = 0; i < count; i++) {
-		    LPD3DSTATE ci = (LPD3DSTATE) instr;
+                for (i = 0; i < count; ++i)
+                {
+                    D3DSTATE *ci = (D3DSTATE *)instr;
 
 		    TRACE("(%08x,%08x)\n", ci->u1.dlstLightStateType, ci->u2.dwArg[0]);
 
@@ -272,8 +273,9 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                 IDirect3DDevice2 *d3d_device2 = &device->IDirect3DDevice2_iface;
 		TRACE("STATERENDER      (%d)\n", count);
 
-		for (i = 0; i < count; i++) {
-		    LPD3DSTATE ci = (LPD3DSTATE) instr;
+                for (i = 0; i < count; ++i)
+                {
+                    D3DSTATE *ci = (D3DSTATE *)instr;
 
                     IDirect3DDevice2_SetRenderState(d3d_device2, ci->u1.drstRenderStateType, ci->u2.dwArg[0]);
 
