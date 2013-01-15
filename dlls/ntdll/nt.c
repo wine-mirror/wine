@@ -1103,6 +1103,14 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
     info->Architecture = PROCESSOR_ARCHITECTURE_ARM;
 }
 
+#elif defined(__aarch64__)
+
+static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
+{
+    info->Level = 8;
+    info->Architecture = PROCESSOR_ARCHITECTURE_ARM;
+}
+
 #elif defined(__sparc__)
 
 static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
