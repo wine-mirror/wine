@@ -537,6 +537,7 @@ static BOOL use_default_fallback = FALSE;
 static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font, FT_UInt *glyph);
 static BOOL get_outline_text_metrics(GdiFont *font);
 static BOOL get_text_metrics(GdiFont *font, LPTEXTMETRICW ptm);
+static void remove_face_from_cache( Face *face );
 
 static const WCHAR system_link[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
                                     'W','i','n','d','o','w','s',' ','N','T','\\',
@@ -1257,6 +1258,7 @@ static void release_face( Face *face )
     if (--face->refcount) return;
     if (face->family)
     {
+        if (face->flags & ADDFONT_ADD_TO_CACHE) remove_face_from_cache( face );
         list_remove( &face->entry );
         release_family( face->family );
     }
@@ -1562,6 +1564,27 @@ static void add_face_to_cache(Face *face)
         reg_save_dword(hkey_face, face_internal_leading_value, face->size.internal_leading);
     }
     RegCloseKey(hkey_face);
+    RegCloseKey(hkey_family);
+}
+
+static void remove_face_from_cache( Face *face )
+{
+    HKEY hkey_family;
+
+    RegOpenKeyExW( hkey_font_cache, face->family->FamilyName, 0, KEY_ALL_ACCESS, &hkey_family );
+
+    if (face->scalable)
+    {
+        RegDeleteKeyW( hkey_family, face->StyleName );
+    }
+    else
+    {
+        static const WCHAR fmtW[] = {'%','s','\\','%','d',0};
+        WCHAR *face_key_name = HeapAlloc(GetProcessHeap(), 0, (strlenW(face->StyleName) + 10) * sizeof(WCHAR));
+        sprintfW(face_key_name, fmtW, face->StyleName, face->size.y_ppem);
+        RegDeleteKeyW( hkey_family, face_key_name );
+        HeapFree(GetProcessHeap(), 0, face_key_name);
+    }
     RegCloseKey(hkey_family);
 }
 
@@ -1957,6 +1980,36 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
 	pFT_Done_Face(ft_face);
     } while(num_faces > ++face_index);
     return ret;
+}
+
+static int remove_font_resource( const char *file, DWORD flags )
+{
+    Family *family, *family_next;
+    Face *face, *face_next;
+    char *filename;
+    struct stat st, st2;
+    int count = 0;
+
+    if (stat( file, &st ) == -1) return 0;
+    LIST_FOR_EACH_ENTRY_SAFE( family, family_next, &font_list, Family, entry )
+    {
+        family->refcount++;
+        LIST_FOR_EACH_ENTRY_SAFE( face, face_next, &family->faces, Face, entry )
+        {
+            if (!face->file) continue;
+            if (LOWORD(face->flags) != LOWORD(flags)) continue;
+            filename = strWtoA( CP_UNIXCP, face->file );
+            if (!stat( filename, &st2 ) && st.st_dev == st2.st_dev && st.st_ino == st2.st_ino)
+            {
+                TRACE( "removing matching face %s\n", debugstr_w(face->file) );
+                release_face( face );
+                count++;
+            }
+            HeapFree( GetProcessHeap(), 0, filename );
+	}
+        release_family( family );
+    }
+    return count;
 }
 
 static void DumpFontList(void)
@@ -2914,9 +2967,41 @@ HANDLE WineEngAddFontMemResourceEx(PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD 
  */
 BOOL WineEngRemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
 {
+    INT ret = 0;
+
     GDI_CheckNotLock();
-    FIXME("(%s, %x, %p): stub\n", debugstr_w(file), flags, pdv);
-    return TRUE;
+
+    if (ft_handle)  /* do it only if we have freetype up and running */
+    {
+        char *unixname;
+
+        EnterCriticalSection( &freetype_cs );
+
+        if ((unixname = wine_get_unix_file_name(file)))
+        {
+            DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
+
+            if(!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
+            ret = remove_font_resource( unixname, addfont_flags );
+            HeapFree(GetProcessHeap(), 0, unixname);
+        }
+        if (!ret && !strchrW(file, '\\'))
+        {
+            if ((unixname = get_winfonts_dir_path( file )))
+            {
+                ret = remove_font_resource( unixname, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
+                HeapFree(GetProcessHeap(), 0, unixname);
+            }
+            if (!ret && (unixname = get_data_dir_path( file )))
+            {
+                ret = remove_font_resource( unixname, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
+                HeapFree(GetProcessHeap(), 0, unixname);
+            }
+        }
+
+        LeaveCriticalSection( &freetype_cs );
+    }
+    return ret;
 }
 
 static char *get_ttf_file_name( LPCWSTR font_file, LPCWSTR font_path )

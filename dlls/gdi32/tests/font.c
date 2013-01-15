@@ -4451,7 +4451,6 @@ static void test_CreateScalableFontResource(void)
     ok(ret, "DeleteFile() error %d\n", GetLastError());
 
     ret = pRemoveFontResourceExA(fot_name, 0, 0);
-todo_wine
     ok(!ret, "RemoveFontResourceEx() should fail\n");
 
     /* test public font resource */
@@ -4472,11 +4471,11 @@ todo_wine
     test_GetGlyphOutline_empty_contour();
 
     ret = pRemoveFontResourceExA(fot_name, FR_PRIVATE, 0);
-todo_wine
     ok(!ret, "RemoveFontResourceEx() with not matching flags should fail\n");
 
     SetLastError(0xdeadbeef);
     ret = pRemoveFontResourceExA(fot_name, 0, 0);
+todo_wine
     ok(ret, "RemoveFontResourceEx() error %d\n", GetLastError());
 
     ret = is_truetype_font_installed("wine_test");
