@@ -2748,6 +2748,36 @@ static void test_coop_level_surf_create(void)
     IDirectDraw2_Release(ddraw);
 }
 
+static void test_coop_level_multi_window(void)
+{
+    HWND window1, window2;
+    IDirectDraw2 *ddraw;
+    HRESULT hr;
+
+    window1 = CreateWindowA("static", "ddraw_test1", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    window2 = CreateWindowA("static", "ddraw_test2", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        DestroyWindow(window2);
+        DestroyWindow(window1);
+        return;
+    }
+
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window1, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window2, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    todo_wine ok(IsWindow(window1), "Window 1 was destroyed.\n");
+    ok(IsWindow(window2), "Window 2 was destroyed.\n");
+
+    IDirectDraw2_Release(ddraw);
+    DestroyWindow(window2);
+    DestroyWindow(window1);
+}
+
 START_TEST(ddraw2)
 {
     test_coop_level_create_device_window();
@@ -2770,4 +2800,5 @@ START_TEST(ddraw2)
     test_coop_level_mode_set_multi();
     test_initialize();
     test_coop_level_surf_create();
+    test_coop_level_multi_window();
 }
