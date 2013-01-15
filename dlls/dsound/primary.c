@@ -262,7 +262,7 @@ HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 {
 	IDirectSoundBufferImpl** dsb = device->buffers;
 	LPBYTE newbuf;
-	DWORD i;
+        int i;
 
 	TRACE("(%p)\n", device);
 
