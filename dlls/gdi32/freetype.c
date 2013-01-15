@@ -518,6 +518,7 @@ struct font_mapping
 static struct list mappings_list = LIST_INIT( mappings_list );
 
 static UINT default_aa_flags;
+static HKEY hkey_font_cache;
 
 static CRITICAL_SECTION freetype_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -1516,10 +1517,8 @@ static LONG create_font_cache_key(HKEY *hkey, DWORD *disposition)
 
 static void add_face_to_cache(Face *face)
 {
-    HKEY hkey_font_cache, hkey_family, hkey_face;
+    HKEY hkey_family, hkey_face;
     WCHAR *face_key_name;
-
-    create_font_cache_key(&hkey_font_cache, NULL);
 
     RegCreateKeyExW(hkey_font_cache, face->family->FamilyName, 0,
                     NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey_family, NULL);
@@ -1564,7 +1563,6 @@ static void add_face_to_cache(Face *face)
     }
     RegCloseKey(hkey_face);
     RegCloseKey(hkey_family);
-    RegCloseKey(hkey_font_cache);
 }
 
 static WCHAR *prepend_at(WCHAR *family)
@@ -3794,7 +3792,6 @@ static void reorder_font_list(void)
  */
 BOOL WineEngInit(void)
 {
-    HKEY hkey_font_cache;
     DWORD disposition;
     HANDLE font_mutex;
 
@@ -3816,8 +3813,6 @@ BOOL WineEngInit(void)
         init_font_list();
     else
         load_font_list_from_cache(hkey_font_cache);
-
-    RegCloseKey(hkey_font_cache);
 
     reorder_font_list();
 
