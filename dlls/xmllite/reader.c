@@ -944,6 +944,30 @@ static HRESULT reader_parse_comment(xmlreader *reader)
     return MX_E_INPUTEND;
 }
 
+/* [2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF] */
+static inline int is_char(WCHAR ch)
+{
+    return (ch == '\t') || (ch == '\r') || (ch == '\n') ||
+           (ch >= 0x20 && ch <= 0xd7ff) ||
+           (ch >= 0xd800 && ch <= 0xdbff) || /* high surrogate */
+           (ch >= 0xdc00 && ch <= 0xdfff) || /* low surrogate */
+           (ch >= 0xe000 && ch <= 0xfffd);
+}
+
+/* [13] PubidChar ::= #x20 | #xD | #xA | [a-zA-Z0-9] | [-'()+,./:=?;!*#@$_%] */
+static inline int is_pubchar(WCHAR ch)
+{
+    return (ch == ' ') ||
+           (ch >= 'a' && ch <= 'z') ||
+           (ch >= 'A' && ch <= 'Z') ||
+           (ch >= '0' && ch <= '9') ||
+           (ch >= '-' && ch <= ';') || /* '()*+,-./:; */
+           (ch == '=') || (ch == '?') ||
+           (ch == '@') || (ch == '!') ||
+           (ch >= '#' && ch <= '%') || /* #$% */
+           (ch == '_') || (ch == '\r') || (ch == '\n');
+}
+
 static inline int is_namestartchar(WCHAR ch)
 {
     return (ch == ':') || (ch >= 'A' && ch <= 'Z') ||
@@ -1148,13 +1172,154 @@ static HRESULT reader_parse_misc(xmlreader *reader)
     return hr;
 }
 
+/* [11] SystemLiteral ::= ('"' [^"]* '"') | ("'" [^']* "'") */
+static HRESULT reader_parse_sys_literal(xmlreader *reader, strval *literal)
+{
+    WCHAR *start = reader_get_cur(reader), *cur, quote;
+
+    if (*start != '"' && *start != '\'') return WC_E_QUOTE;
+
+    quote = *start;
+    reader_skipn(reader, 1);
+
+    cur = start = reader_get_cur(reader);
+    while (is_char(*cur) && *cur != quote)
+    {
+        reader_skipn(reader, 1);
+        cur = reader_get_cur(reader);
+    }
+    if (*cur == quote) reader_skipn(reader, 1);
+
+    literal->str = start;
+    literal->len = cur-start;
+    TRACE("%s\n", debugstr_wn(start, cur-start));
+    return S_OK;
+}
+
+/* [12] PubidLiteral ::= '"' PubidChar* '"' | "'" (PubidChar - "'")* "'"
+   [13] PubidChar ::= #x20 | #xD | #xA | [a-zA-Z0-9] | [-'()+,./:=?;!*#@$_%] */
+static HRESULT reader_parse_pub_literal(xmlreader *reader, strval *literal)
+{
+    WCHAR *start = reader_get_cur(reader), *cur, quote;
+
+    if (*start != '"' && *start != '\'') return WC_E_QUOTE;
+
+    quote = *start;
+    reader_skipn(reader, 1);
+
+    cur = start;
+    while (is_pubchar(*cur) && *cur != quote)
+    {
+        reader_skipn(reader, 1);
+        cur = reader_get_cur(reader);
+    }
+
+    literal->str = start;
+    literal->len = cur-start;
+    TRACE("%s\n", debugstr_wn(start, cur-start));
+    return S_OK;
+}
+
+/* [75] ExternalID ::= 'SYSTEM' S SystemLiteral | 'PUBLIC' S PubidLiteral S SystemLiteral */
+static HRESULT reader_parse_externalid(xmlreader *reader)
+{
+    static WCHAR systemW[] = {'S','Y','S','T','E','M',0};
+    static WCHAR publicW[] = {'P','U','B','L','I','C',0};
+    strval name;
+    HRESULT hr;
+    int cnt;
+
+    if (reader_cmp(reader, systemW))
+    {
+        if (reader_cmp(reader, publicW))
+            return S_FALSE;
+        else
+        {
+            strval pub;
+
+            /* public id */
+            reader_skipn(reader, 6);
+            cnt = reader_skipspaces(reader);
+            if (!cnt) return WC_E_WHITESPACE;
+
+            hr = reader_parse_pub_literal(reader, &pub);
+            if (FAILED(hr)) return hr;
+
+            name.str = publicW;
+            name.len = strlenW(publicW);
+            return reader_add_attr(reader, &name, &pub);
+        }
+    }
+    else
+    {
+        strval sys;
+
+        /* system id */
+        reader_skipn(reader, 6);
+        cnt = reader_skipspaces(reader);
+        if (!cnt) return WC_E_WHITESPACE;
+
+        hr = reader_parse_sys_literal(reader, &sys);
+        if (FAILED(hr)) return hr;
+
+        name.str = systemW;
+        name.len = strlenW(systemW);
+        return reader_add_attr(reader, &name, &sys);
+    }
+
+    return hr;
+}
+
 /* [28] doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' intSubset ']' S?)? '>' */
 static HRESULT reader_parse_dtd(xmlreader *reader)
 {
-    static const WCHAR doctypeW[] = {'D','O','C','T','Y','P','E',0};
+    static const WCHAR doctypeW[] = {'<','!','D','O','C','T','Y','P','E',0};
+    strval name;
+    WCHAR *cur;
+    HRESULT hr;
+
     /* check if we have "<!DOCTYPE" */
     if (reader_cmp(reader, doctypeW)) return S_FALSE;
-    FIXME("DTD parsing not implemented\n");
+    reader_shrink(reader);
+
+    /* DTD processing is not allowed by default */
+    if (reader->dtdmode == DtdProcessing_Prohibit) return WC_E_DTDPROHIBITED;
+
+    reader_skipn(reader, 9);
+    if (!reader_skipspaces(reader)) return WC_E_WHITESPACE;
+
+    /* name */
+    hr = reader_parse_name(reader, &name);
+    if (FAILED(hr)) return WC_E_DECLDOCTYPE;
+
+    reader_skipspaces(reader);
+
+    hr = reader_parse_externalid(reader);
+    if (FAILED(hr)) return hr;
+
+    reader_skipspaces(reader);
+
+    cur = reader_get_cur(reader);
+    if (*cur != '>')
+    {
+        FIXME("internal subset parsing not implemented\n");
+        return E_NOTIMPL;
+    }
+
+    /* skip '>' */
+    reader_skipn(reader, 1);
+
+    reader->nodetype = XmlNodeType_DocumentType;
+    reader_set_strvalue(reader, StringValue_LocalName, &name);
+    reader_set_strvalue(reader, StringValue_QualifiedName, &name);
+
+    return S_OK;
+}
+
+/* [39] element ::= EmptyElemTag | STag content ETag */
+static HRESULT reader_parse_element(xmlreader *reader)
+{
+    FIXME("element parsing not implemented\n");
     return E_NOTIMPL;
 }
 
@@ -1194,29 +1359,36 @@ static HRESULT reader_parse_nextnode(xmlreader *reader)
         case XmlReadInState_Misc_DTD:
             hr = reader_parse_misc(reader);
             if (FAILED(hr)) return hr;
-            if (hr == S_FALSE) {
+
+            if (hr == S_FALSE)
                 reader->instate = XmlReadInState_DTD;
-                continue;
-            }
-            else if (hr == S_OK) return hr;
+            else
+                return hr;
             break;
         case XmlReadInState_DTD:
             hr = reader_parse_dtd(reader);
             if (FAILED(hr)) return hr;
-            if (hr == S_FALSE) {
+
+            if (hr == S_OK)
+            {
                 reader->instate = XmlReadInState_DTD_Misc;
-                continue;
+                return hr;
             }
-            else if (hr == S_OK) return hr;
+            else
+                reader->instate = XmlReadInState_Element;
             break;
         case XmlReadInState_DTD_Misc:
             hr = reader_parse_misc(reader);
             if (FAILED(hr)) return hr;
-            if (hr == S_FALSE) {
+
+            if (hr == S_FALSE)
                 reader->instate = XmlReadInState_Element;
-                continue;
-            }
-            else if (hr == S_OK) return hr;
+            else
+                return hr;
+            break;
+        case XmlReadInState_Element:
+            hr = reader_parse_element(reader);
+            if (FAILED(hr)) return hr;
             break;
         default:
             FIXME("internal state %d not handled\n", reader->instate);
