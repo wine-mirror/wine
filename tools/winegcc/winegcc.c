@@ -160,7 +160,8 @@ static const struct
     { "x86_64",  CPU_x86_64 },
     { "sparc",   CPU_SPARC },
     { "powerpc", CPU_POWERPC },
-    { "arm",     CPU_ARM }
+    { "arm",     CPU_ARM },
+    { "aarch64", CPU_ARM64 }
 };
 
 static const struct
@@ -223,6 +224,8 @@ static const enum target_cpu build_cpu = CPU_SPARC;
 static const enum target_cpu build_cpu = CPU_POWERPC;
 #elif defined(__arm__)
 static const enum target_cpu build_cpu = CPU_ARM;
+#elif defined(__aarch64__)
+static const enum target_cpu build_cpu = CPU_ARM64;
 #else
 #error Unsupported CPU
 #endif
@@ -344,10 +347,10 @@ static int check_platform( struct options *opts, const char *file )
             {
                 if (header[4] == 2)  /* 64-bit */
                     ret = (opts->force_pointer_size == 8 ||
-                           (!opts->force_pointer_size && opts->target_cpu == CPU_x86_64));
+                           (!opts->force_pointer_size && (opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64)));
                 else
                     ret = (opts->force_pointer_size == 4 ||
-                           (!opts->force_pointer_size && opts->target_cpu != CPU_x86_64));
+                           (!opts->force_pointer_size && opts->target_cpu != CPU_x86_64 && opts->target_cpu != CPU_ARM64));
             }
         }
         close( fd );
@@ -370,13 +373,13 @@ static char *get_lib_dir( struct options *opts )
         strcpy( p, libwine );
         if (check_platform( opts, buffer )) goto found;
         if (p > buffer + 2 && (!memcmp( p - 2, "32", 2 ) || !memcmp( p - 2, "64", 2 ))) p -= 2;
-        if (opts->force_pointer_size == 4 || (!opts->force_pointer_size && opts->target_cpu != CPU_x86_64))
+        if (opts->force_pointer_size == 4 || (!opts->force_pointer_size && opts->target_cpu != CPU_x86_64 && opts->target_cpu != CPU_ARM64))
         {
             strcpy( p, "32" );
             strcat( p, libwine );
             if (check_platform( opts, buffer )) goto found;
         }
-        if (opts->force_pointer_size == 8 || (!opts->force_pointer_size && opts->target_cpu == CPU_x86_64))
+        if (opts->force_pointer_size == 8 || (!opts->force_pointer_size && (opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64)))
         {
             strcpy( p, "64" );
             strcat( p, libwine );
@@ -438,7 +441,7 @@ static void compile(struct options* opts, const char* lang)
         strarray_addall(comp_args, strarray_fromstring(DLLFLAGS, " "));
     }
 
-    if (opts->target_cpu == CPU_x86_64)
+    if (opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64)
     {
         strarray_add(comp_args, "-DWIN64");
         strarray_add(comp_args, "-D_WIN64");
@@ -505,7 +508,7 @@ static void compile(struct options* opts, const char* lang)
     strarray_add(comp_args, "-D__int8=char");
     strarray_add(comp_args, "-D__int16=short");
     strarray_add(comp_args, "-D__int32=int");
-    if (opts->target_cpu == CPU_x86_64)
+    if (opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64)
         strarray_add(comp_args, "-D__int64=long");
     else
         strarray_add(comp_args, "-D__int64=long long");
@@ -1399,6 +1402,8 @@ int main(int argc, char **argv)
                     {
                         if (opts.target_cpu == CPU_x86_64)
                             opts.target_cpu = CPU_x86;
+                        else if (opts.target_cpu == CPU_ARM64)
+                            opts.target_cpu = CPU_ARM;
                         opts.force_pointer_size = 4;
 			raw_linker_arg = 1;
                     }
