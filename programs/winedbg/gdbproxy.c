@@ -388,6 +388,42 @@ static struct cpu_register cpu_register_map[] = {
     REG(Lr, 4),
     REG(Pc, 4),
 };
+#elif defined(__aarch64__)
+static struct cpu_register cpu_register_map[] = {
+    REG(X0,  8),
+    REG(X1,  8),
+    REG(X2,  8),
+    REG(X3,  8),
+    REG(X4,  8),
+    REG(X5,  8),
+    REG(X6,  8),
+    REG(X7,  8),
+    REG(X8,  8),
+    REG(X9,  8),
+    REG(X10, 8),
+    REG(X11, 8),
+    REG(X12, 8),
+    REG(X13, 8),
+    REG(X14, 8),
+    REG(X15, 8),
+    REG(X16, 8),
+    REG(X17, 8),
+    REG(X18, 8),
+    REG(X19, 8),
+    REG(X20, 8),
+    REG(X21, 8),
+    REG(X22, 8),
+    REG(X23, 8),
+    REG(X24, 8),
+    REG(X25, 8),
+    REG(X26, 8),
+    REG(X27, 8),
+    REG(X28, 8),
+    REG(X29, 8),
+    REG(X30, 8),
+    REG(Sp,  8),
+    REG(Pc,  8),
+};
 #else
 # error Define the registers map for your CPU
 #endif

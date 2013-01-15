@@ -620,6 +620,8 @@ extern struct backend_cpu be_x86_64;
 extern struct backend_cpu be_sparc;
 #elif defined(__arm__) && !defined(__ARMEB__)
 extern struct backend_cpu be_arm;
+#elif defined(__aarch64__) && !defined(__AARCH64EB__)
+extern struct backend_cpu be_arm64;
 #else
 # error CPU unknown
 #endif
@@ -640,6 +642,8 @@ int main(int argc, char** argv)
     be_cpu = &be_sparc;
 #elif defined(__arm__) && !defined(__ARMEB__)
     be_cpu = &be_arm;
+#elif defined(__aarch64__) && !defined(__AARCH64EB__)
+    be_cpu = &be_arm64;
 #else
 # error CPU unknown
 #endif

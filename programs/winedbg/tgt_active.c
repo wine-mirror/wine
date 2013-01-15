@@ -690,6 +690,8 @@ static void output_system_info(void)
     static const char platform[] = "powerpc";
 #elif defined(__arm__)
     static const char platform[] = "arm";
+#elif defined(__aarch64__)
+    static const char platform[] = "arm64";
 #else
 # error CPU unknown
 #endif
