@@ -493,8 +493,10 @@ HRESULT WINAPI AtlComModuleUnregisterServer(_ATL_COM_MODULE *mod, BOOL bRegTypeL
 
         SysFreeString(path);
         hres = ITypeLib_GetLibAttr(typelib, &attr);
-        if(SUCCEEDED(hres))
+        if(SUCCEEDED(hres)) {
             hres = UnRegisterTypeLib(&attr->guid, attr->wMajorVerNum, attr->wMinorVerNum, attr->lcid, attr->syskind);
+            ITypeLib_ReleaseTLibAttr(typelib, attr);
+        }
         ITypeLib_Release(typelib);
         if(FAILED(hres))
             return hres;
