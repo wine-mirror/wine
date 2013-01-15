@@ -760,7 +760,6 @@ static void parse_inline_script(ScriptHost *script_host, HTMLScriptElement *scri
     if(NS_FAILED(nsres)) {
         ERR("GetText failed: %08x\n", nsres);
     }else if(*text) {
-        script_elem->parsed = TRUE;
         parse_text(script_host, text);
     }
 
@@ -926,9 +925,6 @@ static ScriptHost *get_elem_script_host(HTMLInnerWindow *window, HTMLScriptEleme
 void doc_insert_script(HTMLInnerWindow *window, HTMLScriptElement *script_elem)
 {
     ScriptHost *script_host;
-
-    if(script_elem->parsed)
-        return;
 
     script_host = get_elem_script_host(window, script_elem);
     if(!script_host)
