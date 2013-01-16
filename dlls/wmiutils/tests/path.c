@@ -314,6 +314,7 @@ static void test_IWbemPath_GetClassName(void)
     ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
     ok( len == sizeof(buf) / sizeof(buf[0]), "unexpected length %u\n", len );
 
+    buf[0] = 0;
     len = sizeof(buf) / sizeof(buf[0]);
     hr = IWbemPath_GetClassName( path, &len, buf );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -361,6 +362,7 @@ static void test_IWbemPath_GetServer(void)
     ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
     ok( len == sizeof(buf) / sizeof(buf[0]), "unexpected length %u\n", len );
 
+    buf[0] = 0;
     len = sizeof(buf) / sizeof(buf[0]);
     hr = IWbemPath_GetServer( path, &len, buf );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -433,6 +435,57 @@ static void test_IWbemPath_GetInfo(void)
     IWbemPath_Release( path );
 }
 
+static void test_IWbemPath_SetServer(void)
+{
+    static const WCHAR serverW[] = {'s','e','r','v','e','r',0};
+    IWbemPath *path;
+    WCHAR buf[16];
+    ULONG len;
+    ULONGLONG flags;
+    HRESULT hr;
+
+    if (!(path = create_path())) return;
+
+    hr = IWbemPath_SetServer( path, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    len = sizeof(buf) / sizeof(buf[0]);
+    hr = IWbemPath_GetServer( path, &len, buf );
+    ok( hr == WBEM_E_NOT_AVAILABLE, "got %08x\n", hr );
+
+    hr = IWbemPath_SetServer( path, serverW );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    buf[0] = 0;
+    len = sizeof(buf) / sizeof(buf[0]);
+    hr = IWbemPath_GetServer( path, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( buf, serverW ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+
+    flags = 0;
+    hr = IWbemPath_GetInfo( path, 0, &flags );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( flags == (WBEMPATH_INFO_HAS_MACHINE_NAME | WBEMPATH_INFO_V1_COMPLIANT |
+                  WBEMPATH_INFO_V2_COMPLIANT | WBEMPATH_INFO_CIM_COMPLIANT |
+                  WBEMPATH_INFO_SERVER_NAMESPACE_ONLY | WBEMPATH_INFO_PATH_HAD_SERVER),
+        "got %lx%08lx\n", (unsigned long)(flags >> 32), (unsigned long)flags );
+
+    hr = IWbemPath_SetServer( path, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    len = sizeof(buf) / sizeof(buf[0]);
+    hr = IWbemPath_GetServer( path, &len, buf );
+    ok( hr == WBEM_E_NOT_AVAILABLE, "got %08x\n", hr );
+
+    flags = 0;
+    hr = IWbemPath_GetInfo( path, 0, &flags );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( flags == (WBEMPATH_INFO_ANON_LOCAL_MACHINE | WBEMPATH_INFO_SERVER_NAMESPACE_ONLY),
+        "got %lx%08lx\n", (unsigned long)(flags >> 32), (unsigned long)flags );
+
+    IWbemPath_Release( path );
+}
+
 START_TEST (path)
 {
     CoInitialize( NULL );
@@ -442,6 +495,7 @@ START_TEST (path)
     test_IWbemPath_GetClassName();
     test_IWbemPath_GetServer();
     test_IWbemPath_GetInfo();
+    test_IWbemPath_SetServer();
 
     CoUninitialize();
 }

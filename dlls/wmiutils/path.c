@@ -441,10 +441,29 @@ static HRESULT WINAPI path_GetInfo(
 
 static HRESULT WINAPI path_SetServer(
     IWbemPath *iface,
-    LPCWSTR Name)
+    LPCWSTR name)
 {
-    FIXME("%p, %s\n", iface, debugstr_w(Name));
-    return E_NOTIMPL;
+    struct path *path = impl_from_IWbemPath( iface );
+    static const ULONGLONG flags =
+        WBEMPATH_INFO_PATH_HAD_SERVER | WBEMPATH_INFO_V1_COMPLIANT |
+        WBEMPATH_INFO_V2_COMPLIANT | WBEMPATH_INFO_CIM_COMPLIANT;
+
+    TRACE("%p, %s\n", iface, debugstr_w(name));
+
+    heap_free( path->server );
+    if (name)
+    {
+        if (!(path->server = strdupW( name ))) return WBEM_E_OUT_OF_MEMORY;
+        path->len_server = strlenW( path->server );
+        path->flags |= flags;
+    }
+    else
+    {
+        path->server = NULL;
+        path->len_server = 0;
+        path->flags &= ~flags;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI path_GetServer(
@@ -457,7 +476,7 @@ static HRESULT WINAPI path_GetServer(
     TRACE("%p, %p, %p\n", iface, len, name);
 
     if (!len || (*len && !name)) return WBEM_E_INVALID_PARAMETER;
-    if (!path->class) return WBEM_E_NOT_AVAILABLE;
+    if (!path->server) return WBEM_E_NOT_AVAILABLE;
     if (*len > path->len_server) strcpyW( name, path->server );
     *len = path->len_server + 1;
     return S_OK;
@@ -504,15 +523,15 @@ static HRESULT WINAPI path_RemoveNamespaceAt(
 }
 
 static HRESULT WINAPI path_RemoveAllNamespaces(
-        IWbemPath *iface)
+    IWbemPath *iface)
 {
     FIXME("%p\n", iface);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI path_GetScopeCount(
-        IWbemPath *iface,
-        ULONG *puCount)
+    IWbemPath *iface,
+    ULONG *puCount)
 {
     FIXME("%p, %p\n", iface, puCount);
     return E_NOTIMPL;
