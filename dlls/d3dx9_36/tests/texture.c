@@ -106,24 +106,6 @@ static inline void expect_vec4_(unsigned int line, const D3DXVECTOR4 *expected, 
         got->x, got->y, got->z, got->w);
 }
 
-static inline float float_16_to_32(unsigned short in)
-{
-    unsigned short s = (in & 0x8000);
-    unsigned short e = (in & 0x7C00) >> 10;
-    unsigned short m = in & 0x3FF;
-    float sgn = (s ? -1.0f : 1.0f);
-
-    if (e == 0)
-    {
-        if (m == 0) return sgn * 0.0f; /* +0.0 or -0.0 */
-        else return sgn * powf(2, -14.0f) * (m / 1024.0f);
-    }
-    else
-    {
-        return sgn * powf(2, e - 15.0f) * (1.0f + (m / 1024.0f));
-    }
-}
-
 static BOOL is_autogenmipmap_supported(IDirect3DDevice9 *device, D3DRESOURCETYPE resource_type)
 {
     HRESULT hr;
@@ -1071,10 +1053,8 @@ static void test_D3DXFillTexture(IDirect3DDevice9 *device)
                 {
                     D3DXVECTOR4 got, expected;
 
-                    got.x = float_16_to_32(*ptr++);
-                    got.y = float_16_to_32(*ptr++);
-                    got.z = float_16_to_32(*ptr++);
-                    got.w = float_16_to_32(*ptr++);
+                    D3DXFloat16To32Array((FLOAT *)&got, (D3DXFLOAT16 *)ptr, 4);
+                    ptr += 4;
 
                     expected.x = (x + 0.5f) / 4.0f;
                     expected.y = (y + 0.5f) / 4.0f;
