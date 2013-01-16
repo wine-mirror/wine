@@ -3252,12 +3252,9 @@ static void test_reset_resources(void)
         goto done;
     }
 
-    hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_DEPTHSTENCIL,
-            D3DFMT_D24S8, D3DPOOL_DEFAULT, &texture);
-    ok(SUCCEEDED(hr), "Failed to create depth/stencil texture, hr %#x.\n", hr);
-    hr = IDirect3DTexture8_GetSurfaceLevel(texture, 0, &surface);
-    ok(SUCCEEDED(hr), "Failed to get surface, hr %#x.\n", hr);
-    IDirect3DTexture8_Release(texture);
+    hr = IDirect3DDevice8_CreateDepthStencilSurface(device, 128, 128, D3DFMT_D24S8,
+            D3DMULTISAMPLE_NONE, &surface);
+    ok(SUCCEEDED(hr), "Failed to create depth/stencil surface, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET,
             D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &texture);
