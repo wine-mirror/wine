@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <locale.h>
 #include <wctype.h>
+#include <float.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -48,6 +49,12 @@ typedef struct
     size_t size;
     size_t res;
 } basic_string_char;
+
+/* class complex<float> */
+typedef struct {
+    float real;
+    float imag;
+} complex_float;
 
 static void* (__cdecl *p_set_invalid_parameter_handler)(void*);
 static _locale_t (__cdecl *p__get_current_locale)(void);
@@ -100,6 +107,10 @@ static /*basic_ostringstream_char*/void* (__thiscall *p_basic_ostringstream_char
 static void (__thiscall *p_basic_ostringstream_char_dtor)(/*basic_ostringstream_char*/void*);
 static void (__thiscall *p_basic_ostringstream_char_vbase_dtor)(/*basic_ostringstream_char*/void*);
 static void (__thiscall *p_basic_ios_char_dtor)(/*basic_ios_char*/void*);
+
+static complex_float* (__thiscall *p_complex_float_ctor)(complex_float*, const float*, const float*);
+static complex_float* (__cdecl *p_complex_float_add)(complex_float*, const complex_float*, const complex_float*);
+static complex_float* (__cdecl *p_complex_float_div)(complex_float*, const complex_float*, const complex_float*);
 
 static int invalid_parameter = 0;
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
@@ -231,6 +242,13 @@ static BOOL init(void)
                 "??_D?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXXZ");
         SET(p_basic_ios_char_dtor,
                 "??1?$basic_ios@DU?$char_traits@D@std@@@std@@UEAA@XZ");
+
+        SET(p_complex_float_ctor,
+                "??0?$complex@M@std@@QEAA@AEBM0@Z");
+        SET(p_complex_float_add,
+                "??$?HM@std@@YA?AV?$complex@M@0@AEBV10@0@Z");
+        SET(p_complex_float_div,
+                "??$?KM@std@@YA?AV?$complex@M@0@AEBV10@0@Z");
     } else {
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAADABD@Z");
         SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
@@ -268,6 +286,13 @@ static BOOL init(void)
                 "??_D?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ");
         SET(p_basic_ios_char_dtor,
                 "??1?$basic_ios@DU?$char_traits@D@std@@@std@@UAE@XZ");
+
+        SET(p_complex_float_ctor,
+                "??0?$complex@M@std@@QAE@ABM0@Z");
+        SET(p_complex_float_add,
+                "??$?HM@std@@YA?AV?$complex@M@0@ABV10@0@Z");
+        SET(p_complex_float_div,
+                "??$?KM@std@@YA?AV?$complex@M@0@ABV10@0@Z");
     }
 
     init_thiscall_thunk();
@@ -550,6 +575,75 @@ static void test_virtual_base_dtors(void)
     call_func1(p_basic_ios_char_dtor, this+((int**)this)[0][1]);
 }
 
+static BOOL almost_eq(float f1, float f2)
+{
+    f1 = (f1-f2)/f1;
+    if(f1 < 0)
+        f1 = -f1;
+    return f1 < 0.0001;
+}
+
+static void test_complex(void)
+{
+    complex_float c1, c2, c3;
+    float f1, f2;
+
+    f1 = 1;
+    f2 = 2;
+    call_func3(p_complex_float_ctor, &c1, &f1, &f2);
+    ok(c1.real == 1, "c1.real = %f\n", c1.real);
+    ok(c1.imag == 2, "c1.imag = %f\n", c1.imag);
+
+    f1 = -1;
+    f2 = 1;
+    call_func3(p_complex_float_ctor, &c2, &f1, &f2);
+    ok(c2.real == -1, "c2.real = %f\n", c1.real);
+    ok(c2.imag == 1, "c2.imag = %f\n", c1.imag);
+
+    p_complex_float_add(&c3, &c1, &c2);
+    ok(c3.real == 0, "c3.real = %f\n", c3.real);
+    ok(c3.imag == 3, "c3.imag = %f\n", c3.imag);
+
+    p_complex_float_add(&c2, &c1, &c3);
+    ok(c2.real == 1, "c2.real = %f\n", c1.real);
+    ok(c2.imag == 5, "c2.imag = %f\n", c1.imag);
+
+    /* (1+5i) / (0+3i) */
+    p_complex_float_div(&c1, &c2, &c3);
+    ok(almost_eq(c1.real, 1.666667), "c1.real = %f\n", c1.real);
+    ok(almost_eq(c1.imag, -0.33333), "c1.imag = %f\n", c1.imag);
+
+    /* (1+5i) / (2+0i) */
+    c3.real = 2;
+    c3.imag = 0;
+    p_complex_float_div(&c1, &c2, &c3);
+    ok(almost_eq(c1.real, 0.5), "c1.real = %f\n", c1.real);
+    ok(almost_eq(c1.imag, 2.5), "c1.imag = %f\n", c1.imag);
+
+    /* (1+5i) / 0 */
+    c3.real = 0;
+    p_complex_float_div(&c1, &c2, &c3);
+    ok(_isnan(c1.real), "c1.real = %f\n", c1.real);
+    ok(_isnan(c1.imag), "c1.imag = %f\n", c1.imag);
+
+    /* (1+5i) / (NaN-2i) */
+    c1.imag = -2;
+    p_complex_float_div(&c3, &c2, &c1);
+    ok(_isnan(c3.real), "c3.real = %f\n", c3.real);
+    ok(_isnan(c3.imag), "c3.imag = %f\n", c3.imag);
+
+    /* (NaN-2i) / (1+0i) */
+    c2.imag = 0;
+    p_complex_float_div(&c3, &c1, &c2);
+    ok(_isnan(c3.real), "c3.real = %f\n", c3.real);
+    ok(_isnan(c3.imag), "c3.imag = %f\n", c3.imag);
+
+    /* (1+0i) + (NaN-2i) */
+    p_complex_float_add(&c3, &c2, &c1);
+    ok(_isnan(c3.real), "c3.real = %f\n", c3.real);
+    ok(c3.imag == -2, "c3.imag = %f\n", c3.imag);
+}
+
 START_TEST(misc)
 {
     if(!init())
@@ -564,8 +658,8 @@ START_TEST(misc)
     test_towctrans();
     test_virtual_call();
     test_virtual_base_dtors();
-
     test_allocator_char();
+    test_complex();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 }
