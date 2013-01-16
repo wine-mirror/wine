@@ -1223,6 +1223,13 @@ complex_float* __thiscall complex_float_div_assign(complex_float *this, const co
     return complex_float_div(this, &tmp, r);
 }
 
+/* ??$arg@M@std@@YAMABV?$complex@M@0@@Z */
+/* ??$arg@M@std@@YAMAEBV?$complex@M@0@@Z */
+float __cdecl complex_float_arg(const complex_float *c)
+{
+    return atan2(c->imag, c->real);
+}
+
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QAE@ABN0@Z */
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QEAA@AEBN0@Z */
 /* ??0?$_Complex_base@OU_C_ldouble_complex@@@std@@QAE@ABO0@Z */
@@ -1621,4 +1628,13 @@ complex_double* __thiscall complex_double_div_assign(complex_double *this, const
 {
     complex_double tmp = *this;
     return complex_double_div(this, &tmp, r);
+}
+
+/* ??$arg@N@std@@YANABV?$complex@N@0@@Z */
+/* ??$arg@N@std@@YANAEBV?$complex@N@0@@Z */
+/* ??$arg@O@std@@YAOABV?$complex@O@0@@Z */
+/* ??$arg@O@std@@YAOAEBV?$complex@O@0@@Z */
+double __cdecl complex_double_arg(const complex_double *c)
+{
+    return atan2(c->imag, c->real);
 }
