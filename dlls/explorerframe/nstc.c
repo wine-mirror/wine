@@ -973,7 +973,7 @@ static HRESULT WINAPI NSTC2_fnInsertRoot(INameSpaceTreeControl2* iface,
     nstc_root *new_root;
     struct list *add_after_entry;
     HTREEITEM add_after_hitem;
-    UINT i;
+    int i;
 
     TRACE("%p, %d, %p, %x, %x, %p\n", This, iIndex, psiRoot, grfEnumFlags, grfRootStyle, pif);
 
