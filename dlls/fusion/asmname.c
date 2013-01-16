@@ -261,7 +261,7 @@ static HRESULT WINAPI IAssemblyNameImpl_GetDisplayName(IAssemblyName *iface,
     {
         static const WCHAR spec[] = {'%','d',0};
         static const WCHAR period[] = {'.',0};
-        int i;
+        DWORD i;
 
         wsprintfW(verstr, spec, name->version[0]);
 
