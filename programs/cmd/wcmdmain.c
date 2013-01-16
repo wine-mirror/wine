@@ -1225,16 +1225,13 @@ void WCMD_run_program (WCHAR *command, BOOL called)
         if (!status)
           break;
 
-        if (!assumeInternal && !console) errorlevel = 0;
-        else
-        {
-            /* Always wait when non-interactive (cmd /c or in batch program),
-               or for console applications                                    */
-            if (assumeInternal || !interactive || !HIWORD(console))
-              WaitForSingleObject (pe.hProcess, INFINITE);
-            GetExitCodeProcess (pe.hProcess, &errorlevel);
-            if (errorlevel == STILL_ACTIVE) errorlevel = 0;
-        }
+        /* Always wait when non-interactive (cmd /c or in batch program),
+           or for console applications                                    */
+        if (assumeInternal || !interactive || (console && !HIWORD(console)))
+            WaitForSingleObject (pe.hProcess, INFINITE);
+        GetExitCodeProcess (pe.hProcess, &errorlevel);
+        if (errorlevel == STILL_ACTIVE) errorlevel = 0;
+
         CloseHandle(pe.hProcess);
         CloseHandle(pe.hThread);
         return;
