@@ -894,3 +894,107 @@ double __cdecl std_Ctraits_double_tan( double x ) { return tan( x ); }
 
 /* ?tan@?$_Ctraits@O@std@@SAOO@Z -> public: static long double __cdecl std::_Ctraits<long double>::tan(long double) */
 LDOUBLE __cdecl std_Ctraits_long_double_tan( LDOUBLE x ) { return tan( x ); }
+
+/* ??0?$_Complex_base@MU_C_float_complex@@@std@@QAE@ABM0@Z */
+/* ??0?$_Complex_base@MU_C_float_complex@@@std@@QEAA@AEBM0@Z */
+/* ??0?$complex@M@std@@QAE@ABM0@Z */
+/* ??0?$complex@M@std@@QEAA@AEBM0@Z */
+DEFINE_THISCALL_WRAPPER(complex_float_ctor, 12)
+complex_float* __thiscall complex_float_ctor(complex_float *this, const float *real, const float *imag)
+{
+    this->real = *real;
+    this->imag = *imag;
+    return this;
+}
+
+/* ??0?$complex@M@std@@QAE@ABU_C_float_complex@@@Z */
+/* ??0?$complex@M@std@@QEAA@AEBU_C_float_complex@@@Z */
+DEFINE_THISCALL_WRAPPER(complex_float_ctor_float, 8)
+complex_float* __thiscall complex_float_ctor_float(complex_float *this, const complex_float *c)
+{
+    this->real = c->real;
+    this->imag = c->imag;
+    return this;
+}
+
+/* ??0?$complex@M@std@@QAE@ABU_C_double_complex@@@Z */
+/* ??0?$complex@M@std@@QEAA@AEBU_C_double_complex@@@Z */
+/* ??0?$complex@M@std@@QAE@ABU_C_ldouble_complex@@@Z */
+/* ??0?$complex@M@std@@QEAA@AEBU_C_ldouble_complex@@@Z */
+/* ??0?$complex@M@std@@QAE@ABV?$complex@N@1@@Z */
+/* ??0?$complex@M@std@@QEAA@AEBV?$complex@N@1@@Z */
+/* ??0?$complex@M@std@@QAE@ABV?$complex@O@1@@Z */
+/* ??0?$complex@M@std@@QEAA@AEBV?$complex@O@1@@Z */
+DEFINE_THISCALL_WRAPPER(complex_float_ctor_double, 8)
+complex_float* __thiscall complex_float_ctor_double(complex_float *this, const complex_double *c)
+{
+    this->real = c->real;
+    this->imag = c->imag;
+    return this;
+}
+
+/* ??_F?$complex@M@std@@QAEXXZ */
+/* ??_F?$complex@M@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(complex_float_ctor_def, 4)
+complex_float* __thiscall complex_float_ctor_def(complex_float *this)
+{
+    this->real = this->imag = 0;
+    return this;
+}
+
+/* ??0?$_Complex_base@NU_C_double_complex@@@std@@QAE@ABN0@Z */
+/* ??0?$_Complex_base@NU_C_double_complex@@@std@@QEAA@AEBN0@Z */
+/* ??0?$_Complex_base@OU_C_ldouble_complex@@@std@@QAE@ABO0@Z */
+/* ??0?$_Complex_base@OU_C_ldouble_complex@@@std@@QEAA@AEBO0@Z */
+/* ??0?$complex@N@std@@QAE@ABN0@Z */
+/* ??0?$complex@N@std@@QEAA@AEBN0@Z */
+/* ??0?$complex@O@std@@QAE@ABO0@Z */
+/* ??0?$complex@O@std@@QEAA@AEBO0@Z */
+DEFINE_THISCALL_WRAPPER(complex_double_ctor, 12)
+complex_double* __thiscall complex_double_ctor(complex_double *this, const double *real, const double *imag)
+{
+    this->real = *real;
+    this->imag = *imag;
+    return this;
+}
+
+/* ??0?$complex@N@std@@QAE@ABU_C_double_complex@@@Z */
+/* ??0?$complex@N@std@@QEAA@AEBU_C_double_complex@@@Z */
+/* ??0?$complex@N@std@@QAE@ABU_C_ldouble_complex@@@Z */
+/* ??0?$complex@N@std@@QEAA@AEBU_C_ldouble_complex@@@Z */
+/* ??0?$complex@N@std@@QAE@ABV?$complex@O@1@@Z */
+/* ??0?$complex@N@std@@QEAA@AEBV?$complex@O@1@@Z */
+/* ??0?$complex@O@std@@QAE@ABU_C_ldouble_complex@@@Z */
+/* ??0?$complex@O@std@@QEAA@AEBU_C_ldouble_complex@@@Z */
+/* ??0?$complex@O@std@@QAE@ABV?$complex@N@1@@Z */
+/* ??0?$complex@O@std@@QEAA@AEBV?$complex@N@1@@Z */
+DEFINE_THISCALL_WRAPPER(complex_double_ctor_double, 8)
+complex_double* __thiscall complex_double_ctor_double(complex_double *this, const complex_double *c)
+{
+    this->real = c->real;
+    this->imag = c->imag;
+    return this;
+}
+
+/* ??0?$complex@N@std@@QAE@ABV?$complex@M@1@@Z */
+/* ??0?$complex@N@std@@QEAA@AEBV?$complex@M@1@@Z */
+/* ??0?$complex@O@std@@QAE@ABV?$complex@M@1@@Z */
+/* ??0?$complex@O@std@@QEAA@AEBV?$complex@M@1@@Z */
+DEFINE_THISCALL_WRAPPER(complex_double_ctor_float, 8)
+complex_double* __thiscall complex_double_ctor_float(complex_double *this, const complex_float *c)
+{
+    this->real = c->real;
+    this->imag = c->imag;
+    return this;
+}
+
+/* ??_F?$complex@N@std@@QAEXXZ */
+/* ??_F?$complex@N@std@@QEAAXXZ */
+/* ??_F?$complex@O@std@@QAEXXZ */
+/* ??_F?$complex@O@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(complex_double_ctor_def, 4)
+complex_double* __thiscall complex_double_ctor_def(complex_double *this)
+{
+    this->real = this->imag = 0;
+    return this;
+}
