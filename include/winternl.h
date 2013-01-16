@@ -1287,10 +1287,11 @@ typedef struct _SYSTEM_CACHE_INFORMATION {
     ULONG CurrentSize;
     ULONG PeakSize;
     ULONG PageFaultCount;
-#ifndef _WIN64
     ULONG MinimumWorkingSet;
     ULONG MaximumWorkingSet;
     ULONG unused[4];
+#ifdef _WIN64
+    ULONG unknown64[7];
 #endif
 } SYSTEM_CACHE_INFORMATION, *PSYSTEM_CACHE_INFORMATION;
 
