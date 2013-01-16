@@ -4076,6 +4076,8 @@ static void test_CreateRestrictedToken(void)
     HANDLE process_token, token, r_token;
     PTOKEN_GROUPS token_groups, groups2;
     SID_AND_ATTRIBUTES sattr;
+    SECURITY_IMPERSONATION_LEVEL level;
+    TOKEN_TYPE type;
     BOOL is_member;
     DWORD size;
     BOOL ret;
@@ -4126,7 +4128,7 @@ static void test_CreateRestrictedToken(void)
     sattr.Attributes = 0;
     r_token = NULL;
     ret = pCreateRestrictedToken(token, 0, 1, &sattr, 0, NULL, 0, NULL, &r_token);
-    todo_wine ok(ret, "got error %d\n", GetLastError());
+    ok(ret, "got error %d\n", GetLastError());
 
     if (ret)
     {
@@ -4134,7 +4136,7 @@ static void test_CreateRestrictedToken(void)
         is_member = TRUE;
         ret = pCheckTokenMembership(r_token, token_groups->Groups[i].Sid, &is_member);
         ok(ret, "got error %d\n", GetLastError());
-        ok(!is_member, "not a member\n");
+        todo_wine ok(!is_member, "not a member\n");
 
         ret = GetTokenInformation(r_token, TokenGroups, NULL, 0, &size);
         ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d with error %d\n",
@@ -4149,12 +4151,22 @@ static void test_CreateRestrictedToken(void)
                 break;
         }
 
-        ok(groups2->Groups[j].Attributes & SE_GROUP_USE_FOR_DENY_ONLY,
+        todo_wine ok(groups2->Groups[j].Attributes & SE_GROUP_USE_FOR_DENY_ONLY,
             "got wrong attributes\n");
-        ok((groups2->Groups[j].Attributes & SE_GROUP_ENABLED) == 0,
+        todo_wine ok((groups2->Groups[j].Attributes & SE_GROUP_ENABLED) == 0,
             "got wrong attributes\n");
 
         HeapFree(GetProcessHeap(), 0, groups2);
+
+        size = sizeof(type);
+        ret = GetTokenInformation(r_token, TokenType, &type, size, &size);
+        ok(ret, "got error %d\n", GetLastError());
+        ok(type == TokenImpersonation, "got type %u\n", type);
+
+        size = sizeof(level);
+        ret = GetTokenInformation(r_token, TokenImpersonationLevel, &level, size, &size);
+        ok(ret, "got error %d\n", GetLastError());
+        ok(level == SecurityImpersonation, "got level %u\n", type);
     }
 
     HeapFree(GetProcessHeap(), 0, token_groups);

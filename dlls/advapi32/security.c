@@ -801,13 +801,25 @@ BOOL WINAPI CreateRestrictedToken(
     PSID_AND_ATTRIBUTES restrictSids,
     PHANDLE newToken)
 {
+    TOKEN_TYPE type;
+    SECURITY_IMPERSONATION_LEVEL level = TokenImpersonationLevel;
+    DWORD size;
+
     FIXME("(%p, 0x%x, %u, %p, %u, %p, %u, %p, %p): stub\n",
           baseToken, flags, nDisableSids, disableSids,
           nDeletePrivs, deletePrivs,
           nRestrictSids, restrictSids,
           newToken);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+
+    size = sizeof(type);
+    if (!GetTokenInformation( baseToken, TokenType, &type, size, &size )) return FALSE;
+    if (type == TokenImpersonation)
+    {
+        size = sizeof(level);
+        if (!GetTokenInformation( baseToken, TokenImpersonationLevel, &level, size, &size ))
+            return FALSE;
+    }
+    return DuplicateTokenEx( baseToken, MAXIMUM_ALLOWED, NULL, level, type, newToken );
 }
 
 /*	##############################
