@@ -474,8 +474,9 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                 DWORD i;
 		TRACE("BRANCHFORWARD    (%d)\n", count);
 
-		for (i = 0; i < count; i++) {
-		    LPD3DBRANCH ci = (LPD3DBRANCH) instr;
+                for (i = 0; i < count; ++i)
+                {
+                    D3DBRANCH *ci = (D3DBRANCH *)instr;
 
                     if ((buffer->data.dsStatus.dwStatus & ci->dwMask) == ci->dwValue)
                     {
