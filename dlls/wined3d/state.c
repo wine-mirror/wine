@@ -5735,6 +5735,36 @@ const struct fragment_pipeline ffp_fragment_pipeline = {
     FALSE /* we cannot disable projected textures. The vertex pipe has to do it */
 };
 
+static void fp_none_enable(const struct wined3d_gl_info *gl_info, BOOL enable) {}
+
+static void fp_none_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
+{
+    memset(caps, 0, sizeof(*caps));
+}
+
+static void *fp_none_alloc(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv)
+{
+    return shader_priv;
+}
+
+static void fp_none_free(struct wined3d_device *device) {}
+
+static BOOL fp_none_color_fixup_supported(struct color_fixup_desc fixup)
+{
+    return is_identity_fixup(fixup);
+}
+
+const struct fragment_pipeline none_fragment_pipe =
+{
+    fp_none_enable,
+    fp_none_get_caps,
+    fp_none_alloc,
+    fp_none_free,
+    fp_none_color_fixup_supported,
+    NULL,
+    FALSE,
+};
+
 static unsigned int num_handlers(const APPLYSTATEFUNC *funcs)
 {
     unsigned int i;

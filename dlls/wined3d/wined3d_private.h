@@ -1193,6 +1193,7 @@ struct fragment_pipeline
 
 extern const struct StateEntryTemplate misc_state_template[] DECLSPEC_HIDDEN;
 extern const struct StateEntryTemplate ffp_vertexstate_template[] DECLSPEC_HIDDEN;
+extern const struct fragment_pipeline none_fragment_pipe DECLSPEC_HIDDEN;
 extern const struct fragment_pipeline ffp_fragment_pipeline DECLSPEC_HIDDEN;
 extern const struct fragment_pipeline atifs_fragment_pipeline DECLSPEC_HIDDEN;
 extern const struct fragment_pipeline arbfp_fragment_pipeline DECLSPEC_HIDDEN;

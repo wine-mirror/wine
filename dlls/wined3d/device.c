@@ -5654,32 +5654,27 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
 
     select_shader_mode(&adapter->gl_info, &device->ps_selected_mode, &device->vs_selected_mode);
     device->shader_backend = adapter->shader_backend;
+    device->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
+    device->vs_version = shader_caps.vs_version;
+    device->gs_version = shader_caps.gs_version;
+    device->ps_version = shader_caps.ps_version;
+    device->d3d_vshader_constantF = shader_caps.vs_uniform_count;
+    device->d3d_pshader_constantF = shader_caps.ps_uniform_count;
+    device->vs_clipping = shader_caps.vs_clipping;
 
-    if (device->shader_backend)
-    {
-        device->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
-        device->vs_version = shader_caps.vs_version;
-        device->gs_version = shader_caps.gs_version;
-        device->ps_version = shader_caps.ps_version;
-        device->d3d_vshader_constantF = shader_caps.vs_uniform_count;
-        device->d3d_pshader_constantF = shader_caps.ps_uniform_count;
-        device->vs_clipping = shader_caps.vs_clipping;
-    }
     fragment_pipeline = adapter->fragment_pipe;
-    if (fragment_pipeline)
-    {
-        fragment_pipeline->get_caps(&adapter->gl_info, &ffp_caps);
-        device->max_ffp_textures = ffp_caps.MaxSimultaneousTextures;
+    fragment_pipeline->get_caps(&adapter->gl_info, &ffp_caps);
+    device->max_ffp_textures = ffp_caps.MaxSimultaneousTextures;
 
-        hr = compile_state_table(device->StateTable, device->multistate_funcs, &adapter->gl_info,
-                                 ffp_vertexstate_template, fragment_pipeline, misc_state_template);
-        if (FAILED(hr))
-        {
-            ERR("Failed to compile state table, hr %#x.\n", hr);
-            wined3d_decref(device->wined3d);
-            return hr;
-        }
+    if (fragment_pipeline->states
+            && FAILED(hr = compile_state_table(device->StateTable, device->multistate_funcs,
+            &adapter->gl_info, ffp_vertexstate_template, fragment_pipeline, misc_state_template)))
+    {
+        ERR("Failed to compile state table, hr %#x.\n", hr);
+        wined3d_decref(device->wined3d);
+        return hr;
     }
+
     device->blitter = adapter->blitter;
 
     hr = wined3d_stateblock_create(device, WINED3D_SBT_INIT, &device->stateBlock);

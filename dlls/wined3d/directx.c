@@ -5626,6 +5626,10 @@ static void wined3d_adapter_init_nogl(struct wined3d_adapter *adapter, UINT ordi
         adapter->TextureRam = 128 * 1024 * 1024;
 
     initPixelFormatsNoGL(&adapter->gl_info);
+
+    adapter->fragment_pipe = &none_fragment_pipe;
+    adapter->shader_backend = &none_shader_backend;
+    adapter->blitter = &cpu_blit;
 }
 
 static void STDMETHODCALLTYPE wined3d_null_wined3d_object_destroyed(void *parent) {}
