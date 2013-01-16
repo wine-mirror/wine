@@ -5223,9 +5223,8 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
         return E_FAIL;
     }
 
-    hr = wined3d_swapchain_create(ddraw->wined3d_device, desc,
-            DefaultSurfaceType, NULL, &ddraw_null_wined3d_parent_ops, swapchain);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_swapchain_create(ddraw->wined3d_device, desc, NULL,
+            &ddraw_null_wined3d_parent_ops, swapchain)))
         WARN("Failed to create swapchain, hr %#x.\n", hr);
 
     return hr;

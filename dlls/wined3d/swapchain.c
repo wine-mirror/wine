@@ -815,9 +815,8 @@ void swapchain_update_render_to_fbo(struct wined3d_swapchain *swapchain)
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, enum wined3d_surface_type surface_type,
-        struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
-        void *parent, const struct wined3d_parent_ops *parent_ops)
+static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3d_device *device,
+        struct wined3d_swapchain_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_adapter *adapter = device->adapter;
     const struct wined3d_format *format;
@@ -841,20 +840,10 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, enum wined3d_
                 "Please configure the application to use double buffering (1 back buffer) if possible.\n");
     }
 
-    switch (surface_type)
-    {
-        case WINED3D_SURFACE_TYPE_GDI:
-            swapchain->swapchain_ops = &swapchain_gdi_ops;
-            break;
-
-        case WINED3D_SURFACE_TYPE_OPENGL:
-            swapchain->swapchain_ops = &swapchain_gl_ops;
-            break;
-
-        default:
-            ERR("Invalid surface type %#x.\n", surface_type);
-            return WINED3DERR_INVALIDCALL;
-    }
+    if (device->wined3d->flags & WINED3D_NO3D)
+        swapchain->swapchain_ops = &swapchain_gdi_ops;
+    else
+        swapchain->swapchain_ops = &swapchain_gl_ops;
 
     window = desc->device_window ? desc->device_window : device->create_parms.focus_window;
 
@@ -911,7 +900,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, enum wined3d_
 
     if (swapchain->front_buffer->container.type == WINED3D_CONTAINER_NONE)
         surface_set_container(swapchain->front_buffer, WINED3D_CONTAINER_SWAPCHAIN, swapchain);
-    if (surface_type == WINED3D_SURFACE_TYPE_OPENGL)
+    if (!(device->wined3d->flags & WINED3D_NO3D))
         surface_modify_location(swapchain->front_buffer, SFLAG_INDRAWABLE, TRUE);
 
     /* MSDN says we're only allowed a single fullscreen swapchain per device,
@@ -937,7 +926,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, enum wined3d_
         displaymode_set = TRUE;
     }
 
-    if (surface_type == WINED3D_SURFACE_TYPE_OPENGL)
+    if (!(device->wined3d->flags & WINED3D_NO3D))
     {
         static const enum wined3d_format_id formats[] =
         {
@@ -1024,7 +1013,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, enum wined3d_
     }
 
     /* Swapchains share the depth/stencil buffer, so only create a single depthstencil surface. */
-    if (desc->enable_auto_depth_stencil && surface_type == WINED3D_SURFACE_TYPE_OPENGL)
+    if (desc->enable_auto_depth_stencil && !(device->wined3d->flags & WINED3D_NO3D))
     {
         TRACE("Creating depth/stencil buffer.\n");
         if (!device->auto_depth_stencil)
@@ -1098,16 +1087,14 @@ err:
 }
 
 /* Do not call while under the GL lock. */
-HRESULT CDECL wined3d_swapchain_create(struct wined3d_device *device,
-        struct wined3d_swapchain_desc *desc, enum wined3d_surface_type surface_type,
-        void *parent, const struct wined3d_parent_ops *parent_ops,
-        struct wined3d_swapchain **swapchain)
+HRESULT CDECL wined3d_swapchain_create(struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_swapchain **swapchain)
 {
     struct wined3d_swapchain *object;
     HRESULT hr;
 
-    TRACE("device %p, desc %p, swapchain %p, parent %p, surface_type %#x.\n",
-            device, desc, swapchain, parent, surface_type);
+    TRACE("device %p, desc %p, parent %p, parent_ops %p, swapchain %p.\n",
+            device, desc, parent, parent_ops, swapchain);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1116,7 +1103,7 @@ HRESULT CDECL wined3d_swapchain_create(struct wined3d_device *device,
         return E_OUTOFMEMORY;
     }
 
-    hr = swapchain_init(object, surface_type, device, desc, parent, parent_ops);
+    hr = swapchain_init(object, device, desc, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize swapchain, hr %#x.\n", hr);

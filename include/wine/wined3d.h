@@ -2378,9 +2378,8 @@ HRESULT __cdecl wined3d_surface_update_overlay(struct wined3d_surface *surface, 
 HRESULT __cdecl wined3d_surface_update_overlay_z_order(struct wined3d_surface *surface,
         DWORD flags, struct wined3d_surface *ref);
 
-HRESULT __cdecl wined3d_swapchain_create(struct wined3d_device *device,
-        struct wined3d_swapchain_desc *desc, enum wined3d_surface_type surface_type, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_swapchain **swapchain);
+HRESULT __cdecl wined3d_swapchain_create(struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_swapchain **swapchain);
 ULONG __cdecl wined3d_swapchain_decref(struct wined3d_swapchain *swapchain);
 struct wined3d_surface * __cdecl wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *swapchain,
         UINT backbuffer_idx, enum wined3d_backbuffer_type backbuffer_type);

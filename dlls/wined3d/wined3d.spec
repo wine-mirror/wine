@@ -240,7 +240,7 @@
 @ cdecl wined3d_surface_update_overlay(ptr ptr ptr ptr long ptr)
 @ cdecl wined3d_surface_update_overlay_z_order(ptr long ptr)
 
-@ cdecl wined3d_swapchain_create(ptr ptr long ptr ptr ptr)
+@ cdecl wined3d_swapchain_create(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_swapchain_decref(ptr)
 @ cdecl wined3d_swapchain_get_back_buffer(ptr long long)
 @ cdecl wined3d_swapchain_get_device(ptr)

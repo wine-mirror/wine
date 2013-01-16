@@ -304,10 +304,8 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
     swapchain->IDXGISwapChain_iface.lpVtbl = &dxgi_swapchain_vtbl;
     swapchain->refcount = 1;
 
-    hr = wined3d_swapchain_create(device->wined3d_device, desc,
-            WINED3D_SURFACE_TYPE_OPENGL, swapchain, &dxgi_swapchain_wined3d_parent_ops,
-            &swapchain->wined3d_swapchain);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_swapchain_create(device->wined3d_device, desc, swapchain,
+            &dxgi_swapchain_wined3d_parent_ops, &swapchain->wined3d_swapchain)))
     {
         WARN("Failed to create wined3d swapchain, hr %#x.\n", hr);
         return hr;
