@@ -104,8 +104,9 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                     buffer->indices = HeapAlloc(GetProcessHeap(), 0, sizeof(*buffer->indices) * buffer->nb_indices);
                 }
 
-		for (i = 0; i < count; i++) {
-                    LPD3DTRIANGLE ci = (LPD3DTRIANGLE) instr;
+                for (i = 0; i < count; ++i)
+                {
+                    D3DTRIANGLE *ci = (D3DTRIANGLE *)instr;
 		    TRACE("  v1: %d  v2: %d  v3: %d\n",ci->u1.v1, ci->u2.v2, ci->u3.v3);
 		    TRACE("  Flags : ");
                     if (TRACE_ON(ddraw))
