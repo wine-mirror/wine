@@ -165,6 +165,18 @@ function test_override_functions() {
     ok(tmp === "test", "div.addBehavior() = " + tmp);
 }
 
+function test_forin() {
+    var cnt=0;
+
+    document.body.innerHTML = '<a id="aid"></a>';
+
+    for(var x in document.getElementById("aid")) {
+        cnt++;
+    }
+
+    ok(cnt > 100, "cnt = " + cnt);
+}
+
 var globalVar = false;
 
 function runTests() {
@@ -185,6 +197,7 @@ function runTests() {
     test_attribute_collection();
     test_arg_conv();
     test_override_functions();
+    test_forin();
 
     var r = window.execScript("globalVar = true;");
     ok(r === undefined, "execScript returned " + r);
