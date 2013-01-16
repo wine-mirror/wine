@@ -5243,6 +5243,7 @@ static const struct wined3d_device_parent_ops ddraw_wined3d_device_parent_ops =
 
 HRESULT ddraw_init(struct ddraw *ddraw, enum wined3d_device_type device_type)
 {
+    DWORD flags;
     HRESULT hr;
 
     ddraw->IDirectDraw7_iface.lpVtbl = &ddraw7_vtbl;
@@ -5257,15 +5258,20 @@ HRESULT ddraw_init(struct ddraw *ddraw, enum wined3d_device_type device_type)
     ddraw->numIfaces = 1;
     ddraw->ref7 = 1;
 
-    if (!(ddraw->wined3d = wined3d_create(7, WINED3D_LEGACY_DEPTH_BIAS)))
+    flags = WINED3D_LEGACY_DEPTH_BIAS;
+    if (DefaultSurfaceType != WINED3D_SURFACE_TYPE_OPENGL)
+        flags |= WINED3D_NO3D;
+
+    if (!(ddraw->wined3d = wined3d_create(7, flags)))
     {
-        if (!(ddraw->wined3d = wined3d_create(7, WINED3D_LEGACY_DEPTH_BIAS | WINED3D_NO3D)))
+        if ((flags & WINED3D_NO3D) || !(ddraw->wined3d = wined3d_create(7, flags | WINED3D_NO3D)))
         {
             WARN("Failed to create a wined3d object.\n");
             return E_FAIL;
         }
 
         WARN("Created a wined3d object without 3D support.\n");
+        DefaultSurfaceType = WINED3D_SURFACE_TYPE_GDI;
     }
 
     hr = wined3d_device_create(ddraw->wined3d, WINED3DADAPTER_DEFAULT, device_type,

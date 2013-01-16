@@ -371,6 +371,7 @@ HRESULT WINAPI DirectDrawEnumerateA(LPDDENUMCALLBACKA callback, void *context)
 HRESULT WINAPI DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA callback, void *context, DWORD flags)
 {
     struct wined3d *wined3d;
+    DWORD wined3d_flags;
 
     TRACE("callback %p, context %p, flags %#x.\n", callback, context, flags);
 
@@ -382,16 +383,21 @@ HRESULT WINAPI DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA callback, void *contex
     if (flags)
         FIXME("flags 0x%08x not handled\n", flags);
 
+    wined3d_flags = WINED3D_LEGACY_DEPTH_BIAS;
+    if (DefaultSurfaceType != WINED3D_SURFACE_TYPE_OPENGL)
+        wined3d_flags |= WINED3D_NO3D;
+
     TRACE("Enumerating ddraw interfaces\n");
-    if (!(wined3d = wined3d_create(7, WINED3D_LEGACY_DEPTH_BIAS)))
+    if (!(wined3d = wined3d_create(7, wined3d_flags)))
     {
-        if (!(wined3d = wined3d_create(7, WINED3D_LEGACY_DEPTH_BIAS | WINED3D_NO3D)))
+        if ((wined3d_flags & WINED3D_NO3D) || !(wined3d = wined3d_create(7, wined3d_flags | WINED3D_NO3D)))
         {
             WARN("Failed to create a wined3d object.\n");
             return E_FAIL;
         }
 
         WARN("Created a wined3d object without 3D support.\n");
+        DefaultSurfaceType = WINED3D_SURFACE_TYPE_GDI;
     }
 
     __TRY
