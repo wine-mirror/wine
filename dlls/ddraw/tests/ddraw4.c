@@ -1,5 +1,6 @@
 /*
  * Copyright 2011-2012 Henri Verbeet for CodeWeavers
+ * Copyright 2012-2013 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2965,6 +2966,77 @@ static void test_coop_level_multi_window(void)
     DestroyWindow(window1);
 }
 
+static void test_draw_strided(void)
+{
+    static struct vec3 position[] =
+    {
+        {-1.0,   -1.0,   0.0},
+        {-1.0,    1.0,   0.0},
+        { 1.0,    1.0,   0.0},
+        { 1.0,   -1.0,   0.0},
+    };
+    static DWORD diffuse[] =
+    {
+        0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00,
+    };
+    static WORD indices[] =
+    {
+        0, 1, 2, 2, 3, 0
+    };
+
+    IDirectDrawSurface4 *rt;
+    IDirect3DDevice3 *device;
+    D3DCOLOR color;
+    HWND window;
+    HRESULT hr;
+    D3DDRAWPRIMITIVESTRIDEDDATA strided;
+    IDirect3DViewport3 *viewport;
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice3_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    hr = IDirect3DDevice3_SetCurrentViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to activate the viewport, hr %#x.\n", hr);
+    hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET, 0x00000000, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear the viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+    hr = IDirect3DDevice3_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+
+    memset(&strided, 0x55, sizeof(strided));
+    strided.position.lpvData = position;
+    strided.position.dwStride = sizeof(*position);
+    strided.diffuse.lpvData = diffuse;
+    strided.diffuse.dwStride = sizeof(*diffuse);
+    hr = IDirect3DDevice3_DrawIndexedPrimitiveStrided(device, D3DPT_TRIANGLELIST, D3DFVF_XYZ | D3DFVF_DIFFUSE,
+            &strided, 4, indices, 6, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+
+    IDirect3DViewport3_Release(viewport);
+    IDirectDrawSurface4_Release(rt);
+    IDirect3DDevice3_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     test_process_vertices();
@@ -2990,4 +3062,5 @@ START_TEST(ddraw4)
     test_coop_level_surf_create();
     test_vb_discard();
     test_coop_level_multi_window();
+    test_draw_strided();
 }
