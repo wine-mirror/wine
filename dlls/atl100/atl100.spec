@@ -18,8 +18,8 @@
 31 stdcall AtlComQIPtrAssign(ptr ptr ptr)
 32 stdcall AtlInternalQueryInterface(ptr ptr ptr ptr)
 34 stdcall AtlGetVersion(ptr)
-35 stub AtlAxDialogBoxW
-36 stub AtlAxDialogBoxA
+35 stdcall AtlAxDialogBoxW(long wstr long ptr long)
+36 stdcall AtlAxDialogBoxA(long str long ptr long)
 37 stdcall AtlAxCreateDialogW(long wstr long ptr long)
 38 stdcall AtlAxCreateDialogA(long str long ptr long)
 39 stdcall AtlAxCreateControl(ptr ptr ptr ptr)

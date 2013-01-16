@@ -1350,3 +1350,25 @@ HRESULT WINAPI AtlAxGetControl(HWND hWnd, IUnknown **pUnk)
 
     return IOleObject_QueryInterface( This->control, &IID_IUnknown, (void**) pUnk );
 }
+
+/***********************************************************************
+ *           AtlAxDialogBoxW              [atl100.35]
+ *
+ */
+INT_PTR WINAPI AtlAxDialogBoxW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogProc,
+        LPARAM dwInitParam)
+{
+    FIXME("(%p %s %p %p %lx)\n", hInstance, debugstr_w(lpTemplateName), hWndParent, lpDialogProc, dwInitParam);
+    return 0;
+}
+
+/***********************************************************************
+ *           AtlAxDialogBoxA              [atl100.36]
+ *
+ */
+INT_PTR WINAPI AtlAxDialogBoxA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogProc,
+        LPARAM dwInitParam)
+{
+    FIXME("(%p %s %p %p %lx)\n", hInstance, debugstr_a(lpTemplateName), hWndParent, lpDialogProc, dwInitParam);
+    return 0;
+}

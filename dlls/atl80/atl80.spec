@@ -20,8 +20,8 @@
 31 stdcall AtlComQIPtrAssign(ptr ptr ptr) atl100.AtlComQIPtrAssign
 32 stdcall AtlInternalQueryInterface(ptr ptr ptr ptr) atl100.AtlInternalQueryInterface
 34 stdcall AtlGetVersion(ptr)
-35 stub AtlAxDialogBoxW
-36 stub AtlAxDialogBoxA
+35 stdcall AtlAxDialogBoxW(long wstr long ptr long) atl100.AtlAxDialogBoxW
+36 stdcall AtlAxDialogBoxA(long str long ptr long) atl100.AtlAxDialogBoxA
 37 stdcall AtlAxCreateDialogW(long wstr long ptr long) atl100.AtlAxCreateDialogW
 38 stdcall AtlAxCreateDialogA(long str long ptr long) atl100.AtlAxCreateDialogA
 39 stdcall AtlAxCreateControl(ptr ptr ptr ptr) atl100.AtlAxCreateControl
