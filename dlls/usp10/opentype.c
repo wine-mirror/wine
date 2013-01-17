@@ -375,6 +375,18 @@ typedef struct {
 } GPOS_PairSet;
 
 typedef struct {
+    WORD EntryAnchor;
+    WORD ExitAnchor;
+} GPOS_EntryExitRecord;
+
+typedef struct {
+    WORD PosFormat;
+    WORD Coverage;
+    WORD EntryExitCount;
+    GPOS_EntryExitRecord EntryExitRecord[1];
+} GPOS_CursivePosFormat1;
+
+typedef struct {
     WORD PosFormat;
     WORD MarkCoverage;
     WORD BaseCoverage;
@@ -1333,6 +1345,49 @@ static INT GPOS_apply_PairAdjustment(const OT_LookupTable *look, const SCRIPT_AN
     return glyph_index+1;
 }
 
+static VOID GPOS_apply_CursiveAttachment(const OT_LookupTable *look, const SCRIPT_ANALYSIS *analysis, const WORD *glyphs, INT glyph_index,
+                                     INT glyph_count, INT ppem, LPPOINT pt)
+{
+    int j;
+    int write_dir = (analysis->fRTL && !analysis->fLogicalOrder) ? -1 : 1;
+
+    if (glyph_index + write_dir < 0 || glyph_index + write_dir >= glyph_count) return;
+
+    TRACE("Cursive Attachment Positioning Subtable\n");
+
+    for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
+    {
+        const GPOS_CursivePosFormat1 *cpf1;
+        WORD offset = GET_BE_WORD(look->SubTable[j]);
+        cpf1 = (const GPOS_CursivePosFormat1*)((const BYTE*)look+offset);
+        if (GET_BE_WORD(cpf1->PosFormat) == 1)
+        {
+            int index_exit, index_entry;
+            offset = GET_BE_WORD( cpf1->Coverage );
+            index_exit = GSUB_is_glyph_covered((const BYTE*)cpf1+offset, glyphs[glyph_index]);
+            if (index_exit != -1 && cpf1->EntryExitRecord[index_exit].ExitAnchor!= 0)
+            {
+                index_entry = GSUB_is_glyph_covered((const BYTE*)cpf1+offset, glyphs[glyph_index+write_dir]);
+                if (index_entry != -1 && cpf1->EntryExitRecord[index_entry].EntryAnchor != 0)
+                {
+                    POINT exit_pt, entry_pt;
+                    offset = GET_BE_WORD(cpf1->EntryExitRecord[index_exit].ExitAnchor);
+                    GPOS_get_anchor_values((const BYTE*)cpf1 + offset, &exit_pt, ppem);
+                    offset = GET_BE_WORD(cpf1->EntryExitRecord[index_entry].EntryAnchor);
+                    GPOS_get_anchor_values((const BYTE*)cpf1 + offset, &entry_pt, ppem);
+                    TRACE("Found linkage %x[%i,%i] %x[%i,%i]\n",glyphs[glyph_index], exit_pt.x,exit_pt.y, glyphs[glyph_index+write_dir], entry_pt.x, entry_pt.y);
+                    pt->x = entry_pt.x - exit_pt.x;
+                    pt->y = entry_pt.y - exit_pt.y;
+                    return;
+                }
+            }
+        }
+        else
+            FIXME("Cursive Attachment Positioning: Format %i Unhandled\n",GET_BE_WORD(cpf1->PosFormat));
+    }
+    return;
+}
+
 static VOID GPOS_apply_MarkToBase(const OT_LookupTable *look, const SCRIPT_ANALYSIS *analysis, const WORD *glyphs, INT glyph_index,
                                   INT glyph_count, INT ppem, LPPOINT pt)
 {
@@ -1725,6 +1780,21 @@ static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, c
                 piAdvance[glyph_index + write_dir] += round(devX);
             }
             return index;
+        }
+        case 3:
+        {
+            POINT desU = {0,0};
+            double devX, devY;
+            int write_dir = (analysis->fRTL && !analysis->fLogicalOrder) ? -1 : 1;
+
+            GPOS_apply_CursiveAttachment(look, analysis, glyphs, glyph_index, glyph_count, ppem, &desU);
+            if (desU.x || desU.y)
+            {
+                GPOS_convert_design_units_to_device(lpotm, lplogfont, desU.x, desU.y, &devX, &devY);
+                /* Windows does not appear to apply X offsets here */
+                pGoffset[glyph_index].dv = round(devY) + pGoffset[glyph_index+write_dir].dv;
+            }
+            break;
         }
         case 4:
         {
