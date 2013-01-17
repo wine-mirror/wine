@@ -1352,6 +1352,8 @@ static ULONG WINAPI QTOutPin_Release(IPin *iface)
     {
         DeleteMediaType(This->pmt);
         FreeMediaType(&This->pin.pin.mtCurrent);
+        if (This->pin.pAllocator)
+            IMemAllocator_Release(This->pin.pAllocator);
         CoTaskMemFree(This);
         return 0;
     }
@@ -1384,7 +1386,14 @@ static HRESULT WINAPI QTOutPin_DecideAllocator(BaseOutputPin *iface, IMemInputPi
 
     *pAlloc = NULL;
     if (QTfilter->pInputPin.pAlloc)
+    {
         hr = IMemInputPin_NotifyAllocator(pPin, QTfilter->pInputPin.pAlloc, FALSE);
+        if (SUCCEEDED(hr))
+        {
+            *pAlloc = QTfilter->pInputPin.pAlloc;
+            IMemAllocator_AddRef(*pAlloc);
+        }
+    }
     else
         hr = VFW_E_NO_ALLOCATOR;
 
