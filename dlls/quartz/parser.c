@@ -595,7 +595,14 @@ static HRESULT WINAPI Parser_OutputPin_DecideAllocator(BaseOutputPin *iface, IMe
     *pAlloc = NULL;
 
     if (This->alloc)
+    {
         hr = IMemInputPin_NotifyAllocator(pPin, This->alloc, This->readonly);
+        if (SUCCEEDED(hr))
+        {
+            *pAlloc = This->alloc;
+            IMemAllocator_AddRef(*pAlloc);
+        }
+    }
     else
         hr = VFW_E_NO_ALLOCATOR;
 
@@ -661,6 +668,8 @@ static ULONG WINAPI Parser_OutputPin_Release(IPin * iface)
         FreeMediaType(This->pmt);
         CoTaskMemFree(This->pmt);
         FreeMediaType(&This->pin.pin.mtCurrent);
+        if (This->pin.pAllocator)
+            IMemAllocator_Release(This->pin.pAllocator);
         CoTaskMemFree(This);
         return 0;
     }
