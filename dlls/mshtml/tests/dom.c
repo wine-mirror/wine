@@ -85,6 +85,10 @@ static const char emptydiv_str[] =
 static const char noscript_str[] =
     "<html><head><title>noscript test</title><noscript><style>.body { margin-right: 0px; }</style></noscript></head>"
     "<body><noscript><div>test</div></noscript></body></html>";
+static const char doctype_str[] =
+    "<!DOCTYPE html>"
+    "<html><head><title>emptydiv test</title></head>"
+    "<body><div id=\"divid\"></div></body></html>";
 
 static WCHAR characterW[] = {'c','h','a','r','a','c','t','e','r',0};
 static WCHAR texteditW[] = {'t','e','x','t','e','d','i','t',0};
@@ -6558,6 +6562,24 @@ static void test_noscript(IHTMLDocument2 *doc)
     IHTMLElement_Release(body);
 }
 
+static void test_doctype(IHTMLDocument2 *doc)
+{
+    IHTMLDocument2 *doc_node;
+    IHTMLDOMNode *doctype;
+    int type;
+
+    doc_node = get_doc_node(doc);
+    doctype = get_first_child((IUnknown*)doc_node);
+    IHTMLDocument2_Release(doc_node);
+
+    type = get_node_type((IUnknown*)doctype);
+    ok(type == 8, "type = %d\n", type);
+
+    test_comment_text((IUnknown*)doctype, "<!DOCTYPE html>");
+    test_elem_type((IUnknown*)doctype, ET_COMMENT);
+    IHTMLDOMNode_Release(doctype);
+}
+
 static void test_null_write(IHTMLDocument2 *doc)
 {
     HRESULT hres;
@@ -7106,6 +7128,7 @@ START_TEST(dom)
     run_domtest(frameset_str, test_frameset);
     run_domtest(emptydiv_str, test_docfrag);
     run_domtest(doc_blank, test_replacechild_elems);
+    run_domtest(doctype_str, test_doctype);
 
     CoUninitialize();
 }

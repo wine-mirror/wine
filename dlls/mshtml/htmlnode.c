@@ -387,6 +387,7 @@ static HRESULT WINAPI HTMLDOMNode_get_nodeType(IHTMLDOMNode *iface, LONG *p)
         *p = 3;
         break;
     case COMMENT_NODE:
+    case DOCUMENT_TYPE_NODE:
         *p = 8;
         break;
     case DOCUMENT_NODE:
@@ -1103,6 +1104,8 @@ static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNod
         if(FAILED(hres))
             return hres;
         break;
+    /* doctype nodes are represented as comment nodes (at least in quirks mode) */
+    case DOCUMENT_TYPE_NODE:
     case COMMENT_NODE: {
         HTMLElement *comment;
         hres = HTMLCommentElement_Create(doc, nsnode, &comment);
