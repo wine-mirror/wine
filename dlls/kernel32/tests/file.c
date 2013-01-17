@@ -652,11 +652,11 @@ static void test_CopyFileA(void)
         "copying from an r+w opened and r shared file failed (ret=%d, err=%d)\n", retok, GetLastError());
     CloseHandle(hfile);
 
-    /* copying from a delete-locked source is unreliable */
+    /* copying from a delete-locked source mostly succeeds */
     hfile = CreateFileA(source, DELETE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
     ok(hfile != INVALID_HANDLE_VALUE, "failed to open source file, error %d\n", GetLastError());
     retok = CopyFileA(source, dest, FALSE);
-    ok((!retok && GetLastError() == ERROR_SHARING_VIOLATION) || broken(retok) /* 98, Vista, 2k8, 7 */,
+    ok(retok || broken(!retok && GetLastError() == ERROR_SHARING_VIOLATION) /* NT, 2000, XP */,
         "copying from a delete-locked file failed (ret=%d, err=%d)\n", retok, GetLastError());
     CloseHandle(hfile);
 

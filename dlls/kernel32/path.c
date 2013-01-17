@@ -957,7 +957,8 @@ BOOL WINAPI CopyFileExW(LPCWSTR source, LPCWSTR dest,
 
     TRACE("%s -> %s, %x\n", debugstr_w(source), debugstr_w(dest), flags);
 
-    if ((h1 = CreateFileW(source, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+    if ((h1 = CreateFileW(source, GENERIC_READ,
+                     FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                      NULL, OPEN_EXISTING, 0, 0)) == INVALID_HANDLE_VALUE)
     {
         WARN("Unable to open source %s\n", debugstr_w(source));
