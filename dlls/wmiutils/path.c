@@ -525,10 +525,22 @@ static HRESULT WINAPI path_GetNamespaceAt(
 
 static HRESULT WINAPI path_RemoveNamespaceAt(
     IWbemPath *iface,
-    ULONG uIndex)
+    ULONG idx)
 {
-    FIXME("%p, %u\n", iface, uIndex);
-    return E_NOTIMPL;
+    struct path *path = impl_from_IWbemPath( iface );
+
+    TRACE("%p, %u\n", iface, idx);
+
+    if (idx >= path->num_namespaces) return WBEM_E_INVALID_PARAMETER;
+    heap_free( path->namespaces[idx] );
+    while (idx < path->num_namespaces - 1)
+    {
+        path->namespaces[idx] = path->namespaces[idx + 1];
+        path->len_namespaces[idx] = path->len_namespaces[idx + 1];
+        idx++;
+    }
+    path->num_namespaces--;
+    return S_OK;
 }
 
 static HRESULT WINAPI path_RemoveAllNamespaces(
