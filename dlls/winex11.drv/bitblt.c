@@ -1042,7 +1042,8 @@ static BOOL matching_color_info( const XVisualInfo *vis, const BITMAPINFO *info 
 
 static inline BOOL is_r8g8b8( const XVisualInfo *vis )
 {
-    return vis->depth == 24 && vis->red_mask == 0xff0000 && vis->blue_mask == 0x0000ff;
+    const XPixmapFormatValues *format = pixmap_formats[vis->depth];
+    return format->bits_per_pixel == 24 && vis->red_mask == 0xff0000 && vis->blue_mask == 0x0000ff;
 }
 
 static inline BOOL image_needs_byteswap( XImage *image, BOOL is_r8g8b8, int bit_count )
