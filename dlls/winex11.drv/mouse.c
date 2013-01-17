@@ -772,6 +772,8 @@ cleanup:
     return cursor;
 }
 
+#endif /* SONAME_LIBXCURSOR */
+
 
 struct system_cursors
 {
@@ -843,6 +845,111 @@ static const struct
     { riched20_cursors, {'r','i','c','h','e','d','2','0','.','d','l','l',0} }
 };
 
+struct cursor_font_fallback
+{
+    const char  *name;
+    unsigned int shape;
+};
+
+static const struct cursor_font_fallback fallbacks[] =
+{
+    { "X_cursor",            XC_X_cursor },
+    { "arrow",               XC_arrow },
+    { "based_arrow_down",    XC_based_arrow_down },
+    { "based_arrow_up",      XC_based_arrow_up },
+    { "boat",                XC_boat },
+    { "bogosity",            XC_bogosity },
+    { "bottom_left_corner",  XC_bottom_left_corner },
+    { "bottom_right_corner", XC_bottom_right_corner },
+    { "bottom_side",         XC_bottom_side },
+    { "bottom_tee",          XC_bottom_tee },
+    { "box_spiral",          XC_box_spiral },
+    { "center_ptr",          XC_center_ptr },
+    { "circle",              XC_circle },
+    { "clock",               XC_clock },
+    { "coffee_mug",          XC_coffee_mug },
+    { "col-resize",          XC_sb_v_double_arrow },
+    { "cross",               XC_cross },
+    { "cross_reverse",       XC_cross_reverse },
+    { "crosshair",           XC_crosshair },
+    { "diamond_cross",       XC_diamond_cross },
+    { "dot",                 XC_dot },
+    { "dotbox",              XC_dotbox },
+    { "double_arrow",        XC_double_arrow },
+    { "draft_large",         XC_draft_large },
+    { "draft_small",         XC_draft_small },
+    { "draped_box",          XC_draped_box },
+    { "exchange",            XC_exchange },
+    { "fleur",               XC_fleur },
+    { "gobbler",             XC_gobbler },
+    { "gumby",               XC_gumby },
+    { "hand1",               XC_hand1 },
+    { "hand2",               XC_hand2 },
+    { "heart",               XC_heart },
+    { "icon",                XC_icon },
+    { "iron_cross",          XC_iron_cross },
+    { "left_ptr",            XC_left_ptr },
+    { "left_side",           XC_left_side },
+    { "left_tee",            XC_left_tee },
+    { "leftbutton",          XC_leftbutton },
+    { "ll_angle",            XC_ll_angle },
+    { "lr_angle",            XC_lr_angle },
+    { "man",                 XC_man },
+    { "middlebutton",        XC_middlebutton },
+    { "mouse",               XC_mouse },
+    { "pencil",              XC_pencil },
+    { "pirate",              XC_pirate },
+    { "plus",                XC_plus },
+    { "question_arrow",      XC_question_arrow },
+    { "right_ptr",           XC_right_ptr },
+    { "right_side",          XC_right_side },
+    { "right_tee",           XC_right_tee },
+    { "rightbutton",         XC_rightbutton },
+    { "row-resize",          XC_sb_h_double_arrow },
+    { "rtl_logo",            XC_rtl_logo },
+    { "sailboat",            XC_sailboat },
+    { "sb_down_arrow",       XC_sb_down_arrow },
+    { "sb_h_double_arrow",   XC_sb_h_double_arrow },
+    { "sb_left_arrow",       XC_sb_left_arrow },
+    { "sb_right_arrow",      XC_sb_right_arrow },
+    { "sb_up_arrow",         XC_sb_up_arrow },
+    { "sb_v_double_arrow",   XC_sb_v_double_arrow },
+    { "shuttle",             XC_shuttle },
+    { "sizing",              XC_sizing },
+    { "spider",              XC_spider },
+    { "spraycan",            XC_spraycan },
+    { "star",                XC_star },
+    { "target",              XC_target },
+    { "tcross",              XC_tcross },
+    { "top_left_arrow",      XC_top_left_arrow },
+    { "top_left_corner",     XC_top_left_corner },
+    { "top_right_corner",    XC_top_right_corner },
+    { "top_side",            XC_top_side },
+    { "top_tee",             XC_top_tee },
+    { "trek",                XC_trek },
+    { "ul_angle",            XC_ul_angle },
+    { "umbrella",            XC_umbrella },
+    { "ur_angle",            XC_ur_angle },
+    { "watch",               XC_watch },
+    { "xterm",               XC_xterm }
+};
+
+static int fallback_cmp( const void *key, const void *member )
+{
+    const struct cursor_font_fallback *fallback = member;
+    return strcmp( key, fallback->name );
+}
+
+static int find_fallback_shape( const char *name )
+{
+    struct cursor_font_fallback *fallback;
+
+    if ((fallback = bsearch( name, fallbacks, sizeof(fallbacks) / sizeof(fallbacks[0]),
+                             sizeof(*fallback), fallback_cmp )))
+        return fallback->shape;
+    return -1;
+}
+
 /***********************************************************************
  *		create_xcursor_system_cursor
  *
@@ -860,7 +967,6 @@ static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
     char valueA[64];
     DWORD size, ret;
 
-    if (!pXcursorLibraryLoadCursor) return 0;
     if (!info->szModName[0]) return 0;
 
     p = strrchrW( info->szModName, '\\' );
@@ -904,15 +1010,20 @@ static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
 done:
     if (valueA[0])
     {
-        cursor = pXcursorLibraryLoadCursor( gdi_display, valueA );
+#ifdef SONAME_LIBXCURSOR
+        if (pXcursorLibraryLoadCursor) cursor = pXcursorLibraryLoadCursor( gdi_display, valueA );
+#endif
+        if (!cursor)
+        {
+            int shape = find_fallback_shape( valueA );
+            if (shape != -1) cursor = XCreateFontCursor( gdi_display, shape );
+        }
         if (!cursor) WARN( "no system cursor found for %s mapped to %s\n",
                            debugstr_w(name), debugstr_a(valueA) );
     }
     else WARN( "no system cursor found for %s\n", debugstr_w(name) );
     return cursor;
 }
-
-#endif /* SONAME_LIBXCURSOR */
 
 
 /***********************************************************************
@@ -1154,14 +1265,12 @@ static Cursor create_cursor( HANDLE handle )
     info.cbSize = sizeof(info);
     if (!GetIconInfoExW( handle, &info )) return 0;
 
-#ifdef SONAME_LIBXCURSOR
     if (use_system_cursors && (cursor = create_xcursor_system_cursor( &info )))
     {
         DeleteObject( info.hbmColor );
         DeleteObject( info.hbmMask );
         return cursor;
     }
-#endif
 
     GetObjectW( info.hbmMask, sizeof(bm), &bm );
     if (!info.hbmColor) bm.bmHeight = max( 1, bm.bmHeight / 2 );
