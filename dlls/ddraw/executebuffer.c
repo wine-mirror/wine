@@ -512,13 +512,11 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                 DWORD i;
 		TRACE("SETSTATUS        (%d)\n", count);
 
-		for (i = 0; i < count; i++) {
-		    LPD3DSTATUS ci = (LPD3DSTATUS) instr;
-
-                    buffer->data.dsStatus = *ci;
-
-		    instr += size;
-		}
+                for (i = 0; i < count; ++i)
+                {
+                    buffer->data.dsStatus = *(D3DSTATUS *)instr;
+                    instr += size;
+                }
 	    } break;
 
 	    default:
