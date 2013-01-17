@@ -37,7 +37,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /* The configured default surface */
-enum wined3d_surface_type DefaultSurfaceType = WINED3D_SURFACE_TYPE_OPENGL;
+enum ddraw_surface_type DefaultSurfaceType = DDRAW_SURFACE_TYPE_OPENGL;
 
 static struct list global_ddraw_list = LIST_INIT(global_ddraw_list);
 
@@ -384,7 +384,7 @@ HRESULT WINAPI DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA callback, void *contex
         FIXME("flags 0x%08x not handled\n", flags);
 
     wined3d_flags = WINED3D_LEGACY_DEPTH_BIAS;
-    if (DefaultSurfaceType != WINED3D_SURFACE_TYPE_OPENGL)
+    if (DefaultSurfaceType != DDRAW_SURFACE_TYPE_OPENGL)
         wined3d_flags |= WINED3D_NO3D;
 
     TRACE("Enumerating ddraw interfaces\n");
@@ -397,7 +397,7 @@ HRESULT WINAPI DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA callback, void *contex
         }
 
         WARN("Created a wined3d object without 3D support.\n");
-        DefaultSurfaceType = WINED3D_SURFACE_TYPE_GDI;
+        DefaultSurfaceType = DDRAW_SURFACE_TYPE_GDI;
     }
 
     __TRY
@@ -910,12 +910,12 @@ DllMain(HINSTANCE hInstDLL,
                 if (!strcmp(buffer,"gdi"))
                 {
                     TRACE("Defaulting to GDI surfaces\n");
-                    DefaultSurfaceType = WINED3D_SURFACE_TYPE_GDI;
+                    DefaultSurfaceType = DDRAW_SURFACE_TYPE_GDI;
                 }
                 else if (!strcmp(buffer,"opengl"))
                 {
                     TRACE("Defaulting to opengl surfaces\n");
-                    DefaultSurfaceType = WINED3D_SURFACE_TYPE_OPENGL;
+                    DefaultSurfaceType = DDRAW_SURFACE_TYPE_OPENGL;
                 }
                 else
                 {

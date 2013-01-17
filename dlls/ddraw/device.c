@@ -1079,9 +1079,8 @@ static HRESULT d3d_device7_EnumTextureFormats(IDirect3DDevice7 *iface,
 
     for (i = 0; i < sizeof(FormatList) / sizeof(*FormatList); ++i)
     {
-        hr = wined3d_check_device_format(device->ddraw->wined3d, WINED3DADAPTER_DEFAULT, WINED3D_DEVICE_TYPE_HAL,
-                mode.format_id, 0, WINED3D_RTYPE_TEXTURE, FormatList[i], WINED3D_SURFACE_TYPE_OPENGL);
-        if (hr == D3D_OK)
+        if (wined3d_check_device_format(device->ddraw->wined3d, WINED3DADAPTER_DEFAULT, WINED3D_DEVICE_TYPE_HAL,
+                mode.format_id, 0, WINED3D_RTYPE_TEXTURE, FormatList[i]) == D3D_OK)
         {
             DDPIXELFORMAT pformat;
 
@@ -1102,10 +1101,9 @@ static HRESULT d3d_device7_EnumTextureFormats(IDirect3DDevice7 *iface,
 
     for (i = 0; i < sizeof(BumpFormatList) / sizeof(*BumpFormatList); ++i)
     {
-        hr = wined3d_check_device_format(device->ddraw->wined3d, WINED3DADAPTER_DEFAULT,
+        if (wined3d_check_device_format(device->ddraw->wined3d, WINED3DADAPTER_DEFAULT,
                 WINED3D_DEVICE_TYPE_HAL, mode.format_id, WINED3DUSAGE_QUERY_LEGACYBUMPMAP,
-                WINED3D_RTYPE_TEXTURE, BumpFormatList[i], WINED3D_SURFACE_TYPE_OPENGL);
-        if (hr == D3D_OK)
+                WINED3D_RTYPE_TEXTURE, BumpFormatList[i]) == D3D_OK)
         {
             DDPIXELFORMAT pformat;
 
@@ -1209,9 +1207,8 @@ static HRESULT WINAPI d3d_device2_EnumTextureFormats(IDirect3DDevice2 *iface,
 
     for (i = 0; i < sizeof(FormatList) / sizeof(*FormatList); ++i)
     {
-        hr = wined3d_check_device_format(device->ddraw->wined3d, 0, WINED3D_DEVICE_TYPE_HAL,
-                mode.format_id, 0, WINED3D_RTYPE_TEXTURE, FormatList[i], WINED3D_SURFACE_TYPE_OPENGL);
-        if (hr == D3D_OK)
+        if (wined3d_check_device_format(device->ddraw->wined3d, 0, WINED3D_DEVICE_TYPE_HAL,
+                mode.format_id, 0, WINED3D_RTYPE_TEXTURE, FormatList[i]) == D3D_OK)
         {
             DDSURFACEDESC sdesc;
 
@@ -6702,7 +6699,7 @@ HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target,
     TRACE("ddraw %p, target %p, version %u, device %p, outer_unknown %p.\n",
             ddraw, target, version, device, outer_unknown);
 
-    if (DefaultSurfaceType != WINED3D_SURFACE_TYPE_OPENGL)
+    if (DefaultSurfaceType != DDRAW_SURFACE_TYPE_OPENGL)
     {
         ERR_(winediag)("The application wants to create a Direct3D device, "
                 "but the current DirectDrawRenderer does not support this.\n");

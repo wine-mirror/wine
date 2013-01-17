@@ -254,7 +254,7 @@ static HRESULT WINAPI d3d8_CheckDeviceFormat(IDirect3D8 *iface, UINT adapter, D3
 
     wined3d_mutex_lock();
     hr = wined3d_check_device_format(d3d8->wined3d, adapter, device_type, wined3dformat_from_d3dformat(adapter_format),
-            usage, wined3d_rtype, wined3dformat_from_d3dformat(format), WINED3D_SURFACE_TYPE_OPENGL);
+            usage, wined3d_rtype, wined3dformat_from_d3dformat(format));
     wined3d_mutex_unlock();
 
     return hr;

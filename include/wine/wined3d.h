@@ -748,12 +748,6 @@ enum wined3d_decl_usage
     WINED3D_DECL_USAGE_SAMPLE               = 13
 };
 
-enum wined3d_surface_type
-{
-    WINED3D_SURFACE_TYPE_OPENGL,                    /* OpenGL surface: Renders using libGL, needed for 3D */
-    WINED3D_SURFACE_TYPE_GDI,                       /* User surface. No 3D, DirectDraw rendering with GDI */
-};
-
 enum wined3d_sysval_semantic
 {
     WINED3D_SV_DEPTH = 0xffffffff,
@@ -2024,8 +2018,7 @@ HRESULT __cdecl wined3d_check_depth_stencil_match(const struct wined3d *wined3d,
         enum wined3d_format_id render_target_format_id, enum wined3d_format_id depth_stencil_format_id);
 HRESULT __cdecl wined3d_check_device_format(const struct wined3d *wined3d, UINT adaper_idx,
         enum wined3d_device_type device_type, enum wined3d_format_id adapter_format_id, DWORD usage,
-        enum wined3d_resource_type resource_type, enum wined3d_format_id check_format_id,
-        enum wined3d_surface_type surface_type);
+        enum wined3d_resource_type resource_type, enum wined3d_format_id check_format_id);
 HRESULT __cdecl wined3d_check_device_format_conversion(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, enum wined3d_format_id source_format_id,
         enum wined3d_format_id target_format_id);
