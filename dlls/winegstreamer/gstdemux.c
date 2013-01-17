@@ -1478,6 +1478,8 @@ static ULONG WINAPI GSTOutPin_Release(IPin *iface) {
         DeleteMediaType(This->pmt);
         FreeMediaType(&This->pin.pin.mtCurrent);
         gst_segment_free(This->segment);
+        if (This->pin.pAllocator)
+            IMemAllocator_Release(This->pin.pAllocator);
         CoTaskMemFree(This);
         return 0;
     }
@@ -1510,7 +1512,14 @@ static HRESULT WINAPI GSTOutPin_DecideAllocator(BaseOutputPin *iface, IMemInputP
 
     *pAlloc = NULL;
     if (GSTfilter->pInputPin.pAlloc)
+    {
         hr = IMemInputPin_NotifyAllocator(pPin, GSTfilter->pInputPin.pAlloc, FALSE);
+        if (SUCCEEDED(hr))
+        {
+            *pAlloc = GSTfilter->pInputPin.pAlloc;
+            IMemAllocator_AddRef(*pAlloc);
+        }
+    }
     else
         hr = VFW_E_NO_ALLOCATOR;
 
