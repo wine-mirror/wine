@@ -907,6 +907,36 @@ static BOOL is_same_file(HANDLE h1, HANDLE h2)
  */
 BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )
 {
+    return CopyFileExW( source, dest, NULL, NULL, NULL,
+                        fail_if_exists ? COPY_FILE_FAIL_IF_EXISTS : 0 );
+}
+
+
+/**************************************************************************
+ *           CopyFileA   (KERNEL32.@)
+ */
+BOOL WINAPI CopyFileA( LPCSTR source, LPCSTR dest, BOOL fail_if_exists)
+{
+    WCHAR *sourceW, *destW;
+    BOOL ret;
+
+    if (!(sourceW = FILE_name_AtoW( source, FALSE ))) return FALSE;
+    if (!(destW = FILE_name_AtoW( dest, TRUE ))) return FALSE;
+
+    ret = CopyFileW( sourceW, destW, fail_if_exists );
+
+    HeapFree( GetProcessHeap(), 0, destW );
+    return ret;
+}
+
+
+/**************************************************************************
+ *           CopyFileExW   (KERNEL32.@)
+ */
+BOOL WINAPI CopyFileExW(LPCWSTR source, LPCWSTR dest,
+                        LPPROGRESS_ROUTINE progress, LPVOID param,
+                        LPBOOL cancel_ptr, DWORD flags)
+{
     static const int buffer_size = 65536;
     HANDLE h1, h2;
     BY_HANDLE_FILE_INFORMATION info;
@@ -925,7 +955,7 @@ BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )
         return FALSE;
     }
 
-    TRACE("%s -> %s, %d\n", debugstr_w(source), debugstr_w(dest), fail_if_exists);
+    TRACE("%s -> %s, %x\n", debugstr_w(source), debugstr_w(dest), flags);
 
     if ((h1 = CreateFileW(source, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
                      NULL, OPEN_EXISTING, 0, 0)) == INVALID_HANDLE_VALUE)
@@ -943,7 +973,7 @@ BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )
         return FALSE;
     }
 
-    if (!fail_if_exists)
+    if (!(flags & COPY_FILE_FAIL_IF_EXISTS))
     {
         BOOL same_file = FALSE;
         h2 = CreateFileW( dest, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
@@ -963,7 +993,7 @@ BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )
     }
 
     if ((h2 = CreateFileW( dest, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
-                             fail_if_exists ? CREATE_NEW : CREATE_ALWAYS,
+                             (flags & COPY_FILE_FAIL_IF_EXISTS) ? CREATE_NEW : CREATE_ALWAYS,
                              info.dwFileAttributes, h1 )) == INVALID_HANDLE_VALUE)
     {
         WARN("Unable to open dest %s\n", debugstr_w(dest));
@@ -991,42 +1021,6 @@ done:
     CloseHandle( h1 );
     CloseHandle( h2 );
     return ret;
-}
-
-
-/**************************************************************************
- *           CopyFileA   (KERNEL32.@)
- */
-BOOL WINAPI CopyFileA( LPCSTR source, LPCSTR dest, BOOL fail_if_exists)
-{
-    WCHAR *sourceW, *destW;
-    BOOL ret;
-
-    if (!(sourceW = FILE_name_AtoW( source, FALSE ))) return FALSE;
-    if (!(destW = FILE_name_AtoW( dest, TRUE ))) return FALSE;
-
-    ret = CopyFileW( sourceW, destW, fail_if_exists );
-
-    HeapFree( GetProcessHeap(), 0, destW );
-    return ret;
-}
-
-
-/**************************************************************************
- *           CopyFileExW   (KERNEL32.@)
- *
- * This implementation ignores most of the extra parameters passed-in into
- * the "ex" version of the method and calls the CopyFile method.
- * It will have to be fixed eventually.
- */
-BOOL WINAPI CopyFileExW(LPCWSTR sourceFilename, LPCWSTR destFilename,
-                        LPPROGRESS_ROUTINE progressRoutine, LPVOID appData,
-                        LPBOOL cancelFlagPointer, DWORD copyFlags)
-{
-    /*
-     * Interpret the only flag that CopyFile can interpret.
-     */
-    return CopyFileW(sourceFilename, destFilename, (copyFlags & COPY_FILE_FAIL_IF_EXISTS) != 0);
 }
 
 
