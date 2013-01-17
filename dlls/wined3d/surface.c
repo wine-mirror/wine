@@ -3722,7 +3722,7 @@ static struct wined3d_surface *surface_convert_format(struct wined3d_surface *so
 
     /* FIXME: Multisampled conversion? */
     if (FAILED(hr = wined3d_surface_create(source->resource.device, source->resource.width, source->resource.height,
-            to_fmt, 0, WINED3D_POOL_SCRATCH, WINED3D_MULTISAMPLE_NONE, 0, source->surface_type,
+            to_fmt, 0, WINED3D_POOL_SCRATCH, WINED3D_MULTISAMPLE_NONE, 0,
             WINED3D_SURFACE_MAPPABLE | WINED3D_SURFACE_DISCARD, NULL, &wined3d_null_parent_ops, &ret)))
     {
         ERR("Failed to create a destination surface for conversion.\n");
@@ -7103,9 +7103,9 @@ const struct blit_shader cpu_blit =  {
     cpu_blit_depth_fill,
 };
 
-static HRESULT surface_init(struct wined3d_surface *surface, enum wined3d_surface_type surface_type,
-        UINT alignment, UINT width, UINT height, enum wined3d_multisample_type multisample_type,
-        UINT multisample_quality, struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id,
+static HRESULT surface_init(struct wined3d_surface *surface, UINT alignment, UINT width, UINT height,
+        enum wined3d_multisample_type multisample_type, UINT multisample_quality,
+        struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id,
         enum wined3d_pool pool, DWORD flags, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -7164,22 +7164,10 @@ static HRESULT surface_init(struct wined3d_surface *surface, enum wined3d_surfac
     if (!resource_size)
         return WINED3DERR_INVALIDCALL;
 
-    surface->surface_type = surface_type;
-
-    switch (surface_type)
-    {
-        case WINED3D_SURFACE_TYPE_OPENGL:
-            surface->surface_ops = &surface_ops;
-            break;
-
-        case WINED3D_SURFACE_TYPE_GDI:
-            surface->surface_ops = &gdi_surface_ops;
-            break;
-
-        default:
-            ERR("Requested unknown surface implementation %#x.\n", surface_type);
-            return WINED3DERR_INVALIDCALL;
-    }
+    if (device->wined3d->flags & WINED3D_NO3D)
+        surface->surface_ops = &gdi_surface_ops;
+    else
+        surface->surface_ops = &surface_ops;
 
     hr = resource_init(&surface->resource, device, WINED3D_RTYPE_SURFACE, format,
             multisample_type, multisample_quality, usage, pool, width, height, 1,
@@ -7245,9 +7233,8 @@ static HRESULT surface_init(struct wined3d_surface *surface, enum wined3d_surfac
 
 HRESULT CDECL wined3d_surface_create(struct wined3d_device *device, UINT width, UINT height,
         enum wined3d_format_id format_id, DWORD usage, enum wined3d_pool pool,
-        enum wined3d_multisample_type multisample_type, DWORD multisample_quality,
-        enum wined3d_surface_type surface_type, DWORD flags, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_surface **surface)
+        enum wined3d_multisample_type multisample_type, DWORD multisample_quality, DWORD flags,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_surface **surface)
 {
     struct wined3d_surface *object;
     HRESULT hr;
@@ -7256,13 +7243,7 @@ HRESULT CDECL wined3d_surface_create(struct wined3d_device *device, UINT width, 
             device, width, height, debug_d3dformat(format_id));
     TRACE("surface %p, usage %s (%#x), pool %s, multisample_type %#x, multisample_quality %u\n",
             surface, debug_d3dusage(usage), usage, debug_d3dpool(pool), multisample_type, multisample_quality);
-    TRACE("surface_type %#x, flags %#x, parent %p, parent_ops %p.\n", surface_type, flags, parent, parent_ops);
-
-    if (surface_type == WINED3D_SURFACE_TYPE_OPENGL && !device->adapter)
-    {
-        ERR("OpenGL surfaces are not available without OpenGL.\n");
-        return WINED3DERR_NOTAVAILABLE;
-    }
+    TRACE("flags %#x, parent %p, parent_ops %p.\n", flags, parent, parent_ops);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -7271,8 +7252,8 @@ HRESULT CDECL wined3d_surface_create(struct wined3d_device *device, UINT width, 
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    if (FAILED(hr = surface_init(object, surface_type, device->surface_alignment, width, height,
-            multisample_type, multisample_quality, device, usage, format_id, pool, flags, parent, parent_ops)))
+    if (FAILED(hr = surface_init(object, device->surface_alignment, width, height, multisample_type,
+            multisample_quality, device, usage, format_id, pool, flags, parent, parent_ops)))
     {
         WARN("Failed to initialize surface, returning %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);

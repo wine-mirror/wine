@@ -5785,7 +5785,7 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, D
     surface->first_attached = surface;
 
     if (FAILED(hr = wined3d_surface_create(ddraw->wined3d_device, desc->dwWidth, desc->dwHeight, format,
-            usage, pool, WINED3D_MULTISAMPLE_NONE, 0, DefaultSurfaceType, flags, surface,
+            usage, pool, WINED3D_MULTISAMPLE_NONE, 0, flags, surface,
             &ddraw_surface_wined3d_parent_ops, &surface->wined3d_surface)))
     {
         WARN("Failed to create wined3d surface, hr %#x.\n", hr);

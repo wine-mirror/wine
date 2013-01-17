@@ -1862,8 +1862,7 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
             device_parent, container_parent, width, height, format, usage, pool, sub_resource_idx, surface);
 
     return wined3d_surface_create(device->wined3d_device, width, height, format, usage, pool,
-            WINED3D_MULTISAMPLE_NONE, 0, WINED3D_SURFACE_TYPE_OPENGL, 0, container_parent,
-            &d3d10_null_wined3d_parent_ops, surface);
+            WINED3D_MULTISAMPLE_NONE, 0, 0, container_parent, &d3d10_null_wined3d_parent_ops, surface);
 }
 
 static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_device_parent *device_parent,

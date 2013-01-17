@@ -2053,7 +2053,6 @@ struct wined3d_surface
 
     DWORD flags;
 
-    enum wined3d_surface_type surface_type;
     UINT                      pow2Width;
     UINT                      pow2Height;
 
