@@ -33,7 +33,7 @@
 /* Background copy job vtbl and related data */
 typedef struct
 {
-    const IBackgroundCopyJob2Vtbl *lpVtbl;
+    IBackgroundCopyJob2 IBackgroundCopyJob2_iface;
     LONG ref;
     LPWSTR displayName;
     BG_JOB_TYPE type;
@@ -79,14 +79,13 @@ extern BackgroundCopyManagerImpl globalMgr DECLSPEC_HIDDEN;
 
 HRESULT BackgroundCopyManagerConstructor(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
-                                     GUID *pJobId, LPVOID *ppObj) DECLSPEC_HIDDEN;
+                                     GUID *pJobId, BackgroundCopyJobImpl **job) DECLSPEC_HIDDEN;
 HRESULT enum_copy_job_create(BackgroundCopyManagerImpl *qmgr,
         IEnumBackgroundCopyJobs **enumjob) DECLSPEC_HIDDEN;
 HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
                                       LPCWSTR remoteName, LPCWSTR localName,
                                       LPVOID *ppObj) DECLSPEC_HIDDEN;
-HRESULT EnumBackgroundCopyFilesConstructor(LPVOID *ppObj,
-                                           IBackgroundCopyJob2 *copyJob) DECLSPEC_HIDDEN;
+HRESULT EnumBackgroundCopyFilesConstructor(BackgroundCopyJobImpl*, IEnumBackgroundCopyFiles**) DECLSPEC_HIDDEN;
 DWORD WINAPI fileTransfer(void *param) DECLSPEC_HIDDEN;
 void processJob(BackgroundCopyJobImpl *job) DECLSPEC_HIDDEN;
 BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job) DECLSPEC_HIDDEN;

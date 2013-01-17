@@ -200,9 +200,9 @@ HRESULT enum_copy_job_create(BackgroundCopyManagerImpl *qmgr, IEnumBackgroundCop
     i = 0;
     LIST_FOR_EACH_ENTRY(job, &qmgr->jobs, BackgroundCopyJobImpl, entryFromQmgr)
     {
-        IBackgroundCopyJob *iJob = (IBackgroundCopyJob *) job;
-        IBackgroundCopyJob_AddRef(iJob);
-        This->jobs[i++] = iJob;
+        IBackgroundCopyJob *job_iface = (IBackgroundCopyJob*)&job->IBackgroundCopyJob2_iface;
+        IBackgroundCopyJob_AddRef(job_iface);
+        This->jobs[i++] = job_iface;
     }
     LeaveCriticalSection(&qmgr->cs);
 

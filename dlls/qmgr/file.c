@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 
 static void BackgroundCopyFileDestructor(BackgroundCopyFileImpl *This)
 {
-    IBackgroundCopyJob_Release((IBackgroundCopyJob *) This->owner);
+    IBackgroundCopyJob2_Release(&This->owner->IBackgroundCopyJob2_iface);
     HeapFree(GetProcessHeap(), 0, This->info.LocalName);
     HeapFree(GetProcessHeap(), 0, This->info.RemoteName);
     HeapFree(GetProcessHeap(), 0, This);
@@ -177,7 +177,7 @@ HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
     This->fileProgress.BytesTransferred = 0;
     This->fileProgress.Completed = FALSE;
     This->owner = owner;
-    IBackgroundCopyJob_AddRef((IBackgroundCopyJob *) owner);
+    IBackgroundCopyJob2_AddRef(&owner->IBackgroundCopyJob2_iface);
 
     *ppObj = &This->lpVtbl;
     return S_OK;

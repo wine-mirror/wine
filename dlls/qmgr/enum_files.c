@@ -167,14 +167,13 @@ static const IEnumBackgroundCopyFilesVtbl BITS_IEnumBackgroundCopyFiles_Vtbl =
     BITS_IEnumBackgroundCopyFiles_GetCount
 };
 
-HRESULT EnumBackgroundCopyFilesConstructor(LPVOID *ppObj, IBackgroundCopyJob2 *iCopyJob)
+HRESULT EnumBackgroundCopyFilesConstructor(BackgroundCopyJobImpl *job, IEnumBackgroundCopyFiles **enum_files)
 {
     EnumBackgroundCopyFilesImpl *This;
     BackgroundCopyFileImpl *file;
-    BackgroundCopyJobImpl *job = (BackgroundCopyJobImpl *) iCopyJob;
     ULONG i;
 
-    TRACE("%p, %p)\n", ppObj, job);
+    TRACE("%p, %p)\n", job, enum_files);
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof *This);
     if (!This)
@@ -209,6 +208,6 @@ HRESULT EnumBackgroundCopyFilesConstructor(LPVOID *ppObj, IBackgroundCopyJob2 *i
     }
     LeaveCriticalSection(&job->cs);
 
-    *ppObj = &This->IEnumBackgroundCopyFiles_iface;
+    *enum_files = &This->IEnumBackgroundCopyFiles_iface;
     return S_OK;
 }

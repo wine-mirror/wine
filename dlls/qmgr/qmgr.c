@@ -60,14 +60,13 @@ static HRESULT WINAPI BITS_IBackgroundCopyManager_CreateJob(IBackgroundCopyManag
     HRESULT hres;
     TRACE("\n");
 
-    hres = BackgroundCopyJobConstructor(DisplayName, Type, pJobId,
-                                        (LPVOID *) ppJob);
+    hres = BackgroundCopyJobConstructor(DisplayName, Type, pJobId, &job);
     if (FAILED(hres))
         return hres;
 
     /* Add a reference to the job to job list */
+    *ppJob = (IBackgroundCopyJob*)&job->IBackgroundCopyJob2_iface;
     IBackgroundCopyJob_AddRef(*ppJob);
-    job = (BackgroundCopyJobImpl *) *ppJob;
     EnterCriticalSection(&globalMgr.cs);
     list_add_head(&globalMgr.jobs, &job->entryFromQmgr);
     LeaveCriticalSection(&globalMgr.cs);
@@ -141,7 +140,7 @@ DWORD WINAPI fileTransfer(void *param)
             LIST_FOR_EACH_ENTRY_SAFE(job, jobCur, &qmgr->jobs, BackgroundCopyJobImpl, entryFromQmgr)
             {
                 list_remove(&job->entryFromQmgr);
-                IBackgroundCopyJob_Release((IBackgroundCopyJob *) job);
+                IBackgroundCopyJob2_Release(&job->IBackgroundCopyJob2_iface);
             }
             return 0;
         }
@@ -156,7 +155,7 @@ DWORD WINAPI fileTransfer(void *param)
             if (job->state == BG_JOB_STATE_ACKNOWLEDGED || job->state == BG_JOB_STATE_CANCELLED)
             {
                 list_remove(&job->entryFromQmgr);
-                IBackgroundCopyJob_Release((IBackgroundCopyJob *) job);
+                IBackgroundCopyJob2_Release(&job->IBackgroundCopyJob2_iface);
             }
             else if (job->state == BG_JOB_STATE_QUEUED)
             {
