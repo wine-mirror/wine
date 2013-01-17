@@ -702,6 +702,80 @@ static void test_IWbemPath_RemoveNamespaceAt(void)
     IWbemPath_Release( path );
 }
 
+static void test_IWbemPath_SetNamespaceAt(void)
+{
+    static const ULONGLONG expected_flags =
+        WBEMPATH_INFO_ANON_LOCAL_MACHINE | WBEMPATH_INFO_V1_COMPLIANT |
+        WBEMPATH_INFO_V2_COMPLIANT | WBEMPATH_INFO_CIM_COMPLIANT |
+        WBEMPATH_INFO_SERVER_NAMESPACE_ONLY;
+    static const WCHAR rootW[] = {'r','o','o','t',0};
+    static const WCHAR cimv2W[] = {'c','i','m','v','2',0};
+    IWbemPath *path;
+    WCHAR buf[16];
+    ULONG len, count;
+    ULONGLONG flags;
+    HRESULT hr;
+
+    if (!(path = create_path())) return;
+
+    hr = IWbemPath_SetNamespaceAt( path, 0, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+
+    hr = IWbemPath_SetNamespaceAt( path, 1, cimv2W );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+
+    hr = IWbemPath_SetNamespaceAt( path, 0, cimv2W );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    count = 0xdeadbeef;
+    hr = IWbemPath_GetNamespaceCount( path, &count );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( count == 1, "got %u\n", count );
+
+    flags = 0;
+    hr = IWbemPath_GetInfo( path, 0, &flags );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( flags == expected_flags,
+        "got %lx%08lx\n", (unsigned long)(flags >> 32), (unsigned long)flags );
+
+    buf[0] = 0;
+    len = sizeof(buf) / sizeof(buf[0]);
+    hr = IWbemPath_GetNamespaceAt( path, 0, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( buf, cimv2W ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( cimv2W ) + 1, "unexpected length %u\n", len );
+
+    hr = IWbemPath_SetNamespaceAt( path, 0, rootW );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    flags = 0;
+    hr = IWbemPath_GetInfo( path, 0, &flags );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( flags == expected_flags,
+        "got %lx%08lx\n", (unsigned long)(flags >> 32), (unsigned long)flags );
+
+    count = 0xdeadbeef;
+    hr = IWbemPath_GetNamespaceCount( path, &count );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( count == 2, "got %u\n", count );
+
+    buf[0] = 0;
+    len = sizeof(buf) / sizeof(buf[0]);
+    hr = IWbemPath_GetNamespaceAt( path, 0, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( buf, rootW ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( rootW ) + 1, "unexpected length %u\n", len );
+
+    buf[0] = 0;
+    len = sizeof(buf) / sizeof(buf[0]);
+    hr = IWbemPath_GetNamespaceAt( path, 1, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( buf, cimv2W ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( cimv2W ) + 1, "unexpected length %u\n", len );
+
+    IWbemPath_Release( path );
+}
+
 START_TEST (path)
 {
     CoInitialize( NULL );
@@ -716,6 +790,7 @@ START_TEST (path)
     test_IWbemPath_GetNamespaceAt();
     test_IWbemPath_RemoveAllNamespaces();
     test_IWbemPath_RemoveNamespaceAt();
+    test_IWbemPath_SetNamespaceAt();
 
     CoUninitialize();
 }

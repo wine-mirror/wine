@@ -500,11 +500,50 @@ static HRESULT WINAPI path_GetNamespaceCount(
 
 static HRESULT WINAPI path_SetNamespaceAt(
     IWbemPath *iface,
-    ULONG uIndex,
-    LPCWSTR pszName)
+    ULONG idx,
+    LPCWSTR name)
 {
-    FIXME("%p, %u, %s\n", iface, uIndex, debugstr_w(pszName));
-    return E_NOTIMPL;
+    struct path *path = impl_from_IWbemPath( iface );
+    static const ULONGLONG flags =
+        WBEMPATH_INFO_V1_COMPLIANT | WBEMPATH_INFO_V2_COMPLIANT |
+        WBEMPATH_INFO_CIM_COMPLIANT;
+    int i, *tmp_len;
+    WCHAR **tmp, *new;
+    DWORD size;
+
+    TRACE("%p, %u, %s\n", iface, idx, debugstr_w(name));
+
+    if (idx > path->num_namespaces || !name) return WBEM_E_INVALID_PARAMETER;
+    if (!(new = strdupW( name ))) return WBEM_E_OUT_OF_MEMORY;
+
+    size = (path->num_namespaces + 1) * sizeof(WCHAR *);
+    if (path->namespaces) tmp = heap_realloc( path->namespaces, size );
+    else tmp = heap_alloc( size );
+    if (!tmp)
+    {
+        heap_free( new );
+        return WBEM_E_OUT_OF_MEMORY;
+    }
+    path->namespaces = tmp;
+    size = (path->num_namespaces + 1) * sizeof(int);
+    if (path->len_namespaces) tmp_len = heap_realloc( path->len_namespaces, size );
+    else tmp_len = heap_alloc( size );
+    if (!tmp_len)
+    {
+        heap_free( new );
+        return WBEM_E_OUT_OF_MEMORY;
+    }
+    path->len_namespaces = tmp_len;
+    for (i = idx; i < path->num_namespaces; i++)
+    {
+        path->namespaces[i + 1] = path->namespaces[i];
+        path->len_namespaces[i + 1] = path->len_namespaces[i];
+    }
+    path->namespaces[idx] = new;
+    path->len_namespaces[idx] = strlenW( new );
+    path->num_namespaces++;
+    path->flags |= flags;
+    return S_OK;
 }
 
 static HRESULT WINAPI path_GetNamespaceAt(
@@ -532,6 +571,7 @@ static HRESULT WINAPI path_RemoveNamespaceAt(
     TRACE("%p, %u\n", iface, idx);
 
     if (idx >= path->num_namespaces) return WBEM_E_INVALID_PARAMETER;
+
     heap_free( path->namespaces[idx] );
     while (idx < path->num_namespaces - 1)
     {
