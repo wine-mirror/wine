@@ -3535,7 +3535,7 @@ msgstr "Päättymätön merkkijonovakio"
 
 #: jscript.rc:39
 msgid "'return' statement outside of function"
-msgstr ""
+msgstr "'return' funktion ulkopuolella"
 
 #: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
@@ -8269,16 +8269,12 @@ msgid "Don't install"
 msgstr "Älä asenna"
 
 #: urlmon.rc:40
-#, fuzzy
-#| msgid ""
-#| "When installed, ActiveX has full access to your computer.Do not click "
-#| "install unless you have absolute trust in the above source."
 msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
-"Asennuksen jälkeen ActiveX voi täysin hallita tietokonettasi. Asenna vain, "
-"jos luotat yllä mainittuun lähteeseen täysin."
+"Asennuksen jälkeen ActiveX-komponentti voi täysin hallita tietokonettasi. "
+"Asenna vain, jos luotat yllä mainittuun lähteeseen täysin."
 
 #: urlmon.rc:48
 msgid "Installation of component failed: %08x"
@@ -10072,10 +10068,8 @@ msgid "Wine Command Prompt"
 msgstr "Winen komentokehote"
 
 #: cmd.rc:349
-#, fuzzy
-#| msgid "CMD Version %1!S!\n"
 msgid "Wine CMD Version %1!S!\n"
-msgstr "CMD versio %1!S!\n"
+msgstr "Wine CMD versio %1!S!\n"
 
 #: cmd.rc:350
 msgid "More? "
@@ -10108,27 +10102,27 @@ msgstr "'%1' ei ole sisäinen eikä ulkoinen komento eikä komentojono.\n"
 
 #: cmd.rc:357
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "Virheellinen jako nollalla.\n"
 
 #: cmd.rc:358
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "Odotettiin operandia.\n"
 
 #: cmd.rc:359
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Expected an operator.\n"
-msgstr "Odottamaton verkkovirhe.\n"
+msgstr "Odotettiin operaattoria.\n"
 
 #: cmd.rc:360
 msgid "Mismatch in parentheses.\n"
-msgstr ""
+msgstr "Sulut eivät täsmää.\n"
 
 #: cmd.rc:361
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
+"Luvun muoto on virheellinen – täytyy olla desimaaliluku (12),\n"
+" heksadesimaaliluku (0x34) tai oktaaliluku (056).\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10177,10 +10171,8 @@ msgid "Connection-specific DNS suffix"
 msgstr "Yhteysspesifinen DNS-pääte"
 
 #: ipconfig.rc:33
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv4 address"
-msgstr "IP-osoite"
+msgstr "IPv4-osoite"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -10223,10 +10215,8 @@ msgid "Default gateway"
 msgstr "Oletusyhdyskäytävä"
 
 #: ipconfig.rc:47
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv6 address"
-msgstr "IP-osoite"
+msgstr "IPv6-osoite"
 
 #: net.rc:27
 msgid ""
@@ -10359,78 +10349,60 @@ msgid "The following services are running:\n"
 msgstr "Seuraavat palvelut ovat toiminnassa:\n"
 
 #: netstat.rc:27
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Connections"
-msgstr "Lähiverkkoyhteys"
+msgstr "Aktiiviset yhteydet"
 
 #: netstat.rc:28
 msgid "Proto"
-msgstr ""
+msgstr "Prot."
 
 #: netstat.rc:29
-#, fuzzy
-#| msgid "Email Address"
 msgid "Local Address"
-msgstr "Sähköpostiosoite"
+msgstr "Paikallinen osoite"
 
 #: netstat.rc:30
-#, fuzzy
-#| msgid "Street Address"
 msgid "Foreign Address"
-msgstr "Katuosoite"
+msgstr "Etäosoite"
 
 #: netstat.rc:31
-#, fuzzy
-#| msgid "Status"
 msgid "State"
 msgstr "Tila"
 
 #: netstat.rc:32
-#, fuzzy
-#| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "Rajapinnat"
+msgstr "Rajapinnan tilastot"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "Lähetetty"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "Vastaanotettu"
 
 #: netstat.rc:35
-#, fuzzy
-#| msgid "bytes"
 msgid "Bytes"
-msgstr "tavua"
+msgstr "Tavuja"
 
 #: netstat.rc:36
 msgid "Unicast packets"
-msgstr ""
+msgstr "Unicast-paketteja"
 
 #: netstat.rc:37
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "Ei-unicast-paketteja"
 
 #: netstat.rc:38
-#, fuzzy
-#| msgid "Disclaimer"
 msgid "Discards"
-msgstr "Vastuuvapaus"
+msgstr "Hylkäyksiä"
 
 #: netstat.rc:39
-#, fuzzy
-#| msgid "Error"
 msgid "Errors"
-msgstr "Virhe"
+msgstr "Virheitä"
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "Unknown port.\n"
 msgid "Unknown protocols"
-msgstr "Tuntematon portti.\n"
+msgstr "Vieraita protokollia"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
