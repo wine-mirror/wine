@@ -343,7 +343,6 @@ int interlocked_xchg_add( int *dest, int incr )
     return retv;
 }
 
-#ifdef _WIN64
 int interlocked_cmpxchg128( __int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare )
 {
     int retv;
@@ -363,6 +362,5 @@ int interlocked_cmpxchg128( __int64 *dest, __int64 xchg_high, __int64 xchg_low, 
     pthread_mutex_unlock( &interlocked_mutex );
     return retv;
 }
-#endif
 
 #endif
