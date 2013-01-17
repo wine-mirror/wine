@@ -951,7 +951,7 @@ static HRESULT nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNo
         break;
     }
     case DOCUMENT_TYPE_NODE:
-        WARN("Ignoring DOCUMENT_TYPE_NODE\n");
+        nsIContentSerializer_AppendDoctype(serializer, nscontent, str);
         break;
     case DOCUMENT_FRAGMENT_NODE:
         break;
