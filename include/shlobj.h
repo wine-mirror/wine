@@ -1430,6 +1430,29 @@ int WINAPI SHCreateDirectoryExW(HWND, LPCWSTR, LPSECURITY_ATTRIBUTES);
 #define    SHCreateDirectoryEx WINELIB_NAME_AW(SHCreateDirectoryEx)
 
 /****************************************************************************
+* SHGetSetFolderCustomSettings API
+*/
+typedef struct {
+    DWORD dwSize;
+    DWORD dwMask;
+    SHELLVIEWID *pvid;
+    LPWSTR pszWebViewTemplate;
+    DWORD cchWebViewTemplate;
+    LPWSTR pszWebViewTemplateVersion;
+    LPWSTR pszInfoTip;
+    DWORD cchInfoTip;
+    CLSID *pclsid;
+    DWORD dwFlags;
+    LPWSTR pszIconFile;
+    DWORD cchIconFile;
+    int iIconIndex;
+    LPWSTR pszLogo;
+    DWORD cchLogo;
+} SHFOLDERCUSTOMSETTINGS, *LPSHFOLDERCUSTOMSETTINGS;
+
+HRESULT WINAPI SHGetSetFolderCustomSettings(LPSHFOLDERCUSTOMSETTINGS pfcs, LPCSTR pszPath, DWORD dwReadWrite);
+
+/****************************************************************************
 * SHGetSpecialFolderLocation API
 */
 HRESULT WINAPI SHGetSpecialFolderLocation(HWND hwndOwner, int nFolder, LPITEMIDLIST * ppidl);

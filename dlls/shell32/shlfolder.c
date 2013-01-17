@@ -592,3 +592,14 @@ HRESULT WINAPI SHOpenFolderAndSelectItems( PCIDLIST_ABSOLUTE pidlFolder, UINT ci
     FIXME("%p %u %p 0x%x: stub\n", pidlFolder, cidl, apidl, flags);
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ *  SHGetSetFolderCustomSettings
+ *
+ *   Only in XP (up to SP2) and Server 2003
+ */
+HRESULT WINAPI SHGetSetFolderCustomSettings( LPSHFOLDERCUSTOMSETTINGS fcs, LPCSTR path, DWORD flag )
+{
+    FIXME("%p %s 0x%x: stub\n", fcs, path, flag);
+    return E_NOTIMPL;
+}

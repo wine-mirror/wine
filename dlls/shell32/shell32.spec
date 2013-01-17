@@ -259,7 +259,7 @@
 
  701 stdcall CDefFolderMenu_Create2(ptr ptr long ptr ptr ptr long ptr ptr)
  704 stdcall -noname GUIDFromStringW(wstr ptr)
-
+ 709 stdcall SHGetSetFolderCustomSettings(ptr str long)
  714 stdcall @(ptr) SHELL32_714 # PathIsTemporaryW
  727 stdcall SHGetImageList(long ptr ptr)
  730 stdcall -noname RestartDialogEx(long wstr long long)
