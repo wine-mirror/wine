@@ -1569,8 +1569,6 @@ struct wined3d_driver_info
 struct wined3d_adapter
 {
     UINT ordinal;
-    BOOL                    opengl;
-
     POINT monitorPoint;
     enum wined3d_format_id screen_format;
 

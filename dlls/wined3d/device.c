@@ -1188,7 +1188,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
 
     if (device->d3d_initialized)
         return WINED3DERR_INVALIDCALL;
-    if (!device->adapter->opengl)
+    if (device->wined3d->flags & WINED3D_NO3D)
         return WINED3DERR_INVALIDCALL;
 
     device->valid_rt_mask = 0;

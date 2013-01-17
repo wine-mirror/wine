@@ -5137,8 +5137,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                         WINEDDSCAPS_VISIBLE;
     caps->ddraw_caps.stride_align = DDRAW_PITCH_ALIGNMENT;
 
-    /* Set D3D caps if OpenGL is available. */
-    if (adapter->opengl)
+    if (!(wined3d->flags & WINED3D_NO3D))
     {
         caps->ddraw_caps.dds_caps |=    WINEDDSCAPS_3DDEVICE                |
                                         WINEDDSCAPS_MIPMAP                  |
@@ -5601,7 +5600,6 @@ static BOOL InitAdapters(struct wined3d *wined3d)
 
         select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
         fillGLAttribFuncs(&adapter->gl_info);
-        adapter->opengl = TRUE;
     }
     wined3d->adapter_count = 1;
     TRACE("%u adapters successfully initialized.\n", wined3d->adapter_count);
