@@ -534,8 +534,18 @@ static HRESULT WINAPI path_RemoveNamespaceAt(
 static HRESULT WINAPI path_RemoveAllNamespaces(
     IWbemPath *iface)
 {
-    FIXME("%p\n", iface);
-    return E_NOTIMPL;
+    struct path *path = impl_from_IWbemPath( iface );
+    int i;
+
+    TRACE("%p\n", iface);
+
+    for (i = 0; i < path->num_namespaces; i++) heap_free( path->namespaces[i] );
+    path->num_namespaces = 0;
+    heap_free( path->namespaces );
+    path->namespaces = NULL;
+    heap_free( path->len_namespaces );
+    path->len_namespaces = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI path_GetScopeCount(
