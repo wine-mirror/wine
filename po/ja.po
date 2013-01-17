@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-09-04 23:19+0900\n"
+"PO-Revision-Date: 2013-01-17 20:12+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -3532,7 +3532,7 @@ msgstr "文字列定数が終端していません"
 
 #: jscript.rc:39
 msgid "'return' statement outside of function"
-msgstr ""
+msgstr "return 文が関数外にあります"
 
 #: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
@@ -8252,44 +8252,37 @@ msgid "Security Warning"
 msgstr "セキュリティ警告"
 
 #: urlmon.rc:32
-#, fuzzy
-#| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
-msgstr "とにかく続行してしまいますか?"
+msgstr "このソフトウェアをインストールしますか?"
 
 #: urlmon.rc:34 explorer.rc:29
 msgid "Location:"
 msgstr "場所:"
 
 #: urlmon.rc:36
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Don't install"
-msgstr "インストールとアンインストール"
+msgstr "インストールしない"
 
 #: urlmon.rc:40
 msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
+"万一インストールすると、ActiveX コンポーネントはコンピュータへのフル アクセス"
+"を得ます。上記の出所を完全に信頼しない場合は、インストールをクリックしないで"
+"ください。"
 
 #: urlmon.rc:48
-#, fuzzy
-#| msgid "Installation transform failed to apply.\n"
 msgid "Installation of component failed: %08x"
-msgstr "インストール トランスフォームの適用に失敗しました。\n"
+msgstr "コンポーネントのインストールは失敗しました: %08x"
 
 #: urlmon.rc:49
-#, fuzzy
-#| msgid "&Install"
 msgid "Install (%d)"
-msgstr "インストール(&I)"
+msgstr "インストール (%d)"
 
 #: urlmon.rc:50
-#, fuzzy
-#| msgid "&Install"
 msgid "Install"
-msgstr "インストール(&I)"
+msgstr "インストール"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
@@ -10088,10 +10081,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine コマンド プロンプト"
 
 #: cmd.rc:349
-#, fuzzy
-#| msgid "CMD Version %1!S!\n"
 msgid "Wine CMD Version %1!S!\n"
-msgstr "CMD バージョン %1!S!\n"
+msgstr ""
 
 #: cmd.rc:350
 msgid "More? "
@@ -10120,31 +10111,31 @@ msgstr " (Yes|No|All)"
 #: cmd.rc:356
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
-msgstr ""
+msgstr "%1 を内部または外部コマンド、バッチ スクリプトとして認識できません。\n"
 
 #: cmd.rc:357
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "0 による除算エラー。\n"
 
 #: cmd.rc:358
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "被演算子がありません。\n"
 
 #: cmd.rc:359
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Expected an operator.\n"
-msgstr "予期しないネットワーク エラーです。\n"
+msgstr "演算子がありません。\n"
 
 #: cmd.rc:360
 msgid "Mismatch in parentheses.\n"
-msgstr ""
+msgstr "括弧が対応していません。\n"
 
 #: cmd.rc:361
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
+"数値の形式に誤りがあります - 10 進数 (12)、16 進数 (0x34)、\n"
+"8 進数 (056) のいずれかとしてください。\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10194,10 +10185,8 @@ msgid "Connection-specific DNS suffix"
 msgstr "接続固有の DNS サフィックス"
 
 #: ipconfig.rc:33
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv4 address"
-msgstr "IP アドレス"
+msgstr "IPv4 アドレス"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -10240,10 +10229,8 @@ msgid "Default gateway"
 msgstr "デフォルト ゲートウェイ"
 
 #: ipconfig.rc:47
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv6 address"
-msgstr "IP アドレス"
+msgstr "IPv6 アドレス"
 
 #: net.rc:27
 msgid ""
@@ -10376,78 +10363,60 @@ msgid "The following services are running:\n"
 msgstr "以下のサービスが実行中です:\n"
 
 #: netstat.rc:27
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Connections"
-msgstr "LAN 接続"
+msgstr "アクティブな接続"
 
 #: netstat.rc:28
 msgid "Proto"
 msgstr ""
 
 #: netstat.rc:29
-#, fuzzy
-#| msgid "Email Address"
 msgid "Local Address"
-msgstr "電子メール アドレス"
+msgstr "内部アドレス"
 
 #: netstat.rc:30
-#, fuzzy
-#| msgid "Street Address"
 msgid "Foreign Address"
-msgstr "番地"
+msgstr "外部アドレス"
 
 #: netstat.rc:31
-#, fuzzy
-#| msgid "Status"
 msgid "State"
 msgstr "状態"
 
 #: netstat.rc:32
-#, fuzzy
-#| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "インターフェイス"
+msgstr "インターフェイスの統計"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "送信"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "受信"
 
 #: netstat.rc:35
-#, fuzzy
-#| msgid "bytes"
 msgid "Bytes"
 msgstr "バイト"
 
 #: netstat.rc:36
 msgid "Unicast packets"
-msgstr ""
+msgstr "ユニキャスト パケット"
 
 #: netstat.rc:37
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "非ユニキャスト パケット"
 
 #: netstat.rc:38
-#, fuzzy
-#| msgid "Disclaimer"
 msgid "Discards"
-msgstr "免責条項"
+msgstr "破棄"
 
 #: netstat.rc:39
-#, fuzzy
-#| msgid "Error"
 msgid "Errors"
 msgstr "エラー"
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "Unknown port.\n"
 msgid "Unknown protocols"
-msgstr "認識できないポートです。\n"
+msgstr "不明なプロトコル"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
