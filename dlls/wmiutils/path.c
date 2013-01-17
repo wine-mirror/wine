@@ -447,18 +447,21 @@ static HRESULT WINAPI path_SetServer(
     static const ULONGLONG flags =
         WBEMPATH_INFO_PATH_HAD_SERVER | WBEMPATH_INFO_V1_COMPLIANT |
         WBEMPATH_INFO_V2_COMPLIANT | WBEMPATH_INFO_CIM_COMPLIANT;
+    WCHAR *server;
 
     TRACE("%p, %s\n", iface, debugstr_w(name));
 
-    heap_free( path->server );
     if (name)
     {
-        if (!(path->server = strdupW( name ))) return WBEM_E_OUT_OF_MEMORY;
+        if (!(server = strdupW( name ))) return WBEM_E_OUT_OF_MEMORY;
+        heap_free( path->server );
+        path->server = server;
         path->len_server = strlenW( path->server );
         path->flags |= flags;
     }
     else
     {
+        heap_free( path->server );
         path->server = NULL;
         path->len_server = 0;
         path->flags &= ~flags;
@@ -593,10 +596,21 @@ static HRESULT WINAPI path_RemoveAllScopes(
 
 static HRESULT WINAPI path_SetClassName(
     IWbemPath *iface,
-    LPCWSTR Name)
+    LPCWSTR name)
 {
-    FIXME("%p, %s\n", iface, debugstr_w(Name));
-    return E_NOTIMPL;
+    struct path *path = impl_from_IWbemPath( iface );
+    WCHAR *class;
+
+    TRACE("%p, %s\n", iface, debugstr_w(name));
+
+    if (!name) return WBEM_E_INVALID_PARAMETER;
+
+    if (!(class = strdupW( name ))) return WBEM_E_OUT_OF_MEMORY;
+    heap_free( path->class );
+    path->class = class;
+    path->len_class = strlenW( path->class );
+    path->flags |= WBEMPATH_INFO_V2_COMPLIANT | WBEMPATH_INFO_CIM_COMPLIANT;
+    return S_OK;
 }
 
 static HRESULT WINAPI path_GetClassName(

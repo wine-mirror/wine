@@ -324,6 +324,44 @@ static void test_IWbemPath_GetClassName(void)
     IWbemPath_Release( path );
 }
 
+static void test_IWbemPath_SetClassName(void)
+{
+    static const WCHAR classW[] = {'c','l','a','s','s',0};
+    static const WCHAR emptyW[] = {0};
+    IWbemPath *path;
+    WCHAR buf[16];
+    ULONG len;
+    ULONGLONG flags;
+    HRESULT hr;
+
+    if (!(path = create_path())) return;
+
+    hr = IWbemPath_SetClassName( path, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+
+    hr = IWbemPath_SetClassName( path, emptyW );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWbemPath_SetClassName( path, classW );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    buf[0] = 0;
+    len = sizeof(buf) / sizeof(buf[0]);
+    hr = IWbemPath_GetClassName( path, &len, buf );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( buf, classW ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+
+    flags = 0;
+    hr = IWbemPath_GetInfo( path, 0, &flags );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( flags == (WBEMPATH_INFO_ANON_LOCAL_MACHINE | WBEMPATH_INFO_IS_CLASS_REF |
+                  WBEMPATH_INFO_HAS_SUBSCOPES | WBEMPATH_INFO_V2_COMPLIANT |
+                  WBEMPATH_INFO_CIM_COMPLIANT),
+        "got %lx%08lx\n", (unsigned long)(flags >> 32), (unsigned long)flags );
+
+    IWbemPath_Release( path );
+}
+
 static void test_IWbemPath_GetServer(void)
 {
     static const WCHAR dotW[] = {'.',0};
@@ -438,6 +476,7 @@ static void test_IWbemPath_GetInfo(void)
 static void test_IWbemPath_SetServer(void)
 {
     static const WCHAR serverW[] = {'s','e','r','v','e','r',0};
+    static const WCHAR emptyW[] = {0};
     IWbemPath *path;
     WCHAR buf[16];
     ULONG len;
@@ -452,6 +491,9 @@ static void test_IWbemPath_SetServer(void)
     len = sizeof(buf) / sizeof(buf[0]);
     hr = IWbemPath_GetServer( path, &len, buf );
     ok( hr == WBEM_E_NOT_AVAILABLE, "got %08x\n", hr );
+
+    hr = IWbemPath_SetServer( path, emptyW );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     hr = IWbemPath_SetServer( path, serverW );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -493,6 +535,7 @@ START_TEST (path)
     test_IWbemPath_SetText();
     test_IWbemPath_GetText();
     test_IWbemPath_GetClassName();
+    test_IWbemPath_SetClassName();
     test_IWbemPath_GetServer();
     test_IWbemPath_GetInfo();
     test_IWbemPath_SetServer();
