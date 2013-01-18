@@ -5502,18 +5502,17 @@ static void wined3d_adapter_init_fb_cfgs(struct wined3d_adapter *adapter, HDC dc
 }
 
 /* Do not call while under the GL lock. */
-static BOOL InitAdapters(struct wined3d *wined3d)
+static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
 {
-    struct wined3d_adapter *adapter = &wined3d->adapters[0];
     struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    BOOL ret;
-    int ps_selected_mode, vs_selected_mode;
+    struct wined3d_fake_gl_ctx fake_gl_ctx = {0};
+    DISPLAY_DEVICEW display_device;
 
-    /* No need to hold any lock. The calling library makes sure only one thread calls
-     * wined3d simultaneously
-     */
+    TRACE("adapter %p, ordinal %u.\n", adapter, ordinal);
 
-    TRACE("Initializing adapters\n");
+    adapter->ordinal = ordinal;
+    adapter->monitorPoint.x = -1;
+    adapter->monitorPoint.y = -1;
 
 /* Dynamically load all GL core functions */
 #ifdef USE_WIN32_OPENGL
@@ -5539,74 +5538,58 @@ static BOOL InitAdapters(struct wined3d *wined3d)
     glEnableWINE = gl_info->gl_ops.gl.p_glEnable;
     glDisableWINE = gl_info->gl_ops.gl.p_glDisable;
 
-    /* For now only one default adapter */
+    if (!AllocateLocallyUniqueId(&adapter->luid))
     {
-        struct wined3d_fake_gl_ctx fake_gl_ctx = {0};
-        DISPLAY_DEVICEW DisplayDevice;
-
-        TRACE("Initializing default adapter\n");
-        adapter->ordinal = 0;
-        adapter->monitorPoint.x = -1;
-        adapter->monitorPoint.y = -1;
-
-        if (!AllocateLocallyUniqueId(&adapter->luid))
-        {
-            DWORD err = GetLastError();
-            ERR("Failed to set adapter LUID (%#x).\n", err);
-            return FALSE;
-        }
-        TRACE("Allocated LUID %08x:%08x for adapter.\n",
-                adapter->luid.HighPart, adapter->luid.LowPart);
-
-        if (!WineD3D_CreateFakeGLContext(&fake_gl_ctx))
-        {
-            ERR("Failed to get a gl context for default adapter\n");
-            return FALSE;
-        }
-
-        ret = wined3d_adapter_init_gl_caps(adapter);
-        if(!ret) {
-            ERR("Failed to initialize gl caps for default adapter\n");
-            WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
-            return FALSE;
-        }
-
-        wined3d_adapter_init_fb_cfgs(adapter, fake_gl_ctx.dc);
-        /* We haven't found any suitable formats. This should only happen in
-         * case of GDI software rendering, which is pretty useless anyway. */
-        if (!adapter->cfg_count)
-        {
-            ERR("Disabling Direct3D because no hardware accelerated pixel formats have been found!\n");
-            WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
-            HeapFree(GetProcessHeap(), 0, adapter->cfgs);
-            return FALSE;
-        }
-
-        ret = initPixelFormats(&adapter->gl_info, adapter->driver_info.vendor);
-        if(!ret) {
-            ERR("Failed to init gl formats\n");
-            WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
-            HeapFree(GetProcessHeap(), 0, adapter->cfgs);
-            return FALSE;
-        }
-
-        adapter->TextureRam = adapter->driver_info.vidmem;
-        adapter->UsedTextureRam = 0;
-        TRACE("Emulating %dMB of texture ram\n", adapter->TextureRam/(1024*1024));
-
-        /* Initialize the Adapter's DeviceName which is required for ChangeDisplaySettings and friends */
-        DisplayDevice.cb = sizeof(DisplayDevice);
-        EnumDisplayDevicesW(NULL, 0 /* Adapter 0 = iDevNum 0 */, &DisplayDevice, 0);
-        TRACE("DeviceName: %s\n", debugstr_w(DisplayDevice.DeviceName));
-        strcpyW(adapter->DeviceName, DisplayDevice.DeviceName);
-
-        WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
-
-        select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
-        fillGLAttribFuncs(&adapter->gl_info);
+        ERR("Failed to set adapter LUID (%#x).\n", GetLastError());
+        return FALSE;
     }
-    wined3d->adapter_count = 1;
-    TRACE("%u adapters successfully initialized.\n", wined3d->adapter_count);
+    TRACE("Allocated LUID %08x:%08x for adapter %p.\n",
+            adapter->luid.HighPart, adapter->luid.LowPart, adapter);
+
+    if (!WineD3D_CreateFakeGLContext(&fake_gl_ctx))
+    {
+        ERR("Failed to get a GL context for adapter %p.\n", adapter);
+        return FALSE;
+    }
+
+    if (!wined3d_adapter_init_gl_caps(adapter))
+    {
+        ERR("Failed to initialize GL caps for adapter %p.\n", adapter);
+        WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
+        return FALSE;
+    }
+
+    wined3d_adapter_init_fb_cfgs(adapter, fake_gl_ctx.dc);
+    /* We haven't found any suitable formats. This should only happen in
+     * case of GDI software rendering, which is pretty useless anyway. */
+    if (!adapter->cfg_count)
+    {
+        WARN("No suitable pixel formats found.\n");
+        WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
+        HeapFree(GetProcessHeap(), 0, adapter->cfgs);
+        return FALSE;
+    }
+
+    if (!initPixelFormats(&adapter->gl_info, adapter->driver_info.vendor))
+    {
+        ERR("Failed to initialize GL format info.\n");
+        WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
+        HeapFree(GetProcessHeap(), 0, adapter->cfgs);
+        return FALSE;
+    }
+
+    adapter->TextureRam = adapter->driver_info.vidmem;
+    adapter->UsedTextureRam = 0;
+    TRACE("Emulating %u MB of texture ram.\n", adapter->TextureRam / (1024 * 1024));
+
+    display_device.cb = sizeof(display_device);
+    EnumDisplayDevicesW(NULL, ordinal, &display_device, 0);
+    TRACE("DeviceName: %s\n", debugstr_w(display_device.DeviceName));
+    strcpyW(adapter->DeviceName, display_device.DeviceName);
+
+    WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
+
+    fillGLAttribFuncs(&adapter->gl_info);
 
     return TRUE;
 }
@@ -5646,6 +5629,8 @@ HRESULT wined3d_init(struct wined3d *wined3d, UINT version, DWORD flags)
     wined3d->ref = 1;
     wined3d->flags = flags;
 
+    TRACE("Initializing adapters.\n");
+
     if (flags & WINED3D_NO3D)
     {
         wined3d_adapter_init_nogl(&wined3d->adapters[0], 0);
@@ -5653,11 +5638,12 @@ HRESULT wined3d_init(struct wined3d *wined3d, UINT version, DWORD flags)
         return WINED3D_OK;
     }
 
-    if (!InitAdapters(wined3d))
+    if (!wined3d_adapter_init(&wined3d->adapters[0], 0))
     {
-        WARN("Failed to initialize adapters.\n");
+        WARN("Failed to initialize adapter.\n");
         return E_FAIL;
     }
+    wined3d->adapter_count = 1;
 
     return WINED3D_OK;
 }
