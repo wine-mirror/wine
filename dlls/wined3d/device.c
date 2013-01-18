@@ -5652,7 +5652,6 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
 
     for (i = 0; i < PATCHMAP_SIZE; ++i) list_init(&device->patches[i]);
 
-    select_shader_mode(&adapter->gl_info, &device->ps_selected_mode, &device->vs_selected_mode);
     device->shader_backend = adapter->shader_backend;
     device->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
     device->vs_version = shader_caps.vs_version;

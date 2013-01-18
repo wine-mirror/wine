@@ -1705,9 +1705,6 @@ struct wined3d_device
     /* X and GL Information */
     GLenum                  offscreenBuffer;
 
-    /* Selected capabilities */
-    int vs_selected_mode;
-    int ps_selected_mode;
     const struct wined3d_shader_backend_ops *shader_backend;
     void *shader_priv;
     void *fragment_priv;

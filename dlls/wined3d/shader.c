@@ -2341,9 +2341,6 @@ HRESULT CDECL wined3d_shader_create_ps(struct wined3d_device *device, const DWOR
     TRACE("device %p, byte_code %p, output_signature %p, parent %p, parent_ops %p, shader %p.\n",
             device, byte_code, output_signature, parent, parent_ops, shader);
 
-    if (device->ps_selected_mode == SHADER_NONE)
-        return WINED3DERR_INVALIDCALL;
-
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
@@ -2374,9 +2371,6 @@ HRESULT CDECL wined3d_shader_create_vs(struct wined3d_device *device, const DWOR
 
     TRACE("device %p, byte_code %p, output_signature %p, parent %p, parent_ops %p, shader %p.\n",
             device, byte_code, output_signature, parent, parent_ops, shader);
-
-    if (device->vs_selected_mode == SHADER_NONE)
-        return WINED3DERR_INVALIDCALL;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
