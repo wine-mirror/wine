@@ -467,3 +467,16 @@ void init_exception(void*);
 void init_locale(void*);
 void init_io(void*);
 void free_io(void);
+
+/* class complex<float> */
+typedef struct {
+    float real;
+    float imag;
+} complex_float;
+
+/* class complex<double> */
+/* class complex<long double> */
+typedef struct {
+    double real;
+    double imag;
+} complex_double;
