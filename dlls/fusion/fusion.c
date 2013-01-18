@@ -32,6 +32,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(fusion);
 
+
+/******************************************************************
+ *  InitializeFusion   (FUSION.@)
+ */
+HRESULT WINAPI InitializeFusion(void)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 /******************************************************************
  *  ClearDownloadCache   (FUSION.@)
  */
