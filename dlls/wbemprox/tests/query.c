@@ -69,6 +69,7 @@ static HRESULT exec_query( IWbemServices *services, const WCHAR *str, IEnumWbemC
 
 static void test_select( IWbemServices *services )
 {
+    static const WCHAR emptyW[] = {0};
     static const WCHAR sqlW[] = {'S','Q','L',0};
     static const WCHAR query1[] =
         {'S','E','L','E','C','T',' ','H','O','T','F','I','X','I','D',' ','F','R','O','M',' ',
@@ -111,6 +112,11 @@ static void test_select( IWbemServices *services )
     ok( hr == WBEM_E_INVALID_QUERY_TYPE, "query failed %08x\n", hr );
 
     hr = IWbemServices_ExecQuery( services, sql, NULL, 0, NULL, &result );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "query failed %08x\n", hr );
+
+    SysFreeString( query );
+    query = SysAllocString( emptyW );
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
     ok( hr == WBEM_E_INVALID_PARAMETER, "query failed %08x\n", hr );
 
     for (i = 0; i < sizeof(test)/sizeof(test[0]); i++)

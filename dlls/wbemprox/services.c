@@ -527,7 +527,7 @@ static HRESULT WINAPI wbem_services_ExecQuery(
     TRACE("%p, %s, %s, 0x%08x, %p, %p\n", iface, debugstr_w(strQueryLanguage),
           debugstr_w(strQuery), lFlags, pCtx, ppEnum);
 
-    if (!strQueryLanguage || !strQuery) return WBEM_E_INVALID_PARAMETER;
+    if (!strQueryLanguage || !strQuery || !strQuery[0]) return WBEM_E_INVALID_PARAMETER;
     if (strcmpiW( strQueryLanguage, wqlW )) return WBEM_E_INVALID_QUERY_TYPE;
     return exec_query( strQuery, ppEnum );
 }
