@@ -5374,6 +5374,133 @@ static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
     }
 }
 
+static void wined3d_adapter_init_fb_cfgs(struct wined3d_adapter *adapter, HDC dc)
+{
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
+    unsigned int i;
+
+    if (gl_info->supported[WGL_ARB_PIXEL_FORMAT])
+    {
+        UINT attrib_count = 0;
+        GLint cfg_count;
+        int attribs[11];
+        int values[11];
+        int attribute;
+
+        attribute = WGL_NUMBER_PIXEL_FORMATS_ARB;
+        GL_EXTCALL(wglGetPixelFormatAttribivARB(dc, 0, 0, 1, &attribute, &cfg_count));
+
+        adapter->cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cfg_count * sizeof(*adapter->cfgs));
+        attribs[attrib_count++] = WGL_RED_BITS_ARB;
+        attribs[attrib_count++] = WGL_GREEN_BITS_ARB;
+        attribs[attrib_count++] = WGL_BLUE_BITS_ARB;
+        attribs[attrib_count++] = WGL_ALPHA_BITS_ARB;
+        attribs[attrib_count++] = WGL_COLOR_BITS_ARB;
+        attribs[attrib_count++] = WGL_DEPTH_BITS_ARB;
+        attribs[attrib_count++] = WGL_STENCIL_BITS_ARB;
+        attribs[attrib_count++] = WGL_DRAW_TO_WINDOW_ARB;
+        attribs[attrib_count++] = WGL_PIXEL_TYPE_ARB;
+        attribs[attrib_count++] = WGL_DOUBLE_BUFFER_ARB;
+        attribs[attrib_count++] = WGL_AUX_BUFFERS_ARB;
+
+        for (i = 0, adapter->cfg_count = 0; i < cfg_count; ++i)
+        {
+            struct wined3d_pixel_format *cfg = &adapter->cfgs[adapter->cfg_count];
+            int format_id = i + 1;
+
+            if (!GL_EXTCALL(wglGetPixelFormatAttribivARB(dc, format_id, 0, attrib_count, attribs, values)))
+                continue;
+
+            cfg->iPixelFormat = format_id;
+            cfg->redSize = values[0];
+            cfg->greenSize = values[1];
+            cfg->blueSize = values[2];
+            cfg->alphaSize = values[3];
+            cfg->colorSize = values[4];
+            cfg->depthSize = values[5];
+            cfg->stencilSize = values[6];
+            cfg->windowDrawable = values[7];
+            cfg->iPixelType = values[8];
+            cfg->doubleBuffer = values[9];
+            cfg->auxBuffers = values[10];
+
+            cfg->numSamples = 0;
+            /* Check multisample support. */
+            if (gl_info->supported[ARB_MULTISAMPLE])
+            {
+                int attribs[2] = {WGL_SAMPLE_BUFFERS_ARB, WGL_SAMPLES_ARB};
+                int values[2];
+
+                if (GL_EXTCALL(wglGetPixelFormatAttribivARB(dc, format_id, 0, 2, attribs, values)))
+                {
+                    /* values[0] = WGL_SAMPLE_BUFFERS_ARB which tells whether
+                     * multisampling is supported. values[1] = number of
+                     * multisample buffers. */
+                    if (values[0])
+                        cfg->numSamples = values[1];
+                }
+            }
+
+            TRACE("iPixelFormat=%d, iPixelType=%#x, doubleBuffer=%d, RGBA=%d/%d/%d/%d, "
+                    "depth=%d, stencil=%d, samples=%d, windowDrawable=%d\n",
+                    cfg->iPixelFormat, cfg->iPixelType, cfg->doubleBuffer,
+                    cfg->redSize, cfg->greenSize, cfg->blueSize, cfg->alphaSize,
+                    cfg->depthSize, cfg->stencilSize, cfg->numSamples, cfg->windowDrawable);
+
+            ++adapter->cfg_count;
+        }
+    }
+    else
+    {
+        int cfg_count;
+
+        cfg_count = DescribePixelFormat(dc, 0, 0, 0);
+        adapter->cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cfg_count * sizeof(*adapter->cfgs));
+
+        for (i = 0, adapter->cfg_count = 0; i < cfg_count; ++i)
+        {
+            struct wined3d_pixel_format *cfg = &adapter->cfgs[adapter->cfg_count];
+            PIXELFORMATDESCRIPTOR pfd;
+            int format_id = i + 1;
+
+            if (!DescribePixelFormat(dc, format_id, sizeof(pfd), &pfd))
+                continue;
+
+            /* We only want HW acceleration using an OpenGL ICD driver.
+             * PFD_GENERIC_FORMAT = slow opengl 1.1 gdi software rendering.
+             * PFD_GENERIC_ACCELERATED = partial hw acceleration using a MCD
+             * driver (e.g. 3dfx minigl). */
+            if (pfd.dwFlags & (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED))
+            {
+                TRACE("Skipping format %d because it isn't ICD accelerated.\n", format_id);
+                continue;
+            }
+
+            cfg->iPixelFormat = format_id;
+            cfg->redSize = pfd.cRedBits;
+            cfg->greenSize = pfd.cGreenBits;
+            cfg->blueSize = pfd.cBlueBits;
+            cfg->alphaSize = pfd.cAlphaBits;
+            cfg->colorSize = pfd.cColorBits;
+            cfg->depthSize = pfd.cDepthBits;
+            cfg->stencilSize = pfd.cStencilBits;
+            cfg->windowDrawable = (pfd.dwFlags & PFD_DRAW_TO_WINDOW) ? 1 : 0;
+            cfg->iPixelType = (pfd.iPixelType == PFD_TYPE_RGBA) ? WGL_TYPE_RGBA_ARB : WGL_TYPE_COLORINDEX_ARB;
+            cfg->doubleBuffer = (pfd.dwFlags & PFD_DOUBLEBUFFER) ? 1 : 0;
+            cfg->auxBuffers = pfd.cAuxBuffers;
+            cfg->numSamples = 0;
+
+            TRACE("iPixelFormat=%d, iPixelType=%#x, doubleBuffer=%d, RGBA=%d/%d/%d/%d, "
+                    "depth=%d, stencil=%d, windowDrawable=%d\n",
+                    cfg->iPixelFormat, cfg->iPixelType, cfg->doubleBuffer,
+                    cfg->redSize, cfg->greenSize, cfg->blueSize, cfg->alphaSize,
+                    cfg->depthSize, cfg->stencilSize, cfg->windowDrawable);
+
+            ++adapter->cfg_count;
+        }
+    }
+}
+
 /* Do not call while under the GL lock. */
 static BOOL InitAdapters(struct wined3d *wined3d)
 {
@@ -5415,11 +5542,7 @@ static BOOL InitAdapters(struct wined3d *wined3d)
     /* For now only one default adapter */
     {
         struct wined3d_fake_gl_ctx fake_gl_ctx = {0};
-        struct wined3d_pixel_format *cfgs;
-        int iPixelFormat;
-        int res;
         DISPLAY_DEVICEW DisplayDevice;
-        HDC hdc;
 
         TRACE("Initializing default adapter\n");
         adapter->ordinal = 0;
@@ -5447,14 +5570,25 @@ static BOOL InitAdapters(struct wined3d *wined3d)
             WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
             return FALSE;
         }
+
+        wined3d_adapter_init_fb_cfgs(adapter, fake_gl_ctx.dc);
+        /* We haven't found any suitable formats. This should only happen in
+         * case of GDI software rendering, which is pretty useless anyway. */
+        if (!adapter->cfg_count)
+        {
+            ERR("Disabling Direct3D because no hardware accelerated pixel formats have been found!\n");
+            WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
+            HeapFree(GetProcessHeap(), 0, adapter->cfgs);
+            return FALSE;
+        }
+
         ret = initPixelFormats(&adapter->gl_info, adapter->driver_info.vendor);
         if(!ret) {
             ERR("Failed to init gl formats\n");
             WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
+            HeapFree(GetProcessHeap(), 0, adapter->cfgs);
             return FALSE;
         }
-
-        hdc = fake_gl_ctx.dc;
 
         adapter->TextureRam = adapter->driver_info.vidmem;
         adapter->UsedTextureRam = 0;
@@ -5465,136 +5599,6 @@ static BOOL InitAdapters(struct wined3d *wined3d)
         EnumDisplayDevicesW(NULL, 0 /* Adapter 0 = iDevNum 0 */, &DisplayDevice, 0);
         TRACE("DeviceName: %s\n", debugstr_w(DisplayDevice.DeviceName));
         strcpyW(adapter->DeviceName, DisplayDevice.DeviceName);
-
-        if (gl_info->supported[WGL_ARB_PIXEL_FORMAT])
-        {
-            GLint cfg_count;
-            int attribute;
-            int attribs[11];
-            int values[11];
-            int nAttribs = 0;
-
-            attribute = WGL_NUMBER_PIXEL_FORMATS_ARB;
-            GL_EXTCALL(wglGetPixelFormatAttribivARB(hdc, 0, 0, 1, &attribute, &cfg_count));
-            adapter->cfg_count = cfg_count;
-
-            adapter->cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, adapter->cfg_count * sizeof(*adapter->cfgs));
-            cfgs = adapter->cfgs;
-            attribs[nAttribs++] = WGL_RED_BITS_ARB;
-            attribs[nAttribs++] = WGL_GREEN_BITS_ARB;
-            attribs[nAttribs++] = WGL_BLUE_BITS_ARB;
-            attribs[nAttribs++] = WGL_ALPHA_BITS_ARB;
-            attribs[nAttribs++] = WGL_COLOR_BITS_ARB;
-            attribs[nAttribs++] = WGL_DEPTH_BITS_ARB;
-            attribs[nAttribs++] = WGL_STENCIL_BITS_ARB;
-            attribs[nAttribs++] = WGL_DRAW_TO_WINDOW_ARB;
-            attribs[nAttribs++] = WGL_PIXEL_TYPE_ARB;
-            attribs[nAttribs++] = WGL_DOUBLE_BUFFER_ARB;
-            attribs[nAttribs++] = WGL_AUX_BUFFERS_ARB;
-
-            for (iPixelFormat=1; iPixelFormat <= adapter->cfg_count; ++iPixelFormat)
-            {
-                res = GL_EXTCALL(wglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0, nAttribs, attribs, values));
-
-                if(!res)
-                    continue;
-
-                /* Cache the pixel format */
-                cfgs->iPixelFormat = iPixelFormat;
-                cfgs->redSize = values[0];
-                cfgs->greenSize = values[1];
-                cfgs->blueSize = values[2];
-                cfgs->alphaSize = values[3];
-                cfgs->colorSize = values[4];
-                cfgs->depthSize = values[5];
-                cfgs->stencilSize = values[6];
-                cfgs->windowDrawable = values[7];
-                cfgs->iPixelType = values[8];
-                cfgs->doubleBuffer = values[9];
-                cfgs->auxBuffers = values[10];
-
-                cfgs->numSamples = 0;
-                /* Check multisample support */
-                if (gl_info->supported[ARB_MULTISAMPLE])
-                {
-                    int attrib[2] = {WGL_SAMPLE_BUFFERS_ARB, WGL_SAMPLES_ARB};
-                    int value[2];
-                    if(GL_EXTCALL(wglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0, 2, attrib, value))) {
-                        /* value[0] = WGL_SAMPLE_BUFFERS_ARB which tells whether multisampling is supported.
-                        * value[1] = number of multi sample buffers*/
-                        if(value[0])
-                            cfgs->numSamples = value[1];
-                    }
-                }
-
-                TRACE("iPixelFormat=%d, iPixelType=%#x, doubleBuffer=%d, RGBA=%d/%d/%d/%d, "
-                        "depth=%d, stencil=%d, samples=%d, windowDrawable=%d\n",
-                        cfgs->iPixelFormat, cfgs->iPixelType, cfgs->doubleBuffer,
-                        cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize,
-                        cfgs->depthSize, cfgs->stencilSize, cfgs->numSamples, cfgs->windowDrawable);
-                cfgs++;
-            }
-        }
-        else
-        {
-            int nCfgs = DescribePixelFormat(hdc, 0, 0, 0);
-            adapter->cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nCfgs * sizeof(*adapter->cfgs));
-            adapter->cfg_count = 0; /* We won't accept all formats e.g. software accelerated ones will be skipped */
-
-            cfgs = adapter->cfgs;
-            for(iPixelFormat=1; iPixelFormat<=nCfgs; iPixelFormat++)
-            {
-                PIXELFORMATDESCRIPTOR ppfd;
-
-                res = DescribePixelFormat(hdc, iPixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &ppfd);
-                if(!res)
-                    continue;
-
-                /* We only want HW acceleration using an OpenGL ICD driver.
-                 * PFD_GENERIC_FORMAT = slow opengl 1.1 gdi software rendering
-                 * PFD_GENERIC_ACCELERATED = partial hw acceleration using a MCD driver (e.g. 3dfx minigl)
-                 */
-                if(ppfd.dwFlags & (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED))
-                {
-                    TRACE("Skipping iPixelFormat=%d because it isn't ICD accelerated\n", iPixelFormat);
-                    continue;
-                }
-
-                cfgs->iPixelFormat = iPixelFormat;
-                cfgs->redSize = ppfd.cRedBits;
-                cfgs->greenSize = ppfd.cGreenBits;
-                cfgs->blueSize = ppfd.cBlueBits;
-                cfgs->alphaSize = ppfd.cAlphaBits;
-                cfgs->colorSize = ppfd.cColorBits;
-                cfgs->depthSize = ppfd.cDepthBits;
-                cfgs->stencilSize = ppfd.cStencilBits;
-                cfgs->windowDrawable = (ppfd.dwFlags & PFD_DRAW_TO_WINDOW) ? 1 : 0;
-                cfgs->iPixelType = (ppfd.iPixelType == PFD_TYPE_RGBA) ? WGL_TYPE_RGBA_ARB : WGL_TYPE_COLORINDEX_ARB;
-                cfgs->doubleBuffer = (ppfd.dwFlags & PFD_DOUBLEBUFFER) ? 1 : 0;
-                cfgs->auxBuffers = ppfd.cAuxBuffers;
-                cfgs->numSamples = 0;
-
-                TRACE("iPixelFormat=%d, iPixelType=%#x, doubleBuffer=%d, RGBA=%d/%d/%d/%d, "
-                        "depth=%d, stencil=%d, windowDrawable=%d\n",
-                        cfgs->iPixelFormat, cfgs->iPixelType, cfgs->doubleBuffer,
-                        cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize,
-                        cfgs->depthSize, cfgs->stencilSize, cfgs->windowDrawable);
-                cfgs++;
-                adapter->cfg_count++;
-            }
-
-            /* We haven't found any suitable formats. This should only happen
-             * in case of GDI software rendering, which is pretty useless
-             * anyway. */
-            if (!adapter->cfg_count)
-            {
-                ERR("Disabling Direct3D because no hardware accelerated pixel formats have been found!\n");
-
-                WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
-                HeapFree(GetProcessHeap(), 0, adapter->cfgs);
-                return FALSE;
-            }
-        }
 
         WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
 
