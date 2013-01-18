@@ -433,18 +433,16 @@ static HRESULT WINAPI HTMLObjectElement_put_vspace(IHTMLObjectElement *iface, LO
 static HRESULT WINAPI HTMLObjectElement_get_vspace(IHTMLObjectElement *iface, LONG *p)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
-    PRInt32 vspace;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLObjectElement_GetVspace(This->nsobject, &vspace);
+    nsres = nsIDOMHTMLObjectElement_GetVspace(This->nsobject, p);
     if(NS_FAILED(nsres)) {
         ERR("GetVspace failed: %08x\n", nsres);
         return E_FAIL;
     }
 
-    *p = vspace;
     return S_OK;
 }
 

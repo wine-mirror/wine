@@ -250,16 +250,16 @@ static HRESULT WINAPI HTMLSelectElement_put_selectedIndex(IHTMLSelectElement *if
 static HRESULT WINAPI HTMLSelectElement_get_selectedIndex(IHTMLSelectElement *iface, LONG *p)
 {
     HTMLSelectElement *This = impl_from_IHTMLSelectElement(iface);
-    PRInt32 idx = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLSelectElement_GetSelectedIndex(This->nsselect, &idx);
-    if(NS_FAILED(nsres))
+    nsres = nsIDOMHTMLSelectElement_GetSelectedIndex(This->nsselect, p);
+    if(NS_FAILED(nsres)) {
         ERR("GetSelectedIndex failed: %08x\n", nsres);
+        return E_FAIL;
+    }
 
-    *p = idx;
     return S_OK;
 }
 

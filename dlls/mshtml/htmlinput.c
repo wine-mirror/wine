@@ -291,7 +291,7 @@ static HRESULT WINAPI HTMLInputElement_put_maxLength(IHTMLInputElement *iface, L
 static HRESULT WINAPI HTMLInputElement_get_maxLength(IHTMLInputElement *iface, LONG *p)
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
-    PRInt32 max_length;
+    LONG max_length;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);

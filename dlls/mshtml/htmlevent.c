@@ -641,7 +641,7 @@ static HRESULT WINAPI HTMLEventObj_get_y(IHTMLEventObj *iface, LONG *p)
 static HRESULT WINAPI HTMLEventObj_get_clientX(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    PRInt32 x = 0;
+    LONG x = 0;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -663,7 +663,7 @@ static HRESULT WINAPI HTMLEventObj_get_clientX(IHTMLEventObj *iface, LONG *p)
 static HRESULT WINAPI HTMLEventObj_get_clientY(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    PRInt32 y = 0;
+    LONG y = 0;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -705,7 +705,7 @@ static HRESULT WINAPI HTMLEventObj_get_offsetY(IHTMLEventObj *iface, LONG *p)
 static HRESULT WINAPI HTMLEventObj_get_screenX(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    PRInt32 x = 0;
+    LONG x = 0;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -727,7 +727,7 @@ static HRESULT WINAPI HTMLEventObj_get_screenX(IHTMLEventObj *iface, LONG *p)
 static HRESULT WINAPI HTMLEventObj_get_screenY(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    PRInt32 y = 0;
+    LONG y = 0;
 
     TRACE("(%p)->(%p)\n", This, p);
 
