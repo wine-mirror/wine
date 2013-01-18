@@ -40,14 +40,6 @@ static inline BackgroundCopyFileImpl *impl_from_IBackgroundCopyFile(IBackgroundC
     return CONTAINING_RECORD(iface, BackgroundCopyFileImpl, IBackgroundCopyFile_iface);
 }
 
-static void BackgroundCopyFileDestructor(BackgroundCopyFileImpl *This)
-{
-    IBackgroundCopyJob2_Release(&This->owner->IBackgroundCopyJob2_iface);
-    HeapFree(GetProcessHeap(), 0, This->info.LocalName);
-    HeapFree(GetProcessHeap(), 0, This->info.RemoteName);
-    HeapFree(GetProcessHeap(), 0, This);
-}
-
 static HRESULT WINAPI BITS_IBackgroundCopyFile_QueryInterface(
     IBackgroundCopyFile* iface,
     REFIID riid,
@@ -86,7 +78,12 @@ static ULONG WINAPI BITS_IBackgroundCopyFile_Release(
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (ref == 0)
-        BackgroundCopyFileDestructor(This);
+    {
+        IBackgroundCopyJob2_Release(&This->owner->IBackgroundCopyJob2_iface);
+        HeapFree(GetProcessHeap(), 0, This->info.LocalName);
+        HeapFree(GetProcessHeap(), 0, This->info.RemoteName);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }

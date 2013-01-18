@@ -28,14 +28,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 
-static void BackgroundCopyJobDestructor(BackgroundCopyJobImpl *This)
-{
-    This->cs.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&This->cs);
-    HeapFree(GetProcessHeap(), 0, This->displayName);
-    HeapFree(GetProcessHeap(), 0, This);
-}
-
 static inline BackgroundCopyJobImpl *impl_from_IBackgroundCopyJob2(IBackgroundCopyJob2 *iface)
 {
     return CONTAINING_RECORD(iface, BackgroundCopyJobImpl, IBackgroundCopyJob2_iface);
@@ -77,7 +69,12 @@ static ULONG WINAPI BITS_IBackgroundCopyJob_Release(IBackgroundCopyJob2 *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (ref == 0)
-        BackgroundCopyJobDestructor(This);
+    {
+        This->cs.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->cs);
+        HeapFree(GetProcessHeap(), 0, This->displayName);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
