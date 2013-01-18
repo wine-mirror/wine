@@ -2196,6 +2196,9 @@ BOOL WINAPI QueryServiceObjectSecurity(SC_HANDLE hService,
 
 /******************************************************************************
  * SetServiceObjectSecurity [ADVAPI32.@]
+ *
+ * NOTES
+ *  - SetSecurityInfo should be updated to call this function once it's implemented.
  */
 BOOL WINAPI SetServiceObjectSecurity(SC_HANDLE hService,
        SECURITY_INFORMATION dwSecurityInformation,

@@ -5680,7 +5680,16 @@ DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType,
     if (SecurityInfo & SACL_SECURITY_INFORMATION)
         SetSecurityDescriptorSacl(&sd, TRUE, pSacl, FALSE);
 
-    status = NtSetSecurityObject(handle, SecurityInfo, &sd);
+    switch (ObjectType)
+    {
+    case SE_SERVICE:
+        FIXME("stub: Service objects are not supported at this time.\n");
+        status = STATUS_SUCCESS; /* Implement SetServiceObjectSecurity */
+        break;
+    default:
+        status = NtSetSecurityObject(handle, SecurityInfo, &sd);
+        break;
+    }
     return RtlNtStatusToDosError(status);
 }
 
