@@ -1192,6 +1192,34 @@ static void test_set_getsockopt(void)
         "got %d with %d (expected SOCKET_ERROR with WSAEINVAL)\n",
         err, WSAGetLastError());
 
+    /* Test SO_ERROR set/get */
+    SetLastError(0xdeadbeef);
+    i = 1234;
+    err = setsockopt(s, SOL_SOCKET, SO_ERROR, (char *) &i, size);
+todo_wine
+    ok( !err && !WSAGetLastError(),
+        "got %d with %d (expected 0 with 0)\n",
+        err, WSAGetLastError());
+
+    SetLastError(0xdeadbeef);
+    i = 4321;
+    err = getsockopt(s, SOL_SOCKET, SO_ERROR, (char *) &i, &size);
+todo_wine
+    ok( !err && !WSAGetLastError(),
+        "got %d with %d (expected 0 with 0)\n",
+        err, WSAGetLastError());
+todo_wine
+    ok (i == 1234, "got %d (expected 1234)\n", i);
+
+    /* Test invalid optlen */
+    SetLastError(0xdeadbeef);
+    size = 1;
+    err = getsockopt(s, SOL_SOCKET, SO_ERROR, (char *) &i, &size);
+todo_wine
+    ok( (err == SOCKET_ERROR) && (WSAGetLastError() == WSAEFAULT),
+        "got %d with %d (expected SOCKET_ERROR with WSAEFAULT)\n",
+        err, WSAGetLastError());
+
     closesocket(s);
 }
 
