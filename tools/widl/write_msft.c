@@ -2547,7 +2547,12 @@ static void save_all_changes(msft_typelib_t *typelib)
 
     if (strendswith( typelib_name, ".res" ))  /* create a binary resource file */
     {
-        add_output_to_resources( "TYPELIB", "#1" );
+        char typelib_id[13] = "#1";
+
+        expr_t *expr = get_attrp( typelib->typelib->attrs, ATTR_ID );
+        if (expr)
+            sprintf( typelib_id, "#%d", expr->cval );
+        add_output_to_resources( "TYPELIB", typelib_id );
         output_typelib_regscript( typelib->typelib );
         flush_output_resources( typelib_name );
     }
