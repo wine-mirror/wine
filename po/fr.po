@@ -8316,17 +8316,13 @@ msgid "Don't install"
 msgstr "Ne pas installer"
 
 #: urlmon.rc:40
-#, fuzzy
-#| msgid ""
-#| "When installed, ActiveX has full access to your computer.Do not click "
-#| "install unless you have absolute trust in the above source."
 msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
-"Lorsqu'il est installé, ActiveX a un accès complet à votre ordinateur. Ne "
-"cliquez pas sur le bouton d'installation à moins d'avoir une confiance "
-"absolue dans la source ci-dessus."
+"Lorsqu'il est installé, un composant ActiveX a un accès complet à votre "
+"ordinateur. Ne cliquez pas sur le bouton d'installation à moins d'avoir une "
+"confiance absolue dans la source ci-dessus."
 
 #: urlmon.rc:48
 msgid "Installation of component failed: %08x"
@@ -10316,10 +10312,8 @@ msgid "Connection-specific DNS suffix"
 msgstr "Suffixe DNS propre à la connexion"
 
 #: ipconfig.rc:33
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv4 address"
-msgstr "Adresse IP"
+msgstr "Adresse IPv4"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -10362,10 +10356,8 @@ msgid "Default gateway"
 msgstr "Passerelle par défaut"
 
 #: ipconfig.rc:47
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv6 address"
-msgstr "Adresse IP"
+msgstr "Adresse IPv6"
 
 #: net.rc:27
 msgid ""
@@ -10518,50 +10510,40 @@ msgid "State"
 msgstr "État"
 
 #: netstat.rc:32
-#, fuzzy
-#| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "Interfaces"
+msgstr "Statistiques de l'interface"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "Envoyés"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "Reçus"
 
 #: netstat.rc:35
-#, fuzzy
-#| msgid "bytes"
 msgid "Bytes"
-msgstr "octets"
+msgstr "Octets"
 
 #: netstat.rc:36
 msgid "Unicast packets"
-msgstr ""
+msgstr "Paquets monodiffusion"
 
 #: netstat.rc:37
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "Paquets non monodiffusion"
 
 #: netstat.rc:38
-#, fuzzy
-#| msgid "Disclaimer"
 msgid "Discards"
-msgstr "Avis de non-responsabilité"
+msgstr "Rejets"
 
 #: netstat.rc:39
-#, fuzzy
-#| msgid "Error"
 msgid "Errors"
-msgstr "Erreur"
+msgstr "Erreurs"
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "Unknown port.\n"
 msgid "Unknown protocols"
-msgstr "Port inconnu.\n"
+msgstr "Protocoles inconnus"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
