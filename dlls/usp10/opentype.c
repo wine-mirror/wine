@@ -1548,10 +1548,11 @@ static VOID GPOS_apply_MarkToLigature(const OT_LookupTable *look, const SCRIPT_A
     }
 }
 
-static VOID GPOS_apply_MarkToMark(const OT_LookupTable *look, const SCRIPT_ANALYSIS *analysis, const WORD *glyphs, INT glyph_index,
+static BOOL GPOS_apply_MarkToMark(const OT_LookupTable *look, const SCRIPT_ANALYSIS *analysis, const WORD *glyphs, INT glyph_index,
                                   INT glyph_count, INT ppem, LPPOINT pt)
 {
     int j;
+    BOOL rc = FALSE;
     int write_dir = (analysis->fRTL && !analysis->fLogicalOrder) ? -1 : 1;
 
     TRACE("MarkToMark Attachment Positioning Subtable\n");
@@ -1589,7 +1590,7 @@ static VOID GPOS_apply_MarkToMark(const OT_LookupTable *look, const SCRIPT_ANALY
                     if (mark_index > GET_BE_WORD(ma->MarkCount))
                     {
                         ERR("Mark index exeeded mark count\n");
-                        return;
+                        return FALSE;
                     }
                     mr = &ma->MarkRecord[mark_index];
                     mark_class = GET_BE_WORD(mr->Class);
@@ -1607,12 +1608,14 @@ static VOID GPOS_apply_MarkToMark(const OT_LookupTable *look, const SCRIPT_ANALY
                     pt->x += mark2_pt.x - mark_pt.x;
                     pt->y += mark2_pt.y - mark_pt.y;
                     TRACE("Resulting cumulative offset is %i,%i design units\n",pt->x,pt->y);
+                    rc = TRUE;
                 }
             }
         }
         else
             FIXME("Unhandled Mark To Mark Format %i\n",GET_BE_WORD(mmpf1->PosFormat));
     }
+    return rc;
 }
 
 static INT GPOS_apply_ChainContextPos(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, const SCRIPT_ANALYSIS *analysis, INT* piAdvance,
@@ -1832,8 +1835,7 @@ static INT GPOS_apply_lookup(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, c
             double devX, devY;
             POINT desU = {0,0};
             int write_dir = (analysis->fRTL && !analysis->fLogicalOrder) ? -1 : 1;
-            GPOS_apply_MarkToMark(look, analysis, glyphs, glyph_index, glyph_count, ppem, &desU);
-            if (desU.x || desU.y)
+            if (GPOS_apply_MarkToMark(look, analysis, glyphs, glyph_index, glyph_count, ppem, &desU))
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, desU.x, desU.y, &devX, &devY);
                 if (analysis->fRTL && analysis->fLogicalOrder) devX *= -1;
