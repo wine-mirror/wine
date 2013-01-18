@@ -34,18 +34,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(wmiutils);
 
 struct path
 {
-    IWbemPath IWbemPath_iface;
-    LONG      refs;
-    WCHAR    *text;
-    int       len_text;
-    WCHAR    *server;
-    int       len_server;
-    WCHAR   **namespaces;
-    int      *len_namespaces;
-    int       num_namespaces;
-    WCHAR    *class;
-    int       len_class;
-    ULONGLONG flags;
+    IWbemPath        IWbemPath_iface;
+    LONG             refs;
+    CRITICAL_SECTION cs;
+    WCHAR           *text;
+    int              len_text;
+    WCHAR           *server;
+    int              len_server;
+    WCHAR          **namespaces;
+    int             *len_namespaces;
+    int              num_namespaces;
+    WCHAR           *class;
+    int              len_class;
+    ULONGLONG        flags;
 };
 
 static void init_path( struct path *path )
@@ -93,6 +94,8 @@ static ULONG WINAPI path_Release(
     {
         TRACE("destroying %p\n", path);
         clear_path( path );
+        path->cs.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection( &path->cs );
         heap_free( path );
     }
     return refs;
@@ -193,26 +196,32 @@ static HRESULT WINAPI path_SetText(
     LPCWSTR pszPath)
 {
     struct path *path = impl_from_IWbemPath( iface );
-    HRESULT hr;
+    HRESULT hr = S_OK;
     int len;
 
     TRACE("%p, %u, %s\n", iface, uMode, debugstr_w(pszPath));
 
     if (!uMode || !pszPath) return WBEM_E_INVALID_PARAMETER;
 
+    EnterCriticalSection( &path->cs );
+
     clear_path( path );
-    if (!pszPath[0]) return S_OK;
-    if ((hr = parse_text( path, uMode, pszPath )) != S_OK) return hr;
+    if (!pszPath[0]) goto done;
+    if ((hr = parse_text( path, uMode, pszPath )) != S_OK) goto done;
 
     len = strlenW( pszPath );
     if (!(path->text = heap_alloc( (len + 1) * sizeof(WCHAR) )))
     {
         clear_path( path );
-        return E_OUTOFMEMORY;
+        hr = E_OUTOFMEMORY;
+        goto done;
     }
     strcpyW( path->text, pszPath );
     path->len_text = len;
-    return S_OK;
+
+done:
+    LeaveCriticalSection( &path->cs );
+    return hr;
 }
 
 static WCHAR *build_namespace( struct path *path, int *len, BOOL leading_slash )
@@ -379,6 +388,7 @@ static HRESULT WINAPI path_GetText(
     LPWSTR pszText)
 {
     struct path *path = impl_from_IWbemPath( iface );
+    HRESULT hr = S_OK;
     WCHAR *str;
     int len;
 
@@ -386,25 +396,29 @@ static HRESULT WINAPI path_GetText(
 
     if (!puBufferLength) return WBEM_E_INVALID_PARAMETER;
 
-    str = build_path( path, lFlags, &len );
+    EnterCriticalSection( &path->cs );
 
+    str = build_path( path, lFlags, &len );
     if (*puBufferLength < len + 1)
     {
         *puBufferLength = len + 1;
-        return S_OK;
+        goto done;
     }
     if (!pszText)
     {
-        heap_free( str );
-        return WBEM_E_INVALID_PARAMETER;
+        hr = WBEM_E_INVALID_PARAMETER;
+        goto done;
     }
     if (str) strcpyW( pszText, str );
     else pszText[0] = 0;
     *puBufferLength = len + 1;
 
-    TRACE("<-- %s\n", debugstr_w(pszText));
+    TRACE("returning %s\n", debugstr_w(pszText));
+
+done:
     heap_free( str );
-    return S_OK;
+    LeaveCriticalSection( &path->cs );
+    return hr;
 }
 
 static HRESULT WINAPI path_GetInfo(
@@ -419,6 +433,8 @@ static HRESULT WINAPI path_GetInfo(
     if (info || !response) return WBEM_E_INVALID_PARAMETER;
 
     FIXME("some flags are not implemented\n");
+
+    EnterCriticalSection( &path->cs );
 
     *response = path->flags;
     if (!path->server || (path->len_server == 1 && path->server[0] == '.'))
@@ -436,6 +452,8 @@ static HRESULT WINAPI path_GetInfo(
         else
             *response |= WBEMPATH_INFO_IS_CLASS_REF;
     }
+
+    LeaveCriticalSection( &path->cs );
     return S_OK;
 }
 
@@ -451,9 +469,15 @@ static HRESULT WINAPI path_SetServer(
 
     TRACE("%p, %s\n", iface, debugstr_w(name));
 
+    EnterCriticalSection( &path->cs );
+
     if (name)
     {
-        if (!(server = strdupW( name ))) return WBEM_E_OUT_OF_MEMORY;
+        if (!(server = strdupW( name )))
+        {
+            LeaveCriticalSection( &path->cs );
+            return WBEM_E_OUT_OF_MEMORY;
+        }
         heap_free( path->server );
         path->server = server;
         path->len_server = strlenW( path->server );
@@ -466,6 +490,8 @@ static HRESULT WINAPI path_SetServer(
         path->len_server = 0;
         path->flags &= ~flags;
     }
+
+    LeaveCriticalSection( &path->cs );
     return S_OK;
 }
 
@@ -479,9 +505,18 @@ static HRESULT WINAPI path_GetServer(
     TRACE("%p, %p, %p\n", iface, len, name);
 
     if (!len || (*len && !name)) return WBEM_E_INVALID_PARAMETER;
-    if (!path->server) return WBEM_E_NOT_AVAILABLE;
+
+    EnterCriticalSection( &path->cs );
+
+    if (!path->server)
+    {
+        LeaveCriticalSection( &path->cs );
+        return WBEM_E_NOT_AVAILABLE;
+    }
     if (*len > path->len_server) strcpyW( name, path->server );
     *len = path->len_server + 1;
+
+    LeaveCriticalSection( &path->cs );
     return S_OK;
 }
 
@@ -494,7 +529,10 @@ static HRESULT WINAPI path_GetNamespaceCount(
     TRACE("%p, %p\n", iface, puCount);
 
     if (!puCount) return WBEM_E_INVALID_PARAMETER;
+
+    EnterCriticalSection( &path->cs );
     *puCount = path->num_namespaces;
+    LeaveCriticalSection( &path->cs );
     return S_OK;
 }
 
@@ -513,15 +551,25 @@ static HRESULT WINAPI path_SetNamespaceAt(
 
     TRACE("%p, %u, %s\n", iface, idx, debugstr_w(name));
 
-    if (idx > path->num_namespaces || !name) return WBEM_E_INVALID_PARAMETER;
-    if (!(new = strdupW( name ))) return WBEM_E_OUT_OF_MEMORY;
+    EnterCriticalSection( &path->cs );
 
+    if (idx > path->num_namespaces || !name)
+    {
+        LeaveCriticalSection( &path->cs );
+        return WBEM_E_INVALID_PARAMETER;
+    }
+    if (!(new = strdupW( name )))
+    {
+        LeaveCriticalSection( &path->cs );
+        return WBEM_E_OUT_OF_MEMORY;
+    }
     size = (path->num_namespaces + 1) * sizeof(WCHAR *);
     if (path->namespaces) tmp = heap_realloc( path->namespaces, size );
     else tmp = heap_alloc( size );
     if (!tmp)
     {
         heap_free( new );
+        LeaveCriticalSection( &path->cs );
         return WBEM_E_OUT_OF_MEMORY;
     }
     path->namespaces = tmp;
@@ -531,6 +579,7 @@ static HRESULT WINAPI path_SetNamespaceAt(
     if (!tmp_len)
     {
         heap_free( new );
+        LeaveCriticalSection( &path->cs );
         return WBEM_E_OUT_OF_MEMORY;
     }
     path->len_namespaces = tmp_len;
@@ -543,6 +592,8 @@ static HRESULT WINAPI path_SetNamespaceAt(
     path->len_namespaces[idx] = strlenW( new );
     path->num_namespaces++;
     path->flags |= flags;
+
+    LeaveCriticalSection( &path->cs );
     return S_OK;
 }
 
@@ -556,9 +607,17 @@ static HRESULT WINAPI path_GetNamespaceAt(
 
     TRACE("%p, %u, %p, %p\n", iface, idx, len, name);
 
-    if (!len || (*len && !name) || idx >= path->num_namespaces) return WBEM_E_INVALID_PARAMETER;
+    EnterCriticalSection( &path->cs );
+
+    if (!len || (*len && !name) || idx >= path->num_namespaces)
+    {
+        LeaveCriticalSection( &path->cs );
+        return WBEM_E_INVALID_PARAMETER;
+    }
     if (*len > path->len_namespaces[idx]) strcpyW( name, path->namespaces[idx] );
     *len = path->len_namespaces[idx] + 1;
+
+    LeaveCriticalSection( &path->cs );
     return S_OK;
 }
 
@@ -570,8 +629,13 @@ static HRESULT WINAPI path_RemoveNamespaceAt(
 
     TRACE("%p, %u\n", iface, idx);
 
-    if (idx >= path->num_namespaces) return WBEM_E_INVALID_PARAMETER;
+    EnterCriticalSection( &path->cs );
 
+    if (idx >= path->num_namespaces)
+    {
+        LeaveCriticalSection( &path->cs );
+        return WBEM_E_INVALID_PARAMETER;
+    }
     heap_free( path->namespaces[idx] );
     while (idx < path->num_namespaces - 1)
     {
@@ -580,6 +644,8 @@ static HRESULT WINAPI path_RemoveNamespaceAt(
         idx++;
     }
     path->num_namespaces--;
+
+    LeaveCriticalSection( &path->cs );
     return S_OK;
 }
 
@@ -591,12 +657,16 @@ static HRESULT WINAPI path_RemoveAllNamespaces(
 
     TRACE("%p\n", iface);
 
+    EnterCriticalSection( &path->cs );
+
     for (i = 0; i < path->num_namespaces; i++) heap_free( path->namespaces[i] );
     path->num_namespaces = 0;
     heap_free( path->namespaces );
     path->namespaces = NULL;
     heap_free( path->len_namespaces );
     path->len_namespaces = NULL;
+
+    LeaveCriticalSection( &path->cs );
     return S_OK;
 }
 
@@ -672,12 +742,16 @@ static HRESULT WINAPI path_SetClassName(
     TRACE("%p, %s\n", iface, debugstr_w(name));
 
     if (!name) return WBEM_E_INVALID_PARAMETER;
-
     if (!(class = strdupW( name ))) return WBEM_E_OUT_OF_MEMORY;
+
+    EnterCriticalSection( &path->cs );
+
     heap_free( path->class );
     path->class = class;
     path->len_class = strlenW( path->class );
     path->flags |= WBEMPATH_INFO_V2_COMPLIANT | WBEMPATH_INFO_CIM_COMPLIANT;
+
+    LeaveCriticalSection( &path->cs );
     return S_OK;
 }
 
@@ -691,9 +765,18 @@ static HRESULT WINAPI path_GetClassName(
     TRACE("%p, %p, %p\n", iface, len, name);
 
     if (!len || (*len && !name)) return WBEM_E_INVALID_PARAMETER;
-    if (!path->class) return WBEM_E_INVALID_OBJECT_PATH;
+
+    EnterCriticalSection( &path->cs );
+
+    if (!path->class)
+    {
+        LeaveCriticalSection( &path->cs );
+        return WBEM_E_INVALID_OBJECT_PATH;
+    }
     if (*len > path->len_class) strcpyW( name, path->class );
     *len = path->len_class + 1;
+
+    LeaveCriticalSection( &path->cs );
     return S_OK;
 }
 
@@ -800,6 +883,8 @@ HRESULT WbemPath_create( IUnknown *pUnkOuter, LPVOID *ppObj )
 
     path->IWbemPath_iface.lpVtbl = &path_vtbl;
     path->refs = 1;
+    InitializeCriticalSection( &path->cs );
+    path->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": wmiutils_path.cs");
     init_path( path );
 
     *ppObj = &path->IWbemPath_iface;
