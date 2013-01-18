@@ -941,7 +941,7 @@ DECLARE_INTERFACE_(IDirect3DDevice,IUnknown)
     STDMETHOD(SwapTextureHandles)(THIS_ IDirect3DTexture *tex1, IDirect3DTexture *tex2) PURE;
     STDMETHOD(CreateExecuteBuffer)(THIS_ D3DEXECUTEBUFFERDESC *desc,
             IDirect3DExecuteBuffer **buffer, IUnknown *outer) PURE;
-    STDMETHOD(GetStats)(THIS_ LPD3DSTATS lpD3DStats) PURE;
+    STDMETHOD(GetStats)(THIS_ D3DSTATS *stats) PURE;
     STDMETHOD(Execute)(THIS_ IDirect3DExecuteBuffer *buffer, IDirect3DViewport *viewport,
             DWORD flags) PURE;
     STDMETHOD(AddViewport)(THIS_ IDirect3DViewport *viewport) PURE;
@@ -1028,7 +1028,7 @@ DECLARE_INTERFACE_(IDirect3DDevice2,IUnknown)
     /*** IDirect3DDevice2 methods ***/
     STDMETHOD(GetCaps)(THIS_ D3DDEVICEDESC *hal_desc, D3DDEVICEDESC *hel_desc) PURE;
     STDMETHOD(SwapTextureHandles)(THIS_ IDirect3DTexture2 *tex1, IDirect3DTexture2 *tex2) PURE;
-    STDMETHOD(GetStats)(THIS_ LPD3DSTATS lpD3DStats) PURE;
+    STDMETHOD(GetStats)(THIS_ D3DSTATS *stats) PURE;
     STDMETHOD(AddViewport)(THIS_ IDirect3DViewport2 *viewport) PURE;
     STDMETHOD(DeleteViewport)(THIS_ IDirect3DViewport2 *viewport) PURE;
     STDMETHOD(NextViewport)(THIS_ IDirect3DViewport2 *ref,
@@ -1147,7 +1147,7 @@ DECLARE_INTERFACE_(IDirect3DDevice3,IUnknown)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirect3DDevice3 methods ***/
     STDMETHOD(GetCaps)(THIS_ D3DDEVICEDESC *hal_desc, D3DDEVICEDESC *hel_desc) PURE;
-    STDMETHOD(GetStats)(THIS_ LPD3DSTATS lpD3DStats) PURE;
+    STDMETHOD(GetStats)(THIS_ D3DSTATS *stats) PURE;
     STDMETHOD(AddViewport)(THIS_ IDirect3DViewport3 *viewport) PURE;
     STDMETHOD(DeleteViewport)(THIS_ IDirect3DViewport3 *viewport) PURE;
     STDMETHOD(NextViewport)(THIS_ IDirect3DViewport3 *ref,
