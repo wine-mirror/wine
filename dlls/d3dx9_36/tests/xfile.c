@@ -20,23 +20,23 @@
 #include "d3dx9.h"
 #include "d3dx9xof.h"
 
-char templates_bad_file_type1[] =
+static char templates_bad_file_type1[] =
 "xOf 0302txt 0064\n";
 
-char templates_bad_file_version[] =
+static char templates_bad_file_version[] =
 "xof 0102txt 0064\n";
 
-char templates_bad_file_type2[] =
+static char templates_bad_file_type2[] =
 "xof 0302foo 0064\n";
 
-char templates_bad_file_float_size[] =
+static char templates_bad_file_float_size[] =
 "xof 0302txt 0050\n";
 
-char templates_parse_error[] =
+static char templates_parse_error[] =
 "xof 0302txt 0064"
 "foobar;\n";
 
-char templates[] =
+static char templates[] =
 "xof 0302txt 0064"
 "template Header"
 "{"
@@ -80,7 +80,7 @@ static void test_templates(void)
     todo_wine ok(ret == D3DXFERR_PARSEERROR, "RegisterTemplates returned %#x, expected %#x\n", ret, D3DXFERR_PARSEERROR);
 
     ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, (const void *)templates, (SIZE_T)(sizeof(templates) - 1));
-    ok(ret == S_OK, "RegisterTemplates with %#x\n", ret);
+    ok(ret == S_OK, "RegisterTemplates failed with %#x\n", ret);
 
     d3dxfile->lpVtbl->Release(d3dxfile);
 }
