@@ -22,6 +22,7 @@ IDL_H_SRCS = \
 
 IDL_TLB_SRCS = \
 	vbsglobal.idl \
+	vbsregexp10.idl \
 	vbsregexp55.idl
 
 IDL_R_SRCS = vbscript_classes.idl
