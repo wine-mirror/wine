@@ -343,9 +343,9 @@ int interlocked_xchg_add( int *dest, int incr )
     return retv;
 }
 
-int interlocked_cmpxchg128( __int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare )
+unsigned char interlocked_cmpxchg128( __int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare )
 {
-    int retv;
+    unsigned char retv;
     pthread_mutex_lock( &interlocked_mutex );
     if (dest[0] == compare[0] && dest[1] == compare[1])
     {
