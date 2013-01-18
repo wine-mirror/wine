@@ -20,23 +20,23 @@
 #include "d3dx9.h"
 #include "d3dx9xof.h"
 
-static char templates_bad_file_type1[] =
+static const char templates_bad_file_type1[] =
 "xOf 0302txt 0064\n";
 
-static char templates_bad_file_version[] =
+static const char templates_bad_file_version[] =
 "xof 0102txt 0064\n";
 
-static char templates_bad_file_type2[] =
+static const char templates_bad_file_type2[] =
 "xof 0302foo 0064\n";
 
-static char templates_bad_file_float_size[] =
+static const char templates_bad_file_float_size[] =
 "xof 0302txt 0050\n";
 
-static char templates_parse_error[] =
+static const char templates_parse_error[] =
 "xof 0302txt 0064"
 "foobar;\n";
 
-static char templates[] =
+static const char templates[] =
 "xof 0302txt 0064"
 "template Header"
 "{"
@@ -64,22 +64,22 @@ static void test_templates(void)
     ret = D3DXFileCreate(&d3dxfile);
     ok(ret == S_OK, "D3DXCreateFile failed with %#x\n", ret);
 
-    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, (const void *)templates_bad_file_type1, (SIZE_T)(sizeof(templates_bad_file_type1) - 1));
+    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, templates_bad_file_type1, sizeof(templates_bad_file_type1) - 1);
     ok(ret == D3DXFERR_BADFILETYPE, "RegisterTemplates returned %#x, expected %#x\n", ret, D3DXFERR_BADFILETYPE);
 
-    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, (const void *)templates_bad_file_version, (SIZE_T)(sizeof(templates_bad_file_version) - 1));
+    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, templates_bad_file_version, sizeof(templates_bad_file_version) - 1);
     ok(ret == D3DXFERR_BADFILEVERSION, "RegisterTemplates returned %#x, expected %#x\n", ret, D3DXFERR_BADFILEVERSION);
 
-    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, (const void *)templates_bad_file_type2, (SIZE_T)(sizeof(templates_bad_file_type2) - 1));
+    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, templates_bad_file_type2, sizeof(templates_bad_file_type2) - 1);
     ok(ret == D3DXFERR_BADFILETYPE, "RegisterTemplates returned %#x, expected %#x\n", ret, D3DXFERR_BADFILETYPE);
 
-    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, (const void *)templates_bad_file_float_size, (SIZE_T)(sizeof(templates_bad_file_float_size) - 1));
+    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, templates_bad_file_float_size, sizeof(templates_bad_file_float_size) - 1);
     ok(ret == D3DXFERR_BADFILEFLOATSIZE, "RegisterTemplates returned %#x, expected %#x\n", ret, D3DXFERR_BADFILEFLOATSIZE);
 
-    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, (const void *)templates_parse_error, (SIZE_T)(sizeof(templates_parse_error) - 1));
+    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, templates_parse_error, sizeof(templates_parse_error) - 1);
     todo_wine ok(ret == D3DXFERR_PARSEERROR, "RegisterTemplates returned %#x, expected %#x\n", ret, D3DXFERR_PARSEERROR);
 
-    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, (const void *)templates, (SIZE_T)(sizeof(templates) - 1));
+    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, templates, sizeof(templates) - 1);
     ok(ret == S_OK, "RegisterTemplates failed with %#x\n", ret);
 
     d3dxfile->lpVtbl->Release(d3dxfile);
@@ -98,7 +98,7 @@ static void test_lock_unlock(void)
     ret = D3DXFileCreate(&d3dxfile);
     ok(ret == S_OK, "D3DXCreateFile failed with %#x\n", ret);
 
-    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, (const void *)templates, (SIZE_T)(sizeof(templates) - 1));
+    ret = d3dxfile->lpVtbl->RegisterTemplates(d3dxfile, templates, sizeof(templates) - 1);
     ok(ret == S_OK, "RegisterTemplates failed with %#x\n", ret);
 
     memory.lpMemory = objects;
