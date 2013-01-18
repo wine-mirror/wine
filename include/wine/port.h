@@ -55,7 +55,7 @@
  */
 
 #if !defined(_MSC_VER) && !defined(__int64)
-#  if defined(__x86_64__) || defined(_WIN64)
+#  if defined(__x86_64__) || defined(__aarch64__) || defined(_WIN64)
 #    define __int64 long
 #  else
 #    define __int64 long long
