@@ -19,6 +19,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <assert.h>
 #include <math.h>
 
 #define COBJMACROS
@@ -40,6 +41,51 @@ static const char *debugstr_guid(const GUID *guid)
             guid->Data4[1], guid->Data4[2], guid->Data4[3], guid->Data4[4],
             guid->Data4[5], guid->Data4[6], guid->Data4[7]);
     return buf;
+}
+
+static HBITMAP create_dib(int width, int height, int bpp, LOGPALETTE *pal, const void *data)
+{
+    char bmibuf[sizeof(BITMAPINFO) + sizeof(RGBQUAD) * 255];
+    BITMAPINFO *bmi = (BITMAPINFO *)bmibuf;
+    void *bits;
+    HBITMAP hdib;
+    BITMAP bm;
+
+    memset(bmibuf, 0, sizeof(bmibuf));
+    bmi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
+    bmi->bmiHeader.biWidth = width;
+    bmi->bmiHeader.biHeight = -height;
+    bmi->bmiHeader.biBitCount = bpp;
+    bmi->bmiHeader.biPlanes = 1;
+    bmi->bmiHeader.biCompression = BI_RGB;
+    if (pal)
+    {
+        WORD i;
+
+        assert(pal->palNumEntries <= 256);
+        for (i = 0; i < pal->palNumEntries; i++)
+        {
+            bmi->bmiColors[i].rgbRed = pal->palPalEntry[i].peRed;
+            bmi->bmiColors[i].rgbGreen = pal->palPalEntry[i].peGreen;
+            bmi->bmiColors[i].rgbBlue = pal->palPalEntry[i].peBlue;
+            bmi->bmiColors[i].rgbReserved = 0;
+        }
+
+        bmi->bmiHeader.biClrUsed = pal->palNumEntries;
+        bmi->bmiHeader.biClrImportant = pal->palNumEntries;
+    }
+    hdib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, &bits, NULL, 0);
+    ok(hdib != 0, "CreateDIBSection(%dx%d,%d bpp) failed\n", width, height, bpp);
+
+    GetObject(hdib, sizeof(bm), &bm);
+    ok(bm.bmWidth == width, "expected %d, got %d\n", width, bm.bmWidth);
+    ok(bm.bmHeight == height, "expected %d, got %d\n", height, bm.bmHeight);
+    ok(bm.bmPlanes == 1, "expected 1, got %d\n", bm.bmPlanes);
+    ok(bm.bmBitsPixel == bpp, "expected %d, got %d\n", bpp, bm.bmBitsPixel);
+
+    if (data) memcpy(bits, data, bm.bmWidthBytes * bm.bmHeight);
+
+    return hdib;
 }
 
 static void test_createbitmap(void)
@@ -582,6 +628,147 @@ static void test_CreateBitmapFromHICON(void)
     IWICBitmap_Release(bitmap);
 }
 
+static void test_CreateBitmapFromHBITMAP(void)
+{
+    /* 8 bpp data must be aligned to a DWORD boundary for a DIB */
+    static const BYTE data_8bpp_pal_dib[12] = { 0,1,2,0, 1,2,0,0, 2,1,0,0 };
+    static const BYTE data_8bpp_rgb_dib[12] = { 0xf0,0x0f,0xff,0, 0x0f,0xff,0xf0,0, 0xf0,0x0f,0xff,0 };
+    static const BYTE data_8bpp_pal_wic[12] = { 0xd,0xe,0x10,0, 0xe,0x10,0xd,0, 0x10,0xe,0xd,0 };
+    static const PALETTEENTRY pal_data[3] = { {0xff,0,0,0}, {0,0xff,0,0}, {0,0,0xff,0} };
+    char pal_buf[sizeof(LOGPALETTE) + sizeof(PALETTEENTRY) * 255];
+    LOGPALETTE *pal = (LOGPALETTE *)pal_buf;
+    HBITMAP hbmp;
+    HPALETTE hpal;
+    BYTE data[12];
+    HRESULT hr;
+    IWICBitmap *bitmap;
+    UINT width, height, i, count;
+    WICPixelFormatGUID format;
+    IWICPalette *palette;
+    WICBitmapPaletteType type;
+
+    /* 8 bpp without palette */
+    hbmp = create_dib(3, 3, 8, NULL, data_8bpp_rgb_dib);
+    ok(hbmp != 0, "failed to create bitmap\n");
+
+    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, 0, 0, WICBitmapCacheOnLoad, &bitmap);
+todo_wine
+    ok(hr == WINCODEC_ERR_WIN32ERROR || hr == 0x88980003 /*XP*/, "expected WINCODEC_ERR_WIN32ERROR, got %#x\n", hr);
+
+    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, 0, WICBitmapCacheOnLoad, NULL);
+todo_wine
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, 0, WICBitmapCacheOnLoad, &bitmap);
+todo_wine
+    ok(hr == S_OK, "CreateBitmapFromHBITMAP error %#x\n", hr);
+    if (hr != S_OK) return;
+
+    IWICBitmap_GetPixelFormat(bitmap, &format);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat8bppIndexed),
+       "unexpected pixel format %s\n", debugstr_guid(&format));
+
+    hr = IWICBitmap_GetSize(bitmap, &width, &height);
+    ok(hr == S_OK, "IWICBitmap_GetSize error %#x\n", hr);
+    ok(width == 3, "expected 3, got %u\n", width);
+    ok(height == 3, "expected 3, got %u\n", height);
+
+    memset(data, 0, sizeof(data));
+    hr = IWICBitmap_CopyPixels(bitmap, NULL, 4, sizeof(data), data);
+    ok(hr == S_OK, "IWICBitmap_CopyPixels error %#x\n", hr);
+    for (i = 0; i < sizeof(data); i++)
+        ok(data[i] == data_8bpp_rgb_dib[i], "%u: expected %#x, got %#x\n", i, data_8bpp_rgb_dib[i], data[i]);
+
+    IWICBitmap_Release(bitmap);
+    DeleteObject(hbmp);
+
+    /* 8 bpp with a 3 entries palette */
+    memset(pal_buf, 0, sizeof(pal_buf));
+    pal->palVersion = 0x300;
+    pal->palNumEntries = 3;
+    memcpy(pal->palPalEntry, pal_data, sizeof(pal_data));
+    hpal = CreatePalette(pal);
+    ok(hpal != 0, "CreatePalette failed\n");
+
+    hbmp = create_dib(3, 3, 8, pal, data_8bpp_pal_dib);
+    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, hpal, WICBitmapCacheOnLoad, &bitmap);
+    ok(hr == S_OK, "CreateBitmapFromHBITMAP error %#x\n", hr);
+
+    IWICBitmap_GetPixelFormat(bitmap, &format);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat4bppIndexed),
+       "unexpected pixel format %s\n", debugstr_guid(&format));
+
+    hr = IWICBitmap_GetSize(bitmap, &width, &height);
+    ok(hr == S_OK, "IWICBitmap_GetSize error %#x\n", hr);
+    ok(width == 3, "expected 3, got %u\n", width);
+    ok(height == 3, "expected 3, got %u\n", height);
+
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "CreatePalette error %#x\n", hr);
+    hr = IWICBitmap_CopyPalette(bitmap, palette);
+    ok(hr == S_OK, "CopyPalette error %#x\n", hr);
+
+    hr = IWICPalette_GetType(palette, &type);
+    ok(hr == S_OK, "%u: GetType error %#x\n", i, hr);
+    ok(type == WICBitmapPaletteTypeCustom, "expected WICBitmapPaletteTypeCustom, got %#x\n", type);
+
+    hr = IWICPalette_GetColorCount(palette, &count);
+    ok(hr == S_OK, "GetColorCount error %#x\n", hr);
+    ok(count == 16, "expected 16, got %u\n", count);
+
+    IWICPalette_Release(palette);
+
+    IWICBitmap_Release(bitmap);
+    DeleteObject(hbmp);
+    DeleteObject(hpal);
+
+    /* 8 bpp with a 256 entries palette */
+    memset(pal_buf, 0, sizeof(pal_buf));
+    pal->palVersion = 0x300;
+    pal->palNumEntries = 256;
+    memcpy(pal->palPalEntry, pal_data, sizeof(pal_data));
+    hpal = CreatePalette(pal);
+    ok(hpal != 0, "CreatePalette failed\n");
+
+    hbmp = create_dib(3, 3, 8, pal, data_8bpp_pal_dib);
+    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, hpal, WICBitmapCacheOnLoad, &bitmap);
+    ok(hr == S_OK, "CreateBitmapFromHBITMAP error %#x\n", hr);
+
+    IWICBitmap_GetPixelFormat(bitmap, &format);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat8bppIndexed),
+       "unexpected pixel format %s\n", debugstr_guid(&format));
+
+    hr = IWICBitmap_GetSize(bitmap, &width, &height);
+    ok(hr == S_OK, "IWICBitmap_GetSize error %#x\n", hr);
+    ok(width == 3, "expected 3, got %u\n", width);
+    ok(height == 3, "expected 3, got %u\n", height);
+
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "CreatePalette error %#x\n", hr);
+    hr = IWICBitmap_CopyPalette(bitmap, palette);
+    ok(hr == S_OK, "CopyPalette error %#x\n", hr);
+
+    hr = IWICPalette_GetType(palette, &type);
+    ok(hr == S_OK, "%u: GetType error %#x\n", i, hr);
+    ok(type == WICBitmapPaletteTypeCustom, "expected WICBitmapPaletteTypeCustom, got %#x\n", type);
+
+    hr = IWICPalette_GetColorCount(palette, &count);
+    ok(hr == S_OK, "GetColorCount error %#x\n", hr);
+    ok(count == 256, "expected 256, got %u\n", count);
+
+    IWICPalette_Release(palette);
+
+    memset(data, 0, sizeof(data));
+    hr = IWICBitmap_CopyPixels(bitmap, NULL, 4, sizeof(data), data);
+    ok(hr == S_OK, "IWICBitmap_CopyPixels error %#x\n", hr);
+    for (i = 0; i < sizeof(data); i++)
+        ok(data[i] == data_8bpp_pal_wic[i], "%u: expected %#x, got %#x\n", i, data_8bpp_pal_wic[i], data[i]);
+
+    IWICBitmap_Release(bitmap);
+    DeleteObject(hbmp);
+    DeleteObject(hpal);
+}
+
 START_TEST(bitmap)
 {
     HRESULT hr;
@@ -596,6 +783,7 @@ START_TEST(bitmap)
     test_createbitmapfromsource();
     test_CreateBitmapFromMemory();
     test_CreateBitmapFromHICON();
+    test_CreateBitmapFromHBITMAP();
 
     IWICImagingFactory_Release(factory);
 
