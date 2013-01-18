@@ -31,6 +31,7 @@
 #include <stdarg.h>
 
 #include "msvcrt.h"
+#include "mtdll.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -1022,6 +1023,17 @@ MSVCRT_intptr_t CDECL _wspawnvp(int flags, const MSVCRT_wchar_t* name, const MSV
   return MSVCRT__wspawnvpe(flags, name, argv, NULL);
 }
 
+static struct popen_handle {
+    MSVCRT_FILE *f;
+    HANDLE proc;
+} *popen_handles;
+static DWORD popen_handles_size;
+
+void msvcrt_free_popen_data(void)
+{
+    MSVCRT_free(popen_handles);
+}
+
 /*********************************************************************
  *		_wpopen (MSVCRT.@)
  *
@@ -1036,6 +1048,8 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wc
   MSVCRT_wchar_t *comspec, *fullcmd;
   unsigned int len;
   static const MSVCRT_wchar_t flag[] = {' ','/','c',' ',0};
+  struct popen_handle *container;
+  DWORD i;
 
   TRACE("(command=%s, mode=%s)\n", debugstr_w(command), debugstr_w(mode));
 
@@ -1069,6 +1083,25 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wc
   fdToDup = readPipe ? 1 : 0;
   fdToOpen = readPipe ? 0 : 1;
 
+  _mlock(_POPEN_LOCK);
+  for(i=0; i<popen_handles_size; i++)
+  {
+    if (!popen_handles[i].f)
+      break;
+  }
+  if (i==popen_handles_size)
+  {
+    i = (popen_handles_size ? popen_handles_size*2 : 8);
+    container = MSVCRT_realloc(popen_handles, i*sizeof(*container));
+    if (!container) goto error;
+
+    popen_handles = container;
+    container = popen_handles+popen_handles_size;
+    memset(container, 0, (i-popen_handles_size)*sizeof(*container));
+    popen_handles_size = i;
+  }
+  else container = popen_handles+i;
+
   if ((fdStdHandle = MSVCRT__dup(fdToDup)) == -1)
     goto error;
   if (MSVCRT__dup2(fds[fdToDup], fdToDup) != 0)
@@ -1089,7 +1122,8 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wc
   strcatW(fullcmd, flag);
   strcatW(fullcmd, command);
 
-  if (msvcrt_spawn(MSVCRT__P_NOWAIT, comspec, fullcmd, NULL, 1) == -1)
+  if ((container->proc = (HANDLE)msvcrt_spawn(MSVCRT__P_NOWAIT, comspec, fullcmd, NULL, 1))
+          == INVALID_HANDLE_VALUE)
   {
     MSVCRT__close(fds[fdToOpen]);
     ret = NULL;
@@ -1099,7 +1133,9 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wc
     ret = MSVCRT__wfdopen(fds[fdToOpen], mode);
     if (!ret)
       MSVCRT__close(fds[fdToOpen]);
+    container->f = ret;
   }
+  _munlock(_POPEN_LOCK);
   HeapFree(GetProcessHeap(), 0, comspec);
   HeapFree(GetProcessHeap(), 0, fullcmd);
   MSVCRT__dup2(fdStdHandle, fdToDup);
@@ -1107,6 +1143,7 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wc
   return ret;
 
 error:
+  _munlock(_POPEN_LOCK);
   if (fdStdHandle != -1) MSVCRT__close(fdStdHandle);
   MSVCRT__close(fds[0]);
   MSVCRT__close(fds[1]);
@@ -1145,7 +1182,38 @@ MSVCRT_FILE* CDECL MSVCRT__popen(const char* command, const char* mode)
  */
 int CDECL MSVCRT__pclose(MSVCRT_FILE* file)
 {
-  return MSVCRT_fclose(file);
+  HANDLE h;
+  DWORD i;
+
+  if (!MSVCRT_CHECK_PMT(file != NULL)) return -1;
+
+  _mlock(_POPEN_LOCK);
+  for(i=0; i<popen_handles_size; i++)
+  {
+    if (popen_handles[i].f == file)
+      break;
+  }
+  if(i == popen_handles_size)
+  {
+    _munlock(_POPEN_LOCK);
+    *MSVCRT__errno() = MSVCRT_EBADF;
+    return -1;
+  }
+
+  h = popen_handles[i].proc;
+  popen_handles[i].f = NULL;
+  _munlock(_POPEN_LOCK);
+
+  MSVCRT_fclose(file);
+  if(WaitForSingleObject(h, INFINITE)==WAIT_FAILED || !GetExitCodeProcess(h, &i))
+  {
+    msvcrt_set_errno(GetLastError());
+    CloseHandle(h);
+    return -1;
+  }
+
+  CloseHandle(h);
+  return i;
 }
 
 /*********************************************************************
