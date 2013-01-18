@@ -3119,7 +3119,6 @@ static void test_GetNamedSecurityInfoA(void)
     bret = InitializeAcl(pDacl, sizeof(dacl), ACL_REVISION);
     ok(bret, "Failed to initialize ACL.\n");
     bret = pAddAccessAllowedAceEx(pDacl, ACL_REVISION, 0, GENERIC_ALL, user_sid);
-    HeapFree(GetProcessHeap(), 0, user);
     ok(bret, "Failed to add Current User to ACL.\n");
     bret = pAddAccessAllowedAceEx(pDacl, ACL_REVISION, 0, GENERIC_ALL, admin_sid);
     ok(bret, "Failed to add Administrator Group to ACL.\n");
@@ -3134,6 +3133,7 @@ static void test_GetNamedSecurityInfoA(void)
     if (error != ERROR_SUCCESS && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
         win_skip("SetNamedSecurityInfoA is not implemented\n");
+        HeapFree(GetProcessHeap(), 0, user);
         CloseHandle(hTemp);
         return;
     }
@@ -3144,6 +3144,7 @@ static void test_GetNamedSecurityInfoA(void)
     if (error != ERROR_SUCCESS && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
         win_skip("GetNamedSecurityInfoA is not implemented\n");
+        HeapFree(GetProcessHeap(), 0, user);
         CloseHandle(hTemp);
         return;
     }
@@ -3175,6 +3176,7 @@ static void test_GetNamedSecurityInfoA(void)
            "Administators Group ACE has unexpected mask (0x%x != 0x1f01ff)\n", ace->Mask);
     }
     LocalFree(pSD);
+    HeapFree(GetProcessHeap(), 0, user);
     CloseHandle(hTemp);
 }
 
