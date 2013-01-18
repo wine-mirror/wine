@@ -392,7 +392,7 @@ static nsIDOMNode *get_child_node(nsIDOMNode *node, PRUint32 off)
 static void get_cur_pos(HTMLTxtRange *This, BOOL start, dompos_t *pos)
 {
     nsIDOMNode *node;
-    PRInt32 off;
+    LONG off;
 
     pos->p = NULL;
 

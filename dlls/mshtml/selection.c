@@ -147,7 +147,7 @@ static HRESULT WINAPI HTMLSelectionObject_createRange(IHTMLSelectionObject *ifac
     TRACE("(%p)->(%p)\n", This, range);
 
     if(This->nsselection) {
-        PRInt32 nsrange_cnt = 0;
+        LONG nsrange_cnt = 0;
         nsresult nsres;
 
         nsISelection_GetRangeCount(This->nsselection, &nsrange_cnt);

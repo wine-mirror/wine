@@ -126,7 +126,7 @@ static nsresult NSAPI nsPromptService_ConfirmEx(nsIPromptService *iface,
         nsIDOMWindow *aParent, const PRUnichar *aDialogTitle,
         const PRUnichar *aText, PRUint32 aButtonFlags, const PRUnichar *aButton0Title,
         const PRUnichar *aButton1Title, const PRUnichar *aButton2Title,
-        const PRUnichar *aCheckMsg, cpp_bool *aCheckState, PRInt32 *_retval)
+        const PRUnichar *aCheckMsg, cpp_bool *aCheckState, LONG *_retval)
 {
     static const PRUnichar wszContinue[] = {'C','o','n','t','i','n','u','e',0};
 
@@ -186,7 +186,7 @@ static nsresult NSAPI nsPromptService_PromptPassword(nsIPromptService *iface,
 static nsresult NSAPI nsPromptService_Select(nsIPromptService *iface,
         nsIDOMWindow *aParent, const PRUnichar *aDialogTitle,
         const PRUnichar *aText, PRUint32 aCount, const PRUnichar **aSelectList,
-        PRInt32 *aOutSelection, cpp_bool *_retval)
+        LONG *aOutSelection, cpp_bool *_retval)
 {
     FIXME("(%p %s %s %d %p %p %p)\n", aParent, debugstr_w(aDialogTitle),
         debugstr_w(aText), aCount, aSelectList, aOutSelection, _retval);

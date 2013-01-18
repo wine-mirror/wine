@@ -1333,7 +1333,7 @@ static nsresult NSAPI nsWebBrowserChrome_DestroyBrowserWindow(nsIWebBrowserChrom
 }
 
 static nsresult NSAPI nsWebBrowserChrome_SizeBrowserTo(nsIWebBrowserChrome *iface,
-        PRInt32 aCX, PRInt32 aCY)
+        LONG aCX, LONG aCY)
 {
     NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
     WARN("(%p)->(%d %d)\n", This, aCX, aCY);
@@ -1667,7 +1667,7 @@ static nsrefcnt NSAPI nsEmbeddingSiteWindow_Release(nsIEmbeddingSiteWindow *ifac
 }
 
 static nsresult NSAPI nsEmbeddingSiteWindow_SetDimensions(nsIEmbeddingSiteWindow *iface,
-        PRUint32 flags, PRInt32 x, PRInt32 y, PRInt32 cx, PRInt32 cy)
+        PRUint32 flags, LONG x, LONG y, LONG cx, LONG cy)
 {
     NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
     WARN("(%p)->(%08x %d %d %d %d)\n", This, flags, x, y, cx, cy);
@@ -1675,7 +1675,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_SetDimensions(nsIEmbeddingSiteWindow
 }
 
 static nsresult NSAPI nsEmbeddingSiteWindow_GetDimensions(nsIEmbeddingSiteWindow *iface,
-        PRUint32 flags, PRInt32 *x, PRInt32 *y, PRInt32 *cx, PRInt32 *cy)
+        PRUint32 flags, LONG *x, LONG *y, LONG *cx, LONG *cy)
 {
     NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
     WARN("(%p)->(%08x %p %p %p %p)\n", This, flags, x, y, cx, cy);
@@ -1778,7 +1778,7 @@ static nsrefcnt NSAPI nsTooltipListener_Release(nsITooltipListener *iface)
 }
 
 static nsresult NSAPI nsTooltipListener_OnShowTooltip(nsITooltipListener *iface,
-        PRInt32 aXCoord, PRInt32 aYCoord, const PRUnichar *aTipText)
+        LONG aXCoord, LONG aYCoord, const PRUnichar *aTipText)
 {
     NSContainer *This = impl_from_nsITooltipListener(iface);
 

@@ -333,7 +333,7 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
     cpp_bool collapsed;
     nsIDOMHTMLElement *elem;
     nsIDOMRange *range;
-    PRInt32 range_cnt = 0;
+    LONG range_cnt = 0;
     nsAString size_str;
     nsAString val_str;
 

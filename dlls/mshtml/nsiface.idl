@@ -44,7 +44,6 @@ typedef nsIIDRef nsCIDRef;
 
 typedef WCHAR PRUnichar;
 typedef ULONG PRUint32;
-typedef LONG PRInt32;
 typedef WORD PRUint16;
 typedef INT16 PRInt16;
 typedef BYTE PRUint8;
@@ -57,7 +56,7 @@ typedef ULONGLONG PRUint64;
  * use stdint.h types in C.
  */
 #define int16_t PRInt16
-#define int32_t PRInt32
+#define int32_t LONG
 #define int64_t PRInt64
 
 #define uint8_t PRUint8
