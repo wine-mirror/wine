@@ -834,7 +834,7 @@ static nsresult NSAPI nsChannel_SetContentCharset(nsIHttpChannel *iface,
     return NS_OK;
 }
 
-static nsresult NSAPI nsChannel_GetContentLength(nsIHttpChannel *iface, PRInt32 *aContentLength)
+static nsresult NSAPI nsChannel_GetContentLength(nsIHttpChannel *iface, LONG *aContentLength)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
 
@@ -843,7 +843,7 @@ static nsresult NSAPI nsChannel_GetContentLength(nsIHttpChannel *iface, PRInt32 
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsChannel_SetContentLength(nsIHttpChannel *iface, PRInt32 aContentLength)
+static nsresult NSAPI nsChannel_SetContentLength(nsIHttpChannel *iface, LONG aContentLength)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
 
@@ -1661,7 +1661,7 @@ static nsresult NSAPI nsHttpChannelInternal_GetLocalAddress(nsIHttpChannelIntern
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsHttpChannelInternal_GetLocalPort(nsIHttpChannelInternal *iface, PRInt32 *aLocalPort)
+static nsresult NSAPI nsHttpChannelInternal_GetLocalPort(nsIHttpChannelInternal *iface, LONG *aLocalPort)
 {
     nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
@@ -1679,7 +1679,7 @@ static nsresult NSAPI nsHttpChannelInternal_GetRemoteAddress(nsIHttpChannelInter
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsHttpChannelInternal_GetRemotePort(nsIHttpChannelInternal *iface, PRInt32 *aRemotePort)
+static nsresult NSAPI nsHttpChannelInternal_GetRemotePort(nsIHttpChannelInternal *iface, LONG *aRemotePort)
 {
     nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
@@ -2197,7 +2197,7 @@ static nsresult NSAPI nsURI_SetHost(nsIFileURL *iface, const nsACString *aHost)
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_GetPort(nsIFileURL *iface, PRInt32 *aPort)
+static nsresult NSAPI nsURI_GetPort(nsIFileURL *iface, LONG *aPort)
 {
     nsWineURI *This = impl_from_nsIFileURL(iface);
     DWORD port;
@@ -2218,7 +2218,7 @@ static nsresult NSAPI nsURI_GetPort(nsIFileURL *iface, PRInt32 *aPort)
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_SetPort(nsIFileURL *iface, PRInt32 aPort)
+static nsresult NSAPI nsURI_SetPort(nsIFileURL *iface, LONG aPort)
 {
     nsWineURI *This = impl_from_nsIFileURL(iface);
     HRESULT hres;
@@ -2862,7 +2862,7 @@ static nsresult NSAPI nsStandardURL_SetMutable(nsIStandardURL *iface, cpp_bool a
     return NS_OK;
 }
 
-static nsresult NSAPI nsStandardURL_Init(nsIStandardURL *iface, PRUint32 aUrlType, PRInt32 aDefaultPort,
+static nsresult NSAPI nsStandardURL_Init(nsIStandardURL *iface, PRUint32 aUrlType, LONG aDefaultPort,
         const nsACString *aSpec, const char *aOriginCharset, nsIURI *aBaseURI)
 {
     nsWineURI *This = impl_from_nsIStandardURL(iface);
@@ -3097,7 +3097,7 @@ static nsresult NSAPI nsProtocolHandler_GetScheme(nsIProtocolHandler *iface, nsA
 }
 
 static nsresult NSAPI nsProtocolHandler_GetDefaultPort(nsIProtocolHandler *iface,
-        PRInt32 *aDefaultPort)
+        LONG *aDefaultPort)
 {
     nsProtocolHandler *This = impl_from_nsIProtocolHandler(iface);
 
@@ -3146,7 +3146,7 @@ static nsresult NSAPI nsProtocolHandler_NewChannel(nsIProtocolHandler *iface,
 }
 
 static nsresult NSAPI nsProtocolHandler_AllowPort(nsIProtocolHandler *iface,
-        PRInt32 port, const char *scheme, cpp_bool *_retval)
+        LONG port, const char *scheme, cpp_bool *_retval)
 {
     nsProtocolHandler *This = impl_from_nsIProtocolHandler(iface);
 
@@ -3359,7 +3359,7 @@ static nsresult NSAPI nsIOService_SetOffline(nsIIOService *iface, cpp_bool aOffl
     return nsIIOService_SetOffline(nsio, aOffline);
 }
 
-static nsresult NSAPI nsIOService_AllowPort(nsIIOService *iface, PRInt32 aPort,
+static nsresult NSAPI nsIOService_AllowPort(nsIIOService *iface, LONG aPort,
                                              const char *aScheme, cpp_bool *_retval)
 {
     TRACE("(%d %s %p)\n", aPort, debugstr_a(aScheme), _retval);
@@ -3473,7 +3473,7 @@ static nsresult NSAPI nsNetUtil_UnescapeString(nsINetUtil *iface, const nsACStri
 }
 
 static nsresult NSAPI nsNetUtil_ExtractCharsetFromContentType(nsINetUtil *iface, const nsACString *aTypeHeader,
-        nsACString *aCharset, PRInt32 *aCharsetStart, PRInt32 *aCharsetEnd, cpp_bool *_retval)
+        nsACString *aCharset, LONG *aCharsetStart, LONG *aCharsetEnd, cpp_bool *_retval)
 {
     TRACE("(%s %p %p %p %p)\n", debugstr_nsacstr(aTypeHeader), aCharset, aCharsetStart,
           aCharsetEnd, _retval);
