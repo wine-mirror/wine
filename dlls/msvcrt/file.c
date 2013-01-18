@@ -764,6 +764,34 @@ int CDECL MSVCRT__wunlink(const MSVCRT_wchar_t *path)
   return -1;
 }
 
+/*********************************************************************
+ *		_commit (MSVCRT.@)
+ */
+int CDECL MSVCRT__commit(int fd)
+{
+    HANDLE hand = msvcrt_fdtoh(fd);
+
+    TRACE(":fd (%d) handle (%p)\n",fd,hand);
+    if (hand == INVALID_HANDLE_VALUE)
+        return -1;
+
+    if (!FlushFileBuffers(hand))
+    {
+        if (GetLastError() == ERROR_INVALID_HANDLE)
+        {
+            /* FlushFileBuffers fails for console handles
+             * so we ignore this error.
+             */
+            return 0;
+        }
+        TRACE(":failed-last error (%d)\n",GetLastError());
+        msvcrt_set_errno(GetLastError());
+        return -1;
+    }
+    TRACE(":ok\n");
+    return 0;
+}
+
 /* flush_all_buffers calls MSVCRT_fflush which calls flush_all_buffers */
 int CDECL MSVCRT_fflush(MSVCRT_FILE* file);
 
@@ -811,6 +839,9 @@ int CDECL MSVCRT_fflush(MSVCRT_FILE* file)
 
         MSVCRT__lock_file(file);
         res = msvcrt_flush_buffer(file);
+
+        if(!res && (file->_flag & MSVCRT__IOCOMMIT))
+            res = MSVCRT__commit(file->_file) ? MSVCRT_EOF : 0;
         MSVCRT__unlock_file(file);
 
         return res;
@@ -849,34 +880,6 @@ int CDECL MSVCRT__close(int fd)
   UNLOCK_FILES();
   TRACE(":ok\n");
   return ret;
-}
-
-/*********************************************************************
- *		_commit (MSVCRT.@)
- */
-int CDECL MSVCRT__commit(int fd)
-{
-  HANDLE hand = msvcrt_fdtoh(fd);
-
-  TRACE(":fd (%d) handle (%p)\n",fd,hand);
-  if (hand == INVALID_HANDLE_VALUE)
-    return -1;
-
-  if (!FlushFileBuffers(hand))
-  {
-    if (GetLastError() == ERROR_INVALID_HANDLE)
-    {
-      /* FlushFileBuffers fails for console handles
-       * so we ignore this error.
-       */
-      return 0;
-    }
-    TRACE(":failed-last error (%d)\n",GetLastError());
-    msvcrt_set_errno(GetLastError());
-    return -1;
-  }
-  TRACE(":ok\n");
-  return 0;
 }
 
 /*********************************************************************
@@ -1284,6 +1287,8 @@ static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* st
     return -1;
   }
 
+  *stream_flags |= MSVCRT__commode;
+
   while (*mode && *mode!=',')
     switch (*mode++)
     {
@@ -1300,6 +1305,12 @@ static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* st
       break;
     case 'T':
       *open_flags |= MSVCRT__O_SHORT_LIVED;
+      break;
+    case 'c':
+      *stream_flags |= MSVCRT__IOCOMMIT;
+      break;
+    case 'n':
+      *stream_flags &= ~MSVCRT__IOCOMMIT;
       break;
     case '+':
     case ' ':

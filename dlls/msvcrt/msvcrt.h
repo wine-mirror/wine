@@ -238,6 +238,8 @@ extern MSVCRT_wchar_t ** msvcrt_SnapshotOfEnvironmentW(MSVCRT_wchar_t **) DECLSP
 
 MSVCRT_wchar_t *msvcrt_wstrdupa(const char *) DECLSPEC_HIDDEN;
 
+extern unsigned int MSVCRT__commode;
+
 /* FIXME: This should be declared in new.h but it's not an extern "C" so
  * it would not be much use anyway. Even for Winelib applications.
  */
@@ -713,6 +715,7 @@ struct MSVCRT__stat64 {
 #define MSVCRT__IOERR    0x0020
 #define MSVCRT__IOSTRG   0x0040
 #define MSVCRT__IORW     0x0080
+#define MSVCRT__IOCOMMIT 0x4000
 
 #define MSVCRT__S_IEXEC  0x0040
 #define MSVCRT__S_IWRITE 0x0080
