@@ -178,17 +178,32 @@ static HRESULT WINAPI ID3DXFileDataImpl_GetId(ID3DXFileData *iface, GUID *guid)
 
 static HRESULT WINAPI ID3DXFileDataImpl_Lock(ID3DXFileData *iface, SIZE_T *size, const void **data)
 {
-    FIXME("(%p)->(%p, %p): stub\n", iface, size, data);
+    ID3DXFileDataImpl *This = impl_from_ID3DXFileData(iface);
+    DWORD dxfile_size;
+    HRESULT ret;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %p)\n", iface, size, data);
+
+    if (!size || !data)
+        return E_POINTER;
+
+    ret = IDirectXFileData_GetData(This->dxfile_data, NULL, &dxfile_size, (void**)data);
+    if (ret != DXFILE_OK)
+        return error_dxfile_to_d3dxfile(ret);
+
+    *size = dxfile_size;
+
+    return S_OK;
 }
 
 
 static HRESULT WINAPI ID3DXFileDataImpl_Unlock(ID3DXFileData *iface)
 {
-    FIXME("(%p)->(): stub\n", iface);
+    TRACE("(%p)->()\n", iface);
 
-    return E_NOTIMPL;
+    /* Nothing to do */
+
+    return S_OK;
 }
 
 
