@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-03-02 15:58+0300\n"
+"PO-Revision-Date: 2013-01-18 00:48+0400\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: none\n"
 "Language: Russian\n"
@@ -2178,7 +2178,7 @@ msgid ""
 "To continue, click Next."
 msgstr ""
 "Этот мастер поможет вам импортировать сертификаты, списки отзыва "
-"сертификатов исписки доверенных сертификатов из файла в хранилище "
+"сертификатов и списки доверенных сертификатов из файла в хранилище "
 "сертификатов.\n"
 "\n"
 "Сертификаты позволяют идентифицировать вас или компьютер, с которым "
@@ -2316,7 +2316,7 @@ msgid ""
 "To continue, click Next."
 msgstr ""
 "Этот мастер поможет вам экспортировать сертификаты, списки отзыва "
-"сертификатов исписки доверенных сертификатов из хранилища сертификатов в "
+"сертификатов и списки доверенных сертификатов из хранилища сертификатов в "
 "файл.\n"
 "\n"
 "Сертификаты позволяют идентифицировать вас или компьютер, с которым "
@@ -2918,7 +2918,7 @@ msgstr "Пароли не совпадают."
 
 #: cryptui.rc:172
 msgid "Note: The private key for this certificate could not be opened."
-msgstr "Примечание: Открыть закрытый ключ этого сертификата нельзя."
+msgstr "Примечание: открыть закрытый ключ этого сертификата нельзя."
 
 #: cryptui.rc:173
 msgid "Note: The private key for this certificate is not exportable."
@@ -3547,15 +3547,15 @@ msgstr "Незавершённая строковая константа"
 
 #: jscript.rc:39
 msgid "'return' statement outside of function"
-msgstr ""
+msgstr "Оператор 'return' вне функции"
 
 #: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
-msgstr "Выражение 'break' не может находится вне цикла"
+msgstr "Оператор 'break' не может находиться вне цикла"
 
 #: jscript.rc:41
 msgid "Can't have 'continue' outside of loop"
-msgstr "Выражение 'continue' не может находится вне цикла"
+msgstr "Оператор 'continue' не может находиться вне цикла"
 
 #: jscript.rc:42
 msgid "Label redefined"
@@ -8267,44 +8267,36 @@ msgid "Security Warning"
 msgstr "Предупреждение о безопасности"
 
 #: urlmon.rc:32
-#, fuzzy
-#| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
-msgstr "Все равно хотите продолжить?"
+msgstr "Хотите установить этот компонент?"
 
 #: urlmon.rc:34 explorer.rc:29
 msgid "Location:"
 msgstr "Путь:"
 
 #: urlmon.rc:36
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Don't install"
-msgstr "Установка/Удаление"
+msgstr "Не устанавливать"
 
 #: urlmon.rc:40
 msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
+"Установленный компонент ActiveX имеет полный доступ к вашему компьютеру. "
+"Если вы не уверены в его безопасности, не устанавливайте его."
 
 #: urlmon.rc:48
-#, fuzzy
-#| msgid "Installation transform failed to apply.\n"
 msgid "Installation of component failed: %08x"
-msgstr "Не удалось применить преобразование установки.\n"
+msgstr "Ошибка при установке компонента: %08x"
 
 #: urlmon.rc:49
-#, fuzzy
-#| msgid "&Install"
 msgid "Install (%d)"
-msgstr "&Установить"
+msgstr "Установить (%d)"
 
 #: urlmon.rc:50
-#, fuzzy
-#| msgid "&Install"
 msgid "Install"
-msgstr "&Установить"
+msgstr "Установить"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
@@ -9278,7 +9270,7 @@ msgstr ""
 
 #: attrib.rc:28 cmd.rc:328
 msgid "%1: File Not Found\n"
-msgstr "%1: Файл не найден\n"
+msgstr "%1: файл не найден\n"
 
 #: attrib.rc:47
 msgid ""
@@ -9722,6 +9714,31 @@ msgid ""
 "/ProgIDOpen  Open a document using the specified progID.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
+"Запускает программу или открывает документ в программе обычно используемой "
+"для файлов с таким расширением.\n"
+"Использование:\n"
+"start [параметры] program_filename [...]\n"
+"start [параметры] document_filename\n"
+"\n"
+"Параметры:\n"
+"\"title\"    Заголовок дочерних окон.\n"
+"/d directory Запускает программу в указанной директории.\n"
+"/b           Не создавать новую консоль для программы.\n"
+"/i           Запустить программу с исходными переменными окружения.\n"
+"/min         Запустить программу свернутой.\n"
+"/max         Запустить программу открытой на весь экран.\n"
+"/low         Запустить программу с низким приоритетом.\n"
+"/normal      Запустить программу с нормальным приоритетом.\n"
+"/high        Запустить программу с высоким приоритетом.\n"
+"/realtime    Запустить программу с максимальным приоритетом.\n"
+"/abovenormal Запустить программу с приоритетом выше нормального.\n"
+"/belownormal Запустить программу с приоритетом ниже нормального.\n"
+"/node n      Запустить программу на указанном узле NUMA.\n"
+"/affinity mask Запустить программу с указанной маской.\n"
+"/wait        Подождать завершения программы и вернуть её код возврата.\n"
+"/unix        Использовать Unix-имя файла и запустить как Windows Explorer.\n"
+"/ProgIDOpen  Открывает документ с помощью указанного progID.\n"
+"/?           Показать эту справку и выйти.\n"
 
 #: cmd.rc:211
 msgid "TIME sets or shows the current system time.\n"
@@ -10079,10 +10096,8 @@ msgid "Wine Command Prompt"
 msgstr "Приглашение командной строки Wine"
 
 #: cmd.rc:349
-#, fuzzy
-#| msgid "CMD Version %1!S!\n"
 msgid "Wine CMD Version %1!S!\n"
-msgstr "Версия CMD %1!S!\n"
+msgstr "Версия Wine CMD %1!S!\n"
 
 #: cmd.rc:350
 msgid "More? "
@@ -10112,30 +10127,31 @@ msgstr " (Y - да|N - нет|A - все)"
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
+"'%1' не является ни внутренней или внешней командой, ни batch-скриптом.\n"
 
 #: cmd.rc:357
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "Ошибка деления на ноль.\n"
 
 #: cmd.rc:358
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "Ожидается операнд.\n"
 
 #: cmd.rc:359
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Expected an operator.\n"
-msgstr "Неожиданная сетевая ошибка.\n"
+msgstr "Ожидается оператор.\n"
 
 #: cmd.rc:360
 msgid "Mismatch in parentheses.\n"
-msgstr ""
+msgstr "Несоответствие скобок.\n"
 
 #: cmd.rc:361
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
+"Неверный формат числа - должен быть десятичный (12),\n"
+" шестнадцатиричный (0x34) или восьмиричный (056) формат.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10169,7 +10185,7 @@ msgstr "Использование: ipconfig [ /? | /all ]\n"
 
 #: ipconfig.rc:28
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr "Ошибка: Указаны неизвестные или неверные параметры командной строки\n"
+msgstr "Ошибка: указаны неизвестные или неверные параметры командной строки\n"
 
 #: ipconfig.rc:29
 msgid "%1 adapter %2\n"
@@ -10184,10 +10200,8 @@ msgid "Connection-specific DNS suffix"
 msgstr "DNS-суффикс данного подключения"
 
 #: ipconfig.rc:33
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv4 address"
-msgstr "IP-адрес"
+msgstr "IPv4-адрес"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -10230,10 +10244,8 @@ msgid "Default gateway"
 msgstr "Шлюз по умолчанию"
 
 #: ipconfig.rc:47
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv6 address"
-msgstr "IP-адрес"
+msgstr "IPv6-адрес"
 
 #: net.rc:27
 msgid ""
@@ -10366,78 +10378,60 @@ msgid "The following services are running:\n"
 msgstr "Запущены следующие службы:\n"
 
 #: netstat.rc:27
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Connections"
-msgstr "Сетевое подключение"
+msgstr "Активные подключения"
 
 #: netstat.rc:28
 msgid "Proto"
-msgstr ""
+msgstr "Имя"
 
 #: netstat.rc:29
-#, fuzzy
-#| msgid "Email Address"
 msgid "Local Address"
-msgstr "Электронный адрес"
+msgstr "Локальный адрес"
 
 #: netstat.rc:30
-#, fuzzy
-#| msgid "Street Address"
 msgid "Foreign Address"
-msgstr "Улица"
+msgstr "Внешний адрес"
 
 #: netstat.rc:31
-#, fuzzy
-#| msgid "Status"
 msgid "State"
 msgstr "Состояние"
 
 #: netstat.rc:32
-#, fuzzy
-#| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "Интерфейсы"
+msgstr "Статистика интерфейса"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "Отправлено"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "Получено"
 
 #: netstat.rc:35
-#, fuzzy
-#| msgid "bytes"
 msgid "Bytes"
-msgstr "байт"
+msgstr "Байт"
 
 #: netstat.rc:36
 msgid "Unicast packets"
-msgstr ""
+msgstr "Одноадресные пакеты"
 
 #: netstat.rc:37
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "Многоадресные пакеты"
 
 #: netstat.rc:38
-#, fuzzy
-#| msgid "Disclaimer"
 msgid "Discards"
-msgstr "Уведомление"
+msgstr "Отброшено"
 
 #: netstat.rc:39
-#, fuzzy
-#| msgid "Error"
 msgid "Errors"
-msgstr "Ошибка"
+msgstr "Ошибки"
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "Unknown port.\n"
 msgid "Unknown protocols"
-msgstr "Неизвестный порт.\n"
+msgstr "Неизвестные протоколы"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -11646,23 +11640,23 @@ msgstr ""
 
 #: taskkill.rc:28
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr "Ошибка: Неправильный или неизвестный параметр командной строки.\n"
+msgstr "Ошибка: неправильный или неизвестный параметр командной строки.\n"
 
 #: taskkill.rc:29
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "Ошибка: Неправильный параметр командной строки.\n"
+msgstr "Ошибка: неправильный параметр командной строки.\n"
 
 #: taskkill.rc:30
 msgid "Error: One of options /im or /pid must be specified.\n"
-msgstr "Ошибка: Требуется параметр /im или /pid.\n"
+msgstr "Ошибка: требуется параметр /im или /pid.\n"
 
 #: taskkill.rc:31
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "Ошибка: Для параметра %1 требуется аргумент.\n"
+msgstr "Ошибка: для параметра %1 требуется аргумент.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr "Ошибка: Параметры /im и /pid - взаимоисключающие.\n"
+msgstr "Ошибка: параметры /im и /pid - взаимоисключающие.\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
@@ -11684,19 +11678,19 @@ msgstr "Процесс \"%1\" с PID %2!u! завершён принудител
 
 #: taskkill.rc:37
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "Ошибка: Процесс \"%1\" найти не удалось.\n"
+msgstr "Ошибка: не удалось найти Процесс \"%1\".\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr "Ошибка: Получить список процессов не удалось.\n"
+msgstr "Ошибка: получить список процессов не удалось.\n"
 
 #: taskkill.rc:39
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "Ошибка: Завершить процесс \"%1\" не удалось.\n"
+msgstr "Ошибка: завершить процесс \"%1\" не удалось.\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr "Ошибка: Самозавершение процесса не разрешено.\n"
+msgstr "Ошибка: самозавершение процесса запрещено.\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -12458,7 +12452,7 @@ msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
 msgstr ""
-"ВНИМАНИЕ! Отладка этого процесса может привести к потере данных.\n"
+"Внимание! Отладка этого процесса может привести к потере данных.\n"
 "Вы действительно хотите использовать отладчик?"
 
 #: taskmgr.rc:314
@@ -12495,7 +12489,7 @@ msgstr "Задача"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
-msgstr "Удаление приложений WINE"
+msgstr "Удаление приложений Wine"
 
 #: uninstaller.rc:27
 msgid ""
@@ -13271,15 +13265,15 @@ msgstr "Это тест"
 
 #: wineconsole.rc:41
 msgid "wineconsole: Couldn't parse event id\n"
-msgstr "wineconsole: Неверно указан код события\n"
+msgstr "wineconsole: неверно указан код события\n"
 
 #: wineconsole.rc:42
 msgid "wineconsole: Invalid backend\n"
-msgstr "wineconsole: Неизвестный backend\n"
+msgstr "wineconsole: неизвестный backend\n"
 
 #: wineconsole.rc:43
 msgid "wineconsole: Unrecognized command line option\n"
-msgstr "wineconsole: Неверный параметр командной строки\n"
+msgstr "wineconsole: неверный параметр командной строки\n"
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
@@ -13290,7 +13284,7 @@ msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
 msgstr ""
-"wineconsole: Не удался запуск программы '%s'.\n"
+"wineconsole: не удалось запустить программу '%s'.\n"
 "Неверно указана команда.\n"
 
 #: wineconsole.rc:47
