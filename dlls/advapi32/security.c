@@ -401,6 +401,28 @@ static inline BOOL set_ntstatus( NTSTATUS status )
     return !status;
 }
 
+/* helper function for SE_FILE_OBJECT objects in [Get|Set]NamedSecurityInfo */
+static inline DWORD get_security_file( LPWSTR full_file_name, DWORD access, HANDLE *file )
+{
+    UNICODE_STRING file_nameW;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    if (!RtlDosPathNameToNtPathName_U( full_file_name, &file_nameW, NULL, NULL ))
+        return ERROR_PATH_NOT_FOUND;
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &file_nameW;
+    attr.SecurityDescriptor = NULL;
+    status = NtCreateFile( file, access, &attr, &io, NULL, FILE_FLAG_BACKUP_SEMANTICS,
+                           FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, FILE_OPEN,
+                           FILE_OPEN_FOR_BACKUP_INTENT, NULL, 0 );
+    RtlFreeUnicodeString( &file_nameW );
+    return RtlNtStatusToDosError( status );
+}
+
 #define	WINE_SIZE_OF_WORLD_ACCESS_ACL	(sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) + sizeof(sidWorld) - sizeof(DWORD))
 
 static void GetWorldAccessACL(PACL pACL)
@@ -3964,12 +3986,9 @@ DWORD WINAPI SetNamedSecurityInfoW(LPWSTR pObjectName,
         SE_OBJECT_TYPE ObjectType, SECURITY_INFORMATION SecurityInfo,
         PSID psidOwner, PSID psidGroup, PACL pDacl, PACL pSacl)
 {
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    IO_STATUS_BLOCK io;
     DWORD access = 0;
-    HANDLE hFile;
-    DWORD status;
+    HANDLE handle;
+    DWORD err;
 
     TRACE( "%s %d %d %p %p %p %p\n", debugstr_w(pObjectName), ObjectType,
            SecurityInfo, psidOwner, psidGroup, pDacl, pSacl);
@@ -3980,8 +3999,6 @@ DWORD WINAPI SetNamedSecurityInfoW(LPWSTR pObjectName,
     }
 
     if (!pObjectName) return ERROR_INVALID_PARAMETER;
-    if (!RtlDosPathNameToNtPathName_U( pObjectName, &nameW, NULL, NULL ))
-        return ERROR_PATH_NOT_FOUND;
 
     if (SecurityInfo & (OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION))
         access |= WRITE_OWNER;
@@ -3989,21 +4006,13 @@ DWORD WINAPI SetNamedSecurityInfoW(LPWSTR pObjectName,
         access |= WRITE_DAC;
     if (SecurityInfo & SACL_SECURITY_INFORMATION)
         access |= ACCESS_SYSTEM_SECURITY;
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &nameW;
-    attr.SecurityDescriptor = NULL;
 
-    status = NtCreateFile( &hFile, access, &attr, &io, NULL, FILE_FLAG_BACKUP_SEMANTICS,
-                           FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, FILE_OPEN,
-                           FILE_OPEN_FOR_BACKUP_INTENT, NULL, 0 );
-    RtlFreeUnicodeString( &nameW );
-    if (status != STATUS_SUCCESS)
-        return RtlNtStatusToDosError( status );
-    status = SetSecurityInfo( hFile, ObjectType, SecurityInfo, psidOwner, psidGroup, pDacl, pSacl );
-    CloseHandle( hFile );
-    return status;
+    err = get_security_file( pObjectName, access, &handle );
+    if (err != ERROR_SUCCESS)
+        return err;
+    err = SetSecurityInfo( handle, ObjectType, SecurityInfo, psidOwner, psidGroup, pDacl, pSacl );
+    CloseHandle( handle );
+    return err;
 }
 
 /******************************************************************************
@@ -5520,12 +5529,9 @@ DWORD WINAPI GetNamedSecurityInfoW( LPWSTR name, SE_OBJECT_TYPE type,
     SECURITY_INFORMATION info, PSID* owner, PSID* group, PACL* dacl,
     PACL* sacl, PSECURITY_DESCRIPTOR* descriptor )
 {
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    IO_STATUS_BLOCK io;
     DWORD access = 0;
-    HANDLE hFile;
-    DWORD status;
+    HANDLE handle;
+    DWORD err;
 
     TRACE( "%s %d %d %p %p %p %p %p\n", debugstr_w(name), type, info, owner,
            group, dacl, sacl, descriptor );
@@ -5550,28 +5556,18 @@ DWORD WINAPI GetNamedSecurityInfoW( LPWSTR name, SE_OBJECT_TYPE type,
     ||  ((info & DACL_SECURITY_INFORMATION)  && !dacl)
     ||  ((info & SACL_SECURITY_INFORMATION)  && !sacl)  ))
         return ERROR_INVALID_PARAMETER;
-    if (!RtlDosPathNameToNtPathName_U( name, &nameW, NULL, NULL ))
-        return ERROR_PATH_NOT_FOUND;
 
     if (info & (OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION))
         access |= READ_CONTROL;
     if (info & SACL_SECURITY_INFORMATION)
         access |= ACCESS_SYSTEM_SECURITY;
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &nameW;
-    attr.SecurityDescriptor = NULL;
 
-    status = NtCreateFile( &hFile, access, &attr, &io, NULL, FILE_FLAG_BACKUP_SEMANTICS,
-                           FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, FILE_OPEN,
-                           FILE_OPEN_FOR_BACKUP_INTENT, NULL, 0 );
-    RtlFreeUnicodeString( &nameW );
-    if (status != STATUS_SUCCESS)
-        return RtlNtStatusToDosError( status );
-    status = GetSecurityInfo( hFile, type, info, owner, group, dacl, sacl, descriptor );
-    CloseHandle( hFile );
-    return status;
+    err = get_security_file( name, access, &handle);
+    if (err != ERROR_SUCCESS)
+        return err;
+    err = GetSecurityInfo( handle, type, info, owner, group, dacl, sacl, descriptor );
+    CloseHandle( handle );
+    return err;
 }
 
 /******************************************************************************
