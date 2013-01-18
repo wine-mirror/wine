@@ -846,72 +846,64 @@ static HRESULT WINAPI HTMLElement_get_lang(IHTMLElement *iface, BSTR *p)
 static HRESULT WINAPI HTMLElement_get_offsetLeft(IHTMLElement *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    PRInt32 off_left = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetOffsetLeft(This->nselem, &off_left);
+    nsres = nsIDOMHTMLElement_GetOffsetLeft(This->nselem, p);
     if(NS_FAILED(nsres)) {
         ERR("GetOffsetLeft failed: %08x\n", nsres);
         return E_FAIL;
     }
 
-    *p = off_left;
     return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_get_offsetTop(IHTMLElement *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    PRInt32 top = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetOffsetTop(This->nselem, &top);
+    nsres = nsIDOMHTMLElement_GetOffsetTop(This->nselem, p);
     if(NS_FAILED(nsres)) {
         ERR("GetOffsetTop failed: %08x\n", nsres);
         return E_FAIL;
     }
 
-    *p = top;
     return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_get_offsetWidth(IHTMLElement *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    PRInt32 offset = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetOffsetWidth(This->nselem, &offset);
+    nsres = nsIDOMHTMLElement_GetOffsetWidth(This->nselem, p);
     if(NS_FAILED(nsres)) {
         ERR("GetOffsetWidth failed: %08x\n", nsres);
         return E_FAIL;
     }
 
-    *p = offset;
     return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_get_offsetHeight(IHTMLElement *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    PRInt32 offset = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetOffsetHeight(This->nselem, &offset);
+    nsres = nsIDOMHTMLElement_GetOffsetHeight(This->nselem, p);
     if(NS_FAILED(nsres)) {
         ERR("GetOffsetHeight failed: %08x\n", nsres);
         return E_FAIL;
     }
 
-    *p = offset;
     return S_OK;
 }
 

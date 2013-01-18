@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 #include <math.h>
 
 #define COBJMACROS
@@ -674,7 +675,7 @@ static HRESULT WINAPI HTMLElement2_put_tabIndex(IHTMLElement2 *iface, short v)
 static HRESULT WINAPI HTMLElement2_get_tabIndex(IHTMLElement2 *iface, short *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    PRInt32 index = 0;
+    LONG index;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -807,42 +808,37 @@ static HRESULT WINAPI HTMLElement2_removeFilter(IHTMLElement2 *iface, IUnknown *
 static HRESULT WINAPI HTMLElement2_get_clientHeight(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    PRInt32 height=0;
+    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsIDOMHTMLElement_GetClientHeight(This->nselem, &height);
-
-    *p = height;
+    nsres = nsIDOMHTMLElement_GetClientHeight(This->nselem, p);
+    assert(nsres == NS_OK);
     return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_get_clientWidth(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    PRInt32 width=0;
+    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsIDOMHTMLElement_GetClientWidth(This->nselem, &width);
-
-    *p = width;
+    nsres = nsIDOMHTMLElement_GetClientWidth(This->nselem, p);
+    assert(nsres == NS_OK);
     return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_get_clientTop(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    PRInt32 client_top = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetClientTop(This->nselem, &client_top);
-    if(NS_FAILED(nsres))
-        ERR("GetScrollHeight failed: %08x\n", nsres);
+    nsres = nsIDOMHTMLElement_GetClientTop(This->nselem, p);
+    assert(nsres == NS_OK);
 
-    *p = client_top;
     TRACE("*p = %d\n", *p);
     return S_OK;
 }
@@ -850,16 +846,13 @@ static HRESULT WINAPI HTMLElement2_get_clientTop(IHTMLElement2 *iface, LONG *p)
 static HRESULT WINAPI HTMLElement2_get_clientLeft(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    PRInt32 client_left = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetClientLeft(This->nselem, &client_left);
-    if(NS_FAILED(nsres))
-        ERR("GetScrollHeight failed: %08x\n", nsres);
+    nsres = nsIDOMHTMLElement_GetClientLeft(This->nselem, p);
+    assert(nsres == NS_OK);
 
-    *p = client_left;
     TRACE("*p = %d\n", *p);
     return S_OK;
 }
@@ -1003,16 +996,13 @@ static HRESULT WINAPI HTMLElement2_createControlRange(IHTMLElement2 *iface, IDis
 static HRESULT WINAPI HTMLElement2_get_scrollHeight(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    PRInt32 height = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetScrollHeight(This->nselem, &height);
-    if(NS_FAILED(nsres))
-        ERR("GetScrollHeight failed: %08x\n", nsres);
+    nsres = nsIDOMHTMLElement_GetScrollHeight(This->nselem, p);
+    assert(nsres == NS_OK);
 
-    *p = height;
     TRACE("*p = %d\n", *p);
     return S_OK;
 }
@@ -1020,16 +1010,13 @@ static HRESULT WINAPI HTMLElement2_get_scrollHeight(IHTMLElement2 *iface, LONG *
 static HRESULT WINAPI HTMLElement2_get_scrollWidth(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    PRInt32 width = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetScrollWidth(This->nselem, &width);
-    if(NS_FAILED(nsres))
-        ERR("GetScrollWidth failed: %08x\n", nsres);
+    nsres = nsIDOMHTMLElement_GetScrollWidth(This->nselem, p);
+    assert(nsres == NS_OK);
 
-    *p = width;
     TRACE("*p = %d\n", *p);
     return S_OK;
 }
@@ -1052,16 +1039,13 @@ static HRESULT WINAPI HTMLElement2_put_scrollTop(IHTMLElement2 *iface, LONG v)
 static HRESULT WINAPI HTMLElement2_get_scrollTop(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    PRInt32 top = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetScrollTop(This->nselem, &top);
-    if(NS_FAILED(nsres))
-        ERR("GetScrollTop failed: %08x\n", nsres);
+    nsres = nsIDOMHTMLElement_GetScrollTop(This->nselem, p);
+    assert(nsres == NS_OK);
 
-    *p = top;
     TRACE("*p = %d\n", *p);
     return S_OK;
 }
@@ -1084,7 +1068,7 @@ static HRESULT WINAPI HTMLElement2_put_scrollLeft(IHTMLElement2 *iface, LONG v)
 static HRESULT WINAPI HTMLElement2_get_scrollLeft(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    PRInt32 left = 0;
+    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -1097,9 +1081,9 @@ static HRESULT WINAPI HTMLElement2_get_scrollLeft(IHTMLElement2 *iface, LONG *p)
         return E_NOTIMPL;
     }
 
-    nsIDOMHTMLElement_GetScrollLeft(This->nselem, &left);
+    nsres = nsIDOMHTMLElement_GetScrollLeft(This->nselem, p);
+    assert(nsres == NS_OK);
 
-    *p = left;
     TRACE("*p = %d\n", *p);
     return S_OK;
 }
