@@ -931,8 +931,8 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
  */
 static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-    int		len_add = 0;
-    LPBYTE	lpData, lpNewData = NULL;
+    int len_add = 0;
+    BYTE *lpData, *lpNewData = NULL;
     snd_seq_event_t event;
 
     TRACE("(%04X, %p, %08X);\n", wDevID, lpMidiHdr, dwSize);
@@ -941,7 +941,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
      * but it seems to be used only for midi input.
      * Taking a look at the WAVEHDR structure (which is quite similar) confirms this assumption.
      */
-    
+
     if (wDevID >= MODM_NumDevs) return MMSYSERR_BADDEVICEID;
     if (!MidiOutDev[wDevID].bEnabled) return MIDIERR_NODEVICE;
 
@@ -950,8 +950,8 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	return MIDIERR_NODEVICE;
     }
 
-    lpData = (LPBYTE) lpMidiHdr->lpData;
-    
+    lpData = (BYTE*)lpMidiHdr->lpData;
+
     if (lpData == NULL)
 	return MIDIERR_UNPREPARED;
     if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))
@@ -978,25 +978,25 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 
     switch (MidiOutDev[wDevID].caps.wTechnology) {
     case MOD_FMSYNTH:
-	/* FIXME: I don't think there is much to do here */
-	break;
+        /* FIXME: I don't think there is much to do here */
+        HeapFree(GetProcessHeap(), 0, lpNewData);
+        break;
     case MOD_MIDIPORT:
-	if (lpData[0] != 0xF0) {
-	    /* Send start of System Exclusive */
-	    len_add = 1;
-	    lpData[0] = 0xF0;
-	    memcpy(lpNewData, lpData, lpMidiHdr->dwBufferLength);
-	    WARN("Adding missing 0xF0 marker at the beginning of "
-		 "system exclusive byte stream\n");
-	}
-	if (lpData[lpMidiHdr->dwBufferLength-1] != 0xF7) {
-	    /* Send end of System Exclusive */
-	    memcpy(lpData + len_add, lpData, lpMidiHdr->dwBufferLength);
-            lpNewData[lpMidiHdr->dwBufferLength + len_add - 1] = 0xF0;
-	    len_add++;
-	    WARN("Adding missing 0xF7 marker at the end of "
-		 "system exclusive byte stream\n");
-	}
+        if (lpData[0] != 0xF0) {
+            /* Send start of System Exclusive */
+            len_add = 1;
+            lpNewData[0] = 0xF0;
+            memcpy(lpNewData + 1, lpData, lpMidiHdr->dwBufferLength);
+            WARN("Adding missing 0xF0 marker at the beginning of system exclusive byte stream\n");
+        }
+        if (lpData[lpMidiHdr->dwBufferLength-1] != 0xF7) {
+            /* Send end of System Exclusive */
+            if (!len_add)
+                memcpy(lpNewData, lpData, lpMidiHdr->dwBufferLength);
+            lpNewData[lpMidiHdr->dwBufferLength + len_add] = 0xF7;
+            len_add++;
+            WARN("Adding missing 0xF7 marker at the end of system exclusive byte stream\n");
+        }
 	snd_seq_ev_clear(&event);
 	snd_seq_ev_set_direct(&event);
 	snd_seq_ev_set_source(&event, port_out);
@@ -1004,9 +1004,8 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	TRACE("client = %d port = %d\n", MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
 	snd_seq_ev_set_sysex(&event, lpMidiHdr->dwBufferLength + len_add, lpNewData ? lpNewData : lpData);
 	snd_seq_event_output_direct(midiSeq, &event);
-	if (lpNewData)
-		HeapFree(GetProcessHeap(), 0, lpData);
-	break;
+        HeapFree(GetProcessHeap(), 0, lpNewData);
+        break;
     default:
 	WARN("Technology not supported (yet) %d !\n",
 	     MidiOutDev[wDevID].caps.wTechnology);
