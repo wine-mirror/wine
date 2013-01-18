@@ -45,7 +45,6 @@ typedef nsIIDRef nsCIDRef;
 typedef WCHAR PRUnichar;
 typedef ULONG PRUint32;
 typedef WORD PRUint16;
-typedef INT16 PRInt16;
 typedef BYTE PRUint8;
 typedef LONGLONG PRInt64;
 typedef ULONGLONG PRUint64;
@@ -55,7 +54,7 @@ typedef ULONGLONG PRUint64;
  * more similar to original declarations. Note that it's only a widl trick, we can't
  * use stdint.h types in C.
  */
-#define int16_t PRInt16
+#define int16_t short
 #define int32_t LONG
 #define int64_t PRInt64
 

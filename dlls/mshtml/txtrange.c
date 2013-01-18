@@ -1236,7 +1236,7 @@ static HRESULT WINAPI HTMLTxtRange_inRange(IHTMLTxtRange *iface, IHTMLTxtRange *
 {
     HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     HTMLTxtRange *src_range;
-    PRInt16 nsret = 0;
+    short nsret = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p %p)\n", This, Range, InRange);
@@ -1267,7 +1267,7 @@ static HRESULT WINAPI HTMLTxtRange_isEqual(IHTMLTxtRange *iface, IHTMLTxtRange *
 {
     HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     HTMLTxtRange *src_range;
-    PRInt16 nsret = 0;
+    short nsret = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p %p)\n", This, Range, IsEqual);
@@ -1599,7 +1599,7 @@ static HRESULT WINAPI HTMLTxtRange_compareEndPoints(IHTMLTxtRange *iface, BSTR h
 {
     HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     HTMLTxtRange *src_range;
-    PRInt16 nsret = 0;
+    short nsret = 0;
     int nscmpt;
     nsresult nsres;
 
