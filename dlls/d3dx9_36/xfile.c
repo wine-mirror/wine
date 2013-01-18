@@ -492,7 +492,7 @@ static HRESULT WINAPI ID3DXFileImpl_CreateEnumObject(ID3DXFile *iface, const voi
         return E_NOTIMPL;
     }
 
-    object = HeapAlloc(GetProcessHeap(), 0, sizeof(*object));
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
