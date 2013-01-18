@@ -76,8 +76,6 @@ typedef struct {
 } CMAP_SegmentedCoverage;
 
 /* These are all structures needed for the GDEF table */
-#define GDEF_TAG MS_MAKE_TAG('G', 'D', 'E', 'F')
-
 enum {BaseGlyph=1, LigatureGlyph, MarkGlyph, ComponentGlyph};
 
 typedef struct {
@@ -609,26 +607,10 @@ static WORD OT_get_glyph_class(const void *table, WORD glyph)
     return class;
 }
 
-static VOID *load_gdef_table(HDC hdc)
-{
-    VOID* GDEF_Table = NULL;
-    int length = GetFontData(hdc, GDEF_TAG , 0, NULL, 0);
-    if (length != GDI_ERROR)
-    {
-        GDEF_Table = HeapAlloc(GetProcessHeap(),0,length);
-        GetFontData(hdc, GDEF_TAG , 0, GDEF_Table, length);
-        TRACE("Loaded GDEF table of %i bytes\n",length);
-    }
-    return GDEF_Table;
-}
-
-void OpenType_GDEF_UpdateGlyphProps(HDC hdc, ScriptCache *psc, const WORD *pwGlyphs, const WORD cGlyphs, WORD* pwLogClust, const WORD cChars, SCRIPT_GLYPHPROP *pGlyphProp)
+void OpenType_GDEF_UpdateGlyphProps(ScriptCache *psc, const WORD *pwGlyphs, const WORD cGlyphs, WORD* pwLogClust, const WORD cChars, SCRIPT_GLYPHPROP *pGlyphProp)
 {
     int i;
     void *glyph_class_table = NULL;
-
-    if (!psc->GDEF_Table)
-        psc->GDEF_Table = load_gdef_table(hdc);
 
     if (psc->GDEF_Table)
     {
