@@ -51,7 +51,8 @@ typedef enum
     XmlReadInState_Misc_DTD,
     XmlReadInState_DTD,
     XmlReadInState_DTD_Misc,
-    XmlReadInState_Element
+    XmlReadInState_Element,
+    XmlReadInState_Content
 } XmlReaderInternalState;
 
 typedef enum
@@ -448,11 +449,28 @@ static void readerinput_grow(xmlreaderinput *readerinput, int length)
     }
 }
 
+static inline int readerinput_is_utf8(xmlreaderinput *readerinput)
+{
+    static char startA[] = {'<','?'};
+    static char commentA[] = {'<','!'};
+    encoded_buffer *buffer = &readerinput->buffer->encoded;
+    unsigned char *ptr = (unsigned char*)buffer->data;
+
+    return !memcmp(buffer->data, startA, sizeof(startA)) ||
+           !memcmp(buffer->data, commentA, sizeof(commentA)) ||
+           /* test start byte */
+           (ptr[0] == '<' &&
+            (
+             (ptr[1] && (ptr[1] <= 0x7f)) ||
+             (buffer->data[1] >> 5) == 0x6  || /* 2 bytes */
+             (buffer->data[1] >> 4) == 0xe  || /* 3 bytes */
+             (buffer->data[1] >> 3) == 0x1e)   /* 4 bytes */
+           );
+}
+
 static HRESULT readerinput_detectencoding(xmlreaderinput *readerinput, xml_encoding *enc)
 {
     encoded_buffer *buffer = &readerinput->buffer->encoded;
-    static char startA[] = {'<','?'};
-    static char commentA[] = {'<','!'};
     static WCHAR startW[] = {'<','?'};
     static WCHAR commentW[] = {'<','!'};
     static char utf8bom[] = {0xef,0xbb,0xbf};
@@ -464,8 +482,7 @@ static HRESULT readerinput_detectencoding(xmlreaderinput *readerinput, xml_encod
 
     /* try start symbols if we have enough data to do that, input buffer should contain
        first chunk already */
-    if (!memcmp(buffer->data, startA, sizeof(startA)) ||
-        !memcmp(buffer->data, commentA, sizeof(commentA)))
+    if (readerinput_is_utf8(readerinput))
         *enc = XmlEncoding_UTF8;
     else if (!memcmp(buffer->data, startW, sizeof(startW)) ||
              !memcmp(buffer->data, commentW, sizeof(commentW)))
@@ -987,9 +1004,10 @@ static inline int is_namestartchar(WCHAR ch)
            (ch >= 0xfdf0 && ch <= 0xfffd);
 }
 
-static inline int is_namechar(WCHAR ch)
+/* [4 NS] NCName ::= Name - (Char* ':' Char*) */
+static inline int is_ncnamechar(WCHAR ch)
 {
-    return (ch == ':') || (ch >= 'A' && ch <= 'Z') ||
+    return (ch >= 'A' && ch <= 'Z') ||
            (ch == '_') || (ch >= 'a' && ch <= 'z') ||
            (ch == '-') || (ch == '.') ||
            (ch >= '0'    && ch <= '9')    ||
@@ -1009,6 +1027,11 @@ static inline int is_namechar(WCHAR ch)
            (ch >= 0xdc00 && ch <= 0xdfff) || /* low surrogate */
            (ch >= 0xf900 && ch <= 0xfdcf) ||
            (ch >= 0xfdf0 && ch <= 0xfffd);
+}
+
+static inline int is_namechar(WCHAR ch)
+{
+    return (ch == ':') || is_ncnamechar(ch);
 }
 
 /* [4] NameStartChar ::= ":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] | [#x370-#x37D] |
@@ -1316,11 +1339,106 @@ static HRESULT reader_parse_dtd(xmlreader *reader)
     return S_OK;
 }
 
+/* [7 NS]  QName ::= PrefixedName | UnprefixedName
+   [8 NS]  PrefixedName ::= Prefix ':' LocalPart
+   [9 NS]  UnprefixedName ::= LocalPart
+   [10 NS] Prefix ::= NCName
+   [11 NS] LocalPart ::= NCName */
+static HRESULT reader_parse_qname(xmlreader *reader, strval *prefix, strval *local, strval *qname)
+{
+    WCHAR *ptr, *start = reader_get_cur(reader);
+
+    ptr = start;
+    if (!is_ncnamechar(*ptr)) return NC_E_QNAMECHARACTER;
+
+    while (is_ncnamechar(*ptr))
+    {
+        reader_skipn(reader, 1);
+        ptr = reader_get_cur(reader);
+    }
+
+    /* got a qualified name */
+    if (*ptr == ':')
+    {
+        prefix->str = start;
+        prefix->len = ptr-start;
+
+        reader_skipn(reader, 1);
+        start = ptr = reader_get_cur(reader);
+
+        while (is_ncnamechar(*ptr))
+        {
+            reader_skipn(reader, 1);
+            ptr = reader_get_cur(reader);
+        }
+    }
+    else
+    {
+        prefix->str = NULL;
+        prefix->len = 0;
+    }
+
+    local->str = start;
+    local->len = ptr-start;
+
+    if (prefix->len)
+        TRACE("qname %s:%s\n", debugstr_wn(prefix->str, prefix->len), debugstr_wn(local->str, local->len));
+    else
+        TRACE("ncname %s\n", debugstr_wn(local->str, local->len));
+
+    qname->str = prefix->str ? prefix->str : local->str;
+    /* count ':' too */
+    qname->len = (prefix->len ? prefix->len + 1 : 0) + local->len;
+
+    return S_OK;
+}
+
+/* [12 NS] STag ::= '<' QName (S Attribute)* S? '>'
+   [14 NS] EmptyElemTag ::= '<' QName (S Attribute)* S? '/>' */
+static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *local, strval *qname)
+{
+    static const WCHAR endW[] = {'/','>',0};
+    HRESULT hr;
+
+    /* skip '<' */
+    reader_skipn(reader, 1);
+
+    hr = reader_parse_qname(reader, prefix, local, qname);
+    if (FAILED(hr)) return hr;
+
+    reader_skipspaces(reader);
+
+    if (!reader_cmp(reader, endW)) return S_OK;
+
+    FIXME("only empty elements without attributes supported\n");
+    return E_NOTIMPL;
+}
+
 /* [39] element ::= EmptyElemTag | STag content ETag */
 static HRESULT reader_parse_element(xmlreader *reader)
 {
-    FIXME("element parsing not implemented\n");
-    return E_NOTIMPL;
+    static const WCHAR ltW[] = {'<',0};
+    strval qname, prefix, local;
+    HRESULT hr;
+
+    /* check if we are really on element */
+    if (reader_cmp(reader, ltW)) return S_FALSE;
+    reader_shrink(reader);
+
+    /* this handles empty elements too */
+    hr = reader_parse_stag(reader, &prefix, &local, &qname);
+    if (FAILED(hr)) return hr;
+
+    /* FIXME: need to check for defined namespace to reject invalid prefix,
+       currently reject all prefixes */
+    if (prefix.len) return NC_E_UNDECLAREDPREFIX;
+
+    reader->nodetype = XmlNodeType_Element;
+    reader_set_strvalue(reader, StringValue_LocalName, &local);
+    reader_set_strvalue(reader, StringValue_QualifiedName, &qname);
+
+    FIXME("element content parsing not implemented\n");
+    return hr;
 }
 
 static HRESULT reader_parse_nextnode(xmlreader *reader)
@@ -1389,7 +1507,9 @@ static HRESULT reader_parse_nextnode(xmlreader *reader)
         case XmlReadInState_Element:
             hr = reader_parse_element(reader);
             if (FAILED(hr)) return hr;
-            break;
+
+            reader->instate = XmlReadInState_Content;
+            return hr;
         default:
             FIXME("internal state %d not handled\n", reader->instate);
             return E_NOTIMPL;
