@@ -106,20 +106,18 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_AddFile(
     LPCWSTR LocalName)
 {
     BackgroundCopyJobImpl *This = impl_from_IBackgroundCopyJob2(iface);
-    IBackgroundCopyFile *pFile;
     BackgroundCopyFileImpl *file;
     HRESULT res;
 
     /* We should return E_INVALIDARG in these cases.  */
     FIXME("Check for valid filenames and supported protocols\n");
 
-    res = BackgroundCopyFileConstructor(This, RemoteUrl, LocalName, (LPVOID *) &pFile);
+    res = BackgroundCopyFileConstructor(This, RemoteUrl, LocalName, &file);
     if (res != S_OK)
         return res;
 
     /* Add a reference to the file to file list */
-    IBackgroundCopyFile_AddRef(pFile);
-    file = (BackgroundCopyFileImpl *) pFile;
+    IBackgroundCopyFile_AddRef(&file->IBackgroundCopyFile_iface);
     EnterCriticalSection(&This->cs);
     list_add_head(&This->files, &file->entryFromJob);
     This->jobProgress.BytesTotal = BG_SIZE_UNKNOWN;

@@ -49,7 +49,7 @@ typedef struct
 /* Background copy file vtbl and related data */
 typedef struct
 {
-    const IBackgroundCopyFileVtbl *lpVtbl;
+    IBackgroundCopyFile IBackgroundCopyFile_iface;
     LONG ref;
     BG_FILE_INFO info;
     BG_FILE_PROGRESS fileProgress;
@@ -84,7 +84,7 @@ HRESULT enum_copy_job_create(BackgroundCopyManagerImpl *qmgr,
         IEnumBackgroundCopyJobs **enumjob) DECLSPEC_HIDDEN;
 HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
                                       LPCWSTR remoteName, LPCWSTR localName,
-                                      LPVOID *ppObj) DECLSPEC_HIDDEN;
+                                      BackgroundCopyFileImpl **file) DECLSPEC_HIDDEN;
 HRESULT EnumBackgroundCopyFilesConstructor(BackgroundCopyJobImpl*, IEnumBackgroundCopyFiles**) DECLSPEC_HIDDEN;
 DWORD WINAPI fileTransfer(void *param) DECLSPEC_HIDDEN;
 void processJob(BackgroundCopyJobImpl *job) DECLSPEC_HIDDEN;

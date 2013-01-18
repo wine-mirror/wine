@@ -202,8 +202,8 @@ HRESULT EnumBackgroundCopyFilesConstructor(BackgroundCopyJobImpl *job, IEnumBack
     i = 0;
     LIST_FOR_EACH_ENTRY(file, &job->files, BackgroundCopyFileImpl, entryFromJob)
     {
-        file->lpVtbl->AddRef((IBackgroundCopyFile *) file);
-        This->files[i] = (IBackgroundCopyFile *) file;
+        IBackgroundCopyFile_AddRef(&file->IBackgroundCopyFile_iface);
+        This->files[i] = &file->IBackgroundCopyFile_iface;
         ++i;
     }
     LeaveCriticalSection(&job->cs);
