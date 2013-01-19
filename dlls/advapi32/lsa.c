@@ -311,39 +311,6 @@ static BOOL lookup_name( LSA_UNICODE_STRING *name, SID *sid, DWORD *sid_size, WC
     return ret;
 }
 
-static INT build_domain(PLSA_REFERENCED_DOMAIN_LIST currentList, PLSA_UNICODE_STRING domain)
-{
-    ULONG count;
-    ULONG sid_size = 0,domain_size = 0;
-    BOOL handled = FALSE;
-    SID_NAME_USE use;
-
-    for (count = 0; count < currentList->Entries; count ++)
-    {
-        if ((currentList->Domains[count].Name.Length == domain->Length) &&
-            (strncmpiW(currentList->Domains[count].Name.Buffer,domain->Buffer,(domain->Length / sizeof(WCHAR))) == 0))
-        {
-            HeapFree(GetProcessHeap(),0,domain->Buffer);
-            return count;
-        }
-    }
-
-    if (currentList->Entries > 0)
-        currentList->Domains = HeapReAlloc(GetProcessHeap(),0,currentList->Domains, (currentList->Entries + 1) * sizeof(LSA_TRUST_INFORMATION));
-    else
-        currentList->Domains = HeapAlloc(GetProcessHeap(),0,sizeof(LSA_TRUST_INFORMATION));
-
-    currentList->Domains[currentList->Entries].Name = *domain;
-
-    lookup_name( domain, NULL, &sid_size, NULL, &domain_size, &use, &handled );
-    domain_size = 0;
-    currentList->Domains[currentList->Entries].Sid = HeapAlloc(GetProcessHeap(),0,sid_size);
-    lookup_name( domain, currentList->Domains[currentList->Entries].Sid, &sid_size, NULL, &domain_size, &use, &handled );
-
-    currentList->Entries++;
-    return currentList->Entries-1;
-}
-
 /* Adds domain info to referenced domain list.
    Domain list is stored as plain buffer, layout is:
 
@@ -402,9 +369,10 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
                                  PLSA_UNICODE_STRING names, PLSA_REFERENCED_DOMAIN_LIST *domains,
                                  PLSA_TRANSLATED_SID2 *sids )
 {
-    ULONG i, sid_size_total = 0, domain_size_max = 0, size;
+    ULONG i, sid_size_total = 0, domain_size_max = 0, size, domainname_size_total = 0;
     ULONG sid_size, domain_size, mapped;
     BOOL handled = FALSE;
+    char *domain_data;
     SID_NAME_USE use;
     SID *sid;
 
@@ -419,6 +387,7 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
         if (handled)
         {
             sid_size_total += sid_size;
+            domainname_size_total += domain_size;
             if (domain_size)
             {
                 if (domain_size > domain_size_max)
@@ -430,17 +399,20 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
     TRACE("mapped %u out of %u\n", mapped, count);
 
     size = sizeof(LSA_TRANSLATED_SID2) * count + sid_size_total;
-    if (!(*sids = HeapAlloc( GetProcessHeap(), 0, size) )) return STATUS_NO_MEMORY;
+    if (!(*sids = heap_alloc(size))) return STATUS_NO_MEMORY;
 
     sid = (SID *)(*sids + count);
 
-    if (!(*domains = HeapAlloc( GetProcessHeap(), 0, sizeof(LSA_REFERENCED_DOMAIN_LIST) )))
+    /* use maximum domain count */
+    if (!(*domains = heap_alloc(sizeof(LSA_REFERENCED_DOMAIN_LIST) + sizeof(LSA_TRUST_INFORMATION)*count +
+                                sid_size_total + domainname_size_total)))
     {
-        HeapFree( GetProcessHeap(), 0, *sids );
+        heap_free(*sids);
         return STATUS_NO_MEMORY;
     }
     (*domains)->Entries = 0;
-    (*domains)->Domains = NULL;
+    (*domains)->Domains = (LSA_TRUST_INFORMATION*)((char*)*domains + sizeof(LSA_REFERENCED_DOMAIN_LIST));
+    domain_data = (char*)(*domains)->Domains + sizeof(LSA_TRUST_INFORMATION)*count;
 
     for (i = 0; i < count; i++)
     {
@@ -448,7 +420,7 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
 
         domain.Length = domain_size_max*sizeof(WCHAR);
         domain.MaximumLength = domain_size_max*sizeof(WCHAR);
-        domain.Buffer = HeapAlloc(GetProcessHeap(),0,domain.Length);
+        domain.Buffer = heap_alloc(domain.Length);
 
         (*sids)[i].Use = SidTypeUnknown;
         (*sids)[i].DomainIndex = -1;
@@ -468,13 +440,11 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
             if (domain_size)
             {
                 domain.Length = domain_size * sizeof(WCHAR);
-                (*sids)[i].DomainIndex = build_domain(*domains, &domain);
+                (*sids)[i].DomainIndex = lsa_reflist_add_domain(*domains, &domain, &domain_data);
             }
-            else
-                HeapFree(GetProcessHeap(),0,domain.Buffer);
         }
-        else
-            HeapFree(GetProcessHeap(),0,domain.Buffer);
+
+        heap_free(domain.Buffer);
     }
 
     if (mapped == count) return STATUS_SUCCESS;
