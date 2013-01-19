@@ -296,7 +296,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 	snd_seq_poll_descriptors(midiSeq, pfd, npfd, POLLIN);
 
 	/* Check if an event is present */
-	if (poll(pfd, npfd, 250) < 0) {
+	if (poll(pfd, npfd, 250) <= 0) {
 	    HeapFree(GetProcessHeap(), 0, pfd);
 	    continue;
 	}
