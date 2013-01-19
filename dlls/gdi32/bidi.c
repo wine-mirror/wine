@@ -358,7 +358,8 @@ BOOL BIDI_Reorder(
 {
     WORD *chartype;
     BYTE *levels;
-    unsigned i, done, glyph_i;
+    INT i, done;
+    unsigned glyph_i;
     BOOL is_complex;
 
     int maxItems;
@@ -501,7 +502,7 @@ BOOL BIDI_Reorder(
     glyph_i = 0;
     while (done < uCount)
     {
-        unsigned j;
+        INT j;
         classify(lpString + done, chartype, uCount - done);
         /* limit text to first block */
         i = resolveParagraphs(chartype, uCount - done);

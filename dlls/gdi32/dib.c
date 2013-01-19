@@ -305,7 +305,7 @@ static void *get_pixel_ptr( const BITMAPINFO *info, void *bits, int x, int y )
 
 static BOOL build_rle_bitmap( const BITMAPINFO *info, struct gdi_image_bits *bits, HRGN *clip )
 {
-    int i = 0;
+    DWORD i = 0;
     int left, right;
     int x, y, width = info->bmiHeader.biWidth, height = info->bmiHeader.biHeight;
     HRGN run = NULL;

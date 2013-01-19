@@ -1734,7 +1734,7 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT flags, UINT aa_flags,
 {
     static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
     UINT indices[3] = {0, 0, 0x20};
-    int i;
+    unsigned int i;
     DWORD ret, size;
     int stride;
 
@@ -1775,7 +1775,7 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT flags, UINT aa_flags,
 static RECT get_total_extents( HDC hdc, INT x, INT y, UINT flags, UINT aa_flags,
                                LPCWSTR str, UINT count, const INT *dx )
 {
-    int i;
+    UINT i;
     RECT rect, bounds;
 
     reset_bounds( &bounds );
@@ -1814,7 +1814,8 @@ static void draw_glyph( HDC hdc, INT origin_x, INT origin_y, const GLYPHMETRICS 
                         const struct gdi_image_bits *image, const RECT *clip )
 {
     static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
-    UINT x, y, i, count, max_count;
+    UINT i, count, max_count;
+    LONG x, y;
     BYTE *ptr = image->ptr;
     int stride = get_dib_stride( metrics->gmBlackBoxX, 1 );
     POINT *pts;

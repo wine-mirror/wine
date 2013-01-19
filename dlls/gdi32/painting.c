@@ -140,7 +140,8 @@ BOOL nulldrv_PolyBezierTo( PHYSDEV dev, const POINT *points, DWORD count )
 BOOL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types, DWORD count )
 {
     POINT *line_pts = NULL, *bzr_pts = NULL, bzr[4];
-    INT i, num_pts, num_bzr_pts, space, size;
+    DWORD i;
+    INT num_pts, num_bzr_pts, space, size;
 
     /* check for valid point types */
     for (i = 0; i < count; i++)

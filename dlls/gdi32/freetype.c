@@ -5316,7 +5316,7 @@ static BOOL enum_face_charsets(const Family *family, Face *face, struct enum_cha
     ENUMLOGFONTEXW elf;
     NEWTEXTMETRICEXW ntm;
     DWORD type = 0;
-    int i;
+    DWORD i;
 
     GetEnumStructs(face, face->family->FamilyName, &elf, &ntm, &type);
     for(i = 0; i < list->total; i++) {
