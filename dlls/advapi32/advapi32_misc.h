@@ -32,4 +32,22 @@ BOOL lookup_local_user_name(const LSA_UNICODE_STRING*, PSID, LPDWORD, LPWSTR, LP
 WCHAR *SERV_dup(const char *str) DECLSPEC_HIDDEN;
 NTSTATUS SERV_QueryServiceObjectSecurity(SC_HANDLE, SECURITY_INFORMATION, PSECURITY_DESCRIPTOR, DWORD, LPDWORD) DECLSPEC_HIDDEN;
 
+/* heap allocation helpers */
+static void *heap_alloc( size_t len ) __WINE_ALLOC_SIZE(1);
+static inline void *heap_alloc( size_t len )
+{
+    return HeapAlloc( GetProcessHeap(), 0, len );
+}
+
+static void *heap_realloc( void *mem, size_t len ) __WINE_ALLOC_SIZE(2);
+static inline void *heap_realloc( void *mem, size_t len )
+{
+    return HeapReAlloc( GetProcessHeap(), 0, mem, len );
+}
+
+static inline BOOL heap_free( void *mem )
+{
+    return HeapFree( GetProcessHeap(), 0, mem );
+}
+
 #endif /* __WINE_ADVAPI32MISC_H */
