@@ -118,9 +118,6 @@ static HANDLE hThread;
  *                  Low level MIDI implementation			*
  *======================================================================*/
 
-static int midiOpenSeq(int);
-static int midiCloseSeq(void);
-
 #if 0 /* Debug Purpose */
 static void error_handler(const char* file, int line, const char* function, int err, const char* fmt, ...)
 {
@@ -246,21 +243,21 @@ static int midiOpenSeq(int create_client)
             if (port_out < 0)
                TRACE("Unable to create output port\n");
             else
-	       TRACE("Outport port created successfully (%d)\n", port_out);
+	       TRACE("Outport port %d created successfully\n", port_out);
 #else
             port_out = snd_seq_create_simple_port(midiSeq, "WINE ALSA Output", SND_SEQ_PORT_CAP_READ,
 	                 	                                                 SND_SEQ_PORT_TYPE_APPLICATION);
 	    if (port_out < 0)
 		TRACE("Unable to create output port\n");
 	    else
-		TRACE("Outport port created successfully (%d)\n", port_out);
+		TRACE("Outport port %d created successfully\n", port_out);
 
 	    port_in = snd_seq_create_simple_port(midiSeq, "WINE ALSA Input", SND_SEQ_PORT_CAP_WRITE,
 	             	                                               SND_SEQ_PORT_TYPE_APPLICATION);
             if (port_in < 0)
                 TRACE("Unable to create input port\n");
             else
-	        TRACE("Input port created successfully (%d)\n", port_in);
+	        TRACE("Input port %d created successfully\n", port_in);
 #endif
        }
     }
@@ -413,7 +410,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 		    break;
 		}
 		if (toSend != 0) {
-                    TRACE("Sending event %08x (from %d %d)\n", toSend, ev->source.client, ev->source.port);
+		    TRACE("Received event %08x from %d:%d\n", toSend, ev->source.client, ev->source.port);
 		    MIDI_NotifyClient(wDevID, MIM_DATA, toSend, dwTime);
 		}
 	    }
@@ -485,7 +482,7 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     if (snd_seq_connect_from(midiSeq, port_in, MidiInDev[wDevID].addr.client, MidiInDev[wDevID].addr.port) < 0)
 	return MMSYSERR_NOTENABLED;
 
-    TRACE("input port connected %d %d %d\n",port_in,MidiInDev[wDevID].addr.client,MidiInDev[wDevID].addr.port);
+    TRACE("Input port :%d connected %d:%d\n",port_in,MidiInDev[wDevID].addr.client,MidiInDev[wDevID].addr.port);
 
     if (numStartedMidiIn++ == 0) {
 	end_thread = 0;
@@ -761,8 +758,9 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     if (snd_seq_connect_to(midiSeq, port_out, MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port) < 0)
 	return MMSYSERR_NOTENABLED;
     
+    TRACE("Output port :%d connected %d:%d\n",port_out,MidiOutDev[wDevID].addr.client,MidiOutDev[wDevID].addr.port);
+
     MIDI_NotifyClient(wDevID, MOM_OPEN, 0L, 0L);
-    TRACE("Successful !\n");
     return MMSYSERR_NOERROR;
 }
 
@@ -999,7 +997,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	snd_seq_ev_set_direct(&event);
 	snd_seq_ev_set_source(&event, port_out);
 	snd_seq_ev_set_dest(&event, MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
-	TRACE("client = %d port = %d\n", MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
+	TRACE("destination %d:%d\n", MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
 	snd_seq_ev_set_sysex(&event, lpMidiHdr->dwBufferLength + len_add, lpNewData ? lpNewData : lpData);
 	snd_seq_event_output_direct(midiSeq, &event);
         HeapFree(GetProcessHeap(), 0, lpNewData);
