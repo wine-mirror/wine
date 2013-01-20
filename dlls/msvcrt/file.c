@@ -2226,13 +2226,16 @@ static int read_utf8(int fd, MSVCRT_wchar_t *buf, unsigned int count)
             num_read = 0;
         }else if(GetLastError() == ERROR_BROKEN_PIPE) {
             fdinfo->wxflag |= WX_ATEOF;
+            if (readbuf != min_buf) MSVCRT_free(readbuf);
             return 0;
         }else {
             msvcrt_set_errno(GetLastError());
+            if (readbuf != min_buf) MSVCRT_free(readbuf);
             return -1;
         }
     }else if(!pos && !num_read) {
         fdinfo->wxflag |= WX_ATEOF;
+        if (readbuf != min_buf) MSVCRT_free(readbuf);
         return 0;
     }
 
@@ -2291,9 +2294,11 @@ static int read_utf8(int fd, MSVCRT_wchar_t *buf, unsigned int count)
 
     if(!(num_read = MultiByteToWideChar(CP_UTF8, 0, readbuf, pos, buf, count))) {
         msvcrt_set_errno(GetLastError());
+        if (readbuf != min_buf) MSVCRT_free(readbuf);
         return -1;
     }
 
+    if (readbuf != min_buf) MSVCRT_free(readbuf);
     return num_read*2;
 }
 
