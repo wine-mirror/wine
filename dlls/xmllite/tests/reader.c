@@ -687,10 +687,9 @@ static void test_read_xmldeclaration(void)
     ok(count == 3, "Expected 3, got %d\n", count);
 
     hr = IXmlReader_GetDepth(reader, &count);
-todo_wine {
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+todo_wine
     ok(count == 1, "Expected 1, got %d\n", count);
-}
 
     hr = IXmlReader_MoveToElement(reader);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -1039,7 +1038,11 @@ static struct test_entry element_tests[] = {
 static void test_read_element(void)
 {
     struct test_entry *test = element_tests;
+    static const char stag[] = "<a><b>";
     IXmlReader *reader;
+    XmlNodeType type;
+    IStream *stream;
+    UINT depth;
     HRESULT hr;
 
     hr = pCreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
@@ -1047,9 +1050,6 @@ static void test_read_element(void)
 
     while (test->xml)
     {
-        XmlNodeType type;
-        IStream *stream;
-
         stream = create_stream_on_data(test->xml, strlen(test->xml)+1);
         hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
         ok(hr == S_OK, "got %08x\n", hr);
@@ -1089,6 +1089,33 @@ static void test_read_element(void)
         IStream_Release(stream);
         test++;
     }
+
+    stream = create_stream_on_data(stag, strlen(stag)+1);
+    hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    depth = 1;
+    hr = IXmlReader_GetDepth(reader, &depth);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(depth == 0, "got %d\n", depth);
+
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    depth = 1;
+    hr = IXmlReader_GetDepth(reader, &depth);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(depth == 0, "got %d\n", depth);
+
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    depth = 0;
+    hr = IXmlReader_GetDepth(reader, &depth);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(depth == 1, "got %d\n", depth);
+
+    IStream_Release(stream);
 
     IXmlReader_Release(reader);
 }
