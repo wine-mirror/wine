@@ -124,6 +124,12 @@ struct attribute
     strval value;
 };
 
+struct element
+{
+    struct list entry;
+    strval qname;
+};
+
 typedef struct
 {
     IXmlReader IXmlReader_iface;
@@ -138,6 +144,7 @@ typedef struct
     struct list attrs; /* attributes list for current node */
     struct attribute *attr; /* current attribute */
     UINT attr_count;
+    struct list elements;
     strval strvalues[StringValue_Last];
 } xmlreader;
 
@@ -192,6 +199,21 @@ static inline void *reader_alloc(xmlreader *reader, size_t len)
 static inline void reader_free(xmlreader *reader, void *mem)
 {
     m_free(reader->imalloc, mem);
+}
+
+static HRESULT reader_strvaldup(xmlreader *reader, const strval *src, strval *dest)
+{
+    *dest = *src;
+
+    if (src->str != strval_empty.str)
+    {
+        dest->str = reader_alloc(reader, (dest->len+1)*sizeof(WCHAR));
+        if (!dest->str) return E_OUTOFMEMORY;
+        memcpy(dest->str, src->str, dest->len*sizeof(WCHAR));
+        dest->str[dest->len] = 0;
+    }
+
+    return S_OK;
 }
 
 /* reader input memory allocation functions */
@@ -253,10 +275,9 @@ static HRESULT reader_add_attr(xmlreader *reader, strval *localname, strval *val
     return S_OK;
 }
 
-static void reader_free_strvalue(xmlreader *reader, XmlReaderStringValue type)
+/* This one frees stored string value if needed */
+static void reader_free_strvalued(xmlreader *reader, strval *v)
 {
-    strval *v = &reader->strvalues[type];
-
     if (v->str != strval_empty.str)
     {
         reader_free(reader, v->str);
@@ -264,11 +285,42 @@ static void reader_free_strvalue(xmlreader *reader, XmlReaderStringValue type)
     }
 }
 
+static void reader_free_strvalue(xmlreader *reader, XmlReaderStringValue type)
+{
+    reader_free_strvalued(reader, &reader->strvalues[type]);
+}
+
 static void reader_free_strvalues(xmlreader *reader)
 {
     int type;
     for (type = 0; type < StringValue_Last; type++)
         reader_free_strvalue(reader, type);
+}
+
+static void reader_clear_elements(xmlreader *reader)
+{
+    struct element *elem, *elem2;
+    LIST_FOR_EACH_ENTRY_SAFE(elem, elem2, &reader->elements, struct element, entry)
+    {
+        reader_free_strvalued(reader, &elem->qname);
+        reader_free(reader, elem);
+    }
+    list_init(&reader->elements);
+}
+
+static HRESULT reader_push_element(xmlreader *reader, strval *qname)
+{
+    struct element *elem;
+    HRESULT hr;
+
+    elem = reader_alloc(reader, sizeof(*elem));
+    if (!elem) return E_OUTOFMEMORY;
+
+    hr = reader_strvaldup(reader, qname, &elem->qname);
+    if (FAILED(hr)) return hr;
+
+    list_add_head(&reader->elements, &elem->entry);
+    return hr;
 }
 
 /* always make a copy, cause strings are supposed to be null terminated */
@@ -1398,6 +1450,7 @@ static HRESULT reader_parse_qname(xmlreader *reader, strval *prefix, strval *loc
 static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *local, strval *qname)
 {
     static const WCHAR endW[] = {'/','>',0};
+    static const WCHAR gtW[] = {'>',0};
     HRESULT hr;
 
     /* skip '<' */
@@ -1410,7 +1463,11 @@ static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *loca
 
     if (!reader_cmp(reader, endW)) return S_OK;
 
-    FIXME("only empty elements without attributes supported\n");
+    /* got a start tag */
+    if (!reader_cmp(reader, gtW))
+        return reader_push_element(reader, qname);
+
+    FIXME("only empty elements/start tags without attribute list supported\n");
     return E_NOTIMPL;
 }
 
@@ -1561,6 +1618,7 @@ static ULONG WINAPI xmlreader_Release(IXmlReader *iface)
         IMalloc *imalloc = This->imalloc;
         if (This->input) IUnknown_Release(&This->input->IXmlReaderInput_iface);
         reader_clear_attrs(This);
+        reader_clear_elements(This);
         reader_free_strvalues(This);
         reader_free(This, This);
         if (imalloc) IMalloc_Release(imalloc);
@@ -1985,6 +2043,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
     list_init(&reader->attrs);
     reader->attr_count = 0;
     reader->attr = NULL;
+    list_init(&reader->elements);
 
     for (i = 0; i < StringValue_Last; i++)
         reader->strvalues[i] = strval_empty;

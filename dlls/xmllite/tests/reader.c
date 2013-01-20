@@ -888,6 +888,7 @@ static const char misc_test_xml[] =
     "<!-- comment3 -->"
     " \t \r \n"
     "<!-- comment4 -->"
+    "<a>"
 ;
 
 static struct nodes_test misc_test = {
@@ -899,6 +900,7 @@ static struct nodes_test misc_test = {
         XmlNodeType_Comment,
         XmlNodeType_Whitespace,
         XmlNodeType_Comment,
+        XmlNodeType_Element,
         XmlNodeType_None
     }
 };
@@ -1028,6 +1030,9 @@ static struct test_entry element_tests[] = {
     { "<a:b/>", "a:b", "", NC_E_UNDECLAREDPREFIX },
     { "<:a/>", NULL, NULL, NC_E_QNAMECHARACTER },
     { "< a/>", NULL, NULL, NC_E_QNAMECHARACTER },
+    { "<a>", "a", "", S_OK },
+    { "<a >", "a", "", S_OK },
+    { "<a \r \t\n>", "a", "", S_OK },
     { NULL }
 };
 
