@@ -101,6 +101,6 @@ HRESULT DMUSIC_CreateDirectMusicDownloadImpl(const GUID *guid, void **ret_iface,
 
     download->IDirectMusicDownload_iface.lpVtbl = &DirectMusicDownload_Vtbl;
     download->ref = 1;
-
+    *ret_iface = download;
     return S_OK;
 }
