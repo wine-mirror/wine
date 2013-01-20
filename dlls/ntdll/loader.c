@@ -2175,6 +2175,44 @@ IMAGE_BASE_RELOCATION * WINAPI LdrProcessRelocationBlock( void *page, UINT count
         case IMAGE_REL_BASED_DIR64:
             *(INT_PTR *)((char *)page + offset) += delta;
             break;
+#elif defined(__arm__)
+        case IMAGE_REL_BASED_THUMB_MOV32:
+        {
+            DWORD inst = *(INT_PTR *)((char *)page + offset);
+            DWORD imm16 = ((inst << 1) & 0x0800) + ((inst << 12) & 0xf000) +
+                          ((inst >> 20) & 0x0700) + ((inst >> 16) & 0x000f);
+
+            if ((inst & 0x8000fbf0) != 0x0000f240)
+                ERR("wrong Thumb2 instruction %08x, expected MOVW\n", inst);
+
+            imm16 += LOWORD(delta);
+            if (imm16 > 0xffff)
+                ERR("resulting immediate value won't fit: %08x\n", imm16);
+            *(INT_PTR *)((char *)page + offset) = (inst & 0x8f00fbf0) + ((imm16 >> 1) & 0x0400) +
+                                                  ((imm16 >> 12) & 0x000f) +
+                                                  ((imm16 << 20) & 0x70000000) +
+                                                  ((imm16 << 16) & 0x0f0000);
+
+            if (delta > 0xffff)
+            {
+                inst = *(INT_PTR *)((char *)page + offset + 4);
+                imm16 = ((inst << 1) & 0x0800) + ((inst << 12) & 0xf000) +
+                        ((inst >> 20) & 0x0700) + ((inst >> 16) & 0x000f);
+
+                if ((inst & 0x8000fbf0) != 0x0000f2c0)
+                    ERR("wrong Thumb2 instruction %08x, expected MOVT\n", inst);
+
+                imm16 += HIWORD(delta);
+                if (imm16 > 0xffff)
+                    ERR("resulting immediate value won't fit: %08x\n", imm16);
+                *(INT_PTR *)((char *)page + offset + 4) = (inst & 0x8f00fbf0) +
+                                                          ((imm16 >> 1) & 0x0400) +
+                                                          ((imm16 >> 12) & 0x000f) +
+                                                          ((imm16 << 20) & 0x70000000) +
+                                                          ((imm16 << 16) & 0x0f0000);
+            }
+        }
+            break;
 #endif
         default:
             FIXME("Unknown/unsupported fixup type %x.\n", type);
