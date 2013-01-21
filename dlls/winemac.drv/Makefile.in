@@ -12,6 +12,7 @@ C_SRCS = \
 OBJC_SRCS = \
 	cocoa_app.m \
 	cocoa_display.m \
+	cocoa_event.m \
 	cocoa_main.m \
 	cocoa_window.m
 

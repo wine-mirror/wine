@@ -26,6 +26,30 @@ int macdrv_err_on;
 
 @implementation WineApplication
 
+    - (id) init
+    {
+        self = [super init];
+        if (self != nil)
+        {
+            eventQueues = [[NSMutableArray alloc] init];
+            eventQueuesLock = [[NSLock alloc] init];
+
+            if (!eventQueues || !eventQueuesLock)
+            {
+                [self release];
+                return nil;
+            }
+        }
+        return self;
+    }
+
+    - (void) dealloc
+    {
+        [eventQueues release];
+        [eventQueuesLock release];
+        [super dealloc];
+    }
+
     - (void) transformProcessToForeground
     {
         if ([self activationPolicy] != NSApplicationActivationPolicyRegular)
@@ -67,6 +91,21 @@ int macdrv_err_on;
             [self setMainMenu:mainMenu];
             [self setWindowsMenu:submenu];
         }
+    }
+
+    - (BOOL) registerEventQueue:(WineEventQueue*)queue
+    {
+        [eventQueuesLock lock];
+        [eventQueues addObject:queue];
+        [eventQueuesLock unlock];
+        return TRUE;
+    }
+
+    - (void) unregisterEventQueue:(WineEventQueue*)queue
+    {
+        [eventQueuesLock lock];
+        [eventQueues removeObjectIdenticalTo:queue];
+        [eventQueuesLock unlock];
     }
 
 @end

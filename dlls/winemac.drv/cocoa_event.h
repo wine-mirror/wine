@@ -1,5 +1,5 @@
 /*
- * MACDRV Cocoa application class declaration
+ * MACDRV Cocoa event queue declarations
  *
  * Copyright 2011, 2012, 2013 Ken Thomases for CodeWeavers Inc.
  *
@@ -19,31 +19,18 @@
  */
 
 #import <AppKit/AppKit.h>
-
 #include "macdrv_cocoa.h"
 
 
-#define ERR(...) do { if (macdrv_err_on) LogError(__func__, __VA_ARGS__); } while (false)
-
-
-@class WineEventQueue;
-
-
-@interface WineApplication : NSApplication <NSApplicationDelegate>
+@interface WineEventQueue : NSObject
 {
-    NSMutableArray* eventQueues;
-    NSLock*         eventQueuesLock;
+    NSMutableArray* events;
+    NSLock*         eventsLock;
+
+    int             fds[2]; /* Pipe signaling when there are events queued. */
 }
 
-    - (void) transformProcessToForeground;
-
-    - (BOOL) registerEventQueue:(WineEventQueue*)queue;
-    - (void) unregisterEventQueue:(WineEventQueue*)queue;
+    - (void) postEvent:(const macdrv_event*)inEvent;
+    - (void) discardEventsMatchingMask:(macdrv_event_mask)mask forWindow:(NSWindow*)window;
 
 @end
-
-void OnMainThread(dispatch_block_t block);
-void OnMainThreadAsync(dispatch_block_t block);
-
-void LogError(const char* func, NSString* format, ...);
-void LogErrorv(const char* func, NSString* format, va_list args);
