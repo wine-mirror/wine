@@ -1473,7 +1473,7 @@ DECLARE_INTERFACE_(IDirect3DVertexBuffer,IUnknown)
     STDMETHOD(ProcessVertices)(THIS_ DWORD vertex_op, DWORD dst_idx, DWORD count,
             IDirect3DVertexBuffer *src_buffer, DWORD src_idx,
             IDirect3DDevice3 *device, DWORD flags) PURE;
-    STDMETHOD(GetVertexBufferDesc)(THIS_ LPD3DVERTEXBUFFERDESC lpD3DVertexBufferDesc) PURE;
+    STDMETHOD(GetVertexBufferDesc)(THIS_ D3DVERTEXBUFFERDESC *desc) PURE;
     STDMETHOD(Optimize)(THIS_ IDirect3DDevice3 *device, DWORD flags) PURE;
 };
 #undef INTERFACE
@@ -1518,7 +1518,7 @@ DECLARE_INTERFACE_(IDirect3DVertexBuffer7,IUnknown)
     STDMETHOD(ProcessVertices)(THIS_ DWORD vertex_op, DWORD dst_idx, DWORD count,
             IDirect3DVertexBuffer7 *src_buffer, DWORD src_idx,
             IDirect3DDevice7 *device, DWORD flags) PURE;
-    STDMETHOD(GetVertexBufferDesc)(THIS_ LPD3DVERTEXBUFFERDESC lpD3DVertexBufferDesc) PURE;
+    STDMETHOD(GetVertexBufferDesc)(THIS_ D3DVERTEXBUFFERDESC *desc) PURE;
     STDMETHOD(Optimize)(THIS_ IDirect3DDevice7 *device, DWORD flags) PURE;
     STDMETHOD(ProcessVerticesStrided)(THIS_ DWORD vertex_op, DWORD dst_idx, DWORD count,
             D3DDRAWPRIMITIVESTRIDEDDATA *data, DWORD fvf, IDirect3DDevice7 *device, DWORD flags) PURE;
