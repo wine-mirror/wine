@@ -653,8 +653,8 @@ static msi_custom_action_info *do_msidbCustomActionTypeDll(
     return info;
 }
 
-static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
-                               LPCWSTR target, const INT type, LPCWSTR action)
+static UINT HANDLE_CustomType1( MSIPACKAGE *package, const WCHAR *source, const WCHAR *target,
+                                INT type, const WCHAR *action )
 {
     msi_custom_action_info *info;
     MSIBINARY *binary;
@@ -736,8 +736,8 @@ static HANDLE execute_command( const WCHAR *app, WCHAR *arg, const WCHAR *dir )
     return info.hProcess;
 }
 
-static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
-                               LPCWSTR target, const INT type, LPCWSTR action)
+static UINT HANDLE_CustomType2( MSIPACKAGE *package, const WCHAR *source, const WCHAR *target,
+                                INT type, const WCHAR *action )
 {
     MSIBINARY *binary;
     HANDLE handle;
@@ -754,8 +754,8 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
     return wait_process_handle( package, type, handle, action );
 }
 
-static UINT HANDLE_CustomType17(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action)
+static UINT HANDLE_CustomType17( MSIPACKAGE *package, const WCHAR *source, const WCHAR *target,
+                                 INT type, const WCHAR *action )
 {
     msi_custom_action_info *info;
     MSIFILE *file;
@@ -773,8 +773,8 @@ static UINT HANDLE_CustomType17(MSIPACKAGE *package, LPCWSTR source,
     return wait_thread_handle( info );
 }
 
-static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action)
+static UINT HANDLE_CustomType18( MSIPACKAGE *package, const WCHAR *source, const WCHAR *target,
+                                 INT type, const WCHAR *action )
 {
     MSIFILE *file;
     HANDLE handle;
@@ -791,8 +791,8 @@ static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
     return wait_process_handle( package, type, handle, action );
 }
 
-static UINT HANDLE_CustomType19(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action)
+static UINT HANDLE_CustomType19( MSIPACKAGE *package, const WCHAR *source, const WCHAR *target,
+                                 INT type, const WCHAR *action )
 {
     static const WCHAR query[] = {
       'S','E','L','E','C','T',' ','`','M','e','s','s','a','g','e','`',' ',
@@ -822,8 +822,8 @@ static UINT HANDLE_CustomType19(MSIPACKAGE *package, LPCWSTR source,
     return ERROR_INSTALL_FAILURE;
 }
 
-static UINT HANDLE_CustomType23(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action)
+static UINT HANDLE_CustomType23( MSIPACKAGE *package, const WCHAR *source, const WCHAR *target,
+                                 INT type, const WCHAR *action )
 {
     static const WCHAR msiexecW[] = {'m','s','i','e','x','e','c',0};
     static const WCHAR paramsW[] = {'/','q','b',' ','/','i',' '};
@@ -866,8 +866,8 @@ static UINT HANDLE_CustomType23(MSIPACKAGE *package, LPCWSTR source,
     return wait_process_handle( package, type, handle, action );
 }
 
-static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action)
+static UINT HANDLE_CustomType50( MSIPACKAGE *package, const WCHAR *source, const WCHAR *target,
+                                 INT type, const WCHAR *action )
 {
     WCHAR *exe, *arg;
     HANDLE handle;
@@ -883,8 +883,8 @@ static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
     return wait_process_handle( package, type, handle, action );
 }
 
-static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action)
+static UINT HANDLE_CustomType34( MSIPACKAGE *package, const WCHAR *source, const WCHAR *target,
+                                 INT type, const WCHAR *action )
 {
     const WCHAR *workingdir = NULL;
     HANDLE handle;
@@ -984,8 +984,8 @@ static msi_custom_action_info *do_msidbCustomActionTypeScript(
     return info;
 }
 
-static UINT HANDLE_CustomType37_38(MSIPACKAGE *package, LPCWSTR source,
-                               LPCWSTR target, const INT type, LPCWSTR action)
+static UINT HANDLE_CustomType37_38( MSIPACKAGE *package, const WCHAR *source, const WCHAR *target,
+                                    INT type, const WCHAR *action )
 {
     msi_custom_action_info *info;
 
@@ -995,8 +995,8 @@ static UINT HANDLE_CustomType37_38(MSIPACKAGE *package, LPCWSTR source,
     return wait_thread_handle( info );
 }
 
-static UINT HANDLE_CustomType5_6(MSIPACKAGE *package, LPCWSTR source,
-                               LPCWSTR target, const INT type, LPCWSTR action)
+static UINT HANDLE_CustomType5_6( MSIPACKAGE *package, const WCHAR *source, const WCHAR *target,
+                                  INT type, const WCHAR *action )
 {
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
@@ -1042,8 +1042,8 @@ done:
     return r;
 }
 
-static UINT HANDLE_CustomType21_22(MSIPACKAGE *package, LPCWSTR source,
-                               LPCWSTR target, const INT type, LPCWSTR action)
+static UINT HANDLE_CustomType21_22( MSIPACKAGE *package, const WCHAR *source, const WCHAR *target,
+                                    INT type, const WCHAR *action )
 {
     msi_custom_action_info *info;
     MSIFILE *file;
@@ -1101,8 +1101,8 @@ done:
     return r;
 }
 
-static UINT HANDLE_CustomType53_54(MSIPACKAGE *package, LPCWSTR source,
-                               LPCWSTR target, const INT type, LPCWSTR action)
+static UINT HANDLE_CustomType53_54( MSIPACKAGE *package, const WCHAR *source, const WCHAR *target,
+                                    INT type, const WCHAR *action )
 {
     msi_custom_action_info *info;
     WCHAR *prop;
