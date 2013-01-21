@@ -619,43 +619,6 @@ static DWORD WINAPI DllThread( LPVOID arg )
     return rc;
 }
 
-static DWORD ACTION_CAInstallPackage(const GUID *guid)
-{
-    msi_custom_action_info *info;
-    UINT r = ERROR_FUNCTION_FAILED;
-    INSTALLUILEVEL old_level;
-
-    info = find_action_by_guid(guid);
-    if (!info)
-    {
-        ERR("failed to find action %s\n", debugstr_guid(guid));
-        return r;
-    }
-
-    old_level = MsiSetInternalUI(INSTALLUILEVEL_BASIC, NULL);
-    r = MsiInstallProductW(info->source, info->target);
-    MsiSetInternalUI(old_level, NULL);
-
-    release_custom_action_data(info);
-
-    return r;
-}
-
-static DWORD WINAPI ConcurrentInstallThread(LPVOID arg)
-{
-    LPGUID guid = arg;
-    DWORD rc;
-
-    TRACE("concurrent installation (%x) started\n", GetCurrentThreadId());
-
-    rc = ACTION_CAInstallPackage(guid);
-
-    TRACE("concurrent installation (%x) returned %i\n", GetCurrentThreadId(), rc);
-
-    MsiCloseAllHandles();
-    return rc;
-}
-
 static msi_custom_action_info *do_msidbCustomActionTypeDll(
     MSIPACKAGE *package, INT type, LPCWSTR source, LPCWSTR target, LPCWSTR action )
 {
@@ -688,58 +651,6 @@ static msi_custom_action_info *do_msidbCustomActionTypeDll(
     }
 
     return info;
-}
-
-static msi_custom_action_info *do_msidbCAConcurrentInstall(
-    MSIPACKAGE *package, INT type, LPCWSTR source, LPCWSTR target, LPCWSTR action)
-{
-    msi_custom_action_info *info;
-
-    info = msi_alloc( sizeof *info );
-    if (!info)
-        return NULL;
-
-    msiobj_addref( &package->hdr );
-    info->refs = 2; /* 1 for our caller and 1 for thread we created */
-    info->package = package;
-    info->type = type;
-    info->target = strdupW( target );
-    info->source = strdupW( source );
-    info->action = strdupW( action );
-    CoCreateGuid( &info->guid );
-
-    EnterCriticalSection( &msi_custom_action_cs );
-    list_add_tail( &msi_pending_custom_actions, &info->entry );
-    LeaveCriticalSection( &msi_custom_action_cs );
-
-    info->handle = CreateThread( NULL, 0, ConcurrentInstallThread, &info->guid, 0, NULL );
-    if (!info->handle)
-    {
-        /* release both references */
-        release_custom_action_data( info );
-        release_custom_action_data( info );
-        return NULL;
-    }
-
-    return info;
-}
-
-static UINT HANDLE_CustomType23(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action)
-{
-    msi_custom_action_info *info;
-    WCHAR package_path[MAX_PATH];
-    DWORD size;
-
-    size = MAX_PATH;
-    msi_get_property(package->db, szSourceDir, package_path, &size);
-    lstrcatW(package_path, szBackSlash);
-    lstrcatW(package_path, source);
-
-    TRACE("Installing package %s concurrently\n", debugstr_w(package_path));
-
-    info = do_msidbCAConcurrentInstall(package, type, package_path, target, action);
-    return wait_thread_handle(info);
 }
 
 static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
@@ -909,6 +820,50 @@ static UINT HANDLE_CustomType19(MSIPACKAGE *package, LPCWSTR source,
     msi_free( deformated );
 
     return ERROR_INSTALL_FAILURE;
+}
+
+static UINT HANDLE_CustomType23(MSIPACKAGE *package, LPCWSTR source,
+                                LPCWSTR target, const INT type, LPCWSTR action)
+{
+    static const WCHAR msiexecW[] = {'m','s','i','e','x','e','c',0};
+    static const WCHAR paramsW[] = {'/','q','b',' ','/','i',' '};
+    WCHAR *dir, *arg, *p;
+    UINT len_src, len_dir, len_tgt, len = sizeof(paramsW)/sizeof(paramsW[0]);
+    HANDLE handle;
+
+    if (!(dir = msi_dup_property( package->db, szOriginalDatabase ))) return ERROR_OUTOFMEMORY;
+    if (!(p = strrchrW( dir, '\\' )) && !(p = strrchrW( dir, '/' )))
+    {
+        msi_free( dir );
+        return ERROR_FUNCTION_FAILED;
+    }
+    *p = 0;
+    len_dir = p - dir;
+    len_src = strlenW( source );
+    len_tgt = strlenW( target );
+    if (!(arg = msi_alloc( (len + len_dir + len_src + len_tgt + 5) * sizeof(WCHAR) )))
+    {
+        msi_free( dir );
+        return ERROR_OUTOFMEMORY;
+    }
+    memcpy( arg, paramsW, sizeof(paramsW) );
+    arg[len++] = '"';
+    memcpy( arg + len, dir, len_dir * sizeof(WCHAR) );
+    len += len_dir;
+    arg[len++] = '\\';
+    memcpy( arg + len, source, len_src * sizeof(WCHAR) );
+    len += len_src;
+    arg[len++] = '"';
+    arg[len++] = ' ';
+    strcpyW( arg + len, target );
+
+    TRACE("installing %s concurrently\n", debugstr_w(source));
+
+    handle = execute_command( msiexecW, arg, dir );
+    msi_free( dir );
+    msi_free( arg );
+    if (handle == INVALID_HANDLE_VALUE) return ERROR_SUCCESS;
+    return wait_process_handle( package, type, handle, action );
 }
 
 static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
