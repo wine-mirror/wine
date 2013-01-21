@@ -203,8 +203,8 @@ static int waitpid_thread( struct thread *thread, int signal )
 static inline int tkill( int tgid, int pid, int sig )
 {
 #ifdef __linux__
-    int ret = syscall( SYS_tgkill, tgid, pid, sig );
-    if (ret < 0 && errno == ENOSYS) ret = syscall( SYS_tkill, pid, sig );
+    int ret = syscall( __NR_tgkill, tgid, pid, sig );
+    if (ret < 0 && errno == ENOSYS) ret = syscall( __NR_tkill, pid, sig );
     return ret;
 #elif (defined(__FreeBSD__) || defined (__FreeBSD_kernel__)) && defined(HAVE_THR_KILL2)
     return thr_kill2( tgid, pid, sig );
