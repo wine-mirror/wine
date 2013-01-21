@@ -31,6 +31,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(event);
 /* return the name of an Mac event */
 static const char *dbgstr_event(int type)
 {
+    static const char * const event_names[] = {
+        "WINDOW_CLOSE_REQUESTED",
+    };
+
+    if (0 <= type && type < NUM_EVENT_TYPES) return event_names[type];
     return wine_dbg_sprintf("Unknown event %d", type);
 }
 
@@ -40,8 +45,14 @@ static const char *dbgstr_event(int type)
  */
 static macdrv_event_mask get_event_mask(DWORD mask)
 {
+    macdrv_event_mask event_mask = 0;
+
     if ((mask & QS_ALLINPUT) == QS_ALLINPUT) return -1;
-    return 0;
+
+    if (mask & QS_POSTMESSAGE)
+        event_mask |= event_mask_for_type(WINDOW_CLOSE_REQUESTED);
+
+    return event_mask;
 }
 
 
@@ -62,6 +73,9 @@ void macdrv_handle_event(macdrv_event *event)
 
     switch (event->type)
     {
+    case WINDOW_CLOSE_REQUESTED:
+        macdrv_window_close_requested(hwnd);
+        break;
     default:
         TRACE("    ignoring\n");
         break;

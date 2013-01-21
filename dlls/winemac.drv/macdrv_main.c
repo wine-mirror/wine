@@ -35,6 +35,8 @@ DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
  */
 static BOOL process_attach(void)
 {
+    assert(NUM_EVENT_TYPES <= sizeof(macdrv_event_mask) * 8);
+
     if ((thread_data_tls_index = TlsAlloc()) == TLS_OUT_OF_INDEXES) return FALSE;
 
     macdrv_err_on = ERR_ON(macdrv);

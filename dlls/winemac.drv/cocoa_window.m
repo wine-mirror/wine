@@ -437,6 +437,10 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
      */
     - (BOOL)windowShouldClose:(id)sender
     {
+        macdrv_event event;
+        event.type = WINDOW_CLOSE_REQUESTED;
+        event.window = (macdrv_window)[self retain];
+        [queue postEvent:&event];
         return NO;
     }
 

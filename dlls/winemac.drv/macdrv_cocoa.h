@@ -121,6 +121,11 @@ extern void macdrv_free_displays(struct macdrv_display* displays) DECLSPEC_HIDDE
 
 
 /* event */
+enum {
+    WINDOW_CLOSE_REQUESTED,
+    NUM_EVENT_TYPES
+};
+
 typedef uint32_t macdrv_event_mask;
 
 typedef struct macdrv_event {

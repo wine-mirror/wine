@@ -117,4 +117,6 @@ extern struct window_surface *create_surface(macdrv_window window, const RECT *r
 extern void set_window_surface(macdrv_window window, struct window_surface *window_surface) DECLSPEC_HIDDEN;
 extern void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha) DECLSPEC_HIDDEN;
 
+extern void macdrv_window_close_requested(HWND hwnd) DECLSPEC_HIDDEN;
+
 #endif  /* __WINE_MACDRV_H */

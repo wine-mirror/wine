@@ -1230,3 +1230,52 @@ void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
 done:
     release_win_data(data);
 }
+
+
+/***********************************************************************
+ *              macdrv_window_close_requested
+ *
+ * Handler for WINDOW_CLOSE_REQUESTED events.
+ */
+void macdrv_window_close_requested(HWND hwnd)
+{
+    /* Ignore the delete window request if the window has been disabled. This
+     * is to disallow applications from being closed while in a modal state.
+     */
+    if (IsWindowEnabled(hwnd))
+    {
+        HMENU hSysMenu;
+
+        if (GetClassLongW(hwnd, GCL_STYLE) & CS_NOCLOSE) return;
+        hSysMenu = GetSystemMenu(hwnd, FALSE);
+        if (hSysMenu)
+        {
+            UINT state = GetMenuState(hSysMenu, SC_CLOSE, MF_BYCOMMAND);
+            if (state == 0xFFFFFFFF || (state & (MF_DISABLED | MF_GRAYED)))
+                return;
+        }
+        if (GetActiveWindow() != hwnd)
+        {
+            LRESULT ma = SendMessageW(hwnd, WM_MOUSEACTIVATE,
+                                      (WPARAM)GetAncestor(hwnd, GA_ROOT),
+                                      MAKELPARAM(HTCLOSE, WM_NCLBUTTONDOWN));
+            switch(ma)
+            {
+                case MA_NOACTIVATEANDEAT:
+                case MA_ACTIVATEANDEAT:
+                    return;
+                case MA_NOACTIVATE:
+                    break;
+                case MA_ACTIVATE:
+                case 0:
+                    SetActiveWindow(hwnd);
+                    break;
+                default:
+                    WARN("unknown WM_MOUSEACTIVATE code %d\n", (int) ma);
+                    break;
+            }
+        }
+
+        PostMessageW(hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+    }
+}
