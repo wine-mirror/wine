@@ -4,6 +4,7 @@ EXTRALIBS = -framework AppKit
 
 C_SRCS = \
 	display.c \
+	event.c \
 	gdi.c \
 	macdrv_main.c \
 	surface.c \

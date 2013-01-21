@@ -83,6 +83,7 @@ enum macdrv_window_messages
 struct macdrv_thread_data
 {
     macdrv_event_queue          queue;
+    const macdrv_event         *current_event;
 };
 
 extern DWORD thread_data_tls_index DECLSPEC_HIDDEN;
