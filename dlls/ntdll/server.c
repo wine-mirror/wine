@@ -962,7 +962,7 @@ static int get_unix_tid(void)
 #ifdef HAVE_PTHREAD_GETTHREADID_NP
     ret = pthread_getthreadid_np();
 #elif defined(linux)
-    ret = syscall( SYS_gettid );
+    ret = syscall( __NR_gettid );
 #elif defined(__sun)
     ret = pthread_self();
 #elif defined(__APPLE__)

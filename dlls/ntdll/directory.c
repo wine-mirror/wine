@@ -109,7 +109,7 @@ typedef struct
 # define O_DIRECTORY 0200000 /* must be directory */
 #endif
 
-#ifdef SYS_getdents64
+#ifdef __NR_getdents64
 typedef struct
 {
     ULONG64        d_ino;
@@ -121,7 +121,7 @@ typedef struct
 
 static inline int getdents64( int fd, char *de, unsigned int size )
 {
-    return syscall( SYS_getdents64, fd, de, size );
+    return syscall( __NR_getdents64, fd, de, size );
 }
 #define USE_GETDENTS
 #endif
