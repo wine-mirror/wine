@@ -45,6 +45,7 @@ static ENCRYPT_MESSAGE_FN pEncryptMessage;
 static PCCERT_CONTEXT (WINAPI *pCertCreateCertificateContext)(DWORD,const BYTE*,DWORD);
 static BOOL (WINAPI *pCertFreeCertificateContext)(PCCERT_CONTEXT);
 static BOOL (WINAPI *pCertSetCertificateContextProperty)(PCCERT_CONTEXT,DWORD,DWORD,const void*);
+static PCCERT_CONTEXT (WINAPI *pCertEnumCertificatesInStore)(HCERTSTORE,PCCERT_CONTEXT);
 
 static BOOL (WINAPI *pCryptAcquireContextW)(HCRYPTPROV*, LPCWSTR, LPCWSTR, DWORD, DWORD);
 static BOOL (WINAPI *pCryptDestroyKey)(HCRYPTKEY);
@@ -148,6 +149,7 @@ static void InitFunctionPtrs(void)
     GET_PROC(crypt32dll, CertFreeCertificateContext);
     GET_PROC(crypt32dll, CertSetCertificateContextProperty);
     GET_PROC(crypt32dll, CertCreateCertificateContext);
+    GET_PROC(crypt32dll, CertEnumCertificatesInStore);
 
 #undef GET_PROC
 }
@@ -467,6 +469,24 @@ static void testAcquireSecurityContext(void)
     }
 }
 
+static void test_remote_cert(PCCERT_CONTEXT remote_cert)
+{
+    PCCERT_CONTEXT iter = NULL;
+    BOOL incl_remote = FALSE;
+    unsigned cert_cnt = 0;
+
+    ok(remote_cert->hCertStore != NULL, "hCertStore == NULL\n");
+
+    while((iter = pCertEnumCertificatesInStore(remote_cert->hCertStore, iter))) {
+        if(iter == remote_cert)
+            incl_remote = TRUE;
+        cert_cnt++;
+    }
+
+    ok(cert_cnt == 2, "cert_cnt = %u\n", cert_cnt);
+    ok(incl_remote, "context does not contain cert itself\n");
+}
+
 static const char http_request[] = "HEAD /test.html HTTP/1.1\r\nHost: www.codeweavers.com\r\nConnection: close\r\n\r\n";
 
 static void init_cred(SCHANNEL_CRED *cred)
@@ -572,6 +592,7 @@ static void test_communication(void)
     CredHandle cred_handle;
     CtxtHandle context;
     SecPkgContext_StreamSizes sizes;
+    CERT_CONTEXT *cert;
 
     SecBufferDesc buffers[2];
     SecBuffer *buf;
@@ -724,6 +745,13 @@ static void test_communication(void)
     if(status != SEC_E_OK) {
         win_skip("Handshake failed\n");
         return;
+    }
+
+    status = pQueryContextAttributesA(&context, SECPKG_ATTR_REMOTE_CERT_CONTEXT, (void*)&cert);
+    ok(status == SEC_E_OK, "QueryContextAttributesW(SECPKG_ATTR_REMOTE_CERT_CONTEXT) failed: %08x\n", status);
+    if(status == SEC_E_OK) {
+        test_remote_cert(cert);
+        pCertFreeCertificateContext(cert);
     }
 
     pQueryContextAttributesA(&context, SECPKG_ATTR_STREAM_SIZES, &sizes);
