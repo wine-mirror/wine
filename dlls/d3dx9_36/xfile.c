@@ -60,7 +60,10 @@ typedef struct {
 typedef struct {
     ID3DXFileData ID3DXFileData_iface;
     LONG ref;
+    BOOL reference;
     IDirectXFileData *dxfile_data;
+    ULONG nb_children;
+    ID3DXFileData **children;
 } ID3DXFileDataImpl;
 
 
@@ -117,6 +120,11 @@ static ULONG WINAPI ID3DXFileDataImpl_Release(ID3DXFileData *iface)
 
     if (!ref)
     {
+        ULONG i;
+
+        for (i = 0; i < This->nb_children; i++)
+            (This->children[i])->lpVtbl->Release(This->children[i]);
+        HeapFree(GetProcessHeap(), 0, This->children);
         IDirectXFileData_Release(This->dxfile_data);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -266,21 +274,70 @@ static const ID3DXFileDataVtbl ID3DXFileData_Vtbl =
 };
 
 
-static HRESULT ID3DXFileDataImpl_Create(IDirectXFileData *dxfile_data, ID3DXFileData **ret_iface)
+static HRESULT ID3DXFileDataImpl_Create(IDirectXFileObject *dxfile_object, ID3DXFileData **ret_iface)
 {
     ID3DXFileDataImpl *object;
+    IDirectXFileObject *data_object;
+    HRESULT ret;
 
-    TRACE("(%p, %p)\n", dxfile_data, ret_iface);
+    TRACE("(%p, %p)\n", dxfile_object, ret_iface);
 
     *ret_iface = NULL;
 
-    object = HeapAlloc(GetProcessHeap(), 0, sizeof(*object));
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
     object->ID3DXFileData_iface.lpVtbl = &ID3DXFileData_Vtbl;
     object->ref = 1;
-    object->dxfile_data = dxfile_data;
+
+    ret = IDirectXFileObject_QueryInterface(dxfile_object, &IID_IDirectXFileData, (void **)&object->dxfile_data);
+    if (FAILED(ret))
+    {
+        IDirectXFileDataReference *reference;
+
+        ret = IDirectXFileObject_QueryInterface(dxfile_object, &IID_IDirectXFileDataReference, (void **)&reference);
+        if (SUCCEEDED(ret))
+        {
+            ret = IDirectXFileDataReference_Resolve(reference, &object->dxfile_data);
+            if (FAILED(ret))
+            {
+                HeapFree(GetProcessHeap(), 0, object);
+                return E_FAIL;
+            }
+        }
+        else
+        {
+            FIXME("Don't known what to do with binary object\n");
+            HeapFree(GetProcessHeap(), 0, object);
+            return E_FAIL;
+        }
+    }
+
+    while (SUCCEEDED(ret = IDirectXFileData_GetNextObject(object->dxfile_data, &data_object)))
+    {
+        if (object->children)
+            object->children = HeapReAlloc(GetProcessHeap(), 0, object->children, sizeof(ID3DXFileData*) * (object->nb_children + 1));
+        else
+            object->children = HeapAlloc(GetProcessHeap(), 0, sizeof(ID3DXFileData*));
+        if (!object->children)
+        {
+            ret = E_OUTOFMEMORY;
+            break;
+        }
+        ret = ID3DXFileDataImpl_Create(data_object, &object->children[object->nb_children]);
+        if (ret != S_OK)
+            break;
+        object->nb_children++;
+    }
+
+    if (ret != DXFILEERR_NOMOREOBJECTS)
+    {
+        (&object->ID3DXFileData_iface)->lpVtbl->Release(&object->ID3DXFileData_iface);
+        return ret;
+    }
+
+    TRACE("Found %u children\n", object->nb_children);
 
     *ret_iface = &object->ID3DXFileData_iface;
 
@@ -534,7 +591,7 @@ static HRESULT WINAPI ID3DXFileImpl_CreateEnumObject(ID3DXFile *iface, const voi
             ret = E_OUTOFMEMORY;
             break;
         }
-        ret = ID3DXFileDataImpl_Create(data_object, &object->children[object->nb_children]);
+        ret = ID3DXFileDataImpl_Create((IDirectXFileObject*)data_object, &object->children[object->nb_children]);
         if (ret != S_OK)
             break;
         object->nb_children++;
