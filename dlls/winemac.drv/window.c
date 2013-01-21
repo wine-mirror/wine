@@ -511,7 +511,7 @@ static void create_cocoa_window(struct macdrv_win_data *data)
     TRACE("creating %p window %s whole %s client %s\n", data->hwnd, wine_dbgstr_rect(&data->window_rect),
           wine_dbgstr_rect(&data->whole_rect), wine_dbgstr_rect(&data->client_rect));
 
-    data->cocoa_window = macdrv_create_cocoa_window(&wf, frame, thread_data->queue);
+    data->cocoa_window = macdrv_create_cocoa_window(&wf, frame, data->hwnd, thread_data->queue);
     if (!data->cocoa_window) goto done;
 
     set_cocoa_window_properties(data);

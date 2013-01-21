@@ -32,6 +32,7 @@
     BOOL floating;
     WineWindow* latentParentWindow;
 
+    void* hwnd;
     WineEventQueue* queue;
 
     void* surface;
