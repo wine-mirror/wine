@@ -70,7 +70,7 @@ static inline void fill_modify_ldt_struct( struct modify_ldt_s *ptr, const LDT_E
 
 static inline int modify_ldt( int func, struct modify_ldt_s *ptr, unsigned long count )
 {
-    return syscall( SYS_modify_ldt, func, ptr, count );
+    return syscall( 123 /* SYS_modify_ldt */, func, ptr, count );
 }
 
 static inline int set_thread_area( struct modify_ldt_s *ptr )
