@@ -36,6 +36,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
+        macdrv_err_on = ERR_ON(macdrv);
         if (macdrv_start_cocoa_app())
         {
             ERR("Failed to start Cocoa app main loop\n");

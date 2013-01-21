@@ -109,6 +109,8 @@ struct macdrv_display {
 
 
 /* main */
+extern int macdrv_err_on;
+
 extern int macdrv_start_cocoa_app(void) DECLSPEC_HIDDEN;
 
 
