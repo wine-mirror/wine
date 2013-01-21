@@ -236,14 +236,14 @@ static inline __attribute__((noreturn)) void wld_exit( int code )
 {
     for (;;)  /* avoid warning */
         __asm__ __volatile__( "pushl %%ebx; movl %1,%%ebx; int $0x80; popl %%ebx"
-                              : : "a" (SYS_exit), "r" (code) );
+                              : : "a" (1 /* SYS_exit */), "r" (code) );
 }
 
 static inline int wld_open( const char *name, int flags )
 {
     int ret;
     __asm__ __volatile__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
-                          : "=a" (ret) : "0" (SYS_open), "r" (name), "c" (flags) );
+                          : "=a" (ret) : "0" (5 /* SYS_open */), "r" (name), "c" (flags) );
     return SYSCALL_RET(ret);
 }
 
@@ -251,7 +251,7 @@ static inline int wld_close( int fd )
 {
     int ret;
     __asm__ __volatile__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
-                          : "=a" (ret) : "0" (SYS_close), "r" (fd) );
+                          : "=a" (ret) : "0" (6 /* SYS_close */), "r" (fd) );
     return SYSCALL_RET(ret);
 }
 
@@ -260,7 +260,7 @@ static inline ssize_t wld_read( int fd, void *buffer, size_t len )
     int ret;
     __asm__ __volatile__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
                           : "=a" (ret)
-                          : "0" (SYS_read), "r" (fd), "c" (buffer), "d" (len)
+                          : "0" (3 /* SYS_read */), "r" (fd), "c" (buffer), "d" (len)
                           : "memory" );
     return SYSCALL_RET(ret);
 }
@@ -269,7 +269,7 @@ static inline ssize_t wld_write( int fd, const void *buffer, size_t len )
 {
     int ret;
     __asm__ __volatile__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
-                          : "=a" (ret) : "0" (SYS_write), "r" (fd), "c" (buffer), "d" (len) );
+                          : "=a" (ret) : "0" (4 /* SYS_write */), "r" (fd), "c" (buffer), "d" (len) );
     return SYSCALL_RET(ret);
 }
 
@@ -277,7 +277,7 @@ static inline int wld_mprotect( const void *addr, size_t len, int prot )
 {
     int ret;
     __asm__ __volatile__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
-                          : "=a" (ret) : "0" (SYS_mprotect), "r" (addr), "c" (len), "d" (prot) );
+                          : "=a" (ret) : "0" (125 /* SYS_mprotect */), "r" (addr), "c" (len), "d" (prot) );
     return SYSCALL_RET(ret);
 }
 
@@ -302,35 +302,35 @@ static void *wld_mmap( void *start, size_t len, int prot, int flags, int fd, off
     args.fd     = fd;
     args.offset = offset;
     __asm__ __volatile__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
-                          : "=a" (ret) : "0" (SYS_mmap), "q" (&args) : "memory" );
+                          : "=a" (ret) : "0" (90 /* SYS_mmap */), "q" (&args) : "memory" );
     return (void *)SYSCALL_RET(ret);
 }
 
 static inline uid_t wld_getuid(void)
 {
     uid_t ret;
-    __asm__( "int $0x80" : "=a" (ret) : "0" (SYS_getuid) );
+    __asm__( "int $0x80" : "=a" (ret) : "0" (24 /* SYS_getuid */) );
     return ret;
 }
 
 static inline uid_t wld_geteuid(void)
 {
     uid_t ret;
-    __asm__( "int $0x80" : "=a" (ret) : "0" (SYS_geteuid) );
+    __asm__( "int $0x80" : "=a" (ret) : "0" (49 /* SYS_geteuid */) );
     return ret;
 }
 
 static inline gid_t wld_getgid(void)
 {
     gid_t ret;
-    __asm__( "int $0x80" : "=a" (ret) : "0" (SYS_getgid) );
+    __asm__( "int $0x80" : "=a" (ret) : "0" (47 /* SYS_getgid */) );
     return ret;
 }
 
 static inline gid_t wld_getegid(void)
 {
     gid_t ret;
-    __asm__( "int $0x80" : "=a" (ret) : "0" (SYS_getegid) );
+    __asm__( "int $0x80" : "=a" (ret) : "0" (50 /* SYS_getegid */) );
     return ret;
 }
 
@@ -338,7 +338,7 @@ static inline int wld_prctl( int code, long arg )
 {
     int ret;
     __asm__ __volatile__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
-                          : "=a" (ret) : "0" (SYS_prctl), "r" (code), "c" (arg) );
+                          : "=a" (ret) : "0" (172 /* SYS_prctl */), "r" (code), "c" (arg) );
     return SYSCALL_RET(ret);
 }
 
