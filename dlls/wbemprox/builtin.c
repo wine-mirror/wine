@@ -215,6 +215,7 @@ static const struct column col_compsys[] =
 };
 static const struct column col_diskdrive[] =
 {
+    { prop_deviceidW,     CIM_STRING|COL_FLAG_KEY },
     { prop_manufacturerW, CIM_STRING },
     { prop_modelW,        CIM_STRING },
     { prop_serialnumberW, CIM_STRING }
@@ -345,6 +346,8 @@ static const WCHAR compsys_manufacturerW[] =
     {'T','h','e',' ','W','i','n','e',' ','P','r','o','j','e','c','t',0};
 static const WCHAR compsys_modelW[] =
     {'W','i','n','e',0};
+static const WCHAR diskdrive_deviceidW[] =
+    {'\\','\\','\\','\\','.','\\','\\','P','H','Y','S','I','C','A','L','D','R','I','V','E','0',0};
 static const WCHAR diskdrive_modelW[] =
     {'W','i','n','e',' ','D','i','s','k',' ','D','r','i','v','e',0};
 static const WCHAR diskdrive_manufacturerW[] =
@@ -399,6 +402,7 @@ struct record_computersystem
 };
 struct record_diskdrive
 {
+    const WCHAR *device_id;
     const WCHAR *manufacturer;
     const WCHAR *name;
     const WCHAR *serialnumber;
@@ -518,7 +522,7 @@ static const struct record_cdromdrive data_cdromdrive[] =
 };
 static const struct record_diskdrive data_diskdrive[] =
 {
-    { diskdrive_manufacturerW, diskdrive_modelW }
+    { diskdrive_deviceidW, diskdrive_manufacturerW, diskdrive_modelW }
 };
 static const struct record_params data_params[] =
 {
