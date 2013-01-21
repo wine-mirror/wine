@@ -5662,6 +5662,7 @@ static void ffp_enable(const struct wined3d_gl_info *gl_info, BOOL enable) {}
 
 static void ffp_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
 {
+    caps->wined3d_caps = 0;
     caps->PrimitiveMiscCaps = 0;
     caps->TextureOpCaps = WINED3DTEXOPCAPS_ADD
             | WINED3DTEXOPCAPS_ADDSIGNED
@@ -5732,7 +5733,6 @@ const struct fragment_pipeline ffp_fragment_pipeline = {
     ffp_fragment_free,
     ffp_color_fixup_supported,
     ffp_fragmentstate_template,
-    FALSE /* we cannot disable projected textures. The vertex pipe has to do it */
 };
 
 static void fp_none_enable(const struct wined3d_gl_info *gl_info, BOOL enable) {}
@@ -5762,7 +5762,6 @@ const struct fragment_pipeline none_fragment_pipe =
     fp_none_free,
     fp_none_color_fixup_supported,
     NULL,
-    FALSE,
 };
 
 static unsigned int num_handlers(const APPLYSTATEFUNC *funcs)

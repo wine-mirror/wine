@@ -328,6 +328,7 @@ struct shader_arb_priv
     const struct wined3d_context *last_context;
 
     const struct fragment_pipeline *fragment_pipe;
+    BOOL ffp_proj_control;
 };
 
 /* Context activation for state handlers is done by the caller. */
@@ -4270,7 +4271,7 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
         const char *color_init = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_0001);
         shader_addline(buffer, "MOV result.color.secondary, %s;\n", color_init);
 
-        if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W && !priv->fragment_pipe->ffp_proj_control)
+        if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W && !priv->ffp_proj_control)
         {
             int i;
             const char *one = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_ONE);
@@ -4889,6 +4890,7 @@ static const struct wine_rb_functions sig_tree_functions =
 static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct fragment_pipeline *fragment_pipe)
 {
     struct shader_arb_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*priv));
+    struct fragment_caps fragment_caps;
     void *fragment_priv;
 
     if (!(fragment_priv = fragment_pipe->alloc_private(&arb_program_shader_backend, priv)))
@@ -4917,6 +4919,9 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct frag
         ERR("RB tree init failed\n");
         goto fail;
     }
+
+    fragment_pipe->get_caps(&device->adapter->gl_info, &fragment_caps);
+    priv->ffp_proj_control = fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
     device->fragment_priv = fragment_priv;
     priv->fragment_pipe = fragment_pipe;
     device->shader_priv = priv;
@@ -5629,7 +5634,7 @@ static BOOL shader_arb_has_ffp_proj_control(void *shader_priv)
 {
     struct shader_arb_priv *priv = shader_priv;
 
-    return priv->fragment_pipe->ffp_proj_control;
+    return priv->ffp_proj_control;
 }
 
 const struct wined3d_shader_backend_ops arb_program_shader_backend =
@@ -5731,6 +5736,7 @@ static void arbfp_free(struct wined3d_device *device)
 
 static void arbfp_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
 {
+    caps->wined3d_caps = WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
     caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP;
     caps->TextureOpCaps =  WINED3DTEXOPCAPS_DISABLE                     |
                            WINED3DTEXOPCAPS_SELECTARG1                  |
@@ -6673,7 +6679,6 @@ const struct fragment_pipeline arbfp_fragment_pipeline = {
     arbfp_free,
     shader_arb_color_fixup_supported,
     arbfp_fragmentstate_template,
-    TRUE /* We can disable projected textures */
 };
 
 struct arbfp_blit_priv {

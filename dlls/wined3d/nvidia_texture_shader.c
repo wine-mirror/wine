@@ -670,6 +670,7 @@ static void nvts_enable(const struct wined3d_gl_info *gl_info, BOOL enable)
 
 static void nvrc_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
 {
+    caps->wined3d_caps = 0;
     caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP;
 
     /* The caps below can be supported but aren't handled yet in utils.c
@@ -898,7 +899,6 @@ const struct fragment_pipeline nvts_fragment_pipeline = {
     nvrc_fragment_free,
     nvts_color_fixup_supported,
     nvrc_fragmentstate_template,
-    FALSE /* we cannot disable projected textures. The vertex pipe has to do it */
 };
 
 const struct fragment_pipeline nvrc_fragment_pipeline = {
@@ -908,5 +908,4 @@ const struct fragment_pipeline nvrc_fragment_pipeline = {
     nvrc_fragment_free,
     nvts_color_fixup_supported,
     nvrc_fragmentstate_template,
-    FALSE /* we cannot disable projected textures. The vertex pipe has to do it */
 };

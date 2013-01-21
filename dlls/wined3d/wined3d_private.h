@@ -1172,8 +1172,11 @@ struct StateEntryTemplate
     enum wined3d_gl_extension extension;
 };
 
+#define WINED3D_FRAGMENT_CAP_PROJ_CONTROL   0x00000001
+
 struct fragment_caps
 {
+    DWORD wined3d_caps;
     DWORD PrimitiveMiscCaps;
     DWORD TextureOpCaps;
     DWORD MaxTextureBlendStages;
@@ -1188,7 +1191,6 @@ struct fragment_pipeline
     void (*free_private)(struct wined3d_device *device);
     BOOL (*color_fixup_supported)(struct color_fixup_desc fixup);
     const struct StateEntryTemplate *states;
-    BOOL ffp_proj_control;
 };
 
 extern const struct StateEntryTemplate misc_state_template[] DECLSPEC_HIDDEN;

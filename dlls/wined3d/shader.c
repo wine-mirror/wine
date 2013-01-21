@@ -1479,6 +1479,7 @@ static void shader_cleanup(struct wined3d_shader *shader)
 struct shader_none_priv
 {
     const struct fragment_pipeline *fragment_pipe;
+    BOOL ffp_proj_control;
 };
 
 static void shader_none_handle_instruction(const struct wined3d_shader_instruction *ins) {}
@@ -1505,6 +1506,7 @@ static void shader_none_select(const struct wined3d_context *context, enum wined
 
 static HRESULT shader_none_alloc(struct wined3d_device *device, const struct fragment_pipeline *fragment_pipe)
 {
+    struct fragment_caps fragment_caps;
     struct shader_none_priv *priv;
     void *fragment_priv;
 
@@ -1521,6 +1523,8 @@ static HRESULT shader_none_alloc(struct wined3d_device *device, const struct fra
         return E_FAIL;
     }
 
+    fragment_pipe->get_caps(&device->adapter->gl_info, &fragment_caps);
+    priv->ffp_proj_control = fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
     device->fragment_priv = fragment_priv;
     priv->fragment_pipe = fragment_pipe;
     device->shader_priv = priv;
@@ -1571,7 +1575,7 @@ static BOOL shader_none_has_ffp_proj_control(void *shader_priv)
 {
     struct shader_none_priv *priv = shader_priv;
 
-    return priv->fragment_pipe->ffp_proj_control;
+    return priv->ffp_proj_control;
 }
 
 const struct wined3d_shader_backend_ops none_shader_backend =

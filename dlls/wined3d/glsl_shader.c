@@ -99,6 +99,7 @@ struct shader_glsl_priv {
 
     const struct fragment_pipeline *fragment_pipe;
     struct wine_rb_tree ffp_fragment_shaders;
+    BOOL ffp_proj_control;
 };
 
 struct glsl_vs_program
@@ -6075,6 +6076,7 @@ static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct fra
     struct shader_glsl_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
     SIZE_T stack_size = wined3d_log2i(max(gl_info->limits.glsl_vs_float_constants,
             gl_info->limits.glsl_ps_float_constants)) + 1;
+    struct fragment_caps fragment_caps;
     void *fragment_priv;
 
     if (!(fragment_priv = fragment_pipe->alloc_private(&glsl_shader_backend, priv)))
@@ -6116,6 +6118,8 @@ static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct fra
     }
 
     priv->next_constant_version = 1;
+    fragment_pipe->get_caps(gl_info, &fragment_caps);
+    priv->ffp_proj_control = fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
     device->fragment_priv = fragment_priv;
     priv->fragment_pipe = fragment_pipe;
 
@@ -6359,7 +6363,7 @@ static BOOL shader_glsl_has_ffp_proj_control(void *shader_priv)
 {
     struct shader_glsl_priv *priv = shader_priv;
 
-    return priv->fragment_pipe->ffp_proj_control;
+    return priv->ffp_proj_control;
 }
 
 const struct wined3d_shader_backend_ops glsl_shader_backend =
@@ -6388,6 +6392,7 @@ static void glsl_fragment_pipe_enable(const struct wined3d_gl_info *gl_info, BOO
 
 static void glsl_fragment_pipe_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
 {
+    caps->wined3d_caps = WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
     caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP;
     caps->TextureOpCaps = WINED3DTEXOPCAPS_DISABLE
             | WINED3DTEXOPCAPS_SELECTARG1
@@ -6681,5 +6686,4 @@ const struct fragment_pipeline glsl_fragment_pipe =
     glsl_fragment_pipe_free,
     shader_glsl_color_fixup_supported,
     glsl_fragment_pipe_state_template,
-    TRUE,
 };
