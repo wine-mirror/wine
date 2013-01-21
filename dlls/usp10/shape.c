@@ -614,7 +614,7 @@ static LoadedFeature* load_OT_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache
         int attempt = 2;
         OPENTYPE_TAG tags;
         OPENTYPE_TAG language;
-        OPENTYPE_TAG script;
+        OPENTYPE_TAG script = 0x00000000;
         int cTags;
 
         do
@@ -631,7 +631,7 @@ static LoadedFeature* load_OT_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache
         } while(attempt && !feature);
 
         /* try in the default (latin) table */
-        if (!feature)
+        if (!feature && !script)
             OpenType_GetFontFeatureTags(psc, MS_MAKE_TAG('l','a','t','n'), MS_MAKE_TAG('d','f','l','t'), FALSE, MS_MAKE_TAG(feat[0],feat[1],feat[2],feat[3]), tableType, 1, &tags, &cTags, &feature);
     }
 
