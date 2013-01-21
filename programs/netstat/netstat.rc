@@ -47,4 +47,9 @@ STRINGTABLE
   IDS_TCP_SEGM_RECV,   "Segments Received"
   IDS_TCP_SEGM_SENT,   "Segments Sent"
   IDS_TCP_SEGM_RETRAN, "Segments Retransmitted"
+  IDS_UDP_STAT,        "UDP Statistics for IPv4"
+  IDS_UDP_DGRAMS_RECV, "Datagrams Received"
+  IDS_UDP_NO_PORTS,    "No Ports"
+  IDS_UDP_RECV_ERRORS, "Receive Errors"
+  IDS_UDP_DGRAMS_SENT, "Datagrams Sent"
 }

@@ -10080,6 +10080,26 @@ msgstr ""
 msgid "Segments Retransmitted"
 msgstr ""
 
+#: netstat.rc:50
+msgid "UDP Statistics for IPv4"
+msgstr ""
+
+#: netstat.rc:51
+msgid "Datagrams Received"
+msgstr ""
+
+#: netstat.rc:52
+msgid "No Ports"
+msgstr ""
+
+#: netstat.rc:53
+msgid "Receive Errors"
+msgstr ""
+
+#: netstat.rc:54
+msgid "Datagrams Sent"
+msgstr ""
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&جديد\tCtrl+N"

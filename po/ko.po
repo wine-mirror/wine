@@ -10451,6 +10451,32 @@ msgstr "세그멘트가 잠김.\n"
 msgid "Segments Retransmitted"
 msgstr ""
 
+#: netstat.rc:50
+msgid "UDP Statistics for IPv4"
+msgstr ""
+
+#: netstat.rc:51
+#, fuzzy
+#| msgid "Segment locked.\n"
+msgid "Datagrams Received"
+msgstr "세그멘트가 잠김.\n"
+
+#: netstat.rc:52
+#, fuzzy
+#| msgid "Local Port"
+msgid "No Ports"
+msgstr "지역 포트"
+
+#: netstat.rc:53
+#, fuzzy
+#| msgid "Decoding Error"
+msgid "Receive Errors"
+msgstr "디코딩 오류"
+
+#: netstat.rc:54
+msgid "Datagrams Sent"
+msgstr ""
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "새로 만들기(&N)\tCtrl+N"

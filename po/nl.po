@@ -10667,6 +10667,32 @@ msgstr "Segment vergrendeld.\n"
 msgid "Segments Retransmitted"
 msgstr ""
 
+#: netstat.rc:50
+msgid "UDP Statistics for IPv4"
+msgstr ""
+
+#: netstat.rc:51
+#, fuzzy
+#| msgid "Segment locked.\n"
+msgid "Datagrams Received"
+msgstr "Segment vergrendeld.\n"
+
+#: netstat.rc:52
+#, fuzzy
+#| msgid "Local Port"
+msgid "No Ports"
+msgstr "Lokale poort"
+
+#: netstat.rc:53
+#, fuzzy
+#| msgid "Decoding Error"
+msgid "Receive Errors"
+msgstr "Decodeerfout"
+
+#: netstat.rc:54
+msgid "Datagrams Sent"
+msgstr ""
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Nieuw\tCtrl+N"

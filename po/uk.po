@@ -10540,6 +10540,32 @@ msgstr "Сегмент заблокований.\n"
 msgid "Segments Retransmitted"
 msgstr ""
 
+#: netstat.rc:50
+msgid "UDP Statistics for IPv4"
+msgstr ""
+
+#: netstat.rc:51
+#, fuzzy
+#| msgid "Segment locked.\n"
+msgid "Datagrams Received"
+msgstr "Сегмент заблокований.\n"
+
+#: netstat.rc:52
+#, fuzzy
+#| msgid "Local Port"
+msgid "No Ports"
+msgstr "Локальний порт"
+
+#: netstat.rc:53
+#, fuzzy
+#| msgid "Decoding Error"
+msgid "Receive Errors"
+msgstr "Помилка декодування"
+
+#: netstat.rc:54
+msgid "Datagrams Sent"
+msgstr ""
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Новий\tCtrl+N"

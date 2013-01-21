@@ -53,3 +53,8 @@ typedef enum _NETSTATPROTOCOLS {
 #define IDS_TCP_SEGM_RECV   21
 #define IDS_TCP_SEGM_SENT   22
 #define IDS_TCP_SEGM_RETRAN 23
+#define IDS_UDP_STAT        24
+#define IDS_UDP_DGRAMS_RECV 25
+#define IDS_UDP_NO_PORTS    26
+#define IDS_UDP_RECV_ERRORS 27
+#define IDS_UDP_DGRAMS_SENT 28

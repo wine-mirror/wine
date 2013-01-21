@@ -47,6 +47,7 @@ static const WCHAR fmtethheader[] = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '
                                      ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
                                      ' ', '%', '-', '1', '9', 's', ' ', '%', 's', '\n', '\n', 0};
 static const WCHAR fmttcpstat[] = {' ', ' ', '%', '-', '3', '5', 's', ' ', '=', ' ', '%', 'l', 'u', '\n', 0};
+static const WCHAR fmtudpstat[] = {' ', ' ', '%', '-', '2', '1', 's', ' ', '=', ' ', '%', 'l', 'u', '\n', 0};
 
 static const WCHAR tcpstatesW[][16] = {
     {'?', '?', '?', 0},
@@ -322,6 +323,25 @@ static void NETSTAT_udp_table(void)
     HeapFree(GetProcessHeap(), 0, table);
 }
 
+static void NETSTAT_udp_stats(void)
+{
+    PMIB_UDPSTATS stats;
+
+    stats = (PMIB_UDPSTATS)HeapAlloc(GetProcessHeap(), 0, sizeof(MIB_UDPSTATS));
+
+    if (GetUdpStatistics(stats) == NO_ERROR)
+    {
+        NETSTAT_wprintf(fmtnn, NETSTAT_load_message(IDS_UDP_STAT));
+        NETSTAT_wprintf(fmtn);
+        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_DGRAMS_RECV), stats->dwInDatagrams);
+        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_NO_PORTS), stats->dwNoPorts);
+        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_RECV_ERRORS), stats->dwInErrors);
+        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_DGRAMS_SENT),  stats->dwOutDatagrams);
+    }
+
+    HeapFree(GetProcessHeap(), 0, stats);
+}
+
 static NETSTATPROTOCOLS NETSTAT_get_protocol(WCHAR name[])
 {
     if (!strcmpiW(name, ipW)) return PROT_IP;
@@ -381,6 +401,8 @@ int wmain(int argc, WCHAR *argv[])
                     NETSTAT_tcp_table();
                     break;
                 case PROT_UDP:
+                    if (output_stats)
+                        NETSTAT_udp_stats();
                     NETSTAT_conn_header();
                     NETSTAT_udp_table();
                     break;
@@ -396,7 +418,10 @@ int wmain(int argc, WCHAR *argv[])
     }
 
     if (output_stats)
+    {
         NETSTAT_tcp_stats();
+        NETSTAT_udp_stats();
+    }
 
     return 0;
 }
