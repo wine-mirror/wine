@@ -10071,6 +10071,50 @@ msgstr "Chyba; "
 msgid "Unknown protocols"
 msgstr "Neznámy ovládač tlačiarne.\n"
 
+#: netstat.rc:41
+msgid "TCP Statistics for IPv4"
+msgstr ""
+
+#: netstat.rc:42
+#, fuzzy
+#| msgid "Activation"
+msgid "Active Opens"
+msgstr "Aktivácia"
+
+#: netstat.rc:43
+msgid "Passive Opens"
+msgstr ""
+
+#: netstat.rc:44
+#, fuzzy
+#| msgid "Activation"
+msgid "Failed Connection Attempts"
+msgstr "Aktivácia"
+
+#: netstat.rc:45
+#, fuzzy
+#| msgid "Activation"
+msgid "Reset Connections"
+msgstr "Aktivácia"
+
+#: netstat.rc:46
+#, fuzzy
+#| msgid "Activation"
+msgid "Current Connections"
+msgstr "Aktivácia"
+
+#: netstat.rc:47
+msgid "Segments Received"
+msgstr ""
+
+#: netstat.rc:48
+msgid "Segments Sent"
+msgstr ""
+
+#: netstat.rc:49
+msgid "Segments Retransmitted"
+msgstr ""
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Nový\tCtrl+N"

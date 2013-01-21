@@ -44,3 +44,12 @@ typedef enum _NETSTATPROTOCOLS {
 #define IDS_ETH_DISCARDS    12
 #define IDS_ETH_ERRORS      13
 #define IDS_ETH_UNKNOWN     14
+#define IDS_TCP_STAT        15
+#define IDS_TCP_ACTIVE_OPEN 16
+#define IDS_TCP_PASSIV_OPEN 17
+#define IDS_TCP_FAILED_CONN 18
+#define IDS_TCP_RESET_CONN  19
+#define IDS_TCP_CURR_CONN   20
+#define IDS_TCP_SEGM_RECV   21
+#define IDS_TCP_SEGM_SENT   22
+#define IDS_TCP_SEGM_RETRAN 23

@@ -38,4 +38,13 @@ STRINGTABLE
   IDS_ETH_DISCARDS,    "Discards"
   IDS_ETH_ERRORS,      "Errors"
   IDS_ETH_UNKNOWN,     "Unknown protocols"
+  IDS_TCP_STAT,        "TCP Statistics for IPv4"
+  IDS_TCP_ACTIVE_OPEN, "Active Opens"
+  IDS_TCP_PASSIV_OPEN, "Passive Opens"
+  IDS_TCP_FAILED_CONN, "Failed Connection Attempts"
+  IDS_TCP_RESET_CONN,  "Reset Connections"
+  IDS_TCP_CURR_CONN,   "Current Connections"
+  IDS_TCP_SEGM_RECV,   "Segments Received"
+  IDS_TCP_SEGM_SENT,   "Segments Sent"
+  IDS_TCP_SEGM_RETRAN, "Segments Retransmitted"
 }

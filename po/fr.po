@@ -10545,6 +10545,54 @@ msgstr "Erreurs"
 msgid "Unknown protocols"
 msgstr "Protocoles inconnus"
 
+#: netstat.rc:41
+msgid "TCP Statistics for IPv4"
+msgstr ""
+
+#: netstat.rc:42
+#, fuzzy
+#| msgid "Active Connections"
+msgid "Active Opens"
+msgstr "Connexions actives"
+
+#: netstat.rc:43
+msgid "Passive Opens"
+msgstr ""
+
+#: netstat.rc:44
+#, fuzzy
+#| msgid "Active Connections"
+msgid "Failed Connection Attempts"
+msgstr "Connexions actives"
+
+#: netstat.rc:45
+#, fuzzy
+#| msgid "Active Connections"
+msgid "Reset Connections"
+msgstr "Connexions actives"
+
+#: netstat.rc:46
+#, fuzzy
+#| msgid "Active Connections"
+msgid "Current Connections"
+msgstr "Connexions actives"
+
+#: netstat.rc:47
+#, fuzzy
+#| msgid "Segment locked.\n"
+msgid "Segments Received"
+msgstr "Segment verrouillé.\n"
+
+#: netstat.rc:48
+#, fuzzy
+#| msgid "Segment locked.\n"
+msgid "Segments Sent"
+msgstr "Segment verrouillé.\n"
+
+#: netstat.rc:49
+msgid "Segments Retransmitted"
+msgstr ""
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Nouveau\tCtrl+N"

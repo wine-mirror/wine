@@ -10044,6 +10044,46 @@ msgstr "Σφάλμα, "
 msgid "Unknown protocols"
 msgstr "&Περιεχόμενα.\n"
 
+#: netstat.rc:41
+msgid "TCP Statistics for IPv4"
+msgstr ""
+
+#: netstat.rc:42
+#, fuzzy
+msgid "Active Opens"
+msgstr "Επιλογές"
+
+#: netstat.rc:43
+msgid "Passive Opens"
+msgstr ""
+
+#: netstat.rc:44
+#, fuzzy
+msgid "Failed Connection Attempts"
+msgstr "Επιλογές"
+
+#: netstat.rc:45
+#, fuzzy
+msgid "Reset Connections"
+msgstr "Επιλογές"
+
+#: netstat.rc:46
+#, fuzzy
+msgid "Current Connections"
+msgstr "Επιλογές"
+
+#: netstat.rc:47
+msgid "Segments Received"
+msgstr ""
+
+#: netstat.rc:48
+msgid "Segments Sent"
+msgstr ""
+
+#: netstat.rc:49
+msgid "Segments Retransmitted"
+msgstr ""
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr ""

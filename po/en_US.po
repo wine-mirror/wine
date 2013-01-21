@@ -10424,6 +10424,42 @@ msgstr "Errors"
 msgid "Unknown protocols"
 msgstr "Unknown protocols"
 
+#: netstat.rc:41
+msgid "TCP Statistics for IPv4"
+msgstr "TCP Statistics for IPv4"
+
+#: netstat.rc:42
+msgid "Active Opens"
+msgstr "Active Opens"
+
+#: netstat.rc:43
+msgid "Passive Opens"
+msgstr "Passive Opens"
+
+#: netstat.rc:44
+msgid "Failed Connection Attempts"
+msgstr "Failed Connection Attempts"
+
+#: netstat.rc:45
+msgid "Reset Connections"
+msgstr "Reset Connections"
+
+#: netstat.rc:46
+msgid "Current Connections"
+msgstr "Current Connections"
+
+#: netstat.rc:47
+msgid "Segments Received"
+msgstr "Segments Received"
+
+#: netstat.rc:48
+msgid "Segments Sent"
+msgstr "Segments Sent"
+
+#: netstat.rc:49
+msgid "Segments Retransmitted"
+msgstr "Segments Retransmitted"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&New\tCtrl+N"

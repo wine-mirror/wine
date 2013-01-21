@@ -9917,6 +9917,50 @@ msgstr "Eraro"
 msgid "Unknown protocols"
 msgstr "Nekonata pordo.\n"
 
+#: netstat.rc:41
+msgid "TCP Statistics for IPv4"
+msgstr ""
+
+#: netstat.rc:42
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Active Opens"
+msgstr "LAN konektiĝo"
+
+#: netstat.rc:43
+msgid "Passive Opens"
+msgstr ""
+
+#: netstat.rc:44
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Failed Connection Attempts"
+msgstr "LAN konektiĝo"
+
+#: netstat.rc:45
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Reset Connections"
+msgstr "LAN konektiĝo"
+
+#: netstat.rc:46
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Current Connections"
+msgstr "LAN konektiĝo"
+
+#: netstat.rc:47
+msgid "Segments Received"
+msgstr ""
+
+#: netstat.rc:48
+msgid "Segments Sent"
+msgstr ""
+
+#: netstat.rc:49
+msgid "Segments Retransmitted"
+msgstr ""
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Nova\tStir+N"

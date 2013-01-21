@@ -10671,6 +10671,50 @@ msgstr "Eroare"
 msgid "Unknown protocols"
 msgstr "Eroare necunoscută.\n"
 
+#: netstat.rc:41
+msgid "TCP Statistics for IPv4"
+msgstr ""
+
+#: netstat.rc:42
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Active Opens"
+msgstr "Conexiune LAN"
+
+#: netstat.rc:43
+msgid "Passive Opens"
+msgstr ""
+
+#: netstat.rc:44
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Failed Connection Attempts"
+msgstr "Conexiune LAN"
+
+#: netstat.rc:45
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Reset Connections"
+msgstr "Conexiune LAN"
+
+#: netstat.rc:46
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Current Connections"
+msgstr "Conexiune LAN"
+
+#: netstat.rc:47
+msgid "Segments Received"
+msgstr ""
+
+#: netstat.rc:48
+msgid "Segments Sent"
+msgstr ""
+
+#: netstat.rc:49
+msgid "Segments Retransmitted"
+msgstr ""
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Nou\tCtrl+N"
