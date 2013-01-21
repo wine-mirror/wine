@@ -161,8 +161,9 @@ struct macdrv_window_state {
 };
 
 extern macdrv_window macdrv_create_cocoa_window(const struct macdrv_window_features* wf,
-        CGRect frame) DECLSPEC_HIDDEN;
+        CGRect frame, macdrv_event_queue queue) DECLSPEC_HIDDEN;
 extern void macdrv_destroy_cocoa_window(macdrv_window w) DECLSPEC_HIDDEN;
+extern void* macdrv_get_window_hwnd(macdrv_window w) DECLSPEC_HIDDEN;
 extern void macdrv_set_cocoa_window_features(macdrv_window w,
         const struct macdrv_window_features* wf) DECLSPEC_HIDDEN;
 extern void macdrv_set_cocoa_window_state(macdrv_window w,

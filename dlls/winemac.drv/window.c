@@ -478,6 +478,7 @@ static void sync_window_opacity(struct macdrv_win_data *data, COLORREF key, BYTE
  */
 static void create_cocoa_window(struct macdrv_win_data *data)
 {
+    struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
     WCHAR text[1024];
     struct macdrv_window_features wf;
     CGRect frame;
@@ -510,7 +511,7 @@ static void create_cocoa_window(struct macdrv_win_data *data)
     TRACE("creating %p window %s whole %s client %s\n", data->hwnd, wine_dbgstr_rect(&data->window_rect),
           wine_dbgstr_rect(&data->whole_rect), wine_dbgstr_rect(&data->client_rect));
 
-    data->cocoa_window = macdrv_create_cocoa_window(&wf, frame);
+    data->cocoa_window = macdrv_create_cocoa_window(&wf, frame, thread_data->queue);
     if (!data->cocoa_window) goto done;
 
     set_cocoa_window_properties(data);
@@ -565,7 +566,10 @@ static struct macdrv_win_data *macdrv_create_win_data(HWND hwnd, const RECT *win
     if (GetWindowThreadProcessId(hwnd, NULL) != GetCurrentThreadId()) return NULL;
 
     if (!(parent = GetAncestor(hwnd, GA_PARENT)))  /* desktop */
+    {
+        macdrv_init_thread_data();
         return NULL;
+    }
 
     /* don't create win data for HWND_MESSAGE windows */
     if (parent != GetDesktopWindow() && !GetAncestor(parent, GA_PARENT)) return NULL;

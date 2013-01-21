@@ -22,32 +22,119 @@
 #include "config.h"
 
 #include "macdrv.h"
+#include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 
 
+DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
+
+
 /***********************************************************************
- *           MACDRV initialisation routine
+ *              process_attach
  */
-BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
+static BOOL process_attach(void)
+{
+    if ((thread_data_tls_index = TlsAlloc()) == TLS_OUT_OF_INDEXES) return FALSE;
+
+    macdrv_err_on = ERR_ON(macdrv);
+    if (macdrv_start_cocoa_app())
+    {
+        ERR("Failed to start Cocoa app main loop\n");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *              thread_detach
+ */
+static void thread_detach(void)
+{
+    struct macdrv_thread_data *data = macdrv_thread_data();
+
+    if (data)
+    {
+        macdrv_destroy_event_queue(data->queue);
+        HeapFree(GetProcessHeap(), 0, data);
+    }
+}
+
+
+/***********************************************************************
+ *              set_queue_display_fd
+ *
+ * Store the event queue fd into the message queue
+ */
+static void set_queue_display_fd(int fd)
+{
+    HANDLE handle;
+    int ret;
+
+    if (wine_server_fd_to_handle(fd, GENERIC_READ | SYNCHRONIZE, 0, &handle))
+    {
+        MESSAGE("macdrv: Can't allocate handle for event queue fd\n");
+        ExitProcess(1);
+    }
+    SERVER_START_REQ(set_queue_fd)
+    {
+        req->handle = wine_server_obj_handle(handle);
+        ret = wine_server_call(req);
+    }
+    SERVER_END_REQ;
+    if (ret)
+    {
+        MESSAGE("macdrv: Can't store handle for event queue fd\n");
+        ExitProcess(1);
+    }
+    CloseHandle(handle);
+}
+
+
+/***********************************************************************
+ *              macdrv_init_thread_data
+ */
+struct macdrv_thread_data *macdrv_init_thread_data(void)
+{
+    struct macdrv_thread_data *data = macdrv_thread_data();
+
+    if (data) return data;
+
+    if (!(data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data))))
+    {
+        ERR("could not create data\n");
+        ExitProcess(1);
+    }
+
+    if (!(data->queue = macdrv_create_event_queue()))
+    {
+        ERR("macdrv: Can't create event queue.\n");
+        ExitProcess(1);
+    }
+
+    set_queue_display_fd(macdrv_get_event_queue_fd(data->queue));
+    TlsSetValue(thread_data_tls_index, data);
+
+    return data;
+}
+
+
+/***********************************************************************
+ *              DllMain
+ */
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
 {
     BOOL ret = TRUE;
 
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        macdrv_err_on = ERR_ON(macdrv);
-        if (macdrv_start_cocoa_app())
-        {
-            ERR("Failed to start Cocoa app main loop\n");
-            ret = FALSE;
-        }
+        ret = process_attach();
         break;
     case DLL_THREAD_DETACH:
-        /* do thread detach */
-        break;
-    case DLL_PROCESS_DETACH:
-        /* do detach */
+        thread_detach();
         break;
     }
     return ret;
