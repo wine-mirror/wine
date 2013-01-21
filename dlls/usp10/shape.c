@@ -142,6 +142,8 @@ static OPENTYPE_FEATURE_RECORD standard_features[] =
 
 static OPENTYPE_FEATURE_RECORD latin_features[] =
 {
+    { MS_MAKE_TAG('l','o','c','l'), 1},
+    { MS_MAKE_TAG('c','c','m','p'), 1},
     { MS_MAKE_TAG('l','i','g','a'), 1},
     { MS_MAKE_TAG('c','l','i','g'), 1},
 };
@@ -451,11 +453,11 @@ typedef struct ScriptShapeDataTag {
 static const ScriptShapeData ShapingData[] =
 {
     {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ latin_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
-    {{ latin_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
-    {{ latin_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
     {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ latin_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
     {{ arabic_features, 6}, {arabic_gpos_features, 4}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
     {{ arabic_features, 6}, {arabic_gpos_features, 4}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
     {{ hebrew_features, 2}, {hebrew_gpos_features, 2}, NULL, 0, ContextualShape_Hebrew, ShapeCharGlyphProp_Hebrew},
@@ -495,7 +497,7 @@ static const ScriptShapeData ShapingData[] =
     {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_telugu_features, MS_MAKE_TAG('m','l','m','2'), ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
     {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_telugu_features, MS_MAKE_TAG('m','l','m','2'), ContextualShape_Malayalam, NULL},
     {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ latin_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
     {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ myanmar_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ myanmar_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
@@ -530,7 +532,7 @@ static const ScriptShapeData ShapingData[] =
     {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ hebrew_features, 2}, {hebrew_gpos_features, 2}, NULL, 0, ContextualShape_Hebrew, NULL},
-    {{ latin_features, 2}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
     {{ thai_features, 1}, {thai_gpos_features, 3}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
 };
 
