@@ -5659,7 +5659,7 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     device->ps_version = shader_caps.ps_version;
     device->d3d_vshader_constantF = shader_caps.vs_uniform_count;
     device->d3d_pshader_constantF = shader_caps.ps_uniform_count;
-    device->vs_clipping = shader_caps.vs_clipping;
+    device->vs_clipping = shader_caps.wined3d_caps & WINED3D_SHADER_CAP_VS_CLIPPING;
 
     fragment_pipeline = adapter->fragment_pipe;
     fragment_pipeline->get_caps(&adapter->gl_info, &ffp_caps);

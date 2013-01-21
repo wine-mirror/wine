@@ -5062,7 +5062,9 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
         caps->ps_1x_max_value = 0.0f;
     }
 
-    caps->vs_clipping = use_nv_clip(gl_info);
+    caps->wined3d_caps = 0;
+    if (use_nv_clip(gl_info))
+        caps->wined3d_caps |= WINED3D_SHADER_CAP_VS_CLIPPING;
 }
 
 static BOOL shader_arb_color_fixup_supported(struct color_fixup_desc fixup)

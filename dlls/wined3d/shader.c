@@ -1549,7 +1549,7 @@ static void shader_none_get_caps(const struct wined3d_gl_info *gl_info, struct s
     caps->vs_uniform_count = 0;
     caps->ps_uniform_count = 0;
     caps->ps_1x_max_value = 0.0f;
-    caps->vs_clipping = FALSE;
+    caps->wined3d_caps = 0;
 }
 
 static BOOL shader_none_color_fixup_supported(struct color_fixup_desc fixup)

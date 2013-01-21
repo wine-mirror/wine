@@ -714,6 +714,8 @@ extern const struct wined3d_shader_frontend sm4_shader_frontend DECLSPEC_HIDDEN;
 
 typedef void (*SHADER_HANDLER)(const struct wined3d_shader_instruction *);
 
+#define WINED3D_SHADER_CAP_VS_CLIPPING      0x00000001
+
 struct shader_caps
 {
     UINT vs_version;
@@ -724,7 +726,7 @@ struct shader_caps
     DWORD ps_uniform_count;
     float ps_1x_max_value;
 
-    BOOL vs_clipping;
+    DWORD wined3d_caps;
 };
 
 enum tex_types

@@ -6205,7 +6205,7 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
      */
     caps->ps_1x_max_value = 8.0;
 
-    caps->vs_clipping = TRUE;
+    caps->wined3d_caps = WINED3D_SHADER_CAP_VS_CLIPPING;
 }
 
 static BOOL shader_glsl_color_fixup_supported(struct color_fixup_desc fixup)
