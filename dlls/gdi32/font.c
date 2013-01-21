@@ -3602,6 +3602,15 @@ BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
 }
 
 /***********************************************************************
+ *           GetFontResourceInfoW    (GDI32.@)
+ */
+BOOL WINAPI GetFontResourceInfoW( LPCWSTR str, LPDWORD size, PVOID buffer, DWORD type )
+{
+    FIXME("%s %p(%d) %p %d\n", debugstr_w(str), size, size ? *size : 0, buffer, type);
+    return FALSE;
+}
+
+/***********************************************************************
  *           GetTextCharset    (GDI32.@)
  */
 UINT WINAPI GetTextCharset(HDC hdc)

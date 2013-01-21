@@ -279,7 +279,7 @@
 @ stdcall GetFontData(long long long ptr long)
 @ stdcall GetFontLanguageInfo(long)
 @ stub GetFontResourceInfo
-@ stub GetFontResourceInfoW
+@ stdcall GetFontResourceInfoW(wstr ptr ptr long)
 @ stdcall GetFontUnicodeRanges(ptr ptr)
 @ stdcall GetGlyphIndicesA(long ptr long ptr long)
 @ stdcall GetGlyphIndicesW(long ptr long ptr long)
