@@ -1510,6 +1510,28 @@ static UINT get_local_package( const WCHAR *filename, WCHAR *localfile )
     return r;
 }
 
+UINT msi_set_original_database_property( MSIDATABASE *db, const WCHAR *package )
+{
+    UINT r;
+
+    if (UrlIsW( package, URLIS_URL ))
+        r = msi_set_property( db, szOriginalDatabase, package, -1 );
+    else if (package[0] == '#')
+        r = msi_set_property( db, szOriginalDatabase, db->path, -1 );
+    else
+    {
+        DWORD len;
+        WCHAR *path;
+
+        if (!(len = GetFullPathNameW( package, 0, NULL, NULL ))) return GetLastError();
+        if (!(path = msi_alloc( len * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
+        len = GetFullPathNameW( package, len, path, NULL );
+        r = msi_set_property( db, szOriginalDatabase, path, len );
+        msi_free( path );
+    }
+    return r;
+}
+
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 {
     static const WCHAR dotmsi[] = {'.','m','s','i',0};
@@ -1619,17 +1641,6 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         return r;
     }
     msi_set_property( package->db, szDatabase, db->path, -1 );
-
-    if( UrlIsW( szPackage, URLIS_URL ) )
-        msi_set_property( package->db, szOriginalDatabase, szPackage, -1 );
-    else if( szPackage[0] == '#' )
-        msi_set_property( package->db, szOriginalDatabase, db->path, -1 );
-    else
-    {
-        WCHAR fullpath[MAX_PATH];
-        DWORD len = GetFullPathNameW( szPackage, MAX_PATH, fullpath, NULL );
-        msi_set_property( package->db, szOriginalDatabase, fullpath, len );
-    }
     msi_set_context( package );
 
     while (1)
@@ -1655,6 +1666,12 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     {
         msi_clone_properties( package );
         msi_adjust_privilege_properties( package );
+    }
+    r = msi_set_original_database_property( package->db, szPackage );
+    if (r != ERROR_SUCCESS)
+    {
+        msiobj_release( &package->hdr );
+        return r;
     }
     if (gszLogFile)
         package->log_file = CreateFileW( gszLogFile, GENERIC_WRITE, FILE_SHARE_WRITE, NULL,
