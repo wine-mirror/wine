@@ -706,7 +706,7 @@ static void schan_imp_cf_release(const void *arg, void *ctx)
 }
 #endif
 
-SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session,
+SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session, HCERTSTORE cert_store,
                                                        PCCERT_CONTEXT *cert)
 {
     struct mac_session* s = (struct mac_session*)session;

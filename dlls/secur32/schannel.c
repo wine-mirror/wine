@@ -60,6 +60,7 @@ struct schan_context
 {
     schan_imp_session session;
     ULONG req_ctx_attr;
+    HCERTSTORE cert_store;
 };
 
 static struct schan_handle *schan_handle_table;
@@ -696,6 +697,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
         ctx = HeapAlloc(GetProcessHeap(), 0, sizeof(*ctx));
         if (!ctx) return SEC_E_INSUFFICIENT_MEMORY;
 
+        ctx->cert_store = NULL;
         handle = schan_alloc_handle(ctx, SCHAN_HANDLE_CTX);
         if (handle == SCHAN_INVALID_HANDLE)
         {
@@ -859,7 +861,14 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         case SECPKG_ATTR_REMOTE_CERT_CONTEXT:
         {
             PCCERT_CONTEXT *cert = buffer;
-            return schan_imp_get_session_peer_certificate(ctx->session, cert);
+
+            if (!ctx->cert_store) {
+                ctx->cert_store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+                if(!ctx->cert_store)
+                    return GetLastError();
+            }
+
+            return schan_imp_get_session_peer_certificate(ctx->session, ctx->cert_store, cert);
         }
         case SECPKG_ATTR_CONNECTION_INFO:
         {
@@ -1167,6 +1176,8 @@ static SECURITY_STATUS SEC_ENTRY schan_DeleteSecurityContext(PCtxtHandle context
     ctx = schan_free_handle(context_handle->dwLower, SCHAN_HANDLE_CTX);
     if (!ctx) return SEC_E_INVALID_HANDLE;
 
+    if (ctx->cert_store)
+        CertCloseStore(ctx->cert_store, 0);
     schan_imp_dispose_session(ctx->session);
     HeapFree(GetProcessHeap(), 0, ctx);
 
