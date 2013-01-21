@@ -4528,8 +4528,6 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
 {
     const struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    int vs_selected_mode;
-    int ps_selected_mode;
     struct shader_caps shader_caps;
     struct fragment_caps fragment_caps;
     DWORD ckey_caps, blit_caps, fx_caps, pal_caps;
@@ -4540,12 +4538,6 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
     if (adapter_idx >= wined3d->adapter_count)
         return WINED3DERR_INVALIDCALL;
 
-    select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
-
-    /* ------------------------------------------------
-       The following fields apply to both d3d8 and d3d9
-       ------------------------------------------------ */
-    /* Not quite true, but use h/w supported by opengl I suppose */
     caps->DeviceType = (device_type == WINED3D_DEVICE_TYPE_HAL) ? WINED3D_DEVICE_TYPE_HAL : WINED3D_DEVICE_TYPE_REF;
     caps->AdapterOrdinal           = adapter_idx;
 
@@ -4929,30 +4921,11 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
     /* Add shader misc caps. Only some of them belong to the shader parts of the pipeline */
     caps->PrimitiveMiscCaps |= fragment_caps.PrimitiveMiscCaps;
 
-    /* This takes care for disabling vertex shader or pixel shader caps while leaving the other one enabled.
-     * Ignore shader model capabilities if disabled in config
-     */
-    if (vs_selected_mode == SHADER_NONE)
-    {
-        TRACE("Vertex shader disabled in config, reporting version 0.0.\n");
-        caps->VertexShaderVersion          = 0;
-        caps->MaxVertexShaderConst         = 0;
-    }
-    else
-    {
-        caps->VertexShaderVersion = shader_caps.vs_version;
-        caps->MaxVertexShaderConst = shader_caps.vs_uniform_count;
-    }
+    caps->VertexShaderVersion = shader_caps.vs_version;
+    caps->MaxVertexShaderConst = shader_caps.vs_uniform_count;
 
-    if (ps_selected_mode == SHADER_NONE)
-    {
-        TRACE("Pixel shader disabled in config, reporting version 0.0.\n");
-        caps->PixelShaderVersion           = 0;
-        caps->PixelShader1xMaxValue        = 0.0f;
-    } else {
-        caps->PixelShaderVersion = shader_caps.ps_version;
-        caps->PixelShader1xMaxValue = shader_caps.ps_1x_max_value;
-    }
+    caps->PixelShaderVersion = shader_caps.ps_version;
+    caps->PixelShader1xMaxValue = shader_caps.ps_1x_max_value;
 
     caps->TextureOpCaps                    = fragment_caps.TextureOpCaps;
     caps->MaxTextureBlendStages            = fragment_caps.MaxTextureBlendStages;
