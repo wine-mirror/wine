@@ -266,7 +266,15 @@ static BOOL get_line( char *buf, int size, struct map_context *ctx )
     {
         if (ctx->pos > ctx->end) break;
         buf[i] = *ctx->pos++;
-        if (buf[i] == '\n')
+
+        /* \r\n -> \n */
+        if (buf[i] == '\r' && ctx->pos <= ctx->end && *ctx->pos == '\n')
+        {
+            ctx->pos++;
+            buf[i] = '\n';
+        }
+
+        if (buf[i] == '\n' || buf[i] == '\r')
         {
             i++;
             break;
@@ -394,9 +402,11 @@ static BOOL PSDRV_PPDGetNextTuple(struct map_context *ctx, PPDTuple *tuple)
 	    break;
     } while(1);
 
-    if(line[strlen(line)-1] != '\n') {
+    cp = line + strlen(line) - 1;
+    if (*cp != '\n' && *cp != '\r')
+    {
         ERR("Line too long.\n");
-	goto start;
+        goto start;
     }
 
     for(cp = line; !isspace(*cp) && *cp != ':'; cp++)
