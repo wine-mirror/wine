@@ -964,10 +964,7 @@ static void test_asyncWAVE(HWND hwnd)
     err = mciSendString("play mysound notify", NULL, 0, hwnd);
     ok(!err,"mci play returned %s\n", dbg_mcierr(err));
 
-    /* Give Wine's asynchronous thread time to start up.  Furthermore,
-     * it uses 3 buffers per second, so that the positions reported
-     * will be 333ms, 667ms etc. at best. */
-    Sleep(100); /* milliseconds */
+    Sleep(500); /* milliseconds */
 
     /* Do not query time format as string because result depends on locale! */
     parm.status.dwItem = MCI_STATUS_TIME_FORMAT;
@@ -981,11 +978,19 @@ static void test_asyncWAVE(HWND hwnd)
 
     err = mciSendString("status mysound position", buf, sizeof(buf), hwnd);
     ok(!err,"mci status position returned %s\n", dbg_mcierr(err));
-    ok(strcmp(buf,"2000"), "mci status position: %s, expected 2000\n", buf);
-    trace("position after Sleep: %sms\n",buf);
+    trace("position after Sleep: %sms\n", buf);
     p2 = atoi(buf);
-    /* Some machines reach 79ms only during the 100ms sleep. */
-    ok(p2>=67,"not enough time elapsed %ums\n",p2);
+    /* Check that the 2s sound plays at a normal pace, giving a wide margin to
+     * account for timing granularity and small delays.
+     */
+    todo_wine ok(400 <= p2 && p2 <= 600, "%ums is not in the expected 400-600ms range\n", p2);
+    /* Wine's asynchronous thread needs some time to start up. Furthermore, it
+     * uses 3 buffers per second, so that the positions reported will be 333ms,
+     * 667ms etc. at best, which is why it fails the above test. So add a
+     * second test specifically to prevent Wine from getting even worse.
+     * FIXME: To be removed when Wine is fixed and passes the above test.
+     */
+    ok(400 <= p2 && p2 <= 1000, "%ums is not even in the expected 400-1000ms range\n", p2);
     test_notification(hwnd,"play (nowait)",0);
 
     err = mciSendString("pause mysound wait", NULL, 0, hwnd);
