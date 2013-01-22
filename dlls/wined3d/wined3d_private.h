@@ -715,6 +715,7 @@ extern const struct wined3d_shader_frontend sm4_shader_frontend DECLSPEC_HIDDEN;
 typedef void (*SHADER_HANDLER)(const struct wined3d_shader_instruction *);
 
 #define WINED3D_SHADER_CAP_VS_CLIPPING      0x00000001
+#define WINED3D_SHADER_CAP_SRGB_WRITE       0x00000002
 
 struct shader_caps
 {
@@ -1175,6 +1176,7 @@ struct StateEntryTemplate
 };
 
 #define WINED3D_FRAGMENT_CAP_PROJ_CONTROL   0x00000001
+#define WINED3D_FRAGMENT_CAP_SRGB_WRITE     0x00000002
 
 struct fragment_caps
 {

@@ -5062,7 +5062,7 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
         caps->ps_1x_max_value = 0.0f;
     }
 
-    caps->wined3d_caps = 0;
+    caps->wined3d_caps = WINED3D_SHADER_CAP_SRGB_WRITE;
     if (use_nv_clip(gl_info))
         caps->wined3d_caps |= WINED3D_SHADER_CAP_VS_CLIPPING;
 }
@@ -5738,7 +5738,8 @@ static void arbfp_free(struct wined3d_device *device)
 
 static void arbfp_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
 {
-    caps->wined3d_caps = WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
+    caps->wined3d_caps = WINED3D_FRAGMENT_CAP_PROJ_CONTROL
+            | WINED3D_FRAGMENT_CAP_SRGB_WRITE;
     caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP;
     caps->TextureOpCaps =  WINED3DTEXOPCAPS_DISABLE                     |
                            WINED3DTEXOPCAPS_SELECTARG1                  |

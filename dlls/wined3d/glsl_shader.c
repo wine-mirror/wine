@@ -6205,7 +6205,11 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
      */
     caps->ps_1x_max_value = 8.0;
 
-    caps->wined3d_caps = WINED3D_SHADER_CAP_VS_CLIPPING;
+    /* Ideally we'd only set caps like sRGB writes here if supported by both
+     * the shader backend and the fragment pipe, but we can get called before
+     * shader_glsl_alloc(). */
+    caps->wined3d_caps = WINED3D_SHADER_CAP_VS_CLIPPING
+            | WINED3D_SHADER_CAP_SRGB_WRITE;
 }
 
 static BOOL shader_glsl_color_fixup_supported(struct color_fixup_desc fixup)
@@ -6392,7 +6396,8 @@ static void glsl_fragment_pipe_enable(const struct wined3d_gl_info *gl_info, BOO
 
 static void glsl_fragment_pipe_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
 {
-    caps->wined3d_caps = WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
+    caps->wined3d_caps = WINED3D_FRAGMENT_CAP_PROJ_CONTROL
+            | WINED3D_FRAGMENT_CAP_SRGB_WRITE;
     caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP;
     caps->TextureOpCaps = WINED3DTEXOPCAPS_DISABLE
             | WINED3DTEXOPCAPS_SELECTARG1

@@ -3539,11 +3539,14 @@ static BOOL CheckSrgbWriteCapability(const struct wined3d_adapter *adapter, cons
      * Note Windows drivers (at least on the Geforce 8800) also offer this on R5G6B5. */
     if (format->flags & WINED3DFMT_FLAG_SRGB_WRITE)
     {
-        int vs_selected_mode;
-        int ps_selected_mode;
-        select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
+        struct fragment_caps fragment_caps;
+        struct shader_caps shader_caps;
 
-        if ((ps_selected_mode == SHADER_ARB) || (ps_selected_mode == SHADER_GLSL))
+        adapter->fragment_pipe->get_caps(&adapter->gl_info, &fragment_caps);
+        adapter->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
+
+        if ((fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_SRGB_WRITE)
+                && (shader_caps.wined3d_caps & WINED3D_SHADER_CAP_SRGB_WRITE))
         {
             TRACE("[OK]\n");
             return TRUE;
