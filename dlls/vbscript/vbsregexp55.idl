@@ -122,7 +122,7 @@ library VBScript_RegExp_55
         [id(DISPID_REGEXP_REPLACE)]
         HRESULT Replace(
                 [in] BSTR sourceString,
-                [in] VARIANT *replaceVar,
+                [in] VARIANT replaceVar,
                 [out, retval] BSTR *pDestString);
     }
 
