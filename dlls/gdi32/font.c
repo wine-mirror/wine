@@ -358,7 +358,7 @@ static BOOL get_char_positions_indices( DC *dc, const WORD *indices, INT count, 
     dev = GET_DC_PHYSDEV( dc, pGetTextMetrics );
     dev->funcs->pGetTextMetrics( dev, &tm );
 
-    dev = GET_DC_PHYSDEV( dc, pGetTextExtentExPoint );
+    dev = GET_DC_PHYSDEV( dc, pGetTextExtentExPointI );
     if (!dev->funcs->pGetTextExtentExPointI( dev, indices, count, dx )) return FALSE;
 
     if (dc->breakExtra || dc->breakRem)
