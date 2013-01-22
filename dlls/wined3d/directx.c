@@ -3527,11 +3527,6 @@ static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
     return FALSE;
 }
 
-static BOOL CheckSrgbReadCapability(const struct wined3d_adapter *adapter, const struct wined3d_format *format)
-{
-    return format->flags & WINED3DFMT_FLAG_SRGB_READ;
-}
-
 /* Check if a format support blending in combination with pixel shaders */
 static BOOL CheckPostPixelShaderBlendingCapability(const struct wined3d_adapter *adapter,
         const struct wined3d_format *format)
@@ -3998,7 +3993,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_SRGBREAD)
             {
-                if (!CheckSrgbReadCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_SRGB_READ))
                 {
                     TRACE("[FAILED] - No sRGB read support.\n");
                     return WINED3DERR_NOTAVAILABLE;
@@ -4164,7 +4159,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_SRGBREAD)
             {
-                if (!CheckSrgbReadCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_SRGB_READ))
                 {
                     TRACE("[FAILED] - No sRGB read support.\n");
                     return WINED3DERR_NOTAVAILABLE;
@@ -4332,7 +4327,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_SRGBREAD)
             {
-                if (!CheckSrgbReadCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_SRGB_READ))
                 {
                     TRACE("[FAILED] - No sRGB read support.\n");
                     return WINED3DERR_NOTAVAILABLE;
