@@ -3532,31 +3532,6 @@ static BOOL CheckSrgbReadCapability(const struct wined3d_adapter *adapter, const
     return format->flags & WINED3DFMT_FLAG_SRGB_READ;
 }
 
-static BOOL CheckSrgbWriteCapability(const struct wined3d_adapter *adapter, const struct wined3d_format *format)
-{
-    /* Only offer SRGB writing on X8R8G8B8/A8R8G8B8 when we use ARB or GLSL shaders as we are
-     * doing the color fixup in shaders.
-     * Note Windows drivers (at least on the Geforce 8800) also offer this on R5G6B5. */
-    if (format->flags & WINED3DFMT_FLAG_SRGB_WRITE)
-    {
-        struct fragment_caps fragment_caps;
-        struct shader_caps shader_caps;
-
-        adapter->fragment_pipe->get_caps(&adapter->gl_info, &fragment_caps);
-        adapter->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
-
-        if ((fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_SRGB_WRITE)
-                && (shader_caps.wined3d_caps & WINED3D_SHADER_CAP_SRGB_WRITE))
-        {
-            TRACE("[OK]\n");
-            return TRUE;
-        }
-    }
-
-    TRACE("[FAILED] - sRGB writes not supported by format %s.\n", debug_d3dformat(format->id));
-    return FALSE;
-}
-
 /* Check if a format support blending in combination with pixel shaders */
 static BOOL CheckPostPixelShaderBlendingCapability(const struct wined3d_adapter *adapter,
         const struct wined3d_format *format)
@@ -4033,7 +4008,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_SRGBWRITE)
             {
-                if (!CheckSrgbWriteCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_SRGB_WRITE))
                 {
                     TRACE("[FAILED] - No sRGB write support.\n");
                     return WINED3DERR_NOTAVAILABLE;
@@ -4199,7 +4174,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_SRGBWRITE)
             {
-                if (!CheckSrgbWriteCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_SRGB_WRITE))
                 {
                     TRACE("[FAILED] - No sRGB write support.\n");
                     return WINED3DERR_NOTAVAILABLE;
@@ -4367,7 +4342,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_SRGBWRITE)
             {
-                if (!CheckSrgbWriteCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_SRGB_WRITE))
                 {
                     TRACE("[FAILED] - No sRGB write support.\n");
                     return WINED3DERR_NOTAVAILABLE;
@@ -5546,7 +5521,7 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
         return FALSE;
     }
 
-    if (!initPixelFormats(&adapter->gl_info, adapter->driver_info.vendor))
+    if (!wined3d_adapter_init_format_info(adapter))
     {
         ERR("Failed to initialize GL format info.\n");
         WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);

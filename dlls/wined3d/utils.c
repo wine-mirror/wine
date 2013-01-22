@@ -1243,9 +1243,17 @@ static void init_format_fbo_compat_info(struct wined3d_gl_info *gl_info)
         gl_info->fbo_ops.glDeleteFramebuffers(1, &fbo);
 }
 
-static BOOL init_format_texture_info(struct wined3d_gl_info *gl_info)
+static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct wined3d_gl_info *gl_info)
 {
+    struct fragment_caps fragment_caps;
+    struct shader_caps shader_caps;
+    BOOL srgb_write;
     unsigned int i;
+
+    adapter->fragment_pipe->get_caps(gl_info, &fragment_caps);
+    adapter->shader_backend->shader_get_caps(gl_info, &shader_caps);
+    srgb_write = (fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_SRGB_WRITE)
+            && (shader_caps.wined3d_caps & WINED3D_SHADER_CAP_SRGB_WRITE);
 
     for (i = 0; i < sizeof(format_texture_info) / sizeof(*format_texture_info); ++i)
     {
@@ -1292,6 +1300,9 @@ static BOOL init_format_texture_info(struct wined3d_gl_info *gl_info)
                 format->glInternal = format->glGammaInternal;
             }
         }
+
+        if ((format->flags & WINED3DFMT_FLAG_SRGB_WRITE) && !srgb_write)
+            format->flags &= ~WINED3DFMT_FLAG_SRGB_WRITE;
 
         /* Texture conversion stuff */
         format->convert = format_texture_info[i].convert;
@@ -1645,17 +1656,19 @@ BOOL initPixelFormatsNoGL(struct wined3d_gl_info *gl_info)
 }
 
 /* Context activation is done by the caller. */
-BOOL initPixelFormats(struct wined3d_gl_info *gl_info, enum wined3d_pci_vendor vendor)
+BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter)
 {
+    struct wined3d_gl_info *gl_info = &adapter->gl_info;
+
     if (!init_format_base_info(gl_info)) return FALSE;
 
     if (!init_format_block_info(gl_info)) goto fail;
-    if (!init_format_texture_info(gl_info)) goto fail;
+    if (!init_format_texture_info(adapter, gl_info)) goto fail;
     if (!init_format_vertex_info(gl_info)) goto fail;
 
     apply_format_fixups(gl_info);
     init_format_fbo_compat_info(gl_info);
-    init_format_filter_info(gl_info, vendor);
+    init_format_filter_info(gl_info, adapter->driver_info.vendor);
 
     return TRUE;
 
