@@ -588,21 +588,20 @@ static BOOL set_devmode( HANDLE printer, PSDRV_DEVMODE *dm )
     return SetPrinterW( printer, 9, (BYTE *)&info, 0 );
 }
 
-static char *get_ppd_filename( HANDLE printer )
+static WCHAR *get_ppd_filename( HANDLE printer )
 {
     DWORD needed;
     DRIVER_INFO_2W *info;
-    char *unixname;
+    WCHAR *name;
 
     GetPrinterDriverW( printer, NULL, 2, NULL, 0, &needed );
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
     info = HeapAlloc( GetProcessHeap(), 0, needed );
     if (!info) return NULL;
     GetPrinterDriverW( printer, NULL, 2, (BYTE*)info, needed, &needed );
-    unixname = wine_get_unix_file_name( info->pDataFile );
-    HeapFree( GetProcessHeap(), 0, info );
-
-    return unixname;
+    name = (WCHAR *)info;
+    memmove( name, info->pDataFile, (strlenW( info->pDataFile ) + 1) * sizeof(WCHAR) );
+    return name;
 }
 
 static struct list printer_list = LIST_INIT( printer_list );
@@ -616,7 +615,8 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     FONTNAME *font;
     const AFM *afm;
     HANDLE hPrinter = 0;
-    char *ppd_filename = NULL, *nameA = NULL;
+    WCHAR *ppd_filename = NULL;
+    char *nameA = NULL;
     BOOL using_default_devmode = FALSE;
     int len;
 
@@ -652,7 +652,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     pi->ppd = PSDRV_ParsePPD( ppd_filename, hPrinter );
     if (!pi->ppd)
     {
-        WARN( "Couldn't parse PPD file '%s'\n", ppd_filename );
+        WARN( "Couldn't parse PPD file %s\n", debugstr_w(ppd_filename) );
         goto fail;
     }
 

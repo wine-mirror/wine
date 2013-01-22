@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <locale.h>
+#include <assert.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
@@ -42,6 +43,10 @@ char	*value;
 char	*valtrans;
 } PPDTuple;
 
+struct map_context
+{
+    const char *ptr, *pos, *end;
+};
 
 /* map of page names in ppd file to Windows paper constants */
 
@@ -236,9 +241,10 @@ static char *PSDRV_PPDDecodeHex(char *str)
  *		PSDRV_PPDGetTransValue
  *
  */
-static BOOL PSDRV_PPDGetTransValue(char *start, PPDTuple *tuple)
+static BOOL PSDRV_PPDGetTransValue(const char *start, PPDTuple *tuple)
 {
-    char *buf, *end;
+    char *buf;
+    const char *end;
 
     end = strpbrk(start, "\r\n");
     if(end == start) return FALSE;
@@ -251,6 +257,24 @@ static BOOL PSDRV_PPDGetTransValue(char *start, PPDTuple *tuple)
     return TRUE;
 }
 
+static BOOL get_line( char *buf, int size, struct map_context *ctx )
+{
+    int i;
+    if (ctx->pos > ctx->end) return FALSE;
+
+    for (i = 0; i < size - 1; i++)
+    {
+        if (ctx->pos > ctx->end) break;
+        buf[i] = *ctx->pos++;
+        if (buf[i] == '\n')
+        {
+            i++;
+            break;
+        }
+    }
+    buf[i] = '\0';
+    return TRUE;
+}
 
 /***********************************************************************
  *
@@ -259,38 +283,30 @@ static BOOL PSDRV_PPDGetTransValue(char *start, PPDTuple *tuple)
  * Passed string that should be surrounded by `"'s, return string alloced
  * from process heap.
  */
-static BOOL PSDRV_PPDGetInvocationValue(FILE *fp, char *pos, PPDTuple *tuple)
+static BOOL PSDRV_PPDGetInvocationValue(struct map_context *ctx, PPDTuple *tuple)
 {
-    char *start, *end, *buf;
-    char line[257];
-    int len;
+    const char *start;
+    char *buf, line[257];
 
-    start = pos + 1;
-    buf = HeapAlloc( PSDRV_Heap, 0, strlen(start) + 1 );
-    len = 0;
-    do {
-        end = strchr(start, '"');
-	if(end) {
-	    buf = HeapReAlloc( PSDRV_Heap, 0, buf,
-			       len + (end - start) + 1 );
-	    memcpy(buf + len, start, end - start);
-	    *(buf + len + (end - start)) = '\0';
-	    tuple->value = buf;
-	    start = strchr(end, '/');
-	    if(start)
-	        return PSDRV_PPDGetTransValue(start + 1, tuple);
-	    return TRUE;
-	} else {
-	    int sl = strlen(start);
-	    buf = HeapReAlloc( PSDRV_Heap, 0, buf, len + sl + 1 );
-	    strcpy(buf + len, start);
-	    len += sl;
-	}
-    } while( fgets((start = line), sizeof(line), fp) );
+    assert( *ctx->pos == '"' );
 
-    tuple->value = NULL;
-    HeapFree( PSDRV_Heap, 0, buf );
-    return FALSE;
+    ctx->pos++;
+    for (start = ctx->pos; ctx->pos <= ctx->end; ctx->pos++)
+        if (*ctx->pos == '"') break;
+    if (ctx->pos > ctx->end) return FALSE;
+    ctx->pos++;
+
+    buf = HeapAlloc( PSDRV_Heap, 0, ctx->pos - start );
+    memcpy( buf, start, ctx->pos - start - 1 );
+    buf[ctx->pos - start  - 1] = '\0';
+    tuple->value = buf;
+
+    if (get_line( line, sizeof(line), ctx ))
+    {
+        start = strchr( line, '/' );
+        if (start) return PSDRV_PPDGetTransValue( start + 1, tuple );
+    }
+    return TRUE;
 }
 
 
@@ -301,11 +317,11 @@ static BOOL PSDRV_PPDGetInvocationValue(FILE *fp, char *pos, PPDTuple *tuple)
  * Passed string that should be surrounded by `"'s. Expand <xx> as hex
  * return string alloced from process heap.
  */
-static BOOL PSDRV_PPDGetQuotedValue(FILE *fp, char *pos, PPDTuple *tuple)
+static BOOL PSDRV_PPDGetQuotedValue(struct map_context *ctx, PPDTuple *tuple)
 {
     char *buf;
 
-    if(!PSDRV_PPDGetInvocationValue(fp, pos, tuple))
+    if(!PSDRV_PPDGetInvocationValue(ctx, tuple))
         return FALSE;
     buf = PSDRV_PPDDecodeHex(tuple->value);
     HeapFree(PSDRV_Heap, 0, tuple->value);
@@ -358,10 +374,11 @@ static BOOL PSDRV_PPDGetSymbolValue(char *pos, PPDTuple *tuple)
  * Gets the next Keyword Option Value tuple from the file. Allocs space off
  * the process heap which should be free()ed by the caller if not needed.
  */
-static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
+static BOOL PSDRV_PPDGetNextTuple(struct map_context *ctx, PPDTuple *tuple)
 {
     char line[257], *opt, *cp, *trans, *endkey;
     BOOL gotoption;
+    struct map_context save;
 
  start:
 
@@ -370,7 +387,8 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
     memset(tuple, 0, sizeof(*tuple));
 
     do {
-        if(!fgets(line, sizeof(line), fp))
+        save = *ctx;
+        if(!get_line(line, sizeof(line), ctx))
             return FALSE;
 	if(line[0] == '*' && line[1] != '%' && strncmp(line, "*End", 4))
 	    break;
@@ -435,11 +453,13 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
 
     switch(*cp) {
     case '"':
+        /* update the context pos so that it points to the opening quote */
+        ctx->pos = save.pos + (cp - line);
         if( (!gotoption && strncmp(tuple->key, "*?", 2) ) ||
 	     !strncmp(tuple->key, "*JCL", 4))
-	    PSDRV_PPDGetQuotedValue(fp, cp, tuple);
+	    PSDRV_PPDGetQuotedValue(ctx, tuple);
         else
-	    PSDRV_PPDGetInvocationValue(fp, cp, tuple);
+	    PSDRV_PPDGetInvocationValue(ctx, tuple);
 	break;
 
     case '^':
@@ -622,32 +642,62 @@ static char *get_ppd_override( HANDLE printer, const char *value )
     return data;
 }
 
+static BOOL map_file( const WCHAR *filename, struct map_context *c )
+{
+    HANDLE file, mapping;
+    LARGE_INTEGER size;
+
+    file = CreateFileW( filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+    if (file == INVALID_HANDLE_VALUE) return FALSE;
+
+    if (!GetFileSizeEx( file, &size ) || size.u.HighPart)
+    {
+        CloseHandle( file );
+        return FALSE;
+    }
+
+    mapping = CreateFileMappingW( file, NULL, PAGE_READONLY, 0, 0, NULL );
+    CloseHandle( file );
+    if (!mapping) return FALSE;
+
+    c->pos = c->ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
+    c->end = c->ptr + size.u.LowPart - 1;
+    CloseHandle( mapping );
+    return TRUE;
+}
+
+static void unmap_file( struct map_context *c )
+{
+    UnmapViewOfFile( c->ptr );
+}
+
 /***********************************************************************
  *
  *		PSDRV_ParsePPD
  *
  *
  */
-PPD *PSDRV_ParsePPD( char *fname, HANDLE printer )
+PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
 {
-    FILE *fp;
     PPD *ppd;
     PPDTuple tuple;
     char *default_pagesize = NULL, *default_duplex = NULL;
     char *def_pagesize_override = NULL, *def_duplex_override = NULL;
     PAGESIZE *page, *page_cursor2;
+    struct map_context c;
 
-    TRACE("file '%s'\n", fname);
+    TRACE("file %s\n", debugstr_w(fname));
 
-    if((fp = fopen(fname, "r")) == NULL) {
-        WARN("Couldn't open ppd file '%s'\n", fname);
+    if (!map_file( fname, &c ))
+    {
+        WARN("Couldn't open ppd file %s\n", debugstr_w(fname));
         return NULL;
     }
 
     ppd = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*ppd));
     if(!ppd) {
         ERR("Unable to allocate memory for ppd\n");
-	fclose(fp);
+	unmap_file( &c );
 	return NULL;
     }
 
@@ -671,12 +721,12 @@ PPD *PSDRV_ParsePPD( char *fname, HANDLE printer )
     if (!PSDRV_AddSlot( ppd, NULL, "Automatically Select", NULL, DMBIN_FORMSOURCE ))
     {
 	HeapFree (PSDRV_Heap, 0, ppd);
-	fclose(fp);
+	unmap_file( &c );
 	return NULL;
     }
 
-    while( PSDRV_PPDGetNextTuple(fp, &tuple)) {
-
+    while (PSDRV_PPDGetNextTuple( &c, &tuple ))
+    {
 	if(!strcmp("*NickName", tuple.key)) {
 	    ppd->NickName = tuple.value;
 	    tuple.value = NULL;
@@ -1044,6 +1094,6 @@ PPD *PSDRV_ParsePPD( char *fname, HANDLE printer )
 		  debugstr_a(slot->InvocationString));
     }
 
-    fclose(fp);
+    unmap_file( &c );
     return ppd;
 }
