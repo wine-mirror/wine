@@ -69,6 +69,7 @@ static const WCHAR utf8W[] = {'U','T','F','-','8',0};
 
 static const WCHAR dblquoteW[] = {'\"',0};
 static const WCHAR quoteW[] = {'\'',0};
+static const WCHAR gtW[] = {'>',0};
 
 struct xml_encoding_data
 {
@@ -299,6 +300,14 @@ static void reader_free_strvalues(xmlreader *reader)
         reader_free_strvalue(reader, type);
 }
 
+/* This helper should only be used to test if strings are the same,
+   it doesn't try to sort. */
+static inline int strval_eq(const strval *str1, const strval *str2)
+{
+    if (str1->len != str2->len) return 0;
+    return !memcmp(str1->str, str2->str, str1->len*sizeof(WCHAR));
+}
+
 static void reader_clear_elements(xmlreader *reader)
 {
     struct element *elem, *elem2;
@@ -336,6 +345,18 @@ static HRESULT reader_push_element(xmlreader *reader, strval *qname)
 
     list_add_head(&reader->elements, &elem->entry);
     return hr;
+}
+
+static void reader_pop_element(xmlreader *reader)
+{
+    struct element *elem = LIST_ENTRY(list_head(&reader->elements), struct element, entry);
+
+    if (elem)
+    {
+        list_remove(&elem->entry);
+        reader_free_strvalued(reader, &elem->qname);
+        reader_free(reader, elem);
+    }
 }
 
 /* always make a copy, cause strings are supposed to be null terminated */
@@ -1465,7 +1486,6 @@ static HRESULT reader_parse_qname(xmlreader *reader, strval *prefix, strval *loc
 static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *local, strval *qname, int *empty)
 {
     static const WCHAR endW[] = {'/','>',0};
-    static const WCHAR gtW[] = {'>',0};
     HRESULT hr;
 
     /* skip '<' */
@@ -1477,7 +1497,12 @@ static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *loca
     reader_skipspaces(reader);
 
     /* empty element */
-    if ((*empty = !reader_cmp(reader, endW))) return S_OK;
+    if ((*empty = !reader_cmp(reader, endW)))
+    {
+        /* skip '/>' */
+        reader_skipn(reader, 2);
+        return S_OK;
+    }
 
     /* got a start tag */
     if (!reader_cmp(reader, gtW))
@@ -1528,8 +1553,35 @@ static HRESULT reader_parse_element(xmlreader *reader)
 /* [13 NS] ETag ::= '</' QName S? '>' */
 static HRESULT reader_parse_endtag(xmlreader *reader)
 {
-    FIXME("ETag parsing not implemented\n");
-    return E_NOTIMPL;
+    strval prefix, local, qname;
+    struct element *elem;
+    HRESULT hr;
+
+    /* skip '</' */
+    reader_skipn(reader, 2);
+
+    hr = reader_parse_qname(reader, &prefix, &local, &qname);
+    if (FAILED(hr)) return hr;
+
+    reader_skipspaces(reader);
+
+    if (reader_cmp(reader, gtW)) return WC_E_GREATERTHAN;
+
+    /* skip '>' */
+    reader_skipn(reader, 1);
+
+    /* Element stack should never be empty at this point, cause we shouldn't get to
+       content parsing if it's empty. */
+    elem = LIST_ENTRY(list_head(&reader->elements), struct element, entry);
+    if (!strval_eq(&elem->qname, &qname)) return WC_E_ELEMENTMATCH;
+
+    reader_pop_element(reader);
+
+    reader->nodetype = XmlNodeType_EndElement;
+    reader_set_strvalue(reader, StringValue_LocalName, &local);
+    reader_set_strvalue(reader, StringValue_QualifiedName, &qname);
+
+    return S_OK;
 }
 
 /* [43] content ::= CharData? ((element | Reference | CDSect | PI | Comment) CharData?)* */
