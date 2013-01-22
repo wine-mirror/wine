@@ -46,11 +46,109 @@ static unsigned arm64_get_addr(HANDLE hThread, const CONTEXT* ctx,
     }
 }
 
+#ifdef __aarch64__
+enum st_mode {stm_start, stm_arm64, stm_done};
+
+/* indexes in Reserved array */
+#define __CurrentModeCount      0
+
+#define curr_mode   (frame->Reserved[__CurrentModeCount] & 0x0F)
+#define curr_count  (frame->Reserved[__CurrentModeCount] >> 4)
+
+#define set_curr_mode(m) {frame->Reserved[__CurrentModeCount] &= ~0x0F; frame->Reserved[__CurrentModeCount] |= (m & 0x0F);}
+#define inc_curr_count() (frame->Reserved[__CurrentModeCount] += 0x10)
+
+/* fetch_next_frame()
+ *
+ * modify (at least) context.Pc using unwind information
+ * either out of debug info (dwarf), or simple Lr trace
+ */
+static BOOL fetch_next_frame(struct cpu_stack_walk* csw,
+                               CONTEXT* context, DWORD_PTR curr_pc)
+{
+    DWORD_PTR               xframe;
+    DWORD_PTR               oldReturn = context->X30;
+
+    if (dwarf2_virtual_unwind(csw, curr_pc, context, &xframe))
+    {
+        context->Sp = xframe;
+        context->Pc = oldReturn;
+        return TRUE;
+    }
+
+    if (context->Pc == context->X30) return FALSE;
+    context->Pc = oldReturn;
+
+    return TRUE;
+}
+
 static BOOL arm64_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CONTEXT* context)
 {
-    FIXME("not done for ARM64\n");
+    unsigned deltapc = curr_count <= 1 ? 0 : 4;
+
+    /* sanity check */
+    if (curr_mode >= stm_done) return FALSE;
+
+    TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%s\n",
+          wine_dbgstr_addr(&frame->AddrPC),
+          wine_dbgstr_addr(&frame->AddrFrame),
+          wine_dbgstr_addr(&frame->AddrReturn),
+          wine_dbgstr_addr(&frame->AddrStack),
+          curr_mode == stm_start ? "start" : "ARM64",
+          wine_dbgstr_longlong(curr_count));
+
+    if (curr_mode == stm_start)
+    {
+        /* Init done */
+        set_curr_mode(stm_arm64);
+        frame->AddrReturn.Mode = frame->AddrStack.Mode = AddrModeFlat;
+        /* don't set up AddrStack on first call. Either the caller has set it up, or
+         * we will get it in the next frame
+         */
+        memset(&frame->AddrBStore, 0, sizeof(frame->AddrBStore));
+    }
+    else
+    {
+        if (context->Sp != frame->AddrStack.Offset) FIXME("inconsistent Stack Pointer\n");
+        if (context->Pc != frame->AddrPC.Offset) FIXME("inconsistent Program Counter\n");
+
+        if (frame->AddrReturn.Offset == 0) goto done_err;
+        if (!fetch_next_frame(csw, context, frame->AddrPC.Offset - deltapc))
+            goto done_err;
+    }
+
+    memset(&frame->Params, 0, sizeof(frame->Params));
+
+    /* set frame information */
+    frame->AddrStack.Offset = context->Sp;
+    frame->AddrReturn.Offset = context->X30;
+    frame->AddrFrame.Offset = context->X29;
+    frame->AddrPC.Offset = context->Pc;
+
+    frame->Far = TRUE;
+    frame->Virtual = TRUE;
+    inc_curr_count();
+
+    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%s FuncTable=%p\n",
+          wine_dbgstr_addr(&frame->AddrPC),
+          wine_dbgstr_addr(&frame->AddrFrame),
+          wine_dbgstr_addr(&frame->AddrReturn),
+          wine_dbgstr_addr(&frame->AddrStack),
+          curr_mode == stm_start ? "start" : "ARM",
+          wine_dbgstr_longlong(curr_count),
+          frame->FuncTableEntry);
+
+    return TRUE;
+done_err:
+    set_curr_mode(stm_done);
     return FALSE;
 }
+#else
+static BOOL arm64_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CONTEXT* context)
+{
+    return FALSE;
+}
+#endif
 
 static unsigned arm64_map_dwarf_register(unsigned regno)
 {
