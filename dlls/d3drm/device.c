@@ -904,10 +904,8 @@ static HRESULT WINAPI IDirect3DRMDevice3Impl_GetDirect3DDevice2(IDirect3DRMDevic
 }
 
 /*** IDirect3DRMDevice3 methods ***/
-static HRESULT WINAPI IDirect3DRMDevice3Impl_FindPreferredTextureFormat(IDirect3DRMDevice3* iface,
-                                                                        DWORD bitdepths,
-                                                                        DWORD flags,
-                                                                        LPDDPIXELFORMAT lpDDPF)
+static HRESULT WINAPI IDirect3DRMDevice3Impl_FindPreferredTextureFormat(IDirect3DRMDevice3 *iface,
+        DWORD bitdepths, DWORD flags, DDPIXELFORMAT *lpDDPF)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice3(iface);
 
