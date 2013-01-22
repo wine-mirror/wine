@@ -157,8 +157,9 @@ typedef struct IDirect3DRMClippedVisual   *LPDIRECT3DRMCLIPPEDVISUAL, **LPLPDIRE
 typedef void (__cdecl *D3DRMOBJECTCALLBACK)(LPDIRECT3DRMOBJECT obj, LPVOID arg);
 typedef void (__cdecl *D3DRMFRAMEMOVECALLBACK)(LPDIRECT3DRMFRAME obj, LPVOID arg, D3DVALUE delta);
 typedef void (__cdecl *D3DRMFRAME3MOVECALLBACK)(LPDIRECT3DRMFRAME3 obj, LPVOID arg, D3DVALUE delta);
-typedef void (__cdecl *D3DRMUPDATECALLBACK)(LPDIRECT3DRMDEVICE obj, LPVOID arg, int, LPD3DRECT);
-typedef void (__cdecl *D3DRMDEVICE3UPDATECALLBACK)(LPDIRECT3DRMDEVICE3 obj, LPVOID arg, int, LPD3DRECT);
+typedef void (__cdecl *D3DRMUPDATECALLBACK)(struct IDirect3DRMDevice *device, void *ctx, int count, D3DRECT *rects);
+typedef void (__cdecl *D3DRMDEVICE3UPDATECALLBACK)(struct IDirect3DRMDevice3 *device, void *ctx,
+        int count, D3DRECT *rects);
 typedef int (__cdecl *D3DRMUSERVISUALCALLBACK)(LPDIRECT3DRMUSERVISUAL obj, LPVOID arg,
     D3DRMUSERVISUALREASON reason, LPDIRECT3DRMDEVICE dev, LPDIRECT3DRMVIEWPORT view);
 typedef HRESULT (__cdecl *D3DRMLOADTEXTURECALLBACK)(char *tex_name, void *arg, LPDIRECT3DRMTEXTURE *);
