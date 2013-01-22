@@ -361,6 +361,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
     else
     {
       ME_Cursor cursor;
+      ME_UndoItem *undo;
       int nCharsToDelete = min(nChars, c.nOffset);
       int i;
 
@@ -378,25 +379,15 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
         nCharsToDelete, nChars, c.nOffset,
         debugstr_w(run->strText->szData), run->strText->nLen);
 
-      if (!c.nOffset && run->strText->nLen == nCharsToDelete)
+      undo = ME_AddUndoItem(editor, diUndoInsertRun, c.pRun);
+      if (undo)
       {
-        /* undo = reinsert whole run */
-        /* nOfs is a character offset (from the start of the document
-           to the current (deleted) run */
-        ME_UndoItem *pUndo = ME_AddUndoItem(editor, diUndoInsertRun, c.pRun);
-        if (pUndo)
-          pUndo->di.member.run.nCharOfs = nOfs+nChars;
+          /* nOfs is a character offset (from the start of the document
+             to the current (deleted) run */
+          undo->di.member.run.nCharOfs = nOfs + nChars;
+          undo->di.member.run.strText = ME_MakeStringN(run->strText->szData + c.nOffset, nCharsToDelete);
       }
-      else
-      {
-        /* undo = reinsert partial run */
-        ME_UndoItem *pUndo = ME_AddUndoItem(editor, diUndoInsertRun, c.pRun);
-        if (pUndo) {
-          ME_DestroyString(pUndo->di.member.run.strText);
-          pUndo->di.member.run.nCharOfs = nOfs+nChars;
-          pUndo->di.member.run.strText = ME_MakeStringN(run->strText->szData+c.nOffset, nCharsToDelete);
-        }
-      }
+
       TRACE("Post deletion string: %s (%d)\n", debugstr_w(run->strText->szData), run->strText->nLen);
       TRACE("Shift value: %d\n", shift);
       ME_StrDeleteV(run->strText, c.nOffset, nCharsToDelete);

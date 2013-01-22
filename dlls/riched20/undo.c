@@ -73,7 +73,7 @@ ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_Disp
     case diUndoInsertRun:
       assert(pdi);
       pItem->member.run = pdi->member.run;
-      pItem->member.run.strText = ME_StrDup(pItem->member.run.strText);
+      pItem->member.run.strText = NULL;
       ME_AddRefStyle(pItem->member.run.style);
       if (pdi->member.run.ole_obj)
       {
