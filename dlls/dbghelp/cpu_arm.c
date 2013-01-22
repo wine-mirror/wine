@@ -99,13 +99,6 @@ static BOOL arm_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CON
 
     if (curr_mode == stm_start)
     {
-        if ((frame->AddrPC.Mode == AddrModeFlat) &&
-            (frame->AddrFrame.Mode != AddrModeFlat))
-        {
-            WARN("Bad AddrPC.Mode / AddrFrame.Mode combination\n");
-            goto done_err;
-        }
-
         /* Init done */
         set_curr_mode(stm_arm);
         frame->AddrReturn.Mode = frame->AddrStack.Mode = AddrModeFlat;
