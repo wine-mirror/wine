@@ -235,9 +235,11 @@ static HRESULT WINAPI ID3DXFileDataImpl_GetType(ID3DXFileData *iface, GUID *guid
 
 static BOOL WINAPI ID3DXFileDataImpl_IsReference(ID3DXFileData *iface)
 {
-    TRACE("(%p)->(): stub\n", iface);
+    ID3DXFileDataImpl *This = impl_from_ID3DXFileData(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->()\n", iface);
+
+    return This->reference;
 }
 
 
@@ -320,6 +322,7 @@ static HRESULT ID3DXFileDataImpl_Create(IDirectXFileObject *dxfile_object, ID3DX
                 HeapFree(GetProcessHeap(), 0, object);
                 return E_FAIL;
             }
+            object->reference = TRUE;
         }
         else
         {
