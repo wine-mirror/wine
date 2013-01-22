@@ -243,17 +243,32 @@ static BOOL WINAPI ID3DXFileDataImpl_IsReference(ID3DXFileData *iface)
 
 static HRESULT WINAPI ID3DXFileDataImpl_GetChildren(ID3DXFileData *iface, SIZE_T *children)
 {
-    TRACE("(%p)->(%p): stub\n", iface, children);
+    ID3DXFileDataImpl *This = impl_from_ID3DXFileData(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, children);
+
+    if (!children)
+        return E_POINTER;
+
+    *children = This->nb_children;
+
+    return S_OK;
 }
 
 
 static HRESULT WINAPI ID3DXFileDataImpl_GetChild(ID3DXFileData *iface, SIZE_T id, ID3DXFileData **object)
 {
-    TRACE("(%p)->(%lu, %p): stub\n", iface, id, object);
+    ID3DXFileDataImpl *This = impl_from_ID3DXFileData(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%lu, %p)\n", iface, id, object);
+
+    if (!object)
+        return E_POINTER;
+
+    *object = This->children[id];
+    (*object)->lpVtbl->AddRef(*object);
+
+    return S_OK;
 }
 
 
