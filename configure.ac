@@ -2486,6 +2486,7 @@ case $host_cpu in
   *sparc*)          WINE_CHECK_DEFINE([__sparc__]) ;;
   *powerpc64*)      WINE_CHECK_DEFINE([__powerpc64__]) ;;
   *powerpc*)        WINE_CHECK_DEFINE([__powerpc__]) ;;
+  *aarch64*)        WINE_CHECK_DEFINE([__aarch64__]) ;;
   *arm*)            WINE_CHECK_DEFINE([__arm__]) ;;
 esac
 
