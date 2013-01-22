@@ -597,3 +597,41 @@ interface IWbemClassObject : IUnknown
         [in,string] LPCWSTR wszMethodName,
         [out] BSTR *pstrClassName);
 }
+
+[
+    object,
+    restricted,
+    local,
+    uuid(dc12a680-737f-11cf-884d-00aa004b2e24)
+]
+interface IWbemQualifierSet : IUnknown
+{
+    HRESULT Get(
+        [in,string] LPCWSTR wszName,
+        [in] long lFlags,
+        [out] VARIANT *pVal,
+        [out] long *plFlavor);
+
+    HRESULT Put(
+        [in,string] LPCWSTR wszName,
+        [in] VARIANT *pVal,
+        [in] long lFlavor);
+
+    HRESULT Delete(
+        [in,string] LPCWSTR wszName);
+
+    HRESULT GetNames(
+        [in] long lFlags,
+        [out] SAFEARRAY **pNames);
+
+    HRESULT BeginEnumeration(
+        [in] long lFlags);
+
+    HRESULT Next(
+        [in] long lFlags,
+        [out] BSTR *pstrName,
+        [out] VARIANT *pVal,
+        [out] long *plFlavor);
+
+    HRESULT EndEnumeration();
+};

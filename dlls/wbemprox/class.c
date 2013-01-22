@@ -547,7 +547,7 @@ static HRESULT WINAPI class_object_GetPropertyQualifierSet(
     IWbemQualifierSet **ppQualSet )
 {
     FIXME("%p, %s, %p\n", iface, debugstr_w(wszProperty), ppQualSet);
-    return E_NOTIMPL;
+    return WbemQualifierSet_create( NULL, (void **)ppQualSet );
 }
 
 static HRESULT WINAPI class_object_Clone(
