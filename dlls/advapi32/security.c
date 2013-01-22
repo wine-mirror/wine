@@ -1567,6 +1567,12 @@ BOOL WINAPI AddAce(
     return set_ntstatus(RtlAddAce(pAcl, dwAceRevision, dwStartingAceIndex, pAceList, nAceListLength));
 }
 
+BOOL WINAPI AddMandatoryAce(ACL *acl, DWORD ace_revision, DWORD ace_flags, DWORD mandatory_policy, PSID label_sid)
+{
+    FIXME("%p %x %x %x %p - stub\n", acl, ace_revision, ace_flags, mandatory_policy, label_sid);
+    return FALSE;
+}
+
 /******************************************************************************
  * DeleteAce [ADVAPI32.@]
  */

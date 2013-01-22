@@ -25,7 +25,7 @@
 @ stdcall AddAuditAccessAceEx(ptr long long long ptr long long)
 # @ stub AddAuditAccessObjectAce
 # @ stub AddConditionalAce
-# @ stub AddMandatoryAce
+@ stdcall AddMandatoryAce(ptr long long long ptr)
 # @ stub AddUsersToEncryptedFileEx
 # @ stub ADVAPI32_1000
 # @ stub AddUsersToEncryptedFile
