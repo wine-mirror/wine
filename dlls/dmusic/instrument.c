@@ -76,7 +76,12 @@ static ULONG WINAPI IDirectMusicInstrumentImpl_Release(LPDIRECTMUSICINSTRUMENT i
 
     if (!ref)
     {
+        ULONG i;
+
         HeapFree(GetProcessHeap(), 0, This->regions);
+        for (i = 0; i < This->nb_articulations; i++)
+            HeapFree(GetProcessHeap(), 0, This->articulations->connections);
+        HeapFree(GetProcessHeap(), 0, This->articulations);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -243,6 +248,42 @@ static HRESULT load_region(IDirectMusicInstrumentImpl *This, IStream *stream, in
     return S_OK;
 }
 
+static HRESULT load_articulation(IDirectMusicInstrumentImpl *This, IStream *stream, ULONG length)
+{
+    HRESULT ret;
+    instrument_articulation *articulation;
+
+    if (!This->articulations)
+        This->articulations = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->articulations));
+    else
+        This->articulations = HeapReAlloc(GetProcessHeap(), 0, This->articulations, sizeof(*This->articulations) * (This->nb_articulations + 1));
+    if (!This->articulations)
+        return E_OUTOFMEMORY;
+
+    articulation = &This->articulations[This->nb_articulations];
+
+    ret = read_from_stream(stream, &articulation->connections_list, sizeof(CONNECTIONLIST));
+    if (FAILED(ret))
+        return ret;
+
+    articulation->connections = HeapAlloc(GetProcessHeap(), 0, sizeof(CONNECTION) * articulation->connections_list.cConnections);
+    if (!articulation->connections)
+        return E_OUTOFMEMORY;
+
+    ret = read_from_stream(stream, articulation->connections, sizeof(CONNECTION) * articulation->connections_list.cConnections);
+    if (FAILED(ret))
+    {
+        HeapFree(GetProcessHeap(), 0, articulation->connections);
+        return ret;
+    }
+
+    subtract_bytes(length, sizeof(CONNECTIONLIST) + sizeof(CONNECTION) * articulation->connections_list.cConnections);
+
+    This->nb_articulations++;
+
+    return S_OK;
+}
+
 /* Function that loads all instrument data and which is called from IDirectMusicCollection_GetInstrument as in native */
 HRESULT IDirectMusicInstrumentImpl_CustomLoad(IDirectMusicInstrument *iface, IStream *stream)
 {
@@ -323,13 +364,39 @@ HRESULT IDirectMusicInstrumentImpl_CustomLoad(IDirectMusicInstrument *iface, ISt
 
                             if (chunk.fccID == FOURCC_RGN)
                             {
-                                TRACE("RGN chunk (region list): %u bytes\n", chunk.dwSize);
+                                TRACE("RGN chunk (region): %u bytes\n", chunk.dwSize);
                                 hr = load_region(This, stream, &This->regions[i++], chunk.dwSize - sizeof(chunk.fccID));
                             }
                             else
                             {
                                 TRACE("Unknown chunk %s: %u bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
                                 hr = advance_stream(stream, chunk.dwSize - sizeof(chunk.fccID));
+                            }
+                            if (FAILED(hr))
+                                goto error;
+
+                            size = subtract_bytes(size, chunk.dwSize + sizeof(chunk));
+                        }
+                        break;
+
+                    case FOURCC_LART:
+                        TRACE("LART chunk (articulations list): %u bytes\n", size);
+
+                        while (size)
+                        {
+                            hr = read_from_stream(stream, &chunk, sizeof(chunk));
+                            if (FAILED(hr))
+                                goto error;
+
+                            if (chunk.fccID == FOURCC_ART1)
+                            {
+                                TRACE("ART1 chunk (level 1 articulation): %u bytes\n", chunk.dwSize);
+                                hr = load_articulation(This, stream, chunk.dwSize);
+                            }
+                            else
+                            {
+                                TRACE("Unknown chunk %s: %u bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
+                                hr = advance_stream(stream, chunk.dwSize);
                             }
                             if (FAILED(hr))
                                 goto error;
