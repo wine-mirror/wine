@@ -837,6 +837,13 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
             if (!IS_INTRESOURCE(cs->lpszName))
                 DEFWND_SetTextA( hwnd, cs->lpszName );
             result = 1;
+
+            if(cs->style & (WS_HSCROLL | WS_VSCROLL))
+            {
+                SCROLLINFO si = {sizeof si, SIF_ALL, 0, 100, 0, 0, 0};
+                SetScrollInfo( hwnd, SB_HORZ, &si, FALSE );
+                SetScrollInfo( hwnd, SB_VERT, &si, FALSE );
+            }
         }
         break;
 
@@ -984,6 +991,13 @@ LRESULT WINAPI DefWindowProcW(
             if (!IS_INTRESOURCE(cs->lpszName))
                 DEFWND_SetTextW( hwnd, cs->lpszName );
             result = 1;
+
+            if(cs->style & (WS_HSCROLL | WS_VSCROLL))
+            {
+                SCROLLINFO si = {sizeof si, SIF_ALL, 0, 100, 0, 0, 0};
+                SetScrollInfo( hwnd, SB_HORZ, &si, FALSE );
+                SetScrollInfo( hwnd, SB_VERT, &si, FALSE );
+            }
         }
         break;
 

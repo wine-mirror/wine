@@ -241,7 +241,6 @@ static void scrollbar_test_default( DWORD style)
         ok( min == 0 && max == 0,
                 "Scroll bar range is %d,%d. Expected 0,0. Style %08x\n", min, max, style);
     else
-todo_wine
         ok(( min == 0 && max == 100) ||
                 broken( min == 0 && max == 0), /* Win 9x/ME */
                 "Scroll bar range is %d,%d. Expected 0,100. Style %08x\n", min, max, style);
@@ -253,7 +252,6 @@ todo_wine
         ok( min == 0 && max == 0,
                 "Scroll bar range is %d,%d. Expected 0,0. Style %08x\n", min, max, style);
     else
-todo_wine
         ok(( min == 0 && max == 100) ||
                 broken( min == 0 && max == 0), /* Win 9x/ME */
                 "Scroll bar range is %d,%d. Expected 0,100. Style %08x\n", min, max, style);
@@ -263,7 +261,6 @@ todo_wine
     if( !( style & ( WS_VSCROLL | WS_HSCROLL)))
         ok( !ret, "GetScrollInfo succeeded unexpectedly. Style is %08x\n", style);
     else
-todo_wine
         ok( ret ||
                 broken( !ret), /* Win 9x/ME */
                 "GetScrollInfo failed unexpectedly. Style is %08x\n", style);
@@ -273,7 +270,6 @@ todo_wine
     if( !( style & ( WS_VSCROLL | WS_HSCROLL)))
         ok( !ret, "GetScrollInfo succeeded unexpectedly. Style is %08x\n", style);
     else
-todo_wine
         ok( ret ||
                 broken( !ret), /* Win 9x/ME */
                 "GetScrollInfo failed unexpectedly. Style is %08x\n", style);
@@ -423,15 +419,12 @@ static LRESULT CALLBACK scroll_init_proc(HWND hwnd, UINT msg,
                 /* WM_NCCREATE was passed to DefWindowProc */
                 if(cs->style & (WS_VSCROLL | WS_HSCROLL))
                 {
-                    todo_wine
-                        ok(h_ret && v_ret, "GetScrollInfo() should return NON-zero "
+                    ok(h_ret && v_ret, "GetScrollInfo() should return NON-zero "
                             "but got h_ret=%d v_ret=%d\n", h_ret, v_ret);
-                    todo_wine
-                        ok(vert.nMin == 0 && vert.nMax == 100,
+                    ok(vert.nMin == 0 && vert.nMax == 100,
                             "unexpected init values(SB_VERT): min=%d max=%d\n",
                             vert.nMin, vert.nMax);
-                    todo_wine
-                        ok(horz.nMin == 0 && horz.nMax == 100,
+                    ok(horz.nMin == 0 && horz.nMax == 100,
                             "unexpected init values(SB_HORZ): min=%d max=%d\n",
                             horz.nMin, horz.nMax);
                 }
