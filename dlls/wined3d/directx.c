@@ -3485,8 +3485,7 @@ static BOOL CheckDepthStencilCapability(const struct wined3d_adapter *adapter,
 static BOOL CheckFilterCapability(const struct wined3d_adapter *adapter, const struct wined3d_format *format)
 {
     /* The flags entry of a format contains the filtering capability */
-    if ((format->flags & WINED3DFMT_FLAG_FILTERING)
-            || !(adapter->gl_info.quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING))
+    if (format->flags & WINED3DFMT_FLAG_FILTERING)
         return TRUE;
 
     return FALSE;

@@ -1287,6 +1287,9 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
         format->height_scale.numerator = 1;
         format->height_scale.denominator = 1;
 
+        if (!(gl_info->quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING))
+            format->flags |= WINED3DFMT_FLAG_FILTERING;
+
         if (format->glGammaInternal != format->glInternal)
         {
             /* Filter sRGB capabilities if EXT_texture_sRGB is not supported. */
