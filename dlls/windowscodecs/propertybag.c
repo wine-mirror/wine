@@ -37,6 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 typedef struct PropertyBag {
     IPropertyBag2 IPropertyBag2_iface;
     LONG ref;
+    UINT prop_count;
 } PropertyBag;
 
 static inline PropertyBag *impl_from_IPropertyBag2(IPropertyBag2 *iface)
@@ -108,8 +109,16 @@ static HRESULT WINAPI PropertyBag_Write(IPropertyBag2 *iface, ULONG cProperties,
 
 static HRESULT WINAPI PropertyBag_CountProperties(IPropertyBag2 *iface, ULONG *pcProperties)
 {
-    FIXME("(%p,%p): stub\n", iface, pcProperties);
-    return E_NOTIMPL;
+    PropertyBag *This = impl_from_IPropertyBag2(iface);
+
+    TRACE("(%p,%p)\n", iface, pcProperties);
+
+    if (!pcProperties)
+        return E_INVALIDARG;
+
+    *pcProperties = This->prop_count;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PropertyBag_GetPropertyInfo(IPropertyBag2 *iface, ULONG iProperty,
@@ -147,6 +156,7 @@ HRESULT CreatePropertyBag2(PROPBAG2 *options, UINT count,
 
     This->IPropertyBag2_iface.lpVtbl = &PropertyBag_Vtbl;
     This->ref = 1;
+    This->prop_count = count;
 
     *ppPropertyBag2 = &This->IPropertyBag2_iface;
 

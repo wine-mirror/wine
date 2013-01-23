@@ -237,7 +237,6 @@ static void test_empty_propertybag(void)
     ok(hr == S_OK, "Creating EncoderPropertyBag failed, hr=%x\n", hr);
     if (FAILED(hr)) return;
 
-todo_wine
     test_propertybag_countproperties(property, 0);
 
 todo_wine
@@ -267,7 +266,6 @@ static void test_filled_propertybag(void)
     ok(hr == S_OK, "Creating EncoderPropertyBag failed, hr=%x\n", hr);
     if (FAILED(hr)) return;
 
-todo_wine
     test_propertybag_countproperties(property, 2);
 
 todo_wine
