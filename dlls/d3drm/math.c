@@ -117,7 +117,7 @@ void WINAPI D3DRMMatrixFromQuaternion(D3DRMMATRIX4D m, LPD3DRMQUATERNION q)
 }
 
 /* Return a unit quaternion that represents a rotation of an angle around an axis */
-LPD3DRMQUATERNION WINAPI D3DRMQuaternionFromRotation(LPD3DRMQUATERNION q, LPD3DVECTOR v, D3DVALUE theta)
+D3DRMQUATERNION * WINAPI D3DRMQuaternionFromRotation(D3DRMQUATERNION *q, D3DVECTOR *v, D3DVALUE theta)
 {
     q->s = cos(theta/2.0);
     D3DRMVectorScale(&q->v, D3DRMVectorNormalize(v), sin(theta/2.0));
@@ -153,7 +153,7 @@ LPD3DRMQUATERNION WINAPI D3DRMQuaternionSlerp(LPD3DRMQUATERNION q, LPD3DRMQUATER
 }
 
 /* Add Two Vectors */
-LPD3DVECTOR WINAPI D3DRMVectorAdd(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
+D3DVECTOR * WINAPI D3DRMVectorAdd(D3DVECTOR *d, D3DVECTOR *s1, D3DVECTOR *s2)
 {
     D3DVECTOR temp;
 
@@ -166,7 +166,7 @@ LPD3DVECTOR WINAPI D3DRMVectorAdd(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
 }
 
 /* Subtract Two Vectors */
-LPD3DVECTOR WINAPI D3DRMVectorSubtract(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
+D3DVECTOR * WINAPI D3DRMVectorSubtract(D3DVECTOR *d, D3DVECTOR *s1, D3DVECTOR *s2)
 {
     D3DVECTOR temp;
 
@@ -179,7 +179,7 @@ LPD3DVECTOR WINAPI D3DRMVectorSubtract(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTO
 }
 
 /* Cross Product of Two Vectors */
-LPD3DVECTOR WINAPI D3DRMVectorCrossProduct(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
+D3DVECTOR * WINAPI D3DRMVectorCrossProduct(D3DVECTOR *d, D3DVECTOR *s1, D3DVECTOR *s2)
 {
     D3DVECTOR temp;
 
@@ -192,7 +192,7 @@ LPD3DVECTOR WINAPI D3DRMVectorCrossProduct(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DV
 }
 
 /* Dot Product of Two vectors */
-D3DVALUE WINAPI D3DRMVectorDotProduct(LPD3DVECTOR s1, LPD3DVECTOR s2)
+D3DVALUE WINAPI D3DRMVectorDotProduct(D3DVECTOR *s1, D3DVECTOR *s2)
 {
     D3DVALUE dot_product;
     dot_product=s1->u1.x * s2->u1.x + s1->u2.y * s2->u2.y + s1->u3.z * s2->u3.z;
@@ -200,7 +200,7 @@ D3DVALUE WINAPI D3DRMVectorDotProduct(LPD3DVECTOR s1, LPD3DVECTOR s2)
 }
 
 /* Norm of a vector */
-D3DVALUE WINAPI D3DRMVectorModulus(LPD3DVECTOR v)
+D3DVALUE WINAPI D3DRMVectorModulus(D3DVECTOR *v)
 {
     D3DVALUE result;
     result=sqrt(v->u1.x * v->u1.x + v->u2.y * v->u2.y + v->u3.z * v->u3.z);
@@ -208,7 +208,7 @@ D3DVALUE WINAPI D3DRMVectorModulus(LPD3DVECTOR v)
 }
 
 /* Normalize a vector.  Returns (1,0,0) if INPUT is the NULL vector. */
-LPD3DVECTOR WINAPI D3DRMVectorNormalize(LPD3DVECTOR u)
+D3DVECTOR * WINAPI D3DRMVectorNormalize(D3DVECTOR *u)
 {
     D3DVALUE modulus = D3DRMVectorModulus(u);
     if(modulus)
@@ -225,7 +225,7 @@ LPD3DVECTOR WINAPI D3DRMVectorNormalize(LPD3DVECTOR u)
 }
 
 /* Returns a random unit vector */
-LPD3DVECTOR WINAPI D3DRMVectorRandom(LPD3DVECTOR d)
+D3DVECTOR * WINAPI D3DRMVectorRandom(D3DVECTOR *d)
 {
     d->u1.x = rand();
     d->u2.y = rand();
@@ -235,7 +235,7 @@ LPD3DVECTOR WINAPI D3DRMVectorRandom(LPD3DVECTOR d)
 }
 
 /* Reflection of a vector on a surface */
-LPD3DVECTOR WINAPI D3DRMVectorReflect(LPD3DVECTOR r, LPD3DVECTOR ray, LPD3DVECTOR norm)
+D3DVECTOR * WINAPI D3DRMVectorReflect(D3DVECTOR *r, D3DVECTOR *ray, D3DVECTOR *norm)
 {
     D3DVECTOR sca, temp;
     D3DRMVectorSubtract(&temp, D3DRMVectorScale(&sca, norm, 2.0*D3DRMVectorDotProduct(ray,norm)), ray);
@@ -245,7 +245,7 @@ LPD3DVECTOR WINAPI D3DRMVectorReflect(LPD3DVECTOR r, LPD3DVECTOR ray, LPD3DVECTO
 }
 
 /* Rotation of a vector */
-LPD3DVECTOR WINAPI D3DRMVectorRotate(LPD3DVECTOR r, LPD3DVECTOR v, LPD3DVECTOR axis, D3DVALUE theta)
+D3DVECTOR * WINAPI D3DRMVectorRotate(D3DVECTOR *r, D3DVECTOR *v, D3DVECTOR *axis, D3DVALUE theta)
 {
     D3DRMQUATERNION quaternion1, quaternion2, quaternion3;
     D3DVECTOR norm;
@@ -265,7 +265,7 @@ LPD3DVECTOR WINAPI D3DRMVectorRotate(LPD3DVECTOR r, LPD3DVECTOR v, LPD3DVECTOR a
 }
 
 /* Scale a vector */
-LPD3DVECTOR WINAPI D3DRMVectorScale(LPD3DVECTOR d, LPD3DVECTOR s, D3DVALUE factor)
+D3DVECTOR * WINAPI D3DRMVectorScale(D3DVECTOR *d, D3DVECTOR *s, D3DVALUE factor)
 {
     D3DVECTOR temp;
 

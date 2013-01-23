@@ -2231,8 +2231,8 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetFace(IDirect3DRMMeshBuilder
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetVertex(IDirect3DRMMeshBuilder3* iface,
-                                                            DWORD index, LPD3DVECTOR vector)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetVertex(IDirect3DRMMeshBuilder3 *iface,
+        DWORD index, D3DVECTOR *vector)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 
@@ -2241,8 +2241,8 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetVertex(IDirect3DRMMeshBuild
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetNormal(IDirect3DRMMeshBuilder3* iface,
-                                                            DWORD index, LPD3DVECTOR vector)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetNormal(IDirect3DRMMeshBuilder3 *iface,
+        DWORD index, D3DVECTOR *vector)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 
@@ -2382,9 +2382,8 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_AddTriangles(IDirect3DRMMeshBu
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetVertices(IDirect3DRMMeshBuilder3* iface,
-                                                              DWORD IndexFirst, DWORD count,
-                                                              LPD3DVECTOR vector)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetVertices(IDirect3DRMMeshBuilder3 *iface,
+        DWORD IndexFirst, DWORD count, D3DVECTOR *vector)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 
@@ -2393,9 +2392,8 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetVertices(IDirect3DRMMeshBui
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetVertices(IDirect3DRMMeshBuilder3* iface,
-                                                              DWORD IndexFirst, LPDWORD vcount,
-                                                              LPD3DVECTOR vertices)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetVertices(IDirect3DRMMeshBuilder3 *iface,
+        DWORD IndexFirst, DWORD *vcount, D3DVECTOR *vertices)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
     DWORD count = This->nb_vertices - IndexFirst;
@@ -2410,9 +2408,8 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetVertices(IDirect3DRMMeshBui
     return D3DRM_OK;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetNormals(IDirect3DRMMeshBuilder3* iface,
-                                                             DWORD IndexFirst, DWORD count,
-                                                             LPD3DVECTOR vector)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetNormals(IDirect3DRMMeshBuilder3 *iface,
+        DWORD IndexFirst, DWORD count, D3DVECTOR *vector)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 
@@ -2421,9 +2418,8 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetNormals(IDirect3DRMMeshBuil
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetNormals(IDirect3DRMMeshBuilder3* iface,
-                                                             DWORD IndexFirst, LPDWORD count,
-                                                             LPD3DVECTOR vector)
+static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetNormals(IDirect3DRMMeshBuilder3 *iface,
+        DWORD IndexFirst, DWORD *count, D3DVECTOR *vector)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 

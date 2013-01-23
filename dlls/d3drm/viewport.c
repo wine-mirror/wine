@@ -894,10 +894,8 @@ static HRESULT WINAPI IDirect3DRMViewport2Impl_GetDirect3DViewport(IDirect3DRMVi
 }
 
 /*** IDirect3DRMViewport2 methods ***/
-static HRESULT WINAPI IDirect3DRMViewport2Impl_TransformVectors(IDirect3DRMViewport2* iface,
-                                                                DWORD numvectors,
-                                                                LPD3DRMVECTOR4D dstvectors,
-                                                                LPD3DVECTOR srcvectors)
+static HRESULT WINAPI IDirect3DRMViewport2Impl_TransformVectors(IDirect3DRMViewport2 *iface,
+        DWORD numvectors, D3DRMVECTOR4D *dstvectors, D3DVECTOR *srcvectors)
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport2(iface);
 
@@ -906,10 +904,8 @@ static HRESULT WINAPI IDirect3DRMViewport2Impl_TransformVectors(IDirect3DRMViewp
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMViewport2Impl_InverseTransformVectors(IDirect3DRMViewport2* iface,
-                                                                DWORD numvectors,
-                                                                LPD3DVECTOR dstvectors,
-                                                                LPD3DRMVECTOR4D srcvectors)
+static HRESULT WINAPI IDirect3DRMViewport2Impl_InverseTransformVectors(IDirect3DRMViewport2 *iface,
+        DWORD numvectors, D3DVECTOR *dstvectors, D3DRMVECTOR4D *srcvectors)
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport2(iface);
 
