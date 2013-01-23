@@ -813,7 +813,8 @@ static HICON create_icon_from_bmi( BITMAPINFO *bmi, HMODULE module, LPCWSTR resn
 
     if ( (bmi->bmiHeader.biSize != sizeof(BITMAPCOREHEADER)) &&
          (bmi->bmiHeader.biSize != sizeof(BITMAPINFOHEADER)  ||
-          bmi->bmiHeader.biCompression != BI_RGB) )
+         (bmi->bmiHeader.biCompression != BI_RGB &&
+          bmi->bmiHeader.biCompression != BI_BITFIELDS)) )
     {
           WARN_(cursor)("\tinvalid resource bitmap header.\n");
           return 0;
