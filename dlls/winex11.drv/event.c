@@ -829,21 +829,24 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
     rect.right  = event->x + event->width;
     rect.bottom = event->y + event->height;
 
-    if (data->surface)
+    if (event->window != data->client_window)
     {
-        surface_region = expose_surface( data->surface, &rect );
-        if (!surface_region) flags = 0;
-        if (data->vis.visualid != default_visual.visualid)
-            data->surface->funcs->flush( data->surface );
+        if (data->surface)
+        {
+            surface_region = expose_surface( data->surface, &rect );
+            if (!surface_region) flags = 0;
+            else OffsetRgn( surface_region, data->whole_rect.left - data->client_rect.left,
+                            data->whole_rect.top - data->client_rect.top );
+
+            if (data->vis.visualid != default_visual.visualid)
+                data->surface->funcs->flush( data->surface );
+        }
+        OffsetRect( &rect, data->whole_rect.left - data->client_rect.left,
+                    data->whole_rect.top - data->client_rect.top );
     }
 
     if (event->window != root_window)
     {
-        OffsetRect( &rect, data->whole_rect.left - data->client_rect.left,
-                    data->whole_rect.top - data->client_rect.top );
-        if (surface_region) OffsetRgn( surface_region, data->whole_rect.left - data->client_rect.left,
-                                       data->whole_rect.top - data->client_rect.top );
-
         if (GetWindowLongW( data->hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
             mirror_rect( &data->client_rect, &rect );
 

@@ -1383,11 +1383,12 @@ Window create_client_window( struct x11drv_win_data *data, const XVisualInfo *vi
     attr.bit_gravity = NorthWestGravity;
     attr.win_gravity = NorthWestGravity;
     attr.backing_store = NotUseful;
+    attr.event_mask = ExposureMask;
 
     data->client_window = XCreateWindow( data->display, data->whole_window, x, y, cx, cy,
                                          0, default_visual.depth, InputOutput, visual->visual,
-                                         CWBitGravity | CWWinGravity | CWBackingStore | CWColormap,
-                                         &attr );
+                                         CWBitGravity | CWWinGravity | CWBackingStore |
+                                         CWColormap | CWEventMask, &attr );
     if (!data->client_window) return 0;
 
     XSaveContext( data->display, data->client_window, winContext, (char *)data->hwnd );
