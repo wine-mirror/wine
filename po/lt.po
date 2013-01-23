@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-01-08 22:47+0300\n"
+"PO-Revision-Date: 2013-01-23 20:00+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -10435,77 +10435,59 @@ msgstr "Nežinomi protokolai"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "IPv4 TCP statistika"
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Active Opens"
-msgstr "Aktyvūs ryšiai"
+msgstr "Aktyvūs atvėrimai"
 
 #: netstat.rc:43
 msgid "Passive Opens"
-msgstr ""
+msgstr "Pasyvūs atvėrimai"
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Failed Connection Attempts"
-msgstr "Aktyvūs ryšiai"
+msgstr "Nepavykę bandymai susijungti"
 
 #: netstat.rc:45
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Reset Connections"
-msgstr "Aktyvūs ryšiai"
+msgstr "Panaikinti ryšiai"
 
 #: netstat.rc:46
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Current Connections"
-msgstr "Aktyvūs ryšiai"
+msgstr "Dabartiniai ryšiai"
 
 #: netstat.rc:47
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Received"
-msgstr "Segmentas užblokuotas.\n"
+msgstr "Gauti segmentai"
 
 #: netstat.rc:48
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Sent"
-msgstr "Segmentas užblokuotas.\n"
+msgstr "Išsiųsti segmentai"
 
 #: netstat.rc:49
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "Pakartotinai perduoti segmentai"
 
 #: netstat.rc:50
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "IPv4 UDP statistika"
 
 #: netstat.rc:51
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Datagrams Received"
-msgstr "Segmentas užblokuotas.\n"
+msgstr "Gauti duomenų paketai"
 
 #: netstat.rc:52
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "Vietinis prievadas"
+msgstr "Be prievadų"
 
 #: netstat.rc:53
-#, fuzzy
-#| msgid "Decoding Error"
 msgid "Receive Errors"
-msgstr "Dekodavimo klaida"
+msgstr "Gavimo klaidos"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "Išsiųsti duomenų paketai"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
