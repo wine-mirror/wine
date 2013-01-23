@@ -1055,10 +1055,19 @@ static HRESULT open_icon(LPCWSTR filename, int index, BOOL bWait, IStream **ppSt
     hr = open_module_icon(filename, index, ppStream);
     if (FAILED(hr))
     {
-        static const WCHAR dot_icoW[] = {'.','i','c','o',0};
-        int len = strlenW(filename);
-        if (len >= 4 && strcmpiW(&filename[len - 4], dot_icoW) == 0)
-            hr = SHCreateStreamOnFileW(filename, STGM_READ, ppStream);
+        if(bWait && hr == HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND))
+        {
+            WINE_WARN("Can't find file: %s, give a chance to parent process to create it\n",
+                                    wine_dbgstr_w(filename));
+            return hr;
+        }
+        else
+        {
+            static const WCHAR dot_icoW[] = {'.','i','c','o',0};
+            int len = strlenW(filename);
+            if (len >= 4 && strcmpiW(&filename[len - 4], dot_icoW) == 0)
+                hr = SHCreateStreamOnFileW(filename, STGM_READ, ppStream);
+        }
     }
     if (FAILED(hr))
         hr = open_file_type_icon(filename, ppStream);
