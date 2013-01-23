@@ -2274,10 +2274,8 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
 
     TRACE("(%p, %p, %p)\n", hdc, hDevice, graphics);
 
-    if(hDevice != NULL) {
+    if(hDevice != NULL)
         FIXME("Don't know how to handle parameter hDevice\n");
-        return NotImplemented;
-    }
 
     if(hdc == NULL)
         return OutOfMemory;
