@@ -414,6 +414,8 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
 {
 #if defined(SONAME_LIBSSL) && defined(SONAME_LIBCRYPTO)
     int i;
+#else
+    memset(conn, 0, sizeof(*conn));
 #endif
 
     conn->socket = -1;
@@ -549,10 +551,6 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     pCRYPTO_set_locking_callback(ssl_lock_callback);
 
     LeaveCriticalSection( &init_ssl_cs );
-#else
-    WARN("SSL support not compiled in.\n");
-    set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
-    return FALSE;
 #endif
     return TRUE;
 }
@@ -835,8 +833,9 @@ BOOL netconn_query_data_available( netconn_t *conn, DWORD *available )
 
     if (conn->secure)
     {
+        *available = conn->peek_len;
 #ifdef SONAME_LIBSSL
-        *available = pSSL_pending( conn->ssl_conn ) + conn->peek_len;
+        *available += pSSL_pending( conn->ssl_conn );
 #endif
         return TRUE;
     }
@@ -856,7 +855,6 @@ BOOL netconn_get_next_line( netconn_t *conn, char *buffer, DWORD *buflen )
 
     if (conn->secure)
     {
-#ifdef SONAME_LIBSSL
         while (recvd < *buflen)
         {
             int dummy;
@@ -879,9 +877,6 @@ BOOL netconn_get_next_line( netconn_t *conn, char *buffer, DWORD *buflen )
             TRACE("received line %s\n", debugstr_a(buffer));
         }
         return ret;
-#else
-        return FALSE;
-#endif
     }
 
     pfd.fd = conn->socket;
