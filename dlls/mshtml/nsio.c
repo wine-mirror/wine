@@ -1463,7 +1463,7 @@ static nsrefcnt NSAPI nsUploadChannel_Release(nsIUploadChannel *iface)
 }
 
 static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
-        nsIInputStream *aStream, const nsACString *aContentType, PRInt64 aContentLength)
+        nsIInputStream *aStream, const nsACString *aContentType, INT64 aContentLength)
 {
     nsChannel *This = impl_from_nsIUploadChannel(iface);
     const char *content_type;

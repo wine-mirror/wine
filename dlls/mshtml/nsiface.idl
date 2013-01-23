@@ -46,7 +46,6 @@ typedef WCHAR PRUnichar;
 typedef ULONG PRUint32;
 typedef WORD PRUint16;
 typedef BYTE PRUint8;
-typedef LONGLONG PRInt64;
 typedef ULONGLONG PRUint64;
 
 /*
@@ -56,7 +55,7 @@ typedef ULONGLONG PRUint64;
  */
 #define int16_t short
 #define int32_t LONG
-#define int64_t PRInt64
+#define int64_t INT64
 
 #define uint8_t PRUint8
 #define uint16_t PRUint16
