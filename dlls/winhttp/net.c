@@ -1443,7 +1443,12 @@ const void *netconn_get_certificate( netconn_t *conn )
     ret = X509_to_cert_context( cert );
     return ret;
 #else
-    return NULL;
+    const CERT_CONTEXT *ret;
+    SECURITY_STATUS res;
+
+    if (!conn->secure) return NULL;
+    res = QueryContextAttributesW(&conn->ssl_ctx, SECPKG_ATTR_REMOTE_CERT_CONTEXT, (void*)&ret);
+    return res == SEC_E_OK ? ret : NULL;
 #endif
 }
 
