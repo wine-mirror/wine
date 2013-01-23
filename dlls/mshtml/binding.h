@@ -43,7 +43,7 @@ typedef struct {
     nsIURI *referrer;
     char *content_type;
     char *charset;
-    PRUint32 response_status;
+    UINT32 response_status;
     REQUEST_METHOD request_method;
     struct list response_headers;
     struct list request_headers;

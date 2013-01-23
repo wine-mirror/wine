@@ -542,7 +542,7 @@ static HRESULT WINAPI HTMLEventObj_put_keyCode(IHTMLEventObj *iface, LONG v)
 static HRESULT WINAPI HTMLEventObj_get_keyCode(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    PRUint32 key_code = 0;
+    UINT32 key_code = 0;
 
     TRACE("(%p)->(%p)\n", This, p);
 

@@ -1649,7 +1649,7 @@ HRESULT HTMLElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *eve
 
         nsres = nsIDOMEvent_QueryInterface(event, &IID_nsIDOMKeyEvent, (void**)&key_event);
         if(NS_SUCCEEDED(nsres)) {
-            PRUint32 code = 0;
+            UINT32 code = 0;
 
             nsIDOMKeyEvent_GetKeyCode(key_event, &code);
 
@@ -1716,7 +1716,7 @@ static HRESULT HTMLElement_populate_props(DispatchEx *dispex)
     BSTR name;
     VARIANT value;
     unsigned i;
-    PRUint32 len;
+    UINT32 len;
     DISPID id;
     nsresult nsres;
     HRESULT hres;

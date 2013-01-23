@@ -1173,7 +1173,7 @@ void bind_event_scripts(HTMLDocumentNode *doc)
     nsIDOMNode *script_node;
     nsAString selector_str;
     IDispatch *event_disp;
-    PRUint32 length, i;
+    UINT32 length, i;
     WCHAR *event;
     nsresult nsres;
     HRESULT hres;

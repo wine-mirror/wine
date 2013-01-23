@@ -273,7 +273,7 @@ static HRESULT fill_props(nsIDOMHTMLElement *nselem, PropertyBag *prop_bag)
     nsIDOMHTMLParamElement *nsparam;
     nsAString name_str, value_str;
     nsIDOMNodeList *params;
-    PRUint32 length, i;
+    UINT32 length, i;
     nsIDOMNode *nsnode;
     nsresult nsres;
     HRESULT hres = S_OK;

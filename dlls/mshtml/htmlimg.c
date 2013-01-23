@@ -494,7 +494,7 @@ static HRESULT WINAPI HTMLImgElement_put_width(IHTMLImgElement *iface, LONG v)
 static HRESULT WINAPI HTMLImgElement_get_width(IHTMLImgElement *iface, LONG *p)
 {
     HTMLImgElement *This = impl_from_IHTMLImgElement(iface);
-    PRUint32 width;
+    UINT32 width;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -528,7 +528,7 @@ static HRESULT WINAPI HTMLImgElement_put_height(IHTMLImgElement *iface, LONG v)
 static HRESULT WINAPI HTMLImgElement_get_height(IHTMLImgElement *iface, LONG *p)
 {
     HTMLImgElement *This = impl_from_IHTMLImgElement(iface);
-    PRUint32 height;
+    UINT32 height;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);

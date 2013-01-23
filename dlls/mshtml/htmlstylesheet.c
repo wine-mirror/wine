@@ -148,7 +148,7 @@ static HRESULT WINAPI HTMLStyleSheetRulesCollection_get_length(IHTMLStyleSheetRu
         LONG *p)
 {
     HTMLStyleSheetRulesCollection *This = impl_from_IHTMLStyleSheetRulesCollection(iface);
-    PRUint32 len = 0;
+    UINT32 len = 0;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -294,7 +294,7 @@ static HRESULT WINAPI HTMLStyleSheetsCollection_get_length(IHTMLStyleSheetsColle
         LONG *p)
 {
     HTMLStyleSheetsCollection *This = impl_from_IHTMLStyleSheetsCollection(iface);
-    PRUint32 len = 0;
+    UINT32 len = 0;
 
     TRACE("(%p)->(%p)\n", This, p);
 

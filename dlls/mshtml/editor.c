@@ -215,7 +215,7 @@ static nsISelection *get_ns_selection(HTMLDocument *This)
 static void remove_child_attr(nsIDOMElement *elem, LPCWSTR tag, nsAString *attr_str)
 {
     cpp_bool has_children;
-    PRUint32 child_cnt, i;
+    UINT32 child_cnt, i;
     nsIDOMNode *child_node;
     nsIDOMNodeList *node_list;
     UINT16 node_type;
@@ -408,7 +408,7 @@ static void handle_arrow_key(HTMLDocument *This, nsIDOMKeyEvent *event, const ch
 void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
 {
     nsIDOMKeyEvent *key_event;
-    PRUint32 code;
+    UINT32 code;
 
     nsIDOMEvent_QueryInterface(event, &IID_nsIDOMKeyEvent, (void**)&key_event);
 

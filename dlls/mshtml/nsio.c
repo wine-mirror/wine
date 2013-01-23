@@ -1127,14 +1127,14 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     return nsres;
 }
 
-static nsresult NSAPI nsChannel_GetContentDisposition(nsIHttpChannel *iface, PRUint32 *aContentDisposition)
+static nsresult NSAPI nsChannel_GetContentDisposition(nsIHttpChannel *iface, UINT32 *aContentDisposition)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
     FIXME("(%p)->(%p)\n", This, aContentDisposition);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsChannel_SetContentDisposition(nsIHttpChannel *iface, PRUint32 aContentDisposition)
+static nsresult NSAPI nsChannel_SetContentDisposition(nsIHttpChannel *iface, UINT32 aContentDisposition)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
     FIXME("(%p)->(%u)\n", This, aContentDisposition);
@@ -1270,7 +1270,7 @@ static nsresult NSAPI nsChannel_SetAllowPipelining(nsIHttpChannel *iface, cpp_bo
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsChannel_GetRedirectionLimit(nsIHttpChannel *iface, PRUint32 *aRedirectionLimit)
+static nsresult NSAPI nsChannel_GetRedirectionLimit(nsIHttpChannel *iface, UINT32 *aRedirectionLimit)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
 
@@ -1279,7 +1279,7 @@ static nsresult NSAPI nsChannel_GetRedirectionLimit(nsIHttpChannel *iface, PRUin
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsChannel_SetRedirectionLimit(nsIHttpChannel *iface, PRUint32 aRedirectionLimit)
+static nsresult NSAPI nsChannel_SetRedirectionLimit(nsIHttpChannel *iface, UINT32 aRedirectionLimit)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
 
@@ -1288,7 +1288,7 @@ static nsresult NSAPI nsChannel_SetRedirectionLimit(nsIHttpChannel *iface, PRUin
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsChannel_GetResponseStatus(nsIHttpChannel *iface, PRUint32 *aResponseStatus)
+static nsresult NSAPI nsChannel_GetResponseStatus(nsIHttpChannel *iface, UINT32 *aResponseStatus)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
 
@@ -1571,7 +1571,7 @@ static nsresult NSAPI nsHttpChannelInternal_SetDocumentURI(nsIHttpChannelInterna
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsHttpChannelInternal_GetRequestVersion(nsIHttpChannelInternal *iface, PRUint32 *major, PRUint32 *minor)
+static nsresult NSAPI nsHttpChannelInternal_GetRequestVersion(nsIHttpChannelInternal *iface, UINT32 *major, UINT32 *minor)
 {
     nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
@@ -1580,7 +1580,7 @@ static nsresult NSAPI nsHttpChannelInternal_GetRequestVersion(nsIHttpChannelInte
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsHttpChannelInternal_GetResponseVersion(nsIHttpChannelInternal *iface, PRUint32 *major, PRUint32 *minor)
+static nsresult NSAPI nsHttpChannelInternal_GetResponseVersion(nsIHttpChannelInternal *iface, UINT32 *major, UINT32 *minor)
 {
     nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
@@ -2862,7 +2862,7 @@ static nsresult NSAPI nsStandardURL_SetMutable(nsIStandardURL *iface, cpp_bool a
     return NS_OK;
 }
 
-static nsresult NSAPI nsStandardURL_Init(nsIStandardURL *iface, PRUint32 aUrlType, LONG aDefaultPort,
+static nsresult NSAPI nsStandardURL_Init(nsIStandardURL *iface, UINT32 aUrlType, LONG aDefaultPort,
         const nsACString *aSpec, const char *aOriginCharset, nsIURI *aBaseURI)
 {
     nsWineURI *This = impl_from_nsIStandardURL(iface);
@@ -3109,7 +3109,7 @@ static nsresult NSAPI nsProtocolHandler_GetDefaultPort(nsIProtocolHandler *iface
 }
 
 static nsresult NSAPI nsProtocolHandler_GetProtocolFlags(nsIProtocolHandler *iface,
-                                                         PRUint32 *aProtocolFlags)
+                                                         UINT32 *aProtocolFlags)
 {
     nsProtocolHandler *This = impl_from_nsIProtocolHandler(iface);
 
@@ -3220,7 +3220,7 @@ static nsresult NSAPI nsIOService_GetProtocolHandler(nsIIOService *iface, const 
 }
 
 static nsresult NSAPI nsIOService_GetProtocolFlags(nsIIOService *iface, const char *aScheme,
-                                                    PRUint32 *_retval)
+                                                    UINT32 *_retval)
 {
     TRACE("(%s %p)\n", debugstr_a(aScheme), _retval);
     return nsIIOService_GetProtocolFlags(nsio, aScheme, _retval);
@@ -3415,14 +3415,14 @@ static nsresult NSAPI nsNetUtil_ParseContentType(nsINetUtil *iface, const nsACSt
     return nsINetUtil_ParseContentType(net_util, aTypeHeader, aCharset, aHadCharset, aContentType);
 }
 
-static nsresult NSAPI nsNetUtil_ProtocolHasFlags(nsINetUtil *iface, nsIURI *aURI, PRUint32 aFlags, cpp_bool *_retval)
+static nsresult NSAPI nsNetUtil_ProtocolHasFlags(nsINetUtil *iface, nsIURI *aURI, UINT32 aFlags, cpp_bool *_retval)
 {
     TRACE("()\n");
 
     return nsINetUtil_ProtocolHasFlags(net_util, aURI, aFlags, _retval);
 }
 
-static nsresult NSAPI nsNetUtil_URIChainHasFlags(nsINetUtil *iface, nsIURI *aURI, PRUint32 aFlags, cpp_bool *_retval)
+static nsresult NSAPI nsNetUtil_URIChainHasFlags(nsINetUtil *iface, nsIURI *aURI, UINT32 aFlags, cpp_bool *_retval)
 {
     TRACE("(%p %08x %p)\n", aURI, aFlags, _retval);
 
@@ -3449,14 +3449,14 @@ static nsresult NSAPI nsNetUtil_NewSimpleNestedURI(nsINetUtil *iface, nsIURI *aU
 }
 
 static nsresult NSAPI nsNetUtil_EscapeString(nsINetUtil *iface, const nsACString *aString,
-                                             PRUint32 aEscapeType, nsACString *_retval)
+                                             UINT32 aEscapeType, nsACString *_retval)
 {
     TRACE("(%s %x %p)\n", debugstr_nsacstr(aString), aEscapeType, _retval);
 
     return nsINetUtil_EscapeString(net_util, aString, aEscapeType, _retval);
 }
 
-static nsresult NSAPI nsNetUtil_EscapeURL(nsINetUtil *iface, const nsACString *aStr, PRUint32 aFlags,
+static nsresult NSAPI nsNetUtil_EscapeURL(nsINetUtil *iface, const nsACString *aStr, UINT32 aFlags,
                                           nsACString *_retval)
 {
     TRACE("(%s %08x %p)\n", debugstr_nsacstr(aStr), aFlags, _retval);
@@ -3465,7 +3465,7 @@ static nsresult NSAPI nsNetUtil_EscapeURL(nsINetUtil *iface, const nsACString *a
 }
 
 static nsresult NSAPI nsNetUtil_UnescapeString(nsINetUtil *iface, const nsACString *aStr,
-                                               PRUint32 aFlags, nsACString *_retval)
+                                               UINT32 aFlags, nsACString *_retval)
 {
     TRACE("(%s %08x %p)\n", debugstr_nsacstr(aStr), aFlags, _retval);
 

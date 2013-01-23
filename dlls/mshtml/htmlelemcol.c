@@ -496,7 +496,7 @@ static void create_all_list(HTMLDocumentNode *doc, HTMLDOMNode *elem, elem_vecto
 {
     nsIDOMNodeList *nsnode_list;
     nsIDOMNode *iter;
-    PRUint32 list_len = 0, i;
+    UINT32 list_len = 0, i;
     nsresult nsres;
     HRESULT hres;
 
@@ -550,7 +550,7 @@ IHTMLElementCollection *create_all_collection(HTMLDOMNode *node, BOOL include_ro
 
 IHTMLElementCollection *create_collection_from_nodelist(HTMLDocumentNode *doc, nsIDOMNodeList *nslist)
 {
-    PRUint32 length = 0, i;
+    UINT32 length = 0, i;
     HTMLDOMNode *node;
     elem_vector_t buf;
     HRESULT hres;
@@ -585,7 +585,7 @@ IHTMLElementCollection *create_collection_from_nodelist(HTMLDocumentNode *doc, n
 
 IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocumentNode *doc, nsIDOMHTMLCollection *nscol)
 {
-    PRUint32 length = 0, i;
+    UINT32 length = 0, i;
     elem_vector_t buf;
     HTMLDOMNode *node;
     HRESULT hres = S_OK;

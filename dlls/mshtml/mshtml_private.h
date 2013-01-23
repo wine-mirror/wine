@@ -39,7 +39,7 @@
 #include "nsiface.h"
 
 #define NS_ERROR_GENERATE_FAILURE(module,code) \
-    ((nsresult) (((PRUint32)(1<<31)) | ((PRUint32)(module+0x45)<<16) | ((PRUint32)(code))))
+    ((nsresult) (((UINT32)(1<<31)) | ((UINT32)(module+0x45)<<16) | ((UINT32)(code))))
 
 #define NS_OK                     ((nsresult)0x00000000L)
 #define NS_ERROR_FAILURE          ((nsresult)0x80004005L)
@@ -793,13 +793,13 @@ void nsfree(void*) DECLSPEC_HIDDEN;
 
 void nsACString_InitDepend(nsACString*,const char*) DECLSPEC_HIDDEN;
 void nsACString_SetData(nsACString*,const char*) DECLSPEC_HIDDEN;
-PRUint32 nsACString_GetData(const nsACString*,const char**) DECLSPEC_HIDDEN;
+UINT32 nsACString_GetData(const nsACString*,const char**) DECLSPEC_HIDDEN;
 void nsACString_Finish(nsACString*) DECLSPEC_HIDDEN;
 
 BOOL nsAString_Init(nsAString*,const PRUnichar*) DECLSPEC_HIDDEN;
 void nsAString_InitDepend(nsAString*,const PRUnichar*) DECLSPEC_HIDDEN;
 void nsAString_SetData(nsAString*,const PRUnichar*) DECLSPEC_HIDDEN;
-PRUint32 nsAString_GetData(const nsAString*,const PRUnichar**) DECLSPEC_HIDDEN;
+UINT32 nsAString_GetData(const nsAString*,const PRUnichar**) DECLSPEC_HIDDEN;
 void nsAString_Finish(nsAString*) DECLSPEC_HIDDEN;
 HRESULT return_nsstr(nsresult,nsAString*,BSTR*) DECLSPEC_HIDDEN;
 

@@ -122,7 +122,7 @@ static HRESULT WINAPI HTMLDOMTextNode_toString(IHTMLDOMTextNode *iface, BSTR *St
 static HRESULT WINAPI HTMLDOMTextNode_get_length(IHTMLDOMTextNode *iface, LONG *p)
 {
     HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode(iface);
-    PRUint32 length = 0;
+    UINT32 length = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);

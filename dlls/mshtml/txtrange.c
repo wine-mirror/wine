@@ -56,7 +56,7 @@ typedef struct {
 typedef struct {
     UINT16 type;
     nsIDOMNode *node;
-    PRUint32 off;
+    UINT32 off;
     nsAString str;
     const PRUnichar *p;
 } dompos_t;
@@ -377,7 +377,7 @@ static nsIDOMNode *prev_node(HTMLTxtRange *This, nsIDOMNode *iter)
     return NULL;
 }
 
-static nsIDOMNode *get_child_node(nsIDOMNode *node, PRUint32 off)
+static nsIDOMNode *get_child_node(nsIDOMNode *node, UINT32 off)
 {
     nsIDOMNodeList *node_list;
     nsIDOMNode *ret = NULL;

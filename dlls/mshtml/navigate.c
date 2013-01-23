@@ -145,8 +145,8 @@ static nsresult NSAPI nsInputStream_Available(nsIInputStream *iface, PRUint64 *_
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsInputStream_Read(nsIInputStream *iface, char *aBuf, PRUint32 aCount,
-                                         PRUint32 *_retval)
+static nsresult NSAPI nsInputStream_Read(nsIInputStream *iface, char *aBuf, UINT32 aCount,
+                                         UINT32 *_retval)
 {
     nsProtocolStream *This = impl_from_nsIInputStream(iface);
     DWORD read = aCount;
@@ -168,11 +168,11 @@ static nsresult NSAPI nsInputStream_Read(nsIInputStream *iface, char *aBuf, PRUi
 }
 
 static nsresult NSAPI nsInputStream_ReadSegments(nsIInputStream *iface,
-        nsresult (WINAPI *aWriter)(nsIInputStream*,void*,const char*,PRUint32,PRUint32,PRUint32*),
-        void *aClousure, PRUint32 aCount, PRUint32 *_retval)
+        nsresult (WINAPI *aWriter)(nsIInputStream*,void*,const char*,UINT32,UINT32,UINT32*),
+        void *aClousure, UINT32 aCount, UINT32 *_retval)
 {
     nsProtocolStream *This = impl_from_nsIInputStream(iface);
-    PRUint32 written = 0;
+    UINT32 written = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p %p %d %p)\n", This, aWriter, aClousure, aCount, _retval);
@@ -1002,7 +1002,7 @@ HRESULT bind_mon_to_wstr(HTMLInnerWindow *window, IMoniker *mon, WCHAR **ret)
 static HRESULT read_post_data_stream(nsChannelBSC *This, nsChannel *nschannel)
 {
     PRUint64 available = 0;
-    PRUint32 data_len = 0;
+    UINT32 data_len = 0;
     char *data, *post_data;
     nsresult nsres;
     HRESULT hres = S_OK;

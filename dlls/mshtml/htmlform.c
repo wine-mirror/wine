@@ -510,7 +510,7 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
     HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
     nsIDOMHTMLCollection *elements;
     nsAString nsname, nsstr;
-    PRUint32 len, i;
+    UINT32 len, i;
     nsresult nsres;
     HRESULT hres = DISP_E_UNKNOWNNAME;
 

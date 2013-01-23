@@ -124,7 +124,7 @@ static nsresult NSAPI nsPromptService_ConfirmCheck(nsIPromptService *iface,
 
 static nsresult NSAPI nsPromptService_ConfirmEx(nsIPromptService *iface,
         nsIDOMWindow *aParent, const PRUnichar *aDialogTitle,
-        const PRUnichar *aText, PRUint32 aButtonFlags, const PRUnichar *aButton0Title,
+        const PRUnichar *aText, UINT32 aButtonFlags, const PRUnichar *aButton0Title,
         const PRUnichar *aButton1Title, const PRUnichar *aButton2Title,
         const PRUnichar *aCheckMsg, cpp_bool *aCheckState, LONG *_retval)
 {
@@ -185,7 +185,7 @@ static nsresult NSAPI nsPromptService_PromptPassword(nsIPromptService *iface,
 
 static nsresult NSAPI nsPromptService_Select(nsIPromptService *iface,
         nsIDOMWindow *aParent, const PRUnichar *aDialogTitle,
-        const PRUnichar *aText, PRUint32 aCount, const PRUnichar **aSelectList,
+        const PRUnichar *aText, UINT32 aCount, const PRUnichar **aSelectList,
         LONG *aOutSelection, cpp_bool *_retval)
 {
     FIXME("(%p %s %s %d %p %p %p)\n", aParent, debugstr_w(aDialogTitle),

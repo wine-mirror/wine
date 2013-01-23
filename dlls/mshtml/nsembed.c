@@ -53,6 +53,8 @@ WINE_DECLARE_DEBUG_CHANNEL(gecko);
 #define NS_STRING_CONTAINER_INIT_DEPEND  0x0002
 #define NS_CSTRING_CONTAINER_INIT_DEPEND 0x0002
 
+typedef UINT32 PRUint32;
+
 static nsresult (CDECL *NS_InitXPCOM2)(nsIServiceManager**,void*,void*);
 static nsresult (CDECL *NS_ShutdownXPCOM)(nsIServiceManager*);
 static nsresult (CDECL *NS_GetComponentRegistrar)(nsIComponentRegistrar**);
@@ -798,7 +800,7 @@ void nsACString_SetData(nsACString *str, const char *data)
     NS_CStringSetData(str, data, PR_UINT32_MAX);
 }
 
-PRUint32 nsACString_GetData(const nsACString *str, const char **data)
+UINT32 nsACString_GetData(const nsACString *str, const char **data)
 {
     return NS_CStringGetData(str, data, NULL);
 }
@@ -827,7 +829,7 @@ void nsAString_SetData(nsAString *str, const PRUnichar *data)
     NS_StringSetData(str, data, PR_UINT32_MAX);
 }
 
-PRUint32 nsAString_GetData(const nsAString *str, const PRUnichar **data)
+UINT32 nsAString_GetData(const nsAString *str, const PRUnichar **data)
 {
     return NS_StringGetData(str, data, NULL);
 }
@@ -960,7 +962,7 @@ static HRESULT nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNo
     }
 
     if(has_children) {
-        PRUint32 child_cnt, i;
+        UINT32 child_cnt, i;
         nsIDOMNode *child_node;
 
         nsIDOMNode_GetChildNodes(nsnode, &node_list);
@@ -1273,7 +1275,7 @@ static nsrefcnt NSAPI nsWebBrowserChrome_Release(nsIWebBrowserChrome *iface)
 }
 
 static nsresult NSAPI nsWebBrowserChrome_SetStatus(nsIWebBrowserChrome *iface,
-        PRUint32 statusType, const PRUnichar *status)
+        UINT32 statusType, const PRUnichar *status)
 {
     NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
     TRACE("(%p)->(%d %s)\n", This, statusType, debugstr_w(status));
@@ -1310,7 +1312,7 @@ static nsresult NSAPI nsWebBrowserChrome_SetWebBrowser(nsIWebBrowserChrome *ifac
 }
 
 static nsresult NSAPI nsWebBrowserChrome_GetChromeFlags(nsIWebBrowserChrome *iface,
-        PRUint32 *aChromeFlags)
+        UINT32 *aChromeFlags)
 {
     NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
     WARN("(%p)->(%p)\n", This, aChromeFlags);
@@ -1318,7 +1320,7 @@ static nsresult NSAPI nsWebBrowserChrome_GetChromeFlags(nsIWebBrowserChrome *ifa
 }
 
 static nsresult NSAPI nsWebBrowserChrome_SetChromeFlags(nsIWebBrowserChrome *iface,
-        PRUint32 aChromeFlags)
+        UINT32 aChromeFlags)
 {
     NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
     WARN("(%p)->(%08x)\n", This, aChromeFlags);
@@ -1407,7 +1409,7 @@ static nsrefcnt NSAPI nsContextMenuListener_Release(nsIContextMenuListener *ifac
 }
 
 static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuListener *iface,
-        PRUint32 aContextFlags, nsIDOMEvent *aEvent, nsIDOMNode *aNode)
+        UINT32 aContextFlags, nsIDOMEvent *aEvent, nsIDOMNode *aNode)
 {
     NSContainer *This = impl_from_nsIContextMenuListener(iface);
     nsIDOMMouseEvent *event;
@@ -1667,7 +1669,7 @@ static nsrefcnt NSAPI nsEmbeddingSiteWindow_Release(nsIEmbeddingSiteWindow *ifac
 }
 
 static nsresult NSAPI nsEmbeddingSiteWindow_SetDimensions(nsIEmbeddingSiteWindow *iface,
-        PRUint32 flags, LONG x, LONG y, LONG cx, LONG cy)
+        UINT32 flags, LONG x, LONG y, LONG cx, LONG cy)
 {
     NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
     WARN("(%p)->(%08x %d %d %d %d)\n", This, flags, x, y, cx, cy);
@@ -1675,7 +1677,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_SetDimensions(nsIEmbeddingSiteWindow
 }
 
 static nsresult NSAPI nsEmbeddingSiteWindow_GetDimensions(nsIEmbeddingSiteWindow *iface,
-        PRUint32 flags, LONG *x, LONG *y, LONG *cx, LONG *cy)
+        UINT32 flags, LONG *x, LONG *y, LONG *cx, LONG *cy)
 {
     NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
     WARN("(%p)->(%08x %p %p %p %p)\n", This, flags, x, y, cx, cy);

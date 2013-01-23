@@ -323,11 +323,11 @@ static HRESULT WINAPI HTMLWindow2_Invoke(IHTMLWindow2 *iface, DISPID dispIdMembe
             pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
-static HRESULT get_frame_by_index(HTMLOuterWindow *This, PRUint32 index, HTMLOuterWindow **ret)
+static HRESULT get_frame_by_index(HTMLOuterWindow *This, UINT32 index, HTMLOuterWindow **ret)
 {
     nsIDOMWindowCollection *nsframes;
     nsIDOMWindow *nswindow;
-    PRUint32 length;
+    UINT32 length;
     nsresult nsres;
 
     nsres = nsIDOMWindow_GetFrames(This->nswindow, &nsframes);
@@ -363,7 +363,7 @@ HRESULT get_frame_by_name(HTMLOuterWindow *This, const WCHAR *name, BOOL deep, H
     HTMLOuterWindow *window = NULL;
     nsIDOMWindow *nswindow;
     nsAString name_str;
-    PRUint32 length, i;
+    UINT32 length, i;
     nsresult nsres;
     HRESULT hres = S_OK;
 
@@ -476,7 +476,7 @@ static HRESULT WINAPI HTMLWindow2_get_length(IHTMLWindow2 *iface, LONG *p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
     nsIDOMWindowCollection *nscollection;
-    PRUint32 length;
+    UINT32 length;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);

@@ -415,7 +415,7 @@ static HRESULT WINAPI HTMLSelectElement_put_length(IHTMLSelectElement *iface, LO
 static HRESULT WINAPI HTMLSelectElement_get_length(IHTMLSelectElement *iface, LONG *p)
 {
     HTMLSelectElement *This = impl_from_IHTMLSelectElement(iface);
-    PRUint32 length = 0;
+    UINT32 length = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);

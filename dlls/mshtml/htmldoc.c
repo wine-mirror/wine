@@ -1666,7 +1666,7 @@ static HRESULT dispid_from_elem_name(HTMLDocumentNode *This, BSTR name, DISPID *
 {
     nsIDOMNodeList *node_list;
     nsAString name_str;
-    PRUint32 len;
+    UINT32 len;
     unsigned i;
     nsresult nsres;
 
