@@ -36,6 +36,7 @@ static DWORD GLE;
 
 static const char * sTestpath1 = "%LONGSYSTEMVAR%\\subdir1";
 static const char * sTestpath2 = "%FOO%\\subdir1";
+static const DWORD ptr_size = 8 * sizeof(void*);
 
 static DWORD (WINAPI *pRegGetValueA)(HKEY,LPCSTR,LPCSTR,DWORD,LPDWORD,PVOID,LPDWORD);
 static DWORD (WINAPI *pRegDeleteTreeA)(HKEY,LPCSTR);
@@ -947,6 +948,39 @@ static void test_reg_open_key(void)
         "RegOpenKeyEx with KEY_WOW64_64KEY failed (err=%u)\n", ret);
     RegCloseKey(hkResult);
 
+    /* check special HKEYs on 64bit
+     * only the lower 4 bytes of the supplied key are used
+     */
+    if (ptr_size == 64)
+    {
+        /* HKEY_CURRENT_USER */
+        ret = RegOpenKeyA(UlongToHandle(HandleToUlong(HKEY_CURRENT_USER)), "Software", &hkResult);
+        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+        ok(hkResult != NULL, "expected hkResult != NULL\n");
+        RegCloseKey(hkResult);
+
+        ret = RegOpenKeyA((HKEY)(HandleToUlong(HKEY_CURRENT_USER) | (ULONG64)1 << 32), "Software", &hkResult);
+        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+        ok(hkResult != NULL, "expected hkResult != NULL\n");
+        RegCloseKey(hkResult);
+
+        ret = RegOpenKeyA((HKEY)(HandleToUlong(HKEY_CURRENT_USER) | (ULONG64)0xdeadbeef << 32), "Software", &hkResult);
+        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+        ok(hkResult != NULL, "expected hkResult != NULL\n");
+        RegCloseKey(hkResult);
+
+        ret = RegOpenKeyA((HKEY)(HandleToUlong(HKEY_CURRENT_USER) | (ULONG64)0xffffffff << 32), "Software", &hkResult);
+        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+        ok(hkResult != NULL, "expected hkResult != NULL\n");
+        RegCloseKey(hkResult);
+
+        /* HKEY_LOCAL_MACHINE */
+        ret = RegOpenKeyA((HKEY)(HandleToUlong(HKEY_LOCAL_MACHINE) | (ULONG64)0xdeadbeef << 32), "Software", &hkResult);
+        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+        ok(hkResult != NULL, "expected hkResult != NULL\n");
+        RegCloseKey(hkResult);
+    }
+
     /* Try using WOW64 flags when opening a key with a DACL set to verify that
      * the registry access check is performed correctly. Redirection isn't
      * being tested, so the tests don't care about whether the process is
@@ -1797,8 +1831,6 @@ static void test_symlinks(void)
     HeapFree( GetProcessHeap(), 0, target );
     pRtlFreeUnicodeString( &target_str );
 }
-
-static const DWORD ptr_size = 8 * sizeof(void*);
 
 static DWORD get_key_value( HKEY root, const char *name, DWORD flags )
 {

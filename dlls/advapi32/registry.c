@@ -228,9 +228,9 @@ static NTSTATUS open_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *a
 static HKEY create_special_root_hkey( HKEY hkey, DWORD access )
 {
     HKEY ret = 0;
-    int idx = (UINT_PTR)hkey - (UINT_PTR)HKEY_SPECIAL_ROOT_FIRST;
+    int idx = HandleToUlong(hkey) - HandleToUlong(HKEY_SPECIAL_ROOT_FIRST);
 
-    if (hkey == HKEY_CURRENT_USER)
+    if (HandleToUlong(hkey) == HandleToUlong(HKEY_CURRENT_USER))
     {
         if (RtlOpenCurrentUser( access, (HANDLE *)&hkey )) return 0;
         TRACE( "HKEY_CURRENT_USER -> %p\n", hkey );
@@ -267,9 +267,10 @@ static inline HKEY get_special_root_hkey( HKEY hkey )
 {
     HKEY ret = hkey;
 
-    if ((hkey >= HKEY_SPECIAL_ROOT_FIRST) && (hkey <= HKEY_SPECIAL_ROOT_LAST))
+    if ((HandleToUlong(hkey) >= HandleToUlong(HKEY_SPECIAL_ROOT_FIRST))
+            && (HandleToUlong(hkey) <= HandleToUlong(HKEY_SPECIAL_ROOT_LAST)))
     {
-        if (!(ret = special_root_keys[(UINT_PTR)hkey - (UINT_PTR)HKEY_SPECIAL_ROOT_FIRST]))
+        if (!(ret = special_root_keys[HandleToUlong(hkey) - HandleToUlong(HKEY_SPECIAL_ROOT_FIRST)]))
             ret = create_special_root_hkey( hkey, MAXIMUM_ALLOWED );
     }
     return ret;
@@ -286,9 +287,10 @@ LSTATUS WINAPI RegOverridePredefKey( HKEY hkey, HKEY override )
 
     TRACE("(%p %p)\n", hkey, override);
 
-    if ((hkey < HKEY_SPECIAL_ROOT_FIRST) || (hkey > HKEY_SPECIAL_ROOT_LAST))
+    if ((HandleToUlong(hkey) < HandleToUlong(HKEY_SPECIAL_ROOT_FIRST))
+            || (HandleToUlong(hkey) > HandleToUlong(HKEY_SPECIAL_ROOT_LAST)))
         return ERROR_INVALID_PARAMETER;
-    idx = (UINT_PTR)hkey - (UINT_PTR)HKEY_SPECIAL_ROOT_FIRST;
+    idx = HandleToUlong(hkey) - HandleToUlong(HKEY_SPECIAL_ROOT_FIRST);
 
     if (override)
     {
@@ -443,7 +445,7 @@ LSTATUS WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD options, REGSAM acc
     UNICODE_STRING nameW;
 
     /* NT+ allows beginning backslash for HKEY_CLASSES_ROOT */
-    if (hkey == HKEY_CLASSES_ROOT && name && *name == '\\') name++;
+    if (HandleToUlong(hkey) == HandleToUlong(HKEY_CLASSES_ROOT) && name && *name == '\\') name++;
 
     if (!retkey) return ERROR_INVALID_PARAMETER;
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
@@ -490,7 +492,7 @@ LSTATUS WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD options, REGSAM acce
     else
     {
         /* NT+ allows beginning backslash for HKEY_CLASSES_ROOT */
-        if (hkey == HKEY_CLASSES_ROOT && name && *name == '\\') name++;
+        if (HandleToUlong(hkey) == HandleToUlong(HKEY_CLASSES_ROOT) && name && *name == '\\') name++;
     }
 
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
@@ -2814,7 +2816,7 @@ cleanup:
 LSTATUS WINAPI RegDisablePredefinedCache(void)
 {
     HKEY hkey_current_user;
-    int idx = (UINT_PTR)HKEY_CURRENT_USER - (UINT_PTR)HKEY_SPECIAL_ROOT_FIRST;
+    int idx = HandleToUlong(HKEY_CURRENT_USER) - HandleToUlong(HKEY_SPECIAL_ROOT_FIRST);
 
     /* prevent caching of future requests */
     hkcu_cache_disabled = TRUE;
