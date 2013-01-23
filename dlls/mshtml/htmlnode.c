@@ -373,7 +373,7 @@ static HRESULT WINAPI HTMLDOMNode_Invoke(IHTMLDOMNode *iface, DISPID dispIdMembe
 static HRESULT WINAPI HTMLDOMNode_get_nodeType(IHTMLDOMNode *iface, LONG *p)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(iface);
-    PRUint16 type = -1;
+    UINT16 type = -1;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -1085,7 +1085,7 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
 
 static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNode **ret)
 {
-    PRUint16 node_type;
+    UINT16 node_type;
     HRESULT hres;
 
     nsIDOMNode_GetNodeType(nsnode, &node_type);

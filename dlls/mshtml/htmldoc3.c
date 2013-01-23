@@ -74,7 +74,7 @@ HRESULT get_doc_elem_by_id(HTMLDocumentNode *doc, const WCHAR *id, HTMLElement *
     assert(nsres == NS_OK);
 
     if(nsnode && nselem) {
-        PRUint16 pos;
+        UINT16 pos;
 
         nsres = nsIDOMNode_CompareDocumentPosition(nsnode, (nsIDOMNode*)nselem, &pos);
         if(NS_FAILED(nsres)) {

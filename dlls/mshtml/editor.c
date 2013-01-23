@@ -218,7 +218,7 @@ static void remove_child_attr(nsIDOMElement *elem, LPCWSTR tag, nsAString *attr_
     PRUint32 child_cnt, i;
     nsIDOMNode *child_node;
     nsIDOMNodeList *node_list;
-    PRUint16 node_type;
+    UINT16 node_type;
 
     nsIDOMElement_HasChildNodes(elem, &has_children);
     if(!has_children)
@@ -266,7 +266,7 @@ static void get_font_size(HTMLDocument *This, WCHAR *ret)
     nsIDOMNode *node = NULL, *tmp_node;
     nsAString tag_str;
     LPCWSTR tag;
-    PRUint16 node_type;
+    UINT16 node_type;
     nsresult nsres;
 
     *ret = 0;

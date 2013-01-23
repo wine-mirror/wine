@@ -54,7 +54,7 @@ typedef struct {
 } wstrbuf_t;
 
 typedef struct {
-    PRUint16 type;
+    UINT16 type;
     nsIDOMNode *node;
     PRUint32 off;
     nsAString str;
@@ -116,9 +116,9 @@ static int string_to_nscmptype(LPCWSTR str)
     return -1;
 }
 
-static PRUint16 get_node_type(nsIDOMNode *node)
+static UINT16 get_node_type(nsIDOMNode *node)
 {
-    PRUint16 type = 0;
+    UINT16 type = 0;
 
     if(node)
         nsIDOMNode_GetNodeType(node, &type);

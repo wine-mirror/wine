@@ -79,7 +79,7 @@ static void elem_vector_normalize(elem_vector_t *buf)
 
 static inline BOOL is_elem_node(nsIDOMNode *node)
 {
-    PRUint16 type=0;
+    UINT16 type=0;
 
     nsIDOMNode_GetNodeType(node, &type);
 

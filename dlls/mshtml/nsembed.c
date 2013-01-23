@@ -914,7 +914,7 @@ static HRESULT nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNo
     nsIDOMNodeList *node_list = NULL;
     cpp_bool has_children = FALSE;
     nsIContent *nscontent;
-    PRUint16 type;
+    UINT16 type;
     nsresult nsres;
 
     nsIDOMNode_HasChildNodes(nsnode, &has_children);

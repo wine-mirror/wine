@@ -564,7 +564,7 @@ static HRESULT WINAPI HTMLEventObj_get_keyCode(IHTMLEventObj *iface, LONG *p)
 static HRESULT WINAPI HTMLEventObj_get_button(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    PRUint16 button = 0;
+    UINT16 button = 0;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -1049,7 +1049,7 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
     BOOL prevent_default = FALSE;
     HTMLInnerWindow *window;
     HTMLDOMNode *node;
-    PRUint16 node_type;
+    UINT16 node_type;
     nsresult nsres;
     HRESULT hres;
 
