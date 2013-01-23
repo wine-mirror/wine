@@ -43,7 +43,6 @@ typedef REFIID nsIIDRef;
 typedef nsIIDRef nsCIDRef;
 
 typedef WCHAR PRUnichar;
-typedef ULONGLONG PRUint64;
 
 /*
  * Mozilla uses stdint.h types for its headers. Following defines make this IDL file
@@ -57,7 +56,7 @@ typedef ULONGLONG PRUint64;
 #define uint8_t UINT8
 #define uint16_t UINT16
 #define uint32_t UINT32
-#define uint64_t PRUint64
+#define uint64_t UINT64
 
 typedef uint64_t DOMTimeStamp;
 typedef uint32_t nsLoadFlags;

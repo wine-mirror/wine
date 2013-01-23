@@ -138,7 +138,7 @@ static nsresult NSAPI nsInputStream_Close(nsIInputStream *iface)
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsInputStream_Available(nsIInputStream *iface, PRUint64 *_retval)
+static nsresult NSAPI nsInputStream_Available(nsIInputStream *iface, UINT64 *_retval)
 {
     nsProtocolStream *This = impl_from_nsIInputStream(iface);
     FIXME("(%p)->(%p)\n", This, _retval);
@@ -1001,7 +1001,7 @@ HRESULT bind_mon_to_wstr(HTMLInnerWindow *window, IMoniker *mon, WCHAR **ret)
 
 static HRESULT read_post_data_stream(nsChannelBSC *This, nsChannel *nschannel)
 {
-    PRUint64 available = 0;
+    UINT64 available = 0;
     UINT32 data_len = 0;
     char *data, *post_data;
     nsresult nsres;
