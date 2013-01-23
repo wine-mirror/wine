@@ -3482,15 +3482,6 @@ static BOOL CheckDepthStencilCapability(const struct wined3d_adapter *adapter,
     return FALSE;
 }
 
-static BOOL CheckFilterCapability(const struct wined3d_adapter *adapter, const struct wined3d_format *format)
-{
-    /* The flags entry of a format contains the filtering capability */
-    if (format->flags & WINED3DFMT_FLAG_FILTERING)
-        return TRUE;
-
-    return FALSE;
-}
-
 /* Check the render target capabilities of a format */
 static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
         const struct wined3d_format *adapter_format, const struct wined3d_format *check_format)
@@ -3983,7 +3974,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_FILTER)
             {
-                if (!CheckFilterCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_FILTERING))
                 {
                     TRACE("[FAILED] - No filter support.\n");
                     return WINED3DERR_NOTAVAILABLE;
@@ -4139,7 +4130,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_FILTER)
             {
-                if (!CheckFilterCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_FILTERING))
                 {
                     TRACE("[FAILED] - No filter support.\n");
                     return WINED3DERR_NOTAVAILABLE;
@@ -4317,7 +4308,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_FILTER)
             {
-                if (!CheckFilterCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_FILTERING))
                 {
                     TRACE("[FAILED] - No filter support.\n");
                     return WINED3DERR_NOTAVAILABLE;
