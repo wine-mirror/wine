@@ -1467,6 +1467,13 @@ int netconn_get_cipher_strength( netconn_t *conn )
     pSSL_CIPHER_get_bits( cipher, &bits );
     return bits;
 #else
-    return 0;
+    SecPkgContext_ConnectionInfo conn_info;
+    SECURITY_STATUS res;
+
+    if (!conn->secure) return 0;
+    res = QueryContextAttributesW(&conn->ssl_ctx, SECPKG_ATTR_CONNECTION_INFO, (void*)&conn_info);
+    if(res != SEC_E_OK)
+        WARN("QueryContextAttributesW failed: %08x\n", res);
+    return res == SEC_E_OK ? conn_info.dwCipherStrength : 0;
 #endif
 }
