@@ -2247,16 +2247,14 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
     return select_card_fallback_nvidia(gl_info);
 }
 
-static const struct fragment_pipeline *select_fragment_implementation(const struct wined3d_gl_info *gl_info)
+static const struct fragment_pipeline *select_fragment_implementation(const struct wined3d_gl_info *gl_info,
+        const struct wined3d_shader_backend_ops *shader_backend_ops)
 {
-    int vs_selected_mode, ps_selected_mode;
-
-    select_shader_mode(gl_info, &ps_selected_mode, &vs_selected_mode);
-    if (ps_selected_mode == SHADER_GLSL)
+    if (shader_backend_ops == &glsl_shader_backend)
         return &glsl_fragment_pipe;
-    if (ps_selected_mode == SHADER_ARB)
+    if (shader_backend_ops == &arb_program_shader_backend)
         return &arbfp_fragment_pipeline;
-    if (ps_selected_mode == SHADER_ATI)
+    if (gl_info->supported[ATI_FRAGMENT_SHADER])
         return &atifs_fragment_pipeline;
     if (gl_info->supported[NV_REGISTER_COMBINERS] && gl_info->supported[NV_TEXTURE_SHADER2])
         return &nvts_fragment_pipeline;
@@ -2267,22 +2265,35 @@ static const struct fragment_pipeline *select_fragment_implementation(const stru
 
 static const struct wined3d_shader_backend_ops *select_shader_backend(const struct wined3d_gl_info *gl_info)
 {
-    int vs_selected_mode, ps_selected_mode;
+    BOOL glsl = wined3d_settings.glslRequested && gl_info->glsl_version >= MAKEDWORD_VERSION(1, 20);
 
-    select_shader_mode(gl_info, &ps_selected_mode, &vs_selected_mode);
-    if (vs_selected_mode == SHADER_GLSL || ps_selected_mode == SHADER_GLSL) return &glsl_shader_backend;
-    if (vs_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_ARB) return &arb_program_shader_backend;
+    if (wined3d_settings.vs_mode == VS_NONE && wined3d_settings.ps_mode == PS_NONE)
+        return &none_shader_backend;
+    if (glsl && gl_info->supported[ARB_FRAGMENT_SHADER])
+        return &glsl_shader_backend;
+    if (glsl && gl_info->supported[ARB_VERTEX_SHADER])
+    {
+        /* Geforce4 cards support GLSL but for vertex shaders only. Further
+         * its reported GLSL caps are wrong. This combined with the fact that
+         * GLSL won't offer more features or performance, use ARB shaders only
+         * on this card. */
+        if (gl_info->supported[NV_VERTEX_PROGRAM] && !gl_info->supported[NV_VERTEX_PROGRAM2])
+            return &arb_program_shader_backend;
+        return &glsl_shader_backend;
+    }
+    if (gl_info->supported[ARB_VERTEX_PROGRAM] || gl_info->supported[ARB_FRAGMENT_PROGRAM])
+        return &arb_program_shader_backend;
     return &none_shader_backend;
 }
 
-static const struct blit_shader *select_blit_implementation(const struct wined3d_gl_info *gl_info)
+static const struct blit_shader *select_blit_implementation(const struct wined3d_gl_info *gl_info,
+        const struct wined3d_shader_backend_ops *shader_backend_ops)
 {
-    int vs_selected_mode, ps_selected_mode;
-
-    select_shader_mode(gl_info, &ps_selected_mode, &vs_selected_mode);
-    if ((ps_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_GLSL)
-            && gl_info->supported[ARB_FRAGMENT_PROGRAM]) return &arbfp_blit;
-    else return &ffp_blit;
+    if ((shader_backend_ops == &glsl_shader_backend
+            || shader_backend_ops == &arb_program_shader_backend)
+            && gl_info->supported[ARB_FRAGMENT_PROGRAM])
+        return &arbfp_blit;
+    return &ffp_blit;
 }
 
 static void parse_extension_string(struct wined3d_gl_info *gl_info, const char *extensions,
@@ -2753,9 +2764,9 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 
     checkGLcall("extension detection");
 
-    adapter->fragment_pipe = select_fragment_implementation(gl_info);
     adapter->shader_backend = select_shader_backend(gl_info);
-    adapter->blitter = select_blit_implementation(gl_info);
+    adapter->fragment_pipe = select_fragment_implementation(gl_info, adapter->shader_backend);
+    adapter->blitter = select_blit_implementation(gl_info, adapter->shader_backend);
 
     adapter->fragment_pipe->get_caps(gl_info, &fragment_caps);
     gl_info->limits.texture_stages = fragment_caps.MaxTextureBlendStages;

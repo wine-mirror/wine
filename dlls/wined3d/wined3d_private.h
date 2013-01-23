@@ -252,11 +252,6 @@ static inline float float_24_to_32(DWORD in)
 #define ORM_BACKBUFFER  0
 #define ORM_FBO         1
 
-#define SHADER_ARB  1
-#define SHADER_GLSL 2
-#define SHADER_ATI  3
-#define SHADER_NONE 4
-
 #define RTL_READDRAW   1
 #define RTL_READTEX    2
 
@@ -2580,8 +2575,6 @@ void multiply_matrix(struct wined3d_matrix *dest, const struct wined3d_matrix *s
         const struct wined3d_matrix *src2) DECLSPEC_HIDDEN;
 UINT wined3d_log2i(UINT32 x) DECLSPEC_HIDDEN;
 unsigned int count_bits(unsigned int mask) DECLSPEC_HIDDEN;
-
-void select_shader_mode(const struct wined3d_gl_info *gl_info, int *ps_selected, int *vs_selected) DECLSPEC_HIDDEN;
 
 struct wined3d_shader_lconst
 {

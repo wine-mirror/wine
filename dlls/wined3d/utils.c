@@ -3338,31 +3338,6 @@ UINT wined3d_log2i(UINT32 x)
     return (i = x >> 16) ? (x = i >> 8) ? l[x] + 24 : l[i] + 16 : (i = x >> 8) ? l[i] + 8 : l[x];
 }
 
-/* Set the shader type for this device, depending on the given capabilities
- * and the user preferences in wined3d_settings. */
-void select_shader_mode(const struct wined3d_gl_info *gl_info, int *ps_selected, int *vs_selected)
-{
-    BOOL glsl = wined3d_settings.glslRequested && gl_info->glsl_version >= MAKEDWORD_VERSION(1, 20);
-
-    if (wined3d_settings.vs_mode == VS_NONE) *vs_selected = SHADER_NONE;
-    else if (gl_info->supported[ARB_VERTEX_SHADER] && glsl)
-    {
-        /* Geforce4 cards support GLSL but for vertex shaders only. Further its reported GLSL caps are
-         * wrong. This combined with the fact that glsl won't offer more features or performance, use ARB
-         * shaders only on this card. */
-        if (gl_info->supported[NV_VERTEX_PROGRAM] && !gl_info->supported[NV_VERTEX_PROGRAM2]) *vs_selected = SHADER_ARB;
-        else *vs_selected = SHADER_GLSL;
-    }
-    else if (gl_info->supported[ARB_VERTEX_PROGRAM]) *vs_selected = SHADER_ARB;
-    else *vs_selected = SHADER_NONE;
-
-    if (wined3d_settings.ps_mode == PS_NONE) *ps_selected = SHADER_NONE;
-    else if (gl_info->supported[ARB_FRAGMENT_SHADER] && glsl) *ps_selected = SHADER_GLSL;
-    else if (gl_info->supported[ARB_FRAGMENT_PROGRAM]) *ps_selected = SHADER_ARB;
-    else if (gl_info->supported[ATI_FRAGMENT_SHADER]) *ps_selected = SHADER_ATI;
-    else *ps_selected = SHADER_NONE;
-}
-
 const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
