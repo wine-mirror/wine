@@ -877,7 +877,7 @@ static void test_read_pi(void)
 
 struct nodes_test {
     const char *xml;
-    XmlNodeType types[10];
+    XmlNodeType types[20];
 };
 
 static const char misc_test_xml[] =
@@ -889,6 +889,8 @@ static const char misc_test_xml[] =
     "<!-- comment4 -->"
     "<a>"
     "<b/>"
+    "<!-- comment -->"
+    "<?pi pibody ?>"
     "</a>"
 ;
 
@@ -903,6 +905,8 @@ static struct nodes_test misc_test = {
         XmlNodeType_Comment,
         XmlNodeType_Element,
         XmlNodeType_Element,
+        XmlNodeType_Comment,
+        XmlNodeType_ProcessingInstruction,
         XmlNodeType_EndElement,
         XmlNodeType_None
     }

@@ -69,7 +69,10 @@ static const WCHAR utf8W[] = {'U','T','F','-','8',0};
 
 static const WCHAR dblquoteW[] = {'\"',0};
 static const WCHAR quoteW[] = {'\'',0};
+static const WCHAR ltW[] = {'<',0};
 static const WCHAR gtW[] = {'>',0};
+static const WCHAR commentW[] = {'<','!','-','-',0};
+static const WCHAR piW[] = {'<','?',0};
 
 struct xml_encoding_data
 {
@@ -1264,8 +1267,6 @@ static HRESULT reader_parse_misc(xmlreader *reader)
 
     while (1)
     {
-        static const WCHAR commentW[] = {'<','!','-','-',0};
-        static const WCHAR piW[] = {'<','?',0};
         const WCHAR *cur = reader_get_cur(reader);
 
         if (is_wchar_space(*cur))
@@ -1519,7 +1520,6 @@ static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *loca
 /* [39] element ::= EmptyElemTag | STag content ETag */
 static HRESULT reader_parse_element(xmlreader *reader)
 {
-    static const WCHAR ltW[] = {'<',0};
     strval qname, prefix, local;
     HRESULT hr;
     int empty;
@@ -1584,18 +1584,62 @@ static HRESULT reader_parse_endtag(xmlreader *reader)
     return S_OK;
 }
 
+/* [18] CDSect ::= CDStart CData CDEnd
+   [19] CDStart ::= '<![CDATA['
+   [20] CData ::= (Char* - (Char* ']]>' Char*))
+   [21] CDEnd ::= ']]>' */
+static HRESULT reader_parse_cdata(xmlreader *reader)
+{
+    FIXME("CDATA sections are not supported\n");
+    return E_NOTIMPL;
+}
+
+/* [66] CharRef ::= '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';'
+   [67]	Reference ::= EntityRef | CharRef
+   [68]	EntityRef ::= '&' Name ';' */
+static HRESULT reader_parse_reference(xmlreader *reader)
+{
+    FIXME("References not supported\n");
+    return E_NOTIMPL;
+}
+
+/* [14] CharData ::= [^<&]* - ([^<&]* ']]>' [^<&]*) */
+static HRESULT reader_parse_chardata(xmlreader *reader)
+{
+    FIXME("CharData not supported\n");
+    return E_NOTIMPL;
+}
+
 /* [43] content ::= CharData? ((element | Reference | CDSect | PI | Comment) CharData?)* */
 static HRESULT reader_parse_content(xmlreader *reader)
 {
+    static const WCHAR cdstartW[] = {'<','!','[','C','D','A','T','A','[',0};
     static const WCHAR etagW[] = {'<','/',0};
+    static const WCHAR ampW[] = {'&',0};
+
     reader_shrink(reader);
 
-    /* handle end tag */
+    /* handle end tag here, it indicates end of content as well */
     if (!reader_cmp(reader, etagW))
         return reader_parse_endtag(reader);
 
-    /* FIXME: handle the rest of possible content nodes */
-    return reader_parse_element(reader);
+    if (!reader_cmp(reader, commentW))
+        return reader_parse_comment(reader);
+
+    if (!reader_cmp(reader, piW))
+        return reader_parse_pi(reader);
+
+    if (!reader_cmp(reader, cdstartW))
+        return reader_parse_cdata(reader);
+
+    if (!reader_cmp(reader, ampW))
+        return reader_parse_reference(reader);
+
+    if (!reader_cmp(reader, ltW))
+        return reader_parse_element(reader);
+
+    /* what's left must be CharData */
+    return reader_parse_chardata(reader);
 }
 
 static HRESULT reader_parse_nextnode(xmlreader *reader)
