@@ -563,9 +563,9 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 	}
 	if (sbfb && lpMidiHdr != NULL) {
 	    lpMidiHdr = MidiInDev[wDevID].lpQueueHdr;
+	    MidiInDev[wDevID].lpQueueHdr = lpMidiHdr->lpNext;
 	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 	    lpMidiHdr->dwFlags |= MHDR_DONE;
-	    MidiInDev[wDevID].lpQueueHdr = lpMidiHdr->lpNext;
 	    MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime);
 	}
 	LeaveCriticalSection(&crit_sect);
@@ -906,12 +906,11 @@ static DWORD midReset(WORD wDevID)
 
     EnterCriticalSection(&crit_sect);
     while (MidiInDev[wDevID].lpQueueHdr) {
-	MidiInDev[wDevID].lpQueueHdr->dwFlags &= ~MHDR_INQUEUE;
-	MidiInDev[wDevID].lpQueueHdr->dwFlags |= MHDR_DONE;
-	/* FIXME: when called from 16 bit, lpQueueHdr needs to be a segmented ptr */
-	MIDI_NotifyClient(wDevID, MIM_LONGDATA,
-			  (DWORD_PTR)MidiInDev[wDevID].lpQueueHdr, dwTime);
-	MidiInDev[wDevID].lpQueueHdr = MidiInDev[wDevID].lpQueueHdr->lpNext;
+	LPMIDIHDR lpMidiHdr = MidiInDev[wDevID].lpQueueHdr;
+	MidiInDev[wDevID].lpQueueHdr = lpMidiHdr->lpNext;
+	lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
+	lpMidiHdr->dwFlags |= MHDR_DONE;
+	MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime);
     }
     LeaveCriticalSection(&crit_sect);
 
@@ -1101,10 +1100,6 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     if ((dwFlags & ~CALLBACK_TYPEMASK) != 0) {
 	WARN("bad dwFlags\n");
 	return MMSYSERR_INVALFLAG;
-    }
-    if (!MidiOutDev[wDevID].bEnabled) {
-	TRACE("disabled wDevID\n");
-	return MMSYSERR_NOTENABLED;
     }
 
     MidiOutDev[wDevID].lpExtra = 0;
