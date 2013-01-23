@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Hans Leidekker for CodeWeavers
+ * Copyright 2013 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +23,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <errno.h>
+#include <assert.h>
 
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
@@ -52,6 +54,7 @@
 #include "winbase.h"
 #include "winhttp.h"
 #include "wincrypt.h"
+#include "schannel.h"
 
 #include "winhttp_private.h"
 
@@ -261,6 +264,7 @@ static PCCERT_CONTEXT X509_to_cert_context(X509 *cert)
 
     return ret;
 }
+#endif
 
 static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, HCERTSTORE store,
                                   WCHAR *server, DWORD security_flags )
@@ -355,6 +359,7 @@ static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, HCERTSTORE store,
     return err;
 }
 
+#ifdef SONAME_LIBSSL
 static int netconn_secure_verify( int preverify_ok, X509_STORE_CTX *ctx )
 {
     SSL *ssl;
@@ -408,6 +413,44 @@ static int netconn_secure_verify( int preverify_ok, X509_STORE_CTX *ctx )
     }
     return ret;
 }
+
+#else
+
+static SecHandle cred_handle;
+static BOOL cred_handle_initialized;
+
+static CRITICAL_SECTION init_sechandle_cs;
+static CRITICAL_SECTION_DEBUG init_sechandle_cs_debug = {
+    0, 0, &init_sechandle_cs,
+    { &init_sechandle_cs_debug.ProcessLocksList,
+      &init_sechandle_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": init_sechandle_cs") }
+};
+static CRITICAL_SECTION init_sechandle_cs = { &init_sechandle_cs_debug, -1, 0, 0, 0, 0 };
+
+static BOOL ensure_cred_handle(void)
+{
+    BOOL ret = TRUE;
+
+    EnterCriticalSection(&init_sechandle_cs);
+
+    if(!cred_handle_initialized) {
+        SECURITY_STATUS res;
+
+        res = AcquireCredentialsHandleW(NULL, (WCHAR*)UNISP_NAME_W, SECPKG_CRED_OUTBOUND, NULL, NULL,
+                NULL, NULL, &cred_handle, NULL);
+        if(res == SEC_E_OK) {
+            cred_handle_initialized = TRUE;
+        }else {
+            WARN("AcquireCredentialsHandleW failed: %u\n", res);
+            ret = FALSE;
+        }
+    }
+
+    LeaveCriticalSection(&init_sechandle_cs);
+    return ret;
+}
+
 #endif
 
 BOOL netconn_init( netconn_t *conn, BOOL secure )
@@ -580,6 +623,10 @@ void netconn_unload( void )
         heap_free( ssl_locks );
     }
     DeleteCriticalSection(&init_ssl_cs);
+#else
+    if(cred_handle_initialized)
+        FreeCredentialsHandle(&cred_handle);
+    DeleteCriticalSection(&init_sechandle_cs);
 #endif
 #ifndef HAVE_GETADDRINFO
     DeleteCriticalSection(&cs_gethostbyname);
@@ -606,7 +653,6 @@ BOOL netconn_close( netconn_t *conn )
 {
     int res;
 
-#ifdef SONAME_LIBSSL
     if (conn->secure)
     {
         heap_free( conn->peek_msg_mem );
@@ -614,13 +660,19 @@ BOOL netconn_close( netconn_t *conn )
         conn->peek_msg = NULL;
         conn->peek_len = 0;
 
+#ifdef SONAME_LIBSSL
         pSSL_shutdown( conn->ssl_conn );
         pSSL_free( conn->ssl_conn );
 
         conn->ssl_conn = NULL;
+#else
+        heap_free(conn->extra_buf);
+        conn->extra_buf = NULL;
+        conn->extra_len = 0;
+        DeleteSecurityContext(&conn->ssl_ctx);
+#endif
         conn->secure = FALSE;
     }
-#endif
     res = closesocket( conn->socket );
     conn->socket = -1;
     if (res == -1)
@@ -719,8 +771,132 @@ fail:
         pSSL_free( conn->ssl_conn );
         conn->ssl_conn = NULL;
     }
+#else
+    SecBuffer out_buf = {0, SECBUFFER_TOKEN, NULL}, in_bufs[2] = {{0, SECBUFFER_TOKEN}, {0, SECBUFFER_EMPTY}};
+    SecBufferDesc out_desc = {SECBUFFER_VERSION, 1, &out_buf}, in_desc = {SECBUFFER_VERSION, 2, in_bufs};
+    BYTE *read_buf;
+    SIZE_T read_buf_size = 2048;
+    ULONG attrs = 0;
+    CtxtHandle ctx;
+    SSIZE_T size;
+    const CERT_CONTEXT *cert;
+    SECURITY_STATUS status;
+    DWORD res = ERROR_SUCCESS;
+
+    const DWORD isc_req_flags = ISC_REQ_ALLOCATE_MEMORY|ISC_REQ_USE_SESSION_KEY|ISC_REQ_CONFIDENTIALITY
+        |ISC_REQ_SEQUENCE_DETECT|ISC_REQ_REPLAY_DETECT|ISC_REQ_MANUAL_CRED_VALIDATION;
+
+    if(!ensure_cred_handle())
+        return FALSE;
+
+    read_buf = heap_alloc(read_buf_size);
+    if(!read_buf)
+        return FALSE;
+
+    status = InitializeSecurityContextW(&cred_handle, NULL, hostname, isc_req_flags, 0, 0, NULL, 0,
+            &ctx, &out_desc, &attrs, NULL);
+
+    assert(status != SEC_E_OK);
+
+    while(status == SEC_I_CONTINUE_NEEDED || status == SEC_E_INCOMPLETE_MESSAGE) {
+        if(out_buf.cbBuffer) {
+            assert(status == SEC_I_CONTINUE_NEEDED);
+
+            TRACE("sending %u bytes\n", out_buf.cbBuffer);
+
+            size = send(conn->socket, out_buf.pvBuffer, out_buf.cbBuffer, 0);
+            if(size != out_buf.cbBuffer) {
+                ERR("send failed\n");
+                status = ERROR_WINHTTP_SECURE_CHANNEL_ERROR;
+                break;
+            }
+
+            FreeContextBuffer(out_buf.pvBuffer);
+            out_buf.pvBuffer = NULL;
+            out_buf.cbBuffer = 0;
+        }
+
+        if(status == SEC_I_CONTINUE_NEEDED) {
+            assert(in_bufs[1].cbBuffer < read_buf_size);
+
+            memmove(read_buf, (BYTE*)in_bufs[0].pvBuffer+in_bufs[0].cbBuffer-in_bufs[1].cbBuffer, in_bufs[1].cbBuffer);
+            in_bufs[0].cbBuffer = in_bufs[1].cbBuffer;
+
+            in_bufs[1].BufferType = SECBUFFER_EMPTY;
+            in_bufs[1].cbBuffer = 0;
+            in_bufs[1].pvBuffer = NULL;
+        }
+
+        assert(in_bufs[0].BufferType == SECBUFFER_TOKEN);
+        assert(in_bufs[1].BufferType == SECBUFFER_EMPTY);
+
+        if(in_bufs[0].cbBuffer + 1024 > read_buf_size) {
+            BYTE *new_read_buf;
+
+            new_read_buf = heap_realloc(read_buf, read_buf_size + 1024);
+            if(!new_read_buf) {
+                status = E_OUTOFMEMORY;
+                break;
+            }
+
+            in_bufs[0].pvBuffer = read_buf = new_read_buf;
+            read_buf_size += 1024;
+        }
+
+        size = recv(conn->socket, read_buf+in_bufs[0].cbBuffer, read_buf_size-in_bufs[0].cbBuffer, 0);
+        if(size < 1) {
+            WARN("recv error\n");
+            status = ERROR_WINHTTP_SECURE_CHANNEL_ERROR;
+            break;
+        }
+
+        TRACE("recv %lu bytes\n", size);
+
+        in_bufs[0].cbBuffer += size;
+        in_bufs[0].pvBuffer = read_buf;
+        status = InitializeSecurityContextW(&cred_handle, &ctx, hostname,  isc_req_flags, 0, 0, &in_desc,
+                0, NULL, &out_desc, &attrs, NULL);
+        TRACE("InitializeSecurityContext ret %08x\n", status);
+
+        if(status == SEC_E_OK) {
+            if(in_bufs[1].BufferType == SECBUFFER_EXTRA)
+                FIXME("SECBUFFER_EXTRA not supported\n");
+
+            status = QueryContextAttributesW(&ctx, SECPKG_ATTR_STREAM_SIZES, &conn->ssl_sizes);
+            if(status != SEC_E_OK) {
+                WARN("Could not get sizes\n");
+                break;
+            }
+
+            status = QueryContextAttributesW(&ctx, SECPKG_ATTR_REMOTE_CERT_CONTEXT, (void*)&cert);
+            if(status == SEC_E_OK) {
+                res = netconn_verify_cert(cert, cert->hCertStore, hostname, conn->security_flags);
+                CertFreeCertificateContext(cert);
+                if(res != ERROR_SUCCESS) {
+                    WARN("cert verify failed: %u\n", res);
+                    break;
+                }
+            }else {
+                WARN("Could not get cert\n");
+                break;
+            }
+        }
+    }
+
+
+    if(status != SEC_E_OK || res != ERROR_SUCCESS) {
+        WARN("Failed to initialize security context failed: %08x\n", status);
+        DeleteSecurityContext(&ctx);
+        set_last_error(res ? res : ERROR_WINHTTP_SECURE_CHANNEL_ERROR);
+        return FALSE;
+    }
+
+
+    TRACE("established SSL connection\n");
+    conn->secure = TRUE;
+    conn->ssl_ctx = ctx;
 #endif
-    return FALSE;
+    return TRUE;
 }
 
 BOOL netconn_send( netconn_t *conn, const void *msg, size_t len, int flags, int *sent )

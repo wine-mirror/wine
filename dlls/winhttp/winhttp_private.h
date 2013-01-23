@@ -42,7 +42,9 @@
 # define closesocket close
 # define ioctlsocket ioctl
 #endif
+
 #include "ole2.h"
+#include "sspi.h"
 
 static const WCHAR getW[]    = {'G','E','T',0};
 static const WCHAR postW[]   = {'P','O','S','T',0};
@@ -128,6 +130,10 @@ typedef struct
     int socket;
     BOOL secure; /* SSL active on connection? */
     void *ssl_conn;
+    CtxtHandle ssl_ctx;
+    SecPkgContext_StreamSizes ssl_sizes;
+    char *extra_buf;
+    size_t extra_len;
     char *peek_msg;
     char *peek_msg_mem;
     size_t peek_len;
