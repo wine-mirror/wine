@@ -1264,6 +1264,38 @@ static void sync_window_position( struct x11drv_win_data *data,
 
 
 /***********************************************************************
+ *		sync_client_position
+ *
+ * Synchronize the X client window position with the Windows one
+ */
+static void sync_client_position( struct x11drv_win_data *data,
+                                  const RECT *old_client_rect, const RECT *old_whole_rect )
+{
+    int mask = 0;
+    XWindowChanges changes;
+
+    if (!data->client_window) return;
+
+    changes.x      = data->client_rect.left - data->whole_rect.left;
+    changes.y      = data->client_rect.top - data->whole_rect.top;
+    changes.width  = min( max( 1, data->client_rect.right - data->client_rect.left ), 65535 );
+    changes.height = min( max( 1, data->client_rect.bottom - data->client_rect.top ), 65535 );
+
+    if (changes.x != old_client_rect->left - old_whole_rect->left) mask |= CWX;
+    if (changes.y != old_client_rect->top  - old_whole_rect->top)  mask |= CWY;
+    if (changes.width  != old_client_rect->right - old_client_rect->left) mask |= CWWidth;
+    if (changes.height != old_client_rect->bottom - old_client_rect->top) mask |= CWHeight;
+
+    if (mask)
+    {
+        TRACE( "setting client win %lx pos %d,%d,%dx%d changes=%x\n",
+               data->client_window, changes.x, changes.y, changes.width, changes.height, mask );
+        XConfigureWindow( data->display, data->client_window, mask, &changes );
+    }
+}
+
+
+/***********************************************************************
  *		move_window_bits
  *
  * Move the window bits when a window is moved.
@@ -1329,6 +1361,39 @@ static void move_window_bits( HWND hwnd, Window window, const RECT *old_rect, co
         else RedrawWindow( hwnd, NULL, rgn, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
         DeleteObject( rgn );
     }
+}
+
+
+/**********************************************************************
+ *		create_client_window
+ */
+Window create_client_window( struct x11drv_win_data *data, const XVisualInfo *visual )
+{
+    XSetWindowAttributes attr;
+    int x = data->client_rect.left - data->whole_rect.left;
+    int y = data->client_rect.top - data->whole_rect.top;
+    int cx = min( max( 1, data->client_rect.right - data->client_rect.left ), 65535 );
+    int cy = min( max( 1, data->client_rect.bottom - data->client_rect.top ), 65535 );
+
+    data->colormap = XCreateColormap( data->display, root_window, visual->visual,
+                                      (visual->class == PseudoColor ||
+                                       visual->class == GrayScale ||
+                                       visual->class == DirectColor) ? AllocAll : AllocNone );
+    attr.colormap = data->colormap;
+    attr.bit_gravity = NorthWestGravity;
+    attr.win_gravity = NorthWestGravity;
+    attr.backing_store = NotUseful;
+
+    data->client_window = XCreateWindow( data->display, data->whole_window, x, y, cx, cy,
+                                         0, default_visual.depth, InputOutput, visual->visual,
+                                         CWBitGravity | CWWinGravity | CWBackingStore | CWColormap,
+                                         &attr );
+    if (!data->client_window) return 0;
+
+    XSaveContext( data->display, data->client_window, winContext, (char *)data->hwnd );
+    XMapWindow( data->display, data->client_window );
+    XFlush( data->display );
+    return data->client_window;
 }
 
 
@@ -1430,9 +1495,10 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
 
     TRACE( "win %p xwin %lx\n", data->hwnd, data->whole_window );
     XDeleteContext( data->display, data->whole_window, winContext );
+    if (data->client_window) XDeleteContext( data->display, data->client_window, winContext );
     if (!already_destroyed) XDestroyWindow( data->display, data->whole_window );
     if (data->colormap) XFreeColormap( data->display, data->colormap );
-    data->whole_window = 0;
+    data->whole_window = data->client_window = 0;
     data->colormap = 0;
     data->wm_state = WithdrawnState;
     data->net_wm_state = 0;
@@ -1810,7 +1876,7 @@ HWND create_foreign_window( Display *display, Window xwin )
     }
     SetRect( &data->window_rect, attr.x, attr.y, attr.x + attr.width, attr.y + attr.height );
     data->whole_rect = data->client_rect = data->window_rect;
-    data->whole_window = 0;
+    data->whole_window = data->client_window = 0;
     data->embedded = TRUE;
     data->mapped = TRUE;
 
@@ -2148,9 +2214,14 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
 
     XFlush( gdi_display );  /* make sure painting is done before we move the window */
 
-    sync_gl_drawable( data->hwnd, visible_rect, rectClient );
+    sync_client_position( data, &old_client_rect, &old_whole_rect );
 
-    if (!data->whole_window) goto done;
+    if (!data->whole_window)
+    {
+        release_win_data( data );
+        sync_gl_drawable( hwnd, visible_rect, rectClient );
+        return;
+    }
 
     /* check if we are currently processing an event relevant to this window */
     event_type = 0;
@@ -2219,7 +2290,6 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
     if (data->surface && data->vis.visualid != default_visual.visualid)
         data->surface->funcs->flush( data->surface );
 
-done:
     release_win_data( data );
 }
 

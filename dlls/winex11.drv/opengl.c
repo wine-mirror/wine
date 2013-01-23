@@ -1201,7 +1201,6 @@ static void free_gl_drawable( struct gl_drawable *gl )
 {
     switch (gl->type)
     {
-    case DC_GL_WINDOW:
     case DC_GL_CHILD_WIN:
         XDestroyWindow( gdi_display, gl->drawable );
         XFreeColormap( gdi_display, gl->colormap );
@@ -1229,29 +1228,14 @@ static BOOL create_gl_drawable( HWND hwnd, HWND parent, struct gl_drawable *gl )
 
     if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())  /* top-level window */
     {
-        Window parent = X11DRV_get_whole_window( hwnd );
+        struct x11drv_win_data *data = get_win_data( hwnd );
 
-        gl->type = DC_GL_WINDOW;
-        gl->colormap = XCreateColormap( gdi_display, root_window, gl->visual->visual,
-                                        (gl->visual->class == PseudoColor ||
-                                         gl->visual->class == GrayScale ||
-                                         gl->visual->class == DirectColor) ? AllocAll : AllocNone );
-        attrib.colormap = gl->colormap;
-        attrib.bit_gravity = NorthWestGravity;
-        attrib.win_gravity = NorthWestGravity;
-        attrib.backing_store = NotUseful;
-        /* put the initial rect outside of the window, it will be moved into place by SetWindowPos */
-        OffsetRect( &gl->rect, gl->rect.right, gl->rect.bottom );
-        if (parent)
-            gl->drawable = XCreateWindow( gdi_display, parent, gl->rect.left, gl->rect.top,
-                                          gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top,
-                                          0, default_visual.depth, InputOutput, gl->visual->visual,
-                                          CWBitGravity | CWWinGravity | CWBackingStore | CWColormap,
-                                          &attrib );
-        if (gl->drawable)
-            XMapWindow( gdi_display, gl->drawable );
-        else
-            XFreeColormap( gdi_display, gl->colormap );
+        if (data)
+        {
+            gl->type = DC_GL_WINDOW;
+            gl->drawable = create_client_window( data, gl->visual );
+            release_win_data( data );
+        }
     }
 #ifdef SONAME_LIBXCOMPOSITE
     else if(usexcomposite)
@@ -1358,8 +1342,6 @@ void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_r
     int mask = 0;
     XWindowChanges changes;
 
-    changes.x      = client_rect->left - visible_rect->left;
-    changes.y      = client_rect->top - visible_rect->top;
     changes.width  = min( max( 1, client_rect->right - client_rect->left ), 65535 );
     changes.height = min( max( 1, client_rect->bottom - client_rect->top ), 65535 );
 
@@ -1373,10 +1355,6 @@ void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_r
 
     switch (gl->type)
     {
-    case DC_GL_WINDOW:
-        if (changes.x != gl->rect.left) mask |= CWX;
-        if (changes.y != gl->rect.top)  mask |= CWY;
-        /* fallthrough */
     case DC_GL_CHILD_WIN:
         if (mask) XConfigureWindow( gdi_display, gl->drawable, mask, &changes );
         break;
@@ -1425,8 +1403,6 @@ void set_gl_drawable_parent( HWND hwnd, HWND parent )
     switch (gl->type)
     {
     case DC_GL_WINDOW:
-        XDestroyWindow( gdi_display, gl->drawable );
-        XFreeColormap( gdi_display, gl->colormap );
         break;
     case DC_GL_CHILD_WIN:
         if (parent != GetDesktopWindow()) goto done;
