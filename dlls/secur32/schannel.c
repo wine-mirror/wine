@@ -1134,7 +1134,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
         if (status != SEC_E_OK)
         {
             HeapFree(GetProcessHeap(), 0, data);
-            ERR("Returning %d\n", status);
+            ERR("Returning %x\n", status);
             return status;
         }
 

@@ -132,6 +132,7 @@ typedef struct
     void *ssl_conn;
     CtxtHandle ssl_ctx;
     SecPkgContext_StreamSizes ssl_sizes;
+    char *ssl_buf;
     char *extra_buf;
     size_t extra_len;
     char *peek_msg;

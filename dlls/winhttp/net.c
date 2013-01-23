@@ -666,6 +666,8 @@ BOOL netconn_close( netconn_t *conn )
 
         conn->ssl_conn = NULL;
 #else
+        heap_free(conn->ssl_buf);
+        conn->ssl_buf = NULL;
         heap_free(conn->extra_buf);
         conn->extra_buf = NULL;
         conn->extra_len = 0;
@@ -880,12 +882,20 @@ fail:
                 WARN("Could not get cert\n");
                 break;
             }
+
+            conn->ssl_buf = heap_alloc(conn->ssl_sizes.cbHeader + conn->ssl_sizes.cbMaximumMessage + conn->ssl_sizes.cbTrailer);
+            if(!conn->ssl_buf) {
+                res = GetLastError();
+                break;
+            }
         }
     }
 
 
     if(status != SEC_E_OK || res != ERROR_SUCCESS) {
         WARN("Failed to initialize security context failed: %08x\n", status);
+        heap_free(conn->ssl_buf);
+        conn->ssl_buf = NULL;
         DeleteSecurityContext(&ctx);
         set_last_error(res ? res : ERROR_WINHTTP_SECURE_CHANNEL_ERROR);
         return FALSE;
@@ -921,6 +931,103 @@ BOOL netconn_send( netconn_t *conn, const void *msg, size_t len, int flags, int 
     return TRUE;
 }
 
+#ifndef SONAME_LIBSSL
+
+static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, SIZE_T *ret_size, BOOL *eof)
+{
+    const SIZE_T ssl_buf_size = conn->ssl_sizes.cbHeader+conn->ssl_sizes.cbMaximumMessage+conn->ssl_sizes.cbTrailer;
+    SecBuffer bufs[4];
+    SecBufferDesc buf_desc = {SECBUFFER_VERSION, sizeof(bufs)/sizeof(*bufs), bufs};
+    SSIZE_T size, buf_len;
+    int i;
+    SECURITY_STATUS res;
+
+    assert(conn->extra_len < ssl_buf_size);
+
+    if(conn->extra_len) {
+        memcpy(conn->ssl_buf, conn->extra_buf, conn->extra_len);
+        buf_len = conn->extra_len;
+        conn->extra_len = 0;
+        heap_free(conn->extra_buf);
+        conn->extra_buf = NULL;
+    }else {
+        buf_len = recv(conn->socket, conn->ssl_buf+conn->extra_len, ssl_buf_size-conn->extra_len, 0);
+        if(buf_len < 0) {
+            WARN("recv failed\n");
+            return FALSE;
+        }
+
+        if(!buf_len) {
+            *eof = TRUE;
+            return TRUE;
+        }
+    }
+
+    *ret_size = 0;
+    *eof = FALSE;
+
+    do {
+        memset(bufs, 0, sizeof(bufs));
+        bufs[0].BufferType = SECBUFFER_DATA;
+        bufs[0].cbBuffer = buf_len;
+        bufs[0].pvBuffer = conn->ssl_buf;
+
+        res = DecryptMessage(&conn->ssl_ctx, &buf_desc, 0, NULL);
+        switch(res) {
+        case SEC_E_OK:
+            break;
+        case SEC_I_CONTEXT_EXPIRED:
+            TRACE("context expired\n");
+            *eof = TRUE;
+            return TRUE;
+        case SEC_E_INCOMPLETE_MESSAGE:
+            assert(buf_len < ssl_buf_size);
+
+            size = recv(conn->socket, conn->ssl_buf+buf_len, ssl_buf_size-buf_len, 0);
+            if(size < 1)
+                return FALSE;
+
+            buf_len += size;
+            continue;
+        default:
+            WARN("failed: %08x\n", res);
+            return FALSE;
+        }
+    } while(res != SEC_E_OK);
+
+    for(i=0; i < sizeof(bufs)/sizeof(*bufs); i++) {
+        if(bufs[i].BufferType == SECBUFFER_DATA) {
+            size = min(buf_size, bufs[i].cbBuffer);
+            memcpy(buf, bufs[i].pvBuffer, size);
+            if(size < bufs[i].cbBuffer) {
+                assert(!conn->peek_len);
+                conn->peek_msg_mem = conn->peek_msg = heap_alloc(bufs[i].cbBuffer - size);
+                if(!conn->peek_msg)
+                    return FALSE;
+                conn->peek_len = bufs[i].cbBuffer-size;
+                memcpy(conn->peek_msg, (char*)bufs[i].pvBuffer+size, conn->peek_len);
+            }
+
+            *ret_size = size;
+        }
+    }
+
+    for(i=0; i < sizeof(bufs)/sizeof(*bufs); i++) {
+        if(bufs[i].BufferType == SECBUFFER_EXTRA) {
+            conn->extra_buf = heap_alloc(bufs[i].cbBuffer);
+            if(!conn->extra_buf)
+                return FALSE;
+
+            conn->extra_len = bufs[i].cbBuffer;
+            memcpy(conn->extra_buf, bufs[i].pvBuffer, conn->extra_len);
+        }
+    }
+
+    return TRUE;
+}
+
+#endif
+
 BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd )
 {
     *recvd = 0;
@@ -931,16 +1038,23 @@ BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd
     {
 #ifdef SONAME_LIBSSL
         int ret;
+#else
+        SIZE_T size, cread;
+        BOOL res, eof;
+#endif
 
         if (flags & ~(MSG_PEEK | MSG_WAITALL))
             FIXME("SSL_read does not support the following flags: %08x\n", flags);
 
+#ifdef SONAME_LIBSSL
         /* this ugly hack is all for MSG_PEEK */
         if (flags & MSG_PEEK && !conn->peek_msg)
         {
             if (!(conn->peek_msg = conn->peek_msg_mem = heap_alloc( len + 1 ))) return FALSE;
         }
-        else if (flags & MSG_PEEK && conn->peek_msg)
+        else
+#endif
+        if (flags & MSG_PEEK && conn->peek_msg)
         {
             if (len < conn->peek_len) FIXME("buffer isn't big enough, should we wrap?\n");
             *recvd = min( len, conn->peek_len );
@@ -963,6 +1077,7 @@ BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd
             /* check if we have enough data from the peek buffer */
             if (!(flags & MSG_WAITALL) || (*recvd == len)) return TRUE;
         }
+#ifdef SONAME_LIBSSL
         ret = pSSL_read( conn->ssl_conn, (char *)buf + *recvd, len - *recvd );
         if (ret < 0)
             return FALSE;
@@ -988,7 +1103,36 @@ BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd
         *recvd += ret;
         return TRUE;
 #else
-        return FALSE;
+        size = *recvd;
+
+        do {
+            res = read_ssl_chunk(conn, (BYTE*)buf+size, len-size, &cread, &eof);
+            if(!res) {
+                WARN("read_ssl_chunk failed\n");
+                if(!size)
+                    return FALSE;
+                break;
+            }
+
+            if(eof) {
+                TRACE("EOF\n");
+                break;
+            }
+
+            size += cread;
+        }while(!size || ((flags & MSG_WAITALL) && size < len));
+
+        if(size && (flags & MSG_PEEK)) {
+            conn->peek_msg_mem = conn->peek_msg = heap_alloc(size);
+            if(!conn->peek_msg)
+                return FALSE;
+
+            memcpy(conn->peek_msg, buf, size);
+        }
+
+        TRACE("received %ld bytes\n", size);
+        *recvd = size;
+        return TRUE;
 #endif
     }
     if ((*recvd = recv( conn->socket, buf, len, flags )) == -1)
