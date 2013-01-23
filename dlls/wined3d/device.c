@@ -4011,6 +4011,12 @@ HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_cou
     TRACE("device %p, rect_count %u, rects %p, flags %#x, color {%.8e, %.8e, %.8e, %.8e}, depth %.8e, stencil %u.\n",
             device, rect_count, rects, flags, color->r, color->g, color->b, color->a, depth, stencil);
 
+    if (!rect_count && rects)
+    {
+        WARN("Rects is %p, but rect_count is 0, ignoring clear\n", rects);
+        return WINED3D_OK;
+    }
+
     if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
     {
         struct wined3d_surface *ds = device->fb.depth_stencil;

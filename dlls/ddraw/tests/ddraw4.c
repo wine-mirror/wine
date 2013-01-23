@@ -3037,6 +3037,49 @@ static void test_draw_strided(void)
     DestroyWindow(window);
 }
 
+static void test_clear_rect_count(void)
+{
+    IDirectDrawSurface4 *rt;
+    IDirect3DDevice3 *device;
+    D3DCOLOR color;
+    HWND window;
+    HRESULT hr;
+    IDirect3DViewport3 *viewport;
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice3_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    hr = IDirect3DDevice3_SetCurrentViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to activate the viewport, hr %#x.\n", hr);
+    hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET, 0x00ffffff, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear the viewport, hr %#x.\n", hr);
+    hr = IDirect3DViewport3_Clear2(viewport, 0, &clear_rect, D3DCLEAR_TARGET, 0x00ff0000, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear the viewport, hr %#x.\n", hr);
+    hr = IDirect3DViewport3_Clear2(viewport, 0, NULL, D3DCLEAR_TARGET, 0x0000ff00, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear the viewport, hr %#x.\n", hr);
+    hr = IDirect3DViewport3_Clear2(viewport, 1, NULL, D3DCLEAR_TARGET, 0x000000ff, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear the viewport, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x00ffffff, 1), "Got unexpected color 0x%08x.\n", color);
+
+    IDirect3DViewport3_Release(viewport);
+    IDirectDrawSurface4_Release(rt);
+    IDirect3DDevice3_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     test_process_vertices();
@@ -3063,4 +3106,5 @@ START_TEST(ddraw4)
     test_vb_discard();
     test_coop_level_multi_window();
     test_draw_strided();
+    test_clear_rect_count();
 }

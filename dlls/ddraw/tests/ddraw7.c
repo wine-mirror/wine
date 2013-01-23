@@ -2839,6 +2839,50 @@ static void test_draw_strided(void)
     DestroyWindow(window);
 }
 
+static void test_clear_rect_count(void)
+{
+    IDirectDrawSurface7 *rt;
+    IDirect3DDevice7 *device;
+    D3DCOLOR color;
+    HWND window;
+    HRESULT hr;
+    D3DRECT rect = {{0}, {0}, {640}, {480}};
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ffffff, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_Clear(device, 0, &rect, D3DCLEAR_TARGET, 0x00ff0000, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x00ffffff, 1),
+            "Clear with count = 0, rect != NULL has color %#08x.\n", color);
+
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ffffff, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_Clear(device, 1, NULL, D3DCLEAR_TARGET, 0x0000ff00, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x0000ff00, 1),
+            "Clear with count = 1, rect = NULL has color %#08x.\n", color);
+
+    IDirectDrawSurface7_Release(rt);
+    IDirect3DDevice7_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -2872,4 +2916,5 @@ START_TEST(ddraw7)
     test_vb_discard();
     test_coop_level_multi_window();
     test_draw_strided();
+    test_clear_rect_count();
 }

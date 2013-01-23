@@ -678,6 +678,33 @@ static void clear_test(IDirect3DDevice9 *device)
     ok(color == 0x00ffffff, "Color write protected clear returned color %08x\n", color);
 
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ffffff, 0.0, 0);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_Clear failed with %08x\n", hr);
+
+    rect[0].x1 = 0;
+    rect[0].y1 = 0;
+    rect[0].x2 = 640;
+    rect[0].y2 = 480;
+    hr = IDirect3DDevice9_Clear(device, 0, rect, D3DCLEAR_TARGET, 0x00ff0000, 0.0, 0);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_Clear failed with %08x\n", hr);
+
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff), 1),
+            "Clear with count = 0, rect != NULL has color %08x\n", color);
+
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_Clear failed with %08x\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 1, NULL, D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_Clear failed with %08x\n", hr);
+
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00), 1),
+            "Clear with count = 1, rect = NULL has color %08x\n", color);
+
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 }
 
 static void color_fill_test(IDirect3DDevice9 *device)

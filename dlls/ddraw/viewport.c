@@ -670,6 +670,12 @@ static HRESULT WINAPI d3d_viewport_Clear(IDirect3DViewport3 *iface,
 
     TRACE("iface %p, rect_count %u, rects %p, flags %#x.\n", iface, rect_count, rects, flags);
 
+    if (!rects || !rect_count)
+    {
+        WARN("rect_count = %u, rects = %p, ignoring clear\n", rect_count, rects);
+        return D3D_OK;
+    }
+
     if (This->active_device == NULL) {
         ERR(" Trying to clear a viewport not attached to a device !\n");
         return D3DERR_VIEWPORTHASNODEVICE;
@@ -1059,6 +1065,12 @@ static HRESULT WINAPI d3d_viewport_Clear2(IDirect3DViewport3 *iface, DWORD rect_
 
     TRACE("iface %p, rect_count %u, rects %p, flags %#x, color 0x%08x, depth %.8e, stencil %u.\n",
             iface, rect_count, rects, flags, color, depth, stencil);
+
+    if (!rects || !rect_count)
+    {
+        WARN("rect_count = %u, rects = %p, ignoring clear\n", rect_count, rects);
+        return D3D_OK;
+    }
 
     wined3d_mutex_lock();
 
