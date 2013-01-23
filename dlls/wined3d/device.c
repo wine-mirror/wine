@@ -314,74 +314,6 @@ void device_stream_info_from_declaration(struct wined3d_device *device, struct w
     }
 }
 
-static void stream_info_element_from_strided(const struct wined3d_gl_info *gl_info,
-        const struct wined3d_strided_element *strided, struct wined3d_stream_info_element *e)
-{
-    e->data.addr = strided->data;
-    e->data.buffer_object = 0;
-    e->format = wined3d_get_format(gl_info, strided->format);
-    e->stride = strided->stride;
-    e->stream_idx = 0;
-}
-
-static void device_stream_info_from_strided(const struct wined3d_gl_info *gl_info,
-        const struct wined3d_strided_data *strided, struct wined3d_stream_info *stream_info)
-{
-    unsigned int i;
-
-    memset(stream_info, 0, sizeof(*stream_info));
-
-    if (strided->position.data)
-        stream_info_element_from_strided(gl_info, &strided->position, &stream_info->elements[WINED3D_FFP_POSITION]);
-    if (strided->normal.data)
-        stream_info_element_from_strided(gl_info, &strided->normal, &stream_info->elements[WINED3D_FFP_NORMAL]);
-    if (strided->diffuse.data)
-        stream_info_element_from_strided(gl_info, &strided->diffuse, &stream_info->elements[WINED3D_FFP_DIFFUSE]);
-    if (strided->specular.data)
-        stream_info_element_from_strided(gl_info, &strided->specular, &stream_info->elements[WINED3D_FFP_SPECULAR]);
-
-    for (i = 0; i < WINED3DDP_MAXTEXCOORD; ++i)
-    {
-        if (strided->tex_coords[i].data)
-            stream_info_element_from_strided(gl_info, &strided->tex_coords[i],
-                    &stream_info->elements[WINED3D_FFP_TEXCOORD0 + i]);
-    }
-
-    stream_info->position_transformed = strided->position_transformed;
-
-    for (i = 0; i < sizeof(stream_info->elements) / sizeof(*stream_info->elements); ++i)
-    {
-        if (!stream_info->elements[i].format) continue;
-
-        if (!gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
-                && stream_info->elements[i].format->id == WINED3DFMT_B8G8R8A8_UNORM)
-        {
-            stream_info->swizzle_map |= 1 << i;
-        }
-        stream_info->use_map |= 1 << i;
-    }
-}
-
-static void device_trace_strided_stream_info(const struct wined3d_stream_info *stream_info)
-{
-    TRACE("Strided Data:\n");
-    TRACE_STRIDED(stream_info, WINED3D_FFP_POSITION);
-    TRACE_STRIDED(stream_info, WINED3D_FFP_BLENDWEIGHT);
-    TRACE_STRIDED(stream_info, WINED3D_FFP_BLENDINDICES);
-    TRACE_STRIDED(stream_info, WINED3D_FFP_NORMAL);
-    TRACE_STRIDED(stream_info, WINED3D_FFP_PSIZE);
-    TRACE_STRIDED(stream_info, WINED3D_FFP_DIFFUSE);
-    TRACE_STRIDED(stream_info, WINED3D_FFP_SPECULAR);
-    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD0);
-    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD1);
-    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD2);
-    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD3);
-    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD4);
-    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD5);
-    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD6);
-    TRACE_STRIDED(stream_info, WINED3D_FFP_TEXCOORD7);
-}
-
 /* Context activation is done by the caller. */
 void device_update_stream_info(struct wined3d_device *device, const struct wined3d_gl_info *gl_info)
 {
@@ -389,18 +321,8 @@ void device_update_stream_info(struct wined3d_device *device, const struct wined
     const struct wined3d_state *state = &device->stateBlock->state;
     DWORD prev_all_vbo = stream_info->all_vbo;
 
-    if (device->up_strided)
-    {
-        /* Note: this is a ddraw fixed-function code path. */
-        TRACE("=============================== Strided Input ================================\n");
-        device_stream_info_from_strided(gl_info, device->up_strided, stream_info);
-        if (TRACE_ON(d3d)) device_trace_strided_stream_info(stream_info);
-    }
-    else
-    {
-        TRACE("============================= Vertex Declaration =============================\n");
-        device_stream_info_from_declaration(device, stream_info);
-    }
+    TRACE("============================= Vertex Declaration =============================\n");
+    device_stream_info_from_declaration(device, stream_info);
 
     if (state->vertex_shader && !stream_info->position_transformed)
     {
@@ -4112,59 +4034,6 @@ void CDECL wined3d_device_draw_indexed_primitive_instanced(struct wined3d_device
     TRACE("device %p, start_idx %u, index_count %u.\n", device, start_idx, index_count);
 
     draw_primitive(device, start_idx, index_count, start_instance, instance_count, TRUE, NULL);
-}
-
-HRESULT CDECL wined3d_device_draw_primitive_strided(struct wined3d_device *device,
-        UINT vertex_count, const struct wined3d_strided_data *strided_data)
-{
-    /* Mark the state dirty until we have nicer tracking. It's fine to change
-     * baseVertexIndex because that call is only called by ddraw which does
-     * not need that value. */
-    device_invalidate_state(device, STATE_VDECL);
-    device_invalidate_state(device, STATE_STREAMSRC);
-    device_invalidate_state(device, STATE_INDEXBUFFER);
-
-    device->stateBlock->state.base_vertex_index = 0;
-    device->up_strided = strided_data;
-    draw_primitive(device, 0, vertex_count, 0, 0, FALSE, NULL);
-    device->up_strided = NULL;
-
-    /* Invalidate the states again to make sure the values from the stateblock
-     * are properly applied in the next regular draw. Note that the application-
-     * provided strided data has ovwritten pretty much the entire vertex and
-     * and index stream related states */
-    device_invalidate_state(device, STATE_VDECL);
-    device_invalidate_state(device, STATE_STREAMSRC);
-    device_invalidate_state(device, STATE_INDEXBUFFER);
-    return WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_device_draw_indexed_primitive_strided(struct wined3d_device *device,
-        UINT index_count, const struct wined3d_strided_data *strided_data,
-        UINT vertex_count, const void *index_data, enum wined3d_format_id index_data_format_id)
-{
-    enum wined3d_format_id prev_idx_format;
-
-    /* Mark the state dirty until we have nicer tracking
-     * its fine to change baseVertexIndex because that call is only called by ddraw which does not need
-     * that value.
-     */
-    device_invalidate_state(device, STATE_VDECL);
-    device_invalidate_state(device, STATE_STREAMSRC);
-    device_invalidate_state(device, STATE_INDEXBUFFER);
-
-    prev_idx_format = device->stateBlock->state.index_format;
-    device->stateBlock->state.index_format = index_data_format_id;
-    device->stateBlock->state.base_vertex_index = 0;
-    device->up_strided = strided_data;
-    draw_primitive(device, 0, index_count, 0, 0, TRUE, index_data);
-    device->up_strided = NULL;
-    device->stateBlock->state.index_format = prev_idx_format;
-
-    device_invalidate_state(device, STATE_VDECL);
-    device_invalidate_state(device, STATE_STREAMSRC);
-    device_invalidate_state(device, STATE_INDEXBUFFER);
-    return WINED3D_OK;
 }
 
 /* This is a helper function for UpdateTexture, there is no UpdateVolume method in D3D. */

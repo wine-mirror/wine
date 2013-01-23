@@ -1758,7 +1758,6 @@ struct wined3d_device
 
     /* Stream source management */
     struct wined3d_stream_info strided_streams;
-    const struct wined3d_strided_data *up_strided;
     struct wined3d_event_query *buffer_queries[MAX_ATTRIBS];
     unsigned int num_buffer_queries;
 

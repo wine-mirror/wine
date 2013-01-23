@@ -676,16 +676,13 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
 
     if (indexed)
     {
-        if (!device->up_strided)
+        struct wined3d_buffer *index_buffer = state->index_buffer;
+        if (!index_buffer->buffer_object || !stream_info->all_vbo)
+            idx_data = index_buffer->resource.allocatedMemory;
+        else
         {
-            struct wined3d_buffer *index_buffer = state->index_buffer;
-            if (!index_buffer->buffer_object || !stream_info->all_vbo)
-                idx_data = index_buffer->resource.allocatedMemory;
-            else
-            {
-                ib_query = index_buffer->query;
-                idx_data = NULL;
-            }
+            ib_query = index_buffer->query;
+            idx_data = NULL;
         }
 
         if (state->index_format == WINED3DFMT_R16_UINT)

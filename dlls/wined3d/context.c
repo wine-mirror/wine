@@ -2298,7 +2298,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
     device_preload_textures(device);
     if (isStateDirty(context, STATE_VDECL) || isStateDirty(context, STATE_STREAMSRC))
         device_update_stream_info(device, context->gl_info);
-    if (state->index_buffer && !device->up_strided)
+    if (state->index_buffer)
     {
         if (device->strided_streams.all_vbo)
             wined3d_buffer_preload(state->index_buffer);
