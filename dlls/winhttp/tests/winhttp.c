@@ -792,7 +792,7 @@ static void test_secure_connection(void)
     static const WCHAR google[] = {'w','w','w','.','g','o','o','g','l','e','.','c','o','m',0};
 
     HINTERNET ses, con, req;
-    DWORD size, status, policy, bitness;
+    DWORD size, status, policy, bitness, read_size;
     BOOL ret;
     CERT_CONTEXT *cert;
     WINHTTP_CERTIFICATE_INFO info;
@@ -873,13 +873,16 @@ static void test_secure_connection(void)
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_RAW_HEADERS_CRLF, NULL, NULL, &size, NULL);
     ok(!ret, "succeeded unexpectedly\n");
 
+    read_size = 0;
     for (;;)
     {
         size = 0;
         ret = WinHttpReadData(req, buffer, sizeof(buffer), &size);
         ok(ret == TRUE, "WinHttpReadData failed: %u.\n", GetLastError());
         if (!size) break;
+        read_size += size;
     }
+    ok(read_size > 2014, "read_size = %u\n", read_size);
 
 cleanup:
     WinHttpCloseHandle(req);
