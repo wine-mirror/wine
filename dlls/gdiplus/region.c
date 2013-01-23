@@ -588,7 +588,7 @@ GpStatus WINGDIPAPI GdipCreateRegionHrgn(HRGN hrgn, GpRegion **region)
     GpStatus stat;
     GpPath* path;
     GpRegion* local;
-    int i;
+    DWORD i;
 
     TRACE("(%p, %p)\n", hrgn, region);
 
@@ -1467,7 +1467,7 @@ GpStatus WINGDIPAPI GdipGetRegionScansCount(GpRegion *region, UINT *count, GpMat
 GpStatus WINGDIPAPI GdipGetRegionScansI(GpRegion *region, GpRect *scans, INT *count, GpMatrix *matrix)
 {
     GpStatus stat;
-    INT i;
+    DWORD i;
     LPRGNDATA data;
     RECT *rects;
 
@@ -1501,7 +1501,7 @@ GpStatus WINGDIPAPI GdipGetRegionScansI(GpRegion *region, GpRect *scans, INT *co
 GpStatus WINGDIPAPI GdipGetRegionScans(GpRegion *region, GpRectF *scans, INT *count, GpMatrix *matrix)
 {
     GpStatus stat;
-    INT i;
+    DWORD i;
     LPRGNDATA data;
     RECT *rects;
 

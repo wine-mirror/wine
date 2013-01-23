@@ -370,7 +370,7 @@ static inline UINT get_palette_index(BYTE r, BYTE g, BYTE b, BYTE a, ColorPalett
     BYTE index = 0;
     int best_distance = 0x7fff;
     int distance;
-    int i;
+    UINT i;
 
     if (!palette) return 0;
     /* This algorithm scans entire palette,
@@ -3793,7 +3793,8 @@ static GpStatus get_decoder_info(IStream* stream, const struct image_codec **res
     LARGE_INTEGER seek;
     HRESULT hr;
     UINT bytesread;
-    int i, j, sig;
+    int i;
+    DWORD j, sig;
 
     /* seek to the start of the stream */
     seek.QuadPart = 0;

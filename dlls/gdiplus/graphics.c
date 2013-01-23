@@ -429,7 +429,8 @@ static GpStatus alpha_blend_pixels_hrgn(GpGraphics *graphics, INT dst_x, INT dst
 
     if (graphics->image && graphics->image->type == ImageTypeBitmap)
     {
-        int i, size;
+        DWORD i;
+        int size;
         RGNDATA *rgndata;
         RECT *rects;
         HRGN hrgn, visible_rgn;
@@ -642,7 +643,8 @@ static int color_is_gray(ARGB color)
 static void apply_image_attributes(const GpImageAttributes *attributes, LPBYTE data,
     UINT width, UINT height, INT stride, ColorAdjustType type)
 {
-    UINT x, y, i;
+    UINT x, y;
+    INT i;
 
     if (attributes->colorkeys[type].enabled ||
         attributes->colorkeys[ColorAdjustTypeDefault].enabled)
