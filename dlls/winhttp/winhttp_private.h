@@ -129,7 +129,6 @@ typedef struct
 {
     int socket;
     BOOL secure; /* SSL active on connection? */
-    void *ssl_conn;
     CtxtHandle ssl_ctx;
     SecPkgContext_StreamSizes ssl_sizes;
     char *ssl_buf;
