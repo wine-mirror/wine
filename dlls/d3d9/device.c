@@ -2867,49 +2867,23 @@ static HRESULT WINAPI d3d9_device_GetPixelShaderConstantB(IDirect3DDevice9Ex *if
 static HRESULT WINAPI d3d9_device_DrawRectPatch(IDirect3DDevice9Ex *iface, UINT handle,
         const float *segment_count, const D3DRECTPATCH_INFO *patch_info)
 {
-    struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
-
-    TRACE("iface %p, handle %#x, segment_count %p, patch_info %p.\n",
+    FIXME("iface %p, handle %#x, segment_count %p, patch_info %p unimplemented.\n",
             iface, handle, segment_count, patch_info);
-
-    wined3d_mutex_lock();
-    hr = wined3d_device_draw_rect_patch(device->wined3d_device, handle,
-            segment_count, (const struct wined3d_rect_patch_info *)patch_info);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_DrawTriPatch(IDirect3DDevice9Ex *iface, UINT handle,
         const float *segment_count, const D3DTRIPATCH_INFO *patch_info)
 {
-    struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
-
-    TRACE("iface %p, handle %#x, segment_count %p, patch_info %p.\n",
+    FIXME("iface %p, handle %#x, segment_count %p, patch_info %p unimplemented.\n",
             iface, handle, segment_count, patch_info);
-
-    wined3d_mutex_lock();
-    hr = wined3d_device_draw_tri_patch(device->wined3d_device, handle,
-            segment_count, (const struct wined3d_tri_patch_info *)patch_info);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_DeletePatch(IDirect3DDevice9Ex *iface, UINT handle)
 {
-    struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
-
-    TRACE("iface %p, handle %#x.\n", iface, handle);
-
-    wined3d_mutex_lock();
-    hr = wined3d_device_delete_patch(device->wined3d_device, handle);
-    wined3d_mutex_unlock();
-
-    return hr;
+    FIXME("iface %p, handle %#x unimplemented.\n", iface, handle);
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI d3d9_device_CreateQuery(IDirect3DDevice9Ex *iface, D3DQUERYTYPE type, IDirect3DQuery9 **query)

@@ -4491,8 +4491,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                      WINED3DDEVCAPS_TEXTURESYSTEMMEMORY |
                                      WINED3DDEVCAPS_CANRENDERAFTERFLIP  |
                                      WINED3DDEVCAPS_DRAWPRIMITIVES2     |
-                                     WINED3DDEVCAPS_DRAWPRIMITIVES2EX   |
-                                     WINED3DDEVCAPS_RTPATCHES;
+                                     WINED3DDEVCAPS_DRAWPRIMITIVES2EX;
 
     caps->PrimitiveMiscCaps        = WINED3DPMISCCAPS_CULLNONE              |
                                      WINED3DPMISCCAPS_CULLCCW               |

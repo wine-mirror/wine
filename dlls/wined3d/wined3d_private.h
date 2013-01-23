@@ -1581,22 +1581,6 @@ unsigned int adapter_adjust_memory(struct wined3d_adapter *adapter, int amount) 
 BOOL initPixelFormatsNoGL(struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 extern void add_gl_compat_wrappers(struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 
-/*****************************************************************************
- * High order patch management
- */
-struct wined3d_rect_patch
-{
-    UINT                            Handle;
-    float                          *mem;
-    struct wined3d_strided_data strided;
-    struct wined3d_rect_patch_info rect_patch_info;
-    float                           numSegs[4];
-    char                            has_normals, has_texcoords;
-    struct list                     entry;
-};
-
-HRESULT tesselate_rectpatch(struct wined3d_device *device, struct wined3d_rect_patch *patch) DECLSPEC_HIDDEN;
-
 enum projection_types
 {
     proj_none    = 0,
@@ -1781,11 +1765,6 @@ struct wined3d_device
     /* Context management */
     struct wined3d_context **contexts;
     UINT context_count;
-
-    /* High level patch management */
-#define PATCHMAP_SIZE 43
-#define PATCHMAP_HASHFUNC(x) ((x) % PATCHMAP_SIZE) /* Primitive and simple function */
-    struct list             patches[PATCHMAP_SIZE];
 };
 
 void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, const struct wined3d_fb_state *fb,

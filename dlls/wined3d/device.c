@@ -1390,19 +1390,6 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
         resource->resource_ops->resource_unload(resource);
     }
 
-    TRACE("Deleting high order patches\n");
-    for (i = 0; i < PATCHMAP_SIZE; ++i)
-    {
-        struct wined3d_rect_patch *patch;
-        struct list *e1, *e2;
-
-        LIST_FOR_EACH_SAFE(e1, e2, &device->patches[i])
-        {
-            patch = LIST_ENTRY(e1, struct wined3d_rect_patch, entry);
-            wined3d_device_delete_patch(device, patch->Handle);
-        }
-    }
-
     /* Delete the mouse cursor texture */
     if (device->cursorTexture)
     {
@@ -4489,140 +4476,6 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
     return surface_upload_from_surface(dst_surface, dst_point, src_surface, src_rect);
 }
 
-HRESULT CDECL wined3d_device_draw_rect_patch(struct wined3d_device *device, UINT handle,
-        const float *num_segs, const struct wined3d_rect_patch_info *rect_patch_info)
-{
-    struct wined3d_rect_patch *patch;
-    GLenum old_primitive_type;
-    unsigned int i;
-    struct list *e;
-    BOOL found;
-
-    TRACE("device %p, handle %#x, num_segs %p, rect_patch_info %p.\n",
-            device, handle, num_segs, rect_patch_info);
-
-    if (!(handle || rect_patch_info))
-    {
-        /* TODO: Write a test for the return value, thus the FIXME */
-        FIXME("Both handle and rect_patch_info are NULL.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (handle)
-    {
-        i = PATCHMAP_HASHFUNC(handle);
-        found = FALSE;
-        LIST_FOR_EACH(e, &device->patches[i])
-        {
-            patch = LIST_ENTRY(e, struct wined3d_rect_patch, entry);
-            if (patch->Handle == handle)
-            {
-                found = TRUE;
-                break;
-            }
-        }
-
-        if (!found)
-        {
-            TRACE("Patch does not exist. Creating a new one\n");
-            patch = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*patch));
-            patch->Handle = handle;
-            list_add_head(&device->patches[i], &patch->entry);
-        } else {
-            TRACE("Found existing patch %p\n", patch);
-        }
-    }
-    else
-    {
-        /* Since opengl does not load tesselated vertex attributes into numbered vertex
-         * attributes we have to tesselate, read back, and draw. This needs a patch
-         * management structure instance. Create one.
-         *
-         * A possible improvement is to check if a vertex shader is used, and if not directly
-         * draw the patch.
-         */
-        FIXME("Drawing an uncached patch. This is slow\n");
-        patch = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*patch));
-    }
-
-    if (num_segs[0] != patch->numSegs[0] || num_segs[1] != patch->numSegs[1]
-            || num_segs[2] != patch->numSegs[2] || num_segs[3] != patch->numSegs[3]
-            || (rect_patch_info && memcmp(rect_patch_info, &patch->rect_patch_info, sizeof(*rect_patch_info))))
-    {
-        HRESULT hr;
-        TRACE("Tesselation density or patch info changed, retesselating\n");
-
-        if (rect_patch_info)
-            patch->rect_patch_info = *rect_patch_info;
-
-        patch->numSegs[0] = num_segs[0];
-        patch->numSegs[1] = num_segs[1];
-        patch->numSegs[2] = num_segs[2];
-        patch->numSegs[3] = num_segs[3];
-
-        hr = tesselate_rectpatch(device, patch);
-        if (FAILED(hr))
-        {
-            WARN("Patch tesselation failed.\n");
-
-            /* Do not release the handle to store the params of the patch */
-            if (!handle)
-                HeapFree(GetProcessHeap(), 0, patch);
-
-            return hr;
-        }
-    }
-
-    old_primitive_type = device->stateBlock->state.gl_primitive_type;
-    device->stateBlock->state.gl_primitive_type = GL_TRIANGLES;
-    wined3d_device_draw_primitive_strided(device, patch->numSegs[0] * patch->numSegs[1] * 2 * 3, &patch->strided);
-    device->stateBlock->state.gl_primitive_type = old_primitive_type;
-
-    /* Destroy uncached patches */
-    if (!handle)
-    {
-        HeapFree(GetProcessHeap(), 0, patch->mem);
-        HeapFree(GetProcessHeap(), 0, patch);
-    }
-    return WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_device_draw_tri_patch(struct wined3d_device *device, UINT handle,
-        const float *segment_count, const struct wined3d_tri_patch_info *patch_info)
-{
-    FIXME("device %p, handle %#x, segment_count %p, patch_info %p stub!\n",
-            device, handle, segment_count, patch_info);
-
-    return WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_device_delete_patch(struct wined3d_device *device, UINT handle)
-{
-    struct wined3d_rect_patch *patch;
-    struct list *e;
-    int i;
-
-    TRACE("device %p, handle %#x.\n", device, handle);
-
-    i = PATCHMAP_HASHFUNC(handle);
-    LIST_FOR_EACH(e, &device->patches[i])
-    {
-        patch = LIST_ENTRY(e, struct wined3d_rect_patch, entry);
-        if (patch->Handle == handle)
-        {
-            TRACE("Deleting patch %p\n", patch);
-            list_remove(&patch->entry);
-            HeapFree(GetProcessHeap(), 0, patch->mem);
-            HeapFree(GetProcessHeap(), 0, patch);
-            return WINED3D_OK;
-        }
-    }
-
-    /* TODO: Write a test for the return value */
-    FIXME("Attempt to destroy nonexistent patch\n");
-    return WINED3DERR_INVALIDCALL;
-}
-
 /* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_device_color_fill(struct wined3d_device *device,
         struct wined3d_surface *surface, const RECT *rect, const struct wined3d_color *color)
@@ -5655,8 +5508,6 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     device->create_parms.device_type = device_type;
     device->create_parms.focus_window = focus_window;
     device->create_parms.flags = flags;
-
-    for (i = 0; i < PATCHMAP_SIZE; ++i) list_init(&device->patches[i]);
 
     device->shader_backend = adapter->shader_backend;
     device->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
