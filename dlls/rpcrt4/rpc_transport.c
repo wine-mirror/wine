@@ -1990,7 +1990,7 @@ static DWORD CALLBACK rpcrt4_http_timer_thread(PVOID param)
          timeout = rpcrt4_http_timer_calc_timeout(data.last_sent_time))
     {
         /* are we too soon after last send? */
-        if (GetTickCount() - HTTP_IDLE_TIME < *data.last_sent_time)
+        if (GetTickCount() - *data.last_sent_time < HTTP_IDLE_TIME)
             continue;
         rpcrt4_http_keep_connection_active_timer_proc(data.timer_param, TRUE);
     }
