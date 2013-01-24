@@ -3528,20 +3528,6 @@ static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
     return FALSE;
 }
 
-static BOOL CheckWrapAndMipCapability(const struct wined3d_adapter *adapter, const struct wined3d_format *format)
-{
-    /* OpenGL supports mipmapping on all formats basically. Wrapping is unsupported,
-     * but we have to report mipmapping so we cannot reject this flag. Tests show that
-     * windows reports WRAPANDMIP on unfilterable surfaces as well, apparently to show
-     * that wrapping is supported. The lack of filtering will sort out the mipmapping
-     * capability anyway.
-     *
-     * For now lets report this on all formats, but in the future we may want to
-     * restrict it to some should games need that
-     */
-    return TRUE;
-}
-
 /* Check if a texture format is supported on the given adapter */
 static BOOL CheckTextureCapability(const struct wined3d_adapter *adapter, const struct wined3d_format *format)
 {
@@ -3994,15 +3980,18 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
                 usage_caps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
             }
 
+            /* OpenGL supports mipmapping on all formats. Wrapping is
+             * unsupported, but we have to report mipmapping so we cannot
+             * reject this flag. Tests show that Windows reports WRAPANDMIP on
+             * unfilterable surfaces as well, apparently to show that wrapping
+             * is supported. The lack of filtering will sort out the
+             * mipmapping capability anyway.
+             *
+             * For now lets report this on all formats, but in the future we
+             * may want to restrict it to some should applications need that. */
             if (usage & WINED3DUSAGE_QUERY_WRAPANDMIP)
-            {
-                if (!CheckWrapAndMipCapability(adapter, format))
-                {
-                    TRACE("[FAILED] - No wrapping and mipmapping support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
                 usage_caps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
-            }
+
             break;
 
         case WINED3D_RTYPE_SURFACE:
@@ -4161,14 +4150,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
             }
 
             if (usage & WINED3DUSAGE_QUERY_WRAPANDMIP)
-            {
-                if (!CheckWrapAndMipCapability(adapter, format))
-                {
-                    TRACE("[FAILED] - No wrapping and mipmapping support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
                 usage_caps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
-            }
 
             if (usage & WINED3DUSAGE_DEPTHSTENCIL)
             {
@@ -4329,14 +4311,8 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
             }
 
             if (usage & WINED3DUSAGE_QUERY_WRAPANDMIP)
-            {
-                if (!CheckWrapAndMipCapability(adapter, format))
-                {
-                    TRACE("[FAILED] - No wrapping and mipmapping support.\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
                 usage_caps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
-            }
+
             break;
 
         default:
