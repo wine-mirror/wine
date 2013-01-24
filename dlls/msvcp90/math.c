@@ -1276,6 +1276,33 @@ float __thiscall complex_float_real_get(const complex_float *this)
     return this->real;
 }
 
+/* ??$_Fabs@M@std@@YAMABV?$complex@M@0@PAH@Z */
+/* ??$_Fabs@M@std@@YAMAEBV?$complex@M@0@PEAH@Z */
+float __cdecl complex_float__Fabs(const complex_float *c, int *scale)
+{
+    float ret;
+
+    ret = hypotf(c->real, c->imag);
+    if(_isnan(ret) || ret==0) {
+        *scale = 0;
+    }else if(ret >= 1) {
+        *scale = 2;
+        ret /= 4;
+    }else {
+        *scale = -2;
+        ret *= 4;
+    }
+
+    return ret;
+}
+
+/* ??$abs@M@std@@YAMABV?$complex@M@0@@Z */
+/* ??$abs@M@std@@YAMAEBV?$complex@M@0@@Z */
+float __cdecl complex_float_abs(const complex_float *c)
+{
+    return hypotf(c->real, c->imag);
+}
+
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QAE@ABN0@Z */
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QEAA@AEBN0@Z */
 /* ??0?$_Complex_base@OU_C_ldouble_complex@@@std@@QAE@ABO0@Z */
@@ -1741,4 +1768,35 @@ DEFINE_THISCALL_WRAPPER(complex_double_real_get, 4)
 double __thiscall complex_double_real_get(const complex_double *this)
 {
     return this->real;
+}
+
+/* ??$_Fabs@N@std@@YANABV?$complex@N@0@PAH@Z */
+/* ??$_Fabs@N@std@@YANAEBV?$complex@N@0@PEAH@Z */
+/* ??$_Fabs@O@std@@YAOABV?$complex@O@0@PAH@Z */
+/* ??$_Fabs@O@std@@YAOAEBV?$complex@O@0@PEAH@Z */
+double __cdecl complex_double__Fabs(const complex_double *c, int *scale)
+{
+    double ret;
+
+    ret = hypot(c->real, c->imag);
+    if(_isnan(ret) || ret==0) {
+        *scale = 0;
+    }else if(ret >= 1) {
+        *scale = 2;
+        ret /= 4;
+    }else {
+        *scale = -2;
+        ret *= 4;
+    }
+
+    return ret;
+}
+
+/* ??$abs@N@std@@YANABV?$complex@N@0@@Z */
+/* ??$abs@N@std@@YANAEBV?$complex@N@0@@Z */
+/* ??$abs@O@std@@YAOABV?$complex@O@0@@Z */
+/* ??$abs@O@std@@YAOAEBV?$complex@O@0@@Z */
+double __cdecl complex_double_abs(const complex_double *c)
+{
+    return hypot(c->real, c->imag);
 }
