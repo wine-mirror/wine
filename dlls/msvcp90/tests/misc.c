@@ -113,6 +113,7 @@ static complex_float* (__cdecl *p_complex_float_add)(complex_float*, const compl
 static complex_float* (__cdecl *p_complex_float_div)(complex_float*, const complex_float*, const complex_float*);
 static float (__cdecl *p_complex_float__Fabs)(const complex_float*, int*);
 static complex_float* (__cdecl *p_complex_float_tan)(complex_float*, const complex_float*);
+static complex_float* (__cdecl *p_complex_float_tanh)(complex_float*, const complex_float*);
 
 static int invalid_parameter = 0;
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
@@ -255,6 +256,8 @@ static BOOL init(void)
                 "??$_Fabs@M@std@@YAMAEBV?$complex@M@0@PEAH@Z");
         SET(p_complex_float_tan,
                 "??$tan@M@std@@YA?AV?$complex@M@0@AEBV10@@Z");
+        SET(p_complex_float_tanh,
+                "??$tanh@M@std@@YA?AV?$complex@M@0@AEBV10@@Z");
     } else {
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAADABD@Z");
         SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
@@ -303,6 +306,8 @@ static BOOL init(void)
                 "??$_Fabs@M@std@@YAMABV?$complex@M@0@PAH@Z");
         SET(p_complex_float_tan,
                 "??$tan@M@std@@YA?AV?$complex@M@0@ABV10@@Z");
+        SET(p_complex_float_tanh,
+                "??$tanh@M@std@@YA?AV?$complex@M@0@ABV10@@Z");
     }
 
     init_thiscall_thunk();
@@ -716,11 +721,17 @@ static void test_complex(void)
     p_complex_float_tan(&c2, &c1);
     ok(c2.real == 0, "c2.real = %f\n", c2.real);
     ok(c2.imag == 0, "c2.imag = %f\n", c2.imag);
+    p_complex_float_tanh(&c2, &c1);
+    ok(c2.real == 0, "c2.real = %f\n", c2.real);
+    ok(c2.imag == 0, "c2.imag = %f\n", c2.imag);
 
     c1.real = 3.14159/2;
     c1.imag = 0;
     p_complex_float_tan(&c2, &c1);
     ok(almost_eq(c2.real, 788906.062500), "c2.real = %f\n", c2.real);
+    ok(c2.imag == 0, "c2.imag = %f\n", c2.imag);
+    p_complex_float_tanh(&c2, &c1);
+    ok(almost_eq(c2.real, 0.917152), "c2.real = %f\n", c2.real);
     ok(c2.imag == 0, "c2.imag = %f\n", c2.imag);
 
     c1.real = 7.12;
@@ -728,6 +739,18 @@ static void test_complex(void)
     p_complex_float_tan(&c2, &c1);
     ok(almost_eq(c2.real, 1.040818), "c2.real = %f\n", c2.real);
     ok(almost_eq(c2.imag, 0.362651), "c2.imag = %f\n", c2.imag);
+    p_complex_float_tanh(&c2, &c1);
+    ok(almost_eq(c2.real, 0.999999), "c2.real = %f\n", c2.real);
+    ok(almost_eq(c2.imag, 4.3627e-7), "c2.imag = %g\n", c2.imag);
+
+    c1.real = 0.14;
+    c1.imag = 0.19;
+    p_complex_float_tan(&c2, &c1);
+    ok(almost_eq(c2.real, 0.135859), "c2.real = %f\n", c2.real);
+    ok(almost_eq(c2.imag, 0.191341), "c2.imag = %f\n", c2.imag);
+    p_complex_float_tanh(&c2, &c1);
+    ok(almost_eq(c2.real, 0.144134), "c2.real = %f\n", c2.real);
+    ok(almost_eq(c2.imag, 0.188464), "c2.imag = %f\n", c2.imag);
 }
 
 START_TEST(misc)
