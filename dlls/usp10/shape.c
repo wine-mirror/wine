@@ -64,6 +64,7 @@ static void ContextualShape_Mongolian(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
 typedef VOID (*ShapeCharGlyphPropProc)( HDC , ScriptCache*, SCRIPT_ANALYSIS*, const WCHAR*, const INT, const WORD*, const INT, WORD*, SCRIPT_CHARPROP*, SCRIPT_GLYPHPROP*);
 
 static void ShapeCharGlyphProp_Default( ScriptCache* psc, SCRIPT_ANALYSIS* psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD* pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP* pGlyphProp);
+static void ShapeCharGlyphProp_Latin( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_Hebrew( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_Thai( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
@@ -453,11 +454,11 @@ typedef struct ScriptShapeDataTag {
 static const ScriptShapeData ShapingData[] =
 {
     {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
-    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
-    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, ShapeCharGlyphProp_Latin},
+    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, ShapeCharGlyphProp_Latin},
+    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, ShapeCharGlyphProp_Latin},
     {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, ShapeCharGlyphProp_Latin},
     {{ arabic_features, 6}, {arabic_gpos_features, 4}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
     {{ arabic_features, 6}, {arabic_gpos_features, 4}, required_arabic_features, 0, ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
     {{ hebrew_features, 2}, {hebrew_gpos_features, 2}, NULL, 0, ContextualShape_Hebrew, ShapeCharGlyphProp_Hebrew},
@@ -497,7 +498,7 @@ static const ScriptShapeData ShapingData[] =
     {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_telugu_features, MS_MAKE_TAG('m','l','m','2'), ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
     {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_telugu_features, MS_MAKE_TAG('m','l','m','2'), ContextualShape_Malayalam, NULL},
     {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
-    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, ShapeCharGlyphProp_Latin},
     {{ standard_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ myanmar_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ myanmar_features, 2}, {NULL, 0}, NULL, 0, NULL, NULL},
@@ -532,7 +533,7 @@ static const ScriptShapeData ShapingData[] =
     {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ NULL, 0}, {NULL, 0}, NULL, 0, NULL, NULL},
     {{ hebrew_features, 2}, {hebrew_gpos_features, 2}, NULL, 0, ContextualShape_Hebrew, NULL},
-    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, NULL},
+    {{ latin_features, 4}, {latin_gpos_features, 3}, NULL, 0, NULL, ShapeCharGlyphProp_Latin},
     {{ thai_features, 1}, {thai_gpos_features, 3}, NULL, 0, ContextualShape_Thai, ShapeCharGlyphProp_Thai},
 };
 
@@ -2829,6 +2830,17 @@ static void ShapeCharGlyphProp_Default( ScriptCache* psc, SCRIPT_ANALYSIS* psa, 
 
     OpenType_GDEF_UpdateGlyphProps(psc, pwGlyphs, cGlyphs, pwLogClust, cChars, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
+}
+
+static void ShapeCharGlyphProp_Latin( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
+{
+    int i;
+
+    ShapeCharGlyphProp_Default( psc, psa, pwcChars, cChars, pwGlyphs, cGlyphs, pwLogClust, pCharProp, pGlyphProp);
+
+    for (i = 0; i < cGlyphs; i++)
+        if (pGlyphProp[i].sva.fZeroWidth)
+            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
 }
 
 static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
