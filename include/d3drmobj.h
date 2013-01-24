@@ -1401,8 +1401,8 @@ DECLARE_INTERFACE_(IDirect3DRMFrame2,IDirect3DRMFrame)
     STDMETHOD(SetInheritAxes)(THIS_ BOOL inherit_from_parent);
     STDMETHOD(SetMaterial)(THIS_ LPDIRECT3DRMMATERIAL) PURE;
     STDMETHOD(SetQuaternion)(THIS_ LPDIRECT3DRMFRAME reference, D3DRMQUATERNION *q) PURE;
-    STDMETHOD(RayPick)(THIS_ LPDIRECT3DRMFRAME reference, LPD3DRMRAY ray, DWORD flags,
-        LPDIRECT3DRMPICKED2ARRAY *return_visuals) PURE;
+    STDMETHOD(RayPick)(THIS_ IDirect3DRMFrame *reference, D3DRMRAY *ray, DWORD flags,
+            struct IDirect3DRMPicked2Array **return_visuals) PURE;
     STDMETHOD(Save)(THIS_ LPCSTR filename, D3DRMXOFFORMAT d3dFormat, D3DRMSAVEOPTIONS d3dSaveFlags);
 };
 #undef INTERFACE
@@ -1680,8 +1680,8 @@ DECLARE_INTERFACE_(IDirect3DRMFrame3,IDirect3DRMVisual)
     STDMETHOD(SetInheritAxes)(THIS_ BOOL inherit_from_parent);
     STDMETHOD(SetMaterial)(THIS_ LPDIRECT3DRMMATERIAL2) PURE;
     STDMETHOD(SetQuaternion)(THIS_ LPDIRECT3DRMFRAME3 reference, D3DRMQUATERNION *q) PURE;
-    STDMETHOD(RayPick)(THIS_ LPDIRECT3DRMFRAME3 reference, LPD3DRMRAY ray, DWORD flags,
-        LPDIRECT3DRMPICKED2ARRAY *return_visuals) PURE;
+    STDMETHOD(RayPick)(THIS_ IDirect3DRMFrame3 *reference, D3DRMRAY *ray, DWORD flags,
+            struct IDirect3DRMPicked2Array **return_visuals) PURE;
     STDMETHOD(Save)(THIS_ LPCSTR filename, D3DRMXOFFORMAT d3dFormat, D3DRMSAVEOPTIONS d3dSaveFlags);
     STDMETHOD(TransformVectors)(THIS_ IDirect3DRMFrame3 *reference, DWORD vector_count,
             D3DVECTOR *dst_vectors, D3DVECTOR *src_vectors) PURE;

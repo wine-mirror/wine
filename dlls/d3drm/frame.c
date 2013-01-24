@@ -2452,10 +2452,8 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_SetQuaternion(IDirect3DRMFrame3* ifa
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_RayPick(IDirect3DRMFrame3* iface,
-                                                    LPDIRECT3DRMFRAME3 reference, LPD3DRMRAY ray,
-                                                    DWORD flags,
-                                                    LPDIRECT3DRMPICKED2ARRAY *return_visuals)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_RayPick(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 *reference,
+        D3DRMRAY *ray, DWORD flags, IDirect3DRMPicked2Array **return_visuals)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
 
