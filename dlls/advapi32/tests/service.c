@@ -1856,9 +1856,10 @@ static void test_sequence(void)
             bret = pQueryServiceObjectSecurity(svc_handle, DACL_SECURITY_INFORMATION, NULL, 0, &n1);
             error = GetLastError();
             ok(!bret, "Expected QueryServiceObjectSecurity to fail: result %d\n", bret);
-            ok(error == ERROR_INSUFFICIENT_BUFFER || broken(error == ERROR_INVALID_ADDRESS),
+            ok(error == ERROR_INSUFFICIENT_BUFFER ||
+               broken(error == ERROR_INVALID_ADDRESS) || broken(error == ERROR_INVALID_PARAMETER),
                "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", error);
-            if (error == ERROR_INVALID_ADDRESS) n1 = 1024;
+            if (error != ERROR_INSUFFICIENT_BUFFER) n1 = 1024;
             pSD = LocalAlloc(0, n1);
             bret = pQueryServiceObjectSecurity(svc_handle, DACL_SECURITY_INFORMATION, pSD, n1, &n2);
             ok(bret, "Expected QueryServiceObjectSecurity to succeed: result %d\n", bret);
