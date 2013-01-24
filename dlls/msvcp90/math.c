@@ -1230,6 +1230,52 @@ float __cdecl complex_float_arg(const complex_float *c)
     return atan2(c->imag, c->real);
 }
 
+/* ??$imag@M@std@@YAMABV?$complex@M@0@@Z */
+/* ??$imag@M@std@@YAMAEBV?$complex@M@0@@Z */
+float __cdecl complex_float_imag(const complex_float *c)
+{
+    return c->imag;
+}
+
+/* ?imag@?$_Complex_base@MU_C_float_complex@@@std@@QAEMABM@Z */
+/* ?imag@?$_Complex_base@MU_C_float_complex@@@std@@QEAAMAEBM@Z */
+DEFINE_THISCALL_WRAPPER(complex_float_imag_set, 8)
+float __thiscall complex_float_imag_set(complex_float *this, const float *f)
+{
+    return (this->imag = *f);
+}
+
+/* ?imag@?$_Complex_base@MU_C_float_complex@@@std@@QBEMXZ */
+/* ?imag@?$_Complex_base@MU_C_float_complex@@@std@@QEBAMXZ */
+DEFINE_THISCALL_WRAPPER(complex_float_imag_get, 4)
+float __thiscall complex_float_imag_get(const complex_float *this)
+{
+    return this->imag;
+}
+
+/* ??$real@M@std@@YAMABV?$complex@M@0@@Z */
+/* ??$real@M@std@@YAMAEBV?$complex@M@0@@Z */
+float __cdecl complex_float_real(const complex_float *c)
+{
+    return c->real;
+}
+
+/* ?real@?$_Complex_base@MU_C_float_complex@@@std@@QAEMABM@Z */
+/* ?real@?$_Complex_base@MU_C_float_complex@@@std@@QEAAMAEBM@Z */
+DEFINE_THISCALL_WRAPPER(complex_float_real_set, 8)
+float __thiscall complex_float_real_set(complex_float *this, const float *f)
+{
+    return (this->real = *f);
+}
+
+/* ?real@?$_Complex_base@MU_C_float_complex@@@std@@QBEMXZ */
+/* ?real@?$_Complex_base@MU_C_float_complex@@@std@@QEBAMXZ */
+DEFINE_THISCALL_WRAPPER(complex_float_real_get, 4)
+float __thiscall complex_float_real_get(const complex_float *this)
+{
+    return this->real;
+}
+
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QAE@ABN0@Z */
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QEAA@AEBN0@Z */
 /* ??0?$_Complex_base@OU_C_ldouble_complex@@@std@@QAE@ABO0@Z */
@@ -1637,4 +1683,62 @@ complex_double* __thiscall complex_double_div_assign(complex_double *this, const
 double __cdecl complex_double_arg(const complex_double *c)
 {
     return atan2(c->imag, c->real);
+}
+
+/* ??$imag@N@std@@YANABV?$complex@N@0@@Z */
+/* ??$imag@N@std@@YANAEBV?$complex@N@0@@Z */
+/* ??$imag@O@std@@YAOABV?$complex@O@0@@Z */
+/* ??$imag@O@std@@YAOAEBV?$complex@O@0@@Z */
+double __cdecl complex_double_imag(const complex_double *c)
+{
+    return c->imag;
+}
+
+/* ?imag@?$_Complex_base@NU_C_double_complex@@@std@@QAENABN@Z */
+/* ?imag@?$_Complex_base@NU_C_double_complex@@@std@@QEAANAEBN@Z */
+/* ?imag@?$_Complex_base@OU_C_ldouble_complex@@@std@@QAEOABO@Z */
+/* ?imag@?$_Complex_base@OU_C_ldouble_complex@@@std@@QEAAOAEBO@Z */
+DEFINE_THISCALL_WRAPPER(complex_double_imag_set, 8)
+double __thiscall complex_double_imag_set(complex_double *this, const double *d)
+{
+    return (this->imag = *d);
+}
+
+/* ?imag@?$_Complex_base@NU_C_double_complex@@@std@@QBENXZ */
+/* ?imag@?$_Complex_base@NU_C_double_complex@@@std@@QEBANXZ */
+/* ?imag@?$_Complex_base@OU_C_ldouble_complex@@@std@@QBEOXZ */
+/* ?imag@?$_Complex_base@OU_C_ldouble_complex@@@std@@QEBAOXZ */
+DEFINE_THISCALL_WRAPPER(complex_double_imag_get, 4)
+double __thiscall complex_double_imag_get(const complex_double *this)
+{
+    return this->imag;
+}
+
+/* ??$real@N@std@@YANABV?$complex@N@0@@Z */
+/* ??$real@N@std@@YANAEBV?$complex@N@0@@Z */
+/* ??$real@O@std@@YAOABV?$complex@O@0@@Z */
+/* ??$real@O@std@@YAOAEBV?$complex@O@0@@Z */
+double __cdecl complex_double_real(const complex_double *c)
+{
+    return c->real;
+}
+
+/* ?real@?$_Complex_base@NU_C_double_complex@@@std@@QAENABN@Z */
+/* ?real@?$_Complex_base@NU_C_double_complex@@@std@@QEAANAEBN@Z */
+/* ?real@?$_Complex_base@OU_C_ldouble_complex@@@std@@QAEOABO@Z */
+/* ?real@?$_Complex_base@OU_C_ldouble_complex@@@std@@QEAAOAEBO@Z */
+DEFINE_THISCALL_WRAPPER(complex_double_real_set, 8)
+double __thiscall complex_double_real_set(complex_double *this, const double *d)
+{
+    return (this->real = *d);
+}
+
+/* ?real@?$_Complex_base@NU_C_double_complex@@@std@@QBENXZ */
+/* ?real@?$_Complex_base@NU_C_double_complex@@@std@@QEBANXZ */
+/* ?real@?$_Complex_base@OU_C_ldouble_complex@@@std@@QBEOXZ */
+/* ?real@?$_Complex_base@OU_C_ldouble_complex@@@std@@QEBAOXZ */
+DEFINE_THISCALL_WRAPPER(complex_double_real_get, 4)
+double __thiscall complex_double_real_get(const complex_double *this)
+{
+    return this->real;
 }
