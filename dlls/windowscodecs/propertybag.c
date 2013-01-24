@@ -128,8 +128,36 @@ static LONG find_item(PropertyBag *This, LPCOLESTR name)
 static HRESULT WINAPI PropertyBag_Read(IPropertyBag2 *iface, ULONG cProperties,
     PROPBAG2 *pPropBag, IErrorLog *pErrLog, VARIANT *pvarValue, HRESULT *phrError)
 {
-    FIXME("(%p,%u,%p,%p,%p,%p): stub\n", iface, cProperties, pPropBag, pErrLog, pvarValue, phrError);
-    return E_NOTIMPL;
+    HRESULT res = S_OK;
+    ULONG i;
+    PropertyBag *This = impl_from_IPropertyBag2(iface);
+
+    TRACE("(%p,%u,%p,%p,%p,%p)\n", iface, cProperties, pPropBag, pErrLog, pvarValue, phrError);
+
+    for (i=0; i < cProperties; i++)
+    {
+        LONG idx;
+        if (pPropBag[i].dwHint && pPropBag[i].dwHint <= This->prop_count)
+            idx = pPropBag[i].dwHint-1;
+        else
+            idx = find_item(This, pPropBag[i].pstrName);
+
+        if (idx > -1)
+        {
+            VariantInit(pvarValue+i);
+            res = VariantCopy(pvarValue+i, This->values+idx);
+            if (FAILED(res))
+                break;
+            phrError[i] = res;
+        }
+        else
+        {
+            res = E_FAIL;
+            break;
+        }
+    }
+
+    return res;
 }
 
 static HRESULT WINAPI PropertyBag_Write(IPropertyBag2 *iface, ULONG cProperties,

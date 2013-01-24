@@ -271,7 +271,6 @@ static void test_filled_propertybag(void)
 
     test_propertybag_write(property);
 
-todo_wine
     test_propertybag_read(property);
 
     IPropertyBag2_Release(property);
