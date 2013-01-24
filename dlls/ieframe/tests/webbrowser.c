@@ -2792,7 +2792,6 @@ static void test_download(DWORD flags)
         CHECK_CALLED(Invoke_NAVIGATECOMPLETE2);
     if(is_first_load)
         todo_wine CHECK_CALLED(GetDropTarget);
-    todo_wine CHECK_CALLED(Invoke_PROGRESSCHANGE);
     if(!(flags & DWL_REFRESH))
         CHECK_CALLED(Invoke_DOCUMENTCOMPLETE);
 
@@ -2805,6 +2804,7 @@ static void test_download(DWORD flags)
         DispatchMessage(&msg);
     }
 
+    todo_wine CHECK_CALLED(Invoke_PROGRESSCHANGE);
     if(flags & DWL_HTTP)
         CLEAR_CALLED(Exec_SETTITLE); /* FIXME: make it more strict */
     CHECK_CALLED(UpdateUI);
