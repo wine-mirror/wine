@@ -813,14 +813,17 @@ static void apartment_freeunusedlibraries(struct apartment *apt, DWORD delay)
                     real_delay = 0;
             }
 
-            if (!real_delay || (entry->unload_time && (entry->unload_time < GetTickCount())))
+            if (!real_delay || (entry->unload_time && ((int)(GetTickCount() - entry->unload_time) > 0)))
             {
                 list_remove(&entry->entry);
                 COMPOBJ_DllList_ReleaseRef(entry->dll, TRUE);
                 HeapFree(GetProcessHeap(), 0, entry);
             }
             else
+            {
                 entry->unload_time = GetTickCount() + real_delay;
+                if (!entry->unload_time) entry->unload_time = 1;
+            }
         }
         else if (entry->unload_time)
             entry->unload_time = 0;
