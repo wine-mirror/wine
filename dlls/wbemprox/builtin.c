@@ -945,21 +945,15 @@ static WCHAR *get_lastbootuptime(void)
     static const WCHAR fmtW[] =
         {'%','0','4','u','%','0','2','u','%','0','2','u','%','0','2','u','%','0','2','u','%','0','2','u',
          '.','%','0','6','u','+','0','0','0',0};
-    SYSTEMTIME st;
-    FILETIME ft;
-    ULARGE_INTEGER ticks;
+    SYSTEM_TIMEOFDAY_INFORMATION ti;
+    TIME_FIELDS tf;
     WCHAR *ret;
 
     if (!(ret = heap_alloc( 26 * sizeof(WCHAR) ))) return NULL;
-    GetSystemTime( &st );
-    SystemTimeToFileTime( &st, &ft );
-    ticks.u.LowPart  = ft.dwLowDateTime;
-    ticks.u.HighPart = ft.dwHighDateTime;
-    ticks.QuadPart -= GetTickCount64() * 10000;
-    ft.dwLowDateTime  = ticks.u.LowPart;
-    ft.dwHighDateTime = ticks.u.HighPart;
-    FileTimeToSystemTime( &ft, &st );
-    sprintfW( ret, fmtW, st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds * 1000 );
+
+    NtQuerySystemInformation( SystemTimeOfDayInformation, &ti, sizeof(ti), NULL );
+    RtlTimeToTimeFields( &ti.liKeBootTime, &tf );
+    sprintfW( ret, fmtW, tf.Year, tf.Month, tf.Day, tf.Hour, tf.Minute, tf.Second, tf.Milliseconds * 1000 );
     return ret;
 }
 static const WCHAR *get_osarchitecture(void)
