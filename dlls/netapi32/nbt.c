@@ -297,7 +297,7 @@ static UCHAR NetBTWaitForNameResponse(const NetBTAdapter *adapter, SOCKET fd,
     if (fd == INVALID_SOCKET) return NRC_BADDR;
     if (!answerCallback) return NRC_BADDR;
 
-    while (!found && ret == NRC_GOODRET && (now = GetTickCount()) < waitUntil)
+    while (!found && ret == NRC_GOODRET && (int)((now = GetTickCount()) - waitUntil) < 0)
     {
         DWORD msToWait = waitUntil - now;
         struct fd_set fds;
