@@ -967,7 +967,7 @@ static void test_rtti(void)
   call_func1(pexception_dtor, &e);
   call_func1(pbad_typeid_dtor, &b);
 
-  memcpy(&simple_class_sig0_rtti, &simple_class_rtti, sizeof(struct rtti_data));
+  simple_class_sig0_rtti = simple_class_rtti;
   simple_class_sig0_rtti.object_locator.signature = 0;
   simple_class_sig0_rtti.base_descriptor[0].type_descriptor = RTTI_REF_SIG0(simple_class_sig0_rtti, type_info[0], base);
   simple_class_sig0_rtti.base_array.bases[0] = RTTI_REF_SIG0(simple_class_sig0_rtti, base_descriptor[0], base);
@@ -975,7 +975,7 @@ static void test_rtti(void)
   simple_class_sig0_rtti.object_locator.type_descriptor = RTTI_REF_SIG0(simple_class_sig0_rtti, type_info[0], base);
   simple_class_sig0_rtti.object_locator.type_hierarchy = RTTI_REF_SIG0(simple_class_sig0_rtti, object_hierarchy, base);
 
-  memcpy(&child_class_sig0_rtti, &child_class_rtti, sizeof(struct rtti_data));
+  child_class_sig0_rtti = child_class_rtti;
   child_class_sig0_rtti.object_locator.signature = 0;
   child_class_sig0_rtti.base_descriptor[0].type_descriptor = RTTI_REF_SIG0(child_class_sig0_rtti, type_info[1], base);
   child_class_sig0_rtti.base_descriptor[1].type_descriptor = RTTI_REF_SIG0(child_class_sig0_rtti, type_info[0], base);
