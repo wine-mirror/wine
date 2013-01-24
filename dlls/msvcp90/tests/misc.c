@@ -112,6 +112,7 @@ static complex_float* (__thiscall *p_complex_float_ctor)(complex_float*, const f
 static complex_float* (__cdecl *p_complex_float_add)(complex_float*, const complex_float*, const complex_float*);
 static complex_float* (__cdecl *p_complex_float_div)(complex_float*, const complex_float*, const complex_float*);
 static float (__cdecl *p_complex_float__Fabs)(const complex_float*, int*);
+static complex_float* (__cdecl *p_complex_float_tan)(complex_float*, const complex_float*);
 
 static int invalid_parameter = 0;
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
@@ -252,6 +253,8 @@ static BOOL init(void)
                 "??$?KM@std@@YA?AV?$complex@M@0@AEBV10@0@Z");
         SET(p_complex_float__Fabs,
                 "??$_Fabs@M@std@@YAMAEBV?$complex@M@0@PEAH@Z");
+        SET(p_complex_float_tan,
+                "??$tan@M@std@@YA?AV?$complex@M@0@AEBV10@@Z");
     } else {
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAADABD@Z");
         SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
@@ -298,6 +301,8 @@ static BOOL init(void)
                 "??$?KM@std@@YA?AV?$complex@M@0@ABV10@0@Z");
         SET(p_complex_float__Fabs,
                 "??$_Fabs@M@std@@YAMABV?$complex@M@0@PAH@Z");
+        SET(p_complex_float_tan,
+                "??$tan@M@std@@YA?AV?$complex@M@0@ABV10@@Z");
     }
 
     init_thiscall_thunk();
@@ -705,6 +710,24 @@ static void test_complex(void)
     f1 = p_complex_float__Fabs(&c3, &scale);
     ok(f1 == 0, "abs(0+0i) = %f\n", f1);
     ok(scale == 0, "scale = %d\n", scale);
+
+    c1.real = 0;
+    c1.imag = 0;
+    p_complex_float_tan(&c2, &c1);
+    ok(c2.real == 0, "c2.real = %f\n", c2.real);
+    ok(c2.imag == 0, "c2.imag = %f\n", c2.imag);
+
+    c1.real = 3.14159/2;
+    c1.imag = 0;
+    p_complex_float_tan(&c2, &c1);
+    ok(almost_eq(c2.real, 788906.062500), "c2.real = %f\n", c2.real);
+    ok(c2.imag == 0, "c2.imag = %f\n", c2.imag);
+
+    c1.real = 7.12;
+    c1.imag = 0.17;
+    p_complex_float_tan(&c2, &c1);
+    ok(almost_eq(c2.real, 1.040818), "c2.real = %f\n", c2.real);
+    ok(almost_eq(c2.imag, 0.362651), "c2.imag = %f\n", c2.imag);
 }
 
 START_TEST(misc)
