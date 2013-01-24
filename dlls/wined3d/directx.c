@@ -3877,24 +3877,6 @@ static BOOL CheckSurfaceCapability(const struct wined3d_adapter *adapter,
     return FALSE;
 }
 
-static BOOL CheckVertexTextureCapability(const struct wined3d_adapter *adapter,
-        const struct wined3d_format *format)
-{
-    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
-
-    if (!gl_info->limits.vertex_samplers || !(format->flags & WINED3DFMT_FLAG_VTF))
-        return FALSE;
-
-    switch (format->id)
-    {
-        case WINED3DFMT_R32G32B32A32_FLOAT:
-        case WINED3DFMT_R32_FLOAT:
-            return TRUE;
-        default:
-            return !(gl_info->quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING);
-    }
-}
-
 HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, enum wined3d_format_id adapter_format_id, DWORD usage,
         enum wined3d_resource_type resource_type, enum wined3d_format_id check_format_id)
@@ -4014,7 +3996,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE)
             {
-                if (!CheckVertexTextureCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_VTF))
                 {
                     TRACE("[FAILED] - No vertex texture support.\n");
                     return WINED3DERR_NOTAVAILABLE;
@@ -4180,7 +4162,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE)
             {
-                if (!CheckVertexTextureCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_VTF))
                 {
                     TRACE("[FAILED] - No vertex texture support.\n");
                     return WINED3DERR_NOTAVAILABLE;
@@ -4348,7 +4330,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE)
             {
-                if (!CheckVertexTextureCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_VTF))
                 {
                     TRACE("[FAILED] - No vertex texture support.\n");
                     return WINED3DERR_NOTAVAILABLE;
