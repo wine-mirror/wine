@@ -324,7 +324,7 @@ static void test_dds_header_handling(void)
         dds.header.width = tests[i].width;
         dds.header.height = tests[i].height;
         dds.header.pitch_or_linear_size = tests[i].pitch;
-        memcpy(&dds.header.pixel_format, &tests[i].pixel_format, sizeof(struct dds_pixel_format));
+        dds.header.pixel_format = tests[i].pixel_format;
 
         hr = D3DXGetImageInfoFromFileInMemory(&dds, file_size, &info);
         ok(hr == tests[i].expected_result, "%d: D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", i, hr, tests[i].expected_result);
