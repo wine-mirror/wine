@@ -36,6 +36,7 @@
 #define IActiveScriptParse_Release IActiveScriptParse64_Release
 #define IActiveScriptParse_InitNew IActiveScriptParse64_InitNew
 #define IActiveScriptParse_ParseScriptText IActiveScriptParse64_ParseScriptText
+#define IActiveScriptParseProcedure2_Release IActiveScriptParseProcedure2_64_Release
 
 #else
 
@@ -43,6 +44,7 @@
 #define IActiveScriptParse_Release IActiveScriptParse32_Release
 #define IActiveScriptParse_InitNew IActiveScriptParse32_InitNew
 #define IActiveScriptParse_ParseScriptText IActiveScriptParse32_ParseScriptText
+#define IActiveScriptParseProcedure2_Release IActiveScriptParseProcedure2_32_Release
 
 #endif
 
@@ -72,6 +74,9 @@ extern const CLSID CLSID_VBScript;
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CLEAR_CALLED(func) \
+    expect_ ## func = called_ ## func = FALSE
+
 DEFINE_EXPECT(CreateInstance);
 DEFINE_EXPECT(ProcessUrlAction);
 DEFINE_EXPECT(QueryCustomPolicy);
@@ -91,12 +96,16 @@ static HRESULT QueryCustomPolicy_hres;
 static DWORD QueryCustomPolicy_psize;
 static DWORD QueryCustomPolicy_policy;
 static HRESULT QI_IDispatch_hres;
+static HRESULT QI_IObjectWithSite_hres;
 static HRESULT SetSite_hres;
 
-#define TESTOBJ_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80646}"
+#define TESTOBJ_CLSID     "{178fc163-f585-4e24-9c13-4bb7faf80646}"
+#define TESTOBJINST_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80647}"
 
 static const GUID CLSID_TestObj =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x06,0x46}};
+static const GUID CLSID_TestObjInst =
+    {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x06,0x47}};
 
 /* Defined as extern in urlmon.idl, but not exported by uuid.lib */
 const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
@@ -201,6 +210,8 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid,
         *ppv = iface;
     }else if(IsEqualGUID(&IID_IObjectWithSite, riid)) {
         CHECK_EXPECT(QI_IObjectWithSite);
+        if(FAILED(QI_IObjectWithSite_hres))
+            return QI_IObjectWithSite_hres;
         *ppv = object_with_site;
     }else if(IsEqualGUID(&IID_IObjectSafety, riid)) {
         ok(0, "Unexpected IID_IObjectSafety query\n");
@@ -740,6 +751,7 @@ static IActiveScriptParse *create_script(BOOL use_sec_mgr)
     QueryCustomPolicy_psize = sizeof(DWORD);
     QueryCustomPolicy_policy = URLPOLICY_ALLOW;
     QI_IDispatch_hres = S_OK;
+    QI_IObjectWithSite_hres = S_OK;
     SetSite_hres = S_OK;
 
     hres = CoCreateInstance(&CLSID_VBScript, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -971,6 +983,59 @@ static void test_CreateObject(void)
     IActiveScriptParse_Release(parser);
 }
 
+static void test_GetObject(void)
+{
+    IActiveScriptParse *parser;
+    HRESULT hres;
+
+    /* Never allowed with security manager */
+    parser = create_script(TRUE);
+    hres = parse_script_ae(parser, "Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
+    ok(hres == VB_E_CANNOT_CREATE_OBJ, "hres = %08x\n", hres);
+    IActiveScriptParse_Release(parser);
+
+    parser = create_script(FALSE);
+
+    SET_EXPECT(QI_IObjectWithSite);
+    SET_EXPECT(SetSite);
+    SET_EXPECT(reportSuccess);
+    hres = parse_script_ae(parser, "Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
+    if(hres == 0x8007007e) { /* Workaround for broken win2k */
+        win_skip("got unexpected error %08x\n", hres);
+        CLEAR_CALLED(QI_IObjectWithSite);
+        CLEAR_CALLED(SetSite);
+        CLEAR_CALLED(reportSuccess);
+        IActiveScriptParse_Release(parser);
+        return;
+    }
+    CHECK_CALLED(QI_IObjectWithSite);
+    CHECK_CALLED(SetSite);
+    CHECK_CALLED(reportSuccess);
+
+    SetSite_hres = E_FAIL;
+    SET_EXPECT(QI_IObjectWithSite);
+    SET_EXPECT(SetSite);
+    hres = parse_script_ae(parser, "Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
+    ok(hres == E_FAIL, "hres = %08x\n", hres);
+    CHECK_CALLED(QI_IObjectWithSite);
+    CHECK_CALLED(SetSite);
+
+    QI_IObjectWithSite_hres = E_NOINTERFACE;
+    SET_EXPECT(QI_IObjectWithSite);
+    SET_EXPECT(reportSuccess);
+    parse_script_a(parser, "Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
+    CHECK_CALLED(QI_IObjectWithSite);
+    CHECK_CALLED(reportSuccess);
+
+    IActiveScriptParse_Release(parser);
+
+    /* Invalid moniker */
+    parser = create_script(FALSE);
+    hres = parse_script_ae(parser, "Call GetObject(\"nonexistent:test\").reportSuccess()");
+    ok(hres == MK_E_SYNTAX, "hres = %08x\n", hres);
+    IActiveScriptParse_Release(parser);
+}
+
 static BOOL init_key(const char *key_name, const char *def_value, BOOL init)
 {
     HKEY hkey;
@@ -1012,18 +1077,41 @@ static BOOL register_activex(void)
                                  CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid);
     ok(hres == S_OK, "Could not register script engine: %08x\n", hres);
 
+    hres = CoRegisterClassObject(&CLSID_TestObjInst, (IUnknown *)&testObj,
+                                 CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid);
+    ok(hres == S_OK, "Could not register script engine: %08x\n", hres);
+
     return TRUE;
 }
+
+static BOOL check_vbscript(void)
+{
+    IActiveScriptParseProcedure2 *vbscript;
+    HRESULT hres;
+
+    hres = CoCreateInstance(&CLSID_VBScript, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IActiveScriptParseProcedure2, (void**)&vbscript);
+    if(SUCCEEDED(hres))
+        IActiveScriptParseProcedure2_Release(vbscript);
+
+    return hres == S_OK;
+}
+
 
 START_TEST(createobj)
 {
     CoInitialize(NULL);
 
-    register_activex();
+    if(check_vbscript()) {
+        register_activex();
 
-    test_CreateObject();
+        test_CreateObject();
+        test_GetObject();
 
-    init_registry(FALSE);
+        init_registry(FALSE);
+    }else {
+        win_skip("Broken engine, probably too old\n");
+    }
 
     CoUninitialize();
 }
