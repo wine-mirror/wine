@@ -1340,6 +1340,38 @@ complex_float* __cdecl complex_float_tan(complex_float *ret, const complex_float
     return ret;
 }
 
+/* ??$cosh@M@std@@YA?AV?$complex@M@0@ABV10@@Z */
+/* ??$cosh@M@std@@YA?AV?$complex@M@0@AEBV10@@Z */
+complex_float* __cdecl complex_float_cosh(complex_float *ret, const complex_float *c)
+{
+    ret->real = cosh(c->real)*cos(c->imag);
+    ret->imag = sinh(c->real)*sin(c->imag);
+    return ret;
+}
+
+/* ??$sinh@M@std@@YA?AV?$complex@M@0@ABV10@@Z */
+/* ??$sinh@M@std@@YA?AV?$complex@M@0@AEBV10@@Z */
+complex_float* __cdecl complex_float_sinh(complex_float *ret, const complex_float *c)
+{
+    ret->real = sinh(c->real)*cos(c->imag);
+    ret->imag = cosh(c->real)*sin(c->imag);
+    return ret;
+}
+
+/* ??$tanh@M@std@@YA?AV?$complex@M@0@ABV10@@Z */
+/* ??$tanh@M@std@@YA?AV?$complex@M@0@AEBV10@@Z */
+complex_float* __cdecl complex_float_tanh(complex_float *ret, const complex_float *c)
+{
+    complex_float tmp;
+
+    ret->real = -c->imag;
+    ret->imag = c->real;
+    complex_float_tan(&tmp, ret);
+    ret->real = tmp.imag;
+    ret->imag = -tmp.real;
+    return ret;
+}
+
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QAE@ABN0@Z */
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QEAA@AEBN0@Z */
 /* ??0?$_Complex_base@OU_C_ldouble_complex@@@std@@QAE@ABO0@Z */
@@ -1880,5 +1912,43 @@ complex_double* __cdecl complex_double_tan(complex_double *ret, const complex_do
     double denom = cos(2*c->real) + cosh(2*c->imag);
     ret->real = sin(2*c->real) / denom;
     ret->imag = sinh(2*c->imag) / denom;
+    return ret;
+}
+
+/* ??$cosh@N@std@@YA?AV?$complex@N@0@ABV10@@Z */
+/* ??$cosh@N@std@@YA?AV?$complex@N@0@AEBV10@@Z */
+/* ??$cosh@O@std@@YA?AV?$complex@O@0@ABV10@@Z */
+/* ??$cosh@O@std@@YA?AV?$complex@O@0@AEBV10@@Z */
+complex_double* __cdecl complex_double_cosh(complex_double *ret, const complex_double *c)
+{
+    ret->real = cosh(c->real)*cos(c->imag);
+    ret->imag = sinh(c->real)*sin(c->imag);
+    return ret;
+}
+
+/* ??$sinh@N@std@@YA?AV?$complex@N@0@ABV10@@Z */
+/* ??$sinh@N@std@@YA?AV?$complex@N@0@AEBV10@@Z */
+/* ??$sinh@O@std@@YA?AV?$complex@O@0@ABV10@@Z */
+/* ??$sinh@O@std@@YA?AV?$complex@O@0@AEBV10@@Z */
+complex_double* __cdecl complex_double_sinh(complex_double *ret, const complex_double *c)
+{
+    ret->real = sinh(c->real)*cos(c->imag);
+    ret->imag = cosh(c->real)*sin(c->imag);
+    return ret;
+}
+
+/* ??$tanh@N@std@@YA?AV?$complex@N@0@ABV10@@Z */
+/* ??$tanh@N@std@@YA?AV?$complex@N@0@AEBV10@@Z */
+/* ??$tanh@O@std@@YA?AV?$complex@O@0@ABV10@@Z */
+/* ??$tanh@O@std@@YA?AV?$complex@O@0@AEBV10@@Z */
+complex_double* __cdecl complex_double_tanh(complex_double *ret, const complex_double *c)
+{
+    complex_double tmp;
+
+    ret->real = -c->imag;
+    ret->imag = c->real;
+    complex_double_tan(&tmp, ret);
+    ret->real = tmp.imag;
+    ret->imag = -tmp.real;
     return ret;
 }
