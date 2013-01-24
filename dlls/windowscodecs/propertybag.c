@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "objbase.h"
 #include "wincodec.h"
+#include "wine/unicode.h"
 
 #include "wincodecs_private.h"
 
@@ -38,6 +39,7 @@ typedef struct PropertyBag {
     IPropertyBag2 IPropertyBag2_iface;
     LONG ref;
     UINT prop_count;
+    PROPBAG2 *properties;
 } PropertyBag;
 
 static inline PropertyBag *impl_from_IPropertyBag2(IPropertyBag2 *iface)
@@ -87,6 +89,16 @@ static ULONG WINAPI PropertyBag_Release(IPropertyBag2 *iface)
 
     if (ref == 0)
     {
+        ULONG i;
+        if (This->properties)
+        {
+            for (i=0; i < This->prop_count; i++)
+            {
+                HeapFree(GetProcessHeap(), 0, This->properties[i].pstrName);
+            }
+        }
+
+        HeapFree(GetProcessHeap(), 0, This->properties);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -121,11 +133,55 @@ static HRESULT WINAPI PropertyBag_CountProperties(IPropertyBag2 *iface, ULONG *p
     return S_OK;
 }
 
+static HRESULT copy_propbag2(PROPBAG2 *dest, PROPBAG2 *src, BOOL useCoAlloc)
+{
+    dest->cfType = src->cfType;
+    dest->clsid = src->clsid;
+    dest->dwHint = src->dwHint;
+    dest->dwType = src->dwType;
+    dest->vt = src->vt;
+    if(useCoAlloc)
+        dest->pstrName = CoTaskMemAlloc((strlenW(src->pstrName)+1) * sizeof(WCHAR));
+    else
+        dest->pstrName = HeapAlloc(GetProcessHeap(), 0, (strlenW(src->pstrName)+1) * sizeof(WCHAR));
+
+    if(!dest->pstrName)
+        return E_OUTOFMEMORY;
+
+    strcpyW(dest->pstrName, src->pstrName);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI PropertyBag_GetPropertyInfo(IPropertyBag2 *iface, ULONG iProperty,
     ULONG cProperties, PROPBAG2 *pPropBag, ULONG *pcProperties)
 {
-    FIXME("(%p,%u,%u,%p,%p): stub\n", iface, iProperty, cProperties, pPropBag, pcProperties);
-    return E_NOTIMPL;
+    HRESULT res = S_OK;
+    ULONG i;
+    PropertyBag *This = impl_from_IPropertyBag2(iface);
+
+    TRACE("(%p,%u,%u,%p,%p)\n", iface, iProperty, cProperties, pPropBag, pcProperties);
+
+    if (iProperty >= This->prop_count && iProperty > 0)
+        return WINCODEC_ERR_VALUEOUTOFRANGE;
+    if (iProperty+cProperties > This->prop_count )
+        return WINCODEC_ERR_VALUEOUTOFRANGE;
+
+    *pcProperties = max(cProperties, This->prop_count-iProperty);
+
+    for (i=0; i < *pcProperties; i++)
+    {
+        res = copy_propbag2(pPropBag+i, This->properties+iProperty+i, TRUE);
+        if (FAILED(res))
+        {
+            do {
+                CoTaskMemFree( pPropBag[--i].pstrName );
+            } while (i);
+            break;
+        }
+    }
+
+    return res;
 }
 
 static HRESULT WINAPI PropertyBag_LoadObject(IPropertyBag2 *iface, LPCOLESTR pstrName,
@@ -149,6 +205,8 @@ static const IPropertyBag2Vtbl PropertyBag_Vtbl = {
 HRESULT CreatePropertyBag2(PROPBAG2 *options, UINT count,
                            IPropertyBag2 **ppPropertyBag2)
 {
+    UINT i;
+    HRESULT res = S_OK;
     PropertyBag *This;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(PropertyBag));
@@ -158,7 +216,33 @@ HRESULT CreatePropertyBag2(PROPBAG2 *options, UINT count,
     This->ref = 1;
     This->prop_count = count;
 
-    *ppPropertyBag2 = &This->IPropertyBag2_iface;
+    if (count == 0)
+    {
+        This->properties = NULL;
+    }
+    else
+    {
+        This->properties = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PROPBAG2)*count);
 
-    return S_OK;
+        if (!This->properties)
+            res = E_OUTOFMEMORY;
+        else
+            for (i=0; i < count; i++)
+            {
+                res = copy_propbag2(This->properties+i, options+i, FALSE);
+                if (FAILED(res))
+                    break;
+                This->properties[i].dwHint = i+1; /* 0 means unset, so we start with 1 */
+            }
+    }
+
+    if (FAILED(res))
+    {
+        PropertyBag_Release(&This->IPropertyBag2_iface);
+        *ppPropertyBag2 = NULL;
+    }
+    else
+        *ppPropertyBag2 = &This->IPropertyBag2_iface;
+
+    return res;
 }

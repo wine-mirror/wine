@@ -239,7 +239,6 @@ static void test_empty_propertybag(void)
 
     test_propertybag_countproperties(property, 0);
 
-todo_wine
     test_propertybag_getpropertyinfo(property, 0);
 
     IPropertyBag2_Release(property);
@@ -268,7 +267,6 @@ static void test_filled_propertybag(void)
 
     test_propertybag_countproperties(property, 2);
 
-todo_wine
     test_propertybag_getpropertyinfo(property, 2);
 
 todo_wine
