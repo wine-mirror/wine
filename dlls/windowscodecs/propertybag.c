@@ -40,6 +40,7 @@ typedef struct PropertyBag {
     LONG ref;
     UINT prop_count;
     PROPBAG2 *properties;
+    VARIANT *values;
 } PropertyBag;
 
 static inline PropertyBag *impl_from_IPropertyBag2(IPropertyBag2 *iface)
@@ -90,19 +91,38 @@ static ULONG WINAPI PropertyBag_Release(IPropertyBag2 *iface)
     if (ref == 0)
     {
         ULONG i;
-        if (This->properties)
+        if (This->properties && This->values)
         {
             for (i=0; i < This->prop_count; i++)
             {
                 HeapFree(GetProcessHeap(), 0, This->properties[i].pstrName);
+                VariantClear( This->values+i );
             }
         }
 
         HeapFree(GetProcessHeap(), 0, This->properties);
+        HeapFree(GetProcessHeap(), 0, This->values);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
     return ref;
+}
+
+static LONG find_item(PropertyBag *This, LPCOLESTR name)
+{
+    LONG i;
+    if (!This->properties)
+        return -1;
+    if (!name)
+        return -1;
+
+    for (i=0; i < This->prop_count; i++)
+    {
+        if (strcmpW(name, This->properties[i].pstrName) == 0)
+            return i;
+    }
+
+    return -1;
 }
 
 static HRESULT WINAPI PropertyBag_Read(IPropertyBag2 *iface, ULONG cProperties,
@@ -115,8 +135,41 @@ static HRESULT WINAPI PropertyBag_Read(IPropertyBag2 *iface, ULONG cProperties,
 static HRESULT WINAPI PropertyBag_Write(IPropertyBag2 *iface, ULONG cProperties,
     PROPBAG2 *pPropBag, VARIANT *pvarValue)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cProperties, pPropBag, pvarValue);
-    return E_NOTIMPL;
+    HRESULT res = S_OK;
+    ULONG i;
+    PropertyBag *This = impl_from_IPropertyBag2(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cProperties, pPropBag, pvarValue);
+
+    for (i=0; i < cProperties; i++)
+    {
+        LONG idx;
+        if (pPropBag[i].dwHint && pPropBag[i].dwHint <= This->prop_count)
+            idx = pPropBag[i].dwHint-1;
+        else
+            idx = find_item(This, pPropBag[i].pstrName);
+
+        if (idx > -1)
+        {
+            if (This->properties[idx].vt != V_VT(pvarValue+i))
+                return WINCODEC_ERR_PROPERTYUNEXPECTEDTYPE;
+            res = VariantCopy(This->values+idx, pvarValue+i);
+            if (FAILED(res))
+                return E_FAIL;
+        }
+        else
+        {
+            if (pPropBag[i].pstrName)
+                FIXME("Application tried to set the unknown option %s.\n",
+                      debugstr_w(pPropBag[i].pstrName));
+
+            /* FIXME: Function is not atomar on error, but MSDN does not say anything about it
+             *        (no reset of items between 0 and i-1) */
+            return E_FAIL;
+        }
+    }
+
+    return res;
 }
 
 static HRESULT WINAPI PropertyBag_CountProperties(IPropertyBag2 *iface, ULONG *pcProperties)
@@ -219,12 +272,14 @@ HRESULT CreatePropertyBag2(PROPBAG2 *options, UINT count,
     if (count == 0)
     {
         This->properties = NULL;
+        This->values = NULL;
     }
     else
     {
         This->properties = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PROPBAG2)*count);
+        This->values = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(VARIANT)*count);
 
-        if (!This->properties)
+        if (!This->properties || !This->values)
             res = E_OUTOFMEMORY;
         else
             for (i=0; i < count; i++)

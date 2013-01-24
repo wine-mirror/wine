@@ -269,7 +269,6 @@ static void test_filled_propertybag(void)
 
     test_propertybag_getpropertyinfo(property, 2);
 
-todo_wine
     test_propertybag_write(property);
 
 todo_wine
