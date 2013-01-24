@@ -1825,7 +1825,7 @@ void ReleaseHelpViewer(HHInfo *info)
 HHInfo *CreateHelpViewer(HHInfo *info, LPCWSTR filename, HWND caller)
 {
     HHInfo *tmp_info;
-    int i;
+    unsigned int i;
 
     if(!info)
     {
