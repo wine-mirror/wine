@@ -1,5 +1,5 @@
 TESTDLL   = windowscodecs.dll
-IMPORTS   = gdi32 user32 ole32 windowscodecs
+IMPORTS   = windowscodecs oleaut32 ole32 user32 gdi32
 
 C_SRCS = \
 	bitmap.c \
@@ -11,6 +11,7 @@ C_SRCS = \
 	metadata.c \
 	palette.c \
 	pngformat.c \
+	propertybag.c \
 	stream.c \
 	tiffformat.c
 
