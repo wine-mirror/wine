@@ -111,6 +111,7 @@ static void (__thiscall *p_basic_ios_char_dtor)(/*basic_ios_char*/void*);
 static complex_float* (__thiscall *p_complex_float_ctor)(complex_float*, const float*, const float*);
 static complex_float* (__cdecl *p_complex_float_add)(complex_float*, const complex_float*, const complex_float*);
 static complex_float* (__cdecl *p_complex_float_div)(complex_float*, const complex_float*, const complex_float*);
+static float (__cdecl *p_complex_float__Fabs)(const complex_float*, int*);
 
 static int invalid_parameter = 0;
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
@@ -249,6 +250,8 @@ static BOOL init(void)
                 "??$?HM@std@@YA?AV?$complex@M@0@AEBV10@0@Z");
         SET(p_complex_float_div,
                 "??$?KM@std@@YA?AV?$complex@M@0@AEBV10@0@Z");
+        SET(p_complex_float__Fabs,
+                "??$_Fabs@M@std@@YAMAEBV?$complex@M@0@PEAH@Z");
     } else {
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAADABD@Z");
         SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
@@ -293,6 +296,8 @@ static BOOL init(void)
                 "??$?HM@std@@YA?AV?$complex@M@0@ABV10@0@Z");
         SET(p_complex_float_div,
                 "??$?KM@std@@YA?AV?$complex@M@0@ABV10@0@Z");
+        SET(p_complex_float__Fabs,
+                "??$_Fabs@M@std@@YAMABV?$complex@M@0@PAH@Z");
     }
 
     init_thiscall_thunk();
@@ -587,6 +592,7 @@ static void test_complex(void)
 {
     complex_float c1, c2, c3;
     float f1, f2;
+    int scale;
 
     f1 = 1;
     f2 = 2;
@@ -594,19 +600,35 @@ static void test_complex(void)
     ok(c1.real == 1, "c1.real = %f\n", c1.real);
     ok(c1.imag == 2, "c1.imag = %f\n", c1.imag);
 
+    f1 = p_complex_float__Fabs(&c1, &scale);
+    ok(almost_eq(f1, 0.559017), "abs(1+2i) = %f\n", f1);
+    ok(scale == 2, "scale = %d\n", scale);
+
     f1 = -1;
     f2 = 1;
     call_func3(p_complex_float_ctor, &c2, &f1, &f2);
     ok(c2.real == -1, "c2.real = %f\n", c1.real);
     ok(c2.imag == 1, "c2.imag = %f\n", c1.imag);
 
+    f1 = p_complex_float__Fabs(&c2, &scale);
+    ok(almost_eq(f1, 0.353553), "abs(1-1i) = %f\n", f1);
+    ok(scale == 2, "scale = %d\n", scale);
+
     p_complex_float_add(&c3, &c1, &c2);
     ok(c3.real == 0, "c3.real = %f\n", c3.real);
     ok(c3.imag == 3, "c3.imag = %f\n", c3.imag);
 
+    f1 = p_complex_float__Fabs(&c3, &scale);
+    ok(almost_eq(f1, 0.75), "abs(0+3i) = %f\n", f1);
+    ok(scale == 2, "scale = %d\n", scale);
+
     p_complex_float_add(&c2, &c1, &c3);
     ok(c2.real == 1, "c2.real = %f\n", c1.real);
     ok(c2.imag == 5, "c2.imag = %f\n", c1.imag);
+
+    f1 = p_complex_float__Fabs(&c3, &scale);
+    ok(almost_eq(f1, 0.75), "abs(1+5i) = %f\n", f1);
+    ok(scale == 2, "scale = %d\n", scale);
 
     /* (1+5i) / (0+3i) */
     p_complex_float_div(&c1, &c2, &c3);
@@ -620,11 +642,19 @@ static void test_complex(void)
     ok(almost_eq(c1.real, 0.5), "c1.real = %f\n", c1.real);
     ok(almost_eq(c1.imag, 2.5), "c1.imag = %f\n", c1.imag);
 
+    f1 = p_complex_float__Fabs(&c1, &scale);
+    ok(almost_eq(f1, 0.637377), "abs(0.5+2.5i) = %f\n", f1);
+    ok(scale == 2, "scale = %d\n", scale);
+
     /* (1+5i) / 0 */
     c3.real = 0;
     p_complex_float_div(&c1, &c2, &c3);
     ok(_isnan(c1.real), "c1.real = %f\n", c1.real);
     ok(_isnan(c1.imag), "c1.imag = %f\n", c1.imag);
+
+    f1 = p_complex_float__Fabs(&c1, &scale);
+    ok(_isnan(f1), "abs(NaN+NaNi) = %f\n", f1);
+    ok(scale == 0, "scale = %d\n", scale);
 
     /* (1+5i) / (NaN-2i) */
     c1.imag = -2;
@@ -642,6 +672,39 @@ static void test_complex(void)
     p_complex_float_add(&c3, &c2, &c1);
     ok(_isnan(c3.real), "c3.real = %f\n", c3.real);
     ok(c3.imag == -2, "c3.imag = %f\n", c3.imag);
+
+    f1 = p_complex_float__Fabs(&c3, &scale);
+    ok(_isnan(f1), "abs(NaN-2i) = %f\n", f1);
+    ok(scale == 0, "scale = %d\n", scale);
+
+    c3.real = 1000;
+    f1 = p_complex_float__Fabs(&c3, &scale);
+    ok(almost_eq(f1, 250.000504), "abs(1000-2i) = %f\n", f1);
+    ok(scale == 2, "scale = %d\n", scale);
+
+    c3.real = 0.1;
+    c3.imag = 0.1;
+    f1 = p_complex_float__Fabs(&c3, &scale);
+    ok(almost_eq(f1, 0.565685), "abs(0.1+0.1i) = %f\n", f1);
+    ok(scale == -2, "scale = %d\n", scale);
+
+    c3.real = 1;
+    c3.imag = 0;
+    f1 = p_complex_float__Fabs(&c3, &scale);
+    ok(almost_eq(f1, 0.25), "abs(1+0i) = %f\n", f1);
+    ok(scale == 2, "scale = %d\n", scale);
+
+    c3.real = 0.99;
+    c3.imag = 0;
+    f1 = p_complex_float__Fabs(&c3, &scale);
+    ok(almost_eq(f1, 3.96), "abs(0.99+0i) = %f\n", f1);
+    ok(scale == -2, "scale = %d\n", scale);
+
+    c3.real = 0;
+    c3.imag = 0;
+    f1 = p_complex_float__Fabs(&c3, &scale);
+    ok(f1 == 0, "abs(0+0i) = %f\n", f1);
+    ok(scale == 0, "scale = %d\n", scale);
 }
 
 START_TEST(misc)
