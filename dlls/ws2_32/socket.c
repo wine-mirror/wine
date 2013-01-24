@@ -2183,7 +2183,7 @@ static BOOL interface_bind( SOCKET s, int fd, struct sockaddr *addr )
 
             if (setsockopt(fd, IPPROTO_IP, IP_UNICAST_IF, &ifindex, sizeof(ifindex)) != 0)
                 goto cleanup; /* Failed to suggest egress interface */
-            memcpy(&specific_interface_filter, &generic_interface_filter, sizeof(generic_interface_filter));
+            specific_interface_filter = generic_interface_filter;
             specific_interface_filter.iface_rule.k = adapter->Index;
             filter_prog.len = sizeof(generic_interface_filter)/sizeof(struct sock_filter);
             filter_prog.filter = (struct sock_filter *) &specific_interface_filter;

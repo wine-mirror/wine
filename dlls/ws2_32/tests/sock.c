@@ -2725,7 +2725,7 @@ static void test_getsockname(void)
         return;
     }
 
-    memcpy(&sa_get, &sa_set, sizeof(sa_set));
+    sa_get = sa_set;
     if (getsockname(sock, (struct sockaddr*) &sa_get, &sa_get_len) == 0)
         ok(0, "getsockname on unbound socket should fail\n");
     else {
