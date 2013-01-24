@@ -3528,16 +3528,6 @@ static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
     return FALSE;
 }
 
-/* Check if a format support blending in combination with pixel shaders */
-static BOOL CheckPostPixelShaderBlendingCapability(const struct wined3d_adapter *adapter,
-        const struct wined3d_format *format)
-{
-    /* The flags entry of a format contains the post pixel shader blending capability */
-    if (format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING) return TRUE;
-
-    return FALSE;
-}
-
 static BOOL CheckWrapAndMipCapability(const struct wined3d_adapter *adapter, const struct wined3d_format *format)
 {
     /* OpenGL supports mipmapping on all formats basically. Wrapping is unsupported,
@@ -3966,7 +3956,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
             {
-                if (!CheckPostPixelShaderBlendingCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
                 {
                     TRACE("[FAILED] - No post pixelshader blending support.\n");
                     return WINED3DERR_NOTAVAILABLE;
@@ -4049,7 +4039,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
             {
-                if (!CheckPostPixelShaderBlendingCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
                 {
                     TRACE("[FAILED] - No post pixelshader blending support.\n");
                     return WINED3DERR_NOTAVAILABLE;
@@ -4132,7 +4122,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
             {
-                if (!CheckPostPixelShaderBlendingCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
                 {
                     TRACE("[FAILED] - No post pixelshader blending support.\n");
                     return WINED3DERR_NOTAVAILABLE;
@@ -4300,7 +4290,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
             {
-                if (!CheckPostPixelShaderBlendingCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
                 {
                     TRACE("[FAILED] - No post pixelshader blending support.\n");
                     return WINED3DERR_NOTAVAILABLE;
