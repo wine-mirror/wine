@@ -435,7 +435,8 @@ TW_UINT16 GPHOTO2_ImageNativeXferGet (pTW_IDENTITY pOrigin,
     samprow = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,activeDS.jd.output_width*activeDS.jd.output_components);
     oldsamprow = samprow;
     while ( activeDS.jd.output_scanline<activeDS.jd.output_height ) {
-	int i, x = pjpeg_read_scanlines(&activeDS.jd,&samprow,1);
+        unsigned int i;
+        int x = pjpeg_read_scanlines(&activeDS.jd,&samprow,1);
 	if (x != 1) {
 		FIXME("failed to read current scanline?\n");
 		break;
@@ -641,7 +642,8 @@ _get_gphoto2_file_as_DIB(
     samprow = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,jd.output_width*jd.output_components);
     oldsamprow = samprow;
     while ( jd.output_scanline<jd.output_height ) {
-	int i, x = pjpeg_read_scanlines(&jd,&samprow,1);
+        unsigned int i;
+        int x = pjpeg_read_scanlines(&jd,&samprow,1);
 	if (x != 1) {
 	    FIXME("failed to read current scanline?\n");
 	    break;
