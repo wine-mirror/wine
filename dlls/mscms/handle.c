@@ -140,7 +140,7 @@ HPROFILE create_profile( struct profile *profile )
     if ((handle = alloc_profile_handle()))
     {
         DWORD_PTR index = (DWORD_PTR)handle - 1;
-        memcpy( &profiletable[index], profile, sizeof(struct profile) );
+        profiletable[index] = *profile;
     }
     LeaveCriticalSection( &MSCMS_handle_cs );
     return handle;
@@ -221,7 +221,7 @@ HTRANSFORM create_transform( struct transform *transform )
     if ((handle = alloc_transform_handle()))
     {
         DWORD_PTR index = (DWORD_PTR)handle - 1;
-        memcpy( &transformtable[index], transform, sizeof(struct transform) );
+        transformtable[index] = *transform;
     }
     LeaveCriticalSection( &MSCMS_handle_cs );
     return handle;
