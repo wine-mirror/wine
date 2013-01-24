@@ -30,6 +30,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 #define VB_E_CANNOT_CREATE_OBJ 0x800a01ad
+#define VB_E_MK_PARSE_ERROR    0x800a01b0
 
 /* Defined as extern in urlmon.idl, but not exported by uuid.lib */
 const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
@@ -216,10 +217,29 @@ static HRESULT to_string(VARIANT *v, BSTR *ret)
     return S_OK;
 }
 
+static HRESULT set_object_site(script_ctx_t *ctx, IUnknown *obj)
+{
+    IObjectWithSite *obj_site;
+    IUnknown *ax_site;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(obj, &IID_IObjectWithSite, (void**)&obj_site);
+    if(FAILED(hres))
+        return S_OK;
+
+    ax_site = create_ax_site(ctx);
+    if(ax_site)
+        hres = IObjectWithSite_SetSite(obj_site, ax_site);
+    else
+        hres = E_OUTOFMEMORY;
+    IUnknown_Release(ax_site);
+    IObjectWithSite_Release(obj_site);
+    return hres;
+}
+
 static IUnknown *create_object(script_ctx_t *ctx, const WCHAR *progid)
 {
     IInternetHostSecurityManager *secmgr = NULL;
-    IObjectWithSite *obj_site;
     struct CONFIRMSAFETY cs;
     IClassFactoryEx *cfex;
     IClassFactory *cf;
@@ -279,20 +299,10 @@ static IUnknown *create_object(script_ctx_t *ctx, const WCHAR *progid)
         }
     }
 
-    hres = IUnknown_QueryInterface(obj, &IID_IObjectWithSite, (void**)&obj_site);
-    if(SUCCEEDED(hres)) {
-        IUnknown *ax_site;
-
-        ax_site = create_ax_site(ctx);
-        if(ax_site) {
-            hres = IObjectWithSite_SetSite(obj_site, ax_site);
-            IUnknown_Release(ax_site);
-        }
-        IObjectWithSite_Release(obj_site);
-        if(!ax_site || FAILED(hres)) {
-            IUnknown_Release(obj);
-            return NULL;
-        }
+    hres = set_object_site(ctx, obj);
+    if(FAILED(hres)) {
+        IUnknown_Release(obj);
+        return NULL;
     }
 
     return obj;
@@ -1275,10 +1285,61 @@ static HRESULT Global_CreateObject(vbdisp_t *This, VARIANT *arg, unsigned args_c
     return S_OK;
 }
 
-static HRESULT Global_GetObject(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_GetObject(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    IBindCtx *bind_ctx;
+    IUnknown *obj_unk;
+    IDispatch *disp;
+    ULONG eaten = 0;
+    IMoniker *mon;
+    HRESULT hres;
+
+    TRACE("%s %s\n", args_cnt ? debugstr_variant(args) : "", args_cnt > 1 ? debugstr_variant(args+1) : "");
+
+    if(args_cnt != 1 || V_VT(args) != VT_BSTR) {
+        FIXME("unsupported args\n");
+        return E_NOTIMPL;
+    }
+
+    if(This->desc->ctx->safeopt & (INTERFACE_USES_SECURITY_MANAGER|INTERFACESAFE_FOR_UNTRUSTED_DATA)) {
+        WARN("blocked in current safety mode\n");
+        return VB_E_CANNOT_CREATE_OBJ;
+    }
+
+    hres = CreateBindCtx(0, &bind_ctx);
+    if(FAILED(hres))
+        return hres;
+
+    hres = MkParseDisplayName(bind_ctx, V_BSTR(args), &eaten, &mon);
+    if(SUCCEEDED(hres)) {
+        hres = IMoniker_BindToObject(mon, bind_ctx, NULL, &IID_IUnknown, (void**)&obj_unk);
+        IMoniker_Release(mon);
+    }else {
+        hres = MK_E_SYNTAX;
+    }
+    IBindCtx_Release(bind_ctx);
+    if(FAILED(hres))
+        return hres;
+
+    hres = set_object_site(This->desc->ctx, obj_unk);
+    if(FAILED(hres)) {
+        IUnknown_Release(obj_unk);
+        return hres;
+    }
+
+    hres = IUnknown_QueryInterface(obj_unk, &IID_IDispatch, (void**)&disp);
+    if(SUCCEEDED(hres)) {
+        if(res) {
+            V_VT(res) = VT_DISPATCH;
+            V_DISPATCH(res) = disp;
+        }else {
+            IDispatch_Release(disp);
+        }
+    }else {
+        FIXME("object does not support IDispatch\n");
+    }
+
+    return hres;
 }
 
 static HRESULT Global_DateAdd(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
