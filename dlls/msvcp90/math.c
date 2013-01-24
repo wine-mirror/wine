@@ -1303,6 +1303,15 @@ float __cdecl complex_float_abs(const complex_float *c)
     return hypotf(c->real, c->imag);
 }
 
+/* ??$conj@M@std@@YA?AV?$complex@M@0@ABV10@@Z */
+/* ??$conj@M@std@@YA?AV?$complex@M@0@AEBV10@@Z */
+complex_float* __cdecl complex_float_conj(complex_float *ret, const complex_float *c)
+{
+    ret->real = c->real;
+    ret->imag = -c->imag;
+    return ret;
+}
+
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QAE@ABN0@Z */
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QEAA@AEBN0@Z */
 /* ??0?$_Complex_base@OU_C_ldouble_complex@@@std@@QAE@ABO0@Z */
@@ -1799,4 +1808,15 @@ double __cdecl complex_double__Fabs(const complex_double *c, int *scale)
 double __cdecl complex_double_abs(const complex_double *c)
 {
     return hypot(c->real, c->imag);
+}
+
+/* ??$conj@N@std@@YA?AV?$complex@N@0@ABV10@@Z */
+/* ??$conj@N@std@@YA?AV?$complex@N@0@AEBV10@@Z */
+/* ??$conj@O@std@@YA?AV?$complex@O@0@ABV10@@Z */
+/* ??$conj@O@std@@YA?AV?$complex@O@0@AEBV10@@Z */
+complex_double* __cdecl complex_double_conj(complex_double *ret, const complex_double *c)
+{
+    ret->real = c->real;
+    ret->imag = -c->imag;
+    return ret;
 }
