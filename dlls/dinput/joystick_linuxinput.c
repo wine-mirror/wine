@@ -314,7 +314,7 @@ static void find_joydevs(void)
             continue;
         }
         joydevs = new_joydevs;
-        memcpy(joydevs + have_joydevs, &joydev, sizeof(joydev));
+        joydevs[have_joydevs] = joydev;
         have_joydevs++;
 
         close(fd);
