@@ -3529,8 +3529,6 @@ static void test_FileProtocol(void)
 
     GetTempPathA(MAX_PATH, file_path);
     strcat(file_path, test_file);
-    GetLongPathNameA(file_path, file_path, sizeof(file_path));
-    strcat(file_url, file_path);
 
     webbrowser = create_webbrowser();
     if(!webbrowser)
@@ -3545,6 +3543,9 @@ static void test_FileProtocol(void)
         return;
     }
     CloseHandle(file);
+
+    GetLongPathNameA(file_path, file_path, sizeof(file_path));
+    strcat(file_url, file_path);
 
     test_ConnectionPoint(webbrowser, TRUE);
     test_ClientSite(webbrowser, &ClientSite, TRUE);
