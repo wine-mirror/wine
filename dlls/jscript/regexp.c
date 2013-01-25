@@ -3708,8 +3708,10 @@ static HRESULT RegExp_exec(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsig
     TRACE("\n");
 
     hres = run_exec(ctx, jsthis, argc ? argv[0] : jsval_string(jsstr_empty()), &string, &match, &parens, &parens_cnt, &b);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        heap_free(parens);
         return hres;
+    }
 
     if(r) {
         if(b) {
@@ -3931,8 +3933,10 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, jsstr_t *str, jsval
         const WCHAR *cp = str->str;
 
         hres = regexp_match_next(ctx, &regexp->dispex, 0, str, &cp, &parens, &parens_size, &parens_cnt, &match);
-        if(FAILED(hres))
+        if(FAILED(hres)) {
+            heap_free(parens);
             return hres;
+        }
 
         if(r) {
             if(hres == S_OK) {
