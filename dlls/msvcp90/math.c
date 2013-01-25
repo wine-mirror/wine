@@ -1427,6 +1427,47 @@ complex_float* __cdecl complex_float_polar(complex_float *ret, const float *mod)
     return ret;
 }
 
+/* ??$pow@M@std@@YA?AV?$complex@M@0@ABV10@0@Z */
+/* ??$pow@M@std@@YA?AV?$complex@M@0@AEBV10@0@Z */
+complex_float* __cdecl complex_float_pow(complex_float *ret, const complex_float *l, const complex_float *r)
+{
+    float abs = complex_float_abs(l), arg = complex_float_arg(l);
+    float rad = pow(abs, r->real), theta = r->real*arg;
+
+    if(r->imag) {
+        rad *= exp(-r->imag * arg);
+        theta += r->imag * log(abs);
+    }
+
+    ret->real = rad * cos(theta);
+    ret->imag = rad * sin(theta);
+    return ret;
+}
+
+/* ??$pow@M@std@@YA?AV?$complex@M@0@ABMABV10@@Z */
+/* ??$pow@M@std@@YA?AV?$complex@M@0@AEBMAEBV10@@Z */
+complex_float* __cdecl complex_float_pow_fc(complex_float *ret, const float *l, const complex_float *r)
+{
+    complex_float c = { *l, 0 };
+    return complex_float_pow(ret, &c, r);
+}
+
+/* ??$pow@M@std@@YA?AV?$complex@M@0@ABV10@ABM@Z */
+/* ??$pow@M@std@@YA?AV?$complex@M@0@AEBV10@AEBM@Z */
+complex_float* __cdecl complex_float_pow_cf(complex_float *ret, const complex_float *l, const float *r)
+{
+    complex_float c = { *r, 0 };
+    return complex_float_pow(ret, l, &c);
+}
+
+/* ??$sqrt@M@std@@YA?AV?$complex@M@0@ABV10@@Z */
+/* ??$sqrt@M@std@@YA?AV?$complex@M@0@AEBV10@@Z */
+complex_float* __cdecl complex_float_sqrt(complex_float *ret, const complex_float *l)
+{
+    complex_float c = { 0.5, 0 };
+    return complex_float_pow(ret, l, &c);
+}
+
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QAE@ABN0@Z */
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QEAA@AEBN0@Z */
 /* ??0?$_Complex_base@OU_C_ldouble_complex@@@std@@QAE@ABO0@Z */
@@ -2072,4 +2113,53 @@ complex_double* __cdecl complex_double_polar(complex_double *ret, const double *
     ret->real = *mod;
     ret->imag = 0;
     return ret;
+}
+
+/* ??$pow@N@std@@YA?AV?$complex@N@0@ABV10@0@Z */
+/* ??$pow@N@std@@YA?AV?$complex@N@0@AEBV10@0@Z */
+/* ??$pow@O@std@@YA?AV?$complex@O@0@ABV10@0@Z */
+/* ??$pow@O@std@@YA?AV?$complex@O@0@AEBV10@0@Z */
+complex_double* __cdecl complex_double_pow(complex_double *ret, const complex_double *l, const complex_double *r)
+{
+    double abs = complex_double_abs(l), arg = complex_double_arg(l);
+    double rad = pow(abs, r->real), theta = r->real*arg;
+
+    if(r->imag) {
+        rad *= exp(-r->imag * arg);
+        theta += r->imag * log(abs);
+    }
+
+    ret->real = rad * cos(theta);
+    ret->imag = rad * sin(theta);
+    return ret;
+}
+
+/* ??$pow@N@std@@YA?AV?$complex@N@0@ABNABV10@@Z */
+/* ??$pow@N@std@@YA?AV?$complex@N@0@AEBNAEBV10@@Z */
+/* ??$pow@O@std@@YA?AV?$complex@O@0@ABOABV10@@Z */
+/* ??$pow@O@std@@YA?AV?$complex@O@0@AEBOAEBV10@@Z */
+complex_double* __cdecl complex_double_pow_dc(complex_double *ret, const double *l, const complex_double *r)
+{
+    complex_double c = { *l, 0 };
+    return complex_double_pow(ret, &c, r);
+}
+
+/* ??$pow@N@std@@YA?AV?$complex@N@0@ABV10@ABN@Z */
+/* ??$pow@N@std@@YA?AV?$complex@N@0@AEBV10@AEBN@Z */
+/* ??$pow@O@std@@YA?AV?$complex@O@0@ABV10@ABO@Z */
+/* ??$pow@O@std@@YA?AV?$complex@O@0@AEBV10@AEBO@Z */
+complex_double* __cdecl complex_double_pow_cd(complex_double *ret, const complex_double *l, const double *r)
+{
+    complex_double c = { *r, 0 };
+    return complex_double_pow(ret, l, &c);
+}
+
+/* ??$sqrt@N@std@@YA?AV?$complex@N@0@ABV10@@Z */
+/* ??$sqrt@N@std@@YA?AV?$complex@N@0@AEBV10@@Z */
+/* ??$sqrt@O@std@@YA?AV?$complex@O@0@ABV10@@Z */
+/* ??$sqrt@O@std@@YA?AV?$complex@O@0@AEBV10@@Z */
+complex_double* __cdecl complex_double_sqrt(complex_double *ret, const complex_double *l)
+{
+    complex_double c = { 0.5, 0 };
+    return complex_double_pow(ret, l, &c);
 }
