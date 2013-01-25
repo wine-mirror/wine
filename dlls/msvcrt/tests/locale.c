@@ -116,12 +116,14 @@ static void test_setlocale(void)
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
         ok(!strcmp(ret, "Chinese (Simplified)_People's Republic of China.936")
+        || !strcmp(ret, "Chinese (Simplified)_China.936")
         || broken(!strcmp(ret, "Chinese_Taiwan.950")), "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "chinese-simplified");
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
         ok(!strcmp(ret, "Chinese (Simplified)_People's Republic of China.936")
+        || !strcmp(ret, "Chinese (Simplified)_China.936")
         || broken(!strcmp(ret, "Chinese_People's Republic of China.936"))
         || broken(!strcmp(ret, "Chinese_Taiwan.950")), "ret = %s\n", ret);
 
@@ -135,6 +137,7 @@ static void test_setlocale(void)
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
         ok(!strcmp(ret, "Chinese (Simplified)_People's Republic of China.936")
+        || !strcmp(ret, "Chinese (Simplified)_China.936")
         || broken(!strcmp(ret, "Chinese_People's Republic of China.936")), "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "cht");
