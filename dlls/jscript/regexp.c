@@ -3464,10 +3464,15 @@ static HRESULT regexp_match(script_ctx_t *ctx, jsdisp_t *dispex, jsstr_t *str, B
             break;
 
         if(ret_size == i) {
-            if(ret)
-                ret = heap_realloc(ret, (ret_size <<= 1) * sizeof(match_result_t));
-            else
+            if(ret) {
+                match_result_t *old_ret = ret;
+
+                ret = heap_realloc(old_ret, (ret_size <<= 1) * sizeof(match_result_t));
+                if(!ret)
+                    heap_free(old_ret);
+            }else {
                 ret = heap_alloc((ret_size=4) * sizeof(match_result_t));
+            }
             if(!ret) {
                 hres = E_OUTOFMEMORY;
                 break;
