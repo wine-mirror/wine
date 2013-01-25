@@ -179,10 +179,10 @@ INT WINAPI MulDiv( INT nMultiplicand, INT nMultiplier, INT nDivisor)
  */
 ULONGLONG WINAPI GetTickCount64(void)
 {
-    LARGE_INTEGER now;
+    LARGE_INTEGER counter, frequency;
 
-    NtQuerySystemTime( &now );
-    return (now.QuadPart - server_start_time) / 10000;
+    NtQueryPerformanceCounter( &counter, &frequency );
+    return counter.QuadPart * 1000 / frequency.QuadPart;
 }
 
 
@@ -199,8 +199,6 @@ ULONGLONG WINAPI GetTickCount64(void)
  *
  * NOTES
  *  The value returned will wrap around every 2^32 milliseconds.
- *  Under Windows, tick 0 is the moment at which the system is rebooted.
- *  Under Wine, tick 0 begins at the moment the wineserver process is started.
  */
 DWORD WINAPI GetTickCount(void)
 {
