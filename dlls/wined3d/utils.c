@@ -1068,10 +1068,10 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
             && format->glFormat != GL_LUMINANCE && format->glFormat != GL_LUMINANCE_ALPHA
             && (format->red_size || format->alpha_size))
     {
-        GLuint rb, tex2;
         DWORD readback[16 * 16], color, r_range, a_range;
         BYTE r, a;
         BOOL match = TRUE;
+        GLuint rb;
 
         if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT]
                 || gl_info->supported[EXT_PACKED_DEPTH_STENCIL])
@@ -1125,10 +1125,7 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
             gl_info->gl_ops.gl.p_glEnd();
 
             gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
-            gl_info->gl_ops.gl.p_glGenTextures(1, &tex2);
-            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, tex2);
 
-            gl_info->gl_ops.gl.p_glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 0, 0, 16, 16, 0);
             gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, readback);
             checkGLcall("Post-pixelshader blending check");
 
@@ -1154,9 +1151,6 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
                 TRACE("Color output: %#x\n", color);
                 format->flags |= WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING;
             }
-
-            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, tex);
-            gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex2);
         }
 
         if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT]
