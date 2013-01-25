@@ -319,14 +319,14 @@ static void test_max_conns(void)
     res = InternetQueryOptionA(NULL, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &val, &len);
     ok(res,"Got wrong return value %x\n", res);
     ok(len == sizeof(val), "got %d\n", len);
-    ok(val == 2, "got %d\n", val);
+    trace("INTERNET_OPTION_MAX_CONNS_PER_SERVER: %d\n", val);
 
     len = sizeof(val);
     val = 0xdeadbeef;
     res = InternetQueryOptionA(NULL, INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER, &val, &len);
     ok(res,"Got wrong return value %x\n", res);
     ok(len == sizeof(val), "got %d\n", len);
-    ok(val == 4, "got %d\n", val);
+    trace("INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER: %d\n", val);
 
     val = 3;
     res = InternetSetOptionA(NULL, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &val, sizeof(val));
