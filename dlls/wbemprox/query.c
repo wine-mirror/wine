@@ -650,7 +650,7 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
     LONGLONG val;
 
     if (is_system_prop( name )) return get_system_propval( view, index, name, ret, type, flavor );
-    if (!view->result || !is_selected_prop( view, name )) return WBEM_E_NOT_FOUND;
+    if (!view->count || !is_selected_prop( view, name )) return WBEM_E_NOT_FOUND;
 
     hr = get_column_index( view->table, name, &column );
     if (hr != S_OK || is_method( view->table, column )) return WBEM_E_NOT_FOUND;
