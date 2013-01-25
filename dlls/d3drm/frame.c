@@ -1260,7 +1260,7 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_AddMoveCallback2(IDirect3DRMFrame2* 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetBox(IDirect3DRMFrame2* iface, LPD3DRMBOX box)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_GetBox(IDirect3DRMFrame2 *iface, D3DRMBOX *box)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
@@ -1307,8 +1307,7 @@ static BOOL WINAPI IDirect3DRMFrame2Impl_GetInheritAxes(IDirect3DRMFrame2* iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame2Impl_GetHierarchyBox(IDirect3DRMFrame2* iface,
-                                                            LPD3DRMBOX box)
+static HRESULT WINAPI IDirect3DRMFrame2Impl_GetHierarchyBox(IDirect3DRMFrame2 *iface, D3DRMBOX *box)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
@@ -2336,7 +2335,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_Transform(IDirect3DRMFrame3* iface, 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetBox(IDirect3DRMFrame3* iface, LPD3DRMBOX box)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_GetBox(IDirect3DRMFrame3 *iface, D3DRMBOX *box)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
 
@@ -2382,8 +2381,7 @@ static BOOL WINAPI IDirect3DRMFrame3Impl_GetInheritAxes(IDirect3DRMFrame3* iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetHierarchyBox(IDirect3DRMFrame3* iface,
-                                                            LPD3DRMBOX box)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_GetHierarchyBox(IDirect3DRMFrame3* iface, D3DRMBOX *box)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
 
@@ -2392,7 +2390,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_GetHierarchyBox(IDirect3DRMFrame3* i
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetBox(IDirect3DRMFrame3* iface, LPD3DRMBOX box)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_SetBox(IDirect3DRMFrame3 *iface, D3DRMBOX *box)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
 
