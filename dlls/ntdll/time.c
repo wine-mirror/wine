@@ -85,8 +85,6 @@ static RTL_CRITICAL_SECTION TIME_tz_section = { &critsect_debug, -1, 0, 0, 0, 0 
 /* 1601 to 1980 is 379 years plus 91 leap days */
 #define SECS_1601_TO_1980  ((379 * 365 + 91) * (ULONGLONG)SECSPERDAY)
 #define TICKS_1601_TO_1980 (SECS_1601_TO_1980 * TICKSPERSEC)
-/* max ticks that can be represented as Unix time */
-#define TICKS_1601_TO_UNIX_MAX ((SECS_1601_TO_1970 + INT_MAX) * TICKSPERSEC)
 
 
 static const int MonthLengths[2][MONSPERYEAR] =
@@ -98,6 +96,25 @@ static const int MonthLengths[2][MONSPERYEAR] =
 static inline int IsLeapYear(int Year)
 {
 	return Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0) ? 1 : 0;
+}
+
+/* return a monotonic time counter, in Win32 ticks */
+static ULONGLONG monotonic_counter(void)
+{
+    struct timeval now;
+
+#ifdef HAVE_CLOCK_GETTIME
+    struct timespec ts;
+#ifdef CLOCK_MONOTONIC_RAW
+    if (!clock_gettime( CLOCK_MONOTONIC_RAW, &ts ))
+        return ts.tv_sec * (ULONGLONG)TICKSPERSEC + ts.tv_nsec / 100;
+#endif
+    if (!clock_gettime( CLOCK_MONOTONIC, &ts ))
+        return ts.tv_sec * (ULONGLONG)TICKSPERSEC + ts.tv_nsec / 100;
+#endif
+
+    gettimeofday( &now, 0 );
+    return now.tv_sec * (ULONGLONG)TICKSPERSEC + now.tv_usec * 10 + TICKS_1601_TO_1970 - server_start_time;
 }
 
 /******************************************************************************
@@ -450,24 +467,13 @@ NTSTATUS WINAPI NtQuerySystemTime( PLARGE_INTEGER Time )
 
 /******************************************************************************
  *  NtQueryPerformanceCounter	[NTDLL.@]
- *
- *  Note: Windows uses a timer clocked at a multiple of 1193182 Hz. There is a
- *  good number of applications that crash when the returned frequency is either
- *  lower or higher than what Windows gives. Also too high counter values are
- *  reported to give problems.
  */
-NTSTATUS WINAPI NtQueryPerformanceCounter( PLARGE_INTEGER Counter, PLARGE_INTEGER Frequency )
+NTSTATUS WINAPI NtQueryPerformanceCounter( LARGE_INTEGER *counter, LARGE_INTEGER *frequency )
 {
-    LARGE_INTEGER now;
+    if (!counter) return STATUS_ACCESS_VIOLATION;
 
-    if (!Counter) return STATUS_ACCESS_VIOLATION;
-
-    /* convert a counter that increments at a rate of 10 MHz
-     * to one of 1.193182 MHz, with some care for arithmetic
-     * overflow and good accuracy (21/176 = 0.11931818) */
-    NtQuerySystemTime( &now );
-    Counter->QuadPart = ((now.QuadPart - server_start_time) * 21) / 176;
-    if (Frequency) Frequency->QuadPart = 1193182;
+    counter->QuadPart = monotonic_counter();
+    if (frequency) frequency->QuadPart = TICKSPERSEC;
     return STATUS_SUCCESS;
 }
 

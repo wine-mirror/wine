@@ -2080,6 +2080,13 @@ AC_CHECK_FUNCS(\
 	socketpair \
 )
 
+dnl Check for clock_gettime which may be in -lrt
+ac_save_LIBS=$LIBS
+AC_SEARCH_LIBS(clock_gettime, rt,
+               [AC_DEFINE(HAVE_CLOCK_GETTIME, 1, [Define to 1 if you have the `clock_gettime' function.])
+                test "$ac_res" = "none required" || AC_SUBST(LIBRT,"$ac_res")])
+LIBS=$ac_save_LIBS
+
 dnl **** Check for OpenLDAP ***
 AC_SUBST(LDAPLIBS,"")
 if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"

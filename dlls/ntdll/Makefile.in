@@ -2,7 +2,7 @@ EXTRADEFS = -D_NTSYSTEM_
 MODULE    = ntdll.dll
 IMPORTLIB = ntdll
 IMPORTS   = winecrt0
-EXTRALIBS = @IOKITLIB@ @LIBPTHREAD@
+EXTRALIBS = @IOKITLIB@ @LIBRT@ @LIBPTHREAD@
 EXTRADLLFLAGS = -nodefaultlibs -Wl,--image-base,0x7bc00000
 
 C_SRCS = \
