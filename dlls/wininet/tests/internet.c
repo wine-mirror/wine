@@ -436,7 +436,7 @@ static void test_complicated_cookie(void)
   memset(wbuf, 0xac, sizeof(wbuf));
   ret = InternetGetCookieW(testing_example_comW, NULL, wbuf, &len);
   ok(ret == TRUE,"InternetGetCookieW failed\n");
-  ok(len == 19, "len = %u\n", len);
+  ok(len == 19 || broken(len==18), "len = %u\n", len);
   ok(lstrlenW(wbuf) == 18, "strlenW(wbuf) = %u\n", lstrlenW(wbuf));
 
   len = 10;
