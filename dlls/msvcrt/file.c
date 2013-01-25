@@ -1312,6 +1312,9 @@ static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* st
     case 'n':
       *stream_flags &= ~MSVCRT__IOCOMMIT;
       break;
+    case 'N':
+      *open_flags |= MSVCRT__O_NOINHERIT;
+      break;
     case '+':
     case ' ':
     case 'a':
