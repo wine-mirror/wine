@@ -322,7 +322,7 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
 ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
                                   BOOL keepFirstParaFormat)
 {
-  ME_DisplayItem *pNext, *pFirstRunInNext, *pRun, *pTmp;
+  ME_DisplayItem *pNext, *pFirstRunInNext, *pRun, *pTmp, *pCell = NULL;
   int i, shift;
   ME_UndoItem *undo = NULL;
   int end_len;
@@ -353,20 +353,6 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
   ME_PrevRun(&startCur.pPara, &startCur.pRun);
   ME_SetCharFormat(editor, &startCur, &endCur, &fmt);
 
-  undo = ME_AddUndoItem(editor, diUndoSplitParagraph, pNext);
-  if (undo)
-  {
-    undo->nStart = pNext->member.para.nCharOfs - end_len;
-    undo->eol_str = pRun->member.run.strText;
-    pRun->member.run.strText = NULL; /* Avoid freeing the string */
-  }
-  if (!keepFirstParaFormat)
-  {
-    ME_AddUndoItem(editor, diUndoSetParagraphFormat, tp);
-    *tp->member.para.pFmt = *pNext->member.para.pFmt;
-    tp->member.para.border = pNext->member.para.border;
-  }
-
   if (!editor->bEmulateVersion10) { /* v4.1 */
     /* Table cell/row properties are always moved over from the removed para. */
     tp->member.para.nFlags = pNext->member.para.nFlags;
@@ -374,33 +360,52 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
 
     /* Remove cell boundary if it is between the end paragraph run and the next
      * paragraph display item. */
-    pTmp = pRun->next;
-    while (pTmp != pNext) {
+    for (pTmp = pRun->next; pTmp != pNext; pTmp = pTmp->next)
+    {
       if (pTmp->type == diCell)
       {
-        ME_Cell *pCell = &pTmp->member.cell;
-        if (undo)
-        {
-          assert(!(undo->di.member.para.nFlags & MEPF_ROWEND));
-          if (!(undo->di.member.para.nFlags & MEPF_ROWSTART))
-            undo->di.member.para.nFlags |= MEPF_CELL;
-          undo->di.member.para.pCell = ALLOC_OBJ(ME_DisplayItem);
-          *undo->di.member.para.pCell = *pTmp;
-          undo->di.member.para.pCell->next = NULL;
-          undo->di.member.para.pCell->prev = NULL;
-          undo->di.member.para.pCell->member.cell.next_cell = NULL;
-          undo->di.member.para.pCell->member.cell.prev_cell = NULL;
-        }
-        ME_Remove(pTmp);
-        if (pCell->prev_cell)
-          pCell->prev_cell->member.cell.next_cell = pCell->next_cell;
-        if (pCell->next_cell)
-          pCell->next_cell->member.cell.prev_cell = pCell->prev_cell;
-        ME_DestroyDisplayItem(pTmp);
+        pCell = pTmp;
         break;
       }
-      pTmp = pTmp->next;
     }
+  }
+
+  undo = ME_AddUndoItem(editor, diUndoSplitParagraph, pNext);
+  if (undo)
+  {
+    undo->nStart = pNext->member.para.nCharOfs - end_len;
+    undo->eol_str = pRun->member.run.strText;
+    pRun->member.run.strText = NULL; /* Avoid freeing the string */
+
+    if (pCell)
+    {
+      assert(!(undo->di.member.para.nFlags & MEPF_ROWEND));
+      if (!(undo->di.member.para.nFlags & MEPF_ROWSTART))
+        undo->di.member.para.nFlags |= MEPF_CELL;
+      undo->di.member.para.pCell = ALLOC_OBJ(ME_DisplayItem);
+      *undo->di.member.para.pCell = *pCell;
+      undo->di.member.para.pCell->next = NULL;
+      undo->di.member.para.pCell->prev = NULL;
+      undo->di.member.para.pCell->member.cell.next_cell = NULL;
+      undo->di.member.para.pCell->member.cell.prev_cell = NULL;
+    }
+  }
+
+  if (pCell)
+  {
+    ME_Remove( pCell );
+    if (pCell->member.cell.prev_cell)
+      pCell->member.cell.prev_cell->member.cell.next_cell = pCell->member.cell.next_cell;
+    if (pCell->member.cell.next_cell)
+      pCell->member.cell.next_cell->member.cell.prev_cell = pCell->member.cell.prev_cell;
+    ME_DestroyDisplayItem( pCell );
+  }
+
+  if (!keepFirstParaFormat)
+  {
+    ME_AddUndoItem(editor, diUndoSetParagraphFormat, tp);
+    *tp->member.para.pFmt = *pNext->member.para.pFmt;
+    tp->member.para.border = pNext->member.para.border;
   }
 
   shift = pNext->member.para.nCharOfs - tp->member.para.nCharOfs - end_len;
