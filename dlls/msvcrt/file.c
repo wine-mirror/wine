@@ -1317,6 +1317,10 @@ static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* st
     case 'a':
     case 'w':
       break;
+    case 'S':
+    case 'R':
+      FIXME("ignoring cache optimization flag: %c\n", mode[-1]);
+      break;
     default:
       MSVCRT_INVALID_PMT(0, MSVCRT_EINVAL);
       return -1;
