@@ -1935,7 +1935,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
             if ((dwFlags & SSA_LINK) && !analysis->glyphs[i].fallbackFont && analysis->pItem[i].a.eScript == Script_Hangul)
                 analysis->pItem[i].a.fNoGlyphIndex = TRUE;
 
-            if ((dwFlags & SSA_LINK) && !analysis->glyphs[i].fallbackFont && !scriptInformation[analysis->pItem[i].a.eScript].props.fComplex)
+            if ((dwFlags & SSA_LINK) && !analysis->glyphs[i].fallbackFont && !scriptInformation[analysis->pItem[i].a.eScript].props.fComplex && !analysis->pItem[i].a.fRTL)
                 analysis->pItem[i].a.fNoGlyphIndex = TRUE;
 
             hr = ScriptShape(hdc, sc, &pStr[analysis->pItem[i].iCharPos],
