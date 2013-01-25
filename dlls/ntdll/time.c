@@ -492,10 +492,7 @@ NTSTATUS WINAPI NtQueryPerformanceCounter( LARGE_INTEGER *counter, LARGE_INTEGER
  */
 ULONG WINAPI NtGetTickCount(void)
 {
-    LARGE_INTEGER now;
-
-    NtQuerySystemTime( &now );
-    return (now.QuadPart - server_start_time) / 10000;
+    return monotonic_counter() / TICKSPERMSEC;
 }
 
 /* calculate the mday of dst change date, so that for instance Sun 5 Oct 2007
