@@ -32,7 +32,6 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
-WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 static const char * const shader_opcode_names[] =
 {
@@ -1554,21 +1553,9 @@ static void shader_none_get_caps(const struct wined3d_gl_info *gl_info, struct s
 
 static BOOL shader_none_color_fixup_supported(struct color_fixup_desc fixup)
 {
-    if (TRACE_ON(d3d_shader) && TRACE_ON(d3d))
-    {
-        TRACE("Checking support for fixup:\n");
-        dump_color_fixup_desc(fixup);
-    }
-
-    /* Faked to make some apps happy. */
-    if (!is_complex_fixup(fixup))
-    {
-        TRACE("[OK]\n");
-        return TRUE;
-    }
-
-    TRACE("[FAILED]\n");
-    return FALSE;
+    /* We "support" every possible fixup, since we don't support any shader
+     * model, and will never have to actually sample a texture. */
+    return TRUE;
 }
 
 static BOOL shader_none_has_ffp_proj_control(void *shader_priv)
