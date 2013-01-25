@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <float.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 #include "msvcp90.h"
@@ -1372,6 +1373,35 @@ complex_float* __cdecl complex_float_tanh(complex_float *ret, const complex_floa
     return ret;
 }
 
+/* ??$exp@M@std@@YA?AV?$complex@M@0@ABV10@@Z */
+/* ??$exp@M@std@@YA?AV?$complex@M@0@AEBV10@@Z */
+complex_float* __cdecl complex_float_exp(complex_float *ret, const complex_float *c)
+{
+    ret->real = ret->imag = exp(c->real);
+    ret->real *= cos(c->imag);
+    ret->imag *= sin(c->imag);
+    return ret;
+}
+
+/* ??$log@M@std@@YA?AV?$complex@M@0@ABV10@@Z */
+/* ??$log@M@std@@YA?AV?$complex@M@0@AEBV10@@Z */
+complex_float* __cdecl complex_float_log(complex_float *ret, const complex_float *c)
+{
+    ret->real = log(complex_float_abs(c));
+    ret->imag = complex_float_arg(c);
+    return ret;
+}
+
+/* ??$log10@M@std@@YA?AV?$complex@M@0@ABV10@@Z */
+/* ??$log10@M@std@@YA?AV?$complex@M@0@AEBV10@@Z */
+complex_float* __cdecl complex_float_log10(complex_float *ret, const complex_float *c)
+{
+    complex_float_log(ret, c);
+    ret->real *= M_LOG10E;
+    ret->imag *= M_LOG10E;
+    return ret;
+}
+
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QAE@ABN0@Z */
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QEAA@AEBN0@Z */
 /* ??0?$_Complex_base@OU_C_ldouble_complex@@@std@@QAE@ABO0@Z */
@@ -1950,5 +1980,40 @@ complex_double* __cdecl complex_double_tanh(complex_double *ret, const complex_d
     complex_double_tan(&tmp, ret);
     ret->real = tmp.imag;
     ret->imag = -tmp.real;
+    return ret;
+}
+
+/* ??$exp@N@std@@YA?AV?$complex@N@0@ABV10@@Z */
+/* ??$exp@N@std@@YA?AV?$complex@N@0@AEBV10@@Z */
+/* ??$exp@O@std@@YA?AV?$complex@O@0@ABV10@@Z */
+/* ??$exp@O@std@@YA?AV?$complex@O@0@AEBV10@@Z */
+complex_double* __cdecl complex_double_exp(complex_double *ret, const complex_double *c)
+{
+    ret->real = ret->imag = exp(c->real);
+    ret->real *= cos(c->imag);
+    ret->imag *= sin(c->imag);
+    return ret;
+}
+
+/* ??$log@N@std@@YA?AV?$complex@N@0@ABV10@@Z */
+/* ??$log@N@std@@YA?AV?$complex@N@0@AEBV10@@Z */
+/* ??$log@O@std@@YA?AV?$complex@O@0@ABV10@@Z */
+/* ??$log@O@std@@YA?AV?$complex@O@0@AEBV10@@Z */
+complex_double* __cdecl complex_double_log(complex_double *ret, const complex_double *c)
+{
+    ret->real = log(complex_double_abs(c));
+    ret->imag = complex_double_arg(c);
+    return ret;
+}
+
+/* ??$log10@N@std@@YA?AV?$complex@N@0@ABV10@@Z */
+/* ??$log10@N@std@@YA?AV?$complex@N@0@AEBV10@@Z */
+/* ??$log10@O@std@@YA?AV?$complex@O@0@ABV10@@Z */
+/* ??$log10@O@std@@YA?AV?$complex@O@0@AEBV10@@Z */
+complex_double* __cdecl complex_double_log10(complex_double *ret, const complex_double *c)
+{
+    complex_double_log(ret, c);
+    ret->real *= M_LOG10E;
+    ret->imag *= M_LOG10E;
     return ret;
 }
