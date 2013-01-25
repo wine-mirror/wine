@@ -6184,9 +6184,9 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
         shader_model = 2;
     TRACE("Shader model %u.\n", shader_model);
 
-    caps->vs_version = shader_model;
-    caps->gs_version = shader_model;
-    caps->ps_version = shader_model;
+    caps->vs_version = min(wined3d_settings.max_sm_vs, shader_model);
+    caps->gs_version = min(wined3d_settings.max_sm_gs, shader_model);
+    caps->ps_version = min(wined3d_settings.max_sm_ps, shader_model);
 
     caps->vs_uniform_count = gl_info->limits.glsl_vs_float_constants;
     caps->ps_uniform_count = gl_info->limits.glsl_ps_float_constants;

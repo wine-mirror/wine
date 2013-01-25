@@ -4989,6 +4989,7 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
     if (gl_info->supported[ARB_VERTEX_PROGRAM])
     {
         DWORD vs_consts;
+        UINT vs_version;
 
         /* 96 is the minimum allowed value of MAX_PROGRAM_ENV_PARAMETERS_ARB
          * for vertex programs. If the native limit is less than that it's
@@ -5001,20 +5002,21 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
 
         if (gl_info->supported[NV_VERTEX_PROGRAM3])
         {
-            caps->vs_version = 3;
+            vs_version = 3;
             TRACE("Hardware vertex shader version 3.0 enabled (NV_VERTEX_PROGRAM3)\n");
         }
         else if (vs_consts >= 256)
         {
             /* Shader Model 2.0 requires at least 256 vertex shader constants */
-            caps->vs_version = 2;
+            vs_version = 2;
             TRACE("Hardware vertex shader version 2.0 enabled (ARB_PROGRAM)\n");
         }
         else
         {
-            caps->vs_version = 1;
+            vs_version = 1;
             TRACE("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
         }
+        caps->vs_version = min(wined3d_settings.max_sm_vs, vs_version);
         caps->vs_uniform_count = vs_consts;
     }
     else
@@ -5028,6 +5030,7 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
     if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
     {
         DWORD ps_consts;
+        UINT ps_version;
 
         /* Similar as above for vertex programs, but the minimum for fragment
          * programs is 24. */
@@ -5038,20 +5041,21 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
 
         if (gl_info->supported[NV_FRAGMENT_PROGRAM2])
         {
-            caps->ps_version = 3;
+            ps_version = 3;
             TRACE("Hardware pixel shader version 3.0 enabled (NV_FRAGMENT_PROGRAM2)\n");
         }
         else if (ps_consts >= 32)
         {
             /* Shader Model 2.0 requires at least 32 pixel shader constants */
-            caps->ps_version = 2;
+            ps_version = 2;
             TRACE("Hardware pixel shader version 2.0 enabled (ARB_PROGRAM)\n");
         }
         else
         {
-            caps->ps_version = 1;
+            ps_version = 1;
             TRACE("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
         }
+        caps->ps_version = min(wined3d_settings.max_sm_ps, ps_version);
         caps->ps_uniform_count = ps_consts;
         caps->ps_1x_max_value = 8.0f;
     }

@@ -2267,8 +2267,6 @@ static const struct wined3d_shader_backend_ops *select_shader_backend(const stru
 {
     BOOL glsl = wined3d_settings.glslRequested && gl_info->glsl_version >= MAKEDWORD_VERSION(1, 20);
 
-    if (wined3d_settings.vs_mode == VS_NONE && wined3d_settings.ps_mode == PS_NONE)
-        return &none_shader_backend;
     if (glsl && gl_info->supported[ARB_FRAGMENT_SHADER])
         return &glsl_shader_backend;
     if (glsl && gl_info->supported[ARB_VERTEX_SHADER])

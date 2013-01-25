@@ -237,18 +237,6 @@ static inline float float_24_to_32(DWORD in)
     }
 }
 
-/**
- * Settings
- */
-#define VS_NONE    0
-#define VS_HW      1
-
-#define PS_NONE    0
-#define PS_HW      1
-
-#define VBO_NONE   0
-#define VBO_HW     1
-
 #define ORM_BACKBUFFER  0
 #define ORM_FBO         1
 
@@ -262,9 +250,6 @@ static inline float float_24_to_32(DWORD in)
  * values in wined3d_main.c as well. */
 struct wined3d_settings
 {
-    /* vertex and pixel shader modes */
-    int vs_mode;
-    int ps_mode;
     /* Ideally, we don't want the user to have to request GLSL. If the
      * hardware supports GLSL, we should use it. However, until it's fully
      * implemented, we'll leave it as a registry setting for developers. */
@@ -279,6 +264,9 @@ struct wined3d_settings
     int allow_multisampling;
     BOOL strict_draw_ordering;
     BOOL always_offscreen;
+    unsigned int max_sm_vs;
+    unsigned int max_sm_gs;
+    unsigned int max_sm_ps;
 };
 
 extern struct wined3d_settings wined3d_settings DECLSPEC_HIDDEN;
