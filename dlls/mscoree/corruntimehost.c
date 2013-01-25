@@ -988,7 +988,7 @@ static void FixupVTableEntry(HMODULE hmodule, VTableFixup *vtable_fixup)
         memcpy(tokens, vtable, sizeof(*tokens) * vtable_fixup->count);
         for (i=0; i<vtable_fixup->count; i++)
         {
-            memcpy(&thunks[i], &thunk_template, sizeof(thunk_template));
+            thunks[i] = thunk_template;
             thunks[i].fixup = fixup;
             thunks[i].function = ReallyFixupVTable;
             thunks[i].vtable_entry = &vtable[i];
