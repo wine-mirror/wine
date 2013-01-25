@@ -546,8 +546,11 @@ static HRESULT WINAPI class_object_GetPropertyQualifierSet(
     LPCWSTR wszProperty,
     IWbemQualifierSet **ppQualSet )
 {
-    FIXME("%p, %s, %p\n", iface, debugstr_w(wszProperty), ppQualSet);
-    return WbemQualifierSet_create( NULL, (void **)ppQualSet );
+    struct class_object *co = impl_from_IWbemClassObject( iface );
+
+    TRACE("%p, %s, %p\n", iface, debugstr_w(wszProperty), ppQualSet);
+
+    return WbemQualifierSet_create( NULL, co->name, wszProperty, (void **)ppQualSet );
 }
 
 static HRESULT WINAPI class_object_Clone(

@@ -229,11 +229,17 @@ static void test_Win32_Process( IWbemServices *services )
     static const WCHAR userW[] = {'U','s','e','r',0};
     static const WCHAR domainW[] = {'D','o','m','a','i','n',0};
     static const WCHAR processW[] = {'W','i','n','3','2','_','P','r','o','c','e','s','s',0};
+    static const WCHAR idW[] = {'I','D',0};
     static const WCHAR fmtW[] = {'W','i','n','3','2','_','P','r','o','c','e','s','s','.',
         'H','a','n','d','l','e','=','"','%','u','"',0};
+    static const LONG expected_flavor = WBEM_FLAVOR_FLAG_PROPAGATE_TO_INSTANCE |
+                                        WBEM_FLAVOR_NOT_OVERRIDABLE |
+                                        WBEM_FLAVOR_ORIGIN_PROPAGATED;
     BSTR class, method;
     IWbemClassObject *process, *out;
-    VARIANT user, domain, retval;
+    IWbemQualifierSet *qualifiers;
+    VARIANT user, domain, retval, val;
+    LONG flavor;
     CIMTYPE type;
     HRESULT hr;
 
@@ -281,6 +287,41 @@ static void test_Win32_Process( IWbemServices *services )
     ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
     trace("%s\n", wine_dbgstr_w(V_BSTR(&domain)));
 
+    hr = IWbemClassObject_GetPropertyQualifierSet( out, userW, &qualifiers );
+    ok( hr == S_OK, "failed to get qualifier set %08x\n", hr );
+
+    flavor = -1;
+    V_I4(&val) = -1;
+    V_VT(&val) = VT_ERROR;
+    hr = IWbemQualifierSet_Get( qualifiers, idW, 0, &val, &flavor );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( flavor == expected_flavor, "got %d\n", flavor );
+    ok( V_VT(&val) == VT_I4, "got %u\n", V_VT(&val) );
+    ok( V_I4(&val) == 0, "got %u\n", V_I4(&val) );
+    VariantClear( &val );
+
+    IWbemQualifierSet_Release( qualifiers );
+    hr = IWbemClassObject_GetPropertyQualifierSet( out, domainW, &qualifiers );
+    ok( hr == S_OK, "failed to get qualifier set %08x\n", hr );
+
+    flavor = -1;
+    V_I4(&val) = -1;
+    V_VT(&val) = VT_ERROR;
+    hr = IWbemQualifierSet_Get( qualifiers, idW, 0, &val, &flavor );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( flavor == expected_flavor, "got %d\n", flavor );
+    ok( V_VT(&val) == VT_I4, "got %u\n", V_VT(&val) );
+    ok( V_I4(&val) == 1, "got %u\n", V_I4(&val) );
+    VariantClear( &val );
+
+    IWbemQualifierSet_Release( qualifiers );
+    hr = IWbemClassObject_GetPropertyQualifierSet( out, returnvalueW, &qualifiers );
+    ok( hr == S_OK, "failed to get qualifier set %08x\n", hr );
+
+    hr = IWbemQualifierSet_Get( qualifiers, idW, 0, &val, &flavor );
+    ok( hr == WBEM_E_NOT_FOUND, "got %08x\n", hr );
+
+    IWbemQualifierSet_Release( qualifiers );
     VariantClear( &user );
     VariantClear( &domain );
     IWbemClassObject_Release( out );

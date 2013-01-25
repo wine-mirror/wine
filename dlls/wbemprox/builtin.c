@@ -61,6 +61,11 @@ static const WCHAR class_osW[] =
     {'W','i','n','3','2','_','O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
 static const WCHAR class_paramsW[] =
     {'_','_','P','A','R','A','M','E','T','E','R','S',0};
+static const WCHAR class_qualifiersW[] =
+    {'_','_','Q','U','A','L','I','F','I','E','R','S',0};
+static const WCHAR class_process_getowner_outW[] =
+    {'_','_','W','I','N','3','2','_','P','R','O','C','E','S','S','_','G','E','T','O','W',
+     'N','E','R','_','O','U','T',0};
 static const WCHAR class_processorW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR class_sounddeviceW[] =
@@ -110,12 +115,18 @@ static const WCHAR prop_drivetypeW[] =
     {'D','r','i','v','e','T','y','p','e',0};
 static const WCHAR prop_filesystemW[] =
     {'F','i','l','e','S','y','s','t','e','m',0};
+static const WCHAR prop_flavorW[] =
+    {'F','l','a','v','o','r',0};
 static const WCHAR prop_freespaceW[] =
     {'F','r','e','e','S','p','a','c','e',0};
 static const WCHAR prop_handleW[] =
     {'H','a','n','d','l','e',0};
+static const WCHAR prop_idW[] =
+    {'I','D',0};
 static const WCHAR prop_interfaceindexW[] =
     {'I','n','t','e','r','f','a','c','e','I','n','d','e','x',0};
+static const WCHAR prop_intvalueW[] =
+    {'I','n','t','e','g','e','r','V','a','l','u','e',0};
 static const WCHAR prop_lastbootuptimeW[] =
     {'L','a','s','t','B','o','o','t','U','p','T','i','m','e',0};
 static const WCHAR prop_macaddressW[] =
@@ -124,6 +135,8 @@ static const WCHAR prop_manufacturerW[] =
     {'M','a','n','u','f','a','c','t','u','r','e','r',0};
 static const WCHAR prop_maxclockspeedW[] =
     {'M','a','x','C','l','o','c','k','S','p','e','e','d',0};
+static const WCHAR prop_memberW[] =
+    {'M','e','m','b','e','r',0};
 static const WCHAR prop_methodW[] =
     {'M','e','t','h','o','d',0};
 static const WCHAR prop_modelW[] =
@@ -164,6 +177,8 @@ static const WCHAR prop_speedW[] =
     {'S','p','e','e','d',0};
 static const WCHAR prop_stateW[] =
     {'S','t','a','t','e',0};
+static const WCHAR prop_strvalueW[] =
+    {'S','t','r','i','n','g','V','a','l','u','e',0};
 static const WCHAR prop_systemdirectoryW[] =
     {'S','y','s','t','e','m','D','i','r','e','c','t','o','r','y',0};
 static const WCHAR prop_systemnameW[] =
@@ -249,7 +264,7 @@ static const struct column col_os[] =
     { prop_oslanguageW,      CIM_UINT32, VT_I4 },
     { prop_systemdirectoryW, CIM_STRING|COL_FLAG_DYNAMIC }
 };
-static const struct column col_params[] =
+static const struct column col_param[] =
 {
     { prop_classW,        CIM_STRING },
     { prop_methodW,       CIM_STRING },
@@ -281,6 +296,16 @@ static const struct column col_processor[] =
     { prop_numlogicalprocessorsW, CIM_UINT32, VT_I4 },
     { prop_processoridW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_uniqueidW,             CIM_STRING }
+};
+static const struct column col_qualifier[] =
+{
+    { prop_classW,    CIM_STRING },
+    { prop_memberW,   CIM_STRING },
+    { prop_typeW,     CIM_UINT32 },
+    { prop_flavorW,   CIM_SINT32 },
+    { prop_nameW,     CIM_STRING },
+    { prop_intvalueW, CIM_SINT32 },
+    { prop_strvalueW, CIM_STRING }
 };
 static const struct column col_service[] =
 {
@@ -436,7 +461,7 @@ struct record_operatingsystem
     UINT32       oslanguage;
     const WCHAR *systemdirectory;
 };
-struct record_params
+struct record_param
 {
     const WCHAR *class;
     const WCHAR *method;
@@ -468,6 +493,16 @@ struct record_processor
     UINT32       num_logical_processors;
     const WCHAR *processor_id;
     const WCHAR *unique_id;
+};
+struct record_qualifier
+{
+    const WCHAR *class;
+    const WCHAR *member;
+    UINT32       type;
+    INT32        flavor;
+    const WCHAR *name;
+    INT32        intvalue;
+    const WCHAR *strvalue;
 };
 struct record_service
 {
@@ -524,7 +559,7 @@ static const struct record_diskdrive data_diskdrive[] =
 {
     { diskdrive_deviceidW, diskdrive_manufacturerW, diskdrive_modelW }
 };
-static const struct record_params data_params[] =
+static const struct record_param data_param[] =
 {
     { class_processW, method_getownerW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
     { class_processW, method_getownerW, -1, param_userW, CIM_STRING },
@@ -547,6 +582,15 @@ static const struct record_params data_params[] =
     { class_stdregprovW, method_getstringvalueW, 1, param_valuenameW, CIM_STRING },
     { class_stdregprovW, method_getstringvalueW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
     { class_stdregprovW, method_getstringvalueW, -1, param_valueW, CIM_STRING }
+};
+
+#define FLAVOR_ID (WBEM_FLAVOR_FLAG_PROPAGATE_TO_INSTANCE | WBEM_FLAVOR_NOT_OVERRIDABLE |\
+                   WBEM_FLAVOR_ORIGIN_PROPAGATED)
+
+static const struct record_qualifier data_qualifier[] =
+{
+    { class_process_getowner_outW, param_userW, CIM_SINT32, FLAVOR_ID, prop_idW, 0 },
+    { class_process_getowner_outW, param_domainW, CIM_SINT32, FLAVOR_ID, prop_idW, 1 }
 };
 static const struct record_sounddevice data_sounddevice[] =
 {
@@ -1209,9 +1253,10 @@ static struct table builtin_classes[] =
     { class_logicaldiskW, SIZEOF(col_logicaldisk), col_logicaldisk, 0, NULL, fill_logicaldisk },
     { class_networkadapterW, SIZEOF(col_networkadapter), col_networkadapter, 0, NULL, fill_networkadapter },
     { class_osW, SIZEOF(col_os), col_os, 0, NULL, fill_os },
-    { class_paramsW, SIZEOF(col_params), col_params, SIZEOF(data_params), (BYTE *)data_params },
+    { class_paramsW, SIZEOF(col_param), col_param, SIZEOF(data_param), (BYTE *)data_param },
     { class_processW, SIZEOF(col_process), col_process, 0, NULL, fill_process },
     { class_processorW, SIZEOF(col_processor), col_processor, 0, NULL, fill_processor },
+    { class_qualifiersW, SIZEOF(col_qualifier), col_qualifier, SIZEOF(data_qualifier), (BYTE *)data_qualifier },
     { class_serviceW, SIZEOF(col_service), col_service, 0, NULL, fill_service },
     { class_sounddeviceW, SIZEOF(col_sounddevice), col_sounddevice, SIZEOF(data_sounddevice), (BYTE *)data_sounddevice },
     { class_stdregprovW, SIZEOF(col_stdregprov), col_stdregprov, SIZEOF(data_stdregprov), (BYTE *)data_stdregprov },
