@@ -1402,6 +1402,31 @@ complex_float* __cdecl complex_float_log10(complex_float *ret, const complex_flo
     return ret;
 }
 
+/* ??$norm@M@std@@YAMABV?$complex@M@0@@Z */
+/* ??$norm@M@std@@YAMAEBV?$complex@M@0@@Z */
+float __cdecl complex_float_norm(const complex_float *c)
+{
+    return c->real*c->real + c->imag*c->imag;
+}
+
+/* ??$polar@M@std@@YA?AV?$complex@M@0@ABM0@Z */
+/* ??$polar@M@std@@YA?AV?$complex@M@0@AEBM0@Z */
+complex_float* __cdecl complex_float_polar_theta(complex_float *ret, const float *mod, const float *theta)
+{
+    ret->real = *mod * cos(*theta);
+    ret->imag = *mod * sin(*theta);
+    return ret;
+}
+
+/* ??$polar@M@std@@YA?AV?$complex@M@0@ABM@Z */
+/* ??$polar@M@std@@YA?AV?$complex@M@0@AEBM@Z */
+complex_float* __cdecl complex_float_polar(complex_float *ret, const float *mod)
+{
+    ret->real = *mod;
+    ret->imag = 0;
+    return ret;
+}
+
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QAE@ABN0@Z */
 /* ??0?$_Complex_base@NU_C_double_complex@@@std@@QEAA@AEBN0@Z */
 /* ??0?$_Complex_base@OU_C_ldouble_complex@@@std@@QAE@ABO0@Z */
@@ -2015,5 +2040,36 @@ complex_double* __cdecl complex_double_log10(complex_double *ret, const complex_
     complex_double_log(ret, c);
     ret->real *= M_LOG10E;
     ret->imag *= M_LOG10E;
+    return ret;
+}
+
+/* ??$norm@N@std@@YANABV?$complex@N@0@@Z */
+/* ??$norm@N@std@@YANAEBV?$complex@N@0@@Z */
+/* ??$norm@O@std@@YAOABV?$complex@O@0@@Z */
+/* ??$norm@O@std@@YAOAEBV?$complex@O@0@@Z */
+double __cdecl complex_double_norm(const complex_double *c)
+{
+    return c->real*c->real + c->imag*c->imag;
+}
+
+/* ??$polar@N@std@@YA?AV?$complex@N@0@ABN0@Z */
+/* ??$polar@N@std@@YA?AV?$complex@N@0@AEBN0@Z */
+/* ??$polar@O@std@@YA?AV?$complex@O@0@ABO0@Z */
+/* ??$polar@O@std@@YA?AV?$complex@O@0@AEBO0@Z */
+complex_double* __cdecl complex_double_polar_theta(complex_double *ret, const double *mod, const double *theta)
+{
+    ret->real = *mod * cos(*theta);
+    ret->imag = *mod * sin(*theta);
+    return ret;
+}
+
+/* ??$polar@N@std@@YA?AV?$complex@N@0@ABN@Z */
+/* ??$polar@N@std@@YA?AV?$complex@N@0@AEBN@Z */
+/* ??$polar@O@std@@YA?AV?$complex@O@0@ABO@Z */
+/* ??$polar@O@std@@YA?AV?$complex@O@0@AEBO@Z */
+complex_double* __cdecl complex_double_polar(complex_double *ret, const double *mod)
+{
+    ret->real = *mod;
+    ret->imag = 0;
     return ret;
 }
