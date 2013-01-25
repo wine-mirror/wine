@@ -26,6 +26,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl100);
 
+typedef unsigned char cpp_bool;
+
 static inline void *heap_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);
@@ -706,6 +708,16 @@ HRESULT WINAPI AtlGetObjectSourceInterface(IUnknown *unk, GUID *libid, IID *iid,
     }
 
     return hres;
+}
+
+/***********************************************************************
+ *           AtlGetPerUserRegistration  [atl100.68]
+ */
+HRESULT WINAPI AtlGetPerUserRegistration(cpp_bool *pbEnabled)
+{
+    FIXME("stub: returning false\n");
+    *pbEnabled = 0;
+    return S_OK;
 }
 
 /***********************************************************************

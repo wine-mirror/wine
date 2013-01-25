@@ -150,6 +150,7 @@ static void _test_key_not_exists(unsigned line, HKEY root, const char *key_name)
 
 static void test_regcat(void)
 {
+    unsigned char b;
     HRESULT hres;
 
     const struct _ATL_CATMAP_ENTRY catmap[] = {
@@ -178,6 +179,11 @@ static void test_regcat(void)
     ok(hres == S_OK, "AtlRegisterClassCategoriesHelper failed: %08x\n", hres);
 
     test_key_not_exists(HKEY_CLASSES_ROOT, "CLSID\\{" CLSID_TEST_STR "}");
+
+    b = 10;
+    hres = AtlGetPerUserRegistration(&b);
+    ok(hres == S_OK, "AtlGetPerUserRegistration failed: %08x\n", hres);
+    ok(!b, "AtlGetPerUserRegistration returned %x\n", b);
 }
 
 static void test_typelib(void)
