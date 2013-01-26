@@ -935,32 +935,38 @@ static ULONG get_refcount(IUnknown *test_iface)
     return IUnknown_Release(test_iface);
 }
 
-static void test_viewport_interfaces(void)
+static void test_viewport(void)
 {
     IDirectDraw *ddraw;
     IDirect3D *d3d;
     HRESULT hr;
     ULONG ref;
-    IDirect3DViewport *viewport;
+    IDirect3DViewport *viewport, *another_vp;
     IDirect3DViewport2 *viewport2;
     IDirect3DViewport3 *viewport3;
     IDirectDrawGammaControl *gamma;
     IUnknown *unknown;
+    IDirect3DDevice *device;
+    HWND window;
 
     if (!(ddraw = create_ddraw()))
     {
         skip("Failed to create ddraw object, skipping test.\n");
         return;
     }
-    hr = IDirectDraw_QueryInterface(ddraw, &IID_IDirect3D, (void **)&d3d);
-    ok(SUCCEEDED(hr) || hr == E_NOINTERFACE, "Failed to get d3d interface, hr %#x.\n", hr);
-    if (FAILED(hr))
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
-        skip("Direct3D not available, skipping tests\n");
+        skip("Failed to create D3D device, skipping test.\n");
         IDirectDraw_Release(ddraw);
+        DestroyWindow(window);
         return;
     }
-    ref = get_refcount((IUnknown *)d3d);
+
+    hr = IDirectDraw_QueryInterface(ddraw, &IID_IDirect3D, (void **)&d3d);
+    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) d3d);
     ok(ref == 2, "IDirect3D refcount is %d\n", ref);
 
     hr = IDirect3D_CreateViewport(d3d, &viewport, NULL);
@@ -1016,8 +1022,35 @@ static void test_viewport_interfaces(void)
         IUnknown_Release(unknown);
     }
 
-    IDirect3DViewport_Release(viewport);
+    /* AddViewport(NULL): Segfault */
+    hr = IDirect3DDevice_DeleteViewport(device, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3D_CreateViewport(d3d, &another_vp, NULL);
+    ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice_AddViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to add viewport to device, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) viewport);
+    ok(ref == 2, "IDirect3DViewport refcount is %d\n", ref);
+    hr = IDirect3DDevice_AddViewport(device, another_vp);
+    ok(SUCCEEDED(hr), "Failed to add viewport to device, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) another_vp);
+    ok(ref == 2, "IDirect3DViewport refcount is %d\n", ref);
+
+    hr = IDirect3DDevice_DeleteViewport(device, another_vp);
+    ok(SUCCEEDED(hr), "Failed to delete viewport from device, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) another_vp);
+    ok(ref == 1, "IDirect3DViewport refcount is %d\n", ref);
+
+    IDirect3DDevice_Release(device);
+    ref = get_refcount((IUnknown *) viewport);
+    ok(ref == 1, "IDirect3DViewport refcount is %d\n", ref);
+
+    IDirect3DViewport_Release(another_vp);
     IDirect3D_Release(d3d);
+    IDirect3DViewport_Release(viewport);
+    DestroyWindow(window);
     IDirectDraw_Release(ddraw);
 }
 
@@ -2731,7 +2764,7 @@ START_TEST(ddraw1)
     test_coop_level_d3d_state();
     test_surface_interface_mismatch();
     test_coop_level_threaded();
-    test_viewport_interfaces();
+    test_viewport();
     test_zenable();
     test_ck_rgba();
     test_ck_default();

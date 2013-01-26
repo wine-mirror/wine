@@ -1179,21 +1179,32 @@ static ULONG get_refcount(IUnknown *test_iface)
     return IUnknown_Release(test_iface);
 }
 
-static void test_viewport_interfaces(void)
+static void test_viewport(void)
 {
     IDirectDraw2 *ddraw;
     IDirect3D2 *d3d;
     HRESULT hr;
     ULONG ref, old_d3d_ref;
     IDirect3DViewport *viewport;
-    IDirect3DViewport2 *viewport2;
+    IDirect3DViewport2 *viewport2, *another_vp, *test_vp;
     IDirect3DViewport3 *viewport3;
     IDirectDrawGammaControl *gamma;
     IUnknown *unknown;
+    IDirect3DDevice2 *device;
+    HWND window;
 
     if (!(ddraw = create_ddraw()))
     {
         skip("Failed to create ddraw object, skipping test.\n");
+        return;
+    }
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        IDirectDraw_Release(ddraw);
+        DestroyWindow(window);
         return;
     }
 
@@ -1255,8 +1266,100 @@ static void test_viewport_interfaces(void)
         IUnknown_Release(unknown);
     }
 
+    /* AddViewport(NULL): Segfault */
+    hr = IDirect3DDevice2_DeleteViewport(device, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice2_GetCurrentViewport(device, NULL);
+    ok(hr == D3DERR_NOCURRENTVIEWPORT, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3D2_CreateViewport(d3d, &another_vp, NULL);
+    ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
+
+    /* Setting a viewport not in the viewport list fails */
+    hr = IDirect3DDevice2_SetCurrentViewport(device, another_vp);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_AddViewport(device, viewport2);
+    ok(SUCCEEDED(hr), "Failed to add viewport to device, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) viewport2);
+    ok(ref == 2, "viewport2 refcount is %d\n", ref);
+    hr = IDirect3DDevice2_AddViewport(device, another_vp);
+    ok(SUCCEEDED(hr), "Failed to add viewport to device, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) another_vp);
+    ok(ref == 2, "another_vp refcount is %d\n", ref);
+
+    test_vp = (IDirect3DViewport2 *) 0xbaadc0de;
+    hr = IDirect3DDevice2_GetCurrentViewport(device, &test_vp);
+    ok(hr == D3DERR_NOCURRENTVIEWPORT, "Got unexpected hr %#x.\n", hr);
+    ok(test_vp == (IDirect3DViewport2 *) 0xbaadc0de, "Got unexpected pointer %p\n", test_vp);
+
+    hr = IDirect3DDevice2_SetCurrentViewport(device, viewport2);
+    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) viewport2);
+    ok(ref == 3, "viewport2 refcount is %d\n", ref);
+    ref = get_refcount((IUnknown *) device);
+    ok(ref == 1, "device refcount is %d\n", ref);
+
+    test_vp = NULL;
+    hr = IDirect3DDevice2_GetCurrentViewport(device, &test_vp);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(test_vp == viewport2, "Got unexpected viewport %p\n", test_vp);
+    ref = get_refcount((IUnknown *) viewport2);
+    ok(ref == 4, "viewport2 refcount is %d\n", ref);
+    if(test_vp) IDirect3DViewport2_Release(test_vp);
+
+    /* GetCurrentViewport with a viewport set and NULL input param: Segfault */
+
+    /* Cannot set the viewport to NULL */
+    hr = IDirect3DDevice2_SetCurrentViewport(device, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Failed to set viewport to NULL, hr %#x.\n", hr);
+    test_vp = NULL;
+    hr = IDirect3DDevice2_GetCurrentViewport(device, &test_vp);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(test_vp == viewport2, "Got unexpected viewport %p\n", test_vp);
+    if(test_vp) IDirect3DViewport2_Release(test_vp);
+
+    /* SetCurrentViewport properly releases the old viewport's reference */
+    hr = IDirect3DDevice2_SetCurrentViewport(device, another_vp);
+    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) viewport2);
+    ok(ref == 2, "viewport2 refcount is %d\n", ref);
+    ref = get_refcount((IUnknown *) another_vp);
+    ok(ref == 3, "another_vp refcount is %d\n", ref);
+
+    /* Deleting the viewport removes the reference added by AddViewport, but not
+     * the one added by SetCurrentViewport. */
+    hr = IDirect3DDevice2_DeleteViewport(device, another_vp);
+    ok(SUCCEEDED(hr), "Failed to delete viewport from device, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) another_vp);
+    todo_wine ok(ref == 2, "IDirect3DViewport2 refcount is %d\n", ref);
+
+    /* GetCurrentViewport fails though */
+    test_vp = NULL;
+    hr = IDirect3DDevice2_GetCurrentViewport(device, &test_vp);
+    ok(hr == D3DERR_NOCURRENTVIEWPORT, "Got unexpected hr %#x.\n", hr);
+    ok(test_vp == NULL, "Got unexpected viewport %p\n", test_vp);
+    if(test_vp) IDirect3DViewport2_Release(test_vp);
+
+    /* Setting a different viewport does not free the leaked reference. How
+     * do I get rid of it? Leak the viewport for now. */
+    hr = IDirect3DDevice2_SetCurrentViewport(device, viewport2);
+    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) viewport2);
+    ok(ref == 3, "viewport2 refcount is %d\n", ref);
+    ref = get_refcount((IUnknown *) another_vp);
+    todo_wine ok(ref == 2, "another_vp refcount is %d\n", ref);
+
+    /* Destroying the device removes the viewport, but does not free the reference
+     * added by SetCurrentViewport. */
+    IDirect3DDevice2_Release(device);
+    ref = get_refcount((IUnknown *) viewport2);
+    todo_wine ok(ref == 2, "viewport2 refcount is %d\n", ref);
+
+    IDirect3DViewport2_Release(another_vp);
     IDirect3DViewport2_Release(viewport2);
     IDirect3D2_Release(d3d);
+    DestroyWindow(window);
     IDirectDraw2_Release(ddraw);
 }
 
@@ -2855,7 +2958,7 @@ START_TEST(ddraw2)
     test_coop_level_threaded();
     test_depth_blit();
     test_texture_load_ckey();
-    test_viewport_interfaces();
+    test_viewport();
     test_zenable();
     test_ck_rgba();
     test_ck_default();

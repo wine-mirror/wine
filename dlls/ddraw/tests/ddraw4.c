@@ -1328,7 +1328,7 @@ static ULONG get_refcount(IUnknown *test_iface)
     return IUnknown_Release(test_iface);
 }
 
-static void test_viewport_interfaces(void)
+static void test_viewport(void)
 {
     IDirectDraw4 *ddraw;
     IDirect3D3 *d3d;
@@ -1336,24 +1336,25 @@ static void test_viewport_interfaces(void)
     ULONG ref;
     IDirect3DViewport *viewport;
     IDirect3DViewport2 *viewport2;
-    IDirect3DViewport3 *viewport3;
+    IDirect3DViewport3 *viewport3, *another_vp, *test_vp;
     IDirectDrawGammaControl *gamma;
     IUnknown *unknown;
+    HWND window;
+    IDirect3DDevice3 *device;
 
-    if (!(ddraw = create_ddraw()))
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, DDSCL_NORMAL)))
     {
-        skip("Failed to create ddraw object, skipping test.\n");
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
         return;
     }
-    hr = IDirectDraw4_QueryInterface(ddraw, &IID_IDirect3D3, (void **)&d3d);
-    ok(SUCCEEDED(hr) || hr == E_NOINTERFACE, "Failed to get d3d interface, hr %#x.\n", hr);
-    if (FAILED(hr))
-    {
-        skip("Direct3D not available, skipping tests\n");
-        IDirectDraw4_Release(ddraw);
-        return;
-    }
-    old_d3d_ref = get_refcount((IUnknown *)d3d);
+    hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get Direct3D3 interface, hr %#x.\n", hr);
+    hr = IDirect3D3_QueryInterface(d3d, &IID_IDirectDraw4, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "Failed to get DirectDraw4 interface, hr %#x.\n", hr);
+    old_d3d_ref = get_refcount((IUnknown *) d3d);
 
     hr = IDirect3D3_CreateViewport(d3d, &viewport3, NULL);
     ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
@@ -1403,8 +1404,100 @@ static void test_viewport_interfaces(void)
         IUnknown_Release(unknown);
     }
 
-    IDirect3DViewport3_Release(viewport3);
+    /* AddViewport(NULL): Segfault */
+    hr = IDirect3DDevice3_DeleteViewport(device, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice3_GetCurrentViewport(device, NULL);
+    ok(hr == D3DERR_NOCURRENTVIEWPORT, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3D3_CreateViewport(d3d, &another_vp, NULL);
+    ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
+
+    /* Setting a viewport not in the viewport list fails */
+    hr = IDirect3DDevice3_SetCurrentViewport(device, another_vp);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_AddViewport(device, viewport3);
+    ok(SUCCEEDED(hr), "Failed to add viewport to device, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) viewport3);
+    ok(ref == 2, "viewport3 refcount is %d\n", ref);
+    hr = IDirect3DDevice3_AddViewport(device, another_vp);
+    ok(SUCCEEDED(hr), "Failed to add viewport to device, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) another_vp);
+    ok(ref == 2, "another_vp refcount is %d\n", ref);
+
+    test_vp = (IDirect3DViewport3 *) 0xbaadc0de;
+    hr = IDirect3DDevice3_GetCurrentViewport(device, &test_vp);
+    ok(hr == D3DERR_NOCURRENTVIEWPORT, "Got unexpected hr %#x.\n", hr);
+    ok(test_vp == (IDirect3DViewport3 *) 0xbaadc0de, "Got unexpected pointer %p\n", test_vp);
+
+    hr = IDirect3DDevice3_SetCurrentViewport(device, viewport3);
+    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) viewport3);
+    ok(ref == 3, "viewport3 refcount is %d\n", ref);
+    ref = get_refcount((IUnknown *) device);
+    ok(ref == 1, "device refcount is %d\n", ref);
+
+    test_vp = NULL;
+    hr = IDirect3DDevice3_GetCurrentViewport(device, &test_vp);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(test_vp == viewport3, "Got unexpected viewport %p\n", test_vp);
+    ref = get_refcount((IUnknown *) viewport3);
+    ok(ref == 4, "viewport3 refcount is %d\n", ref);
+    if(test_vp) IDirect3DViewport3_Release(test_vp);
+
+    /* GetCurrentViewport with a viewport set and NULL input param: Segfault */
+
+    /* Cannot set the viewport to NULL */
+    hr = IDirect3DDevice3_SetCurrentViewport(device, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Failed to set viewport to NULL, hr %#x.\n", hr);
+    test_vp = NULL;
+    hr = IDirect3DDevice3_GetCurrentViewport(device, &test_vp);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(test_vp == viewport3, "Got unexpected viewport %p\n", test_vp);
+    if(test_vp) IDirect3DViewport3_Release(test_vp);
+
+    /* SetCurrentViewport properly releases the old viewport's reference */
+    hr = IDirect3DDevice3_SetCurrentViewport(device, another_vp);
+    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) viewport3);
+    ok(ref == 2, "viewport3 refcount is %d\n", ref);
+    ref = get_refcount((IUnknown *) another_vp);
+    ok(ref == 3, "another_vp refcount is %d\n", ref);
+
+    /* Unlike device2::DeleteViewport, device3::DeleteViewport releases the
+     * reference held by SetCurrentViewport */
+    hr = IDirect3DDevice3_DeleteViewport(device, another_vp);
+    ok(SUCCEEDED(hr), "Failed to delete viewport from device, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) another_vp);
+    ok(ref == 1, "another_vp refcount is %d\n", ref);
+
+    /* GetCurrentViewport still fails */
+    test_vp = NULL;
+    hr = IDirect3DDevice3_GetCurrentViewport(device, &test_vp);
+    ok(hr == D3DERR_NOCURRENTVIEWPORT, "Got unexpected hr %#x.\n", hr);
+    ok(test_vp == NULL, "Got unexpected viewport %p\n", test_vp);
+    if(test_vp) IDirect3DViewport3_Release(test_vp);
+
+    /* Setting a different viewport doesn't have any surprises now */
+    hr = IDirect3DDevice3_SetCurrentViewport(device, viewport3);
+    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *) viewport3);
+    ok(ref == 3, "viewport3 refcount is %d\n", ref);
+    ref = get_refcount((IUnknown *) another_vp);
+    ok(ref == 1, "another_vp refcount is %d\n", ref);
+
+    /* Destroying the device removes the viewport and releases the reference */
+    IDirect3DDevice3_Release(device);
+    ref = get_refcount((IUnknown *) viewport3);
+    ok(ref == 1, "viewport3 refcount is %d\n", ref);
+
+    ref = IDirect3DViewport3_Release(another_vp);
+    ok(ref == 0, "Got unexpected ref %d\n", ref);
+    ref = IDirect3DViewport3_Release(viewport3);
+    ok(ref == 0, "Got unexpected ref %d\n", ref);
     IDirect3D3_Release(d3d);
+    DestroyWindow(window);
     IDirectDraw4_Release(ddraw);
 }
 
@@ -3090,7 +3183,7 @@ START_TEST(ddraw4)
     test_coop_level_threaded();
     test_depth_blit();
     test_texture_load_ckey();
-    test_viewport_interfaces();
+    test_viewport();
     test_zenable();
     test_ck_rgba();
     test_ck_default();
