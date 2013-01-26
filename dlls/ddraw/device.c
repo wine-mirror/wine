@@ -1703,9 +1703,15 @@ static HRESULT WINAPI d3d_device3_SetCurrentViewport(IDirect3DDevice3 *iface, ID
 
     TRACE("iface %p, viewport %p.\n", iface, Direct3DViewport3);
 
+    if (!vp)
+    {
+        WARN("Direct3DViewport3 is NULL, returning DDERR_INVALIDPARAMS\n");
+        return DDERR_INVALIDPARAMS;
+    }
+
     wined3d_mutex_lock();
     /* Do nothing if the specified viewport is the same as the current one */
-    if (This->current_viewport == vp )
+    if (This->current_viewport == vp)
     {
         wined3d_mutex_unlock();
         return D3D_OK;
@@ -1745,7 +1751,8 @@ static HRESULT WINAPI d3d_device2_SetCurrentViewport(IDirect3DDevice2 *iface, ID
 
     TRACE("iface %p, viewport %p.\n", iface, viewport);
 
-    return d3d_device3_SetCurrentViewport(&device->IDirect3DDevice3_iface, &vp->IDirect3DViewport3_iface);
+    return d3d_device3_SetCurrentViewport(&device->IDirect3DDevice3_iface,
+            vp ? &vp->IDirect3DViewport3_iface : NULL);
 }
 
 /*****************************************************************************
