@@ -64,7 +64,9 @@ typedef enum {
 typedef struct {
     basic_streambuf_char base;
     codecvt_char *cvt;
+    int state0;
     char putback;
+    basic_string_char *conv;
     MSVCP_bool wrotesome;
     int state;
     MSVCP_bool close;
@@ -74,7 +76,9 @@ typedef struct {
 typedef struct {
     basic_streambuf_wchar base;
     codecvt_wchar *cvt;
+    int state0;
     wchar_t putback;
+    basic_string_char *conv;
     MSVCP_bool wrotesome;
     int state;
     MSVCP_bool close;
