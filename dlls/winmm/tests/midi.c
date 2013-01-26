@@ -128,30 +128,79 @@ static void test_midiIn_device(UINT udev, HWND hwnd)
     test_notification(hwnd, "midiInOpen", MIM_OPEN, 0);
 
     memset(&mhdr, 0, sizeof(mhdr));
+    mhdr.dwFlags = MHDR_DONE;
     mhdr.dwUser = 0x56FA552C;
     mhdr.dwBufferLength = 70000; /* > 64KB! */
+    mhdr.dwBytesRecorded = 5;
     mhdr.lpData = HeapAlloc(GetProcessHeap(), 0 , mhdr.dwBufferLength);
     ok(mhdr.lpData!=NULL, "No %d bytes of memory!\n", mhdr.dwBufferLength);
     if (mhdr.lpData) {
         rc = midiInPrepareHeader(hm, &mhdr, offsetof(MIDIHDR,dwOffset)-1);
         ok(rc==MMSYSERR_INVALPARAM, "midiInPrepare tiny rc=%s\n", mmsys_error(rc));
+        ok(mhdr.dwFlags == MHDR_DONE, "dwFlags=%x\n", mhdr.dwFlags);
+
+        mhdr.dwFlags |= MHDR_INQUEUE;
         rc = midiInPrepareHeader(hm, &mhdr, offsetof(MIDIHDR,dwOffset));
         ok(!rc, "midiInPrepare old size rc=%s\n", mmsys_error(rc));
-        rc = midiInPrepareHeader(hm, &mhdr, sizeof(mhdr));
-        ok(!rc, "midiInPrepare rc=%s\n", mmsys_error(rc));
-        rc = midiInUnprepareHeader(hm, &mhdr, sizeof(mhdr));
-        ok(!rc, "midiInUnprepare rc=%s\n", mmsys_error(rc));
+        ok(mhdr.dwFlags == (MHDR_PREPARED|MHDR_INQUEUE|MHDR_DONE)/*w9x*/ ||
+           mhdr.dwFlags == MHDR_PREPARED, "dwFlags=%x\n", mhdr.dwFlags);
         trace("MIDIHDR flags=%x when unsent\n", mhdr.dwFlags);
 
-        HeapFree(GetProcessHeap(), 0, mhdr.lpData);
-    }
-    ok(mhdr.dwUser==0x56FA552C, "MIDIHDR.dwUser changed to %lx\n", mhdr.dwUser);
+        mhdr.dwFlags |= MHDR_INQUEUE|MHDR_DONE;
+        rc = midiInPrepareHeader(hm, &mhdr, sizeof(mhdr));
+        ok(!rc, "midiInPrepare rc=%s\n", mmsys_error(rc));
+        ok(mhdr.dwFlags == (MHDR_PREPARED|MHDR_INQUEUE|MHDR_DONE), "dwFlags=%x\n", mhdr.dwFlags);
 
+        mhdr.dwFlags &= ~MHDR_INQUEUE;
+        rc = midiInUnprepareHeader(hm, &mhdr, sizeof(mhdr));
+        ok(!rc, "midiInUnprepare rc=%s\n", mmsys_error(rc));
+        ok(mhdr.dwFlags == MHDR_DONE, "dwFlags=%x\n", mhdr.dwFlags);
+
+        mhdr.dwFlags &= ~MHDR_DONE;
+        rc = midiInUnprepareHeader(hm, &mhdr, sizeof(mhdr));
+        ok(!rc, "midiInUnprepare rc=%s\n", mmsys_error(rc));
+        ok(mhdr.dwFlags == 0, "dwFlags=%x\n", mhdr.dwFlags);
+
+        rc = midiInPrepareHeader(hm, &mhdr, offsetof(MIDIHDR,dwOffset));
+        ok(!rc, "midiInPrepare rc=%s\n", mmsys_error(rc));
+        ok(mhdr.dwFlags == MHDR_PREPARED, "dwFlags=%x\n", mhdr.dwFlags);
+
+        mhdr.dwFlags |= MHDR_DONE;
+        rc = midiInPrepareHeader(hm, &mhdr, offsetof(MIDIHDR,dwOffset));
+        ok(!rc, "midiInPrepare rc=%s\n", mmsys_error(rc));
+        ok(mhdr.dwBytesRecorded == 5, "BytesRec=%u\n", mhdr.dwBytesRecorded);
+
+        mhdr.dwFlags |= MHDR_DONE;
+        rc = midiInAddBuffer(hm, &mhdr, sizeof(mhdr));
+        ok(!rc, "midiAddBuffer rc=%s\n", mmsys_error(rc));
+        ok(mhdr.dwFlags == (MHDR_PREPARED|MHDR_INQUEUE), "dwFlags=%x\n", mhdr.dwFlags);
+
+        /* w95 does not set dwBytesRecorded=0 within midiInAddBuffer.  Wine does. */
+        if (mhdr.dwBytesRecorded != 0)
+            trace("dwBytesRecorded %u\n", mhdr.dwBytesRecorded);
+
+        rc = midiInAddBuffer(hm, &mhdr, sizeof(mhdr));
+        ok(rc==MIDIERR_STILLPLAYING, "midiAddBuffer rc=%s\n", mmsys_error(rc));
+
+        rc = midiInPrepareHeader(hm, &mhdr, offsetof(MIDIHDR,dwOffset));
+        ok(!rc, "midiInPrepare rc=%s\n", mmsys_error(rc));
+        ok(mhdr.dwFlags == (MHDR_PREPARED|MHDR_INQUEUE), "dwFlags=%x\n", mhdr.dwFlags);
+    }
     rc = midiInReset(hm); /* Return any pending buffer */
     ok(!rc, "midiInReset rc=%s\n", mmsys_error(rc));
+    test_notification(hwnd, "midiInReset", MIM_LONGDATA, (DWORD_PTR)&mhdr);
+
+    ok(mhdr.dwFlags == (MHDR_PREPARED|MHDR_DONE), "dwFlags=%x\n", mhdr.dwFlags);
+    rc = midiInUnprepareHeader(hm, &mhdr, sizeof(mhdr));
+    ok(!rc, "midiInUnprepare rc=%s\n", mmsys_error(rc));
+
+    ok(mhdr.dwBytesRecorded == 0, "Did some MIDI HW send %u bytes?\n", mhdr.dwBytesRecorded);
 
     rc = midiInClose(hm);
     ok(!rc, "midiInClose rc=%s\n", mmsys_error(rc));
+
+    ok(mhdr.dwUser==0x56FA552C, "MIDIHDR.dwUser changed to %lx\n", mhdr.dwUser);
+    HeapFree(GetProcessHeap(), 0, mhdr.lpData);
     test_notification(hwnd, "midiInClose", MIM_CLOSE, 0);
     test_notification(hwnd, "midiIn over", 0, WHATEVER);
 }
@@ -290,6 +339,7 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
     }
 
     memset(&mhdr, 0, sizeof(mhdr));
+    mhdr.dwFlags = MHDR_DONE;
     mhdr.dwUser   = 0x56FA552C;
     mhdr.dwOffset = 0xDEADBEEF;
     mhdr.dwBufferLength = 70000; /* > 64KB! */
@@ -298,17 +348,41 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
     if (mhdr.lpData) {
         rc = midiOutLongMsg(hm, &mhdr, sizeof(mhdr));
         ok(rc==MIDIERR_UNPREPARED, "midiOutLongMsg unprepared rc=%s\n", mmsys_error(rc));
+        ok(mhdr.dwFlags == MHDR_DONE, "dwFlags=%x\n", mhdr.dwFlags);
         test_notification(hwnd, "midiOutLong unprepared", 0, WHATEVER);
 
         rc = midiOutPrepareHeader(hm, &mhdr, offsetof(MIDIHDR,dwOffset)-1);
         ok(rc==MMSYSERR_INVALPARAM, "midiOutPrepare tiny rc=%s\n", mmsys_error(rc));
+        ok(mhdr.dwFlags == MHDR_DONE, "dwFlags=%x\n", mhdr.dwFlags);
+
+        /* Since at least w2k, midiOutPrepare clears the DONE and INQUEUE flags.  w95 didn't. */
+        /* mhdr.dwFlags |= MHDR_INQUEUE; would cause w95 to return STILLPLAYING from Unprepare */
         rc = midiOutPrepareHeader(hm, &mhdr, offsetof(MIDIHDR,dwOffset));
         ok(!rc, "midiOutPrepare old size rc=%s\n", mmsys_error(rc));
+        ok(mhdr.dwFlags == (MHDR_PREPARED|MHDR_DONE)/*w9x*/ ||
+           mhdr.dwFlags == MHDR_PREPARED, "dwFlags=%x\n", mhdr.dwFlags);
+        trace("MIDIHDR flags=%x when unsent\n", mhdr.dwFlags);
+
+        /* No flag is cleared when already prepared. */
+        mhdr.dwFlags |= MHDR_DONE|MHDR_INQUEUE;
         rc = midiOutPrepareHeader(hm, &mhdr, sizeof(mhdr));
         ok(!rc, "midiOutPrepare rc=%s\n", mmsys_error(rc));
+        ok(mhdr.dwFlags == (MHDR_PREPARED|MHDR_DONE|MHDR_INQUEUE), "dwFlags=%x\n", mhdr.dwFlags);
+
+        mhdr.dwFlags |= MHDR_INQUEUE;
+        rc = midiOutUnprepareHeader(hm, &mhdr, sizeof(mhdr));
+        ok(rc==MIDIERR_STILLPLAYING, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
+        ok(mhdr.dwFlags == (MHDR_PREPARED|MHDR_DONE|MHDR_INQUEUE), "dwFlags=%x\n", mhdr.dwFlags);
+
+        mhdr.dwFlags &= ~MHDR_INQUEUE;
         rc = midiOutUnprepareHeader(hm, &mhdr, sizeof(mhdr));
         ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
-        trace("MIDIHDR flags=%x when unsent\n", mhdr.dwFlags);
+        ok(mhdr.dwFlags == MHDR_DONE, "dwFlags=%x\n", mhdr.dwFlags);
+
+        mhdr.dwFlags |= MHDR_INQUEUE;
+        rc = midiOutUnprepareHeader(hm, &mhdr, sizeof(mhdr));
+        ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
+        ok(mhdr.dwFlags == (MHDR_INQUEUE|MHDR_DONE), "dwFlags=%x\n", mhdr.dwFlags);
 
         HeapFree(GetProcessHeap(), 0, mhdr.lpData);
     }
@@ -327,6 +401,7 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
     test_notification(hwnd, "midiOutClose", MOM_CLOSE, 0);
 
     rc = midiOutOpen(&hm, udev, 0, (DWORD_PTR)MYCBINST, CALLBACK_WINDOW);
+    /* w95 broken(rc==MMSYSERR_INVALPARAM) see WINMM_CheckCallback */
     ok(!rc, "midiOutOpen(dev=%d) 0 CALLBACK_WINDOW rc=%s\n", udev, mmsys_error(rc));
     /* PostMessage(hwnd=0) redirects to PostThreadMessage(GetCurrentThreadId())
      * which PeekMessage((HWND)-1) queries. */

@@ -455,25 +455,14 @@ static DWORD MIDIOut_Prepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
     TRACE("wDevID=%d lpMidiHdr=%p dwSize=%d\n", wDevID, lpMidiHdr, dwSize);
 
-    if (wDevID >= MIDIOut_NumDevs) {
-        WARN("bad device ID : %d\n", wDevID);
-	return MMSYSERR_BADDEVICEID;
-    }
-
-    /* MS doc says that dwFlags must be set to zero, but (kinda funny) MS mciseq drivers
-     * asks to prepare MIDIHDR which dwFlags != 0.
-     * So at least check for the inqueue flag
-     */
-    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 ||
-	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0) {
-	WARN("%p %p %08x %lu/%d\n", lpMidiHdr, lpMidiHdr->lpData,
-	           lpMidiHdr->dwFlags, offsetof(MIDIHDR,dwOffset), dwSize);
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
 	return MMSYSERR_INVALPARAM;
-    }
+    if (lpMidiHdr->dwFlags & MHDR_PREPARED)
+	return MMSYSERR_NOERROR;
 
     lpMidiHdr->lpNext = 0;
     lpMidiHdr->dwFlags |= MHDR_PREPARED;
-    lpMidiHdr->dwFlags &= ~MHDR_DONE;
+    lpMidiHdr->dwFlags &= ~(MHDR_DONE|MHDR_INQUEUE); /* flags cleared since w2k */
     return MMSYSERR_NOERROR;
 }
 
@@ -484,17 +473,14 @@ static DWORD MIDIOut_Unprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
     TRACE("wDevID=%d lpMidiHdr=%p dwSize=%d\n", wDevID, lpMidiHdr, dwSize);
 
-    if (wDevID >= MIDIOut_NumDevs) {
-        WARN("bad device ID : %d\n", wDevID);
-	return MMSYSERR_BADDEVICEID;
-    }
-    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0)
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
 	return MMSYSERR_INVALPARAM;
+    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))
+	return MMSYSERR_NOERROR;
     if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
 	return MIDIERR_STILLPLAYING;
 
     lpMidiHdr->dwFlags &= ~MHDR_PREPARED;
-
     return MMSYSERR_NOERROR;
 }
 
@@ -707,42 +693,27 @@ static DWORD MIDIIn_Prepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
     TRACE("wDevID=%d lpMidiHdr=%p dwSize=%d\n", wDevID, lpMidiHdr, dwSize);
 
-    if (wDevID >= MIDIIn_NumDevs) {
-        WARN("bad device ID : %d\n", wDevID);
-	return MMSYSERR_BADDEVICEID;
-    }
-    /* MS doc says that dwFlags must be set to zero, but (kinda funny) MS mciseq drivers
-     * asks to prepare MIDIHDR which dwFlags != 0.
-     * So at least check for the inqueue flag
-     */
-    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 ||
-	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0) {
-	WARN("Invalid parameter %p %p %08x %d\n", lpMidiHdr, lpMidiHdr->lpData,
-	           lpMidiHdr->dwFlags, dwSize);
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
 	return MMSYSERR_INVALPARAM;
-    }
+    if (lpMidiHdr->dwFlags & MHDR_PREPARED)
+	return MMSYSERR_NOERROR;
 
     lpMidiHdr->lpNext = 0;
     lpMidiHdr->dwFlags |= MHDR_PREPARED;
-    lpMidiHdr->dwFlags &= ~MHDR_DONE;
+    lpMidiHdr->dwFlags &= ~(MHDR_DONE|MHDR_INQUEUE); /* flags cleared since w2k */
     return MMSYSERR_NOERROR;
 }
 
 static DWORD MIDIIn_Unprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
     TRACE("wDevID=%d lpMidiHdr=%p dwSize=%d\n", wDevID, lpMidiHdr, dwSize);
-    if (wDevID >= MIDIIn_NumDevs) {
-        WARN("bad device ID : %d\n", wDevID);
-	return MMSYSERR_BADDEVICEID;
-    }
-    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0) {
-	WARN("Invalid Parameter\n");
+
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
 	return MMSYSERR_INVALPARAM;
-    }
-    if (lpMidiHdr->dwFlags & MHDR_INQUEUE) {
-	WARN("Still playing\n");
+    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))
+	return MMSYSERR_NOERROR;
+    if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
 	return MIDIERR_STILLPLAYING;
-    }
 
     lpMidiHdr->dwFlags &= ~MHDR_PREPARED;
     return MMSYSERR_NOERROR;

@@ -476,9 +476,6 @@ UINT WINAPI midiOutPrepareHeader(HMIDIOUT hMidiOut,
 
     TRACE("(%p, %p, %d)\n", hMidiOut, lpMidiOutHdr, uSize);
 
-    if (lpMidiOutHdr == NULL || uSize < offsetof(MIDIHDR,dwOffset))
-	return MMSYSERR_INVALPARAM;
-
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
     /* FIXME: detect MIDIStream handles and enforce 64KB buffer limit on those */
@@ -495,13 +492,6 @@ UINT WINAPI midiOutUnprepareHeader(HMIDIOUT hMidiOut,
     LPWINE_MLD		wmld;
 
     TRACE("(%p, %p, %d)\n", hMidiOut, lpMidiOutHdr, uSize);
-
-    if (lpMidiOutHdr == NULL || uSize < offsetof(MIDIHDR,dwOffset))
-	return MMSYSERR_INVALPARAM;
-
-    if (!(lpMidiOutHdr->dwFlags & MHDR_PREPARED)) {
-	return MMSYSERR_NOERROR;
-    }
 
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -592,7 +582,7 @@ UINT WINAPI midiOutCachePatches(HMIDIOUT hMidiOut, UINT uBank,
 				WORD* lpwPatchArray, UINT uFlags)
 {
     /* not really necessary to support this */
-    FIXME("not supported yet\n");
+    FIXME("(%p, %u, %p, %x): Stub\n", hMidiOut, uBank, lpwPatchArray, uFlags);
     return MMSYSERR_NOTSUPPORTED;
 }
 
@@ -602,7 +592,7 @@ UINT WINAPI midiOutCachePatches(HMIDIOUT hMidiOut, UINT uBank,
 UINT WINAPI midiOutCacheDrumPatches(HMIDIOUT hMidiOut, UINT uPatch,
 				    WORD* lpwKeyArray, UINT uFlags)
 {
-    FIXME("not supported yet\n");
+    FIXME("(%p, %u, %p, %x): Stub\n", hMidiOut, uPatch, lpwKeyArray, uFlags);
     return MMSYSERR_NOTSUPPORTED;
 }
 
@@ -774,9 +764,6 @@ UINT WINAPI midiInPrepareHeader(HMIDIIN hMidiIn,
 
     TRACE("(%p, %p, %d)\n", hMidiIn, lpMidiInHdr, uSize);
 
-    if (lpMidiInHdr == NULL || uSize < offsetof(MIDIHDR,dwOffset))
-	return MMSYSERR_INVALPARAM;
-
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
@@ -792,13 +779,6 @@ UINT WINAPI midiInUnprepareHeader(HMIDIIN hMidiIn,
     LPWINE_MLD		wmld;
 
     TRACE("(%p, %p, %d)\n", hMidiIn, lpMidiInHdr, uSize);
-
-    if (lpMidiInHdr == NULL || uSize < offsetof(MIDIHDR,dwOffset))
-	return MMSYSERR_INVALPARAM;
-
-    if (!(lpMidiInHdr->dwFlags & MHDR_PREPARED)) {
-	return MMSYSERR_NOERROR;
-    }
 
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;

@@ -565,7 +565,7 @@ static DWORD midClose(WORD wDevID)
  */
 static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-    TRACE("(%04X, %p, %08X);\n", wDevID, lpMidiHdr, dwSize);
+    TRACE("(%04X, %p, %d);\n", wDevID, lpMidiHdr, dwSize);
 
     if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
     if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
@@ -600,15 +600,16 @@ static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
  */
 static DWORD midPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-    TRACE("(%04X, %p, %08X);\n", wDevID, lpMidiHdr, dwSize);
+    TRACE("(%04X, %p, %d);\n", wDevID, lpMidiHdr, dwSize);
 
-    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 ||
-	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0)
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
 	return MMSYSERR_INVALPARAM;
+    if (lpMidiHdr->dwFlags & MHDR_PREPARED)
+	return MMSYSERR_NOERROR;
 
     lpMidiHdr->lpNext = 0;
     lpMidiHdr->dwFlags |= MHDR_PREPARED;
-    lpMidiHdr->dwBytesRecorded = 0;
+    lpMidiHdr->dwFlags &= ~(MHDR_DONE|MHDR_INQUEUE); /* flags cleared since w2k */
 
     return MMSYSERR_NOERROR;
 }
@@ -618,17 +619,14 @@ static DWORD midPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
  */
 static DWORD midUnprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-    TRACE("(%04X, %p, %08X);\n", wDevID, lpMidiHdr, dwSize);
+    TRACE("(%04X, %p, %d);\n", wDevID, lpMidiHdr, dwSize);
 
-    if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
-    if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
-
-    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 ||
-	lpMidiHdr->lpData == 0)
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
 	return MMSYSERR_INVALPARAM;
-
-    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED)) return MIDIERR_UNPREPARED;
-    if (lpMidiHdr->dwFlags & MHDR_INQUEUE) return MIDIERR_STILLPLAYING;
+    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))
+	return MMSYSERR_NOERROR;
+    if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
+	return MIDIERR_STILLPLAYING;
 
     lpMidiHdr->dwFlags &= ~MHDR_PREPARED;
 
@@ -1024,27 +1022,16 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
  */
 static DWORD modPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-    TRACE("(%04X, %p, %08X);\n", wDevID, lpMidiHdr, dwSize);
+    TRACE("(%04X, %p, %d);\n", wDevID, lpMidiHdr, dwSize);
 
-    if (midiSeq == NULL) {
-	WARN("can't prepare !\n");
-	return MMSYSERR_NOTENABLED;
-    }
-
-    /* MS doc says that dwFlags must be set to zero, but (kinda funny) MS mciseq drivers
-     * asks to prepare MIDIHDR which dwFlags != 0.
-     * So at least check for the inqueue flag
-     */
-    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 ||
-	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0) {
-	WARN("%p %p %08x %d\n", lpMidiHdr, lpMidiHdr ? lpMidiHdr->lpData : NULL,
-             lpMidiHdr ? lpMidiHdr->dwFlags : 0, dwSize);
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
 	return MMSYSERR_INVALPARAM;
-    }
+    if (lpMidiHdr->dwFlags & MHDR_PREPARED)
+	return MMSYSERR_NOERROR;
 
     lpMidiHdr->lpNext = 0;
     lpMidiHdr->dwFlags |= MHDR_PREPARED;
-    lpMidiHdr->dwFlags &= ~MHDR_DONE;
+    lpMidiHdr->dwFlags &= ~(MHDR_DONE|MHDR_INQUEUE); /* flags cleared since w2k */
     return MMSYSERR_NOERROR;
 }
 
@@ -1053,15 +1040,12 @@ static DWORD modPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
  */
 static DWORD modUnprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-    TRACE("(%04X, %p, %08X);\n", wDevID, lpMidiHdr, dwSize);
+    TRACE("(%04X, %p, %d);\n", wDevID, lpMidiHdr, dwSize);
 
-    if (midiSeq == NULL) {
-	WARN("can't unprepare !\n");
-	return MMSYSERR_NOTENABLED;
-    }
-
-    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0)
+    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
 	return MMSYSERR_INVALPARAM;
+    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))
+	return MMSYSERR_NOERROR;
     if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
 	return MIDIERR_STILLPLAYING;
     lpMidiHdr->dwFlags &= ~MHDR_PREPARED;
