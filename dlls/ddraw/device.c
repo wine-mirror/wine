@@ -765,6 +765,7 @@ static HRESULT WINAPI d3d_device3_AddViewport(IDirect3DDevice3 *iface, IDirect3D
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
+    IDirect3DViewport3_AddRef(viewport);
     list_add_head(&device->viewport_list, &vp->entry);
     /* Viewport must be usable for Clear() after AddViewport, so set active_device here. */
     vp->active_device = device;
@@ -834,6 +835,8 @@ static HRESULT WINAPI d3d_device3_DeleteViewport(IDirect3DDevice3 *iface, IDirec
 
     vp->active_device = NULL;
     list_remove(&vp->entry);
+
+    IDirect3DViewport3_Release(viewport);
 
     wined3d_mutex_unlock();
 
