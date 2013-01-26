@@ -817,6 +817,12 @@ static HRESULT WINAPI d3d_device3_DeleteViewport(IDirect3DDevice3 *iface, IDirec
 
     TRACE("iface %p, viewport %p.\n", iface, viewport);
 
+    if (!vp)
+    {
+        WARN("NULL viewport, returning DDERR_INVALIDPARAMS\n");
+        return DDERR_INVALIDPARAMS;
+    }
+
     wined3d_mutex_lock();
 
     if (vp->active_device != device)
@@ -841,7 +847,8 @@ static HRESULT WINAPI d3d_device2_DeleteViewport(IDirect3DDevice2 *iface, IDirec
 
     TRACE("iface %p, viewport %p.\n", iface, viewport);
 
-    return d3d_device3_DeleteViewport(&device->IDirect3DDevice3_iface, &vp->IDirect3DViewport3_iface);
+    return d3d_device3_DeleteViewport(&device->IDirect3DDevice3_iface,
+            vp ? &vp->IDirect3DViewport3_iface : NULL);
 }
 
 static HRESULT WINAPI d3d_device1_DeleteViewport(IDirect3DDevice *iface, IDirect3DViewport *viewport)
@@ -851,7 +858,8 @@ static HRESULT WINAPI d3d_device1_DeleteViewport(IDirect3DDevice *iface, IDirect
 
     TRACE("iface %p, viewport %p.\n", iface, viewport);
 
-    return d3d_device3_DeleteViewport(&device->IDirect3DDevice3_iface, &vp->IDirect3DViewport3_iface);
+    return d3d_device3_DeleteViewport(&device->IDirect3DDevice3_iface,
+            vp ? &vp->IDirect3DViewport3_iface : NULL);
 }
 
 /*****************************************************************************
