@@ -1786,9 +1786,6 @@ static HRESULT WINAPI d3d_device3_GetCurrentViewport(IDirect3DDevice3 *iface, ID
 
     TRACE("iface %p, viewport %p.\n", iface, viewport);
 
-    if (!viewport)
-        return DDERR_INVALIDPARAMS;
-
     wined3d_mutex_lock();
     if (!device->current_viewport)
     {
