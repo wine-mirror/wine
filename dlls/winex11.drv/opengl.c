@@ -1222,8 +1222,6 @@ static void free_gl_drawable( struct gl_drawable *gl )
  */
 static BOOL create_gl_drawable( HWND hwnd, HWND parent, struct gl_drawable *gl )
 {
-    XSetWindowAttributes attrib;
-
     gl->drawable = 0;
 
     if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())  /* top-level window */
@@ -1241,6 +1239,7 @@ static BOOL create_gl_drawable( HWND hwnd, HWND parent, struct gl_drawable *gl )
     else if(usexcomposite)
     {
         static Window dummy_parent;
+        XSetWindowAttributes attrib;
 
         attrib.override_redirect = True;
         if (!dummy_parent)
