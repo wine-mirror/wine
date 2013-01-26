@@ -833,6 +833,13 @@ static HRESULT WINAPI d3d_device3_DeleteViewport(IDirect3DDevice3 *iface, IDirec
         return DDERR_INVALIDPARAMS;
     }
 
+    if (device->current_viewport == vp)
+    {
+        TRACE("Deleting current viewport, unsetting and releasing\n");
+        IDirect3DViewport3_Release(viewport);
+        device->current_viewport = NULL;
+    }
+
     vp->active_device = NULL;
     list_remove(&vp->entry);
 
