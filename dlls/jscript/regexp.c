@@ -3366,6 +3366,7 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
             if(!new_parens)
                 return E_OUTOFMEMORY;
 
+            *parens_size = regexp->jsregexp->parenCount;
             *parens = new_parens;
         }
     }
