@@ -233,6 +233,7 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
     if (!ref)
     {
         DWORD i;
+        struct list *vp_entry, *vp_entry2;
 
         wined3d_mutex_lock();
 
@@ -303,6 +304,12 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
         }
 
         ddraw_handle_table_destroy(&This->handle_table);
+
+        LIST_FOR_EACH_SAFE(vp_entry, vp_entry2, &This->viewport_list)
+        {
+            struct d3d_viewport *vp = LIST_ENTRY(vp_entry, struct d3d_viewport, entry);
+            IDirect3DDevice3_DeleteViewport(&This->IDirect3DDevice3_iface, &vp->IDirect3DViewport3_iface);
+        }
 
         TRACE("Releasing target %p.\n", This->target);
         /* Release the render target. */
