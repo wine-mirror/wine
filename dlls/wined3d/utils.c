@@ -1171,6 +1171,8 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
 
             gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
 
+            /* Rebinding texture to workaround a fglrx bug. */
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, tex);
             gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, readback);
             checkGLcall("Post-pixelshader blending check");
 
