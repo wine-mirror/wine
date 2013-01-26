@@ -342,10 +342,10 @@ static HRESULT WINAPI d3d_viewport_SetViewport(IDirect3DViewport3 *iface, D3DVIE
     This->viewports.vp1.dvMinZ = 0.0;
     This->viewports.vp1.dvMaxZ = 1.0;
 
-    if (This->active_device) {
+    if (This->active_device)
+    {
         IDirect3DDevice3 *d3d_device3 = &This->active_device->IDirect3DDevice3_iface;
-        IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
-        if (current_viewport)
+        if (SUCCEEDED(IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport)))
         {
             if (current_viewport == iface) viewport_activate(This, FALSE);
             IDirect3DViewport3_Release(current_viewport);
@@ -705,8 +705,7 @@ static HRESULT WINAPI d3d_viewport_Clear(IDirect3DViewport3 *iface,
     hr = IDirect3DDevice7_Clear(&This->active_device->IDirect3DDevice7_iface, rect_count, rects,
             flags & (D3DCLEAR_ZBUFFER | D3DCLEAR_TARGET), color, 1.0, 0x00000000);
 
-    IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
-    if (current_viewport)
+    if (SUCCEEDED(IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport)))
     {
         struct d3d_viewport *vp = impl_from_IDirect3DViewport3(current_viewport);
         viewport_activate(vp, TRUE);
@@ -979,10 +978,10 @@ static HRESULT WINAPI d3d_viewport_SetViewport2(IDirect3DViewport3 *iface, D3DVI
     memset(&(This->viewports.vp2), 0, sizeof(This->viewports.vp2));
     memcpy(&(This->viewports.vp2), lpData, lpData->dwSize);
 
-    if (This->active_device) {
+    if (This->active_device)
+    {
         IDirect3DDevice3 *d3d_device3 = &This->active_device->IDirect3DDevice3_iface;
-        IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
-        if (current_viewport)
+        if (SUCCEEDED(IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport)))
         {
             if (current_viewport == iface) viewport_activate(This, FALSE);
             IDirect3DViewport3_Release(current_viewport);
@@ -1087,8 +1086,7 @@ static HRESULT WINAPI d3d_viewport_Clear2(IDirect3DViewport3 *iface, DWORD rect_
 
     hr = IDirect3DDevice7_Clear(&viewport->active_device->IDirect3DDevice7_iface,
             rect_count, rects, flags, color, depth, stencil);
-    IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
-    if (current_viewport)
+    if (SUCCEEDED(IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport)))
     {
         struct d3d_viewport *vp = impl_from_IDirect3DViewport3(current_viewport);
         viewport_activate(vp, TRUE);

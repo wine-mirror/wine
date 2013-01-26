@@ -1758,16 +1758,18 @@ static HRESULT WINAPI d3d_device3_GetCurrentViewport(IDirect3DDevice3 *iface, ID
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-    *viewport = &device->current_viewport->IDirect3DViewport3_iface;
+    if (!device->current_viewport)
+    {
+        wined3d_mutex_unlock();
+        WARN("No current viewport, returning D3DERR_NOCURRENTVIEWPORT\n");
+        return D3DERR_NOCURRENTVIEWPORT;
+    }
 
-    /* AddRef the returned viewport */
-    if (*viewport)
-        IDirect3DViewport3_AddRef(*viewport);
+    *viewport = &device->current_viewport->IDirect3DViewport3_iface;
+    IDirect3DViewport3_AddRef(*viewport);
 
     TRACE("Returning interface %p.\n", *viewport);
-
     wined3d_mutex_unlock();
-
     return D3D_OK;
 }
 
