@@ -40,7 +40,7 @@ static BOOL process_attach(void)
     if ((thread_data_tls_index = TlsAlloc()) == TLS_OUT_OF_INDEXES) return FALSE;
 
     macdrv_err_on = ERR_ON(macdrv);
-    if (macdrv_start_cocoa_app())
+    if (macdrv_start_cocoa_app(GetTickCount64()))
     {
         ERR("Failed to start Cocoa app main loop\n");
         return FALSE;

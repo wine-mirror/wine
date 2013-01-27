@@ -108,6 +108,16 @@ int macdrv_err_on;
         [eventQueuesLock unlock];
     }
 
+    - (void) computeEventTimeAdjustmentFromTicks:(unsigned long long)tickcount uptime:(uint64_t)uptime_ns
+    {
+        eventTimeAdjustment = (tickcount / 1000.0) - (uptime_ns / (double)NSEC_PER_SEC);
+    }
+
+    - (double) ticksForEventTime:(NSTimeInterval)eventTime
+    {
+        return (eventTime + eventTimeAdjustment) * 1000;
+    }
+
 @end
 
 /***********************************************************************

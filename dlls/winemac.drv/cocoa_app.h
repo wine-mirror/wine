@@ -33,12 +33,17 @@
 {
     NSMutableArray* eventQueues;
     NSLock*         eventQueuesLock;
+
+    NSTimeInterval eventTimeAdjustment;
 }
 
     - (void) transformProcessToForeground;
 
     - (BOOL) registerEventQueue:(WineEventQueue*)queue;
     - (void) unregisterEventQueue:(WineEventQueue*)queue;
+
+    - (void) computeEventTimeAdjustmentFromTicks:(unsigned long long)tickcount uptime:(uint64_t)uptime_ns;
+    - (double) ticksForEventTime:(NSTimeInterval)eventTime;
 
 @end
 

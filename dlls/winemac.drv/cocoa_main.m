@@ -19,6 +19,8 @@
  */
 
 #import <AppKit/AppKit.h>
+#include <mach/mach.h>
+#include <mach/mach_time.h>
 
 #include "macdrv_cocoa.h"
 #import "cocoa_app.h"
@@ -30,6 +32,13 @@
 enum {
     COCOA_APP_NOT_RUNNING,
     COCOA_APP_RUNNING,
+};
+
+
+struct cocoa_app_startup_info {
+    NSConditionLock*    lock;
+    unsigned long long  tickcount;
+    uint64_t            uptime_ns;
 };
 
 
@@ -50,12 +59,14 @@ enum {
  */
 static void run_cocoa_app(void* info)
 {
-    NSConditionLock* lock = info;
+    struct cocoa_app_startup_info* startup_info = info;
+    NSConditionLock* lock = startup_info->lock;
 
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
     [WineApplication sharedApplication];
     [NSApp setDelegate:(WineApplication*)NSApp];
+    [NSApp computeEventTimeAdjustmentFromTicks:startup_info->tickcount uptime:startup_info->uptime_ns];
 
     /* Retain the lock while we're using it, so macdrv_start_cocoa_app()
        doesn't deallocate it in the middle of us unlocking it. */
@@ -78,11 +89,13 @@ static void run_cocoa_app(void* info)
  *
  * Returns 0 on success, non-zero on failure.
  */
-int macdrv_start_cocoa_app(void)
+int macdrv_start_cocoa_app(unsigned long long tickcount)
 {
     int ret = -1;
     CFRunLoopSourceRef source;
-    NSConditionLock* lock;
+    struct cocoa_app_startup_info startup_info;
+    uint64_t uptime_mach = mach_absolute_time();
+    mach_timebase_info_data_t mach_timebase;
     NSDate* timeLimit;
     CFRunLoopSourceContext source_context = { 0 };
 
@@ -94,29 +107,34 @@ int macdrv_start_cocoa_app(void)
                              toTarget:[NSThread class]
                            withObject:nil];
 
-    lock = [[NSConditionLock alloc] initWithCondition:COCOA_APP_NOT_RUNNING];
+    startup_info.lock = [[NSConditionLock alloc] initWithCondition:COCOA_APP_NOT_RUNNING];
+    startup_info.tickcount = tickcount;
+
+    mach_timebase_info(&mach_timebase);
+    startup_info.uptime_ns = uptime_mach * mach_timebase.numer / mach_timebase.denom;
+
     timeLimit = [NSDate dateWithTimeIntervalSinceNow:5];
 
-    source_context.info = lock;
+    source_context.info = &startup_info;
     source_context.perform = run_cocoa_app;
     source = CFRunLoopSourceCreate(NULL, 0, &source_context);
 
-    if (source && lock && timeLimit)
+    if (source && startup_info.lock && timeLimit)
     {
         CFRunLoopAddSource(CFRunLoopGetMain(), source, kCFRunLoopCommonModes);
         CFRunLoopSourceSignal(source);
         CFRunLoopWakeUp(CFRunLoopGetMain());
 
-        if ([lock lockWhenCondition:COCOA_APP_RUNNING beforeDate:timeLimit])
+        if ([startup_info.lock lockWhenCondition:COCOA_APP_RUNNING beforeDate:timeLimit])
         {
-            [lock unlock];
+            [startup_info.lock unlock];
             ret = 0;
         }
     }
 
     if (source)
         CFRelease(source);
-    [lock release];
+    [startup_info.lock release];
     [pool release];
     return ret;
 }
