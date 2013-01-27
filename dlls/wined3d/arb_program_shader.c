@@ -6448,7 +6448,7 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
                 return;
             }
 
-            memcpy(&new_desc->parent.settings, &settings, sizeof(settings));
+            new_desc->parent.settings = settings;
             new_desc->shader = gen_arbfp_ffp_shader(&settings, gl_info);
             add_ffp_frag_shader(&priv->fragment_shaders, &new_desc->parent);
             TRACE("Allocated fixed function replacement shader descriptor %p\n", new_desc);

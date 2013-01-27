@@ -861,7 +861,7 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
             new_desc->num_textures_used = i + 1;
         }
 
-        memcpy(&new_desc->parent.settings, &settings, sizeof(settings));
+        new_desc->parent.settings = settings;
         new_desc->shader = gen_ati_shader(settings.op, gl_info);
         add_ffp_frag_shader(&priv->fragment_shaders, &new_desc->parent);
         TRACE("Allocated fixed function replacement shader descriptor %p\n", new_desc);

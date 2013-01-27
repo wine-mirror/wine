@@ -1168,11 +1168,11 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     memset(stateblock->changed.vertexShaderConstantsF, 0, device->d3d_vshader_constantF * sizeof(BOOL));
 
     /* Set some of the defaults for lights, transforms etc */
-    memcpy(&state->transforms[WINED3D_TS_PROJECTION], &identity, sizeof(identity));
-    memcpy(&state->transforms[WINED3D_TS_VIEW], &identity, sizeof(identity));
+    state->transforms[WINED3D_TS_PROJECTION] = identity;
+    state->transforms[WINED3D_TS_VIEW] = identity;
     for (i = 0; i < 256; ++i)
     {
-        memcpy(&state->transforms[WINED3D_TS_WORLD_MATRIX(i)], &identity, sizeof(identity));
+        state->transforms[WINED3D_TS_WORLD_MATRIX(i)] = identity;
     }
 
     state->fb = &device->fb;
@@ -1313,7 +1313,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     for (i = 0; i < MAX_TEXTURES; ++i)
     {
         TRACE("Setting up default texture states for texture Stage %u.\n", i);
-        memcpy(&state->transforms[WINED3D_TS_TEXTURE0 + i], &identity, sizeof(identity));
+        state->transforms[WINED3D_TS_TEXTURE0 + i] = identity;
         state->texture_states[i][WINED3D_TSS_COLOR_OP] = i ? WINED3D_TOP_DISABLE : WINED3D_TOP_MODULATE;
         state->texture_states[i][WINED3D_TSS_COLOR_ARG1] = WINED3DTA_TEXTURE;
         state->texture_states[i][WINED3D_TSS_COLOR_ARG2] = WINED3DTA_CURRENT;
