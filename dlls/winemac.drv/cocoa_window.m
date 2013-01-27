@@ -67,7 +67,7 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 @property (retain, nonatomic) NSWindow* latentParentWindow;
 
 @property (nonatomic) void* hwnd;
-@property (retain, nonatomic) WineEventQueue* queue;
+@property (retain, readwrite, nonatomic) WineEventQueue* queue;
 
 @property (nonatomic) void* surface;
 @property (nonatomic) pthread_mutex_t* surface_mutex;
@@ -505,6 +505,29 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         return [super validateMenuItem:menuItem];
     }
 
+    /* We don't call this.  It's the action method of the items in the Window menu. */
+    - (void) makeKeyAndOrderFront:(id)sender
+    {
+        if (![self isKeyWindow] && !self.disabled && !self.noActivate)
+            [NSApp windowGotFocus:self];
+    }
+
+    - (void) sendEvent:(NSEvent*)event
+    {
+        if ([event type] == NSLeftMouseDown)
+        {
+            /* Since our windows generally claim they can't be made key, clicks
+               in their title bars are swallowed by the theme frame stuff.  So,
+               we hook directly into the event stream and assume that any click
+               in the window will activate it, if Wine and the Win32 program
+               accept. */
+            if (![self isKeyWindow] && !self.disabled && !self.noActivate)
+                [NSApp windowGotFocus:self];
+        }
+
+        [super sendEvent:event];
+    }
+
 
     /*
      * ---------- NSResponder method overrides ----------
@@ -521,6 +544,13 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
     /*
      * ---------- NSWindowDelegate methods ----------
      */
+    - (void)windowDidBecomeKey:(NSNotification *)notification
+    {
+        if (causing_becomeKeyWindow) return;
+
+        [NSApp windowGotFocus:self];
+    }
+
     - (void)windowDidMove:(NSNotification *)notification
     {
         [self windowDidResize:notification];

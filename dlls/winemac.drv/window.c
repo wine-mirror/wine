@@ -1419,3 +1419,37 @@ done:
     if (!(flags & SWP_NOSIZE) || !(flags & SWP_NOMOVE))
         SetWindowPos(hwnd, 0, rect.left, rect.top, width, height, flags);
 }
+
+
+/***********************************************************************
+ *              macdrv_window_got_focus
+ *
+ * Handler for WINDOW_GOT_FOCUS events.
+ */
+void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event)
+{
+    if (!hwnd) return;
+
+    TRACE("win %p/%p serial %lu enabled %d visible %d style %08x focus %p active %p fg %p\n",
+          hwnd, event->window, event->window_got_focus.serial, IsWindowEnabled(hwnd),
+          IsWindowVisible(hwnd), GetWindowLongW(hwnd, GWL_STYLE), GetFocus(),
+          GetActiveWindow(), GetForegroundWindow());
+
+    if (can_activate_window(hwnd))
+    {
+        /* simulate a mouse click on the caption to find out
+         * whether the window wants to be activated */
+        LRESULT ma = SendMessageW(hwnd, WM_MOUSEACTIVATE,
+                                  (WPARAM)GetAncestor(hwnd, GA_ROOT),
+                                  MAKELONG(HTCAPTION,WM_LBUTTONDOWN));
+        if (ma != MA_NOACTIVATEANDEAT && ma != MA_NOACTIVATE)
+        {
+            TRACE("setting foreground window to %p\n", hwnd);
+            SetForegroundWindow(hwnd);
+            return;
+        }
+    }
+
+    TRACE("win %p/%p rejecting focus\n", hwnd, event->window);
+    macdrv_window_rejected_focus(event);
+}

@@ -275,6 +275,13 @@ void macdrv_cleanup_event(macdrv_event *event)
 {
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
+    switch (event->type)
+    {
+        case WINDOW_GOT_FOCUS:
+            [(NSMutableSet*)event->window_got_focus.tried_windows release];
+            break;
+    }
+
     [(WineWindow*)event->window release];
 
     [pool release];

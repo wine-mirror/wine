@@ -19,6 +19,8 @@
  */
 
 #import "cocoa_app.h"
+#import "cocoa_event.h"
+#import "cocoa_window.h"
 
 
 int macdrv_err_on;
@@ -121,10 +123,65 @@ int macdrv_err_on;
         return (eventTime + eventTimeAdjustment) * 1000;
     }
 
+    /* Invalidate old focus offers across all queues. */
+    - (void) invalidateGotFocusEvents
+    {
+        WineEventQueue* queue;
+
+        windowFocusSerial++;
+
+        [eventQueuesLock lock];
+        for (queue in eventQueues)
+        {
+            [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_GOT_FOCUS)
+                                   forWindow:nil];
+        }
+        [eventQueuesLock unlock];
+    }
+
+    - (void) windowGotFocus:(WineWindow*)window
+    {
+        macdrv_event event;
+
+        [NSApp invalidateGotFocusEvents];
+
+        event.type = WINDOW_GOT_FOCUS;
+        event.window = (macdrv_window)[window retain];
+        event.window_got_focus.serial = windowFocusSerial;
+        if (triedWindows)
+            event.window_got_focus.tried_windows = [triedWindows retain];
+        else
+            event.window_got_focus.tried_windows = [[NSMutableSet alloc] init];
+        [window.queue postEvent:&event];
+    }
+
+    - (void) windowRejectedFocusEvent:(const macdrv_event*)event
+    {
+        if (event->window_got_focus.serial == windowFocusSerial)
+        {
+            triedWindows = (NSMutableSet*)event->window_got_focus.tried_windows;
+            [triedWindows addObject:(WineWindow*)event->window];
+            for (NSWindow* window in [keyWindows arrayByAddingObjectsFromArray:[self orderedWindows]])
+            {
+                if (![triedWindows containsObject:window] && [window canBecomeKeyWindow])
+                {
+                    [window makeKeyWindow];
+                    break;
+                }
+            }
+            triedWindows = nil;
+        }
+    }
+
 
     /*
      * ---------- NSApplicationDelegate methods ----------
      */
+    - (void)applicationDidResignActive:(NSNotification *)notification
+    {
+        [self invalidateGotFocusEvents];
+    }
+
     - (void)applicationWillFinishLaunching:(NSNotification *)notification
     {
         NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
@@ -188,4 +245,17 @@ void LogErrorv(const char* func, NSString* format, va_list args)
     NSString* message = [[NSString alloc] initWithFormat:format arguments:args];
     fprintf(stderr, "err:%s:%s", func, [message UTF8String]);
     [message release];
+}
+
+/***********************************************************************
+ *              macdrv_window_rejected_focus
+ *
+ * Pass focus to the next window that hasn't already rejected this same
+ * WINDOW_GOT_FOCUS event.
+ */
+void macdrv_window_rejected_focus(const macdrv_event *event)
+{
+    OnMainThread(^{
+        [NSApp windowRejectedFocusEvent:event];
+    });
 }

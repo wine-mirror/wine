@@ -35,6 +35,7 @@ static const char *dbgstr_event(int type)
         "MOUSE_BUTTON",
         "WINDOW_CLOSE_REQUESTED",
         "WINDOW_FRAME_CHANGED",
+        "WINDOW_GOT_FOCUS",
     };
 
     if (0 <= type && type < NUM_EVENT_TYPES) return event_names[type];
@@ -58,6 +59,7 @@ static macdrv_event_mask get_event_mask(DWORD mask)
     {
         event_mask |= event_mask_for_type(WINDOW_CLOSE_REQUESTED);
         event_mask |= event_mask_for_type(WINDOW_FRAME_CHANGED);
+        event_mask |= event_mask_for_type(WINDOW_GOT_FOCUS);
     }
 
     return event_mask;
@@ -89,6 +91,9 @@ void macdrv_handle_event(macdrv_event *event)
         break;
     case WINDOW_FRAME_CHANGED:
         macdrv_window_frame_changed(hwnd, event->window_frame_changed.frame);
+        break;
+    case WINDOW_GOT_FOCUS:
+        macdrv_window_got_focus(hwnd, event);
         break;
     default:
         TRACE("    ignoring\n");

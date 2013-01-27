@@ -101,6 +101,7 @@
 
 typedef struct macdrv_opaque_window* macdrv_window;
 typedef struct macdrv_opaque_event_queue* macdrv_event_queue;
+struct macdrv_event;
 
 struct macdrv_display {
     CGDirectDisplayID displayID;
@@ -113,6 +114,7 @@ struct macdrv_display {
 extern int macdrv_err_on;
 
 extern int macdrv_start_cocoa_app(unsigned long long tickcount) DECLSPEC_HIDDEN;
+extern void macdrv_window_rejected_focus(const struct macdrv_event *event) DECLSPEC_HIDDEN;
 
 
 /* display */
@@ -125,6 +127,7 @@ enum {
     MOUSE_BUTTON,
     WINDOW_CLOSE_REQUESTED,
     WINDOW_FRAME_CHANGED,
+    WINDOW_GOT_FOCUS,
     NUM_EVENT_TYPES
 };
 
@@ -144,6 +147,10 @@ typedef struct macdrv_event {
         struct {
             CGRect frame;
         }                                           window_frame_changed;
+        struct {
+            unsigned long   serial;
+            void           *tried_windows;
+        }                                           window_got_focus;
     };
 } macdrv_event;
 
