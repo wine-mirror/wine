@@ -34,7 +34,9 @@ int macdrv_err_on;
             eventQueues = [[NSMutableArray alloc] init];
             eventQueuesLock = [[NSLock alloc] init];
 
-            if (!eventQueues || !eventQueuesLock)
+            keyWindows = [[NSMutableArray alloc] init];
+
+            if (!eventQueues || !eventQueuesLock || !keyWindows)
             {
                 [self release];
                 return nil;
@@ -45,6 +47,7 @@ int macdrv_err_on;
 
     - (void) dealloc
     {
+        [keyWindows release];
         [eventQueues release];
         [eventQueuesLock release];
         [super dealloc];
@@ -116,6 +119,32 @@ int macdrv_err_on;
     - (double) ticksForEventTime:(NSTimeInterval)eventTime
     {
         return (eventTime + eventTimeAdjustment) * 1000;
+    }
+
+
+    /*
+     * ---------- NSApplicationDelegate methods ----------
+     */
+    - (void)applicationWillFinishLaunching:(NSNotification *)notification
+    {
+        NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
+
+        [nc addObserverForName:NSWindowDidBecomeKeyNotification
+                        object:nil
+                         queue:nil
+                    usingBlock:^(NSNotification *note){
+            NSWindow* window = [note object];
+            [keyWindows removeObjectIdenticalTo:window];
+            [keyWindows insertObject:window atIndex:0];
+        }];
+
+        [nc addObserverForName:NSWindowWillCloseNotification
+                        object:nil
+                         queue:[NSOperationQueue mainQueue]
+                    usingBlock:^(NSNotification *note){
+            NSWindow* window = [note object];
+            [keyWindows removeObjectIdenticalTo:window];
+        }];
     }
 
 @end

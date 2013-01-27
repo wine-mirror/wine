@@ -35,6 +35,8 @@
     NSLock*         eventQueuesLock;
 
     NSTimeInterval eventTimeAdjustment;
+
+    NSMutableArray* keyWindows;
 }
 
     - (void) transformProcessToForeground;
