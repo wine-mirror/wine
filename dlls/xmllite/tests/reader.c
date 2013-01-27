@@ -339,6 +339,60 @@ static HRESULT testinput_createinstance(void **ppObj)
     return S_OK;
 }
 
+static HRESULT WINAPI teststream_QueryInterface(ISequentialStream *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_ISequentialStream))
+    {
+        *obj = iface;
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI teststream_AddRef(ISequentialStream *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI teststream_Release(ISequentialStream *iface)
+{
+    return 1;
+}
+
+static int stream_readcall;
+
+static HRESULT WINAPI teststream_Read(ISequentialStream *iface, void *pv, ULONG cb, ULONG *pread)
+{
+    static const char xml[] = "<!-- comment -->";
+
+    if (stream_readcall++)
+    {
+        *pread = 0;
+        return E_PENDING;
+    }
+
+    *pread = sizeof(xml) / 2;
+    memcpy(pv, xml, *pread);
+    return S_OK;
+}
+
+static HRESULT WINAPI teststream_Write(ISequentialStream *iface, const void *pv, ULONG cb, ULONG *written)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const ISequentialStreamVtbl teststreamvtbl =
+{
+    teststream_QueryInterface,
+    teststream_AddRef,
+    teststream_Release,
+    teststream_Read,
+    teststream_Write
+};
+
 static BOOL init_pointers(void)
 {
     /* don't free module here, it's to be unloaded on exit */
@@ -1172,6 +1226,43 @@ todo_wine
     IXmlReader_Release(reader);
 }
 
+static ISequentialStream teststream = { &teststreamvtbl };
+
+static void test_read_pending(void)
+{
+    IXmlReader *reader;
+    const WCHAR *value;
+    XmlNodeType type;
+    HRESULT hr;
+    int c;
+
+    hr = pCreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
+    ok(hr == S_OK, "S_OK, got %08x\n", hr);
+
+    hr = IXmlReader_SetInput(reader, (IUnknown*)&teststream);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    /* first read call returns incomplete node, second attempt fails with E_PENDING */
+    stream_readcall = 0;
+    type = XmlNodeType_Element;
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_OK || broken(hr == E_PENDING), "Expected S_OK, got %08x\n", hr);
+    /* newer versions are happy when it's enough data to detect node type,
+       older versions keep reading until it fails to read more */
+    ok(stream_readcall == 1 || broken(stream_readcall > 1), "got %d\n", stream_readcall);
+    ok(type == XmlNodeType_Comment || broken(type == XmlNodeType_None), "got %d\n", type);
+
+    /* newer versions' GetValue() makes an attempt to read more */
+    c = stream_readcall;
+    value = (void*)0xdeadbeef;
+    hr = IXmlReader_GetValue(reader, &value, NULL);
+    ok(hr == E_PENDING, "Expected E_PENDING, got %08x\n", hr);
+    ok(value == (void*)0xdeadbeef, "got %p\n", value);
+    ok(c < stream_readcall || broken(c == stream_readcall), "got %d, expected %d\n", stream_readcall, c+1);
+
+    IXmlReader_Release(reader);
+}
+
 START_TEST(reader)
 {
     HRESULT r;
@@ -1193,6 +1284,7 @@ START_TEST(reader)
     test_read_dtd();
     test_read_element();
     test_read_full();
+    test_read_pending();
     test_read_xmldeclaration();
 
     CoUninitialize();

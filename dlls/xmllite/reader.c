@@ -111,6 +111,7 @@ typedef struct
        optimizations possible with IStream aren't implemented */
     ISequentialStream *stream;
     input_buffer *buffer;
+    unsigned int pending : 1;
 } xmlreaderinput;
 
 typedef struct
@@ -152,6 +153,7 @@ typedef struct
     struct list elements;
     strval strvalues[StringValue_Last];
     UINT depth;
+    WCHAR *save;
 } xmlreader;
 
 struct input_buffer
@@ -362,12 +364,20 @@ static void reader_pop_element(xmlreader *reader)
     }
 }
 
-/* always make a copy, cause strings are supposed to be null terminated */
+/* Always make a copy, cause strings are supposed to be null terminated. Null pointer for 'value'
+   means node value is to be determined. */
 static void reader_set_strvalue(xmlreader *reader, XmlReaderStringValue type, const strval *value)
 {
     strval *v = &reader->strvalues[type];
 
     reader_free_strvalue(reader, type);
+    if (!value)
+    {
+        v->str = NULL;
+        v->len = 0;
+        return;
+    }
+
     if (value->str == strval_empty.str)
         *v = *value;
     else
@@ -377,6 +387,11 @@ static void reader_set_strvalue(xmlreader *reader, XmlReaderStringValue type, co
         v->str[value->len] = 0;
         v->len = value->len;
     }
+}
+
+static inline int is_reader_pending(xmlreader *reader)
+{
+    return reader->input->pending;
 }
 
 static HRESULT init_encoded_buffer(xmlreaderinput *input, encoded_buffer *buffer)
@@ -518,9 +533,11 @@ static HRESULT readerinput_growraw(xmlreaderinput *readerinput)
         len = buffer->allocated - buffer->written;
     }
 
+    read = 0;
     hr = ISequentialStream_Read(readerinput->stream, buffer->data + buffer->written, len, &read);
-    if (FAILED(hr)) return hr;
     TRACE("requested %d, read %d, ret 0x%08x\n", len, read, hr);
+    readerinput->pending = hr == E_PENDING;
+    if (FAILED(hr)) return hr;
     buffer->written += read;
 
     return hr;
@@ -695,17 +712,18 @@ static void reader_shrink(xmlreader *reader)
 
 /* This is a normal way for reader to get new data converted from raw buffer to utf16 buffer.
    It won't attempt to shrink but will grow destination buffer if needed */
-static void reader_more(xmlreader *reader)
+static HRESULT reader_more(xmlreader *reader)
 {
     xmlreaderinput *readerinput = reader->input;
     encoded_buffer *src = &readerinput->buffer->encoded;
     encoded_buffer *dest = &readerinput->buffer->utf16;
     UINT cp = readerinput->buffer->code_page;
     int len, dest_len;
+    HRESULT hr;
     WCHAR *ptr;
 
     /* get some raw data from stream first */
-    readerinput_growraw(readerinput);
+    hr = readerinput_growraw(readerinput);
     len = readerinput_get_convlen(readerinput);
 
     /* just copy for UTF-16 case */
@@ -714,7 +732,7 @@ static void reader_more(xmlreader *reader)
         readerinput_grow(readerinput, len);
         memcpy(dest->data, src->cur, len);
         dest->written += len*sizeof(WCHAR);
-        return;
+        return hr;
     }
 
     dest_len = MultiByteToWideChar(cp, 0, src->cur, len, NULL, 0);
@@ -725,6 +743,8 @@ static void reader_more(xmlreader *reader)
     dest->written += dest_len*sizeof(WCHAR);
     /* get rid of processed data */
     readerinput_shrinkraw(readerinput, len);
+
+    return hr;
 }
 
 static inline WCHAR *reader_get_cur(xmlreader *reader)
@@ -1009,11 +1029,26 @@ static HRESULT reader_parse_comment(xmlreader *reader)
 {
     WCHAR *start, *ptr;
 
-    /* skip '<!--' */
-    reader_skipn(reader, 4);
-    reader_shrink(reader);
-    ptr = start = reader_get_cur(reader);
+    if (reader->save)
+    {
+        start = reader->save;
+        ptr = reader_get_cur(reader);
+        reader->save = NULL;
+    }
+    else
+    {
+        /* skip '<!--' */
+        reader_skipn(reader, 4);
+        reader_shrink(reader);
+        ptr = start = reader_get_cur(reader);
+        reader->nodetype = XmlNodeType_Comment;
+        reader_set_strvalue(reader, StringValue_LocalName, NULL);
+        reader_set_strvalue(reader, StringValue_QualifiedName, NULL);
+        reader_set_strvalue(reader, StringValue_Value, NULL);
+    }
 
+    /* will exit when there's no more data, it won't attempt to
+       read more from stream */
     while (*ptr)
     {
         if (ptr[0] == '-')
@@ -1037,19 +1072,16 @@ static HRESULT reader_parse_comment(xmlreader *reader)
                     return WC_E_COMMENT;
             }
             else
-            {
                 ptr++;
-                reader_more(reader);
-            }
         }
         else
         {
             reader_skipn(reader, 1);
-            ptr = reader_get_cur(reader);
+            ptr++;
         }
     }
 
-    return MX_E_INPUTEND;
+    return S_OK;
 }
 
 /* [2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF] */
@@ -1264,6 +1296,16 @@ static HRESULT reader_parse_whitespace(xmlreader *reader)
 static HRESULT reader_parse_misc(xmlreader *reader)
 {
     HRESULT hr = S_FALSE;
+
+    if (is_reader_pending(reader))
+    {
+        hr = reader_more(reader);
+        if (FAILED(hr)) return hr;
+
+        /* finish current node */
+        if (reader->nodetype == XmlNodeType_Comment)
+            return reader_parse_comment(reader);
+    }
 
     while (1)
     {
@@ -1786,6 +1828,7 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
     This->line = This->pos = 0;
     reader_clear_elements(This);
     This->depth = 0;
+    This->save = NULL;
 
     /* just reset current input */
     if (!input)
@@ -1982,6 +2025,20 @@ static HRESULT WINAPI xmlreader_GetValue(IXmlReader* iface, LPCWSTR *value, UINT
     xmlreader *This = impl_from_IXmlReader(iface);
 
     TRACE("(%p)->(%p %p)\n", This, value, len);
+
+    if ((This->nodetype == XmlNodeType_Comment && !This->strvalues[StringValue_Value].str) ||
+        is_reader_pending(This))
+    {
+        XmlNodeType type;
+        HRESULT hr;
+
+        hr = IXmlReader_Read(iface, &type);
+        if (FAILED(hr)) return hr;
+
+        /* return if still pending, partially read values are not reported */
+        if (is_reader_pending(This)) return E_PENDING;
+    }
+
     *value = This->strvalues[StringValue_Value].str;
     if (len) *len = This->strvalues[StringValue_Value].len;
     return S_OK;
@@ -2191,6 +2248,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
     reader->attr = NULL;
     list_init(&reader->elements);
     reader->depth = 0;
+    reader->save = NULL;
 
     for (i = 0; i < StringValue_Last; i++)
         reader->strvalues[i] = strval_empty;
@@ -2231,11 +2289,14 @@ HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
     readerinput->encoding = parse_encoding_name(encoding, -1);
     readerinput->hint = hint;
     readerinput->baseuri = readerinput_strdupW(readerinput, base_uri);
+    readerinput->pending = 0;
 
     hr = alloc_input_buffer(readerinput);
     if (hr != S_OK)
     {
+        readerinput_free(readerinput, readerinput->baseuri);
         readerinput_free(readerinput, readerinput);
+        if (imalloc) IMalloc_Release(imalloc);
         return hr;
     }
     IUnknown_QueryInterface(stream, &IID_IUnknown, (void**)&readerinput->input);
