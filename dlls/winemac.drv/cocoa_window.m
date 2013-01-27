@@ -158,6 +158,13 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         }
     }
 
+    /* By default, NSView will swallow right-clicks in an attempt to support contextual
+       menus.  We need to bypass that and allow the event to make it to the window. */
+    - (void) rightMouseDown:(NSEvent*)theEvent
+    {
+        [[self window] rightMouseDown:theEvent];
+    }
+
 @end
 
 
@@ -417,6 +424,22 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         [self checkTransparency];
     }
 
+    - (void) postMouseButtonEvent:(NSEvent *)theEvent pressed:(int)pressed
+    {
+        CGPoint pt = CGEventGetLocation([theEvent CGEvent]);
+        macdrv_event event;
+
+        event.type = MOUSE_BUTTON;
+        event.window = (macdrv_window)[self retain];
+        event.mouse_button.button = [theEvent buttonNumber];
+        event.mouse_button.pressed = pressed;
+        event.mouse_button.x = pt.x;
+        event.mouse_button.y = pt.y;
+        event.mouse_button.time_ms = [NSApp ticksForEventTime:[theEvent timestamp]];
+
+        [queue postEvent:&event];
+    }
+
 
     /*
      * ---------- NSWindow method overrides ----------
@@ -443,6 +466,18 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
             return [self isKeyWindow] || (!self.disabled && !self.noActivate);
         return [super validateMenuItem:menuItem];
     }
+
+
+    /*
+     * ---------- NSResponder method overrides ----------
+     */
+    - (void) mouseDown:(NSEvent *)theEvent { [self postMouseButtonEvent:theEvent pressed:1]; }
+    - (void) rightMouseDown:(NSEvent *)theEvent { [self mouseDown:theEvent]; }
+    - (void) otherMouseDown:(NSEvent *)theEvent { [self mouseDown:theEvent]; }
+
+    - (void) mouseUp:(NSEvent *)theEvent { [self postMouseButtonEvent:theEvent pressed:0]; }
+    - (void) rightMouseUp:(NSEvent *)theEvent { [self mouseUp:theEvent]; }
+    - (void) otherMouseUp:(NSEvent *)theEvent { [self mouseUp:theEvent]; }
 
 
     /*

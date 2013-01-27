@@ -122,6 +122,7 @@ extern void macdrv_free_displays(struct macdrv_display* displays) DECLSPEC_HIDDE
 
 /* event */
 enum {
+    MOUSE_BUTTON,
     WINDOW_CLOSE_REQUESTED,
     WINDOW_FRAME_CHANGED,
     NUM_EVENT_TYPES
@@ -133,6 +134,13 @@ typedef struct macdrv_event {
     int                 type;
     macdrv_window       window;
     union {
+        struct {
+            int             button;
+            int             pressed;
+            int             x;
+            int             y;
+            unsigned long   time_ms;
+        }                                           mouse_button;
         struct {
             CGRect frame;
         }                                           window_frame_changed;

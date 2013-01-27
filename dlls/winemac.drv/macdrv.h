@@ -120,4 +120,6 @@ extern void set_surface_use_alpha(struct window_surface *window_surface, BOOL us
 extern void macdrv_window_close_requested(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_frame_changed(HWND hwnd, CGRect frame) DECLSPEC_HIDDEN;
 
+extern void macdrv_mouse_button(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
+
 #endif  /* __WINE_MACDRV_H */

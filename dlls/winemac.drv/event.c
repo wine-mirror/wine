@@ -32,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(event);
 static const char *dbgstr_event(int type)
 {
     static const char * const event_names[] = {
+        "MOUSE_BUTTON",
         "WINDOW_CLOSE_REQUESTED",
         "WINDOW_FRAME_CHANGED",
     };
@@ -49,6 +50,9 @@ static macdrv_event_mask get_event_mask(DWORD mask)
     macdrv_event_mask event_mask = 0;
 
     if ((mask & QS_ALLINPUT) == QS_ALLINPUT) return -1;
+
+    if (mask & QS_MOUSEBUTTON)
+        event_mask |= event_mask_for_type(MOUSE_BUTTON);
 
     if (mask & QS_POSTMESSAGE)
     {
@@ -77,6 +81,9 @@ void macdrv_handle_event(macdrv_event *event)
 
     switch (event->type)
     {
+    case MOUSE_BUTTON:
+        macdrv_mouse_button(hwnd, event);
+        break;
     case WINDOW_CLOSE_REQUESTED:
         macdrv_window_close_requested(hwnd);
         break;
