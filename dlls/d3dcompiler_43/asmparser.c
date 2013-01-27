@@ -782,7 +782,7 @@ static void asmparser_srcreg_vs_1(struct asm_parser *This,
     check_legacy_srcmod(This, src->srcmod);
     check_abs_srcmod(This, src->srcmod);
     reg = map_oldvs_register(src);
-    memcpy(&instr->src[num], &reg, sizeof(reg));
+    instr->src[num] = reg;
 }
 
 static const struct allowed_reg_type vs_2_reg_allowed[] = {
@@ -816,7 +816,7 @@ static void asmparser_srcreg_vs_2(struct asm_parser *This,
     check_legacy_srcmod(This, src->srcmod);
     check_abs_srcmod(This, src->srcmod);
     reg = map_oldvs_register(src);
-    memcpy(&instr->src[num], &reg, sizeof(reg));
+    instr->src[num] = reg;
 }
 
 static const struct allowed_reg_type vs_3_reg_allowed[] = {
@@ -845,7 +845,7 @@ static void asmparser_srcreg_vs_3(struct asm_parser *This,
     }
     check_loop_swizzle(This, src);
     check_legacy_srcmod(This, src->srcmod);
-    memcpy(&instr->src[num], src, sizeof(*src));
+    instr->src[num] = *src;
 }
 
 static const struct allowed_reg_type ps_1_0123_reg_allowed[] = {
@@ -869,7 +869,7 @@ static void asmparser_srcreg_ps_1_0123(struct asm_parser *This,
     }
     check_abs_srcmod(This, src->srcmod);
     reg = map_oldps_register(src, FALSE);
-    memcpy(&instr->src[num], &reg, sizeof(reg));
+    instr->src[num] = reg;
 }
 
 static const struct allowed_reg_type ps_1_4_reg_allowed[] = {
@@ -893,7 +893,7 @@ static void asmparser_srcreg_ps_1_4(struct asm_parser *This,
     }
     check_abs_srcmod(This, src->srcmod);
     reg = map_oldps_register(src, TRUE);
-    memcpy(&instr->src[num], &reg, sizeof(reg));
+    instr->src[num] = reg;
 }
 
 static const struct allowed_reg_type ps_2_0_reg_allowed[] = {
@@ -923,7 +923,7 @@ static void asmparser_srcreg_ps_2(struct asm_parser *This,
     check_legacy_srcmod(This, src->srcmod);
     check_abs_srcmod(This, src->srcmod);
     reg = map_oldps_register(src, TRUE);
-    memcpy(&instr->src[num], &reg, sizeof(reg));
+    instr->src[num] = reg;
 }
 
 static const struct allowed_reg_type ps_2_x_reg_allowed[] = {
@@ -955,7 +955,7 @@ static void asmparser_srcreg_ps_2_x(struct asm_parser *This,
     check_legacy_srcmod(This, src->srcmod);
     check_abs_srcmod(This, src->srcmod);
     reg = map_oldps_register(src, TRUE);
-    memcpy(&instr->src[num], &reg, sizeof(reg));
+    instr->src[num] = reg;
 }
 
 static const struct allowed_reg_type ps_3_reg_allowed[] = {
@@ -985,7 +985,7 @@ static void asmparser_srcreg_ps_3(struct asm_parser *This,
     }
     check_loop_swizzle(This, src);
     check_legacy_srcmod(This, src->srcmod);
-    memcpy(&instr->src[num], src, sizeof(*src));
+    instr->src[num] = *src;
 }
 
 static void asmparser_dstreg_vs_1(struct asm_parser *This,
@@ -1002,7 +1002,7 @@ static void asmparser_dstreg_vs_1(struct asm_parser *This,
     check_ps_dstmod(This, instr->dstmod);
     check_shift_dstmod(This, instr->shift);
     reg = map_oldvs_register(dst);
-    memcpy(&instr->dst, &reg, sizeof(reg));
+    instr->dst = reg;
     instr->has_dst = TRUE;
 }
 
@@ -1020,7 +1020,7 @@ static void asmparser_dstreg_vs_2(struct asm_parser *This,
     check_ps_dstmod(This, instr->dstmod);
     check_shift_dstmod(This, instr->shift);
     reg = map_oldvs_register(dst);
-    memcpy(&instr->dst, &reg, sizeof(reg));
+    instr->dst = reg;
     instr->has_dst = TRUE;
 }
 
@@ -1035,7 +1035,7 @@ static void asmparser_dstreg_vs_3(struct asm_parser *This,
     }
     check_ps_dstmod(This, instr->dstmod);
     check_shift_dstmod(This, instr->shift);
-    memcpy(&instr->dst, dst, sizeof(*dst));
+    instr->dst = *dst;
     instr->has_dst = TRUE;
 }
 
@@ -1051,7 +1051,7 @@ static void asmparser_dstreg_ps_1_0123(struct asm_parser *This,
         set_parse_status(&This->status, PARSE_ERR);
     }
     reg = map_oldps_register(dst, FALSE);
-    memcpy(&instr->dst, &reg, sizeof(reg));
+    instr->dst = reg;
     instr->has_dst = TRUE;
 }
 
@@ -1067,7 +1067,7 @@ static void asmparser_dstreg_ps_1_4(struct asm_parser *This,
         set_parse_status(&This->status, PARSE_ERR);
     }
     reg = map_oldps_register(dst, TRUE);
-    memcpy(&instr->dst, &reg, sizeof(reg));
+    instr->dst = reg;
     instr->has_dst = TRUE;
 }
 
@@ -1084,7 +1084,7 @@ static void asmparser_dstreg_ps_2(struct asm_parser *This,
     }
     check_shift_dstmod(This, instr->shift);
     reg = map_oldps_register(dst, TRUE);
-    memcpy(&instr->dst, &reg, sizeof(reg));
+    instr->dst = reg;
     instr->has_dst = TRUE;
 }
 
@@ -1101,7 +1101,7 @@ static void asmparser_dstreg_ps_2_x(struct asm_parser *This,
     }
     check_shift_dstmod(This, instr->shift);
     reg = map_oldps_register(dst, TRUE);
-    memcpy(&instr->dst, &reg, sizeof(reg));
+    instr->dst = reg;
     instr->has_dst = TRUE;
 }
 
@@ -1115,7 +1115,7 @@ static void asmparser_dstreg_ps_3(struct asm_parser *This,
         set_parse_status(&This->status, PARSE_ERR);
     }
     check_shift_dstmod(This, instr->shift);
-    memcpy(&instr->dst, dst, sizeof(*dst));
+    instr->dst = *dst;
     instr->has_dst = TRUE;
 }
 
@@ -1125,7 +1125,7 @@ static void asmparser_predicate_supported(struct asm_parser *This,
     if(!This->shader) return;
     if(This->shader->num_instrs == 0) ERR("Predicate without an instruction\n");
     This->shader->instr[This->shader->num_instrs - 1]->has_predicate = TRUE;
-    memcpy(&This->shader->instr[This->shader->num_instrs - 1]->predicate, predicate, sizeof(*predicate));
+    This->shader->instr[This->shader->num_instrs - 1]->predicate = *predicate;
 }
 
 static void asmparser_predicate_unsupported(struct asm_parser *This,
