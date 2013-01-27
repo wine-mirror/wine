@@ -114,6 +114,8 @@ typedef struct
     unsigned int pending : 1;
 } xmlreaderinput;
 
+static const struct IUnknownVtbl xmlreaderinputvtbl;
+
 typedef struct
 {
     WCHAR *str;
@@ -1764,7 +1766,7 @@ static HRESULT WINAPI xmlreader_QueryInterface(IXmlReader *iface, REFIID riid, v
 {
     xmlreader *This = impl_from_IXmlReader(iface);
 
-    TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IXmlReader))
@@ -1774,6 +1776,7 @@ static HRESULT WINAPI xmlreader_QueryInterface(IXmlReader *iface, REFIID riid, v
     else
     {
         FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        *ppvObject = NULL;
         return E_NOINTERFACE;
     }
 
@@ -1814,6 +1817,7 @@ static ULONG WINAPI xmlreader_Release(IXmlReader *iface)
 static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
 {
     xmlreader *This = impl_from_IXmlReader(iface);
+    IXmlReaderInput *readerinput;
     HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, input);
@@ -1838,11 +1842,23 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
     }
 
     /* now try IXmlReaderInput, ISequentialStream, IStream */
-    hr = IUnknown_QueryInterface(input, &IID_IXmlReaderInput, (void**)&This->input);
-    if (hr != S_OK)
+    hr = IUnknown_QueryInterface(input, &IID_IXmlReaderInput, (void**)&readerinput);
+    if (hr == S_OK)
     {
-        IXmlReaderInput *readerinput;
+        if (readerinput->lpVtbl == &xmlreaderinputvtbl)
+            This->input = impl_from_IXmlReaderInput(readerinput);
+        else
+        {
+            ERR("got external IXmlReaderInput implementation: %p, vtbl=%p\n",
+                readerinput, readerinput->lpVtbl);
+            IUnknown_Release(readerinput);
+            return E_FAIL;
 
+        }
+    }
+
+    if (hr != S_OK || !readerinput)
+    {
         /* create IXmlReaderInput basing on supplied interface */
         hr = CreateXmlReaderInputWithEncodingName(input,
                                          NULL, NULL, FALSE, NULL, &readerinput);
@@ -2160,7 +2176,7 @@ static HRESULT WINAPI xmlreaderinput_QueryInterface(IXmlReaderInput *iface, REFI
 {
     xmlreaderinput *This = impl_from_IXmlReaderInput(iface);
 
-    TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
     if (IsEqualGUID(riid, &IID_IXmlReaderInput) ||
         IsEqualGUID(riid, &IID_IUnknown))
@@ -2170,6 +2186,7 @@ static HRESULT WINAPI xmlreaderinput_QueryInterface(IXmlReaderInput *iface, REFI
     else
     {
         WARN("interface %s not implemented\n", debugstr_guid(riid));
+        *ppvObject = NULL;
         return E_NOINTERFACE;
     }
 
@@ -2207,7 +2224,7 @@ static ULONG WINAPI xmlreaderinput_Release(IXmlReaderInput *iface)
     return ref;
 }
 
-static const struct IUnknownVtbl xmlreaderinput_vtbl =
+static const struct IUnknownVtbl xmlreaderinputvtbl =
 {
     xmlreaderinput_QueryInterface,
     xmlreaderinput_AddRef,
@@ -2281,7 +2298,7 @@ HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
         readerinput = heap_alloc(sizeof(*readerinput));
     if(!readerinput) return E_OUTOFMEMORY;
 
-    readerinput->IXmlReaderInput_iface.lpVtbl = &xmlreaderinput_vtbl;
+    readerinput->IXmlReaderInput_iface.lpVtbl = &xmlreaderinputvtbl;
     readerinput->ref = 1;
     readerinput->imalloc = imalloc;
     readerinput->stream = NULL;
