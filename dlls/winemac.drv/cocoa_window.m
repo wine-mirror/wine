@@ -556,6 +556,17 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         [self windowDidResize:notification];
     }
 
+    - (void)windowDidResignKey:(NSNotification *)notification
+    {
+        macdrv_event event;
+
+        if (causing_becomeKeyWindow) return;
+
+        event.type = WINDOW_LOST_FOCUS;
+        event.window = (macdrv_window)[self retain];
+        [queue postEvent:&event];
+    }
+
     - (void)windowDidResize:(NSNotification *)notification
     {
         macdrv_event event;

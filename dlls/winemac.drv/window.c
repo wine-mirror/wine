@@ -1453,3 +1453,19 @@ void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event)
     TRACE("win %p/%p rejecting focus\n", hwnd, event->window);
     macdrv_window_rejected_focus(event);
 }
+
+
+/***********************************************************************
+ *              macdrv_window_lost_focus
+ *
+ * Handler for WINDOW_LOST_FOCUS events.
+ */
+void macdrv_window_lost_focus(HWND hwnd, const macdrv_event *event)
+{
+    if (!hwnd) return;
+
+    TRACE("win %p/%p fg %p\n", hwnd, event->window, GetForegroundWindow());
+
+    if (hwnd == GetForegroundWindow())
+        SendMessageW(hwnd, WM_CANCELMODE, 0, 0);
+}
