@@ -45,6 +45,8 @@
     CGFloat colorKeyRed, colorKeyGreen, colorKeyBlue;
 
     BOOL usePerPixelAlpha;
+
+    BOOL causing_becomeKeyWindow;
 }
 
 @end

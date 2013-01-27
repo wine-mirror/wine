@@ -43,6 +43,9 @@ static CRITICAL_SECTION win_data_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 static CFMutableDictionaryRef win_datas;
 
 
+void CDECL macdrv_SetFocus(HWND hwnd);
+
+
 /***********************************************************************
  *              get_cocoa_window_features
  */
@@ -154,6 +157,12 @@ static void show_window(struct macdrv_win_data *data)
     TRACE("win %p/%p\n", data->hwnd, data->cocoa_window);
 
     data->on_screen = macdrv_order_cocoa_window(data->cocoa_window, NULL, NULL);
+    if (data->on_screen)
+    {
+        HWND hwndFocus = GetFocus();
+        if (hwndFocus && (data->hwnd == hwndFocus || IsChild(data->hwnd, hwndFocus)))
+            macdrv_SetFocus(hwndFocus);
+    }
 }
 
 
@@ -817,6 +826,31 @@ void CDECL macdrv_DestroyWindow(HWND hwnd)
     CFDictionaryRemoveValue(win_datas, hwnd);
     release_win_data(data);
     HeapFree(GetProcessHeap(), 0, data);
+}
+
+
+/*****************************************************************
+ *              SetFocus   (MACDRV.@)
+ *
+ * Set the Mac focus.
+ */
+void CDECL macdrv_SetFocus(HWND hwnd)
+{
+    struct macdrv_win_data *data;
+
+    TRACE("%p\n", hwnd);
+
+    if (!(hwnd = GetAncestor(hwnd, GA_ROOT))) return;
+    if (!(data = get_win_data(hwnd))) return;
+
+    if (data->cocoa_window)
+    {
+        /* Set Mac focus */
+        macdrv_give_cocoa_window_focus(data->cocoa_window);
+        data->on_screen = TRUE;
+    }
+
+    release_win_data(data);
 }
 
 

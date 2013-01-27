@@ -205,5 +205,6 @@ extern void macdrv_set_window_color_key(macdrv_window w, CGFloat keyRed, CGFloat
                                         CGFloat keyBlue) DECLSPEC_HIDDEN;
 extern void macdrv_clear_window_color_key(macdrv_window w) DECLSPEC_HIDDEN;
 extern void macdrv_window_use_per_pixel_alpha(macdrv_window w, int use_per_pixel_alpha) DECLSPEC_HIDDEN;
+extern void macdrv_give_cocoa_window_focus(macdrv_window w) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_MACDRV_COCOA_H */

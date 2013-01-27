@@ -440,14 +440,52 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         [queue postEvent:&event];
     }
 
+    - (void) makeFocused
+    {
+        NSArray* screens;
+
+        [NSApp transformProcessToForeground];
+
+        /* If a borderless window is offscreen, orderFront: won't move
+           it onscreen like it would for a titled window.  Do that ourselves. */
+        screens = [NSScreen screens];
+        if (!([self styleMask] & NSTitledWindowMask) && ![self isVisible] &&
+            !frame_intersects_screens([self frame], screens))
+        {
+            NSScreen* primaryScreen = [screens objectAtIndex:0];
+            NSRect frame = [primaryScreen frame];
+            [self setFrameTopLeftPoint:NSMakePoint(NSMinX(frame), NSMaxY(frame))];
+            frame = [self constrainFrameRect:[self frame] toScreen:primaryScreen];
+            [self setFrame:frame display:YES];
+        }
+
+        [self orderFront:nil];
+        causing_becomeKeyWindow = TRUE;
+        [self makeKeyWindow];
+        causing_becomeKeyWindow = FALSE;
+        if (latentParentWindow)
+        {
+            [latentParentWindow addChildWindow:self ordered:NSWindowAbove];
+            self.latentParentWindow = nil;
+        }
+        if (![self isExcludedFromWindowsMenu])
+            [NSApp addWindowsItem:self title:[self title] filename:NO];
+
+        /* Cocoa may adjust the frame when the window is ordered onto the screen.
+           Generate a frame-changed event just in case.  The back end will ignore
+           it if nothing actually changed. */
+        [self windowDidResize:nil];
+    }
+
 
     /*
      * ---------- NSWindow method overrides ----------
      */
     - (BOOL) canBecomeKeyWindow
     {
+        if (causing_becomeKeyWindow) return YES;
         if (self.disabled || self.noActivate) return NO;
-        return YES;
+        return [self isKeyWindow];
     }
 
     - (BOOL) canBecomeMainWindow
@@ -840,4 +878,20 @@ void macdrv_window_use_per_pixel_alpha(macdrv_window w, int use_per_pixel_alpha)
     });
 
     [pool release];
+}
+
+/***********************************************************************
+ *              macdrv_give_cocoa_window_focus
+ *
+ * Makes the Cocoa window "key" (gives it keyboard focus).  This also
+ * orders it front and, if its frame was not within the desktop bounds,
+ * Cocoa will typically move it on-screen.
+ */
+void macdrv_give_cocoa_window_focus(macdrv_window w)
+{
+    WineWindow* window = (WineWindow*)w;
+
+    OnMainThread(^{
+        [window makeFocused];
+    });
 }
