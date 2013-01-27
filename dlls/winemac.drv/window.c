@@ -950,6 +950,51 @@ void CDECL macdrv_SetWindowText(HWND hwnd, LPCWSTR text)
 
 
 /***********************************************************************
+ *              ShowWindow   (MACDRV.@)
+ */
+UINT CDECL macdrv_ShowWindow(HWND hwnd, INT cmd, RECT *rect, UINT swp)
+{
+    struct macdrv_thread_data *thread_data = macdrv_thread_data();
+    struct macdrv_win_data *data = get_win_data(hwnd);
+    CGRect frame;
+
+    if (!data || !data->cocoa_window) goto done;
+    if (IsRectEmpty(rect)) goto done;
+    if (GetWindowLongW(hwnd, GWL_STYLE) & WS_MINIMIZE)
+    {
+        if (rect->left != -32000 || rect->top != -32000)
+        {
+            OffsetRect(rect, -32000 - rect->left, -32000 - rect->top);
+            swp &= ~(SWP_NOMOVE | SWP_NOCLIENTMOVE);
+        }
+        goto done;
+    }
+    if (!data->on_screen) goto done;
+
+    /* only fetch the new rectangle if the ShowWindow was a result of an external event */
+
+    if (!thread_data->current_event || thread_data->current_event->window != data->cocoa_window)
+        goto done;
+
+    if (thread_data->current_event->type != WINDOW_FRAME_CHANGED)
+        goto done;
+
+    TRACE("win %p/%p cmd %d at %s flags %08x\n",
+          hwnd, data->cocoa_window, cmd, wine_dbgstr_rect(rect), swp);
+
+    macdrv_get_cocoa_window_frame(data->cocoa_window, &frame);
+    *rect = rect_from_cgrect(frame);
+    macdrv_mac_to_window_rect(data, rect);
+    TRACE("rect %s -> %s\n", wine_dbgstr_cgrect(frame), wine_dbgstr_rect(rect));
+    swp &= ~(SWP_NOMOVE | SWP_NOCLIENTMOVE | SWP_NOSIZE | SWP_NOCLIENTSIZE);
+
+done:
+    release_win_data(data);
+    return swp;
+}
+
+
+/***********************************************************************
  *              UpdateLayeredWindow   (MACDRV.@)
  */
 BOOL CDECL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
@@ -1148,11 +1193,14 @@ void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
                                    const RECT *visible_rect, const RECT *valid_rects,
                                    struct window_surface *surface)
 {
+    struct macdrv_thread_data *thread_data;
     struct macdrv_win_data *data;
     DWORD new_style = GetWindowLongW(hwnd, GWL_STYLE);
     RECT old_window_rect, old_whole_rect, old_client_rect;
 
     if (!(data = get_win_data(hwnd))) return;
+
+    thread_data = macdrv_thread_data();
 
     old_window_rect = data->window_rect;
     old_whole_rect  = data->whole_rect;
@@ -1224,8 +1272,14 @@ void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
             show_window(data);
     }
 
-    sync_window_position(data, swp_flags);
-    set_cocoa_window_properties(data);
+    /* check if we are currently processing an event relevant to this window */
+    if (!thread_data || !thread_data->current_event ||
+        thread_data->current_event->window != data->cocoa_window ||
+        thread_data->current_event->type != WINDOW_FRAME_CHANGED)
+    {
+        sync_window_position(data, swp_flags);
+        set_cocoa_window_properties(data);
+    }
 
 done:
     release_win_data(data);
@@ -1278,4 +1332,56 @@ void macdrv_window_close_requested(HWND hwnd)
 
         PostMessageW(hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
     }
+}
+
+
+/***********************************************************************
+ *              macdrv_window_frame_changed
+ *
+ * Handler for WINDOW_FRAME_CHANGED events.
+ */
+void macdrv_window_frame_changed(HWND hwnd, CGRect frame)
+{
+    struct macdrv_win_data *data;
+    RECT rect;
+    HWND parent;
+    UINT flags = SWP_NOACTIVATE | SWP_NOZORDER;
+    int width, height;
+
+    if (!hwnd) return;
+    if (!(data = get_win_data(hwnd))) return;
+    if (!data->on_screen) goto done;
+
+    /* Get geometry */
+
+    parent = GetAncestor(hwnd, GA_PARENT);
+
+    TRACE("win %p/%p new Cocoa frame %s\n", hwnd, data->cocoa_window, wine_dbgstr_cgrect(frame));
+
+    rect = rect_from_cgrect(frame);
+    macdrv_mac_to_window_rect(data, &rect);
+    MapWindowPoints(0, parent, (POINT *)&rect, 2);
+
+    width = rect.right - rect.left;
+    height = rect.bottom - rect.top;
+
+    if (data->window_rect.left == rect.left && data->window_rect.top == rect.top)
+        flags |= SWP_NOMOVE;
+    else
+        TRACE("%p moving from (%d,%d) to (%d,%d)\n", hwnd, data->window_rect.left,
+              data->window_rect.top, rect.left, rect.top);
+
+    if ((data->window_rect.right - data->window_rect.left == width &&
+         data->window_rect.bottom - data->window_rect.top == height) ||
+        (IsRectEmpty(&data->window_rect) && width <= 0 && height <= 0))
+        flags |= SWP_NOSIZE;
+    else
+        TRACE("%p resizing from (%dx%d) to (%dx%d)\n", hwnd, data->window_rect.right - data->window_rect.left,
+              data->window_rect.bottom - data->window_rect.top, width, height);
+
+done:
+    release_win_data(data);
+
+    if (!(flags & SWP_NOSIZE) || !(flags & SWP_NOMOVE))
+        SetWindowPos(hwnd, 0, rect.left, rect.top, width, height, flags);
 }

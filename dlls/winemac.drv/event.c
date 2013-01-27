@@ -33,6 +33,7 @@ static const char *dbgstr_event(int type)
 {
     static const char * const event_names[] = {
         "WINDOW_CLOSE_REQUESTED",
+        "WINDOW_FRAME_CHANGED",
     };
 
     if (0 <= type && type < NUM_EVENT_TYPES) return event_names[type];
@@ -50,7 +51,10 @@ static macdrv_event_mask get_event_mask(DWORD mask)
     if ((mask & QS_ALLINPUT) == QS_ALLINPUT) return -1;
 
     if (mask & QS_POSTMESSAGE)
+    {
         event_mask |= event_mask_for_type(WINDOW_CLOSE_REQUESTED);
+        event_mask |= event_mask_for_type(WINDOW_FRAME_CHANGED);
+    }
 
     return event_mask;
 }
@@ -75,6 +79,9 @@ void macdrv_handle_event(macdrv_event *event)
     {
     case WINDOW_CLOSE_REQUESTED:
         macdrv_window_close_requested(hwnd);
+        break;
+    case WINDOW_FRAME_CHANGED:
+        macdrv_window_frame_changed(hwnd, event->window_frame_changed.frame);
         break;
     default:
         TRACE("    ignoring\n");

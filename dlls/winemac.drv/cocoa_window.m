@@ -207,6 +207,10 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
 
         [window setContentView:contentView];
 
+        /* In case Cocoa adjusted the frame we tried to set, generate a frame-changed
+           event.  The back end will ignore it if nothing actually changed. */
+        [window windowDidResize:nil];
+
         return window;
     }
 
@@ -297,6 +301,11 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
                 self.latentParentWindow = nil;
             }
 
+            /* Cocoa may adjust the frame when the window is ordered onto the screen.
+               Generate a frame-changed event just in case.  The back end will ignore
+               it if nothing actually changed. */
+            [self windowDidResize:nil];
+
             if (![self isExcludedFromWindowsMenu])
                 [NSApp addWindowsItem:self title:[self title] filename:NO];
         }
@@ -340,6 +349,10 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
             else
                 [self setFrame:frame display:YES];
         }
+
+        /* In case Cocoa adjusted the frame we tried to set, generate a frame-changed
+           event.  The back end will ignore it if nothing actually changed. */
+        [self windowDidResize:nil];
 
         return on_screen;
     }
@@ -435,6 +448,28 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
     /*
      * ---------- NSWindowDelegate methods ----------
      */
+    - (void)windowDidMove:(NSNotification *)notification
+    {
+        [self windowDidResize:notification];
+    }
+
+    - (void)windowDidResize:(NSNotification *)notification
+    {
+        macdrv_event event;
+        NSRect frame = [self contentRectForFrameRect:[self frame]];
+
+        [[self class] flipRect:&frame];
+
+        /* Coalesce events by discarding any previous ones still in the queue. */
+        [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_FRAME_CHANGED)
+                               forWindow:self];
+
+        event.type = WINDOW_FRAME_CHANGED;
+        event.window = (macdrv_window)[self retain];
+        event.window_frame_changed.frame = NSRectToCGRect(frame);
+        [queue postEvent:&event];
+    }
+
     - (BOOL)windowShouldClose:(id)sender
     {
         macdrv_event event;
@@ -609,6 +644,24 @@ int macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_frame)
     });
 
     return on_screen;
+}
+
+/***********************************************************************
+ *              macdrv_get_cocoa_window_frame
+ *
+ * Gets the frame of a Cocoa window.
+ */
+void macdrv_get_cocoa_window_frame(macdrv_window w, CGRect* out_frame)
+{
+    WineWindow* window = (WineWindow*)w;
+
+    OnMainThread(^{
+        NSRect frame;
+
+        frame = [window contentRectForFrameRect:[window frame]];
+        [[window class] flipRect:&frame];
+        *out_frame = NSRectToCGRect(frame);
+    });
 }
 
 /***********************************************************************

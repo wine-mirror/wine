@@ -123,6 +123,7 @@ extern void macdrv_free_displays(struct macdrv_display* displays) DECLSPEC_HIDDE
 /* event */
 enum {
     WINDOW_CLOSE_REQUESTED,
+    WINDOW_FRAME_CHANGED,
     NUM_EVENT_TYPES
 };
 
@@ -131,6 +132,11 @@ typedef uint32_t macdrv_event_mask;
 typedef struct macdrv_event {
     int                 type;
     macdrv_window       window;
+    union {
+        struct {
+            CGRect frame;
+        }                                           window_frame_changed;
+    };
 } macdrv_event;
 
 static inline macdrv_event_mask event_mask_for_type(int type)
@@ -179,6 +185,7 @@ extern int macdrv_order_cocoa_window(macdrv_window w, macdrv_window prev,
         macdrv_window next) DECLSPEC_HIDDEN;
 extern void macdrv_hide_cocoa_window(macdrv_window w) DECLSPEC_HIDDEN;
 extern int macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_frame) DECLSPEC_HIDDEN;
+extern void macdrv_get_cocoa_window_frame(macdrv_window w, CGRect* out_frame) DECLSPEC_HIDDEN;
 extern void macdrv_set_cocoa_parent_window(macdrv_window w, macdrv_window parent) DECLSPEC_HIDDEN;
 extern void macdrv_set_window_surface(macdrv_window w, void *surface, pthread_mutex_t *mutex) DECLSPEC_HIDDEN;
 extern CGImageRef create_surface_image(void *window_surface, CGRect *rect, int copy_data) DECLSPEC_HIDDEN;
