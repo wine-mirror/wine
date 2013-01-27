@@ -809,6 +809,29 @@ static void wave_out_test_deviceOut(int device, double duration,
            "waveOutUnprepareHeader(%s): rc=%s\n",dev_name(device),
            wave_out_error(rc));
     }
+
+    ok(frags[0].dwFlags==(interactive ? WHDR_DONE : 0), "dwFlags(%d)=%x\n",device,frags[0].dwFlags);
+
+    frags[0].dwFlags |= WHDR_DONE;
+    rc=waveOutUnprepareHeader(wout, &frags[0], sizeof(frags[0]));
+    ok(rc==MMSYSERR_NOERROR, "waveOutUnprepareHeader(%d): rc=%s\n",device,wave_out_error(rc));
+    ok(frags[0].dwFlags==WHDR_DONE, "dwFlags(%d)=%x\n",device,frags[0].dwFlags);
+
+    frags[0].dwFlags |= WHDR_INQUEUE;
+    rc=waveOutPrepareHeader(wout, &frags[0], sizeof(frags[0]));
+    ok(rc==MMSYSERR_NOERROR, "waveOutPrepareHeader(%d): rc=%s\n",device,wave_out_error(rc));
+    ok(frags[0].dwFlags==WHDR_PREPARED, "dwFlags(%d)=%x\n",device,frags[0].dwFlags);
+
+    frags[0].dwFlags |= WHDR_INQUEUE;
+    rc=waveOutPrepareHeader(wout, &frags[0], sizeof(frags[0]));
+    ok(rc==MMSYSERR_NOERROR, "waveOutPrepareHeader(%d): rc=%s\n",device,wave_out_error(rc));
+    ok(frags[0].dwFlags==(WHDR_PREPARED|WHDR_INQUEUE), "dwFlags(%d)=%x\n",device,frags[0].dwFlags);
+
+    frags[0].dwFlags &= ~(WHDR_INQUEUE|WHDR_DONE);
+    rc=waveOutUnprepareHeader(wout, &frags[0], sizeof(frags[0]));
+    ok(rc==MMSYSERR_NOERROR, "waveOutUnprepareHeader(%d): rc=%s\n",device,wave_out_error(rc));
+    ok(frags[0].dwFlags==0, "dwFlags(%d)=%x\n",device,frags[0].dwFlags);
+
     rc=waveOutClose(wout);
     ok(rc==MMSYSERR_NOERROR,"waveOutClose(%s): rc=%s\n",dev_name(device),
        wave_out_error(rc));

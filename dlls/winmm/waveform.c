@@ -1517,7 +1517,7 @@ static LRESULT WINMM_PrepareHeader(HWAVE hwave, WAVEHDR *header)
     LeaveCriticalSection(&device->lock);
 
     header->dwFlags |= WHDR_PREPARED;
-    header->dwFlags &= ~WHDR_DONE;
+    header->dwFlags &= ~(WHDR_DONE|WHDR_INQUEUE); /* flags cleared since w2k */
 
     return MMSYSERR_NOERROR;
 }
@@ -1542,7 +1542,6 @@ static LRESULT WINMM_UnprepareHeader(HWAVE hwave, WAVEHDR *header)
     LeaveCriticalSection(&device->lock);
 
     header->dwFlags &= ~WHDR_PREPARED;
-    header->dwFlags |= WHDR_DONE;
 
     return MMSYSERR_NOERROR;
 }
@@ -2782,8 +2781,8 @@ UINT WINAPI waveOutPrepareHeader(HWAVEOUT hWaveOut,
     if(!lpWaveOutHdr || uSize < sizeof(WAVEHDR))
         return MMSYSERR_INVALPARAM;
 
-    if(lpWaveOutHdr->dwFlags & WHDR_INQUEUE)
-        return WAVERR_STILLPLAYING;
+    if(lpWaveOutHdr->dwFlags & WHDR_PREPARED)
+        return MMSYSERR_NOERROR;
 
     return WINMM_PrepareHeader((HWAVE)hWaveOut, lpWaveOutHdr);
 }
@@ -2798,12 +2797,12 @@ UINT WINAPI waveOutUnprepareHeader(HWAVEOUT hWaveOut,
 
     if(!lpWaveOutHdr || uSize < sizeof(WAVEHDR))
         return MMSYSERR_INVALPARAM;
-    
-    if(!(lpWaveOutHdr->dwFlags & WHDR_PREPARED))
-        return MMSYSERR_NOERROR;
 
     if(lpWaveOutHdr->dwFlags & WHDR_INQUEUE)
         return WAVERR_STILLPLAYING;
+
+    if(!(lpWaveOutHdr->dwFlags & WHDR_PREPARED))
+        return MMSYSERR_NOERROR;
 
     return WINMM_UnprepareHeader((HWAVE)hWaveOut, lpWaveOutHdr);
 }
@@ -3412,8 +3411,8 @@ UINT WINAPI waveInPrepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
     if(!lpWaveInHdr || uSize < sizeof(WAVEHDR))
         return MMSYSERR_INVALPARAM;
 
-    if(lpWaveInHdr->dwFlags & WHDR_INQUEUE)
-        return WAVERR_STILLPLAYING;
+    if(lpWaveInHdr->dwFlags & WHDR_PREPARED)
+        return MMSYSERR_NOERROR;
 
     return WINMM_PrepareHeader((HWAVE)hWaveIn, lpWaveInHdr);
 }
@@ -3429,11 +3428,11 @@ UINT WINAPI waveInUnprepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
     if(!lpWaveInHdr || uSize < sizeof(WAVEHDR))
         return MMSYSERR_INVALPARAM;
 
-    if(!(lpWaveInHdr->dwFlags & WHDR_PREPARED))
-        return MMSYSERR_NOERROR;
-
     if(lpWaveInHdr->dwFlags & WHDR_INQUEUE)
         return WAVERR_STILLPLAYING;
+
+    if(!(lpWaveInHdr->dwFlags & WHDR_PREPARED))
+        return MMSYSERR_NOERROR;
 
     return WINMM_UnprepareHeader((HWAVE)hWaveIn, lpWaveInHdr);
 }
