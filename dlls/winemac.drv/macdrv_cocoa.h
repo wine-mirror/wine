@@ -124,6 +124,7 @@ extern void macdrv_free_displays(struct macdrv_display* displays) DECLSPEC_HIDDE
 
 /* event */
 enum {
+    APP_DEACTIVATED,
     MOUSE_BUTTON,
     WINDOW_CLOSE_REQUESTED,
     WINDOW_FRAME_CHANGED,

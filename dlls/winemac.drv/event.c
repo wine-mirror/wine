@@ -32,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(event);
 static const char *dbgstr_event(int type)
 {
     static const char * const event_names[] = {
+        "APP_DEACTIVATED",
         "MOUSE_BUTTON",
         "WINDOW_CLOSE_REQUESTED",
         "WINDOW_FRAME_CHANGED",
@@ -58,6 +59,7 @@ static macdrv_event_mask get_event_mask(DWORD mask)
 
     if (mask & QS_POSTMESSAGE)
     {
+        event_mask |= event_mask_for_type(APP_DEACTIVATED);
         event_mask |= event_mask_for_type(WINDOW_CLOSE_REQUESTED);
         event_mask |= event_mask_for_type(WINDOW_FRAME_CHANGED);
         event_mask |= event_mask_for_type(WINDOW_GOT_FOCUS);
@@ -85,6 +87,9 @@ void macdrv_handle_event(macdrv_event *event)
 
     switch (event->type)
     {
+    case APP_DEACTIVATED:
+        macdrv_app_deactivated();
+        break;
     case MOUSE_BUTTON:
         macdrv_mouse_button(hwnd, event);
         break;

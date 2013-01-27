@@ -1469,3 +1469,18 @@ void macdrv_window_lost_focus(HWND hwnd, const macdrv_event *event)
     if (hwnd == GetForegroundWindow())
         SendMessageW(hwnd, WM_CANCELMODE, 0, 0);
 }
+
+
+/***********************************************************************
+ *              macdrv_app_deactivated
+ *
+ * Handler for APP_DEACTIVATED events.
+ */
+void macdrv_app_deactivated(void)
+{
+    if (GetActiveWindow() == GetForegroundWindow())
+    {
+        TRACE("setting fg to desktop\n");
+        SetForegroundWindow(GetDesktopWindow());
+    }
+}

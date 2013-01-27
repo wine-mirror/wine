@@ -179,7 +179,18 @@ int macdrv_err_on;
      */
     - (void)applicationDidResignActive:(NSNotification *)notification
     {
+        macdrv_event event;
+        WineEventQueue* queue;
+
         [self invalidateGotFocusEvents];
+
+        event.type = APP_DEACTIVATED;
+        event.window = NULL;
+
+        [eventQueuesLock lock];
+        for (queue in eventQueues)
+            [queue postEvent:&event];
+        [eventQueuesLock unlock];
     }
 
     - (void)applicationWillFinishLaunching:(NSNotification *)notification
