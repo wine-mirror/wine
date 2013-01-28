@@ -1307,8 +1307,19 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
         return E_FAIL;
     }
 
-    fmt->Format.nChannels = This->ai.max_channels;
-    fmt->Format.nSamplesPerSec = This->ai.max_rate;
+    /* some OSS drivers are buggy, so set reasonable defaults if
+     * the reported values seem wacky */
+    fmt->Format.nChannels = max(This->ai.max_channels, This->ai.min_channels);
+    if(fmt->Format.nChannels == 0 || fmt->Format.nChannels > 8)
+        fmt->Format.nChannels = 2;
+
+    if(This->ai.max_rate == 0)
+        fmt->Format.nSamplesPerSec = 44100;
+    else
+        fmt->Format.nSamplesPerSec = min(This->ai.max_rate, 44100);
+    if(fmt->Format.nSamplesPerSec < This->ai.min_rate)
+        fmt->Format.nSamplesPerSec = This->ai.min_rate;
+
     fmt->dwChannelMask = get_channel_mask(fmt->Format.nChannels);
 
     fmt->Format.nBlockAlign = (fmt->Format.wBitsPerSample *
