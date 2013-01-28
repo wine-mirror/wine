@@ -352,11 +352,9 @@ static HRESULT WINAPI wbem_services_GetObject(
 
     if (lFlags) FIXME("unsupported flags 0x%08x\n", lFlags);
 
-    if (!strObjectPath)
-    {
-        FIXME("no support for creating new classes\n");
-        return WBEM_E_FAILED;
-    }
+    if (!strObjectPath || !strObjectPath[0])
+        return create_class_object( NULL, NULL, 0, NULL, ppObject );
+
     return get_object( strObjectPath, ppObject );
 }
 

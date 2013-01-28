@@ -1015,8 +1015,8 @@ HRESULT create_class_object( const WCHAR *name, IEnumWbemClassObject *iter, UINT
 
     co->IWbemClassObject_iface.lpVtbl = &class_object_vtbl;
     co->refs  = 1;
-    co->name  = heap_strdupW( name );
-    if (!co->name)
+    if (!name) co->name = NULL;
+    else if (!(co->name = heap_strdupW( name )))
     {
         heap_free( co );
         return E_OUTOFMEMORY;
