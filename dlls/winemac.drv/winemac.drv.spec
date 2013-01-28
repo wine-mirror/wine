@@ -46,6 +46,7 @@
 @ cdecl WindowMessage(long long long long) macdrv_WindowMessage
 @ cdecl WindowPosChanged(long long long ptr ptr ptr ptr ptr) macdrv_WindowPosChanged
 @ cdecl WindowPosChanging(long long long ptr ptr ptr ptr) macdrv_WindowPosChanging
+@ cdecl SystemParametersInfo(long long ptr long) macdrv_SystemParametersInfo
 
 # System tray
 @ cdecl wine_notify_icon(long ptr)

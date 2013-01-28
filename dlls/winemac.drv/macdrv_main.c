@@ -22,12 +22,20 @@
 #include "config.h"
 
 #include <Security/AuthSession.h>
+#include <IOKit/pwr_mgt/IOPMLib.h>
 
 #include "macdrv.h"
+#include "winuser.h"
 #include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 
+#ifndef kIOPMAssertionTypePreventUserIdleDisplaySleep
+#define kIOPMAssertionTypePreventUserIdleDisplaySleep CFSTR("PreventUserIdleDisplaySleep")
+#endif
+#ifndef kCFCoreFoundationVersionNumber10_7
+#define kCFCoreFoundationVersionNumber10_7      635.00
+#endif
 
 DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
 
@@ -205,4 +213,68 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
         break;
     }
     return ret;
+}
+
+/***********************************************************************
+ *              SystemParametersInfo (MACDRV.@)
+ */
+BOOL CDECL macdrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, UINT flags )
+{
+    switch (action)
+    {
+    case SPI_GETSCREENSAVEACTIVE:
+        if (ptr_param)
+        {
+            CFDictionaryRef assertionStates;
+            IOReturn status = IOPMCopyAssertionsStatus(&assertionStates);
+            if (status == kIOReturnSuccess)
+            {
+                CFNumberRef count = CFDictionaryGetValue(assertionStates, kIOPMAssertionTypeNoDisplaySleep);
+                CFNumberRef count2 = CFDictionaryGetValue(assertionStates, kIOPMAssertionTypePreventUserIdleDisplaySleep);
+                long longCount = 0, longCount2 = 0;
+
+                if (count)
+                    CFNumberGetValue(count, kCFNumberLongType, &longCount);
+                if (count2)
+                    CFNumberGetValue(count2, kCFNumberLongType, &longCount2);
+
+                *(BOOL *)ptr_param = !longCount && !longCount2;
+                CFRelease(assertionStates);
+            }
+            else
+            {
+                WARN("Could not determine screen saver state, error code %d\n", status);
+                *(BOOL *)ptr_param = TRUE;
+            }
+            return TRUE;
+        }
+        break;
+
+    case SPI_SETSCREENSAVEACTIVE:
+        {
+            static IOPMAssertionID powerAssertion = kIOPMNullAssertionID;
+            if (int_param)
+            {
+                if (powerAssertion != kIOPMNullAssertionID)
+                {
+                    IOPMAssertionRelease(powerAssertion);
+                    powerAssertion = kIOPMNullAssertionID;
+                }
+            }
+            else if (powerAssertion == kIOPMNullAssertionID)
+            {
+                CFStringRef assertName;
+                /*Are we running Lion or later?*/
+                if (kCFCoreFoundationVersionNumber >= kCFCoreFoundationVersionNumber10_7)
+                    assertName = kIOPMAssertionTypePreventUserIdleDisplaySleep;
+                else
+                    assertName = kIOPMAssertionTypeNoDisplaySleep;
+                IOPMAssertionCreateWithName( assertName, kIOPMAssertionLevelOn,
+                                             CFSTR("Wine Process requesting no screen saver"),
+                                             &powerAssertion);
+            }
+        }
+        break;
+    }
+    return FALSE;
 }
