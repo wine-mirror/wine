@@ -884,11 +884,13 @@ static inline LRESULT notify_listview(const LISTVIEW_INFO *infoPtr, INT code, LP
     return notify_hdr(infoPtr, code, (LPNMHDR)plvnm);
 }
 
+/* Handles NM_DBLCLK, NM_CLICK, NM_RDBLCLK, NM_RCLICK. Only NM_RCLICK return value is used. */
 static BOOL notify_click(const LISTVIEW_INFO *infoPtr, INT code, const LVHITTESTINFO *lvht)
 {
     NMITEMACTIVATE nmia;
     LVITEMW item;
     HWND hwnd = infoPtr->hwndSelf;
+    LRESULT ret;
 
     TRACE("code=%d, lvht=%s\n", code, debuglvhittestinfo(lvht)); 
     ZeroMemory(&nmia, sizeof(nmia));
@@ -899,8 +901,8 @@ static BOOL notify_click(const LISTVIEW_INFO *infoPtr, INT code, const LVHITTEST
     item.iItem = lvht->iItem;
     item.iSubItem = 0;
     if (LISTVIEW_GetItemT(infoPtr, &item, TRUE)) nmia.lParam = item.lParam;
-    notify_hdr(infoPtr, code, (LPNMHDR)&nmia);
-    return IsWindow(hwnd);
+    ret = notify_hdr(infoPtr, code, (NMHDR*)&nmia);
+    return IsWindow(hwnd) && (code == NM_RCLICK ? !ret : TRUE);
 }
 
 static BOOL notify_deleteitem(const LISTVIEW_INFO *infoPtr, INT nItem)
