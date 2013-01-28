@@ -109,6 +109,13 @@ typedef [uuid(2cc2b33f-1174-4507-b8d9-5bc0eb37c197)]  struct TS_ATTRVAL
     VARIANT varValue;
 } TS_ATTRVAL;
 
+const DWORD TS_ATTR_FIND_BACKWARDS    = 0x0001;
+const DWORD TS_ATTR_FIND_WANT_OFFSET  = 0x0002;
+const DWORD TS_ATTR_FIND_UPDATESTART  = 0x0004;
+const DWORD TS_ATTR_FIND_WANT_VALUE   = 0x0008;
+const DWORD TS_ATTR_FIND_WANT_END     = 0x0010;
+const DWORD TS_ATTR_FIND_HIDDEN       = 0x0020;
+
 typedef [uuid(7899d7c4-5f07-493c-a89a-fac8e777f476)]  enum { TS_LC_CREATE, TS_LC_CHANGE, TS_LC_DESTROY } TsLayoutCode;
 typedef [uuid(1faf509e-44c1-458e-950a-38a96705a62b)]  DWORD TsViewCookie;
 
