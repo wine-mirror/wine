@@ -4930,23 +4930,32 @@ lend:
     return res;
 }
 
+typedef struct {
+    task_header_t hdr;
+    WCHAR *headers;
+    DWORD  headers_len;
+    void  *optional;
+    DWORD  optional_len;
+    DWORD  content_len;
+    BOOL   end_request;
+} send_request_task_t;
+
 /***********************************************************************
  *
  * Helper functions for the HttpSendRequest(Ex) functions
  *
  */
-static void AsyncHttpSendRequestProc(WORKREQUEST *workRequest)
+static void AsyncHttpSendRequestProc(task_header_t *hdr)
 {
-    struct WORKREQ_HTTPSENDREQUESTW const *req = &workRequest->u.HttpSendRequestW;
-    http_request_t *request = (http_request_t*) workRequest->hdr;
+    send_request_task_t *task = (send_request_task_t*)hdr;
+    http_request_t *request = (http_request_t*)task->hdr.hdr;
 
     TRACE("%p\n", request);
 
-    HTTP_HttpSendRequestW(request, req->lpszHeader,
-            req->dwHeaderLength, req->lpOptional, req->dwOptionalLength,
-            req->dwContentLength, req->bEndRequest);
+    HTTP_HttpSendRequestW(request, task->headers, task->headers_len, task->optional,
+            task->optional_len, task->content_len, task->end_request);
 
-    heap_free(req->lpszHeader);
+    heap_free(task->headers);
 }
 
 
@@ -5211,11 +5220,9 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
 
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST *task;
-        struct WORKREQ_HTTPSENDREQUESTW *req;
+        send_request_task_t *task;
 
         task = alloc_async_task(&request->hdr, AsyncHttpSendRequestProc, sizeof(*task));
-        req = &task->u.HttpSendRequestW;
         if (lpBuffersIn)
         {
             DWORD size = 0;
@@ -5227,31 +5234,28 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
                 else
                     size = lpBuffersIn->dwHeadersLength * sizeof(WCHAR);
 
-                req->lpszHeader = heap_alloc(size);
-                memcpy( req->lpszHeader, lpBuffersIn->lpcszHeader, size );
+                task->headers = heap_alloc(size);
+                memcpy(task->headers, lpBuffersIn->lpcszHeader, size);
             }
-            else req->lpszHeader = NULL;
+            else task->headers = NULL;
 
-            req->dwHeaderLength = size / sizeof(WCHAR);
-            req->lpOptional = lpBuffersIn->lpvBuffer;
-            req->dwOptionalLength = lpBuffersIn->dwBufferLength;
-            req->dwContentLength = lpBuffersIn->dwBufferTotal;
+            task->headers_len = size / sizeof(WCHAR);
+            task->optional = lpBuffersIn->lpvBuffer;
+            task->optional_len = lpBuffersIn->dwBufferLength;
+            task->content_len = lpBuffersIn->dwBufferTotal;
         }
         else
         {
-            req->lpszHeader = NULL;
-            req->dwHeaderLength = 0;
-            req->lpOptional = NULL;
-            req->dwOptionalLength = 0;
-            req->dwContentLength = 0;
+            task->headers = NULL;
+            task->headers_len = 0;
+            task->optional = NULL;
+            task->optional_len = 0;
+            task->content_len = 0;
         }
 
-        req->bEndRequest = FALSE;
+        task->end_request = FALSE;
 
-        INTERNET_AsyncCall(task);
-        /*
-         * This is from windows.
-         */
+        INTERNET_AsyncCall(&task->hdr);
         res = ERROR_IO_PENDING;
     }
     else
@@ -5317,11 +5321,9 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
 
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST *task;
-        struct WORKREQ_HTTPSENDREQUESTW *req;
+        send_request_task_t *task;
 
         task = alloc_async_task(&request->hdr, AsyncHttpSendRequestProc, sizeof(*task));
-        req = &task->u.HttpSendRequestW;
         if (lpszHeaders)
         {
             DWORD size;
@@ -5329,18 +5331,18 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
             if (dwHeaderLength == ~0u) size = (strlenW(lpszHeaders) + 1) * sizeof(WCHAR);
             else size = dwHeaderLength * sizeof(WCHAR);
 
-            req->lpszHeader = heap_alloc(size);
-            memcpy(req->lpszHeader, lpszHeaders, size);
+            task->headers = heap_alloc(size);
+            memcpy(task->headers, lpszHeaders, size);
         }
         else
-            req->lpszHeader = 0;
-        req->dwHeaderLength = dwHeaderLength;
-        req->lpOptional = lpOptional;
-        req->dwOptionalLength = dwOptionalLength;
-        req->dwContentLength = dwOptionalLength;
-        req->bEndRequest = TRUE;
+            task->headers = NULL;
+        task->headers_len = dwHeaderLength;
+        task->optional = lpOptional;
+        task->optional_len = dwOptionalLength;
+        task->content_len = dwOptionalLength;
+        task->end_request = TRUE;
 
-        INTERNET_AsyncCall(task);
+        INTERNET_AsyncCall(&task->hdr);
         res = ERROR_IO_PENDING;
     }
     else
