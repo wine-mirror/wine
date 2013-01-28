@@ -3327,7 +3327,7 @@ DECLARE_INTERFACE_(IDirect3DRMTexture2, IDirect3DRMTexture)
     STDMETHOD_(BOOL, GetDecalTransparency)(THIS) PURE;
     STDMETHOD_(D3DCOLOR, GetDecalTransparentColor)(THIS) PURE;
     /*** IDirect3DRMTexture2 methods ***/
-    STDMETHOD(InitFromImage)(THIS_ LPD3DRMIMAGE) PURE;
+    STDMETHOD(InitFromImage)(THIS_ D3DRMIMAGE *image) PURE;
     STDMETHOD(InitFromResource2)(THIS_ HMODULE hModule, LPCSTR /* LPCTSTR */ strName, LPCSTR /* LPCTSTR */ strType) PURE;
     STDMETHOD(GenerateMIPMap)(THIS_ DWORD) PURE;
 };
@@ -3450,7 +3450,7 @@ DECLARE_INTERFACE_(IDirect3DRMTexture3, IDirect3DRMVisual)
     STDMETHOD_(DWORD, GetDecalScale)(THIS) PURE;
     STDMETHOD_(BOOL, GetDecalTransparency)(THIS) PURE;
     STDMETHOD_(D3DCOLOR, GetDecalTransparentColor)(THIS) PURE;
-    STDMETHOD(InitFromImage)(THIS_ LPD3DRMIMAGE) PURE;
+    STDMETHOD(InitFromImage)(THIS_ D3DRMIMAGE *image) PURE;
     STDMETHOD(InitFromResource2)(THIS_ HMODULE hModule, LPCSTR /* LPCTSTR */ strName, LPCSTR /* LPCTSTR */ strType) PURE;
     STDMETHOD(GenerateMIPMap)(THIS_ DWORD) PURE;
     STDMETHOD(GetSurface)(THIS_ DWORD flags, IDirectDrawSurface **surface) PURE;

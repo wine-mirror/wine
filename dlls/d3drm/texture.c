@@ -346,7 +346,7 @@ static D3DCOLOR WINAPI IDirect3DRMTexture2Impl_GetDecalTransparentColor(IDirect3
 }
 
 /*** IDirect3DRMTexture2 methods ***/
-static HRESULT WINAPI IDirect3DRMTexture2Impl_InitFromImage(IDirect3DRMTexture2* iface, LPD3DRMIMAGE image)
+static HRESULT WINAPI IDirect3DRMTexture2Impl_InitFromImage(IDirect3DRMTexture2 *iface, D3DRMIMAGE *image)
 {
     IDirect3DRMTextureImpl *This = impl_from_IDirect3DRMTexture2(iface);
 
@@ -722,7 +722,7 @@ static D3DCOLOR WINAPI IDirect3DRMTexture3Impl_GetDecalTransparentColor(IDirect3
     return 0;
 }
 
-static HRESULT WINAPI IDirect3DRMTexture3Impl_InitFromImage(IDirect3DRMTexture3* iface, LPD3DRMIMAGE image)
+static HRESULT WINAPI IDirect3DRMTexture3Impl_InitFromImage(IDirect3DRMTexture3 *iface, D3DRMIMAGE *image)
 {
     IDirect3DRMTextureImpl *This = impl_from_IDirect3DRMTexture3(iface);
 

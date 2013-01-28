@@ -191,14 +191,14 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateAnimationSet(IDirect3DRM* iface, LPD
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateTexture(IDirect3DRM* iface, LPD3DRMIMAGE pImage,
-                                                    LPDIRECT3DRMTEXTURE * ppTexture)
+static HRESULT WINAPI IDirect3DRMImpl_CreateTexture(IDirect3DRM *iface,
+        D3DRMIMAGE *image, IDirect3DRMTexture **texture)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
 
-    FIXME("(%p/%p)->(%p,%p): partial stub\n", iface, This, pImage, ppTexture);
+    FIXME("(%p/%p)->(%p,%p): partial stub\n", iface, This, image, texture);
 
-    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture, (IUnknown**)ppTexture);
+    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture, (IUnknown **)texture);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateLight(IDirect3DRM* iface, D3DRMLIGHTTYPE type,
@@ -568,14 +568,14 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateAnimationSet(IDirect3DRM2* iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM2Impl_CreateTexture(IDirect3DRM2* iface, LPD3DRMIMAGE pImage,
-                                                     LPDIRECT3DRMTEXTURE2 * ppTexture)
+static HRESULT WINAPI IDirect3DRM2Impl_CreateTexture(IDirect3DRM2 *iface,
+        D3DRMIMAGE *image, IDirect3DRMTexture2 **texture)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
 
-    FIXME("(%p/%p)->(%p,%p): partial stub\n", iface, This, pImage, ppTexture);
+    FIXME("(%p/%p)->(%p,%p): partial stub\n", iface, This, image, texture);
 
-    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture2, (IUnknown**)ppTexture);
+    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture2, (IUnknown **)texture);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateLight(IDirect3DRM2* iface, D3DRMLIGHTTYPE type,
@@ -988,14 +988,14 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateAnimationSet(IDirect3DRM3* iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRM3Impl_CreateTexture(IDirect3DRM3* iface, LPD3DRMIMAGE Image,
-                                                     LPDIRECT3DRMTEXTURE3* Texture)
+static HRESULT WINAPI IDirect3DRM3Impl_CreateTexture(IDirect3DRM3 *iface,
+        D3DRMIMAGE *image, IDirect3DRMTexture3 **texture)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
 
-    FIXME("(%p/%p)->(%p,%p): partial stub\n", iface, This, Image, Texture);
+    FIXME("(%p/%p)->(%p,%p): partial stub\n", iface, This, image, texture);
 
-    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture3, (IUnknown**)Texture);
+    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture3, (IUnknown **)texture);
 }
 
 static HRESULT WINAPI IDirect3DRM3Impl_CreateLight(IDirect3DRM3* iface, D3DRMLIGHTTYPE type,
