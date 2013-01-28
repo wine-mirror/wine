@@ -441,16 +441,6 @@ struct WORKREQ_SENDCALLBACK
     DWORD     dwStatusInfoLength;
 };
 
-struct WORKREQ_INTERNETOPENURLW
-{
-    HINTERNET hInternet;
-    LPWSTR     lpszUrl;
-    LPWSTR     lpszHeaders;
-    DWORD     dwHeadersLength;
-    DWORD     dwFlags;
-    DWORD_PTR dwContext;
-};
-
 struct WORKREQ_HTTPREADFILEEX
 {
     void *buf;
@@ -480,7 +470,6 @@ typedef struct WORKREQ
         struct WORKREQ_FTPFINDNEXTW             FtpFindNextW;
         struct WORKREQ_HTTPENDREQUESTW          HttpEndRequestW;
         struct WORKREQ_SENDCALLBACK             SendCallback;
-        struct WORKREQ_INTERNETOPENURLW         InternetOpenUrlW;
         struct WORKREQ_HTTPREADFILEEX           HttpReadFileEx;
     } u;
 } WORKREQUEST, *LPWORKREQUEST;

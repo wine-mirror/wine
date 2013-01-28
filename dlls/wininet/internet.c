@@ -3497,17 +3497,25 @@ static HINTERNET INTERNET_InternetOpenUrlW(appinfo_t *hIC, LPCWSTR lpszUrl,
  * RETURNS
  *   handle of connection or NULL on failure
  */
-static void AsyncInternetOpenUrlProc(WORKREQUEST *workRequest)
+typedef struct {
+    task_header_t hdr;
+    WCHAR *url;
+    WCHAR *headers;
+    DWORD headers_len;
+    DWORD flags;
+    DWORD_PTR context;
+} open_url_task_t;
+
+static void AsyncInternetOpenUrlProc(task_header_t *hdr)
 {
-    struct WORKREQ_INTERNETOPENURLW const *req = &workRequest->u.InternetOpenUrlW;
-    appinfo_t *hIC = (appinfo_t*) workRequest->hdr;
+    open_url_task_t *task = (open_url_task_t*)hdr;
 
-    TRACE("%p\n", hIC);
+    TRACE("%p\n", task->hdr.hdr);
 
-    INTERNET_InternetOpenUrlW(hIC, req->lpszUrl,
-                              req->lpszHeaders, req->dwHeadersLength, req->dwFlags, req->dwContext);
-    heap_free(req->lpszUrl);
-    heap_free(req->lpszHeaders);
+    INTERNET_InternetOpenUrlW((appinfo_t*)task->hdr.hdr, task->url, task->headers,
+            task->headers_len, task->flags, task->context);
+    heap_free(task->url);
+    heap_free(task->headers);
 }
 
 HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
@@ -3536,19 +3544,17 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
     }
     
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC) {
-	WORKREQUEST *task;
-	struct WORKREQ_INTERNETOPENURLW *req;
+	open_url_task_t *task;
 
         task = alloc_async_task(&hIC->hdr, AsyncInternetOpenUrlProc, sizeof(*task));
-        req = &task->u.InternetOpenUrlW;
-        req->lpszUrl = heap_strdupW(lpszUrl);
-        req->lpszHeaders = heap_strdupW(lpszHeaders);
-	req->dwHeadersLength = dwHeadersLength;
-	req->dwFlags = dwFlags;
-	req->dwContext = dwContext;
+        task->url = heap_strdupW(lpszUrl);
+        task->headers = heap_strdupW(lpszHeaders);
+        task->headers_len = dwHeadersLength;
+        task->flags = dwFlags;
+        task->context = dwContext;
 	
-	INTERNET_AsyncCall(task);
-	SetLastError(ERROR_IO_PENDING);
+        INTERNET_AsyncCall(&task->hdr);
+        SetLastError(ERROR_IO_PENDING);
     } else {
 	ret = INTERNET_InternetOpenUrlW(hIC, lpszUrl, lpszHeaders, dwHeadersLength, dwFlags, dwContext);
     }
