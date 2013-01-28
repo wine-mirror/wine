@@ -793,7 +793,8 @@ static void release_font_collection(IDWriteFontCollection *iface)
 
 void release_system_fontcollection(void)
 {
-    release_font_collection(system_collection);
+    if (system_collection)
+        release_font_collection(system_collection);
 }
 
 HRESULT get_system_fontcollection(IDWriteFontCollection **collection)
