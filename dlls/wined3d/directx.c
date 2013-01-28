@@ -3526,12 +3526,6 @@ static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
     return FALSE;
 }
 
-/* Check if a texture format is supported on the given adapter */
-static BOOL CheckTextureCapability(const struct wined3d_adapter *adapter, const struct wined3d_format *format)
-{
-    return format->flags & WINED3DFMT_FLAG_TEXTURE;
-}
-
 static BOOL CheckSurfaceCapability(const struct wined3d_adapter *adapter,
         const struct wined3d_format *adapter_format,
         const struct wined3d_format *check_format, BOOL no3d)
@@ -3568,8 +3562,10 @@ static BOOL CheckSurfaceCapability(const struct wined3d_adapter *adapter,
         }
     }
 
-    /* All format that are supported for textures are supported for surfaces as well */
-    if (CheckTextureCapability(adapter, check_format)) return TRUE;
+    /* All formats that are supported for textures are supported for surfaces
+     * as well. */
+    if (check_format->flags & WINED3DFMT_FLAG_TEXTURE)
+        return TRUE;
     /* All depth stencil formats are supported on surfaces */
     if (CheckDepthStencilCapability(adapter, adapter_format, check_format)) return TRUE;
 
@@ -3630,7 +3626,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
                 return WINED3DERR_NOTAVAILABLE;
             }
 
-            if (!CheckTextureCapability(adapter, format))
+            if (!(format->flags & WINED3DFMT_FLAG_TEXTURE))
             {
                 TRACE("[FAILED] - Cube texture format not supported.\n");
                 return WINED3DERR_NOTAVAILABLE;
@@ -3789,7 +3785,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
                 return WINED3DERR_NOTAVAILABLE;
             }
 
-            if (!CheckTextureCapability(adapter, format))
+            if (!(format->flags & WINED3DFMT_FLAG_TEXTURE))
             {
                 TRACE("[FAILED] - Texture format not supported.\n");
                 return WINED3DERR_NOTAVAILABLE;
@@ -3926,7 +3922,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
                 return WINED3DERR_NOTAVAILABLE;
             }
 
-            if (!CheckTextureCapability(adapter, format))
+            if (!(format->flags & WINED3DFMT_FLAG_TEXTURE))
             {
                 TRACE("[FAILED] - Format not supported.\n");
                 return WINED3DERR_NOTAVAILABLE;
