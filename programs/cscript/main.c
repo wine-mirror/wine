@@ -44,8 +44,8 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
     GetSystemDirectoryW(app, MAX_PATH);
     strcatW(app, wscriptW);
     strcpyW(cmd, app);
-    strcatW(app, parbW);
-    strcatW(app, cmdline);
+    strcatW(cmd, parbW);
+    strcatW(cmd, cmdline);
 
     if (!CreateProcessW(app, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) return 1;
     WaitForSingleObject( pi.hProcess, INFINITE );
