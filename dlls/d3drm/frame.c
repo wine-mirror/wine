@@ -2531,8 +2531,8 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_GetSceneFogMethod(IDirect3DRMFrame3*
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_SetMaterialOverride(IDirect3DRMFrame3* iface,
-                                                                LPD3DRMMATERIALOVERRIDE override)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_SetMaterialOverride(IDirect3DRMFrame3 *iface,
+        D3DRMMATERIALOVERRIDE *override)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
 
@@ -2541,8 +2541,8 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_SetMaterialOverride(IDirect3DRMFrame
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMFrame3Impl_GetMaterialOverride(IDirect3DRMFrame3* iface,
-                                                                LPD3DRMMATERIALOVERRIDE override)
+static HRESULT WINAPI IDirect3DRMFrame3Impl_GetMaterialOverride(IDirect3DRMFrame3 *iface,
+        D3DRMMATERIALOVERRIDE *override)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
 
