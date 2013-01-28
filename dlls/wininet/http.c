@@ -2877,16 +2877,22 @@ static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DW
     return res;
 }
 
-static void AsyncReadFileExProc(WORKREQUEST *workRequest)
+typedef struct {
+    task_header_t hdr;
+    void *buf;
+    DWORD size;
+    DWORD *ret_read;
+} read_file_ex_task_t;
+
+static void AsyncReadFileExProc(task_header_t *hdr)
 {
-    struct WORKREQ_HTTPREADFILEEX const *data = &workRequest->u.HttpReadFileEx;
-    http_request_t *req = (http_request_t*)workRequest->hdr;
+    read_file_ex_task_t *task = (read_file_ex_task_t*)hdr;
+    http_request_t *req = (http_request_t*)task->hdr.hdr;
     DWORD res;
 
-    TRACE("INTERNETREADFILEEXW %p\n", workRequest->hdr);
+    TRACE("INTERNETREADFILEEXW %p\n", task->hdr.hdr);
 
-    res = HTTPREQ_Read(req, data->buf, data->size, data->ret_read, TRUE);
-
+    res = HTTPREQ_Read(req, task->buf, task->size, task->ret_read, TRUE);
     send_request_complete(req, res == ERROR_SUCCESS, res);
 }
 
@@ -2904,7 +2910,7 @@ static DWORD HTTPREQ_ReadFileEx(object_header_t *hdr, void *buf, DWORD size, DWO
 
     if (hdr->dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST *task;
+        read_file_ex_task_t *task;
 
         if (TryEnterCriticalSection( &req->read_section ))
         {
@@ -2918,11 +2924,11 @@ static DWORD HTTPREQ_ReadFileEx(object_header_t *hdr, void *buf, DWORD size, DWO
         }
 
         task = alloc_async_task(&req->hdr, AsyncReadFileExProc, sizeof(*task));
-        task->u.HttpReadFileEx.buf = buf;
-        task->u.HttpReadFileEx.size = size;
-        task->u.HttpReadFileEx.ret_read = ret_read;
+        task->buf = buf;
+        task->size = size;
+        task->ret_read = ret_read;
 
-        INTERNET_AsyncCall(task);
+        INTERNET_AsyncCall(&task->hdr);
 
         return ERROR_IO_PENDING;
     }

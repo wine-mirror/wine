@@ -441,13 +441,6 @@ struct WORKREQ_SENDCALLBACK
     DWORD     dwStatusInfoLength;
 };
 
-struct WORKREQ_HTTPREADFILEEX
-{
-    void *buf;
-    DWORD size;
-    DWORD *ret_read;
-};
-
 typedef struct WORKREQ task_header_t;
 typedef void (*async_task_proc_t)(task_header_t*);
 
@@ -470,7 +463,6 @@ typedef struct WORKREQ
         struct WORKREQ_FTPFINDNEXTW             FtpFindNextW;
         struct WORKREQ_HTTPENDREQUESTW          HttpEndRequestW;
         struct WORKREQ_SENDCALLBACK             SendCallback;
-        struct WORKREQ_HTTPREADFILEEX           HttpReadFileEx;
     } u;
 } WORKREQUEST, *LPWORKREQUEST;
 
