@@ -3429,16 +3429,6 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
     return WINED3D_OK;
 }
 
-/* Check if we support bumpmapping for a format */
-static BOOL CheckBumpMapCapability(const struct wined3d_adapter *adapter, const struct wined3d_format *format)
-{
-    /* Ask the fixed function pipeline implementation if it can deal
-     * with the conversion. If we've got a GL extension giving native
-     * support this will be an identity conversion. */
-    return (format->flags & WINED3DFMT_FLAG_BUMPMAP)
-            && adapter->fragment_pipe->color_fixup_supported(format->color_fixup);
-}
-
 /* Check if the given DisplayFormat + DepthStencilFormat combination is valid for the Adapter */
 static BOOL CheckDepthStencilCapability(const struct wined3d_adapter *adapter,
         const struct wined3d_format *display_format, const struct wined3d_format *ds_format)
@@ -3831,7 +3821,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
             if (usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP)
             {
-                if (!CheckBumpMapCapability(adapter, format))
+                if (!(format->flags & WINED3DFMT_FLAG_BUMPMAP))
                 {
                     TRACE("[FAILED] - No legacy bumpmap support.\n");
                     return WINED3DERR_NOTAVAILABLE;
