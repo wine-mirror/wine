@@ -288,8 +288,6 @@ char *find_tool( const char *name, const char * const *names )
     unsigned int i, len;
     struct stat st;
 
-    if (target_alias) return strmake( "%s-%s", target_alias, name );
-
     if (!dirs)
     {
         char *path;
@@ -322,6 +320,8 @@ char *find_tool( const char *name, const char * const *names )
     while (*names)
     {
         len = strlen(*names) + sizeof(EXEEXT) + 1;
+        if (target_alias)
+            len += strlen(target_alias) + 1;
         file = xmalloc( maxlen + len );
 
         for (i = 0; i < count; i++)
@@ -330,6 +330,12 @@ char *find_tool( const char *name, const char * const *names )
             p = file + strlen(file);
             if (p == file) *p++ = '.';
             if (p[-1] != '/') *p++ = '/';
+            if (target_alias)
+            {
+                strcpy( p, target_alias );
+                p += strlen(p);
+                *p++ = '-';
+            }
             strcpy( p, *names );
             strcat( p, EXEEXT );
 
@@ -338,21 +344,38 @@ char *find_tool( const char *name, const char * const *names )
         free( file );
         names++;
     }
-    return xstrdup( name );
+    return NULL;
 }
 
 struct strarray *get_as_command(void)
 {
+    static int as_is_clang = 0;
     struct strarray *args = strarray_init();
+
+    if (!as_command)
+    {
+        as_command = find_tool( "clang", NULL );
+        if (as_command) as_is_clang = 1;
+    }
 
     if (!as_command)
     {
         static const char * const commands[] = { "gas", "as", NULL };
         as_command = find_tool( "as", commands );
     }
+
+    if (!as_command)
+        fatal_error( "cannot find suitable assembler\n" );
+
     strarray_add_one( args, as_command );
 
-    if (force_pointer_size)
+    if (as_is_clang)
+    {
+        strarray_add( args, "-xassembler", "-c", NULL );
+        if (force_pointer_size)
+            strarray_add_one( args, (force_pointer_size == 8) ? "-m64" : "-m32" );
+    }
+    else if (force_pointer_size)
     {
         switch (target_platform)
         {
@@ -386,6 +409,10 @@ struct strarray *get_ld_command(void)
         static const char * const commands[] = { "ld", "gld", NULL };
         ld_command = find_tool( "ld", commands );
     }
+
+    if (!ld_command)
+        fatal_error( "cannot find suitable linker\n" );
+
     strarray_add_one( args, ld_command );
 
     if (force_pointer_size)
@@ -421,6 +448,9 @@ const char *get_nm_command(void)
         static const char * const commands[] = { "nm", "gnm", NULL };
         nm_command = find_tool( "nm", commands );
     }
+
+    if (!nm_command)
+        fatal_error( "cannot find suitable name lister\n" );
     return nm_command;
 }
 
