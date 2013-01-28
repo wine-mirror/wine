@@ -316,17 +316,15 @@ BOOL WINAPI FtpPutFileW(HINTERNET hConnect, LPCWSTR lpszLocalFile,
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST workRequest;
-        struct WORKREQ_FTPPUTFILEW *req = &workRequest.u.FtpPutFileW;
+        WORKREQUEST *task = alloc_async_task(&lpwfs->hdr, AsyncFtpPutFileProc, sizeof(*task));
+        struct WORKREQ_FTPPUTFILEW *req = &task->u.FtpPutFileW;
 
-        workRequest.asyncproc = AsyncFtpPutFileProc;
-        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req->lpszLocalFile = heap_strdupW(lpszLocalFile);
         req->lpszNewRemoteFile = heap_strdupW(lpszNewRemoteFile);
 	req->dwFlags = dwFlags;
 	req->dwContext = dwContext;
 
-	r = res_to_le(INTERNET_AsyncCall(&workRequest));
+	r = res_to_le(INTERNET_AsyncCall(task));
     }
     else
     {
@@ -488,15 +486,14 @@ BOOL WINAPI FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST workRequest;
+        WORKREQUEST *task;
         struct WORKREQ_FTPSETCURRENTDIRECTORYW *req;
 
-        workRequest.asyncproc = AsyncFtpSetCurrentDirectoryProc;
-        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
-        req = &workRequest.u.FtpSetCurrentDirectoryW;
+        task = alloc_async_task(&lpwfs->hdr, AsyncFtpSetCurrentDirectoryProc, sizeof(*task));
+        req = &task->u.FtpSetCurrentDirectoryW;
         req->lpszDirectory = heap_strdupW(lpszDirectory);
 
-	r = res_to_le(INTERNET_AsyncCall(&workRequest));
+	r = res_to_le(INTERNET_AsyncCall(task));
     }
     else
     {
@@ -638,15 +635,14 @@ BOOL WINAPI FtpCreateDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST workRequest;
+        WORKREQUEST *task;
         struct WORKREQ_FTPCREATEDIRECTORYW *req;
 
-        workRequest.asyncproc = AsyncFtpCreateDirectoryProc;
-        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
-        req = &workRequest.u.FtpCreateDirectoryW;
+        task = alloc_async_task(&lpwfs->hdr, AsyncFtpCreateDirectoryProc, sizeof(*task));
+        req = &task->u.FtpCreateDirectoryW;
         req->lpszDirectory = heap_strdupW(lpszDirectory);
 
-	r = res_to_le(INTERNET_AsyncCall(&workRequest));
+	r = res_to_le(INTERNET_AsyncCall(task));
     }
     else
     {
@@ -782,18 +778,17 @@ HINTERNET WINAPI FtpFindFirstFileW(HINTERNET hConnect,
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST workRequest;
+        WORKREQUEST *task;
         struct WORKREQ_FTPFINDFIRSTFILEW *req;
 
-        workRequest.asyncproc = AsyncFtpFindFirstFileProc;
-        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
-        req = &workRequest.u.FtpFindFirstFileW;
+        task = alloc_async_task(&lpwfs->hdr, AsyncFtpFindFirstFileProc, sizeof(*task));
+        req = &task->u.FtpFindFirstFileW;
         req->lpszSearchFile = (lpszSearchFile == NULL) ? NULL : heap_strdupW(lpszSearchFile);
 	req->lpFindFileData = lpFindFileData;
 	req->dwFlags = dwFlags;
 	req->dwContext= dwContext;
 
-	INTERNET_AsyncCall(&workRequest);
+	INTERNET_AsyncCall(task);
 	r = NULL;
     }
     else
@@ -998,16 +993,15 @@ BOOL WINAPI FtpGetCurrentDirectoryW(HINTERNET hFtpSession, LPWSTR lpszCurrentDir
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST workRequest;
+        WORKREQUEST *task;
         struct WORKREQ_FTPGETCURRENTDIRECTORYW *req;
 
-        workRequest.asyncproc = AsyncFtpGetCurrentDirectoryProc;
-        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
-        req = &workRequest.u.FtpGetCurrentDirectoryW;
+        task = alloc_async_task(&lpwfs->hdr, AsyncFtpGetCurrentDirectoryProc, sizeof(*task));
+        req = &task->u.FtpGetCurrentDirectoryW;
 	req->lpszDirectory = lpszCurrentDirectory;
 	req->lpdwDirectory = lpdwCurrentDirectory;
 
-	r = res_to_le(INTERNET_AsyncCall(&workRequest));
+	r = res_to_le(INTERNET_AsyncCall(task));
     }
     else
     {
@@ -1271,14 +1265,12 @@ static DWORD FTPFILE_QueryDataAvailable(object_header_t *hdr, DWORD *available, 
 
         retval = recv(file->nDataSocket, &byte, 1, MSG_PEEK);
         if(retval > 0) {
-            WORKREQUEST workRequest;
+            task_header_t *task;
+
+            task = alloc_async_task(&file->hdr, FTPFILE_AsyncQueryDataAvailableProc, sizeof(*task));
+            INTERNET_AsyncCall(task);
 
             *available = 0;
-            workRequest.asyncproc = FTPFILE_AsyncQueryDataAvailableProc;
-            workRequest.hdr = WININET_AddRef( &file->hdr );
-
-            INTERNET_AsyncCall(&workRequest);
-
             return ERROR_IO_PENDING;
         }
     }
@@ -1512,18 +1504,17 @@ HINTERNET WINAPI FtpOpenFileW(HINTERNET hFtpSession,
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST workRequest;
+        WORKREQUEST *task;
         struct WORKREQ_FTPOPENFILEW *req;
 
-        workRequest.asyncproc = AsyncFtpOpenFileProc;
-        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
-        req = &workRequest.u.FtpOpenFileW;
+        task = alloc_async_task(&lpwfs->hdr, AsyncFtpOpenFileProc, sizeof(*task));
+        req = &task->u.FtpOpenFileW;
 	req->lpszFilename = heap_strdupW(lpszFileName);
 	req->dwAccess = fdwAccess;
 	req->dwFlags = dwFlags;
 	req->dwContext = dwContext;
 
-	INTERNET_AsyncCall(&workRequest);
+	INTERNET_AsyncCall(task);
 	r = NULL;
     }
     else
@@ -1633,12 +1624,11 @@ BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lps
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST workRequest;
+        WORKREQUEST *task;
         struct WORKREQ_FTPGETFILEW *req;
 
-        workRequest.asyncproc = AsyncFtpGetFileProc;
-        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
-        req = &workRequest.u.FtpGetFileW;
+        task = alloc_async_task(&lpwfs->hdr, AsyncFtpGetFileProc, sizeof(*task));
+        req = &task->u.FtpGetFileW;
         req->lpszRemoteFile = heap_strdupW(lpszRemoteFile);
         req->lpszNewFile = heap_strdupW(lpszNewFile);
 	req->dwLocalFlagsAttribute = dwLocalFlagsAttribute;
@@ -1646,7 +1636,7 @@ BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lps
 	req->dwFlags = dwInternetFlags;
 	req->dwContext = dwContext;
 
-	r = res_to_le(INTERNET_AsyncCall(&workRequest));
+	r = res_to_le(INTERNET_AsyncCall(task));
     }
     else
     {
@@ -1827,15 +1817,14 @@ BOOL WINAPI FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName)
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST workRequest;
+        WORKREQUEST *task;
         struct WORKREQ_FTPDELETEFILEW *req;
 
-        workRequest.asyncproc = AsyncFtpDeleteFileProc;
-        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
-        req = &workRequest.u.FtpDeleteFileW;
+        task = alloc_async_task(&lpwfs->hdr, AsyncFtpDeleteFileProc, sizeof(*task));
+        req = &task->u.FtpDeleteFileW;
         req->lpszFilename = heap_strdupW(lpszFileName);
 
-	r = res_to_le(INTERNET_AsyncCall(&workRequest));
+	r = res_to_le(INTERNET_AsyncCall(task));
     }
     else
     {
@@ -1972,15 +1961,14 @@ BOOL WINAPI FtpRemoveDirectoryW(HINTERNET hFtpSession, LPCWSTR lpszDirectory)
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST workRequest;
+        WORKREQUEST *task;
         struct WORKREQ_FTPREMOVEDIRECTORYW *req;
 
-        workRequest.asyncproc = AsyncFtpRemoveDirectoryProc;
-        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
-        req = &workRequest.u.FtpRemoveDirectoryW;
+        task = alloc_async_task(&lpwfs->hdr, AsyncFtpRemoveDirectoryProc, sizeof(*task));
+        req = &task->u.FtpRemoveDirectoryW;
         req->lpszDirectory = heap_strdupW(lpszDirectory);
 
-	r = res_to_le(INTERNET_AsyncCall(&workRequest));
+	r = res_to_le(INTERNET_AsyncCall(task));
     }
     else
     {
@@ -2122,16 +2110,15 @@ BOOL WINAPI FtpRenameFileW(HINTERNET hFtpSession, LPCWSTR lpszSrc, LPCWSTR lpszD
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST workRequest;
+        WORKREQUEST *task;
         struct WORKREQ_FTPRENAMEFILEW *req;
 
-        workRequest.asyncproc = AsyncFtpRenameFileProc;
-        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
-        req = &workRequest.u.FtpRenameFileW;
+        task = alloc_async_task(&lpwfs->hdr, AsyncFtpRenameFileProc, sizeof(*task));
+        req = &task->u.FtpRenameFileW;
         req->lpszSrcFile = heap_strdupW(lpszSrc);
         req->lpszDestFile = heap_strdupW(lpszDest);
 
-	r = res_to_le(INTERNET_AsyncCall(&workRequest));
+	r = res_to_le(INTERNET_AsyncCall(task));
     }
     else
     {
@@ -3447,15 +3434,14 @@ static DWORD FTPFINDNEXT_FindNextFileW(object_header_t *hdr, void *data)
 
     if (find->lpFtpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST workRequest;
+        WORKREQUEST *task;
         struct WORKREQ_FTPFINDNEXTW *req;
 
-        workRequest.asyncproc = FTPFINDNEXT_AsyncFindNextFileProc;
-        workRequest.hdr = WININET_AddRef( &find->hdr );
-        req = &workRequest.u.FtpFindNextW;
+        task = alloc_async_task(&find->hdr, FTPFINDNEXT_AsyncFindNextFileProc, sizeof(*task));
+        req = &task->u.FtpFindNextW;
         req->lpFindFileData = data;
 
-	INTERNET_AsyncCall(&workRequest);
+	INTERNET_AsyncCall(task);
 
         return ERROR_SUCCESS;
     }

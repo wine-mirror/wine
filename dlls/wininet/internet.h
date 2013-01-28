@@ -468,9 +468,12 @@ struct WORKREQ_HTTPREADFILEEX
     DWORD *ret_read;
 };
 
+typedef struct WORKREQ task_header_t;
+typedef void (*async_task_proc_t)(task_header_t*);
+
 typedef struct WORKREQ
 {
-    void (*asyncproc)(struct WORKREQ*);
+    async_task_proc_t proc;
     object_header_t *hdr;
 
     union {
@@ -491,8 +494,9 @@ typedef struct WORKREQ
         struct WORKREQ_INTERNETOPENURLW         InternetOpenUrlW;
         struct WORKREQ_HTTPREADFILEEX           HttpReadFileEx;
     } u;
-
 } WORKREQUEST, *LPWORKREQUEST;
+
+void *alloc_async_task(object_header_t*,async_task_proc_t,size_t) DECLSPEC_HIDDEN;
 
 void *alloc_object(object_header_t*,const object_vtbl_t*,size_t) DECLSPEC_HIDDEN;
 object_header_t *get_handle_object( HINTERNET hinternet ) DECLSPEC_HIDDEN;

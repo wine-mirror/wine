@@ -385,7 +385,7 @@ void SendAsyncCallback(object_header_t *hdr, DWORD_PTR dwContext,
     
     if (hdr->dwFlags & INTERNET_FLAG_ASYNC)
     {
-	WORKREQUEST workRequest;
+	WORKREQUEST *task;
 	struct WORKREQ_SENDCALLBACK *req;
 	void *lpvStatusInfo_copy = lpvStatusInfo;
 
@@ -395,15 +395,14 @@ void SendAsyncCallback(object_header_t *hdr, DWORD_PTR dwContext,
 	    memcpy(lpvStatusInfo_copy, lpvStatusInfo, dwStatusInfoLength);
 	}
 
-	workRequest.asyncproc = SendAsyncCallbackProc;
-	workRequest.hdr = WININET_AddRef( hdr );
-	req = &workRequest.u.SendCallback;
+        task = alloc_async_task(hdr, SendAsyncCallbackProc, sizeof(*task));
+	req = &task->u.SendCallback;
 	req->dwContext = dwContext;
 	req->dwInternetStatus = dwInternetStatus;
 	req->lpvStatusInfo = lpvStatusInfo_copy;
 	req->dwStatusInfoLength = dwStatusInfoLength;
 	
-	INTERNET_AsyncCall(&workRequest);
+	INTERNET_AsyncCall(task);
     }
     else
 	INTERNET_SendCallback(hdr, dwContext, dwInternetStatus,

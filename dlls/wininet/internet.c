@@ -3536,22 +3536,18 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
     }
     
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC) {
-	WORKREQUEST workRequest;
+	WORKREQUEST *task;
 	struct WORKREQ_INTERNETOPENURLW *req;
 
-	workRequest.asyncproc = AsyncInternetOpenUrlProc;
-	workRequest.hdr = WININET_AddRef( &hIC->hdr );
-        req = &workRequest.u.InternetOpenUrlW;
+        task = alloc_async_task(&hIC->hdr, AsyncInternetOpenUrlProc, sizeof(*task));
+        req = &task->u.InternetOpenUrlW;
         req->lpszUrl = heap_strdupW(lpszUrl);
         req->lpszHeaders = heap_strdupW(lpszHeaders);
 	req->dwHeadersLength = dwHeadersLength;
 	req->dwFlags = dwFlags;
 	req->dwContext = dwContext;
 	
-	INTERNET_AsyncCall(&workRequest);
-	/*
-	 * This is from windows.
-	 */
+	INTERNET_AsyncCall(task);
 	SetLastError(ERROR_IO_PENDING);
     } else {
 	ret = INTERNET_InternetOpenUrlW(hIC, lpszUrl, lpszHeaders, dwHeadersLength, dwFlags, dwContext);
@@ -3676,16 +3672,13 @@ DWORD INTERNET_GetLastError(void)
  */
 static DWORD CALLBACK INTERNET_WorkerThreadFunc(LPVOID lpvParam)
 {
-    LPWORKREQUEST lpRequest = lpvParam;
-    WORKREQUEST workRequest;
+    task_header_t *task = lpvParam;
 
     TRACE("\n");
 
-    workRequest = *lpRequest;
-    heap_free(lpRequest);
-
-    workRequest.asyncproc(&workRequest);
-    WININET_Release( workRequest.hdr );
+    task->proc(task);
+    WININET_Release(task->hdr);
+    heap_free(task);
 
     if (g_dwTlsErrIndex != TLS_OUT_OF_INDEXES)
     {
@@ -3695,6 +3688,18 @@ static DWORD CALLBACK INTERNET_WorkerThreadFunc(LPVOID lpvParam)
     return TRUE;
 }
 
+void *alloc_async_task(object_header_t *hdr, async_task_proc_t proc, size_t size)
+{
+    task_header_t *task;
+
+    task = heap_alloc(size);
+    if(!task)
+        return NULL;
+
+    task->hdr = WININET_AddRef(hdr);
+    task->proc = proc;
+    return task;
+}
 
 /***********************************************************************
  *           INTERNET_AsyncCall (internal)
@@ -3707,20 +3712,13 @@ static DWORD CALLBACK INTERNET_WorkerThreadFunc(LPVOID lpvParam)
 DWORD INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest)
 {
     BOOL bSuccess;
-    LPWORKREQUEST lpNewRequest;
 
     TRACE("\n");
 
-    lpNewRequest = heap_alloc(sizeof(WORKREQUEST));
-    if (!lpNewRequest)
-        return ERROR_OUTOFMEMORY;
-
-    *lpNewRequest = *lpWorkRequest;
-
-    bSuccess = QueueUserWorkItem(INTERNET_WorkerThreadFunc, lpNewRequest, WT_EXECUTELONGFUNCTION);
+    bSuccess = QueueUserWorkItem(INTERNET_WorkerThreadFunc, lpWorkRequest, WT_EXECUTELONGFUNCTION);
     if (!bSuccess)
     {
-        heap_free(lpNewRequest);
+        heap_free(lpWorkRequest);
         return ERROR_INTERNET_ASYNC_THREAD_FAILED;
     }
     return ERROR_SUCCESS;
