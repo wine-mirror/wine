@@ -2526,29 +2526,6 @@ const char *debug_glerror(GLenum error) {
     }
 }
 
-const char *debug_d3dbasis(enum wined3d_basis_type basis)
-{
-    switch (basis)
-    {
-        case WINED3D_BASIS_BEZIER:      return "WINED3D_BASIS_BEZIER";
-        case WINED3D_BASIS_BSPLINE:     return "WINED3D_BASIS_BSPLINE";
-        case WINED3D_BASIS_INTERPOLATE: return "WINED3D_BASIS_INTERPOLATE";
-        default:                        return "unrecognized";
-    }
-}
-
-const char *debug_d3ddegree(enum wined3d_degree_type degree)
-{
-    switch (degree)
-    {
-        case WINED3D_DEGREE_LINEAR:     return "WINED3D_DEGREE_LINEAR";
-        case WINED3D_DEGREE_QUADRATIC:  return "WINED3D_DEGREE_QUADRATIC";
-        case WINED3D_DEGREE_CUBIC:      return "WINED3D_DEGREE_CUBIC";
-        case WINED3D_DEGREE_QUINTIC:    return "WINED3D_DEGREE_QUINTIC";
-        default:                        return "unrecognized";
-    }
-}
-
 static const char *debug_fixup_channel_source(enum fixup_channel_source source)
 {
     switch(source)

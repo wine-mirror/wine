@@ -2495,8 +2495,6 @@ const char *debug_d3dtstype(enum wined3d_transform_state tstype) DECLSPEC_HIDDEN
 const char *debug_d3dpool(enum wined3d_pool pool) DECLSPEC_HIDDEN;
 const char *debug_fbostatus(GLenum status) DECLSPEC_HIDDEN;
 const char *debug_glerror(GLenum error) DECLSPEC_HIDDEN;
-const char *debug_d3dbasis(enum wined3d_basis_type basis) DECLSPEC_HIDDEN;
-const char *debug_d3ddegree(enum wined3d_degree_type order) DECLSPEC_HIDDEN;
 const char *debug_d3dtop(enum wined3d_texture_op d3dtop) DECLSPEC_HIDDEN;
 void dump_color_fixup_desc(struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
 const char *debug_surflocation(DWORD flag) DECLSPEC_HIDDEN;
