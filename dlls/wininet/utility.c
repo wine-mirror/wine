@@ -356,18 +356,24 @@ VOID INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR dwContext,
         heap_free(lpvNewInfo);
 }
 
-static void SendAsyncCallbackProc(WORKREQUEST *workRequest)
+typedef struct {
+    task_header_t hdr;
+    DWORD_PTR context;
+    DWORD     status;
+    LPVOID    status_info;
+    DWORD     status_info_len;
+} send_callback_task_t;
+
+static void SendAsyncCallbackProc(task_header_t *hdr)
 {
-    struct WORKREQ_SENDCALLBACK const *req = &workRequest->u.SendCallback;
+    send_callback_task_t *task = (send_callback_task_t*)hdr;
 
-    TRACE("%p\n", workRequest->hdr);
+    TRACE("%p\n", task->hdr.hdr);
 
-    INTERNET_SendCallback(workRequest->hdr,
-                          req->dwContext, req->dwInternetStatus, req->lpvStatusInfo,
-                          req->dwStatusInfoLength);
+    INTERNET_SendCallback(task->hdr.hdr, task->context, task->status, task->status_info, task->status_info_len);
 
     /* And frees the copy of the status info */
-    heap_free(req->lpvStatusInfo);
+    heap_free(task->status_info);
 }
 
 void SendAsyncCallback(object_header_t *hdr, DWORD_PTR dwContext,
@@ -385,24 +391,22 @@ void SendAsyncCallback(object_header_t *hdr, DWORD_PTR dwContext,
     
     if (hdr->dwFlags & INTERNET_FLAG_ASYNC)
     {
-	WORKREQUEST *task;
-	struct WORKREQ_SENDCALLBACK *req;
-	void *lpvStatusInfo_copy = lpvStatusInfo;
+        send_callback_task_t *task;
+        void *lpvStatusInfo_copy = lpvStatusInfo;
 
-	if (lpvStatusInfo)
-	{
-	    lpvStatusInfo_copy = heap_alloc(dwStatusInfoLength);
-	    memcpy(lpvStatusInfo_copy, lpvStatusInfo, dwStatusInfoLength);
-	}
+        if (lpvStatusInfo)
+        {
+            lpvStatusInfo_copy = heap_alloc(dwStatusInfoLength);
+            memcpy(lpvStatusInfo_copy, lpvStatusInfo, dwStatusInfoLength);
+        }
 
         task = alloc_async_task(hdr, SendAsyncCallbackProc, sizeof(*task));
-	req = &task->u.SendCallback;
-	req->dwContext = dwContext;
-	req->dwInternetStatus = dwInternetStatus;
-	req->lpvStatusInfo = lpvStatusInfo_copy;
-	req->dwStatusInfoLength = dwStatusInfoLength;
+        task->context = dwContext;
+        task->status = dwInternetStatus;
+        task->status_info = lpvStatusInfo_copy;
+        task->status_info_len = dwStatusInfoLength;
 	
-	INTERNET_AsyncCall(task);
+        INTERNET_AsyncCall(&task->hdr);
     }
     else
 	INTERNET_SendCallback(hdr, dwContext, dwInternetStatus,
