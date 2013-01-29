@@ -595,6 +595,29 @@ static BOOL msvcrt_alloc_buffer(MSVCRT_FILE* file)
     return TRUE;
 }
 
+/* INTERNAL: Allocate temporary buffer for stdout and stderr */
+static BOOL add_std_buffer(MSVCRT_FILE *file)
+{
+    static char buffers[2][MSVCRT_BUFSIZ];
+
+    if((file->_file!=MSVCRT_STDOUT_FILENO && file->_file!=MSVCRT_STDERR_FILENO)
+            || !MSVCRT__isatty(file->_file) || file->_bufsiz)
+        return FALSE;
+
+    file->_ptr = file->_base = buffers[file->_file == MSVCRT_STDOUT_FILENO ? 0 : 1];
+    file->_bufsiz = file->_cnt = MSVCRT_BUFSIZ;
+    return TRUE;
+}
+
+/* INTERNAL: Removes temporary buffer from stdout or stderr */
+/* Only call this function when add_std_buffer returned TRUE */
+static void remove_std_buffer(MSVCRT_FILE *file)
+{
+    msvcrt_flush_buffer(file);
+    file->_ptr = file->_base = NULL;
+    file->_bufsiz = file->_cnt = 0;
+}
+
 /* INTERNAL: Convert integer to base32 string (0-9a-v), 0 becomes "" */
 static int msvcrt_int_to_base32(int num, char *str)
 {
@@ -3911,6 +3934,7 @@ int CDECL MSVCRT_fputs(const char *s, MSVCRT_FILE* file)
 int CDECL MSVCRT_fputws(const MSVCRT_wchar_t *s, MSVCRT_FILE* file)
 {
     MSVCRT_size_t i, len = strlenW(s);
+    BOOL tmp_buf;
     int ret;
 
     MSVCRT__lock_file(file);
@@ -3919,13 +3943,17 @@ int CDECL MSVCRT_fputws(const MSVCRT_wchar_t *s, MSVCRT_FILE* file)
         MSVCRT__unlock_file(file);
         return ret;
     }
+
+    tmp_buf = add_std_buffer(file);
     for (i=0; i<len; i++) {
         if(MSVCRT_fputwc(s[i], file) == MSVCRT_WEOF) {
+            if(tmp_buf) remove_std_buffer(file);
             MSVCRT__unlock_file(file);
             return MSVCRT_WEOF;
         }
     }
 
+    if(tmp_buf) remove_std_buffer(file);
     MSVCRT__unlock_file(file);
     return 0;
 }
@@ -4271,10 +4299,13 @@ static int puts_clbk_file_w(void *file, int len, const MSVCRT_wchar_t *str)
  */
 int CDECL MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, __ms_va_list valist)
 {
+    BOOL tmp_buf;
     int ret;
 
     MSVCRT__lock_file(file);
+    tmp_buf = add_std_buffer(file);
     ret = pf_printf_a(puts_clbk_file_a, file, format, NULL, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
+    if(tmp_buf) remove_std_buffer(file);
     MSVCRT__unlock_file(file);
 
     return ret;
@@ -4285,12 +4316,15 @@ int CDECL MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, __ms_va_list va
  */
 int CDECL MSVCRT_vfprintf_s(MSVCRT_FILE* file, const char *format, __ms_va_list valist)
 {
+    BOOL tmp_buf;
     int ret;
 
     if(!MSVCRT_CHECK_PMT(file != NULL)) return -1;
 
     MSVCRT__lock_file(file);
+    tmp_buf = add_std_buffer(file);
     ret = pf_printf_a(puts_clbk_file_a, file, format, NULL, FALSE, TRUE, arg_clbk_valist, NULL, &valist);
+    if(tmp_buf) remove_std_buffer(file);
     MSVCRT__unlock_file(file);
 
     return ret;
@@ -4301,10 +4335,13 @@ int CDECL MSVCRT_vfprintf_s(MSVCRT_FILE* file, const char *format, __ms_va_list 
  */
 int CDECL MSVCRT_vfwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __ms_va_list valist)
 {
+    BOOL tmp_buf;
     int ret;
 
     MSVCRT__lock_file(file);
+    tmp_buf = add_std_buffer(file);
     ret = pf_printf_w(puts_clbk_file_w, file, format, NULL, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
+    if(tmp_buf) remove_std_buffer(file);
     MSVCRT__unlock_file(file);
 
     return ret;
@@ -4315,12 +4352,15 @@ int CDECL MSVCRT_vfwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __ms
  */
 int CDECL MSVCRT_vfwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __ms_va_list valist)
 {
+    BOOL tmp_buf;
     int ret;
 
     if (!MSVCRT_CHECK_PMT( file != NULL )) return -1;
 
     MSVCRT__lock_file(file);
+    tmp_buf = add_std_buffer(file);
     ret = pf_printf_w(puts_clbk_file_w, file, format, NULL, FALSE, TRUE, arg_clbk_valist, NULL, &valist);
+    if(tmp_buf) remove_std_buffer(file);
     MSVCRT__unlock_file(file);
 
     return ret;
@@ -4332,12 +4372,15 @@ int CDECL MSVCRT_vfwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __
 int CDECL MSVCRT__vfwprintf_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format,
         MSVCRT__locale_t locale, __ms_va_list valist)
 {
+    BOOL tmp_buf;
     int ret;
 
     if (!MSVCRT_CHECK_PMT( file != NULL )) return -1;
 
     MSVCRT__lock_file(file);
+    tmp_buf = add_std_buffer(file);
     ret = pf_printf_w(puts_clbk_file_w, file, format, locale, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
+    if(tmp_buf) remove_std_buffer(file);
     MSVCRT__unlock_file(file);
 
     return ret;
