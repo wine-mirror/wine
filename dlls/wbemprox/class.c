@@ -123,7 +123,7 @@ static HRESULT WINAPI enum_class_object_Next(
     if (lTimeout != WBEM_INFINITE) FIXME("timeout not supported\n");
 
     *puReturned = 0;
-    if (ec->index + uCount > view->count) return WBEM_S_FALSE;
+    if (ec->index >= view->count) return WBEM_S_FALSE;
 
     hr = create_class_object( view->table->name, iface, ec->index, NULL, apObjects );
     if (hr != S_OK) return hr;
