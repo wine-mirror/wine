@@ -474,7 +474,7 @@ static DWORD WINAPI thread_proc(PVOID arg)
             BINDSTATUS_FINDINGRESOURCE, wszWineHQSite);
     ok(hres == S_OK, "ReportProgress failed: %08x\n", hres);
     if(!no_callback) {
-        WaitForSingleObject(complete_event, INFINITE);
+        ok( WaitForSingleObject(complete_event, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
         if(bind_to_object)
             CHECK_CALLED(Obj_OnProgress_FINDINGRESOURCE);
         else
@@ -491,7 +491,7 @@ static DWORD WINAPI thread_proc(PVOID arg)
             BINDSTATUS_CONNECTING, wszWineHQIP);
     ok(hres == S_OK, "ReportProgress failed: %08x\n", hres);
     if(!no_callback) {
-        WaitForSingleObject(complete_event, INFINITE);
+        ok( WaitForSingleObject(complete_event, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
         if(bind_to_object)
             CHECK_CALLED(Obj_OnProgress_CONNECTING);
         else
@@ -508,7 +508,7 @@ static DWORD WINAPI thread_proc(PVOID arg)
             BINDSTATUS_SENDINGREQUEST, NULL);
     ok(hres == S_OK, "ReportProgress failed: %08x\n", hres);
     if(!no_callback) {
-        WaitForSingleObject(complete_event, INFINITE);
+        ok( WaitForSingleObject(complete_event, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
         if(bind_to_object)
             CHECK_CALLED(Obj_OnProgress_SENDINGREQUEST);
         else
@@ -522,7 +522,7 @@ static DWORD WINAPI thread_proc(PVOID arg)
             SET_EXPECT(OnProgress_REDIRECTING);
         hres = IInternetProtocolSink_ReportProgress(protocol_sink, BINDSTATUS_REDIRECTING, winetest_data_urlW);
         ok(hres == S_OK, "ReportProgress(BINDSTATUS_REFIRECTING) failed: %08x\n", hres);
-        WaitForSingleObject(complete_event, INFINITE);
+        ok( WaitForSingleObject(complete_event, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
         if(bind_to_object)
             CHECK_CALLED(Obj_OnProgress_REDIRECTING);
         else
@@ -535,7 +535,7 @@ static DWORD WINAPI thread_proc(PVOID arg)
     prot_state = 1;
     hres = IInternetProtocolSink_Switch(protocol_sink, &protocoldata);
     ok(hres == S_OK, "Switch failed: %08x\n", hres);
-    WaitForSingleObject(complete_event, INFINITE);
+    ok( WaitForSingleObject(complete_event, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
 
     CHECK_CALLED(Continue);
     CHECK_CALLED(Read);
@@ -563,7 +563,7 @@ static DWORD WINAPI thread_proc(PVOID arg)
     prot_state = 2;
     hres = IInternetProtocolSink_Switch(protocol_sink, &protocoldata);
     ok(hres == S_OK, "Switch failed: %08x\n", hres);
-    WaitForSingleObject(complete_event, INFINITE);
+    ok( WaitForSingleObject(complete_event, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
     CHECK_CALLED(Continue);
     if(test_abort) {
         CHECK_CALLED(OnProgress_DOWNLOADINGDATA);
@@ -582,7 +582,7 @@ static DWORD WINAPI thread_proc(PVOID arg)
     prot_state = 2;
     hres = IInternetProtocolSink_Switch(protocol_sink, &protocoldata);
     ok(hres == S_OK, "Switch failed: %08x\n", hres);
-    WaitForSingleObject(complete_event, INFINITE);
+    ok( WaitForSingleObject(complete_event, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
     CHECK_CALLED(Continue);
     CHECK_CALLED(Read);
     if(!no_callback) {
@@ -594,7 +594,7 @@ static DWORD WINAPI thread_proc(PVOID arg)
     prot_state = 3;
     hres = IInternetProtocolSink_Switch(protocol_sink, &protocoldata);
     ok(hres == S_OK, "Switch failed: %08x\n", hres);
-    WaitForSingleObject(complete_event, INFINITE);
+    ok( WaitForSingleObject(complete_event, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
     CHECK_CALLED(Continue);
     CHECK_CALLED(Read);
     if(!no_callback) {
@@ -1947,7 +1947,7 @@ static HRESULT WINAPI statusclb_OnStopBinding(IBindStatusCallbackEx *iface, HRES
     if((test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST) && emulate_protocol) {
         SetEvent(complete_event);
         if(iface != &objbsc)
-            WaitForSingleObject(complete_event2, INFINITE);
+            ok( WaitForSingleObject(complete_event2, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
     }
 
     return S_OK;
@@ -3008,7 +3008,7 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
         ok(hres == MK_S_ASYNCHRONOUS, "IMoniker_BindToStorage failed: %08x\n", hres);
     else if(no_callback) {
         if(emulate_protocol)
-            WaitForSingleObject(complete_event2, INFINITE);
+            ok( WaitForSingleObject(complete_event2, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
         ok(hres == S_OK, "IMoniker_BindToStorage failed: %08x\n", hres);
         ok(unk != NULL, "unk == NULL\n");
     }else if(!(bindf & BINDF_ASYNCHRONOUS) && tymed == TYMED_FILE) {

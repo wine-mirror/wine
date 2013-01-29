@@ -668,12 +668,12 @@ static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOL
 
     if(binding_test) {
         SetEvent(event_complete);
-        WaitForSingleObject(event_complete2, INFINITE);
+        ok( WaitForSingleObject(event_complete2, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
         return S_OK;
     }if(direct_read) {
         continue_protdata = *pProtocolData;
         SetEvent(event_continue);
-        WaitForSingleObject(event_continue_done, INFINITE);
+        ok( WaitForSingleObject(event_continue_done, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
     }else {
         call_continue(pProtocolData);
         SetEvent(event_complete);
@@ -2935,7 +2935,7 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
         if(direct_read) {
             SET_EXPECT(Switch);
             while(wait_for_switch) {
-                WaitForSingleObject(event_continue, INFINITE);
+                ok( WaitForSingleObject(event_continue, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
                 CHECK_CALLED(Switch); /* Set in ReportData */
                 call_continue(&continue_protdata);
                 SetEvent(event_continue_done);
@@ -2945,7 +2945,7 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
             ok((hres == E_PENDING && cb==0) ||
                (hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
 
-            WaitForSingleObject(event_complete, INFINITE);
+            ok( WaitForSingleObject(event_complete, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
             if(bindf & BINDF_FROMURLMON)
                 CHECK_CALLED(Switch);
             else
@@ -2963,7 +2963,7 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
                     hres = IInternetProtocol_Read(async_protocol, buf, 1, &cb);
                     ok((hres == E_PENDING && cb==0) ||
                        (hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
-                    WaitForSingleObject(event_complete, INFINITE);
+                    ok( WaitForSingleObject(event_complete, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
                     if(bindf & BINDF_FROMURLMON)
                         CHECK_CALLED(Switch);
                     else
@@ -3139,12 +3139,16 @@ static void test_ftp_protocol(void)
     ok((hres == E_PENDING && cb==0) ||
        (hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
 
-    WaitForSingleObject(event_complete, INFINITE);
+    ok( WaitForSingleObject(event_complete, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
 
     while(1) {
         hres = IInternetProtocol_Read(async_protocol, buf, sizeof(buf), &cb);
         if(hres == E_PENDING)
-            WaitForSingleObject(event_complete, INFINITE);
+        {
+            DWORD ret = WaitForSingleObject(event_complete, 90000);
+            ok( ret == WAIT_OBJECT_0, "wait timed out\n" );
+            if (ret != WAIT_OBJECT_0) break;
+        }
         else
             if(cb == 0) break;
     }
@@ -3522,7 +3526,7 @@ static void test_binding(int prot, DWORD grf_pi, DWORD test_flags)
 
     if(prot == HTTP_TEST || prot == HTTPS_TEST) {
         while(prot_state < 4) {
-            WaitForSingleObject(event_complete, INFINITE);
+            ok( WaitForSingleObject(event_complete, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
             if(mimefilter_test && filtered_protocol) {
                 SET_EXPECT(Continue);
                 IInternetProtocol_Continue(filtered_protocol, pdata);
@@ -3547,7 +3551,7 @@ static void test_binding(int prot, DWORD grf_pi, DWORD test_flags)
         }
         if(direct_read)
             CHECK_CALLED(ReportData); /* Set in ReportResult */
-        WaitForSingleObject(event_complete, INFINITE);
+        ok( WaitForSingleObject(event_complete, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
     }else {
         if(mimefilter_test)
             SET_EXPECT(MimeFilter_LockRequest);
