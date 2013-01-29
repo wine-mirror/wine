@@ -427,12 +427,6 @@ struct WORKREQ_FTPFINDNEXTW
     LPWIN32_FIND_DATAW lpFindFileData;
 };
 
-struct WORKREQ_HTTPENDREQUESTW
-{
-    DWORD     dwFlags;
-    DWORD_PTR dwContext;
-};
-
 struct WORKREQ_SENDCALLBACK
 {
     DWORD_PTR dwContext;
@@ -461,7 +455,6 @@ typedef struct WORKREQ
         struct WORKREQ_FTPREMOVEDIRECTORYW      FtpRemoveDirectoryW;
         struct WORKREQ_FTPRENAMEFILEW           FtpRenameFileW;
         struct WORKREQ_FTPFINDNEXTW             FtpFindNextW;
-        struct WORKREQ_HTTPENDREQUESTW          HttpEndRequestW;
         struct WORKREQ_SENDCALLBACK             SendCallback;
     } u;
 } WORKREQUEST, *LPWORKREQUEST;

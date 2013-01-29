@@ -5065,14 +5065,20 @@ BOOL WINAPI HttpEndRequestA(HINTERNET hRequest,
     return HttpEndRequestW(hRequest, NULL, dwFlags, dwContext);
 }
 
-static void AsyncHttpEndRequestProc(WORKREQUEST *work)
+typedef struct {
+    task_header_t hdr;
+    DWORD flags;
+    DWORD context;
+} end_request_task_t;
+
+static void AsyncHttpEndRequestProc(task_header_t *hdr)
 {
-    struct WORKREQ_HTTPENDREQUESTW const *req = &work->u.HttpEndRequestW;
-    http_request_t *request = (http_request_t*)work->hdr;
+    end_request_task_t *task = (end_request_task_t*)hdr;
+    http_request_t *req = (http_request_t*)task->hdr.hdr;
 
-    TRACE("%p\n", request);
+    TRACE("%p\n", req);
 
-    HTTP_HttpEndRequestW(request, req->dwFlags, req->dwContext);
+    HTTP_HttpEndRequestW(req, task->flags, task->context);
 }
 
 /***********************************************************************
@@ -5112,15 +5118,13 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
 
     if (request->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST *task;
-        struct WORKREQ_HTTPENDREQUESTW *work_endrequest;
+        end_request_task_t *task;
 
         task = alloc_async_task(&request->hdr, AsyncHttpEndRequestProc, sizeof(*task));
-        work_endrequest = &task->u.HttpEndRequestW;
-        work_endrequest->dwFlags = dwFlags;
-        work_endrequest->dwContext = dwContext;
+        task->flags = dwFlags;
+        task->context = dwContext;
 
-        INTERNET_AsyncCall(task);
+        INTERNET_AsyncCall(&task->hdr);
         res = ERROR_IO_PENDING;
     }
     else
