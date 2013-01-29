@@ -1791,9 +1791,9 @@ static void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
     ok (hr == S_OK, "ScriptGetCMap should return S_OK not (%08x)\n", hr);
     ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
     ok(pwOutGlyphs3[0] == pwOutGlyphs2[0], "glyph incorrectly altered\n");
-    ok(pwOutGlyphs3[1] == pwOutGlyphs2[1], "glyph incorreclty altered\n");
-    ok(pwOutGlyphs3[2] == pwOutGlyphs2[2], "glyph incorreclty altered\n");
-    ok(pwOutGlyphs3[3] == pwOutGlyphs2[3], "glyph incorreclty altered\n");
+    ok(pwOutGlyphs3[1] == pwOutGlyphs2[1], "glyph incorrectly altered\n");
+    ok(pwOutGlyphs3[2] == pwOutGlyphs2[2], "glyph incorrectly altered\n");
+    ok(pwOutGlyphs3[3] == pwOutGlyphs2[3], "glyph incorrectly altered\n");
     ok(pwOutGlyphs3[4] == pwOutGlyphs2[4], "glyph not mirrored correctly\n");
     ok(pwOutGlyphs3[5] == pwOutGlyphs2[5], "glyph not mirrored correctly\n");
     ok(pwOutGlyphs3[6] == pwOutGlyphs2[6], "glyph not mirrored correctly\n");

@@ -797,8 +797,8 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
  * Expand the command. Native expands lines from batch programs as they are
  * read in and not again, except for 'for' variable substitution.
  * eg. As evidence, "echo %1 && shift && echo %1" or "echo %%path%%"
- * atExecute is TRUE when the expansion is occuring as the command is executed
- * rather than at parse time, ie delayed expansion and for loops need to be
+ * atExecute is TRUE when the expansion is occurring as the command is executed
+ * rather than at parse time, i.e. delayed expansion and for loops need to be
  * processed
  */
 static void handleExpansion(WCHAR *cmd, BOOL atExecute, BOOL delayed) {

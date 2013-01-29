@@ -1920,7 +1920,7 @@ int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int
                           sizeof(utf8_bom)-written, &tmp, NULL))
                   written += tmp;
               if (written != sizeof(utf8_bom)) {
-                  WARN("error writting BOM\n");
+                  WARN("error writing BOM\n");
                   CloseHandle(hand);
                   msvcrt_set_errno(GetLastError());
                   return *MSVCRT__errno();
@@ -1935,7 +1935,7 @@ int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int
                   written += tmp;
               if (written != sizeof(utf16_bom))
               {
-                  WARN("error writting BOM\n");
+                  WARN("error writing BOM\n");
                   CloseHandle(hand);
                   msvcrt_set_errno(GetLastError());
                   return *MSVCRT__errno();

@@ -4287,12 +4287,12 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 	}
 	/* If we are asked to change focus, and we manage it, do it.
            It's important to have all new item data stored at this point,
-           cause changing existing focus could result in redrawing operation,
+           because changing existing focus could result in a redrawing operation,
            which in turn could ask for disp data, application should see all data
            for inserted item when processing LVN_GETDISPINFO.
 
            The way this works application will see nested item change notifications -
-           changed item notifications interrupted by ones from item loosing focus. */
+           changed item notifications interrupted by ones from item losing focus. */
 	if (stateMask & ~infoPtr->uCallbackMask & LVIS_FOCUSED)
 	{
 	    if (lpLVItem->state & LVIS_FOCUSED)
@@ -8861,7 +8861,7 @@ static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, const LVITE
         UINT oldstate = 0;
         BOOL notify;
 
-        /* special case optimization for recurring attemp to deselect all */
+        /* special case optimization for recurring attempt to deselect all */
         if (lvItem.state == 0 && lvItem.stateMask == LVIS_SELECTED && !LISTVIEW_GetSelectedCount(infoPtr))
             return TRUE;
 
