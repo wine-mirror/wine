@@ -355,15 +355,6 @@ typedef struct
 } http_request_t;
 
 
-
-struct WORKREQ_FTPPUTFILEW
-{
-    LPWSTR lpszLocalFile;
-    LPWSTR lpszNewRemoteFile;
-    DWORD  dwFlags;
-    DWORD_PTR dwContext;
-};
-
 struct WORKREQ_FTPSETCURRENTDIRECTORYW
 {
     LPWSTR lpszDirectory;
@@ -436,7 +427,6 @@ typedef struct WORKREQ
     object_header_t *hdr;
 
     union {
-        struct WORKREQ_FTPPUTFILEW              FtpPutFileW;
         struct WORKREQ_FTPSETCURRENTDIRECTORYW  FtpSetCurrentDirectoryW;
         struct WORKREQ_FTPCREATEDIRECTORYW      FtpCreateDirectoryW;
         struct WORKREQ_FTPFINDFIRSTFILEW        FtpFindFirstFileW;

@@ -251,18 +251,26 @@ BOOL WINAPI FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
     return ret;
 }
 
-static void AsyncFtpPutFileProc(WORKREQUEST *workRequest)
+typedef struct {
+    task_header_t hdr;
+    WCHAR *local_file;
+    WCHAR *remote_file;
+    DWORD flags;
+    DWORD_PTR context;
+} put_file_task_t;
+
+static void AsyncFtpPutFileProc(task_header_t *hdr)
 {
-    struct WORKREQ_FTPPUTFILEW const *req = &workRequest->u.FtpPutFileW;
-    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
+    put_file_task_t *task = (put_file_task_t*)hdr;
+    ftp_session_t *session = (ftp_session_t*)task->hdr.hdr;
 
-    TRACE("%p\n", lpwfs);
+    TRACE("%p\n", session);
 
-    FTP_FtpPutFileW(lpwfs, req->lpszLocalFile,
-               req->lpszNewRemoteFile, req->dwFlags, req->dwContext);
+    FTP_FtpPutFileW(session, task->local_file, task->remote_file,
+               task->flags, task->context);
 
-    heap_free(req->lpszLocalFile);
-    heap_free(req->lpszNewRemoteFile);
+    heap_free(task->local_file);
+    heap_free(task->remote_file);
 }
 
 /***********************************************************************
@@ -316,15 +324,14 @@ BOOL WINAPI FtpPutFileW(HINTERNET hConnect, LPCWSTR lpszLocalFile,
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST *task = alloc_async_task(&lpwfs->hdr, AsyncFtpPutFileProc, sizeof(*task));
-        struct WORKREQ_FTPPUTFILEW *req = &task->u.FtpPutFileW;
+        put_file_task_t *task = alloc_async_task(&lpwfs->hdr, AsyncFtpPutFileProc, sizeof(*task));
 
-        req->lpszLocalFile = heap_strdupW(lpszLocalFile);
-        req->lpszNewRemoteFile = heap_strdupW(lpszNewRemoteFile);
-	req->dwFlags = dwFlags;
-	req->dwContext = dwContext;
+        task->local_file = heap_strdupW(lpszLocalFile);
+        task->remote_file = heap_strdupW(lpszNewRemoteFile);
+        task->flags = dwFlags;
+        task->context = dwContext;
 
-	r = res_to_le(INTERNET_AsyncCall(task));
+        r = res_to_le(INTERNET_AsyncCall(&task->hdr));
     }
     else
     {
