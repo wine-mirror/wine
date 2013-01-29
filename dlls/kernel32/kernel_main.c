@@ -41,8 +41,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(process);
 
 extern int CDECL __wine_set_signal_handler(unsigned, int (*)(unsigned));
 
-static ULONGLONG server_start_time;
-
 /***********************************************************************
  *           set_entry_point
  */
@@ -83,11 +81,7 @@ static void set_entry_point( HMODULE module, const char *name, DWORD rva )
  */
 static BOOL process_attach( HMODULE module )
 {
-    SYSTEM_TIMEOFDAY_INFORMATION ti;
     RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
-
-    NtQuerySystemInformation( SystemTimeOfDayInformation, &ti, sizeof(ti), NULL );
-    server_start_time = ti.liKeBootTime.QuadPart;
 
     /* Setup registry locale information */
     LOCALE_InitRegistry();
