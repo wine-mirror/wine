@@ -1883,7 +1883,7 @@ static HRESULT WINAPI TiffEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 
     if (SUCCEEDED(hr))
     {
-        hr = CreatePropertyBag2(ppIEncoderOptions);
+        hr = CreatePropertyBag2(NULL, 0, ppIEncoderOptions);
     }
 
     if (SUCCEEDED(hr))

@@ -1389,7 +1389,7 @@ static HRESULT WINAPI JpegEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
         return WINCODEC_ERR_NOTINITIALIZED;
     }
 
-    hr = CreatePropertyBag2(ppIEncoderOptions);
+    hr = CreatePropertyBag2(NULL, 0, ppIEncoderOptions);
     if (FAILED(hr))
     {
         LeaveCriticalSection(&This->lock);

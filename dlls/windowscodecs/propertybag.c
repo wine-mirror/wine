@@ -1,5 +1,6 @@
 /*
  * Copyright 2009 Vincent Povirk for CodeWeavers
+ * Copyright 2013 Ludger Sprenker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -136,7 +137,8 @@ static const IPropertyBag2Vtbl PropertyBag_Vtbl = {
     PropertyBag_LoadObject
 };
 
-HRESULT CreatePropertyBag2(IPropertyBag2 **ppPropertyBag2)
+HRESULT CreatePropertyBag2(PROPBAG2 *options, UINT count,
+                           IPropertyBag2 **ppPropertyBag2)
 {
     PropertyBag *This;
 

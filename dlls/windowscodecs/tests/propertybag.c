@@ -234,7 +234,6 @@ static void test_empty_propertybag(void)
 
     hr = IWICComponentFactory_CreateEncoderPropertyBag(factory, NULL, 0, &property);
 
-todo_wine
     ok(hr == S_OK, "Creating EncoderPropertyBag failed, hr=%x\n", hr);
     if (FAILED(hr)) return;
 
@@ -265,7 +264,6 @@ static void test_filled_propertybag(void)
 
     hr = IWICComponentFactory_CreateEncoderPropertyBag(factory, opts, 2, &property);
 
-todo_wine
     ok(hr == S_OK, "Creating EncoderPropertyBag failed, hr=%x\n", hr);
     if (FAILED(hr)) return;
 

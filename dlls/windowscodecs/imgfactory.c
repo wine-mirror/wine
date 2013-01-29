@@ -821,8 +821,8 @@ static HRESULT WINAPI ComponentFactory_CreateQueryWriterFromBlockWriter(IWICComp
 static HRESULT WINAPI ComponentFactory_CreateEncoderPropertyBag(IWICComponentFactory *iface,
         PROPBAG2 *options, UINT count, IPropertyBag2 **property)
 {
-    FIXME("%p,%p,%u,%p: stub\n", iface, options, count, property);
-    return E_NOTIMPL;
+    TRACE("(%p,%p,%u,%p)\n", iface, options, count, property);
+    return CreatePropertyBag2(options, count, property);
 }
 
 static const IWICComponentFactoryVtbl ComponentFactory_Vtbl = {
