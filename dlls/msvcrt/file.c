@@ -560,20 +560,39 @@ static int msvcrt_flush_buffer(MSVCRT_FILE* file)
   return 0;
 }
 
-/* INTERNAL: Allocate stdio file buffer */
-static void msvcrt_alloc_buffer(MSVCRT_FILE* file)
+/*********************************************************************
+ *		_isatty (MSVCRT.@)
+ */
+int CDECL MSVCRT__isatty(int fd)
 {
-	file->_base = MSVCRT_calloc(MSVCRT_BUFSIZ,1);
-	if(file->_base) {
-		file->_bufsiz = MSVCRT_BUFSIZ;
-		file->_flag |= MSVCRT__IOMYBUF;
-	} else {
-		file->_base = (char*)(&file->_charbuf);
-		/* put here 2 ??? */
-		file->_bufsiz = sizeof(file->_charbuf);
-	}
-	file->_ptr = file->_base;
-	file->_cnt = 0;
+    HANDLE hand = msvcrt_fdtoh(fd);
+
+    TRACE(":fd (%d) handle (%p)\n",fd,hand);
+    if (hand == INVALID_HANDLE_VALUE)
+        return 0;
+
+    return GetFileType(hand) == FILE_TYPE_CHAR? 1 : 0;
+}
+
+/* INTERNAL: Allocate stdio file buffer */
+static BOOL msvcrt_alloc_buffer(MSVCRT_FILE* file)
+{
+    if((file->_file==MSVCRT_STDOUT_FILENO || file->_file==MSVCRT_STDERR_FILENO)
+            && MSVCRT__isatty(file->_file))
+        return FALSE;
+
+    file->_base = MSVCRT_calloc(MSVCRT_BUFSIZ,1);
+    if(file->_base) {
+        file->_bufsiz = MSVCRT_BUFSIZ;
+        file->_flag |= MSVCRT__IOMYBUF;
+    } else {
+        file->_base = (char*)(&file->_charbuf);
+        /* put here 2 ??? */
+        file->_bufsiz = sizeof(file->_charbuf);
+    }
+    file->_ptr = file->_base;
+    file->_cnt = 0;
+    return TRUE;
 }
 
 /* INTERNAL: Convert integer to base32 string (0-9a-v), 0 becomes "" */
@@ -1616,20 +1635,6 @@ MSVCRT_intptr_t CDECL MSVCRT__get_osfhandle(int fd)
   TRACE(":fd (%d) handle (%p)\n",fd,hand);
 
   return (MSVCRT_intptr_t)hand;
-}
-
-/*********************************************************************
- *		_isatty (MSVCRT.@)
- */
-int CDECL MSVCRT__isatty(int fd)
-{
-  HANDLE hand = msvcrt_fdtoh(fd);
-
-  TRACE(":fd (%d) handle (%p)\n",fd,hand);
-  if (hand == INVALID_HANDLE_VALUE)
-    return 0;
-
-  return GetFileType(hand) == FILE_TYPE_CHAR? 1 : 0;
 }
 
 /*********************************************************************
@@ -3661,10 +3666,8 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
     /* Fill the buffer on small reads.
      * TODO: Use a better buffering strategy.
      */
-    if (!file->_cnt && size*nmemb <= MSVCRT_BUFSIZ/2 && !(file->_flag & MSVCRT__IONBF)) {
-      if (file->_bufsiz == 0) {
-        msvcrt_alloc_buffer(file);
-      }
+    if (!file->_cnt && size*nmemb <= MSVCRT_BUFSIZ/2 && !(file->_flag & MSVCRT__IONBF)
+            && (file->_bufsiz != 0 || msvcrt_alloc_buffer(file))) {
       file->_cnt = MSVCRT__read(file->_file, file->_base, file->_bufsiz);
       file->_ptr = file->_base;
       i = (file->_cnt<rcnt) ? file->_cnt : rcnt;
@@ -4472,10 +4475,8 @@ int CDECL MSVCRT_ungetc(int c, MSVCRT_FILE * file)
         return MSVCRT_EOF;
 
     MSVCRT__lock_file(file);
-    if(file->_bufsiz == 0) {
-        msvcrt_alloc_buffer(file);
+    if(file->_bufsiz == 0 && msvcrt_alloc_buffer(file))
         file->_ptr++;
-    }
     if(file->_ptr>file->_base) {
         file->_ptr--;
         *file->_ptr=c;
