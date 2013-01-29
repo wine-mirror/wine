@@ -1950,6 +1950,19 @@ static void test_TVM_HITTEST(void)
     DestroyWindow(hTree);
 }
 
+static void test_WM_GETDLGCODE(void)
+{
+    DWORD code;
+    HWND hTree;
+
+    hTree = create_treeview_control(0);
+
+    code = SendMessageA(hTree, WM_GETDLGCODE, VK_TAB, 0);
+    ok(code == (DLGC_WANTCHARS | DLGC_WANTARROWS), "0x%08x\n", code);
+
+    DestroyWindow(hTree);
+}
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
@@ -2023,6 +2036,7 @@ START_TEST(treeview)
     test_TVS_CHECKBOXES();
     test_TVM_GETNEXTITEM();
     test_TVM_HITTEST();
+    test_WM_GETDLGCODE();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
@@ -2048,6 +2062,7 @@ START_TEST(treeview)
     /* comctl32 version 6 tests start here */
     test_expandedimage();
     test_htreeitem_layout();
+    test_WM_GETDLGCODE();
 
     unload_v6_module(ctx_cookie, hCtx);
 
