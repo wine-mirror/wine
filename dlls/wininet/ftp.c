@@ -441,16 +441,20 @@ BOOL WINAPI FtpSetCurrentDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
     return ret;
 }
 
+typedef struct {
+    task_header_t hdr;
+    WCHAR *directory;
+} directory_task_t;
 
-static void AsyncFtpSetCurrentDirectoryProc(WORKREQUEST *workRequest)
+static void AsyncFtpSetCurrentDirectoryProc(task_header_t *hdr)
 {
-    struct WORKREQ_FTPSETCURRENTDIRECTORYW const *req = &workRequest->u.FtpSetCurrentDirectoryW;
-    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
+    directory_task_t *task = (directory_task_t*)hdr;
+    ftp_session_t *session = (ftp_session_t*)task->hdr.hdr;
 
-    TRACE("%p\n", lpwfs);
+    TRACE("%p\n", session);
 
-    FTP_FtpSetCurrentDirectoryW(lpwfs, req->lpszDirectory);
-    heap_free(req->lpszDirectory);
+    FTP_FtpSetCurrentDirectoryW(session, task->directory);
+    heap_free(task->directory);
 }
 
 /***********************************************************************
@@ -493,14 +497,12 @@ BOOL WINAPI FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST *task;
-        struct WORKREQ_FTPSETCURRENTDIRECTORYW *req;
+        directory_task_t *task;
 
         task = alloc_async_task(&lpwfs->hdr, AsyncFtpSetCurrentDirectoryProc, sizeof(*task));
-        req = &task->u.FtpSetCurrentDirectoryW;
-        req->lpszDirectory = heap_strdupW(lpszDirectory);
+        task->directory = heap_strdupW(lpszDirectory);
 
-	r = res_to_le(INTERNET_AsyncCall(task));
+        r = res_to_le(INTERNET_AsyncCall(&task->hdr));
     }
     else
     {
