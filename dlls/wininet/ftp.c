@@ -1913,15 +1913,15 @@ BOOL WINAPI FtpRemoveDirectoryA(HINTERNET hFtpSession, LPCSTR lpszDirectory)
     return ret;
 }
 
-static void AsyncFtpRemoveDirectoryProc(WORKREQUEST *workRequest)
+static void AsyncFtpRemoveDirectoryProc(task_header_t *hdr)
 {
-    struct WORKREQ_FTPREMOVEDIRECTORYW const *req = &workRequest->u.FtpRemoveDirectoryW;
-    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
+    directory_task_t *task = (directory_task_t*)hdr;
+    ftp_session_t *session = (ftp_session_t*)task->hdr.hdr;
 
-    TRACE("%p\n", lpwfs);
+    TRACE("%p\n", session);
 
-    FTP_FtpRemoveDirectoryW(lpwfs, req->lpszDirectory);
-    heap_free(req->lpszDirectory);
+    FTP_FtpRemoveDirectoryW(session, task->directory);
+    heap_free(task->directory);
 }
 
 /***********************************************************************
@@ -1968,14 +1968,12 @@ BOOL WINAPI FtpRemoveDirectoryW(HINTERNET hFtpSession, LPCWSTR lpszDirectory)
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST *task;
-        struct WORKREQ_FTPREMOVEDIRECTORYW *req;
+        directory_task_t *task;
 
         task = alloc_async_task(&lpwfs->hdr, AsyncFtpRemoveDirectoryProc, sizeof(*task));
-        req = &task->u.FtpRemoveDirectoryW;
-        req->lpszDirectory = heap_strdupW(lpszDirectory);
+        task->directory = heap_strdupW(lpszDirectory);
 
-	r = res_to_le(INTERNET_AsyncCall(task));
+        r = res_to_le(INTERNET_AsyncCall(&task->hdr));
     }
     else
     {

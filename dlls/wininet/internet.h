@@ -392,11 +392,6 @@ struct WORKREQ_FTPDELETEFILEW
     LPWSTR lpszFilename;
 };
 
-struct WORKREQ_FTPREMOVEDIRECTORYW
-{
-    LPWSTR lpszDirectory;
-};
-
 struct WORKREQ_FTPRENAMEFILEW
 {
     LPWSTR lpszSrcFile;
@@ -422,7 +417,6 @@ typedef struct WORKREQ
         struct WORKREQ_FTPOPENFILEW             FtpOpenFileW;
         struct WORKREQ_FTPGETFILEW              FtpGetFileW;
         struct WORKREQ_FTPDELETEFILEW           FtpDeleteFileW;
-        struct WORKREQ_FTPREMOVEDIRECTORYW      FtpRemoveDirectoryW;
         struct WORKREQ_FTPRENAMEFILEW           FtpRenameFileW;
         struct WORKREQ_FTPFINDNEXTW             FtpFindNextW;
     } u;
