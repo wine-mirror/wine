@@ -589,15 +589,15 @@ BOOL WINAPI FtpCreateDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
 }
 
 
-static void AsyncFtpCreateDirectoryProc(WORKREQUEST *workRequest)
+static void AsyncFtpCreateDirectoryProc(task_header_t *hdr)
 {
-    struct WORKREQ_FTPCREATEDIRECTORYW const *req = &workRequest->u.FtpCreateDirectoryW;
-    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
+    directory_task_t *task = (directory_task_t*)hdr;
+    ftp_session_t *session = (ftp_session_t*)task->hdr.hdr;
 
-    TRACE(" %p\n", lpwfs);
+    TRACE(" %p\n", session);
 
-    FTP_FtpCreateDirectoryW(lpwfs, req->lpszDirectory);
-    heap_free(req->lpszDirectory);
+    FTP_FtpCreateDirectoryW(session, task->directory);
+    heap_free(task->directory);
 }
 
 /***********************************************************************
@@ -644,14 +644,12 @@ BOOL WINAPI FtpCreateDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST *task;
-        struct WORKREQ_FTPCREATEDIRECTORYW *req;
+        directory_task_t *task;
 
         task = alloc_async_task(&lpwfs->hdr, AsyncFtpCreateDirectoryProc, sizeof(*task));
-        req = &task->u.FtpCreateDirectoryW;
-        req->lpszDirectory = heap_strdupW(lpszDirectory);
+        task->directory = heap_strdupW(lpszDirectory);
 
-	r = res_to_le(INTERNET_AsyncCall(task));
+        r = res_to_le(INTERNET_AsyncCall(&task->hdr));
     }
     else
     {
