@@ -2709,7 +2709,8 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->nEventMask = 0;
   ed->nModifyStep = 0;
   ed->nTextLimit = TEXT_LIMIT_DEFAULT;
-  ed->pUndoStack = ed->pRedoStack = ed->pUndoStackBottom = NULL;
+  list_init( &ed->undo_stack );
+  list_init( &ed->redo_stack );
   ed->nUndoStackSize = 0;
   ed->nUndoLimit = STACK_SIZE_DEFAULT;
   ed->nUndoMode = umAddToUndo;
@@ -3106,9 +3107,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return editor->nUndoLimit;
   }
   case EM_CANUNDO:
-    return editor->pUndoStack != NULL;
+    return !list_empty( &editor->undo_stack );
   case EM_CANREDO:
-    return editor->pRedoStack != NULL;
+    return !list_empty( &editor->redo_stack );
   case WM_UNDO: /* FIXME: actually not the same */
   case EM_UNDO:
     return ME_Undo(editor);
@@ -4348,7 +4349,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     int mask = 0;
     int changes = 0;
 
-    if (ME_GetTextLength(editor) || editor->pUndoStack || editor->pRedoStack)
+    if (ME_GetTextLength(editor) ||
+        !list_empty( &editor->undo_stack ) || !list_empty( &editor->redo_stack ))
       return E_UNEXPECTED;
 
     /* Check for mutually exclusive flags in adjacent bits of wParam */

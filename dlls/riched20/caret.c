@@ -361,7 +361,6 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
     else
     {
       ME_Cursor cursor;
-      ME_UndoItem *undo;
       int nCharsToDelete = min(nChars, c.nOffset);
       int i;
 
@@ -379,14 +378,9 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
         nCharsToDelete, nChars, c.nOffset,
         debugstr_w(run->strText->szData), run->strText->nLen);
 
-      undo = ME_AddUndoItem(editor, diUndoInsertRun, c.pRun);
-      if (undo)
-      {
-          /* nOfs is a character offset (from the start of the document
-             to the current (deleted) run */
-          undo->di.member.run.nCharOfs = nOfs + nChars;
-          undo->di.member.run.strText = ME_MakeStringN(run->strText->szData + c.nOffset, nCharsToDelete);
-      }
+      /* nOfs is a character offset (from the start of the document
+         to the current (deleted) run */
+      add_undo_insert_run( editor, nOfs + nChars, run->strText->szData + c.nOffset, nCharsToDelete, run->nFlags, run->style );
 
       TRACE("Post deletion string: %s (%d)\n", debugstr_w(run->strText->szData), run->strText->nLen);
       TRACE("Shift value: %d\n", shift);

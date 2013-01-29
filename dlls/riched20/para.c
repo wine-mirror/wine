@@ -127,7 +127,7 @@ static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const 
   else
     dwMask &= PFM_ALL2;
 
-  ME_AddUndoItem(editor, diUndoSetParagraphFormat, para);
+  add_undo_set_para_fmt( editor, &para->member.para );
 
   copy = *para->member.para.pFmt;
 
@@ -198,7 +198,6 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   ME_DisplayItem *run_para = NULL;
   ME_DisplayItem *new_para = ME_MakeDI(diParagraph);
   ME_DisplayItem *end_run;
-  ME_UndoItem *undo = NULL;
   int ofs, i;
   ME_DisplayItem *pp;
   int run_flags = MERF_ENDPARA;
@@ -224,9 +223,7 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   next_para = run_para->member.para.next_para;
   assert(next_para == ME_FindItemFwd(run_para, diParagraphOrEnd));
   
-  undo = ME_AddUndoItem(editor, diUndoJoinParagraphs, NULL);
-  if (undo)
-    undo->nStart = run_para->member.para.nCharOfs + ofs;
+  add_undo_join_paras( editor, run_para->member.para.nCharOfs + ofs );
 
   /* Update selection cursors to point to the correct paragraph. */
   for (i = 0; i < editor->nCursors; i++) {
@@ -324,7 +321,6 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
 {
   ME_DisplayItem *pNext, *pFirstRunInNext, *pRun, *pTmp, *pCell = NULL;
   int i, shift;
-  ME_UndoItem *undo = NULL;
   int end_len;
   CHARFORMAT2W fmt;
   ME_Cursor startCur, endCur;
@@ -370,26 +366,7 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
     }
   }
 
-  undo = ME_AddUndoItem(editor, diUndoSplitParagraph, pNext);
-  if (undo)
-  {
-    undo->nStart = pNext->member.para.nCharOfs - end_len;
-    undo->eol_str = pRun->member.run.strText;
-    pRun->member.run.strText = NULL; /* Avoid freeing the string */
-
-    if (pCell)
-    {
-      assert(!(undo->di.member.para.nFlags & MEPF_ROWEND));
-      if (!(undo->di.member.para.nFlags & MEPF_ROWSTART))
-        undo->di.member.para.nFlags |= MEPF_CELL;
-      undo->di.member.para.pCell = ALLOC_OBJ(ME_DisplayItem);
-      *undo->di.member.para.pCell = *pCell;
-      undo->di.member.para.pCell->next = NULL;
-      undo->di.member.para.pCell->prev = NULL;
-      undo->di.member.para.pCell->member.cell.next_cell = NULL;
-      undo->di.member.para.pCell->member.cell.prev_cell = NULL;
-    }
-  }
+  add_undo_split_para( editor, &pNext->member.para, &pRun->member.run, pCell ? &pCell->member.cell : NULL );
 
   if (pCell)
   {
@@ -403,7 +380,7 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
 
   if (!keepFirstParaFormat)
   {
-    ME_AddUndoItem(editor, diUndoSetParagraphFormat, tp);
+    add_undo_set_para_fmt( editor, &tp->member.para );
     *tp->member.para.pFmt = *pNext->member.para.pFmt;
     tp->member.para.border = pNext->member.para.border;
   }

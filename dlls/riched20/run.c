@@ -357,17 +357,12 @@ ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
                      const WCHAR *str, int len, int flags)
 {
   ME_DisplayItem *pDI;
-  ME_UndoItem *pUI;
 
   if (cursor->nOffset)
     ME_SplitRunSimple(editor, cursor);
 
-  pUI = ME_AddUndoItem(editor, diUndoDeleteRun, NULL);
-  if (pUI) {
-    pUI->nStart = cursor->pPara->member.para.nCharOfs
-                  + cursor->pRun->member.run.nCharOfs;
-    pUI->nLen = len;
-  }
+  add_undo_delete_run( editor, cursor->pPara->member.para.nCharOfs +
+                       cursor->pRun->member.run.nCharOfs, len );
 
   pDI = ME_MakeRun(style, ME_MakeStringN(str, len), flags);
   pDI->member.run.nCharOfs = cursor->pRun->member.run.nCharOfs;
@@ -769,19 +764,12 @@ void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, C
 
   while(run != end_run)
   {
-    ME_UndoItem *undo = NULL;
     ME_Style *new_style = ME_ApplyStyle(run->member.run.style, pFmt);
     /* ME_DumpStyle(new_style); */
-    undo = ME_AddUndoItem(editor, diUndoSetCharFormat, NULL);
-    if (undo) {
-      undo->nStart = run->member.run.nCharOfs+para->member.para.nCharOfs;
-      undo->nLen = run->member.run.strText->nLen;
-      undo->di.member.ustyle = run->member.run.style;
-      /* we'd have to addref undo...ustyle and release tmp...style
-         but they'd cancel each other out so we can do nothing instead */
-    }
-    else
-      ME_ReleaseStyle(run->member.run.style);
+
+    add_undo_set_char_fmt( editor, para->member.para.nCharOfs + run->member.run.nCharOfs,
+                           run->member.run.strText->nLen, &run->member.run.style->fmt );
+    ME_ReleaseStyle(run->member.run.style);
     run->member.run.style = new_style;
     run = ME_FindItemFwd(run, diRunOrParagraph);
     if (run && run->type == diParagraph)
