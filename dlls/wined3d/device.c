@@ -174,7 +174,7 @@ static BOOL fixed_get_input(BYTE usage, BYTE usage_idx, unsigned int *regnum)
 }
 
 /* Context activation is done by the caller. */
-void device_stream_info_from_declaration(struct wined3d_device *device, struct wined3d_stream_info *stream_info)
+static void device_stream_info_from_declaration(struct wined3d_device *device, struct wined3d_stream_info *stream_info)
 {
     const struct wined3d_state *state = &device->stateBlock->state;
     /* We need to deal with frequency data! */
