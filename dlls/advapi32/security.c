@@ -4005,11 +4005,6 @@ DWORD WINAPI SetNamedSecurityInfoW(LPWSTR pObjectName,
 
     TRACE( "%s %d %d %p %p %p %p\n", debugstr_w(pObjectName), ObjectType,
            SecurityInfo, psidOwner, psidGroup, pDacl, pSacl);
-    if (ObjectType != SE_FILE_OBJECT)
-    {
-        FIXME( "Object type %d is not currently supported.\n", ObjectType );
-        return ERROR_SUCCESS;
-    }
 
     if (!pObjectName) return ERROR_INVALID_PARAMETER;
 
@@ -4020,11 +4015,26 @@ DWORD WINAPI SetNamedSecurityInfoW(LPWSTR pObjectName,
     if (SecurityInfo & SACL_SECURITY_INFORMATION)
         access |= ACCESS_SYSTEM_SECURITY;
 
-    err = get_security_file( pObjectName, access, &handle );
-    if (err != ERROR_SUCCESS)
-        return err;
-    err = SetSecurityInfo( handle, ObjectType, SecurityInfo, psidOwner, psidGroup, pDacl, pSacl );
-    CloseHandle( handle );
+    switch (ObjectType)
+    {
+    case SE_SERVICE:
+        if (!(err = get_security_service( pObjectName, access, &handle )))
+        {
+            err = SetSecurityInfo( handle, ObjectType, SecurityInfo, psidOwner, psidGroup, pDacl, pSacl );
+            CloseServiceHandle( handle );
+        }
+        break;
+    case SE_FILE_OBJECT:
+        if (!(err = get_security_file( pObjectName, access, &handle )))
+        {
+            err = SetSecurityInfo( handle, ObjectType, SecurityInfo, psidOwner, psidGroup, pDacl, pSacl );
+            CloseHandle( handle );
+        }
+        break;
+    default:
+        FIXME( "Object type %d is not currently supported.\n", ObjectType );
+        return ERROR_SUCCESS;
+    }
     return err;
 }
 
