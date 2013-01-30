@@ -354,12 +354,6 @@ typedef struct
     netconn_stream_t netconn_stream;
 } http_request_t;
 
-
-struct WORKREQ_FTPDELETEFILEW
-{
-    LPWSTR lpszFilename;
-};
-
 typedef struct WORKREQ task_header_t;
 typedef void (*async_task_proc_t)(task_header_t*);
 
@@ -367,10 +361,6 @@ typedef struct WORKREQ
 {
     async_task_proc_t proc;
     object_header_t *hdr;
-
-    union {
-        struct WORKREQ_FTPDELETEFILEW           FtpDeleteFileW;
-    } u;
 } WORKREQUEST, *LPWORKREQUEST;
 
 void *alloc_async_task(object_header_t*,async_task_proc_t,size_t) DECLSPEC_HIDDEN;

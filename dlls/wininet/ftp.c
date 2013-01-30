@@ -1786,15 +1786,20 @@ BOOL WINAPI FtpDeleteFileA(HINTERNET hFtpSession, LPCSTR lpszFileName)
     return ret;
 }
 
-static void AsyncFtpDeleteFileProc(WORKREQUEST *workRequest)
+typedef struct {
+    task_header_t hdr;
+    WCHAR *file_name;
+} delete_file_task_t;
+
+static void AsyncFtpDeleteFileProc(task_header_t *hdr)
 {
-    struct WORKREQ_FTPDELETEFILEW const *req = &workRequest->u.FtpDeleteFileW;
-    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
+    delete_file_task_t *task = (delete_file_task_t*)hdr;
+    ftp_session_t *session = (ftp_session_t*)task->hdr.hdr;
 
-    TRACE("%p\n", lpwfs);
+    TRACE("%p\n", session);
 
-    FTP_FtpDeleteFileW(lpwfs, req->lpszFilename);
-    heap_free(req->lpszFilename);
+    FTP_FtpDeleteFileW(session, task->file_name);
+    heap_free(task->file_name);
 }
 
 /***********************************************************************
@@ -1841,14 +1846,12 @@ BOOL WINAPI FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName)
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST *task;
-        struct WORKREQ_FTPDELETEFILEW *req;
+        delete_file_task_t *task;
 
         task = alloc_async_task(&lpwfs->hdr, AsyncFtpDeleteFileProc, sizeof(*task));
-        req = &task->u.FtpDeleteFileW;
-        req->lpszFilename = heap_strdupW(lpszFileName);
+        task->file_name = heap_strdupW(lpszFileName);
 
-	r = res_to_le(INTERNET_AsyncCall(task));
+        r = res_to_le(INTERNET_AsyncCall(&task->hdr));
     }
     else
     {
