@@ -692,7 +692,7 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
     else if ( !strcmpW( attribute, szProperty ) )
     {
         MSIFEATURE *feature = msi_seltree_get_selected_feature( ctrl );
-        msi_dialog_set_property( dialog->package, ctrl->property, feature->Directory );
+        if (feature) msi_dialog_set_property( dialog->package, ctrl->property, feature->Directory );
     }
     else if ( !strcmpW( attribute, szSelectionPath ) )
     {
