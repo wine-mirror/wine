@@ -1253,12 +1253,12 @@ static LONG condvar_producer_sleepcnt,condvar_consumer_sleepcnt;
 #define BUFFER_SIZE 5
 
 static DWORD WINAPI condvar_producer(LPVOID x) {
-    DWORD sleepinterval = 50;
+    DWORD sleepinterval = 5;
 
     while (1) {
         Sleep(sleepinterval);
-        if (sleepinterval > 10)
-            sleepinterval -= 10;
+        if (sleepinterval > 1)
+            sleepinterval -= 1;
 
         EnterCriticalSection(&buffercrit);
         while ((bufferlen == BUFFER_SIZE) && !condvar_stop) {
@@ -1282,7 +1282,7 @@ static DWORD WINAPI condvar_producer(LPVOID x) {
 
 static DWORD WINAPI condvar_consumer(LPVOID x) {
     DWORD *cnt = (DWORD*)x;
-    DWORD sleepinterval = 10;
+    DWORD sleepinterval = 1;
 
     while (1) {
         EnterCriticalSection(&buffercrit);
@@ -1303,12 +1303,12 @@ static DWORD WINAPI condvar_consumer(LPVOID x) {
         LeaveCriticalSection(&buffercrit);
         pWakeConditionVariable(&buffernotfull);
         Sleep(sleepinterval);
-        if (sleepinterval < 50) sleepinterval += 10;
+        if (sleepinterval < 5) sleepinterval += 1;
     }
     return 0;
 }
 
-static void test_condvars(void)
+static void test_condvars_consumer_producer(void)
 {
     HANDLE hp1,hp2,hp3,hc1,hc2,hc3;
     DWORD dummy;
@@ -1328,8 +1328,10 @@ static void test_condvars(void)
      * pInitializeConditionVariable(&buffernotfull);
      */
     pInitializeConditionVariable(&buffernotempty);
-
     InitializeCriticalSection(&buffercrit);
+
+    /* Larger Test: consumer/producer example */
+
     bufferlen = totalproduced = totalconsumed = cnt1 = cnt2 = cnt3 = 0;
 
     hp1 = CreateThread(NULL, 0, condvar_producer, NULL, 0, &dummy);
@@ -1349,7 +1351,9 @@ static void test_condvars(void)
     pWakeAllConditionVariable (&buffernotfull);
     pWakeAllConditionVariable (&buffernotempty);
 
-    ok(buffernotfull.Ptr == NULL, "buffernotfull.Ptr is %p\n", buffernotfull.Ptr);
+    /* (mostly an implementation detail)
+     * ok(buffernotfull.Ptr == NULL, "buffernotfull.Ptr is %p\n", buffernotfull.Ptr);
+     */
 
     WaitForSingleObject(hp1, 1000);
     WaitForSingleObject(hp2, 1000);
@@ -1370,6 +1374,137 @@ static void test_condvars(void)
      * not hard defined. */
     trace("producer sleep %d, consumer sleep %d\n", condvar_producer_sleepcnt, condvar_consumer_sleepcnt);
 }
+
+/* Sample test for some sequence of events happening, sequenced using "condvar_seq" */
+static DWORD condvar_seq = 0;
+static CONDITION_VARIABLE condvar_base = CONDITION_VARIABLE_INIT;
+static CRITICAL_SECTION condvar_crit;
+
+/* Sequence of wake/sleep to check boundary conditions:
+ * 0: init
+ * 1: producer emits a WakeConditionVaribale without consumer waiting.
+ * 2: consumer sleeps without a wake expecting timeout
+ * 3: producer emits a WakeAllConditionVaribale without consumer waiting.
+ * 4: consumer sleeps without a wake expecting timeout
+ * 5: a wake is handed to a SleepConditionVariableCS
+ * 6: a wakeall is handed to a SleepConditionVariableCS
+ * 7: sleep after above should timeout
+ * 8: wake with crit section locked into the sleep timeout
+ * 9: end
+ */
+static DWORD WINAPI condvar_base_producer(LPVOID x) {
+    while (condvar_seq < 1) Sleep(1);
+
+    pWakeConditionVariable (&condvar_base);
+    condvar_seq = 2;
+
+    while (condvar_seq < 3) Sleep(1);
+    pWakeAllConditionVariable (&condvar_base);
+    condvar_seq = 4;
+
+    while (condvar_seq < 5) Sleep(1);
+    EnterCriticalSection (&condvar_crit);
+    pWakeConditionVariable (&condvar_base);
+    LeaveCriticalSection (&condvar_crit);
+    while (condvar_seq < 6) Sleep(1);
+    EnterCriticalSection (&condvar_crit);
+    pWakeAllConditionVariable (&condvar_base);
+    LeaveCriticalSection (&condvar_crit);
+
+    while (condvar_seq < 8) Sleep(1);
+    EnterCriticalSection (&condvar_crit);
+    pWakeConditionVariable (&condvar_base);
+    Sleep(50);
+    LeaveCriticalSection (&condvar_crit);
+
+    return 0;
+}
+
+static DWORD WINAPI condvar_base_consumer(LPVOID x) {
+    BOOL ret;
+
+    while (condvar_seq < 2) Sleep(1);
+
+    /* wake was emitted, but we were not sleeping */
+    EnterCriticalSection (&condvar_crit);
+    ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 10);
+    LeaveCriticalSection (&condvar_crit);
+    ok (!ret, "SleepConditionVariableCS should return FALSE on out of band wake\n");
+    ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on out of band wake, not %d\n", GetLastError());
+
+    condvar_seq = 3;
+    while (condvar_seq < 4) Sleep(1);
+
+    /* wake all was emitted, but we were not sleeping */
+    EnterCriticalSection (&condvar_crit);
+    ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 10);
+    LeaveCriticalSection (&condvar_crit);
+    ok (!ret, "SleepConditionVariableCS should return FALSE on out of band wake\n");
+    ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on out of band wake, not %d\n", GetLastError());
+
+    EnterCriticalSection (&condvar_crit);
+    condvar_seq = 5;
+    ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 200);
+    LeaveCriticalSection (&condvar_crit);
+    ok (ret, "SleepConditionVariableCS should return TRUE on good wake\n");
+
+    EnterCriticalSection (&condvar_crit);
+    condvar_seq = 6;
+    ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 200);
+    LeaveCriticalSection (&condvar_crit);
+    ok (ret, "SleepConditionVariableCS should return TRUE on good wakeall\n");
+    condvar_seq = 7;
+
+    EnterCriticalSection (&condvar_crit);
+    ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 10);
+    LeaveCriticalSection (&condvar_crit);
+    ok (!ret, "SleepConditionVariableCS should return FALSE on out of band wake\n");
+    ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on out of band wake, not %d\n", GetLastError());
+
+    EnterCriticalSection (&condvar_crit);
+    condvar_seq = 8;
+    ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 20);
+    LeaveCriticalSection (&condvar_crit);
+    ok (ret, "SleepConditionVariableCS should still return TRUE on crit unlock delay\n");
+    condvar_seq = 9;
+
+    return 0;
+}
+
+static void test_condvars_base(void) {
+    HANDLE hp, hc;
+    DWORD dummy;
+    BOOL ret;
+
+
+    if (!pInitializeConditionVariable) {
+        /* function is not yet in XP, only in newer Windows */
+        /* and not yet implemented in Wine for some days/weeks */
+        todo_wine win_skip("no condition variable support.\n");
+        return;
+    }
+
+    InitializeCriticalSection (&condvar_crit);
+
+    EnterCriticalSection (&condvar_crit);
+    ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 10);
+    LeaveCriticalSection (&condvar_crit);
+
+    ok (!ret, "SleepConditionVariableCS should return FALSE on untriggered condvar\n");
+    ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on untriggered condvar, not %d\n", GetLastError());
+
+
+    hp = CreateThread(NULL, 0, condvar_base_producer, NULL, 0, &dummy);
+    hc = CreateThread(NULL, 0, condvar_base_consumer, NULL, 0, &dummy);
+
+    condvar_seq = 1; /* go */
+
+    while (condvar_seq < 9)
+        Sleep (5);
+    WaitForSingleObject(hp, 100);
+    WaitForSingleObject(hc, 100);
+}
+
 
 START_TEST(sync)
 {
@@ -1403,5 +1538,6 @@ START_TEST(sync)
     test_WaitForSingleObject();
     test_WaitForMultipleObjects();
     test_initonce();
-    test_condvars();
+    test_condvars_base();
+    test_condvars_consumer_producer();
 }
