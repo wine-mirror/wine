@@ -885,7 +885,7 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
         return FALSE;
 
       nEnd = (cursor.pRun == endCur.pRun) ? endCur.nOffset : cursor.pRun->member.run.strText->nLen;
-      if (!ME_StreamOutRTFText(pStream, cursor.pRun->member.run.strText->szData + cursor.nOffset,
+      if (!ME_StreamOutRTFText(pStream, get_text( &cursor.pRun->member.run, cursor.nOffset ),
                                nEnd - cursor.nOffset))
         return FALSE;
       cursor.nOffset = 0;
@@ -932,19 +932,19 @@ static BOOL ME_StreamOutText(ME_TextEditor *editor, ME_OutStream *pStream,
         success = ME_StreamOutMove(pStream, "\r\n", 2);
     } else {
       if (dwFormat & SF_UNICODE)
-        success = ME_StreamOutMove(pStream, (const char *)(cursor.pRun->member.run.strText->szData + cursor.nOffset),
+        success = ME_StreamOutMove(pStream, (const char *)(get_text( &cursor.pRun->member.run, cursor.nOffset )),
                                    sizeof(WCHAR) * nLen);
       else {
         int nSize;
 
-        nSize = WideCharToMultiByte(nCodePage, 0, cursor.pRun->member.run.strText->szData + cursor.nOffset,
+        nSize = WideCharToMultiByte(nCodePage, 0, get_text( &cursor.pRun->member.run, cursor.nOffset ),
                                     nLen, NULL, 0, NULL, NULL);
         if (nSize > nBufLen) {
           FREE_OBJ(buffer);
           buffer = ALLOC_N_OBJ(char, nSize);
           nBufLen = nSize;
         }
-        WideCharToMultiByte(nCodePage, 0, cursor.pRun->member.run.strText->szData + cursor.nOffset,
+        WideCharToMultiByte(nCodePage, 0, get_text( &cursor.pRun->member.run, cursor.nOffset ),
                             nLen, buffer, nSize, NULL, NULL);
         success = ME_StreamOutMove(pStream, buffer, nSize);
       }

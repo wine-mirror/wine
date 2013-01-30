@@ -112,7 +112,7 @@ static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
            * Other whitespace or delimiters are not treated this way. */
           SIZE sz;
           int len = p->member.run.strText->nLen;
-          WCHAR *text = p->member.run.strText->szData + len - 1;
+          WCHAR *text = get_text( &p->member.run, len - 1 );
 
           assert (len);
           if (~p->member.run.nFlags & MERF_GRAPHICS)

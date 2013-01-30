@@ -435,7 +435,7 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
     }
     else
       ME_DrawTextWithStyle(c, x, y,
-        run->strText->szData, run->strText->nLen, run->style, run->nWidth,
+        get_text( run, 0 ), run->strText->nLen, run->style, run->nWidth,
         nSelFrom-runofs,nSelTo-runofs,
         c->pt.y + para->pt.y + start->member.row.pt.y,
         start->member.row.nHeight);
@@ -947,13 +947,12 @@ static void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph)
                      c->pt.y + para->pt.y + run->pt.y + baseline, p, para);
         if (me_debug)
         {
-          /* I'm using %ls, hope wsprintfW is not going to use wrong (4-byte) WCHAR version */
           const WCHAR wszRunDebug[] = {'[','%','d',':','%','x',']',' ','%','l','s',0};
           WCHAR buf[2560];
           POINT pt;
           pt.x = c->pt.x + run->pt.x;
           pt.y = c->pt.y + para->pt.y + run->pt.y;
-          wsprintfW(buf, wszRunDebug, no, p->member.run.nFlags, p->member.run.strText->szData);
+          wsprintfW(buf, wszRunDebug, no, p->member.run.nFlags, get_text( &p->member.run, 0 ));
           ME_DebugWrite(c->hDC, &pt, buf);
         }
         break;

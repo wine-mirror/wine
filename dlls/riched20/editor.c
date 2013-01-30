@@ -1723,7 +1723,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
     if ((flags & FR_WHOLEWORD) && nMin)
     {
       ME_CursorFromCharOfs(editor, nMin - 1, &cursor);
-      wLastChar = cursor.pRun->member.run.strText->szData[cursor.nOffset];
+      wLastChar = *get_text( &cursor.pRun->member.run, cursor.nOffset );
       ME_MoveCursorChars(editor, &cursor, 1);
     } else {
       ME_CursorFromCharOfs(editor, nMin, &cursor);
@@ -1735,7 +1735,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
       int nCurStart = cursor.nOffset;
       int nMatched = 0;
     
-      while (pCurItem && ME_CharCompare(pCurItem->member.run.strText->szData[nCurStart + nMatched], text[nMatched], (flags & FR_MATCHCASE)))
+      while (pCurItem && ME_CharCompare( *get_text( &pCurItem->member.run, nCurStart + nMatched ), text[nMatched], (flags & FR_MATCHCASE)))
       {
         if ((flags & FR_WHOLEWORD) && isalnumW(wLastChar))
           break;
@@ -1757,7 +1757,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
             }
 
             if (pNextItem)
-              wNextChar = pNextItem->member.run.strText->szData[nNextStart + nMatched];
+              wNextChar = *get_text( &pNextItem->member.run, nNextStart + nMatched );
             else
               wNextChar = ' ';
 
@@ -1781,7 +1781,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
         }
       }
       if (pCurItem)
-        wLastChar = pCurItem->member.run.strText->szData[nCurStart + nMatched];
+        wLastChar = *get_text( &pCurItem->member.run, nCurStart + nMatched );
       else
         wLastChar = ' ';
 
@@ -1799,7 +1799,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
     if ((flags & FR_WHOLEWORD) && nMax < nTextLen - 1)
     {
       ME_CursorFromCharOfs(editor, nMax + 1, &cursor);
-      wLastChar = cursor.pRun->member.run.strText->szData[cursor.nOffset];
+      wLastChar = *get_text( &cursor.pRun->member.run, cursor.nOffset );
       ME_MoveCursorChars(editor, &cursor, -1);
     } else {
       ME_CursorFromCharOfs(editor, nMax, &cursor);
@@ -1818,7 +1818,8 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
         nCurEnd = pCurItem->member.run.strText->nLen + nMatched;
       }
 
-      while (pCurItem && ME_CharCompare(pCurItem->member.run.strText->szData[nCurEnd - nMatched - 1], text[nLen - nMatched - 1], (flags & FR_MATCHCASE)))
+      while (pCurItem && ME_CharCompare( *get_text( &pCurItem->member.run, nCurEnd - nMatched - 1 ),
+                                         text[nLen - nMatched - 1], (flags & FR_MATCHCASE) ))
       {
         if ((flags & FR_WHOLEWORD) && isalnumW(wLastChar))
           break;
@@ -1842,7 +1843,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
             }
 
             if (pPrevItem)
-              wPrevChar = pPrevItem->member.run.strText->szData[nPrevEnd - nMatched - 1];
+              wPrevChar = *get_text( &pPrevItem->member.run, nPrevEnd - nMatched - 1 );
             else
               wPrevChar = ' ';
 
@@ -1869,7 +1870,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
         }
       }
       if (pCurItem)
-        wLastChar = pCurItem->member.run.strText->szData[nCurEnd - nMatched - 1];
+        wLastChar = *get_text( &pCurItem->member.run, nCurEnd - nMatched - 1 );
       else
         wLastChar = ' ';
 
@@ -3704,16 +3705,15 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     while (nCharsLeft && (run = ME_FindItemFwd(run, diRunOrStartRow))
            && run->type == diRun)
     {
+      WCHAR *str = get_text( &run->member.run, 0 );
       unsigned int nCopy;
-      ME_String *strText;
 
-      strText = run->member.run.strText;
-      nCopy = min(nCharsLeft, strText->nLen);
+      nCopy = min(nCharsLeft, run->member.run.strText->nLen);
 
       if (unicode)
-        memcpy(dest, strText->szData, nCopy * sizeof(WCHAR));
+        memcpy(dest, str, nCopy * sizeof(WCHAR));
       else
-        nCopy = WideCharToMultiByte(CP_ACP, 0, strText->szData, nCopy, dest,
+        nCopy = WideCharToMultiByte(CP_ACP, 0, str, nCopy, dest,
                                     nCharsLeft, NULL, NULL);
       dest += nCopy * (unicode ? sizeof(WCHAR) : 1);
       nCharsLeft -= nCopy;
@@ -3756,7 +3756,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     if (editor->bEmulateVersion10 && prev_para &&
         last_para->member.run.nCharOfs == 0 &&
         prev_para->member.run.strText->nLen == 1 &&
-        prev_para->member.run.strText->szData[0] == '\r')
+        *get_text( &prev_para->member.run, 0 ) == '\r')
     {
       /* In 1.0 emulation, the last solitary \r at the very end of the text
          (if one exists) is NOT a line break.
@@ -4605,7 +4605,7 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
   pNextRun = ME_FindItemFwd(pRun, diRun);
 
   nLen = pRun->member.run.strText->nLen - start->nOffset;
-  str = pRun->member.run.strText->szData + start->nOffset;
+  str = get_text( &pRun->member.run, start->nOffset );
 
   /* No '\r' is appended to the last paragraph. */
   while (srcChars && buflen && pNextRun)
@@ -4637,7 +4637,7 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
     pNextRun = ME_FindItemFwd(pRun, diRun);
 
     nLen = pRun->member.run.strText->nLen;
-    str = pRun->member.run.strText->szData;
+    str = get_text( &pRun->member.run, 0 );
   }
   *buffer = 0;
   return buffer - pStart;
@@ -4777,7 +4777,7 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor,
 
   while (nChars > 0)
   {
-    WCHAR *strStart = cursor.pRun->member.run.strText->szData;
+    WCHAR *strStart = get_text( &cursor.pRun->member.run, 0 );
     WCHAR *str = strStart + cursor.nOffset;
     int nLen = cursor.pRun->member.run.strText->nLen - cursor.nOffset;
     nChars -= nLen;

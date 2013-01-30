@@ -380,7 +380,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
 
       /* nOfs is a character offset (from the start of the document
          to the current (deleted) run */
-      add_undo_insert_run( editor, nOfs + nChars, run->strText->szData + c.nOffset, nCharsToDelete, run->nFlags, run->style );
+      add_undo_insert_run( editor, nOfs + nChars, get_text( run, c.nOffset ), nCharsToDelete, run->nFlags, run->style );
 
       TRACE("Post deletion string: %s (%d)\n", debugstr_run( run ), run->strText->nLen);
       TRACE("Shift value: %d\n", shift);

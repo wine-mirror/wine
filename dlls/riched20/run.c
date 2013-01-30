@@ -461,7 +461,7 @@ int ME_CharFromPoint(ME_Context *c, int cx, ME_Run *run)
   }
   else
   {
-    GetTextExtentExPointW(c->hDC, run->strText->szData, run->strText->nLen,
+    GetTextExtentExPointW(c->hDC, get_text( run, 0 ), run->strText->nLen,
       cx, &fit, NULL, &sz);
   }
   
@@ -483,10 +483,9 @@ int ME_CharFromPoint(ME_Context *c, int cx, ME_Run *run)
  */
 int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
 {
-  ME_String *strRunText;
-  /* This could point to either the run's real text, or it's masked form in a password control */
-
-  int fit = 0;
+  ME_String *mask_text = NULL;
+  WCHAR *str;
+  int fit = 0, len;
   ME_Context c;
   HGDIOBJ hOldFont;
   SIZE sz, sz2, sz3;
@@ -510,24 +509,27 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
     return 1;
   }
 
+  len = run->strText->nLen;
   if (editor->cPasswordMask)
-    strRunText = ME_MakeStringR(editor->cPasswordMask, run->strText->nLen);
+  {
+    mask_text = ME_MakeStringR( editor->cPasswordMask, len );
+    str = mask_text->szData;
+  }
   else
-    strRunText = run->strText;
+    str = get_text( run, 0 );
 
   hOldFont = ME_SelectStyleFont(&c, run->style);
-  GetTextExtentExPointW(c.hDC, strRunText->szData, strRunText->nLen,
+  GetTextExtentExPointW(c.hDC, str, len,
                         cx, &fit, NULL, &sz);
-  if (fit != strRunText->nLen)
+  if (fit != len)
   {
-    GetTextExtentPoint32W(c.hDC, strRunText->szData, fit, &sz2);
-    GetTextExtentPoint32W(c.hDC, strRunText->szData, fit + 1, &sz3);
+    GetTextExtentPoint32W(c.hDC, str, fit, &sz2);
+    GetTextExtentPoint32W(c.hDC, str, fit + 1, &sz3);
     if (cx >= (sz2.cx+sz3.cx)/2)
       fit = fit + 1;
   }
 
-  if (editor->cPasswordMask)
-    ME_DestroyString(strRunText);
+  ME_DestroyString( mask_text );
 
   ME_UnselectStyleFont(&c, run->style, hOldFont);
   ME_DestroyContext(&c);
@@ -562,8 +564,9 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
 {
   SIZE size;
   ME_Context c;
-  ME_String *strRunText;
-  /* This could point to either the run's real text, or it's masked form in a password control */
+  ME_String *mask_text = NULL;
+  WCHAR *str;
+  int len;
 
   ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
   if (pRun->nFlags & MERF_GRAPHICS)
@@ -576,15 +579,18 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
     nOffset = 0;
   }
 
+  len = pRun->strText->nLen;
   if (editor->cPasswordMask)
-    strRunText = ME_MakeStringR(editor->cPasswordMask, pRun->strText->nLen);
+  {
+    mask_text = ME_MakeStringR(editor->cPasswordMask, len);
+    str = mask_text->szData;
+  }
   else
-    strRunText = pRun->strText;
+      str = get_text( pRun, 0 );
 
-  ME_GetTextExtent(&c,  strRunText->szData, nOffset, pRun->style, &size);
+  ME_GetTextExtent(&c,  str, nOffset, pRun->style, &size);
   ME_DestroyContext(&c);
-  if (editor->cPasswordMask)
-    ME_DestroyString(strRunText);
+  ME_DestroyString( mask_text );
   return size.cx;
 }
 
@@ -616,7 +622,7 @@ static SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run 
   }
   else
   {
-    ME_GetTextExtent(c, run->strText->szData, nLen, run->style, &size);
+    ME_GetTextExtent(c, get_text( run, 0 ), nLen, run->style, &size);
   }
   *pAscent = run->style->tm.tmAscent;
   *pDescent = run->style->tm.tmDescent;
