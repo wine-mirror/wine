@@ -64,7 +64,7 @@ void ME_PropagateCharOffset(ME_DisplayItem *p, int shift)
 	 */	 	    
   if (p->type == diRun) /* propagate in all runs in this para */
   {
-    TRACE("PropagateCharOffset(%s, %d)\n", debugstr_w(p->member.run.strText->szData), shift);
+    TRACE("PropagateCharOffset(%s, %d)\n", debugstr_run( &p->member.run ), shift);
     do {
       p->member.run.nCharOfs += shift;
       assert(p->member.run.nCharOfs >= 0);
@@ -121,9 +121,9 @@ void ME_CheckCharOffsets(ME_TextEditor *editor)
         ofs = 0;
         break;
       case diRun:
-        TRACE_(richedit_check)("run, real ofs = %d (+ofsp = %d), counted = %d, len = %d, txt = \"%s\", flags=%08x, fx&mask = %08x\n",
+        TRACE_(richedit_check)("run, real ofs = %d (+ofsp = %d), counted = %d, len = %d, txt = %s, flags=%08x, fx&mask = %08x\n",
           p->member.run.nCharOfs, p->member.run.nCharOfs+ofsp, ofsp+ofs,
-          p->member.run.strText->nLen, debugstr_w(p->member.run.strText->szData),
+          p->member.run.strText->nLen, debugstr_run( &p->member.run ),
           p->member.run.nFlags,
           p->member.run.style->fmt.dwMask & p->member.run.style->fmt.dwEffects);
         assert(ofs == p->member.run.nCharOfs);
@@ -265,7 +265,7 @@ ME_DisplayItem *ME_SplitRun(ME_WrapContext *wc, ME_DisplayItem *item, int nVChar
 
   run = &item->member.run;
 
-  TRACE("Before split: %s(%d, %d)\n", debugstr_w(run->strText->szData),
+  TRACE("Before split: %s(%d, %d)\n", debugstr_run( run ),
         run->pt.x, run->pt.y);
 
   ME_SplitRunSimple(editor, &cursor);
@@ -283,8 +283,8 @@ ME_DisplayItem *ME_SplitRun(ME_WrapContext *wc, ME_DisplayItem *item, int nVChar
     ME_CheckCharOffsets(editor);
     TRACE("After check after split\n");
     TRACE("After split: %s(%d, %d), %s(%d, %d)\n",
-      debugstr_w(run->strText->szData), run->pt.x, run->pt.y,
-      debugstr_w(run2->strText->szData), run2->pt.x, run2->pt.y);
+      debugstr_run( run ), run->pt.x, run->pt.y,
+      debugstr_run( run2 ), run2->pt.x, run2->pt.y);
   }
 
   return cursor.pRun;

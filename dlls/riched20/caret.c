@@ -374,15 +374,15 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
          nCharsToDelete is a number of chars to delete from THIS run */
       nChars -= nCharsToDelete;
       shift -= nCharsToDelete;
-      TRACE("Deleting %d (remaning %d) chars at %d in '%s' (%d)\n",
+      TRACE("Deleting %d (remaning %d) chars at %d in %s (%d)\n",
         nCharsToDelete, nChars, c.nOffset,
-        debugstr_w(run->strText->szData), run->strText->nLen);
+        debugstr_run( run ), run->strText->nLen);
 
       /* nOfs is a character offset (from the start of the document
          to the current (deleted) run */
       add_undo_insert_run( editor, nOfs + nChars, run->strText->szData + c.nOffset, nCharsToDelete, run->nFlags, run->style );
 
-      TRACE("Post deletion string: %s (%d)\n", debugstr_w(run->strText->szData), run->strText->nLen);
+      TRACE("Post deletion string: %s (%d)\n", debugstr_run( run ), run->strText->nLen);
       TRACE("Shift value: %d\n", shift);
       ME_StrDeleteV(run->strText, c.nOffset, nCharsToDelete);
 

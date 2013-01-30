@@ -189,7 +189,7 @@ static void ME_WrapEndParagraph(ME_WrapContext *wc, ME_DisplayItem *p)
     if (p->type == diRun)
     {
       ME_Run *run = &p->member.run;
-      TRACE("%s - (%d, %d)\n", debugstr_w(run->strText->szData), run->pt.x, run->pt.y);
+      TRACE("%s - (%d, %d)\n", debugstr_run(run), run->pt.x, run->pt.y);
     }
     p = p->next;
   }
@@ -241,7 +241,7 @@ static ME_DisplayItem *ME_MaximizeSplit(ME_WrapContext *wc, ME_DisplayItem *p, i
       /* this run is the end of spaces, so the run edge is a good point to split */
       wc->pt = pp->member.run.pt;
       wc->bOverflown = TRUE;
-      TRACE("Split point is: %s|%s\n", debugstr_w(piter->member.run.strText->szData), debugstr_w(pp->member.run.strText->szData));
+      TRACE("Split point is: %s|%s\n", debugstr_run( &piter->member.run ), debugstr_run( &pp->member.run ));
       return pp;
     }
     wc->pt = piter->member.run.pt;
@@ -266,7 +266,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
     if (pp)
       return pp;
   }
-  TRACE("Must backtrack to split at: %s\n", debugstr_w(p->member.run.strText->szData));
+  TRACE("Must backtrack to split at: %s\n", debugstr_run( &p->member.run ));
   if (wc->pLastSplittableRun)
   {
     if (wc->pLastSplittableRun->member.run.nFlags & (MERF_GRAPHICS|MERF_TAB))
@@ -303,7 +303,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
       return wc->pLastSplittableRun;
     }
   }
-  TRACE("Backtracking failed, trying desperate: %s\n", debugstr_w(p->member.run.strText->szData));
+  TRACE("Backtracking failed, trying desperate: %s\n", debugstr_run( &p->member.run ));
   /* OK, no better idea, so assume we MAY split words if we can split at all*/
   if (idesp)
     return ME_SplitRun(wc, piter, idesp);

@@ -56,6 +56,8 @@ static inline void * __WINE_ALLOC_SIZE(2) heap_realloc( void *ptr, size_t len )
         (fe).lindex=-1;\
         };
 
+static inline const char *debugstr_run( const ME_Run *run ) { return debugstr_w( run->strText->szData ); }
+
 /* style.c */
 ME_Style *ME_MakeStyle(CHARFORMAT2W *style) DECLSPEC_HIDDEN;
 void ME_AddRefStyle(ME_Style *item) DECLSPEC_HIDDEN;

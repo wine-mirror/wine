@@ -410,7 +410,7 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
     pTmp = ME_FindItemFwd(pTmp, diRunOrParagraphOrEnd);
     if (pTmp->type != diRun)
       break;
-    TRACE("shifting \"%s\" by %d (previous %d)\n", debugstr_w(pTmp->member.run.strText->szData), shift, pTmp->member.run.nCharOfs);
+    TRACE("shifting %s by %d (previous %d)\n", debugstr_run( &pTmp->member.run ), shift, pTmp->member.run.nCharOfs);
     pTmp->member.run.nCharOfs += shift;
     pTmp->member.run.para = &tp->member.para;
   } while(1);

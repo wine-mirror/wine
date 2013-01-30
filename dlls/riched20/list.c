@@ -211,7 +211,7 @@ void ME_DumpDocument(ME_TextBuffer *buffer)
         TRACE(" - StartRow\n");
         break;
       case diRun:
-        TRACE(" - Run(\"%s\", %d, flags=%x)\n", debugstr_w(pItem->member.run.strText->szData),
+        TRACE(" - Run(%s, %d, flags=%x)\n", debugstr_run( &pItem->member.run ),
           pItem->member.run.nCharOfs, pItem->member.run.nFlags);
         break;
       case diTextEnd:
