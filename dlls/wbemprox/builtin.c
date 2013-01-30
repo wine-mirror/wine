@@ -343,7 +343,7 @@ static const struct column col_videocontroller[] =
     { prop_descriptionW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_deviceidW,             CIM_STRING|COL_FLAG_KEY },
     { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_pnpdeviceidW,          CIM_STRING }
+    { prop_pnpdeviceidW,          CIM_STRING|COL_FLAG_DYNAMIC }
 };
 
 static const WCHAR baseboard_manufacturerW[] =
@@ -395,10 +395,6 @@ static const WCHAR sounddevice_productnameW[] =
     {'W','i','n','e',' ','A','u','d','i','o',' ','D','e','v','i','c','e',0};
 static const WCHAR videocontroller_deviceidW[] =
     {'V','i','d','e','o','C','o','n','t','r','o','l','l','e','r','1',0};
-static const WCHAR videocontroller_pnpdeviceidW[] =
-    {'P','C','I','\\','V','E','N','_','1','0','0','2','&','D','E','V','_','6','7','1','8','&',
-     'S','U','B','S','Y','S','_','2','2','0','1','1','4','5','8','&','R','E','V','_','0','0','\\',
-     '4','&','3','8','A','C','1','8','A','C','&','0','&','0','0','0','9',0};
 
 #include "pshpack1.h"
 struct record_baseboard
@@ -1206,6 +1202,19 @@ static UINT32 get_bits_per_pixel( UINT *hres, UINT *vres )
     return ret;
 }
 
+static WCHAR *get_pnpdeviceid( DXGI_ADAPTER_DESC *desc )
+{
+    static const WCHAR fmtW[] =
+        {'P','C','I','\\','V','E','N','_','%','0','4','X','&','D','E','V','_','%','0','4','X',
+         '&','S','U','B','S','Y','S','_','%','0','8','X','&','R','E','V','_','%','0','2','X','\\',
+         '0','&','D','E','A','D','B','E','E','F','&','0','&','D','E','A','D',0};
+    WCHAR *ret;
+
+    if (!(ret = heap_alloc( sizeof(fmtW) + 2 * sizeof(WCHAR) ))) return NULL;
+    sprintfW( ret, fmtW, desc->VendorId, desc->DeviceId, desc->SubSysId, desc->Revision );
+    return ret;
+}
+
 static void fill_videocontroller( struct table *table )
 {
 
@@ -1241,7 +1250,7 @@ done:
     rec->description           = heap_strdupW( name );
     rec->device_id             = videocontroller_deviceidW;
     rec->name                  = heap_strdupW( name );
-    rec->pnpdevice_id          = videocontroller_pnpdeviceidW;
+    rec->pnpdevice_id          = get_pnpdeviceid( &desc );
 
     TRACE("created 1 row\n");
     table->num_rows = 1;
