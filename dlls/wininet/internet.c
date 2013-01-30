@@ -3715,16 +3715,16 @@ void *alloc_async_task(object_header_t *hdr, async_task_proc_t proc, size_t size
  * RETURNS
  *
  */
-DWORD INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest)
+DWORD INTERNET_AsyncCall(task_header_t *task)
 {
     BOOL bSuccess;
 
     TRACE("\n");
 
-    bSuccess = QueueUserWorkItem(INTERNET_WorkerThreadFunc, lpWorkRequest, WT_EXECUTELONGFUNCTION);
+    bSuccess = QueueUserWorkItem(INTERNET_WorkerThreadFunc, task, WT_EXECUTELONGFUNCTION);
     if (!bSuccess)
     {
-        heap_free(lpWorkRequest);
+        heap_free(task);
         return ERROR_INTERNET_ASYNC_THREAD_FAILED;
     }
     return ERROR_SUCCESS;

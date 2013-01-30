@@ -1248,9 +1248,9 @@ static void FTP_ReceiveRequestData(ftp_file_t *file, BOOL first_notif)
                           sizeof(INTERNET_ASYNC_RESULT));
 }
 
-static void FTPFILE_AsyncQueryDataAvailableProc(WORKREQUEST *workRequest)
+static void FTPFILE_AsyncQueryDataAvailableProc(task_header_t *task)
 {
-    ftp_file_t *file = (ftp_file_t*)workRequest->hdr;
+    ftp_file_t *file = (ftp_file_t*)task->hdr;
 
     FTP_ReceiveRequestData(file, FALSE);
 }

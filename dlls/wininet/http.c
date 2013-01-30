@@ -2993,9 +2993,9 @@ static DWORD HTTPREQ_WriteFile(object_header_t *hdr, const void *buffer, DWORD s
     return res;
 }
 
-static void AsyncQueryDataAvailableProc(WORKREQUEST *workRequest)
+static void AsyncQueryDataAvailableProc(task_header_t *task)
 {
-    http_request_t *req = (http_request_t*)workRequest->hdr;
+    http_request_t *req = (http_request_t*)task->hdr;
 
     HTTP_ReceiveRequestData(req, FALSE);
 }

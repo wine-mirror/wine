@@ -354,14 +354,14 @@ typedef struct
     netconn_stream_t netconn_stream;
 } http_request_t;
 
-typedef struct WORKREQ task_header_t;
+typedef struct task_header_t task_header_t;
 typedef void (*async_task_proc_t)(task_header_t*);
 
-typedef struct WORKREQ
+struct task_header_t
 {
     async_task_proc_t proc;
     object_header_t *hdr;
-} WORKREQUEST, *LPWORKREQUEST;
+};
 
 void *alloc_async_task(object_header_t*,async_task_proc_t,size_t) DECLSPEC_HIDDEN;
 
@@ -393,7 +393,7 @@ BOOL set_cookie(const WCHAR*,const WCHAR*,const WCHAR*,const WCHAR*) DECLSPEC_HI
 
 void INTERNET_SetLastError(DWORD dwError) DECLSPEC_HIDDEN;
 DWORD INTERNET_GetLastError(void) DECLSPEC_HIDDEN;
-DWORD INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest) DECLSPEC_HIDDEN;
+DWORD INTERNET_AsyncCall(task_header_t*) DECLSPEC_HIDDEN;
 LPSTR INTERNET_GetResponseBuffer(void) DECLSPEC_HIDDEN;
 LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen) DECLSPEC_HIDDEN;
 
