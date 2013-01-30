@@ -200,8 +200,8 @@ static HRESULT WINAPI IcoFrameDecode_GetColorContexts(IWICBitmapFrameDecode *ifa
 static HRESULT WINAPI IcoFrameDecode_GetThumbnail(IWICBitmapFrameDecode *iface,
     IWICBitmapSource **ppIThumbnail)
 {
-    FIXME("(%p,%p)\n", iface, ppIThumbnail);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIThumbnail);
+    return IWICBitmapFrameDecode_QueryInterface(iface, &IID_IWICBitmapSource, (void **)ppIThumbnail);
 }
 
 static const IWICBitmapFrameDecodeVtbl IcoFrameDecode_Vtbl = {
