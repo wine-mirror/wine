@@ -67,6 +67,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   eol_str = ME_MakeStringN(cr_lf, editor->bEmulateVersion10 ? 2 : 1);
   run = ME_MakeRun(style, eol_str, MERF_ENDPARA);
   run->member.run.nCharOfs = 0;
+  run->member.run.para = &para->member.para;
 
   ME_InsertBefore(text->pLast, para);
   ME_InsertBefore(text->pLast, run);
@@ -213,16 +214,17 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   } else { /* v1.0 - v3.0 */
     assert(!(paraFlags & (MEPF_CELL|MEPF_ROWSTART|MEPF_ROWEND)));
   }
-  end_run = ME_MakeRun(style, eol_str, run_flags);
-
   assert(run->type == diRun);
   run_para = ME_GetParagraph(run);
   assert(run_para->member.para.pFmt->cbSize == sizeof(PARAFORMAT2));
 
+  end_run = ME_MakeRun(style, eol_str, run_flags);
   ofs = end_run->member.run.nCharOfs = run->member.run.nCharOfs;
+  end_run->member.run.para = run->member.run.para;
+
   next_para = run_para->member.para.next_para;
   assert(next_para == ME_FindItemFwd(run_para, diParagraphOrEnd));
-  
+
   add_undo_join_paras( editor, run_para->member.para.nCharOfs + ofs );
 
   /* Update selection cursors to point to the correct paragraph. */
@@ -238,6 +240,7 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   pp = run;
   while(pp->type == diRun) {
     pp->member.run.nCharOfs -= ofs;
+    pp->member.run.para = &new_para->member.para;
     pp = ME_FindItemFwd(pp, diRunOrParagraphOrEnd);
   }
   new_para->member.para.nCharOfs = run_para->member.para.nCharOfs + ofs;
@@ -409,6 +412,7 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
       break;
     TRACE("shifting \"%s\" by %d (previous %d)\n", debugstr_w(pTmp->member.run.strText->szData), shift, pTmp->member.run.nCharOfs);
     pTmp->member.run.nCharOfs += shift;
+    pTmp->member.run.para = &tp->member.para;
   } while(1);
 
   ME_Remove(pRun);

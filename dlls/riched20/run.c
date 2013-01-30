@@ -310,6 +310,7 @@ ME_DisplayItem *ME_SplitRunSimple(ME_TextEditor *editor, ME_Cursor *cursor)
                        run->member.run.nFlags & MERF_SPLITMASK);
 
   new_run->member.run.nCharOfs = run->member.run.nCharOfs + nOffset;
+  new_run->member.run.para = run->member.run.para;
   cursor->pRun = new_run;
   cursor->nOffset = 0;
 
@@ -341,6 +342,7 @@ ME_DisplayItem *ME_MakeRun(ME_Style *s, ME_String *strData, int nFlags)
   item->member.run.strText = strData;
   item->member.run.nFlags = nFlags;
   item->member.run.nCharOfs = -1;
+  item->member.run.para = NULL;
   ME_AddRefStyle(s);
   return item;
 }
@@ -366,6 +368,7 @@ ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
 
   pDI = ME_MakeRun(style, ME_MakeStringN(str, len), flags);
   pDI->member.run.nCharOfs = cursor->pRun->member.run.nCharOfs;
+  pDI->member.run.para = cursor->pRun->member.run.para;
   ME_InsertBefore(cursor->pRun, pDI);
   TRACE("Shift length:%d\n", len);
   ME_PropagateCharOffset(cursor->pRun, len);

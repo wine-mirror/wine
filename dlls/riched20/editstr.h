@@ -143,6 +143,7 @@ typedef struct tagME_Run
 {
   ME_String *strText;
   ME_Style *style;
+  struct tagME_Paragraph *para; /* ptr to the run's paragraph */
   int nCharOfs; /* relative to para's offset */
   int nWidth; /* width of full run, width of leading&trailing ws */
   int nFlags;
