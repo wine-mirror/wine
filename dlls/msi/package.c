@@ -749,6 +749,8 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     static const WCHAR szPrintHoodFolder[] = {'P','r','i','n','t','H','o','o','d','F','o','l','d','e','r',0};
     static const WCHAR szRecentFolder[] = {'R','e','c','e','n','t','F','o','l','d','e','r',0};
     static const WCHAR szComputerName[] = {'C','o','m','p','u','t','e','r','N','a','m','e',0};
+    static const WCHAR szBrowseProperty[] = {'_','B','r','o','w','s','e','P','r','o','p','e','r','t','y',0};
+    static const WCHAR szInstallDir[] = {'I','N','S','T','A','L','L','D','I','R',0};
 
     /*
      * Other things that probably should be set:
@@ -1020,6 +1022,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
             msi_free( computername );
         }
     }
+    msi_set_property( package->db, szBrowseProperty, szInstallDir, -1 );
 }
 
 static UINT msi_load_summary_properties( MSIPACKAGE *package )
