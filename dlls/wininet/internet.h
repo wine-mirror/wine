@@ -363,12 +363,6 @@ struct WORKREQ_FTPFINDFIRSTFILEW
     DWORD_PTR dwContext;
 };
 
-struct WORKREQ_FTPGETCURRENTDIRECTORYW
-{
-    LPWSTR lpszDirectory;
-    DWORD *lpdwDirectory;
-};
-
 struct WORKREQ_FTPOPENFILEW
 {
     LPWSTR lpszFilename;
@@ -403,7 +397,6 @@ typedef struct WORKREQ
 
     union {
         struct WORKREQ_FTPFINDFIRSTFILEW        FtpFindFirstFileW;
-        struct WORKREQ_FTPGETCURRENTDIRECTORYW  FtpGetCurrentDirectoryW;
         struct WORKREQ_FTPOPENFILEW             FtpOpenFileW;
         struct WORKREQ_FTPDELETEFILEW           FtpDeleteFileW;
         struct WORKREQ_FTPRENAMEFILEW           FtpRenameFileW;
