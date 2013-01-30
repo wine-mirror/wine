@@ -739,17 +739,23 @@ HINTERNET WINAPI FtpFindFirstFileA(HINTERNET hConnect,
     return ret;
 }
 
+typedef struct {
+    task_header_t hdr;
+    WCHAR *search_file;
+    WIN32_FIND_DATAW *find_file_data;
+    DWORD flags;
+    DWORD_PTR context;
+} find_first_file_task_t;
 
-static void AsyncFtpFindFirstFileProc(WORKREQUEST *workRequest)
+static void AsyncFtpFindFirstFileProc(task_header_t *hdr)
 {
-    struct WORKREQ_FTPFINDFIRSTFILEW const *req = &workRequest->u.FtpFindFirstFileW;
-    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
+    find_first_file_task_t *task = (find_first_file_task_t*)hdr;
+    ftp_session_t *session = (ftp_session_t*)task->hdr.hdr;
 
-    TRACE("%p\n", lpwfs);
+    TRACE("%p\n", session);
 
-    FTP_FtpFindFirstFileW(lpwfs, req->lpszSearchFile,
-       req->lpFindFileData, req->dwFlags, req->dwContext);
-    heap_free(req->lpszSearchFile);
+    FTP_FtpFindFirstFileW(session, task->search_file, task->find_file_data, task->flags, task->context);
+    heap_free(task->search_file);
 }
 
 /***********************************************************************
@@ -785,18 +791,16 @@ HINTERNET WINAPI FtpFindFirstFileW(HINTERNET hConnect,
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST *task;
-        struct WORKREQ_FTPFINDFIRSTFILEW *req;
+        find_first_file_t *task;
 
         task = alloc_async_task(&lpwfs->hdr, AsyncFtpFindFirstFileProc, sizeof(*task));
-        req = &task->u.FtpFindFirstFileW;
-        req->lpszSearchFile = (lpszSearchFile == NULL) ? NULL : heap_strdupW(lpszSearchFile);
-	req->lpFindFileData = lpFindFileData;
-	req->dwFlags = dwFlags;
-	req->dwContext= dwContext;
+        task->search_file = heap_strdupW(lpszSearchFile);
+        task->find_file_data = lpFindFileData;
+        task->flags = dwFlags;
+        task->context = dwContext;
 
-	INTERNET_AsyncCall(task);
-	r = NULL;
+        INTERNET_AsyncCall(&task->hdr);
+        r = NULL;
     }
     else
     {

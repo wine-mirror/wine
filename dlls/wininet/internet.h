@@ -355,14 +355,6 @@ typedef struct
 } http_request_t;
 
 
-struct WORKREQ_FTPFINDFIRSTFILEW
-{
-    LPWSTR lpszSearchFile;
-    LPWIN32_FIND_DATAW lpFindFileData;
-    DWORD  dwFlags;
-    DWORD_PTR dwContext;
-};
-
 struct WORKREQ_FTPOPENFILEW
 {
     LPWSTR lpszFilename;
@@ -396,7 +388,6 @@ typedef struct WORKREQ
     object_header_t *hdr;
 
     union {
-        struct WORKREQ_FTPFINDFIRSTFILEW        FtpFindFirstFileW;
         struct WORKREQ_FTPOPENFILEW             FtpOpenFileW;
         struct WORKREQ_FTPDELETEFILEW           FtpDeleteFileW;
         struct WORKREQ_FTPRENAMEFILEW           FtpRenameFileW;
