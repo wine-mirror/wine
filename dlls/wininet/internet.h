@@ -377,16 +377,6 @@ struct WORKREQ_FTPOPENFILEW
     DWORD_PTR dwContext;
 };
 
-struct WORKREQ_FTPGETFILEW
-{
-    LPWSTR lpszRemoteFile;
-    LPWSTR lpszNewFile;
-    BOOL   fFailIfExists;
-    DWORD  dwLocalFlagsAttribute;
-    DWORD  dwFlags;
-    DWORD_PTR dwContext;
-};
-
 struct WORKREQ_FTPDELETEFILEW
 {
     LPWSTR lpszFilename;
@@ -415,7 +405,6 @@ typedef struct WORKREQ
         struct WORKREQ_FTPFINDFIRSTFILEW        FtpFindFirstFileW;
         struct WORKREQ_FTPGETCURRENTDIRECTORYW  FtpGetCurrentDirectoryW;
         struct WORKREQ_FTPOPENFILEW             FtpOpenFileW;
-        struct WORKREQ_FTPGETFILEW              FtpGetFileW;
         struct WORKREQ_FTPDELETEFILEW           FtpDeleteFileW;
         struct WORKREQ_FTPRENAMEFILEW           FtpRenameFileW;
         struct WORKREQ_FTPFINDNEXTW             FtpFindNextW;

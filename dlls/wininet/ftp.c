@@ -1563,19 +1563,27 @@ BOOL WINAPI FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszN
     return ret;
 }
 
+typedef struct {
+    task_header_t hdr;
+    WCHAR *remote_file;
+    WCHAR *new_file;
+    BOOL fail_if_exists;
+    DWORD local_attr;
+    DWORD flags;
+    DWORD_PTR context;
+} get_file_task_t;
 
-static void AsyncFtpGetFileProc(WORKREQUEST *workRequest)
+static void AsyncFtpGetFileProc(task_header_t *hdr)
 {
-    struct WORKREQ_FTPGETFILEW const *req = &workRequest->u.FtpGetFileW;
-    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
+    get_file_task_t *task = (get_file_task_t*)hdr;
+    ftp_session_t *session = (ftp_session_t*)task->hdr.hdr;
 
-    TRACE("%p\n", lpwfs);
+    TRACE("%p\n", session);
 
-    FTP_FtpGetFileW(lpwfs, req->lpszRemoteFile,
-             req->lpszNewFile, req->fFailIfExists,
-             req->dwLocalFlagsAttribute, req->dwFlags, req->dwContext);
-    heap_free(req->lpszRemoteFile);
-    heap_free(req->lpszNewFile);
+    FTP_FtpGetFileW(session, task->remote_file, task->new_file, task->fail_if_exists,
+             task->local_attr, task->flags, task->context);
+    heap_free(task->remote_file);
+    heap_free(task->new_file);
 }
 
 
@@ -1631,19 +1639,17 @@ BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lps
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST *task;
-        struct WORKREQ_FTPGETFILEW *req;
+        get_file_task_t *task;
 
         task = alloc_async_task(&lpwfs->hdr, AsyncFtpGetFileProc, sizeof(*task));
-        req = &task->u.FtpGetFileW;
-        req->lpszRemoteFile = heap_strdupW(lpszRemoteFile);
-        req->lpszNewFile = heap_strdupW(lpszNewFile);
-	req->dwLocalFlagsAttribute = dwLocalFlagsAttribute;
-	req->fFailIfExists = fFailIfExists;
-	req->dwFlags = dwInternetFlags;
-	req->dwContext = dwContext;
+        task->remote_file = heap_strdupW(lpszRemoteFile);
+        task->new_file = heap_strdupW(lpszNewFile);
+        task->local_attr = dwLocalFlagsAttribute;
+        task->fail_if_exists = fFailIfExists;
+        task->flags = dwInternetFlags;
+        task->context = dwContext;
 
-	r = res_to_le(INTERNET_AsyncCall(task));
+        r = res_to_le(INTERNET_AsyncCall(&task->hdr));
     }
     else
     {
