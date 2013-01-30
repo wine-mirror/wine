@@ -2076,16 +2076,22 @@ BOOL WINAPI FtpRenameFileA(HINTERNET hFtpSession, LPCSTR lpszSrc, LPCSTR lpszDes
     return ret;
 }
 
-static void AsyncFtpRenameFileProc(WORKREQUEST *workRequest)
+typedef struct {
+    task_header_t hdr;
+    WCHAR *src_file;
+    WCHAR *dst_file;
+} rename_file_task_t;
+
+static void AsyncFtpRenameFileProc(task_header_t *hdr)
 {
-    struct WORKREQ_FTPRENAMEFILEW const *req = &workRequest->u.FtpRenameFileW;
-    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
+    rename_file_task_t *task = (rename_file_task_t*)hdr;
+    ftp_session_t *session = (ftp_session_t*)task->hdr.hdr;
 
-    TRACE("%p\n", lpwfs);
+    TRACE("%p\n", session);
 
-    FTP_FtpRenameFileW(lpwfs, req->lpszSrcFile, req->lpszDestFile);
-    heap_free(req->lpszSrcFile);
-    heap_free(req->lpszDestFile);
+    FTP_FtpRenameFileW(session, task->src_file, task->dst_file);
+    heap_free(task->src_file);
+    heap_free(task->dst_file);
 }
 
 /***********************************************************************
@@ -2132,15 +2138,13 @@ BOOL WINAPI FtpRenameFileW(HINTERNET hFtpSession, LPCWSTR lpszSrc, LPCWSTR lpszD
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST *task;
-        struct WORKREQ_FTPRENAMEFILEW *req;
+        rename_file_t *task;
 
         task = alloc_async_task(&lpwfs->hdr, AsyncFtpRenameFileProc, sizeof(*task));
-        req = &task->u.FtpRenameFileW;
-        req->lpszSrcFile = heap_strdupW(lpszSrc);
-        req->lpszDestFile = heap_strdupW(lpszDest);
+        task->src_file = heap_strdupW(lpszSrc);
+        task->dst_file = heap_strdupW(lpszDest);
 
-	r = res_to_le(INTERNET_AsyncCall(task));
+        r = res_to_le(INTERNET_AsyncCall(&task->hdr));
     }
     else
     {

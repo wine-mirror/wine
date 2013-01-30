@@ -360,12 +360,6 @@ struct WORKREQ_FTPDELETEFILEW
     LPWSTR lpszFilename;
 };
 
-struct WORKREQ_FTPRENAMEFILEW
-{
-    LPWSTR lpszSrcFile;
-    LPWSTR lpszDestFile;
-};
-
 struct WORKREQ_FTPFINDNEXTW
 {
     LPWIN32_FIND_DATAW lpFindFileData;
@@ -381,7 +375,6 @@ typedef struct WORKREQ
 
     union {
         struct WORKREQ_FTPDELETEFILEW           FtpDeleteFileW;
-        struct WORKREQ_FTPRENAMEFILEW           FtpRenameFileW;
         struct WORKREQ_FTPFINDNEXTW             FtpFindNextW;
     } u;
 } WORKREQUEST, *LPWORKREQUEST;
