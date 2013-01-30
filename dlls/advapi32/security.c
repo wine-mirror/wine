@@ -423,6 +423,19 @@ static inline DWORD get_security_file( LPWSTR full_file_name, DWORD access, HAND
     return RtlNtStatusToDosError( status );
 }
 
+/* helper function for SE_SERVICE objects in [Get|Set]NamedSecurityInfo */
+static inline DWORD get_security_service( LPWSTR full_service_name, DWORD access, HANDLE *service )
+{
+    SC_HANDLE manager = 0;
+    DWORD err;
+
+    err = SERV_OpenSCManagerW( NULL, NULL, access, (SC_HANDLE *)&manager );
+    if (err == ERROR_SUCCESS)
+        err = SERV_OpenServiceW( manager, full_service_name, access, (SC_HANDLE *)service );
+    CloseServiceHandle( manager );
+    return err;
+}
+
 #define	WINE_SIZE_OF_WORLD_ACCESS_ACL	(sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) + sizeof(sidWorld) - sizeof(DWORD))
 
 static void GetWorldAccessACL(PACL pACL)
@@ -5535,16 +5548,6 @@ DWORD WINAPI GetNamedSecurityInfoW( LPWSTR name, SE_OBJECT_TYPE type,
 
     TRACE( "%s %d %d %p %p %p %p %p\n", debugstr_w(name), type, info, owner,
            group, dacl, sacl, descriptor );
-    if (type != SE_FILE_OBJECT)
-    {
-        FIXME( "Object type %d is not currently supported.\n", type );
-        if (owner) *owner = NULL;
-        if (group) *group = NULL;
-        if (dacl) *dacl = NULL;
-        if (sacl) *sacl = NULL;
-        if (descriptor) *descriptor = NULL;
-        return ERROR_SUCCESS;
-    }
 
     /* A NULL descriptor is allowed if any one of the other pointers is not NULL */
     if (!name || !(owner||group||dacl||sacl||descriptor) ) return ERROR_INVALID_PARAMETER;
@@ -5562,11 +5565,31 @@ DWORD WINAPI GetNamedSecurityInfoW( LPWSTR name, SE_OBJECT_TYPE type,
     if (info & SACL_SECURITY_INFORMATION)
         access |= ACCESS_SYSTEM_SECURITY;
 
-    err = get_security_file( name, access, &handle);
-    if (err != ERROR_SUCCESS)
-        return err;
-    err = GetSecurityInfo( handle, type, info, owner, group, dacl, sacl, descriptor );
-    CloseHandle( handle );
+    switch (type)
+    {
+    case SE_SERVICE:
+        if (!(err = get_security_service( name, access, &handle)))
+        {
+            err = GetSecurityInfo( handle, type, info, owner, group, dacl, sacl, descriptor );
+            CloseServiceHandle( handle );
+        }
+        break;
+    case SE_FILE_OBJECT:
+        if (!(err = get_security_file( name, access, &handle)))
+        {
+            err = GetSecurityInfo( handle, type, info, owner, group, dacl, sacl, descriptor );
+            CloseHandle( handle );
+        }
+        break;
+    default:
+        FIXME( "Object type %d is not currently supported.\n", type );
+        if (owner) *owner = NULL;
+        if (group) *group = NULL;
+        if (dacl) *dacl = NULL;
+        if (sacl) *sacl = NULL;
+        if (descriptor) *descriptor = NULL;
+        return ERROR_SUCCESS;
+    }
     return err;
 }
 

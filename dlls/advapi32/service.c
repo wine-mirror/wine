@@ -777,18 +777,17 @@ SC_HANDLE WINAPI OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
  *
  * See OpenSCManagerA.
  */
-SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
-                                 DWORD dwDesiredAccess )
+DWORD SERV_OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
+                           DWORD dwDesiredAccess, SC_HANDLE *handle )
 {
-    SC_HANDLE handle = 0;
-    LONG r;
+    DWORD r;
 
     TRACE("(%s,%s,0x%08x)\n", debugstr_w(lpMachineName),
           debugstr_w(lpDatabaseName), dwDesiredAccess);
 
     __TRY
     {
-        r = svcctl_OpenSCManagerW(lpMachineName, lpDatabaseName, dwDesiredAccess, (SC_RPC_HANDLE *)&handle);
+        r = svcctl_OpenSCManagerW(lpMachineName, lpDatabaseName, dwDesiredAccess, (SC_RPC_HANDLE *)handle);
     }
     __EXCEPT(rpc_filter)
     {
@@ -797,12 +796,21 @@ SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
     __ENDTRY
 
     if (r!=ERROR_SUCCESS)
-    {
-        SetLastError( r );
-        handle = 0;
-    }
+        *handle = 0;
 
-    TRACE("returning %p\n", handle);
+    TRACE("returning %p\n", *handle);
+    return r;
+}
+
+SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
+                                 DWORD dwDesiredAccess )
+{
+    SC_HANDLE handle = 0;
+    DWORD r;
+
+    r = SERV_OpenSCManagerW(lpMachineName, lpDatabaseName, dwDesiredAccess, &handle);
+    if (r!=ERROR_SUCCESS)
+        SetLastError(r);
     return handle;
 }
 
@@ -921,23 +929,19 @@ SC_HANDLE WINAPI OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
  *
  * See OpenServiceA.
  */
-SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
-                               DWORD dwDesiredAccess)
+DWORD SERV_OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
+                         DWORD dwDesiredAccess, SC_HANDLE *handle )
 {
-    SC_HANDLE handle = 0;
     DWORD err;
 
     TRACE("%p %s %d\n", hSCManager, debugstr_w(lpServiceName), dwDesiredAccess);
 
     if (!hSCManager)
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return 0;
-    }
+        return ERROR_INVALID_HANDLE;
 
     __TRY
     {
-        err = svcctl_OpenServiceW(hSCManager, lpServiceName, dwDesiredAccess, (SC_RPC_HANDLE *)&handle);
+        err = svcctl_OpenServiceW(hSCManager, lpServiceName, dwDesiredAccess, (SC_RPC_HANDLE *)handle);
     }
     __EXCEPT(rpc_filter)
     {
@@ -946,12 +950,21 @@ SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     __ENDTRY
 
     if (err != ERROR_SUCCESS)
-    {
-        SetLastError(err);
         handle = 0;
-    }
 
-    TRACE("returning %p\n",handle);
+    TRACE("returning %p\n", *handle);
+    return err;
+}
+
+SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
+                               DWORD dwDesiredAccess)
+{
+    SC_HANDLE handle = 0;
+    DWORD err;
+
+    err = SERV_OpenServiceW(hSCManager, lpServiceName, dwDesiredAccess, &handle);
+    if (err != ERROR_SUCCESS)
+        SetLastError(err);
     return handle;
 }
 
