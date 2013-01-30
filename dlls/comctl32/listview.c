@@ -1838,9 +1838,9 @@ static inline INT LISTVIEW_GetCountPerColumn(const LISTVIEW_INFO *infoPtr)
 static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, LPARAM keyData)
 {
     WCHAR buffer[MAX_PATH];
-    INT endidx, startidx;
     DWORD prevTime;
     LVITEMW item;
+    int startidx;
     INT nItem;
     INT diff;
 
@@ -1880,15 +1880,16 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
         infoPtr->nSearchParamLength = 1;
     }
 
-    /* and search from the current position */
-    nItem = -1;
-    endidx = infoPtr->nItemCount;
-
     /* should start from next after focused item, so next item that matches
        will be selected, if there isn't any and focused matches it will be selected
        on second search stage from beginning of the list */
     if (infoPtr->nFocusedItem >= 0 && infoPtr->nItemCount > 1)
-        startidx = infoPtr->nFocusedItem + 1;
+    {
+        /* with some accumulated search data available start with current focus, otherwise
+           it's excluded from search */
+        startidx = infoPtr->nSearchParamLength > 1 ? infoPtr->nFocusedItem : infoPtr->nFocusedItem + 1;
+        if (startidx == infoPtr->nItemCount) startidx = 0;
+    }
     else
         startidx = 0;
 
@@ -1908,7 +1909,11 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
     }
     else
     {
-        INT i = startidx;
+        int i = startidx, endidx;
+
+        /* and search from the current position */
+        nItem = -1;
+        endidx = infoPtr->nItemCount;
 
         /* first search in [startidx, endidx), on failure continue in [0, startidx) */
         while (1)
@@ -1930,12 +1935,15 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
                 item.cchTextMax = MAX_PATH;
                 if (!LISTVIEW_GetItemW(infoPtr, &item)) return 0;
 
-                if (lstrncmpiW(item.pszText, infoPtr->szSearchParam, infoPtr->nSearchParamLength) == 0)
+                if (!lstrncmpiW(item.pszText, infoPtr->szSearchParam, infoPtr->nSearchParamLength))
                 {
                     nItem = i;
                     break;
                 }
-                else if (nItem == -1 && lstrncmpiW(item.pszText, infoPtr->szSearchParam, 1) == 0)
+                /* this is used to find first char match when search string is not available yet,
+                   otherwise every WM_CHAR will search to next item by first char, ignoring that we're
+                   already waiting for user to complete a string */
+                else if (nItem == -1 && infoPtr->nSearchParamLength == 1 && !lstrncmpiW(item.pszText, infoPtr->szSearchParam, 1))
                 {
                     /* this would work but we must keep looking for a longer match */
                     nItem = i;
