@@ -791,7 +791,7 @@ HINTERNET WINAPI FtpFindFirstFileW(HINTERNET hConnect,
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        find_first_file_t *task;
+        find_first_file_task_t *task;
 
         task = alloc_async_task(&lpwfs->hdr, AsyncFtpFindFirstFileProc, sizeof(*task));
         task->search_file = heap_strdupW(lpszSearchFile);
@@ -1454,17 +1454,23 @@ HINTERNET WINAPI FtpOpenFileA(HINTERNET hFtpSession,
     return ret;
 }
 
+typedef struct {
+    task_header_t hdr;
+    WCHAR *file_name;
+    DWORD access;
+    DWORD flags;
+    DWORD_PTR context;
+} open_file_task_t;
 
-static void AsyncFtpOpenFileProc(WORKREQUEST *workRequest)
+static void AsyncFtpOpenFileProc(task_header_t *hdr)
 {
-    struct WORKREQ_FTPOPENFILEW const *req = &workRequest->u.FtpOpenFileW;
-    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
+    open_file_task_t *task = (open_file_task_t*)hdr;
+    ftp_session_t *session = (ftp_session_t*)task->hdr.hdr;
 
-    TRACE("%p\n", lpwfs);
+    TRACE("%p\n", session);
 
-    FTP_FtpOpenFileW(lpwfs, req->lpszFilename,
-        req->dwAccess, req->dwFlags, req->dwContext);
-    heap_free(req->lpszFilename);
+    FTP_FtpOpenFileW(session, task->file_name, task->access, task->flags, task->context);
+    heap_free(task->file_name);
 }
 
 /***********************************************************************
@@ -1518,18 +1524,16 @@ HINTERNET WINAPI FtpOpenFileW(HINTERNET hFtpSession,
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST *task;
-        struct WORKREQ_FTPOPENFILEW *req;
+        open_file_task_t *task;
 
         task = alloc_async_task(&lpwfs->hdr, AsyncFtpOpenFileProc, sizeof(*task));
-        req = &task->u.FtpOpenFileW;
-	req->lpszFilename = heap_strdupW(lpszFileName);
-	req->dwAccess = fdwAccess;
-	req->dwFlags = dwFlags;
-	req->dwContext = dwContext;
+        task->file_name = heap_strdupW(lpszFileName);
+        task->access = fdwAccess;
+        task->flags = dwFlags;
+        task->context = dwContext;
 
-	INTERNET_AsyncCall(task);
-	r = NULL;
+        INTERNET_AsyncCall(&task->hdr);
+        r = NULL;
     }
     else
     {
