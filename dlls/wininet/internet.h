@@ -360,11 +360,6 @@ struct WORKREQ_FTPDELETEFILEW
     LPWSTR lpszFilename;
 };
 
-struct WORKREQ_FTPFINDNEXTW
-{
-    LPWIN32_FIND_DATAW lpFindFileData;
-};
-
 typedef struct WORKREQ task_header_t;
 typedef void (*async_task_proc_t)(task_header_t*);
 
@@ -375,7 +370,6 @@ typedef struct WORKREQ
 
     union {
         struct WORKREQ_FTPDELETEFILEW           FtpDeleteFileW;
-        struct WORKREQ_FTPFINDNEXTW             FtpFindNextW;
     } u;
 } WORKREQUEST, *LPWORKREQUEST;
 

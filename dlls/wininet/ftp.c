@@ -2138,7 +2138,7 @@ BOOL WINAPI FtpRenameFileW(HINTERNET hFtpSession, LPCWSTR lpszSrc, LPCWSTR lpszD
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        rename_file_t *task;
+        rename_file_task_t *task;
 
         task = alloc_async_task(&lpwfs->hdr, AsyncFtpRenameFileProc, sizeof(*task));
         task->src_file = heap_strdupW(lpszSrc);
@@ -3430,11 +3430,16 @@ static DWORD FTPFINDNEXT_FindNextFileProc(WININETFTPFINDNEXTW *find, LPVOID data
     return res;
 }
 
-static void FTPFINDNEXT_AsyncFindNextFileProc(WORKREQUEST *workRequest)
-{
-    struct WORKREQ_FTPFINDNEXTW *req = &workRequest->u.FtpFindNextW;
+typedef struct {
+    task_header_t hdr;
+    WIN32_FIND_DATAW *find_data;
+} find_next_task_t;
 
-    FTPFINDNEXT_FindNextFileProc((WININETFTPFINDNEXTW*)workRequest->hdr, req->lpFindFileData);
+static void FTPFINDNEXT_AsyncFindNextFileProc(task_header_t *hdr)
+{
+    find_next_task_t *task = (find_next_task_t*)hdr;
+
+    FTPFINDNEXT_FindNextFileProc((WININETFTPFINDNEXTW*)task->hdr.hdr, task->find_data);
 }
 
 static DWORD FTPFINDNEXT_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
@@ -3460,15 +3465,12 @@ static DWORD FTPFINDNEXT_FindNextFileW(object_header_t *hdr, void *data)
 
     if (find->lpFtpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        WORKREQUEST *task;
-        struct WORKREQ_FTPFINDNEXTW *req;
+        find_next_task_t *task;
 
         task = alloc_async_task(&find->hdr, FTPFINDNEXT_AsyncFindNextFileProc, sizeof(*task));
-        req = &task->u.FtpFindNextW;
-        req->lpFindFileData = data;
+        task->find_data = data;
 
-	INTERNET_AsyncCall(task);
-
+        INTERNET_AsyncCall(&task->hdr);
         return ERROR_SUCCESS;
     }
 
