@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-01-09 01:25+0100\n"
+"PO-Revision-Date: 2013-01-31 04:40+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -10502,77 +10502,59 @@ msgstr "Unbekannte Protokolle"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "TCP-Statisktik für IPv4"
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Active Opens"
-msgstr "Aktive Verbindungen"
+msgstr "Aktiv geöffnete Verbindungen"
 
 #: netstat.rc:43
 msgid "Passive Opens"
-msgstr ""
+msgstr "Passiv geöffnete Verbindungen"
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Failed Connection Attempts"
-msgstr "Aktive Verbindungen"
+msgstr "Fehlgeschlagene Verbindungsversuche"
 
 #: netstat.rc:45
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Reset Connections"
-msgstr "Aktive Verbindungen"
+msgstr "Zurückgesetzte Verbindungen"
 
 #: netstat.rc:46
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Current Connections"
-msgstr "Aktive Verbindungen"
+msgstr "Aktuelle Verbindungen"
 
 #: netstat.rc:47
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Received"
-msgstr "Segment gesperrt.\n"
+msgstr "Segmente empfangen"
 
 #: netstat.rc:48
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Sent"
-msgstr "Segment gesperrt.\n"
+msgstr "Segmente gesendet"
 
 #: netstat.rc:49
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "Segmente erneut gesendet"
 
 #: netstat.rc:50
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "UDP-Statistik für IPv4"
 
 #: netstat.rc:51
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Datagrams Received"
-msgstr "Segment gesperrt.\n"
+msgstr "Datagramme empfangen"
 
 #: netstat.rc:52
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "Lokaler Anschluss"
+msgstr "Keine Ports"
 
 #: netstat.rc:53
-#, fuzzy
-#| msgid "Decoding Error"
 msgid "Receive Errors"
-msgstr "Dekodierungsfehler"
+msgstr "Fehler beim Empfangen"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "Datagramme gesendet"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
