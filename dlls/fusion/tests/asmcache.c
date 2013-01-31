@@ -1016,6 +1016,13 @@ static void test_QueryAssemblyInfo(void)
         'p','u','b','l','i','c','K','e','y','T','o','k','e','n','=',
         '2','d','0','3','6','1','7','b','1','c','3','1','e','2','f','5',',',
         'c','u','l','t','u','r','e','=','n','e','u','t','r','a','l',0};
+    static const WCHAR nullpublickey[] = {
+        'm','s','c','o','r','l','i','b','.','d','l','l',',','v','e','r','s','i','o','n','=','0','.','0','.',
+        '0','.','0',',','c','u','l','t','u','r','e','=','n','e','u','t','r','a','l',',',
+        'p','u','b','l','i','c','K','e','y','T','o','k','e','n','=','n','u','l','l',0};
+    static const WCHAR nullpublickey1[] = {
+        'm','s','c','o','r','l','i','b','.','d','l','l',',',
+        'p','u','b','l','i','c','K','e','y','T','o','k','e','n','=','n','u','L','l',0};
 
     size = MAX_PATH;
     hr = pGetCachePath(ASM_CACHE_GAC, asmpath, &size);
@@ -1385,6 +1392,18 @@ static void test_QueryAssemblyInfo(void)
     ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
        "Assembly path was changed\n");
     ok(info.cchBuf == MAX_PATH, "Expected MAX_PATH, got %d\n", info.cchBuf);
+
+    /* display name is "mscorlib.dll,version=0.0.0.0,culture=neutral,publicKeyToken=null" */
+    INIT_ASM_INFO();
+    lstrcpyW(name, nullpublickey);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, name, &info);
+    ok(hr == FUSION_E_PRIVATE_ASM_DISALLOWED, "got %08x\n", hr);
+
+    /* display name is "mscorlib.dll,publicKeyToken=nuLl" */
+    INIT_ASM_INFO();
+    lstrcpyW(name, nullpublickey1);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, name, &info);
+    ok(hr == FUSION_E_PRIVATE_ASM_DISALLOWED, "got %08x\n", hr);
 
     /* display name is "wine, Culture=neutral" */
     INIT_ASM_INFO();

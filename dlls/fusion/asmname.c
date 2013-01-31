@@ -561,6 +561,10 @@ static HRESULT parse_pubkey(IAssemblyNameImpl *name, LPCWSTR pubkey)
 {
     int i;
     BYTE val;
+    static const WCHAR nullstr[] = {'n','u','l','l',0};
+
+    if(lstrcmpiW(pubkey, nullstr) == 0)
+        return FUSION_E_PRIVATE_ASM_DISALLOWED;
 
     if (lstrlenW(pubkey) < CHARS_PER_PUBKEY)
         return FUSION_E_INVALID_NAME;
