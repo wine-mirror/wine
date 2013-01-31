@@ -414,7 +414,6 @@ static BOOL run_is_entirely_ws( const ME_Run *run )
  */
 void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run)
 {
-  ME_String *strText = run->strText;
   assert(run->nCharOfs >= 0);
 
   if (RUN_IS_HIDDEN(run) || run->nFlags & MERF_TABLESTART)
@@ -435,12 +434,12 @@ void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run)
     {
       run->nFlags &= ~MERF_WHITESPACE;
 
-      if (ME_IsWSpace(strText->szData[0]))
+      if (ME_IsWSpace( *get_text( run, 0 ) ))
         run->nFlags |= MERF_STARTWHITE;
       else
         run->nFlags &= ~MERF_STARTWHITE;
 
-      if (ME_IsWSpace(strText->szData[strText->nLen - 1]))
+      if (ME_IsWSpace( *get_text( run, run->strText->nLen - 1 ) ))
         run->nFlags |= MERF_ENDWHITE;
       else
         run->nFlags &= ~MERF_ENDWHITE;
