@@ -1269,9 +1269,18 @@ UINT msi_create_empty_local_file( LPWSTR path, LPCWSTR suffix )
     return ERROR_SUCCESS;
 }
 
+static enum platform parse_platform( WCHAR *str )
+{
+    if (!str[0] || !strcmpW( str, szIntel )) return PLATFORM_INTEL;
+    else if (!strcmpW( str, szIntel64 )) return PLATFORM_INTEL64;
+    else if (!strcmpW( str, szX64 ) || !strcmpW( str, szAMD64 )) return PLATFORM_X64;
+    else if (!strcmpW( str, szARM )) return PLATFORM_ARM;
+    return PLATFORM_UNKNOWN;
+}
+
 static UINT msi_parse_summary( MSISUMMARYINFO *si, MSIPACKAGE *package )
 {
-    WCHAR *template, *p, *q;
+    WCHAR *template, *p, *q, *platform;
     DWORD i, count;
 
     package->version = msi_suminfo_get_int32( si, PID_PAGECOUNT );
@@ -1291,16 +1300,16 @@ static UINT msi_parse_summary( MSISUMMARYINFO *si, MSIPACKAGE *package )
         return ERROR_PATCH_PACKAGE_INVALID;
     }
     *p = 0;
-    if ((q = strchrW( template, ',' ))) *q = 0;
-    if (!template[0] || !strcmpW( template, szIntel ))
-        package->platform = PLATFORM_INTEL;
-    else if (!strcmpW( template, szIntel64 ))
-        package->platform = PLATFORM_INTEL64;
-    else if (!strcmpW( template, szX64 ) || !strcmpW( template, szAMD64 ))
-        package->platform = PLATFORM_X64;
-    else if (!strcmpW( template, szARM ))
-        package->platform = PLATFORM_ARM;
-    else
+    platform = template;
+    if ((q = strchrW( platform, ',' ))) *q = 0;
+    package->platform = parse_platform( platform );
+    while (package->platform == PLATFORM_UNKNOWN && q)
+    {
+        platform = q + 1;
+        if ((q = strchrW( platform, ',' ))) *q = 0;
+        package->platform = parse_platform( platform );
+    }
+    if (package->platform == PLATFORM_UNKNOWN)
     {
         WARN("unknown platform %s\n", debugstr_w(template));
         msi_free( template );
