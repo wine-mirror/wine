@@ -439,7 +439,6 @@ static void create_rebar(HWND hwnd)
     REBARBANDINFOW bandinf;
     WCHAR addr[40];
     HIMAGELIST imagelist;
-    WCHAR idb_ietoolbar[] = {'I','D','B','_','I','E','T','O','O','L','B','A','R',0};
     SIZE toolbar_size;
 
     LoadStringW(ieframe_instance, IDS_ADDRESS, addr, sizeof(addr)/sizeof(addr[0]));
@@ -457,7 +456,7 @@ static void create_rebar(HWND hwnd)
     hwndToolbar = CreateWindowExW(TBSTYLE_EX_MIXEDBUTTONS, TOOLBARCLASSNAMEW, NULL, TBSTYLE_FLAT | WS_CHILD | WS_VISIBLE | CCS_NORESIZE,
             0, 0, 0, 0, hwndRebar, (HMENU)IDC_BROWSE_TOOLBAR, ieframe_instance, NULL);
 
-    imagelist = ImageList_LoadImageW(ieframe_instance, idb_ietoolbar, 32, 0, CLR_NONE, IMAGE_BITMAP, LR_CREATEDIBSECTION);
+    imagelist = ImageList_LoadImageW(ieframe_instance, MAKEINTRESOURCEW(IDB_IETOOLBAR), 32, 0, CLR_NONE, IMAGE_BITMAP, LR_CREATEDIBSECTION);
 
     SendMessageW(hwndToolbar, TB_SETIMAGELIST, 0, (LPARAM)imagelist);
     SendMessageW(hwndToolbar, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);

@@ -62,6 +62,8 @@
 
 #define IDS_ADDRESS                    1106
 
+#define IDB_IETOOLBAR                  1400
+
 /* update status text in BINDSTATUS_* callback */
 #define IDS_STATUSFMT_FIRST            4096
 #define IDS_FINDINGRESOURCE            (IDS_STATUSFMT_FIRST + 1)
