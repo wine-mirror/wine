@@ -108,19 +108,6 @@ ME_String *ME_VSplitString(ME_String *orig, int charidx)
   return s;
 }
 
-int ME_IsWhitespaces(const ME_String *s)
-{
-  /* FIXME multibyte */
-  WCHAR *pos = s->szData;
-  while(ME_IsWSpace(*pos++))
-    ;
-  pos--;
-  if (*pos)
-    return 0;
-  else
-    return 1;
-}
-
 void ME_StrDeleteV(ME_String *s, int nVChar, int nChars)
 {
   int end_ofs = nVChar + nChars;

@@ -394,6 +394,17 @@ static BOOL run_is_splittable( const ME_Run *run )
     return FALSE;
 }
 
+static BOOL run_is_entirely_ws( const ME_Run *run )
+{
+    WCHAR *str = get_text( run, 0 ), *p;
+    int i, len = run->strText->nLen;
+
+    for (i = 0, p = str; i < len; i++, p++)
+        if (!ME_IsWSpace( *p )) return FALSE;
+
+    return TRUE;
+}
+
 /******************************************************************************
  * ME_UpdateRunFlags
  *
@@ -416,8 +427,9 @@ void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run)
   else
     run->nFlags &= ~MERF_SPLITTABLE;
 
-  if (!(run->nFlags & MERF_NOTEXT)) {
-    if (ME_IsWhitespaces(strText))
+  if (!(run->nFlags & MERF_NOTEXT))
+  {
+    if (run_is_entirely_ws( run ))
       run->nFlags |= MERF_WHITESPACE | MERF_STARTWHITE | MERF_ENDWHITE;
     else
     {
