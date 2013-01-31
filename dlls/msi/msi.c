@@ -3158,7 +3158,7 @@ static UINT get_file_version( const WCHAR *path, WCHAR *verbuf, DWORD *verlen,
     static const WCHAR szVersionResource[] = {'\\',0};
     static const WCHAR szVersionFormat[] = {'%','d','.','%','d','.','%','d','.','%','d',0};
     static const WCHAR szLangFormat[] = {'%','d',0};
-    UINT ret = ERROR_SUCCESS;
+    UINT ret = ERROR_MORE_DATA;
     DWORD len, error;
     LPVOID version;
     VS_FIXEDFILEINFO *ffi;
@@ -3169,6 +3169,7 @@ static UINT get_file_version( const WCHAR *path, WCHAR *verbuf, DWORD *verlen,
     {
         error = GetLastError();
         if (error == ERROR_BAD_PATHNAME) return ERROR_FILE_NOT_FOUND;
+        if (error == ERROR_RESOURCE_DATA_NOT_FOUND) return ERROR_FILE_INVALID;
         return error;
     }
     if (!(version = msi_alloc( len ))) return ERROR_OUTOFMEMORY;
@@ -3177,6 +3178,7 @@ static UINT get_file_version( const WCHAR *path, WCHAR *verbuf, DWORD *verlen,
         msi_free( version );
         return GetLastError();
     }
+    if (!verbuf && !verlen && !langbuf && !langlen) return ERROR_SUCCESS;
     if (verlen)
     {
         if (VerQueryValueW( version, szVersionResource, (LPVOID *)&ffi, &len ) && len > 0)
@@ -3186,7 +3188,7 @@ static UINT get_file_version( const WCHAR *path, WCHAR *verbuf, DWORD *verlen,
                       HIWORD(ffi->dwFileVersionLS), LOWORD(ffi->dwFileVersionLS) );
             if (verbuf) lstrcpynW( verbuf, tmp, *verlen );
             len = strlenW( tmp );
-            if (len >= *verlen) ret = ERROR_MORE_DATA;
+            if (*verlen > len) ret = ERROR_SUCCESS;
             *verlen = len;
         }
         else
@@ -3202,7 +3204,7 @@ static UINT get_file_version( const WCHAR *path, WCHAR *verbuf, DWORD *verlen,
             sprintfW( tmp, szLangFormat, *lang );
             if (langbuf) lstrcpynW( langbuf, tmp, *langlen );
             len = strlenW( tmp );
-            if (len >= *langlen) ret = ERROR_MORE_DATA;
+            if (*langlen > len) ret = ERROR_SUCCESS;
             *langlen = len;
         }
         else
