@@ -3810,7 +3810,7 @@ UINT WINAPI MsiCreateAndVerifyInstallerDirectory(DWORD dwReserved)
 
     lstrcatW(path, installerW);
 
-    if (!CreateDirectoryW(path, NULL))
+    if (!CreateDirectoryW(path, NULL) && GetLastError() != ERROR_ALREADY_EXISTS)
         return ERROR_FUNCTION_FAILED;
 
     return ERROR_SUCCESS;
