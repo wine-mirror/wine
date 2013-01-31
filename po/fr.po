@@ -10547,77 +10547,59 @@ msgstr "Protocoles inconnus"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "Statistiques TCP pour IPv4"
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Active Opens"
-msgstr "Connexions actives"
+msgstr "Ouvertures actives"
 
 #: netstat.rc:43
 msgid "Passive Opens"
-msgstr ""
+msgstr "Ouvertures passives"
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Failed Connection Attempts"
-msgstr "Connexions actives"
+msgstr "Tentatives de connexion ratées"
 
 #: netstat.rc:45
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Reset Connections"
-msgstr "Connexions actives"
+msgstr "Connexions réinitialisées"
 
 #: netstat.rc:46
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Current Connections"
-msgstr "Connexions actives"
+msgstr "Connexions en cours"
 
 #: netstat.rc:47
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Received"
-msgstr "Segment verrouillé.\n"
+msgstr "Segments reçus"
 
 #: netstat.rc:48
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Sent"
-msgstr "Segment verrouillé.\n"
+msgstr "Segments envoyés"
 
 #: netstat.rc:49
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "Segments retransmis"
 
 #: netstat.rc:50
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "Statistiques UDP pour IPv4"
 
 #: netstat.rc:51
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Datagrams Received"
-msgstr "Segment verrouillé.\n"
+msgstr "Datagrammes reçus"
 
 #: netstat.rc:52
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "Port local"
+msgstr "Aucun port"
 
 #: netstat.rc:53
-#, fuzzy
-#| msgid "Decoding Error"
 msgid "Receive Errors"
-msgstr "Erreur de décodage"
+msgstr "Erreurs de réception"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "Datagrammes envoyés"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
