@@ -407,7 +407,7 @@ static HRESULT on_default_action(FileDialogImpl *This)
     IShellFolder *psf_parent, *psf_desktop;
     LPITEMIDLIST *pidla;
     LPITEMIDLIST current_folder;
-    LPWSTR fn_iter, files, tmp_files;
+    LPWSTR fn_iter, files = NULL, tmp_files;
     UINT file_count = 0, len, i;
     int open_action;
     HRESULT hr, ret = E_FAIL;
@@ -425,6 +425,7 @@ static HRESULT on_default_action(FileDialogImpl *This)
     if(FAILED(hr))
     {
         ERR("Failed to get pidl for current directory.\n");
+        HeapFree(GetProcessHeap(), 0, files);
         return hr;
     }
 
