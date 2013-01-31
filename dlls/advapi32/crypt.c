@@ -27,6 +27,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <limits.h>
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -109,33 +110,38 @@ static inline PWSTR CRYPT_GetTypeKeyName(DWORD dwType, BOOL user)
 	return keyname;
 }
 
-/* CRYPT_UnicodeTOANSI
+/* CRYPT_UnicodeToANSI
  * wstr - unicode string
- * str - pointer to ANSI string
- * strsize - size of buffer pointed to by str or -1 if we have to do the allocation
+ * str - pointer to ANSI string or pointer to null pointer if we have to do the allocation
+ * strsize - size of buffer pointed to by str
  *
  * returns TRUE if unsuccessful, FALSE otherwise.
  * if wstr is NULL, returns TRUE and sets str to NULL! Value of str should be checked after call
  */
 static inline BOOL CRYPT_UnicodeToANSI(LPCWSTR wstr, LPSTR* str, int strsize)
 {
-	int count;
-
 	if (!wstr)
 	{
 		*str = NULL;
 		return TRUE;
 	}
-	count = WideCharToMultiByte(CP_ACP, 0, wstr, -1, NULL, 0, NULL, NULL);
-	if (strsize == -1)
-		*str = CRYPT_Alloc(count * sizeof(CHAR));
-	else
-		count = min( count, strsize );
+
+	if (!*str)
+	{
+		strsize = WideCharToMultiByte(CP_ACP, 0, wstr, -1, NULL, 0, NULL, NULL);
+		*str = CRYPT_Alloc(strsize * sizeof(CHAR));
+	}
+	else if (strsize < 0)
+	{
+		strsize = INT_MAX; /* windows will pretend that the buffer is infinitely long */
+	}
+
 	if (*str)
 	{
-		WideCharToMultiByte(CP_ACP, 0, wstr, -1, *str, count, NULL, NULL);
+		WideCharToMultiByte(CP_ACP, 0, wstr, -1, *str, strsize, NULL, NULL);
 		return TRUE;
 	}
+
 	SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 	return FALSE;
 }
@@ -481,13 +487,13 @@ BOOL WINAPI CryptAcquireContextW (HCRYPTPROV *phProv, LPCWSTR pszContainer,
 		goto error;
 	}
 	pProv->pVTable->dwProvType = dwProvType;
-	if(!CRYPT_UnicodeToANSI(provname, &provnameA, -1))
+	if(!CRYPT_UnicodeToANSI(provname, &provnameA, 0))
 	{
 		/* CRYPT_UnicodeToANSI calls SetLastError */
 		goto error;
 	}
 	pProv->pVTable->pszProvName = provnameA;
-	if(!CRYPT_UnicodeToANSI(pszContainer, &pszContainerA, -1))
+	if(!CRYPT_UnicodeToANSI(pszContainer, &pszContainerA, 0))
 	{
 		/* CRYPT_UnicodeToANSI calls SetLastError */
 		goto error;

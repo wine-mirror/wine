@@ -561,7 +561,16 @@ static void test_enum_providers(void)
 	if (!(provider = LocalAlloc(LMEM_ZEROINIT, providerLen)))
 		return;
 		
-	providerLen = 0xdeadbeef;
+	providerLen = -1;
+	result = pCryptEnumProvidersA(dwIndex, NULL, 0, &type, provider, &providerLen);
+	ok(result, "expected TRUE, got %d\n", result);
+	ok(type==dwType, "expected %d, got %d\n", dwType, type);
+	if (pszProvName)
+	    ok(!strcmp(pszProvName, provider), "expected %s, got %s\n", pszProvName, provider);
+	ok(cbName==providerLen, "expected %d, got %d\n", cbName, providerLen);
+
+	providerLen = -1000;
+	provider[0] = 0;
 	result = pCryptEnumProvidersA(dwIndex, NULL, 0, &type, provider, &providerLen);
 	ok(result, "expected TRUE, got %d\n", result);
 	ok(type==dwType, "expected %d, got %d\n", dwType, type);
