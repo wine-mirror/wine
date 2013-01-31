@@ -121,21 +121,6 @@ int ME_IsWhitespaces(const ME_String *s)
     return 1;
 }
 
-int ME_IsSplitable(const ME_String *s)
-{
-  WCHAR *pos = s->szData;
-  WCHAR ch;
-  while(ME_IsWSpace(*pos++))
-    ;
-  pos--;
-  while((ch = *pos++) != 0)
-  {
-    if (ME_IsWSpace(ch))
-      return 1;
-  }
-  return 0;
-}
-
 void ME_StrDeleteV(ME_String *s, int nVChar, int nChars)
 {
   int end_ofs = nVChar + nChars;

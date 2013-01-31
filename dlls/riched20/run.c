@@ -376,6 +376,24 @@ ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
   return pDI;
 }
 
+static BOOL run_is_splittable( const ME_Run *run )
+{
+    WCHAR *str = get_text( run, 0 ), *p;
+    int i, len = run->strText->nLen;
+    BOOL found_ink = FALSE;
+
+    for (i = 0, p = str; i < len; i++, p++)
+    {
+        if (ME_IsWSpace( *p ))
+        {
+            if (found_ink) return TRUE;
+        }
+        else
+            found_ink = TRUE;
+    }
+    return FALSE;
+}
+
 /******************************************************************************
  * ME_UpdateRunFlags
  *
@@ -393,7 +411,7 @@ void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run)
   else
     run->nFlags &= ~MERF_HIDDEN;
 
-  if (ME_IsSplitable(strText))
+  if (run_is_splittable( run ))
     run->nFlags |= MERF_SPLITTABLE;
   else
     run->nFlags &= ~MERF_SPLITTABLE;
