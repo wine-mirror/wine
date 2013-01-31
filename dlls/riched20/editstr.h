@@ -145,6 +145,7 @@ typedef struct tagME_Run
   ME_Style *style;
   struct tagME_Paragraph *para; /* ptr to the run's paragraph */
   int nCharOfs; /* relative to para's offset */
+  int len;      /* length of run's text */
   int nWidth; /* width of full run, width of leading&trailing ws */
   int nFlags;
   int nAscent, nDescent; /* pixels above/below baseline */

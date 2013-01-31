@@ -341,7 +341,7 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
   assert(pRun->type == diRun);
   assert(pRun->member.run.nFlags & MERF_ENDPARA);
 
-  end_len = pRun->member.run.strText->nLen;
+  end_len = pRun->member.run.len;
 
   /* null char format operation to store the original char format for the ENDPARA run */
   ME_InitCharFormat2W(&fmt);

@@ -305,7 +305,7 @@ void ME_ProtectPartialTableDeletion(ME_TextEditor *editor, ME_Cursor *c, int *nC
                     - end_para->member.para.nCharOfs;
     if (remaining)
     {
-      assert(remaining < c2.pRun->member.run.strText->nLen);
+      assert(remaining < c2.pRun->member.run.len);
       end_para = end_para->member.para.next_para;
     }
   }
@@ -353,7 +353,7 @@ void ME_ProtectPartialTableDeletion(ME_TextEditor *editor, ME_Cursor *c, int *nC
         {
           ME_Run *end_run = &ME_FindItemBack(next_para, diRun)->member.run;
           int nCharsNew = (next_para->member.para.nCharOfs - nOfs
-                           - end_run->strText->nLen);
+                           - end_run->len);
           nCharsNew = max(nCharsNew, 0);
           assert(nCharsNew <= *nChars);
           *nChars = nCharsNew;

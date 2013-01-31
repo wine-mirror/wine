@@ -187,7 +187,7 @@ BOOL add_undo_split_para( ME_TextEditor *editor, const ME_Paragraph *para, const
     struct undo_item *undo = add_undo( editor, undo_split_para );
     if (!undo) return FALSE;
 
-    undo->u.split_para.pos = para->nCharOfs - run->strText->nLen;
+    undo->u.split_para.pos = para->nCharOfs - run->len;
     undo->u.split_para.eol_str = ME_StrDup( run->strText );
     undo->u.split_para.fmt = *para->pFmt;
     undo->u.split_para.border = para->border;

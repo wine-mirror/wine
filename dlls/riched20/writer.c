@@ -870,7 +870,7 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
           return FALSE;
       }
       /* Skip as many characters as required by current line break */
-      nChars = max(0, nChars - cursor.pRun->member.run.strText->nLen);
+      nChars = max(0, nChars - cursor.pRun->member.run.len);
     } else if (cursor.pRun->member.run.nFlags & MERF_ENDROW) {
       if (!ME_StreamOutPrint(pStream, "\\line \r\n"))
         return FALSE;
@@ -884,7 +884,7 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
       if (!ME_StreamOutRTFCharProps(pStream, &cursor.pRun->member.run.style->fmt))
         return FALSE;
 
-      nEnd = (cursor.pRun == endCur.pRun) ? endCur.nOffset : cursor.pRun->member.run.strText->nLen;
+      nEnd = (cursor.pRun == endCur.pRun) ? endCur.nOffset : cursor.pRun->member.run.len;
       if (!ME_StreamOutRTFText(pStream, get_text( &cursor.pRun->member.run, cursor.nOffset ),
                                nEnd - cursor.nOffset))
         return FALSE;
@@ -919,7 +919,7 @@ static BOOL ME_StreamOutText(ME_TextEditor *editor, ME_OutStream *pStream,
   /* TODO: Handle SF_TEXTIZED */
 
   while (success && nChars && cursor.pRun) {
-    nLen = min(nChars, cursor.pRun->member.run.strText->nLen - cursor.nOffset);
+    nLen = min(nChars, cursor.pRun->member.run.len - cursor.nOffset);
 
     if (!editor->bEmulateVersion10 && cursor.pRun->member.run.nFlags & MERF_ENDPARA)
     {

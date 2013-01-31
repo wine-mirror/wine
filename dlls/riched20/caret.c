@@ -236,7 +236,7 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
       assert(run);
       assert(run->type == diRun);
       sz = ME_GetRunSize(&c, &para->member.para,
-                         &run->member.run, run->member.run.strText->nLen,
+                         &run->member.run, run->member.run.len,
                          row->member.row.nLMargin);
     }
   }
@@ -317,11 +317,11 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
       /* We aren't deleting anything in this run, so we will go back to the
        * last run we are deleting text in. */
       ME_PrevRun(&c.pPara, &c.pRun);
-      c.nOffset = c.pRun->member.run.strText->nLen;
+      c.nOffset = c.pRun->member.run.len;
     }
     run = &c.pRun->member.run;
     if (run->nFlags & MERF_ENDPARA) {
-      int eollen = c.pRun->member.run.strText->nLen;
+      int eollen = c.pRun->member.run.len;
       BOOL keepFirstParaFormat;
 
       if (!ME_FindItemFwd(c.pRun, diParagraph))
@@ -376,15 +376,16 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
       shift -= nCharsToDelete;
       TRACE("Deleting %d (remaning %d) chars at %d in %s (%d)\n",
         nCharsToDelete, nChars, c.nOffset,
-        debugstr_run( run ), run->strText->nLen);
+        debugstr_run( run ), run->len);
 
       /* nOfs is a character offset (from the start of the document
          to the current (deleted) run */
       add_undo_insert_run( editor, nOfs + nChars, get_text( run, c.nOffset ), nCharsToDelete, run->nFlags, run->style );
 
-      TRACE("Post deletion string: %s (%d)\n", debugstr_run( run ), run->strText->nLen);
-      TRACE("Shift value: %d\n", shift);
       ME_StrDeleteV(run->strText, c.nOffset, nCharsToDelete);
+      run->len -= nCharsToDelete;
+      TRACE("Post deletion string: %s (%d)\n", debugstr_run( run ), run->len);
+      TRACE("Shift value: %d\n", shift);
 
       /* update cursors (including c) */
       for (i=-1; i<editor->nCursors; i++) {
@@ -397,9 +398,9 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
             else
               pThisCur->nOffset -= nCharsToDelete;
             assert(pThisCur->nOffset >= 0);
-            assert(pThisCur->nOffset <= run->strText->nLen);
+            assert(pThisCur->nOffset <= run->len);
           }
-          if (pThisCur->nOffset == run->strText->nLen)
+          if (pThisCur->nOffset == run->len)
           {
             pThisCur->pRun = ME_FindItemFwd(pThisCur->pRun, diRunOrParagraphOrEnd);
             assert(pThisCur->pRun->type == diRun);
@@ -415,9 +416,9 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
       else
         ME_PropagateCharOffset(c.pRun, shift);
 
-      if (!cursor.pRun->member.run.strText->nLen)
+      if (!cursor.pRun->member.run.len)
       {
-        TRACE("Removing useless run\n");
+        TRACE("Removing empty run\n");
         ME_Remove(cursor.pRun);
         ME_DestroyDisplayItem(cursor.pRun);
       }
@@ -625,7 +626,7 @@ int ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
       cursor->pRun = ME_FindItemBack(cursor->pRun, diRun);
     }
     cursor->nOffset -= cursor->pRun->member.run.nCharOfs;
-  } else if (cursor->nOffset >= cursor->pRun->member.run.strText->nLen) {
+  } else if (cursor->nOffset >= cursor->pRun->member.run.len) {
     ME_DisplayItem *next_para;
     int new_offset;
 
@@ -635,9 +636,9 @@ int ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
     {
       /* new offset in the same paragraph */
       do {
-        cursor->nOffset -= cursor->pRun->member.run.strText->nLen;
+        cursor->nOffset -= cursor->pRun->member.run.len;
         cursor->pRun = ME_FindItemFwd(cursor->pRun, diRun);
-      } while (cursor->nOffset >= cursor->pRun->member.run.strText->nLen);
+      } while (cursor->nOffset >= cursor->pRun->member.run.len);
       return nRelOfs;
     }
 
@@ -657,9 +658,9 @@ int ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
 
     cursor->nOffset = new_offset - cursor->pPara->member.para.nCharOfs;
     cursor->pRun = ME_FindItemFwd(cursor->pPara, diRun);
-    while (cursor->nOffset >= cursor->pRun->member.run.strText->nLen)
+    while (cursor->nOffset >= cursor->pRun->member.run.len)
     {
-      cursor->nOffset -= cursor->pRun->member.run.strText->nLen;
+      cursor->nOffset -= cursor->pRun->member.run.len;
       cursor->pRun = ME_FindItemFwd(cursor->pRun, diRun);
     }
   } /* else new offset is in the same run */
@@ -687,7 +688,7 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
       if (pOtherRun->type == diRun)
       {
         if (ME_CallWordBreakProc(editor, pOtherRun->member.run.strText,
-                                 pOtherRun->member.run.strText->nLen - 1,
+                                 pOtherRun->member.run.len - 1,
                                  WB_ISDELIMITER)
             && !(pRun->member.run.nFlags & MERF_ENDPARA)
             && !(cursor->pRun == pRun && cursor->nOffset == 0)
@@ -695,7 +696,7 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
                                      WB_ISDELIMITER))
           break;
         pRun = pOtherRun;
-        nOffset = pOtherRun->member.run.strText->nLen;
+        nOffset = pOtherRun->member.run.len;
       }
       else if (pOtherRun->type == diParagraph)
       {
@@ -728,7 +729,7 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
         break;
       nOffset = ME_CallWordBreakProc(editor, pRun->member.run.strText,
                                      nOffset, WB_MOVEWORDRIGHT);
-      if (nOffset < pRun->member.run.strText->nLen)
+      if (nOffset < pRun->member.run.len)
         break;
       pOtherRun = ME_FindItemFwd(pRun, diRunOrParagraphOrEnd);
       if (pOtherRun->type == diRun)
@@ -878,7 +879,7 @@ static BOOL ME_ReturnFoundPos(ME_TextEditor *editor, ME_DisplayItem *found,
     rx = 0;
   result->pRun = found;
   result->nOffset = ME_CharFromPointCursor(editor, rx, &found->member.run);
-  if (result->nOffset == found->member.run.strText->nLen && rx)
+  if (result->nOffset == found->member.run.len && rx)
   {
     result->pRun = ME_FindItemFwd(result->pRun, diRun);
     result->nOffset = 0;
@@ -1199,8 +1200,7 @@ static ME_DisplayItem *ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pR
     if (x >= run_x && x < run_x+width)
     {
       int ch = ME_CharFromPointCursor(editor, x-run_x, &pNext->member.run);
-      ME_String *s = pNext->member.run.strText;
-      if (ch < s->nLen) {
+      if (ch < pNext->member.run.len) {
         if (pOffset)
           *pOffset = ch;
         return pNext;          

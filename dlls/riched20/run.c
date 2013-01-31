@@ -123,12 +123,12 @@ void ME_CheckCharOffsets(ME_TextEditor *editor)
       case diRun:
         TRACE_(richedit_check)("run, real ofs = %d (+ofsp = %d), counted = %d, len = %d, txt = %s, flags=%08x, fx&mask = %08x\n",
           p->member.run.nCharOfs, p->member.run.nCharOfs+ofsp, ofsp+ofs,
-          p->member.run.strText->nLen, debugstr_run( &p->member.run ),
+          p->member.run.len, debugstr_run( &p->member.run ),
           p->member.run.nFlags,
           p->member.run.style->fmt.dwMask & p->member.run.style->fmt.dwEffects);
         assert(ofs == p->member.run.nCharOfs);
-        assert(p->member.run.strText->nLen);
-        ofs += p->member.run.strText->nLen;
+        assert(p->member.run.len);
+        ofs += p->member.run.len;
         break;
       case diCell:
         TRACE_(richedit_check)("cell\n");
@@ -226,11 +226,12 @@ void ME_JoinRuns(ME_TextEditor *editor, ME_DisplayItem *p)
   for (i=0; i<editor->nCursors; i++) {
     if (editor->pCursors[i].pRun == pNext) {
       editor->pCursors[i].pRun = p;
-      editor->pCursors[i].nOffset += p->member.run.strText->nLen;
+      editor->pCursors[i].nOffset += p->member.run.len;
     }
   }
 
   ME_AppendString(p->member.run.strText, pNext->member.run.strText);
+  p->member.run.len += pNext->member.run.len;
   ME_Remove(pNext);
   ME_DestroyDisplayItem(pNext);
   ME_UpdateRunFlags(editor, &p->member.run);
@@ -308,7 +309,7 @@ ME_DisplayItem *ME_SplitRunSimple(ME_TextEditor *editor, ME_Cursor *cursor)
   new_run = ME_MakeRun(run->member.run.style,
                        ME_VSplitString(run->member.run.strText, nOffset),
                        run->member.run.nFlags & MERF_SPLITMASK);
-
+  run->member.run.len = nOffset;
   new_run->member.run.nCharOfs = run->member.run.nCharOfs + nOffset;
   new_run->member.run.para = run->member.run.para;
   cursor->pRun = new_run;
@@ -342,6 +343,7 @@ ME_DisplayItem *ME_MakeRun(ME_Style *s, ME_String *strData, int nFlags)
   item->member.run.strText = strData;
   item->member.run.nFlags = nFlags;
   item->member.run.nCharOfs = -1;
+  item->member.run.len = strData->nLen;
   item->member.run.para = NULL;
   ME_AddRefStyle(s);
   return item;
@@ -379,10 +381,10 @@ ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
 static BOOL run_is_splittable( const ME_Run *run )
 {
     WCHAR *str = get_text( run, 0 ), *p;
-    int i, len = run->strText->nLen;
+    int i;
     BOOL found_ink = FALSE;
 
-    for (i = 0, p = str; i < len; i++, p++)
+    for (i = 0, p = str; i < run->len; i++, p++)
     {
         if (ME_IsWSpace( *p ))
         {
@@ -397,9 +399,9 @@ static BOOL run_is_splittable( const ME_Run *run )
 static BOOL run_is_entirely_ws( const ME_Run *run )
 {
     WCHAR *str = get_text( run, 0 ), *p;
-    int i, len = run->strText->nLen;
+    int i;
 
-    for (i = 0, p = str; i < len; i++, p++)
+    for (i = 0, p = str; i < run->len; i++, p++)
         if (!ME_IsWSpace( *p )) return FALSE;
 
     return TRUE;
@@ -439,7 +441,7 @@ void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run)
       else
         run->nFlags &= ~MERF_STARTWHITE;
 
-      if (ME_IsWSpace( *get_text( run, run->strText->nLen - 1 ) ))
+      if (ME_IsWSpace( *get_text( run, run->len - 1 ) ))
         run->nFlags |= MERF_ENDWHITE;
       else
         run->nFlags &= ~MERF_ENDWHITE;
@@ -461,7 +463,7 @@ int ME_CharFromPoint(ME_Context *c, int cx, ME_Run *run)
   int fit = 0;
   HGDIOBJ hOldFont;
   SIZE sz;
-  if (!run->strText->nLen || cx <= 0)
+  if (!run->len || cx <= 0)
     return 0;
 
   if (run->nFlags & MERF_TAB ||
@@ -483,14 +485,14 @@ int ME_CharFromPoint(ME_Context *c, int cx, ME_Run *run)
   
   if (c->editor->cPasswordMask)
   {
-    ME_String *strMasked = ME_MakeStringR(c->editor->cPasswordMask, run->strText->nLen);
-    GetTextExtentExPointW(c->hDC, strMasked->szData, run->strText->nLen,
+    ME_String *strMasked = ME_MakeStringR(c->editor->cPasswordMask, run->len);
+    GetTextExtentExPointW(c->hDC, strMasked->szData, run->len,
       cx, &fit, NULL, &sz);
     ME_DestroyString(strMasked);
   }
   else
   {
-    GetTextExtentExPointW(c->hDC, get_text( run, 0 ), run->strText->nLen,
+    GetTextExtentExPointW(c->hDC, get_text( run, 0 ), run->len,
       cx, &fit, NULL, &sz);
   }
   
@@ -514,11 +516,11 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
 {
   ME_String *mask_text = NULL;
   WCHAR *str;
-  int fit = 0, len;
+  int fit = 0;
   ME_Context c;
   HGDIOBJ hOldFont;
   SIZE sz, sz2, sz3;
-  if (!run->strText->nLen || cx <= 0)
+  if (!run->len || cx <= 0)
     return 0;
 
   if (run->nFlags & (MERF_TAB | MERF_ENDCELL))
@@ -538,19 +540,18 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
     return 1;
   }
 
-  len = run->strText->nLen;
   if (editor->cPasswordMask)
   {
-    mask_text = ME_MakeStringR( editor->cPasswordMask, len );
+    mask_text = ME_MakeStringR( editor->cPasswordMask, run->len );
     str = mask_text->szData;
   }
   else
     str = get_text( run, 0 );
 
   hOldFont = ME_SelectStyleFont(&c, run->style);
-  GetTextExtentExPointW(c.hDC, str, len,
+  GetTextExtentExPointW(c.hDC, str, run->len,
                         cx, &fit, NULL, &sz);
-  if (fit != len)
+  if (fit != run->len)
   {
     GetTextExtentPoint32W(c.hDC, str, fit, &sz2);
     GetTextExtentPoint32W(c.hDC, str, fit + 1, &sz3);
@@ -595,7 +596,6 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
   ME_Context c;
   ME_String *mask_text = NULL;
   WCHAR *str;
-  int len;
 
   ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
   if (pRun->nFlags & MERF_GRAPHICS)
@@ -608,16 +608,15 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
     nOffset = 0;
   }
 
-  len = pRun->strText->nLen;
   if (editor->cPasswordMask)
   {
-    mask_text = ME_MakeStringR(editor->cPasswordMask, len);
+    mask_text = ME_MakeStringR(editor->cPasswordMask, pRun->len);
     str = mask_text->szData;
   }
   else
       str = get_text( pRun, 0 );
 
-  ME_GetTextExtent(&c,  str, nOffset, pRun->style, &size);
+  ME_GetTextExtent(&c, str, nOffset, pRun->style, &size);
   ME_DestroyContext(&c);
   ME_DestroyString( mask_text );
   return size.cx;
@@ -633,7 +632,7 @@ static SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run 
                                 int startx, int *pAscent, int *pDescent)
 {
   SIZE size;
-  int nMaxLen = run->strText->nLen;
+  int nMaxLen = run->len;
 
   if (nLen>nMaxLen)
     nLen = nMaxLen;
@@ -726,7 +725,7 @@ void ME_CalcRunExtent(ME_Context *c, const ME_Paragraph *para, int startx, ME_Ru
     run->nWidth = 0;
   else
   {
-    int nEnd = run->strText->nLen;
+    int nEnd = run->len;
     SIZE size = ME_GetRunSizeCommon(c, para, run, nEnd, startx,
                                     &run->nAscent, &run->nDescent);
     run->nWidth = size.cx;
@@ -806,7 +805,7 @@ void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, C
     /* ME_DumpStyle(new_style); */
 
     add_undo_set_char_fmt( editor, para->member.para.nCharOfs + run->member.run.nCharOfs,
-                           run->member.run.strText->nLen, &run->member.run.style->fmt );
+                           run->member.run.len, &run->member.run.style->fmt );
     ME_ReleaseStyle(run->member.run.style);
     run->member.run.style = new_style;
     run = ME_FindItemFwd(run, diRunOrParagraph);

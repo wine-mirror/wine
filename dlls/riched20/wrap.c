@@ -111,7 +111,7 @@ static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
           /* Exclude space characters from run width.
            * Other whitespace or delimiters are not treated this way. */
           SIZE sz;
-          int len = p->member.run.strText->nLen;
+          int len = p->member.run.len;
           WCHAR *text = get_text( &p->member.run, len - 1 );
 
           assert (len);
@@ -120,7 +120,7 @@ static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
               len--;
           if (len)
           {
-              if (len == p->member.run.strText->nLen)
+              if (len == p->member.run.len)
               {
                   width += p->member.run.nWidth;
               } else {
@@ -233,7 +233,7 @@ static ME_DisplayItem *ME_MaximizeSplit(ME_WrapContext *wc, ME_DisplayItem *p, i
       if (piter->member.run.nFlags & MERF_ENDWHITE)
       {
         i = ME_ReverseFindNonWhitespaceV(piter->member.run.strText,
-                                         piter->member.run.strText->nLen);
+                                         piter->member.run.len);
         pp = ME_SplitRun(wc, piter, i);
         wc->pt = pp->member.run.pt;
         return pp;
@@ -256,7 +256,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
   ME_Run *run = &p->member.run;
 
   idesp = i = ME_CharFromPoint(wc->context, loc, run);
-  len = run->strText->nLen;
+  len = run->len;
   assert(len>0);
   assert(i<len);
   if (i) {
@@ -283,7 +283,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
 
       piter = wc->pLastSplittableRun;
       run = &piter->member.run;
-      len = run->strText->nLen;
+      len = run->len;
       /* don't split words */
       i = ME_ReverseFindWhitespaceV(run->strText, len);
       if (i == len)
@@ -340,7 +340,7 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
   run->pt.x = wc->pt.x;
   run->pt.y = wc->pt.y;
   ME_WrapSizeRun(wc, p);
-  len = run->strText->nLen;
+  len = run->len;
 
   if (wc->bOverflown) /* just skipping final whitespaces */
   {

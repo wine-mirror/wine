@@ -1750,7 +1750,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
           /* Check to see if next character is a whitespace */
           if (flags & FR_WHOLEWORD)
           {
-            if (nCurStart + nMatched == pCurItem->member.run.strText->nLen)
+            if (nCurStart + nMatched == pCurItem->member.run.len)
             {
               pNextItem = ME_FindItemFwd(pCurItem, diRun);
               nNextStart = -nMatched;
@@ -1774,7 +1774,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
           TRACE("found at %d-%d\n", cursor.nOffset, cursor.nOffset + nLen);
           return cursor.nOffset;
         }
-        if (nCurStart + nMatched == pCurItem->member.run.strText->nLen)
+        if (nCurStart + nMatched == pCurItem->member.run.len)
         {
           pCurItem = ME_FindItemFwd(pCurItem, diRun);
           nCurStart = -nMatched;
@@ -1786,7 +1786,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
         wLastChar = ' ';
 
       cursor.nOffset++;
-      if (cursor.nOffset == cursor.pRun->member.run.strText->nLen)
+      if (cursor.nOffset == cursor.pRun->member.run.len)
       {
         ME_NextRun(&cursor.pPara, &cursor.pRun);
         cursor.nOffset = 0;
@@ -1815,7 +1815,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
       if (nCurEnd == 0)
       {
         ME_PrevRun(&pCurPara, &pCurItem);
-        nCurEnd = pCurItem->member.run.strText->nLen + nMatched;
+        nCurEnd = pCurItem->member.run.len + nMatched;
       }
 
       while (pCurItem && ME_CharCompare( *get_text( &pCurItem->member.run, nCurEnd - nMatched - 1 ),
@@ -1839,7 +1839,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
             {
               pPrevItem = ME_FindItemBack(pCurItem, diRun);
               if (pPrevItem)
-                nPrevEnd = pPrevItem->member.run.strText->nLen + nMatched;
+                nPrevEnd = pPrevItem->member.run.len + nMatched;
             }
 
             if (pPrevItem)
@@ -1866,7 +1866,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
           ME_PrevRun(&pCurPara, &pCurItem);
           /* Don't care about pCurItem becoming NULL here; it's already taken
            * care of in the exterior loop condition */
-          nCurEnd = pCurItem->member.run.strText->nLen + nMatched;
+          nCurEnd = pCurItem->member.run.len + nMatched;
         }
       }
       if (pCurItem)
@@ -1878,7 +1878,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
       if (cursor.nOffset < 0)
       {
         ME_PrevRun(&cursor.pPara, &cursor.pRun);
-        cursor.nOffset = cursor.pRun->member.run.strText->nLen;
+        cursor.nOffset = cursor.pRun->member.run.len;
       }
     }
   }
@@ -3011,7 +3011,7 @@ static void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM
     info.lParam = lParam;
     cursor.nOffset = 0;
     info.chrg.cpMin = ME_GetCursorOfs(&cursor);
-    info.chrg.cpMax = info.chrg.cpMin + cursor.pRun->member.run.strText->nLen;
+    info.chrg.cpMax = info.chrg.cpMin + cursor.pRun->member.run.len;
     ITextHost_TxNotify(editor->texthost, info.nmhdr.code, &info);
   }
 }
@@ -3708,7 +3708,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       WCHAR *str = get_text( &run->member.run, 0 );
       unsigned int nCopy;
 
-      nCopy = min(nCharsLeft, run->member.run.strText->nLen);
+      nCopy = min(nCharsLeft, run->member.run.len);
 
       if (unicode)
         memcpy(dest, str, nCopy * sizeof(WCHAR));
@@ -3755,7 +3755,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     assert(last_para->member.run.nFlags & MERF_ENDPARA);
     if (editor->bEmulateVersion10 && prev_para &&
         last_para->member.run.nCharOfs == 0 &&
-        prev_para->member.run.strText->nLen == 1 &&
+        prev_para->member.run.len == 1 &&
         *get_text( &prev_para->member.run, 0 ) == '\r')
     {
       /* In 1.0 emulation, the last solitary \r at the very end of the text
@@ -3820,7 +3820,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     } else {
       ME_DisplayItem *endRun = ME_FindItemBack(item_end, diRun);
       assert(endRun && endRun->member.run.nFlags & MERF_ENDPARA);
-      nNextLineOfs = item_end->member.para.nCharOfs - endRun->member.run.strText->nLen;
+      nNextLineOfs = item_end->member.para.nCharOfs - endRun->member.run.len;
     }
     nChars = nNextLineOfs - nThisLineOfs;
     TRACE("EM_LINELENGTH(%ld)==%d\n",wParam, nChars);
@@ -4604,7 +4604,7 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
   assert(pRun);
   pNextRun = ME_FindItemFwd(pRun, diRun);
 
-  nLen = pRun->member.run.strText->nLen - start->nOffset;
+  nLen = pRun->member.run.len - start->nOffset;
   str = get_text( &pRun->member.run, start->nOffset );
 
   /* No '\r' is appended to the last paragraph. */
@@ -4636,7 +4636,7 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
     pRun = pNextRun;
     pNextRun = ME_FindItemFwd(pRun, diRun);
 
-    nLen = pRun->member.run.strText->nLen;
+    nLen = pRun->member.run.len;
     str = get_text( &pRun->member.run, 0 );
   }
   *buffer = 0;
@@ -4779,7 +4779,7 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor,
   {
     WCHAR *strStart = get_text( &cursor.pRun->member.run, 0 );
     WCHAR *str = strStart + cursor.nOffset;
-    int nLen = cursor.pRun->member.run.strText->nLen - cursor.nOffset;
+    int nLen = cursor.pRun->member.run.len - cursor.nOffset;
     nChars -= nLen;
 
     if (~cursor.pRun->member.run.nFlags & MERF_ENDPARA)
@@ -4953,9 +4953,9 @@ static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, ME_Cursor *start, int 
         /* Update candidateEnd since setting character formats may split
          * runs, which can cause a cursor to be at an invalid offset within
          * a split run. */
-        while (candidateEnd.nOffset >= candidateEnd.pRun->member.run.strText->nLen)
+        while (candidateEnd.nOffset >= candidateEnd.pRun->member.run.len)
         {
-          candidateEnd.nOffset -= candidateEnd.pRun->member.run.strText->nLen;
+          candidateEnd.nOffset -= candidateEnd.pRun->member.run.len;
           candidateEnd.pRun = ME_FindItemFwd(candidateEnd.pRun, diRun);
         }
         modified = TRUE;
