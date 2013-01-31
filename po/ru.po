@@ -13429,7 +13429,7 @@ msgstr ""
 
 #: winedbg.rc:58
 msgid "Show &Details"
-msgstr "Показать &подробно"
+msgstr "&Подробно"
 
 #: winedbg.rc:63
 msgid "Program Error Details"
