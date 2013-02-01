@@ -66,15 +66,18 @@ INT PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
+    TRACE("%p,%d,%d,%p,%d,%p\n",
+          dev->hdc, nEscape, cbInput, in_data, cbOutput, out_data);
+
     switch(nEscape)
     {
     case QUERYESCSUPPORT:
-        if(cbInput < sizeof(INT))
+        if(cbInput < sizeof(SHORT))
         {
-	    WARN("cbInput < sizeof(INT) (=%d) for QUERYESCSUPPORT\n", cbInput);
+	    WARN("cbInput < sizeof(SHORT) (=%d) for QUERYESCSUPPORT\n", cbInput);
 	    return 0;
 	} else {
-	    UINT num = *(const UINT *)in_data;
+	    DWORD num = (cbInput < sizeof(DWORD)) ? *(const USHORT *)in_data : *(const DWORD *)in_data;
 	    TRACE("QUERYESCSUPPORT for %d\n", num);
 
 	    switch(num) {

@@ -316,7 +316,7 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
     switch(escape)
     {
     case QUERYESCSUPPORT:
-        if (in_data)
+        if (in_data && in_count >= sizeof(DWORD))
         {
             switch (*(const INT *)in_data)
             {

@@ -1101,9 +1101,11 @@ INT WINAPI Escape( HDC hdc, INT escape, INT in_count, LPCSTR in_data, LPVOID out
 
     case QUERYESCSUPPORT:
         {
-            const INT *ptr = (const INT *)in_data;
-            if (in_count < sizeof(INT)) return 0;
-            switch(*ptr)
+            DWORD code;
+
+            if (in_count < sizeof(SHORT)) return 0;
+            code = (in_count < sizeof(DWORD)) ? *(const USHORT *)in_data : *(const DWORD *)in_data;
+            switch (code)
             {
             case ABORTDOC:
             case ENDDOC:
