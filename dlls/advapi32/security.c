@@ -4049,6 +4049,13 @@ DWORD WINAPI SetNamedSecurityInfoW(LPWSTR pObjectName,
             CloseServiceHandle( handle );
         }
         break;
+    case SE_REGISTRY_KEY:
+        if (!(err = get_security_regkey( pObjectName, access, &handle )))
+        {
+            err = SetSecurityInfo( handle, ObjectType, SecurityInfo, psidOwner, psidGroup, pDacl, pSacl );
+            RegCloseKey( handle );
+        }
+        break;
     case SE_FILE_OBJECT:
         if (!(err = get_security_file( pObjectName, access, &handle )))
         {
