@@ -3178,7 +3178,11 @@ static UINT get_file_version( const WCHAR *path, WCHAR *verbuf, DWORD *verlen,
         msi_free( version );
         return GetLastError();
     }
-    if (!verbuf && !verlen && !langbuf && !langlen) return ERROR_SUCCESS;
+    if (!verbuf && !verlen && !langbuf && !langlen)
+    {
+        msi_free( version );
+        return ERROR_SUCCESS;
+    }
     if (verlen)
     {
         if (VerQueryValueW( version, szVersionResource, (LPVOID *)&ffi, &len ) && len > 0)
