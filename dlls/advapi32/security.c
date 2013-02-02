@@ -436,6 +436,31 @@ static inline DWORD get_security_service( LPWSTR full_service_name, DWORD access
     return err;
 }
 
+/* helper function for SE_REGISTRY_KEY objects in [Get|Set]NamedSecurityInfo */
+static inline DWORD get_security_regkey( LPWSTR full_key_name, DWORD access, HANDLE *key )
+{
+    WCHAR classes_rootW[] = {'C','L','A','S','S','E','S','_','R','O','O','T',0};
+    WCHAR current_userW[] = {'C','U','R','R','E','N','T','_','U','S','E','R',0};
+    WCHAR machineW[] = {'M','A','C','H','I','N','E',0};
+    WCHAR usersW[] = {'U','S','E','R','S',0};
+    LPWSTR p = strchrW(full_key_name, '\\');
+    int len = p-full_key_name;
+    HKEY hParent;
+
+    if (!p) return ERROR_INVALID_PARAMETER;
+    if (strncmpW( full_key_name, classes_rootW, len ) == 0)
+        hParent = HKEY_CLASSES_ROOT;
+    else if (strncmpW( full_key_name, current_userW, len ) == 0)
+        hParent = HKEY_CURRENT_USER;
+    else if (strncmpW( full_key_name, machineW, len ) == 0)
+        hParent = HKEY_LOCAL_MACHINE;
+    else if (strncmpW( full_key_name, usersW, len ) == 0)
+        hParent = HKEY_USERS;
+    else
+        return ERROR_INVALID_PARAMETER;
+    return RegOpenKeyExW( hParent, p+1, 0, access, (HKEY *)key );
+}
+
 #define	WINE_SIZE_OF_WORLD_ACCESS_ACL	(sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) + sizeof(sidWorld) - sizeof(DWORD))
 
 static void GetWorldAccessACL(PACL pACL)
@@ -5578,14 +5603,21 @@ DWORD WINAPI GetNamedSecurityInfoW( LPWSTR name, SE_OBJECT_TYPE type,
     switch (type)
     {
     case SE_SERVICE:
-        if (!(err = get_security_service( name, access, &handle)))
+        if (!(err = get_security_service( name, access, &handle )))
         {
             err = GetSecurityInfo( handle, type, info, owner, group, dacl, sacl, descriptor );
             CloseServiceHandle( handle );
         }
         break;
+    case SE_REGISTRY_KEY:
+        if (!(err = get_security_regkey( name, access, &handle )))
+        {
+            err = GetSecurityInfo( handle, type, info, owner, group, dacl, sacl, descriptor );
+            RegCloseKey( handle );
+        }
+        break;
     case SE_FILE_OBJECT:
-        if (!(err = get_security_file( name, access, &handle)))
+        if (!(err = get_security_file( name, access, &handle )))
         {
             err = GetSecurityInfo( handle, type, info, owner, group, dacl, sacl, descriptor );
             CloseHandle( handle );
