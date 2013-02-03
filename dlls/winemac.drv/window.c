@@ -113,6 +113,7 @@ static void get_cocoa_window_state(struct macdrv_win_data *data,
     state->excluded_by_expose = state->excluded_by_cycle =
         !(ex_style & WS_EX_APPWINDOW) &&
         (GetWindow(data->hwnd, GW_OWNER) || (ex_style & (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE)));
+    state->minimized = (style & WS_MINIMIZE) != 0;
 }
 
 
@@ -337,6 +338,7 @@ static void set_cocoa_window_properties(struct macdrv_win_data *data)
 
     get_cocoa_window_state(data, style, ex_style, &state);
     macdrv_set_cocoa_window_state(data->cocoa_window, &state);
+    data->minimized = state.minimized;
 }
 
 
@@ -674,7 +676,11 @@ RGNDATA *get_region_data(HRGN hrgn, HDC hdc_lptodp)
  */
 static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags)
 {
-    CGRect frame = cgrect_from_rect(data->whole_rect);
+    CGRect frame;
+
+    if (data->minimized) return;
+
+    frame = cgrect_from_rect(data->whole_rect);
     constrain_window_frame(&frame);
 
     data->on_screen = macdrv_set_cocoa_window_frame(data->cocoa_window, &frame);
@@ -1010,7 +1016,9 @@ UINT CDECL macdrv_ShowWindow(HWND hwnd, INT cmd, RECT *rect, UINT swp)
     if (!thread_data->current_event || thread_data->current_event->window != data->cocoa_window)
         goto done;
 
-    if (thread_data->current_event->type != WINDOW_FRAME_CHANGED)
+    if (thread_data->current_event->type != WINDOW_FRAME_CHANGED &&
+        thread_data->current_event->type != WINDOW_DID_MINIMIZE &&
+        thread_data->current_event->type != WINDOW_DID_UNMINIMIZE)
         goto done;
 
     TRACE("win %p/%p cmd %d at %s flags %08x\n",
@@ -1309,7 +1317,9 @@ void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
     /* check if we are currently processing an event relevant to this window */
     if (!thread_data || !thread_data->current_event ||
         thread_data->current_event->window != data->cocoa_window ||
-        thread_data->current_event->type != WINDOW_FRAME_CHANGED)
+        (thread_data->current_event->type != WINDOW_FRAME_CHANGED &&
+         thread_data->current_event->type != WINDOW_DID_MINIMIZE &&
+         thread_data->current_event->type != WINDOW_DID_UNMINIMIZE))
     {
         sync_window_position(data, swp_flags);
         set_cocoa_window_properties(data);
@@ -1483,4 +1493,69 @@ void macdrv_app_deactivated(void)
         TRACE("setting fg to desktop\n");
         SetForegroundWindow(GetDesktopWindow());
     }
+}
+
+
+/***********************************************************************
+ *              macdrv_window_did_minimize
+ *
+ * Handler for WINDOW_DID_MINIMIZE events.
+ */
+void macdrv_window_did_minimize(HWND hwnd)
+{
+    struct macdrv_win_data *data;
+    DWORD style;
+
+    TRACE("win %p\n", hwnd);
+
+    if (!(data = get_win_data(hwnd))) return;
+    if (data->minimized) goto done;
+
+    style = GetWindowLongW(hwnd, GWL_STYLE);
+
+    data->minimized = TRUE;
+    if ((style & WS_MINIMIZEBOX) && !(style & WS_DISABLED))
+    {
+        TRACE("minimizing win %p/%p\n", hwnd, data->cocoa_window);
+        release_win_data(data);
+        SendMessageW(hwnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+        return;
+    }
+    TRACE("not minimizing win %p/%p style %08x\n", hwnd, data->cocoa_window, style);
+
+done:
+    release_win_data(data);
+}
+
+
+/***********************************************************************
+ *              macdrv_window_did_unminimize
+ *
+ * Handler for WINDOW_DID_UNMINIMIZE events.
+ */
+void macdrv_window_did_unminimize(HWND hwnd)
+{
+    struct macdrv_win_data *data;
+    DWORD style;
+
+    TRACE("win %p\n", hwnd);
+
+    if (!(data = get_win_data(hwnd))) return;
+    if (!data->minimized) goto done;
+
+    style = GetWindowLongW(hwnd, GWL_STYLE);
+
+    data->minimized = FALSE;
+    if (style & (WS_MINIMIZE | WS_MAXIMIZE))
+    {
+        TRACE("restoring win %p/%p\n", hwnd, data->cocoa_window);
+        release_win_data(data);
+        SendMessageW(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+        return;
+    }
+
+    TRACE("not restoring win %p/%p style %08x\n", hwnd, data->cocoa_window, style);
+
+done:
+    release_win_data(data);
 }

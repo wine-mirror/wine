@@ -47,6 +47,8 @@
     BOOL usePerPixelAlpha;
 
     BOOL causing_becomeKeyWindow;
+    BOOL ignore_windowMiniaturize;
+    BOOL ignore_windowDeminiaturize;
 }
 
 @property (retain, readonly, nonatomic) WineEventQueue* queue;

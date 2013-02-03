@@ -287,6 +287,22 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
                 [NSApp addWindowsItem:self title:[self title] filename:NO];
         }
         [self setCollectionBehavior:behavior];
+
+        if (state->minimized && ![self isMiniaturized])
+        {
+            ignore_windowMiniaturize = TRUE;
+            [self miniaturize:nil];
+        }
+        else if (!state->minimized && [self isMiniaturized])
+        {
+            ignore_windowDeminiaturize = TRUE;
+            [self deminiaturize:nil];
+        }
+
+        /* Whatever events regarding minimization might have been in the queue are now stale. */
+        [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_MINIMIZE) |
+                                         event_mask_for_type(WINDOW_DID_UNMINIMIZE)
+                               forWindow:self];
     }
 
     /* Returns whether or not the window was ordered in, which depends on if
@@ -551,6 +567,25 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         [NSApp windowGotFocus:self];
     }
 
+    - (void)windowDidDeminiaturize:(NSNotification *)notification
+    {
+        if (!ignore_windowDeminiaturize)
+        {
+            macdrv_event event;
+
+            /* Coalesce events by discarding any previous ones still in the queue. */
+            [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_MINIMIZE) |
+                                             event_mask_for_type(WINDOW_DID_UNMINIMIZE)
+                                   forWindow:self];
+
+            event.type = WINDOW_DID_UNMINIMIZE;
+            event.window = (macdrv_window)[self retain];
+            [queue postEvent:&event];
+        }
+
+        ignore_windowDeminiaturize = FALSE;
+    }
+
     - (void)windowDidMove:(NSNotification *)notification
     {
         [self windowDidResize:notification];
@@ -591,6 +626,25 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         event.window = (macdrv_window)[self retain];
         [queue postEvent:&event];
         return NO;
+    }
+
+    - (void)windowWillMiniaturize:(NSNotification *)notification
+    {
+        if (!ignore_windowMiniaturize)
+        {
+            macdrv_event event;
+
+            /* Coalesce events by discarding any previous ones still in the queue. */
+            [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_MINIMIZE) |
+                                             event_mask_for_type(WINDOW_DID_UNMINIMIZE)
+                                   forWindow:self];
+
+            event.type = WINDOW_DID_MINIMIZE;
+            event.window = (macdrv_window)[self retain];
+            [queue postEvent:&event];
+        }
+
+        ignore_windowMiniaturize = FALSE;
     }
 
 @end

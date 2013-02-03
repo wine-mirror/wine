@@ -127,6 +127,8 @@ enum {
     APP_DEACTIVATED,
     MOUSE_BUTTON,
     WINDOW_CLOSE_REQUESTED,
+    WINDOW_DID_MINIMIZE,
+    WINDOW_DID_UNMINIMIZE,
     WINDOW_FRAME_CHANGED,
     WINDOW_GOT_FOCUS,
     WINDOW_LOST_FOCUS,
@@ -186,6 +188,7 @@ struct macdrv_window_state {
     unsigned int    floating:1;
     unsigned int    excluded_by_expose:1;
     unsigned int    excluded_by_cycle:1;
+    unsigned int    minimized:1;
 };
 
 extern macdrv_window macdrv_create_cocoa_window(const struct macdrv_window_features* wf,

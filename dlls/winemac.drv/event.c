@@ -35,6 +35,8 @@ static const char *dbgstr_event(int type)
         "APP_DEACTIVATED",
         "MOUSE_BUTTON",
         "WINDOW_CLOSE_REQUESTED",
+        "WINDOW_DID_MINIMIZE",
+        "WINDOW_DID_UNMINIMIZE",
         "WINDOW_FRAME_CHANGED",
         "WINDOW_GOT_FOCUS",
         "WINDOW_LOST_FOCUS",
@@ -61,6 +63,8 @@ static macdrv_event_mask get_event_mask(DWORD mask)
     {
         event_mask |= event_mask_for_type(APP_DEACTIVATED);
         event_mask |= event_mask_for_type(WINDOW_CLOSE_REQUESTED);
+        event_mask |= event_mask_for_type(WINDOW_DID_MINIMIZE);
+        event_mask |= event_mask_for_type(WINDOW_DID_UNMINIMIZE);
         event_mask |= event_mask_for_type(WINDOW_FRAME_CHANGED);
         event_mask |= event_mask_for_type(WINDOW_GOT_FOCUS);
         event_mask |= event_mask_for_type(WINDOW_LOST_FOCUS);
@@ -95,6 +99,12 @@ void macdrv_handle_event(macdrv_event *event)
         break;
     case WINDOW_CLOSE_REQUESTED:
         macdrv_window_close_requested(hwnd);
+        break;
+    case WINDOW_DID_MINIMIZE:
+        macdrv_window_did_minimize(hwnd);
+        break;
+    case WINDOW_DID_UNMINIMIZE:
+        macdrv_window_did_unminimize(hwnd);
         break;
     case WINDOW_FRAME_CHANGED:
         macdrv_window_frame_changed(hwnd, event->window_frame_changed.frame);
