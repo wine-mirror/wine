@@ -177,6 +177,47 @@ int macdrv_err_on;
         }
     }
 
+    - (void) keyboardSelectionDidChange
+    {
+        TISInputSourceRef inputSource;
+
+        inputSource = TISCopyCurrentKeyboardLayoutInputSource();
+        if (inputSource)
+        {
+            CFDataRef uchr;
+            uchr = TISGetInputSourceProperty(inputSource,
+                    kTISPropertyUnicodeKeyLayoutData);
+            if (uchr)
+            {
+                macdrv_event event;
+                WineEventQueue* queue;
+
+                event.type = KEYBOARD_CHANGED;
+                event.window = NULL;
+                event.keyboard_changed.keyboard_type = self.keyboardType;
+                event.keyboard_changed.iso_keyboard = (KBGetLayoutType(self.keyboardType) == kKeyboardISO);
+                event.keyboard_changed.uchr = CFDataCreateCopy(NULL, uchr);
+
+                if (event.keyboard_changed.uchr)
+                {
+                    [eventQueuesLock lock];
+
+                    for (queue in eventQueues)
+                    {
+                        CFRetain(event.keyboard_changed.uchr);
+                        [queue postEvent:&event];
+                    }
+
+                    [eventQueuesLock unlock];
+
+                    CFRelease(event.keyboard_changed.uchr);
+                }
+            }
+
+            CFRelease(inputSource);
+        }
+    }
+
 
     /*
      * ---------- NSApplicationDelegate methods ----------
@@ -217,6 +258,15 @@ int macdrv_err_on;
             NSWindow* window = [note object];
             [keyWindows removeObjectIdenticalTo:window];
         }];
+
+        [nc addObserver:self
+               selector:@selector(keyboardSelectionDidChange)
+                   name:NSTextInputContextKeyboardSelectionDidChangeNotification
+                 object:nil];
+
+        /* The above notification isn't sent unless the NSTextInputContext
+           class has initialized itself.  Poke it. */
+        [NSTextInputContext self];
 
         self.keyboardType = LMGetKbdType();
     }

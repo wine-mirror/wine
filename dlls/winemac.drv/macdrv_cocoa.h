@@ -125,6 +125,7 @@ extern void macdrv_free_displays(struct macdrv_display* displays) DECLSPEC_HIDDE
 /* event */
 enum {
     APP_DEACTIVATED,
+    KEYBOARD_CHANGED,
     MOUSE_BUTTON,
     WINDOW_CLOSE_REQUESTED,
     WINDOW_DID_MINIMIZE,
@@ -141,6 +142,11 @@ typedef struct macdrv_event {
     int                 type;
     macdrv_window       window;
     union {
+        struct {
+            CFDataRef                   uchr;
+            CGEventSourceKeyboardType   keyboard_type;
+            int                         iso_keyboard;
+        }                                           keyboard_changed;
         struct {
             int             button;
             int             pressed;

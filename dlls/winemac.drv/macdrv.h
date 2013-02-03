@@ -134,5 +134,6 @@ extern void macdrv_window_did_unminimize(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_mouse_button(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
 
 extern void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data) DECLSPEC_HIDDEN;
+extern void macdrv_keyboard_changed(const macdrv_event *event) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_MACDRV_H */

@@ -33,6 +33,7 @@ static const char *dbgstr_event(int type)
 {
     static const char * const event_names[] = {
         "APP_DEACTIVATED",
+        "KEYBOARD_CHANGED",
         "MOUSE_BUTTON",
         "WINDOW_CLOSE_REQUESTED",
         "WINDOW_DID_MINIMIZE",
@@ -55,6 +56,9 @@ static macdrv_event_mask get_event_mask(DWORD mask)
     macdrv_event_mask event_mask = 0;
 
     if ((mask & QS_ALLINPUT) == QS_ALLINPUT) return -1;
+
+    if (mask & QS_KEY)
+        event_mask |= event_mask_for_type(KEYBOARD_CHANGED);
 
     if (mask & QS_MOUSEBUTTON)
         event_mask |= event_mask_for_type(MOUSE_BUTTON);
@@ -93,6 +97,9 @@ void macdrv_handle_event(macdrv_event *event)
     {
     case APP_DEACTIVATED:
         macdrv_app_deactivated();
+        break;
+    case KEYBOARD_CHANGED:
+        macdrv_keyboard_changed(event);
         break;
     case MOUSE_BUTTON:
         macdrv_mouse_button(hwnd, event);

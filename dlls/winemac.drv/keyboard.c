@@ -661,3 +661,25 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
         TRACE("keyc 0x%04x -> vkey 0x%04x (spare vkey)\n", keyc, vkey);
     }
 }
+
+
+/***********************************************************************
+ *              macdrv_keyboard_changed
+ *
+ * Handler for KEYBOARD_CHANGED events.
+ */
+void macdrv_keyboard_changed(const macdrv_event *event)
+{
+    struct macdrv_thread_data *thread_data = macdrv_thread_data();
+
+    TRACE("new keyboard layout uchr data %p, type %u, iso %d\n", event->keyboard_changed.uchr,
+          event->keyboard_changed.keyboard_type, event->keyboard_changed.iso_keyboard);
+
+    if (thread_data->keyboard_layout_uchr)
+        CFRelease(thread_data->keyboard_layout_uchr);
+    thread_data->keyboard_layout_uchr = CFDataCreateCopy(NULL, event->keyboard_changed.uchr);
+    thread_data->keyboard_type = event->keyboard_changed.keyboard_type;
+    thread_data->iso_keyboard = event->keyboard_changed.iso_keyboard;
+
+    macdrv_compute_keyboard_layout(thread_data);
+}
