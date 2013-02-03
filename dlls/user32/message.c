@@ -3803,8 +3803,9 @@ BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG pmsg )
 BOOL WINAPI TranslateMessage( const MSG *msg )
 {
     UINT message;
-    WCHAR wp[2];
+    WCHAR wp[8];
     BYTE state[256];
+    INT len;
 
     if (msg->message < WM_KEYFIRST || msg->message > WM_KEYLAST) return FALSE;
     if (msg->message != WM_KEYDOWN && msg->message != WM_SYSKEYDOWN) return TRUE;
@@ -3826,22 +3827,23 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
     }
 
     GetKeyboardState( state );
-    /* FIXME : should handle ToUnicode yielding 2 */
-    switch (ToUnicode(msg->wParam, HIWORD(msg->lParam), state, wp, 2, 0))
+    len = ToUnicode(msg->wParam, HIWORD(msg->lParam), state, wp, sizeof(wp)/sizeof(WCHAR), 0);
+    if (len == -1)
     {
-    case 1:
-        message = (msg->message == WM_KEYDOWN) ? WM_CHAR : WM_SYSCHAR;
-        TRACE_(key)("1 -> PostMessageW(%p,%s,%04x,%08lx)\n",
-            msg->hwnd, SPY_GetMsgName(message, msg->hwnd), wp[0], msg->lParam);
-        PostMessageW( msg->hwnd, message, wp[0], msg->lParam );
-        break;
-
-    case -1:
         message = (msg->message == WM_KEYDOWN) ? WM_DEADCHAR : WM_SYSDEADCHAR;
         TRACE_(key)("-1 -> PostMessageW(%p,%s,%04x,%08lx)\n",
             msg->hwnd, SPY_GetMsgName(message, msg->hwnd), wp[0], msg->lParam);
         PostMessageW( msg->hwnd, message, wp[0], msg->lParam );
-        break;
+    }
+    else if (len > 0)
+    {
+        INT i;
+
+        message = (msg->message == WM_KEYDOWN) ? WM_CHAR : WM_SYSCHAR;
+        TRACE_(key)("%d -> PostMessageW(%p,%s,<x>,%08lx) for <x> in %s\n", len, msg->hwnd,
+            SPY_GetMsgName(message, msg->hwnd), msg->lParam, debugstr_wn(wp, len));
+        for (i = 0; i < len; i++)
+            PostMessageW( msg->hwnd, message, wp[i], msg->lParam );
     }
     return TRUE;
 }
