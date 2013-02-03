@@ -842,9 +842,13 @@ void CDECL macdrv_DestroyWindow(HWND hwnd)
  */
 void CDECL macdrv_SetFocus(HWND hwnd)
 {
+    struct macdrv_thread_data *thread_data = macdrv_thread_data();
     struct macdrv_win_data *data;
 
     TRACE("%p\n", hwnd);
+
+    if (!thread_data) return;
+    thread_data->dead_key_state = 0;
 
     if (!(hwnd = GetAncestor(hwnd, GA_ROOT))) return;
     if (!(data = get_win_data(hwnd))) return;

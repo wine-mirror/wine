@@ -327,6 +327,25 @@ static BOOL char_matches_string(WCHAR wchar, UniChar *string, BOOL ignore_diacri
 }
 
 
+/* Filter Apple-specific private-use characters (see NSEvent.h) out of a
+ * string.  Returns the length of the string after stripping. */
+static int strip_apple_private_chars(LPWSTR bufW, int len)
+{
+    int i;
+    for (i = 0; i < len; )
+    {
+        if (0xF700 <= bufW[i] && bufW[i] <= 0xF8FF)
+        {
+            memmove(&bufW[i], &bufW[i+1], (len - i - 1) * sizeof(bufW[0]));
+            len--;
+        }
+        else
+            i++;
+    }
+    return len;
+}
+
+
 /***********************************************************************
  *              macdrv_compute_keyboard_layout
  */
@@ -699,6 +718,8 @@ void macdrv_key_event(HWND hwnd, const macdrv_event *event)
                 hwnd, event->window, (event->type == KEY_PRESS ? "press" : "release"),
                 event->key.keycode, event->key.modifiers);
 
+    thread_data->last_modifiers = event->key.modifiers;
+
     if (event->key.keycode < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]))
     {
         vkey = thread_data->keyc2vkey[event->key.keycode];
@@ -737,6 +758,198 @@ void macdrv_keyboard_changed(const macdrv_event *event)
     thread_data->keyboard_layout_uchr = CFDataCreateCopy(NULL, event->keyboard_changed.uchr);
     thread_data->keyboard_type = event->keyboard_changed.keyboard_type;
     thread_data->iso_keyboard = event->keyboard_changed.iso_keyboard;
+    thread_data->dead_key_state = 0;
 
     macdrv_compute_keyboard_layout(thread_data);
+}
+
+
+/***********************************************************************
+ *              ToUnicodeEx (MACDRV.@)
+ *
+ * The ToUnicode function translates the specified virtual-key code and keyboard
+ * state to the corresponding Windows character or characters.
+ *
+ * If the specified key is a dead key, the return value is negative. Otherwise,
+ * it is one of the following values:
+ * Value        Meaning
+ * -1           The specified virtual key is a dead-key.  If possible, the
+ *              non-combining form of the dead character is written to bufW.
+ * 0            The specified virtual key has no translation for the current
+ *              state of the keyboard.
+ * 1            One Windows character was copied to the buffer.
+ * 2 or more    Multiple characters were copied to the buffer. This usually
+ *              happens when a dead-key character (accent or diacritic) stored
+ *              in the keyboard layout cannot be composed with the specified
+ *              virtual key to form a single character.
+ *
+ */
+INT CDECL macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
+                             LPWSTR bufW, int bufW_size, UINT flags, HKL hkl)
+{
+    struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
+    INT ret = 0;
+    int keyc;
+    BOOL is_menu = (flags & 0x1);
+    OSStatus status;
+    const UCKeyboardLayout *uchr;
+    UInt16 keyAction;
+    UInt32 modifierKeyState;
+    OptionBits options;
+    UInt32 deadKeyState, savedDeadKeyState;
+    UniCharCount len;
+    BOOL dead = FALSE;
+
+    TRACE_(key)("virtKey 0x%04x scanCode 0x%04x lpKeyState %p bufW %p bufW_size %d flags 0x%08x hkl %p\n",
+                virtKey, scanCode, lpKeyState, bufW, bufW_size, flags, hkl);
+
+    if (!virtKey)
+        goto done;
+
+    /* UCKeyTranslate, below, terminates a dead-key sequence if passed a
+       modifier key press.  We want it to effectively ignore modifier key
+       presses.  I think that one isn't supposed to call it at all for modifier
+       events (e.g. NSFlagsChanged or kEventRawKeyModifiersChanged), since they
+       are different event types than key up/down events. */
+    switch (virtKey)
+    {
+        case VK_SHIFT:
+        case VK_CONTROL:
+        case VK_MENU:
+        case VK_CAPITAL:
+        case VK_LSHIFT:
+        case VK_RSHIFT:
+        case VK_LCONTROL:
+        case VK_RCONTROL:
+        case VK_LMENU:
+        case VK_RMENU:
+            goto done;
+    }
+
+    /* There are a number of key combinations for which Windows does not
+       produce characters, but Mac keyboard layouts may.  Eat them.  Do this
+       here to avoid the expense of UCKeyTranslate() but also because these
+       keys shouldn't terminate dead key sequences. */
+    if ((VK_PRIOR <= virtKey && virtKey <= VK_HELP) || (VK_F1 <= virtKey && virtKey <= VK_F24))
+        goto done;
+
+    /* Shift + <non-digit keypad keys>. */
+    if ((lpKeyState[VK_SHIFT] & 0x80) && VK_MULTIPLY <= virtKey && virtKey <= VK_DIVIDE)
+        goto done;
+
+    if (lpKeyState[VK_CONTROL] & 0x80)
+    {
+        /* Control-Tab, with or without other modifiers. */
+        if (virtKey == VK_TAB)
+            goto done;
+
+        /* Control-Shift-<key>, Control-Alt-<key>, and Control-Alt-Shift-<key>
+           for these keys. */
+        if ((lpKeyState[VK_SHIFT] & 0x80) || (lpKeyState[VK_MENU] & 0x80))
+        {
+            switch (virtKey)
+            {
+                case VK_CANCEL:
+                case VK_BACK:
+                case VK_ESCAPE:
+                case VK_SPACE:
+                case VK_RETURN:
+                    goto done;
+            }
+        }
+    }
+
+    if (thread_data->keyboard_layout_uchr)
+        uchr = (const UCKeyboardLayout*)CFDataGetBytePtr(thread_data->keyboard_layout_uchr);
+    else
+        uchr = NULL;
+
+    keyAction = (scanCode & 0x8000) ? kUCKeyActionUp : kUCKeyActionDown;
+
+    modifierKeyState = 0;
+    if (lpKeyState[VK_SHIFT] & 0x80)
+        modifierKeyState |= (shiftKey >> 8);
+    if (lpKeyState[VK_CAPITAL] & 0x01)
+        modifierKeyState |= (alphaLock >> 8);
+    if (lpKeyState[VK_CONTROL] & 0x80)
+        modifierKeyState |= (controlKey >> 8);
+    if (lpKeyState[VK_MENU] & 0x80)
+        modifierKeyState |= (cmdKey >> 8);
+    if (thread_data->last_modifiers & (NX_ALTERNATEMASK | NX_DEVICELALTKEYMASK | NX_DEVICERALTKEYMASK))
+        modifierKeyState |= (optionKey >> 8);
+
+    /* Find the Mac keycode corresponding to the vkey */
+    for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
+        if (thread_data->keyc2vkey[keyc] == virtKey) break;
+
+    if (keyc >= sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]))
+    {
+        WARN_(key)("Unknown virtual key 0x%04x\n", virtKey);
+        goto done;
+    }
+
+    TRACE_(key)("Key code 0x%04x %s, faked modifiers = 0x%04x\n", keyc,
+                (keyAction == kUCKeyActionDown) ? "pressed" : "released", (unsigned)modifierKeyState);
+
+    if (is_menu)
+    {
+        options = kUCKeyTranslateNoDeadKeysMask;
+        deadKeyState = 0;
+    }
+    else
+    {
+        options = 0;
+        deadKeyState = thread_data->dead_key_state;
+    }
+    savedDeadKeyState = deadKeyState;
+    status = UCKeyTranslate(uchr, keyc, keyAction, modifierKeyState,
+        thread_data->keyboard_type, options, &deadKeyState, bufW_size,
+        &len, bufW);
+    if (status != noErr)
+    {
+        ERR_(key)("Couldn't translate keycode 0x%04x, status %ld\n", keyc, status);
+        goto done;
+    }
+    if (!is_menu)
+        thread_data->dead_key_state = deadKeyState;
+
+    if (len == 0 && deadKeyState)
+    {
+        /* Repeat the translation, but disabling dead-key generation to
+           learn which dead key it was. */
+        status = UCKeyTranslate(uchr, keyc, keyAction, modifierKeyState,
+            thread_data->keyboard_type, kUCKeyTranslateNoDeadKeysMask,
+            &savedDeadKeyState, bufW_size, &len, bufW);
+        if (status != noErr)
+        {
+            ERR_(key)("Couldn't translate keycode 0x%04x, status %ld\n", keyc, status);
+            goto done;
+        }
+
+        dead = TRUE;
+    }
+
+    if (len > 0)
+        len = strip_apple_private_chars(bufW, len);
+
+    if (dead && len > 0) ret = -1;
+    else ret = len;
+
+    /* Control-Return produces line feed instead of carriage return. */
+    if (ret > 0 && (lpKeyState[VK_CONTROL] & 0x80) && virtKey == VK_RETURN)
+    {
+        int i;
+        for (i = 0; i < len; i++)
+            if (bufW[i] == '\r')
+                bufW[i] = '\n';
+    }
+
+done:
+    /* Null-terminate the buffer, if there's room.  MSDN clearly states that the
+       caller must not assume this is done, but some programs (e.g. Audiosurf) do. */
+    if (1 <= ret && ret < bufW_size)
+        bufW[ret] = 0;
+
+    TRACE_(key)("returning %d / %s\n", ret, debugstr_wn(bufW, abs(ret)));
+    return ret;
 }

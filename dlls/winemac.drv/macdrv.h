@@ -87,6 +87,8 @@ struct macdrv_thread_data
     CFDataRef                   keyboard_layout_uchr;
     CGEventSourceKeyboardType   keyboard_type;
     int                         iso_keyboard;
+    CGEventFlags                last_modifiers;
+    UInt32                      dead_key_state;
     WORD                        keyc2vkey[128];
     WORD                        keyc2scan[128];
 };
