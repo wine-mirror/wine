@@ -8,6 +8,7 @@ C_SRCS = \
 	gdi.c \
 	macdrv_main.c \
 	mouse.c \
+	scroll.c \
 	surface.c \
 	window.c
 
