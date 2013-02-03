@@ -84,6 +84,11 @@ struct macdrv_thread_data
 {
     macdrv_event_queue          queue;
     const macdrv_event         *current_event;
+    CFDataRef                   keyboard_layout_uchr;
+    CGEventSourceKeyboardType   keyboard_type;
+    int                         iso_keyboard;
+    WORD                        keyc2vkey[128];
+    WORD                        keyc2scan[128];
 };
 
 extern DWORD thread_data_tls_index DECLSPEC_HIDDEN;
@@ -127,5 +132,7 @@ extern void macdrv_window_did_minimize(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_did_unminimize(HWND hwnd) DECLSPEC_HIDDEN;
 
 extern void macdrv_mouse_button(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
+
+extern void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_MACDRV_H */

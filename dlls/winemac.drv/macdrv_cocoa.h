@@ -219,4 +219,8 @@ extern void macdrv_clear_window_color_key(macdrv_window w) DECLSPEC_HIDDEN;
 extern void macdrv_window_use_per_pixel_alpha(macdrv_window w, int use_per_pixel_alpha) DECLSPEC_HIDDEN;
 extern void macdrv_give_cocoa_window_focus(macdrv_window w) DECLSPEC_HIDDEN;
 
+
+/* keyboard */
+extern CFDataRef macdrv_copy_keyboard_layout(CGEventSourceKeyboardType* keyboard_type, int* is_iso) DECLSPEC_HIDDEN;
+
 #endif  /* __WINE_MACDRV_COCOA_H */

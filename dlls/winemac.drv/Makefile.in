@@ -1,11 +1,12 @@
 MODULE    = winemac.drv
 IMPORTS   = user32 gdi32 advapi32
-EXTRALIBS = -framework AppKit
+EXTRALIBS = -framework AppKit -framework Carbon
 
 C_SRCS = \
 	display.c \
 	event.c \
 	gdi.c \
+	keyboard.c \
 	macdrv_main.c \
 	mouse.c \
 	scroll.c \

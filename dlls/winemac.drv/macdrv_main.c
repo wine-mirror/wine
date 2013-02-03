@@ -60,6 +60,8 @@ static void thread_detach(void)
     if (data)
     {
         macdrv_destroy_event_queue(data->queue);
+        if (data->keyboard_layout_uchr)
+            CFRelease(data->keyboard_layout_uchr);
         HeapFree(GetProcessHeap(), 0, data);
     }
 }
@@ -115,6 +117,9 @@ struct macdrv_thread_data *macdrv_init_thread_data(void)
         ERR("macdrv: Can't create event queue.\n");
         ExitProcess(1);
     }
+
+    data->keyboard_layout_uchr = macdrv_copy_keyboard_layout(&data->keyboard_type, &data->iso_keyboard);
+    macdrv_compute_keyboard_layout(data);
 
     set_queue_display_fd(macdrv_get_event_queue_fd(data->queue));
     TlsSetValue(thread_data_tls_index, data);

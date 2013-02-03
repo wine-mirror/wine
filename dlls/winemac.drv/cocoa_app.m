@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#import <Carbon/Carbon.h>
+
 #import "cocoa_app.h"
 #import "cocoa_event.h"
 #import "cocoa_window.h"
@@ -27,6 +29,8 @@ int macdrv_err_on;
 
 
 @implementation WineApplication
+
+    @synthesize keyboardType;
 
     - (id) init
     {
@@ -213,6 +217,8 @@ int macdrv_err_on;
             NSWindow* window = [note object];
             [keyWindows removeObjectIdenticalTo:window];
         }];
+
+        self.keyboardType = LMGetKbdType();
     }
 
 @end
@@ -269,4 +275,32 @@ void macdrv_window_rejected_focus(const macdrv_event *event)
     OnMainThread(^{
         [NSApp windowRejectedFocusEvent:event];
     });
+}
+
+/***********************************************************************
+ *              macdrv_get_keyboard_layout
+ *
+ * Returns the keyboard layout uchr data.
+ */
+CFDataRef macdrv_copy_keyboard_layout(CGEventSourceKeyboardType* keyboard_type, int* is_iso)
+{
+    __block CFDataRef result = NULL;
+
+    OnMainThread(^{
+        TISInputSourceRef inputSource;
+
+        inputSource = TISCopyCurrentKeyboardLayoutInputSource();
+        if (inputSource)
+        {
+            CFDataRef uchr = TISGetInputSourceProperty(inputSource,
+                                kTISPropertyUnicodeKeyLayoutData);
+            result = CFDataCreateCopy(NULL, uchr);
+            CFRelease(inputSource);
+
+            *keyboard_type = ((WineApplication*)NSApp).keyboardType;
+            *is_iso = (KBGetLayoutType(*keyboard_type) == kKeyboardISO);
+        }
+    });
+
+    return result;
 }

@@ -40,7 +40,11 @@
     NSMutableArray* keyWindows;
     NSMutableSet* triedWindows;
     unsigned long windowFocusSerial;
+
+    CGEventSourceKeyboardType keyboardType;
 }
+
+@property (nonatomic) CGEventSourceKeyboardType keyboardType;
 
     - (void) transformProcessToForeground;
 
