@@ -18,11 +18,19 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#import <Carbon/Carbon.h>
+
 #import "cocoa_window.h"
 
 #include "macdrv_cocoa.h"
 #import "cocoa_app.h"
 #import "cocoa_event.h"
+
+
+/* Additional Mac virtual keycode, to complement those in Carbon's <HIToolbox/Events.h>. */
+enum {
+    kVK_RightCommand              = 0x36, /* Invented for Wine; was unused */
+};
 
 
 static NSUInteger style_mask_for_features(const struct macdrv_window_features* wf)
@@ -52,6 +60,49 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
             return TRUE;
     }
     return FALSE;
+}
+
+
+/* We rely on the supposedly device-dependent modifier flags to distinguish the
+   keys on the left side of the keyboard from those on the right.  Some event
+   sources don't set those device-depdendent flags.  If we see a device-independent
+   flag for a modifier without either corresponding device-dependent flag, assume
+   the left one. */
+static inline void fix_device_modifiers_by_generic(NSUInteger* modifiers)
+{
+    if ((*modifiers & (NX_COMMANDMASK | NX_DEVICELCMDKEYMASK | NX_DEVICERCMDKEYMASK)) == NX_COMMANDMASK)
+        *modifiers |= NX_DEVICELCMDKEYMASK;
+    if ((*modifiers & (NX_SHIFTMASK | NX_DEVICELSHIFTKEYMASK | NX_DEVICERSHIFTKEYMASK)) == NX_SHIFTMASK)
+        *modifiers |= NX_DEVICELSHIFTKEYMASK;
+    if ((*modifiers & (NX_CONTROLMASK | NX_DEVICELCTLKEYMASK | NX_DEVICERCTLKEYMASK)) == NX_CONTROLMASK)
+        *modifiers |= NX_DEVICELCTLKEYMASK;
+    if ((*modifiers & (NX_ALTERNATEMASK | NX_DEVICELALTKEYMASK | NX_DEVICERALTKEYMASK)) == NX_ALTERNATEMASK)
+        *modifiers |= NX_DEVICELALTKEYMASK;
+}
+
+/* As we manipulate individual bits of a modifier mask, we can end up with
+   inconsistent sets of flags.  In particular, we might set or clear one of the
+   left/right-specific bits, but not the corresponding non-side-specific bit.
+   Fix that.  If either side-specific bit is set, set the non-side-specific bit,
+   otherwise clear it. */
+static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
+{
+    if (*modifiers & (NX_DEVICELCMDKEYMASK | NX_DEVICERCMDKEYMASK))
+        *modifiers |= NX_COMMANDMASK;
+    else
+        *modifiers &= ~NX_COMMANDMASK;
+    if (*modifiers & (NX_DEVICELSHIFTKEYMASK | NX_DEVICERSHIFTKEYMASK))
+        *modifiers |= NX_SHIFTMASK;
+    else
+        *modifiers &= ~NX_SHIFTMASK;
+    if (*modifiers & (NX_DEVICELCTLKEYMASK | NX_DEVICERCTLKEYMASK))
+        *modifiers |= NX_CONTROLMASK;
+    else
+        *modifiers &= ~NX_CONTROLMASK;
+    if (*modifiers & (NX_DEVICELALTKEYMASK | NX_DEVICERALTKEYMASK))
+        *modifiers |= NX_ALTERNATEMASK;
+    else
+        *modifiers &= ~NX_ALTERNATEMASK;
 }
 
 
@@ -493,6 +544,44 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
         [self windowDidResize:nil];
     }
 
+    - (void) postKey:(uint16_t)keyCode
+             pressed:(BOOL)pressed
+           modifiers:(NSUInteger)modifiers
+               event:(NSEvent*)theEvent
+    {
+        macdrv_event event;
+        CGEventRef cgevent;
+        WineApplication* app = (WineApplication*)NSApp;
+
+        event.type          = pressed ? KEY_PRESS : KEY_RELEASE;
+        event.window        = (macdrv_window)[self retain];
+        event.key.keycode   = keyCode;
+        event.key.modifiers = modifiers;
+        event.key.time_ms   = [app ticksForEventTime:[theEvent timestamp]];
+
+        if ((cgevent = [theEvent CGEvent]))
+        {
+            CGEventSourceKeyboardType keyboardType = CGEventGetIntegerValueField(cgevent,
+                                                        kCGKeyboardEventKeyboardType);
+            if (keyboardType != app.keyboardType)
+            {
+                app.keyboardType = keyboardType;
+                [app keyboardSelectionDidChange];
+            }
+        }
+
+        [queue postEvent:&event];
+    }
+
+    - (void) postKeyEvent:(NSEvent *)theEvent
+    {
+        [self flagsChanged:theEvent];
+        [self postKey:[theEvent keyCode]
+              pressed:[theEvent type] == NSKeyDown
+            modifiers:[theEvent modifierFlags]
+                event:theEvent];
+    }
+
 
     /*
      * ---------- NSWindow method overrides ----------
@@ -556,12 +645,81 @@ static BOOL frame_intersects_screens(NSRect frame, NSArray* screens)
     - (void) rightMouseUp:(NSEvent *)theEvent { [self mouseUp:theEvent]; }
     - (void) otherMouseUp:(NSEvent *)theEvent { [self mouseUp:theEvent]; }
 
+    - (void) keyDown:(NSEvent *)theEvent { [self postKeyEvent:theEvent]; }
+    - (void) keyUp:(NSEvent *)theEvent   { [self postKeyEvent:theEvent]; }
+
+    - (void) flagsChanged:(NSEvent *)theEvent
+    {
+        static const struct {
+            NSUInteger  mask;
+            uint16_t    keycode;
+        } modifiers[] = {
+            { NX_ALPHASHIFTMASK,        kVK_CapsLock },
+            { NX_DEVICELSHIFTKEYMASK,   kVK_Shift },
+            { NX_DEVICERSHIFTKEYMASK,   kVK_RightShift },
+            { NX_DEVICELCTLKEYMASK,     kVK_Control },
+            { NX_DEVICERCTLKEYMASK,     kVK_RightControl },
+            { NX_DEVICELALTKEYMASK,     kVK_Option },
+            { NX_DEVICERALTKEYMASK,     kVK_RightOption },
+            { NX_DEVICELCMDKEYMASK,     kVK_Command },
+            { NX_DEVICERCMDKEYMASK,     kVK_RightCommand },
+        };
+
+        NSUInteger modifierFlags = [theEvent modifierFlags];
+        NSUInteger changed;
+        int i, last_changed;
+
+        fix_device_modifiers_by_generic(&modifierFlags);
+        changed = modifierFlags ^ lastModifierFlags;
+
+        last_changed = -1;
+        for (i = 0; i < sizeof(modifiers)/sizeof(modifiers[0]); i++)
+            if (changed & modifiers[i].mask)
+                last_changed = i;
+
+        for (i = 0; i <= last_changed; i++)
+        {
+            if (changed & modifiers[i].mask)
+            {
+                BOOL pressed = (modifierFlags & modifiers[i].mask) != 0;
+
+                if (i == last_changed)
+                    lastModifierFlags = modifierFlags;
+                else
+                {
+                    lastModifierFlags ^= modifiers[i].mask;
+                    fix_generic_modifiers_by_device(&lastModifierFlags);
+                }
+
+                // Caps lock generates one event for each press-release action.
+                // We need to simulate a pair of events for each actual event.
+                if (modifiers[i].mask == NX_ALPHASHIFTMASK)
+                {
+                    [self postKey:modifiers[i].keycode
+                          pressed:TRUE
+                        modifiers:lastModifierFlags
+                            event:(NSEvent*)theEvent];
+                    pressed = FALSE;
+                }
+
+                [self postKey:modifiers[i].keycode
+                      pressed:pressed
+                    modifiers:lastModifierFlags
+                        event:(NSEvent*)theEvent];
+            }
+        }
+    }
+
 
     /*
      * ---------- NSWindowDelegate methods ----------
      */
     - (void)windowDidBecomeKey:(NSNotification *)notification
     {
+        NSEvent* event = [NSApp lastFlagsChanged];
+        if (event)
+            [self flagsChanged:event];
+
         if (causing_becomeKeyWindow) return;
 
         [NSApp windowGotFocus:self];

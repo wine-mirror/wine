@@ -28,9 +28,16 @@
 int macdrv_err_on;
 
 
+@interface WineApplication ()
+
+@property (readwrite, copy, nonatomic) NSEvent* lastFlagsChanged;
+
+@end
+
+
 @implementation WineApplication
 
-    @synthesize keyboardType;
+    @synthesize keyboardType, lastFlagsChanged;
 
     - (id) init
     {
@@ -216,6 +223,18 @@ int macdrv_err_on;
 
             CFRelease(inputSource);
         }
+    }
+
+
+    /*
+     * ---------- NSApplication method overrides ----------
+     */
+    - (void) sendEvent:(NSEvent*)anEvent
+    {
+        if ([anEvent type] == NSFlagsChanged)
+            self.lastFlagsChanged = anEvent;
+
+        [super sendEvent:anEvent];
     }
 
 

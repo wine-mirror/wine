@@ -46,6 +46,8 @@
 
     BOOL usePerPixelAlpha;
 
+    NSUInteger lastModifierFlags;
+
     BOOL causing_becomeKeyWindow;
     BOOL ignore_windowMiniaturize;
     BOOL ignore_windowDeminiaturize;

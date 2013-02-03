@@ -31,6 +31,7 @@
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
+WINE_DECLARE_DEBUG_CHANNEL(key);
 
 
 /* Carbon-style modifier mask definitions from <Carbon/HIToolbox/Events.h>. */
@@ -660,6 +661,62 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
         vkey_used[vkey] = 1;
         TRACE("keyc 0x%04x -> vkey 0x%04x (spare vkey)\n", keyc, vkey);
     }
+}
+
+
+/***********************************************************************
+ *              macdrv_send_keyboard_input
+ */
+static void macdrv_send_keyboard_input(HWND hwnd, WORD vkey, WORD scan, DWORD flags, DWORD time)
+{
+    INPUT input;
+
+    TRACE_(key)("hwnd %p vkey=%04x scan=%04x flags=%04x\n", hwnd, vkey, scan, flags);
+
+    input.type              = INPUT_KEYBOARD;
+    input.ki.wVk            = vkey;
+    input.ki.wScan          = scan;
+    input.ki.dwFlags        = flags;
+    input.ki.time           = time;
+    input.ki.dwExtraInfo    = 0;
+
+    __wine_send_input(hwnd, &input);
+}
+
+
+/***********************************************************************
+ *              macdrv_key_event
+ *
+ * Handler for KEY_PRESS and KEY_RELEASE events.
+ */
+void macdrv_key_event(HWND hwnd, const macdrv_event *event)
+{
+    struct macdrv_thread_data *thread_data = macdrv_thread_data();
+    WORD vkey, scan;
+    DWORD flags;
+
+    TRACE_(key)("win %p/%p key %s keycode %hu modifiers 0x%08llx\n",
+                hwnd, event->window, (event->type == KEY_PRESS ? "press" : "release"),
+                event->key.keycode, event->key.modifiers);
+
+    if (event->key.keycode < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]))
+    {
+        vkey = thread_data->keyc2vkey[event->key.keycode];
+        scan = thread_data->keyc2scan[event->key.keycode];
+    }
+    else
+        vkey = scan = 0;
+
+    TRACE_(key)("keycode %hu converted to vkey 0x%X scan 0x%02x\n",
+                event->key.keycode, vkey, scan);
+
+    if (!vkey) return;
+
+    flags = 0;
+    if (event->type == KEY_RELEASE) flags |= KEYEVENTF_KEYUP;
+    if (scan & 0x100)               flags |= KEYEVENTF_EXTENDEDKEY;
+
+    macdrv_send_keyboard_input(hwnd, vkey, scan & 0xff, flags, event->key.time_ms);
 }
 
 

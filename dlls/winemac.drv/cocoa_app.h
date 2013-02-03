@@ -42,9 +42,11 @@
     unsigned long windowFocusSerial;
 
     CGEventSourceKeyboardType keyboardType;
+    NSEvent* lastFlagsChanged;
 }
 
 @property (nonatomic) CGEventSourceKeyboardType keyboardType;
+@property (readonly, copy, nonatomic) NSEvent* lastFlagsChanged;
 
     - (void) transformProcessToForeground;
 
@@ -55,6 +57,8 @@
     - (double) ticksForEventTime:(NSTimeInterval)eventTime;
 
     - (void) windowGotFocus:(WineWindow*)window;
+
+    - (void) keyboardSelectionDidChange;
 
 @end
 
