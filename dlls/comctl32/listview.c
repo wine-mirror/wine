@@ -11468,7 +11468,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_SetHoverTime(infoPtr, (DWORD)lParam);
 
   case LVM_SETICONSPACING:
-    return LISTVIEW_SetIconSpacing(infoPtr, (short)LOWORD(lParam), (short)HIWORD(lParam));
+    if(lParam == -1)
+        return LISTVIEW_SetIconSpacing(infoPtr, -1, -1);
+    return LISTVIEW_SetIconSpacing(infoPtr, LOWORD(lParam), HIWORD(lParam));
 
   case LVM_SETIMAGELIST:
     return (LRESULT)LISTVIEW_SetImageList(infoPtr, (INT)wParam, (HIMAGELIST)lParam);

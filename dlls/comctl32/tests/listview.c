@@ -4654,11 +4654,26 @@ static void test_getitemspacing(void)
 
     ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
     expect(100, LOWORD(ret));
+
     expect(0xFFFF, HIWORD(ret));
 
-    ret = SendMessage(hwnd, LVM_SETICONSPACING, 0, -1);
-    expect(100, LOWORD(ret));
-    expect(0xFFFF, HIWORD(ret));
+    if (sizeof(void*) == 8)
+    {
+        /* NOTE: -1 is not treated the same as (DWORD)-1 by 64bit listview */
+        ret = SendMessage(hwnd, LVM_SETICONSPACING, 0, (DWORD)-1);
+        expect(100, LOWORD(ret));
+        expect(0xFFFF, HIWORD(ret));
+
+        ret = SendMessage(hwnd, LVM_SETICONSPACING, 0, -1);
+        expect(0xFFFF, LOWORD(ret));
+        expect(0xFFFF, HIWORD(ret));
+    }
+    else
+    {
+        ret = SendMessage(hwnd, LVM_SETICONSPACING, 0, -1);
+        expect(100, LOWORD(ret));
+        expect(0xFFFF, HIWORD(ret));
+    }
     ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
     /* spacing + icon size returned */
     expect(cx + 40, LOWORD(ret));
