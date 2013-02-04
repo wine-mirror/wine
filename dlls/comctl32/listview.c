@@ -55,7 +55,6 @@
  *   -- LVA_SNAPTOGRID not implemented
  *   -- LISTVIEW_ApproximateViewRect partially implemented
  *   -- LISTVIEW_SetColumnWidth ignores header images & bitmap
- *   -- LISTVIEW_SetIconSpacing is incomplete
  *   -- LISTVIEW_StyleChanged doesn't handle some changes too well
  *
  * Speedups
@@ -290,6 +289,7 @@ typedef struct tagLISTVIEW_INFO
   HIMAGELIST himlSmall;
   HIMAGELIST himlState;
   SIZE iconSize;
+  BOOL autoSpacing;
   SIZE iconSpacing;
   SIZE iconStateSize;
   POINT currIconPos;        /* this is the position next icon will be placed */
@@ -8594,11 +8594,15 @@ static DWORD LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, INT cx, INT cy)
     /* set to defaults, if instructed to */
     if (cx == -1 && cy == -1)
     {
+        infoPtr->autoSpacing = TRUE;
         if (infoPtr->himlNormal)
             ImageList_GetIconSize(infoPtr->himlNormal, &iconWidth, &iconHeight);
         cx = GetSystemMetrics(SM_CXICONSPACING) - GetSystemMetrics(SM_CXICON) + iconWidth;
         cy = GetSystemMetrics(SM_CYICONSPACING) - GetSystemMetrics(SM_CYICON) + iconHeight;
     }
+    else
+        infoPtr->autoSpacing = FALSE;
+
     /* if 0 then keep width */
     if (cx != 0)
         infoPtr->iconSpacing.cx = cx;
@@ -8660,7 +8664,8 @@ static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *infoPtr, INT nType, HIMAG
         himlOld = infoPtr->himlNormal;
         infoPtr->himlNormal = himl;
         if (infoPtr->uView == LV_VIEW_ICON) set_icon_size(&infoPtr->iconSize, himl, FALSE);
-        LISTVIEW_SetIconSpacing(infoPtr, -1, -1);
+        if (infoPtr->autoSpacing)
+            LISTVIEW_SetIconSpacing(infoPtr, -1, -1);
     break;
 
     case LVSIL_SMALL:
@@ -9374,6 +9379,7 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->bRedraw = TRUE;
   infoPtr->bNoItemMetrics = TRUE;
   infoPtr->bDoChangeNotify = TRUE;
+  infoPtr->autoSpacing = TRUE;
   infoPtr->iconSpacing.cx = GetSystemMetrics(SM_CXICONSPACING) - GetSystemMetrics(SM_CXICON);
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING) - GetSystemMetrics(SM_CYICON);
   infoPtr->nEditLabelItem = -1;

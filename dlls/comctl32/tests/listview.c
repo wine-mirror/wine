@@ -4643,6 +4643,23 @@ static void test_getitemspacing(void)
     SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)himl40);
 
     ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
+    /* set size returned */
+    expect(100, LOWORD(ret));
+    expect(100, HIWORD(ret));
+
+    /* spacing = 0 - keep previous value */
+    ret = SendMessage(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(0, -1));
+    expect(100, LOWORD(ret));
+    expect(100, HIWORD(ret));
+
+    ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
+    expect(100, LOWORD(ret));
+    expect(0xFFFF, HIWORD(ret));
+
+    ret = SendMessage(hwnd, LVM_SETICONSPACING, 0, -1);
+    expect(100, LOWORD(ret));
+    expect(0xFFFF, HIWORD(ret));
+    ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
     /* spacing + icon size returned */
     expect(cx + 40, LOWORD(ret));
     expect(cy + 40, HIWORD(ret));
