@@ -834,12 +834,11 @@ HRESULT create_signature( const WCHAR *class, const WCHAR *method, enum param_di
     }
     hr = create_signature_table( iter, name );
     IEnumWbemClassObject_Release( iter );
-    if (hr != S_OK)
-    {
-        heap_free( name );
-        return hr;
-    }
-    return get_object( name, sig );
+    if (hr == S_OK)
+        hr = get_object( name, sig );
+
+    heap_free( name );
+    return hr;
 }
 
 static HRESULT WINAPI class_object_GetMethod(
