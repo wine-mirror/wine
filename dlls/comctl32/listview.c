@@ -8,6 +8,7 @@
  * Copyright 2002 Dimitrie O. Paun
  * Copyright 2009-2013 Nikolay Sivov
  * Copyright 2009 Owen Rudge for CodeWeavers
+ * Copyright 2012-2013 Daniel Jelinski
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -8593,28 +8594,21 @@ static DWORD LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, INT cx, INT cy)
     if (infoPtr->uView != LV_VIEW_ICON) return oldspacing;
   
     /* set to defaults, if instructed to */
-    if (cx == -1) cx = GetSystemMetrics(SM_CXICONSPACING);
-    if (cy == -1) cy = GetSystemMetrics(SM_CYICONSPACING);
-
-    /* if 0 then compute width
-     * FIXME: computed cx and cy is not matching native behaviour */
-    if (cx == 0) {
-        cx = GetSystemMetrics(SM_CXICONSPACING);
-        if (infoPtr->iconSize.cx + ICON_LR_PADDING > cx)
-            cx = infoPtr->iconSize.cx + ICON_LR_PADDING;
+    if (cx == -1 && cy == -1)
+    {
+        cx = GetSystemMetrics(SM_CXICONSPACING) - GetSystemMetrics(SM_CXICON) + infoPtr->iconSize.cx;
+        cy = GetSystemMetrics(SM_CYICONSPACING) - GetSystemMetrics(SM_CYICON) + infoPtr->iconSize.cy;
     }
+    /* if 0 then keep width */
+    if (cx != 0)
+        infoPtr->iconSpacing.cx = cx;
 
-    /* if 0 then compute height */
-    if (cy == 0) 
-	cy = infoPtr->iconSize.cy + 2 * infoPtr->ntmHeight +
-	     ICON_BOTTOM_PADDING + ICON_TOP_PADDING + LABEL_VERT_PADDING;
-    
-
-    infoPtr->iconSpacing.cx = cx;
-    infoPtr->iconSpacing.cy = cy;
+    /* if 0 then keep height */
+    if (cy != 0)
+        infoPtr->iconSpacing.cy = cy;
 
     TRACE("old=(%d,%d), new=(%d,%d), iconSize=(%d,%d), ntmH=%d\n",
-	  LOWORD(oldspacing), HIWORD(oldspacing), cx, cy, 
+          LOWORD(oldspacing), HIWORD(oldspacing), infoPtr->iconSpacing.cx, infoPtr->iconSpacing.cy,
 	  infoPtr->iconSize.cx, infoPtr->iconSize.cy,
 	  infoPtr->ntmHeight);
 
@@ -8666,7 +8660,7 @@ static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *infoPtr, INT nType, HIMAG
         himlOld = infoPtr->himlNormal;
         infoPtr->himlNormal = himl;
         if (infoPtr->uView == LV_VIEW_ICON) set_icon_size(&infoPtr->iconSize, himl, FALSE);
-        LISTVIEW_SetIconSpacing(infoPtr, 0, 0);
+        LISTVIEW_SetIconSpacing(infoPtr, -1, -1);
     break;
 
     case LVSIL_SMALL:
@@ -9090,7 +9084,7 @@ static INT LISTVIEW_SetView(LISTVIEW_INFO *infoPtr, DWORD nView)
       {
             TRACE("icon old size=(%d,%d), new size=(%d,%d)\n",
                    oldIconSize.cx, oldIconSize.cy, infoPtr->iconSize.cx, infoPtr->iconSize.cy);
-	    LISTVIEW_SetIconSpacing(infoPtr, 0, 0);
+	    LISTVIEW_SetIconSpacing(infoPtr, -1, -1);
       }
       LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
       break;
@@ -9389,8 +9383,8 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->bRedraw = TRUE;
   infoPtr->bNoItemMetrics = TRUE;
   infoPtr->bDoChangeNotify = TRUE;
-  infoPtr->iconSpacing.cx = GetSystemMetrics(SM_CXICONSPACING);
-  infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING);
+  infoPtr->iconSpacing.cx = GetSystemMetrics(SM_CXICONSPACING) - GetSystemMetrics(SM_CXICON);
+  infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING) - GetSystemMetrics(SM_CYICON);
   infoPtr->nEditLabelItem = -1;
   infoPtr->nLButtonDownItem = -1;
   infoPtr->dwHoverTime = HOVER_DEFAULT; /* default system hover time */
@@ -11040,7 +11034,7 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
             {
                 TRACE("icon old size=(%d,%d), new size=(%d,%d)\n",
 		      oldIconSize.cx, oldIconSize.cy, infoPtr->iconSize.cx, infoPtr->iconSize.cy);
-	        LISTVIEW_SetIconSpacing(infoPtr, 0, 0);
+	        LISTVIEW_SetIconSpacing(infoPtr, -1, -1);
             }
         }
         else if (uNewView == LVS_REPORT)

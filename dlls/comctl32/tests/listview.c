@@ -4598,9 +4598,7 @@ static void test_getitemspacing(void)
     HWND hwnd;
     DWORD ret;
     INT cx, cy;
-    HIMAGELIST himl;
-    HBITMAP hbmp;
-    LVITEMA itema;
+    HIMAGELIST himl40, himl80;
 
     cx = GetSystemMetrics(SM_CXICONSPACING) - GetSystemMetrics(SM_CXICON);
     cy = GetSystemMetrics(SM_CYICONSPACING) - GetSystemMetrics(SM_CYICON);
@@ -4608,56 +4606,71 @@ static void test_getitemspacing(void)
     /* LVS_ICON */
     hwnd = create_listview_control(LVS_ICON);
     ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
-todo_wine {
     expect(cx, LOWORD(ret));
     expect(cy, HIWORD(ret));
-}
+
     /* now try with icons */
-    himl = ImageList_Create(40, 40, 0, 4, 4);
-    ok(himl != NULL, "failed to create imagelist\n");
-    hbmp = CreateBitmap(40, 40, 1, 1, NULL);
-    ok(hbmp != NULL, "failed to create bitmap\n");
-    ret = ImageList_Add(himl, hbmp, 0);
-    expect(0, ret);
-    ret = SendMessage(hwnd, LVM_SETIMAGELIST, 0, (LPARAM)himl);
+    himl40 = ImageList_Create(40, 40, 0, 4, 4);
+    ok(himl40 != NULL, "failed to create imagelist\n");
+    himl80 = ImageList_Create(80, 80, 0, 4, 4);
+    ok(himl80 != NULL, "failed to create imagelist\n");
+    ret = SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)himl40);
     expect(0, ret);
 
-    itema.mask = LVIF_IMAGE;
-    itema.iImage = 0;
-    itema.iItem = 0;
-    itema.iSubItem = 0;
-    ret = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM)&itema);
-    expect(0, ret);
     ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
-todo_wine {
     /* spacing + icon size returned */
     expect(cx + 40, LOWORD(ret));
     expect(cy + 40, HIWORD(ret));
-}
+    /* try changing icon size */
+    SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)himl80);
+
+    ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
+    /* spacing + icon size returned */
+    expect(cx + 80, LOWORD(ret));
+    expect(cy + 80, HIWORD(ret));
+
+    /* set own icon spacing */
+    ret = SendMessage(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(100, 100));
+    expect(cx + 80, LOWORD(ret));
+    expect(cy + 80, HIWORD(ret));
+
+    ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
+    /* set size returned */
+    expect(100, LOWORD(ret));
+    expect(100, HIWORD(ret));
+
+    /* now change image list - icon spacing should be unaffected */
+    SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)himl40);
+
+    ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
+    /* spacing + icon size returned */
+    expect(cx + 40, LOWORD(ret));
+    expect(cy + 40, HIWORD(ret));
+
+    SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_NORMAL, 0);
+    ImageList_Destroy(himl80);
     DestroyWindow(hwnd);
     /* LVS_SMALLICON */
     hwnd = create_listview_control(LVS_SMALLICON);
     ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
-todo_wine {
     expect(cx, LOWORD(ret));
     expect(cy, HIWORD(ret));
-}
+
+    ImageList_Destroy(himl40);
     DestroyWindow(hwnd);
     /* LVS_REPORT */
     hwnd = create_listview_control(LVS_REPORT);
     ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
-todo_wine {
     expect(cx, LOWORD(ret));
     expect(cy, HIWORD(ret));
-}
+
     DestroyWindow(hwnd);
     /* LVS_LIST */
     hwnd = create_listview_control(LVS_LIST);
     ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
-todo_wine {
     expect(cx, LOWORD(ret));
     expect(cy, HIWORD(ret));
-}
+
     DestroyWindow(hwnd);
 }
 
