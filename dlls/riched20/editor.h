@@ -105,7 +105,7 @@ void ME_DestroyString(ME_String *s) DECLSPEC_HIDDEN;
 void ME_AppendString(ME_String *s1, const ME_String *s2) DECLSPEC_HIDDEN;
 ME_String *ME_VSplitString(ME_String *orig, int nVPos) DECLSPEC_HIDDEN;
 int ME_FindNonWhitespaceV(const ME_String *s, int nVChar) DECLSPEC_HIDDEN;
-int ME_CallWordBreakProc(ME_TextEditor *editor, ME_String *str, INT start, INT code) DECLSPEC_HIDDEN;
+int ME_CallWordBreakProc(ME_TextEditor *editor, WCHAR *str, INT len, INT start, INT code) DECLSPEC_HIDDEN;
 void ME_StrDeleteV(ME_String *s, int nVChar, int nChars) DECLSPEC_HIDDEN;
 /* smart helpers for A<->W conversions, they reserve/free memory and call MultiByte<->WideChar functions */
 LPWSTR ME_ToUnicode(BOOL unicode, LPVOID psz) DECLSPEC_HIDDEN;

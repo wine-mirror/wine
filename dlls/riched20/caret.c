@@ -680,19 +680,21 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
     /* Backward movement */
     while (TRUE)
     {
-      nOffset = ME_CallWordBreakProc(editor, pRun->member.run.strText,
-                                     nOffset, WB_MOVEWORDLEFT);
+      nOffset = ME_CallWordBreakProc(editor, get_text( &pRun->member.run, 0 ),
+                                     pRun->member.run.len, nOffset, WB_MOVEWORDLEFT);
       if (nOffset)
         break;
       pOtherRun = ME_FindItemBack(pRun, diRunOrParagraph);
       if (pOtherRun->type == diRun)
       {
-        if (ME_CallWordBreakProc(editor, pOtherRun->member.run.strText,
+        if (ME_CallWordBreakProc(editor, get_text( &pOtherRun->member.run, 0 ),
+                                 pOtherRun->member.run.len,
                                  pOtherRun->member.run.len - 1,
                                  WB_ISDELIMITER)
             && !(pRun->member.run.nFlags & MERF_ENDPARA)
             && !(cursor->pRun == pRun && cursor->nOffset == 0)
-            && !ME_CallWordBreakProc(editor, pRun->member.run.strText, 0,
+            && !ME_CallWordBreakProc(editor, get_text( &pRun->member.run, 0 ),
+                                     pRun->member.run.len, 0,
                                      WB_ISDELIMITER))
           break;
         pRun = pOtherRun;
@@ -724,18 +726,18 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
     
     while (TRUE)
     {
-      if (last_delim && !ME_CallWordBreakProc(editor, pRun->member.run.strText,
-                                              nOffset, WB_ISDELIMITER))
+      if (last_delim && !ME_CallWordBreakProc(editor, get_text( &pRun->member.run, 0 ),
+                                              pRun->member.run.len, nOffset, WB_ISDELIMITER))
         break;
-      nOffset = ME_CallWordBreakProc(editor, pRun->member.run.strText,
-                                     nOffset, WB_MOVEWORDRIGHT);
+      nOffset = ME_CallWordBreakProc(editor, get_text( &pRun->member.run, 0 ),
+                                     pRun->member.run.len, nOffset, WB_MOVEWORDRIGHT);
       if (nOffset < pRun->member.run.len)
         break;
       pOtherRun = ME_FindItemFwd(pRun, diRunOrParagraphOrEnd);
       if (pOtherRun->type == diRun)
       {
-        last_delim = ME_CallWordBreakProc(editor, pRun->member.run.strText,
-                                          nOffset - 1, WB_ISDELIMITER);
+        last_delim = ME_CallWordBreakProc(editor, get_text( &pRun->member.run, 0 ),
+                                          pRun->member.run.len, nOffset - 1, WB_ISDELIMITER);
         pRun = pOtherRun;
         nOffset = 0;
       }

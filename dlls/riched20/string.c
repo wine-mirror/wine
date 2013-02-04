@@ -180,20 +180,20 @@ ME_WordBreakProc(LPWSTR s, INT start, INT len, INT code)
 
 
 int
-ME_CallWordBreakProc(ME_TextEditor *editor, ME_String *str, INT start, INT code)
+ME_CallWordBreakProc(ME_TextEditor *editor, WCHAR *str, INT len, INT start, INT code)
 {
   if (!editor->pfnWordBreak) {
-    return ME_WordBreakProc(str->szData, start, str->nLen*sizeof(WCHAR), code);
+    return ME_WordBreakProc(str, start, len * sizeof(WCHAR), code);
   } else if (!editor->bEmulateVersion10) {
     /* MSDN lied about the third parameter for EditWordBreakProc being the number
      * of characters, it is actually the number of bytes of the string. */
-    return editor->pfnWordBreak(str->szData, start, str->nLen*sizeof(WCHAR), code);
+    return editor->pfnWordBreak(str, start, len * sizeof(WCHAR), code);
   } else {
     int result;
-    int buffer_size = WideCharToMultiByte(CP_ACP, 0, str->szData, str->nLen,
+    int buffer_size = WideCharToMultiByte(CP_ACP, 0, str, len,
                                           NULL, 0, NULL, NULL);
     char *buffer = heap_alloc(buffer_size);
-    WideCharToMultiByte(CP_ACP, 0, str->szData, str->nLen,
+    WideCharToMultiByte(CP_ACP, 0, str, len,
                         buffer, buffer_size, NULL, NULL);
     result = editor->pfnWordBreak((WCHAR*)buffer, start, buffer_size, code);
     heap_free(buffer);
