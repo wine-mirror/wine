@@ -8586,18 +8586,18 @@ static DWORD LISTVIEW_SetHoverTime(LISTVIEW_INFO *infoPtr, DWORD dwHoverTime)
  */
 static DWORD LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, INT cx, INT cy)
 {
+    INT iconWidth = 0, iconHeight = 0;
     DWORD oldspacing = MAKELONG(infoPtr->iconSpacing.cx, infoPtr->iconSpacing.cy);
 
     TRACE("requested=(%d,%d)\n", cx, cy);
-    
-    /* this is supported only for LVS_ICON style */
-    if (infoPtr->uView != LV_VIEW_ICON) return oldspacing;
-  
+
     /* set to defaults, if instructed to */
     if (cx == -1 && cy == -1)
     {
-        cx = GetSystemMetrics(SM_CXICONSPACING) - GetSystemMetrics(SM_CXICON) + infoPtr->iconSize.cx;
-        cy = GetSystemMetrics(SM_CYICONSPACING) - GetSystemMetrics(SM_CYICON) + infoPtr->iconSize.cy;
+        if (infoPtr->himlNormal)
+            ImageList_GetIconSize(infoPtr->himlNormal, &iconWidth, &iconHeight);
+        cx = GetSystemMetrics(SM_CXICONSPACING) - GetSystemMetrics(SM_CXICON) + iconWidth;
+        cy = GetSystemMetrics(SM_CYICONSPACING) - GetSystemMetrics(SM_CYICON) + iconHeight;
     }
     /* if 0 then keep width */
     if (cx != 0)
@@ -9054,7 +9054,6 @@ static BOOL LISTVIEW_SetUnicodeFormat( LISTVIEW_INFO *infoPtr, BOOL unicode)
  */
 static INT LISTVIEW_SetView(LISTVIEW_INFO *infoPtr, DWORD nView)
 {
-  SIZE oldIconSize = infoPtr->iconSize;
   HIMAGELIST himl;
 
   if (infoPtr->uView == nView) return 1;
@@ -9080,14 +9079,6 @@ static INT LISTVIEW_SetView(LISTVIEW_INFO *infoPtr, DWORD nView)
   switch (nView)
   {
   case LV_VIEW_ICON:
-      if ((infoPtr->iconSize.cx != oldIconSize.cx) || (infoPtr->iconSize.cy != oldIconSize.cy))
-      {
-            TRACE("icon old size=(%d,%d), new size=(%d,%d)\n",
-                   oldIconSize.cx, oldIconSize.cy, infoPtr->iconSize.cx, infoPtr->iconSize.cy);
-	    LISTVIEW_SetIconSpacing(infoPtr, -1, -1);
-      }
-      LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
-      break;
   case LV_VIEW_SMALLICON:
       LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
       break;
@@ -11016,7 +11007,6 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
 
     if (uNewView != uOldView)
     {
-    	SIZE oldIconSize = infoPtr->iconSize;
     	HIMAGELIST himl;
     
         SendMessageW(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
@@ -11027,17 +11017,8 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
 
         himl = (uNewView == LVS_ICON ? infoPtr->himlNormal : infoPtr->himlSmall);
         set_icon_size(&infoPtr->iconSize, himl, uNewView != LVS_ICON);
-    
-        if (uNewView == LVS_ICON)
-        {
-            if ((infoPtr->iconSize.cx != oldIconSize.cx) || (infoPtr->iconSize.cy != oldIconSize.cy))
-            {
-                TRACE("icon old size=(%d,%d), new size=(%d,%d)\n",
-		      oldIconSize.cx, oldIconSize.cy, infoPtr->iconSize.cx, infoPtr->iconSize.cy);
-	        LISTVIEW_SetIconSpacing(infoPtr, -1, -1);
-            }
-        }
-        else if (uNewView == LVS_REPORT)
+
+        if (uNewView == LVS_REPORT)
         {
             HDLAYOUT hl;
             WINDOWPOS wp;

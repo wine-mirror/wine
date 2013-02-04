@@ -4656,6 +4656,16 @@ static void test_getitemspacing(void)
     expect(cx, LOWORD(ret));
     expect(cy, HIWORD(ret));
 
+    /* spacing does not depend on selected view type */
+    ret = SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)himl40);
+    expect(0, ret);
+
+    ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
+    /* spacing + icon size returned */
+    expect(cx + 40, LOWORD(ret));
+    expect(cy + 40, HIWORD(ret));
+
+    SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_NORMAL, 0);
     ImageList_Destroy(himl40);
     DestroyWindow(hwnd);
     /* LVS_REPORT */
