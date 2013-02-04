@@ -265,10 +265,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         [window setContentView:contentView];
 
-        /* In case Cocoa adjusted the frame we tried to set, generate a frame-changed
-           event.  The back end will ignore it if nothing actually changed. */
-        [window windowDidResize:nil];
-
         return window;
     }
 
@@ -424,9 +420,12 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                 [self setFrame:frame display:YES];
         }
 
-        /* In case Cocoa adjusted the frame we tried to set, generate a frame-changed
-           event.  The back end will ignore it if nothing actually changed. */
-        [self windowDidResize:nil];
+        if (on_screen)
+        {
+            /* In case Cocoa adjusted the frame we tried to set, generate a frame-changed
+               event.  The back end will ignore it if nothing actually changed. */
+            [self windowDidResize:nil];
+        }
 
         return on_screen;
     }
