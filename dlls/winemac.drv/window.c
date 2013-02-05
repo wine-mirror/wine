@@ -1398,7 +1398,11 @@ void macdrv_window_frame_changed(HWND hwnd, CGRect frame)
 
     if (!hwnd) return;
     if (!(data = get_win_data(hwnd))) return;
-    if (!data->on_screen) goto done;
+    if (!data->on_screen)
+    {
+        release_win_data(data);
+        return;
+    }
 
     /* Get geometry */
 
@@ -1427,7 +1431,6 @@ void macdrv_window_frame_changed(HWND hwnd, CGRect frame)
         TRACE("%p resizing from (%dx%d) to (%dx%d)\n", hwnd, data->window_rect.right - data->window_rect.left,
               data->window_rect.bottom - data->window_rect.top, width, height);
 
-done:
     release_win_data(data);
 
     if (!(flags & SWP_NOSIZE) || !(flags & SWP_NOMOVE))
