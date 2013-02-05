@@ -1329,8 +1329,36 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
             forceLevels = TRUE;
 
         /* Diacritical marks merge with other scripts */
-        if (scripts[i] == Script_Diacritical && i > 0)
-                scripts[i] = scripts[i-1];
+        if (scripts[i] == Script_Diacritical)
+        {
+            if (i > 0)
+            {
+                if (pScriptTags)
+                    scripts[i] = scripts[i-1];
+                else
+                {
+                    int j;
+                    BOOL asian = FALSE;
+                    WORD first_script = scripts[i-1];
+                    for (j = i-1; j >= 0 &&  scripts[j] == first_script && pwcInChars[j] != Numeric_space; j--)
+                    {
+                        WORD original = scripts[j];
+                        if (original == Script_Ideograph || original == Script_Kana || original == Script_Yi || original == Script_CJK_Han || original == Script_Bopomofo)
+                        {
+                            asian = TRUE;
+                            break;
+                        }
+                        if (original != Script_MathAlpha && scriptInformation[scripts[j]].props.fComplex)
+                            break;
+                        scripts[j] = scripts[i];
+                        if (original == Script_Punctuation2)
+                            break;
+                    }
+                    if (scriptInformation[scripts[j]].props.fComplex || asian)
+                        scripts[i] = scripts[j];
+                }
+            }
+        }
     }
 
     for (i = 0; i < cInChars; i++)
