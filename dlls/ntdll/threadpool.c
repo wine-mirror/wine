@@ -605,9 +605,9 @@ static DWORD WINAPI timer_callback_wrapper(LPVOID p)
 
 static inline ULONGLONG queue_current_time(void)
 {
-    LARGE_INTEGER now;
-    NtQuerySystemTime(&now);
-    return now.QuadPart / 10000;
+    LARGE_INTEGER now, freq;
+    NtQueryPerformanceCounter(&now, &freq);
+    return now.QuadPart * 1000 / freq.QuadPart;
 }
 
 static void queue_add_timer(struct queue_timer *t, ULONGLONG time,
