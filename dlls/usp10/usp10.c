@@ -1270,28 +1270,11 @@ static inline WORD base_indic(WORD script)
     };
 }
 
-/***********************************************************************
- *      ScriptItemizeOpenType (USP10.@)
- *
- * Split a Unicode string into shapeable parts.
- *
- * PARAMS
- *  pwcInChars  [I] String to split.
- *  cInChars    [I] Number of characters in pwcInChars.
- *  cMaxItems   [I] Maximum number of items to return.
- *  psControl   [I] Pointer to a SCRIPT_CONTROL structure.
- *  psState     [I] Pointer to a SCRIPT_STATE structure.
- *  pItems      [O] Buffer to receive SCRIPT_ITEM structures.
- *  pScriptTags [O] Buffer to receive OPENTYPE_TAGs.
- *  pcItems     [O] Number of script items returned.
- *
- * RETURNS
- *  Success: S_OK
- *  Failure: Non-zero HRESULT value.
- */
-HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int cMaxItems,
-                             const SCRIPT_CONTROL *psControl, const SCRIPT_STATE *psState,
-                             SCRIPT_ITEM *pItems, OPENTYPE_TAG *pScriptTags, int *pcItems)
+
+static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
+                int cMaxItems, const SCRIPT_CONTROL *psControl,
+                const SCRIPT_STATE *psState, SCRIPT_ITEM *pItems,
+                OPENTYPE_TAG *pScriptTags, int *pcItems)
 {
 
 #define Numeric_space 0x0020
@@ -1496,7 +1479,8 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
 
     pItems[index].iCharPos = 0;
     pItems[index].a = scriptInformation[scripts[cnt]].a;
-    pScriptTags[index] = scriptInformation[scripts[cnt]].scriptTag;
+    if (pScriptTags)
+        pScriptTags[index] = scriptInformation[scripts[cnt]].scriptTag;
 
     if (strength && strength[cnt] == BIDI_STRONG)
         str = strength[cnt];
@@ -1590,7 +1574,8 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
             memset(&pItems[index].a, 0, sizeof(SCRIPT_ANALYSIS));
 
             pItems[index].a = scriptInformation[New_Script].a;
-            pScriptTags[index] = scriptInformation[New_Script].scriptTag;
+            if (pScriptTags)
+                pScriptTags[index] = scriptInformation[New_Script].scriptTag;
             if (levels)
             {
                 if (levels[cnt] == 0)
@@ -1633,6 +1618,32 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
 }
 
 /***********************************************************************
+ *      ScriptItemizeOpenType (USP10.@)
+ *
+ * Split a Unicode string into shapeable parts.
+ *
+ * PARAMS
+ *  pwcInChars  [I] String to split.
+ *  cInChars    [I] Number of characters in pwcInChars.
+ *  cMaxItems   [I] Maximum number of items to return.
+ *  psControl   [I] Pointer to a SCRIPT_CONTROL structure.
+ *  psState     [I] Pointer to a SCRIPT_STATE structure.
+ *  pItems      [O] Buffer to receive SCRIPT_ITEM structures.
+ *  pScriptTags [O] Buffer to receive OPENTYPE_TAGs.
+ *  pcItems     [O] Number of script items returned.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: Non-zero HRESULT value.
+ */
+HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int cMaxItems,
+                             const SCRIPT_CONTROL *psControl, const SCRIPT_STATE *psState,
+                             SCRIPT_ITEM *pItems, OPENTYPE_TAG *pScriptTags, int *pcItems)
+{
+    return _ItemizeInternal(pwcInChars, cInChars, cMaxItems, psControl, psState, pItems, pScriptTags, pcItems);
+}
+
+/***********************************************************************
  *      ScriptItemize (USP10.@)
  *
  * Split a Unicode string into shapeable parts.
@@ -1654,15 +1665,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
                              const SCRIPT_CONTROL *psControl, const SCRIPT_STATE *psState,
                              SCRIPT_ITEM *pItems, int *pcItems)
 {
-    OPENTYPE_TAG *discarded_tags;
-    HRESULT res;
-
-    discarded_tags = heap_alloc(cMaxItems * sizeof(OPENTYPE_TAG));
-    if (!discarded_tags)
-        return E_OUTOFMEMORY;
-    res = ScriptItemizeOpenType(pwcInChars, cInChars, cMaxItems, psControl, psState, pItems, discarded_tags, pcItems);
-    heap_free(discarded_tags);
-    return res;
+    return _ItemizeInternal(pwcInChars, cInChars, cMaxItems, psControl, psState, pItems, NULL, pcItems);
 }
 
 static inline int getGivenTabWidth(ScriptCache *psc, SCRIPT_TABDEF *pTabdef, int charPos, int current_x)
