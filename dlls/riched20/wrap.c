@@ -206,13 +206,46 @@ static void ME_WrapSizeRun(ME_WrapContext *wc, ME_DisplayItem *p)
                    wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, &p->member.run);
 }
 
+
+static int find_non_whitespace(const WCHAR *s, int len, int start)
+{
+  int i;
+  for (i = start; i < len && ME_IsWSpace( s[i] ); i++)
+    ;
+
+  return i;
+}
+
+/* note: these two really return the first matching offset (starting from EOS)+1
+ * in other words, an offset of the first trailing white/black */
+
+/* note: returns offset of the first trailing whitespace */
+static int reverse_find_non_whitespace(const WCHAR *s, int start)
+{
+  int i;
+  for (i = start; i > 0 && ME_IsWSpace( s[i - 1] ); i--)
+    ;
+
+  return i;
+}
+
+/* note: returns offset of the first trailing nonwhitespace */
+static int reverse_find_whitespace(const WCHAR *s, int start)
+{
+  int i;
+  for (i = start; i > 0 && !ME_IsWSpace( s[i - 1] ); i--)
+    ;
+
+  return i;
+}
+
 static ME_DisplayItem *ME_MaximizeSplit(ME_WrapContext *wc, ME_DisplayItem *p, int i)
 {
   ME_DisplayItem *pp, *piter = p;
   int j;
   if (!i)
     return NULL;
-  j = ME_ReverseFindNonWhitespaceV(p->member.run.strText, i);
+  j = reverse_find_non_whitespace( get_text( &p->member.run, 0 ), i);
   if (j>0) {
     pp = ME_SplitRun(wc, piter, j);
     wc->pt.x += piter->member.run.nWidth;
@@ -232,8 +265,8 @@ static ME_DisplayItem *ME_MaximizeSplit(ME_WrapContext *wc, ME_DisplayItem *p, i
       }
       if (piter->member.run.nFlags & MERF_ENDWHITE)
       {
-        i = ME_ReverseFindNonWhitespaceV(piter->member.run.strText,
-                                         piter->member.run.len);
+        i = reverse_find_non_whitespace( get_text( &piter->member.run, 0 ),
+                                         piter->member.run.len );
         pp = ME_SplitRun(wc, piter, i);
         wc->pt = pp->member.run.pt;
         return pp;
@@ -261,7 +294,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
   assert(i<len);
   if (i) {
     /* don't split words */
-    i = ME_ReverseFindWhitespaceV(run->strText, i);
+    i = reverse_find_whitespace( get_text( run, 0 ), i );
     pp = ME_MaximizeSplit(wc, p, i);
     if (pp)
       return pp;
@@ -285,9 +318,9 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
       run = &piter->member.run;
       len = run->len;
       /* don't split words */
-      i = ME_ReverseFindWhitespaceV(run->strText, len);
+      i = reverse_find_whitespace( get_text( run, 0 ), len );
       if (i == len)
-        i = ME_ReverseFindNonWhitespaceV(run->strText, len);
+        i = reverse_find_non_whitespace( get_text( run, 0 ), len );
       if (i) {
         ME_DisplayItem *piter2 = ME_SplitRun(wc, piter, i);
         wc->pt = piter2->member.run.pt;
@@ -357,7 +390,7 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
     if (run->nFlags & MERF_STARTWHITE) {
       /* try to split the run at the first non-white char */
       int black;
-      black = ME_FindNonWhitespaceV(run->strText, 0);
+      black = find_non_whitespace( get_text( run, 0 ), run->len, 0 );
       if (black) {
         wc->bOverflown = FALSE;
         pp = ME_SplitRun(wc, p, black);
@@ -410,7 +443,7 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
     if (run->nFlags & MERF_ENDWHITE)
     {
       /* we aren't sure if it's *really* necessary, it's a good start however */
-      int black = ME_ReverseFindNonWhitespaceV(run->strText, len);
+      int black = reverse_find_non_whitespace( get_text( run, 0 ), len );
       ME_SplitRun(wc, p, black);
       /* handle both parts again */
       return p;

@@ -121,33 +121,6 @@ void ME_StrDeleteV(ME_String *s, int nVChar, int nChars)
   s->nLen -= nChars;
 }
 
-int ME_FindNonWhitespaceV(const ME_String *s, int nVChar) {
-  int i;
-  for (i = nVChar; i<s->nLen && ME_IsWSpace(s->szData[i]); i++)
-    ;
-    
-  return i;
-}
-
-/* note: returns offset of the first trailing whitespace */
-int ME_ReverseFindNonWhitespaceV(const ME_String *s, int nVChar) {
-  int i;
-  for (i = nVChar; i>0 && ME_IsWSpace(s->szData[i-1]); i--)
-    ;
-    
-  return i;
-}
-
-/* note: returns offset of the first trailing nonwhitespace */
-int ME_ReverseFindWhitespaceV(const ME_String *s, int nVChar) {
-  int i;
-  for (i = nVChar; i>0 && !ME_IsWSpace(s->szData[i-1]); i--)
-    ;
-    
-  return i;
-}
-
-
 static int
 ME_WordBreakProc(LPWSTR s, INT start, INT len, INT code)
 {
