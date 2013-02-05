@@ -141,7 +141,6 @@ struct tagME_DisplayItem;
 
 typedef struct tagME_Run
 {
-  ME_String *strText;
   ME_Style *style;
   struct tagME_Paragraph *para; /* ptr to the run's paragraph */
   int nCharOfs; /* relative to para's offset */
@@ -170,6 +169,7 @@ typedef struct tagME_BorderRect
 typedef struct tagME_Paragraph
 {
   PARAFORMAT2 *pFmt;
+  ME_String *text;
 
   struct tagME_DisplayItem *pCell; /* v4.1 */
   ME_BorderRect border;

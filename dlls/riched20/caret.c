@@ -382,7 +382,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
          to the current (deleted) run */
       add_undo_insert_run( editor, nOfs + nChars, get_text( run, c.nOffset ), nCharsToDelete, run->nFlags, run->style );
 
-      ME_StrDeleteV(run->strText, c.nOffset, nCharsToDelete);
+      ME_StrDeleteV(run->para->text, run->nCharOfs + c.nOffset, nCharsToDelete);
       run->len -= nCharsToDelete;
       TRACE("Post deletion string: %s (%d)\n", debugstr_run( run ), run->len);
       TRACE("Shift value: %d\n", shift);

@@ -33,7 +33,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   ME_DisplayItem *para = ME_MakeDI(diParagraph);
   ME_DisplayItem *run;
   ME_Style *style;
-  ME_String *eol_str;
+  int eol_len;
   WCHAR cr_lf[] = {'\r','\n',0};
 
   ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
@@ -64,9 +64,12 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   style = ME_MakeStyle(&cf);
   text->pDefaultStyle = style;
 
-  eol_str = ME_MakeStringN(cr_lf, editor->bEmulateVersion10 ? 2 : 1);
-  run = ME_MakeRun(style, eol_str, MERF_ENDPARA);
+  eol_len = editor->bEmulateVersion10 ? 2 : 1;
+  para->member.para.text = ME_MakeStringN( cr_lf, eol_len );
+
+  run = ME_MakeRun(style, MERF_ENDPARA);
   run->member.run.nCharOfs = 0;
+  run->member.run.len = eol_len;
   run->member.run.para = &para->member.para;
 
   ME_InsertBefore(text->pLast, para);
@@ -202,7 +205,6 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   int ofs, i;
   ME_DisplayItem *pp;
   int run_flags = MERF_ENDPARA;
-  ME_String *str;
 
   if (!editor->bEmulateVersion10) { /* v4.1 */
     /* At most 1 of MEPF_CELL, MEPF_ROWSTART, or MEPF_ROWEND should be set. */
@@ -219,11 +221,13 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   run_para = ME_GetParagraph(run);
   assert(run_para->member.para.pFmt->cbSize == sizeof(PARAFORMAT2));
 
-  str = ME_MakeStringN( eol_str, eol_len );
-  end_run = ME_MakeRun(style, str, run_flags);
-  ofs = end_run->member.run.nCharOfs = run->member.run.nCharOfs;
-  end_run->member.run.para = run->member.run.para;
+  new_para->member.para.text = ME_VSplitString( run_para->member.para.text, run->member.run.nCharOfs );
 
+  end_run = ME_MakeRun(style, run_flags);
+  ofs = end_run->member.run.nCharOfs = run->member.run.nCharOfs;
+  end_run->member.run.len = eol_len;
+  end_run->member.run.para = run->member.run.para;
+  ME_AppendString( run_para->member.para.text, eol_str, eol_len );
   next_para = run_para->member.para.next_para;
   assert(next_para == ME_FindItemFwd(run_para, diParagraphOrEnd));
 
@@ -329,6 +333,7 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
   int end_len;
   CHARFORMAT2W fmt;
   ME_Cursor startCur, endCur;
+  ME_String *eol_str;
 
   assert(tp->type == diParagraph);
   assert(tp->member.para.next_para);
@@ -344,6 +349,8 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
   assert(pRun->member.run.nFlags & MERF_ENDPARA);
 
   end_len = pRun->member.run.len;
+  eol_str = ME_VSplitString( tp->member.para.text, pRun->member.run.nCharOfs );
+  ME_AppendString( tp->member.para.text, pNext->member.para.text->szData, pNext->member.para.text->nLen );
 
   /* null char format operation to store the original char format for the ENDPARA run */
   ME_InitCharFormat2W(&fmt);
@@ -371,7 +378,7 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
     }
   }
 
-  add_undo_split_para( editor, &pNext->member.para, &pRun->member.run, pCell ? &pCell->member.cell : NULL );
+  add_undo_split_para( editor, &pNext->member.para, eol_str, pCell ? &pCell->member.cell : NULL );
 
   if (pCell)
   {

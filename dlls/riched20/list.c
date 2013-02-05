@@ -143,13 +143,15 @@ void ME_DestroyDisplayItem(ME_DisplayItem *item)
 {
 /*  TRACE("type=%s\n", ME_GetDITypeName(item->type)); */
   if (item->type==diParagraph)
+  {
     FREE_OBJ(item->member.para.pFmt);
+    ME_DestroyString(item->member.para.text);
+  }
 
   if (item->type==diRun)
   {
     if (item->member.run.ole_obj) ME_DeleteReObject(item->member.run.ole_obj);
     ME_ReleaseStyle(item->member.run.style);
-    ME_DestroyString(item->member.run.strText);
   }
   FREE_OBJ(item);
 }

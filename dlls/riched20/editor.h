@@ -58,12 +58,12 @@ static inline void * __WINE_ALLOC_SIZE(2) heap_realloc( void *ptr, size_t len )
 
 static inline WCHAR *get_text( const ME_Run *run, int offset )
 {
-    return run->strText->szData + offset;
+    return run->para->text->szData + run->nCharOfs + offset;
 }
 
 static inline const char *debugstr_run( const ME_Run *run )
 {
-    return debugstr_w( get_text( run, 0 ) );
+    return debugstr_wn( get_text( run, 0 ), run->len );
 }
 
 /* style.c */
@@ -102,11 +102,13 @@ ME_String *ME_MakeStringN(LPCWSTR szText, int nMaxChars) DECLSPEC_HIDDEN;
 ME_String *ME_MakeStringR(WCHAR cRepeat, int nMaxChars) DECLSPEC_HIDDEN;
 ME_String *ME_StrDup(const ME_String *s) DECLSPEC_HIDDEN;
 void ME_DestroyString(ME_String *s) DECLSPEC_HIDDEN;
-void ME_AppendString(ME_String *s1, const ME_String *s2) DECLSPEC_HIDDEN;
+BOOL ME_AppendString(ME_String *s, const WCHAR *append, int len) DECLSPEC_HIDDEN;
 ME_String *ME_VSplitString(ME_String *orig, int nVPos) DECLSPEC_HIDDEN;
 int ME_FindNonWhitespaceV(const ME_String *s, int nVChar) DECLSPEC_HIDDEN;
 int ME_CallWordBreakProc(ME_TextEditor *editor, WCHAR *str, INT len, INT start, INT code) DECLSPEC_HIDDEN;
 void ME_StrDeleteV(ME_String *s, int nVChar, int nChars) DECLSPEC_HIDDEN;
+BOOL ME_InsertString(ME_String *s, int ofs, const WCHAR *insert, int len) DECLSPEC_HIDDEN;
+
 /* smart helpers for A<->W conversions, they reserve/free memory and call MultiByte<->WideChar functions */
 LPWSTR ME_ToUnicode(BOOL unicode, LPVOID psz) DECLSPEC_HIDDEN;
 void ME_EndToUnicode(BOOL unicode, LPVOID psz) DECLSPEC_HIDDEN;
@@ -133,7 +135,7 @@ ME_DisplayItem *ME_FindRowWithNumber(ME_TextEditor *editor, int nRow) DECLSPEC_H
 int ME_RowNumberFromCharOfs(ME_TextEditor *editor, int nOfs) DECLSPEC_HIDDEN;
 
 /* run.c */
-ME_DisplayItem *ME_MakeRun(ME_Style *s, ME_String *strData, int nFlags) DECLSPEC_HIDDEN;
+ME_DisplayItem *ME_MakeRun(ME_Style *s, int nFlags) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor,
                                      ME_Style *style, const WCHAR *str, int len, int flags) DECLSPEC_HIDDEN;
 void ME_CheckCharOffsets(ME_TextEditor *editor) DECLSPEC_HIDDEN;
@@ -330,7 +332,7 @@ BOOL add_undo_delete_run( ME_TextEditor *, int pos, int len ) DECLSPEC_HIDDEN;
 BOOL add_undo_set_para_fmt( ME_TextEditor *, const ME_Paragraph *para ) DECLSPEC_HIDDEN;
 BOOL add_undo_set_char_fmt( ME_TextEditor *, int pos, int len, const CHARFORMAT2W *fmt ) DECLSPEC_HIDDEN;
 BOOL add_undo_join_paras( ME_TextEditor *, int pos ) DECLSPEC_HIDDEN;
-BOOL add_undo_split_para( ME_TextEditor *, const ME_Paragraph *para, const ME_Run *run, const ME_Cell *cell) DECLSPEC_HIDDEN;
+BOOL add_undo_split_para( ME_TextEditor *, const ME_Paragraph *para, ME_String *eol_str, const ME_Cell *cell) DECLSPEC_HIDDEN;
 void ME_CommitUndo(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_ContinueCoalescingTransaction(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_CommitCoalescingUndo(ME_TextEditor *editor) DECLSPEC_HIDDEN;

@@ -71,25 +71,28 @@ void ME_DestroyString(ME_String *s)
   FREE_OBJ(s);
 }
 
-void ME_AppendString(ME_String *s1, const ME_String *s2)
+BOOL ME_InsertString(ME_String *s, int ofs, const WCHAR *insert, int len)
 {
-  if (s1->nLen+s2->nLen+1 <= s1->nBuffer)
-  {
-    memcpy(s1->szData + s1->nLen, s2->szData, s2->nLen * sizeof(WCHAR));
-    s1->nLen += s2->nLen;
-    s1->szData[s1->nLen] = 0;
-  } else {
-    WCHAR *buf;
-    s1->nBuffer = ME_GetOptimalBuffer(s1->nLen+s2->nLen+1);
+    DWORD new_len = s->nLen + len + 1;
+    assert( ofs <= s->nLen );
 
-    buf = ALLOC_N_OBJ(WCHAR, s1->nBuffer);
-    memcpy(buf, s1->szData, s1->nLen * sizeof(WCHAR));
-    memcpy(buf + s1->nLen, s2->szData, s2->nLen * sizeof(WCHAR));
-    FREE_OBJ(s1->szData);
-    s1->szData = buf;
-    s1->nLen += s2->nLen;
-    s1->szData[s1->nLen] = 0;
-  }
+    if( new_len > s->nBuffer )
+    {
+        s->nBuffer = ME_GetOptimalBuffer( new_len );
+        s->szData = heap_realloc( s->szData, s->nBuffer * sizeof(WCHAR) );
+        if (!s->szData) return FALSE;
+    }
+
+    memmove( s->szData + ofs + len, s->szData + ofs, (s->nLen - ofs + 1) * sizeof(WCHAR) );
+    memcpy( s->szData + ofs, insert, len * sizeof(WCHAR) );
+    s->nLen += len;
+
+    return TRUE;
+}
+
+BOOL ME_AppendString(ME_String *s, const WCHAR *append, int len)
+{
+    return ME_InsertString( s, s->nLen, append, len );
 }
 
 ME_String *ME_VSplitString(ME_String *orig, int charidx)

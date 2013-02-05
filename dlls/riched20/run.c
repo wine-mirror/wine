@@ -230,7 +230,6 @@ void ME_JoinRuns(ME_TextEditor *editor, ME_DisplayItem *p)
     }
   }
 
-  ME_AppendString(p->member.run.strText, pNext->member.run.strText);
   p->member.run.len += pNext->member.run.len;
   ME_Remove(pNext);
   ME_DestroyDisplayItem(pNext);
@@ -307,11 +306,11 @@ ME_DisplayItem *ME_SplitRunSimple(ME_TextEditor *editor, ME_Cursor *cursor)
   assert(!(run->member.run.nFlags & MERF_NONTEXT));
 
   new_run = ME_MakeRun(run->member.run.style,
-                       ME_VSplitString(run->member.run.strText, nOffset),
                        run->member.run.nFlags & MERF_SPLITMASK);
-  run->member.run.len = nOffset;
   new_run->member.run.nCharOfs = run->member.run.nCharOfs + nOffset;
+  new_run->member.run.len = run->member.run.len - nOffset;
   new_run->member.run.para = run->member.run.para;
+  run->member.run.len = nOffset;
   cursor->pRun = new_run;
   cursor->nOffset = 0;
 
@@ -335,15 +334,14 @@ ME_DisplayItem *ME_SplitRunSimple(ME_TextEditor *editor, ME_Cursor *cursor)
  * 
  * A helper function to create run structures quickly.
  */   
-ME_DisplayItem *ME_MakeRun(ME_Style *s, ME_String *strData, int nFlags)
+ME_DisplayItem *ME_MakeRun(ME_Style *s, int nFlags)
 {
   ME_DisplayItem *item = ME_MakeDI(diRun);
   item->member.run.style = s;
   item->member.run.ole_obj = NULL;
-  item->member.run.strText = strData;
   item->member.run.nFlags = nFlags;
   item->member.run.nCharOfs = -1;
-  item->member.run.len = strData->nLen;
+  item->member.run.len = 0;
   item->member.run.para = NULL;
   ME_AddRefStyle(s);
   return item;
@@ -368,9 +366,11 @@ ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
   add_undo_delete_run( editor, cursor->pPara->member.para.nCharOfs +
                        cursor->pRun->member.run.nCharOfs, len );
 
-  pDI = ME_MakeRun(style, ME_MakeStringN(str, len), flags);
+  pDI = ME_MakeRun(style, flags);
   pDI->member.run.nCharOfs = cursor->pRun->member.run.nCharOfs;
+  pDI->member.run.len = len;
   pDI->member.run.para = cursor->pRun->member.run.para;
+  ME_InsertString( pDI->member.run.para->text, pDI->member.run.nCharOfs, str, len );
   ME_InsertBefore(cursor->pRun, pDI);
   TRACE("Shift length:%d\n", len);
   ME_PropagateCharOffset(cursor->pRun, len);
