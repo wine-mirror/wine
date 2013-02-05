@@ -3872,13 +3872,13 @@ static void CreateSurfaceBadCapsSizeTest(void)
     ddsd_ok.dwWidth = 64;
     ddsd_ok.dwHeight = 64;
     ddsd_ok.ddsCaps.dwCaps = caps;
-    memcpy(&ddsd_bad1, &ddsd_ok, sizeof(ddsd_bad1));
+    ddsd_bad1 = ddsd_ok;
     ddsd_bad1.dwSize--;
-    memcpy(&ddsd_bad2, &ddsd_ok, sizeof(ddsd_bad2));
+    ddsd_bad2 = ddsd_ok;
     ddsd_bad2.dwSize++;
-    memcpy(&ddsd_bad3, &ddsd_ok, sizeof(ddsd_bad3));
+    ddsd_bad3 = ddsd_ok;
     ddsd_bad3.dwSize = 0;
-    memcpy(&ddsd_bad4, &ddsd_ok, sizeof(ddsd_bad4));
+    ddsd_bad4 = ddsd_ok;
     ddsd_bad4.dwSize = sizeof(DDSURFACEDESC2);
 
     memset(&ddsd2_ok, 0, sizeof(ddsd2_ok));
@@ -3887,13 +3887,13 @@ static void CreateSurfaceBadCapsSizeTest(void)
     ddsd2_ok.dwWidth = 64;
     ddsd2_ok.dwHeight = 64;
     ddsd2_ok.ddsCaps.dwCaps = caps;
-    memcpy(&ddsd2_bad1, &ddsd2_ok, sizeof(ddsd2_bad1));
+    ddsd2_bad1 = ddsd2_ok;
     ddsd2_bad1.dwSize--;
-    memcpy(&ddsd2_bad2, &ddsd2_ok, sizeof(ddsd2_bad2));
+    ddsd2_bad2 = ddsd2_ok;
     ddsd2_bad2.dwSize++;
-    memcpy(&ddsd2_bad3, &ddsd2_ok, sizeof(ddsd2_bad3));
+    ddsd2_bad3 = ddsd2_ok;
     ddsd2_bad3.dwSize = 0;
-    memcpy(&ddsd2_bad4, &ddsd2_ok, sizeof(ddsd2_bad4));
+    ddsd2_bad4 = ddsd2_ok;
     ddsd2_bad4.dwSize = sizeof(DDSURFACEDESC);
 
     hr = IDirectDraw_CreateSurface(lpDD, &ddsd_ok, &surf, NULL);
