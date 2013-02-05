@@ -558,13 +558,12 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
         WCHAR space = ' ';
         ME_InternalInsertTextFromCursor(editor, nCursor, &space, 1, style, 0);
       } else {
-        ME_String *eol_str;
+        const WCHAR cr = '\r', *eol_str = str;
 
-        if (!editor->bEmulateVersion10) {
-          WCHAR cr = '\r';
-          eol_str = ME_MakeStringN(&cr, 1);
-        } else {
-          eol_str = ME_MakeStringN(str, eol_len);
+        if (!editor->bEmulateVersion10)
+        {
+          eol_str = &cr;
+          eol_len = 1;
         }
 
         p = &editor->pCursors[nCursor];
@@ -572,7 +571,7 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
           ME_SplitRunSimple(editor, p);
         tmp_style = ME_GetInsertStyle(editor, nCursor);
         /* ME_SplitParagraph increases style refcount */
-        tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, eol_str, 0);
+        tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, eol_str, eol_len, 0);
         p->pRun = ME_FindItemFwd(tp, diRun);
         p->pPara = tp;
         end_run = ME_FindItemBack(tp, diRun);

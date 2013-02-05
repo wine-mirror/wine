@@ -394,9 +394,7 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, struct undo_item *undo)
       this_para->member.para.nFlags &= ~MEPF_ROWSTART;
     }
     new_para = ME_SplitParagraph(editor, tmp.pRun, tmp.pRun->member.run.style,
-                                 undo->u.split_para.eol_str, paraFlags);
-    /* ME_SplitParagraph owns eol_str */
-    undo->u.split_para.eol_str = NULL;
+                                 undo->u.split_para.eol_str->szData, undo->u.split_para.eol_str->nLen, paraFlags);
     if (bFixRowStart)
       new_para->member.para.nFlags |= MEPF_ROWSTART;
     *new_para->member.para.pFmt = undo->u.split_para.fmt;

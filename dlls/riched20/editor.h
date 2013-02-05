@@ -202,7 +202,7 @@ void ME_SendRequestResize(ME_TextEditor *editor, BOOL force) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_GetParagraph(ME_DisplayItem *run) DECLSPEC_HIDDEN;
 void ME_GetSelectionParas(ME_TextEditor *editor, ME_DisplayItem **para, ME_DisplayItem **para_end) DECLSPEC_HIDDEN;
 void ME_MakeFirstParagraph(ME_TextEditor *editor) DECLSPEC_HIDDEN;
-ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *rp, ME_Style *style, ME_String *eol_str, int paraFlags) DECLSPEC_HIDDEN;
+ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *rp, ME_Style *style, const WCHAR *eol_str, int eol_len, int paraFlags) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
                                   BOOL keepFirstParaFormat) DECLSPEC_HIDDEN;
 void ME_DumpParaStyle(ME_Paragraph *s) DECLSPEC_HIDDEN;

@@ -58,7 +58,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit_lists);
 
 static ME_DisplayItem* ME_InsertEndParaFromCursor(ME_TextEditor *editor,
                                                   int nCursor,
-                                                  ME_String *eol_str,
+                                                  const WCHAR *eol_str, int eol_len,
                                                   int paraFlags)
 {
   ME_Style *pStyle = ME_GetInsertStyle(editor, nCursor);
@@ -67,7 +67,7 @@ static ME_DisplayItem* ME_InsertEndParaFromCursor(ME_TextEditor *editor,
   if (cursor->nOffset)
     ME_SplitRunSimple(editor, cursor);
 
-  tp = ME_SplitParagraph(editor, cursor->pRun, pStyle, eol_str, paraFlags);
+  tp = ME_SplitParagraph(editor, cursor->pRun, pStyle, eol_str, eol_len, paraFlags);
   ME_ReleaseStyle(pStyle);
   cursor->pPara = tp;
   cursor->pRun = ME_FindItemFwd(tp, diRun);
@@ -78,8 +78,7 @@ ME_DisplayItem* ME_InsertTableRowStartFromCursor(ME_TextEditor *editor)
 {
   ME_DisplayItem *para;
   WCHAR cr_lf[] = {'\r', '\n', 0};
-  ME_String *eol_str = ME_MakeStringN(cr_lf, 2);
-  para = ME_InsertEndParaFromCursor(editor, 0, eol_str, MEPF_ROWSTART);
+  para = ME_InsertEndParaFromCursor(editor, 0, cr_lf, 2, MEPF_ROWSTART);
   return para->member.para.prev_para;
 }
 
@@ -122,8 +121,7 @@ ME_DisplayItem* ME_InsertTableCellFromCursor(ME_TextEditor *editor)
 {
   ME_DisplayItem *para;
   WCHAR tab = '\t';
-  ME_String *eol_str = ME_MakeStringN(&tab, 1);
-  para = ME_InsertEndParaFromCursor(editor, 0, eol_str, MEPF_CELL);
+  para = ME_InsertEndParaFromCursor(editor, 0, &tab, 1, MEPF_CELL);
   return para;
 }
 
@@ -131,8 +129,7 @@ ME_DisplayItem* ME_InsertTableRowEndFromCursor(ME_TextEditor *editor)
 {
   ME_DisplayItem *para;
   WCHAR cr_lf[] = {'\r', '\n', 0};
-  ME_String *eol_str = ME_MakeStringN(cr_lf, 2);
-  para = ME_InsertEndParaFromCursor(editor, 0, eol_str, MEPF_ROWEND);
+  para = ME_InsertEndParaFromCursor(editor, 0, cr_lf, 2, MEPF_ROWEND);
   return para->member.para.prev_para;
 }
 

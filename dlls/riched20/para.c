@@ -192,7 +192,7 @@ static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const 
 
 /* split paragraph at the beginning of the run */
 ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
-                                  ME_Style *style, ME_String *eol_str,
+                                  ME_Style *style, const WCHAR *eol_str, int eol_len,
                                   int paraFlags)
 {
   ME_DisplayItem *next_para = NULL;
@@ -202,6 +202,7 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   int ofs, i;
   ME_DisplayItem *pp;
   int run_flags = MERF_ENDPARA;
+  ME_String *str;
 
   if (!editor->bEmulateVersion10) { /* v4.1 */
     /* At most 1 of MEPF_CELL, MEPF_ROWSTART, or MEPF_ROWEND should be set. */
@@ -218,7 +219,8 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   run_para = ME_GetParagraph(run);
   assert(run_para->member.para.pFmt->cbSize == sizeof(PARAFORMAT2));
 
-  end_run = ME_MakeRun(style, eol_str, run_flags);
+  str = ME_MakeStringN( eol_str, eol_len );
+  end_run = ME_MakeRun(style, str, run_flags);
   ofs = end_run->member.run.nCharOfs = run->member.run.nCharOfs;
   end_run->member.run.para = run->member.run.para;
 
@@ -244,7 +246,7 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
     pp = ME_FindItemFwd(pp, diRunOrParagraphOrEnd);
   }
   new_para->member.para.nCharOfs = run_para->member.para.nCharOfs + ofs;
-  new_para->member.para.nCharOfs += eol_str->nLen;
+  new_para->member.para.nCharOfs += eol_len;
   new_para->member.para.nFlags = MEPF_REWRAP;
 
   /* FIXME initialize format style and call ME_SetParaFormat blah blah */
@@ -311,7 +313,7 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   new_para->member.para.prev_para->member.para.nFlags |= MEPF_REWRAP;
 
   /* we've added the end run, so we need to modify nCharOfs in the next paragraphs */
-  ME_PropagateCharOffset(next_para, eol_str->nLen);
+  ME_PropagateCharOffset(next_para, eol_len);
   editor->nParagraphs++;
 
   return new_para;
