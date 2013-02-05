@@ -1277,10 +1277,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
 
     ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
     if (!ret)
-    {
-        ERR("Failed to allocate context memory.\n");
         return NULL;
-    }
 
     ret->blit_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             gl_info->limits.buffers * sizeof(*ret->blit_targets));

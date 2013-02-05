@@ -1283,10 +1283,7 @@ HRESULT CDECL wined3d_buffer_create(struct wined3d_device *device, struct wined3
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate memory\n");
         return E_OUTOFMEMORY;
-    }
 
     FIXME("Ignoring access flags (pool)\n");
 
@@ -1328,7 +1325,6 @@ HRESULT CDECL wined3d_buffer_create_vb(struct wined3d_device *device, UINT size,
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
-        ERR("Out of memory\n");
         *buffer = NULL;
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
@@ -1360,7 +1356,6 @@ HRESULT CDECL wined3d_buffer_create_ib(struct wined3d_device *device, UINT size,
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
-        ERR("Out of memory\n");
         *buffer = NULL;
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }

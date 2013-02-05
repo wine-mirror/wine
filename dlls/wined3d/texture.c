@@ -1251,7 +1251,6 @@ HRESULT CDECL wined3d_texture_create_2d(struct wined3d_device *device, UINT widt
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
-        ERR("Out of memory.\n");
         *texture = NULL;
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
@@ -1287,7 +1286,6 @@ HRESULT CDECL wined3d_texture_create_3d(struct wined3d_device *device, UINT widt
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
-        ERR("Out of memory\n");
         *texture = NULL;
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
@@ -1323,7 +1321,6 @@ HRESULT CDECL wined3d_texture_create_cube(struct wined3d_device *device, UINT ed
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
-        ERR("Out of memory\n");
         *texture = NULL;
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }

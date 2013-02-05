@@ -7247,10 +7247,7 @@ HRESULT CDECL wined3d_surface_create(struct wined3d_device *device, UINT width, 
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate surface memory.\n");
         return WINED3DERR_OUTOFVIDEOMEMORY;
-    }
 
     if (FAILED(hr = surface_init(object, device->surface_alignment, width, height, multisample_type,
             multisample_quality, device, usage, format_id, pool, flags, parent, parent_ops)))

@@ -1098,10 +1098,7 @@ HRESULT CDECL wined3d_swapchain_create(struct wined3d_device *device, struct win
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate swapchain memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = swapchain_init(object, device, desc, parent, parent_ops);
     if (FAILED(hr))

@@ -65,10 +65,7 @@ HRESULT CDECL wined3d_sampler_create(void *parent, struct wined3d_sampler **samp
     TRACE("parent %p, sampler %p.\n", parent, sampler);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
-    {
-        ERR("Failed to allocate memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     wined3d_sampler_init(object, parent);
 

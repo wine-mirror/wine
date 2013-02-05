@@ -530,10 +530,7 @@ static void *shader_sm1_init(const DWORD *byte_code, const struct wined3d_shader
 
     priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv));
     if (!priv)
-    {
-        ERR("Failed to allocate private data\n");
         return NULL;
-    }
 
     if (output_signature)
     {

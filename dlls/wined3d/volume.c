@@ -312,7 +312,6 @@ HRESULT CDECL wined3d_volume_create(struct wined3d_device *device, UINT width, U
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
-        ERR("Out of memory\n");
         *volume = NULL;
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }

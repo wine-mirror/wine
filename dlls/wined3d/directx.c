@@ -4780,10 +4780,7 @@ HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx, e
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate device memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = device_init(object, wined3d, adapter_idx, device_type,
             focus_window, flags, surface_alignment, device_parent);

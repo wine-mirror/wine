@@ -1765,10 +1765,8 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
         TRACE("Adding new light\n");
         object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
         if (!object)
-        {
-            ERR("Out of memory error when allocating a light\n");
             return E_OUTOFMEMORY;
-        }
+
         list_add_head(&device->updateStateBlock->state.light_map[hash_idx], &object->entry);
         object->glIndex = -1;
         object->OriginalIndex = light_idx;

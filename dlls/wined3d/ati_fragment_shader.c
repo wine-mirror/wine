@@ -1153,10 +1153,8 @@ static void *atifs_alloc(const struct wined3d_shader_backend_ops *shader_backend
     struct atifs_private_data *priv;
 
     if (!(priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*priv))))
-    {
-        ERR("Out of memory.\n");
         return NULL;
-    }
+
     if (wine_rb_init(&priv->fragment_shaders, &wined3d_ffp_frag_program_rb_functions) == -1)
     {
         ERR("Failed to initialize rbtree.\n");

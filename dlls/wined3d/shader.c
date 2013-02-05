@@ -1510,10 +1510,7 @@ static HRESULT shader_none_alloc(struct wined3d_device *device, const struct fra
     void *fragment_priv;
 
     if (!(priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv))))
-    {
-        ERR("Failed to allocate private data.\n");
         return E_OUTOFMEMORY;
-    }
 
     if (!(fragment_priv = fragment_pipe->alloc_private(&none_shader_backend, priv)))
     {
@@ -2303,10 +2300,7 @@ HRESULT CDECL wined3d_shader_create_gs(struct wined3d_device *device, const DWOR
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate shader memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = geometryshader_init(object, device, byte_code, output_signature, parent, parent_ops, max_version);
     if (FAILED(hr))
@@ -2334,10 +2328,7 @@ HRESULT CDECL wined3d_shader_create_ps(struct wined3d_device *device, const DWOR
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate shader memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = pixelshader_init(object, device, byte_code, output_signature, parent, parent_ops, max_version);
     if (FAILED(hr))
@@ -2365,10 +2356,7 @@ HRESULT CDECL wined3d_shader_create_vs(struct wined3d_device *device, const DWOR
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate shader memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = vertexshader_init(object, device, byte_code, output_signature, parent, parent_ops, max_version);
     if (FAILED(hr))

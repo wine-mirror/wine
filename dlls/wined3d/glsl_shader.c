@@ -5446,10 +5446,7 @@ static struct glsl_ffp_fragment_shader *shader_glsl_find_ffp_fragment_shader(str
         return CONTAINING_RECORD(desc, struct glsl_ffp_fragment_shader, entry);
 
     if (!(glsl_desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*glsl_desc))))
-    {
-        ERR("Failed to allocate ffp desc memory.\n");
         return NULL;
-    }
 
     glsl_desc->entry.settings = *args;
     glsl_desc->id = shader_glsl_generate_ffp_fragment_shader(&priv->shader_buffer, args, gl_info);
