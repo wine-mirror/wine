@@ -285,8 +285,7 @@ BOOL WINAPI CryptHashMessage(PCRYPT_HASH_MESSAGE_PARA pHashPara,
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
     info.hCryptProv = pHashPara->hCryptProv;
-    memcpy(&info.HashAlgorithm, &pHashPara->HashAlgorithm,
-     sizeof(info.HashAlgorithm));
+    info.HashAlgorithm = pHashPara->HashAlgorithm;
     info.pvHashAuxInfo = pHashPara->pvHashAuxInfo;
     msg = CryptMsgOpenToEncode(pHashPara->dwMsgEncodingType, flags, CMSG_HASHED,
      &info, NULL, NULL);

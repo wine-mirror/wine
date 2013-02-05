@@ -842,7 +842,7 @@ static BOOL container_matches_cert(PCCERT_CONTEXT pCert, LPCSTR container,
      * keyProvInfo->pwszContainerName to be NULL or a heap-allocated container
      * name.
      */
-    memcpy(&copy, keyProvInfo, sizeof(copy));
+    copy = *keyProvInfo;
     copy.pwszContainerName = containerW;
     matches = key_prov_info_matches_cert(pCert, &copy);
     if (matches)
@@ -2216,9 +2216,7 @@ BOOL WINAPI CryptSignAndEncodeCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCrypt
 
                             info.ToBeSigned.cbData = encodedSize;
                             info.ToBeSigned.pbData = encoded;
-                            memcpy(&info.SignatureAlgorithm,
-                             pSignatureAlgorithm,
-                             sizeof(info.SignatureAlgorithm));
+                            info.SignatureAlgorithm = *pSignatureAlgorithm;
                             info.Signature.cbData = hashSize;
                             info.Signature.pbData = hash;
                             info.Signature.cUnusedBits = 0;
@@ -2986,8 +2984,7 @@ static PCCERT_CONTEXT CRYPT_CreateSignedCert(const CRYPT_DER_BLOB *blob,
 
             signedInfo.ToBeSigned.cbData = blob->cbData;
             signedInfo.ToBeSigned.pbData = blob->pbData;
-            memcpy(&signedInfo.SignatureAlgorithm, sigAlgo,
-             sizeof(signedInfo.SignatureAlgorithm));
+            signedInfo.SignatureAlgorithm = *sigAlgo;
             signedInfo.Signature.cbData = sigSize;
             signedInfo.Signature.pbData = sig;
             signedInfo.Signature.cUnusedBits = 0;
@@ -3038,8 +3035,7 @@ static void CRYPT_MakeCertInfo(PCERT_INFO info, const CRYPT_DATA_BLOB *pSerialNu
     info->SerialNumber.cbData = pSerialNumber->cbData;
     info->SerialNumber.pbData = pSerialNumber->pbData;
     if (pSignatureAlgorithm)
-        memcpy(&info->SignatureAlgorithm, pSignatureAlgorithm,
-         sizeof(info->SignatureAlgorithm));
+        info->SignatureAlgorithm = *pSignatureAlgorithm;
     else
     {
         info->SignatureAlgorithm.pszObjId = oid;
@@ -3066,8 +3062,7 @@ static void CRYPT_MakeCertInfo(PCERT_INFO info, const CRYPT_DATA_BLOB *pSerialNu
     }
     info->Subject.cbData = pSubjectIssuerBlob->cbData;
     info->Subject.pbData = pSubjectIssuerBlob->pbData;
-    memcpy(&info->SubjectPublicKeyInfo, pubKey,
-     sizeof(info->SubjectPublicKeyInfo));
+    info->SubjectPublicKeyInfo = *pubKey;
     if (pExtensions)
     {
         info->cExtension = pExtensions->cExtension;

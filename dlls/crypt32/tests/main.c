@@ -181,12 +181,12 @@ static void test_verifyTimeValidity(void)
     /* Check with 0 NotBefore and NotAfter */
     ret = CertVerifyTimeValidity(&fileTime, &info);
     ok(ret == 1, "Expected 1, got %d\n", ret);
-    memcpy(&info.NotAfter, &fileTime, sizeof(info.NotAfter));
+    info.NotAfter = fileTime;
     /* Check with NotAfter equal to comparison time */
     ret = CertVerifyTimeValidity(&fileTime, &info);
     ok(ret == 0, "Expected 0, got %d\n", ret);
     /* Check with NotBefore after comparison time */
-    memcpy(&info.NotBefore, &fileTime, sizeof(info.NotBefore));
+    info.NotBefore = fileTime;
     info.NotBefore.dwLowDateTime += 5000;
     ret = CertVerifyTimeValidity(&fileTime, &info);
     ok(ret == -1, "Expected -1, got %d\n", ret);
