@@ -130,7 +130,7 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
  *
  * Create the X11 desktop window for the desktop mode.
  */
-Window CDECL X11DRV_create_desktop( UINT width, UINT height )
+BOOL CDECL X11DRV_create_desktop( UINT width, UINT height )
 {
     XSetWindowAttributes win_attr;
     Window win;
@@ -152,7 +152,9 @@ Window CDECL X11DRV_create_desktop( UINT width, UINT height )
     win = XCreateWindow( display, DefaultRootWindow(display),
                          0, 0, width, height, 0, default_visual.depth, InputOutput, default_visual.visual,
                          CWEventMask | CWCursor | CWColormap, &win_attr );
-    if (win != None && width == screen_width && height == screen_height)
+    if (!win) return FALSE;
+
+    if (width == screen_width && height == screen_height)
     {
         TRACE("setting desktop to fullscreen\n");
         XChangeProperty( display, win, x11drv_atom(_NET_WM_STATE), XA_ATOM, 32,
@@ -160,8 +162,8 @@ Window CDECL X11DRV_create_desktop( UINT width, UINT height )
             1);
     }
     XFlush( display );
-    if (win != None) X11DRV_init_desktop( win, width, height );
-    return win;
+    X11DRV_init_desktop( win, width, height );
+    return TRUE;
 }
 
 

@@ -106,13 +106,13 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
     }
 }
 
-/* create the desktop and the associated X11 window, and make it the current desktop */
-static unsigned long create_desktop( const WCHAR *name, unsigned int width, unsigned int height )
+/* create the desktop and the associated driver window, and make it the current desktop */
+static BOOL create_desktop( const WCHAR *name, unsigned int width, unsigned int height )
 {
     static const WCHAR rootW[] = {'r','o','o','t',0};
     HDESK desktop;
-    unsigned long xwin = 0;
-    unsigned long (CDECL *create_desktop_func)(unsigned int, unsigned int);
+    BOOL ret = FALSE;
+    BOOL (CDECL *create_desktop_func)(unsigned int, unsigned int);
 
     desktop = CreateDesktopW( name, NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
     if (!desktop)
@@ -124,10 +124,10 @@ static unsigned long create_desktop( const WCHAR *name, unsigned int width, unsi
     if (graphics_driver && strcmpiW( name, rootW ))
     {
         create_desktop_func = (void *)GetProcAddress( graphics_driver, "wine_create_desktop" );
-        if (create_desktop_func) xwin = create_desktop_func( width, height );
+        if (create_desktop_func) ret = create_desktop_func( width, height );
     }
     SetThreadDesktop( desktop );
-    return xwin;
+    return ret;
 }
 
 /* parse the desktop size specification */
@@ -266,7 +266,6 @@ void manage_desktop( WCHAR *arg )
     MSG msg;
     HDC hdc;
     HWND hwnd, msg_hwnd;
-    unsigned long xwin = 0;
     unsigned int width, height;
     WCHAR *cmdline = NULL;
     WCHAR *p = arg;
@@ -299,9 +298,7 @@ void manage_desktop( WCHAR *arg )
     hdc = CreateDCW( displayW, NULL, NULL, NULL );
     graphics_driver = __wine_get_driver_module( hdc );
 
-    if (name && width && height) xwin = create_desktop( name, width, height );
-
-    if (!xwin) using_root = TRUE; /* using the root window */
+    if (name && width && height) using_root = !create_desktop( name, width, height );
 
     /* create the desktop window */
     hwnd = CreateWindowExW( 0, DESKTOP_CLASS_ATOM, NULL,
