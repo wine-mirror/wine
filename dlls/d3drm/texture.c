@@ -62,7 +62,7 @@ static HRESULT WINAPI IDirect3DRMTexture2Impl_QueryInterface(IDirect3DRMTexture2
     {
         *object = &This->IDirect3DRMTexture2_iface;
     }
-    else if IsEqualGUID(riid, &IID_IDirect3DRMTexture3)
+    else if (IsEqualGUID(riid, &IID_IDirect3DRMTexture3))
     {
         *object = &This->IDirect3DRMTexture3_iface;
     }
@@ -431,7 +431,7 @@ static HRESULT WINAPI IDirect3DRMTexture3Impl_QueryInterface(IDirect3DRMTexture3
     {
         *object = &This->IDirect3DRMTexture2_iface;
     }
-    else if IsEqualGUID(riid, &IID_IDirect3DRMTexture3)
+    else if (IsEqualGUID(riid, &IID_IDirect3DRMTexture3))
     {
         *object = &This->IDirect3DRMTexture3_iface;
     }
