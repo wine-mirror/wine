@@ -100,11 +100,7 @@ static const struct gdi_dc_funcs *get_display_driver( HMODULE *module_ret )
     HMODULE module = 0;
     HKEY hkey;
 
-    if (display_driver)
-    {
-        *module_ret = display_driver->module;
-        return display_driver->funcs;  /* already loaded */
-    }
+    if (display_driver) goto done;
 
     strcpy( buffer, "x11" );  /* default value */
     /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
@@ -140,6 +136,8 @@ static const struct gdi_dc_funcs *get_display_driver( HMODULE *module_ret )
         FreeLibrary( driver->module );
         HeapFree( GetProcessHeap(), 0, driver );
     }
+done:
+    *module_ret = display_driver->module;
     return display_driver->funcs;
 }
 
