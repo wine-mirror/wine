@@ -629,14 +629,12 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 }
 
 /* this function creates the listener window */
-void initialize_systray( BOOL using_root )
+void initialize_systray( HMODULE graphics_driver, BOOL using_root )
 {
-    HMODULE x11drv;
     WNDCLASSEXW class;
     static const WCHAR classname[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
 
-    if ((x11drv = GetModuleHandleA( "winex11.drv" )))
-        wine_notify_icon = (void *)GetProcAddress( x11drv, "wine_notify_icon" );
+    wine_notify_icon = (void *)GetProcAddress( graphics_driver, "wine_notify_icon" );
 
     icon_cx = GetSystemMetrics( SM_CXSMICON ) + 2*ICON_BORDER;
     icon_cy = GetSystemMetrics( SM_CYSMICON ) + 2*ICON_BORDER;
@@ -651,7 +649,7 @@ void initialize_systray( BOOL using_root )
     class.hIcon         = LoadIconW(0, (LPCWSTR)IDI_WINLOGO);
     class.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
     class.hbrBackground = (HBRUSH) COLOR_WINDOW;
-    class.lpszClassName = (WCHAR *) &classname;
+    class.lpszClassName = classname;
 
     if (!RegisterClassExW(&class))
     {
