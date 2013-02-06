@@ -89,6 +89,7 @@ struct macdrv_thread_data
     int                         iso_keyboard;
     CGEventFlags                last_modifiers;
     UInt32                      dead_key_state;
+    HKL                         active_keyboard_layout;
     WORD                        keyc2vkey[128];
     WORD                        keyc2scan[128];
 };

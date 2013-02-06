@@ -847,6 +847,93 @@ void macdrv_keyboard_changed(const macdrv_event *event)
 
 
 /***********************************************************************
+ *              get_locale_keyboard_layout
+ */
+static HKL get_locale_keyboard_layout(void)
+{
+    ULONG_PTR layout;
+    LANGID langid;
+
+    layout = GetUserDefaultLCID();
+
+    /*
+     * Microsoft Office expects this value to be something specific
+     * for Japanese and Korean Windows with an IME the value is 0xe001
+     * We should probably check to see if an IME exists and if so then
+     * set this word properly.
+     */
+    langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
+    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
+        layout |= 0xe001 << 16; /* IME */
+    else
+        layout |= layout << 16;
+
+    return (HKL)layout;
+}
+
+
+/***********************************************************************
+ *              match_keyboard_layout
+ */
+static BOOL match_keyboard_layout(HKL hkl)
+{
+    const DWORD isIME = 0xE0000000;
+    HKL current_hkl = get_locale_keyboard_layout();
+
+    /* if the layout is an IME, only match the low word (LCID) */
+    if (((ULONG_PTR)hkl & isIME) == isIME)
+        return (LOWORD(hkl) == LOWORD(current_hkl));
+    else
+        return (hkl == current_hkl);
+}
+
+
+/***********************************************************************
+ *              ActivateKeyboardLayout (MACDRV.@)
+ */
+HKL CDECL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
+{
+    HKL oldHkl = 0;
+    struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
+
+    /* FIXME: Use Text Input Services or NSTextInputContext to actually
+              change the Mac keyboard input source. */
+
+    FIXME("hkl %p flags %04x: semi-stub!\n", hkl, flags);
+    if (flags & KLF_SETFORPROCESS)
+    {
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        FIXME("KLF_SETFORPROCESS not supported\n");
+        return 0;
+    }
+
+    if (flags)
+        FIXME("flags %x not supported\n",flags);
+
+    if (hkl == (HKL)HKL_NEXT || hkl == (HKL)HKL_PREV)
+    {
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        FIXME("HKL_NEXT and HKL_PREV not supported\n");
+        return 0;
+    }
+
+    if (!match_keyboard_layout(hkl))
+    {
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        FIXME("setting keyboard of different locales not supported\n");
+        return 0;
+    }
+
+    oldHkl = thread_data->active_keyboard_layout;
+    if (!oldHkl) oldHkl = get_locale_keyboard_layout();
+
+    thread_data->active_keyboard_layout = hkl;
+
+    return oldHkl;
+}
+
+
+/***********************************************************************
  *              Beep (MACDRV.@)
  */
 void CDECL macdrv_Beep(void)
@@ -941,6 +1028,46 @@ INT CDECL macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
 
     WARN("found no name for lparam 0x%08x\n", lparam);
     return 0;
+}
+
+
+/***********************************************************************
+ *              GetKeyboardLayout (MACDRV.@)
+ */
+HKL CDECL macdrv_GetKeyboardLayout(DWORD thread_id)
+{
+    if (!thread_id || thread_id == GetCurrentThreadId())
+    {
+        struct macdrv_thread_data *thread_data = macdrv_thread_data();
+        if (thread_data && thread_data->active_keyboard_layout)
+            return thread_data->active_keyboard_layout;
+    }
+    else
+        FIXME("couldn't return keyboard layout for thread %04x\n", thread_id);
+
+    /* FIXME: Use TISGetInputSourceProperty() and kTISPropertyInputSourceLanguages
+     *        to get input source language ID string.  Use
+     *        CFLocaleGetWindowsLocaleCodeFromLocaleIdentifier() to convert that
+     *        to a Windows locale ID and from there to a layout handle.
+     */
+
+    return get_locale_keyboard_layout();
+}
+
+
+/***********************************************************************
+ *              GetKeyboardLayoutName (MACDRV.@)
+ */
+BOOL CDECL macdrv_GetKeyboardLayoutName(LPWSTR name)
+{
+    static const WCHAR formatW[] = {'%','0','8','x',0};
+    DWORD layout;
+
+    layout = HandleToUlong(get_locale_keyboard_layout());
+    if (HIWORD(layout) == LOWORD(layout)) layout = LOWORD(layout);
+    sprintfW(name, formatW, layout);
+    TRACE("returning %s\n", debugstr_w(name));
+    return TRUE;
 }
 
 

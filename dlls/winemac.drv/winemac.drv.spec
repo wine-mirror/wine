@@ -4,11 +4,14 @@
 
 # USER driver
 
+@ cdecl ActivateKeyboardLayout(long long) macdrv_ActivateKeyboardLayout
 @ cdecl Beep() macdrv_Beep
 @ cdecl CreateDesktopWindow(long) macdrv_CreateDesktopWindow
 @ cdecl CreateWindow(long) macdrv_CreateWindow
 @ cdecl DestroyWindow(long) macdrv_DestroyWindow
 @ cdecl EnumDisplayMonitors(long ptr ptr long) macdrv_EnumDisplayMonitors
+@ cdecl GetKeyboardLayout(long) macdrv_GetKeyboardLayout
+@ cdecl GetKeyboardLayoutName(ptr) macdrv_GetKeyboardLayoutName
 @ cdecl GetKeyNameText(long ptr long) macdrv_GetKeyNameText
 @ cdecl GetMonitorInfo(long ptr) macdrv_GetMonitorInfo
 @ cdecl MapVirtualKeyEx(long long long) macdrv_MapVirtualKeyEx
