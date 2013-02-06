@@ -175,7 +175,7 @@ static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 			}
 			break;
 		case WM_COMMAND:
-			switch LOWORD(wParam)
+			switch (LOWORD(wParam))
 			{
 				case IDC_SKIP:
 					on_disable_dialog_clicked(hwnd);
