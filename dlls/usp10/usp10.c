@@ -1878,7 +1878,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
     hr = ScriptItemize(pString, cString, num_items, &sControl, &sState, analysis->pItem,
                        &analysis->numItems);
 
-    if FAILED(hr)
+    if (FAILED(hr))
     {
         if (hr == E_OUTOFMEMORY)
             hr = E_INVALIDARG;
