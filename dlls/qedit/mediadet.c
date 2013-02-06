@@ -79,7 +79,7 @@ static HRESULT WINAPI MediaDet_inner_QueryInterface(IUnknown *iface, REFIID riid
     *ppv = NULL;
     if (IsEqualIID(riid, &IID_IUnknown))
         *ppv = &This->IUnknown_inner;
-    else if IsEqualIID(riid, &IID_IMediaDet)
+    else if (IsEqualIID(riid, &IID_IMediaDet))
         *ppv = &This->IMediaDet_iface;
     else
         WARN("(%p, %s,%p): not found\n", This, debugstr_guid(riid), ppv);
