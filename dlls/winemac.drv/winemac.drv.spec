@@ -22,6 +22,7 @@
 @ cdecl ShowWindow(long long ptr long) macdrv_ShowWindow
 @ cdecl ToUnicodeEx(long long ptr ptr long long long) macdrv_ToUnicodeEx
 @ cdecl UpdateLayeredWindow(long ptr ptr) macdrv_UpdateLayeredWindow
+@ cdecl VkKeyScanEx(long long) macdrv_VkKeyScanEx
 @ cdecl WindowMessage(long long long long) macdrv_WindowMessage
 @ cdecl WindowPosChanged(long long long ptr ptr ptr ptr ptr) macdrv_WindowPosChanged
 @ cdecl WindowPosChanging(long long long ptr ptr ptr ptr) macdrv_WindowPosChanging

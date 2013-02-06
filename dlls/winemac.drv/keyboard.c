@@ -1087,3 +1087,76 @@ done:
     TRACE_(key)("returning %d / %s\n", ret, debugstr_wn(bufW, abs(ret)));
     return ret;
 }
+
+
+/***********************************************************************
+ *              VkKeyScanEx (MACDRV.@)
+ *
+ * Note: Windows ignores HKL parameter and uses current active layout instead
+ */
+SHORT CDECL macdrv_VkKeyScanEx(WCHAR wChar, HKL hkl)
+{
+    struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
+    SHORT ret = -1;
+    int state;
+    const UCKeyboardLayout *uchr;
+
+    TRACE("%04x, %p\n", wChar, hkl);
+
+    uchr = (const UCKeyboardLayout*)CFDataGetBytePtr(thread_data->keyboard_layout_uchr);
+    if (!uchr)
+    {
+        TRACE("no keyboard layout UCHR data; returning -1\n");
+        return -1;
+    }
+
+    for (state = 0; state < 8; state++)
+    {
+        UInt32 modifierKeyState = 0;
+        int keyc;
+
+        if (state & 1)
+            modifierKeyState |= (shiftKey >> 8);
+        if ((state & 6) == 6)
+            modifierKeyState |= (optionKey >> 8);
+        else
+        {
+            if (state & 2)
+                modifierKeyState |= (controlKey >> 8);
+            if (state & 4)
+                modifierKeyState |= (cmdKey >> 8);
+        }
+
+        for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey) / sizeof(thread_data->keyc2vkey[0]); keyc++)
+        {
+            UInt32 deadKeyState = 0;
+            UniChar uchar;
+            UniCharCount len;
+            OSStatus status;
+
+            if (!thread_data->keyc2vkey[keyc]) continue;
+
+            status = UCKeyTranslate(uchr, keyc, kUCKeyActionDown, modifierKeyState,
+                                    thread_data->keyboard_type, 0, &deadKeyState,
+                                    1, &len, &uchar);
+            if (status == noErr && len == 1 && uchar == wChar)
+            {
+                WORD vkey = thread_data->keyc2vkey[keyc];
+
+                ret = vkey | (state << 8);
+                if ((VK_NUMPAD0 <= vkey && vkey <= VK_DIVIDE) ||
+                    keyc == kVK_ANSI_KeypadClear || keyc == kVK_ANSI_KeypadEnter ||
+                    keyc == kVK_ANSI_KeypadEquals)
+                {
+                    /* Keep searching for a non-numpad match, which is preferred. */
+                }
+                else
+                    goto done;
+            }
+        }
+    }
+
+done:
+    TRACE(" -> 0x%04x\n", ret);
+    return ret;
+}
