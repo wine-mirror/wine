@@ -238,9 +238,24 @@ static HRESULT WINAPI ComponentFactory_CreateDecoderFromFileHandle(
     IWICComponentFactory *iface, ULONG_PTR hFile, const GUID *pguidVendor,
     WICDecodeOptions metadataOptions, IWICBitmapDecoder **ppIDecoder)
 {
-    FIXME("(%p,%lx,%s,%u,%p): stub\n", iface, hFile, debugstr_guid(pguidVendor),
+    IWICStream *stream;
+    HRESULT hr;
+
+    TRACE("(%p,%lx,%s,%u,%p)\n", iface, hFile, debugstr_guid(pguidVendor),
         metadataOptions, ppIDecoder);
-    return E_NOTIMPL;
+
+    hr = StreamImpl_Create(&stream);
+    if (SUCCEEDED(hr))
+    {
+        hr = stream_initialize_from_filehandle(stream, (HANDLE)hFile);
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICComponentFactory_CreateDecoderFromStream(iface, (IStream*)stream,
+                pguidVendor, metadataOptions, ppIDecoder);
+        }
+        IWICStream_Release(stream);
+    }
+    return hr;
 }
 
 static HRESULT WINAPI ComponentFactory_CreateComponentInfo(IWICComponentFactory *iface,

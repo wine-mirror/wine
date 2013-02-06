@@ -105,4 +105,6 @@ extern HRESULT GCEReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **
 extern HRESULT APEReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **ppv) DECLSPEC_HIDDEN;
 extern HRESULT GifCommentReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void **ppv) DECLSPEC_HIDDEN;
 
+extern HRESULT stream_initialize_from_filehandle(IWICStream *iface, HANDLE hfile) DECLSPEC_HIDDEN;
+
 #endif /* WINCODECS_PRIVATE_H */
