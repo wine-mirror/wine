@@ -474,7 +474,8 @@ static HRESULT WINAPI class_object_GetNames(
     struct class_object *co = impl_from_IWbemClassObject( iface );
     struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
 
-    TRACE("%p, %s, %08x, %p, %p\n", iface, debugstr_w(wszQualifierName), lFlags, pQualifierVal, pNames);
+    TRACE("%p, %s, %08x, %s, %p\n", iface, debugstr_w(wszQualifierName), lFlags,
+          debugstr_variant(pQualifierVal), pNames);
 
     if (wszQualifierName || pQualifierVal)
     {
