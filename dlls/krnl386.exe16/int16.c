@@ -52,7 +52,7 @@ void WINAPI DOSVM_Int16Handler( CONTEXT *context )
    BIOSDATA *data = NULL;
    BYTE ascii, scan;
 
-   switch AH_reg(context) {
+   switch (AH_reg(context)) {
 
    case 0x00: /* Get Keystroke */
       /* Returns: AH = Scan code

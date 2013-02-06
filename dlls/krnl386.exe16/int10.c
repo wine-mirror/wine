@@ -1123,7 +1123,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT *context )
        break;
 
     case 0x0b:
-        switch BH_reg(context) {
+        switch (BH_reg(context)) {
         case 0x00: /* SET BACKGROUND/BORDER COLOR */
             /* In text modes, this sets only the border... */
             /* According to the interrupt list and one of my books. */
@@ -1192,7 +1192,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT *context )
         break;
 
     case 0x10:
-        switch AL_reg(context) {
+        switch (AL_reg(context)) {
         case 0x00: /* SET SINGLE PALETTE REGISTER - A.C. */
             TRACE("Set Single Palette Register - Reg 0x0%x Value 0x0%x\n",
 		BL_reg(context),BH_reg(context));
@@ -1291,7 +1291,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT *context )
     case 0x11: /* TEXT MODE CHARGEN */
         /* Note that second subfunction is *almost* identical. */
         /* See INTERRUPT.A for details. */
-        switch AL_reg(context) {
+        switch (AL_reg(context)) {
         case 0x00: /* LOAD USER SPECIFIED PATTERNS */
         case 0x10:
             FIXME("Load User Specified Patterns - Not Supported\n");
@@ -1339,7 +1339,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT *context )
         break;
 
     case 0x12: /* ALTERNATE FUNCTION SELECT */
-        switch BL_reg(context) {
+        switch (BL_reg(context)) {
         case 0x10: /* GET EGA INFO */
             TRACE("EGA info requested\n");
             SET_BH( context, 0x00 );   /* Color screen */
@@ -1385,7 +1385,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT *context )
         break;
 
     case 0x1a:
-        switch AL_reg(context) {
+        switch (AL_reg(context)) {
         case 0x00: /* GET DISPLAY COMBINATION CODE */
             TRACE("Get Display Combination Code\n");
             SET_AL( context, 0x1a );      /* Function supported */

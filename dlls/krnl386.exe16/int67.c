@@ -149,7 +149,7 @@ static void EMS_access_name( CONTEXT *context )
     return;
   }
 
-  switch AL_reg(context) {
+  switch (AL_reg(context)) {
   case 0x00: /* get name */
     ptr = PTR_REAL_TO_LIN(context->SegEs, DI_reg(context));
     memcpy(ptr, EMS_record->handle[hindex].name, 8);
@@ -326,7 +326,7 @@ static void EMS_restore_context( CONTEXT *context )
  */
 void WINAPI DOSVM_Int67Handler( CONTEXT *context )
 {
-  switch AH_reg(context) {
+  switch (AH_reg(context)) {
 
   case 0x40: /* EMS - GET MANAGER STATUS */
     SET_AH( context, 0 ); /* status: ok */
@@ -465,7 +465,7 @@ void EMS_Ioctl_Handler( CONTEXT *context )
 {
   assert(AH_reg(context) == 0x44);
 
-  switch AL_reg(context) {
+  switch (AL_reg(context)) {
   case 0x00: /* IOCTL - GET DEVICE INFORMATION */
       RESET_CFLAG(context); /* operation was successful */
       SET_DX( context, 0x4080 ); /* bit 14 (support ioctl read) and
