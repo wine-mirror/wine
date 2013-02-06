@@ -613,7 +613,7 @@ static HRESULT WINAPI PersistFile_Save(IPersistFile *pFile, LPCOLESTR pszFileNam
             WriteFile(file, str_eol, lstrlenA(str_eol), &bytesWritten, NULL);
 
             hr = IPropertySetStorage_Open(This->property_set_storage, &FMTID_Intshcut, STGM_READ|STGM_SHARE_EXCLUSIVE, &pPropStgRead);
-            if SUCCEEDED(hr)
+            if (SUCCEEDED(hr))
             {
                 hr = IPropertyStorage_ReadMultiple(pPropStgRead, 2, ps, pvread);
                 if (hr == S_FALSE)
@@ -622,7 +622,7 @@ static HRESULT WINAPI PersistFile_Save(IPersistFile *pFile, LPCOLESTR pszFileNam
                     hr = S_OK;
                     IPropertyStorage_Release(pPropStgRead);
                 }
-                else if SUCCEEDED(hr)
+                else if (SUCCEEDED(hr))
                 {
                     char indexString[50];
                     len = WideCharToMultiByte(CP_UTF8, 0, pvread[0].u.pwszVal, -1, NULL, 0, 0, 0);
@@ -819,7 +819,7 @@ static InternetShortcut *create_shortcut(void)
         newshortcut->refCount = 1;
         hr = StgCreateStorageEx(NULL, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE,
                                 STGFMT_STORAGE, 0, NULL, NULL, &IID_IPropertySetStorage, (void **) &newshortcut->property_set_storage);
-        if FAILED(hr)
+        if (FAILED(hr))
         {
             TRACE("Failed to create the storage object needed for the shortcut.\n");
             heap_free(newshortcut);
@@ -827,7 +827,7 @@ static InternetShortcut *create_shortcut(void)
         }
 
         hr = IPropertySetStorage_Create(newshortcut->property_set_storage, &FMTID_Intshcut, NULL, PROPSETFLAG_DEFAULT, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, &dummy);
-        if FAILED(hr)
+        if (FAILED(hr))
         {
             TRACE("Failed to create the property object needed for the shortcut.\n");
             IPropertySetStorage_Release(newshortcut->property_set_storage);
