@@ -317,6 +317,27 @@ static IWICBitmapDecoder *create_decoder(const void *image_data, UINT image_size
     return decoder;
 }
 
+static WCHAR *save_profile( BYTE *buffer, UINT size )
+{
+    static const WCHAR tstW[] = {'t','s','t',0};
+    WCHAR path[MAX_PATH], filename[MAX_PATH], *ret;
+    HANDLE handle;
+    DWORD count;
+
+    GetTempPathW(MAX_PATH, path);
+    GetTempFileNameW(path, tstW, 0, filename);
+
+    handle = CreateFileW(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    if (handle == INVALID_HANDLE_VALUE) return NULL;
+
+    WriteFile(handle, buffer, size, &count, NULL);
+    CloseHandle( handle );
+
+    ret = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(filename) + 1) * sizeof(WCHAR));
+    lstrcpyW(ret, filename);
+    return ret;
+}
+
 static void test_color_contexts(void)
 {
     HRESULT hr;
@@ -325,7 +346,9 @@ static void test_color_contexts(void)
     IWICColorContext *context;
     WICColorContextType type;
     UINT count, colorspace, size;
+    WCHAR *tmpfile;
     BYTE *buffer;
+    BOOL ret;
 
     decoder = create_decoder(png_no_color_profile, sizeof(png_no_color_profile));
     ok(decoder != 0, "Failed to load PNG image data\n");
@@ -453,6 +476,8 @@ static void test_color_contexts(void)
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     hr = IWICColorContext_GetProfileBytes(context, size, buffer, &size);
     ok(hr == S_OK, "GetProfileBytes error %#x\n", hr);
+
+    tmpfile = save_profile( buffer, size );
     HeapFree(GetProcessHeap(), 0, buffer);
 
     type = 0xdeadbeef;
@@ -468,6 +493,42 @@ static void test_color_contexts(void)
     hr = IWICColorContext_InitializeFromExifColorSpace(context, 1);
     ok(hr == WINCODEC_ERR_WRONGSTATE, "InitializeFromExifColorSpace error %#x\n", hr);
 
+    if (tmpfile)
+    {
+        hr = IWICColorContext_InitializeFromFilename(context, NULL);
+        ok(hr == E_INVALIDARG, "InitializeFromFilename error %#x\n", hr);
+
+        hr = IWICColorContext_InitializeFromFilename(context, tmpfile);
+        ok(hr == S_OK, "InitializeFromFilename error %#x\n", hr);
+
+        ret = DeleteFileW(tmpfile);
+        ok(ret, "DeleteFileW failed %u\n", GetLastError());
+
+        type = 0xdeadbeef;
+        hr = IWICColorContext_GetType(context, &type);
+        ok(hr == S_OK, "GetType error %#x\n", hr);
+        ok(type == WICColorContextProfile, "unexpected type %u\n", type);
+
+        colorspace = 0xdeadbeef;
+        hr = IWICColorContext_GetExifColorSpace(context, &colorspace);
+        ok(hr == S_OK, "GetExifColorSpace error %#x\n", hr);
+        ok(colorspace == 0xffffffff, "unexpected color space %u\n", colorspace);
+
+        hr = IWICColorContext_InitializeFromExifColorSpace(context, 1);
+        ok(hr == WINCODEC_ERR_WRONGSTATE, "InitializeFromExifColorSpace error %#x\n", hr);
+
+        size = 0;
+        hr = IWICColorContext_GetProfileBytes(context, 0, NULL, &size);
+        ok(hr == S_OK, "GetProfileBytes error %#x\n", hr);
+        ok(size, "unexpected size %u\n", size);
+
+        buffer = HeapAlloc(GetProcessHeap(), 0, size);
+        hr = IWICColorContext_GetProfileBytes(context, size, buffer, &size);
+        ok(hr == S_OK, "GetProfileBytes error %#x\n", hr);
+
+        HeapFree(GetProcessHeap(), 0, buffer);
+        HeapFree(GetProcessHeap(), 0, tmpfile);
+    }
     IWICColorContext_Release(context);
     IWICBitmapFrameDecode_Release(frame);
     IWICBitmapDecoder_Release(decoder);
