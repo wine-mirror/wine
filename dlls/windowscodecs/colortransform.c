@@ -36,6 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 typedef struct ColorTransform {
     IWICColorTransform IWICColorTransform_iface;
     LONG ref;
+    IWICBitmapSource *dst;
 } ColorTransform;
 
 static inline ColorTransform *impl_from_IWICColorTransform(IWICColorTransform *iface)
@@ -86,6 +87,7 @@ static ULONG WINAPI ColorTransform_Release(IWICColorTransform *iface)
 
     if (ref == 0)
     {
+        if (This->dst) IWICBitmapSource_Release(This->dst);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -95,45 +97,67 @@ static ULONG WINAPI ColorTransform_Release(IWICColorTransform *iface)
 static HRESULT WINAPI ColorTransform_GetSize(IWICColorTransform *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    FIXME("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
-    return E_NOTIMPL;
+    ColorTransform *This = impl_from_IWICColorTransform(iface);
+    TRACE("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
+
+    return IWICBitmapSource_GetSize(This->dst, puiWidth, puiHeight);
 }
 
 static HRESULT WINAPI ColorTransform_GetPixelFormat(IWICColorTransform *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    FIXME("(%p,%p)\n", iface, pPixelFormat);
-    return E_NOTIMPL;
+    ColorTransform *This = impl_from_IWICColorTransform(iface);
+    TRACE("(%p,%p)\n", iface, pPixelFormat);
+
+    return IWICBitmapSource_GetPixelFormat(This->dst, pPixelFormat);
 }
 
 static HRESULT WINAPI ColorTransform_GetResolution(IWICColorTransform *iface,
     double *pDpiX, double *pDpiY)
 {
-    FIXME("(%p,%p,%p)\n", iface, pDpiX, pDpiY);
-    return E_NOTIMPL;
+    ColorTransform *This = impl_from_IWICColorTransform(iface);
+    TRACE("(%p,%p,%p)\n", iface, pDpiX, pDpiY);
+
+    return IWICBitmapSource_GetResolution(This->dst, pDpiX, pDpiY);
 }
 
 static HRESULT WINAPI ColorTransform_CopyPalette(IWICColorTransform *iface,
     IWICPalette *pIPalette)
 {
-    FIXME("(%p,%p)\n", iface, pIPalette);
-    return E_NOTIMPL;
+    ColorTransform *This = impl_from_IWICColorTransform(iface);
+    TRACE("(%p,%p)\n", iface, pIPalette);
+
+    return IWICBitmapSource_CopyPalette(This->dst, pIPalette);
 }
 
 static HRESULT WINAPI ColorTransform_CopyPixels(IWICColorTransform *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    FIXME("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
-    return E_NOTIMPL;
+    ColorTransform *This = impl_from_IWICColorTransform(iface);
+    TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
+
+    return IWICBitmapSource_CopyPixels(This->dst, prc, cbStride, cbBufferSize, pbBuffer);
 }
 
 static HRESULT WINAPI ColorTransform_Initialize(IWICColorTransform *iface,
     IWICBitmapSource *pIBitmapSource, IWICColorContext *pIContextSource,
     IWICColorContext *pIContextDest, REFWICPixelFormatGUID pixelFmtDest)
 {
-    FIXME("(%p,%p,%p,%p,%s)\n", iface, pIBitmapSource, pIContextSource,
+    ColorTransform *This = impl_from_IWICColorTransform(iface);
+    IWICBitmapSource *dst;
+    HRESULT hr;
+
+    TRACE("(%p,%p,%p,%p,%s)\n", iface, pIBitmapSource, pIContextSource,
           pIContextDest, debugstr_guid(pixelFmtDest));
-    return E_NOTIMPL;
+
+    FIXME("ignoring color contexts\n");
+
+    hr = WICConvertBitmapSource(pixelFmtDest, pIBitmapSource, &dst);
+    if (FAILED(hr)) return hr;
+
+    if (This->dst) IWICBitmapSource_Release(This->dst);
+    This->dst = dst;
+    return S_OK;
 }
 
 static const IWICColorTransformVtbl ColorTransform_Vtbl = {
@@ -159,6 +183,7 @@ HRESULT ColorTransform_Create(IWICColorTransform **colortransform)
 
     This->IWICColorTransform_iface.lpVtbl = &ColorTransform_Vtbl;
     This->ref = 1;
+    This->dst = NULL;
 
     *colortransform = &This->IWICColorTransform_iface;
 
