@@ -450,8 +450,8 @@ static HRESULT WINAPI ComponentFactory_CreateColorContext(IWICComponentFactory *
 static HRESULT WINAPI ComponentFactory_CreateColorTransformer(IWICComponentFactory *iface,
     IWICColorTransform **ppIColorTransform)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIColorTransform);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIColorTransform);
+    return ColorTransform_Create(ppIColorTransform);
 }
 
 static HRESULT WINAPI ComponentFactory_CreateBitmap(IWICComponentFactory *iface,

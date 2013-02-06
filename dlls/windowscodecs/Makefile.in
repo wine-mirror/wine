@@ -11,6 +11,7 @@ C_SRCS = \
 	bmpencode.c \
 	clsfactory.c \
 	colorcontext.c \
+	colortransform.c \
 	converter.c \
 	fliprotate.c \
 	gifformat.c \
