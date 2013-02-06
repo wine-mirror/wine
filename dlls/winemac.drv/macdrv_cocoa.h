@@ -115,6 +115,7 @@ extern int macdrv_err_on;
 
 extern int macdrv_start_cocoa_app(unsigned long long tickcount) DECLSPEC_HIDDEN;
 extern void macdrv_window_rejected_focus(const struct macdrv_event *event) DECLSPEC_HIDDEN;
+extern void macdrv_beep(void) DECLSPEC_HIDDEN;
 
 
 /* display */

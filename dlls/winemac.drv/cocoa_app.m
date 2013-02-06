@@ -373,3 +373,15 @@ CFDataRef macdrv_copy_keyboard_layout(CGEventSourceKeyboardType* keyboard_type, 
 
     return result;
 }
+
+/***********************************************************************
+ *              macdrv_beep
+ *
+ * Play the beep sound configured by the user in System Preferences.
+ */
+void macdrv_beep(void)
+{
+    OnMainThreadAsync(^{
+        NSBeep();
+    });
+}

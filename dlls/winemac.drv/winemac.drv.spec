@@ -4,6 +4,7 @@
 
 # USER driver
 
+@ cdecl Beep() macdrv_Beep
 @ cdecl CreateDesktopWindow(long) macdrv_CreateDesktopWindow
 @ cdecl CreateWindow(long) macdrv_CreateWindow
 @ cdecl DestroyWindow(long) macdrv_DestroyWindow

@@ -765,6 +765,15 @@ void macdrv_keyboard_changed(const macdrv_event *event)
 
 
 /***********************************************************************
+ *              Beep (MACDRV.@)
+ */
+void CDECL macdrv_Beep(void)
+{
+    macdrv_beep();
+}
+
+
+/***********************************************************************
  *              ToUnicodeEx (MACDRV.@)
  *
  * The ToUnicode function translates the specified virtual-key code and keyboard
