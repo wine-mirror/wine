@@ -312,6 +312,88 @@ static const struct {
 };
 
 
+static const struct {
+    DWORD       vkey;
+    const char *name;
+} vkey_names[] = {
+    { VK_ADD,                   "Num +" },
+    { VK_BACK,                  "Backspace" },
+    { VK_CAPITAL,               "Caps Lock" },
+    { VK_CONTROL,               "Ctrl" },
+    { VK_DECIMAL,               "Num Del" },
+    { VK_DELETE | 0x100,        "Delete" },
+    { VK_DIVIDE | 0x100,        "Num /" },
+    { VK_DOWN | 0x100,          "Down" },
+    { VK_END | 0x100,           "End" },
+    { VK_ESCAPE,                "Esc" },
+    { VK_F1,                    "F1" },
+    { VK_F2,                    "F2" },
+    { VK_F3,                    "F3" },
+    { VK_F4,                    "F4" },
+    { VK_F5,                    "F5" },
+    { VK_F6,                    "F6" },
+    { VK_F7,                    "F7" },
+    { VK_F8,                    "F8" },
+    { VK_F9,                    "F9" },
+    { VK_F10,                   "F10" },
+    { VK_F11,                   "F11" },
+    { VK_F12,                   "F12" },
+    { VK_F13,                   "F13" },
+    { VK_F14,                   "F14" },
+    { VK_F15,                   "F15" },
+    { VK_F16,                   "F16" },
+    { VK_F17,                   "F17" },
+    { VK_F18,                   "F18" },
+    { VK_F19,                   "F19" },
+    { VK_F20,                   "F20" },
+    { VK_F21,                   "F21" },
+    { VK_F22,                   "F22" },
+    { VK_F23,                   "F23" },
+    { VK_F24,                   "F24" },
+    { VK_HELP | 0x100,          "Help" },
+    { VK_HOME | 0x100,          "Home" },
+    { VK_INSERT | 0x100,        "Insert" },
+    { VK_LCONTROL,              "Ctrl" },
+    { VK_LEFT | 0x100,          "Left" },
+    { VK_LMENU,                 "Alt" },
+    { VK_LSHIFT,                "Shift" },
+    { VK_LWIN | 0x100,          "Win" },
+    { VK_MENU,                  "Alt" },
+    { VK_MULTIPLY,              "Num *" },
+    { VK_NEXT | 0x100,          "Page Down" },
+    { VK_NUMLOCK | 0x100,       "Num Lock" },
+    { VK_NUMPAD0,               "Num 0" },
+    { VK_NUMPAD1,               "Num 1" },
+    { VK_NUMPAD2,               "Num 2" },
+    { VK_NUMPAD3,               "Num 3" },
+    { VK_NUMPAD4,               "Num 4" },
+    { VK_NUMPAD5,               "Num 5" },
+    { VK_NUMPAD6,               "Num 6" },
+    { VK_NUMPAD7,               "Num 7" },
+    { VK_NUMPAD8,               "Num 8" },
+    { VK_NUMPAD9,               "Num 9" },
+    { VK_OEM_CLEAR,             "Num Clear" },
+    { VK_OEM_NEC_EQUAL | 0x100, "Num =" },
+    { VK_PRIOR | 0x100,         "Page Up" },
+    { VK_RCONTROL | 0x100,      "Right Ctrl" },
+    { VK_RETURN,                "Return" },
+    { VK_RETURN | 0x100,        "Num Enter" },
+    { VK_RIGHT | 0x100,         "Right" },
+    { VK_RMENU | 0x100,         "Right Alt" },
+    { VK_RSHIFT,                "Right Shift" },
+    { VK_RWIN | 0x100,          "Right Win" },
+    { VK_SEPARATOR,             "Num ," },
+    { VK_SHIFT,                 "Shift" },
+    { VK_SPACE,                 "Space" },
+    { VK_SUBTRACT,              "Num -" },
+    { VK_TAB,                   "Tab" },
+    { VK_UP | 0x100,            "Up" },
+    { VK_VOLUME_DOWN | 0x100,   "Volume Down" },
+    { VK_VOLUME_MUTE | 0x100,   "Mute" },
+    { VK_VOLUME_UP | 0x100,     "Volume Up" },
+};
+
+
 static BOOL char_matches_string(WCHAR wchar, UniChar *string, BOOL ignore_diacritics)
 {
     BOOL ret;
@@ -770,6 +852,95 @@ void macdrv_keyboard_changed(const macdrv_event *event)
 void CDECL macdrv_Beep(void)
 {
     macdrv_beep();
+}
+
+
+/***********************************************************************
+ *              GetKeyNameText (MACDRV.@)
+ */
+INT CDECL macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
+{
+    struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
+    int scan, keyc;
+
+    scan = (lparam >> 16) & 0x1FF;
+    for (keyc = 0; keyc < sizeof(thread_data->keyc2scan)/sizeof(thread_data->keyc2scan[0]); keyc++)
+    {
+        if (thread_data->keyc2scan[keyc] == scan)
+        {
+            static const WCHAR dead[] = {' ','d','e','a','d',0};
+            const UCKeyboardLayout *uchr;
+            UInt32 deadKeyState = 0;
+            UniCharCount len;
+            OSStatus status;
+
+            uchr = (const UCKeyboardLayout*)CFDataGetBytePtr(thread_data->keyboard_layout_uchr);
+            status = UCKeyTranslate(uchr, keyc, kUCKeyActionDisplay, 0, thread_data->keyboard_type,
+                                    0, &deadKeyState, size - 1, &len, (UniChar*)buffer);
+            if (status != noErr)
+                len = 0;
+            if (len && isgraphW(buffer[0]))
+                buffer[len] = 0;
+            else
+            {
+                DWORD vkey = thread_data->keyc2vkey[keyc];
+                int i;
+
+                if (scan & 0x100) vkey |= 0x100;
+
+                if (lparam & (1 << 25))
+                {
+                    /* Caller doesn't care about distinctions between left and
+                       right keys. */
+                    switch (vkey)
+                    {
+                        case VK_LSHIFT:
+                        case VK_RSHIFT:
+                            vkey = VK_SHIFT; break;
+                        case VK_LCONTROL:
+                        case VK_RCONTROL:
+                            vkey = VK_CONTROL; break;
+                        case VK_LMENU:
+                        case VK_RMENU:
+                            vkey = VK_MENU; break;
+                    }
+                }
+
+                len = 0;
+                for (i = 0; i < sizeof(vkey_names) / sizeof(vkey_names[0]); i++)
+                {
+                    if (vkey_names[i].vkey == vkey)
+                    {
+                        len = MultiByteToWideChar(CP_UTF8, 0, vkey_names[i].name, -1, buffer, size);
+                        if (len) len--;
+                        break;
+                    }
+                }
+
+                if (!len)
+                {
+                    static const WCHAR format[] = {'K','e','y',' ','0','x','%','0','2','x',0};
+                    snprintfW(buffer, size, format, vkey);
+                    len = strlenW(buffer);
+                }
+            }
+
+            if (!len)
+                break;
+
+            if (status == noErr && deadKeyState)
+            {
+                lstrcpynW(buffer + len, dead, size - len);
+                len = strlenW(buffer);
+            }
+
+            TRACE("lparam 0x%08x -> %s\n", lparam, debugstr_w(buffer));
+            return len;
+        }
+    }
+
+    WARN("found no name for lparam 0x%08x\n", lparam);
+    return 0;
 }
 
 
