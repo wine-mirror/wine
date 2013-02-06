@@ -25,8 +25,10 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
+#define NOFIX32
 #include "wintab.h"
 #include "wintab_internal.h"
+#include "wine/gdi_driver.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintab32);
@@ -72,7 +74,6 @@ static VOID TABLET_Unregister(void)
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
     static const WCHAR name[] = {'T','a','b','l','e','t',0};
-    HMODULE hx11drv;
 
     TRACE("%p, %x, %p\n",hInstDLL,fdwReason,lpReserved);
     switch (fdwReason)
@@ -80,16 +81,19 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
         case DLL_PROCESS_ATTACH:
             TRACE("Initialization\n");
             DisableThreadLibraryCalls(hInstDLL);
-            hx11drv = GetModuleHandleA("winex11.drv");
-            if (hx11drv)
+            TABLET_Register();
+            hwndDefault = CreateWindowW(WC_TABLETCLASSNAME, name,
+                                        WS_POPUPWINDOW,0,0,0,0,0,0,hInstDLL,0);
+            if (hwndDefault)
             {
-                pLoadTabletInfo = (void *)GetProcAddress(hx11drv, "LoadTabletInfo");
-                pAttachEventQueueToTablet = (void *)GetProcAddress(hx11drv, "AttachEventQueueToTablet");
-                pGetCurrentPacket = (void *)GetProcAddress(hx11drv, "GetCurrentPacket");
-                pWTInfoW = (void *)GetProcAddress(hx11drv, "WTInfoW");
-                TABLET_Register();
-                hwndDefault = CreateWindowW(WC_TABLETCLASSNAME, name,
-                                WS_POPUPWINDOW,0,0,0,0,0,0,hInstDLL,0);
+                HDC hdc = GetDC( hwndDefault );
+                HMODULE module = __wine_get_driver_module( hdc );
+
+                pLoadTabletInfo = (void *)GetProcAddress(module, "LoadTabletInfo");
+                pAttachEventQueueToTablet = (void *)GetProcAddress(module, "AttachEventQueueToTablet");
+                pGetCurrentPacket = (void *)GetProcAddress(module, "GetCurrentPacket");
+                pWTInfoW = (void *)GetProcAddress(module, "WTInfoW");
+                ReleaseDC( hwndDefault, hdc );
             }
             else
                 return FALSE;
