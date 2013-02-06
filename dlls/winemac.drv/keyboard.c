@@ -774,6 +774,131 @@ void CDECL macdrv_Beep(void)
 
 
 /***********************************************************************
+ *              MapVirtualKeyEx (MACDRV.@)
+ */
+UINT CDECL macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
+{
+    struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
+    UINT ret = 0;
+    int keyc;
+
+    TRACE("wCode=0x%x, wMapType=%d, hkl %p\n", wCode, wMapType, hkl);
+
+    switch (wMapType)
+    {
+        case MAPVK_VK_TO_VSC: /* vkey-code to scan-code */
+        case MAPVK_VK_TO_VSC_EX:
+            switch (wCode)
+            {
+                case VK_SHIFT: wCode = VK_LSHIFT; break;
+                case VK_CONTROL: wCode = VK_LCONTROL; break;
+                case VK_MENU: wCode = VK_LMENU; break;
+            }
+
+            /* vkey -> keycode -> scan */
+            for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
+            {
+                if (thread_data->keyc2vkey[keyc] == wCode)
+                {
+                    ret = thread_data->keyc2scan[keyc] & 0xFF;
+                    break;
+                }
+            }
+            break;
+
+        case MAPVK_VSC_TO_VK: /* scan-code to vkey-code */
+        case MAPVK_VSC_TO_VK_EX:
+            /* scan -> keycode -> vkey */
+            for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
+                if ((thread_data->keyc2scan[keyc] & 0xFF) == (wCode & 0xFF))
+                {
+                    ret = thread_data->keyc2vkey[keyc];
+                    /* Only stop if it's not a numpad vkey; otherwise keep
+                       looking for a potential better vkey. */
+                    if (ret && (ret < VK_NUMPAD0 || VK_DIVIDE < ret))
+                        break;
+                }
+
+            if (wMapType == MAPVK_VSC_TO_VK)
+                switch (ret)
+                {
+                    case VK_LSHIFT:
+                    case VK_RSHIFT:
+                        ret = VK_SHIFT; break;
+                    case VK_LCONTROL:
+                    case VK_RCONTROL:
+                        ret = VK_CONTROL; break;
+                    case VK_LMENU:
+                    case VK_RMENU:
+                        ret = VK_MENU; break;
+                }
+
+            break;
+
+        case MAPVK_VK_TO_CHAR: /* vkey-code to character */
+        {
+            /* vkey -> keycode -> (UCKeyTranslate) wide char */
+            struct macdrv_thread_data *thread_data = macdrv_thread_data();
+            const UCKeyboardLayout *uchr;
+            UniChar s[10];
+            OSStatus status;
+            UInt32 deadKeyState;
+            UniCharCount len;
+            BOOL deadKey = FALSE;
+
+            if ((VK_PRIOR <= wCode && wCode <= VK_HELP) ||
+                (VK_F1 <= wCode && wCode <= VK_F24))
+                break;
+
+            if (!thread_data || !thread_data->keyboard_layout_uchr)
+            {
+                WARN("No keyboard layout uchr data\n");
+                break;
+            }
+
+            uchr = (const UCKeyboardLayout*)CFDataGetBytePtr(thread_data->keyboard_layout_uchr);
+
+            /* Find the Mac keycode corresponding to the vkey */
+            for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
+                if (thread_data->keyc2vkey[keyc] == wCode) break;
+
+            if (keyc >= sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]))
+            {
+                WARN("Unknown virtual key %X\n", wCode);
+                break;
+            }
+
+            TRACE("Found keycode %u\n", keyc);
+
+            deadKeyState = 0;
+            status = UCKeyTranslate(uchr, keyc, kUCKeyActionDown, 0,
+                thread_data->keyboard_type, 0, &deadKeyState,
+                sizeof(s)/sizeof(s[0]), &len, s);
+            if (status == noErr && !len && deadKeyState)
+            {
+                deadKey = TRUE;
+                deadKeyState = 0;
+                status = UCKeyTranslate(uchr, keyc, kUCKeyActionDown, 0,
+                    thread_data->keyboard_type, kUCKeyTranslateNoDeadKeysMask,
+                    &deadKeyState, sizeof(s)/sizeof(s[0]), &len, s);
+            }
+
+            if (status == noErr && len)
+                ret = toupperW(s[0]) | (deadKey ? 0x80000000 : 0);
+
+            break;
+        }
+        default: /* reserved */
+            FIXME("Unknown wMapType %d\n", wMapType);
+            break;
+    }
+
+    TRACE("returning 0x%04x\n", ret);
+    return ret;
+}
+
+
+/***********************************************************************
  *              ToUnicodeEx (MACDRV.@)
  *
  * The ToUnicode function translates the specified virtual-key code and keyboard

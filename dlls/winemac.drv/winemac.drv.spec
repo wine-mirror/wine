@@ -10,6 +10,7 @@
 @ cdecl DestroyWindow(long) macdrv_DestroyWindow
 @ cdecl EnumDisplayMonitors(long ptr ptr long) macdrv_EnumDisplayMonitors
 @ cdecl GetMonitorInfo(long ptr) macdrv_GetMonitorInfo
+@ cdecl MapVirtualKeyEx(long long long) macdrv_MapVirtualKeyEx
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) macdrv_MsgWaitForMultipleObjectsEx
 @ cdecl ScrollDC(long long long ptr ptr long ptr) macdrv_ScrollDC
 @ cdecl SetFocus(long) macdrv_SetFocus
