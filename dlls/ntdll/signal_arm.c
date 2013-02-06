@@ -832,6 +832,21 @@ void signal_free_thread( TEB *teb )
     NtFreeVirtualMemory( NtCurrentProcess(), (void **)&teb, &size, MEM_RELEASE );
 }
 
+/**********************************************************************
+ *      set_tpidrurw
+ *
+ * Win32/ARM applications expect the TEB pointer to be in the TPIDRURW register.
+ */
+#ifdef __ARM_ARCH_7A__
+extern void set_tpidrurw( TEB *teb );
+__ASM_GLOBAL_FUNC( set_tpidrurw,
+                   "mcr p15, 0, r0, c13, c0, 2\n\t" /* TEB -> TPIDRURW */
+                   "blx lr" )
+#else
+void set_tpidrurw( TEB *teb )
+{
+}
+#endif
 
 /**********************************************************************
  *		signal_init_thread
@@ -845,6 +860,7 @@ void signal_init_thread( TEB *teb )
         pthread_key_create( &teb_key, NULL );
         init_done = 1;
     }
+    set_tpidrurw( teb );
     pthread_setspecific( teb_key, teb );
 }
 
