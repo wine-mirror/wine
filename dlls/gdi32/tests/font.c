@@ -3552,6 +3552,38 @@ todo_wine
     DeleteDC(hdc);
 }
 
+static int CALLBACK create_fixed_pitch_font_proc(const LOGFONT *lpelfe,
+                                                 const TEXTMETRIC *lpntme,
+                                                 DWORD FontType, LPARAM lParam)
+{
+    const NEWTEXTMETRICEX *lpntmex = (const NEWTEXTMETRICEX *)lpntme;
+    CHARSETINFO csi;
+    LOGFONT lf = *lpelfe;
+    HFONT hfont;
+
+    /* skip bitmap, proportional or vertical font */
+    if ((FontType & TRUETYPE_FONTTYPE) == 0 ||
+        (lf.lfPitchAndFamily & 0xf) != FIXED_PITCH ||
+        lf.lfFaceName[0] == '@')
+        return 1;
+
+    /* skip linked font */
+    if (!TranslateCharsetInfo((DWORD*)(INT_PTR)lpelfe->lfCharSet, &csi, TCI_SRCCHARSET) ||
+        (lpntmex->ntmFontSig.fsCsb[0] & csi.fs.fsCsb[0]) == 0)
+        return 1;
+
+    /* test with an odd height */
+    lf.lfHeight = -19;
+    lf.lfWidth = 0;
+    hfont = CreateFontIndirect(&lf);
+    if (hfont)
+    {
+        *(HFONT *)lParam = hfont;
+        return 0;
+    }
+    return 1;
+}
+
 static void test_GetGlyphOutline(void)
 {
     HDC hdc;
@@ -3640,6 +3672,8 @@ static void test_GetGlyphOutline(void)
 
     for (i = 0; i < sizeof c / sizeof c[0]; ++i)
     {
+        static const MAT2 rotate_mat = {{0, 0}, {0, -1}, {0, 1}, {0, 0}};
+
         lf.lfFaceName[0] = '\0';
         lf.lfCharSet = c[i].cs;
         lf.lfPitchAndFamily = 0;
@@ -3669,6 +3703,60 @@ static void test_GetGlyphOutline(void)
         /* expected to match wide-char version results */
         ret2 = GetGlyphOutlineW(hdc, c[i].w, GGO_BITMAP, &gm2, 0, NULL, &mat);
         ok(ret == ret2 && memcmp(&gm, &gm2, sizeof gm) == 0, "%d %d\n", ret, ret2);
+
+        if (EnumFontFamiliesEx(hdc, &lf, create_fixed_pitch_font_proc, (LPARAM)&hfont, 0))
+        {
+            skip("Fixed-pitch TrueType font for charset %u is not available\n", c[i].cs);
+            continue;
+        }
+        DeleteObject(SelectObject(hdc, hfont));
+        if (c[i].a <= 0xff)
+        {
+            DeleteObject(SelectObject(hdc, old_hfont));
+            continue;
+        }
+
+        ret = GetObject(hfont, sizeof lf, &lf);
+        ok(ret > 0, "GetObject error %u\n", GetLastError());
+
+        ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat);
+        ok(ret != GDI_ERROR, "GetGlyphOutlineA error %u\n", GetLastError());
+        ret = GetGlyphOutlineA(hdc, c[i].a, GGO_METRICS, &gm2, 0, NULL, &mat);
+        ok(ret != GDI_ERROR, "GetGlyphOutlineA error %u\n", GetLastError());
+        trace("Tests with height=%d,half=%d,full=%d,face=%s,charset=%d\n",
+              -lf.lfHeight, gm.gmCellIncX, gm2.gmCellIncX, lf.lfFaceName, lf.lfCharSet);
+        ok(gm2.gmCellIncX == gm.gmCellIncX * 2 || broken(gm2.gmCellIncX == -lf.lfHeight),
+           "expected %d, got %d (%s:%d)\n",
+           gm.gmCellIncX * 2, gm2.gmCellIncX, lf.lfFaceName, lf.lfCharSet);
+
+        ret = GetGlyphOutlineA(hdc, c[i].a, GGO_METRICS, &gm2, 0, NULL, &rotate_mat);
+        ok(ret != GDI_ERROR, "GetGlyphOutlineA error %u\n", GetLastError());
+        ok(gm2.gmCellIncY == -lf.lfHeight,
+           "expected %d, got %d (%s:%d)\n",
+           -lf.lfHeight, gm2.gmCellIncY, lf.lfFaceName, lf.lfCharSet);
+
+        lf.lfItalic = TRUE;
+        hfont = CreateFontIndirect(&lf);
+        ok(hfont != NULL, "CreateFontIndirect error %u\n", GetLastError());
+        DeleteObject(SelectObject(hdc, hfont));
+        ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat);
+        ok(ret != GDI_ERROR, "GetGlyphOutlineA error %u\n", GetLastError());
+        ret = GetGlyphOutlineA(hdc, c[i].a, GGO_METRICS, &gm2, 0, NULL, &mat);
+        ok(ret != GDI_ERROR, "GetGlyphOutlineA error %u\n", GetLastError());
+        ok(gm2.gmCellIncX == gm.gmCellIncX * 2 || broken(gm2.gmCellIncX == -lf.lfHeight),
+           "expected %d, got %d (%s:%d)\n",
+           gm.gmCellIncX * 2, gm2.gmCellIncX, lf.lfFaceName, lf.lfCharSet);
+
+        lf.lfItalic = FALSE;
+        lf.lfEscapement = lf.lfOrientation = 2700;
+        hfont = CreateFontIndirect(&lf);
+        ok(hfont != NULL, "CreateFontIndirect error %u\n", GetLastError());
+        DeleteObject(SelectObject(hdc, hfont));
+        ret = GetGlyphOutlineA(hdc, c[i].a, GGO_METRICS, &gm2, 0, NULL, &mat);
+        ok(ret != GDI_ERROR, "GetGlyphOutlineA error %u\n", GetLastError());
+        ok(gm2.gmCellIncY == -lf.lfHeight,
+           "expected %d, got %d (%s:%d)\n",
+           -lf.lfHeight, gm2.gmCellIncY, lf.lfFaceName, lf.lfCharSet);
 
         hfont = SelectObject(hdc, old_hfont);
         DeleteObject(hfont);

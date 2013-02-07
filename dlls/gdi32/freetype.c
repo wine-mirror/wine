@@ -5821,6 +5821,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     BOOL needsTransform = FALSE;
     BOOL tategaki = (font->GSUB_Table != NULL);
     UINT original_index;
+    FT_Fixed avgAdvance = 0;
 
     TRACE("%p, %04x, %08x, %p, %08x, %p, %p\n", font, glyph, format, lpgm,
 	  buflen, buf, lpmat);
@@ -5957,10 +5958,26 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         return GDI_ERROR;
     }
 
+    if(FT_IS_SCALABLE(incoming_font->ft_face)) {
+        TEXTMETRICW tm;
+        if (get_text_metrics(incoming_font, &tm) &&
+            !(tm.tmPitchAndFamily & TMPF_FIXED_PITCH)) {
+            avgAdvance = pFT_MulFix(incoming_font->ntmAvgWidth,
+                                    incoming_font->ft_face->size->metrics.x_scale);
+            if (avgAdvance && (ft_face->glyph->metrics.horiAdvance+63) >> 6 == (avgAdvance*2+63) >> 6)
+                TRACE("Fixed-pitch full-width character detected\n");
+            else
+                avgAdvance = 0; /* cancel this feature */
+        }
+    }
+
     if(!needsTransform) {
         left = (INT)(ft_face->glyph->metrics.horiBearingX) & -64;
         right = (INT)((ft_face->glyph->metrics.horiBearingX + ft_face->glyph->metrics.width) + 63) & -64;
-        adv = (INT)(ft_face->glyph->metrics.horiAdvance + 63) >> 6;
+        if (!avgAdvance)
+            adv = (INT)(ft_face->glyph->metrics.horiAdvance + 63) >> 6;
+        else
+            adv = (INT)((avgAdvance + 32) >> 6) * 2;
 
 	top = (ft_face->glyph->metrics.horiBearingY + 63) & -64;
 	bottom = (ft_face->glyph->metrics.horiBearingY -
@@ -6001,13 +6018,27 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	vec.x = ft_face->glyph->metrics.horiAdvance;
 	vec.y = 0;
 	pFT_Vector_Transform(&vec, &transMat);
-	lpgm->gmCellIncX = (vec.x+63) >> 6;
 	lpgm->gmCellIncY = -((vec.y+63) >> 6);
+	if (!avgAdvance || vec.y)
+	    lpgm->gmCellIncX = (vec.x+63) >> 6;
+	else {
+	    vec.x = avgAdvance;
+	    vec.y = 0;
+	    pFT_Vector_Transform(&vec, &transMat);
+	    lpgm->gmCellIncX = ((vec.x+32) >> 6) * 2;
+	}
 
         vec.x = ft_face->glyph->metrics.horiAdvance;
         vec.y = 0;
         pFT_Vector_Transform(&vec, &transMatUnrotated);
-        adv = (vec.x+63) >> 6;
+        if (!avgAdvance || vec.y)
+            adv = (vec.x+63) >> 6;
+        else {
+            vec.x = avgAdvance;
+            vec.y = 0;
+            pFT_Vector_Transform(&vec, &transMatUnrotated);
+            adv = ((vec.x+32) >> 6) * 2;
+        }
     }
 
     lpgm->gmBlackBoxX = (right - left) >> 6;
