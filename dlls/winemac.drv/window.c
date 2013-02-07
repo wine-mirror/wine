@@ -1041,6 +1041,36 @@ done:
 
 
 /***********************************************************************
+ *              SysCommand   (MACDRV.@)
+ *
+ * Perform WM_SYSCOMMAND handling.
+ */
+LRESULT CDECL macdrv_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
+{
+    struct macdrv_win_data *data;
+    LRESULT ret = -1;
+
+    TRACE("%p, %x, %lx\n", hwnd, (unsigned)wparam, lparam);
+
+    if (!(data = get_win_data(hwnd))) goto done;
+    if (!data->cocoa_window || !data->on_screen) goto done;
+
+    /* prevent a simple ALT press+release from activating the system menu,
+       as that can get confusing */
+    if ((wparam & 0xfff0) == SC_KEYMENU && !(WCHAR)lparam && !GetMenu(hwnd) &&
+        (GetWindowLongW(hwnd, GWL_STYLE) & WS_SYSMENU))
+    {
+        TRACE("ignoring SC_KEYMENU wp %lx lp %lx\n", wparam, lparam);
+        ret = 0;
+    }
+
+done:
+    release_win_data(data);
+    return ret;
+}
+
+
+/***********************************************************************
  *              UpdateLayeredWindow   (MACDRV.@)
  */
 BOOL CDECL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
