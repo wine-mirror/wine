@@ -43,6 +43,9 @@
 
     CGEventSourceKeyboardType keyboardType;
     NSEvent* lastFlagsChanged;
+
+    CGFloat primaryScreenHeight;
+    BOOL primaryScreenHeightValid;
 }
 
 @property (nonatomic) CGEventSourceKeyboardType keyboardType;

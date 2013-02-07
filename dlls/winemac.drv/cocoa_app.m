@@ -225,6 +225,32 @@ int macdrv_err_on;
         }
     }
 
+    - (CGFloat) primaryScreenHeight
+    {
+        if (!primaryScreenHeightValid)
+        {
+            NSArray* screens = [NSScreen screens];
+            if ([screens count])
+            {
+                primaryScreenHeight = NSHeight([[screens objectAtIndex:0] frame]);
+                primaryScreenHeightValid = TRUE;
+            }
+            else
+                return 1280; /* arbitrary value */
+        }
+
+        return primaryScreenHeight;
+    }
+
+    - (NSPoint) flippedMouseLocation:(NSPoint)point
+    {
+        /* This relies on the fact that Cocoa's mouse location points are
+           actually off by one (precisely because they were flipped from
+           Quartz screen coordinates using this same technique). */
+        point.y = [self primaryScreenHeight] - point.y;
+        return point;
+    }
+
 
     /*
      * ---------- NSApplication method overrides ----------
@@ -241,6 +267,11 @@ int macdrv_err_on;
     /*
      * ---------- NSApplicationDelegate methods ----------
      */
+    - (void)applicationDidChangeScreenParameters:(NSNotification *)notification
+    {
+        primaryScreenHeightValid = FALSE;
+    }
+
     - (void)applicationDidResignActive:(NSNotification *)notification
     {
         macdrv_event event;
