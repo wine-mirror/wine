@@ -32,6 +32,55 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
  * - no tabs
  */
 
+/******************************************************************************
+ * split_run_extents
+ *
+ * Splits a run into two in a given place. It also updates the screen position
+ * and size (extent) of the newly generated runs.
+ */
+static ME_DisplayItem *split_run_extents(ME_WrapContext *wc, ME_DisplayItem *item, int nVChar)
+{
+  ME_TextEditor *editor = wc->context->editor;
+  ME_Run *run, *run2;
+  ME_Paragraph *para = &wc->pPara->member.para;
+  ME_Cursor cursor = {wc->pPara, item, nVChar};
+
+  assert(item->member.run.nCharOfs != -1);
+  if(TRACE_ON(richedit))
+  {
+    TRACE("Before check before split\n");
+    ME_CheckCharOffsets(editor);
+    TRACE("After check before split\n");
+  }
+
+  run = &item->member.run;
+
+  TRACE("Before split: %s(%d, %d)\n", debugstr_run( run ),
+        run->pt.x, run->pt.y);
+
+  ME_SplitRunSimple(editor, &cursor);
+
+  run2 = &cursor.pRun->member.run;
+
+  ME_CalcRunExtent(wc->context, para, wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, run);
+
+  run2->pt.x = run->pt.x+run->nWidth;
+  run2->pt.y = run->pt.y;
+
+  if(TRACE_ON(richedit))
+  {
+    TRACE("Before check after split\n");
+    ME_CheckCharOffsets(editor);
+    TRACE("After check after split\n");
+    TRACE("After split: %s(%d, %d), %s(%d, %d)\n",
+      debugstr_run( run ), run->pt.x, run->pt.y,
+      debugstr_run( run2 ), run2->pt.x, run2->pt.y);
+  }
+
+  return cursor.pRun;
+}
+
+
 static ME_DisplayItem *ME_MakeRow(int height, int baseline, int width)
 {
   ME_DisplayItem *item = ME_MakeDI(diStartRow);
@@ -247,7 +296,7 @@ static ME_DisplayItem *ME_MaximizeSplit(ME_WrapContext *wc, ME_DisplayItem *p, i
     return NULL;
   j = reverse_find_non_whitespace( get_text( &p->member.run, 0 ), i);
   if (j>0) {
-    pp = ME_SplitRun(wc, piter, j);
+    pp = split_run_extents(wc, piter, j);
     wc->pt.x += piter->member.run.nWidth;
     return pp;
   }
@@ -267,7 +316,7 @@ static ME_DisplayItem *ME_MaximizeSplit(ME_WrapContext *wc, ME_DisplayItem *p, i
       {
         i = reverse_find_non_whitespace( get_text( &piter->member.run, 0 ),
                                          piter->member.run.len );
-        pp = ME_SplitRun(wc, piter, i);
+        pp = split_run_extents(wc, piter, i);
         wc->pt = pp->member.run.pt;
         return pp;
       }
@@ -322,7 +371,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
       if (i == len)
         i = reverse_find_non_whitespace( get_text( run, 0 ), len );
       if (i) {
-        ME_DisplayItem *piter2 = ME_SplitRun(wc, piter, i);
+        ME_DisplayItem *piter2 = split_run_extents(wc, piter, i);
         wc->pt = piter2->member.run.pt;
         return piter2;
       }
@@ -339,7 +388,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
   TRACE("Backtracking failed, trying desperate: %s\n", debugstr_run( &p->member.run ));
   /* OK, no better idea, so assume we MAY split words if we can split at all*/
   if (idesp)
-    return ME_SplitRun(wc, piter, idesp);
+    return split_run_extents(wc, piter, idesp);
   else
   if (wc->pRowStart && piter != wc->pRowStart)
   {
@@ -353,7 +402,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
     /* split point inside first character - no choice but split after that char */
     if (len != 1) {
       /* the run is more than 1 char, so we may split */
-      return ME_SplitRun(wc, piter, 1);
+      return split_run_extents(wc, piter, 1);
     }
     /* the run is one char, can't split it */
     return piter;
@@ -393,7 +442,7 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
       black = find_non_whitespace( get_text( run, 0 ), run->len, 0 );
       if (black) {
         wc->bOverflown = FALSE;
-        pp = ME_SplitRun(wc, p, black);
+        pp = split_run_extents(wc, p, black);
         ME_CalcRunExtent(wc->context, &wc->pPara->member.para,
                          wc->nRow ? wc->nLeftMargin : wc->nFirstMargin,
                          &pp->member.run);
@@ -444,7 +493,7 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
     {
       /* we aren't sure if it's *really* necessary, it's a good start however */
       int black = reverse_find_non_whitespace( get_text( run, 0 ), len );
-      ME_SplitRun(wc, p, black);
+      split_run_extents(wc, p, black);
       /* handle both parts again */
       return p;
     }

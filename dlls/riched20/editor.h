@@ -146,7 +146,6 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run) DECLSPEC_
 int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset) DECLSPEC_HIDDEN;
 int ME_CanJoinRuns(const ME_Run *run1, const ME_Run *run2) DECLSPEC_HIDDEN;
 void ME_JoinRuns(ME_TextEditor *editor, ME_DisplayItem *p) DECLSPEC_HIDDEN;
-ME_DisplayItem *ME_SplitRun(ME_WrapContext *wc, ME_DisplayItem *item, int nChar) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_SplitRunSimple(ME_TextEditor *editor, ME_Cursor *cursor) DECLSPEC_HIDDEN;
 void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run) DECLSPEC_HIDDEN;
 void ME_CalcRunExtent(ME_Context *c, const ME_Paragraph *para, int startx, ME_Run *run) DECLSPEC_HIDDEN;

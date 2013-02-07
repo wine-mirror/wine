@@ -243,54 +243,6 @@ void ME_JoinRuns(ME_TextEditor *editor, ME_DisplayItem *p)
 }
 
 /******************************************************************************
- * ME_SplitRun
- *
- * Splits a run into two in a given place. It also updates the screen position
- * and size (extent) of the newly generated runs.
- */
-ME_DisplayItem *ME_SplitRun(ME_WrapContext *wc, ME_DisplayItem *item, int nVChar)
-{
-  ME_TextEditor *editor = wc->context->editor;
-  ME_Run *run, *run2;
-  ME_Paragraph *para = &wc->pPara->member.para;
-  ME_Cursor cursor = {wc->pPara, item, nVChar};
-
-  assert(item->member.run.nCharOfs != -1);
-  if(TRACE_ON(richedit))
-  {
-    TRACE("Before check before split\n");
-    ME_CheckCharOffsets(editor);
-    TRACE("After check before split\n");
-  }
-
-  run = &item->member.run;
-
-  TRACE("Before split: %s(%d, %d)\n", debugstr_run( run ),
-        run->pt.x, run->pt.y);
-
-  ME_SplitRunSimple(editor, &cursor);
-
-  run2 = &cursor.pRun->member.run;
-
-  ME_CalcRunExtent(wc->context, para, wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, run);
-
-  run2->pt.x = run->pt.x+run->nWidth;
-  run2->pt.y = run->pt.y;
-
-  if(TRACE_ON(richedit))
-  {
-    TRACE("Before check after split\n");
-    ME_CheckCharOffsets(editor);
-    TRACE("After check after split\n");
-    TRACE("After split: %s(%d, %d), %s(%d, %d)\n",
-      debugstr_run( run ), run->pt.x, run->pt.y,
-      debugstr_run( run2 ), run2->pt.x, run2->pt.y);
-  }
-
-  return cursor.pRun;
-}
-
-/******************************************************************************
  * ME_SplitRunSimple
  *
  * Does the most basic job of splitting a run into two - it does not
