@@ -216,6 +216,11 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [[self window] rightMouseDown:theEvent];
     }
 
+    - (BOOL) acceptsFirstMouse:(NSEvent*)theEvent
+    {
+        return YES;
+    }
+
 @end
 
 
