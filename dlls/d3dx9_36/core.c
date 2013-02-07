@@ -145,10 +145,7 @@ HRESULT WINAPI D3DXCreateBuffer(DWORD size, ID3DXBuffer **buffer)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate buffer memory\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = d3dx9_buffer_init(object, size);
     if (FAILED(hr))

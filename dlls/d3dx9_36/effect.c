@@ -4608,10 +4608,7 @@ static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value, cons
 
                     sampler = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*sampler));
                     if (!sampler)
-                    {
-                        ERR("Out of memory\n");
                         return E_OUTOFMEMORY;
-                    }
 
                     hr = d3dx9_parse_sampler(sampler, data, ptr, objects);
                     if (hr != D3D_OK)
@@ -4913,7 +4910,6 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
             member = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*member));
             if (!member)
             {
-                ERR("Out of memory\n");
                 hr = E_OUTOFMEMORY;
                 goto err_out;
             }
@@ -4949,7 +4945,6 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
             member = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*member));
             if (!member)
             {
-                ERR("Out of memory\n");
                 hr = E_OUTOFMEMORY;
                 goto err_out;
             }
@@ -5037,10 +5032,7 @@ static HRESULT d3dx9_parse_state(struct d3dx_state *state, const char *data, con
 
     parameter = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*parameter));
     if (!parameter)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     state->type = ST_CONSTANT;
 
@@ -5132,7 +5124,6 @@ static HRESULT d3dx9_parse_effect_parameter(struct d3dx_parameter *param, const 
             annotation = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*annotation));
             if (!annotation)
             {
-                ERR("Out of memory\n");
                 hr = E_OUTOFMEMORY;
                 goto err_out;
             }
@@ -5207,7 +5198,6 @@ static HRESULT d3dx9_parse_effect_pass(struct d3dx_pass *pass, const char *data,
             annotation = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*annotation));
             if (!annotation)
             {
-                ERR("Out of memory\n");
                 hr = E_OUTOFMEMORY;
                 goto err_out;
             }
@@ -5316,7 +5306,6 @@ static HRESULT d3dx9_parse_effect_technique(struct d3dx_technique *technique, co
             annotation = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*annotation));
             if (!annotation)
             {
-                ERR("Out of memory\n");
                 hr = E_OUTOFMEMORY;
                 goto err_out;
             }
@@ -5349,7 +5338,6 @@ static HRESULT d3dx9_parse_effect_technique(struct d3dx_technique *technique, co
             pass = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pass));
             if (!pass)
             {
-                ERR("Out of memory\n");
                 hr = E_OUTOFMEMORY;
                 goto err_out;
             }
@@ -5570,7 +5558,6 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
             parameter = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*parameter));
             if (!parameter)
             {
-                ERR("Out of memory\n");
                 hr = E_OUTOFMEMORY;
                 goto err_out;
             }
@@ -5603,7 +5590,6 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
             technique = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*technique));
             if (!technique)
             {
-                ERR("Out of memory\n");
                 hr = E_OUTOFMEMORY;
                 goto err_out;
             }
@@ -5751,7 +5737,6 @@ static HRESULT d3dx9_effect_init(struct ID3DXEffectImpl *effect, struct IDirect3
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
-        ERR("Out of memory\n");
         hr = E_OUTOFMEMORY;
         goto err_out;
     }
@@ -5804,10 +5789,7 @@ HRESULT WINAPI D3DXCreateEffectEx(struct IDirect3DDevice9 *device, const void *s
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = d3dx9_effect_init(object, device, srcdata, srcdatalen, pool);
     if (FAILED(hr))
@@ -5847,7 +5829,6 @@ static HRESULT d3dx9_effect_compiler_init(struct ID3DXEffectCompilerImpl *compil
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
-        ERR("Out of memory\n");
         hr = E_OUTOFMEMORY;
         goto err_out;
     }
@@ -5888,10 +5869,7 @@ HRESULT WINAPI D3DXCreateEffectCompiler(const char *srcdata, UINT srcdatalen, co
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = d3dx9_effect_compiler_init(object, srcdata, srcdatalen);
     if (FAILED(hr))
@@ -5980,10 +5958,7 @@ HRESULT WINAPI D3DXCreateEffectPool(ID3DXEffectPool **pool)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     object->ID3DXEffectPool_iface.lpVtbl = &ID3DXEffectPool_Vtbl;
     object->ref = 1;
