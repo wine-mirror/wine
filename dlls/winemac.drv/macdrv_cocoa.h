@@ -130,6 +130,8 @@ enum {
     KEY_RELEASE,
     KEYBOARD_CHANGED,
     MOUSE_BUTTON,
+    MOUSE_MOVED,
+    MOUSE_MOVED_ABSOLUTE,
     WINDOW_CLOSE_REQUESTED,
     WINDOW_DID_MINIMIZE,
     WINDOW_DID_UNMINIMIZE,
@@ -162,6 +164,11 @@ typedef struct macdrv_event {
             int             y;
             unsigned long   time_ms;
         }                                           mouse_button;
+        struct {
+            int             x;
+            int             y;
+            unsigned long   time_ms;
+        }                                           mouse_moved;
         struct {
             CGRect frame;
         }                                           window_frame_changed;

@@ -234,6 +234,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     {
         WineWindow* window;
         WineContentView* contentView;
+        NSTrackingArea* trackingArea;
 
         [self flipRect:&window_frame];
 
@@ -244,6 +245,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         if (!window) return nil;
         window->normalStyleMask = [window styleMask];
+        window->forceNextMouseMoveAbsolute = TRUE;
 
         /* Standardize windows to eliminate differences between titled and
            borderless windows and between NSWindow and NSPanel. */
@@ -262,6 +264,17 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         if (!contentView)
             return nil;
         [contentView setAutoresizesSubviews:NO];
+
+        trackingArea = [[[NSTrackingArea alloc] initWithRect:[contentView bounds]
+                                                     options:(NSTrackingMouseEnteredAndExited |
+                                                              NSTrackingMouseMoved |
+                                                              NSTrackingActiveAlways |
+                                                              NSTrackingInVisibleRect)
+                                                       owner:window
+                                                    userInfo:nil] autorelease];
+        if (!trackingArea)
+            return nil;
+        [contentView addTrackingArea:trackingArea];
 
         [window setContentView:contentView];
 
@@ -387,6 +400,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     {
         self.latentParentWindow = [self parentWindow];
         [latentParentWindow removeChildWindow:self];
+        forceNextMouseMoveAbsolute = TRUE;
         [self orderOut:nil];
         [NSApp removeWindowsItem:self];
     }
@@ -581,6 +595,48 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                 event:theEvent];
     }
 
+    - (void) postMouseMovedEvent:(NSEvent *)theEvent
+    {
+        macdrv_event event;
+
+        if (forceNextMouseMoveAbsolute)
+        {
+            CGPoint point = CGEventGetLocation([theEvent CGEvent]);
+
+            event.type = MOUSE_MOVED_ABSOLUTE;
+            event.mouse_moved.x = point.x;
+            event.mouse_moved.y = point.y;
+
+            mouseMoveDeltaX = 0;
+            mouseMoveDeltaY = 0;
+
+            forceNextMouseMoveAbsolute = FALSE;
+        }
+        else
+        {
+            /* Add event delta to accumulated delta error */
+            /* deltaY is already flipped */
+            mouseMoveDeltaX += [theEvent deltaX];
+            mouseMoveDeltaY += [theEvent deltaY];
+
+            event.type = MOUSE_MOVED;
+            event.mouse_moved.x = mouseMoveDeltaX;
+            event.mouse_moved.y = mouseMoveDeltaY;
+
+            /* Keep the remainder after integer truncation. */
+            mouseMoveDeltaX -= event.mouse_moved.x;
+            mouseMoveDeltaY -= event.mouse_moved.y;
+        }
+
+        if (event.type == MOUSE_MOVED_ABSOLUTE || event.mouse_moved.x || event.mouse_moved.y)
+        {
+            event.window = (macdrv_window)[self retain];
+            event.mouse_moved.time_ms = [NSApp ticksForEventTime:[theEvent timestamp]];
+
+            [queue postEvent:&event];
+        }
+    }
+
 
     /*
      * ---------- NSWindow method overrides ----------
@@ -708,6 +764,14 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             }
         }
     }
+
+    - (void) mouseEntered:(NSEvent *)theEvent { forceNextMouseMoveAbsolute = TRUE; }
+    - (void) mouseExited:(NSEvent *)theEvent  { forceNextMouseMoveAbsolute = TRUE; }
+
+    - (void) mouseMoved:(NSEvent *)theEvent         { [self postMouseMovedEvent:theEvent]; }
+    - (void) mouseDragged:(NSEvent *)theEvent       { [self postMouseMovedEvent:theEvent]; }
+    - (void) rightMouseDragged:(NSEvent *)theEvent  { [self postMouseMovedEvent:theEvent]; }
+    - (void) otherMouseDragged:(NSEvent *)theEvent  { [self postMouseMovedEvent:theEvent]; }
 
 
     /*

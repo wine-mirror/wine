@@ -37,6 +37,8 @@ static const char *dbgstr_event(int type)
         "KEY_RELEASE",
         "KEYBOARD_CHANGED",
         "MOUSE_BUTTON",
+        "MOUSE_MOVED",
+        "MOUSE_MOVED_ABSOLUTE",
         "WINDOW_CLOSE_REQUESTED",
         "WINDOW_DID_MINIMIZE",
         "WINDOW_DID_UNMINIMIZE",
@@ -68,6 +70,12 @@ static macdrv_event_mask get_event_mask(DWORD mask)
 
     if (mask & QS_MOUSEBUTTON)
         event_mask |= event_mask_for_type(MOUSE_BUTTON);
+
+    if (mask & QS_MOUSEMOVE)
+    {
+        event_mask |= event_mask_for_type(MOUSE_MOVED);
+        event_mask |= event_mask_for_type(MOUSE_MOVED_ABSOLUTE);
+    }
 
     if (mask & QS_POSTMESSAGE)
     {
@@ -113,6 +121,10 @@ void macdrv_handle_event(macdrv_event *event)
         break;
     case MOUSE_BUTTON:
         macdrv_mouse_button(hwnd, event);
+        break;
+    case MOUSE_MOVED:
+    case MOUSE_MOVED_ABSOLUTE:
+        macdrv_mouse_moved(hwnd, event);
         break;
     case WINDOW_CLOSE_REQUESTED:
         macdrv_window_close_requested(hwnd);

@@ -112,8 +112,36 @@
 
     - (void) postEventObject:(MacDrvEvent*)event
     {
+        MacDrvEvent* lastEvent;
+
         [eventsLock lock];
-        [events addObject:event];
+
+        if ((event->event.type == MOUSE_MOVED ||
+             event->event.type == MOUSE_MOVED_ABSOLUTE) &&
+            (lastEvent = [events lastObject]) &&
+            (lastEvent->event.type == MOUSE_MOVED ||
+             lastEvent->event.type == MOUSE_MOVED_ABSOLUTE) &&
+            lastEvent->event.window == event->event.window)
+        {
+            if (event->event.type == MOUSE_MOVED)
+            {
+                lastEvent->event.mouse_moved.x += event->event.mouse_moved.x;
+                lastEvent->event.mouse_moved.y += event->event.mouse_moved.y;
+            }
+            else
+            {
+                lastEvent->event.type = MOUSE_MOVED_ABSOLUTE;
+                lastEvent->event.mouse_moved.x = event->event.mouse_moved.x;
+                lastEvent->event.mouse_moved.y = event->event.mouse_moved.y;
+            }
+
+            lastEvent->event.mouse_moved.time_ms = event->event.mouse_moved.time_ms;
+
+            macdrv_cleanup_event(&event->event);
+        }
+        else
+            [events addObject:event];
+
         [eventsLock unlock];
 
         [self signalEventAvailable];
