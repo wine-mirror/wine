@@ -364,10 +364,7 @@ static HRESULT WINAPI d3d8_CreateDevice(IDirect3D8 *iface, UINT adapter,
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate device memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = device_init(object, d3d8, d3d8->wined3d, adapter, device_type, focus_window, flags, parameters);
     if (FAILED(hr))
