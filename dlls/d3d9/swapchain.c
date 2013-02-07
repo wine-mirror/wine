@@ -278,10 +278,7 @@ HRESULT d3d9_swapchain_create(struct d3d9_device *device, struct wined3d_swapcha
     HRESULT hr;
 
     if (!(object = HeapAlloc(GetProcessHeap(),  HEAP_ZERO_MEMORY, sizeof(*object))))
-    {
-        ERR("Failed to allocate swapchain memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     if (FAILED(hr = swapchain_init(object, device, desc)))
     {

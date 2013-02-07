@@ -734,10 +734,7 @@ static HRESULT WINAPI d3d9_device_CreateTexture(IDirect3DDevice9Ex *iface,
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate texture memory.\n");
         return D3DERR_OUTOFVIDEOMEMORY;
-    }
 
     hr = texture_init(object, device, width, height, levels, usage, format, pool);
     if (FAILED(hr))
@@ -781,10 +778,7 @@ static HRESULT WINAPI d3d9_device_CreateVolumeTexture(IDirect3DDevice9Ex *iface,
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate volume texture memory.\n");
         return D3DERR_OUTOFVIDEOMEMORY;
-    }
 
     hr = volumetexture_init(object, device, width, height, depth, levels, usage, format, pool);
     if (FAILED(hr))
@@ -816,10 +810,7 @@ static HRESULT WINAPI d3d9_device_CreateCubeTexture(IDirect3DDevice9Ex *iface,
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate cube texture memory.\n");
         return D3DERR_OUTOFVIDEOMEMORY;
-    }
 
     hr = cubetexture_init(object, device, edge_length, levels, usage, format, pool);
     if (FAILED(hr))
@@ -851,10 +842,7 @@ static HRESULT WINAPI d3d9_device_CreateVertexBuffer(IDirect3DDevice9Ex *iface, 
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate buffer memory.\n");
         return D3DERR_OUTOFVIDEOMEMORY;
-    }
 
     hr = vertexbuffer_init(object, device, size, usage, fvf, pool);
     if (FAILED(hr))
@@ -886,10 +874,7 @@ static HRESULT WINAPI d3d9_device_CreateIndexBuffer(IDirect3DDevice9Ex *iface, U
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate buffer memory.\n");
         return D3DERR_OUTOFVIDEOMEMORY;
-    }
 
     hr = indexbuffer_init(object, device, size, usage, format, pool);
     if (FAILED(hr))
@@ -1559,10 +1544,7 @@ static HRESULT WINAPI d3d9_device_CreateStateBlock(IDirect3DDevice9Ex *iface,
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate stateblock memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = stateblock_init(object, device, type, NULL);
     if (FAILED(hr))
@@ -1613,7 +1595,6 @@ static HRESULT WINAPI d3d9_device_EndStateBlock(IDirect3DDevice9Ex *iface, IDire
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
-        ERR("Failed to allocate stateblock memory.\n");
         wined3d_mutex_lock();
         wined3d_stateblock_decref(wined3d_stateblock);
         wined3d_mutex_unlock();
@@ -2413,10 +2394,7 @@ static HRESULT WINAPI d3d9_device_CreateVertexShader(IDirect3DDevice9Ex *iface,
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate vertex shader memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = vertexshader_init(object, device, byte_code);
     if (FAILED(hr))
@@ -2896,10 +2874,7 @@ static HRESULT WINAPI d3d9_device_CreateQuery(IDirect3DDevice9Ex *iface, D3DQUER
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate query memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = query_init(object, device, type);
     if (FAILED(hr))
