@@ -1068,10 +1068,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBuffer(ID3D10Device *iface,
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D10 buffer object memory\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = d3d10_buffer_init(object, This, desc, data);
     if (FAILED(hr))
@@ -1108,10 +1105,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device *ifac
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D10 texture2d object memory\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = d3d10_texture2d_init(object, This, desc);
     if (FAILED(hr))
@@ -1140,10 +1134,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture3D(ID3D10Device *ifac
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D10 texture3d object memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = d3d10_texture3d_init(object, device, desc);
     if (FAILED(hr))
@@ -1169,10 +1160,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Dev
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D10 shader resource view object memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     if (FAILED(hr = d3d10_shader_resource_view_init(object, resource, desc)))
     {
@@ -1197,10 +1185,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Devic
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D10 rendertarget view object memory\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = d3d10_rendertarget_view_init(object, resource, desc);
     if (FAILED(hr))
@@ -1226,10 +1211,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilView(ID3D10Devic
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D10 depthstencil view object memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     if (FAILED(hr = d3d10_depthstencil_view_init(object, resource, desc)))
     {
@@ -1260,10 +1242,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device *if
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D10 input layout object memory\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = d3d10_input_layout_init(object, This, element_descs, element_count,
             shader_byte_code, shader_byte_code_length);
@@ -1292,10 +1271,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateVertexShader(ID3D10Device *i
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D10 vertex shader object memory\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = d3d10_vertex_shader_init(object, This, byte_code, byte_code_length);
     if (FAILED(hr))
@@ -1323,10 +1299,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShader(ID3D10Device 
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D10 geometry shader object memory\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = d3d10_geometry_shader_init(object, This, byte_code, byte_code_length);
     if (FAILED(hr))
@@ -1366,10 +1339,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePixelShader(ID3D10Device *if
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D10 pixel shader object memory\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = d3d10_pixel_shader_init(object, This, byte_code, byte_code_length);
     if (FAILED(hr))
@@ -1411,10 +1381,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState(ID3D10Device *ifa
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D10 blend state object memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     if (FAILED(hr = d3d10_blend_state_init(object, device, desc)))
     {
@@ -1455,10 +1422,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilState(ID3D10Devi
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D10 depthstencil state object memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     if (FAILED(hr = d3d10_depthstencil_state_init(object, device, desc)))
     {
@@ -1500,10 +1464,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRasterizerState(ID3D10Device
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D10 rasterizer state object memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     if (FAILED(hr = d3d10_rasterizer_state_init(object, device, desc)))
     {
@@ -1544,10 +1505,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device *i
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D10 sampler state object memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     if (FAILED(hr = d3d10_sampler_state_init(object, device, desc)))
     {
@@ -1572,10 +1530,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateQuery(ID3D10Device *iface,
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D10 query object memory.\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = d3d10_query_init(object);
     if (FAILED(hr))
