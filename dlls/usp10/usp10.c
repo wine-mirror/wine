@@ -1060,6 +1060,9 @@ HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
                     heap_free(((ScriptCache *)*psc)->scripts[i].languages[j].features[k].lookups);
                 heap_free(((ScriptCache *)*psc)->scripts[i].languages[j].features);
             }
+            for (j = 0; j < ((ScriptCache *)*psc)->scripts[i].default_language.feature_count; j++)
+                heap_free(((ScriptCache *)*psc)->scripts[i].default_language.features[j].lookups);
+            heap_free(((ScriptCache *)*psc)->scripts[i].default_language.features);
             heap_free(((ScriptCache *)*psc)->scripts[i].languages);
         }
         heap_free(((ScriptCache *)*psc)->scripts);
