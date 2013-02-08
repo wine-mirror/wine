@@ -2873,7 +2873,7 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
 
             if (icon->rsrc && (flags & LR_COPYFROMRESOURCE))
                 res = CURSORICON_Load( icon->module, icon->resname, desiredx, desiredy, depth,
-                                       type == IMAGE_CURSOR, flags );
+                                       !icon->is_icon, flags );
             else
                 res = CopyIcon( hnd ); /* FIXME: change size if necessary */
             release_icon_ptr( hnd, icon );
