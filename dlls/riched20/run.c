@@ -404,56 +404,6 @@ void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run)
 }
 
 /******************************************************************************
- * ME_CharFromPoint
- * 
- * Returns a character position inside the run given a run-relative
- * pixel horizontal position. This version rounds left (ie. if the second
- * character is at pixel position 8, then for cx=0..7 it returns 0).  
- */     
-int ME_CharFromPoint(ME_Context *c, int cx, ME_Run *run)
-{
-  int fit = 0;
-  HGDIOBJ hOldFont;
-  SIZE sz;
-  if (!run->len || cx <= 0)
-    return 0;
-
-  if (run->nFlags & MERF_TAB ||
-      (run->nFlags & (MERF_ENDCELL|MERF_ENDPARA)) == MERF_ENDCELL)
-  {
-    if (cx < run->nWidth/2) 
-      return 0;
-    return 1;
-  }
-  if (run->nFlags & MERF_GRAPHICS)
-  {
-    SIZE sz;
-    ME_GetOLEObjectSize(c, run, &sz);
-    if (cx < sz.cx)
-      return 0;
-    return 1;
-  }
-  hOldFont = ME_SelectStyleFont(c, run->style);
-  
-  if (c->editor->cPasswordMask)
-  {
-    ME_String *strMasked = ME_MakeStringR(c->editor->cPasswordMask, run->len);
-    GetTextExtentExPointW(c->hDC, strMasked->szData, run->len,
-      cx, &fit, NULL, &sz);
-    ME_DestroyString(strMasked);
-  }
-  else
-  {
-    GetTextExtentExPointW(c->hDC, get_text( run, 0 ), run->len,
-      cx, &fit, NULL, &sz);
-  }
-  
-  ME_UnselectStyleFont(c, run->style, hOldFont);
-
-  return fit;
-}
-
-/******************************************************************************
  * ME_CharFromPointCursor
  *
  * Returns a character position inside the run given a run-relative
