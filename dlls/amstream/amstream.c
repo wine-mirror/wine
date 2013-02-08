@@ -63,10 +63,7 @@ HRESULT AM_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAMMultiMediaStreamImpl));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     object->IAMMultiMediaStream_iface.lpVtbl = &AM_Vtbl;
     object->ref = 1;

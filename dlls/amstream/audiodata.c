@@ -143,10 +143,7 @@ HRESULT AMAudioData_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AMAudioDataImpl));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     object->IAudioData_iface.lpVtbl = &AudioData_Vtbl;
     object->ref = 1;
