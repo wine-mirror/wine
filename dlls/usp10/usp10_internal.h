@@ -144,6 +144,7 @@ typedef struct {
     OPENTYPE_TAG tag;
     LPCVOID gsub_table;
     LPCVOID gpos_table;
+    BOOL features_initialized;
     INT feature_count;
     LoadedFeature *features;
 } LoadedLanguage;
@@ -153,6 +154,7 @@ typedef struct {
     LPCVOID gsub_table;
     LPCVOID gpos_table;
     LoadedLanguage default_language;
+    BOOL languages_initialized;
     INT language_count;
     LoadedLanguage *languages;
 } LoadedScript;
@@ -174,6 +176,7 @@ typedef struct {
     LPVOID CMAP_Table;
     LPVOID CMAP_format12_Table;
     LPVOID GPOS_Table;
+    BOOL scripts_initialized;
     INT script_count;
     LoadedScript *scripts;
 

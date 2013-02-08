@@ -1898,6 +1898,9 @@ static void GPOS_expand_script_cache(ScriptCache *psc)
     script = (const OT_ScriptList*)((const BYTE*)header + GET_BE_WORD(header->ScriptList));
     count = GET_BE_WORD(script->ScriptCount);
 
+    if (!count)
+        return;
+
     if (!psc->script_count)
     {
         psc->script_count = count;
@@ -1941,10 +1944,11 @@ static void GPOS_expand_script_cache(ScriptCache *psc)
 
 static void _initialize_script_cache(ScriptCache *psc)
 {
-    if (!psc->script_count)
+    if (!psc->scripts_initialized)
     {
         GSUB_initialize_script_cache(psc);
         GPOS_expand_script_cache(psc);
+        psc->scripts_initialized = TRUE;
     }
 }
 
@@ -2029,6 +2033,10 @@ static void GPOS_expand_language_cache(LoadedScript *script)
     count = GET_BE_WORD(table->LangSysCount);
 
     TRACE("Deflang %p, LangCount %i\n",script->default_language.gpos_table, count);
+
+    if (!count)
+        return;
+
     if (!script->language_count)
     {
         int i;
@@ -2072,10 +2080,11 @@ static void GPOS_expand_language_cache(LoadedScript *script)
 
 static void _initialize_language_cache(LoadedScript *script)
 {
-    if (!script->language_count)
+    if (!script->languages_initialized)
     {
         GSUB_initialize_language_cache(script);
         GPOS_expand_language_cache(script);
+        script->languages_initialized = TRUE;
     }
 }
 
@@ -2194,6 +2203,10 @@ static void GPOS_expand_feature_cache(LPCVOID table, LoadedLanguage *language)
     feature_list = (const OT_FeatureList*)((const BYTE*)header + GET_BE_WORD(header->FeatureList));
 
     TRACE("%i features\n",count);
+
+    if (!count)
+        return;
+
     if (!language->feature_count)
     {
         language->feature_count = count;
@@ -2219,7 +2232,7 @@ static void GPOS_expand_feature_cache(LPCVOID table, LoadedLanguage *language)
             }
         }
     }
-    else if (count)
+    else
     {
         language->features = HeapReAlloc(GetProcessHeap(),0,language->features, sizeof(LoadedFeature)*(language->feature_count + count));
 
@@ -2245,10 +2258,11 @@ static void GPOS_expand_feature_cache(LPCVOID table, LoadedLanguage *language)
 
 static void _initialize_feature_cache(ScriptCache *psc, LoadedLanguage *language)
 {
-    if (!language->feature_count)
+    if (!language->features_initialized)
     {
         GSUB_initialize_feature_cache(psc->GSUB_Table, language);
         GPOS_expand_feature_cache(psc->GPOS_Table, language);
+        language->features_initialized = TRUE;
     }
 }
 
