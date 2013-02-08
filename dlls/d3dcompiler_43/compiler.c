@@ -84,10 +84,8 @@ static void wpp_write_message(const char *fmt, va_list args)
     {
         wpp_messages = HeapAlloc(GetProcessHeap(), 0, MESSAGEBUFFER_INITIAL_SIZE);
         if(wpp_messages == NULL)
-        {
-            ERR("Error allocating memory for parser messages\n");
             return;
-        }
+
         wpp_messages_capacity = MESSAGEBUFFER_INITIAL_SIZE;
     }
 
@@ -189,10 +187,8 @@ static void *wpp_open_mem(const char *filename, int type)
     if(current_include == NULL) return NULL;
     desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*desc));
     if(!desc)
-    {
-        ERR("Error allocating memory\n");
         return NULL;
-    }
+
     hr = ID3DInclude_Open(current_include,
                           type ? D3D_INCLUDE_LOCAL : D3D_INCLUDE_SYSTEM,
                           filename, parent_include, (LPCVOID *)&desc->buffer,
@@ -275,10 +271,8 @@ static void wpp_write_mem(const char *buffer, unsigned int len)
     {
         wpp_output = HeapAlloc(GetProcessHeap(), 0, BUFFER_INITIAL_CAPACITY);
         if(!wpp_output)
-        {
-            ERR("Error allocating memory\n");
             return;
-        }
+
         wpp_output_capacity = BUFFER_INITIAL_CAPACITY;
     }
     if(len > wpp_output_capacity - wpp_output_size)

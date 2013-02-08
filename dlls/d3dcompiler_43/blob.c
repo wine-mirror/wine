@@ -148,10 +148,7 @@ HRESULT WINAPI D3DCreateBlob(SIZE_T data_size, ID3DBlob **blob)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D blob object memory\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = d3dcompiler_blob_init(object, data_size);
     if (FAILED(hr))

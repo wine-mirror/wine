@@ -1282,10 +1282,7 @@ static struct d3dcompiler_shader_reflection_type *get_reflection_type(struct d3d
 
     type = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*type));
     if (!type)
-    {
-        ERR("Failed to allocate type memory.\n");
         return NULL;
-    }
 
     type->ID3D11ShaderReflectionType_iface.lpVtbl = &d3dcompiler_shader_reflection_type_vtbl;
     type->id = offset;
@@ -1833,10 +1830,7 @@ HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void 
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
-    {
-        ERR("Failed to allocate D3D compiler shader reflection object memory\n");
         return E_OUTOFMEMORY;
-    }
 
     hr = d3dcompiler_shader_reflection_init(object, data, data_size);
     if (FAILED(hr))
