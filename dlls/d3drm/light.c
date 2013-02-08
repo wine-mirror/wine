@@ -426,10 +426,7 @@ HRESULT Direct3DRMLight_create(IUnknown** ppObj)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMLightImpl));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     object->IDirect3DRMLight_iface.lpVtbl = &Direct3DRMLight_Vtbl;
     object->ref = 1;

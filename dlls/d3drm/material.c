@@ -312,10 +312,7 @@ HRESULT Direct3DRMMaterial_create(IDirect3DRMMaterial2** ret_iface)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMMaterialImpl));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     object->IDirect3DRMMaterial2_iface.lpVtbl = &Direct3DRMMaterial2_Vtbl;
     object->ref = 1;

@@ -2522,10 +2522,7 @@ HRESULT Direct3DRMMeshBuilder_create(REFIID riid, IUnknown** ppObj)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMMeshBuilderImpl));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     object->IDirect3DRMMeshBuilder2_iface.lpVtbl = &Direct3DRMMeshBuilder2_Vtbl;
     object->IDirect3DRMMeshBuilder3_iface.lpVtbl = &Direct3DRMMeshBuilder3_Vtbl;
@@ -3086,10 +3083,7 @@ HRESULT Direct3DRMMesh_create(IDirect3DRMMesh** obj)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMMeshImpl));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     object->IDirect3DRMMesh_iface.lpVtbl = &Direct3DRMMesh_Vtbl;
     object->ref = 1;

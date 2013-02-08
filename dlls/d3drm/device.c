@@ -1161,10 +1161,7 @@ HRESULT Direct3DRMDevice_create(REFIID riid, IUnknown** ppObj)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMDeviceImpl));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     object->IDirect3DRMDevice2_iface.lpVtbl = &Direct3DRMDevice2_Vtbl;
     object->IDirect3DRMDevice3_iface.lpVtbl = &Direct3DRMDevice3_Vtbl;

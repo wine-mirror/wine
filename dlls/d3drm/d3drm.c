@@ -1686,10 +1686,7 @@ HRESULT Direct3DRM_create(IUnknown** ppObj)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMImpl));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     object->IDirect3DRM_iface.lpVtbl = &Direct3DRM_Vtbl;
     object->IDirect3DRM2_iface.lpVtbl = &Direct3DRM2_Vtbl;

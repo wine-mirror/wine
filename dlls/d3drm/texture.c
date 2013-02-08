@@ -849,10 +849,7 @@ HRESULT Direct3DRMTexture_create(REFIID riid, IUnknown** ret_iface)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMTextureImpl));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     object->IDirect3DRMTexture2_iface.lpVtbl = &Direct3DRMTexture2_Vtbl;
     object->IDirect3DRMTexture3_iface.lpVtbl = &Direct3DRMTexture3_Vtbl;

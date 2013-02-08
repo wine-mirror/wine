@@ -971,10 +971,7 @@ HRESULT Direct3DRMViewport_create(REFIID riid, IUnknown** ppObj)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMViewportImpl));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     object->IDirect3DRMViewport_iface.lpVtbl = &Direct3DRMViewport_Vtbl;
     object->IDirect3DRMViewport2_iface.lpVtbl = &Direct3DRMViewport2_Vtbl;

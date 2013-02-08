@@ -203,10 +203,7 @@ static HRESULT Direct3DRMFrameArray_create(IDirect3DRMFrameArray** obj)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMFrameArrayImpl));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     object->IDirect3DRMFrameArray_iface.lpVtbl = &Direct3DRMFrameArray_Vtbl;
     object->ref = 1;
@@ -319,10 +316,7 @@ static HRESULT Direct3DRMVisualArray_create(IDirect3DRMVisualArray** ret_iface)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMVisualArrayImpl));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     object->IDirect3DRMVisualArray_iface.lpVtbl = &Direct3DRMVisualArray_Vtbl;
     object->ref = 1;
@@ -439,10 +433,7 @@ static HRESULT Direct3DRMLightArray_create(IDirect3DRMLightArray** obj)
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMLightArrayImpl));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     object->IDirect3DRMLightArray_iface.lpVtbl = &Direct3DRMLightArray_Vtbl;
     object->ref = 1;
@@ -2665,10 +2656,7 @@ HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown* parent, IUnknown** ret_ifa
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMFrameImpl));
     if (!object)
-    {
-        ERR("Out of memory\n");
         return E_OUTOFMEMORY;
-    }
 
     object->IDirect3DRMFrame2_iface.lpVtbl = &Direct3DRMFrame2_Vtbl;
     object->IDirect3DRMFrame3_iface.lpVtbl = &Direct3DRMFrame3_Vtbl;
