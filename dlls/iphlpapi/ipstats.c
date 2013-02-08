@@ -693,7 +693,7 @@ DWORD WINAPI GetIcmpStatisticsEx(PMIB_ICMP_EX stats, DWORD family)
     }
 
     ret = GetIcmpStatistics(&ipv4stats);
-    if (SUCCEEDED(ret))
+    if (!ret)
     {
         stats->icmpInStats.dwMsgs = ipv4stats.stats.icmpInStats.dwMsgs;
         stats->icmpInStats.dwErrors = ipv4stats.stats.icmpInStats.dwErrors;
