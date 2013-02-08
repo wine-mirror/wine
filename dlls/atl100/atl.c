@@ -456,6 +456,38 @@ HRESULT WINAPI AtlComModuleGetClassObject(_ATL_COM_MODULE *pm, REFCLSID rclsid, 
 }
 
 /***********************************************************************
+ *           AtlComModuleRegisterClassObjects   [atl100.17]
+ */
+HRESULT WINAPI AtlComModuleRegisterClassObjects(_ATL_COM_MODULE *module, DWORD context, DWORD flags)
+{
+    _ATL_OBJMAP_ENTRY **iter;
+    IUnknown *unk;
+    HRESULT hres;
+
+    TRACE("(%p %x %x)\n", module, context, flags);
+
+    if(!module)
+        return E_INVALIDARG;
+
+    for(iter = module->m_ppAutoObjMapFirst; iter < module->m_ppAutoObjMapLast; iter++) {
+        if(!(*iter)->pfnGetClassObject)
+            continue;
+
+        hres = (*iter)->pfnGetClassObject((*iter)->pfnCreateInstance, &IID_IUnknown, (void**)&unk);
+        if(FAILED(hres))
+            return hres;
+
+        hres = CoRegisterClassObject((*iter)->pclsid, unk, context, flags, &(*iter)->dwRegister);
+        IUnknown_Release(unk);
+        if(FAILED(hres))
+            return hres;
+    }
+
+   return S_OK;
+
+}
+
+/***********************************************************************
  *           AtlComModuleUnregisterServer       [atl100.22]
  */
 HRESULT WINAPI AtlComModuleUnregisterServer(_ATL_COM_MODULE *mod, BOOL bRegTypeLib, const CLSID *clsid)
