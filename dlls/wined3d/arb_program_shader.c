@@ -821,6 +821,7 @@ static DWORD shader_generate_arb_declarations(const struct wined3d_shader *shade
 
             max_constantsF -= reserved_vs_const(shader_data, reg_maps, gl_info);
             max_constantsF -= count_bits(reg_maps->integer_constants);
+            max_constantsF -= gl_info->reserved_arb_constants;
 
             for (i = 0; i < shader->limits.constant_float; ++i)
             {

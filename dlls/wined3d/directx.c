@@ -751,6 +751,14 @@ static BOOL match_fglrx(const struct wined3d_gl_info *gl_info, const char *gl_re
     return gl_vendor == GL_VENDOR_FGLRX;
 }
 
+static BOOL match_r200(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+{
+    if (card_vendor != HW_VENDOR_AMD) return FALSE;
+    if (device == CARD_AMD_RADEON_8500) return TRUE;
+    return FALSE;
+}
+
 static void quirk_apple_glsl_constants(struct wined3d_gl_info *gl_info)
 {
     /* MacOS needs uniforms for relative addressing offsets. This can accumulate to quite a few uniforms.
@@ -861,6 +869,19 @@ static void quirk_limited_tex_filtering(struct wined3d_gl_info *gl_info)
     gl_info->quirks |= WINED3D_QUIRK_LIMITED_TEX_FILTERING;
 }
 
+static void quirk_r200_constants(struct wined3d_gl_info *gl_info)
+{
+    /* The Mesa r200 driver (and there is no other driver for this GPU Wine would run on)
+     * loads some fog parameters (start, end, exponent, but not the color) into the
+     * program.
+     *
+     * Apparently the fog hardware is only able to handle linear fog with a range of 0.0;1.0,
+     * and it is the responsibility of the vertex pipeline to handle non-linear fog and
+     * linear fog with start and end other than 0.0 and 1.0. */
+    TRACE("Reserving 1 ARB constant for compiler private use.\n");
+    gl_info->reserved_arb_constants = max(gl_info->reserved_arb_constants, 1);
+}
+
 struct driver_quirk
 {
     BOOL (*match)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
@@ -940,6 +961,11 @@ static const struct driver_quirk quirk_table[] =
         match_not_dx10_capable,
         quirk_limited_tex_filtering,
         "Texture filtering, blending and VTF support is limited"
+    },
+    {
+        match_r200,
+        quirk_r200_constants,
+        "r200 vertex shader constants"
     },
 };
 

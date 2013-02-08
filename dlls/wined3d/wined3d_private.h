@@ -1532,7 +1532,7 @@ struct wined3d_gl_info
 {
     DWORD glsl_version;
     struct wined3d_gl_limits limits;
-    DWORD reserved_glsl_constants;
+    DWORD reserved_glsl_constants, reserved_arb_constants;
     DWORD quirks;
     BOOL supported[WINED3D_GL_EXT_COUNT];
     GLint wrap_lookup[WINED3D_TADDRESS_MIRROR_ONCE - WINED3D_TADDRESS_WRAP + 1];
