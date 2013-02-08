@@ -113,10 +113,9 @@ static HRESULT WINAPI IDirectMusicTempoTrack_IDirectMusicTrack_InitPlay (LPDIREC
   FIXME("(%p, %p, %p, %p, %d, %d): semi-stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
 
   pState = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_TEMPO_PLAY_STATE));
-  if (NULL == pState) {
-    ERR(": no more memory\n");
+  if (NULL == pState)
     return E_OUTOFMEMORY;
-  }
+
   /** TODO real fill useful data */
   pState->dummy = 0;
   *ppStateData = pState;
@@ -348,10 +347,9 @@ static HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_Load (LPPERSISTSTREA
       TRACE_(dmfile)(" - lTime = %u\n", item.lTime);
       TRACE_(dmfile)(" - dblTempo = %g\n", item.dblTempo);
       pNewItem = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_TEMPO_ITEM));
-      if (NULL == pNewItem) {
-	ERR(": no more memory\n");
-	return  E_OUTOFMEMORY;
-      }
+      if (NULL == pNewItem)
+        return  E_OUTOFMEMORY;
+
       pNewItem->item = item;
       list_add_tail (&This->Items, &pNewItem->entry);
       pNewItem = NULL;

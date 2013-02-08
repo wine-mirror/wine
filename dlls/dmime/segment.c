@@ -246,10 +246,9 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_InsertTrack 
   }
 
   pNewSegTrack = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_SEGMENT_TRACK));
-  if (NULL == pNewSegTrack) {
-    ERR(": no more memory\n");
+  if (NULL == pNewSegTrack)
     return  E_OUTOFMEMORY;
-  }
+
   pNewSegTrack->dwGroupBits = dwGroupBits;
   pNewSegTrack->pTrack = pTrack;
   IDirectMusicTrack_Init(pTrack, (IDirectMusicSegment *)iface);

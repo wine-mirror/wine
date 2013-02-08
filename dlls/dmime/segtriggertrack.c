@@ -274,10 +274,9 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSIS
       TRACE_(dmfile)(": segment item chunk\n"); 
       /** alloc new item entry */
       pNewItem = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_SEGMENT_ITEM));
-      if (!pNewItem) {
-	ERR(": no more memory\n");
-	return  E_OUTOFMEMORY;
-      }
+      if (!pNewItem)
+        return  E_OUTOFMEMORY;
+
       IStream_Read (pStm, &pNewItem->header, sizeof(DMUS_IO_SEGMENT_ITEM_HEADER), NULL);
       TRACE_(dmfile)(" - lTimePhysical: %u\n", pNewItem->header.lTimeLogical);
       TRACE_(dmfile)(" - lTimePhysical: %u\n", pNewItem->header.lTimePhysical);
