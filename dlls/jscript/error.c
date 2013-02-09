@@ -342,7 +342,7 @@ HRESULT init_error_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
         SyntaxErrorConstr_value, TypeErrorConstr_value, URIErrorConstr_value};
 
     jsdisp_t *err;
-    INT i;
+    unsigned int i;
     jsstr_t *str;
     HRESULT hres;
 

@@ -755,7 +755,8 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
     bytecode_t *code;
     jsdisp_t *function;
     jsstr_t **params = NULL;
-    int i=0, j=0;
+    unsigned int i = 0;
+    int j = 0;
     HRESULT hres = S_OK;
 
     static const WCHAR function_anonymousW[] = {'f','u','n','c','t','i','o','n',' ','a','n','o','n','y','m','o','u','s','('};
@@ -809,8 +810,8 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
         }
     }
 
-    while(--i >= 0)
-        jsstr_release(params[i]);
+    while(i)
+        jsstr_release(params[--i]);
     heap_free(params);
     if(FAILED(hres))
         return hres;

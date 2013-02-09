@@ -3596,7 +3596,7 @@ static HRESULT create_match_array(script_ctx_t *ctx, jsstr_t *input, const match
 {
     jsdisp_t *array;
     jsstr_t *str;
-    int i;
+    DWORD i;
     HRESULT hres = S_OK;
 
     static const WCHAR indexW[] = {'i','n','d','e','x',0};

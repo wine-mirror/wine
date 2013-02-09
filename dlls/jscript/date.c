@@ -2236,7 +2236,7 @@ static inline HRESULT date_parse(jsstr_t *input_str, double *ret) {
             }
             else {
                 /* Month or garbage */
-                int j;
+                unsigned int j;
 
                 for(size=i; parse[size]>='A' && parse[size]<='Z'; size++);
                 size -= i;
