@@ -4634,21 +4634,25 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     else if ((infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) == FALSE)
         prepaint_setup(infoPtr, hdc, &nmlvcd, TRUE);
 
-    /* in full row select, subitems, will just use main item's colors */
-    if (nSubItem && infoPtr->uView == LV_VIEW_DETAILS && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
-	nmlvcd.clrTextBk = CLR_NONE;
-
     /* FIXME: temporary hack */
     rcSelect.left = rcLabel.left;
 
-    /* draw the selection background, if we're drawing the main item */
-    if (nSubItem == 0)
-    {
-        /* in icon mode, the label rect is really what we want to draw the
-         * background for */
-        if (infoPtr->uView == LV_VIEW_ICON)
-	    rcSelect = rcLabel;
+    /* in icon mode, the label rect is really what we want to draw the
+     * background for */
+    /* in detail mode, we want to paint background for label rect when
+     * item is not selected or listview has full row select; otherwise paint
+     * background for text only */
+    if (infoPtr->uView == LV_VIEW_ICON ||
+        (infoPtr->uView == LV_VIEW_DETAILS &&
+        (!(lvItem.state & LVIS_SELECTED) ||
+        (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) != 0)))
+        rcSelect = rcLabel;
 
+    if (nmlvcd.clrTextBk != CLR_NONE)
+        ExtTextOutW(hdc, rcSelect.left, rcSelect.top, ETO_OPAQUE, &rcSelect, NULL, 0, NULL);
+
+    if(nSubItem == 0 && infoPtr->nFocusedItem == nItem)
+    {
 	if (infoPtr->uView == LV_VIEW_DETAILS && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
 	{
 	    /* we have to update left focus bound too if item isn't in leftmost column
@@ -4671,10 +4675,8 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
 	    rcSelect.right = rcBox.right;
 	}
 
-	if (nmlvcd.clrTextBk != CLR_NONE)
-	    ExtTextOutW(hdc, rcSelect.left, rcSelect.top, ETO_OPAQUE, &rcSelect, NULL, 0, NULL);
 	/* store new focus rectangle */
-	if (infoPtr->nFocusedItem == nItem) infoPtr->rcFocus = rcSelect;
+        infoPtr->rcFocus = rcSelect;
     }
 
     /* state icons */
