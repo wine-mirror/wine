@@ -255,7 +255,8 @@ static void test_LsaLookupNames2(void)
         return;
     }
 
-    if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH)
+    if ((PRIMARYLANGID(LANGIDFROMLCID(GetSystemDefaultLCID())) != LANG_ENGLISH) ||
+        (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH))
     {
         skip("Non-English locale (skipping LsaLookupNames2 tests)\n");
         return;
