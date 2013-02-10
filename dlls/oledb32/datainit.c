@@ -289,30 +289,89 @@ static void free_dbpropset(ULONG count, DBPROPSET *propset)
     CoTaskMemFree(propset);
 }
 
+struct dbproperty {
+    const WCHAR *name;
+    DBPROPID id;
+    DBPROPOPTIONS options;
+    VARTYPE type;
+};
+
+static const WCHAR datasourceW[] = {'D','a','t','a',' ','S','o','u','r','c','e',0};
+static const WCHAR persistsiW[] = {'P','e','r','s','i','s','t',' ','S','e','c','u','r','i','t','y',' ','I','n','f','o',0};
+
+static const struct dbproperty dbproperties[] = {
+    { datasourceW, DBPROP_INIT_DATASOURCE, DBPROPOPTIONS_REQUIRED, VT_BSTR },
+    { persistsiW, DBPROP_AUTH_PERSIST_SENSITIVE_AUTHINFO, DBPROPOPTIONS_OPTIONAL, VT_BOOL }
+};
+
 static HRESULT set_dbpropset(BSTR name, BSTR value, DBPROPSET **propset)
 {
-    static const WCHAR datasourceW[] = {'D','a','t','a',' ','S','o','u','r','c','e',0};
+    VARIANT src, dest;
+    int min, max, n;
+    HRESULT hr;
 
-    if (!strcmpW(datasourceW, name))
+    min = 0;
+    max = sizeof(dbproperties)/sizeof(struct dbproperty) - 1;
+
+    while (min <= max)
     {
-        *propset = CoTaskMemAlloc(sizeof(DBPROPSET));
-        (*propset)->rgProperties = CoTaskMemAlloc(sizeof(DBPROP));
-        (*propset)->cProperties = 1;
-        (*propset)->guidPropertySet = DBPROPSET_DBINIT;
-        (*propset)->rgProperties[0].dwPropertyID = DBPROP_INIT_DATASOURCE;
-        (*propset)->rgProperties[0].dwOptions = DBPROPOPTIONS_REQUIRED;
-        (*propset)->rgProperties[0].dwStatus = 0;
-        memset(&(*propset)->rgProperties[0].colid, 0, sizeof(DBID));
-        V_VT(&(*propset)->rgProperties[0].vValue) = VT_BSTR;
-        V_BSTR(&(*propset)->rgProperties[0].vValue) = SysAllocString(value);
-        return S_OK;
+        int r;
+
+        n = (min+max)/2;
+
+        r = strcmpW(dbproperties[n].name, name);
+        if (!r)
+            break;
+
+        if (r < 0)
+            min = n+1;
+        else
+            max = n-1;
     }
-    else
+
+    if (min > max)
     {
         *propset = NULL;
         FIXME("unsupported property %s\n", debugstr_w(name));
         return E_FAIL;
     }
+
+    VariantInit(&dest);
+
+    V_VT(&src) = VT_BSTR;
+    V_BSTR(&src) = value;
+
+    hr = VariantChangeType(&dest, &src, 0, dbproperties[n].type);
+    if (FAILED(hr))
+    {
+        ERR("failed to init property %s value as type %d\n", debugstr_w(name), dbproperties[n].type);
+        return hr;
+    }
+
+    *propset = CoTaskMemAlloc(sizeof(DBPROPSET));
+    if (!*propset)
+    {
+        VariantClear(&dest);
+        return E_OUTOFMEMORY;
+    }
+
+    (*propset)->rgProperties = CoTaskMemAlloc(sizeof(DBPROP));
+    if (!(*propset)->rgProperties)
+    {
+        VariantClear(&dest);
+        CoTaskMemFree(*propset);
+        return E_OUTOFMEMORY;
+    }
+
+    (*propset)->cProperties = 1;
+    (*propset)->guidPropertySet = DBPROPSET_DBINIT;
+    (*propset)->rgProperties[0].dwPropertyID = dbproperties[n].id;
+    (*propset)->rgProperties[0].dwOptions = dbproperties[n].options;
+    (*propset)->rgProperties[0].dwStatus = 0;
+    memset(&(*propset)->rgProperties[0].colid, 0, sizeof(DBID));
+    (*propset)->rgProperties[0].vValue = dest;
+
+    return S_OK;
 }
 
 /*** IDataInitialize methods ***/

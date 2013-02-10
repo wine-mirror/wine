@@ -59,12 +59,13 @@ static void test_database(void)
 {
     static WCHAR initstring_jet[] = {'P','r','o','v','i','d','e','r','=','M','i','c','r','o','s','o','f','t','.',
          'J','e','t','.','O','L','E','D','B','.','4','.','0',';',
-         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',0};
+         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',
+         'P','e','r','s','i','s','t',' ','S','e','c','u','r','i','t','y',' ','I','n','f','o','=','F','a','l','s','e',';',0};
     static WCHAR initstring_default[] = {'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',0};
     IDataInitialize *datainit = NULL;
     HRESULT hr;
 
-    hr = CoCreateInstance(&CLSID_MSDAINITIALIZE, NULL, CLSCTX_INPROC_SERVER, &IID_IDataInitialize,(void**)&datainit);
+    hr = CoCreateInstance(&CLSID_MSDAINITIALIZE, NULL, CLSCTX_INPROC_SERVER, &IID_IDataInitialize, (void**)&datainit);
     if (FAILED(hr))
     {
         win_skip("Unable to load oledb library\n");
