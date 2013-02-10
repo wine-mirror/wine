@@ -280,11 +280,23 @@ static void test_GetLocaleInfoW(void)
 
       ret = GetLocaleInfoW(lcid_en_neut, LOCALE_SCOUNTRY, bufferW, COUNTOF(bufferW));
       ok(ret, "got %d\n", ret);
-      ok(!lstrcmpW(statesW, bufferW), "got wrong name %s\n", wine_dbgstr_w(bufferW));
+      if ((PRIMARYLANGID(LANGIDFROMLCID(GetSystemDefaultLCID())) != LANG_ENGLISH) ||
+          (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH))
+      {
+          skip("Non-English locale\n");
+      }
+      else
+          ok(!lstrcmpW(statesW, bufferW), "got wrong name %s\n", wine_dbgstr_w(bufferW));
 
       ret = GetLocaleInfoW(lcid_en_neut, LOCALE_SLANGUAGE, bufferW, COUNTOF(bufferW));
       ok(ret, "got %d\n", ret);
-      ok(!lstrcmpW(slangW, bufferW), "got wrong name %s\n", wine_dbgstr_w(bufferW));
+      if ((PRIMARYLANGID(LANGIDFROMLCID(GetSystemDefaultLCID())) != LANG_ENGLISH) ||
+          (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH))
+      {
+          skip("Non-English locale\n");
+      }
+      else
+          ok(!lstrcmpW(slangW, bufferW), "got wrong name %s\n", wine_dbgstr_w(bufferW));
 
       while (*ptr->name)
       {
@@ -3434,7 +3446,13 @@ static void test_GetLocaleInfoEx(void)
 
         ret = pGetLocaleInfoEx(enW, LOCALE_SCOUNTRY, bufferW, sizeof(bufferW)/sizeof(WCHAR));
         ok(ret == lstrlenW(bufferW)+1, "got %d\n", ret);
-        ok(!lstrcmpW(bufferW, statesW), "got %s\n", wine_dbgstr_w(bufferW));
+        if ((PRIMARYLANGID(LANGIDFROMLCID(GetSystemDefaultLCID())) != LANG_ENGLISH) ||
+            (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH))
+        {
+            skip("Non-English locale\n");
+        }
+        else
+            ok(!lstrcmpW(bufferW, statesW), "got %s\n", wine_dbgstr_w(bufferW));
 
         bufferW[0] = 0;
         SetLastError(0xdeadbeef);
