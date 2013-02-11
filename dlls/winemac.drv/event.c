@@ -39,6 +39,7 @@ static const char *dbgstr_event(int type)
         "MOUSE_BUTTON",
         "MOUSE_MOVED",
         "MOUSE_MOVED_ABSOLUTE",
+        "MOUSE_SCROLL",
         "WINDOW_CLOSE_REQUESTED",
         "WINDOW_DID_MINIMIZE",
         "WINDOW_DID_UNMINIMIZE",
@@ -69,7 +70,10 @@ static macdrv_event_mask get_event_mask(DWORD mask)
     }
 
     if (mask & QS_MOUSEBUTTON)
+    {
         event_mask |= event_mask_for_type(MOUSE_BUTTON);
+        event_mask |= event_mask_for_type(MOUSE_SCROLL);
+    }
 
     if (mask & QS_MOUSEMOVE)
     {
@@ -125,6 +129,9 @@ void macdrv_handle_event(macdrv_event *event)
     case MOUSE_MOVED:
     case MOUSE_MOVED_ABSOLUTE:
         macdrv_mouse_moved(hwnd, event);
+        break;
+    case MOUSE_SCROLL:
+        macdrv_mouse_scroll(hwnd, event);
         break;
     case WINDOW_CLOSE_REQUESTED:
         macdrv_window_close_requested(hwnd);

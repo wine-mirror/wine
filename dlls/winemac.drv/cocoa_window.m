@@ -778,6 +778,84 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     - (void) rightMouseDragged:(NSEvent *)theEvent  { [self postMouseMovedEvent:theEvent]; }
     - (void) otherMouseDragged:(NSEvent *)theEvent  { [self postMouseMovedEvent:theEvent]; }
 
+    - (void) scrollWheel:(NSEvent *)theEvent
+    {
+        CGPoint pt;
+        macdrv_event event;
+        CGEventRef cgevent;
+        CGFloat x, y;
+        BOOL continuous = FALSE;
+
+        cgevent = [theEvent CGEvent];
+        pt = CGEventGetLocation(cgevent);
+
+        event.type = MOUSE_SCROLL;
+        event.window = (macdrv_window)[self retain];
+        event.mouse_scroll.x = pt.x;
+        event.mouse_scroll.y = pt.y;
+        event.mouse_scroll.time_ms = [NSApp ticksForEventTime:[theEvent timestamp]];
+
+        if (CGEventGetIntegerValueField(cgevent, kCGScrollWheelEventIsContinuous))
+        {
+            continuous = TRUE;
+
+            /* Continuous scroll wheel events come from high-precision scrolling
+               hardware like Apple's Magic Mouse, Mighty Mouse, and trackpads.
+               For these, we can get more precise data from the CGEvent API. */
+            /* Axis 1 is vertical, axis 2 is horizontal. */
+            x = CGEventGetDoubleValueField(cgevent, kCGScrollWheelEventPointDeltaAxis2);
+            y = CGEventGetDoubleValueField(cgevent, kCGScrollWheelEventPointDeltaAxis1);
+        }
+        else
+        {
+            double pixelsPerLine = 10;
+            CGEventSourceRef source;
+
+            /* The non-continuous values are in units of "lines", not pixels. */
+            if ((source = CGEventCreateSourceFromEvent(cgevent)))
+            {
+                pixelsPerLine = CGEventSourceGetPixelsPerLine(source);
+                CFRelease(source);
+            }
+
+            x = pixelsPerLine * [theEvent deltaX];
+            y = pixelsPerLine * [theEvent deltaY];
+        }
+
+        /* Mac: negative is right or down, positive is left or up.
+           Win32: negative is left or down, positive is right or up.
+           So, negate the X scroll value to translate. */
+        x = -x;
+
+        /* The x,y values so far are in pixels.  Win32 expects to receive some
+           fraction of WHEEL_DELTA == 120.  By my estimation, that's roughly
+           6 times the pixel value. */
+        event.mouse_scroll.x_scroll = 6 * x;
+        event.mouse_scroll.y_scroll = 6 * y;
+
+        if (!continuous)
+        {
+            /* For non-continuous "clicky" wheels, if there was any motion, make
+               sure there was at least WHEEL_DELTA motion.  This is so, at slow
+               speeds where the system's acceleration curve is actually reducing the
+               scroll distance, the user is sure to get some action out of each click.
+               For example, this is important for rotating though weapons in a
+               first-person shooter. */
+            if (0 < event.mouse_scroll.x_scroll && event.mouse_scroll.x_scroll < 120)
+                event.mouse_scroll.x_scroll = 120;
+            else if (-120 < event.mouse_scroll.x_scroll && event.mouse_scroll.x_scroll < 0)
+                event.mouse_scroll.x_scroll = -120;
+
+            if (0 < event.mouse_scroll.y_scroll && event.mouse_scroll.y_scroll < 120)
+                event.mouse_scroll.y_scroll = 120;
+            else if (-120 < event.mouse_scroll.y_scroll && event.mouse_scroll.y_scroll < 0)
+                event.mouse_scroll.y_scroll = -120;
+        }
+
+        if (event.mouse_scroll.x_scroll || event.mouse_scroll.y_scroll)
+            [queue postEvent:&event];
+    }
+
 
     /*
      * ---------- NSWindowDelegate methods ----------

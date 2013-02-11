@@ -142,3 +142,24 @@ void macdrv_mouse_moved(HWND hwnd, const macdrv_event *event)
     send_mouse_input(hwnd, flags, event->mouse_moved.x, event->mouse_moved.y,
                      0, event->mouse_moved.time_ms);
 }
+
+
+/***********************************************************************
+ *              macdrv_mouse_scroll
+ *
+ * Handler for MOUSE_SCROLL events.
+ */
+void macdrv_mouse_scroll(HWND hwnd, const macdrv_event *event)
+{
+    TRACE("win %p/%p scroll (%d,%d) at (%d,%d) time %lu (%lu ticks ago)\n", hwnd,
+          event->window, event->mouse_scroll.x_scroll, event->mouse_scroll.y_scroll,
+          event->mouse_scroll.x, event->mouse_scroll.y,
+          event->mouse_scroll.time_ms, (GetTickCount() - event->mouse_scroll.time_ms));
+
+    send_mouse_input(hwnd, MOUSEEVENTF_WHEEL | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
+                     event->mouse_scroll.x, event->mouse_scroll.y,
+                     event->mouse_scroll.y_scroll, event->mouse_scroll.time_ms);
+    send_mouse_input(hwnd, MOUSEEVENTF_HWHEEL | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
+                     event->mouse_scroll.x, event->mouse_scroll.y,
+                     event->mouse_scroll.x_scroll, event->mouse_scroll.time_ms);
+}
