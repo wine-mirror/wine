@@ -102,6 +102,7 @@ typedef struct tagTREEVIEW_INFO
   BOOL          insertBeforeorAfter; /* flag used by TVM_SETINSERTMARK */
   HIMAGELIST    dragList;       /* Bitmap of dragged item */
   LONG          scrollX;
+  INT           wheelRemainder;
   COLORREF      clrBk;
   COLORREF      clrText;
   COLORREF      clrLine;
@@ -4925,7 +4926,7 @@ scroll:
 static LRESULT
 TREEVIEW_MouseWheel(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    short gcWheelDelta;
+    short wheelDelta;
     UINT pulScrollLines = 3;
 
     if (wParam & (MK_SHIFT | MK_CONTROL))
@@ -4936,13 +4937,25 @@ TREEVIEW_MouseWheel(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     SystemParametersInfoW(SPI_GETWHEELSCROLLLINES, 0, &pulScrollLines, 0);
 
-    gcWheelDelta = -(short)HIWORD(wParam);
-    pulScrollLines *= (gcWheelDelta / WHEEL_DELTA);
+    wheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+    /* if scrolling changes direction, ignore left overs */
+    if ((wheelDelta < 0 && infoPtr->wheelRemainder < 0) ||
+        (wheelDelta > 0 && infoPtr->wheelRemainder > 0))
+        infoPtr->wheelRemainder += wheelDelta;
+    else
+        infoPtr->wheelRemainder = wheelDelta;
 
-    if (abs(gcWheelDelta) >= WHEEL_DELTA && pulScrollLines)
+    if (infoPtr->wheelRemainder && pulScrollLines)
     {
-	int newDy = infoPtr->firstVisible->visibleOrder + pulScrollLines;
-	int maxDy = infoPtr->maxVisibleOrder;
+	int newDy;
+	int maxDy;
+	int lineScroll;
+
+	lineScroll = pulScrollLines * (float)infoPtr->wheelRemainder / WHEEL_DELTA;
+	infoPtr->wheelRemainder -= WHEEL_DELTA * lineScroll / (int)pulScrollLines;
+
+	newDy = infoPtr->firstVisible->visibleOrder - lineScroll;
+	maxDy = infoPtr->maxVisibleOrder;
 
 	if (newDy > maxDy)
 	    newDy = maxDy;
@@ -5047,6 +5060,7 @@ TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
     /* dragList */
 
     infoPtr->scrollX = 0;
+    infoPtr->wheelRemainder = 0;
 
     infoPtr->clrBk   = CLR_NONE; /* use system color */
     infoPtr->clrText = CLR_NONE; /* use system color */
