@@ -32,6 +32,7 @@
 #include "ddk/imm.h"
 #include "winnls.h"
 #include "winreg.h"
+#include "wine/gdi_driver.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);
@@ -247,37 +248,6 @@ static void IMM_FreeThreadData(void)
     }
 }
 
-static HMODULE LoadDefaultWineIME(void)
-{
-    char buffer[MAX_PATH], libname[32], *name, *next;
-    HMODULE module = 0;
-    HKEY hkey;
-
-    TRACE("Attempting to fall back to wine default IME\n");
-
-    strcpy( buffer, "x11" );  /* default value */
-    /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
-    if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Drivers", &hkey ))
-    {
-        DWORD type, count = sizeof(buffer);
-        RegQueryValueExA( hkey, "Ime", 0, &type, (LPBYTE) buffer, &count );
-        RegCloseKey( hkey );
-    }
-
-    name = buffer;
-    while (name)
-    {
-        next = strchr( name, ',' );
-        if (next) *next++ = 0;
-
-        snprintf( libname, sizeof(libname), "wine%s.drv", name );
-        if ((module = LoadLibraryA( libname )) != 0) break;
-        name = next;
-    }
-
-    return module;
-}
-
 /* ImmHkl loading and freeing */
 #define LOAD_FUNCPTR(f) if((ptr->p##f = (LPVOID)GetProcAddress(ptr->hIME, #f)) == NULL){WARN("Can't find function %s in ime\n", #f);}
 static ImmHkl *IMM_GetImmHkl(HKL hkl)
@@ -299,7 +269,12 @@ static ImmHkl *IMM_GetImmHkl(HKL hkl)
     ptr->hkl = hkl;
     if (ImmGetIMEFileNameW(hkl, filename, MAX_PATH)) ptr->hIME = LoadLibraryW(filename);
     if (!ptr->hIME)
-        ptr->hIME = LoadDefaultWineIME();
+    {
+        HDC hdc = GetDC( 0 );
+        GetModuleHandleExW( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                            (LPCWSTR)__wine_get_driver_module( hdc ), &ptr->hIME );
+        ReleaseDC( 0, hdc );
+    }
     if (ptr->hIME)
     {
         LOAD_FUNCPTR(ImeInquire);
