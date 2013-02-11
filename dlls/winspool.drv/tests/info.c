@@ -92,31 +92,35 @@ static LPSTR tempfileA = NULL;
 static LPWSTR tempdirW = NULL;
 static LPWSTR tempfileW = NULL;
 
-/* ################################ */
-/* report common behavior only once */
-static DWORD deactivated_spooler_reported = 0;
-#define RETURN_ON_DEACTIVATED_SPOOLER(res) \
-    if ((res == 0) && (GetLastError() == RPC_S_SERVER_UNAVAILABLE)) \
-    { \
-        if (!deactivated_spooler_reported) { \
-            deactivated_spooler_reported++; \
-            skip("The service 'Spooler' is required for many tests\n"); \
-        } \
-        return; \
+static BOOL is_spooler_deactivated(DWORD res, DWORD lasterror)
+{
+    if (!res && lasterror == RPC_S_SERVER_UNAVAILABLE)
+    {
+        static int deactivated_spooler_reported = 0;
+        if (!deactivated_spooler_reported)
+        {
+            deactivated_spooler_reported = 1;
+            skip("The service 'Spooler' is required for many tests\n");
+        }
+        return TRUE;
     }
+    return FALSE;
+}
 
-static DWORD access_denied_reported = 0;
-#define RETURN_ON_ACCESS_DENIED(res) \
-    if ((res == 0) && (GetLastError() == ERROR_ACCESS_DENIED)) \
-    { \
-        if (!access_denied_reported) { \
-            access_denied_reported++; \
-            skip("More access rights are required for many tests\n"); \
-        } \
-        return; \
+static BOOL is_access_denied(DWORD res, DWORD lasterror)
+{
+    if (!res && lasterror == ERROR_ACCESS_DENIED)
+    {
+        static int access_denied_reported = 0;
+        if (!access_denied_reported)
+        {
+            access_denied_reported = 1;
+            skip("More access rights are required for many tests\n");
+        }
+        return TRUE;
     }
-
-/* ################################ */
+    return FALSE;
+}
 
 static BOOL on_win9x = FALSE;
 
@@ -349,8 +353,8 @@ static void test_AddMonitor(void)
     ZeroMemory(&mi2a, sizeof(MONITOR_INFO_2A));
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
-    RETURN_ON_DEACTIVATED_SPOOLER(res)
-    RETURN_ON_ACCESS_DENIED(res)
+    if (is_spooler_deactivated(res, GetLastError())) return;
+    if (is_access_denied(res, GetLastError())) return;
 
     /* NT: ERROR_INVALID_PARAMETER,  9x: ERROR_INVALID_ENVIRONMENT */
     ok(!res && ((GetLastError() == ERROR_INVALID_PARAMETER) ||
@@ -463,7 +467,7 @@ static void test_AddPort(void)
 
     SetLastError(0xdeadbeef);
     res = AddPortA(NULL, 0, NULL);
-    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    if (is_spooler_deactivated(res, GetLastError())) return;
     /* NT: RPC_X_NULL_REF_POINTER, 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == RPC_X_NULL_REF_POINTER) || 
                  (GetLastError() == ERROR_INVALID_PARAMETER)),
@@ -474,7 +478,7 @@ static void test_AddPort(void)
     SetLastError(0xdeadbeef);
     res = AddPortA(NULL, 0, empty);
     /* Allowed only for (Printer-)Administrators */
-    RETURN_ON_ACCESS_DENIED(res)
+    if (is_access_denied(res, GetLastError())) return;
 
     /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
@@ -512,7 +516,7 @@ static void test_AddPortEx(void)
     pi.pPortName = tempfileA;
     SetLastError(0xdeadbeef);
     res = pAddPortExA(NULL, 1, (LPBYTE) &pi, LocalPortA);
-    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    if (is_spooler_deactivated(res, GetLastError())) return;
 
     /* Allowed only for (Printer-)Administrators.
        W2K+XP: ERROR_INVALID_PARAMETER  */
@@ -615,7 +619,7 @@ static void test_ConfigurePort(void)
 
     SetLastError(0xdeadbeef);
     res = ConfigurePortA(NULL, 0, NULL);
-    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    if (is_spooler_deactivated(res, GetLastError())) return;
     /* NT: RPC_X_NULL_REF_POINTER, 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == RPC_X_NULL_REF_POINTER) || 
                  (GetLastError() == ERROR_INVALID_PARAMETER)),
@@ -625,7 +629,7 @@ static void test_ConfigurePort(void)
     SetLastError(0xdeadbeef);
     res = ConfigurePortA(NULL, 0, empty);
     /* Allowed only for (Printer-)Administrators */
-    RETURN_ON_ACCESS_DENIED(res)
+    if (is_access_denied(res, GetLastError())) return;
 
     /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
@@ -761,12 +765,12 @@ static void test_DeletePort(void)
 
     SetLastError(0xdeadbeef);
     res = DeletePortA(NULL, 0, NULL);
-    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    if (is_spooler_deactivated(res, GetLastError())) return;
 
     SetLastError(0xdeadbeef);
     res = DeletePortA(NULL, 0, empty);
     /* Allowed only for (Printer-)Administrators */
-    RETURN_ON_ACCESS_DENIED(res)
+    if (is_access_denied(res, GetLastError())) return;
 
     /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
@@ -804,7 +808,7 @@ static void test_EnumForms(LPSTR pName)
     PFORM_INFO_2A pFI_2a;
 
     res = OpenPrinter(pName, &hprinter, NULL);
-    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    if (is_spooler_deactivated(res, GetLastError())) return;
     if (!res || !hprinter)
     {
         /* opening the local Printserver is not supported on win9x */
@@ -935,9 +939,7 @@ static void test_EnumMonitors(void)
         pcReturned = MAGIC_DEAD;
         SetLastError(MAGIC_DEAD);
         res = EnumMonitorsA(NULL, level, NULL, 0, &cbBuf, &pcReturned);
-
-        RETURN_ON_DEACTIVATED_SPOOLER(res)
-
+        if (is_spooler_deactivated(res, GetLastError())) return;
         /* not implemented yet in wine */
         if (!res && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)) continue;
 
@@ -1046,7 +1048,7 @@ static void test_EnumPorts(void)
         pcReturned = 0xdeadbeef;
         SetLastError(0xdeadbeef);
         res = EnumPortsA(NULL, level, NULL, 0, &cbBuf, &pcReturned);
-        RETURN_ON_DEACTIVATED_SPOOLER(res)
+        if (is_spooler_deactivated(res, GetLastError())) return;
 
         /* use only a short test when testing an invalid level */
         if(!level || (level > 2)) {
@@ -1145,7 +1147,7 @@ static void test_EnumPrinterDrivers(void)
         pcReturned = 0xdeadbeef;
         SetLastError(0xdeadbeef);
         res = EnumPrinterDriversA(NULL, NULL, level, NULL, 0, &cbBuf, &pcReturned);
-        RETURN_ON_DEACTIVATED_SPOOLER(res)
+        if (is_spooler_deactivated(res, GetLastError())) return;
 
         /* use only a short test when testing an invalid level */
         if(!level || (level == 7) || (level > 8)) {
@@ -1291,7 +1293,7 @@ static void test_EnumPrintProcessors(void)
     pcReturned = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     res = EnumPrintProcessorsA(NULL, NULL, 1, NULL, 0, &cbBuf, &pcReturned);
-    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    if (is_spooler_deactivated(res, GetLastError())) return;
 
     if (res && !cbBuf) {
         skip("No Printprocessor installed\n");
@@ -1485,10 +1487,11 @@ static void test_GetPrinterDriverDirectory(void)
 
     SetLastError(MAGIC_DEAD);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, 0, &cbBuf);
-    trace("first call returned 0x%04x, with %d: buffer size 0x%08x\n",
-    res, GetLastError(), cbBuf);
+    if (is_spooler_deactivated(res, GetLastError())) return;
 
-    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    trace("first call returned 0x%04x, with %d: buffer size 0x%08x\n",
+          res, GetLastError(), cbBuf);
+
     ok((res == 0) && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
         "returned %d with lasterror=%d (expected '0' with "
         "ERROR_INSUFFICIENT_BUFFER)\n", res, GetLastError());
@@ -1639,8 +1642,8 @@ static void test_GetPrintProcessorDirectory(void)
 
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA(NULL, NULL, 1, NULL, 0, &cbBuf);
-    /* The deactivated spooler is caught here on NT3.51 */
-    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    if (is_spooler_deactivated(res, GetLastError())) return;
+
     ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
         "returned %d with %d (expected '0' with ERROR_INSUFFICIENT_BUFFER)\n",
         res, GetLastError());
@@ -1776,9 +1779,9 @@ static void test_OpenPrinter(void)
     DWORD               res;
 
     SetLastError(MAGIC_DEAD);
-    res = OpenPrinter(NULL, NULL, NULL);    
-    /* The deactivated spooler is caught here on NT3.51 */
-    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    res = OpenPrinter(NULL, NULL, NULL);
+    if (is_spooler_deactivated(res, GetLastError())) return;
+
     ok(!res && (GetLastError() == ERROR_INVALID_PARAMETER),
         "returned %d with %d (expected '0' with ERROR_INVALID_PARAMETER)\n",
         res, GetLastError());
@@ -1788,8 +1791,7 @@ static void test_OpenPrinter(void)
     hprinter = (HANDLE) MAGIC_DEAD;
     SetLastError(MAGIC_DEAD);
     res = OpenPrinter(NULL, &hprinter, NULL);
-    /* The deactivated spooler is caught here on XPsp2 */
-    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    if (is_spooler_deactivated(res, GetLastError())) return;
     ok(res || (!res && GetLastError() == ERROR_INVALID_PARAMETER),
         "returned %d with %d (expected '!=0' or '0' with ERROR_INVALID_PARAMETER)\n",
         res, GetLastError());
@@ -1891,7 +1893,7 @@ static void test_OpenPrinter(void)
         SetLastError(MAGIC_DEAD);
         res = OpenPrinter(default_printer, &hprinter, &defaults);
         /* stop here, when a remote Printserver has no RPC-Service running */
-        RETURN_ON_DEACTIVATED_SPOOLER(res)
+        if (is_spooler_deactivated(res, GetLastError())) return;
         ok(res || ((GetLastError() == ERROR_INVALID_DATATYPE) ||
                    (GetLastError() == ERROR_ACCESS_DENIED)),
             "returned %d with %d (expected '!=0' or '0' with: "
@@ -1950,9 +1952,7 @@ static void test_SetDefaultPrinter(void)
     /* first part: with the default Printer */
     SetLastError(MAGIC_DEAD);
     res = pSetDefaultPrinterA("no_printer_with_this_name");
-
-    RETURN_ON_DEACTIVATED_SPOOLER(res)
-    /* spooler is running or we have no spooler here*/
+    if (is_spooler_deactivated(res, GetLastError())) return;
 
     /* Not implemented in wine */
     if (!res && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)) {
@@ -1998,13 +1998,8 @@ static void test_SetDefaultPrinter(void)
     WriteProfileStringA("windows", "device", NULL);    
     SetLastError(MAGIC_DEAD);
     res = pSetDefaultPrinterA("");
-    if ((res == 0) && (GetLastError() == RPC_S_SERVER_UNAVAILABLE))     {
-        if (!deactivated_spooler_reported) {
-            deactivated_spooler_reported++;
-            skip("The service 'Spooler' is required for many tests\n");
-        }
+    if (is_spooler_deactivated(res, GetLastError()))
         goto restore_old_printer;
-    }
 
     /* we get ERROR_INVALID_PRINTER_NAME when no printer is installed */
     ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
@@ -2062,8 +2057,8 @@ static void test_XcvDataW_MonitorUI(void)
     hXcv = NULL;
     SetLastError(0xdeadbeef);
     res = OpenPrinter(xcv_localport, &hXcv, &pd);
-    RETURN_ON_DEACTIVATED_SPOOLER(res)
-    RETURN_ON_ACCESS_DENIED(res)
+    if (is_spooler_deactivated(res, GetLastError())) return;
+    if (is_access_denied(res, GetLastError())) return;
 
     ok(res, "returned %d with %u and handle %p (expected '!= 0')\n", res, GetLastError(), hXcv);
     if (!res) return;
@@ -2180,9 +2175,8 @@ static void test_XcvDataW_PortIsValid(void)
     hXcv = NULL;
     SetLastError(0xdeadbeef);
     res = OpenPrinter(xcv_localport, &hXcv, &pd);
-
-    RETURN_ON_DEACTIVATED_SPOOLER(res)
-    RETURN_ON_ACCESS_DENIED(res)
+    if (is_spooler_deactivated(res, GetLastError())) return;
+    if (is_access_denied(res, GetLastError())) return;
 
     ok(res, "returned %d with %u and handle %p (expected '!= 0')\n", res, GetLastError(), hXcv);
     if (!res) return;
@@ -2701,7 +2695,7 @@ static void test_EnumPrinters(void)
     SetLastError(0xdeadbeef);
     neededA = -1;
     ret = EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &neededA, &num);
-    RETURN_ON_DEACTIVATED_SPOOLER(ret)
+    if (is_spooler_deactivated(ret, GetLastError())) return;
     if (!ret)
     {
         /* We have 1 or more printers */
