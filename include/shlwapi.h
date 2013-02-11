@@ -955,6 +955,8 @@ VOID WINAPI ColorRGBToHLS(COLORREF,LPWORD,LPWORD,LPWORD);
 
 #endif /* NO_SHLWAPI_GDI */
 
+/* Security functions */
+BOOL WINAPI IsInternetESCEnabled(void);
 
 /* Stream functions */
 #ifndef NO_SHLWAPI_STREAM

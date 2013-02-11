@@ -2621,3 +2621,12 @@ HRESULT WINAPI UrlFixupW(LPCWSTR url, LPWSTR translatedUrl, DWORD maxChars)
 
     return S_OK;
 }
+
+/*************************************************************************
+ * IsInternetESCEnabled [SHLWAPI.@]
+ */
+BOOL WINAPI IsInternetESCEnabled(void)
+{
+    FIXME(": stub\n");
+    return FALSE;
+}
