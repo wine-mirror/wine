@@ -269,7 +269,7 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
         if (message->nFileCount > 0)
         {
             ULONG num_attach = 0;
-            int i, j;
+            unsigned int i;
 
             for (i = 0; i < message->nFileCount; i++)
             {
@@ -294,6 +294,8 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
 
                 if (!filename)
                 {
+                    int j;
+
                     filename = message->lpFiles[i].lpszPathName;
 
                     for (j = lstrlenW(message->lpFiles[i].lpszPathName)-1; j >= 0; j--)
@@ -307,7 +309,7 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
                     }
                 }
 
-                TRACE("Attachment %d path: '%s'; filename: '%s'\n", i, debugstr_w(message->lpFiles[i].lpszPathName),
+                TRACE("Attachment %u path: '%s'; filename: '%s'\n", i, debugstr_w(message->lpFiles[i].lpszPathName),
                     debugstr_w(filename));
 
                 /* Create the attachment */
@@ -504,7 +506,7 @@ ULONG WINAPI MAPISendMail( LHANDLE session, ULONG_PTR uiparam,
         if (message->nFileCount && message->lpFiles)
         {
             lpMapiFileDescW filesW;
-            int i;
+            unsigned int i;
 
             filesW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MapiFileDescW) * message->nFileCount);
 
@@ -522,7 +524,7 @@ ULONG WINAPI MAPISendMail( LHANDLE session, ULONG_PTR uiparam,
         /* Now free everything we allocated */
         if (message->nFileCount && message->lpFiles)
         {
-            int i;
+            unsigned int i;
 
             for (i = 0; i < message->nFileCount; i++)
             {
@@ -623,7 +625,7 @@ ULONG WINAPI MAPISendMailW(LHANDLE session, ULONG_PTR uiparam,
         if (message->nRecipCount && message->lpRecips)
         {
             lpMapiRecipDesc recipsA;
-            int i;
+            unsigned int i;
 
             recipsA = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MapiRecipDesc) * message->nRecipCount);
 
@@ -638,7 +640,7 @@ ULONG WINAPI MAPISendMailW(LHANDLE session, ULONG_PTR uiparam,
         if (message->nFileCount && message->lpFiles)
         {
             lpMapiFileDesc filesA;
-            int i;
+            unsigned int i;
 
             filesA = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MapiFileDesc) * message->nFileCount);
 
@@ -666,7 +668,7 @@ ULONG WINAPI MAPISendMailW(LHANDLE session, ULONG_PTR uiparam,
 
         if (message->nRecipCount && message->lpRecips)
         {
-            int i;
+            unsigned int i;
 
             for (i = 0; i < message->nRecipCount; i++)
             {
@@ -679,7 +681,7 @@ ULONG WINAPI MAPISendMailW(LHANDLE session, ULONG_PTR uiparam,
 
         if (message->nFileCount && message->lpFiles)
         {
-            int i;
+            unsigned int i;
 
             for (i = 0; i < message->nFileCount; i++)
             {
