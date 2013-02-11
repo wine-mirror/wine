@@ -330,6 +330,7 @@ typedef struct tagLISTVIEW_INFO
   INT nLButtonDownItem;     /* tracks item to reset multiselection on WM_LBUTTONUP */
   DWORD dwHoverTime;
   HCURSOR hHotCursor;
+  INT cWheelRemainder;
 
   /* keyboard operation */
   DWORD lastKeyPressTimestamp;
@@ -9385,6 +9386,7 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->nEditLabelItem = -1;
   infoPtr->nLButtonDownItem = -1;
   infoPtr->dwHoverTime = HOVER_DEFAULT; /* default system hover time */
+  infoPtr->cWheelRemainder = 0;
   infoPtr->nMeasureItemHeight = 0;
   infoPtr->xTrackLine = -1;  /* no track line */
   infoPtr->itemEdit.fEnabled = FALSE;
@@ -9785,11 +9787,9 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
 
 static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
 {
-    INT pulScrollLines = 3;
+    UINT pulScrollLines = 3;
 
     TRACE("(wheelDelta=%d)\n", wheelDelta);
-
-    SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
 
     switch(infoPtr->uView)
     {
@@ -9804,11 +9804,21 @@ static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
         break;
 
     case LV_VIEW_DETAILS:
-        if (abs(wheelDelta) >= WHEEL_DELTA && pulScrollLines)
+        SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
+
+        /* if scrolling changes direction, ignore left overs */
+        if ((wheelDelta < 0 && infoPtr->cWheelRemainder < 0) ||
+            (wheelDelta > 0 && infoPtr->cWheelRemainder > 0))
+            infoPtr->cWheelRemainder += wheelDelta;
+        else
+            infoPtr->cWheelRemainder = wheelDelta;
+        if (infoPtr->cWheelRemainder && pulScrollLines)
         {
-            int cLineScroll = min(LISTVIEW_GetCountPerColumn(infoPtr), pulScrollLines);
-            cLineScroll *= (-wheelDelta / WHEEL_DELTA);
-            LISTVIEW_VScroll(infoPtr, SB_INTERNAL, cLineScroll);
+            int cLineScroll;
+            pulScrollLines = min((UINT)LISTVIEW_GetCountPerColumn(infoPtr), pulScrollLines);
+            cLineScroll = pulScrollLines * (float)infoPtr->cWheelRemainder / WHEEL_DELTA;
+            infoPtr->cWheelRemainder -= WHEEL_DELTA * cLineScroll / (int)pulScrollLines;
+            LISTVIEW_VScroll(infoPtr, SB_INTERNAL, -cLineScroll);
         }
         break;
 
@@ -9940,7 +9950,10 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
 {
     TRACE("()\n");
 
-    /* if we did not have the focus, there's nothing to do */
+    /* drop any left over scroll amount */
+    infoPtr->cWheelRemainder = 0;
+
+    /* if we did not have the focus, there's nothing more to do */
     if (!infoPtr->bFocus) return 0;
    
     /* send NM_KILLFOCUS notification */
