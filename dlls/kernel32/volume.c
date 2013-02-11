@@ -445,7 +445,7 @@ static enum fs_type VOLUME_ReadCDSuperblock( HANDLE handle, BYTE *buff )
  */
 static BOOL UDF_Find_PVD( HANDLE handle, BYTE pvd[] )
 {
-    int i;
+    unsigned int i;
     DWORD offset;
     INT locations[] = { 256, -1, -257, 512 };
 
@@ -548,7 +548,7 @@ static void VOLUME_GetSuperblockLabel( const UNICODE_STRING *device, HANDLE hand
             }
             else
             {
-                int i;
+                unsigned int i;
 
                 label_len = 1 + pvd[24+32-1];
                 for(i=0; i<label_len && i<len; i+=2)

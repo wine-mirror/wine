@@ -51,7 +51,8 @@ BOOL WINAPI WaitForDebugEvent(
     DWORD         timeout)
 {
     BOOL ret;
-    DWORD i, res;
+    DWORD res;
+    int i;
 
     for (;;)
     {
