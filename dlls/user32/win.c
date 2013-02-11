@@ -180,7 +180,7 @@ void *free_user_handle( HANDLE handle, enum user_obj_type type )
             else InterlockedCompareExchangePointer( &user_handles[index], NULL, ptr );
         }
         SERVER_END_REQ;
-        release_user_handle_ptr( ptr );
+        USER_Unlock();
     }
     return ptr;
 }
@@ -290,7 +290,7 @@ static void free_window_handle( HWND hwnd )
             else InterlockedCompareExchangePointer( &user_handles[index], NULL, ptr );
         }
         SERVER_END_REQ;
-        release_user_handle_ptr( ptr );
+        USER_Unlock();
         HeapFree( GetProcessHeap(), 0, ptr );
     }
 }
