@@ -814,6 +814,7 @@ static void test_UuidCreateSequential(void)
     if (version == 1)
     {
         UUID guid2;
+        char buf[39];
 
         if (!ret)
         {
@@ -821,7 +822,8 @@ static void test_UuidCreateSequential(void)
              * address in the uuid:
              */
             ok(!(guid1.Data4[2] & 0x01),
-               "GUID does not appear to contain a MAC address\n");
+               "GUID does not appear to contain a MAC address: %s\n",
+               printGuid(buf, sizeof(buf), &guid1));
         }
         else
         {
@@ -829,7 +831,8 @@ static void test_UuidCreateSequential(void)
              * address in the uuid:
              */
             ok((guid1.Data4[2] & 0x01),
-               "GUID does not appear to contain a multicast MAC address\n");
+               "GUID does not appear to contain a multicast MAC address: %s\n",
+               printGuid(buf, sizeof(buf), &guid1));
         }
         /* Generate another GUID, and make sure its MAC address matches the
          * first.
@@ -840,7 +843,8 @@ static void test_UuidCreateSequential(void)
         version = (guid2.Data3 & 0xf000) >> 12;
         ok(version == 1, "unexpected version %d\n", version);
         ok(!memcmp(guid1.Data4, guid2.Data4, sizeof(guid2.Data4)),
-           "unexpected value in MAC address\n");
+           "unexpected value in MAC address: %s\n",
+           printGuid(buf, sizeof(buf), &guid2));
     }
 }
 
