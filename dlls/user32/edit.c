@@ -140,6 +140,7 @@ typedef struct
 				           Even if parent will change, EN_* messages
 					   should be sent to the first parent. */
 	HWND hwndListBox;		/* handle of ComboBox's listbox or NULL */
+	INT wheelDeltaRemainder;        /* scroll wheel delta left over after scrolling whole lines */
 	/*
 	 *	only for multi line controls
 	 */
@@ -3551,6 +3552,8 @@ static LRESULT EDIT_WM_KillFocus(EDITSTATE *es)
 	if(!(es->style & ES_NOHIDESEL))
 		EDIT_InvalidateText(es, es->selection_start, es->selection_end);
 	EDIT_NOTIFY_PARENT(es, EN_KILLFOCUS);
+	/* throw away left over scroll when we lose focus */
+	es->wheelDeltaRemainder = 0;
 	return 0;
 }
 
@@ -5108,7 +5111,7 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 
         case WM_MOUSEWHEEL:
                 {
-                    int gcWheelDelta = 0;
+                    int wheelDelta;
                     UINT pulScrollLines = 3;
                     SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
 
@@ -5116,12 +5119,20 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
                         result = DefWindowProcW(hwnd, msg, wParam, lParam);
                         break;
                     }
-                    gcWheelDelta -= GET_WHEEL_DELTA_WPARAM(wParam);
-                    if (abs(gcWheelDelta) >= WHEEL_DELTA && pulScrollLines)
+                    wheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+                    /* if scrolling changes direction, ignore left overs */
+                    if ((wheelDelta < 0 && es->wheelDeltaRemainder < 0) ||
+                        (wheelDelta > 0 && es->wheelDeltaRemainder > 0))
+                        es->wheelDeltaRemainder += wheelDelta;
+                    else
+                        es->wheelDeltaRemainder = wheelDelta;
+                    if (es->wheelDeltaRemainder && pulScrollLines)
                     {
-                        int cLineScroll= (int) min((UINT) es->line_count, pulScrollLines);
-                        cLineScroll *= (gcWheelDelta / WHEEL_DELTA);
-			result = EDIT_EM_LineScroll(es, 0, cLineScroll);
+                        int cLineScroll;
+                        pulScrollLines = (int) min((UINT) es->line_count, pulScrollLines);
+                        cLineScroll = pulScrollLines * (float)es->wheelDeltaRemainder / WHEEL_DELTA;
+                        es->wheelDeltaRemainder -= WHEEL_DELTA * cLineScroll / (int)pulScrollLines;
+                        result = EDIT_EM_LineScroll(es, 0, -cLineScroll);
                     }
                 }
                 break;
