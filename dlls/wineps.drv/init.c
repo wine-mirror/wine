@@ -148,11 +148,98 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     return TRUE;
 }
 
+static void dump_fields(DWORD fields)
+{
+    int add_space = 0;
+
+#define CHECK_FIELD(flag) \
+do \
+{ \
+    if (fields & flag) \
+    { \
+        if (add_space++) DPRINTF(" "); \
+        TRACE(#flag); \
+        fields &= ~flag; \
+    } \
+} \
+while (0)
+
+    CHECK_FIELD(DM_ORIENTATION);
+    CHECK_FIELD(DM_PAPERSIZE);
+    CHECK_FIELD(DM_PAPERLENGTH);
+    CHECK_FIELD(DM_PAPERWIDTH);
+    CHECK_FIELD(DM_SCALE);
+    CHECK_FIELD(DM_POSITION);
+    CHECK_FIELD(DM_NUP);
+    CHECK_FIELD(DM_DISPLAYORIENTATION);
+    CHECK_FIELD(DM_COPIES);
+    CHECK_FIELD(DM_DEFAULTSOURCE);
+    CHECK_FIELD(DM_PRINTQUALITY);
+    CHECK_FIELD(DM_COLOR);
+    CHECK_FIELD(DM_DUPLEX);
+    CHECK_FIELD(DM_YRESOLUTION);
+    CHECK_FIELD(DM_TTOPTION);
+    CHECK_FIELD(DM_COLLATE);
+    CHECK_FIELD(DM_FORMNAME);
+    CHECK_FIELD(DM_LOGPIXELS);
+    CHECK_FIELD(DM_BITSPERPEL);
+    CHECK_FIELD(DM_PELSWIDTH);
+    CHECK_FIELD(DM_PELSHEIGHT);
+    CHECK_FIELD(DM_DISPLAYFLAGS);
+    CHECK_FIELD(DM_DISPLAYFREQUENCY);
+    CHECK_FIELD(DM_ICMMETHOD);
+    CHECK_FIELD(DM_ICMINTENT);
+    CHECK_FIELD(DM_MEDIATYPE);
+    CHECK_FIELD(DM_DITHERTYPE);
+    CHECK_FIELD(DM_PANNINGWIDTH);
+    CHECK_FIELD(DM_PANNINGHEIGHT);
+    if (fields) TRACE(" %#x", fields);
+    TRACE("\n");
+#undef CHECK_FIELD
+}
+
+/* Dump DEVMODE structure without a device specific part.
+ * Some applications and drivers fail to specify correct field
+ * flags (like DM_FORMNAME), so dump everything.
+ */
+static void dump_devmode(const DEVMODEW *dm)
+{
+    if (!TRACE_ON(psdrv)) return;
+
+    TRACE("dmDeviceName: %s\n", debugstr_w(dm->dmDeviceName));
+    TRACE("dmSpecVersion: 0x%04x\n", dm->dmSpecVersion);
+    TRACE("dmDriverVersion: 0x%04x\n", dm->dmDriverVersion);
+    TRACE("dmSize: 0x%04x\n", dm->dmSize);
+    TRACE("dmDriverExtra: 0x%04x\n", dm->dmDriverExtra);
+    TRACE("dmFields: 0x%04x\n", dm->dmFields);
+    dump_fields(dm->dmFields);
+    TRACE("dmOrientation: %d\n", dm->u1.s1.dmOrientation);
+    TRACE("dmPaperSize: %d\n", dm->u1.s1.dmPaperSize);
+    TRACE("dmPaperLength: %d\n", dm->u1.s1.dmPaperLength);
+    TRACE("dmPaperWidth: %d\n", dm->u1.s1.dmPaperWidth);
+    TRACE("dmScale: %d\n", dm->u1.s1.dmScale);
+    TRACE("dmCopies: %d\n", dm->u1.s1.dmCopies);
+    TRACE("dmDefaultSource: %d\n", dm->u1.s1.dmDefaultSource);
+    TRACE("dmPrintQuality: %d\n", dm->u1.s1.dmPrintQuality);
+    TRACE("dmColor: %d\n", dm->dmColor);
+    TRACE("dmDuplex: %d\n", dm->dmDuplex);
+    TRACE("dmYResolution: %d\n", dm->dmYResolution);
+    TRACE("dmTTOption: %d\n", dm->dmTTOption);
+    TRACE("dmCollate: %d\n", dm->dmCollate);
+    TRACE("dmFormName: %s\n", debugstr_w(dm->dmFormName));
+    TRACE("dmLogPixels %u\n", dm->dmLogPixels);
+    TRACE("dmBitsPerPel %u\n", dm->dmBitsPerPel);
+    TRACE("dmPelsWidth %u\n", dm->dmPelsWidth);
+    TRACE("dmPelsHeight %u\n", dm->dmPelsHeight);
+}
+
 static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 {
     PAGESIZE *page;
     RESOLUTION *res;
     INT width = 0, height = 0, resx = 0, resy = 0;
+
+    dump_devmode(&physDev->Devmode->dmPublic);
 
     if (physDev->Devmode->dmPublic.dmFields & (DM_PRINTQUALITY | DM_YRESOLUTION | DM_LOGPIXELS))
     {
@@ -324,7 +411,10 @@ static BOOL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
     if (output && *output) physDev->job.output = strdupW( output );
 
     if(initData)
+    {
+        dump_devmode(initData);
         PSDRV_MergeDevmodes(physDev->Devmode, (const PSDRV_DEVMODE *)initData, pi);
+    }
 
     PSDRV_UpdateDevCaps(physDev);
     SelectObject( (*pdev)->hdc, PSDRV_DefaultFont );
