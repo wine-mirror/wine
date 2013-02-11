@@ -3415,8 +3415,10 @@ struct get_visible_region_reply
     user_handle_t  top_win;
     rectangle_t    top_rect;
     rectangle_t    win_rect;
+    unsigned int   paint_flags;
     data_size_t    total_size;
     /* VARARG(region,rectangles); */
+    char __pad_52[4];
 };
 
 
@@ -5715,6 +5717,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 438
+#define SERVER_PROTOCOL_VERSION 439
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

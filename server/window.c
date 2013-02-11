@@ -2434,6 +2434,7 @@ DECL_HANDLER(get_visible_region)
         reply->win_rect.right  = win->client_rect.right - win->client_rect.left;
         reply->win_rect.bottom = win->client_rect.bottom - win->client_rect.top;
     }
+    reply->paint_flags = win->paint_flags & PAINT_CLIENT_FLAGS;
 }
 
 

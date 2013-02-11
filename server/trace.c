@@ -2926,6 +2926,7 @@ static void dump_get_visible_region_reply( const struct get_visible_region_reply
     fprintf( stderr, " top_win=%08x", req->top_win );
     dump_rectangle( ", top_rect=", &req->top_rect );
     dump_rectangle( ", win_rect=", &req->win_rect );
+    fprintf( stderr, ", paint_flags=%08x", req->paint_flags );
     fprintf( stderr, ", total_size=%u", req->total_size );
     dump_varargs_rectangles( ", region=", cur_size );
 }

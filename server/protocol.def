@@ -2460,6 +2460,7 @@ enum coords_relative
     user_handle_t  top_win;       /* top window to clip against */
     rectangle_t    top_rect;      /* top window visible rect with screen coords */
     rectangle_t    win_rect;      /* window rect in screen coords */
+    unsigned int   paint_flags;   /* paint flags (from SET_WINPOS_* flags) */
     data_size_t    total_size;    /* total size of the resulting region */
     VARARG(region,rectangles);    /* list of rectangles for the region (in screen coords) */
 @END
