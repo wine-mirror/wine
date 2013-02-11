@@ -2029,6 +2029,7 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
     }
 
     surface->gc = XCreateGC( gdi_display, window, 0, NULL );
+    XSetSubwindowMode( gdi_display, surface->gc, IncludeInferiors );
     surface->byteswap = image_needs_byteswap( surface->image, is_r8g8b8(vis), format->bits_per_pixel );
 
     if (surface->byteswap || format->bits_per_pixel == 4 || format->bits_per_pixel == 8)

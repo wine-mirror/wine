@@ -1084,6 +1084,9 @@ static struct region *get_surface_region( struct window *win )
     set_region_rect( clip, &win->client_rect );
     if (win->win_region && !intersect_window_region( clip, win )) goto error;
 
+    if ((win->paint_flags & PAINT_HAS_PIXEL_FORMAT) && !subtract_region( region, region, clip ))
+        goto error;
+
     /* clip children */
 
     if (!is_desktop_window(win))
@@ -2264,7 +2267,7 @@ DECL_HANDLER(set_window_pos)
     top = get_top_clipping_window( win );
     if (is_visible( top ) &&
         (top->paint_flags & PAINT_HAS_SURFACE) &&
-        (top->paint_flags & PAINT_PIXEL_FORMAT_CHILD))
+        (top->paint_flags & (PAINT_HAS_PIXEL_FORMAT | PAINT_PIXEL_FORMAT_CHILD)))
         reply->surface_win = top->handle;
 }
 
