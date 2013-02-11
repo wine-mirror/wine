@@ -16184,7 +16184,8 @@ wine_fn_config_dll winaspi.dll16 enable_win16
 wine_fn_config_dll windebug.dll16 enable_win16
 wine_fn_config_dll windowscodecs enable_windowscodecs implib
 wine_fn_config_test dlls/windowscodecs/tests windowscodecs_test
-wine_fn_config_dll windowscodecsext enable_windowscodecsext
+wine_fn_config_dll windowscodecsext enable_windowscodecsext implib
+wine_fn_config_test dlls/windowscodecsext/tests windowscodecsext_test
 wine_fn_config_dll winealsa.drv enable_winealsa_drv
 wine_fn_config_dll winecoreaudio.drv enable_winecoreaudio_drv
 wine_fn_config_lib winecrt0
