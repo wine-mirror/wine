@@ -90,6 +90,7 @@ typedef struct
     INT         nb_tabs;        /* Number of tabs in array */
     INT        *tabs;           /* Array of tabs */
     INT         avg_char_width; /* Average width of characters */
+    INT         wheel_remain;   /* Left over scroll amount */
     BOOL        caret_on;       /* Is caret on? */
     BOOL        captured;       /* Is mouse captured? */
     BOOL	in_focus;
@@ -1988,18 +1989,24 @@ static LRESULT LISTBOX_HandleHScroll( LB_DESCR *descr, WORD scrollReq, WORD pos 
 
 static LRESULT LISTBOX_HandleMouseWheel(LB_DESCR *descr, SHORT delta )
 {
-    short gcWheelDelta = 0;
     UINT pulScrollLines = 3;
 
     SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
 
-    gcWheelDelta -= delta;
+    /* if scrolling changes direction, ignore left overs */
+    if ((delta < 0 && descr->wheel_remain < 0) ||
+        (delta > 0 && descr->wheel_remain > 0))
+        descr->wheel_remain += delta;
+    else
+        descr->wheel_remain = delta;
 
-    if (abs(gcWheelDelta) >= WHEEL_DELTA && pulScrollLines)
+    if (descr->wheel_remain && pulScrollLines)
     {
-        int cLineScroll = (int) min((UINT) descr->page_size, pulScrollLines);
-        cLineScroll *= (gcWheelDelta / WHEEL_DELTA);
-        LISTBOX_SetTopItem( descr, descr->top_item + cLineScroll, TRUE );
+        int cLineScroll;
+        pulScrollLines = min((UINT) descr->page_size, pulScrollLines);
+        cLineScroll = pulScrollLines * (float)descr->wheel_remain / WHEEL_DELTA;
+        descr->wheel_remain -= WHEEL_DELTA * cLineScroll / (int)pulScrollLines;
+        LISTBOX_SetTopItem( descr, descr->top_item - cLineScroll, TRUE );
     }
     return 0;
 }
@@ -2482,6 +2489,7 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
     descr->horz_pos      = 0;
     descr->nb_tabs       = 0;
     descr->tabs          = NULL;
+    descr->wheel_remain  = 0;
     descr->caret_on      = !lphc;
     if (descr->style & LBS_NOSEL) descr->caret_on = FALSE;
     descr->in_focus 	 = FALSE;
@@ -2989,6 +2997,7 @@ LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         return 0;
     case WM_KILLFOCUS:
         descr->in_focus = FALSE;
+        descr->wheel_remain = 0;
         if ((descr->focus_item != -1) && descr->caret_on)
             LISTBOX_RepaintItem( descr, descr->focus_item, ODA_FOCUS );
         SEND_NOTIFICATION( descr, LBN_KILLFOCUS );
