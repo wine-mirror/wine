@@ -1035,7 +1035,6 @@ static HRESULT reader_parse_comment(xmlreader *reader)
     {
         start = reader->save;
         ptr = reader_get_cur(reader);
-        reader->save = NULL;
     }
     else
     {
@@ -1044,6 +1043,7 @@ static HRESULT reader_parse_comment(xmlreader *reader)
         reader_shrink(reader);
         ptr = start = reader_get_cur(reader);
         reader->nodetype = XmlNodeType_Comment;
+        reader->save = start;
         reader_set_strvalue(reader, StringValue_LocalName, NULL);
         reader_set_strvalue(reader, StringValue_QualifiedName, NULL);
         reader_set_strvalue(reader, StringValue_Value, NULL);
@@ -1067,7 +1067,7 @@ static HRESULT reader_parse_comment(xmlreader *reader)
                     reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
                     reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
                     reader_set_strvalue(reader, StringValue_Value, &value);
-                    reader->nodetype = XmlNodeType_Comment;
+                    reader->save = NULL;
                     return S_OK;
                 }
                 else
