@@ -1263,6 +1263,60 @@ static void test_read_pending(void)
     IXmlReader_Release(reader);
 }
 
+static void test_readvaluechunk(void)
+{
+    static const char testA[] = "<!-- comment1 -->";
+    IXmlReader *reader;
+    XmlNodeType type;
+    IStream *stream;
+    const WCHAR *value;
+    WCHAR b;
+    HRESULT hr;
+    UINT c;
+
+    hr = pCreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
+    ok(hr == S_OK, "S_OK, got %08x\n", hr);
+
+    stream = create_stream_on_data(testA, sizeof(testA));
+    hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    c = 0;
+    b = 0;
+    hr = IXmlReader_ReadValueChunk(reader, &b, 1, &c);
+todo_wine {
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(c == 1, "got %u\n", c);
+    ok(b == ' ', "got %x\n", b);
+}
+    /* portion read as chunk is skipped from resulting node value */
+    value = NULL;
+    hr = IXmlReader_GetValue(reader, &value, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+todo_wine
+    ok(value[0] == 'c', "got %s\n", wine_dbgstr_w(value));
+
+    /* once value is returned/allocated it's not possible to read by chunk */
+    c = 0;
+    b = 0;
+    hr = IXmlReader_ReadValueChunk(reader, &b, 1, &c);
+todo_wine
+    ok(hr == S_FALSE, "got %08x\n", hr);
+    ok(c == 0, "got %u\n", c);
+    ok(b == 0, "got %x\n", b);
+
+    value = NULL;
+    hr = IXmlReader_GetValue(reader, &value, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+todo_wine
+    ok(value[0] == 'c', "got %s\n", wine_dbgstr_w(value));
+
+    IXmlReader_Release(reader);
+}
+
 START_TEST(reader)
 {
     HRESULT r;
@@ -1285,6 +1339,7 @@ START_TEST(reader)
     test_read_element();
     test_read_full();
     test_read_pending();
+    test_readvaluechunk();
     test_read_xmldeclaration();
 
     CoUninitialize();
