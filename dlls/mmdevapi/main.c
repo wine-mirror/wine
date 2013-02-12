@@ -271,7 +271,7 @@ static IClassFactoryImpl MMDEVAPI_CF[] = {
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
-    int i = 0;
+    unsigned int i = 0;
     TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
     if(!init_driver()){
