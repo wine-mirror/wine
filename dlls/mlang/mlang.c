@@ -3008,7 +3008,7 @@ static HRESULT WINAPI fnIMultiLanguage3_ValidateCodePageEx(
     HWND hwnd,
     DWORD dwfIODControl)
 {
-    int i;
+    unsigned int i;
     MLang_impl *This = impl_from_IMultiLanguage3( iface );
 
     TRACE("%p %u %p %08x\n", This, uiCodePage, hwnd, dwfIODControl);
@@ -3020,7 +3020,7 @@ static HRESULT WINAPI fnIMultiLanguage3_ValidateCodePageEx(
     /* check for mlang supported code pages */
     for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
     {
-        int n;
+        UINT n;
         for (n = 0; n < mlang_data[i].number_of_cp; n++)
         {
             if (mlang_data[i].mime_cp_info[n].cp == uiCodePage)
@@ -3139,7 +3139,7 @@ static HRESULT WINAPI fnIMLangFontLink2_GetCharCodePages( IMLangFontLink2* iface
         WCHAR ch_src, DWORD *ret_codepages)
 {
     MLang_impl *This = impl_from_IMLangFontLink2(iface);
-    int i;
+    unsigned int i;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_wn(&ch_src, 1), ret_codepages);
 
