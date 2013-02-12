@@ -373,6 +373,35 @@ static DWORD DoRegServer(void)
     return ret;
 }
 
+static DWORD DoUnregServer(void)
+{
+    static const WCHAR msiserverW[] = {'M','S','I','S','e','r','v','e','r',0};
+    SC_HANDLE scm, service;
+    DWORD ret = 0;
+
+    if (!(scm = OpenSCManagerW(NULL, SERVICES_ACTIVE_DATABASEW, SC_MANAGER_CONNECT)))
+    {
+        fprintf(stderr, "Failed to open service control manager\n");
+        return 1;
+    }
+    if ((service = OpenServiceW(scm, msiserverW, DELETE)))
+    {
+        if (!DeleteService(service))
+        {
+            fprintf(stderr, "Failed to delete MSI service\n");
+            ret = 1;
+        }
+        CloseServiceHandle(service);
+    }
+    else if (GetLastError() != ERROR_SERVICE_DOES_NOT_EXIST)
+    {
+        fprintf(stderr, "Failed to open MSI service\n");
+        ret = 1;
+    }
+    CloseServiceHandle(scm);
+    return ret;
+}
+
 static INT DoEmbedding( LPWSTR key )
 {
 	printf("Remote custom actions are not supported yet\n");
@@ -982,7 +1011,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 	else if (FunctionUnregServer)
 	{
-		WINE_FIXME( "/unregserver not implemented yet, ignoring\n" );
+		ReturnCode = DoUnregServer();
 	}
 	else if (FunctionServer)
 	{
