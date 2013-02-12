@@ -257,10 +257,8 @@ static void test_getfile(HINTERNET hFtp, HINTERNET hConnect)
         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     /* Zero attributes */
-    SetLastError(0xdeadbeef);
     bRet = FtpGetFileA(hFtp, "welcome.msg", "should_be_existing_non_deadbeef", FALSE, 0, FTP_TRANSFER_TYPE_UNKNOWN, 0);
     ok ( bRet == TRUE, "Expected FtpGetFileA to succeed\n");
-    ok (GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok (GetFileAttributesA("should_be_existing_non_deadbeef") != INVALID_FILE_ATTRIBUTES,
         "Local file should have been created\n");
     DeleteFileA("should_be_existing_non_deadbeef");
