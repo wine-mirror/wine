@@ -1284,7 +1284,6 @@ static DWORD FTPFILE_QueryDataAvailable(object_header_t *hdr, DWORD *available, 
             task = alloc_async_task(&file->hdr, FTPFILE_AsyncQueryDataAvailableProc, sizeof(*task));
             INTERNET_AsyncCall(task);
 
-            *available = 0;
             return ERROR_IO_PENDING;
         }
     }
