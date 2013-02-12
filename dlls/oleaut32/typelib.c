@@ -6185,6 +6185,10 @@ DispCallFunc(
     case VT_CY:
         V_UI8(pvargResult) = call_method( func, argspos - 1, args + 1, &stack_offset );
         break;
+    case VT_HRESULT:
+        WARN("invalid return type %u\n", vtReturn);
+        heap_free( args );
+        return E_INVALIDARG;
     default:
         V_UI4(pvargResult) = call_method( func, argspos - 1, args + 1, &stack_offset );
         break;
@@ -6263,6 +6267,10 @@ DispCallFunc(
         args[0] = (DWORD_PTR)pvargResult;  /* arg 0 is a pointer to the result */
         call_method( func, argspos, args );
         break;
+    case VT_HRESULT:
+        WARN("invalid return type %u\n", vtReturn);
+        heap_free( args );
+        return E_INVALIDARG;
     default:
         V_UI8(pvargResult) = call_method( func, argspos - 1, args + 1 );
         break;

@@ -923,6 +923,11 @@ static int WINAPI inst_func( void *inst, int a )
     return a * 2;
 }
 
+static HRESULT WINAPI ret_false_func(void)
+{
+    return S_FALSE;
+}
+
 static const void *vtable[] = { NULL, NULL, NULL, inst_func };
 
 static void test_DispCallFunc(void)
@@ -1038,6 +1043,17 @@ static void test_DispCallFunc(void)
     ok( res == S_OK, "DispCallFunc failed %x\n", res );
     ok( V_VT(&result) == VT_I4, "wrong result type %d\n", V_VT(&result) );
     ok( V_I4(&result) == 6, "wrong result %08x\n", V_I4(&result) );
+
+    memset( &result, 0xcc, sizeof(result) );
+    res = DispCallFunc(NULL, (ULONG_PTR)ret_false_func, CC_STDCALL, VT_ERROR, 0, NULL, NULL, &result);
+    ok(res == S_OK, "DispCallFunc failed: %08x\n", res);
+    ok(V_VT(&result) == VT_ERROR, "V_VT(result) = %u\n", V_VT(&result));
+    ok(V_ERROR(&result) == S_FALSE, "V_ERROR(result) = %08x\n", V_ERROR(&result));
+
+    memset( &result, 0xcc, sizeof(result) );
+    res = DispCallFunc(NULL, (ULONG_PTR)ret_false_func, CC_STDCALL, VT_HRESULT, 0, NULL, NULL, &result);
+    ok(res == E_INVALIDARG, "DispCallFunc failed: %08x\n", res);
+    ok(V_VT(&result) == 0xcccc, "V_VT(result) = %u\n", V_VT(&result));
 }
 
 /* RegDeleteTreeW from dlls/advapi32/registry.c */
