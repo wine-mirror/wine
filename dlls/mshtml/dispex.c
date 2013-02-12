@@ -1066,7 +1066,7 @@ static HRESULT invoke_builtin_function(DispatchEx *This, func_info_t *func, DISP
         }
 
         V_VT(&vhres) = VT_ERROR;
-        hres = DispCallFunc(iface, func->call_vtbl_off*sizeof(void*), CC_STDCALL, VT_HRESULT,
+        hres = DispCallFunc(iface, func->call_vtbl_off*sizeof(void*), CC_STDCALL, VT_ERROR,
                     func->argc + (func->prop_vt == VT_VOID ? 0 : 1), func->arg_types, arg_ptrs, &vhres);
     }
 
