@@ -1528,6 +1528,8 @@ static BOOL check_atl_thunk( EXCEPTION_RECORD *rec, CONTEXT *context )
     const struct atl_thunk *thunk = (const struct atl_thunk *)rec->ExceptionInformation[1];
     BOOL ret = FALSE;
 
+    if (!virtual_is_valid_code_address( thunk, sizeof(thunk) )) return FALSE;
+
     __TRY
     {
         if (thunk->movl == 0x042444c7 && thunk->jmp == 0xe9)

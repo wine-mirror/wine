@@ -1617,6 +1617,23 @@ NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err )
 
 
 /***********************************************************************
+ *           virtual_is_valid_code_address
+ */
+BOOL virtual_is_valid_code_address( const void *addr, SIZE_T size )
+{
+    struct file_view *view;
+    BOOL ret = FALSE;
+    sigset_t sigset;
+
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
+    if ((view = VIRTUAL_FindView( addr, size )))
+        ret = !(view->protect & VPROT_SYSTEM);  /* system views are not visible to the app */
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
+    return ret;
+}
+
+
+/***********************************************************************
  *           virtual_handle_stack_fault
  *
  * Handle an access fault inside the current thread stack.
