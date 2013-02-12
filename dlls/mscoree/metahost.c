@@ -871,7 +871,7 @@ static HRESULT WINAPI InstalledRuntimeEnum_Next(IEnumUnknown *iface, ULONG celt,
     IUnknown **rgelt, ULONG *pceltFetched)
 {
     struct InstalledRuntimeEnum *This = impl_from_IEnumUnknown(iface);
-    int num_fetched = 0;
+    ULONG num_fetched = 0;
     HRESULT hr=S_OK;
     IUnknown *item;
 
@@ -903,7 +903,7 @@ static HRESULT WINAPI InstalledRuntimeEnum_Next(IEnumUnknown *iface, ULONG celt,
 static HRESULT WINAPI InstalledRuntimeEnum_Skip(IEnumUnknown *iface, ULONG celt)
 {
     struct InstalledRuntimeEnum *This = impl_from_IEnumUnknown(iface);
-    int num_fetched = 0;
+    ULONG num_fetched = 0;
     HRESULT hr=S_OK;
 
     TRACE("(%p,%u)\n", iface, celt);
