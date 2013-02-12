@@ -336,7 +336,7 @@ static BOOL parse_token(struct parser *parser)
                 if (len + 1 < sizeof(buffer))
                     buffer[len++] = c;
             }
-            if (c == EOF) {
+            if (c != '"') {
                 fprintf(stderr, "%s: Unterminated string (line %d).\n",
                         program_name, parser->line_no);
                 parser->error = TRUE;
