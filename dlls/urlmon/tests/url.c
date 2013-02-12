@@ -1468,10 +1468,10 @@ static void test_WinInetHttpInfo(IWinInetHttpInfo *http_info, DWORD progress)
     ok(hres == expect || ((progress == BINDSTATUS_COOKIE_SENT || progress == BINDSTATUS_PROXYDETECTING) && hres == S_FALSE),
        "progress %u: hres = %x, expected %x\n", progress, hres, expect);
     if(hres == S_OK) {
-        if(download_state==BEFORE_DOWNLOAD && progress!=BINDSTATUS_MIMETYPEAVAILABLE)
-            ok(status == 0, "status = %d\n", status);
+        if(download_state == BEFORE_DOWNLOAD && progress != BINDSTATUS_MIMETYPEAVAILABLE && progress != BINDSTATUS_DECODING)
+            ok(status == 0, "progress %u: status = %d\n", progress, status);
         else
-            ok(status == HTTP_STATUS_OK, "status = %d\n", status);
+            ok(status == HTTP_STATUS_OK, "progress %u: status = %d\n", progress, status);
         ok(size == sizeof(DWORD), "size = %d\n", size);
     }
 
@@ -1815,6 +1815,9 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
         break;
     case BINDSTATUS_COOKIE_SENT:
         trace("BINDSTATUS_COOKIE_SENT\n");
+        break;
+    case BINDSTATUS_DECODING:
+        trace("BINDSTATUS_DECODING\n");
         break;
     default:
         ok(0, "unexpected code %d\n", ulStatusCode);
