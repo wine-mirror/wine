@@ -344,26 +344,25 @@ static DWORD DoDllUnregisterServer(LPCWSTR DllName)
 
 static DWORD DoRegServer(void)
 {
+    static const WCHAR msiserverW[] = {'M','S','I','S','e','r','v','e','r',0};
+    static const WCHAR msiexecW[] = {'\\','m','s','i','e','x','e','c',' ','/','V',0};
     SC_HANDLE scm, service;
-    CHAR path[MAX_PATH+12];
-    DWORD ret = 0;
+    WCHAR path[MAX_PATH+12];
+    DWORD len, ret = 0;
 
-    scm = OpenSCManagerA(NULL, SERVICES_ACTIVE_DATABASEA, SC_MANAGER_CREATE_SERVICE);
-    if (!scm)
+    if (!(scm = OpenSCManagerW(NULL, SERVICES_ACTIVE_DATABASEW, SC_MANAGER_CREATE_SERVICE)))
     {
         fprintf(stderr, "Failed to open the service control manager.\n");
         return 1;
     }
-
-    GetSystemDirectoryA(path, MAX_PATH);
-    lstrcatA(path, "\\msiexec.exe /V");
-
-    service = CreateServiceA(scm, "MSIServer", "MSIServer", GENERIC_ALL,
-                             SERVICE_WIN32_SHARE_PROCESS, SERVICE_DEMAND_START,
-                             SERVICE_ERROR_NORMAL, path, NULL, NULL,
-                             NULL, NULL, NULL);
-
-    if (service) CloseServiceHandle(service);
+    len = GetSystemDirectoryW(path, MAX_PATH);
+    lstrcpyW(path + len, msiexecW);
+    if ((service = CreateServiceW(scm, msiserverW, msiserverW, GENERIC_ALL,
+                                  SERVICE_WIN32_SHARE_PROCESS, SERVICE_DEMAND_START,
+                                  SERVICE_ERROR_NORMAL, path, NULL, NULL, NULL, NULL, NULL)))
+    {
+        CloseServiceHandle(service);
+    }
     else if (GetLastError() != ERROR_SERVICE_EXISTS)
     {
         fprintf(stderr, "Failed to create MSI service\n");
