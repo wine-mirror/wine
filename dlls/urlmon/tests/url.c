@@ -933,7 +933,9 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
     CHECK_EXPECT(Continue);
 
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
-    ok(reported_url && !lstrcmpW(reported_url, current_url), "wrong url %s\n", wine_dbgstr_w(reported_url));
+
+    if(!bind_to_object)
+        ok(reported_url && !lstrcmpW(reported_url, current_url), "wrong url %s\n", wine_dbgstr_w(reported_url));
 
     ok(pProtocolData != NULL, "pProtocolData == NULL\n");
     if(!pProtocolData)
