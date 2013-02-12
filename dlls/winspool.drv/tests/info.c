@@ -2989,7 +2989,7 @@ todo_wine
 
 START_TEST(info)
 {
-    hwinspool = GetModuleHandleA("winspool.drv");
+    hwinspool = LoadLibrary("winspool.drv");
     pAddPortExA = (void *) GetProcAddress(hwinspool, "AddPortExA");
     pEnumPrinterDriversW = (void *) GetProcAddress(hwinspool, "EnumPrinterDriversW");
     pGetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "GetDefaultPrinterA");

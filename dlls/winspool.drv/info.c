@@ -3986,63 +3986,20 @@ static BOOL WINSPOOL_GetStringFromReg(HKEY hkey, LPCWSTR ValueName, LPBYTE ptr,
  *    WINSPOOL_GetDefaultDevMode
  *
  * Get a default DevMode values for wineps.
- * FIXME - use ppd.
  */
-
-static void WINSPOOL_GetDefaultDevMode(
-	LPBYTE ptr,
-	DWORD buflen, DWORD *needed)
+static void WINSPOOL_GetDefaultDevMode(LPBYTE ptr, DWORD buflen, DWORD *needed)
 {
-    DEVMODEW	dm;
-    static const WCHAR szWwps[] = {'w', 'i', 'n', 'e', 'p', 's', '.', 'd', 'r', 'v', 0 };
+    static const WCHAR winepsW[] = { 'w','i','n','e','p','s','.','d','r','v',0 };
 
-	/* fill default DEVMODE - should be read from ppd... */
-	ZeroMemory( &dm, sizeof(dm) );
-	memcpy(dm.dmDeviceName,szWwps,sizeof szWwps);
-	dm.dmSpecVersion = DM_SPECVERSION;
-	dm.dmDriverVersion = 1;
-	dm.dmSize = sizeof(DEVMODEW);
-	dm.dmDriverExtra = 0;
-	dm.dmFields =
-		DM_ORIENTATION | DM_PAPERSIZE |
-		DM_PAPERLENGTH | DM_PAPERWIDTH |
-		DM_SCALE |
-		DM_COPIES |
-		DM_DEFAULTSOURCE | DM_PRINTQUALITY |
-		DM_YRESOLUTION | DM_TTOPTION;
+    if (buflen >= sizeof(DEVMODEW))
+    {
+        DEVMODEW *dm = (DEVMODEW *)ptr;
 
-	dm.u1.s1.dmOrientation = DMORIENT_PORTRAIT;
-	dm.u1.s1.dmPaperSize = DMPAPER_A4;
-	dm.u1.s1.dmPaperLength = 2970;
-	dm.u1.s1.dmPaperWidth = 2100;
-
-	dm.u1.s1.dmScale = 100;
-	dm.u1.s1.dmCopies = 1;
-	dm.u1.s1.dmDefaultSource = DMBIN_AUTO;
-	dm.u1.s1.dmPrintQuality = DMRES_MEDIUM;
-	/* dm.dmColor */
-	/* dm.dmDuplex */
-	dm.dmYResolution = 300; /* 300dpi */
-	dm.dmTTOption = DMTT_BITMAP;
-	/* dm.dmCollate */
-	/* dm.dmFormName */
-	/* dm.dmLogPixels */
-	/* dm.dmBitsPerPel */
-	/* dm.dmPelsWidth */
-	/* dm.dmPelsHeight */
-	/* dm.u2.dmDisplayFlags */
-	/* dm.dmDisplayFrequency */
-	/* dm.dmICMMethod */
-	/* dm.dmICMIntent */
-	/* dm.dmMediaType */
-	/* dm.dmDitherType */
-	/* dm.dmReserved1 */
-	/* dm.dmReserved2 */
-	/* dm.dmPanningWidth */
-	/* dm.dmPanningHeight */
-
-    if(buflen >= sizeof(DEVMODEW))
-        memcpy(ptr, &dm, sizeof(DEVMODEW));
+        /* the driver will update registry with real values */
+        memset(dm, 0, sizeof(*dm));
+        dm->dmSize = sizeof(*dm);
+        lstrcpyW(dm->dmDeviceName, winepsW);
+    }
     *needed = sizeof(DEVMODEW);
 }
 
