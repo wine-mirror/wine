@@ -2619,6 +2619,8 @@ HANDLE WINAPI LoadImageA( HINSTANCE hinst, LPCSTR name, UINT type,
 HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
                 INT desiredx, INT desiredy, UINT loadflags )
 {
+    int depth;
+
     TRACE_(resource)("(%p,%s,%d,%d,%d,0x%08x)\n",
                      hinst,debugstr_w(name),type,desiredx,desiredy,loadflags);
 
@@ -2628,18 +2630,14 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
         return BITMAP_Load( hinst, name, desiredx, desiredy, loadflags );
 
     case IMAGE_ICON:
-        if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
-        if (screen_dc)
-        {
-            return CURSORICON_Load(hinst, name, desiredx, desiredy,
-                                   GetDeviceCaps(screen_dc, BITSPIXEL),
-                                   FALSE, loadflags);
-        }
-        break;
-
     case IMAGE_CURSOR:
-        return CURSORICON_Load(hinst, name, desiredx, desiredy,
-                               1, TRUE, loadflags);
+        depth = 1;
+        if (!(loadflags & LR_MONOCHROME))
+        {
+            if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
+            if (screen_dc) depth = GetDeviceCaps( screen_dc, BITSPIXEL );
+        }
+        return CURSORICON_Load(hinst, name, desiredx, desiredy, depth, (type == IMAGE_CURSOR), loadflags);
     }
     return 0;
 }
