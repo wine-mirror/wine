@@ -530,8 +530,8 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
  * Finds width, height, ascent and descent of a run, up to given character
  * (nLen).
  */
-static SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run *run, int nLen,
-                                int startx, int *pAscent, int *pDescent)
+SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run *run, int nLen,
+                         int startx, int *pAscent, int *pDescent)
 {
   SIZE size;
   int nMaxLen = run->len;
@@ -612,28 +612,6 @@ SIZE ME_GetRunSize(ME_Context *c, const ME_Paragraph *para,
 {
   int asc, desc;
   return ME_GetRunSizeCommon(c, para, run, nLen, startx, &asc, &desc);
-}
-
-/******************************************************************************
- * ME_CalcRunExtent
- * 
- * Updates the size of the run (fills width, ascent and descent). The height
- * is calculated based on whole row's ascent and descent anyway, so no need
- * to use it here.        
- */     
-void ME_CalcRunExtent(ME_Context *c, const ME_Paragraph *para, int startx, ME_Run *run)
-{
-  if (run->nFlags & MERF_HIDDEN)
-    run->nWidth = 0;
-  else
-  {
-    int nEnd = run->len;
-    SIZE size = ME_GetRunSizeCommon(c, para, run, nEnd, startx,
-                                    &run->nAscent, &run->nDescent);
-    run->nWidth = size.cx;
-    if (!size.cx)
-      WARN("size.cx == 0\n");
-  }
 }
 
 /******************************************************************************

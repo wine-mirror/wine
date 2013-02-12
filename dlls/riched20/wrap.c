@@ -33,6 +33,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
  */
 
 /******************************************************************************
+ * calc_run_extent
+ *
+ * Updates the size of the run (fills width, ascent and descent). The height
+ * is calculated based on whole row's ascent and descent anyway, so no need
+ * to use it here.
+ */
+static void calc_run_extent(ME_Context *c, const ME_Paragraph *para, int startx, ME_Run *run)
+{
+    if (run->nFlags & MERF_HIDDEN) run->nWidth = 0;
+    else
+    {
+        SIZE size = ME_GetRunSizeCommon( c, para, run, run->len, startx, &run->nAscent, &run->nDescent );
+        run->nWidth = size.cx;
+    }
+}
+
+/******************************************************************************
  * split_run_extents
  *
  * Splits a run into two in a given place. It also updates the screen position
@@ -62,7 +79,7 @@ static ME_DisplayItem *split_run_extents(ME_WrapContext *wc, ME_DisplayItem *ite
 
   run2 = &cursor.pRun->member.run;
 
-  ME_CalcRunExtent(wc->context, para, wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, run);
+  calc_run_extent(wc->context, para, wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, run);
 
   run2->pt.x = run->pt.x+run->nWidth;
   run2->pt.y = run->pt.y;
@@ -296,8 +313,8 @@ static void ME_WrapSizeRun(ME_WrapContext *wc, ME_DisplayItem *p)
 
   ME_UpdateRunFlags(wc->context->editor, &p->member.run);
 
-  ME_CalcRunExtent(wc->context, &wc->pPara->member.para,
-                   wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, &p->member.run);
+  calc_run_extent(wc->context, &wc->pPara->member.para,
+                  wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, &p->member.run);
 }
 
 
@@ -488,9 +505,9 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
       if (black) {
         wc->bOverflown = FALSE;
         pp = split_run_extents(wc, p, black);
-        ME_CalcRunExtent(wc->context, &wc->pPara->member.para,
-                         wc->nRow ? wc->nLeftMargin : wc->nFirstMargin,
-                         &pp->member.run);
+        calc_run_extent(wc->context, &wc->pPara->member.para,
+                        wc->nRow ? wc->nLeftMargin : wc->nFirstMargin,
+                        &pp->member.run);
         ME_InsertRowStart(wc, pp);
         return pp;
       }
