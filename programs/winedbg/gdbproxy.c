@@ -423,6 +423,7 @@ static struct cpu_register cpu_register_map[] = {
     REG(X30, 8),
     REG(Sp,  8),
     REG(Pc,  8),
+    REG(PState, 8),
 };
 #else
 # error Define the registers map for your CPU
