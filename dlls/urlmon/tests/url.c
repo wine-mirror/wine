@@ -150,29 +150,7 @@ DEFINE_EXPECT(OnSecurityProblem);
 static const WCHAR winetest_data_urlW[] =
     {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',
      't','e','s','t','s','/','d','a','t','a','.','p','h','p',0};
-
-static const WCHAR TEST_PART_URL_1[] = {'/','t','e','s','t','s','/','d','a','t','a','.','p','h','p','\0'};
-
-static const WCHAR winetest_post_urlW[] =
-        {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',
-         't','e','s','t','s','/','p','o','s','t','.','p','h','p',0};
-static const WCHAR ABOUT_BLANK[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
-static WCHAR INDEX_HTML[MAX_PATH];
-static const WCHAR ITS_URL[] =
-    {'i','t','s',':','t','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
-static const WCHAR MK_URL[] = {'m','k',':','@','M','S','I','T','S','t','o','r','e',':',
-    't','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
-static const WCHAR https_urlW[] =
-    {'h','t','t','p','s',':','/','/','w','w','w','.','c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',
-     '/','t','e','s','t','.','h','t','m','l',0};
-static const WCHAR https_invalid_cn_urlW[] =
-    {'h','t','t','p','s',':','/','/','2','0','9','.','4','6','.','2','5','.','1','3','2',
-     '/','t','e','s','t','.','h','t','m','l',0};
-static const WCHAR ftp_urlW[] = {'f','t','p',':','/','/','f','t','p','.','w','i','n','e','h','q','.','o','r','g',
-    '/','p','u','b','/','o','t','h','e','r','/',
-    'w','i','n','e','l','o','g','o','.','x','c','f','.','t','a','r','.','b','z','2',0};
-static const WCHAR winetest_urlW[] = {'w','i','n','e','t','e','s','t',':','t','e','s','t',0};
-
+static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
 
 static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
 
@@ -191,7 +169,7 @@ static const CHAR test_txtA[] = "test.txt";
 static const WCHAR emptyW[] = {0};
 
 static BOOL stopped_binding = FALSE, stopped_obj_binding = FALSE, emulate_protocol = FALSE,
-    data_available = FALSE, http_is_first = TRUE, bind_to_object = FALSE, filedwl_api;
+    data_available = FALSE, http_is_first = TRUE, bind_to_object = FALSE, filedwl_api, post_test;
 static DWORD read = 0, bindf = 0, prot_state = 0, thread_id, tymed, security_problem;
 static const WCHAR *reported_url;
 static CHAR mime_type[512];
@@ -210,19 +188,7 @@ static BOOL abort_start = FALSE;
 static BOOL abort_progress = FALSE;
 static BOOL async_switch = FALSE;
 
-static LPCWSTR urls[] = {
-    winetest_data_urlW,
-    ABOUT_BLANK,
-    INDEX_HTML,
-    ITS_URL,
-    MK_URL,
-    https_urlW,
-    ftp_urlW,
-    winetest_urlW,
-    winetest_urlW
-};
-
-static WCHAR file_url[INTERNET_MAX_URL_LENGTH];
+static WCHAR file_url[INTERNET_MAX_URL_LENGTH], current_url[INTERNET_MAX_URL_LENGTH];
 
 static enum {
     HTTP_TEST,
@@ -321,6 +287,8 @@ static void test_create(void)
     IMoniker *mon;
     IBindCtx *bctx;
     HRESULT hr;
+
+    static const WCHAR TEST_PART_URL_1[] = {'/','t','e','s','t','s','/','d','a','t','a','.','p','h','p',0};
 
     test_CreateURLMoniker(winetest_data_urlW, TEST_PART_URL_1);
 
@@ -626,7 +594,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     reported_url = szUrl;
     if(!filedwl_api) /* FIXME */
-        ok(szUrl && !lstrcmpW(szUrl, urls[test_protocol]), "wrong url %s\n", wine_dbgstr_w(szUrl));
+        ok(szUrl && !lstrcmpW(szUrl, current_url), "wrong url %s\n", wine_dbgstr_w(szUrl));
     ok(pOIProtSink != NULL, "pOIProtSink == NULL\n");
     ok(pOIBindInfo != NULL, "pOIBindInfo == NULL\n");
     ok(grfPI == 0, "grfPI=%d, expected 0\n", grfPI);
@@ -771,7 +739,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
             SET_EXPECT(BeginningTransaction);
             SET_EXPECT(QueryInterface_IHttpNegotiate);
         }
-        hres = IHttpNegotiate_BeginningTransaction(http_negotiate, urls[test_protocol],
+        hres = IHttpNegotiate_BeginningTransaction(http_negotiate, current_url,
                                                    NULL, 0, &additional_headers);
         if(!no_callback) {
             CHECK_CALLED_BROKEN(QueryInterface_IHttpNegotiate);
@@ -837,7 +805,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     if(test_protocol == FILE_TEST) {
         hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
-                BINDSTATUS_CACHEFILENAMEAVAILABLE, file_url+8);
+                BINDSTATUS_CACHEFILENAMEAVAILABLE, file_url+7);
         ok(hres == S_OK,
            "ReportProgress(BINDSTATUS_CACHEFILENAMEAVAILABLE) failed: %08x\n", hres);
 
@@ -965,7 +933,7 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
     CHECK_EXPECT(Continue);
 
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
-    ok(reported_url && !lstrcmpW(reported_url, urls[test_protocol]), "wrong url %s\n", wine_dbgstr_w(reported_url));
+    ok(reported_url && !lstrcmpW(reported_url, current_url), "wrong url %s\n", wine_dbgstr_w(reported_url));
 
     ok(pProtocolData != NULL, "pProtocolData == NULL\n");
     if(!pProtocolData)
@@ -1282,7 +1250,7 @@ static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate2 *iface,
 
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
 
-    ok(!lstrcmpW(szURL, urls[test_protocol]), "szURL != urls[test_protocol]\n");
+    ok(!lstrcmpW(szURL, current_url), "szURL != current_url\n");
     ok(!dwReserved, "dwReserved=%d, expected 0\n", dwReserved);
     ok(pszAdditionalHeaders != NULL, "pszAdditionalHeaders == NULL\n");
     if(pszAdditionalHeaders)
@@ -1755,7 +1723,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
             if(filedwl_api) {
                 /* FIXME */
             }else {
-                ok(!lstrcmpW(szStatusText, urls[test_protocol]), "wrong szStatusText %s\n", wine_dbgstr_w(szStatusText));
+                ok(!lstrcmpW(szStatusText, current_url), "wrong szStatusText %s\n", wine_dbgstr_w(szStatusText));
             }
         }
         if(!bind_to_object)
@@ -1792,7 +1760,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
             if(filedwl_api) {
                 /* FIXME */
             }else {
-                ok(!lstrcmpW(szStatusText, urls[test_protocol]), "wrong szStatusText %s\n", wine_dbgstr_w(szStatusText));
+                ok(!lstrcmpW(szStatusText, current_url), "wrong szStatusText %s\n", wine_dbgstr_w(szStatusText));
             }
         }
         ok(download_state == DOWNLOADING, "Download state was %d, expected DOWNLOADING\n",
@@ -1812,7 +1780,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
 
         ok(szStatusText != NULL, "szStatusText == NULL\n");
         if(szStatusText && test_protocol == FILE_TEST)
-            ok(!lstrcmpW(file_url+8, szStatusText), "wrong szStatusText %s\n", wine_dbgstr_w(szStatusText));
+            ok(!lstrcmpW(file_url+7, szStatusText), "wrong szStatusText %s\n", wine_dbgstr_w(szStatusText));
         break;
     case BINDSTATUS_CLASSIDAVAILABLE:
     {
@@ -2070,7 +2038,7 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallbackEx *iface, DW
 
     case TYMED_FILE:
         if(test_protocol == FILE_TEST)
-            ok(!lstrcmpW(pstgmed->u.lpszFileName, INDEX_HTML+7),
+            ok(!lstrcmpW(pstgmed->u.lpszFileName, file_url+7),
                "unexpected file name %s\n", wine_dbgstr_w(pstgmed->u.lpszFileName));
         else if(emulate_protocol)
             ok(!lstrcmpW(pstgmed->u.lpszFileName, cache_fileW),
@@ -2626,7 +2594,7 @@ static BOOL test_bscholder(IBindStatusCallback *holder)
     wstr = (void*)0xdeadbeef;
     SET_EXPECT(QueryInterface_IHttpNegotiate);
     SET_EXPECT(BeginningTransaction);
-    hres = IHttpNegotiate_BeginningTransaction(http_negotiate_serv, urls[test_protocol], emptyW, 0, &wstr);
+    hres = IHttpNegotiate_BeginningTransaction(http_negotiate_serv, current_url, emptyW, 0, &wstr);
     CHECK_CALLED_BROKEN(QueryInterface_IHttpNegotiate); /* IE8 */
     CHECK_CALLED(BeginningTransaction);
     ok(hres == S_OK, "BeginningTransaction failed: %08x\n", hres);
@@ -2831,6 +2799,8 @@ static BOOL test_RegisterBindStatusCallback(void)
 
 static void init_bind_test(int protocol, DWORD flags, DWORD t)
 {
+    const char *url_a = NULL;
+
     test_protocol = protocol;
     emulate_protocol = (flags & BINDTEST_EMULATE) != 0;
     download_state = BEFORE_DOWNLOAD;
@@ -2842,14 +2812,40 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
     bind_to_object = (flags & BINDTEST_TOOBJECT) != 0;
     tymed = t;
     filedwl_api = (flags & BINDTEST_FILEDWLAPI) != 0;
-    if(flags & BINDTEST_HTTPRESPONSE)
-        urls[HTTP_TEST] = winetest_post_urlW;
-    else
-        urls[HTTP_TEST] = winetest_data_urlW;
-    if(flags & BINDTEST_INVALID_CN)
-        urls[HTTPS_TEST] = https_invalid_cn_urlW;
-    else
-        urls[HTTPS_TEST] = https_urlW;
+    post_test = (flags & BINDTEST_HTTPRESPONSE) != 0;
+
+    switch(protocol) {
+    case HTTP_TEST:
+        if(post_test)
+            url_a = "http://test.winehq.org/tests/post.php";
+        else
+            lstrcpyW(current_url, winetest_data_urlW);
+        break;
+    case ABOUT_TEST:
+        url_a = "about:blank";
+        break;
+    case FILE_TEST:
+        lstrcpyW(current_url, file_url);
+        break;
+    case MK_TEST:
+        url_a = "mk:@MSITStore:test.chm::/blank.html";
+        break;
+    case ITS_TEST:
+        url_a = "its:test.chm::/blank.html";
+        break;
+    case HTTPS_TEST:
+        url_a = (flags & BINDTEST_INVALID_CN) ? "https://209.46.25.132/test.html" : "https://www.codeweavers.com/test.html";
+        break;
+    case FTP_TEST:
+        url_a = "ftp://ftp.winehq.org/pub/other/winelogo.xcf.tar.bz2";
+        break;
+    default:
+        url_a = "winetest:test";
+    }
+
+    if(url_a)
+        MultiByteToWideChar(CP_ACP, 0, url_a, -1, current_url, sizeof(current_url)/sizeof(*current_url));
+
     test_redirect = (flags & BINDTEST_REDIRECT) != 0;
     use_cache_file = (flags & BINDTEST_USE_CACHE) != 0;
     callback_read = !(flags & BINDTEST_NO_CALLBACK_READ);
@@ -2861,6 +2857,8 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
     is_async_prot = protocol == HTTP_TEST || protocol == HTTPS_TEST || protocol == FTP_TEST || protocol == WINETEST_TEST;
     prot_state = 0;
     ResetEvent(complete_event);
+
+    trace("URL: %s\n", wine_dbgstr_w(current_url));
 }
 
 static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
@@ -2896,7 +2894,7 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
             IBindStatusCallback_Release(previousclb);
     }
 
-    hres = CreateURLMoniker(NULL, test_protocol == FILE_TEST ? file_url : urls[test_protocol], &mon);
+    hres = CreateURLMoniker(NULL, current_url, &mon);
     ok(hres == S_OK, "failed to create moniker: %08x\n", hres);
     if(FAILED(hres))
         return;
@@ -2908,8 +2906,8 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
 
     hres = IMoniker_GetDisplayName(mon, bctx, NULL, &display_name);
     ok(hres == S_OK, "GetDisplayName failed %08x\n", hres);
-    ok(!lstrcmpW(display_name, urls[test_protocol]),
-       "GetDisplayName got wrong name %s\n", wine_dbgstr_w(display_name));
+    ok(!lstrcmpW(display_name, current_url), "GetDisplayName got wrong name %s, expected %s\n",
+       wine_dbgstr_w(display_name), wine_dbgstr_w(current_url));
     CoTaskMemFree(display_name);
 
     if(tymed == TYMED_FILE && (test_protocol == ABOUT_TEST || test_protocol == ITS_TEST))
@@ -3218,7 +3216,7 @@ static void test_BindToObject(int protocol, DWORD flags)
     if(FAILED(hres))
         return;
 
-    hres = CreateURLMoniker(NULL, test_protocol == FILE_TEST ? file_url : urls[test_protocol], &mon);
+    hres = CreateURLMoniker(NULL, current_url, &mon);
     ok(hres == S_OK, "failed to create moniker: %08x\n", hres);
     if(FAILED(hres)) {
         IBindCtx_Release(bctx);
@@ -3232,7 +3230,7 @@ static void test_BindToObject(int protocol, DWORD flags)
 
     hres = IMoniker_GetDisplayName(mon, bctx, NULL, &display_name);
     ok(hres == S_OK, "GetDisplayName failed %08x\n", hres);
-    ok(!lstrcmpW(display_name, urls[test_protocol]), "GetDisplayName got wrong name\n");
+    ok(!lstrcmpW(display_name, current_url), "GetDisplayName got wrong name\n");
     CoTaskMemFree(display_name);
 
     SET_EXPECT(QueryInterface_IBindStatusCallbackEx);
@@ -3349,7 +3347,7 @@ static void test_BindToObject(int protocol, DWORD flags)
             CLEAR_CALLED(GetWindow_IWindowForBindingUI);
         }
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FILE_TEST) {
-            if(urls[test_protocol] == winetest_post_urlW)
+            if(post_test)
                 CLEAR_CALLED(Obj_OnProgress_SENDINGREQUEST);
             else
                 CHECK_CALLED(Obj_OnProgress_SENDINGREQUEST);
@@ -3429,8 +3427,7 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
         SET_EXPECT(OnStopBinding);
     }
 
-    hres = URLDownloadToFileW(NULL, test_protocol == FILE_TEST ? file_url : urls[test_protocol],
-            dwl_htmlW, 0, (IBindStatusCallback*)&bsc);
+    hres = URLDownloadToFileW(NULL, current_url, dwl_htmlW, 0, (IBindStatusCallback*)&bsc);
     ok(hres == S_OK, "URLDownloadToFile failed: %08x\n", hres);
 
     CHECK_CALLED(GetBindInfo);
@@ -3481,7 +3478,7 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
     if(prot != FILE_TEST || emul)
         return;
 
-    hres = URLDownloadToFileW(NULL, urls[test_protocol], dwl_htmlW, 0, NULL);
+    hres = URLDownloadToFileW(NULL, current_url, dwl_htmlW, 0, NULL);
     ok(hres == S_OK, "URLDownloadToFile failed: %08x\n", hres);
 
     res = DeleteFileA(dwl_htmlA);
@@ -3508,7 +3505,7 @@ static void test_URLDownloadToFile_abort(void)
     SET_EXPECT(OnProgress_SENDINGREQUEST);
     SET_EXPECT(OnStopBinding);
 
-    hres = URLDownloadToFileW(NULL, urls[HTTP_TEST], dwl_htmlW, 0, (IBindStatusCallback*)&bsc);
+    hres = URLDownloadToFileW(NULL, current_url, dwl_htmlW, 0, (IBindStatusCallback*)&bsc);
     ok(hres == E_ABORT, "URLDownloadToFile failed: %08x, expected E_ABORT\n", hres);
 
     CHECK_CALLED(GetBindInfo);
@@ -3535,7 +3532,7 @@ static void test_URLDownloadToFile_abort(void)
     SET_EXPECT(OnStopBinding);
 
     abort_hres = E_ABORT;
-    hres = URLDownloadToFileW(NULL, urls[HTTP_TEST], dwl_htmlW, 0, (IBindStatusCallback*)&bsc);
+    hres = URLDownloadToFileW(NULL, current_url, dwl_htmlW, 0, (IBindStatusCallback*)&bsc);
     ok(hres == E_ABORT, "URLDownloadToFile failed: %08x, expected E_ABORT\n", hres);
 
     CHECK_CALLED(GetBindInfo);
@@ -3570,7 +3567,7 @@ static void test_URLDownloadToFile_abort(void)
      * IBindStatusCallback's OnStartBinding function.
      */
     abort_hres = E_NOTIMPL;
-    hres = URLDownloadToFileW(NULL, urls[HTTP_TEST], dwl_htmlW, 0, (IBindStatusCallback*)&bsc);
+    hres = URLDownloadToFileW(NULL, current_url, dwl_htmlW, 0, (IBindStatusCallback*)&bsc);
     ok(hres == S_OK, "URLDownloadToFile failed: %08x\n", hres);
 
     CHECK_CALLED(GetBindInfo);
@@ -3598,15 +3595,10 @@ static void test_URLDownloadToFile_abort(void)
 static void set_file_url(char *path)
 {
     CHAR file_urlA[INTERNET_MAX_URL_LENGTH];
-    CHAR INDEX_HTMLA[MAX_PATH];
 
-    lstrcpyA(file_urlA, "file:///");
+    lstrcpyA(file_urlA, "file://");
     lstrcatA(file_urlA, path);
     MultiByteToWideChar(CP_ACP, 0, file_urlA, -1, file_url, INTERNET_MAX_URL_LENGTH);
-
-    lstrcpyA(INDEX_HTMLA, "file://");
-    lstrcatA(INDEX_HTMLA, path);
-    MultiByteToWideChar(CP_ACP, 0, INDEX_HTMLA, -1, INDEX_HTML, MAX_PATH);
 }
 
 static void create_file(void)
@@ -3666,7 +3658,7 @@ static void test_ReportResult(HRESULT exhres)
     init_bind_test(ABOUT_TEST, BINDTEST_EMULATE, TYMED_ISTREAM);
     binding_hres = exhres;
 
-    hres = CreateURLMoniker(NULL, ABOUT_BLANK, &mon);
+    hres = CreateURLMoniker(NULL, about_blankW, &mon);
     ok(hres == S_OK, "CreateURLMoniker failed: %08x\n", hres);
 
     SET_EXPECT(QueryInterface_IServiceProvider);
@@ -3710,7 +3702,7 @@ static void test_BindToStorage_fail(void)
     IUnknown *unk;
     HRESULT hres;
 
-    hres = CreateURLMoniker(NULL, ABOUT_BLANK, &mon);
+    hres = CreateURLMoniker(NULL, about_blankW, &mon);
     ok(hres == S_OK, "CreateURLMoniker failed: %08x\n", hres);
     if(FAILED(hres))
         return;
