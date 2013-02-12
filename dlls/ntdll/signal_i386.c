@@ -1507,6 +1507,47 @@ static inline DWORD is_privileged_instr( CONTEXT *context )
     }
 }
 
+/***********************************************************************
+ *           check_invalid_gs
+ *
+ * Check for fault caused by invalid %gs value (some copy protection schemes mess with it).
+ */
+static inline BOOL check_invalid_gs( CONTEXT *context )
+{
+    unsigned int prefix_count = 0;
+    const BYTE *instr = (BYTE *)context->Eip;
+    WORD system_gs = ntdll_get_thread_data()->gs;
+
+    if (context->SegGs == system_gs) return FALSE;
+    if (!wine_ldt_is_system( context->SegCs )) return FALSE;
+    /* only handle faults in system libraries */
+    if (virtual_is_valid_code_address( instr, 1 )) return FALSE;
+
+    for (;;) switch(*instr)
+    {
+    /* instruction prefixes */
+    case 0x2e:  /* %cs: */
+    case 0x36:  /* %ss: */
+    case 0x3e:  /* %ds: */
+    case 0x26:  /* %es: */
+    case 0x64:  /* %fs: */
+    case 0x66:  /* opcode size */
+    case 0x67:  /* addr size */
+    case 0xf0:  /* lock */
+    case 0xf2:  /* repne */
+    case 0xf3:  /* repe */
+        if (++prefix_count >= 15) return FALSE;
+        instr++;
+        continue;
+    case 0x65:  /* %gs: */
+        TRACE( "%04x/%04x at %p, fixing up\n", context->SegGs, system_gs, instr );
+        context->SegGs = system_gs;
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
 
 #include "pshpack1.h"
 struct atl_thunk
@@ -1715,6 +1756,8 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
         if (rec->NumberParameters == 2)
         {
             if (rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT && check_atl_thunk( rec, context ))
+                goto done;
+            if (rec->ExceptionInformation[1] == 0xffffffff && check_invalid_gs( context ))
                 goto done;
             if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
                                                              rec->ExceptionInformation[0] )))
