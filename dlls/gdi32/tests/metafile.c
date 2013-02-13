@@ -2477,14 +2477,13 @@ static void test_emf_clipping(void)
     SetRect(&rc_sclip, 100, 100, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
     hrgn = CreateRectRgn(rc_sclip.left, rc_sclip.top, rc_sclip.right, rc_sclip.bottom);
     SelectClipRgn(hdc, hrgn);
+    SetRect(&rc_res, -1, -1, -1, -1);
     ret = GetClipBox(hdc, &rc_res);
-todo_wine
     ok(ret == SIMPLEREGION, "got %d\n", ret);
-    if(ret == SIMPLEREGION)
-        ok(EqualRect(&rc_res, &rc_sclip),
-                 "expected rc_res (%d, %d) - (%d, %d), got (%d, %d) - (%d, %d)\n",
-                 rc_sclip.left, rc_sclip.top, rc_sclip.right, rc_sclip.bottom,
-                 rc_res.left, rc_res.top, rc_res.right, rc_res.bottom);
+    ok(EqualRect(&rc_res, &rc_sclip),
+       "expected rc_res (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
+       rc_sclip.left, rc_sclip.top, rc_sclip.right, rc_sclip.bottom,
+       rc_res.left, rc_res.top, rc_res.right, rc_res.bottom);
 
     hemf = CloseEnhMetaFile(hdc);
     DeleteEnhMetaFile(hemf);

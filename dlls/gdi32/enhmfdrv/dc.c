@@ -191,6 +191,7 @@ INT EMFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
 
 INT EMFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
 {
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pExtSelectClipRgn );
     EMREXTSELECTCLIPRGN *emr;
     DWORD size, rgnsize;
     BOOL ret;
@@ -213,7 +214,7 @@ INT EMFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
 
     ret = EMFDRV_WriteRecord( dev, &emr->emr );
     HeapFree( GetProcessHeap(), 0, emr );
-    return ret ? SIMPLEREGION : ERROR;
+    return ret ? next->funcs->pExtSelectClipRgn( next, hrgn, mode ) : ERROR;
 }
 
 INT EMFDRV_SetMapMode( PHYSDEV dev, INT mode )
