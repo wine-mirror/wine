@@ -1115,8 +1115,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	    void*	extra;
 
             extra = HeapAlloc(GetProcessHeap(), 0,
-                              sizeof(struct sFMextra) +
-                              sizeof(struct sVoice) * (MidiOutDev[wDevID].caps.wVoices - 1));
+                              offsetof(struct sFMextra, voice[MidiOutDev[wDevID].caps.wVoices]));
 
 	    if (extra == 0) {
 		WARN("can't alloc extra data !\n");
