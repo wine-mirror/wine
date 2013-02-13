@@ -158,6 +158,14 @@ struct wld_link_map {
     ElfW(Addr) l_interp;
 };
 
+struct wld_auxv
+{
+    ElfW(Addr) a_type;
+    union
+    {
+        ElfW(Addr) a_val;
+    } a_un;
+};
 
 /*
  * The __bb_init_func is an empty function only called when file is
@@ -540,7 +548,7 @@ static __attribute__((noreturn,format(printf,1,2))) void fatal_error(const char 
  *  Dump interesting bits of the ELF auxv_t structure that is passed
  *   as the 4th parameter to the _start function
  */
-static void dump_auxiliary( ElfW(auxv_t) *av )
+static void dump_auxiliary( struct wld_auxv *av )
 {
 #define NAME(at) { at, #at }
     static const struct { int val; const char *name; } names[] =
@@ -581,8 +589,8 @@ static void dump_auxiliary( ElfW(auxv_t) *av )
  *
  * Set the new auxiliary values
  */
-static void set_auxiliary_values( ElfW(auxv_t) *av, const ElfW(auxv_t) *new_av,
-                                  const ElfW(auxv_t) *delete_av, void **stack )
+static void set_auxiliary_values( struct wld_auxv *av, const struct wld_auxv *new_av,
+                                  const struct wld_auxv *delete_av, void **stack )
 {
     int i, j, av_count = 0, new_count = 0, delete_count = 0;
     char *src, *dst;
@@ -624,7 +632,7 @@ static void set_auxiliary_values( ElfW(auxv_t) *av, const ElfW(auxv_t) *new_av,
         for (i = len - 1; i >= 0; i--) dst[i] = src[i];
     }
     *stack = dst;
-    av = (ElfW(auxv_t) *)((char *)av + (dst - src));
+    av = (struct wld_auxv *)((char *)av + (dst - src));
 
     /* now set the values */
     for (j = 0; new_av[j].a_type != AT_NULL; j++)
@@ -650,7 +658,7 @@ static void set_auxiliary_values( ElfW(auxv_t) *av, const ElfW(auxv_t) *new_av,
  *
  * Get a field of the auxiliary structure
  */
-static int get_auxiliary( ElfW(auxv_t) *av, int type, int def_val )
+static int get_auxiliary( struct wld_auxv *av, int type, int def_val )
 {
   for ( ; av->a_type != AT_NULL; av++)
       if( av->a_type == type ) return av->a_un.a_val;
@@ -1110,7 +1118,7 @@ static void remove_preload_range( int i )
  *
  * Check if address of the given aux value is in one of the reserved ranges
  */
-static int is_in_preload_range( const ElfW(auxv_t) *av, int type )
+static int is_in_preload_range( const struct wld_auxv *av, int type )
 {
     while (av->a_type != AT_NULL)
     {
@@ -1153,7 +1161,7 @@ void* wld_start( void **stack )
     long i, *pargc;
     char **argv, **p;
     char *interp, *reserve = NULL;
-    ElfW(auxv_t) new_av[12], delete_av[3], *av;
+    struct wld_auxv new_av[12], delete_av[3], *av;
     struct wld_link_map main_binary_map, ld_so_map;
     struct wine_preload_info **wine_main_preload_info;
 
@@ -1172,7 +1180,7 @@ void* wld_start( void **stack )
         p++;
     }
 
-    av = (ElfW(auxv_t)*) (p+1);
+    av = (struct wld_auxv *)(p+1);
     page_size = get_auxiliary( av, AT_PAGESZ, 4096 );
     page_mask = page_size - 1;
 
