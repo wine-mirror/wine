@@ -695,10 +695,10 @@ HRESULT CALLBACK IRowsetInfo_GetProperties_Proxy(IRowsetInfo* This, const ULONG 
 
     for(i = 0; i < cPropertyIDSets; i++)
     {
-        int j;
+        unsigned int j;
         TRACE("%d: %s %d props\n", i, debugstr_guid(&rgPropertyIDSets[i].guidPropertySet), rgPropertyIDSets[i].cPropertyIDs);
         for(j = 0; j < rgPropertyIDSets[i].cPropertyIDs; j++)
-            TRACE("\t%d: prop id %d\n", j, rgPropertyIDSets[i].rgPropertyIDs[j]);
+            TRACE("\t%u: prop id %d\n", j, rgPropertyIDSets[i].rgPropertyIDs[j]);
     }
 
     hr = IRowsetInfo_RemoteGetProperties_Proxy(This, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets, &error);
