@@ -916,9 +916,60 @@ void __wine_enter_vm86( CONTEXT *context )
 /***********************************************************************
  *            RtlUnwind  (NTDLL.@)
  */
-void WINAPI RtlUnwind( PVOID pEndFrame, PVOID targetIp, PEXCEPTION_RECORD pRecord, PVOID retval )
+void WINAPI RtlUnwind( void *endframe, void *target_ip, EXCEPTION_RECORD *rec, void *retval )
 {
-    FIXME( "Not implemented on ARM\n" );
+    CONTEXT context;
+    EXCEPTION_RECORD record;
+    EXCEPTION_REGISTRATION_RECORD *frame, *dispatch;
+    DWORD res;
+
+    RtlCaptureContext( &context );
+    context.R0 = (DWORD)retval;
+
+    /* build an exception record, if we do not have one */
+    if (!rec)
+    {
+        record.ExceptionCode    = STATUS_UNWIND;
+        record.ExceptionFlags   = 0;
+        record.ExceptionRecord  = NULL;
+        record.ExceptionAddress = (void *)context.Pc;
+        record.NumberParameters = 0;
+        rec = &record;
+    }
+
+    rec->ExceptionFlags |= EH_UNWINDING | (endframe ? 0 : EH_EXIT_UNWIND);
+
+    TRACE( "code=%x flags=%x\n", rec->ExceptionCode, rec->ExceptionFlags );
+
+    /* get chain of exception frames */
+    frame = NtCurrentTeb()->Tib.ExceptionList;
+    while ((frame != (EXCEPTION_REGISTRATION_RECORD*)~0UL) && (frame != endframe))
+    {
+        /* Check frame address */
+        if (endframe && ((void*)frame > endframe))
+            raise_status( STATUS_INVALID_UNWIND_TARGET, rec );
+
+        if (!is_valid_frame( frame )) raise_status( STATUS_BAD_STACK, rec );
+
+        /* Call handler */
+        TRACE( "calling handler at %p code=%x flags=%x\n",
+               frame->Handler, rec->ExceptionCode, rec->ExceptionFlags );
+        res = frame->Handler(rec, frame, &context, &dispatch);
+        TRACE( "handler at %p returned %x\n", frame->Handler, res );
+
+        switch(res)
+        {
+        case ExceptionContinueSearch:
+            break;
+        case ExceptionCollidedUnwind:
+            frame = dispatch;
+            break;
+        default:
+            raise_status( STATUS_INVALID_DISPOSITION, rec );
+            break;
+        }
+        frame = __wine_pop_frame( frame );
+    }
 }
 
 /*******************************************************************
