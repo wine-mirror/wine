@@ -2285,7 +2285,7 @@ static void test_D3DXVec_Array(void)
     exp_vec[3].x = 1051.778931f; exp_vec[3].y =  376.462250f; exp_vec[3].z = 0.156329f;
     exp_vec[4].x = 1037.348877f; exp_vec[4].y =  606.827393f; exp_vec[4].z = 0.133813f;
     exp_vec[5].x = 1025.023560f; exp_vec[5].y =  803.591248f; exp_vec[5].z = 0.114581f;
-    D3DXVec3ProjectArray((D3DXVECTOR3*)(out_vec + 1), sizeof(D3DXVECTOR4), (CONST D3DXVECTOR3*)inp_vec, sizeof(D3DXVECTOR4), &viewport, &projection, &view, &world, ARRAY_SIZE);
+    D3DXVec3ProjectArray((D3DXVECTOR3*)(out_vec + 1), sizeof(D3DXVECTOR4), (const D3DXVECTOR3*)inp_vec, sizeof(D3DXVECTOR4), &viewport, &projection, &view, &world, ARRAY_SIZE);
     compare_vectors(exp_vec, out_vec);
 
     /* D3DXVec3UnprojectArray */
@@ -2294,7 +2294,7 @@ static void test_D3DXVec_Array(void)
     exp_vec[3].x = -2.922839f; exp_vec[3].y = 1.596689f; exp_vec[3].z = 0.380609f;
     exp_vec[4].x = -2.456225f; exp_vec[4].y = 1.359290f; exp_vec[4].z = 0.345632f;
     exp_vec[5].x = -2.167897f; exp_vec[5].y = 1.212597f; exp_vec[5].z = 0.324019f;
-    D3DXVec3UnprojectArray((D3DXVECTOR3*)(out_vec + 1), sizeof(D3DXVECTOR4), (CONST D3DXVECTOR3*)inp_vec, sizeof(D3DXVECTOR4), &viewport, &projection, &view, &world, ARRAY_SIZE);
+    D3DXVec3UnprojectArray((D3DXVECTOR3*)(out_vec + 1), sizeof(D3DXVECTOR4), (const D3DXVECTOR3*)inp_vec, sizeof(D3DXVECTOR4), &viewport, &projection, &view, &world, ARRAY_SIZE);
     compare_vectors(exp_vec, out_vec);
 
     /* D3DXVec2TransformArray */
@@ -2462,7 +2462,7 @@ static void test_D3DXSHDot(void)
 {
     unsigned int i;
     FLOAT a[49], b[49], got;
-    CONST FLOAT expected[] =
+    const FLOAT expected[] =
     { 0.5f, 0.5f, 25.0f, 262.5f, 1428.0f, 5362.0f, 15873.0f, 39812.0f, };
 
     for (i = 0; i < 49; i++)
@@ -2486,7 +2486,7 @@ static void test_D3DXSHEvalDirection(void)
     unsigned int i, order;
     D3DXVECTOR3 d;
     FLOAT a[49], expected[49], *received_ptr;
-    CONST FLOAT table[36] =
+    const FLOAT table[36] =
     { 0.282095f, -0.977205f, 1.465808f, -0.488603f, 2.185097f, -6.555291f,
       8.200181f, -3.277646f, -1.638823f, 1.180087f, 17.343668f, -40.220032f,
       47.020218f, -20.110016f, -13.007751f, 6.490479f, -15.020058f, 10.620785f,

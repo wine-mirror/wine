@@ -50,7 +50,7 @@ struct ID3DXMatrixStackImpl
 
 /*_________________D3DXColor____________________*/
 
-D3DXCOLOR* WINAPI D3DXColorAdjustContrast(D3DXCOLOR *pout, CONST D3DXCOLOR *pc, FLOAT s)
+D3DXCOLOR* WINAPI D3DXColorAdjustContrast(D3DXCOLOR *pout, const D3DXCOLOR *pc, FLOAT s)
 {
     TRACE("(%p, %p, %f)\n", pout, pc, s);
 
@@ -61,7 +61,7 @@ D3DXCOLOR* WINAPI D3DXColorAdjustContrast(D3DXCOLOR *pout, CONST D3DXCOLOR *pc, 
     return pout;
 }
 
-D3DXCOLOR* WINAPI D3DXColorAdjustSaturation(D3DXCOLOR *pout, CONST D3DXCOLOR *pc, FLOAT s)
+D3DXCOLOR* WINAPI D3DXColorAdjustSaturation(D3DXCOLOR *pout, const D3DXCOLOR *pc, FLOAT s)
 {
     FLOAT grey;
 
@@ -208,7 +208,7 @@ D3DXMATRIX * WINAPI D3DXMatrixAffineTransformation2D(D3DXMATRIX *out, FLOAT scal
     return out;
 }
 
-HRESULT WINAPI D3DXMatrixDecompose(D3DXVECTOR3 *poutscale, D3DXQUATERNION *poutrotation, D3DXVECTOR3 *pouttranslation, CONST D3DXMATRIX *pm)
+HRESULT WINAPI D3DXMatrixDecompose(D3DXVECTOR3 *poutscale, D3DXQUATERNION *poutrotation, D3DXVECTOR3 *pouttranslation, const D3DXMATRIX *pm)
 {
     D3DXMATRIX normalized;
     D3DXVECTOR3 vec;
@@ -253,7 +253,7 @@ HRESULT WINAPI D3DXMatrixDecompose(D3DXVECTOR3 *poutscale, D3DXQUATERNION *poutr
     return S_OK;
 }
 
-FLOAT WINAPI D3DXMatrixDeterminant(CONST D3DXMATRIX *pm)
+FLOAT WINAPI D3DXMatrixDeterminant(const D3DXMATRIX *pm)
 {
     D3DXVECTOR4 minor, v1, v2, v3;
     FLOAT det;
@@ -268,7 +268,7 @@ FLOAT WINAPI D3DXMatrixDeterminant(CONST D3DXMATRIX *pm)
     return det;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixInverse(D3DXMATRIX *pout, FLOAT *pdeterminant, CONST D3DXMATRIX *pm)
+D3DXMATRIX* WINAPI D3DXMatrixInverse(D3DXMATRIX *pout, FLOAT *pdeterminant, const D3DXMATRIX *pm)
 {
     int a, i, j;
     D3DXMATRIX out;
@@ -305,7 +305,7 @@ D3DXMATRIX* WINAPI D3DXMatrixInverse(D3DXMATRIX *pout, FLOAT *pdeterminant, CONS
    return pout;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixLookAtLH(D3DXMATRIX *pout, CONST D3DXVECTOR3 *peye, CONST D3DXVECTOR3 *pat, CONST D3DXVECTOR3 *pup)
+D3DXMATRIX* WINAPI D3DXMatrixLookAtLH(D3DXMATRIX *pout, const D3DXVECTOR3 *peye, const D3DXVECTOR3 *pat, const D3DXVECTOR3 *pup)
 {
     D3DXVECTOR3 right, rightn, up, upn, vec, vec2;
 
@@ -336,7 +336,7 @@ D3DXMATRIX* WINAPI D3DXMatrixLookAtLH(D3DXMATRIX *pout, CONST D3DXVECTOR3 *peye,
     return pout;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixLookAtRH(D3DXMATRIX *pout, CONST D3DXVECTOR3 *peye, CONST D3DXVECTOR3 *pat, CONST D3DXVECTOR3 *pup)
+D3DXMATRIX* WINAPI D3DXMatrixLookAtRH(D3DXMATRIX *pout, const D3DXVECTOR3 *peye, const D3DXVECTOR3 *pat, const D3DXVECTOR3 *pup)
 {
     D3DXVECTOR3 right, rightn, up, upn, vec, vec2;
 
@@ -367,7 +367,7 @@ D3DXMATRIX* WINAPI D3DXMatrixLookAtRH(D3DXMATRIX *pout, CONST D3DXVECTOR3 *peye,
     return pout;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixMultiply(D3DXMATRIX *pout, CONST D3DXMATRIX *pm1, CONST D3DXMATRIX *pm2)
+D3DXMATRIX* WINAPI D3DXMatrixMultiply(D3DXMATRIX *pout, const D3DXMATRIX *pm1, const D3DXMATRIX *pm2)
 {
     D3DXMATRIX out;
     int i,j;
@@ -386,7 +386,7 @@ D3DXMATRIX* WINAPI D3DXMatrixMultiply(D3DXMATRIX *pout, CONST D3DXMATRIX *pm1, C
     return pout;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixMultiplyTranspose(D3DXMATRIX *pout, CONST D3DXMATRIX *pm1, CONST D3DXMATRIX *pm2)
+D3DXMATRIX* WINAPI D3DXMatrixMultiplyTranspose(D3DXMATRIX *pout, const D3DXMATRIX *pm1, const D3DXMATRIX *pm2)
 {
     TRACE("%p, %p, %p)\n", pout, pm1, pm2);
 
@@ -535,7 +535,7 @@ D3DXMATRIX* WINAPI D3DXMatrixPerspectiveRH(D3DXMATRIX *pout, FLOAT w, FLOAT h, F
     return pout;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixReflect(D3DXMATRIX *pout, CONST D3DXPLANE *pplane)
+D3DXMATRIX* WINAPI D3DXMatrixReflect(D3DXMATRIX *pout, const D3DXPLANE *pplane)
 {
     D3DXPLANE Nplane;
 
@@ -590,7 +590,7 @@ D3DXMATRIX * WINAPI D3DXMatrixRotationAxis(D3DXMATRIX *out, const D3DXVECTOR3 *v
     return out;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixRotationQuaternion(D3DXMATRIX *pout, CONST D3DXQUATERNION *pq)
+D3DXMATRIX* WINAPI D3DXMatrixRotationQuaternion(D3DXMATRIX *pout, const D3DXQUATERNION *pq)
 {
     TRACE("(%p, %p)\n", pout, pq);
 
@@ -687,7 +687,7 @@ D3DXMATRIX* WINAPI D3DXMatrixScaling(D3DXMATRIX *pout, FLOAT sx, FLOAT sy, FLOAT
     return pout;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixShadow(D3DXMATRIX *pout, CONST D3DXVECTOR4 *plight, CONST D3DXPLANE *pplane)
+D3DXMATRIX* WINAPI D3DXMatrixShadow(D3DXMATRIX *pout, const D3DXVECTOR4 *plight, const D3DXPLANE *pplane)
 {
     D3DXPLANE Nplane;
     FLOAT dot;
@@ -715,7 +715,7 @@ D3DXMATRIX* WINAPI D3DXMatrixShadow(D3DXMATRIX *pout, CONST D3DXVECTOR4 *plight,
     return pout;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixTransformation(D3DXMATRIX *pout, CONST D3DXVECTOR3 *pscalingcenter, CONST D3DXQUATERNION *pscalingrotation, CONST D3DXVECTOR3 *pscaling, CONST D3DXVECTOR3 *protationcenter, CONST D3DXQUATERNION *protation, CONST D3DXVECTOR3 *ptranslation)
+D3DXMATRIX* WINAPI D3DXMatrixTransformation(D3DXMATRIX *pout, const D3DXVECTOR3 *pscalingcenter, const D3DXQUATERNION *pscalingrotation, const D3DXVECTOR3 *pscaling, const D3DXVECTOR3 *protationcenter, const D3DXQUATERNION *protation, const D3DXVECTOR3 *ptranslation)
 {
     D3DXMATRIX m1, m2, m3, m4, m5, m6, m7;
     D3DXQUATERNION prc;
@@ -792,7 +792,7 @@ D3DXMATRIX* WINAPI D3DXMatrixTransformation(D3DXMATRIX *pout, CONST D3DXVECTOR3 
     return pout;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixTransformation2D(D3DXMATRIX *pout, CONST D3DXVECTOR2 *pscalingcenter, FLOAT scalingrotation, CONST D3DXVECTOR2 *pscaling, CONST D3DXVECTOR2 *protationcenter, FLOAT rotation, CONST D3DXVECTOR2 *ptranslation)
+D3DXMATRIX* WINAPI D3DXMatrixTransformation2D(D3DXMATRIX *pout, const D3DXVECTOR2 *pscalingcenter, FLOAT scalingrotation, const D3DXVECTOR2 *pscaling, const D3DXVECTOR2 *protationcenter, FLOAT rotation, const D3DXVECTOR2 *ptranslation)
 {
     D3DXQUATERNION rot, sca_rot;
     D3DXVECTOR3 rot_center, sca, sca_center, trans;
@@ -877,9 +877,9 @@ D3DXMATRIX* WINAPI D3DXMatrixTranslation(D3DXMATRIX *pout, FLOAT x, FLOAT y, FLO
     return pout;
 }
 
-D3DXMATRIX* WINAPI D3DXMatrixTranspose(D3DXMATRIX *pout, CONST D3DXMATRIX *pm)
+D3DXMATRIX* WINAPI D3DXMatrixTranspose(D3DXMATRIX *pout, const D3DXMATRIX *pm)
 {
-    CONST D3DXMATRIX m = *pm;
+    const D3DXMATRIX m = *pm;
     int i,j;
 
     TRACE("(%p, %p)\n", pout, pm);
@@ -991,7 +991,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_LoadIdentity(ID3DXMatrixStack *iface)
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMatrixStackImpl_LoadMatrix(ID3DXMatrixStack *iface, CONST D3DXMATRIX *pm)
+static HRESULT WINAPI ID3DXMatrixStackImpl_LoadMatrix(ID3DXMatrixStack *iface, const D3DXMATRIX *pm)
 {
     struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
@@ -1002,7 +1002,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_LoadMatrix(ID3DXMatrixStack *iface, C
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrix(ID3DXMatrixStack *iface, CONST D3DXMATRIX *pm)
+static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrix(ID3DXMatrixStack *iface, const D3DXMATRIX *pm)
 {
     struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
@@ -1013,7 +1013,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrix(ID3DXMatrixStack *iface, C
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrixLocal(ID3DXMatrixStack *iface, CONST D3DXMATRIX *pm)
+static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrixLocal(ID3DXMatrixStack *iface, const D3DXMATRIX *pm)
 {
     struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
 
@@ -1079,7 +1079,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_Push(ID3DXMatrixStack *iface)
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxis(ID3DXMatrixStack *iface, CONST D3DXVECTOR3 *pv, FLOAT angle)
+static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxis(ID3DXMatrixStack *iface, const D3DXVECTOR3 *pv, FLOAT angle)
 {
     D3DXMATRIX temp;
     struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
@@ -1092,7 +1092,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxis(ID3DXMatrixStack *iface, C
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxisLocal(ID3DXMatrixStack *iface, CONST D3DXVECTOR3 *pv, FLOAT angle)
+static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxisLocal(ID3DXMatrixStack *iface, const D3DXVECTOR3 *pv, FLOAT angle)
 {
     D3DXMATRIX temp;
     struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
@@ -1207,7 +1207,7 @@ static const ID3DXMatrixStackVtbl ID3DXMatrixStack_Vtbl =
 
 /*_________________D3DXPLANE________________*/
 
-D3DXPLANE* WINAPI D3DXPlaneFromPointNormal(D3DXPLANE *pout, CONST D3DXVECTOR3 *pvpoint, CONST D3DXVECTOR3 *pvnormal)
+D3DXPLANE* WINAPI D3DXPlaneFromPointNormal(D3DXPLANE *pout, const D3DXVECTOR3 *pvpoint, const D3DXVECTOR3 *pvnormal)
 {
     TRACE("(%p, %p, %p)\n", pout, pvpoint, pvnormal);
 
@@ -1218,7 +1218,7 @@ D3DXPLANE* WINAPI D3DXPlaneFromPointNormal(D3DXPLANE *pout, CONST D3DXVECTOR3 *p
     return pout;
 }
 
-D3DXPLANE* WINAPI D3DXPlaneFromPoints(D3DXPLANE *pout, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2, CONST D3DXVECTOR3 *pv3)
+D3DXPLANE* WINAPI D3DXPlaneFromPoints(D3DXPLANE *pout, const D3DXVECTOR3 *pv1, const D3DXVECTOR3 *pv2, const D3DXVECTOR3 *pv3)
 {
     D3DXVECTOR3 edge1, edge2, normal, Nnormal;
 
@@ -1234,7 +1234,7 @@ D3DXPLANE* WINAPI D3DXPlaneFromPoints(D3DXPLANE *pout, CONST D3DXVECTOR3 *pv1, C
     return pout;
 }
 
-D3DXVECTOR3* WINAPI D3DXPlaneIntersectLine(D3DXVECTOR3 *pout, CONST D3DXPLANE *pp, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2)
+D3DXVECTOR3* WINAPI D3DXPlaneIntersectLine(D3DXVECTOR3 *pout, const D3DXPLANE *pp, const D3DXVECTOR3 *pv1, const D3DXVECTOR3 *pv2)
 {
     D3DXVECTOR3 direction, normal;
     FLOAT dot, temp;
@@ -1281,9 +1281,9 @@ D3DXPLANE * WINAPI D3DXPlaneNormalize(D3DXPLANE *out, const D3DXPLANE *p)
     return out;
 }
 
-D3DXPLANE* WINAPI D3DXPlaneTransform(D3DXPLANE *pout, CONST D3DXPLANE *pplane, CONST D3DXMATRIX *pm)
+D3DXPLANE* WINAPI D3DXPlaneTransform(D3DXPLANE *pout, const D3DXPLANE *pplane, const D3DXMATRIX *pm)
 {
-    CONST D3DXPLANE plane = *pplane;
+    const D3DXPLANE plane = *pplane;
 
     TRACE("(%p, %p, %p)\n", pout, pplane, pm);
 
@@ -1294,7 +1294,7 @@ D3DXPLANE* WINAPI D3DXPlaneTransform(D3DXPLANE *pout, CONST D3DXPLANE *pplane, C
     return pout;
 }
 
-D3DXPLANE* WINAPI D3DXPlaneTransformArray(D3DXPLANE* out, UINT outstride, CONST D3DXPLANE* in, UINT instride, CONST D3DXMATRIX* matrix, UINT elements)
+D3DXPLANE* WINAPI D3DXPlaneTransformArray(D3DXPLANE* out, UINT outstride, const D3DXPLANE* in, UINT instride, const D3DXMATRIX* matrix, UINT elements)
 {
     UINT i;
 
@@ -1303,7 +1303,7 @@ D3DXPLANE* WINAPI D3DXPlaneTransformArray(D3DXPLANE* out, UINT outstride, CONST 
     for (i = 0; i < elements; ++i) {
         D3DXPlaneTransform(
             (D3DXPLANE*)((char*)out + outstride * i),
-            (CONST D3DXPLANE*)((const char*)in + instride * i),
+            (const D3DXPLANE*)((const char*)in + instride * i),
             matrix);
     }
     return out;
@@ -1311,7 +1311,7 @@ D3DXPLANE* WINAPI D3DXPlaneTransformArray(D3DXPLANE* out, UINT outstride, CONST 
 
 /*_________________D3DXQUATERNION________________*/
 
-D3DXQUATERNION* WINAPI D3DXQuaternionBaryCentric(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2, CONST D3DXQUATERNION *pq3, FLOAT f, FLOAT g)
+D3DXQUATERNION* WINAPI D3DXQuaternionBaryCentric(D3DXQUATERNION *pout, const D3DXQUATERNION *pq1, const D3DXQUATERNION *pq2, const D3DXQUATERNION *pq3, FLOAT f, FLOAT g)
 {
     D3DXQUATERNION temp1, temp2;
 
@@ -1346,7 +1346,7 @@ D3DXQUATERNION * WINAPI D3DXQuaternionExp(D3DXQUATERNION *out, const D3DXQUATERN
     return out;
 }
 
-D3DXQUATERNION* WINAPI D3DXQuaternionInverse(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)
+D3DXQUATERNION* WINAPI D3DXQuaternionInverse(D3DXQUATERNION *pout, const D3DXQUATERNION *pq)
 {
     D3DXQUATERNION out;
     FLOAT norm;
@@ -1383,7 +1383,7 @@ D3DXQUATERNION * WINAPI D3DXQuaternionLn(D3DXQUATERNION *out, const D3DXQUATERNI
     return out;
 }
 
-D3DXQUATERNION* WINAPI D3DXQuaternionMultiply(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2)
+D3DXQUATERNION* WINAPI D3DXQuaternionMultiply(D3DXQUATERNION *pout, const D3DXQUATERNION *pq1, const D3DXQUATERNION *pq2)
 {
     D3DXQUATERNION out;
 
@@ -1537,7 +1537,7 @@ D3DXQUATERNION * WINAPI D3DXQuaternionSlerp(D3DXQUATERNION *out, const D3DXQUATE
     return out;
 }
 
-D3DXQUATERNION* WINAPI D3DXQuaternionSquad(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2, CONST D3DXQUATERNION *pq3, CONST D3DXQUATERNION *pq4, FLOAT t)
+D3DXQUATERNION* WINAPI D3DXQuaternionSquad(D3DXQUATERNION *pout, const D3DXQUATERNION *pq1, const D3DXQUATERNION *pq2, const D3DXQUATERNION *pq3, const D3DXQUATERNION *pq4, FLOAT t)
 {
     D3DXQUATERNION temp1, temp2;
 
@@ -1547,7 +1547,7 @@ D3DXQUATERNION* WINAPI D3DXQuaternionSquad(D3DXQUATERNION *pout, CONST D3DXQUATE
     return pout;
 }
 
-static D3DXQUATERNION add_diff(CONST D3DXQUATERNION *q1, CONST D3DXQUATERNION *q2, CONST FLOAT add)
+static D3DXQUATERNION add_diff(const D3DXQUATERNION *q1, const D3DXQUATERNION *q2, const FLOAT add)
 {
     D3DXQUATERNION temp;
 
@@ -1559,7 +1559,7 @@ static D3DXQUATERNION add_diff(CONST D3DXQUATERNION *q1, CONST D3DXQUATERNION *q
     return temp;
 }
 
-void WINAPI D3DXQuaternionSquadSetup(D3DXQUATERNION *paout, D3DXQUATERNION *pbout, D3DXQUATERNION *pcout, CONST D3DXQUATERNION *pq0, CONST D3DXQUATERNION *pq1, CONST D3DXQUATERNION *pq2, CONST D3DXQUATERNION *pq3)
+void WINAPI D3DXQuaternionSquadSetup(D3DXQUATERNION *paout, D3DXQUATERNION *pbout, D3DXQUATERNION *pcout, const D3DXQUATERNION *pq0, const D3DXQUATERNION *pq1, const D3DXQUATERNION *pq2, const D3DXQUATERNION *pq3)
 {
     D3DXQUATERNION q, temp1, temp2, temp3, zero;
 
@@ -1614,7 +1614,7 @@ void WINAPI D3DXQuaternionSquadSetup(D3DXQUATERNION *paout, D3DXQUATERNION *pbou
     return;
 }
 
-void WINAPI D3DXQuaternionToAxisAngle(CONST D3DXQUATERNION *pq, D3DXVECTOR3 *paxis, FLOAT *pangle)
+void WINAPI D3DXQuaternionToAxisAngle(const D3DXQUATERNION *pq, D3DXVECTOR3 *paxis, FLOAT *pangle)
 {
     TRACE("(%p, %p, %p)\n", pq, paxis, pangle);
 
@@ -1626,7 +1626,7 @@ void WINAPI D3DXQuaternionToAxisAngle(CONST D3DXQUATERNION *pq, D3DXVECTOR3 *pax
 
 /*_________________D3DXVec2_____________________*/
 
-D3DXVECTOR2* WINAPI D3DXVec2BaryCentric(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2, CONST D3DXVECTOR2 *pv3, FLOAT f, FLOAT g)
+D3DXVECTOR2* WINAPI D3DXVec2BaryCentric(D3DXVECTOR2 *pout, const D3DXVECTOR2 *pv1, const D3DXVECTOR2 *pv2, const D3DXVECTOR2 *pv3, FLOAT f, FLOAT g)
 {
     TRACE("(%p, %p, %p, %p, %f, %f)\n", pout, pv1, pv2, pv3, f, g);
 
@@ -1635,7 +1635,7 @@ D3DXVECTOR2* WINAPI D3DXVec2BaryCentric(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv
     return pout;
 }
 
-D3DXVECTOR2* WINAPI D3DXVec2CatmullRom(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv0, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2, CONST D3DXVECTOR2 *pv3, FLOAT s)
+D3DXVECTOR2* WINAPI D3DXVec2CatmullRom(D3DXVECTOR2 *pout, const D3DXVECTOR2 *pv0, const D3DXVECTOR2 *pv1, const D3DXVECTOR2 *pv2, const D3DXVECTOR2 *pv3, FLOAT s)
 {
     TRACE("(%p, %p, %p, %p, %p, %f)\n", pout, pv0, pv1, pv2, pv3, s);
 
@@ -1644,7 +1644,7 @@ D3DXVECTOR2* WINAPI D3DXVec2CatmullRom(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv0
     return pout;
 }
 
-D3DXVECTOR2* WINAPI D3DXVec2Hermite(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pt1, CONST D3DXVECTOR2 *pv2, CONST D3DXVECTOR2 *pt2, FLOAT s)
+D3DXVECTOR2* WINAPI D3DXVec2Hermite(D3DXVECTOR2 *pout, const D3DXVECTOR2 *pv1, const D3DXVECTOR2 *pt1, const D3DXVECTOR2 *pv2, const D3DXVECTOR2 *pt2, FLOAT s)
 {
     FLOAT h1, h2, h3, h4;
 
@@ -1660,7 +1660,7 @@ D3DXVECTOR2* WINAPI D3DXVec2Hermite(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, C
     return pout;
 }
 
-D3DXVECTOR2* WINAPI D3DXVec2Normalize(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv)
+D3DXVECTOR2* WINAPI D3DXVec2Normalize(D3DXVECTOR2 *pout, const D3DXVECTOR2 *pv)
 {
     FLOAT norm;
 
@@ -1681,7 +1681,7 @@ D3DXVECTOR2* WINAPI D3DXVec2Normalize(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv)
     return pout;
 }
 
-D3DXVECTOR4* WINAPI D3DXVec2Transform(D3DXVECTOR4 *pout, CONST D3DXVECTOR2 *pv, CONST D3DXMATRIX *pm)
+D3DXVECTOR4* WINAPI D3DXVec2Transform(D3DXVECTOR4 *pout, const D3DXVECTOR2 *pv, const D3DXMATRIX *pm)
 {
     TRACE("(%p, %p, %p)\n", pout, pv, pm);
 
@@ -1692,7 +1692,7 @@ D3DXVECTOR4* WINAPI D3DXVec2Transform(D3DXVECTOR4 *pout, CONST D3DXVECTOR2 *pv, 
     return pout;
 }
 
-D3DXVECTOR4* WINAPI D3DXVec2TransformArray(D3DXVECTOR4* out, UINT outstride, CONST D3DXVECTOR2* in, UINT instride, CONST D3DXMATRIX* matrix, UINT elements)
+D3DXVECTOR4* WINAPI D3DXVec2TransformArray(D3DXVECTOR4* out, UINT outstride, const D3DXVECTOR2* in, UINT instride, const D3DXMATRIX* matrix, UINT elements)
 {
     UINT i;
 
@@ -1701,13 +1701,13 @@ D3DXVECTOR4* WINAPI D3DXVec2TransformArray(D3DXVECTOR4* out, UINT outstride, CON
     for (i = 0; i < elements; ++i) {
         D3DXVec2Transform(
             (D3DXVECTOR4*)((char*)out + outstride * i),
-            (CONST D3DXVECTOR2*)((const char*)in + instride * i),
+            (const D3DXVECTOR2*)((const char*)in + instride * i),
             matrix);
     }
     return out;
 }
 
-D3DXVECTOR2* WINAPI D3DXVec2TransformCoord(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv, CONST D3DXMATRIX *pm)
+D3DXVECTOR2* WINAPI D3DXVec2TransformCoord(D3DXVECTOR2 *pout, const D3DXVECTOR2 *pv, const D3DXMATRIX *pm)
 {
     D3DXVECTOR2 v;
     FLOAT norm;
@@ -1723,7 +1723,7 @@ D3DXVECTOR2* WINAPI D3DXVec2TransformCoord(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 
     return pout;
 }
 
-D3DXVECTOR2* WINAPI D3DXVec2TransformCoordArray(D3DXVECTOR2* out, UINT outstride, CONST D3DXVECTOR2* in, UINT instride, CONST D3DXMATRIX* matrix, UINT elements)
+D3DXVECTOR2* WINAPI D3DXVec2TransformCoordArray(D3DXVECTOR2* out, UINT outstride, const D3DXVECTOR2* in, UINT instride, const D3DXMATRIX* matrix, UINT elements)
 {
     UINT i;
 
@@ -1732,21 +1732,21 @@ D3DXVECTOR2* WINAPI D3DXVec2TransformCoordArray(D3DXVECTOR2* out, UINT outstride
     for (i = 0; i < elements; ++i) {
         D3DXVec2TransformCoord(
             (D3DXVECTOR2*)((char*)out + outstride * i),
-            (CONST D3DXVECTOR2*)((const char*)in + instride * i),
+            (const D3DXVECTOR2*)((const char*)in + instride * i),
             matrix);
     }
     return out;
 }
 
-D3DXVECTOR2* WINAPI D3DXVec2TransformNormal(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv, CONST D3DXMATRIX *pm)
+D3DXVECTOR2* WINAPI D3DXVec2TransformNormal(D3DXVECTOR2 *pout, const D3DXVECTOR2 *pv, const D3DXMATRIX *pm)
 {
-    CONST D3DXVECTOR2 v = *pv;
+    const D3DXVECTOR2 v = *pv;
     pout->x = pm->u.m[0][0] * v.x + pm->u.m[1][0] * v.y;
     pout->y = pm->u.m[0][1] * v.x + pm->u.m[1][1] * v.y;
     return pout;
 }
 
-D3DXVECTOR2* WINAPI D3DXVec2TransformNormalArray(D3DXVECTOR2* out, UINT outstride, CONST D3DXVECTOR2 *in, UINT instride, CONST D3DXMATRIX *matrix, UINT elements)
+D3DXVECTOR2* WINAPI D3DXVec2TransformNormalArray(D3DXVECTOR2* out, UINT outstride, const D3DXVECTOR2 *in, UINT instride, const D3DXMATRIX *matrix, UINT elements)
 {
     UINT i;
 
@@ -1755,7 +1755,7 @@ D3DXVECTOR2* WINAPI D3DXVec2TransformNormalArray(D3DXVECTOR2* out, UINT outstrid
     for (i = 0; i < elements; ++i) {
         D3DXVec2TransformNormal(
             (D3DXVECTOR2*)((char*)out + outstride * i),
-            (CONST D3DXVECTOR2*)((const char*)in + instride * i),
+            (const D3DXVECTOR2*)((const char*)in + instride * i),
             matrix);
     }
     return out;
@@ -1763,7 +1763,7 @@ D3DXVECTOR2* WINAPI D3DXVec2TransformNormalArray(D3DXVECTOR2* out, UINT outstrid
 
 /*_________________D3DXVec3_____________________*/
 
-D3DXVECTOR3* WINAPI D3DXVec3BaryCentric(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2, CONST D3DXVECTOR3 *pv3, FLOAT f, FLOAT g)
+D3DXVECTOR3* WINAPI D3DXVec3BaryCentric(D3DXVECTOR3 *pout, const D3DXVECTOR3 *pv1, const D3DXVECTOR3 *pv2, const D3DXVECTOR3 *pv3, FLOAT f, FLOAT g)
 {
     TRACE("(%p, %p, %p, %p, %f, %f)\n", pout, pv1, pv2, pv3, f, g);
 
@@ -1773,7 +1773,7 @@ D3DXVECTOR3* WINAPI D3DXVec3BaryCentric(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv
     return pout;
 }
 
-D3DXVECTOR3* WINAPI D3DXVec3CatmullRom( D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv0, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2, CONST D3DXVECTOR3 *pv3, FLOAT s)
+D3DXVECTOR3* WINAPI D3DXVec3CatmullRom( D3DXVECTOR3 *pout, const D3DXVECTOR3 *pv0, const D3DXVECTOR3 *pv1, const D3DXVECTOR3 *pv2, const D3DXVECTOR3 *pv3, FLOAT s)
 {
     TRACE("(%p, %p, %p, %p, %p, %f)\n", pout, pv0, pv1, pv2, pv3, s);
 
@@ -1783,7 +1783,7 @@ D3DXVECTOR3* WINAPI D3DXVec3CatmullRom( D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv
     return pout;
 }
 
-D3DXVECTOR3* WINAPI D3DXVec3Hermite(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pt1, CONST D3DXVECTOR3 *pv2, CONST D3DXVECTOR3 *pt2, FLOAT s)
+D3DXVECTOR3* WINAPI D3DXVec3Hermite(D3DXVECTOR3 *pout, const D3DXVECTOR3 *pv1, const D3DXVECTOR3 *pt1, const D3DXVECTOR3 *pv2, const D3DXVECTOR3 *pt2, FLOAT s)
 {
     FLOAT h1, h2, h3, h4;
 
@@ -1800,7 +1800,7 @@ D3DXVECTOR3* WINAPI D3DXVec3Hermite(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv1, C
     return pout;
 }
 
-D3DXVECTOR3* WINAPI D3DXVec3Normalize(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv)
+D3DXVECTOR3* WINAPI D3DXVec3Normalize(D3DXVECTOR3 *pout, const D3DXVECTOR3 *pv)
 {
     FLOAT norm;
 
@@ -1823,7 +1823,7 @@ D3DXVECTOR3* WINAPI D3DXVec3Normalize(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv)
     return pout;
 }
 
-D3DXVECTOR3* WINAPI D3DXVec3Project(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv, CONST D3DVIEWPORT9 *pviewport, CONST D3DXMATRIX *pprojection, CONST D3DXMATRIX *pview, CONST D3DXMATRIX *pworld)
+D3DXVECTOR3* WINAPI D3DXVec3Project(D3DXVECTOR3 *pout, const D3DXVECTOR3 *pv, const D3DVIEWPORT9 *pviewport, const D3DXMATRIX *pprojection, const D3DXMATRIX *pview, const D3DXMATRIX *pworld)
 {
     D3DXMATRIX m;
 
@@ -1845,7 +1845,7 @@ D3DXVECTOR3* WINAPI D3DXVec3Project(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv, CO
     return pout;
 }
 
-D3DXVECTOR3* WINAPI D3DXVec3ProjectArray(D3DXVECTOR3* out, UINT outstride, CONST D3DXVECTOR3* in, UINT instride, CONST D3DVIEWPORT9* viewport, CONST D3DXMATRIX* projection, CONST D3DXMATRIX* view, CONST D3DXMATRIX* world, UINT elements)
+D3DXVECTOR3* WINAPI D3DXVec3ProjectArray(D3DXVECTOR3* out, UINT outstride, const D3DXVECTOR3* in, UINT instride, const D3DVIEWPORT9* viewport, const D3DXMATRIX* projection, const D3DXMATRIX* view, const D3DXMATRIX* world, UINT elements)
 {
     UINT i;
 
@@ -1854,13 +1854,13 @@ D3DXVECTOR3* WINAPI D3DXVec3ProjectArray(D3DXVECTOR3* out, UINT outstride, CONST
     for (i = 0; i < elements; ++i) {
         D3DXVec3Project(
             (D3DXVECTOR3*)((char*)out + outstride * i),
-            (CONST D3DXVECTOR3*)((const char*)in + instride * i),
+            (const D3DXVECTOR3*)((const char*)in + instride * i),
             viewport, projection, view, world);
     }
     return out;
 }
 
-D3DXVECTOR4* WINAPI D3DXVec3Transform(D3DXVECTOR4 *pout, CONST D3DXVECTOR3 *pv, CONST D3DXMATRIX *pm)
+D3DXVECTOR4* WINAPI D3DXVec3Transform(D3DXVECTOR4 *pout, const D3DXVECTOR3 *pv, const D3DXMATRIX *pm)
 {
     TRACE("(%p, %p, %p)\n", pout, pv, pm);
 
@@ -1871,7 +1871,7 @@ D3DXVECTOR4* WINAPI D3DXVec3Transform(D3DXVECTOR4 *pout, CONST D3DXVECTOR3 *pv, 
     return pout;
 }
 
-D3DXVECTOR4* WINAPI D3DXVec3TransformArray(D3DXVECTOR4* out, UINT outstride, CONST D3DXVECTOR3* in, UINT instride, CONST D3DXMATRIX* matrix, UINT elements)
+D3DXVECTOR4* WINAPI D3DXVec3TransformArray(D3DXVECTOR4* out, UINT outstride, const D3DXVECTOR3* in, UINT instride, const D3DXMATRIX* matrix, UINT elements)
 {
     UINT i;
 
@@ -1880,13 +1880,13 @@ D3DXVECTOR4* WINAPI D3DXVec3TransformArray(D3DXVECTOR4* out, UINT outstride, CON
     for (i = 0; i < elements; ++i) {
         D3DXVec3Transform(
             (D3DXVECTOR4*)((char*)out + outstride * i),
-            (CONST D3DXVECTOR3*)((const char*)in + instride * i),
+            (const D3DXVECTOR3*)((const char*)in + instride * i),
             matrix);
     }
     return out;
 }
 
-D3DXVECTOR3* WINAPI D3DXVec3TransformCoord(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv, CONST D3DXMATRIX *pm)
+D3DXVECTOR3* WINAPI D3DXVec3TransformCoord(D3DXVECTOR3 *pout, const D3DXVECTOR3 *pv, const D3DXMATRIX *pm)
 {
     D3DXVECTOR3 out;
     FLOAT norm;
@@ -1904,7 +1904,7 @@ D3DXVECTOR3* WINAPI D3DXVec3TransformCoord(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 
     return pout;
 }
 
-D3DXVECTOR3* WINAPI D3DXVec3TransformCoordArray(D3DXVECTOR3* out, UINT outstride, CONST D3DXVECTOR3* in, UINT instride, CONST D3DXMATRIX* matrix, UINT elements)
+D3DXVECTOR3* WINAPI D3DXVec3TransformCoordArray(D3DXVECTOR3* out, UINT outstride, const D3DXVECTOR3* in, UINT instride, const D3DXMATRIX* matrix, UINT elements)
 {
     UINT i;
 
@@ -1913,15 +1913,15 @@ D3DXVECTOR3* WINAPI D3DXVec3TransformCoordArray(D3DXVECTOR3* out, UINT outstride
     for (i = 0; i < elements; ++i) {
         D3DXVec3TransformCoord(
             (D3DXVECTOR3*)((char*)out + outstride * i),
-            (CONST D3DXVECTOR3*)((const char*)in + instride * i),
+            (const D3DXVECTOR3*)((const char*)in + instride * i),
             matrix);
     }
     return out;
 }
 
-D3DXVECTOR3* WINAPI D3DXVec3TransformNormal(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv, CONST D3DXMATRIX *pm)
+D3DXVECTOR3* WINAPI D3DXVec3TransformNormal(D3DXVECTOR3 *pout, const D3DXVECTOR3 *pv, const D3DXMATRIX *pm)
 {
-    CONST D3DXVECTOR3 v = *pv;
+    const D3DXVECTOR3 v = *pv;
 
     TRACE("(%p, %p, %p)\n", pout, pv, pm);
 
@@ -1932,7 +1932,7 @@ D3DXVECTOR3* WINAPI D3DXVec3TransformNormal(D3DXVECTOR3 *pout, CONST D3DXVECTOR3
 
 }
 
-D3DXVECTOR3* WINAPI D3DXVec3TransformNormalArray(D3DXVECTOR3* out, UINT outstride, CONST D3DXVECTOR3* in, UINT instride, CONST D3DXMATRIX* matrix, UINT elements)
+D3DXVECTOR3* WINAPI D3DXVec3TransformNormalArray(D3DXVECTOR3* out, UINT outstride, const D3DXVECTOR3* in, UINT instride, const D3DXMATRIX* matrix, UINT elements)
 {
     UINT i;
 
@@ -1941,13 +1941,13 @@ D3DXVECTOR3* WINAPI D3DXVec3TransformNormalArray(D3DXVECTOR3* out, UINT outstrid
     for (i = 0; i < elements; ++i) {
         D3DXVec3TransformNormal(
             (D3DXVECTOR3*)((char*)out + outstride * i),
-            (CONST D3DXVECTOR3*)((const char*)in + instride * i),
+            (const D3DXVECTOR3*)((const char*)in + instride * i),
             matrix);
     }
     return out;
 }
 
-D3DXVECTOR3* WINAPI D3DXVec3Unproject(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv, CONST D3DVIEWPORT9 *pviewport, CONST D3DXMATRIX *pprojection, CONST D3DXMATRIX *pview, CONST D3DXMATRIX *pworld)
+D3DXVECTOR3* WINAPI D3DXVec3Unproject(D3DXVECTOR3 *pout, const D3DXVECTOR3 *pv, const D3DVIEWPORT9 *pviewport, const D3DXMATRIX *pprojection, const D3DXMATRIX *pview, const D3DXMATRIX *pworld)
 {
     D3DXMATRIX m;
 
@@ -1970,7 +1970,7 @@ D3DXVECTOR3* WINAPI D3DXVec3Unproject(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv, 
     return pout;
 }
 
-D3DXVECTOR3* WINAPI D3DXVec3UnprojectArray(D3DXVECTOR3* out, UINT outstride, CONST D3DXVECTOR3* in, UINT instride, CONST D3DVIEWPORT9* viewport, CONST D3DXMATRIX* projection, CONST D3DXMATRIX* view, CONST D3DXMATRIX* world, UINT elements)
+D3DXVECTOR3* WINAPI D3DXVec3UnprojectArray(D3DXVECTOR3* out, UINT outstride, const D3DXVECTOR3* in, UINT instride, const D3DVIEWPORT9* viewport, const D3DXMATRIX* projection, const D3DXMATRIX* view, const D3DXMATRIX* world, UINT elements)
 {
     UINT i;
 
@@ -1979,7 +1979,7 @@ D3DXVECTOR3* WINAPI D3DXVec3UnprojectArray(D3DXVECTOR3* out, UINT outstride, CON
     for (i = 0; i < elements; ++i) {
         D3DXVec3Unproject(
             (D3DXVECTOR3*)((char*)out + outstride * i),
-            (CONST D3DXVECTOR3*)((const char*)in + instride * i),
+            (const D3DXVECTOR3*)((const char*)in + instride * i),
             viewport, projection, view, world);
     }
     return out;
@@ -1987,7 +1987,7 @@ D3DXVECTOR3* WINAPI D3DXVec3UnprojectArray(D3DXVECTOR3* out, UINT outstride, CON
 
 /*_________________D3DXVec4_____________________*/
 
-D3DXVECTOR4* WINAPI D3DXVec4BaryCentric(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, CONST D3DXVECTOR4 *pv2, CONST D3DXVECTOR4 *pv3, FLOAT f, FLOAT g)
+D3DXVECTOR4* WINAPI D3DXVec4BaryCentric(D3DXVECTOR4 *pout, const D3DXVECTOR4 *pv1, const D3DXVECTOR4 *pv2, const D3DXVECTOR4 *pv3, FLOAT f, FLOAT g)
 {
     TRACE("(%p, %p, %p, %p, %f, %f)\n", pout, pv1, pv2, pv3, f, g);
 
@@ -1998,7 +1998,7 @@ D3DXVECTOR4* WINAPI D3DXVec4BaryCentric(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv
     return pout;
 }
 
-D3DXVECTOR4* WINAPI D3DXVec4CatmullRom(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv0, CONST D3DXVECTOR4 *pv1, CONST D3DXVECTOR4 *pv2, CONST D3DXVECTOR4 *pv3, FLOAT s)
+D3DXVECTOR4* WINAPI D3DXVec4CatmullRom(D3DXVECTOR4 *pout, const D3DXVECTOR4 *pv0, const D3DXVECTOR4 *pv1, const D3DXVECTOR4 *pv2, const D3DXVECTOR4 *pv3, FLOAT s)
 {
     TRACE("(%p, %p, %p, %p, %p, %f)\n", pout, pv0, pv1, pv2, pv3, s);
 
@@ -2009,7 +2009,7 @@ D3DXVECTOR4* WINAPI D3DXVec4CatmullRom(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv0
     return pout;
 }
 
-D3DXVECTOR4* WINAPI D3DXVec4Cross(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, CONST D3DXVECTOR4 *pv2, CONST D3DXVECTOR4 *pv3)
+D3DXVECTOR4* WINAPI D3DXVec4Cross(D3DXVECTOR4 *pout, const D3DXVECTOR4 *pv1, const D3DXVECTOR4 *pv2, const D3DXVECTOR4 *pv3)
 {
     D3DXVECTOR4 out;
 
@@ -2023,7 +2023,7 @@ D3DXVECTOR4* WINAPI D3DXVec4Cross(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, CON
     return pout;
 }
 
-D3DXVECTOR4* WINAPI D3DXVec4Hermite(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, CONST D3DXVECTOR4 *pt1, CONST D3DXVECTOR4 *pv2, CONST D3DXVECTOR4 *pt2, FLOAT s)
+D3DXVECTOR4* WINAPI D3DXVec4Hermite(D3DXVECTOR4 *pout, const D3DXVECTOR4 *pv1, const D3DXVECTOR4 *pt1, const D3DXVECTOR4 *pv2, const D3DXVECTOR4 *pt2, FLOAT s)
 {
     FLOAT h1, h2, h3, h4;
 
@@ -2041,7 +2041,7 @@ D3DXVECTOR4* WINAPI D3DXVec4Hermite(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, C
     return pout;
 }
 
-D3DXVECTOR4* WINAPI D3DXVec4Normalize(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv)
+D3DXVECTOR4* WINAPI D3DXVec4Normalize(D3DXVECTOR4 *pout, const D3DXVECTOR4 *pv)
 {
     FLOAT norm;
 
@@ -2057,7 +2057,7 @@ D3DXVECTOR4* WINAPI D3DXVec4Normalize(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv)
     return pout;
 }
 
-D3DXVECTOR4* WINAPI D3DXVec4Transform(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv, CONST D3DXMATRIX *pm)
+D3DXVECTOR4* WINAPI D3DXVec4Transform(D3DXVECTOR4 *pout, const D3DXVECTOR4 *pv, const D3DXMATRIX *pm)
 {
     D3DXVECTOR4 out;
 
@@ -2071,7 +2071,7 @@ D3DXVECTOR4* WINAPI D3DXVec4Transform(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv, 
     return pout;
 }
 
-D3DXVECTOR4* WINAPI D3DXVec4TransformArray(D3DXVECTOR4* out, UINT outstride, CONST D3DXVECTOR4* in, UINT instride, CONST D3DXMATRIX* matrix, UINT elements)
+D3DXVECTOR4* WINAPI D3DXVec4TransformArray(D3DXVECTOR4* out, UINT outstride, const D3DXVECTOR4* in, UINT instride, const D3DXMATRIX* matrix, UINT elements)
 {
     UINT i;
 
@@ -2080,7 +2080,7 @@ D3DXVECTOR4* WINAPI D3DXVec4TransformArray(D3DXVECTOR4* out, UINT outstride, CON
     for (i = 0; i < elements; ++i) {
         D3DXVec4Transform(
             (D3DXVECTOR4*)((char*)out + outstride * i),
-            (CONST D3DXVECTOR4*)((const char*)in + instride * i),
+            (const D3DXVECTOR4*)((const char*)in + instride * i),
             matrix);
     }
     return out;
@@ -2171,7 +2171,7 @@ unsigned short float_32_to_16(const float in)
     return ret;
 }
 
-D3DXFLOAT16 *WINAPI D3DXFloat32To16Array(D3DXFLOAT16 *pout, CONST FLOAT *pin, UINT n)
+D3DXFLOAT16 *WINAPI D3DXFloat32To16Array(D3DXFLOAT16 *pout, const FLOAT *pin, UINT n)
 {
     unsigned int i;
 
@@ -2205,7 +2205,7 @@ static inline float float_16_to_32(const unsigned short in)
     }
 }
 
-FLOAT *WINAPI D3DXFloat16To32Array(FLOAT *pout, CONST D3DXFLOAT16 *pin, UINT n)
+FLOAT *WINAPI D3DXFloat16To32Array(FLOAT *pout, const D3DXFLOAT16 *pin, UINT n)
 {
     unsigned int i;
 
@@ -2233,7 +2233,7 @@ FLOAT* WINAPI D3DXSHAdd(FLOAT *out, UINT order, const FLOAT *a, const FLOAT *b)
     return out;
 }
 
-FLOAT WINAPI D3DXSHDot(UINT order, CONST FLOAT *a, CONST FLOAT *b)
+FLOAT WINAPI D3DXSHDot(UINT order, const FLOAT *a, const FLOAT *b)
 {
     FLOAT s;
     UINT i;
@@ -2247,7 +2247,7 @@ FLOAT WINAPI D3DXSHDot(UINT order, CONST FLOAT *a, CONST FLOAT *b)
     return s;
 }
 
-FLOAT* WINAPI D3DXSHEvalDirection(FLOAT *out, UINT order, CONST D3DXVECTOR3 *dir)
+FLOAT* WINAPI D3DXSHEvalDirection(FLOAT *out, UINT order, const D3DXVECTOR3 *dir)
 {
 
     TRACE("(%p, %u, %p)\n", out, order, dir);
@@ -2307,7 +2307,7 @@ FLOAT* WINAPI D3DXSHEvalDirection(FLOAT *out, UINT order, CONST D3DXVECTOR3 *dir
     return out;
 }
 
-HRESULT WINAPI D3DXSHEvalDirectionalLight(UINT order, CONST D3DXVECTOR3 *dir, FLOAT Rintensity, FLOAT Gintensity, FLOAT Bintensity, FLOAT *Rout, FLOAT *Gout, FLOAT *Bout)
+HRESULT WINAPI D3DXSHEvalDirectionalLight(UINT order, const D3DXVECTOR3 *dir, FLOAT Rintensity, FLOAT Gintensity, FLOAT Bintensity, FLOAT *Rout, FLOAT *Gout, FLOAT *Bout)
 {
     FLOAT s, temp;
     UINT j;
@@ -2452,7 +2452,7 @@ FLOAT * WINAPI D3DXSHMultiply3(FLOAT *out, const FLOAT *a, const FLOAT *b)
     return out;
 }
 
-FLOAT * WINAPI D3DXSHMultiply4(FLOAT *out, CONST FLOAT *a, CONST FLOAT *b)
+FLOAT * WINAPI D3DXSHMultiply4(FLOAT *out, const FLOAT *a, const FLOAT *b)
 {
     FLOAT ta, tb, t;
 
@@ -2789,7 +2789,7 @@ static void rotate_X(FLOAT *out, UINT order, FLOAT a, FLOAT *in)
     out[35] = 0.9057110548f * in[31] - 0.4192627370f * in[33] + 0.0624999329f * in[35];
 }
 
-FLOAT* WINAPI D3DXSHRotate(FLOAT *out, UINT order, CONST D3DXMATRIX *matrix, CONST FLOAT *in)
+FLOAT* WINAPI D3DXSHRotate(FLOAT *out, UINT order, const D3DXMATRIX *matrix, const FLOAT *in)
 {
     FLOAT alpha, beta, gamma, sinb, temp[36], temp1[36];
 
@@ -2920,7 +2920,7 @@ FLOAT * WINAPI D3DXSHRotateZ(FLOAT *out, UINT order, FLOAT angle, const FLOAT *i
     return out;
 }
 
-FLOAT* WINAPI D3DXSHScale(FLOAT *out, UINT order, CONST FLOAT *a, CONST FLOAT scale)
+FLOAT* WINAPI D3DXSHScale(FLOAT *out, UINT order, const FLOAT *a, const FLOAT scale)
 {
     UINT i;
 
