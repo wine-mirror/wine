@@ -4491,3 +4491,12 @@ void free_urlcache(void)
 
     URLCacheContainers_DeleteAll();
 }
+
+/***********************************************************************
+ *           LoadUrlCacheContent (WININET.@)
+ */
+BOOL WINAPI LoadUrlCacheContent(void)
+{
+    FIXME("stub!\n");
+    return FALSE;
+}

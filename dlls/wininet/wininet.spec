@@ -215,7 +215,7 @@
 @ stdcall IsHostInProxyBypassList(long str long)
 @ stdcall IsUrlCacheEntryExpiredA(str long ptr)
 @ stdcall IsUrlCacheEntryExpiredW(wstr long ptr)
-@ stub LoadUrlCacheContent
+@ stdcall LoadUrlCacheContent()
 @ stub ParseX509EncodedCertificateForListBoxEntry
 @ stdcall PrivacyGetZonePreferenceW(long long ptr ptr ptr)
 @ stdcall PrivacySetZonePreferenceW(long long long wstr)
