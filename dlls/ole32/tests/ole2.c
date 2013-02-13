@@ -1926,6 +1926,14 @@ static const IUnknownVtbl UnknownVtbl =
 
 static IUnknown unknown = { &UnknownVtbl };
 
+static void test_OleRun(void)
+{
+    HRESULT hr;
+
+    hr = OleRun(&unknown);
+    ok(hr == S_OK, "OleRun failed 0x%08x\n", hr);
+}
+
 static void test_OleLockRunning(void)
 {
     HRESULT hr;
@@ -1984,6 +1992,7 @@ START_TEST(ole2)
     test_data_cache();
     test_default_handler();
     test_runnable();
+    test_OleRun();
     test_OleLockRunning();
     test_OleDraw();
 
