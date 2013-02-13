@@ -1392,7 +1392,7 @@ static HRESULT WINAPI EnumTfDocumentMgr_Next(IEnumTfDocumentMgrs *iface,
 
 static HRESULT WINAPI EnumTfDocumentMgr_Skip( IEnumTfDocumentMgrs* iface, ULONG celt)
 {
-    INT i;
+    ULONG i;
     EnumTfDocumentMgr *This = (EnumTfDocumentMgr *)iface;
     TRACE("(%p)\n",This);
     for(i = 0; i < celt && This->index != NULL; i++)

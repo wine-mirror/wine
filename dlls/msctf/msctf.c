@@ -198,7 +198,7 @@ static HRESULT ClassFactory_Constructor(LPFNCONSTRUCTOR ctor, LPVOID *ppvOut)
  */
 DWORD generate_Cookie(DWORD magic, LPVOID data)
 {
-    int i;
+    UINT i;
 
     /* try to reuse IDs if possible */
     for (i = 0; i < id_last; i++)
@@ -282,7 +282,7 @@ LPVOID remove_Cookie(DWORD id)
 
 DWORD enumerate_Cookie(DWORD magic, DWORD *index)
 {
-    int i;
+    unsigned int i;
     for (i = *index; i < id_last; i++)
         if (cookies[i].id != 0 && cookies[i].magic == magic)
         {
@@ -614,12 +614,12 @@ HRESULT WINAPI SetInputScopes(HWND hwnd, const INT *pInputScopes,
                               UINT cInputScopes, WCHAR **ppszPhraseList,
                               UINT cPhrases, WCHAR *pszRegExp, WCHAR *pszSRGS)
 {
-    int i;
+    UINT i;
     FIXME("STUB: %p ... %s %s\n",hwnd, debugstr_w(pszRegExp), debugstr_w(pszSRGS));
     for (i = 0; i < cInputScopes; i++)
-        TRACE("\tScope[%i] = %i\n",i,pInputScopes[i]);
+        TRACE("\tScope[%u] = %i\n",i,pInputScopes[i]);
     for (i = 0; i < cPhrases; i++)
-        TRACE("\tPhrase[%i] = %s\n",i,debugstr_w(ppszPhraseList[i]));
+        TRACE("\tPhrase[%u] = %s\n",i,debugstr_w(ppszPhraseList[i]));
 
     return S_OK;
 }

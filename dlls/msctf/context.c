@@ -369,7 +369,7 @@ static HRESULT WINAPI Context_SetSelection (ITfContext *iface,
 {
     TS_SELECTION_ACP *acp;
     Context *This = (Context *)iface;
-    INT i;
+    ULONG i;
     HRESULT hr;
 
     TRACE("(%p) %i %i %p\n",This,ec,ulCount,pSelection);
