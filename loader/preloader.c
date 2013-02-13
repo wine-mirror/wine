@@ -912,7 +912,7 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
 }
 
 
-static unsigned int elf_hash( const char *name )
+static unsigned int wld_elf_hash( const char *name )
 {
     unsigned int hi, hash = 0;
     while (*name)
@@ -1006,7 +1006,7 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var, int 
     }
     else if (hashtab)  /* old style hash table */
     {
-        const unsigned int hash   = elf_hash(var);
+        const unsigned int hash   = wld_elf_hash(var);
         const Elf_Symndx nbuckets = hashtab[0];
         const Elf_Symndx *buckets = hashtab + 2;
         const Elf_Symndx *chains  = buckets + nbuckets;
