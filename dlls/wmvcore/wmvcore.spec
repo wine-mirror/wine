@@ -6,7 +6,7 @@
 @ stub WMValidateData
 @ stdcall -private DllRegisterServer()
 @ stub WMCreateBackupRestorer
-@ stub WMCreateEditor
+@ stdcall WMCreateEditor(ptr)
 @ stub WMCreateIndexer
 @ stub WMCreateProfileManager
 @ stdcall WMCreateReader(ptr long ptr)

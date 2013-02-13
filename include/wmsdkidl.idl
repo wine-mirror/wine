@@ -182,6 +182,22 @@ interface IWMOutputMediaProps : IWMMediaProps
 
 [
     object,
+    uuid(96406bd9-2b2b-11d3-b36b-00c04f6108ff),
+    pointer_default(unique),
+    local
+]
+interface IWMMetadataEditor : IUnknown
+{
+    HRESULT Open(
+        [in] const WCHAR *pwszFilename);
+
+    HRESULT Close();
+
+    HRESULT Flush();
+};
+
+[
+    object,
     uuid(96406bd6-2b2b-11d3-b36b-00c04f6108ff),
     pointer_default(unique),
     local
