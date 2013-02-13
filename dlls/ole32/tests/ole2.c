@@ -1701,6 +1701,9 @@ static void test_default_handler(void)
     hr = IOleObject_GetClientSite(pObject, &pClientSite);
     ok_ole_success(hr, "IOleObject_GetClientSite");
 
+    hr = IOleObject_SetClientSite(pObject, pClientSite);
+    ok_ole_success(hr, "IOleObject_SetClientSite");
+
     hr = IOleObject_GetClipboardData(pObject, 0, &pDataObject);
     ok(hr == OLE_E_NOTRUNNING,
        "IOleObject_GetClipboardData should have returned OLE_E_NOTRUNNING instead of 0x%08x\n",
