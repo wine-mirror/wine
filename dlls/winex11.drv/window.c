@@ -1525,12 +1525,23 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
  */
 void set_window_visual( struct x11drv_win_data *data, const XVisualInfo *vis )
 {
+    Window client_window = data->client_window;
+    Window whole_window = data->whole_window;
+
     if (data->vis.visualid == vis->visualid) return;
-    destroy_whole_window( data, FALSE );
+    data->client_window = 0;
+    destroy_whole_window( data, client_window != 0 /* don't destroy whole_window until reparented */ );
     if (data->surface) window_surface_release( data->surface );
     data->surface = NULL;
     data->vis = *vis;
     create_whole_window( data );
+    if (!client_window) return;
+    /* move the client to the new parent */
+    XReparentWindow( data->display, client_window, data->whole_window,
+                     data->client_rect.left - data->whole_rect.left,
+                     data->client_rect.top - data->whole_rect.top );
+    data->client_window = client_window;
+    XDestroyWindow( data->display, whole_window );
 }
 
 
