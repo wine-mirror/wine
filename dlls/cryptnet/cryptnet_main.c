@@ -42,22 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(cryptnet);
 
 #define IS_INTOID(x)    (((ULONG_PTR)(x) >> 16) == 0)
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-   TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
-
-   switch (fdwReason) {
-      case DLL_PROCESS_ATTACH:
-         DisableThreadLibraryCalls(hinstDLL);
-         break;
-      case DLL_PROCESS_DETACH:
-         /* Do uninitialisation here */
-         break;
-      default: break;
-   }
-   return TRUE;
-}
-
 static const WCHAR cryptNet[] = { 'c','r','y','p','t','n','e','t','.',
    'd','l','l',0 };
 
