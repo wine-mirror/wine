@@ -1143,8 +1143,8 @@ start_header:
 
 	    dwToGo = lpMidiStrm->dwStartTicks + lpMidiStrm->dwPositionMS;
 
-	    TRACE("%d/%d/%d\n", dwToGo, GetTickCount(), me->dwDeltaTime);
-	    while ((dwCurrTC = GetTickCount()) < dwToGo) {
+	    TRACE("%u/%u/%u\n", dwToGo, GetTickCount(), me->dwDeltaTime);
+	    while (dwToGo - (dwCurrTC = GetTickCount()) <= MAXLONG) {
 		if (MsgWaitForMultipleObjects(0, NULL, FALSE, dwToGo - dwCurrTC, QS_ALLINPUT) == WAIT_OBJECT_0) {
 		    /* got a message, handle it */
 		    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {
