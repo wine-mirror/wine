@@ -185,6 +185,22 @@ static int calc_y_offset( const ME_Context *c, ME_Style *style )
     return offs;
 }
 
+static COLORREF get_text_color( ME_Context *c, ME_Style *style, BOOL highlight )
+{
+    COLORREF color;
+
+    if (highlight)
+        color = ITextHost_TxGetSysColor( c->editor->texthost, COLOR_HIGHLIGHTTEXT );
+    else if ((style->fmt.dwMask & CFM_LINK) && (style->fmt.dwEffects & CFE_LINK))
+        color = RGB(0,0,255);
+    else if ((style->fmt.dwMask & CFM_COLOR) && (style->fmt.dwEffects & CFE_AUTOCOLOR))
+        color = ITextHost_TxGetSysColor( c->editor->texthost, COLOR_WINDOWTEXT );
+    else
+        color = style->fmt.crTextColor;
+
+    return color;
+}
+
 static void get_underline_pen( ME_Style *style, COLORREF color, HPEN *pen )
 {
     *pen = NULL;
@@ -284,12 +300,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
   hOldFont = ME_SelectStyleFont(c, run->style);
   yOffset = calc_y_offset( c, run->style );
 
-  if ((run->style->fmt.dwMask & CFM_LINK) && (run->style->fmt.dwEffects & CFE_LINK))
-    rgb = RGB(0,0,255);
-  else if ((run->style->fmt.dwMask & CFM_COLOR) && (run->style->fmt.dwEffects & CFE_AUTOCOLOR))
-    rgb = ITextHost_TxGetSysColor(c->editor->texthost, COLOR_WINDOWTEXT);
-  else
-    rgb = run->style->fmt.crTextColor;
+  rgb = get_text_color( c, run->style, FALSE );
 
   if (bHighlightedText)
   {
@@ -336,8 +347,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
     dim.bottom = ymin + cy;
     dim.left = xSelStart;
     dim.right = xSelEnd;
-    SetTextColor(hDC, ITextHost_TxGetSysColor(c->editor->texthost,
-                                              COLOR_HIGHLIGHTTEXT));
+    SetTextColor( hDC, get_text_color( c, run->style, TRUE ) );
     rgbBackOld = SetBkColor(hDC, ITextHost_TxGetSysColor(c->editor->texthost,
                                                          COLOR_HIGHLIGHT));
     ExtTextOutW(hDC, xSelStart, y-yOffset, ETO_OPAQUE, &dim,
