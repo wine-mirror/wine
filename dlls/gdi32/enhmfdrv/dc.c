@@ -157,14 +157,18 @@ INT EMFDRV_SetArcDirection(PHYSDEV dev, INT arcDirection)
 
 INT EMFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pExcludeClipRect );
     EMREXCLUDECLIPRECT emr;
+    BOOL ret;
+
     emr.emr.iType      = EMR_EXCLUDECLIPRECT;
     emr.emr.nSize      = sizeof(emr);
     emr.rclClip.left   = left;
     emr.rclClip.top    = top;
     emr.rclClip.right  = right;
     emr.rclClip.bottom = bottom;
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    ret = EMFDRV_WriteRecord( dev, &emr.emr );
+    return ret ? next->funcs->pExcludeClipRect( next, left, top, right, bottom ) : ERROR;
 }
 
 INT EMFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom)
