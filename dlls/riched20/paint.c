@@ -308,13 +308,6 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
   BOOL bHighlightedText = (nSelFrom < nChars && nSelTo >= 0
                            && nSelFrom < nSelTo && !c->editor->bHideSelection);
   int xSelStart = x, xSelEnd = x;
-  int *lpDx = NULL;
-  /* lpDx is only needed for tabs to make sure the underline done automatically
-   * by the font extends to the end of the tab. Tabs are always stored as
-   * a single character run, so we can handle this case separately, since
-   * otherwise lpDx would need to specify the lengths of each character. */
-  if (run->nWidth && nChars == 1)
-      lpDx = &run->nWidth; /* Make sure underline for tab extends across tab space */
 
   hOldFont = ME_SelectStyleFont(c, run->style);
   yOffset = calc_y_offset( c, run->style );
@@ -370,7 +363,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
     rgbBackOld = SetBkColor(hDC, ITextHost_TxGetSysColor(c->editor->texthost,
                                                          COLOR_HIGHLIGHT));
     ExtTextOutW(hDC, xSelStart, y-yOffset, ETO_OPAQUE, &dim,
-                szText+nSelFrom, nSelTo-nSelFrom, lpDx);
+                szText+nSelFrom, nSelTo-nSelFrom, NULL);
     if (hPen)
       LineTo(hDC, xSelEnd, y - yOffset + 1);
     SetBkColor(hDC, rgbBackOld);
@@ -385,7 +378,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
   }
   else
   {
-    ExtTextOutW(hDC, x, y-yOffset, 0, NULL, szText, nChars, lpDx);
+    ExtTextOutW(hDC, x, y-yOffset, 0, NULL, szText, nChars, NULL);
 
     /* FIXME: should use textmetrics info for Descent info */
     if (hPen)
