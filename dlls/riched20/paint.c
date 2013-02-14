@@ -295,6 +295,15 @@ static void draw_space( ME_Context *c, ME_Run *run, int x, int y,
         PatBlt( hdc, x, ymin, run->nWidth, cy, DSTINVERT );
 }
 
+static void get_selection_rect( ME_Context *c, ME_Run *run, int from, int to, int cy, RECT *r )
+{
+
+    r->left = ME_PointFromCharContext( c, run, from );
+    r->top = 0;
+    r->right = ME_PointFromCharContext( c, run, to );
+    r->bottom = cy;
+    return;
+}
 
 static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWSTR szText,
                                  int nSelFrom, int nSelTo, int ymin, int cy)
@@ -307,36 +316,21 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
   HPEN hPen = NULL, hOldPen = NULL;
   BOOL bHighlightedText = (nSelFrom < run->len && nSelTo >= 0
                            && nSelFrom < nSelTo && !c->editor->bHideSelection);
-  int xSelStart = x, xSelEnd = x;
+  RECT sel_rect;
 
-  hOldFont = ME_SelectStyleFont(c, run->style);
   yOffset = calc_y_offset( c, run->style );
 
   rgb = get_text_color( c, run->style, FALSE );
 
   if (bHighlightedText)
   {
-    SIZE sz;
-    if (nSelFrom <= 0)
-    {
-      nSelFrom = 0;
-    }
-    else
-    {
-      GetTextExtentPoint32W(hDC, szText, nSelFrom, &sz);
-      xSelStart = x + sz.cx;
-    }
-    if (nSelTo >= run->len)
-    {
-      nSelTo = run->len;
-      xSelEnd = x + run->nWidth;
-    }
-    else
-    {
-      GetTextExtentPoint32W(hDC, szText+nSelFrom, nSelTo-nSelFrom, &sz);
-      xSelEnd = xSelStart + sz.cx;
-    }
+    nSelFrom = max( 0, nSelFrom );
+    nSelTo = min( run->len, nSelTo );
+    get_selection_rect( c, run, nSelFrom, nSelTo, cy, &sel_rect );
+    OffsetRect( &sel_rect, x, ymin );
   }
+
+  hOldFont = ME_SelectStyleFont(c, run->style);
 
   get_underline_pen( run->style, rgb, &hPen );
   if (hPen) hOldPen = SelectObject( hDC, hPen );
@@ -345,32 +339,27 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
   if (bHighlightedText && !c->editor->bEmulateVersion10)
   {
     COLORREF rgbBackOld;
-    RECT dim;
     /* FIXME: should use textmetrics info for Descent info */
     if (hPen)
       MoveToEx(hDC, x, y - yOffset + 1, NULL);
-    if (xSelStart > x)
+    if (sel_rect.left > x)
     {
       ExtTextOutW(hDC, x, y-yOffset, 0, NULL, szText, nSelFrom, NULL);
       if (hPen)
-        LineTo(hDC, xSelStart, y - yOffset + 1);
+        LineTo(hDC, sel_rect.left, y - yOffset + 1);
     }
-    dim.top = ymin;
-    dim.bottom = ymin + cy;
-    dim.left = xSelStart;
-    dim.right = xSelEnd;
     SetTextColor( hDC, get_text_color( c, run->style, TRUE ) );
     rgbBackOld = SetBkColor(hDC, ITextHost_TxGetSysColor(c->editor->texthost,
                                                          COLOR_HIGHLIGHT));
-    ExtTextOutW(hDC, xSelStart, y-yOffset, ETO_OPAQUE, &dim,
+    ExtTextOutW(hDC, sel_rect.left, y-yOffset, ETO_OPAQUE, &sel_rect,
                 szText+nSelFrom, nSelTo-nSelFrom, NULL);
     if (hPen)
-      LineTo(hDC, xSelEnd, y - yOffset + 1);
+      LineTo(hDC, sel_rect.right, y - yOffset + 1);
     SetBkColor(hDC, rgbBackOld);
-    if (xSelEnd < x + run->nWidth)
+    if (sel_rect.right < x + run->nWidth)
     {
       SetTextColor(hDC, rgb);
-      ExtTextOutW(hDC, xSelEnd, y-yOffset, 0, NULL, szText+nSelTo,
+      ExtTextOutW(hDC, sel_rect.right, y-yOffset, 0, NULL, szText+nSelTo,
                   run->len - nSelTo, NULL);
       if (hPen)
         LineTo(hDC, x + run->nWidth, y - yOffset + 1);
@@ -389,7 +378,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
 
     if (bHighlightedText) /* v1.0 inverts the selection */
     {
-      PatBlt(hDC, xSelStart, ymin, xSelEnd-xSelStart, cy, DSTINVERT);
+      PatBlt(hDC, sel_rect.left, ymin, sel_rect.right - sel_rect.left, cy, DSTINVERT);
     }
   }
 
