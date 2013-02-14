@@ -215,9 +215,8 @@ static void ME_HighlightSpace(ME_Context *c, int x, int y, LPCWSTR szText,
   }
 }
 
-static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText,
-                                 int nChars, ME_Style *s, int width,
-                                 int nSelFrom, int nSelTo, int ymin, int cy)
+static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWSTR szText,
+                                 int nChars, int nSelFrom, int nSelTo, int ymin, int cy)
 {
   HDC hDC = c->hDC;
   HGDIOBJ hOldFont;
@@ -233,26 +232,26 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText,
    * by the font extends to the end of the tab. Tabs are always stored as
    * a single character run, so we can handle this case separately, since
    * otherwise lpDx would need to specify the lengths of each character. */
-  if (width && nChars == 1)
-      lpDx = &width; /* Make sure underline for tab extends across tab space */
+  if (run->nWidth && nChars == 1)
+      lpDx = &run->nWidth; /* Make sure underline for tab extends across tab space */
 
-  hOldFont = ME_SelectStyleFont(c, s);
-  if ((s->fmt.dwMask & s->fmt.dwEffects) & CFM_OFFSET) {
-    yTwipsOffset = s->fmt.yOffset;
+  hOldFont = ME_SelectStyleFont(c, run->style);
+  if ((run->style->fmt.dwMask & run->style->fmt.dwEffects) & CFM_OFFSET) {
+    yTwipsOffset = run->style->fmt.yOffset;
   }
-  if ((s->fmt.dwMask & s->fmt.dwEffects) & (CFM_SUPERSCRIPT | CFM_SUBSCRIPT)) {
-    if (s->fmt.dwEffects & CFE_SUPERSCRIPT) yTwipsOffset = s->fmt.yHeight/3;
-    if (s->fmt.dwEffects & CFE_SUBSCRIPT) yTwipsOffset = -s->fmt.yHeight/12;
+  if ((run->style->fmt.dwMask & run->style->fmt.dwEffects) & (CFM_SUPERSCRIPT | CFM_SUBSCRIPT)) {
+    if (run->style->fmt.dwEffects & CFE_SUPERSCRIPT) yTwipsOffset = run->style->fmt.yHeight/3;
+    if (run->style->fmt.dwEffects & CFE_SUBSCRIPT) yTwipsOffset = -run->style->fmt.yHeight/12;
   }
   if (yTwipsOffset)
     yOffset = ME_twips2pointsY(c, yTwipsOffset);
 
-  if ((s->fmt.dwMask & CFM_LINK) && (s->fmt.dwEffects & CFE_LINK))
+  if ((run->style->fmt.dwMask & CFM_LINK) && (run->style->fmt.dwEffects & CFE_LINK))
     rgb = RGB(0,0,255);
-  else if ((s->fmt.dwMask & CFM_COLOR) && (s->fmt.dwEffects & CFE_AUTOCOLOR))
+  else if ((run->style->fmt.dwMask & CFM_COLOR) && (run->style->fmt.dwEffects & CFE_AUTOCOLOR))
     rgb = ITextHost_TxGetSysColor(c->editor->texthost, COLOR_WINDOWTEXT);
   else
-    rgb = s->fmt.crTextColor;
+    rgb = run->style->fmt.crTextColor;
 
   if (bHighlightedText)
   {
@@ -269,7 +268,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText,
     if (nSelTo >= nChars)
     {
       nSelTo = nChars;
-      xSelEnd = x + width;
+      xSelEnd = x + run->nWidth;
     }
     else
     {
@@ -279,9 +278,9 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText,
   }
 
   /* Choose the pen type for underlining the text. */
-  if (s->fmt.dwMask & CFM_UNDERLINETYPE)
+  if (run->style->fmt.dwMask & CFM_UNDERLINETYPE)
   {
-    switch (s->fmt.bUnderlineType)
+    switch (run->style->fmt.bUnderlineType)
     {
     case CFU_UNDERLINE:
     case CFU_UNDERLINEWORD: /* native seems to map it to simple underline (MSDN) */
@@ -292,7 +291,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText,
       hPen = CreatePen(PS_DOT, 1, rgb);
       break;
     default:
-      FIXME("Unknown underline type (%u)\n", s->fmt.bUnderlineType);
+      FIXME("Unknown underline type (%u)\n", run->style->fmt.bUnderlineType);
       /* fall through */
     case CFU_CF1UNDERLINE: /* this type is supported in the font, do nothing */
     case CFU_UNDERLINENONE:
@@ -332,13 +331,13 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText,
     if (hPen)
       LineTo(hDC, xSelEnd, y - yOffset + 1);
     SetBkColor(hDC, rgbBackOld);
-    if (xSelEnd < x + width)
+    if (xSelEnd < x + run->nWidth)
     {
       SetTextColor(hDC, rgb);
       ExtTextOutW(hDC, xSelEnd, y-yOffset, 0, NULL, szText+nSelTo,
                   nChars-nSelTo, NULL);
       if (hPen)
-        LineTo(hDC, x + width, y - yOffset + 1);
+        LineTo(hDC, x + run->nWidth, y - yOffset + 1);
     }
   }
   else
@@ -349,7 +348,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText,
     if (hPen)
     {
       MoveToEx(hDC, x, y - yOffset + 1, NULL);
-      LineTo(hDC, x + width, y - yOffset + 1);
+      LineTo(hDC, x + run->nWidth, y - yOffset + 1);
     }
 
     if (bHighlightedText) /* v1.0 inverts the selection */
@@ -364,7 +363,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText,
     DeleteObject(hPen);
   }
   SetTextColor(hDC, rgbOld);
-  ME_UnselectStyleFont(c, s, hOldFont);
+  ME_UnselectStyleFont(c, run->style, hOldFont);
 }
 
 static void ME_DebugWrite(HDC hDC, const POINT *pt, LPCWSTR szText) {
@@ -407,7 +406,7 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
   {
     /* wszSpace is used instead of the tab character because otherwise
      * an unwanted symbol can be inserted instead. */
-    ME_DrawTextWithStyle(c, x, y, wszSpace, 1, run->style, run->nWidth,
+    ME_DrawTextWithStyle(c, run, x, y, wszSpace, 1,
                          nSelFrom-runofs, nSelTo-runofs,
                          c->pt.y + para->pt.y + start->member.row.pt.y,
                          start->member.row.nHeight);
@@ -421,16 +420,16 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
     if (c->editor->cPasswordMask)
     {
       ME_String *szMasked = ME_MakeStringR(c->editor->cPasswordMask, run->len);
-      ME_DrawTextWithStyle(c, x, y,
-        szMasked->szData, szMasked->nLen, run->style, run->nWidth,
+      ME_DrawTextWithStyle(c, run, x, y,
+        szMasked->szData, szMasked->nLen,
         nSelFrom-runofs,nSelTo-runofs,
         c->pt.y + para->pt.y + start->member.row.pt.y,
         start->member.row.nHeight);
       ME_DestroyString(szMasked);
     }
     else
-      ME_DrawTextWithStyle(c, x, y,
-        get_text( run, 0 ), run->len, run->style, run->nWidth,
+      ME_DrawTextWithStyle(c, run, x, y,
+        get_text( run, 0 ), run->len,
         nSelFrom-runofs,nSelTo-runofs,
         c->pt.y + para->pt.y + start->member.row.pt.y,
         start->member.row.nHeight);
