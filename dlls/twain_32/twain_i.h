@@ -39,7 +39,6 @@ typedef struct tagActiveDS
     DSENTRYPROC		dsEntry;
 } activeDS;
 
-TW_UINT16 DSM_currentState DECLSPEC_HIDDEN;     /* current state of Source Manager */
 TW_UINT16 DSM_twCC DECLSPEC_HIDDEN;             /* current condition code of Source Manager */
 
 activeDS *activeSources DECLSPEC_HIDDEN;	/* list of active data sources */

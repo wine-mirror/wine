@@ -43,25 +43,6 @@ static activeDS *TWAIN_LookupSource (const TW_IDENTITY *pDest)
     return pSource;
 }
 
-BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("%p,%x,%p\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason)
-    {
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-            DSM_currentState = 2;
-            break;
-
-        case DLL_PROCESS_DETACH:
-            DSM_currentState = 1;
-            break;
-    }
-
-    return TRUE;
-}
-
 static TW_UINT16 TWAIN_SourceManagerHandler (
            pTW_IDENTITY pOrigin,
            TW_UINT16   DAT,
