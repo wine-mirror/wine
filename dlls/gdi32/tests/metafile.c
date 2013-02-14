@@ -2511,7 +2511,6 @@ static void test_emf_clipping(void)
        rc_res.left, rc_res.top, rc_res.right, rc_res.bottom);
 
     ret = IntersectClipRect(hdc, 0, 0, 100, 100);
-todo_wine
     ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION) /* XP */, "got %d\n", ret);
     if (ret == COMPLEXREGION)
     {
@@ -2524,7 +2523,6 @@ todo_wine
     SetRect(&rc_res, -1, -1, -1, -1);
     ret = GetClipBox(hdc, &rc_res);
     ok(ret == SIMPLEREGION, "got %d\n", ret);
-todo_wine
     ok(EqualRect(&rc_res, &rc),
        "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
        rc.left, rc.top, rc.right, rc.bottom,
