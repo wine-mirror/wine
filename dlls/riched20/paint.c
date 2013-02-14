@@ -228,54 +228,73 @@ static void get_underline_pen( ME_Style *style, COLORREF color, HPEN *pen )
     return;
 }
 
-static void ME_HighlightSpace(ME_Context *c, int x, int y, LPCWSTR szText,
-                              int nChars, ME_Style *s, int width,
-                              int nSelFrom, int nSelTo, int ymin, int cy)
+/*********************************************************************
+ *  draw_space
+ *
+ * Draw the end-of-paragraph or tab space.
+ *
+ * If actually_draw is TRUE then ensure any underline is drawn.
+ */
+static void draw_space( ME_Context *c, ME_Run *run, int x, int y,
+                        BOOL selected, BOOL actually_draw, int ymin, int cy )
 {
-  HDC hDC = c->hDC;
-  HGDIOBJ hOldFont = NULL;
-  SIZE sz;
-  int selWidth;
-  /* Only highlight if there is a selection in the run and when
-   * EM_HIDESELECTION is not being used to hide the selection. */
-  if (nSelFrom >= nChars || nSelTo < 0 || nSelFrom >= nSelTo
-      || c->editor->bHideSelection)
-    return;
-  hOldFont = ME_SelectStyleFont(c, s);
-  if (width <= 0)
-  {
-    GetTextExtentPoint32W(hDC, szText, nChars, &sz);
-    width = sz.cx;
-  }
-  if (nSelFrom < 0) nSelFrom = 0;
-  if (nSelTo > nChars) nSelTo = nChars;
-  GetTextExtentPoint32W(hDC, szText, nSelFrom, &sz);
-  x += sz.cx;
-  if (nSelTo != nChars)
-  {
-    GetTextExtentPoint32W(hDC, szText+nSelFrom, nSelTo-nSelFrom, &sz);
-    selWidth = sz.cx;
-  } else {
-    selWidth = width - sz.cx;
-  }
-  ME_UnselectStyleFont(c, s, hOldFont);
-
-  if (c->editor->bEmulateVersion10)
-    PatBlt(hDC, x, ymin, selWidth, cy, DSTINVERT);
-  else
-  {
+    HDC hdc = c->hDC;
+    BOOL old_style_selected = FALSE;
     RECT rect;
-    HBRUSH hBrush;
-    rect.left = x;
-    rect.top = ymin;
-    rect.right = x + selWidth;
-    rect.bottom = ymin + cy;
-    hBrush = CreateSolidBrush(ITextHost_TxGetSysColor(c->editor->texthost,
-                                                      COLOR_HIGHLIGHT));
-    FillRect(hDC, &rect, hBrush);
-    DeleteObject(hBrush);
-  }
+    COLORREF back_color = 0;
+
+    SetRect( &rect, x, ymin, x + run->nWidth, ymin + cy );
+
+    if (c->editor->bHideSelection) selected = FALSE;
+    if (c->editor->bEmulateVersion10)
+    {
+        old_style_selected = selected;
+        selected = FALSE;
+    }
+
+    if (selected)
+        back_color = ITextHost_TxGetSysColor( c->editor->texthost, COLOR_HIGHLIGHT );
+
+    if (actually_draw)
+    {
+        COLORREF text_color = get_text_color( c, run->style, selected );
+        COLORREF old_text, old_back;
+        HFONT old_font = NULL;
+        HPEN pen = NULL;
+        int y_offset = calc_y_offset( c, run->style );
+        static const WCHAR space[1] = {' '};
+
+        old_font = ME_SelectStyleFont( c, run->style );
+        old_text = SetTextColor( hdc, text_color );
+        if (selected) old_back = SetBkColor( hdc, back_color );
+
+        ExtTextOutW( hdc, x, y - y_offset, selected ? ETO_OPAQUE : 0, &rect, space, 1, &run->nWidth );
+
+        if (selected) SetBkColor( hdc, old_back );
+        SetTextColor( hdc, old_text );
+        ME_UnselectStyleFont( c, run->style, old_font );
+
+        get_underline_pen( run->style, text_color, &pen );
+        if (pen)
+        {
+            HPEN old_pen = SelectObject( hdc, pen );
+            MoveToEx( hdc, x, y - y_offset + 1, NULL );
+            LineTo( hdc, x + run->nWidth, y - y_offset + 1 );
+            SelectObject( hdc, old_pen );
+            DeleteObject( pen );
+        }
+    }
+    else if (selected)
+    {
+        HBRUSH brush = CreateSolidBrush( back_color );
+        FillRect( hdc, &rect, brush );
+        DeleteObject( brush );
+    }
+
+    if (old_style_selected)
+        PatBlt( hdc, x, ymin, run->nWidth, cy, DSTINVERT );
 }
+
 
 static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWSTR szText,
                                  int nChars, int nSelFrom, int nSelTo, int ymin, int cy)
@@ -406,7 +425,6 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
   ME_DisplayItem *start;
   int runofs = run->nCharOfs+para->nCharOfs;
   int nSelFrom, nSelTo;
-  const WCHAR wszSpace[] = {' ', 0};
   
   if (run->nFlags & MERF_HIDDEN)
     return;
@@ -419,21 +437,20 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
   {
     if (runofs >= nSelFrom && runofs < nSelTo)
     {
-      ME_HighlightSpace(c, x, y, wszSpace, 1, run->style, 0, 0, 1,
-                        c->pt.y + para->pt.y + start->member.row.pt.y,
-                        start->member.row.nHeight);
+      draw_space( c, run, x, y, TRUE, FALSE,
+                  c->pt.y + para->pt.y + start->member.row.pt.y,
+                  start->member.row.nHeight );
     }
     return;
   }
 
   if (run->nFlags & (MERF_TAB | MERF_ENDCELL))
   {
-    /* wszSpace is used instead of the tab character because otherwise
-     * an unwanted symbol can be inserted instead. */
-    ME_DrawTextWithStyle(c, run, x, y, wszSpace, 1,
-                         nSelFrom-runofs, nSelTo-runofs,
-                         c->pt.y + para->pt.y + start->member.row.pt.y,
-                         start->member.row.nHeight);
+    BOOL selected = runofs >= nSelFrom && runofs < nSelTo;
+
+    draw_space( c, run, x, y, selected, TRUE,
+                c->pt.y + para->pt.y + start->member.row.pt.y,
+                start->member.row.nHeight );
     return;
   }
 
