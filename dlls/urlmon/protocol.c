@@ -338,32 +338,38 @@ HRESULT protocol_continue(Protocol *protocol, PROTOCOLDATA *data)
         protocol->flags |= FLAG_FIRST_CONTINUE_COMPLETE;
     }
 
-    if(data->pData >= UlongToPtr(BINDSTATUS_DOWNLOADINGDATA) && !protocol->available_bytes) {
-        BOOL res;
+    if(data->pData >= UlongToPtr(BINDSTATUS_DOWNLOADINGDATA)) {
+        if(!protocol->available_bytes) {
+            BOOL res;
 
-        /* InternetQueryDataAvailable may immediately fork and perform its asynchronous
-         * read, so clear the flag _before_ calling so it does not incorrectly get cleared
-         * after the status callback is called */
-        protocol->flags &= ~FLAG_REQUEST_COMPLETE;
-        res = InternetQueryDataAvailable(protocol->request, &protocol->available_bytes, 0, 0);
-        if(res) {
-            if(!protocol->available_bytes) {
-                if(is_start) {
-                    TRACE("empty file\n");
-                    all_data_read(protocol);
-                }else {
-                    WARN("unexpected end of file?\n");
-                    report_result(protocol, INET_E_DOWNLOAD_FAILURE);
+            /* InternetQueryDataAvailable may immediately fork and perform its asynchronous
+             * read, so clear the flag _before_ calling so it does not incorrectly get cleared
+             * after the status callback is called */
+            protocol->flags &= ~FLAG_REQUEST_COMPLETE;
+            res = InternetQueryDataAvailable(protocol->request, &protocol->available_bytes, 0, 0);
+            if(res) {
+                TRACE("available %u bytes\n", protocol->available_bytes);
+                if(!protocol->available_bytes) {
+                    if(is_start) {
+                        TRACE("empty file\n");
+                        all_data_read(protocol);
+                    }else {
+                        WARN("unexpected end of file?\n");
+                        report_result(protocol, INET_E_DOWNLOAD_FAILURE);
+                    }
+                    return S_OK;
                 }
+            }else if(GetLastError() != ERROR_IO_PENDING) {
+                protocol->flags |= FLAG_REQUEST_COMPLETE;
+                WARN("InternetQueryDataAvailable failed: %d\n", GetLastError());
+                report_result(protocol, INET_E_DATA_NOT_AVAILABLE);
                 return S_OK;
             }
+
             protocol->flags |= FLAG_REQUEST_COMPLETE;
-            report_data(protocol);
-        }else if(GetLastError() != ERROR_IO_PENDING) {
-            protocol->flags |= FLAG_REQUEST_COMPLETE;
-            WARN("InternetQueryDataAvailable failed: %d\n", GetLastError());
-            report_result(protocol, INET_E_DATA_NOT_AVAILABLE);
         }
+
+        report_data(protocol);
     }
 
     return S_OK;
