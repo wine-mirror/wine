@@ -999,23 +999,6 @@ int USP10_FindGlyphInLogClust(const WORD* pwLogClust, int cChars, WORD target)
 }
 
 /***********************************************************************
- *      DllMain
- *
- */
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
-{
-    switch(fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hInstDLL);
-        break;
-    case DLL_PROCESS_DETACH:
-        break;
-    }
-    return TRUE;
-}
-
-/***********************************************************************
  *      ScriptFreeCache (USP10.@)
  *
  * Free a script cache.
