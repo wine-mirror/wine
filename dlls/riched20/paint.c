@@ -166,6 +166,33 @@ int ME_twips2pointsY(const ME_Context *c, int y)
     return y * c->dpi.cy * c->editor->nZoomNumerator / 1440 / c->editor->nZoomDenominator;
 }
 
+static void get_underline_pen( ME_Style *style, COLORREF color, HPEN *pen )
+{
+    *pen = NULL;
+    /* Choose the pen type for underlining the text. */
+    if (style->fmt.dwMask & CFM_UNDERLINETYPE)
+    {
+        switch (style->fmt.bUnderlineType)
+        {
+        case CFU_UNDERLINE:
+        case CFU_UNDERLINEWORD: /* native seems to map it to simple underline (MSDN) */
+        case CFU_UNDERLINEDOUBLE: /* native seems to map it to simple underline (MSDN) */
+            *pen = CreatePen( PS_SOLID, 1, color );
+            break;
+        case CFU_UNDERLINEDOTTED:
+            *pen = CreatePen( PS_DOT, 1, color );
+            break;
+        default:
+            FIXME( "Unknown underline type (%u)\n", style->fmt.bUnderlineType );
+            /* fall through */
+        case CFU_CF1UNDERLINE: /* this type is supported in the font, do nothing */
+        case CFU_UNDERLINENONE:
+            break;
+        }
+    }
+    return;
+}
+
 static void ME_HighlightSpace(ME_Context *c, int x, int y, LPCWSTR szText,
                               int nChars, ME_Style *s, int width,
                               int nSelFrom, int nSelTo, int ymin, int cy)
@@ -277,32 +304,8 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
     }
   }
 
-  /* Choose the pen type for underlining the text. */
-  if (run->style->fmt.dwMask & CFM_UNDERLINETYPE)
-  {
-    switch (run->style->fmt.bUnderlineType)
-    {
-    case CFU_UNDERLINE:
-    case CFU_UNDERLINEWORD: /* native seems to map it to simple underline (MSDN) */
-    case CFU_UNDERLINEDOUBLE: /* native seems to map it to simple underline (MSDN) */
-      hPen = CreatePen(PS_SOLID, 1, rgb);
-      break;
-    case CFU_UNDERLINEDOTTED:
-      hPen = CreatePen(PS_DOT, 1, rgb);
-      break;
-    default:
-      FIXME("Unknown underline type (%u)\n", run->style->fmt.bUnderlineType);
-      /* fall through */
-    case CFU_CF1UNDERLINE: /* this type is supported in the font, do nothing */
-    case CFU_UNDERLINENONE:
-      hPen = NULL;
-      break;
-    }
-    if (hPen)
-    {
-      hOldPen = SelectObject(hDC, hPen);
-    }
-  }
+  get_underline_pen( run->style, rgb, &hPen );
+  if (hPen) hOldPen = SelectObject( hDC, hPen );
 
   rgbOld = SetTextColor(hDC, rgb);
   if (bHighlightedText && !c->editor->bEmulateVersion10)
