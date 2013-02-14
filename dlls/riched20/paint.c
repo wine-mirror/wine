@@ -297,7 +297,7 @@ static void draw_space( ME_Context *c, ME_Run *run, int x, int y,
 
 
 static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWSTR szText,
-                                 int nChars, int nSelFrom, int nSelTo, int ymin, int cy)
+                                 int nSelFrom, int nSelTo, int ymin, int cy)
 {
   HDC hDC = c->hDC;
   HGDIOBJ hOldFont;
@@ -305,7 +305,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
   int yOffset = 0;
   COLORREF      rgb;
   HPEN hPen = NULL, hOldPen = NULL;
-  BOOL bHighlightedText = (nSelFrom < nChars && nSelTo >= 0
+  BOOL bHighlightedText = (nSelFrom < run->len && nSelTo >= 0
                            && nSelFrom < nSelTo && !c->editor->bHideSelection);
   int xSelStart = x, xSelEnd = x;
 
@@ -326,9 +326,9 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
       GetTextExtentPoint32W(hDC, szText, nSelFrom, &sz);
       xSelStart = x + sz.cx;
     }
-    if (nSelTo >= nChars)
+    if (nSelTo >= run->len)
     {
-      nSelTo = nChars;
+      nSelTo = run->len;
       xSelEnd = x + run->nWidth;
     }
     else
@@ -371,14 +371,14 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
     {
       SetTextColor(hDC, rgb);
       ExtTextOutW(hDC, xSelEnd, y-yOffset, 0, NULL, szText+nSelTo,
-                  nChars-nSelTo, NULL);
+                  run->len - nSelTo, NULL);
       if (hPen)
         LineTo(hDC, x + run->nWidth, y - yOffset + 1);
     }
   }
   else
   {
-    ExtTextOutW(hDC, x, y-yOffset, 0, NULL, szText, nChars, NULL);
+    ExtTextOutW(hDC, x, y-yOffset, 0, NULL, szText, run->len, NULL);
 
     /* FIXME: should use textmetrics info for Descent info */
     if (hPen)
@@ -455,16 +455,14 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
     {
       ME_String *szMasked = ME_MakeStringR(c->editor->cPasswordMask, run->len);
       ME_DrawTextWithStyle(c, run, x, y,
-        szMasked->szData, szMasked->nLen,
-        nSelFrom-runofs,nSelTo-runofs,
+        szMasked->szData, nSelFrom - runofs, nSelTo - runofs,
         c->pt.y + para->pt.y + start->member.row.pt.y,
         start->member.row.nHeight);
       ME_DestroyString(szMasked);
     }
     else
       ME_DrawTextWithStyle(c, run, x, y,
-        get_text( run, 0 ), run->len,
-        nSelFrom-runofs,nSelTo-runofs,
+        get_text( run, 0 ), nSelFrom - runofs, nSelTo - runofs,
         c->pt.y + para->pt.y + start->member.row.pt.y,
         start->member.row.nHeight);
   }
