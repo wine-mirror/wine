@@ -8824,6 +8824,7 @@ _ACEOF
 
        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+#include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
 int
 main ()
