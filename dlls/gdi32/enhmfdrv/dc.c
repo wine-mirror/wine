@@ -181,12 +181,16 @@ INT EMFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bot
 
 INT EMFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
 {
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pOffsetClipRgn );
     EMROFFSETCLIPRGN emr;
+    BOOL ret;
+
     emr.emr.iType   = EMR_OFFSETCLIPRGN;
     emr.emr.nSize   = sizeof(emr);
     emr.ptlOffset.x = x;
     emr.ptlOffset.y = y;
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    ret = EMFDRV_WriteRecord( dev, &emr.emr );
+    return ret ? next->funcs->pOffsetClipRgn( next, x, y ) : ERROR;
 }
 
 INT EMFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )

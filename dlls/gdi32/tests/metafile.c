@@ -2501,12 +2501,10 @@ static void test_emf_clipping(void)
 
     OffsetRect(&rc_sclip, -100, -100);
     ret = OffsetClipRgn(hdc, -100, -100);
-todo_wine
     ok(ret == SIMPLEREGION, "got %d\n", ret);
     SetRect(&rc_res, -1, -1, -1, -1);
     ret = GetClipBox(hdc, &rc_res);
     ok(ret == SIMPLEREGION, "got %d\n", ret);
-todo_wine
     ok(EqualRect(&rc_res, &rc_sclip),
        "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
        rc_sclip.left, rc_sclip.top, rc_sclip.right, rc_sclip.bottom,
