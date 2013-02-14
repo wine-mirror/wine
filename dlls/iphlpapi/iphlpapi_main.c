@@ -71,19 +71,6 @@ static void initialise_resolver(void)
         res_init();
 }
 
-BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-  switch (fdwReason) {
-    case DLL_PROCESS_ATTACH:
-      DisableThreadLibraryCalls( hinstDLL );
-      break;
-
-    case DLL_PROCESS_DETACH:
-      break;
-  }
-  return TRUE;
-}
-
 /******************************************************************
  *    AddIPAddress (IPHLPAPI.@)
  *
