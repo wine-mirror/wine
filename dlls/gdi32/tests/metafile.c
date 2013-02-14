@@ -60,6 +60,20 @@ static void init_function_pointers(void)
     GDI_GET_PROC(SetDCPenColor);
 }
 
+static DWORD rgn_rect_count(HRGN hrgn)
+{
+    DWORD size;
+    RGNDATA *data;
+
+    if (!hrgn) return 0;
+    if (!(size = GetRegionData(hrgn, 0, NULL))) return 0;
+    if (!(data = HeapAlloc(GetProcessHeap(), 0, size))) return 0;
+    GetRegionData(hrgn, size, data);
+    size = data->rdh.nCount;
+    HeapFree(GetProcessHeap(), 0, data);
+    return size;
+}
+
 static int CALLBACK eto_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
     const ENHMETARECORD *emr, int n_objs, LPARAM param)
 {
@@ -2481,8 +2495,62 @@ static void test_emf_clipping(void)
     ret = GetClipBox(hdc, &rc_res);
     ok(ret == SIMPLEREGION, "got %d\n", ret);
     ok(EqualRect(&rc_res, &rc_sclip),
-       "expected rc_res (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
+       "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
        rc_sclip.left, rc_sclip.top, rc_sclip.right, rc_sclip.bottom,
+       rc_res.left, rc_res.top, rc_res.right, rc_res.bottom);
+
+    OffsetRect(&rc_sclip, -100, -100);
+    ret = OffsetClipRgn(hdc, -100, -100);
+todo_wine
+    ok(ret == SIMPLEREGION, "got %d\n", ret);
+    SetRect(&rc_res, -1, -1, -1, -1);
+    ret = GetClipBox(hdc, &rc_res);
+    ok(ret == SIMPLEREGION, "got %d\n", ret);
+todo_wine
+    ok(EqualRect(&rc_res, &rc_sclip),
+       "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
+       rc_sclip.left, rc_sclip.top, rc_sclip.right, rc_sclip.bottom,
+       rc_res.left, rc_res.top, rc_res.right, rc_res.bottom);
+
+    ret = IntersectClipRect(hdc, 0, 0, 100, 100);
+todo_wine
+    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION) /* XP */, "got %d\n", ret);
+    if (ret == COMPLEXREGION)
+    {
+        /* XP returns COMPLEXREGION although region contains only 1 rect */
+        ret = GetClipRgn(hdc, hrgn);
+        ok(ret == 1, "expected 1, got %d\n", ret);
+        ret = rgn_rect_count(hrgn);
+        ok(ret == 1, "expected 1, got %d\n", ret);
+    }
+    SetRect(&rc_res, -1, -1, -1, -1);
+    ret = GetClipBox(hdc, &rc_res);
+    ok(ret == SIMPLEREGION, "got %d\n", ret);
+todo_wine
+    ok(EqualRect(&rc_res, &rc),
+       "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
+       rc.left, rc.top, rc.right, rc.bottom,
+       rc_res.left, rc_res.top, rc_res.right, rc_res.bottom);
+
+    SetRect(&rc_sclip, 0, 0, 100, 50);
+    ret = ExcludeClipRect(hdc, 0, 50, 100, 100);
+todo_wine
+    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION) /* XP */, "got %d\n", ret);
+    if (ret == COMPLEXREGION)
+    {
+        /* XP returns COMPLEXREGION although region contains only 1 rect */
+        ret = GetClipRgn(hdc, hrgn);
+        ok(ret == 1, "expected 1, got %d\n", ret);
+        ret = rgn_rect_count(hrgn);
+        ok(ret == 1, "expected 1, got %d\n", ret);
+    }
+    SetRect(&rc_res, -1, -1, -1, -1);
+    ret = GetClipBox(hdc, &rc_res);
+    ok(ret == SIMPLEREGION, "got %d\n", ret);
+todo_wine
+    ok(EqualRect(&rc_res, &rc_sclip),
+       "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
+       rc.left, rc.top, rc.right, rc.bottom,
        rc_res.left, rc_res.top, rc_res.right, rc_res.bottom);
 
     hemf = CloseEnhMetaFile(hdc);
