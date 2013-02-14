@@ -223,7 +223,6 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText,
   HGDIOBJ hOldFont;
   COLORREF rgbOld;
   int yOffset = 0, yTwipsOffset = 0;
-  SIZE          sz;
   COLORREF      rgb;
   HPEN hPen = NULL, hOldPen = NULL;
   BOOL bHighlightedText = (nSelFrom < nChars && nSelTo >= 0
@@ -255,13 +254,9 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText,
   else
     rgb = s->fmt.crTextColor;
 
-  /* Determine the area that is selected in the run. */
-  GetTextExtentPoint32W(hDC, szText, nChars, &sz);
-  /* Treat width as an optional parameter.  We can get the width from the
-   * text extent of the string if it isn't specified. */
-  if (!width) width = sz.cx;
   if (bHighlightedText)
   {
+    SIZE sz;
     if (nSelFrom <= 0)
     {
       nSelFrom = 0;
