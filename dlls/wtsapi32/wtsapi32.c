@@ -26,25 +26,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wtsapi);
 
 
-BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("%p,%x,%p\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason) {
-        case DLL_PROCESS_ATTACH:
-        {
-            DisableThreadLibraryCalls(hinstDLL);
-            break;
-        }
-        case DLL_PROCESS_DETACH:
-        {
-            break;
-        }
-    }
-
-    return TRUE;
-}
-
 /************************************************************
  *                WTSCloseServer  (WTSAPI32.@)
  */
