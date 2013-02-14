@@ -305,89 +305,91 @@ static void get_selection_rect( ME_Context *c, ME_Run *run, int from, int to, in
     return;
 }
 
+
+static void draw_text( ME_Context *c, ME_Run *run, int x, int y, const WCHAR *text, BOOL selected, RECT *sel_rect )
+{
+    COLORREF text_color = get_text_color( c, run->style, selected );
+    COLORREF back_color = selected ? ITextHost_TxGetSysColor( c->editor->texthost, COLOR_HIGHLIGHT ) : 0;
+    COLORREF old_text, old_back;
+    HPEN pen;
+
+    old_text = SetTextColor( c->hDC, text_color );
+    if (selected) old_back = SetBkColor( c->hDC, back_color );
+
+    ExtTextOutW( c->hDC, x, y, selected ? ETO_OPAQUE : 0, sel_rect, text, run->len, NULL );
+
+    if (selected) SetBkColor( c->hDC, old_back );
+    SetTextColor( c->hDC, old_text );
+
+    get_underline_pen( run->style, text_color, &pen );
+    if (pen)
+    {
+        HPEN old_pen = SelectObject( c->hDC, pen );
+        MoveToEx( c->hDC, x, y + 1, NULL );
+        LineTo( c->hDC, x + run->nWidth, y + 1 );
+        SelectObject( c->hDC, old_pen );
+        DeleteObject( pen );
+    }
+
+    return;
+}
+
+
 static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWSTR szText,
                                  int nSelFrom, int nSelTo, int ymin, int cy)
 {
   HDC hDC = c->hDC;
   HGDIOBJ hOldFont;
-  COLORREF rgbOld;
   int yOffset = 0;
-  COLORREF      rgb;
-  HPEN hPen = NULL, hOldPen = NULL;
-  BOOL bHighlightedText = (nSelFrom < run->len && nSelTo >= 0
-                           && nSelFrom < nSelTo && !c->editor->bHideSelection);
+  BOOL selected = (nSelFrom < run->len && nSelTo >= 0
+                   && nSelFrom < nSelTo && !c->editor->bHideSelection);
+  BOOL old_style_selected = FALSE;
   RECT sel_rect;
+  HRGN clip = NULL, sel_rgn = NULL;
 
   yOffset = calc_y_offset( c, run->style );
 
-  rgb = get_text_color( c, run->style, FALSE );
-
-  if (bHighlightedText)
+  if (selected)
   {
     nSelFrom = max( 0, nSelFrom );
     nSelTo = min( run->len, nSelTo );
     get_selection_rect( c, run, nSelFrom, nSelTo, cy, &sel_rect );
     OffsetRect( &sel_rect, x, ymin );
+
+    if (c->editor->bEmulateVersion10)
+    {
+      old_style_selected = TRUE;
+      selected = FALSE;
+    }
+    else
+    {
+      sel_rgn = CreateRectRgnIndirect( &sel_rect );
+      clip = CreateRectRgn( 0, 0, 0, 0 );
+      if (GetClipRgn( hDC, clip ) != 1)
+      {
+        DeleteObject( clip );
+        clip = NULL;
+      }
+    }
   }
 
-  hOldFont = ME_SelectStyleFont(c, run->style);
+  hOldFont = ME_SelectStyleFont( c, run->style );
 
-  get_underline_pen( run->style, rgb, &hPen );
-  if (hPen) hOldPen = SelectObject( hDC, hPen );
-
-  rgbOld = SetTextColor(hDC, rgb);
-  if (bHighlightedText && !c->editor->bEmulateVersion10)
+  if (sel_rgn) ExtSelectClipRgn( hDC, sel_rgn, RGN_DIFF );
+  draw_text( c, run, x, y - yOffset, szText, FALSE, NULL );
+  if (sel_rgn)
   {
-    COLORREF rgbBackOld;
-    /* FIXME: should use textmetrics info for Descent info */
-    if (hPen)
-      MoveToEx(hDC, x, y - yOffset + 1, NULL);
-    if (sel_rect.left > x)
-    {
-      ExtTextOutW(hDC, x, y-yOffset, 0, NULL, szText, nSelFrom, NULL);
-      if (hPen)
-        LineTo(hDC, sel_rect.left, y - yOffset + 1);
-    }
-    SetTextColor( hDC, get_text_color( c, run->style, TRUE ) );
-    rgbBackOld = SetBkColor(hDC, ITextHost_TxGetSysColor(c->editor->texthost,
-                                                         COLOR_HIGHLIGHT));
-    ExtTextOutW(hDC, sel_rect.left, y-yOffset, ETO_OPAQUE, &sel_rect,
-                szText+nSelFrom, nSelTo-nSelFrom, NULL);
-    if (hPen)
-      LineTo(hDC, sel_rect.right, y - yOffset + 1);
-    SetBkColor(hDC, rgbBackOld);
-    if (sel_rect.right < x + run->nWidth)
-    {
-      SetTextColor(hDC, rgb);
-      ExtTextOutW(hDC, sel_rect.right, y-yOffset, 0, NULL, szText+nSelTo,
-                  run->len - nSelTo, NULL);
-      if (hPen)
-        LineTo(hDC, x + run->nWidth, y - yOffset + 1);
-    }
-  }
-  else
-  {
-    ExtTextOutW(hDC, x, y-yOffset, 0, NULL, szText, run->len, NULL);
-
-    /* FIXME: should use textmetrics info for Descent info */
-    if (hPen)
-    {
-      MoveToEx(hDC, x, y - yOffset + 1, NULL);
-      LineTo(hDC, x + run->nWidth, y - yOffset + 1);
-    }
-
-    if (bHighlightedText) /* v1.0 inverts the selection */
-    {
-      PatBlt(hDC, sel_rect.left, ymin, sel_rect.right - sel_rect.left, cy, DSTINVERT);
-    }
+    ExtSelectClipRgn( hDC, clip, RGN_COPY );
+    ExtSelectClipRgn( hDC, sel_rgn, RGN_AND );
+    draw_text( c, run, x, y - yOffset, szText, TRUE, &sel_rect );
+    ExtSelectClipRgn( hDC, clip, RGN_COPY );
+    if (clip) DeleteObject( clip );
+    DeleteObject( sel_rgn );
   }
 
-  if (hPen)
-  {
-    SelectObject(hDC, hOldPen);
-    DeleteObject(hPen);
-  }
-  SetTextColor(hDC, rgbOld);
+  if (old_style_selected)
+    PatBlt( hDC, sel_rect.left, ymin, sel_rect.right - sel_rect.left, cy, DSTINVERT );
+
   ME_UnselectStyleFont(c, run->style, hOldFont);
 }
 
