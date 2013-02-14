@@ -980,7 +980,7 @@
 @ varargs _sscanf_l(str str ptr) msvcrt._sscanf_l
 @ varargs _sscanf_s_l(str str ptr) msvcrt._sscanf_s_l
 @ cdecl _stat32(str ptr) msvcr100._stat32
-@ stub _stat32i64
+@ cdecl _stat32i64(str ptr) msvcr100._stat32i64
 @ cdecl _stat64(str ptr) msvcrt._stat64
 @ cdecl _stat64i32(str ptr) msvcr100._stat64i32
 @ cdecl _statusfp() msvcrt._statusfp
@@ -1252,7 +1252,7 @@
 @ cdecl _wsplitpath(wstr ptr ptr ptr ptr) msvcrt._wsplitpath
 @ cdecl _wsplitpath_s(wstr ptr long ptr long ptr long ptr long) msvcrt._wsplitpath_s
 @ cdecl _wstat32(wstr ptr) msvcr100._wstat32
-@ stub _wstat32i64
+@ cdecl _wstat32i64(wstr ptr) msvcr100._wstat32i64
 @ cdecl _wstat64(wstr ptr) msvcrt._wstat64
 @ cdecl _wstat64i32(wstr ptr) msvcr100._wstat64i32
 @ cdecl _wstrdate(ptr) msvcrt._wstrdate
