@@ -1318,7 +1318,7 @@
 @ varargs _sscanf_l(str str ptr) msvcrt._sscanf_l
 @ varargs _sscanf_s_l(str str ptr) msvcrt._sscanf_s_l
 @ cdecl _stat32(str ptr)
-@ stub _stat32i64
+@ cdecl _stat32i64(str ptr)
 @ cdecl _stat64(str ptr) msvcrt._stat64
 @ cdecl _stat64i32(str ptr)
 @ cdecl _statusfp() msvcrt._statusfp

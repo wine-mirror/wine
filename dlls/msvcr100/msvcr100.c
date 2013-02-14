@@ -267,6 +267,20 @@ static void stat64_to_stat32i64(const struct _stat64 *buf64, struct _stat32i64 *
 }
 
 /*********************************************************************
+ *  _stat32i64 (MSVCR100.@)
+ */
+int CDECL _stat32i64(const char *path, struct _stat32i64* buf)
+{
+    int ret;
+    struct _stat64 buf64;
+
+    ret = _stat64(path, &buf64);
+    if (!ret)
+        stat64_to_stat32i64(&buf64, buf);
+    return ret;
+}
+
+/*********************************************************************
  *  _wstat32i64 (MSVCR100.@)
  */
 int CDECL _wstat32i64(const wchar_t *path, struct _stat32i64* buf)
