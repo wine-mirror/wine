@@ -1588,7 +1588,7 @@
 @ cdecl _wsplitpath(wstr ptr ptr ptr ptr) msvcrt._wsplitpath
 @ cdecl _wsplitpath_s(wstr ptr long ptr long ptr long ptr long) msvcrt._wsplitpath_s
 @ cdecl _wstat32(wstr ptr)
-@ stub _wstat32i64
+@ cdecl _wstat32i64(wstr ptr)
 @ cdecl _wstat64(wstr ptr) msvcrt._wstat64
 @ cdecl _wstat64i32(wstr ptr)
 @ cdecl _wstrdate(ptr) msvcrt._wstrdate
