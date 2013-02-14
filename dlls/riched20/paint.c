@@ -166,6 +166,25 @@ int ME_twips2pointsY(const ME_Context *c, int y)
     return y * c->dpi.cy * c->editor->nZoomNumerator / 1440 / c->editor->nZoomDenominator;
 }
 
+
+static int calc_y_offset( const ME_Context *c, ME_Style *style )
+{
+    int offs = 0, twips = 0;
+
+    if ((style->fmt.dwMask & style->fmt.dwEffects) & CFM_OFFSET)
+        twips = style->fmt.yOffset;
+
+    if ((style->fmt.dwMask & style->fmt.dwEffects) & (CFM_SUPERSCRIPT | CFM_SUBSCRIPT))
+    {
+        if (style->fmt.dwEffects & CFE_SUPERSCRIPT) twips = style->fmt.yHeight/3;
+        if (style->fmt.dwEffects & CFE_SUBSCRIPT) twips = -style->fmt.yHeight/12;
+    }
+
+    if (twips) offs = ME_twips2pointsY( c, twips );
+
+    return offs;
+}
+
 static void get_underline_pen( ME_Style *style, COLORREF color, HPEN *pen )
 {
     *pen = NULL;
@@ -248,7 +267,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
   HDC hDC = c->hDC;
   HGDIOBJ hOldFont;
   COLORREF rgbOld;
-  int yOffset = 0, yTwipsOffset = 0;
+  int yOffset = 0;
   COLORREF      rgb;
   HPEN hPen = NULL, hOldPen = NULL;
   BOOL bHighlightedText = (nSelFrom < nChars && nSelTo >= 0
@@ -263,15 +282,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
       lpDx = &run->nWidth; /* Make sure underline for tab extends across tab space */
 
   hOldFont = ME_SelectStyleFont(c, run->style);
-  if ((run->style->fmt.dwMask & run->style->fmt.dwEffects) & CFM_OFFSET) {
-    yTwipsOffset = run->style->fmt.yOffset;
-  }
-  if ((run->style->fmt.dwMask & run->style->fmt.dwEffects) & (CFM_SUPERSCRIPT | CFM_SUBSCRIPT)) {
-    if (run->style->fmt.dwEffects & CFE_SUPERSCRIPT) yTwipsOffset = run->style->fmt.yHeight/3;
-    if (run->style->fmt.dwEffects & CFE_SUBSCRIPT) yTwipsOffset = -run->style->fmt.yHeight/12;
-  }
-  if (yTwipsOffset)
-    yOffset = ME_twips2pointsY(c, yTwipsOffset);
+  yOffset = calc_y_offset( c, run->style );
 
   if ((run->style->fmt.dwMask & CFM_LINK) && (run->style->fmt.dwEffects & CFE_LINK))
     rgb = RGB(0,0,255);
