@@ -448,7 +448,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     char *post_data = NULL;
     BOOL res, on_async = TRUE;
     CHAR buffer[4000];
-    DWORD length, post_len = 0;
+    DWORD length, exlen = 0, post_len = 0;
     const char *types[2] = { "*", NULL };
     HINTERNET hi, hic = 0, hor = 0;
 
@@ -649,12 +649,17 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     {
         if (flags & INTERNET_FLAG_ASYNC)
             SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+        length = 0;
         res = InternetQueryDataAvailable(hor,&length,0x0,0x0);
         if (flags & INTERNET_FLAG_ASYNC)
         {
             if (res)
             {
                 CHECK_NOT_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+                if(exlen) {
+                    ok(length >= exlen, "length %u < exlen %u\n", length, exlen);
+                    exlen = 0;
+                }
             }
             else if (GetLastError() == ERROR_IO_PENDING)
             {
@@ -663,6 +668,8 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
                 if(!(test->flags & TESTF_CHUNKED))
                     ok(!length, "InternetQueryDataAvailable returned ERROR_IO_PENDING and %u length\n", length);
                 WaitForSingleObject(hCompleteEvent, INFINITE);
+                exlen = length;
+                ok(exlen, "length = 0\n");
                 CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
                 ok(req_error, "req_error = 0\n");
                 continue;
