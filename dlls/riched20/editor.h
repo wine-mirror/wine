@@ -142,6 +142,7 @@ void ME_CheckCharOffsets(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_PropagateCharOffset(ME_DisplayItem *p, int shift) DECLSPEC_HIDDEN;
 /* this one accounts for 1/2 char tolerance */
 int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run) DECLSPEC_HIDDEN;
+int ME_PointFromCharContext(ME_Context *c, ME_Run *pRun, int nOffset) DECLSPEC_HIDDEN;
 int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset) DECLSPEC_HIDDEN;
 int ME_CanJoinRuns(const ME_Run *run1, const ME_Run *run2) DECLSPEC_HIDDEN;
 void ME_JoinRuns(ME_TextEditor *editor, ME_DisplayItem *p) DECLSPEC_HIDDEN;

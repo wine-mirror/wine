@@ -487,41 +487,54 @@ static void ME_GetTextExtent(ME_Context *c, LPCWSTR szText, int nChars, ME_Style
 }
 
 /******************************************************************************
- * ME_PointFromChar
+ * ME_PointFromCharContext
  *
  * Returns a run-relative pixel position given a run-relative character
  * position (character offset)
  */
-int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
+int ME_PointFromCharContext(ME_Context *c, ME_Run *pRun, int nOffset)
 {
   SIZE size;
-  ME_Context c;
   ME_String *mask_text = NULL;
   WCHAR *str;
 
-  ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
   if (pRun->nFlags & MERF_GRAPHICS)
   {
     if (nOffset)
-      ME_GetOLEObjectSize(&c, pRun, &size);
-    ME_DestroyContext(&c);
+      ME_GetOLEObjectSize(c, pRun, &size);
     return nOffset != 0;
   } else if (pRun->nFlags & MERF_ENDPARA) {
     nOffset = 0;
   }
 
-  if (editor->cPasswordMask)
+  if (c->editor->cPasswordMask)
   {
-    mask_text = ME_MakeStringR(editor->cPasswordMask, pRun->len);
+    mask_text = ME_MakeStringR(c->editor->cPasswordMask, pRun->len);
     str = mask_text->szData;
   }
   else
       str = get_text( pRun, 0 );
 
-  ME_GetTextExtent(&c, str, nOffset, pRun->style, &size);
-  ME_DestroyContext(&c);
+  ME_GetTextExtent(c, str, nOffset, pRun->style, &size);
   ME_DestroyString( mask_text );
   return size.cx;
+}
+
+/******************************************************************************
+ * ME_PointFromChar
+ *
+ * Calls ME_PointFromCharContext after first creating a context.
+ */
+int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
+{
+    ME_Context c;
+    int ret;
+
+    ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
+    ret = ME_PointFromCharContext( &c, pRun, nOffset );
+    ME_DestroyContext(&c);
+
+    return ret;
 }
 
 /******************************************************************************
