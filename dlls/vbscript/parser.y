@@ -922,7 +922,7 @@ void *parser_alloc(parser_ctx_t *ctx, size_t size)
 {
     void *ret;
 
-    ret = vbsheap_alloc(&ctx->heap, size);
+    ret = heap_pool_alloc(&ctx->heap, size);
     if(!ret)
         ctx->hres = E_OUTOFMEMORY;
     return ret;
@@ -935,7 +935,7 @@ HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
     ctx->code = ctx->ptr = code;
     ctx->end = ctx->code + strlenW(ctx->code);
 
-    vbsheap_init(&ctx->heap);
+    heap_pool_init(&ctx->heap);
 
     ctx->parse_complete = FALSE;
     ctx->hres = S_OK;
@@ -961,5 +961,5 @@ HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
 
 void parser_release(parser_ctx_t *ctx)
 {
-    vbsheap_free(&ctx->heap);
+    heap_pool_free(&ctx->heap);
 }

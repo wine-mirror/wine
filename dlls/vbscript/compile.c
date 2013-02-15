@@ -118,14 +118,14 @@ static void dump_code(compile_ctx_t *ctx)
 
 static inline void *compiler_alloc(vbscode_t *vbscode, size_t size)
 {
-    return vbsheap_alloc(&vbscode->heap, size);
+    return heap_pool_alloc(&vbscode->heap, size);
 }
 
 static inline void *compiler_alloc_zero(vbscode_t *vbscode, size_t size)
 {
     void *ret;
 
-    ret = vbsheap_alloc(&vbscode->heap, size);
+    ret = heap_pool_alloc(&vbscode->heap, size);
     if(ret)
         memset(ret, 0, size);
     return ret;
@@ -1585,7 +1585,7 @@ void release_vbscode(vbscode_t *code)
     for(i=0; i < code->bstr_cnt; i++)
         SysFreeString(code->bstr_pool[i]);
 
-    vbsheap_free(&code->heap);
+    heap_pool_free(&code->heap);
 
     heap_free(code->bstr_pool);
     heap_free(code->source);
@@ -1615,7 +1615,7 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
 
     ctx->instr_cnt = 1;
     ctx->instr_size = 32;
-    vbsheap_init(&ret->heap);
+    heap_pool_init(&ret->heap);
 
     ret->option_explicit = ctx->parser.option_explicit;
 

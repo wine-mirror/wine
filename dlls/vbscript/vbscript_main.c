@@ -133,13 +133,13 @@ static inline DWORD block_size(DWORD block)
     return MIN_BLOCK_SIZE << block;
 }
 
-void vbsheap_init(vbsheap_t *heap)
+void heap_pool_init(heap_pool_t *heap)
 {
     memset(heap, 0, sizeof(*heap));
     list_init(&heap->custom_blocks);
 }
 
-void *vbsheap_alloc(vbsheap_t *heap, size_t size)
+void *heap_pool_alloc(heap_pool_t *heap, size_t size)
 {
     struct list *list;
     void *tmp;
@@ -194,7 +194,7 @@ void *vbsheap_alloc(vbsheap_t *heap, size_t size)
     return list+1;
 }
 
-void vbsheap_free(vbsheap_t *heap)
+void heap_pool_free(heap_pool_t *heap)
 {
     struct list *iter;
     DWORD i;

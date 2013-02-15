@@ -37,11 +37,11 @@ typedef struct {
     DWORD last_block;
     DWORD offset;
     struct list custom_blocks;
-} vbsheap_t;
+} heap_pool_t;
 
-void vbsheap_init(vbsheap_t*) DECLSPEC_HIDDEN;
-void *vbsheap_alloc(vbsheap_t*,size_t) __WINE_ALLOC_SIZE(2) DECLSPEC_HIDDEN;
-void vbsheap_free(vbsheap_t*) DECLSPEC_HIDDEN;
+void heap_pool_init(heap_pool_t*) DECLSPEC_HIDDEN;
+void *heap_pool_alloc(heap_pool_t*,size_t) __WINE_ALLOC_SIZE(2) DECLSPEC_HIDDEN;
+void heap_pool_free(heap_pool_t*) DECLSPEC_HIDDEN;
 
 typedef struct _function_t function_t;
 typedef struct _vbscode_t vbscode_t;
@@ -177,7 +177,7 @@ struct _script_ctx_t {
     class_desc_t *classes;
     class_desc_t *procs;
 
-    vbsheap_t heap;
+    heap_pool_t heap;
 
     struct list objects;
     struct list code_list;
@@ -320,7 +320,7 @@ struct _vbscode_t {
     BSTR *bstr_pool;
     unsigned bstr_pool_size;
     unsigned bstr_cnt;
-    vbsheap_t heap;
+    heap_pool_t heap;
 
     struct list entry;
 };

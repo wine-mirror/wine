@@ -37,7 +37,7 @@ typedef struct {
     VARIANT *vars;
 
     dynamic_var_t *dynamic_vars;
-    vbsheap_t heap;
+    heap_pool_t heap;
 
     BOOL resume_next;
 
@@ -210,19 +210,19 @@ static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name,
         BOOL is_const, VARIANT *val, BOOL own_val, VARIANT **out_var)
 {
     dynamic_var_t *new_var;
-    vbsheap_t *heap;
+    heap_pool_t *heap;
     WCHAR *str;
     unsigned size;
     HRESULT hres;
 
     heap = ctx->func->type == FUNC_GLOBAL ? &ctx->script->heap : &ctx->heap;
 
-    new_var = vbsheap_alloc(heap, sizeof(*new_var));
+    new_var = heap_pool_alloc(heap, sizeof(*new_var));
     if(!new_var)
         return E_OUTOFMEMORY;
 
     size = (strlenW(name)+1)*sizeof(WCHAR);
-    str = vbsheap_alloc(heap, size);
+    str = heap_pool_alloc(heap, size);
     if(!str)
         return E_OUTOFMEMORY;
     memcpy(str, name, size);
@@ -1833,7 +1833,7 @@ static void release_exec(exec_ctx_t *ctx)
             VariantClear(ctx->vars+i);
     }
 
-    vbsheap_free(&ctx->heap);
+    heap_pool_free(&ctx->heap);
     heap_free(ctx->args);
     heap_free(ctx->vars);
     heap_free(ctx->stack);
@@ -1852,7 +1852,7 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, IDispatch *this_obj, DI
         return E_FAIL;
     }
 
-    vbsheap_init(&exec.heap);
+    heap_pool_init(&exec.heap);
 
     if(func->arg_cnt) {
         VARIANT *v;

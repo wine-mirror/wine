@@ -263,7 +263,7 @@ typedef struct {
     statement_t *stats_tail;
     class_decl_t *class_decls;
 
-    vbsheap_t heap;
+    heap_pool_t heap;
 } parser_ctx_t;
 
 HRESULT parse_script(parser_ctx_t*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;

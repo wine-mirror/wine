@@ -172,8 +172,8 @@ static void release_script(script_ctx_t *ctx)
         IDispatchEx_Release(&script_obj->IDispatchEx_iface);
     }
 
-    vbsheap_free(&ctx->heap);
-    vbsheap_init(&ctx->heap);
+    heap_pool_free(&ctx->heap);
+    heap_pool_init(&ctx->heap);
 }
 
 static void destroy_script(script_ctx_t *ctx)
@@ -568,7 +568,7 @@ static HRESULT WINAPI VBScriptParse_InitNew(IActiveScriptParse *iface)
         return E_OUTOFMEMORY;
 
     ctx->safeopt = This->safeopt;
-    vbsheap_init(&ctx->heap);
+    heap_pool_init(&ctx->heap);
     list_init(&ctx->objects);
     list_init(&ctx->code_list);
     list_init(&ctx->named_items);
