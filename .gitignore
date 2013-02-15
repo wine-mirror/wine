@@ -136,6 +136,7 @@ dlls/urlmon/urlmon_urlmon.h
 dlls/urlmon/urlmon_urlmon_p.c
 dlls/vbscript/parser.tab.c
 dlls/vbscript/parser.tab.h
+dlls/vbscript/tests/vbsregexp55.h
 dlls/vbscript/vbscript_classes.h
 dlls/vbscript/vbsglobal.h
 dlls/vbscript/vbsregexp55.h

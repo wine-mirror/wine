@@ -6,6 +6,8 @@ C_SRCS = \
 	run.c \
 	vbscript.c
 
+IDL_H_SRCS = vbsregexp55.idl
+
 RC_SRCS = rsrc.rc
 
 @MAKE_TEST_RULES@

@@ -25,6 +25,8 @@
 #include <objsafe.h>
 #include <dispex.h>
 
+#include "vbsregexp55.h"
+
 #include "wine/test.h"
 
 #ifdef _WIN64
@@ -84,6 +86,7 @@ DEFINE_EXPECT(OnEnterScript);
 DEFINE_EXPECT(OnLeaveScript);
 
 DEFINE_GUID(CLSID_VBScript, 0xb54f3741, 0x5b07, 0x11cf, 0xa4,0xb0, 0x00,0xaa,0x00,0x4a,0x55,0xe8);
+DEFINE_GUID(CLSID_VBScriptRegExp, 0x3f4daca4, 0x160d, 0x11d2, 0xa8,0xe9, 0x00,0x10,0x4b,0x36,0x5c,0x9f);
 
 static BSTR a2bstr(const char *str)
 {
@@ -791,6 +794,39 @@ static void test_vbscript_initializing(void)
     ok(!ref, "ref = %d\n", ref);
 }
 
+static void test_RegExp(void)
+{
+    IRegExp2 *regexp;
+    IUnknown *unk;
+    HRESULT hres;
+
+    hres = CoCreateInstance(&CLSID_VBScriptRegExp, NULL,
+            CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IUnknown, (void**)&unk);
+    if(hres == REGDB_E_CLASSNOTREG) {
+        win_skip("VBScriptRegExp is not registered\n");
+        return;
+    }
+    ok(hres == S_OK, "CoCreateInstance(CLSID_VBScriptRegExp) failed: %x\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IRegExp2, (void**)&regexp);
+    if(hres == E_NOINTERFACE) {
+        win_skip("IRegExp2 interface is not available\n");
+        return;
+    }
+    ok(hres == S_OK, "QueryInterface(IID_IRegExp2) failed: %x\n", hres);
+    IUnknown_Release(unk);
+
+    hres = IRegExp2_QueryInterface(regexp, &IID_IRegExp, (void**)&unk);
+    ok(hres == S_OK, "QueryInterface(IID_IRegExp) returned %x\n", hres);
+    IUnknown_Release(unk);
+
+    hres = IRegExp2_QueryInterface(regexp, &IID_IDispatchEx, (void**)&unk);
+    ok(hres == E_NOINTERFACE, "QueryInterface(IID_IDispatchEx) returned %x\n", hres);
+
+    IRegExp2_Release(regexp);
+}
+
 static BOOL check_vbscript(void)
 {
     IActiveScriptParseProcedure2 *vbscript;
@@ -815,6 +851,7 @@ START_TEST(vbscript)
         test_vbscript_simplecreate();
         test_vbscript_initializing();
         test_scriptdisp();
+        test_RegExp();
     }else {
         win_skip("VBScript engine not available or too old\n");
     }
