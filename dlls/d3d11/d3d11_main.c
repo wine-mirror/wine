@@ -28,7 +28,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
-const char *debug_d3d_driver_type(D3D_DRIVER_TYPE driver_type)
+static const char *debug_d3d_driver_type(D3D_DRIVER_TYPE driver_type)
 {
     switch(driver_type)
     {
