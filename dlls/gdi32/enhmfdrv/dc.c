@@ -159,7 +159,6 @@ INT EMFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT botto
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pExcludeClipRect );
     EMREXCLUDECLIPRECT emr;
-    BOOL ret;
 
     emr.emr.iType      = EMR_EXCLUDECLIPRECT;
     emr.emr.nSize      = sizeof(emr);
@@ -167,15 +166,14 @@ INT EMFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT botto
     emr.rclClip.top    = top;
     emr.rclClip.right  = right;
     emr.rclClip.bottom = bottom;
-    ret = EMFDRV_WriteRecord( dev, &emr.emr );
-    return ret ? next->funcs->pExcludeClipRect( next, left, top, right, bottom ) : ERROR;
+    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return ERROR;
+    return next->funcs->pExcludeClipRect( next, left, top, right, bottom );
 }
 
 INT EMFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pIntersectClipRect );
     EMRINTERSECTCLIPRECT emr;
-    BOOL ret;
 
     emr.emr.iType      = EMR_INTERSECTCLIPRECT;
     emr.emr.nSize      = sizeof(emr);
@@ -183,22 +181,21 @@ INT EMFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bot
     emr.rclClip.top    = top;
     emr.rclClip.right  = right;
     emr.rclClip.bottom = bottom;
-    ret = EMFDRV_WriteRecord( dev, &emr.emr );
-    return ret ? next->funcs->pIntersectClipRect( next, left, top, right, bottom ) : ERROR;
+    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return ERROR;
+    return next->funcs->pIntersectClipRect( next, left, top, right, bottom );
 }
 
 INT EMFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pOffsetClipRgn );
     EMROFFSETCLIPRGN emr;
-    BOOL ret;
 
     emr.emr.iType   = EMR_OFFSETCLIPRGN;
     emr.emr.nSize   = sizeof(emr);
     emr.ptlOffset.x = x;
     emr.ptlOffset.y = y;
-    ret = EMFDRV_WriteRecord( dev, &emr.emr );
-    return ret ? next->funcs->pOffsetClipRgn( next, x, y ) : ERROR;
+    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return ERROR;
+    return next->funcs->pOffsetClipRgn( next, x, y );
 }
 
 INT EMFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
@@ -477,13 +474,15 @@ BOOL EMFDRV_FlattenPath( PHYSDEV dev )
 
 BOOL EMFDRV_SelectClipPath( PHYSDEV dev, INT iMode )
 {
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectClipPath );
     EMRSELECTCLIPPATH emr;
 
     emr.emr.iType = EMR_SELECTCLIPPATH;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = iMode;
 
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
+    return next->funcs->pSelectClipPath( next, iMode );
 }
 
 BOOL EMFDRV_StrokeAndFillPath( PHYSDEV dev )
