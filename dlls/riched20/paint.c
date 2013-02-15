@@ -228,6 +228,22 @@ static void get_underline_pen( ME_Style *style, COLORREF color, HPEN *pen )
     return;
 }
 
+static void draw_underline( ME_Context *c, ME_Run *run, int x, int y, COLORREF color )
+{
+    HPEN pen;
+
+    get_underline_pen( run->style, color, &pen );
+    if (pen)
+    {
+        HPEN old_pen = SelectObject( c->hDC, pen );
+        MoveToEx( c->hDC, x, y + 1, NULL );
+        LineTo( c->hDC, x + run->nWidth, y + 1 );
+        SelectObject( c->hDC, old_pen );
+        DeleteObject( pen );
+    }
+    return;
+}
+
 /*********************************************************************
  *  draw_space
  *
@@ -260,7 +276,6 @@ static void draw_space( ME_Context *c, ME_Run *run, int x, int y,
         COLORREF text_color = get_text_color( c, run->style, selected );
         COLORREF old_text, old_back;
         HFONT old_font = NULL;
-        HPEN pen = NULL;
         int y_offset = calc_y_offset( c, run->style );
         static const WCHAR space[1] = {' '};
 
@@ -274,15 +289,7 @@ static void draw_space( ME_Context *c, ME_Run *run, int x, int y,
         SetTextColor( hdc, old_text );
         ME_UnselectStyleFont( c, run->style, old_font );
 
-        get_underline_pen( run->style, text_color, &pen );
-        if (pen)
-        {
-            HPEN old_pen = SelectObject( hdc, pen );
-            MoveToEx( hdc, x, y - y_offset + 1, NULL );
-            LineTo( hdc, x + run->nWidth, y - y_offset + 1 );
-            SelectObject( hdc, old_pen );
-            DeleteObject( pen );
-        }
+        draw_underline( c, run, x, y - y_offset, text_color );
     }
     else if (selected)
     {
@@ -311,7 +318,6 @@ static void draw_text( ME_Context *c, ME_Run *run, int x, int y, const WCHAR *te
     COLORREF text_color = get_text_color( c, run->style, selected );
     COLORREF back_color = selected ? ITextHost_TxGetSysColor( c->editor->texthost, COLOR_HIGHLIGHT ) : 0;
     COLORREF old_text, old_back;
-    HPEN pen;
 
     old_text = SetTextColor( c->hDC, text_color );
     if (selected) old_back = SetBkColor( c->hDC, back_color );
@@ -321,15 +327,7 @@ static void draw_text( ME_Context *c, ME_Run *run, int x, int y, const WCHAR *te
     if (selected) SetBkColor( c->hDC, old_back );
     SetTextColor( c->hDC, old_text );
 
-    get_underline_pen( run->style, text_color, &pen );
-    if (pen)
-    {
-        HPEN old_pen = SelectObject( c->hDC, pen );
-        MoveToEx( c->hDC, x, y + 1, NULL );
-        LineTo( c->hDC, x + run->nWidth, y + 1 );
-        SelectObject( c->hDC, old_pen );
-        DeleteObject( pen );
-    }
+    draw_underline( c, run, x, y, text_color );
 
     return;
 }
