@@ -43,6 +43,11 @@ Sub TestConstant(name, val, exval)
     Call ok(getVT(val) = "VT_I2*", "getVT(" & name & ") = " & getVT(val))
 End Sub
 
+Sub TestConstantI4(name, val, exval)
+    Call ok(val = exval, name & " =  " & val & " expected " & exval)
+    Call ok(getVT(val) = "VT_I4*", "getVT(" & name & ") = " & getVT(val))
+End Sub
+
 TestConstant "vbEmpty", vbEmpty, 0
 TestConstant "vbNull", vbNull, 1
 TestConstant "vbLong", vbLong, 3
@@ -76,6 +81,10 @@ TestConstant "vbFirstFourDays", vbFirstFourDays, 2
 TestConstant "vbFirstFullWeek", vbFirstFullWeek, 3
 TestConstant "vbTrue", vbTrue, -1
 TestConstant "vbFalse", vbFalse, 0
+TestConstantI4 "vbMsgBoxHelpButton", vbMsgBoxHelpButton, 16384
+TestConstantI4 "vbMsgBoxSetForeground", vbMsgBoxSetForeground, 65536
+TestConstantI4 "vbMsgBoxRight", vbMsgBoxRight, 524288
+TestConstantI4 "vbMsgBoxRtlReading", vbMsgBoxRtlReading, 1048576
 
 Sub TestCStr(arg, exval)
     dim x

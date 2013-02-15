@@ -150,9 +150,14 @@ static HRESULT invoke_builtin(vbdisp_t *This, const builtin_prop_t *prop, WORD f
         break;
     case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
         if(!prop->proc && prop->flags == BP_GET) {
-            assert((INT16)prop->min_args == prop->min_args);
-            V_VT(res) = VT_I2;
-            V_I2(res) = prop->min_args;
+            int val = prop->min_args;
+            if(val < 0x4000) {
+                V_VT(res) = VT_I2;
+                V_I2(res) = val;
+            }else {
+                V_VT(res) = VT_I4;
+                V_I4(res) = val;
+            }
             return S_OK;
         }
         break;

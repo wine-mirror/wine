@@ -1771,30 +1771,6 @@ static HRESULT Global_vbVerticalTab(vbdisp_t *This, VARIANT *arg, unsigned args_
     return E_NOTIMPL;
 }
 
-static HRESULT Global_vbMsgBoxHelpButton(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbMsgBoxSetForeground(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbMsgBoxRight(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbMsgBoxRtlReading(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
 static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_VBUSESYSTEM,        NULL, BP_GET, 0},
     {DISPID_GLOBAL_USESYSTEMDAYOFWEEK, NULL, BP_GET, 0},
@@ -1984,10 +1960,10 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_EXECUTE,                   Global_Execute, 0, 1},
     {DISPID_GLOBAL_EXECUTEGLOBAL,             Global_ExecuteGlobal, 0, 1},
     {DISPID_GLOBAL_GETREF,                    Global_GetRef, 0, 1},
-    {DISPID_GLOBAL_VBMSGBOXHELPBUTTON,     Global_vbMsgBoxHelpButton, BP_GET},
-    {DISPID_GLOBAL_VBMSGBOXSETFOREGROUND,  Global_vbMsgBoxSetForeground, BP_GET},
-    {DISPID_GLOBAL_VBMSGBOXRIGHT,          Global_vbMsgBoxRight, BP_GET},
-    {DISPID_GLOBAL_VBMSGBOXRTLREADING,     Global_vbMsgBoxRtlReading, BP_GET}
+    {DISPID_GLOBAL_VBMSGBOXHELPBUTTON,     NULL, BP_GET, MB_HELP},
+    {DISPID_GLOBAL_VBMSGBOXSETFOREGROUND,  NULL, BP_GET, MB_SETFOREGROUND},
+    {DISPID_GLOBAL_VBMSGBOXRIGHT,          NULL, BP_GET, MB_RIGHT},
+    {DISPID_GLOBAL_VBMSGBOXRTLREADING,     NULL, BP_GET, MB_RTLREADING}
 };
 
 HRESULT init_global(script_ctx_t *ctx)
