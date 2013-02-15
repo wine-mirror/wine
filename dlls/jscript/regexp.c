@@ -294,7 +294,7 @@ typedef struct REBackTrackData {
 #define INITIAL_BACKTRACK   8000
 
 typedef struct REGlobalData {
-    script_ctx_t *cx;
+    void *cx;
     JSRegExp *regexp;               /* the RE in execution */
     BOOL ok;                        /* runtime error (out_of_memory only?) */
     size_t start;                   /* offset to start at */
@@ -354,7 +354,7 @@ struct RENode {
 #define CLASS_CACHE_SIZE    4
 
 typedef struct CompilerState {
-    script_ctx_t    *context;
+    void            *context;
     const WCHAR     *cpbegin;
     const WCHAR     *cpend;
     const WCHAR     *cp;
@@ -370,6 +370,9 @@ typedef struct CompilerState {
         size_t index;
     } classCache[CLASS_CACHE_SIZE];
     WORD          flags;
+
+    heap_pool_t *pool;                 /* It's faster to use one malloc'd pool
+                                       than to malloc/free */
 } CompilerState;
 
 typedef struct EmitStateStackEntry {
@@ -469,7 +472,7 @@ NewRENode(CompilerState *state, REOp op)
 {
     RENode *ren;
 
-    ren = heap_pool_alloc(&state->context->tmp_heap, sizeof(*ren));
+    ren = heap_pool_alloc(state->pool, sizeof(*ren));
     if (!ren) {
         /* js_ReportOutOfScriptQuota(cx); */
         return NULL;
@@ -3254,7 +3257,7 @@ js_DestroyRegExp(JSRegExp *re)
 }
 
 static JSRegExp *
-js_NewRegExp(script_ctx_t *cx, const WCHAR *str, DWORD str_len, UINT flags, BOOL flat)
+js_NewRegExp(void *cx, heap_pool_t *pool, const WCHAR *str, DWORD str_len, UINT flags, BOOL flat)
 {
     JSRegExp *re;
     heap_pool_t *mark;
@@ -3265,10 +3268,11 @@ js_NewRegExp(script_ctx_t *cx, const WCHAR *str, DWORD str_len, UINT flags, BOOL
     size_t len;
 
     re = NULL;
-    mark = heap_pool_mark(&cx->tmp_heap);
+    mark = heap_pool_mark(pool);
     len = str_len;
 
     state.context = cx;
+    state.pool = pool;
     state.cp = str;
     if (!state.cp)
         goto out;
@@ -3884,7 +3888,7 @@ HRESULT create_regexp(script_ctx_t *ctx, jsstr_t *src, DWORD flags, jsdisp_t **r
     regexp->str = jsstr_addref(src);
     regexp->last_index_val = jsval_number(0);
 
-    regexp->jsregexp = js_NewRegExp(ctx, regexp->str->str,
+    regexp->jsregexp = js_NewRegExp(ctx, &ctx->tmp_heap, regexp->str->str,
             jsstr_length(regexp->str), flags, FALSE);
     if(!regexp->jsregexp) {
         WARN("js_NewRegExp failed\n");
