@@ -118,7 +118,7 @@ static HRESULT compile_statement(compiler_ctx_t*,statement_ctx_t*,statement_t*);
 
 static inline void *compiler_alloc(bytecode_t *code, size_t size)
 {
-    return jsheap_alloc(&code->heap, size);
+    return heap_pool_alloc(&code->heap, size);
 }
 
 static jsstr_t *compiler_alloc_string_len(compiler_ctx_t *ctx, const WCHAR *str, unsigned len)
@@ -1806,7 +1806,7 @@ void release_bytecode(bytecode_t *code)
         jsstr_release(code->str_pool[i]);
 
     heap_free(code->source);
-    jsheap_free(&code->heap);
+    heap_pool_free(&code->heap);
     heap_free(code->bstr_pool);
     heap_free(code->str_pool);
     heap_free(code->instrs);
@@ -1820,7 +1820,7 @@ static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source)
         return E_OUTOFMEMORY;
 
     compiler->code->ref = 1;
-    jsheap_init(&compiler->code->heap);
+    heap_pool_init(&compiler->code->heap);
 
     compiler->code->source = heap_strdupW(source);
     if(!compiler->code->source) {

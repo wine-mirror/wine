@@ -1487,7 +1487,7 @@ static void program_parsed(parser_ctx_t *ctx, source_elements_t *source)
 void parser_release(parser_ctx_t *ctx)
 {
     script_release(ctx->script);
-    jsheap_free(&ctx->heap);
+    heap_pool_free(&ctx->heap);
     heap_free(ctx);
 }
 
@@ -1495,7 +1495,7 @@ HRESULT script_parse(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
         parser_ctx_t **ret)
 {
     parser_ctx_t *parser_ctx;
-    jsheap_t *mark;
+    heap_pool_t *mark;
     HRESULT hres;
 
     const WCHAR html_tagW[] = {'<','/','s','c','r','i','p','t','>',0};
@@ -1513,11 +1513,11 @@ HRESULT script_parse(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
     script_addref(ctx);
     parser_ctx->script = ctx;
 
-    mark = jsheap_mark(&ctx->tmp_heap);
-    jsheap_init(&parser_ctx->heap);
+    mark = heap_pool_mark(&ctx->tmp_heap);
+    heap_pool_init(&parser_ctx->heap);
 
     parser_parse(parser_ctx);
-    jsheap_clear(mark);
+    heap_pool_clear(mark);
     hres = parser_ctx->hres;
     if(FAILED(hres)) {
         WARN("parser failed around %s\n",

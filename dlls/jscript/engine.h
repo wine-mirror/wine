@@ -33,7 +33,7 @@ typedef struct {
     BOOL lexer_error;
     HRESULT hres;
 
-    jsheap_t heap;
+    heap_pool_t heap;
 } parser_ctx_t;
 
 #define OP_LIST                            \
@@ -166,7 +166,7 @@ typedef struct _bytecode_t {
     LONG ref;
 
     instr_t *instrs;
-    jsheap_t heap;
+    heap_pool_t heap;
 
     function_code_t global_code;
 
@@ -198,12 +198,12 @@ int parser_lex(void*,parser_ctx_t*) DECLSPEC_HIDDEN;
 
 static inline void *parser_alloc(parser_ctx_t *ctx, DWORD size)
 {
-    return jsheap_alloc(&ctx->heap, size);
+    return heap_pool_alloc(&ctx->heap, size);
 }
 
 static inline void *parser_alloc_tmp(parser_ctx_t *ctx, DWORD size)
 {
-    return jsheap_alloc(&ctx->script->tmp_heap, size);
+    return heap_pool_alloc(&ctx->script->tmp_heap, size);
 }
 
 typedef struct _scope_chain_t {

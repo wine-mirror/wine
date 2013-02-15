@@ -90,13 +90,13 @@ static inline DWORD block_size(DWORD block)
     return MIN_BLOCK_SIZE << block;
 }
 
-void jsheap_init(jsheap_t *heap)
+void heap_pool_init(heap_pool_t *heap)
 {
     memset(heap, 0, sizeof(*heap));
     list_init(&heap->custom_blocks);
 }
 
-void *jsheap_alloc(jsheap_t *heap, DWORD size)
+void *heap_pool_alloc(heap_pool_t *heap, DWORD size)
 {
     struct list *list;
     void *tmp;
@@ -149,7 +149,7 @@ void *jsheap_alloc(jsheap_t *heap, DWORD size)
     return list+1;
 }
 
-void *jsheap_grow(jsheap_t *heap, void *mem, DWORD size, DWORD inc)
+void *heap_pool_grow(heap_pool_t *heap, void *mem, DWORD size, DWORD inc)
 {
     void *ret;
 
@@ -159,13 +159,13 @@ void *jsheap_grow(jsheap_t *heap, void *mem, DWORD size, DWORD inc)
         return mem;
     }
 
-    ret = jsheap_alloc(heap, size+inc);
+    ret = heap_pool_alloc(heap, size+inc);
     if(ret) /* FIXME: avoid copying for custom blocks */
         memcpy(ret, mem, size);
     return ret;
 }
 
-void jsheap_clear(jsheap_t *heap)
+void heap_pool_clear(heap_pool_t *heap)
 {
     struct list *tmp;
 
@@ -188,20 +188,20 @@ void jsheap_clear(jsheap_t *heap)
     heap->mark = FALSE;
 }
 
-void jsheap_free(jsheap_t *heap)
+void heap_pool_free(heap_pool_t *heap)
 {
     DWORD i;
 
-    jsheap_clear(heap);
+    heap_pool_clear(heap);
 
     for(i=0; i < heap->block_cnt; i++)
         heap_free(heap->blocks[i]);
     heap_free(heap->blocks);
 
-    jsheap_init(heap);
+    heap_pool_init(heap);
 }
 
-jsheap_t *jsheap_mark(jsheap_t *heap)
+heap_pool_t *heap_pool_mark(heap_pool_t *heap)
 {
     if(heap->mark)
         return NULL;

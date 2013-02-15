@@ -46,14 +46,14 @@ typedef struct {
     DWORD offset;
     BOOL mark;
     struct list custom_blocks;
-} jsheap_t;
+} heap_pool_t;
 
-void jsheap_init(jsheap_t*) DECLSPEC_HIDDEN;
-void *jsheap_alloc(jsheap_t*,DWORD) __WINE_ALLOC_SIZE(2) DECLSPEC_HIDDEN;
-void *jsheap_grow(jsheap_t*,void*,DWORD,DWORD) DECLSPEC_HIDDEN;
-void jsheap_clear(jsheap_t*) DECLSPEC_HIDDEN;
-void jsheap_free(jsheap_t*) DECLSPEC_HIDDEN;
-jsheap_t *jsheap_mark(jsheap_t*) DECLSPEC_HIDDEN;
+void heap_pool_init(heap_pool_t*) DECLSPEC_HIDDEN;
+void *heap_pool_alloc(heap_pool_t*,DWORD) __WINE_ALLOC_SIZE(2) DECLSPEC_HIDDEN;
+void *heap_pool_grow(heap_pool_t*,void*,DWORD,DWORD) DECLSPEC_HIDDEN;
+void heap_pool_clear(heap_pool_t*) DECLSPEC_HIDDEN;
+void heap_pool_free(heap_pool_t*) DECLSPEC_HIDDEN;
+heap_pool_t *heap_pool_mark(heap_pool_t*) DECLSPEC_HIDDEN;
 
 static inline void *heap_alloc(size_t len)
 {
@@ -383,7 +383,7 @@ struct _script_ctx_t {
     JSCaller *jscaller;
     jsexcept_t ei;
 
-    jsheap_t tmp_heap;
+    heap_pool_t tmp_heap;
 
     IDispatch *host_global;
 

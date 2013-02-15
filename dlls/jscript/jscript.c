@@ -71,7 +71,7 @@ void script_release(script_ctx_t *ctx)
     clear_ei(ctx);
     if(ctx->cc)
         release_cc(ctx->cc);
-    jsheap_free(&ctx->tmp_heap);
+    heap_pool_free(&ctx->tmp_heap);
     if(ctx->last_match)
         jsstr_release(ctx->last_match);
 
@@ -717,7 +717,7 @@ static HRESULT WINAPI JScriptParse_InitNew(IActiveScriptParse *iface)
     ctx->safeopt = This->safeopt;
     ctx->version = This->version;
     ctx->ei.val = jsval_undefined();
-    jsheap_init(&ctx->tmp_heap);
+    heap_pool_init(&ctx->tmp_heap);
 
     hres = create_jscaller(ctx);
     if(FAILED(hres)) {

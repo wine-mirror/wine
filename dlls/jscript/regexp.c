@@ -312,7 +312,7 @@ typedef struct REGlobalData {
     size_t backTrackCount;          /* how many times we've backtracked */
     size_t backTrackLimit;          /* upper limit on backtrack states */
 
-    jsheap_t *pool;                 /* It's faster to use one malloc'd pool
+    heap_pool_t *pool;              /* It's faster to use one malloc'd pool
                                        than to malloc/free the three items
                                        that are allocated from this pool */
 } REGlobalData;
@@ -468,7 +468,7 @@ NewRENode(CompilerState *state, REOp op)
 {
     RENode *ren;
 
-    ren = jsheap_alloc(&state->context->tmp_heap, sizeof(*ren));
+    ren = heap_pool_alloc(&state->context->tmp_heap, sizeof(*ren));
     if (!ren) {
         /* js_ReportOutOfScriptQuota(cx); */
         return NULL;
@@ -2001,7 +2001,7 @@ PushBackTrackState(REGlobalData *gData, REOp op,
 
         JS_COUNT_OPERATION(gData->cx, JSOW_ALLOCATION);
         btincr = ((btincr+btsize-1)/btsize)*btsize;
-        gData->backTrackStack = jsheap_grow(gData->pool, gData->backTrackStack, btsize, btincr);
+        gData->backTrackStack = heap_pool_grow(gData->pool, gData->backTrackStack, btsize, btincr);
         if (!gData->backTrackStack) {
             js_ReportOutOfScriptQuota(gData->cx);
             gData->ok = FALSE;
@@ -2358,7 +2358,7 @@ ReallocStateStack(REGlobalData *gData)
     size_t limit = gData->stateStackLimit;
     size_t sz = sizeof(REProgState) * limit;
 
-    gData->stateStack = jsheap_grow(gData->pool, gData->stateStack, sz, sz);
+    gData->stateStack = heap_pool_grow(gData->pool, gData->stateStack, sz, sz);
     if (!gData->stateStack) {
         js_ReportOutOfScriptQuota(gData->cx);
         gData->ok = FALSE;
@@ -3164,7 +3164,7 @@ static REMatchState *InitMatch(script_ctx_t *cx, REGlobalData *gData, JSRegExp *
     UINT i;
 
     gData->backTrackStackSize = INITIAL_BACKTRACK;
-    gData->backTrackStack = jsheap_alloc(gData->pool, INITIAL_BACKTRACK);
+    gData->backTrackStack = heap_pool_alloc(gData->pool, INITIAL_BACKTRACK);
     if (!gData->backTrackStack)
         goto bad;
 
@@ -3174,7 +3174,7 @@ static REMatchState *InitMatch(script_ctx_t *cx, REGlobalData *gData, JSRegExp *
     gData->backTrackLimit = 0;
 
     gData->stateStackLimit = INITIAL_STATESTACK;
-    gData->stateStack = jsheap_alloc(gData->pool, sizeof(REProgState) * INITIAL_STATESTACK);
+    gData->stateStack = heap_pool_alloc(gData->pool, sizeof(REProgState) * INITIAL_STATESTACK);
     if (!gData->stateStack)
         goto bad;
 
@@ -3183,7 +3183,7 @@ static REMatchState *InitMatch(script_ctx_t *cx, REGlobalData *gData, JSRegExp *
     gData->regexp = re;
     gData->ok = TRUE;
 
-    result = jsheap_alloc(gData->pool, offsetof(REMatchState, parens) + re->parenCount * sizeof(RECapture));
+    result = heap_pool_alloc(gData->pool, offsetof(REMatchState, parens) + re->parenCount * sizeof(RECapture));
     if (!result)
         goto bad;
 
@@ -3221,7 +3221,7 @@ static JSRegExp *
 js_NewRegExp(script_ctx_t *cx, jsstr_t *str, UINT flags, BOOL flat)
 {
     JSRegExp *re;
-    jsheap_t *mark;
+    heap_pool_t *mark;
     CompilerState state;
     size_t resize;
     jsbytecode *endPC;
@@ -3229,7 +3229,7 @@ js_NewRegExp(script_ctx_t *cx, jsstr_t *str, UINT flags, BOOL flat)
     size_t len;
 
     re = NULL;
-    mark = jsheap_mark(&cx->tmp_heap);
+    mark = heap_pool_mark(&cx->tmp_heap);
     len = jsstr_length(str);
 
     state.context = cx;
@@ -3306,7 +3306,7 @@ js_NewRegExp(script_ctx_t *cx, jsstr_t *str, UINT flags, BOOL flat)
     re->source = str;
 
 out:
-    jsheap_clear(mark);
+    heap_pool_clear(mark);
     return re;
 }
 
@@ -3428,17 +3428,17 @@ HRESULT regexp_match_next(script_ctx_t *ctx, jsdisp_t *dispex, DWORD rem_flags, 
         match_result_t *ret)
 {
     RegExpInstance *regexp = (RegExpInstance*)dispex;
-    jsheap_t *mark;
+    heap_pool_t *mark;
     HRESULT hres;
 
     if((rem_flags & REM_CHECK_GLOBAL) && !(regexp->jsregexp->flags & JSREG_GLOB))
         return S_FALSE;
 
-    mark = jsheap_mark(&ctx->tmp_heap);
+    mark = heap_pool_mark(&ctx->tmp_heap);
 
     hres = do_regexp_match_next(ctx, regexp, rem_flags, str, cp, parens, parens_size, parens_cnt, ret);
 
-    jsheap_clear(mark);
+    heap_pool_clear(mark);
     return hres;
 }
 
@@ -3449,10 +3449,10 @@ static HRESULT regexp_match(script_ctx_t *ctx, jsdisp_t *dispex, jsstr_t *str, B
     match_result_t *ret = NULL, cres;
     const WCHAR *cp = str->str;
     DWORD i=0, ret_size = 0;
-    jsheap_t *mark;
+    heap_pool_t *mark;
     HRESULT hres;
 
-    mark = jsheap_mark(&ctx->tmp_heap);
+    mark = heap_pool_mark(&ctx->tmp_heap);
 
     while(1) {
         hres = do_regexp_match_next(ctx, This, 0, str, &cp, NULL, NULL, NULL, &cres);
@@ -3488,7 +3488,7 @@ static HRESULT regexp_match(script_ctx_t *ctx, jsdisp_t *dispex, jsstr_t *str, B
         }
     }
 
-    jsheap_clear(mark);
+    heap_pool_clear(mark);
     if(FAILED(hres)) {
         heap_free(ret);
         return hres;
