@@ -7260,12 +7260,14 @@ static UINT ITERATE_RemoveExistingProducts( MSIRECORD *rec, LPVOID param )
         {'m','s','i','e','x','e','c',' ','/','i',' ','%','s',' ','R','E','M','O','V','E','=','%','s',0};
     MSIPACKAGE *package = param;
     const WCHAR *property = MSI_RecordGetString( rec, 7 );
+    int attrs = MSI_RecordGetInteger( rec, 5 );
     UINT len = sizeof(fmtW)/sizeof(fmtW[0]);
     WCHAR *product, *features, *cmd;
     STARTUPINFOW si;
     PROCESS_INFORMATION info;
     BOOL ret;
 
+    if (attrs & msidbUpgradeAttributesOnlyDetect) return ERROR_SUCCESS;
     if (!(product = msi_dup_property( package->db, property ))) return ERROR_SUCCESS;
 
     deformat_string( package, MSI_RecordGetString( rec, 6 ), &features );
