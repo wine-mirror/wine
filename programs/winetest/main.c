@@ -724,12 +724,13 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
     else
     {
         int status;
+        DWORD start = GetTickCount();
         char *cmd = strmake (NULL, "%s %s", test->exename, subtest);
         report (R_STEP, "Running: %s:%s", test->name, subtest);
         xprintf ("%s:%s start %s -\n", test->name, subtest, file);
         status = run_ex (cmd, out_file, tempdir, 120000);
         heap_free (cmd);
-        xprintf ("%s:%s done (%d)\n", test->name, subtest, status);
+        xprintf ("%s:%s done (%d) in %ds\n", test->name, subtest, status, (GetTickCount()-start)/1000);
         if (status) failures++;
     }
     if (failures) report (R_STATUS, "Running tests - %u failures", failures);
