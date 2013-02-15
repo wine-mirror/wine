@@ -84,6 +84,8 @@ typedef struct {
     IRegExp IRegExp_iface;
 
     LONG ref;
+
+    WCHAR *pattern;
 } RegExp2;
 
 static inline RegExp2 *impl_from_IRegExp2(IRegExp2 *iface)
@@ -135,6 +137,7 @@ static ULONG WINAPI RegExp2_Release(IRegExp2 *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        heap_free(This->pattern);
         heap_free(This);
     }
 
@@ -186,15 +189,44 @@ static HRESULT WINAPI RegExp2_Invoke(IRegExp2 *iface, DISPID dispIdMember,
 static HRESULT WINAPI RegExp2_get_Pattern(IRegExp2 *iface, BSTR *pPattern)
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
-    FIXME("(%p)->(%p)\n", This, pPattern);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pPattern);
+
+    if(!pPattern)
+        return E_POINTER;
+
+    if(!This->pattern) {
+        *pPattern = NULL;
+        return S_OK;
+    }
+
+    *pPattern = SysAllocString(This->pattern);
+    return *pPattern ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI RegExp2_put_Pattern(IRegExp2 *iface, BSTR pattern)
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
-    FIXME("(%p)->(%s)\n", This, wine_dbgstr_w(pattern));
-    return E_NOTIMPL;
+    WCHAR *p;
+    DWORD size;
+
+    TRACE("(%p)->(%s)\n", This, wine_dbgstr_w(pattern));
+
+    if(!pattern) {
+        heap_free(This->pattern);
+        This->pattern = NULL;
+        return S_OK;
+    }
+
+    size = (SysStringLen(pattern)+1) * sizeof(WCHAR);
+    p = heap_alloc(size);
+    if(!p)
+        return E_OUTOFMEMORY;
+
+    heap_free(This->pattern);
+    This->pattern = p;
+    memcpy(p, pattern, size);
+    return S_OK;
 }
 
 static HRESULT WINAPI RegExp2_get_IgnoreCase(IRegExp2 *iface, VARIANT_BOOL *pIgnoreCase)
