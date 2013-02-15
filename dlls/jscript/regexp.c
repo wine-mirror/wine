@@ -74,7 +74,8 @@ typedef struct {
     size_t       parenCount;    /* number of parenthesized submatches */
     size_t       classCount;    /* count [...] bitmaps */
     RECharSet    *classList;    /* list of [...] bitmaps */
-    jsstr_t      *source;       /* locked source string, sans // */
+    const WCHAR  *source;       /* locked source string, sans // */
+    DWORD        source_len;
     jsbytecode   program[1];    /* regular expression bytecode */
 } JSRegExp;
 
@@ -2038,7 +2039,7 @@ PushBackTrackState(REGlobalData *gData, REOp op,
 }
 
 static inline REMatchState *
-FlatNIMatcher(REGlobalData *gData, REMatchState *x, WCHAR *matchChars,
+FlatNIMatcher(REGlobalData *gData, REMatchState *x, const WCHAR *matchChars,
               size_t length)
 {
     size_t i;
@@ -2157,13 +2158,12 @@ ProcessCharSet(REGlobalData *gData, RECharSet *charSet)
      * source string.
      */
     assert(1 <= charSet->u.src.startIndex);
-    assert(charSet->u.src.startIndex
-              < jsstr_length(gData->regexp->source));
-    assert(charSet->u.src.length <= jsstr_length(gData->regexp->source)
-                                       - 1 - charSet->u.src.startIndex);
+    assert(charSet->u.src.startIndex < gData->regexp->source_len);
+    assert(charSet->u.src.length <= gData->regexp->source_len
+            - 1 - charSet->u.src.startIndex);
 
     charSet->converted = TRUE;
-    src = gData->regexp->source->str + charSet->u.src.startIndex;
+    src = gData->regexp->source + charSet->u.src.startIndex;
 
     end = src + charSet->u.src.length;
 
@@ -2392,7 +2392,7 @@ SimpleMatch(REGlobalData *gData, REMatchState *x, REOp op,
     size_t parenIndex;
     size_t offset, length, index;
     jsbytecode *pc = *startpc;  /* pc has already been incremented past op */
-    WCHAR *source;
+    const WCHAR *source;
     const WCHAR *startcp = x->cp;
     WCHAR ch;
     RECharSet *charSet;
@@ -2488,12 +2488,12 @@ SimpleMatch(REGlobalData *gData, REMatchState *x, REOp op,
         break;
       case REOP_FLAT:
         pc = ReadCompactIndex(pc, &offset);
-        assert(offset < jsstr_length(gData->regexp->source));
+        assert(offset < gData->regexp->source_len);
         pc = ReadCompactIndex(pc, &length);
         assert(1 <= length);
-        assert(length <= jsstr_length(gData->regexp->source) - offset);
+        assert(length <= gData->regexp->source_len - offset);
         if (length <= (size_t)(gData->cpend - x->cp)) {
-            source = gData->regexp->source->str + offset;
+            source = gData->regexp->source + offset;
             TRACE("%s\n", debugstr_wn(source, length));
             for (index = 0; index != length; index++) {
                 if (source[index] != x->cp[index])
@@ -2513,11 +2513,11 @@ SimpleMatch(REGlobalData *gData, REMatchState *x, REOp op,
         break;
       case REOP_FLATi:
         pc = ReadCompactIndex(pc, &offset);
-        assert(offset < jsstr_length(gData->regexp->source));
+        assert(offset < gData->regexp->source_len);
         pc = ReadCompactIndex(pc, &length);
         assert(1 <= length);
-        assert(length <= jsstr_length(gData->regexp->source) - offset);
-        source = gData->regexp->source->str;
+        assert(length <= gData->regexp->source_len - offset);
+        source = gData->regexp->source;
         result = FlatNIMatcher(gData, x, source + offset, length);
         break;
       case REOP_FLAT1i:
@@ -3303,7 +3303,8 @@ js_NewRegExp(script_ctx_t *cx, jsstr_t *str, UINT flags, BOOL flat)
 
     re->flags = flags;
     re->parenCount = state.parenCount;
-    re->source = str;
+    re->source = str->str;
+    re->source_len = jsstr_length(str);
 
 out:
     heap_pool_clear(mark);
