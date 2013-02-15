@@ -3202,6 +3202,42 @@ bad:
     return NULL;
 }
 
+static HRESULT MatchRegExpNext(JSRegExp *jsregexp, const WCHAR *str, DWORD str_len,
+        const WCHAR **cp, heap_pool_t *pool, REMatchState **result, DWORD *matchlen)
+{
+    REMatchState *x, *res;
+    REGlobalData gData;
+
+    gData.cpbegin = str;
+    gData.cpend = str+str_len;
+    gData.start = *cp-str;
+    gData.skipped = 0;
+    gData.pool = pool;
+
+    x = InitMatch(NULL, &gData, jsregexp, gData.cpend - gData.cpbegin);
+    if(!x) {
+        WARN("InitMatch failed\n");
+        return E_FAIL;
+    }
+
+    x->cp = *cp;
+    res = MatchRegExp(&gData, x);
+    if(!gData.ok) {
+        WARN("MatchRegExp failed\n");
+        return E_FAIL;
+    }
+
+    *result = res;
+    if(!res) {
+        *matchlen = 0;
+        return S_FALSE;
+    }
+
+    *matchlen = (res->cp-*cp) - gData.skipped;
+    *cp = res->cp;
+    return S_OK;
+}
+
 static void
 js_DestroyRegExp(JSRegExp *re)
 {
@@ -3327,30 +3363,15 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
         jsstr_t *str, const WCHAR **cp, match_result_t **parens, DWORD *parens_size,
         DWORD *parens_cnt, match_result_t *ret)
 {
-    REMatchState *x, *result;
-    REGlobalData gData;
+    REMatchState *result;
     DWORD matchlen;
+    HRESULT hres;
 
-    gData.cpbegin = str->str;
-    gData.cpend = str->str + jsstr_length(str);
-    gData.start = *cp-str->str;
-    gData.skipped = 0;
-    gData.pool = &ctx->tmp_heap;
-
-    x = InitMatch(NULL, &gData, regexp->jsregexp, gData.cpend - gData.cpbegin);
-    if(!x) {
-        WARN("InitMatch failed\n");
-        return E_FAIL;
-    }
-
-    x->cp = *cp;
-    result = MatchRegExp(&gData, x);
-    if(!gData.ok) {
-        WARN("MatchRegExp failed\n");
-        return E_FAIL;
-    }
-
-    if(!result) {
+    hres = MatchRegExpNext(regexp->jsregexp, str->str, jsstr_length(str),
+            cp, &ctx->tmp_heap, &result, &matchlen);
+    if(FAILED(hres))
+        return hres;
+    if(hres == S_FALSE) {
         if(rem_flags & REM_RESET_INDEX)
             set_last_index(regexp, 0);
         return S_FALSE;
@@ -3410,8 +3431,6 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
             memset(ctx->match_parens+n, 0, sizeof(ctx->match_parens) - n*sizeof(ctx->match_parens[0]));
     }
 
-    matchlen = (result->cp-*cp) - gData.skipped;
-    *cp = result->cp;
     ret->str = result->cp-matchlen;
     ret->len = matchlen;
     set_last_index(regexp, result->cp-str->str);
