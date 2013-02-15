@@ -61,7 +61,7 @@ HRESULT WINAPI WMCreateEditor(IWMMetadataEditor **editor)
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMSyncReader **reader)
+HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **reader)
 {
     FIXME("(%p, %x, %p): stub\n", reserved, rights, reader);
 
