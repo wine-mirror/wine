@@ -24,6 +24,7 @@
 #include "rpcproxy.h"
 #include "vbscript_classes.h"
 #include "vbsglobal.h"
+#include "vbsregexp55.h"
 
 #include "wine/debug.h"
 
@@ -257,6 +258,16 @@ static const IClassFactoryVtbl VBScriptFactoryVtbl = {
 
 static IClassFactory VBScriptFactory = { &VBScriptFactoryVtbl };
 
+static const IClassFactoryVtbl VBScriptRegExpFactoryVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    VBScriptRegExpFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory VBScriptRegExpFactory = { &VBScriptRegExpFactoryVtbl };
+
 /******************************************************************
  *              DllMain (vbscript.@)
  */
@@ -287,6 +298,9 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     if(IsEqualGUID(&CLSID_VBScript, rclsid)) {
         TRACE("(CLSID_VBScript %s %p)\n", debugstr_guid(riid), ppv);
         return IClassFactory_QueryInterface(&VBScriptFactory, riid, ppv);
+    }else if(IsEqualGUID(&CLSID_VBScriptRegExp, rclsid)) {
+        TRACE("(CLSID_VBScriptRegExp %s %p)\n", debugstr_guid(riid), ppv);
+        return IClassFactory_QueryInterface(&VBScriptRegExpFactory, riid, ppv);
     }
 
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
