@@ -4771,6 +4771,7 @@ static void test_AcceptEx(void)
     ok(!iret, "getsockopt failed %d\n", WSAGetLastError());
     ok(connect_time == ~0u, "unexpected connect time %u\n", connect_time);
 
+    /* AcceptEx() still won't complete until we send data */
     iret = connect(connector, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
     ok(iret == 0, "connecting to accepting socket failed, error %d\n", WSAGetLastError());
 
@@ -4785,6 +4786,13 @@ static void test_AcceptEx(void)
 
     iret = getsockname( connector, (struct sockaddr *)&peerAddress, &remoteSize);
     ok( !iret, "getsockname failed.\n");
+
+    /* AcceptEx() could complete any time now */
+    iret = send(connector, buffer, 1, 0);
+    ok(iret == 1, "could not send 1 byte: send %d errno %d\n", iret, WSAGetLastError());
+
+    dwret = WaitForSingleObject(overlapped.hEvent, 1000);
+    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
 
     /* Check if the buffer from AcceptEx is decoded correctly */
     pGetAcceptExSockaddrs(buffer, 2, sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
@@ -4804,12 +4812,6 @@ static void test_AcceptEx(void)
     ok( readRemoteAddress->sin_port == peerAddress.sin_port,
             "Remote socket port is different: %d != %d\n",
             readRemoteAddress->sin_port, peerAddress.sin_port);
-
-    iret = send(connector, buffer, 1, 0);
-    ok(iret == 1, "could not send 1 byte: send %d errno %d\n", iret, WSAGetLastError());
-
-    dwret = WaitForSingleObject(overlapped.hEvent, 1000);
-    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
 
     bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
     ok(bret, "GetOverlappedResult failed, error %d\n", GetLastError());
