@@ -314,11 +314,19 @@ static void get_selection_rect( ME_Context *c, ME_Run *run, int from, int to, in
 }
 
 
-static void draw_text( ME_Context *c, ME_Run *run, int x, int y, const WCHAR *text, BOOL selected, RECT *sel_rect )
+static void draw_text( ME_Context *c, ME_Run *run, int x, int y, BOOL selected, RECT *sel_rect )
 {
     COLORREF text_color = get_text_color( c, run->style, selected );
     COLORREF back_color = selected ? ITextHost_TxGetSysColor( c->editor->texthost, COLOR_HIGHLIGHT ) : 0;
     COLORREF old_text, old_back;
+    const WCHAR *text = get_text( run, 0 );
+    ME_String *masked = NULL;
+
+    if (c->editor->cPasswordMask)
+    {
+        masked = ME_MakeStringR( c->editor->cPasswordMask, run->len );
+        text = masked->szData;
+    }
 
     old_text = SetTextColor( c->hDC, text_color );
     if (selected) old_back = SetBkColor( c->hDC, back_color );
@@ -330,11 +338,12 @@ static void draw_text( ME_Context *c, ME_Run *run, int x, int y, const WCHAR *te
 
     draw_underline( c, run, x, y, text_color );
 
+    ME_DestroyString( masked );
     return;
 }
 
 
-static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWSTR szText,
+static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y,
                                  int nSelFrom, int nSelTo, int ymin, int cy)
 {
   HDC hDC = c->hDC;
@@ -373,12 +382,12 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
   hOldFont = ME_SelectStyleFont( c, run->style );
 
   if (sel_rgn) ExtSelectClipRgn( hDC, sel_rgn, RGN_DIFF );
-  draw_text( c, run, x, y - yOffset, szText, FALSE, NULL );
+  draw_text( c, run, x, y - yOffset, FALSE, NULL );
   if (sel_rgn)
   {
     ExtSelectClipRgn( hDC, clip, RGN_COPY );
     ExtSelectClipRgn( hDC, sel_rgn, RGN_AND );
-    draw_text( c, run, x, y - yOffset, szText, TRUE, &sel_rect );
+    draw_text( c, run, x, y - yOffset, TRUE, &sel_rect );
     ExtSelectClipRgn( hDC, clip, RGN_COPY );
     if (clip) DeleteObject( clip );
     DeleteObject( sel_rgn );
@@ -439,20 +448,9 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
     ME_DrawOLE(c, x, y, run, para, (runofs >= nSelFrom) && (runofs < nSelTo));
   else
   {
-    if (c->editor->cPasswordMask)
-    {
-      ME_String *szMasked = ME_MakeStringR(c->editor->cPasswordMask, run->len);
-      ME_DrawTextWithStyle(c, run, x, y,
-        szMasked->szData, nSelFrom - runofs, nSelTo - runofs,
-        c->pt.y + para->pt.y + start->member.row.pt.y,
-        start->member.row.nHeight);
-      ME_DestroyString(szMasked);
-    }
-    else
-      ME_DrawTextWithStyle(c, run, x, y,
-        get_text( run, 0 ), nSelFrom - runofs, nSelTo - runofs,
-        c->pt.y + para->pt.y + start->member.row.pt.y,
-        start->member.row.nHeight);
+    ME_DrawTextWithStyle(c, run, x, y, nSelFrom - runofs, nSelTo - runofs,
+                         c->pt.y + para->pt.y + start->member.row.pt.y,
+                         start->member.row.nHeight);
   }
 }
 
