@@ -370,8 +370,6 @@ HGLOBAL WINAPI GlobalAlloc(
           return 0;
       }
 
-      RtlLockHeap(GetProcessHeap());
-
       pintern = HeapAlloc(GetProcessHeap(), 0, sizeof(GLOBAL32_INTERN));
       if (pintern)
       {
@@ -400,7 +398,6 @@ HGLOBAL WINAPI GlobalAlloc(
               pintern->Pointer = NULL;
       }
 
-      RtlUnlockHeap(GetProcessHeap());
       if (!pintern) return 0;
       TRACE( "(flags=%04x) returning handle %p pointer %p\n",
              flags, INTERN_TO_HANDLE(pintern), pintern->Pointer );
