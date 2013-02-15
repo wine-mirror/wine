@@ -304,7 +304,8 @@ static void draw_space( ME_Context *c, ME_Run *run, int x, int y,
 
 static void get_selection_rect( ME_Context *c, ME_Run *run, int from, int to, int cy, RECT *r )
 {
-
+    from = max( 0, from );
+    to = min( run->len, to );
     r->left = ME_PointFromCharContext( c, run, from );
     r->top = 0;
     r->right = ME_PointFromCharContext( c, run, to );
@@ -349,8 +350,6 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y, LPCWS
 
   if (selected)
   {
-    nSelFrom = max( 0, nSelFrom );
-    nSelTo = min( run->len, nSelTo );
     get_selection_rect( c, run, nSelFrom, nSelTo, cy, &sel_rect );
     OffsetRect( &sel_rect, x, ymin );
 
