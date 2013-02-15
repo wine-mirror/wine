@@ -285,6 +285,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
         break;
     case DLL_PROCESS_DETACH:
         release_typelib();
+        release_regexp_typelib();
     }
 
     return TRUE;

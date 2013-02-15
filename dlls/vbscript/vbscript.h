@@ -342,6 +342,7 @@ TID_LIST
 } tid_t;
 
 HRESULT get_typeinfo(tid_t,ITypeInfo**) DECLSPEC_HIDDEN;
+void release_regexp_typelib(void) DECLSPEC_HIDDEN;
 
 #ifndef INT32_MIN
 #define INT32_MIN (-2147483647-1)

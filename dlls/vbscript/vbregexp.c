@@ -23,6 +23,62 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
+#define REGEXP_TID_LIST \
+    XDIID(RegExp2) \
+    XDIID(Match2) \
+    XDIID(MatchCollection2) \
+    XDIID(SubMatches)
+
+typedef enum {
+#define XDIID(iface) iface ## _tid,
+REGEXP_TID_LIST
+#undef XDIID
+    REGEXP_LAST_tid
+} regexp_tid_t;
+
+static REFIID tid_ids[] = {
+#define XDIID(iface) &IID_I ## iface,
+REGEXP_TID_LIST
+#undef XDIID
+};
+
+static ITypeLib *typelib;
+static ITypeInfo *typeinfos[REGEXP_LAST_tid];
+
+static HRESULT init_regexp_typeinfo(regexp_tid_t tid)
+{
+    HRESULT hres;
+
+    if(!typelib) {
+        static const WCHAR vbscript_dll3W[] = {'v','b','s','c','r','i','p','t','.','d','l','l','\\','3',0};
+        ITypeLib *tl;
+
+        hres = LoadTypeLib(vbscript_dll3W, &tl);
+        if(FAILED(hres)) {
+            ERR("LoadRegTypeLib failed: %08x\n", hres);
+            return hres;
+        }
+
+        if(InterlockedCompareExchangePointer((void**)&typelib, tl, NULL))
+            ITypeLib_Release(tl);
+    }
+
+    if(!typeinfos[tid]) {
+        ITypeInfo *ti;
+
+        hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
+        if(FAILED(hres)) {
+            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hres);
+            return hres;
+        }
+
+        if(InterlockedCompareExchangePointer((void**)(typeinfos+tid), ti, NULL))
+            ITypeInfo_Release(ti);
+    }
+
+    return S_OK;
+}
+
 typedef struct {
     IRegExp2 IRegExp2_iface;
     IRegExp IRegExp_iface;
@@ -78,8 +134,9 @@ static ULONG WINAPI RegExp2_Release(IRegExp2 *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
         heap_free(This);
+    }
 
     return ref;
 }
@@ -87,8 +144,11 @@ static ULONG WINAPI RegExp2_Release(IRegExp2 *iface)
 static HRESULT WINAPI RegExp2_GetTypeInfoCount(IRegExp2 *iface, UINT *pctinfo)
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
-    FIXME("(%p)->(%p)\n", This, pctinfo);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+
+    *pctinfo = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI RegExp2_GetTypeInfo(IRegExp2 *iface,
@@ -103,9 +163,11 @@ static HRESULT WINAPI RegExp2_GetIDsOfNames(IRegExp2 *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
-    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
-            lcid, rgDispId);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid),
+            rgszNames, cNames, lcid, rgDispId);
+
+    return ITypeInfo_GetIDsOfNames(typeinfos[RegExp2_tid], rgszNames, cNames, rgDispId);
 }
 
 static HRESULT WINAPI RegExp2_Invoke(IRegExp2 *iface, DISPID dispIdMember,
@@ -113,9 +175,12 @@ static HRESULT WINAPI RegExp2_Invoke(IRegExp2 *iface, DISPID dispIdMember,
         VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
-    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-    return E_NOTIMPL;
+
+    return ITypeInfo_Invoke(typeinfos[RegExp2_tid], iface, dispIdMember, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI RegExp2_get_Pattern(IRegExp2 *iface, BSTR *pPattern)
@@ -357,6 +422,10 @@ HRESULT WINAPI VBScriptRegExpFactory_CreateInstance(IClassFactory *iface, IUnkno
 
     TRACE("(%p %s %p)\n", pUnkOuter, debugstr_guid(riid), ppv);
 
+    hres = init_regexp_typeinfo(RegExp2_tid);
+    if(FAILED(hres))
+        return hres;
+
     ret = heap_alloc_zero(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
@@ -369,4 +438,16 @@ HRESULT WINAPI VBScriptRegExpFactory_CreateInstance(IClassFactory *iface, IUnkno
     hres = IRegExp2_QueryInterface(&ret->IRegExp2_iface, riid, ppv);
     IRegExp2_Release(&ret->IRegExp2_iface);
     return hres;
+}
+
+void release_regexp_typelib(void)
+{
+    DWORD i;
+
+    for(i=0; i<REGEXP_LAST_tid; i++) {
+        if(typeinfos[i])
+            ITypeInfo_Release(typeinfos[i]);
+    }
+    if(typelib)
+        ITypeLib_Release(typelib);
 }
