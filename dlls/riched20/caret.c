@@ -205,7 +205,7 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
   ME_DisplayItem *para = pCursor->pPara;
   ME_DisplayItem *pSizeRun = run;
   ME_Context c;
-  SIZE sz = {0, 0};
+  int run_x;
 
   assert(height && x && y);
   assert(~para->member.para.nFlags & MEPF_REWRAP);
@@ -235,18 +235,12 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
       pSizeRun = run = tmp;
       assert(run);
       assert(run->type == diRun);
-      sz = ME_GetRunSize(&c, &para->member.para,
-                         &run->member.run, run->member.run.len,
-                         row->member.row.nLMargin);
     }
   }
-  if (pCursor->nOffset) {
-    sz = ME_GetRunSize(&c, &para->member.para, &run->member.run,
-                       pCursor->nOffset, row->member.row.nLMargin);
-  }
+  run_x = ME_PointFromCharContext( &c, &run->member.run, pCursor->nOffset );
 
   *height = pSizeRun->member.run.nAscent + pSizeRun->member.run.nDescent;
-  *x = c.rcView.left + run->member.run.pt.x + sz.cx - editor->horz_si.nPos;
+  *x = c.rcView.left + run->member.run.pt.x + run_x - editor->horz_si.nPos;
   *y = c.rcView.top + para->member.para.pt.y + row->member.row.nBaseline
        + run->member.run.pt.y - pSizeRun->member.run.nAscent
        - editor->vert_si.nPos;
