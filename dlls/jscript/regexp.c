@@ -3218,7 +3218,7 @@ js_DestroyRegExp(JSRegExp *re)
 }
 
 static JSRegExp *
-js_NewRegExp(script_ctx_t *cx, jsstr_t *str, UINT flags, BOOL flat)
+js_NewRegExp(script_ctx_t *cx, const WCHAR *str, DWORD str_len, UINT flags, BOOL flat)
 {
     JSRegExp *re;
     heap_pool_t *mark;
@@ -3230,10 +3230,10 @@ js_NewRegExp(script_ctx_t *cx, jsstr_t *str, UINT flags, BOOL flat)
 
     re = NULL;
     mark = heap_pool_mark(&cx->tmp_heap);
-    len = jsstr_length(str);
+    len = str_len;
 
     state.context = cx;
-    state.cp = str->str;
+    state.cp = str;
     if (!state.cp)
         goto out;
     state.cpbegin = state.cp;
@@ -3303,8 +3303,8 @@ js_NewRegExp(script_ctx_t *cx, jsstr_t *str, UINT flags, BOOL flat)
 
     re->flags = flags;
     re->parenCount = state.parenCount;
-    re->source = str->str;
-    re->source_len = jsstr_length(str);
+    re->source = str;
+    re->source_len = str_len;
 
 out:
     heap_pool_clear(mark);
@@ -3865,7 +3865,8 @@ HRESULT create_regexp(script_ctx_t *ctx, jsstr_t *src, DWORD flags, jsdisp_t **r
     regexp->str = jsstr_addref(src);
     regexp->last_index_val = jsval_number(0);
 
-    regexp->jsregexp = js_NewRegExp(ctx, regexp->str, flags, FALSE);
+    regexp->jsregexp = js_NewRegExp(ctx, regexp->str->str,
+            jsstr_length(regexp->str), flags, FALSE);
     if(!regexp->jsregexp) {
         WARN("js_NewRegExp failed\n");
         jsdisp_release(&regexp->dispex);
