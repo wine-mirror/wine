@@ -154,7 +154,6 @@ void msi_free_action_script( MSIPACKAGE *package, UINT script )
 
 static void free_package_structures( MSIPACKAGE *package )
 {
-    INT i;
     struct list *item, *cursor;
 
     LIST_FOR_EACH_SAFE( item, cursor, &package->features )
@@ -283,11 +282,14 @@ static void free_package_structures( MSIPACKAGE *package )
 
     if (package->script)
     {
+        INT i;
+        UINT j;
+
         for (i = 0; i < SCRIPT_MAX; i++)
             msi_free_action_script( package, i );
 
-        for (i = 0; i < package->script->UniqueActionsCount; i++)
-            msi_free( package->script->UniqueActions[i] );
+        for (j = 0; j < package->script->UniqueActionsCount; j++)
+            msi_free( package->script->UniqueActions[j] );
 
         msi_free( package->script->UniqueActions );
         msi_free( package->script );

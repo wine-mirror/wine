@@ -770,7 +770,7 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
     JOINTABLE *table = wv->tables;
     UINT *rows;
     JOINTABLE **ordered_tables;
-    int i = 0;
+    UINT i = 0;
 
     TRACE("%p %p\n", wv, record);
 
@@ -1052,7 +1052,7 @@ static UINT WHERE_sort(struct tagMSIVIEW *view, column_info *columns)
     column_info *column = columns;
     MSIORDERINFO *orderinfo;
     UINT r, count = 0;
-    int i;
+    UINT i;
 
     TRACE("%p %p\n", view, columns);
 
