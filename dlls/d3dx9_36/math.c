@@ -388,10 +388,16 @@ D3DXMATRIX* WINAPI D3DXMatrixMultiply(D3DXMATRIX *pout, const D3DXMATRIX *pm1, c
 
 D3DXMATRIX* WINAPI D3DXMatrixMultiplyTranspose(D3DXMATRIX *pout, const D3DXMATRIX *pm1, const D3DXMATRIX *pm2)
 {
+    D3DXMATRIX temp;
+    int i, j;
+
     TRACE("pout %p, pm1 %p, pm2 %p\n", pout, pm1, pm2);
 
-    D3DXMatrixMultiply(pout, pm1, pm2);
-    D3DXMatrixTranspose(pout, pout);
+    for (i = 0; i < 4; i++)
+        for (j = 0; j < 4; j++)
+            temp.u.m[j][i] = pm1->u.m[i][0] * pm2->u.m[0][j] + pm1->u.m[i][1] * pm2->u.m[1][j] + pm1->u.m[i][2] * pm2->u.m[2][j] + pm1->u.m[i][3] * pm2->u.m[3][j];
+
+    *pout = temp;
     return pout;
 }
 
