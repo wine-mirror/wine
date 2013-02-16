@@ -929,7 +929,6 @@ static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, 
     const BOOL cancelable = event_info[eid].flags & EVENT_CANCELABLE;
     handler_vector_t *handler_vector = NULL;
     VARIANT v;
-    int i;
     HRESULT hres;
 
     if(event_target)
@@ -966,6 +965,7 @@ static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, 
     if(handler_vector && handler_vector->handler_cnt) {
         VARIANTARG arg;
         DISPPARAMS dp = {&arg, NULL, 1, 0};
+        int i;
 
         V_VT(&arg) = VT_DISPATCH;
         V_DISPATCH(&arg) = (IDispatch*)event_obj;
@@ -1009,16 +1009,18 @@ static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, 
 
         for(cp = cp_container->cp_list; cp; cp = cp->next) {
             if(cp->sinks_size && is_cp_event(cp->data, event_info[eid].dispid)) {
+                unsigned int i;
+
                 for(i=0; doc->nsevent_listener && i < cp->sinks_size; i++) {
                     if(!cp->sinks[i].disp)
                         continue;
 
                     V_VT(&v) = VT_EMPTY;
 
-                    TRACE("cp %s [%d] >>>\n", debugstr_w(event_info[eid].name), i);
+                    TRACE("cp %s [%u] >>>\n", debugstr_w(event_info[eid].name), i);
                     hres = call_cp_func(cp->sinks[i].disp, event_info[eid].dispid, &v);
                     if(hres == S_OK) {
-                        TRACE("cp %s [%d] <<<\n", debugstr_w(event_info[eid].name), i);
+                        TRACE("cp %s [%u] <<<\n", debugstr_w(event_info[eid].name), i);
 
                         if(cancelable) {
                             if(V_VT(&v) == VT_BOOL) {
@@ -1030,7 +1032,7 @@ static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, 
                         }
                         VariantClear(&v);
                     }else {
-                        WARN("cp %s [%d] <<< %08x\n", debugstr_w(event_info[eid].name), i, hres);
+                        WARN("cp %s [%u] <<< %08x\n", debugstr_w(event_info[eid].name), i, hres);
                     }
                 }
 
@@ -1558,7 +1560,8 @@ HRESULT doc_init_events(HTMLDocumentNode *doc)
 
 void release_event_target(event_target_t *event_target)
 {
-    int i, j;
+    int i;
+    unsigned int j;
 
     for(i=0; i < EVENTID_LAST; i++) {
         if(event_target->event_table[i]) {

@@ -3229,7 +3229,7 @@ static nsresult NSAPI nsIOService_GetProtocolFlags(nsIIOService *iface, const ch
 static BOOL is_gecko_special_uri(const char *spec)
 {
     static const char *special_schemes[] = {"chrome:", "jar:", "moz-safe-about", "resource:", "javascript:", "wyciwyg:"};
-    int i;
+    unsigned int i;
 
     for(i=0; i < sizeof(special_schemes)/sizeof(*special_schemes); i++) {
         if(!strncasecmp(spec, special_schemes[i], strlen(special_schemes[i])))

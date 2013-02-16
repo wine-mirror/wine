@@ -127,7 +127,8 @@ static int loose_hex_to_rgb(const WCHAR *hex)
 
 static HRESULT nscolor_to_str(LPCWSTR color, BSTR *ret)
 {
-    int i, rgb = -1;
+    unsigned int i;
+    int rgb = -1;
 
     static const WCHAR formatW[] = {'#','%','0','2','x','%','0','2','x','%','0','2','x',0};
 
