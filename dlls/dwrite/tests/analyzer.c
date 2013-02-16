@@ -49,7 +49,7 @@ static const char *get_analysis_kind_name(enum analysis_kind kind)
 struct script_analysis {
     UINT32 pos;
     UINT32 len;
-    DWRITE_SCRIPT_ANALYSIS a;
+    DWRITE_SCRIPT_SHAPES shapes;
 };
 
 struct call_entry {
@@ -172,7 +172,7 @@ static void ok_sequence_(struct call_sequence **seq, int sequence_index,
 
                 test_uint(sa_act->pos, sa_exp->pos, "position", &ctxt);
                 test_uint(sa_act->len, sa_exp->len, "length", &ctxt);
-                test_uint(sa_act->a.script, sa_exp->a.script, "script", &ctxt);
+                test_uint(sa_act->shapes, sa_exp->shapes, "shapes", &ctxt);
 
                 break;
             }
@@ -258,14 +258,14 @@ static ULONG WINAPI analysissink_Release(IDWriteTextAnalysisSink *iface)
 }
 
 static HRESULT WINAPI analysissink_SetScriptAnalysis(IDWriteTextAnalysisSink *iface,
-    UINT32 position, UINT32 length, DWRITE_SCRIPT_ANALYSIS const* scriptanalysis)
+    UINT32 position, UINT32 length, DWRITE_SCRIPT_ANALYSIS const* sa)
 {
     struct call_entry entry;
 
     entry.kind = ScriptAnalysis;
     entry.sa.pos = position;
     entry.sa.len = length;
-    entry.sa.a = *scriptanalysis;
+    entry.sa.shapes = sa->shapes;
     add_call(sequences, ANALYZER_ID, &entry);
     return S_OK;
 }
@@ -396,79 +396,33 @@ struct sa_test {
     struct script_analysis sa[10];
 };
 
-enum scriptcode {
-    Script_Arabic = 0,
-    Script_Armenian = 1,
-    Script_Balinese = 2,
-    Script_Bengali = 3,
-    Script_Buginese = 6,
-    Script_Canadian = 8,
-    Script_Cherokee = 11,
-    Script_Controls = 12,
-    Script_Coptic = 13,
-    Script_Cyrillic = 16,
-    Script_Devanagari = 18,
-    Script_Ethiopic = 19,
-    Script_Georgian = 20,
-    Script_Greek = 23,
-    Script_Gujarati = 24,
-    Script_Gurmukhi = 25,
-    Script_Hangul = 27,
-    Script_Hebrew = 29,
-    Script_Kannada = 32,
-    Script_Khmer = 36,
-    Script_Lao = 37,
-    Script_Latin = 38,
-    Script_Lepcha = 39,
-    Script_Limbu = 40,
-    Script_Malayalam = 44,
-    Script_Mongolian = 45,
-    Script_Myanmar = 46,
-    Script_New_TaiLue = 47,
-    Script_NKo = 48,
-    Script_Ogham = 49,
-    Script_OlChiki = 50,
-    Script_Oriya = 53,
-    Script_Runic = 58,
-    Script_Sinhala = 61,
-    Script_Sundanese = 62,
-    Script_Syriac = 64,
-    Script_TaiLe = 67,
-    Script_Tamil = 68,
-    Script_Telugu = 69,
-    Script_Thaana = 70,
-    Script_Thai = 71,
-    Script_Tibetan = 72,
-    Script_Undefined = 77
-};
-
 static struct sa_test sa_tests[] = {
     {
       /* just 1 char string */
       {'t',0}, 1,
-          { { 0, 1, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 1, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       {'t','e','s','t',0}, 1,
-          { { 0, 4, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 4, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       {' ',' ',' ',' ','!','$','[','^','{','~',0}, 1,
-          { { 0, 10, { Script_Undefined, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 10, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       {' ',' ',' ','1','2',' ',0}, 1,
-          { { 0, 6, { Script_Undefined, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* digits only */
       {'1','2',0}, 1,
-          { { 0, 2, { Script_Undefined, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Arabic */
       {0x064a,0x064f,0x0633,0x0627,0x0648,0x0650,0x064a,0}, 1,
-          { { 0, 7, { Script_Arabic, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 7, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Arabic */
@@ -476,170 +430,170 @@ static struct sa_test sa_tests[] = {
        0x0627,0x062c,0x064c,' ',0x0639,0x064e,0x0644,0x0649,' ',
        0x0631,0x064f,0x0624,0x0648,0x0633,0x0650,' ',0x0627,0x0644,
        0x0623,0x0635,0x0650,0x062d,0x0651,0x064e,0x0627,0x0621,0x0650,0x06f0,0x06f5,0}, 1,
-          { { 0, 40, { Script_Arabic, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 40, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Arabic, Latin */
       {'1','2','3','-','5','2',0x064a,0x064f,0x0633,0x0627,0x0648,0x0650,0x064a,'7','1','.',0}, 1,
-          { { 0, 16, { Script_Arabic, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 16, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Arabic, English */
       {'A','B','C','-','D','E','F',' ',0x0621,0x0623,0x0624,0}, 2,
-          { { 0, 8, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } },
-            { 8, 3, { Script_Arabic, DWRITE_SCRIPT_SHAPES_DEFAULT } },
+          { { 0, 8, DWRITE_SCRIPT_SHAPES_DEFAULT },
+            { 8, 3, DWRITE_SCRIPT_SHAPES_DEFAULT },
           }
     },
     {
       /* leading space, Arabic, English */
       {' ',0x0621,0x0623,0x0624,'A','B','C','-','D','E','F',0}, 2,
-          { { 0, 4, { Script_Arabic,  DWRITE_SCRIPT_SHAPES_DEFAULT } },
-            { 4, 7, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } },
+          { { 0, 4, DWRITE_SCRIPT_SHAPES_DEFAULT },
+            { 4, 7, DWRITE_SCRIPT_SHAPES_DEFAULT },
           }
     },
     {
       /* English, Arabic, trailing space */
       {'A','B','C','-','D','E','F',0x0621,0x0623,0x0624,' ',0}, 2,
-          { { 0, 7, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } },
-            { 7, 4, { Script_Arabic, DWRITE_SCRIPT_SHAPES_DEFAULT } },
+          { { 0, 7, DWRITE_SCRIPT_SHAPES_DEFAULT },
+            { 7, 4, DWRITE_SCRIPT_SHAPES_DEFAULT },
           }
     },
     {
       /* C1 Controls, Latin-1 Supplement */
       {0x80,0x90,0x9f,0xa0,0xc0,0xb8,0xbf,0xc0,0xff,0}, 2,
-          { { 0, 3, { Script_Controls, DWRITE_SCRIPT_SHAPES_DEFAULT } },
-            { 3, 6, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } },
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_NO_VISUAL },
+            { 3, 6, DWRITE_SCRIPT_SHAPES_DEFAULT },
           }
     },
     {
       /* Latin Extended-A */
       {0x100,0x120,0x130,0x140,0x150,0x160,0x170,0x17f,0}, 1,
-          { { 0, 8, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 8, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Latin Extended-B */
       {0x180,0x190,0x1bf,0x1c0,0x1c3,0x1c4,0x1cc,0x1dc,0x1ff,0x217,0x21b,0x24f,0}, 1,
-          { { 0, 12, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 12, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* IPA Extensions */
       {0x250,0x260,0x270,0x290,0x2af,0}, 1,
-          { { 0, 5, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 5, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Spacing Modifier Letters */
       {0x2b0,0x2ba,0x2d7,0x2dd,0x2ef,0x2ff,0}, 1,
-          { { 0, 6, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Combining Diacritical Marks */
       {0x300,0x320,0x340,0x345,0x350,0x36f,0}, 1,
-          { { 0, 6, { Script_Undefined, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Greek and Coptic */
       {0x370,0x388,0x3d8,0x3e1,0x3e2,0x3fa,0x3ff,0}, 3,
-          { { 0, 4, { Script_Greek, DWRITE_SCRIPT_SHAPES_DEFAULT } },
-            { 4, 1, { Script_Coptic, DWRITE_SCRIPT_SHAPES_DEFAULT } },
-            { 5, 2, { Script_Greek, DWRITE_SCRIPT_SHAPES_DEFAULT } }
+          { { 0, 4, DWRITE_SCRIPT_SHAPES_DEFAULT },
+            { 4, 1, DWRITE_SCRIPT_SHAPES_DEFAULT },
+            { 5, 2, DWRITE_SCRIPT_SHAPES_DEFAULT }
           }
     },
     {
       /* Cyrillic and Cyrillic Supplement */
       {0x400,0x40f,0x410,0x44f,0x450,0x45f,0x460,0x481,0x48a,0x4f0,0x4fa,0x4ff,0x500,0x510,0x520,0}, 1,
-          { { 0, 15, { Script_Cyrillic, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 15, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Armenian */
       {0x531,0x540,0x559,0x55f,0x570,0x589,0x58a,0}, 1,
-          { { 0, 7, { Script_Armenian, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 7, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Hebrew */
       {0x5e9,0x5dc,0x5d5,0x5dd,0}, 1,
-          { { 0, 4, { Script_Hebrew, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 4, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
-      /* Hebrew */
+      /* Latin, Hebrew, Latin */
       {'p','a','r','t',' ','o','n','e',' ',0x5d7,0x5dc,0x5e7,' ',0x5e9,0x5ea,0x5d9,0x5d9,0x5dd,' ','p','a','r','t',' ','t','h','r','e','e',0}, 3,
-          { { 0, 9, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } },
-            { 9, 10, { Script_Hebrew, DWRITE_SCRIPT_SHAPES_DEFAULT } },
-            { 19, 10, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 9, DWRITE_SCRIPT_SHAPES_DEFAULT },
+            { 9, 10, DWRITE_SCRIPT_SHAPES_DEFAULT },
+            { 19, 10, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Syriac */
       {0x710,0x712,0x712,0x714,'.',0}, 1,
-          { { 0, 5, { Script_Syriac, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 5, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Arabic Supplement */
       {0x750,0x760,0x76d,'.',0}, 1,
-          { { 0, 4, { Script_Arabic, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 4, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Thaana */
       {0x780,0x78e,0x798,0x7a6,0x7b0,'.',0}, 1,
-          { { 0, 6, { Script_Thaana, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* N'Ko */
       {0x7c0,0x7ca,0x7e8,0x7eb,0x7f6,'.',0}, 1,
-          { { 0, 6, { Script_NKo, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Thaana */
       {0x780,0x798,0x7a5,0x7a6,0x7b0,'.',0}, 1,
-          { { 0, 6, { Script_Thaana, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Devanagari */
       {0x926,0x947,0x935,0x928,0x93e,0x917,0x930,0x940,'.',0}, 1,
-          { { 0, 9, { Script_Devanagari, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 9, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Bengali */
       {0x9ac,0x9be,0x982,0x9b2,0x9be,'.',0}, 1,
-          { { 0, 6, { Script_Bengali, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Gurmukhi */
       {0xa17,0xa41,0xa30,0xa2e,0xa41,0xa16,0xa40,'.',0}, 1,
-          { { 0, 8, { Script_Gurmukhi, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 8, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Gujarati */
       {0xa97,0xac1,0xa9c,0xab0,0xabe,0xaa4,0xac0,'.',0}, 1,
-          { { 0, 8, { Script_Gujarati, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 8, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Oriya */
       {0xb13,0xb21,0xb3c,0xb3f,0xb06,'.',0}, 1,
-          { { 0, 6, { Script_Oriya, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Tamil */
       {0xba4,0xbae,0xbbf,0xbb4,0xbcd,'.',0}, 1,
-          { { 0, 6, { Script_Tamil, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Telugu */
       {0xc24,0xc46,0xc32,0xc41,0xc17,0xc41,'.',0}, 1,
-          { { 0, 7, { Script_Telugu, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 7, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Kannada */
       {0xc95,0xca8,0xccd,0xca8,0xca1,'.',0}, 1,
-          { { 0, 6, { Script_Kannada, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Malayalam */
       {0xd2e,0xd32,0xd2f,0xd3e,0xd33,0xd02,'.',0}, 1,
-          { { 0, 7, { Script_Malayalam, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 7, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Sinhala */
       {0xd82,0xd85,0xd9a,0xdcf,'.',0}, 1,
-          { { 0, 5, { Script_Sinhala, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 5, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Thai */
@@ -647,128 +601,128 @@ static struct sa_test sa_tests[] = {
        0x0e2d,0x0e22,0x0e39,0x0e48,0x0e17,0x0e35,0x0e48,0x0e44,0x0e2b,0x0e19,
        0x0e04,0x0e27,0x0e32,0x0e21,0x0e2a, 0x0e33,0x0e40,0x0e23,0x0e47,0x0e08,
        0x0e2d,0x0e22,0x0e39,0x0e48,0x0e17,0x0e35,0x0e48,0x0e19,0x0e31,0x0e48,0x0e19,'.',0}, 1,
-          { { 0, 42, { Script_Thai, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 42, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Lao */
       {0xead,0xeb1,0xe81,0xeaa,0xead,0xe99,0xea5,0xeb2,0xea7,'.',0}, 1,
-          { { 0, 10, { Script_Lao, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 10, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Tibetan */
       {0xf04,0xf05,0xf0e,0x020,0xf51,0xf7c,0xf53,0xf0b,0xf5a,0xf53,0xf0b,
        0xf51,0xf44,0xf0b,0xf54,0xf7c,0xf0d,'.',0}, 1,
-          { { 0, 18, { Script_Tibetan, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 18, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Myanmar */
       {0x1019,0x103c,0x1014,0x103a,0x1019,0x102c,0x1021,0x1000,0x1039,0x1001,0x101b,0x102c,'.',0}, 1,
-          { { 0, 13, { Script_Myanmar, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 13, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Georgian */
       {0x10a0,0x10d0,0x10da,0x10f1,0x10fb,'.',0}, 1,
-          { { 0, 6, { Script_Georgian, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Hangul */
       {0x1100,0x1110,0x1160,0x1170,0x11a8,'.',0}, 1,
-          { { 0, 6, { Script_Hangul, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Ethiopic */
       {0x130d,0x12d5,0x12dd,0}, 1,
-          { { 0, 3, { Script_Ethiopic, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Cherokee */
       {0x13e3,0x13b3,0x13a9,0x0020,0x13a6,0x13ec,0x13c2,0x13af,0x13cd,0x13d7,0}, 1,
-          { { 0, 10, { Script_Cherokee, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 10, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Canadian */
       {0x1403,0x14c4,0x1483,0x144e,0x1450,0x1466,0}, 1,
-          { { 0, 6, { Script_Canadian, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Ogham */
       {0x169b,0x1691,0x168c,0x1690,0x168b,0x169c,0}, 1,
-          { { 0, 6, { Script_Ogham, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Runic */
       {0x16a0,0x16a1,0x16a2,0x16a3,0x16a4,0x16a5,0}, 1,
-          { { 0, 6, { Script_Runic, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Khmer */
       {0x1781,0x17c1,0x1798,0x179a,0x1797,0x17b6,0x179f,0x17b6,0x19e0,0}, 1,
-          { { 0, 9, { Script_Khmer, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 9, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Mongolian */
       {0x182e,0x1823,0x1829,0x182d,0x1823,0x182f,0x0020,0x182a,0x1822,0x1834,0x1822,0x182d,0x180c,0}, 1,
-          { { 0, 13, { Script_Mongolian, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 13, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Limbu */
       {0x1900,0x1910,0x1920,0x1930,0}, 1,
-          { { 0, 4, { Script_Limbu, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 4, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Tai Le */
       {0x1956,0x196d,0x1970,0x1956,0x196c,0x1973,0x1951,0x1968,0x1952,0x1970,0}, 1,
-          { { 0, 10, { Script_TaiLe, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 10, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* New Tai Lue */
       {0x1992,0x19c4,0}, 1,
-          { { 0, 2, { Script_New_TaiLue, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Buginese */
       {0x1a00,0x1a10,0}, 1,
-          { { 0, 2, { Script_Buginese, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Tai Tham */
       {0x1a20,0x1a40,0x1a50,0}, 1,
-          { { 0, 3, { Script_Undefined, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Balinese */
       {0x1b00,0x1b05,0x1b20,0}, 1,
-          { { 0, 3, { Script_Balinese, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Sundanese */
       {0x1b80,0x1b85,0x1ba0,0}, 1,
-          { { 0, 3, { Script_Sundanese, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Batak */
       {0x1bc0,0x1be5,0x1bfc,0}, 1,
-          { { 0, 3, { Script_Undefined, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Lepcha */
       {0x1c00,0x1c20,0x1c40,0}, 1,
-          { { 0, 3, { Script_Lepcha, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Ol Chiki */
       {0x1c50,0x1c5a,0x1c77,0}, 1,
-          { { 0, 3, { Script_OlChiki, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Sundanese Supplement */
       {0x1cc0,0x1cc5,0x1cc8,0}, 1,
-          { { 0, 3, { Script_Undefined, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Phonetic Extensions */
       {0x1d00,0x1d40,0x1d70,0}, 1,
-          { { 0, 3, { Script_Latin, DWRITE_SCRIPT_SHAPES_DEFAULT } }}
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     /* keep this as end marker */
     { {0} }
@@ -787,9 +741,7 @@ static void init_expected_sa(struct call_sequence **seq, const struct sa_test *t
         struct call_entry call;
 
         call.kind = ScriptAnalysis;
-        call.sa.pos = test->sa[i].pos;
-        call.sa.len = test->sa[i].len;
-        call.sa.a = test->sa[i].a;
+        call.sa = test->sa[i];
         add_call(seq, 0, &call);
     }
 

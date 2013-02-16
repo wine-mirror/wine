@@ -231,7 +231,6 @@ static HRESULT analyze_script(const WCHAR *text, UINT32 len, IDWriteTextAnalysis
     if (!len) return S_OK;
 
     sa.script = get_char_script(*text);
-    sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
 
     pos = 0;
     length = 1;
@@ -248,7 +247,10 @@ static HRESULT analyze_script(const WCHAR *text, UINT32 len, IDWriteTextAnalysis
 
         if (sa.script != script)
         {
-            HRESULT hr = IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, length, &sa);
+            HRESULT hr;
+
+            sa.shapes = sa.script != Script_Controls ? DWRITE_SCRIPT_SHAPES_DEFAULT : DWRITE_SCRIPT_SHAPES_NO_VISUAL;
+            hr = IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, length, &sa);
             if (FAILED(hr)) return hr;
             pos = i;
             length = 1;
@@ -257,6 +259,7 @@ static HRESULT analyze_script(const WCHAR *text, UINT32 len, IDWriteTextAnalysis
     }
 
     /* 1 length case or normal completion call */
+    sa.shapes = sa.script != Script_Controls ? DWRITE_SCRIPT_SHAPES_DEFAULT : DWRITE_SCRIPT_SHAPES_NO_VISUAL;
     return IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, length, &sa);
 }
 
