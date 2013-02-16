@@ -2033,8 +2033,11 @@ HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *ppszProgID)
       *ppszProgID = CoTaskMemAlloc(progidlen * sizeof(WCHAR));
       if (*ppszProgID)
       {
-        if (RegQueryValueW(hkey, NULL, *ppszProgID, &progidlen))
+        if (RegQueryValueW(hkey, NULL, *ppszProgID, &progidlen)) {
           ret = REGDB_E_CLASSNOTREG;
+          CoTaskMemFree(*ppszProgID);
+          *ppszProgID = NULL;
+        }
       }
       else
         ret = E_OUTOFMEMORY;
