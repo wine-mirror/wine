@@ -712,7 +712,7 @@ static BOOL HLPFILE_RtfAddText(struct RtfData* rd, const char* str)
     }
     for (last = p = str; *p; p++)
     {
-        if (*p < 0) /* escape non ASCII chars */
+        if (*p & 0x80) /* escape non-ASCII chars */
         {
             static char         xx[8];
             rlen = sprintf(xx, "\\'%x", *(const BYTE*)p);
