@@ -276,7 +276,7 @@ int macdrv_err_on;
                     index = 0;
                     for (otherWindow in orderedWineWindows)
                     {
-                        if ([otherWindow level] <= [window level])
+                        if ([otherWindow levelWhenActive] <= [window levelWhenActive])
                             break;
                         index++;
                     }
@@ -298,7 +298,7 @@ int macdrv_err_on;
                     index = 0;
                     for (otherWindow in orderedWineWindows)
                     {
-                        if ([otherWindow level] < [window level])
+                        if ([otherWindow levelWhenActive] < [window levelWhenActive])
                             break;
                         index++;
                     }
@@ -328,6 +328,15 @@ int macdrv_err_on;
     /*
      * ---------- NSApplicationDelegate methods ----------
      */
+    - (void)applicationDidBecomeActive:(NSNotification *)notification
+    {
+        [orderedWineWindows enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id obj, NSUInteger idx, BOOL *stop){
+            WineWindow* window = obj;
+            if ([window levelWhenActive] != [window level])
+                [window setLevel:[window levelWhenActive]];
+        }];
+    }
+
     - (void)applicationDidChangeScreenParameters:(NSNotification *)notification
     {
         primaryScreenHeightValid = FALSE;
@@ -381,6 +390,16 @@ int macdrv_err_on;
         [NSTextInputContext self];
 
         self.keyboardType = LMGetKbdType();
+    }
+
+    - (void)applicationWillResignActive:(NSNotification *)notification
+    {
+        [orderedWineWindows enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id obj, NSUInteger idx, BOOL *stop){
+            WineWindow* window = obj;
+            NSInteger level = window.floating ? NSFloatingWindowLevel : NSNormalWindowLevel;
+            if ([window level] > level)
+                [window setLevel:level];
+        }];
     }
 
 @end
