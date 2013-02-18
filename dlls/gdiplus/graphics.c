@@ -3576,24 +3576,11 @@ GpStatus WINGDIPAPI GdipDrawLines(GpGraphics *graphics, GpPen *pen, GDIPCONST
 GpStatus WINGDIPAPI GdipDrawLinesI(GpGraphics *graphics, GpPen *pen, GDIPCONST
     GpPoint *points, INT count)
 {
-    INT save_state;
     GpStatus retval;
-    GpPointF *ptf = NULL;
+    GpPointF *ptf;
     int i;
 
     TRACE("(%p, %p, %p, %d)\n", graphics, pen, points, count);
-
-    if(!pen || !graphics || (count < 2))
-        return InvalidParameter;
-
-    if(graphics->busy)
-        return ObjectBusy;
-
-    if (!graphics->hdc)
-    {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
-    }
 
     ptf = GdipAlloc(count * sizeof(GpPointF));
     if(!ptf) return OutOfMemory;
@@ -3603,11 +3590,7 @@ GpStatus WINGDIPAPI GdipDrawLinesI(GpGraphics *graphics, GpPen *pen, GDIPCONST
         ptf[i].Y = (REAL) points[i].Y;
     }
 
-    save_state = prepare_dc(graphics, pen);
-
-    retval = draw_polyline(graphics, pen, ptf, count, TRUE);
-
-    restore_dc(graphics, save_state);
+    retval = GdipDrawLines(graphics, pen, ptf, count);
 
     GdipFree(ptf);
     return retval;
