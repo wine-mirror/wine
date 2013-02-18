@@ -429,14 +429,17 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                 [self doOrderOut];
         }
 
-        oldFrame = [self frame];
-        frame = [self frameRectForContentRect:contentRect];
-        if (!NSEqualRects(frame, oldFrame))
+        if (!NSIsEmptyRect(contentRect))
         {
-            if (NSEqualSizes(frame.size, oldFrame.size))
-                [self setFrameOrigin:frame.origin];
-            else
-                [self setFrame:frame display:YES];
+            oldFrame = [self frame];
+            frame = [self frameRectForContentRect:contentRect];
+            if (!NSEqualRects(frame, oldFrame))
+            {
+                if (NSEqualSizes(frame.size, oldFrame.size))
+                    [self setFrameOrigin:frame.origin];
+                else
+                    [self setFrame:frame display:YES];
+            }
         }
 
         if (on_screen)
