@@ -642,9 +642,6 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
                "IDirectSound_CreateSoundBuffer() failed to create a secondary buffer %08x\n",rc);
 
             if (rc==DS_OK && secondary!=NULL) {
-                todo_wine ok(primary->lpVtbl==secondary->lpVtbl,
-                            "Primary and secondary buffers have different vtbls.\n");
-
                 test_buffer(dso,&secondary,0,FALSE,0,FALSE,0,
                             winetest_interactive,1.0,0,NULL,0,0,FALSE,0);
 
