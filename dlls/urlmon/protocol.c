@@ -115,10 +115,19 @@ static void WINAPI internet_status_callback(HINTERNET internet, DWORD_PTR contex
         report_progress(protocol, BINDSTATUS_FINDINGRESOURCE, (LPWSTR)status_info);
         break;
 
-    case INTERNET_STATUS_CONNECTING_TO_SERVER:
-        TRACE("%p INTERNET_STATUS_CONNECTING_TO_SERVER\n", protocol);
-        report_progress(protocol, BINDSTATUS_CONNECTING, (LPWSTR)status_info);
+    case INTERNET_STATUS_CONNECTING_TO_SERVER: {
+        WCHAR *info;
+
+        TRACE("%p INTERNET_STATUS_CONNECTING_TO_SERVER %s\n", protocol, (const char*)status_info);
+
+        info = heap_strdupAtoW(status_info);
+        if(!info)
+            return;
+
+        report_progress(protocol, BINDSTATUS_CONNECTING, info);
+        heap_free(info);
         break;
+    }
 
     case INTERNET_STATUS_SENDING_REQUEST:
         TRACE("%p INTERNET_STATUS_SENDING_REQUEST\n", protocol);

@@ -298,62 +298,48 @@ static const char *debugstr_status_info(DWORD status, void *info)
     }
 }
 
-VOID INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR dwContext,
-                           DWORD dwInternetStatus, LPVOID lpvStatusInfo,
-                           DWORD dwStatusInfoLength)
+void INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR context, DWORD status, void *info, DWORD info_len)
 {
-    LPVOID lpvNewInfo = NULL;
+    void *new_info = info;
 
     if( !hdr->lpfnStatusCB )
         return;
 
     /* the IE5 version of wininet does not
        send callbacks if dwContext is zero */
-    if( !dwContext )
+    if(!context)
         return;
 
-    lpvNewInfo = lpvStatusInfo;
-    if(hdr->dwInternalFlags & INET_CALLBACKW) {
-        switch(dwInternetStatus) {
-        case INTERNET_STATUS_NAME_RESOLVED:
-        case INTERNET_STATUS_CONNECTING_TO_SERVER:
-        case INTERNET_STATUS_CONNECTED_TO_SERVER:
-            lpvNewInfo = heap_strdupAtoW(lpvStatusInfo);
-            dwStatusInfoLength *= sizeof(WCHAR);
+    switch(status) {
+    case INTERNET_STATUS_NAME_RESOLVED:
+    case INTERNET_STATUS_CONNECTING_TO_SERVER:
+    case INTERNET_STATUS_CONNECTED_TO_SERVER:
+        new_info = heap_alloc(info_len);
+        if(new_info)
+            memcpy(new_info, info, info_len);
+        break;
+    case INTERNET_STATUS_RESOLVING_NAME:
+    case INTERNET_STATUS_REDIRECT:
+        if(hdr->dwInternalFlags & INET_CALLBACKW) {
+            new_info = heap_strdupW(info);
             break;
-        case INTERNET_STATUS_RESOLVING_NAME:
-        case INTERNET_STATUS_REDIRECT:
-            lpvNewInfo = heap_strdupW(lpvStatusInfo);
-            break;
-        }
-    }else {
-        switch(dwInternetStatus)
-        {
-        case INTERNET_STATUS_NAME_RESOLVED:
-        case INTERNET_STATUS_CONNECTING_TO_SERVER:
-        case INTERNET_STATUS_CONNECTED_TO_SERVER:
-            lpvNewInfo = heap_alloc(strlen(lpvStatusInfo) + 1);
-            if (lpvNewInfo) strcpy(lpvNewInfo, lpvStatusInfo);
-            break;
-        case INTERNET_STATUS_RESOLVING_NAME:
-        case INTERNET_STATUS_REDIRECT:
-            lpvNewInfo = heap_strdupWtoA(lpvStatusInfo);
-            dwStatusInfoLength /= sizeof(WCHAR);
+        }else {
+            new_info = heap_strdupWtoA(info);
+            info_len = strlen(new_info)+1;
             break;
         }
     }
     
     TRACE(" callback(%p) (%p (%p), %08lx, %d (%s), %s, %d)\n",
-	  hdr->lpfnStatusCB, hdr->hInternet, hdr, dwContext, dwInternetStatus, get_callback_name(dwInternetStatus),
-	  debugstr_status_info(dwInternetStatus, lpvNewInfo), dwStatusInfoLength);
+	  hdr->lpfnStatusCB, hdr->hInternet, hdr, context, status, get_callback_name(status),
+	  debugstr_status_info(status, new_info), info_len);
     
-    hdr->lpfnStatusCB(hdr->hInternet, dwContext, dwInternetStatus,
-                      lpvNewInfo, dwStatusInfoLength);
+    hdr->lpfnStatusCB(hdr->hInternet, context, status, new_info, info_len);
 
     TRACE(" end callback().\n");
 
-    if(lpvNewInfo != lpvStatusInfo)
-        heap_free(lpvNewInfo);
+    if(new_info != info)
+        heap_free(new_info);
 }
 
 typedef struct {

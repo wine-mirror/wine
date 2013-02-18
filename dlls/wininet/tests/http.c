@@ -159,6 +159,7 @@ static const test_data_t test_data[] = {
 };
 
 static INTERNET_STATUS_CALLBACK (WINAPI *pInternetSetStatusCallbackA)(HINTERNET ,INTERNET_STATUS_CALLBACK);
+static INTERNET_STATUS_CALLBACK (WINAPI *pInternetSetStatusCallbackW)(HINTERNET ,INTERNET_STATUS_CALLBACK);
 static BOOL (WINAPI *pInternetGetSecurityInfoByURLA)(LPSTR,PCCERT_CHAIN_CONTEXT*,DWORD*);
 
 static int strcmp_wa(LPCWSTR strw, const char *stra)
@@ -321,12 +322,16 @@ static VOID WINAPI callback(
             trace("%04x:Callback %p 0x%lx INTERNET_STATUS_CONNECTING_TO_SERVER \"%s\" %d\n",
                 GetCurrentThreadId(), hInternet, dwContext,
                 (LPCSTR)lpvStatusInformation,dwStatusInformationLength);
+            ok(dwStatusInformationLength == strlen(lpvStatusInformation)+1, "unexpected size %u\n",
+               dwStatusInformationLength);
             *(LPSTR)lpvStatusInformation = '\0';
             break;
         case INTERNET_STATUS_CONNECTED_TO_SERVER:
             trace("%04x:Callback %p 0x%lx INTERNET_STATUS_CONNECTED_TO_SERVER \"%s\" %d\n",
                 GetCurrentThreadId(), hInternet, dwContext,
                 (LPCSTR)lpvStatusInformation,dwStatusInformationLength);
+            ok(dwStatusInformationLength == strlen(lpvStatusInformation)+1, "unexpected size %u\n",
+               dwStatusInformationLength);
             *(LPSTR)lpvStatusInformation = '\0';
             break;
         case INTERNET_STATUS_SENDING_REQUEST:
@@ -3595,19 +3600,27 @@ static void WINAPI cb(HINTERNET handle, DWORD_PTR context, DWORD status, LPVOID 
 
     trace("%p 0x%08lx %u %p 0x%08x\n", handle, context, status, info, size);
 
-    if (status == INTERNET_STATUS_REQUEST_COMPLETE)
-    {
+    switch(status) {
+    case INTERNET_STATUS_REQUEST_COMPLETE:
         trace("request handle: 0x%08lx\n", result->dwResult);
         ctx->req = (HINTERNET)result->dwResult;
         SetEvent(ctx->event);
-    }
-    if (status == INTERNET_STATUS_HANDLE_CLOSING)
-    {
+        break;
+    case INTERNET_STATUS_HANDLE_CLOSING: {
         DWORD type = INTERNET_HANDLE_TYPE_CONNECT_HTTP, size = sizeof(type);
 
         if (InternetQueryOption(handle, INTERNET_OPTION_HANDLE_TYPE, &type, &size))
             ok(type != INTERNET_HANDLE_TYPE_CONNECT_HTTP, "unexpected callback\n");
         SetEvent(ctx->event);
+        break;
+    }
+    case INTERNET_STATUS_NAME_RESOLVED:
+    case INTERNET_STATUS_CONNECTING_TO_SERVER:
+    case INTERNET_STATUS_CONNECTED_TO_SERVER: {
+        char *str = info;
+        ok(str[0] && str[1], "Got string: %s\n", str);
+        ok(size == strlen(str)+1, "unexpected size %u\n", size);
+    }
     }
 }
 
@@ -3618,6 +3631,10 @@ static void test_open_url_async(void)
     DWORD size, error;
     struct context ctx;
     ULONG type;
+
+    /* Collect all existing persistent connections */
+    ret = InternetSetOptionA(NULL, INTERNET_OPTION_SETTINGS_CHANGED, NULL, 0);
+    ok(ret, "InternetSetOption(INTERNET_OPTION_END_BROWSER_SESSION) failed: %u\n", GetLastError());
 
     ctx.req = NULL;
     ctx.event = CreateEvent(NULL, TRUE, FALSE, "Z:_home_hans_jaman-installer.exe_ev1");
@@ -3636,7 +3653,7 @@ static void test_open_url_async(void)
     ok(!ret, "InternetSetOptionA failed\n");
     ok(error == ERROR_INTERNET_OPTION_NOT_SETTABLE, "got %u expected ERROR_INTERNET_OPTION_NOT_SETTABLE\n", error);
 
-    pInternetSetStatusCallbackA(ses, cb);
+    pInternetSetStatusCallbackW(ses, cb);
     ResetEvent(ctx.event);
 
     req = InternetOpenUrl(ses, "http://test.winehq.org", NULL, 0, 0, (DWORD_PTR)&ctx);
@@ -4123,6 +4140,7 @@ START_TEST(http)
     }
 
     pInternetSetStatusCallbackA = (void*)GetProcAddress(hdll, "InternetSetStatusCallbackA");
+    pInternetSetStatusCallbackW = (void*)GetProcAddress(hdll, "InternetSetStatusCallbackW");
     pInternetGetSecurityInfoByURLA = (void*)GetProcAddress(hdll, "InternetGetSecurityInfoByURLA");
 
     init_status_tests();
