@@ -17,15 +17,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define _WIN32_WINNT 0x0600 /* For SPI_GETMOUSEHOVERWIDTH and more */
+#define _WIN32_IE 0x0700
+#define WINVER 0x0600 /* For COLOR_MENUBAR, NONCLIENTMETRICS with padding */
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-
-#undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0600 /* For SPI_GETMOUSEHOVERWIDTH and more */
-#define _WIN32_IE 0x0700
-#define WINVER 0x0600 /* For COLOR_MENUBAR, NONCLIENTMETRICS with padding */
 
 #include "wine/test.h"
 #include "windef.h"
