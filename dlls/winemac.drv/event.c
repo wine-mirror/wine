@@ -33,6 +33,7 @@ static const char *dbgstr_event(int type)
 {
     static const char * const event_names[] = {
         "APP_DEACTIVATED",
+        "DISPLAYS_CHANGED",
         "KEY_PRESS",
         "KEY_RELEASE",
         "KEYBOARD_CHANGED",
@@ -84,6 +85,7 @@ static macdrv_event_mask get_event_mask(DWORD mask)
     if (mask & QS_POSTMESSAGE)
     {
         event_mask |= event_mask_for_type(APP_DEACTIVATED);
+        event_mask |= event_mask_for_type(DISPLAYS_CHANGED);
         event_mask |= event_mask_for_type(WINDOW_CLOSE_REQUESTED);
         event_mask |= event_mask_for_type(WINDOW_DID_MINIMIZE);
         event_mask |= event_mask_for_type(WINDOW_DID_UNMINIMIZE);
@@ -115,6 +117,9 @@ void macdrv_handle_event(macdrv_event *event)
     {
     case APP_DEACTIVATED:
         macdrv_app_deactivated();
+        break;
+    case DISPLAYS_CHANGED:
+        macdrv_displays_changed(event);
         break;
     case KEY_PRESS:
     case KEY_RELEASE:

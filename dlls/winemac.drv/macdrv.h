@@ -68,6 +68,7 @@ static inline const char *wine_dbgstr_cgrect(CGRect cgrect)
  */
 
 extern CGRect macdrv_get_desktop_rect(void) DECLSPEC_HIDDEN;
+extern void macdrv_reset_device_metrics(void) DECLSPEC_HIDDEN;
 
 
 /**************************************************************************
@@ -78,6 +79,9 @@ extern CGRect macdrv_get_desktop_rect(void) DECLSPEC_HIDDEN;
 enum macdrv_window_messages
 {
     WM_MACDRV_SET_WIN_REGION = 0x80001000,
+    WM_MACDRV_UPDATE_DESKTOP_RECT,
+    WM_MACDRV_RESET_DEVICE_METRICS,
+    WM_MACDRV_DISPLAYCHANGE,
 };
 
 struct macdrv_thread_data
@@ -141,5 +145,7 @@ extern void macdrv_mouse_scroll(HWND hwnd, const macdrv_event *event) DECLSPEC_H
 extern void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data) DECLSPEC_HIDDEN;
 extern void macdrv_keyboard_changed(const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_key_event(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
+
+extern void macdrv_displays_changed(const macdrv_event *event) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_MACDRV_H */

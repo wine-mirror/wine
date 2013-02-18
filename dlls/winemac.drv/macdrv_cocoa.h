@@ -126,6 +126,7 @@ extern void macdrv_free_displays(struct macdrv_display* displays) DECLSPEC_HIDDE
 /* event */
 enum {
     APP_DEACTIVATED,
+    DISPLAYS_CHANGED,
     KEY_PRESS,
     KEY_RELEASE,
     KEYBOARD_CHANGED,

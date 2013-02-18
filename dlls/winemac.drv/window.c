@@ -1192,6 +1192,39 @@ LRESULT CDECL macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             release_win_data(data);
         }
         return 0;
+    case WM_MACDRV_UPDATE_DESKTOP_RECT:
+        if (hwnd == GetDesktopWindow())
+        {
+            CGRect new_desktop_rect;
+            RECT current_desktop_rect;
+
+            macdrv_reset_device_metrics();
+            new_desktop_rect = macdrv_get_desktop_rect();
+            if (!GetWindowRect(hwnd, &current_desktop_rect) ||
+                !CGRectEqualToRect(cgrect_from_rect(current_desktop_rect), new_desktop_rect))
+            {
+                SendMessageTimeoutW(HWND_BROADCAST, WM_MACDRV_RESET_DEVICE_METRICS, 0, 0,
+                                    SMTO_ABORTIFHUNG, 2000, NULL);
+                SetWindowPos(hwnd, 0, CGRectGetMinX(new_desktop_rect), CGRectGetMinY(new_desktop_rect),
+                             CGRectGetWidth(new_desktop_rect), CGRectGetHeight(new_desktop_rect),
+                             SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE);
+                SendMessageTimeoutW(HWND_BROADCAST, WM_MACDRV_DISPLAYCHANGE, wp, lp,
+                                    SMTO_ABORTIFHUNG, 2000, NULL);
+            }
+        }
+        return 0;
+    case WM_MACDRV_RESET_DEVICE_METRICS:
+        macdrv_reset_device_metrics();
+        return 0;
+    case WM_MACDRV_DISPLAYCHANGE:
+        if ((data = get_win_data(hwnd)))
+        {
+            if (data->cocoa_window && data->on_screen)
+                sync_window_position(data, SWP_NOZORDER | SWP_NOACTIVATE);
+            release_win_data(data);
+        }
+        SendMessageW(hwnd, WM_DISPLAYCHANGE, wp, lp);
+        return 0;
     }
 
     FIXME("unrecognized window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, wp, lp);

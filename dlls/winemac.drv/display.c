@@ -2,7 +2,7 @@
  * MACDRV display settings
  *
  * Copyright 2003 Alexander James Pasadyn
- * Copyright 2011, 2012 Ken Thomases for CodeWeavers Inc.
+ * Copyright 2011, 2012, 2013 Ken Thomases for CodeWeavers Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,6 +35,42 @@ static inline HMONITOR display_id_to_monitor(CGDirectDisplayID display_id)
 static inline CGDirectDisplayID monitor_to_display_id(HMONITOR handle)
 {
     return (CGDirectDisplayID)(UINT_PTR)handle;
+}
+
+
+static int display_mode_bits_per_pixel(CGDisplayModeRef display_mode)
+{
+    CFStringRef pixel_encoding;
+    int bits_per_pixel = 0;
+
+    pixel_encoding = CGDisplayModeCopyPixelEncoding(display_mode);
+    if (pixel_encoding)
+    {
+        if (CFEqual(pixel_encoding, CFSTR(kIO32BitFloatPixels)))
+            bits_per_pixel = 128;
+        else if (CFEqual(pixel_encoding, CFSTR(kIO16BitFloatPixels)))
+            bits_per_pixel = 64;
+        else if (CFEqual(pixel_encoding, CFSTR(kIO64BitDirectPixels)))
+            bits_per_pixel = 64;
+        else if (CFEqual(pixel_encoding, CFSTR(kIO30BitDirectPixels)))
+            bits_per_pixel = 30;
+        else if (CFEqual(pixel_encoding, CFSTR(IO32BitDirectPixels)))
+            bits_per_pixel = 32;
+        else if (CFEqual(pixel_encoding, CFSTR(IO16BitDirectPixels)))
+            bits_per_pixel = 16;
+        else if (CFEqual(pixel_encoding, CFSTR(IO8BitIndexedPixels)))
+            bits_per_pixel = 8;
+        else if (CFEqual(pixel_encoding, CFSTR(IO4BitIndexedPixels)))
+            bits_per_pixel = 4;
+        else if (CFEqual(pixel_encoding, CFSTR(IO2BitIndexedPixels)))
+            bits_per_pixel = 2;
+        else if (CFEqual(pixel_encoding, CFSTR(IO1BitIndexedPixels)))
+            bits_per_pixel = 1;
+
+        CFRelease(pixel_encoding);
+    }
+
+    return bits_per_pixel;
 }
 
 
@@ -155,4 +191,31 @@ BOOL CDECL macdrv_GetMonitorInfo(HMONITOR monitor, LPMONITORINFO info)
 
     macdrv_free_displays(displays);
     return (i < num_displays);
+}
+
+
+/***********************************************************************
+ *              macdrv_displays_changed
+ *
+ * Handler for DISPLAYS_CHANGED events.
+ */
+void macdrv_displays_changed(const macdrv_event *event)
+{
+    HWND hwnd = GetDesktopWindow();
+
+    /* A system display change will get delivered to all GUI-attached threads,
+       so the desktop-window-owning thread will get it and all others should
+       ignore it. */
+    if (GetWindowThreadProcessId(hwnd, NULL) == GetCurrentThreadId())
+    {
+        CGDirectDisplayID mainDisplay = CGMainDisplayID();
+        CGDisplayModeRef mode = CGDisplayCopyDisplayMode(mainDisplay);
+        size_t width = CGDisplayModeGetWidth(mode);
+        size_t height = CGDisplayModeGetHeight(mode);
+        int mode_bpp = display_mode_bits_per_pixel(mode);
+
+        CGDisplayModeRelease(mode);
+        SendMessageW(hwnd, WM_MACDRV_UPDATE_DESKTOP_RECT, mode_bpp,
+                     MAKELPARAM(width, height));
+    }
 }

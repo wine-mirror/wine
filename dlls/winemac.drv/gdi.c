@@ -2,7 +2,7 @@
  * Mac graphics driver initialisation functions
  *
  * Copyright 1996 Alexandre Julliard
- * Copyright 2011, 2012 Ken Thomases for CodeWeavers, Inc.
+ * Copyright 2011, 2012, 2013 Ken Thomases for CodeWeavers, Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -197,6 +197,14 @@ static void device_init(void)
         palette_size = 0;
 
     device_data_valid = TRUE;
+}
+
+
+void macdrv_reset_device_metrics(void)
+{
+    EnterCriticalSection(&device_data_section);
+    device_data_valid = FALSE;
+    LeaveCriticalSection(&device_data_section);
 }
 
 

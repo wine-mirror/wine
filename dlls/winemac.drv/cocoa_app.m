@@ -312,6 +312,20 @@ int macdrv_err_on;
         }
     }
 
+    - (void) sendDisplaysChanged
+    {
+        macdrv_event event;
+        WineEventQueue* queue;
+
+        event.type = DISPLAYS_CHANGED;
+        event.window = NULL;
+
+        [eventQueuesLock lock];
+        for (queue in eventQueues)
+            [queue postEvent:&event];
+        [eventQueuesLock unlock];
+    }
+
 
     /*
      * ---------- NSApplication method overrides ----------
@@ -340,6 +354,7 @@ int macdrv_err_on;
     - (void)applicationDidChangeScreenParameters:(NSNotification *)notification
     {
         primaryScreenHeightValid = FALSE;
+        [self sendDisplaysChanged];
     }
 
     - (void)applicationDidResignActive:(NSNotification *)notification
