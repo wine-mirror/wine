@@ -178,6 +178,7 @@ include/docobj.h
 include/docobjectservice.h
 include/downloadmgr.h
 include/dwrite.h
+include/dwrite_1.h
 include/dxgi.h
 include/endpointvolume.h
 include/exdisp.h

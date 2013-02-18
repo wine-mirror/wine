@@ -33,6 +33,7 @@ PUBLIC_IDL_H_SRCS = \
 	docobjectservice.idl \
 	downloadmgr.idl \
 	dwrite.idl \
+	dwrite_1.idl \
 	dxgi.idl \
 	endpointvolume.idl \
 	exdisp.idl \
