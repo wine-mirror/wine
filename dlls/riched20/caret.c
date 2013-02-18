@@ -873,7 +873,7 @@ static BOOL ME_ReturnFoundPos(ME_TextEditor *editor, ME_DisplayItem *found,
   if ((found->member.run.nFlags & MERF_ENDPARA) || rx < 0)
     rx = 0;
   result->pRun = found;
-  result->nOffset = ME_CharFromPointCursor(editor, rx, &found->member.run);
+  result->nOffset = ME_CharFromPoint(editor, rx, &found->member.run, TRUE);
   if (result->nOffset == found->member.run.len && rx)
   {
     result->pRun = ME_FindItemFwd(result->pRun, diRun);
@@ -1194,7 +1194,7 @@ static ME_DisplayItem *ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pR
     }
     if (x >= run_x && x < run_x+width)
     {
-      int ch = ME_CharFromPointCursor(editor, x-run_x, &pNext->member.run);
+      int ch = ME_CharFromPoint(editor, x-run_x, &pNext->member.run, TRUE);
       if (ch < pNext->member.run.len) {
         if (pOffset)
           *pOffset = ch;

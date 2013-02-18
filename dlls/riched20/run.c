@@ -404,22 +404,22 @@ void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run)
 }
 
 /******************************************************************************
- * ME_CharFromPointCursor
+ * ME_CharFromPointContext
  *
  * Returns a character position inside the run given a run-relative
- * pixel horizontal position. This version rounds to the nearest character edge
- * (ie. if the second character is at pixel position 8, then for cx=0..3
- * it returns 0, and for cx=4..7 it returns 1).
+ * pixel horizontal position.
  *
- * It is used for mouse click handling, for better usability (and compatibility
- * with the native control).
+ * If closest is FALSE return the actual character
+ * If closest is TRUE will round to the closest leading edge.
+ * ie. if the second character is at pixel position 8 and third at 16 then for:
+ * closest = FALSE cx = 0..7 return 0, cx = 8..15 return 1
+ * closest = TRUE  cx = 0..3 return 0, cx = 4..11 return 1.
  */
-int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
+int ME_CharFromPointContext(ME_Context *c, int cx, ME_Run *run, BOOL closest)
 {
   ME_String *mask_text = NULL;
   WCHAR *str;
   int fit = 0;
-  ME_Context c;
   HGDIOBJ hOldFont;
   SIZE sz, sz2, sz3;
   if (!run->len || cx <= 0)
@@ -427,45 +427,52 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
 
   if (run->nFlags & (MERF_TAB | MERF_ENDCELL))
   {
-    if (cx < run->nWidth/2)
-      return 0;
-    return 1;
-  }
-  ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
-  if (run->nFlags & MERF_GRAPHICS)
-  {
-    SIZE sz;
-    ME_GetOLEObjectSize(&c, run, &sz);
-    ME_DestroyContext(&c);
-    if (cx < sz.cx/2)
-      return 0;
+    if (!closest || cx < run->nWidth / 2) return 0;
     return 1;
   }
 
-  if (editor->cPasswordMask)
+  if (run->nFlags & MERF_GRAPHICS)
   {
-    mask_text = ME_MakeStringR( editor->cPasswordMask, run->len );
+    SIZE sz;
+    ME_GetOLEObjectSize(c, run, &sz);
+    if (!closest || cx < sz.cx / 2) return 0;
+    return 1;
+  }
+
+  if (c->editor->cPasswordMask)
+  {
+    mask_text = ME_MakeStringR( c->editor->cPasswordMask, run->len );
     str = mask_text->szData;
   }
   else
     str = get_text( run, 0 );
 
-  hOldFont = ME_SelectStyleFont(&c, run->style);
-  GetTextExtentExPointW(c.hDC, str, run->len,
+  hOldFont = ME_SelectStyleFont(c, run->style);
+  GetTextExtentExPointW(c->hDC, str, run->len,
                         cx, &fit, NULL, &sz);
-  if (fit != run->len)
+  if (closest && fit != run->len)
   {
-    GetTextExtentPoint32W(c.hDC, str, fit, &sz2);
-    GetTextExtentPoint32W(c.hDC, str, fit + 1, &sz3);
+    GetTextExtentPoint32W(c->hDC, str, fit, &sz2);
+    GetTextExtentPoint32W(c->hDC, str, fit + 1, &sz3);
     if (cx >= (sz2.cx+sz3.cx)/2)
       fit = fit + 1;
   }
 
   ME_DestroyString( mask_text );
 
-  ME_UnselectStyleFont(&c, run->style, hOldFont);
-  ME_DestroyContext(&c);
+  ME_UnselectStyleFont(c, run->style, hOldFont);
   return fit;
+}
+
+int ME_CharFromPoint(ME_TextEditor *editor, int cx, ME_Run *run, BOOL closest)
+{
+    ME_Context c;
+    int ret;
+
+    ME_InitContext( &c, editor, ITextHost_TxGetDC( editor->texthost ) );
+    ret = ME_CharFromPointContext( &c, cx, run, closest );
+    ME_DestroyContext(&c);
+    return ret;
 }
 
 /******************************************************************************
