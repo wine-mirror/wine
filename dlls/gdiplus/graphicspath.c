@@ -1702,6 +1702,13 @@ static void add_bevel_point(const GpPointF *endpoint, const GpPointF *nextpoint,
     REAL distance = pen->width/2.0;
     REAL bevel_dx, bevel_dy;
 
+    if (segment_length == 0.0)
+    {
+        *last_point = add_path_list_node(*last_point, endpoint->X,
+            endpoint->Y, PathPointTypeLine);
+        return;
+    }
+
     if (right_side)
     {
         bevel_dx = -distance * segment_dy / segment_length;
