@@ -1065,7 +1065,7 @@ static void build(struct options* opts)
     strarray_free (link_args);
 
     /* set the base address */
-    if (opts->image_base)
+    if (opts->image_base && !opts->target)
     {
         const char *prelink = PRELINK;
         if (prelink[0] && strcmp(prelink,"false"))
