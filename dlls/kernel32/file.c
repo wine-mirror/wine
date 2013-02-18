@@ -61,10 +61,13 @@ typedef struct
     BOOL              is_root;     /* is directory the root of the drive? */
     UINT              data_pos;    /* current position in dir data */
     UINT              data_len;    /* length of dir data */
-    BYTE              data[8192];  /* directory data */
+    UINT              data_size;   /* size of data buffer, or 0 when everything has been read */
+    BYTE             *data;        /* directory data */
 } FIND_FIRST_INFO;
 
 #define FIND_FIRST_MAGIC  0xc0ffee11
+
+static const UINT max_entry_size = offsetof( FILE_BOTH_DIRECTORY_INFORMATION, FileName[256] );
 
 static BOOL oem_file_apis;
 
@@ -1930,6 +1933,8 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     info->magic    = FIND_FIRST_MAGIC;
     info->data_pos = 0;
     info->data_len = 0;
+    info->data_size = 0;
+    info->data      = NULL;
     info->search_op = search_op;
 
     if (device)
@@ -1945,16 +1950,44 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     else
     {
         IO_STATUS_BLOCK io;
+        BOOL has_wildcard = strpbrkW( info->mask.Buffer, wildcardsW ) != NULL;
 
-        NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, sizeof(info->data),
-                              FileBothDirectoryInformation, FALSE, &info->mask, TRUE );
-        if (io.u.Status)
+        info->data_size = has_wildcard ? 8192 : max_entry_size;
+
+        while (info->data_size)
         {
-            FindClose( info );
-            SetLastError( RtlNtStatusToDosError( io.u.Status ) );
-            return INVALID_HANDLE_VALUE;
+            if (!(info->data = HeapAlloc( GetProcessHeap(), 0, info->data_size )))
+            {
+                FindClose( info );
+                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+                return INVALID_HANDLE_VALUE;
+            }
+
+            NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, info->data_size,
+                                  FileBothDirectoryInformation, FALSE, &info->mask, TRUE );
+            if (io.u.Status)
+            {
+                FindClose( info );
+                SetLastError( RtlNtStatusToDosError( io.u.Status ) );
+                return INVALID_HANDLE_VALUE;
+            }
+
+            if (io.Information < info->data_size - max_entry_size)
+            {
+                info->data_size = 0;  /* we read everything */
+            }
+            else if (info->data_size < 1024 * 1024)
+            {
+                HeapFree( GetProcessHeap(), 0, info->data );
+                info->data_size *= 2;
+            }
+            else break;
         }
+
         info->data_len = io.Information;
+        if (!info->data_size && has_wildcard)  /* release unused buffer space */
+            HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, info->data, info->data_len );
+
         if (!FindNextFileW( info, data ))
         {
             TRACE( "%s not found\n", debugstr_w(filename) );
@@ -1962,11 +1995,12 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
             SetLastError( ERROR_FILE_NOT_FOUND );
             return INVALID_HANDLE_VALUE;
         }
-        if (!strpbrkW( info->mask.Buffer, wildcardsW ))
+        if (!has_wildcard)  /* we can't find two files with the same name */
         {
-            /* we can't find two files with the same name */
             CloseHandle( info->handle );
+            HeapFree( GetProcessHeap(), 0, info->data );
             info->handle = 0;
+            info->data = NULL;
         }
     }
     return info;
@@ -2010,15 +2044,21 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
         {
             IO_STATUS_BLOCK io;
 
-            NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, sizeof(info->data),
-                                  FileBothDirectoryInformation, FALSE, &info->mask, FALSE );
+            if (info->data_size)
+                NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, info->data_size,
+                                      FileBothDirectoryInformation, FALSE, &info->mask, FALSE );
+            else
+                io.u.Status = STATUS_NO_MORE_FILES;
+
             if (io.u.Status)
             {
                 SetLastError( RtlNtStatusToDosError( io.u.Status ) );
                 if (io.u.Status == STATUS_NO_MORE_FILES)
                 {
                     CloseHandle( info->handle );
+                    HeapFree( GetProcessHeap(), 0, info->data );
                     info->handle = 0;
+                    info->data = NULL;
                 }
                 break;
             }
@@ -2101,6 +2141,7 @@ BOOL WINAPI FindClose( HANDLE handle )
                 RtlFreeUnicodeString( &info->path );
                 info->data_pos = 0;
                 info->data_len = 0;
+                HeapFree( GetProcessHeap(), 0, info->data );
                 RtlLeaveCriticalSection( &info->cs );
                 info->cs.DebugInfo->Spare[0] = 0;
                 RtlDeleteCriticalSection( &info->cs );
