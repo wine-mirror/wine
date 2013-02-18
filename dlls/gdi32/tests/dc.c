@@ -20,12 +20,12 @@
  */
 
 
-#include <assert.h>
-#include <stdio.h>
-
 #define WINVER 0x0501 /* request latest DEVMODE */
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
+
+#include <assert.h>
+#include <stdio.h>
 
 #include "wine/test.h"
 #include "winbase.h"
