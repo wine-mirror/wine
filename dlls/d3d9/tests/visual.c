@@ -13411,14 +13411,9 @@ static void multisampled_depth_buffer_test(IDirect3D9 *d3d9)
     for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
     {
         D3DCOLOR color = getPixelColorFromSurface(readback, expected_colors[i].x, expected_colors[i].y);
-        if (i % 4 < 2)
-            todo_wine ok(color_match(color, expected_colors[i].color, 1),
-                    "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
-                    expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
-        else
-            ok(color_match(color, expected_colors[i].color, 1),
-                    "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
-                    expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
+        ok(color_match(color, expected_colors[i].color, 1),
+                "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
+                expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
     }
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);

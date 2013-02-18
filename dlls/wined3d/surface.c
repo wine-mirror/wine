@@ -1040,17 +1040,20 @@ static BOOL surface_is_full_rect(const struct wined3d_surface *surface, const RE
     return TRUE;
 }
 
-static void wined3d_surface_depth_blt_fbo(const struct wined3d_device *device, struct wined3d_surface *src_surface,
-        const RECT *src_rect, struct wined3d_surface *dst_surface, const RECT *dst_rect)
+static void surface_depth_blt_fbo(const struct wined3d_device *device,
+        struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect,
+        struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect)
 {
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     DWORD src_mask, dst_mask;
     GLbitfield gl_mask;
 
-    TRACE("device %p, src_surface %p, src_rect %s, dst_surface %p, dst_rect %s.\n",
-            device, src_surface, wine_dbgstr_rect(src_rect),
-            dst_surface, wine_dbgstr_rect(dst_rect));
+    TRACE("device %p\n", device);
+    TRACE("src_surface %p, src_location %s, src_rect %s,\n",
+            src_surface, debug_surflocation(src_location), wine_dbgstr_rect(src_rect));
+    TRACE("dst_surface %p, dst_location %s, dst_rect %s.\n",
+            dst_surface, debug_surflocation(dst_location), wine_dbgstr_rect(dst_rect));
 
     src_mask = src_surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
     dst_mask = dst_surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
@@ -1078,9 +1081,9 @@ static void wined3d_surface_depth_blt_fbo(const struct wined3d_device *device, s
 
     /* Make sure the locations are up-to-date. Loading the destination
      * surface isn't required if the entire surface is overwritten. */
-    surface_load_location(src_surface, SFLAG_INTEXTURE, NULL);
+    surface_load_location(src_surface, src_location, NULL);
     if (!surface_is_full_rect(dst_surface, dst_rect))
-        surface_load_location(dst_surface, SFLAG_INTEXTURE, NULL);
+        surface_load_location(dst_surface, dst_location, NULL);
 
     context = context_acquire(device, NULL);
     if (!context->valid)
@@ -1092,12 +1095,12 @@ static void wined3d_surface_depth_blt_fbo(const struct wined3d_device *device, s
 
     gl_info = context->gl_info;
 
-    context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, NULL, src_surface, SFLAG_INTEXTURE);
+    context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, NULL, src_surface, src_location);
     gl_info->gl_ops.gl.p_glReadBuffer(GL_NONE);
     checkGLcall("glReadBuffer()");
     context_check_fbo_status(context, GL_READ_FRAMEBUFFER);
 
-    context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, NULL, dst_surface, SFLAG_INTEXTURE);
+    context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, NULL, dst_surface, dst_location);
     context_set_draw_buffer(context, GL_NONE);
     context_check_fbo_status(context, GL_DRAW_FRAMEBUFFER);
     context_invalidate_state(context, STATE_FRAMEBUFFER);
@@ -1404,8 +1407,8 @@ static HRESULT wined3d_surface_depth_fill(struct wined3d_surface *surface, const
     return blitter->depth_fill(device, surface, rect, depth);
 }
 
-static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, const RECT *src_rect,
-        struct wined3d_surface *dst_surface, const RECT *dst_rect)
+static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect,
+        struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect)
 {
     struct wined3d_device *device = src_surface->resource.device;
 
@@ -1414,9 +1417,9 @@ static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, co
             dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
         return WINED3DERR_INVALIDCALL;
 
-    wined3d_surface_depth_blt_fbo(device, src_surface, src_rect, dst_surface, dst_rect);
+    surface_depth_blt_fbo(device, src_surface, src_location, src_rect, dst_surface, dst_location, dst_rect);
 
-    surface_modify_ds_location(dst_surface, SFLAG_INTEXTURE,
+    surface_modify_ds_location(dst_surface, dst_location,
             dst_surface->ds_current_size.cx, dst_surface->ds_current_size.cy);
 
     return WINED3D_OK;
@@ -1612,7 +1615,8 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                 return WINED3DERR_INVALIDCALL;
             }
 
-            if (SUCCEEDED(wined3d_surface_depth_blt(src_surface, &src_rect, dst_surface, &dst_rect)))
+            if (SUCCEEDED(wined3d_surface_depth_blt(src_surface, src_surface->draw_binding, &src_rect,
+                    dst_surface, dst_surface->draw_binding, &dst_rect)))
                 return WINED3D_OK;
         }
     }
@@ -6168,16 +6172,22 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, c
 
     if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
     {
-        if (location == SFLAG_INTEXTURE)
+        if (location == SFLAG_INTEXTURE && surface->flags & SFLAG_INDRAWABLE)
         {
             struct wined3d_context *context = context_acquire(device, NULL);
             surface_load_ds_location(surface, context, location);
             context_release(context);
             return WINED3D_OK;
         }
+        else if (location & surface->flags && surface->draw_binding != SFLAG_INDRAWABLE)
+        {
+            /* Already up to date, nothing to do. */
+            return WINED3D_OK;
+        }
         else
         {
-            FIXME("Unimplemented location %s for depth/stencil buffers.\n", debug_surflocation(location));
+            FIXME("Unimplemented copy from %s to %s for depth/stencil buffers.\n",
+                    debug_surflocation(surface->flags & SFLAG_LOCATIONS), debug_surflocation(location));
             return WINED3DERR_INVALIDCALL;
         }
     }
