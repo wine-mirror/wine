@@ -303,10 +303,12 @@ static void release_win_data(struct macdrv_win_data *data)
  *
  * Return the Mac window associated with the full area of a window
  */
-static macdrv_window macdrv_get_cocoa_window(HWND hwnd)
+static macdrv_window macdrv_get_cocoa_window(HWND hwnd, BOOL require_on_screen)
 {
     struct macdrv_win_data *data = get_win_data(hwnd);
-    macdrv_window ret = data ? data->cocoa_window : NULL;
+    macdrv_window ret = NULL;
+    if (data && (data->on_screen || !require_on_screen))
+        ret = data->cocoa_window;
     release_win_data(data);
     return ret;
 }
@@ -330,7 +332,7 @@ static void set_cocoa_window_properties(struct macdrv_win_data *data)
     ex_style = GetWindowLongW(data->hwnd, GWL_EXSTYLE);
 
     owner = GetWindow(data->hwnd, GW_OWNER);
-    owner_win = macdrv_get_cocoa_window(owner);
+    owner_win = macdrv_get_cocoa_window(owner, TRUE);
     macdrv_set_cocoa_parent_window(data->cocoa_window, owner_win);
 
     get_cocoa_window_features(data, style, ex_style, &wf);
@@ -698,14 +700,14 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags)
         /* find window that this one must be after */
         HWND prev = GetWindow(data->hwnd, GW_HWNDPREV);
         while (prev && !((GetWindowLongW(prev, GWL_STYLE) & WS_VISIBLE) &&
-                         (prev_window = macdrv_get_cocoa_window(prev))))
+                         (prev_window = macdrv_get_cocoa_window(prev, TRUE))))
             prev = GetWindow(prev, GW_HWNDPREV);
         if (!prev_window)
         {
             /* find window that this one must be before */
             next = GetWindow(data->hwnd, GW_HWNDNEXT);
             while (next && !((GetWindowLongW(next, GWL_STYLE) & WS_VISIBLE) &&
-                             (next_window = macdrv_get_cocoa_window(next))))
+                             (next_window = macdrv_get_cocoa_window(next, TRUE))))
                 next = GetWindow(next, GW_HWNDNEXT);
         }
 
@@ -988,7 +990,7 @@ void CDECL macdrv_SetWindowText(HWND hwnd, LPCWSTR text)
 
     TRACE("%p, %s\n", hwnd, debugstr_w(text));
 
-    if ((win = macdrv_get_cocoa_window(hwnd)))
+    if ((win = macdrv_get_cocoa_window(hwnd, FALSE)))
         macdrv_set_cocoa_window_title(win, text, strlenW(text));
 }
 
