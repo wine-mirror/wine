@@ -46,10 +46,13 @@
 
     CGFloat primaryScreenHeight;
     BOOL primaryScreenHeightValid;
+
+    NSMutableArray* orderedWineWindows;
 }
 
 @property (nonatomic) CGEventSourceKeyboardType keyboardType;
 @property (readonly, copy, nonatomic) NSEvent* lastFlagsChanged;
+@property (readonly, nonatomic) NSArray* orderedWineWindows;
 
     - (void) transformProcessToForeground;
 
@@ -62,6 +65,10 @@
     - (void) windowGotFocus:(WineWindow*)window;
 
     - (void) keyboardSelectionDidChange;
+
+    - (void) wineWindow:(WineWindow*)window
+                ordered:(NSWindowOrderingMode)order
+             relativeTo:(WineWindow*)otherWindow;
 
 @end
 

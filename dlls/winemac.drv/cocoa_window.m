@@ -380,12 +380,19 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             [NSApp transformProcessToForeground];
 
             if (prev)
+            {
                 [self orderWindow:NSWindowBelow relativeTo:[prev windowNumber]];
+                [NSApp wineWindow:self ordered:NSWindowBelow relativeTo:prev];
+            }
             else
+            {
                 [self orderWindow:NSWindowAbove relativeTo:[next windowNumber]];
+                [NSApp wineWindow:self ordered:NSWindowAbove relativeTo:next];
+            }
             if (latentParentWindow)
             {
                 [latentParentWindow addChildWindow:self ordered:NSWindowAbove];
+                [NSApp wineWindow:self ordered:NSWindowAbove relativeTo:latentParentWindow];
                 self.latentParentWindow = nil;
             }
 
@@ -407,6 +414,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [latentParentWindow removeChildWindow:self];
         forceNextMouseMoveAbsolute = TRUE;
         [self orderOut:nil];
+        [NSApp wineWindow:self ordered:NSWindowOut relativeTo:nil];
         [NSApp removeWindowsItem:self];
     }
 
@@ -467,7 +475,10 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             [[self parentWindow] removeChildWindow:self];
             self.latentParentWindow = nil;
             if ([self isVisible] && parent)
+            {
                 [parent addChildWindow:self ordered:NSWindowAbove];
+                [NSApp wineWindow:self ordered:NSWindowAbove relativeTo:parent];
+            }
             else
                 self.latentParentWindow = parent;
         }
@@ -556,12 +567,14 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         }
 
         [self orderFront:nil];
+        [NSApp wineWindow:self ordered:NSWindowAbove relativeTo:nil];
         causing_becomeKeyWindow = TRUE;
         [self makeKeyWindow];
         causing_becomeKeyWindow = FALSE;
         if (latentParentWindow)
         {
             [latentParentWindow addChildWindow:self ordered:NSWindowAbove];
+            [NSApp wineWindow:self ordered:NSWindowAbove relativeTo:latentParentWindow];
             self.latentParentWindow = nil;
         }
         if (![self isExcludedFromWindowsMenu])
@@ -700,6 +713,9 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         {
             if ([event type] == NSLeftMouseDown)
             {
+                NSWindowButton windowButton;
+                BOOL broughtWindowForward = TRUE;
+
                 /* Since our windows generally claim they can't be made key, clicks
                    in their title bars are swallowed by the theme frame stuff.  So,
                    we hook directly into the event stream and assume that any click
@@ -707,6 +723,27 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                    accept. */
                 if (![self isKeyWindow] && !self.disabled && !self.noActivate)
                     [NSApp windowGotFocus:self];
+
+                /* Any left-click on our window anyplace other than the close or
+                   minimize buttons will bring it forward. */
+                for (windowButton = NSWindowCloseButton;
+                     windowButton <= NSWindowMiniaturizeButton;
+                     windowButton++)
+                {
+                    NSButton* button = [[event window] standardWindowButton:windowButton];
+                    if (button)
+                    {
+                        NSPoint point = [button convertPoint:[event locationInWindow] fromView:nil];
+                        if ([button mouse:point inRect:[button bounds]])
+                        {
+                            broughtWindowForward = FALSE;
+                            break;
+                        }
+                    }
+                }
+
+                if (broughtWindowForward)
+                    [NSApp wineWindow:self ordered:NSWindowAbove relativeTo:nil];
             }
 
             [super sendEvent:event];
@@ -908,6 +945,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         }
 
         ignore_windowDeminiaturize = FALSE;
+
+        [NSApp wineWindow:self ordered:NSWindowAbove relativeTo:nil];
     }
 
     - (void)windowDidMove:(NSNotification *)notification

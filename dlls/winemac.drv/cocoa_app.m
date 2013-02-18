@@ -38,6 +38,7 @@ int macdrv_err_on;
 @implementation WineApplication
 
     @synthesize keyboardType, lastFlagsChanged;
+    @synthesize orderedWineWindows;
 
     - (id) init
     {
@@ -48,8 +49,9 @@ int macdrv_err_on;
             eventQueuesLock = [[NSLock alloc] init];
 
             keyWindows = [[NSMutableArray alloc] init];
+            orderedWineWindows = [[NSMutableArray alloc] init];
 
-            if (!eventQueues || !eventQueuesLock || !keyWindows)
+            if (!eventQueues || !eventQueuesLock || !keyWindows || !orderedWineWindows)
             {
                 [self release];
                 return nil;
@@ -60,6 +62,7 @@ int macdrv_err_on;
 
     - (void) dealloc
     {
+        [orderedWineWindows release];
         [keyWindows release];
         [eventQueues release];
         [eventQueuesLock release];
@@ -251,6 +254,64 @@ int macdrv_err_on;
         return point;
     }
 
+    - (void) wineWindow:(WineWindow*)window
+                ordered:(NSWindowOrderingMode)order
+             relativeTo:(WineWindow*)otherWindow
+    {
+        NSUInteger index;
+
+        switch (order)
+        {
+            case NSWindowAbove:
+                [window retain];
+                [orderedWineWindows removeObjectIdenticalTo:window];
+                if (otherWindow)
+                {
+                    index = [orderedWineWindows indexOfObjectIdenticalTo:otherWindow];
+                    if (index == NSNotFound)
+                        index = 0;
+                }
+                else
+                {
+                    index = 0;
+                    for (otherWindow in orderedWineWindows)
+                    {
+                        if ([otherWindow level] <= [window level])
+                            break;
+                        index++;
+                    }
+                }
+                [orderedWineWindows insertObject:window atIndex:index];
+                [window release];
+                break;
+            case NSWindowBelow:
+                [window retain];
+                [orderedWineWindows removeObjectIdenticalTo:window];
+                if (otherWindow)
+                {
+                    index = [orderedWineWindows indexOfObjectIdenticalTo:otherWindow];
+                    if (index == NSNotFound)
+                        index = [orderedWineWindows count];
+                }
+                else
+                {
+                    index = 0;
+                    for (otherWindow in orderedWineWindows)
+                    {
+                        if ([otherWindow level] < [window level])
+                            break;
+                        index++;
+                    }
+                }
+                [orderedWineWindows insertObject:window atIndex:index];
+                [window release];
+                break;
+            case NSWindowOut:
+            default:
+                break;
+        }
+    }
+
 
     /*
      * ---------- NSApplication method overrides ----------
@@ -307,6 +368,7 @@ int macdrv_err_on;
                     usingBlock:^(NSNotification *note){
             NSWindow* window = [note object];
             [keyWindows removeObjectIdenticalTo:window];
+            [orderedWineWindows removeObjectIdenticalTo:window];
         }];
 
         [nc addObserver:self
