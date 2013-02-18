@@ -126,6 +126,7 @@ static const struct wined3d_format_channels formats[] =
     {WINED3DFMT_NVDB,                       0,  0,  0,  0,   0,  0,  0,  0,    0,   0,     0},
     {WINED3DFMT_INST,                       0,  0,  0,  0,   0,  0,  0,  0,    0,   0,     0},
     {WINED3DFMT_INTZ,                       0,  0,  0,  0,   0,  0,  0,  0,    4,  24,     8},
+    {WINED3DFMT_RESZ,                       0,  0,  0,  0,   0,  0,  0,  0,    0,   0,     0},
     {WINED3DFMT_NVHU,                       0,  0,  0,  0,   0,  0,  0,  0,    2,   0,     0},
     {WINED3DFMT_NVHS,                       0,  0,  0,  0,   0,  0,  0,  0,    2,   0,     0},
     {WINED3DFMT_NULL,                       8,  8,  8,  8,   0,  8, 16, 24,    4,   0,     0},
@@ -1712,6 +1713,15 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
         gl_info->formats[idx].flags |= WINED3DFMT_FLAG_TEXTURE;
     }
 
+    /* RESZ aka AMD DX9-level hack for multisampled depth buffer resolve. You query for RESZ
+     * support by checking for availability of MAKEFOURCC('R','E','S','Z') surfaces with
+     * RENDERTARGET usage. */
+    if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT])
+    {
+        idx = getFmtIdx(WINED3DFMT_RESZ);
+        gl_info->formats[idx].flags |= WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_RENDERTARGET;
+    }
+
     for (i = 0; i < sizeof(formats) / sizeof(*formats); ++i)
     {
         struct wined3d_format *format = &gl_info->formats[idx];
@@ -1975,6 +1985,7 @@ const char *debug_d3dformat(enum wined3d_format_id format_id)
         FMT_TO_STR(WINED3DFMT_B8G8R8A8_UNORM);
         FMT_TO_STR(WINED3DFMT_B8G8R8X8_UNORM);
         FMT_TO_STR(WINED3DFMT_INTZ);
+        FMT_TO_STR(WINED3DFMT_RESZ);
         FMT_TO_STR(WINED3DFMT_NULL);
         FMT_TO_STR(WINED3DFMT_R16);
         FMT_TO_STR(WINED3DFMT_AL16);

@@ -2212,6 +2212,22 @@ void CDECL wined3d_device_get_viewport(const struct wined3d_device *device, stru
     *viewport = device->stateBlock->state.viewport;
 }
 
+static void resolve_depth_buffer(struct wined3d_state *state)
+{
+    struct wined3d_texture *texture = state->textures[0];
+    struct wined3d_surface *depth_stencil, *surface;
+
+    if (!texture || texture->resource.type != WINED3D_RTYPE_TEXTURE
+            || !(texture->resource.format->flags & WINED3DFMT_FLAG_DEPTH))
+        return;
+    surface = surface_from_resource(texture->sub_resources[0]);
+    depth_stencil = state->fb->depth_stencil;
+    if (!depth_stencil)
+        return;
+
+    wined3d_surface_blt(surface, NULL, depth_stencil, NULL, 0, NULL, WINED3D_TEXF_POINT);
+}
+
 void CDECL wined3d_device_set_render_state(struct wined3d_device *device,
         enum wined3d_render_state state, DWORD value)
 {
@@ -2234,6 +2250,12 @@ void CDECL wined3d_device_set_render_state(struct wined3d_device *device,
         TRACE("Application is setting the old value over, nothing to do.\n");
     else
         device_invalidate_state(device, STATE_RENDER(state));
+
+    if (state == WINED3D_RS_POINTSIZE && value == WINED3D_RESZ_CODE)
+    {
+        TRACE("RESZ multisampled depth buffer resolve triggered.\n");
+        resolve_depth_buffer(&device->stateBlock->state);
+    }
 }
 
 DWORD CDECL wined3d_device_get_render_state(const struct wined3d_device *device, enum wined3d_render_state state)
