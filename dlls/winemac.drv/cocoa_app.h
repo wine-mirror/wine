@@ -48,11 +48,14 @@
     BOOL primaryScreenHeightValid;
 
     NSMutableArray* orderedWineWindows;
+
+    NSMutableDictionary* originalDisplayModes;
 }
 
 @property (nonatomic) CGEventSourceKeyboardType keyboardType;
 @property (readonly, copy, nonatomic) NSEvent* lastFlagsChanged;
 @property (readonly, nonatomic) NSArray* orderedWineWindows;
+@property (readonly, nonatomic) BOOL areDisplaysCaptured;
 
     - (void) transformProcessToForeground;
 

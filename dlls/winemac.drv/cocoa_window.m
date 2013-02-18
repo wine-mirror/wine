@@ -338,17 +338,22 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     - (void) adjustWindowLevel
     {
         NSInteger level;
-        BOOL fullscreen;
+        BOOL fullscreen, captured;
         NSScreen* screen;
         NSUInteger index;
         WineWindow* other = nil;
 
         screen = screen_covered_by_rect([self frame], [NSScreen screens]);
         fullscreen = (screen != nil);
+        captured = (screen || [self screen]) && [NSApp areDisplaysCaptured];
 
-        if (fullscreen)
+        if (captured || fullscreen)
         {
-            level = NSMainMenuWindowLevel + 1;
+            if (captured)
+                level = CGShieldingWindowLevel() + 1; /* Need +1 or we don't get mouse moves */
+            else
+                level = NSMainMenuWindowLevel + 1;
+
             if (self.floating)
                 level++;
         }

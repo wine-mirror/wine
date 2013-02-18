@@ -121,6 +121,8 @@ extern void macdrv_beep(void) DECLSPEC_HIDDEN;
 /* display */
 extern int macdrv_get_displays(struct macdrv_display** displays, int* count) DECLSPEC_HIDDEN;
 extern void macdrv_free_displays(struct macdrv_display* displays) DECLSPEC_HIDDEN;
+extern int macdrv_set_display_mode(const struct macdrv_display* display,
+                                   CGDisplayModeRef display_mode) DECLSPEC_HIDDEN;
 
 
 /* event */
@@ -149,6 +151,9 @@ typedef struct macdrv_event {
     int                 type;
     macdrv_window       window;
     union {
+        struct {
+            int activating;
+        }                                           displays_changed;
         struct {
             CGKeyCode                   keycode;
             CGEventFlags                modifiers;

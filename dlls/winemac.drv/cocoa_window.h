@@ -62,4 +62,6 @@
 @property (readonly, nonatomic) BOOL floating;
 @property (readonly, nonatomic) NSInteger levelWhenActive;
 
+    - (void) adjustWindowLevel;
+
 @end
