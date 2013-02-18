@@ -3095,10 +3095,10 @@ static void test_ftp_protocol(void)
 
     trace("Testing ftp protocol...\n");
 
+    init_test(FTP_TEST, 0);
+
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
     state = STATE_STARTDOWNLOADING;
-    tested_protocol = FTP_TEST;
-    first_data_notif = TRUE;
     expect_hrResult = E_PENDING;
 
     hres = CoGetClassObject(&CLSID_FtpProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
@@ -3629,7 +3629,10 @@ START_TEST(protocol)
 
     test_file_protocol();
     test_http_protocol();
-    test_https_protocol();
+    if(pCreateUri)
+        test_https_protocol();
+    else
+        win_skip("Skipping https tests on too old platform\n");
     test_ftp_protocol();
     test_gopher_protocol();
     test_mk_protocol();
