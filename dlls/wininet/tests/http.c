@@ -1702,7 +1702,6 @@ static const char page1[] =
 struct server_info {
     HANDLE hEvent;
     int port;
-    int num_testH_retrievals;
 };
 
 static DWORD CALLBACK server_thread(LPVOID param)
@@ -1892,17 +1891,6 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "GET /testG"))
         {
             send(c, page1, sizeof page1-1, 0);
-        }
-        if (strstr(buffer, "GET /testH"))
-        {
-            si->num_testH_retrievals++;
-            if (!strstr(buffer, "Content-Length: 0"))
-            {
-                send(c, okmsg, sizeof okmsg-1, 0);
-                send(c, page1, sizeof page1-1, 0);
-            }
-            else
-                send(c, notokmsg, sizeof notokmsg-1, 0);
         }
         if (strstr(buffer, "GET /test_no_content"))
         {
@@ -2814,70 +2802,6 @@ static void test_options(int port)
     InternetCloseHandle(ses);
 }
 
-static void test_url_caching(int port, int *num_retrievals)
-{
-    HINTERNET hi, hc, hr;
-    DWORD r, count;
-    char buffer[0x100];
-
-    ok(*num_retrievals == 0, "expected 0 retrievals prior to test\n");
-
-    hi = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
-    ok(hi != NULL, "open failed\n");
-
-    hc = InternetConnect(hi, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
-    ok(hc != NULL, "connect failed\n");
-
-    /* Pre-load the cache: */
-    hr = HttpOpenRequest(hc, "GET", "/testH", NULL, NULL, NULL, 0, 0);
-    ok(hr != NULL, "HttpOpenRequest failed\n");
-
-    r = HttpSendRequest(hr, NULL, 0, NULL, 0);
-    ok(r, "HttpSendRequest failed\n");
-
-    ok(*num_retrievals == 1, "expected 1 retrievals, got %d\n", *num_retrievals);
-
-    count = 0;
-    memset(buffer, 0, sizeof buffer);
-    SetLastError(0xdeadbeef);
-    r = InternetReadFile(hr, buffer, sizeof buffer, &count);
-    ok(r, "InternetReadFile failed %u\n", GetLastError());
-    ok(count == sizeof page1 - 1, "count was wrong\n");
-    ok(!memcmp(buffer, page1, sizeof page1), "http data wrong\n");
-
-    InternetCloseHandle(hr);
-
-    /* Send the same request, requiring it to be retrieved from the cache */
-    hr = HttpOpenRequest(hc, "GET", "/testH", NULL, NULL, NULL, INTERNET_FLAG_FROM_CACHE, 0);
-    ok(hr != NULL, "HttpOpenRequest failed\n");
-
-    r = HttpSendRequest(hr, NULL, 0, NULL, 0);
-    /* Older Windows versions succeed with this request, newer ones fail with
-     * ERROR_FILE_NOT_FOUND.  Accept either, as the older version allows us
-     * to verify that the server isn't contacted.
-     */
-    if (!r)
-        ok(GetLastError() == ERROR_FILE_NOT_FOUND,
-           "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
-    else
-    {
-        /* The server shouldn't be contacted for this request. */
-        todo_wine
-        ok(*num_retrievals == 1, "expected 1 retrievals\n");
-
-        count = 0;
-        memset(buffer, 0, sizeof buffer);
-        SetLastError(0xdeadbeef);
-        r = InternetReadFile(hr, buffer, sizeof buffer, &count);
-        ok(r, "InternetReadFile failed %u\n", GetLastError());
-        ok(count == sizeof page1 - 1, "count was wrong\n");
-        ok(!memcmp(buffer, page1, sizeof page1), "http data wrong\n");
-    }
-
-    InternetCloseHandle(hc);
-    InternetCloseHandle(hi);
-}
-
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -2886,7 +2810,6 @@ static void test_http_connection(void)
 
     si.hEvent = CreateEvent(NULL, 0, 0, NULL);
     si.port = 7531;
-    si.num_testH_retrievals = 0;
 
     hThread = CreateThread(NULL, 0, server_thread, (LPVOID) &si, 0, &id);
     ok( hThread != NULL, "create thread failed\n");
@@ -2915,7 +2838,6 @@ static void test_http_connection(void)
     test_HttpSendRequestW(si.port);
     test_last_error(si.port);
     test_options(si.port);
-    test_url_caching(si.port, &si.num_testH_retrievals);
     test_no_content(si.port);
     test_conn_close(si.port);
 
