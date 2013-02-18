@@ -445,6 +445,14 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                event.  The back end will ignore it if nothing actually changed. */
             [self windowDidResize:nil];
         }
+        else
+        {
+            /* The back end is establishing a new window size and position.  It's
+               not interested in any stale events regarding those that may be sitting
+               in the queue. */
+            [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_FRAME_CHANGED)
+                                   forWindow:self];
+        }
 
         return on_screen;
     }
