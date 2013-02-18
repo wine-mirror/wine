@@ -3539,36 +3539,9 @@ GpStatus WINGDIPAPI GdipDrawLine(GpGraphics *graphics, GpPen *pen, REAL x1,
 GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
     INT y1, INT x2, INT y2)
 {
-    INT save_state;
-    GpPointF pt[2];
-    GpStatus retval;
-
     TRACE("(%p, %p, %d, %d, %d, %d)\n", graphics, pen, x1, y1, x2, y2);
 
-    if(!pen || !graphics)
-        return InvalidParameter;
-
-    if(graphics->busy)
-        return ObjectBusy;
-
-    if (!graphics->hdc)
-    {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
-    }
-
-    pt[0].X = (REAL)x1;
-    pt[0].Y = (REAL)y1;
-    pt[1].X = (REAL)x2;
-    pt[1].Y = (REAL)y2;
-
-    save_state = prepare_dc(graphics, pen);
-
-    retval = draw_polyline(graphics, pen, pt, 2, TRUE);
-
-    restore_dc(graphics, save_state);
-
-    return retval;
+    return GdipDrawLine(graphics, pen, (REAL)x1, (REAL)y1, (REAL)x2, (REAL)y2);
 }
 
 GpStatus WINGDIPAPI GdipDrawLines(GpGraphics *graphics, GpPen *pen, GDIPCONST
