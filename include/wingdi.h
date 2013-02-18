@@ -3027,6 +3027,7 @@ DECL_WINELIB_TYPE_AW(LPDEVMODE)
 #define DM_DITHERTYPE           __MSABI_LONG(0x04000000)
 #define DM_PANNINGWIDTH         __MSABI_LONG(0x08000000)
 #define DM_PANNINGHEIGHT        __MSABI_LONG(0x10000000)
+#define DM_DISPLAYFIXEDOUTPUT   __MSABI_LONG(0x20000000)
 
 #define DM_GRAYSCALE            1
 #define DM_INTERLACED           2
@@ -3223,6 +3224,10 @@ DECL_WINELIB_TYPE_AW(LPDEVMODE)
 #define DMDO_90                 1
 #define DMDO_180                2
 #define DMDO_270                3
+
+#define DMDFO_DEFAULT           0
+#define DMDFO_STRETCH           1
+#define DMDFO_CENTER            2
 
 typedef struct
 {
