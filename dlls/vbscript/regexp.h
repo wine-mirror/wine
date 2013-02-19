@@ -65,6 +65,7 @@ regexp_t* regexp_new(void*, heap_pool_t*, const WCHAR*, DWORD, WORD, BOOL) DECLS
 void regexp_destroy(regexp_t*) DECLSPEC_HIDDEN;
 HRESULT regexp_execute(regexp_t*, void*, heap_pool_t*, const WCHAR*,
         DWORD, match_state_t*) DECLSPEC_HIDDEN;
+HRESULT regexp_set_flags(regexp_t**, void*, heap_pool_t*, WORD) DECLSPEC_HIDDEN;
 
 static inline match_state_t* alloc_match_state(regexp_t *regexp,
         heap_pool_t *pool, const WCHAR *pos)

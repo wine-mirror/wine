@@ -3286,3 +3286,21 @@ out:
     heap_pool_clear(mark);
     return re;
 }
+
+HRESULT regexp_set_flags(regexp_t **regexp, void *cx, heap_pool_t *pool, WORD flags)
+{
+    if(((*regexp)->flags & REG_FOLD) != (flags & REG_FOLD)) {
+        regexp_t *new_regexp = regexp_new(cx, pool, (*regexp)->source,
+                (*regexp)->source_len, flags, FALSE);
+
+        if(!new_regexp)
+            return E_FAIL;
+
+        regexp_destroy(*regexp);
+        *regexp = new_regexp;
+    }else {
+        (*regexp)->flags = flags;
+    }
+
+    return S_OK;
+}

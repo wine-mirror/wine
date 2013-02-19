@@ -247,43 +247,79 @@ static HRESULT WINAPI RegExp2_put_Pattern(IRegExp2 *iface, BSTR pattern)
 static HRESULT WINAPI RegExp2_get_IgnoreCase(IRegExp2 *iface, VARIANT_BOOL *pIgnoreCase)
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
-    FIXME("(%p)->(%p)\n", This, pIgnoreCase);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pIgnoreCase);
+
+    if(!pIgnoreCase)
+        return E_POINTER;
+
+    *pIgnoreCase = This->flags & REG_FOLD ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI RegExp2_put_IgnoreCase(IRegExp2 *iface, VARIANT_BOOL ignoreCase)
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
-    FIXME("(%p)->(%s)\n", This, ignoreCase ? "true" : "false");
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, ignoreCase ? "true" : "false");
+
+    if(ignoreCase)
+        This->flags |= REG_FOLD;
+    else
+        This->flags &= ~REG_FOLD;
+    return S_OK;
 }
 
 static HRESULT WINAPI RegExp2_get_Global(IRegExp2 *iface, VARIANT_BOOL *pGlobal)
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
-    FIXME("(%p)->(%p)\n", This, pGlobal);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pGlobal);
+
+    if(!pGlobal)
+        return E_POINTER;
+
+    *pGlobal = This->flags & REG_GLOB ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI RegExp2_put_Global(IRegExp2 *iface, VARIANT_BOOL global)
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
-    FIXME("(%p)->(%s)\n", This, global ? "true" : "false");
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, global ? "true" : "false");
+
+    if(global)
+        This->flags |= REG_GLOB;
+    else
+        This->flags &= ~REG_GLOB;
+    return S_OK;
 }
 
 static HRESULT WINAPI RegExp2_get_Multiline(IRegExp2 *iface, VARIANT_BOOL *pMultiline)
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
-    FIXME("(%p)->(%p)\n", This, pMultiline);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pMultiline);
+
+    if(!pMultiline)
+        return E_POINTER;
+
+    *pMultiline = This->flags & REG_MULTILINE ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI RegExp2_put_Multiline(IRegExp2 *iface, VARIANT_BOOL multiline)
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
-    FIXME("(%p)->(%s)\n", This, multiline ? "true" : "false");
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, multiline ? "true" : "false");
+
+    if(multiline)
+        This->flags |= REG_MULTILINE;
+    else
+        This->flags &= ~REG_MULTILINE;
+    return S_OK;
 }
 
 static HRESULT WINAPI RegExp2_Execute(IRegExp2 *iface,
@@ -313,6 +349,10 @@ static HRESULT WINAPI RegExp2_Test(IRegExp2 *iface, BSTR sourceString, VARIANT_B
                 strlenW(This->pattern), This->flags, FALSE);
         if(!This->regexp)
             return E_FAIL;
+    }else {
+        hres = regexp_set_flags(&This->regexp, NULL, &This->pool, This->flags);
+        if(FAILED(hres))
+            return hres;
     }
 
     mark = heap_pool_mark(&This->pool);
