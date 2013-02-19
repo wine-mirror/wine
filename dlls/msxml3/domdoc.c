@@ -3245,7 +3245,7 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
     ConnectionPoint *This = impl_from_IConnectionPoint(iface);
     IUnknown *sink;
     HRESULT hr;
-    int i;
+    DWORD i;
 
     TRACE("(%p)->(%p %p)\n", This, unk_sink, cookie);
 
