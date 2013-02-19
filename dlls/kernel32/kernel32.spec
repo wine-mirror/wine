@@ -498,6 +498,7 @@
 @ stdcall GetCurrentConsoleFont(long long ptr)
 @ stdcall GetCurrentDirectoryA(long ptr)
 @ stdcall GetCurrentDirectoryW(long ptr)
+@ stdcall GetCurrentPackageId(ptr ptr)
 @ stdcall GetCurrentProcess()
 @ stdcall GetCurrentProcessId()
 @ stdcall GetCurrentProcessorNumber() ntdll.NtGetCurrentProcessorNumber

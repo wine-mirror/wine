@@ -201,3 +201,9 @@ BOOL WINAPI GetProductInfo(DWORD dwOSMajorVersion, DWORD dwOSMinorVersion, DWORD
     return RtlGetProductInfo(dwOSMajorVersion, dwOSMinorVersion,
                              dwSpMajorVersion, dwSpMinorVersion, pdwReturnedProductType);
 }
+
+LONG WINAPI GetCurrentPackageId(UINT32 *len, BYTE *buffer)
+{
+    FIXME("(%p %p): stub\n", len, buffer);
+    return APPMODEL_ERROR_NO_PACKAGE;
+}
