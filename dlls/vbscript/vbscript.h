@@ -36,12 +36,16 @@ typedef struct {
     DWORD block_cnt;
     DWORD last_block;
     DWORD offset;
+    BOOL mark;
     struct list custom_blocks;
 } heap_pool_t;
 
 void heap_pool_init(heap_pool_t*) DECLSPEC_HIDDEN;
 void *heap_pool_alloc(heap_pool_t*,size_t) __WINE_ALLOC_SIZE(2) DECLSPEC_HIDDEN;
+void *heap_pool_grow(heap_pool_t*,void*,DWORD,DWORD) DECLSPEC_HIDDEN;
+void heap_pool_clear(heap_pool_t*) DECLSPEC_HIDDEN;
 void heap_pool_free(heap_pool_t*) DECLSPEC_HIDDEN;
+heap_pool_t *heap_pool_mark(heap_pool_t*) DECLSPEC_HIDDEN;
 
 typedef struct _function_t function_t;
 typedef struct _vbscode_t vbscode_t;

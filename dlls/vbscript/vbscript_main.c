@@ -29,6 +29,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
+WINE_DECLARE_DEBUG_CHANNEL(heap);
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
@@ -127,6 +128,7 @@ const char *debugstr_variant(const VARIANT *v)
 }
 
 #define MIN_BLOCK_SIZE  128
+#define ARENA_FREE_FILLER  0xaa
 
 static inline DWORD block_size(DWORD block)
 {
@@ -194,19 +196,65 @@ void *heap_pool_alloc(heap_pool_t *heap, size_t size)
     return list+1;
 }
 
+void *heap_pool_grow(heap_pool_t *heap, void *mem, DWORD size, DWORD inc)
+{
+    void *ret;
+
+    if(mem == (BYTE*)heap->blocks[heap->last_block] + heap->offset-size
+            && heap->offset+inc < block_size(heap->last_block)) {
+        heap->offset += inc;
+        return mem;
+    }
+
+    ret = heap_pool_alloc(heap, size+inc);
+    if(ret) /* FIXME: avoid copying for custom blocks */
+        memcpy(ret, mem, size);
+    return ret;
+}
+
+void heap_pool_clear(heap_pool_t *heap)
+{
+    struct list *tmp;
+
+    if(!heap)
+        return;
+
+    while((tmp = list_next(&heap->custom_blocks, &heap->custom_blocks))) {
+        list_remove(tmp);
+        heap_free(tmp);
+    }
+
+    if(WARN_ON(heap)) {
+        DWORD i;
+
+        for(i=0; i < heap->block_cnt; i++)
+            memset(heap->blocks[i], ARENA_FREE_FILLER, block_size(i));
+    }
+
+    heap->last_block = heap->offset = 0;
+    heap->mark = FALSE;
+}
+
 void heap_pool_free(heap_pool_t *heap)
 {
-    struct list *iter;
     DWORD i;
 
-    while((iter = list_next(&heap->custom_blocks, &heap->custom_blocks))) {
-        list_remove(iter);
-        heap_free(iter);
-    }
+    heap_pool_clear(heap);
 
     for(i=0; i < heap->block_cnt; i++)
         heap_free(heap->blocks[i]);
     heap_free(heap->blocks);
+
+    heap_pool_init(heap);
+}
+
+heap_pool_t *heap_pool_mark(heap_pool_t *heap)
+{
+    if(heap->mark)
+        return NULL;
+
+    heap->mark = TRUE;
+    return heap;
 }
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)

@@ -17,6 +17,7 @@
  */
 
 #include "vbscript.h"
+#include "regexp.h"
 #include "vbsregexp55.h"
 
 #include "wine/debug.h"
@@ -86,6 +87,9 @@ typedef struct {
     LONG ref;
 
     WCHAR *pattern;
+    regexp_t *regexp;
+    heap_pool_t pool;
+    WORD flags;
 } RegExp2;
 
 static inline RegExp2 *impl_from_IRegExp2(IRegExp2 *iface)
@@ -138,6 +142,9 @@ static ULONG WINAPI RegExp2_Release(IRegExp2 *iface)
 
     if(!ref) {
         heap_free(This->pattern);
+        if(This->regexp)
+            regexp_destroy(This->regexp);
+        heap_pool_free(&This->pool);
         heap_free(This);
     }
 
@@ -214,6 +221,10 @@ static HRESULT WINAPI RegExp2_put_Pattern(IRegExp2 *iface, BSTR pattern)
 
     if(!pattern) {
         heap_free(This->pattern);
+        if(This->regexp) {
+            regexp_destroy(This->regexp);
+            This->regexp = NULL;
+        }
         This->pattern = NULL;
         return S_OK;
     }
@@ -226,6 +237,10 @@ static HRESULT WINAPI RegExp2_put_Pattern(IRegExp2 *iface, BSTR pattern)
     heap_free(This->pattern);
     This->pattern = p;
     memcpy(p, pattern, size);
+    if(This->regexp) {
+        regexp_destroy(This->regexp);
+        This->regexp = NULL;
+    }
     return S_OK;
 }
 
@@ -282,8 +297,43 @@ static HRESULT WINAPI RegExp2_Execute(IRegExp2 *iface,
 static HRESULT WINAPI RegExp2_Test(IRegExp2 *iface, BSTR sourceString, VARIANT_BOOL *pMatch)
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(sourceString), pMatch);
-    return E_NOTIMPL;
+    match_state_t *result;
+    heap_pool_t *mark;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(sourceString), pMatch);
+
+    if(!This->pattern) {
+        *pMatch = VARIANT_TRUE;
+        return S_OK;
+    }
+
+    if(!This->regexp) {
+        This->regexp = regexp_new(NULL, &This->pool, This->pattern,
+                strlenW(This->pattern), This->flags, FALSE);
+        if(!This->regexp)
+            return E_FAIL;
+    }
+
+    mark = heap_pool_mark(&This->pool);
+    result = alloc_match_state(This->regexp, &This->pool, sourceString);
+    if(!result) {
+        heap_pool_clear(mark);
+        return E_OUTOFMEMORY;
+    }
+
+    hres = regexp_execute(This->regexp, NULL, &This->pool,
+            sourceString, SysStringLen(sourceString), result);
+
+    heap_pool_clear(mark);
+
+    if(hres == S_OK) {
+        *pMatch = VARIANT_TRUE;
+    }else if(hres == S_FALSE) {
+        *pMatch = VARIANT_FALSE;
+        hres = S_OK;
+    }
+    return hres;
 }
 
 static HRESULT WINAPI RegExp2_Replace(IRegExp2 *iface, BSTR sourceString,
@@ -466,6 +516,7 @@ HRESULT WINAPI VBScriptRegExpFactory_CreateInstance(IClassFactory *iface, IUnkno
     ret->IRegExp_iface.lpVtbl = &RegExpVtbl;
 
     ret->ref = 1;
+    heap_pool_init(&ret->pool);
 
     hres = IRegExp2_QueryInterface(&ret->IRegExp2_iface, riid, ppv);
     IRegExp2_Release(&ret->IRegExp2_iface);
