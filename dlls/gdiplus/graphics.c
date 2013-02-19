@@ -3486,7 +3486,7 @@ GpStatus WINGDIPAPI GdipFillClosedCurve2(GpGraphics *graphics, GpBrush *brush,
     GDIPCONST GpPointF *points, INT count, REAL tension, GpFillMode fill)
 {
     GpPath *path;
-    GpStatus stat;
+    GpStatus status;
 
     TRACE("(%p, %p, %p, %d, %.2f, %d)\n", graphics, brush, points,
             count, tension, fill);
@@ -3500,25 +3500,15 @@ GpStatus WINGDIPAPI GdipFillClosedCurve2(GpGraphics *graphics, GpBrush *brush,
     if(count == 1)    /* Do nothing */
         return Ok;
 
-    stat = GdipCreatePath(fill, &path);
-    if(stat != Ok)
-        return stat;
+    status = GdipCreatePath(fill, &path);
+    if (status != Ok) return status;
 
-    stat = GdipAddPathClosedCurve2(path, points, count, tension);
-    if(stat != Ok){
-        GdipDeletePath(path);
-        return stat;
-    }
-
-    stat = GdipFillPath(graphics, brush, path);
-    if(stat != Ok){
-        GdipDeletePath(path);
-        return stat;
-    }
+    status = GdipAddPathClosedCurve2(path, points, count, tension);
+    if (status == Ok)
+        status = GdipFillPath(graphics, brush, path);
 
     GdipDeletePath(path);
-
-    return Ok;
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipFillClosedCurve2I(GpGraphics *graphics, GpBrush *brush,
