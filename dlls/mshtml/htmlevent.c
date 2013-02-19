@@ -1057,9 +1057,14 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
 
     TRACE("(%p) %s\n", doc, debugstr_w(event_info[eid].name));
 
+    window = doc->window;
+    if(!window) {
+        WARN("NULL window\n");
+        return;
+    }
+
     htmldoc_addref(&doc->basedoc);
 
-    window = doc->window;
     prev_event = window->event;
     window->event = event_obj ? &event_obj->IHTMLEventObj_iface : NULL;
 
