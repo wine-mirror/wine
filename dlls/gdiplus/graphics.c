@@ -51,18 +51,6 @@ static GpStatus draw_driver_string(GpGraphics *graphics, GDIPCONST UINT16 *text,
                                    GDIPCONST GpBrush *brush, GDIPCONST PointF *positions,
                                    INT flags, GDIPCONST GpMatrix *matrix);
 
-/* Converts angle (in degrees) to x/y coordinates */
-static void deg2xy(REAL angle, REAL x_0, REAL y_0, REAL *x, REAL *y)
-{
-    REAL radAngle, hypotenuse;
-
-    radAngle = deg2rad(angle);
-    hypotenuse = 50.0; /* arbitrary */
-
-    *x = x_0 + cos(radAngle) * hypotenuse;
-    *y = y_0 + sin(radAngle) * hypotenuse;
-}
-
 /* Converts from gdiplus path point type to gdi path point type. */
 static BYTE convert_path_point_type(BYTE type)
 {
@@ -1454,27 +1442,6 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
     default:
         return NotImplemented;
     }
-}
-
-/* GdipDrawPie/GdipFillPie helper function */
-static void draw_pie(GpGraphics *graphics, REAL x, REAL y, REAL width,
-    REAL height, REAL startAngle, REAL sweepAngle)
-{
-    GpPointF ptf[4];
-    POINT pti[4];
-
-    ptf[0].X = x;
-    ptf[0].Y = y;
-    ptf[1].X = x + width;
-    ptf[1].Y = y + height;
-
-    deg2xy(startAngle+sweepAngle, x + width / 2.0, y + width / 2.0, &ptf[2].X, &ptf[2].Y);
-    deg2xy(startAngle, x + width / 2.0, y + width / 2.0, &ptf[3].X, &ptf[3].Y);
-
-    transform_and_round_points(graphics, pti, ptf, 4);
-
-    Pie(graphics->hdc, pti[0].x, pti[0].y, pti[1].x, pti[1].y, pti[2].x,
-        pti[2].y, pti[3].x, pti[3].y);
 }
 
 /* Draws the linecap the specified color and size on the hdc.  The linecap is in
@@ -3396,7 +3363,8 @@ GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 GpStatus WINGDIPAPI GdipDrawPie(GpGraphics *graphics, GpPen *pen, REAL x,
     REAL y, REAL width, REAL height, REAL startAngle, REAL sweepAngle)
 {
-    INT save_state;
+    GpStatus status;
+    GpPath *path;
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f)\n", graphics, pen, x, y,
             width, height, startAngle, sweepAngle);
@@ -3407,20 +3375,15 @@ GpStatus WINGDIPAPI GdipDrawPie(GpGraphics *graphics, GpPen *pen, REAL x,
     if(graphics->busy)
         return ObjectBusy;
 
-    if (!graphics->hdc)
-    {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
-    }
+    status = GdipCreatePath(FillModeAlternate, &path);
+    if (status != Ok) return status;
 
-    save_state = prepare_dc(graphics, pen);
-    SelectObject(graphics->hdc, GetStockObject(NULL_BRUSH));
+    status = GdipAddPathPie(path, x, y, width, height, startAngle, sweepAngle);
+    if (status == Ok)
+        status = GdipDrawPath(graphics, pen, path);
 
-    draw_pie(graphics, x, y, width, height, startAngle, sweepAngle);
-
-    restore_dc(graphics, save_state);
-
-    return Ok;
+    GdipDeletePath(path);
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipDrawPieI(GpGraphics *graphics, GpPen *pen, INT x,
