@@ -4724,7 +4724,7 @@ static void partial_block_lock_test(void)
             {
                 SetRect(&rect, formats[i].block_width >> 1, 0, formats[i].block_width, formats[i].block_height);
                 hr = IDirectDrawSurface7_Lock(surface, &rect, &ddsd, 0, NULL);
-                ok(!SUCCEEDED(hr) == !pools[j].success || broken(SUCCEEDED(hr)),
+                ok(SUCCEEDED(hr) == pools[j].success || broken(SUCCEEDED(hr)),
                         "Partial block lock %s, expected %s, format %s, pool %s\n",
                         SUCCEEDED(hr) ? "succeeded" : "failed", pools[j].success ? "success" : "failure",
                         formats[i].name, pools[j].name);
@@ -4736,7 +4736,7 @@ static void partial_block_lock_test(void)
 
                 SetRect(&rect, 0, 0, formats[i].block_width >> 1, formats[i].block_height);
                 hr = IDirectDrawSurface7_Lock(surface, &rect, &ddsd, 0, NULL);
-                ok(!SUCCEEDED(hr) == !pools[j].success || broken(SUCCEEDED(hr)),
+                ok(SUCCEEDED(hr) == pools[j].success || broken(SUCCEEDED(hr)),
                         "Partial block lock %s, expected %s, format %s, pool %s\n",
                         SUCCEEDED(hr) ? "succeeded" : "failed", pools[j].success ? "success" : "failure",
                         formats[i].name, pools[j].name);
@@ -4751,7 +4751,7 @@ static void partial_block_lock_test(void)
             {
                 SetRect(&rect, 0, formats[i].block_height >> 1, formats[i].block_width, formats[i].block_height);
                 hr = IDirectDrawSurface7_Lock(surface, &rect, &ddsd, 0, NULL);
-                ok(!SUCCEEDED(hr) == !pools[j].success || broken(SUCCEEDED(hr)),
+                ok(SUCCEEDED(hr) == pools[j].success || broken(SUCCEEDED(hr)),
                         "Partial block lock %s, expected %s, format %s, pool %s\n",
                         SUCCEEDED(hr) ? "succeeded" : "failed", pools[j].success ? "success" : "failure",
                         formats[i].name, pools[j].name);
@@ -4763,7 +4763,7 @@ static void partial_block_lock_test(void)
 
                 SetRect(&rect, 0, 0, formats[i].block_width, formats[i].block_height >> 1);
                 hr = IDirectDrawSurface7_Lock(surface, &rect, &ddsd, 0, NULL);
-                ok(!SUCCEEDED(hr) == !pools[j].success || broken(SUCCEEDED(hr)),
+                ok(SUCCEEDED(hr) == pools[j].success || broken(SUCCEEDED(hr)),
                         "Partial block lock %s, expected %s, format %s, pool %s\n",
                         SUCCEEDED(hr) ? "succeeded" : "failed", pools[j].success ? "success" : "failure",
                         formats[i].name, pools[j].name);
