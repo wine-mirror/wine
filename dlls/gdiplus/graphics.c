@@ -3431,9 +3431,8 @@ GpStatus WINGDIPAPI GdipDrawRectangleI(GpGraphics *graphics, GpPen *pen, INT x,
 GpStatus WINGDIPAPI GdipDrawRectangles(GpGraphics *graphics, GpPen *pen,
     GDIPCONST GpRectF* rects, INT count)
 {
-    GpPointF *ptf;
-    POINT *pti;
-    INT save_state, i;
+    GpStatus status;
+    GpPath *path;
 
     TRACE("(%p, %p, %p, %d)\n", graphics, pen, rects, count);
 
@@ -3443,42 +3442,15 @@ GpStatus WINGDIPAPI GdipDrawRectangles(GpGraphics *graphics, GpPen *pen,
     if(graphics->busy)
         return ObjectBusy;
 
-    if (!graphics->hdc)
-    {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
-    }
+    status = GdipCreatePath(FillModeAlternate, &path);
+    if (status != Ok) return status;
 
-    ptf = GdipAlloc(4 * count * sizeof(GpPointF));
-    pti = GdipAlloc(4 * count * sizeof(POINT));
+    status = GdipAddPathRectangles(path, rects, count);
+    if (status == Ok)
+        status = GdipDrawPath(graphics, pen, path);
 
-    if(!ptf || !pti){
-        GdipFree(ptf);
-        GdipFree(pti);
-        return OutOfMemory;
-    }
-
-    for(i = 0; i < count; i++){
-        ptf[4 * i + 3].X = ptf[4 * i].X = rects[i].X;
-        ptf[4 * i + 1].Y = ptf[4 * i].Y = rects[i].Y;
-        ptf[4 * i + 2].X = ptf[4 * i + 1].X = rects[i].X + rects[i].Width;
-        ptf[4 * i + 3].Y = ptf[4 * i + 2].Y = rects[i].Y + rects[i].Height;
-    }
-
-    save_state = prepare_dc(graphics, pen);
-    SelectObject(graphics->hdc, GetStockObject(NULL_BRUSH));
-
-    transform_and_round_points(graphics, pti, ptf, 4 * count);
-
-    for(i = 0; i < count; i++)
-        Polygon(graphics->hdc, &pti[4 * i], 4);
-
-    restore_dc(graphics, save_state);
-
-    GdipFree(ptf);
-    GdipFree(pti);
-
-    return Ok;
+    GdipDeletePath(path);
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipDrawRectanglesI(GpGraphics *graphics, GpPen *pen,
