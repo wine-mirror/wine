@@ -151,35 +151,6 @@ static void get_mac_rect_offset(struct macdrv_win_data *data, DWORD style, RECT 
 
 
 /***********************************************************************
- *              show_window
- */
-static void show_window(struct macdrv_win_data *data)
-{
-    TRACE("win %p/%p\n", data->hwnd, data->cocoa_window);
-
-    data->on_screen = macdrv_order_cocoa_window(data->cocoa_window, NULL, NULL);
-    if (data->on_screen)
-    {
-        HWND hwndFocus = GetFocus();
-        if (hwndFocus && (data->hwnd == hwndFocus || IsChild(data->hwnd, hwndFocus)))
-            macdrv_SetFocus(hwndFocus);
-    }
-}
-
-
-/***********************************************************************
- *              hide_window
- */
-static void hide_window(struct macdrv_win_data *data)
-{
-    TRACE("win %p/%p\n", data->hwnd, data->cocoa_window);
-
-    macdrv_hide_cocoa_window(data->cocoa_window);
-    data->on_screen = FALSE;
-}
-
-
-/***********************************************************************
  *              macdrv_window_to_mac_rect
  *
  * Convert a rect from client to Mac window coordinates
@@ -605,6 +576,55 @@ static struct macdrv_win_data *macdrv_create_win_data(HWND hwnd, const RECT *win
 
 
 /***********************************************************************
+ *              show_window
+ */
+static void show_window(struct macdrv_win_data *data)
+{
+    HWND prev = NULL;
+    HWND next = NULL;
+    macdrv_window prev_window = NULL;
+    macdrv_window next_window = NULL;
+
+    /* find window that this one must be after */
+    prev = GetWindow(data->hwnd, GW_HWNDPREV);
+    while (prev && !((GetWindowLongW(prev, GWL_STYLE) & WS_VISIBLE) &&
+                     (prev_window = macdrv_get_cocoa_window(prev, TRUE))))
+        prev = GetWindow(prev, GW_HWNDPREV);
+    if (!prev_window)
+    {
+        /* find window that this one must be before */
+        next = GetWindow(data->hwnd, GW_HWNDNEXT);
+        while (next && !((GetWindowLongW(next, GWL_STYLE) & WS_VISIBLE) &&
+                         (next_window = macdrv_get_cocoa_window(next, TRUE))))
+            next = GetWindow(next, GW_HWNDNEXT);
+    }
+
+    TRACE("win %p/%p below %p/%p above %p/%p\n",
+          data->hwnd, data->cocoa_window, prev, prev_window, next, next_window);
+
+    data->on_screen = macdrv_order_cocoa_window(data->cocoa_window, prev_window, next_window);
+    if (data->on_screen)
+    {
+        HWND hwndFocus = GetFocus();
+        if (hwndFocus && (data->hwnd == hwndFocus || IsChild(data->hwnd, hwndFocus)))
+            macdrv_SetFocus(hwndFocus);
+    }
+}
+
+
+/***********************************************************************
+ *              hide_window
+ */
+static void hide_window(struct macdrv_win_data *data)
+{
+    TRACE("win %p/%p\n", data->hwnd, data->cocoa_window);
+
+    macdrv_hide_cocoa_window(data->cocoa_window);
+    data->on_screen = FALSE;
+}
+
+
+/***********************************************************************
  *              get_region_data
  *
  * Calls GetRegionData on the given region and converts the rectangle
@@ -692,30 +712,7 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags)
           wine_dbgstr_rect(&data->whole_rect));
 
     if (data->on_screen && (!(swp_flags & SWP_NOZORDER) || (swp_flags & SWP_SHOWWINDOW)))
-    {
-        HWND next = NULL;
-        macdrv_window prev_window = NULL;
-        macdrv_window next_window = NULL;
-
-        /* find window that this one must be after */
-        HWND prev = GetWindow(data->hwnd, GW_HWNDPREV);
-        while (prev && !((GetWindowLongW(prev, GWL_STYLE) & WS_VISIBLE) &&
-                         (prev_window = macdrv_get_cocoa_window(prev, TRUE))))
-            prev = GetWindow(prev, GW_HWNDPREV);
-        if (!prev_window)
-        {
-            /* find window that this one must be before */
-            next = GetWindow(data->hwnd, GW_HWNDNEXT);
-            while (next && !((GetWindowLongW(next, GWL_STYLE) & WS_VISIBLE) &&
-                             (next_window = macdrv_get_cocoa_window(next, TRUE))))
-                next = GetWindow(next, GW_HWNDNEXT);
-        }
-
-        data->on_screen = macdrv_order_cocoa_window(data->cocoa_window, prev_window, next_window);
-
-        TRACE("win %p/%p below %p/%p above %p/%p\n",
-              data->hwnd, data->cocoa_window, prev, prev_window, next, next_window);
-    }
+        show_window(data);
 }
 
 
