@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 typedef struct {
     jsdisp_t dispex;
 
-    JSRegExp *jsregexp;
+    regexp_t *jsregexp;
     jsstr_t *str;
     INT last_index;
     jsval_t last_index_val;
@@ -77,12 +77,15 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
         jsstr_t *str, const WCHAR **cp, match_result_t **parens, DWORD *parens_size,
         DWORD *parens_cnt, match_result_t *ret)
 {
-    REMatchState *result;
-    DWORD matchlen;
+    match_state_t *result;
     HRESULT hres;
 
-    hres = MatchRegExpNext(regexp->jsregexp, str->str, jsstr_length(str),
-            cp, &ctx->tmp_heap, &result, &matchlen);
+    result = alloc_match_state(regexp->jsregexp, &ctx->tmp_heap, *cp);
+    if(!result)
+        return E_OUTOFMEMORY;
+
+    hres = regexp_execute(regexp->jsregexp, ctx, &ctx->tmp_heap,
+            str->str, jsstr_length(str), result);
     if(FAILED(hres))
         return hres;
     if(hres == S_FALSE) {
@@ -90,19 +93,20 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
             set_last_index(regexp, 0);
         return S_FALSE;
     }
+    *cp = result->cp;
 
     if(parens) {
-        if(regexp->jsregexp->parenCount > *parens_size) {
+        if(result->paren_count > *parens_size) {
             match_result_t *new_parens;
 
             if(*parens)
-                new_parens = heap_realloc(*parens, sizeof(match_result_t)*regexp->jsregexp->parenCount);
+                new_parens = heap_realloc(*parens, sizeof(match_result_t)*result->paren_count);
             else
-                new_parens = heap_alloc(sizeof(match_result_t)*regexp->jsregexp->parenCount);
+                new_parens = heap_alloc(sizeof(match_result_t)*result->paren_count);
             if(!new_parens)
                 return E_OUTOFMEMORY;
 
-            *parens_size = regexp->jsregexp->parenCount;
+            *parens_size = result->paren_count;
             *parens = new_parens;
         }
     }
@@ -115,9 +119,9 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
     if(parens) {
         DWORD i;
 
-        *parens_cnt = regexp->jsregexp->parenCount;
+        *parens_cnt = result->paren_count;
 
-        for(i=0; i < regexp->jsregexp->parenCount; i++) {
+        for(i=0; i < result->paren_count; i++) {
             if(result->parens[i].index == -1) {
                 (*parens)[i].str = NULL;
                 (*parens)[i].len = 0;
@@ -129,7 +133,7 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
     }
 
     if(!(rem_flags & REM_NO_CTX_UPDATE)) {
-        DWORD i, n = min(sizeof(ctx->match_parens)/sizeof(ctx->match_parens[0]), regexp->jsregexp->parenCount);
+        DWORD i, n = min(sizeof(ctx->match_parens)/sizeof(ctx->match_parens[0]), result->paren_count);
 
         for(i=0; i < n; i++) {
             if(result->parens[i].index == -1) {
@@ -145,13 +149,13 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
             memset(ctx->match_parens+n, 0, sizeof(ctx->match_parens) - n*sizeof(ctx->match_parens[0]));
     }
 
-    ret->str = result->cp-matchlen;
-    ret->len = matchlen;
+    ret->str = result->cp - result->match_len;
+    ret->len = result->match_len;
     set_last_index(regexp, result->cp-str->str);
 
     if(!(rem_flags & REM_NO_CTX_UPDATE)) {
         ctx->last_match_index = ret->str-str->str;
-        ctx->last_match_length = matchlen;
+        ctx->last_match_length = result->match_len;
     }
 
     return S_OK;
@@ -518,7 +522,7 @@ static void RegExp_destructor(jsdisp_t *dispex)
     RegExpInstance *This = (RegExpInstance*)dispex;
 
     if(This->jsregexp)
-        js_DestroyRegExp(This->jsregexp);
+        regexp_destroy(This->jsregexp);
     jsval_release(This->last_index_val);
     jsstr_release(This->str);
     heap_free(This);
@@ -598,10 +602,10 @@ HRESULT create_regexp(script_ctx_t *ctx, jsstr_t *src, DWORD flags, jsdisp_t **r
     regexp->str = jsstr_addref(src);
     regexp->last_index_val = jsval_number(0);
 
-    regexp->jsregexp = js_NewRegExp(ctx, &ctx->tmp_heap, regexp->str->str,
+    regexp->jsregexp = regexp_new(ctx, &ctx->tmp_heap, regexp->str->str,
             jsstr_length(regexp->str), flags, FALSE);
-    if(!regexp->jsregexp) {
-        WARN("js_NewRegExp failed\n");
+    if(FAILED(hres)) {
+        WARN("regexp_new failed\n");
         jsdisp_release(&regexp->dispex);
         return E_FAIL;
     }

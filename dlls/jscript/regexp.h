@@ -41,50 +41,41 @@ typedef struct RECapture {
     size_t length;              /* length of capture */
 } RECapture;
 
-typedef struct REMatchState {
+typedef struct match_state_t {
     const WCHAR *cp;
-    RECapture parens[1];      /* first of 're->parenCount' captures,
-                                 allocated at end of this struct */
-} REMatchState;
+    DWORD match_len;
 
+    DWORD paren_count;
+    RECapture parens[1];
+} match_state_t;
 
-typedef BYTE JSPackedBool;
 typedef BYTE jsbytecode;
 
-/*
- * This struct holds a bitmap representation of a class from a regexp.
- * There's a list of these referenced by the classList field in the JSRegExp
- * struct below. The initial state has startIndex set to the offset in the
- * original regexp source of the beginning of the class contents. The first
- * use of the class converts the source representation into a bitmap.
- *
- */
-typedef struct RECharSet {
-    JSPackedBool    converted;
-    JSPackedBool    sense;
-    WORD            length;
-    union {
-        BYTE        *bits;
-        struct {
-            size_t  startIndex;
-            size_t  length;
-        } src;
-    } u;
-} RECharSet;
+typedef struct regexp_t {
+    WORD                flags;         /* flags, see jsapi.h's REG_* defines */
+    size_t              parenCount;    /* number of parenthesized submatches */
+    size_t              classCount;    /* count [...] bitmaps */
+    struct RECharSet    *classList;    /* list of [...] bitmaps */
+    const WCHAR         *source;       /* locked source string, sans // */
+    DWORD               source_len;
+    jsbytecode          program[1];    /* regular expression bytecode */
+} regexp_t;
 
-typedef struct JSRegExp {
-    WORD         flags;         /* flags, see jsapi.h's REG_* defines */
-    size_t       parenCount;    /* number of parenthesized submatches */
-    size_t       classCount;    /* count [...] bitmaps */
-    RECharSet    *classList;    /* list of [...] bitmaps */
-    const WCHAR  *source;       /* locked source string, sans // */
-    DWORD        source_len;
-    jsbytecode   program[1];    /* regular expression bytecode */
-} JSRegExp;
+regexp_t* regexp_new(void*, heap_pool_t*, const WCHAR*, DWORD, WORD, BOOL) DECLSPEC_HIDDEN;
+void regexp_destroy(regexp_t*) DECLSPEC_HIDDEN;
+HRESULT regexp_execute(regexp_t*, void*, heap_pool_t*, const WCHAR*,
+        DWORD, match_state_t*) DECLSPEC_HIDDEN;
 
-JSRegExp* js_NewRegExp(void *cx, heap_pool_t *pool, const WCHAR *str,
-        DWORD str_len, UINT flags, BOOL flat) DECLSPEC_HIDDEN;
-void js_DestroyRegExp(JSRegExp *re) DECLSPEC_HIDDEN;
-HRESULT MatchRegExpNext(JSRegExp *jsregexp, const WCHAR *str,
-        DWORD str_len, const WCHAR **cp, heap_pool_t *pool,
-        REMatchState **result, DWORD *matchlen) DECLSPEC_HIDDEN;
+static inline match_state_t* alloc_match_state(regexp_t *regexp,
+        heap_pool_t *pool, const WCHAR *pos)
+{
+    size_t size = offsetof(match_state_t, parens) + regexp->parenCount*sizeof(RECapture);
+    match_state_t *ret;
+
+    ret = pool ? heap_pool_alloc(pool, size) : heap_alloc(size);
+    if(!ret)
+        return NULL;
+
+    ret->cp = pos;
+    return ret;
+}

@@ -49,6 +49,30 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 #define JS_ReportOutOfMemory(a)
 #define JS_COUNT_OPERATION(a,b)
 
+
+typedef BYTE JSPackedBool;
+
+/*
+ * This struct holds a bitmap representation of a class from a regexp.
+ * There's a list of these referenced by the classList field in the regexp_t
+ * struct below. The initial state has startIndex set to the offset in the
+ * original regexp source of the beginning of the class contents. The first
+ * use of the class converts the source representation into a bitmap.
+ *
+ */
+typedef struct RECharSet {
+    JSPackedBool    converted;
+    JSPackedBool    sense;
+    WORD            length;
+    union {
+        BYTE        *bits;
+        struct {
+            size_t  startIndex;
+            size_t  length;
+        } src;
+    } u;
+} RECharSet;
+
 #define JSMSG_MIN_TOO_BIG 47
 #define JSMSG_MAX_TOO_BIG 48
 #define JSMSG_OUT_OF_ORDER 49
@@ -209,7 +233,7 @@ typedef struct REBackTrackData {
 
 typedef struct REGlobalData {
     void *cx;
-    JSRegExp *regexp;               /* the RE in execution */
+    regexp_t *regexp;               /* the RE in execution */
     BOOL ok;                        /* runtime error (out_of_memory only?) */
     size_t start;                   /* offset to start at */
     ptrdiff_t skipped;              /* chars skipped anchoring this r.e. */
@@ -285,7 +309,7 @@ typedef struct CompilerState {
     } classCache[CLASS_CACHE_SIZE];
     WORD          flags;
 
-    heap_pool_t *pool;                 /* It's faster to use one malloc'd pool
+    heap_pool_t *pool;              /* It's faster to use one malloc'd pool
                                        than to malloc/free */
 } CompilerState;
 
@@ -448,7 +472,7 @@ SetForwardJumpOffset(jsbytecode *jump, jsbytecode *target)
  * of recursion.
  */
 static jsbytecode *
-EmitREBytecode(CompilerState *state, JSRegExp *re, size_t treeDepth,
+EmitREBytecode(CompilerState *state, regexp_t *re, size_t treeDepth,
                jsbytecode *pc, RENode *t)
 {
     EmitStateStackEntry *emitStateSP, *emitStateStack;
@@ -1896,7 +1920,7 @@ out:
  */
 static REBackTrackData *
 PushBackTrackState(REGlobalData *gData, REOp op,
-                   jsbytecode *target, REMatchState *x, const WCHAR *cp,
+                   jsbytecode *target, match_state_t *x, const WCHAR *cp,
                    size_t parenIndex, size_t parenCount)
 {
     size_t i;
@@ -1955,8 +1979,8 @@ PushBackTrackState(REGlobalData *gData, REOp op,
     return result;
 }
 
-static inline REMatchState *
-FlatNIMatcher(REGlobalData *gData, REMatchState *x, const WCHAR *matchChars,
+static inline match_state_t *
+FlatNIMatcher(REGlobalData *gData, match_state_t *x, const WCHAR *matchChars,
               size_t length)
 {
     size_t i;
@@ -1994,8 +2018,8 @@ FlatNIMatcher(REGlobalData *gData, REMatchState *x, const WCHAR *matchChars,
  *     9. Let y be the State (f, cap).
  *     10. Call c(y) and return its result.
  */
-static REMatchState *
-BackrefMatcher(REGlobalData *gData, REMatchState *x, size_t parenIndex)
+static match_state_t *
+BackrefMatcher(REGlobalData *gData, match_state_t *x, size_t parenIndex)
 {
     size_t len, i;
     const WCHAR *parenContent;
@@ -2300,11 +2324,11 @@ ReallocStateStack(REGlobalData *gData)
  * true, then update the current state's cp. Always update startpc to the next
  * op.
  */
-static inline REMatchState *
-SimpleMatch(REGlobalData *gData, REMatchState *x, REOp op,
+static inline match_state_t *
+SimpleMatch(REGlobalData *gData, match_state_t *x, REOp op,
             jsbytecode **startpc, BOOL updatecp)
 {
-    REMatchState *result = NULL;
+    match_state_t *result = NULL;
     WCHAR matchCh;
     size_t parenIndex;
     size_t offset, length, index;
@@ -2508,10 +2532,10 @@ SimpleMatch(REGlobalData *gData, REMatchState *x, REOp op,
     return NULL;
 }
 
-static inline REMatchState *
-ExecuteREBytecode(REGlobalData *gData, REMatchState *x)
+static inline match_state_t *
+ExecuteREBytecode(REGlobalData *gData, match_state_t *x)
 {
-    REMatchState *result = NULL;
+    match_state_t *result = NULL;
     REBackTrackData *backTrackData;
     jsbytecode *nextpc, *testpc;
     REOp nextop;
@@ -2919,7 +2943,7 @@ ExecuteREBytecode(REGlobalData *gData, REMatchState *x)
                 TRACE("{%d,%d}\n", curState->u.quantifier.min, curState->u.quantifier.max);
 #define PREPARE_REPEAT()                                                      \
     do {                                                                      \
-        curState->index = x->cp - gData->cpbegin;                             \
+        curState->index = x->cp - gData->cpbegin;                          \
         curState->continue_op = REOP_MINIMALREPEAT;                           \
         curState->continue_pc = pc;                                           \
         pc += ARG_LEN;                                                        \
@@ -3046,9 +3070,9 @@ good:
     return x;
 }
 
-static REMatchState *MatchRegExp(REGlobalData *gData, REMatchState *x)
+static match_state_t *MatchRegExp(REGlobalData *gData, match_state_t *x)
 {
-    REMatchState *result;
+    match_state_t *result;
     const WCHAR *cp = x->cp;
     const WCHAR *cp2;
     UINT j;
@@ -3073,11 +3097,8 @@ static REMatchState *MatchRegExp(REGlobalData *gData, REMatchState *x)
     return NULL;
 }
 
-#define MIN_BACKTRACK_LIMIT 400000
-
-static REMatchState *InitMatch(script_ctx_t *cx, REGlobalData *gData, JSRegExp *re, size_t length)
+static HRESULT InitMatch(regexp_t *re, void *cx, heap_pool_t *pool, REGlobalData *gData)
 {
-    REMatchState *result;
     UINT i;
 
     gData->backTrackStackSize = INITIAL_BACKTRACK;
@@ -3097,65 +3118,67 @@ static REMatchState *InitMatch(script_ctx_t *cx, REGlobalData *gData, JSRegExp *
 
     gData->stateStackTop = 0;
     gData->cx = cx;
+    gData->pool = pool;
     gData->regexp = re;
     gData->ok = TRUE;
 
-    result = heap_pool_alloc(gData->pool, offsetof(REMatchState, parens) + re->parenCount * sizeof(RECapture));
-    if (!result)
-        goto bad;
-
     for (i = 0; i < re->classCount; i++) {
         if (!re->classList[i].converted &&
-            !ProcessCharSet(gData, &re->classList[i])) {
-            return NULL;
+                !ProcessCharSet(gData, &re->classList[i])) {
+            return E_FAIL;
         }
     }
 
-    return result;
+    return S_OK;
 
 bad:
     js_ReportOutOfScriptQuota(cx);
     gData->ok = FALSE;
-    return NULL;
+    return E_OUTOFMEMORY;
 }
 
-HRESULT MatchRegExpNext(JSRegExp *jsregexp, const WCHAR *str, DWORD str_len,
-        const WCHAR **cp, heap_pool_t *pool, REMatchState **result, DWORD *matchlen)
+HRESULT regexp_execute(regexp_t *regexp, void *cx, heap_pool_t *pool,
+        const WCHAR *str, DWORD str_len, match_state_t *result)
 {
-    REMatchState *x, *res;
+    match_state_t *res;
     REGlobalData gData;
+    heap_pool_t *mark = heap_pool_mark(pool);
+    const WCHAR *str_beg = result->cp;
+    HRESULT hres;
+
+    assert(result->cp != NULL);
 
     gData.cpbegin = str;
     gData.cpend = str+str_len;
-    gData.start = *cp-str;
+    gData.start = result->cp-str;
     gData.skipped = 0;
     gData.pool = pool;
 
-    x = InitMatch(NULL, &gData, jsregexp, gData.cpend - gData.cpbegin);
-    if(!x) {
+    hres = InitMatch(regexp, cx, pool, &gData);
+    if(FAILED(hres)) {
         WARN("InitMatch failed\n");
-        return E_FAIL;
+        heap_pool_clear(mark);
+        return hres;
     }
 
-    x->cp = *cp;
-    res = MatchRegExp(&gData, x);
+    res = MatchRegExp(&gData, result);
+    heap_pool_clear(mark);
     if(!gData.ok) {
         WARN("MatchRegExp failed\n");
         return E_FAIL;
     }
 
-    *result = res;
     if(!res) {
-        *matchlen = 0;
+        result->match_len = 0;
         return S_FALSE;
     }
 
-    *matchlen = (res->cp-*cp) - gData.skipped;
-    *cp = res->cp;
+    result->match_len = (result->cp-str_beg) - gData.skipped;
+    result->paren_count = regexp->parenCount;
     return S_OK;
 }
 
-void js_DestroyRegExp(JSRegExp *re)
+void regexp_destroy(regexp_t *re)
 {
     if (re->classList) {
         UINT i;
@@ -3169,9 +3192,10 @@ void js_DestroyRegExp(JSRegExp *re)
     heap_free(re);
 }
 
-JSRegExp* js_NewRegExp(void *cx, heap_pool_t *pool, const WCHAR *str, DWORD str_len, UINT flags, BOOL flat)
+regexp_t* regexp_new(void *cx, heap_pool_t *pool, const WCHAR *str,
+        DWORD str_len, WORD flags, BOOL flat)
 {
-    JSRegExp *re;
+    regexp_t *re;
     heap_pool_t *mark;
     CompilerState state;
     size_t resize;
@@ -3213,7 +3237,7 @@ JSRegExp* js_NewRegExp(void *cx, heap_pool_t *pool, const WCHAR *str, DWORD str_
         if (!ParseRegExp(&state))
             goto out;
     }
-    resize = offsetof(JSRegExp, program) + state.progLength + 1;
+    resize = offsetof(regexp_t, program) + state.progLength + 1;
     re = heap_alloc(resize);
     if (!re)
         goto out;
@@ -3223,7 +3247,7 @@ JSRegExp* js_NewRegExp(void *cx, heap_pool_t *pool, const WCHAR *str, DWORD str_
     if (re->classCount) {
         re->classList = heap_alloc(re->classCount * sizeof(RECharSet));
         if (!re->classList) {
-            js_DestroyRegExp(re);
+            regexp_destroy(re);
             re = NULL;
             goto out;
         }
@@ -3234,7 +3258,7 @@ JSRegExp* js_NewRegExp(void *cx, heap_pool_t *pool, const WCHAR *str, DWORD str_
     }
     endPC = EmitREBytecode(&state, re, state.treeDepth, re->program, state.result);
     if (!endPC) {
-        js_DestroyRegExp(re);
+        regexp_destroy(re);
         re = NULL;
         goto out;
     }
@@ -3245,9 +3269,9 @@ JSRegExp* js_NewRegExp(void *cx, heap_pool_t *pool, const WCHAR *str, DWORD str_
      * besides re exist here.
      */
     if ((size_t)(endPC - re->program) != state.progLength + 1) {
-        JSRegExp *tmp;
+        regexp_t *tmp;
         assert((size_t)(endPC - re->program) < state.progLength + 1);
-        resize = offsetof(JSRegExp, program) + (endPC - re->program);
+        resize = offsetof(regexp_t, program) + (endPC - re->program);
         tmp = heap_realloc(re, resize);
         if (tmp)
             re = tmp;
