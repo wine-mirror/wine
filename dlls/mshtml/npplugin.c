@@ -470,7 +470,7 @@ static ULONG WINAPI WindowForBindingUI_AddRef(IWindowForBindingUI *iface)
 static ULONG WINAPI WindowForBindingUI_Release(IWindowForBindingUI *iface)
 {
     InstallCallback *This = impl_from_IWindowForBindingUI(iface);
-    return IBindStatusCallback_AddRef(&This->IBindStatusCallback_iface);
+    return IBindStatusCallback_Release(&This->IBindStatusCallback_iface);
 }
 
 static HRESULT WINAPI WindowForBindingUI_GetWindow(IWindowForBindingUI *iface, REFGUID rguidReason, HWND *phwnd)
