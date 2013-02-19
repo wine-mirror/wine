@@ -2759,9 +2759,8 @@ GpStatus WINGDIPAPI GdipDrawCurve3I(GpGraphics *graphics, GpPen *pen,
 GpStatus WINGDIPAPI GdipDrawEllipse(GpGraphics *graphics, GpPen *pen, REAL x,
     REAL y, REAL width, REAL height)
 {
-    INT save_state;
-    GpPointF ptf[2];
-    POINT pti[2];
+    GpPath *path;
+    GpStatus status;
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f)\n", graphics, pen, x, y, width, height);
 
@@ -2771,27 +2770,15 @@ GpStatus WINGDIPAPI GdipDrawEllipse(GpGraphics *graphics, GpPen *pen, REAL x,
     if(graphics->busy)
         return ObjectBusy;
 
-    if (!graphics->hdc)
-    {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
-    }
+    status = GdipCreatePath(FillModeAlternate, &path);
+    if (status != Ok) return status;
 
-    ptf[0].X = x;
-    ptf[0].Y = y;
-    ptf[1].X = x + width;
-    ptf[1].Y = y + height;
+    status = GdipAddPathEllipse(path, x, y, width, height);
+    if (status == Ok)
+        status = GdipDrawPath(graphics, pen, path);
 
-    save_state = prepare_dc(graphics, pen);
-    SelectObject(graphics->hdc, GetStockObject(NULL_BRUSH));
-
-    transform_and_round_points(graphics, pti, ptf, 2);
-
-    Ellipse(graphics->hdc, pti[0].x, pti[0].y, pti[1].x, pti[1].y);
-
-    restore_dc(graphics, save_state);
-
-    return Ok;
+    GdipDeletePath(path);
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipDrawEllipseI(GpGraphics *graphics, GpPen *pen, INT x,
