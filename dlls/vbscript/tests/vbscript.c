@@ -797,8 +797,15 @@ static void test_vbscript_initializing(void)
 static void test_RegExp(void)
 {
     IRegExp2 *regexp;
+    IMatchCollection2 *mc;
+    IMatch2 *match;
+    ISubMatches *sm;
     IUnknown *unk;
+    IDispatch *disp;
     HRESULT hres;
+    BSTR bstr;
+    LONG count;
+    VARIANT v;
 
     hres = CoCreateInstance(&CLSID_VBScriptRegExp, NULL,
             CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -823,6 +830,74 @@ static void test_RegExp(void)
 
     hres = IRegExp2_QueryInterface(regexp, &IID_IDispatchEx, (void**)&unk);
     ok(hres == E_NOINTERFACE, "QueryInterface(IID_IDispatchEx) returned %x\n", hres);
+
+    hres = IRegExp2_get_Pattern(regexp, &bstr);
+    ok(bstr == NULL, "bstr != NULL\n");
+    ok(hres == S_OK, "get_Pattern returned %x, expected S_OK\n", hres);
+
+    hres = IRegExp2_get_Pattern(regexp, NULL);
+    ok(hres == E_POINTER, "get_Pattern returned %x, expected E_POINTER\n", hres);
+
+    hres = IRegExp2_get_IgnoreCase(regexp, NULL);
+    ok(hres == E_POINTER, "get_IgnoreCase returned %x, expected E_POINTER\n", hres);
+
+    hres = IRegExp2_get_Global(regexp, NULL);
+    ok(hres == E_POINTER, "get_Global returned %x, expected E_POINTER\n", hres);
+
+    hres = IRegExp2_Execute(regexp, NULL, &disp);
+    ok(hres == S_OK, "Execute returned %x, expected S_OK\n", hres);
+    hres = IDispatch_QueryInterface(disp, &IID_IMatchCollection2, (void**)&mc);
+    ok(hres == S_OK, "QueryInterface(IID_IMatchCollection2) returned %x\n", hres);
+    IDispatch_Release(disp);
+
+    hres = IMatchCollection2_get_Count(mc, NULL);
+    ok(hres == E_POINTER, "get_Count returned %x, expected E_POINTER\n", hres);
+
+    hres = IMatchCollection2_get_Count(mc, &count);
+    ok(hres == S_OK, "get_Count returned %x, expected S_OK\n", hres);
+    ok(count == 1, "count = %d\n", count);
+
+    hres = IMatchCollection2_get_Item(mc, 1, &disp);
+    ok(hres == E_INVALIDARG, "get_Item returned %x, expected E_INVALIDARG\n", hres);
+
+    hres = IMatchCollection2_get_Item(mc, 1, NULL);
+    ok(hres == E_POINTER, "get_Item returned %x, expected E_POINTER\n", hres);
+
+    hres = IMatchCollection2_get_Item(mc, 0, &disp);
+    ok(hres == S_OK, "get_Item returned %x, expected S_OK\n", hres);
+    IMatchCollection2_Release(mc);
+    hres = IDispatch_QueryInterface(disp, &IID_IMatch2, (void**)&match);
+    ok(hres == S_OK, "QueryInterface(IID_IMatch2) returned %x\n", hres);
+    IDispatch_Release(disp);
+
+    hres = IMatch2_get_Value(match, NULL);
+    ok(hres == E_POINTER, "get_Value returned %x, expected E_POINTER\n", hres);
+
+    hres = IMatch2_get_FirstIndex(match, NULL);
+    ok(hres == E_POINTER, "get_FirstIndex returned %x, expected E_POINTER\n", hres);
+
+    hres = IMatch2_get_Length(match, NULL);
+    ok(hres == E_POINTER, "get_Length returned %x, expected E_POINTER\n", hres);
+
+    hres = IMatch2_get_SubMatches(match, NULL);
+    ok(hres == E_POINTER, "get_SubMatches returned %x, expected E_POINTER\n", hres);
+
+    hres = IMatch2_get_SubMatches(match, &disp);
+    ok(hres == S_OK, "get_SubMatches returned %x, expected S_OK\n", hres);
+    IMatch2_Release(match);
+    hres = IDispatch_QueryInterface(disp, &IID_ISubMatches, (void**)&sm);
+    ok(hres == S_OK, "QueryInterface(IID_ISubMatches) returned %x\n", hres);
+    IDispatch_Release(disp);
+
+    hres = ISubMatches_get_Item(sm, 0, &v);
+    ok(hres == E_INVALIDARG, "get_Item returned %x, expected E_INVALIDARG\n", hres);
+
+    hres = ISubMatches_get_Item(sm, 0, NULL);
+    ok(hres == E_POINTER, "get_Item returned %x, expected E_POINTER\n", hres);
+
+    hres = ISubMatches_get_Count(sm, NULL);
+    ok(hres == E_POINTER, "get_Count returned %x, expected E_POINTER\n", hres);
+    ISubMatches_Release(sm);
 
     IRegExp2_Release(regexp);
 }
