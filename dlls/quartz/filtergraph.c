@@ -204,6 +204,7 @@ typedef struct _IFilterGraphImpl {
     LONGLONG stop_position;
     LONG recursioncount;
     IUnknown *pSite;
+    LONG version;
 } IFilterGraphImpl;
 
 static inline IFilterGraphImpl *impl_from_IUnknown(IUnknown *iface)
@@ -457,6 +458,7 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface, IBaseFilter *
         This->ppFiltersInGraph[This->nFilters] = pFilter;
         This->pFilterNames[This->nFilters] = wszFilterName;
         This->nFilters++;
+        This->version++;
         IBaseFilter_SetSyncSource(pFilter, This->refClock);
     }
     else
@@ -542,6 +544,7 @@ static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface, IBaseFilte
                 memmove(This->ppFiltersInGraph+i, This->ppFiltersInGraph+i+1, sizeof(IBaseFilter*)*(This->nFilters - 1 - i));
                 memmove(This->pFilterNames+i, This->pFilterNames+i+1, sizeof(LPWSTR)*(This->nFilters - 1 - i));
                 This->nFilters--;
+                This->version++;
                 /* Invalidate interfaces in the cache */
                 for (i = 0; i < This->nItfCacheEntries; i++)
                     if (pFilter == This->ItfCacheEntries[i].filter)
@@ -5580,9 +5583,13 @@ static HRESULT WINAPI GraphVersion_QueryVersion(IGraphVersion *iface, LONG *pVer
 {
     IFilterGraphImpl *This = impl_from_IGraphVersion(iface);
 
-    FIXME("(%p)->(%p): stub!\n", This, pVersion);
+    if(!pVersion)
+        return E_POINTER;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p): current version %i\n", This, pVersion, This->version);
+
+    *pVersion = This->version;
+    return S_OK;
 }
 
 static const IGraphVersionVtbl IGraphVersion_VTable =
@@ -5653,6 +5660,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->stop_position = -1;
     fimpl->punkFilterMapper2 = NULL;
     fimpl->recursioncount = 0;
+    fimpl->version = 0;
 
     if (pUnkOuter)
         fimpl->outer_unk = pUnkOuter;
