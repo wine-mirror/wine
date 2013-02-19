@@ -139,6 +139,10 @@ static HRESULT WINAPI SubMatches_QueryInterface(
     }else if(IsEqualGUID(riid, &IID_ISubMatches)) {
         TRACE("(%p)->(IID_ISubMatches %p)\n", This, ppv);
         *ppv = &This->ISubMatches_iface;
+    }else if(IsEqualGUID(riid, &IID_IDispatchEx)) {
+        TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -339,6 +343,10 @@ static HRESULT WINAPI Match2_QueryInterface(
     }else if(IsEqualGUID(riid, &IID_IMatch2)) {
         TRACE("(%p)->(IID_IMatch2 %p)\n", This, ppv);
         *ppv = &This->IMatch2_iface;
+    }else if(IsEqualGUID(riid, &IID_IDispatchEx)) {
+        TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -539,6 +547,10 @@ static HRESULT WINAPI MatchCollection2_QueryInterface(
     }else if(IsEqualGUID(riid, &IID_IMatchCollection2)) {
         TRACE("(%p)->(IID_IMatchCollection2 %p)\n", This, ppv);
         *ppv = &This->IMatchCollection2_iface;
+    }else if(IsEqualGUID(riid, &IID_IDispatchEx)) {
+        TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -738,6 +750,10 @@ static HRESULT WINAPI RegExp2_QueryInterface(IRegExp2 *iface, REFIID riid, void 
     }else if(IsEqualGUID(riid, &IID_IRegExp)) {
         TRACE("(%p)->(IID_IRegExp %p)\n", This, ppv);
         *ppv = &This->IRegExp_iface;
+    }else if(IsEqualGUID(riid, &IID_IDispatchEx)) {
+        TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
