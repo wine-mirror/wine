@@ -424,10 +424,10 @@ MMRESULT16 WINAPI mmioSetInfo16(HMMIO16 hmmio, const MMIOINFO16* lpmmioinfo, UIN
 /**************************************************************************
  * 				mmioSetBuffer		[MMSYSTEM.1217]
  */
-MMRESULT16 WINAPI mmioSetBuffer16(HMMIO16 hmmio, LPSTR pchBuffer,
+MMRESULT16 WINAPI mmioSetBuffer16(HMMIO16 hmmio, SEGPTR pchBuffer,
                                   LONG cchBuffer, UINT16 uFlags)
 {
-    MMRESULT    ret = mmioSetBuffer(HMMIO_32(hmmio), MapSL((DWORD)pchBuffer),
+    MMRESULT    ret = mmioSetBuffer(HMMIO_32(hmmio), MapSL(pchBuffer),
                                     cchBuffer, uFlags);
 
     if (ret == MMSYSERR_NOERROR)
@@ -439,10 +439,10 @@ MMRESULT16 WINAPI mmioSetBuffer16(HMMIO16 hmmio, LPSTR pchBuffer,
             FIXME("really ?\n");
             return MMSYSERR_INVALHANDLE;
         }
-        MMIO_SetSegmentedBuffer(thunk, (DWORD)pchBuffer, TRUE);
+        MMIO_SetSegmentedBuffer(thunk, pchBuffer, TRUE);
     }
     else
-        UnMapLS((DWORD)pchBuffer);
+        UnMapLS(pchBuffer);
     return ret;
 }
 

@@ -814,12 +814,12 @@ UINT16 WINAPI midiOutShortMsg16(HMIDIOUT16 hMidiOut, DWORD dwMsg)
  * 				midiOutLongMsg		[MMSYSTEM.209]
  */
 UINT16 WINAPI midiOutLongMsg16(HMIDIOUT16 hMidiOut,          /* [in] */
-                               LPMIDIHDR16 lpsegMidiOutHdr,  /* [???] NOTE: SEGPTR */
+			       SEGPTR lpsegMidiOutHdr,       /* [???] */
 			       UINT16 uSize)                 /* [in] */
 {
-    TRACE("(%04X, %p, %d)\n", hMidiOut, lpsegMidiOutHdr, uSize);
+    TRACE("(%04X, %08x, %d)\n", hMidiOut, lpsegMidiOutHdr, uSize);
 
-    return MMSYSTDRV_Message(HMIDIOUT_32(hMidiOut), MODM_LONGDATA, (DWORD_PTR)lpsegMidiOutHdr, uSize);
+    return MMSYSTDRV_Message(HMIDIOUT_32(hMidiOut), MODM_LONGDATA, lpsegMidiOutHdr, uSize);
 }
 
 /**************************************************************************
@@ -895,10 +895,10 @@ DWORD WINAPI midiOutMessage16(HMIDIOUT16 hMidiOut, UINT16 uMessage,
 
     case MODM_GETVOLUME:
         return midiOutGetVolume16(hMidiOut, MapSL(dwParam1));
+    /* lpMidiOutHdr is still a segmented pointer for these functions */
     case MODM_LONGDATA:
-        return midiOutLongMsg16(hMidiOut, MapSL(dwParam1), dwParam2);
+        return midiOutLongMsg16(hMidiOut, dwParam1, dwParam2);
     case MODM_PREPARE:
-        /* lpMidiOutHdr is still a segmented pointer for this function */
         return midiOutPrepareHeader16(hMidiOut, dwParam1, dwParam2);
     case MODM_UNPREPARE:
         return midiOutUnprepareHeader16(hMidiOut, dwParam1, dwParam2);
@@ -1010,12 +1010,12 @@ UINT16 WINAPI midiInUnprepareHeader16(HMIDIIN16 hMidiIn,         /* [in] */
  * 				midiInAddBuffer		[MMSYSTEM.308]
  */
 UINT16 WINAPI midiInAddBuffer16(HMIDIIN16 hMidiIn,         /* [in] */
-                                MIDIHDR16* lpsegMidiInHdr, /* [???] NOTE: SEGPTR */
+                                SEGPTR lpsegMidiInHdr,     /* [???] */
 				UINT16 uSize)              /* [in] */
 {
-    TRACE("(%04X, %p, %d)\n", hMidiIn, lpsegMidiInHdr, uSize);
+    TRACE("(%04X, %08x, %d)\n", hMidiIn, lpsegMidiInHdr, uSize);
 
-    return MMSYSTDRV_Message(HMIDIIN_32(hMidiIn), MIDM_ADDBUFFER, (DWORD_PTR)lpsegMidiInHdr, uSize);
+    return MMSYSTDRV_Message(HMIDIIN_32(hMidiIn), MIDM_ADDBUFFER, lpsegMidiInHdr, uSize);
 }
 
 /**************************************************************************
@@ -1077,7 +1077,7 @@ DWORD WINAPI midiInMessage16(HMIDIIN16 hMidiIn, UINT16 uMessage,
     case MIDM_UNPREPARE:
         return midiInUnprepareHeader16(hMidiIn, dwParam1, dwParam2);
     case MIDM_ADDBUFFER:
-        return midiInAddBuffer16(hMidiIn, MapSL(dwParam1), dwParam2);
+        return midiInAddBuffer16(hMidiIn, dwParam1, dwParam2);
     }
     return MMSYSTDRV_Message(HMIDIIN_32(hMidiIn), uMessage, dwParam1, dwParam2);
 }
@@ -1330,12 +1330,12 @@ UINT16 WINAPI waveOutUnprepareHeader16(HWAVEOUT16 hWaveOut,       /* [in] */
  * 				waveOutWrite		[MMSYSTEM.408]
  */
 UINT16 WINAPI waveOutWrite16(HWAVEOUT16 hWaveOut,       /* [in] */
-			     LPWAVEHDR lpsegWaveOutHdr, /* [???] NOTE: SEGPTR */
+			     SEGPTR lpsegWaveOutHdr,    /* [???] */
 			     UINT16 uSize)              /* [in] */
 {
-    TRACE("(%04X, %p, %u);\n", hWaveOut, lpsegWaveOutHdr, uSize);
+    TRACE("(%04X, %08x, %u);\n", hWaveOut, lpsegWaveOutHdr, uSize);
 
-    return MMSYSTDRV_Message(HWAVEOUT_32(hWaveOut), WODM_WRITE, (DWORD_PTR)lpsegWaveOutHdr, uSize);
+    return MMSYSTDRV_Message(HWAVEOUT_32(hWaveOut), WODM_WRITE, lpsegWaveOutHdr, uSize);
 }
 
 /**************************************************************************
@@ -1616,14 +1616,14 @@ UINT16 WINAPI waveInUnprepareHeader16(HWAVEIN16 hWaveIn,       /* [in] */
  * 				waveInAddBuffer		[MMSYSTEM.508]
  */
 UINT16 WINAPI waveInAddBuffer16(HWAVEIN16 hWaveIn,       /* [in] */
-				WAVEHDR* lpsegWaveInHdr, /* [???] NOTE: SEGPTR */
+				SEGPTR lpsegWaveInHdr,   /* [???] */
 				UINT16 uSize)            /* [in] */
 {
-    TRACE("(%04X, %p, %u);\n", hWaveIn, lpsegWaveInHdr, uSize);
+    TRACE("(%04X, %08x, %u);\n", hWaveIn, lpsegWaveInHdr, uSize);
 
-    if (lpsegWaveInHdr == NULL) return MMSYSERR_INVALPARAM;
+    if (lpsegWaveInHdr == 0) return MMSYSERR_INVALPARAM;
 
-    return MMSYSTDRV_Message(HWAVEIN_32(hWaveIn), WIDM_ADDBUFFER, (DWORD_PTR)lpsegWaveInHdr, uSize);
+    return MMSYSTDRV_Message(HWAVEIN_32(hWaveIn), WIDM_ADDBUFFER, lpsegWaveInHdr, uSize);
 }
 
 /**************************************************************************
