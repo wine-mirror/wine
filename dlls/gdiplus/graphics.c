@@ -1756,66 +1756,6 @@ static void shorten_bezier_amt(GpPointF * pt, REAL amt, BOOL rev)
     }
 }
 
-/* Draws bezier curves between given points, and if caps is true then draws an
- * endcap at the end of the last line. */
-static GpStatus draw_polybezier(GpGraphics *graphics, GpPen *pen,
-    GDIPCONST GpPointF * pt, INT count, BOOL caps)
-{
-    POINT *pti;
-    GpPointF *ptcopy;
-    GpStatus status = GenericError;
-
-    if(!count)
-        return Ok;
-
-    pti = GdipAlloc(count * sizeof(POINT));
-    ptcopy = GdipAlloc(count * sizeof(GpPointF));
-
-    if(!pti || !ptcopy){
-        status = OutOfMemory;
-        goto end;
-    }
-
-    memcpy(ptcopy, pt, count * sizeof(GpPointF));
-
-    if(caps){
-        if(pen->endcap == LineCapArrowAnchor)
-            shorten_bezier_amt(&ptcopy[count-4], pen->width, FALSE);
-        else if((pen->endcap == LineCapCustom) && pen->customend)
-            shorten_bezier_amt(&ptcopy[count-4], pen->width * pen->customend->inset,
-                               FALSE);
-
-        if(pen->startcap == LineCapArrowAnchor)
-            shorten_bezier_amt(ptcopy, pen->width, TRUE);
-        else if((pen->startcap == LineCapCustom) && pen->customstart)
-            shorten_bezier_amt(ptcopy, pen->width * pen->customstart->inset, TRUE);
-
-        /* the direction of the line cap is parallel to the direction at the
-         * end of the bezier (which, if it has been shortened, is not the same
-         * as the direction from pt[count-2] to pt[count-1]) */
-        draw_cap(graphics, get_gdi_brush_color(pen->brush), pen->endcap, pen->width, pen->customend,
-            pt[count - 1].X - (ptcopy[count - 1].X - ptcopy[count - 2].X),
-            pt[count - 1].Y - (ptcopy[count - 1].Y - ptcopy[count - 2].Y),
-            pt[count - 1].X, pt[count - 1].Y);
-
-        draw_cap(graphics, get_gdi_brush_color(pen->brush), pen->startcap, pen->width, pen->customstart,
-            pt[0].X - (ptcopy[0].X - ptcopy[1].X),
-            pt[0].Y - (ptcopy[0].Y - ptcopy[1].Y), pt[0].X, pt[0].Y);
-    }
-
-    transform_and_round_points(graphics, pti, ptcopy, count);
-
-    PolyBezier(graphics->hdc, pti, count);
-
-    status = Ok;
-
-end:
-    GdipFree(pti);
-    GdipFree(ptcopy);
-
-    return status;
-}
-
 /* Draws a combination of bezier curves and lines between points. */
 static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF * pt,
     GDIPCONST BYTE * types, INT count, BOOL caps)
@@ -2538,9 +2478,7 @@ GpStatus WINGDIPAPI GdipDrawArcI(GpGraphics *graphics, GpPen *pen, INT x,
 GpStatus WINGDIPAPI GdipDrawBezier(GpGraphics *graphics, GpPen *pen, REAL x1,
     REAL y1, REAL x2, REAL y2, REAL x3, REAL y3, REAL x4, REAL y4)
 {
-    INT save_state;
     GpPointF pt[4];
-    GpStatus retval;
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f)\n", graphics, pen, x1, y1,
           x2, y2, x3, y3, x4, y4);
@@ -2551,12 +2489,6 @@ GpStatus WINGDIPAPI GdipDrawBezier(GpGraphics *graphics, GpPen *pen, REAL x1,
     if(graphics->busy)
         return ObjectBusy;
 
-    if (!graphics->hdc)
-    {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
-    }
-
     pt[0].X = x1;
     pt[0].Y = y1;
     pt[1].X = x2;
@@ -2565,14 +2497,7 @@ GpStatus WINGDIPAPI GdipDrawBezier(GpGraphics *graphics, GpPen *pen, REAL x1,
     pt[2].Y = y3;
     pt[3].X = x4;
     pt[3].Y = y4;
-
-    save_state = prepare_dc(graphics, pen);
-
-    retval = draw_polybezier(graphics, pen, pt, 4, TRUE);
-
-    restore_dc(graphics, save_state);
-
-    return retval;
+    return GdipDrawBeziers(graphics, pen, pt, 4);
 }
 
 GpStatus WINGDIPAPI GdipDrawBezierI(GpGraphics *graphics, GpPen *pen, INT x1,
