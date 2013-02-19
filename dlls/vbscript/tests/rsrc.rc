@@ -21,3 +21,6 @@ api.vbs 40 "api.vbs"
 
 /* @makedep: lang.vbs */
 lang.vbs 40 "lang.vbs"
+
+/* @makedep: regexp.vbs */
+regexp.vbs 40 "regexp.vbs"

@@ -25,6 +25,8 @@
 #include <dispex.h>
 #include <activscp.h>
 
+#include "vbsregexp55.h"
+
 #include "wine/test.h"
 
 #ifdef _WIN64
@@ -48,6 +50,7 @@
 #endif
 
 extern const CLSID CLSID_VBScript;
+extern const CLSID CLSID_VBScriptRegExp;
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -1920,6 +1923,7 @@ static void run_tests(void)
 
     run_from_res("lang.vbs");
     run_from_res("api.vbs");
+    run_from_res("regexp.vbs");
 
     test_procedures();
     test_gc();
@@ -1928,13 +1932,21 @@ static void run_tests(void)
 
 static BOOL check_vbscript(void)
 {
-    IActiveScriptParseProcedure2 *vbscript;
+    IRegExp2 *regexp;
+    IUnknown *unk;
     HRESULT hres;
 
-    hres = CoCreateInstance(&CLSID_VBScript, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
-            &IID_IActiveScriptParseProcedure2, (void**)&vbscript);
+    hres = CoCreateInstance(&CLSID_VBScriptRegExp, NULL,
+            CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IUnknown, (void**)&unk);
+    if(hres == REGDB_E_CLASSNOTREG)
+        return FALSE;
+    ok(hres == S_OK, "CoCreateInstance(CLSID_VBScriptRegExp) failed: %x\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IRegExp2, (void**)&regexp);
     if(SUCCEEDED(hres))
-        IActiveScriptParseProcedure2_Release(vbscript);
+        IRegExp2_Release(regexp);
+    IUnknown_Release(unk);
 
     return hres == S_OK;
 }
