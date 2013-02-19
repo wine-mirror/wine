@@ -800,12 +800,14 @@ static void test_RegExp(void)
     IMatchCollection2 *mc;
     IMatch2 *match;
     ISubMatches *sm;
+    IEnumVARIANT *ev;
     IUnknown *unk;
     IDispatch *disp;
     HRESULT hres;
     BSTR bstr;
     LONG count;
     VARIANT v;
+    ULONG fetched;
 
     hres = CoCreateInstance(&CLSID_VBScriptRegExp, NULL,
             CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -865,7 +867,6 @@ static void test_RegExp(void)
 
     hres = IMatchCollection2_get_Item(mc, 0, &disp);
     ok(hres == S_OK, "get_Item returned %x, expected S_OK\n", hres);
-    IMatchCollection2_Release(mc);
     hres = IDispatch_QueryInterface(disp, &IID_IMatch2, (void**)&match);
     ok(hres == S_OK, "QueryInterface(IID_IMatch2) returned %x\n", hres);
     IDispatch_Release(disp);
@@ -898,6 +899,29 @@ static void test_RegExp(void)
     hres = ISubMatches_get_Count(sm, NULL);
     ok(hres == E_POINTER, "get_Count returned %x, expected E_POINTER\n", hres);
     ISubMatches_Release(sm);
+
+    hres = IMatchCollection2_get__NewEnum(mc, &unk);
+    ok(hres == S_OK, "get__NewEnum returned %x, expected S_OK\n", hres);
+    hres = IUnknown_QueryInterface(unk, &IID_IEnumVARIANT, (void**)&ev);
+    ok(hres == S_OK, "QueryInterface(IID_IEnumVARIANT) returned %x\n", hres);
+    IUnknown_Release(unk);
+    IMatchCollection2_Release(mc);
+
+    hres = IEnumVARIANT_Skip(ev, 2);
+    ok(hres == S_OK, "Skip returned %x\n", hres);
+
+    hres = IEnumVARIANT_Next(ev, 1, &v, &fetched);
+    ok(hres == S_FALSE, "Next returned %x, expected S_FALSE\n", hres);
+    ok(fetched == 0, "fetched = %d\n", fetched);
+
+    hres = IEnumVARIANT_Skip(ev, -1);
+    ok(hres == S_OK, "Skip returned %x\n", hres);
+
+    hres = IEnumVARIANT_Next(ev, 1, &v, &fetched);
+    ok(hres == S_OK, "Next returned %x\n", hres);
+    ok(fetched == 1, "fetched = %d\n", fetched);
+    VariantClear(&v);
+    IEnumVARIANT_Release(ev);
 
     IRegExp2_Release(regexp);
 }
