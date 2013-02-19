@@ -2726,7 +2726,7 @@ GpStatus WINGDIPAPI GdipDrawClosedCurve2(GpGraphics *graphics, GpPen *pen,
     GDIPCONST GpPointF *points, INT count, REAL tension)
 {
     GpPath *path;
-    GpStatus stat;
+    GpStatus status;
 
     TRACE("(%p, %p, %p, %d, %.2f)\n", graphics, pen, points, count, tension);
 
@@ -2736,20 +2736,16 @@ GpStatus WINGDIPAPI GdipDrawClosedCurve2(GpGraphics *graphics, GpPen *pen,
     if(graphics->busy)
         return ObjectBusy;
 
-    if((stat = GdipCreatePath(FillModeAlternate, &path)) != Ok)
-        return stat;
+    status = GdipCreatePath(FillModeAlternate, &path);
+    if (status != Ok) return status;
 
-    stat = GdipAddPathClosedCurve2(path, points, count, tension);
-    if(stat != Ok){
-        GdipDeletePath(path);
-        return stat;
-    }
-
-    stat = GdipDrawPath(graphics, pen, path);
+    status = GdipAddPathClosedCurve2(path, points, count, tension);
+    if (status == Ok)
+        status = GdipDrawPath(graphics, pen, path);
 
     GdipDeletePath(path);
 
-    return stat;
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipDrawClosedCurve2I(GpGraphics *graphics, GpPen *pen,
