@@ -363,7 +363,7 @@ static int msvcrt_alloc_fd(HANDLE hand, int flag)
 /* caller must hold the files lock */
 static MSVCRT_FILE* msvcrt_alloc_fp(void)
 {
-  unsigned int i;
+  int i;
   MSVCRT_FILE *file;
 
   for (i = 3; i < MSVCRT_max_streams; i++)
@@ -1047,7 +1047,8 @@ int CDECL MSVCRT__fcloseall(void)
 /* free everything on process exit */
 void msvcrt_free_io(void)
 {
-    int i;
+    unsigned int i;
+    int j;
 
     MSVCRT__fcloseall();
     /* The Win32 _fcloseall() function explicitly doesn't close stdin,
@@ -1061,9 +1062,9 @@ void msvcrt_free_io(void)
     for(i=0; i<sizeof(MSVCRT___pioinfo)/sizeof(MSVCRT___pioinfo[0]); i++)
         MSVCRT_free(MSVCRT___pioinfo[i]);
 
-    for(i=0; i<MSVCRT_stream_idx; i++)
+    for(j=0; j<MSVCRT_stream_idx; j++)
     {
-        MSVCRT_FILE *file = msvcrt_get_file(i);
+        MSVCRT_FILE *file = msvcrt_get_file(j);
         if(file<MSVCRT__iob || file>=MSVCRT__iob+_IOB_ENTRIES)
         {
             ((file_crit*)file)->crit.DebugInfo->Spare[0] = 0;

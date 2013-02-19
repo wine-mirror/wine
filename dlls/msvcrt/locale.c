@@ -492,7 +492,7 @@ char* CDECL _Getmonths(void)
 void* CDECL _Gettnames(void)
 {
     MSVCRT___lc_time_data *ret, *cur = get_locinfo()->lc_time_curr;
-    int i, size = sizeof(MSVCRT___lc_time_data);
+    unsigned int i, size = sizeof(MSVCRT___lc_time_data);
 
     TRACE("\n");
 
