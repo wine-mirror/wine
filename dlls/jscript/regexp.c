@@ -638,14 +638,14 @@ EmitREBytecode(CompilerState *state, JSRegExp *re, size_t treeDepth,
                 }
             }
             if (t->kid && t->u.flat.length > 1) {
-                pc[-1] = (state->flags & JSREG_FOLD) ? REOP_FLATi : REOP_FLAT;
+                pc[-1] = (state->flags & REG_FOLD) ? REOP_FLATi : REOP_FLAT;
                 pc = WriteCompactIndex(pc, (WCHAR*)t->kid - state->cpbegin);
                 pc = WriteCompactIndex(pc, t->u.flat.length);
             } else if (t->u.flat.chr < 256) {
-                pc[-1] = (state->flags & JSREG_FOLD) ? REOP_FLAT1i : REOP_FLAT1;
+                pc[-1] = (state->flags & REG_FOLD) ? REOP_FLAT1i : REOP_FLAT1;
                 *pc++ = (jsbytecode) t->u.flat.chr;
             } else {
-                pc[-1] = (state->flags & JSREG_FOLD)
+                pc[-1] = (state->flags & REG_FOLD)
                          ? REOP_UCFLAT1i
                          : REOP_UCFLAT1;
                 SET_ARG(pc, t->u.flat.chr);
@@ -804,7 +804,7 @@ ProcessOp(CompilerState *state, REOpData *opData, RENode **operandStack,
          */
         if (((RENode *) result->kid)->op == REOP_FLAT &&
             ((RENode *) result->u.kid2)->op == REOP_FLAT &&
-            (state->flags & JSREG_FOLD) == 0) {
+            (state->flags & REG_FOLD) == 0) {
             result->op = REOP_ALTPREREQ;
             result->u.altprereq.ch1 = ((RENode *) result->kid)->u.flat.chr;
             result->u.altprereq.ch2 = ((RENode *) result->u.kid2)->u.flat.chr;
@@ -816,7 +816,7 @@ ProcessOp(CompilerState *state, REOpData *opData, RENode **operandStack,
         if (((RENode *) result->kid)->op == REOP_CLASS &&
             ((RENode *) result->kid)->u.ucclass.index < 256 &&
             ((RENode *) result->u.kid2)->op == REOP_FLAT &&
-            (state->flags & JSREG_FOLD) == 0) {
+            (state->flags & REG_FOLD) == 0) {
             result->op = REOP_ALTPREREQ2;
             result->u.altprereq.ch1 = ((RENode *) result->u.kid2)->u.flat.chr;
             result->u.altprereq.ch2 = ((RENode *) result->kid)->u.ucclass.index;
@@ -828,7 +828,7 @@ ProcessOp(CompilerState *state, REOpData *opData, RENode **operandStack,
         if (((RENode *) result->kid)->op == REOP_FLAT &&
             ((RENode *) result->u.kid2)->op == REOP_CLASS &&
             ((RENode *) result->u.kid2)->u.ucclass.index < 256 &&
-            (state->flags & JSREG_FOLD) == 0) {
+            (state->flags & REG_FOLD) == 0) {
             result->op = REOP_ALTPREREQ2;
             result->u.altprereq.ch1 = ((RENode *) result->kid)->u.flat.chr;
             result->u.altprereq.ch2 =
@@ -1108,11 +1108,11 @@ lexHex:
                     continue;
                 }
             }
-            if (state->flags & JSREG_FOLD)
+            if (state->flags & REG_FOLD)
                 rangeStart = localMax;   /* one run of the uc/dc loop below */
         }
 
-        if (state->flags & JSREG_FOLD) {
+        if (state->flags & REG_FOLD) {
             WCHAR maxch = localMax;
 
             for (i = rangeStart; i <= localMax; i++) {
@@ -2009,7 +2009,7 @@ BackrefMatcher(REGlobalData *gData, REMatchState *x, size_t parenIndex)
         return NULL;
 
     parenContent = &gData->cpbegin[cap->index];
-    if (gData->regexp->flags & JSREG_FOLD) {
+    if (gData->regexp->flags & REG_FOLD) {
         for (i = 0; i < len; i++) {
             if (toupperW(parenContent[i]) != toupperW(x->cp[i]))
                 return NULL;
@@ -2233,7 +2233,7 @@ ProcessCharSet(REGlobalData *gData, RECharSet *charSet)
 
         }
         if (inRange) {
-            if (gData->regexp->flags & JSREG_FOLD) {
+            if (gData->regexp->flags & REG_FOLD) {
                 assert(rangeStart <= thisCh);
                 for (i = rangeStart; i <= thisCh; i++) {
                     WCHAR uch, dch;
@@ -2251,7 +2251,7 @@ ProcessCharSet(REGlobalData *gData, RECharSet *charSet)
             }
             inRange = FALSE;
         } else {
-            if (gData->regexp->flags & JSREG_FOLD) {
+            if (gData->regexp->flags & REG_FOLD) {
                 AddCharacterToCharSet(charSet, toupperW(thisCh));
                 AddCharacterToCharSet(charSet, tolowerW(thisCh));
             } else {
@@ -2325,7 +2325,7 @@ SimpleMatch(REGlobalData *gData, REMatchState *x, REOp op,
       case REOP_BOL:
         if (x->cp != gData->cpbegin) {
             if (/*!gData->cx->regExpStatics.multiline &&  FIXME !!! */
-                !(gData->regexp->flags & JSREG_MULTILINE)) {
+                !(gData->regexp->flags & REG_MULTILINE)) {
                 break;
             }
             if (!RE_IS_LINE_TERM(x->cp[-1]))
@@ -2336,7 +2336,7 @@ SimpleMatch(REGlobalData *gData, REMatchState *x, REOp op,
       case REOP_EOL:
         if (x->cp != gData->cpend) {
             if (/*!gData->cx->regExpStatics.multiline &&*/
-                !(gData->regexp->flags & JSREG_MULTILINE)) {
+                !(gData->regexp->flags & REG_MULTILINE)) {
                 break;
             }
             if (!RE_IS_LINE_TERM(*x->cp))
@@ -2532,7 +2532,7 @@ ExecuteREBytecode(REGlobalData *gData, REMatchState *x)
      * If the first node is a simple match, step the index into the string
      * until that match is made, or fail if it can't be found at all.
      */
-    if (REOP_IS_SIMPLE(op) && !(gData->regexp->flags & JSREG_STICKY)) {
+    if (REOP_IS_SIMPLE(op) && !(gData->regexp->flags & REG_STICKY)) {
         anchor = FALSE;
         while (x->cp <= gData->cpend) {
             nextpc = pc;    /* reset back to start each time */
@@ -3063,7 +3063,7 @@ static REMatchState *MatchRegExp(REGlobalData *gData, REMatchState *x)
         for (j = 0; j < gData->regexp->parenCount; j++)
             x->parens[j].index = -1;
         result = ExecuteREBytecode(gData, x);
-        if (!gData->ok || result || (gData->regexp->flags & JSREG_STICKY))
+        if (!gData->ok || result || (gData->regexp->flags & REG_STICKY))
             return result;
         gData->backTrackSP = gData->backTrackStack;
         gData->cursz = 0;

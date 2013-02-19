@@ -165,7 +165,7 @@ HRESULT regexp_match_next(script_ctx_t *ctx, jsdisp_t *dispex, DWORD rem_flags, 
     heap_pool_t *mark;
     HRESULT hres;
 
-    if((rem_flags & REM_CHECK_GLOBAL) && !(regexp->jsregexp->flags & JSREG_GLOB))
+    if((rem_flags & REM_CHECK_GLOBAL) && !(regexp->jsregexp->flags & REG_GLOB))
         return S_FALSE;
 
     mark = heap_pool_mark(&ctx->tmp_heap);
@@ -216,7 +216,7 @@ static HRESULT regexp_match(script_ctx_t *ctx, jsdisp_t *dispex, jsstr_t *str, B
 
         ret[i++] = cres;
 
-        if(!gflag && !(This->jsregexp->flags & JSREG_GLOB)) {
+        if(!gflag && !(This->jsregexp->flags & REG_GLOB)) {
             hres = S_OK;
             break;
         }
@@ -407,7 +407,7 @@ static HRESULT run_exec(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t arg, jsstr_t
     if(FAILED(hres))
         return hres;
 
-    if(regexp->jsregexp->flags & JSREG_GLOB) {
+    if(regexp->jsregexp->flags & REG_GLOB) {
         if(regexp->last_index < 0) {
             jsstr_release(string);
             set_last_index(regexp, 0);
@@ -668,7 +668,7 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, jsstr_t *str, jsval
     jsdisp_t *array;
     HRESULT hres;
 
-    if(!(regexp->jsregexp->flags & JSREG_GLOB)) {
+    if(!(regexp->jsregexp->flags & REG_GLOB)) {
         match_result_t match, *parens = NULL;
         DWORD parens_cnt, parens_size = 0;
         const WCHAR *cp = str->str;
@@ -991,16 +991,16 @@ HRESULT parse_regexp_flags(const WCHAR *str, DWORD str_len, DWORD *ret)
     for (p = str; p < str+str_len; p++) {
         switch (*p) {
         case 'g':
-            flags |= JSREG_GLOB;
+            flags |= REG_GLOB;
             break;
         case 'i':
-            flags |= JSREG_FOLD;
+            flags |= REG_FOLD;
             break;
         case 'm':
-            flags |= JSREG_MULTILINE;
+            flags |= REG_MULTILINE;
             break;
         case 'y':
-            flags |= JSREG_STICKY;
+            flags |= REG_STICKY;
             break;
         default:
             WARN("wrong flag %c\n", *p);

@@ -31,10 +31,10 @@
  * the Initial Developer. All Rights Reserved.
  */
 
-#define JSREG_FOLD      0x01    /* fold uppercase to lowercase */
-#define JSREG_GLOB      0x02    /* global exec, creates array of matches */
-#define JSREG_MULTILINE 0x04    /* treat ^ and $ as begin and end of line */
-#define JSREG_STICKY    0x08    /* only match starting at lastIndex */
+#define REG_FOLD      0x01      /* fold uppercase to lowercase */
+#define REG_GLOB      0x02      /* global exec, creates array of matches */
+#define REG_MULTILINE 0x04      /* treat ^ and $ as begin and end of line */
+#define REG_STICKY    0x08      /* only match starting at lastIndex */
 
 typedef struct RECapture {
     ptrdiff_t index;            /* start of contents, -1 for empty  */
@@ -73,7 +73,7 @@ typedef struct RECharSet {
 } RECharSet;
 
 typedef struct JSRegExp {
-    WORD         flags;         /* flags, see jsapi.h's JSREG_* defines */
+    WORD         flags;         /* flags, see jsapi.h's REG_* defines */
     size_t       parenCount;    /* number of parenthesized submatches */
     size_t       classCount;    /* count [...] bitmaps */
     RECharSet    *classList;    /* list of [...] bitmaps */
