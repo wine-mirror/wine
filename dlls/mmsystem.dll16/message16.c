@@ -188,8 +188,6 @@ static MMSYSTEM_MapType	MMSYSTDRV_MidiOut_Map16To32W  (UINT wMsg, DWORD_PTR* lpP
 		mh32->dwBytesRecorded = mh16->dwBytesRecorded;
 		mh32->dwUser = mh16->dwUser;
 		mh32->dwFlags = mh16->dwFlags;
-		/* FIXME: nothing on mh32->lpNext */
-		/* could link the mh32->lpNext at this level for memory house keeping */
 		mh32->dwOffset = (*lpParam2 >= sizeof(MIDIHDR)) ? mh16->dwOffset : 0;
 		mh16->lpNext = mh32; /* for reuse in unprepare and write */
 		/* store size of passed MIDIHDR?? structure to know if dwOffset is available or not */
@@ -278,9 +276,6 @@ static  MMSYSTEM_MapType	MMSYSTDRV_MidiOut_UnMap16To32W(UINT wMsg, DWORD_PTR* lp
 	    LPMIDIHDR		mh16 = MapSL(*(SEGPTR*)((LPSTR)mh32 - sizeof(LPMIDIHDR)));
 
 	    assert(mh16->lpNext == mh32);
-	    mh16->dwBufferLength = mh32->dwBufferLength;
-	    mh16->dwBytesRecorded = mh32->dwBytesRecorded;
-	    mh16->dwUser = mh32->dwUser;
 	    mh16->dwFlags = mh32->dwFlags;
 	    if (mh16->reserved >= sizeof(MIDIHDR))
 		mh16->dwOffset = mh32->dwOffset;
@@ -501,11 +496,8 @@ static  MMSYSTEM_MapType	MMSYSTDRV_WaveIn_UnMap16To32W(UINT wMsg, DWORD_PTR* lpP
 	    LPWAVEHDR		wh16 = MapSL(*(SEGPTR*)((LPSTR)wh32 - sizeof(LPWAVEHDR)));
 
 	    assert(wh16->lpNext == wh32);
-	    wh16->dwBufferLength = wh32->dwBufferLength;
 	    wh16->dwBytesRecorded = wh32->dwBytesRecorded;
-	    wh16->dwUser = wh32->dwUser;
 	    wh16->dwFlags = wh32->dwFlags;
-	    wh16->dwLoops = wh32->dwLoops;
 
 	    if (wMsg == WIDM_UNPREPARE && fn_ret == MMSYSERR_NOERROR) {
 		HeapFree(GetProcessHeap(), 0, (LPSTR)wh32 - sizeof(LPWAVEHDR));
@@ -734,11 +726,7 @@ static  MMSYSTEM_MapType	MMSYSTDRV_WaveOut_UnMap16To32W(UINT wMsg, DWORD_PTR* lp
 	    LPWAVEHDR		wh16 = MapSL(*(SEGPTR*)((LPSTR)wh32 - sizeof(LPWAVEHDR)));
 
 	    assert(wh16->lpNext == wh32);
-	    wh16->dwBufferLength = wh32->dwBufferLength;
-	    wh16->dwBytesRecorded = wh32->dwBytesRecorded;
-	    wh16->dwUser = wh32->dwUser;
 	    wh16->dwFlags = wh32->dwFlags;
-	    wh16->dwLoops = wh32->dwLoops;
 
 	    if (wMsg == WODM_UNPREPARE && fn_ret == MMSYSERR_NOERROR) {
 		HeapFree(GetProcessHeap(), 0, (LPSTR)wh32 - sizeof(LPWAVEHDR));

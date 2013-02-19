@@ -104,20 +104,6 @@ void MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32)
     memcpy(&(mmt16->u), &(mmt32->u), sizeof(mmt16->u));
 }
 
-/******************************************************************
- *		MMSYSTEM_MMTIME16to32
- *
- *
- */
-static void MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16)
-{
-    mmt32->wType = mmt16->wType;
-    /* layout of rest is the same for 32/16,
-     * Note: mmt16->u is 2 bytes smaller than mmt32->u, which has padding
-     */
-    memcpy(&(mmt32->u), &(mmt16->u), sizeof(mmt16->u));
-}
-
 /**************************************************************************
  * 				timeGetSystemTime	[MMSYSTEM.601]
  */
@@ -1153,7 +1139,7 @@ MMRESULT16 WINAPI midiStreamPosition16(HMIDISTRM16 hMidiStrm, LPMMTIME16 lpmmt16
 
     if (!lpmmt16)
 	return MMSYSERR_INVALPARAM;
-    MMSYSTEM_MMTIME16to32(&mmt32, lpmmt16);
+    mmt32.wType = lpmmt16->wType;
     ret = midiStreamPosition(HMIDISTRM_32(hMidiStrm), &mmt32, sizeof(MMTIME));
     MMSYSTEM_MMTIME32to16(lpmmt16, &mmt32);
     return ret;
@@ -1288,24 +1274,11 @@ UINT16 WINAPI waveOutPrepareHeader16(HWAVEOUT16 hWaveOut,      /* [in] */
                                      SEGPTR lpsegWaveOutHdr,   /* [???] */
 				     UINT16 uSize)             /* [in] */
 {
-    LPWAVEHDR		lpWaveOutHdr = MapSL(lpsegWaveOutHdr);
-    UINT16		result;
-
     TRACE("(%04X, %08x, %u);\n", hWaveOut, lpsegWaveOutHdr, uSize);
 
-    if (lpWaveOutHdr == NULL) return MMSYSERR_INVALPARAM;
+    if (lpsegWaveOutHdr == 0) return MMSYSERR_INVALPARAM;
 
-    if ((result = MMSYSTDRV_Message(HWAVEOUT_32(hWaveOut), WODM_PREPARE, lpsegWaveOutHdr,
-                                    uSize)) != MMSYSERR_NOTSUPPORTED)
-        return result;
-
-    if (lpWaveOutHdr->dwFlags & WHDR_INQUEUE)
-        return WAVERR_STILLPLAYING;
-
-    lpWaveOutHdr->dwFlags |= WHDR_PREPARED;
-    lpWaveOutHdr->dwFlags &= ~WHDR_DONE;
-
-    return MMSYSERR_NOERROR;
+    return MMSYSTDRV_Message(HWAVEOUT_32(hWaveOut), WODM_PREPARE, lpsegWaveOutHdr, uSize);
 }
 
 /**************************************************************************
@@ -1581,15 +1554,12 @@ UINT16 WINAPI waveInPrepareHeader16(HWAVEIN16 hWaveIn,       /* [in] */
 				    UINT16 uSize)            /* [in] */
 {
     LPWAVEHDR		lpWaveInHdr = MapSL(lpsegWaveInHdr);
-    UINT16		ret;
 
     TRACE("(%04X, %p, %u);\n", hWaveIn, lpWaveInHdr, uSize);
 
     if (lpWaveInHdr == NULL) return MMSYSERR_INVALHANDLE;
-    lpWaveInHdr->dwBytesRecorded = 0;
 
-    ret = MMSYSTDRV_Message(HWAVEIN_32(hWaveIn), WIDM_PREPARE, lpsegWaveInHdr, uSize);
-    return ret;
+    return MMSYSTDRV_Message(HWAVEIN_32(hWaveIn), WIDM_PREPARE, lpsegWaveInHdr, uSize);
 }
 
 /**************************************************************************
