@@ -2642,41 +2642,10 @@ GpStatus WINGDIPAPI GdipDrawBezier(GpGraphics *graphics, GpPen *pen, REAL x1,
 GpStatus WINGDIPAPI GdipDrawBezierI(GpGraphics *graphics, GpPen *pen, INT x1,
     INT y1, INT x2, INT y2, INT x3, INT y3, INT x4, INT y4)
 {
-    INT save_state;
-    GpPointF pt[4];
-    GpStatus retval;
-
     TRACE("(%p, %p, %d, %d, %d, %d, %d, %d, %d, %d)\n", graphics, pen, x1, y1,
           x2, y2, x3, y3, x4, y4);
 
-    if(!graphics || !pen)
-        return InvalidParameter;
-
-    if(graphics->busy)
-        return ObjectBusy;
-
-    if (!graphics->hdc)
-    {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
-    }
-
-    pt[0].X = x1;
-    pt[0].Y = y1;
-    pt[1].X = x2;
-    pt[1].Y = y2;
-    pt[2].X = x3;
-    pt[2].Y = y3;
-    pt[3].X = x4;
-    pt[3].Y = y4;
-
-    save_state = prepare_dc(graphics, pen);
-
-    retval = draw_polybezier(graphics, pen, pt, 4, TRUE);
-
-    restore_dc(graphics, save_state);
-
-    return retval;
+    return GdipDrawBezier(graphics, pen, (REAL)x1, (REAL)y1, (REAL)x2, (REAL)y2, (REAL)x3, (REAL)y3, (REAL)x4, (REAL)y4);
 }
 
 GpStatus WINGDIPAPI GdipDrawBeziers(GpGraphics *graphics, GpPen *pen,
