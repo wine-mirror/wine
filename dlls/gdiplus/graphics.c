@@ -1713,63 +1713,6 @@ static void shorten_line_amt(REAL x1, REAL y1, REAL *x2, REAL *y2, REAL amt)
     shorten_line_percent(x1, y1, x2, y2, percent);
 }
 
-/* Draws lines between the given points, and if caps is true then draws an endcap
- * at the end of the last line. */
-static GpStatus draw_polyline(GpGraphics *graphics, GpPen *pen,
-    GDIPCONST GpPointF * pt, INT count, BOOL caps)
-{
-    POINT *pti = NULL;
-    GpPointF *ptcopy = NULL;
-    GpStatus status = GenericError;
-
-    if(!count)
-        return Ok;
-
-    pti = GdipAlloc(count * sizeof(POINT));
-    ptcopy = GdipAlloc(count * sizeof(GpPointF));
-
-    if(!pti || !ptcopy){
-        status = OutOfMemory;
-        goto end;
-    }
-
-    memcpy(ptcopy, pt, count * sizeof(GpPointF));
-
-    if(caps){
-        if(pen->endcap == LineCapArrowAnchor)
-            shorten_line_amt(ptcopy[count-2].X, ptcopy[count-2].Y,
-                             &ptcopy[count-1].X, &ptcopy[count-1].Y, pen->width);
-        else if((pen->endcap == LineCapCustom) && pen->customend)
-            shorten_line_amt(ptcopy[count-2].X, ptcopy[count-2].Y,
-                             &ptcopy[count-1].X, &ptcopy[count-1].Y,
-                             pen->customend->inset * pen->width);
-
-        if(pen->startcap == LineCapArrowAnchor)
-            shorten_line_amt(ptcopy[1].X, ptcopy[1].Y,
-                             &ptcopy[0].X, &ptcopy[0].Y, pen->width);
-        else if((pen->startcap == LineCapCustom) && pen->customstart)
-            shorten_line_amt(ptcopy[1].X, ptcopy[1].Y,
-                             &ptcopy[0].X, &ptcopy[0].Y,
-                             pen->customstart->inset * pen->width);
-
-        draw_cap(graphics, get_gdi_brush_color(pen->brush), pen->endcap, pen->width, pen->customend,
-                 pt[count - 2].X, pt[count - 2].Y, pt[count - 1].X, pt[count - 1].Y);
-        draw_cap(graphics, get_gdi_brush_color(pen->brush), pen->startcap, pen->width, pen->customstart,
-                         pt[1].X, pt[1].Y, pt[0].X, pt[0].Y);
-    }
-
-    transform_and_round_points(graphics, pti, ptcopy, count);
-
-    if(Polyline(graphics->hdc, pti, count))
-        status = Ok;
-
-end:
-    GdipFree(pti);
-    GdipFree(ptcopy);
-
-    return status;
-}
-
 /* Conducts a linear search to find the bezier points that will back off
  * the endpoint of the curve by a distance of amt. Linear search works
  * better than binary in this case because there are multiple solutions,
@@ -3473,8 +3416,8 @@ GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
 GpStatus WINGDIPAPI GdipDrawLines(GpGraphics *graphics, GpPen *pen, GDIPCONST
     GpPointF *points, INT count)
 {
-    INT save_state;
-    GpStatus retval;
+    GpStatus status;
+    GpPath *path;
 
     TRACE("(%p, %p, %p, %d)\n", graphics, pen, points, count);
 
@@ -3484,19 +3427,15 @@ GpStatus WINGDIPAPI GdipDrawLines(GpGraphics *graphics, GpPen *pen, GDIPCONST
     if(graphics->busy)
         return ObjectBusy;
 
-    if (!graphics->hdc)
-    {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
-    }
+    status = GdipCreatePath(FillModeAlternate, &path);
+    if (status != Ok) return status;
 
-    save_state = prepare_dc(graphics, pen);
+    status = GdipAddPathLine2(path, points, count);
+    if (status == Ok)
+        status = GdipDrawPath(graphics, pen, path);
 
-    retval = draw_polyline(graphics, pen, points, count, TRUE);
-
-    restore_dc(graphics, save_state);
-
-    return retval;
+    GdipDeletePath(path);
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipDrawLinesI(GpGraphics *graphics, GpPen *pen, GDIPCONST
