@@ -665,15 +665,13 @@ HRESULT to_int32(script_ctx_t *ctx, jsval_t v, INT *ret)
 /* ECMA-262 3rd Edition    9.6 */
 HRESULT to_uint32(script_ctx_t *ctx, jsval_t val, DWORD *ret)
 {
-    double n;
+    INT32 n;
     HRESULT hres;
 
-    hres = to_number(ctx, val, &n);
-    if(FAILED(hres))
-        return hres;
-
-    *ret = isnan(n) || isinf(n) ? 0 : n;
-    return S_OK;
+    hres = to_int32(ctx, val, &n);
+    if(SUCCEEDED(hres))
+        *ret = n;
+    return hres;
 }
 
 static jsstr_t *int_to_string(int i)
