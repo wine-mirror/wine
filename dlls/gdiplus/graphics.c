@@ -3829,20 +3829,23 @@ GpStatus WINGDIPAPI GdipFillRectangleI(GpGraphics *graphics, GpBrush *brush,
 GpStatus WINGDIPAPI GdipFillRectangles(GpGraphics *graphics, GpBrush *brush, GDIPCONST GpRectF *rects,
     INT count)
 {
-    GpStatus ret;
-    INT i;
+    GpStatus status;
+    GpPath *path;
 
     TRACE("(%p, %p, %p, %d)\n", graphics, brush, rects, count);
 
     if(!rects)
         return InvalidParameter;
 
-    for(i = 0; i < count; i++){
-        ret = GdipFillRectangle(graphics, brush, rects[i].X, rects[i].Y, rects[i].Width, rects[i].Height);
-        if(ret != Ok)   return ret;
-    }
+    status = GdipCreatePath(FillModeAlternate, &path);
+    if (status != Ok) return status;
 
-    return Ok;
+    status = GdipAddPathRectangles(path, rects, count);
+    if (status == Ok)
+        status = GdipFillPath(graphics, brush, path);
+
+    GdipDeletePath(path);
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipFillRectanglesI(GpGraphics *graphics, GpBrush *brush, GDIPCONST GpRect *rects,
