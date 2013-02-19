@@ -2587,8 +2587,8 @@ GpStatus WINGDIPAPI GdipDrawBezierI(GpGraphics *graphics, GpPen *pen, INT x1,
 GpStatus WINGDIPAPI GdipDrawBeziers(GpGraphics *graphics, GpPen *pen,
     GDIPCONST GpPointF *points, INT count)
 {
-    INT i;
-    GpStatus ret;
+    GpStatus status;
+    GpPath *path;
 
     TRACE("(%p, %p, %p, %d)\n", graphics, pen, points, count);
 
@@ -2598,17 +2598,15 @@ GpStatus WINGDIPAPI GdipDrawBeziers(GpGraphics *graphics, GpPen *pen,
     if(graphics->busy)
         return ObjectBusy;
 
-    for(i = 0; i < floor(count / 4); i++){
-        ret = GdipDrawBezier(graphics, pen,
-                             points[4*i].X, points[4*i].Y,
-                             points[4*i + 1].X, points[4*i + 1].Y,
-                             points[4*i + 2].X, points[4*i + 2].Y,
-                             points[4*i + 3].X, points[4*i + 3].Y);
-        if(ret != Ok)
-            return ret;
-    }
+    status = GdipCreatePath(FillModeAlternate, &path);
+    if (status != Ok) return status;
 
-    return Ok;
+    status = GdipAddPathBeziers(path, points, count);
+    if (status == Ok)
+        status = GdipDrawPath(graphics, pen, path);
+
+    GdipDeletePath(path);
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipDrawBeziersI(GpGraphics *graphics, GpPen *pen,
