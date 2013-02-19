@@ -98,6 +98,16 @@ typedef struct Match2 {
     SubMatches *sub_matches;
 } Match2;
 
+typedef struct MatchCollectionEnum {
+    IEnumVARIANT IEnumVARIANT_iface;
+
+    LONG ref;
+
+    IMatchCollection2 *mc;
+    LONG pos;
+    LONG count;
+} MatchCollectionEnum;
+
 typedef struct MatchCollection2 {
     IMatchCollection2 IMatchCollection2_iface;
 
@@ -528,6 +538,149 @@ static HRESULT create_match2(DWORD pos, match_state_t **result, IMatch2 **match)
     return hres;
 }
 
+static inline MatchCollectionEnum* impl_from_IMatchCollectionEnum(IEnumVARIANT *iface)
+{
+    return CONTAINING_RECORD(iface, MatchCollectionEnum, IEnumVARIANT_iface);
+}
+
+static HRESULT WINAPI MatchCollectionEnum_QueryInterface(
+        IEnumVARIANT *iface, REFIID riid, void **ppv)
+{
+    MatchCollectionEnum *This = impl_from_IMatchCollectionEnum(iface);
+
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IEnumVARIANT_iface;
+    }else if(IsEqualGUID(riid, &IID_IEnumVARIANT)) {
+        TRACE("(%p)->(IID_IEnumVARIANT %p)\n", This, ppv);
+        *ppv = &This->IEnumVARIANT_iface;
+    }else {
+        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI MatchCollectionEnum_AddRef(IEnumVARIANT *iface)
+{
+    MatchCollectionEnum *This = impl_from_IMatchCollectionEnum(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI MatchCollectionEnum_Release(IEnumVARIANT *iface)
+{
+    MatchCollectionEnum *This = impl_from_IMatchCollectionEnum(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        IMatchCollection2_Release(This->mc);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI MatchCollectionEnum_Next(IEnumVARIANT *iface,
+        ULONG celt, VARIANT *rgVar, ULONG *pCeltFetched)
+{
+    MatchCollectionEnum *This = impl_from_IMatchCollectionEnum(iface);
+    DWORD i;
+    HRESULT hres = S_OK;
+
+    TRACE("(%p)->(%u %p %p)\n", This, celt, rgVar, pCeltFetched);
+
+    if(This->pos>=This->count) {
+        if(pCeltFetched)
+            *pCeltFetched = 0;
+        return S_FALSE;
+    }
+
+    for(i=0; i<celt && This->pos+i<This->count; i++) {
+        V_VT(rgVar+i) = VT_DISPATCH;
+        hres = IMatchCollection2_get_Item(This->mc, This->pos+i, &V_DISPATCH(rgVar+i));
+        if(FAILED(hres))
+            break;
+    }
+    if(FAILED(hres)) {
+        while(i--)
+            VariantClear(rgVar+i);
+        return hres;
+    }
+
+    if(pCeltFetched)
+        *pCeltFetched = i;
+    This->pos += i;
+    return S_OK;
+}
+
+static HRESULT WINAPI MatchCollectionEnum_Skip(IEnumVARIANT *iface, ULONG celt)
+{
+    MatchCollectionEnum *This = impl_from_IMatchCollectionEnum(iface);
+
+    TRACE("(%p)->(%u)\n", This, celt);
+
+    if(This->pos+celt <= This->count)
+        This->pos += celt;
+    else
+        This->pos = This->count;
+    return S_OK;
+}
+
+static HRESULT WINAPI MatchCollectionEnum_Reset(IEnumVARIANT *iface)
+{
+    MatchCollectionEnum *This = impl_from_IMatchCollectionEnum(iface);
+
+    TRACE("(%p)\n", This);
+
+    This->pos = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI MatchCollectionEnum_Clone(IEnumVARIANT *iface, IEnumVARIANT **ppEnum)
+{
+    MatchCollectionEnum *This = impl_from_IMatchCollectionEnum(iface);
+    FIXME("(%p)->(%p)\n", This, ppEnum);
+    return E_NOTIMPL;
+}
+
+static const IEnumVARIANTVtbl MatchCollectionEnum_Vtbl = {
+    MatchCollectionEnum_QueryInterface,
+    MatchCollectionEnum_AddRef,
+    MatchCollectionEnum_Release,
+    MatchCollectionEnum_Next,
+    MatchCollectionEnum_Skip,
+    MatchCollectionEnum_Reset,
+    MatchCollectionEnum_Clone
+};
+
+static HRESULT create_enum_variant_mc2(IMatchCollection2 *mc, ULONG pos, IEnumVARIANT **enum_variant)
+{
+    MatchCollectionEnum *ret;
+
+    ret = heap_alloc_zero(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->IEnumVARIANT_iface.lpVtbl = &MatchCollectionEnum_Vtbl;
+    ret->ref = 1;
+    ret->pos = pos;
+    IMatchCollection2_get_Count(mc, &ret->count);
+    ret->mc = mc;
+    IMatchCollection2_AddRef(mc);
+
+    *enum_variant = &ret->IEnumVARIANT_iface;
+    return S_OK;
+}
+
 static inline MatchCollection2* impl_from_IMatchCollection2(IMatchCollection2 *iface)
 {
     return CONTAINING_RECORD(iface, MatchCollection2, IMatchCollection2_iface);
@@ -667,8 +820,13 @@ static HRESULT WINAPI MatchCollection2_get_Count(IMatchCollection2 *iface, LONG 
 static HRESULT WINAPI MatchCollection2_get__NewEnum(IMatchCollection2 *iface, IUnknown **ppEnum)
 {
     MatchCollection2 *This = impl_from_IMatchCollection2(iface);
-    FIXME("(%p)->(%p)\n", This, ppEnum);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppEnum);
+
+    if(!ppEnum)
+        return E_POINTER;
+
+    return create_enum_variant_mc2(&This->IMatchCollection2_iface, 0, (IEnumVARIANT**)ppEnum);
 }
 
 static const IMatchCollection2Vtbl MatchCollection2Vtbl = {
