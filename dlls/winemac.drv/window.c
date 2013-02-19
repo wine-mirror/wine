@@ -852,11 +852,10 @@ void CDECL macdrv_SetFocus(HWND hwnd)
     if (!(hwnd = GetAncestor(hwnd, GA_ROOT))) return;
     if (!(data = get_win_data(hwnd))) return;
 
-    if (data->cocoa_window)
+    if (data->cocoa_window && data->on_screen)
     {
         /* Set Mac focus */
         macdrv_give_cocoa_window_focus(data->cocoa_window);
-        data->on_screen = TRUE;
     }
 
     release_win_data(data);
