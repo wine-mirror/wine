@@ -2503,9 +2503,8 @@ GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
 GpStatus WINGDIPAPI GdipDrawArc(GpGraphics *graphics, GpPen *pen, REAL x,
     REAL y, REAL width, REAL height, REAL startAngle, REAL sweepAngle)
 {
-    INT save_state, num_pts;
-    GpPointF points[MAX_ARC_PTS];
-    GpStatus retval;
+    GpStatus status;
+    GpPath *path;
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f)\n", graphics, pen, x, y,
           width, height, startAngle, sweepAngle);
@@ -2516,21 +2515,15 @@ GpStatus WINGDIPAPI GdipDrawArc(GpGraphics *graphics, GpPen *pen, REAL x,
     if(graphics->busy)
         return ObjectBusy;
 
-    if (!graphics->hdc)
-    {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
-    }
+    status = GdipCreatePath(FillModeAlternate, &path);
+    if (status != Ok) return status;
 
-    num_pts = arc2polybezier(points, x, y, width, height, startAngle, sweepAngle);
+    status = GdipAddPathArc(path, x, y, width, height, startAngle, sweepAngle);
+    if (status == Ok)
+        status = GdipDrawPath(graphics, pen, path);
 
-    save_state = prepare_dc(graphics, pen);
-
-    retval = draw_polybezier(graphics, pen, points, num_pts, TRUE);
-
-    restore_dc(graphics, save_state);
-
-    return retval;
+    GdipDeletePath(path);
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipDrawArcI(GpGraphics *graphics, GpPen *pen, INT x,
