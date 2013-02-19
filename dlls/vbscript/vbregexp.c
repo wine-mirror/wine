@@ -80,7 +80,35 @@ static HRESULT init_regexp_typeinfo(regexp_tid_t tid)
     return S_OK;
 }
 
-typedef struct {
+struct SubMatches {
+    ISubMatches ISubMatches_iface;
+
+    LONG ref;
+
+    WCHAR *match;
+    match_state_t *result;
+};
+
+typedef struct Match2 {
+    IMatch2 IMatch2_iface;
+
+    LONG ref;
+
+    DWORD index;
+    SubMatches *sub_matches;
+} Match2;
+
+typedef struct MatchCollection2 {
+    IMatchCollection2 IMatchCollection2_iface;
+
+    LONG ref;
+
+    IMatch2 **matches;
+    DWORD count;
+    DWORD size;
+} MatchCollection2;
+
+typedef struct RegExp2 {
     IRegExp2 IRegExp2_iface;
     IRegExp IRegExp_iface;
 
@@ -91,6 +119,603 @@ typedef struct {
     heap_pool_t pool;
     WORD flags;
 } RegExp2;
+
+static inline SubMatches* impl_from_ISubMatches(ISubMatches *iface)
+{
+    return CONTAINING_RECORD(iface, SubMatches, ISubMatches_iface);
+}
+
+static HRESULT WINAPI SubMatches_QueryInterface(
+        ISubMatches *iface, REFIID riid, void **ppv)
+{
+    SubMatches *This = impl_from_ISubMatches(iface);
+
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->ISubMatches_iface;
+    }else if(IsEqualGUID(riid, &IID_IDispatch)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = &This->ISubMatches_iface;
+    }else if(IsEqualGUID(riid, &IID_ISubMatches)) {
+        TRACE("(%p)->(IID_ISubMatches %p)\n", This, ppv);
+        *ppv = &This->ISubMatches_iface;
+    }else {
+        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI SubMatches_AddRef(ISubMatches *iface)
+{
+    SubMatches *This = impl_from_ISubMatches(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI SubMatches_Release(ISubMatches *iface)
+{
+    SubMatches *This = impl_from_ISubMatches(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        heap_free(This->match);
+        heap_free(This->result);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI SubMatches_GetTypeInfoCount(ISubMatches *iface, UINT *pctinfo)
+{
+    SubMatches *This = impl_from_ISubMatches(iface);
+
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI SubMatches_GetTypeInfo(ISubMatches *iface,
+        UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    SubMatches *This = impl_from_ISubMatches(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SubMatches_GetIDsOfNames(ISubMatches *iface,
+        REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    SubMatches *This = impl_from_ISubMatches(iface);
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid),
+            rgszNames, cNames, lcid, rgDispId);
+
+    return ITypeInfo_GetIDsOfNames(typeinfos[SubMatches_tid], rgszNames, cNames, rgDispId);
+}
+
+static HRESULT WINAPI SubMatches_Invoke(ISubMatches *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    SubMatches *This = impl_from_ISubMatches(iface);
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    return ITypeInfo_Invoke(typeinfos[SubMatches_tid], iface, dispIdMember, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI SubMatches_get_Item(ISubMatches *iface,
+        LONG index, VARIANT *pSubMatch)
+{
+    SubMatches *This = impl_from_ISubMatches(iface);
+
+    TRACE("(%p)->(%d %p)\n", This, index, pSubMatch);
+
+    if(!pSubMatch)
+        return E_POINTER;
+
+    if(!This->result || index<0 || index>=This->result->paren_count)
+        return E_INVALIDARG;
+
+    if(This->result->parens[index].index == -1) {
+        V_VT(pSubMatch) = VT_EMPTY;
+    }else {
+        V_VT(pSubMatch) = VT_BSTR;
+        V_BSTR(pSubMatch) = SysAllocStringLen(
+                This->match+This->result->parens[index].index,
+                This->result->parens[index].length);
+
+        if(!V_BSTR(pSubMatch))
+            return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI SubMatches_get_Count(ISubMatches *iface, LONG *pCount)
+{
+    SubMatches *This = impl_from_ISubMatches(iface);
+
+    TRACE("(%p)->(%p)\n", This, pCount);
+
+    if(!pCount)
+        return E_POINTER;
+
+    if(!This->result)
+        *pCount = 0;
+    else
+        *pCount = This->result->paren_count;
+    return S_OK;
+}
+
+static HRESULT WINAPI SubMatches_get__NewEnum(ISubMatches *iface, IUnknown **ppEnum)
+{
+    SubMatches *This = impl_from_ISubMatches(iface);
+    FIXME("(%p)->(%p)\n", This, ppEnum);
+    return E_NOTIMPL;
+}
+
+static const ISubMatchesVtbl SubMatchesVtbl = {
+    SubMatches_QueryInterface,
+    SubMatches_AddRef,
+    SubMatches_Release,
+    SubMatches_GetTypeInfoCount,
+    SubMatches_GetTypeInfo,
+    SubMatches_GetIDsOfNames,
+    SubMatches_Invoke,
+    SubMatches_get_Item,
+    SubMatches_get_Count,
+    SubMatches_get__NewEnum
+};
+
+static HRESULT create_sub_matches(DWORD pos, match_state_t *result, SubMatches **sub_matches)
+{
+    SubMatches *ret;
+    DWORD i;
+    HRESULT hres;
+
+    hres = init_regexp_typeinfo(SubMatches_tid);
+    if(FAILED(hres))
+        return hres;
+
+    ret = heap_alloc_zero(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->ISubMatches_iface.lpVtbl = &SubMatchesVtbl;
+
+    ret->result = result;
+    if(result) {
+        ret->match = heap_alloc((result->match_len+1) * sizeof(WCHAR));
+        if(!ret) {
+            heap_free(ret);
+            return E_OUTOFMEMORY;
+        }
+        memcpy(ret->match, result->cp-result->match_len, result->match_len*sizeof(WCHAR));
+        ret->match[result->match_len] = 0;
+
+        result->cp = NULL;
+        for(i=0; i<result->paren_count; i++)
+            if(result->parens[i].index != -1)
+                result->parens[i].index -= pos;
+    }else {
+        ret->match = NULL;
+    }
+
+    ret->ref = 1;
+    *sub_matches = ret;
+    return hres;
+}
+
+static inline Match2* impl_from_IMatch2(IMatch2 *iface)
+{
+    return CONTAINING_RECORD(iface, Match2, IMatch2_iface);
+}
+
+static HRESULT WINAPI Match2_QueryInterface(
+        IMatch2 *iface, REFIID riid, void **ppv)
+{
+    Match2 *This = impl_from_IMatch2(iface);
+
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IMatch2_iface;
+    }else if(IsEqualGUID(riid, &IID_IDispatch)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = &This->IMatch2_iface;
+    }else if(IsEqualGUID(riid, &IID_IMatch2)) {
+        TRACE("(%p)->(IID_IMatch2 %p)\n", This, ppv);
+        *ppv = &This->IMatch2_iface;
+    }else {
+        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI Match2_AddRef(IMatch2 *iface)
+{
+    Match2 *This = impl_from_IMatch2(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI Match2_Release(IMatch2 *iface)
+{
+    Match2 *This = impl_from_IMatch2(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        ISubMatches_Release(&This->sub_matches->ISubMatches_iface);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI Match2_GetTypeInfoCount(IMatch2 *iface, UINT *pctinfo)
+{
+    Match2 *This = impl_from_IMatch2(iface);
+
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI Match2_GetTypeInfo(IMatch2 *iface,
+        UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    Match2 *This = impl_from_IMatch2(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Match2_GetIDsOfNames(IMatch2 *iface,
+        REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    Match2 *This = impl_from_IMatch2(iface);
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid),
+            rgszNames, cNames, lcid, rgDispId);
+
+    return ITypeInfo_GetIDsOfNames(typeinfos[Match2_tid], rgszNames, cNames, rgDispId);
+}
+
+static HRESULT WINAPI Match2_Invoke(IMatch2 *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    Match2 *This = impl_from_IMatch2(iface);
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    return ITypeInfo_Invoke(typeinfos[Match2_tid], iface, dispIdMember, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI Match2_get_Value(IMatch2 *iface, BSTR *pValue)
+{
+    Match2 *This = impl_from_IMatch2(iface);
+
+    TRACE("(%p)->(%p)\n", This, pValue);
+
+    if(!pValue)
+        return E_POINTER;
+
+    if(!This->sub_matches->match) {
+        *pValue = NULL;
+        return S_OK;
+    }
+
+    *pValue = SysAllocString(This->sub_matches->match);
+    return *pValue ? S_OK : E_OUTOFMEMORY;
+}
+
+static HRESULT WINAPI Match2_get_FirstIndex(IMatch2 *iface, LONG *pFirstIndex)
+{
+    Match2 *This = impl_from_IMatch2(iface);
+
+    TRACE("(%p)->(%p)\n", This, pFirstIndex);
+
+    if(!pFirstIndex)
+        return E_POINTER;
+
+    *pFirstIndex = This->index;
+    return S_OK;
+}
+
+static HRESULT WINAPI Match2_get_Length(IMatch2 *iface, LONG *pLength)
+{
+    Match2 *This = impl_from_IMatch2(iface);
+
+    TRACE("(%p)->(%p)\n", This, pLength);
+
+    if(!pLength)
+        return E_POINTER;
+
+    if(This->sub_matches->result)
+        *pLength = This->sub_matches->result->match_len;
+    else
+        *pLength = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI Match2_get_SubMatches(IMatch2 *iface, IDispatch **ppSubMatches)
+{
+    Match2 *This = impl_from_IMatch2(iface);
+
+    TRACE("(%p)->(%p)\n", This, ppSubMatches);
+
+    if(!ppSubMatches)
+        return E_POINTER;
+
+    *ppSubMatches = (IDispatch*)&This->sub_matches->ISubMatches_iface;
+    ISubMatches_AddRef(&This->sub_matches->ISubMatches_iface);
+    return S_OK;
+}
+
+static const IMatch2Vtbl Match2Vtbl = {
+    Match2_QueryInterface,
+    Match2_AddRef,
+    Match2_Release,
+    Match2_GetTypeInfoCount,
+    Match2_GetTypeInfo,
+    Match2_GetIDsOfNames,
+    Match2_Invoke,
+    Match2_get_Value,
+    Match2_get_FirstIndex,
+    Match2_get_Length,
+    Match2_get_SubMatches
+};
+
+static HRESULT create_match2(DWORD pos, match_state_t **result, IMatch2 **match)
+{
+    Match2 *ret;
+    HRESULT hres;
+
+    hres = init_regexp_typeinfo(Match2_tid);
+    if(FAILED(hres))
+        return hres;
+
+    ret = heap_alloc_zero(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->index = pos;
+    hres = create_sub_matches(pos, result ? *result : NULL, &ret->sub_matches);
+    if(FAILED(hres)) {
+        heap_free(ret);
+        return hres;
+    }
+    if(result)
+        *result = NULL;
+
+    ret->IMatch2_iface.lpVtbl = &Match2Vtbl;
+
+    ret->ref = 1;
+    *match = &ret->IMatch2_iface;
+    return hres;
+}
+
+static inline MatchCollection2* impl_from_IMatchCollection2(IMatchCollection2 *iface)
+{
+    return CONTAINING_RECORD(iface, MatchCollection2, IMatchCollection2_iface);
+}
+
+static HRESULT WINAPI MatchCollection2_QueryInterface(
+        IMatchCollection2 *iface, REFIID riid, void **ppv)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection2(iface);
+
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IMatchCollection2_iface;
+    }else if(IsEqualGUID(riid, &IID_IDispatch)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = &This->IMatchCollection2_iface;
+    }else if(IsEqualGUID(riid, &IID_IMatchCollection2)) {
+        TRACE("(%p)->(IID_IMatchCollection2 %p)\n", This, ppv);
+        *ppv = &This->IMatchCollection2_iface;
+    }else {
+        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI MatchCollection2_AddRef(IMatchCollection2 *iface)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection2(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI MatchCollection2_Release(IMatchCollection2 *iface)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection2(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        DWORD i;
+
+        for(i=0; i<This->count; i++)
+            IMatch2_Release(This->matches[i]);
+        heap_free(This->matches);
+
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI MatchCollection2_GetTypeInfoCount(IMatchCollection2 *iface, UINT *pctinfo)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection2(iface);
+
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI MatchCollection2_GetTypeInfo(IMatchCollection2 *iface,
+        UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection2(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MatchCollection2_GetIDsOfNames(IMatchCollection2 *iface,
+        REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection2(iface);
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid),
+            rgszNames, cNames, lcid, rgDispId);
+
+    return ITypeInfo_GetIDsOfNames(typeinfos[MatchCollection2_tid], rgszNames, cNames, rgDispId);
+}
+
+static HRESULT WINAPI MatchCollection2_Invoke(IMatchCollection2 *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection2(iface);
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    return ITypeInfo_Invoke(typeinfos[MatchCollection2_tid], iface, dispIdMember, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI MatchCollection2_get_Item(IMatchCollection2 *iface,
+        LONG index, IDispatch **ppMatch)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection2(iface);
+
+    TRACE("(%p)->()\n", This);
+
+    if(!ppMatch)
+        return E_POINTER;
+
+    if(index<0 || index>=This->count)
+        return E_INVALIDARG;
+
+    *ppMatch = (IDispatch*)This->matches[index];
+    IMatch2_AddRef(This->matches[index]);
+    return S_OK;
+}
+
+static HRESULT WINAPI MatchCollection2_get_Count(IMatchCollection2 *iface, LONG *pCount)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection2(iface);
+
+    TRACE("(%p)->()\n", This);
+
+    if(!pCount)
+        return E_POINTER;
+
+    *pCount = This->count;
+    return S_OK;
+}
+
+static HRESULT WINAPI MatchCollection2_get__NewEnum(IMatchCollection2 *iface, IUnknown **ppEnum)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection2(iface);
+    FIXME("(%p)->(%p)\n", This, ppEnum);
+    return E_NOTIMPL;
+}
+
+static const IMatchCollection2Vtbl MatchCollection2Vtbl = {
+    MatchCollection2_QueryInterface,
+    MatchCollection2_AddRef,
+    MatchCollection2_Release,
+    MatchCollection2_GetTypeInfoCount,
+    MatchCollection2_GetTypeInfo,
+    MatchCollection2_GetIDsOfNames,
+    MatchCollection2_Invoke,
+    MatchCollection2_get_Item,
+    MatchCollection2_get_Count,
+    MatchCollection2_get__NewEnum
+};
+
+static HRESULT add_match(IMatchCollection2 *iface, IMatch2 *add)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection2(iface);
+
+    TRACE("(%p)->(%p)\n", This, add);
+
+    if(!This->size) {
+        This->matches = heap_alloc(8*sizeof(IMatch*));
+        if(!This->matches)
+            return E_OUTOFMEMORY;
+        This->size = 8;
+    }else if(This->size == This->count) {
+        IMatch2 **new_matches = heap_realloc(This->matches, 2*This->size*sizeof(IMatch*));
+        if(!new_matches)
+            return E_OUTOFMEMORY;
+
+        This->matches = new_matches;
+        This->size <<= 1;
+    }
+
+    This->matches[This->count++] = add;
+    IMatch2_AddRef(add);
+    return S_OK;
+}
+
+static HRESULT create_match_collection2(IMatchCollection2 **match_collection)
+{
+    MatchCollection2 *ret;
+    HRESULT hres;
+
+    hres = init_regexp_typeinfo(MatchCollection2_tid);
+    if(FAILED(hres))
+        return hres;
+
+    ret = heap_alloc_zero(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->IMatchCollection2_iface.lpVtbl = &MatchCollection2Vtbl;
+
+    ret->ref = 1;
+    *match_collection = &ret->IMatchCollection2_iface;
+    return S_OK;
+}
 
 static inline RegExp2 *impl_from_IRegExp2(IRegExp2 *iface)
 {
@@ -326,8 +951,95 @@ static HRESULT WINAPI RegExp2_Execute(IRegExp2 *iface,
         BSTR sourceString, IDispatch **ppMatches)
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(sourceString), ppMatches);
-    return E_NOTIMPL;
+    match_state_t *result;
+    const WCHAR *pos;
+    IMatchCollection2 *match_collection;
+    IMatch2 *add = NULL;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(sourceString), ppMatches);
+
+    if(!This->pattern) {
+        DWORD i, len = SysStringLen(sourceString);
+
+        hres = create_match_collection2(&match_collection);
+        if(FAILED(hres))
+            return hres;
+
+        for(i=0; i<=len; i++) {
+            hres = create_match2(i, NULL, &add);
+            if(FAILED(hres))
+                break;
+
+            hres = add_match(match_collection, add);
+            if(FAILED(hres))
+                break;
+            IMatch2_Release(add);
+
+            if(!(This->flags & REG_GLOB))
+                break;
+        }
+
+        if(FAILED(hres)) {
+            IMatchCollection2_Release(match_collection);
+            return hres;
+        }
+
+        *ppMatches = (IDispatch*)match_collection;
+        return S_OK;
+    }
+
+    if(!This->regexp) {
+        This->regexp = regexp_new(NULL, &This->pool, This->pattern,
+                strlenW(This->pattern), This->flags, FALSE);
+        if(!This->regexp)
+            return E_FAIL;
+    }else {
+        hres = regexp_set_flags(&This->regexp, NULL, &This->pool, This->flags);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    hres = create_match_collection2(&match_collection);
+    if(FAILED(hres))
+        return hres;
+
+    pos = sourceString;
+    while(1) {
+        result = alloc_match_state(This->regexp, NULL, pos);
+        if(!result) {
+            hres = E_OUTOFMEMORY;
+            break;
+        }
+
+        hres = regexp_execute(This->regexp, NULL, &This->pool,
+                sourceString, SysStringLen(sourceString), result);
+        if(hres != S_OK) {
+            heap_free(result);
+            break;
+        }
+        pos = result->cp;
+
+        hres = create_match2(result->cp-result->match_len-sourceString, &result, &add);
+        heap_free(result);
+        if(FAILED(hres))
+            break;
+        hres = add_match(match_collection, add);
+        IMatch2_Release(add);
+        if(FAILED(hres))
+            break;
+
+        if(!(This->flags & REG_GLOB))
+            break;
+    }
+
+    if(FAILED(hres)) {
+        IMatchCollection2_Release(match_collection);
+        return hres;
+    }
+
+    *ppMatches = (IDispatch*)match_collection;
+    return S_OK;
 }
 
 static HRESULT WINAPI RegExp2_Test(IRegExp2 *iface, BSTR sourceString, VARIANT_BOOL *pMatch)
