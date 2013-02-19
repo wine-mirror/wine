@@ -265,7 +265,7 @@ void WINAPI SysFreeString(BSTR str)
         /* According to tests, freeing a string that's already in cache doesn't corrupt anything.
          * For that to work we need to search the cache. */
         for(i=0; i < cache_entry->cnt; i++) {
-            if(cache_entry->buf[(cache_entry->head+cache_entry->cnt) % BUCKET_BUFFER_SIZE] == bstr) {
+            if(cache_entry->buf[(cache_entry->head+i) % BUCKET_BUFFER_SIZE] == bstr) {
                 WARN_(heap)("String already is in cache!\n");
                 LeaveCriticalSection(&cs_bstr_cache);
                 return;
