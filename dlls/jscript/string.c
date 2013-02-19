@@ -20,6 +20,7 @@
 #include "wine/port.h"
 
 #include "jscript.h"
+#include "regexp.h"
 
 #include "wine/debug.h"
 
@@ -626,8 +627,8 @@ static HRESULT strbuf_append(strbuf_t *buf, const WCHAR *str, DWORD len)
     return S_OK;
 }
 
-static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func, jsstr_t *str, match_result_t *match,
-        match_result_t *parens, DWORD parens_cnt, jsstr_t **ret)
+static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func,
+        jsstr_t *str, match_state_t *match, jsstr_t **ret)
 {
     jsval_t *argv;
     unsigned argc;
@@ -636,19 +637,22 @@ static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func, jsstr_t *str, match_r
     DWORD i;
     HRESULT hres = S_OK;
 
-    argc = parens_cnt+3;
+    argc = match->paren_count+3;
     argv = heap_alloc_zero(sizeof(*argv)*argc);
     if(!argv)
         return E_OUTOFMEMORY;
 
-    tmp_str = jsstr_alloc_len(match->str, match->len);
+    tmp_str = jsstr_alloc_len(match->cp-match->match_len, match->match_len);
     if(!tmp_str)
         hres = E_OUTOFMEMORY;
     argv[0] = jsval_string(tmp_str);
 
     if(SUCCEEDED(hres)) {
-        for(i=0; i < parens_cnt; i++) {
-            tmp_str = jsstr_alloc_len(parens[i].str, parens[i].len);
+        for(i=0; i < match->paren_count; i++) {
+            if(match->parens[i].index == -1)
+                tmp_str = jsstr_empty();
+            else
+                tmp_str = jsstr_alloc_len(str->str+match->parens[i].index, match->parens[i].length);
             if(!tmp_str) {
                hres = E_OUTOFMEMORY;
                break;
@@ -658,14 +662,14 @@ static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func, jsstr_t *str, match_r
     }
 
     if(SUCCEEDED(hres)) {
-        argv[parens_cnt+1] = jsval_number(match->str - str->str);
-        argv[parens_cnt+2] = jsval_string(str);
+        argv[match->paren_count+1] = jsval_number(match->cp-str->str - match->match_len);
+        argv[match->paren_count+2] = jsval_string(str);
     }
 
     if(SUCCEEDED(hres))
         hres = jsdisp_call_value(func, NULL, DISPATCH_METHOD, argc, argv, &val);
 
-    for(i=0; i <= parens_cnt; i++)
+    for(i=0; i <= match->paren_count; i++)
         jsstr_release(get_string(argv[i]));
     heap_free(argv);
 
@@ -681,12 +685,12 @@ static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func, jsstr_t *str, match_r
 static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    DWORD parens_cnt = 0, parens_size=0, rep_len=0;
+    DWORD rep_len=0;
     jsstr_t *rep_str = NULL, *match_str = NULL, *str;
     jsdisp_t *rep_func = NULL, *regexp = NULL;
-    match_result_t *parens = NULL, match = {NULL,0}, **parens_ptr = &parens;
+    match_state_t *match = NULL, last_match = {0};
     strbuf_t ret = {NULL,0,0};
-    DWORD re_flags = REM_NO_CTX_UPDATE;
+    DWORD re_flags = REM_NO_CTX_UPDATE|REM_ALLOC_RESULT;
     HRESULT hres = S_OK;
 
     TRACE("\n");
@@ -730,24 +734,18 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 
         if(!rep_func) {
             hres = to_string(ctx, argv[1], &rep_str);
-            if(SUCCEEDED(hres)) {
+            if(SUCCEEDED(hres))
                 rep_len = jsstr_length(rep_str);
-                if(!strchrW(rep_str->str, '$'))
-                    parens_ptr = NULL;
-            }
         }
     }
 
     if(SUCCEEDED(hres)) {
-        const WCHAR *cp, *ecp;
-
-        cp = ecp = str->str;
+        const WCHAR *ecp = str->str;
 
         while(1) {
             if(regexp) {
-                hres = regexp_match_next(ctx, regexp, re_flags, str, &cp, parens_ptr,
-                        &parens_size, &parens_cnt, &match);
-                re_flags |= REM_CHECK_GLOBAL;
+                hres = regexp_match_next(ctx, regexp, re_flags, str, &match);
+                re_flags = (re_flags | REM_CHECK_GLOBAL) & (~REM_ALLOC_RESULT);
 
                 if(hres == S_FALSE) {
                     hres = S_OK;
@@ -756,25 +754,31 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
                 if(FAILED(hres))
                     break;
 
-                if(!match.len)
-                    cp++;
+                last_match.cp = match->cp;
+                last_match.match_len = match->match_len;
             }else {
-                match.str = strstrW(cp, match_str->str);
-                if(!match.str)
+                if(re_flags & REM_ALLOC_RESULT) {
+                    re_flags &= ~REM_ALLOC_RESULT;
+                    match = &last_match;
+                    match->cp = str->str;
+                }
+
+                match->cp = strstrW(match->cp, match_str->str);
+                if(!match->cp)
                     break;
-                match.len = jsstr_length(match_str);
-                cp = match.str+match.len;
+                match->match_len = jsstr_length(match_str);
+                match->cp += match->match_len;
             }
 
-            hres = strbuf_append(&ret, ecp, match.str-ecp);
-            ecp = match.str+match.len;
+            hres = strbuf_append(&ret, ecp, match->cp-ecp-match->match_len);
+            ecp = match->cp;
             if(FAILED(hres))
                 break;
 
             if(rep_func) {
                 jsstr_t *cstr;
 
-                hres = rep_call(ctx, rep_func, str, &match, parens, parens_cnt, &cstr);
+                hres = rep_call(ctx, rep_func, str, match, &cstr);
                 if(FAILED(hres))
                     break;
 
@@ -796,11 +800,11 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
                         ptr = ptr2+2;
                         break;
                     case '&':
-                        hres = strbuf_append(&ret, match.str, match.len);
+                        hres = strbuf_append(&ret, match->cp-match->match_len, match->match_len);
                         ptr = ptr2+2;
                         break;
                     case '`':
-                        hres = strbuf_append(&ret, str->str, match.str-str->str);
+                        hres = strbuf_append(&ret, str->str, match->cp-str->str-match->match_len);
                         ptr = ptr2+2;
                         break;
                     case '\'':
@@ -817,10 +821,10 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
                         }
 
                         idx = ptr2[1] - '0';
-                        if(isdigitW(ptr2[2]) && idx*10 + (ptr2[2]-'0') <= parens_cnt) {
+                        if(isdigitW(ptr2[2]) && idx*10 + (ptr2[2]-'0') <= match->paren_count) {
                             idx = idx*10 + (ptr[2]-'0');
                             ptr = ptr2+3;
-                        }else if(idx && idx <= parens_cnt) {
+                        }else if(idx && idx <= match->paren_count) {
                             ptr = ptr2+2;
                         }else {
                             hres = strbuf_append(&ret, ptr2, 1);
@@ -828,7 +832,9 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
                             break;
                         }
 
-                        hres = strbuf_append(&ret, parens[idx-1].str, parens[idx-1].len);
+                        if(match->parens[idx-1].index != -1)
+                            hres = strbuf_append(&ret, str->str+match->parens[idx-1].index,
+                                    match->parens[idx-1].length);
                     }
                     }
 
@@ -854,6 +860,8 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 
             if(!regexp)
                 break;
+            else if(!match->match_len)
+                match->cp++;
         }
 
         if(SUCCEEDED(hres))
@@ -866,13 +874,14 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         jsstr_release(rep_str);
     if(match_str)
         jsstr_release(match_str);
-    heap_free(parens);
+    if(regexp)
+        heap_free(match);
 
-    if(SUCCEEDED(hres) && match.str && regexp) {
+    if(SUCCEEDED(hres) && last_match.cp && regexp) {
         jsstr_release(ctx->last_match);
         ctx->last_match = jsstr_addref(str);
-        ctx->last_match_index = match.str-str->str;
-        ctx->last_match_length = match.len;
+        ctx->last_match_index = last_match.cp-str->str-last_match.match_len;
+        ctx->last_match_length = last_match.match_len;
     }
 
     if(regexp)
@@ -898,9 +907,8 @@ static HRESULT String_search(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         jsval_t *r)
 {
     jsdisp_t *regexp = NULL;
-    const WCHAR *cp;
-    match_result_t match;
     jsstr_t *str;
+    match_state_t match, *match_ptr = &match;
     HRESULT hres;
 
     TRACE("\n");
@@ -932,15 +940,15 @@ static HRESULT String_search(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         }
     }
 
-    cp = str->str;
-    hres = regexp_match_next(ctx, regexp, REM_RESET_INDEX, str, &cp, NULL, NULL, NULL, &match);
+    match.cp = str->str;
+    hres = regexp_match_next(ctx, regexp, REM_RESET_INDEX|REM_NO_PARENS, str, &match_ptr);
     jsstr_release(str);
     jsdisp_release(regexp);
     if(FAILED(hres))
         return hres;
 
     if(r)
-        *r = jsval_number(hres == S_OK ? match.str-str->str : -1);
+        *r = jsval_number(hres == S_OK ? match.cp-match.match_len-str->str : -1);
     return S_OK;
 }
 
@@ -1031,9 +1039,9 @@ static HRESULT String_small(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    match_result_t match_result;
+    match_state_t match_result, *match_ptr = &match_result;
     DWORD length, i, match_len = 0;
-    const WCHAR *ptr, *ptr2, *cp;
+    const WCHAR *ptr, *ptr2;
     unsigned limit = UINT32_MAX;
     jsdisp_t *array, *regexp = NULL;
     jsstr_t *str, *match_str = NULL, *tmp_str;
@@ -1087,13 +1095,14 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     hres = create_array(ctx, 0, &array);
 
     if(SUCCEEDED(hres)) {
-        ptr = cp = str->str;
+        ptr = str->str;
+        match_result.cp = str->str;
         for(i=0; i<limit; i++) {
             if(regexp) {
-                hres = regexp_match_next(ctx, regexp, 0, str, &cp, NULL, NULL, NULL, &match_result);
+                hres = regexp_match_next(ctx, regexp, REM_NO_PARENS, str, &match_ptr);
                 if(hres != S_OK)
                     break;
-                ptr2 = match_result.str;
+                ptr2 = match_result.cp - match_result.match_len;
             }else if(match_str) {
                 ptr2 = strstrW(ptr, match_str->str);
                 if(!ptr2)
@@ -1116,7 +1125,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
                 break;
 
             if(regexp)
-                ptr = cp;
+                ptr = match_result.cp;
             else if(match_str)
                 ptr = ptr2 + match_len;
             else

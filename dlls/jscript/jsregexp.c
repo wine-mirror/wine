@@ -73,19 +73,13 @@ static void set_last_index(RegExpInstance *This, DWORD last_index)
     This->last_index_val = jsval_number(last_index);
 }
 
-static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, DWORD rem_flags,
-        jsstr_t *str, const WCHAR **cp, match_result_t **parens, DWORD *parens_size,
-        DWORD *parens_cnt, match_result_t *ret)
+static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp,
+        DWORD rem_flags, jsstr_t *str, match_state_t *ret)
 {
-    match_state_t *result;
     HRESULT hres;
 
-    result = alloc_match_state(regexp->jsregexp, &ctx->tmp_heap, *cp);
-    if(!result)
-        return E_OUTOFMEMORY;
-
     hres = regexp_execute(regexp->jsregexp, ctx, &ctx->tmp_heap,
-            str->str, jsstr_length(str), result);
+            str->str, jsstr_length(str), ret);
     if(FAILED(hres))
         return hres;
     if(hres == S_FALSE) {
@@ -93,55 +87,22 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
             set_last_index(regexp, 0);
         return S_FALSE;
     }
-    *cp = result->cp;
-
-    if(parens) {
-        if(result->paren_count > *parens_size) {
-            match_result_t *new_parens;
-
-            if(*parens)
-                new_parens = heap_realloc(*parens, sizeof(match_result_t)*result->paren_count);
-            else
-                new_parens = heap_alloc(sizeof(match_result_t)*result->paren_count);
-            if(!new_parens)
-                return E_OUTOFMEMORY;
-
-            *parens_size = result->paren_count;
-            *parens = new_parens;
-        }
-    }
 
     if(!(rem_flags & REM_NO_CTX_UPDATE) && ctx->last_match != str) {
         jsstr_release(ctx->last_match);
         ctx->last_match = jsstr_addref(str);
     }
 
-    if(parens) {
-        DWORD i;
-
-        *parens_cnt = result->paren_count;
-
-        for(i=0; i < result->paren_count; i++) {
-            if(result->parens[i].index == -1) {
-                (*parens)[i].str = NULL;
-                (*parens)[i].len = 0;
-            }else {
-                (*parens)[i].str = str->str + result->parens[i].index;
-                (*parens)[i].len = result->parens[i].length;
-            }
-        }
-    }
-
     if(!(rem_flags & REM_NO_CTX_UPDATE)) {
-        DWORD i, n = min(sizeof(ctx->match_parens)/sizeof(ctx->match_parens[0]), result->paren_count);
+        DWORD i, n = min(sizeof(ctx->match_parens)/sizeof(ctx->match_parens[0]), ret->paren_count);
 
         for(i=0; i < n; i++) {
-            if(result->parens[i].index == -1) {
+            if(ret->parens[i].index == -1) {
                 ctx->match_parens[i].str = NULL;
                 ctx->match_parens[i].len = 0;
             }else {
-                ctx->match_parens[i].str = ctx->last_match->str + result->parens[i].index;
-                ctx->match_parens[i].len = result->parens[i].length;
+                ctx->match_parens[i].str = ctx->last_match->str + ret->parens[i].index;
+                ctx->match_parens[i].len = ret->parens[i].length;
             }
         }
 
@@ -149,34 +110,65 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
             memset(ctx->match_parens+n, 0, sizeof(ctx->match_parens) - n*sizeof(ctx->match_parens[0]));
     }
 
-    ret->str = result->cp - result->match_len;
-    ret->len = result->match_len;
-    set_last_index(regexp, result->cp-str->str);
+    set_last_index(regexp, ret->cp-str->str);
 
     if(!(rem_flags & REM_NO_CTX_UPDATE)) {
-        ctx->last_match_index = ret->str-str->str;
-        ctx->last_match_length = result->match_len;
+        ctx->last_match_index = ret->cp-str->str-ret->match_len;
+        ctx->last_match_length = ret->match_len;
     }
 
     return S_OK;
 }
 
-HRESULT regexp_match_next(script_ctx_t *ctx, jsdisp_t *dispex, DWORD rem_flags, jsstr_t *str,
-        const WCHAR **cp, match_result_t **parens, DWORD *parens_size, DWORD *parens_cnt,
-        match_result_t *ret)
+HRESULT regexp_match_next(script_ctx_t *ctx, jsdisp_t *dispex,
+        DWORD rem_flags, jsstr_t *str, match_state_t **ret)
 {
     RegExpInstance *regexp = (RegExpInstance*)dispex;
+    match_state_t *match;
     heap_pool_t *mark;
     HRESULT hres;
 
-    if((rem_flags & REM_CHECK_GLOBAL) && !(regexp->jsregexp->flags & REG_GLOB))
+    if((rem_flags & REM_CHECK_GLOBAL) && !(regexp->jsregexp->flags & REG_GLOB)) {
+        if(rem_flags & REM_ALLOC_RESULT)
+            *ret = NULL;
         return S_FALSE;
+    }
+
+    if(rem_flags & REM_ALLOC_RESULT) {
+        match = alloc_match_state(regexp->jsregexp, NULL, str->str);
+        if(!match)
+            return E_OUTOFMEMORY;
+        *ret = match;
+    }
 
     mark = heap_pool_mark(&ctx->tmp_heap);
 
-    hres = do_regexp_match_next(ctx, regexp, rem_flags, str, cp, parens, parens_size, parens_cnt, ret);
+    if(rem_flags & REM_NO_PARENS) {
+        match = alloc_match_state(regexp->jsregexp, &ctx->tmp_heap, NULL);
+        if(!match) {
+            heap_pool_clear(mark);
+            return E_OUTOFMEMORY;
+        }
+        match->cp = (*ret)->cp;
+        match->match_len = (*ret)->match_len;
+    }else {
+        match = *ret;
+    }
+
+    hres = do_regexp_match_next(ctx, regexp, rem_flags, str, match);
+
+    if(rem_flags & REM_NO_PARENS) {
+        (*ret)->cp = match->cp;
+        (*ret)->match_len = match->match_len;
+    }
 
     heap_pool_clear(mark);
+
+    if(hres != S_OK && (rem_flags & REM_ALLOC_RESULT)) {
+        heap_free(match);
+        *ret = NULL;
+    }
+
     return hres;
 }
 
@@ -184,16 +176,22 @@ static HRESULT regexp_match(script_ctx_t *ctx, jsdisp_t *dispex, jsstr_t *str, B
         match_result_t **match_result, DWORD *result_cnt)
 {
     RegExpInstance *This = (RegExpInstance*)dispex;
-    match_result_t *ret = NULL, cres;
-    const WCHAR *cp = str->str;
+    match_result_t *ret = NULL;
+    match_state_t *result;
     DWORD i=0, ret_size = 0;
     heap_pool_t *mark;
     HRESULT hres;
 
     mark = heap_pool_mark(&ctx->tmp_heap);
 
+    result = alloc_match_state(This->jsregexp, &ctx->tmp_heap, str->str);
+    if(!result) {
+        heap_pool_clear(mark);
+        return E_OUTOFMEMORY;
+    }
+
     while(1) {
-        hres = do_regexp_match_next(ctx, This, 0, str, &cp, NULL, NULL, NULL, &cres);
+        hres = do_regexp_match_next(ctx, This, 0, str, result);
         if(hres == S_FALSE) {
             hres = S_OK;
             break;
@@ -218,7 +216,8 @@ static HRESULT regexp_match(script_ctx_t *ctx, jsdisp_t *dispex, jsstr_t *str, B
             }
         }
 
-        ret[i++] = cres;
+        ret[i].str = result->cp - result->match_len;
+        ret[i++].len = result->match_len;
 
         if(!gflag && !(This->jsregexp->flags & REG_GLOB)) {
             hres = S_OK;
@@ -329,8 +328,8 @@ static HRESULT RegExp_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     return E_NOTIMPL;
 }
 
-static HRESULT create_match_array(script_ctx_t *ctx, jsstr_t *input, const match_result_t *result,
-        const match_result_t *parens, DWORD parens_cnt, IDispatch **ret)
+static HRESULT create_match_array(script_ctx_t *ctx, jsstr_t *input,
+        const match_state_t *result, IDispatch **ret)
 {
     jsdisp_t *array;
     jsstr_t *str;
@@ -342,12 +341,15 @@ static HRESULT create_match_array(script_ctx_t *ctx, jsstr_t *input, const match
     static const WCHAR lastIndexW[] = {'l','a','s','t','I','n','d','e','x',0};
     static const WCHAR zeroW[] = {'0',0};
 
-    hres = create_array(ctx, parens_cnt+1, &array);
+    hres = create_array(ctx, result->paren_count+1, &array);
     if(FAILED(hres))
         return hres;
 
-    for(i=0; i < parens_cnt; i++) {
-        str = jsstr_alloc_len(parens[i].str, parens[i].len);
+    for(i=0; i < result->paren_count; i++) {
+        if(result->parens[i].index == -1)
+            str = jsstr_empty();
+        else
+            str = jsstr_alloc_len(input->str+result->parens[i].index, result->parens[i].length);
         if(!str) {
             hres = E_OUTOFMEMORY;
             break;
@@ -360,11 +362,11 @@ static HRESULT create_match_array(script_ctx_t *ctx, jsstr_t *input, const match
     }
 
     while(SUCCEEDED(hres)) {
-        hres = jsdisp_propput_name(array, indexW, jsval_number(result->str-input->str));
+        hres = jsdisp_propput_name(array, indexW, jsval_number(result->cp-input->str-result->match_len));
         if(FAILED(hres))
             break;
 
-        hres = jsdisp_propput_name(array, lastIndexW, jsval_number(result->str-input->str+result->len));
+        hres = jsdisp_propput_name(array, lastIndexW, jsval_number(result->cp-input->str));
         if(FAILED(hres))
             break;
 
@@ -372,7 +374,7 @@ static HRESULT create_match_array(script_ctx_t *ctx, jsstr_t *input, const match
         if(FAILED(hres))
             break;
 
-        str = jsstr_alloc_len(result->str, result->len);
+        str = jsstr_alloc_len(result->cp-result->match_len, result->match_len);
         if(!str) {
             hres = E_OUTOFMEMORY;
             break;
@@ -391,12 +393,12 @@ static HRESULT create_match_array(script_ctx_t *ctx, jsstr_t *input, const match
     return S_OK;
 }
 
-static HRESULT run_exec(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t arg, jsstr_t **input,
-        match_result_t *match, match_result_t **parens, DWORD *parens_cnt, BOOL *ret)
+static HRESULT run_exec(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t arg,
+        jsstr_t **input, match_state_t **result, BOOL *ret)
 {
     RegExpInstance *regexp;
-    DWORD parens_size = 0, last_index = 0;
-    const WCHAR *cp;
+    match_state_t *match;
+    DWORD last_index = 0;
     jsstr_t *string;
     HRESULT hres;
 
@@ -424,14 +426,19 @@ static HRESULT run_exec(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t arg, jsstr_t
         last_index = regexp->last_index;
     }
 
-    cp = string->str + last_index;
-    hres = regexp_match_next(ctx, &regexp->dispex, REM_RESET_INDEX, string, &cp, parens,
-            parens ? &parens_size : NULL, parens_cnt, match);
+    match = alloc_match_state(regexp->jsregexp, &ctx->tmp_heap, string->str+last_index);
+    if(!match) {
+        jsstr_release(string);
+        return E_OUTOFMEMORY;
+    }
+
+    hres = regexp_match_next(ctx, &regexp->dispex, REM_RESET_INDEX, string, &match);
     if(FAILED(hres)) {
         jsstr_release(string);
         return hres;
     }
 
+    *result = match;
     *ret = hres == S_OK;
     if(input)
         *input = string;
@@ -443,17 +450,19 @@ static HRESULT run_exec(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t arg, jsstr_t
 static HRESULT RegExp_exec(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    match_result_t *parens = NULL, match;
-    DWORD parens_cnt = 0;
+    match_state_t *match;
+    heap_pool_t *mark;
     BOOL b;
     jsstr_t *string;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = run_exec(ctx, jsthis, argc ? argv[0] : jsval_string(jsstr_empty()), &string, &match, &parens, &parens_cnt, &b);
+    mark = heap_pool_mark(&ctx->tmp_heap);
+
+    hres = run_exec(ctx, jsthis, argc ? argv[0] : jsval_string(jsstr_empty()), &string, &match, &b);
     if(FAILED(hres)) {
-        heap_free(parens);
+        heap_pool_clear(mark);
         return hres;
     }
 
@@ -461,7 +470,7 @@ static HRESULT RegExp_exec(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsig
         if(b) {
             IDispatch *ret;
 
-            hres = create_match_array(ctx, string, &match, parens, parens_cnt, &ret);
+            hres = create_match_array(ctx, string, match, &ret);
             if(SUCCEEDED(hres))
                 *r = jsval_disp(ret);
         }else {
@@ -469,7 +478,7 @@ static HRESULT RegExp_exec(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsig
         }
     }
 
-    heap_free(parens);
+    heap_pool_clear(mark);
     jsstr_release(string);
     return hres;
 }
@@ -477,7 +486,8 @@ static HRESULT RegExp_exec(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsig
 static HRESULT RegExp_test(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    match_result_t match;
+    match_state_t *match;
+    heap_pool_t *mark;
     jsstr_t *undef_str;
     BOOL b;
     HRESULT hres;
@@ -490,7 +500,9 @@ static HRESULT RegExp_test(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsig
             return E_OUTOFMEMORY;
     }
 
-    hres = run_exec(ctx, jsthis, argc ? argv[0] : jsval_string(undef_str), NULL, &match, NULL, NULL, &b);
+    mark = heap_pool_mark(&ctx->tmp_heap);
+    hres = run_exec(ctx, jsthis, argc ? argv[0] : jsval_string(undef_str), NULL, &match, &b);
+    heap_pool_clear(mark);
     if(!argc)
         jsstr_release(undef_str);
     if(FAILED(hres))
@@ -673,13 +685,19 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, jsstr_t *str, jsval
     HRESULT hres;
 
     if(!(regexp->jsregexp->flags & REG_GLOB)) {
-        match_result_t match, *parens = NULL;
-        DWORD parens_cnt, parens_size = 0;
-        const WCHAR *cp = str->str;
+        match_state_t *match;
+        heap_pool_t *mark;
 
-        hres = regexp_match_next(ctx, &regexp->dispex, 0, str, &cp, &parens, &parens_size, &parens_cnt, &match);
+        mark = heap_pool_mark(&ctx->tmp_heap);
+        match = alloc_match_state(regexp->jsregexp, &ctx->tmp_heap, str->str);
+        if(!match) {
+            heap_pool_clear(mark);
+            return E_OUTOFMEMORY;
+        }
+
+        hres = regexp_match_next(ctx, &regexp->dispex, 0, str, &match);
         if(FAILED(hres)) {
-            heap_free(parens);
+            heap_pool_clear(mark);
             return hres;
         }
 
@@ -687,7 +705,7 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, jsstr_t *str, jsval
             if(hres == S_OK) {
                 IDispatch *ret;
 
-                hres = create_match_array(ctx, str, &match, parens, parens_cnt, &ret);
+                hres = create_match_array(ctx, str, match, &ret);
                 if(SUCCEEDED(hres))
                     *r = jsval_disp(ret);
             }else {
@@ -695,7 +713,7 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, jsstr_t *str, jsval
             }
         }
 
-        heap_free(parens);
+        heap_pool_clear(mark);
         return S_OK;
     }
 
