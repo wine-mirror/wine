@@ -2348,7 +2348,7 @@ static void release_doc(IHTMLDocument2 *doc)
 
     set_client_site(doc, FALSE);
     ref = IHTMLDocument2_Release(doc);
-    ok(!ref, "ref = %d\n", ref);
+    ok(!ref || broken(ref == 1) /* Vista */, "ref = %d\n", ref);
 
     if(client_site) {
         IOleClientSite_Release(client_site);
