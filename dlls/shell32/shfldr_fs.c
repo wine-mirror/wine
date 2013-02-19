@@ -59,14 +59,13 @@ WINE_DEFAULT_DEBUG_CHANNEL (shell);
 */
 
 typedef struct {
-    const IUnknownVtbl        *lpVtbl;
-    LONG                ref;
+    IUnknown IUnknown_inner;
+    LONG ref;
     const IShellFolder2Vtbl   *lpvtblShellFolder;
     const IPersistFolder3Vtbl *lpvtblPersistFolder3;
     const IDropTargetVtbl     *lpvtblDropTarget;
     const ISFHelperVtbl       *lpvtblSFHelper;
-
-    IUnknown *pUnkOuter; /* used for aggregation */
+    IUnknown *outer_unk;
 
     CLSID *pclsid;
 
@@ -79,11 +78,15 @@ typedef struct {
     BOOL fAcceptFmt;       /* flag for pending Drop */
 } IGenericSFImpl;
 
-static const IUnknownVtbl unkvt;
 static const IShellFolder2Vtbl sfvt;
 static const IPersistFolder3Vtbl vt_FSFldr_PersistFolder3; /* IPersistFolder3 for a FS_Folder */
 static const IDropTargetVtbl dtvt;
 static const ISFHelperVtbl shvt;
+
+static inline IGenericSFImpl *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, IGenericSFImpl, IUnknown_inner);
+}
 
 static inline IGenericSFImpl *impl_from_IShellFolder2( IShellFolder2 *iface )
 {
@@ -109,7 +112,6 @@ static inline IGenericSFImpl *impl_from_ISFHelper( ISFHelper *iface )
 /*
   converts This to an interface pointer
 */
-#define _IUnknown_(This)        ((IUnknown*)&(This)->lpVtbl)
 #define _IShellFolder_(This)    ((IShellFolder*)&(This)->lpvtblShellFolder)
 #define _IShellFolder2_(This)   ((IShellFolder2*)&(This)->lpvtblShellFolder)
 #define _IPersist_(This)        (&(This)->lpvtblPersistFolder3)
@@ -132,19 +134,18 @@ static void SF_RegisterClipFmt (IGenericSFImpl * This)
 }
 
 /**************************************************************************
-* we need a separate IUnknown to handle aggregation
-* (inner IUnknown)
+* inner IUnknown
 */
-static HRESULT WINAPI IUnknown_fnQueryInterface (IUnknown * iface, REFIID riid, LPVOID * ppvObj)
+static HRESULT WINAPI IUnknown_fnQueryInterface(IUnknown *iface, REFIID riid, void **ppvObj)
 {
-    IGenericSFImpl *This = (IGenericSFImpl *)iface;
+    IGenericSFImpl *This = impl_from_IUnknown(iface);
 
-    TRACE ("(%p)->(%s,%p)\n", This, shdebugstr_guid (riid), ppvObj);
+    TRACE("(%p)->(%s,%p)\n", This, shdebugstr_guid(riid), ppvObj);
 
     *ppvObj = NULL;
 
     if (IsEqualIID (riid, &IID_IUnknown))
-        *ppvObj = _IUnknown_ (This);
+        *ppvObj = &This->IUnknown_inner;
     else if (IsEqualIID (riid, &IID_IShellFolder))
         *ppvObj = _IShellFolder_ (This);
     else if (IsEqualIID (riid, &IID_IShellFolder2))
@@ -165,7 +166,7 @@ static HRESULT WINAPI IUnknown_fnQueryInterface (IUnknown * iface, REFIID riid, 
     }
 
     if (*ppvObj) {
-        IUnknown_AddRef ((IUnknown *) (*ppvObj));
+        IUnknown_AddRef((IUnknown *)*ppvObj);
         TRACE ("-- Interface = %p\n", *ppvObj);
         return S_OK;
     }
@@ -173,31 +174,31 @@ static HRESULT WINAPI IUnknown_fnQueryInterface (IUnknown * iface, REFIID riid, 
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IUnknown_fnAddRef (IUnknown * iface)
+static ULONG WINAPI IUnknown_fnAddRef(IUnknown *iface)
 {
-    IGenericSFImpl *This = (IGenericSFImpl *)iface;
-    ULONG refCount = InterlockedIncrement(&This->ref);
+    IGenericSFImpl *This = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE ("(%p)->(count=%u)\n", This, refCount - 1);
+    TRACE("(%p) ref=%d\n", This, ref);
 
-    return refCount;
+    return ref;
 }
 
-static ULONG WINAPI IUnknown_fnRelease (IUnknown * iface)
+static ULONG WINAPI IUnknown_fnRelease(IUnknown *iface)
 {
-    IGenericSFImpl *This = (IGenericSFImpl *)iface;
-    ULONG refCount = InterlockedDecrement(&This->ref);
+    IGenericSFImpl *This = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE ("(%p)->(count=%u)\n", This, refCount + 1);
+    TRACE("(%p) ref=%d\n", This, ref);
 
-    if (!refCount) {
-        TRACE ("-- destroying IShellFolder(%p)\n", This);
+    if (!ref) {
+        TRACE("-- destroying IShellFolder(%p)\n", This);
 
-        SHFree (This->pidlRoot);
-        SHFree (This->sPathTarget);
-        LocalFree (This);
+        SHFree(This->pidlRoot);
+        SHFree(This->sPathTarget);
+        LocalFree(This);
     }
-    return refCount;
+    return ref;
 }
 
 static const IUnknownVtbl unkvt =
@@ -239,16 +240,16 @@ IFSFolder_Constructor (IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv)
         return E_OUTOFMEMORY;
 
     sf->ref = 0;
-    sf->lpVtbl = &unkvt;
+    sf->IUnknown_inner.lpVtbl = &unkvt;
     sf->lpvtblShellFolder = &sfvt;
     sf->lpvtblPersistFolder3 = &vt_FSFldr_PersistFolder3;
     sf->lpvtblDropTarget = &dtvt;
     sf->lpvtblSFHelper = &shvt;
     sf->pclsid = (CLSID *) & CLSID_ShellFSFolder;
-    sf->pUnkOuter = pUnkOuter ? pUnkOuter : _IUnknown_ (sf);
+    sf->outer_unk = pUnkOuter ? pUnkOuter : &sf->IUnknown_inner;
 
-    if (FAILED (IUnknown_QueryInterface (_IUnknown_ (sf), riid, ppv))) {
-        IUnknown_Release (_IUnknown_ (sf));
+    if (FAILED(IUnknown_QueryInterface(&sf->IUnknown_inner, riid, ppv))) {
+        IUnknown_Release(&sf->IUnknown_inner);
         return E_NOINTERFACE;
     }
 
@@ -271,7 +272,7 @@ IShellFolder_fnQueryInterface (IShellFolder2 * iface, REFIID riid,
 
     TRACE ("(%p)->(%s,%p)\n", This, shdebugstr_guid (riid), ppvObj);
 
-    return IUnknown_QueryInterface (This->pUnkOuter, riid, ppvObj);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppvObj);
 }
 
 /**************************************************************************
@@ -284,7 +285,7 @@ static ULONG WINAPI IShellFolder_fnAddRef (IShellFolder2 * iface)
 
     TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
-    return IUnknown_AddRef (This->pUnkOuter);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 /**************************************************************************
@@ -296,7 +297,7 @@ static ULONG WINAPI IShellFolder_fnRelease (IShellFolder2 * iface)
 
     TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
-    return IUnknown_Release (This->pUnkOuter);
+    return IUnknown_Release(This->outer_unk);
 }
 
 /**************************************************************************
@@ -1136,7 +1137,7 @@ ISFHelper_fnQueryInterface (ISFHelper * iface, REFIID riid, LPVOID * ppvObj)
 
     TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
-    return IUnknown_QueryInterface (This->pUnkOuter, riid, ppvObj);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppvObj);
 }
 
 static ULONG WINAPI ISFHelper_fnAddRef (ISFHelper * iface)
@@ -1145,7 +1146,7 @@ static ULONG WINAPI ISFHelper_fnAddRef (ISFHelper * iface)
 
     TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
-    return IUnknown_AddRef (This->pUnkOuter);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI ISFHelper_fnRelease (ISFHelper * iface)
@@ -1154,7 +1155,7 @@ static ULONG WINAPI ISFHelper_fnRelease (ISFHelper * iface)
 
     TRACE ("(%p)\n", This);
 
-    return IUnknown_Release (This->pUnkOuter);
+    return IUnknown_Release(This->outer_unk);
 }
 
 /****************************************************************************
@@ -1450,7 +1451,7 @@ IFSFldr_PersistFolder3_QueryInterface (IPersistFolder3 * iface, REFIID iid,
 
     TRACE ("(%p)\n", This);
 
-    return IUnknown_QueryInterface (This->pUnkOuter, iid, ppvObj);
+    return IUnknown_QueryInterface(This->outer_unk, iid, ppvObj);
 }
 
 /************************************************************************
@@ -1464,7 +1465,7 @@ IFSFldr_PersistFolder3_AddRef (IPersistFolder3 * iface)
 
     TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
-    return IUnknown_AddRef (This->pUnkOuter);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 /************************************************************************
@@ -1478,7 +1479,7 @@ IFSFldr_PersistFolder3_Release (IPersistFolder3 * iface)
 
     TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
-    return IUnknown_Release (This->pUnkOuter);
+    return IUnknown_Release(This->outer_unk);
 }
 
 /************************************************************************
@@ -1673,7 +1674,7 @@ ISFDropTarget_QueryInterface (IDropTarget * iface, REFIID riid, LPVOID * ppvObj)
 
     TRACE ("(%p)\n", This);
 
-    return IUnknown_QueryInterface (This->pUnkOuter, riid, ppvObj);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppvObj);
 }
 
 static ULONG WINAPI ISFDropTarget_AddRef (IDropTarget * iface)
@@ -1682,7 +1683,7 @@ static ULONG WINAPI ISFDropTarget_AddRef (IDropTarget * iface)
 
     TRACE ("(%p)\n", This);
 
-    return IUnknown_AddRef (This->pUnkOuter);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI ISFDropTarget_Release (IDropTarget * iface)
@@ -1691,7 +1692,7 @@ static ULONG WINAPI ISFDropTarget_Release (IDropTarget * iface)
 
     TRACE ("(%p)\n", This);
 
-    return IUnknown_Release (This->pUnkOuter);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI
