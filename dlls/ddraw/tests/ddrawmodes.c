@@ -473,7 +473,10 @@ static void enumdisplaymodes(void)
 
     modes16bpp_cnt = 0;
     ddsd.dwFlags = DDSD_PIXELFORMAT | DDSD_REFRESHRATE;
-    U2(ddsd).dwRefreshRate = 1;
+    /* Ask for a refresh rate that could not possibly be used. But note that
+     * the Windows 'Standard VGA' driver claims to run the display at 1Hz!
+     */
+    U2(ddsd).dwRefreshRate = 2;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
     ok(rc==DD_OK,"EnumDisplayModes returned: %x\n",rc);
