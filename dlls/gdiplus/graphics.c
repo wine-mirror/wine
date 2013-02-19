@@ -2815,11 +2815,8 @@ GpStatus WINGDIPAPI GdipDrawCurveI(GpGraphics *graphics, GpPen *pen,
 GpStatus WINGDIPAPI GdipDrawCurve2(GpGraphics *graphics, GpPen *pen,
     GDIPCONST GpPointF *points, INT count, REAL tension)
 {
-    /* PolyBezier expects count*3-2 points. */
-    INT i, len_pt = count*3-2, save_state;
-    GpPointF *pt;
-    REAL x1, x2, y1, y2;
-    GpStatus retval;
+    GpPath *path;
+    GpStatus status;
 
     TRACE("(%p, %p, %p, %d, %.2f)\n", graphics, pen, points, count, tension);
 
@@ -2832,53 +2829,15 @@ GpStatus WINGDIPAPI GdipDrawCurve2(GpGraphics *graphics, GpPen *pen,
     if(count < 2)
         return InvalidParameter;
 
-    if (!graphics->hdc)
-    {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
-    }
+    status = GdipCreatePath(FillModeAlternate, &path);
+    if (status != Ok) return status;
 
-    pt = GdipAlloc(len_pt * sizeof(GpPointF));
-    if(!pt)
-        return OutOfMemory;
+    status = GdipAddPathCurve2(path, points, count, tension);
+    if (status == Ok)
+        status = GdipDrawPath(graphics, pen, path);
 
-    tension = tension * TENSION_CONST;
-
-    calc_curve_bezier_endp(points[0].X, points[0].Y, points[1].X, points[1].Y,
-        tension, &x1, &y1);
-
-    pt[0].X = points[0].X;
-    pt[0].Y = points[0].Y;
-    pt[1].X = x1;
-    pt[1].Y = y1;
-
-    for(i = 0; i < count-2; i++){
-        calc_curve_bezier(&(points[i]), tension, &x1, &y1, &x2, &y2);
-
-        pt[3*i+2].X = x1;
-        pt[3*i+2].Y = y1;
-        pt[3*i+3].X = points[i+1].X;
-        pt[3*i+3].Y = points[i+1].Y;
-        pt[3*i+4].X = x2;
-        pt[3*i+4].Y = y2;
-    }
-
-    calc_curve_bezier_endp(points[count-1].X, points[count-1].Y,
-        points[count-2].X, points[count-2].Y, tension, &x1, &y1);
-
-    pt[len_pt-2].X = x1;
-    pt[len_pt-2].Y = y1;
-    pt[len_pt-1].X = points[count-1].X;
-    pt[len_pt-1].Y = points[count-1].Y;
-
-    save_state = prepare_dc(graphics, pen);
-
-    retval = draw_polybezier(graphics, pen, pt, len_pt, TRUE);
-
-    GdipFree(pt);
-    restore_dc(graphics, save_state);
-
-    return retval;
+    GdipDeletePath(path);
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipDrawCurve2I(GpGraphics *graphics, GpPen *pen,
