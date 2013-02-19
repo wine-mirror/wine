@@ -1369,17 +1369,6 @@ void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
             hide_window(data);
     }
 
-    if (new_style & WS_VISIBLE)
-    {
-        if (!data->on_screen || (swp_flags & (SWP_FRAMECHANGED|SWP_STATECHANGED)))
-            set_cocoa_window_properties(data);
-
-        /* layered windows are not shown until their attributes are set */
-        if (!data->on_screen &&
-            (data->layered || !(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED)))
-            show_window(data);
-    }
-
     /* check if we are currently processing an event relevant to this window */
     if (!thread_data || !thread_data->current_event ||
         thread_data->current_event->window != data->cocoa_window ||
@@ -1389,6 +1378,17 @@ void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
     {
         sync_window_position(data, swp_flags);
         set_cocoa_window_properties(data);
+    }
+
+    if (new_style & WS_VISIBLE)
+    {
+        if (!data->on_screen || (swp_flags & (SWP_FRAMECHANGED|SWP_STATECHANGED)))
+            set_cocoa_window_properties(data);
+
+        /* layered windows are not shown until their attributes are set */
+        if (!data->on_screen &&
+            (data->layered || !(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED)))
+            show_window(data);
     }
 
 done:
