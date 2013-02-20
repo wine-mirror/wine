@@ -492,7 +492,7 @@ static void test_gettext(void)
     expect(4, r);
     /* A size of 0 returns the length of the text */
     r = SendMessage(hwndStatus, WM_GETTEXT, 0, 0);
-    expect(4, r);
+    ok( r == 4 || broken(r == 2) /* win8 */, "Expected 4 got %d\n", r );
     /* A size of 1 only stores the NULL terminator */
     buf[0] = 0xa;
     r = SendMessage(hwndStatus, WM_GETTEXT, 1, (LPARAM)buf);
