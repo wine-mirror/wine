@@ -3549,8 +3549,8 @@ static BOOL LISTVIEW_AddGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
     ZeroMemory(&nmlv, sizeof(nmlv));
     nmlv.iFrom = nFirst;
     nmlv.iTo = nLast;
-    nmlv.uNewState = 0;
-    nmlv.uOldState = item.state;
+    nmlv.uOldState = 0;
+    nmlv.uNewState = item.state;
 
     notify_hdr(infoPtr, LVN_ODSTATECHANGED, (LPNMHDR)&nmlv);
     if (!IsWindow(hwndSelf))
