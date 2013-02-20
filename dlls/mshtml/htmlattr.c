@@ -126,8 +126,13 @@ static HRESULT WINAPI HTMLDOMAttribute_get_nodeName(IHTMLDOMAttribute *iface, BS
     TRACE("(%p)->(%p)\n", This, p);
 
     if(!This->elem) {
-        FIXME("NULL This->elem\n");
-        return E_UNEXPECTED;
+        if(!This->name) {
+            FIXME("No name available\n");
+            return E_FAIL;
+        }
+
+        *p = SysAllocString(This->name);
+        return *p ? S_OK : E_OUTOFMEMORY;
     }
 
     return IDispatchEx_GetMemberName(&This->elem->node.dispex.IDispatchEx_iface, This->dispid, p);
