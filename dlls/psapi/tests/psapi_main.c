@@ -19,10 +19,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-
 /* 0x0600 makes PROCESS_ALL_ACCESS not compatible with pre-Vista versions */
 #define _WIN32_WINNT 0x0500
+
+#include <stdarg.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
