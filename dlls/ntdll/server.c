@@ -98,8 +98,6 @@ static const enum cpu_type client_cpu = CPU_x86;
 static const enum cpu_type client_cpu = CPU_x86_64;
 #elif defined(__powerpc__)
 static const enum cpu_type client_cpu = CPU_POWERPC;
-#elif defined(__sparc__)
-static const enum cpu_type client_cpu = CPU_SPARC;
 #elif defined(__arm__)
 static const enum cpu_type client_cpu = CPU_ARM;
 #elif defined(__aarch64__)

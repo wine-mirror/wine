@@ -114,7 +114,6 @@ static void dump_cpu_type( const char *prefix, const cpu_type_t *code )
         CASE(x86);
         CASE(x86_64);
         CASE(POWERPC);
-        CASE(SPARC);
         default: fprintf( stderr, "%s%u", prefix, *code ); break;
 #undef CASE
     }
@@ -597,19 +596,6 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
             dump_uint64( ",x28=", &ctx.integer.arm64_regs.x[28] );
             dump_uint64( ",x29=", &ctx.integer.arm64_regs.x[29] );
             dump_uint64( ",x30=", &ctx.integer.arm64_regs.x[30] );
-        }
-        break;
-    case CPU_SPARC:
-        if (ctx.flags & SERVER_CTX_CONTROL)
-            fprintf( stderr, ",psr=%08x,pc=%08x,npc=%08x,y=%08x,wim=%08x,tbr=%08x",
-                     ctx.ctl.sparc_regs.psr, ctx.ctl.sparc_regs.pc, ctx.ctl.sparc_regs.npc,
-                     ctx.ctl.sparc_regs.y, ctx.ctl.sparc_regs.wim, ctx.ctl.sparc_regs.tbr );
-        if (ctx.flags & SERVER_CTX_INTEGER)
-        {
-            for (i = 0; i < 8; i++) fprintf( stderr, ",g%u=%08x", i, ctx.integer.sparc_regs.g[i] );
-            for (i = 0; i < 8; i++) fprintf( stderr, ",o%u=%08x", i, ctx.integer.sparc_regs.o[i] );
-            for (i = 0; i < 8; i++) fprintf( stderr, ",l%u=%08x", i, ctx.integer.sparc_regs.l[i] );
-            for (i = 0; i < 8; i++) fprintf( stderr, ",i%u=%08x", i, ctx.integer.sparc_regs.i[i] );
         }
         break;
     }
