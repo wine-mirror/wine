@@ -1085,7 +1085,6 @@ static NTSTATUS check_architecture( const IMAGE_NT_HEADERS *nt )
         case IMAGE_FILE_MACHINE_ARM:     arch = "ARM"; break;
         case IMAGE_FILE_MACHINE_ARMNT:   arch = "ARMNT"; break;
         case IMAGE_FILE_MACHINE_THUMB:   arch = "ARM Thumb"; break;
-        case IMAGE_FILE_MACHINE_SPARC:   arch = "SPARC"; break;
         default: arch = wine_dbg_sprintf( "Unknown-%04x", nt->FileHeader.Machine ); break;
     }
     ERR( "Trying to load PE image for unsupported architecture %s\n", arch );

@@ -1111,13 +1111,6 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
     info->Architecture = PROCESSOR_ARCHITECTURE_ARM;
 }
 
-#elif defined(__sparc__)
-
-static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
-{
-    info->Architecture = PROCESSOR_ARCHITECTURE_SPARC;
-}
-
 #endif /* End architecture specific feature detection for CPUs */
 
 /******************************************************************
