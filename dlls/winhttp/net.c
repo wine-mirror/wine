@@ -139,9 +139,9 @@ static int sock_get_error( int err )
     return err;
 }
 
-static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, HCERTSTORE store,
-                                  WCHAR *server, DWORD security_flags )
+static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, WCHAR *server, DWORD security_flags )
 {
+    HCERTSTORE store = cert->hCertStore;
     BOOL ret;
     CERT_CHAIN_PARA chainPara = { sizeof(chainPara), { 0 } };
     PCCERT_CHAIN_CONTEXT chain;
@@ -468,7 +468,7 @@ BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname )
 
             status = QueryContextAttributesW(&ctx, SECPKG_ATTR_REMOTE_CERT_CONTEXT, (void*)&cert);
             if(status == SEC_E_OK) {
-                res = netconn_verify_cert(cert, cert->hCertStore, hostname, conn->security_flags);
+                res = netconn_verify_cert(cert, hostname, conn->security_flags);
                 CertFreeCertificateContext(cert);
                 if(res != ERROR_SUCCESS) {
                     WARN("cert verify failed: %u\n", res);
