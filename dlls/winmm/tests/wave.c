@@ -854,6 +854,16 @@ static void wave_out_test_deviceOut(int device, double duration,
     rc=WaitForSingleObject(hevent,1500);
     ok(rc==WAIT_OBJECT_0, "missing WOM_CLOSE notification\n");
 
+    wout = (HWAVEOUT)0xdeadf00d;
+    rc=waveOutOpen(&wout,device,pwfx,callback,callback_instance,flags|WAVE_FORMAT_QUERY);
+    ok(rc==MMSYSERR_NOERROR, "WAVE_FORMAT_QUERY(%s): rc=%s\n",dev_name(device),
+       wave_out_error(rc));
+    ok(wout==(HWAVEOUT)0xdeadf00d, "WAVE_FORMAT_QUERY handle %p\n", wout);
+
+    rc=WaitForSingleObject(hevent,20);
+    ok(rc==WAIT_TIMEOUT, "Notification from %s rc=%x\n",
+       wave_open_flags(flags|WAVE_FORMAT_QUERY),rc);
+
     HeapFree(GetProcessHeap(), 0, buffer);
 EXIT:
     if ((flags & CALLBACK_TYPEMASK) == CALLBACK_THREAD) {

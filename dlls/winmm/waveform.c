@@ -2726,7 +2726,7 @@ MMRESULT WINAPI waveOutOpen(LPHWAVEOUT lphWaveOut, UINT uDeviceID,
     info.reset = TRUE;
 
     res = SendMessageW(g_devices_hwnd, WODM_OPEN, (DWORD_PTR)&info, 0);
-    if(res != MMSYSERR_NOERROR)
+    if(res != MMSYSERR_NOERROR || (dwFlags & WAVE_FORMAT_QUERY))
         return res;
 
     if(lphWaveOut)
@@ -3356,7 +3356,7 @@ MMRESULT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
     info.reset = TRUE;
 
     res = SendMessageW(g_devices_hwnd, WIDM_OPEN, (DWORD_PTR)&info, 0);
-    if(res != MMSYSERR_NOERROR)
+    if(res != MMSYSERR_NOERROR || (dwFlags & WAVE_FORMAT_QUERY))
         return res;
 
     if(lphWaveIn)
