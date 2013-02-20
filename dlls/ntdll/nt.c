@@ -1166,7 +1166,7 @@ void fill_cpu_info(void)
 static inline BOOL logical_proc_info_add_by_id(SYSTEM_LOGICAL_PROCESSOR_INFORMATION *data,
         DWORD *len, DWORD max_len, LOGICAL_PROCESSOR_RELATIONSHIP rel, DWORD id, DWORD proc)
 {
-    int i;
+    DWORD i;
 
     for(i=0; i<*len; i++)
     {
@@ -1192,7 +1192,7 @@ static inline BOOL logical_proc_info_add_by_id(SYSTEM_LOGICAL_PROCESSOR_INFORMAT
 static inline BOOL logical_proc_info_add_cache(SYSTEM_LOGICAL_PROCESSOR_INFORMATION *data,
         DWORD *len, DWORD max_len, ULONG_PTR mask, CACHE_DESCRIPTOR *cache)
 {
-    int i;
+    DWORD i;
 
     for(i=0; i<*len; i++)
     {
@@ -1891,7 +1891,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             if (cpus == 0)
             {
                 static int i = 1;
-                int n;
+                unsigned int n;
                 cpus = min(NtCurrentTeb()->Peb->NumberOfProcessors, out_cpus);
                 len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * cpus;
                 sppi = RtlAllocateHeap(GetProcessHeap(), 0, len);

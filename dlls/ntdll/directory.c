@@ -145,7 +145,7 @@ struct file_identity
 };
 
 static struct file_identity ignored_files[MAX_IGNORED_FILES];
-static int ignored_files_count;
+static unsigned int ignored_files_count;
 
 union file_directory_info
 {

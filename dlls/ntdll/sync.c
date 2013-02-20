@@ -1091,7 +1091,8 @@ NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UIN
                                           const LARGE_INTEGER *timeout, HANDLE signal_object )
 {
     NTSTATUS ret;
-    int i, cookie;
+    UINT i;
+    int cookie;
     BOOL user_apc = FALSE;
     obj_handle_t obj_handles[MAXIMUM_WAIT_OBJECTS];
     obj_handle_t apc_handle = 0;
