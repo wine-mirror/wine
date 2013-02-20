@@ -2534,8 +2534,9 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
 
             if (check >= cChars && !iMaxPos)
             {
-                for (check = clust; check < cChars; check++)
-                    special_size += get_glyph_cluster_advance(piAdvance, psva, pwLogClust, cGlyphs, cChars, check, 1);
+                int glyph;
+                for (glyph = clust; glyph < cGlyphs; glyph++)
+                    special_size += get_glyph_cluster_advance(piAdvance, psva, pwLogClust, cGlyphs, cChars, glyph, 1);
                 iSpecial = item;
                 special_size /= (cChars - item);
                 iPosX += special_size;
@@ -2666,8 +2667,9 @@ HRESULT WINAPI ScriptXtoCP(int iX,
 
             if (check >= cChars && direction > 0)
             {
-                for (check = clust; check < cChars; check++)
-                    special_size += get_glyph_cluster_advance(piAdvance, psva, pwLogClust, cGlyphs, cChars, check, direction);
+                int glyph;
+                for (glyph = clust; glyph < cGlyphs; glyph++)
+                    special_size += get_glyph_cluster_advance(piAdvance, psva, pwLogClust, cGlyphs, cChars, glyph, direction);
                 iSpecial = item;
                 special_size /= (cChars - item);
                 iPosX += special_size;
