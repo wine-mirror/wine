@@ -81,6 +81,7 @@ static ULONG WINAPI HTMLDOMAttribute_Release(IHTMLDOMAttribute *iface)
     if(!ref) {
         assert(!This->elem);
         release_dispex(&This->dispex);
+        heap_free(This->name);
         heap_free(This);
     }
 
@@ -124,6 +125,11 @@ static HRESULT WINAPI HTMLDOMAttribute_get_nodeName(IHTMLDOMAttribute *iface, BS
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(!This->elem) {
+        FIXME("NULL This->elem\n");
+        return E_UNEXPECTED;
+    }
+
     return IDispatchEx_GetMemberName(&This->elem->node.dispex.IDispatchEx_iface, This->dispid, p);
 }
 
@@ -163,14 +169,14 @@ static HRESULT WINAPI HTMLDOMAttribute_get_specified(IHTMLDOMAttribute *iface, V
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(get_dispid_type(This->dispid) != DISPEXPROP_BUILTIN) {
-        *p = VARIANT_TRUE;
-        return S_OK;
-    }
-
     if(!This->elem || !This->elem->nselem) {
         FIXME("NULL This->elem\n");
         return E_UNEXPECTED;
+    }
+
+    if(get_dispid_type(This->dispid) != DISPEXPROP_BUILTIN) {
+        *p = VARIANT_TRUE;
+        return S_OK;
     }
 
     hres = IDispatchEx_GetMemberName(&This->elem->node.dispex.IDispatchEx_iface, This->dispid, &name);
@@ -221,7 +227,7 @@ static dispex_static_data_t HTMLDOMAttribute_dispex = {
     HTMLDOMAttribute_iface_tids
 };
 
-HRESULT HTMLDOMAttribute_Create(HTMLElement *elem, DISPID dispid, HTMLDOMAttribute **attr)
+HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dispid, HTMLDOMAttribute **attr)
 {
     HTMLAttributeCollection *col;
     HTMLDOMAttribute *ret;
@@ -231,22 +237,34 @@ HRESULT HTMLDOMAttribute_Create(HTMLElement *elem, DISPID dispid, HTMLDOMAttribu
     if(!ret)
         return E_OUTOFMEMORY;
 
-    hres = HTMLElement_get_attr_col(&elem->node, &col);
-    if(FAILED(hres)) {
-        heap_free(ret);
-        return hres;
-    }
-    IHTMLAttributeCollection_Release(&col->IHTMLAttributeCollection_iface);
-
     ret->IHTMLDOMAttribute_iface.lpVtbl = &HTMLDOMAttributeVtbl;
     ret->ref = 1;
-
     ret->dispid = dispid;
     ret->elem = elem;
-    list_add_tail(&elem->attrs->attrs, &ret->entry);
 
     init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLDOMAttribute_iface,
             &HTMLDOMAttribute_dispex);
+
+    /* For attributes attached to an element, (elem,dispid) pair should be valid used for its operation. */
+    if(elem) {
+        hres = HTMLElement_get_attr_col(&elem->node, &col);
+        if(FAILED(hres)) {
+            IHTMLDOMAttribute_Release(&ret->IHTMLDOMAttribute_iface);
+            return hres;
+        }
+        IHTMLAttributeCollection_Release(&col->IHTMLAttributeCollection_iface);
+
+        list_add_tail(&elem->attrs->attrs, &ret->entry);
+    }
+
+    /* For detached attributes we may still do most operations if we have its name available. */
+    if(name) {
+        ret->name = heap_strdupW(name);
+        if(!ret->name) {
+            IHTMLDOMAttribute_Release(&ret->IHTMLDOMAttribute_iface);
+            return E_OUTOFMEMORY;
+        }
+    }
 
     *attr = ret;
     return S_OK;

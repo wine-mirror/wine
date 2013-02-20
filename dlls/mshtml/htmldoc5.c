@@ -120,8 +120,17 @@ static HRESULT WINAPI HTMLDocument5_createAttribute(IHTMLDocument5 *iface, BSTR 
         IHTMLDOMAttribute **ppattribute)
 {
     HTMLDocument *This = impl_from_IHTMLDocument5(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(bstrattrName), ppattribute);
-    return E_NOTIMPL;
+    HTMLDOMAttribute *attr;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrattrName), ppattribute);
+
+    hres = HTMLDOMAttribute_Create(bstrattrName, NULL, 0, &attr);
+    if(FAILED(hres))
+        return hres;
+
+    *ppattribute = &attr->IHTMLDOMAttribute_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument5_createComment(IHTMLDocument5 *iface, BSTR bstrdata,

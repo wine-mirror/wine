@@ -852,12 +852,14 @@ typedef struct {
 
     LONG ref;
 
-    DISPID dispid;
+    WCHAR *name;
+
     HTMLElement *elem;
+    DISPID dispid;
     struct list entry;
 } HTMLDOMAttribute;
 
-HRESULT HTMLDOMAttribute_Create(HTMLElement*,DISPID,HTMLDOMAttribute**) DECLSPEC_HIDDEN;
+HRESULT HTMLDOMAttribute_Create(const WCHAR*,HTMLElement*,DISPID,HTMLDOMAttribute**) DECLSPEC_HIDDEN;
 
 HRESULT HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLElement**) DECLSPEC_HIDDEN;
