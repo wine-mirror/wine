@@ -60,8 +60,6 @@ static IMAGE_NT_HEADERS nt_header =
       IMAGE_FILE_MACHINE_AMD64, /* Machine */
 #elif defined __powerpc__
       IMAGE_FILE_MACHINE_POWERPC, /* Machine */
-#elif defined __sparc__
-      IMAGE_FILE_MACHINE_SPARC, /* Machine */
 #elif defined __arm__
       IMAGE_FILE_MACHINE_ARMNT, /* Machine */
 #elif defined __aarch64__
