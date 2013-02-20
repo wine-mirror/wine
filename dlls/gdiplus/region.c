@@ -894,7 +894,7 @@ static GpStatus get_path_hrgn(GpPath *path, GpGraphics *graphics, HRGN *hrgn)
 
     if (!graphics)
     {
-        new_hdc = GetDC(0);
+        new_hdc = CreateCompatibleDC(0);
         if (!new_hdc)
             return OutOfMemory;
 
@@ -902,13 +902,13 @@ static GpStatus get_path_hrgn(GpPath *path, GpGraphics *graphics, HRGN *hrgn)
         graphics = new_graphics;
         if (stat != Ok)
         {
-            ReleaseDC(0, new_hdc);
+            DeleteDC(new_hdc);
             return stat;
         }
     }
     else if (!graphics->hdc)
     {
-        graphics->hdc = new_hdc = GetDC(0);
+        graphics->hdc = new_hdc = CreateCompatibleDC(0);
         if (!new_hdc)
             return OutOfMemory;
     }
@@ -929,7 +929,7 @@ static GpStatus get_path_hrgn(GpPath *path, GpGraphics *graphics, HRGN *hrgn)
     RestoreDC(graphics->hdc, save_state);
     if (new_hdc)
     {
-        ReleaseDC(0, new_hdc);
+        DeleteDC(new_hdc);
         if (new_graphics)
             GdipDeleteGraphics(new_graphics);
         else
