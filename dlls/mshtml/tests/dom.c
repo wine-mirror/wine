@@ -2609,6 +2609,18 @@ static void test_dynamic_properties(IHTMLElement *elem)
     SysFreeString(attr1);
 }
 
+#define test_attr_node_name(a,b) _test_attr_node_name(__LINE__,a,b)
+static void _test_attr_node_name(unsigned line, IHTMLDOMAttribute *attr, const char *exname)
+{
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLDOMAttribute_get_nodeName(attr, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_nodeName failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_wa(str, exname), "node name is %s, expected %s\n", wine_dbgstr_w(str), exname);
+    SysFreeString(str);
+}
+
 static void test_attr_collection_disp(IDispatch *disp)
 {
     IDispatchEx *dispex;
@@ -2647,10 +2659,9 @@ static void test_attr_collection_disp(IDispatch *disp)
     ok(V_DISPATCH(&var) != NULL, "V_DISPATCH(var) == NULL\n");
     hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IHTMLDOMAttribute, (void**)&attr);
     ok(hres == S_OK, "QueryInterface failed: %08x\n", hres);
-    hres = IHTMLDOMAttribute_get_nodeName(attr, &bstr);
-    ok(hres == S_OK, "get_nodeName failed: %08x\n", hres);
-    ok(!strcmp_wa(bstr, "attr1"), "node name is %s, expected attr1\n", wine_dbgstr_w(bstr));
-    SysFreeString(bstr);
+
+    test_attr_node_name(attr, "attr1");
+
     IHTMLDOMAttribute_Release(attr);
     VariantClear(&var);
 
@@ -6399,6 +6410,7 @@ static void test_create_elems(IHTMLDocument2 *doc)
 {
     IHTMLElement *elem, *body, *elem2;
     IHTMLDOMNode *node, *node2, *node3, *comment;
+    IHTMLDOMAttribute *attr;
     IHTMLDocument5 *doc5;
     IDispatch *disp;
     VARIANT var;
@@ -6488,6 +6500,20 @@ static void test_create_elems(IHTMLDocument2 *doc)
             test_comment_attrs((IUnknown*)comment);
 
             IHTMLDOMNode_Release(comment);
+        }
+
+        str = a2bstr("Test");
+        hres = IHTMLDocument5_createAttribute(doc5, str, &attr);
+        ok(hres == S_OK, "createAttribute dailed: %08x\n", hres);
+        SysFreeString(str);
+        if(SUCCEEDED(hres)) {
+            test_disp((IUnknown*)attr, &DIID_DispHTMLDOMAttribute, "[object]");
+            test_ifaces((IUnknown*)attr, attr_iids);
+            test_no_iface((IUnknown*)attr, &IID_IHTMLDOMNode);
+
+            test_attr_node_name(attr, "Test");
+
+            IHTMLDOMAttribute_Release(attr);
         }
 
         IHTMLDocument5_Release(doc5);
