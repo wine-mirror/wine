@@ -96,11 +96,14 @@
 @ stub ZonesReInit
 
 111 stdcall @(wstr) IsProtectedModeURL
+328 stdcall @(ptr ptr) propsys.VariantCompare
 329 stdcall @(ptr ptr) propsys.VariantToGUID
 331 stdcall @(ptr long ptr) propsys.InitPropVariantFromBuffer
 335 stdcall @(ptr long ptr) propsys.InitVariantFromBuffer
 350 stdcall @(ptr ptr) propsys.PropVariantToGUID
 362 stdcall @(ptr ptr) propsys.InitVariantFromGUIDAsString
+363 stdcall @(long long ptr) propsys.InitVariantFromResource
+387 stdcall @(ptr long) propsys.VariantToUInt32WithDefault
 410 stdcall @(long long) LogSqmBits
 423 stdcall @(long long long long) LogSqmUXCommandOffsetInternal
 444 stdcall @(long long long) MapUriToBrowserEmulationState
