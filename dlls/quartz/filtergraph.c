@@ -1556,61 +1556,97 @@ static HRESULT WINAPI FilterGraph2_RenderFile(IFilterGraph2 *iface, LPCWSTR lpcw
     return hr;
 }
 
+static HRESULT CreateFilterInstanceAndLoadFile(GUID* clsid, LPCOLESTR pszFileName, IBaseFilter **filter)
+{
+    IFileSourceFilter *source = NULL;
+    HRESULT hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)filter);
+    TRACE("CLSID: %s\n", debugstr_guid(clsid));
+    if (FAILED(hr))
+        return hr;
+
+    hr = IBaseFilter_QueryInterface(*filter, &IID_IFileSourceFilter, (LPVOID*)&source);
+    if (FAILED(hr))
+    {
+        IBaseFilter_Release(*filter);
+        return hr;
+    }
+
+    /* Load the file in the file source filter */
+    hr = IFileSourceFilter_Load(source, pszFileName, NULL);
+    IFileSourceFilter_Release(source);
+    if (FAILED(hr)) {
+        WARN("Load (%x)\n", hr);
+        IBaseFilter_Release(*filter);
+        return hr;
+    }
+
+    return hr;
+}
+
 /* Some filters implement their own asynchronous reader (Theoretically they all should, try to load it first */
 static HRESULT GetFileSourceFilter(LPCOLESTR pszFileName, IBaseFilter **filter)
 {
-    static const WCHAR wszReg[] = {'M','e','d','i','a',' ','T','y','p','e','\\','E','x','t','e','n','s','i','o','n','s',0};
-    HRESULT hr = S_OK;
-    HKEY extkey;
-    LONG lRet;
+    HRESULT hr;
+    GUID clsid;
+    IAsyncReader * pReader = NULL;
+    IFileSourceFilter* pSource = NULL;
+    IPin * pOutputPin = NULL;
+    static const WCHAR wszOutputPinName[] = { 'O','u','t','p','u','t',0 };
 
-    lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszReg, 0, KEY_READ, &extkey);
-    hr = HRESULT_FROM_WIN32(lRet);
+    /* Try to find a match without reading the file first */
+    hr = GetClassMediaFile(NULL, pszFileName, NULL, NULL, &clsid);
 
-    if (SUCCEEDED(hr))
-    {
-        static const WCHAR filtersource[] = {'S','o','u','r','c','e',' ','F','i','l','t','e','r',0};
-        WCHAR *ext = PathFindExtensionW(pszFileName);
-        WCHAR clsid_key[39];
-        GUID clsid;
-        DWORD size = sizeof(clsid_key);
-        HKEY pathkey;
+    if (!hr)
+        return CreateFilterInstanceAndLoadFile(&clsid, pszFileName, filter);
 
-        if (!ext)
-        {
-            CloseHandle(extkey);
-            return E_FAIL;
-        }
-
-        lRet = RegOpenKeyExW(extkey, ext, 0, KEY_READ, &pathkey);
-        hr = HRESULT_FROM_WIN32(lRet);
-        CloseHandle(extkey);
-        if (FAILED(hr))
-            return hr;
-
-        lRet = RegQueryValueExW(pathkey, filtersource, NULL, NULL, (LPBYTE)clsid_key, &size);
-        hr = HRESULT_FROM_WIN32(lRet);
-        CloseHandle(pathkey);
-        if (FAILED(hr))
-            return hr;
-
-        CLSIDFromString(clsid_key, &clsid);
-
-        TRACE("CLSID: %s\n", debugstr_guid(&clsid));
-        hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)filter);
-        if (SUCCEEDED(hr))
-        {
-            IFileSourceFilter *source = NULL;
-            hr = IBaseFilter_QueryInterface(*filter, &IID_IFileSourceFilter, (LPVOID*)&source);
-            if (SUCCEEDED(hr))
-                IFileSourceFilter_Release(source);
-            else
-                IBaseFilter_Release(*filter);
-        }
-    }
+    /* Now create a AyncReader instance, to check for signature bytes in the file */
+    hr = CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)filter);
     if (FAILED(hr))
-        *filter = NULL;
-    return hr;
+        return hr;
+
+    hr = IBaseFilter_QueryInterface(*filter, &IID_IFileSourceFilter, (LPVOID *)&pSource);
+    if (FAILED(hr))
+    {
+        IBaseFilter_Release(*filter);
+        return hr;
+    }
+
+    hr = IFileSourceFilter_Load(pSource, pszFileName, NULL);
+    IFileSourceFilter_Release(pSource);
+    if (FAILED(hr))
+    {
+        IBaseFilter_Release(*filter);
+        return hr;
+    }
+
+    hr = IBaseFilter_FindPin(*filter, wszOutputPinName, &pOutputPin);
+    if (FAILED(hr))
+    {
+        IBaseFilter_Release(*filter);
+        return hr;
+    }
+
+    hr = IPin_QueryInterface(pOutputPin, &IID_IAsyncReader, (LPVOID *)&pReader);
+    IPin_Release(pOutputPin);
+    if (FAILED(hr))
+    {
+        IBaseFilter_Release(*filter);
+        return hr;
+    }
+
+    /* Try again find a match */
+    hr = GetClassMediaFile(pReader, pszFileName, NULL, NULL, &clsid);
+    IAsyncReader_Release(pReader);
+
+    if (!hr)
+    {
+        /* Release the AsyncReader filter and create the matching one */
+        IBaseFilter_Release(*filter);
+        return CreateFilterInstanceAndLoadFile(&clsid, pszFileName, filter);
+    }
+
+    /* Return the AsyncReader filter */
+    return S_OK;
 }
 
 static HRESULT WINAPI FilterGraph2_AddSourceFilter(IFilterGraph2 *iface, LPCWSTR lpcwstrFileName,
@@ -1627,9 +1663,6 @@ static HRESULT WINAPI FilterGraph2_AddSourceFilter(IFilterGraph2 *iface, LPCWSTR
 
     /* Try from file name first, then fall back to default asynchronous reader */
     hr = GetFileSourceFilter(lpcwstrFileName, &preader);
-
-    if (FAILED(hr))
-        hr = CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&preader);
     if (FAILED(hr)) {
         WARN("Unable to create file source filter (%x)\n", hr);
         return hr;
@@ -1648,13 +1681,7 @@ static HRESULT WINAPI FilterGraph2_AddSourceFilter(IFilterGraph2 *iface, LPCWSTR
         goto error;
     }
 
-    /* Load the file in the file source filter */
-    hr = IFileSourceFilter_Load(pfile, lpcwstrFileName, NULL);
-    if (FAILED(hr)) {
-        WARN("Load (%x)\n", hr);
-        goto error;
-    }
-
+    /* The file has been already loaded */
     IFileSourceFilter_GetCurFile(pfile, &filename, &mt);
     if (FAILED(hr)) {
         WARN("GetCurFile (%x)\n", hr);

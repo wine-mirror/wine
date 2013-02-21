@@ -295,7 +295,8 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
                 if (process_extensions(hkeyMajor, pszFileName, majorType, minorType, sourceFilter) == S_OK)
                     bFound = TRUE;
             }
-            else
+            /* We need a reader interface to check bytes */
+            else if (pReader)
             {
                 DWORD indexMinor;
 
@@ -305,7 +306,7 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
                     WCHAR wszMinorKeyName[CHARS_IN_GUID];
                     DWORD dwMinorKeyNameLen = sizeof(wszMinorKeyName) / sizeof(wszMinorKeyName[0]);
                     WCHAR wszSourceFilterKeyName[CHARS_IN_GUID];
-                    DWORD dwSourceFilterKeyNameLen = sizeof(wszSourceFilterKeyName) / sizeof(wszSourceFilterKeyName[0]);
+                    DWORD dwSourceFilterKeyNameLen = sizeof(wszSourceFilterKeyName);
                     DWORD maxValueLen;
                     DWORD indexValue;
 
@@ -370,7 +371,15 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
         hr = E_FAIL;
     }
     else if (bFound)
-        TRACE("Found file's class: major = %s, subtype = %s\n", qzdebugstr_guid(majorType), qzdebugstr_guid(minorType));
+    {
+        TRACE("Found file's class:\n");
+	if(majorType)
+		TRACE("\tmajor = %s\n", qzdebugstr_guid(majorType));
+	if(minorType)
+		TRACE("\tsubtype = %s\n", qzdebugstr_guid(minorType));
+	if(sourceFilter)
+		TRACE("\tsource filter = %s\n", qzdebugstr_guid(sourceFilter));
+    }
 
     return hr;
 }
