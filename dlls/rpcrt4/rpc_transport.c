@@ -2324,9 +2324,22 @@ static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request,
     if (status != RPC_S_OK) return status;
     TRACE("received (%d) from first prepare header\n", field1);
 
-    status = rpcrt4_http_read_http_packet(out_request, &pkt_from_server,
-                                          &data_from_server);
-    if (status != RPC_S_OK) return status;
+    for (;;)
+    {
+        status = rpcrt4_http_read_http_packet(out_request, &pkt_from_server,
+                                              &data_from_server);
+        if (status != RPC_S_OK) return status;
+        if (pkt_from_server.http.flags != 0x0001) break;
+
+        TRACE("http idle packet, waiting for real packet\n");
+        HeapFree(GetProcessHeap(), 0, data_from_server);
+        if (pkt_from_server.http.num_data_items != 0)
+        {
+            ERR("HTTP idle packet should have no data items instead of %d\n",
+                pkt_from_server.http.num_data_items);
+            return RPC_S_PROTOCOL_ERROR;
+        }
+    }
     status = RPCRT4_ParseHttpPrepareHeader2(&pkt_from_server, data_from_server,
                                             &field1, flow_control_increment,
                                             &field3);
