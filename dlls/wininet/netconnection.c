@@ -463,7 +463,6 @@ static long get_tls_option(void) {
 #endif
     return tls_option;
 }
-#endif /* SONAME_LIBSSL */
 
 static CRITICAL_SECTION init_ssl_cs;
 static CRITICAL_SECTION_DEBUG init_ssl_cs_debug =
@@ -477,7 +476,7 @@ static CRITICAL_SECTION init_ssl_cs = { &init_ssl_cs_debug, -1, 0, 0, 0, 0 };
 
 static DWORD init_openssl(void)
 {
-#if defined(SONAME_LIBSSL) && defined(SONAME_LIBCRYPTO)
+#ifdef SONAME_LIBCRYPTO
     int i;
 
     if(OpenSSL_ssl_handle)
@@ -600,10 +599,11 @@ static DWORD init_openssl(void)
 
     return ERROR_SUCCESS;
 #else
-    FIXME("can't use SSL, not compiled in.\n");
+    FIXME("can't use SSL, libcrypto not compiled in.\n");
     return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
 #endif
 }
+#endif /* SONAME_LIBSSL */
 
 static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD timeout)
 {
@@ -663,6 +663,7 @@ DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, BOOL m
     netconn_t *netconn;
     int result;
 
+#ifdef SONAME_LIBSSL
     if(useSSL) {
         DWORD res;
 
@@ -674,6 +675,7 @@ DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, BOOL m
         if(res != ERROR_SUCCESS)
             return res;
     }
+#endif
 
     netconn = heap_alloc_zero(sizeof(*netconn));
     if(!netconn)
@@ -910,6 +912,8 @@ DWORD NETCON_secure_connect(netconn_t *connection, server_t *server)
         res = netcon_secure_connect_setup(connection, get_tls_option()|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2);
     }
 #endif
+#else
+    FIXME("Cannot connect, OpenSSL not available.\n");
 #endif
     return res;
 }
@@ -943,6 +947,7 @@ DWORD NETCON_send(netconn_t *connection, const void *msg, size_t len, int flags,
 	    return ERROR_INTERNET_CONNECTION_ABORTED;
         return ERROR_SUCCESS;
 #else
+        FIXME("not supported on this platform\n");
 	return ERROR_NOT_SUPPORTED;
 #endif
     }
@@ -980,6 +985,7 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags,
 
         return *recvd > 0 ? ERROR_SUCCESS : ERROR_INTERNET_CONNECTION_ABORTED;
 #else
+        FIXME("not supported on this platform\n");
 	return ERROR_NOT_SUPPORTED;
 #endif
     }
@@ -1010,6 +1016,9 @@ BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available)
     {
 #ifdef SONAME_LIBSSL
         *available = connection->ssl_s ? pSSL_pending(connection->ssl_s) : 0;
+#else
+        FIXME("not supported on this platform\n");
+        return FALSE;
 #endif
     }
     return TRUE;
@@ -1058,6 +1067,7 @@ LPCVOID NETCON_GetCert(netconn_t *connection)
     r = X509_to_cert_context(cert);
     return r;
 #else
+    FIXME("not supported on this platform\n");
     return NULL;
 #endif
 }
@@ -1080,6 +1090,7 @@ int NETCON_GetCipherStrength(netconn_t *connection)
     pSSL_CIPHER_get_bits(cipher, &bits);
     return bits;
 #else
+    FIXME("not supported on this platform\n");
     return 0;
 #endif
 }
