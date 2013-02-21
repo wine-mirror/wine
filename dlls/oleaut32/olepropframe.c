@@ -168,7 +168,7 @@ HRESULT WINAPI OleCreatePropertyFrameIndirect(LPOCPFIPARAMS lpParams)
     IPropertyPage **property_page;
     PropertyPageSite *property_page_site;
     HRESULT res;
-    int i;
+    ULONG i;
     HMODULE hcomctl;
     HRSRC property_sheet_dialog_find = NULL;
     HGLOBAL property_sheet_dialog_load = NULL;

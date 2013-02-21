@@ -4388,7 +4388,7 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoOfGuid(
     ITypeInfo **ppTInfo)
 {
     ITypeLibImpl *This = impl_from_ITypeLib2(iface);
-    UINT i;
+    int i;
 
     TRACE("%p %s %p\n", This, debugstr_guid(guid), ppTInfo);
 
@@ -4553,7 +4553,8 @@ static HRESULT WINAPI ITypeLib2_fnIsName(
 	BOOL *pfName)
 {
     ITypeLibImpl *This = impl_from_ITypeLib2(iface);
-    UINT nNameBufLen = (lstrlenW(szNameBuf)+1)*sizeof(WCHAR), tic, fdc, vrc, pc;
+    int tic;
+    UINT nNameBufLen = (lstrlenW(szNameBuf)+1)*sizeof(WCHAR), fdc, vrc;
 
     TRACE("(%p)->(%s,%08x,%p)\n", This, debugstr_w(szNameBuf), lHashVal,
 	  pfName);
@@ -4564,6 +4565,8 @@ static HRESULT WINAPI ITypeLib2_fnIsName(
         if(!memcmp(szNameBuf,pTInfo->Name, nNameBufLen)) goto ITypeLib2_fnIsName_exit;
         for(fdc = 0; fdc < pTInfo->TypeAttr.cFuncs; ++fdc) {
             TLBFuncDesc *pFInfo = &pTInfo->funcdescs[fdc];
+            int pc;
+
             if(!memcmp(szNameBuf,pFInfo->Name, nNameBufLen)) goto ITypeLib2_fnIsName_exit;
             for(pc=0; pc < pFInfo->funcdesc.cParams; pc++)
                 if(!memcmp(szNameBuf,pFInfo->pParamDesc[pc].Name, nNameBufLen))
@@ -4599,7 +4602,8 @@ static HRESULT WINAPI ITypeLib2_fnFindName(
 	UINT16 *found)
 {
     ITypeLibImpl *This = impl_from_ITypeLib2(iface);
-    UINT tic, count = 0;
+    int tic;
+    UINT count = 0;
     UINT len;
 
     TRACE("(%p)->(%s %u %p %p %p)\n", This, debugstr_w(name), hash, ppTInfo, memid, found);
@@ -4616,7 +4620,7 @@ static HRESULT WINAPI ITypeLib2_fnFindName(
         if(!memcmp(name, pTInfo->Name, len)) goto ITypeLib2_fnFindName_exit;
         for(fdc = 0; fdc < pTInfo->TypeAttr.cFuncs; ++fdc) {
             TLBFuncDesc *func = &pTInfo->funcdescs[fdc];
-            UINT pc;
+            int pc;
 
             if(!memcmp(name, func->Name, len)) goto ITypeLib2_fnFindName_exit;
             for(pc = 0; pc < func->funcdesc.cParams; pc++) {
@@ -4995,7 +4999,7 @@ static HRESULT WINAPI ITypeLibComp_fnBindType(
     ITypeComp ** ppTComp)
 {
     ITypeLibImpl *This = impl_from_ITypeComp(iface);
-    UINT i;
+    int i;
 
     TRACE("(%s, %x, %p, %p)\n", debugstr_w(szName), lHash, ppTInfo, ppTComp);
 
@@ -5097,7 +5101,7 @@ static ULONG WINAPI ITypeInfo_fnAddRef( ITypeInfo2 *iface)
 
 static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
 {
-    UINT i, j;
+    UINT i;
 
     TRACE("destroying ITypeInfo(%p)\n",This);
 
@@ -5112,6 +5116,7 @@ static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
 
     for (i = 0; i < This->TypeAttr.cFuncs; ++i)
     {
+        int j;
         TLBFuncDesc *pFInfo = &This->funcdescs[i];
         for(j = 0; j < pFInfo->funcdesc.cParams; j++)
         {
