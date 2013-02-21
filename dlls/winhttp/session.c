@@ -959,7 +959,7 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     request->connect = connect;
     list_add_head( &connect->hdr.children, &request->hdr.entry );
 
-    if (!netconn_init( &request->netconn, request->hdr.flags & WINHTTP_FLAG_SECURE )) goto end;
+    if (!netconn_init( &request->netconn )) goto end;
     request->resolve_timeout = connect->session->resolve_timeout;
     request->connect_timeout = connect->session->connect_timeout;
     request->send_timeout = connect->session->send_timeout;

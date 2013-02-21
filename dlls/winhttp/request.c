@@ -1636,7 +1636,7 @@ static BOOL handle_redirect( request_t *request, DWORD status )
             if (!(ret = set_server_for_hostname( connect, hostname, port ))) goto end;
 
             netconn_close( &request->netconn );
-            if (!(ret = netconn_init( &request->netconn, request->hdr.flags & WINHTTP_FLAG_SECURE ))) goto end;
+            if (!(ret = netconn_init( &request->netconn ))) goto end;
         }
         if (!(ret = add_host_header( request, WINHTTP_ADDREQ_FLAG_REPLACE ))) goto end;
         if (!(ret = open_connection( request ))) goto end;

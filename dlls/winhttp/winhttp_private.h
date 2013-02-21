@@ -231,7 +231,7 @@ BOOL netconn_connect( netconn_t *, const struct sockaddr *, unsigned int, int ) 
 BOOL netconn_connected( netconn_t * ) DECLSPEC_HIDDEN;
 BOOL netconn_create( netconn_t *, int, int, int ) DECLSPEC_HIDDEN;
 BOOL netconn_get_next_line( netconn_t *, char *, DWORD * ) DECLSPEC_HIDDEN;
-BOOL netconn_init( netconn_t *, BOOL ) DECLSPEC_HIDDEN;
+BOOL netconn_init( netconn_t * ) DECLSPEC_HIDDEN;
 void netconn_unload( void ) DECLSPEC_HIDDEN;
 BOOL netconn_query_data_available( netconn_t *, DWORD * ) DECLSPEC_HIDDEN;
 BOOL netconn_recv( netconn_t *, void *, size_t, int, int * ) DECLSPEC_HIDDEN;

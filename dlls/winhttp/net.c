@@ -267,7 +267,7 @@ static BOOL ensure_cred_handle(void)
     return ret;
 }
 
-BOOL netconn_init( netconn_t *conn, BOOL secure )
+BOOL netconn_init( netconn_t *conn )
 {
     memset(conn, 0, sizeof(*conn));
     conn->socket = -1;
