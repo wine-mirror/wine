@@ -67,4 +67,6 @@ extern void video_unregister_windowclass(void) DECLSPEC_HIDDEN;
 BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards);
 void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt) DECLSPEC_HIDDEN;
 
+HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * majorType, GUID * minorType, GUID * sourceFilter);
+
 #endif /* __QUARTZ_PRIVATE_INCLUDED__ */

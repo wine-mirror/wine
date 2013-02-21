@@ -254,7 +254,7 @@ static HRESULT process_pattern_string(LPCWSTR wszPatternString, IAsyncReader * p
         return hr;
 }
 
-static HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * majorType, GUID * minorType, GUID * sourceFilter)
+HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * majorType, GUID * minorType, GUID * sourceFilter)
 {
     HKEY hkeyMediaType = NULL;
     LONG lRet;
