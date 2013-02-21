@@ -1,0 +1,7 @@
+MODULE    = webservices.dll
+IMPORTLIB = webservices
+
+C_SRCS = \
+	main.c
+
+@MAKE_DLL_RULES@
