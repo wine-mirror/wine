@@ -75,7 +75,6 @@
  * States
  *   -- LVIS_ACTIVATING (not currently supported by comctl32.dll version 6.0)
  *   -- LVIS_DROPHILITED
- *   -- LVIS_OVERLAYMASK
  *
  * Styles
  *   -- LVS_NOLABELWRAP
@@ -4586,7 +4585,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;
     if (nSubItem == 0) lvItem.mask |= LVIF_STATE;
     if (infoPtr->uView == LV_VIEW_DETAILS) lvItem.mask |= LVIF_INDENT;
-    lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED | LVIS_STATEIMAGEMASK | LVIS_CUT;
+    lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED | LVIS_STATEIMAGEMASK | LVIS_CUT | LVIS_OVERLAYMASK;
     lvItem.iItem = nItem;
     lvItem.iSubItem = nSubItem;
     lvItem.state = 0;
@@ -4707,7 +4706,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
         ImageList_DrawEx(himl, lvItem.iImage, hdc, rcIcon.left, rcIcon.top,
                          rcIcon.right - rcIcon.left, rcIcon.bottom - rcIcon.top, infoPtr->clrBk,
                          lvItem.state & LVIS_CUT ? RGB(255, 255, 255) : CLR_DEFAULT,
-                         style);
+                         style | (lvItem.state & LVIS_OVERLAYMASK));
     }
 
     /* Don't bother painting item being edited */
