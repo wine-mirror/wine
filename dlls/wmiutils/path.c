@@ -116,8 +116,19 @@ static HRESULT WINAPI keylist_GetCount(
     IWbemPathKeyList *iface,
     ULONG *puKeyCount )
 {
-    FIXME("%p, %p\n", iface, puKeyCount);
-    return E_NOTIMPL;
+    struct keylist *keylist = impl_from_IWbemPathKeyList( iface );
+    struct path *parent = impl_from_IWbemPath( keylist->parent );
+
+    TRACE("%p, %p\n", iface, puKeyCount);
+
+    if (!puKeyCount) return WBEM_E_INVALID_PARAMETER;
+
+    EnterCriticalSection( &parent->cs );
+
+    *puKeyCount = parent->num_keys;
+
+    LeaveCriticalSection( &parent->cs );
+    return S_OK;
 }
 
 static HRESULT WINAPI keylist_SetKey(
