@@ -32,12 +32,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmiutils);
 
-struct key
+struct keylist
 {
-    WCHAR *name;
-    int    len_name;
-    WCHAR *value;
-    int    len_value;
+    IWbemPathKeyList IWbemPathKeyList_iface;
+    IWbemPath       *parent;
+    LONG             refs;
 };
 
 struct path
@@ -57,6 +56,207 @@ struct path
     struct key      *keys;
     unsigned int     num_keys;
     ULONGLONG        flags;
+};
+
+static inline struct keylist *impl_from_IWbemPathKeyList( IWbemPathKeyList *iface )
+{
+    return CONTAINING_RECORD(iface, struct keylist, IWbemPathKeyList_iface);
+}
+
+static inline struct path *impl_from_IWbemPath( IWbemPath *iface )
+{
+    return CONTAINING_RECORD(iface, struct path, IWbemPath_iface);
+}
+
+static ULONG WINAPI keylist_AddRef(
+    IWbemPathKeyList *iface )
+{
+    struct keylist *keylist = impl_from_IWbemPathKeyList( iface );
+    return InterlockedIncrement( &keylist->refs );
+}
+
+static ULONG WINAPI keylist_Release(
+    IWbemPathKeyList *iface )
+{
+    struct keylist *keylist = impl_from_IWbemPathKeyList( iface );
+    LONG refs = InterlockedDecrement( &keylist->refs );
+    if (!refs)
+    {
+        TRACE("destroying %p\n", keylist);
+        IWbemPath_Release( keylist->parent );
+        heap_free( keylist );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI keylist_QueryInterface(
+    IWbemPathKeyList *iface,
+    REFIID riid,
+    void **ppvObject )
+{
+    struct keylist *keylist = impl_from_IWbemPathKeyList( iface );
+
+    TRACE("%p, %s, %p\n", keylist, debugstr_guid(riid), ppvObject);
+
+    if (IsEqualGUID( riid, &IID_IWbemPathKeyList ) ||
+        IsEqualGUID( riid, &IID_IUnknown ))
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+    IWbemPathKeyList_AddRef( iface );
+    return S_OK;
+}
+
+static HRESULT WINAPI keylist_GetCount(
+    IWbemPathKeyList *iface,
+    ULONG *puKeyCount )
+{
+    FIXME("%p, %p\n", iface, puKeyCount);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI keylist_SetKey(
+    IWbemPathKeyList *iface,
+    LPCWSTR wszName,
+    ULONG uFlags,
+    ULONG uCimType,
+    LPVOID pKeyVal )
+{
+    FIXME("%p, %s, 0x%x, %u, %p\n", iface, debugstr_w(wszName), uFlags, uCimType, pKeyVal);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI keylist_SetKey2(
+    IWbemPathKeyList *iface,
+    LPCWSTR wszName,
+    ULONG uFlags,
+    ULONG uCimType,
+    VARIANT *pKeyVal )
+{
+    FIXME("%p, %s, 0x%x, %u, %p\n", iface, debugstr_w(wszName), uFlags, uCimType, pKeyVal);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI keylist_GetKey(
+    IWbemPathKeyList *iface,
+    ULONG uKeyIx,
+    ULONG uFlags,
+    ULONG *puNameBufSize,
+    LPWSTR pszKeyName,
+    ULONG *puKeyValBufSize,
+    LPVOID pKeyVal,
+    ULONG *puApparentCimType )
+{
+    FIXME("%p, %u, 0x%x, %p, %p, %p, %p, %p\n", iface, uKeyIx, uFlags, puNameBufSize,
+          pszKeyName, puKeyValBufSize, pKeyVal, puApparentCimType);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI keylist_GetKey2(
+    IWbemPathKeyList *iface,
+    ULONG uKeyIx,
+    ULONG uFlags,
+    ULONG *puNameBufSize,
+    LPWSTR pszKeyName,
+    VARIANT *pKeyValue,
+    ULONG *puApparentCimType )
+{
+    FIXME("%p, %u, 0x%x, %p, %p, %p, %p\n", iface, uKeyIx, uFlags, puNameBufSize,
+          pszKeyName, pKeyValue, puApparentCimType);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI keylist_RemoveKey(
+    IWbemPathKeyList *iface,
+    LPCWSTR wszName,
+    ULONG uFlags )
+{
+    FIXME("%p, %s, 0x%x\n", iface, debugstr_w(wszName), uFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI keylist_RemoveAllKeys(
+    IWbemPathKeyList *iface,
+    ULONG uFlags )
+{
+    FIXME("%p, 0x%x\n", iface, uFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI keylist_MakeSingleton(
+    IWbemPathKeyList *iface,
+    boolean bSet )
+{
+    FIXME("%p, %d\n", iface, bSet);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI keylist_GetInfo(
+    IWbemPathKeyList *iface,
+    ULONG uRequestedInfo,
+    ULONGLONG *puResponse )
+{
+    FIXME("%p, %u, %p\n", iface, uRequestedInfo, puResponse);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI keylist_GetText(
+    IWbemPathKeyList *iface,
+    LONG lFlags,
+    ULONG *puBuffLength,
+    LPWSTR pszText )
+{
+    FIXME("%p, 0x%x, %p, %p\n", iface, lFlags, puBuffLength, pszText);
+    return E_NOTIMPL;
+}
+
+static const struct IWbemPathKeyListVtbl keylist_vtbl =
+{
+    keylist_QueryInterface,
+    keylist_AddRef,
+    keylist_Release,
+    keylist_GetCount,
+    keylist_SetKey,
+    keylist_SetKey2,
+    keylist_GetKey,
+    keylist_GetKey2,
+    keylist_RemoveKey,
+    keylist_RemoveAllKeys,
+    keylist_MakeSingleton,
+    keylist_GetInfo,
+    keylist_GetText
+};
+
+static HRESULT WbemPathKeyList_create( IUnknown *pUnkOuter, IWbemPath *parent, LPVOID *ppObj )
+{
+    struct keylist *keylist;
+
+    TRACE("%p, %p\n", pUnkOuter, ppObj);
+
+    if (!(keylist = heap_alloc( sizeof(*keylist) ))) return E_OUTOFMEMORY;
+
+    keylist->IWbemPathKeyList_iface.lpVtbl = &keylist_vtbl;
+    keylist->refs = 1;
+    keylist->parent = parent;
+    IWbemPath_AddRef( keylist->parent );
+
+    *ppObj = &keylist->IWbemPathKeyList_iface;
+
+    TRACE("returning iface %p\n", *ppObj);
+    return S_OK;
+}
+
+struct key
+{
+    WCHAR *name;
+    int    len_name;
+    WCHAR *value;
+    int    len_value;
 };
 
 static void init_path( struct path *path )
@@ -91,11 +291,6 @@ static void clear_path( struct path *path )
     }
     heap_free( path->keys );
     init_path( path );
-}
-
-static inline struct path *impl_from_IWbemPath( IWbemPath *iface )
-{
-    return CONTAINING_RECORD(iface, struct path, IWbemPath_iface);
 }
 
 static ULONG WINAPI path_AddRef(
@@ -922,8 +1117,22 @@ static HRESULT WINAPI path_GetKeyList(
     IWbemPath *iface,
     IWbemPathKeyList **pOut)
 {
-    FIXME("%p, %p\n", iface, pOut);
-    return E_NOTIMPL;
+    struct path *path = impl_from_IWbemPath( iface );
+    HRESULT hr;
+
+    TRACE("%p, %p\n", iface, pOut);
+
+    EnterCriticalSection( &path->cs );
+
+    if (!path->class)
+    {
+        LeaveCriticalSection( &path->cs );
+        return WBEM_E_INVALID_PARAMETER;
+    }
+    hr = WbemPathKeyList_create( NULL, iface, (void **)pOut );
+
+    LeaveCriticalSection( &path->cs );
+    return hr;
 }
 
 static HRESULT WINAPI path_CreateClassPart(
