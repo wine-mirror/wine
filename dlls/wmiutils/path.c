@@ -39,6 +39,14 @@ struct keylist
     LONG             refs;
 };
 
+struct key
+{
+    WCHAR *name;
+    int    len_name;
+    WCHAR *value;
+    int    len_value;
+};
+
 struct path
 {
     IWbemPath        IWbemPath_iface;
@@ -191,12 +199,37 @@ static HRESULT WINAPI keylist_RemoveKey(
     return E_NOTIMPL;
 }
 
+static void free_keys( struct key *keys, unsigned int count )
+{
+    unsigned int i;
+
+    for (i = 0; i < count; i++)
+    {
+        heap_free( keys[i].name );
+        heap_free( keys[i].value );
+    }
+    heap_free( keys );
+}
+
 static HRESULT WINAPI keylist_RemoveAllKeys(
     IWbemPathKeyList *iface,
     ULONG uFlags )
 {
-    FIXME("%p, 0x%x\n", iface, uFlags);
-    return E_NOTIMPL;
+    struct keylist *keylist = impl_from_IWbemPathKeyList( iface );
+    struct path *parent = impl_from_IWbemPath( keylist->parent );
+
+    TRACE("%p, 0x%x\n", iface, uFlags);
+
+    if (uFlags) return WBEM_E_INVALID_PARAMETER;
+
+    EnterCriticalSection( &parent->cs );
+
+    free_keys( parent->keys, parent->num_keys );
+    parent->num_keys = 0;
+    parent->keys = NULL;
+
+    LeaveCriticalSection( &parent->cs );
+    return S_OK;
 }
 
 static HRESULT WINAPI keylist_MakeSingleton(
@@ -262,14 +295,6 @@ static HRESULT WbemPathKeyList_create( IUnknown *pUnkOuter, IWbemPath *parent, L
     return S_OK;
 }
 
-struct key
-{
-    WCHAR *name;
-    int    len_name;
-    WCHAR *value;
-    int    len_value;
-};
-
 static void init_path( struct path *path )
 {
     path->text           = NULL;
@@ -288,19 +313,12 @@ static void init_path( struct path *path )
 
 static void clear_path( struct path *path )
 {
-    unsigned int i;
-
     heap_free( path->text );
     heap_free( path->server );
     heap_free( path->namespaces );
     heap_free( path->len_namespaces );
     heap_free( path->class );
-    for (i = 0; i < path->num_keys; i++)
-    {
-        heap_free( path->keys[i].name );
-        heap_free( path->keys[i].value );
-    }
-    heap_free( path->keys );
+    free_keys( path->keys, path->num_keys );
     init_path( path );
 }
 
