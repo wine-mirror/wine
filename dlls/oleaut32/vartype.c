@@ -6619,7 +6619,7 @@ HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbst
 
     if (whole == 0.0)
       dwFlags |= VAR_TIMEVALUEONLY;
-    else if (partial < 1e-12)
+    else if (partial > -1e-12 && partial < 1e-12)
       dwFlags |= VAR_DATEVALUEONLY;
   }
 

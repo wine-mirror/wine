@@ -4951,6 +4951,7 @@ static void test_VarBstrFromDate(void)
   BSTR_DATE(365.25, "12/30/1900 6:00:00 AM");
   BSTR_DATE(1461.0, "12/31/1903");
   BSTR_DATE(1461.5, "12/31/1903 12:00:00 PM");
+  BSTR_DATE(-49192.24, "4/24/1765 5:45:36 AM");
   todo_wine { BSTR_DATE(-657434.0, "1/1/100"); }
   BSTR_DATE(2958465.0, "12/31/9999");
 
