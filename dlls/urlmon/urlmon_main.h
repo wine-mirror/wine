@@ -104,6 +104,7 @@ typedef struct {
     ULONG current_position;
     ULONG content_length;
     ULONG available_bytes;
+    ULONG query_available;
 
     IStream *post_stream;
 
