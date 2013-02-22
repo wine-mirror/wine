@@ -1609,66 +1609,6 @@ static HRESULT Global_GetRef(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VA
     return E_NOTIMPL;
 }
 
-static HRESULT Global_vbUseDefault(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbBinaryCompare(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbTextCompare(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbDatabaseCompare(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbGeneralDate(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbLongDate(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbShortDate(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbLongTime(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbShortTime(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbObjectError(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
 static HRESULT Global_vbBlack(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
@@ -1826,16 +1766,16 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_VBARRAY,            NULL, BP_GET, VT_ARRAY},
     {DISPID_GLOBAL_VBTRUE,             NULL, BP_GET, VARIANT_TRUE},
     {DISPID_GLOBAL_VBFALSE,            NULL, BP_GET, VARIANT_FALSE},
-    {DISPID_GLOBAL_VBUSEDEFAULT,       Global_vbUseDefault, BP_GET},
-    {DISPID_GLOBAL_VBBINARYCOMPARE,    Global_vbBinaryCompare, BP_GET},
-    {DISPID_GLOBAL_VBTEXTCOMPARE,      Global_vbTextCompare, BP_GET},
-    {DISPID_GLOBAL_VBDATABASECOMPARE,  Global_vbDatabaseCompare, BP_GET},
-    {DISPID_GLOBAL_VBGENERALDATE,      Global_vbGeneralDate, BP_GET},
-    {DISPID_GLOBAL_VBLONGDATE,         Global_vbLongDate, BP_GET},
-    {DISPID_GLOBAL_VBSHORTDATE,        Global_vbShortDate, BP_GET},
-    {DISPID_GLOBAL_VBLONGTIME,         Global_vbLongTime, BP_GET},
-    {DISPID_GLOBAL_VBSHORTTIME,        Global_vbShortTime, BP_GET},
-    {DISPID_GLOBAL_VBOBJECTERROR,      Global_vbObjectError, BP_GET},
+    {DISPID_GLOBAL_VBUSEDEFAULT,       NULL, BP_GET, -2},
+    {DISPID_GLOBAL_VBBINARYCOMPARE,    NULL, BP_GET, 0},
+    {DISPID_GLOBAL_VBTEXTCOMPARE,      NULL, BP_GET, 1},
+    {DISPID_GLOBAL_VBDATABASECOMPARE,  NULL, BP_GET, 2},
+    {DISPID_GLOBAL_VBGENERALDATE,      NULL, BP_GET, 0},
+    {DISPID_GLOBAL_VBLONGDATE,         NULL, BP_GET, 1},
+    {DISPID_GLOBAL_VBSHORTDATE,        NULL, BP_GET, 2},
+    {DISPID_GLOBAL_VBLONGTIME,         NULL, BP_GET, 3},
+    {DISPID_GLOBAL_VBSHORTTIME,        NULL, BP_GET, 4},
+    {DISPID_GLOBAL_VBOBJECTERROR,      NULL, BP_GET, 0x80040000},
     {DISPID_GLOBAL_VBBLACK,            Global_vbBlack, BP_GET},
     {DISPID_GLOBAL_VBBLUE,             Global_vbBlue, BP_GET},
     {DISPID_GLOBAL_VBCYAN,             Global_vbCyan, BP_GET},

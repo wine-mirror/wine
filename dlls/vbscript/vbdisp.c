@@ -151,7 +151,7 @@ static HRESULT invoke_builtin(vbdisp_t *This, const builtin_prop_t *prop, WORD f
     case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
         if(!prop->proc && prop->flags == BP_GET) {
             int val = prop->min_args;
-            if(val < 0x4000) {
+            if(val < 0x4000 && (INT16)val == val) {
                 V_VT(res) = VT_I2;
                 V_I2(res) = val;
             }else {

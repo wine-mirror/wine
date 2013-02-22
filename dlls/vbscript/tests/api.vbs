@@ -85,6 +85,16 @@ TestConstantI4 "vbMsgBoxHelpButton", vbMsgBoxHelpButton, 16384
 TestConstantI4 "vbMsgBoxSetForeground", vbMsgBoxSetForeground, 65536
 TestConstantI4 "vbMsgBoxRight", vbMsgBoxRight, 524288
 TestConstantI4 "vbMsgBoxRtlReading", vbMsgBoxRtlReading, 1048576
+TestConstant "vbUseDefault", vbUseDefault, -2
+TestConstant "vbBinaryCompare", vbBinaryCompare, 0
+TestConstant "vbTextCompare", vbTextCompare, 1
+TestConstant "vbDatabaseCompare", vbDatabaseCompare, 2
+TestConstant "vbGeneralDate", vbGeneralDate, 0
+TestConstant "vbLongDate", vbLongDate, 1
+TestConstant "vbShortDate", vbShortDate, 2
+TestConstant "vbLongTime", vbLongTime, 3
+TestConstant "vbShortTime", vbShortTime, 4
+TestConstantI4 "vbObjectError", vbObjectError, &h80040000&
 
 Sub TestCStr(arg, exval)
     dim x
