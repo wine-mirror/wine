@@ -297,7 +297,6 @@ GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap* bitmap, INT x, INT y,
     BYTE r, g, b, a;
     BYTE index;
     BYTE *row;
-    TRACE("%p %d %d %p\n", bitmap, x, y, color);
 
     if(!bitmap || !color ||
        x < 0 || y < 0 || x >= bitmap->width || y >= bitmap->height)
@@ -503,7 +502,6 @@ GpStatus WINGDIPAPI GdipBitmapSetPixel(GpBitmap* bitmap, INT x, INT y,
 {
     BYTE a, r, g, b;
     BYTE *row;
-    TRACE("bitmap:%p, x:%d, y:%d, color:%08x\n", bitmap, x, y, color);
 
     if(!bitmap || x < 0 || y < 0 || x >= bitmap->width || y >= bitmap->height)
         return InvalidParameter;
