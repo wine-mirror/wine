@@ -85,7 +85,9 @@ static void dump_ps_flags(DWORD flags)
 
 static void dump_pastespecial(const OLEUIPASTESPECIALW *ps)
 {
-    UINT i;
+    INT i;
+    UINT j;
+
     dump_ps_flags(ps->dwFlags);
     TRACE("hwnd %p caption %s hook %p custdata %lx\n",
           ps->hWndOwner, debugstr_w(ps->lpszCaption), ps->lpfnHook, ps->lCustData);
@@ -110,8 +112,8 @@ static void dump_pastespecial(const OLEUIPASTESPECIALW *ps)
     }
     for(i = 0; i < ps->cLinkTypes; i++)
         TRACE("arrLinkTypes[%d] %08x\n", i, ps->arrLinkTypes[i]);
-    for(i = 0; i < ps->cClsidExclude; i++)
-        TRACE("lpClsidExclude[%d] %s\n", i, debugstr_guid(&ps->lpClsidExclude[i]));
+    for(j = 0; j < ps->cClsidExclude; j++)
+        TRACE("lpClsidExclude[%u] %s\n", j, debugstr_guid(&ps->lpClsidExclude[j]));
 
 }
 
