@@ -734,8 +734,7 @@ UINT16 WINAPI midiOutOpen16(HMIDIOUT16* lphMidiOut, UINT16 uDeviceID,
     {
         return MMSYSERR_NOMEM;
     }
-    if ((dwFlags & CALLBACK_TYPEMASK) != CALLBACK_NULL)
-        dwFlags = (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
+    dwFlags = (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
     ret = midiOutOpen(&hmo, uDeviceID, (DWORD)thunk, dwInstance, dwFlags);
     if (ret == MMSYSERR_NOERROR)
     {
@@ -938,8 +937,7 @@ UINT16 WINAPI midiInOpen16(HMIDIIN16* lphMidiIn, UINT16 uDeviceID,
     {
         return MMSYSERR_NOMEM;
     }
-    if ((dwFlags & CALLBACK_TYPEMASK) != CALLBACK_NULL)
-        dwFlags = (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
+    dwFlags = (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
     ret = midiInOpen(&hmid, uDeviceID, (DWORD)thunk, dwInstance, dwFlags);
     if (ret == MMSYSERR_NOERROR)
     {
@@ -1099,8 +1097,7 @@ MMRESULT16 WINAPI midiStreamOpen16(HMIDISTRM16* phMidiStrm, LPUINT16 devid,
     {
         return MMSYSERR_NOMEM;
     }
-    if ((fdwOpen & CALLBACK_TYPEMASK) != CALLBACK_NULL)
-        fdwOpen = (fdwOpen & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
+    fdwOpen = (fdwOpen & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
     ret = midiStreamOpen(&hMidiStrm32, &devid32, cMidi, (DWORD)thunk, dwInstance, fdwOpen);
     if (ret == MMSYSERR_NOERROR)
     {
@@ -1233,8 +1230,7 @@ UINT16 WINAPI waveOutOpen16(HWAVEOUT16* lphWaveOut, UINT16 uDeviceID,
     {
         return MMSYSERR_NOMEM;
     }
-    if ((dwFlags & CALLBACK_TYPEMASK) != CALLBACK_NULL)
-        dwFlags = (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
+    dwFlags = (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
     /* since layout of WAVEFORMATEX is the same for 16/32 bits, we directly
      * call the 32 bit version
      * however, we need to promote correctly the wave mapper id
@@ -1243,11 +1239,12 @@ UINT16 WINAPI waveOutOpen16(HWAVEOUT16* lphWaveOut, UINT16 uDeviceID,
     ret = waveOutOpen(&hWaveOut, (uDeviceID == (UINT16)-1) ? (UINT)-1 : uDeviceID,
                       lpFormat, (DWORD)thunk, dwInstance, dwFlags);
 
-    if (lphWaveOut != NULL && ret == MMSYSERR_NOERROR)
-       *lphWaveOut = HWAVEOUT_16(hWaveOut);
     if (ret == MMSYSERR_NOERROR && !(dwFlags & WAVE_FORMAT_QUERY))
+    {
          MMSYSTDRV_SetHandle(thunk, (void*)hWaveOut);
-    else MMSYSTDRV_DeleteThunk(thunk);
+         if (lphWaveOut != NULL)
+             *lphWaveOut = HWAVEOUT_16(hWaveOut);
+    } else MMSYSTDRV_DeleteThunk(thunk);
     return ret;
 }
 
@@ -1512,8 +1509,7 @@ UINT16 WINAPI waveInOpen16(HWAVEIN16* lphWaveIn, UINT16 uDeviceID,
     {
         return MMSYSERR_NOMEM;
     }
-    if ((dwFlags & CALLBACK_TYPEMASK) != CALLBACK_NULL)
-        dwFlags = (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
+    dwFlags = (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
     /* since layout of WAVEFORMATEX is the same for 16/32 bits, we directly
      * call the 32 bit version
      * however, we need to promote correctly the wave mapper id
@@ -1522,11 +1518,12 @@ UINT16 WINAPI waveInOpen16(HWAVEIN16* lphWaveIn, UINT16 uDeviceID,
     ret = waveInOpen(&hWaveIn, (uDeviceID == (UINT16)-1) ? (UINT)-1 : uDeviceID,
                      lpFormat, (DWORD)thunk, dwInstance, dwFlags);
 
-    if (lphWaveIn != NULL && ret == MMSYSERR_NOERROR)
-       *lphWaveIn = HWAVEIN_16(hWaveIn);
     if (ret == MMSYSERR_NOERROR && !(dwFlags & WAVE_FORMAT_QUERY))
+    {
          MMSYSTDRV_SetHandle(thunk, (void*)hWaveIn);
-    else MMSYSTDRV_DeleteThunk(thunk);
+         if (lphWaveIn != NULL)
+             *lphWaveIn = HWAVEOUT_16(hWaveIn);
+    } else MMSYSTDRV_DeleteThunk(thunk);
     return ret;
 }
 
