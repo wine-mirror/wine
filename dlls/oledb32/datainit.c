@@ -275,11 +275,11 @@ static ULONG WINAPI datainit_Release(IDataInitialize *iface)
 
 static void free_dbpropset(ULONG count, DBPROPSET *propset)
 {
-    int i;
+    ULONG i;
 
     for (i = 0; i < count; i++)
     {
-        int p;
+        ULONG p;
 
         for (p = 0; p < propset[i].cProperties; p++)
             VariantClear(&propset[i].rgProperties[p].vValue);
@@ -566,7 +566,7 @@ static void write_propvalue_str(WCHAR *str, DBPROP *prop)
 
 static WCHAR *get_propinfo_descr(DBPROP *prop, DBPROPINFOSET *propinfoset)
 {
-    int i;
+    ULONG i;
 
     for (i = 0; i < propinfoset->cPropertyInfos; i++)
         if (propinfoset->rgPropertyInfos[i].dwPropertyID == prop->dwPropertyID)
@@ -577,11 +577,11 @@ static WCHAR *get_propinfo_descr(DBPROP *prop, DBPROPINFOSET *propinfoset)
 
 static void free_dbpropinfoset(ULONG count, DBPROPINFOSET *propinfoset)
 {
-    int i;
+    ULONG i;
 
     for (i = 0; i < count; i++)
     {
-        int p;
+        ULONG p;
 
         for (p = 0; p < propinfoset[i].cPropertyInfos; p++)
             VariantClear(&propinfoset[i].rgPropertyInfos[p].vValues);
@@ -606,7 +606,7 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
     IPersist *persist;
     HRESULT hr;
     CLSID clsid;
-    int i, len;
+    ULONG i, len;
 
     TRACE("(%p)->(%p %d %p)\n", This, datasource, include_pass, init_string);
 
