@@ -1495,7 +1495,7 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_ChangeD3DDevice(IVMRSurfaceAllo
 static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfaceAllocatorNotify9 *iface, VMR9AllocationInfo *allocinfo, DWORD *numbuffers, IDirect3DSurface9 **surface)
 {
     VMR9Impl *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
-    INT i;
+    DWORD i;
     HRESULT hr = S_OK;
 
     FIXME("(%p/%p)->(%p, %p => %u, %p) semi-stub\n", iface, This, allocinfo, numbuffers, (numbuffers ? *numbuffers : 0), surface);
@@ -1554,11 +1554,7 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfa
     }
     else
     {
-        ERR("Allocation failed\n");
-        for (--i; i >= 0; --i)
-        {
-            IDirect3DSurface9_Release(surface[i]);
-        }
+        for ( ; i > 0; --i) IDirect3DSurface9_Release(surface[i - 1]);
         *numbuffers = 0;
     }
     return hr;
@@ -1691,7 +1687,7 @@ static ULONG WINAPI VMR9_ImagePresenter_Release(IVMRImagePresenter9 *iface)
 
     if (!refCount)
     {
-        int i;
+        DWORD i;
         TRACE("Destroying\n");
         CloseHandle(This->ack);
         IDirect3D9_Release(This->d3d9_ptr);
@@ -2091,7 +2087,7 @@ static HRESULT VMR9_SurfaceAllocator_UpdateDeviceReset(VMR9DefaultAllocatorPrese
 {
     struct VERTEX t_vert[4];
     UINT width, height;
-    INT i;
+    unsigned int i;
     void *bits = NULL;
     D3DPRESENT_PARAMETERS d3dpp;
     HRESULT hr;
