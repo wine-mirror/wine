@@ -114,6 +114,7 @@ typedef struct
 {
     HWND	hwnd;
     HIMAGELIST	himl;
+    HIMAGELIST	himlNoCursor;
     /* position of the drag image relative to the window */
     INT		x;
     INT		y;
@@ -126,7 +127,7 @@ typedef struct
     HBITMAP	hbmBg;
 } INTERNALDRAG;
 
-static INTERNALDRAG InternalDrag = { 0, 0, 0, 0, 0, 0, FALSE, 0 };
+static INTERNALDRAG InternalDrag = { 0, 0, 0, 0, 0, 0, 0, FALSE, 0 };
 
 static HBITMAP ImageList_CreateImage(HDC hdc, HIMAGELIST himl, UINT count);
 static HRESULT ImageListImpl_CreateInstance(const IUnknown *pUnkOuter, REFIID iid, void** ppv);
@@ -607,7 +608,7 @@ ImageList_BeginDrag (HIMAGELIST himlTrack, INT iTrack,
     cx = himlTrack->cx;
     cy = himlTrack->cy;
 
-    InternalDrag.himl = ImageList_Create (cx, cy, himlTrack->flags, 1, 1);
+    InternalDrag.himlNoCursor = InternalDrag.himl = ImageList_Create (cx, cy, himlTrack->flags, 1, 1);
     if (InternalDrag.himl == NULL) {
         WARN("Error creating drag image list!\n");
         return FALSE;
@@ -1635,8 +1636,10 @@ ImageList_EndDrag (void)
 {
     /* cleanup the InternalDrag struct */
     InternalDrag.hwnd = 0;
+    if (InternalDrag.himl != InternalDrag.himlNoCursor)
+        ImageList_Destroy (InternalDrag.himlNoCursor);
     ImageList_Destroy (InternalDrag.himl);
-    InternalDrag.himl = 0;
+    InternalDrag.himlNoCursor = InternalDrag.himl = 0;
     InternalDrag.x= 0;
     InternalDrag.y= 0;
     InternalDrag.dxHotspot = 0;
@@ -2699,7 +2702,7 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT iDrag,
 
     visible = InternalDrag.bShow;
 
-    himlTemp = ImageList_Merge (InternalDrag.himl, 0, himlDrag, iDrag,
+    himlTemp = ImageList_Merge (InternalDrag.himlNoCursor, 0, himlDrag, iDrag,
                                 dxHotspot, dyHotspot);
 
     if (visible) {
@@ -2713,7 +2716,8 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT iDrag,
 	InternalDrag.hbmBg = 0;
     }
 
-    ImageList_Destroy (InternalDrag.himl);
+    if (InternalDrag.himl != InternalDrag.himlNoCursor)
+        ImageList_Destroy (InternalDrag.himl);
     InternalDrag.himl = himlTemp;
 
     if (visible) {
