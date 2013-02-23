@@ -1686,7 +1686,6 @@ static unsigned be_arm_get_register_info(int regno, enum be_cpu_addr* kind)
 
 static void be_arm_single_step(CONTEXT* ctx, unsigned enable)
 {
-    dbg_printf("be_arm_single_step: not done\n");
 }
 
 static void be_arm_print_context(HANDLE hThread, const CONTEXT* ctx, int all_regs)
