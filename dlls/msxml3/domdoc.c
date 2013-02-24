@@ -1115,12 +1115,26 @@ static HRESULT WINAPI domdoc_insertBefore(
     IXMLDOMNode** outNewChild )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
+    DOMNodeType type;
+    HRESULT hr;
 
     TRACE("(%p)->(%p %s %p)\n", This, newChild, debugstr_variant(&refChild), outNewChild);
 
-    return node_insert_before(&This->node, newChild, &refChild, outNewChild);
-}
+    hr = IXMLDOMNode_get_nodeType(newChild, &type);
+    if (hr != S_OK) return hr;
 
+    TRACE("new node type %d\n", type);
+    switch (type)
+    {
+        case NODE_ATTRIBUTE:
+        case NODE_DOCUMENT:
+        case NODE_CDATA_SECTION:
+            if (outNewChild) *outNewChild = NULL;
+            return E_FAIL;
+        default:
+            return node_insert_before(&This->node, newChild, &refChild, outNewChild);
+    }
+}
 
 static HRESULT WINAPI domdoc_replaceChild(
     IXMLDOMDocument3 *iface,
