@@ -374,11 +374,45 @@ HRESULT node_get_next_sibling(xmlnode *This, IXMLDOMNode **ret)
     return get_node(This, "next", This->node->next, ret);
 }
 
+static int node_get_inst_cnt(xmlNodePtr node)
+{
+    int ret = *(LONG *)&node->_private;
+    xmlNodePtr child;
+
+    /* add attribute counts */
+    if (node->type == XML_ELEMENT_NODE)
+    {
+        xmlAttrPtr prop = node->properties;
+
+        while (prop)
+        {
+            ret += node_get_inst_cnt((xmlNodePtr)prop);
+            prop = prop->next;
+        }
+    }
+
+    /* add children counts */
+    child = node->children;
+    while (child)
+    {
+        ret += node_get_inst_cnt(child);
+        child = child->next;
+    }
+
+    return ret;
+}
+
+static int xmlnode_get_inst_cnt(xmlnode *node)
+{
+    return node_get_inst_cnt(node->node);
+}
+
 HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT *ref_child,
         IXMLDOMNode **ret)
 {
     IXMLDOMNode *before = NULL;
     xmlnode *node_obj;
+    int refcount = 0;
     xmlDocPtr doc;
     HRESULT hr;
 
@@ -414,6 +448,8 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
         if(xmldoc_remove_orphan(node_obj->node->doc, node_obj->node) != S_OK)
             WARN("%p is not an orphan of %p\n", node_obj->node, node_obj->node->doc);
 
+    refcount = xmlnode_get_inst_cnt(node_obj);
+
     if(before)
     {
         xmlnode *before_node_obj = get_node_obj(before);
@@ -426,10 +462,16 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
             hr = IXMLDOMNode_removeChild(node_obj->parent, node_obj->iface, NULL);
             if (hr == S_OK) xmldoc_remove_orphan(node_obj->node->doc, node_obj->node);
         }
+
         doc = node_obj->node->doc;
-        xmldoc_add_ref(before_node_obj->node->doc);
+
+        /* refs count including subtree */
+        if (doc != before_node_obj->node->doc)
+            refcount = xmlnode_get_inst_cnt(node_obj);
+
+        if (refcount) xmldoc_add_refs(before_node_obj->node->doc, refcount);
         xmlAddPrevSibling(before_node_obj->node, node_obj->node);
-        xmldoc_release(doc);
+        if (refcount) xmldoc_release_refs(doc, refcount);
         node_obj->parent = This->parent;
     }
     else
@@ -441,11 +483,15 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
             if (hr == S_OK) xmldoc_remove_orphan(node_obj->node->doc, node_obj->node);
         }
         doc = node_obj->node->doc;
-        xmldoc_add_ref(This->node->doc);
+
+        if (doc != This->node->doc)
+            refcount = xmlnode_get_inst_cnt(node_obj);
+
+        if (refcount) xmldoc_add_refs(This->node->doc, refcount);
         /* xmlAddChild doesn't unlink node from previous parent */
         xmlUnlinkNode(node_obj->node);
         xmlAddChild(This->node, node_obj->node);
-        xmldoc_release(doc);
+        if (refcount) xmldoc_release_refs(doc, refcount);
         node_obj->parent = This->iface;
     }
 
@@ -1017,17 +1063,36 @@ HRESULT node_get_base_name(xmlnode *This, BSTR *name)
     return S_OK;
 }
 
+/* _private field holds a number of COM instances spawned from this libxml2 node */
+static void xmlnode_add_ref(xmlNodePtr node)
+{
+    if (node->type == XML_DOCUMENT_NODE) return;
+    InterlockedIncrement((LONG*)&node->_private);
+}
+
+static void xmlnode_release(xmlNodePtr node)
+{
+    if (node->type == XML_DOCUMENT_NODE) return;
+    InterlockedDecrement((LONG*)&node->_private);
+}
+
 void destroy_xmlnode(xmlnode *This)
 {
     if(This->node)
+    {
+        xmlnode_release(This->node);
         xmldoc_release(This->node->doc);
+    }
     release_dispex(&This->dispex);
 }
 
 void init_xmlnode(xmlnode *This, xmlNodePtr node, IXMLDOMNode *node_iface, dispex_static_data_t *dispex_data)
 {
     if(node)
-        xmldoc_add_ref( node->doc );
+    {
+        xmlnode_add_ref(node);
+        xmldoc_add_ref(node->doc);
+    }
 
     This->node = node;
     This->iface = node_iface;

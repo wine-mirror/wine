@@ -553,19 +553,28 @@ void xmldoc_init(xmlDocPtr doc, MSXML_VERSION version)
     priv_from_xmlDocPtr(doc)->properties = create_properties(version);
 }
 
-LONG xmldoc_add_ref(xmlDocPtr doc)
+LONG xmldoc_add_refs(xmlDocPtr doc, LONG refs)
 {
-    LONG ref = InterlockedIncrement(&priv_from_xmlDocPtr(doc)->refs);
+    LONG ref = InterlockedExchangeAdd(&priv_from_xmlDocPtr(doc)->refs, refs) + refs;
     TRACE("(%p)->(%d)\n", doc, ref);
     return ref;
 }
 
-LONG xmldoc_release(xmlDocPtr doc)
+LONG xmldoc_add_ref(xmlDocPtr doc)
+{
+    return xmldoc_add_refs(doc, 1);
+}
+
+LONG xmldoc_release_refs(xmlDocPtr doc, LONG refs)
 {
     xmldoc_priv *priv = priv_from_xmlDocPtr(doc);
-    LONG ref = InterlockedDecrement(&priv->refs);
+    LONG ref = InterlockedExchangeAdd(&priv->refs, -refs) - refs;
     TRACE("(%p)->(%d)\n", doc, ref);
-    if(ref == 0)
+
+    if (ref < 0)
+        WARN("negative refcount, expect troubles\n");
+
+    if (ref == 0)
     {
         orphan_entry *orphan, *orphan2;
         TRACE("freeing docptr %p\n", doc);
@@ -582,6 +591,11 @@ LONG xmldoc_release(xmlDocPtr doc)
     }
 
     return ref;
+}
+
+LONG xmldoc_release(xmlDocPtr doc)
+{
+    return xmldoc_release_refs(doc, 1);
 }
 
 HRESULT xmldoc_add_orphan(xmlDocPtr doc, xmlNodePtr node)
