@@ -808,9 +808,8 @@ static HRESULT WINAPI FilterGraph2_SetDefaultSyncSource(IFilterGraph2 *iface)
     return hr;
 }
 
-static HRESULT GetFilterInfo(IMoniker* pMoniker, GUID* pclsid, VARIANT* pvar)
+static HRESULT GetFilterInfo(IMoniker* pMoniker, VARIANT* pvar)
 {
-    static const WCHAR wszClsidName[] = {'C','L','S','I','D',0};
     static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
     IPropertyBag * pPropBagCat = NULL;
     HRESULT hr;
@@ -820,18 +819,10 @@ static HRESULT GetFilterInfo(IMoniker* pMoniker, GUID* pclsid, VARIANT* pvar)
     hr = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID*)&pPropBagCat);
 
     if (SUCCEEDED(hr))
-        hr = IPropertyBag_Read(pPropBagCat, wszClsidName, pvar, NULL);
-
-    if (SUCCEEDED(hr))
-        hr = CLSIDFromString(V_UNION(pvar, bstrVal), pclsid);
-
-    VariantClear(pvar);
-
-    if (SUCCEEDED(hr))
         hr = IPropertyBag_Read(pPropBagCat, wszFriendlyName, pvar, NULL);
 
     if (SUCCEEDED(hr))
-        TRACE("Moniker = %s - %s\n", debugstr_guid(pclsid), debugstr_w(V_UNION(pvar, bstrVal)));
+        TRACE("Moniker = %s\n", debugstr_w(V_UNION(pvar, bstrVal)));
 
     if (pPropBagCat)
         IPropertyBag_Release(pPropBagCat);
@@ -1024,7 +1015,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
         IBaseFilter* pfilter = NULL;
         IAMGraphBuilderCallback *callback = NULL;
 
-        hr = GetFilterInfo(pMoniker, &clsid, &var);
+        hr = GetFilterInfo(pMoniker, &var);
         if (FAILED(hr)) {
             WARN("Unable to retrieve filter info (%x)\n", hr);
             goto error;
@@ -1395,13 +1386,12 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
         while (IEnumMoniker_Next(pEnumMoniker, 1, &pMoniker, &nb) == S_OK)
         {
             VARIANT var;
-            GUID clsid;
             IPin* ppinfilter;
             IBaseFilter* pfilter = NULL;
             IEnumPins* penumpins = NULL;
             ULONG pin;
 
-            hr = GetFilterInfo(pMoniker, &clsid, &var);
+            hr = GetFilterInfo(pMoniker, &var);
             if (FAILED(hr)) {
                 WARN("Unable to retrieve filter info (%x)\n", hr);
                 goto error;
