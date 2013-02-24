@@ -1394,13 +1394,13 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
             ULONG pin;
 
             hr = GetFilterInfo(pMoniker, &clsid, &var);
-            IMoniker_Release(pMoniker);
             if (FAILED(hr)) {
                 WARN("Unable to retrieve filter info (%x)\n", hr);
                 goto error;
             }
 
-            hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&pfilter);
+            hr = IMoniker_BindToObject(pMoniker, NULL, NULL, &IID_IBaseFilter, (LPVOID*)&pfilter);
+            IMoniker_Release(pMoniker);
             if (FAILED(hr))
             {
                 WARN("Unable to create filter (%x), trying next one\n", hr);
