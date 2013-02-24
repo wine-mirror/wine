@@ -1025,14 +1025,28 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
         IAMGraphBuilderCallback *callback = NULL;
 
         hr = GetFilterInfo(pMoniker, &clsid, &var);
-        IMoniker_Release(pMoniker);
         if (FAILED(hr)) {
             WARN("Unable to retrieve filter info (%x)\n", hr);
             goto error;
         }
 
+        hr = IMoniker_BindToObject(pMoniker, NULL, NULL, &IID_IBaseFilter, (LPVOID*)&pfilter);
+        IMoniker_Release(pMoniker);
+        if (FAILED(hr)) {
+            WARN("Unable to create filter (%x), trying next one\n", hr);
+            goto error;
+        }
+
+        hr = IBaseFilter_GetClassID(pfilter, &clsid);
+        if (FAILED(hr))
+        {
+            IBaseFilter_Release(pfilter);
+            goto error;
+	}
+
         if (IsEqualGUID(&clsid, &FilterCLSID)) {
             /* Skip filter (same as the one the output pin belongs to) */
+            IBaseFilter_Release(pfilter);
             goto error;
         }
 
@@ -1050,12 +1064,6 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
                     goto error;
                 }
             }
-        }
-
-        hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&pfilter);
-        if (FAILED(hr)) {
-            WARN("Unable to create filter (%x), trying next one\n", hr);
-            goto error;
         }
 
         if (callback)
