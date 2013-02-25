@@ -407,7 +407,7 @@ enum wined3d_shader_rel_op
 struct wined3d_shader_buffer
 {
     char *buffer;
-    unsigned int bsize;
+    unsigned int content_size;
     unsigned int lineNo;
     BOOL newline;
 };

@@ -3890,7 +3890,7 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
     TRACE("Created hw pixel shader, prg=%d\n", retval);
     /* Create the program and check for errors */
     GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
-               buffer->bsize, buffer->buffer));
+               buffer->content_size, buffer->buffer));
     checkGLcall("glProgramStringARB()");
 
     gl_info->gl_ops.gl.p_glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
@@ -4303,7 +4303,7 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
     TRACE("Created hw vertex shader, prg=%d\n", ret);
     /* Create the program and check for errors */
     GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
-               buffer->bsize, buffer->buffer));
+               buffer->content_size, buffer->buffer));
     checkGLcall("glProgramStringARB()");
 
     gl_info->gl_ops.gl.p_glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
