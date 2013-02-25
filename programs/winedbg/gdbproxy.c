@@ -213,6 +213,7 @@ struct cpu_register
 #define REG(r,gs)  {FIELD_OFFSET(CONTEXT, r), sizeof(((CONTEXT*)NULL)->r), gs}
 
 #ifdef __i386__
+static const char target_xml[] = "";
 static struct cpu_register cpu_register_map[] = {
     REG(Eax, 4),
     REG(Ecx, 4),
@@ -232,6 +233,7 @@ static struct cpu_register cpu_register_map[] = {
     REG(SegGs, 4),
 };
 #elif defined(__powerpc__)
+static const char target_xml[] = "";
 static struct cpu_register cpu_register_map[] = {
     REG(Gpr0, 4),
     REG(Gpr1, 4),
@@ -308,6 +310,7 @@ static struct cpu_register cpu_register_map[] = {
     /* see gdb/nlm/ppc.c */
 };
 #elif defined(__x86_64__)
+static const char target_xml[] = "";
 static struct cpu_register cpu_register_map[] = {
     REG(Rax, 8),
     REG(Rbx, 8),
@@ -335,6 +338,7 @@ static struct cpu_register cpu_register_map[] = {
     REG(SegGs, 4),
 };
 #elif defined(__sparc__)
+static const char target_xml[] = "";
 static struct cpu_register cpu_register_map[] = {
     REG(g0, 4),
     REG(g1, 4),
@@ -370,6 +374,28 @@ static struct cpu_register cpu_register_map[] = {
     REG(i7, 4),
 };
 #elif defined(__arm__)
+static const char target_xml[] =
+    "l <target><architecture>arm</architecture>\n"
+    "<feature name=\"org.gnu.gdb.arm.core\">\n"
+    "    <reg name=\"r0\" bitsize=\"32\" type=\"uint32\"/>\n"
+    "    <reg name=\"r1\" bitsize=\"32\" type=\"uint32\"/>\n"
+    "    <reg name=\"r2\" bitsize=\"32\" type=\"uint32\"/>\n"
+    "    <reg name=\"r3\" bitsize=\"32\" type=\"uint32\"/>\n"
+    "    <reg name=\"r4\" bitsize=\"32\" type=\"uint32\"/>\n"
+    "    <reg name=\"r5\" bitsize=\"32\" type=\"uint32\"/>\n"
+    "    <reg name=\"r6\" bitsize=\"32\" type=\"uint32\"/>\n"
+    "    <reg name=\"r7\" bitsize=\"32\" type=\"uint32\"/>\n"
+    "    <reg name=\"r8\" bitsize=\"32\" type=\"uint32\"/>\n"
+    "    <reg name=\"r9\" bitsize=\"32\" type=\"uint32\"/>\n"
+    "    <reg name=\"r10\" bitsize=\"32\" type=\"uint32\"/>\n"
+    "    <reg name=\"r11\" bitsize=\"32\" type=\"uint32\"/>\n"
+    "    <reg name=\"r12\" bitsize=\"32\" type=\"uint32\"/>\n"
+    "    <reg name=\"sp\" bitsize=\"32\" type=\"data_ptr\"/>\n"
+    "    <reg name=\"lr\" bitsize=\"32\"/>\n"
+    "    <reg name=\"pc\" bitsize=\"32\" type=\"code_ptr\"/>\n"
+    "    <reg name=\"cpsr\" bitsize=\"32\"/>\n"
+    "</feature></target>\n";
+
 static struct cpu_register cpu_register_map[] = {
     REG(R0, 4),
     REG(R1, 4),
@@ -387,8 +413,10 @@ static struct cpu_register cpu_register_map[] = {
     REG(Sp, 4),
     REG(Lr, 4),
     REG(Pc, 4),
+    REG(Cpsr, 4),
 };
 #elif defined(__aarch64__)
+static const char target_xml[] = "";
 static struct cpu_register cpu_register_map[] = {
     REG(X0,  8),
     REG(X1,  8),
@@ -1930,10 +1958,15 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             return packet_ok;
         if (strncmp(gdbctx->in_packet, "Supported", 9) == 0)
         {
-            /* no features supported */
-            packet_reply_open(gdbctx);
-            packet_reply_close(gdbctx);
-            return packet_done;
+            if (strlen(target_xml))
+                return packet_reply(gdbctx, "PacketSize=400;qXfer:features:read+", -1);
+            else
+            {
+                /* no features supported */
+                packet_reply_open(gdbctx);
+                packet_reply_close(gdbctx);
+                return packet_done;
+            }
         }
         break;
     case 'T':
@@ -1960,6 +1993,10 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             packet_reply_close(gdbctx);
             return packet_done;
         }
+        break;
+    case 'X':
+        if (strlen(target_xml) && strncmp(gdbctx->in_packet, "Xfer:features:read:target.xml", 29) == 0)
+            return packet_reply(gdbctx, target_xml, -1);
         break;
     }
     if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
