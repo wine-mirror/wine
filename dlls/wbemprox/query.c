@@ -47,6 +47,7 @@ HRESULT create_view( const struct property *proplist, const WCHAR *class,
 
 void destroy_view( struct view *view )
 {
+    if (!view) return;
     if (view->table) release_table( view->table );
     heap_free( view->result );
     heap_free( view );
