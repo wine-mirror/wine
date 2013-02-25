@@ -44,6 +44,90 @@ static CRITICAL_SECTION cursor_cache_section = { &critsect_debug, -1, 0, 0, 0, 0
 static CFMutableDictionaryRef cursor_cache;
 
 
+struct system_cursors
+{
+    WORD id;
+    CFStringRef name;
+};
+
+static const struct system_cursors user32_cursors[] =
+{
+    { OCR_NORMAL,      CFSTR("arrowCursor") },
+    { OCR_IBEAM,       CFSTR("IBeamCursor") },
+    { OCR_CROSS,       CFSTR("crosshairCursor") },
+    { OCR_SIZEWE,      CFSTR("resizeLeftRightCursor") },
+    { OCR_SIZENS,      CFSTR("resizeUpDownCursor") },
+    { OCR_NO,          CFSTR("operationNotAllowedCursor") },
+    { OCR_HAND,        CFSTR("pointingHandCursor") },
+    { 0 }
+};
+
+static const struct system_cursors comctl32_cursors[] =
+{
+    { 102, CFSTR("closedHandCursor") },
+    { 104, CFSTR("dragCopyCursor") },
+    { 105, CFSTR("arrowCursor") },
+    { 106, CFSTR("resizeLeftRightCursor") },
+    { 107, CFSTR("resizeLeftRightCursor") },
+    { 108, CFSTR("pointingHandCursor") },
+    { 135, CFSTR("resizeUpDownCursor") },
+    { 0 }
+};
+
+static const struct system_cursors ole32_cursors[] =
+{
+    { 1, CFSTR("operationNotAllowedCursor") },
+    { 2, CFSTR("closedHandCursor") },
+    { 3, CFSTR("dragCopyCursor") },
+    { 4, CFSTR("dragLinkCursor") },
+    { 0 }
+};
+
+static const struct system_cursors riched20_cursors[] =
+{
+    { 105, CFSTR("pointingHandCursor") },
+    { 109, CFSTR("dragCopyCursor") },
+    { 110, CFSTR("closedHandCursor") },
+    { 111, CFSTR("operationNotAllowedCursor") },
+    { 0 }
+};
+
+static const struct
+{
+    const struct system_cursors *cursors;
+    WCHAR name[16];
+} module_cursors[] =
+{
+    { user32_cursors, {'u','s','e','r','3','2','.','d','l','l',0} },
+    { comctl32_cursors, {'c','o','m','c','t','l','3','2','.','d','l','l',0} },
+    { ole32_cursors, {'o','l','e','3','2','.','d','l','l',0} },
+    { riched20_cursors, {'r','i','c','h','e','d','2','0','.','d','l','l',0} }
+};
+
+/* The names of NSCursor class methods which return cursor objects. */
+static const CFStringRef cocoa_cursor_names[] =
+{
+    CFSTR("arrowCursor"),
+    CFSTR("closedHandCursor"),
+    CFSTR("contextualMenuCursor"),
+    CFSTR("crosshairCursor"),
+    CFSTR("disappearingItemCursor"),
+    CFSTR("dragCopyCursor"),
+    CFSTR("dragLinkCursor"),
+    CFSTR("IBeamCursor"),
+    CFSTR("IBeamCursorForVerticalLayout"),
+    CFSTR("openHandCursor"),
+    CFSTR("operationNotAllowedCursor"),
+    CFSTR("pointingHandCursor"),
+    CFSTR("resizeDownCursor"),
+    CFSTR("resizeLeftCursor"),
+    CFSTR("resizeLeftRightCursor"),
+    CFSTR("resizeRightCursor"),
+    CFSTR("resizeUpCursor"),
+    CFSTR("resizeUpDownCursor"),
+};
+
+
 /***********************************************************************
  *              send_mouse_input
  *
@@ -88,6 +172,90 @@ static void send_mouse_input(HWND hwnd, UINT flags, int x, int y,
     __wine_send_input(top_level_hwnd, &input);
 }
 
+
+/***********************************************************************
+ *              copy_system_cursor_name
+ */
+CFStringRef copy_system_cursor_name(ICONINFOEXW *info)
+{
+    static const WCHAR idW[] = {'%','h','u',0};
+    const struct system_cursors *cursors;
+    unsigned int i;
+    CFStringRef cursor_name = NULL;
+    HMODULE module;
+    HKEY key;
+    WCHAR *p, name[MAX_PATH * 2];
+
+    TRACE("info->szModName %s info->szResName %s info->wResID %hu\n", debugstr_w(info->szModName),
+          debugstr_w(info->szResName), info->wResID);
+
+    if (!info->szModName[0]) return NULL;
+
+    p = strrchrW(info->szModName, '\\');
+    strcpyW(name, p ? p + 1 : info->szModName);
+    p = name + strlenW(name);
+    *p++ = ',';
+    if (info->szResName[0]) strcpyW(p, info->szResName);
+    else sprintfW(p, idW, info->wResID);
+
+    /* @@ Wine registry key: HKCU\Software\Wine\Mac Driver\Cursors */
+    if (!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Mac Driver\\Cursors", &key))
+    {
+        WCHAR value[64];
+        DWORD size, ret;
+
+        value[0] = 0;
+        size = sizeof(value) / sizeof(WCHAR);
+        ret = RegQueryValueExW(key, name, NULL, NULL, (BYTE *)value, &size);
+        RegCloseKey(key);
+        if (!ret)
+        {
+            if (!value[0])
+            {
+                TRACE("registry forces standard cursor for %s\n", debugstr_w(name));
+                return NULL; /* force standard cursor */
+            }
+
+            cursor_name = CFStringCreateWithCharacters(NULL, value, strlenW(value));
+            if (!cursor_name)
+            {
+                WARN("CFStringCreateWithCharacters failed for %s\n", debugstr_w(value));
+                return NULL;
+            }
+
+            /* Make sure it's one of the appropriate NSCursor class methods. */
+            for (i = 0; i < sizeof(cocoa_cursor_names) / sizeof(cocoa_cursor_names[0]); i++)
+                if (CFEqual(cursor_name, cocoa_cursor_names[i]))
+                    goto done;
+
+            WARN("%s mapped to invalid Cocoa cursor name %s\n", debugstr_w(name), debugstr_w(value));
+            CFRelease(cursor_name);
+            return NULL;
+        }
+    }
+
+    if (info->szResName[0]) goto done;  /* only integer resources are supported here */
+    if (!(module = GetModuleHandleW(info->szModName))) goto done;
+
+    for (i = 0; i < sizeof(module_cursors)/sizeof(module_cursors[0]); i++)
+        if (GetModuleHandleW(module_cursors[i].name) == module) break;
+    if (i == sizeof(module_cursors)/sizeof(module_cursors[0])) goto done;
+
+    cursors = module_cursors[i].cursors;
+    for (i = 0; cursors[i].id; i++)
+        if (cursors[i].id == info->wResID)
+        {
+            cursor_name = CFRetain(cursors[i].name);
+            break;
+        }
+
+done:
+    if (cursor_name)
+        TRACE("%s -> %s\n", debugstr_w(name), debugstr_cf(cursor_name));
+    else
+        WARN("no system cursor found for %s\n", debugstr_w(name));
+    return cursor_name;
+}
 
 /***********************************************************************
  *              release_provider_cfdata
@@ -580,8 +748,6 @@ void CDECL macdrv_SetCursor(HCURSOR cursor)
     if (cursor)
     {
         ICONINFOEXW info;
-        BITMAP bm;
-        HDC hdc;
 
         EnterCriticalSection(&cursor_cache_section);
         if (cursor_cache)
@@ -606,28 +772,39 @@ void CDECL macdrv_SetCursor(HCURSOR cursor)
             return;
         }
 
-        GetObjectW(info.hbmMask, sizeof(bm), &bm);
-        if (!info.hbmColor) bm.bmHeight = max(1, bm.bmHeight / 2);
-
-        /* make sure hotspot is valid */
-        if (info.xHotspot >= bm.bmWidth || info.yHotspot >= bm.bmHeight)
+        if ((cursor_name = copy_system_cursor_name(&info)))
         {
-            info.xHotspot = bm.bmWidth / 2;
-            info.yHotspot = bm.bmHeight / 2;
-        }
-
-        hdc = CreateCompatibleDC(0);
-
-        if (info.hbmColor)
-        {
-            cursor_frames = create_color_cursor(hdc, &info, cursor, bm.bmWidth, bm.bmHeight);
             DeleteObject(info.hbmColor);
+            DeleteObject(info.hbmMask);
         }
         else
-            cursor_frames = create_monochrome_cursor(hdc, &info, bm.bmWidth, bm.bmHeight);
+        {
+            BITMAP bm;
+            HDC hdc;
 
-        DeleteObject(info.hbmMask);
-        DeleteDC(hdc);
+            GetObjectW(info.hbmMask, sizeof(bm), &bm);
+            if (!info.hbmColor) bm.bmHeight = max(1, bm.bmHeight / 2);
+
+            /* make sure hotspot is valid */
+            if (info.xHotspot >= bm.bmWidth || info.yHotspot >= bm.bmHeight)
+            {
+                info.xHotspot = bm.bmWidth / 2;
+                info.yHotspot = bm.bmHeight / 2;
+            }
+
+            hdc = CreateCompatibleDC(0);
+
+            if (info.hbmColor)
+            {
+                cursor_frames = create_color_cursor(hdc, &info, cursor, bm.bmWidth, bm.bmHeight);
+                DeleteObject(info.hbmColor);
+            }
+            else
+                cursor_frames = create_monochrome_cursor(hdc, &info, bm.bmWidth, bm.bmHeight);
+
+            DeleteObject(info.hbmMask);
+            DeleteDC(hdc);
+        }
 
         if (cursor_name || cursor_frames)
         {
