@@ -932,32 +932,32 @@ static void fog_test(IDirect3DDevice9 *device)
 
     /* Gets full z based fog with linear fog, no fog with specular color */
     struct sVertex untransformed_1[] = {
-        {-1,    -1,   0.1f,         0xFFFF0000,     0xFF000000  },
-        {-1,     0,   0.1f,         0xFFFF0000,     0xFF000000  },
-        { 0,     0,   0.1f,         0xFFFF0000,     0xFF000000  },
-        { 0,    -1,   0.1f,         0xFFFF0000,     0xFF000000  },
+        {-1,    -1,   0.1f,         0xffff0000,     0xff000000  },
+        {-1,     0,   0.1f,         0xffff0000,     0xff000000  },
+        { 0,     0,   0.1f,         0xffff0000,     0xff000000  },
+        { 0,    -1,   0.1f,         0xffff0000,     0xff000000  },
     };
     /* Ok, I am too lazy to deal with transform matrices */
     struct sVertex untransformed_2[] = {
-        {-1,     0,   1.0f,         0xFFFF0000,     0xFF000000  },
-        {-1,     1,   1.0f,         0xFFFF0000,     0xFF000000  },
-        { 0,     1,   1.0f,         0xFFFF0000,     0xFF000000  },
-        { 0,     0,   1.0f,         0xFFFF0000,     0xFF000000  },
+        {-1,     0,   1.0f,         0xffff0000,     0xff000000  },
+        {-1,     1,   1.0f,         0xffff0000,     0xff000000  },
+        { 0,     1,   1.0f,         0xffff0000,     0xff000000  },
+        { 0,     0,   1.0f,         0xffff0000,     0xff000000  },
     };
     /* Untransformed ones. Give them a different diffuse color to make the test look
      * nicer. It also makes making sure that they are drawn correctly easier.
      */
     struct sVertexT transformed_1[] = {
-        {320,    0,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
-        {640,    0,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
-        {640,  240,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
-        {320,  240,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
+        {320,    0,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
+        {640,    0,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
+        {640,  240,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
+        {320,  240,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
     };
     struct sVertexT transformed_2[] = {
-        {320,  240,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
-        {640,  240,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
-        {640,  480,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
-        {320,  480,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
+        {320,  240,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
+        {640,  240,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
+        {640,  480,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
+        {320,  480,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
     };
     struct vertex rev_fog_quads[] = {
        {-1.0,   -1.0,   0.1,    0x000000ff},
@@ -1037,7 +1037,7 @@ static void fog_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Turning off lighting returned %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, TRUE);
     ok(hr == D3D_OK, "Turning on fog calculations returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGCOLOR, 0xFF00FF00 /* A nice green */);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGCOLOR, 0xff00ff00 /* A nice green */);
     ok(hr == D3D_OK, "Setting fog color returned %#08x\n", hr);
 
     /* First test: Both table fog and vertex fog off */
@@ -1101,11 +1101,11 @@ static void fog_test(IDirect3DDevice9 *device)
     }
 
     color = getPixelColor(device, 160, 360);
-    ok(color == 0x00FF0000, "Untransformed vertex with no table or vertex fog has color %08x\n", color);
+    ok(color == 0x00ff0000, "Untransformed vertex with no table or vertex fog has color %08x\n", color);
     color = getPixelColor(device, 160, 120);
     ok(color_match(color, 0x0000ff00, 1), "Untransformed vertex with linear vertex fog has color %08x\n", color);
     color = getPixelColor(device, 480, 120);
-    ok(color == 0x00FFFF00, "Transformed vertex with linear vertex fog has color %08x\n", color);
+    ok(color == 0x00ffff00, "Transformed vertex with linear vertex fog has color %08x\n", color);
     if(caps.RasterCaps & D3DPRASTERCAPS_FOGTABLE)
     {
         color = getPixelColor(device, 480, 360);
@@ -1117,7 +1117,7 @@ static void fog_test(IDirect3DDevice9 *device)
          * The settings above result in no fogging with vertex fog
          */
         color = getPixelColor(device, 480, 120);
-        ok(color == 0x00FFFF00, "Transformed vertex with linear vertex fog has color %08x\n", color);
+        ok(color == 0x00ffff00, "Transformed vertex with linear vertex fog has color %08x\n", color);
         trace("Info: Table fog not supported by this device\n");
     }
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
@@ -1177,7 +1177,7 @@ static void fog_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 160, 120);
     ok(color_match(color, 0x0000ff00, 1), "Untransformed vertex with vertex fog and z = 1.0 has color %08x\n", color);
     color = getPixelColor(device, 480, 120);
-    ok(color == 0x00FFFF00, "Transformed vertex with linear vertex fog has color %08x\n", color);
+    ok(color == 0x00ffff00, "Transformed vertex with linear vertex fog has color %08x\n", color);
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
     /* Test "reversed" fog without shaders. With shaders this fails on a few Windows D3D implementations,
@@ -1347,10 +1347,10 @@ static void fog_test(IDirect3DDevice9 *device)
     {
         struct sVertex untransformed_3[] =
         {
-            {-1.0,-1.0,   0.4999f,      0xFFFF0000,     0xFF000000  },
-            {-1.0, 1.0,   0.4999f,      0xFFFF0000,     0xFF000000  },
-            { 1.0,-1.0,   0.4999f,      0xFFFF0000,     0xFF000000  },
-            { 1.0, 1.0,   0.4999f,      0xFFFF0000,     0xFF000000  },
+            {-1.0,-1.0,   0.4999f,      0xffff0000,     0xff000000  },
+            {-1.0, 1.0,   0.4999f,      0xffff0000,     0xff000000  },
+            { 1.0,-1.0,   0.4999f,      0xffff0000,     0xff000000  },
+            { 1.0, 1.0,   0.4999f,      0xffff0000,     0xff000000  },
         };
 
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
@@ -1798,10 +1798,10 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
     };
 
     static struct vertex quad[] = {
-        {-1.0f, -1.0f,  0.0f,          0xFFFF0000  },
-        {-1.0f,  1.0f,  0.0f,          0xFFFF0000  },
-        { 1.0f, -1.0f,  0.0f,          0xFFFF0000  },
-        { 1.0f,  1.0f,  0.0f,          0xFFFF0000  },
+        {-1.0f, -1.0f,  0.0f,          0xffff0000  },
+        {-1.0f,  1.0f,  0.0f,          0xffff0000  },
+        { 1.0f, -1.0f,  0.0f,          0xffff0000  },
+        { 1.0f,  1.0f,  0.0f,          0xffff0000  },
     };
 
     static const D3DVERTEXELEMENT9 decl_elements[] = {
@@ -2021,7 +2021,7 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Turning off lighting failed (%08x)\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, TRUE);
     ok(hr == D3D_OK, "Turning on fog calculations failed (%08x)\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGCOLOR, 0xFF00FF00 /* A nice green */);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGCOLOR, 0xff00ff00 /* A nice green */);
     ok(hr == D3D_OK, "Setting fog color failed (%08x)\n", hr);
     hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
     ok(SUCCEEDED(hr), "SetVertexDeclaration failed (%08x)\n", hr);
@@ -3759,7 +3759,7 @@ static void float_texture_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %08x\n", hr);
 
     color = getPixelColor(device, 240, 320);
-    ok(color == 0x0000FFFF, "R32F with value 0.0 has color %08x, expected 0x0000FFFF\n", color);
+    ok(color == 0x0000ffff, "R32F with value 0.0 has color %08x, expected 0x0000ffff\n", color);
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
@@ -4221,13 +4221,13 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %08x\n", hr);
     }
     color = getPixelColor(device, 160, 360);
-    ok(color_match(color, 0x00FFFF00, 1), "quad 1 has color %08x, expected 0x00FFFF00\n", color);
+    ok(color_match(color, 0x00ffff00, 1), "quad 1 has color %08x, expected 0x00ffff00\n", color);
     color = getPixelColor(device, 160, 120);
     ok(color == 0x00000000, "quad 2 has color %08x, expected 0x0000000\n", color);
     color = getPixelColor(device, 480, 120);
-    ok(color_match(color, 0x0000FF00, 1), "quad 3 has color %08x, expected 0x0000FF00\n", color);
+    ok(color_match(color, 0x0000ff00, 1), "quad 3 has color %08x, expected 0x0000ff00\n", color);
     color = getPixelColor(device, 480, 360);
-    ok(color_match(color, 0x00FF0000, 1), "quad 4 has color %08x, expected 0x00FF0000\n", color);
+    ok(color_match(color, 0x00ff0000, 1), "quad 4 has color %08x, expected 0x00ff0000\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
@@ -4305,14 +4305,14 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %08x\n", hr);
     }
     color = getPixelColor(device, 160, 360);
-    ok(color_match(color, 0x00FF0000, 1), "quad 1 has color %08x, expected 0x00FF0000\n", color);
+    ok(color_match(color, 0x00ff0000, 1), "quad 1 has color %08x, expected 0x00ff0000\n", color);
     color = getPixelColor(device, 160, 120);
     ok(color == 0x00000000, "quad 2 has color %08x, expected 0x0000000\n", color);
     color = getPixelColor(device, 480, 120);
     ok(color_match(color, 0x00ff8000, 1) || color == 0x00000000,
        "quad 3 has color %08x, expected 0x00ff8000\n", color);
     color = getPixelColor(device, 480, 360);
-    ok(color_match(color, 0x0033cc00, 1) || color_match(color, 0x00FF0000, 1),
+    ok(color_match(color, 0x0033cc00, 1) || color_match(color, 0x00ff0000, 1),
        "quad 4 has color %08x, expected 0x0033cc00\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
@@ -6494,11 +6494,11 @@ static void test_compare_instructions(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader returned %08x\n", hr);
 
     color = getPixelColor(device, 160, 360);
-    ok(color == 0x00FF00FF, "Compare test: Quad 1(sge vec) returned color 0x%08x, expected 0x00FF00FF\n", color);
+    ok(color == 0x00ff00ff, "Compare test: Quad 1(sge vec) returned color 0x%08x, expected 0x00ff00ff\n", color);
     color = getPixelColor(device, 480, 360);
-    ok(color == 0x0000FF00, "Compare test: Quad 2(slt vec) returned color 0x%08x, expected 0x0000FF00\n", color);
+    ok(color == 0x0000ff00, "Compare test: Quad 2(slt vec) returned color 0x%08x, expected 0x0000ff00\n", color);
     color = getPixelColor(device, 160, 120);
-    ok(color == 0x00FFFFFF, "Compare test: Quad 3(sge scalar) returned color 0x%08x, expected 0x00FFFFFF\n", color);
+    ok(color == 0x00ffffff, "Compare test: Quad 3(sge scalar) returned color 0x%08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 480, 160);
     ok(color == 0x000000ff, "Compare test: Quad 4(slt scalar) returned color 0x%08x, expected 0x000000ff\n", color);
 
@@ -6795,29 +6795,29 @@ static void test_vshader_input(IDirect3DDevice9 *device)
         if(i == 3 || i == 2) {
             color = getPixelColor(device, 160, 360);
             ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0x80), 1),
-               "Input test: Quad 1(2crd) returned color 0x%08x, expected 0x00FFFF80\n", color);
+               "Input test: Quad 1(2crd) returned color 0x%08x, expected 0x00ffff80\n", color);
 
             /* The last value of the read but undefined stream is used, it is 0x00. The defined input is vec4(1, 0, 0, 0) */
             color = getPixelColor(device, 480, 360);
-            ok(color == 0x00FFFF00 || color ==0x00FF0000,
-               "Input test: Quad 2(1crd) returned color 0x%08x, expected 0x00FFFF00\n", color);
+            ok(color == 0x00ffff00 || color ==0x00ff0000,
+               "Input test: Quad 2(1crd) returned color 0x%08x, expected 0x00ffff00\n", color);
             color = getPixelColor(device, 160, 120);
             /* Same as above, accept both the last used value and 0.0 for the undefined streams */
             ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x80), 1) || color == D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x00),
-               "Input test: Quad 3(2crd-wrongidx) returned color 0x%08x, expected 0x00FF0080\n", color);
+               "Input test: Quad 3(2crd-wrongidx) returned color 0x%08x, expected 0x00ff0080\n", color);
 
             color = getPixelColor(device, 480, 160);
             ok(color == 0x00000000, "Input test: Quad 4(2crd-rightorder) returned color 0x%08x, expected 0x00000000\n", color);
         } else if(i == 1) {
             color = getPixelColor(device, 160, 360);
             ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0x80), 1),
-               "Input test: Quad 1(2crd) returned color 0x%08x, expected 0x00FFFF80\n", color);
+               "Input test: Quad 1(2crd) returned color 0x%08x, expected 0x00ffff80\n", color);
             color = getPixelColor(device, 480, 360);
             /* Accept the clear color as well in this case, since SW VP returns an error */
-            ok(color == 0x00FFFF00 || color == 0x00FF0000, "Input test: Quad 2(1crd) returned color 0x%08x, expected 0x00FFFF00\n", color);
+            ok(color == 0x00ffff00 || color == 0x00ff0000, "Input test: Quad 2(1crd) returned color 0x%08x, expected 0x00ffff00\n", color);
             color = getPixelColor(device, 160, 120);
             ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x80), 1) || color == D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x00),
-               "Input test: Quad 3(2crd-wrongidx) returned color 0x%08x, expected 0x00FF0080\n", color);
+               "Input test: Quad 3(2crd-wrongidx) returned color 0x%08x, expected 0x00ff0080\n", color);
             color = getPixelColor(device, 480, 160);
             ok(color == 0x00000000, "Input test: Quad 4(2crd-rightorder) returned color 0x%08x, expected 0x00000000\n", color);
         }
@@ -6881,8 +6881,8 @@ static void test_vshader_input(IDirect3DDevice9 *device)
          *
          * A test app for this behavior is Half Life 2 Episode 2 in dxlevel 95, and related games(Portal, TF2).
          */
-        ok(color == 0x000000FF || color == 0x00808080 || color == 0x00000000,
-           "Input test: Quad 2(different colors) returned color 0x%08x, expected 0x000000FF, 0x00808080 or 0x00000000\n", color);
+        ok(color == 0x000000ff || color == 0x00808080 || color == 0x00000000,
+           "Input test: Quad 2(different colors) returned color 0x%08x, expected 0x000000ff, 0x00808080 or 0x00000000\n", color);
 
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
@@ -6967,7 +6967,7 @@ static void test_vshader_input(IDirect3DDevice9 *device)
            "Input test: Quad 3(color-color) returned color 0x%08x, expected 0x00ff8040\n", color);
         color = getPixelColor(device, 480, 160);
         ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0x00), 1),
-           "Input test: Quad 4(color-float) returned color 0x%08x, expected 0x00FFFF00\n", color);
+           "Input test: Quad 4(color-float) returned color 0x%08x, expected 0x00ffff00\n", color);
 
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
@@ -9651,7 +9651,7 @@ static void tssargtemp_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed, hr = %08x\n", hr);
     }
     color = getPixelColor(device, 320, 240);
-    ok(color == 0x00FFFF00, "TSSARGTEMP test returned color 0x%08x, expected 0x00FFFF00\n", color);
+    ok(color == 0x00ffff00, "TSSARGTEMP test returned color 0x%08x, expected 0x00ffff00\n", color);
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
     /* Set stage 1 back to default */
@@ -10223,7 +10223,7 @@ static void yuv_color_test(IDirect3DDevice9 *device) {
 
       { 0x4cff4c54, 0x00ff0000, 0x00ff0000, 0x000b8b00, 0x00b6ffa3 },
       { 0x00800080, 0x00000000, 0x00000000, 0x0000ff00, 0x0000ff00 },
-      { 0xFF80FF80, 0x00ffffff, 0x00ffffff, 0x00ff00ff, 0x00ff00ff },
+      { 0xff80ff80, 0x00ffffff, 0x00ffffff, 0x00ff00ff, 0x00ff00ff },
       { 0x1c6b1cff, 0x000000fd, 0x000000fd, 0x006dff45, 0x0000d500 },
     };
 
