@@ -122,6 +122,7 @@ extern void macdrv_beep(void) DECLSPEC_HIDDEN;
 extern void macdrv_set_cursor(CFStringRef name, CFArrayRef frames) DECLSPEC_HIDDEN;
 extern int macdrv_get_cursor_position(CGPoint *pos) DECLSPEC_HIDDEN;
 extern int macdrv_set_cursor_position(CGPoint pos) DECLSPEC_HIDDEN;
+extern int macdrv_clip_cursor(CGRect rect) DECLSPEC_HIDDEN;
 
 
 /* display */

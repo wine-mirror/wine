@@ -736,6 +736,32 @@ void CDECL macdrv_DestroyCursorIcon(HCURSOR cursor)
 
 
 /***********************************************************************
+ *              ClipCursor (MACDRV.@)
+ *
+ * Set the cursor clipping rectangle.
+ */
+BOOL CDECL macdrv_ClipCursor(LPCRECT clip)
+{
+    CGRect rect;
+
+    TRACE("%s\n", wine_dbgstr_rect(clip));
+
+    if (clip)
+    {
+        rect = CGRectMake(clip->left, clip->top, max(1, clip->right - clip->left),
+                          max(1, clip->bottom - clip->top));
+    }
+    else
+        rect = CGRectInfinite;
+
+    /* FIXME: This needs to be done not just in this process but in all of the
+       ones for this WINEPREFIX.  Broadcast a message to do that. */
+
+    return macdrv_clip_cursor(rect);
+}
+
+
+/***********************************************************************
  *              GetCursorPos (MACDRV.@)
  */
 BOOL CDECL macdrv_GetCursorPos(LPPOINT pos)

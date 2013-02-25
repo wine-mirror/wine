@@ -59,7 +59,13 @@
     NSTimer*    cursorTimer;
     BOOL        cursorHidden;
 
+    BOOL clippingCursor;
+    CGRect cursorClipRect;
+    CFMachPortRef cursorClippingEventTap;
+    NSMutableArray* warpRecords;
+    CGPoint synthesizedLocation;
     NSTimeInterval lastSetCursorPositionTime;
+    NSTimeInterval lastEventTapEventTime;
 }
 
 @property (nonatomic) CGEventSourceKeyboardType keyboardType;
@@ -78,6 +84,8 @@
     - (void) windowGotFocus:(WineWindow*)window;
 
     - (void) keyboardSelectionDidChange;
+
+    - (void) flipRect:(NSRect*)rect;
 
     - (void) wineWindow:(WineWindow*)window
                 ordered:(NSWindowOrderingMode)order

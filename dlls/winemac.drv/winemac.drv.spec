@@ -7,6 +7,7 @@
 @ cdecl ActivateKeyboardLayout(long long) macdrv_ActivateKeyboardLayout
 @ cdecl Beep() macdrv_Beep
 @ cdecl ChangeDisplaySettingsEx(ptr ptr long long long) macdrv_ChangeDisplaySettingsEx
+@ cdecl ClipCursor(ptr) macdrv_ClipCursor
 @ cdecl CreateDesktopWindow(long) macdrv_CreateDesktopWindow
 @ cdecl CreateWindow(long) macdrv_CreateWindow
 @ cdecl DestroyCursorIcon(long) macdrv_DestroyCursorIcon

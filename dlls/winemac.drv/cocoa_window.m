@@ -144,8 +144,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
 @property (readwrite, nonatomic) NSInteger levelWhenActive;
 
-    + (void) flipRect:(NSRect*)rect;
-
 @end
 
 
@@ -255,7 +253,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         WineContentView* contentView;
         NSTrackingArea* trackingArea;
 
-        [self flipRect:&window_frame];
+        [NSApp flipRect:&window_frame];
 
         window = [[[self alloc] initWithContentRect:window_frame
                                           styleMask:style_mask_for_features(wf)
@@ -307,11 +305,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [latentParentWindow release];
         [shape release];
         [super dealloc];
-    }
-
-    + (void) flipRect:(NSRect*)rect
-    {
-        rect->origin.y = NSMaxY([[[NSScreen screens] objectAtIndex:0] frame]) - NSMaxY(*rect);
     }
 
     - (void) adjustFeaturesForState
@@ -524,7 +517,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         /* Origin is (left, top) in a top-down space.  Need to convert it to
            (left, bottom) in a bottom-up space. */
-        [[self class] flipRect:&contentRect];
+        [NSApp flipRect:&contentRect];
 
         if (on_screen)
         {
@@ -1094,7 +1087,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         macdrv_event event;
         NSRect frame = [self contentRectForFrameRect:[self frame]];
 
-        [[self class] flipRect:&frame];
+        [NSApp flipRect:&frame];
 
         /* Coalesce events by discarding any previous ones still in the queue. */
         [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_FRAME_CHANGED)
@@ -1314,7 +1307,7 @@ void macdrv_get_cocoa_window_frame(macdrv_window w, CGRect* out_frame)
         NSRect frame;
 
         frame = [window contentRectForFrameRect:[window frame]];
-        [[window class] flipRect:&frame];
+        [NSApp flipRect:&frame];
         *out_frame = NSRectToCGRect(frame);
     });
 }
