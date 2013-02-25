@@ -590,8 +590,12 @@ int macdrv_err_on;
                 [targetWindow postMouseMovedEvent:anEvent absolute:absolute];
                 lastTargetWindow = targetWindow;
             }
-            else
+            else if (lastTargetWindow)
+            {
+                [[NSCursor arrowCursor] set];
+                [self unhideCursor];
                 lastTargetWindow = nil;
+            }
         }
         else if (type == NSLeftMouseDown || type == NSLeftMouseUp ||
                  type == NSRightMouseDown || type == NSRightMouseUp ||
