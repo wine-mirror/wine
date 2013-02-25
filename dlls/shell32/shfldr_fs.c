@@ -61,7 +61,7 @@ WINE_DEFAULT_DEBUG_CHANNEL (shell);
 typedef struct {
     IUnknown IUnknown_inner;
     LONG ref;
-    const IShellFolder2Vtbl   *lpvtblShellFolder;
+    IShellFolder2 IShellFolder2_iface;
     const IPersistFolder3Vtbl *lpvtblPersistFolder3;
     const IDropTargetVtbl     *lpvtblDropTarget;
     const ISFHelperVtbl       *lpvtblSFHelper;
@@ -88,9 +88,9 @@ static inline IGenericSFImpl *impl_from_IUnknown(IUnknown *iface)
     return CONTAINING_RECORD(iface, IGenericSFImpl, IUnknown_inner);
 }
 
-static inline IGenericSFImpl *impl_from_IShellFolder2( IShellFolder2 *iface )
+static inline IGenericSFImpl *impl_from_IShellFolder2(IShellFolder2 *iface)
 {
-    return (IGenericSFImpl *)((char*)iface - FIELD_OFFSET(IGenericSFImpl, lpvtblShellFolder));
+    return CONTAINING_RECORD(iface, IGenericSFImpl, IShellFolder2_iface);
 }
 
 static inline IGenericSFImpl *impl_from_IPersistFolder3( IPersistFolder3 *iface )
@@ -112,8 +112,6 @@ static inline IGenericSFImpl *impl_from_ISFHelper( ISFHelper *iface )
 /*
   converts This to an interface pointer
 */
-#define _IShellFolder_(This)    ((IShellFolder*)&(This)->lpvtblShellFolder)
-#define _IShellFolder2_(This)   ((IShellFolder2*)&(This)->lpvtblShellFolder)
 #define _IPersist_(This)        (&(This)->lpvtblPersistFolder3)
 #define _IPersistFolder_(This)  (&(This)->lpvtblPersistFolder3)
 #define _IPersistFolder2_(This) (&(This)->lpvtblPersistFolder3)
@@ -146,10 +144,8 @@ static HRESULT WINAPI IUnknown_fnQueryInterface(IUnknown *iface, REFIID riid, vo
 
     if (IsEqualIID (riid, &IID_IUnknown))
         *ppvObj = &This->IUnknown_inner;
-    else if (IsEqualIID (riid, &IID_IShellFolder))
-        *ppvObj = _IShellFolder_ (This);
-    else if (IsEqualIID (riid, &IID_IShellFolder2))
-        *ppvObj = _IShellFolder_ (This);
+    else if (IsEqualIID(riid, &IID_IShellFolder) || IsEqualIID(riid, &IID_IShellFolder2))
+        *ppvObj = &This->IShellFolder2_iface;
     else if (IsEqualIID (riid, &IID_IPersist))
         *ppvObj = _IPersist_ (This);
     else if (IsEqualIID (riid, &IID_IPersistFolder))
@@ -241,7 +237,7 @@ IFSFolder_Constructor (IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv)
 
     sf->ref = 0;
     sf->IUnknown_inner.lpVtbl = &unkvt;
-    sf->lpvtblShellFolder = &sfvt;
+    sf->IShellFolder2_iface.lpVtbl = &sfvt;
     sf->lpvtblPersistFolder3 = &vt_FSFldr_PersistFolder3;
     sf->lpvtblDropTarget = &dtvt;
     sf->lpvtblSFHelper = &shvt;
@@ -259,18 +255,11 @@ IFSFolder_Constructor (IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv)
 
 /**************************************************************************
  *  IShellFolder_fnQueryInterface
- *
- * PARAMETERS
- *  REFIID riid       [in ] Requested InterfaceID
- *  LPVOID* ppvObject [out] Interface* to hold the result
  */
-static HRESULT WINAPI
-IShellFolder_fnQueryInterface (IShellFolder2 * iface, REFIID riid,
-                               LPVOID * ppvObj)
+static HRESULT WINAPI IShellFolder_fnQueryInterface(IShellFolder2 *iface, REFIID riid,
+        void **ppvObj)
 {
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
-
-    TRACE ("(%p)->(%s,%p)\n", This, shdebugstr_guid (riid), ppvObj);
 
     return IUnknown_QueryInterface(This->outer_unk, riid, ppvObj);
 }
@@ -278,12 +267,9 @@ IShellFolder_fnQueryInterface (IShellFolder2 * iface, REFIID riid,
 /**************************************************************************
 *  IShellFolder_AddRef
 */
-
-static ULONG WINAPI IShellFolder_fnAddRef (IShellFolder2 * iface)
+static ULONG WINAPI IShellFolder_fnAddRef(IShellFolder2 *iface)
 {
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
-
-    TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
     return IUnknown_AddRef(This->outer_unk);
 }
@@ -291,11 +277,9 @@ static ULONG WINAPI IShellFolder_fnAddRef (IShellFolder2 * iface)
 /**************************************************************************
  *  IShellFolder_fnRelease
  */
-static ULONG WINAPI IShellFolder_fnRelease (IShellFolder2 * iface)
+static ULONG WINAPI IShellFolder_fnRelease(IShellFolder2 *iface)
 {
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
-
-    TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
     return IUnknown_Release(This->outer_unk);
 }
@@ -420,8 +404,8 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
             } else {
                 /* it's the last element */
                 if (pdwAttributes && *pdwAttributes) {
-                    hr = SHELL32_GetItemAttributes (_IShellFolder_ (This),
-                     pidlTemp, pdwAttributes);
+                    hr = SHELL32_GetItemAttributes((IShellFolder *)&This->IShellFolder2_iface,
+                            pidlTemp, pdwAttributes);
                 }
             }
         }
@@ -519,7 +503,7 @@ IShellFolder_fnCompareIDs (IShellFolder2 * iface, LPARAM lParam,
     int nReturn;
 
     TRACE ("(%p)->(0x%08lx,pidl1=%p,pidl2=%p)\n", This, lParam, pidl1, pidl2);
-    nReturn = SHELL32_CompareIDs (_IShellFolder_ (This), lParam, pidl1, pidl2);
+    nReturn = SHELL32_CompareIDs((IShellFolder *)&This->IShellFolder2_iface, lParam, pidl1, pidl2);
     TRACE ("-- %i\n", nReturn);
     return nReturn;
 }
@@ -600,7 +584,7 @@ IShellFolder_fnGetAttributesOf (IShellFolder2 * iface, UINT cidl,
     else {
         while (cidl > 0 && *apidl) {
             pdump (*apidl);
-            SHELL32_GetItemAttributes (_IShellFolder_ (This), *apidl, rgfInOut);
+            SHELL32_GetItemAttributes((IShellFolder *)&This->IShellFolder2_iface, *apidl, rgfInOut);
             apidl++;
             cidl--;
         }
@@ -1182,8 +1166,8 @@ ISFHelper_fnGetUniqueName (ISFHelper * iface, LPWSTR pwszName, UINT uLen)
 
     lstrcpynW (pwszName, wszNewFolder, uLen);
 
-    hr = IShellFolder_fnEnumObjects (_IShellFolder2_ (This), 0,
-     SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN, &penum);
+    hr = IShellFolder2_EnumObjects(&This->IShellFolder2_iface, 0,
+            SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN, &penum);
     if (penum) {
         LPITEMIDLIST pidl;
         DWORD dwFetched;
@@ -1237,8 +1221,8 @@ ISFHelper_fnAddFolder (ISFHelper * iface, HWND hwnd, LPCWSTR pwszName,
 
         lstrcpyW(wszNewDir, pwszName);
 
-        hres = IShellFolder_ParseDisplayName((IShellFolder*)&This->lpvtblShellFolder,
-                hwnd, NULL, wszNewDir, NULL, &relPidl, NULL);
+        hres = IShellFolder2_ParseDisplayName(&This->IShellFolder2_iface, hwnd, NULL, wszNewDir,
+                NULL, &relPidl, NULL);
 
         if (SUCCEEDED(hres)) {
             LPITEMIDLIST fullPidl;
