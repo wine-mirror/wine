@@ -9,6 +9,7 @@
 @ cdecl ChangeDisplaySettingsEx(ptr ptr long long long) macdrv_ChangeDisplaySettingsEx
 @ cdecl CreateDesktopWindow(long) macdrv_CreateDesktopWindow
 @ cdecl CreateWindow(long) macdrv_CreateWindow
+@ cdecl DestroyCursorIcon(long) macdrv_DestroyCursorIcon
 @ cdecl DestroyWindow(long) macdrv_DestroyWindow
 @ cdecl EnumDisplayMonitors(long ptr ptr long) macdrv_EnumDisplayMonitors
 @ cdecl EnumDisplaySettingsEx(ptr long ptr long) macdrv_EnumDisplaySettingsEx
@@ -19,6 +20,7 @@
 @ cdecl MapVirtualKeyEx(long long long) macdrv_MapVirtualKeyEx
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) macdrv_MsgWaitForMultipleObjectsEx
 @ cdecl ScrollDC(long long long ptr ptr long ptr) macdrv_ScrollDC
+@ cdecl SetCursor(long) macdrv_SetCursor
 @ cdecl SetFocus(long) macdrv_SetFocus
 @ cdecl SetLayeredWindowAttributes(long long long long) macdrv_SetLayeredWindowAttributes
 @ cdecl SetParent(long long long) macdrv_SetParent

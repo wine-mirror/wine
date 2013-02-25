@@ -30,6 +30,40 @@ WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
 
 
+/**************************************************************************
+ *              debugstr_cf
+ */
+const char* debugstr_cf(CFTypeRef t)
+{
+    CFStringRef s;
+    const char* ret;
+
+    if (!t) return "(null)";
+
+    if (CFGetTypeID(t) == CFStringGetTypeID())
+        s = t;
+    else
+        s = CFCopyDescription(t);
+    ret = CFStringGetCStringPtr(s, kCFStringEncodingUTF8);
+    if (ret) ret = debugstr_a(ret);
+    if (!ret)
+    {
+        const UniChar* u = CFStringGetCharactersPtr(s);
+        if (u)
+            ret = debugstr_wn((const WCHAR*)u, CFStringGetLength(s));
+    }
+    if (!ret)
+    {
+        UniChar buf[200];
+        int len = min(CFStringGetLength(s), sizeof(buf)/sizeof(buf[0]));
+        CFStringGetCharacters(s, CFRangeMake(0, len), buf);
+        ret = debugstr_wn(buf, len);
+    }
+    if (s != t) CFRelease(s);
+    return ret;
+}
+
+
 /***********************************************************************
  *              process_attach
  */

@@ -50,6 +50,11 @@
     NSMutableArray* orderedWineWindows;
 
     NSMutableDictionary* originalDisplayModes;
+
+    NSArray*    cursorFrames;
+    int         cursorFrame;
+    NSTimer*    cursorTimer;
+    BOOL        cursorHidden;
 }
 
 @property (nonatomic) CGEventSourceKeyboardType keyboardType;

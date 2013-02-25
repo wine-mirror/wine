@@ -31,6 +31,8 @@ int macdrv_err_on;
 @interface WineApplication ()
 
 @property (readwrite, copy, nonatomic) NSEvent* lastFlagsChanged;
+@property (copy, nonatomic) NSArray* cursorFrames;
+@property (retain, nonatomic) NSTimer* cursorTimer;
 
 @end
 
@@ -39,6 +41,7 @@ int macdrv_err_on;
 
     @synthesize keyboardType, lastFlagsChanged;
     @synthesize orderedWineWindows;
+    @synthesize cursorFrames, cursorTimer;
 
     - (id) init
     {
@@ -65,6 +68,8 @@ int macdrv_err_on;
 
     - (void) dealloc
     {
+        [cursorTimer release];
+        [cursorFrames release];
         [originalDisplayModes release];
         [orderedWineWindows release];
         [keyWindows release];
@@ -460,6 +465,89 @@ int macdrv_err_on;
         return ([originalDisplayModes count] > 0);
     }
 
+    - (void) hideCursor
+    {
+        if (!cursorHidden)
+        {
+            [NSCursor hide];
+            cursorHidden = TRUE;
+        }
+    }
+
+    - (void) unhideCursor
+    {
+        if (cursorHidden)
+        {
+            [NSCursor unhide];
+            cursorHidden = FALSE;
+        }
+    }
+
+    - (void) setCursor
+    {
+        NSDictionary* frame = [cursorFrames objectAtIndex:cursorFrame];
+        CGImageRef cgimage = (CGImageRef)[frame objectForKey:@"image"];
+        NSImage* image = [[NSImage alloc] initWithCGImage:cgimage size:NSZeroSize];
+        CFDictionaryRef hotSpotDict = (CFDictionaryRef)[frame objectForKey:@"hotSpot"];
+        CGPoint hotSpot;
+        NSCursor* cursor;
+
+        if (!CGPointMakeWithDictionaryRepresentation(hotSpotDict, &hotSpot))
+            hotSpot = CGPointZero;
+        cursor = [[NSCursor alloc] initWithImage:image hotSpot:NSPointFromCGPoint(hotSpot)];
+        [image release];
+        [cursor set];
+        [self unhideCursor];
+        [cursor release];
+    }
+
+    - (void) nextCursorFrame:(NSTimer*)theTimer
+    {
+        NSDictionary* frame;
+        NSTimeInterval duration;
+        NSDate* date;
+
+        cursorFrame++;
+        if (cursorFrame >= [cursorFrames count])
+            cursorFrame = 0;
+        [self setCursor];
+
+        frame = [cursorFrames objectAtIndex:cursorFrame];
+        duration = [[frame objectForKey:@"duration"] doubleValue];
+        date = [[theTimer fireDate] dateByAddingTimeInterval:duration];
+        [cursorTimer setFireDate:date];
+    }
+
+    - (void) setCursorWithFrames:(NSArray*)frames
+    {
+        if (self.cursorFrames == frames)
+            return;
+
+        self.cursorFrames = frames;
+        cursorFrame = 0;
+        [cursorTimer invalidate];
+        self.cursorTimer = nil;
+
+        if ([frames count])
+        {
+            if ([frames count] > 1)
+            {
+                NSDictionary* frame = [frames objectAtIndex:0];
+                NSTimeInterval duration = [[frame objectForKey:@"duration"] doubleValue];
+                NSDate* date = [NSDate dateWithTimeIntervalSinceNow:duration];
+                self.cursorTimer = [[[NSTimer alloc] initWithFireDate:date
+                                                             interval:1000000
+                                                               target:self
+                                                             selector:@selector(nextCursorFrame:)
+                                                             userInfo:nil
+                                                              repeats:YES] autorelease];
+                [[NSRunLoop currentRunLoop] addTimer:cursorTimer forMode:NSRunLoopCommonModes];
+            }
+
+            [self setCursor];
+        }
+    }
+
 
     /*
      * ---------- NSApplication method overrides ----------
@@ -672,4 +760,58 @@ int macdrv_set_display_mode(const struct macdrv_display* display,
     });
 
     return ret;
+}
+
+/***********************************************************************
+ *              macdrv_set_cursor
+ *
+ * Set the cursor.
+ *
+ * If name is non-NULL, it is a selector for a class method on NSCursor
+ * identifying the cursor to set.  In that case, frames is ignored.  If
+ * name is NULL, then frames is used.
+ *
+ * frames is an array of dictionaries.  Each dictionary is a frame of
+ * an animated cursor.  Under the key "image" is a CGImage for the
+ * frame.  Under the key "duration" is a CFNumber time interval, in
+ * seconds, for how long that frame is presented before proceeding to
+ * the next frame.  Under the key "hotSpot" is a CFDictionary encoding a
+ * CGPoint, to be decoded using CGPointMakeWithDictionaryRepresentation().
+ * This is the hot spot, measured in pixels down and to the right of the
+ * top-left corner of the image.
+ *
+ * If the array has exactly 1 element, the cursor is static, not
+ * animated.  If frames is NULL or has 0 elements, the cursor is hidden.
+ */
+void macdrv_set_cursor(CFStringRef name, CFArrayRef frames)
+{
+    SEL sel;
+
+    sel = NSSelectorFromString((NSString*)name);
+    if (sel)
+    {
+        OnMainThreadAsync(^{
+            NSCursor* cursor = [NSCursor performSelector:sel];
+            [NSApp setCursorWithFrames:nil];
+            [cursor set];
+            [NSApp unhideCursor];
+        });
+    }
+    else
+    {
+        NSArray* nsframes = (NSArray*)frames;
+        if ([nsframes count])
+        {
+            OnMainThreadAsync(^{
+                [NSApp setCursorWithFrames:nsframes];
+            });
+        }
+        else
+        {
+            OnMainThreadAsync(^{
+                [NSApp setCursorWithFrames:nil];
+                [NSApp hideCursor];
+            });
+        }
+    }
 }

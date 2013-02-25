@@ -35,6 +35,8 @@
 #include "wine/gdi_driver.h"
 
 
+extern const char* debugstr_cf(CFTypeRef t) DECLSPEC_HIDDEN;
+
 static inline CGRect cgrect_from_rect(RECT rect)
 {
     if (rect.left >= rect.right || rect.top >= rect.bottom)
