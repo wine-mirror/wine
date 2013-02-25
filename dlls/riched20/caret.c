@@ -930,8 +930,8 @@ static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
         p = ME_FindItemFwd(p, diRun);
         break;
     }
-    pp = ME_FindItemFwd(p, diStartRowOrParagraphOrEnd);
-    if (pp->type != diStartRow)
+    pp = ME_FindItemFwd(p, diStartRow);
+    if (!pp)
     {
         p = ME_FindItemFwd(p, diRun);
         break;
