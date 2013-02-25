@@ -574,7 +574,7 @@ HRESULT ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, const LPC
 {
     ContextMenu* This;
     HRESULT hr;
-    int i;
+    UINT i;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
