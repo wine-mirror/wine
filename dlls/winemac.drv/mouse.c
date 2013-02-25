@@ -736,6 +736,25 @@ void CDECL macdrv_DestroyCursorIcon(HCURSOR cursor)
 
 
 /***********************************************************************
+ *              GetCursorPos (MACDRV.@)
+ */
+BOOL CDECL macdrv_GetCursorPos(LPPOINT pos)
+{
+    CGPoint pt;
+    BOOL ret;
+
+    ret = macdrv_get_cursor_position(&pt);
+    if (ret)
+    {
+        TRACE("pointer at (%g,%g) server pos %d,%d\n", pt.x, pt.y, pos->x, pos->y);
+        pos->x = pt.x;
+        pos->y = pt.y;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
  *              SetCursor (MACDRV.@)
  */
 void CDECL macdrv_SetCursor(HCURSOR cursor)

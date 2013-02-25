@@ -815,3 +815,20 @@ void macdrv_set_cursor(CFStringRef name, CFArrayRef frames)
         }
     }
 }
+
+/***********************************************************************
+ *              macdrv_get_cursor_position
+ *
+ * Obtains the current cursor position.  Returns zero on failure,
+ * non-zero on success.
+ */
+int macdrv_get_cursor_position(CGPoint *pos)
+{
+    OnMainThread(^{
+        NSPoint location = [NSEvent mouseLocation];
+        location = [NSApp flippedMouseLocation:location];
+        *pos = NSPointToCGPoint(location);
+    });
+
+    return TRUE;
+}
