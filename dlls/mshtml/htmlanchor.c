@@ -374,8 +374,14 @@ static HRESULT WINAPI HTMLAnchorElement_put_hostname(IHTMLAnchorElement *iface, 
 static HRESULT WINAPI HTMLAnchorElement_get_hostname(IHTMLAnchorElement *iface, BSTR *p)
 {
     HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString hostname_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&hostname_str, NULL);
+    nsres = nsIDOMHTMLAnchorElement_GetHostname(This->nsanchor, &hostname_str);
+    return return_nsstr(nsres, &hostname_str, p);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_pathname(IHTMLAnchorElement *iface, BSTR v)

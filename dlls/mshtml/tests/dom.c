@@ -1370,6 +1370,21 @@ static void _test_anchor_put_name(unsigned line, IUnknown *unk, const char *name
     _test_anchor_name(line, unk, name);
 }
 
+#define test_anchor_hostname(a,h) _test_anchor_hostname(__LINE__,a,h)
+static void _test_anchor_hostname(unsigned line, IUnknown *unk, const char *hostname)
+{
+    IHTMLAnchorElement *anchor = _get_anchor_iface(line, unk);
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLAnchorElement_get_hostname(anchor, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_name failed: %08x\n", hres);
+    if(hostname)
+        ok_(__FILE__,line)(!strcmp_wa(str, hostname), "hostname = %s, expected %s\n", wine_dbgstr_w(str), hostname);
+    else
+        ok_(__FILE__,line)(str == NULL, "hostname = %s, expected NULL\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+}
 
 #define test_option_text(o,t) _test_option_text(__LINE__,o,t)
 static void _test_option_text(unsigned line, IHTMLOptionElement *option, const char *text)
@@ -6035,10 +6050,12 @@ static void test_elems(IHTMLDocument2 *doc)
         /* Change the href */
         test_anchor_put_href((IUnknown*)elem, "http://test1/");
         test_anchor_href((IUnknown*)elem, "http://test1/");
+        test_anchor_hostname((IUnknown*)elem, "test1");
 
         /* Restore the href */
         test_anchor_put_href((IUnknown*)elem, "http://test/");
         test_anchor_href((IUnknown*)elem, "http://test/");
+        test_anchor_hostname((IUnknown*)elem, "test");
 
         /* target */
         test_anchor_get_target((IUnknown*)elem, NULL);
