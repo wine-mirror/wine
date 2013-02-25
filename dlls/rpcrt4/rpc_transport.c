@@ -3117,7 +3117,7 @@ RPC_STATUS WINAPI RpcProtseqVectorFreeA(RPC_PROTSEQ_VECTORA **protseqs)
 
   if (*protseqs)
   {
-    int i;
+    unsigned int i;
     for (i = 0; i < (*protseqs)->Count; i++)
       HeapFree(GetProcessHeap(), 0, (*protseqs)->Protseq[i]);
     HeapFree(GetProcessHeap(), 0, *protseqs);
@@ -3135,7 +3135,7 @@ RPC_STATUS WINAPI RpcProtseqVectorFreeW(RPC_PROTSEQ_VECTORW **protseqs)
 
   if (*protseqs)
   {
-    int i;
+    unsigned int i;
     for (i = 0; i < (*protseqs)->Count; i++)
       HeapFree(GetProcessHeap(), 0, (*protseqs)->Protseq[i]);
     HeapFree(GetProcessHeap(), 0, *protseqs);
@@ -3150,7 +3150,7 @@ RPC_STATUS WINAPI RpcProtseqVectorFreeW(RPC_PROTSEQ_VECTORW **protseqs)
 RPC_STATUS WINAPI RpcNetworkInqProtseqsW( RPC_PROTSEQ_VECTORW** protseqs )
 {
   RPC_PROTSEQ_VECTORW *pvector;
-  int i = 0;
+  unsigned int i;
   RPC_STATUS status = RPC_S_OUT_OF_MEMORY;
 
   TRACE("(%p)\n", protseqs);
@@ -3183,7 +3183,7 @@ end:
 RPC_STATUS WINAPI RpcNetworkInqProtseqsA(RPC_PROTSEQ_VECTORA** protseqs)
 {
   RPC_PROTSEQ_VECTORA *pvector;
-  int i = 0;
+  unsigned int i;
   RPC_STATUS status = RPC_S_OUT_OF_MEMORY;
 
   TRACE("(%p)\n", protseqs);
