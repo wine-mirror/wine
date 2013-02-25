@@ -107,6 +107,8 @@ static const WCHAR prop_directionW[] =
     {'D','i','r','e','c','t','i','o','n',0};
 static const WCHAR prop_displaynameW[] =
     {'D','i','s','p','l','a','y','N','a','m','e',0};
+static const WCHAR prop_driveW[] =
+    {'D','r','i','v','e',0};
 static const WCHAR prop_domainW[] =
     {'D','o','m','a','i','n',0};
 static const WCHAR prop_domainroleW[] =
@@ -215,7 +217,10 @@ static const struct column col_bios[] =
 };
 static const struct column col_cdromdrive[] =
 {
-    { prop_nameW, CIM_STRING }
+    { prop_deviceidW,    CIM_STRING|COL_FLAG_KEY },
+    { prop_driveW,       CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_nameW,        CIM_STRING },
+    { prop_pnpdeviceidW, CIM_STRING }
 };
 static const struct column col_compsys[] =
 {
@@ -364,6 +369,11 @@ static const WCHAR bios_versionW[] =
     {'W','I','N','E',' ',' ',' ','-',' ','1',0};
 static const WCHAR cdromdrive_nameW[] =
     {'W','i','n','e',' ','C','D','-','R','O','M',' ','A','T','A',' ','D','e','v','i','c','e',0};
+static const WCHAR cdromdrive_pnpdeviceidW[]=
+    {'I','D','E','\\','C','D','R','O','M','W','I','N','E','_','C','D','-','R','O','M',
+     '_','_','_','_','_','_','_','_','_','_','_','_','_','_','_','_','_','_','_','_','_','_',
+     '_','_','_','_','_','_','_','1','.','0','_','_','_','_','_','\\','5','&','3','A','2',
+     'A','5','8','5','4','&','0','&','1','.','0','.','0',0};
 static const WCHAR compsys_descriptionW[] =
     {'A','T','/','A','T',' ','C','O','M','P','A','T','I','B','L','E',0};
 static const WCHAR compsys_domainW[] =
@@ -413,7 +423,10 @@ struct record_bios
 };
 struct record_cdromdrive
 {
+    const WCHAR *device_id;
+    const WCHAR *drive;
     const WCHAR *name;
+    const WCHAR *pnpdevice_id;
 };
 struct record_computersystem
 {
@@ -553,10 +566,6 @@ static const struct record_bios data_bios[] =
 {
     { bios_descriptionW, bios_manufacturerW, bios_releasedateW, bios_serialnumberW, bios_versionW }
 };
-static const struct record_cdromdrive data_cdromdrive[] =
-{
-    { cdromdrive_nameW }
-};
 static const struct record_diskdrive data_diskdrive[] =
 {
     { diskdrive_deviceidW, diskdrive_manufacturerW, diskdrive_modelW }
@@ -602,6 +611,45 @@ static const struct record_stdregprov data_stdregprov[] =
 {
     { reg_enum_key, reg_enum_values, reg_get_stringvalue }
 };
+
+static void fill_cdromdrive( struct table *table )
+{
+    static const WCHAR fmtW[] = {'%','c',':',0};
+    WCHAR drive[3], root[] = {'A',':','\\',0};
+    struct record_cdromdrive *rec;
+    UINT i, num_rows = 0, offset = 0, count = 1;
+    DWORD drives = GetLogicalDrives();
+
+    if (!(table->data = heap_alloc( count * sizeof(*rec) ))) return;
+
+    for (i = 0; i < sizeof(drives); i++)
+    {
+        if (drives & (1 << i))
+        {
+            root[0] = 'A' + i;
+            if (GetDriveTypeW( root ) != DRIVE_CDROM)
+                continue;
+
+            if (num_rows > count)
+            {
+                BYTE *data;
+                count *= 2;
+                if (!(data = heap_realloc( table->data, count * sizeof(*rec) ))) return;
+                table->data = data;
+            }
+            rec = (struct record_cdromdrive *)(table->data + offset);
+            rec->device_id    = cdromdrive_pnpdeviceidW;
+            sprintfW( drive, fmtW, 'A' + i );
+            rec->drive        = heap_strdupW( drive );
+            rec->name         = cdromdrive_nameW;
+            rec->pnpdevice_id = cdromdrive_pnpdeviceidW;
+            offset += sizeof(*rec);
+            num_rows++;
+        }
+    }
+    TRACE("created %u rows\n", num_rows);
+    table->num_rows = num_rows;
+}
 
 static UINT get_processor_count(void)
 {
@@ -1263,7 +1311,7 @@ static struct table builtin_classes[] =
 {
     { class_baseboardW, SIZEOF(col_baseboard), col_baseboard, SIZEOF(data_baseboard), (BYTE *)data_baseboard },
     { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), (BYTE *)data_bios },
-    { class_cdromdriveW, SIZEOF(col_cdromdrive), col_cdromdrive, SIZEOF(data_cdromdrive), (BYTE *)data_cdromdrive },
+    { class_cdromdriveW, SIZEOF(col_cdromdrive), col_cdromdrive, 0, NULL, fill_cdromdrive },
     { class_compsysW, SIZEOF(col_compsys), col_compsys, 0, NULL, fill_compsys },
     { class_diskdriveW, SIZEOF(col_diskdrive), col_diskdrive, SIZEOF(data_diskdrive), (BYTE *)data_diskdrive },
     { class_logicaldiskW, SIZEOF(col_logicaldisk), col_logicaldisk, 0, NULL, fill_logicaldisk },
@@ -1284,9 +1332,6 @@ void init_table_list( void )
     static struct list tables = LIST_INIT( tables );
     UINT i;
 
-    for (i = 0; i < SIZEOF(builtin_classes); i++)
-    {
-        list_add_tail( &tables, &builtin_classes[i].entry );
-    }
+    for (i = 0; i < SIZEOF(builtin_classes); i++) list_add_tail( &tables, &builtin_classes[i].entry );
     table_list = &tables;
 }
