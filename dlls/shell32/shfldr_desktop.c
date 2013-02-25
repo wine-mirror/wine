@@ -396,11 +396,10 @@ static HRESULT WINAPI ISF_Desktop_fnCompareIDs (IShellFolder2 *iface,
                         LPARAM lParam, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 {
     IDesktopFolderImpl *This = impl_from_IShellFolder2(iface);
-    IShellFolder *shell_folder = (IShellFolder*)iface;
     HRESULT hr;
 
     TRACE ("(%p)->(0x%08lx,pidl1=%p,pidl2=%p)\n", This, lParam, pidl1, pidl2);
-    hr = SHELL32_CompareIDs ( shell_folder, lParam, pidl1, pidl2);
+    hr = SHELL32_CompareIDs(iface, lParam, pidl1, pidl2);
     TRACE ("-- 0x%08x\n", hr);
     return hr;
 }

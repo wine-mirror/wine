@@ -482,16 +482,14 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWO
 /***********************************************************************
  *  SHELL32_CompareIDs
  */
-HRESULT SHELL32_CompareIDs (IShellFolder * iface, LPARAM lParam, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
+HRESULT SHELL32_CompareIDs(IShellFolder2 *sf, LPARAM lParam, LPCITEMIDLIST pidl1,
+        LPCITEMIDLIST pidl2)
 {
-    int type1,
-      type2;
+    int type1, type2;
     char szTemp1[MAX_PATH];
     char szTemp2[MAX_PATH];
     HRESULT nReturn;
-    LPITEMIDLIST firstpidl,
-      nextpidl1,
-      nextpidl2;
+    LPITEMIDLIST firstpidl, nextpidl1, nextpidl2;
     IShellFolder *psf;
 
     /* test for empty pidls */
@@ -539,7 +537,7 @@ HRESULT SHELL32_CompareIDs (IShellFolder * iface, LPARAM lParam, LPCITEMIDLIST p
     } else if (isEmpty2) {
         return MAKE_HRESULT( SEVERITY_SUCCESS, 0, 1 );
     /* optimizing end */
-    } else if (SUCCEEDED (IShellFolder_BindToObject (iface, firstpidl, NULL, &IID_IShellFolder, (LPVOID *) & psf))) {
+    } else if (SUCCEEDED(IShellFolder2_BindToObject(sf, firstpidl, NULL, &IID_IShellFolder, (void **)&psf))) {
 	nReturn = IShellFolder_CompareIDs (psf, lParam, nextpidl1, nextpidl2);
 	IShellFolder_Release (psf);
     }

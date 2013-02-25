@@ -503,7 +503,7 @@ IShellFolder_fnCompareIDs (IShellFolder2 * iface, LPARAM lParam,
     int nReturn;
 
     TRACE ("(%p)->(0x%08lx,pidl1=%p,pidl2=%p)\n", This, lParam, pidl1, pidl2);
-    nReturn = SHELL32_CompareIDs((IShellFolder *)&This->IShellFolder2_iface, lParam, pidl1, pidl2);
+    nReturn = SHELL32_CompareIDs(&This->IShellFolder2_iface, lParam, pidl1, pidl2);
     TRACE ("-- %i\n", nReturn);
     return nReturn;
 }

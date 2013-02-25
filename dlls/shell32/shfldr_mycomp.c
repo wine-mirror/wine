@@ -410,7 +410,7 @@ static HRESULT WINAPI ISF_MyComputer_fnCompareIDs (IShellFolder2 *iface,
     HRESULT hr;
 
     TRACE ("(%p)->(0x%08lx,pidl1=%p,pidl2=%p)\n", This, lParam, pidl1, pidl2);
-    hr = SHELL32_CompareIDs ((IShellFolder*)&This->IShellFolder2_iface, lParam, pidl1, pidl2);
+    hr = SHELL32_CompareIDs(&This->IShellFolder2_iface, lParam, pidl1, pidl2);
     TRACE ("-- 0x%08x\n", hr);
     return hr;
 }
