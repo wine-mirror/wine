@@ -1177,7 +1177,7 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
   ME_SendSelChange(editor);
 }
 
-static void ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow,
+static BOOL ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow,
                             int x, ME_Cursor *cursor, int *pbCaretAtEnd)
 {
   ME_DisplayItem *pNext, *pLastRun;
@@ -1192,7 +1192,7 @@ static void ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow,
     {
       cursor->pRun = pNext;
       cursor->pPara = ME_GetParagraph( cursor->pRun );
-      return;
+      return FALSE;
     }
     if (x >= run_x && x < run_x+width)
     {
@@ -1202,7 +1202,7 @@ static void ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow,
         cursor->nOffset = ch;
         cursor->pRun = pNext;
         cursor->pPara = ME_GetParagraph( cursor->pRun );
-        return;
+        return TRUE;
       }
     }
     pLastRun = pNext;
@@ -1218,7 +1218,7 @@ static void ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow,
     cursor->pRun = pLastRun;
 
   cursor->pPara = ME_GetParagraph( cursor->pRun );
-  return;
+  return FALSE;
 }
 
 static int ME_GetXForArrow(ME_TextEditor *editor, ME_Cursor *pCursor)
