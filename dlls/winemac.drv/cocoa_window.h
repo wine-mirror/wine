@@ -48,7 +48,6 @@
 
     NSUInteger lastModifierFlags;
 
-    BOOL forceNextMouseMoveAbsolute;
     double mouseMoveDeltaX, mouseMoveDeltaY;
 
     NSInteger levelWhenActive;
@@ -63,5 +62,7 @@
 @property (readonly, nonatomic) NSInteger levelWhenActive;
 
     - (void) adjustWindowLevel;
+
+    - (void) postMouseMovedEvent:(NSEvent *)theEvent absolute:(BOOL)absolute;
 
 @end

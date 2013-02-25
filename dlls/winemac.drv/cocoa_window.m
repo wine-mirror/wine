@@ -264,7 +264,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         if (!window) return nil;
         window->normalStyleMask = [window styleMask];
-        window->forceNextMouseMoveAbsolute = TRUE;
 
         /* Standardize windows to eliminate differences between titled and
            borderless windows and between NSWindow and NSPanel. */
@@ -285,8 +284,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [contentView setAutoresizesSubviews:NO];
 
         trackingArea = [[[NSTrackingArea alloc] initWithRect:[contentView bounds]
-                                                     options:(NSTrackingMouseEnteredAndExited |
-                                                              NSTrackingMouseMoved |
+                                                     options:(NSTrackingMouseMoved |
                                                               NSTrackingActiveAlways |
                                                               NSTrackingInVisibleRect)
                                                        owner:window
@@ -508,7 +506,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     {
         self.latentParentWindow = [self parentWindow];
         [latentParentWindow removeChildWindow:self];
-        forceNextMouseMoveAbsolute = TRUE;
         [self orderOut:nil];
         [NSApp wineWindow:self ordered:NSWindowOut relativeTo:nil];
         [NSApp removeWindowsItem:self];
@@ -739,11 +736,11 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                 event:theEvent];
     }
 
-    - (void) postMouseMovedEvent:(NSEvent *)theEvent
+    - (void) postMouseMovedEvent:(NSEvent *)theEvent absolute:(BOOL)absolute
     {
         macdrv_event event;
 
-        if (forceNextMouseMoveAbsolute)
+        if (absolute)
         {
             CGPoint point = CGEventGetLocation([theEvent CGEvent]);
 
@@ -753,8 +750,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
             mouseMoveDeltaX = 0;
             mouseMoveDeltaY = 0;
-
-            forceNextMouseMoveAbsolute = FALSE;
         }
         else
         {
@@ -960,14 +955,6 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             }
         }
     }
-
-    - (void) mouseEntered:(NSEvent *)theEvent { forceNextMouseMoveAbsolute = TRUE; }
-    - (void) mouseExited:(NSEvent *)theEvent  { forceNextMouseMoveAbsolute = TRUE; }
-
-    - (void) mouseMoved:(NSEvent *)theEvent         { [self postMouseMovedEvent:theEvent]; }
-    - (void) mouseDragged:(NSEvent *)theEvent       { [self postMouseMovedEvent:theEvent]; }
-    - (void) rightMouseDragged:(NSEvent *)theEvent  { [self postMouseMovedEvent:theEvent]; }
-    - (void) otherMouseDragged:(NSEvent *)theEvent  { [self postMouseMovedEvent:theEvent]; }
 
     - (void) scrollWheel:(NSEvent *)theEvent
     {

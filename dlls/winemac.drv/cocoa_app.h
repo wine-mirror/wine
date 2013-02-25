@@ -47,6 +47,9 @@
     CGFloat primaryScreenHeight;
     BOOL primaryScreenHeightValid;
 
+    WineWindow* lastTargetWindow;
+    BOOL forceNextMouseMoveAbsolute;
+
     NSMutableArray* orderedWineWindows;
 
     NSMutableDictionary* originalDisplayModes;

@@ -554,10 +554,40 @@ int macdrv_err_on;
      */
     - (void) sendEvent:(NSEvent*)anEvent
     {
-        if ([anEvent type] == NSFlagsChanged)
+        NSEventType type = [anEvent type];
+        if (type == NSFlagsChanged)
             self.lastFlagsChanged = anEvent;
 
         [super sendEvent:anEvent];
+
+        if (type == NSMouseMoved || type == NSLeftMouseDragged ||
+            type == NSRightMouseDragged || type == NSOtherMouseDragged)
+        {
+            WineWindow* targetWindow;
+
+            targetWindow = (WineWindow*)[anEvent window];
+
+            if ([targetWindow isKindOfClass:[WineWindow class]])
+            {
+                BOOL absolute = forceNextMouseMoveAbsolute || (targetWindow != lastTargetWindow);
+                forceNextMouseMoveAbsolute = FALSE;
+
+                [targetWindow postMouseMovedEvent:anEvent absolute:absolute];
+                lastTargetWindow = targetWindow;
+            }
+            else
+                lastTargetWindow = nil;
+        }
+        else if (type == NSLeftMouseDown || type == NSLeftMouseUp ||
+                 type == NSRightMouseDown || type == NSRightMouseUp ||
+                 type == NSOtherMouseDown || type == NSOtherMouseUp ||
+                 type == NSScrollWheel)
+        {
+            // Since mouse button and scroll wheel events deliver absolute cursor
+            // position, the accumulating delta from move events is invalidated.
+            // Make sure next mouse move event starts over from an absolute baseline.
+            forceNextMouseMoveAbsolute = TRUE;
+        }
     }
 
 
@@ -583,12 +613,22 @@ int macdrv_err_on;
         // activated.  This will provoke a re-synchronization of Wine's notion of
         // the desktop rect with the actual state.
         [self sendDisplaysChanged:TRUE];
+
+        // The cursor probably moved while we were inactive.  Accumulated mouse
+        // movement deltas are invalidated.  Make sure the next mouse move event
+        // starts over from an absolute baseline.
+        forceNextMouseMoveAbsolute = TRUE;
     }
 
     - (void)applicationDidChangeScreenParameters:(NSNotification *)notification
     {
         primaryScreenHeightValid = FALSE;
         [self sendDisplaysChanged:FALSE];
+
+        // When the display configuration changes, the cursor position may jump.
+        // Accumulated mouse movement deltas are invalidated.  Make sure the next
+        // mouse move event starts over from an absolute baseline.
+        forceNextMouseMoveAbsolute = TRUE;
     }
 
     - (void)applicationDidResignActive:(NSNotification *)notification
@@ -627,6 +667,8 @@ int macdrv_err_on;
             NSWindow* window = [note object];
             [keyWindows removeObjectIdenticalTo:window];
             [orderedWineWindows removeObjectIdenticalTo:window];
+            if (window == lastTargetWindow)
+                lastTargetWindow = nil;
         }];
 
         [nc addObserver:self
