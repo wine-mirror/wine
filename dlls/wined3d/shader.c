@@ -251,6 +251,7 @@ BOOL shader_buffer_init(struct wined3d_shader_buffer *buffer)
         ERR("Failed to allocate shader buffer memory.\n");
         return FALSE;
     }
+    buffer->buffer_size = SHADER_PGMSIZE;
 
     shader_buffer_clear(buffer);
     return TRUE;
@@ -265,15 +266,28 @@ int shader_vaddline(struct wined3d_shader_buffer *buffer, const char *format, va
 {
     char *base = buffer->buffer + buffer->content_size;
     int rc;
+    char *new_buffer;
 
-    rc = vsnprintf(base, SHADER_PGMSIZE - 1 - buffer->content_size, format, args);
-
-    if (rc < 0 /* C89 */ || (unsigned int)rc > SHADER_PGMSIZE - 1 - buffer->content_size /* C99 */)
+    while(1)
     {
-        ERR("The buffer allocated for the shader program string "
-            "is too small at %d bytes.\n", SHADER_PGMSIZE);
-        buffer->content_size = SHADER_PGMSIZE - 1;
-        return -1;
+        rc = vsnprintf(base, buffer->buffer_size - buffer->content_size, format, args);
+        if (rc < 0 /* C89 */ || (unsigned int)rc >= buffer->buffer_size - buffer->content_size /* C99 */)
+        {
+            new_buffer = HeapReAlloc(GetProcessHeap(), 0, buffer->buffer, buffer->buffer_size * 2);
+            if (!new_buffer)
+            {
+                ERR("The buffer allocated for the shader program string is too small at %d bytes.\n", buffer->buffer_size);
+                buffer->content_size = buffer->buffer_size - 1;
+                return -1;
+            }
+            buffer->buffer = new_buffer;
+            buffer->buffer_size = buffer->buffer_size * 2;
+            base = buffer->buffer + buffer->content_size;
+        }
+        else
+        {
+            break;
+        }
     }
 
     if (buffer->newline)
