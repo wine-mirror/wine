@@ -4129,7 +4129,6 @@ static void test_ARGB_conversion(void)
     ok(data.Stride == 8, "expected 8, got %d\n", data.Stride);
     ok(data.PixelFormat == PixelFormat32bppPARGB, "expected PixelFormat32bppPARGB, got %d\n", data.PixelFormat);
     match = !memcmp(data.Scan0, pargb, sizeof(pargb));
-todo_wine
     ok(match, "bits don't match\n");
     if (!match)
     {
