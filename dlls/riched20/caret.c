@@ -1177,28 +1177,32 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
   ME_SendSelChange(editor);
 }
 
-static ME_DisplayItem *ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow, 
-                                int x, int *pOffset, int *pbCaretAtEnd)
+static void ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow,
+                            int x, ME_Cursor *cursor, int *pbCaretAtEnd)
 {
   ME_DisplayItem *pNext, *pLastRun;
   pNext = ME_FindItemFwd(pRow, diRunOrStartRow);
   assert(pNext->type == diRun);
   if (pbCaretAtEnd) *pbCaretAtEnd = FALSE;
-  if (pOffset) *pOffset = 0;
+  cursor->nOffset = 0;
   do {
     int run_x = pNext->member.run.pt.x;
     int width = pNext->member.run.nWidth;
     if (x < run_x)
     {
-      return pNext;
+      cursor->pRun = pNext;
+      cursor->pPara = ME_GetParagraph( cursor->pRun );
+      return;
     }
     if (x >= run_x && x < run_x+width)
     {
       int ch = ME_CharFromPoint(editor, x-run_x, &pNext->member.run, TRUE);
-      if (ch < pNext->member.run.len) {
-        if (pOffset)
-          *pOffset = ch;
-        return pNext;          
+      if (ch < pNext->member.run.len)
+      {
+        cursor->nOffset = ch;
+        cursor->pRun = pNext;
+        cursor->pPara = ME_GetParagraph( cursor->pRun );
+        return;
       }
     }
     pLastRun = pNext;
@@ -1207,12 +1211,14 @@ static ME_DisplayItem *ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pR
   
   if ((pLastRun->member.run.nFlags & MERF_ENDPARA) == 0)
   {
-    pNext = ME_FindItemFwd(pNext, diRun);
+    cursor->pRun = ME_FindItemFwd(pNext, diRun);
     if (pbCaretAtEnd) *pbCaretAtEnd = TRUE;
-    return pNext;
-  } else {
-    return pLastRun;
   }
+  else
+    cursor->pRun = pLastRun;
+
+  cursor->pPara = ME_GetParagraph( cursor->pRun );
+  return;
 }
 
 static int ME_GetXForArrow(ME_TextEditor *editor, ME_Cursor *pCursor)
@@ -1313,8 +1319,7 @@ ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
     /* row not found - ignore */
     return;
   }
-  pCursor->pRun = ME_FindRunInRow(editor, pItem, x, &pCursor->nOffset, &editor->bCaretAtEnd);
-  pCursor->pPara = ME_GetParagraph(pCursor->pRun);
+  ME_FindRunInRow(editor, pItem, x, pCursor, &editor->bCaretAtEnd);
   assert(pCursor->pRun);
   assert(pCursor->pRun->type == diRun);
 }
@@ -1367,9 +1372,7 @@ static void ME_ArrowPageUp(ME_TextEditor *editor, ME_Cursor *pCursor)
       pLast = p;
     } while(1);
 
-    pCursor->pRun = ME_FindRunInRow(editor, pLast, x, &pCursor->nOffset,
-                                    &editor->bCaretAtEnd);
-    pCursor->pPara = ME_GetParagraph(pCursor->pRun);
+    ME_FindRunInRow(editor, pLast, x, pCursor, &editor->bCaretAtEnd);
   }
   assert(pCursor->pRun);
   assert(pCursor->pRun->type == diRun);
@@ -1427,9 +1430,7 @@ static void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
       pLast = p;
     } while(1);
 
-    pCursor->pRun = ME_FindRunInRow(editor, pLast, x, &pCursor->nOffset,
-                                    &editor->bCaretAtEnd);
-    pCursor->pPara = ME_GetParagraph(pCursor->pRun);
+    ME_FindRunInRow(editor, pLast, x, pCursor, &editor->bCaretAtEnd);
   }
   assert(pCursor->pRun);
   assert(pCursor->pRun->type == diRun);
