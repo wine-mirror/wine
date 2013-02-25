@@ -511,6 +511,7 @@ HRESULT node_replace_child(xmlnode *This, IXMLDOMNode *newChild, IXMLDOMNode *ol
     xmlnode *old_child, *new_child;
     xmlDocPtr leaving_doc;
     xmlNode *my_ancestor;
+    int refcount = 0;
 
     /* Do not believe any documentation telling that newChild == NULL
        means removal. It does certainly *not* apply to msxml3! */
@@ -548,9 +549,13 @@ HRESULT node_replace_child(xmlnode *This, IXMLDOMNode *newChild, IXMLDOMNode *ol
             WARN("%p is not an orphan of %p\n", new_child->node, new_child->node->doc);
 
     leaving_doc = new_child->node->doc;
-    xmldoc_add_ref(old_child->node->doc);
+
+    if (leaving_doc != old_child->node->doc)
+        refcount = xmlnode_get_inst_cnt(new_child);
+
+    if (refcount) xmldoc_add_refs(old_child->node->doc, refcount);
     xmlReplaceNode(old_child->node, new_child->node);
-    xmldoc_release(leaving_doc);
+    if (refcount) xmldoc_release_refs(leaving_doc, refcount);
     new_child->parent = old_child->parent;
     old_child->parent = NULL;
 
