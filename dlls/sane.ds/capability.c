@@ -174,7 +174,7 @@ static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
     if (pCapability->hContainer)
     {
         UINT16 *u;
-        int i;
+        TW_UINT32 i;
         a = GlobalLock (pCapability->hContainer);
         a->ItemType = TWTY_UINT16;
         a->NumItems = sizeof(supported_caps) / sizeof(supported_caps[0]);
@@ -924,7 +924,7 @@ static TW_UINT16 SANE_ICAPSupportedSizes (pTW_CAPABILITY pCapability, TW_UINT16 
 #ifdef SONAME_LIBSANE
 
     static TW_UINT32 possible_values[SUPPORTED_SIZE_COUNT];
-    int i;
+    unsigned int i;
     TW_UINT32 val;
     TW_UINT16 default_size = get_default_paper_size(supported_sizes, SUPPORTED_SIZE_COUNT);
     TW_UINT16 current_size = get_current_paper_size(supported_sizes, SUPPORTED_SIZE_COUNT);
