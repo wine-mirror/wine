@@ -6596,7 +6596,7 @@ static inline int output_int_len(int o, int min_len, WCHAR *date, int date_len)
 }
 
 /* format date string, similar to GetDateFormatW function but works on bigger range of dates */
-static BOOL get_date_format(LCID lcid, DWORD flags, const SYSTEMTIME *st,
+BOOL get_date_format(LCID lcid, DWORD flags, const SYSTEMTIME *st,
         const WCHAR *fmt, WCHAR *date, int date_len)
 {
     static const LCTYPE dayname[] = {
