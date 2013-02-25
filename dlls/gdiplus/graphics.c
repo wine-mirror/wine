@@ -398,8 +398,11 @@ static GpStatus alpha_blend_hdc_pixels(GpGraphics *graphics, INT dst_x, INT dst_
     hbitmap = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS,
         (void**)&temp_bits, NULL, 0);
 
-    convert_32bppARGB_to_32bppPARGB(src_width, src_height, temp_bits,
-        4 * src_width, src, src_stride);
+    if (GetDeviceCaps(graphics->hdc, SHADEBLENDCAPS) == SB_NONE)
+        memcpy(temp_bits, src, src_width * src_height * 4);
+    else
+        convert_32bppARGB_to_32bppPARGB(src_width, src_height, temp_bits,
+                                        4 * src_width, src, src_stride);
 
     SelectObject(hdc, hbitmap);
     gdi_alpha_blend(graphics, dst_x, dst_y, src_width, src_height,
