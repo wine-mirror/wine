@@ -876,7 +876,7 @@ D3DXMATRIX* WINAPI D3DXMatrixTransformation2D(D3DXMATRIX *pout, const D3DXVECTOR
 
 D3DXMATRIX* WINAPI D3DXMatrixTranslation(D3DXMATRIX *pout, FLOAT x, FLOAT y, FLOAT z)
 {
-    TRACE("pout %p, x %f, y %f, z%f\n", pout, x, y, z);
+    TRACE("pout %p, x %f, y %f, z %f\n", pout, x, y, z);
 
     D3DXMatrixIdentity(pout);
     pout->u.m[3][0] = x;
@@ -1571,7 +1571,7 @@ void WINAPI D3DXQuaternionSquadSetup(D3DXQUATERNION *paout, D3DXQUATERNION *pbou
 {
     D3DXQUATERNION q, temp1, temp2, temp3, zero;
 
-    TRACE("paout %p, pbout %p, pcout %p, pq0 %p, 1 %p, pq2 %p, pq3 %p\n", paout, pbout, pcout, pq0, pq1, pq2, pq3);
+    TRACE("paout %p, pbout %p, pcout %p, pq0 %p, pq1 %p, pq2 %p, pq3 %p\n", paout, pbout, pcout, pq0, pq1, pq2, pq3);
 
     zero.x = 0.0f;
     zero.y = 0.0f;
