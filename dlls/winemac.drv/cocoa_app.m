@@ -548,6 +548,31 @@ int macdrv_err_on;
         }
     }
 
+    - (BOOL) setCursorPosition:(CGPoint)pos
+    {
+        BOOL ret;
+
+        ret = (CGWarpMouseCursorPosition(pos) == kCGErrorSuccess);
+        if (ret)
+        {
+            WineEventQueue* queue;
+
+            lastSetCursorPositionTime = [[NSProcessInfo processInfo] systemUptime];
+
+            // Discard all pending mouse move events.
+            [eventQueuesLock lock];
+            for (queue in eventQueues)
+            {
+                [queue discardEventsMatchingMask:event_mask_for_type(MOUSE_MOVED) |
+                                                 event_mask_for_type(MOUSE_MOVED_ABSOLUTE)
+                                       forWindow:nil];
+            }
+            [eventQueuesLock unlock];
+        }
+
+        return ret;
+    }
+
 
     /*
      * ---------- NSApplication method overrides ----------
@@ -586,6 +611,17 @@ int macdrv_err_on;
             {
                 BOOL absolute = forceNextMouseMoveAbsolute || (targetWindow != lastTargetWindow);
                 forceNextMouseMoveAbsolute = FALSE;
+
+                // If we recently warped the cursor, discard mouse move events until
+                // we see an event which is later than that time.
+                if (lastSetCursorPositionTime)
+                {
+                    if ([anEvent timestamp] <= lastSetCursorPositionTime)
+                        return;
+
+                    lastSetCursorPositionTime = 0;
+                    absolute = TRUE;
+                }
 
                 [targetWindow postMouseMovedEvent:anEvent absolute:absolute];
                 lastTargetWindow = targetWindow;
@@ -892,4 +928,21 @@ int macdrv_get_cursor_position(CGPoint *pos)
     });
 
     return TRUE;
+}
+
+/***********************************************************************
+ *              macdrv_set_cursor_position
+ *
+ * Sets the cursor position without generating events.  Returns zero on
+ * failure, non-zero on success.
+ */
+int macdrv_set_cursor_position(CGPoint pos)
+{
+    __block int ret;
+
+    OnMainThread(^{
+        ret = [NSApp setCursorPosition:pos];
+    });
+
+    return ret;
 }

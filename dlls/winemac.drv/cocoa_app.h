@@ -58,6 +58,8 @@
     int         cursorFrame;
     NSTimer*    cursorTimer;
     BOOL        cursorHidden;
+
+    NSTimeInterval lastSetCursorPositionTime;
 }
 
 @property (nonatomic) CGEventSourceKeyboardType keyboardType;

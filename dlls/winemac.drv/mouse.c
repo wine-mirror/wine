@@ -848,6 +848,20 @@ done:
 
 
 /***********************************************************************
+ *              SetCursorPos (MACDRV.@)
+ */
+BOOL CDECL macdrv_SetCursorPos(INT x, INT y)
+{
+    BOOL ret = macdrv_set_cursor_position(CGPointMake(x, y));
+    if (ret)
+        TRACE("warped to %d,%d\n", x, y);
+    else
+        ERR("failed to warp to %d,%d\n", x, y);
+    return ret;
+}
+
+
+/***********************************************************************
  *              macdrv_mouse_button
  *
  * Handler for MOUSE_BUTTON events.

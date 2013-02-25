@@ -22,6 +22,7 @@
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) macdrv_MsgWaitForMultipleObjectsEx
 @ cdecl ScrollDC(long long long ptr ptr long ptr) macdrv_ScrollDC
 @ cdecl SetCursor(long) macdrv_SetCursor
+@ cdecl SetCursorPos(long long) macdrv_SetCursorPos
 @ cdecl SetFocus(long) macdrv_SetFocus
 @ cdecl SetLayeredWindowAttributes(long long long long) macdrv_SetLayeredWindowAttributes
 @ cdecl SetParent(long long long) macdrv_SetParent
