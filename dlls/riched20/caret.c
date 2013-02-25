@@ -865,22 +865,48 @@ static ME_DisplayItem* ME_FindPixelPosInTableRow(int x, int y,
   return para;
 }
 
-static BOOL ME_ReturnFoundPos(ME_TextEditor *editor, ME_DisplayItem *found,
-                               ME_Cursor *result, int rx, BOOL isExact)
+static BOOL ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow,
+                            int x, ME_Cursor *cursor, int *pbCaretAtEnd)
 {
-  assert(found);
-  assert(found->type == diRun);
-  if ((found->member.run.nFlags & MERF_ENDPARA) || rx < 0)
-    rx = 0;
-  result->pRun = found;
-  result->nOffset = ME_CharFromPoint(editor, rx, &found->member.run, TRUE);
-  if (result->nOffset == found->member.run.len && rx)
+  ME_DisplayItem *pNext, *pLastRun;
+  pNext = ME_FindItemFwd(pRow, diRunOrStartRow);
+  assert(pNext->type == diRun);
+  if (pbCaretAtEnd) *pbCaretAtEnd = FALSE;
+  cursor->nOffset = 0;
+  do {
+    int run_x = pNext->member.run.pt.x;
+    int width = pNext->member.run.nWidth;
+    if (x < run_x)
+    {
+      cursor->pRun = pNext;
+      cursor->pPara = ME_GetParagraph( cursor->pRun );
+      return FALSE;
+    }
+    if (x >= run_x && x < run_x+width)
+    {
+      int ch = ME_CharFromPoint(editor, x-run_x, &pNext->member.run, TRUE);
+      if (ch < pNext->member.run.len)
+      {
+        cursor->nOffset = ch;
+        cursor->pRun = pNext;
+        cursor->pPara = ME_GetParagraph( cursor->pRun );
+        return TRUE;
+      }
+    }
+    pLastRun = pNext;
+    pNext = ME_FindItemFwd(pNext, diRunOrStartRow);
+  } while(pNext && pNext->type == diRun);
+
+  if ((pLastRun->member.run.nFlags & MERF_ENDPARA) == 0)
   {
-    result->pRun = ME_FindItemFwd(result->pRun, diRun);
-    result->nOffset = 0;
+    cursor->pRun = ME_FindItemFwd(pNext, diRun);
+    if (pbCaretAtEnd) *pbCaretAtEnd = TRUE;
   }
-  result->pPara = ME_GetParagraph(result->pRun);
-  return isExact;
+  else
+    cursor->pRun = pLastRun;
+
+  cursor->pPara = ME_GetParagraph( cursor->pRun );
+  return FALSE;
 }
 
 /* Finds the run and offset from the pixel position.
@@ -895,8 +921,6 @@ static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
                             ME_Cursor *result, BOOL *is_eol)
 {
   ME_DisplayItem *p = editor->pBuffer->pFirst->member.para.next_para;
-  ME_DisplayItem *last = NULL;
-  int rx = 0;
   BOOL isExact = TRUE;
 
   x -= editor->rcFormat.left;
@@ -925,17 +949,9 @@ static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
   {
     ME_DisplayItem *pp;
     assert(p->type == diStartRow);
-    if (y < p->member.row.pt.y + p->member.row.nHeight)
-    {
-        p = ME_FindItemFwd(p, diRun);
-        break;
-    }
+    if (y < p->member.row.pt.y + p->member.row.nHeight) break;
     pp = ME_FindItemFwd(p, diStartRow);
-    if (!pp)
-    {
-        p = ME_FindItemFwd(p, diRun);
-        break;
-    }
+    if (!pp) break;
     p = pp;
   }
   if (p == editor->pBuffer->pLast)
@@ -945,40 +961,14 @@ static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
      * determine the offset closest to the pixel position. */
     isExact = FALSE;
     p = ME_FindItemBack(p, diStartRow);
-    if (p != NULL){
-      p = ME_FindItemFwd(p, diRun);
-    }
-    else
-    {
-      p = editor->pBuffer->pLast;
-    }
+    if (!p) p = editor->pBuffer->pLast;
   }
-  for (; p != editor->pBuffer->pLast; p = p->next)
-  {
-    switch (p->type)
-    {
-    case diRun:
-      rx = x - p->member.run.pt.x;
-      if (rx < p->member.run.nWidth)
-        return ME_ReturnFoundPos(editor, p, result, rx, isExact);
-      break;
-    case diStartRow:
-      isExact = FALSE;
-      p = ME_FindItemFwd(p, diRun);
-      if (is_eol) *is_eol = 1;
-      rx = 0; /* FIXME not sure */
-      return ME_ReturnFoundPos(editor, p, result, rx, isExact);
-    case diCell:
-    case diParagraph:
-    case diTextEnd:
-      isExact = FALSE;
-      rx = 0; /* FIXME not sure */
-      p = last;
-      return ME_ReturnFoundPos(editor, p, result, rx, isExact);
-    default: assert(0);
-    }
-    last = p;
-  }
+
+  assert( p->type == diStartRow || p == editor->pBuffer->pLast );
+
+  if( p->type == diStartRow )
+      return ME_FindRunInRow( editor, p, x, result, is_eol ) && isExact;
+
   result->pRun = ME_FindItemBack(p, diRun);
   result->pPara = ME_GetParagraph(result->pRun);
   result->nOffset = 0;
@@ -1175,50 +1165,6 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
   ITextHost_TxShowCaret(editor->texthost, FALSE);
   ME_ShowCaret(editor);
   ME_SendSelChange(editor);
-}
-
-static BOOL ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow,
-                            int x, ME_Cursor *cursor, int *pbCaretAtEnd)
-{
-  ME_DisplayItem *pNext, *pLastRun;
-  pNext = ME_FindItemFwd(pRow, diRunOrStartRow);
-  assert(pNext->type == diRun);
-  if (pbCaretAtEnd) *pbCaretAtEnd = FALSE;
-  cursor->nOffset = 0;
-  do {
-    int run_x = pNext->member.run.pt.x;
-    int width = pNext->member.run.nWidth;
-    if (x < run_x)
-    {
-      cursor->pRun = pNext;
-      cursor->pPara = ME_GetParagraph( cursor->pRun );
-      return FALSE;
-    }
-    if (x >= run_x && x < run_x+width)
-    {
-      int ch = ME_CharFromPoint(editor, x-run_x, &pNext->member.run, TRUE);
-      if (ch < pNext->member.run.len)
-      {
-        cursor->nOffset = ch;
-        cursor->pRun = pNext;
-        cursor->pPara = ME_GetParagraph( cursor->pRun );
-        return TRUE;
-      }
-    }
-    pLastRun = pNext;
-    pNext = ME_FindItemFwd(pNext, diRunOrStartRow);
-  } while(pNext && pNext->type == diRun);
-  
-  if ((pLastRun->member.run.nFlags & MERF_ENDPARA) == 0)
-  {
-    cursor->pRun = ME_FindItemFwd(pNext, diRun);
-    if (pbCaretAtEnd) *pbCaretAtEnd = TRUE;
-  }
-  else
-    cursor->pRun = pLastRun;
-
-  cursor->pPara = ME_GetParagraph( cursor->pRun );
-  return FALSE;
 }
 
 static int ME_GetXForArrow(ME_TextEditor *editor, ME_Cursor *pCursor)
