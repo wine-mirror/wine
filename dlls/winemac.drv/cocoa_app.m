@@ -565,7 +565,22 @@ int macdrv_err_on;
         {
             WineWindow* targetWindow;
 
-            targetWindow = (WineWindow*)[anEvent window];
+            /* Because of the way -[NSWindow setAcceptsMouseMovedEvents:] works, the
+               event indicates its window is the main window, even if the cursor is
+               over a different window.  Find the actual WineWindow that is under the
+               cursor and post the event as being for that window. */
+            if (type == NSMouseMoved)
+            {
+                CGPoint cgpoint = CGEventGetLocation([anEvent CGEvent]);
+                NSPoint point = [self flippedMouseLocation:NSPointFromCGPoint(cgpoint)];
+                NSInteger windowUnderNumber;
+
+                windowUnderNumber = [NSWindow windowNumberAtPoint:point
+                                      belowWindowWithWindowNumber:0];
+                targetWindow = (WineWindow*)[self windowWithWindowNumber:windowUnderNumber];
+            }
+            else
+                targetWindow = (WineWindow*)[anEvent window];
 
             if ([targetWindow isKindOfClass:[WineWindow class]])
             {

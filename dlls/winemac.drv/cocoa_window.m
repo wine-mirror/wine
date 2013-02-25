@@ -273,6 +273,7 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         [window disableCursorRects];
         [window setShowsResizeIndicator:NO];
         [window setHasShadow:wf->shadow];
+        [window setAcceptsMouseMovedEvents:YES];
         [window setColorSpace:[NSColorSpace genericRGBColorSpace]];
         [window setDelegate:window];
         window.hwnd = hwnd;
@@ -283,6 +284,8 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
             return nil;
         [contentView setAutoresizesSubviews:NO];
 
+        /* We use tracking areas in addition to setAcceptsMouseMovedEvents:YES
+           because they give us mouse moves in the background. */
         trackingArea = [[[NSTrackingArea alloc] initWithRect:[contentView bounds]
                                                      options:(NSTrackingMouseMoved |
                                                               NSTrackingActiveAlways |
