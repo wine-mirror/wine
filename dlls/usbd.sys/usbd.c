@@ -105,7 +105,7 @@ PURB WINAPI USBD_CreateConfigurationRequestEx(
         interfaceInfo = &urb->u.UrbSelectConfiguration.Interface;
         for (interfaceEntry = InterfaceList; interfaceEntry->InterfaceDescriptor; interfaceEntry++)
         {
-            int i;
+            ULONG i;
             USB_INTERFACE_DESCRIPTOR *currentInterface;
             USB_ENDPOINT_DESCRIPTOR *endpointDescriptor;
             interfaceInfo->InterfaceNumber = interfaceEntry->InterfaceDescriptor->bInterfaceNumber;
