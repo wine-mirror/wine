@@ -487,15 +487,19 @@ static HRESULT WINAPI IHlink_fnNavigate(IHlink* iface, DWORD grfHLNF, LPBC pbc,
     if (SUCCEEDED(r))
     {
         IBindCtx *bcxt;
-        IHlinkTarget *target = NULL;
+        IUnknown *unk = NULL;
+        IHlinkTarget *target;
 
         CreateBindCtx(0, &bcxt);
 
         RegisterBindStatusCallback(bcxt, pbsc, NULL, 0);
 
-        r = IMoniker_BindToObject(mon, bcxt, NULL, &IID_IHlinkTarget,
-                (LPVOID*)&target);
-        TRACE("IHlinkTarget returned 0x%x\n", r);
+        r = IMoniker_BindToObject(mon, bcxt, NULL, &IID_IUnknown, (void**)&unk);
+        if (r == S_OK)
+        {
+            r = IUnknown_QueryInterface(unk, &IID_IHlinkTarget, (void**)&target);
+            IUnknown_Release(unk);
+        }
         if (r == S_OK)
         {
             IHlinkTarget_SetBrowseContext(target, phbc);
