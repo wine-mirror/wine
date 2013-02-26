@@ -869,6 +869,14 @@ static BOOL ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow,
                             int x, ME_Cursor *cursor, int *pbCaretAtEnd)
 {
   ME_DisplayItem *pNext, *pLastRun;
+  ME_Row *row = &pRow->member.row;
+  BOOL exact = TRUE;
+
+  if (x < row->pt.x)
+  {
+      x = row->pt.x;
+      exact = FALSE;
+  }
   pNext = ME_FindItemFwd(pRow, diRunOrStartRow);
   assert(pNext->type == diRun);
   if (pbCaretAtEnd) *pbCaretAtEnd = FALSE;
@@ -876,18 +884,13 @@ static BOOL ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow,
   do {
     int run_x = pNext->member.run.pt.x;
     int width = pNext->member.run.nWidth;
-    if (x < run_x)
-    {
-      cursor->pRun = pNext;
-      cursor->pPara = ME_GetParagraph( cursor->pRun );
-      return FALSE;
-    }
+
     if (x >= run_x && x < run_x+width)
     {
       cursor->nOffset = ME_CharFromPoint(editor, x-run_x, &pNext->member.run, TRUE);
       cursor->pRun = pNext;
       cursor->pPara = ME_GetParagraph( cursor->pRun );
-      return TRUE;
+      return exact;
     }
     pLastRun = pNext;
     pNext = ME_FindItemFwd(pNext, diRunOrStartRow);
