@@ -503,7 +503,7 @@ static HRESULT WINAPI IHlink_fnNavigate(IHlink* iface, DWORD grfHLNF, LPBC pbc,
         if (r == S_OK)
         {
             IHlinkTarget_SetBrowseContext(target, phbc);
-            IHlinkTarget_Navigate(target, grfHLNF, This->Location);
+            r = IHlinkTarget_Navigate(target, grfHLNF, This->Location);
             IHlinkTarget_Release(target);
         }
         else
