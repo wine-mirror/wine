@@ -19,6 +19,7 @@
 #include "wshom_private.h"
 #include "wshom.h"
 
+#include "shellapi.h"
 #include "shlobj.h"
 
 #include "wine/debug.h"
@@ -665,10 +666,62 @@ static HRESULT WINAPI WshShell3_get_Environment(IWshShell3 *iface, VARIANT *Type
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR Command, VARIANT *WindowStyle, VARIANT *WaitOnReturn, int *out_ExitCode)
+static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR cmd, VARIANT *style, VARIANT *WaitOnReturn, int *exit_code)
 {
-    FIXME("(%s %s %p): stub\n", debugstr_variant(WindowStyle), debugstr_variant(WaitOnReturn), out_ExitCode);
-    return E_NOTIMPL;
+    SHELLEXECUTEINFOW info;
+    int waitforprocess;
+    VARIANT s, w;
+    HRESULT hr;
+
+    TRACE("(%s %s %s %p)\n", debugstr_w(cmd), debugstr_variant(style), debugstr_variant(WaitOnReturn), exit_code);
+
+    VariantInit(&s);
+    hr = VariantChangeType(&s, style, 0, VT_I4);
+    if (FAILED(hr))
+    {
+        ERR("failed to convert style argument, 0x%08x\n", hr);
+        return hr;
+    }
+
+    VariantInit(&w);
+    hr = VariantChangeType(&w, WaitOnReturn, 0, VT_I4);
+    if (FAILED(hr))
+    {
+        ERR("failed to convert wait argument, 0x%08x\n", hr);
+        return hr;
+    }
+
+    memset(&info, 0, sizeof(info));
+    info.cbSize = sizeof(info);
+
+    waitforprocess = V_I4(&w);
+
+    info.fMask = waitforprocess ? SEE_MASK_NOASYNC | SEE_MASK_NOCLOSEPROCESS : SEE_MASK_DEFAULT;
+    info.lpFile = cmd;
+    info.nShow = V_I4(&s);
+
+    if (!ShellExecuteExW(&info))
+    {
+        TRACE("ShellExecute failed, %d\n", GetLastError());
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+    else
+    {
+        if (waitforprocess)
+        {
+            if (exit_code)
+            {
+                DWORD code;
+                GetExitCodeProcess(info.hProcess, &code);
+                *exit_code = code;
+            }
+            CloseHandle(info.hProcess);
+        }
+        else
+            if (exit_code) *exit_code = 0;
+
+        return S_OK;
+    }
 }
 
 static HRESULT WINAPI WshShell3_Popup(IWshShell3 *iface, BSTR Text, VARIANT* SecondsToWait, VARIANT *Title, VARIANT *Type, int *button)

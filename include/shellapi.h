@@ -273,6 +273,7 @@ HINSTANCE	WINAPI ShellExecuteW(HWND,LPCWSTR,LPCWSTR,LPCWSTR,LPCWSTR,INT);
 #define SE_ERR_DDEBUSY                  30
 #define SE_ERR_NOASSOC                  31
 
+#define SEE_MASK_DEFAULT          0x00000000
 #define SEE_MASK_CLASSNAME        0x00000001
 #define SEE_MASK_CLASSKEY         0x00000003
 #define SEE_MASK_IDLIST           0x00000004
