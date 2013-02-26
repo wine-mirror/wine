@@ -79,6 +79,9 @@ cpp_quote("#define TF_MOD_LSHIFT                0x0100")
 cpp_quote("#define TF_MOD_ON_KEYUP              0x0200")
 cpp_quote("#define TF_MOD_IGNORE_ALL_MODIFIER   0x0400")
 
+cpp_quote("#define TF_PROFILETYPE_INPUTPROCESSOR  0x0001")
+cpp_quote("#define TF_PROFILETYPE_KEYBOARDLAYOUT  0x0002")
+
 interface ITfDocumentMgr;
 interface ITfContext;
 interface IEnumTfDocumentMgrs;
@@ -98,6 +101,10 @@ interface IEnumTfLanguageProfiles;
 interface ITfEditRecord;
 interface ITfCompositionView;
 interface ITfKeyEventSink;
+
+cpp_quote("#if 0")
+typedef [uuid(4f5d560f-5ab5-4dde-8c4d-404592857ab0)] UINT_PTR HKL;
+cpp_quote("#endif")
 
 typedef [uuid(e1b5808d-1e46-4c19-84dc-68c5f5978cc8)] struct TF_LANGUAGEPROFILE
 {
@@ -420,6 +427,105 @@ interface ITfInputProcessorProfiles : IUnknown
         [in] REFGUID guidProfile,
         [in] HKL hKL);
 };
+
+typedef [uuid(44d2825a-10e5-43b2-877f-6cb2f43b7e7e)]
+struct TF_INPUTPROCESSORPROFILE {
+    DWORD dwProfileType;
+    LANGID langid;
+    CLSID clsid;
+    GUID guidProfile;
+    GUID catid;
+    HKL hklSubstitute;
+    DWORD dwCaps;
+    HKL hkl;
+    DWORD dwFlags;
+} TF_INPUTPROCESSORPROFILE;
+
+[
+    object,
+    uuid(71c6e74d-0f28-11d8-a82a-00065b84435c),
+    pointer_default(unique)
+]
+interface IEnumTfInputProcessorProfiles : IUnknown
+{
+    HRESULT Clone(
+        [out] IEnumTfInputProcessorProfiles **ppEnum);
+
+    HRESULT Next(
+        [in] ULONG ulCount,
+        [out, size_is(ulCount), length_is(*pcFetch)] TF_INPUTPROCESSORPROFILE *pProfile,
+        [out] ULONG *pcFetch);
+
+    HRESULT Reset();
+
+    HRESULT Skip(
+        [in] ULONG ulCount);
+}
+
+[
+    object,
+    uuid(71c6e74c-0f28-11d8-a82a-00065b84435c),
+    pointer_default(unique)
+]
+interface ITfInputProcessorProfileMgr : IUnknown
+{
+    HRESULT ActivateProfile(
+        [in] DWORD dwProfileType,
+        [in] LANGID langid,
+        [in] REFCLSID clsid,
+        [in] REFGUID guidProfile,
+        [in] HKL hkl,
+        [in] DWORD dwFlags);
+
+    HRESULT DeactivateProfile(
+        [in] DWORD dwProfileType,
+        [in] LANGID langid,
+        [in] REFCLSID clsid,
+        [in] REFGUID guidProfile,
+        [in] HKL hkl,
+        [in] DWORD dwFlags);
+
+    HRESULT GetProfile(
+        [in] DWORD dwProfileType,
+        [in] LANGID langid,
+        [in] REFCLSID clsid,
+        [in] REFGUID guidProfile,
+        [in] HKL hkl,
+        [out] TF_INPUTPROCESSORPROFILE *pProfile);
+
+
+    HRESULT EnumProfiles(
+        [in] LANGID langid,
+        [out] IEnumTfInputProcessorProfiles **ppEnum);
+
+    HRESULT ReleaseInputProcessor(
+        [in] REFCLSID rclsid,
+        [in] DWORD dwFlags);
+
+    HRESULT RegisterProfile(
+        [in] REFCLSID rclsid,
+        [in] LANGID langid,
+        [in] REFGUID guidProfile,
+        [in, size_is(cchDesc)] const WCHAR *pchDesc,
+        [in] ULONG cchDesc,
+        [in, size_is(cchFile)] const WCHAR *pchIconFile,
+        [in] ULONG cchFile,
+        [in] ULONG uIconIndex,
+        [in] HKL hklsubstitute,
+        [in] DWORD dwPreferredLayout,
+        [in] BOOL bEnabledByDefault,
+        [in] DWORD dwFlags);
+
+    HRESULT UnregisterProfile(
+        [in] REFCLSID rclsid,
+        [in] LANGID langid,
+        [in] REFGUID guidProfile,
+        [in] DWORD dwFlags);
+
+    HRESULT GetActiveProfile(
+        [in] REFGUID catid,
+        [out] TF_INPUTPROCESSORPROFILE *pProfile);
+}
 
 typedef [uuid(c4cc07f1-80cc-4a7b-bc54-98512782cbe3)]
 enum {
