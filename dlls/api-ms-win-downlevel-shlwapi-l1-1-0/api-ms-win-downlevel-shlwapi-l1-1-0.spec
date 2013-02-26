@@ -1,6 +1,6 @@
 @ stdcall GetAcceptLanguagesW(ptr ptr) shlwapi.GetAcceptLanguagesW
 @ stdcall HashData(ptr long ptr long) shlwapi.HashData
-@ stub IsInternetESCEnabled
+@ stdcall IsInternetESCEnabled() shlwapi.IsInternetESCEnabled
 @ stdcall ParseURLW(wstr ptr) shlwapi.ParseURLW
 @ stdcall PathAddBackslashA(str) shlwapi.PathAddBackslashA
 @ stdcall PathAddBackslashW(wstr) shlwapi.PathAddBackslashW
