@@ -369,7 +369,9 @@ typedef struct _SG_Impl {
     IBaseFilter IBaseFilter_iface;
     ISampleGrabber ISampleGrabber_iface;
     IMemInputPin IMemInputPin_iface;
-    /* TODO: IMediaPosition, IMediaSeeking, IQualityControl */
+    /* IMediaSeeking and IMediaPosition are implemented by ISeekingPassThru */
+    IUnknown* seekthru_unk;
+    /* TODO: IQualityControl */
     IUnknown *outer_unk;
     LONG ref;
     CRITICAL_SECTION critSect;
@@ -433,6 +435,8 @@ static void SampleGrabber_cleanup(SG_Impl *This)
         CoTaskMemFree(This->mtype.pbFormat);
     if (This->bufferData)
         CoTaskMemFree(This->bufferData);
+    if(This->seekthru_unk)
+        IUnknown_Release(This->seekthru_unk);
     This->critSect.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->critSect);
 }
@@ -455,9 +459,9 @@ static HRESULT WINAPI SampleGrabber_QueryInterface(IUnknown *iface, REFIID riid,
     else if (IsEqualIID(riid, &IID_IMemInputPin))
         *ppv = &This->IMemInputPin_iface;
     else if (IsEqualIID(riid, &IID_IMediaPosition))
-        FIXME("IMediaPosition not implemented\n");
+        return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        FIXME("IMediaSeeking not implemented\n");
+        return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
     else if (IsEqualIID(riid, &IID_IQualityControl))
         FIXME("IQualityControl not implemented\n");
     else
@@ -1048,6 +1052,10 @@ SampleGrabber_IPin_QueryInterface(IPin *iface, REFIID riid, void **ppv)
         *ppv = iface;
     else if (IsEqualIID(riid, &IID_IMemInputPin))
         *ppv = &This->sg->IMemInputPin_iface;
+    else if (IsEqualIID(riid, &IID_IMediaSeeking))
+        return IUnknown_QueryInterface(&This->sg->IUnknown_inner, riid, ppv);
+    else if (IsEqualIID(riid, &IID_IMediaPosition))
+        return IUnknown_QueryInterface(&This->sg->IUnknown_inner, riid, ppv);
     else {
         WARN("(%p, %s,%p): not found\n", This, debugstr_guid(riid), ppv);
         return E_NOINTERFACE;
@@ -1467,6 +1475,8 @@ static const IPinVtbl IPin_Out_VTable =
 HRESULT SampleGrabber_create(IUnknown *pUnkOuter, LPVOID *ppv)
 {
     SG_Impl* obj = NULL;
+    ISeekingPassThru *passthru;
+    HRESULT hr;
 
     TRACE("(%p,%p)\n", ppv, pUnkOuter);
 
@@ -1513,6 +1523,13 @@ HRESULT SampleGrabber_create(IUnknown *pUnkOuter, LPVOID *ppv)
         obj->outer_unk = pUnkOuter;
     else
         obj->outer_unk = &obj->IUnknown_inner;
+
+    hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown*)obj, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&obj->seekthru_unk);
+    if(hr)
+        return hr;
+    IUnknown_QueryInterface(obj->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
+    ISeekingPassThru_Init(passthru, FALSE, &obj->pin_in.IPin_iface);
+    ISeekingPassThru_Release(passthru);
 
     *ppv = &obj->IUnknown_inner;
     return S_OK;
