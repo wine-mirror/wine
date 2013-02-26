@@ -884,14 +884,10 @@ static BOOL ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow,
     }
     if (x >= run_x && x < run_x+width)
     {
-      int ch = ME_CharFromPoint(editor, x-run_x, &pNext->member.run, TRUE);
-      if (ch < pNext->member.run.len)
-      {
-        cursor->nOffset = ch;
-        cursor->pRun = pNext;
-        cursor->pPara = ME_GetParagraph( cursor->pRun );
-        return TRUE;
-      }
+      cursor->nOffset = ME_CharFromPoint(editor, x-run_x, &pNext->member.run, TRUE);
+      cursor->pRun = pNext;
+      cursor->pPara = ME_GetParagraph( cursor->pRun );
+      return TRUE;
     }
     pLastRun = pNext;
     pNext = ME_FindItemFwd(pNext, diRunOrStartRow);
