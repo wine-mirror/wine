@@ -63,8 +63,8 @@ typedef struct {
     LONG ref;
     IShellFolder2 IShellFolder2_iface;
     IPersistFolder3 IPersistFolder3_iface;
-    const IDropTargetVtbl     *lpvtblDropTarget;
-    const ISFHelperVtbl       *lpvtblSFHelper;
+    IDropTarget IDropTarget_iface;
+    ISFHelper ISFHelper_iface;
     IUnknown *outer_unk;
 
     CLSID *pclsid;
@@ -98,22 +98,15 @@ static inline IGenericSFImpl *impl_from_IPersistFolder3(IPersistFolder3 *iface)
     return CONTAINING_RECORD(iface, IGenericSFImpl, IPersistFolder3_iface);
 }
 
-static inline IGenericSFImpl *impl_from_IDropTarget( IDropTarget *iface )
+static inline IGenericSFImpl *impl_from_IDropTarget(IDropTarget *iface)
 {
-    return (IGenericSFImpl *)((char*)iface - FIELD_OFFSET(IGenericSFImpl, lpvtblDropTarget));
+    return CONTAINING_RECORD(iface, IGenericSFImpl, IDropTarget_iface);
 }
 
-static inline IGenericSFImpl *impl_from_ISFHelper( ISFHelper *iface )
+static inline IGenericSFImpl *impl_from_ISFHelper(ISFHelper *iface)
 {
-    return (IGenericSFImpl *)((char*)iface - FIELD_OFFSET(IGenericSFImpl, lpvtblSFHelper));
+    return CONTAINING_RECORD(iface, IGenericSFImpl, ISFHelper_iface);
 }
-
-
-/*
-  converts This to an interface pointer
-*/
-#define _IDropTarget_(This)     (&(This)->lpvtblDropTarget)
-#define _ISFHelper_(This)       (&(This)->lpvtblSFHelper)
 
 /**************************************************************************
 * registers clipboardformat once
@@ -146,10 +139,10 @@ static HRESULT WINAPI IUnknown_fnQueryInterface(IUnknown *iface, REFIID riid, vo
             IsEqualIID(riid, &IID_IPersistFolder2) || IsEqualIID(riid, &IID_IPersistFolder3))
         *ppvObj = &This->IPersistFolder3_iface;
     else if (IsEqualIID (riid, &IID_ISFHelper))
-        *ppvObj = _ISFHelper_ (This);
+        *ppvObj = &This->ISFHelper_iface;
     else if (IsEqualIID (riid, &IID_IDropTarget)) {
-        *ppvObj = _IDropTarget_ (This);
-        SF_RegisterClipFmt (This);
+        *ppvObj = &This->IDropTarget_iface;
+        SF_RegisterClipFmt(This);
     }
 
     if (*ppvObj) {
@@ -230,8 +223,8 @@ IFSFolder_Constructor (IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv)
     sf->IUnknown_inner.lpVtbl = &unkvt;
     sf->IShellFolder2_iface.lpVtbl = &sfvt;
     sf->IPersistFolder3_iface.lpVtbl = &pfvt;
-    sf->lpvtblDropTarget = &dtvt;
-    sf->lpvtblSFHelper = &shvt;
+    sf->IDropTarget_iface.lpVtbl = &dtvt;
+    sf->ISFHelper_iface.lpVtbl = &shvt;
     sf->pclsid = (CLSID *) & CLSID_ShellFSFolder;
     sf->outer_unk = pUnkOuter ? pUnkOuter : &sf->IUnknown_inner;
 
@@ -1105,30 +1098,23 @@ static const IShellFolder2Vtbl sfvt =
  * ISFHelper for IShellFolder implementation
  */
 
-static HRESULT WINAPI
-ISFHelper_fnQueryInterface (ISFHelper * iface, REFIID riid, LPVOID * ppvObj)
+static HRESULT WINAPI ISFHelper_fnQueryInterface(ISFHelper *iface, REFIID riid, void **ppvObj)
 {
     IGenericSFImpl *This = impl_from_ISFHelper(iface);
-
-    TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
     return IUnknown_QueryInterface(This->outer_unk, riid, ppvObj);
 }
 
-static ULONG WINAPI ISFHelper_fnAddRef (ISFHelper * iface)
+static ULONG WINAPI ISFHelper_fnAddRef(ISFHelper *iface)
 {
     IGenericSFImpl *This = impl_from_ISFHelper(iface);
-
-    TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
     return IUnknown_AddRef(This->outer_unk);
 }
 
-static ULONG WINAPI ISFHelper_fnRelease (ISFHelper * iface)
+static ULONG WINAPI ISFHelper_fnRelease(ISFHelper *iface)
 {
     IGenericSFImpl *This = impl_from_ISFHelper(iface);
-
-    TRACE ("(%p)\n", This);
 
     return IUnknown_Release(This->outer_unk);
 }
@@ -1612,30 +1598,23 @@ static const IPersistFolder3Vtbl pfvt =
 /****************************************************************************
  * ISFDropTarget implementation
  */
-static HRESULT WINAPI
-ISFDropTarget_QueryInterface (IDropTarget * iface, REFIID riid, LPVOID * ppvObj)
+static HRESULT WINAPI ISFDropTarget_QueryInterface(IDropTarget *iface, REFIID riid, void **ppv)
 {
     IGenericSFImpl *This = impl_from_IDropTarget(iface);
 
-    TRACE ("(%p)\n", This);
-
-    return IUnknown_QueryInterface(This->outer_unk, riid, ppvObj);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
-static ULONG WINAPI ISFDropTarget_AddRef (IDropTarget * iface)
+static ULONG WINAPI ISFDropTarget_AddRef(IDropTarget *iface)
 {
     IGenericSFImpl *This = impl_from_IDropTarget(iface);
-
-    TRACE ("(%p)\n", This);
 
     return IUnknown_AddRef(This->outer_unk);
 }
 
-static ULONG WINAPI ISFDropTarget_Release (IDropTarget * iface)
+static ULONG WINAPI ISFDropTarget_Release(IDropTarget *iface)
 {
     IGenericSFImpl *This = impl_from_IDropTarget(iface);
-
-    TRACE ("(%p)\n", This);
 
     return IUnknown_Release(This->outer_unk);
 }
