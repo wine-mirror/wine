@@ -1868,7 +1868,17 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
       var_t *name;
 
       cur = find_type(decl->var->name, 0);
-      if (cur)
+
+      /*
+       * MIDL allows shadowing types that are declared in imported files.
+       * We don't throw an error in this case and instead add a new type
+       * (which is earlier on the list in hash table, so it will be used
+       * instead of shadowed type).
+       *
+       * FIXME: We may consider string separated type tables for each input
+       *        for cleaner solution.
+       */
+      if (cur && input_name == cur->loc_info.input_name)
           error_loc("%s: redefinition error; original definition was at %s:%d\n",
                     cur->name, cur->loc_info.input_name,
                     cur->loc_info.line_number);
