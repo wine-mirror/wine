@@ -233,6 +233,7 @@ static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
     shift = max((wc->nAvailWidth-width)/2, 0);
   if (align == PFA_RIGHT)
     shift = max(wc->nAvailWidth-width, 0);
+  row->member.row.pt.x = row->member.row.nLMargin + shift;
   for (p = wc->pRowStart; p!=pEnd; p = p->next)
   {
     if (p->type==diRun) { /* FIXME add more run types */
