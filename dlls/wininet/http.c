@@ -2774,10 +2774,8 @@ static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif, DWORD
 
     mode = first_notif && req->read_size ? READMODE_NOBLOCK : READMODE_ASYNC;
     res = refill_read_buffer(req, mode, &read);
-    if(res == ERROR_SUCCESS && !first_notif)
+    if(res == ERROR_SUCCESS)
         avail = get_avail_data(req);
-    if(ret_size)
-        *ret_size = get_avail_data(req);
 
     LeaveCriticalSection( &req->read_section );
 
@@ -2786,10 +2784,17 @@ static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif, DWORD
         http_release_netconn(req, FALSE);
     }
 
-    if(res == ERROR_SUCCESS)
-        send_request_complete(req, req->session->hdr.dwInternalFlags & INET_OPENURL ? (DWORD_PTR)req->hdr.hInternet : 1, avail);
-    else
+    if(res != ERROR_SUCCESS) {
         send_request_complete(req, 0, res);
+        return;
+    }
+
+    if(ret_size)
+        *ret_size = avail;
+    if(first_notif)
+        avail = 0;
+
+    send_request_complete(req, req->session->hdr.dwInternalFlags & INET_OPENURL ? (DWORD_PTR)req->hdr.hInternet : 1, avail);
 }
 
 /* read data from the http connection (the read section must be held) */
