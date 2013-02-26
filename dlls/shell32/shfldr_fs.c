@@ -62,7 +62,7 @@ typedef struct {
     IUnknown IUnknown_inner;
     LONG ref;
     IShellFolder2 IShellFolder2_iface;
-    const IPersistFolder3Vtbl *lpvtblPersistFolder3;
+    IPersistFolder3 IPersistFolder3_iface;
     const IDropTargetVtbl     *lpvtblDropTarget;
     const ISFHelperVtbl       *lpvtblSFHelper;
     IUnknown *outer_unk;
@@ -79,7 +79,7 @@ typedef struct {
 } IGenericSFImpl;
 
 static const IShellFolder2Vtbl sfvt;
-static const IPersistFolder3Vtbl vt_FSFldr_PersistFolder3; /* IPersistFolder3 for a FS_Folder */
+static const IPersistFolder3Vtbl pfvt;
 static const IDropTargetVtbl dtvt;
 static const ISFHelperVtbl shvt;
 
@@ -93,9 +93,9 @@ static inline IGenericSFImpl *impl_from_IShellFolder2(IShellFolder2 *iface)
     return CONTAINING_RECORD(iface, IGenericSFImpl, IShellFolder2_iface);
 }
 
-static inline IGenericSFImpl *impl_from_IPersistFolder3( IPersistFolder3 *iface )
+static inline IGenericSFImpl *impl_from_IPersistFolder3(IPersistFolder3 *iface)
 {
-    return (IGenericSFImpl *)((char*)iface - FIELD_OFFSET(IGenericSFImpl, lpvtblPersistFolder3));
+    return CONTAINING_RECORD(iface, IGenericSFImpl, IPersistFolder3_iface);
 }
 
 static inline IGenericSFImpl *impl_from_IDropTarget( IDropTarget *iface )
@@ -112,10 +112,6 @@ static inline IGenericSFImpl *impl_from_ISFHelper( ISFHelper *iface )
 /*
   converts This to an interface pointer
 */
-#define _IPersist_(This)        (&(This)->lpvtblPersistFolder3)
-#define _IPersistFolder_(This)  (&(This)->lpvtblPersistFolder3)
-#define _IPersistFolder2_(This) (&(This)->lpvtblPersistFolder3)
-#define _IPersistFolder3_(This) (&(This)->lpvtblPersistFolder3)
 #define _IDropTarget_(This)     (&(This)->lpvtblDropTarget)
 #define _ISFHelper_(This)       (&(This)->lpvtblSFHelper)
 
@@ -146,14 +142,9 @@ static HRESULT WINAPI IUnknown_fnQueryInterface(IUnknown *iface, REFIID riid, vo
         *ppvObj = &This->IUnknown_inner;
     else if (IsEqualIID(riid, &IID_IShellFolder) || IsEqualIID(riid, &IID_IShellFolder2))
         *ppvObj = &This->IShellFolder2_iface;
-    else if (IsEqualIID (riid, &IID_IPersist))
-        *ppvObj = _IPersist_ (This);
-    else if (IsEqualIID (riid, &IID_IPersistFolder))
-        *ppvObj = _IPersistFolder_ (This);
-    else if (IsEqualIID (riid, &IID_IPersistFolder2))
-        *ppvObj = _IPersistFolder2_ (This);
-    else if (IsEqualIID (riid, &IID_IPersistFolder3))
-        *ppvObj = _IPersistFolder3_ (This);
+    else if (IsEqualIID(riid, &IID_IPersist) || IsEqualIID(riid, &IID_IPersistFolder) ||
+            IsEqualIID(riid, &IID_IPersistFolder2) || IsEqualIID(riid, &IID_IPersistFolder3))
+        *ppvObj = &This->IPersistFolder3_iface;
     else if (IsEqualIID (riid, &IID_ISFHelper))
         *ppvObj = _ISFHelper_ (This);
     else if (IsEqualIID (riid, &IID_IDropTarget)) {
@@ -238,7 +229,7 @@ IFSFolder_Constructor (IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv)
     sf->ref = 0;
     sf->IUnknown_inner.lpVtbl = &unkvt;
     sf->IShellFolder2_iface.lpVtbl = &sfvt;
-    sf->lpvtblPersistFolder3 = &vt_FSFldr_PersistFolder3;
+    sf->IPersistFolder3_iface.lpVtbl = &pfvt;
     sf->lpvtblDropTarget = &dtvt;
     sf->lpvtblSFHelper = &shvt;
     sf->pclsid = (CLSID *) & CLSID_ShellFSFolder;
@@ -1427,27 +1418,21 @@ static const ISFHelperVtbl shvt =
  * IFSFldr_PersistFolder3_QueryInterface
  *
  */
-static HRESULT WINAPI
-IFSFldr_PersistFolder3_QueryInterface (IPersistFolder3 * iface, REFIID iid,
-                                       LPVOID * ppvObj)
+static HRESULT WINAPI IFSFldr_PersistFolder3_QueryInterface(IPersistFolder3 *iface, REFIID iid,
+        void **ppv)
 {
     IGenericSFImpl *This = impl_from_IPersistFolder3(iface);
 
-    TRACE ("(%p)\n", This);
-
-    return IUnknown_QueryInterface(This->outer_unk, iid, ppvObj);
+    return IUnknown_QueryInterface(This->outer_unk, iid, ppv);
 }
 
 /************************************************************************
  * IFSFldr_PersistFolder3_AddRef
  *
  */
-static ULONG WINAPI
-IFSFldr_PersistFolder3_AddRef (IPersistFolder3 * iface)
+static ULONG WINAPI IFSFldr_PersistFolder3_AddRef(IPersistFolder3 *iface)
 {
     IGenericSFImpl *This = impl_from_IPersistFolder3(iface);
-
-    TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
     return IUnknown_AddRef(This->outer_unk);
 }
@@ -1456,12 +1441,9 @@ IFSFldr_PersistFolder3_AddRef (IPersistFolder3 * iface)
  * IFSFldr_PersistFolder3_Release
  *
  */
-static ULONG WINAPI
-IFSFldr_PersistFolder3_Release (IPersistFolder3 * iface)
+static ULONG WINAPI IFSFldr_PersistFolder3_Release(IPersistFolder3 *iface)
 {
     IGenericSFImpl *This = impl_from_IPersistFolder3(iface);
-
-    TRACE ("(%p)->(count=%u)\n", This, This->ref);
 
     return IUnknown_Release(This->outer_unk);
 }
@@ -1615,7 +1597,7 @@ IFSFldr_PersistFolder3_GetFolderTargetInfo (IPersistFolder3 * iface,
     return E_NOTIMPL;
 }
 
-static const IPersistFolder3Vtbl vt_FSFldr_PersistFolder3 =
+static const IPersistFolder3Vtbl pfvt =
 {
     IFSFldr_PersistFolder3_QueryInterface,
     IFSFldr_PersistFolder3_AddRef,
