@@ -428,6 +428,23 @@ struct MSVCRT___JUMP_BUFFER
     struct MSVCRT__SETJMP_FLOAT128 Xmm14;
     struct MSVCRT__SETJMP_FLOAT128 Xmm15;
 };
+#elif defined(__arm__)
+struct MSVCRT___JUMP_BUFFER
+{
+    unsigned long Frame;
+    unsigned long R4;
+    unsigned long R5;
+    unsigned long R6;
+    unsigned long R7;
+    unsigned long R8;
+    unsigned long R9;
+    unsigned long R10;
+    unsigned long R11;
+    unsigned long Sp;
+    unsigned long Pc;
+    unsigned long Fpscr;
+    unsigned long long D[8];
+};
 #endif /* __i386__ */
 
 struct MSVCRT__diskfree_t {

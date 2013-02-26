@@ -165,18 +165,18 @@
 @ stub __BuildCatchObject
 @ stub __BuildCatchObjectHelper
 @ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr) msvcrt.__C_specific_handler
-@ cdecl -arch=i386,x86_64 __CppXcptFilter(long ptr) msvcrt.__CppXcptFilter
+@ cdecl -arch=i386,x86_64,arm __CppXcptFilter(long ptr) msvcrt.__CppXcptFilter
 @ stub __CxxCallUnwindDelDtor
 @ stub __CxxCallUnwindDtor
 @ stub __CxxCallUnwindStdDelDtor
 @ stub __CxxCallUnwindVecDtor
-@ cdecl -arch=i386,x86_64 __CxxDetectRethrow(ptr) msvcrt.__CxxDetectRethrow
+@ cdecl -arch=i386,x86_64,arm __CxxDetectRethrow(ptr) msvcrt.__CxxDetectRethrow
 @ stub __CxxExceptionFilter
-@ cdecl -arch=i386,x86_64 -norelay __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
-@ cdecl -arch=i386,x86_64 -norelay __CxxFrameHandler2(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler2
-@ cdecl -arch=i386,x86_64 -norelay __CxxFrameHandler3(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler3
+@ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
+@ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler2(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler2
+@ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler3(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler3
 @ stdcall -i386 __CxxLongjmpUnwind(ptr) msvcrt.__CxxLongjmpUnwind
-@ cdecl -arch=i386,x86_64 __CxxQueryExceptionSize() msvcrt.__CxxQueryExceptionSize
+@ cdecl -arch=i386,x86_64,arm __CxxQueryExceptionSize() msvcrt.__CxxQueryExceptionSize
 @ stub __CxxRegisterExceptionObject
 @ stub __CxxUnregisterExceptionObject
 @ stub __DestructExceptionObject
@@ -936,7 +936,7 @@
 @ cdecl _set_purecall_handler(ptr) msvcrt._set_purecall_handler
 @ cdecl _set_sbh_threshold(long) msvcrt._set_sbh_threshold
 @ cdecl _seterrormode(long) msvcrt._seterrormode
-@ cdecl -arch=i386,x86_64 -norelay _setjmp(ptr) msvcrt._setjmp
+@ cdecl -arch=i386,x86_64,arm -norelay _setjmp(ptr) msvcrt._setjmp
 @ cdecl -arch=i386 -norelay _setjmp3(ptr long) msvcrt._setjmp3
 @ cdecl _setmaxstdio(long) msvcrt._setmaxstdio
 @ cdecl _setmbcp(long) msvcrt._setmbcp
@@ -1378,7 +1378,7 @@
 @ cdecl localeconv() msvcrt.localeconv
 @ cdecl log(double) msvcrt.log
 @ cdecl log10(double) msvcrt.log10
-@ cdecl -arch=i386,x86_64 longjmp(ptr long) msvcrt.longjmp
+@ cdecl -arch=i386,x86_64,arm longjmp(ptr long) msvcrt.longjmp
 @ cdecl malloc(long) msvcrt.malloc
 @ cdecl mblen(ptr long) msvcrt.mblen
 @ cdecl mbrlen(ptr long ptr) msvcrt.mbrlen

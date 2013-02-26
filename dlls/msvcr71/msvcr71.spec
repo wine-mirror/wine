@@ -110,14 +110,14 @@
 @ extern _HUGE msvcrt._HUGE
 @ cdecl _Strftime(str long str ptr ptr) msvcrt._Strftime
 @ cdecl _XcptFilter(long ptr) msvcrt._XcptFilter
-@ cdecl -arch=i386,x86_64 __CppXcptFilter(long ptr) msvcrt.__CppXcptFilter
+@ cdecl -arch=i386,x86_64,arm __CppXcptFilter(long ptr) msvcrt.__CppXcptFilter
 @ stub __CxxCallUnwindDtor
 @ stub __CxxCallUnwindVecDtor
-@ cdecl -arch=i386,x86_64 __CxxDetectRethrow(ptr) msvcrt.__CxxDetectRethrow
+@ cdecl -arch=i386,x86_64,arm __CxxDetectRethrow(ptr) msvcrt.__CxxDetectRethrow
 @ stub __CxxExceptionFilter
-@ cdecl -arch=i386,x86_64 -norelay __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
+@ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
 @ stdcall -i386 __CxxLongjmpUnwind(ptr) msvcrt.__CxxLongjmpUnwind
-@ cdecl -arch=i386,x86_64 __CxxQueryExceptionSize() msvcrt.__CxxQueryExceptionSize
+@ cdecl -arch=i386,x86_64,arm __CxxQueryExceptionSize() msvcrt.__CxxQueryExceptionSize
 @ stub __CxxRegisterExceptionObject
 @ stub __CxxUnregisterExceptionObject
 @ stub __DestructExceptionObject
@@ -514,7 +514,7 @@
 @ cdecl _set_sbh_threshold(long) msvcrt._set_sbh_threshold
 @ cdecl _set_security_error_handler(ptr) msvcrt._set_security_error_handler
 @ cdecl _seterrormode(long) msvcrt._seterrormode
-@ cdecl -arch=i386,x86_64 -norelay _setjmp(ptr) msvcrt._setjmp
+@ cdecl -arch=i386,x86_64,arm -norelay _setjmp(ptr) msvcrt._setjmp
 @ cdecl -arch=i386 -norelay _setjmp3(ptr long) msvcrt._setjmp3
 @ cdecl _setmaxstdio(long) msvcrt._setmaxstdio
 @ cdecl _setmbcp(long) msvcrt._setmbcp
@@ -767,7 +767,7 @@
 @ cdecl localtime(ptr) msvcrt.localtime
 @ cdecl log(double) msvcrt.log
 @ cdecl log10(double) msvcrt.log10
-@ cdecl -arch=i386,x86_64 longjmp(ptr long) msvcrt.longjmp
+@ cdecl -arch=i386,x86_64,arm longjmp(ptr long) msvcrt.longjmp
 @ cdecl malloc(long) msvcrt.malloc
 @ cdecl mblen(ptr long) msvcrt.mblen
 @ cdecl mbstowcs(ptr str long) msvcrt.mbstowcs

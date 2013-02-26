@@ -81,6 +81,28 @@ typedef struct _JUMP_BUFFER
 #define _JBLEN  16
 typedef SETJMP_FLOAT128 _JBTYPE;
 
+#elif defined(__arm__)
+
+typedef struct _JUMP_BUFFER
+{
+    unsigned long Frame;
+    unsigned long R4;
+    unsigned long R5;
+    unsigned long R6;
+    unsigned long R7;
+    unsigned long R8;
+    unsigned long R9;
+    unsigned long R10;
+    unsigned long R11;
+    unsigned long Sp;
+    unsigned long Pc;
+    unsigned long Fpscr;
+    unsigned long long D[8];
+} _JUMP_BUFFER;
+
+#define _JBLEN  28
+#define _JBTYPE int
+
 #else
 
 #define _JBLEN 1

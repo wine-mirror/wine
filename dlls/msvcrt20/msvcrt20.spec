@@ -793,7 +793,7 @@
 @ stdcall _CxxThrowException(long long) msvcrt._CxxThrowException
 @ extern _HUGE msvcrt._HUGE
 @ cdecl _XcptFilter(long ptr) msvcrt._XcptFilter
-@ cdecl -arch=i386,x86_64 -norelay __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
+@ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
 @ stdcall -i386 __CxxLongjmpUnwind(ptr) msvcrt.__CxxLongjmpUnwind
 @ cdecl __STRINGTOLD(ptr ptr str long) msvcrt.__STRINGTOLD
 @ extern __argc msvcrt.__argc
@@ -1103,7 +1103,7 @@
 @ cdecl _searchenv(str str ptr) msvcrt._searchenv
 @ stdcall -i386 __seh_longjmp_unwind@4(ptr) msvcrt._seh_longjmp_unwind
 @ cdecl _seterrormode(long) msvcrt._seterrormode
-@ cdecl -arch=i386,x86_64 -norelay _setjmp(ptr) msvcrt._setjmp
+@ cdecl -arch=i386,x86_64,arm -norelay _setjmp(ptr) msvcrt._setjmp
 @ cdecl -arch=i386 -norelay _setjmp3(ptr long) msvcrt._setjmp3
 @ cdecl _setmbcp(long) msvcrt._setmbcp
 @ cdecl _setmode(long long) msvcrt._setmode
@@ -1359,7 +1359,7 @@
 @ cdecl localtime(ptr) msvcrt.localtime
 @ cdecl log(double) msvcrt.log
 @ cdecl log10(double) msvcrt.log10
-@ cdecl -arch=i386,x86_64 longjmp(ptr long) msvcrt.longjmp
+@ cdecl -arch=i386,x86_64,arm longjmp(ptr long) msvcrt.longjmp
 @ cdecl malloc(long) msvcrt.malloc
 @ cdecl mblen(ptr long) msvcrt.mblen
 @ cdecl mbstowcs(ptr str long) msvcrt.mbstowcs

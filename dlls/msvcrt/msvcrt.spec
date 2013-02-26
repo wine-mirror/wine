@@ -146,17 +146,17 @@
 @ cdecl _Strftime(str long str ptr ptr)
 @ cdecl _XcptFilter(long ptr)
 @ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr) ntdll.__C_specific_handler
-@ cdecl -arch=i386,x86_64 __CppXcptFilter(long ptr)
+@ cdecl -arch=i386,x86_64,arm __CppXcptFilter(long ptr)
 # stub __CxxCallUnwindDelDtor
 # stub __CxxCallUnwindDtor
 # stub __CxxCallUnwindVecDtor
-@ cdecl -arch=i386,x86_64 __CxxDetectRethrow(ptr)
+@ cdecl -arch=i386,x86_64,arm __CxxDetectRethrow(ptr)
 # stub __CxxExceptionFilter
-@ cdecl -arch=i386,x86_64 -norelay __CxxFrameHandler(ptr ptr ptr ptr)
-@ cdecl -arch=i386,x86_64 -norelay __CxxFrameHandler2(ptr ptr ptr ptr) __CxxFrameHandler
-@ cdecl -arch=i386,x86_64 -norelay __CxxFrameHandler3(ptr ptr ptr ptr) __CxxFrameHandler
+@ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler(ptr ptr ptr ptr)
+@ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler2(ptr ptr ptr ptr) __CxxFrameHandler
+@ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler3(ptr ptr ptr ptr) __CxxFrameHandler
 @ stdcall -i386 __CxxLongjmpUnwind(ptr)
-@ cdecl -arch=i386,x86_64 __CxxQueryExceptionSize()
+@ cdecl -arch=i386,x86_64,arm __CxxQueryExceptionSize()
 # stub __CxxRegisterExceptionObject
 # stub __CxxUnregisterExceptionObject
 # stub __DestructExceptionObject
@@ -871,9 +871,9 @@
 # stub _set_output_format(long)
 @ cdecl _set_sbh_threshold(long)
 @ cdecl _seterrormode(long)
-@ cdecl -arch=i386,x86_64 -norelay _setjmp(ptr) MSVCRT__setjmp
+@ cdecl -arch=i386,x86_64,arm -norelay _setjmp(ptr) MSVCRT__setjmp
 @ cdecl -arch=i386 -norelay _setjmp3(ptr long) MSVCRT__setjmp3
-@ cdecl -arch=x86_64 -norelay _setjmpex(ptr ptr) MSVCRT__setjmpex
+@ cdecl -arch=x86_64,arm -norelay _setjmpex(ptr ptr) MSVCRT__setjmpex
 @ cdecl _setmaxstdio(long) MSVCRT__setmaxstdio
 @ cdecl _setmbcp(long)
 @ cdecl _setmode(long long) MSVCRT__setmode
@@ -1325,7 +1325,7 @@
 @ cdecl log10(double) MSVCRT_log10
 @ cdecl -arch=x86_64 logf(float) MSVCRT_logf
 @ cdecl -arch=x86_64 log10f(float) MSVCRT_log10f
-@ cdecl -arch=i386,x86_64 longjmp(ptr long) MSVCRT_longjmp
+@ cdecl -arch=i386,x86_64,arm longjmp(ptr long) MSVCRT_longjmp
 @ cdecl malloc(long) MSVCRT_malloc
 @ cdecl mblen(ptr long) MSVCRT_mblen
 @ cdecl mbrlen(ptr long ptr) MSVCRT_mbrlen

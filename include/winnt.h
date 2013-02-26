@@ -1628,6 +1628,45 @@ typedef struct _CONTEXT
 #define EXCEPTION_WRITE_FAULT   1
 #define EXCEPTION_EXECUTE_FAULT 8
 
+typedef struct _RUNTIME_FUNCTION
+{
+    DWORD BeginAddress;
+    union {
+        DWORD UnwindData;
+        struct {
+            DWORD Flag : 2;
+            DWORD FunctionLength : 11;
+            DWORD Ret : 2;
+            DWORD H : 1;
+            DWORD Reg : 3;
+            DWORD R : 1;
+            DWORD L : 1;
+            DWORD C : 1;
+            DWORD StackAdjust : 10;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+} RUNTIME_FUNCTION, *PRUNTIME_FUNCTION;
+
+#define UNWIND_HISTORY_TABLE_SIZE 12
+
+typedef struct _UNWIND_HISTORY_TABLE_ENTRY
+{
+    DWORD ImageBase;
+    PRUNTIME_FUNCTION FunctionEntry;
+} UNWIND_HISTORY_TABLE_ENTRY, *PUNWIND_HISTORY_TABLE_ENTRY;
+
+typedef struct _UNWIND_HISTORY_TABLE
+{
+    DWORD Count;
+    BYTE  LocalHint;
+    BYTE  GlobalHint;
+    BYTE  Search;
+    BYTE  Once;
+    DWORD LowAddress;
+    DWORD HighAddress;
+    UNWIND_HISTORY_TABLE_ENTRY Entry[UNWIND_HISTORY_TABLE_SIZE];
+} UNWIND_HISTORY_TABLE, *PUNWIND_HISTORY_TABLE;
+
 typedef struct _CONTEXT {
 	/* The flags values within this flag control the contents of
 	   a CONTEXT record.
