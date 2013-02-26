@@ -891,7 +891,7 @@ static BOOL ipv6_to_number(const ipv6_address *address, USHORT number[8]) {
                 /* Means we just passed the elision and need to add its values to
                  * 'number' before we do anything else.
                  */
-                DWORD j = 0;
+                INT j;
                 for(j = 0; j < address->elision_size; j+=2)
                     number[cur_component++] = 0;
 
@@ -904,7 +904,8 @@ static BOOL ipv6_to_number(const ipv6_address *address, USHORT number[8]) {
 
     /* Case when the elision appears after the h16 components. */
     if(!already_passed_elision && address->elision) {
-        for(i = 0; i < address->elision_size; i+=2)
+        INT j;
+        for(j = 0; j < address->elision_size; j+=2)
             number[cur_component++] = 0;
     }
 
