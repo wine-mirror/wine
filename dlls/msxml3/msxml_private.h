@@ -294,6 +294,7 @@ extern LONG xmldoc_add_ref( xmlDocPtr doc ) DECLSPEC_HIDDEN;
 extern LONG xmldoc_release( xmlDocPtr doc ) DECLSPEC_HIDDEN;
 extern LONG xmldoc_add_refs( xmlDocPtr doc, LONG refs ) DECLSPEC_HIDDEN;
 extern LONG xmldoc_release_refs ( xmlDocPtr doc, LONG refs ) DECLSPEC_HIDDEN;
+extern int xmlnode_get_inst_cnt( xmlnode *node ) DECLSPEC_HIDDEN;
 extern HRESULT xmldoc_add_orphan( xmlDocPtr doc, xmlNodePtr node ) DECLSPEC_HIDDEN;
 extern HRESULT xmldoc_remove_orphan( xmlDocPtr doc, xmlNodePtr node ) DECLSPEC_HIDDEN;
 extern void xmldoc_link_xmldecl(xmlDocPtr doc, xmlNodePtr node) DECLSPEC_HIDDEN;

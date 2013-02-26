@@ -402,7 +402,7 @@ static int node_get_inst_cnt(xmlNodePtr node)
     return ret;
 }
 
-static int xmlnode_get_inst_cnt(xmlnode *node)
+int xmlnode_get_inst_cnt(xmlnode *node)
 {
     return node_get_inst_cnt(node->node);
 }

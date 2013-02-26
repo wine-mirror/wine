@@ -1538,7 +1538,9 @@ static HRESULT WINAPI domdoc_put_documentElement(
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
     IXMLDOMNode *elementNode;
     xmlNodePtr oldRoot;
+    xmlDocPtr old_doc;
     xmlnode *xmlNode;
+    int refcount = 0;
     HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, DOMElement);
@@ -1554,7 +1556,14 @@ static HRESULT WINAPI domdoc_put_documentElement(
         if(xmldoc_remove_orphan(xmlNode->node->doc, xmlNode->node) != S_OK)
             WARN("%p is not an orphan of %p\n", xmlNode->node->doc, xmlNode->node);
 
+    old_doc = xmlNode->node->doc;
+    if (old_doc != get_doc(This))
+        refcount = xmlnode_get_inst_cnt(xmlNode);
+
+    /* old root is still orphaned by its document, update refcount from new root */
+    if (refcount) xmldoc_add_refs(get_doc(This), refcount);
     oldRoot = xmlDocSetRootElement( get_doc(This), xmlNode->node);
+    if (refcount) xmldoc_release_refs(old_doc, refcount);
     IXMLDOMNode_Release( elementNode );
 
     if(oldRoot)
