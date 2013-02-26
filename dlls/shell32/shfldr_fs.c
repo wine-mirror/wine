@@ -1612,27 +1612,6 @@ static const IPersistFolder3Vtbl pfvt =
 /****************************************************************************
  * ISFDropTarget implementation
  */
-static BOOL
-ISFDropTarget_QueryDrop (IDropTarget * iface, DWORD dwKeyState,
-                         LPDWORD pdwEffect)
-{
-    DWORD dwEffect = *pdwEffect;
-
-    IGenericSFImpl *This = impl_from_IDropTarget(iface);
-
-    *pdwEffect = DROPEFFECT_NONE;
-
-    if (This->fAcceptFmt) { /* Does our interpretation of the keystate ... */
-        *pdwEffect = KeyStateToDropEffect (dwKeyState);
-
-        /* ... matches the desired effect ? */
-        if (dwEffect & *pdwEffect) {
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
 static HRESULT WINAPI
 ISFDropTarget_QueryInterface (IDropTarget * iface, REFIID riid, LPVOID * ppvObj)
 {
@@ -1673,7 +1652,10 @@ ISFDropTarget_DragEnter (IDropTarget * iface, IDataObject * pDataObject,
 
     InitFormatEtc (fmt, This->cfShellIDList, TYMED_HGLOBAL);
     This->fAcceptFmt = IDataObject_QueryGetData (pDataObject, &fmt) == S_OK;
-    ISFDropTarget_QueryDrop (iface, dwKeyState, pdwEffect);
+    if (This->fAcceptFmt)
+        *pdwEffect = KeyStateToDropEffect(dwKeyState);
+    else
+        *pdwEffect = DROPEFFECT_NONE;
 
     return S_OK;
 }
@@ -1689,7 +1671,10 @@ ISFDropTarget_DragOver (IDropTarget * iface, DWORD dwKeyState, POINTL pt,
     if (!pdwEffect)
         return E_INVALIDARG;
 
-    ISFDropTarget_QueryDrop (iface, dwKeyState, pdwEffect);
+    if (This->fAcceptFmt)
+        *pdwEffect = KeyStateToDropEffect(dwKeyState);
+    else
+        *pdwEffect = DROPEFFECT_NONE;
 
     return S_OK;
 }
