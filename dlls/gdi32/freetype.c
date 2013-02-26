@@ -3505,6 +3505,46 @@ static void set_value_key(HKEY hkey, const char *name, const char *value)
         RegDeleteValueA(hkey, name);
 }
 
+static void update_font_association_info(UINT current_ansi_codepage)
+{
+    static const char *font_assoc_reg_key = "System\\CurrentControlSet\\Control\\FontAssoc";
+    static const char *assoc_charset_subkey = "Associated Charset";
+
+    if (is_dbcs_ansi_cp(current_ansi_codepage))
+    {
+        HKEY hkey;
+        if (RegCreateKeyA(HKEY_LOCAL_MACHINE, font_assoc_reg_key, &hkey) == ERROR_SUCCESS)
+        {
+            HKEY hsubkey;
+            if (RegCreateKeyA(hkey, assoc_charset_subkey, &hsubkey) == ERROR_SUCCESS)
+            {
+                switch (current_ansi_codepage)
+                {
+                case 932:
+                    set_value_key(hsubkey, "ANSI(00)", "NO");
+                    set_value_key(hsubkey, "OEM(FF)", "NO");
+                    set_value_key(hsubkey, "SYMBOL(02)", "NO");
+                    break;
+                case 936:
+                case 949:
+                case 950:
+                    set_value_key(hsubkey, "ANSI(00)", "YES");
+                    set_value_key(hsubkey, "OEM(FF)", "YES");
+                    set_value_key(hsubkey, "SYMBOL(02)", "NO");
+                    break;
+                }
+                RegCloseKey(hsubkey);
+            }
+
+            /* TODO: Associated DefaultFonts */
+
+            RegCloseKey(hkey);
+        }
+    }
+    else
+        RegDeleteTreeA(HKEY_LOCAL_MACHINE, font_assoc_reg_key);
+}
+
 static void update_font_info(void)
 {
     static const WCHAR logpixels[] = { 'L','o','g','P','i','x','e','l','s',0 };
@@ -3538,6 +3578,7 @@ static void update_font_info(void)
     if (is_dbcs_ansi_cp(ansi_cp))
         use_default_fallback = TRUE;
 
+    buf[0] = 0;
     len = sizeof(buf);
     if (RegQueryValueExA(hkey, "Codepages", 0, &type, (BYTE *)buf, &len) == ERROR_SUCCESS && type == REG_SZ)
     {
@@ -3615,6 +3656,11 @@ static void update_font_info(void)
     }
     if (!done)
         FIXME("there is no font defaults for codepages %u,%u\n", ansi_cp, oem_cp);
+
+    /* update locale dependent font association info in registry.
+       update only when codepages changed, not logpixels. */
+    if (strcmp(buf, cpbuf) != 0)
+        update_font_association_info(ansi_cp);
 }
 
 static BOOL init_freetype(void)

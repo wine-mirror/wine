@@ -590,10 +590,65 @@ HFONT WINAPI CreateFontW( INT height, INT width, INT esc,
     return CreateFontIndirectW( &logfont );
 }
 
+#define ASSOC_CHARSET_OEM    1
+#define ASSOC_CHARSET_ANSI   2
+#define ASSOC_CHARSET_SYMBOL 4
+
+static DWORD get_associated_charset_info(void)
+{
+    static DWORD associated_charset = -1;
+
+    if (associated_charset == -1)
+    {
+        static const WCHAR assoc_charset_reg_keyW[] = {'S','y','s','t','e','m','\\',
+            'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+            'C','o','n','t','r','o','l','\\','F','o','n','t','A','s','s','o','c','\\',
+            'A','s','s','o','c','i','a','t','e','d',' ','C','h','a','r','s','e','t','\0'};
+        static const WCHAR ansiW[] = {'A','N','S','I','(','0','0',')','\0'};
+        static const WCHAR oemW[] = {'O','E','M','(','F','F',')','\0'};
+        static const WCHAR symbolW[] = {'S','Y','M','B','O','L','(','0','2',')','\0'};
+        static const WCHAR yesW[] = {'Y','E','S','\0'};
+        HKEY hkey;
+        WCHAR dataW[32];
+        DWORD type, data_len;
+
+        associated_charset = 0;
+
+        if (RegOpenKeyW(HKEY_LOCAL_MACHINE,
+                        assoc_charset_reg_keyW, &hkey) != ERROR_SUCCESS)
+            return 0;
+
+        data_len = sizeof(dataW);
+        if (!RegQueryValueExW(hkey, ansiW, NULL, &type, (LPBYTE)dataW, &data_len) &&
+            type == REG_SZ && !strcmpiW(dataW, yesW))
+            associated_charset |= ASSOC_CHARSET_ANSI;
+
+        data_len = sizeof(dataW);
+        if (!RegQueryValueExW(hkey, oemW, NULL, &type, (LPBYTE)dataW, &data_len) &&
+            type == REG_SZ && !strcmpiW(dataW, yesW))
+            associated_charset |= ASSOC_CHARSET_OEM;
+
+        data_len = sizeof(dataW);
+        if (!RegQueryValueExW(hkey, symbolW, NULL, &type, (LPBYTE)dataW, &data_len) &&
+            type == REG_SZ && !strcmpiW(dataW, yesW))
+            associated_charset |= ASSOC_CHARSET_SYMBOL;
+
+        RegCloseKey(hkey);
+
+        TRACE("associated_charset = %d\n", associated_charset);
+    }
+
+    return associated_charset;
+}
+
 static void update_font_code_page( DC *dc )
 {
     CHARSETINFO csi;
     int charset = GetTextCharsetInfo( dc->hSelf, NULL, 0 );
+
+    if (charset == ANSI_CHARSET &&
+        get_associated_charset_info() & ASSOC_CHARSET_ANSI)
+        charset = DEFAULT_CHARSET;
 
     /* Hmm, nicely designed api this one! */
     if (TranslateCharsetInfo( ULongToPtr(charset), &csi, TCI_SRCCHARSET) )

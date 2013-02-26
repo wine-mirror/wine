@@ -2083,6 +2083,90 @@ static void test_font_charset(void)
         skip("Symbol or Wingdings is not installed\n");
 }
 
+static void test_GdiGetCodePage(void)
+{
+    static const struct _matching_data
+    {
+        UINT   current_codepage;
+        LPCSTR lfFaceName;
+        UCHAR  lfCharSet;
+        UINT   expected_codepage;
+    } matching_data[] = {
+        {1251, "Arial", ANSI_CHARSET, 1252},
+        {1251, "Tahoma", ANSI_CHARSET, 1252},
+
+        {1252, "Arial", ANSI_CHARSET, 1252},
+        {1252, "Tahoma", ANSI_CHARSET, 1252},
+
+        {1253, "Arial", ANSI_CHARSET, 1252},
+        {1253, "Tahoma", ANSI_CHARSET, 1252},
+
+        { 932, "Arial", ANSI_CHARSET, 1252}, /* Japanese Windows returns 1252, not 932 */
+        { 932, "Tahoma", ANSI_CHARSET, 1252},
+        { 932, "MS UI Gothic", ANSI_CHARSET, 1252},
+
+        { 936, "Arial", ANSI_CHARSET, 936},
+        { 936, "Tahoma", ANSI_CHARSET, 936},
+        { 936, "Simsun", ANSI_CHARSET, 936},
+
+        { 949, "Arial", ANSI_CHARSET, 949},
+        { 949, "Tahoma", ANSI_CHARSET, 949},
+        { 949, "Gulim",  ANSI_CHARSET, 949},
+
+        { 950, "Arial", ANSI_CHARSET, 950},
+        { 950, "Tahoma", ANSI_CHARSET, 950},
+        { 950, "PMingLiU", ANSI_CHARSET, 950},
+    };
+    HDC         hdc;
+    LOGFONT     lf;
+    HFONT       hfont;
+    UINT        charset, acp;
+    DWORD       codepage;
+    int         i;
+
+    if (!pGdiGetCodePage)
+    {
+        skip("GdiGetCodePage not available on this platform\n");
+        return;
+    }
+
+    acp = GetACP();
+
+    for (i = 0; i < sizeof(matching_data) / sizeof(struct _matching_data); i++)
+    {
+        /* only test data matched current locale codepage */
+        if (matching_data[i].current_codepage != acp)
+            continue;
+
+        if (!is_font_installed(matching_data[i].lfFaceName))
+        {
+            skip("%s is not installed\n", matching_data[i].lfFaceName);
+            continue;
+        }
+
+        hdc = GetDC(0);
+
+        memset(&lf, 0, sizeof(lf));
+        lf.lfHeight = -16;
+        lf.lfCharSet = matching_data[i].lfCharSet;
+        lstrcpyA(lf.lfFaceName, matching_data[i].lfFaceName);
+        hfont = CreateFontIndirectA(&lf);
+        ok(hfont != 0, "CreateFontIndirectA error %u\n", GetLastError());
+
+        hfont = SelectObject(hdc, hfont);
+        charset = GetTextCharset(hdc);
+        codepage = pGdiGetCodePage(hdc);
+        trace("acp=%d, lfFaceName=%s, lfCharSet=%d, GetTextCharset=%d, GdiGetCodePage=%d, expected codepage=%d\n",
+              acp, lf.lfFaceName, lf.lfCharSet, charset, codepage, matching_data[i].expected_codepage);
+        ok(codepage == matching_data[i].expected_codepage,
+           "GdiGetCodePage should have returned %d, got %d\n", matching_data[i].expected_codepage, codepage);
+
+        hfont = SelectObject(hdc, hfont);
+        DeleteObject(hfont);
+        ReleaseDC(NULL, hdc);
+    }
+}
+
 static void test_GetFontUnicodeRanges(void)
 {
     LOGFONTA lf;
@@ -4902,6 +4986,7 @@ START_TEST(font)
     test_GetOutlineTextMetrics();
     test_SetTextJustification();
     test_font_charset();
+    test_GdiGetCodePage();
     test_GetFontUnicodeRanges();
     test_nonexistent_font();
     test_orientation();
