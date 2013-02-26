@@ -1445,7 +1445,6 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		switch (evt & 0x0F) {
 		case 0x00:	/* System Exclusive, don't do it on modData,
 				 * should require modLongData*/
-		case 0x01:	/* Undefined */
 		case 0x04:	/* Undefined. */
 		case 0x05:	/* Undefined. */
 		case 0x07:	/* End of Exclusive. */
@@ -1470,6 +1469,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		    SEQ_MIDIOUT(dev, 0x01);
 		    SEQ_MIDIOUT(dev, 0xf7);
 		    break;
+		case 0x01:	/* MTC Quarter frame */
 		case 0x03:	/* Song Select. */
 		    SEQ_MIDIOUT(dev, evt);
 		    SEQ_MIDIOUT(dev, d1);
