@@ -66,7 +66,6 @@
 #include "sspi.h"
 #include "wincrypt.h"
 #include "winuser.h"
-#include "cryptuiapi.h"
 
 #include "internet.h"
 #include "wine/debug.h"
@@ -6111,49 +6110,4 @@ BOOL WINAPI IsHostInProxyBypassList(DWORD flags, LPCSTR szHost, DWORD length)
 {
    FIXME("STUB: flags=%d host=%s length=%d\n",flags,szHost,length);
    return FALSE;
-}
-
-/***********************************************************************
- *           InternetShowSecurityInfoByURLA (@)
- */
-BOOL WINAPI InternetShowSecurityInfoByURLA(LPCSTR url, HWND window)
-{
-   FIXME("stub: %s %p\n", url, window);
-   return FALSE;
-}
-
-/***********************************************************************
- *           InternetShowSecurityInfoByURLW (@)
- */
-BOOL WINAPI InternetShowSecurityInfoByURLW(LPCWSTR url, HWND window)
-{
-   FIXME("stub: %s %p\n", debugstr_w(url), window);
-   return FALSE;
-}
-
-/***********************************************************************
- *           ShowX509EncodedCertificate (@)
- */
-DWORD WINAPI ShowX509EncodedCertificate(HWND parent, LPBYTE cert, DWORD len)
-{
-    PCCERT_CONTEXT certContext = CertCreateCertificateContext(X509_ASN_ENCODING,
-        cert, len);
-    DWORD ret;
-
-    if (certContext)
-    {
-        CRYPTUI_VIEWCERTIFICATE_STRUCTW view;
-
-        memset(&view, 0, sizeof(view));
-        view.hwndParent = parent;
-        view.pCertContext = certContext;
-        if (CryptUIDlgViewCertificateW(&view, NULL))
-            ret = ERROR_SUCCESS;
-        else
-            ret = GetLastError();
-        CertFreeCertificateContext(certContext);
-    }
-    else
-        ret = GetLastError();
-    return ret;
 }
