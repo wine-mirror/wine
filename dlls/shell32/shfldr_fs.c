@@ -78,11 +78,6 @@ typedef struct {
     BOOL fAcceptFmt;       /* flag for pending Drop */
 } IGenericSFImpl;
 
-static const IShellFolder2Vtbl sfvt;
-static const IPersistFolder3Vtbl pfvt;
-static const IDropTargetVtbl dtvt;
-static const ISFHelperVtbl shvt;
-
 static inline IGenericSFImpl *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, IGenericSFImpl, IUnknown_inner);
@@ -197,45 +192,6 @@ static const shvheader GenericSFHeader[] = {
 };
 
 #define GENERICSHELLVIEWCOLUMNS 5
-
-/**************************************************************************
-* IFSFolder_Constructor
-*
-* NOTES
-*  creating undocumented ShellFS_Folder as part of an aggregation
-*  {F3364BA0-65B9-11CE-A9BA-00AA004AE837}
-*
-*/
-HRESULT WINAPI
-IFSFolder_Constructor (IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv)
-{
-    IGenericSFImpl *sf;
-
-    TRACE ("unkOut=%p %s\n", pUnkOuter, shdebugstr_guid (riid));
-
-    if (pUnkOuter && !IsEqualIID (riid, &IID_IUnknown))
-        return CLASS_E_NOAGGREGATION;
-    sf = LocalAlloc (LMEM_ZEROINIT, sizeof (IGenericSFImpl));
-    if (!sf)
-        return E_OUTOFMEMORY;
-
-    sf->ref = 0;
-    sf->IUnknown_inner.lpVtbl = &unkvt;
-    sf->IShellFolder2_iface.lpVtbl = &sfvt;
-    sf->IPersistFolder3_iface.lpVtbl = &pfvt;
-    sf->IDropTarget_iface.lpVtbl = &dtvt;
-    sf->ISFHelper_iface.lpVtbl = &shvt;
-    sf->pclsid = (CLSID *) & CLSID_ShellFSFolder;
-    sf->outer_unk = pUnkOuter ? pUnkOuter : &sf->IUnknown_inner;
-
-    if (FAILED(IUnknown_QueryInterface(&sf->IUnknown_inner, riid, ppv))) {
-        IUnknown_Release(&sf->IUnknown_inner);
-        return E_NOINTERFACE;
-    }
-
-    TRACE ("--%p\n", *ppv);
-    return S_OK;
-}
 
 /**************************************************************************
  *  IShellFolder_fnQueryInterface
@@ -1689,3 +1645,33 @@ static const IDropTargetVtbl dtvt = {
     ISFDropTarget_DragLeave,
     ISFDropTarget_Drop
 };
+
+HRESULT WINAPI IFSFolder_Constructor(IUnknown *outer_unk, REFIID riid, void **ppv)
+{
+    IGenericSFImpl *sf;
+    HRESULT hr;
+
+    TRACE("outer_unk=%p %s\n", outer_unk, shdebugstr_guid(riid));
+
+    if (outer_unk && !IsEqualIID(riid, &IID_IUnknown))
+        return CLASS_E_NOAGGREGATION;
+
+    sf = LocalAlloc(LMEM_ZEROINIT, sizeof(*sf));
+    if (!sf)
+        return E_OUTOFMEMORY;
+
+    sf->ref = 1;
+    sf->IUnknown_inner.lpVtbl = &unkvt;
+    sf->IShellFolder2_iface.lpVtbl = &sfvt;
+    sf->IPersistFolder3_iface.lpVtbl = &pfvt;
+    sf->IDropTarget_iface.lpVtbl = &dtvt;
+    sf->ISFHelper_iface.lpVtbl = &shvt;
+    sf->pclsid = (CLSID *) & CLSID_ShellFSFolder;
+    sf->outer_unk = outer_unk ? outer_unk : &sf->IUnknown_inner;
+
+    hr = IUnknown_QueryInterface(&sf->IUnknown_inner, riid, ppv);
+    IUnknown_Release(&sf->IUnknown_inner);
+
+    TRACE ("--%p\n", *ppv);
+    return hr;
+}
