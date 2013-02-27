@@ -443,6 +443,17 @@ static void unload_mspatch(void)
     FreeLibrary(hmspatcha);
 }
 
+static MSIFILEPATCH *get_next_filepatch( MSIPACKAGE *package, const WCHAR *key )
+{
+    MSIFILEPATCH *patch;
+
+    LIST_FOR_EACH_ENTRY( patch, &package->filepatches, MSIFILEPATCH, entry )
+    {
+        if (!patch->IsApplied && !strcmpW( key, patch->File->File )) return patch;
+    }
+    return NULL;
+}
+
 static BOOL patchfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
                           LPWSTR *path, DWORD *attrs, PVOID user)
 {
@@ -455,12 +466,8 @@ static BOOL patchfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
         if (temp_folder[0] == '\0')
             GetTempPathW(MAX_PATH, temp_folder);
 
-        p = msi_get_loaded_filepatch(package, file);
-        if (!p)
-        {
-            TRACE("unknown file in cabinet (%s)\n", debugstr_w(file));
-            return FALSE;
-        }
+        if (!(p = get_next_filepatch(package, file))) return FALSE;
+
         GetTempFileNameW(temp_folder, NULL, 0, patch_path);
 
         *path = strdupW(patch_path);

@@ -684,18 +684,6 @@ MSIFILE *msi_get_loaded_file( MSIPACKAGE *package, const WCHAR *key )
     return NULL;
 }
 
-MSIFILEPATCH *msi_get_loaded_filepatch( MSIPACKAGE *package, const WCHAR *key )
-{
-    MSIFILEPATCH *patch;
-
-    /* FIXME: There might be more than one patch */
-    LIST_FOR_EACH_ENTRY( patch, &package->filepatches, MSIFILEPATCH, entry )
-    {
-        if (!strcmpW( key, patch->File->File )) return patch;
-    }
-    return NULL;
-}
-
 MSIFOLDER *msi_get_loaded_folder( MSIPACKAGE *package, const WCHAR *dir )
 {
     MSIFOLDER *folder;
