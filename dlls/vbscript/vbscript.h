@@ -86,7 +86,7 @@ typedef struct {
     HRESULT (*proc)(vbdisp_t*,VARIANT*,unsigned,VARIANT*);
     DWORD flags;
     unsigned min_args;
-    unsigned max_args;
+    UINT_PTR max_args;
 } builtin_prop_t;
 
 typedef struct _class_desc_t {
@@ -333,6 +333,11 @@ void release_vbscode(vbscode_t*) DECLSPEC_HIDDEN;
 HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,vbscode_t**) DECLSPEC_HIDDEN;
 HRESULT exec_script(script_ctx_t*,function_t*,IDispatch*,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
 void release_dynamic_vars(dynamic_var_t*) DECLSPEC_HIDDEN;
+
+typedef struct {
+    UINT16 len;
+    WCHAR buf[7];
+} string_constant_t;
 
 #define TID_LIST \
     XDIID(ErrObj) \

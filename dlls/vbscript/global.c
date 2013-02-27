@@ -1609,59 +1609,15 @@ static HRESULT Global_GetRef(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VA
     return E_NOTIMPL;
 }
 
-static HRESULT Global_vbCr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbCrLf(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbNewLine(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbFormFeed(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbLf(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbNullChar(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbNullString(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbTab(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbVerticalTab(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
+static const string_constant_t vbCr          = {1, {'\r'}};
+static const string_constant_t vbCrLf        = {2, {'\r','\n'}};
+static const string_constant_t vbNewLine     = {2, {'\r','\n'}};
+static const string_constant_t vbFormFeed    = {1, {0xc}};
+static const string_constant_t vbLf          = {1, {'\n'}};
+static const string_constant_t vbNullChar    = {1};
+static const string_constant_t vbNullString  = {0};
+static const string_constant_t vbTab         = {1, {'\t'}};
+static const string_constant_t vbVerticalTab = {1, {0xb}};
 
 static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_VBUSESYSTEM,        NULL, BP_GET, VT_I2, 0},
@@ -1736,15 +1692,15 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_VBRED,              NULL, BP_GET, VT_I4, 0x0000ff},
     {DISPID_GLOBAL_VBWHITE,            NULL, BP_GET, VT_I4, 0xffffff},
     {DISPID_GLOBAL_VBYELLOW,           NULL, BP_GET, VT_I4, 0x00ffff},
-    {DISPID_GLOBAL_VBCR,               Global_vbCr, BP_GET},
-    {DISPID_GLOBAL_VBCRLF,             Global_vbCrLf, BP_GET},
-    {DISPID_GLOBAL_VBNEWLINE,          Global_vbNewLine, BP_GET},
-    {DISPID_GLOBAL_VBFORMFEED,         Global_vbFormFeed, BP_GET},
-    {DISPID_GLOBAL_VBLF,               Global_vbLf, BP_GET},
-    {DISPID_GLOBAL_VBNULLCHAR,         Global_vbNullChar, BP_GET},
-    {DISPID_GLOBAL_VBNULLSTRING,       Global_vbNullString, BP_GET},
-    {DISPID_GLOBAL_VBTAB,              Global_vbTab, BP_GET},
-    {DISPID_GLOBAL_VBVERTICALTAB,      Global_vbVerticalTab, BP_GET},
+    {DISPID_GLOBAL_VBCR,               NULL, BP_GET, VT_BSTR, (UINT_PTR)&vbCr},
+    {DISPID_GLOBAL_VBCRLF,             NULL, BP_GET, VT_BSTR, (UINT_PTR)&vbCrLf},
+    {DISPID_GLOBAL_VBNEWLINE,          NULL, BP_GET, VT_BSTR, (UINT_PTR)&vbNewLine},
+    {DISPID_GLOBAL_VBFORMFEED,         NULL, BP_GET, VT_BSTR, (UINT_PTR)&vbFormFeed},
+    {DISPID_GLOBAL_VBLF,               NULL, BP_GET, VT_BSTR, (UINT_PTR)&vbLf},
+    {DISPID_GLOBAL_VBNULLCHAR,         NULL, BP_GET, VT_BSTR, (UINT_PTR)&vbNullChar},
+    {DISPID_GLOBAL_VBNULLSTRING,       NULL, BP_GET, VT_BSTR, (UINT_PTR)&vbNullString},
+    {DISPID_GLOBAL_VBTAB,              NULL, BP_GET, VT_BSTR, (UINT_PTR)&vbTab},
+    {DISPID_GLOBAL_VBVERTICALTAB,      NULL, BP_GET, VT_BSTR, (UINT_PTR)&vbVerticalTab},
     {DISPID_GLOBAL_CCUR,                      Global_CCur, 0, 1},
     {DISPID_GLOBAL_CINT,                      Global_CInt, 0, 1},
     {DISPID_GLOBAL_CLNG,                      Global_CLng, 0, 1},

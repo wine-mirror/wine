@@ -48,6 +48,11 @@ Sub TestConstantI4(name, val, exval)
     Call ok(getVT(val) = "VT_I4*", "getVT(" & name & ") = " & getVT(val))
 End Sub
 
+Sub TestConstantBSTR(name, val, exval)
+    Call ok(val = exval, name & " =  " & val & " expected " & exval)
+    Call ok(getVT(val) = "VT_BSTR*", "getVT(" & name & ") = " & getVT(val))
+End Sub
+
 TestConstant "vbEmpty", vbEmpty, 0
 TestConstant "vbNull", vbNull, 1
 TestConstant "vbLong", vbLong, 3
@@ -103,6 +108,15 @@ TestConstantI4 "vbMagenta", vbMagenta, &hff00ff&
 TestConstantI4 "vbRed", vbRed, &h0000ff&
 TestConstantI4 "vbWhite", vbWhite, &hffffff&
 TestConstantI4 "vbYellow", vbYellow, &h00ffff&
+TestConstantBSTR "vbCr", vbCr, Chr(13)
+TestConstantBSTR "vbCrLf", vbCrLf, Chr(13)&Chr(10)
+TestConstantBSTR "vbNewLine", vbNewLine, Chr(13)&Chr(10)
+TestConstantBSTR "vbFormFeed", vbFormFeed, Chr(12)
+TestConstantBSTR "vbLf", vbLf, Chr(10)
+TestConstantBSTR "vbNullChar", vbNullChar, Chr(0)
+TestConstantBSTR "vbNullString", vbNullString, ""
+TestConstantBSTR "vbTab", vbTab, chr(9)
+TestConstantBSTR "vbVerticalTab", vbVerticalTab, chr(11)
 
 Sub TestCStr(arg, exval)
     dim x

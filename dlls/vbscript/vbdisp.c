@@ -160,6 +160,18 @@ static HRESULT invoke_builtin(vbdisp_t *This, const builtin_prop_t *prop, WORD f
                 V_VT(res) = VT_I4;
                 V_I4(res) = val;
                 break;
+            case VT_BSTR: {
+                const string_constant_t *str = (const string_constant_t*)prop->max_args;
+                BSTR ret;
+
+                ret = SysAllocStringLen(str->buf, str->len);
+                if(!ret)
+                    return E_OUTOFMEMORY;
+
+                V_VT(res) = VT_BSTR;
+                V_BSTR(res) = ret;
+                break;
+            }
             default:
                 assert(0);
             }
