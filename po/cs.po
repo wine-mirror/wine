@@ -157,21 +157,10 @@ msgid "Cancel"
 msgstr "Storno"
 
 #: appwiz.rc:112
-#, fuzzy
-#| msgid "Wine Gecko Installer"
 msgid "Wine Mono Installer"
-msgstr "Instalátor Wine Gecko"
+msgstr "Instalátor Wine Mono"
 
 #: appwiz.rc:115
-#, fuzzy
-#| msgid ""
-#| "Wine could not find a Gecko package which is needed for applications "
-#| "embedding HTML to work correctly. Wine can automatically download and "
-#| "install it for you.\n"
-#| "\n"
-#| "Note: it is recommended to use your distribution's packages instead. See "
-#| "<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
-#| "for details."
 msgid ""
 "Wine could not find a Mono package which is needed for .NET applications to "
 "work correctly. Wine can automatically download and install it for you.\n"
@@ -180,13 +169,12 @@ msgid ""
 "href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> for "
 "details."
 msgstr ""
-"Wine se nepodařilo najít balíček Gecko potřebný pro správnou funkčnost "
-"aplikací využívajících HTML. Wine ho pro Vás může automaticky stáhnout a "
-"nainstalovat.\n"
+"Wine se nepodařilo najít balíček Mono potřebný pro správnou funkčnost .NET "
+"aplikací. Wine ho pro Vás může automaticky stáhnout a nainstalovat.\n"
 "\n"
 "Poznámka: Je doporučeno využít namísto toho balíček Vaší distribuce. Pro "
-"více detailů čtěte <a href=\"http://wiki.winehq.org/Gecko\">http://wiki."
-"winehq.org/Gecko</a>."
+"více detailů čtěte <a href=\"http://wiki.winehq.org/Mono\">http://wiki."
+"winehq.org/Mono</a>."
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
@@ -822,14 +810,12 @@ msgid "&Open"
 msgstr "&Otevřít"
 
 #: comdlg32.rc:482
-#, fuzzy
 msgid "File name:"
-msgstr "&Název souboru:"
+msgstr "Název souboru:"
 
 #: comdlg32.rc:485
-#, fuzzy
 msgid "Files of type:"
-msgstr "Soubory &typu:"
+msgstr "Soubory typu:"
 
 #: comdlg32.rc:29
 msgid "File not found"
@@ -1024,13 +1010,8 @@ msgid "Cannot find the printer."
 msgstr "Nemohu najít tiskárnu."
 
 #: comdlg32.rc:66 progman.rc:73
-#, fuzzy
 msgid "Out of memory."
-msgstr ""
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"Došla paměť.\n"
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"Dostupná paměť byla vyčerpána."
+msgstr "Nedostatek paměti."
 
 #: comdlg32.rc:67
 msgid "An error occurred."
@@ -2215,12 +2196,11 @@ msgstr ""
 
 #: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
 msgid "Certificate Import Wizard"
-msgstr ""
+msgstr "Průvodce importem certifikátu"
 
 #: cryptui.rc:280
-#, fuzzy
 msgid "Welcome to the Certificate Import Wizard"
-msgstr "Ukazatel na zařízení je neplatný."
+msgstr "Vítejte v průvodci importem certifikátu"
 
 #: cryptui.rc:283
 msgid ""
@@ -2345,12 +2325,11 @@ msgstr "&Vlastnosti"
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
 msgid "Certificate Export Wizard"
-msgstr ""
+msgstr "Průvodce exportem certifikátu"
 
 #: cryptui.rc:370
-#, fuzzy
 msgid "Welcome to the Certificate Export Wizard"
-msgstr "Ukazatel na zařízení je neplatný."
+msgstr "Vítejte v průvodci exportem certifikátu."
 
 #: cryptui.rc:373
 msgid ""
@@ -2436,9 +2415,8 @@ msgid "Certificate"
 msgstr ""
 
 #: cryptui.rc:28
-#, fuzzy
 msgid "Certificate Information"
-msgstr "Informace"
+msgstr "Informace o certifikátu"
 
 #: cryptui.rc:29
 msgid ""
@@ -2457,9 +2435,8 @@ msgid "This certificate could not be validated to a trusted root certificate."
 msgstr ""
 
 #: cryptui.rc:32
-#, fuzzy
 msgid "This certificate's issuer could not be found."
-msgstr "'%s' nebyl nalezen."
+msgstr "Vydavatele certifikátu se nepodařilo najít."
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
@@ -2583,9 +2560,8 @@ msgid "Description"
 msgstr ""
 
 #: cryptui.rc:63
-#, fuzzy
 msgid "Certificate Properties"
-msgstr "&Vlastnosti"
+msgstr "Vlastnosti certifikátu"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
