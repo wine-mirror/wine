@@ -36,9 +36,6 @@
 #define SET_EXPECT(func) \
     expect_ ## func = TRUE
 
-#define GET_EXPECT(func) \
-    expect_ ## func
-
 #define CHECK_EXPECT2(func) \
     do { \
         ok(expect_ ##func, "unexpected call " #func "\n"); \
@@ -184,12 +181,6 @@ static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID r
         *ppv = NULL;
         return E_NOINTERFACE;
     }else if(IsEqualGUID(riid, &IID_IClassFactory)) {
-        if(!GET_EXPECT(CF_QueryInterface_ClassFactory)) {
-            todo_wine CHECK_EXPECT(CF_QueryInterface_ClassFactory);
-            *ppv = NULL;
-            return E_NOINTERFACE;
-        }
-
         CHECK_EXPECT(CF_QueryInterface_ClassFactory);
         *ppv = iface;
         return S_OK;
@@ -268,7 +259,7 @@ static void test_default_handler_run(void)
     IUnknown_Release(unk);
 
     hres = IRunnableObject_Run(ro, NULL);
-    todo_wine ok(hres == REGDB_E_CLASSNOTREG, "Run returned: %x, expected REGDB_E_CLASSNOTREG\n", hres);
+    ok(hres == REGDB_E_CLASSNOTREG, "Run returned: %x, expected REGDB_E_CLASSNOTREG\n", hres);
     IRunnableObject_Release(ro);
 
     CoRevokeClassObject(class_reg);
