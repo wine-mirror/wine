@@ -95,6 +95,14 @@ TestConstant "vbShortDate", vbShortDate, 2
 TestConstant "vbLongTime", vbLongTime, 3
 TestConstant "vbShortTime", vbShortTime, 4
 TestConstantI4 "vbObjectError", vbObjectError, &h80040000&
+TestConstantI4 "vbBlack", vbBlack, 0
+TestConstantI4 "vbBlue", vbBlue, &hff0000&
+TestConstantI4 "vbCyan", vbCyan, &hffff00&
+TestConstantI4 "vbGreen", vbGreen, &h00ff00&
+TestConstantI4 "vbMagenta", vbMagenta, &hff00ff&
+TestConstantI4 "vbRed", vbRed, &h0000ff&
+TestConstantI4 "vbWhite", vbWhite, &hffffff&
+TestConstantI4 "vbYellow", vbYellow, &h00ffff&
 
 Sub TestCStr(arg, exval)
     dim x

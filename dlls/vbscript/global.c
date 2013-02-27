@@ -1609,54 +1609,6 @@ static HRESULT Global_GetRef(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VA
     return E_NOTIMPL;
 }
 
-static HRESULT Global_vbBlack(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbBlue(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbCyan(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbGreen(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbMagenta(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbRed(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbWhite(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Global_vbYellow(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
 static HRESULT Global_vbCr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
@@ -1776,14 +1728,14 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_VBLONGTIME,         NULL, BP_GET, VT_I2, 3},
     {DISPID_GLOBAL_VBSHORTTIME,        NULL, BP_GET, VT_I2, 4},
     {DISPID_GLOBAL_VBOBJECTERROR,      NULL, BP_GET, VT_I4, 0x80040000},
-    {DISPID_GLOBAL_VBBLACK,            Global_vbBlack, BP_GET},
-    {DISPID_GLOBAL_VBBLUE,             Global_vbBlue, BP_GET},
-    {DISPID_GLOBAL_VBCYAN,             Global_vbCyan, BP_GET},
-    {DISPID_GLOBAL_VBGREEN,            Global_vbGreen, BP_GET},
-    {DISPID_GLOBAL_VBMAGENTA,          Global_vbMagenta, BP_GET},
-    {DISPID_GLOBAL_VBRED,              Global_vbRed, BP_GET},
-    {DISPID_GLOBAL_VBWHITE,            Global_vbWhite, BP_GET},
-    {DISPID_GLOBAL_VBYELLOW,           Global_vbYellow, BP_GET},
+    {DISPID_GLOBAL_VBBLACK,            NULL, BP_GET, VT_I4, 0x000000},
+    {DISPID_GLOBAL_VBBLUE,             NULL, BP_GET, VT_I4, 0xff0000},
+    {DISPID_GLOBAL_VBCYAN,             NULL, BP_GET, VT_I4, 0xffff00},
+    {DISPID_GLOBAL_VBGREEN,            NULL, BP_GET, VT_I4, 0x00ff00},
+    {DISPID_GLOBAL_VBMAGENTA,          NULL, BP_GET, VT_I4, 0xff00ff},
+    {DISPID_GLOBAL_VBRED,              NULL, BP_GET, VT_I4, 0x0000ff},
+    {DISPID_GLOBAL_VBWHITE,            NULL, BP_GET, VT_I4, 0xffffff},
+    {DISPID_GLOBAL_VBYELLOW,           NULL, BP_GET, VT_I4, 0x00ffff},
     {DISPID_GLOBAL_VBCR,               Global_vbCr, BP_GET},
     {DISPID_GLOBAL_VBCRLF,             Global_vbCrLf, BP_GET},
     {DISPID_GLOBAL_VBNEWLINE,          Global_vbNewLine, BP_GET},
