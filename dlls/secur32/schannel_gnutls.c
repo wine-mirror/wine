@@ -309,9 +309,9 @@ SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
 
     info->dwProtocol = schannel_get_protocol(proto);
     info->aiCipher = schannel_get_cipher_algid(alg);
-    info->dwCipherStrength = pgnutls_cipher_get_key_size(alg);
+    info->dwCipherStrength = pgnutls_cipher_get_key_size(alg) * 8;
     info->aiHash = schannel_get_mac_algid(mac);
-    info->dwHashStrength = pgnutls_mac_get_key_size(mac);
+    info->dwHashStrength = pgnutls_mac_get_key_size(mac) * 8;
     info->aiExch = schannel_get_kx_algid(kx);
     /* FIXME: info->dwExchStrength? */
     info->dwExchStrength = 0;

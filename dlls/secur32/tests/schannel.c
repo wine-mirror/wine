@@ -592,6 +592,7 @@ static void test_communication(void)
     CredHandle cred_handle;
     CtxtHandle context;
     SecPkgContext_StreamSizes sizes;
+    SecPkgContext_ConnectionInfo conn_info;
     CERT_CONTEXT *cert;
 
     SecBufferDesc buffers[2];
@@ -752,6 +753,13 @@ static void test_communication(void)
     if(status == SEC_E_OK) {
         test_remote_cert(cert);
         pCertFreeCertificateContext(cert);
+    }
+
+    status = pQueryContextAttributesA(&context, SECPKG_ATTR_CONNECTION_INFO, (void*)&conn_info);
+    ok(status == SEC_E_OK, "QueryContextAttributesW(SECPKG_ATTR_CONNECTION_INFO) failed: %08x\n", status);
+    if(status == SEC_E_OK) {
+        ok(conn_info.dwCipherStrength == 128, "conn_info.dwCipherStrength = %d\n", conn_info.dwCipherStrength);
+        ok(conn_info.dwHashStrength >= 128, "conn_info.dwHashStrength = %d\n", conn_info.dwHashStrength);
     }
 
     pQueryContextAttributesA(&context, SECPKG_ATTR_STREAM_SIZES, &sizes);
