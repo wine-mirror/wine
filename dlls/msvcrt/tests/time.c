@@ -181,8 +181,8 @@ static void test_gmtime(void)
     errno = 0;
     gmt = -1;
     err = p_gmtime32_s(&gmt_tm_s, &gmt);
-    ok(gmt_tm_s.tm_year==-1 || broken(gmt_tm_s.tm_year==70 && gmt_tm->tm_sec<0),
-            "tm_year = %d\n", gmt_tm_s.tm_year);
+    ok(gmt_tm_s.tm_year == -1 || broken(gmt_tm_s.tm_year == 70 && gmt_tm_s.tm_sec < 0),
+       "tm_year = %d, tm_sec = %d\n", gmt_tm_s.tm_year, gmt_tm_s.tm_sec);
     if(gmt_tm_s.tm_year == -1) {
         ok(err==EINVAL, "err = %d\n", err);
         ok(errno==EINVAL, "errno = %d\n", errno);
