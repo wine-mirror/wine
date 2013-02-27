@@ -2082,6 +2082,7 @@ ImageList_Merge (HIMAGELIST himl1, INT i1, HIMAGELIST himl2, INT i2,
     INT      cxDst, cyDst;
     INT      xOff1, yOff1, xOff2, yOff2;
     POINT    pt1, pt2;
+    INT      newFlags;
 
     TRACE("(himl1=%p i1=%d himl2=%p i2=%d dx=%d dy=%d)\n", himl1, i1, himl2,
 	   i2, dx, dy);
@@ -2121,7 +2122,10 @@ ImageList_Merge (HIMAGELIST himl1, INT i1, HIMAGELIST himl2, INT i2,
         yOff2 = 0;
     }
 
-    himlDst = ImageList_Create (cxDst, cyDst, ILC_MASK | ILC_COLOR, 1, 1);
+    newFlags = (himl1->flags > himl2->flags ? himl1->flags : himl2->flags) & ILC_COLORDDB;
+    if (newFlags == ILC_COLORDDB && (himl1->flags & ILC_COLORDDB) == ILC_COLOR16)
+        newFlags = ILC_COLOR16; /* this is what native (at least v5) does, don't know why */
+    himlDst = ImageList_Create (cxDst, cyDst, ILC_MASK | newFlags, 1, 1);
 
     if (himlDst)
     {
