@@ -119,6 +119,7 @@ if isEnglishLang then TestCStr true, "True"
 Call ok(getVT(Chr(120)) = "VT_BSTR", "getVT(Chr(120)) = " & getVT(Chr(120)))
 Call ok(getVT(Chr(255)) = "VT_BSTR", "getVT(Chr(255)) = " & getVT(Chr(255)))
 Call ok(Chr(120) = "x", "Chr(120) = " & Chr(120))
+Call ok(Chr(0) <> "", "Chr(0) = """"")
 
 Call ok(isObject(new EmptyClass), "isObject(new EmptyClass) is not true?")
 Set x = new EmptyClass
