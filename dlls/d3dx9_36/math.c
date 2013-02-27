@@ -277,39 +277,75 @@ FLOAT WINAPI D3DXMatrixDeterminant(const D3DXMATRIX *pm)
 
 D3DXMATRIX* WINAPI D3DXMatrixInverse(D3DXMATRIX *pout, FLOAT *pdeterminant, const D3DXMATRIX *pm)
 {
-    int a, i, j;
-    D3DXMATRIX out;
-    D3DXVECTOR4 v, vec[3];
-    FLOAT det;
+    FLOAT det, t[3], v[16];
+    UINT i, j;
 
     TRACE("pout %p, pdeterminant %p, pm %p\n", pout, pdeterminant, pm);
 
-    det = D3DXMatrixDeterminant(pm);
-    if ( !det ) return NULL;
-    if ( pdeterminant ) *pdeterminant = det;
-    for (i=0; i<4; i++)
-    {
-        for (j=0; j<4; j++)
-        {
-            if (j != i )
-            {
-                a = j;
-                if ( j > i ) a = a-1;
-                vec[a].x = pm->u.m[j][0];
-                vec[a].y = pm->u.m[j][1];
-                vec[a].z = pm->u.m[j][2];
-                vec[a].w = pm->u.m[j][3];
-            }
-        }
-    D3DXVec4Cross(&v, &vec[0], &vec[1], &vec[2]);
-    out.u.m[0][i] = pow(-1.0f, i) * v.x / det;
-    out.u.m[1][i] = pow(-1.0f, i) * v.y / det;
-    out.u.m[2][i] = pow(-1.0f, i) * v.z / det;
-    out.u.m[3][i] = pow(-1.0f, i) * v.w / det;
-   }
+    t[0] = pm->u.m[2][2] * pm->u.m[3][3] - pm->u.m[2][3] * pm->u.m[3][2];
+    t[1] = pm->u.m[1][2] * pm->u.m[3][3] - pm->u.m[1][3] * pm->u.m[3][2];
+    t[2] = pm->u.m[1][2] * pm->u.m[2][3] - pm->u.m[1][3] * pm->u.m[2][2];
+    v[0] = pm->u.m[1][1] * t[0] - pm->u.m[2][1] * t[1] + pm->u.m[3][1] * t[2];
+    v[4] = -pm->u.m[1][0] * t[0] + pm->u.m[2][0] * t[1] - pm->u.m[3][0] * t[2];
 
-   *pout = out;
-   return pout;
+    t[0] = pm->u.m[1][0] * pm->u.m[2][1] - pm->u.m[2][0] * pm->u.m[1][1];
+    t[1] = pm->u.m[1][0] * pm->u.m[3][1] - pm->u.m[3][0] * pm->u.m[1][1];
+    t[2] = pm->u.m[2][0] * pm->u.m[3][1] - pm->u.m[3][0] * pm->u.m[2][1];
+    v[8] = pm->u.m[3][3] * t[0] - pm->u.m[2][3] * t[1] + pm->u.m[1][3] * t[2];
+    v[12] = -pm->u.m[3][2] * t[0] + pm->u.m[2][2] * t[1] - pm->u.m[1][2] * t[2];
+
+    det = pm->u.m[0][0] * v[0] + pm->u.m[0][1] * v[4] +
+        pm->u.m[0][2] * v[8] + pm->u.m[0][3] * v[12];
+    if (det == 0.0f)
+        return NULL;
+    if (pdeterminant)
+        *pdeterminant = det;
+
+    t[0] = pm->u.m[2][2] * pm->u.m[3][3] - pm->u.m[2][3] * pm->u.m[3][2];
+    t[1] = pm->u.m[0][2] * pm->u.m[3][3] - pm->u.m[0][3] * pm->u.m[3][2];
+    t[2] = pm->u.m[0][2] * pm->u.m[2][3] - pm->u.m[0][3] * pm->u.m[2][2];
+    v[1] = -pm->u.m[0][1] * t[0] + pm->u.m[2][1] * t[1] - pm->u.m[3][1] * t[2];
+    v[5] = pm->u.m[0][0] * t[0] - pm->u.m[2][0] * t[1] + pm->u.m[3][0] * t[2];
+
+    t[0] = pm->u.m[0][0] * pm->u.m[2][1] - pm->u.m[2][0] * pm->u.m[0][1];
+    t[1] = pm->u.m[3][0] * pm->u.m[0][1] - pm->u.m[0][0] * pm->u.m[3][1];
+    t[2] = pm->u.m[2][0] * pm->u.m[3][1] - pm->u.m[3][0] * pm->u.m[2][1];
+    v[9] = -pm->u.m[3][3] * t[0] - pm->u.m[2][3] * t[1]- pm->u.m[0][3] * t[2];
+    v[13] = pm->u.m[3][2] * t[0] + pm->u.m[2][2] * t[1] + pm->u.m[0][2] * t[2];
+
+    t[0] = pm->u.m[1][2] * pm->u.m[3][3] - pm->u.m[1][3] * pm->u.m[3][2];
+    t[1] = pm->u.m[0][2] * pm->u.m[3][3] - pm->u.m[0][3] * pm->u.m[3][2];
+    t[2] = pm->u.m[0][2] * pm->u.m[1][3] - pm->u.m[0][3] * pm->u.m[1][2];
+    v[2] = pm->u.m[0][1] * t[0] - pm->u.m[1][1] * t[1] + pm->u.m[3][1] * t[2];
+    v[6] = -pm->u.m[0][0] * t[0] + pm->u.m[1][0] * t[1] - pm->u.m[3][0] * t[2];
+
+    t[0] = pm->u.m[0][0] * pm->u.m[1][1] - pm->u.m[1][0] * pm->u.m[0][1];
+    t[1] = pm->u.m[3][0] * pm->u.m[0][1] - pm->u.m[0][0] * pm->u.m[3][1];
+    t[2] = pm->u.m[1][0] * pm->u.m[3][1] - pm->u.m[3][0] * pm->u.m[1][1];
+    v[10] = pm->u.m[3][3] * t[0] + pm->u.m[1][3] * t[1] + pm->u.m[0][3] * t[2];
+    v[14] = -pm->u.m[3][2] * t[0] - pm->u.m[1][2] * t[1] - pm->u.m[0][2] * t[2];
+
+    t[0] = pm->u.m[1][2] * pm->u.m[2][3] - pm->u.m[1][3] * pm->u.m[2][2];
+    t[1] = pm->u.m[0][2] * pm->u.m[2][3] - pm->u.m[0][3] * pm->u.m[2][2];
+    t[2] = pm->u.m[0][2] * pm->u.m[1][3] - pm->u.m[0][3] * pm->u.m[1][2];
+    v[3] = -pm->u.m[0][1] * t[0] + pm->u.m[1][1] * t[1] - pm->u.m[2][1] * t[2];
+    v[7] = pm->u.m[0][0] * t[0] - pm->u.m[1][0] * t[1] + pm->u.m[2][0] * t[2];
+
+    v[11] = -pm->u.m[0][0] * (pm->u.m[1][1] * pm->u.m[2][3] - pm->u.m[1][3] * pm->u.m[2][1]) +
+        pm->u.m[1][0] * (pm->u.m[0][1] * pm->u.m[2][3] - pm->u.m[0][3] * pm->u.m[2][1]) -
+        pm->u.m[2][0] * (pm->u.m[0][1] * pm->u.m[1][3] - pm->u.m[0][3] * pm->u.m[1][1]);
+
+    v[15] = pm->u.m[0][0] * (pm->u.m[1][1] * pm->u.m[2][2] - pm->u.m[1][2] * pm->u.m[2][1]) -
+        pm->u.m[1][0] * (pm->u.m[0][1] * pm->u.m[2][2] - pm->u.m[0][2] * pm->u.m[2][1]) +
+        pm->u.m[2][0] * (pm->u.m[0][1] * pm->u.m[1][2] - pm->u.m[0][2] * pm->u.m[1][1]);
+
+    det = 1.0f / det;
+
+    for (i = 0; i < 4; i++)
+        for (j = 0; j < 4; j++)
+            pout->u.m[i][j] = v[4 * i + j] * det;
+
+    return pout;
 }
 
 D3DXMATRIX* WINAPI D3DXMatrixLookAtLH(D3DXMATRIX *pout, const D3DXVECTOR3 *peye, const D3DXVECTOR3 *pat, const D3DXVECTOR3 *pup)
