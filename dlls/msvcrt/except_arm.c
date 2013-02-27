@@ -53,7 +53,7 @@ typedef struct _DISPATCHER_CONTEXT
     DWORD                 ImageBase;
     PRUNTIME_FUNCTION     FunctionEntry;
     DWORD                 EstablisherFrame;
-    DWORD                 TargetIp;
+    DWORD                 TargetPc;
     PCONTEXT              ContextRecord;
     PEXCEPTION_ROUTINE    LanguageHandler;
     PVOID                 HandlerData;
@@ -61,7 +61,7 @@ typedef struct _DISPATCHER_CONTEXT
     DWORD                 ScopeIndex;
     BOOLEAN               ControlPcIsUnwound;
     PBYTE                 NonVolatileRegisters;
-    DWORD                 Reserved;
+    DWORD                 VirtualVfpHead;
 } DISPATCHER_CONTEXT;
 
 
