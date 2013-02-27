@@ -171,6 +171,7 @@ struct loaded_mono
     void (CDECL *mono_runtime_quit)(void);
     void (CDECL *mono_runtime_set_shutting_down)(void);
     void (CDECL *mono_set_dirs)(const char *assembly_dir, const char *config_dir);
+    void (CDECL *mono_set_verbose_level)(DWORD level);
     char* (CDECL *mono_stringify_assembly_name)(MonoAssemblyName *aname);
     void (CDECL *mono_thread_pool_cleanup)(void);
     void (CDECL *mono_thread_suspend_all_other_threads)(void);
