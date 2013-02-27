@@ -466,7 +466,8 @@ static BOOL patchfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
         if (temp_folder[0] == '\0')
             GetTempPathW(MAX_PATH, temp_folder);
 
-        if (!(p = get_next_filepatch(package, file))) return FALSE;
+        if (!(p = get_next_filepatch(package, file)) || !p->File->Component->Enabled)
+            return FALSE;
 
         GetTempFileNameW(temp_folder, NULL, 0, patch_path);
 
