@@ -255,17 +255,24 @@ HRESULT WINAPI D3DXMatrixDecompose(D3DXVECTOR3 *poutscale, D3DXQUATERNION *poutr
 
 FLOAT WINAPI D3DXMatrixDeterminant(const D3DXMATRIX *pm)
 {
-    D3DXVECTOR4 minor, v1, v2, v3;
-    FLOAT det;
+    FLOAT t[3], v[4];
 
     TRACE("pm %p\n", pm);
 
-    v1.x = pm->u.m[0][0]; v1.y = pm->u.m[1][0]; v1.z = pm->u.m[2][0]; v1.w = pm->u.m[3][0];
-    v2.x = pm->u.m[0][1]; v2.y = pm->u.m[1][1]; v2.z = pm->u.m[2][1]; v2.w = pm->u.m[3][1];
-    v3.x = pm->u.m[0][2]; v3.y = pm->u.m[1][2]; v3.z = pm->u.m[2][2]; v3.w = pm->u.m[3][2];
-    D3DXVec4Cross(&minor, &v1, &v2, &v3);
-    det =  - (pm->u.m[0][3] * minor.x + pm->u.m[1][3] * minor.y + pm->u.m[2][3] * minor.z + pm->u.m[3][3] * minor.w);
-    return det;
+    t[0] = pm->u.m[2][2] * pm->u.m[3][3] - pm->u.m[2][3] * pm->u.m[3][2];
+    t[1] = pm->u.m[1][2] * pm->u.m[3][3] - pm->u.m[1][3] * pm->u.m[3][2];
+    t[2] = pm->u.m[1][2] * pm->u.m[2][3] - pm->u.m[1][3] * pm->u.m[2][2];
+    v[0] = pm->u.m[1][1] * t[0] - pm->u.m[2][1] * t[1] + pm->u.m[3][1] * t[2];
+    v[1] = -pm->u.m[1][0] * t[0] + pm->u.m[2][0] * t[1] - pm->u.m[3][0] * t[2];
+
+    t[0] = pm->u.m[1][0] * pm->u.m[2][1] - pm->u.m[2][0] * pm->u.m[1][1];
+    t[1] = pm->u.m[1][0] * pm->u.m[3][1] - pm->u.m[3][0] * pm->u.m[1][1];
+    t[2] = pm->u.m[2][0] * pm->u.m[3][1] - pm->u.m[3][0] * pm->u.m[2][1];
+    v[2] = pm->u.m[3][3] * t[0] - pm->u.m[2][3] * t[1] + pm->u.m[1][3] * t[2];
+    v[3] = -pm->u.m[3][2] * t[0] + pm->u.m[2][2] * t[1] - pm->u.m[1][2] * t[2];
+
+    return pm->u.m[0][0] * v[0] + pm->u.m[0][1] * v[1] +
+        pm->u.m[0][2] * v[2] + pm->u.m[0][3] * v[3];
 }
 
 D3DXMATRIX* WINAPI D3DXMatrixInverse(D3DXMATRIX *pout, FLOAT *pdeterminant, const D3DXMATRIX *pm)
