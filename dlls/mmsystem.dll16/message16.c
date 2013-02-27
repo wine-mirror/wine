@@ -119,13 +119,11 @@ static  void            	MMSYSTDRV_MidiIn_MapCB(UINT uMsg, DWORD_PTR* dwUser, DW
         {
 	    LPMIDIHDR		mh32 = (LPMIDIHDR)(*dwParam1);
 	    SEGPTR		segmh16 = *(SEGPTR*)((LPSTR)mh32 - sizeof(LPMIDIHDR));
-	    LPMIDIHDR		mh16 = MapSL(segmh16);
+	    LPMIDIHDR16		mh16 = MapSL(segmh16);
 
 	    *dwParam1 = (DWORD)segmh16;
 	    mh16->dwFlags = mh32->dwFlags;
 	    mh16->dwBytesRecorded = mh32->dwBytesRecorded;
-	    if (mh16->reserved >= sizeof(MIDIHDR))
-		mh16->dwOffset = mh32->dwOffset;
 	}
 	break;
     default:
@@ -178,7 +176,7 @@ static MMSYSTEM_MapType	MMSYSTDRV_MidiOut_Map16To32W  (UINT wMsg, DWORD_PTR* lpP
     case MODM_PREPARE:
 	{
 	    LPMIDIHDR		mh32 = HeapAlloc(GetProcessHeap(), 0, sizeof(LPMIDIHDR) + sizeof(MIDIHDR));
-	    LPMIDIHDR		mh16 = MapSL(*lpParam1);
+	    LPMIDIHDR16		mh16 = MapSL(*lpParam1);
 
 	    if (mh32) {
 		*(LPMIDIHDR*)mh32 = (LPMIDIHDR)*lpParam1;
@@ -188,12 +186,9 @@ static MMSYSTEM_MapType	MMSYSTDRV_MidiOut_Map16To32W  (UINT wMsg, DWORD_PTR* lpP
 		mh32->dwBytesRecorded = mh16->dwBytesRecorded;
 		mh32->dwUser = mh16->dwUser;
 		mh32->dwFlags = mh16->dwFlags;
-		mh32->dwOffset = (*lpParam2 >= sizeof(MIDIHDR)) ? mh16->dwOffset : 0;
-		mh16->lpNext = mh32; /* for reuse in unprepare and write */
-		/* store size of passed MIDIHDR?? structure to know if dwOffset is available or not */
-		mh16->reserved = *lpParam2;
+		mh16->lpNext = (MIDIHDR16*)mh32; /* for reuse in unprepare and write */
 		*lpParam1 = (DWORD)mh32;
-		*lpParam2 = sizeof(MIDIHDR);
+		*lpParam2 = offsetof(MIDIHDR,dwOffset); /* old size, without dwOffset */
 
 		ret = MMSYSTEM_MAP_OKMEM;
 	    } else {
@@ -204,11 +199,11 @@ static MMSYSTEM_MapType	MMSYSTDRV_MidiOut_Map16To32W  (UINT wMsg, DWORD_PTR* lpP
     case MODM_UNPREPARE:
     case MODM_LONGDATA:
 	{
-	    LPMIDIHDR		mh16 = MapSL(*lpParam1);
-	    LPMIDIHDR		mh32 = mh16->lpNext;
+	    LPMIDIHDR16		mh16 = MapSL(*lpParam1);
+	    LPMIDIHDR		mh32 = (MIDIHDR*)mh16->lpNext;
 
 	    *lpParam1 = (DWORD)mh32;
-	    *lpParam2 = sizeof(MIDIHDR);
+	    *lpParam2 = offsetof(MIDIHDR,dwOffset);
 	    /* dwBufferLength can be reduced between prepare & write */
 	    if (wMsg == MODM_LONGDATA && mh32->dwBufferLength < mh16->dwBufferLength) {
 		ERR("Size of buffer has been increased from %d to %d, keeping initial value\n",
@@ -273,12 +268,10 @@ static  MMSYSTEM_MapType	MMSYSTDRV_MidiOut_UnMap16To32W(UINT wMsg, DWORD_PTR* lp
     case MODM_LONGDATA:
 	{
 	    LPMIDIHDR		mh32 = (LPMIDIHDR)(*lpParam1);
-	    LPMIDIHDR		mh16 = MapSL(*(SEGPTR*)((LPSTR)mh32 - sizeof(LPMIDIHDR)));
+	    LPMIDIHDR16		mh16 = MapSL(*(SEGPTR*)((LPSTR)mh32 - sizeof(LPMIDIHDR)));
 
-	    assert(mh16->lpNext == mh32);
+	    assert((MIDIHDR*)mh16->lpNext == mh32);
 	    mh16->dwFlags = mh32->dwFlags;
-	    if (mh16->reserved >= sizeof(MIDIHDR))
-		mh16->dwOffset = mh32->dwOffset;
 
 	    if (wMsg == MODM_UNPREPARE && fn_ret == MMSYSERR_NOERROR) {
 		HeapFree(GetProcessHeap(), 0, (LPSTR)mh32 - sizeof(LPMIDIHDR));
@@ -307,24 +300,21 @@ static  void MMSYSTDRV_MidiOut_MapCB(UINT uMsg, DWORD_PTR* dwUser, DWORD_PTR* dw
     case MOM_CLOSE:
 	/* dwParam1 & dwParam2 are supposed to be 0, nothing to do */
 	break;
+    case MOM_POSITIONCB:
+	/* MIDIHDR.dwOffset exists since Win 32 only */
+	FIXME("MOM_POSITIONCB/MEVT_F_CALLBACK wants MIDIHDR.dwOffset in 16 bit code\n");
+	/* fall through */
     case MOM_DONE:
         {
 	    /* initial map is: 16 => 32 */
 	    LPMIDIHDR		mh32 = (LPMIDIHDR)(*dwParam1);
 	    SEGPTR		segmh16 = *(SEGPTR*)((LPSTR)mh32 - sizeof(LPMIDIHDR));
-	    LPMIDIHDR		mh16 = MapSL(segmh16);
+	    LPMIDIHDR16		mh16 = MapSL(segmh16);
 
 	    *dwParam1 = (DWORD)segmh16;
 	    mh16->dwFlags = mh32->dwFlags;
-	    if (mh16->reserved >= sizeof(MIDIHDR))
-		mh16->dwOffset = mh32->dwOffset;
 	}
 	break;
-    case MOM_POSITIONCB:
-        FIXME("NIY\n");
-        /* FIXME: would require to recreate a 16bit MIDIHDR here */
-        *dwParam1 = *dwParam2 = 0;
-        break;
     default:
 	ERR("Unknown msg %u\n", uMsg);
     }
