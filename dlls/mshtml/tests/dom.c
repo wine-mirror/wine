@@ -51,6 +51,7 @@ static const char elem_test_str[] =
     "<link id=\"linkid\"></head>"
     "<body onload=\"Testing()\">text test<!-- a comment -->"
     "<a id=\"a\" href=\"http://test\" name=\"x\">link</a>"
+    "<label for=\"in\" id=\"labelid\">Label:</label>"
     "<input id=\"in\" class=\"testclass\" tabIndex=\"2\" title=\"test title\" />"
     "<select id=\"s\"><option id=\"x\" value=\"val1\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
@@ -126,7 +127,8 @@ typedef enum {
     ET_DIV,
     ET_META,
     ET_NOSCRIPT,
-    ET_LINK
+    ET_LINK,
+    ET_LABEL
 } elem_type_t;
 
 static const IID * const none_iids[] = {
@@ -201,6 +203,13 @@ static const IID * const input_iids[] = {
     ELEM_IFACES,
     &IID_IHTMLInputElement,
     &IID_IHTMLInputTextElement,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
+static const IID * const label_iids[] = {
+    ELEM_IFACES,
+    &IID_IHTMLLabelElement,
     &IID_IConnectionPointContainer,
     NULL
 };
@@ -447,7 +456,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"DIV",       elem_iids,        NULL},
     {"META",      meta_iids,        &DIID_DispHTMLMetaElement},
     {"NOSCRIPT",  elem_iids,        NULL /*&DIID_DispHTMLNoShowElement*/},
-    {"LINK",      link_iids,        &DIID_DispHTMLLinkElement}
+    {"LINK",      link_iids,        &DIID_DispHTMLLinkElement},
+    {"LABEL",     label_iids,       &DIID_DispHTMLLabelElement}
 };
 
 static const char *dbgstr_guid(REFIID riid)
@@ -5714,6 +5724,7 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_BODY,
         ET_COMMENT,
         ET_A,
+        ET_LABEL,
         ET_INPUT,
         ET_SELECT,
         ET_OPTION,

@@ -1239,3 +1239,174 @@ HRESULT HTMLInputElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem
     *elem = &ret->element;
     return S_OK;
 }
+
+typedef struct {
+    HTMLElement element;
+
+    IHTMLLabelElement IHTMLLabelElement_iface;
+} HTMLLabelElement;
+
+static inline HTMLLabelElement *impl_from_IHTMLLabelElement(IHTMLLabelElement *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLLabelElement, IHTMLLabelElement_iface);
+}
+
+static HRESULT WINAPI HTMLLabelElement_QueryInterface(IHTMLLabelElement *iface,
+                                                         REFIID riid, void **ppv)
+{
+    HTMLLabelElement *This = impl_from_IHTMLLabelElement(iface);
+
+    return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
+}
+
+static ULONG WINAPI HTMLLabelElement_AddRef(IHTMLLabelElement *iface)
+{
+    HTMLLabelElement *This = impl_from_IHTMLLabelElement(iface);
+
+    return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
+}
+
+static ULONG WINAPI HTMLLabelElement_Release(IHTMLLabelElement *iface)
+{
+    HTMLLabelElement *This = impl_from_IHTMLLabelElement(iface);
+
+    return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
+}
+
+static HRESULT WINAPI HTMLLabelElement_GetTypeInfoCount(IHTMLLabelElement *iface, UINT *pctinfo)
+{
+    HTMLLabelElement *This = impl_from_IHTMLLabelElement(iface);
+
+    return IDispatchEx_GetTypeInfoCount(&This->element.node.dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI HTMLLabelElement_GetTypeInfo(IHTMLLabelElement *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLLabelElement *This = impl_from_IHTMLLabelElement(iface);
+
+    return IDispatchEx_GetTypeInfo(&This->element.node.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLLabelElement_GetIDsOfNames(IHTMLLabelElement *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLLabelElement *This = impl_from_IHTMLLabelElement(iface);
+
+    return IDispatchEx_GetIDsOfNames(&This->element.node.dispex.IDispatchEx_iface, riid, rgszNames,
+            cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLLabelElement_Invoke(IHTMLLabelElement *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLLabelElement *This = impl_from_IHTMLLabelElement(iface);
+
+    return IDispatchEx_Invoke(&This->element.node.dispex.IDispatchEx_iface, dispIdMember, riid,
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLLabelElement_put_htmlFor(IHTMLLabelElement *iface, BSTR v)
+{
+    HTMLLabelElement *This = impl_from_IHTMLLabelElement(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLLabelElement_get_htmlFor(IHTMLLabelElement *iface, BSTR *p)
+{
+    HTMLLabelElement *This = impl_from_IHTMLLabelElement(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLLabelElement_put_accessKey(IHTMLLabelElement *iface, BSTR v)
+{
+    HTMLLabelElement *This = impl_from_IHTMLLabelElement(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLLabelElement_get_accessKey(IHTMLLabelElement *iface, BSTR *p)
+{
+    HTMLLabelElement *This = impl_from_IHTMLLabelElement(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static const IHTMLLabelElementVtbl HTMLLabelElementVtbl = {
+    HTMLLabelElement_QueryInterface,
+    HTMLLabelElement_AddRef,
+    HTMLLabelElement_Release,
+    HTMLLabelElement_GetTypeInfoCount,
+    HTMLLabelElement_GetTypeInfo,
+    HTMLLabelElement_GetIDsOfNames,
+    HTMLLabelElement_Invoke,
+    HTMLLabelElement_put_htmlFor,
+    HTMLLabelElement_get_htmlFor,
+    HTMLLabelElement_put_accessKey,
+    HTMLLabelElement_get_accessKey
+};
+
+static inline HTMLLabelElement *label_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLLabelElement, element.node);
+}
+
+static HRESULT HTMLLabelElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+{
+    HTMLLabelElement *This = label_from_HTMLDOMNode(iface);
+
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IHTMLLabelElement_iface;
+    }else if(IsEqualGUID(&IID_IHTMLLabelElement, riid)) {
+        TRACE("(%p)->(IID_IHTMLLabelElement %p)\n", This, ppv);
+        *ppv = &This->IHTMLLabelElement_iface;
+    }else {
+        return HTMLElement_QI(&This->element.node, riid, ppv);
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static const NodeImplVtbl HTMLLabelElementImplVtbl = {
+    HTMLLabelElement_QI,
+    HTMLElement_destructor,
+    HTMLElement_clone,
+    HTMLElement_handle_event,
+    HTMLElement_get_attr_col,
+};
+
+static const tid_t HTMLLabelElement_iface_tids[] = {
+    HTMLELEMENT_TIDS,
+    IHTMLLabelElement_tid,
+    0
+};
+
+static dispex_static_data_t HTMLLabelElement_dispex = {
+    NULL,
+    DispHTMLLabelElement_tid,
+    NULL,
+    HTMLLabelElement_iface_tids
+};
+
+HRESULT HTMLLabelElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+{
+    HTMLLabelElement *ret;
+
+    ret = heap_alloc_zero(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->IHTMLLabelElement_iface.lpVtbl = &HTMLLabelElementVtbl;
+    ret->element.node.vtbl = &HTMLLabelElementImplVtbl;
+
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLLabelElement_dispex);
+    *elem = &ret->element;
+    return S_OK;
+}
