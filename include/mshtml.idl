@@ -8968,6 +8968,68 @@ methods:
 }
 
 /*****************************************************************************
+ *    IHTMLLabelElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f32a-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLLabelElement : IDispatch
+{
+    [propput, id(DISPID_IHTMLLABELELEMENT_HTMLFOR), displaybind, bindable]
+    HRESULT htmlFor([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLLABELELEMENT_HTMLFOR), displaybind, bindable]
+    HRESULT htmlFor([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLLABELELEMENT_ACCESSKEY), displaybind, bindable]
+    HRESULT accessKey([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLLABELELEMENT_ACCESSKEY), displaybind, bindable]
+    HRESULT accessKey([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
+ *    IHTMLLabelElement2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f832-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLLabelElement2 : IDispatch
+{
+    [propget, id(DISPID_IHTMLLABELELEMENT2_FORM)]
+    HRESULT form([out, retval] IHTMLFormElement **p);
+}
+
+/*****************************************************************************
+ *    DispHTMLLabelElement dispinterface
+ */
+[
+    hidden,
+    uuid(3050f522-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLLabelElement
+{
+properties:
+methods:
+    WINE_HTMLDATAELEMENT_DISPINTERFACE_DECL;
+
+    [propput, id(DISPID_IHTMLLABELELEMENT_HTMLFOR), displaybind, bindable]
+    void htmlFor(BSTR v);
+
+    [propget, id(DISPID_IHTMLLABELELEMENT_HTMLFOR), displaybind, bindable]
+    BSTR htmlFor();
+
+    [propget, id(DISPID_IHTMLLABELELEMENT2_FORM)]
+    IHTMLFormElement *form();
+}
+
+/*****************************************************************************
  *    IHTMLElementCollection interface
  */
 [
