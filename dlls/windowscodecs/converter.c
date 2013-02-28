@@ -93,7 +93,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
             BYTE *srcdata;
             UINT srcstride, srcdatasize;
             const BYTE *srcrow;
@@ -160,7 +160,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
             BYTE *srcdata;
             UINT srcstride, srcdatasize;
             const BYTE *srcrow;
@@ -223,7 +223,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
             BYTE *srcdata;
             UINT srcstride, srcdatasize;
             const BYTE *srcrow;
@@ -283,7 +283,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
             BYTE *srcdata;
             UINT srcstride, srcdatasize;
             const BYTE *srcrow;
@@ -325,7 +325,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
             BYTE *srcdata;
             UINT srcstride, srcdatasize;
             const BYTE *srcrow;
@@ -378,7 +378,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
             BYTE *srcdata;
             UINT srcstride, srcdatasize;
             const BYTE *srcrow;
@@ -420,7 +420,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
             BYTE *srcdata;
             UINT srcstride, srcdatasize;
             const BYTE *srcrow;
@@ -468,7 +468,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
             BYTE *srcdata;
             UINT srcstride, srcdatasize;
             const BYTE *srcrow;
@@ -516,7 +516,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
             BYTE *srcdata;
             UINT srcstride, srcdatasize;
             const BYTE *srcrow;
@@ -564,7 +564,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
             BYTE *srcdata;
             UINT srcstride, srcdatasize;
             const BYTE *srcrow;
@@ -607,7 +607,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
             BYTE *srcdata;
             UINT srcstride, srcdatasize;
             const BYTE *srcrow;
@@ -655,7 +655,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
 
             res = IWICBitmapSource_CopyPixels(This->source, prc, cbStride, cbBufferSize, pbBuffer);
             if (FAILED(res)) return res;
@@ -674,7 +674,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
 
             res = IWICBitmapSource_CopyPixels(This->source, prc, cbStride, cbBufferSize, pbBuffer);
             if (FAILED(res)) return res;
@@ -696,7 +696,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
             BYTE *srcdata;
             UINT srcstride, srcdatasize;
             const BYTE *srcrow;
@@ -740,7 +740,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
             BYTE *srcdata;
             UINT srcstride, srcdatasize;
             const BYTE *srcrow;
@@ -838,7 +838,7 @@ static HRESULT copypixels_to_32bppPBGRA(struct FormatConverter *This, const WICR
         hr = copypixels_to_32bppBGRA(This, prc, cbStride, cbBufferSize, pbBuffer, source_format);
         if (SUCCEEDED(hr) && prc)
         {
-            UINT x, y;
+            INT x, y;
 
             for (y=0; y<prc->Height; y++)
                 for (x=0; x<prc->Width; x++)
@@ -879,7 +879,7 @@ static HRESULT copypixels_to_24bppBGR(struct FormatConverter *This, const WICRec
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
             BYTE *srcdata;
             UINT srcstride, srcdatasize;
             const BYTE *srcrow;
@@ -947,7 +947,7 @@ static HRESULT copypixels_to_24bppRGB(struct FormatConverter *This, const WICRec
         if (prc)
         {
             HRESULT res;
-            UINT x, y;
+            INT x, y;
             BYTE *srcdata;
             UINT srcstride, srcdatasize;
             const BYTE *srcrow;
