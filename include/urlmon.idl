@@ -1998,6 +1998,30 @@ interface IInternetProtocolEx : IInternetProtocol
         [in] HANDLE *dwReserved);
 }
 
+/*****************************************************************************
+ * IGetBindHandle interface
+ */
+[
+    local,
+    object,
+    uuid(AF0FF408-129D-4b20-91F0-02BD23D88352),
+    pointer_default(unique)
+]
+interface IGetBindHandle : IUnknown
+{
+    typedef [unique] IGetBindHandle *LPGETBINDHANDLE;
+
+    typedef enum {
+        BINDHANDLETYPES_APPCACHE    = 0x00000000,
+        BINDHANDLETYPES_DEPENDENCY  = 0x00000001,
+        BINDHANDLETYPES_COUNT
+    } BINDHANDLETYPES;
+
+    HRESULT GetBindHandle(
+            [in] BINDHANDLETYPES enumRequestedHandle,
+            [out] HANDLE *pRetHandle);
+}
+
 cpp_quote("#define CONFIRMSAFETYACTION_LOADOBJECT  0x00000001")
 
 struct CONFIRMSAFETY
