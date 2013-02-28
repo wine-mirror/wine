@@ -4050,6 +4050,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       return 0;
     goto do_default;
   case WM_CHAR:
+    if ((editor->nEventMask & ENM_KEYEVENTS) &&
+        !ME_FilterEvent(editor, msg, &wParam, &lParam))
+      return 0;
     return ME_Char(editor, wParam, lParam, unicode);
   case WM_UNICHAR:
     if (unicode)
