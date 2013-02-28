@@ -313,6 +313,12 @@ static HRESULT CLRRuntimeInfo_GetRuntimeHost(CLRRuntimeInfo *This, RuntimeHost *
 void unload_all_runtimes(void)
 {
     int i;
+    HMODULE handle;
+
+    /* If the only references to mscoree are through dll's that were loaded by
+     * Mono, shutting down the Mono runtime will free mscoree, so take a
+     * reference to prevent that from happening. */
+    GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (const WCHAR *)&unload_all_runtimes, &handle);
 
     for (i=0; i<NUM_ABI_VERSIONS; i++)
     {
