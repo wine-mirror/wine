@@ -632,7 +632,7 @@ HRESULT xmldoc_remove_orphan(xmlDocPtr doc, xmlNodePtr node)
 
 static inline xmlDocPtr get_doc( domdoc *This )
 {
-    return (xmlDocPtr)This->node.node;
+    return This->node.node->doc;
 }
 
 static HRESULT attach_xmldoc(domdoc *This, xmlDocPtr xml )
