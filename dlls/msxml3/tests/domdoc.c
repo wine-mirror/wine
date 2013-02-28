@@ -8046,10 +8046,15 @@ static void test_put_nodeTypedValue(void)
 static void test_get_xml(void)
 {
     static const char xmlA[] = "<?xml version=\"1.0\" encoding=\"UTF-16\"?>\r\n<a>test</a>\r\n";
+    static const char attrA[] = "attr=\"&quot;a &amp; b&quot;\"";
+    static const char attr2A[] = "\"a & b\"";
+    static const char attr3A[] = "attr=\"&amp;quot;a\"";
+    static const char attr4A[] = "&quot;a";
     static const char fooA[] = "<foo/>";
     IXMLDOMProcessingInstruction *pi;
     IXMLDOMNode *first;
     IXMLDOMElement *elem = NULL;
+    IXMLDOMAttribute *attr;
     IXMLDOMDocument *doc;
     VARIANT_BOOL b;
     VARIANT v;
@@ -8105,6 +8110,51 @@ static void test_get_xml(void)
     SysFreeString(xml);
 
     IXMLDOMElement_Release(elem);
+
+    /* attribute node */
+    hr = IXMLDOMDocument_createAttribute(doc, _bstr_("attr"), &attr);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_("\"a & b\"");
+    hr = IXMLDOMAttribute_put_value(attr, v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    xml = NULL;
+    hr = IXMLDOMAttribute_get_xml(attr, &xml);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!memcmp(xml, _bstr_(attrA), (sizeof(attrA)-1)*sizeof(WCHAR)), "got %s\n", wine_dbgstr_w(xml));
+    SysFreeString(xml);
+
+    VariantInit(&v);
+    hr = IXMLDOMAttribute_get_value(attr, &v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&v) == VT_BSTR, "got type %d\n", V_VT(&v));
+    ok(!memcmp(V_BSTR(&v), _bstr_(attr2A), (sizeof(attr2A)-1)*sizeof(WCHAR)),
+        "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_("&quot;a");
+    hr = IXMLDOMAttribute_put_value(attr, v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    xml = NULL;
+    hr = IXMLDOMAttribute_get_xml(attr, &xml);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!memcmp(xml, _bstr_(attr3A), (sizeof(attr3A)-1)*sizeof(WCHAR)), "got %s\n", wine_dbgstr_w(xml));
+    SysFreeString(xml);
+
+    VariantInit(&v);
+    hr = IXMLDOMAttribute_get_value(attr, &v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&v) == VT_BSTR, "got type %d\n", V_VT(&v));
+    ok(!memcmp(V_BSTR(&v), _bstr_(attr4A), (sizeof(attr4A)-1)*sizeof(WCHAR)),
+        "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    IXMLDOMAttribute_Release(attr);
+
     IXMLDOMDocument_Release(doc);
 
     free_bstrs();
