@@ -2951,7 +2951,6 @@ static void test_QueryInterface(IWebBrowser2 *wb)
     IViewObjectEx *viewex = (void*)0xdeadbeef;
     IOleLink *link = (void*)0xdeadbeef;
     IMarshal *marshal = (void*)0xdeadbeef;
-    IStdMarshalInfo *marshalinfo = (void*)0xdeadbeef;
     IUnknown *unk = (IUnknown*)wb;
     HRESULT hres;
 
@@ -2990,10 +2989,6 @@ static void test_QueryInterface(IWebBrowser2 *wb)
     hres = IUnknown_QueryInterface(unk, &IID_IMarshal, (void**)&marshal);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
     ok(marshal == NULL, "marshal=%p, expected NULL\n", marshal);
-
-    hres = IUnknown_QueryInterface(unk, &IID_IStdMarshalInfo, (void**)&marshalinfo);
-    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
-    ok(marshalinfo == NULL, "marshalinfo=%p, expected NULL\n", marshalinfo);
 
 }
 
