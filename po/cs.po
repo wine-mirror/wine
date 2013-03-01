@@ -13825,7 +13825,7 @@ msgstr ""
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "&Hra"
 
 #: winemine.rc:35
 msgid "&New\tF2"
@@ -13833,7 +13833,7 @@ msgstr "&Nová\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "&Otazníky"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -13845,28 +13845,25 @@ msgstr "&Pokročilý"
 
 #: winemine.rc:41
 msgid "&Expert"
-msgstr ""
+msgstr "E&xpert"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "&Dle libosti..."
+msgstr "&Vlastní..."
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
-msgstr "Ne&jlepší časy"
+msgstr "N&ejlepší časy"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "&O Wine"
+msgstr "&O WineMinách"
 
 #: winemine.rc:56
 msgid "Fastest Times"
 msgstr "Nejlepší časy"
 
 #: winemine.rc:58
-#, fuzzy
 msgid "Fastest times"
 msgstr "Nejlepší časy"
 
@@ -13884,11 +13881,11 @@ msgstr "Expert"
 
 #: winemine.rc:74
 msgid "Congratulations!"
-msgstr "Gratulujeme !"
+msgstr "Gratulace!"
 
 #: winemine.rc:76
 msgid "Please enter your name"
-msgstr "Prosím, zadejte své jméno"
+msgstr "Zadej prosím své jméno"
 
 #: winemine.rc:84
 msgid "Custom Game"
@@ -13900,7 +13897,7 @@ msgstr "Řádky"
 
 #: winemine.rc:87
 msgid "Columns"
-msgstr ""
+msgstr "Sloupce"
 
 #: winemine.rc:88
 msgid "Mines"
@@ -13908,7 +13905,7 @@ msgstr "Miny"
 
 #: winemine.rc:27
 msgid "WineMine"
-msgstr "WineMine"
+msgstr "WineMiny"
 
 #: winemine.rc:28
 msgid "Nobody"
