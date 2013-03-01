@@ -1116,7 +1116,7 @@ static HRESULT WINAPI HTMLElement2_get_oncontextmenu(IHTMLElement2 *iface, VARIA
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLElement2_insertAdjecentElement(IHTMLElement2 *iface, BSTR where,
+static HRESULT WINAPI HTMLElement2_insertAdjacentElement(IHTMLElement2 *iface, BSTR where,
         IHTMLElement *insertedElement, IHTMLElement **inserted)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
@@ -1132,14 +1132,14 @@ static HRESULT WINAPI HTMLElement2_applyElement(IHTMLElement2 *iface, IHTMLEleme
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLElement2_getAdjecentText(IHTMLElement2 *iface, BSTR where, BSTR *text)
+static HRESULT WINAPI HTMLElement2_getAdjacentText(IHTMLElement2 *iface, BSTR where, BSTR *text)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(where), text);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLElement2_replaceAdjecentText(IHTMLElement2 *iface, BSTR where,
+static HRESULT WINAPI HTMLElement2_replaceAdjacentText(IHTMLElement2 *iface, BSTR where,
                                                        BSTR newText, BSTR *oldText)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
@@ -1348,10 +1348,10 @@ static const IHTMLElement2Vtbl HTMLElement2Vtbl = {
     HTMLElement2_mergeAttributes,
     HTMLElement2_put_oncontextmenu,
     HTMLElement2_get_oncontextmenu,
-    HTMLElement2_insertAdjecentElement,
+    HTMLElement2_insertAdjacentElement,
     HTMLElement2_applyElement,
-    HTMLElement2_getAdjecentText,
-    HTMLElement2_replaceAdjecentText,
+    HTMLElement2_getAdjacentText,
+    HTMLElement2_replaceAdjacentText,
     HTMLElement2_get_canHandleChildren,
     HTMLElement2_addBehavior,
     HTMLElement2_removeBehavior,
