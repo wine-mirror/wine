@@ -1968,7 +1968,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             info->Flags |= IDSI_FLAG_KEEP_ALIVE;
         if (req->proxy)
             info->Flags |= IDSI_FLAG_PROXY;
-        if (req->netconn->useSSL)
+        if (req->netconn->secure)
             info->Flags |= IDSI_FLAG_SECURE;
 
         return ERROR_SUCCESS;

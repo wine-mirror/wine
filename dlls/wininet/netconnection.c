@@ -848,6 +848,7 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, long tls_option)
     }
 
     connection->ssl_s = ssl_s;
+    connection->secure = TRUE;
 
     bits = NETCON_GetCipherStrength(connection);
     if (bits >= 128)
@@ -879,21 +880,20 @@ fail:
 DWORD NETCON_secure_connect(netconn_t *connection, server_t *server)
 {
     DWORD res = ERROR_NOT_SUPPORTED;
-#ifdef SONAME_LIBSSL
+
     /* can't connect if we are already connected */
-    if (connection->ssl_s)
-    {
+    if(connection->secure) {
         ERR("already connected\n");
         return ERROR_INTERNET_CANNOT_CONNECT;
     }
 
-    connection->useSSL = TRUE;
     if(server != connection->server) {
         server_release(connection->server);
         server_addref(server);
         connection->server = server;
     }
 
+#ifdef SONAME_LIBSSL
     /* connect with given TLS options */
     res = netcon_secure_connect_setup(connection, get_tls_option());
     if (res == ERROR_SUCCESS)
@@ -926,7 +926,7 @@ DWORD NETCON_secure_connect(netconn_t *connection, server_t *server)
 DWORD NETCON_send(netconn_t *connection, const void *msg, size_t len, int flags,
 		int *sent /* out */)
 {
-    if (!connection->useSSL)
+    if(!connection->secure)
     {
 	*sent = send(connection->socketFD, msg, len, flags);
 	if (*sent == -1)
@@ -958,13 +958,13 @@ DWORD NETCON_send(netconn_t *connection, const void *msg, size_t len, int flags,
  * Basically calls 'recv()' unless we should use SSL
  * number of chars received is put in *recvd
  */
-DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags,
-		int *recvd /* out */)
+DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags, int *recvd)
 {
     *recvd = 0;
     if (!len)
         return ERROR_SUCCESS;
-    if (!connection->useSSL)
+
+    if (!connection->secure)
     {
 	*recvd = recv(connection->socketFD, buf, len, flags);
 	return *recvd == -1 ? sock_get_error(errno) :  ERROR_SUCCESS;
@@ -1000,7 +1000,7 @@ BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available)
 {
     *available = 0;
 
-    if (!connection->useSSL)
+    if(!connection->secure)
     {
 #ifdef FIONREAD
         int unread;
