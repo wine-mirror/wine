@@ -635,8 +635,8 @@ static  unsigned        dump_system_info(struct dump_context* dc)
 
         do_x86cpuid(0, regs0);
         mdSysInfo.Cpu.X86CpuInfo.VendorId[0] = regs0[1];
-        mdSysInfo.Cpu.X86CpuInfo.VendorId[1] = regs0[2];
-        mdSysInfo.Cpu.X86CpuInfo.VendorId[2] = regs0[3];
+        mdSysInfo.Cpu.X86CpuInfo.VendorId[1] = regs0[3];
+        mdSysInfo.Cpu.X86CpuInfo.VendorId[2] = regs0[2];
         do_x86cpuid(1, regs1);
         mdSysInfo.Cpu.X86CpuInfo.VersionInformation = regs1[0];
         mdSysInfo.Cpu.X86CpuInfo.FeatureInformation = regs1[3];
