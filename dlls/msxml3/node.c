@@ -282,36 +282,48 @@ static HRESULT node_set_content_escaped(xmlnode *This, LPCWSTR value)
 
 HRESULT node_put_value(xmlnode *This, VARIANT *value)
 {
-    VARIANT string_value;
     HRESULT hr;
 
-    VariantInit(&string_value);
-    hr = VariantChangeType(&string_value, value, 0, VT_BSTR);
-    if(FAILED(hr)) {
-        WARN("Couldn't convert to VT_BSTR\n");
-        return hr;
-    }
+    if (V_VT(value) != VT_BSTR)
+    {
+        VARIANT string_value;
 
-    hr = node_set_content(This, V_BSTR(&string_value));
-    VariantClear(&string_value);
+        VariantInit(&string_value);
+        hr = VariantChangeType(&string_value, value, 0, VT_BSTR);
+        if(FAILED(hr)) {
+            WARN("Couldn't convert to VT_BSTR\n");
+            return hr;
+        }
+
+        hr = node_set_content(This, V_BSTR(&string_value));
+        VariantClear(&string_value);
+    }
+    else
+        hr = node_set_content(This, V_BSTR(value));
 
     return hr;
 }
 
 HRESULT node_put_value_escaped(xmlnode *This, VARIANT *value)
 {
-    VARIANT string_value;
     HRESULT hr;
 
-    VariantInit(&string_value);
-    hr = VariantChangeType(&string_value, value, 0, VT_BSTR);
-    if(FAILED(hr)) {
-        WARN("Couldn't convert to VT_BSTR\n");
-        return hr;
-    }
+    if (V_VT(value) != VT_BSTR)
+    {
+       VARIANT string_value;
 
-    hr = node_set_content_escaped(This, V_BSTR(&string_value));
-    VariantClear(&string_value);
+        VariantInit(&string_value);
+        hr = VariantChangeType(&string_value, value, 0, VT_BSTR);
+        if(FAILED(hr)) {
+            WARN("Couldn't convert to VT_BSTR\n");
+            return hr;
+        }
+
+        hr = node_set_content_escaped(This, V_BSTR(&string_value));
+        VariantClear(&string_value);
+    }
+    else
+        hr = node_set_content_escaped(This, V_BSTR(value));
 
     return hr;
 }
