@@ -251,40 +251,37 @@ static HANDLE msvcrt_fdtoh(int fd)
 /* INTERNAL: free a file entry fd */
 static void msvcrt_free_fd(int fd)
 {
-  HANDLE old_handle;
   ioinfo *fdinfo;
 
   LOCK_FILES();
   fdinfo = msvcrt_get_ioinfo(fd);
-  old_handle = fdinfo->handle;
   if(fdinfo != &MSVCRT___badioinfo)
   {
     fdinfo->handle = INVALID_HANDLE_VALUE;
     fdinfo->wxflag = 0;
   }
   TRACE(":fd (%d) freed\n",fd);
-  if (fd < 3) /* don't use 0,1,2 for user files */
+
+  if (fd < 3)
   {
     switch (fd)
     {
     case 0:
-        if (GetStdHandle(STD_INPUT_HANDLE) == old_handle) SetStdHandle(STD_INPUT_HANDLE, 0);
+        SetStdHandle(STD_INPUT_HANDLE, 0);
         break;
     case 1:
-        if (GetStdHandle(STD_OUTPUT_HANDLE) == old_handle) SetStdHandle(STD_OUTPUT_HANDLE, 0);
+        SetStdHandle(STD_OUTPUT_HANDLE, 0);
         break;
     case 2:
-        if (GetStdHandle(STD_ERROR_HANDLE) == old_handle) SetStdHandle(STD_ERROR_HANDLE, 0);
+        SetStdHandle(STD_ERROR_HANDLE, 0);
         break;
     }
   }
-  else
-  {
-    if (fd == MSVCRT_fdend - 1)
-      MSVCRT_fdend--;
-    if (fd < MSVCRT_fdstart)
-      MSVCRT_fdstart = fd;
-  }
+
+  if (fd == MSVCRT_fdend - 1)
+    MSVCRT_fdend--;
+  if (fd < MSVCRT_fdstart)
+    MSVCRT_fdstart = fd;
   UNLOCK_FILES();
 }
 
