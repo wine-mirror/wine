@@ -29,6 +29,7 @@
 #include "winreg.h"
 #include "ole2.h"
 #include "shlobj.h"
+#include "shlwapi.h"
 
 #include "wine/debug.h"
 
@@ -1106,11 +1107,13 @@ BOOL is_gecko_path(const char *path)
     if(!buf || strlenW(buf) < gecko_path_len)
         return FALSE;
 
-    buf[gecko_path_len] = 0;
     for(ptr = buf; *ptr; ptr++) {
         if(*ptr == '\\')
             *ptr = '/';
     }
+
+    UrlUnescapeW(buf, NULL, NULL, URL_UNESCAPE_INPLACE);
+    buf[gecko_path_len] = 0;
 
     ret = !strcmpiW(buf, gecko_path);
     heap_free(buf);
