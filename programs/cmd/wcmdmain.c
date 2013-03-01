@@ -1213,6 +1213,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
            Note: Launching internal wine processes cannot specify a full path to exe */
         status = CreateProcessW(assumeInternal?NULL : thisDir,
                                 command, NULL, NULL, TRUE, 0, NULL, NULL, &st, &pe);
+        heap_free(st.lpReserved2);
         if ((opt_c || opt_k) && !opt_s && !status
             && GetLastError()==ERROR_FILE_NOT_FOUND && command[0]=='\"') {
           /* strip first and last quote WCHARacters and try again */
