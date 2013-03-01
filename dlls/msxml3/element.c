@@ -1228,7 +1228,6 @@ static HRESULT WINAPI domelem_setAttribute(
     xmlChar *xml_name, *xml_value, *local, *prefix;
     xmlNodePtr element;
     HRESULT hr;
-    VARIANT var;
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(name), debugstr_variant(&value));
 
@@ -1236,16 +1235,25 @@ static HRESULT WINAPI domelem_setAttribute(
     if ( !element )
         return E_FAIL;
 
-    VariantInit(&var);
-    hr = VariantChangeType(&var, &value, 0, VT_BSTR);
-    if(hr != S_OK)
+    if (V_VT(&value) != VT_BSTR)
     {
-        FIXME("VariantChangeType failed\n");
-        return hr;
+        VARIANT var;
+
+        VariantInit(&var);
+        hr = VariantChangeType(&var, &value, 0, VT_BSTR);
+        if (hr != S_OK)
+        {
+            FIXME("VariantChangeType failed\n");
+            return hr;
+        }
+
+        xml_value = xmlchar_from_wchar(V_BSTR(&var));
+        VariantClear(&var);
     }
+    else
+        xml_value = xmlchar_from_wchar(V_BSTR(&value));
 
     xml_name = xmlchar_from_wchar( name );
-    xml_value = xmlchar_from_wchar( V_BSTR(&var) );
 
     if ((local = xmlSplitQName2(xml_name, &prefix)))
     {
@@ -1268,7 +1276,6 @@ static HRESULT WINAPI domelem_setAttribute(
 
     heap_free(xml_value);
     heap_free(xml_name);
-    VariantClear(&var);
 
     return hr;
 }
