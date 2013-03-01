@@ -446,6 +446,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         case 69: /* TODO */
         case 101: /* TODO (IE8) */
         case 109: /* TODO (IE9) */
+        case 113: /* TODO (IE10) */
             return E_FAIL;
         default:
             ok(0, "unexpected nCmdID %d\n", nCmdID);
@@ -453,6 +454,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     }else if(IsEqualGUID(&CGID_ShellDocView, pguidCmdGroup)) {
         switch(nCmdID) {
         case 105: /* TODO */
+        case 134: /* TODO (IE10) */
+        case 136: /* TODO (IE10) */
         case 138: /* TODO */
         case 140: /* TODO (Win7) */
         case 144: /* TODO */
@@ -948,6 +951,9 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
 
     case 282: /* FIXME */
         CHECK_EXPECT2(Invoke_282);
+        break;
+
+    case 290: /* FIXME: IE10 */
         break;
 
     default:
