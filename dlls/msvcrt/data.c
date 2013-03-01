@@ -431,7 +431,7 @@ static int build_expanded_argv(int *argc, char **argv)
                 args_no++;
                 size += len+path_len;
             }while(FindNextFileA(h, &data));
-            CloseHandle(h);
+            FindClose(h);
         }
 
         if(!len) {
@@ -528,7 +528,7 @@ static int build_expanded_wargv(int *argc, MSVCRT_wchar_t **argv)
                 args_no++;
                 size += len+path_len;
             }while(FindNextFileW(h, &data));
-            CloseHandle(h);
+            FindClose(h);
         }
 
         if(!len) {
