@@ -1087,68 +1087,74 @@ static HRESULT WINAPI HTMLElement_get_outerText(IHTMLElement *iface, BSTR *p)
     return E_NOTIMPL;
 }
 
-static HRESULT HTMLElement_InsertAdjacentNode(HTMLElement *This, BSTR where, nsIDOMNode *nsnode)
+static HRESULT insert_adjacent_node(HTMLElement *This, const WCHAR *where, nsIDOMNode *nsnode)
 {
-    static const WCHAR wszBeforeBegin[] = {'b','e','f','o','r','e','B','e','g','i','n',0};
-    static const WCHAR wszAfterBegin[] = {'a','f','t','e','r','B','e','g','i','n',0};
-    static const WCHAR wszBeforeEnd[] = {'b','e','f','o','r','e','E','n','d',0};
-    static const WCHAR wszAfterEnd[] = {'a','f','t','e','r','E','n','d',0};
+    nsIDOMNode *ret_nsnode;
     nsresult nsres;
+    HRESULT hres = S_OK;
 
-    if (!strcmpiW(where, wszBeforeBegin))
-    {
-        nsIDOMNode *unused;
+    static const WCHAR beforebeginW[] = {'b','e','f','o','r','e','b','e','g','i','n',0};
+    static const WCHAR afterbeginW[] = {'a','f','t','e','r','b','e','g','i','n',0};
+    static const WCHAR beforeendW[] = {'b','e','f','o','r','e','e','n','d',0};
+    static const WCHAR afterendW[] = {'a','f','t','e','r','e','n','d',0};
+
+    if (!strcmpiW(where, beforebeginW)) {
         nsIDOMNode *parent;
+
         nsres = nsIDOMNode_GetParentNode(This->node.nsnode, &parent);
-        if (!parent) return E_INVALIDARG;
-        nsres = nsIDOMNode_InsertBefore(parent, nsnode, This->node.nsnode, &unused);
-        if (unused) nsIDOMNode_Release(unused);
-        nsIDOMNode_Release(parent);
-    }
-    else if (!strcmpiW(where, wszAfterBegin))
-    {
-        nsIDOMNode *unused;
-        nsIDOMNode *first_child;
-        nsIDOMNode_GetFirstChild(This->node.nsnode, &first_child);
-        nsres = nsIDOMNode_InsertBefore(This->node.nsnode, nsnode, first_child, &unused);
-        if (unused) nsIDOMNode_Release(unused);
-        if (first_child) nsIDOMNode_Release(first_child);
-    }
-    else if (!strcmpiW(where, wszBeforeEnd))
-    {
-        nsIDOMNode *unused;
-        nsres = nsIDOMNode_AppendChild(This->node.nsnode, nsnode, &unused);
-        if (unused) nsIDOMNode_Release(unused);
-    }
-    else if (!strcmpiW(where, wszAfterEnd))
-    {
-        nsIDOMNode *unused;
-        nsIDOMNode *next_sibling;
-        nsIDOMNode *parent;
-        nsIDOMNode_GetParentNode(This->node.nsnode, &parent);
-        if (!parent) return E_INVALIDARG;
+        if(NS_FAILED(nsres))
+            return E_FAIL;
 
-        nsIDOMNode_GetNextSibling(This->node.nsnode, &next_sibling);
-        if (next_sibling)
-        {
-            nsres = nsIDOMNode_InsertBefore(parent, nsnode, next_sibling, &unused);
-            nsIDOMNode_Release(next_sibling);
-        }
-        else
-            nsres = nsIDOMNode_AppendChild(parent, nsnode, &unused);
+        if(!parent)
+            return E_INVALIDARG;
+
+        nsres = nsIDOMNode_InsertBefore(parent, nsnode, This->node.nsnode, &ret_nsnode);
         nsIDOMNode_Release(parent);
-        if (unused) nsIDOMNode_Release(unused);
-    }
-    else
-    {
+    }else if(!strcmpiW(where, afterbeginW)) {
+        nsIDOMNode *first_child;
+
+        nsres = nsIDOMNode_GetFirstChild(This->node.nsnode, &first_child);
+        if(NS_FAILED(nsres))
+            return E_FAIL;
+
+        nsres = nsIDOMNode_InsertBefore(This->node.nsnode, nsnode, first_child, &ret_nsnode);
+        if(NS_FAILED(nsres))
+            return E_FAIL;
+
+        if (first_child)
+            nsIDOMNode_Release(first_child);
+    }else if (!strcmpiW(where, beforeendW)) {
+        nsres = nsIDOMNode_AppendChild(This->node.nsnode, nsnode, &ret_nsnode);
+    }else if (!strcmpiW(where, afterendW)) {
+        nsIDOMNode *next_sibling, *parent;
+
+        nsres = nsIDOMNode_GetParentNode(This->node.nsnode, &parent);
+        if(NS_FAILED(nsres))
+            return E_FAIL;
+        if(!parent)
+            return E_INVALIDARG;
+
+        nsres = nsIDOMNode_GetNextSibling(This->node.nsnode, &next_sibling);
+        if(NS_SUCCEEDED(nsres)) {
+            if(next_sibling) {
+                nsres = nsIDOMNode_InsertBefore(parent, nsnode, next_sibling, &ret_nsnode);
+                nsIDOMNode_Release(next_sibling);
+            }else {
+                nsres = nsIDOMNode_AppendChild(parent, nsnode, &ret_nsnode);
+            }
+        }
+
+        nsIDOMNode_Release(parent);
+    }else {
         ERR("invalid where: %s\n", debugstr_w(where));
         return E_INVALIDARG;
     }
 
     if (NS_FAILED(nsres))
         return E_FAIL;
-    else
-        return S_OK;
+
+    nsIDOMNode_Release(ret_nsnode);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLElement_insertAdjacentHTML(IHTMLElement *iface, BSTR where,
@@ -1188,9 +1194,8 @@ static HRESULT WINAPI HTMLElement_insertAdjacentHTML(IHTMLElement *iface, BSTR w
         return E_FAIL;
     }
 
-    hr = HTMLElement_InsertAdjacentNode(This, where, nsnode);
+    hr = insert_adjacent_node(This, where, nsnode);
     nsIDOMNode_Release(nsnode);
-
     return hr;
 }
 
@@ -1221,7 +1226,7 @@ static HRESULT WINAPI HTMLElement_insertAdjacentText(IHTMLElement *iface, BSTR w
         return E_FAIL;
     }
 
-    hr = HTMLElement_InsertAdjacentNode(This, where, nsnode);
+    hr = insert_adjacent_node(This, where, nsnode);
     nsIDOMNode_Release(nsnode);
 
     return hr;
