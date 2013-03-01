@@ -1964,6 +1964,42 @@ static void test_dup2(void)
     ok(-1 == _dup2(0, -1), "expected _dup2 to fail when second arg is negative\n" );
 }
 
+static void test_stdin(void)
+{
+    HANDLE stdinh = GetStdHandle(STD_INPUT_HANDLE);
+    int stdin_dup, fd;
+    HANDLE h;
+    DWORD r;
+
+    stdin_dup = _dup(STDIN_FILENO);
+    ok(stdin_dup != -1, "_dup(STDIN_FILENO) failed\n");
+
+    ok(stdinh == (HANDLE)_get_osfhandle(STDIN_FILENO),
+            "GetStdHandle(STD_INPUT_HANDLE) != _get_osfhandle(STDIN_FILENO)\n");
+
+    r = SetStdHandle(STD_INPUT_HANDLE, INVALID_HANDLE_VALUE);
+    ok(r == TRUE, "SetStdHandle returned %x, expected TRUE\n", r);
+    h = GetStdHandle(STD_INPUT_HANDLE);
+    ok(h == INVALID_HANDLE_VALUE, "h = %p\n", h);
+
+    close(STDIN_FILENO);
+    h = GetStdHandle(STD_INPUT_HANDLE);
+    ok(h == NULL, "h != NULL\n");
+
+    fd = open("stdin.tst", O_WRONLY | O_CREAT, _S_IREAD |_S_IWRITE);
+    ok(fd != -1, "open failed\n");
+    ok(fd == STDIN_FILENO, "fd = %d, expected STDIN_FILENO\n", fd);
+    h = GetStdHandle(STD_INPUT_HANDLE);
+    ok(h != NULL, "h == NULL\n");
+    close(fd);
+    unlink("stdin.tst");
+
+    r = _dup2(stdin_dup, STDIN_FILENO);
+    ok(r != -1, "_dup2 failed\n");
+    h = GetStdHandle(STD_INPUT_HANDLE);
+    ok(h != NULL, "h == NULL\n");
+}
+
 START_TEST(file)
 {
     int arg_c;
@@ -2019,6 +2055,7 @@ START_TEST(file)
     test_get_osfhandle();
     test_setmaxstdio();
     test_pipes(arg_v[0]);
+    test_stdin();
 
     /* Wait for the (_P_NOWAIT) spawned processes to finish to make sure the report
      * file contains lines in the correct order
