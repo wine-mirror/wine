@@ -1087,7 +1087,7 @@ static HRESULT WINAPI HTMLElement_get_outerText(IHTMLElement *iface, BSTR *p)
     return E_NOTIMPL;
 }
 
-static HRESULT insert_adjacent_node(HTMLElement *This, const WCHAR *where, nsIDOMNode *nsnode)
+HRESULT insert_adjacent_node(HTMLElement *This, const WCHAR *where, nsIDOMNode *nsnode, HTMLDOMNode **ret_node)
 {
     nsIDOMNode *ret_nsnode;
     nsresult nsres;
@@ -1153,6 +1153,8 @@ static HRESULT insert_adjacent_node(HTMLElement *This, const WCHAR *where, nsIDO
     if (NS_FAILED(nsres))
         return E_FAIL;
 
+    if(ret_node)
+        hres = get_node(This->node.doc, ret_nsnode, TRUE, ret_node);
     nsIDOMNode_Release(ret_nsnode);
     return hres;
 }
@@ -1194,7 +1196,7 @@ static HRESULT WINAPI HTMLElement_insertAdjacentHTML(IHTMLElement *iface, BSTR w
         return E_FAIL;
     }
 
-    hr = insert_adjacent_node(This, where, nsnode);
+    hr = insert_adjacent_node(This, where, nsnode, NULL);
     nsIDOMNode_Release(nsnode);
     return hr;
 }
@@ -1226,7 +1228,7 @@ static HRESULT WINAPI HTMLElement_insertAdjacentText(IHTMLElement *iface, BSTR w
         return E_FAIL;
     }
 
-    hr = insert_adjacent_node(This, where, nsnode);
+    hr = insert_adjacent_node(This, where, nsnode, NULL);
     nsIDOMNode_Release(nsnode);
 
     return hr;

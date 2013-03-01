@@ -1120,8 +1120,23 @@ static HRESULT WINAPI HTMLElement2_insertAdjacentElement(IHTMLElement2 *iface, B
         IHTMLElement *insertedElement, IHTMLElement **inserted)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    FIXME("(%p)->(%s %p %p)\n", This, debugstr_w(where), insertedElement, inserted);
-    return E_NOTIMPL;
+    HTMLDOMNode *ret_node;
+    HTMLElement *elem;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(where), insertedElement, inserted);
+
+    elem = unsafe_impl_from_IHTMLElement(insertedElement);
+    if(!elem)
+        return E_INVALIDARG;
+
+    hres = insert_adjacent_node(This, where, elem->node.nsnode, &ret_node);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IHTMLDOMNode_QueryInterface(&ret_node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)inserted);
+    IHTMLDOMNode_Release(&ret_node->IHTMLDOMNode_iface);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLElement2_applyElement(IHTMLElement2 *iface, IHTMLElement *apply,
