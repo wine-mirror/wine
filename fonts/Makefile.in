@@ -54,7 +54,8 @@ TRUETYPE_FONTS = \
 	marlett.ttf \
 	symbol.ttf \
 	tahoma.ttf \
-	tahomabd.ttf
+	tahomabd.ttf \
+	wingding.ttf
 
 FONTS = $(BITMAP_FONTS) $(TRUETYPE_FONTS)
 
