@@ -486,53 +486,21 @@ void msvcrt_init_io(void)
         if (msvcrt_get_ioinfo(MSVCRT_fdstart)->handle == INVALID_HANDLE_VALUE) break;
   }
 
-  if(!MSVCRT___pioinfo[0])
-      msvcrt_alloc_fd_from(INVALID_HANDLE_VALUE, 0, 3);
-
-  fdinfo = msvcrt_get_ioinfo(0);
+  fdinfo = msvcrt_get_ioinfo(MSVCRT_STDIN_FILENO);
   if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE)
-  {
-      HANDLE std = GetStdHandle(STD_INPUT_HANDLE);
-      if (std != INVALID_HANDLE_VALUE && DuplicateHandle(GetCurrentProcess(), std,
-                                                         GetCurrentProcess(), &fdinfo->handle,
-                                                         0, TRUE, DUPLICATE_SAME_ACCESS))
-          fdinfo->wxflag = WX_OPEN | WX_TEXT;
-      fdinfo->lookahead[0] = '\n';
-      fdinfo->lookahead[1] = '\n';
-      fdinfo->lookahead[2] = '\n';
-      fdinfo->exflag = 0;
-  }
+    msvcrt_alloc_fd_from(GetStdHandle(STD_INPUT_HANDLE), WX_OPEN|WX_TEXT, MSVCRT_STDIN_FILENO);
 
-  fdinfo = msvcrt_get_ioinfo(1);
+  fdinfo = msvcrt_get_ioinfo(MSVCRT_STDOUT_FILENO);
   if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE)
-  {
-      HANDLE std = GetStdHandle(STD_OUTPUT_HANDLE);
-      if (std != INVALID_HANDLE_VALUE && DuplicateHandle(GetCurrentProcess(), std,
-                                                         GetCurrentProcess(), &fdinfo->handle,
-                                                         0, TRUE, DUPLICATE_SAME_ACCESS))
-          fdinfo->wxflag = WX_OPEN | WX_TEXT;
-      fdinfo->lookahead[0] = '\n';
-      fdinfo->lookahead[1] = '\n';
-      fdinfo->lookahead[2] = '\n';
-      fdinfo->exflag = 0;
-  }
+    msvcrt_alloc_fd_from(GetStdHandle(STD_OUTPUT_HANDLE), WX_OPEN|WX_TEXT, MSVCRT_STDOUT_FILENO);
 
-  fdinfo = msvcrt_get_ioinfo(2);
+  fdinfo = msvcrt_get_ioinfo(MSVCRT_STDERR_FILENO);
   if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE)
-  {
-      HANDLE std = GetStdHandle(STD_ERROR_HANDLE);
-      if (std != INVALID_HANDLE_VALUE && DuplicateHandle(GetCurrentProcess(), std,
-                                                         GetCurrentProcess(), &fdinfo->handle,
-                                                         0, TRUE, DUPLICATE_SAME_ACCESS))
-          fdinfo->wxflag = WX_OPEN | WX_TEXT;
-      fdinfo->lookahead[0] = '\n';
-      fdinfo->lookahead[1] = '\n';
-      fdinfo->lookahead[2] = '\n';
-      fdinfo->exflag = 0;
-  }
+    msvcrt_alloc_fd_from(GetStdHandle(STD_ERROR_HANDLE), WX_OPEN|WX_TEXT, MSVCRT_STDERR_FILENO);
 
-  TRACE(":handles (%p)(%p)(%p)\n", msvcrt_get_ioinfo(0)->handle,
-	msvcrt_get_ioinfo(1)->handle, msvcrt_get_ioinfo(2)->handle);
+  TRACE(":handles (%p)(%p)(%p)\n", msvcrt_get_ioinfo(MSVCRT_STDIN_FILENO)->handle,
+        msvcrt_get_ioinfo(MSVCRT_STDOUT_FILENO)->handle,
+        msvcrt_get_ioinfo(MSVCRT_STDERR_FILENO)->handle);
 
   memset(MSVCRT__iob,0,3*sizeof(MSVCRT_FILE));
   for (i = 0; i < 3; i++)
