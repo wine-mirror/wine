@@ -4179,6 +4179,48 @@ static void test_create_img_elem(IHTMLDocument2 *doc)
     }
 }
 
+#define insert_adjacent_elem(a,b,c) _insert_adjacent_elem(__LINE__,a,b,c)
+static void _insert_adjacent_elem(unsigned line, IHTMLElement *parent, const char *where, IHTMLElement *elem)
+{
+    IHTMLElement2 *elem2 = _get_elem2_iface(line, (IUnknown*)parent);
+    IHTMLElement *ret_elem = NULL;
+    BSTR str = a2bstr(where);
+    HRESULT hres;
+
+    hres = IHTMLElement2_insertAdjacentElement(elem2, str, elem, &ret_elem);
+    IHTMLElement2_Release(elem2);
+    SysFreeString(str);
+    ok_(__FILE__,line)(hres == S_OK, "insertAdjacentElement failed: %08x\n", hres);
+    ok_(__FILE__,line)(ret_elem == elem, "ret_elem != elem\n");
+    IHTMLElement_Release(ret_elem);
+}
+
+void test_insert_adjacent_elems(IHTMLDocument2 *doc, IHTMLElement *parent)
+{
+    IHTMLElement *elem, *elem2;
+
+    static const elem_type_t br_br[] = {ET_BR, ET_BR};
+    static const elem_type_t br_div_br[] = {ET_BR, ET_DIV, ET_BR};
+
+    elem = test_create_elem(doc, "BR");
+    insert_adjacent_elem(parent, "BeforeEnd", elem);
+    IHTMLElement_Release(elem);
+
+    test_elem_all((IUnknown*)parent, br_br, 1);
+
+    elem = test_create_elem(doc, "BR");
+    insert_adjacent_elem(parent, "beforeend", elem);
+
+    test_elem_all((IUnknown*)parent, br_br, 2);
+
+    elem2 = test_create_elem(doc, "DIV");
+    insert_adjacent_elem(elem, "beforebegin", elem2);
+    IHTMLElement_Release(elem2);
+    IHTMLElement_Release(elem);
+
+    test_elem_all((IUnknown*)parent, br_div_br, 3);
+}
+
 static IHTMLTxtRange *test_create_body_range(IHTMLDocument2 *doc)
 {
     IHTMLBodyElement *body;
@@ -6404,6 +6446,9 @@ static void test_elems2(IHTMLDocument2 *doc)
         test_input_value((IUnknown*)elem, "test");
         IHTMLElement_Release(elem);
     }
+
+    test_elem_set_innerhtml((IUnknown*)div, "");
+    test_insert_adjacent_elems(doc, div);
 
     test_elem_set_innerhtml((IUnknown*)div,
             "<form id=\"form\"><input type=\"button\" /><div><input type=\"text\" /></div></textarea>");
