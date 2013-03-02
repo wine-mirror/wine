@@ -2195,6 +2195,9 @@ GpStatus graphics_from_image(GpImage *image, GpGraphics **graphics)
     (*graphics)->hwnd = NULL;
     (*graphics)->owndc = FALSE;
     (*graphics)->image = image;
+    /* We have to store the image type here because the image may be freed
+     * before GdipDeleteGraphics is called, and metafiles need special treatment. */
+    (*graphics)->image_type = image->type;
     (*graphics)->smoothing = SmoothingModeDefault;
     (*graphics)->compqual = CompositingQualityDefault;
     (*graphics)->interpolation = InterpolationModeBilinear;
@@ -2389,7 +2392,7 @@ GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
     if(!graphics) return InvalidParameter;
     if(graphics->busy) return ObjectBusy;
 
-    if (graphics->image && graphics->image->type == ImageTypeMetafile)
+    if (graphics->image && graphics->image_type == ImageTypeMetafile)
     {
         stat = METAFILE_GraphicsDeleted((GpMetafile*)graphics->image);
         if (stat != Ok)

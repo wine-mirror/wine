@@ -154,6 +154,7 @@ struct GpGraphics{
     BOOL owndc;
     BOOL alpha_hdc;
     GpImage *image;
+    ImageType image_type;
     SmoothingMode smoothing;
     CompositingQuality compqual;
     InterpolationMode interpolation;
