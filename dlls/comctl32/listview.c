@@ -4577,7 +4577,6 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     NMLVCUSTOMDRAW nmlvcd;
     HIMAGELIST himl;
     LVITEMW lvItem;
-    HFONT hOldFont;
 
     TRACE("(hdc=%p, nItem=%d, nSubItem=%d, pos=%s)\n", hdc, nItem, nSubItem, wine_dbgstr_point(&pos));
 
@@ -4615,7 +4614,6 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     /* fill in the custom draw structure */
     customdraw_fill(&nmlvcd, infoPtr, hdc, &rcBox, &lvItem);
 
-    hOldFont = GetCurrentObject(hdc, OBJ_FONT);
     if (nSubItem > 0) cdmode = infoPtr->cditemmode;
     if (cdmode & CDRF_SKIPDEFAULT) goto postpaint;
     if (cdmode & CDRF_NOTIFYITEMDRAW)
@@ -4741,8 +4739,6 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
 postpaint:
     if (cdsubitemmode & CDRF_NOTIFYPOSTPAINT)
         notify_postpaint(infoPtr, &nmlvcd);
-    if (cdsubitemmode & CDRF_NEWFONT)
-        SelectObject(hdc, hOldFont);
     return TRUE;
 }
 
@@ -4869,6 +4865,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc,
     /* iterate through the invalidated rows */
     while(iterator_next(i))
     {
+        SelectObject(hdc, infoPtr->hFont);
 	LISTVIEW_GetItemOrigin(infoPtr, i->nItem, &Position);
 	Position.y += Origin.y;
 
@@ -5016,6 +5013,7 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc, D
     
     while(iterator_prev(i))
     {
+        SelectObject(hdc, infoPtr->hFont);
 	LISTVIEW_GetItemOrigin(infoPtr, i->nItem, &Position);
 	Position.x += Origin.x;
 	Position.y += Origin.y;
@@ -5342,6 +5340,7 @@ static HIMAGELIST LISTVIEW_CreateDragImage(LISTVIEW_INFO *infoPtr, INT iItem, LP
     POINT pos;
     HDC hdc, hdcOrig;
     HBITMAP hbmp, hOldbmp;
+    HFONT hOldFont;
     HIMAGELIST dragList = 0;
     TRACE("iItem=%d Count=%d\n", iItem, infoPtr->nItemCount);
 
@@ -5362,6 +5361,7 @@ static HIMAGELIST LISTVIEW_CreateDragImage(LISTVIEW_INFO *infoPtr, INT iItem, LP
     hdc = CreateCompatibleDC(hdcOrig);
     hbmp = CreateCompatibleBitmap(hdcOrig, size.cx, size.cy);
     hOldbmp = SelectObject(hdc, hbmp);
+    hOldFont = SelectObject(hdc, infoPtr->hFont);
 
     rcItem.left = rcItem.top = 0;
     rcItem.right = size.cx;
@@ -5378,6 +5378,7 @@ static HIMAGELIST LISTVIEW_CreateDragImage(LISTVIEW_INFO *infoPtr, INT iItem, LP
     else
         SelectObject(hdc, hOldbmp);
 
+    SelectObject(hdc, hOldFont);
     DeleteObject(hbmp);
     DeleteDC(hdc);
     ReleaseDC(infoPtr->hwndSelf, hdcOrig);
