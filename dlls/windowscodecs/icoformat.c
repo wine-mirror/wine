@@ -293,7 +293,7 @@ static HRESULT ReadIcoDib(IStream *stream, IcoFrameDecode *result)
         {
             /* If the alpha channel is fully transparent, we should ignore it. */
             int nonzero_alpha = 0;
-            int i;
+            UINT i;
 
             for (i=0; i<(result->height*result->width); i++)
             {

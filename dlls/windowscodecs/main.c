@@ -98,7 +98,7 @@ HRESULT copy_pixels(UINT bpp, const BYTE *srcbuffer,
     if (row_offset % 8 == 0)
     {
         /* everything lines up on a byte boundary */
-        UINT row;
+        INT row;
         const BYTE *src;
         BYTE *dst;
 

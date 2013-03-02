@@ -998,7 +998,8 @@ static HRESULT WINAPI JpegEncoder_Frame_WritePixels(IWICBitmapFrameEncode *iface
     JpegEncoder *This = impl_from_IWICBitmapFrameEncode(iface);
     jmp_buf jmpbuf;
     BYTE *swapped_data = NULL, *current_row;
-    int line, row_size;
+    UINT line;
+    int row_size;
     TRACE("(%p,%u,%u,%u,%p)\n", iface, lineCount, cbStride, cbBufferSize, pbPixels);
 
     EnterCriticalSection(&This->lock);
@@ -1061,7 +1062,7 @@ static HRESULT WINAPI JpegEncoder_Frame_WritePixels(IWICBitmapFrameEncode *iface
     {
         if (This->format->swap_rgb)
         {
-            int x;
+            UINT x;
 
             memcpy(swapped_data, pbPixels + (cbStride * line), row_size);
 

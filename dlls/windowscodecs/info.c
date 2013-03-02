@@ -539,7 +539,8 @@ static HRESULT WINAPI BitmapDecoderInfo_MatchesPattern(IWICBitmapDecoderInfo *if
     WICBitmapPattern *patterns;
     UINT pattern_count=0, patterns_size=0;
     HRESULT hr;
-    int i, pos;
+    UINT i;
+    ULONG pos;
     BYTE *data=NULL;
     ULONG datasize=0;
     ULONG bytesread;
@@ -1900,7 +1901,7 @@ static HRESULT WINAPI ComponentEnum_Next(IEnumUnknown *iface, ULONG celt,
     IUnknown **rgelt, ULONG *pceltFetched)
 {
     ComponentEnum *This = impl_from_IEnumUnknown(iface);
-    int num_fetched=0;
+    ULONG num_fetched=0;
     ComponentEnumItem *item;
     HRESULT hr=S_OK;
 
@@ -1929,7 +1930,7 @@ static HRESULT WINAPI ComponentEnum_Next(IEnumUnknown *iface, ULONG celt,
 static HRESULT WINAPI ComponentEnum_Skip(IEnumUnknown *iface, ULONG celt)
 {
     ComponentEnum *This = impl_from_IEnumUnknown(iface);
-    int i;
+    ULONG i;
     HRESULT hr=S_OK;
 
     TRACE("(%p,%u)\n", iface, celt);
