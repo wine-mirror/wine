@@ -3396,7 +3396,7 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
         IAudioStreamVolume *iface, UINT32 count, const float *levels)
 {
     ACImpl *This = impl_from_IAudioStreamVolume(iface);
-    int i;
+    unsigned int i;
 
     TRACE("(%p)->(%d, %p)\n", This, count, levels);
 
@@ -3422,7 +3422,7 @@ static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
         IAudioStreamVolume *iface, UINT32 count, float *levels)
 {
     ACImpl *This = impl_from_IAudioStreamVolume(iface);
-    int i;
+    unsigned int i;
 
     TRACE("(%p)->(%d, %p)\n", This, count, levels);
 
@@ -3558,7 +3558,7 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
 {
     AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
     AudioSession *session = This->session;
-    int i;
+    unsigned int i;
 
     TRACE("(%p)->(%d, %p, %s)\n", session, count, levels,
             wine_dbgstr_guid(context));
@@ -3589,7 +3589,7 @@ static HRESULT WINAPI ChannelAudioVolume_GetAllVolumes(
 {
     AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
     AudioSession *session = This->session;
-    int i;
+    unsigned int i;
 
     TRACE("(%p)->(%d, %p)\n", session, count, levels);
 
