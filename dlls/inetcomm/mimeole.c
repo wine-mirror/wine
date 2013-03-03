@@ -1099,17 +1099,14 @@ static HRESULT MimeBody_set_offsets(MimeBody *body, const BODYOFFSETS *offsets)
 
 #define FIRST_CUSTOM_PROP_ID 0x100
 
-HRESULT MimeBody_create(IUnknown *outer, void **obj)
+MimeBody *mimebody_create(void)
 {
     MimeBody *This;
     BODYOFFSETS body_offsets;
 
-    *obj = NULL;
-
-    if(outer) return CLASS_E_NOAGGREGATION;
-
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
-    if (!This) return E_OUTOFMEMORY;
+    if (!This)
+        return NULL;
 
     This->IMimeBody_iface.lpVtbl = &body_vtbl;
     This->ref = 1;
@@ -1127,9 +1124,29 @@ HRESULT MimeBody_create(IUnknown *outer, void **obj)
     body_offsets.cbBodyStart     = body_offsets.cbBodyEnd     = 0;
     MimeBody_set_offsets(This, &body_offsets);
 
-    *obj = &This->IMimeBody_iface;
-    return S_OK;
+    return This;
 }
+
+HRESULT MimeBody_create(IUnknown *outer, void **ppv)
+{
+    MimeBody *mb;
+
+    if(outer)
+        return CLASS_E_NOAGGREGATION;
+
+    if ((mb = mimebody_create()))
+    {
+        *ppv = &mb->IMimeBody_iface;
+        return S_OK;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_OUTOFMEMORY;
+    }
+}
+
+
 
 typedef struct
 {
@@ -1422,7 +1439,7 @@ typedef struct body_t
 {
     struct list entry;
     DWORD index;
-    IMimeBody *mime_body;
+    MimeBody *mime_body;
 
     struct body_t *parent;
     struct list children;
@@ -1480,7 +1497,7 @@ static void empty_body_list(struct list *list)
     {
         empty_body_list(&body->children);
         list_remove(&body->entry);
-        IMimeBody_Release(body->mime_body);
+        IMimeBody_Release(&body->mime_body->IMimeBody_iface);
         HeapFree(GetProcessHeap(), 0, body);
     }
 }
@@ -1520,7 +1537,7 @@ static HRESULT WINAPI MimeMessage_IsDirty(
     return E_NOTIMPL;
 }
 
-static body_t *new_body_entry(IMimeBody *mime_body, DWORD index, body_t *parent)
+static body_t *new_body_entry(MimeBody *mime_body, DWORD index, body_t *parent)
 {
     body_t *body = HeapAlloc(GetProcessHeap(), 0, sizeof(*body));
     if(body)
@@ -1625,28 +1642,29 @@ end:
 
 static body_t *create_sub_body(MimeMessage *msg, IStream *pStm, BODYOFFSETS *offset, body_t *parent)
 {
-    IMimeBody *mime_body;
+    MimeBody *mime_body;
     HRESULT hr;
     body_t *body;
     ULARGE_INTEGER cur;
     LARGE_INTEGER zero;
 
-    MimeBody_create(NULL, (void**)&mime_body);
-    IMimeBody_Load(mime_body, pStm);
+    mime_body = mimebody_create();
+    IMimeBody_Load(&mime_body->IMimeBody_iface, pStm);
     zero.QuadPart = 0;
     hr = IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &cur);
     offset->cbBodyStart = cur.u.LowPart + offset->cbHeaderStart;
-    if(parent) MimeBody_set_offsets(impl_from_IMimeBody(mime_body), offset);
-    IMimeBody_SetData(mime_body, IET_BINARY, NULL, NULL, &IID_IStream, pStm);
+    if (parent) MimeBody_set_offsets(mime_body, offset);
+    IMimeBody_SetData(&mime_body->IMimeBody_iface, IET_BINARY, NULL, NULL, &IID_IStream, pStm);
     body = new_body_entry(mime_body, msg->next_index++, parent);
 
-    if(IMimeBody_IsContentType(mime_body, "multipart", NULL) == S_OK)
+    if(IMimeBody_IsContentType(&mime_body->IMimeBody_iface, "multipart", NULL) == S_OK)
     {
         MIMEPARAMINFO *param_info;
         ULONG count, i;
         IMimeAllocator *alloc;
 
-        hr = IMimeBody_GetParameters(mime_body, "Content-Type", &count, &param_info);
+        hr = IMimeBody_GetParameters(&mime_body->IMimeBody_iface, "Content-Type", &count,
+                &param_info);
         if(hr != S_OK || count == 0) return body;
 
         MimeOleGetAllocator(&alloc);
@@ -1708,7 +1726,7 @@ static HRESULT WINAPI MimeMessage_Load(IMimeMessage *iface, IStream *pStm)
     zero.QuadPart = 0;
     IStream_Seek(pStm, zero, STREAM_SEEK_END, &cur);
     offsets.cbBodyEnd = cur.u.LowPart;
-    MimeBody_set_offsets(impl_from_IMimeBody(root_body->mime_body), &offsets);
+    MimeBody_set_offsets(root_body->mime_body, &offsets);
 
     list_add_head(&This->body_tree, &root_body->entry);
 
@@ -1842,8 +1860,8 @@ static HRESULT WINAPI MimeMessage_BindToObject(IMimeMessage *iface, const HBODY 
 
     if(IsEqualIID(riid, &IID_IMimeBody))
     {
-        IMimeBody_AddRef(body->mime_body);
-        *ppvObject = body->mime_body;
+        IMimeBody_AddRef(&body->mime_body->IMimeBody_iface);
+        *ppvObject = &body->mime_body->IMimeBody_iface;
         return S_OK;
     }
 
@@ -2019,7 +2037,8 @@ static HRESULT find_next(MimeMessage *This, body_t *body, FINDBODY *find, HBODY 
         body = LIST_ENTRY( ptr, body_t, entry );
         next = UlongToHandle( body->index );
         find->dwReserved = body->index;
-        if (IMimeBody_IsContentType(body->mime_body, find->pszPriType, find->pszSubType) == S_OK)
+        if (IMimeBody_IsContentType(&body->mime_body->IMimeBody_iface, find->pszPriType,
+                    find->pszSubType) == S_OK)
         {
             *out = next;
             return S_OK;
