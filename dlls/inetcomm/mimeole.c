@@ -2778,11 +2778,6 @@ HRESULT WINAPI MimeOleCreateSecurity(IMimeSecurity **ppSecurity)
     return MimeSecurity_create(NULL, (void **)ppSecurity);
 }
 
-typedef struct
-{
-    IMimeAllocatorVtbl *lpVtbl;
-} MimeAllocator;
-
 static HRESULT WINAPI MimeAlloc_QueryInterface(
         IMimeAllocator* iface,
         REFIID riid,
@@ -2964,7 +2959,7 @@ static IMimeAllocatorVtbl mime_alloc_vtbl =
     MimeAlloc_PropVariantClear
 };
 
-static MimeAllocator mime_allocator =
+static IMimeAllocator mime_allocator =
 {
     &mime_alloc_vtbl
 };
