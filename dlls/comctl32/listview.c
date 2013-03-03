@@ -5037,7 +5037,7 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc, D
  */
 static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc, const RECT *prcErase)
 {
-    COLORREF oldTextColor = 0, oldBkColor = 0, oldClrTextBk, oldClrText;
+    COLORREF oldTextColor = 0, oldBkColor = 0;
     NMLVCUSTOMDRAW nmlvcd;
     HFONT hOldFont = 0;
     DWORD cdmode;
@@ -5094,21 +5094,12 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc, const RECT *prcEra
                hdcOrig, infoPtr->rcList.left, infoPtr->rcList.top, SRCCOPY);
     }
 
-    /* FIXME: Shouldn't need to do this */
-    oldClrTextBk = infoPtr->clrTextBk;
-    oldClrText   = infoPtr->clrText;
-   
     infoPtr->cditemmode = CDRF_DODEFAULT;
 
     GetClientRect(infoPtr->hwndSelf, &rcClient);
     customdraw_fill(&nmlvcd, infoPtr, hdc, &rcClient, 0);
     cdmode = notify_customdraw(infoPtr, CDDS_PREPAINT, &nmlvcd);
     if (cdmode & CDRF_SKIPDEFAULT) goto enddraw;
-    prepaint_setup(infoPtr, hdc, &nmlvcd, FALSE);
-
-    /* Use these colors to draw the items */
-    infoPtr->clrTextBk = nmlvcd.clrTextBk;
-    infoPtr->clrText = nmlvcd.clrText;
 
     /* nothing to draw */
     if(infoPtr->nItemCount == 0) goto enddraw;
@@ -5156,9 +5147,6 @@ enddraw:
 
     if (cdmode & CDRF_NOTIFYPOSTPAINT)
 	notify_postpaint(infoPtr, &nmlvcd);
-
-    infoPtr->clrTextBk = oldClrTextBk;
-    infoPtr->clrText = oldClrText;
 
     if(hbmp) {
         BitBlt(hdcOrig, infoPtr->rcList.left, infoPtr->rcList.top,
