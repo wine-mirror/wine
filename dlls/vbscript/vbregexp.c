@@ -314,7 +314,7 @@ static HRESULT create_sub_matches(DWORD pos, match_state_t *result, SubMatches *
     ret->result = result;
     if(result) {
         ret->match = heap_alloc((result->match_len+1) * sizeof(WCHAR));
-        if(!ret) {
+        if(!ret->match) {
             heap_free(ret);
             return E_OUTOFMEMORY;
         }
