@@ -1996,9 +1996,8 @@ static HRESULT WINAPI MimeMessage_CountBodies(IMimeMessage *iface, HBODY hParent
     return S_OK;
 }
 
-static HRESULT find_next(IMimeMessage *msg, body_t *body, LPFINDBODY find, HBODY *out)
+static HRESULT find_next(MimeMessage *This, body_t *body, FINDBODY *find, HBODY *out)
 {
-    MimeMessage *This = (MimeMessage *)msg;
     struct list *ptr;
     HBODY next;
 
@@ -2027,15 +2026,14 @@ static HRESULT find_next(IMimeMessage *msg, body_t *body, LPFINDBODY find, HBODY
     return MIME_E_NOT_FOUND;
 }
 
-static HRESULT WINAPI MimeMessage_FindFirst(
-    IMimeMessage *iface,
-    LPFINDBODY pFindBody,
-    LPHBODY phBody)
+static HRESULT WINAPI MimeMessage_FindFirst(IMimeMessage *iface, FINDBODY *pFindBody, HBODY *phBody)
 {
+    MimeMessage *This = impl_from_IMimeMessage(iface);
+
     TRACE("(%p)->(%p, %p)\n", iface, pFindBody, phBody);
 
     pFindBody->dwReserved = 0;
-    return find_next( iface, NULL, pFindBody, phBody );
+    return find_next(This, NULL, pFindBody, phBody);
 }
 
 static HRESULT WINAPI MimeMessage_FindNext(IMimeMessage *iface, FINDBODY *pFindBody, HBODY *phBody)
@@ -2048,7 +2046,7 @@ static HRESULT WINAPI MimeMessage_FindNext(IMimeMessage *iface, FINDBODY *pFindB
 
     hr = find_body( &This->body_tree, UlongToHandle( pFindBody->dwReserved ), &body );
     if (hr != S_OK) return MIME_E_NOT_FOUND;
-    return find_next( iface, body, pFindBody, phBody );
+    return find_next(This, body, pFindBody, phBody);
 }
 
 static HRESULT WINAPI MimeMessage_ResolveURL(
