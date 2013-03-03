@@ -8370,6 +8370,22 @@ static void test_insertBefore(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(cdata != NULL, "got %p\n", cdata);
 
+    EXPECT_NO_CHILDREN(cdata);
+
+    /* attribute to cdata */
+    V_VT(&v) = VT_NULL;
+    node = (void*)0xdeadbeef;
+    hr = IXMLDOMNode_insertBefore(cdata, (IXMLDOMNode*)attr, v, &node);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(node == NULL, "got %p\n", node);
+
+    /* document to cdata */
+    V_VT(&v) = VT_NULL;
+    node = (void*)0xdeadbeef;
+    hr = IXMLDOMNode_insertBefore(cdata, (IXMLDOMNode*)doc, v, &node);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(node == NULL, "got %p\n", node);
+
     V_VT(&v) = VT_NULL;
     node = (void*)0xdeadbeef;
     hr = IXMLDOMDocument_insertBefore(doc3, cdata, v, &node);

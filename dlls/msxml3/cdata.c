@@ -290,10 +290,9 @@ static HRESULT WINAPI domcdata_insertBefore(
     IXMLDOMNode** outOldNode)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-
-    FIXME("(%p)->(%p %s %p) needs test\n", This, newNode, debugstr_variant(&refChild), outOldNode);
-
-    return node_insert_before(&This->node, newNode, &refChild, outOldNode);
+    TRACE("(%p)->(%p %s %p)\n", This, newNode, debugstr_variant(&refChild), outOldNode);
+    if (outOldNode) *outOldNode = NULL;
+    return E_FAIL;
 }
 
 static HRESULT WINAPI domcdata_replaceChild(
@@ -303,10 +302,9 @@ static HRESULT WINAPI domcdata_replaceChild(
     IXMLDOMNode** outOldNode)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-
-    FIXME("(%p)->(%p %p %p) needs tests\n", This, newNode, oldNode, outOldNode);
-
-    return node_replace_child(&This->node, newNode, oldNode, outOldNode);
+    TRACE("(%p)->(%p %p %p)\n", This, newNode, oldNode, outOldNode);
+    if (outOldNode) *outOldNode = NULL;
+    return E_FAIL;
 }
 
 static HRESULT WINAPI domcdata_removeChild(
@@ -315,7 +313,8 @@ static HRESULT WINAPI domcdata_removeChild(
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
     TRACE("(%p)->(%p %p)\n", This, child, oldChild);
-    return node_remove_child(&This->node, child, oldChild);
+    if (oldChild) *oldChild = NULL;
+    return E_FAIL;
 }
 
 static HRESULT WINAPI domcdata_appendChild(
@@ -324,7 +323,8 @@ static HRESULT WINAPI domcdata_appendChild(
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
     TRACE("(%p)->(%p %p)\n", This, child, outChild);
-    return node_append_child(&This->node, child, outChild);
+    if (outChild) *outChild = NULL;
+    return E_FAIL;
 }
 
 static HRESULT WINAPI domcdata_hasChildNodes(
