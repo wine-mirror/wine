@@ -94,8 +94,8 @@ typedef struct
 
 typedef struct MimeBody
 {
-    const IMimeBodyVtbl *lpVtbl;
-    LONG refs;
+    IMimeBody IMimeBody_iface;
+    LONG ref;
 
     HBODY handle;
 
@@ -110,9 +110,9 @@ typedef struct MimeBody
     BODYOFFSETS body_offsets;
 } MimeBody;
 
-static inline MimeBody *impl_from_IMimeBody( IMimeBody *iface )
+static inline MimeBody *impl_from_IMimeBody(IMimeBody *iface)
 {
-    return (MimeBody *)((char*)iface - FIELD_OFFSET(MimeBody, lpVtbl));
+    return CONTAINING_RECORD(iface, MimeBody, IMimeBody_iface);
 }
 
 static LPSTR strdupA(LPCSTR str)
@@ -523,22 +523,24 @@ static HRESULT WINAPI MimeBody_QueryInterface(IMimeBody* iface,
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI MimeBody_AddRef(IMimeBody* iface)
+static ULONG WINAPI MimeBody_AddRef(IMimeBody *iface)
 {
     MimeBody *This = impl_from_IMimeBody(iface);
-    TRACE("(%p)->()\n", iface);
-    return InterlockedIncrement(&This->refs);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
 }
 
-static ULONG WINAPI MimeBody_Release(IMimeBody* iface)
+static ULONG WINAPI MimeBody_Release(IMimeBody *iface)
 {
     MimeBody *This = impl_from_IMimeBody(iface);
-    ULONG refs;
+    LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->()\n", iface);
+    TRACE("(%p) ref=%d\n", This, ref);
 
-    refs = InterlockedDecrement(&This->refs);
-    if (!refs)
+    if (!ref)
     {
         empty_header_list(&This->headers);
         empty_new_prop_list(&This->new_props);
@@ -551,7 +553,7 @@ static ULONG WINAPI MimeBody_Release(IMimeBody* iface)
         HeapFree(GetProcessHeap(), 0, This);
     }
 
-    return refs;
+    return ref;
 }
 
 static HRESULT WINAPI MimeBody_GetClassID(
@@ -1109,8 +1111,8 @@ HRESULT MimeBody_create(IUnknown *outer, void **obj)
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
-    This->lpVtbl = &body_vtbl;
-    This->refs = 1;
+    This->IMimeBody_iface.lpVtbl = &body_vtbl;
+    This->ref = 1;
     This->handle = NULL;
     list_init(&This->headers);
     list_init(&This->new_props);
@@ -1125,7 +1127,7 @@ HRESULT MimeBody_create(IUnknown *outer, void **obj)
     body_offsets.cbBodyStart     = body_offsets.cbBodyEnd     = 0;
     MimeBody_set_offsets(This, &body_offsets);
 
-    *obj = &This->lpVtbl;
+    *obj = &This->IMimeBody_iface;
     return S_OK;
 }
 
