@@ -572,19 +572,14 @@ static HRESULT WINAPI MimeBody_IsDirty(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MimeBody_Load(
-                           IMimeBody* iface,
-                           LPSTREAM pStm)
+static HRESULT WINAPI MimeBody_Load(IMimeBody *iface, IStream *pStm)
 {
     MimeBody *This = impl_from_IMimeBody(iface);
     TRACE("(%p)->(%p)\n", iface, pStm);
     return parse_headers(This, pStm);
 }
 
-static HRESULT WINAPI MimeBody_Save(
-                           IMimeBody* iface,
-                           LPSTREAM pStm,
-                           BOOL fClearDirty)
+static HRESULT WINAPI MimeBody_Save(IMimeBody *iface, IStream *pStm, BOOL fClearDirty)
 {
     FIXME("stub\n");
     return E_NOTIMPL;
@@ -1150,62 +1145,58 @@ HRESULT MimeBody_create(IUnknown *outer, void **ppv)
 
 typedef struct
 {
-    IStreamVtbl *lpVtbl;
-    LONG refs;
-
+    IStream IStream_iface;
+    LONG ref;
     IStream *base;
     ULARGE_INTEGER pos, start, length;
 } sub_stream_t;
 
-static inline sub_stream_t *impl_from_IStream( IStream *iface )
+static inline sub_stream_t *impl_from_IStream(IStream *iface)
 {
-    return (sub_stream_t *)((char*)iface - FIELD_OFFSET(sub_stream_t, lpVtbl));
+    return CONTAINING_RECORD(iface, sub_stream_t, IStream_iface);
 }
 
-static HRESULT WINAPI sub_stream_QueryInterface(
-        IStream* iface,
-        REFIID riid,
-        void **ppvObject)
+static HRESULT WINAPI sub_stream_QueryInterface(IStream *iface, REFIID riid, void **ppv)
 {
     sub_stream_t *This = impl_from_IStream(iface);
 
-    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppvObject);
-    *ppvObject = NULL;
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
+    *ppv = NULL;
 
     if(IsEqualIID(riid, &IID_IUnknown) ||
        IsEqualIID(riid, &IID_ISequentialStream) ||
        IsEqualIID(riid, &IID_IStream))
     {
         IStream_AddRef(iface);
-        *ppvObject = iface;
+        *ppv = iface;
         return S_OK;
     }
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI sub_stream_AddRef(
-         IStream* iface)
+static ULONG WINAPI sub_stream_AddRef(IStream *iface)
 {
     sub_stream_t *This = impl_from_IStream(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)\n", This);
-    return InterlockedIncrement(&This->refs);
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
 }
 
-static ULONG WINAPI  sub_stream_Release(
-        IStream* iface)
+static ULONG WINAPI sub_stream_Release(IStream *iface)
 {
     sub_stream_t *This = impl_from_IStream(iface);
-    LONG refs;
+    LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)\n", This);
-    refs = InterlockedDecrement(&This->refs);
-    if(!refs)
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
     {
         IStream_Release(This->base);
         HeapFree(GetProcessHeap(), 0, This);
     }
-    return refs;
+    return ref;
 }
 
 static HRESULT WINAPI sub_stream_Read(
@@ -1422,15 +1413,15 @@ static HRESULT create_sub_stream(IStream *stream, ULARGE_INTEGER start, ULARGE_I
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if(!This) return E_OUTOFMEMORY;
 
-    This->lpVtbl = &sub_stream_vtbl;
-    This->refs = 1;
+    This->IStream_iface.lpVtbl = &sub_stream_vtbl;
+    This->ref = 1;
     This->start = start;
     This->length = length;
     This->pos.QuadPart = 0;
     IStream_AddRef(stream);
     This->base = stream;
 
-    *out = (IStream*)&This->lpVtbl;
+    *out = &This->IStream_iface;
     return S_OK;
 }
 
@@ -1733,10 +1724,7 @@ static HRESULT WINAPI MimeMessage_Load(IMimeMessage *iface, IStream *pStm)
     return S_OK;
 }
 
-static HRESULT WINAPI MimeMessage_Save(
-    IMimeMessage *iface,
-    LPSTREAM pStm,
-    BOOL fClearDirty)
+static HRESULT WINAPI MimeMessage_Save(IMimeMessage *iface, IStream *pStm, BOOL fClearDirty)
 {
     FIXME("(%p)->(%p, %s)\n", iface, pStm, fClearDirty ? "TRUE" : "FALSE");
     return E_NOTIMPL;
