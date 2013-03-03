@@ -1428,14 +1428,18 @@ typedef struct body_t
 
 typedef struct MimeMessage
 {
-    const IMimeMessageVtbl *lpVtbl;
-
-    LONG refs;
+    IMimeMessage IMimeMessage_iface;
+    LONG ref;
     IStream *stream;
 
     struct list body_tree;
     DWORD next_index;
 } MimeMessage;
+
+static inline MimeMessage *impl_from_IMimeMessage(IMimeMessage *iface)
+{
+    return CONTAINING_RECORD(iface, MimeMessage, IMimeMessage_iface);
+}
 
 static HRESULT WINAPI MimeMessage_QueryInterface(IMimeMessage *iface, REFIID riid, void **ppv)
 {
@@ -1459,9 +1463,12 @@ static HRESULT WINAPI MimeMessage_QueryInterface(IMimeMessage *iface, REFIID rii
 
 static ULONG WINAPI MimeMessage_AddRef(IMimeMessage *iface)
 {
-    MimeMessage *This = (MimeMessage *)iface;
-    TRACE("(%p)->()\n", iface);
-    return InterlockedIncrement(&This->refs);
+    MimeMessage *This = impl_from_IMimeMessage(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
 }
 
 static void empty_body_list(struct list *list)
@@ -1478,13 +1485,12 @@ static void empty_body_list(struct list *list)
 
 static ULONG WINAPI MimeMessage_Release(IMimeMessage *iface)
 {
-    MimeMessage *This = (MimeMessage *)iface;
-    ULONG refs;
+    MimeMessage *This = impl_from_IMimeMessage(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->()\n", iface);
+    TRACE("(%p) ref=%d\n", This, ref);
 
-    refs = InterlockedDecrement(&This->refs);
-    if (!refs)
+    if (!ref)
     {
         empty_body_list(&This->body_tree);
 
@@ -1492,7 +1498,7 @@ static ULONG WINAPI MimeMessage_Release(IMimeMessage *iface)
         HeapFree(GetProcessHeap(), 0, This);
     }
 
-    return refs;
+    return ref;
 }
 
 /*** IPersist methods ***/
@@ -1674,11 +1680,9 @@ static body_t *create_sub_body(MimeMessage *msg, IStream *pStm, BODYOFFSETS *off
     return body;
 }
 
-static HRESULT WINAPI MimeMessage_Load(
-    IMimeMessage *iface,
-    LPSTREAM pStm)
+static HRESULT WINAPI MimeMessage_Load(IMimeMessage *iface, IStream *pStm)
 {
-    MimeMessage *This = (MimeMessage *)iface;
+    MimeMessage *This = impl_from_IMimeMessage(iface);
     body_t *root_body;
     BODYOFFSETS offsets;
     ULARGE_INTEGER cur;
@@ -1734,12 +1738,11 @@ static HRESULT WINAPI MimeMessage_InitNew(
 }
 
 /*** IMimeMessageTree methods ***/
-static HRESULT WINAPI MimeMessage_GetMessageSource(
-    IMimeMessage *iface,
-    IStream **ppStream,
-    DWORD dwFlags)
+static HRESULT WINAPI MimeMessage_GetMessageSource(IMimeMessage *iface, IStream **ppStream,
+        DWORD dwFlags)
 {
-    MimeMessage *This = (MimeMessage *)iface;
+    MimeMessage *This = impl_from_IMimeMessage(iface);
+
     FIXME("(%p)->(%p, 0x%x)\n", iface, ppStream, dwFlags);
 
     IStream_AddRef(This->stream);
@@ -1822,13 +1825,10 @@ static HRESULT find_body(struct list *list, HBODY hbody, body_t **body)
     return S_FALSE;
 }
 
-static HRESULT WINAPI MimeMessage_BindToObject(
-    IMimeMessage *iface,
-    const HBODY hBody,
-    REFIID riid,
-    void **ppvObject)
+static HRESULT WINAPI MimeMessage_BindToObject(IMimeMessage *iface, const HBODY hBody, REFIID riid,
+        void **ppvObject)
 {
-    MimeMessage *This = (MimeMessage *)iface;
+    MimeMessage *This = impl_from_IMimeMessage(iface);
     HRESULT hr;
     body_t *body;
 
@@ -1933,13 +1933,10 @@ static HRESULT WINAPI MimeMessage_InsertBody(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MimeMessage_GetBody(
-    IMimeMessage *iface,
-    BODYLOCATION location,
-    HBODY hPivot,
-    LPHBODY phBody)
+static HRESULT WINAPI MimeMessage_GetBody(IMimeMessage *iface, BODYLOCATION location, HBODY hPivot,
+        HBODY *phBody)
 {
-    MimeMessage *This = (MimeMessage *)iface;
+    MimeMessage *This = impl_from_IMimeMessage(iface);
     body_t *body;
     HRESULT hr;
 
@@ -1981,14 +1978,11 @@ static void count_children(body_t *body, boolean recurse, ULONG *count)
     }
 }
 
-static HRESULT WINAPI MimeMessage_CountBodies(
-    IMimeMessage *iface,
-    HBODY hParent,
-    boolean fRecurse,
-    ULONG *pcBodies)
+static HRESULT WINAPI MimeMessage_CountBodies(IMimeMessage *iface, HBODY hParent, boolean fRecurse,
+        ULONG *pcBodies)
 {
     HRESULT hr;
-    MimeMessage *This = (MimeMessage *)iface;
+    MimeMessage *This = impl_from_IMimeMessage(iface);
     body_t *body;
 
     TRACE("(%p)->(%p, %s, %p)\n", iface, hParent, fRecurse ? "TRUE" : "FALSE", pcBodies);
@@ -2044,12 +2038,9 @@ static HRESULT WINAPI MimeMessage_FindFirst(
     return find_next( iface, NULL, pFindBody, phBody );
 }
 
-static HRESULT WINAPI MimeMessage_FindNext(
-    IMimeMessage *iface,
-    LPFINDBODY pFindBody,
-    LPHBODY phBody)
+static HRESULT WINAPI MimeMessage_FindNext(IMimeMessage *iface, FINDBODY *pFindBody, HBODY *phBody)
 {
-    MimeMessage *This = (MimeMessage *)iface;
+    MimeMessage *This = impl_from_IMimeMessage(iface);
     body_t *body;
     HRESULT hr;
 
@@ -2561,13 +2552,13 @@ HRESULT MimeMessage_create(IUnknown *outer, void **obj)
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
-    This->lpVtbl = &MimeMessageVtbl;
-    This->refs = 1;
+    This->IMimeMessage_iface.lpVtbl = &MimeMessageVtbl;
+    This->ref = 1;
     This->stream = NULL;
     list_init(&This->body_tree);
     This->next_index = 1;
 
-    *obj = &This->lpVtbl;
+    *obj = &This->IMimeMessage_iface;
     return S_OK;
 }
 
