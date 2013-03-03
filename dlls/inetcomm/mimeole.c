@@ -2592,54 +2592,53 @@ HRESULT WINAPI MimeOleCreateVirtualStream(IStream **ppStream)
 
 typedef struct MimeSecurity
 {
-    const IMimeSecurityVtbl *lpVtbl;
-
-    LONG refs;
+    IMimeSecurity IMimeSecurity_iface;
+    LONG ref;
 } MimeSecurity;
 
-static HRESULT WINAPI MimeSecurity_QueryInterface(
-        IMimeSecurity* iface,
-        REFIID riid,
-        void** obj)
+static inline MimeSecurity *impl_from_IMimeSecurity(IMimeSecurity *iface)
 {
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), obj);
+    return CONTAINING_RECORD(iface, MimeSecurity, IMimeSecurity_iface);
+}
+
+static HRESULT WINAPI MimeSecurity_QueryInterface(IMimeSecurity *iface, REFIID riid, void **ppv)
+{
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
 
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IMimeSecurity))
     {
-        *obj = iface;
+        *ppv = iface;
         IMimeSecurity_AddRef(iface);
         return S_OK;
     }
 
     FIXME("no interface for %s\n", debugstr_guid(riid));
-    *obj = NULL;
+    *ppv = NULL;
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI MimeSecurity_AddRef(
-        IMimeSecurity* iface)
+static ULONG WINAPI MimeSecurity_AddRef(IMimeSecurity *iface)
 {
-    MimeSecurity *This = (MimeSecurity *)iface;
-    TRACE("(%p)->()\n", iface);
-    return InterlockedIncrement(&This->refs);
+    MimeSecurity *This = impl_from_IMimeSecurity(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
 }
 
-static ULONG WINAPI MimeSecurity_Release(
-        IMimeSecurity* iface)
+static ULONG WINAPI MimeSecurity_Release(IMimeSecurity *iface)
 {
-    MimeSecurity *This = (MimeSecurity *)iface;
-    ULONG refs;
+    MimeSecurity *This = impl_from_IMimeSecurity(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->()\n", iface);
+    TRACE("(%p) ref=%d\n", This, ref);
 
-    refs = InterlockedDecrement(&This->refs);
-    if (!refs)
-    {
+    if (!ref)
         HeapFree(GetProcessHeap(), 0, This);
-    }
 
-    return refs;
+    return ref;
 }
 
 static HRESULT WINAPI MimeSecurity_InitNew(
@@ -2764,10 +2763,10 @@ HRESULT MimeSecurity_create(IUnknown *outer, void **obj)
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
-    This->lpVtbl = &MimeSecurityVtbl;
-    This->refs = 1;
+    This->IMimeSecurity_iface.lpVtbl = &MimeSecurityVtbl;
+    This->ref = 1;
 
-    *obj = &This->lpVtbl;
+    *obj = &This->IMimeSecurity_iface;
     return S_OK;
 }
 
