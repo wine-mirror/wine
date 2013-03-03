@@ -4,7 +4,7 @@
  * Copyright 2005 Mike McCormack for CodeWeavers
  * Copyright 2007-2008 Alistair Leslie-Hughes
  * Copyright 2010-2011 Adam Martinson for CodeWeavers
- * Copyright 2010-2012 Nikolay Sivov for CodeWeavers
+ * Copyright 2010-2013 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -8483,6 +8483,12 @@ static void test_insertBefore(void)
     EXPECT_NO_CHILDREN(elem3);
 
     todo_wine EXPECT_REF(elem2, 2);
+
+    /* document to element */
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    hr = IXMLDOMElement_insertBefore(elem1, (IXMLDOMNode*)doc, v, NULL);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
 
     V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = NULL;
