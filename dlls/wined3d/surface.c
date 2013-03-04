@@ -3763,7 +3763,7 @@ static HRESULT _Blt_ColorFill(BYTE *buf, unsigned int width, unsigned int height
         unsigned int bpp, UINT pitch, DWORD color)
 {
     BYTE *first;
-    int x, y;
+    unsigned int x, y;
 
     /* Do first row */
 
@@ -4842,7 +4842,6 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
     struct wined3d_device *device = dst_surface->resource.device;
     const struct wined3d_gl_info *gl_info;
     float xrel, yrel;
-    UINT row;
     struct wined3d_context *context;
     BOOL upsidedown = FALSE;
     RECT dst_rect = *dst_rect_in;
@@ -4910,6 +4909,7 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
     }
     else
     {
+        LONG row;
         UINT yoffset = src_surface->resource.height - src_rect->top + dst_rect.top - 1;
         /* I have to process this row by row to swap the image,
          * otherwise it would be upside down, so stretching in y direction
@@ -4923,7 +4923,7 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
                 /* Well, that stuff works, but it's very slow.
                  * find a better way instead
                  */
-                UINT col;
+                LONG col;
 
                 for (col = dst_rect.left; col < dst_rect.right; ++col)
                 {

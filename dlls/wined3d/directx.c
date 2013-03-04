@@ -2247,7 +2247,7 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
      * memory behind our backs if really needed. Note that the amount of video
      * memory can be overruled using a registry setting. */
 
-    int i;
+    unsigned int i;
     enum wined3d_pci_device device;
 
     for (i = 0; i < (sizeof(card_vendor_table) / sizeof(*card_vendor_table)); ++i)
@@ -5014,7 +5014,7 @@ static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
 static void wined3d_adapter_init_fb_cfgs(struct wined3d_adapter *adapter, HDC dc)
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    unsigned int i;
+    int i;
 
     if (gl_info->supported[WGL_ARB_PIXEL_FORMAT])
     {
