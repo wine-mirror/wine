@@ -1394,7 +1394,7 @@ Window create_client_window( struct x11drv_win_data *data, const XVisualInfo *vi
 
     XSaveContext( data->display, data->client_window, winContext, (char *)data->hwnd );
     XMapWindow( data->display, data->client_window );
-    XFlush( data->display );
+    XSync( data->display, False );
     return data->client_window;
 }
 
