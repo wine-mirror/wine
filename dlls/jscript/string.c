@@ -276,7 +276,7 @@ static HRESULT String_charAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     }
 
     if(0 <= pos && pos < jsstr_length(str)) {
-        ret = jsstr_alloc_len(str->str+pos, 1);
+        ret = jsstr_substr(str, pos, 1);
         if(!ret)
             return E_OUTOFMEMORY;
     }else {
@@ -649,10 +649,10 @@ static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func,
 
     if(SUCCEEDED(hres)) {
         for(i=0; i < match->paren_count; i++) {
-            if(match->parens[i].index == -1)
-                tmp_str = jsstr_empty();
+            if(match->parens[i].index != -1)
+                tmp_str = jsstr_substr(str, match->parens[i].index, match->parens[i].length);
             else
-                tmp_str = jsstr_alloc_len(str->str+match->parens[i].index, match->parens[i].length);
+                tmp_str = jsstr_empty();
             if(!tmp_str) {
                hres = E_OUTOFMEMORY;
                break;
@@ -1016,7 +1016,7 @@ static HRESULT String_slice(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
         end = start;
 
     if(r) {
-        jsstr_t *retstr = jsstr_alloc_len(str->str+start, end-start);
+        jsstr_t *retstr = jsstr_substr(str, start, end-start);
         if(!retstr) {
             jsstr_release(str);
             return E_OUTOFMEMORY;
@@ -1225,15 +1225,14 @@ static HRESULT String_substring(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
     }
 
     if(r) {
-        jsstr_t *ret = jsstr_alloc_len(str->str+start, end-start);
-        if(!ret) {
-            jsstr_release(str);
-            return E_OUTOFMEMORY;
-        }
-        *r = jsval_string(ret);
+        jsstr_t *ret = jsstr_substr(str, start, end-start);
+        if(ret)
+            *r = jsval_string(ret);
+        else
+            hres = E_OUTOFMEMORY;
     }
     jsstr_release(str);
-    return S_OK;
+    return hres;
 }
 
 /* ECMA-262 3rd Edition    B.2.3 */
@@ -1280,7 +1279,7 @@ static HRESULT String_substr(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 
     hres = S_OK;
     if(r) {
-        jsstr_t *ret = jsstr_alloc_len(str->str+start, len);
+        jsstr_t *ret = jsstr_substr(str, start, len);
         if(ret)
             *r = jsval_string(ret);
         else
@@ -1426,7 +1425,7 @@ static HRESULT String_idx_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
 
     TRACE("%p[%u] = %s\n", string, idx, debugstr_wn(string->str->str+idx, 1));
 
-    ret = jsstr_alloc_len(string->str->str+idx, 1);
+    ret = jsstr_substr(string->str, idx, 1);
     if(!ret)
         return E_OUTOFMEMORY;
 

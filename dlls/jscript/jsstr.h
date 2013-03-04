@@ -59,6 +59,11 @@ static inline BOOL jsstr_eq(jsstr_t *str1, jsstr_t *str2)
     return len == jsstr_length(str2) && !memcmp(str1->str, str2->str, len*sizeof(WCHAR));
 }
 
+static inline jsstr_t *jsstr_substr(jsstr_t *str, unsigned off, unsigned len)
+{
+    return jsstr_alloc_len(str->str+off, len);
+}
+
 int jsstr_cmp(jsstr_t*,jsstr_t*) DECLSPEC_HIDDEN;
 jsstr_t *jsstr_concat(jsstr_t*,jsstr_t*) DECLSPEC_HIDDEN;
 
