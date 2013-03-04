@@ -21,6 +21,8 @@
  */
 #include "config.h"
 
+#include <Security/AuthSession.h>
+
 #include "macdrv.h"
 #include "wine/server.h"
 
@@ -69,7 +71,14 @@ const char* debugstr_cf(CFTypeRef t)
  */
 static BOOL process_attach(void)
 {
+    SessionAttributeBits attributes;
+    OSStatus status;
+
     assert(NUM_EVENT_TYPES <= sizeof(macdrv_event_mask) * 8);
+
+    status = SessionGetInfo(callerSecuritySession, NULL, &attributes);
+    if (status != noErr || !(attributes & sessionHasGraphicAccess))
+        return FALSE;
 
     if ((thread_data_tls_index = TlsAlloc()) == TLS_OUT_OF_INDEXES) return FALSE;
 
