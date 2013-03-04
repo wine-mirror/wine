@@ -2303,6 +2303,79 @@ FLOAT WINAPI D3DXSHDot(UINT order, const FLOAT *a, const FLOAT *b)
     return s;
 }
 
+static void weightedcapintegrale(FLOAT *out, FLOAT order, FLOAT angle)
+{
+    FLOAT coeff[3];
+
+    coeff[0] = cosf(angle);
+
+    out[0] = 2.0f * D3DX_PI * (1.0f - coeff[0]);
+    out[1] = D3DX_PI * sinf(angle) * sinf(angle);
+    if (order <= 2)
+        return;
+
+    out[2] = coeff[0] * out[1];
+    if (order == 3)
+        return;
+
+    coeff[1] = coeff[0] * coeff[0];
+    coeff[2] = coeff[1] * coeff[1];
+
+    out[3] = D3DX_PI * (-1.25f * coeff[2] + 1.5f * coeff[1] - 0.25f);
+    if (order == 4)
+        return;
+
+    out[4] = -0.25f * D3DX_PI * coeff[0] * (7.0f * coeff[2] - 10.0f * coeff[1] + 3.0f);
+    if (order == 5)
+        return;
+
+    out[5] = D3DX_PI * (-2.625f * coeff[2] * coeff[1] + 4.375f * coeff[2] - 1.875f * coeff[1] + 0.125f);
+}
+
+HRESULT WINAPI D3DXSHEvalConeLight(UINT order, const D3DXVECTOR3 *dir, FLOAT radius,
+    FLOAT Rintensity, FLOAT Gintensity, FLOAT Bintensity, FLOAT *rout, FLOAT *gout, FLOAT *bout)
+{
+    FLOAT cap[6], clamped_angle, norm, scale, temp;
+    UINT i, index, j;
+
+    TRACE("order %u, dir %p, radius %f, red %f, green %f, blue %f, rout %p, gout %p, bout %p\n",
+        order, dir, radius, Rintensity, Gintensity, Bintensity, rout, gout, bout);
+
+    if (radius <= 0.0f)
+        return D3DXSHEvalDirectionalLight(order, dir, Rintensity, Gintensity, Bintensity, rout, gout, bout);
+
+    clamped_angle = (radius > D3DX_PI / 2.0f) ? (D3DX_PI / 2.0f) : radius;
+    norm = sinf(clamped_angle) * sinf(clamped_angle);
+
+    if (order > D3DXSH_MAXORDER)
+    {
+        WARN("Order clamped at D3DXSH_MAXORDER\n");
+        order = D3DXSH_MAXORDER;
+    }
+
+    weightedcapintegrale(cap, order, radius);
+    D3DXSHEvalDirection(rout, order, dir);
+
+    for (i = 0; i < order; i++)
+    {
+        scale = cap[i] / norm;
+
+        for (j = 0; j < 2 * i + 1; j++)
+        {
+            index = i * i + j;
+            temp = rout[index] * scale;
+
+            rout[index] = temp * Rintensity;
+            if (gout)
+                gout[index] = temp * Gintensity;
+            if (bout)
+                bout[index] = temp * Bintensity;
+        }
+    }
+
+    return D3D_OK;
+}
+
 FLOAT* WINAPI D3DXSHEvalDirection(FLOAT *out, UINT order, const D3DXVECTOR3 *dir)
 {
 

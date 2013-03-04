@@ -2481,6 +2481,166 @@ static void test_D3DXSHDot(void)
     return;
 }
 
+static void test_D3DXSHEvalConeLight(void)
+{
+    D3DXVECTOR3 dir;
+    FLOAT bout[49], expected, gout[49], rout[49];
+    const FLOAT table[] = {
+    /* Red colour */
+        1.604815f, -3.131381f, 7.202175f, -2.870432f, 6.759296f, -16.959688f,
+        32.303082f, -15.546381f, -0.588878f, -5.902123f, 40.084042f, -77.423569f,
+        137.556320f, -70.971603f, -3.492171f, 7.683092f, -2.129311f, -35.971344f,
+        183.086548f, -312.414948f, 535.091064f, -286.380371f, -15.950727f, 46.825714f,
+        -12.127637f, 11.289261f, -12.417809f, -155.039566f, 681.182556f, -1079.733643f,
+        1807.650513f, -989.755798f, -59.345467f, 201.822815f, -70.726486f, 7.206529f,
+
+        3.101155f, -3.128710f, 7.196033f, -2.867984f, -0.224708f, 0.563814f,
+        -1.073895f, 0.516829f, 0.019577f, 2.059788f, -13.988971f, 27.020128f,
+        -48.005917f, 24.768450f, 1.218736f, -2.681329f, -0.088639f, -1.497410f,
+        7.621501f, -13.005165f, 22.274696f, -11.921401f, -0.663995f, 1.949254f,
+        -0.504848f, 4.168484f, -4.585193f, -57.247314f, 251.522095f, -398.684387f,
+        667.462891f, -365.460693f, -21.912912f, 74.521721f, -26.115280f, 2.660963f,
+    /* Green colour */
+        2.454422f, -4.789170f, 11.015091f, -4.390072f, 10.337747f, -25.938347f,
+        49.404713f, -23.776817f, -0.900637f, -9.026776f, 61.305000f, -118.412514f,
+        210.380249f, -108.544792f, -5.340967f, 11.750610f, -3.256593f, -55.014996f,
+        280.014709f, -477.811066f, 818.374512f, -437.993469f, -24.395227f, 71.615799f,
+        -18.548151f, 17.265928f, -18.991943f, -237.119324f, 1041.808594f, -1651.357300f,
+        2764.642090f, -1513.744141f, -90.763657f, 308.670197f, -108.169922f, 11.021750f,
+
+        4.742942f, -4.785086f, 11.005697f, -4.386329f, -0.343672f, 0.862303f,
+        -1.642427f, 0.790444f, 0.029941f, 3.150264f, -21.394896f, 41.324898f,
+        -73.420807f, 37.881153f, 1.863950f, -4.100857f, -0.135565f, -2.290156f,
+        11.656413f, -19.890251f, 34.067181f, -18.232729f, -1.015521f, 2.981212f,
+        -0.772120f, 6.375328f, -7.012648f, -87.554710f, 384.680817f, -609.752563f,
+        1020.825500f, -558.939819f, -33.513863f, 113.974388f, -39.941013f, 4.069707f,
+    /* Blue colour */
+        3.304030f, -6.446959f, 14.828006f, -5.909713f, 13.916198f, -34.917004f,
+        66.506340f, -32.007256f, -1.212396f, -12.151429f, 82.525963f, -159.401459f,
+        283.204193f, -146.117996f, -7.189764f, 15.818130f, -4.383876f, -74.058655f,
+        376.942871f, -643.207214f, 1101.658081f, -589.606628f, -32.839729f, 96.405884f,
+        -24.968664f, 23.242596f, -25.566080f, -319.199097f, 1402.434692f, -2222.980957f,
+        3721.633545f, -2037.732544f, -122.181847f, 415.517578f, -145.613358f, 14.836972f,
+
+        6.384730f, -6.441462f, 14.815362f, -5.904673f, -0.462635f, 1.160793f,
+        -2.210959f, 1.064060f, 0.040305f, 4.240739f, -28.800821f, 55.629673f,
+        -98.835709f, 50.993862f, 2.509163f, -5.520384f, -0.182491f, -3.082903f,
+        15.691326f, -26.775339f, 45.859665f, -24.544060f, -1.367048f, 4.013170f,
+        -1.039392f, 8.582172f, -9.440103f, -117.862114f, 517.839600f, -820.820740f,
+        1374.188232f, -752.419067f, -45.114819f, 153.427063f, -53.766754f, 5.478452f, };
+    struct
+    {
+        FLOAT *red_received, *green_received, *blue_received;
+        const FLOAT *red_expected, *green_expected, *blue_expected;
+        FLOAT radius, roffset, goffset, boffset;
+    } test[] = {
+        { rout, gout, bout, table, &table[72], &table[144], 0.5f, 1.01f, 1.02f, 1.03f, },
+        { rout, gout, bout, &table[36], &table[108], &table[180], 1.6f, 1.01f, 1.02f, 1.03f, },
+        { rout, rout, rout, &table[144], &table[144], &table[144], 0.5f, 1.03f, 1.03f, 1.03f, },
+        { rout, rout, bout, &table[72], &table[72], &table[144], 0.5, 1.02f, 1.02f, 1.03f, },
+        { rout, gout, gout, table, &table[144], &table[144], 0.5f, 1.01f, 1.03f, 1.03f, },
+        { rout, gout, rout, &table[144], &table[72], &table[144], 0.5f, 1.03f, 1.02f, 1.03f, },
+    /* D3DXSHEvalConeLight accepts NULL green or blue colour. */
+        { rout, NULL, bout, table, NULL, &table[144], 0.5f, 1.01f, 0.0f, 1.03f, },
+        { rout, gout, NULL, table, &table[72], NULL, 0.5f, 1.01f, 1.02f, 0.0f, },
+        { rout, NULL, NULL, table, NULL, NULL, 0.5f, 1.01f, 0.0f, 0.0f, }, };
+    HRESULT hr;
+    unsigned int j, l, order;
+
+    dir.x = 1.1f; dir.y = 1.2f; dir.z = 2.76f;
+
+    for (l = 0; l < sizeof(test) / sizeof(test[0]); l++)
+    {
+        for (order = D3DXSH_MINORDER; order <= D3DXSH_MAXORDER; order++)
+        {
+            for (j = 0; j < 49; j++)
+            {
+                test[l].red_received[j] = 1.01f + j;
+                if (test[l].green_received)
+                    test[l].green_received[j] = 1.02f + j;
+                if (test[l].blue_received)
+                    test[l].blue_received[j] = 1.03f + j;
+            }
+
+            hr = D3DXSHEvalConeLight(order, &dir, test[l].radius, 1.7f, 2.6f, 3.5f, test[l].red_received, test[l].green_received, test[l].blue_received);
+            ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+
+            for (j = 0; j < 49; j++)
+            {
+                if (j >= order * order)
+                    expected = j + test[l].roffset;
+                else
+                    expected = test[l].red_expected[j];
+                ok(relative_error(expected, test[l].red_received[j]) < admitted_error,
+                    "Red: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].red_received[j]);
+
+                if (test[l].green_received)
+                {
+                    if (j >= order * order)
+                        expected = j + test[l].goffset;
+                    else
+                        expected = test[l].green_expected[j];
+                    ok(relative_error(expected, test[l].green_received[j]) < admitted_error,
+                        "Green: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].green_received[j]);
+                }
+
+                if (test[l].blue_received)
+                {
+                    if (j >= order * order)
+                        expected = j + test[l].boffset;
+                    else
+                        expected = test[l].blue_expected[j];
+                    ok(relative_error(expected, test[l].blue_received[j]) < admitted_error,
+                        "Blue: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].blue_received[j]);
+                }
+            }
+        }
+    }
+
+    /* Cone light with radius <= 0.0f behaves as a directional light */
+    for (order = D3DXSH_MINORDER; order <= D3DXSH_MAXORDER; order++)
+    {
+        FLOAT blue[49], green[49], red[49];
+
+        for (j = 0; j < 49; j++)
+        {
+            rout[j] = 1.01f + j;
+            gout[j] = 1.02f + j;
+            bout[j] = 1.03f + j;
+            red[j] = 1.01f + j;
+            green[j] = 1.02f + j;
+            blue[j] = 1.03f + j;
+        }
+
+        hr = D3DXSHEvalConeLight(order, &dir, -0.1f, 1.7f, 2.6f, 3.5f, rout, gout, bout);
+        ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+        D3DXSHEvalDirectionalLight(order, &dir, 1.7f, 2.6f, 3.5f, red, green, blue);
+
+        for (j = 0; j < 49; j++)
+        {
+            expected = red[j];
+            ok(relative_error(expected, rout[j]) < admitted_error,
+                "Red: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, rout[j]);
+
+            expected = green[j];
+            ok(relative_error(expected, gout[j]) < admitted_error,
+                "Green: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, gout[j]);
+
+            expected = blue[j];
+            ok(relative_error(expected, bout[j]) < admitted_error,
+                "Blue: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, bout[j]);
+        }
+    }
+
+    /* D3DXSHEvalConeLight accepts order < D3DXSH_MINORDER or order > D3DXSH_MAXORDER. But tests in native windows show that the colour outputs are not set */
+    hr = D3DXSHEvalConeLight(7, &dir, 0.5f, 1.0f, 2.0f, 3.0f, rout, gout, bout);
+    ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+    hr = D3DXSHEvalConeLight(0, &dir, 0.5f, 1.0f, 2.0f, 3.0f, rout, gout, bout);
+    ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+    hr = D3DXSHEvalConeLight(1, &dir, 0.5f, 1.0f, 2.0f, 3.0f, rout, gout, bout);
+    ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+}
+
 static void test_D3DXSHEvalDirection(void)
 {
     unsigned int i, order;
@@ -2997,6 +3157,7 @@ START_TEST(math)
     test_D3DXFloat_Array();
     test_D3DXSHAdd();
     test_D3DXSHDot();
+    test_D3DXSHEvalConeLight();
     test_D3DXSHEvalDirection();
     test_D3DXSHEvalDirectionalLight();
     test_D3DXSHMultiply2();

@@ -274,7 +274,7 @@
 @ stub D3DXSaveVolumeToFileW(ptr long ptr ptr ptr)
 @ stdcall D3DXSHAdd(ptr long ptr ptr)
 @ stdcall D3DXSHDot(long ptr ptr)
-@ stub D3DXSHEvalConeLight(long ptr long long long long ptr ptr ptr)
+@ stdcall D3DXSHEvalConeLight(long ptr float float float float ptr ptr ptr)
 @ stdcall D3DXSHEvalDirection(ptr long ptr)
 @ stdcall D3DXSHEvalDirectionalLight(long ptr float float float ptr ptr ptr)
 @ stub D3DXSHEvalHemisphereLight(long ptr long long ptr ptr ptr)
