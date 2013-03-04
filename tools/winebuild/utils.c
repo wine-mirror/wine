@@ -64,7 +64,7 @@ static const struct
 };
 
 /* atexit handler to clean tmp files */
-static void cleanup_tmp_files(void)
+void cleanup_tmp_files(void)
 {
     unsigned int i;
     for (i = 0; i < nb_tmp_files; i++) if (tmp_files[i]) unlink( tmp_files[i] );
@@ -460,8 +460,6 @@ char *get_temp_file_name( const char *prefix, const char *suffix )
     char *name;
     const char *ext, *basename;
     int fd;
-
-    if (!nb_tmp_files && !save_temps) atexit( cleanup_tmp_files );
 
     if (!prefix || !prefix[0]) prefix = "winebuild";
     if (!suffix) suffix = "";
