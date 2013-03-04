@@ -4567,6 +4567,7 @@ static void test_CreateScalableFontResource(void)
     char fot_name[MAX_PATH];
     char *file_part;
     DWORD ret;
+    int i;
 
     if (!pAddFontResourceExA || !pRemoveFontResourceExA)
     {
@@ -4652,6 +4653,22 @@ static void test_CreateScalableFontResource(void)
     ret = is_truetype_font_installed("wine_test");
     ok(!ret, "font wine_test should not be enumerated\n");
 
+    ret = pRemoveFontResourceExA(fot_name, 0, 0);
+    ok(!ret, "RemoveFontResourceEx() should fail\n");
+
+    /* test refcounting */
+    for (i = 0; i < 5; i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = pAddFontResourceExA(fot_name, 0, 0);
+        ok(ret, "AddFontResourceEx() error %d\n", GetLastError());
+    }
+    for (i = 0; i < 5; i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = pRemoveFontResourceExA(fot_name, 0, 0);
+        ok(ret, "RemoveFontResourceEx() error %d\n", GetLastError());
+    }
     ret = pRemoveFontResourceExA(fot_name, 0, 0);
     ok(!ret, "RemoveFontResourceEx() should fail\n");
 

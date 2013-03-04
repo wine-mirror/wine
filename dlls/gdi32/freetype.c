@@ -1304,6 +1304,13 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
                   debugstr_w(family->FamilyName), debugstr_w(face->StyleName),
                   cursor->font_version, face->font_version);
 
+            if (face->file && face->dev == cursor->dev && face->ino == cursor->ino)
+            {
+                cursor->refcount++;
+                TRACE("Font %s already in list, refcount now %d\n",
+                      debugstr_w(face->file), cursor->refcount);
+                return FALSE;
+            }
             if (face->font_version <= cursor->font_version)
             {
                 TRACE("Original font %s is newer so skipping %s\n",
