@@ -346,10 +346,10 @@ static HRESULT create_match_array(script_ctx_t *ctx, jsstr_t *input,
         return hres;
 
     for(i=0; i < result->paren_count; i++) {
-        if(result->parens[i].index == -1)
-            str = jsstr_empty();
+        if(result->parens[i].index != -1)
+            str = jsstr_substr(input, result->parens[i].index, result->parens[i].length);
         else
-            str = jsstr_alloc_len(input->str+result->parens[i].index, result->parens[i].length);
+            str = jsstr_empty();
         if(!str) {
             hres = E_OUTOFMEMORY;
             break;
@@ -866,7 +866,7 @@ static HRESULT RegExpConstr_leftContext(script_ctx_t *ctx, vdisp_t *jsthis, WORD
     case DISPATCH_PROPERTYGET: {
         jsstr_t *ret;
 
-        ret = jsstr_alloc_len(ctx->last_match->str, ctx->last_match_index);
+        ret = jsstr_substr(ctx->last_match, 0, ctx->last_match_index);
         if(!ret)
             return E_OUTOFMEMORY;
 
@@ -892,7 +892,8 @@ static HRESULT RegExpConstr_rightContext(script_ctx_t *ctx, vdisp_t *jsthis, WOR
     case DISPATCH_PROPERTYGET: {
         jsstr_t *ret;
 
-        ret = jsstr_alloc(ctx->last_match->str+ctx->last_match_index+ctx->last_match_length);
+        ret = jsstr_substr(ctx->last_match, ctx->last_match_index+ctx->last_match_length,
+                jsstr_length(ctx->last_match) - ctx->last_match_index - ctx->last_match_length);
         if(!ret)
             return E_OUTOFMEMORY;
 
