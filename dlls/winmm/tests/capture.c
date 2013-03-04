@@ -648,7 +648,7 @@ static void wave_in_tests(void)
 
     rc = waveInMessage((HWAVEIN)WAVE_MAPPER, DRVM_MAPPER_PREFERRED_GET,
             (DWORD_PTR)&preferred, (DWORD_PTR)&status);
-    ok((ndev == 0 && rc == MMSYSERR_NODRIVER) ||
+    ok((ndev == 0 && (rc == MMSYSERR_NODRIVER || rc == MMSYSERR_BADDEVICEID)) ||
             rc == MMSYSERR_NOERROR, "waveInMessage(DRVM_MAPPER_PREFERRED_GET) failed: %u\n", rc);
 
     ok((ndev == 0 && (preferred == -1 || broken(preferred != -1))) ||
