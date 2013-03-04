@@ -207,6 +207,8 @@ typedef struct TransformFilter
 
 	const struct TransformFilterFuncTable * pFuncsTable;
 	struct QualityControlImpl *qcimpl;
+        /* IMediaSeeking and IMediaPosition are implemented by ISeekingPassThru */
+        IUnknown *seekthru_unk;
 } TransformFilter;
 
 typedef HRESULT (WINAPI *TransformFilter_DecideBufferSize) (TransformFilter *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest);

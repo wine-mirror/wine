@@ -42,7 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 typedef struct ACMWrapperImpl
 {
     TransformFilter tf;
-    IUnknown *seekthru_unk;
 
     HACMSTREAM has;
     LPWAVEFORMATEX pWfIn;
@@ -399,14 +398,6 @@ HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     if (FAILED(hr))
         return hr;
-    else
-    {
-        ISeekingPassThru *passthru;
-        hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown*)This, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&This->seekthru_unk);
-        IUnknown_QueryInterface(This->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
-        ISeekingPassThru_Init(passthru, FALSE, This->tf.ppPins[0]);
-        ISeekingPassThru_Release(passthru);
-    }
 
     *ppv = This;
     This->lasttime_real = This->lasttime_sent = -1;
@@ -414,24 +405,9 @@ HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv)
     return hr;
 }
 
-static HRESULT WINAPI ACMWrapper_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
-{
-    HRESULT hr;
-    ACMWrapperImpl *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
-
-    if (IsEqualIID(riid, &IID_IMediaSeeking))
-        return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
-
-    hr = TransformFilterImpl_QueryInterface(iface, riid, ppv);
-
-    return hr;
-}
-
-
 static const IBaseFilterVtbl ACMWrapper_Vtbl =
 {
-    ACMWrapper_QueryInterface,
+    TransformFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     TransformFilterImpl_Release,
     BaseFilterImpl_GetClassID,

@@ -136,7 +136,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(qtdecoder);
 typedef struct QTVDecoderImpl
 {
     TransformFilter tf;
-    IUnknown *seekthru_unk;
 
     ImageDescriptionHandle hImageDescription;
     CFMutableDictionaryRef outputBufferAttributes;
@@ -545,36 +544,14 @@ IUnknown * CALLBACK QTVDecoder_create(IUnknown * pUnkOuter, HRESULT* phr)
         *phr = hr;
         return NULL;
     }
-    else
-    {
-        ISeekingPassThru *passthru;
-        hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown*)This, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&This->seekthru_unk);
-        IUnknown_QueryInterface(This->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
-        ISeekingPassThru_Init(passthru, FALSE, This->tf.ppPins[0]);
-        ISeekingPassThru_Release(passthru);
-    }
 
     *phr = hr;
     return (IUnknown*)This;
 }
 
-HRESULT WINAPI QTVDecoder_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
-{
-    HRESULT hr;
-    QTVDecoderImpl *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppv);
-
-    if (IsEqualIID(riid, &IID_IMediaSeeking) || IsEqualIID(riid, &IID_IMediaPosition))
-        return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
-
-    hr = TransformFilterImpl_QueryInterface(iface, riid, ppv);
-
-    return hr;
-}
-
 static const IBaseFilterVtbl QTVDecoder_Vtbl =
 {
-    QTVDecoder_QueryInterface,
+    TransformFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     TransformFilterImpl_Release,
     BaseFilterImpl_GetClassID,

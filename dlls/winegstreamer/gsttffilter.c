@@ -115,7 +115,6 @@ static const char *Gstreamer_FindMatch(const char *strcaps)
 
 typedef struct GstTfImpl {
     TransformFilter tf;
-    IUnknown *seekthru_unk;
     const char *gstreamer_name;
     GstElement *filter;
     GstPad *my_src, *my_sink, *their_src, *their_sink;
@@ -450,14 +449,6 @@ static HRESULT Gstreamer_transform_create(IUnknown *punkout, const CLSID *clsid,
 
     if (FAILED(TransformFilter_Construct(&GSTTf_Vtbl, sizeof(GstTfImpl), clsid, vtbl, (IBaseFilter**)&This)))
         return E_OUTOFMEMORY;
-    else
-    {
-        ISeekingPassThru *passthru;
-        CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown*)This, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&This->seekthru_unk);
-        IUnknown_QueryInterface(This->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
-        ISeekingPassThru_Init(passthru, FALSE, (IPin*)This->tf.ppPins[0]);
-        ISeekingPassThru_Release(passthru);
-    }
 
     This->gstreamer_name = name;
     *obj = This;
@@ -830,23 +821,9 @@ IUnknown * CALLBACK Gstreamer_AudioConvert_create(IUnknown *punkout, HRESULT *ph
     return obj;
 }
 
-static HRESULT WINAPI GSTTf_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
-{
-    HRESULT hr;
-    GstTfImpl *This = (GstTfImpl*)iface;
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppv);
-
-    if (IsEqualIID(riid, &IID_IMediaSeeking) || IsEqualIID(riid, &IID_IMediaPosition))
-        return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
-
-    hr = TransformFilterImpl_QueryInterface(iface, riid, ppv);
-
-    return hr;
-}
-
 static const IBaseFilterVtbl GSTTf_Vtbl =
 {
-    GSTTf_QueryInterface,
+    TransformFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     TransformFilterImpl_Release,
     BaseFilterImpl_GetClassID,

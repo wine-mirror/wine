@@ -43,7 +43,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 typedef struct AVIDecImpl
 {
     TransformFilter tf;
-    IUnknown *seekthru_unk;
 
     HIC hvid;
     BITMAPINFOHEADER* pBihIn;
@@ -417,14 +416,6 @@ HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     if (FAILED(hr))
         return hr;
-    else
-    {
-        ISeekingPassThru *passthru;
-        hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown*)This, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&This->seekthru_unk);
-        IUnknown_QueryInterface(This->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
-        ISeekingPassThru_Init(passthru, FALSE, This->tf.ppPins[0]);
-        ISeekingPassThru_Release(passthru);
-    }
 
     This->hvid = NULL;
     This->pBihIn = NULL;
@@ -435,23 +426,9 @@ HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv)
     return hr;
 }
 
-static HRESULT WINAPI AVIDec_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
-{
-    HRESULT hr;
-    AVIDecImpl *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
-
-    if (IsEqualIID(riid, &IID_IMediaSeeking))
-        return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
-
-    hr = TransformFilterImpl_QueryInterface(iface, riid, ppv);
-
-    return hr;
-}
-
 static const IBaseFilterVtbl AVIDec_Vtbl =
 {
-    AVIDec_QueryInterface,
+    TransformFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     TransformFilterImpl_Release,
     BaseFilterImpl_GetClassID,

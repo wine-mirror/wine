@@ -238,6 +238,20 @@ static HRESULT TransformFilter_Init(const IBaseFilterVtbl *pVtbl, const CLSID* p
             pTransformFilter->qcimpl->IQualityControl_iface.lpVtbl = &TransformFilter_QualityControl_Vtbl;
         }
     }
+
+    if (SUCCEEDED(hr))
+    {
+        ISeekingPassThru *passthru;
+        pTransformFilter->seekthru_unk = NULL;
+        hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown*)pTransformFilter, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&pTransformFilter->seekthru_unk);
+        if (SUCCEEDED(hr))
+        {
+            IUnknown_QueryInterface(pTransformFilter->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
+            ISeekingPassThru_Init(passthru, FALSE, pTransformFilter->ppPins[0]);
+            ISeekingPassThru_Release(passthru);
+        }
+    }
+
     if (FAILED(hr))
     {
         CoTaskMemFree(pTransformFilter->ppPins);
@@ -283,6 +297,11 @@ HRESULT WINAPI TransformFilterImpl_QueryInterface(IBaseFilter * iface, REFIID ri
         IUnknown_AddRef((IUnknown*)*ppv);
         return S_OK;
     }
+    else if (IsEqualIID(riid, &IID_IMediaSeeking) ||
+             IsEqualIID(riid, &IID_IMediaPosition))
+    {
+        return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
+    }
     hr = BaseFilterImpl_QueryInterface(iface, riid, ppv);
 
     if (FAILED(hr) && !IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow) &&
@@ -325,6 +344,7 @@ ULONG WINAPI TransformFilterImpl_Release(IBaseFilter * iface)
         FreeMediaType(&This->pmt);
         QualityControlImpl_Destroy(This->qcimpl);
         CoTaskMemFree(This);
+        IUnknown_Release(This->seekthru_unk);
 
         return 0;
     }
