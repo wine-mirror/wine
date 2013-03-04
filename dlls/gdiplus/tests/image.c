@@ -3105,8 +3105,11 @@ static void test_tiff_properties(void)
     PropertyItem *prop_item;
 
     image = load_image((const BYTE *)&TIFF_data, sizeof(TIFF_data));
-    ok(image != 0, "Failed to load TIFF image data\n");
-    if (!image) return;
+    if (!image)
+    {
+        win_skip("Failed to load TIFF image data. Might not be supported. Skipping.\n");
+        return;
+    }
 
     status = GdipImageGetFrameDimensionsCount(image, &dim_count);
     expect(Ok, status);
@@ -3360,8 +3363,11 @@ static void test_tiff_palette(void)
 
     /* 1bpp TIFF without palette */
     image = load_image((const BYTE *)&TIFF_data, sizeof(TIFF_data));
-    ok(image != 0, "Failed to load TIFF image data\n");
-    if (!image) return;
+    if (!image)
+    {
+        win_skip("Failed to load TIFF image data. Might not be supported. Skipping.\n");
+        return;
+    }
 
     status = GdipGetImagePixelFormat(image, &format);
     expect(Ok, status);
