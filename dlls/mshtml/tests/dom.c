@@ -4195,7 +4195,7 @@ static void _insert_adjacent_elem(unsigned line, IHTMLElement *parent, const cha
     IHTMLElement_Release(ret_elem);
 }
 
-void test_insert_adjacent_elems(IHTMLDocument2 *doc, IHTMLElement *parent)
+static void test_insert_adjacent_elems(IHTMLDocument2 *doc, IHTMLElement *parent)
 {
     IHTMLElement *elem, *elem2;
 
