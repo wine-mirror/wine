@@ -702,12 +702,12 @@ void free_netconn(netconn_t *netconn)
 {
     server_release(netconn->server);
 
+    if (netconn->secure) {
 #ifdef SONAME_LIBSSL
-    if (netconn->ssl_s) {
         pSSL_shutdown(netconn->ssl_s);
         pSSL_free(netconn->ssl_s);
-    }
 #endif
+    }
 
     closesocket(netconn->socket);
     heap_free(netconn);
@@ -936,7 +936,7 @@ DWORD NETCON_send(netconn_t *connection, const void *msg, size_t len, int flags,
     else
     {
 #ifdef SONAME_LIBSSL
-        if(!connection->ssl_s) {
+        if(!connection->secure) {
             FIXME("not connected\n");
             return ERROR_NOT_SUPPORTED;
         }
@@ -972,7 +972,7 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags, int *
     else
     {
 #ifdef SONAME_LIBSSL
-        if(!connection->ssl_s) {
+        if(!connection->secure) {
             FIXME("not connected\n");
             return ERROR_NOT_SUPPORTED;
         }
@@ -1015,7 +1015,7 @@ BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available)
     else
     {
 #ifdef SONAME_LIBSSL
-        *available = connection->ssl_s ? pSSL_pending(connection->ssl_s) : 0;
+        *available = pSSL_pending(connection->ssl_s);
 #else
         FIXME("not supported on this platform\n");
         return FALSE;
@@ -1060,7 +1060,7 @@ LPCVOID NETCON_GetCert(netconn_t *connection)
     X509* cert;
     LPCVOID r = NULL;
 
-    if (!connection->ssl_s)
+    if (!connection->secure)
         return NULL;
 
     cert = pSSL_get_peer_certificate(connection->ssl_s);
@@ -1082,7 +1082,7 @@ int NETCON_GetCipherStrength(netconn_t *connection)
 #endif
     int bits = 0;
 
-    if (!connection->ssl_s)
+    if (!connection->secure)
         return 0;
     cipher = pSSL_get_current_cipher(connection->ssl_s);
     if (!cipher)
