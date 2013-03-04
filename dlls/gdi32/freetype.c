@@ -263,6 +263,8 @@ typedef struct tagFace {
     WCHAR *StyleName;
     WCHAR *FullName;
     WCHAR *file;
+    dev_t dev;
+    ino_t ino;
     void *font_data_ptr;
     DWORD font_data_size;
     FT_Long face_index;
@@ -1761,6 +1763,7 @@ static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
 static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file, void *font_data_ptr, DWORD font_data_size,
                           DWORD flags )
 {
+    struct stat st;
     Face *face = HeapAlloc( GetProcessHeap(), 0, sizeof(*face) );
     My_FT_Bitmap_Size *size = (My_FT_Bitmap_Size *)ft_face->available_sizes;
 
@@ -1779,11 +1782,18 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
     if (flags & ADDFONT_VERTICAL_FONT)
         face->FullName = prepend_at( face->FullName );
 
+    face->dev = 0;
+    face->ino = 0;
     if (file)
     {
         face->file = towstr( CP_UNIXCP, file );
         face->font_data_ptr = NULL;
         face->font_data_size = 0;
+        if (!stat( file, &st ))
+        {
+            face->dev = st.st_dev;
+            face->ino = st.st_ino;
+        }
     }
     else
     {
@@ -1986,8 +1996,7 @@ static int remove_font_resource( const char *file, DWORD flags )
 {
     Family *family, *family_next;
     Face *face, *face_next;
-    char *filename;
-    struct stat st, st2;
+    struct stat st;
     int count = 0;
 
     if (stat( file, &st ) == -1) return 0;
@@ -1998,14 +2007,12 @@ static int remove_font_resource( const char *file, DWORD flags )
         {
             if (!face->file) continue;
             if (LOWORD(face->flags) != LOWORD(flags)) continue;
-            filename = strWtoA( CP_UNIXCP, face->file );
-            if (!stat( filename, &st2 ) && st.st_dev == st2.st_dev && st.st_ino == st2.st_ino)
+            if (st.st_dev == face->dev && st.st_ino == face->ino)
             {
-                TRACE( "removing matching face %s\n", debugstr_w(face->file) );
+                TRACE( "removing matching face %s refcount %d\n", debugstr_w(face->file), face->refcount );
                 release_face( face );
                 count++;
             }
-            HeapFree( GetProcessHeap(), 0, filename );
 	}
         release_family( family );
     }
