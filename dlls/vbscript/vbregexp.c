@@ -25,21 +25,21 @@
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 #define REGEXP_TID_LIST \
-    XDIID(RegExp2) \
-    XDIID(Match2) \
-    XDIID(MatchCollection2) \
+    XDIID(RegExp2), \
+    XDIID(Match2), \
+    XDIID(MatchCollection2), \
     XDIID(SubMatches)
 
 typedef enum {
-#define XDIID(iface) iface ## _tid,
-REGEXP_TID_LIST
+#define XDIID(iface) iface ## _tid
+    REGEXP_TID_LIST,
 #undef XDIID
     REGEXP_LAST_tid
 } regexp_tid_t;
 
 static REFIID tid_ids[] = {
-#define XDIID(iface) &IID_I ## iface,
-REGEXP_TID_LIST
+#define XDIID(iface) &IID_I ## iface
+    REGEXP_TID_LIST
 #undef XDIID
 };
 
