@@ -187,7 +187,7 @@ void PSDRV_AFM2C(const AFM *afm)
 {
     char    buffer[256];
     FILE    *of;
-    int     i;
+    unsigned int i;
 
     lstrcpynA(buffer, afm->FontName, sizeof(buffer) - 2);
 
