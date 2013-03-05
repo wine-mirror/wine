@@ -1220,8 +1220,10 @@ static Cursor create_xlib_color_cursor( HDC hdc, const ICONINFOEXW *icon, int wi
     }
     else  /* invert the mask */
     {
+        unsigned int j;
+
         ptr = (unsigned int *)mask_bits;
-        for (i = 0; i < info->bmiHeader.biSizeImage / sizeof(*ptr); i++, ptr++) *ptr ^= ~0u;
+        for (j = 0; j < info->bmiHeader.biSizeImage / sizeof(*ptr); j++, ptr++) *ptr ^= ~0u;
     }
 
     vis.depth = 1;

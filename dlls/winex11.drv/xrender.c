@@ -763,7 +763,7 @@ static void lfsz_calc_hash(LFANDSIZE *plfsz)
 {
   DWORD hash = 0, *ptr, two_chars;
   WORD *pwc;
-  int i;
+  unsigned int i;
 
   hash ^= plfsz->devsize.cx;
   hash ^= plfsz->devsize.cy;

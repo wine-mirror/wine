@@ -534,7 +534,8 @@ static BOOL create_icon_pixmaps( HDC hdc, const ICONINFO *icon, Pixmap *icon_ret
     XVisualInfo vis = default_visual;
     struct gdi_image_bits bits;
     Pixmap color_pixmap = 0, mask_pixmap = 0;
-    int i, lines;
+    int lines;
+    unsigned int i;
 
     bits.ptr = NULL;
     bits.free = NULL;
