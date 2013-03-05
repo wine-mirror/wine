@@ -1574,28 +1574,39 @@ end:
     return TRUE;
 }
 
+static WCHAR *get_redirect_url( request_t *request, DWORD *len )
+{
+    DWORD size;
+    WCHAR *ret;
+
+    query_headers( request, WINHTTP_QUERY_LOCATION, NULL, NULL, &size, NULL );
+    if (get_last_error() != ERROR_INSUFFICIENT_BUFFER) return FALSE;
+    if (!(ret = heap_alloc( size ))) return NULL;
+    *len = size / sizeof(WCHAR);
+    if (query_headers( request, WINHTTP_QUERY_LOCATION, NULL, ret, &size, NULL )) return ret;
+    heap_free( ret );
+    return NULL;
+}
+
 static BOOL handle_redirect( request_t *request, DWORD status )
 {
     BOOL ret = FALSE;
-    DWORD size, len;
+    DWORD len;
     URL_COMPONENTS uc;
     connect_t *connect = request->connect;
     INTERNET_PORT port;
-    WCHAR *hostname = NULL, *location = NULL;
+    WCHAR *hostname = NULL, *location;
     int index;
 
-    size = 0;
-    query_headers( request, WINHTTP_QUERY_LOCATION, NULL, NULL, &size, NULL );
-    if (!(location = heap_alloc( size ))) return FALSE;
-    if (!query_headers( request, WINHTTP_QUERY_LOCATION, NULL, location, &size, NULL )) goto end;
+    if (!(location = get_redirect_url( request, &len ))) return FALSE;
 
-    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REDIRECT, location, size / sizeof(WCHAR) + 1 );
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REDIRECT, location, len + 1 );
 
     memset( &uc, 0, sizeof(uc) );
     uc.dwStructSize = sizeof(uc);
     uc.dwSchemeLength = uc.dwHostNameLength = uc.dwUrlPathLength = uc.dwExtraInfoLength = ~0u;
 
-    if (!WinHttpCrackUrl( location, size / sizeof(WCHAR), 0, &uc )) /* assume relative redirect */
+    if (!WinHttpCrackUrl( location, len, 0, &uc )) /* assume relative redirect */
     {
         WCHAR *path, *p;
 
