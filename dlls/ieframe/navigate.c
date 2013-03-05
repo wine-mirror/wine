@@ -45,7 +45,7 @@ typedef struct {
     DocHost *doc_host;
     IBinding *binding;
 
-    LPWSTR url;
+    BSTR url;
     HGLOBAL post_data;
     BSTR headers;
     ULONG post_data_len;
@@ -206,7 +206,7 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
         if(This->post_data)
             GlobalFree(This->post_data);
         SysFreeString(This->headers);
-        heap_free(This->url);
+        SysFreeString(This->url);
         heap_free(This);
     }
 
@@ -543,7 +543,7 @@ static BindStatusCallback *create_callback(DocHost *doc_host, LPCWSTR url, PBYTE
     ret->IHttpSecurity_iface.lpVtbl       = &HttpSecurityVtbl;
 
     ret->ref = 1;
-    ret->url = heap_strdupW(url);
+    ret->url = SysAllocString(url);
     ret->post_data = NULL;
     ret->post_data_len = post_data_len;
     ret->headers = headers ? SysAllocString(headers) : NULL;
