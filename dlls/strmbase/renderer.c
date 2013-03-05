@@ -371,7 +371,7 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
     }
 
     /* Wait for render Time */
-    if (SUCCEEDED(IMediaSample_GetMediaTime(pSample, &start, &stop)))
+    if (SUCCEEDED(IMediaSample_GetTime(pSample, &start, &stop)))
     {
         hr = S_FALSE;
         RendererPosPassThru_RegisterMediaTime(This->pPosition, start);
