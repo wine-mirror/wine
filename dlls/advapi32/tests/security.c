@@ -3005,10 +3005,12 @@ static void test_SetEntriesInAclA(void)
 
 static void test_GetNamedSecurityInfoA(void)
 {
-    char admin_ptr[sizeof(SID)+sizeof(ULONG)*SID_MAX_SUB_AUTHORITIES], dacl[100], *user;
+    char admin_ptr[sizeof(SID)+sizeof(ULONG)*SID_MAX_SUB_AUTHORITIES], *user;
+    char system_ptr[sizeof(SID)+sizeof(ULONG)*SID_MAX_SUB_AUTHORITIES];
+    PSID admin_sid = (PSID) admin_ptr, system_sid = (PSID) system_ptr, user_sid;
     DWORD sid_size = sizeof(admin_ptr), user_size;
     char invalid_path[] = "/an invalid file path";
-    PSID admin_sid = (PSID) admin_ptr, user_sid;
+    char software_key[] = "MACHINE\\Software";
     char sd[SECURITY_DESCRIPTOR_MIN_LENGTH];
     SECURITY_DESCRIPTOR_CONTROL control;
     ACL_SIZE_INFORMATION acl_size;
@@ -3113,10 +3115,10 @@ static void test_GetNamedSecurityInfoA(void)
 
     /* Create security descriptor information and test that it comes back the same */
     pSD = &sd;
-    pDacl = (PACL)&dacl;
+    pDacl = HeapAlloc(GetProcessHeap(), 0, 100);
     InitializeSecurityDescriptor(pSD, SECURITY_DESCRIPTOR_REVISION);
     pCreateWellKnownSid(WinBuiltinAdministratorsSid, NULL, admin_sid, &sid_size);
-    bret = InitializeAcl(pDacl, sizeof(dacl), ACL_REVISION);
+    bret = InitializeAcl(pDacl, 100, ACL_REVISION);
     ok(bret, "Failed to initialize ACL.\n");
     bret = pAddAccessAllowedAceEx(pDacl, ACL_REVISION, 0, GENERIC_ALL, user_sid);
     ok(bret, "Failed to add Current User to ACL.\n");
@@ -3130,6 +3132,7 @@ static void test_GetNamedSecurityInfoA(void)
     SetLastError(0xdeadbeef);
     error = pSetNamedSecurityInfoA(tmpfile, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, NULL,
                                    NULL, pDacl, NULL);
+    HeapFree(GetProcessHeap(), 0, pDacl);
     if (error != ERROR_SUCCESS && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
         win_skip("SetNamedSecurityInfoA is not implemented\n");
@@ -3178,6 +3181,26 @@ static void test_GetNamedSecurityInfoA(void)
     LocalFree(pSD);
     HeapFree(GetProcessHeap(), 0, user);
     CloseHandle(hTemp);
+
+    /* Test querying the ownership of a built-in registry key */
+    sid_size = sizeof(system_ptr);
+    pCreateWellKnownSid(WinLocalSystemSid, NULL, system_sid, &sid_size);
+    error = pGetNamedSecurityInfoA(software_key, SE_REGISTRY_KEY,
+                                   OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,
+                                   NULL, NULL, NULL, NULL, &pSD);
+    ok(!error, "GetNamedSecurityInfo failed with error %d\n", error);
+
+    bret = GetSecurityDescriptorOwner(pSD, &owner, &owner_defaulted);
+    ok(bret, "GetSecurityDescriptorOwner failed with error %d\n", GetLastError());
+    ok(owner != NULL, "owner should not be NULL\n");
+    ok(EqualSid(owner, admin_sid), "MACHINE\\Software owner SID != Administrators SID.\n");
+
+    bret = GetSecurityDescriptorGroup(pSD, &group, &group_defaulted);
+    ok(bret, "GetSecurityDescriptorGroup failed with error %d\n", GetLastError());
+    ok(group != NULL, "group should not be NULL\n");
+    ok(EqualSid(group, admin_sid) || broken(EqualSid(group, system_sid)) /* before Win7 */,
+       "MACHINE\\Software group SID != Local System SID.\n");
+    LocalFree(pSD);
 }
 
 static void test_ConvertStringSecurityDescriptor(void)
