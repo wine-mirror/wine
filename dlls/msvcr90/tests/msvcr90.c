@@ -117,6 +117,7 @@ static int (__cdecl *p_feof)(FILE*);
 static int (__cdecl *p_ferror)(FILE*);
 static int (__cdecl *p_flsbuf)(int, FILE*);
 static unsigned long (__cdecl *p_byteswap_ulong)(unsigned long);
+static void** (__cdecl *p__pxcptinfoptrs)(void);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -302,6 +303,7 @@ static BOOL init(void)
     SET(p_ferror, "ferror");
     SET(p_flsbuf, "_flsbuf");
     SET(p_byteswap_ulong, "_byteswap_ulong");
+    SET(p__pxcptinfoptrs, "__pxcptinfoptrs");
     if (sizeof(void *) == 8)
     {
         SET(p_type_info_name_internal_method, "?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z");
@@ -1015,7 +1017,8 @@ struct __thread_data {
     struct tm                       *time_buffer;
     char                            *efcvt_buffer;
     int                             unk3[2];
-    void                            *unk4[4];
+    void                            *unk4[3];
+    EXCEPTION_POINTERS              *xcptinfo;
     int                             fpecode;
     pthreadmbcinfo                  mbcinfo;
     pthreadlocinfo                  locinfo;
@@ -1060,6 +1063,7 @@ static void test_getptd(void)
     ok(p_wasctime(&time) == ptd->wasctime_buffer, "ptd->wasctime_buffer is incorrect\n");
     ok(p_localtime64(&secs) == ptd->time_buffer, "ptd->time_buffer is incorrect\n");
     ok(p_ecvt(3.12, 1, &dec, &sign) == ptd->efcvt_buffer, "ptd->efcvt_buffer is incorrect\n");
+    ok(p__pxcptinfoptrs() == (void**)&ptd->xcptinfo, "ptd->xcptinfo is incorrect\n");
     ok(p_fpecode() == &ptd->fpecode, "ptd->fpecode is incorrect\n");
     mbcinfo = ptd->mbcinfo;
     locinfo = ptd->locinfo;
