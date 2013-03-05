@@ -1574,112 +1574,6 @@ end:
     return TRUE;
 }
 
-static WCHAR *get_redirect_url( request_t *request, DWORD *len )
-{
-    DWORD size;
-    WCHAR *ret;
-
-    query_headers( request, WINHTTP_QUERY_LOCATION, NULL, NULL, &size, NULL );
-    if (get_last_error() != ERROR_INSUFFICIENT_BUFFER) return FALSE;
-    if (!(ret = heap_alloc( size ))) return NULL;
-    *len = size / sizeof(WCHAR);
-    if (query_headers( request, WINHTTP_QUERY_LOCATION, NULL, ret, &size, NULL )) return ret;
-    heap_free( ret );
-    return NULL;
-}
-
-static BOOL handle_redirect( request_t *request, DWORD status )
-{
-    BOOL ret = FALSE;
-    DWORD len;
-    URL_COMPONENTS uc;
-    connect_t *connect = request->connect;
-    INTERNET_PORT port;
-    WCHAR *hostname = NULL, *location;
-    int index;
-
-    if (!(location = get_redirect_url( request, &len ))) return FALSE;
-
-    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REDIRECT, location, len + 1 );
-
-    memset( &uc, 0, sizeof(uc) );
-    uc.dwStructSize = sizeof(uc);
-    uc.dwSchemeLength = uc.dwHostNameLength = uc.dwUrlPathLength = uc.dwExtraInfoLength = ~0u;
-
-    if (!WinHttpCrackUrl( location, len, 0, &uc )) /* assume relative redirect */
-    {
-        WCHAR *path, *p;
-
-        len = strlenW( location ) + 1;
-        if (location[0] != '/') len++;
-        if (!(p = path = heap_alloc( len * sizeof(WCHAR) ))) goto end;
-
-        if (location[0] != '/') *p++ = '/';
-        strcpyW( p, location );
-
-        heap_free( request->path );
-        request->path = path;
-    }
-    else
-    {
-        if (uc.nScheme == INTERNET_SCHEME_HTTP && request->hdr.flags & WINHTTP_FLAG_SECURE)
-        {
-            TRACE("redirect from secure page to non-secure page\n");
-            request->hdr.flags &= ~WINHTTP_FLAG_SECURE;
-        }
-        else if (uc.nScheme == INTERNET_SCHEME_HTTPS && !(request->hdr.flags & WINHTTP_FLAG_SECURE))
-        {
-            TRACE("redirect from non-secure page to secure page\n");
-            request->hdr.flags |= WINHTTP_FLAG_SECURE;
-        }
-
-        len = uc.dwHostNameLength;
-        if (!(hostname = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
-        memcpy( hostname, uc.lpszHostName, len * sizeof(WCHAR) );
-        hostname[len] = 0;
-
-        port = uc.nPort ? uc.nPort : (uc.nScheme == INTERNET_SCHEME_HTTPS ? 443 : 80);
-        if (strcmpiW( connect->hostname, hostname ) || connect->serverport != port)
-        {
-            heap_free( connect->hostname );
-            connect->hostname = hostname;
-            connect->hostport = port;
-            if (!(ret = set_server_for_hostname( connect, hostname, port ))) goto end;
-
-            netconn_close( &request->netconn );
-            if (!(ret = netconn_init( &request->netconn ))) goto end;
-        }
-        if (!(ret = add_host_header( request, WINHTTP_ADDREQ_FLAG_REPLACE ))) goto end;
-        if (!(ret = open_connection( request ))) goto end;
-
-        heap_free( request->path );
-        request->path = NULL;
-        if (uc.dwUrlPathLength)
-        {
-            len = uc.dwUrlPathLength + uc.dwExtraInfoLength;
-            if (!(request->path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
-            strcpyW( request->path, uc.lpszUrlPath );
-        }
-        else request->path = strdupW( slashW );
-    }
-
-    /* remove content-type/length headers */
-    if ((index = get_header_index( request, attr_content_type, 0, TRUE )) >= 0) delete_header( request, index );
-    if ((index = get_header_index( request, attr_content_length, 0, TRUE )) >= 0 ) delete_header( request, index );
-
-    if (status != HTTP_STATUS_REDIRECT_KEEP_VERB && !strcmpW( request->verb, postW ))
-    {
-        heap_free( request->verb );
-        request->verb = strdupW( getW );
-    }
-    ret = TRUE;
-
-end:
-    if (!ret) heap_free( hostname );
-    heap_free( location );
-    return ret;
-}
-
 static BOOL receive_data( request_t *request, void *buffer, DWORD size, DWORD *read, BOOL async )
 {
     DWORD to_read;
@@ -1862,6 +1756,117 @@ static void record_cookies( request_t *request )
     }
 }
 
+static WCHAR *get_redirect_url( request_t *request, DWORD *len )
+{
+    DWORD size;
+    WCHAR *ret;
+
+    query_headers( request, WINHTTP_QUERY_LOCATION, NULL, NULL, &size, NULL );
+    if (get_last_error() != ERROR_INSUFFICIENT_BUFFER) return FALSE;
+    if (!(ret = heap_alloc( size ))) return NULL;
+    *len = size / sizeof(WCHAR);
+    if (query_headers( request, WINHTTP_QUERY_LOCATION, NULL, ret, &size, NULL )) return ret;
+    heap_free( ret );
+    return NULL;
+}
+
+static BOOL handle_redirect( request_t *request, DWORD status )
+{
+    BOOL ret = FALSE;
+    DWORD len, len_url;
+    URL_COMPONENTS uc;
+    connect_t *connect = request->connect;
+    INTERNET_PORT port;
+    WCHAR *hostname = NULL, *location;
+    int index;
+
+    if (!(location = get_redirect_url( request, &len_url ))) return FALSE;
+
+    memset( &uc, 0, sizeof(uc) );
+    uc.dwStructSize = sizeof(uc);
+    uc.dwSchemeLength = uc.dwHostNameLength = uc.dwUrlPathLength = uc.dwExtraInfoLength = ~0u;
+
+    if (!WinHttpCrackUrl( location, len_url, 0, &uc )) /* assume relative redirect */
+    {
+        WCHAR *path, *p;
+
+        len = strlenW( location ) + 1;
+        if (location[0] != '/') len++;
+        if (!(p = path = heap_alloc( len * sizeof(WCHAR) ))) goto end;
+
+        if (location[0] != '/') *p++ = '/';
+        strcpyW( p, location );
+
+        heap_free( request->path );
+        request->path = path;
+
+        drain_content( request );
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REDIRECT, location, len_url + 1 );
+    }
+    else
+    {
+        if (uc.nScheme == INTERNET_SCHEME_HTTP && request->hdr.flags & WINHTTP_FLAG_SECURE)
+        {
+            if (request->hdr.redirect_policy == WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP) goto end;
+            TRACE("redirect from secure page to non-secure page\n");
+            request->hdr.flags &= ~WINHTTP_FLAG_SECURE;
+        }
+        else if (uc.nScheme == INTERNET_SCHEME_HTTPS && !(request->hdr.flags & WINHTTP_FLAG_SECURE))
+        {
+            TRACE("redirect from non-secure page to secure page\n");
+            request->hdr.flags |= WINHTTP_FLAG_SECURE;
+        }
+
+        drain_content( request );
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REDIRECT, location, len_url + 1 );
+
+        len = uc.dwHostNameLength;
+        if (!(hostname = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
+        memcpy( hostname, uc.lpszHostName, len * sizeof(WCHAR) );
+        hostname[len] = 0;
+
+        port = uc.nPort ? uc.nPort : (uc.nScheme == INTERNET_SCHEME_HTTPS ? 443 : 80);
+        if (strcmpiW( connect->hostname, hostname ) || connect->serverport != port)
+        {
+            heap_free( connect->hostname );
+            connect->hostname = hostname;
+            connect->hostport = port;
+            if (!(ret = set_server_for_hostname( connect, hostname, port ))) goto end;
+
+            netconn_close( &request->netconn );
+            if (!(ret = netconn_init( &request->netconn ))) goto end;
+        }
+        if (!(ret = add_host_header( request, WINHTTP_ADDREQ_FLAG_REPLACE ))) goto end;
+        if (!(ret = open_connection( request ))) goto end;
+
+        heap_free( request->path );
+        request->path = NULL;
+        if (uc.dwUrlPathLength)
+        {
+            len = uc.dwUrlPathLength + uc.dwExtraInfoLength;
+            if (!(request->path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
+            strcpyW( request->path, uc.lpszUrlPath );
+        }
+        else request->path = strdupW( slashW );
+    }
+
+    /* remove content-type/length headers */
+    if ((index = get_header_index( request, attr_content_type, 0, TRUE )) >= 0) delete_header( request, index );
+    if ((index = get_header_index( request, attr_content_length, 0, TRUE )) >= 0 ) delete_header( request, index );
+
+    if (status != HTTP_STATUS_REDIRECT_KEEP_VERB && !strcmpW( request->verb, postW ))
+    {
+        heap_free( request->verb );
+        request->verb = strdupW( getW );
+    }
+    ret = TRUE;
+
+end:
+    if (!ret) heap_free( hostname );
+    heap_free( location );
+    return ret;
+}
+
 static BOOL receive_response( request_t *request, BOOL async )
 {
     BOOL ret;
@@ -1890,7 +1895,6 @@ static BOOL receive_response( request_t *request, BOOL async )
             if (request->hdr.disable_flags & WINHTTP_DISABLE_REDIRECTS ||
                 request->hdr.redirect_policy == WINHTTP_OPTION_REDIRECT_POLICY_NEVER) break;
 
-            drain_content( request );
             if (!(ret = handle_redirect( request, status ))) break;
 
             clear_response_headers( request );
