@@ -354,8 +354,10 @@ HRESULT jsval_to_variant(jsval_t val, VARIANT *retv)
         if(str->length_flags & JSSTR_FLAG_NULLBSTR) {
             V_BSTR(retv) = NULL;
         }else {
-            V_BSTR(retv) = SysAllocStringLen(str->str, jsstr_length(str));
-            if(!V_BSTR(retv))
+            V_BSTR(retv) = SysAllocStringLen(NULL, jsstr_length(str));
+            if(V_BSTR(retv))
+                jsstr_flush(str, V_BSTR(retv));
+            else
                 return E_OUTOFMEMORY;
         }
         return S_OK;
