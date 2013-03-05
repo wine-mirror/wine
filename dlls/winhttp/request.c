@@ -1422,12 +1422,12 @@ static BOOL handle_authorization( request_t *request, DWORD status )
 
     switch (status)
     {
-    case 401:
+    case HTTP_STATUS_DENIED:
         target = WINHTTP_AUTH_TARGET_SERVER;
         level  = WINHTTP_QUERY_WWW_AUTHENTICATE;
         break;
 
-    case 407:
+    case HTTP_STATUS_PROXY_AUTH_REQ:
         target = WINHTTP_AUTH_TARGET_PROXY;
         level  = WINHTTP_QUERY_PROXY_AUTHENTICATE;
         break;
@@ -1886,7 +1886,7 @@ static BOOL receive_response( request_t *request, BOOL async )
             send_request( request, NULL, 0, NULL, 0, 0, 0, FALSE ); /* recurse synchronously */
             continue;
         }
-        else if (status == 401 || status == 407)
+        else if (status == HTTP_STATUS_DENIED || status == HTTP_STATUS_PROXY_AUTH_REQ)
         {
             if (request->hdr.disable_flags & WINHTTP_DISABLE_AUTHENTICATION) break;
 
