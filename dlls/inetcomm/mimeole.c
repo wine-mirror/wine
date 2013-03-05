@@ -1094,7 +1094,7 @@ static HRESULT MimeBody_set_offsets(MimeBody *body, const BODYOFFSETS *offsets)
 
 #define FIRST_CUSTOM_PROP_ID 0x100
 
-MimeBody *mimebody_create(void)
+static MimeBody *mimebody_create(void)
 {
     MimeBody *This;
     BODYOFFSETS body_offsets;
