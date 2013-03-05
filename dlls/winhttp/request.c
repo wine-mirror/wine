@@ -1038,6 +1038,20 @@ static BOOL add_host_header( request_t *request, DWORD modifier )
     return ret;
 }
 
+static void clear_response_headers( request_t *request )
+{
+    unsigned int i;
+
+    for (i = 0; i < request->num_headers; i++)
+    {
+        if (!request->headers[i].field) continue;
+        if (!request->headers[i].value) continue;
+        if (request->headers[i].is_request) continue;
+        delete_header( request, i );
+        i--;
+    }
+}
+
 static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len, LPVOID optional,
                           DWORD optional_len, DWORD total_len, DWORD_PTR context, BOOL async )
 {
@@ -1052,6 +1066,8 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
     char *req_ascii;
     int bytes_sent;
     DWORD len, i, flags;
+
+    clear_response_headers( request );
 
     flags = WINHTTP_ADDREQ_FLAG_ADD|WINHTTP_ADDREQ_FLAG_COALESCE_WITH_COMMA;
     for (i = 0; i < request->num_accept_types; i++)
@@ -1455,20 +1471,6 @@ static BOOL handle_authorization( request_t *request, DWORD status )
 
     FIXME("unsupported authentication scheme\n");
     return FALSE;
-}
-
-static void clear_response_headers( request_t *request )
-{
-    unsigned int i;
-
-    for (i = 0; i < request->num_headers; i++)
-    {
-        if (!request->headers[i].field) continue;
-        if (!request->headers[i].value) continue;
-        if (request->headers[i].is_request) continue;
-        delete_header( request, i );
-        i--;
-    }
 }
 
 #define MAX_REPLY_LEN   1460
@@ -1897,7 +1899,6 @@ static BOOL receive_response( request_t *request, BOOL async )
 
             if (!(ret = handle_redirect( request, status ))) break;
 
-            clear_response_headers( request );
             send_request( request, NULL, 0, NULL, 0, 0, 0, FALSE ); /* recurse synchronously */
             continue;
         }
@@ -1911,7 +1912,6 @@ static BOOL receive_response( request_t *request, BOOL async )
                 ret = TRUE;
                 break;
             }
-            clear_response_headers( request );
             send_request( request, NULL, 0, NULL, 0, 0, 0, FALSE );
             continue;
         }
