@@ -250,7 +250,7 @@
 @ cdecl __pctype_func() MSVCRT___pctype_func
 @ extern __pioinfo MSVCRT___pioinfo
 # stub __pwctype_func()
-@ stub __pxcptinfoptrs()
+@ cdecl __pxcptinfoptrs() MSVCRT___pxcptinfoptrs
 @ cdecl __set_app_type(long) MSVCRT___set_app_type
 @ extern __setlc_active MSVCRT___setlc_active
 @ cdecl __setusermatherr(ptr) MSVCRT___setusermatherr

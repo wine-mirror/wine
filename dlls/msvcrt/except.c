@@ -61,6 +61,14 @@ static BOOL WINAPI msvcrt_console_handler(DWORD ctrlType)
     return ret;
 }
 
+/*********************************************************************
+ *              __pxcptinfoptrs (MSVCRT.@)
+ */
+void** CDECL MSVCRT___pxcptinfoptrs(void)
+{
+    return (void**)&msvcrt_get_thread_data()->xcptinfo;
+}
+
 typedef void (CDECL *float_handler)(int, int);
 
 /* The exception codes are actually NTSTATUS values */
@@ -93,8 +101,13 @@ static LONG WINAPI msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
         {
             if (handler != MSVCRT_SIG_IGN)
             {
+                EXCEPTION_POINTERS **ep = (EXCEPTION_POINTERS**)MSVCRT___pxcptinfoptrs(), *old_ep;
+
+                old_ep = *ep;
+                *ep = except;
                 sighandlers[MSVCRT_SIGSEGV] = MSVCRT_SIG_DFL;
                 handler(MSVCRT_SIGSEGV);
+                *ep = old_ep;
             }
             ret = EXCEPTION_CONTINUE_EXECUTION;
         }
@@ -114,6 +127,7 @@ static LONG WINAPI msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
         {
             if (handler != MSVCRT_SIG_IGN)
             {
+                EXCEPTION_POINTERS **ep = (EXCEPTION_POINTERS**)MSVCRT___pxcptinfoptrs(), *old_ep;
                 unsigned int i;
                 int float_signal = MSVCRT__FPE_INVALID;
 
@@ -128,7 +142,11 @@ static LONG WINAPI msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
                         break;
                     }
                 }
+
+                old_ep = *ep;
+                *ep = except;
                 ((float_handler)handler)(MSVCRT_SIGFPE, float_signal);
+                *ep = old_ep;
             }
             ret = EXCEPTION_CONTINUE_EXECUTION;
         }
@@ -139,8 +157,13 @@ static LONG WINAPI msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
         {
             if (handler != MSVCRT_SIG_IGN)
             {
+                EXCEPTION_POINTERS **ep = (EXCEPTION_POINTERS**)MSVCRT___pxcptinfoptrs(), *old_ep;
+
+                old_ep = *ep;
+                *ep = except;
                 sighandlers[MSVCRT_SIGILL] = MSVCRT_SIG_DFL;
                 handler(MSVCRT_SIGILL);
+                *ep = old_ep;
             }
             ret = EXCEPTION_CONTINUE_EXECUTION;
         }
@@ -204,10 +227,27 @@ int CDECL MSVCRT_raise(int sig)
 
     switch (sig)
     {
-    case MSVCRT_SIGABRT:
     case MSVCRT_SIGFPE:
     case MSVCRT_SIGILL:
     case MSVCRT_SIGSEGV:
+        handler = sighandlers[sig];
+        if (handler == MSVCRT_SIG_DFL) MSVCRT__exit(3);
+        if (handler != MSVCRT_SIG_IGN)
+        {
+            EXCEPTION_POINTERS **ep = (EXCEPTION_POINTERS**)MSVCRT___pxcptinfoptrs(), *old_ep;
+
+            sighandlers[sig] = MSVCRT_SIG_DFL;
+
+            old_ep = *ep;
+            *ep = NULL;
+            if (sig == MSVCRT_SIGFPE)
+                ((float_handler)handler)(sig, MSVCRT__FPE_EXPLICITGEN);
+            else
+                handler(sig);
+            *ep = old_ep;
+        }
+        break;
+    case MSVCRT_SIGABRT:
     case MSVCRT_SIGINT:
     case MSVCRT_SIGTERM:
     case MSVCRT_SIGBREAK:
@@ -216,10 +256,7 @@ int CDECL MSVCRT_raise(int sig)
         if (handler != MSVCRT_SIG_IGN)
         {
             sighandlers[sig] = MSVCRT_SIG_DFL;
-            if (sig == MSVCRT_SIGFPE)
-                ((float_handler)handler)(sig, MSVCRT__FPE_EXPLICITGEN);
-            else
-                handler(sig);
+            handler(sig);
         }
         break;
     default:
