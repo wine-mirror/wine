@@ -287,7 +287,7 @@ static void msvcrt_free_fd(int fd)
 
 /* INTERNAL: Allocate an fd slot from a Win32 HANDLE, starting from fd */
 /* caller must hold the files lock */
-static int msvcrt_alloc_fd_from(HANDLE hand, int flag, int fd)
+static int msvcrt_set_fd(HANDLE hand, int flag, int fd)
 {
   ioinfo *fdinfo;
 
@@ -351,7 +351,7 @@ static int msvcrt_alloc_fd(HANDLE hand, int flag)
 
   LOCK_FILES();
   TRACE(":handle (%p) allocating fd (%d)\n",hand,MSVCRT_fdstart);
-  ret = msvcrt_alloc_fd_from(hand, flag, MSVCRT_fdstart);
+  ret = msvcrt_set_fd(hand, flag, MSVCRT_fdstart);
   UNLOCK_FILES();
   return ret;
 }
@@ -474,7 +474,7 @@ void msvcrt_init_io(void)
     for (i = 0; i < count; i++)
     {
       if ((*wxflag_ptr & WX_OPEN) && *handle_ptr != INVALID_HANDLE_VALUE)
-        msvcrt_alloc_fd_from(*handle_ptr, *wxflag_ptr, i);
+        msvcrt_set_fd(*handle_ptr, *wxflag_ptr, i);
 
       wxflag_ptr++; handle_ptr++;
     }
@@ -485,15 +485,15 @@ void msvcrt_init_io(void)
 
   fdinfo = msvcrt_get_ioinfo(MSVCRT_STDIN_FILENO);
   if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE)
-    msvcrt_alloc_fd_from(GetStdHandle(STD_INPUT_HANDLE), WX_OPEN|WX_TEXT, MSVCRT_STDIN_FILENO);
+    msvcrt_set_fd(GetStdHandle(STD_INPUT_HANDLE), WX_OPEN|WX_TEXT, MSVCRT_STDIN_FILENO);
 
   fdinfo = msvcrt_get_ioinfo(MSVCRT_STDOUT_FILENO);
   if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE)
-    msvcrt_alloc_fd_from(GetStdHandle(STD_OUTPUT_HANDLE), WX_OPEN|WX_TEXT, MSVCRT_STDOUT_FILENO);
+    msvcrt_set_fd(GetStdHandle(STD_OUTPUT_HANDLE), WX_OPEN|WX_TEXT, MSVCRT_STDOUT_FILENO);
 
   fdinfo = msvcrt_get_ioinfo(MSVCRT_STDERR_FILENO);
   if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE)
-    msvcrt_alloc_fd_from(GetStdHandle(STD_ERROR_HANDLE), WX_OPEN|WX_TEXT, MSVCRT_STDERR_FILENO);
+    msvcrt_set_fd(GetStdHandle(STD_ERROR_HANDLE), WX_OPEN|WX_TEXT, MSVCRT_STDERR_FILENO);
 
   TRACE(":handles (%p)(%p)(%p)\n", msvcrt_get_ioinfo(MSVCRT_STDIN_FILENO)->handle,
         msvcrt_get_ioinfo(MSVCRT_STDOUT_FILENO)->handle,
@@ -913,7 +913,7 @@ int CDECL MSVCRT__dup2(int od, int nd)
 
       if (msvcrt_is_valid_fd(nd))
         MSVCRT__close(nd);
-      ret = msvcrt_alloc_fd_from(handle, wxflag, nd);
+      ret = msvcrt_set_fd(handle, wxflag, nd);
       if (ret == -1)
       {
         CloseHandle(handle);
