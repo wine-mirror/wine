@@ -298,8 +298,8 @@ UINT WINAPI WNetEnumCachedPasswords(
             continue;
 
         /* read the value data */
-        size = sizeof *entry - sizeof entry->abResource[0] + val_sz + data_sz;
-        entry = HeapAlloc( GetProcessHeap(), 0, sizeof *entry + val_sz + data_sz );
+        size = offsetof( PASSWORD_CACHE_ENTRY, abResource[val_sz + data_sz] );
+        entry = HeapAlloc( GetProcessHeap(), 0, size );
         memcpy( entry->abResource, val, val_sz );
         entry->cbEntry = size;
         entry->cbResource = val_sz;
