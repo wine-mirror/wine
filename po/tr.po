@@ -1,28 +1,33 @@
 # Turkish translations for Wine
 #
 # zeugma, 2012.
+# Volkan Gezer <volkangezer@gmail.com>, 2013.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-03-08 23:20+0200\n"
-"Last-Translator: zeugma\n"
+"PO-Revision-Date: 2013-02-01 14:20+0100\n"
+"Last-Translator: Volkan Gezer <volkangezer@gmail.com>\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: Turkish\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.5.4\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #: appwiz.rc:55
 msgid "Install/Uninstall"
-msgstr ""
+msgstr "Yükle/Kaldır"
 
 #: appwiz.rc:58
 msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
 msgstr ""
+"Disketten, CD-ROM sürücüsünden veya sabit diskinizden yeni bir program "
+"yüklemek için, Yükle tıklayın."
 
 #: appwiz.rc:59
 msgid "&Install..."
@@ -34,6 +39,9 @@ msgid ""
 "to modify its installed components, select it from the list and click Modify/"
 "Remove."
 msgstr ""
+"Aşağıdaki yazılım otomatik olarak kaldırılabilir. Bir programı kaldırmak "
+"veya yüklü bileşenlerini düzenlemek için listeden seçtikten sonra Düzenle/"
+"Kaldır tıklayın."
 
 #: appwiz.rc:64
 msgid "&Support Information"
@@ -72,7 +80,7 @@ msgstr "Tamam"
 
 #: appwiz.rc:76
 msgid "The following information can be used to get technical support for %s:"
-msgstr ""
+msgstr "Aşağıdaki bilgi %s için teknik destek almada kullanılabilir:"
 
 #: appwiz.rc:77
 msgid "Publisher:"
@@ -120,6 +128,13 @@ msgid ""
 "href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
+"Wine, doğru çalışması için HTML'i gömülü kullanan uygulamaların ihtiyacı "
+"olan Gecko paketini bulamadı. Wine, sizin için otomatik indirip "
+"yükleyebilir.\n"
+"\n"
+"Not: kendi dağıtımınızın paketlerini kullanmanız önerilir. Ayrıntılar için "
+"<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
+"adresine bakın."
 
 #: appwiz.rc:106 appwiz.rc:121
 msgid "&Install"
@@ -146,10 +161,8 @@ msgid "Cancel"
 msgstr "İptal"
 
 #: appwiz.rc:112
-#, fuzzy
-#| msgid "Wine Gecko Installer"
 msgid "Wine Mono Installer"
-msgstr "Wine Gecko Kurucusu"
+msgstr "Wine Mono Kurucusu"
 
 #: appwiz.rc:115
 msgid ""
@@ -160,6 +173,12 @@ msgid ""
 "href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> for "
 "details."
 msgstr ""
+"Wine, .NET uygulamalarının düzgün çalışması için gerekli olan Mono paketini "
+"bulamadı. Wine, sizin için otomatik indirip yükleyebilir.\n"
+"\n"
+"Not: kendi dağıtımınızın paketlerini kullanmanız önerilir. Ayrıntılar için "
+"<a href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> "
+"adresine bakın."
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
@@ -170,19 +189,20 @@ msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
+"Bilgisayarınıza yeni yazılım yüklemenize veya bilgisayarınızdan yazılım "
+"kaldırmanıza izin verir."
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Uygulamalar"
 
 #: appwiz.rc:32
-#, fuzzy
 msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
 msgstr ""
-"'%s' kaldırma komutu çalıştırılamadı, çalıştırıbilir dosya var olmayabilir.\n"
-"Sistem kaydından bu kaldırma girişini silmek ister misiniz?"
+"'%s' kaldırma komutu çalıştırılamadı. Sistem kaydından bu kaldırma girişini "
+"silmek ister misiniz?"
 
 #: appwiz.rc:33
 msgid "Not specified"
@@ -201,9 +221,8 @@ msgid "Version"
 msgstr "Sürüm"
 
 #: appwiz.rc:38
-#, fuzzy
 msgid "Installation programs"
-msgstr "Yeni bir program çalıştırır"
+msgstr "Kurulum programları"
 
 #: appwiz.rc:39
 msgid "Programs (*.exe)"
@@ -231,6 +250,8 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
+"İndirilen dosyada beklenmeyen sağlama toplamı. Bozuk dosyanın kurulumu iptal "
+"ediliyor."
 
 #: avifil32.rc:39
 msgid "Compress options"
@@ -246,7 +267,7 @@ msgstr "&Seçenekler..."
 
 #: avifil32.rc:46
 msgid "&Interleave every"
-msgstr ""
+msgstr "&Her şu değerde yenile"
 
 #: avifil32.rc:48 msvfw32.rc:48
 msgid "frames"
@@ -258,11 +279,11 @@ msgstr "Geçerli biçim:"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
-msgstr ""
+msgstr "Dalga formu: %s"
 
 #: avifil32.rc:28
 msgid "Waveform"
-msgstr ""
+msgstr "Dalga formu"
 
 #: avifil32.rc:29
 msgid "All multimedia files"
@@ -278,7 +299,7 @@ msgstr "ses"
 
 #: avifil32.rc:33
 msgid "Wine AVI-default-filehandler"
-msgstr ""
+msgstr "Wine AVI-varsayılan-dosyadenetçisi"
 
 #: avifil32.rc:34
 msgid "uncompressed"
@@ -581,17 +602,17 @@ msgstr "&Mavi:"
 
 #: comdlg32.rc:288
 msgid "&Hue:"
-msgstr ""
+msgstr "&Ton:"
 
 #: comdlg32.rc:290
 msgctxt "Saturation"
 msgid "&Sat:"
-msgstr ""
+msgstr "&Doy:"
 
 #: comdlg32.rc:292
 msgctxt "Luminance"
 msgid "&Lum:"
-msgstr ""
+msgstr "&Par:"
 
 #: comdlg32.rc:302
 msgid "&Add to Custom Colors"
@@ -852,19 +873,19 @@ msgstr "Masaüstüne Git"
 
 #: comdlg32.rc:109
 msgid "Regular"
-msgstr ""
+msgstr "Düzenli"
 
 #: comdlg32.rc:110
 msgid "Bold"
-msgstr ""
+msgstr "Kalın"
 
 #: comdlg32.rc:111
 msgid "Italic"
-msgstr ""
+msgstr "Eğik"
 
 #: comdlg32.rc:112
 msgid "Bold Italic"
-msgstr ""
+msgstr "Kalın Eğik"
 
 #: comdlg32.rc:117 wordpad.rc:114
 msgid "Black"
@@ -1036,7 +1057,7 @@ msgstr "Silme bekleniyor; "
 
 #: comdlg32.rc:83
 msgid "Paper jam; "
-msgstr ""
+msgstr "Kağıt sıkışması;"
 
 #: comdlg32.rc:84
 msgid "Out of paper; "
@@ -1044,7 +1065,7 @@ msgstr "Kağıt yok; "
 
 #: comdlg32.rc:85
 msgid "Feed paper manual; "
-msgstr ""
+msgstr "El ile kağıt besleme;"
 
 #: comdlg32.rc:86
 msgid "Paper problem; "
@@ -1088,11 +1109,11 @@ msgstr "Hazırlanıyor; "
 
 #: comdlg32.rc:96
 msgid "Warming up; "
-msgstr ""
+msgstr "Isınıyor;"
 
 #: comdlg32.rc:97
 msgid "Toner low; "
-msgstr ""
+msgstr "Kartuş az;"
 
 #: comdlg32.rc:98
 msgid "No toner; "
@@ -1100,7 +1121,7 @@ msgstr "Toner yok; "
 
 #: comdlg32.rc:99
 msgid "Page punt; "
-msgstr ""
+msgstr "Sayfa atışı;"
 
 #: comdlg32.rc:100
 msgid "Interrupted by user; "
@@ -1165,13 +1186,15 @@ msgstr "%s bağlanıyor"
 
 #: credui.rc:29
 msgid "Logon unsuccessful"
-msgstr ""
+msgstr "Oturum açma başarısız"
 
 #: credui.rc:30
 msgid ""
 "Make sure that your user name\n"
 "and password are correct."
 msgstr ""
+"Kullanıcı adınızın ve şifrenizin\n"
+"doğru olduğundan emin olun."
 
 #: credui.rc:32
 msgid ""
@@ -1180,62 +1203,66 @@ msgid ""
 "Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
 "entering your password."
 msgstr ""
+"Caps Lock tuşunun açık olması, şifrenizi yanlış girmenize sebep olabilir.\n"
+"\n"
+"Büyük harfi kapatmak için, şifrenizi girmeden önce klavyenizdeki Caps Lock\n"
+"tuşuna basın."
 
 #: credui.rc:31
 msgid "Caps Lock is On"
-msgstr ""
+msgstr "Caps Lock Açık"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
-msgstr ""
+msgstr "Uzmak Anahtar Tanımlayıcı"
 
 #: crypt32.rc:28
 msgid "Key Attributes"
-msgstr ""
+msgstr "Anahtar Özellikleri"
 
 #: crypt32.rc:29
 msgid "Key Usage Restriction"
-msgstr ""
+msgstr "Anahtar Kullanım Sınırlaması"
 
 #: crypt32.rc:30
 msgid "Subject Alternative Name"
-msgstr ""
+msgstr "Konu Alternatif İsim"
 
 #: crypt32.rc:31
 msgid "Issuer Alternative Name"
-msgstr ""
+msgstr "Yayınlayıcı Alternatif İsim"
 
 #: crypt32.rc:32
 msgid "Basic Constraints"
-msgstr ""
+msgstr "Temel Sınırlamalar"
 
 #: crypt32.rc:33
 msgid "Key Usage"
-msgstr ""
+msgstr "Anahtar Kullanımı"
 
 #: crypt32.rc:34
 msgid "Certificate Policies"
-msgstr ""
+msgstr "Sertifika İlkeleri"
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
-msgstr ""
+msgstr "Konu Anahtar Kimliği"
 
 #: crypt32.rc:36
 msgid "CRL Reason Code"
-msgstr ""
+msgstr "CRL Neden Kodu"
 
 #: crypt32.rc:37
 msgid "CRL Distribution Points"
-msgstr ""
+msgstr "CRL Dağıtım Noktaları"
 
 #: crypt32.rc:38
 msgid "Enhanced Key Usage"
-msgstr ""
+msgstr "İyileştirilmiş Anahtar Kullanımı"
 
 #: crypt32.rc:39
 msgid "Authority Information Access"
-msgstr ""
+msgstr "Yetkili Bilgi Erişimi"
 
 #: crypt32.rc:40
 msgid "Certificate Extensions"
@@ -1243,11 +1270,11 @@ msgstr "Sertifika Uzantıları"
 
 #: crypt32.rc:41
 msgid "Next Update Location"
-msgstr ""
+msgstr "Sonraki Güncelleme Konumu"
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
-msgstr ""
+msgstr "Güvene Evet veya Hayır"
 
 #: crypt32.rc:43
 msgid "Email Address"
@@ -1255,60 +1282,60 @@ msgstr "E-posta Adresi"
 
 #: crypt32.rc:44
 msgid "Unstructured Name"
-msgstr ""
+msgstr "Yapısız İsim"
 
 #: crypt32.rc:45
 msgid "Content Type"
-msgstr ""
+msgstr "İçerik Türü"
 
 #: crypt32.rc:46
 msgid "Message Digest"
-msgstr ""
+msgstr "Mesaj Özeti"
 
 #: crypt32.rc:47
 msgid "Signing Time"
-msgstr ""
+msgstr "İmza Tarihi"
 
 #: crypt32.rc:48
 msgid "Counter Sign"
-msgstr ""
+msgstr "Sayaç İşareti"
 
 #: crypt32.rc:49
 msgid "Challenge Password"
-msgstr ""
+msgstr "Şifre Sor"
 
 #: crypt32.rc:50
 msgid "Unstructured Address"
-msgstr ""
+msgstr "Yapısız Adres"
 
 #: crypt32.rc:51
 msgid "S/MIME Capabilities"
-msgstr ""
+msgstr "S/MIME Yetenekleri"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
-msgstr ""
+msgstr "İmzalı Veriyi Tercih Et"
 
 #: crypt32.rc:53 cryptdlg.rc:31
 msgctxt "Certification Practice Statement"
 msgid "CPS"
-msgstr ""
+msgstr "CPS"
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
-msgstr ""
+msgstr "Kullanıcı Notu"
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr ""
+msgstr "Çevrimiçi Sertifika Durum Protokolü"
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
-msgstr ""
+msgstr "Sertifika Sahipliği Sağlayıcı"
 
 #: crypt32.rc:57
 msgid "Certification Template Name"
-msgstr ""
+msgstr "Sertifika Şablon Adı"
 
 #: crypt32.rc:58
 msgid "Certificate Type"
@@ -1320,15 +1347,15 @@ msgstr ""
 
 #: crypt32.rc:60
 msgid "Netscape Cert Type"
-msgstr ""
+msgstr "Netscape Ser. Türü"
 
 #: crypt32.rc:61
 msgid "Netscape Base URL"
-msgstr ""
+msgstr "Netscape Temel URL"
 
 #: crypt32.rc:62
 msgid "Netscape Revocation URL"
-msgstr ""
+msgstr "Netscape Revocation URL"
 
 #: crypt32.rc:63
 msgid "Netscape CA Revocation URL"
@@ -1336,19 +1363,19 @@ msgstr ""
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
-msgstr ""
+msgstr "Netscape Sert. Yenileme URL"
 
 #: crypt32.rc:65
 msgid "Netscape CA Policy URL"
-msgstr ""
+msgstr "Netscape CA İlke URL"
 
 #: crypt32.rc:66
 msgid "Netscape SSL ServerName"
-msgstr ""
+msgstr "Netscape SSL SunucuAdı"
 
 #: crypt32.rc:67
 msgid "Netscape Comment"
-msgstr ""
+msgstr "Netscape Yorumu"
 
 #: crypt32.rc:68
 msgid "Country/Region"
@@ -1360,15 +1387,15 @@ msgstr "Organizasyon"
 
 #: crypt32.rc:70
 msgid "Organizational Unit"
-msgstr ""
+msgstr "Kurumsal Birim"
 
 #: crypt32.rc:71
 msgid "Common Name"
-msgstr ""
+msgstr "Ortak İsim"
 
 #: crypt32.rc:72
 msgid "Locality"
-msgstr ""
+msgstr "Yerellik"
 
 #: crypt32.rc:73
 msgid "State or Province"
@@ -1380,11 +1407,11 @@ msgstr "Başlık"
 
 #: crypt32.rc:75
 msgid "Given Name"
-msgstr ""
+msgstr "Verilen İsim"
 
 #: crypt32.rc:76
 msgid "Initials"
-msgstr ""
+msgstr "Baş Harfler"
 
 #: crypt32.rc:77
 msgid "Surname"
@@ -1392,7 +1419,7 @@ msgstr "Soyisim"
 
 #: crypt32.rc:78
 msgid "Domain Component"
-msgstr ""
+msgstr "Alan Adı Bileşeni"
 
 #: crypt32.rc:79
 msgid "Street Address"
@@ -1404,19 +1431,19 @@ msgstr "Seri Numarası"
 
 #: crypt32.rc:81
 msgid "CA Version"
-msgstr ""
+msgstr "CA Sürümü"
 
 #: crypt32.rc:82
 msgid "Cross CA Version"
-msgstr ""
+msgstr "Çapraz CA Sürümü"
 
 #: crypt32.rc:83
 msgid "Serialized Signature Serial Number"
-msgstr ""
+msgstr "Numaralandırılmış İmza Seri Numarası"
 
 #: crypt32.rc:84
 msgid "Principal Name"
-msgstr ""
+msgstr "Yönetici Adı"
 
 #: crypt32.rc:85
 msgid "Windows Product Update"
@@ -1424,19 +1451,19 @@ msgstr "Windows Ürün Güncelleme"
 
 #: crypt32.rc:86
 msgid "Enrollment Name Value Pair"
-msgstr ""
+msgstr "Kayıt İsmi Değeri Çifti"
 
 #: crypt32.rc:87
 msgid "OS Version"
-msgstr ""
+msgstr "OS Sürümü"
 
 #: crypt32.rc:88
 msgid "Enrollment CSP"
-msgstr ""
+msgstr "Kayıt CSP'si"
 
 #: crypt32.rc:89
 msgid "CRL Number"
-msgstr ""
+msgstr "CRL Numarası"
 
 #: crypt32.rc:90
 msgid "Delta CRL Indicator"
@@ -1444,23 +1471,23 @@ msgstr ""
 
 #: crypt32.rc:91
 msgid "Issuing Distribution Point"
-msgstr ""
+msgstr "Dağıt Noktası Sağlanıyor"
 
 #: crypt32.rc:92
 msgid "Freshest CRL"
-msgstr ""
+msgstr "En Yeni CRL"
 
 #: crypt32.rc:93
 msgid "Name Constraints"
-msgstr ""
+msgstr "İsim Kısıtlamaları"
 
 #: crypt32.rc:94
 msgid "Policy Mappings"
-msgstr ""
+msgstr "Politika İlkeleri"
 
 #: crypt32.rc:95
 msgid "Policy Constraints"
-msgstr ""
+msgstr "Politika Kısıtlamaları"
 
 #: crypt32.rc:96
 msgid "Cross-Certificate Distribution Points"
@@ -1480,43 +1507,43 @@ msgstr ""
 
 #: crypt32.rc:100
 msgid "CMC Data"
-msgstr ""
+msgstr "CMC Verisi"
 
 #: crypt32.rc:101
 msgid "CMC Response"
-msgstr ""
+msgstr "CMC Yanıtı"
 
 #: crypt32.rc:102
 msgid "Unsigned CMC Request"
-msgstr ""
+msgstr "İmzasız CMC Yanıtı"
 
 #: crypt32.rc:103
 msgid "CMC Status Info"
-msgstr ""
+msgstr "CMC Durum Bilgisi"
 
 #: crypt32.rc:104
 msgid "CMC Extensions"
-msgstr ""
+msgstr "CMC Uzantıları"
 
 #: crypt32.rc:105
 msgid "CMC Attributes"
-msgstr ""
+msgstr "CMC Öznitelikleri"
 
 #: crypt32.rc:106
 msgid "PKCS 7 Data"
-msgstr ""
+msgstr "PKCS 7 Verisi"
 
 #: crypt32.rc:107
 msgid "PKCS 7 Signed"
-msgstr ""
+msgstr "PKCS 7 İmzalı"
 
 #: crypt32.rc:108
 msgid "PKCS 7 Enveloped"
-msgstr ""
+msgstr "PKCS 7 Zarflanmış"
 
 #: crypt32.rc:109
 msgid "PKCS 7 Signed Enveloped"
-msgstr ""
+msgstr "PKCS 7 İmzalanmış Zarflanmış"
 
 #: crypt32.rc:110
 msgid "PKCS 7 Digested"
@@ -1640,7 +1667,7 @@ msgstr ""
 
 #: crypt32.rc:140
 msgid "Microsoft Trust List Signing"
-msgstr ""
+msgstr "Microsoft Güven Listesi İmzalaması"
 
 #: crypt32.rc:141
 msgid "Microsoft Time Stamping"
@@ -2217,11 +2244,11 @@ msgstr ""
 
 #: cryptui.rc:341
 msgid "&Import..."
-msgstr ""
+msgstr "&İçe aktar..."
 
 #: cryptui.rc:342 regedit.rc:109
 msgid "&Export..."
-msgstr ""
+msgstr "&Dışa aktar..."
 
 #: cryptui.rc:344
 msgid "&Advanced..."
@@ -2552,7 +2579,7 @@ msgstr "Lütfen bir dosya seçin."
 
 #: cryptui.rc:82
 msgid "The file format is not recognized. Please select another file."
-msgstr ""
+msgstr "Dosya biçimi tanınmadı. Lütfen başka dosya seçin."
 
 #: cryptui.rc:83
 msgid "Could not open "
@@ -2560,19 +2587,19 @@ msgstr "Açılamadı "
 
 #: cryptui.rc:84
 msgid "Determined by the program"
-msgstr ""
+msgstr "Program tarafından karar verildi"
 
 #: cryptui.rc:85
 msgid "Please select a store"
-msgstr ""
+msgstr "Lütfen bir mağaza seçin"
 
 #: cryptui.rc:86
 msgid "Certificate Store Selected"
-msgstr ""
+msgstr "Sertifika Mağazası Seçildi"
 
 #: cryptui.rc:87
 msgid "Automatically determined by the program"
-msgstr ""
+msgstr "Program tarafından otomatik karar verildi"
 
 #: cryptui.rc:88 shell32.rc:134
 msgid "File"
@@ -2580,7 +2607,7 @@ msgstr "Dosya"
 
 #: cryptui.rc:89 inetcpl.rc:105
 msgid "Content"
-msgstr ""
+msgstr "İçerik"
 
 #: cryptui.rc:91
 msgid "Certificate Revocation List"
@@ -2832,7 +2859,7 @@ msgstr ""
 
 #: devenum.rc:32
 msgid "Default DirectSound"
-msgstr ""
+msgstr "Varsayılan DirectSound"
 
 #: devenum.rc:33
 msgid "DirectSound: %s"
@@ -2840,11 +2867,11 @@ msgstr ""
 
 #: devenum.rc:34
 msgid "Default WaveOut Device"
-msgstr ""
+msgstr "Varsayılan WaveOut Aygıtı"
 
 #: devenum.rc:35
 msgid "Default MidiOut Device"
-msgstr ""
+msgstr "Varsayılan MidiOut Aygıtı"
 
 #: dinput.rc:40
 msgid "Configure Devices"
@@ -2856,7 +2883,7 @@ msgstr "Sıfırla"
 
 #: dinput.rc:48
 msgid "Player"
-msgstr ""
+msgstr "Oyuncu"
 
 #: dinput.rc:49
 msgid "Device"
@@ -2872,7 +2899,7 @@ msgstr ""
 
 #: dinput.rc:53
 msgid "Show Assigned First"
-msgstr ""
+msgstr "İlk, Atananları Göster"
 
 #: dinput.rc:34
 msgid "Action"
@@ -2880,11 +2907,11 @@ msgstr "Eylem"
 
 #: dinput.rc:35
 msgid "Object"
-msgstr ""
+msgstr "Nesne"
 
 #: dxdiagn.rc:25
 msgid "Regional Setting"
-msgstr ""
+msgstr "Bölgesel Ayar"
 
 #: dxdiagn.rc:26
 msgid "%1!u!MB used, %2!u!MB available"
@@ -2892,7 +2919,7 @@ msgstr "%2!u!MB mevcut, %1!u!MB kullanımda"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "Batı"
 
 #: gdi32.rc:26
 msgid "Central European"
@@ -2936,7 +2963,7 @@ msgstr "Japonca"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "ÇİNCE_GB2312"
 
 #: gdi32.rc:37
 msgid "Hangul"
@@ -2952,7 +2979,7 @@ msgstr ""
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "Sembol"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
@@ -2964,23 +2991,23 @@ msgstr "Diğer"
 
 #: gphoto2.rc:27
 msgid "Files on Camera"
-msgstr ""
+msgstr "Kameradaki Dosyalar"
 
 #: gphoto2.rc:31
 msgid "Import Selected"
-msgstr ""
+msgstr "Seçilenleri İçe Aktar"
 
 #: gphoto2.rc:32
 msgid "Preview"
-msgstr ""
+msgstr "Önizle"
 
 #: gphoto2.rc:33
 msgid "Import All"
-msgstr ""
+msgstr "Tümünü İçe Aktar"
 
 #: gphoto2.rc:34
 msgid "Skip This Dialog"
-msgstr ""
+msgstr "Bu İletiyi Geç"
 
 #: gphoto2.rc:35
 msgid "Exit"
@@ -2992,28 +3019,27 @@ msgstr "Aktarılıyor"
 
 #: gphoto2.rc:43
 msgid "Transferring... Please Wait"
-msgstr "Aktarılıyor...Lütfen Bekleyin"
+msgstr "Aktarılıyor... Lütfen Bekleyin"
 
 #: gphoto2.rc:48
 msgid "Connecting to camera"
-msgstr ""
+msgstr "Kameraya bağlanılıayor"
 
 #: gphoto2.rc:52
 msgid "Connecting to camera... Please Wait"
-msgstr "Kameraya bağlanılıyor...Lütfen Bekleyin"
+msgstr "Kameraya bağlanılıyor... Lütfen Bekleyin"
 
 #: hhctrl.rc:56
 msgid "S&ync"
-msgstr ""
+msgstr "&Senk."
 
 #: hhctrl.rc:57 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
 msgstr "&Geri"
 
 #: hhctrl.rc:58
-#, fuzzy
 msgid "&Forward"
-msgstr "İleri"
+msgstr "&İleri"
 
 #: hhctrl.rc:59
 msgctxt "table of contents"
@@ -3050,11 +3076,11 @@ msgstr "&Sık Kullanılanlar"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr ""
+msgstr "Sekmeleri &Gizle"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr ""
+msgstr "&Sekmeleri Göster"
 
 #: hhctrl.rc:39
 msgid "Show"
@@ -3095,7 +3121,7 @@ msgstr "İleri"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
-msgstr "Cinepak Vidyo çözücü"
+msgstr "Cinepak Video çözücü"
 
 #: ieframe.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
 #: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
@@ -3121,7 +3147,7 @@ msgstr "&Farklı Kaydet..."
 
 #: ieframe.rc:35
 msgid "Print &format..."
-msgstr ""
+msgstr "&Yazdırma biçimi..."
 
 #: ieframe.rc:36
 msgid "Pr&int..."
@@ -3129,7 +3155,7 @@ msgstr "&Yazdır..."
 
 #: ieframe.rc:37 wordpad.rc:34
 msgid "Print previe&w"
-msgstr ""
+msgstr "Y&azdırma önizleme"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
@@ -3137,11 +3163,11 @@ msgstr "&Araç Çubuğu"
 
 #: ieframe.rc:46
 msgid "&Standard bar"
-msgstr ""
+msgstr "&Standart çubuk"
 
 #: ieframe.rc:47
 msgid "&Address bar"
-msgstr ""
+msgstr "&Adres çubuğu"
 
 #: ieframe.rc:50 regedit.rc:71
 msgid "&Favorites"
@@ -3161,7 +3187,7 @@ msgstr "Bağlantıyı Aç"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr ""
+msgstr "Internet Explorer'da açmak istediğiniz URL'yi belirtin"
 
 #: ieframe.rc:91
 msgid "Open:"
@@ -3182,11 +3208,11 @@ msgstr "Adres"
 
 #: ieframe.rc:78
 msgid "Searching for %s"
-msgstr ""
+msgstr "Aranan %s"
 
 #: ieframe.rc:79
 msgid "Start downloading %s"
-msgstr ""
+msgstr "%s indirmesine başla"
 
 #: ieframe.rc:80
 msgid "Downloading %s"
@@ -3194,7 +3220,7 @@ msgstr "%s İndiriliyor"
 
 #: ieframe.rc:81
 msgid "Asking for %s"
-msgstr ""
+msgstr "Sorulan %s"
 
 #: inetcpl.rc:46
 msgid "Home page"
@@ -3202,27 +3228,27 @@ msgstr "Ana sayfa"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
-msgstr ""
+msgstr "Ana sayfanız için kullanılacak adresi seçebilirsiniz."
 
 #: inetcpl.rc:50
 msgid "&Current page"
-msgstr ""
+msgstr "&Şimdiki sayfa"
 
 #: inetcpl.rc:51
 msgid "&Default page"
-msgstr ""
+msgstr "Varsa&yılan sayfa"
 
 #: inetcpl.rc:52
 msgid "&Blank page"
-msgstr ""
+msgstr "Boş sa&yfa"
 
 #: inetcpl.rc:53
 msgid "Browsing history"
-msgstr ""
+msgstr "Gezinme geçmişi"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr ""
+msgstr "Belleğe alınmış sayfaları, çerezleri ve diğer verileri silebilirsiniz."
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
@@ -3234,7 +3260,7 @@ msgstr "&Ayarlar..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
-msgstr ""
+msgstr "Gezinme geçmişini sil"
 
 #: inetcpl.rc:68
 msgid ""
@@ -3295,19 +3321,19 @@ msgstr "İnternet Ayarları"
 
 #: inetcpl.rc:29
 msgid "Configure Wine Internet Browser and related settings"
-msgstr ""
+msgstr "Wine Internet Tarayıcısı ve bağlı ayarlarını yapılandır"
 
 #: inetcpl.rc:30
 msgid "Security settings for zone: "
-msgstr ""
+msgstr "Bölge için güvenlik ayarları:"
 
 #: inetcpl.rc:31
 msgid "Custom"
-msgstr ""
+msgstr "Özel"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "Çok Düşük"
 
 #: inetcpl.rc:33
 msgid "Low"
@@ -3315,11 +3341,11 @@ msgstr "Düşük"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "Orta"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "Arttırılmış"
 
 #: inetcpl.rc:36
 msgid "High"
@@ -3327,65 +3353,59 @@ msgstr "Yüksek"
 
 #: joy.rc:33
 msgid "Joysticks"
-msgstr ""
+msgstr "Oyun Kolları"
 
 #: joy.rc:36 winecfg.rc:204
 msgid "&Disable"
 msgstr "&Etkisizleştir"
 
 #: joy.rc:37
-#, fuzzy
-#| msgid "&Table"
 msgid "&Enable"
-msgstr "&Tablo"
+msgstr "&Etkinleştir"
 
 #: joy.rc:38
-#, fuzzy
-#| msgid "Connect to %s"
 msgid "Connected"
-msgstr "%s Bağlan"
+msgstr "Bağlı"
 
 #: joy.rc:40
-#, fuzzy
-#| msgid "&Disable"
 msgid "Disabled"
-msgstr "&Etkisizleştir"
+msgstr "Etkin değil"
 
 #: joy.rc:42
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
+"Bir aygıtı etkinleştirdiğinizde veya kapattığınızda, bu uygulamacığı yeniden "
+"başlatana kadar bağlı oyun kolları burada güncellenmeyecektir."
 
 #: joy.rc:47
 msgid "Test Joystick"
-msgstr ""
+msgstr "Oyun Kolunu Test Et"
 
 #: joy.rc:51
 msgid "Buttons"
-msgstr ""
+msgstr "Düğmeler"
 
 #: joy.rc:60
 msgid "Test Force Feedback"
-msgstr ""
+msgstr "Zorunlu Geri Beslemeyi Kontrol Et"
 
 #: joy.rc:64
-#, fuzzy
-#| msgid "Available formats"
 msgid "Available Effects"
-msgstr "Mevcut biçimler"
+msgstr "Kullanılabilir Efektler"
 
 #: joy.rc:66
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
+"Seçili efekti etkinleştirmek için denetleyicide bir tuşa basın. Efekt yönü "
+"denetleyici ekseni ile değiştirilebilir."
 
 #: joy.rc:28
-#, fuzzy
-#| msgid "Create Control"
 msgid "Game Controllers"
-msgstr "Denetim Oluştur"
+msgstr "Oyun Denetimleri"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -3401,11 +3421,11 @@ msgstr ""
 
 #: jscript.rc:28
 msgid "Object required"
-msgstr ""
+msgstr "Nesne gerekli"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
-msgstr ""
+msgstr "Otomasyon sunucusu nesneyi oluşturamadı"
 
 #: jscript.rc:30
 msgid "Object doesn't support this property or method"
@@ -3417,81 +3437,79 @@ msgstr ""
 
 #: jscript.rc:32
 msgid "Argument not optional"
-msgstr ""
+msgstr "Parametre isteğe bağlı değil"
 
 #: jscript.rc:33
 msgid "Syntax error"
-msgstr ""
+msgstr "Sözdizimi hatası"
 
 #: jscript.rc:34
 msgid "Expected ';'"
-msgstr ""
+msgstr "Beklenen ';'"
 
 #: jscript.rc:35
 msgid "Expected '('"
-msgstr ""
+msgstr "Beklenen '('"
 
 #: jscript.rc:36
 msgid "Expected ')'"
-msgstr ""
+msgstr "Beklenen ')'"
 
 #: jscript.rc:37
-#, fuzzy
-#| msgid "Invalid parameter.\n"
 msgid "Invalid character"
-msgstr "Geçersiz parametre.\n"
+msgstr "Geçersiz karakter"
 
 #: jscript.rc:38
 msgid "Unterminated string constant"
-msgstr ""
+msgstr "Sonlandırılmamış dize sabiti"
 
 #: jscript.rc:39
 msgid "'return' statement outside of function"
-msgstr ""
+msgstr "'return' komutu fonksiyon dışında"
 
 #: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "Döngü dışında 'break' olamaz"
 
 #: jscript.rc:41
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "Döngü dışında 'continue' olamaz"
 
 #: jscript.rc:42
 msgid "Label redefined"
-msgstr ""
+msgstr "Etiket tekrar tanımlandı"
 
 #: jscript.rc:43
 msgid "Label not found"
-msgstr ""
+msgstr "Etiket bulunamadı"
 
 #: jscript.rc:44
 msgid "Conditional compilation is turned off"
-msgstr ""
+msgstr "Şartlı derleme kapatıldı"
 
 #: jscript.rc:47
 msgid "Number expected"
-msgstr ""
+msgstr "Sayı beklendi"
 
 #: jscript.rc:45
 msgid "Function expected"
-msgstr ""
+msgstr "Fonksiyon beklendi"
 
 #: jscript.rc:46
 msgid "'[object]' is not a date object"
-msgstr ""
+msgstr "'[object]' bir tarih nesnesi değil"
 
 #: jscript.rc:48
 msgid "Object expected"
-msgstr ""
+msgstr "Nesne beklendi"
 
 #: jscript.rc:49
 msgid "Illegal assignment"
-msgstr ""
+msgstr "Geçersiz atama"
 
 #: jscript.rc:50
 msgid "'|' is undefined"
-msgstr ""
+msgstr "'|' tanımsız"
 
 #: jscript.rc:51
 msgid "Boolean object expected"
@@ -3499,11 +3517,11 @@ msgstr ""
 
 #: jscript.rc:52
 msgid "Cannot delete '|'"
-msgstr ""
+msgstr "'|' silinemedi"
 
 #: jscript.rc:53
 msgid "VBArray object expected"
-msgstr ""
+msgstr "VBArray nesnesi beklendi"
 
 #: jscript.rc:54
 msgid "JScript object expected"
@@ -3526,18 +3544,16 @@ msgid "Number of fraction digits is out of range"
 msgstr ""
 
 #: jscript.rc:59
-#, fuzzy
-#| msgid "Print range"
 msgid "Precision is out of range"
-msgstr "Aralığı yazdır"
+msgstr "Aralık erişim dışında"
 
 #: jscript.rc:60
 msgid "Array length must be a finite positive integer"
-msgstr ""
+msgstr "Dizi adı pozitif sonlu bir sayı olmalıdır"
 
 #: jscript.rc:61
 msgid "Array object expected"
-msgstr ""
+msgstr "Dizi nesnesi bekleniyor"
 
 #: winerror.mc:26
 msgid "Success.\n"
@@ -3552,9 +3568,8 @@ msgid "File not found.\n"
 msgstr "Dosya bulunamadı.\n"
 
 #: winerror.mc:41
-#, fuzzy
 msgid "Path not found.\n"
-msgstr "%s yolu  bulunamadı.\n"
+msgstr "Yol bulunamadı.\n"
 
 #: winerror.mc:46
 msgid "Too many open files.\n"
@@ -3566,23 +3581,23 @@ msgstr "Erişim engellendi.\n"
 
 #: winerror.mc:56
 msgid "Invalid handle.\n"
-msgstr ""
+msgstr "Geçersiz işleme.\n"
 
 #: winerror.mc:61
 msgid "Memory trashed.\n"
-msgstr ""
+msgstr "Bellek çöpe atıldı.\n"
 
 #: winerror.mc:66
 msgid "Not enough memory.\n"
-msgstr ""
+msgstr "Yeterli bellek yok.\n"
 
 #: winerror.mc:71
 msgid "Invalid block.\n"
-msgstr ""
+msgstr "Geçersiz blok.\n"
 
 #: winerror.mc:76
 msgid "Bad environment.\n"
-msgstr ""
+msgstr "Bozuk ortam.\n"
 
 #: winerror.mc:81
 msgid "Bad format.\n"
@@ -3598,7 +3613,7 @@ msgstr "Geçersiz veri.\n"
 
 #: winerror.mc:96
 msgid "Out of memory.\n"
-msgstr ""
+msgstr "Yetersiz bellek.\n"
 
 #: winerror.mc:101
 msgid "Invalid drive.\n"
@@ -3606,23 +3621,23 @@ msgstr "Geçersiz sürücü.\n"
 
 #: winerror.mc:106
 msgid "Can't delete current directory.\n"
-msgstr ""
+msgstr "Geçerli dizin silinemiyor.\n"
 
 #: winerror.mc:111
 msgid "Not same device.\n"
-msgstr ""
+msgstr "Aynı aygıt değil.\n"
 
 #: winerror.mc:116
 msgid "No more files.\n"
-msgstr ""
+msgstr "Daha fazla dosya yok.\n"
 
 #: winerror.mc:121
 msgid "Write protected.\n"
-msgstr ""
+msgstr "Yazma korumalı.\n"
 
 #: winerror.mc:126
 msgid "Bad unit.\n"
-msgstr ""
+msgstr "Bozuk birim.\n"
 
 #: winerror.mc:131
 msgid "Not ready.\n"
@@ -3634,27 +3649,27 @@ msgstr "Kötü komut.\n"
 
 #: winerror.mc:141
 msgid "CRC error.\n"
-msgstr ""
+msgstr "CRC hatası.\n"
 
 #: winerror.mc:146
 msgid "Bad length.\n"
-msgstr ""
+msgstr "Bozuk uzunluk.\n"
 
 #: winerror.mc:151 winerror.mc:526
 msgid "Seek error.\n"
-msgstr ""
+msgstr "Arama hatası.\n"
 
 #: winerror.mc:156
 msgid "Not DOS disk.\n"
-msgstr ""
+msgstr "DOS diski değil.\n"
 
 #: winerror.mc:161
 msgid "Sector not found.\n"
-msgstr ""
+msgstr "Sektör bulunamadı.\n"
 
 #: winerror.mc:166
 msgid "Out of paper.\n"
-msgstr ""
+msgstr "Kağıt bitti.\n"
 
 #: winerror.mc:171
 msgid "Write fault.\n"
@@ -4117,9 +4132,8 @@ msgid "EXE %1 is marked invalid.\n"
 msgstr ""
 
 #: winerror.mc:756
-#, fuzzy
 msgid "Bad EXE format for %1.\n"
-msgstr "Geçersiz dizin adı.\n"
+msgstr "%1 için bozuk EXE biçimi.\n"
 
 #: winerror.mc:761
 msgid "Iterated data exceeds 64k in %1.\n"
@@ -6087,7 +6101,7 @@ msgstr ""
 
 #: winerror.mc:3231
 msgid "Invalid network address family.\n"
-msgstr "AĞ adresi ailesi geçersiz.\n"
+msgstr "Ağ adresi ailesi geçersiz.\n"
 
 #: winerror.mc:3236
 msgid "Operation not supported.\n"
@@ -6279,43 +6293,43 @@ msgstr ""
 
 #: winerror.mc:3471
 msgid "Resource data not found.\n"
-msgstr ""
+msgstr "Kaynak verisi bulunamadı.\n"
 
 #: winerror.mc:3476
 msgid "Resource type not found.\n"
-msgstr ""
+msgstr "Kaynak türü bulunamadı.\n"
 
 #: winerror.mc:3481
 msgid "Resource name not found.\n"
-msgstr ""
+msgstr "Kaynak adı bulunamadı.\n"
 
 #: winerror.mc:3486
 msgid "Resource language not found.\n"
-msgstr ""
+msgstr "Kaynak dili bulunamadı.\n"
 
 #: winerror.mc:3491
 msgid "Not enough quota.\n"
-msgstr ""
+msgstr "Yeterli kota yok.\n"
 
 #: winerror.mc:3496
 msgid "No interfaces.\n"
-msgstr ""
+msgstr "Arayüz yok.\n"
 
 #: winerror.mc:3501
 msgid "RPC call canceled.\n"
-msgstr ""
+msgstr "RPC çağrımı iptal edildi.\n"
 
 #: winerror.mc:3506
 msgid "Binding incomplete.\n"
-msgstr ""
+msgstr "Atama tamamlanmadı.\n"
 
 #: winerror.mc:3511
 msgid "RPC comm failure.\n"
-msgstr ""
+msgstr "RPC comm başarısız.\n"
 
 #: winerror.mc:3516
 msgid "Unsupported authorization level.\n"
-msgstr ""
+msgstr "Desteklenmeyen yetkilendirme seviyesi.\n"
 
 #: winerror.mc:3521
 msgid "No principal name registered.\n"
@@ -6331,7 +6345,7 @@ msgstr ""
 
 #: winerror.mc:3536
 msgid "Security package error.\n"
-msgstr ""
+msgstr "Güvenlik paket hatası.\n"
 
 #: winerror.mc:3541
 msgid "Thread not canceled.\n"
@@ -6339,7 +6353,7 @@ msgstr ""
 
 #: winerror.mc:3546
 msgid "Invalid handle operation.\n"
-msgstr ""
+msgstr "Geçersiz tutma işlemi.\n"
 
 #: winerror.mc:3551
 msgid "Wrong serializing package version.\n"
@@ -6363,7 +6377,7 @@ msgstr ""
 
 #: winerror.mc:3576
 msgid "Group member not found.\n"
-msgstr ""
+msgstr "Grup üyesi bulunamadı.\n"
 
 #: winerror.mc:3581
 msgid "Can't create endpoint mapper DB.\n"
@@ -6371,7 +6385,7 @@ msgstr ""
 
 #: winerror.mc:3586
 msgid "Invalid object.\n"
-msgstr ""
+msgstr "Geçersiz nesne.\n"
 
 #: winerror.mc:3591
 msgid "Invalid time.\n"
@@ -6379,15 +6393,15 @@ msgstr "Geçeriz zaman.\n"
 
 #: winerror.mc:3596
 msgid "Invalid form name.\n"
-msgstr ""
+msgstr "Geçersiz form adı.\n"
 
 #: winerror.mc:3601
 msgid "Invalid form size.\n"
-msgstr ""
+msgstr "Geçersiz form boyutu.\n"
 
 #: winerror.mc:3606
 msgid "Already awaiting printer handle.\n"
-msgstr ""
+msgstr "Zaten bir yazıcı işlemi bekleniyor.\n"
 
 #: winerror.mc:3611
 msgid "Printer deleted.\n"
@@ -6395,15 +6409,15 @@ msgstr "Yazıcı silindi.\n"
 
 #: winerror.mc:3616
 msgid "Invalid printer state.\n"
-msgstr ""
+msgstr "Geçersiz yazıcı durumu.\n"
 
 #: winerror.mc:3621
 msgid "User must change password.\n"
-msgstr ""
+msgstr "Kullanıcı şifresini değiştirmeli.\n"
 
 #: winerror.mc:3626
 msgid "Domain controller not found.\n"
-msgstr ""
+msgstr "Alan adı denetleyici bulunamadı.\n"
 
 #: winerror.mc:3631
 msgid "Account locked out.\n"
@@ -6411,7 +6425,7 @@ msgstr ""
 
 #: winerror.mc:3636
 msgid "Invalid pixel format.\n"
-msgstr ""
+msgstr "Geçersiz piksel biçimi.\n"
 
 #: winerror.mc:3641
 msgid "Invalid driver.\n"
@@ -6419,7 +6433,7 @@ msgstr "Geçersiz sürücü.\n"
 
 #: winerror.mc:3646
 msgid "Invalid object resolver set.\n"
-msgstr ""
+msgstr "Geçersiz nesne çözümü seti.\n"
 
 #: winerror.mc:3651
 msgid "Incomplete RPC send.\n"
@@ -6447,51 +6461,51 @@ msgstr ""
 
 #: winerror.mc:3681
 msgid "No site name available.\n"
-msgstr ""
+msgstr "Kullanılabilir site adı yok.\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed.\n"
-msgstr ""
+msgstr "Dosya erişilemez.\n"
 
 #: winerror.mc:3691
 msgid "The filename cannot be resolved.\n"
-msgstr ""
+msgstr "Dosya adı çözülemedi.\n"
 
 #: winerror.mc:3696
 msgid "RPC entry type mismatch.\n"
-msgstr ""
+msgstr "RPC giriş türü uyumsuzluğu.\n"
 
 #: winerror.mc:3701
 msgid "Not all objects could be exported.\n"
-msgstr ""
+msgstr "Tüm nesneler çıkartılamadı.\n"
 
 #: winerror.mc:3706
 msgid "The interface could not be exported.\n"
-msgstr ""
+msgstr "Arayüz çıkartılamadı.\n"
 
 #: winerror.mc:3711
 msgid "The profile could not be added.\n"
-msgstr ""
+msgstr "Profil eklenemedi.\n"
 
 #: winerror.mc:3716
 msgid "The profile element could not be added.\n"
-msgstr ""
+msgstr "Profil elemanı eklenemedi.\n"
 
 #: winerror.mc:3721
 msgid "The profile element could not be removed.\n"
-msgstr ""
+msgstr "Profil elemanı kaldırılamadı.\n"
 
 #: winerror.mc:3726
 msgid "The group element could not be added.\n"
-msgstr ""
+msgstr "Grup elemanı eklenemedi.\n"
 
 #: winerror.mc:3731
 msgid "The group element could not be removed.\n"
-msgstr ""
+msgstr "Grup elemanı kaldırılamadı.\n"
 
 #: winerror.mc:3736
 msgid "The username could not be found.\n"
-msgstr ""
+msgstr "Kullanıcı adı bulunamadı.\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
@@ -6499,19 +6513,19 @@ msgstr "Yerel Bağlantı Noktası"
 
 #: localspl.rc:29
 msgid "Local Monitor"
-msgstr ""
+msgstr "Yerel İzleyici"
 
 #: localui.rc:36
 msgid "Add a Local Port"
-msgstr ""
+msgstr "Yerel Bir Port Ekle"
 
 #: localui.rc:39
 msgid "&Enter the port name to add:"
-msgstr ""
+msgstr "&Eklenecek port adı:"
 
 #: localui.rc:48
 msgid "Configure LPT Port"
-msgstr ""
+msgstr "LPT Portunu Yapılandır"
 
 #: localui.rc:51
 msgid "Timeout (seconds)"
@@ -6519,27 +6533,28 @@ msgstr "Zaman aşımı (saniye)"
 
 #: localui.rc:52
 msgid "&Transmission Retry:"
-msgstr ""
+msgstr "&Aktarım Yeniden Denemesi:"
 
 #: localui.rc:29
 msgid "'%s' is not a valid port name"
-msgstr ""
+msgstr "'%s' geçerli bir port adı değil"
 
 #: localui.rc:30
 msgid "Port %s already exists"
-msgstr ""
+msgstr "%s portu zaten mevcut"
 
 #: localui.rc:31
 msgid "This port has no options to configure"
-msgstr ""
+msgstr "Bu portun düzenlenecek seçeneği bulunmuyor"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
 msgstr ""
+"Bir MAPI e-posta istemcisi kurulu olmadığından posta gönderimi başarısız."
 
 #: mapi32.rc:29
 msgid "Send Mail"
-msgstr ""
+msgstr "Posta Gönder"
 
 #: mpr.rc:32 wininet.rc:34
 msgid "Enter Network Password"
@@ -6551,7 +6566,7 @@ msgstr "Lütfen kullanıcı adınızı ve parolanızı girin:"
 
 #: mpr.rc:36 wininet.rc:38
 msgid "Proxy"
-msgstr "Proxy"
+msgstr "Vekil"
 
 #: mpr.rc:38 wininet.rc:40 wininet.rc:60
 msgid "User"
@@ -6587,11 +6602,11 @@ msgstr "&Öznitelikler:"
 
 #: mshtml.rc:36
 msgid "Hyperlink"
-msgstr ""
+msgstr "Bağlantı"
 
 #: mshtml.rc:39
 msgid "Hyperlink Information"
-msgstr ""
+msgstr "Bağlantı Bilgisi"
 
 #: mshtml.rc:40 winecfg.rc:236
 msgid "&Type:"
@@ -6607,17 +6622,19 @@ msgstr "HTML Belgesi"
 
 #: mshtml.rc:26
 msgid "Downloading from %s..."
-msgstr ""
+msgstr "%s'ten indiriliyor..."
 
 #: mshtml.rc:25
 msgid "Done"
-msgstr ""
+msgstr "Bitti"
 
 #: msi.rc:27
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
+"Belirtilen kurulum paketi açılamadı. Lütfen dosya yolunu kontrol edip tekrar "
+"deneyin."
 
 #: msi.rc:28
 msgid "path %s not found"
@@ -6738,27 +6755,27 @@ msgstr "bilinmeyen nesne"
 
 #: oleacc.rc:28
 msgid "title bar"
-msgstr ""
+msgstr "başlık çubuğu"
 
 #: oleacc.rc:29
 msgid "menu bar"
-msgstr ""
+msgstr "menü çubuğu"
 
 #: oleacc.rc:30
 msgid "scroll bar"
-msgstr ""
+msgstr "kaydırma çubuğu"
 
 #: oleacc.rc:31
 msgid "grip"
-msgstr ""
+msgstr "tutamaç"
 
 #: oleacc.rc:32
 msgid "sound"
-msgstr ""
+msgstr "ses"
 
 #: oleacc.rc:33
 msgid "cursor"
-msgstr ""
+msgstr "imleç"
 
 #: oleacc.rc:34
 msgid "caret"
@@ -6766,7 +6783,7 @@ msgstr ""
 
 #: oleacc.rc:35
 msgid "alert"
-msgstr ""
+msgstr "uyarı"
 
 #: oleacc.rc:36
 msgid "window"
@@ -6782,11 +6799,11 @@ msgstr "açılır menü"
 
 #: oleacc.rc:39
 msgid "menu item"
-msgstr ""
+msgstr "menü öğesi"
 
 #: oleacc.rc:40
 msgid "tool tip"
-msgstr ""
+msgstr "araç ipucu"
 
 #: oleacc.rc:41
 msgid "application"
@@ -6798,23 +6815,23 @@ msgstr "belge"
 
 #: oleacc.rc:43
 msgid "pane"
-msgstr ""
+msgstr "pano"
 
 #: oleacc.rc:44
 msgid "chart"
-msgstr ""
+msgstr "grafik"
 
 #: oleacc.rc:45
 msgid "dialog"
-msgstr ""
+msgstr "ileti"
 
 #: oleacc.rc:46
 msgid "border"
-msgstr ""
+msgstr "kenar"
 
 #: oleacc.rc:47
 msgid "grouping"
-msgstr ""
+msgstr "gruplama"
 
 #: oleacc.rc:48
 msgid "separator"
@@ -6830,15 +6847,15 @@ msgstr "durum çubuğu"
 
 #: oleacc.rc:51
 msgid "table"
-msgstr ""
+msgstr "tablo"
 
 #: oleacc.rc:52
 msgid "column header"
-msgstr ""
+msgstr "sütun başlığı"
 
 #: oleacc.rc:53
 msgid "row header"
-msgstr ""
+msgstr "satır başlığı"
 
 #: oleacc.rc:54
 msgid "column"
@@ -6846,15 +6863,15 @@ msgstr "sütun"
 
 #: oleacc.rc:55
 msgid "row"
-msgstr ""
+msgstr "satır"
 
 #: oleacc.rc:56
 msgid "cell"
-msgstr ""
+msgstr "hücre"
 
 #: oleacc.rc:57
 msgid "link"
-msgstr ""
+msgstr "bağlantı"
 
 #: oleacc.rc:58
 msgid "help balloon"
@@ -6870,27 +6887,27 @@ msgstr "liste"
 
 #: oleacc.rc:61
 msgid "list item"
-msgstr ""
+msgstr "liste öğesi"
 
 #: oleacc.rc:62
 msgid "outline"
-msgstr ""
+msgstr "anahat"
 
 #: oleacc.rc:63
 msgid "outline item"
-msgstr ""
+msgstr "anahat öğesi"
 
 #: oleacc.rc:64
 msgid "page tab"
-msgstr ""
+msgstr "sayfa sekmesi"
 
 #: oleacc.rc:65
 msgid "property page"
-msgstr ""
+msgstr "özellik sayfası"
 
 #: oleacc.rc:66
 msgid "indicator"
-msgstr ""
+msgstr "belirteç"
 
 #: oleacc.rc:67
 msgid "graphic"
@@ -6898,7 +6915,7 @@ msgstr "grafik"
 
 #: oleacc.rc:68
 msgid "static text"
-msgstr ""
+msgstr "sabit yazı"
 
 #: oleacc.rc:69
 msgid "text"
@@ -6906,31 +6923,31 @@ msgstr "metin"
 
 #: oleacc.rc:70
 msgid "push button"
-msgstr ""
+msgstr "basma düğmesi"
 
 #: oleacc.rc:71
 msgid "check button"
-msgstr ""
+msgstr "işaret kutusu"
 
 #: oleacc.rc:72
 msgid "radio button"
-msgstr ""
+msgstr "seçme düğmesi"
 
 #: oleacc.rc:73
 msgid "combo box"
-msgstr ""
+msgstr "açılır kutu"
 
 #: oleacc.rc:74
 msgid "drop down"
-msgstr ""
+msgstr "açılır kutu"
 
 #: oleacc.rc:75
 msgid "progress bar"
-msgstr ""
+msgstr "ilerleme çubuğu"
 
 #: oleacc.rc:76
 msgid "dial"
-msgstr ""
+msgstr "ara"
 
 #: oleacc.rc:77
 msgid "hot key field"
@@ -6938,15 +6955,15 @@ msgstr ""
 
 #: oleacc.rc:78
 msgid "slider"
-msgstr ""
+msgstr "kaydırıcı"
 
 #: oleacc.rc:79
 msgid "spin box"
-msgstr ""
+msgstr "dönme kutusu"
 
 #: oleacc.rc:80
 msgid "diagram"
-msgstr ""
+msgstr "diagram"
 
 #: oleacc.rc:81
 msgid "animation"
@@ -6954,27 +6971,27 @@ msgstr "animasyon"
 
 #: oleacc.rc:82
 msgid "equation"
-msgstr ""
+msgstr "eşitlik"
 
 #: oleacc.rc:83
 msgid "drop down button"
-msgstr ""
+msgstr "açılır düğme"
 
 #: oleacc.rc:84
 msgid "menu button"
-msgstr ""
+msgstr "menü düğmesi"
 
 #: oleacc.rc:85
 msgid "grid drop down button"
-msgstr ""
+msgstr "ızgara açılır düğmesi"
 
 #: oleacc.rc:86
 msgid "white space"
-msgstr ""
+msgstr "alfabe dışı"
 
 #: oleacc.rc:87
 msgid "page tab list"
-msgstr ""
+msgstr "sayfa sekme listesi"
 
 #: oleacc.rc:88
 msgid "clock"
@@ -6982,7 +6999,7 @@ msgstr "saat"
 
 #: oleacc.rc:89
 msgid "split button"
-msgstr ""
+msgstr "ayır düğmesi"
 
 #: oleacc.rc:90
 msgid "IP address"
@@ -6990,7 +7007,7 @@ msgstr "İP adresi"
 
 #: oleacc.rc:91
 msgid "outline button"
-msgstr ""
+msgstr "anahat düğmesi"
 
 #: oleaut32.rc:27 oleview.rc:144
 msgid "True"
@@ -7050,7 +7067,7 @@ msgstr "Dosya:"
 
 #: oledlg.rc:75
 msgid "Paste Special"
-msgstr ""
+msgstr "Özel Yapıştır"
 
 #: oledlg.rc:78 setupapi.rc:40
 msgid "Source:"
@@ -7063,11 +7080,11 @@ msgstr "&Yapıştır"
 
 #: oledlg.rc:81
 msgid "Paste &Link"
-msgstr ""
+msgstr "Bağ&lantı Yapıştır"
 
 #: oledlg.rc:83
 msgid "&As:"
-msgstr ""
+msgstr "&Farklı:"
 
 #: oledlg.rc:90
 msgid "&Display As Icon"
@@ -7106,19 +7123,23 @@ msgstr "Denetim Ekle"
 
 #: oledlg.rc:34
 msgid "Inserts the contents of the clipboard into your document as %s."
-msgstr ""
+msgstr "Panonun içeriklerini dokümanınıza %s olarak ekler."
 
 #: oledlg.rc:35
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
 msgstr ""
+"Panonun içeriklerini dokümanınıza ekler ve %s kullanarak "
+"etkinleştirebilirsiniz."
 
 #: oledlg.rc:36
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
+"Panonun içeriklerini dokümanınıza ekler ve %s kullanarak "
+"etkinleştirebilirsiniz. Simge olarak gösterilecektir."
 
 #: oledlg.rc:37
 msgid ""
@@ -7126,6 +7147,8 @@ msgid ""
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
+"Panonun içeriklerini dokümanınıza %s olarak ekler. Veri kaynak dosyasına "
+"bağlanılır ve dosyadaki değişiklikler dokümanınıza yansıtılır."
 
 #: oledlg.rc:38
 msgid ""
@@ -7133,6 +7156,8 @@ msgid ""
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
+"Dokümanınıza pano içeriğinin resmini ekler. Resim kaynak dosyasına "
+"bağlanılır ve dosyadaki değişiklikler dokümanınıza yansıtılır."
 
 #: oledlg.rc:39
 msgid ""
@@ -7143,7 +7168,7 @@ msgstr ""
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
-msgstr ""
+msgstr "Panonun içeriklerini dokümanınıza ekler."
 
 #: oledlg.rc:41
 msgid "Unknown Type"
@@ -7155,30 +7180,30 @@ msgstr "Bilinmeyen Kaynak"
 
 #: oledlg.rc:43
 msgid "the program which created it"
-msgstr ""
+msgstr "oluşturan program"
 
 #: sane.rc:41
 msgid "Scanning"
-msgstr ""
+msgstr "Tarıyor"
 
 #: sane.rc:44
 msgid "SCANNING... Please Wait"
-msgstr ""
+msgstr "TARIYOR... Lütfen Bekleyin"
 
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"
-msgstr ""
+msgstr "px"
 
 #: sane.rc:32
 msgctxt "unit: bits"
 msgid "b"
-msgstr ""
+msgstr "b"
 
 #: sane.rc:34 wineps.rc:46 winecfg.rc:174
 msgctxt "unit: dots/inch"
 msgid "dpi"
-msgstr ""
+msgstr "dpi"
 
 #: sane.rc:35
 msgctxt "unit: percent"
@@ -7188,11 +7213,11 @@ msgstr "%"
 #: sane.rc:36
 msgctxt "unit: microseconds"
 msgid "us"
-msgstr ""
+msgstr "us"
 
 #: serialui.rc:25
 msgid "Settings for %s"
-msgstr ""
+msgstr "%s için Ayarlar"
 
 #: serialui.rc:28
 msgid "Baud Rate"
@@ -7413,7 +7438,7 @@ msgstr "&Kes"
 
 #: shdoclc.rc:152
 msgid "&Save Video As..."
-msgstr "&Vidyoyu Farklı Kaydet..."
+msgstr "&Videoyu Farklı Kaydet..."
 
 #: shdoclc.rc:163 shdoclc.rc:187
 msgid "Play"
@@ -7611,7 +7636,6 @@ msgid "Properties"
 msgstr "Özellikler"
 
 #: shell32.rc:82
-#, fuzzy
 msgctxt "recycle bin"
 msgid "&Restore"
 msgstr "&Geri Yükle"
@@ -8101,9 +8125,8 @@ msgid "Security Warning"
 msgstr "Güvenlik Uyarısı"
 
 #: urlmon.rc:32
-#, fuzzy
 msgid "Do you want to install this software?"
-msgstr "Windows Yeniden Başlatma taklit edilsin mi?"
+msgstr "Bu yazılımı yüklemek istiyor musunuz?"
 
 #: urlmon.rc:34 explorer.rc:29
 msgid "Location:"
@@ -8124,16 +8147,12 @@ msgid "Installation of component failed: %08x"
 msgstr ""
 
 #: urlmon.rc:49
-#, fuzzy
-#| msgid "&Install"
 msgid "Install (%d)"
-msgstr "&Kur"
+msgstr "Kur (%d)"
 
 #: urlmon.rc:50
-#, fuzzy
-#| msgid "&Install"
 msgid "Install"
-msgstr "&Kur"
+msgstr "Kur"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
@@ -8225,9 +8244,8 @@ msgid "There is a problem with the certificate for this site."
 msgstr ""
 
 #: wininet.rc:79
-#, fuzzy
 msgid "Do you want to continue anyway?"
-msgstr "Windows Yeniden Başlatma taklit edilsin mi?"
+msgstr "Yine de devam edilsin mi?"
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -8238,9 +8256,8 @@ msgid "The certificate is issued by an unknown or untrusted publisher."
 msgstr ""
 
 #: wininet.rc:27
-#, fuzzy
 msgid "The date on the certificate is invalid."
-msgstr "Belirtilen aygıt işleyici geçersiz."
+msgstr "Sertifikada yazılı tarih geçersiz."
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
@@ -8279,9 +8296,8 @@ msgid "The specified device handle is invalid."
 msgstr "Belirtilen aygıt işleyici geçersiz."
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "Sisteminizde yüklü sürücü yok!\n"
+msgstr "Sisteminizde yüklü sürücü yok!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -8312,13 +8328,12 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "Bir sistem işlevine geçersiz bir parametre geçilmiş."
 
 #: winmm.rc:42
-#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
 msgstr ""
 "Belirtilen biçim desteklenmiyor veya çevrilemiyor. Desteklenen biçimleri "
-"belirlemek için Kapasite işlevini kullanın"
+"belirlemek için Yetenekler işlevini kullanın"
 
 #: winmm.rc:43 winmm.rc:49
 msgid ""
@@ -8498,13 +8513,12 @@ msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "Belirtilen komut ile 'all' aygıt adı kullanılamaz."
 
 #: winmm.rc:77
-#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
 msgstr ""
 "Birden fazla aygıtta hatalar oluştu. Hangi aygıtların hataya neden olduğunu "
-"belirlemek için her komutu ve aygıtı ayrı ayrı belirleyin"
+"belirlemek için her komutu ve aygıtı ayrı ayrı belirleyin."
 
 #: winmm.rc:78
 msgid "Cannot determine the device type from the given filename extension."
@@ -8856,9 +8870,8 @@ msgid "&Output File Name:"
 msgstr "&Çıktı Dosyası:"
 
 #: winspool.rc:28
-#, fuzzy
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "Çıkış dosyası zaten var. Üzerine yazmak için Tamam'ı tıklayın."
+msgstr "Çıkış dosyası zaten var. Üzerine yazmak için Tamam tıklayın."
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
@@ -9187,45 +9200,40 @@ msgstr ""
 "kendisini çağıran tarafından miras alınır.\n"
 
 #: cmd.rc:40
-#, fuzzy
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
-msgstr "CD hakkında yardım\n"
+msgstr ""
+"CD <dir> CHDIR komutunun kısa sürümüdür. Geçerli\n"
+"varsayılan dizini değiştirir.\n"
 
 #: cmd.rc:41
-#, fuzzy
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr "CHDIR hakkında yardım\n"
+msgstr "CHDIR <dizin> geçerli varsayılan dizini değiştirir\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
 msgstr "CLS konsol ekranını temizler.\n"
 
 #: cmd.rc:45
-#, fuzzy
 msgid "COPY <filename> copies a file.\n"
-msgstr "COPY hakkında yardım\n"
+msgstr "COPY <dosyaadı> bir dosya kopyalar.\n"
 
 #: cmd.rc:46
-#, fuzzy
 msgid "CTTY changes the input/output device.\n"
-msgstr "CTTY hakkında yardım\n"
+msgstr "CTTY girdi/çıktı aygıtını değiştirir.\n"
 
 #: cmd.rc:47
-#, fuzzy
 msgid "DATE shows or changes the system date.\n"
-msgstr "DATE hakkında yardım\n"
+msgstr "DATE  sistem tarihini gösterir ve değiştirir.\n"
 
 #: cmd.rc:48
-#, fuzzy
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "DEL hakkında yardım\n"
+msgstr "DEL <dosyaadı> bir veya birçok dosyayı siler.\n"
 
 #: cmd.rc:49
-#, fuzzy
 msgid "DIR lists the contents of a directory.\n"
-msgstr "DIR hakkında yardım\n"
+msgstr "DIR bir dizinin içeriklerini listeler.\n"
 
 #: cmd.rc:59
 msgid ""
@@ -9248,9 +9256,8 @@ msgstr ""
 "getirerek engelleyebilirsiniz.\n"
 
 #: cmd.rc:61
-#, fuzzy
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr "ERASE hakkında yardım\n"
+msgstr "ERASE <dosyaadı> bir veya birçok dosyayı siler.\n"
 
 #: cmd.rc:69
 msgid ""
@@ -9294,14 +9301,14 @@ msgstr ""
 "GOTO komutunun etkileşimli olarak kullanımının bir etkisi yoktur.\n"
 
 #: cmd.rc:84
-#, fuzzy
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
-msgstr "HELP hakkında yardım\n"
+msgstr ""
+"HELP <komut> bir konuda özet yardımı gösterir.\n"
+"Bir argüman kullanılmayan HELP, tüm dahili CMD komutlarını gösterir.\n"
 
 #: cmd.rc:94
-#, fuzzy
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9314,9 +9321,9 @@ msgid ""
 msgstr ""
 "IF bir komutu koşula bağlı olarak çalıştırmada kullanılır.\n"
 "\n"
-"Sözdzimi:   IF [NOT] EXIST dosyaadı komut\n"
-"IF [NOT] dize1==dize2 komut\n"
-"IF [NOT] ERRORLEVEL sayı komut\n"
+"Sözdizimi:   IF [NOT] EXIST dosyaadı komut\n"
+"        IF [NOT] dize1==dize2 komut\n"
+"        IF [NOT] ERRORLEVEL sayı komut\n"
 "\n"
 "İkinci biçimde dize1 ve dize2 çift tırnak içerisinde olmalıdır.\n"
 "Karşılaştırma BÜYÜK/küçük harf duyarlı değildir.\n"
@@ -9336,14 +9343,12 @@ msgstr ""
 "Disk bölüm etiketini VOL komutu ile gösterebilirsiniz.\n"
 
 #: cmd.rc:103
-#, fuzzy
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr "MD hakkında yardım\n"
+msgstr "MD <isim> MKDIR komutunun kısa sürümüdür. Bir alt dizin oluşturur.\n"
 
 #: cmd.rc:104
-#, fuzzy
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr "MKDIR hakkında yardım\n"
+msgstr "MKDIR <isim> bir alt dizin oluşturur.\n"
 
 #: cmd.rc:111
 msgid ""
@@ -9386,20 +9391,18 @@ msgstr ""
 "PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:128
-#, fuzzy
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
 "It is mainly useful in batch files to allow the user to read the output\n"
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE 'Devam etmek için bir tuşa basın' iletisini ekranda gösterip\n"
-"kullanıcının bir tuşa basmasını bekler. Çoğunlukla toplu işlem\n"
-"dosyalarında kullanıcıya önceki komutun çıktısını ekrandan çıkmadan\n"
-"önce okutmak için kullanılır.\n"
+"PAUSE Ekranda kullanıcının bir tuşa basmasını bekleyen bir mesaj gösterir.\n"
+"\n"
+"Çoğunlukla toplu işlem dosyalarında kullanıcıya önceki komutun çıktısını\n"
+"ekrandan çıkmadan önce okumak için kullanılır.\n"
 
 #: cmd.rc:149
-#, fuzzy
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9698,11 +9701,11 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 "CMD dahili komutları:\n"
-"ASSOC\t\tShow or modify file extension associations\n"
+"ASSOC\t\tDosya uzantı ilişkilerini göster veya düzenle\n"
 "ATTRIB\t\tDOS dosya özelliklerini göster veya değiştir\n"
 "CALL\t\tToplu işlem dosyası içerisinden bir diğerini çalıştır\n"
 "CD (CHDIR)\tGeçerli dizini değiştir\n"
-"CHOICE\t\tWait for an keypress from a selectable list\n"
+"CHOICE\t\tSeçilebilir listeden bir tuşa basılmasını bekle\n"
 "CLS\t\tKonsol ekranını temizle\n"
 "COPY\t\tDosya kopyala\n"
 "CTTY\t\tGiriş/çıkış aygıtını değiştir\n"
@@ -9710,28 +9713,30 @@ msgstr ""
 "DEL (ERASE)\tBir veya daha fazla dosyayı sil\n"
 "DIR\t\tDizin içeriğini listele\n"
 "ECHO\t\tMetni doğrudan konsol çıkışına kopyala\n"
-"ENDLOCAL\tEnd localization of environment changes in a batch file\n"
-"FTYPE\t\tShow or modify open commands associated with file types\n"
+"ENDLOCAL\tOrtam değişiklikleri yerelleştirmesini, bir toplu dosyada "
+"sonlandır\n"
+"FTYPE\t\tDosya türleri ile ilişkilendirilmiş aç komutlarını göster veya "
+"düzenle\n"
 "HELP\t\tBir konu üzerinde özet yardım göster\n"
 "MD (MKDIR)\tAlt dizin oluştur\n"
 "MORE\t\tDisplay output in pages\n"
 "MOVE\t\tBir veya daha fazla dosyayı ya da dizin ağacını taşı\n"
 "PATH\t\tArama yolunu düzenle veya göster\n"
-"PAUSE\t\tSuspend execution of a batch file\n"
-"POPD\t\tRestores the directory to the last one saved with PUSHD\n"
+"PAUSE\t\tBir toplu iş dosyasının çalışmasını durdur\n"
+"POPD\t\tPUSHD ile kaydedilen son dizini onar\n"
 "PROMPT\t\tKomut istemini değiştir\n"
-"PUSHD\t\tChanges to a new directory, saving the current one\n"
+"PUSHD\t\tYeni dizine geçiş yap, şimdikini kaydet\n"
 "REN (RENAME)\tDosyayı yeniden adlandır\n"
 "RD (RMDIR)\tAlt dizini sil\n"
 "SET\t\tÇevre değişkenlerini düzenle veya göster\n"
-"SETLOCAL\tStart localization of environment changes in a batch file\n"
-"START\t\tStart a program, or open a document in the associated program\n"
+"SETLOCAL\tOrtam değişiklikleri yerelleştirmesini bir toply dosyada başlat\n"
+"START\t\tİlişkili programda bir program başlar veya bir doküman aç\n"
 "TIME\t\tGeçerli sistem saatini düzenle veya göster\n"
 "TITLE\t\tCMD oturumu için pencere başlığını belirle\n"
 "TYPE\t\tMetin dosyasının içeriğini göster\n"
 "VER\t\tGeçerli CMD sürümünü göster\n"
 "VOL\t\tDisk aygıtının bölüm etiketini göster\n"
-"XCOPY\t\tCopy source files or directory trees to a destination\n"
+"XCOPY\t\tKaynak dosyaları veya dizin ağaçlarını bir hedefe kopyala\n"
 "EXIT\t\tCMD'yi kapat\n"
 "\n"
 "Yukarıdaki komutlar hakkında daha fazla bilgi için HELP <komut> girin.\n"
@@ -9963,10 +9968,8 @@ msgid "Connection-specific DNS suffix"
 msgstr ""
 
 #: ipconfig.rc:33
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv4 address"
-msgstr "İP adresi"
+msgstr "IPv4 adresi"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -10009,10 +10012,8 @@ msgid "Default gateway"
 msgstr ""
 
 #: ipconfig.rc:47
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv6 address"
-msgstr "İP adresi"
+msgstr "IPv6 adresi"
 
 #: net.rc:27
 msgid ""
@@ -10124,38 +10125,28 @@ msgid "The following services are running:\n"
 msgstr ""
 
 #: netstat.rc:27
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Connections"
-msgstr "LAN Bağlantısı"
+msgstr "Etkin Bağlantılar"
 
 #: netstat.rc:28
 msgid "Proto"
 msgstr ""
 
 #: netstat.rc:29
-#, fuzzy
-#| msgid "Email Address"
 msgid "Local Address"
-msgstr "E-posta Adresi"
+msgstr "Yerel Adres"
 
 #: netstat.rc:30
-#, fuzzy
-#| msgid "Street Address"
 msgid "Foreign Address"
-msgstr "Sokak Adresi"
+msgstr "Yabancı Adres"
 
 #: netstat.rc:31
-#, fuzzy
-#| msgid "Status"
 msgid "State"
-msgstr "Durum"
+msgstr "State"
 
 #: netstat.rc:32
-#, fuzzy
-#| msgid "Internet Settings"
 msgid "Interface Statistics"
-msgstr "İnternet Ayarları"
+msgstr "Arayüz Ayarları"
 
 #: netstat.rc:33
 msgid "Sent"
@@ -10166,10 +10157,8 @@ msgid "Received"
 msgstr ""
 
 #: netstat.rc:35
-#, fuzzy
-#| msgid "%d bytes"
 msgid "Bytes"
-msgstr "%d bayt"
+msgstr "Bayt"
 
 #: netstat.rc:36
 msgid "Unicast packets"
@@ -10184,16 +10173,12 @@ msgid "Discards"
 msgstr ""
 
 #: netstat.rc:39
-#, fuzzy
-#| msgid "Error"
 msgid "Errors"
-msgstr "Hata"
+msgstr "Hatalar"
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown protocols"
-msgstr "Bilinmeyen hata"
+msgstr "Bilinmeyen protokoller"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
@@ -10201,9 +10186,9 @@ msgstr ""
 
 #: netstat.rc:42
 #, fuzzy
-#| msgid "LAN Connection"
+#| msgid "Active Connections"
 msgid "Active Opens"
-msgstr "LAN Bağlantısı"
+msgstr "Etkin Bağlantılar"
 
 #: netstat.rc:43
 msgid "Passive Opens"
@@ -10211,21 +10196,21 @@ msgstr ""
 
 #: netstat.rc:44
 #, fuzzy
-#| msgid "LAN Connection"
+#| msgid "Active Connections"
 msgid "Failed Connection Attempts"
-msgstr "LAN Bağlantısı"
+msgstr "Etkin Bağlantılar"
 
 #: netstat.rc:45
 #, fuzzy
-#| msgid "LAN Connection"
+#| msgid "Active Connections"
 msgid "Reset Connections"
-msgstr "LAN Bağlantısı"
+msgstr "Etkin Bağlantılar"
 
 #: netstat.rc:46
 #, fuzzy
-#| msgid "LAN Connection"
+#| msgid "Active Connections"
 msgid "Current Connections"
-msgstr "LAN Bağlantısı"
+msgstr "Etkin Bağlantılar"
 
 #: netstat.rc:47
 msgid "Segments Received"
@@ -10322,7 +10307,7 @@ msgstr "S&aat/Tarih\tF5"
 
 #: notepad.rc:49
 msgid "&Wrap long lines"
-msgstr "&Uzun satırları kırp"
+msgstr "&Uzun satırları kaydır"
 
 #: notepad.rc:53
 msgid "&Search...\tCtrl+F"
@@ -11426,14 +11411,12 @@ msgid "Can't query key '%s'"
 msgstr "'%s' anahtarı sorgulanamadı"
 
 #: regedit.rc:149
-#, fuzzy
 msgid "Adds a new multi-string value"
-msgstr "Yeni bir dize değeri ekler"
+msgstr "Yeni bir çoklu dize değeri ekler"
 
 #: regedit.rc:171
-#, fuzzy
 msgid "Exports selected branch of the registry to a text file"
-msgstr "Sistem kaydının bir kısmını veya tümünü bir metin dosyasına aktarır"
+msgstr "Sistem kaydının seçilen kısmını dosyasına aktarır"
 
 #: start.rc:52
 msgid ""
@@ -11555,15 +11538,15 @@ msgstr "&Sütunları Seç..."
 
 #: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
-msgstr "&MİB Geçmişi"
+msgstr "&CPU Geçmişi"
 
 #: taskmgr.rc:71 taskmgr.rc:259
 msgid "&One Graph, All CPUs"
-msgstr "&Bir Grafikte Tüm MİB'ler"
+msgstr "&Bir Grafikte Tüm CPU'ler"
 
 #: taskmgr.rc:73 taskmgr.rc:260
 msgid "One Graph &Per CPU"
-msgstr "&Her MİB için Ayrı Grafik"
+msgstr "&Her CPU için Ayrı Grafik"
 
 #: taskmgr.rc:76 taskmgr.rc:261
 msgid "&Show Kernel Times"
@@ -11626,12 +11609,10 @@ msgid "&Realtime"
 msgstr "&Gerçek Zamanlı"
 
 #: taskmgr.rc:160
-#, fuzzy
 msgid "&Above Normal"
 msgstr "Normalin &Üzerinde"
 
 #: taskmgr.rc:164
-#, fuzzy
 msgid "&Below Normal"
 msgstr "Normalin &Altında"
 
@@ -11705,7 +11686,7 @@ msgstr "Zirve"
 
 #: taskmgr.rc:398
 msgid "System Cache"
-msgstr "Sistem Kaşesi"
+msgstr "Sistem Önbelleği"
 
 #: taskmgr.rc:406
 msgid "Paged"
@@ -12077,11 +12058,11 @@ msgstr "Başarım grafiklerinde çekirdek sürelerini gösterir"
 
 #: taskmgr.rc:219
 msgid "A single history graph shows total CPU usage"
-msgstr "Tek bir geçmiş grafiği toplam MİB kullanımını gösterir"
+msgstr "Tek bir geçmiş grafiği toplam MİB (CPU) kullanımını gösterir"
 
 #: taskmgr.rc:220
 msgid "Each CPU has its own history graph"
-msgstr "Her MİB'nin kendi geçmiş grafiği olur"
+msgstr "Her MİB'nin (CPU) kendi geçmiş grafiği olur"
 
 #: taskmgr.rc:222
 msgid "Brings a task to the foreground, switch focus to that task"
@@ -12267,7 +12248,7 @@ msgstr ""
 
 #: taskmgr.rc:316
 msgid "Invalid Option"
-msgstr "eçersiz Seçenek"
+msgstr "Geçersiz Seçenek"
 
 #: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
@@ -12304,7 +12285,7 @@ msgstr ""
 
 #: view.rc:33
 msgid "&Pan"
-msgstr "&Tava"
+msgstr "&Gezinme"
 
 #: view.rc:35
 msgid "&Scale to Window"
@@ -12360,11 +12341,11 @@ msgstr ""
 
 #: winecfg.rc:135
 msgid "&Owner:"
-msgstr "Owner:"
+msgstr "Sahip:"
 
 #: winecfg.rc:137
 msgid "Organi&zation:"
-msgstr "Organization:"
+msgstr "Şirket:"
 
 #: winecfg.rc:145
 msgid "Application settings"
@@ -12574,7 +12555,7 @@ msgstr "&Öğe:"
 
 #: winecfg.rc:284
 msgid "C&olor:"
-msgstr "Color:"
+msgstr "Re&nk:"
 
 #: winecfg.rc:290
 msgid "Folders"
@@ -12582,7 +12563,7 @@ msgstr "Klasörler"
 
 #: winecfg.rc:293
 msgid "&Link to:"
-msgstr "Hedef dizin:"
+msgstr "Hedef d&izin:"
 
 #: winecfg.rc:31
 msgid "Libraries"
@@ -12709,7 +12690,6 @@ msgid "Select an executable file"
 msgstr "Çalıştırılabilir bir dosya seçin"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect"
 msgstr "Otomatik &Algıla"
 
@@ -12730,7 +12710,6 @@ msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:71
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -12895,11 +12874,11 @@ msgstr ""
 
 #: winecfg.rc:120
 msgid "Menu Highlight"
-msgstr ""
+msgstr "Menü Belirtmesi"
 
 #: winecfg.rc:121
 msgid "Menu Bar"
-msgstr ""
+msgstr "Menü çubuğu"
 
 #: wineconsole.rc:60
 msgid "Cursor size"
@@ -12931,7 +12910,7 @@ msgstr "&Kontrol"
 
 #: wineconsole.rc:68
 msgid "S&hift"
-msgstr "S&hift"
+msgstr "&Kaydır"
 
 #: wineconsole.rc:69
 msgid "Quick edit"
@@ -12939,7 +12918,7 @@ msgstr "Hızlı düzenle"
 
 #: wineconsole.rc:70
 msgid "&enable"
-msgstr ""
+msgstr "&etkinleştir"
 
 #: wineconsole.rc:72
 msgid "Command history"
@@ -13063,15 +13042,15 @@ msgstr ""
 
 #: wineconsole.rc:42
 msgid "wineconsole: Invalid backend\n"
-msgstr ""
+msgstr "wineconsole: Geçersiz arka uç\n"
 
 #: wineconsole.rc:43
 msgid "wineconsole: Unrecognized command line option\n"
-msgstr ""
+msgstr "wineconsole: Tanınmayan komut satırı seçeneği\n"
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
-msgstr ""
+msgstr "Wine konsolu içerisinde bir program başlatır\n"
 
 #: wineconsole.rc:45
 msgid ""
@@ -13141,26 +13120,30 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"Eğer bu problem Windows altında yoksa ve henüz rapor edilmemişse, \"Farklı "
+"Kaydet\" düğmesi kullanarak ayrıntılı bilgiyi bir dosyaya kaydedebilir; "
+"ardından bu dosyayı ekleyerek bir <a href=\"http://wiki.winehq.org/Bugs"
+"\">dosya hatası raporu</a> gönderebilirsiniz."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
-msgstr ""
+msgstr "Wine program hatası"
 
 #: winedbg.rc:36
 msgid "Internal errors - invalid parameters received"
-msgstr ""
+msgstr "Dahili hatalar - geçersiz parametreler alındı"
 
 #: winedbg.rc:37
 msgid "(unidentified)"
-msgstr ""
+msgstr "(tanımsız)"
 
 #: winedbg.rc:40
 msgid "Saving failed"
-msgstr ""
+msgstr "Kayıt başarısız"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr ""
+msgstr "Ayrıntılı bilgi yükleniyor, lütfen bekleyin..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
@@ -13312,7 +13295,7 @@ msgstr "&Sistem"
 
 #: winefile.rc:177
 msgid "&Compressed"
-msgstr "S&ıkışık"
+msgstr "S&ıkıştırılmış"
 
 #: winefile.rc:178
 msgid "Version information"
@@ -13321,7 +13304,7 @@ msgstr "Sürüm Bilgisi"
 #: winefile.rc:194
 msgctxt "accelerator Fullscreen"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: winefile.rc:87
 msgid "Applying font settings"
@@ -13365,10 +13348,9 @@ msgstr "DTarihi"
 
 #: winefile.rc:109
 msgid "Index/Inode"
-msgstr "İndeks/Düğüm"
+msgstr "İndis/Düğüm"
 
 #: winefile.rc:114
-#, fuzzy
 msgid "%1 of %2 free"
 msgstr "%s / %s boş"
 
@@ -13397,7 +13379,7 @@ msgstr "&Yeni\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "Soru &İşaretleri"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -13417,7 +13399,7 @@ msgstr "&Özel..."
 
 #: winemine.rc:44
 msgid "&Fastest Times"
-msgstr ""
+msgstr "&En hızlı zamanlar"
 
 #: winemine.rc:49
 msgid "&About WineMine"
@@ -13429,7 +13411,7 @@ msgstr "En Kısa Süreler"
 
 #: winemine.rc:58
 msgid "Fastest times"
-msgstr ""
+msgstr "En hızlı zamanlar"
 
 #: winemine.rc:59
 msgid "Beginner"
@@ -13485,7 +13467,7 @@ msgstr "&Yazıcı ayarları..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."
-msgstr ""
+msgstr "&Dipnot koy..."
 
 #: winhlp32.rc:41
 msgid "&Bookmark"
@@ -13501,19 +13483,19 @@ msgstr "Yazı Tipleri"
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
-msgstr ""
+msgstr "Küçük"
 
 #: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
-msgstr ""
+msgstr "Normal"
 
 #: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
-msgstr ""
+msgstr "Geniş"
 
 #: winhlp32.rc:54
 msgid "&Help on help\tF1"
-msgstr ""
+msgstr "&Yardım üzerine yardım\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
@@ -13525,7 +13507,7 @@ msgstr "&Wine Yardım Hakkında"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
-msgstr ""
+msgstr "Not..."
 
 #: winhlp32.rc:65
 msgid "Copy"
@@ -13549,7 +13531,7 @@ msgstr "'%s' yardım dosyası açılırken hata"
 
 #: winhlp32.rc:85
 msgid "Summary"
-msgstr ""
+msgstr "Özet"
 
 #: winhlp32.rc:84
 msgid "&Index"
@@ -13561,11 +13543,11 @@ msgstr "Yardım dosyaları (*.hlp)"
 
 #: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr ""
+msgstr "'%s' bulunamadı. Bu dosyayı kendiniz bulmak ister misiniz?"
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr ""
+msgstr "Zengin metin uygulaması bulunamadı... Çıkılıyor"
 
 #: winhlp32.rc:91
 msgid "Help topics: "
@@ -13573,19 +13555,15 @@ msgstr "Yardım konuları: "
 
 #: wmic.rc:25
 msgid "Error: Command line not supported\n"
-msgstr ""
+msgstr "Hata: Komut satırı desteklenmiyor\n"
 
 #: wmic.rc:26
-#, fuzzy
-#| msgid "Entry not found.\n"
 msgid "Error: Alias not found\n"
-msgstr "Girdi bulunamadı.\n"
+msgstr "Hata: Sahte isim bulunamadı.\n"
 
 #: wmic.rc:27
-#, fuzzy
-#| msgid "Invalid entry.\n"
 msgid "Error: Invalid query\n"
-msgstr "Geçersiz giriş.\n"
+msgstr "Hata: Geçersiz giriş.\n"
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
@@ -13605,7 +13583,7 @@ msgstr "&Tümünü seç\tCtrl+A"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"
-msgstr ""
+msgstr "Sonrakini &bul\tF3"
 
 #: wordpad.rc:54
 msgid "Read-&only"
@@ -13641,15 +13619,15 @@ msgstr "&Metni al"
 
 #: wordpad.rc:69 wordpad.rc:262
 msgid "&Format Bar"
-msgstr ""
+msgstr "&Biçim Kutusu"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
-msgstr ""
+msgstr "&Cetvel"
 
 #: wordpad.rc:75
 msgid "&Insert"
-msgstr ""
+msgstr "&Ekle"
 
 #: wordpad.rc:77
 msgid "&Date and time..."
@@ -13661,15 +13639,15 @@ msgstr "&Biçim"
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
-msgstr ""
+msgstr "&Numaralandırma noktaları"
 
 #: wordpad.rc:83 wordpad.rc:106
 msgid "&Paragraph..."
-msgstr ""
+msgstr "&Paragraf..."
 
 #: wordpad.rc:84
 msgid "&Tabs..."
-msgstr ""
+msgstr "&Sekmeler..."
 
 #: wordpad.rc:85
 msgid "Backgroun&d"
@@ -13680,9 +13658,8 @@ msgid "&System\tCtrl+1"
 msgstr "S&istem\tCtrl+1"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
-msgstr "&Sarımtırak\tCtrl+2"
+msgstr "&Soluk sarı\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
@@ -13710,31 +13687,31 @@ msgstr "Paragraf biçimi"
 
 #: wordpad.rc:224
 msgid "Indentation"
-msgstr ""
+msgstr "Girintileme"
 
 #: wordpad.rc:225 wordpad.rc:148
 msgid "Left"
-msgstr ""
+msgstr "Sol"
 
 #: wordpad.rc:227 wordpad.rc:149
 msgid "Right"
-msgstr ""
+msgstr "Sağ"
 
 #: wordpad.rc:229
 msgid "First line"
-msgstr ""
+msgstr "İlk Satır"
 
 #: wordpad.rc:231
 msgid "Alignment"
-msgstr ""
+msgstr "Hizalama"
 
 #: wordpad.rc:239
 msgid "Tabs"
-msgstr ""
+msgstr "Sekmeler"
 
 #: wordpad.rc:242
 msgid "Tab stops"
-msgstr ""
+msgstr "Sekme durmaları"
 
 #: wordpad.rc:248
 msgid "Remove al&l"
@@ -13742,19 +13719,19 @@ msgstr "Tümünü &kaldır"
 
 #: wordpad.rc:256
 msgid "Line wrapping"
-msgstr ""
+msgstr "Satır kaydırma"
 
 #: wordpad.rc:257
 msgid "&No line wrapping"
-msgstr ""
+msgstr "&Satır kaydırma yok"
 
 #: wordpad.rc:258
 msgid "Wrap text by the &window border"
-msgstr ""
+msgstr "Metni %pencere sınırına göre kaydır"
 
 #: wordpad.rc:259
 msgid "Wrap text by the &margin"
-msgstr ""
+msgstr "Metni &boşluğa göre kaydır"
 
 #: wordpad.rc:260
 msgid "Toolbars"
@@ -13763,37 +13740,37 @@ msgstr "Araç Çubuğu"
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
 msgid "L"
-msgstr ""
+msgstr "L"
 
 #: wordpad.rc:274
 msgctxt "accelerator Align Center"
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: wordpad.rc:275
 msgctxt "accelerator Align Right"
 msgid "R"
-msgstr ""
+msgstr "R"
 
 #: wordpad.rc:282
 msgctxt "accelerator Redo"
 msgid "Y"
-msgstr ""
+msgstr "Y"
 
 #: wordpad.rc:283
 msgctxt "accelerator Bold"
 msgid "B"
-msgstr ""
+msgstr "K"
 
 #: wordpad.rc:284
 msgctxt "accelerator Italic"
 msgid "I"
-msgstr ""
+msgstr "T"
 
 #: wordpad.rc:285
 msgctxt "accelerator Underline"
 msgid "U"
-msgstr ""
+msgstr "U"
 
 #: wordpad.rc:136
 msgid "All documents (*.*)"
@@ -13805,15 +13782,15 @@ msgstr "Metin belgeleri (*.txt)"
 
 #: wordpad.rc:138
 msgid "Unicode text document (*.txt)"
-msgstr ""
+msgstr "Unicode metin belgesi (*.txt)"
 
 #: wordpad.rc:139
 msgid "Rich text format (*.rtf)"
-msgstr ""
+msgstr "Zengin metin belgesi (*.rtf)"
 
 #: wordpad.rc:140
 msgid "Rich text document"
-msgstr ""
+msgstr "Zengin metin belgesi"
 
 #: wordpad.rc:141
 msgid "Text document"
@@ -13821,11 +13798,11 @@ msgstr "Metin belgesi"
 
 #: wordpad.rc:142
 msgid "Unicode text document"
-msgstr ""
+msgstr "Unicode metin belgesi"
 
 #: wordpad.rc:143
 msgid "Printer files (*.prn)"
-msgstr "Yazıcı dosyaları (*.prn"
+msgstr "Yazıcı dosyaları (*.prn)"
 
 #: wordpad.rc:150
 msgid "Center"
@@ -13837,7 +13814,7 @@ msgstr "Metin"
 
 #: wordpad.rc:157
 msgid "Rich text"
-msgstr ""
+msgstr "Zengin metin"
 
 #: wordpad.rc:163
 msgid "Next page"
@@ -13888,7 +13865,7 @@ msgstr "inç"
 #: wordpad.rc:175
 msgctxt "unit: point"
 msgid "pt"
-msgstr ""
+msgstr "pt"
 
 #: wordpad.rc:180
 msgid "Document"
@@ -13896,77 +13873,79 @@ msgstr "Belge"
 
 #: wordpad.rc:181
 msgid "Save changes to '%s'?"
-msgstr ""
+msgstr "'%s' değişiklikleri kaydedilsin mi?"
 
 #: wordpad.rc:182
 msgid "Finished searching the document."
-msgstr ""
+msgstr "Dokümanı arama tamamlandı."
 
 #: wordpad.rc:183
 msgid "Failed to load the RichEdit library."
-msgstr ""
+msgstr "RichEdit kütüphanesi yüklenemedi."
 
 #: wordpad.rc:184
 msgid ""
 "You have chosen to save in plain text format, which will cause all "
 "formatting to be lost. Are you sure that you wish to do this?"
 msgstr ""
+"Tüm biçimlendirmenin kaybedileceği sade metin biçiminde kaydetmeyi seçtiniz. "
+"Bunu yapmak istediğinizden emin misiniz?"
 
 #: wordpad.rc:187
 msgid "Invalid number format."
-msgstr ""
+msgstr "Geçersiz sayı biçimi"
 
 #: wordpad.rc:188
 msgid "OLE storage documents are not supported."
-msgstr ""
+msgstr "OLE kayıt belgeleri desteklenmiyor."
 
 #: wordpad.rc:189
 msgid "Could not save the file."
-msgstr ""
+msgstr "Dosya kaydedilemedi."
 
 #: wordpad.rc:190
 msgid "You do not have access to save the file."
-msgstr ""
+msgstr "Dosyayı kaydetme erişiminiz yok."
 
 #: wordpad.rc:191
 msgid "Could not open the file."
-msgstr ""
+msgstr "Dosya açıklamadı."
 
 #: wordpad.rc:192
 msgid "You do not have access to open the file."
-msgstr ""
+msgstr "Dosyayı açma erişiminiz yok."
 
 #: wordpad.rc:193
 msgid "Printing not implemented."
-msgstr ""
+msgstr "Yazdırma kullanılamıyor."
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
-msgstr ""
+msgstr "32'den fazla sekme duraklaması eklenemez."
 
 #: write.rc:27
 msgid "Starting Wordpad failed"
-msgstr ""
+msgstr "Wordpad başlatılamadı"
 
 #: xcopy.rc:27
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr ""
+msgstr "Hatalı parametre sayısı - Yardım için xcopy /? kullanın\n"
 
 #: xcopy.rc:28
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr ""
+msgstr "Geçersiz parametre '%1' - Yardım için xcopy /? kullanın\n"
 
 #: xcopy.rc:29
 msgid "Press <Enter> to begin copying\n"
-msgstr ""
+msgstr "Kopyalamaya başlamak için <Enter>'a basın\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"
-msgstr ""
+msgstr "%1!d! kopyalanacak\n"
 
 #: xcopy.rc:31
 msgid "%1!d! file(s) copied\n"
-msgstr ""
+msgstr "%1!d! dosya kopyalandı\n"
 
 #: xcopy.rc:34
 msgid ""
@@ -13974,6 +13953,9 @@ msgid ""
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
+"Hedefteki '%1' bir dosya mı\n"
+"yoksa dizin mi?\n"
+"(F - Dosya, D - Dizin)\n"
 
 #: xcopy.rc:35
 msgid "%1? (Yes|No)\n"
@@ -13981,25 +13963,25 @@ msgstr "%1? (Evet|Hayır)\n"
 
 #: xcopy.rc:36
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr ""
+msgstr "%1 üzerine yazılsın mı? (Evet|Hayır|Tümü)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr ""
+msgstr "'%1', '%2' konumuna kopyalanırken r/c %3!d! hatası oluştu\n"
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%1'\n"
-msgstr ""
+msgstr "'%1' okunurken hata\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
 msgid "F"
-msgstr ""
+msgstr "F"
 
 #: xcopy.rc:44
 msgctxt "Directory key"
 msgid "D"
-msgstr ""
+msgstr "D"
 
 #: xcopy.rc:77
 msgid ""
@@ -14036,3 +14018,35 @@ msgid ""
 "\t\tthan source.\n"
 "\n"
 msgstr ""
+"XCOPY - Kaynak dosya ve klasörlerini hedefe kopyalar.\n"
+"\n"
+"Sözdizimi:\n"
+"XCOPY kaynak [hedef] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Nerede:\n"
+"\n"
+"[/I]  Hedef dizini bulunmuyorsa oluşturup iki veya daha fazla dosyaları\n"
+"\tkopyalar.\n"
+"[/S]  Dizin ve alt dizinlerini kopyala.\n"
+"[/E]  Boş olanlar hariç dizin ve alt dizinleri kopyala.\n"
+"[/Q]  Kopyalama sırasında isimleri gösterme, sessiz yap.\n"
+"[/F]  Kopyalama sırasında tüm kaynak ve hedef isimlerini göster.\n"
+"[/L]  İşlemi simüle et, kopyalanacak isimleri göster.\n"
+"[/W]  Kopyalama işlemi sırasında komut sorar.\n"
+"[/T]  Boş dizin yapısını oluşturur ancak dosyaları kopyalamaz.\n"
+"[/Y]  Dosyalar üzerine yazılsın mı sorgusunu atla.\n"
+"[/-Y] Dosyalar yazılırken onay alır.\n"
+"[/P]  Kopyalamadan önce her kaynak dosya için onay alır.\n"
+"[/N]  Kısa isimler kullanarak kopyala.\n"
+"[/U]  Sadece hedefte bulunan dosyaları kopyala.\n"
+"[/R]  Tüm salt okunur dosyaların üzerine yaz.\n"
+"[/H]  Kopyalarken gizli ve sistem dosyalarını da dahil et.\n"
+"[/C]  Kopyalama sırasında bir hata oluşursa devam et.\n"
+"[/A]  Sadece arşiv nitelikli dosyaları kopyala.\n"
+"[/M]  Sadece arşiv nitelikli dosyaları kopyala, arşiv niteliklerini\n"
+"\tkaldır.\n"
+"[/D | /D:a-g-y] Belirtilen tarihten sonra düzenlenmiş yeni dosya\n"
+"\t\tve klasörleri kopyala. Tarih belirtilmemişse, sadece hedef\n"
+"\t\tkaynaktan yeniyse kopyala.\n"
+"\n"
