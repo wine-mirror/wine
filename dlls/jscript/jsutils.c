@@ -903,8 +903,10 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
             break;
         }
 
-        V_BSTR(dst) = SysAllocStringLen(str->str, jsstr_length(str));
-        if(!V_BSTR(dst))
+        V_BSTR(dst) = SysAllocStringLen(NULL, jsstr_length(str));
+        if(V_BSTR(dst))
+            jsstr_flush(str, V_BSTR(dst));
+        else
             hres = E_OUTOFMEMORY;
         break;
     }
