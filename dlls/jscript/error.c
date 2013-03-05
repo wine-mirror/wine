@@ -85,10 +85,10 @@ static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
         if(name_len && msg_len) {
             ret = jsstr_alloc_buf(name_len + msg_len + 2);
             if(ret) {
-                memcpy(ret->str, name->str, name_len*sizeof(WCHAR));
+                jsstr_flush(name, ret->str);
                 ret->str[name_len] = ':';
                 ret->str[name_len+1] = ' ';
-                memcpy(ret->str+name_len+2, msg->str, msg_len*sizeof(WCHAR));
+                jsstr_flush(msg, ret->str+name_len+2);
             }
         }else if(name_len) {
             ret = name;
