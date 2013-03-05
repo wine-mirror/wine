@@ -331,8 +331,8 @@ static HRESULT String_charCodeAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 static HRESULT String_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
+    unsigned len = 0, i, str_cnt;
     jsstr_t **strs, *ret = NULL;
-    DWORD len = 0, i, l, str_cnt;
     WCHAR *ptr;
     HRESULT hres;
 
@@ -364,11 +364,8 @@ static HRESULT String_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         ret = jsstr_alloc_buf(len);
         if(ret) {
             ptr = ret->str;
-            for(i=0; i < str_cnt; i++) {
-                l = jsstr_length(strs[i]);
-                memcpy(ptr, strs[i]->str, l*sizeof(WCHAR));
-                ptr += l;
-            }
+            for(i=0; i < str_cnt; i++)
+                ptr += jsstr_flush(strs[i], ptr);
         }else {
             hres = E_OUTOFMEMORY;
         }
