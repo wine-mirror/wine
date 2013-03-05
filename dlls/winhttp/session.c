@@ -878,7 +878,7 @@ static const object_vtbl_t request_vtbl =
 static BOOL store_accept_types( request_t *request, const WCHAR **accept_types )
 {
     const WCHAR **types = accept_types;
-    int i;
+    DWORD i;
 
     if (!types) return TRUE;
     while (*types)
@@ -897,7 +897,7 @@ static BOOL store_accept_types( request_t *request, const WCHAR **accept_types )
     {
         if (!(request->accept_types[i] = strdupW( *types )))
         {
-            for (; i >= 0; i--) heap_free( request->accept_types[i] );
+            for ( ; i > 0; --i) heap_free( request->accept_types[i - 1] );
             heap_free( request->accept_types );
             request->accept_types = NULL;
             request->num_accept_types = 0;

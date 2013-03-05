@@ -568,7 +568,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, SIZE_T *
     SecBuffer bufs[4];
     SecBufferDesc buf_desc = {SECBUFFER_VERSION, sizeof(bufs)/sizeof(*bufs), bufs};
     SSIZE_T size, buf_len;
-    int i;
+    unsigned int i;
     SECURITY_STATUS res;
 
     assert(conn->extra_len < ssl_buf_size);

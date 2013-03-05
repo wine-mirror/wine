@@ -2935,9 +2935,9 @@ static HRESULT request_send( struct winhttp_request *request )
         VariantInit( &data );
         if (V_VT( &request->data ) == VT_BSTR)
         {
-            UINT i, cp = CP_ACP;
+            UINT cp = CP_ACP;
             const WCHAR *str = V_BSTR( &request->data );
-            int len = strlenW( str );
+            int i, len = strlenW( str );
 
             for (i = 0; i < len; i++)
             {
