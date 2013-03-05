@@ -152,13 +152,11 @@ static LONG WINAPI msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
 void msvcrt_init_signals(void)
 {
     SetConsoleCtrlHandler(msvcrt_console_handler, TRUE);
-    SetUnhandledExceptionFilter(msvcrt_exception_filter);
 }
 
 void msvcrt_free_signals(void)
 {
     SetConsoleCtrlHandler(msvcrt_console_handler, FALSE);
-    SetUnhandledExceptionFilter(NULL);
 }
 
 /*********************************************************************
