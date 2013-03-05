@@ -83,8 +83,8 @@ jsstr_t *jsstr_concat(jsstr_t *str1, jsstr_t *str2)
     if(!ret)
         return NULL;
 
-    memcpy(ret->str, str1->str, len1*sizeof(WCHAR));
-    memcpy(ret->str+len1, str2->str, len2*sizeof(WCHAR));
+    jsstr_flush(str1, ret->str);
+    jsstr_flush(str2, ret->str+len1);
     return ret;
 }
 
