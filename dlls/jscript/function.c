@@ -751,11 +751,10 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, function_cod
 static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *argv, IDispatch **ret)
 {
     WCHAR *str = NULL, *ptr;
-    DWORD len = 0, l;
+    unsigned len = 0, i = 0;
     bytecode_t *code;
     jsdisp_t *function;
     jsstr_t **params = NULL;
-    unsigned int i = 0;
     int j = 0;
     HRESULT hres = S_OK;
 
@@ -786,9 +785,7 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
             ptr = str + sizeof(function_anonymousW)/sizeof(WCHAR);
             if(argc > 1) {
                 while(1) {
-                    l = jsstr_length(params[j]);
-                    memcpy(ptr, params[j]->str, l*sizeof(WCHAR));
-                    ptr += l;
+                    ptr += jsstr_flush(params[j], ptr);
                     if(++j == argc-1)
                         break;
                     *ptr++ = ',';
@@ -797,11 +794,8 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
             }
             memcpy(ptr, function_beginW, sizeof(function_beginW));
             ptr += sizeof(function_beginW)/sizeof(WCHAR);
-            if(argc) {
-                l = jsstr_length(params[argc-1]);
-                memcpy(ptr, params[argc-1]->str, l*sizeof(WCHAR));
-                ptr += l;
-            }
+            if(argc)
+                ptr += jsstr_flush(params[argc-1], ptr);
             memcpy(ptr, function_endW, sizeof(function_endW));
 
             TRACE("%s\n", debugstr_w(str));
