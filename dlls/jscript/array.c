@@ -286,15 +286,10 @@ static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, cons
         if(SUCCEEDED(hres))
             ret = jsstr_alloc_buf(len);
         if(ret) {
-            unsigned tmplen;
-
             ptr = ret->str;
 
-            if(str_tab[0]) {
-                tmplen = jsstr_length(str_tab[0]);
-                memcpy(ptr, str_tab[0]->str, tmplen*sizeof(WCHAR));
-                ptr += tmplen;
-            }
+            if(str_tab[0])
+                ptr += jsstr_flush(str_tab[0], ptr);
 
             for(i=1; i < length; i++) {
                 if(seplen) {
@@ -302,13 +297,9 @@ static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, cons
                     ptr += seplen;
                 }
 
-                if(str_tab[i]) {
-                    tmplen = jsstr_length(str_tab[i]);
-                    memcpy(ptr, str_tab[i]->str, tmplen*sizeof(WCHAR));
-                    ptr += tmplen;
-                }
+                if(str_tab[i])
+                    ptr += jsstr_flush(str_tab[i], ptr);
             }
-            *ptr=0;
         }else {
             hres = E_OUTOFMEMORY;
         }
