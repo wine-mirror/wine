@@ -476,6 +476,7 @@ static inline DWORD64   cpu_register(CONTEXT* ctx, unsigned idx)
     default:
         fprintf(stderr, "got unexpected size: %u\n", (unsigned)cpu_register_map[idx].ctx_length);
         assert(0);
+        return 0;
     }
 }
 
@@ -2363,7 +2364,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
 {
     int                 sock;
     struct sockaddr_in  s_addrs;
-    unsigned int        s_len = sizeof(s_addrs);
+    socklen_t           s_len = sizeof(s_addrs);
     struct pollfd       pollfd;
     IMAGEHLP_MODULE64   imh_mod;
     BOOL                ret = FALSE;
