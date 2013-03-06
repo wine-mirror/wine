@@ -46,6 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 typedef struct _xmlparser
 {
     IXMLParser IXMLParser_iface;
+    IXMLNodeFactory *nodefactory;
     LONG ref;
 
     int flags;
@@ -95,6 +96,9 @@ static ULONG WINAPI xmlparser_Release(IXMLParser* iface)
     TRACE("(%p)->(%d)\n", This, ref);
     if ( ref == 0 )
     {
+        if(This->nodefactory)
+            IXMLNodeFactory_Release(This->nodefactory);
+
         heap_free( This );
     }
 
@@ -106,18 +110,33 @@ static HRESULT WINAPI xmlparser_SetFactory(IXMLParser *iface, IXMLNodeFactory *p
 {
     xmlparser *This = impl_from_IXMLParser( iface );
 
-    FIXME("(%p %p)\n", This, pNodeFactory);
+    TRACE("(%p %p)\n", This, pNodeFactory);
 
-    return E_NOTIMPL;
+    if(This->nodefactory)
+        IXMLNodeFactory_Release(This->nodefactory);
+
+    This->nodefactory = pNodeFactory;
+    if(This->nodefactory)
+        IXMLNodeFactory_AddRef(This->nodefactory);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlparser_GetFactory(IXMLParser *iface, IXMLNodeFactory **ppNodeFactory)
 {
     xmlparser *This = impl_from_IXMLParser( iface );
 
-    FIXME("(%p, %p)\n", This, ppNodeFactory);
+    TRACE("(%p, %p)\n", This, ppNodeFactory);
 
-    return E_NOTIMPL;
+    if(!ppNodeFactory)
+        return E_INVALIDARG;
+
+    *ppNodeFactory = This->nodefactory;
+
+    if(*ppNodeFactory)
+        IXMLNodeFactory_AddRef(*ppNodeFactory);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlparser_Abort(IXMLParser *iface, BSTR bstrErrorInfo)
@@ -415,6 +434,7 @@ HRESULT XMLParser_create(IUnknown* pUnkOuter, void**ppObj)
         return E_OUTOFMEMORY;
 
     This->IXMLParser_iface.lpVtbl = &xmlparser_vtbl;
+    This->nodefactory = NULL;
     This->flags = 0;
     This->ref = 1;
 

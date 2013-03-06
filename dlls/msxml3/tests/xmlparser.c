@@ -28,10 +28,81 @@
 #include "xmlparser.h"
 #include "wine/test.h"
 
+
+static HRESULT WINAPI nodefact_QueryInterface(IXMLNodeFactory *iface,
+        REFIID riid, void **ppvObject)
+{
+    *ppvObject = NULL;
+
+    if (IsEqualGUID(riid, &IID_IXMLNodeFactory) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+        *ppvObject = iface;
+    else
+        return E_NOINTERFACE;
+
+    return S_OK;
+}
+
+static ULONG WINAPI nodefact_AddRef(IXMLNodeFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI nodefact_Release(IXMLNodeFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI nodefact_NotifyEvent(IXMLNodeFactory *iface,
+        IXMLNodeSource *pSource, XML_NODEFACTORY_EVENT iEvt)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI nodefact_BeginChildren(IXMLNodeFactory *iface,
+        IXMLNodeSource *pSource, XML_NODE_INFO *pNodeInfo)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI nodefact_EndChildren(IXMLNodeFactory *iface,
+        IXMLNodeSource *pSource, BOOL fEmpty, XML_NODE_INFO *pNodeInfo)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI nodefact_Error(IXMLNodeFactory *iface,
+        IXMLNodeSource *pSource, HRESULT hrErrorCode, USHORT cNumRecs,
+        XML_NODE_INFO **ppNodeInfo)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI nodefact_CreateNode(IXMLNodeFactory *iface, IXMLNodeSource *pSource,
+        PVOID pNodeParent, USHORT cNumRecs, XML_NODE_INFO **ppNodeInfo)
+{
+    return E_NOTIMPL;
+}
+
+static const IXMLNodeFactoryVtbl nodefactoryVtbl =
+{
+    nodefact_QueryInterface,
+    nodefact_AddRef,
+    nodefact_Release,
+    nodefact_NotifyEvent,
+    nodefact_BeginChildren,
+    nodefact_EndChildren,
+    nodefact_Error,
+    nodefact_CreateNode
+};
+
+static IXMLNodeFactory thenodefactory = { &nodefactoryVtbl };
+
 static void create_test(void)
 {
     HRESULT hr;
     IXMLParser *parser;
+    IXMLNodeFactory *nodefactory;
     DWORD flags;
 
     hr = CoCreateInstance(&CLSID_XMLParser30, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLParser, (void**)&parser);
@@ -49,6 +120,23 @@ static void create_test(void)
 
     flags = IXMLParser_GetFlags(parser);
     ok(flags == XMLFLAG_SAX, "Expected 0 got %d\n", flags);
+
+    hr = IXMLParser_GetFactory(parser, NULL);
+    ok(hr == E_INVALIDARG, "Expected S_OK got 0x%08x\n", hr);
+
+    hr = IXMLParser_GetFactory(parser, &nodefactory);
+    ok(hr == S_OK, "Expected S_OK got 0x%08x\n", hr);
+    ok(nodefactory == NULL, "expected NULL\n");
+
+    hr = IXMLParser_SetFactory(parser, &thenodefactory);
+    ok(hr == S_OK, "Expected S_OK got 0x%08x\n", hr);
+
+    hr = IXMLParser_GetFactory(parser, &nodefactory);
+    ok(hr == S_OK, "Expected S_OK got 0x%08x\n", hr);
+    ok(nodefactory == &thenodefactory, "expected NULL\n");
+
+    hr = IXMLParser_SetFactory(parser, NULL);
+    ok(hr == S_OK, "Expected S_OK got 0x%08x\n", hr);
 
     hr = IXMLParser_SetFlags(parser, 0);
     ok(hr == S_OK, "Expected S_OK got 0x%08x\n", hr);
