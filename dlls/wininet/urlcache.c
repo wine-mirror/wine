@@ -1803,15 +1803,16 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
     if (pEntry->dwSignature != URL_SIGNATURE)
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
-        FIXME("Trying to retrieve entry of unknown format %s\n", debugstr_an((LPCSTR)&pEntry->dwSignature, sizeof(DWORD)));
+        FIXME("Trying to retrieve entry of unknown format %s\n",
+                debugstr_an((LPCSTR)&pEntry->dwSignature, sizeof(DWORD)));
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
     }
 
     pUrlEntry = (const URL_CACHEFILE_ENTRY *)pEntry;
     TRACE("Found URL: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetUrl));
-    if (pUrlEntry->dwOffsetHeaderInfo)
-        TRACE("Header info: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo));
+    TRACE("Header info: %s\n", debugstr_an((LPCSTR)pUrlEntry +
+                pUrlEntry->dwOffsetHeaderInfo, pUrlEntry->dwHeaderInfoSize));
 
     if((dwFlags & GET_INSTALLED_ENTRY) && !(pUrlEntry->CacheEntryType & INSTALLED_CACHE_ENTRY))
     {
@@ -1838,7 +1839,8 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
             SetLastError(error);
             return FALSE;
         }
-        TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName));
+        if(pUrlEntry->dwOffsetLocalName)
+            TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName));
     }
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
@@ -1944,14 +1946,16 @@ BOOL WINAPI GetUrlCacheEntryInfoExW(
     if (pEntry->dwSignature != URL_SIGNATURE)
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
-        FIXME("Trying to retrieve entry of unknown format %s\n", debugstr_an((LPCSTR)&pEntry->dwSignature, sizeof(DWORD)));
+        FIXME("Trying to retrieve entry of unknown format %s\n",
+                debugstr_an((LPCSTR)&pEntry->dwSignature, sizeof(DWORD)));
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
     }
 
     pUrlEntry = (const URL_CACHEFILE_ENTRY *)pEntry;
     TRACE("Found URL: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetUrl));
-    TRACE("Header info: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo));
+    TRACE("Header info: %s\n", debugstr_an((LPCSTR)pUrlEntry +
+                pUrlEntry->dwOffsetHeaderInfo, pUrlEntry->dwHeaderInfoSize));
 
     if (lpdwCacheEntryInfoBufSize)
     {
@@ -1971,7 +1975,8 @@ BOOL WINAPI GetUrlCacheEntryInfoExW(
             SetLastError(error);
             return FALSE;
         }
-        TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName));
+        if(pUrlEntry->dwOffsetLocalName)
+            TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName));
     }
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
@@ -2169,8 +2174,9 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
         return FALSE;
     }
 
-    TRACE("Found URL: %s\n", (LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl);
-    TRACE("Header info: %s\n", (LPBYTE)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo);
+    TRACE("Found URL: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetUrl));
+    TRACE("Header info: %s\n", debugstr_an((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo,
+                pUrlEntry->dwHeaderInfoSize));
 
     error = URLCache_CopyEntry(pContainer, pHeader, lpCacheEntryInfo,
                                lpdwCacheEntryInfoBufferSize, pUrlEntry,
@@ -2266,8 +2272,9 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
         return FALSE;
     }
 
-    TRACE("Found URL: %s\n", (LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl);
-    TRACE("Header info: %s\n", (LPBYTE)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo);
+    TRACE("Found URL: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetUrl));
+    TRACE("Header info: %s\n", debugstr_an((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo,
+            pUrlEntry->dwHeaderInfoSize));
 
     error = URLCache_CopyEntry(
         pContainer,
@@ -2593,7 +2600,7 @@ BOOL WINAPI FreeUrlCacheSpaceW(LPCWSTR cache_path, DWORD size, DWORD filter)
                 continue;
 
             if(urlcache_rate_entry(url_entry, &cur_time) <= delete_factor) {
-                TRACE("deleting file: %s\n", (char*)url_entry+url_entry->dwOffsetLocalName);
+                TRACE("deleting file: %s\n", debugstr_a((char*)url_entry+url_entry->dwOffsetLocalName));
                 DeleteUrlCacheEntryInternal(container, header, hash_entry);
 
                 if(header->CacheUsage.QuadPart+header->ExemptUsage.QuadPart <= desired_size)
@@ -3978,7 +3985,8 @@ static BOOL FindNextUrlCacheEntryInternal(
                 TRACE("Found URL: %s\n",
                       debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetUrl));
                 TRACE("Header info: %s\n",
-                      debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo));
+                        debugstr_an((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo,
+                            pUrlEntry->dwHeaderInfoSize));
 
                 error = URLCache_CopyEntry(
                     pContainer,
@@ -3993,8 +4001,8 @@ static BOOL FindNextUrlCacheEntryInternal(
                     SetLastError(error);
                     return FALSE;
                 }
-                TRACE("Local File Name: %s\n",
-                      debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName));
+                if(pUrlEntry->dwOffsetLocalName)
+                    TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName));
 
                 /* increment the current index so that next time the function
                  * is called the next entry is returned */
