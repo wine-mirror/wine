@@ -739,7 +739,7 @@ msgstr "&do:"
 
 #: comdlg32.rc:410 winecfg.rc:286
 msgid "Si&ze:"
-msgstr "Velikost:"
+msgstr "Veli&kost:"
 
 #: comdlg32.rc:412
 msgid "&Source:"
@@ -2221,9 +2221,8 @@ msgid "&File name:"
 msgstr "&Název souboru:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
-#, fuzzy
 msgid "B&rowse..."
-msgstr "Procházet..."
+msgstr "P&rocházet..."
 
 #: cryptui.rc:294
 msgid ""
@@ -8041,7 +8040,6 @@ msgid "Date deleted"
 msgstr "Datum odstranění"
 
 #: shell32.rc:153 winecfg.rc:92 winefile.rc:97
-#, fuzzy
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Plocha"
@@ -9500,9 +9498,8 @@ msgid "&Always on Top"
 msgstr "Vždy n&a vrchu"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
-msgstr "O &aplikaci..."
+msgstr "O &Hodinách"
 
 #: clock.rc:48
 msgid "Clock"
@@ -12763,19 +12760,17 @@ msgid "Organi&zation:"
 msgstr "Organi&zace:"
 
 #: winecfg.rc:145
-#, fuzzy
 msgid "Application settings"
 msgstr "Nastavení aplikací"
 
 #: winecfg.rc:146
-#, fuzzy
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine umí předstírat různé verze Windows pro každou jednu applikaci. Tato "
-"záložka je spojená se složkami Knihovny a Obraz a umožňuje změnit nastavení "
+"Wine umí simulovat různé verze Windows pro jednotlivé aplikace. Tato záložka "
+"je provázaná se záložkami Knihovny a Zobrazení a umožňuje změnit nastavení "
 "celého systému nebo nastavení každé aplikace zvlášť."
 
 #: winecfg.rc:150
@@ -12796,7 +12791,7 @@ msgstr "Nastavení oken"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Automaticky odchytávat myš v režimu celé obrazovky"
+msgstr "Automaticky odchytávat &myš v režimu celé obrazovky"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
@@ -12804,15 +12799,15 @@ msgstr "Povolit správci oken &dekorovat okna"
 
 #: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
-msgstr "Povolit správci oken kontrolu nad okny"
+msgstr "Povolit &správci oken kontrolu nad okny"
 
 #: winecfg.rc:164
 msgid "&Emulate a virtual desktop"
-msgstr "Emulace virtuálního desktopu"
+msgstr "&Emulace virtuálního desktopu"
 
 #: winecfg.rc:166
 msgid "Desktop &size:"
-msgstr "Velikost desktopu:"
+msgstr "&Velikost desktopu:"
 
 #: winecfg.rc:171
 msgid "Screen resolution"
@@ -12823,9 +12818,8 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr "Toto je testovací text - 10 bodů, Tahoma"
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "DLL overrides"
-msgstr "Náhrady DLL"
+msgstr "Nastavení DLL"
 
 #: winecfg.rc:183
 msgid ""
@@ -12834,11 +12828,11 @@ msgid ""
 "application)."
 msgstr ""
 "Můžete vybrat zda budou použity dynamicky linkované knihovny vestavěné ve "
-"Wine nebo nativní (vzaté z Windows nebo poskytnuté aplikací)."
+"Wine nebo nativní (získané z Windows nebo poskytnuté aplikací)."
 
 #: winecfg.rc:185
 msgid "&New override for library:"
-msgstr "&Nová náhrada knihovny:"
+msgstr "&Nové nastavení pro knihovnu:"
 
 #: winecfg.rc:187 wordpad.rc:244
 msgid "&Add"
@@ -12846,7 +12840,7 @@ msgstr "Přid&at"
 
 #: winecfg.rc:188
 msgid "Existing &overrides:"
-msgstr "&Stávající náhrady:"
+msgstr "&Existující nastavení knihoven:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
@@ -12854,7 +12848,7 @@ msgstr "&Upravit..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
-msgstr "Úprava náhrady"
+msgstr "Úprava nastavení knihovny"
 
 #: winecfg.rc:199
 msgid "Load order"
@@ -12889,6 +12883,8 @@ msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
+"Selhalo připojení k správci přípojných bodů, nelze upravovat konfiguraci "
+"diskových jednotek."
 
 #: winecfg.rc:227
 msgid "&Add..."
@@ -12904,7 +12900,7 @@ msgstr "&Cesta:"
 
 #: winecfg.rc:239 winecfg.rc:35
 msgid "Show &Advanced"
-msgstr "Zobrazit rozšířené možnosti"
+msgstr "Zobrazit rozšířené &možnosti"
 
 #: winecfg.rc:240
 msgid "De&vice:"
@@ -12912,7 +12908,7 @@ msgstr "&Zařízení:"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
-msgstr "Prochá&zet..."
+msgstr "Procház&et..."
 
 #: winecfg.rc:244
 msgid "&Label:"
@@ -12972,7 +12968,7 @@ msgstr "Po&ložka:"
 
 #: winecfg.rc:284
 msgid "C&olor:"
-msgstr "&Barva:"
+msgstr "B&arva:"
 
 #: winecfg.rc:290
 msgid "Folders"
@@ -12980,7 +12976,7 @@ msgstr "Adresáře"
 
 #: winecfg.rc:293
 msgid "&Link to:"
-msgstr "&Odkaz na:"
+msgstr "&Odkaz do:"
 
 #: winecfg.rc:31
 msgid "Libraries"
@@ -12992,11 +12988,11 @@ msgstr "Disky"
 
 #: winecfg.rc:33
 msgid "Select the Unix target directory, please."
-msgstr "Vyberte, prosím, unixový cílový adresář."
+msgstr "Vyberte, prosím, cílový unixový adresář."
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
-msgstr "Schovat rozšířené možnosti"
+msgstr "Schovat rozšířené &možnosti"
 
 #: winecfg.rc:36
 msgid "(No Theme)"
@@ -13004,7 +13000,7 @@ msgstr "(Bez tématu)"
 
 #: winecfg.rc:37
 msgid "Graphics"
-msgstr "Obraz"
+msgstr "Zobrazení"
 
 #: winecfg.rc:38
 msgid "Desktop Integration"
@@ -13024,11 +13020,11 @@ msgstr "Konfigurace Wine"
 
 #: winecfg.rc:43
 msgid "Theme files (*.msstyles; *.theme)"
-msgstr "Soubory s tématy vzhledu (*.msstyles; *.theme)"
+msgstr "Témata vzhledu (*.msstyles; *.theme)"
 
 #: winecfg.rc:44
 msgid "Select a theme file"
-msgstr "Zvolte soubor s tématem vzhledu"
+msgstr "Zvolte soubor tématu vzhledu"
 
 #: winecfg.rc:45
 msgid "Folder"
@@ -13036,33 +13032,27 @@ msgstr "Adresář"
 
 #: winecfg.rc:46
 msgid "Links to"
-msgstr "Odkaz na"
+msgstr "Odkazuje do"
 
 #: winecfg.rc:42
 msgid "Wine configuration for %s"
-msgstr "Úprava Wine pro %s"
+msgstr "Konfigurace Wine pro %s"
 
 #: winecfg.rc:81
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "Zvolený ovladač: %s"
 
 #: winecfg.rc:82
-#, fuzzy
 msgid "(None)"
-msgstr ""
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"Žádná klávesová zkratka.\n"
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"Žádný"
+msgstr "(Žádný)"
 
 #: winecfg.rc:83
 msgid "Audio test failed!"
-msgstr ""
+msgstr "Test zvuku selhal!"
 
 #: winecfg.rc:85
-#, fuzzy
 msgid "(System default)"
-msgstr "Systémový adresář"
+msgstr "(Výchozí v systému)"
 
 #: winecfg.rc:51
 msgid ""
@@ -13101,9 +13091,8 @@ msgid "Default Settings"
 msgstr "Standardní nastavení"
 
 #: winecfg.rc:59
-#, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Programy Wine (*.exe,*.exe.so)"
+msgstr "Programy Wine (*.exe; *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
@@ -13114,9 +13103,8 @@ msgid "Select an executable file"
 msgstr "Vyberte spustitelný soubor"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect"
-msgstr "Auto&detekce"
+msgstr "Autodetekce"
 
 #: winecfg.rc:67
 msgid "Local hard disk"
@@ -13135,16 +13123,15 @@ msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:71
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
 "Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
-"Další disk již není možno přidat.\n"
+"Další disk již nelze přidat.\n"
 "\n"
-"Každý disk musí mít přiřazeno písmeno od A do Z, takže nelze mít více než 26 "
-"disků"
+"Každý disk musí mít přiřazeno písmeno od A do Z, takže jich nelze mít více "
+"než 26."
 
 #: winecfg.rc:72
 msgid "System drive"
@@ -13159,12 +13146,11 @@ msgid ""
 msgstr ""
 "Určitě chcete smazat disk C?\n"
 "\n"
-"Většina aplikací ve Windows čeká, že disk C existuje a těžce zkolabuje v "
+"Většina aplikací ve Windows očekává, že disk C existuje a těžce zkolabuje v "
 "případě, že tomu tak není. Pokud smažete disk C, nezapomeňte jej znovu "
 "vytvořit!"
 
 #: winecfg.rc:74
-#, fuzzy
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Písmeno"
@@ -13179,7 +13165,7 @@ msgid ""
 "\n"
 "Remember to click 'Add' in the Drives tab to create one!\n"
 msgstr ""
-"Varování: Vypadá to, že disk C není definován.\n"
+"Vypadá to, že nemáte disk C. To není dobré.\n"
 "\n"
 "Klikněte na ‘Přidat...’ v záložce Disky a vytvořte ho!\n"
 
@@ -13245,79 +13231,67 @@ msgstr "Písmo titulku neaktivního okna"
 
 #: winecfg.rc:106
 msgid "Message Box Text"
-msgstr ""
+msgstr "Písmo okna zprávy"
 
 #: winecfg.rc:107
-#, fuzzy
 msgid "Application Workspace"
-msgstr "Programy"
+msgstr "Pracovní prostor aplikace"
 
 #: winecfg.rc:108
-#, fuzzy
 msgid "Window Frame"
 msgstr "Písmo okna"
 
 #: winecfg.rc:109
-#, fuzzy
 msgid "Active Border"
-msgstr "Pozadí titulku aktivního okna"
+msgstr "Okraj aktivního okna"
 
 #: winecfg.rc:110
-#, fuzzy
 msgid "Inactive Border"
-msgstr "Pozadí titulku neaktivného okna"
+msgstr "Okraj neaktivního okna"
 
 #: winecfg.rc:111
-#, fuzzy
 msgid "Controls Shadow"
-msgstr "Pozadí ovládacích prvků"
+msgstr "Stíny ovládacích prvků"
 
 #: winecfg.rc:112
 msgid "Gray Text"
-msgstr ""
+msgstr "Pošedlý text"
 
 #: winecfg.rc:113
-#, fuzzy
 msgid "Controls Highlight"
-msgstr "Písmo ovládacích prvků"
+msgstr "Zvýraznění ovládacích prvků"
 
 #: winecfg.rc:114
-#, fuzzy
 msgid "Controls Dark Shadow"
-msgstr "Pozadí ovládacích prvků"
+msgstr "Tmavé stíny ovládacích prvků"
 
 #: winecfg.rc:115
-#, fuzzy
 msgid "Controls Light"
-msgstr "Písmo ovládacích prvků"
+msgstr "Nasvícení ovládacích prvků"
 
 #: winecfg.rc:116
-#, fuzzy
 msgid "Controls Alternate Background"
-msgstr "Pozadí ovládacích prvků"
+msgstr "Alternativní pozadí ovládacích prvků"
 
 #: winecfg.rc:117
 msgid "Hot Tracked Item"
-msgstr ""
+msgstr "Prvek pod ukazatelem"
 
 #: winecfg.rc:118
-#, fuzzy
 msgid "Active Title Bar Gradient"
-msgstr "Pozadí titulku aktivního okna"
+msgstr "Přechod titulku aktivního okna"
 
 #: winecfg.rc:119
-#, fuzzy
 msgid "Inactive Title Bar Gradient"
-msgstr "Pozadí titulku neaktivného okna"
+msgstr "Přechod titulku neaktivného okna"
 
 #: winecfg.rc:120
 msgid "Menu Highlight"
-msgstr ""
+msgstr "Zvýraznění v menu"
 
 #: winecfg.rc:121
-#, fuzzy
 msgid "Menu Bar"
-msgstr "Pozadí menu"
+msgstr "Lišta menu"
 
 #: wineconsole.rc:60
 msgid "Cursor size"
