@@ -71,7 +71,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap_v4l);
 
-#if defined(HAVE_LINUX_VIDEODEV_H) || defined(HAVE_LIBV4L1_H)
+#ifdef VIDIOCMCAPTURE
 
 static typeof(open) *video_open = open;
 static typeof(close) *video_close = close;
@@ -973,4 +973,4 @@ HRESULT qcap_driver_stop(Capture *capBox, FILTER_STATE *state)
     FAIL_WITH_ERR;
 }
 
-#endif /* HAVE_LINUX_VIDEODEV_H || HAVE_LINUX_LIBV4L1_H */
+#endif /* defined(VIDIOCMCAPTURE) */
