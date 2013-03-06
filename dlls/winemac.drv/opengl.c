@@ -46,6 +46,8 @@ struct gl_info {
     char *glExtensions;
 
     char wglExtensions[4096];
+
+    GLint max_viewport_dims[2];
 };
 
 static struct gl_info gl_info;
@@ -58,10 +60,30 @@ struct wgl_context
     macdrv_opengl_context   context;
     CGLContextObj           cglcontext;
     macdrv_view             draw_view;
+    struct wgl_pbuffer     *draw_pbuffer;
     macdrv_view             read_view;
+    struct wgl_pbuffer     *read_pbuffer;
     BOOL                    has_been_current;
     BOOL                    sharing;
 };
+
+
+struct wgl_pbuffer
+{
+    CGLPBufferObj   pbuffer;
+    int             format;
+};
+
+static CFMutableDictionaryRef dc_pbuffers;
+
+static CRITICAL_SECTION dc_pbuffers_section;
+static CRITICAL_SECTION_DEBUG dc_pbuffers_section_debug =
+{
+    0, 0, &dc_pbuffers_section,
+    { &dc_pbuffers_section_debug.ProcessLocksList, &dc_pbuffers_section_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": dc_pbuffers_section") }
+};
+static CRITICAL_SECTION dc_pbuffers_section = { &dc_pbuffers_section_debug, -1, 0, 0, 0, 0 };
 
 
 static struct opengl_funcs opengl_funcs;
@@ -1083,6 +1105,8 @@ static BOOL init_gl_info(void)
     gl_info.glExtensions = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
     strcpy(gl_info.glExtensions, str);
 
+    opengl_funcs.gl.p_glGetIntegerv(GL_MAX_VIEWPORT_DIMS, gl_info.max_viewport_dims);
+
     TRACE("GL version   : %s\n", gl_info.glVersion);
     TRACE("GL renderer  : %s\n", opengl_funcs.gl.p_glGetString(GL_RENDERER));
 
@@ -1273,8 +1297,27 @@ void set_gl_view_parent(HWND hwnd, HWND parent)
  */
 static void make_context_current(struct wgl_context *context, BOOL read)
 {
-    macdrv_view view = read ? context->read_view : context->draw_view;
-    macdrv_make_context_current(context->context, view);
+    macdrv_view view;
+    struct wgl_pbuffer *pbuffer;
+
+    if (read)
+    {
+        view = context->read_view;
+        pbuffer = context->read_pbuffer;
+    }
+    else
+    {
+        view = context->draw_view;
+        pbuffer = context->draw_pbuffer;
+    }
+
+    if (view || !pbuffer)
+        macdrv_make_context_current(context->context, view);
+    else
+    {
+        CGLSetPBuffer(context->cglcontext, pbuffer->pbuffer, 0, 0, 0);
+        CGLSetCurrentContext(context->cglcontext);
+    }
 }
 
 
@@ -1292,12 +1335,12 @@ static void macdrv_glCopyColorTable(GLenum target, GLenum internalformat, GLint 
 {
     struct wgl_context *context = NtCurrentTeb()->glContext;
 
-    if (context->read_view)
+    if (context->read_view || context->read_pbuffer)
         make_context_current(context, TRUE);
 
     pglCopyColorTable(target, internalformat, x, y, width);
 
-    if (context->read_view)
+    if (context->read_view || context->read_pbuffer)
         make_context_current(context, FALSE);
 }
 
@@ -1315,12 +1358,12 @@ static void macdrv_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 {
     struct wgl_context *context = NtCurrentTeb()->glContext;
 
-    if (context->read_view)
+    if (context->read_view || context->read_pbuffer)
         make_context_current(context, TRUE);
 
     pglCopyPixels(x, y, width, height, type);
 
-    if (context->read_view)
+    if (context->read_view || context->read_pbuffer)
         make_context_current(context, FALSE);
 }
 
@@ -1339,12 +1382,12 @@ static void macdrv_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 {
     struct wgl_context *context = NtCurrentTeb()->glContext;
 
-    if (context->read_view)
+    if (context->read_view || context->read_pbuffer)
         make_context_current(context, TRUE);
 
     pglReadPixels(x, y, width, height, format, type, pixels);
 
-    if (context->read_view)
+    if (context->read_view || context->read_pbuffer)
         make_context_current(context, FALSE);
 }
 
@@ -1579,6 +1622,12 @@ static BOOL macdrv_wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList,
                 /* ignored */
                 break;
 
+            case WGL_DRAW_TO_PBUFFER_ARB:
+                if (valid.pbuffer && (!pf.pbuffer != !value)) goto cant_match;
+                pf.pbuffer = (value != 0);
+                valid.pbuffer = 1;
+                break;
+
             default:
                 WARN("invalid attribute %x\n", iptr[0]);
                 return GL_FALSE;
@@ -1647,6 +1696,86 @@ cant_match:
 
 
 /**********************************************************************
+ *              macdrv_wglCreatePbufferARB
+ *
+ * WGL_ARB_pbuffer: wglCreatePbufferARB
+ */
+static struct wgl_pbuffer *macdrv_wglCreatePbufferARB(HDC hdc, int iPixelFormat, int iWidth, int iHeight,
+                                                      const int *piAttribList)
+{
+    struct wgl_pbuffer* pbuffer;
+    CGLError err;
+
+    TRACE("hdc %p iPixelFormat %d iWidth %d iHeight %d piAttribList %p\n",
+          hdc, iPixelFormat, iWidth, iHeight, piAttribList);
+
+    if (!is_valid_pixel_format(iPixelFormat) || !pixel_formats[iPixelFormat].pbuffer)
+    {
+        WARN("invalid pixel format %d\n", iPixelFormat);
+        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+        return NULL;
+    }
+
+    pbuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pbuffer));
+    pbuffer->format = iPixelFormat;
+
+    for ( ; piAttribList && *piAttribList; piAttribList += 2)
+    {
+        int attr = piAttribList[0];
+        int value = piAttribList[1];
+
+        switch (attr)
+        {
+            case WGL_PBUFFER_LARGEST_ARB:
+                FIXME("WGL_PBUFFER_LARGEST_ARB: %d; ignoring\n", value);
+                break;
+
+            default:
+                WARN("unknown attribute 0x%x\n", attr);
+                SetLastError(ERROR_INVALID_DATA);
+                goto done;
+        }
+    }
+
+    err = CGLCreatePBuffer(iWidth, iHeight, GL_TEXTURE_RECTANGLE, GL_RGB, 0, &pbuffer->pbuffer);
+    if (err != kCGLNoError)
+    {
+        WARN("CGLCreatePBuffer failed; err %d %s\n", err, CGLErrorString(err));
+        pbuffer->pbuffer = NULL;
+        if (err == kCGLBadAlloc)
+            SetLastError(ERROR_NO_SYSTEM_RESOURCES);
+        else
+            SetLastError(ERROR_INVALID_DATA);
+    }
+
+done:
+    if (!pbuffer->pbuffer)
+    {
+        HeapFree(GetProcessHeap(), 0, pbuffer);
+        return NULL;
+    }
+
+    TRACE(" -> %p\n", pbuffer);
+    return pbuffer;
+}
+
+
+/**********************************************************************
+ *              macdrv_wglDestroyPbufferARB
+ *
+ * WGL_ARB_pbuffer: wglDestroyPbufferARB
+ */
+static BOOL macdrv_wglDestroyPbufferARB(struct wgl_pbuffer *pbuffer)
+{
+    TRACE("pbuffer %p\n", pbuffer);
+    if (pbuffer && pbuffer->pbuffer)
+        CGLReleasePBuffer(pbuffer->pbuffer);
+    HeapFree(GetProcessHeap(), 0, pbuffer);
+    return GL_TRUE;
+}
+
+
+/**********************************************************************
  *              macdrv_wglGetExtensionsStringARB
  *
  * WGL_ARB_extensions_string: wglGetExtensionsStringARB
@@ -1669,6 +1798,34 @@ static const GLubyte *macdrv_wglGetExtensionsStringEXT(void)
 {
     TRACE("returning \"%s\"\n", gl_info.wglExtensions);
     return (const GLubyte*)gl_info.wglExtensions;
+}
+
+
+/**********************************************************************
+ *              macdrv_wglGetPbufferDCARB
+ *
+ * WGL_ARB_pbuffer: wglGetPbufferDCARB
+ */
+static HDC macdrv_wglGetPbufferDCARB(struct wgl_pbuffer *pbuffer)
+{
+    HDC hdc;
+    struct wgl_pbuffer *prev;
+
+    hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    if (!hdc) return 0;
+
+    EnterCriticalSection(&dc_pbuffers_section);
+    prev = (struct wgl_pbuffer*)CFDictionaryGetValue(dc_pbuffers, hdc);
+    if (prev)
+    {
+        CGLReleasePBuffer(prev->pbuffer);
+        HeapFree(GetProcessHeap(), 0, prev);
+    }
+    CFDictionarySetValue(dc_pbuffers, hdc, pbuffer);
+    LeaveCriticalSection(&dc_pbuffers_section);
+
+    TRACE("pbuffer %p -> hdc %p\n", pbuffer, hdc);
+    return hdc;
 }
 
 
@@ -1927,6 +2084,22 @@ static BOOL macdrv_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int i
                     piValues[i] = GL_FALSE;
                 break;
 
+            case WGL_DRAW_TO_PBUFFER_ARB:
+                piValues[i] = pf->pbuffer ? GL_TRUE : GL_FALSE;
+                break;
+
+            case WGL_MAX_PBUFFER_WIDTH_ARB:
+                piValues[i] = gl_info.max_viewport_dims[0];
+                break;
+
+            case WGL_MAX_PBUFFER_HEIGHT_ARB:
+                piValues[i] = gl_info.max_viewport_dims[1];
+                break;
+
+            case WGL_MAX_PBUFFER_PIXELS_ARB:
+                piValues[i] = gl_info.max_viewport_dims[0] * gl_info.max_viewport_dims[1];
+                break;
+
             default:
                 WARN("invalid attribute %x\n", piAttributes[i]);
                 return GL_FALSE;
@@ -2031,16 +2204,40 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
         }
 
         context->draw_view = data->gl_view;
+        context->draw_pbuffer = NULL;
         release_win_data(data);
     }
     else
     {
-        WARN("no window for DC\n");
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
+        struct wgl_pbuffer *pbuffer;
+
+        EnterCriticalSection(&dc_pbuffers_section);
+        pbuffer = (struct wgl_pbuffer*)CFDictionaryGetValue(dc_pbuffers, draw_hdc);
+        if (pbuffer)
+        {
+            if (context->format != pbuffer->format)
+            {
+                WARN("mismatched pixel format draw_hdc %p %u context %p %u\n", draw_hdc, pbuffer->format, context, context->format);
+                LeaveCriticalSection(&dc_pbuffers_section);
+                SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+                return FALSE;
+            }
+        }
+        else
+        {
+            WARN("no window or pbuffer for DC\n");
+            LeaveCriticalSection(&dc_pbuffers_section);
+            SetLastError(ERROR_INVALID_HANDLE);
+            return FALSE;
+        }
+
+        context->draw_view = NULL;
+        context->draw_pbuffer = pbuffer;
+        LeaveCriticalSection(&dc_pbuffers_section);
     }
 
     context->read_view = NULL;
+    context->read_pbuffer = NULL;
     if (read_hdc && read_hdc != draw_hdc)
     {
         if ((hwnd = WindowFromDC(read_hdc)))
@@ -2052,16 +2249,98 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
                 release_win_data(data);
             }
         }
+        else
+        {
+            EnterCriticalSection(&dc_pbuffers_section);
+            context->read_pbuffer = (struct wgl_pbuffer*)CFDictionaryGetValue(dc_pbuffers, read_hdc);
+            LeaveCriticalSection(&dc_pbuffers_section);
+        }
     }
 
-    TRACE("making context current with draw_view %p read_view %p format %u\n",
-          context->draw_view, context->read_view, context->format);
+    TRACE("making context current with draw_view %p draw_pbuffer %p read_view %p read_pbuffer %p format %u\n",
+          context->draw_view, context->draw_pbuffer, context->read_view, context->read_pbuffer, context->format);
 
     make_context_current(context, FALSE);
     context->has_been_current = TRUE;
     NtCurrentTeb()->glContext = context;
 
     return TRUE;
+}
+
+
+/**********************************************************************
+ *              macdrv_wglQueryPbufferARB
+ *
+ * WGL_ARB_pbuffer: wglQueryPbufferARB
+ */
+static BOOL macdrv_wglQueryPbufferARB(struct wgl_pbuffer *pbuffer, int iAttribute, int *piValue)
+{
+    CGLError err;
+    GLsizei width;
+    GLsizei height;
+    GLenum target;
+    GLenum internalFormat;
+    GLint mipmap;
+
+    TRACE("pbuffer %p iAttribute 0x%x piValue %p\n", pbuffer, iAttribute, piValue);
+
+    err = CGLDescribePBuffer(pbuffer->pbuffer, &width, &height, &target, &internalFormat, &mipmap);
+    if (err != kCGLNoError)
+    {
+        WARN("CGLDescribePBuffer failed; error %d %s\n", err, CGLErrorString(err));
+        SetLastError(ERROR_INVALID_HANDLE);
+        return GL_FALSE;
+    }
+
+    switch (iAttribute)
+    {
+        case WGL_PBUFFER_WIDTH_ARB:
+            *piValue = width;
+            break;
+        case WGL_PBUFFER_HEIGHT_ARB:
+            *piValue = height;
+            break;
+        case WGL_PBUFFER_LOST_ARB:
+            /* Mac PBuffers can't be lost */
+            *piValue = GL_FALSE;
+            break;
+        default:
+            WARN("invalid attribute 0x%x\n", iAttribute);
+            SetLastError(ERROR_INVALID_DATA);
+            return GL_FALSE;
+    }
+
+    return GL_TRUE;
+}
+
+
+/**********************************************************************
+ *              macdrv_wglReleasePbufferDCARB
+ *
+ * WGL_ARB_pbuffer: wglReleasePbufferDCARB
+ */
+static int macdrv_wglReleasePbufferDCARB(struct wgl_pbuffer *pbuffer, HDC hdc)
+{
+    struct wgl_pbuffer *prev;
+
+    TRACE("pbuffer %p hdc %p\n", pbuffer, hdc);
+
+    EnterCriticalSection(&dc_pbuffers_section);
+
+    prev = (struct wgl_pbuffer*)CFDictionaryGetValue(dc_pbuffers, hdc);
+    if (prev)
+    {
+        if (prev != pbuffer)
+            FIXME("hdc %p isn't associated with pbuffer %p\n", hdc, pbuffer);
+        CGLReleasePBuffer(prev->pbuffer);
+        HeapFree(GetProcessHeap(), 0, prev);
+        CFDictionaryRemoveValue(dc_pbuffers, hdc);
+    }
+    else hdc = 0;
+
+    LeaveCriticalSection(&dc_pbuffers_section);
+
+    return hdc && DeleteDC(hdc);
 }
 
 
@@ -2114,6 +2393,16 @@ static void load_extensions(void)
     if (gluCheckExtension((GLubyte*)"GL_ARB_framebuffer_sRGB", (GLubyte*)gl_info.glExtensions))
         register_extension("WGL_ARB_framebuffer_sRGB");
 
+    if (gluCheckExtension((GLubyte*)"GL_APPLE_pixel_buffer", (GLubyte*)gl_info.glExtensions))
+    {
+        register_extension("WGL_ARB_pbuffer");
+        opengl_funcs.ext.p_wglCreatePbufferARB    = macdrv_wglCreatePbufferARB;
+        opengl_funcs.ext.p_wglDestroyPbufferARB   = macdrv_wglDestroyPbufferARB;
+        opengl_funcs.ext.p_wglGetPbufferDCARB     = macdrv_wglGetPbufferDCARB;
+        opengl_funcs.ext.p_wglQueryPbufferARB     = macdrv_wglQueryPbufferARB;
+        opengl_funcs.ext.p_wglReleasePbufferDCARB = macdrv_wglReleasePbufferDCARB;
+    }
+
     /* TODO:
         WGL_ARB_create_context: wglCreateContextAttribsARB
         WGL_ARB_create_context_profile
@@ -2155,6 +2444,13 @@ static BOOL init_opengl(void)
     init_done = 1;
 
     TRACE("()\n");
+
+    dc_pbuffers = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);
+    if (!dc_pbuffers)
+    {
+        WARN("CFDictionaryCreateMutable failed\n");
+        return FALSE;
+    }
 
     opengl_handle = wine_dlopen("/System/Library/Frameworks/OpenGL.framework/OpenGL", RTLD_LAZY|RTLD_LOCAL|RTLD_NOLOAD, buffer, sizeof(buffer));
     if (!opengl_handle)
@@ -2246,8 +2542,18 @@ static int get_dc_pixel_format(HDC hdc)
     }
     else
     {
-        WARN("no window for DC %p\n", hdc);
-        format = 0;
+        struct wgl_pbuffer *pbuffer;
+
+        EnterCriticalSection(&dc_pbuffers_section);
+        pbuffer = (struct wgl_pbuffer*)CFDictionaryGetValue(dc_pbuffers, hdc);
+        if (pbuffer)
+            format = pbuffer->format;
+        else
+        {
+            WARN("no window or pbuffer for DC %p\n", hdc);
+            format = 0;
+        }
+        LeaveCriticalSection(&dc_pbuffers_section);
     }
 
     return format;
