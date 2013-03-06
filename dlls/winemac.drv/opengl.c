@@ -1705,10 +1705,13 @@ static BOOL macdrv_wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList,
             case WGL_DRAW_TO_PBUFFER_ARB:
             case WGL_BIND_TO_TEXTURE_RGB_ARB:
             case WGL_BIND_TO_TEXTURE_RGBA_ARB:
+            case WGL_BIND_TO_TEXTURE_RECTANGLE_RGB_NV:
+            case WGL_BIND_TO_TEXTURE_RECTANGLE_RGBA_NV:
                 if (valid.pbuffer && (!pf.pbuffer != !value)) goto cant_match;
                 pf.pbuffer = (value != 0);
                 valid.pbuffer = 1;
-                if (attr == WGL_BIND_TO_TEXTURE_RGBA_ARB && !alpha_bits)
+                if ((attr == WGL_BIND_TO_TEXTURE_RGBA_ARB || attr == WGL_BIND_TO_TEXTURE_RECTANGLE_RGBA_NV) &&
+                    !alpha_bits)
                     alpha_bits = 1;
                 break;
 
@@ -1858,6 +1861,10 @@ static struct wgl_pbuffer *macdrv_wglCreatePbufferARB(HDC hdc, int iPixelFormat,
                     case WGL_TEXTURE_2D_ARB:
                         TRACE("WGL_TEXTURE_TARGET_ARB: WGL_TEXTURE_2D_ARB\n");
                         target = GL_TEXTURE_2D;
+                        break;
+                    case WGL_TEXTURE_RECTANGLE_NV:
+                        TRACE("WGL_TEXTURE_TARGET_ARB: WGL_TEXTURE_RECTANGLE_NV\n");
+                        target = GL_TEXTURE_RECTANGLE;
                         break;
                     default:
                         WARN("unknown WGL_TEXTURE_TARGET_ARB value 0x%x\n", value);
@@ -2244,10 +2251,12 @@ static BOOL macdrv_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int i
 
             case WGL_DRAW_TO_PBUFFER_ARB:
             case WGL_BIND_TO_TEXTURE_RGB_ARB:
+            case WGL_BIND_TO_TEXTURE_RECTANGLE_RGB_NV:
                 piValues[i] = pf->pbuffer ? GL_TRUE : GL_FALSE;
                 break;
 
             case WGL_BIND_TO_TEXTURE_RGBA_ARB:
+            case WGL_BIND_TO_TEXTURE_RECTANGLE_RGBA_NV:
                 piValues[i] = (pf->pbuffer && color_modes[pf->color_mode].alpha_bits) ? GL_TRUE : GL_FALSE;
                 break;
 
@@ -2490,9 +2499,11 @@ static BOOL macdrv_wglQueryPbufferARB(struct wgl_pbuffer *pbuffer, int iAttribut
                     *piValue = WGL_TEXTURE_CUBE_MAP_ARB;
                     break;
                 case GL_TEXTURE_2D:
+                    *piValue = WGL_TEXTURE_2D_ARB;
+                    break;
                 case GL_TEXTURE_RECTANGLE:
                 default:
-                    *piValue = WGL_TEXTURE_2D_ARB;
+                    *piValue = WGL_TEXTURE_RECTANGLE_NV;
                     break;
             }
             break;
@@ -2726,6 +2737,10 @@ static void load_extensions(void)
         opengl_funcs.ext.p_wglBindTexImageARB       = macdrv_wglBindTexImageARB;
         opengl_funcs.ext.p_wglReleaseTexImageARB    = macdrv_wglReleaseTexImageARB;
         opengl_funcs.ext.p_wglSetPbufferAttribARB   = macdrv_wglSetPbufferAttribARB;
+
+        if (gluCheckExtension((GLubyte*)"GL_ARB_texture_rectangle", (GLubyte*)gl_info.glExtensions) ||
+            gluCheckExtension((GLubyte*)"GL_EXT_texture_rectangle", (GLubyte*)gl_info.glExtensions))
+            register_extension("WGL_NV_render_texture_rectangle");
     }
 
     /* TODO:
