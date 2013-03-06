@@ -331,7 +331,8 @@ BOOL netconn_close( netconn_t *conn )
 BOOL netconn_connect( netconn_t *conn, const struct sockaddr *sockaddr, unsigned int addr_len, int timeout )
 {
     BOOL ret = FALSE;
-    int res = 0, state;
+    int res = 0;
+    ULONG state;
 
     if (timeout > 0)
     {
@@ -734,7 +735,8 @@ BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd
 BOOL netconn_query_data_available( netconn_t *conn, DWORD *available )
 {
 #ifdef FIONREAD
-    int ret, unread;
+    int ret;
+    ULONG unread;
 #endif
     *available = 0;
     if (!netconn_connected( conn )) return FALSE;
