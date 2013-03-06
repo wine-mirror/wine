@@ -4013,6 +4013,34 @@ static void test_connection_failure(void)
     InternetCloseHandle(session);
 }
 
+static void test_default_service_port(void)
+{
+    HINTERNET session, connect, request;
+    DWORD error;
+    BOOL ret;
+
+    session = InternetOpen("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(session != NULL, "InternetOpen failed\n");
+
+    connect = InternetConnect(session, "test.winehq.org", INTERNET_INVALID_PORT_NUMBER, NULL, NULL,
+                              INTERNET_SERVICE_HTTP, 0, 0);
+    ok(connect != NULL, "InternetConnect failed\n");
+
+    request = HttpOpenRequest(connect, NULL, "/", NULL, NULL, NULL, INTERNET_FLAG_SECURE, 0);
+    ok(request != NULL, "HttpOpenRequest failed\n");
+
+    SetLastError(0xdeadbeef);
+    ret = HttpSendRequest(request, NULL, 0, NULL, 0);
+    error = GetLastError();
+    ok(!ret, "HttpSendRequest succeeded\n");
+    ok(error == ERROR_INTERNET_SECURITY_CHANNEL_ERROR || error == ERROR_INTERNET_CANNOT_CONNECT,
+       "got %u\n", error);
+
+    InternetCloseHandle(request);
+    InternetCloseHandle(connect);
+    InternetCloseHandle(session);
+}
+
 static void init_status_tests(void)
 {
     memset(expect, 0, sizeof(expect));
@@ -4091,4 +4119,5 @@ START_TEST(http)
     HttpSendRequestEx_test();
     InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[3]);
     test_connection_failure();
+    test_default_service_port();
 }

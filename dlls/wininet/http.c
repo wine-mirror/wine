@@ -283,7 +283,7 @@ server_t *get_server(const WCHAR *name, INTERNET_PORT port, BOOL is_https, BOOL 
     server_t *iter, *server = NULL;
 
     if(port == INTERNET_INVALID_PORT_NUMBER)
-        port = is_https ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
+        port = INTERNET_DEFAULT_HTTP_PORT;
 
     EnterCriticalSection(&connection_pool_cs);
 
@@ -1706,6 +1706,9 @@ static WCHAR *build_proxy_path_url(http_request_t *req)
  */
 static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_request_t *request)
 {
+    static const WCHAR protoHttp[] = { 'h','t','t','p',0 };
+    static const WCHAR szHttp[] = { 'h','t','t','p',':','/','/',0 };
+    static const WCHAR szFormat[] = { 'h','t','t','p',':','/','/','%','s',0 };
     WCHAR buf[INTERNET_MAX_HOST_NAME_LENGTH];
     WCHAR protoProxy[INTERNET_MAX_URL_LENGTH];
     DWORD protoProxyLen = INTERNET_MAX_URL_LENGTH;
@@ -1713,9 +1716,7 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
     static WCHAR szNul[] = { 0 };
     URL_COMPONENTSW UrlComponents;
     server_t *new_server;
-    static const WCHAR protoHttp[] = { 'h','t','t','p',0 };
-    static const WCHAR szHttp[] = { 'h','t','t','p',':','/','/',0 };
-    static const WCHAR szFormat[] = { 'h','t','t','p',':','/','/','%','s',0 };
+    BOOL is_https;
 
     memset( &UrlComponents, 0, sizeof UrlComponents );
     UrlComponents.dwStructSize = sizeof UrlComponents;
@@ -1737,7 +1738,11 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
     if( !request->path )
         request->path = szNul;
 
-    new_server = get_server(UrlComponents.lpszHostName, UrlComponents.nPort, UrlComponents.nScheme == INTERNET_SCHEME_HTTPS, TRUE);
+    is_https = (UrlComponents.nScheme == INTERNET_SCHEME_HTTPS);
+    if (is_https && UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
+        UrlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
+
+    new_server = get_server(UrlComponents.lpszHostName, UrlComponents.nPort, is_https, TRUE);
     if(!new_server)
         return FALSE;
 
@@ -3160,9 +3165,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     HTTP_ProcessHeader(request, hostW, request->server->canon_host_port, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
 
     if (session->hostPort == INTERNET_INVALID_PORT_NUMBER)
-        session->hostPort = (dwFlags & INTERNET_FLAG_SECURE ?
-                        INTERNET_DEFAULT_HTTPS_PORT :
-                        INTERNET_DEFAULT_HTTP_PORT);
+        session->hostPort = INTERNET_DEFAULT_HTTP_PORT;
 
     if (hIC->proxy && hIC->proxy[0])
         HTTP_DealWithProxy( hIC, session, request );
