@@ -76,7 +76,7 @@ static HRESULT read_png_chunk(IStream *stream, BYTE *type, BYTE **data, ULONG *d
             return hr;
         }
 
-        /* FIXME: Verify the CRC? */
+        /* Windows ignores CRC of the chunk */
     }
 
     return S_OK;
