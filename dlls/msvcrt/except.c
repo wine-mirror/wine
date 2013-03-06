@@ -86,7 +86,7 @@ static const struct
  { EXCEPTION_FLT_UNDERFLOW, MSVCRT__FPE_UNDERFLOW },
 };
 
-static LONG WINAPI msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
+static LONG msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
 {
     LONG ret = EXCEPTION_CONTINUE_SEARCH;
     MSVCRT___sighandler_t handler;
