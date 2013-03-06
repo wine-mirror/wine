@@ -57,7 +57,8 @@ struct wgl_context
     int                     format;
     macdrv_opengl_context   context;
     CGLContextObj           cglcontext;
-    macdrv_view             view;
+    macdrv_view             draw_view;
+    macdrv_view             read_view;
     BOOL                    has_been_current;
     BOOL                    sharing;
 };
@@ -70,6 +71,11 @@ static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
 #undef USE_GL_FUNC
 
 
+static void (*pglCopyColorTable)(GLenum target, GLenum internalformat, GLint x, GLint y,
+                                 GLsizei width);
+static void (*pglCopyPixels)(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type);
+static void (*pglReadPixels)(GLint x, GLint y, GLsizei width, GLsizei height,
+                             GLenum format, GLenum type, void *pixels);
 static void (*pglViewport)(GLint x, GLint y, GLsizei width, GLsizei height);
 
 
@@ -1263,6 +1269,87 @@ void set_gl_view_parent(HWND hwnd, HWND parent)
 
 
 /**********************************************************************
+ *              make_context_current
+ */
+static void make_context_current(struct wgl_context *context, BOOL read)
+{
+    macdrv_view view = read ? context->read_view : context->draw_view;
+    macdrv_make_context_current(context->context, view);
+}
+
+
+/**********************************************************************
+ *              macdrv_glCopyColorTable
+ *
+ * Hook into glCopyColorTable as part of the implementation of
+ * wglMakeContextCurrentARB.  If the context has a separate readable,
+ * temporarily make that current, do glCopyColorTable, and then set it
+ * back to the drawable.  This is modeled after what Mesa GLX's Apple
+ * implementation does.
+ */
+static void macdrv_glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y,
+                                    GLsizei width)
+{
+    struct wgl_context *context = NtCurrentTeb()->glContext;
+
+    if (context->read_view)
+        make_context_current(context, TRUE);
+
+    pglCopyColorTable(target, internalformat, x, y, width);
+
+    if (context->read_view)
+        make_context_current(context, FALSE);
+}
+
+
+/**********************************************************************
+ *              macdrv_glCopyPixels
+ *
+ * Hook into glCopyPixels as part of the implementation of
+ * wglMakeContextCurrentARB.  If the context has a separate readable,
+ * temporarily make that current, do glCopyPixels, and then set it back
+ * to the drawable.  This is modeled after what Mesa GLX's Apple
+ * implementation does.
+ */
+static void macdrv_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type)
+{
+    struct wgl_context *context = NtCurrentTeb()->glContext;
+
+    if (context->read_view)
+        make_context_current(context, TRUE);
+
+    pglCopyPixels(x, y, width, height, type);
+
+    if (context->read_view)
+        make_context_current(context, FALSE);
+}
+
+
+/**********************************************************************
+ *              macdrv_glReadPixels
+ *
+ * Hook into glReadPixels as part of the implementation of
+ * wglMakeContextCurrentARB.  If the context has a separate readable,
+ * temporarily make that current, do glReadPixels, and then set it back
+ * to the drawable.  This is modeled after what Mesa GLX's Apple
+ * implementation does.
+ */
+static void macdrv_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
+                                GLenum format, GLenum type, void *pixels)
+{
+    struct wgl_context *context = NtCurrentTeb()->glContext;
+
+    if (context->read_view)
+        make_context_current(context, TRUE);
+
+    pglReadPixels(x, y, width, height, format, type, pixels);
+
+    if (context->read_view)
+        make_context_current(context, FALSE);
+}
+
+
+/**********************************************************************
  *              macdrv_glViewport
  *
  * Hook into glViewport as an opportunity to update the OpenGL context
@@ -1304,6 +1391,89 @@ static const GLubyte *macdrv_wglGetExtensionsStringEXT(void)
 }
 
 
+/***********************************************************************
+ *              macdrv_wglMakeContextCurrentARB
+ *
+ * WGL_ARB_make_current_read: wglMakeContextCurrentARB
+ *
+ * This is not supported directly by OpenGL on the Mac.  We emulate it
+ * by hooking into glReadPixels, glCopyPixels, and glCopyColorTable to
+ * temporarily swap the drawable.  This follows the technique used in
+ * the implementation of Mesa GLX for Apple.
+ */
+static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct wgl_context *context)
+{
+    struct macdrv_win_data *data;
+    HWND hwnd;
+
+    TRACE("draw_hdc %p read_hdc %p context %p/%p/%p\n", draw_hdc, read_hdc, context,
+          (context ? context->context : NULL), (context ? context->cglcontext : NULL));
+
+    if (!context)
+    {
+        macdrv_make_context_current(NULL, NULL);
+        NtCurrentTeb()->glContext = NULL;
+        return TRUE;
+    }
+
+    if ((hwnd = WindowFromDC(draw_hdc)))
+    {
+        if (!(data = get_win_data(hwnd)))
+        {
+            FIXME("draw DC for window %p of other process: not implemented\n", hwnd);
+            return FALSE;
+        }
+
+        if (!data->pixel_format)
+        {
+            WARN("no pixel format set\n");
+            release_win_data(data);
+            SetLastError(ERROR_INVALID_HANDLE);
+            return FALSE;
+        }
+        if (context->format != data->pixel_format)
+        {
+            WARN("mismatched pixel format draw_hdc %p %u context %p %u\n", draw_hdc, data->pixel_format, context, context->format);
+            release_win_data(data);
+            SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+            return FALSE;
+        }
+
+        context->draw_view = data->gl_view;
+        release_win_data(data);
+    }
+    else
+    {
+        WARN("no window for DC\n");
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    context->read_view = NULL;
+    if (read_hdc && read_hdc != draw_hdc)
+    {
+        if ((hwnd = WindowFromDC(read_hdc)))
+        {
+            if ((data = get_win_data(hwnd)))
+            {
+                if (data->gl_view != context->draw_view)
+                    context->read_view = data->gl_view;
+                release_win_data(data);
+            }
+        }
+    }
+
+    TRACE("making context current with draw_view %p read_view %p format %u\n",
+          context->draw_view, context->read_view, context->format);
+
+    make_context_current(context, FALSE);
+    context->has_been_current = TRUE;
+    NtCurrentTeb()->glContext = context;
+
+    return TRUE;
+}
+
+
 /**********************************************************************
  *              macdrv_wglSetPixelFormatWINE
  *
@@ -1331,6 +1501,10 @@ static void load_extensions(void)
      */
     register_extension("WGL_ARB_extensions_string");
     opengl_funcs.ext.p_wglGetExtensionsStringARB = macdrv_wglGetExtensionsStringARB;
+
+    register_extension("WGL_ARB_make_current_read");
+    opengl_funcs.ext.p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
+    opengl_funcs.ext.p_wglMakeContextCurrentARB = macdrv_wglMakeContextCurrentARB;
 
     /* TODO:
         WGL_ARB_create_context: wglCreateContextAttribsARB
@@ -1386,7 +1560,15 @@ static BOOL init_opengl(void)
     /* redirect some standard OpenGL functions */
 #define REDIRECT(func) \
     do { p##func = opengl_funcs.gl.p_##func; opengl_funcs.gl.p_##func = macdrv_##func; } while(0)
+    REDIRECT(glCopyPixels);
+    REDIRECT(glReadPixels);
     REDIRECT(glViewport);
+#undef REDIRECT
+
+    /* redirect some OpenGL extension functions */
+#define REDIRECT(func) \
+    do { if (opengl_funcs.ext.p_##func) { p##func = opengl_funcs.ext.p_##func; opengl_funcs.ext.p_##func = macdrv_##func; } } while(0)
+    REDIRECT(glCopyColorTable);
 #undef REDIRECT
 
     if (!init_gl_info())
@@ -1743,59 +1925,10 @@ static PROC macdrv_wglGetProcAddress(const char *proc)
  */
 static BOOL macdrv_wglMakeCurrent(HDC hdc, struct wgl_context *context)
 {
-    struct macdrv_win_data *data;
-    HWND hwnd;
-
     TRACE("hdc %p context %p/%p/%p\n", hdc, context, (context ? context->context : NULL),
           (context ? context->cglcontext : NULL));
 
-    if (!context)
-    {
-        macdrv_make_context_current(NULL, NULL);
-        NtCurrentTeb()->glContext = NULL;
-        return TRUE;
-    }
-
-    if ((hwnd = WindowFromDC(hdc)))
-    {
-        if (!(data = get_win_data(hwnd)))
-        {
-            FIXME("DC for window %p of other process: not implemented\n", hwnd);
-            return FALSE;
-        }
-
-        if (!data->pixel_format)
-        {
-            WARN("no pixel format set\n");
-            release_win_data(data);
-            SetLastError(ERROR_INVALID_HANDLE);
-            return FALSE;
-        }
-        if (context->format != data->pixel_format)
-        {
-            WARN("mismatched pixel format hdc %p %u context %p %u\n", hdc, data->pixel_format, context, context->format);
-            release_win_data(data);
-            SetLastError(ERROR_INVALID_PIXEL_FORMAT);
-            return FALSE;
-        }
-
-        context->view = data->gl_view;
-        release_win_data(data);
-    }
-    else
-    {
-        WARN("no window for DC\n");
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
-    }
-
-    TRACE("making context current with view %p format %u\n", context->view, context->format);
-
-    macdrv_make_context_current(context->context, context->view);
-    context->has_been_current = TRUE;
-    NtCurrentTeb()->glContext = context;
-
-    return TRUE;
+    return macdrv_wglMakeContextCurrentARB(hdc, hdc, context);
 }
 
 /**********************************************************************
