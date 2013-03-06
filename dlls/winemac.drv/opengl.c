@@ -2327,6 +2327,31 @@ static BOOL macdrv_wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelFormat, int i
 }
 
 
+/**********************************************************************
+ *              macdrv_wglGetSwapIntervalEXT
+ *
+ * WGL_EXT_swap_control: wglGetSwapIntervalEXT
+ */
+static int macdrv_wglGetSwapIntervalEXT(void)
+{
+    struct wgl_context *context = NtCurrentTeb()->glContext;
+    long value;
+    CGLError err;
+
+    TRACE("\n");
+
+    err = CGLGetParameter(context->cglcontext, kCGLCPSwapInterval, (GLint*)&value);
+    if (err != kCGLNoError)
+    {
+        WARN("CGLGetParameter(kCGLCPSwapInterval) failed; error %d %s\n",
+             err, CGLErrorString(err));
+        value = 1;
+    }
+
+    return value;
+}
+
+
 /***********************************************************************
  *              macdrv_wglMakeContextCurrentARB
  *
@@ -2686,6 +2711,42 @@ static BOOL macdrv_wglSetPixelFormatWINE(HDC hdc, int fmt)
 }
 
 
+/**********************************************************************
+ *              macdrv_wglSwapIntervalEXT
+ *
+ * WGL_EXT_swap_control: wglSwapIntervalEXT
+ */
+static BOOL macdrv_wglSwapIntervalEXT(int interval)
+{
+    struct wgl_context *context = NtCurrentTeb()->glContext;
+    long value;
+    CGLError err;
+
+    TRACE("interval %d\n", interval);
+
+    if (interval < 0)
+    {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
+
+    if (interval > 1)
+        interval = 1;
+
+    value = interval;
+    err = CGLSetParameter(context->cglcontext, kCGLCPSwapInterval, (GLint*)&value);
+    if (err != kCGLNoError)
+    {
+        WARN("CGLSetParameter(kCGLCPSwapInterval) failed; error %d %s\n",
+             err, CGLErrorString(err));
+        SetLastError(ERROR_GEN_FAILURE);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+
 static void register_extension(const char *ext)
 {
     if (gl_info.wglExtensions[0])
@@ -2753,6 +2814,10 @@ static void load_extensions(void)
      */
     register_extension("WGL_EXT_extensions_string");
     opengl_funcs.ext.p_wglGetExtensionsStringEXT = macdrv_wglGetExtensionsStringEXT;
+
+    register_extension("WGL_EXT_swap_control");
+    opengl_funcs.ext.p_wglSwapIntervalEXT = macdrv_wglSwapIntervalEXT;
+    opengl_funcs.ext.p_wglGetSwapIntervalEXT = macdrv_wglGetSwapIntervalEXT;
 
     /* Presumably identical to [W]GL_ARB_framebuffer_sRGB, above, but clients may
        check for either, so register them separately. */
