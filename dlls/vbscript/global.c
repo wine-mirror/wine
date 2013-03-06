@@ -1012,6 +1012,7 @@ static HRESULT Global_InStr(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VA
         return E_NOTIMPL;
     default:
         assert(0);
+        return E_FAIL;
     }
 
     if(startv) {

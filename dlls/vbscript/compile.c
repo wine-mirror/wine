@@ -1400,6 +1400,7 @@ static HRESULT create_class_funcprop(compile_ctx_t *ctx, function_decl_t *func_d
             break;
         default:
             assert(0);
+            return E_FAIL;
         }
 
         assert(!desc->entries[invoke_type]);
