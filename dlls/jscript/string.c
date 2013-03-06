@@ -186,14 +186,11 @@ static HRESULT do_attributeless_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, j
 }
 
 static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsigned argc, jsval_t *argv, jsval_t *r,
-        const WCHAR *tagname, const WCHAR *attr)
+        const WCHAR *tagname, const WCHAR *attrname)
 {
-    static const WCHAR tagfmtW[]
-        = {'<','%','s',' ','%','s','=','\"','%','s','\"','>','%','s','<','/','%','s','>',0};
     static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
 
     jsstr_t *str, *attr_value = NULL;
-    const WCHAR *attr_str;
     unsigned attr_len;
     HRESULT hres;
 
@@ -207,19 +204,45 @@ static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsig
             jsstr_release(str);
             return hres;
         }
-        attr_str = attr_value->str;
         attr_len = jsstr_length(attr_value);
     }else {
-        attr_str = undefinedW;
         attr_len = sizeof(undefinedW)/sizeof(WCHAR)-1;
     }
 
     if(r) {
+        unsigned attrname_len = strlenW(attrname);
+        unsigned tagname_len = strlenW(tagname);
         jsstr_t *ret;
 
-        ret = jsstr_alloc_buf(2*strlenW(tagname) + strlenW(attr) + attr_len + jsstr_length(str) + 9);
+        ret = jsstr_alloc_buf(2*tagname_len + attrname_len + attr_len + jsstr_length(str) + 9);
         if(ret) {
-            sprintfW(ret->str, tagfmtW, tagname, attr, attr_str, str->str, tagname);
+            WCHAR *ptr = ret->str;
+
+            *ptr++ = '<';
+            memcpy(ptr, tagname, tagname_len*sizeof(WCHAR));
+            ptr += tagname_len;
+            *ptr++ = ' ';
+            memcpy(ptr, attrname, attrname_len*sizeof(WCHAR));
+            ptr += attrname_len;
+            *ptr++ = '=';
+            *ptr++ = '"';
+
+            if(attr_value)
+                jsstr_flush(attr_value, ptr);
+            else
+                memcpy(ptr, undefinedW, attr_len*sizeof(WCHAR));
+            ptr += attr_len;
+
+            *ptr++ = '"';
+            *ptr++ = '>';
+            ptr += jsstr_flush(str, ptr);
+
+            *ptr++ = '<';
+            *ptr++ = '/';
+            memcpy(ptr, tagname, tagname_len*sizeof(WCHAR));
+            ptr += tagname_len;
+            *ptr = '>';
+
             *r = jsval_string(ret);
         }else {
             hres = E_OUTOFMEMORY;
