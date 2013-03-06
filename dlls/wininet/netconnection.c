@@ -607,7 +607,8 @@ static DWORD init_openssl(void)
 
 static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD timeout)
 {
-    int result, flag;
+    int result;
+    ULONG flag;
 
     assert(server->addr_len);
     result = netconn->socket = socket(server->addr.ss_family, SOCK_STREAM, 0);
@@ -633,7 +634,7 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
                 {
                     int err;
                     socklen_t len = sizeof(err);
-                    if (!getsockopt(netconn->socket, SOL_SOCKET, SO_ERROR, &err, &len) && !err)
+                    if (!getsockopt(netconn->socket, SOL_SOCKET, SO_ERROR, (void *)&err, &len) && !err)
                         result = 0;
                 }
             }
@@ -1003,7 +1004,7 @@ BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available)
     if(!connection->secure)
     {
 #ifdef FIONREAD
-        int unread;
+        ULONG unread;
         int retval = ioctlsocket(connection->socket, FIONREAD, &unread);
         if (!retval)
         {
