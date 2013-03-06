@@ -534,6 +534,59 @@ static void test_color_contexts(void)
     IWICBitmapDecoder_Release(decoder);
 }
 
+/* 1 bpp 1x1 pixel PNG image with PLTE and tRNS chunks */
+static const char png_PLTE_tRNS[] = {
+  0x89,'P','N','G',0x0d,0x0a,0x1a,0x0a,
+  0x00,0x00,0x00,0x0d,'I','H','D','R',0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x01,0x03,0x00,0x00,0x00,0x25,0xdb,0x56,0xca,
+  0x00,0x00,0x00,0x06,'P','L','T','E',0x01,0x02,0x03,0x04,0x05,0x06,0x95,0x53,0x6f,0x48,
+  0x00,0x00,0x00,0x02,'t','R','N','S',0xff,0x00,0xe5,0xb7,0x30,0x4a,
+  0x00,0x00,0x00,0x0a,'I','D','A','T',0x18,0xd3,0x63,0x68,0x00,0x00,0x00,0x82,0x00,0x81,0xa7,0x01,0xba,0x10,
+  0x00,0x00,0x00,0x00,'I','E','N','D',0xae,0x42,0x60,0x82
+};
+
+static void test_png_palette(void)
+{
+    HRESULT hr;
+    IWICBitmapDecoder *decoder;
+    IWICBitmapFrameDecode *frame;
+    IWICPalette *palette;
+    GUID format;
+    UINT count, ret;
+    WICColor color[256];
+
+    decoder = create_decoder(png_PLTE_tRNS, sizeof(png_PLTE_tRNS));
+    ok(decoder != 0, "Failed to load PNG image data\n");
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+
+    hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
+    ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat1bppIndexed),
+       "got wrong format %s\n", debugstr_guid(&format));
+
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "CreatePalette error %#x\n", hr);
+    hr = IWICBitmapFrameDecode_CopyPalette(frame, palette);
+    ok(hr == S_OK, "CopyPalette error %#x\n", hr);
+
+    hr = IWICPalette_GetColorCount(palette, &count);
+    ok(hr == S_OK, "GetColorCount error %#x\n", hr);
+    ok(count == 2, "expected 2, got %u\n", count);
+
+    hr = IWICPalette_GetColors(palette, 256, color, &ret);
+    ok(hr == S_OK, "GetColors error %#x\n", hr);
+    ok(ret == count, "expected %u, got %u\n", count, ret);
+todo_wine
+    ok(color[0] == 0xff010203, "expected 0xff010203, got %#x\n", color[0]);
+todo_wine
+    ok(color[1] == 0x00040506, "expected 0x00040506, got %#x\n", color[1]);
+
+    IWICPalette_Release(palette);
+    IWICBitmapFrameDecode_Release(frame);
+    IWICBitmapDecoder_Release(decoder);
+}
+
 START_TEST(pngformat)
 {
     HRESULT hr;
@@ -545,6 +598,7 @@ START_TEST(pngformat)
     if (FAILED(hr)) return;
 
     test_color_contexts();
+    test_png_palette();
 
     IWICImagingFactory_Release(factory);
     CoUninitialize();
