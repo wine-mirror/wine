@@ -25,6 +25,7 @@
 #include "macdrv_cocoa.h"
 #import "cocoa_app.h"
 #import "cocoa_event.h"
+#import "cocoa_opengl.h"
 
 
 /* Additional Mac virtual keycode, to complement those in Carbon's <HIToolbox/Events.h>. */
@@ -118,6 +119,15 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
 
 @interface WineContentView : NSView
+{
+    NSMutableArray* glContexts;
+    NSMutableArray* pendingGlContexts;
+}
+
+    - (void) addGLContext:(WineOpenGLContext*)context;
+    - (void) removeGLContext:(WineOpenGLContext*)context;
+    - (void) updateGLContexts;
+
 @end
 
 
@@ -149,6 +159,13 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
 @implementation WineContentView
 
+    - (void) dealloc
+    {
+        [glContexts release];
+        [pendingGlContexts release];
+        [super dealloc];
+    }
+
     - (BOOL) isFlipped
     {
         return YES;
@@ -157,6 +174,14 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     - (void) drawRect:(NSRect)rect
     {
         WineWindow* window = (WineWindow*)[self window];
+
+        for (WineOpenGLContext* context in pendingGlContexts)
+            context.needsUpdate = TRUE;
+        [glContexts addObjectsFromArray:pendingGlContexts];
+        [pendingGlContexts removeAllObjects];
+
+        if ([window contentView] != self)
+            return;
 
         if (window.surface && window.surface_mutex &&
             !pthread_mutex_lock(window.surface_mutex))
@@ -225,6 +250,28 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
     - (void) rightMouseDown:(NSEvent*)theEvent
     {
         [[self window] rightMouseDown:theEvent];
+    }
+
+    - (void) addGLContext:(WineOpenGLContext*)context
+    {
+        if (!glContexts)
+            glContexts = [[NSMutableArray alloc] init];
+        if (!pendingGlContexts)
+            pendingGlContexts = [[NSMutableArray alloc] init];
+        [pendingGlContexts addObject:context];
+        [self setNeedsDisplay:YES];
+    }
+
+    - (void) removeGLContext:(WineOpenGLContext*)context
+    {
+        [glContexts removeObjectIdenticalTo:context];
+        [pendingGlContexts removeObjectIdenticalTo:context];
+    }
+
+    - (void) updateGLContexts
+    {
+        for (WineOpenGLContext* context in glContexts)
+            context.needsUpdate = TRUE;
     }
 
     - (BOOL) acceptsFirstMouse:(NSEvent*)theEvent
@@ -1469,4 +1516,144 @@ void macdrv_give_cocoa_window_focus(macdrv_window w)
     OnMainThread(^{
         [window makeFocused];
     });
+}
+
+/***********************************************************************
+ *              macdrv_create_view
+ *
+ * Creates and returns a view in the specified rect of the window.  The
+ * caller is responsible for calling macdrv_dispose_view() on the view
+ * when it is done with it.
+ */
+macdrv_view macdrv_create_view(macdrv_window w, CGRect rect)
+{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    WineWindow* window = (WineWindow*)w;
+    __block WineContentView* view;
+
+    if (CGRectIsNull(rect)) rect = CGRectZero;
+
+    OnMainThread(^{
+        NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
+
+        view = [[WineContentView alloc] initWithFrame:NSRectFromCGRect(rect)];
+        [view setAutoresizesSubviews:NO];
+        [nc addObserver:view
+               selector:@selector(updateGLContexts)
+                   name:NSViewGlobalFrameDidChangeNotification
+                 object:view];
+        [nc addObserver:view
+               selector:@selector(updateGLContexts)
+                   name:NSApplicationDidChangeScreenParametersNotification
+                 object:NSApp];
+        [[window contentView] addSubview:view];
+    });
+
+    [pool release];
+    return (macdrv_view)view;
+}
+
+/***********************************************************************
+ *              macdrv_dispose_view
+ *
+ * Destroys a view previously returned by macdrv_create_view.
+ */
+void macdrv_dispose_view(macdrv_view v)
+{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    WineContentView* view = (WineContentView*)v;
+
+    OnMainThread(^{
+        NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
+
+        [nc removeObserver:view
+                      name:NSViewGlobalFrameDidChangeNotification
+                    object:view];
+        [nc removeObserver:view
+                      name:NSApplicationDidChangeScreenParametersNotification
+                    object:NSApp];
+        [view removeFromSuperview];
+        [view release];
+    });
+
+    [pool release];
+}
+
+/***********************************************************************
+ *              macdrv_set_view_window_and_frame
+ *
+ * Move a view to a new window and/or position within its window.  If w
+ * is NULL, leave the view in its current window and just change its
+ * frame.
+ */
+void macdrv_set_view_window_and_frame(macdrv_view v, macdrv_window w, CGRect rect)
+{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    WineContentView* view = (WineContentView*)v;
+    WineWindow* window = (WineWindow*)w;
+
+    if (CGRectIsNull(rect)) rect = CGRectZero;
+
+    OnMainThread(^{
+        BOOL changedWindow = (window && window != [view window]);
+        NSRect newFrame = NSRectFromCGRect(rect);
+        NSRect oldFrame = [view frame];
+
+        if (changedWindow)
+        {
+            [view removeFromSuperview];
+            [[window contentView] addSubview:view];
+        }
+
+        if (!NSEqualRects(oldFrame, newFrame))
+        {
+            if (!changedWindow)
+                [[view superview] setNeedsDisplayInRect:oldFrame];
+            if (NSEqualPoints(oldFrame.origin, newFrame.origin))
+                [view setFrameSize:newFrame.size];
+            else if (NSEqualSizes(oldFrame.size, newFrame.size))
+                [view setFrameOrigin:newFrame.origin];
+            else
+                [view setFrame:newFrame];
+            [view setNeedsDisplay:YES];
+        }
+    });
+
+    [pool release];
+}
+
+/***********************************************************************
+ *              macdrv_add_view_opengl_context
+ *
+ * Add an OpenGL context to the list being tracked for each view.
+ */
+void macdrv_add_view_opengl_context(macdrv_view v, macdrv_opengl_context c)
+{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    WineContentView* view = (WineContentView*)v;
+    WineOpenGLContext *context = (WineOpenGLContext*)c;
+
+    OnMainThreadAsync(^{
+        [view addGLContext:context];
+    });
+
+    [pool release];
+}
+
+/***********************************************************************
+ *              macdrv_remove_view_opengl_context
+ *
+ * Add an OpenGL context to the list being tracked for each view.
+ */
+void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_context c)
+{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    WineContentView* view = (WineContentView*)v;
+    WineOpenGLContext *context = (WineOpenGLContext*)c;
+
+    OnMainThreadAsync(^{
+        [view removeGLContext:context];
+    });
+
+    [pool release];
 }

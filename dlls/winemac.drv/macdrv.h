@@ -118,6 +118,9 @@ struct macdrv_win_data
     RECT                window_rect;            /* USER window rectangle relative to parent */
     RECT                whole_rect;             /* Mac window rectangle for the whole window relative to parent */
     RECT                client_rect;            /* client area relative to parent */
+    int                 pixel_format;           /* pixel format for GL */
+    macdrv_view         gl_view;                /* view for GL */
+    RECT                gl_rect;                /* GL view rectangle relative to whole_rect */
     COLORREF            color_key;              /* color key for layered window; CLR_INVALID is not color keyed */
     BOOL                on_screen : 1;          /* is window ordered in? (minimized or not) */
     BOOL                shaped : 1;             /* is window using a custom region shape? */
@@ -127,6 +130,9 @@ struct macdrv_win_data
     struct window_surface *surface;
 };
 
+extern struct macdrv_win_data *get_win_data(HWND hwnd) DECLSPEC_HIDDEN;
+extern void release_win_data(struct macdrv_win_data *data) DECLSPEC_HIDDEN;
+extern macdrv_window macdrv_get_cocoa_window(HWND hwnd, BOOL require_on_screen) DECLSPEC_HIDDEN;
 extern RGNDATA *get_region_data(HRGN hrgn, HDC hdc_lptodp) DECLSPEC_HIDDEN;
 extern struct window_surface *create_surface(macdrv_window window, const RECT *rect, BOOL use_alpha) DECLSPEC_HIDDEN;
 extern void set_window_surface(macdrv_window window, struct window_surface *window_surface) DECLSPEC_HIDDEN;
@@ -149,5 +155,9 @@ extern void macdrv_keyboard_changed(const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_key_event(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
 
 extern void macdrv_displays_changed(const macdrv_event *event) DECLSPEC_HIDDEN;
+
+extern struct opengl_funcs *macdrv_wine_get_wgl_driver(PHYSDEV dev, UINT version) DECLSPEC_HIDDEN;
+extern void sync_gl_view(struct macdrv_win_data *data) DECLSPEC_HIDDEN;
+extern void set_gl_view_parent(HWND hwnd, HWND parent) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_MACDRV_H */

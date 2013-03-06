@@ -101,6 +101,8 @@
 
 typedef struct macdrv_opaque_window* macdrv_window;
 typedef struct macdrv_opaque_event_queue* macdrv_event_queue;
+typedef struct macdrv_opaque_view* macdrv_view;
+typedef struct macdrv_opaque_opengl_context* macdrv_opengl_context;
 struct macdrv_event;
 
 struct macdrv_display {
@@ -260,9 +262,22 @@ extern void macdrv_set_window_color_key(macdrv_window w, CGFloat keyRed, CGFloat
 extern void macdrv_clear_window_color_key(macdrv_window w) DECLSPEC_HIDDEN;
 extern void macdrv_window_use_per_pixel_alpha(macdrv_window w, int use_per_pixel_alpha) DECLSPEC_HIDDEN;
 extern void macdrv_give_cocoa_window_focus(macdrv_window w) DECLSPEC_HIDDEN;
+extern macdrv_view macdrv_create_view(macdrv_window w, CGRect rect) DECLSPEC_HIDDEN;
+extern void macdrv_dispose_view(macdrv_view v) DECLSPEC_HIDDEN;
+extern void macdrv_set_view_window_and_frame(macdrv_view v, macdrv_window w, CGRect rect) DECLSPEC_HIDDEN;
+extern void macdrv_add_view_opengl_context(macdrv_view v, macdrv_opengl_context c) DECLSPEC_HIDDEN;
+extern void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_context c) DECLSPEC_HIDDEN;
 
 
 /* keyboard */
 extern CFDataRef macdrv_copy_keyboard_layout(CGEventSourceKeyboardType* keyboard_type, int* is_iso) DECLSPEC_HIDDEN;
+
+
+/* opengl */
+extern macdrv_opengl_context macdrv_create_opengl_context(void* cglctx) DECLSPEC_HIDDEN;
+extern void macdrv_dispose_opengl_context(macdrv_opengl_context c) DECLSPEC_HIDDEN;
+extern void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v) DECLSPEC_HIDDEN;
+extern void macdrv_update_opengl_context(macdrv_opengl_context c) DECLSPEC_HIDDEN;
+extern void macdrv_flush_opengl_context(macdrv_opengl_context c) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_MACDRV_COCOA_H */

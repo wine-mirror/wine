@@ -245,7 +245,7 @@ static struct macdrv_win_data *alloc_win_data(HWND hwnd)
  *
  * Lock and return the data structure associated with a window.
  */
-static struct macdrv_win_data *get_win_data(HWND hwnd)
+struct macdrv_win_data *get_win_data(HWND hwnd)
 {
     struct macdrv_win_data *data;
 
@@ -263,7 +263,7 @@ static struct macdrv_win_data *get_win_data(HWND hwnd)
  *
  * Release the data returned by get_win_data.
  */
-static void release_win_data(struct macdrv_win_data *data)
+void release_win_data(struct macdrv_win_data *data)
 {
     if (data) LeaveCriticalSection(&win_data_section);
 }
@@ -274,7 +274,7 @@ static void release_win_data(struct macdrv_win_data *data)
  *
  * Return the Mac window associated with the full area of a window
  */
-static macdrv_window macdrv_get_cocoa_window(HWND hwnd, BOOL require_on_screen)
+macdrv_window macdrv_get_cocoa_window(HWND hwnd, BOOL require_on_screen)
 {
     struct macdrv_win_data *data = get_win_data(hwnd);
     macdrv_window ret = NULL;
@@ -826,6 +826,7 @@ void CDECL macdrv_DestroyWindow(HWND hwnd)
 
     if (!(data = get_win_data(hwnd))) return;
 
+    if (data->gl_view) macdrv_dispose_view(data->gl_view);
     destroy_cocoa_window(data);
 
     CFDictionaryRemoveValue(win_datas, hwnd);
@@ -913,6 +914,8 @@ void CDECL macdrv_SetParent(HWND hwnd, HWND parent, HWND old_parent)
     else  /* new top level window */
         create_cocoa_window(data);
     release_win_data(data);
+
+    set_gl_view_parent(hwnd, parent);
 }
 
 
@@ -1359,6 +1362,8 @@ void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
             if (!(data = get_win_data(hwnd))) return;
         }
     }
+
+    sync_gl_view(data);
 
     if (!data->cocoa_window) goto done;
 
