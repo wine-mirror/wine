@@ -144,27 +144,44 @@ static HRESULT String_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 
 static HRESULT do_attributeless_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r, const WCHAR *tagname)
 {
-    jsstr_t *str;
+    unsigned tagname_len;
+    jsstr_t *str, *ret;
+    WCHAR *ptr;
     HRESULT hres;
-
-    static const WCHAR tagfmt[] = {'<','%','s','>','%','s','<','/','%','s','>',0};
 
     hres = get_string_val(ctx, jsthis, &str);
     if(FAILED(hres))
         return hres;
 
-    if(r) {
-        jsstr_t *ret = jsstr_alloc_buf(jsstr_length(str) + 2*strlenW(tagname) + 5);
-        if(!ret) {
-            jsstr_release(str);
-            return E_OUTOFMEMORY;
-        }
-
-        sprintfW(ret->str, tagfmt, tagname, str->str, tagname);
-        *r = jsval_string(ret);
+    if(!r) {
+        jsstr_release(str);
+        return S_OK;
     }
 
+    tagname_len = strlenW(tagname);
+
+    ret = jsstr_alloc_buf(jsstr_length(str) + 2*tagname_len + 5);
+    if(!ret) {
+        jsstr_release(str);
+        return E_OUTOFMEMORY;
+    }
+
+    ptr = ret->str;
+    *ptr++ = '<';
+    memcpy(ptr, tagname, tagname_len*sizeof(WCHAR));
+    ptr += tagname_len;
+    *ptr++ = '>';
+
+    ptr += jsstr_flush(str, ptr);
     jsstr_release(str);
+
+    *ptr++ = '<';
+    *ptr++ = '/';
+    memcpy(ptr, tagname, tagname_len*sizeof(WCHAR));
+    ptr += tagname_len;
+    *ptr = '>';
+
+    *r = jsval_string(ret);
     return S_OK;
 }
 
