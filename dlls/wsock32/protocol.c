@@ -115,7 +115,8 @@ INT WINAPI EnumProtocolsA(LPINT protocols, LPVOID buffer, LPDWORD buflen)
         {
             WSAPROTOCOL_INFOA *wsabuf;
             PROTOCOL_INFOA *pi = buffer;
-            unsigned int i, string_offset;
+            unsigned int string_offset;
+            INT i;
 
             if (!(wsabuf = HeapAlloc(GetProcessHeap(), 0, size))) return SOCKET_ERROR;
 
@@ -169,7 +170,8 @@ INT WINAPI EnumProtocolsW(LPINT protocols, LPVOID buffer, LPDWORD buflen)
         {
             WSAPROTOCOL_INFOW *wsabuf;
             PROTOCOL_INFOW *pi = buffer;
-            unsigned int i, string_offset;
+            unsigned int string_offset;
+            INT i;
 
             if (!(wsabuf = HeapAlloc(GetProcessHeap(), 0, size))) return SOCKET_ERROR;
 
