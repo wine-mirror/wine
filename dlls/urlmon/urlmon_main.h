@@ -149,6 +149,7 @@ struct ProtocolVtbl {
 #define FLAG_LAST_DATA_REPORTED       0x0010
 #define FLAG_RESULT_REPORTED          0x0020
 #define FLAG_ERROR                    0x0040
+#define FLAG_SYNC_READ                0x0080
 
 HRESULT protocol_start(Protocol*,IInternetProtocol*,IUri*,IInternetProtocolSink*,IInternetBindInfo*) DECLSPEC_HIDDEN;
 HRESULT protocol_continue(Protocol*,PROTOCOLDATA*) DECLSPEC_HIDDEN;
@@ -156,6 +157,7 @@ HRESULT protocol_read(Protocol*,void*,ULONG,ULONG*) DECLSPEC_HIDDEN;
 HRESULT protocol_lock_request(Protocol*) DECLSPEC_HIDDEN;
 HRESULT protocol_unlock_request(Protocol*) DECLSPEC_HIDDEN;
 HRESULT protocol_abort(Protocol*,HRESULT) DECLSPEC_HIDDEN;
+HRESULT protocol_syncbinding(Protocol*) DECLSPEC_HIDDEN;
 void protocol_close_connection(Protocol*) DECLSPEC_HIDDEN;
 
 void find_domain_name(const WCHAR*,DWORD,INT*) DECLSPEC_HIDDEN;

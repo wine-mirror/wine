@@ -445,11 +445,18 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
     do {
         error = send_http_request(This);
 
-        if(error == ERROR_IO_PENDING || error == ERROR_SUCCESS)
+        switch(error) {
+        case ERROR_IO_PENDING:
             return S_OK;
-
-        hres = handle_http_error(This, error);
-
+        case ERROR_SUCCESS:
+            /*
+             * If sending response ended synchronously, it means that we have the whole data
+             * available locally (most likely in cache).
+             */
+            return protocol_syncbinding(&This->base);
+        default:
+            hres = handle_http_error(This, error);
+        }
     } while(hres == RPC_E_RETRY);
 
     WARN("HttpSendRequest failed: %d\n", error);

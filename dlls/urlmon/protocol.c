@@ -70,6 +70,55 @@ static void all_data_read(Protocol *protocol)
     report_result(protocol, S_OK);
 }
 
+static HRESULT start_downloading(Protocol *protocol)
+{
+    HRESULT hres;
+
+    hres = protocol->vtbl->start_downloading(protocol);
+    if(FAILED(hres)) {
+        protocol_close_connection(protocol);
+        report_result(protocol, hres);
+        return S_OK;
+    }
+
+    if(protocol->bindf & BINDF_NEEDFILE) {
+        WCHAR cache_file[MAX_PATH];
+        DWORD buflen = sizeof(cache_file);
+
+        if(InternetQueryOptionW(protocol->request, INTERNET_OPTION_DATAFILE_NAME, cache_file, &buflen)) {
+            report_progress(protocol, BINDSTATUS_CACHEFILENAMEAVAILABLE, cache_file);
+        }else {
+            FIXME("Could not get cache file\n");
+        }
+    }
+
+    protocol->flags |= FLAG_FIRST_CONTINUE_COMPLETE;
+    return S_OK;
+}
+
+HRESULT protocol_syncbinding(Protocol *protocol)
+{
+    BOOL res;
+    HRESULT hres;
+
+    protocol->flags |= FLAG_SYNC_READ;
+
+    hres = start_downloading(protocol);
+    if(FAILED(hres))
+        return hres;
+
+    res = InternetQueryDataAvailable(protocol->request, &protocol->query_available, 0, 0);
+    if(res)
+        protocol->available_bytes = protocol->query_available;
+    else
+        WARN("InternetQueryDataAvailable failed: %u\n", GetLastError());
+
+    protocol->flags |= FLAG_FIRST_DATA_REPORTED|FLAG_LAST_DATA_REPORTED;
+    IInternetProtocolSink_ReportData(protocol->protocol_sink, BSCF_LASTDATANOTIFICATION|BSCF_DATAFULLYAVAILABLE,
+            protocol->available_bytes, protocol->content_length);
+    return S_OK;
+}
+
 static void request_complete(Protocol *protocol, INTERNET_ASYNC_RESULT *ar)
 {
     PROTOCOLDATA data;
@@ -298,12 +347,7 @@ HRESULT protocol_continue(Protocol *protocol, PROTOCOLDATA *data)
     BOOL is_start;
     HRESULT hres;
 
-    if (!data) {
-        WARN("Expected pProtocolData to be non-NULL\n");
-        return S_OK;
-    }
-
-    is_start = data->pData == UlongToPtr(BINDSTATUS_DOWNLOADINGDATA);
+    is_start = !data || data->pData == UlongToPtr(BINDSTATUS_DOWNLOADINGDATA);
 
     if(!protocol->request) {
         WARN("Expected request to be non-NULL\n");
@@ -325,29 +369,12 @@ HRESULT protocol_continue(Protocol *protocol, PROTOCOLDATA *data)
         return write_post_stream(protocol);
 
     if(is_start) {
-        hres = protocol->vtbl->start_downloading(protocol);
-        if(FAILED(hres)) {
-            protocol_close_connection(protocol);
-            report_result(protocol, hres);
+        hres = start_downloading(protocol);
+        if(FAILED(hres))
             return S_OK;
-        }
-
-        if(protocol->bindf & BINDF_NEEDFILE) {
-            WCHAR cache_file[MAX_PATH];
-            DWORD buflen = sizeof(cache_file);
-
-            if(InternetQueryOptionW(protocol->request, INTERNET_OPTION_DATAFILE_NAME,
-                    cache_file, &buflen)) {
-                report_progress(protocol, BINDSTATUS_CACHEFILENAMEAVAILABLE, cache_file);
-            }else {
-                FIXME("Could not get cache file\n");
-            }
-        }
-
-        protocol->flags |= FLAG_FIRST_CONTINUE_COMPLETE;
     }
 
-    if(data->pData >= UlongToPtr(BINDSTATUS_DOWNLOADINGDATA)) {
+    if(!data || data->pData >= UlongToPtr(BINDSTATUS_DOWNLOADINGDATA)) {
         if(!protocol->available_bytes) {
             if(protocol->query_available) {
                 protocol->available_bytes = protocol->query_available;
@@ -400,7 +427,7 @@ HRESULT protocol_read(Protocol *protocol, void *buf, ULONG size, ULONG *read_ret
         return S_FALSE;
     }
 
-    if(!(protocol->flags & FLAG_REQUEST_COMPLETE) || !protocol->available_bytes) {
+    if(!(protocol->flags & FLAG_SYNC_READ) && (!(protocol->flags & FLAG_REQUEST_COMPLETE) || !protocol->available_bytes)) {
         *read_ret = 0;
         return E_PENDING;
     }
