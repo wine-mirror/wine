@@ -385,6 +385,41 @@ static DWORD cache_container_set_size(URLCACHECONTAINER *container, HANDLE file,
     return ERROR_SUCCESS;
 }
 
+static BOOL cache_container_is_valid(URLCACHE_HEADER *header, DWORD file_size)
+{
+    DWORD allocation_size, count_bits, i;
+
+    if(file_size < FILE_SIZE(MIN_BLOCK_NO))
+        return FALSE;
+
+    if(file_size != header->dwFileSize)
+        return FALSE;
+
+    if (!memcmp(header->szSignature, urlcache_ver_prefix, sizeof(urlcache_ver_prefix)-1) &&
+            memcmp(header->szSignature+sizeof(urlcache_ver_prefix)-1, urlcache_ver, sizeof(urlcache_ver)-1))
+        return FALSE;
+
+    if(FILE_SIZE(header->dwIndexCapacityInBlocks) != file_size)
+        return FALSE;
+
+    allocation_size = 0;
+    for(i=0; i<header->dwIndexCapacityInBlocks/8; i++) {
+        for(count_bits = header->allocation_table[i]; count_bits!=0; count_bits>>=1) {
+            if(count_bits & 1)
+                allocation_size++;
+        }
+    }
+    if(allocation_size != header->dwBlocksInUse)
+        return FALSE;
+
+    for(; i<ALLOCATION_TABLE_SIZE; i++) {
+        if(header->allocation_table[i])
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 /***********************************************************************
  *           cache_container_open_index (Internal)
  *
@@ -451,8 +486,7 @@ static DWORD cache_container_open_index(URLCACHECONTAINER *container, DWORD bloc
     if(container->hMapping && validate) {
         URLCACHE_HEADER *header = MapViewOfFile(container->hMapping, FILE_MAP_WRITE, 0, 0, 0);
 
-        if(header && !memcmp(header->szSignature, urlcache_ver_prefix, sizeof(urlcache_ver_prefix)-1) &&
-                memcmp(header->szSignature+sizeof(urlcache_ver_prefix)-1, urlcache_ver, sizeof(urlcache_ver)-1)) {
+        if(header && !cache_container_is_valid(header, file_size)) {
             WARN("detected old or broken index.dat file\n");
             UnmapViewOfFile(header);
             FreeUrlCacheSpaceW(container->path, 100, 0);
