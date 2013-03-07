@@ -174,6 +174,7 @@ MAKE_FUNCPTR(png_get_pHYs);
 MAKE_FUNCPTR(png_get_PLTE);
 MAKE_FUNCPTR(png_get_tRNS);
 MAKE_FUNCPTR(png_set_bgr);
+MAKE_FUNCPTR(png_set_crc_action);
 MAKE_FUNCPTR(png_set_error_fn);
 #if HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8
 MAKE_FUNCPTR(png_set_expand_gray_1_2_4_to_8);
@@ -222,6 +223,7 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_get_PLTE);
         LOAD_FUNCPTR(png_get_tRNS);
         LOAD_FUNCPTR(png_set_bgr);
+        LOAD_FUNCPTR(png_set_crc_action);
         LOAD_FUNCPTR(png_set_error_fn);
 #if HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8
         LOAD_FUNCPTR(png_set_expand_gray_1_2_4_to_8);
@@ -438,6 +440,7 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         goto end;
     }
     ppng_set_error_fn(This->png_ptr, jmpbuf, user_error_fn, user_warning_fn);
+    ppng_set_crc_action(This->png_ptr, PNG_CRC_QUIET_USE, PNG_CRC_QUIET_USE);
 
     /* seek to the start of the stream */
     seek.QuadPart = 0;
