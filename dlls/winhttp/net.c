@@ -843,7 +843,7 @@ DWORD netconn_set_timeout( netconn_t *netconn, BOOL send, int value )
     return ERROR_SUCCESS;
 }
 
-static DWORD resolve_hostname( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr *sa, socklen_t *sa_len )
+static DWORD resolve_hostname( const WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr *sa, socklen_t *sa_len )
 {
     char *hostname;
 #ifdef HAVE_GETADDRINFO
@@ -928,7 +928,7 @@ static DWORD resolve_hostname( WCHAR *hostnameW, INTERNET_PORT port, struct sock
 
 struct resolve_args
 {
-    WCHAR           *hostname;
+    const WCHAR     *hostname;
     INTERNET_PORT    port;
     struct sockaddr *sa;
     socklen_t       *sa_len;
