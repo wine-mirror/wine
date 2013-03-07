@@ -33,6 +33,7 @@
 #include "wine/wglext.h"
 
 #define __gl_h_
+#define __gltypes_h_
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/glu.h>
 #include <OpenGL/CGLRenderers.h>
