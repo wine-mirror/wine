@@ -791,7 +791,9 @@ static HRESULT literal_as_bstr(compiler_ctx_t *ctx, literal_t *literal, BSTR *st
         if(FAILED(hres))
             return hres;
 
-        *str = compiler_alloc_bstr(ctx, jsstr->str);
+        *str = compiler_alloc_bstr_len(ctx, NULL, jsstr_length(jsstr));
+        if(*str)
+            jsstr_flush(jsstr, *str);
         jsstr_release(jsstr);
         break;
     }
