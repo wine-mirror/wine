@@ -1190,7 +1190,7 @@ static HRESULT reader_parse_pitarget(xmlreader *reader, strval *target)
     static const WCHAR xmlW[] = {'x','m','l'};
     strval name;
     HRESULT hr;
-    int i;
+    UINT i;
 
     hr = reader_parse_name(reader, &name);
     if (FAILED(hr)) return WC_E_PI;
