@@ -98,11 +98,11 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp,
 
         for(i=0; i < n; i++) {
             if(ret->parens[i].index == -1) {
-                ctx->match_parens[i].str = NULL;
-                ctx->match_parens[i].len = 0;
+                ctx->match_parens[i].index = 0;
+                ctx->match_parens[i].length = 0;
             }else {
-                ctx->match_parens[i].str = ctx->last_match->str + ret->parens[i].index;
-                ctx->match_parens[i].len = ret->parens[i].length;
+                ctx->match_parens[i].index = ret->parens[i].index;
+                ctx->match_parens[i].length = ret->parens[i].length;
             }
         }
 
@@ -216,8 +216,8 @@ static HRESULT regexp_match(script_ctx_t *ctx, jsdisp_t *dispex, jsstr_t *str, B
             }
         }
 
-        ret[i].str = result->cp - result->match_len;
-        ret[i++].len = result->match_len;
+        ret[i].index = result->cp - str->str - result->match_len;
+        ret[i++].length = result->match_len;
 
         if(!gflag && !(This->jsregexp->flags & REG_GLOB)) {
             hres = S_OK;
@@ -736,7 +736,7 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, jsstr_t *str, jsval
     for(i=0; i < match_cnt; i++) {
         jsstr_t *tmp_str;
 
-        tmp_str = jsstr_alloc_len(match_result[i].str, match_result[i].len);
+        tmp_str = jsstr_substr(str, match_result[i].index, match_result[i].length);
         if(!tmp_str) {
             hres = E_OUTOFMEMORY;
             break;
@@ -749,12 +749,12 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, jsstr_t *str, jsval
     }
 
     while(SUCCEEDED(hres)) {
-        hres = jsdisp_propput_name(array, indexW, jsval_number(match_result[match_cnt-1].str-str->str));
+        hres = jsdisp_propput_name(array, indexW, jsval_number(match_result[match_cnt-1].index));
         if(FAILED(hres))
             break;
 
         hres = jsdisp_propput_name(array, lastIndexW,
-                jsval_number(match_result[match_cnt-1].str-str->str+match_result[match_cnt-1].len));
+                jsval_number(match_result[match_cnt-1].index + match_result[match_cnt-1].length));
         if(FAILED(hres))
             break;
 
@@ -777,7 +777,7 @@ static HRESULT global_idx(script_ctx_t *ctx, DWORD flags, DWORD idx, jsval_t *r)
     case DISPATCH_PROPERTYGET: {
         jsstr_t *ret;
 
-        ret = jsstr_alloc_len(ctx->match_parens[idx].str, ctx->match_parens[idx].len);
+        ret = jsstr_substr(ctx->last_match, ctx->match_parens[idx].index, ctx->match_parens[idx].length);
         if(!ret)
             return E_OUTOFMEMORY;
 

@@ -362,8 +362,8 @@ typedef struct {
 } jsexcept_t;
 
 typedef struct {
-    const WCHAR *str;
-    DWORD len;
+    unsigned index;
+    unsigned length;
 } match_result_t;
 
 struct _script_ctx_t {
