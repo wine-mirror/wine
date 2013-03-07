@@ -152,7 +152,7 @@ static PROTOCOLDATA protocoldata, *pdata, continue_protdata;
 static DWORD prot_read, filter_state, http_post_test, thread_id;
 static BOOL security_problem, test_async_req, impl_protex;
 static BOOL async_read_pending, mimefilter_test, direct_read, wait_for_switch, emulate_prot, short_read, test_abort;
-static BOOL empty_file, no_mime;
+static BOOL empty_file, no_mime, bind_from_cache;
 
 enum {
     STATE_CONNECTING,
@@ -214,6 +214,13 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     CHAR buf[512];
     WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
     return lstrcmpA(stra, buf);
+}
+
+static const char *w2a(LPCWSTR str)
+{
+    static char buf[INTERNET_MAX_URL_LENGTH];
+    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
+    return buf;
 }
 
 static HRESULT WINAPI HttpSecurity_QueryInterface(IHttpSecurity *iface, REFIID riid, void **ppv)
@@ -749,7 +756,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
     if (ulStatusCode < sizeof(status_names)/sizeof(status_names[0]))
         trace( "progress: %s %s\n", status_names[ulStatusCode], wine_dbgstr_w(szStatusText) );
     else
-          trace( "progress: %u %s\n", ulStatusCode, wine_dbgstr_w(szStatusText) );
+        trace( "progress: %u %s\n", ulStatusCode, wine_dbgstr_w(szStatusText) );
 
     switch(ulStatusCode) {
     case BINDSTATUS_MIMETYPEAVAILABLE:
@@ -893,6 +900,12 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
                "grcfBSCF = %08x\n", grfBSCF);
         else
             ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_DATAFULLYAVAILABLE), "grcfBSCF = %08x\n", grfBSCF);
+    }else if(bind_from_cache) {
+        CHECK_EXPECT(ReportData);
+
+        ok(grfBSCF == (BSCF_LASTDATANOTIFICATION|BSCF_DATAFULLYAVAILABLE), "grcfBSCF = %08x\n", grfBSCF);
+        ok(ulProgress == 1000, "ulProgress = %u\n", ulProgress);
+        ok(!ulProgressMax, "ulProgressMax = %u\n", ulProgressMax);
     }else if(direct_read) {
         BYTE buf[14096];
         ULONG read;
@@ -2298,6 +2311,7 @@ static IClassFactory mimefilter_cf = { &MimeFilterCFVtbl };
 #define TEST_IMPLPROTEX  0x0800
 #define TEST_EMPTY       0x1000
 #define TEST_NOMIME      0x2000
+#define TEST_FROMCACHE   0x4000
 
 static void register_filter(BOOL do_register)
 {
@@ -2353,6 +2367,7 @@ static void init_test(int prot, DWORD flags)
     test_abort = (flags & TEST_ABORT) != 0;
     impl_protex = (flags & TEST_IMPLPROTEX) != 0;
     empty_file = (flags & TEST_EMPTY) != 0;
+    bind_from_cache = (flags & TEST_FROMCACHE) != 0;
 
     register_filter(mimefilter_test);
 }
@@ -2755,6 +2770,51 @@ static void test_file_protocol(void) {
     test_file_protocol_fail();
 }
 
+static void create_cache_entry(const WCHAR *urlw)
+{
+    FILETIME now, tomorrow, yesterday;
+    char file_path[MAX_PATH];
+    BYTE content[1000];
+    ULARGE_INTEGER li;
+    const char *url;
+    HANDLE file;
+    DWORD size;
+    unsigned i;
+    BOOL res;
+
+    BYTE cache_headers[] = "HTTP/1.1 200 OK\r\n\r\n";
+
+    trace("Testing cache read...\n");
+
+    url = w2a(urlw);
+
+    for(i = 0; i < sizeof(content); i++)
+        content[i] = '0' + (i%10);
+
+    GetSystemTimeAsFileTime(&now);
+    li.u.HighPart = now.dwHighDateTime;
+    li.u.LowPart = now.dwLowDateTime;
+    li.QuadPart += (LONGLONG)10000000 * 3600 * 24;
+    tomorrow.dwHighDateTime = li.u.HighPart;
+    tomorrow.dwLowDateTime = li.u.LowPart;
+    li.QuadPart -= (LONGLONG)10000000 * 3600 * 24 * 2;
+    yesterday.dwHighDateTime = li.u.HighPart;
+    yesterday.dwLowDateTime = li.u.LowPart;
+
+    res = CreateUrlCacheEntryA(url, sizeof(content), "", file_path, 0);
+    ok(res, "CreateUrlCacheEntryA failed: %u\n", GetLastError());
+
+    file = CreateFileA(file_path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
+
+    WriteFile(file, content, sizeof(content), &size, NULL);
+    CloseHandle(file);
+
+    res = CommitUrlCacheEntryA(url, file_path, tomorrow, yesterday, NORMAL_CACHE_ENTRY,
+                               cache_headers, sizeof(cache_headers)-1, "", 0);
+    ok(res, "CommitUrlCacheEntryA failed: %u\n", GetLastError());
+}
+
 static BOOL http_protocol_start(LPCWSTR url, BOOL use_iuri)
 {
     static BOOL got_user_agent = FALSE;
@@ -2779,6 +2839,11 @@ static BOOL http_protocol_start(LPCWSTR url, BOOL use_iuri)
         SET_EXPECT(GetBindString_POST_COOKIE);
         if(http_post_test == TYMED_ISTREAM)
             SET_EXPECT(Stream_Seek);
+    }
+    if(bind_from_cache) {
+        SET_EXPECT(OnResponse);
+        SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+        SET_EXPECT(ReportData);
     }
 
     if(uri) {
@@ -2816,6 +2881,11 @@ static BOOL http_protocol_start(LPCWSTR url, BOOL use_iuri)
         CHECK_CALLED(GetBindString_POST_COOKIE);
         if(http_post_test == TYMED_ISTREAM)
             CHECK_CALLED(Stream_Seek);
+    }
+    if(bind_from_cache) {
+        CHECK_CALLED(OnResponse);
+        CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+        CHECK_CALLED(ReportData);
     }
 
     return TRUE;
@@ -2876,6 +2946,9 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
     http_url = url;
     http_post_test = tymed;
 
+    if(flags & TEST_FROMCACHE)
+        create_cache_entry(url);
+
     hres = CoGetClassObject(prot == HTTPS_TEST ? &CLSID_HttpSProtocol : &CLSID_HttpProtocol,
             CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
@@ -2925,10 +2998,13 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
             SET_EXPECT(Switch);
         }
 
-        if(!http_protocol_start(url, (flags & TEST_USEIURI) != 0))
+        if(!http_protocol_start(url, (flags & TEST_USEIURI) != 0)) {
+            IInternetProtocol_Abort(async_protocol, E_ABORT, 0);
+            IInternetProtocol_Release(async_protocol);
             return;
+        }
 
-        if(!direct_read && !test_abort)
+        if(!direct_read && !test_abort && !bind_from_cache)
             SET_EXPECT(ReportResult);
         expect_hrResult = test_abort ? E_ABORT : S_OK;
 
@@ -2940,6 +3016,19 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
                 call_continue(&continue_protdata);
                 SetEvent(event_continue_done);
             }
+        }else if(bind_from_cache) {
+            BYTE buf[1500];
+
+            hres = IInternetProtocol_Read(async_protocol, buf, 100, &cb);
+            ok(hres == S_OK && cb == 100, "Read failed: %08x (%d bytes)\n", hres, cb);
+
+            SET_EXPECT(ReportResult);
+            hres = IInternetProtocol_Read(async_protocol, buf, sizeof(buf), &cb);
+            ok(hres == S_OK && cb == 900, "Read failed: %08x (%d bytes)\n", hres, cb);
+            CHECK_CALLED(ReportResult);
+
+            hres = IInternetProtocol_Read(async_protocol, buf, sizeof(buf), &cb);
+            ok(hres == S_FALSE && !cb, "Read failed: %08x (%d bytes)\n", hres, cb);
         }else {
             hres = IInternetProtocol_Read(async_protocol, buf, 1, &cb);
             ok((hres == E_PENDING && cb==0) ||
@@ -3013,6 +3102,13 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
     }
 
     IClassFactory_Release(factory);
+
+    if(flags & TEST_FROMCACHE) {
+        BOOL res;
+
+        res = DeleteUrlCacheEntryW(url);
+        ok(res, "DeleteUrlCacheEntryA failed: %u\n", GetLastError());
+    }
 }
 
 static void test_http_protocol(void)
@@ -3029,6 +3125,10 @@ static void test_http_protocol(void)
     static const WCHAR empty_url[] =
         {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',
          't','e','s','t','s','/','e','m','p','t','y','.','j','s',0};
+    static const WCHAR cache_only_url[] =
+        {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',
+         't','e','s','t','s','/','c','a','c','h','e','-','o','n','l','y',0};
+
 
     trace("Testing http protocol (not from urlmon)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
@@ -3058,9 +3158,22 @@ static void test_http_protocol(void)
     test_http_protocol_url(redirect_url, HTTP_TEST, TEST_REDIRECT, TYMED_NULL);
 
     trace("Testing http protocol empty file...\n");
+    bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
     test_http_protocol_url(empty_url, HTTP_TEST, TEST_EMPTY, TYMED_NULL);
 
+    /* This is a bit ugly. We unconditionally disable this test on Wine. This won't work until we have
+     * support for reading from cache via HTTP layer in wininet. Until then, Wine will fail badly, affecting
+     * other, unrelated, tests. Working around it is not worth the trouble, we may simply make sure those
+     * tests work on Windows and have them around for the future.
+     */
+    if(broken(1)) {
+    trace("Testing http protocol (from cache)...\n");
+    bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
+    test_http_protocol_url(cache_only_url, HTTP_TEST, TEST_FROMCACHE, TYMED_NULL);
+    }
+
     trace("Testing http protocol abort...\n");
+    bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
     test_http_protocol_url(winetest_url, HTTP_TEST, TEST_ABORT, TYMED_NULL);
 
     test_early_abort(&CLSID_HttpProtocol);
