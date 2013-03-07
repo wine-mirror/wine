@@ -2643,7 +2643,7 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
             if(read_mode == READMODE_NOBLOCK) {
                 DWORD avail;
 
-                if(!NETCON_query_data_available(req->netconn, &avail) || !avail)
+                if(!req->netconn || !NETCON_query_data_available(req->netconn, &avail) || !avail)
                     break;
                 if(read_bytes > avail)
                     read_bytes = avail;
