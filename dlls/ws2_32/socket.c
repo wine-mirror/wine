@@ -2881,7 +2881,8 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             {
                 struct irda_device_list *src = (struct irda_device_list *)buf;
                 DEVICELIST *dst = (DEVICELIST *)optval;
-                INT needed = sizeof(DEVICELIST), i;
+                INT needed = sizeof(DEVICELIST);
+                unsigned int i;
 
                 if (src->len > 0)
                     needed += (src->len - 1) * sizeof(IRDA_DEVICE_INFO);
@@ -4605,6 +4606,7 @@ struct WS_hostent* WINAPI WS_gethostbyaddr(const char *addr, int len, int type)
 static struct WS_hostent* WS_get_local_ips( char *hostname )
 {
     int last_metric, numroutes = 0, i, j;
+    DWORD n;
     PIP_ADAPTER_INFO adapters = NULL, k;
     struct WS_hostent *hostlist = NULL;
     PMIB_IPFORWARDTABLE routes = NULL;
@@ -4627,15 +4629,15 @@ static struct WS_hostent* WS_get_local_ips( char *hostname )
     if (GetIpForwardTable(routes, &route_size, FALSE) != NO_ERROR)
         goto cleanup;
     /* Store the interface associated with each route */
-    for (i = 0; i < routes->dwNumEntries; i++)
+    for (n = 0; n < routes->dwNumEntries; n++)
     {
         IF_INDEX ifindex;
         DWORD ifmetric, exists = FALSE;
 
-        if (routes->table[i].u1.ForwardType != MIB_IPROUTE_TYPE_DIRECT)
+        if (routes->table[n].u1.ForwardType != MIB_IPROUTE_TYPE_DIRECT)
             continue;
-        ifindex = routes->table[i].dwForwardIfIndex;
-        ifmetric = routes->table[i].dwForwardMetric1;
+        ifindex = routes->table[n].dwForwardIfIndex;
+        ifmetric = routes->table[n].dwForwardMetric1;
         /* Only store the lowest valued metric for an interface */
         for (j = 0; j < numroutes; j++)
         {
