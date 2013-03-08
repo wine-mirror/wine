@@ -941,19 +941,15 @@ static BOOL WINAPI HTTP_RetrieveEncodedObjectW(LPCWSTR pszURL,
                         else
                             ret = TRUE;
                     }
-                    /* We don't set ret to TRUE in this block to avoid masking
-                     * an error from HttpSendRequestExW.
-                     */
                     if (ret &&
-                     !HttpEndRequestW(hHttp, NULL, 0, (DWORD_PTR)context) &&
+                     !(ret = HttpEndRequestW(hHttp, NULL, 0, (DWORD_PTR)context)) &&
                      GetLastError() == ERROR_IO_PENDING)
                     {
                         if (WaitForSingleObject(context->event,
                          context->timeout) == WAIT_TIMEOUT)
-                        {
                             SetLastError(ERROR_TIMEOUT);
-                            ret = FALSE;
-                        }
+                        else
+                            ret = TRUE;
                     }
                     if (ret)
                         ret = CRYPT_DownloadObject(dwRetrievalFlags, hHttp,
