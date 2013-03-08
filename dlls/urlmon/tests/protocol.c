@@ -201,7 +201,7 @@ static const char *debugstr_guid(REFIID riid)
 {
     static char buf[50];
 
-    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
             riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
             riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
             riid->Data4[5], riid->Data4[6], riid->Data4[7]);
@@ -1479,6 +1479,8 @@ static HRESULT WINAPI Protocol_Seek(IInternetProtocolEx *iface,
 
 static HRESULT WINAPI ProtocolEmul_QueryInterface(IInternetProtocolEx *iface, REFIID riid, void **ppv)
 {
+    static const IID unknown_iid = {0x7daf9908,0x8415,0x4005,{0x95,0xae, 0xbd,0x27,0xf6,0xe3,0xdc,0x00}};
+
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocol, riid)) {
         *ppv = iface;
         return S_OK;
@@ -1510,7 +1512,8 @@ static HRESULT WINAPI ProtocolEmul_QueryInterface(IInternetProtocolEx *iface, RE
         return E_NOINTERFACE;
     }
 
-    ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+    if(!IsEqualGUID(riid, &unknown_iid)) /* IE10 */
+        ok(0, "unexpected riid %s\n", debugstr_guid(riid));
     *ppv = NULL;
     return E_NOINTERFACE;
 }
