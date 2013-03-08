@@ -648,28 +648,6 @@ static void output_import_thunk( const char *name, const char *table, int pos )
     case CPU_x86_64:
         output( "\tjmpq *%s+%d(%%rip)\n", table, pos );
         break;
-    case CPU_SPARC:
-        if ( !UsePIC )
-        {
-            output( "\tsethi %%hi(%s+%d), %%g1\n", table, pos );
-            output( "\tld [%%g1+%%lo(%s+%d)], %%g1\n", table, pos );
-            output( "\tjmp %%g1\n" );
-            output( "\tnop\n" );
-        }
-        else
-        {
-            /* Hmpf.  Stupid sparc assembler always interprets global variable
-               names as GOT offsets, so we have to do it the long way ... */
-            output( "\tsave %%sp, -96, %%sp\n" );
-            output( "0:\tcall 1f\n" );
-            output( "\tnop\n" );
-            output( "1:\tsethi %%hi(%s+%d-0b), %%g1\n", table, pos );
-            output( "\tor %%g1, %%lo(%s+%d-0b), %%g1\n", table, pos );
-            output( "\tld [%%g1+%%o7], %%g1\n" );
-            output( "\tjmp %%g1\n" );
-            output( "\trestore\n" );
-        }
-        break;
     case CPU_ARM:
         output( "\tldr IP,[PC,#0]\n");
         output( "\tldr PC,[IP,#%d]\n", pos);
@@ -987,13 +965,6 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output_cfi( ".cfi_adjust_cfa_offset -88" );
         output( "\tjmp *%%rax\n" );
         break;
-    case CPU_SPARC:
-        output( "\tsave %%sp, -96, %%sp\n" );
-        output( "\tcall %s\n", asm_name("__wine_spec_delay_load") );
-        output( "\tmov %%g1, %%o0\n" );
-        output( "\tjmp %%o0\n" );
-        output( "\trestore\n" );
-        break;
     case CPU_ARM:
         output( "\tstmfd  SP!, {r4-r10,FP,LR}\n" );
         output( "\tmov LR,PC\n");
@@ -1093,11 +1064,6 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             case CPU_x86_64:
                 output( "\tmovq $%d,%%rax\n", (idx << 16) | j );
                 output( "\tjmp %s\n", asm_name("__wine_delay_load_asm") );
-                break;
-            case CPU_SPARC:
-                output( "\tset %d, %%g1\n", (idx << 16) | j );
-                output( "\tb,a %s\n", asm_name("__wine_delay_load_asm") );
-                output( "\tnop\n" );
                 break;
             case CPU_ARM:
                 output( "\tstmfd  SP!, {r0-r3}\n" );

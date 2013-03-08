@@ -140,7 +140,7 @@ typedef struct
 
 enum target_cpu
 {
-    CPU_x86, CPU_x86_64, CPU_SPARC, CPU_POWERPC, CPU_ARM, CPU_ARM64, CPU_LAST = CPU_ARM64
+    CPU_x86, CPU_x86_64, CPU_POWERPC, CPU_ARM, CPU_ARM64, CPU_LAST = CPU_ARM64
 };
 
 enum target_platform
