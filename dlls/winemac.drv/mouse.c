@@ -258,21 +258,6 @@ done:
 }
 
 /***********************************************************************
- *              release_provider_cfdata
- *
- * Helper for create_monochrome_cursor.  A CFData is used by two
- * different CGDataProviders, using different offsets.  One of them is
- * constructed with a pointer to the bytes, not a reference to the
- * CFData object (because of the offset).  So, the CFData is CFRetain'ed
- * on its behalf at creation and released here.
- */
-void release_provider_cfdata(void *info, const void *data, size_t size)
-{
-    CFRelease(info);
-}
-
-
-/***********************************************************************
  *              create_monochrome_cursor
  */
 CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width, int height)
@@ -280,6 +265,9 @@ CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width,
     char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     unsigned int width_bytes = (width + 31) / 32 * 4;
+    unsigned long *and_bits = NULL, *xor_bits;
+    unsigned long *data_bits;
+    int count, i;
     CGColorSpaceRef colorspace;
     CFMutableDataRef data;
     CGDataProviderRef provider;
@@ -306,43 +294,86 @@ CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width,
     info->bmiHeader.biClrUsed = 0;
     info->bmiHeader.biClrImportant = 0;
 
-    /* This will be owned by the data provider for the mask image and released
-       when it is destroyed. */
-    data = CFDataCreateMutable(NULL, info->bmiHeader.biSizeImage);
+    and_bits = HeapAlloc(GetProcessHeap(), 0, info->bmiHeader.biSizeImage);
+    if (!and_bits)
+    {
+        WARN("failed to allocate and_bits\n");
+        return NULL;
+    }
+    xor_bits = (unsigned long*)((char*)and_bits + info->bmiHeader.biSizeImage / 2);
+
+    if (!GetDIBits(hdc, icon->hbmMask, 0, height * 2, and_bits, info, DIB_RGB_COLORS))
+    {
+        WARN("GetDIBits failed\n");
+        HeapFree(GetProcessHeap(), 0, and_bits);
+        return NULL;
+    }
+
+    /* On Windows, the pixels of a monochrome cursor can have four effects:
+       draw black, draw white, leave unchanged (transparent), or invert.  The Mac
+       only supports the first three.  It can't do pixels which invert the
+       background.  Since the background is usually white, I am arbitrarily
+       mapping "invert" to "draw black".  This entails bitwise math between the
+       cursor's AND mask and XOR mask:
+
+            AND | XOR | Windows cursor pixel
+            --------------------------------
+             0  |  0  | black
+             0  |  1  | white
+             1  |  0  | transparent
+             1  |  1  | invert
+
+            AND | XOR | Mac image
+            ---------------------
+             0  |  0  | black (0)
+             0  |  1  | white (1)
+             1  |  0  | don't care
+             1  |  1  | black (0)
+
+            AND | XOR | Mac mask
+            ---------------------------
+             0  |  0  | paint (0)
+             0  |  1  | paint (0)
+             1  |  0  | don't paint (1)
+             1  |  1  | paint (0)
+
+       So, Mac image = AND ^ XOR and Mac mask = AND & ~XOR.
+      */
+    /* Create data for Mac image. */
+    data = CFDataCreateMutable(NULL, info->bmiHeader.biSizeImage / 2);
     if (!data)
     {
         WARN("failed to create data\n");
+        HeapFree(GetProcessHeap(), 0, and_bits);
         return NULL;
     }
-    CFDataSetLength(data, info->bmiHeader.biSizeImage);
 
-    if (!GetDIBits(hdc, icon->hbmMask, 0, height * 2, CFDataGetMutableBytePtr(data), info, DIB_RGB_COLORS))
-    {
-        WARN("GetDIBits failed\n");
-        CFRelease(data);
-        return NULL;
-    }
+    /* image data = AND mask */
+    CFDataAppendBytes(data, (UInt8*)and_bits, info->bmiHeader.biSizeImage / 2);
+    /* image data ^= XOR mask */
+    data_bits = (unsigned long*)CFDataGetMutableBytePtr(data);
+    count = (info->bmiHeader.biSizeImage / 2) / sizeof(*data_bits);
+    for (i = 0; i < count; i++)
+        data_bits[i] ^= xor_bits[i];
 
     colorspace = CGColorSpaceCreateWithName(kCGColorSpaceGenericGray);
     if (!colorspace)
     {
         WARN("failed to create colorspace\n");
         CFRelease(data);
+        HeapFree(GetProcessHeap(), 0, and_bits);
         return NULL;
     }
 
-    /* The data object needs to live as long as this provider, so retain it an
-       extra time and have the provider's data-release callback release it. */
-    provider = CGDataProviderCreateWithData(data, CFDataGetBytePtr(data) + width_bytes * height,
-                                            width_bytes * height, release_provider_cfdata);
+    provider = CGDataProviderCreateWithCFData(data);
+    CFRelease(data);
     if (!provider)
     {
         WARN("failed to create data provider\n");
         CGColorSpaceRelease(colorspace);
-        CFRelease(data);
+        HeapFree(GetProcessHeap(), 0, and_bits);
         return NULL;
     }
-    CFRetain(data);
 
     cgimage = CGImageCreate(width, height, 1, 1, width_bytes, colorspace,
                             kCGImageAlphaNone | kCGBitmapByteOrderDefault,
@@ -352,9 +383,27 @@ CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width,
     if (!cgimage)
     {
         WARN("failed to create image\n");
-        CFRelease(data);
+        HeapFree(GetProcessHeap(), 0, and_bits);
         return NULL;
     }
+
+    /* Create data for mask. */
+    data = CFDataCreateMutable(NULL, info->bmiHeader.biSizeImage / 2);
+    if (!data)
+    {
+        WARN("failed to create data\n");
+        CGImageRelease(cgimage);
+        HeapFree(GetProcessHeap(), 0, and_bits);
+        return NULL;
+    }
+
+    /* mask data = AND mask */
+    CFDataAppendBytes(data, (UInt8*)and_bits, info->bmiHeader.biSizeImage / 2);
+    /* mask data &= ~XOR mask */
+    data_bits = (unsigned long*)CFDataGetMutableBytePtr(data);
+    for (i = 0; i < count; i++)
+        data_bits[i] &= ~xor_bits[i];
+    HeapFree(GetProcessHeap(), 0, and_bits);
 
     provider = CGDataProviderCreateWithCFData(data);
     CFRelease(data);
