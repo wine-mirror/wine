@@ -1032,8 +1032,8 @@ static BOOL WINAPI File_RetrieveEncodedObjectW(LPCWSTR pszURL,
             /* Try to create the file directly - Wine handles / in pathnames */
             lstrcpynW(path, components.lpszUrlPath,
              components.dwUrlPathLength + 1);
-            hFile = CreateFileW(path, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-             FILE_ATTRIBUTE_NORMAL, NULL);
+            hFile = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ,
+             NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if (hFile == INVALID_HANDLE_VALUE)
             {
                 /* Try again on the current drive */
@@ -1042,8 +1042,8 @@ static BOOL WINAPI File_RetrieveEncodedObjectW(LPCWSTR pszURL,
                 {
                     lstrcpynW(path + 2, components.lpszUrlPath,
                      components.dwUrlPathLength + 1);
-                    hFile = CreateFileW(path, GENERIC_READ, 0, NULL,
-                     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+                    hFile = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ,
+                     NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
                 }
                 if (hFile == INVALID_HANDLE_VALUE)
                 {
@@ -1053,8 +1053,8 @@ static BOOL WINAPI File_RetrieveEncodedObjectW(LPCWSTR pszURL,
                     {
                         lstrcpynW(path + 2, components.lpszUrlPath,
                          components.dwUrlPathLength + 1);
-                        hFile = CreateFileW(path, GENERIC_READ, 0, NULL,
-                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+                        hFile = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ,
+                         NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
                     }
                 }
             }
