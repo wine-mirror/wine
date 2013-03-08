@@ -76,6 +76,7 @@ jsstr_t *jsstr_concat(jsstr_t*,jsstr_t*) DECLSPEC_HIDDEN;
 
 jsstr_t *jsstr_nan(void) DECLSPEC_HIDDEN;
 jsstr_t *jsstr_empty(void) DECLSPEC_HIDDEN;
+jsstr_t *jsstr_undefined(void) DECLSPEC_HIDDEN;
 
 BOOL init_strings(void) DECLSPEC_HIDDEN;
 void free_strings(void) DECLSPEC_HIDDEN;

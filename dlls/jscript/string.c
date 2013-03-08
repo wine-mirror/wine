@@ -188,10 +188,7 @@ static HRESULT do_attributeless_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, j
 static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsigned argc, jsval_t *argv, jsval_t *r,
         const WCHAR *tagname, const WCHAR *attrname)
 {
-    static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
-
     jsstr_t *str, *attr_value = NULL;
-    unsigned attr_len;
     HRESULT hres;
 
     hres = get_string_val(ctx, jsthis, &str);
@@ -204,9 +201,8 @@ static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsig
             jsstr_release(str);
             return hres;
         }
-        attr_len = jsstr_length(attr_value);
     }else {
-        attr_len = sizeof(undefinedW)/sizeof(WCHAR)-1;
+        attr_value = jsstr_undefined();
     }
 
     if(r) {
@@ -214,7 +210,7 @@ static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsig
         unsigned tagname_len = strlenW(tagname);
         jsstr_t *ret;
 
-        ret = jsstr_alloc_buf(2*tagname_len + attrname_len + attr_len + jsstr_length(str) + 9);
+        ret = jsstr_alloc_buf(2*tagname_len + attrname_len + jsstr_length(attr_value) + jsstr_length(str) + 9);
         if(ret) {
             WCHAR *ptr = ret->str;
 
@@ -226,13 +222,7 @@ static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsig
             ptr += attrname_len;
             *ptr++ = '=';
             *ptr++ = '"';
-
-            if(attr_value)
-                jsstr_flush(attr_value, ptr);
-            else
-                memcpy(ptr, undefinedW, attr_len*sizeof(WCHAR));
-            ptr += attr_len;
-
+            ptr += jsstr_flush(attr_value, ptr);
             *ptr++ = '"';
             *ptr++ = '>';
             ptr += jsstr_flush(str, ptr);
@@ -249,8 +239,7 @@ static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsig
         }
     }
 
-    if(attr_value)
-        jsstr_release(attr_value);
+    jsstr_release(attr_value);
     jsstr_release(str);
     return hres;
 }

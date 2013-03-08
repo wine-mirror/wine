@@ -1698,13 +1698,11 @@ static HRESULT interp_typeofid(exec_ctx_t *ctx)
     DISPID id;
     HRESULT hres;
 
-    static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
-
     TRACE("\n");
 
     obj = stack_pop_objid(ctx, &id);
     if(!obj)
-        return stack_push_string(ctx, undefinedW);
+        return stack_push(ctx, jsval_string(jsstr_undefined()));
 
     hres = disp_propget(ctx->script, obj, id, &v);
     IDispatch_Release(obj);
@@ -1735,7 +1733,7 @@ static HRESULT interp_typeofident(exec_ctx_t *ctx)
         return hres;
 
     if(exprval.type == EXPRVAL_INVALID) {
-        hres = stack_push_string(ctx, undefinedW);
+        hres = stack_push(ctx, jsval_string(jsstr_undefined()));
         exprval_release(&exprval);
         return hres;
     }

@@ -286,14 +286,8 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     TRACE("\n");
 
     if(!argc) {
-        if(r) {
-            ret_str = jsstr_alloc(undefinedW);
-            if(!ret_str)
-                return E_OUTOFMEMORY;
-
-            *r = jsval_string(ret_str);
-        }
-
+        if(r)
+            *r = jsval_string(jsstr_undefined());
         return S_OK;
     }
 
@@ -640,13 +634,8 @@ static HRESULT JSGlobal_unescape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     TRACE("\n");
 
     if(!argc) {
-        if(r) {
-            ret_str = jsstr_alloc(undefinedW);
-            if(!ret_str)
-                return E_OUTOFMEMORY;
-            *r = jsval_string(ret_str);
-        }
-
+        if(r)
+            *r = jsval_string(jsstr_undefined());
         return S_OK;
     }
 
@@ -781,14 +770,8 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     TRACE("\n");
 
     if(!argc) {
-        if(r) {
-            ret = jsstr_alloc(undefinedW);
-            if(!ret)
-                return E_OUTOFMEMORY;
-
-            *r = jsval_string(ret);
-        }
-
+        if(r)
+            *r = jsval_string(jsstr_undefined());
         return S_OK;
     }
 
@@ -853,14 +836,8 @@ static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     TRACE("\n");
 
     if(!argc) {
-        if(r) {
-            ret = jsstr_alloc(undefinedW);
-            if(!ret)
-                return E_OUTOFMEMORY;
-
-            *r = jsval_string(ret);
-        }
-
+        if(r)
+            *r = jsval_string(jsstr_undefined());
         return S_OK;
     }
 
@@ -944,14 +921,8 @@ static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
     TRACE("\n");
 
     if(!argc) {
-        if(r) {
-            ret = jsstr_alloc(undefinedW);
-            if(!ret)
-                return E_OUTOFMEMORY;
-
-            *r = jsval_string(ret);
-        }
-
+        if(r)
+            *r = jsval_string(jsstr_undefined());
         return S_OK;
     }
 
@@ -1014,14 +985,8 @@ static HRESULT JSGlobal_decodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
     TRACE("\n");
 
     if(!argc) {
-        if(r) {
-            ret = jsstr_alloc(undefinedW);
-            if(!ret)
-                return E_OUTOFMEMORY;
-
-            *r = jsval_string(ret);
-        }
-
+        if(r)
+            *r = jsval_string(jsstr_undefined());
         return S_OK;
     }
 

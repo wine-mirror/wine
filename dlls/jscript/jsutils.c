@@ -738,15 +738,14 @@ HRESULT double_to_string(double n, jsstr_t **str)
 /* ECMA-262 3rd Edition    9.8 */
 HRESULT to_string(script_ctx_t *ctx, jsval_t val, jsstr_t **str)
 {
-    const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
     const WCHAR nullW[] = {'n','u','l','l',0};
     const WCHAR trueW[] = {'t','r','u','e',0};
     const WCHAR falseW[] = {'f','a','l','s','e',0};
 
     switch(jsval_type(val)) {
     case JSV_UNDEFINED:
-        *str = jsstr_alloc(undefinedW);
-        break;
+        *str = jsstr_undefined();
+        return S_OK;
     case JSV_NULL:
         *str = jsstr_alloc(nullW);
         break;

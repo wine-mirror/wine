@@ -58,7 +58,6 @@ static const WCHAR idx7W[] = {'$','7',0};
 static const WCHAR idx8W[] = {'$','8',0};
 static const WCHAR idx9W[] = {'$','9',0};
 
-static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
 static const WCHAR emptyW[] = {0};
 
 static inline RegExpInstance *regexp_from_vdisp(vdisp_t *vdisp)
@@ -487,21 +486,15 @@ static HRESULT RegExp_test(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsig
         jsval_t *r)
 {
     match_state_t *match;
-    heap_pool_t *mark;
     jsstr_t *undef_str;
+    heap_pool_t *mark;
     BOOL b;
     HRESULT hres;
 
     TRACE("\n");
 
-    if(!argc) {
-        undef_str = jsstr_alloc(undefinedW);
-        if(!undef_str)
-            return E_OUTOFMEMORY;
-    }
-
     mark = heap_pool_mark(&ctx->tmp_heap);
-    hres = run_exec(ctx, jsthis, argc ? argv[0] : jsval_string(undef_str), NULL, &match, &b);
+    hres = run_exec(ctx, jsthis, argc ? argv[0] : jsval_string(undef_str = jsstr_undefined()), NULL, &match, &b);
     heap_pool_clear(mark);
     if(!argc)
         jsstr_release(undef_str);

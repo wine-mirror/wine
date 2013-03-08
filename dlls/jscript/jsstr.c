@@ -88,7 +88,7 @@ jsstr_t *jsstr_concat(jsstr_t *str1, jsstr_t *str2)
     return ret;
 }
 
-static jsstr_t *empty_str, *nan_str;
+static jsstr_t *empty_str, *nan_str, *undefined_str;
 
 jsstr_t *jsstr_nan(void)
 {
@@ -100,13 +100,21 @@ jsstr_t *jsstr_empty(void)
     return jsstr_addref(empty_str);
 }
 
+jsstr_t *jsstr_undefined(void)
+{
+    return jsstr_addref(undefined_str);
+}
+
 BOOL init_strings(void)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
+    static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
 
     if(!(empty_str = jsstr_alloc_buf(0)))
         return FALSE;
     if(!(nan_str = jsstr_alloc(NaNW)))
+        return FALSE;
+    if(!(undefined_str = jsstr_alloc(undefinedW)))
         return FALSE;
     return TRUE;
 }
@@ -115,4 +123,5 @@ void free_strings(void)
 {
     jsstr_release(empty_str);
     jsstr_release(nan_str);
+    jsstr_release(undefined_str);
 }

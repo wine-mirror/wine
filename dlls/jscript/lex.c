@@ -59,7 +59,6 @@ static const WCHAR throwW[] = {'t','h','r','o','w',0};
 static const WCHAR trueW[] = {'t','r','u','e',0};
 static const WCHAR tryW[] = {'t','r','y',0};
 static const WCHAR typeofW[] = {'t','y','p','e','o','f',0};
-static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
 static const WCHAR varW[] = {'v','a','r',0};
 static const WCHAR voidW[] = {'v','o','i','d',0};
 static const WCHAR whileW[] = {'w','h','i','l','e',0};
