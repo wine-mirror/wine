@@ -9,7 +9,6 @@ C_SRCS = \
 	be_arm64.c \
 	be_i386.c \
 	be_ppc.c \
-	be_sparc.c \
 	be_x86_64.c \
 	break.c \
 	crashdlg.c \
