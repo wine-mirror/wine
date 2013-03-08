@@ -56,6 +56,23 @@ typedef enum
     XmlReadInState_MiscEnd
 } XmlReaderInternalState;
 
+/* This state denotes where parsing was interrupted by input problem.
+   Reader resumes parsing using this information. */
+typedef enum
+{
+    XmlReadResumeState_Initial,
+    XmlReadResumeState_PITarget,
+    XmlReadResumeState_PIBody
+} XmlReaderResumeState;
+
+/* saved pointer index to resume from particular input position */
+typedef enum
+{
+    XmlReadResume_Name, /* PITarget */
+    XmlReadResume_Body, /* PI body, comment text */
+    XmlReadResume_Last
+} XmlReaderResume;
+
 typedef enum
 {
     StringValue_LocalName,
@@ -146,6 +163,7 @@ typedef struct
     IMalloc *imalloc;
     XmlReadState state;
     XmlReaderInternalState instate;
+    XmlReaderResumeState resumestate;
     XmlNodeType nodetype;
     DtdProcessing dtdmode;
     UINT line, pos;           /* reader position in XML stream */
@@ -155,7 +173,7 @@ typedef struct
     struct list elements;
     strval strvalues[StringValue_Last];
     UINT depth;
-    WCHAR *save;
+    WCHAR *resume[XmlReadResume_Last]; /* pointers used to resume reader */
 } xmlreader;
 
 struct input_buffer
@@ -1031,9 +1049,9 @@ static HRESULT reader_parse_comment(xmlreader *reader)
 {
     WCHAR *start, *ptr;
 
-    if (reader->save)
+    if (reader->resume[XmlReadResume_Body])
     {
-        start = reader->save;
+        start = reader->resume[XmlReadResume_Body];
         ptr = reader_get_cur(reader);
     }
     else
@@ -1043,7 +1061,7 @@ static HRESULT reader_parse_comment(xmlreader *reader)
         reader_shrink(reader);
         ptr = start = reader_get_cur(reader);
         reader->nodetype = XmlNodeType_Comment;
-        reader->save = start;
+        reader->resume[XmlReadResume_Body] = start;
         reader_set_strvalue(reader, StringValue_LocalName, NULL);
         reader_set_strvalue(reader, StringValue_QualifiedName, NULL);
         reader_set_strvalue(reader, StringValue_Value, NULL);
@@ -1067,7 +1085,7 @@ static HRESULT reader_parse_comment(xmlreader *reader)
                     reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
                     reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
                     reader_set_strvalue(reader, StringValue_Value, &value);
-                    reader->save = NULL;
+                    reader->resume[XmlReadResume_Body] = NULL;
                     return S_OK;
                 }
                 else
@@ -1166,16 +1184,32 @@ static inline int is_namechar(WCHAR ch)
    [5]  Name     ::= NameStartChar (NameChar)* */
 static HRESULT reader_parse_name(xmlreader *reader, strval *name)
 {
-    WCHAR *ptr, *start = reader_get_cur(reader);
+    WCHAR *ptr, *start;
 
-    ptr = start;
-    if (!is_namestartchar(*ptr)) return WC_E_NAMECHARACTER;
+    if (reader->resume[XmlReadResume_Name])
+    {
+        start = reader->resume[XmlReadResume_Name];
+        ptr = reader_get_cur(reader);
+    }
+    else
+    {
+        ptr = start = reader_get_cur(reader);
+        if (!is_namestartchar(*ptr)) return WC_E_NAMECHARACTER;
+    }
 
     while (is_namechar(*ptr))
     {
         reader_skipn(reader, 1);
         ptr = reader_get_cur(reader);
     }
+
+    if (is_reader_pending(reader))
+    {
+        reader->resume[XmlReadResume_Name] = start;
+        return E_PENDING;
+    }
+    else
+        reader->resume[XmlReadResume_Name] = NULL;
 
     TRACE("name %s:%d\n", debugstr_wn(start, ptr-start), (int)(ptr-start));
     name->str = start;
@@ -1193,7 +1227,7 @@ static HRESULT reader_parse_pitarget(xmlreader *reader, strval *target)
     UINT i;
 
     hr = reader_parse_name(reader, &name);
-    if (FAILED(hr)) return WC_E_PI;
+    if (FAILED(hr)) return is_reader_pending(reader) ? E_PENDING : WC_E_PI;
 
     /* now that we got name check for illegal content */
     if (name.len == 3 && !strncmpiW(name.str, xmlW, 3))
@@ -1216,12 +1250,20 @@ static HRESULT reader_parse_pi(xmlreader *reader)
     strval target;
     HRESULT hr;
 
-    /* skip '<?' */
-    reader_skipn(reader, 2);
-    reader_shrink(reader);
-
-    hr = reader_parse_pitarget(reader, &target);
-    if (FAILED(hr)) return hr;
+    switch (reader->resumestate)
+    {
+    case XmlReadResumeState_Initial:
+        /* skip '<?' */
+        reader_skipn(reader, 2);
+        reader_shrink(reader);
+        reader->resumestate = XmlReadResumeState_PITarget;
+    case XmlReadResumeState_PITarget:
+        hr = reader_parse_pitarget(reader, &target);
+        if (FAILED(hr)) return hr;
+        reader->resumestate = XmlReadResumeState_PIBody;
+    default:
+        ;
+    }
 
     ptr = reader_get_cur(reader);
     /* exit earlier if there's no content */
@@ -1230,17 +1272,26 @@ static HRESULT reader_parse_pi(xmlreader *reader)
         /* skip '?>' */
         reader_skipn(reader, 2);
         reader->nodetype = XmlNodeType_ProcessingInstruction;
+        reader->resumestate = XmlReadResumeState_Initial;
         reader_set_strvalue(reader, StringValue_LocalName, &target);
         reader_set_strvalue(reader, StringValue_QualifiedName, &target);
         reader_set_strvalue(reader, StringValue_Value, &strval_empty);
         return S_OK;
     }
 
-    /* now at least a single space char should be there */
-    if (!is_wchar_space(*ptr)) return WC_E_WHITESPACE;
-    reader_skipspaces(reader);
-
-    ptr = start = reader_get_cur(reader);
+    if (!reader->resume[XmlReadResume_Body])
+    {
+        /* now at least a single space char should be there */
+        if (!is_wchar_space(*ptr)) return WC_E_WHITESPACE;
+        reader_skipspaces(reader);
+        ptr = start = reader_get_cur(reader);
+        reader->resume[XmlReadResume_Body] = start;
+    }
+    else
+    {
+        start = reader->resume[XmlReadResume_Body];
+        ptr = reader_get_cur(reader);
+    }
 
     while (*ptr)
     {
@@ -1254,6 +1305,8 @@ static HRESULT reader_parse_pi(xmlreader *reader)
                 /* skip '?>' */
                 reader_skipn(reader, 2);
                 reader->nodetype = XmlNodeType_ProcessingInstruction;
+                reader->resumestate = XmlReadResumeState_Initial;
+                reader->resume[XmlReadResume_Body] = NULL;
                 reader_set_strvalue(reader, StringValue_LocalName, &target);
                 reader_set_strvalue(reader, StringValue_QualifiedName, &target);
                 reader_set_strvalue(reader, StringValue_Value, &value);
@@ -1832,7 +1885,8 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
     This->line = This->pos = 0;
     reader_clear_elements(This);
     This->depth = 0;
-    This->save = NULL;
+    This->resumestate = XmlReadResumeState_Initial;
+    memset(This->resume, 0, sizeof(This->resume));
 
     /* just reset current input */
     if (!input)
@@ -2255,6 +2309,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
     reader->input = NULL;
     reader->state = XmlReadState_Closed;
     reader->instate = XmlReadInState_Initial;
+    reader->resumestate = XmlReadResumeState_Initial;
     reader->dtdmode = DtdProcessing_Prohibit;
     reader->line  = reader->pos = 0;
     reader->imalloc = imalloc;
@@ -2265,7 +2320,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
     reader->attr = NULL;
     list_init(&reader->elements);
     reader->depth = 0;
-    reader->save = NULL;
+    memset(reader->resume, 0, sizeof(reader->resume));
 
     for (i = 0; i < StringValue_Last; i++)
         reader->strvalues[i] = strval_empty;

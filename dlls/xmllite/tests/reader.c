@@ -852,6 +852,7 @@ static void test_read_comment(void)
 static struct test_entry pi_tests[] = {
     { "<?pi?>", "pi", "", S_OK },
     { "<?pi ?>", "pi", "", S_OK },
+    { "<?pi  ?>", "pi", "", S_OK },
     { "<?pi pi data?>", "pi", "pi data", S_OK },
     { "<?pi pi data  ?>", "pi", "pi data  ", S_OK },
     { "<?pi:pi?>", NULL, NULL, NC_E_NAMECOLON, WC_E_NAMECHARACTER },
