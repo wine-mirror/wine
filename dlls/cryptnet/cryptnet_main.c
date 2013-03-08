@@ -503,24 +503,26 @@ static BOOL CRYPT_GetObjectFromCache(LPCWSTR pszURL, PCRYPT_BLOB_ARRAY pObject,
 
     TRACE("(%s, %p, %p)\n", debugstr_w(pszURL), pObject, pAuxInfo);
 
-    ret = GetUrlCacheEntryInfoW(pszURL, NULL, &size);
-    if (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    RetrieveUrlCacheEntryFileW(pszURL, NULL, &size, 0);
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        return FALSE;
+
+    pCacheInfo = CryptMemAlloc(size);
+    if (!pCacheInfo)
     {
-        pCacheInfo = CryptMemAlloc(size);
-        if (pCacheInfo)
-            ret = TRUE;
-        else
-            SetLastError(ERROR_OUTOFMEMORY);
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
     }
-    if (ret && (ret = GetUrlCacheEntryInfoW(pszURL, pCacheInfo, &size)))
+
+    if ((ret = RetrieveUrlCacheEntryFileW(pszURL, pCacheInfo, &size, 0)))
     {
         FILETIME ft;
 
         GetSystemTimeAsFileTime(&ft);
         if (CompareFileTime(&pCacheInfo->ExpireTime, &ft) >= 0)
         {
-            HANDLE hFile = CreateFileW(pCacheInfo->lpszLocalFileName,
-             GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            HANDLE hFile = CreateFileW(pCacheInfo->lpszLocalFileName, GENERIC_READ,
+             FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
             if (hFile != INVALID_HANDLE_VALUE)
             {
@@ -547,6 +549,7 @@ static BOOL CRYPT_GetObjectFromCache(LPCWSTR pszURL, PCRYPT_BLOB_ARRAY pObject,
             DeleteUrlCacheEntryW(pszURL);
             ret = FALSE;
         }
+        UnlockUrlCacheEntryFileW(pszURL, 0);
     }
     CryptMemFree(pCacheInfo);
     TRACE("returning %d\n", ret);
