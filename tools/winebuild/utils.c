@@ -1109,14 +1109,6 @@ const char *get_asm_string_keyword(void)
     }
 }
 
-const char *get_asm_short_keyword(void)
-{
-    switch (target_platform)
-    {
-    default:            return ".short";
-    }
-}
-
 const char *get_asm_rodata_section(void)
 {
     switch (target_platform)

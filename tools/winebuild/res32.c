@@ -407,7 +407,7 @@ static void free_resource_tree( struct res_tree *tree )
 static void output_string( const WCHAR *name )
 {
     int i, len = strlenW(name);
-    output( "\t%s 0x%04x", get_asm_short_keyword(), len );
+    output( "\t.short 0x%04x", len );
     for (i = 0; i < len; i++) output( ",0x%04x", name[i] );
     output( " /* " );
     for (i = 0; i < len; i++) output( "%c", isprint((char)name[i]) ? (char)name[i] : '?' );
@@ -419,10 +419,9 @@ static inline void output_res_dir( unsigned int nb_names, unsigned int nb_ids )
 {
     output( "\t.long 0\n" );  /* Characteristics */
     output( "\t.long 0\n" );  /* TimeDateStamp */
-    output( "\t%s 0,0\n",     /* Major/MinorVersion */
-             get_asm_short_keyword() );
-    output( "\t%s %u,%u\n",   /* NumberOfNamed/IdEntries */
-             get_asm_short_keyword(), nb_names, nb_ids );
+    output( "\t.short 0,0\n" );   /* Major/MinorVersion */
+    output( "\t.short %u,%u\n",   /* NumberOfNamed/IdEntries */
+             nb_names, nb_ids );
 }
 
 /* output the resource definitions */

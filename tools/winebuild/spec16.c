@@ -110,18 +110,16 @@ static void output_entries( DLLSPEC *spec, int first, int count )
         case TYPE_PASCAL:
         case TYPE_VARARGS:
         case TYPE_STUB:
-            output( "\t%s .L__wine_%s_%u-.L__wine_spec_code_segment\n",
-                     get_asm_short_keyword(),
+            output( "\t.short .L__wine_%s_%u-.L__wine_spec_code_segment\n",
                      make_c_identifier(spec->dll_name), first + i );
             break;
         case TYPE_VARIABLE:
-            output( "\t%s .L__wine_%s_%u-.L__wine_spec_data_segment\n",
-                     get_asm_short_keyword(),
+            output( "\t.short .L__wine_%s_%u-.L__wine_spec_data_segment\n",
                      make_c_identifier(spec->dll_name), first + i );
             break;
         case TYPE_ABS:
-            output( "\t%s 0x%04x  /* %s */\n",
-                     get_asm_short_keyword(), odp->u.abs.value, odp->name );
+            output( "\t.short 0x%04x  /* %s */\n",
+                     odp->u.abs.value, odp->name );
             break;
         default:
             assert(0);
@@ -213,7 +211,7 @@ static void output_resident_name( const char *string, int ordinal )
     output( "\t.byte 0x%02x", len );
     for (i = 0; i < len; i++) output( ",0x%02x", (unsigned char)toupper(string[i]) );
     output( " /* %s */\n", string );
-    output( "\t%s %u\n", get_asm_short_keyword(), ordinal );
+    output( "\t.short %u\n", ordinal );
 }
 
 
@@ -570,68 +568,60 @@ static void output_module16( DLLSPEC *spec )
     output( "\t.data\n" );
     output( "\t.align %d\n", get_alignment(4) );
     output( ".L__wine_spec_dos_header:\n" );
-    output( "\t%s 0x5a4d\n", get_asm_short_keyword() );                    /* e_magic */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_cblp */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_cp */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_crlc */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_cparhdr */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_minalloc */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_maxalloc */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_ss */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_sp */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_csum */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_ip */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_cs */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_lfarlc */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_ovno */
-    output( "\t%s 0,0,0,0\n", get_asm_short_keyword() );                   /* e_res */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_oemid */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_oeminfo */
-    output( "\t%s 0,0,0,0,0,0,0,0,0,0\n", get_asm_short_keyword() );       /* e_res2 */
+    output( "\t.short 0x5a4d\n" );                                         /* e_magic */
+    output( "\t.short 0\n" );                                              /* e_cblp */
+    output( "\t.short 0\n" );                                              /* e_cp */
+    output( "\t.short 0\n" );                                              /* e_crlc */
+    output( "\t.short 0\n" );                                              /* e_cparhdr */
+    output( "\t.short 0\n" );                                              /* e_minalloc */
+    output( "\t.short 0\n" );                                              /* e_maxalloc */
+    output( "\t.short 0\n" );                                              /* e_ss */
+    output( "\t.short 0\n" );                                              /* e_sp */
+    output( "\t.short 0\n" );                                              /* e_csum */
+    output( "\t.short 0\n" );                                              /* e_ip */
+    output( "\t.short 0\n" );                                              /* e_cs */
+    output( "\t.short 0\n" );                                              /* e_lfarlc */
+    output( "\t.short 0\n" );                                              /* e_ovno */
+    output( "\t.short 0,0,0,0\n" );                                        /* e_res */
+    output( "\t.short 0\n" );                                              /* e_oemid */
+    output( "\t.short 0\n" );                                              /* e_oeminfo */
+    output( "\t.short 0,0,0,0,0,0,0,0,0,0\n" );                            /* e_res2 */
     output( "\t.long .L__wine_spec_ne_header-.L__wine_spec_dos_header\n" );/* e_lfanew */
 
     output( ".L__wine_spec_ne_header:\n" );
-    output( "\t%s 0x454e\n", get_asm_short_keyword() );                    /* ne_magic */
+    output( "\t.short 0x454e\n" );                                         /* ne_magic */
     output( "\t.byte 0\n" );                                               /* ne_ver */
     output( "\t.byte 0\n" );                                               /* ne_rev */
-    output( "\t%s .L__wine_spec_ne_enttab-.L__wine_spec_ne_header\n",      /* ne_enttab */
-             get_asm_short_keyword() );
-    output( "\t%s .L__wine_spec_ne_enttab_end-.L__wine_spec_ne_enttab\n",  /* ne_cbenttab */
-             get_asm_short_keyword() );
+    output( "\t.short .L__wine_spec_ne_enttab-.L__wine_spec_ne_header\n" );/* ne_enttab */
+    output( "\t.short .L__wine_spec_ne_enttab_end-.L__wine_spec_ne_enttab\n" );/* ne_cbenttab */
     output( "\t.long 0\n" );                                               /* ne_crc */
-    output( "\t%s 0x%04x\n", get_asm_short_keyword(),                      /* ne_flags */
-             NE_FFLAGS_SINGLEDATA |
+    output( "\t.short 0x%04x\n", NE_FFLAGS_SINGLEDATA |                    /* ne_flags */
              ((spec->characteristics & IMAGE_FILE_DLL) ? NE_FFLAGS_LIBMODULE : 0) );
-    output( "\t%s 2\n", get_asm_short_keyword() );                         /* ne_autodata */
-    output( "\t%s %u\n", get_asm_short_keyword(), spec->heap_size );       /* ne_heap */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* ne_stack */
+    output( "\t.short 2\n" );                                              /* ne_autodata */
+    output( "\t.short %u\n", spec->heap_size );                            /* ne_heap */
+    output( "\t.short 0\n" );                                              /* ne_stack */
     if (!entry_point) output( "\t.long 0\n" );                             /* ne_csip */
-    else output( "\t%s .L__wine_%s_0-.L__wine_spec_code_segment,1\n",
-                 get_asm_short_keyword(), make_c_identifier(spec->dll_name) );
-    output( "\t%s 0,2\n", get_asm_short_keyword() );                       /* ne_sssp */
-    output( "\t%s 2\n", get_asm_short_keyword() );                         /* ne_cseg */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* ne_cmod */
-    output( "\t%s 0\n", get_asm_short_keyword() );                         /* ne_cbnrestab */
-    output( "\t%s .L__wine_spec_ne_segtab-.L__wine_spec_ne_header\n",      /* ne_segtab */
-             get_asm_short_keyword() );
-    output( "\t%s .L__wine_spec_ne_rsrctab-.L__wine_spec_ne_header\n",     /* ne_rsrctab */
-             get_asm_short_keyword() );
-    output( "\t%s .L__wine_spec_ne_restab-.L__wine_spec_ne_header\n",      /* ne_restab */
-             get_asm_short_keyword() );
-    output( "\t%s .L__wine_spec_ne_modtab-.L__wine_spec_ne_header\n",      /* ne_modtab */
-             get_asm_short_keyword() );
-    output( "\t%s .L__wine_spec_ne_imptab-.L__wine_spec_ne_header\n",      /* ne_imptab */
-             get_asm_short_keyword() );
+    else output( "\t.short .L__wine_%s_0-.L__wine_spec_code_segment,1\n",
+                 make_c_identifier(spec->dll_name) );
+    output( "\t.short 0,2\n" );                                            /* ne_sssp */
+    output( "\t.short 2\n" );                                              /* ne_cseg */
+    output( "\t.short 0\n" );                                              /* ne_cmod */
+    output( "\t.short 0\n" );                                              /* ne_cbnrestab */
+    output( "\t.short .L__wine_spec_ne_segtab-.L__wine_spec_ne_header\n" );/* ne_segtab */
+    output( "\t.short .L__wine_spec_ne_rsrctab-.L__wine_spec_ne_header\n" );   /* ne_rsrctab */
+    output( "\t.short .L__wine_spec_ne_restab-.L__wine_spec_ne_header\n" );    /* ne_restab */
+    output( "\t.short .L__wine_spec_ne_modtab-.L__wine_spec_ne_header\n" );    /* ne_modtab */
+    output( "\t.short .L__wine_spec_ne_imptab-.L__wine_spec_ne_header\n" );    /* ne_imptab */
     output( "\t.long 0\n" );                                   /* ne_nrestab */
-    output( "\t%s 0\n", get_asm_short_keyword() );             /* ne_cmovent */
-    output( "\t%s 0\n", get_asm_short_keyword() );             /* ne_align */
-    output( "\t%s 0\n", get_asm_short_keyword() );             /* ne_cres */
+    output( "\t.short 0\n" );                                  /* ne_cmovent */
+    output( "\t.short 0\n" );                                  /* ne_align */
+    output( "\t.short 0\n" );                                  /* ne_cres */
     output( "\t.byte 0x02\n" );                                /* ne_exetyp = NE_OSFLAGS_WINDOWS */
     output( "\t.byte 0x08\n" );                                /* ne_flagsothers = NE_AFLAGS_FASTLOAD */
-    output( "\t%s 0\n", get_asm_short_keyword() );             /* ne_pretthunks */
-    output( "\t%s 0\n", get_asm_short_keyword() );             /* ne_psegrefbytes */
-    output( "\t%s 0\n", get_asm_short_keyword() );             /* ne_swaparea */
-    output( "\t%s 0\n", get_asm_short_keyword() );             /* ne_expver */
+    output( "\t.short 0\n" );                                  /* ne_pretthunks */
+    output( "\t.short 0\n" );                                  /* ne_psegrefbytes */
+    output( "\t.short 0\n" );                                  /* ne_swaparea */
+    output( "\t.short 0\n" );                                  /* ne_expver */
 
     /* segment table */
 
@@ -639,23 +629,17 @@ static void output_module16( DLLSPEC *spec )
 
     /* code segment entry */
 
-    output( "\t%s .L__wine_spec_code_segment-.L__wine_spec_dos_header\n",  /* filepos */
-             get_asm_short_keyword() );
-    output( "\t%s .L__wine_spec_code_segment_end-.L__wine_spec_code_segment\n", /* size */
-             get_asm_short_keyword() );
-    output( "\t%s 0x2000\n", get_asm_short_keyword() ); /* flags = NE_SEGFLAGS_32BIT */
-    output( "\t%s .L__wine_spec_code_segment_end-.L__wine_spec_code_segment\n", /* minsize */
-             get_asm_short_keyword() );
+    output( "\t.short .L__wine_spec_code_segment-.L__wine_spec_dos_header\n" );         /* filepos */
+    output( "\t.short .L__wine_spec_code_segment_end-.L__wine_spec_code_segment\n" );   /* size */
+    output( "\t.short 0x2000\n" );                                                      /* flags = NE_SEGFLAGS_32BIT */
+    output( "\t.short .L__wine_spec_code_segment_end-.L__wine_spec_code_segment\n" );   /* minsize */
 
     /* data segment entry */
 
-    output( "\t%s .L__wine_spec_data_segment-.L__wine_spec_dos_header\n",  /* filepos */
-             get_asm_short_keyword() );
-    output( "\t%s .L__wine_spec_data_segment_end-.L__wine_spec_data_segment\n", /* size */
-             get_asm_short_keyword() );
-    output( "\t%s 0x0001\n", get_asm_short_keyword() ); /* flags = NE_SEGFLAGS_DATA */
-    output( "\t%s .L__wine_spec_data_segment_end-.L__wine_spec_data_segment\n", /* minsize */
-             get_asm_short_keyword() );
+    output( "\t.short .L__wine_spec_data_segment-.L__wine_spec_dos_header\n" );         /* filepos */
+    output( "\t.short .L__wine_spec_data_segment_end-.L__wine_spec_data_segment\n" );   /* size */
+    output( "\t.short 0x0001\n" );                                                      /* flags = NE_SEGFLAGS_DATA */
+    output( "\t.short .L__wine_spec_data_segment_end-.L__wine_spec_data_segment\n" );   /* minsize */
 
     /* resource directory */
 
@@ -762,7 +746,7 @@ static void output_module16( DLLSPEC *spec )
 
         /* the movl is here so that the code contains only valid instructions, */
         /* it's never actually executed, we only care about the arg_types[] values */
-        output( "\t%s 0x86c7\n", get_asm_short_keyword() );
+        output( "\t.short 0x86c7\n" );
         output( "\t.long 0x%08x,0x%08x\n", arg_types[0], arg_types[1] );
     }
 

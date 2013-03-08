@@ -246,22 +246,22 @@ void output_res16_directory( DLLSPEC *spec )
     tree = build_resource_tree( spec );
 
     output( "\n.L__wine_spec_ne_rsrctab:\n" );
-    output( "\t%s 0\n", get_asm_short_keyword() );  /* alignment */
+    output( "\t.short 0\n" );  /* alignment */
 
     /* type and name structures */
 
     for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
     {
-        output( "\t%s 0x%04x,%u,0,0\n", get_asm_short_keyword(), type->name_offset, type->nb_names );
+        output( "\t.short 0x%04x,%u,0,0\n", type->name_offset, type->nb_names );
 
         for (j = 0, res = type->res; j < type->nb_names; j++, res++)
         {
-            output( "\t%s .L__wine_spec_resource_%lu-.L__wine_spec_dos_header,%u\n",
-                    get_asm_short_keyword(), (unsigned long)(res - spec->resources), res->data_size );
-            output( "\t%s 0x%04x,0x%04x,0,0\n", get_asm_short_keyword(), res->memopt, res->name_offset );
+            output( "\t.short .L__wine_spec_resource_%lu-.L__wine_spec_dos_header,%u\n",
+                    (unsigned long)(res - spec->resources), res->data_size );
+            output( "\t.short 0x%04x,0x%04x,0,0\n", res->memopt, res->name_offset );
         }
     }
-    output( "\t%s 0\n", get_asm_short_keyword() );  /* terminator */
+    output( "\t.short 0\n" );  /* terminator */
 
     /* name strings */
 

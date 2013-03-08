@@ -272,7 +272,6 @@ extern const char *func_declaration( const char *func );
 extern const char *asm_globl( const char *func );
 extern const char *get_asm_ptr_keyword(void);
 extern const char *get_asm_string_keyword(void);
-extern const char *get_asm_short_keyword(void);
 extern const char *get_asm_rodata_section(void);
 extern const char *get_asm_string_section(void);
 extern void output_function_size( const char *name );

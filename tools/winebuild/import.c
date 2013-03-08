@@ -771,7 +771,7 @@ static void output_immediate_imports(void)
             {
                 output( "\t.align %d\n", get_alignment(2) );
                 output( ".L__wine_spec_import_data_%s_%s:\n", dll_name, odp->name );
-                output( "\t%s %d\n", get_asm_short_keyword(), odp->ordinal );
+                output( "\t.short %d\n", odp->ordinal );
                 output( "\t%s \"%s\"\n", get_asm_string_keyword(), odp->name );
             }
         }
