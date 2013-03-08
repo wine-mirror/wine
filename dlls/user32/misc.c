@@ -651,3 +651,13 @@ VOID WINAPI DisableProcessWindowsGhosting(VOID)
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return;
 }
+
+/**********************************************************************
+ * UserHandleGrantAccess [USER32.@]
+ *
+ */
+BOOL WINAPI UserHandleGrantAccess(HANDLE handle, HANDLE job, BOOL grant)
+{
+    FIXME("(%p,%p,%d): stub\n", handle, job, grant);
+    return TRUE;
+}

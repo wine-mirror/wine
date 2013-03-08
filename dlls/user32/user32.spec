@@ -734,7 +734,7 @@
 @ stdcall UpdateWindow(long)
 @ stdcall User32InitializeImmEntryTable(ptr)
 @ stdcall UserClientDllInitialize(long long ptr) DllMain
-@ stub UserHandleGrantAccess
+@ stdcall UserHandleGrantAccess(ptr ptr long)
 # @ stub UserIsSystemResumeAutomatic
 # @ stub UserLpkPSMTextOut
 # @ stub UserLpkTabbedTextOut
