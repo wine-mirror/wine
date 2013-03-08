@@ -279,7 +279,7 @@ sub parse_spec_file($$) {
 	}
 
 	my $ordinal;
-	my $ARCHES="arm|i386|powerpc|sparc|win32|win64|x86_64|arm64";
+	my $ARCHES="arm|arm64|i386|powerpc|win32|win64|x86_64";
 	if(/^(\d+|@)\s+
 	   (cdecl|pascal|stdcall|varargs|thiscall)\s+
 	   ((?:(?:-arch=(?:$ARCHES)(?:,(?:$ARCHES))*|-noname|-norelay|-ordinal|-i386|-ret16|-ret64|-register|-interrupt|-private)\s+)*)(\S+)\s*\(\s*(.*?)\s*\)\s*(\S*)$/x)
