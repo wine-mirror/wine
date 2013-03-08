@@ -649,9 +649,6 @@ typedef DWORD FLONG;
 #define PROCESSOR_ARCHITECTURE_IA32_ON_WIN64    10
 #define PROCESSOR_ARCHITECTURE_UNKNOWN	0xFFFF
 
-/* Wine extension */
-#define PROCESSOR_ARCHITECTURE_SPARC    20
-
 /* dwProcessorType */
 #define PROCESSOR_INTEL_386      386
 #define PROCESSOR_INTEL_486      486
@@ -2013,88 +2010,6 @@ typedef struct _STACK_FRAME_HEADER
 
 #endif  /* __powerpc__ */
 
-#ifdef __sparc__
-
-/*
- * FIXME:
- *
- * There is no official CONTEXT structure defined for the SPARC
- * architecture, so I just made one up.
- *
- * This structure is valid only for 32-bit SPARC architectures,
- * not for 64-bit SPARC.
- *
- * Note that this structure contains only the 'top-level' registers;
- * the rest of the register window chain is not visible.
- *
- * The layout follows the Solaris 'prgregset_t' structure.
- *
- */
-
-#define CONTEXT_SPARC            0x10000000
-
-#define CONTEXT_CONTROL         (CONTEXT_SPARC | 0x00000001)
-#define CONTEXT_FLOATING_POINT  (CONTEXT_SPARC | 0x00000002)
-#define CONTEXT_INTEGER         (CONTEXT_SPARC | 0x00000004)
-
-#define CONTEXT_FULL (CONTEXT_CONTROL | CONTEXT_FLOATING_POINT | CONTEXT_INTEGER)
-
-#define EXCEPTION_READ_FAULT    0
-#define EXCEPTION_WRITE_FAULT   1
-#define EXCEPTION_EXECUTE_FAULT 8
-
-typedef struct _CONTEXT
-{
-    DWORD ContextFlags;
-
-    /* These are selected by CONTEXT_INTEGER */
-    DWORD g0;
-    DWORD g1;
-    DWORD g2;
-    DWORD g3;
-    DWORD g4;
-    DWORD g5;
-    DWORD g6;
-    DWORD g7;
-    DWORD o0;
-    DWORD o1;
-    DWORD o2;
-    DWORD o3;
-    DWORD o4;
-    DWORD o5;
-    DWORD o6;
-    DWORD o7;
-    DWORD l0;
-    DWORD l1;
-    DWORD l2;
-    DWORD l3;
-    DWORD l4;
-    DWORD l5;
-    DWORD l6;
-    DWORD l7;
-    DWORD i0;
-    DWORD i1;
-    DWORD i2;
-    DWORD i3;
-    DWORD i4;
-    DWORD i5;
-    DWORD i6;
-    DWORD i7;
-
-    /* These are selected by CONTEXT_CONTROL */
-    DWORD psr;
-    DWORD pc;
-    DWORD npc;
-    DWORD y;
-    DWORD wim;
-    DWORD tbr;
-
-    /* FIXME: floating point registers missing */
-
-} CONTEXT;
-
-#endif  /* __sparc__ */
-
 #if !defined(CONTEXT_FULL) && !defined(RC_INVOKED)
 #error You need to define a CONTEXT for your CPU
 #endif
@@ -2556,7 +2471,6 @@ typedef struct _IMAGE_VXD_HEADER {
 #define	IMAGE_FILE_MACHINE_CEE		0xc0ee
 
 /* Wine extension */
-#define	IMAGE_FILE_MACHINE_SPARC	0x2000
 #define	IMAGE_FILE_MACHINE_ARM64	0x01c5
 
 #define	IMAGE_SIZEOF_FILE_HEADER		20
