@@ -1338,12 +1338,13 @@ static HRESULT String_toLowerCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     if(r) {
         jsstr_t *ret;
 
-        ret = jsstr_alloc_len(str->str, jsstr_length(str));
+        ret = jsstr_alloc_buf(jsstr_length(str));
         if(!ret) {
             jsstr_release(str);
             return E_OUTOFMEMORY;
         }
 
+        jsstr_flush(str, ret->str);
         strlwrW(ret->str);
         *r = jsval_string(ret);
     }
@@ -1366,12 +1367,13 @@ static HRESULT String_toUpperCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     if(r) {
         jsstr_t *ret;
 
-        ret = jsstr_alloc_len(str->str, jsstr_length(str));
+        ret = jsstr_alloc_buf(jsstr_length(str));
         if(!ret) {
             jsstr_release(str);
             return E_OUTOFMEMORY;
         }
 
+        jsstr_flush(str, ret->str);
         struprW(ret->str);
         *r = jsval_string(ret);
     }
@@ -1449,11 +1451,11 @@ static HRESULT String_idx_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
     StringInstance *string = (StringInstance*)jsdisp;
     jsstr_t *ret;
 
-    TRACE("%p[%u] = %s\n", string, idx, debugstr_wn(string->str->str+idx, 1));
-
     ret = jsstr_substr(string->str, idx, 1);
     if(!ret)
         return E_OUTOFMEMORY;
+
+    TRACE("%p[%u] = %s\n", string, idx, debugstr_jsstr(ret));
 
     *r = jsval_string(ret);
     return S_OK;
