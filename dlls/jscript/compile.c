@@ -799,6 +799,7 @@ static HRESULT literal_as_bstr(compiler_ctx_t *ctx, literal_t *literal, BSTR *st
     }
     default:
         assert(0);
+        return E_FAIL;
     }
 
     return *str ? S_OK : E_OUTOFMEMORY;
@@ -1051,6 +1052,7 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr, BOOL 
         break;
     default:
         assert(0);
+        hres = E_FAIL;
     }
 
     if(FAILED(hres))
