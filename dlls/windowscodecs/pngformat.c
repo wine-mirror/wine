@@ -798,7 +798,7 @@ static HRESULT WINAPI PngDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
     png_colorp png_palette;
     int num_palette;
     WICColor palette[256];
-    png_bytep trans;
+    png_bytep trans_alpha;
     int num_trans;
     png_color_16p trans_values;
     int i;
@@ -822,21 +822,16 @@ static HRESULT WINAPI PngDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
         goto end;
     }
 
+    ret = ppng_get_tRNS(This->png_ptr, This->info_ptr, &trans_alpha, &num_trans, &trans_values);
+    if (!ret) num_trans = 0;
+
     for (i=0; i<num_palette; i++)
     {
-        palette[i] = (0xff000000|
+        BYTE alpha = (i < num_trans) ? trans_alpha[i] : 0xff;
+        palette[i] = (alpha << 24 |
                       png_palette[i].red << 16|
                       png_palette[i].green << 8|
                       png_palette[i].blue);
-    }
-
-    ret = ppng_get_tRNS(This->png_ptr, This->info_ptr, &trans, &num_trans, &trans_values);
-    if (ret)
-    {
-        for (i=0; i<num_trans; i++)
-        {
-            palette[trans[i]] = 0x00000000;
-        }
     }
 
 end:

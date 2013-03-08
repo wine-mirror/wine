@@ -577,9 +577,7 @@ static void test_png_palette(void)
     hr = IWICPalette_GetColors(palette, 256, color, &ret);
     ok(hr == S_OK, "GetColors error %#x\n", hr);
     ok(ret == count, "expected %u, got %u\n", count, ret);
-todo_wine
     ok(color[0] == 0xff010203, "expected 0xff010203, got %#x\n", color[0]);
-todo_wine
     ok(color[1] == 0x00040506, "expected 0x00040506, got %#x\n", color[1]);
 
     IWICPalette_Release(palette);
