@@ -2276,7 +2276,7 @@ static void create_cache_entry(http_request_t *req)
         return;
     }
 
-    b = CreateUrlCacheEntryW(url, req->contentLength, NULL, file_name, 0);
+    b = CreateUrlCacheEntryW(url, req->contentLength == ~0u ? 0 : req->contentLength, NULL, file_name, 0);
     if(!b) {
         WARN("Could not create cache entry: %08x\n", GetLastError());
         return;
