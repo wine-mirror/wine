@@ -397,7 +397,7 @@ static VOID WINAPI callback(
             trace("%04x:Callback %p 0x%lx INTERNET_STATUS_HANDLE_CLOSING %p %d\n",
                 GetCurrentThreadId(), hInternet, dwContext,
                 *(HINTERNET *)lpvStatusInformation, dwStatusInformationLength);
-            if(!--close_handle_cnt)
+            if(!InterlockedDecrement(&close_handle_cnt))
                 SetEvent(hCompleteEvent);
             break;
         case INTERNET_STATUS_REQUEST_COMPLETE:
@@ -411,7 +411,8 @@ static VOID WINAPI callback(
                 GetCurrentThreadId(), hInternet, dwContext,
                 iar->dwResult,iar->dwError,dwStatusInformationLength);
             req_error = iar->dwError;
-            SetEvent(hCompleteEvent);
+            if(!close_handle_cnt)
+                SetEvent(hCompleteEvent);
             break;
         }
         case INTERNET_STATUS_REDIRECT:
@@ -445,7 +446,6 @@ static void close_async_handle(HINTERNET handle, HANDLE complete_event, int hand
     ok(res, "InternetCloseHandle failed: %u\n", GetLastError());
     WaitForSingleObject(hCompleteEvent, INFINITE);
     CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, handle_cnt);
-    SET_EXPECT2(INTERNET_STATUS_HANDLE_CLOSING, handle_cnt);
 }
 
 static void InternetReadFile_test(int flags, const test_data_t *test)
@@ -1219,6 +1219,108 @@ done:
     ok(InternetCloseHandle(session), "Close session handle failed\n");
 }
 
+static void test_cache_read(void)
+{
+    HINTERNET session, connection, req;
+    FILETIME now, tomorrow, yesterday;
+    BYTE content[1000], buf[2000];
+    char file_path[MAX_PATH];
+    ULARGE_INTEGER li;
+    HANDLE file;
+    DWORD size;
+    unsigned i;
+    BOOL res;
+
+    static const char cache_only_url[] = "http://test.winehq.org/tests/cache-only";
+    BYTE cache_headers[] = "HTTP/1.1 200 OK\r\n\r\n";
+
+    trace("Testing cache read...\n");
+
+    hCompleteEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+    for(i = 0; i < sizeof(content); i++)
+        content[i] = '0' + (i%10);
+
+    GetSystemTimeAsFileTime(&now);
+    li.u.HighPart = now.dwHighDateTime;
+    li.u.LowPart = now.dwLowDateTime;
+    li.QuadPart += (LONGLONG)10000000 * 3600 * 24;
+    tomorrow.dwHighDateTime = li.u.HighPart;
+    tomorrow.dwLowDateTime = li.u.LowPart;
+    li.QuadPart -= (LONGLONG)10000000 * 3600 * 24 * 2;
+    yesterday.dwHighDateTime = li.u.HighPart;
+    yesterday.dwLowDateTime = li.u.LowPart;
+
+    res = CreateUrlCacheEntryA(cache_only_url, sizeof(content), "", file_path, 0);
+    ok(res, "CreateUrlCacheEntryA failed: %u\n", GetLastError());
+
+    file = CreateFileA(file_path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
+
+    WriteFile(file, content, sizeof(content), &size, NULL);
+    CloseHandle(file);
+
+    res = CommitUrlCacheEntryA(cache_only_url, file_path, tomorrow, yesterday, NORMAL_CACHE_ENTRY,
+                               cache_headers, sizeof(cache_headers)-1, "", 0);
+    ok(res, "CommitUrlCacheEntryA failed: %u\n", GetLastError());
+
+    session = InternetOpenA("", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, INTERNET_FLAG_ASYNC);
+    ok(session != NULL,"InternetOpen failed with error %u\n", GetLastError());
+
+    pInternetSetStatusCallbackA(session, callback);
+
+    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
+    connection = InternetConnectA(session, "test.winehq.org", INTERNET_DEFAULT_HTTP_PORT,
+            NULL, NULL, INTERNET_SERVICE_HTTP, 0x0, 0xdeadbeef);
+    ok(connection != NULL,"InternetConnect failed with error %u\n", GetLastError());
+    CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
+
+    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
+    req = HttpOpenRequestA(connection, "GET", "/tests/cache-only", NULL, NULL, NULL, 0, 0xdeadbead);
+    ok(req != NULL, "HttpOpenRequest failed: %u\n", GetLastError());
+    CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
+
+    SET_WINE_ALLOW(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    SET_WINE_ALLOW(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_WINE_ALLOW(INTERNET_STATUS_SENDING_REQUEST);
+    SET_WINE_ALLOW(INTERNET_STATUS_REQUEST_SENT);
+    SET_WINE_ALLOW(INTERNET_STATUS_RECEIVING_RESPONSE);
+    SET_WINE_ALLOW(INTERNET_STATUS_RESPONSE_RECEIVED);
+    SET_WINE_ALLOW(INTERNET_STATUS_REQUEST_COMPLETE);
+
+    res = HttpSendRequestA(req, NULL, -1, NULL, 0);
+    todo_wine
+    ok(res, "HttpSendRequest failed: %u\n", GetLastError());
+
+    if(res) {
+        size = 0;
+        res = InternetQueryDataAvailable(req, &size, 0, 0);
+        ok(res, "InternetQueryDataAvailable failed: %u\n", GetLastError());
+        ok(size  == sizeof(content), "size = %u\n", size);
+
+        size = sizeof(buf);
+        res = InternetReadFile(req, buf, sizeof(buf), &size);
+        ok(res, "InternetReadFile failed: %u\n", GetLastError());
+        ok(size == sizeof(content), "size = %u\n", size);
+        ok(!memcmp(content, buf, sizeof(content)), "unexpected content\n");
+    }
+
+    close_async_handle(session, hCompleteEvent, 2);
+
+    CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    CLEAR_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
+    CLEAR_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
+    CLEAR_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
+    CLEAR_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
+    CLEAR_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+
+    res = DeleteUrlCacheEntryA(cache_only_url);
+    ok(res, "DeleteUrlCacheEntryA failed: %u\n", GetLastError());
+
+    CloseHandle(hCompleteEvent);
+}
+
 static void test_http_cache(void)
 {
     HINTERNET session, connect, request;
@@ -1333,6 +1435,8 @@ static void test_http_cache(void)
     ok(InternetCloseHandle(request), "Close request handle failed\n");
     ok(InternetCloseHandle(connect), "Close connect handle failed\n");
     ok(InternetCloseHandle(session), "Close session handle failed\n");
+
+    test_cache_read();
 }
 
 static void HttpHeaders_test(void)
