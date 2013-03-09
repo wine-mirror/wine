@@ -228,7 +228,7 @@ static ULONG WINAPI localizedstrings_Release(IDWriteLocalizedStrings *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (!ref) {
-        int i;
+        unsigned int i;
 
         for (i = 0; i < This->count; i++) {
             heap_free(This->data[i].locale);

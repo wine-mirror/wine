@@ -211,7 +211,7 @@ static const struct script_range script_ranges[] = {
 static UINT16 get_char_script( WCHAR c )
 {
     DWORD ch = c;
-    int i;
+    unsigned int i;
 
     for (i = 0; i < sizeof(script_ranges)/sizeof(struct script_range); i++)
     {

@@ -288,7 +288,7 @@ static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace *iface, UIN
     HFONT hfont;
     WCHAR *str;
     HDC hdc;
-    int i;
+    unsigned int i;
 
     TRACE("(%p)->(%p %u %p)\n", This, codepoints, count, glyph_indices);
 
@@ -783,7 +783,7 @@ static INT CALLBACK enum_font_families(const LOGFONTW *lf, const TEXTMETRICW *tm
 static void release_font_collection(IDWriteFontCollection *iface)
 {
     struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection(iface);
-    int i;
+    unsigned int i;
 
     for (i = 0; i < This->count; i++)
         heap_free(This->families[i]);
