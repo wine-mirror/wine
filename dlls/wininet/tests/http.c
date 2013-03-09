@@ -3662,6 +3662,16 @@ static void test_open_url_async(void)
     ret = InternetSetOptionA(NULL, INTERNET_OPTION_SETTINGS_CHANGED, NULL, 0);
     ok(ret, "InternetSetOption(INTERNET_OPTION_END_BROWSER_SESSION) failed: %u\n", GetLastError());
 
+    /*
+     * Some versions of IE6 fail those tests. They pass some notification data as UNICODE string, while
+     * other versions never do. They also hang of following tests. We disable it for everything older
+     * than IE7.
+     */
+    if(!pInternetGetSecurityInfoByURLA) {
+        win_skip("Skipping async open on too old wininet version.\n");
+        return;
+    }
+
     ctx.req = NULL;
     ctx.event = CreateEvent(NULL, TRUE, FALSE, "Z:_home_hans_jaman-installer.exe_ev1");
 
