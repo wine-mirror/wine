@@ -233,7 +233,7 @@ static void initialize_disabled_joysticks_list(HWND hwnd)
     HKEY hkey, appkey;
     DWORD values = 0;
     HRESULT hr;
-    int i;
+    DWORD i;
 
     SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_RESETCONTENT, 0, 0);
 
@@ -394,6 +394,8 @@ static DWORD WINAPI input_thread(void *param)
     while (!data->stop)
     {
         int i;
+        unsigned int j;
+
         poll_input(&data->joysticks[data->chosen_joystick], &state);
 
         dump_joy_state(&state, data->joysticks[data->chosen_joystick].num_buttons);
@@ -412,12 +414,12 @@ static DWORD WINAPI input_thread(void *param)
         axes_pos[2][1] = state.lRz;
 
         /* Set pov values */
-        for (i = 0; i < sizeof(pov_val)/sizeof(pov_val[0]); i++)
+        for (j = 0; i < sizeof(pov_val)/sizeof(pov_val[0]); j++)
         {
-            if (state.rgdwPOV[0] == pov_val[i])
+            if (state.rgdwPOV[0] == pov_val[j])
             {
-                axes_pos[3][0] = pov_pos[i][0];
-                axes_pos[3][1] = pov_pos[i][1];
+                axes_pos[3][0] = pov_pos[j][0];
+                axes_pos[3][1] = pov_pos[j][1];
             }
         }
 
