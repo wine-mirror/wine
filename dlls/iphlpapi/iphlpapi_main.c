@@ -848,7 +848,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
         if (num_v4addrs)
         {
             IP_ADAPTER_UNICAST_ADDRESS *ua;
-            struct sockaddr_in *sa;
+            struct WS_sockaddr_in *sa;
             aa->Flags |= IP_ADAPTER_IPV4_ENABLED;
             ua = aa->FirstUnicastAddress = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
             for (i = 0; i < num_v4addrs; i++)
@@ -860,12 +860,12 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 ua->Address.iSockaddrLength = sizeof(struct sockaddr_in);
                 ua->Address.lpSockaddr      = (SOCKADDR *)((char *)ua + ua->u.s.Length);
 
-                sa = (struct sockaddr_in *)ua->Address.lpSockaddr;
-                sa->sin_family      = AF_INET;
-                sa->sin_addr.s_addr = v4addrs[i];
-                sa->sin_port        = 0;
+                sa = (struct WS_sockaddr_in *)ua->Address.lpSockaddr;
+                sa->sin_family           = WS_AF_INET;
+                sa->sin_addr.S_un.S_addr = v4addrs[i];
+                sa->sin_port             = 0;
                 TRACE("IPv4 %d/%d: %s\n", i + 1, num_v4addrs,
-                      debugstr_ipv4(&sa->sin_addr.s_addr, addr_buf));
+                      debugstr_ipv4(&sa->sin_addr.S_un.S_addr, addr_buf));
 
                 ptr += ua->u.s.Length + ua->Address.iSockaddrLength;
                 if (i < num_v4addrs - 1)
