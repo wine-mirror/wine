@@ -4282,6 +4282,58 @@ static void test_alpha_hdc(void)
     DeleteDC(hdc);
 }
 
+static void test_bitmapfromgraphics(void)
+{
+    GpStatus stat;
+    GpGraphics *graphics = NULL;
+    HDC hdc = GetDC( hwnd );
+    GpBitmap *bitmap = NULL;
+    PixelFormat format;
+    REAL imageres, graphicsres;
+    UINT width, height;
+
+    stat = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipCreateBitmapFromGraphics(12, 13, NULL, &bitmap);
+    expect(InvalidParameter, stat);
+
+    stat = GdipCreateBitmapFromGraphics(12, 13, graphics, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = GdipCreateBitmapFromGraphics(12, 13, graphics, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImagePixelFormat((GpImage*)bitmap, &format);
+    expect(Ok, stat);
+    expect(PixelFormat32bppPARGB, format);
+
+    stat = GdipGetDpiX(graphics, &graphicsres);
+    expect(Ok, stat);
+
+    stat = GdipGetImageHorizontalResolution((GpImage*)bitmap, &imageres);
+    expect(Ok, stat);
+    expectf(graphicsres, imageres);
+
+    stat = GdipGetDpiY(graphics, &graphicsres);
+    expect(Ok, stat);
+
+    stat = GdipGetImageVerticalResolution((GpImage*)bitmap, &imageres);
+    expect(Ok, stat);
+    expectf(graphicsres, imageres);
+
+    stat = GdipGetImageWidth((GpImage*)bitmap, &width);
+    expect(Ok, stat);
+    expect(12, width);
+
+    stat = GdipGetImageHeight((GpImage*)bitmap, &height);
+    expect(Ok, stat);
+    expect(13, height);
+
+    GdipDeleteGraphics(graphics);
+    GdipDisposeImage((GpImage*)bitmap);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -4349,6 +4401,7 @@ START_TEST(graphics)
     test_get_set_textrenderinghint();
     test_getdc_scaled();
     test_alpha_hdc();
+    test_bitmapfromgraphics();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow( hwnd );
