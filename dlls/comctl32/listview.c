@@ -8290,10 +8290,10 @@ static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn, INT cx)
 	lvItem.mask = LVIF_TEXT;	
 	lvItem.iItem = 0;
 	lvItem.iSubItem = nColumn;
-	lvItem.pszText = szDispText;
 	lvItem.cchTextMax = DISP_TEXT_SIZE;
 	for (; lvItem.iItem < infoPtr->nItemCount; lvItem.iItem++)
 	{
+            lvItem.pszText = szDispText;
 	    if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) continue;
 	    nLabelWidth = LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
 	    if (max_cx < nLabelWidth) max_cx = nLabelWidth;
