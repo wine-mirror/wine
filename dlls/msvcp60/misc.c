@@ -80,7 +80,7 @@ unsigned short __cdecl wctype(const char *property)
         { "upper", _UPPER },
         { "xdigit", _HEX }
     };
-    int i;
+    unsigned int i;
 
     for(i=0; i<sizeof(properties)/sizeof(properties[0]); i++)
         if(!strcmp(property, properties[i].name))
