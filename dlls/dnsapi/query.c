@@ -578,13 +578,13 @@ static DNS_STATUS dns_get_serverlist( PIP4_ARRAY addrs, PDWORD len )
     return ERROR_SUCCESS;
 }
 
-static DNS_STATUS dns_do_query( PCSTR name, WORD type, DWORD options,
-                                PDNS_RECORDA *result )
+#define DNS_MAX_PACKET_SIZE 4096
+static DNS_STATUS dns_do_query( PCSTR name, WORD type, DWORD options, PDNS_RECORDA *result )
 {
     DNS_STATUS ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED;
 
     unsigned int i, num;
-    unsigned char answer[NS_PACKETSZ];
+    unsigned char answer[DNS_MAX_PACKET_SIZE];
     ns_sect sections[] = { ns_s_an, ns_s_ar };
     ns_msg msg;
 
