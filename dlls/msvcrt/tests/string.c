@@ -71,6 +71,8 @@ static int (__cdecl *p_wcsupr_s)(wchar_t *str, size_t size);
 static size_t (__cdecl *p_strnlen)(const char *, size_t);
 static __int64 (__cdecl *p_strtoi64)(const char *, char **, int);
 static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
+static __int64 (__cdecl *p_wcstoi64)(const wchar_t *, wchar_t **, int);
+static unsigned __int64 (__cdecl *p_wcstoui64)(const wchar_t *, wchar_t **, int);
 static int (__cdecl *pwcstombs_s)(size_t*,char*,size_t,const wchar_t*,size_t);
 static int (__cdecl *pmbstowcs_s)(size_t*,wchar_t*,size_t,const char*,size_t);
 static size_t (__cdecl *p_mbsrtowcs)(wchar_t*, const char**, size_t, mbstate_t*);
@@ -2468,6 +2470,57 @@ static void test__stricmp(void)
     setlocale(LC_ALL, "C");
 }
 
+static void test__wcstoi64(void)
+{
+    static const WCHAR digit[] = { '9', 0 };
+    static const WCHAR stock[] = { 0x3231, 0 }; /* PARENTHESIZED IDEOGRAPH STOCK */
+    static const WCHAR tamil[] = { 0x0bef, 0 }; /* TAMIL DIGIT NINE */
+    static const WCHAR thai[]  = { 0x0e59, 0 }; /* THAI DIGIT NINE */
+    static const WCHAR fullwidth[] = { 0xff19, 0 }; /* FULLWIDTH DIGIT NINE */
+    static const WCHAR hex[] = { 0xff19, 'f', 0x0e59, 0xff46, 0 };
+
+    __int64 res;
+    unsigned __int64 ures;
+    WCHAR *endpos;
+
+    if (!p_wcstoi64 || !p_wcstoui64) {
+        win_skip("_wcstoi64 or _wcstoui64 not found\n");
+        return;
+    }
+
+    res = p_wcstoi64(digit, NULL, 10);
+    ok(res == 9, "res != 9\n");
+    res = p_wcstoi64(stock, &endpos, 10);
+    todo_wine ok(res == 0, "res != 0\n");
+    todo_wine ok(endpos == stock, "Incorrect endpos (%p-%p)\n", stock, endpos);
+    res = p_wcstoi64(tamil, &endpos, 10);
+    ok(res == 0, "res != 0\n");
+    ok(endpos == tamil, "Incorrect endpos (%p-%p)\n", tamil, endpos);
+    res = p_wcstoi64(thai, NULL, 10);
+    todo_wine ok(res == 9, "res != 9\n");
+    res = p_wcstoi64(fullwidth, NULL, 10);
+    todo_wine ok(res == 9, "res != 9\n");
+    res = p_wcstoi64(hex, NULL, 16);
+    todo_wine ok(res == 0x9f9, "res != 0x9f9\n");
+
+    ures = p_wcstoui64(digit, NULL, 10);
+    ok(ures == 9, "ures != 9\n");
+    ures = p_wcstoui64(stock, &endpos, 10);
+    todo_wine ok(ures == 0, "ures != 0\n");
+    todo_wine ok(endpos == stock, "Incorrect endpos (%p-%p)\n", stock, endpos);
+    ures = p_wcstoui64(tamil, &endpos, 10);
+    ok(ures == 0, "ures != 0\n");
+    ok(endpos == tamil, "Incorrect endpos (%p-%p)\n", tamil, endpos);
+    ures = p_wcstoui64(thai, NULL, 10);
+    todo_wine ok(ures == 9, "ures != 9\n");
+    ures = p_wcstoui64(fullwidth, NULL, 10);
+    todo_wine ok(ures == 9, "ures != 9\n");
+    ures = p_wcstoui64(hex, NULL, 16);
+    todo_wine ok(ures == 0x9f9, "ures != 0x9f9\n");
+
+    return;
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -2495,6 +2548,8 @@ START_TEST(string)
     p_strnlen = (void *)GetProcAddress( hMsvcrt,"strnlen" );
     p_strtoi64 = (void *)GetProcAddress(hMsvcrt, "_strtoi64");
     p_strtoui64 = (void *)GetProcAddress(hMsvcrt, "_strtoui64");
+    p_wcstoi64 = (void *)GetProcAddress(hMsvcrt, "_wcstoi64");
+    p_wcstoui64 = (void *)GetProcAddress(hMsvcrt, "_wcstoui64");
     pmbstowcs_s = (void *)GetProcAddress(hMsvcrt, "mbstowcs_s");
     pwcstombs_s = (void *)GetProcAddress(hMsvcrt, "wcstombs_s");
     pwcsrtombs = (void *)GetProcAddress(hMsvcrt, "wcsrtombs");
@@ -2564,4 +2619,5 @@ START_TEST(string)
     test_tolower();
     test__atodbl();
     test__stricmp();
+    test__wcstoi64();
 }
