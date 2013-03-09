@@ -2491,8 +2491,8 @@ static void test__wcstoi64(void)
     res = p_wcstoi64(digit, NULL, 10);
     ok(res == 9, "res != 9\n");
     res = p_wcstoi64(stock, &endpos, 10);
-    todo_wine ok(res == 0, "res != 0\n");
-    todo_wine ok(endpos == stock, "Incorrect endpos (%p-%p)\n", stock, endpos);
+    ok(res == 0, "res != 0\n");
+    ok(endpos == stock, "Incorrect endpos (%p-%p)\n", stock, endpos);
     res = p_wcstoi64(tamil, &endpos, 10);
     ok(res == 0, "res != 0\n");
     ok(endpos == tamil, "Incorrect endpos (%p-%p)\n", tamil, endpos);
@@ -2506,8 +2506,8 @@ static void test__wcstoi64(void)
     ures = p_wcstoui64(digit, NULL, 10);
     ok(ures == 9, "ures != 9\n");
     ures = p_wcstoui64(stock, &endpos, 10);
-    todo_wine ok(ures == 0, "ures != 0\n");
-    todo_wine ok(endpos == stock, "Incorrect endpos (%p-%p)\n", stock, endpos);
+    ok(ures == 0, "ures != 0\n");
+    ok(endpos == stock, "Incorrect endpos (%p-%p)\n", stock, endpos);
     ures = p_wcstoui64(tamil, &endpos, 10);
     ok(ures == 0, "ures != 0\n");
     ok(endpos == tamil, "Incorrect endpos (%p-%p)\n", tamil, endpos);

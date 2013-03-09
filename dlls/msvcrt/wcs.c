@@ -1395,7 +1395,7 @@ __int64 CDECL MSVCRT__wcstoi64_l(const MSVCRT_wchar_t *nptr,
     }
 
     while(*nptr) {
-        char cur = tolowerW(*nptr);
+        MSVCRT_wchar_t cur = tolowerW(*nptr);
         int v;
 
         if(isdigitW(cur)) {
@@ -1493,10 +1493,10 @@ unsigned __int64 CDECL MSVCRT__wcstoui64_l(const MSVCRT_wchar_t *nptr,
     }
 
     while(*nptr) {
-        char cur = tolowerW(*nptr);
+        MSVCRT_wchar_t cur = tolowerW(*nptr);
         int v;
 
-        if(isdigit(cur)) {
+        if(isdigitW(cur)) {
             if(cur >= '0'+base)
                 break;
             v = *nptr-'0';
