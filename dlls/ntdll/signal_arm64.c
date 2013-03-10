@@ -115,7 +115,7 @@ static inline BOOL is_valid_frame( void *frame )
  *
  * Set the register values from a sigcontext.
  */
-static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
+static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
 #define C(n) context->X##n = REGn_sig(n,sigcontext)
     /* Save normal registers */
@@ -136,7 +136,7 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
  *
  * Build a sigcontext from the register values.
  */
-static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
+static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 {
 #define C(n)  REGn_sig(n,sigcontext) = context->X##n
     /* Restore normal registers */
@@ -156,7 +156,7 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
  *
  * Set the FPU context from a sigcontext.
  */
-static inline void save_fpu( CONTEXT *context, const ucontext_t *sigcontext )
+static inline void save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
     FIXME( "Not implemented on ARM64\n" );
 }
@@ -167,7 +167,7 @@ static inline void save_fpu( CONTEXT *context, const ucontext_t *sigcontext )
  *
  * Restore the FPU context to a sigcontext.
  */
-static inline void restore_fpu( CONTEXT *context, const ucontext_t *sigcontext )
+static inline void restore_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
     FIXME( "Not implemented on ARM64\n" );
 }
