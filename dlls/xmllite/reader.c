@@ -1849,6 +1849,11 @@ static HRESULT reader_parse_content(xmlreader *reader)
         {
         case XmlReadResumeState_CDATA:
             return reader_parse_cdata(reader);
+        case XmlReadResumeState_Comment:
+            return reader_parse_comment(reader);
+        case XmlReadResumeState_PIBody:
+        case XmlReadResumeState_PITarget:
+            return reader_parse_pi(reader);
         default:
             ERR("unknown resume state %d\n", reader->resumestate);
         }
