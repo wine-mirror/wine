@@ -63,6 +63,7 @@ typedef enum
     XmlReadResumeState_Initial,
     XmlReadResumeState_PITarget,
     XmlReadResumeState_PIBody,
+    XmlReadResumeState_CDATA,
     XmlReadResumeState_Comment,
     XmlReadResumeState_STag
 } XmlReaderResumeState;
@@ -72,7 +73,7 @@ typedef enum
 {
     XmlReadResume_Name,  /* PITarget, name for NCName, prefix for QName */
     XmlReadResume_Local, /* local for QName */
-    XmlReadResume_Body,  /* PI body, comment text */
+    XmlReadResume_Body,  /* PI body, comment text, CDATA text */
     XmlReadResume_Last
 } XmlReaderResume;
 
@@ -1772,8 +1773,51 @@ static HRESULT reader_parse_endtag(xmlreader *reader)
    [21] CDEnd ::= ']]>' */
 static HRESULT reader_parse_cdata(xmlreader *reader)
 {
-    FIXME("CDATA sections are not supported\n");
-    return E_NOTIMPL;
+    WCHAR *start, *ptr;
+
+    if (reader->resume[XmlReadResume_Body])
+    {
+        start = reader->resume[XmlReadResume_Body];
+        ptr = reader_get_cur(reader);
+    }
+    else
+    {
+        /* skip markup '<![CDATA[' */
+        reader_skipn(reader, 9);
+        reader_shrink(reader);
+        ptr = start = reader_get_cur(reader);
+        reader->nodetype = XmlNodeType_CDATA;
+        reader->resume[XmlReadResume_Body] = start;
+        reader->resumestate = XmlReadResumeState_CDATA;
+        reader_set_strvalue(reader, StringValue_LocalName, NULL);
+        reader_set_strvalue(reader, StringValue_QualifiedName, NULL);
+        reader_set_strvalue(reader, StringValue_Value, NULL);
+    }
+
+    while (*ptr)
+    {
+        if (*ptr == ']' && *(ptr+1) == ']' && *(ptr+2) == '>')
+        {
+            strval value = { start, ptr-start };
+
+            TRACE("%s\n", debugstr_wn(start, ptr-start));
+            /* skip ']]>' */
+            reader_skipn(reader, 3);
+            reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
+            reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
+            reader_set_strvalue(reader, StringValue_Value, &value);
+            reader->resume[XmlReadResume_Body] = NULL;
+            reader->resumestate = XmlReadResumeState_Initial;
+            return S_OK;
+        }
+        else
+        {
+            reader_skipn(reader, 1);
+            ptr++;
+        }
+    }
+
+    return S_OK;
 }
 
 /* [66] CharRef ::= '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';'
@@ -1798,6 +1842,17 @@ static HRESULT reader_parse_content(xmlreader *reader)
     static const WCHAR cdstartW[] = {'<','!','[','C','D','A','T','A','[',0};
     static const WCHAR etagW[] = {'<','/',0};
     static const WCHAR ampW[] = {'&',0};
+
+    if (reader->resumestate != XmlReadResumeState_Initial)
+    {
+        switch (reader->resumestate)
+        {
+        case XmlReadResumeState_CDATA:
+            return reader_parse_cdata(reader);
+        default:
+            ERR("unknown resume state %d\n", reader->resumestate);
+        }
+    }
 
     reader_shrink(reader);
 
