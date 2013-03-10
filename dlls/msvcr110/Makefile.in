@@ -1,0 +1,9 @@
+MODULE    = msvcr110.dll
+IMPORTS   = msvcrt
+MODCFLAGS = @BUILTINFLAG@
+EXTRAINCL = -I$(top_srcdir)/include/msvcrt
+
+C_SRCS = \
+	msvcr110.c
+
+@MAKE_DLL_RULES@
