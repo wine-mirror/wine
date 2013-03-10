@@ -21,6 +21,7 @@
 #import "cocoa_opengl.h"
 
 #include "macdrv_cocoa.h"
+#include "cocoa_app.h"
 
 
 @interface WineOpenGLContext ()
@@ -97,8 +98,21 @@ void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v)
         context.needsUpdate = FALSE;
         if (view)
         {
+            __block BOOL windowHasDevice;
+
             macdrv_add_view_opengl_context(v, c);
-            [context setLatentView:view];
+
+            OnMainThread(^{
+                windowHasDevice = [[view window] windowNumber] > 0;
+            });
+            if (windowHasDevice)
+            {
+                [context setView:view];
+                [context setLatentView:nil];
+            }
+            else
+                [context setLatentView:view];
+
             [context makeCurrentContext];
         }
         else
