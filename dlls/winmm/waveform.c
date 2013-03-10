@@ -2035,7 +2035,7 @@ static LRESULT WINMM_Reset(HWAVE hwave)
 }
 
 static MMRESULT WINMM_FramesToMMTime(MMTIME *time, UINT32 played_frames,
-        UINT32 sample_rate, UINT32 bytes_per_frame)
+        UINT32 sample_rate, UINT32 bytes_per_sec)
 {
     switch(time->wType){
     case TIME_SAMPLES:
@@ -2058,7 +2058,7 @@ static MMRESULT WINMM_FramesToMMTime(MMTIME *time, UINT32 played_frames,
         time->wType = TIME_BYTES;
         /* fall through */
     case TIME_BYTES:
-        time->u.cb = played_frames * bytes_per_frame;
+        time->u.cb = MulDiv(played_frames, bytes_per_sec, sample_rate);
         return MMSYSERR_NOERROR;
     }
 }
@@ -2066,7 +2066,7 @@ static MMRESULT WINMM_FramesToMMTime(MMTIME *time, UINT32 played_frames,
 static LRESULT WINMM_GetPosition(HWAVE hwave, MMTIME *time)
 {
     WINMM_Device *device = WINMM_GetDeviceFromHWAVE(hwave);
-    UINT32 played_frames, sample_rate, bytes_per_frame;
+    UINT32 played_frames, sample_rate, bytes_per_sec;
 
     TRACE("(%p, %p)\n", hwave, time);
 
@@ -2075,12 +2075,11 @@ static LRESULT WINMM_GetPosition(HWAVE hwave, MMTIME *time)
 
     played_frames = device->played_frames;
     sample_rate = device->orig_fmt->nSamplesPerSec;
-    bytes_per_frame = device->orig_fmt->nBlockAlign;
+    bytes_per_sec = device->orig_fmt->nAvgBytesPerSec;
 
     LeaveCriticalSection(&device->lock);
 
-    return WINMM_FramesToMMTime(time, played_frames, sample_rate,
-            bytes_per_frame);
+    return WINMM_FramesToMMTime(time, played_frames, sample_rate, bytes_per_sec);
 }
 
 static WINMM_MMDevice *WINMM_GetMixerMMDevice(HMIXEROBJ hmix, DWORD flags,
