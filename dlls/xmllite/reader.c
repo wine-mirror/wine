@@ -62,14 +62,16 @@ typedef enum
 {
     XmlReadResumeState_Initial,
     XmlReadResumeState_PITarget,
-    XmlReadResumeState_PIBody
+    XmlReadResumeState_PIBody,
+    XmlReadResumeState_STag
 } XmlReaderResumeState;
 
 /* saved pointer index to resume from particular input position */
 typedef enum
 {
-    XmlReadResume_Name, /* PITarget */
-    XmlReadResume_Body, /* PI body, comment text */
+    XmlReadResume_Name,  /* PITarget, name for NCName, prefix for QName */
+    XmlReadResume_Local, /* local for QName */
+    XmlReadResume_Body,  /* PI body, comment text */
     XmlReadResume_Last
 } XmlReaderResume;
 
@@ -1525,17 +1527,20 @@ static HRESULT reader_parse_dtd(xmlreader *reader)
     return S_OK;
 }
 
-/* [7 NS]  QName ::= PrefixedName | UnprefixedName
-   [8 NS]  PrefixedName ::= Prefix ':' LocalPart
-   [9 NS]  UnprefixedName ::= LocalPart
-   [10 NS] Prefix ::= NCName
-   [11 NS] LocalPart ::= NCName */
-static HRESULT reader_parse_qname(xmlreader *reader, strval *prefix, strval *local, strval *qname)
+/* [11 NS] LocalPart ::= NCName */
+static HRESULT reader_parse_local(xmlreader *reader, strval *local)
 {
-    WCHAR *ptr, *start = reader_get_cur(reader);
+    WCHAR *ptr, *start;
 
-    ptr = start;
-    if (!is_ncnamechar(*ptr)) return NC_E_QNAMECHARACTER;
+    if (reader->resume[XmlReadResume_Local])
+    {
+        start = reader->resume[XmlReadResume_Local];
+        ptr = reader_get_cur(reader);
+    }
+    else
+    {
+        ptr = start = reader_get_cur(reader);
+    }
 
     while (is_ncnamechar(*ptr))
     {
@@ -1543,25 +1548,79 @@ static HRESULT reader_parse_qname(xmlreader *reader, strval *prefix, strval *loc
         ptr = reader_get_cur(reader);
     }
 
-    /* got a qualified name */
-    if (*ptr == ':')
+    if (is_reader_pending(reader))
     {
-        prefix->str = start;
-        prefix->len = ptr-start;
+         reader->resume[XmlReadResume_Local] = start;
+         return E_PENDING;
+    }
+    else
+         reader->resume[XmlReadResume_Local] = NULL;
 
-        reader_skipn(reader, 1);
-        start = ptr = reader_get_cur(reader);
+    local->str = start;
+    local->len = ptr-start;
 
+    return S_OK;
+}
+
+/* [7 NS]  QName ::= PrefixedName | UnprefixedName
+   [8 NS]  PrefixedName ::= Prefix ':' LocalPart
+   [9 NS]  UnprefixedName ::= LocalPart
+   [10 NS] Prefix ::= NCName */
+static HRESULT reader_parse_qname(xmlreader *reader, strval *prefix, strval *local, strval *qname)
+{
+    WCHAR *ptr, *start;
+    HRESULT hr;
+
+    if (reader->resume[XmlReadResume_Name])
+    {
+        start = reader->resume[XmlReadResume_Name];
+        ptr = reader_get_cur(reader);
+    }
+    else
+    {
+        ptr = start = reader_get_cur(reader);
+        reader->resume[XmlReadResume_Name] = start;
+        if (!is_ncnamechar(*ptr)) return NC_E_QNAMECHARACTER;
+    }
+
+    if (reader->resume[XmlReadResume_Local])
+    {
+        hr = reader_parse_local(reader, local);
+        if (FAILED(hr)) return hr;
+
+        prefix->str = reader->resume[XmlReadResume_Name];
+        prefix->len = local->str - prefix->str - 1;
+    }
+    else
+    {
+        /* skip prefix part */
         while (is_ncnamechar(*ptr))
         {
             reader_skipn(reader, 1);
             ptr = reader_get_cur(reader);
         }
-    }
-    else
-    {
-        prefix->str = NULL;
-        prefix->len = 0;
+
+        if (is_reader_pending(reader)) return E_PENDING;
+
+        /* got a qualified name */
+        if (*ptr == ':')
+        {
+            prefix->str = start;
+            prefix->len = ptr-start;
+
+            /* skip ':' */
+            reader_skipn(reader, 1);
+            hr = reader_parse_local(reader, local);
+            if (FAILED(hr)) return hr;
+        }
+        else
+        {
+            local->str = reader->resume[XmlReadResume_Name];
+            local->len = ptr-local->str;
+
+            prefix->str = NULL;
+            prefix->len = 0;
+        }
     }
 
     local->str = start;
@@ -1576,6 +1635,9 @@ static HRESULT reader_parse_qname(xmlreader *reader, strval *prefix, strval *loc
     /* count ':' too */
     qname->len = (prefix->len ? prefix->len + 1 : 0) + local->len;
 
+    reader->resume[XmlReadResume_Name] = NULL;
+    reader->resume[XmlReadResume_Local] = NULL;
+
     return S_OK;
 }
 
@@ -1585,9 +1647,6 @@ static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *loca
 {
     static const WCHAR endW[] = {'/','>',0};
     HRESULT hr;
-
-    /* skip '<' */
-    reader_skipn(reader, 1);
 
     hr = reader_parse_qname(reader, prefix, local, qname);
     if (FAILED(hr)) return hr;
@@ -1617,32 +1676,47 @@ static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *loca
 /* [39] element ::= EmptyElemTag | STag content ETag */
 static HRESULT reader_parse_element(xmlreader *reader)
 {
-    strval qname, prefix, local;
     HRESULT hr;
-    int empty;
 
-    /* check if we are really on element */
-    if (reader_cmp(reader, ltW)) return S_FALSE;
-    reader_shrink(reader);
+    switch (reader->resumestate)
+    {
+    case XmlReadResumeState_Initial:
+        /* check if we are really on element */
+        if (reader_cmp(reader, ltW)) return S_FALSE;
 
-    /* this handles empty elements too */
-    empty = 0;
-    hr = reader_parse_stag(reader, &prefix, &local, &qname, &empty);
-    if (FAILED(hr)) return hr;
+        /* skip '<' */
+        reader_skipn(reader, 1);
 
-    /* FIXME: need to check for defined namespace to reject invalid prefix,
-       currently reject all prefixes */
-    if (prefix.len) return NC_E_UNDECLAREDPREFIX;
+        reader_shrink(reader);
+        reader->resumestate = XmlReadResumeState_STag;
+    case XmlReadResumeState_STag:
+    {
+        strval qname, prefix, local;
+        int empty = 0;
 
-    /* if we got empty element and stack is empty go straight to Misc */
-    if (empty && list_empty(&reader->elements))
-        reader->instate = XmlReadInState_MiscEnd;
-    else
-        reader->instate = XmlReadInState_Content;
+        /* this handles empty elements too */
+        hr = reader_parse_stag(reader, &prefix, &local, &qname, &empty);
+        if (FAILED(hr)) return hr;
 
-    reader->nodetype = XmlNodeType_Element;
-    reader_set_strvalue(reader, StringValue_LocalName, &local);
-    reader_set_strvalue(reader, StringValue_QualifiedName, &qname);
+        /* FIXME: need to check for defined namespace to reject invalid prefix,
+           currently reject all prefixes */
+        if (prefix.len) return NC_E_UNDECLAREDPREFIX;
+
+        /* if we got empty element and stack is empty go straight to Misc */
+        if (empty && list_empty(&reader->elements))
+            reader->instate = XmlReadInState_MiscEnd;
+        else
+            reader->instate = XmlReadInState_Content;
+
+        reader->nodetype = XmlNodeType_Element;
+        reader->resumestate = XmlReadResumeState_Initial;
+        reader_set_strvalue(reader, StringValue_LocalName, &local);
+        reader_set_strvalue(reader, StringValue_QualifiedName, &qname);
+        break;
+    }
+    default:
+        hr = E_FAIL;
+    }
 
     return hr;
 }

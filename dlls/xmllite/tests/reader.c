@@ -994,7 +994,7 @@ static void test_read_full(void)
         hr = IXmlReader_Read(reader, &type);
         i++;
     }
-    ok(test->types[i] == XmlNodeType_None, "incomplete sequence\n");
+    ok(test->types[i] == XmlNodeType_None, "incomplete sequence, got %d\n", test->types[i]);
 
     IStream_Release(stream);
     IXmlReader_Release(reader);
