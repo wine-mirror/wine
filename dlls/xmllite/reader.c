@@ -63,6 +63,7 @@ typedef enum
     XmlReadResumeState_Initial,
     XmlReadResumeState_PITarget,
     XmlReadResumeState_PIBody,
+    XmlReadResumeState_Comment,
     XmlReadResumeState_STag
 } XmlReaderResumeState;
 
@@ -1064,6 +1065,7 @@ static HRESULT reader_parse_comment(xmlreader *reader)
         ptr = start = reader_get_cur(reader);
         reader->nodetype = XmlNodeType_Comment;
         reader->resume[XmlReadResume_Body] = start;
+        reader->resumestate = XmlReadResumeState_Comment;
         reader_set_strvalue(reader, StringValue_LocalName, NULL);
         reader_set_strvalue(reader, StringValue_QualifiedName, NULL);
         reader_set_strvalue(reader, StringValue_Value, NULL);
@@ -1088,6 +1090,7 @@ static HRESULT reader_parse_comment(xmlreader *reader)
                     reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
                     reader_set_strvalue(reader, StringValue_Value, &value);
                     reader->resume[XmlReadResume_Body] = NULL;
+                    reader->resumestate = XmlReadResumeState_Initial;
                     return S_OK;
                 }
                 else
@@ -1354,14 +1357,22 @@ static HRESULT reader_parse_misc(xmlreader *reader)
 {
     HRESULT hr = S_FALSE;
 
-    if (is_reader_pending(reader))
+    if (reader->resumestate != XmlReadResumeState_Initial)
     {
         hr = reader_more(reader);
         if (FAILED(hr)) return hr;
 
         /* finish current node */
-        if (reader->nodetype == XmlNodeType_Comment)
+        switch (reader->resumestate)
+        {
+        case XmlReadResumeState_PITarget:
+        case XmlReadResumeState_PIBody:
+            return reader_parse_pi(reader);
+        case XmlReadResumeState_Comment:
             return reader_parse_comment(reader);
+        default:
+            ERR("unknown resume state %d\n", reader->resumestate);
+        }
     }
 
     while (1)
