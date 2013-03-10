@@ -38,6 +38,31 @@
         [super dealloc];
     }
 
+    /* On at least some versions of Mac OS X, -[NSOpenGLContext clearDrawable] has the
+       undesirable side effect of ordering the view's GL surface off-screen.  This isn't
+       done when just changing the context's view to a different view (which I would
+       think would be analogous, since the old view and surface end up without a
+       context attached).  So, we finesse things by first setting the context's view to
+       a different view (the content view of an off-screen window) and then letting the
+       original implementation proceed. */
+    - (void) clearDrawable
+    {
+        static NSWindow* dummyWindow;
+        static dispatch_once_t once;
+
+        dispatch_once(&once, ^{
+            OnMainThread(^{
+                dummyWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 100, 100)
+                                                          styleMask:NSBorderlessWindowMask
+                                                            backing:NSBackingStoreBuffered
+                                                              defer:NO];
+            });
+        });
+
+        [self setView:[dummyWindow contentView]];
+        [super clearDrawable];
+    }
+
 @end
 
 
