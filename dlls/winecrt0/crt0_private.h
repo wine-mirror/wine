@@ -21,7 +21,7 @@
 #ifndef __WINE_CRT0_PRIVATE_H__
 #define __WINE_CRT0_PRIVATE_H__
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__ANDROID__)
 static inline void _init(int argc, char **argv, char **envp ) { /* nothing */ }
 static inline void _fini(void) { /* nothing */ }
 #else
