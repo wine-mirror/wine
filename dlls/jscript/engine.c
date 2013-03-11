@@ -350,6 +350,7 @@ static HRESULT disp_get_id(script_ctx_t *ctx, IDispatch *disp, WCHAR *name, BSTR
 {
     IDispatchEx *dispex;
     jsdisp_t *jsdisp;
+    BSTR bstr;
     HRESULT hres;
 
     jsdisp = iface_to_jsdisp((IUnknown*)disp);
@@ -359,24 +360,27 @@ static HRESULT disp_get_id(script_ctx_t *ctx, IDispatch *disp, WCHAR *name, BSTR
         return hres;
     }
 
+    if(name_bstr) {
+        bstr = name_bstr;
+    }else {
+        bstr = SysAllocString(name);
+        if(!bstr)
+            return E_OUTOFMEMORY;
+    }
+
     *id = 0;
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(SUCCEEDED(hres)) {
-        BSTR str = name_bstr;
-
-        if(!str)
-            str = SysAllocString(name);
-        if(str)
-            hres = IDispatchEx_GetDispID(dispex, str, make_grfdex(ctx, flags|fdexNameCaseSensitive), id);
-        else
-            hres = E_OUTOFMEMORY;
+        hres = IDispatchEx_GetDispID(dispex, bstr, make_grfdex(ctx, flags|fdexNameCaseSensitive), id);
         IDispatchEx_Release(dispex);
-        return hres;
+    }else {
+        TRACE("using IDispatch\n");
+        hres = IDispatch_GetIDsOfNames(disp, &IID_NULL, &name, 1, 0, id);
     }
 
-    TRACE("using IDispatch\n");
-
-    return IDispatch_GetIDsOfNames(disp, &IID_NULL, &name, 1, 0, id);
+    if(name_bstr != bstr)
+        SysFreeString(bstr);
+    return hres;
 }
 
 static inline BOOL var_is_null(const VARIANT *v)
