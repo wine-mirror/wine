@@ -1467,6 +1467,11 @@ static LRESULT WID_Close(HWAVEIN hwave)
     return MMSYSERR_NOERROR;
 }
 
+static DWORD WINMM_FixedBufferLen(DWORD length, WINMM_Device *device)
+{
+    return length - length % device->bytes_per_frame;
+}
+
 static LRESULT WINMM_PrepareHeader(HWAVE hwave, WAVEHDR *header)
 {
     WINMM_Device *device = WINMM_GetDeviceFromHWAVE(hwave);
@@ -1550,10 +1555,10 @@ static UINT32 WINMM_HeaderLenBytes(WINMM_Device *device, WAVEHDR *header)
 {
     if(device->acm_handle){
         ACMSTREAMHEADER *ash = (ACMSTREAMHEADER*)header->reserved;
-        return ash->cbDstLengthUsed;
+        return WINMM_FixedBufferLen(ash->cbDstLengthUsed, device);
     }
 
-    return header->dwBufferLength;
+    return WINMM_FixedBufferLen(header->dwBufferLength, device);
 }
 
 static UINT32 WINMM_HeaderLenFrames(WINMM_Device *device, WAVEHDR *header)
@@ -1690,14 +1695,11 @@ static void WOD_PushData(WINMM_Device *device)
 
         queue = device->playing;
 
-        if(device->acm_handle){
-            ACMSTREAMHEADER *ash = (ACMSTREAMHEADER*)queue->reserved;
-            queue_bytes = ash->cbDstLengthUsed;
-            queue_data = ash->pbDst;
-        }else{
-            queue_bytes = queue->dwBufferLength;
+        queue_bytes = WINMM_HeaderLenBytes(device, queue);
+        if(device->acm_handle)
+            queue_data = ((ACMSTREAMHEADER*)queue->reserved)->pbDst;
+        else
             queue_data = (BYTE*)queue->lpData;
-        }
 
         queue_frames = (queue_bytes - device->ofs_bytes) /
             device->bytes_per_frame;
@@ -1817,8 +1819,8 @@ static void WID_PullACMData(WINMM_Device *device)
     while(queue){
         UINT32 to_copy_bytes;
 
-        to_copy_bytes = min(queue->dwBufferLength - queue->dwBytesRecorded,
-                device->acm_hdr.cbDstLengthUsed - device->acm_offs);
+        to_copy_bytes = min(WINMM_FixedBufferLen(queue->dwBufferLength, device) - queue->dwBytesRecorded,
+                WINMM_FixedBufferLen(device->acm_hdr.cbDstLengthUsed, device) - device->acm_offs);
 
         memcpy(queue->lpData + queue->dwBytesRecorded,
                 device->acm_hdr.pbDst + device->acm_offs, to_copy_bytes);
@@ -1833,7 +1835,7 @@ static void WID_PullACMData(WINMM_Device *device)
             device->first = queue = queue->lpNext;
         }
 
-        if(device->acm_offs >= device->acm_hdr.cbDstLengthUsed){
+        if(device->acm_offs >= WINMM_FixedBufferLen(device->acm_hdr.cbDstLengthUsed, device)){
             acmStreamUnprepareHeader(device->acm_handle, &device->acm_hdr, 0);
             HeapFree(GetProcessHeap(), 0, device->acm_hdr.pbDst);
             device->acm_hdr.cbDstLength = 0;
@@ -1893,7 +1895,7 @@ static void WID_PullData(WINMM_Device *device)
             UINT32 to_copy_bytes;
 
             to_copy_bytes = min(packet * device->bytes_per_frame,
-                    queue->dwBufferLength - queue->dwBytesRecorded);
+                    WINMM_FixedBufferLen(queue->dwBufferLength, device) - queue->dwBytesRecorded);
 
             memcpy(queue->lpData + queue->dwBytesRecorded,
                     data + (packet_len - packet) * device->bytes_per_frame,
@@ -2831,6 +2833,8 @@ UINT WINAPI waveOutWrite(HWAVEOUT hWaveOut, WAVEHDR *header, UINT uSize)
         LeaveCriticalSection(&device->lock);
         return WAVERR_STILLPLAYING;
     }
+
+    TRACE("dwBufferLength: %u\n", header->dwBufferLength);
 
     if(device->acm_handle){
         ACMSTREAMHEADER *ash = (ACMSTREAMHEADER*)header->reserved;
