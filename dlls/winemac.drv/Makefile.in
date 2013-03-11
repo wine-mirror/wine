@@ -3,6 +3,7 @@ IMPORTS   = user32 gdi32 advapi32
 EXTRALIBS = -framework AppKit -framework Carbon -framework Security -framework OpenGL
 
 C_SRCS = \
+	clipboard.c \
 	display.c \
 	event.c \
 	gdi.c \
@@ -16,6 +17,7 @@ C_SRCS = \
 
 OBJC_SRCS = \
 	cocoa_app.m \
+	cocoa_clipboard.m \
 	cocoa_display.m \
 	cocoa_event.m \
 	cocoa_main.m \

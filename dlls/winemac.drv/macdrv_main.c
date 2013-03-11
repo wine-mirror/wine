@@ -89,6 +89,8 @@ static BOOL process_attach(void)
         return FALSE;
     }
 
+    macdrv_clipboard_process_attach();
+
     return TRUE;
 }
 

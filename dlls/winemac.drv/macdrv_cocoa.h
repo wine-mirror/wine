@@ -273,6 +273,10 @@ extern void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_conte
 extern CFDataRef macdrv_copy_keyboard_layout(CGEventSourceKeyboardType* keyboard_type, int* is_iso) DECLSPEC_HIDDEN;
 
 
+/* clipboard */
+extern CFArrayRef macdrv_copy_pasteboard_types(void) DECLSPEC_HIDDEN;
+
+
 /* opengl */
 extern macdrv_opengl_context macdrv_create_opengl_context(void* cglctx) DECLSPEC_HIDDEN;
 extern void macdrv_dispose_opengl_context(macdrv_opengl_context c) DECLSPEC_HIDDEN;
