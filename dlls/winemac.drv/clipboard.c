@@ -647,6 +647,49 @@ INT CDECL macdrv_CountClipboardFormats(void)
 
 
 /**************************************************************************
+ *              IsClipboardFormatAvailable (MACDRV.@)
+ */
+BOOL CDECL macdrv_IsClipboardFormatAvailable(UINT desired_format)
+{
+    CFArrayRef types;
+    int count;
+    UINT i;
+    BOOL found = FALSE;
+
+    TRACE("desired_format %s\n", debugstr_format(desired_format));
+
+    types = macdrv_copy_pasteboard_types();
+    if (!types)
+    {
+        WARN("Failed to copy pasteboard types\n");
+        return FALSE;
+    }
+
+    count = CFArrayGetCount(types);
+    TRACE("got %d types\n", count);
+
+    for (i = 0; !found && i < count; i++)
+    {
+        CFStringRef type = CFArrayGetValueAtIndex(types, i);
+        WINE_CLIPFORMAT* format;
+
+        format = NULL;
+        while (!found && (format = format_for_type(format, type)))
+        {
+            TRACE("for type %s got format %s\n", debugstr_cf(type), debugstr_format(format->format_id));
+
+            if (format->format_id == desired_format)
+                found = TRUE;
+        }
+    }
+
+    CFRelease(types);
+    TRACE(" -> %d\n", found);
+    return found;
+}
+
+
+/**************************************************************************
  *              MACDRV Private Clipboard Exports
  **************************************************************************/
 

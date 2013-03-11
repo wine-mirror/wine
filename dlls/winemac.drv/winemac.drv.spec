@@ -20,6 +20,7 @@
 @ cdecl GetKeyboardLayoutName(ptr) macdrv_GetKeyboardLayoutName
 @ cdecl GetKeyNameText(long ptr long) macdrv_GetKeyNameText
 @ cdecl GetMonitorInfo(long ptr) macdrv_GetMonitorInfo
+@ cdecl IsClipboardFormatAvailable(long) macdrv_IsClipboardFormatAvailable
 @ cdecl MapVirtualKeyEx(long long long) macdrv_MapVirtualKeyEx
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) macdrv_MsgWaitForMultipleObjectsEx
 @ cdecl ScrollDC(long long long ptr ptr long ptr) macdrv_ScrollDC
