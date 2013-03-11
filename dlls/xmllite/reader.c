@@ -2246,6 +2246,8 @@ static HRESULT WINAPI xmlreader_GetValue(IXmlReader* iface, LPCWSTR *value, UINT
 
     TRACE("(%p)->(%p %p)\n", This, value, len);
 
+    *value = NULL;
+
     if ((This->nodetype == XmlNodeType_Comment && !This->strvalues[StringValue_Value].str) ||
         is_reader_pending(This))
     {

@@ -1238,16 +1238,16 @@ static void test_read_pending(void)
     int c;
 
     hr = pCreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
-    ok(hr == S_OK, "S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "S_OK, got 0x%08x\n", hr);
 
     hr = IXmlReader_SetInput(reader, (IUnknown*)&teststream);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* first read call returns incomplete node, second attempt fails with E_PENDING */
     stream_readcall = 0;
     type = XmlNodeType_Element;
     hr = IXmlReader_Read(reader, &type);
-    ok(hr == S_OK || broken(hr == E_PENDING), "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK || broken(hr == E_PENDING), "got 0x%08x\n", hr);
     /* newer versions are happy when it's enough data to detect node type,
        older versions keep reading until it fails to read more */
     ok(stream_readcall == 1 || broken(stream_readcall > 1), "got %d\n", stream_readcall);
@@ -1257,8 +1257,8 @@ static void test_read_pending(void)
     c = stream_readcall;
     value = (void*)0xdeadbeef;
     hr = IXmlReader_GetValue(reader, &value, NULL);
-    ok(hr == E_PENDING, "Expected E_PENDING, got %08x\n", hr);
-    ok(value == (void*)0xdeadbeef, "got %p\n", value);
+    ok(hr == E_PENDING, "got 0x%08x\n", hr);
+    ok(value == NULL || broken(value == (void*)0xdeadbeef) /* Win8 sets it to NULL */, "got %p\n", value);
     ok(c < stream_readcall || broken(c == stream_readcall), "got %d, expected %d\n", stream_readcall, c+1);
 
     IXmlReader_Release(reader);
