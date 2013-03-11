@@ -282,7 +282,7 @@ GpStatus WINGDIPAPI GdipCombineRegionRect(GpRegion *region,
     region_element *left, *right = NULL;
     GpStatus stat;
 
-    TRACE("%p %p %d\n", region, rect, mode);
+    TRACE("%p %s %d\n", region, debugstr_rectf(rect), mode);
 
     if (!(region && rect))
         return InvalidParameter;
