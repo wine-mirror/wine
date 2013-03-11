@@ -116,6 +116,10 @@ static void macdrv_query_event(HWND hwnd, macdrv_event *event)
 
     switch (query->type)
     {
+        case QUERY_PASTEBOARD_DATA:
+            TRACE("QUERY_PASTEBOARD_DATA\n");
+            success = query_pasteboard_data(hwnd, query->pasteboard_data.type);
+            break;
         default:
             FIXME("unrecognized query type %d\n", query->type);
             break;

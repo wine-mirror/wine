@@ -159,6 +159,7 @@ extern void macdrv_key_event(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDD
 extern void macdrv_displays_changed(const macdrv_event *event) DECLSPEC_HIDDEN;
 
 extern void macdrv_clipboard_process_attach(void) DECLSPEC_HIDDEN;
+extern BOOL query_pasteboard_data(HWND hwnd, CFStringRef type) DECLSPEC_HIDDEN;
 
 extern struct opengl_funcs *macdrv_wine_get_wgl_driver(PHYSDEV dev, UINT version) DECLSPEC_HIDDEN;
 extern void sync_gl_view(struct macdrv_win_data *data) DECLSPEC_HIDDEN;

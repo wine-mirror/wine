@@ -1174,6 +1174,21 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         ignore_windowMiniaturize = FALSE;
     }
 
+
+    /*
+     * ---------- NSPasteboardOwner methods ----------
+     */
+    - (void) pasteboard:(NSPasteboard *)sender provideDataForType:(NSString *)type
+    {
+        macdrv_query* query = macdrv_create_query();
+        query->type = QUERY_PASTEBOARD_DATA;
+        query->window = (macdrv_window)[self retain];
+        query->pasteboard_data.type = (CFStringRef)[type copy];
+
+        [self.queue query:query timeout:3];
+        macdrv_release_query(query);
+    }
+
 @end
 
 

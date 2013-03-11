@@ -125,20 +125,22 @@ void macdrv_clear_pasteboard(void)
  *              macdrv_set_pasteboard_data
  *
  * Sets the pasteboard data for a specified type.  Replaces any data of
- * that type already on the pasteboard.
+ * that type already on the pasteboard.  If data is NULL, promises the
+ * type.
  *
  * Returns 0 on error, non-zero on success.
  */
-int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data)
+int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data, macdrv_window w)
 {
     __block int ret = 0;
+    WineWindow* window = (WineWindow*)w;
 
     OnMainThread(^{
         @try
         {
             NSPasteboard* pb = [NSPasteboard generalPasteboard];
             NSInteger change_count = [pb addTypes:[NSArray arrayWithObject:(NSString*)type]
-                                            owner:nil];
+                                            owner:window];
             if (change_count)
             {
                 owned_change_count = change_count;

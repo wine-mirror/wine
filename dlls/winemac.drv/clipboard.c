@@ -1102,17 +1102,11 @@ BOOL CDECL macdrv_SetClipboardData(UINT format_id, HANDLE data, BOOL owner)
     HWND hwnd_owner;
     macdrv_window window;
     WINE_CLIPFORMAT *format;
-    CFDataRef cfdata;
+    CFDataRef cfdata = NULL;
 
     check_clipboard_ownership(&hwnd_owner);
     window = macdrv_get_cocoa_window(GetAncestor(hwnd_owner, GA_ROOT), FALSE);
     TRACE("format_id %s data %p owner %d hwnd_owner %p window %p)\n", debugstr_format(format_id), data, owner, hwnd_owner, window);
-
-    if (!data)
-    {
-        FIXME("delayed rendering (promising) is not implemented yet\n");
-        return FALSE;
-    }
 
     /* Find the "natural" format for this format_id (the one which isn't
        synthesized from another type). */
@@ -1126,22 +1120,25 @@ BOOL CDECL macdrv_SetClipboardData(UINT format_id, HANDLE data, BOOL owner)
     }
 
     /* Export the data to the Mac pasteboard. */
-    if (!format->export_func || !(cfdata = format->export_func(data)))
+    if (data)
     {
-        WARN("Failed to export %s data to type %s\n", debugstr_format(format_id), debugstr_cf(format->type));
-        return FALSE;
+        if (!format->export_func || !(cfdata = format->export_func(data)))
+        {
+            WARN("Failed to export %s data to type %s\n", debugstr_format(format_id), debugstr_cf(format->type));
+            return FALSE;
+        }
     }
 
-    if (macdrv_set_pasteboard_data(format->type, cfdata))
+    if (macdrv_set_pasteboard_data(format->type, cfdata, window))
         TRACE("Set pasteboard data for type %s: %s\n", debugstr_cf(format->type), debugstr_cf(cfdata));
     else
     {
         WARN("Failed to set pasteboard data for type %s: %s\n", debugstr_cf(format->type), debugstr_cf(cfdata));
-        CFRelease(cfdata);
+        if (cfdata) CFRelease(cfdata);
         return FALSE;
     }
 
-    CFRelease(cfdata);
+    if (cfdata) CFRelease(cfdata);
 
     /* Find any other formats for this format_id (the exportable synthesized ones). */
     LIST_FOR_EACH_ENTRY(format, &format_list, WINE_CLIPFORMAT, entry)
@@ -1151,43 +1148,51 @@ BOOL CDECL macdrv_SetClipboardData(UINT format_id, HANDLE data, BOOL owner)
             /* We have a synthesized format for this format ID.  Add its type to the pasteboard. */
             TRACE("Synthesized from format %s: type %s\n", debugstr_format(format_id), debugstr_cf(format->type));
 
-            cfdata = format->export_func(data);
-            if (!cfdata)
+            if (data)
             {
-                WARN("Failed to export %s data to type %s\n", debugstr_format(format->format_id), debugstr_cf(format->type));
-                continue;
+                cfdata = format->export_func(data);
+                if (!cfdata)
+                {
+                    WARN("Failed to export %s data to type %s\n", debugstr_format(format->format_id), debugstr_cf(format->type));
+                    continue;
+                }
             }
+            else
+                cfdata = NULL;
 
-            if (macdrv_set_pasteboard_data(format->type, cfdata))
+            if (macdrv_set_pasteboard_data(format->type, cfdata, window))
                 TRACE("    ... set pasteboard data: %s\n", debugstr_cf(cfdata));
             else
                 WARN("    ... failed to set pasteboard data: %s\n", debugstr_cf(cfdata));
 
-            CFRelease(cfdata);
+            if (cfdata) CFRelease(cfdata);
         }
     }
 
-    /* FIXME: According to MSDN, the caller is entitled to lock and read from
-       data until CloseClipboard is called.  So, we should defer this cleanup. */
-    if ((format_id >= CF_GDIOBJFIRST && format_id <= CF_GDIOBJLAST) ||
-        format_id == CF_BITMAP ||
-        format_id == CF_DIB ||
-        format_id == CF_PALETTE)
+    if (data)
     {
-        DeleteObject(data);
-    }
-    else if (format_id == CF_METAFILEPICT)
-    {
-        DeleteMetaFile(((METAFILEPICT *)GlobalLock(data))->hMF);
-        GlobalFree(data);
-    }
-    else if (format_id == CF_ENHMETAFILE)
-    {
-        DeleteEnhMetaFile(data);
-    }
-    else if (format_id < CF_PRIVATEFIRST || CF_PRIVATELAST < format_id)
-    {
-        GlobalFree(data);
+        /* FIXME: According to MSDN, the caller is entitled to lock and read from
+           data until CloseClipboard is called.  So, we should defer this cleanup. */
+        if ((format_id >= CF_GDIOBJFIRST && format_id <= CF_GDIOBJLAST) ||
+            format_id == CF_BITMAP ||
+            format_id == CF_DIB ||
+            format_id == CF_PALETTE)
+        {
+            DeleteObject(data);
+        }
+        else if (format_id == CF_METAFILEPICT)
+        {
+            DeleteMetaFile(((METAFILEPICT *)GlobalLock(data))->hMF);
+            GlobalFree(data);
+        }
+        else if (format_id == CF_ENHMETAFILE)
+        {
+            DeleteEnhMetaFile(data);
+        }
+        else if (format_id < CF_PRIVATEFIRST || CF_PRIVATELAST < format_id)
+        {
+            GlobalFree(data);
+        }
     }
 
     return TRUE;
@@ -1219,4 +1224,75 @@ void macdrv_clipboard_process_attach(void)
         format->synthesized = builtin_format_ids[i].synthesized;
         list_add_tail(&format_list, &format->entry);
     }
+}
+
+
+/**************************************************************************
+ *              query_pasteboard_data
+ */
+BOOL query_pasteboard_data(HWND hwnd, CFStringRef type)
+{
+    BOOL ret = FALSE;
+    CLIPBOARDINFO cbinfo;
+    WINE_CLIPFORMAT* format;
+    CFArrayRef types = NULL;
+    CFRange range;
+
+    TRACE("hwnd %p type %s\n", hwnd, debugstr_cf(type));
+
+    if (get_clipboard_info(&cbinfo))
+        hwnd = cbinfo.hwnd_owner;
+
+    format = NULL;
+    while ((format = format_for_type(format, type)))
+    {
+        WINE_CLIPFORMAT* base_format;
+
+        TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
+
+        if (!format->synthesized)
+        {
+            TRACE("Sending WM_RENDERFORMAT message for format %s to hwnd %p\n", debugstr_format(format->format_id), hwnd);
+            SendMessageW(hwnd, WM_RENDERFORMAT, format->format_id, 0);
+            ret = TRUE;
+            goto done;
+        }
+
+        if (!types)
+        {
+            types = macdrv_copy_pasteboard_types();
+            if (!types)
+            {
+                WARN("Failed to copy pasteboard types\n");
+                break;
+            }
+
+            range = CFRangeMake(0, CFArrayGetCount(types));
+        }
+
+        /* The type maps to a synthesized format.  Now look up what type that format maps to natively
+           (not synthesized).  For example, if type is "public.utf8-plain-text", then this format may
+           have an ID of CF_TEXT.  From CF_TEXT, we want to find "org.winehq.builtin.text" to see if
+           that type is present in the pasteboard.  If it is, then the app must have promised it and
+           we can ask it to render it.  (If it had put it on the clipboard immediately, then the
+           pasteboard would also have data for "public.utf8-plain-text" and we wouldn't be here.)  If
+           "org.winehq.builtin.text" is not on the pasteboard, then one of the other text formats is
+           presumably responsible for the promise that we're trying to satisfy, so we keep looking. */
+        LIST_FOR_EACH_ENTRY(base_format, &format_list, WINE_CLIPFORMAT, entry)
+        {
+            if (base_format->format_id == format->format_id && !base_format->synthesized &&
+                CFArrayContainsValue(types, range, base_format->type))
+            {
+                TRACE("Sending WM_RENDERFORMAT message for format %s to hwnd %p\n", debugstr_format(base_format->format_id), hwnd);
+                SendMessageW(hwnd, WM_RENDERFORMAT, base_format->format_id, 0);
+                ret = TRUE;
+                goto done;
+            }
+        }
+    }
+
+done:
+    if (types) CFRelease(types);
+
+    return ret;
 }

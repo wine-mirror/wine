@@ -208,6 +208,7 @@ typedef struct macdrv_event {
 } macdrv_event;
 
 enum {
+    QUERY_PASTEBOARD_DATA,
     NUM_QUERY_TYPES
 };
 
@@ -217,6 +218,11 @@ typedef struct macdrv_query {
     macdrv_window       window;
     int                 status;
     int                 done;
+    union {
+        struct {
+            CFStringRef type;
+        }                                           pasteboard_data;
+    };
 } macdrv_query;
 
 static inline macdrv_event_mask event_mask_for_type(int type)
@@ -302,7 +308,7 @@ extern CFArrayRef macdrv_copy_pasteboard_types(void) DECLSPEC_HIDDEN;
 extern CFDataRef macdrv_copy_pasteboard_data(CFStringRef type) DECLSPEC_HIDDEN;
 extern int macdrv_is_pasteboard_owner(void) DECLSPEC_HIDDEN;
 extern void macdrv_clear_pasteboard(void) DECLSPEC_HIDDEN;
-extern int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data) DECLSPEC_HIDDEN;
+extern int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data, macdrv_window w) DECLSPEC_HIDDEN;
 
 
 /* opengl */
