@@ -4,6 +4,7 @@
 
 # USER driver
 
+@ cdecl AcquireClipboard(long) macdrv_AcquireClipboard
 @ cdecl ActivateKeyboardLayout(long long) macdrv_ActivateKeyboardLayout
 @ cdecl Beep() macdrv_Beep
 @ cdecl ChangeDisplaySettingsEx(ptr ptr long long long) macdrv_ChangeDisplaySettingsEx
@@ -13,6 +14,8 @@
 @ cdecl CreateWindow(long) macdrv_CreateWindow
 @ cdecl DestroyCursorIcon(long) macdrv_DestroyCursorIcon
 @ cdecl DestroyWindow(long) macdrv_DestroyWindow
+@ cdecl EmptyClipboard(long) macdrv_EmptyClipboard
+@ cdecl EndClipboardUpdate() macdrv_EndClipboardUpdate
 @ cdecl EnumClipboardFormats(long) macdrv_EnumClipboardFormats
 @ cdecl EnumDisplayMonitors(long ptr ptr long) macdrv_EnumDisplayMonitors
 @ cdecl EnumDisplaySettingsEx(ptr long ptr long) macdrv_EnumDisplaySettingsEx
@@ -26,6 +29,7 @@
 @ cdecl MapVirtualKeyEx(long long long) macdrv_MapVirtualKeyEx
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) macdrv_MsgWaitForMultipleObjectsEx
 @ cdecl ScrollDC(long long long ptr ptr long ptr) macdrv_ScrollDC
+@ cdecl SetClipboardData(long long long) macdrv_SetClipboardData
 @ cdecl SetCursor(long) macdrv_SetCursor
 @ cdecl SetCursorPos(long long) macdrv_SetCursorPos
 @ cdecl SetFocus(long) macdrv_SetFocus

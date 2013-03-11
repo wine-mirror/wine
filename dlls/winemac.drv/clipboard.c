@@ -27,6 +27,7 @@
 #include "macdrv.h"
 #include "winuser.h"
 #include "wine/list.h"
+#include "wine/server.h"
 #include "wine/unicode.h"
 
 
@@ -37,7 +38,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
  *              Types
  **************************************************************************/
 
+typedef struct
+{
+    HWND hwnd_owner;
+    UINT flags;
+} CLIPBOARDINFO, *LPCLIPBOARDINFO;
+
 typedef HANDLE (*DRVIMPORTFUNC)(CFDataRef data);
+typedef CFDataRef (*DRVEXPORTFUNC)(HANDLE data);
 
 typedef struct
 {
@@ -45,6 +53,7 @@ typedef struct
     UINT            format_id;
     CFStringRef     type;
     DRVIMPORTFUNC   import_func;
+    DRVEXPORTFUNC   export_func;
     BOOL            synthesized;
 } WINE_CLIPFORMAT;
 
@@ -68,6 +77,11 @@ static HANDLE import_unicodetext_to_text(CFDataRef data);
 static HANDLE import_utf8_to_oemtext(CFDataRef data);
 static HANDLE import_utf8_to_text(CFDataRef data);
 static HANDLE import_utf8_to_unicodetext(CFDataRef data);
+
+static CFDataRef export_clipboard_data(HANDLE data);
+static CFDataRef export_oemtext_to_utf8(HANDLE data);
+static CFDataRef export_text_to_utf8(HANDLE data);
+static CFDataRef export_unicodetext_to_utf8(HANDLE data);
 
 
 /**************************************************************************
@@ -123,24 +137,25 @@ static const struct
     UINT          id;
     CFStringRef   type;
     DRVIMPORTFUNC import;
+    DRVEXPORTFUNC export;
     BOOL          synthesized;
 } builtin_format_ids[] =
 {
-    { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.unicodetext"),        import_clipboard_data,          FALSE },
-    { CF_TEXT,              CFSTR("org.winehq.builtin.unicodetext"),        import_unicodetext_to_text,     TRUE },
-    { CF_OEMTEXT,           CFSTR("org.winehq.builtin.unicodetext"),        import_unicodetext_to_oemtext,  TRUE },
+    { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.unicodetext"),        import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_TEXT,              CFSTR("org.winehq.builtin.unicodetext"),        import_unicodetext_to_text,     NULL,                       TRUE },
+    { CF_OEMTEXT,           CFSTR("org.winehq.builtin.unicodetext"),        import_unicodetext_to_oemtext,  NULL,                       TRUE },
 
-    { CF_TEXT,              CFSTR("org.winehq.builtin.text"),               import_clipboard_data,          FALSE },
-    { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.text"),               import_text_to_unicodetext,     TRUE },
-    { CF_OEMTEXT,           CFSTR("org.winehq.builtin.text"),               import_text_to_oemtext,         TRUE },
+    { CF_TEXT,              CFSTR("org.winehq.builtin.text"),               import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.text"),               import_text_to_unicodetext,     NULL,                       TRUE },
+    { CF_OEMTEXT,           CFSTR("org.winehq.builtin.text"),               import_text_to_oemtext,         NULL,                       TRUE },
 
-    { CF_OEMTEXT,           CFSTR("org.winehq.builtin.oemtext"),            import_clipboard_data,          FALSE },
-    { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.oemtext"),            import_oemtext_to_unicodetext,  TRUE },
-    { CF_TEXT,              CFSTR("org.winehq.builtin.oemtext"),            import_oemtext_to_text,         TRUE },
+    { CF_OEMTEXT,           CFSTR("org.winehq.builtin.oemtext"),            import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.oemtext"),            import_oemtext_to_unicodetext,  NULL,                       TRUE },
+    { CF_TEXT,              CFSTR("org.winehq.builtin.oemtext"),            import_oemtext_to_text,         NULL,                       TRUE },
 
-    { CF_UNICODETEXT,       CFSTR("public.utf8-plain-text"),                import_utf8_to_unicodetext,     TRUE },
-    { CF_TEXT,              CFSTR("public.utf8-plain-text"),                import_utf8_to_text,            TRUE },
-    { CF_OEMTEXT,           CFSTR("public.utf8-plain-text"),                import_utf8_to_oemtext,         TRUE },
+    { CF_UNICODETEXT,       CFSTR("public.utf8-plain-text"),                import_utf8_to_unicodetext,     export_unicodetext_to_utf8, TRUE },
+    { CF_TEXT,              CFSTR("public.utf8-plain-text"),                import_utf8_to_text,            export_text_to_utf8,        TRUE },
+    { CF_OEMTEXT,           CFSTR("public.utf8-plain-text"),                import_utf8_to_oemtext,         export_oemtext_to_utf8,     TRUE },
 };
 
 /* The prefix prepended to an external Mac pasteboard type to make a Win32 clipboard format name. org.winehq.mac-type. */
@@ -215,6 +230,7 @@ static WINE_CLIPFORMAT *insert_clipboard_format(UINT id, CFStringRef type)
     }
     format->format_id = id;
     format->import_func = import_clipboard_data;
+    format->export_func = export_clipboard_data;
     format->synthesized = FALSE;
 
     if (type)
@@ -587,8 +603,213 @@ static HANDLE import_utf8_to_unicodetext(CFDataRef data)
 
 
 /**************************************************************************
+ *              export_clipboard_data
+ *
+ *  Generic export clipboard data routine.
+ */
+static CFDataRef export_clipboard_data(HANDLE data)
+{
+    CFDataRef ret;
+    UINT len;
+    LPVOID src;
+
+    len = GlobalSize(data);
+    src = GlobalLock(data);
+    if (!src) return NULL;
+
+    ret = CFDataCreate(NULL, src, len);
+    GlobalUnlock(data);
+
+    return ret;
+}
+
+
+/**************************************************************************
+ *              export_codepage_to_utf8
+ *
+ *  Export string data in a specified codepage to UTF-8.
+ */
+static CFDataRef export_codepage_to_utf8(HANDLE data, UINT cp)
+{
+    CFDataRef ret = NULL;
+    const char* str;
+
+    if ((str = GlobalLock(data)))
+    {
+        HANDLE unicode = convert_text(str, GlobalSize(data), cp, -1);
+
+        ret = export_unicodetext_to_utf8(unicode);
+
+        GlobalFree(unicode);
+        GlobalUnlock(data);
+    }
+
+    return ret;
+}
+
+
+/**************************************************************************
+ *              export_oemtext_to_utf8
+ *
+ *  Export CF_OEMTEXT to UTF-8.
+ */
+static CFDataRef export_oemtext_to_utf8(HANDLE data)
+{
+    return export_codepage_to_utf8(data, CP_OEMCP);
+}
+
+
+/**************************************************************************
+ *              export_text_to_utf8
+ *
+ *  Export CF_TEXT to UTF-8.
+ */
+static CFDataRef export_text_to_utf8(HANDLE data)
+{
+    return export_codepage_to_utf8(data, CP_ACP);
+}
+
+
+/**************************************************************************
+ *              export_unicodetext_to_utf8
+ *
+ *  Export CF_UNICODETEXT to UTF-8.
+ */
+static CFDataRef export_unicodetext_to_utf8(HANDLE data)
+{
+    CFMutableDataRef ret;
+    LPVOID src;
+    INT dst_len;
+
+    src = GlobalLock(data);
+    if (!src) return NULL;
+
+    dst_len = WideCharToMultiByte(CP_UTF8, 0, src, -1, NULL, 0, NULL, NULL);
+    if (dst_len) dst_len--; /* Leave off null terminator. */
+    ret = CFDataCreateMutable(NULL, dst_len);
+    if (ret)
+    {
+        LPSTR dst;
+        int i, j;
+
+        CFDataSetLength(ret, dst_len);
+        dst = (LPSTR)CFDataGetMutableBytePtr(ret);
+        WideCharToMultiByte(CP_UTF8, 0, src, -1, dst, dst_len, NULL, NULL);
+
+        /* Remove carriage returns */
+        for (i = 0, j = 0; i < dst_len; i++)
+        {
+            if (dst[i] == '\r' &&
+                (i + 1 >= dst_len || dst[i + 1] == '\n' || dst[i + 1] == '\0'))
+                continue;
+            dst[j++] = dst[i];
+        }
+        CFDataSetLength(ret, j);
+    }
+    GlobalUnlock(data);
+
+    return ret;
+}
+
+
+/**************************************************************************
+ *              get_clipboard_info
+ */
+static BOOL get_clipboard_info(LPCLIPBOARDINFO cbinfo)
+{
+    BOOL ret = FALSE;
+
+    SERVER_START_REQ(set_clipboard_info)
+    {
+        req->flags = 0;
+
+        if (wine_server_call_err(req))
+        {
+            ERR("Failed to get clipboard owner.\n");
+        }
+        else
+        {
+            cbinfo->hwnd_owner = wine_server_ptr_handle(reply->old_owner);
+            cbinfo->flags = reply->flags;
+
+            ret = TRUE;
+        }
+    }
+    SERVER_END_REQ;
+
+    return ret;
+}
+
+
+/**************************************************************************
+ *              release_ownership
+ */
+static BOOL release_ownership(void)
+{
+    BOOL ret = FALSE;
+
+    SERVER_START_REQ(set_clipboard_info)
+    {
+        req->flags = SET_CB_RELOWNER | SET_CB_SEQNO;
+
+        if (wine_server_call_err(req))
+            ERR("Failed to set clipboard.\n");
+        else
+            ret = TRUE;
+    }
+    SERVER_END_REQ;
+
+    return ret;
+}
+
+
+/**************************************************************************
+ *              check_clipboard_ownership
+ */
+static void check_clipboard_ownership(HWND *owner)
+{
+    CLIPBOARDINFO cbinfo;
+
+    if (owner) *owner = NULL;
+
+    /* If Wine thinks we're the clipboard owner but Mac OS X thinks we're not
+       the pasteboard owner, update Wine. */
+    if (get_clipboard_info(&cbinfo) && (cbinfo.flags & CB_PROCESS))
+    {
+        if (!(cbinfo.flags & CB_OPEN) && !macdrv_is_pasteboard_owner())
+        {
+            TRACE("Lost clipboard ownership\n");
+
+            if (OpenClipboard(cbinfo.hwnd_owner))
+            {
+                /* Destroy private objects */
+                SendMessageW(cbinfo.hwnd_owner, WM_DESTROYCLIPBOARD, 0, 0);
+
+                /* Give up ownership of the windows clipboard */
+                release_ownership();
+                CloseClipboard();
+            }
+        }
+        else if (owner)
+            *owner = cbinfo.hwnd_owner;
+    }
+}
+
+
+/**************************************************************************
  *              Mac User Driver Clipboard Exports
  **************************************************************************/
+
+
+/**************************************************************************
+ *              AcquireClipboard (MACDRV.@)
+ */
+int CDECL macdrv_AcquireClipboard(HWND hwnd)
+{
+    TRACE("hwnd %p\n", hwnd);
+    check_clipboard_ownership(NULL);
+    return 0;
+}
 
 
 /**************************************************************************
@@ -603,6 +824,7 @@ INT CDECL macdrv_CountClipboardFormats(void)
     INT ret = 0;
 
     TRACE("()\n");
+    check_clipboard_ownership(NULL);
 
     seen_formats = CFSetCreateMutable(NULL, 0, NULL);
     if (!seen_formats)
@@ -647,6 +869,28 @@ INT CDECL macdrv_CountClipboardFormats(void)
 
 
 /**************************************************************************
+ *              EmptyClipboard (MACDRV.@)
+ *
+ * Empty cached clipboard data.
+ */
+void CDECL macdrv_EmptyClipboard(BOOL keepunowned)
+{
+    TRACE("keepunowned %d\n", keepunowned);
+    macdrv_clear_pasteboard();
+}
+
+
+/**************************************************************************
+ *              EndClipboardUpdate (MACDRV.@)
+ */
+void CDECL macdrv_EndClipboardUpdate(void)
+{
+    TRACE("()\n");
+    check_clipboard_ownership(NULL);
+}
+
+
+/**************************************************************************
  *              EnumClipboardFormats (MACDRV.@)
  */
 UINT CDECL macdrv_EnumClipboardFormats(UINT prev_format)
@@ -657,6 +901,7 @@ UINT CDECL macdrv_EnumClipboardFormats(UINT prev_format)
     UINT ret;
 
     TRACE("prev_format %s\n", debugstr_format(prev_format));
+    check_clipboard_ownership(NULL);
 
     types = macdrv_copy_pasteboard_types();
     if (!types)
@@ -750,6 +995,7 @@ HANDLE CDECL macdrv_GetClipboardData(UINT desired_format)
     HANDLE data = NULL;
 
     TRACE("desired_format %s\n", debugstr_format(desired_format));
+    check_clipboard_ownership(NULL);
 
     types = macdrv_copy_pasteboard_types();
     if (!types)
@@ -815,6 +1061,7 @@ BOOL CDECL macdrv_IsClipboardFormatAvailable(UINT desired_format)
     BOOL found = FALSE;
 
     TRACE("desired_format %s\n", debugstr_format(desired_format));
+    check_clipboard_ownership(NULL);
 
     types = macdrv_copy_pasteboard_types();
     if (!types)
@@ -848,6 +1095,106 @@ BOOL CDECL macdrv_IsClipboardFormatAvailable(UINT desired_format)
 
 
 /**************************************************************************
+ *              SetClipboardData (MACDRV.@)
+ */
+BOOL CDECL macdrv_SetClipboardData(UINT format_id, HANDLE data, BOOL owner)
+{
+    HWND hwnd_owner;
+    macdrv_window window;
+    WINE_CLIPFORMAT *format;
+    CFDataRef cfdata;
+
+    check_clipboard_ownership(&hwnd_owner);
+    window = macdrv_get_cocoa_window(GetAncestor(hwnd_owner, GA_ROOT), FALSE);
+    TRACE("format_id %s data %p owner %d hwnd_owner %p window %p)\n", debugstr_format(format_id), data, owner, hwnd_owner, window);
+
+    if (!data)
+    {
+        FIXME("delayed rendering (promising) is not implemented yet\n");
+        return FALSE;
+    }
+
+    /* Find the "natural" format for this format_id (the one which isn't
+       synthesized from another type). */
+    LIST_FOR_EACH_ENTRY(format, &format_list, WINE_CLIPFORMAT, entry)
+        if (format->format_id == format_id && !format->synthesized) break;
+
+    if (&format->entry == &format_list && !(format = insert_clipboard_format(format_id, NULL)))
+    {
+        WARN("Failed to register clipboard format %s\n", debugstr_format(format_id));
+        return FALSE;
+    }
+
+    /* Export the data to the Mac pasteboard. */
+    if (!format->export_func || !(cfdata = format->export_func(data)))
+    {
+        WARN("Failed to export %s data to type %s\n", debugstr_format(format_id), debugstr_cf(format->type));
+        return FALSE;
+    }
+
+    if (macdrv_set_pasteboard_data(format->type, cfdata))
+        TRACE("Set pasteboard data for type %s: %s\n", debugstr_cf(format->type), debugstr_cf(cfdata));
+    else
+    {
+        WARN("Failed to set pasteboard data for type %s: %s\n", debugstr_cf(format->type), debugstr_cf(cfdata));
+        CFRelease(cfdata);
+        return FALSE;
+    }
+
+    CFRelease(cfdata);
+
+    /* Find any other formats for this format_id (the exportable synthesized ones). */
+    LIST_FOR_EACH_ENTRY(format, &format_list, WINE_CLIPFORMAT, entry)
+    {
+        if (format->format_id == format_id && format->synthesized && format->export_func)
+        {
+            /* We have a synthesized format for this format ID.  Add its type to the pasteboard. */
+            TRACE("Synthesized from format %s: type %s\n", debugstr_format(format_id), debugstr_cf(format->type));
+
+            cfdata = format->export_func(data);
+            if (!cfdata)
+            {
+                WARN("Failed to export %s data to type %s\n", debugstr_format(format->format_id), debugstr_cf(format->type));
+                continue;
+            }
+
+            if (macdrv_set_pasteboard_data(format->type, cfdata))
+                TRACE("    ... set pasteboard data: %s\n", debugstr_cf(cfdata));
+            else
+                WARN("    ... failed to set pasteboard data: %s\n", debugstr_cf(cfdata));
+
+            CFRelease(cfdata);
+        }
+    }
+
+    /* FIXME: According to MSDN, the caller is entitled to lock and read from
+       data until CloseClipboard is called.  So, we should defer this cleanup. */
+    if ((format_id >= CF_GDIOBJFIRST && format_id <= CF_GDIOBJLAST) ||
+        format_id == CF_BITMAP ||
+        format_id == CF_DIB ||
+        format_id == CF_PALETTE)
+    {
+        DeleteObject(data);
+    }
+    else if (format_id == CF_METAFILEPICT)
+    {
+        DeleteMetaFile(((METAFILEPICT *)GlobalLock(data))->hMF);
+        GlobalFree(data);
+    }
+    else if (format_id == CF_ENHMETAFILE)
+    {
+        DeleteEnhMetaFile(data);
+    }
+    else if (format_id < CF_PRIVATEFIRST || CF_PRIVATELAST < format_id)
+    {
+        GlobalFree(data);
+    }
+
+    return TRUE;
+}
+
+
+/**************************************************************************
  *              MACDRV Private Clipboard Exports
  **************************************************************************/
 
@@ -868,6 +1215,7 @@ void macdrv_clipboard_process_attach(void)
         format->format_id   = builtin_format_ids[i].id;
         format->type        = CFRetain(builtin_format_ids[i].type);
         format->import_func = builtin_format_ids[i].import;
+        format->export_func = builtin_format_ids[i].export;
         format->synthesized = builtin_format_ids[i].synthesized;
         list_add_tail(&format_list, &format->entry);
     }

@@ -22,6 +22,25 @@
 #import "cocoa_app.h"
 
 
+static int owned_change_count = -1;
+
+
+/***********************************************************************
+ *              macdrv_is_pasteboard_owner
+ */
+int macdrv_is_pasteboard_owner(void)
+{
+    __block int ret;
+
+    OnMainThread(^{
+        NSPasteboard* pb = [NSPasteboard generalPasteboard];
+        ret = ([pb changeCount] == owned_change_count);
+    });
+
+    return ret;
+}
+
+
 /***********************************************************************
  *              macdrv_copy_pasteboard_types
  *
@@ -77,4 +96,62 @@ CFDataRef macdrv_copy_pasteboard_data(CFStringRef type)
     });
 
     return (CFDataRef)ret;
+}
+
+
+/***********************************************************************
+ *              macdrv_clear_pasteboard
+ *
+ * Takes ownership of the Mac pasteboard and clears it of all data types.
+ */
+void macdrv_clear_pasteboard(void)
+{
+    OnMainThreadAsync(^{
+        @try
+        {
+            NSPasteboard* pb = [NSPasteboard generalPasteboard];
+            owned_change_count = [pb declareTypes:[NSArray array] owner:nil];
+        }
+        @catch (id e)
+        {
+            ERR(@"Exception discarded while clearing pasteboard: %@\n", e);
+        }
+    });
+}
+
+
+/***********************************************************************
+ *              macdrv_set_pasteboard_data
+ *
+ * Sets the pasteboard data for a specified type.  Replaces any data of
+ * that type already on the pasteboard.
+ *
+ * Returns 0 on error, non-zero on success.
+ */
+int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data)
+{
+    __block int ret = 0;
+
+    OnMainThread(^{
+        @try
+        {
+            NSPasteboard* pb = [NSPasteboard generalPasteboard];
+            NSInteger change_count = [pb addTypes:[NSArray arrayWithObject:(NSString*)type]
+                                            owner:nil];
+            if (change_count)
+            {
+                owned_change_count = change_count;
+                if (data)
+                    ret = [pb setData:(NSData*)data forType:(NSString*)type];
+                else
+                    ret = 1;
+            }
+        }
+        @catch (id e)
+        {
+            ERR(@"Exception discarded while copying pasteboard types: %@\n", e);
+        }
+    });
+
+    return ret;
 }

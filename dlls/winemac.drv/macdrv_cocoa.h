@@ -276,6 +276,9 @@ extern CFDataRef macdrv_copy_keyboard_layout(CGEventSourceKeyboardType* keyboard
 /* clipboard */
 extern CFArrayRef macdrv_copy_pasteboard_types(void) DECLSPEC_HIDDEN;
 extern CFDataRef macdrv_copy_pasteboard_data(CFStringRef type) DECLSPEC_HIDDEN;
+extern int macdrv_is_pasteboard_owner(void) DECLSPEC_HIDDEN;
+extern void macdrv_clear_pasteboard(void) DECLSPEC_HIDDEN;
+extern int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data) DECLSPEC_HIDDEN;
 
 
 /* opengl */
