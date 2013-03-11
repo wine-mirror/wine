@@ -16,6 +16,7 @@
 @ cdecl EnumClipboardFormats(long) macdrv_EnumClipboardFormats
 @ cdecl EnumDisplayMonitors(long ptr ptr long) macdrv_EnumDisplayMonitors
 @ cdecl EnumDisplaySettingsEx(ptr long ptr long) macdrv_EnumDisplaySettingsEx
+@ cdecl GetClipboardData(long) macdrv_GetClipboardData
 @ cdecl GetCursorPos(ptr) macdrv_GetCursorPos
 @ cdecl GetKeyboardLayout(long) macdrv_GetKeyboardLayout
 @ cdecl GetKeyboardLayoutName(ptr) macdrv_GetKeyboardLayoutName

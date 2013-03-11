@@ -50,3 +50,31 @@ CFArrayRef macdrv_copy_pasteboard_types(void)
     [pool release];
     return ret;
 }
+
+
+/***********************************************************************
+ *              macdrv_copy_pasteboard_data
+ *
+ * Returns the pasteboard data for a specified type, or NULL on error or
+ * if there's no such type on the pasteboard.  The caller is responsible
+ * for releasing the returned data object with CFRelease().
+ */
+CFDataRef macdrv_copy_pasteboard_data(CFStringRef type)
+{
+    __block NSData* ret = nil;
+
+    OnMainThread(^{
+        @try
+        {
+            NSPasteboard* pb = [NSPasteboard generalPasteboard];
+            if ([pb availableTypeFromArray:[NSArray arrayWithObject:(NSString*)type]])
+                ret = [[pb dataForType:(NSString*)type] copy];
+        }
+        @catch (id e)
+        {
+            ERR(@"Exception discarded while copying pasteboard types: %@\n", e);
+        }
+    });
+
+    return (CFDataRef)ret;
+}
