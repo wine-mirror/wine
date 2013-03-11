@@ -647,6 +647,97 @@ INT CDECL macdrv_CountClipboardFormats(void)
 
 
 /**************************************************************************
+ *              EnumClipboardFormats (MACDRV.@)
+ */
+UINT CDECL macdrv_EnumClipboardFormats(UINT prev_format)
+{
+    CFArrayRef types;
+    CFIndex count;
+    CFIndex i;
+    UINT ret;
+
+    TRACE("prev_format %s\n", debugstr_format(prev_format));
+
+    types = macdrv_copy_pasteboard_types();
+    if (!types)
+    {
+        WARN("Failed to copy pasteboard types\n");
+        return 0;
+    }
+
+    count = CFArrayGetCount(types);
+    TRACE("got %ld types\n", count);
+
+    if (!count)
+    {
+        CFRelease(types);
+        return 0;
+    }
+
+    if (prev_format)
+    {
+        CFMutableArrayRef formats = CFArrayCreateMutable(NULL, 0, NULL);
+        if (!formats)
+        {
+            WARN("Failed to allocate array to track formats\n");
+            CFRelease(types);
+            return 0;
+        }
+
+        for (i = 0; i < count; i++)
+        {
+            CFStringRef type = CFArrayGetValueAtIndex(types, i);
+            WINE_CLIPFORMAT* format;
+
+            format = NULL;
+            while ((format = format_for_type(format, type)))
+            {
+                TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
+
+                if (format->synthesized)
+                {
+                    /* Don't override a real value with a synthesized value. */
+                    if (!CFArrayContainsValue(formats, CFRangeMake(0, CFArrayGetCount(formats)), (void*)format->format_id))
+                        CFArrayAppendValue(formats, (void*)format->format_id);
+                }
+                else
+                {
+                    /* If the type was already in the array, it must have been synthesized
+                       because this one's real.  Remove the synthesized entry in favor of
+                       this one. */
+                    CFIndex index = CFArrayGetFirstIndexOfValue(formats, CFRangeMake(0, CFArrayGetCount(formats)),
+                                                                (void*)format->format_id);
+                    if (index != kCFNotFound)
+                        CFArrayRemoveValueAtIndex(formats, index);
+                    CFArrayAppendValue(formats, (void*)format->format_id);
+                }
+            }
+        }
+
+        count = CFArrayGetCount(formats);
+        i = CFArrayGetFirstIndexOfValue(formats, CFRangeMake(0, count), (void*)prev_format);
+        if (i == kCFNotFound || i + 1 >= count)
+            ret = 0;
+        else
+            ret = (UINT)CFArrayGetValueAtIndex(formats, i + 1);
+
+        CFRelease(formats);
+    }
+    else
+    {
+        CFStringRef type = CFArrayGetValueAtIndex(types, 0);
+        WINE_CLIPFORMAT *format = format_for_type(NULL, type);
+
+        ret = format ? format->format_id : 0;
+    }
+
+    CFRelease(types);
+    TRACE(" -> %u\n", ret);
+    return ret;
+}
+
+
+/**************************************************************************
  *              IsClipboardFormatAvailable (MACDRV.@)
  */
 BOOL CDECL macdrv_IsClipboardFormatAvailable(UINT desired_format)

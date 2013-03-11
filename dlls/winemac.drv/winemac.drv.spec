@@ -13,6 +13,7 @@
 @ cdecl CreateWindow(long) macdrv_CreateWindow
 @ cdecl DestroyCursorIcon(long) macdrv_DestroyCursorIcon
 @ cdecl DestroyWindow(long) macdrv_DestroyWindow
+@ cdecl EnumClipboardFormats(long) macdrv_EnumClipboardFormats
 @ cdecl EnumDisplayMonitors(long ptr ptr long) macdrv_EnumDisplayMonitors
 @ cdecl EnumDisplaySettingsEx(ptr long ptr long) macdrv_EnumDisplaySettingsEx
 @ cdecl GetCursorPos(ptr) macdrv_GetCursorPos
