@@ -1508,9 +1508,88 @@ static void test_sndPlaySound(void)
     ok(br == TRUE || br == FALSE, "sndPlaySound gave strange return: %u\n", br);
 }
 
+static void test_fragmentsize(void)
+{
+    MMRESULT rc;
+    WAVEHDR hdr[2];
+    HWAVEOUT wout;
+    WAVEFORMATEX fmt;
+    MMTIME mmtime;
+    DWORD wait;
+    HANDLE hevent;
+
+    if(waveOutGetNumDevs() == 0)
+        return;
+
+    fmt.wFormatTag = WAVE_FORMAT_PCM;
+    fmt.nChannels = 2;
+    fmt.nSamplesPerSec = 44100;
+    fmt.wBitsPerSample = 16;
+    fmt.nBlockAlign = fmt.nChannels * fmt.wBitsPerSample / 8;
+    fmt.nAvgBytesPerSec = fmt.nBlockAlign * fmt.nSamplesPerSec;
+    fmt.cbSize = sizeof(WAVEFORMATEX);
+
+    hevent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    g_tid = GetCurrentThreadId();
+
+    rc = waveOutOpen(&wout, WAVE_MAPPER, &fmt, (DWORD_PTR)callback_func,
+            (DWORD_PTR)hevent, CALLBACK_FUNCTION);
+    ok(rc == MMSYSERR_NOERROR || rc == WAVERR_BADFORMAT ||
+           rc == MMSYSERR_INVALFLAG || rc == MMSYSERR_INVALPARAM,
+           "waveOutOpen(%s) failed: %s\n", dev_name(WAVE_MAPPER), wave_out_error(rc));
+    if(rc != MMSYSERR_NOERROR){
+        CloseHandle(hevent);
+        return;
+    }
+
+    wait = WaitForSingleObject(hevent, 1000);
+    ok(wait == WAIT_OBJECT_0, "wave open callback missed\n");
+
+    memset(hdr, 0, sizeof(hdr));
+    hdr[0].dwBufferLength = (fmt.nSamplesPerSec * fmt.nBlockAlign / 4) + 1;
+    hdr[1].dwBufferLength = hdr[0].dwBufferLength - 2;
+    hdr[1].lpData = hdr[0].lpData =
+        HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, hdr[0].dwBufferLength);
+
+    rc = waveOutPrepareHeader(wout, &hdr[0], sizeof(hdr[0]));
+    ok(rc == MMSYSERR_NOERROR, "waveOutPrepareHeader failed: %s\n", wave_out_error(rc));
+
+    rc = waveOutPrepareHeader(wout, &hdr[1], sizeof(hdr[1]));
+    ok(rc == MMSYSERR_NOERROR, "waveOutPrepareHeader failed: %s\n", wave_out_error(rc));
+
+    trace("writing %u bytes then %u bytes\n", hdr[0].dwBufferLength, hdr[1].dwBufferLength);
+    rc = waveOutWrite(wout, &hdr[0], sizeof(hdr[0]));
+    ok(rc == MMSYSERR_NOERROR, "waveOutWrite failed: %s\n", wave_out_error(rc));
+
+    rc = waveOutWrite(wout, &hdr[1], sizeof(hdr[1]));
+    ok(rc == MMSYSERR_NOERROR, "waveOutWrite failed: %s\n", wave_out_error(rc));
+
+    wait = WaitForSingleObject(hevent, 1000);
+    ok(wait == WAIT_OBJECT_0, "header 1 callback missed\n");
+
+    wait = WaitForSingleObject(hevent, 1000);
+    ok(wait == WAIT_OBJECT_0, "header 2 callback missed\n");
+
+    memset(&mmtime, 0, sizeof(mmtime));
+    mmtime.wType = TIME_BYTES;
+
+    rc = waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
+    ok(rc == MMSYSERR_NOERROR, "waveOutGetPosition failed: %s\n", wave_out_error(rc));
+
+    /* windows behavior is inconsistent */
+    ok(mmtime.u.cb == 88200 ||
+            mmtime.u.cb == 88196, "after position: %u\n", mmtime.u.cb);
+
+    rc = waveOutClose(wout);
+    ok(rc == MMSYSERR_NOERROR, "waveOutClose failed: %s\n", wave_out_error(rc));
+
+    CloseHandle(hevent);
+}
+
 START_TEST(wave)
 {
     test_multiple_waveopens();
     wave_out_tests();
     test_sndPlaySound();
+    test_fragmentsize();
 }
