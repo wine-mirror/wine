@@ -1518,6 +1518,7 @@ HRESULT disp_delete_name(script_ctx_t *ctx, IDispatch *disp, jsstr_t *name, BOOL
 {
     IDispatchEx *dispex;
     jsdisp_t *jsdisp;
+    BSTR bstr;
     HRESULT hres;
 
     jsdisp = iface_to_jsdisp((IUnknown*)disp);
@@ -1536,26 +1537,21 @@ HRESULT disp_delete_name(script_ctx_t *ctx, IDispatch *disp, jsstr_t *name, BOOL
         return hres;
     }
 
+    bstr = SysAllocStringLen(NULL, jsstr_length(name));
+    if(!bstr)
+        return E_OUTOFMEMORY;
+    jsstr_flush(name, bstr);
+
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(SUCCEEDED(hres)) {
-        BSTR bstr;
-
-        bstr = SysAllocStringLen(name->str, jsstr_length(name));
-        if(bstr) {
-            hres = IDispatchEx_DeleteMemberByName(dispex, bstr, make_grfdex(ctx, fdexNameCaseSensitive));
-            SysFreeString(bstr);
-            if(SUCCEEDED(hres))
-                *ret = hres == S_OK;
-        }else {
-            hres = E_OUTOFMEMORY;
-        }
-
+        hres = IDispatchEx_DeleteMemberByName(dispex, bstr, make_grfdex(ctx, fdexNameCaseSensitive));
+        if(SUCCEEDED(hres))
+            *ret = hres == S_OK;
         IDispatchEx_Release(dispex);
     }else {
-        WCHAR *name_str = name->str;
         DISPID id;
 
-        hres = IDispatch_GetIDsOfNames(disp, &IID_NULL, &name_str, 1, 0, &id);
+        hres = IDispatch_GetIDsOfNames(disp, &IID_NULL, &bstr, 1, 0, &id);
         if(SUCCEEDED(hres)) {
             /* Property exists and we can't delete it from pure IDispatch interface, so return false. */
             *ret = FALSE;
@@ -1566,6 +1562,7 @@ HRESULT disp_delete_name(script_ctx_t *ctx, IDispatch *disp, jsstr_t *name, BOOL
         }
     }
 
+    SysFreeString(bstr);
     return hres;
 }
 
