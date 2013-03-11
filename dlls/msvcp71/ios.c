@@ -2560,7 +2560,7 @@ static FILE* _Fiopen_wchar(const wchar_t *name, int mode, int prot)
     };
 
     int real_mode = mode & ~(OPENMODE_ate|OPENMODE__Nocreate|OPENMODE__Noreplace|OPENMODE_binary);
-    int mode_idx;
+    unsigned int mode_idx;
     FILE *f = NULL;
 
     TRACE("(%s %d %d)\n", debugstr_w(name), mode, prot);
