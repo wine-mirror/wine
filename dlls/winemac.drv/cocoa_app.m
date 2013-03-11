@@ -26,6 +26,9 @@
 #import "cocoa_window.h"
 
 
+static NSString* const WineAppWaitQueryResponseMode = @"WineAppWaitQueryResponseMode";
+
+
 int macdrv_err_on;
 
 
@@ -56,6 +59,8 @@ int macdrv_err_on;
 @property (copy, nonatomic) NSArray* cursorFrames;
 @property (retain, nonatomic) NSTimer* cursorTimer;
 
+    static void PerformRequest(void *info);
+
 @end
 
 
@@ -70,6 +75,20 @@ int macdrv_err_on;
         self = [super init];
         if (self != nil)
         {
+            CFRunLoopSourceContext context = { 0 };
+            context.perform = PerformRequest;
+            requestSource = CFRunLoopSourceCreate(NULL, 0, &context);
+            if (!requestSource)
+            {
+                [self release];
+                return nil;
+            }
+            CFRunLoopAddSource(CFRunLoopGetMain(), requestSource, kCFRunLoopCommonModes);
+            CFRunLoopAddSource(CFRunLoopGetMain(), requestSource, (CFStringRef)WineAppWaitQueryResponseMode);
+
+            requests =  [[NSMutableArray alloc] init];
+            requestsManipQueue = dispatch_queue_create("org.winehq.WineAppRequestManipQueue", NULL);
+
             eventQueues = [[NSMutableArray alloc] init];
             eventQueuesLock = [[NSLock alloc] init];
 
@@ -80,8 +99,8 @@ int macdrv_err_on;
 
             warpRecords = [[NSMutableArray alloc] init];
 
-            if (!eventQueues || !eventQueuesLock || !keyWindows || !orderedWineWindows ||
-                !originalDisplayModes || !warpRecords)
+            if (!requests || !requestsManipQueue || !eventQueues || !eventQueuesLock ||
+                !keyWindows || !orderedWineWindows || !originalDisplayModes || !warpRecords)
             {
                 [self release];
                 return nil;
@@ -100,6 +119,13 @@ int macdrv_err_on;
         [keyWindows release];
         [eventQueues release];
         [eventQueuesLock release];
+        if (requestsManipQueue) dispatch_release(requestsManipQueue);
+        [requests release];
+        if (requestSource)
+        {
+            CFRunLoopSourceInvalidate(requestSource);
+            CFRelease(requestSource);
+        }
         [super dealloc];
     }
 
@@ -144,6 +170,18 @@ int macdrv_err_on;
             [self setMainMenu:mainMenu];
             [self setWindowsMenu:submenu];
         }
+    }
+
+    - (BOOL) waitUntilQueryDone:(int*)done timeout:(NSDate*)timeout
+    {
+        PerformRequest(NULL);
+
+        do
+        {
+            [[NSRunLoop currentRunLoop] runMode:WineAppWaitQueryResponseMode beforeDate:timeout];
+        } while (!*done && [timeout timeIntervalSinceNow] >= 0);
+
+        return *done;
     }
 
     - (BOOL) registerEventQueue:(WineEventQueue*)queue
@@ -1102,16 +1140,36 @@ int macdrv_err_on;
         }];
     }
 
-@end
-
 /***********************************************************************
- *              OnMainThread
+ *              PerformRequest
  *
- * Run a block on the main thread synchronously.
+ * Run-loop-source perform callback.  Pull request blocks from the
+ * array of queued requests and invoke them.
  */
-void OnMainThread(dispatch_block_t block)
+static void PerformRequest(void *info)
 {
-    dispatch_sync(dispatch_get_main_queue(), block);
+    WineApplication* app = (WineApplication*)NSApp;
+
+    for (;;)
+    {
+        __block dispatch_block_t block;
+
+        dispatch_sync(app->requestsManipQueue, ^{
+            if ([app->requests count])
+            {
+                block = (dispatch_block_t)[[app->requests objectAtIndex:0] retain];
+                [app->requests removeObjectAtIndex:0];
+            }
+            else
+                block = nil;
+        });
+
+        if (!block)
+            break;
+
+        block();
+        [block release];
+    }
 }
 
 /***********************************************************************
@@ -1121,8 +1179,18 @@ void OnMainThread(dispatch_block_t block)
  */
 void OnMainThreadAsync(dispatch_block_t block)
 {
-    dispatch_async(dispatch_get_main_queue(), block);
+    WineApplication* app = (WineApplication*)NSApp;
+
+    block = [block copy];
+    dispatch_sync(app->requestsManipQueue, ^{
+        [app->requests addObject:block];
+    });
+    [block release];
+    CFRunLoopSourceSignal(app->requestSource);
+    CFRunLoopWakeUp(CFRunLoopGetMain());
 }
+
+@end
 
 /***********************************************************************
  *              LogError

@@ -28,9 +28,16 @@
     NSLock*         eventsLock;
 
     int             fds[2]; /* Pipe signaling when there are events queued. */
+    int             kq; /* kqueue for waiting in OnMainThread(). */
+
+    macdrv_event_handler event_handler;
 }
 
     - (void) postEvent:(const macdrv_event*)inEvent;
     - (void) discardEventsMatchingMask:(macdrv_event_mask)mask forWindow:(NSWindow*)window;
 
+    - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout;
+
 @end
+
+void OnMainThread(dispatch_block_t block);

@@ -21,7 +21,7 @@
 #import "cocoa_opengl.h"
 
 #include "macdrv_cocoa.h"
-#include "cocoa_app.h"
+#include "cocoa_event.h"
 
 
 @interface WineOpenGLContext ()

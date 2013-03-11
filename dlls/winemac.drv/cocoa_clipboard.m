@@ -20,6 +20,7 @@
 
 #include "macdrv_cocoa.h"
 #import "cocoa_app.h"
+#import "cocoa_event.h"
 
 
 static int owned_change_count = -1;

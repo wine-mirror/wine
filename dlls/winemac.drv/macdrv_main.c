@@ -157,7 +157,7 @@ struct macdrv_thread_data *macdrv_init_thread_data(void)
         ExitProcess(1);
     }
 
-    if (!(data->queue = macdrv_create_event_queue()))
+    if (!(data->queue = macdrv_create_event_queue(macdrv_handle_event)))
     {
         ERR("macdrv: Can't create event queue.\n");
         ExitProcess(1);

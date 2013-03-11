@@ -104,6 +104,7 @@ typedef struct macdrv_opaque_event_queue* macdrv_event_queue;
 typedef struct macdrv_opaque_view* macdrv_view;
 typedef struct macdrv_opaque_opengl_context* macdrv_opengl_context;
 struct macdrv_event;
+struct macdrv_query;
 
 struct macdrv_display {
     CGDirectDisplayID displayID;
@@ -145,6 +146,7 @@ enum {
     MOUSE_MOVED,
     MOUSE_MOVED_ABSOLUTE,
     MOUSE_SCROLL,
+    QUERY_EVENT,
     WINDOW_CLOSE_REQUESTED,
     WINDOW_DID_MINIMIZE,
     WINDOW_DID_UNMINIMIZE,
@@ -193,6 +195,9 @@ typedef struct macdrv_event {
             unsigned long   time_ms;
         }                                           mouse_scroll;
         struct {
+            struct macdrv_query *query;
+        }                                           query_event;
+        struct {
             CGRect frame;
         }                                           window_frame_changed;
         struct {
@@ -202,18 +207,37 @@ typedef struct macdrv_event {
     };
 } macdrv_event;
 
+enum {
+    NUM_QUERY_TYPES
+};
+
+typedef struct macdrv_query {
+    int                 refs;
+    int                 type;
+    macdrv_window       window;
+    int                 status;
+    int                 done;
+} macdrv_query;
+
 static inline macdrv_event_mask event_mask_for_type(int type)
 {
     return ((macdrv_event_mask)1 << type);
 }
 
-extern macdrv_event_queue macdrv_create_event_queue(void) DECLSPEC_HIDDEN;
+typedef void (*macdrv_event_handler)(macdrv_event *event);
+
+extern macdrv_event_queue macdrv_create_event_queue(macdrv_event_handler handler) DECLSPEC_HIDDEN;
 extern void macdrv_destroy_event_queue(macdrv_event_queue queue) DECLSPEC_HIDDEN;
 extern int macdrv_get_event_queue_fd(macdrv_event_queue queue) DECLSPEC_HIDDEN;
 
 extern int macdrv_get_event_from_queue(macdrv_event_queue queue,
         macdrv_event_mask mask, macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_cleanup_event(macdrv_event *event) DECLSPEC_HIDDEN;
+
+extern macdrv_query* macdrv_create_query(void) DECLSPEC_HIDDEN;
+extern macdrv_query* macdrv_retain_query(macdrv_query *query) DECLSPEC_HIDDEN;
+extern void macdrv_release_query(macdrv_query *query) DECLSPEC_HIDDEN;
+extern void macdrv_set_query_done(macdrv_query *query) DECLSPEC_HIDDEN;
 
 
 /* window */
