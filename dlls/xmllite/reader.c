@@ -610,7 +610,12 @@ static HRESULT readerinput_detectencoding(xmlreaderinput *readerinput, xml_encod
 
     *enc = XmlEncoding_Unknown;
 
-    if (buffer->written <= 3) return MX_E_INPUTEND;
+    if (buffer->written <= 3)
+    {
+        HRESULT hr = readerinput_growraw(readerinput);
+        if (FAILED(hr)) return hr;
+        if (buffer->written <= 3) return MX_E_INPUTEND;
+    }
 
     /* try start symbols if we have enough data to do that, input buffer should contain
        first chunk already */
