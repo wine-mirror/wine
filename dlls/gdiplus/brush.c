@@ -946,7 +946,7 @@ GpStatus WINGDIPAPI GdipGetLineWrapMode(GpLineGradient *brush, GpWrapMode *wrapm
 {
     TRACE("(%p, %p)\n", brush, wrapmode);
 
-    if(!brush || !wrapmode)
+    if(!brush || !wrapmode || brush->brush.bt != BrushTypeLinearGradient)
         return InvalidParameter;
 
     *wrapmode = brush->wrap;
@@ -959,7 +959,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientBlend(GpPathGradient *brush, REAL *blend,
 {
     TRACE("(%p, %p, %p, %d)\n", brush, blend, positions, count);
 
-    if(!brush || !blend || !positions || count <= 0)
+    if(!brush || !blend || !positions || count <= 0 || brush->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     if(count < brush->blendcount)
@@ -977,7 +977,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientBlendCount(GpPathGradient *brush, INT *co
 {
     TRACE("(%p, %p)\n", brush, count);
 
-    if(!brush || !count)
+    if(!brush || !count || brush->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     *count = brush->blendcount;
@@ -990,7 +990,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientCenterPoint(GpPathGradient *grad,
 {
     TRACE("(%p, %p)\n", grad, point);
 
-    if(!grad || !point)
+    if(!grad || !point || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     point->X = grad->center.X;
@@ -1025,7 +1025,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientCenterColor(GpPathGradient *grad,
 {
     TRACE("(%p,%p)\n", grad, colors);
 
-    if (!grad || !colors)
+    if (!grad || !colors || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     *colors = grad->centercolor;
@@ -1038,7 +1038,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientFocusScales(GpPathGradient *grad,
 {
     TRACE("(%p, %p, %p)\n", grad, x, y);
 
-    if(!grad || !x || !y)
+    if(!grad || !x || !y || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     *x = grad->focus.X;
@@ -1052,7 +1052,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientGammaCorrection(GpPathGradient *grad,
 {
     TRACE("(%p, %p)\n", grad, gamma);
 
-    if(!grad || !gamma)
+    if(!grad || !gamma || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     *gamma = grad->gamma;
@@ -1077,7 +1077,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientPointCount(GpPathGradient *grad,
 {
     TRACE("(%p, %p)\n", grad, count);
 
-    if(!grad || !count)
+    if(!grad || !count || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     *count = grad->path->pathdata.Count;
@@ -1091,7 +1091,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientRect(GpPathGradient *brush, GpRectF *rect
 
     TRACE("(%p, %p)\n", brush, rect);
 
-    if(!brush || !rect)
+    if(!brush || !rect || brush->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     stat = GdipGetPathWorldBounds(brush->path, rect, NULL, NULL);
@@ -1127,7 +1127,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientSurroundColorsWithCount(GpPathGradient
 
     TRACE("(%p,%p,%p)\n", grad, argb, count);
 
-    if(!grad || !argb || !count || (*count < grad->path->pathdata.Count))
+    if(!grad || !argb || !count || (*count < grad->path->pathdata.Count) || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     for (i=0; i<grad->path->pathdata.Count; i++)
@@ -1147,7 +1147,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientSurroundColorCount(GpPathGradient *brush,
 {
     TRACE("(%p, %p)\n", brush, count);
 
-    if (!brush || !count)
+    if (!brush || !count || brush->brush.bt != BrushTypePathGradient)
        return InvalidParameter;
 
     /* Yes, this actually returns the number of points in the path (which is the
@@ -1164,7 +1164,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientWrapMode(GpPathGradient *brush,
 {
     TRACE("(%p, %p)\n", brush, wrapmode);
 
-    if(!brush || !wrapmode)
+    if(!brush || !wrapmode || brush->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     *wrapmode = brush->wrap;
@@ -1275,7 +1275,7 @@ GpStatus WINGDIPAPI GdipSetLineBlend(GpLineGradient *brush,
 
     TRACE("(%p, %p, %p, %i)\n", brush, factors, positions, count);
 
-    if(!brush || !factors || !positions || count <= 0 ||
+    if(!brush || !factors || !positions || count <= 0 || brush->brush.bt != BrushTypeLinearGradient ||
        (count >= 2 && (positions[0] != 0.0f || positions[count-1] != 1.0f)))
         return InvalidParameter;
 
@@ -1307,7 +1307,7 @@ GpStatus WINGDIPAPI GdipGetLineBlend(GpLineGradient *brush, REAL *factors,
 {
     TRACE("(%p, %p, %p, %i)\n", brush, factors, positions, count);
 
-    if (!brush || !factors || !positions || count <= 0)
+    if (!brush || !factors || !positions || count <= 0 || brush->brush.bt != BrushTypeLinearGradient)
         return InvalidParameter;
 
     if (count < brush->blendcount)
@@ -1323,7 +1323,7 @@ GpStatus WINGDIPAPI GdipGetLineBlendCount(GpLineGradient *brush, INT *count)
 {
     TRACE("(%p, %p)\n", brush, count);
 
-    if (!brush || !count)
+    if (!brush || !count || brush->brush.bt != BrushTypeLinearGradient)
         return InvalidParameter;
 
     *count = brush->blendcount;
@@ -1336,7 +1336,7 @@ GpStatus WINGDIPAPI GdipSetLineGammaCorrection(GpLineGradient *line,
 {
     TRACE("(%p, %d)\n", line, usegamma);
 
-    if(!line)
+    if(!line || line->brush.bt != BrushTypeLinearGradient)
         return InvalidParameter;
 
     line->gamma = usegamma;
@@ -1358,7 +1358,7 @@ GpStatus WINGDIPAPI GdipSetLineSigmaBlend(GpLineGradient *line, REAL focus,
 
     TRACE("(%p, %0.2f, %0.2f)\n", line, focus, scale);
 
-    if(!line || focus < 0.0 || focus > 1.0 || scale < 0.0 || scale > 1.0)
+    if(!line || focus < 0.0 || focus > 1.0 || scale < 0.0 || scale > 1.0 || line->brush.bt != BrushTypeLinearGradient)
         return InvalidParameter;
 
     /* we want 2 standard deviations */
@@ -1405,7 +1405,7 @@ GpStatus WINGDIPAPI GdipSetLineWrapMode(GpLineGradient *line,
 {
     TRACE("(%p, %d)\n", line, wrap);
 
-    if(!line || wrap == WrapModeClamp)
+    if(!line || wrap == WrapModeClamp || line->brush.bt != BrushTypeLinearGradient)
         return InvalidParameter;
 
     line->wrap = wrap;
@@ -1420,7 +1420,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientBlend(GpPathGradient *brush, GDIPCONST RE
 
     TRACE("(%p,%p,%p,%i)\n", brush, blend, pos, count);
 
-    if(!brush || !blend || !pos || count <= 0 ||
+    if(!brush || !blend || !pos || count <= 0 || brush->brush.bt != BrushTypePathGradient ||
        (count >= 2 && (pos[0] != 0.0f || pos[count-1] != 1.0f)))
         return InvalidParameter;
 
@@ -1456,7 +1456,8 @@ GpStatus WINGDIPAPI GdipSetPathGradientLinearBlend(GpPathGradient *brush,
 
     TRACE("(%p,%0.2f,%0.2f)\n", brush, focus, scale);
 
-    if (!brush) return InvalidParameter;
+    if (!brush || brush->brush.bt != BrushTypePathGradient)
+        return InvalidParameter;
 
     if (focus != 0.0)
     {
@@ -1486,7 +1487,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientPresetBlend(GpPathGradient *brush,
     REAL *new_pos;
     TRACE("(%p,%p,%p,%i)\n", brush, blend, pos, count);
 
-    if (!brush || !blend || !pos || count < 2 ||
+    if (!brush || !blend || !pos || count < 2 || brush->brush.bt != BrushTypePathGradient ||
         pos[0] != 0.0f || pos[count-1] != 1.0f)
     {
         return InvalidParameter;
@@ -1522,7 +1523,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientPresetBlend(GpPathGradient *brush,
     if (count < 0)
         return OutOfMemory;
 
-    if (!brush || !blend || !pos || count < 2)
+    if (!brush || !blend || !pos || count < 2 || brush->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     if (brush->pblendcount == 0)
@@ -1546,7 +1547,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientPresetBlendCount(GpPathGradient *brush,
 {
     TRACE("(%p,%p)\n", brush, count);
 
-    if (!brush || !count)
+    if (!brush || !count || brush->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     *count = brush->pblendcount;
@@ -1559,7 +1560,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient *grad,
 {
     TRACE("(%p, %x)\n", grad, argb);
 
-    if(!grad)
+    if(!grad || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     grad->centercolor = argb;
@@ -1571,7 +1572,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientCenterPoint(GpPathGradient *grad,
 {
     TRACE("(%p, %s)\n", grad, debugstr_pointf(point));
 
-    if(!grad || !point)
+    if(!grad || !point || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     grad->center.X = point->X;
@@ -1601,7 +1602,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientFocusScales(GpPathGradient *grad,
 {
     TRACE("(%p, %.2f, %.2f)\n", grad, x, y);
 
-    if(!grad)
+    if(!grad || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     grad->focus.X = x;
@@ -1615,7 +1616,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientGammaCorrection(GpPathGradient *grad,
 {
     TRACE("(%p, %d)\n", grad, gamma);
 
-    if(!grad)
+    if(!grad || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     grad->gamma = gamma;
@@ -1637,7 +1638,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientSigmaBlend(GpPathGradient *grad,
 
     TRACE("(%p,%0.2f,%0.2f)\n", grad, focus, scale);
 
-    if(!grad || focus < 0.0 || focus > 1.0 || scale < 0.0 || scale > 1.0)
+    if(!grad || focus < 0.0 || focus > 1.0 || scale < 0.0 || scale > 1.0 || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     /* we want 2 standard deviations */
@@ -1687,7 +1688,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientSurroundColorsWithCount(GpPathGradient
 
     TRACE("(%p,%p,%p)\n", grad, argb, count);
 
-    if(!grad || !argb || !count || (*count <= 0) ||
+    if(!grad || !argb || !count || (*count <= 0) || grad->brush.bt != BrushTypePathGradient ||
         (*count > grad->path->pathdata.Count))
         return InvalidParameter;
 
@@ -1723,7 +1724,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientWrapMode(GpPathGradient *grad,
 {
     TRACE("(%p, %d)\n", grad, wrap);
 
-    if(!grad)
+    if(!grad || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     grad->wrap = wrap;
@@ -1736,7 +1737,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientTransform(GpPathGradient *grad,
 {
     TRACE("(%p,%p)\n", grad, matrix);
 
-    if (!grad || !matrix)
+    if (!grad || !matrix || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     grad->transform = *matrix;
@@ -1749,7 +1750,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientTransform(GpPathGradient *grad,
 {
     TRACE("(%p,%p)\n", grad, matrix);
 
-    if (!grad || !matrix)
+    if (!grad || !matrix || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     *matrix = grad->transform;
@@ -1762,7 +1763,7 @@ GpStatus WINGDIPAPI GdipMultiplyPathGradientTransform(GpPathGradient *grad,
 {
     TRACE("(%p,%p,%i)\n", grad, matrix, order);
 
-    if (!grad)
+    if (!grad || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     return GdipMultiplyMatrix(&grad->transform, matrix, order);
@@ -1772,7 +1773,7 @@ GpStatus WINGDIPAPI GdipResetPathGradientTransform(GpPathGradient *grad)
 {
     TRACE("(%p)\n", grad);
 
-    if (!grad)
+    if (!grad || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     return GdipSetMatrixElements(&grad->transform, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
@@ -1783,7 +1784,7 @@ GpStatus WINGDIPAPI GdipRotatePathGradientTransform(GpPathGradient *grad,
 {
     TRACE("(%p,%0.2f,%i)\n", grad, angle, order);
 
-    if (!grad)
+    if (!grad || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     return GdipRotateMatrix(&grad->transform, angle, order);
@@ -1794,7 +1795,7 @@ GpStatus WINGDIPAPI GdipScalePathGradientTransform(GpPathGradient *grad,
 {
     TRACE("(%p,%0.2f,%0.2f,%i)\n", grad, sx, sy, order);
 
-    if (!grad)
+    if (!grad || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     return GdipScaleMatrix(&grad->transform, sx, sy, order);
@@ -1805,7 +1806,7 @@ GpStatus WINGDIPAPI GdipTranslatePathGradientTransform(GpPathGradient *grad,
 {
     TRACE("(%p,%0.2f,%0.2f,%i)\n", grad, dx, dy, order);
 
-    if (!grad)
+    if (!grad || grad->brush.bt != BrushTypePathGradient)
         return InvalidParameter;
 
     return GdipTranslateMatrix(&grad->transform, dx, dy, order);
@@ -1860,7 +1861,7 @@ GpStatus WINGDIPAPI GdipSetLineColors(GpLineGradient *brush, ARGB color1,
 {
     TRACE("(%p, %x, %x)\n", brush, color1, color2);
 
-    if(!brush)
+    if(!brush || brush->brush.bt != BrushTypeLinearGradient)
         return InvalidParameter;
 
     brush->startcolor = color1;
@@ -1873,7 +1874,7 @@ GpStatus WINGDIPAPI GdipGetLineColors(GpLineGradient *brush, ARGB *colors)
 {
     TRACE("(%p, %p)\n", brush, colors);
 
-    if(!brush || !colors)
+    if(!brush || !colors || brush->brush.bt != BrushTypeLinearGradient)
         return InvalidParameter;
 
     colors[0] = brush->startcolor;
@@ -1935,7 +1936,7 @@ GpStatus WINGDIPAPI GdipSetLinePresetBlend(GpLineGradient *brush,
     REAL *new_pos;
     TRACE("(%p,%p,%p,%i)\n", brush, blend, positions, count);
 
-    if (!brush || !blend || !positions || count < 2 ||
+    if (!brush || !blend || !positions || count < 2 || brush->brush.bt != BrushTypeLinearGradient ||
         positions[0] != 0.0f || positions[count-1] != 1.0f)
     {
         return InvalidParameter;
@@ -1966,7 +1967,7 @@ GpStatus WINGDIPAPI GdipSetLinePresetBlend(GpLineGradient *brush,
 GpStatus WINGDIPAPI GdipGetLinePresetBlend(GpLineGradient *brush,
     ARGB *blend, REAL* positions, INT count)
 {
-    if (!brush || !blend || !positions || count < 2)
+    if (!brush || !blend || !positions || count < 2 || brush->brush.bt != BrushTypeLinearGradient)
         return InvalidParameter;
 
     if (brush->pblendcount == 0)
@@ -1984,7 +1985,7 @@ GpStatus WINGDIPAPI GdipGetLinePresetBlend(GpLineGradient *brush,
 GpStatus WINGDIPAPI GdipGetLinePresetBlendCount(GpLineGradient *brush,
     INT *count)
 {
-    if (!brush || !count)
+    if (!brush || !count || brush->brush.bt != BrushTypeLinearGradient)
         return InvalidParameter;
 
     *count = brush->pblendcount;
@@ -2086,7 +2087,7 @@ GpStatus WINGDIPAPI GdipGetLineRect(GpLineGradient *brush, GpRectF *rect)
 {
     TRACE("(%p, %p)\n", brush, rect);
 
-    if(!brush || !rect)
+    if(!brush || !rect || brush->brush.bt != BrushTypeLinearGradient)
         return InvalidParameter;
 
     *rect = brush->rect;
@@ -2123,7 +2124,7 @@ GpStatus WINGDIPAPI GdipRotateLineTransform(GpLineGradient* brush,
 
     TRACE("(%p,%0.2f,%u)\n", brush, angle, order);
 
-    if(!brush)
+    if(!brush || brush->brush.bt != BrushTypeLinearGradient)
         return InvalidParameter;
 
     if(!(calls++))
