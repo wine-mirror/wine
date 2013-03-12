@@ -1398,9 +1398,9 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
     options = 0;
     if (dwOpenMode & FILE_FLAG_WRITE_THROUGH) options |= FILE_WRITE_THROUGH;
     if (!(dwOpenMode & FILE_FLAG_OVERLAPPED)) options |= FILE_SYNCHRONOUS_IO_NONALERT;
-    pipe_type = (dwPipeMode & PIPE_TYPE_MESSAGE) ? TRUE : FALSE;
-    read_mode = (dwPipeMode & PIPE_READMODE_MESSAGE) ? TRUE : FALSE;
-    non_block = (dwPipeMode & PIPE_NOWAIT) ? TRUE : FALSE;
+    pipe_type = (dwPipeMode & PIPE_TYPE_MESSAGE) != 0;
+    read_mode = (dwPipeMode & PIPE_READMODE_MESSAGE) != 0;
+    non_block = (dwPipeMode & PIPE_NOWAIT) != 0;
     if (nMaxInstances >= PIPE_UNLIMITED_INSTANCES) nMaxInstances = ~0U;
 
     timeout.QuadPart = (ULONGLONG)nDefaultTimeOut * -10000;
