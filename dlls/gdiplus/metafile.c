@@ -410,7 +410,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             if (record)
             {
                 record->iType = recordType;
-                record->nSize = dataSize;
+                record->nSize = dataSize + 8;
                 memcpy(record->dParm, data, dataSize);
 
                 PlayEnhMetaFileRecord(metafile->playback_dc, metafile->handle_table,
