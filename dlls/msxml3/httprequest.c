@@ -948,7 +948,8 @@ static HRESULT httprequest_getResponseHeader(httprequest *This, BSTR header, BST
 {
     struct httpheader *entry;
 
-    if (!header || !value) return E_INVALIDARG;
+    if (!header) return E_INVALIDARG;
+    if (!value) return E_POINTER;
 
     if (This->raw_respheaders && list_empty(&This->respheaders))
     {
@@ -982,7 +983,7 @@ static HRESULT httprequest_getResponseHeader(httprequest *This, BSTR header, BST
 
 static HRESULT httprequest_getAllResponseHeaders(httprequest *This, BSTR *respheaders)
 {
-    if (!respheaders) return E_INVALIDARG;
+    if (!respheaders) return E_POINTER;
 
     *respheaders = SysAllocString(This->raw_respheaders);
 
@@ -1015,17 +1016,16 @@ static HRESULT httprequest_abort(httprequest *This)
 
 static HRESULT httprequest_get_status(httprequest *This, LONG *status)
 {
-    if (!status) return E_INVALIDARG;
-    if (This->state != READYSTATE_COMPLETE) return E_FAIL;
+    if (!status) return E_POINTER;
 
     *status = This->status;
 
-    return S_OK;
+    return This->state == READYSTATE_COMPLETE ? S_OK : E_FAIL;
 }
 
 static HRESULT httprequest_get_statusText(httprequest *This, BSTR *status)
 {
-    if (!status) return E_INVALIDARG;
+    if (!status) return E_POINTER;
     if (This->state != READYSTATE_COMPLETE) return E_FAIL;
 
     *status = SysAllocString(This->status_text);
@@ -1038,7 +1038,7 @@ static HRESULT httprequest_get_responseText(httprequest *This, BSTR *body)
     HGLOBAL hglobal;
     HRESULT hr;
 
-    if (!body) return E_INVALIDARG;
+    if (!body) return E_POINTER;
     if (This->state != READYSTATE_COMPLETE) return E_FAIL;
 
     hr = GetHGlobalFromStream(This->bsc->stream, &hglobal);
@@ -1184,7 +1184,7 @@ static HRESULT httprequest_get_responseStream(httprequest *This, VARIANT *body)
 
 static HRESULT httprequest_get_readyState(httprequest *This, LONG *state)
 {
-    if (!state) return E_INVALIDARG;
+    if (!state) return E_POINTER;
 
     *state = This->state;
     return S_OK;

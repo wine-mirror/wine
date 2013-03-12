@@ -1469,12 +1469,12 @@ static void test_XMLHTTP(void)
 
     /* initial status code */
     hr = IXMLHttpRequest_get_status(xhr, NULL);
-    EXPECT_HR(hr, E_INVALIDARG);
+    ok(hr == E_POINTER || broken(hr == E_INVALIDARG) /* <win8 */, "got 0x%08x\n", hr);
 
     status = 0xdeadbeef;
     hr = IXMLHttpRequest_get_status(xhr, &status);
     ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win2k */, "got 0x%08x\n", hr);
-    ok(status == 0xdeadbeef, "got %d\n", status);
+    ok(status == READYSTATE_UNINITIALIZED || broken(status == 0xdeadbeef) /* <win8 */, "got %d\n", status);
 
     hr = IXMLHttpRequest_get_statusText(xhr, &str);
     ok(hr == E_FAIL, "got 0x%08x\n", hr);
@@ -1497,7 +1497,7 @@ static void test_XMLHTTP(void)
     ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win2k */, "got 0x%08x\n", hr);
 
     hr = IXMLHttpRequest_get_readyState(xhr, NULL);
-    EXPECT_HR(hr, E_INVALIDARG);
+    ok(hr == E_POINTER || broken(hr == E_INVALIDARG) /* <win8 */, "got 0x%08x\n", hr);
 
     state = -1;
     hr = IXMLHttpRequest_get_readyState(xhr, &state);
@@ -1523,7 +1523,7 @@ static void test_XMLHTTP(void)
     status = 0xdeadbeef;
     hr = IXMLHttpRequest_get_status(xhr, &status);
     ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win2k */, "got 0x%08x\n", hr);
-    ok(status == 0xdeadbeef, "got %d\n", status);
+    ok(status == READYSTATE_UNINITIALIZED || broken(status == 0xdeadbeef) /* <win8 */, "got %d\n", status);
 
     state = -1;
     hr = IXMLHttpRequest_get_readyState(xhr, &state);
@@ -1564,7 +1564,7 @@ static void test_XMLHTTP(void)
 
     /* response headers */
     hr = IXMLHttpRequest_getAllResponseHeaders(xhr, NULL);
-    EXPECT_HR(hr, E_INVALIDARG);
+    ok(hr == E_POINTER || broken(hr == E_INVALIDARG) /* <win8 */, "got 0x%08x\n", hr);
     hr = IXMLHttpRequest_getAllResponseHeaders(xhr, &str);
     EXPECT_HR(hr, S_OK);
     /* status line is stripped already */
@@ -1579,7 +1579,7 @@ static void test_XMLHTTP(void)
     hr = IXMLHttpRequest_getResponseHeader(xhr, NULL, NULL);
     EXPECT_HR(hr, E_INVALIDARG);
     hr = IXMLHttpRequest_getResponseHeader(xhr, _bstr_("Date"), NULL);
-    EXPECT_HR(hr, E_INVALIDARG);
+    ok(hr == E_POINTER || broken(hr == E_INVALIDARG) /* <win8 */, "got 0x%08x\n", hr);
     hr = IXMLHttpRequest_getResponseHeader(xhr, _bstr_("Date"), &str);
     EXPECT_HR(hr, S_OK);
     ok(*str != ' ', "got leading space in header %s\n", wine_dbgstr_w(str));
@@ -1592,7 +1592,7 @@ static void test_XMLHTTP(void)
     ok(status == 200, "got %d\n", status);
 
     hr = IXMLHttpRequest_get_statusText(xhr, NULL);
-    EXPECT_HR(hr, E_INVALIDARG);
+    ok(hr == E_POINTER || broken(hr == E_INVALIDARG) /* <win8 */, "got 0x%08x\n", hr);
 
     hr = IXMLHttpRequest_get_statusText(xhr, &str);
     EXPECT_HR(hr, S_OK);
@@ -1640,7 +1640,7 @@ static void test_XMLHTTP(void)
     EXPECT_HR(hr, S_OK);
 
     hr = IXMLHttpRequest_get_responseText(xhr, NULL);
-    EXPECT_HR(hr, E_INVALIDARG);
+    ok(hr == E_POINTER || broken(hr == E_INVALIDARG) /* <win8 */, "got 0x%08x\n", hr);
 
     hr = IXMLHttpRequest_get_responseText(xhr, &bstrResponse);
     EXPECT_HR(hr, S_OK);
