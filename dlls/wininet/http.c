@@ -4050,7 +4050,7 @@ static WORD HTTP_ParseWkday(LPCWSTR day)
                                      { 't','h','u',0 },
                                      { 'f','r','i',0 },
                                      { 's','a','t',0 }};
-    int i;
+    unsigned int i;
     for (i = 0; i < sizeof(days)/sizeof(*days); i++)
         if (!strcmpiW(day, days[i]))
             return i;
@@ -4313,7 +4313,7 @@ static WORD HTTP_ParseWeekday(LPCWSTR day)
                                      { 't','h','u','r','s','d','a','y',0 },
                                      { 'f','r','i','d','a','y',0 },
                                      { 's','a','t','u','r','d','a','y',0 }};
-    int i;
+    unsigned int i;
     for (i = 0; i < sizeof(days)/sizeof(*days); i++)
         if (!strcmpiW(day, days[i]))
             return i;

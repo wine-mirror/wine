@@ -2836,7 +2836,7 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     case INTERNET_OPTION_PER_CONNECTION_OPTION: {
         INTERNET_PER_CONN_OPTION_LISTW *con = lpBuffer;
         LONG res;
-        int i;
+        unsigned int i;
         proxyinfo_t pi;
 
         INTERNET_LoadProxySettings(&pi);
@@ -2950,7 +2950,7 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
                                    wbuffer, wlen );
         break;
     case INTERNET_OPTION_PER_CONNECTION_OPTION: {
-        int i;
+        unsigned int i;
         INTERNET_PER_CONN_OPTION_LISTW *listW;
         INTERNET_PER_CONN_OPTION_LISTA *listA = lpBuffer;
         wlen = sizeof(INTERNET_PER_CONN_OPTION_LISTW);
@@ -3019,7 +3019,7 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
         if (dwOption == INTERNET_OPTION_PER_CONNECTION_OPTION)
         {
             INTERNET_PER_CONN_OPTION_LISTW *list = wbuffer;
-            int i;
+            unsigned int i;
             for (i = 0; i < list->dwOptionCount; ++i) {
                 INTERNET_PER_CONN_OPTIONW *opt = list->pOptions + i;
                 switch (opt->dwOption) {

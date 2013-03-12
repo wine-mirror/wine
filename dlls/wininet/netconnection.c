@@ -477,7 +477,7 @@ static CRITICAL_SECTION init_ssl_cs = { &init_ssl_cs_debug, -1, 0, 0, 0, 0 };
 static DWORD init_openssl(void)
 {
 #ifdef SONAME_LIBCRYPTO
-    int i;
+    unsigned int i;
 
     if(OpenSSL_ssl_handle)
         return ERROR_SUCCESS;
@@ -730,7 +730,7 @@ void NETCON_unload(void)
     }
     if (ssl_locks)
     {
-        int i;
+        unsigned int i;
         for (i = 0; i < num_ssl_locks; i++)
         {
             ssl_locks[i].DebugInfo->Spare[0] = 0;
