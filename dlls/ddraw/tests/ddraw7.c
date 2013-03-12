@@ -940,7 +940,7 @@ static void test_surface_interface_mismatch(void)
     }
 
     memset(&z_fmt, 0, sizeof(z_fmt));
-    hr = IDirect3D7_EnumZBufferFormats(d3d, &IID_IDirect3DTnLHalDevice, enum_z_fmt, &z_fmt);
+    hr = IDirect3D7_EnumZBufferFormats(d3d, &IID_IDirect3DHALDevice, enum_z_fmt, &z_fmt);
     if (FAILED(hr) || !z_fmt.dwSize)
     {
         skip("No depth buffer formats available, skipping test.\n");
@@ -968,7 +968,7 @@ static void test_surface_interface_mismatch(void)
         goto cleanup;
 
     /* Here too */
-    hr = IDirect3D7_CreateDevice(d3d, &IID_IDirect3DTnLHalDevice, (IDirectDrawSurface7 *)surface3, &device);
+    hr = IDirect3D7_CreateDevice(d3d, &IID_IDirect3DHALDevice, (IDirectDrawSurface7 *)surface3, &device);
     ok(SUCCEEDED(hr), "Failed to create d3d device.\n");
     if (FAILED(hr))
         goto cleanup;
