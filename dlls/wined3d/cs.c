@@ -77,15 +77,19 @@ struct wined3d_cs_fence
     BOOL *signalled;
 };
 
+#define CS_PRESENT_SRC_RECT 1
+#define CS_PRESENT_DST_RECT 2
+#define CS_PRESENT_DIRTY_RGN 4
 struct wined3d_cs_present
 {
     enum wined3d_cs_op opcode;
     HWND dst_window_override;
     struct wined3d_swapchain *swapchain;
-    const RECT *src_rect;
-    const RECT *dst_rect;
-    const RGNDATA *dirty_region;
+    RECT src_rect;
+    RECT dst_rect;
+    RGNDATA dirty_region;
     DWORD flags;
+    DWORD set_data;
 };
 
 struct wined3d_cs_clear
@@ -405,12 +409,15 @@ static UINT wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_present *op = data;
     struct wined3d_swapchain *swapchain;
+    const RECT *src_rect = op->set_data & CS_PRESENT_SRC_RECT ? &op->src_rect : NULL;
+    const RECT *dst_rect = op->set_data & CS_PRESENT_DST_RECT ? &op->dst_rect : NULL;
+    const RGNDATA *dirty_region = op->set_data & CS_PRESENT_DIRTY_RGN ? &op->dirty_region : NULL;
 
     swapchain = op->swapchain;
     wined3d_swapchain_set_window(swapchain, op->dst_window_override);
 
     swapchain->swapchain_ops->swapchain_present(swapchain,
-            op->src_rect, op->dst_rect, op->dirty_region, op->flags);
+            src_rect, dst_rect, dirty_region, op->flags);
 
     return sizeof(*op);
 }
@@ -425,9 +432,22 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
     op->opcode = WINED3D_CS_OP_PRESENT;
     op->dst_window_override = dst_window_override;
     op->swapchain = swapchain;
-    op->src_rect = src_rect;
-    op->dst_rect = dst_rect;
-    op->dirty_region = dirty_region;
+    op->set_data = 0;
+    if (src_rect)
+    {
+        op->src_rect = *src_rect;
+        op->set_data |= CS_PRESENT_SRC_RECT;
+    }
+    if (dst_rect)
+    {
+        op->dst_rect = *dst_rect;
+        op->set_data |= CS_PRESENT_DST_RECT;
+    }
+    if (dirty_region)
+    {
+        op->dirty_region = *dirty_region;
+        op->set_data = CS_PRESENT_DIRTY_RGN;
+    }
     op->flags = flags;
 
     cs->ops->submit(cs);
