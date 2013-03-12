@@ -10754,7 +10754,7 @@ static void test_nodeValue(void)
     IXMLDOMDocument_Release(doc);
 }
 
-void test_xmlns_attribute(void)
+static void test_xmlns_attribute(void)
 {
     BSTR str;
     IXMLDOMDocument *doc;
