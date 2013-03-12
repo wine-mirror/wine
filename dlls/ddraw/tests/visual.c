@@ -64,6 +64,17 @@ static HRESULT WINAPI enum_z_fmt(DDPIXELFORMAT *fmt, void *ctx)
     return DDENUMRET_OK;
 }
 
+static HRESULT WINAPI enum_devtype_cb(char *desc_str, char *name, D3DDEVICEDESC7 *desc, void *ctx)
+{
+    BOOL *hal_ok = ctx;
+    if (IsEqualGUID(&desc->deviceGUID, &IID_IDirect3DTnLHalDevice))
+    {
+        *hal_ok = TRUE;
+        return DDENUMRET_CANCEL;
+    }
+    return DDENUMRET_OK;
+}
+
 static BOOL createObjects(void)
 {
     HRESULT hr;
@@ -71,6 +82,8 @@ static BOOL createObjects(void)
     WNDCLASS wc = {0};
     DDSURFACEDESC2 ddsd;
     DDPIXELFORMAT zfmt;
+    BOOL hal_ok = FALSE;
+    const GUID *devtype = &IID_IDirect3DHALDevice;
 
     if(!hmod) return FALSE;
     pDirectDrawCreateEx = (void*)GetProcAddress(hmod, "DirectDrawCreateEx");
@@ -116,8 +129,12 @@ static BOOL createObjects(void)
     hr = IDirectDraw7_CreateSurface(DirectDraw, &ddsd, &Surface, NULL);
     if(FAILED(hr)) goto err;
 
+    hr = IDirect3D7_EnumDevices(Direct3D, enum_devtype_cb, &hal_ok);
+    ok(SUCCEEDED(hr), "Failed to enumerate devices, hr %#x.\n", hr);
+    if (hal_ok) devtype = &IID_IDirect3DTnLHalDevice;
+
     memset(&zfmt, 0, sizeof(zfmt));
-    hr = IDirect3D7_EnumZBufferFormats(Direct3D, &IID_IDirect3DTnLHalDevice, enum_z_fmt, &zfmt);
+    hr = IDirect3D7_EnumZBufferFormats(Direct3D, devtype, enum_z_fmt, &zfmt);
     if (FAILED(hr)) goto err;
     if (zfmt.dwSize == 0) goto err;
 
@@ -136,7 +153,7 @@ static BOOL createObjects(void)
     ok(SUCCEEDED(hr), "AddAttachedSurface failed, hr %#x.\n", hr);
     if (FAILED(hr)) goto err;
 
-    hr = IDirect3D7_CreateDevice(Direct3D, &IID_IDirect3DTnLHalDevice, Surface, &Direct3DDevice);
+    hr = IDirect3D7_CreateDevice(Direct3D, devtype, Surface, &Direct3DDevice);
     if (FAILED(hr) || !Direct3DDevice) goto err;
     return TRUE;
 
