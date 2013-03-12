@@ -202,6 +202,17 @@ static IDirectDraw7 *create_ddraw(void)
     return ddraw;
 }
 
+static HRESULT WINAPI enum_devtype_cb(char *desc_str, char *name, D3DDEVICEDESC7 *desc, void *ctx)
+{
+    BOOL *hal_ok = ctx;
+    if (IsEqualGUID(&desc->deviceGUID, &IID_IDirect3DTnLHalDevice))
+    {
+        *hal_ok = TRUE;
+        return DDENUMRET_CANCEL;
+    }
+    return DDENUMRET_OK;
+}
+
 static IDirect3DDevice7 *create_device(HWND window, DWORD coop_level)
 {
     IDirectDrawSurface7 *surface, *ds;
@@ -211,6 +222,8 @@ static IDirect3DDevice7 *create_device(HWND window, DWORD coop_level)
     IDirectDraw7 *ddraw;
     IDirect3D7 *d3d7;
     HRESULT hr;
+    BOOL hal_ok = FALSE;
+    const GUID *devtype = &IID_IDirect3DHALDevice;
 
     if (!(ddraw = create_ddraw()))
         return NULL;
@@ -249,8 +262,12 @@ static IDirect3DDevice7 *create_device(HWND window, DWORD coop_level)
         return NULL;
     }
 
+    hr = IDirect3D7_EnumDevices(d3d7, enum_devtype_cb, &hal_ok);
+    ok(SUCCEEDED(hr), "Failed to enumerate devices, hr %#x.\n", hr);
+    if (hal_ok) devtype = &IID_IDirect3DTnLHalDevice;
+
     memset(&z_fmt, 0, sizeof(z_fmt));
-    hr = IDirect3D7_EnumZBufferFormats(d3d7, &IID_IDirect3DTnLHalDevice, enum_z_fmt, &z_fmt);
+    hr = IDirect3D7_EnumZBufferFormats(d3d7, devtype, enum_z_fmt, &z_fmt);
     if (FAILED(hr) || !z_fmt.dwSize)
     {
         IDirect3D7_Release(d3d7);
@@ -284,7 +301,7 @@ static IDirect3DDevice7 *create_device(HWND window, DWORD coop_level)
         return NULL;
     }
 
-    hr = IDirect3D7_CreateDevice(d3d7, &IID_IDirect3DTnLHalDevice, surface, &device);
+    hr = IDirect3D7_CreateDevice(d3d7, devtype, surface, &device);
     IDirect3D7_Release(d3d7);
     IDirectDrawSurface7_Release(surface);
     if (FAILED(hr))
