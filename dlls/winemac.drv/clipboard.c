@@ -1324,6 +1324,49 @@ static HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_form
 
 
 /**************************************************************************
+ *              macdrv_pasteboard_has_format
+ */
+static BOOL macdrv_pasteboard_has_format(CFTypeRef pasteboard, UINT desired_format)
+{
+    CFArrayRef types;
+    int count;
+    UINT i;
+    BOOL found = FALSE;
+
+    TRACE("pasteboard %p, desired_format %s\n", pasteboard, debugstr_format(desired_format));
+
+    types = macdrv_copy_pasteboard_types(pasteboard);
+    if (!types)
+    {
+        WARN("Failed to copy pasteboard types\n");
+        return FALSE;
+    }
+
+    count = CFArrayGetCount(types);
+    TRACE("got %d types\n", count);
+
+    for (i = 0; !found && i < count; i++)
+    {
+        CFStringRef type = CFArrayGetValueAtIndex(types, i);
+        WINE_CLIPFORMAT* format;
+
+        format = NULL;
+        while (!found && (format = format_for_type(format, type)))
+        {
+            TRACE("for type %s got format %s\n", debugstr_cf(type), debugstr_format(format->format_id));
+
+            if (format->format_id == desired_format)
+                found = TRUE;
+        }
+    }
+
+    CFRelease(types);
+    TRACE(" -> %d\n", found);
+    return found;
+}
+
+
+/**************************************************************************
  *              check_clipboard_ownership
  */
 static void check_clipboard_ownership(HWND *owner)
@@ -1558,42 +1601,8 @@ HANDLE CDECL macdrv_GetClipboardData(UINT desired_format)
  */
 BOOL CDECL macdrv_IsClipboardFormatAvailable(UINT desired_format)
 {
-    CFArrayRef types;
-    int count;
-    UINT i;
-    BOOL found = FALSE;
-
-    TRACE("desired_format %s\n", debugstr_format(desired_format));
     check_clipboard_ownership(NULL);
-
-    types = macdrv_copy_pasteboard_types(NULL);
-    if (!types)
-    {
-        WARN("Failed to copy pasteboard types\n");
-        return FALSE;
-    }
-
-    count = CFArrayGetCount(types);
-    TRACE("got %d types\n", count);
-
-    for (i = 0; !found && i < count; i++)
-    {
-        CFStringRef type = CFArrayGetValueAtIndex(types, i);
-        WINE_CLIPFORMAT* format;
-
-        format = NULL;
-        while (!found && (format = format_for_type(format, type)))
-        {
-            TRACE("for type %s got format %s\n", debugstr_cf(type), debugstr_format(format->format_id));
-
-            if (format->format_id == desired_format)
-                found = TRUE;
-        }
-    }
-
-    CFRelease(types);
-    TRACE(" -> %d\n", found);
-    return found;
+    return macdrv_pasteboard_has_format(NULL, desired_format);
 }
 
 
