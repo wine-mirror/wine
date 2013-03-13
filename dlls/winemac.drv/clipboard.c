@@ -141,6 +141,21 @@ static const struct
     BOOL          synthesized;
 } builtin_format_ids[] =
 {
+    { CF_DIBV5,             CFSTR("org.winehq.builtin.dibv5"),              import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_DIF,               CFSTR("org.winehq.builtin.dif"),                import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_DSPBITMAP,         CFSTR("org.winehq.builtin.dspbitmap"),          import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_DSPENHMETAFILE,    CFSTR("org.winehq.builtin.dspenhmetafile"),     import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_DSPMETAFILEPICT,   CFSTR("org.winehq.builtin.dspmetafilepict"),    import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_DSPTEXT,           CFSTR("org.winehq.builtin.dsptext"),            import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_LOCALE,            CFSTR("org.winehq.builtin.locale"),             import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_OWNERDISPLAY,      CFSTR("org.winehq.builtin.ownerdisplay"),       import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_PALETTE,           CFSTR("org.winehq.builtin.palette"),            import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_PENDATA,           CFSTR("org.winehq.builtin.pendata"),            import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_RIFF,              CFSTR("org.winehq.builtin.riff"),               import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_SYLK,              CFSTR("org.winehq.builtin.sylk"),               import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_TIFF,              CFSTR("public.tiff"),                           import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_WAVE,              CFSTR("com.microsoft.waveform-audio"),          import_clipboard_data,          export_clipboard_data,      FALSE },
+
     { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.unicodetext"),        import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_TEXT,              CFSTR("org.winehq.builtin.unicodetext"),        import_unicodetext_to_text,     NULL,                       TRUE },
     { CF_OEMTEXT,           CFSTR("org.winehq.builtin.unicodetext"),        import_unicodetext_to_oemtext,  NULL,                       TRUE },
@@ -156,6 +171,24 @@ static const struct
     { CF_UNICODETEXT,       CFSTR("public.utf8-plain-text"),                import_utf8_to_unicodetext,     export_unicodetext_to_utf8, TRUE },
     { CF_TEXT,              CFSTR("public.utf8-plain-text"),                import_utf8_to_text,            export_text_to_utf8,        TRUE },
     { CF_OEMTEXT,           CFSTR("public.utf8-plain-text"),                import_utf8_to_oemtext,         export_oemtext_to_utf8,     TRUE },
+};
+
+static const WCHAR wszRichTextFormat[] = {'R','i','c','h',' ','T','e','x','t',' ','F','o','r','m','a','t',0};
+static const WCHAR wszGIF[] = {'G','I','F',0};
+static const WCHAR wszJFIF[] = {'J','F','I','F',0};
+static const WCHAR wszPNG[] = {'P','N','G',0};
+static const WCHAR wszHTMLFormat[] = {'H','T','M','L',' ','F','o','r','m','a','t',0};
+static const struct
+{
+    LPCWSTR     name;
+    CFStringRef type;
+} builtin_format_names[] =
+{
+    { wszRichTextFormat,    CFSTR("public.rtf") },
+    { wszGIF,               CFSTR("com.compuserve.gif") },
+    { wszJFIF,              CFSTR("public.jpeg") },
+    { wszPNG,               CFSTR("public.png") },
+    { wszHTMLFormat,        CFSTR("public.html") },
 };
 
 /* The prefix prepended to an external Mac pasteboard type to make a Win32 clipboard format name. org.winehq.mac-type. */
@@ -1224,6 +1257,11 @@ void macdrv_clipboard_process_attach(void)
         format->synthesized = builtin_format_ids[i].synthesized;
         list_add_tail(&format_list, &format->entry);
     }
+
+    /* Register known mappings between Windows formats and Mac types */
+    for (i = 0; i < sizeof(builtin_format_names)/sizeof(builtin_format_names[0]); i++)
+        insert_clipboard_format(RegisterClipboardFormatW(builtin_format_names[i].name),
+                                builtin_format_names[i].type);
 }
 
 
