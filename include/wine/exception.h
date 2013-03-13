@@ -88,7 +88,7 @@ extern "C" {
 
 #else  /* USE_COMPILER_EXCEPTIONS */
 
-#if defined(__MINGW32__) || defined(__CYGWIN__)
+#if defined(__MINGW32__) || defined(__CYGWIN__) || defined(__ANDROID__)
 #define sigjmp_buf jmp_buf
 #define sigsetjmp(buf,sigs) setjmp(buf)
 #define siglongjmp(buf,val) longjmp(buf,val)
