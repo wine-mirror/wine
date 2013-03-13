@@ -92,8 +92,7 @@ static void dump_instr_arg(instr_arg_type_t type, instr_arg_t *arg)
     case ARG_FUNC:
     case ARG_NONE:
         break;
-    default:
-        assert(0);
+    DEFAULT_UNREACHABLE;
     }
 }
 
@@ -447,8 +446,7 @@ static HRESULT compile_memberid_expression(compiler_ctx_t *ctx, expression_t *ex
         hres = push_instr_uint(ctx, OP_memberid, flags);
         break;
     }
-    default:
-        assert(0);
+    DEFAULT_UNREACHABLE;
     }
 
     return hres;
@@ -771,9 +769,7 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
         instr_ptr(ctx, instr)->u.arg[1].uint = literal->u.regexp.flags;
         return S_OK;
     }
-    default:
-        assert(0);
-        return E_FAIL;
+    DEFAULT_UNREACHABLE;
     }
 }
 
@@ -797,9 +793,7 @@ static HRESULT literal_as_bstr(compiler_ctx_t *ctx, literal_t *literal, BSTR *st
         jsstr_release(jsstr);
         break;
     }
-    default:
-        assert(0);
-        return E_FAIL;
+    DEFAULT_UNREACHABLE;
     }
 
     return *str ? S_OK : E_OUTOFMEMORY;
@@ -1050,9 +1044,7 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr, BOOL 
     case EXPR_BXOR:
         hres = compile_binary_expression(ctx, (binary_expression_t*)expr, OP_xor);
         break;
-    default:
-        assert(0);
-        hres = E_FAIL;
+    DEFAULT_UNREACHABLE;
     }
 
     if(FAILED(hres))
@@ -1769,9 +1761,7 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx,
     case STAT_WITH:
         hres = compile_with_statement(ctx, (with_statement_t*)stat);
         break;
-    default:
-        assert(0);
-        hres = E_FAIL;
+    DEFAULT_UNREACHABLE;
     }
 
     if(stat_ctx) {
