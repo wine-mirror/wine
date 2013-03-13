@@ -1367,6 +1367,79 @@ static BOOL macdrv_pasteboard_has_format(CFTypeRef pasteboard, UINT desired_form
 
 
 /**************************************************************************
+ *              macdrv_copy_pasteboard_formats
+ */
+static CFArrayRef macdrv_copy_pasteboard_formats(CFTypeRef pasteboard)
+{
+    CFArrayRef types;
+    CFIndex count;
+    CFMutableArrayRef formats;
+    CFIndex i;
+
+    TRACE("pasteboard %p\n", pasteboard);
+
+    types = macdrv_copy_pasteboard_types(pasteboard);
+    if (!types)
+    {
+        WARN("Failed to copy pasteboard types\n");
+        return NULL;
+    }
+
+    count = CFArrayGetCount(types);
+    TRACE("got %ld types\n", count);
+
+    if (!count)
+    {
+        CFRelease(types);
+        return NULL;
+    }
+
+    formats = CFArrayCreateMutable(NULL, 0, NULL);
+    if (!formats)
+    {
+        WARN("Failed to allocate formats array\n");
+        CFRelease(types);
+        return NULL;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        CFStringRef type = CFArrayGetValueAtIndex(types, i);
+        WINE_CLIPFORMAT* format;
+
+        format = NULL;
+        while ((format = format_for_type(format, type)))
+        {
+            TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
+
+            if (format->synthesized)
+            {
+                /* Don't override a real value with a synthesized value. */
+                if (!CFArrayContainsValue(formats, CFRangeMake(0, CFArrayGetCount(formats)), (void*)format->format_id))
+                    CFArrayAppendValue(formats, (void*)format->format_id);
+            }
+            else
+            {
+                /* If the type was already in the array, it must have been synthesized
+                   because this one's real.  Remove the synthesized entry in favor of
+                   this one. */
+                CFIndex index = CFArrayGetFirstIndexOfValue(formats, CFRangeMake(0, CFArrayGetCount(formats)),
+                                                            (void*)format->format_id);
+                if (index != kCFNotFound)
+                    CFArrayRemoveValueAtIndex(formats, index);
+                CFArrayAppendValue(formats, (void*)format->format_id);
+            }
+        }
+    }
+
+    CFRelease(types);
+
+    TRACE(" -> %s\n", debugstr_cf(formats));
+    return formats;
+}
+
+
+/**************************************************************************
  *              check_clipboard_ownership
  */
 static void check_clipboard_ownership(HWND *owner)
@@ -1498,88 +1571,48 @@ void CDECL macdrv_EndClipboardUpdate(void)
  */
 UINT CDECL macdrv_EnumClipboardFormats(UINT prev_format)
 {
-    CFArrayRef types;
     CFIndex count;
     CFIndex i;
-    UINT ret;
+    UINT ret = 0;
 
     TRACE("prev_format %s\n", debugstr_format(prev_format));
     check_clipboard_ownership(NULL);
 
-    types = macdrv_copy_pasteboard_types(NULL);
-    if (!types)
-    {
-        WARN("Failed to copy pasteboard types\n");
-        return 0;
-    }
-
-    count = CFArrayGetCount(types);
-    TRACE("got %ld types\n", count);
-
-    if (!count)
-    {
-        CFRelease(types);
-        return 0;
-    }
-
     if (prev_format)
     {
-        CFMutableArrayRef formats = CFArrayCreateMutable(NULL, 0, NULL);
-        if (!formats)
+        CFArrayRef formats = macdrv_copy_pasteboard_formats(NULL);
+        if (formats)
         {
-            WARN("Failed to allocate array to track formats\n");
-            CFRelease(types);
-            return 0;
+            count = CFArrayGetCount(formats);
+            i = CFArrayGetFirstIndexOfValue(formats, CFRangeMake(0, count), (void*)prev_format);
+            if (i != kCFNotFound && i + 1 < count)
+                ret = (UINT)CFArrayGetValueAtIndex(formats, i + 1);
+
+            CFRelease(formats);
         }
-
-        for (i = 0; i < count; i++)
-        {
-            CFStringRef type = CFArrayGetValueAtIndex(types, i);
-            WINE_CLIPFORMAT* format;
-
-            format = NULL;
-            while ((format = format_for_type(format, type)))
-            {
-                TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
-
-                if (format->synthesized)
-                {
-                    /* Don't override a real value with a synthesized value. */
-                    if (!CFArrayContainsValue(formats, CFRangeMake(0, CFArrayGetCount(formats)), (void*)format->format_id))
-                        CFArrayAppendValue(formats, (void*)format->format_id);
-                }
-                else
-                {
-                    /* If the type was already in the array, it must have been synthesized
-                       because this one's real.  Remove the synthesized entry in favor of
-                       this one. */
-                    CFIndex index = CFArrayGetFirstIndexOfValue(formats, CFRangeMake(0, CFArrayGetCount(formats)),
-                                                                (void*)format->format_id);
-                    if (index != kCFNotFound)
-                        CFArrayRemoveValueAtIndex(formats, index);
-                    CFArrayAppendValue(formats, (void*)format->format_id);
-                }
-            }
-        }
-
-        count = CFArrayGetCount(formats);
-        i = CFArrayGetFirstIndexOfValue(formats, CFRangeMake(0, count), (void*)prev_format);
-        if (i == kCFNotFound || i + 1 >= count)
-            ret = 0;
-        else
-            ret = (UINT)CFArrayGetValueAtIndex(formats, i + 1);
-
-        CFRelease(formats);
     }
     else
     {
-        CFStringRef type = CFArrayGetValueAtIndex(types, 0);
-        WINE_CLIPFORMAT *format = format_for_type(NULL, type);
+        CFArrayRef types = macdrv_copy_pasteboard_types(NULL);
+        if (types)
+        {
+            count = CFArrayGetCount(types);
+            TRACE("got %ld types\n", count);
 
-        ret = format ? format->format_id : 0;
+            if (count)
+            {
+                CFStringRef type = CFArrayGetValueAtIndex(types, 0);
+                WINE_CLIPFORMAT *format = format_for_type(NULL, type);
+
+                ret = format ? format->format_id : 0;
+            }
+
+            CFRelease(types);
+        }
+        else
+            WARN("Failed to copy pasteboard types\n");
     }
 
-    CFRelease(types);
     TRACE(" -> %u\n", ret);
     return ret;
 }
