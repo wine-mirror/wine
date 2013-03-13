@@ -2015,6 +2015,16 @@ static DWORD CALLBACK server_thread(LPVOID param)
             WaitForSingleObject(conn_close_event, INFINITE);
             trace("closing connection\n");
         }
+        if (strstr(buffer, "GET /test_cache_control_no_cache"))
+        {
+            static const char no_cache_response[] = "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\n\r\nsome content";
+            send(c, no_cache_response, sizeof(no_cache_response)-1, 0);
+        }
+        if (strstr(buffer, "GET /test_cache_control_no_store"))
+        {
+            static const char no_cache_response[] = "HTTP/1.1 200 OK\r\nCache-Control: No-StOrE\r\n\r\nsome content";
+            send(c, no_cache_response, sizeof(no_cache_response)-1, 0);
+        }
 
         shutdown(c, 2);
         closesocket(c);
@@ -2472,6 +2482,63 @@ static void test_conn_close(int port)
 
     close_async_handle(session, hCompleteEvent, 2);
     CloseHandle(hCompleteEvent);
+}
+
+static void test_no_cache(int port)
+{
+    static const char cache_control_no_cache[] = "/test_cache_control_no_cache";
+    static const char cache_control_no_store[] = "/test_cache_control_no_store";
+    static const char cache_url_fmt[] = "http://localhost:%d%s";
+
+    char cache_url[256], buf[256];
+    HINTERNET ses, con, req;
+    DWORD read, size;
+    BOOL ret;
+
+    trace("Testing no-cache header\n");
+
+    ses = InternetOpen("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != NULL,"InternetOpen failed with error %u\n", GetLastError());
+
+    con = InternetConnect(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed with error %u\n", GetLastError());
+
+    req = HttpOpenRequest(con, NULL, cache_control_no_cache, NULL, NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    sprintf(cache_url, cache_url_fmt, port, cache_control_no_cache);
+    DeleteUrlCacheEntry(cache_url);
+
+    ret = HttpSendRequest(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed with error %u\n", GetLastError());
+    size = 0;
+    while(InternetReadFile(req, buf, sizeof(buf), &read) && read)
+        size += read;
+    ok(size == 12, "read %d bytes of data\n", size);
+    InternetCloseHandle(req);
+
+    ret = DeleteUrlCacheEntry(cache_url);
+    ok(!ret && GetLastError()==ERROR_FILE_NOT_FOUND, "cache entry should not exist\n");
+
+    req = HttpOpenRequest(con, NULL, cache_control_no_store, NULL, NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    sprintf(cache_url, cache_url_fmt, port, cache_control_no_store);
+    DeleteUrlCacheEntry(cache_url);
+
+    ret = HttpSendRequest(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed with error %u\n", GetLastError());
+    size = 0;
+    while(InternetReadFile(req, buf, sizeof(buf), &read) && read)
+        size += read;
+    ok(size == 12, "read %d bytes of data\n", size);
+    InternetCloseHandle(req);
+
+    ret = DeleteUrlCacheEntry(cache_url);
+    ok(!ret && GetLastError()==ERROR_FILE_NOT_FOUND, "cache entry should not exist\n");
+
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
 }
 
 static void test_HttpSendRequestW(int port)
@@ -2951,6 +3018,7 @@ static void test_http_connection(void)
     test_options(si.port);
     test_no_content(si.port);
     test_conn_close(si.port);
+    test_no_cache(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
