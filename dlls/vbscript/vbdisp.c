@@ -172,8 +172,7 @@ static HRESULT invoke_builtin(vbdisp_t *This, const builtin_prop_t *prop, WORD f
                 V_BSTR(res) = ret;
                 break;
             }
-            default:
-                assert(0);
+            DEFAULT_UNREACHABLE;
             }
             return S_OK;
         }

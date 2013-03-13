@@ -216,8 +216,7 @@ static void decrease_state(VBScript *This, SCRIPTSTATE state)
         break;
     case SCRIPTSTATE_CLOSED:
         break;
-    default:
-        assert(0);
+    DEFAULT_UNREACHABLE;
     }
 }
 

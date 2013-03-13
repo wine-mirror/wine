@@ -98,8 +98,7 @@ static void dump_instr_arg(instr_arg_type_t type, instr_arg_t *arg)
         break;
     case ARG_NONE:
         break;
-    default:
-        assert(0);
+    DEFAULT_UNREACHABLE;
     }
 }
 
@@ -1398,9 +1397,7 @@ static HRESULT create_class_funcprop(compile_ctx_t *ctx, function_decl_t *func_d
         case FUNC_PROPSET:
             invoke_type = VBDISP_SET;
             break;
-        default:
-            assert(0);
-            return E_FAIL;
+        DEFAULT_UNREACHABLE;
         }
 
         assert(!desc->entries[invoke_type]);

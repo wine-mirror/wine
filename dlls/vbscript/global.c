@@ -1010,9 +1010,7 @@ static HRESULT Global_InStr(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VA
     case 4:
         FIXME("unsupported compare argument %s\n", debugstr_variant(args));
         return E_NOTIMPL;
-    default:
-        assert(0);
-        return E_FAIL;
+    DEFAULT_UNREACHABLE;
     }
 
     if(startv) {
