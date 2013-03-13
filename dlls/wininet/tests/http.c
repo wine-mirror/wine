@@ -1072,6 +1072,10 @@ static void InternetOpenUrlA_test(void)
   DWORD size, readbytes, totalbytes=0;
   BOOL ret;
 
+  ret = DeleteUrlCacheEntry(TEST_URL);
+  ok(ret || GetLastError() == ERROR_FILE_NOT_FOUND,
+          "DeleteUrlCacheEntry returned %x, GetLastError() = %d\n", ret, GetLastError());
+
   myhinternet = InternetOpen("Winetest",0,NULL,NULL,INTERNET_FLAG_NO_CACHE_WRITE);
   ok((myhinternet != 0), "InternetOpen failed, error %u\n",GetLastError());
   size = 0x400;
@@ -1093,6 +1097,9 @@ static void InternetOpenUrlA_test(void)
 
   InternetCloseHandle(myhttp);
   InternetCloseHandle(myhinternet);
+
+  ret = DeleteUrlCacheEntry(TEST_URL);
+  ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND, "INTERNET_FLAG_NO_CACHE_WRITE flag doesn't work\n");
 }
 
 static void HttpSendRequestEx_test(void)
