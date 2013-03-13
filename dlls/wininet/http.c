@@ -2261,14 +2261,34 @@ static void commit_cache_entry(http_request_t *req)
 
 static void create_cache_entry(http_request_t *req)
 {
+    static const WCHAR no_cacheW[] = {'n','o','-','c','a','c','h','e',0};
+    static const WCHAR no_storeW[] = {'n','o','-','s','t','o','r','e',0};
+
     WCHAR url[INTERNET_MAX_URL_LENGTH];
     WCHAR file_name[MAX_PATH+1];
-    BOOL b;
+    BOOL b = TRUE;
 
     /* FIXME: We should free previous cache file earlier */
     heap_free(req->cacheFile);
     CloseHandle(req->hCacheFile);
     req->hCacheFile = NULL;
+
+    if(req->hdr.dwFlags & INTERNET_FLAG_NO_CACHE_WRITE)
+        b = FALSE;
+
+    if(b) {
+        int header_idx = HTTP_GetCustomHeaderIndex(req, szCache_Control, 0, FALSE);
+        if(header_idx!=-1 && (!strcmpiW(req->custHeaders[header_idx].lpszValue, no_cacheW)
+                    || !strcmpiW(req->custHeaders[header_idx].lpszValue, no_storeW)))
+            b = FALSE;
+    }
+
+    if(!b) {
+        if(!(req->hdr.dwFlags & INTERNET_FLAG_NEED_FILE))
+            return;
+
+        FIXME("INTERNET_FLAG_NEED_FILE is not supported correctly\n");
+    }
 
     b = HTTP_GetRequestURL(req, url);
     if(!b) {
