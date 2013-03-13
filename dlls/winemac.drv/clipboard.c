@@ -226,7 +226,7 @@ static const CFStringRef registered_name_type_prefix = CFSTR("org.winehq.registe
 /**************************************************************************
  *              debugstr_format
  */
-static const char *debugstr_format(UINT id)
+const char *debugstr_format(UINT id)
 {
     WCHAR buffer[256];
 
@@ -1259,7 +1259,7 @@ static BOOL release_ownership(void)
 /**************************************************************************
  *              macdrv_get_pasteboard_data
  */
-static HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_format)
+HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_format)
 {
     CFArrayRef types;
     CFIndex count;
@@ -1326,7 +1326,7 @@ static HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_form
 /**************************************************************************
  *              macdrv_pasteboard_has_format
  */
-static BOOL macdrv_pasteboard_has_format(CFTypeRef pasteboard, UINT desired_format)
+BOOL macdrv_pasteboard_has_format(CFTypeRef pasteboard, UINT desired_format)
 {
     CFArrayRef types;
     int count;
@@ -1369,7 +1369,7 @@ static BOOL macdrv_pasteboard_has_format(CFTypeRef pasteboard, UINT desired_form
 /**************************************************************************
  *              macdrv_copy_pasteboard_formats
  */
-static CFArrayRef macdrv_copy_pasteboard_formats(CFTypeRef pasteboard)
+CFArrayRef macdrv_copy_pasteboard_formats(CFTypeRef pasteboard)
 {
     CFArrayRef types;
     CFIndex count;

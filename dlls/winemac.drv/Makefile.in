@@ -1,10 +1,12 @@
 MODULE    = winemac.drv
-IMPORTS   = user32 gdi32 advapi32
+IMPORTS   = uuid user32 gdi32 advapi32
+DELAYIMPORTS = ole32 shell32
 EXTRALIBS = -framework AppKit -framework Carbon -framework Security -framework OpenGL
 
 C_SRCS = \
 	clipboard.c \
 	display.c \
+	dragdrop.c \
 	event.c \
 	gdi.c \
 	keyboard.c \

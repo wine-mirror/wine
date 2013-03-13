@@ -116,6 +116,18 @@ static void macdrv_query_event(HWND hwnd, macdrv_event *event)
 
     switch (query->type)
     {
+        case QUERY_DRAG_DROP:
+            TRACE("QUERY_DRAG_DROP\n");
+            success = query_drag_drop(query);
+            break;
+        case QUERY_DRAG_EXITED:
+            TRACE("QUERY_DRAG_EXITED\n");
+            success = query_drag_exited(query);
+            break;
+        case QUERY_DRAG_OPERATION:
+            TRACE("QUERY_DRAG_OPERATION\n");
+            success = query_drag_operation(query);
+            break;
         case QUERY_PASTEBOARD_DATA:
             TRACE("QUERY_PASTEBOARD_DATA\n");
             success = query_pasteboard_data(hwnd, query->pasteboard_data.type);

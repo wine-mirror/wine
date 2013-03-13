@@ -460,8 +460,21 @@ void macdrv_release_query(macdrv_query *query)
 {
     if (OSAtomicDecrement32Barrier(&query->refs) <= 0)
     {
-        if (query->type == QUERY_PASTEBOARD_DATA && query->pasteboard_data.type)
-            CFRelease(query->pasteboard_data.type);
+        switch (query->type)
+        {
+            case QUERY_DRAG_OPERATION:
+                if (query->drag_operation.pasteboard)
+                    CFRelease(query->drag_operation.pasteboard);
+                break;
+            case QUERY_DRAG_DROP:
+                if (query->drag_drop.pasteboard)
+                    CFRelease(query->drag_drop.pasteboard);
+                break;
+            case QUERY_PASTEBOARD_DATA:
+                if (query->pasteboard_data.type)
+                    CFRelease(query->pasteboard_data.type);
+                break;
+        }
         [(WineWindow*)query->window release];
         free(query);
     }

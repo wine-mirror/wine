@@ -160,6 +160,14 @@ extern void macdrv_displays_changed(const macdrv_event *event) DECLSPEC_HIDDEN;
 
 extern void macdrv_clipboard_process_attach(void) DECLSPEC_HIDDEN;
 extern BOOL query_pasteboard_data(HWND hwnd, CFStringRef type) DECLSPEC_HIDDEN;
+extern const char *debugstr_format(UINT id) DECLSPEC_HIDDEN;
+extern HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_format) DECLSPEC_HIDDEN;
+extern BOOL CDECL macdrv_pasteboard_has_format(CFTypeRef pasteboard, UINT desired_format) DECLSPEC_HIDDEN;
+extern CFArrayRef macdrv_copy_pasteboard_formats(CFTypeRef pasteboard) DECLSPEC_HIDDEN;
+
+extern BOOL query_drag_operation(macdrv_query* query) DECLSPEC_HIDDEN;
+extern BOOL query_drag_exited(macdrv_query* query) DECLSPEC_HIDDEN;
+extern BOOL query_drag_drop(macdrv_query* query) DECLSPEC_HIDDEN;
 
 extern struct opengl_funcs *macdrv_wine_get_wgl_driver(PHYSDEV dev, UINT version) DECLSPEC_HIDDEN;
 extern void sync_gl_view(struct macdrv_win_data *data) DECLSPEC_HIDDEN;

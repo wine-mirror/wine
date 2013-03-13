@@ -324,6 +324,10 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         window.hwnd = hwnd;
         window.queue = queue;
 
+        [window registerForDraggedTypes:[NSArray arrayWithObjects:(NSString*)kUTTypeData,
+                                                                  (NSString*)kUTTypeContent,
+                                                                  nil]];
+
         contentView = [[[WineContentView alloc] initWithFrame:NSZeroRect] autorelease];
         if (!contentView)
             return nil;
@@ -1187,6 +1191,76 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
 
         [self.queue query:query timeout:3];
         macdrv_release_query(query);
+    }
+
+
+    /*
+     * ---------- NSDraggingDestination methods ----------
+     */
+    - (NSDragOperation) draggingEntered:(id <NSDraggingInfo>)sender
+    {
+        return [self draggingUpdated:sender];
+    }
+
+    - (void) draggingExited:(id <NSDraggingInfo>)sender
+    {
+        // This isn't really a query.  We don't need any response.  However, it
+        // has to be processed in a similar manner as the other drag-and-drop
+        // queries in order to maintain the proper order of operations.
+        macdrv_query* query = macdrv_create_query();
+        query->type = QUERY_DRAG_EXITED;
+        query->window = (macdrv_window)[self retain];
+
+        [self.queue query:query timeout:0.1];
+        macdrv_release_query(query);
+    }
+
+    - (NSDragOperation) draggingUpdated:(id <NSDraggingInfo>)sender
+    {
+        NSDragOperation ret;
+        NSPoint pt = [[self contentView] convertPoint:[sender draggingLocation] fromView:nil];
+        NSPasteboard* pb = [sender draggingPasteboard];
+
+        macdrv_query* query = macdrv_create_query();
+        query->type = QUERY_DRAG_OPERATION;
+        query->window = (macdrv_window)[self retain];
+        query->drag_operation.x = pt.x;
+        query->drag_operation.y = pt.y;
+        query->drag_operation.offered_ops = [sender draggingSourceOperationMask];
+        query->drag_operation.accepted_op = NSDragOperationNone;
+        query->drag_operation.pasteboard = (CFTypeRef)[pb retain];
+
+        [self.queue query:query timeout:3];
+        ret = query->status ? query->drag_operation.accepted_op : NSDragOperationNone;
+        macdrv_release_query(query);
+
+        return ret;
+    }
+
+    - (BOOL) performDragOperation:(id <NSDraggingInfo>)sender
+    {
+        BOOL ret;
+        NSPoint pt = [[self contentView] convertPoint:[sender draggingLocation] fromView:nil];
+        NSPasteboard* pb = [sender draggingPasteboard];
+
+        macdrv_query* query = macdrv_create_query();
+        query->type = QUERY_DRAG_DROP;
+        query->window = (macdrv_window)[self retain];
+        query->drag_drop.x = pt.x;
+        query->drag_drop.y = pt.y;
+        query->drag_drop.op = [sender draggingSourceOperationMask];
+        query->drag_drop.pasteboard = (CFTypeRef)[pb retain];
+
+        [self.queue query:query timeout:3 * 60 processEvents:YES];
+        ret = query->status;
+        macdrv_release_query(query);
+
+        return ret;
+    }
+
+    - (BOOL) wantsPeriodicDraggingUpdates
+    {
+        return NO;
     }
 
 @end

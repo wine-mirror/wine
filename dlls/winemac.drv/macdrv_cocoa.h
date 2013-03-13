@@ -99,6 +99,19 @@
 #endif
 
 
+/* Must match the values of Cocoa's NSDragOperation enum. */
+enum {
+    DRAG_OP_NONE    = 0,
+    DRAG_OP_COPY    = 1,
+    DRAG_OP_LINK    = 2,
+    DRAG_OP_GENERIC = 4,
+    DRAG_OP_PRIVATE = 8,
+    DRAG_OP_MOVE    = 16,
+    DRAG_OP_DELETE  = 32,
+    DRAG_OP_EVERY   = UINT32_MAX
+};
+
+
 typedef struct macdrv_opaque_window* macdrv_window;
 typedef struct macdrv_opaque_event_queue* macdrv_event_queue;
 typedef struct macdrv_opaque_view* macdrv_view;
@@ -208,6 +221,9 @@ typedef struct macdrv_event {
 } macdrv_event;
 
 enum {
+    QUERY_DRAG_DROP,
+    QUERY_DRAG_EXITED,
+    QUERY_DRAG_OPERATION,
     QUERY_PASTEBOARD_DATA,
     NUM_QUERY_TYPES
 };
@@ -219,6 +235,19 @@ typedef struct macdrv_query {
     int                 status;
     int                 done;
     union {
+        struct {
+            int                 x;
+            int                 y;
+            uint32_t            op;
+            CFTypeRef           pasteboard;
+        }                                           drag_drop;
+        struct {
+            int                 x;
+            int                 y;
+            uint32_t            offered_ops;
+            uint32_t            accepted_op;
+            CFTypeRef           pasteboard;
+        }                                           drag_operation;
         struct {
             CFStringRef type;
         }                                           pasteboard_data;
