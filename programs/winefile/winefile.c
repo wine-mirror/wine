@@ -465,9 +465,9 @@ static Entry* read_tree_win(Root* root, LPCWSTR path, SORT_ORDER sortOrder, HWND
 
 #ifdef __WINE__
 
-static BOOL time_to_filetime(const time_t* t, FILETIME* ftime)
+static BOOL time_to_filetime(time_t t, FILETIME* ftime)
 {
-	struct tm* tm = gmtime(t);
+	struct tm* tm = gmtime(&t);
 	SYSTEMTIME stime;
 
 	if (!tm)
@@ -534,8 +534,8 @@ static void read_directory_unix(Entry* dir, LPCWSTR path)
 				entry->data.nFileSizeHigh = st.st_size >> 32;
 
 				memset(&entry->data.ftCreationTime, 0, sizeof(FILETIME));
-				time_to_filetime(&st.st_atime, &entry->data.ftLastAccessTime);
-				time_to_filetime(&st.st_mtime, &entry->data.ftLastWriteTime);
+				time_to_filetime(st.st_atime, &entry->data.ftLastAccessTime);
+				time_to_filetime(st.st_mtime, &entry->data.ftLastWriteTime);
 
 				entry->bhfi.nFileIndexLow = ent->d_ino;
 				entry->bhfi.nFileIndexHigh = 0;
