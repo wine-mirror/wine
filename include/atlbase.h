@@ -259,6 +259,7 @@ HRESULT WINAPI AtlComModuleRegisterClassObjects(_ATL_COM_MODULE*,DWORD,DWORD);
 HRESULT WINAPI AtlComModuleUnregisterServer(_ATL_COM_MODULE*,BOOL,const CLSID*);
 BOOL WINAPI AtlWaitWithMessageLoop(HANDLE);
 HRESULT WINAPI AtlGetObjectSourceInterface(IUnknown*,GUID*,IID*,unsigned short*,unsigned short*);
+HRESULT WINAPI AtlSetPerUserRegistration(unsigned char /*bool*/);
 HRESULT WINAPI AtlGetPerUserRegistration(unsigned char /*bool*/ *);
 
 #endif /* __WINE_ATLBASE_H__ */

@@ -743,6 +743,15 @@ HRESULT WINAPI AtlGetObjectSourceInterface(IUnknown *unk, GUID *libid, IID *iid,
 }
 
 /***********************************************************************
+ *           AtlSetPerUserRegistration [atl100.67]
+ */
+HRESULT WINAPI AtlSetPerUserRegistration(cpp_bool bEnable)
+{
+    FIXME("stub: bEnable: %d\n", bEnable);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
  *           AtlGetPerUserRegistration  [atl100.68]
  */
 HRESULT WINAPI AtlGetPerUserRegistration(cpp_bool *pbEnabled)

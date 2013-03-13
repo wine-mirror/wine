@@ -48,5 +48,5 @@
 64 stdcall AtlCallTermFunc(ptr)
 65 stdcall AtlWinModuleInit(ptr)
 66 stub AtlWinModuleTerm
-67 stub AtlSetPerUserRegistration
+67 stdcall AtlSetPerUserRegistration(long)
 68 stdcall AtlGetPerUserRegistration(ptr)
