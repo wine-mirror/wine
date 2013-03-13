@@ -26,6 +26,8 @@
 
 #include "macdrv.h"
 #include "winuser.h"
+#include "shellapi.h"
+#include "shlobj.h"
 #include "wine/list.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
@@ -70,6 +72,7 @@ typedef struct
 static HANDLE import_clipboard_data(CFDataRef data);
 static HANDLE import_bmp_to_bitmap(CFDataRef data);
 static HANDLE import_bmp_to_dib(CFDataRef data);
+static HANDLE import_nsfilenames_to_hdrop(CFDataRef data);
 static HANDLE import_oemtext_to_text(CFDataRef data);
 static HANDLE import_oemtext_to_unicodetext(CFDataRef data);
 static HANDLE import_text_to_oemtext(CFDataRef data);
@@ -83,6 +86,7 @@ static HANDLE import_utf8_to_unicodetext(CFDataRef data);
 static CFDataRef export_clipboard_data(HANDLE data);
 static CFDataRef export_bitmap_to_bmp(HANDLE data);
 static CFDataRef export_dib_to_bmp(HANDLE data);
+static CFDataRef export_hdrop_to_filenames(HANDLE data);
 static CFDataRef export_oemtext_to_utf8(HANDLE data);
 static CFDataRef export_text_to_utf8(HANDLE data);
 static CFDataRef export_unicodetext_to_utf8(HANDLE data);
@@ -181,6 +185,9 @@ static const struct
 
     { CF_BITMAP,            CFSTR("org.winehq.builtin.bitmap"),             import_bmp_to_bitmap,           export_bitmap_to_bmp,       FALSE },
     { CF_BITMAP,            CFSTR("com.microsoft.bmp"),                     import_bmp_to_bitmap,           export_bitmap_to_bmp,       TRUE },
+
+    { CF_HDROP,             CFSTR("org.winehq.builtin.hdrop"),              import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_HDROP,             CFSTR("NSFilenamesPboardType"),                 import_nsfilenames_to_hdrop,    export_hdrop_to_filenames,  TRUE },
 };
 
 static const WCHAR wszRichTextFormat[] = {'R','i','c','h',' ','T','e','x','t',' ','F','o','r','m','a','t',0};
@@ -671,6 +678,124 @@ static HANDLE import_bmp_to_dib(CFDataRef data)
 
 
 /**************************************************************************
+ *              import_nsfilenames_to_hdrop
+ *
+ *  Import NSFilenamesPboardType data, converting the property-list-
+ *  serialized array of path strings to CF_HDROP.
+ */
+static HANDLE import_nsfilenames_to_hdrop(CFDataRef data)
+{
+    HDROP hdrop = NULL;
+    CFArrayRef names;
+    CFIndex count, i;
+    size_t len;
+    char *buffer = NULL;
+    WCHAR **paths = NULL;
+    DROPFILES* dropfiles;
+    UniChar* p;
+
+    TRACE("data %s\n", debugstr_cf(data));
+
+    names = (CFArrayRef)CFPropertyListCreateWithData(NULL, data, kCFPropertyListImmutable,
+                                                     NULL, NULL);
+    if (!names || CFGetTypeID(names) != CFArrayGetTypeID())
+    {
+        WARN("failed to interpret data as a CFArray\n");
+        goto done;
+    }
+
+    count = CFArrayGetCount(names);
+
+    len = 0;
+    for (i = 0; i < count; i++)
+    {
+        CFIndex this_len;
+        CFStringRef name = (CFStringRef)CFArrayGetValueAtIndex(names, i);
+        TRACE("    %s\n", debugstr_cf(name));
+        if (CFGetTypeID(name) != CFStringGetTypeID())
+        {
+            WARN("non-string in array\n");
+            goto done;
+        }
+
+        this_len = CFStringGetMaximumSizeOfFileSystemRepresentation(name);
+        if (this_len > len)
+            len = this_len;
+    }
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!buffer)
+    {
+        WARN("failed to allocate buffer for file-system representations\n");
+        goto done;
+    }
+
+    paths = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, count * sizeof(paths[0]));
+    if (!paths)
+    {
+        WARN("failed to allocate array of DOS paths\n");
+        goto done;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        CFStringRef name = (CFStringRef)CFArrayGetValueAtIndex(names, i);
+        if (!CFStringGetFileSystemRepresentation(name, buffer, len))
+        {
+            WARN("failed to get file-system representation for %s\n", debugstr_cf(name));
+            goto done;
+        }
+        paths[i] = wine_get_dos_file_name(buffer);
+        if (!paths[i])
+        {
+            WARN("failed to get DOS path for %s\n", debugstr_a(buffer));
+            goto done;
+        }
+    }
+
+    len = 1; /* for the terminating null */
+    for (i = 0; i < count; i++)
+        len += strlenW(paths[i]) + 1;
+
+    hdrop = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(*dropfiles) + len * sizeof(WCHAR));
+    if (!hdrop || !(dropfiles = GlobalLock(hdrop)))
+    {
+        WARN("failed to allocate HDROP\n");
+        GlobalFree(hdrop);
+        hdrop = NULL;
+        goto done;
+    }
+
+    dropfiles->pFiles   = sizeof(*dropfiles);
+    dropfiles->pt.x     = 0;
+    dropfiles->pt.y     = 0;
+    dropfiles->fNC      = FALSE;
+    dropfiles->fWide    = TRUE;
+
+    p = (WCHAR*)(dropfiles + 1);
+    for (i = 0; i < count; i++)
+    {
+        strcpyW(p, paths[i]);
+        p += strlenW(p) + 1;
+    }
+    *p = 0;
+
+    GlobalUnlock(hdrop);
+
+done:
+    if (paths)
+    {
+        for (i = 0; i < count; i++)
+            HeapFree(GetProcessHeap(), 0, paths[i]);
+        HeapFree(GetProcessHeap(), 0, paths);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+    if (names) CFRelease(names);
+    return hdrop;
+}
+
+
+/**************************************************************************
  *              import_oemtext_to_text
  *
  *  Import CF_OEMTEXT data, converting the string to CF_TEXT.
@@ -919,6 +1044,99 @@ static CFDataRef export_dib_to_bmp(HANDLE data)
 
     GlobalUnlock(data);
 
+    return ret;
+}
+
+
+/**************************************************************************
+ *              export_hdrop_to_filenames
+ *
+ *  Export CF_HDROP to NSFilenamesPboardType data, which is a CFArray of
+ *  CFStrings (holding Unix paths) which is serialized as a property list.
+ */
+static CFDataRef export_hdrop_to_filenames(HANDLE data)
+{
+    CFDataRef ret = NULL;
+    DROPFILES *dropfiles;
+    CFMutableArrayRef filenames = NULL;
+    void *p;
+    WCHAR *buffer = NULL;
+    size_t buffer_len = 0;
+
+    TRACE("data %p\n", data);
+
+    if (!(dropfiles = GlobalLock(data)))
+    {
+        WARN("failed to lock data %p\n", data);
+        goto done;
+    }
+
+    filenames = CFArrayCreateMutable(NULL, 0, &kCFTypeArrayCallBacks);
+    if (!filenames)
+    {
+        WARN("failed to create filenames array\n");
+        goto done;
+    }
+
+    p = (char*)dropfiles + dropfiles->pFiles;
+    while (dropfiles->fWide ? *(WCHAR*)p : *(char*)p)
+    {
+        char *unixname;
+        CFStringRef filename;
+
+        TRACE("    %s\n", dropfiles->fWide ? debugstr_w(p) : debugstr_a(p));
+
+        if (dropfiles->fWide)
+            unixname = wine_get_unix_file_name(p);
+        else
+        {
+            int len = MultiByteToWideChar(CP_ACP, 0, p, -1, NULL, 0);
+            if (len)
+            {
+                if (len > buffer_len)
+                {
+                    HeapFree(GetProcessHeap(), 0, buffer);
+                    buffer_len = len * 2;
+                    buffer = HeapAlloc(GetProcessHeap(), 0, buffer_len * sizeof(*buffer));
+                }
+
+                MultiByteToWideChar(CP_ACP, 0, p, -1, buffer, buffer_len);
+                unixname = wine_get_unix_file_name(buffer);
+            }
+            else
+                unixname = NULL;
+        }
+        if (!unixname)
+        {
+            WARN("failed to convert DOS path to Unix: %s\n",
+                 dropfiles->fWide ? debugstr_w(p) : debugstr_a(p));
+            goto done;
+        }
+
+        if (dropfiles->fWide)
+            p = (WCHAR*)p + strlenW(p) + 1;
+        else
+            p = (char*)p + strlen(p) + 1;
+
+        filename = CFStringCreateWithFileSystemRepresentation(NULL, unixname);
+        HeapFree(GetProcessHeap(), 0, unixname);
+        if (!filename)
+        {
+            WARN("failed to create CFString from Unix path %s\n", debugstr_a(unixname));
+            goto done;
+        }
+
+        CFArrayAppendValue(filenames, filename);
+        CFRelease(filename);
+    }
+
+    ret = CFPropertyListCreateData(NULL, filenames, kCFPropertyListXMLFormat_v1_0, 0, NULL);
+
+done:
+    HeapFree(GetProcessHeap(), 0, buffer);
+    GlobalUnlock(data);
+    if (filenames) CFRelease(filenames);
+    TRACE(" -> %s\n", debugstr_cf(ret));
     return ret;
 }
 
