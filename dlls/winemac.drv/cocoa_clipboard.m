@@ -53,8 +53,9 @@ int macdrv_is_pasteboard_owner(void)
  * the pasteboard, or NULL on error.  The caller is responsible for
  * releasing the returned array with CFRelease().
  */
-CFArrayRef macdrv_copy_pasteboard_types(void)
+CFArrayRef macdrv_copy_pasteboard_types(CFTypeRef pasteboard)
 {
+    NSPasteboard* pb = (NSPasteboard*)pasteboard;
     __block CFArrayRef ret = NULL;
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
@@ -79,8 +80,11 @@ CFArrayRef macdrv_copy_pasteboard_types(void)
     OnMainThread(^{
         @try
         {
-            NSPasteboard* pb = [NSPasteboard generalPasteboard];
-            NSArray* types = [pb types];
+            NSPasteboard* local_pb = pb;
+            NSArray* types;
+
+            if (!local_pb) local_pb = [NSPasteboard generalPasteboard];
+            types = [local_pb types];
 
             // If there are any types understood by NSBitmapImageRep, then we
             // can offer all of the types that it can output, too.  For example,
@@ -115,22 +119,24 @@ CFArrayRef macdrv_copy_pasteboard_types(void)
  * if there's no such type on the pasteboard.  The caller is responsible
  * for releasing the returned data object with CFRelease().
  */
-CFDataRef macdrv_copy_pasteboard_data(CFStringRef type)
+CFDataRef macdrv_copy_pasteboard_data(CFTypeRef pasteboard, CFStringRef type)
 {
+    NSPasteboard* pb = (NSPasteboard*)pasteboard;
     __block NSData* ret = nil;
 
     OnMainThread(^{
         @try
         {
-            NSPasteboard* pb = [NSPasteboard generalPasteboard];
-            if ([pb availableTypeFromArray:[NSArray arrayWithObject:(NSString*)type]])
-                ret = [[pb dataForType:(NSString*)type] copy];
+            NSPasteboard* local_pb = pb;
+            if (!local_pb) local_pb = [NSPasteboard generalPasteboard];
+            if ([local_pb availableTypeFromArray:[NSArray arrayWithObject:(NSString*)type]])
+                ret = [[local_pb dataForType:(NSString*)type] copy];
             else
             {
                 NSNumber* bitmapType = [BitmapOutputTypeMap objectForKey:(NSString*)type];
                 if (bitmapType)
                 {
-                    NSArray* reps = [NSBitmapImageRep imageRepsWithPasteboard:pb];
+                    NSArray* reps = [NSBitmapImageRep imageRepsWithPasteboard:local_pb];
                     ret = [NSBitmapImageRep representationOfImageRepsInArray:reps
                                                                    usingType:[bitmapType unsignedIntegerValue]
                                                                   properties:nil];

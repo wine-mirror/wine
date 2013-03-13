@@ -1326,7 +1326,7 @@ INT CDECL macdrv_CountClipboardFormats(void)
         return 0;
     }
 
-    types = macdrv_copy_pasteboard_types();
+    types = macdrv_copy_pasteboard_types(NULL);
     if (!types)
     {
         WARN("Failed to copy pasteboard types\n");
@@ -1396,7 +1396,7 @@ UINT CDECL macdrv_EnumClipboardFormats(UINT prev_format)
     TRACE("prev_format %s\n", debugstr_format(prev_format));
     check_clipboard_ownership(NULL);
 
-    types = macdrv_copy_pasteboard_types();
+    types = macdrv_copy_pasteboard_types(NULL);
     if (!types)
     {
         WARN("Failed to copy pasteboard types\n");
@@ -1490,7 +1490,7 @@ HANDLE CDECL macdrv_GetClipboardData(UINT desired_format)
     TRACE("desired_format %s\n", debugstr_format(desired_format));
     check_clipboard_ownership(NULL);
 
-    types = macdrv_copy_pasteboard_types();
+    types = macdrv_copy_pasteboard_types(NULL);
     if (!types)
     {
         WARN("Failed to copy pasteboard types\n");
@@ -1526,7 +1526,7 @@ HANDLE CDECL macdrv_GetClipboardData(UINT desired_format)
 
     if (best_format)
     {
-        CFDataRef pasteboard_data = macdrv_copy_pasteboard_data(best_type);
+        CFDataRef pasteboard_data = macdrv_copy_pasteboard_data(NULL, best_type);
 
         TRACE("got pasteboard data for type %s: %s\n", debugstr_cf(best_type), debugstr_cf(pasteboard_data));
 
@@ -1556,7 +1556,7 @@ BOOL CDECL macdrv_IsClipboardFormatAvailable(UINT desired_format)
     TRACE("desired_format %s\n", debugstr_format(desired_format));
     check_clipboard_ownership(NULL);
 
-    types = macdrv_copy_pasteboard_types();
+    types = macdrv_copy_pasteboard_types(NULL);
     if (!types)
     {
         WARN("Failed to copy pasteboard types\n");
@@ -1758,7 +1758,7 @@ BOOL query_pasteboard_data(HWND hwnd, CFStringRef type)
 
         if (!types)
         {
-            types = macdrv_copy_pasteboard_types();
+            types = macdrv_copy_pasteboard_types(NULL);
             if (!types)
             {
                 WARN("Failed to copy pasteboard types\n");
