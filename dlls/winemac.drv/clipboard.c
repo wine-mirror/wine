@@ -68,6 +68,8 @@ typedef struct
  **************************************************************************/
 
 static HANDLE import_clipboard_data(CFDataRef data);
+static HANDLE import_bmp_to_bitmap(CFDataRef data);
+static HANDLE import_bmp_to_dib(CFDataRef data);
 static HANDLE import_oemtext_to_text(CFDataRef data);
 static HANDLE import_oemtext_to_unicodetext(CFDataRef data);
 static HANDLE import_text_to_oemtext(CFDataRef data);
@@ -79,6 +81,8 @@ static HANDLE import_utf8_to_text(CFDataRef data);
 static HANDLE import_utf8_to_unicodetext(CFDataRef data);
 
 static CFDataRef export_clipboard_data(HANDLE data);
+static CFDataRef export_bitmap_to_bmp(HANDLE data);
+static CFDataRef export_dib_to_bmp(HANDLE data);
 static CFDataRef export_oemtext_to_utf8(HANDLE data);
 static CFDataRef export_text_to_utf8(HANDLE data);
 static CFDataRef export_unicodetext_to_utf8(HANDLE data);
@@ -171,6 +175,12 @@ static const struct
     { CF_UNICODETEXT,       CFSTR("public.utf8-plain-text"),                import_utf8_to_unicodetext,     export_unicodetext_to_utf8, TRUE },
     { CF_TEXT,              CFSTR("public.utf8-plain-text"),                import_utf8_to_text,            export_text_to_utf8,        TRUE },
     { CF_OEMTEXT,           CFSTR("public.utf8-plain-text"),                import_utf8_to_oemtext,         export_oemtext_to_utf8,     TRUE },
+
+    { CF_DIB,               CFSTR("org.winehq.builtin.dib"),                import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_DIB,               CFSTR("com.microsoft.bmp"),                     import_bmp_to_dib,              export_dib_to_bmp,          TRUE },
+
+    { CF_BITMAP,            CFSTR("org.winehq.builtin.bitmap"),             import_bmp_to_bitmap,           export_bitmap_to_bmp,       FALSE },
+    { CF_BITMAP,            CFSTR("com.microsoft.bmp"),                     import_bmp_to_bitmap,           export_bitmap_to_bmp,       TRUE },
 };
 
 static const WCHAR wszRichTextFormat[] = {'R','i','c','h',' ','T','e','x','t',' ','F','o','r','m','a','t',0};
@@ -452,6 +462,113 @@ static HANDLE convert_unicodetext_to_codepage(HANDLE unicode_handle, UINT cp)
 }
 
 
+/***********************************************************************
+ *              bitmap_info_size
+ *
+ * Return the size of the bitmap info structure including color table.
+ */
+static int bitmap_info_size(const BITMAPINFO *info, WORD coloruse)
+{
+    unsigned int colors, size, masks = 0;
+
+    if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
+    {
+        const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER*)info;
+        colors = (core->bcBitCount <= 8) ? 1 << core->bcBitCount : 0;
+        return sizeof(BITMAPCOREHEADER) + colors *
+             ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBTRIPLE) : sizeof(WORD));
+    }
+    else  /* assume BITMAPINFOHEADER */
+    {
+        colors = info->bmiHeader.biClrUsed;
+        if (!colors && (info->bmiHeader.biBitCount <= 8))
+            colors = 1 << info->bmiHeader.biBitCount;
+        if (info->bmiHeader.biCompression == BI_BITFIELDS) masks = 3;
+        size = max(info->bmiHeader.biSize, sizeof(BITMAPINFOHEADER) + masks * sizeof(DWORD));
+        return size + colors * ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBQUAD) : sizeof(WORD));
+    }
+}
+
+
+/***********************************************************************
+ *              create_dib_from_bitmap
+ *
+ * Allocates a packed DIB and copies the bitmap data into it.
+ */
+static HGLOBAL create_dib_from_bitmap(HBITMAP hBmp)
+{
+    BITMAP bmp;
+    HDC hdc;
+    HGLOBAL hPackedDIB;
+    LPBYTE pPackedDIB;
+    LPBITMAPINFOHEADER pbmiHeader;
+    unsigned int cDataSize, cPackedSize, OffsetBits;
+    int nLinesCopied;
+
+    if (!GetObjectW(hBmp, sizeof(bmp), &bmp)) return 0;
+
+    /*
+     * A packed DIB contains a BITMAPINFO structure followed immediately by
+     * an optional color palette and the pixel data.
+     */
+
+    /* Calculate the size of the packed DIB */
+    cDataSize = abs(bmp.bmHeight) * (((bmp.bmWidth * bmp.bmBitsPixel + 31) / 8) & ~3);
+    cPackedSize = sizeof(BITMAPINFOHEADER)
+                  + ((bmp.bmBitsPixel <= 8) ? (sizeof(RGBQUAD) * (1 << bmp.bmBitsPixel)) : 0)
+                  + cDataSize;
+    /* Get the offset to the bits */
+    OffsetBits = cPackedSize - cDataSize;
+
+    /* Allocate the packed DIB */
+    TRACE("\tAllocating packed DIB of size %d\n", cPackedSize);
+    hPackedDIB = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cPackedSize);
+    if (!hPackedDIB)
+    {
+        WARN("Could not allocate packed DIB!\n");
+        return 0;
+    }
+
+    /* A packed DIB starts with a BITMAPINFOHEADER */
+    pPackedDIB = GlobalLock(hPackedDIB);
+    pbmiHeader = (LPBITMAPINFOHEADER)pPackedDIB;
+
+    /* Init the BITMAPINFOHEADER */
+    pbmiHeader->biSize = sizeof(BITMAPINFOHEADER);
+    pbmiHeader->biWidth = bmp.bmWidth;
+    pbmiHeader->biHeight = bmp.bmHeight;
+    pbmiHeader->biPlanes = 1;
+    pbmiHeader->biBitCount = bmp.bmBitsPixel;
+    pbmiHeader->biCompression = BI_RGB;
+    pbmiHeader->biSizeImage = 0;
+    pbmiHeader->biXPelsPerMeter = pbmiHeader->biYPelsPerMeter = 0;
+    pbmiHeader->biClrUsed = 0;
+    pbmiHeader->biClrImportant = 0;
+
+    /* Retrieve the DIB bits from the bitmap and fill in the
+     * DIB color table if present */
+    hdc = GetDC(0);
+    nLinesCopied = GetDIBits(hdc,                       /* Handle to device context */
+                             hBmp,                      /* Handle to bitmap */
+                             0,                         /* First scan line to set in dest bitmap */
+                             bmp.bmHeight,              /* Number of scan lines to copy */
+                             pPackedDIB + OffsetBits,   /* [out] Address of array for bitmap bits */
+                             (LPBITMAPINFO) pbmiHeader, /* [out] Address of BITMAPINFO structure */
+                             0);                        /* RGB or palette index */
+    GlobalUnlock(hPackedDIB);
+    ReleaseDC(0, hdc);
+
+    /* Cleanup if GetDIBits failed */
+    if (nLinesCopied != bmp.bmHeight)
+    {
+        TRACE("\tGetDIBits returned %d. Actual lines=%d\n", nLinesCopied, bmp.bmHeight);
+        GlobalFree(hPackedDIB);
+        hPackedDIB = 0;
+    }
+    return hPackedDIB;
+}
+
+
 /**************************************************************************
  *              import_clipboard_data
  *
@@ -484,6 +601,72 @@ static HANDLE import_clipboard_data(CFDataRef data)
     }
 
     return data_handle;
+}
+
+
+/**************************************************************************
+ *              import_bmp_to_bitmap
+ *
+ *  Import BMP data, converting to CF_BITMAP format.
+ */
+static HANDLE import_bmp_to_bitmap(CFDataRef data)
+{
+    HANDLE ret = 0;
+    HANDLE dib = import_bmp_to_dib(data);
+    BITMAPINFO *bmi;
+
+    if (dib && (bmi = GlobalLock(dib)))
+    {
+        HDC hdc;
+        unsigned int offset;
+
+        hdc = GetDC(NULL);
+
+        offset = bitmap_info_size(bmi, DIB_RGB_COLORS);
+
+        ret = CreateDIBitmap(hdc, &bmi->bmiHeader, CBM_INIT, (LPBYTE)bmi + offset,
+                             bmi, DIB_RGB_COLORS);
+
+        GlobalUnlock(dib);
+        ReleaseDC(NULL, hdc);
+    }
+
+    GlobalFree(dib);
+    return ret;
+}
+
+
+/**************************************************************************
+ *              import_bmp_to_dib
+ *
+ *  Import BMP data, converting to CF_DIB format.  This just entails
+ *  stripping the BMP file format header.
+ */
+static HANDLE import_bmp_to_dib(CFDataRef data)
+{
+    HANDLE ret = 0;
+    BITMAPFILEHEADER *bfh = (BITMAPFILEHEADER*)CFDataGetBytePtr(data);
+    CFIndex len = CFDataGetLength(data);
+
+    if (len >= sizeof(*bfh) + sizeof(BITMAPCOREHEADER) &&
+        bfh->bfType == 0x4d42 /* "BM" */)
+    {
+        BITMAPINFO *bmi = (BITMAPINFO*)(bfh + 1);
+        BYTE* p;
+
+        len -= sizeof(*bfh);
+        ret = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, len);
+        if (!ret || !(p = GlobalLock(ret)))
+        {
+            GlobalFree(ret);
+            return 0;
+        }
+
+        memcpy(p, bmi, len);
+        GlobalUnlock(ret);
+    }
+
+    return ret;
 }
 
 
@@ -658,6 +841,27 @@ static CFDataRef export_clipboard_data(HANDLE data)
 
 
 /**************************************************************************
+ *              export_bitmap_to_bmp
+ *
+ *  Export CF_BITMAP to BMP file format.
+ */
+static CFDataRef export_bitmap_to_bmp(HANDLE data)
+{
+    CFDataRef ret = NULL;
+    HGLOBAL dib;
+
+    dib = create_dib_from_bitmap(data);
+    if (dib)
+    {
+        ret = export_dib_to_bmp(dib);
+        GlobalFree(dib);
+    }
+
+    return ret;
+}
+
+
+/**************************************************************************
  *              export_codepage_to_utf8
  *
  *  Export string data in a specified codepage to UTF-8.
@@ -676,6 +880,44 @@ static CFDataRef export_codepage_to_utf8(HANDLE data, UINT cp)
         GlobalFree(unicode);
         GlobalUnlock(data);
     }
+
+    return ret;
+}
+
+
+/**************************************************************************
+ *              export_dib_to_bmp
+ *
+ *  Export CF_DIB to BMP file format.  This just entails prepending a BMP
+ *  file format header to the data.
+ */
+static CFDataRef export_dib_to_bmp(HANDLE data)
+{
+    CFMutableDataRef ret = NULL;
+    BYTE *dibdata;
+    CFIndex len;
+    BITMAPFILEHEADER bfh;
+
+    dibdata = GlobalLock(data);
+    if (!dibdata)
+        return NULL;
+
+    len = sizeof(bfh) + GlobalSize(data);
+    ret = CFDataCreateMutable(NULL, len);
+    if (ret)
+    {
+        bfh.bfType = 0x4d42; /* "BM" */
+        bfh.bfSize = len;
+        bfh.bfReserved1 = 0;
+        bfh.bfReserved2 = 0;
+        bfh.bfOffBits = sizeof(bfh) + bitmap_info_size((BITMAPINFO*)dibdata, DIB_RGB_COLORS);
+        CFDataAppendBytes(ret, (UInt8*)&bfh, sizeof(bfh));
+
+        /* rest of bitmap is the same as the packed dib */
+        CFDataAppendBytes(ret, (UInt8*)dibdata, len - sizeof(bfh));
+    }
+
+    GlobalUnlock(data);
 
     return ret;
 }
