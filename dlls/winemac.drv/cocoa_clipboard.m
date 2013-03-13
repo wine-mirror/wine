@@ -25,6 +25,10 @@
 
 static int owned_change_count = -1;
 
+static NSArray* BitmapOutputTypes;
+static NSDictionary* BitmapOutputTypeMap;
+static dispatch_once_t BitmapOutputTypesInitOnce;
+
 
 /***********************************************************************
  *              macdrv_is_pasteboard_owner
@@ -54,11 +58,43 @@ CFArrayRef macdrv_copy_pasteboard_types(void)
     __block CFArrayRef ret = NULL;
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
+    dispatch_once(&BitmapOutputTypesInitOnce, ^{
+        NSArray* bitmapFileTypes = [NSArray arrayWithObjects:
+                                    [NSNumber numberWithUnsignedInteger:NSTIFFFileType],
+                                    [NSNumber numberWithUnsignedInteger:NSPNGFileType],
+                                    [NSNumber numberWithUnsignedInteger:NSBMPFileType],
+                                    [NSNumber numberWithUnsignedInteger:NSGIFFileType],
+                                    [NSNumber numberWithUnsignedInteger:NSJPEGFileType],
+                                    [NSNumber numberWithUnsignedInteger:NSJPEG2000FileType],
+                                    nil];
+
+        BitmapOutputTypes = [[NSArray alloc] initWithObjects:@"public.tiff", @"public.png",
+                             @"com.microsoft.bmp", @"com.compuserve.gif", @"public.jpeg",
+                             @"public.jpeg-2000", nil];
+
+        BitmapOutputTypeMap = [[NSDictionary alloc] initWithObjects:bitmapFileTypes
+                                                            forKeys:BitmapOutputTypes];
+    });
+
     OnMainThread(^{
         @try
         {
             NSPasteboard* pb = [NSPasteboard generalPasteboard];
             NSArray* types = [pb types];
+
+            // If there are any types understood by NSBitmapImageRep, then we
+            // can offer all of the types that it can output, too.  For example,
+            // if TIFF is on the pasteboard, we can offer PNG, BMP, etc. to the
+            // Windows program.  We'll convert on demand.
+            if ([types firstObjectCommonWithArray:[NSBitmapImageRep imageTypes]] ||
+                [types firstObjectCommonWithArray:[NSBitmapImageRep imagePasteboardTypes]])
+            {
+                NSMutableArray* newTypes = [BitmapOutputTypes mutableCopy];
+                [newTypes removeObjectsInArray:types];
+                types = [types arrayByAddingObjectsFromArray:newTypes];
+                [newTypes release];
+            }
+
             ret = (CFArrayRef)[types copy];
         }
         @catch (id e)
@@ -89,6 +125,18 @@ CFDataRef macdrv_copy_pasteboard_data(CFStringRef type)
             NSPasteboard* pb = [NSPasteboard generalPasteboard];
             if ([pb availableTypeFromArray:[NSArray arrayWithObject:(NSString*)type]])
                 ret = [[pb dataForType:(NSString*)type] copy];
+            else
+            {
+                NSNumber* bitmapType = [BitmapOutputTypeMap objectForKey:(NSString*)type];
+                if (bitmapType)
+                {
+                    NSArray* reps = [NSBitmapImageRep imageRepsWithPasteboard:pb];
+                    ret = [NSBitmapImageRep representationOfImageRepsInArray:reps
+                                                                   usingType:[bitmapType unsignedIntegerValue]
+                                                                  properties:nil];
+                    ret = [ret copy];
+                }
+            }
         }
         @catch (id e)
         {
