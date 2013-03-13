@@ -1257,6 +1257,73 @@ static BOOL release_ownership(void)
 
 
 /**************************************************************************
+ *              macdrv_get_pasteboard_data
+ */
+static HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_format)
+{
+    CFArrayRef types;
+    CFIndex count;
+    CFIndex i;
+    CFStringRef type, best_type;
+    WINE_CLIPFORMAT* best_format = NULL;
+    HANDLE data = NULL;
+
+    TRACE("pasteboard %p, desired_format %s\n", pasteboard, debugstr_format(desired_format));
+
+    types = macdrv_copy_pasteboard_types(pasteboard);
+    if (!types)
+    {
+        WARN("Failed to copy pasteboard types\n");
+        return NULL;
+    }
+
+    count = CFArrayGetCount(types);
+    TRACE("got %ld types\n", count);
+
+    for (i = 0; (!best_format || best_format->synthesized) && i < count; i++)
+    {
+        WINE_CLIPFORMAT* format;
+
+        type = CFArrayGetValueAtIndex(types, i);
+
+        format = NULL;
+        while ((!best_format || best_format->synthesized) && (format = format_for_type(format, type)))
+        {
+            TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format ? format->format_id : 0));
+
+            if (format->format_id == desired_format)
+            {
+                /* The best format is the matching one which is not synthesized.  Failing that,
+                   the best format is the first matching synthesized format. */
+                if (!format->synthesized || !best_format)
+                {
+                    best_type = type;
+                    best_format = format;
+                }
+            }
+        }
+    }
+
+    if (best_format)
+    {
+        CFDataRef pasteboard_data = macdrv_copy_pasteboard_data(pasteboard, best_type);
+
+        TRACE("got pasteboard data for type %s: %s\n", debugstr_cf(best_type), debugstr_cf(pasteboard_data));
+
+        if (pasteboard_data)
+        {
+            data = best_format->import_func(pasteboard_data);
+            CFRelease(pasteboard_data);
+        }
+    }
+
+    CFRelease(types);
+    TRACE(" -> %p\n", data);
+    return data;
+}
+
+
+/**************************************************************************
  *              check_clipboard_ownership
  */
 static void check_clipboard_ownership(HWND *owner)
@@ -1480,66 +1547,9 @@ UINT CDECL macdrv_EnumClipboardFormats(UINT prev_format)
  */
 HANDLE CDECL macdrv_GetClipboardData(UINT desired_format)
 {
-    CFArrayRef types;
-    CFIndex count;
-    CFIndex i;
-    CFStringRef type, best_type;
-    WINE_CLIPFORMAT* best_format = NULL;
-    HANDLE data = NULL;
-
-    TRACE("desired_format %s\n", debugstr_format(desired_format));
     check_clipboard_ownership(NULL);
 
-    types = macdrv_copy_pasteboard_types(NULL);
-    if (!types)
-    {
-        WARN("Failed to copy pasteboard types\n");
-        return NULL;
-    }
-
-    count = CFArrayGetCount(types);
-    TRACE("got %ld types\n", count);
-
-    for (i = 0; (!best_format || best_format->synthesized) && i < count; i++)
-    {
-        WINE_CLIPFORMAT* format;
-
-        type = CFArrayGetValueAtIndex(types, i);
-
-        format = NULL;
-        while ((!best_format || best_format->synthesized) && (format = format_for_type(format, type)))
-        {
-            TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format ? format->format_id : 0));
-
-            if (format->format_id == desired_format)
-            {
-                /* The best format is the matching one which is not synthesized.  Failing that,
-                   the best format is the first matching synthesized format. */
-                if (!format->synthesized || !best_format)
-                {
-                    best_type = type;
-                    best_format = format;
-                }
-            }
-        }
-    }
-
-    if (best_format)
-    {
-        CFDataRef pasteboard_data = macdrv_copy_pasteboard_data(NULL, best_type);
-
-        TRACE("got pasteboard data for type %s: %s\n", debugstr_cf(best_type), debugstr_cf(pasteboard_data));
-
-        if (pasteboard_data)
-        {
-            data = best_format->import_func(pasteboard_data);
-            CFRelease(pasteboard_data);
-        }
-    }
-
-    CFRelease(types);
-    TRACE(" -> %p\n", data);
-    return data;
+    return macdrv_get_pasteboard_data(NULL, desired_format);
 }
 
 
