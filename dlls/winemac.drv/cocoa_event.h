@@ -36,6 +36,7 @@
     - (void) postEvent:(const macdrv_event*)inEvent;
     - (void) discardEventsMatchingMask:(macdrv_event_mask)mask forWindow:(NSWindow*)window;
 
+    - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout processEvents:(BOOL)processEvents;
     - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout;
 
 @end

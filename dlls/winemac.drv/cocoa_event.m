@@ -252,7 +252,7 @@ static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThrea
         [eventsLock unlock];
     }
 
-    - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout
+    - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout processEvents:(BOOL)processEvents
     {
         macdrv_event event;
         NSDate* timeoutDate = [NSDate dateWithTimeIntervalSinceNow:timeout];
@@ -264,8 +264,13 @@ static NSString* const WineEventQueueThreadDictionaryKey = @"WineEventQueueThrea
         query->done = FALSE;
 
         [self postEvent:&event];
-        timedout = ![NSApp waitUntilQueryDone:&query->done timeout:timeoutDate];
+        timedout = ![NSApp waitUntilQueryDone:&query->done timeout:timeoutDate processEvents:processEvents];
         return !timedout && query->status;
+    }
+
+    - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout
+    {
+        return [self query:query timeout:timeout processEvents:FALSE];
     }
 
 
@@ -470,8 +475,21 @@ void macdrv_set_query_done(macdrv_query *query)
     macdrv_retain_query(query);
 
     OnMainThreadAsync(^{
+        NSEvent* event;
+
         query->done = TRUE;
         macdrv_release_query(query);
+
+        event = [NSEvent otherEventWithType:NSApplicationDefined
+                                   location:NSZeroPoint
+                              modifierFlags:0
+                                  timestamp:[[NSProcessInfo processInfo] systemUptime]
+                               windowNumber:0
+                                    context:nil
+                                    subtype:WineApplicationEventWakeQuery
+                                      data1:0
+                                      data2:0];
+        [NSApp postEvent:event atStart:TRUE];
     });
 }
 

@@ -240,7 +240,8 @@ DWORD CDECL macdrv_MsgWaitForMultipleObjectsEx(DWORD count, const HANDLE *handle
                                         timeout, flags & MWMO_ALERTABLE);
     }
 
-    if (data->current_event) event_mask = 0;  /* don't process nested events */
+    if (data->current_event && data->current_event->type != QUERY_EVENT)
+        event_mask = 0;  /* don't process nested events */
 
     if (process_events(data->queue, event_mask)) ret = count - 1;
     else if (count || timeout)

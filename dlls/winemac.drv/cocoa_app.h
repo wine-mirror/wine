@@ -26,6 +26,11 @@
 #define ERR(...) do { if (macdrv_err_on) LogError(__func__, __VA_ARGS__); } while (false)
 
 
+enum {
+    WineApplicationEventWakeQuery,
+};
+
+
 @class WineEventQueue;
 @class WineWindow;
 
@@ -87,7 +92,7 @@
 
     - (void) windowGotFocus:(WineWindow*)window;
 
-    - (BOOL) waitUntilQueryDone:(int*)done timeout:(NSDate*)timeout;
+    - (BOOL) waitUntilQueryDone:(int*)done timeout:(NSDate*)timeout processEvents:(BOOL)processEvents;
 
     - (void) keyboardSelectionDidChange;
 

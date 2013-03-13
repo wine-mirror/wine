@@ -172,13 +172,25 @@ int macdrv_err_on;
         }
     }
 
-    - (BOOL) waitUntilQueryDone:(int*)done timeout:(NSDate*)timeout
+    - (BOOL) waitUntilQueryDone:(int*)done timeout:(NSDate*)timeout processEvents:(BOOL)processEvents
     {
         PerformRequest(NULL);
 
         do
         {
-            [[NSRunLoop currentRunLoop] runMode:WineAppWaitQueryResponseMode beforeDate:timeout];
+            if (processEvents)
+            {
+                NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+                NSEvent* event = [NSApp nextEventMatchingMask:NSAnyEventMask
+                                                    untilDate:timeout
+                                                       inMode:NSDefaultRunLoopMode
+                                                      dequeue:YES];
+                if (event)
+                    [NSApp sendEvent:event];
+                [pool release];
+            }
+            else
+                [[NSRunLoop currentRunLoop] runMode:WineAppWaitQueryResponseMode beforeDate:timeout];
         } while (!*done && [timeout timeIntervalSinceNow] >= 0);
 
         return *done;
