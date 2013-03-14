@@ -106,6 +106,16 @@ cpp_quote("#if 0")
 typedef [uuid(4f5d560f-5ab5-4dde-8c4d-404592857ab0)] UINT_PTR HKL;
 cpp_quote("#endif")
 
+typedef [uuid(e26d9e1d-691e-4f29-90d7-338dcf1f8cef)] struct TF_PERSISTENT_PROPERTY_HEADER_ACP
+{
+    GUID guidType;
+    LONG ichStart;
+    LONG cch;
+    ULONG cb;
+    DWORD dwPrivate;
+    CLSID clsidTIP;
+} TF_PERSISTENT_PROPERTY_HEADER_ACP;
+
 typedef [uuid(e1b5808d-1e46-4c19-84dc-68c5f5978cc8)] struct TF_LANGUAGEPROFILE
 {
     CLSID clsid;
@@ -1297,6 +1307,51 @@ interface ITfContextComposition : IUnknown
 interface ITfContextOwnerCompositionServices : ITfContextComposition
 {
     HRESULT TerminateComposition([in] ITfCompositionView *pComposition);
+}
+
+[
+    object,
+    uuid(4ef89150-0807-11d3-8df0-00105a2799b5),
+    pointer_default(unique)
+]
+interface ITfPersistentPropertyLoaderACP : IUnknown
+{
+    HRESULT LoadProperty(
+            [in] const TF_PERSISTENT_PROPERTY_HEADER_ACP *pHdr,
+            [out] IStream **ppStream);
+}
+
+[
+    object,
+    uuid(b23eb630-3e1c-11d3-a745-0050040ab407),
+    pointer_default(unique)
+]
+interface ITfContextOwnerServices : IUnknown
+{
+    HRESULT OnLayoutChange();
+
+    HRESULT OnStatusChange([in] DWORD dwFlags);
+
+    HRESULT OnAttributeChange([in] REFGUID rguidAttribute);
+
+    HRESULT Serialize(
+            [in] ITfProperty *pProp,
+            [in] ITfRange *pRange,
+            [out] TF_PERSISTENT_PROPERTY_HEADER_ACP *pHdr,
+            [in] IStream *pStream);
+
+    HRESULT Unserialize(
+            [in] ITfProperty *pProp,
+            [in] const TF_PERSISTENT_PROPERTY_HEADER_ACP *pHdr,
+            [in] IStream *pStream,
+            [in] ITfPersistentPropertyLoaderACP *pLoader);
+
+    HRESULT ForceLoadProperty([in] ITfProperty *pProp);
+
+    HRESULT CreateRange(
+            [in] LONG acpStart,
+            [in] LONG acpEnd,
+            [out] ITfRangeACP **ppRange);
 }
 
 [
