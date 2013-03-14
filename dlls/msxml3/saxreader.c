@@ -349,6 +349,21 @@ static inline int saxreader_has_handler(const saxlocator *locator, enum saxhandl
     return (locator->vbInterface && iface->vbhandler) || (!locator->vbInterface && iface->handler);
 }
 
+static HRESULT saxreader_saxcharacters(saxlocator *locator, BSTR chars)
+{
+    struct saxcontenthandler_iface *content = saxreader_get_contenthandler(locator->saxreader);
+    HRESULT hr;
+
+    if (!saxreader_has_handler(locator, SAXContentHandler)) return S_OK;
+
+    if (locator->vbInterface)
+        hr = IVBSAXContentHandler_characters(content->vbhandler, &chars);
+    else
+        hr = ISAXContentHandler_characters(content->handler, chars, SysStringLen(chars));
+
+    return hr;
+}
+
 /* property names */
 static const WCHAR PropertyCharsetW[] = {
     'c','h','a','r','s','e','t',0
@@ -1565,7 +1580,6 @@ static void libxmlCharacters(
         int len)
 {
     saxlocator *This = ctx;
-    struct saxcontenthandler_iface *handler = saxreader_get_contenthandler(This->saxreader);
     BSTR Chars;
     HRESULT hr;
     xmlChar *cur, *end;
@@ -1624,10 +1638,7 @@ static void libxmlCharacters(
         }
 
         Chars = pooled_bstr_from_xmlCharN(&This->saxreader->pool, cur, end-cur);
-        if(This->vbInterface)
-            hr = IVBSAXContentHandler_characters(handler->vbhandler, &Chars);
-        else
-            hr = ISAXContentHandler_characters(handler->handler, Chars, SysStringLen(Chars));
+        hr = saxreader_saxcharacters(This, Chars);
 
         if (sax_callback_failed(This, hr))
         {
@@ -1797,21 +1808,6 @@ static BSTR saxreader_get_cdata_chunk(const xmlChar *str, int len)
     ret = SysAllocStringLen(bstr, len);
     SysFreeString(bstr);
     return ret;
-}
-
-static HRESULT saxreader_saxcharacters(saxlocator *locator, BSTR chars)
-{
-    struct saxcontenthandler_iface *content = saxreader_get_contenthandler(locator->saxreader);
-    HRESULT hr;
-
-    if (!saxreader_has_handler(locator, SAXContentHandler)) return S_OK;
-
-    if (locator->vbInterface)
-        hr = IVBSAXContentHandler_characters(content->vbhandler, &chars);
-    else
-        hr = ISAXContentHandler_characters(content->handler, chars, SysStringLen(chars));
-
-    return hr;
 }
 
 static void libxml_cdatablock(void *ctx, const xmlChar *value, int len)
