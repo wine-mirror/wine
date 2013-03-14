@@ -68,7 +68,7 @@ int CDECL MSVCRT__set_SSE2_enable(int flag)
     return sse2_enabled;
 }
 
-#ifdef __x86_64__
+#if defined(__x86_64__) || defined(__arm__)
 
 /*********************************************************************
  *      _chgsignf (MSVCRT.@)
