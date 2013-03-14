@@ -1240,11 +1240,11 @@
 @ stub ZwWriteRequestData
 @ stdcall ZwWriteVirtualMemory(long ptr ptr long ptr) NtWriteVirtualMemory
 @ stdcall ZwYieldExecution() NtYieldExecution
-# @ stub _CIcos
-# @ stub _CIlog
+@ cdecl -private -arch=i386 _CIcos() NTDLL__CIcos
+@ cdecl -private -arch=i386 _CIlog() NTDLL__CIlog
 @ cdecl -private -arch=i386 _CIpow() NTDLL__CIpow
-# @ stub _CIsin
-# @ stub _CIsqrt
+@ cdecl -private -arch=i386 _CIsin() NTDLL__CIsin
+@ cdecl -private -arch=i386 _CIsqrt() NTDLL__CIsqrt
 @ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr)
 @ stdcall -private -arch=x86_64 -norelay __chkstk()
 # @ stub __isascii
