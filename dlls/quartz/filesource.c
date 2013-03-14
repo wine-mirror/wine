@@ -335,12 +335,15 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
                             break;
                         }
 
-                        if (strcmpW(wszValueName, source_filter_name)==0)
+                        if (strcmpW(wszValueName, source_filter_name)==0) {
+                            HeapFree(GetProcessHeap(), 0, wszPatternString);
                             continue;
+                        }
 
                         /* if it is not the source filter value */
                         if (process_pattern_string(wszPatternString, pReader) == S_OK)
                         {
+                            HeapFree(GetProcessHeap(), 0, wszPatternString);
                             if (majorType && FAILED(CLSIDFromString(wszMajorKeyName, majorType)))
                                 break;
                             if (minorType && FAILED(CLSIDFromString(wszMinorKeyName, minorType)))
@@ -354,8 +357,8 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
                                     break;
                             }
                             bFound = TRUE;
-                        }
-                        HeapFree(GetProcessHeap(), 0, wszPatternString);
+                        } else
+                            HeapFree(GetProcessHeap(), 0, wszPatternString);
                     }
                     CloseHandle(hkeyMinor);
                 }
