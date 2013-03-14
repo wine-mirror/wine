@@ -794,7 +794,7 @@
 @ extern _HUGE msvcrt._HUGE
 @ cdecl _XcptFilter(long ptr) msvcrt._XcptFilter
 @ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
-@ stdcall -i386 __CxxLongjmpUnwind(ptr) msvcrt.__CxxLongjmpUnwind
+@ stdcall -arch=i386 __CxxLongjmpUnwind(ptr) msvcrt.__CxxLongjmpUnwind
 @ cdecl __STRINGTOLD(ptr ptr str long) msvcrt.__STRINGTOLD
 @ extern __argc msvcrt.__argc
 @ extern __argv msvcrt.__argv
@@ -897,8 +897,8 @@
 @ extern _environ msvcrt._environ
 @ cdecl _eof(long) msvcrt._eof
 @ cdecl _errno() msvcrt._errno
-@ cdecl -i386 _except_handler2(ptr ptr ptr ptr) msvcrt._except_handler2
-@ cdecl -i386 _except_handler3(ptr ptr ptr ptr) msvcrt._except_handler3
+@ cdecl -arch=i386 _except_handler2(ptr ptr ptr ptr) msvcrt._except_handler2
+@ cdecl -arch=i386 _except_handler3(ptr ptr ptr ptr) msvcrt._except_handler3
 @ varargs _execl(str str) msvcrt._execl
 @ varargs _execle(str str) msvcrt._execle
 @ varargs _execlp(str str) msvcrt._execlp
@@ -951,7 +951,7 @@
 @ cdecl _getsystime(ptr) msvcrt._getsystime
 @ cdecl _getw(ptr) msvcrt._getw
 @ cdecl _getws(ptr) msvcrt._getws
-@ cdecl -i386 _global_unwind2(ptr) msvcrt._global_unwind2
+@ cdecl -arch=i386 _global_unwind2(ptr) msvcrt._global_unwind2
 @ cdecl _heapadd(ptr long) msvcrt._heapadd
 @ cdecl _heapchk() msvcrt._heapchk
 @ cdecl _heapmin() msvcrt._heapmin
@@ -1001,10 +1001,10 @@
 @ cdecl _kbhit() msvcrt._kbhit
 @ cdecl _lfind(ptr ptr ptr long ptr) msvcrt._lfind
 @ cdecl _loaddll(str) msvcrt._loaddll
-@ cdecl -i386 _local_unwind2(ptr long) msvcrt._local_unwind2
+@ cdecl -arch=i386 _local_unwind2(ptr long) msvcrt._local_unwind2
 @ cdecl _locking(long long long) msvcrt._locking
 @ cdecl _logb(double) msvcrt._logb
-@ cdecl -i386 _longjmpex(ptr long) msvcrt._longjmpex
+@ cdecl -arch=i386 _longjmpex(ptr long) msvcrt._longjmpex
 @ cdecl _lrotl(long long) msvcrt._lrotl
 @ cdecl _lrotr(long long) msvcrt._lrotr
 @ cdecl _lsearch(ptr ptr ptr long ptr) msvcrt._lsearch
@@ -1101,7 +1101,7 @@
 @ cdecl -arch=i386 _safe_fprem1() msvcrt._safe_fprem1
 @ cdecl _scalb(double long) msvcrt._scalb
 @ cdecl _searchenv(str str ptr) msvcrt._searchenv
-@ stdcall -i386 __seh_longjmp_unwind@4(ptr) msvcrt._seh_longjmp_unwind
+@ stdcall -arch=i386 __seh_longjmp_unwind@4(ptr) msvcrt._seh_longjmp_unwind
 @ cdecl _seterrormode(long) msvcrt._seterrormode
 @ cdecl -arch=i386,x86_64,arm -norelay _setjmp(ptr) msvcrt._setjmp
 @ cdecl -arch=i386 -norelay _setjmp3(ptr long) msvcrt._setjmp3
