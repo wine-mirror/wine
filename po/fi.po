@@ -10406,77 +10406,59 @@ msgstr "Vieraita protokollia"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "TCP-tilastot IPv4:lle"
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Active Opens"
-msgstr "Aktiiviset yhteydet"
+msgstr "Aktiivisia avauksia"
 
 #: netstat.rc:43
 msgid "Passive Opens"
-msgstr ""
+msgstr "Passiivisia avauksia"
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Failed Connection Attempts"
-msgstr "Aktiiviset yhteydet"
+msgstr "Epäonnistuneita yhteysyrityksiä"
 
 #: netstat.rc:45
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Reset Connections"
-msgstr "Aktiiviset yhteydet"
+msgstr "Nollattuja yhteyksiä"
 
 #: netstat.rc:46
-#, fuzzy
-#| msgid "Active Connections"
 msgid "Current Connections"
-msgstr "Aktiiviset yhteydet"
+msgstr "Yhteyksiä nyt"
 
 #: netstat.rc:47
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Received"
-msgstr "Segmentti lukittu.\n"
+msgstr "Segmenttejä vastaanotettu"
 
 #: netstat.rc:48
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Sent"
-msgstr "Segmentti lukittu.\n"
+msgstr "Segmenttejä lähetetty"
 
 #: netstat.rc:49
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "Segmenttejä lähetetty uudelleen"
 
 #: netstat.rc:50
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "UDP-tilastot IPv4:lle"
 
 #: netstat.rc:51
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Datagrams Received"
-msgstr "Segmentti lukittu.\n"
+msgstr "Datagrammeja vastaanotettu"
 
 #: netstat.rc:52
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "Paikallinen portti"
+msgstr "Kohdeporttivirheitä"
 
 #: netstat.rc:53
-#, fuzzy
-#| msgid "Decoding Error"
 msgid "Receive Errors"
-msgstr "Virhe dekoodauksessa"
+msgstr "Vastaanottovirheitä"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "Datagrammeja lähetetty"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
