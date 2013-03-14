@@ -4701,7 +4701,7 @@ static inline void set_menu_item_text( MENUITEM *menu, LPCWSTR text, BOOL unicod
  */
 static int MENU_depth( POPUPMENU *pmenu, int depth)
 {
-    int i;
+    UINT i;
     MENUITEM *item;
     int subdepth;
 
