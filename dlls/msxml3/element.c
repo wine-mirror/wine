@@ -1243,7 +1243,7 @@ static HRESULT WINAPI domelem_setAttribute(
     domelem *This = impl_from_IXMLDOMElement( iface );
     xmlChar *xml_name, *xml_value, *local, *prefix;
     xmlNodePtr element;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(name), debugstr_variant(&value));
 
