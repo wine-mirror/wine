@@ -164,7 +164,7 @@
 # stub _CrtSetReportHook2
 # stub _CrtSetReportMode
 @ stdcall _CxxThrowException(long long)
-@ cdecl -i386 -norelay _EH_prolog()
+@ cdecl -arch=i386 -norelay _EH_prolog()
 @ cdecl _Getdays()
 @ cdecl _Getmonths()
 @ cdecl _Gettnames()
@@ -181,7 +181,7 @@
 @ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler(ptr ptr ptr ptr)
 @ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler2(ptr ptr ptr ptr) __CxxFrameHandler
 @ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler3(ptr ptr ptr ptr) __CxxFrameHandler
-@ stdcall -i386 __CxxLongjmpUnwind(ptr)
+@ stdcall -arch=i386 __CxxLongjmpUnwind(ptr)
 @ cdecl -arch=i386,x86_64,arm __CxxQueryExceptionSize()
 # stub __CxxRegisterExceptionObject
 # stub __CxxUnregisterExceptionObject
@@ -352,7 +352,7 @@
 @ cdecl _chdrive(long) MSVCRT__chdrive
 @ cdecl _chgsign(double) MSVCRT__chgsign
 @ cdecl -arch=arm,x86_64 _chgsignf(float) MSVCRT__chgsignf
-@ cdecl -i386 -norelay _chkesp()
+@ cdecl -arch=i386 -norelay _chkesp()
 @ cdecl _chmod(str long) MSVCRT__chmod
 @ cdecl _chsize(long long) MSVCRT__chsize
 # stub _chsize_s(long int64)
@@ -412,9 +412,9 @@
 @ extern _environ MSVCRT__environ
 @ cdecl _eof(long) MSVCRT__eof
 @ cdecl _errno() MSVCRT__errno
-@ cdecl -i386 _except_handler2(ptr ptr ptr ptr)
-@ cdecl -i386 _except_handler3(ptr ptr ptr ptr)
-@ cdecl -i386 _except_handler4_common(ptr ptr ptr ptr ptr ptr)
+@ cdecl -arch=i386 _except_handler2(ptr ptr ptr ptr)
+@ cdecl -arch=i386 _except_handler3(ptr ptr ptr ptr)
+@ cdecl -arch=i386 _except_handler4_common(ptr ptr ptr ptr ptr ptr)
 @ varargs _execl(str str)
 @ varargs _execle(str str)
 @ varargs _execlp(str str)
@@ -532,7 +532,7 @@
 # stub _getwch()
 # stub _getwche()
 @ cdecl _getws(ptr) MSVCRT__getws
-@ cdecl -i386 _global_unwind2(ptr)
+@ cdecl -arch=i386 _global_unwind2(ptr)
 @ cdecl _gmtime32(ptr) MSVCRT__gmtime32
 @ cdecl _gmtime32_s(ptr ptr) MSVCRT__gmtime32_s
 @ cdecl _gmtime64(ptr) MSVCRT__gmtime64
@@ -654,8 +654,8 @@
 # stub _lfind_s(ptr ptr ptr long ptr ptr)
 @ cdecl _loaddll(str)
 @ cdecl -arch=x86_64 _local_unwind(ptr ptr)
-@ cdecl -i386 _local_unwind2(ptr long)
-@ cdecl -i386 _local_unwind4(ptr ptr long)
+@ cdecl -arch=i386 _local_unwind2(ptr long)
+@ cdecl -arch=i386 _local_unwind4(ptr ptr long)
 @ cdecl _localtime32(ptr) MSVCRT__localtime32
 @ cdecl _localtime32_s(ptr ptr)
 @ cdecl _localtime64(ptr) MSVCRT__localtime64
@@ -665,7 +665,7 @@
 @ cdecl _locking(long long long) MSVCRT__locking
 @ cdecl _logb(double) MSVCRT__logb
 @ cdecl -arch=arm,x86_64 _logbf(float) MSVCRT__logbf
-@ cdecl -i386 _longjmpex(ptr long) MSVCRT_longjmp
+@ cdecl -arch=i386 _longjmpex(ptr long) MSVCRT_longjmp
 @ cdecl _lrotl(long long) MSVCRT__lrotl
 @ cdecl _lrotr(long long) MSVCRT__lrotr
 @ cdecl _lsearch(ptr ptr ptr long ptr)
@@ -885,8 +885,8 @@
 # stub _scwprintf_p_l(wstr ptr)
 @ cdecl _searchenv(str str ptr) MSVCRT__searchenv
 @ cdecl _searchenv_s(str str ptr long)
-@ stdcall -i386 _seh_longjmp_unwind4(ptr)
-@ stdcall -i386 _seh_longjmp_unwind(ptr)
+@ stdcall -arch=i386 _seh_longjmp_unwind4(ptr)
+@ stdcall -arch=i386 _seh_longjmp_unwind(ptr)
 @ cdecl _set_SSE2_enable(long) MSVCRT__set_SSE2_enable
 @ cdecl _set_controlfp(long long)
 @ cdecl _set_doserrno(long)
