@@ -5881,7 +5881,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     BOOL needsTransform = FALSE;
     BOOL tategaki = (font->GSUB_Table != NULL);
     UINT original_index;
-    FT_Fixed avgAdvance = 0;
+    LONG avgAdvance = 0;
+    FT_Fixed em_scale;
 
     TRACE("%p, %04x, %08x, %p, %08x, %p, %p\n", font, glyph, format, lpgm,
 	  buflen, buf, lpmat);
@@ -6022,9 +6023,10 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         TEXTMETRICW tm;
         if (get_text_metrics(incoming_font, &tm) &&
             !(tm.tmPitchAndFamily & TMPF_FIXED_PITCH)) {
-            avgAdvance = pFT_MulFix(incoming_font->ntmAvgWidth,
-                                    incoming_font->ft_face->size->metrics.x_scale);
-            if (avgAdvance && (ft_face->glyph->metrics.horiAdvance+63) >> 6 == (avgAdvance*2+63) >> 6)
+            em_scale = MulDiv(incoming_font->ppem, 1 << 16, incoming_font->ft_face->units_per_EM);
+            avgAdvance = pFT_MulFix(incoming_font->ntmAvgWidth, em_scale);
+            if (avgAdvance &&
+                (ft_face->glyph->metrics.horiAdvance+63) >> 6 == pFT_MulFix(incoming_font->ntmAvgWidth*2, em_scale))
                 TRACE("Fixed-pitch full-width character detected\n");
             else
                 avgAdvance = 0; /* cancel this feature */
@@ -6037,7 +6039,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         if (!avgAdvance)
             adv = (INT)(ft_face->glyph->metrics.horiAdvance + 63) >> 6;
         else
-            adv = (INT)((avgAdvance + 32) >> 6) * 2;
+            adv = (INT)avgAdvance * 2;
 
 	top = (ft_face->glyph->metrics.horiBearingY + 63) & -64;
 	bottom = (ft_face->glyph->metrics.horiBearingY -
@@ -6082,10 +6084,10 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	if (!avgAdvance || vec.y)
 	    lpgm->gmCellIncX = (vec.x+63) >> 6;
 	else {
-	    vec.x = avgAdvance;
+	    vec.x = incoming_font->ntmAvgWidth;
 	    vec.y = 0;
 	    pFT_Vector_Transform(&vec, &transMat);
-	    lpgm->gmCellIncX = ((vec.x+32) >> 6) * 2;
+	    lpgm->gmCellIncX = pFT_MulFix(vec.x, em_scale) * 2;
 	}
 
         vec.x = ft_face->glyph->metrics.horiAdvance;
@@ -6094,10 +6096,10 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         if (!avgAdvance || vec.y)
             adv = (vec.x+63) >> 6;
         else {
-            vec.x = avgAdvance;
+            vec.x = incoming_font->ntmAvgWidth;
             vec.y = 0;
             pFT_Vector_Transform(&vec, &transMatUnrotated);
-            adv = ((vec.x+32) >> 6) * 2;
+            adv = pFT_MulFix(vec.x, em_scale) * 2;
         }
     }
 
