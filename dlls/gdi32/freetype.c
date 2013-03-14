@@ -6775,7 +6775,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     TT_OS2 *pOS2;
     TT_HoriHeader *pHori;
     TT_Postscript *pPost;
-    FT_Fixed x_scale, y_scale;
+    FT_Fixed em_scale;
     WCHAR *family_nameW, *style_nameW, *face_nameW, *full_nameW;
     char *cp;
     INT ascent, descent;
@@ -6837,8 +6837,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     needed += lenfull;
 
 
-    x_scale = ft_face->size->metrics.x_scale;
-    y_scale = ft_face->size->metrics.y_scale;
+    em_scale = (FT_Fixed)MulDiv(font->ppem, 1 << 16, ft_face->units_per_EM);
 
     pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
     if(!pOS2) {
@@ -6878,8 +6877,8 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     font->ntmCellHeight = ascent + descent;
     font->ntmAvgWidth = pOS2->xAvgCharWidth;
 
-#define SCALE_X(x) ((pFT_MulFix(x, x_scale) + 32) >> 6)
-#define SCALE_Y(y) ((pFT_MulFix(y, y_scale) + 32) >> 6)
+#define SCALE_X(x) (pFT_MulFix(x, em_scale))
+#define SCALE_Y(y) (pFT_MulFix(y, em_scale))
 
     if(font->yMax) {
 	TM.tmAscent = font->yMax;
