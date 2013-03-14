@@ -53,6 +53,7 @@ static const char elem_test_str[] =
     "<a id=\"a\" href=\"http://test\" name=\"x\">link</a>"
     "<label for=\"in\" id=\"labelid\">Label:</label>"
     "<input id=\"in\" class=\"testclass\" tabIndex=\"2\" title=\"test title\" />"
+    "<button id=\"btnid\"></button>"
     "<select id=\"s\"><option id=\"x\" value=\"val1\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
     "<table id=\"tbl\"><tbody><tr></tr><tr id=\"row2\"><td>td1 text</td><td>td2 text</td></tr></tbody></table>"
@@ -128,7 +129,8 @@ typedef enum {
     ET_META,
     ET_NOSCRIPT,
     ET_LINK,
-    ET_LABEL
+    ET_LABEL,
+    ET_BUTTON
 } elem_type_t;
 
 static const IID * const none_iids[] = {
@@ -203,6 +205,13 @@ static const IID * const input_iids[] = {
     ELEM_IFACES,
     &IID_IHTMLInputElement,
     &IID_IHTMLInputTextElement,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
+static const IID *const button_iids[] = {
+    ELEM_IFACES,
+    &IID_IHTMLButtonElement,
     &IID_IConnectionPointContainer,
     NULL
 };
@@ -457,7 +466,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"META",      meta_iids,        &DIID_DispHTMLMetaElement},
     {"NOSCRIPT",  elem_iids,        NULL /*&DIID_DispHTMLNoShowElement*/},
     {"LINK",      link_iids,        &DIID_DispHTMLLinkElement},
-    {"LABEL",     label_iids,       &DIID_DispHTMLLabelElement}
+    {"LABEL",     label_iids,       &DIID_DispHTMLLabelElement},
+    {"BUTTON",    button_iids,      &DIID_DispHTMLButtonElement}
 };
 
 static const char *dbgstr_guid(REFIID riid)
@@ -5768,6 +5778,7 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_A,
         ET_LABEL,
         ET_INPUT,
+        ET_BUTTON,
         ET_SELECT,
         ET_OPTION,
         ET_OPTION,

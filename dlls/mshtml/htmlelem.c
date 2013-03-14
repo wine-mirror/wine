@@ -38,6 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static const WCHAR aW[]        = {'A',0};
 static const WCHAR bodyW[]     = {'B','O','D','Y',0};
+static const WCHAR buttonW[]   = {'B','U','T','T','O','N',0};
 static const WCHAR embedW[]    = {'E','M','B','E','D',0};
 static const WCHAR formW[]     = {'F','O','R','M',0};
 static const WCHAR frameW[]    = {'F','R','A','M','E',0};
@@ -67,6 +68,7 @@ typedef struct {
 static const tag_desc_t tag_descs[] = {
     {aW,         HTMLAnchorElement_Create},
     {bodyW,      HTMLBodyElement_Create},
+    {buttonW,    HTMLButtonElement_Create},
     {embedW,     HTMLEmbedElement_Create},
     {formW,      HTMLFormElement_Create},
     {frameW,     HTMLFrameElement_Create},

@@ -77,6 +77,7 @@ typedef struct event_target_t event_target_t;
     XDIID(DispHTMLAnchorElement) \
     XDIID(DispHTMLAttributeCollection) \
     XDIID(DispHTMLBody) \
+    XDIID(DispHTMLButtonElement) \
     XDIID(DispHTMLCommentElement) \
     XDIID(DispHTMLCurrentStyle) \
     XDIID(DispHTMLDocument) \
@@ -119,6 +120,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLAttributeCollection3) \
     XIID(IHTMLBodyElement) \
     XIID(IHTMLBodyElement2) \
+    XIID(IHTMLButtonElement) \
     XIID(IHTMLCommentElement) \
     XIID(IHTMLCurrentStyle) \
     XIID(IHTMLCurrentStyle2) \
@@ -869,6 +871,7 @@ HRESULT HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL,HTMLElement**) DEC
 HRESULT HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLAnchorElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLBodyElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
+HRESULT HTMLButtonElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLEmbedElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLFormElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLFrameElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;

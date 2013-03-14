@@ -1410,3 +1410,232 @@ HRESULT HTMLLabelElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem
     *elem = &ret->element;
     return S_OK;
 }
+
+typedef struct {
+    HTMLElement element;
+
+    IHTMLButtonElement IHTMLButtonElement_iface;
+} HTMLButtonElement;
+
+static inline HTMLButtonElement *impl_from_IHTMLButtonElement(IHTMLButtonElement *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLButtonElement, IHTMLButtonElement_iface);
+}
+
+static HRESULT WINAPI HTMLButtonElement_QueryInterface(IHTMLButtonElement *iface,
+                                                         REFIID riid, void **ppv)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+
+    return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
+}
+
+static ULONG WINAPI HTMLButtonElement_AddRef(IHTMLButtonElement *iface)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+
+    return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
+}
+
+static ULONG WINAPI HTMLButtonElement_Release(IHTMLButtonElement *iface)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+
+    return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
+}
+
+static HRESULT WINAPI HTMLButtonElement_GetTypeInfoCount(IHTMLButtonElement *iface, UINT *pctinfo)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+
+    return IDispatchEx_GetTypeInfoCount(&This->element.node.dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI HTMLButtonElement_GetTypeInfo(IHTMLButtonElement *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+
+    return IDispatchEx_GetTypeInfo(&This->element.node.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLButtonElement_GetIDsOfNames(IHTMLButtonElement *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+
+    return IDispatchEx_GetIDsOfNames(&This->element.node.dispex.IDispatchEx_iface, riid, rgszNames,
+            cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLButtonElement_Invoke(IHTMLButtonElement *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+
+    return IDispatchEx_Invoke(&This->element.node.dispex.IDispatchEx_iface, dispIdMember, riid,
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLButtonElement_get_type(IHTMLButtonElement *iface, BSTR *p)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLButtonElement_put_value(IHTMLButtonElement *iface, BSTR v)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLButtonElement_get_value(IHTMLButtonElement *iface, BSTR *p)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLButtonElement_put_name(IHTMLButtonElement *iface, BSTR v)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLButtonElement_get_name(IHTMLButtonElement *iface, BSTR *p)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLButtonElement_put_status(IHTMLButtonElement *iface, VARIANT v)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLButtonElement_get_status(IHTMLButtonElement *iface, VARIANT *p)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLButtonElement_put_disabled(IHTMLButtonElement *iface, VARIANT_BOOL v)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+    FIXME("(%p)->(%x)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLButtonElement_get_disabled(IHTMLButtonElement *iface, VARIANT_BOOL *p)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLButtonElement_get_form(IHTMLButtonElement *iface, IHTMLFormElement **p)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLButtonElement_createTextRange(IHTMLButtonElement *iface, IHTMLTxtRange **range)
+{
+    HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
+    FIXME("(%p)->(%p)\n", This, range);
+    return E_NOTIMPL;
+}
+
+static const IHTMLButtonElementVtbl HTMLButtonElementVtbl = {
+    HTMLButtonElement_QueryInterface,
+    HTMLButtonElement_AddRef,
+    HTMLButtonElement_Release,
+    HTMLButtonElement_GetTypeInfoCount,
+    HTMLButtonElement_GetTypeInfo,
+    HTMLButtonElement_GetIDsOfNames,
+    HTMLButtonElement_Invoke,
+    HTMLButtonElement_get_type,
+    HTMLButtonElement_put_value,
+    HTMLButtonElement_get_value,
+    HTMLButtonElement_put_name,
+    HTMLButtonElement_get_name,
+    HTMLButtonElement_put_status,
+    HTMLButtonElement_get_status,
+    HTMLButtonElement_put_disabled,
+    HTMLButtonElement_get_disabled,
+    HTMLButtonElement_get_form,
+    HTMLButtonElement_createTextRange
+};
+
+static inline HTMLButtonElement *button_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLButtonElement, element.node);
+}
+
+static HRESULT HTMLButtonElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+{
+    HTMLButtonElement *This = button_from_HTMLDOMNode(iface);
+
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IHTMLButtonElement_iface;
+    }else if(IsEqualGUID(&IID_IHTMLButtonElement, riid)) {
+        TRACE("(%p)->(IID_IHTMLButtonElement %p)\n", This, ppv);
+        *ppv = &This->IHTMLButtonElement_iface;
+    }else {
+        return HTMLElement_QI(&This->element.node, riid, ppv);
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static const NodeImplVtbl HTMLButtonElementImplVtbl = {
+    HTMLButtonElement_QI,
+    HTMLElement_destructor,
+    HTMLElement_clone,
+    HTMLElement_handle_event,
+    HTMLElement_get_attr_col,
+};
+
+static const tid_t HTMLButtonElement_iface_tids[] = {
+    HTMLELEMENT_TIDS,
+    IHTMLButtonElement_tid,
+    0
+};
+
+static dispex_static_data_t HTMLButtonElement_dispex = {
+    NULL,
+    DispHTMLButtonElement_tid,
+    NULL,
+    HTMLButtonElement_iface_tids
+};
+
+HRESULT HTMLButtonElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+{
+    HTMLButtonElement *ret;
+
+    ERR("!!!\n");
+
+    ret = heap_alloc_zero(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->IHTMLButtonElement_iface.lpVtbl = &HTMLButtonElementVtbl;
+    ret->element.node.vtbl = &HTMLButtonElementImplVtbl;
+
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLButtonElement_dispex);
+    *elem = &ret->element;
+    return S_OK;
+}
