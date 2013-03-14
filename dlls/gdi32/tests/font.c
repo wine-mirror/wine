@@ -3757,6 +3757,7 @@ static void test_GetGlyphOutline(void)
     for (i = 0; i < sizeof c / sizeof c[0]; ++i)
     {
         static const MAT2 rotate_mat = {{0, 0}, {0, -1}, {0, 1}, {0, 0}};
+        TEXTMETRIC tm;
 
         lf.lfFaceName[0] = '\0';
         lf.lfCharSet = c[i].cs;
@@ -3803,15 +3804,15 @@ static void test_GetGlyphOutline(void)
         ret = GetObject(hfont, sizeof lf, &lf);
         ok(ret > 0, "GetObject error %u\n", GetLastError());
 
-        ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat);
-        ok(ret != GDI_ERROR, "GetGlyphOutlineA error %u\n", GetLastError());
+        ret = GetTextMetrics(hdc, &tm);
+        ok(ret, "GetTextMetrics error %u\n", GetLastError());
         ret = GetGlyphOutlineA(hdc, c[i].a, GGO_METRICS, &gm2, 0, NULL, &mat);
         ok(ret != GDI_ERROR, "GetGlyphOutlineA error %u\n", GetLastError());
-        trace("Tests with height=%d,half=%d,full=%d,face=%s,charset=%d\n",
-              -lf.lfHeight, gm.gmCellIncX, gm2.gmCellIncX, lf.lfFaceName, lf.lfCharSet);
-        ok(gm2.gmCellIncX == gm.gmCellIncX * 2 || broken(gm2.gmCellIncX == -lf.lfHeight),
+        trace("Tests with height=%d,avg=%d,full=%d,face=%s,charset=%d\n",
+              -lf.lfHeight, tm.tmAveCharWidth, gm2.gmCellIncX, lf.lfFaceName, lf.lfCharSet);
+        ok(gm2.gmCellIncX == tm.tmAveCharWidth * 2 || broken(gm2.gmCellIncX == -lf.lfHeight),
            "expected %d, got %d (%s:%d)\n",
-           gm.gmCellIncX * 2, gm2.gmCellIncX, lf.lfFaceName, lf.lfCharSet);
+           tm.tmAveCharWidth * 2, gm2.gmCellIncX, lf.lfFaceName, lf.lfCharSet);
 
         ret = GetGlyphOutlineA(hdc, c[i].a, GGO_METRICS, &gm2, 0, NULL, &rotate_mat);
         ok(ret != GDI_ERROR, "GetGlyphOutlineA error %u\n", GetLastError());
@@ -3823,13 +3824,13 @@ static void test_GetGlyphOutline(void)
         hfont = CreateFontIndirect(&lf);
         ok(hfont != NULL, "CreateFontIndirect error %u\n", GetLastError());
         DeleteObject(SelectObject(hdc, hfont));
-        ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat);
-        ok(ret != GDI_ERROR, "GetGlyphOutlineA error %u\n", GetLastError());
+        ret = GetTextMetrics(hdc, &tm);
+        ok(ret, "GetTextMetrics error %u\n", GetLastError());
         ret = GetGlyphOutlineA(hdc, c[i].a, GGO_METRICS, &gm2, 0, NULL, &mat);
         ok(ret != GDI_ERROR, "GetGlyphOutlineA error %u\n", GetLastError());
-        ok(gm2.gmCellIncX == gm.gmCellIncX * 2 || broken(gm2.gmCellIncX == -lf.lfHeight),
+        ok(gm2.gmCellIncX == tm.tmAveCharWidth * 2 || broken(gm2.gmCellIncX == -lf.lfHeight),
            "expected %d, got %d (%s:%d)\n",
-           gm.gmCellIncX * 2, gm2.gmCellIncX, lf.lfFaceName, lf.lfCharSet);
+           tm.tmAveCharWidth * 2, gm2.gmCellIncX, lf.lfFaceName, lf.lfCharSet);
 
         lf.lfItalic = FALSE;
         lf.lfEscapement = lf.lfOrientation = 2700;
