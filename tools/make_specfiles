@@ -148,6 +148,11 @@ my @dll_groups =
   "version",
   "api-ms-win-downlevel-version-l1-1-0",
  ],
+ [
+  "msvcrt",
+  "ntdll",
+  "ntoskrnl.exe"
+ ],
 );
 
 my $update_flags = 0;
@@ -256,6 +261,10 @@ sub update_spec_file($)
         {
             $flags = $parent{flags};
             $flags =~ s/-ordinal\s*// if $descr{ordinal} eq "@";
+            if ($descr{flags} =~ /-private/)  # preserve -private flag
+            {
+                $flags = "-private " . $flags unless $flags =~ /-private/;
+            }
         }
 
         if ($parent{callconv} ne "stub" || $parent{args})
