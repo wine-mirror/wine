@@ -415,6 +415,60 @@ int __cdecl NTDLL_isxdigit( int c )
 
 
 /*********************************************************************
+ *		__isascii (NTDLL.@)
+ */
+int CDECL NTDLL___isascii(int c)
+{
+    return (unsigned)c < 0x80;
+}
+
+
+/*********************************************************************
+ *		__toascii (NTDLL.@)
+ */
+int CDECL NTDLL___toascii(int c)
+{
+    return (unsigned)c & 0x7f;
+}
+
+
+/*********************************************************************
+ *		__iscsym (NTDLL.@)
+ */
+int CDECL NTDLL___iscsym(int c)
+{
+    return (c < 127 && (isalnum(c) || c == '_'));
+}
+
+
+/*********************************************************************
+ *		__iscsymf (NTDLL.@)
+ */
+int CDECL NTDLL___iscsymf(int c)
+{
+    return (c < 127 && (isalpha(c) || c == '_'));
+}
+
+
+/*********************************************************************
+ *		_toupper (NTDLL.@)
+ */
+int CDECL NTDLL__toupper(int c)
+{
+    return c - 0x20;  /* sic */
+}
+
+
+/*********************************************************************
+ *		_tolower (NTDLL.@)
+ */
+int CDECL NTDLL__tolower(int c)
+{
+    return c + 0x20;  /* sic */
+}
+
+
+/*********************************************************************
  *                  strtol   (NTDLL.@)
  */
 LONG __cdecl NTDLL_strtol( const char *nptr, char **endptr, int base )

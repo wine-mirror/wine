@@ -1247,10 +1247,10 @@
 @ cdecl -private -arch=i386 _CIsqrt() NTDLL__CIsqrt
 @ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr)
 @ stdcall -private -arch=x86_64 -norelay __chkstk()
-# @ stub __isascii
-# @ stub __iscsym
-# @ stub __iscsymf
-# @ stub __toascii
+@ cdecl -private __isascii(long) NTDLL___isascii
+@ cdecl -private __iscsym(long) NTDLL___iscsym
+@ cdecl -private __iscsymf(long) NTDLL___iscsymf
+@ cdecl -private __toascii(long) NTDLL___toascii
 @ stdcall -private -arch=i386 -ret64 _alldiv(int64 int64)
 # @ stub _alldvrm
 @ stdcall -private -arch=i386 -ret64 _allmul(int64 int64)
@@ -1284,8 +1284,8 @@
 @ cdecl -private _strlwr(str)
 @ cdecl -private _strnicmp(str str long)
 @ cdecl -private _strupr(str)
-# @ stub -private _tolower
-# @ stub -private _toupper
+@ cdecl -private _tolower(long) NTDLL__tolower
+@ cdecl -private _toupper(long) NTDLL__toupper
 @ cdecl -private _ui64toa(int64 ptr long)
 @ cdecl -private _ui64tow(int64 ptr long)
 @ cdecl -private _ultoa(long ptr long)
