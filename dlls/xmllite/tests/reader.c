@@ -1288,23 +1288,20 @@ static void test_readvaluechunk(void)
     c = 0;
     b = 0;
     hr = IXmlReader_ReadValueChunk(reader, &b, 1, &c);
-todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(c == 1, "got %u\n", c);
     ok(b == ' ', "got %x\n", b);
-}
+
     /* portion read as chunk is skipped from resulting node value */
     value = NULL;
     hr = IXmlReader_GetValue(reader, &value, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
-todo_wine
     ok(value[0] == 'c', "got %s\n", wine_dbgstr_w(value));
 
     /* once value is returned/allocated it's not possible to read by chunk */
     c = 0;
     b = 0;
     hr = IXmlReader_ReadValueChunk(reader, &b, 1, &c);
-todo_wine
     ok(hr == S_FALSE, "got %08x\n", hr);
     ok(c == 0, "got %u\n", c);
     ok(b == 0, "got %x\n", b);
@@ -1312,7 +1309,6 @@ todo_wine
     value = NULL;
     hr = IXmlReader_GetValue(reader, &value, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
-todo_wine
     ok(value[0] == 'c', "got %s\n", wine_dbgstr_w(value));
 
     IXmlReader_Release(reader);
