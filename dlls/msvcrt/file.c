@@ -35,6 +35,7 @@
 # include <unistd.h>
 #endif
 #include <sys/types.h>
+#include <limits.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -3652,10 +3653,7 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
   while(rcnt>0)
   {
     int i;
-    /* Fill the buffer on small reads.
-     * TODO: Use a better buffering strategy.
-     */
-    if (!file->_cnt && size*nmemb <= MSVCRT_BUFSIZ/2 && !(file->_flag & MSVCRT__IONBF)
+    if (!file->_cnt && rcnt<MSVCRT_BUFSIZ && !(file->_flag & MSVCRT__IONBF)
             && (file->_bufsiz != 0 || msvcrt_alloc_buffer(file))) {
       file->_cnt = MSVCRT__read(file->_file, file->_base, file->_bufsiz);
       file->_ptr = file->_base;
@@ -3670,8 +3668,12 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
         file->_cnt -= i;
         file->_ptr += i;
       }
+    } else if (rcnt > UINT_MAX) {
+      i = MSVCRT__read(file->_file, ptr, UINT_MAX);
+    } else if (rcnt < MSVCRT_BUFSIZ) {
+      i = MSVCRT__read(file->_file, ptr, rcnt);
     } else {
-      i = MSVCRT__read(file->_file,ptr, rcnt);
+      i = MSVCRT__read(file->_file, ptr, rcnt - MSVCRT_BUFSIZ/2);
     }
     pread += i;
     rcnt -= i;
