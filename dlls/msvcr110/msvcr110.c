@@ -23,9 +23,6 @@
 #include "stdlib.h"
 #include "windef.h"
 #include "winbase.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(msvcr110);
 
 /*********************************************************************
  *  DllMain (MSVCR110.@)
