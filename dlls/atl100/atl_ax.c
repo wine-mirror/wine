@@ -95,7 +95,7 @@ BOOL WINAPI AtlAxWinInit(void)
         return FALSE;
 
     wcex.cbSize        = sizeof(wcex);
-    wcex.style         = 0;
+    wcex.style         = CS_GLOBALCLASS | CS_DBLCLKS;
     wcex.cbClsExtra    = 0;
     wcex.cbWndExtra    = 0;
     wcex.hInstance     = GetModuleHandleW( NULL );
