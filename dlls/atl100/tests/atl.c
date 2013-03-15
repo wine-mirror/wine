@@ -582,12 +582,12 @@ static void test_ax_win(void)
     memset(&wcex, 0, sizeof(wcex));
     wcex.cbSize = sizeof(wcex);
     ret = GetClassInfoExW(hinstance, AtlAxWin100, &wcex);
-    todo_wine ok(ret, "AtlAxWin100 has not registered\n");
+    ok(ret, "AtlAxWin100 has not registered\n");
 
     memset(&wcex, 0, sizeof(wcex));
     wcex.cbSize = sizeof(wcex);
     ret = GetClassInfoExW(hinstance, AtlAxWinLic100, &wcex);
-    todo_wine ok(ret, "AtlAxWinLic100 has not registered\n");
+    ok(ret, "AtlAxWinLic100 has not registered\n");
 }
 
 START_TEST(atl)

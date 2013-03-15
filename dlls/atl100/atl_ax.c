@@ -86,7 +86,8 @@ static LRESULT CALLBACK AtlAxWin_wndproc( HWND hWnd, UINT wMsg, WPARAM wParam, L
 BOOL WINAPI AtlAxWinInit(void)
 {
     WNDCLASSEXW wcex;
-    const WCHAR AtlAxWin[] = {'A','t','l','A','x','W','i','n',0};
+    const WCHAR AtlAxWin100[] = {'A','t','l','A','x','W','i','n','1','0','0',0};
+    const WCHAR AtlAxWinLic100[] = {'A','t','l','A','x','W','i','n','L','i','c','1','0','0',0};
 
     FIXME("semi-stub\n");
 
@@ -105,7 +106,11 @@ BOOL WINAPI AtlAxWinInit(void)
     wcex.hIconSm       = 0;
 
     wcex.lpfnWndProc   = AtlAxWin_wndproc;
-    wcex.lpszClassName = AtlAxWin;
+    wcex.lpszClassName = AtlAxWin100;
+    if ( !RegisterClassExW( &wcex ) )
+        return FALSE;
+
+    wcex.lpszClassName = AtlAxWinLic100;
     if ( !RegisterClassExW( &wcex ) )
         return FALSE;
 
