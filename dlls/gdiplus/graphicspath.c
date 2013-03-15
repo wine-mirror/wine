@@ -1009,7 +1009,8 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
     args.maxY = 0;
     args.scale = emSize / native_height;
     args.ascent = textmetric.tmAscent * args.scale;
-    status = gdip_format_string(dc, string, length, NULL, &scaled_layout_rect, format, format_string_callback, &args);
+    status = gdip_format_string(dc, string, length, NULL, &scaled_layout_rect,
+                                format, TRUE, format_string_callback, &args);
 
     DeleteDC(dc);
     DeleteObject(hfont);

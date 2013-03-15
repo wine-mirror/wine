@@ -4418,7 +4418,7 @@ GpStatus WINGDIPAPI GdipIsVisibleRectI(GpGraphics *graphics, INT x, INT y, INT w
 
 GpStatus gdip_format_string(HDC hdc,
     GDIPCONST WCHAR *string, INT length, GDIPCONST GpFont *font,
-    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
+    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format, int ignore_empty_clip,
     gdip_format_string_callback callback, void *user_data)
 {
     WCHAR* stringdup;
@@ -4441,6 +4441,11 @@ GpStatus gdip_format_string(HDC hdc,
 
     nwidth = rect->Width;
     nheight = rect->Height;
+    if (ignore_empty_clip)
+    {
+        if (!nwidth) nwidth = INT_MAX;
+        if (!nheight) nheight = INT_MAX;
+    }
 
     if (format)
         hkprefix = format->hkprefix;
@@ -4698,7 +4703,7 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     args.regions = regions;
 
     stat = gdip_format_string(hdc, string, length, font, &scaled_rect, stringFormat,
-        measure_ranges_callback, &args);
+        (stringFormat->attr & StringFormatFlagsNoClip) != 0, measure_ranges_callback, &args);
 
     SelectObject(hdc, oldfont);
     DeleteObject(gdifont);
@@ -4806,8 +4811,8 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
         if (scaled_rect.Width < 0.5) return Ok; /* doesn't fit */
     }
 
-    if (scaled_rect.Width >= 1 << 23 || scaled_rect.Width < 0.5) scaled_rect.Width = 1 << 23;
-    if (scaled_rect.Height >= 1 << 23 || scaled_rect.Height < 0.5) scaled_rect.Height = 1 << 23;
+    if (scaled_rect.Width >= 1 << 23) scaled_rect.Width = 1 << 23;
+    if (scaled_rect.Height >= 1 << 23) scaled_rect.Height = 1 << 23;
 
     get_font_hfont(graphics, font, format, &gdifont, NULL);
     oldfont = SelectObject(hdc, gdifont);
@@ -4822,7 +4827,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     args.linesfilled = &lines;
     lines = glyphs = 0;
 
-    gdip_format_string(hdc, string, length, font, &scaled_rect, format,
+    gdip_format_string(hdc, string, length, font, &scaled_rect, format, TRUE,
         measure_string_callback, &args);
 
     if (linesfilled) *linesfilled = lines;
@@ -4979,8 +4984,8 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
         if (scaled_rect.Width < 0.5) return Ok; /* doesn't fit */
     }
 
-    if (scaled_rect.Width >= 1 << 23 || scaled_rect.Width < 0.5) scaled_rect.Width = 1 << 23;
-    if (scaled_rect.Height >= 1 << 23 || scaled_rect.Height < 0.5) scaled_rect.Height = 1 << 23;
+    if (scaled_rect.Width >= 1 << 23) scaled_rect.Width = 1 << 23;
+    if (scaled_rect.Height >= 1 << 23) scaled_rect.Height = 1 << 23;
 
     if (!(format_flags & StringFormatFlagsNoClip) &&
         scaled_rect.Width != 1 << 23 && scaled_rect.Height != 1 << 23)
@@ -5005,7 +5010,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     GetTextMetricsW(hdc, &textmetric);
     args.ascent = textmetric.tmAscent / rel_height;
 
-    gdip_format_string(hdc, string, length, font, &scaled_rect, format,
+    gdip_format_string(hdc, string, length, font, &scaled_rect, format, TRUE,
         draw_string_callback, &args);
 
     DeleteObject(rgn);

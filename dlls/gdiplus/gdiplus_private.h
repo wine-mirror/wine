@@ -442,7 +442,7 @@ typedef GpStatus (*gdip_format_string_callback)(HDC hdc,
 
 GpStatus gdip_format_string(HDC hdc,
     GDIPCONST WCHAR *string, INT length, GDIPCONST GpFont *font,
-    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
+    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format, int ignore_empty_clip,
     gdip_format_string_callback callback, void *user_data) DECLSPEC_HIDDEN;
 
 void get_log_fontW(const GpFont *, GpGraphics *, LOGFONTW *) DECLSPEC_HIDDEN;
