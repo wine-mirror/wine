@@ -1679,6 +1679,8 @@ HRESULT HTMLElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *eve
     return S_OK;
 }
 
+cp_static_data_t HTMLElementEvents2_data = { HTMLElementEvents2_tid, NULL /* FIXME */, TRUE };
+
 const cpc_entry_t HTMLElement_cpc[] = {
     HTMLELEMENT_CPC,
     {NULL}

@@ -883,11 +883,19 @@ static HRESULT call_disp_func(IDispatch *disp, DISPPARAMS *dp, VARIANT *retv)
     return hres;
 }
 
-static HRESULT call_cp_func(IDispatch *disp, DISPID dispid, VARIANT *retv)
+static HRESULT call_cp_func(IDispatch *disp, DISPID dispid, HTMLEventObj *event_obj, VARIANT *retv)
 {
     DISPPARAMS dp = {NULL,NULL,0,0};
+    VARIANT event_arg;
     ULONG argerr;
     EXCEPINFO ei;
+
+    if(event_obj) {
+        V_VT(&event_arg) = VT_DISPATCH;
+        V_DISPATCH(&event_arg) = (IDispatch*)&event_obj->IHTMLEventObj_iface;
+        dp.rgvarg = &event_arg;
+        dp.cArgs = 1;
+    }
 
     memset(&ei, 0, sizeof(ei));
     return IDispatch_Invoke(disp, dispid, &IID_NULL, 0, DISPATCH_METHOD, &dp, retv, &ei, &argerr);
@@ -1019,7 +1027,8 @@ static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, 
                 V_VT(&v) = VT_EMPTY;
 
                 TRACE("cp %s [%u] >>>\n", debugstr_w(event_info[eid].name), i);
-                hres = call_cp_func(cp->sinks[i].disp, event_info[eid].dispid, &v);
+                hres = call_cp_func(cp->sinks[i].disp, event_info[eid].dispid,
+                        cp->data->pass_event_arg ? event_obj : NULL, &v);
                 if(hres == S_OK) {
                     TRACE("cp %s [%u] <<<\n", debugstr_w(event_info[eid].name), i);
 

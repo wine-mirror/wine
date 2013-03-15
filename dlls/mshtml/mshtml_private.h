@@ -114,6 +114,7 @@ typedef struct event_target_t event_target_t;
     XDIID(DispHTMLUnknownElement) \
     XDIID(DispHTMLWindow2) \
     XDIID(HTMLDocumentEvents) \
+    XDIID(HTMLElementEvents2) \
     XIID(IHTMLAnchorElement) \
     XIID(IHTMLAttributeCollection) \
     XIID(IHTMLAttributeCollection2) \
@@ -430,6 +431,7 @@ typedef enum {
 typedef struct _cp_static_data_t {
     tid_t tid;
     void (*on_advise)(IUnknown*,struct _cp_static_data_t*);
+    BOOL pass_event_arg;
     DWORD id_cnt;
     DISPID *ids;
 } cp_static_data_t;
@@ -666,7 +668,8 @@ typedef struct {
     IHTMLElement3_tid,      \
     IHTMLElement4_tid
 
-#define HTMLELEMENT_CPC {NULL}
+extern cp_static_data_t HTMLElementEvents2_data;
+#define HTMLELEMENT_CPC {&DIID_HTMLElementEvents2, &HTMLElementEvents2_data}
 extern const cpc_entry_t HTMLElement_cpc[];
 
 typedef struct {
