@@ -584,3 +584,51 @@ DWORD WINAPI AtlGetVersion(void *pReserved)
 {
    return _ATL_VER;
 }
+
+/**********************************************************************
+ * AtlAxWin class window procedure
+ */
+static LRESULT CALLBACK AtlAxWin_wndproc( HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam )
+{
+    if ( wMsg == WM_CREATE )
+    {
+            DWORD len = GetWindowTextLengthW( hWnd ) + 1;
+            WCHAR *ptr = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+            if (!ptr)
+                return 1;
+            GetWindowTextW( hWnd, ptr, len );
+            AtlAxCreateControlEx( ptr, hWnd, NULL, NULL, NULL, NULL, NULL );
+            HeapFree( GetProcessHeap(), 0, ptr );
+            return 0;
+    }
+    return DefWindowProcW( hWnd, wMsg, wParam, lParam );
+}
+
+BOOL WINAPI AtlAxWinInit(void)
+{
+    WNDCLASSEXW wcex;
+    const WCHAR AtlAxWin[] = {'A','t','l','A','x','W','i','n',0};
+
+    FIXME("semi-stub\n");
+
+    if ( FAILED( OleInitialize(NULL) ) )
+        return FALSE;
+
+    wcex.cbSize        = sizeof(wcex);
+    wcex.style         = CS_GLOBALCLASS;
+    wcex.cbClsExtra    = 0;
+    wcex.cbWndExtra    = 0;
+    wcex.hInstance     = GetModuleHandleW( NULL );
+    wcex.hIcon         = NULL;
+    wcex.hCursor       = NULL;
+    wcex.hbrBackground = NULL;
+    wcex.lpszMenuName  = NULL;
+    wcex.hIconSm       = 0;
+
+    wcex.lpfnWndProc   = AtlAxWin_wndproc;
+    wcex.lpszClassName = AtlAxWin;
+    if ( !RegisterClassExW( &wcex ) )
+        return FALSE;
+
+    return TRUE;
+}

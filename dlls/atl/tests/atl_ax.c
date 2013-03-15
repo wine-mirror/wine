@@ -35,6 +35,7 @@
 #include <olectl.h>
 #include <ocidl.h>
 #include <exdisp.h>
+#include <atlbase.h>
 
 static HRESULT (WINAPI *pAtlAxAttachControl)(IUnknown *, HWND, IUnknown **);
 
@@ -114,6 +115,24 @@ static void test_AtlAxAttachControl(void)
     DestroyWindow(hwnd);
 }
 
+static void test_ax_win(void)
+{
+    BOOL ret;
+    WNDCLASSEXW wcex;
+    static const WCHAR AtlAxWin[] = {'A','t','l','A','x','W','i','n',0};
+    static HMODULE hinstance = 0;
+
+    ret = AtlAxWinInit();
+    ok(ret, "AtlAxWinInit failed\n");
+
+    hinstance = GetModuleHandleA(NULL);
+    memset(&wcex, 0, sizeof(wcex));
+    wcex.cbSize = sizeof(wcex);
+    ret = GetClassInfoExW(hinstance, AtlAxWin, &wcex);
+    ok(ret, "AtlAxWin has not registered\n");
+    ok(wcex.style == CS_GLOBALCLASS, "wcex.style %08x\n", wcex.style);
+}
+
 START_TEST(atl_ax)
 {
     init_function_pointers();
@@ -127,6 +146,8 @@ START_TEST(atl_ax)
         test_AtlAxAttachControl();
     else
         win_skip("AtlAxAttachControl is not available\n");
+
+    test_ax_win();
 
     CoUninitialize();
 }

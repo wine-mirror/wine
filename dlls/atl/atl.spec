@@ -33,7 +33,7 @@
 39 stdcall AtlAxCreateControl(ptr ptr ptr ptr) atl100.AtlAxCreateControl
 40 stdcall AtlAxCreateControlEx(ptr ptr ptr ptr ptr ptr ptr) atl100.AtlAxCreateControlEx
 41 stdcall AtlAxAttachControl(ptr ptr ptr) atl100.AtlAxAttachControl
-42 stdcall AtlAxWinInit() atl100.AtlAxWinInit
+42 stdcall AtlAxWinInit()
 43 stdcall AtlModuleAddCreateWndData(ptr ptr ptr)
 44 stdcall AtlModuleExtractCreateWndData(ptr)
 45 stdcall AtlModuleRegisterWndClassInfoW(ptr ptr ptr)
