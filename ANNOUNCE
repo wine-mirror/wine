@@ -1,15 +1,17 @@
-The Wine development release 1.5.25 is now available.
+The Wine development release 1.5.26 is now available.
 
 What's new in this release (see below for details):
-  - Proper cursor support in the Mac driver.
-  - Fixes for right-to-left support in RichEdit.
-  - Initial version of a Wingdings font.
+  - OpenGL support in the Mac driver.
+  - Clipboard and drag&drop support in the Mac driver.
+  - Improvements to the URL cache.
+  - Some fixes for ARM binaries.
+  - SPARC platform no longer supported.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://prdownloads.sourceforge.net/wine/wine-1.5.25.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.5/wine-1.5.25.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.5.26.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.5/wine-1.5.26.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -25,337 +27,376 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.5.25 (total 40):
+Bugs fixed in 1.5.26 (total 49):
 
-   5341  SourceInsight: Missing dock button
-   8942  Astral Masters no longer gets past start screen
-  17130  felix2: The screenmate flashes and doesn't move
-  18819  LOK Soul Reaver program error
-  19144  QueryContextAttributesW returns wrong return value
-  19504  Moedan: Crashes after showing developer's logo.
-  19678  Lingoes does not start
-  21283  sPlan 7.0: Non properly text rotation
-  21856  VB6 modal form appears BEHIND parent (borderless) form when focus is on certain controls, making parent form unusable.
-  22227  Wrong grayed picture for disabled vb6 controls
-  22551  Multiple .NET apps fail to load riched20.dll into memory (.NET Framework/Windows Forms wants riched20.dll loaded into lower 2GiB address space range)
-  22860  Enterprise Architect fails to create a new project or loads an existing one
-  23227  G-Police: Page fault on read access
-  23986  datetime control SetRange() has no effect, enter big year will cause CTime assert failed
-  24669  Civilization V crashes on startup
-  26261  Start menu items are not displayed
-  26465  Sound Recorder cannot convert audio codec/sample rate, due to 'acmFormatChooseW' missing
-  26775  Ace of Spades: Incomplete Sound
-  27941  Very slow rendering in sPlan7
-  29616  1Password crashes while creating a backup
-  31456  Emulating a virtual screen does not work
-  31769  windowsx.h macro HANDLE_WM_DISPLAYCHANGE is incorrect
-  31987  FindNextFile/DeleteFile loop fails for directories with many files
-  32391  Iexplore crashes play.google.com
-  32697  Word 2003 crashes on formula edit
-  32709  The Testament of Sherlock Holmes crashes at launch
-  32743  putty_arm for jailbroken WinRT needs KERNEL32.dll.GetCurrentPackageId
-  32798  Memory leak in Path of Exile
-  32829  TurboTax 2012 crashes when applying updater preferences
-  32846  dxdiag: can't retrieve network info
-  32854  Winedbg on ARM: gdb proxy mode lacks support for reading CPSR
-  32905  MT4(MetaTrader) crash at start when mpd playing music
-  32919  Yarmap causes Unhandled exception: page fault on read access in 32 bit code
-  32990  Wine on ARM: relay tracing is broken with entry points having an odd number of arguments, calling into glibc code that makes use of alloca()
-  33011  Metatrader4 crashes trying to open message
-  33014  Steam enters into an infinite update loop upon opening with wine 1.4.1
-  33029  wine-gecko downloads broken
-  33063  Rosetta Stone 4.5.5 - RosettaStoneLtdServices.exe crash on start
-  33064  Rosetta Stone 4.5.5 - Cannot start lesson: See only a gray box
-  33071  Adobe Reader XI not installing
+   1886  windows media player 9 setup fails while registering Portable Media Serial Number Service
+   9548  pxtone: Can't save new project files (*.ptcop), or *.pttune
+  11342  NFS3 demo version does not uninstall
+  12832  Propellerheads reason 4 works a lot slower than on WinXP
+  13155  msvideo problems when running M1.EXE
+  13194  Gordian Knot unable to open codec settings dialog
+  14140  Entropia Universe installer hangs
+  14421  Wing Commander 3 Kilrathi saga edition. Sound Stutters on movie playback
+  16263  Priority: Survive game window flickers
+  16975  [StrongDC++] switching between tabs show background windows
+  17680  nhOneClick: Authorization required message on some HTML pages
+  20637  3DMark 2000, 2001SE - no result of last test
+  21655  MacOS: broken mixing in dsound8 tests + assertion failure
+  22793  JumpGate: The Reconstruction Initiative glitches badly.
+  23100  BURRACO: startup error and then closing connection (needs mshtml.HTMLElement2_insertAdjacentElement impl)
+  27003  Latest gnutls breaks wine ssl support
+  27210  MCM2: wineqtdecoder crashes after intro
+  27320  sims3 crashes after a while in wined3d
+  27466  Listview redraw is broken
+  27854  Listview: custom draw code overwrites text background color when it shouldn't (it seems)
+  27855  entry field in Quicken98-2002 follows keys rather than filling out field
+  28039  IAudioClock_GetPosition must ignore underruns (MacOS)
+  28723  Sound stutter in Rage when emulated windows version is set to "Windows 7" (XAudio2 -> mmdevapi sound output path)
+  28856  Crackling/popping sounds in Starcraft 2 (PulseAudio)
+  29274  Steam on Mac - mic test fails and crashes Counter Strike 1.6
+  30071  Need a CreateTimerQueueTimer that is stable over time
+  30591  Houdini 12.x (3D animation tool) crashes due to unimplemented function msvcrt.dll.__pxcptinfoptrs in "purist" mode (builtin msvcr90)
+  31383  Might and Magic Heroes crashes with GL_INVALID_OPERATION
+  31920  ComboBox in a program written with Delphi is shown incorrectly
+  32276  Railworks 3 2013 Trainsimulator glsl errors.
+  32302  Endless Space >=1.0.25: crash during advanced game
+  32427  Delphi listview: wrong font when using custom draw
+  32541  Endless Space crashes when activating certain options in the menu
+  32766  Multiple applications ported to WinRT/ARM require msvcr110.dll (Miranda IM)
+  32960  Unimplemented function user32.dll.UserHandleGrantAccess
+  33045  Bunch of Heroes freezing on start at the beginning of the intro video
+  33054  Enterprise Architect 10 fails to load EAExample.eap poject
+  33083  Magic: The Gathering Online Wide Beta installer crashes with X error
+  33090  Apache Flex SDK Installer: can not access file system.
+  33102  Drakensang exits with error messages
+  33110  AudioSurf crash on start
+  33144  DnsQuery_A API returns DNS_ERROR_BAD_PACKET when querying for MX records.
+  33151  .NET 2.0 program crashes eInvalidOperationException on startup mscorwks
+  33152  GetAdaptersAddresses reports incorrect address family for IPv4 addresses
+  33168  Disciples: Sacred Lands crashes on start
+  33169  Total Annihilation : Kindoms crashes
+  33197  Multiple applications ported to WinRT/ARM using msvcr110.dll require some msvcrt math functions (Audacity)
+  33198  Multiple applications ported to WinRT/ARM using msvcr110.dll require msvcrt.setjmp
+  33200  AliWangwang: needs unimplemented function atl100.AtlSetPerUserRegistration
 
 ----------------------------------------------------------------
 
-Changes since 1.5.24:
+Changes since 1.5.25:
 
-Alessandro Pignotti (8):
-      quartz: IEnumFiltersImpl needs to access data from IGraphFilterImpl.
-      quartz: Properly implement IGraphVersion in IFilterGraph.
-      quartz: Modify GetClassMediaFile to also extract the SourceFilter value.
-      quartz: Make GetClassMediaFile visible in the module.
-      quartz: Check byte patterns in GetFileSourceFilter.
-      quartz: Use the moniker to create the filter directly.
-      quartz: Get the CLSID directly from the filter.
-      quartz: It's not guaranteed that filters have a GUID in the property bag.
+Akihiro Sagawa (2):
+      msvcrt/tests: Add _wcstoi64/_wcstoui64 tests.
+      msvcrt: Fix incorrect casts in _wcstoi64_l and _wcstoui64_l.
 
-Alexandre Julliard (6):
-      gdi32/tests: Define the required Windows version before including anything.
-      user32/tests: Define the required Windows version before including anything.
-      rpcrt4/tests: Define the required Windows version before including anything.
-      kernel32: Attempt to buffer the full directory in FindFirstFile to avoid races.
-      winegcc: Don't use prelink when cross-compiling.
-      psapi/tests: Define the required Windows version before including anything.
+Alessandro Pignotti (4):
+      strmbase: Remove code duplicated by every user of ISeekingPassThruImpl.
+      qedit: Implement IMediaSeeking and IMediaPosition in sample grabber.
+      quartz: The filter graph manager should handle GetCurrentPosition itself.
+      strmbase: Frame scheduling should use IMediaSample::GetTime.
 
-Alistair Leslie-Hughes (1):
-      webservices: Add new dll.
+Alexandre Julliard (22):
+      vbscript: Tweak enum macros to avoid confusing winapi_extract.
+      gdi32: Store the font stat information when loading it.
+      gdi32: Increment the face refcount when loading the same font file multiple times.
+      winex11: Explicitly set the border pixel when creating the client window.
+      winex11: Wait for the client window to be created on the server side.
+      server: Use socklen_t where appropriate.
+      ws2_32: Use socklen_t where appropriate.
+      winedbg: Use socklen_t where appropriate.
+      winhttp: Always pass a ULONG variable to ioctlsocket.
+      wininet: Always pass a ULONG variable to ioctlsocket.
+      vbscript: Return after assert(0) to silence warnings.
+      jscript: Return after assert(0) to silence warnings.
+      exception.h: Android doesn't have sigsetjmp.
+      winefile: Pass a value instead of a pointer to avoid type mismatch warnings.
+      msi: Avoid intermediate variables when calling create_record.
+      msvcrt: Export the ARM version of some mangled names.
+      msvcrt: Export the float math functions on ARM.
+      msvcrt: Use -arch=i386 everywhere for consistency.
+      msvcrt: Synchronize spec files.
+      ntdll: Copy some missing math functions from msvcrt.
+      ntdll: Copy some missing string functions from msvcrt.
+      ntoskrnl: Synchronize spec file with ntdll and msvcrt.
 
-Andrew Talbot (19):
-      msvcp90: Avoid signed-unsigned integer comparisons.
-      msi: Avoid signed-unsigned integer comparisons.
-      mshtml: Avoid signed-unsigned integer comparisons.
-      msxml3: Avoid signed-unsigned integer comparisons.
-      msvcrt: Avoid signed-unsigned integer comparisons.
-      ntdll: Avoid signed-unsigned integer comparisons.
-      oleaut32: Avoid signed-unsigned integer comparisons.
-      ole32: Avoid signed-unsigned integer comparisons.
-      quartz: Avoid signed-unsigned integer comparisons.
-      oledlg: Avoid signed-unsigned integer comparisons.
-      oledb32: Avoid signed-unsigned integer comparisons.
-      shell32: Avoid signed-unsigned integer comparisons.
-      rpcrt4: Avoid signed-unsigned integer comparisons.
-      sane.ds: Avoid signed-unsigned integer comparisons.
-      usbd.sys: Avoid signed-unsigned integer comparisons.
-      urlmon: Avoid signed-unsigned integer comparisons.
-      usp10: Avoid signed-unsigned integer comparisons.
+Alistair Leslie-Hughes (3):
+      msxml3: Add xmlns attribute test.
+      msxml3: Implement IXMLParser Get/Set Factory.
+      msxml3: Implment IXMLParser SetInput.
+
+Andrew Eikum (3):
+      winmm/tests: Add another valid return code.
+      winmm: Truncate buffers to align to frame size.
+      winmm/tests: Add tests for non-block-aligned fragment sizes.
+
+Andrew Talbot (16):
+      winealsa.drv: Avoid signed-unsigned integer comparisons.
       windowscodecs: Avoid signed-unsigned integer comparisons.
-      kernel32/tests: Do not assume the signedness of plain char.
+      mscoree: Remove unneeded address-of operator from function name.
+      wineps.drv: Avoid signed-unsigned integer comparisons.
+      wined3d: Avoid signed-unsigned integer comparisons.
+      winhttp: Avoid signed-unsigned integer comparisons.
+      winex11.drv: Avoid signed-unsigned integer comparisons.
+      xmllite: Avoid signed-unsigned integer comparisons.
+      wsock32: Avoid signed-unsigned integer comparisons.
+      ws2_32: Avoid signed-unsigned integer comparisons.
+      msvcp60: Avoid signed-unsigned integer comparisons.
+      joy.cpl: Avoid signed-unsigned integer comparisons.
+      dwrite: Avoid signed-unsigned integer comparisons.
+      msvcp71: Avoid signed-unsigned integer comparisons.
+      wininet: Avoid signed-unsigned integer comparisons.
+      user32: Avoid signed-unsigned integer comparisons.
 
-André Hentschel (10):
-      winhlp32: Properly detect non-ASCII chars.
-      ntdll: Correctly align the stack for odd numbers of arguments in relay traces on ARM.
-      kernel32: Add stub for GetCurrentPackageId.
-      comctl32/tests: Mark win8 behaviour as broken.
-      winedbg: There is no hardware single stepping support on ARM.
-      winedbg: Add support for XML Target Descriptions to read Cpsr on ARM.
-      api-ms-win*: Update spec files.
-      msvcrt: Add a new file for the ARM exception handling.
-      msvcrt/tests: Mark win8 behaviour as broken.
-      msvcrt: Fix DISPATCHER_CONTEXT on ARM.
+André Hentschel (17):
+      winetest: Remove SPARC support.
+      dbghelp: Remove SPARC support.
+      kernel32/tests: Remove SPARC support.
+      ntdll: Remove SPARC support.
+      server: Remove SPARC support.
+      winedbg: Remove SPARC support.
+      widl: Remove SPARC and Alpha support.
+      winegcc: Remove SPARC support.
+      winebuild: Remove SPARC support.
+      winedump: Remove SPARC support.
+      libport: Remove SPARC support.
+      winapi: Remove SPARC support.
+      include: Remove SPARC support.
+      winecrt0: Android NDK doesn't have _init and _fini.
+      ntdll: Unify the usage of internal SIGCONTEXT type on ARM and ARM64.
+      winebuild: Remove get_asm_short_keyword.
+      msvcrt: Add setjmp for ARM in spec file.
 
-Austin English (1):
-      riched20: Make sure to load dll below 2GB address space.
+C.W. Betts (1):
+      winemac: Fix compilation on Lion and later.
 
-Byeongsik Jeon (1):
-      gdi32: Fix the GdiGetCodePage() support ANSI_CHARSET font associated charset.
+Daniel Jelinski (6):
+      comctl32/imagelist: Fixed merging of images without mask.
+      comctl32/listview: Fix font handling in custom draw.
+      comctl32/listview: Fix custom draw prepaint handling.
+      comctl32/listview: Correct sending NM_CUSTOMDRAW to subitem 0.
+      comctl32/imagelist: Use proper color format for merged image lists.
+      comctl32/listview: Fix overwriting of item values.
 
-Carlo Bramini (1):
-      windowsx.h: Fix HANDLE_WM_DISPLAYCHANGE macro.
+Detlef Riekenberg (1):
+      kernel32/tests: Fix failures with virtual Drives (AppVirt Client).
 
-Daniel Jelinski (3):
-      comctl32/listview: Fix incorrect message parameters.
-      comctl32/listview: Implement overlay image support.
-      comctl32/imagelist: Allow only one drag cursor.
+Dmitry Timoshkov (13):
+      Revert "gdiplus: Add support for StringFormatFlagsNoClip.".
+      gdiplus: GdipDrawString should not clip the string if StringFormatFlagsNoClip is specified.
+      gdiplus: Add some tests for string format alignment.
+      windowscodecs: Add a test for palette of a PNG image with PLTE and tRNS chunks.
+      windowscodecs: Add a comment to PNG decoder that Windows ignores CRC of the chunks.
+      windowscodecs: Ask libpng to ignore CRC of PNG chunks.
+      windowscodecs: Fix handling of a tRNS PNG chunk in the frame CopyPalette method.
+      gdiplus: Print a passed in rectangle in GdipCombineRegionRect.
+      gdiplus: Protect from mixing BrushTypeLinearGradient and BrushTypePathGradient.
+      gdiplus: Ignore gdiplus page and world transformations when creating a gdi32 clipping region.
+      gdiplus: Add more GdipMeasureString/GdipMeasureCharacterRanges clipping and alignment tests.
+      gdiplus: GdipMeasureCharacterRanges shouldn't add margins to string bounds.
+      gdiplus: GdipMeasureCharacterRanges should treat empty layout extents as infinite when StringFormatFlagsNoClip is specified.
 
-Dmitry Timoshkov (28):
-      gdiplus: Forward GdipDrawLine to GdipDrawLines.
-      gdiplus: Forward GdipDrawLineI to GdipDrawLine.
-      gdiplus: Forward GdipDrawLinesI to GdipDrawLines.
-      include/gdiplusenums.h: Add FlatnessDefault definition.
-      gdiplus: Avoid a devision by zero when a being added segment length is 0.
-      gdiplus: Avoid a crash in GdipDrawImagePointRect.
-      gdiplus: Forward GdipDrawBezierI to GdipDrawBezier.
-      gdiplus: Slightly simplify GdipDrawClosedCurve2 implementation.
-      gdiplus: Reimplement GdipDrawCurve2 using GdipDrawPath.
-      gdiplus: Reimplement GdipDrawLines using GdipDrawPath.
-      gdiplus: Reimplement GdipDrawArc using GdipDrawPath.
-      gdiplus: Reimplement GdipDrawBeziers using GdipDrawPath.
-      gdiplus: Forward GdipDrawBezier to GdipDrawBeziers.
-      gdiplus: Reimplement GdipDrawEllipse using GdipDrawPath.
-      gdiplus: Reimplement GdipDrawPie using GdipDrawPath.
-      gdiplus: Reimplement GdipDrawRectangle using GdipDrawPath.
-      gdiplus: Reimplement GdipDrawRectangles using GdipDrawPath.
-      gdiplus: Slightly simplify GdipFillClosedCurve2 implementation.
-      gdiplus: Reimplement GdipFillRectangles using GdipFillPath.
-      gdiplus: Use an off-screen DC for font enumeration.
-      gdiplus: Use an off-screen DC as an image surface.
-      gdiplus: Use an off-screen DC to trace a path.
-      gdiplus: Correct the GdipDrawString .spec entry.
-      gdiplus: Remove debug traces from GdipBitmapGetPixel and GdipBitmapSetPixel.
-      gdiplus: Add some tests for ARGB conversions.
-      gdiplus: Round up when converting from 32-bit ARGB to PARGB.
-      gdiplus: If a device doesn't support AlphaBlend don't convert image to PARGB.
-      fonts: Add an initial version of Wingdings font.
+Filip Navara (1):
+      iphlpapi: Use prefixed WS_ structures to avoid misalignment on OS X builds.
 
-Francois Gouget (2):
-      ddraw/tests: Fix the refresh rate test when running with the Windows 'Standard VGA' driver.
-      d3d9/tests: CheckDeviceType() may also return D3DERR_NOTAVAILABLE for D3DFMT_X1R5G5B5.
+Francois Gouget (8):
+      gdiplus/tests: Skip the tests if unable to load the TIFF image.
+      mshtml/tests: Make test_insert_adjacent_elems() static.
+      inetcomm: Make mimebody_create() static.
+      msvcrt: Remove WINAPI on static functions where not needed.
+      qcap: Fix compilation on systems that have v4l1 but not VIDIOCMCAPTURE & co.
+      d3dx9_34: Add a space between the spec entry name and the implementation function.
+      msxml3/tests: Make test_xmlns_attribute() static.
+      msvcr110: Remove an unused debug channel.
 
-Hans Leidekker (10):
-      wmiutils: Add support for for parsing and serializing a key list.
-      wmiutils: Add a stub implementation of IWbemPathKeyList.
-      wmiutils: Implement IWbemPathKeyList::GetCount.
-      wmiutils: Implement IWbemPathKeyList::RemoveAllKeys.
-      rpcrt4: Accept HTTP idle packets while waiting for the second prepare header.
-      wbemprox: Avoid a crash in destroy_view.
-      wbemprox: Implement more properties of Win32_CDROMDrive.
-      wbemprox: Add a partial implementation of Win32_DiskPartition.
-      msi: Handle more than one patch per file.
-      msi: Don't attempt to patch files from disabled components.
+Frédéric Delanoy (1):
+      vbscript: Specify correct variable in memory allocation check (coverity).
 
-Huw Davies (10):
-      riched20: Add the ability to CharFromPoint to either pick the closest leading edge or the leading edge of the selected character.
-      usp10: Clusters are represented by glyph indices not character positions.
-      riched20: Change ME_FindRunInRow to fill out a cursor structure.
-      riched20: Return a BOOL that indicates whether the hit is exact.
-      riched20: Only retrieve the next row.
-      riched20: Rewrite ME_FindPixelPos to use ME_GetRunInRow.
-      riched20: Correctly set the row's x position.
-      riched20: Allow the cursor offset to be equal to the run length - this implies the cursor is at the end of the run, which isn't necessarily the start of the next.
-      riched20: Don't assume the the runs in a row are in visual order.
-      riched20: Send WM_CHAR notifications.
+Hans Leidekker (9):
+      winhttp: Use symbolic constants for HTTP status codes.
+      winhttp: Add a helper to retrieve the redirect URL.
+      winhttp: Implement WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP.
+      winhttp: Make sure to clear response headers from a previous request.
+      wininet: Port resolution doesn't depend on the secure flag.
+      winhttp: Make the first parameter of resolve_hostname const.
+      user32: Add a stub implementation of UserHandleGrantAccess.
+      dnsapi: Increase maximum packet size.
+      winhttp: Implement WINHTTP_OPTION_CONNECTION_INFO.
 
-Jacek Caban (42):
-      urlmon: Skip https tests on IE6.
-      wininet: Address string should never be converted to UNICODE in status notifications.
-      wininet: Removed broken cache tests.
-      mshtml: Fixed tests on some broken Vista versions.
-      oleaut32: Fixed copy&paste mistake in SysFreeString.
-      jscript: Use to_int32 in to_uint32 implementation.
-      jscript: Fixed BSTR leak.
-      mshtml: Don't crash if fire_event_obj is called on detached document.
-      winhttp: Get cert store directly from cert in netconn_verify_cert.
-      urlmon: Added a few more forward to propsys.
-      mshtml: Forward IHTMLDocument3::get_childNodes to IHTMLDOMNode implemnentation.
-      mshtml: Added IHTMLWindow2::onfocus property implementation.
-      mshtml: Addeed IHTMLDocument5::createAttribute implementation.
-      mshtml: Added support for IHTMLDOMAttribute::get_nodeName in detached attributes.
-      mshtml: Added IHTMLDocument5::createAttribute tests.
-      winhttp: Removed no longer used netconn_init argument.
-      wininet: Fail in NETCON_secure_connect instead of create_netconn if OpenSSL is not available.
-      vbscript: Added support for a few more constants.
-      urlmon: Use separated variable for InternetQueryDataAvailable to avoid races.
-      mshtml: Don't report IHTMLTextContainer as supported in anchor element.
-      mshtml: Added IHTMLAnchorElement::get_hostname implementation.
-      widl: Allow shadowing imported types with typedef.
-      msctf.idl: Added some missing declarations.
-      wininet: Don't call get_avail_data multiple times in HTTP_ReceiveRequestData.
-      wininet: Moved dialog-related functions to dialog.c.
-      vbscript: Make constant type explicit.
-      vbscript: Added color constants.
-      vbscript: Fixed chr(0) implementation.
-      vbscipt: Added string constants.
-      secur32: Report SecPkgContext_ConnectionInfo in bits, not bytes.
-      mshtml.idl: Added IHTMLLabelElement* interfaces declarations.
-      mshtml: Added IHTMLLabelElement stub implementation.
-      ieframe: Fixed QI tests on IE10, where IStdMarshalInfo is supported by WebBrowser object.
-      urlmon.idl: Added IGetBindHandle declaration.
-      wininet: Renamed useSSL to secure and set it after secure connection is established.
-      wininet: Renamed socketFD to socket.
-      ieframe: Fixed tests on IE10.
-      mshtml: Fixed handling escaped paths in is_gecko_path.
-      mshtml: Fixed 'adjacent' spelling.
-      mshtml: insert_adjacent_node clean up.
-      mshtml: Added IHTMLElement2::insertAdjacentElement implementation.
-      mshtml: Added IHTMLElement2::insertAdjacentElement tests.
+Huw Davies (1):
+      usp10: Don't read past the end of the context_type array.
 
-Jörg Höhle (9):
-      ntdll: Stabilize CreateTimerQueueTimer callbacks over time.
-      mmdevapi/tests: Produce audible 16bit output too.
-      winmm: WAVE_OPEN_QUERY causes no WIM/WOM_OPEN notification.
-      mmsystem: Use SEGPTR when the .spec says so.
-      mmsystem: Do not rewrite input parameters.
-      mmsystem: Always use CALLBACK_FUNCTION to update MIDI/WAVEHDR.dwFlags.
-      winealsa: Reword some MIDI log messages.
-      wineoss: Add midi MTC Quarter Frame support (on output).
-      winmm: Prevent some MIDI race conditions.
+Jacek Caban (38):
+      jscript: Added jsstr_substr helper and use it in String object implementation.
+      jscript: Use jsstr_substr in jsregexp.c where possible.
+      wininet: Use secure variable instead of ssl_s handle in a few more places.
+      jscript: Added jsstr_flush helper and use it in array_join.
+      jscript: Use jsstr_flush in Error_toString.
+      jscript: Use jsstr_flush in construct_function.
+      jscript: Use jsstr_flush in jsstr_concat.
+      jscript: Use jsstr_flush in jsval_to_variant.
+      jscript: Use jsstr_flush in variant_change_type.
+      jscript: Use jsstr_flush in String_concat.
+      jscript: Reimplemented do_attributeless_tag_format without direct access to object's string buffer.
+      jscript: Reimplemented do_attribute_tag_format without direct access to object's string buffer.
+      jscript: Use (index,length) pair as match result.
+      jscript: Use jsstr_flush in literal_as_bstr.
+      urlmon: Fixed handling binding reading immediately from cache.
+      urlmon: Added HTTP cache reading tests.
+      wininet: Fixed crash in chunked_read if netconn is not available.
+      jscript: Pass msg as jsstr_t to create_error.
+      jscript: Reuse static instance of 'undefined' string.
+      jscript: Avoid direct access to string buffer in a few more places.
+      urlmon: Fixed some test failures on IE10.
+      wininet: Don't pass expected cache file size to CreateUrlCacheEntry if it's unknown.
+      wininet: Added a test of request reading from cache.
+      wininet: Skip test_open_url_async on IEs older than 7.
+      jscript: Use BSTR also for pure IDispatch call in disp_delete_name.
+      jscript: Use BSTR also for pure IDispatch call in disp_get_id.
+      jscript: Use BSTR also for pure IDispatch call in Object.hasOwnProperty.
+      winnt.h: Added GCC variant of DEFAULT_UNREACHABLE macro.
+      vbscript: Use DEFAULT_UNREACHABLE macro where appropriate.
+      jscript: Use DEFAULT_UNREACHABLE macro where appropriate.
+      msctf.idl: Added ITfContextOwnerServices declaration.
+      mshtml.idl: Added IHTMLButtonElement and DispHTMLButtonElement declarations.
+      mshtml: Added IHTMLButtonElement stub implementation.
+      wininet: Use parsed status_code to test for CONTINUE HTTP response.
+      mshtml: Don't use getElementsByTagNameNS in IHTMLDocument3::getElementsByTagName implementation.
+      mshtml: Use lazy allocation for connection points.
+      mshtml: Added HTMLElementEvents2 support.
+      mshtml: Added HTMLElementEvents2 tests.
 
-Ken Thomases (20):
-      winemac: Discard old frame changed events when setting frame for off-screen windows, too.
-      winemac: Don't set Cocoa window frame to be zero-sized.
-      winemac: Use only on-screen windows for Cocoa parent (Win32 owner) and ordering sibling.
-      winemac: Track Cocoa windows in a z-ordered list.
-      winemac: Implement support for full-screen windows.
-      winemac: Implement DISPLAYS_CHANGED event for when display configuration has changed.
-      include/wingdi.h: Add definitions for DEVMODE display fixed output flags and values.
-      winemac: Implement EnumDisplaySettingsEx().
-      winemac: Implement ChangeDisplaySettingsEx().
-      winemac: Always use proper z-order when putting a window on screen.
-      winemac: Call sync_window_position() before show_window() since window frame affects whether it shows.
-      winemac: Don't bring a window onto the screen in SetFocus().
-      winemac: Implement SetCursor() and DestroyCursorIcon().
-      winemac: Use system cursors when possible.
-      winemac: Implement GetCursorPos().
-      winemac: Handle mouse moves in -[WineApplication sendEvent:] instead of WineWindow.
-      winemac: Request mouse move events when our window is active even when cursor is outside it.
-      winemac: Reset the cursor to the normal Mac arrow when it's outside all Wine windows.
-      winemac: Implement SetCursorPos().
-      winemac: Implement ClipCursor().
+Jactry Zeng (1):
+      atl100: Added AtlSetPerUserRegistration stub implementation.
+
+Jeff Muizelaar (1):
+      dbghelp: Store the vendor id in the correct order.
+
+Jörg Höhle (3):
+      winmm: Don't log the uninitialised MCI output buffer in case of error.
+      mmsystem: MIDIHDR.dwOffset exists since Win 32 only, not in 16 bit code.
+      winmm: Fix GetPosition when using MSACM codecs.
+
+Ken Thomases (28):
+      winemac: Fail gracefully and early when run from a non-GUI session.
+      winemac: Implement OpenGL support.
+      winemac: Implement WGL_ARB_make_current_read.
+      winemac: Implement WGL_ARB_pixel_format and enable dependent extensions.
+      winemac: Implement WGL_ARB_pbuffer.
+      winemac: Implement WGL_ARB_render_texture.
+      winemac: Implement WGL_NV_render_texture_rectangle.
+      winemac: Implement WGL_EXT_swap_control.
+      winemac: Improve handling of "invert" pixels in monochrome cursors.
+      winemac: Don't defer attaching OpenGL context to view if it is backed by a window device.
+      winemac: Override -[NSOpenGLContext clearDrawable] to not hide the GL surface.
+      winemac: Implement CountClipboardFormats() with support for text formats.
+      winemac: Implement IsClipboardFormatAvailable() with support for text formats.
+      winemac: Implement EnumClipboardFormats() with support for text formats.
+      winemac: Implement GetClipboardData() with support for text formats.
+      winemac: Implement setting of clipboard data with support for text formats.
+      winemac: Add support for "query" events which wait for synchronous responses.
+      winemac: Add support for delay-rendered (a.k.a. promised) clipboard data.
+      winemac: Add clipboard formats which can or must be put on Mac pasteboard without transformation.
+      winemac: Add support for CF_DIB and CF_BITMAP clipboard formats.
+      winemac: Synthesize additional bitmap pasteboard types from any that Cocoa can convert.
+      winemac: Add support for CF_HDROP clipboard format, mapped to/from Cocoa's NSFilenamesPboardType.
+      winemac: Allow for processing Cocoa events while waiting for query results.
+      winemac: Enable pasteboard functions to operate on arbitrary pasteboards.
+      winemac: Extract new function from macdrv_GetClipboardData() parameterized by the target pasteboard.
+      winemac: Extract new function from macdrv_IsClipboardFormatAvailable() parameterized by the target pasteboard.
+      winemac: Extract new function from macdrv_EnumClipboardFormats() parameterized by the target pasteboard.
+      winemac: Implement support for drag-and-drop.
+
+Lauri Kenttä (1):
+      po: Update Finnish translation.
 
 Marcus Meissner (2):
-      kernel32: Use the correct pointer size in atl thunk (Coverity).
-      ole32: Free *ppszProgID on error path (Coverity).
+      msxml3: Initialize hr (Coverity).
+      quartz: Free wszPatternString (Coverity).
 
-Matteo Bruni (2):
-      wined3d: Make (wined3d_)surface_depth_blt_fbo handle locations other than SFLAG_INTEXTURE.
-      wined3d: Add RESZ support.
+Michael Stefaniuc (14):
+      inetcomm: COM cleanup for the IMimeMessage iface.
+      inetcomm: Pass the object instead of an iface to a helper function.
+      inetcomm: COM cleanup for the IMimeSecurity iface.
+      inetcomm: Use a static interface instance for IMimeAllocator.
+      inetcomm: COM cleanup for the IMimeBody iface.
+      inetcomm: Include the object instead of IMimeBody in struct body_t.
+      inetcomm: COM cleanup for the IStream iface.
+      mpr: Use offsetof for the size of structs with varlen arrays.
+      avifil32: COM cleanup for the IAVIFile iface.
+      avifil32: Merge and cleanup the IPersistFile iface.
+      avifil32: Avoid forward declaration of IAVIFile/IPersistFile methods.
+      avifil32: Support COM aggregation for AVIFile.
+      avifil32/tests: Add COM tests for AVIFile.
+      kernel32: Avoid TRUE FALSE conditional expressions.
 
-Michael Stefaniuc (10):
-      Revert "dsound/tests: Primary and secondary buffers use the same IDirectSoundBuffer vtbl.".
-      mshtml: Fix copy and paste error.
-      ddraw/tests: Simplify some equality comparisons between bools.
-      shell32: COM clean up for the inner IUnknown of ShellFSFolder.
-      shell32: COM clean up for IShellFolder2 in ShellFSFolder.
-      shell32: Pass an IShellFolder2 to SHELL32_CompareIDs() to avoid casts.
-      shell32: COM clean up for IPersistFolder3 in ShellFSFolder.
-      shell32: Get rid of a helper function.
-      shell32: Finish the COM cleanup of ShellFSFolder.
-      shell32: Move IFSFolder_Constructor() to avoid forward declarations.
+Nikolay Sivov (14):
+      msxml3: Filter unsupported child nodes in insertBefore() for elements.
+      msxml3: CDATA nodes can't have children.
+      xmllite: Support pending input reads for PI nodes.
+      xmllite: Support resuming for start tag.
+      xmllite: Actually resume comment and PI parsing while on Misc part.
+      xmllite: Support CDATA nodes.
+      xmllite: Support resuming to comments and PIs while on Content part.
+      xmllite: Make another read attempt if we don't have enough data initially.
+      xmllite: Fix a test failure on Windows 8.
+      msxml3: Added a simple test for CDATA processing with SAX reader.
+      msxml3: Fix some test failures on Windows 8.
+      msxml3: Process CDATA section before reporting it.
+      msxml3: Use characters callback helper in one more place.
+      xmllite: Implement ReadValueChunk().
 
-Nikolay Sivov (12):
-      dwrite: Remove testing for exact script code value.
-      dwrite: Added more dwrite interfaces.
-      msvcrt: Move demangler flags to a header and use them.
-      msxml3: Fail to insert a node of unsupported type to a document.
-      wshom: Implement IWshShell3::Run().
-      msxml3: Better handle cross-tree node moves.
-      msxml3: Update refcount in replaceNode().
-      msxml3: Update backing docs refcount in put_documentElement().
-      msxml3: Remove unneeded cast to xmlDocPtr.
-      msxml3: Escape value for attribute in put_value().
-      msxml3: Don't make a variant copy if no need to for setting node value.
-      msxml3: Avoid unneeded variant copy in setAttribute(), leak fixed as a side effect.
+Nozomi Kodama (2):
+      d3dx9: Implement D3DXSHEvalConeLight.
+      d3dx9: Save multiplications for better performance.
 
-Nozomi Kodama (5):
-      d3dx9: Specify arguments in trace to ease debugging.
-      d3dx9: Add a missing trace.
-      d3dx9: Avoid useless computations.
-      d3dx9: Explicit computations in D3DXMatrixDeterminant to speed them up.
-      d3dx9: Explicit computations in D3DXMatrixInverse to speed them up.
+Petr Kočandrle (2):
+      po: Completed WineMine Czech translation.
+      po: Completed winecfg and clock Czech translation.
 
-Petr Kočandrle (1):
-      po: Small improvement of Czech translation.
+Piotr Caban (22):
+      msvcrt: Don't duplicate standard handles during initialization.
+      msvcrt: Reuse standard file descriptors after closing them.
+      msvcrt: Added stdin close/open tests.
+      msvcrt: Rename msvcrt_alloc_fd_from to msvcrt_set_fd.
+      msvcrt: Don't set unhandled exception filter, XcptFilter is responsible for handling signals.
+      msvcrt: Added __pxcptinfoptrs implementation.
+      msvcrt: Added __pxcptinfoptrs tests.
+      msvcr90: Check more fields in _getptd tests.
+      ieframe: Pass BSTR to handle_navigation_error.
+      wininet: Improved urlcache debug traces.
+      wininet: Cleanup and optimize URLCacheContainer_OpenIndex function.
+      wininet: Added better urlcache index file validation on first open.
+      wininet: Rename URLCacheContainer_* functions to cache_container_*.
+      cryptnet: Lock cache file while accessing it.
+      cryptnet: Open file with FILE_SHARE_READ flag in File_RetrieveEncodedObjectW.
+      cryptnet: Don't ignore HttpEndRequestW error in HTTP_RetrieveEncodedObjectW.
+      wininet: Don't create cache file if it's forbidden.
+      wininet: Test if cache entry is created when INTERNET_FLAG_NO_CACHE_WRITE flag is used.
+      wininet: Added tests for Cache-Control: no-cache and no-store HTTP headers.
+      wininet: Rename CACHEFILE_ENTRY to entry_header.
+      wininet: Rename URL_CACHEFILE_ENTRY to entry_url.
+      msvcrt: Limit access to out buffer in fread function.
 
-Piotr Caban (24):
-      msvcr90: Prefer builtin version.
-      msvcp90: Prefer builtin version.
-      jscript: Rename JSREG_* defines to REG_*.
-      jscript: Cleanup regular expressions engine API.
-      jscript: Avoid copying regular expression results.
-      vbscript: Added RegExp2::Test implementation.
-      vbscript: Added RegExp2 flags getters and setters implementation.
-      vbscript: Added RegExp2::Execute implementation.
-      vbscript: Silence IDispatchEx queries on RegExp objects.
-      vbscript: Added RegExp.Execute tests.
-      vbscript: Added IMatchCollection2::_NewEnum implementation.
-      vbscript: Added tests for invalid parameters in regular expression functions.
-      vbscript: Added IMatchCollection2::__NewEnum test.
-      msvcrt: Mark gmtime32 tests with negative argument as broken on win8.
-      oleaut32: Fixed time outputing for dates before 1899 in VarBstrFromDate.
-      oleaut32: Fixed VarBstrFromDate behavior on dates before year 1600.
-      oleaut32: Fixed VARIANT_FormatDate behavior on dates before year 1600.
-      hlink: Call BindToObject with IID_IUnknown in IHlink_fnNavigate.
-      hlink: Return value returned by IHlinkTarget_Navigate in IHlink_fnNavigate.
-      hlink: Added basic Hlink::Navigate tests.
-      ole32: Added more OleCreateDefaultHandler tests.
-      ole32: Don't pass CLSCTX_INPROC_SERVER and CLSCTX_INPROC_HANDLER flags to CoCreateInstance in DefaultHandler_Run.
-      cmd: Fixed memory leak in WCMD_run_program.
-      msvcrt: Fixed closing of FindFirstFile handle in build_expanded_argv.
+Sergey Guralnik (1):
+      user32: Use window height/width instead of client for combo resizing.
 
-Rico Schüller (2):
-      d3d9/tests: Use lower base hexadecimal values.
-      d3dx9: Fix typos.
+Stefan Dösinger (3):
+      ddraw/tests: Use a TnLHal device only if supported in ddraw7 tests.
+      ddraw/tests: Use a software VP device in test_surface_interface_mismatch.
+      ddraw/tests: Use hardware VP only if available in the visual tests.
 
-Ričardas Barkauskas (2):
-      wined3d: Rename bsize to content_size to reflect usage.
-      wined3d: Make shader buffer dynamic.
+Stefan Leichter (1):
+      msvcr110: Add VS2012 C/C++ runtime.
 
-Vincent Povirk (2):
-      mscoree: Add WINE_MONO_VERBOSE environment setting.
-      mscoree: Keep a reference to mscoree when shutting down.
+Tijl Coosemans (1):
+      winebuild: Don't register cleanup function when --save-temps is passed after --output.
+
+Vincent Povirk (4):
+      gdiplus: Store the image type on a Graphics object in case the image is freed.
+      gdiplus: Fix GdipCreateBitmapFromGraphics implementation.
+      gdiplus: Also get a DC for drawing WMF images.
+      gdiplus: Correct EMF record size calculation.
+
+Volkan Gezer (1):
+      po: Updated Turkish translation.
 
 --
 Alexandre Julliard
