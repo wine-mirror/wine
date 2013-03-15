@@ -82,6 +82,7 @@ DEFINE_EXPECT(submit_onclick_cancel);
 DEFINE_EXPECT(submit_onclick_attached);
 DEFINE_EXPECT(submit_onclick_attached_check_cancel);
 DEFINE_EXPECT(submit_onclick_setret);
+DEFINE_EXPECT(elem2_cp_onclick);
 
 static HWND container_hwnd = NULL;
 static IHTMLWindow2 *window;
@@ -1239,6 +1240,31 @@ static void _test_cp_args(unsigned line, REFIID riid, WORD flags, DISPPARAMS *dp
     ok_(__FILE__,line)(argerr != NULL, "argerr == NULL\n");
 }
 
+#define test_cp_eventarg(a,b,c,d,e,f) _test_cp_eventarg(__LINE__,a,b,c,d,e,f)
+static void _test_cp_eventarg(unsigned line, REFIID riid, WORD flags, DISPPARAMS *dp, VARIANT *vres, EXCEPINFO *ei, UINT *argerr)
+{
+    IHTMLEventObj *event;
+
+    ok_(__FILE__,line)(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", debugstr_guid(riid));
+    ok_(__FILE__,line)(flags == DISPATCH_METHOD, "flags = %x\n", flags);
+    ok_(__FILE__,line)(dp != NULL, "dp == NULL\n");
+    ok_(__FILE__,line)(dp->cArgs == 1, "dp->cArgs = %d\n", dp->cArgs);
+    ok_(__FILE__,line)(dp->rgvarg != NULL, "dp->rgvarg = %p\n", dp->rgvarg);
+    ok_(__FILE__,line)(!dp->cNamedArgs, "dp->cNamedArgs = %d\n", dp->cNamedArgs);
+    ok_(__FILE__,line)(!dp->rgdispidNamedArgs, "dp->rgdispidNamedArgs = %p\n", dp->rgdispidNamedArgs);
+    ok_(__FILE__,line)(vres != NULL, "vres == NULL\n");
+    ok_(__FILE__,line)(V_VT(vres) == VT_EMPTY, "V_VT(vres) = %d\n", V_VT(vres));
+    ok_(__FILE__,line)(ei != NULL, "ei == NULL\n");
+    ok_(__FILE__,line)(argerr != NULL, "argerr == NULL\n");
+
+    ok(V_VT(dp->rgvarg) == VT_DISPATCH, "V_VT(dp->rgvarg) = %d\n", V_VT(dp->rgvarg));
+    ok(V_DISPATCH(dp->rgvarg) != NULL, "V_DISPATCH(dp->rgvarg) = %p\n", V_DISPATCH(dp->rgvarg));
+
+    event = _get_event_obj(line);
+    ok(iface_cmp((IUnknown*)event, (IUnknown*)V_DISPATCH(dp->rgvarg)), "event != arg0\n");
+    IHTMLEventObj_Release(event);
+}
+
 static HRESULT WINAPI doccp(IDispatchEx *iface, DISPID dispIdMember,
                             REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
                             VARIANT *pVarResult, EXCEPINFO *pei, UINT *puArgErr)
@@ -1277,6 +1303,24 @@ static HRESULT WINAPI doccp_onclick_cancel(IDispatchEx *iface, DISPID dispIdMemb
 }
 
 CONNECTION_POINT_OBJ(doccp_onclick_cancel, DIID_HTMLDocumentEvents);
+
+static HRESULT WINAPI elem2_cp(IDispatchEx *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD wFlags, DISPPARAMS *pdp, VARIANT *pVarResult, EXCEPINFO *pei, UINT *puArgErr)
+{
+    switch(dispIdMember) {
+    case DISPID_HTMLDOCUMENTEVENTS_ONCLICK:
+        CHECK_EXPECT(elem2_cp_onclick);
+        test_cp_eventarg(riid, wFlags, pdp, pVarResult, pei, puArgErr);
+        break;
+    default:
+        ok(0, "unexpected call %d\n", dispIdMember);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+CONNECTION_POINT_OBJ(elem2_cp, DIID_HTMLElementEvents2);
 
 static HRESULT WINAPI timeoutFunc_Invoke(IDispatchEx *iface, DISPID dispIdMember,
                             REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
@@ -1492,8 +1536,8 @@ static IDispatch EventDispatch = { &EventDispatchVtbl };
 
 static void test_onclick(IHTMLDocument2 *doc)
 {
+    DWORD cp_cookie, elem2_cp_cookie;
     IHTMLElement *div, *body;
-    DWORD cp_cookie;
     VARIANT v;
     HRESULT hres;
 
@@ -1638,6 +1682,34 @@ static void test_onclick(IHTMLDocument2 *doc)
     CHECK_CALLED(doccp_onclick);
     CHECK_CALLED(invoke_onclick);
 
+    elem2_cp_cookie = register_cp((IUnknown*)div, &DIID_HTMLElementEvents2, (IUnknown*)&elem2_cp_obj);
+
+    SET_EXPECT(div_onclick);
+    SET_EXPECT(div_onclick_disp);
+    SET_EXPECT(div_onclick_attached);
+    SET_EXPECT(elem2_cp_onclick);
+    SET_EXPECT(body_onclick);
+    SET_EXPECT(document_onclick);
+    SET_EXPECT(doc_onclick_attached);
+    SET_EXPECT(doccp_onclick);
+    SET_EXPECT(invoke_onclick);
+
+    trace("click >>>\n");
+    hres = IHTMLElement_click(div);
+    ok(hres == S_OK, "click failed: %08x\n", hres);
+    trace("click <<<\n");
+
+    CHECK_CALLED(div_onclick);
+    CHECK_CALLED(div_onclick_disp);
+    CHECK_CALLED(div_onclick_attached);
+    CHECK_CALLED(elem2_cp_onclick);
+    CHECK_CALLED(body_onclick);
+    CHECK_CALLED(document_onclick);
+    CHECK_CALLED(doc_onclick_attached);
+    CHECK_CALLED(doccp_onclick);
+    CHECK_CALLED(invoke_onclick);
+
+    unregister_cp((IUnknown*)div, &DIID_HTMLElementEvents2, elem2_cp_cookie);
     unregister_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents, cp_cookie);
 
     V_VT(&v) = VT_NULL;
