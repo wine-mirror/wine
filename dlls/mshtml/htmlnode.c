@@ -1057,9 +1057,12 @@ static HRESULT HTMLDOMNode_clone(HTMLDOMNode *This, nsIDOMNode *nsnode, HTMLDOMN
     return create_node(This->doc, nsnode, ret);
 }
 
+static const cpc_entry_t HTMLDOMNode_cpc[] = {{NULL}};
+
 static const NodeImplVtbl HTMLDOMNodeImplVtbl = {
     HTMLDOMNode_QI,
     HTMLDOMNode_destructor,
+    HTMLDOMNode_cpc,
     HTMLDOMNode_clone
 };
 

@@ -362,6 +362,7 @@ static HRESULT HTMLLinkElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOOL
 static const NodeImplVtbl HTMLLinkElementImplVtbl = {
     HTMLLinkElement_QI,
     HTMLElement_destructor,
+    HTMLElement_cpc,
     HTMLElement_clone,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col,

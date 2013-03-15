@@ -1679,9 +1679,15 @@ HRESULT HTMLElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *eve
     return S_OK;
 }
 
+const cpc_entry_t HTMLElement_cpc[] = {
+    HTMLELEMENT_CPC,
+    {NULL}
+};
+
 static const NodeImplVtbl HTMLElementImplVtbl = {
     HTMLElement_QI,
     HTMLElement_destructor,
+    HTMLElement_cpc,
     HTMLElement_clone,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col
@@ -1838,7 +1844,8 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElemen
         This->nselem = nselem;
     }
 
-    ConnectionPointContainer_Init(&This->cp_container, (IUnknown*)&This->IHTMLElement_iface);
+    This->node.cp_container = &This->cp_container;
+    ConnectionPointContainer_Init(&This->cp_container, (IUnknown*)&This->IHTMLElement_iface, This->node.vtbl->cpc_entries);
 }
 
 HRESULT HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_generic, HTMLElement **ret)
@@ -1868,8 +1875,8 @@ HRESULT HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_g
     }else {
         elem = heap_alloc_zero(sizeof(HTMLElement));
         if(elem) {
-            HTMLElement_Init(elem, doc, nselem, &HTMLElement_dispex);
             elem->node.vtbl = &HTMLElementImplVtbl;
+            HTMLElement_Init(elem, doc, nselem, &HTMLElement_dispex);
             hres = S_OK;
         }else {
             hres = E_OUTOFMEMORY;

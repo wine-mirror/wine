@@ -191,6 +191,4 @@ void HTMLTextContainer_Init(HTMLTextContainer *This, HTMLDocumentNode *doc, nsID
     This->IHTMLTextContainer_iface.lpVtbl = &HTMLTextContainerVtbl;
 
     HTMLElement_Init(&This->element, doc, nselem, dispex_data);
-
-    ConnectionPoint_Init(&This->cp, &This->element.cp_container, &DIID_HTMLTextContainerEvents, NULL);
 }

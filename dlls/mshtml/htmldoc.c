@@ -2055,6 +2055,14 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
 
 static cp_static_data_t HTMLDocumentEvents_data = { HTMLDocumentEvents_tid, HTMLDocument_on_advise };
 
+static const cpc_entry_t HTMLDocument_cpc[] = {
+    {&IID_IDispatch, &HTMLDocumentEvents_data},
+    {&IID_IPropertyNotifySink},
+    {&DIID_HTMLDocumentEvents, &HTMLDocumentEvents_data},
+    {&DIID_HTMLDocumentEvents2},
+    {NULL}
+};
+
 static void init_doc(HTMLDocument *doc, IUnknown *unk_impl, IDispatchEx *dispex)
 {
     doc->IHTMLDocument2_iface.lpVtbl = &HTMLDocumentVtbl;
@@ -2076,11 +2084,7 @@ static void init_doc(HTMLDocument *doc, IUnknown *unk_impl, IDispatchEx *dispex)
     HTMLDocument_Service_Init(doc);
     HTMLDocument_Hlink_Init(doc);
 
-    ConnectionPointContainer_Init(&doc->cp_container, (IUnknown*)&doc->IHTMLDocument2_iface);
-    ConnectionPoint_Init(&doc->cp_dispatch, &doc->cp_container, &IID_IDispatch, &HTMLDocumentEvents_data);
-    ConnectionPoint_Init(&doc->cp_propnotif, &doc->cp_container, &IID_IPropertyNotifySink, NULL);
-    ConnectionPoint_Init(&doc->cp_htmldocevents, &doc->cp_container, &DIID_HTMLDocumentEvents, &HTMLDocumentEvents_data);
-    ConnectionPoint_Init(&doc->cp_htmldocevents2, &doc->cp_container, &DIID_HTMLDocumentEvents2, NULL);
+    ConnectionPointContainer_Init(&doc->cp_container, (IUnknown*)&doc->IHTMLDocument2_iface, HTMLDocument_cpc);
 }
 
 static void destroy_htmldoc(HTMLDocument *This)
@@ -2192,6 +2196,7 @@ static void HTMLDocumentNode_unlink(HTMLDOMNode *iface)
 static const NodeImplVtbl HTMLDocumentNodeImplVtbl = {
     HTMLDocumentNode_QI,
     HTMLDocumentNode_destructor,
+    HTMLDocument_cpc,
     HTMLDocumentNode_clone,
     NULL,
     NULL,
@@ -2280,6 +2285,7 @@ static const dispex_static_data_vtbl_t HTMLDocumentNode_dispex_vtbl = {
 static const NodeImplVtbl HTMLDocumentFragmentImplVtbl = {
     HTMLDocumentNode_QI,
     HTMLDocumentNode_destructor,
+    HTMLDocument_cpc,
     HTMLDocumentFragment_clone
 };
 

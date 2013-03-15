@@ -707,6 +707,7 @@ static HRESULT HTMLObjectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid
 static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     HTMLObjectElement_QI,
     HTMLObjectElement_destructor,
+    HTMLElement_cpc,
     HTMLElement_clone,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col,

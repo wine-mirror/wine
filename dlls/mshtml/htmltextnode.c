@@ -186,9 +186,12 @@ static HRESULT HTMLDOMTextNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTM
     return HTMLDOMTextNode_Create(This->node.doc, nsnode, ret);
 }
 
+static const cpc_entry_t HTMLDOMTextNode_cpc[] = {{NULL}};
+
 static const NodeImplVtbl HTMLDOMTextNodeImplVtbl = {
     HTMLDOMTextNode_QI,
     HTMLDOMNode_destructor,
+    HTMLDOMTextNode_cpc,
     HTMLDOMTextNode_clone
 };
 

@@ -684,6 +684,7 @@ static HRESULT HTMLAnchorElement_handle_event(HTMLDOMNode *iface, eventid_t eid,
 static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
     HTMLAnchorElement_QI,
     HTMLElement_destructor,
+    HTMLElement_cpc,
     HTMLElement_clone,
     HTMLAnchorElement_handle_event,
     HTMLElement_get_attr_col

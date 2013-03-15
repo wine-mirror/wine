@@ -1001,44 +1001,44 @@ static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, 
      * it's safe to call event handler by checking nsevent_listener, which is NULL for
      * detached documents.
      */
-    if(cp_container && doc->nsevent_listener) {
+    if(cp_container && cp_container->forward_container)
+        cp_container = cp_container->forward_container;
+    if(cp_container && cp_container->cps && doc->nsevent_listener) {
         ConnectionPoint *cp;
+        unsigned i, j;
 
-        if(cp_container->forward_container)
-            cp_container = cp_container->forward_container;
+        for(j=0; cp_container->cp_entries[j].riid; j++) {
+            cp = cp_container->cps + j;
+            if(!cp->sinks_size || !is_cp_event(cp->data, event_info[eid].dispid))
+                continue;
 
-        for(cp = cp_container->cp_list; cp; cp = cp->next) {
-            if(cp->sinks_size && is_cp_event(cp->data, event_info[eid].dispid)) {
-                unsigned int i;
+            for(i=0; doc->nsevent_listener && i < cp->sinks_size; i++) {
+                if(!cp->sinks[i].disp)
+                    continue;
 
-                for(i=0; doc->nsevent_listener && i < cp->sinks_size; i++) {
-                    if(!cp->sinks[i].disp)
-                        continue;
+                V_VT(&v) = VT_EMPTY;
 
-                    V_VT(&v) = VT_EMPTY;
+                TRACE("cp %s [%u] >>>\n", debugstr_w(event_info[eid].name), i);
+                hres = call_cp_func(cp->sinks[i].disp, event_info[eid].dispid, &v);
+                if(hres == S_OK) {
+                    TRACE("cp %s [%u] <<<\n", debugstr_w(event_info[eid].name), i);
 
-                    TRACE("cp %s [%u] >>>\n", debugstr_w(event_info[eid].name), i);
-                    hres = call_cp_func(cp->sinks[i].disp, event_info[eid].dispid, &v);
-                    if(hres == S_OK) {
-                        TRACE("cp %s [%u] <<<\n", debugstr_w(event_info[eid].name), i);
-
-                        if(cancelable) {
-                            if(V_VT(&v) == VT_BOOL) {
-                                if(!V_BOOL(&v))
-                                    event_obj->prevent_default = TRUE;
-                            }else if(V_VT(&v) != VT_EMPTY) {
-                                FIXME("unhandled result %s\n", debugstr_variant(&v));
-                            }
+                    if(cancelable) {
+                        if(V_VT(&v) == VT_BOOL) {
+                            if(!V_BOOL(&v))
+                                event_obj->prevent_default = TRUE;
+                        }else if(V_VT(&v) != VT_EMPTY) {
+                            FIXME("unhandled result %s\n", debugstr_variant(&v));
                         }
-                        VariantClear(&v);
-                    }else {
-                        WARN("cp %s [%u] <<< %08x\n", debugstr_w(event_info[eid].name), i, hres);
                     }
+                    VariantClear(&v);
+                }else {
+                    WARN("cp %s [%u] <<< %08x\n", debugstr_w(event_info[eid].name), i, hres);
                 }
-
-                if(!doc->nsevent_listener)
-                    break;
             }
+
+            if(!doc->nsevent_listener)
+                break;
         }
     }
 }

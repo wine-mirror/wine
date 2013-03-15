@@ -155,6 +155,7 @@ static void HTMLTitleElement_destructor(HTMLDOMNode *iface)
 static const NodeImplVtbl HTMLTitleElementImplVtbl = {
     HTMLTitleElement_QI,
     HTMLTitleElement_destructor,
+    HTMLElement_cpc,
     HTMLElement_clone,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col
@@ -314,6 +315,7 @@ static void HTMLHeadElement_destructor(HTMLDOMNode *iface)
 static const NodeImplVtbl HTMLHeadElementImplVtbl = {
     HTMLHeadElement_QI,
     HTMLHeadElement_destructor,
+    HTMLElement_cpc,
     HTMLElement_clone,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col

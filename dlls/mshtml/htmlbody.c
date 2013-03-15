@@ -38,8 +38,6 @@ typedef struct {
 
     IHTMLBodyElement IHTMLBodyElement_iface;
 
-    ConnectionPoint cp_propnotif;
-
     nsIDOMHTMLBodyElement *nsbody;
 } HTMLBodyElement;
 
@@ -771,9 +769,17 @@ static event_target_t **HTMLBodyElement_get_event_target(HTMLDOMNode *iface)
         : &This->textcont.element.node.event_target;
 }
 
+static const cpc_entry_t HTMLBodyElement_cpc[] = {
+    {&DIID_HTMLTextContainerEvents},
+    {&IID_IPropertyNotifySink},
+    HTMLELEMENT_CPC,
+    {NULL}
+};
+
 static const NodeImplVtbl HTMLBodyElementImplVtbl = {
     HTMLBodyElement_QI,
     HTMLBodyElement_destructor,
+    HTMLBodyElement_cpc,
     HTMLElement_clone,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col,
@@ -816,8 +822,6 @@ HRESULT HTMLBodyElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
     }
 
     HTMLTextContainer_Init(&ret->textcont, doc, nselem, &HTMLBodyElement_dispex);
-
-    ConnectionPoint_Init(&ret->cp_propnotif, &ret->textcont.element.cp_container, &IID_IPropertyNotifySink, NULL);
 
     *elem = &ret->textcont.element;
     return S_OK;

@@ -48,16 +48,6 @@ static const char *debugstr_cp_guid(REFIID riid)
     return debugstr_guid(riid);
 }
 
-void call_property_onchanged(ConnectionPoint *This, DISPID dispid)
-{
-    DWORD i;
-
-    for(i=0; i<This->sinks_size; i++) {
-        if(This->sinks[i].propnotif)
-            IPropertyNotifySink_OnChanged(This->sinks[i].propnotif, dispid);
-    }
-}
-
 static inline ConnectionPoint *impl_from_IConnectionPoint(IConnectionPoint *iface)
 {
     return CONTAINING_RECORD(iface, ConnectionPoint, IConnectionPoint_iface);
@@ -201,7 +191,7 @@ static const IConnectionPointVtbl ConnectionPointVtbl =
     ConnectionPoint_EnumConnections
 };
 
-void ConnectionPoint_Init(ConnectionPoint *cp, ConnectionPointContainer *container, REFIID riid, cp_static_data_t *data)
+static void ConnectionPoint_Init(ConnectionPoint *cp, ConnectionPointContainer *container, REFIID riid, cp_static_data_t *data)
 {
     cp->IConnectionPoint_iface.lpVtbl = &ConnectionPointVtbl;
     cp->container = container;
@@ -209,9 +199,6 @@ void ConnectionPoint_Init(ConnectionPoint *cp, ConnectionPointContainer *contain
     cp->sinks_size = 0;
     cp->iid = riid;
     cp->data = data;
-
-    cp->next = container->cp_list;
-    container->cp_list = cp;
 }
 
 static void ConnectionPoint_Destroy(ConnectionPoint *This)
@@ -224,6 +211,51 @@ static void ConnectionPoint_Destroy(ConnectionPoint *This)
     }
 
     heap_free(This->sinks);
+}
+
+static ConnectionPoint *get_cp(ConnectionPointContainer *container, REFIID riid, BOOL do_create)
+{
+    const cpc_entry_t *iter;
+    unsigned idx, i;
+
+    for(iter = container->cp_entries; iter->riid; iter++) {
+        if(IsEqualGUID(iter->riid, riid))
+            break;
+    }
+    if(!iter->riid)
+        return NULL;
+    idx = iter - container->cp_entries;
+
+    if(!container->cps) {
+        if(!do_create)
+            return NULL;
+
+        while(iter->riid)
+            iter++;
+        container->cps = heap_alloc((iter - container->cp_entries) * sizeof(*container->cps));
+        if(!container->cps)
+            return NULL;
+
+        for(i=0; container->cp_entries[i].riid; i++)
+            ConnectionPoint_Init(container->cps+i, container, container->cp_entries[i].riid, container->cp_entries[i].desc);
+    }
+
+    return container->cps+idx;
+}
+
+void call_property_onchanged(ConnectionPointContainer *container, DISPID dispid)
+{
+    ConnectionPoint *cp;
+    DWORD i;
+
+    cp = get_cp(container, &IID_IPropertyNotifySink, FALSE);
+    if(!cp)
+        return;
+
+    for(i=0; i<cp->sinks_size; i++) {
+        if(cp->sinks[i].propnotif)
+            IPropertyNotifySink_OnChanged(cp->sinks[i].propnotif, dispid);
+    }
 }
 
 static inline ConnectionPointContainer *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
@@ -262,7 +294,7 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
         REFIID riid, IConnectionPoint **ppCP)
 {
     ConnectionPointContainer *This = impl_from_IConnectionPointContainer(iface);
-    ConnectionPoint *iter;
+    ConnectionPoint *cp;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_cp_guid(riid), ppCP);
 
@@ -270,20 +302,16 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
         return IConnectionPointContainer_FindConnectionPoint(&This->forward_container->IConnectionPointContainer_iface,
                 riid, ppCP);
 
-    *ppCP = NULL;
-
-    for(iter = This->cp_list; iter; iter = iter->next) {
-        if(IsEqualGUID(iter->iid, riid))
-            *ppCP = &iter->IConnectionPoint_iface;
+    cp = get_cp(This, riid, TRUE);
+    if(!cp) {
+        FIXME("unsupported riid %s\n", debugstr_cp_guid(riid));
+        *ppCP = NULL;
+        return CONNECT_E_NOCONNECTION;
     }
 
-    if(*ppCP) {
-        IConnectionPoint_AddRef(*ppCP);
-        return S_OK;
-    }
-
-    FIXME("unsupported riid %s\n", debugstr_cp_guid(riid));
-    return CONNECT_E_NOCONNECTION;
+    *ppCP = &cp->IConnectionPoint_iface;
+    IConnectionPoint_AddRef(*ppCP);
+    return S_OK;
 }
 
 static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl = {
@@ -294,19 +322,23 @@ static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl = {
     ConnectionPointContainer_FindConnectionPoint
 };
 
-void ConnectionPointContainer_Init(ConnectionPointContainer *This, IUnknown *outer)
+void ConnectionPointContainer_Init(ConnectionPointContainer *This, IUnknown *outer, const cpc_entry_t *cp_entries)
 {
     This->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
-    This->cp_list = NULL;
+    This->cp_entries = cp_entries;
+    This->cps = NULL;
     This->outer = outer;
+    This->forward_container = NULL;
 }
 
 void ConnectionPointContainer_Destroy(ConnectionPointContainer *This)
 {
-    ConnectionPoint *iter = This->cp_list;
+    unsigned i;
 
-    while(iter) {
-        ConnectionPoint_Destroy(iter);
-        iter = iter->next;
-    }
+    if(!This->cps)
+        return;
+
+    for(i=0; This->cp_entries[i].riid; i++)
+        ConnectionPoint_Destroy(This->cps+i);
+    heap_free(This->cps);
 }

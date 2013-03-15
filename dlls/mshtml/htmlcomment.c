@@ -172,6 +172,7 @@ static void HTMLCommentElement_destructor(HTMLDOMNode *iface)
 static const NodeImplVtbl HTMLCommentElementImplVtbl = {
     HTMLCommentElement_QI,
     HTMLCommentElement_destructor,
+    HTMLElement_cpc,
     HTMLElement_clone,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col

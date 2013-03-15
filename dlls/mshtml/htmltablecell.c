@@ -340,6 +340,7 @@ static void HTMLTableCell_destructor(HTMLDOMNode *iface)
 static const NodeImplVtbl HTMLTableCellImplVtbl = {
     HTMLTableCell_QI,
     HTMLTableCell_destructor,
+    HTMLElement_cpc,
     HTMLElement_clone,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col
