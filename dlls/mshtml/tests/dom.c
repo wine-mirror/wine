@@ -6281,7 +6281,7 @@ static void test_elems(IHTMLDocument2 *doc)
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
     ok(hres == S_OK, "Could not get IHTMLDocument3 iface: %08x\n", hres);
 
-    str = a2bstr("img");
+    str = a2bstr("Img");
     hres = IHTMLDocument3_getElementsByTagName(doc3, str, &col);
     ok(hres == S_OK, "getElementsByTagName(%s) failed: %08x\n", wine_dbgstr_w(str), hres);
     SysFreeString(str);

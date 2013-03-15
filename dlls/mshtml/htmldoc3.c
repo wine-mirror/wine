@@ -566,9 +566,8 @@ static HRESULT WINAPI HTMLDocument3_getElementsByTagName(IHTMLDocument3 *iface, 
 {
     HTMLDocument *This = impl_from_IHTMLDocument3(iface);
     nsIDOMNodeList *nslist;
-    nsAString id_str, ns_str;
+    nsAString id_str;
     nsresult nsres;
-    static const WCHAR str[] = {'*',0};
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pelColl);
 
@@ -578,10 +577,8 @@ static HRESULT WINAPI HTMLDocument3_getElementsByTagName(IHTMLDocument3 *iface, 
     }
 
     nsAString_InitDepend(&id_str, v);
-    nsAString_InitDepend(&ns_str, str);
-    nsres = nsIDOMHTMLDocument_GetElementsByTagNameNS(This->doc_node->nsdoc, &ns_str, &id_str, &nslist);
+    nsres = nsIDOMHTMLDocument_GetElementsByTagName(This->doc_node->nsdoc, &id_str, &nslist);
     nsAString_Finish(&id_str);
-    nsAString_Finish(&ns_str);
     if(FAILED(nsres)) {
         ERR("GetElementByName failed: %08x\n", nsres);
         return E_FAIL;
