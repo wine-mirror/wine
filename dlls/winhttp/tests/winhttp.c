@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <windef.h>
 #include <winbase.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <winhttp.h>
 #include <wincrypt.h>
 #include <winreg.h>
@@ -2019,6 +2021,65 @@ static void test_bad_header( int port )
     WinHttpCloseHandle( ses );
 }
 
+static void test_connection_info( int port )
+{
+    static const WCHAR basicW[] = {'/','b','a','s','i','c',0};
+    HINTERNET ses, con, req;
+    WINHTTP_CONNECTION_INFO info;
+    DWORD size, error;
+    BOOL ret;
+
+    ses = WinHttpOpen( test_useragent, 0, NULL, NULL, 0 );
+    ok( ses != NULL, "failed to open session %u\n", GetLastError() );
+
+    con = WinHttpConnect( ses, localhostW, port, 0 );
+    ok( con != NULL, "failed to open a connection %u\n", GetLastError() );
+
+    req = WinHttpOpenRequest( con, NULL, basicW, NULL, NULL, NULL, 0 );
+    ok( req != NULL, "failed to open a request %u\n", GetLastError() );
+
+    size = sizeof(info);
+    SetLastError( 0xdeadbeef );
+    ret = WinHttpQueryOption( req, WINHTTP_OPTION_CONNECTION_INFO, &info, &size );
+    error = GetLastError();
+    if (!ret && error == ERROR_INVALID_PARAMETER)
+    {
+        win_skip( "WINHTTP_OPTION_CONNECTION_INFO not supported\n" );
+        return;
+    }
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_WINHTTP_INCORRECT_HANDLE_STATE, "got %u\n", error );
+
+    ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
+    ok( ret, "failed to send request %u\n", GetLastError() );
+
+    size = 0;
+    SetLastError( 0xdeadbeef );
+    ret = WinHttpQueryOption( req, WINHTTP_OPTION_CONNECTION_INFO, &info, &size );
+    error = GetLastError();
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INSUFFICIENT_BUFFER, "got %u\n", error );
+
+    size = sizeof(info);
+    memset( &info, 0, sizeof(info) );
+    ret = WinHttpQueryOption( req, WINHTTP_OPTION_CONNECTION_INFO, &info, &size );
+    ok( ret, "failed to retrieve connection info %u\n", GetLastError() );
+    ok( info.cbSize == sizeof(info), "wrong size %u\n", info.cbSize );
+
+    ret = WinHttpReceiveResponse( req, NULL );
+    ok( ret, "failed to receive response %u\n", GetLastError() );
+
+    size = sizeof(info);
+    memset( &info, 0, sizeof(info) );
+    ret = WinHttpQueryOption( req, WINHTTP_OPTION_CONNECTION_INFO, &info, &size );
+    ok( ret, "failed to retrieve connection info %u\n", GetLastError() );
+    ok( info.cbSize == sizeof(info), "wrong size %u\n", info.cbSize );
+
+    WinHttpCloseHandle( req );
+    WinHttpCloseHandle( con );
+    WinHttpCloseHandle( ses );
+}
+
 static void test_credentials(void)
 {
     static WCHAR userW[] = {'u','s','e','r',0};
@@ -2768,6 +2829,7 @@ START_TEST (winhttp)
     if (ret != WAIT_OBJECT_0)
         return;
 
+    test_connection_info(si.port);
     test_basic_request(si.port, NULL, basicW);
     test_no_headers(si.port);
     test_basic_authentication(si.port);
