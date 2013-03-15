@@ -135,6 +135,9 @@ static void create_test(void)
     ok(hr == S_OK, "Expected S_OK got 0x%08x\n", hr);
     ok(nodefactory == &thenodefactory, "expected NULL\n");
 
+    hr = IXMLParser_SetInput(parser, NULL);
+    ok(hr == E_INVALIDARG, "Expected S_OK got 0x%08x\n", hr);
+
     hr = IXMLParser_SetFactory(parser, NULL);
     ok(hr == S_OK, "Expected S_OK got 0x%08x\n", hr);
 

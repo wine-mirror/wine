@@ -47,6 +47,7 @@ typedef struct _xmlparser
 {
     IXMLParser IXMLParser_iface;
     IXMLNodeFactory *nodefactory;
+    IUnknown *input;
     LONG ref;
 
     int flags;
@@ -96,6 +97,9 @@ static ULONG WINAPI xmlparser_Release(IXMLParser* iface)
     TRACE("(%p)->(%d)\n", This, ref);
     if ( ref == 0 )
     {
+        if(This->input)
+            IUnknown_Release(This->input);
+
         if(This->nodefactory)
             IXMLNodeFactory_Release(This->nodefactory);
 
@@ -246,9 +250,18 @@ static HRESULT WINAPI xmlparser_SetInput(IXMLParser *iface, IUnknown *pStm)
 {
     xmlparser *This = impl_from_IXMLParser( iface );
 
-    FIXME("(%p %p)\n", This, pStm);
+    TRACE("(%p %p)\n", This, pStm);
 
-    return E_NOTIMPL;
+    if(!pStm)
+        return E_INVALIDARG;
+
+    if(This->input)
+        IUnknown_Release(This->input);
+
+    This->input = pStm;
+    IUnknown_AddRef(This->input);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlparser_PushData(IXMLParser *iface, const char *pData,
@@ -435,6 +448,7 @@ HRESULT XMLParser_create(IUnknown* pUnkOuter, void**ppObj)
 
     This->IXMLParser_iface.lpVtbl = &xmlparser_vtbl;
     This->nodefactory = NULL;
+    This->input = NULL;
     This->flags = 0;
     This->ref = 1;
 
