@@ -5680,7 +5680,6 @@ static INT HTTP_GetResponseHeaders(http_request_t *request, BOOL clear)
 
     NETCON_set_timeout( request->netconn, FALSE, request->receive_timeout );
     do {
-        static const WCHAR szHundred[] = {'1','0','0',0};
         /*
          * We should first receive 'HTTP/1.x nnn OK' where nnn is the status code.
          */
@@ -5716,7 +5715,7 @@ static INT HTTP_GetResponseHeaders(http_request_t *request, BOOL clear)
             TRACE("version [%s] status code [%s] status text [%s]\n",
                debugstr_w(buffer), debugstr_w(status_code), debugstr_w(status_text) );
 
-            codeHundred = (!strcmpW(status_code, szHundred));
+            codeHundred = request->status_code == HTTP_STATUS_CONTINUE;
         }
         else if (!codeHundred)
         {
