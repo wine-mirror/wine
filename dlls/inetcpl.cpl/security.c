@@ -134,8 +134,7 @@ static void update_zone_info(secdlg_data *sd, DWORD lv_index)
 
     SetWindowTextW(GetDlgItem(sd->hsec, IDC_SEC_ZONE_INFO), za->szDescription);
 
-    LoadStringW(hcpl, IDS_SEC_SETTINGS, name, sizeof(name)/sizeof(*name));
-    len = lstrlenW(name);
+    len = LoadStringW(hcpl, IDS_SEC_SETTINGS, name, sizeof(name)/sizeof(*name));
     lstrcpynW(&name[len], za->szDisplayName, sizeof(name)/sizeof(*name) - len - 1);
 
     TRACE("new title: %s\n", debugstr_w(name));
