@@ -829,8 +829,6 @@ static VOID test_thread_processor(void)
        ok(retMask == processMask, "SetThreadAffinityMask failed\n");
        retMask = SetThreadAffinityMask(curthread,~(ULONG_PTR)0 >> 3);
        ok(retMask == processMask, "SetThreadAffinityMask failed\n");
-       retMask = SetThreadAffinityMask(curthread,~(ULONG_PTR)1);
-       ok(retMask == 0, "SetThreadAffinityMask succeeded\n");
    }
 /* NOTE: This only works on WinNT/2000/XP) */
    if (pSetThreadIdealProcessor) {
