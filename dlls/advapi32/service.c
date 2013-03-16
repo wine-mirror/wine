@@ -950,7 +950,7 @@ DWORD SERV_OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     __ENDTRY
 
     if (err != ERROR_SUCCESS)
-        handle = 0;
+        *handle = 0;
 
     TRACE("returning %p\n", *handle);
     return err;
