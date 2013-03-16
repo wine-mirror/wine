@@ -1088,17 +1088,27 @@ UINT WINAPI GetMetaFileBitsEx( HMETAFILE hmf, UINT nSize, LPVOID buf )
 {
     METAHEADER *mh = GDI_GetObjPtr( hmf, OBJ_METAFILE );
     UINT mfSize;
+    BOOL mf_copy = FALSE;
 
     TRACE("(%p,%d,%p)\n", hmf, nSize, buf);
     if (!mh) return 0;  /* FIXME: error code */
     if(mh->mtType == METAFILE_DISK)
-        FIXME("Disk-based metafile?\n");
+    {
+        mh = MF_LoadDiskBasedMetaFile( mh );
+        if (!mh)
+        {
+            GDI_ReleaseObj( hmf );
+            return 0;
+        }
+        mf_copy = TRUE;
+    }
     mfSize = mh->mtSize * 2;
     if (buf)
     {
         if(mfSize > nSize) mfSize = nSize;
         memmove(buf, mh, mfSize);
     }
+    if (mf_copy) HeapFree( GetProcessHeap(), 0, mh );
     GDI_ReleaseObj( hmf );
     TRACE("returning size %d\n", mfSize);
     return mfSize;
