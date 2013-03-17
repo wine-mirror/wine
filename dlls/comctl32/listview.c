@@ -6265,6 +6265,7 @@ again:
     {
         lvItem.iItem = nItem;
         lvItem.iSubItem = 0;
+        lvItem.pszText = szDispText;
         if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) continue;
 
 	if (lvItem.mask & LVIF_PARAM)
