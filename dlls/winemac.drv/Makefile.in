@@ -16,6 +16,7 @@ C_SRCS = \
 	opengl.c \
 	scroll.c \
 	surface.c \
+	systray.c \
 	window.c
 
 OBJC_SRCS = \
@@ -25,6 +26,7 @@ OBJC_SRCS = \
 	cocoa_event.m \
 	cocoa_main.m \
 	cocoa_opengl.m \
+	cocoa_status_item.m \
 	cocoa_window.m
 
 @MAKE_DLL_RULES@

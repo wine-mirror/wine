@@ -177,6 +177,9 @@ extern CGImageRef create_cgimage_from_icon_bitmaps(HDC hdc, HANDLE icon, HBITMAP
                                                    unsigned char *color_bits, int color_size, HBITMAP hbmMask,
                                                    unsigned char *mask_bits, int mask_size, int width,
                                                    int height, int istep) DECLSPEC_HIDDEN;
+extern CGImageRef create_cgimage_from_icon(HANDLE icon, int width, int height) DECLSPEC_HIDDEN;
 extern CFArrayRef create_app_icon_images(void) DECLSPEC_HIDDEN;
+
+extern void macdrv_status_item_clicked(const macdrv_event *event) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_MACDRV_H */

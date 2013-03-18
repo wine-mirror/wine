@@ -116,6 +116,7 @@ typedef struct macdrv_opaque_window* macdrv_window;
 typedef struct macdrv_opaque_event_queue* macdrv_event_queue;
 typedef struct macdrv_opaque_view* macdrv_view;
 typedef struct macdrv_opaque_opengl_context* macdrv_opengl_context;
+typedef struct macdrv_opaque_status_item* macdrv_status_item;
 struct macdrv_event;
 struct macdrv_query;
 
@@ -161,6 +162,7 @@ enum {
     MOUSE_MOVED_ABSOLUTE,
     MOUSE_SCROLL,
     QUERY_EVENT,
+    STATUS_ITEM_CLICKED,
     WINDOW_CLOSE_REQUESTED,
     WINDOW_DID_MINIMIZE,
     WINDOW_DID_UNMINIMIZE,
@@ -211,6 +213,10 @@ typedef struct macdrv_event {
         struct {
             struct macdrv_query *query;
         }                                           query_event;
+        struct {
+            macdrv_status_item  item;
+            int                 count;
+        }                                           status_item_clicked;
         struct {
             CGRect frame;
         }                                           window_frame_changed;
@@ -347,5 +353,12 @@ extern void macdrv_dispose_opengl_context(macdrv_opengl_context c) DECLSPEC_HIDD
 extern void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v) DECLSPEC_HIDDEN;
 extern void macdrv_update_opengl_context(macdrv_opengl_context c) DECLSPEC_HIDDEN;
 extern void macdrv_flush_opengl_context(macdrv_opengl_context c) DECLSPEC_HIDDEN;
+
+
+/* systray / status item */
+extern macdrv_status_item macdrv_create_status_item(macdrv_event_queue q) DECLSPEC_HIDDEN;
+extern void macdrv_destroy_status_item(macdrv_status_item s) DECLSPEC_HIDDEN;
+extern void macdrv_set_status_item_image(macdrv_status_item s, CGImageRef cgimage) DECLSPEC_HIDDEN;
+extern void macdrv_set_status_item_tooltip(macdrv_status_item s, CFStringRef cftip) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_MACDRV_COCOA_H */

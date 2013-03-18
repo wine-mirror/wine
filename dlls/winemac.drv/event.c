@@ -42,6 +42,7 @@ static const char *dbgstr_event(int type)
         "MOUSE_MOVED_ABSOLUTE",
         "MOUSE_SCROLL",
         "QUERY_EVENT",
+        "STATUS_ITEM_CLICKED",
         "WINDOW_CLOSE_REQUESTED",
         "WINDOW_DID_MINIMIZE",
         "WINDOW_DID_UNMINIMIZE",
@@ -87,6 +88,7 @@ static macdrv_event_mask get_event_mask(DWORD mask)
     {
         event_mask |= event_mask_for_type(APP_DEACTIVATED);
         event_mask |= event_mask_for_type(DISPLAYS_CHANGED);
+        event_mask |= event_mask_for_type(STATUS_ITEM_CLICKED);
         event_mask |= event_mask_for_type(WINDOW_CLOSE_REQUESTED);
         event_mask |= event_mask_for_type(WINDOW_DID_MINIMIZE);
         event_mask |= event_mask_for_type(WINDOW_DID_UNMINIMIZE);
@@ -185,6 +187,9 @@ void macdrv_handle_event(macdrv_event *event)
         break;
     case QUERY_EVENT:
         macdrv_query_event(hwnd, event);
+        break;
+    case STATUS_ITEM_CLICKED:
+        macdrv_status_item_clicked(event);
         break;
     case WINDOW_CLOSE_REQUESTED:
         macdrv_window_close_requested(hwnd);

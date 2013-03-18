@@ -181,7 +181,7 @@ CGImageRef create_cgimage_from_icon_bitmaps(HDC hdc, HANDLE icon, HBITMAP hbmCol
  *
  * Create a CGImage from a Windows icon.
  */
-static CGImageRef create_cgimage_from_icon(HANDLE icon, int width, int height)
+CGImageRef create_cgimage_from_icon(HANDLE icon, int width, int height)
 {
     CGImageRef ret = NULL;
     HDC hdc;
