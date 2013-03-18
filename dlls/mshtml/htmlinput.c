@@ -1417,6 +1417,8 @@ typedef struct {
     HTMLElement element;
 
     IHTMLButtonElement IHTMLButtonElement_iface;
+
+    nsIDOMHTMLButtonElement *nsbutton;
 } HTMLButtonElement;
 
 static inline HTMLButtonElement *impl_from_IHTMLButtonElement(IHTMLButtonElement *iface)
@@ -1504,15 +1506,33 @@ static HRESULT WINAPI HTMLButtonElement_get_value(IHTMLButtonElement *iface, BST
 static HRESULT WINAPI HTMLButtonElement_put_name(IHTMLButtonElement *iface, BSTR v)
 {
     HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString name_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&name_str, v);
+    nsres = nsIDOMHTMLButtonElement_SetName(This->nsbutton, &name_str);
+    nsAString_Finish(&name_str);
+    if(NS_FAILED(nsres)) {
+        ERR("SetName failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLButtonElement_get_name(IHTMLButtonElement *iface, BSTR *p)
 {
     HTMLButtonElement *This = impl_from_IHTMLButtonElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString name_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&name_str, NULL);
+    nsres = nsIDOMHTMLButtonElement_GetName(This->nsbutton, &name_str);
+    return return_nsstr(nsres, &name_str, p);
 }
 
 static HRESULT WINAPI HTMLButtonElement_put_status(IHTMLButtonElement *iface, VARIANT v)
@@ -1628,8 +1648,7 @@ static dispex_static_data_t HTMLButtonElement_dispex = {
 HRESULT HTMLButtonElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
     HTMLButtonElement *ret;
-
-    ERR("!!!\n");
+    nsresult nsres;
 
     ret = heap_alloc_zero(sizeof(*ret));
     if(!ret)
@@ -1639,6 +1658,13 @@ HRESULT HTMLButtonElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
     ret->element.node.vtbl = &HTMLButtonElementImplVtbl;
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLButtonElement_dispex);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLButtonElement, (void**)&ret->nsbutton);
+
+    /* Share nsbutton reference with nsnode */
+    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsbutton == ret->element.node.nsnode);
+    nsIDOMNode_Release(ret->element.node.nsnode);
+
     *elem = &ret->element;
     return S_OK;
 }

@@ -1690,6 +1690,41 @@ interface nsIDOMHTMLOptionElement : nsIDOMHTMLElement
 
 [
     object,
+    uuid(8e40d4d7-c204-4192-802a-0b5602e9c669),
+    local
+]
+interface nsIDOMHTMLButtonElement : nsIDOMHTMLElement
+{
+    nsresult GetAutofocus(bool *aAutofocus);
+    nsresult SetAutofocus(bool aAutofocus);
+    nsresult GetDisabled(bool *aDisabled);
+    nsresult SetDisabled(bool aDisabled);
+    nsresult GetForm(nsIDOMHTMLFormElement **aForm);
+    nsresult GetFormAction(nsAString *aFormAction);
+    nsresult SetFormAction(const nsAString *aFormAction);
+    nsresult GetFormEnctype(nsAString *aFormEnctype);
+    nsresult SetFormEnctype(const nsAString *aFormEnctype);
+    nsresult GetFormMethod(nsAString *aFormMethod);
+    nsresult SetFormMethod(const nsAString *aFormMethod);
+    nsresult GetFormNoValidate(bool *aFormNoValidate);
+    nsresult SetFormNoValidate(bool aFormNoValidate);
+    nsresult GetFormTarget(nsAString *aFormTarget);
+    nsresult SetFormTarget(const nsAString *aFormTarget);
+    nsresult GetName(nsAString *aName);
+    nsresult SetName(const nsAString *aName);
+    nsresult GetType(nsAString *aType);
+    nsresult SetType(const nsAString *aType);
+    nsresult GetValue(nsAString *aValue);
+    nsresult SetValue(const nsAString *aValue);
+    nsresult GetWillValidate(bool *aWillValidate);
+    nsresult GetValidity(nsIDOMValidityState **aValidity);
+    nsresult GetValidationMessage(nsAString *aValidationMessage);
+    nsresult CheckValidity(bool *_retval);
+    nsresult SetCustomValidity(const nsAString *error);
+}
+
+[
+    object,
     uuid(429b041b-06df-486c-9a3a-a1d901cc76a2),
     local
 ]
