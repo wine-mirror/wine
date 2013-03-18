@@ -467,12 +467,12 @@ CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width,
 
 
 /***********************************************************************
- *              create_cgimage_from_icon
+ *              create_cgimage_from_icon_bitmaps
  */
-static CGImageRef create_cgimage_from_icon(HDC hdc, HANDLE icon, HBITMAP hbmColor,
-                                           unsigned char *color_bits, int color_size, HBITMAP hbmMask,
-                                           unsigned char *mask_bits, int mask_size, int width,
-                                           int height, int istep)
+static CGImageRef create_cgimage_from_icon_bitmaps(HDC hdc, HANDLE icon, HBITMAP hbmColor,
+                                                   unsigned char *color_bits, int color_size, HBITMAP hbmMask,
+                                                   unsigned char *mask_bits, int mask_size, int width,
+                                                   int height, int istep)
 {
     int i, has_alpha = FALSE;
     DWORD *ptr;
@@ -655,8 +655,8 @@ static CFDictionaryRef create_cursor_frame(HDC hdc, const ICONINFOEXW *iinfo, HA
     CFDictionarySetValue(frame, CFSTR("duration"), duration_number);
     CFRelease(duration_number);
 
-    cgimage = create_cgimage_from_icon(hdc, icon, hbmColor, color_bits, color_size,
-                                       hbmMask, mask_bits, mask_size, width, height, istep);
+    cgimage = create_cgimage_from_icon_bitmaps(hdc, icon, hbmColor, color_bits, color_size,
+                                               hbmMask, mask_bits, mask_size, width, height, istep);
     if (!cgimage)
     {
         CFRelease(frame);
