@@ -9,6 +9,7 @@ C_SRCS = \
 	dragdrop.c \
 	event.c \
 	gdi.c \
+	image.c \
 	keyboard.c \
 	macdrv_main.c \
 	mouse.c \

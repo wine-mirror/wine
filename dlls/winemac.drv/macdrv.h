@@ -173,4 +173,9 @@ extern struct opengl_funcs *macdrv_wine_get_wgl_driver(PHYSDEV dev, UINT version
 extern void sync_gl_view(struct macdrv_win_data *data) DECLSPEC_HIDDEN;
 extern void set_gl_view_parent(HWND hwnd, HWND parent) DECLSPEC_HIDDEN;
 
+extern CGImageRef create_cgimage_from_icon_bitmaps(HDC hdc, HANDLE icon, HBITMAP hbmColor,
+                                                   unsigned char *color_bits, int color_size, HBITMAP hbmMask,
+                                                   unsigned char *mask_bits, int mask_size, int width,
+                                                   int height, int istep) DECLSPEC_HIDDEN;
+
 #endif  /* __WINE_MACDRV_H */
