@@ -75,6 +75,8 @@ enum {
     CGPoint synthesizedLocation;
     NSTimeInterval lastSetCursorPositionTime;
     NSTimeInterval lastEventTapEventTime;
+
+    NSImage* applicationIcon;
 }
 
 @property (nonatomic) CGEventSourceKeyboardType keyboardType;

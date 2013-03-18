@@ -58,6 +58,7 @@ int macdrv_err_on;
 @property (readwrite, copy, nonatomic) NSEvent* lastFlagsChanged;
 @property (copy, nonatomic) NSArray* cursorFrames;
 @property (retain, nonatomic) NSTimer* cursorTimer;
+@property (retain, nonatomic) NSImage* applicationIcon;
 
     static void PerformRequest(void *info);
 
@@ -67,7 +68,7 @@ int macdrv_err_on;
 @implementation WineApplication
 
     @synthesize keyboardType, lastFlagsChanged;
-    @synthesize orderedWineWindows;
+    @synthesize orderedWineWindows, applicationIcon;
     @synthesize cursorFrames, cursorTimer;
 
     - (id) init
@@ -111,6 +112,7 @@ int macdrv_err_on;
 
     - (void) dealloc
     {
+        [applicationIcon release];
         [warpRecords release];
         [cursorTimer release];
         [cursorFrames release];
@@ -169,6 +171,8 @@ int macdrv_err_on;
 
             [self setMainMenu:mainMenu];
             [self setWindowsMenu:submenu];
+
+            [self setApplicationIconImage:self.applicationIcon];
         }
     }
 
@@ -629,6 +633,43 @@ int macdrv_err_on;
 
             [self setCursor];
         }
+    }
+
+    - (void) setApplicationIconFromCGImageArray:(NSArray*)images
+    {
+        NSImage* nsimage = nil;
+
+        if ([images count])
+        {
+            NSSize bestSize = NSZeroSize;
+            id image;
+
+            nsimage = [[[NSImage alloc] initWithSize:NSZeroSize] autorelease];
+
+            for (image in images)
+            {
+                CGImageRef cgimage = (CGImageRef)image;
+                NSBitmapImageRep* imageRep = [[NSBitmapImageRep alloc] initWithCGImage:cgimage];
+                if (imageRep)
+                {
+                    NSSize size = [imageRep size];
+
+                    [nsimage addRepresentation:imageRep];
+                    [imageRep release];
+
+                    if (MIN(size.width, size.height) > MIN(bestSize.width, bestSize.height))
+                        bestSize = size;
+                }
+            }
+
+            if ([[nsimage representations] count] && bestSize.width && bestSize.height)
+                [nsimage setSize:bestSize];
+            else
+                nsimage = nil;
+        }
+
+        self.applicationIcon = nsimage;
+        [self setApplicationIconImage:nsimage];
     }
 
     /*
@@ -1421,4 +1462,21 @@ int macdrv_clip_cursor(CGRect rect)
     });
 
     return ret;
+}
+
+/***********************************************************************
+ *              macdrv_set_application_icon
+ *
+ * Set the application icon.  The images array contains CGImages.  If
+ * there are more than one, then they represent different sizes or
+ * color depths from the icon resource.  If images is NULL or empty,
+ * restores the default application image.
+ */
+void macdrv_set_application_icon(CFArrayRef images)
+{
+    NSArray* imageArray = (NSArray*)images;
+
+    OnMainThreadAsync(^{
+        [NSApp setApplicationIconFromCGImageArray:imageArray];
+    });
 }
