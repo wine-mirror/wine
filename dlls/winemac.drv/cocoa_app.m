@@ -672,6 +672,49 @@ int macdrv_err_on;
         [self setApplicationIconImage:nsimage];
     }
 
+    - (void) handleCommandTab
+    {
+        if ([self isActive])
+        {
+            NSRunningApplication* thisApp = [NSRunningApplication currentApplication];
+            NSRunningApplication* app;
+            NSRunningApplication* otherValidApp = nil;
+
+            if ([originalDisplayModes count])
+            {
+                CGRestorePermanentDisplayConfiguration();
+                CGReleaseAllDisplays();
+                [originalDisplayModes removeAllObjects];
+            }
+
+            for (app in [[NSWorkspace sharedWorkspace] runningApplications])
+            {
+                if (![app isEqual:thisApp] && !app.terminated &&
+                    app.activationPolicy == NSApplicationActivationPolicyRegular)
+                {
+                    if (!app.hidden)
+                    {
+                        // There's another visible app.  Just hide ourselves and let
+                        // the system activate the other app.
+                        [self hide:self];
+                        return;
+                    }
+
+                    if (!otherValidApp)
+                        otherValidApp = app;
+                }
+            }
+
+            // Didn't find a visible GUI app.  Try the Finder or, if that's not
+            // running, the first hidden GUI app.  If even that doesn't work, we
+            // just fail to switch and remain the active app.
+            app = [[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.apple.finder"] lastObject];
+            if (!app) app = otherValidApp;
+            [app unhide];
+            [app activateWithOptions:0];
+        }
+    }
+
     /*
      * ---------- Cursor clipping methods ----------
      *
@@ -1083,6 +1126,19 @@ int macdrv_err_on;
             // position, the accumulating delta from move events is invalidated.
             // Make sure next mouse move event starts over from an absolute baseline.
             forceNextMouseMoveAbsolute = TRUE;
+        }
+        else if (type == NSKeyDown && ![anEvent isARepeat] && [anEvent keyCode] == kVK_Tab)
+        {
+            NSUInteger modifiers = [anEvent modifierFlags];
+            if ((modifiers & NSCommandKeyMask) &&
+                !(modifiers & (NSControlKeyMask | NSAlternateKeyMask)))
+            {
+                // Command-Tab and Command-Shift-Tab would normally be intercepted
+                // by the system to switch applications.  If we're seeing it, it's
+                // presumably because we've captured the displays, preventing
+                // normal application switching.  Do it manually.
+                [self handleCommandTab];
+            }
         }
     }
 
