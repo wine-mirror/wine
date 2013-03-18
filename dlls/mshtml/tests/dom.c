@@ -913,6 +913,17 @@ static IHTMLIFrameElement2 *_get_iframe2_iface(unsigned line, IUnknown *unk)
     return ret;
 }
 
+#define get_button_iface(u) _get_button_iface(__LINE__,u)
+static IHTMLButtonElement *_get_button_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLButtonElement *ret;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLButtonElement, (void**)&ret);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLButtonElement: %08x\n", hres);
+    return ret;
+}
+
 #define test_node_name(u,n) _test_node_name(__LINE__,u,n)
 static void _test_node_name(unsigned line, IUnknown *unk, const char *exname)
 {
@@ -5348,6 +5359,45 @@ static void test_defaults(IHTMLDocument2 *doc)
     test_doc_title(doc, "");
 }
 
+#define test_button_name(a,b) _test_button_name(__LINE__,a,b)
+static void _test_button_name(unsigned line, IHTMLElement *elem, const char *exname)
+{
+    IHTMLButtonElement *button = _get_button_iface(line, (IUnknown*)elem);
+    BSTR str;
+    HRESULT hres;
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLButtonElement_get_name(button, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_name failed: %08x\n", hres);
+    if(exname)
+        ok_(__FILE__,line)(!strcmp_wa(str, exname), "name = %s, expected %s\n", wine_dbgstr_w(str), exname);
+    else
+        ok_(__FILE__,line)(!str, "name = %s, expected NULL\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    IHTMLButtonElement_Release(button);
+}
+
+#define set_button_name(a,b) _set_button_name(__LINE__,a,b)
+static void _set_button_name(unsigned line, IHTMLElement *elem, const char *name)
+{
+    IHTMLButtonElement *button = _get_button_iface(line, (IUnknown*)elem);
+    BSTR str = a2bstr(name);
+    HRESULT hres;
+
+    hres = IHTMLButtonElement_put_name(button, str);
+    ok_(__FILE__,line)(hres == S_OK, "get_name failed: %08x\n", hres);
+    SysFreeString(str);
+    IHTMLButtonElement_Release(button);
+
+    _test_button_name(line, elem, name);
+}
+
+static void test_button_elem(IHTMLElement *elem)
+{
+    test_button_name(elem, NULL);
+    set_button_name(elem, "button name");
+}
+
 static void test_tr_elem(IHTMLElement *elem)
 {
     IHTMLElementCollection *col;
@@ -6094,6 +6144,13 @@ static void test_elems(IHTMLDocument2 *doc)
     ok(elem != NULL, "elem == NULL\n");
     if(elem) {
         test_iframe_elem(elem);
+        IHTMLElement_Release(elem);
+    }
+
+    elem = get_doc_elem_by_id(doc, "btnid");
+    ok(elem != NULL, "elem == NULL\n");
+    if(elem) {
+        test_button_elem(elem);
         IHTMLElement_Release(elem);
     }
 
