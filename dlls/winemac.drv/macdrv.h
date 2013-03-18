@@ -71,6 +71,8 @@ static inline const char *wine_dbgstr_cgrect(CGRect cgrect)
 
 extern CGRect macdrv_get_desktop_rect(void) DECLSPEC_HIDDEN;
 extern void macdrv_reset_device_metrics(void) DECLSPEC_HIDDEN;
+extern BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;
+extern BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;
 
 
 /**************************************************************************

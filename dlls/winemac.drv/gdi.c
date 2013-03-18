@@ -461,7 +461,7 @@ static const struct gdi_dc_funcs macdrv_funcs =
     NULL,                                   /* pGetCharABCWidthsI */
     NULL,                                   /* pGetCharWidth */
     macdrv_GetDeviceCaps,                   /* pGetDeviceCaps */
-    NULL,                                   /* pGetDeviceGammaRamp */
+    macdrv_GetDeviceGammaRamp,              /* pGetDeviceGammaRamp */
     NULL,                                   /* pGetFontData */
     NULL,                                   /* pGetFontUnicodeRanges */
     NULL,                                   /* pGetGlyphIndices */
@@ -522,7 +522,7 @@ static const struct gdi_dc_funcs macdrv_funcs =
     NULL,                                   /* pSetDCPenColor */
     NULL,                                   /* pSetDIBitsToDevice */
     NULL,                                   /* pSetDeviceClipping */
-    NULL,                                   /* pSetDeviceGammaRamp */
+    macdrv_SetDeviceGammaRamp,              /* pSetDeviceGammaRamp */
     NULL,                                   /* pSetLayout */
     NULL,                                   /* pSetMapMode */
     NULL,                                   /* pSetMapperFlags */

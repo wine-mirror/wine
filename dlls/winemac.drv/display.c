@@ -24,6 +24,7 @@
 #include "macdrv.h"
 #include "winuser.h"
 #include "winreg.h"
+#include "ddrawi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(display);
 
@@ -599,6 +600,91 @@ failed:
 
 
 /***********************************************************************
+ *              GetDeviceGammaRamp (MACDRV.@)
+ */
+BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
+{
+    BOOL ret = FALSE;
+    DDGAMMARAMP *r = ramp;
+    struct macdrv_display *displays;
+    int num_displays;
+    uint32_t mac_entries;
+    int win_entries = sizeof(r->red) / sizeof(r->red[0]);
+    CGGammaValue *red, *green, *blue;
+    CGError err;
+    int win_entry;
+
+    TRACE("dev %p ramp %p\n", dev, ramp);
+
+    if (macdrv_get_displays(&displays, &num_displays))
+    {
+        WARN("failed to get Mac displays\n");
+        return FALSE;
+    }
+
+    mac_entries = CGDisplayGammaTableCapacity(displays[0].displayID);
+    red = HeapAlloc(GetProcessHeap(), 0, mac_entries * sizeof(red[0]) * 3);
+    if (!red)
+        goto done;
+    green = red + mac_entries;
+    blue = green + mac_entries;
+
+    err = CGGetDisplayTransferByTable(displays[0].displayID, mac_entries, red, green,
+                                      blue, &mac_entries);
+    if (err != kCGErrorSuccess)
+    {
+        WARN("failed to get Mac gamma table: %d\n", err);
+        goto done;
+    }
+
+    if (mac_entries == win_entries)
+    {
+        for (win_entry = 0; win_entry < win_entries; win_entry++)
+        {
+            r->red[win_entry]   = red[win_entry]   * 65535 + 0.5;
+            r->green[win_entry] = green[win_entry] * 65535 + 0.5;
+            r->blue[win_entry]  = blue[win_entry]  * 65535 + 0.5;
+        }
+    }
+    else
+    {
+        for (win_entry = 0; win_entry < win_entries; win_entry++)
+        {
+            double mac_pos = win_entry * (mac_entries - 1) / (double)(win_entries - 1);
+            int mac_entry = mac_pos;
+            double red_value, green_value, blue_value;
+
+            if (mac_entry == mac_entries - 1)
+            {
+                red_value   = red[mac_entry];
+                green_value = green[mac_entry];
+                blue_value  = blue[mac_entry];
+            }
+            else
+            {
+                double distance = mac_pos - mac_entry;
+
+                red_value   = red[mac_entry]   * (1 - distance) + red[mac_entry + 1]   * distance;
+                green_value = green[mac_entry] * (1 - distance) + green[mac_entry + 1] * distance;
+                blue_value  = blue[mac_entry]  * (1 - distance) + blue[mac_entry + 1]  * distance;
+            }
+
+            r->red[win_entry]   = red_value   * 65535 + 0.5;
+            r->green[win_entry] = green_value * 65535 + 0.5;
+            r->blue[win_entry]  = blue_value  * 65535 + 0.5;
+        }
+    }
+
+    ret = TRUE;
+
+done:
+    HeapFree(GetProcessHeap(), 0, red);
+    macdrv_free_displays(displays);
+    return ret;
+}
+
+
+/***********************************************************************
  *              GetMonitorInfo  (MACDRV.@)
  */
 BOOL CDECL macdrv_GetMonitorInfo(HMONITOR monitor, LPMONITORINFO info)
@@ -646,6 +732,51 @@ BOOL CDECL macdrv_GetMonitorInfo(HMONITOR monitor, LPMONITORINFO info)
 
     macdrv_free_displays(displays);
     return (i < num_displays);
+}
+
+
+/***********************************************************************
+ *              SetDeviceGammaRamp (MACDRV.@)
+ */
+BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
+{
+    DDGAMMARAMP *r = ramp;
+    struct macdrv_display *displays;
+    int num_displays;
+    int win_entries = sizeof(r->red) / sizeof(r->red[0]);
+    CGGammaValue *red, *green, *blue;
+    int i;
+    CGError err = kCGErrorFailure;
+
+    TRACE("dev %p ramp %p\n", dev, ramp);
+
+    if (macdrv_get_displays(&displays, &num_displays))
+    {
+        WARN("failed to get Mac displays\n");
+        return FALSE;
+    }
+
+    red = HeapAlloc(GetProcessHeap(), 0, win_entries * sizeof(red[0]) * 3);
+    if (!red)
+        goto done;
+    green = red + win_entries;
+    blue = green + win_entries;
+
+    for (i = 0; i < win_entries; i++)
+    {
+        red[i]      = r->red[i] / 65535.0;
+        green[i]    = r->green[i] / 65535.0;
+        blue[i]     = r->blue[i] / 65535.0;
+    }
+
+    err = CGSetDisplayTransferByTable(displays[0].displayID, win_entries, red, green, blue);
+    if (err != kCGErrorSuccess)
+        WARN("failed to set display gamma table: %d\n", err);
+
+done:
+    HeapFree(GetProcessHeap(), 0, red);
+    macdrv_free_displays(displays);
+    return (err == kCGErrorSuccess);
 }
 
 
