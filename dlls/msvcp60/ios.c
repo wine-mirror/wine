@@ -2286,15 +2286,6 @@ streamsize __thiscall basic_streambuf_wchar_sputn(basic_streambuf_wchar *this, c
     return call_basic_streambuf_wchar_xsputn(this, ptr, count);
 }
 
-/* ?getloc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAE?AVlocale@2@XZ */
-/* ?getloc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAA?AVlocale@2@XZ */
-DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_getloc, 8)
-locale* __thiscall basic_streambuf_wchar_getloc(basic_streambuf_wchar *this, locale *ret)
-{
-    TRACE("(%p %p)\n", this, ret);
-    return locale_copy_ctor(ret, &this->loc);
-}
-
 /* ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA */
 /* ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@23@@Z@4HA */
 int basic_filebuf_char__Init__Stinit = 0;
