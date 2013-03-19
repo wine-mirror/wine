@@ -27,6 +27,7 @@
 #include "math.h"
 #include "stdio.h"
 #include "wctype.h"
+#include "time.h"
 
 #include "wine/list.h"
 
@@ -98,6 +99,12 @@ typedef struct {
     const wchar_t *false_name;
     const wchar_t *true_name;
 } numpunct_wchar;
+
+typedef struct {
+    locale_facet facet;
+    _Timevec time;
+    _Cvtvec cvt;
+} time_put;
 
 /* ?_Id_cnt@id@locale@std@@0HA */
 int locale_id__Id_cnt = 0;
@@ -7785,6 +7792,299 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_bool(const num_put *this
     return call_num_put_wchar_do_put_bool(this, ret, dest, base, fill, v);
 }
 
+/* ?id@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@2V0locale@2@A */
+locale_id time_put_char_id = {0};
+
+/* ??_7?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_time_put_char_vtable;
+
+/* ?_Init@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z */
+DEFINE_THISCALL_WRAPPER(time_put_char__Init, 8)
+void __thiscall time_put_char__Init(time_put *this, const _Locinfo *locinfo)
+{
+    FIXME("(%p %p) stub\n", this, locinfo);
+}
+
+/* ??0?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */
+/* ??0?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAA@AEBV_Locinfo@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(time_put_char_ctor_locinfo, 12)
+time_put* __thiscall time_put_char_ctor_locinfo(time_put *this, const _Locinfo *locinfo, MSVCP_size_t refs)
+{
+    FIXME("(%p %p %lu) stub\n", this, locinfo, refs);
+    return NULL;
+}
+
+/* ??0?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@I@Z */
+/* ??0?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(time_put_char_ctor_refs, 8)
+time_put* __thiscall time_put_char_ctor_refs(time_put *this, MSVCP_size_t refs)
+{
+    FIXME("(%p %lu) stub\n", this, refs);
+    return NULL;
+}
+
+/* ??_F?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAEXXZ */
+/* ??_F?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(time_put_char_ctor, 4)
+time_put* __thiscall time_put_char_ctor(time_put *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ??1?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MAE@XZ */
+/* ??1?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEAA@XZ */
+DEFINE_THISCALL_WRAPPER(time_put_char_dtor, 4)
+void __thiscall time_put_char_dtor(time_put *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(time_put_char_vector_dtor, 8)
+time_put* __thiscall time_put_char_vector_dtor(time_put *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            time_put_char_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        time_put_char_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?_Getcat@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ?_Getcat@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+MSVCP_size_t __cdecl time_put_char__Getcat(const locale_facet **facet, const locale *loc)
+{
+    FIXME("(%p %p) stub\n", facet, loc);
+    return 0;
+}
+
+/* ?do_put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPBUtm@@DD@Z */
+/* ?do_put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DPEBUtm@@DD@Z */
+DEFINE_THISCALL_WRAPPER(time_put_char_do_put, 36)
+#define call_time_put_char_do_put(this, ret, dest, base, fill, t, spec, mod) CALL_VTBL_FUNC(this, 4, ostreambuf_iterator_char*, \
+        (const time_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, const struct tm*, char, char), \
+        (this, ret, dest, base, fill, t, spec, mod))
+ostreambuf_iterator_char* __thiscall time_put_char_do_put(const time_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, const struct tm *t, char spec, char mod)
+{
+    FIXME("(%p %p %p %c %p %c %c) stub\n", this, ret, base, fill, t, spec, mod);
+    return NULL;
+}
+
+/* ?put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPBUtm@@PBD3@Z */
+/* ?put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DPEBUtm@@PEBD3@Z */
+DEFINE_THISCALL_WRAPPER(time_put_char_put_format, 36)
+ostreambuf_iterator_char* __thiscall time_put_char_put_format(const time_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, const struct tm *t, const char *pat, const char *pat_end)
+{
+    FIXME("(%p %p %p %c %p %s) stub\n", this, ret, base, fill, t, debugstr_an(pat, pat_end-pat));
+    return NULL;
+}
+
+/* ?put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPBUtm@@DD@Z */
+/* ?put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DPEBUtm@@DD@Z */
+DEFINE_THISCALL_WRAPPER(time_put_char_put, 36)
+ostreambuf_iterator_char* __thiscall time_put_char_put(const time_put *this, ostreambuf_iterator_char *ret,
+        ostreambuf_iterator_char dest, ios_base *base, char fill, const struct tm *t, char spec, char mod)
+{
+    TRACE("(%p %p %p %c %p %c %c)\n", this, ret, base, fill, t, spec, mod);
+    return call_time_put_char_do_put(this, ret, dest, base, fill, t, spec, mod);
+}
+
+/* ?id@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@2V0locale@2@A */
+locale_id time_put_wchar_id = {0};
+/* ?id@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@2V0locale@2@A */
+locale_id time_put_short_id = {0};
+
+/* ??_7?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_time_put_wchar_vtable;
+/* ??_7?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_time_put_short_vtable;
+
+/* ?_Init@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z */
+/* ?_Init@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z */
+DEFINE_THISCALL_WRAPPER(time_put_wchar__Init, 8)
+void __thiscall time_put_wchar__Init(time_put *this, const _Locinfo *locinfo)
+{
+    FIXME("(%p %p) stub\n", this, locinfo);
+}
+
+/* ??0?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */
+/* ??0?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAA@AEBV_Locinfo@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(time_put_wchar_ctor_locinfo, 12)
+time_put* __thiscall time_put_wchar_ctor_locinfo(time_put *this, const _Locinfo *locinfo, MSVCP_size_t refs)
+{
+    FIXME("(%p %p %lu) stub\n", this, locinfo, refs);
+    return NULL;
+}
+
+/* ??0?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */
+/* ??0?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEAA@AEBV_Locinfo@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(time_put_short_ctor_locinfo, 12)
+time_put* __thiscall time_put_short_ctor_locinfo(time_put *this, const _Locinfo *locinfo, MSVCP_size_t refs)
+{
+    time_put_wchar_ctor_locinfo(this, locinfo, refs);
+    this->facet.vtable = &MSVCP_time_put_short_vtable;
+    return this;
+}
+
+/* ??0?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IAE@PBDI@Z */
+/* ??0?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IEAA@PEBD_K@Z */
+DEFINE_THISCALL_WRAPPER(time_put_wchar_ctor_name, 12)
+time_put* __thiscall time_put_wchar_ctor_name(time_put *this, const char *name, MSVCP_size_t refs)
+{
+    FIXME("(%p %s %lu) stub\n", this, debugstr_a(name), refs);
+    return NULL;
+}
+
+/* ??0?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@IAE@PBDI@Z */
+/* ??0?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@IEAA@PEBD_K@Z */
+DEFINE_THISCALL_WRAPPER(time_put_short_ctor_name, 12)
+time_put* __thiscall time_put_short_ctor_name(time_put *this, const char *name, MSVCP_size_t refs)
+{
+    time_put_wchar_ctor_name(this, name, refs);
+    this->facet.vtable = &MSVCP_time_put_short_vtable;
+    return this;
+}
+
+/* ??0?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAE@I@Z */
+/* ??0?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(time_put_wchar_ctor_refs, 8)
+time_put* __thiscall time_put_wchar_ctor_refs(time_put *this, MSVCP_size_t refs)
+{
+    FIXME("(%p %lu) stub\n", this, refs);
+    return NULL;
+}
+
+/* ??0?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QAE@I@Z */
+/* ??0?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(time_put_short_ctor_refs, 8)
+time_put* __thiscall time_put_short_ctor_refs(time_put *this, MSVCP_size_t refs)
+{
+    time_put_wchar_ctor_refs(this, refs);
+    this->facet.vtable = &MSVCP_time_put_short_vtable;
+    return this;
+}
+
+/* ??_F?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAEXXZ */
+/* ??_F?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(time_put_wchar_ctor, 4)
+time_put* __thiscall time_put_wchar_ctor(time_put *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ??_F?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QAEXXZ */
+/* ??_F?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(time_put_short_ctor, 4)
+time_put* __thiscall time_put_short_ctor(time_put *this)
+{
+    time_put_wchar_ctor(this);
+    this->facet.vtable = &MSVCP_time_put_short_vtable;
+    return this;
+}
+
+/* ??1?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MAE@XZ */
+/* ??1?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MEAA@XZ */
+/* ??1?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MAE@XZ */
+/* ??1?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEAA@XZ */
+DEFINE_THISCALL_WRAPPER(time_put_wchar_dtor, 4)
+void __thiscall time_put_wchar_dtor(time_put *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(time_put_wchar_vector_dtor, 8)
+time_put* __thiscall time_put_wchar_vector_dtor(time_put *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            time_put_wchar_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        time_put_wchar_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?_Getcat@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ?_Getcat@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+MSVCP_size_t __cdecl time_put_wchar__Getcat(const locale_facet **facet, const locale *loc)
+{
+    FIXME("(%p %p) stub\n", facet, loc);
+    return 0;
+}
+
+/* ?_Getcat@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ?_Getcat@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+MSVCP_size_t __cdecl time_put_short__Getcat(const locale_facet **facet, const locale *loc)
+{
+    FIXME("(%p %p) stub\n", facet, loc);
+    return 0;
+}
+
+/* ?do_put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AAVios_base@2@GPBUtm@@DD@Z */
+/* ?do_put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AEAVios_base@2@GPEBUtm@@DD@Z */
+/* ?do_put@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WPBUtm@@DD@Z */
+/* ?do_put@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEBUtm@@DD@Z */
+DEFINE_THISCALL_WRAPPER(time_put_wchar_do_put, 36)
+#define call_time_put_wchar_do_put(this, ret, dest, base, fill, t, spec, mod) CALL_VTBL_FUNC(this, 4, ostreambuf_iterator_wchar*, \
+        (const time_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, const struct tm*, char, char), \
+        (this, ret, dest, base, fill, t, spec, mod))
+ostreambuf_iterator_wchar* __thiscall time_put_wchar_do_put(const time_put *this,
+        ostreambuf_iterator_wchar *ret, ostreambuf_iterator_wchar dest, ios_base *base,
+        wchar_t fill, const struct tm *t, char spec, char mod)
+{
+    FIXME("(%p %p %p %c %p %c %c) stub\n", this, ret, base, fill, t, spec, mod);
+    return NULL;
+}
+
+/* ?put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AAVios_base@2@GPBUtm@@PBG3@Z */
+/* ?put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AEAVios_base@2@GPEBUtm@@PEBG3@Z */
+/* ?put@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WPBUtm@@PB_W4@Z */
+/* ?put@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEBUtm@@PEB_W4@Z */
+DEFINE_THISCALL_WRAPPER(time_put_wchar_put_format, 36)
+ostreambuf_iterator_wchar* __thiscall time_put_wchar_put_format(const time_put *this,
+        ostreambuf_iterator_wchar *ret, ostreambuf_iterator_wchar dest, ios_base *base,
+        wchar_t fill, const struct tm *t, const wchar_t *pat, const wchar_t *pat_end)
+{
+    FIXME("(%p %p %p %c %p %s) stub\n", this, ret, base, fill, t, debugstr_wn(pat, pat_end-pat));
+    return NULL;
+}
+
+/* ?put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AAVios_base@2@GPBUtm@@DD@Z */
+/* ?put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AEAVios_base@2@GPEBUtm@@DD@Z */
+/* ?put@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WPBUtm@@DD@Z */
+/* ?put@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEBUtm@@DD@Z */
+DEFINE_THISCALL_WRAPPER(time_put_wchar_put, 36)
+ostreambuf_iterator_wchar* __thiscall time_put_wchar_put(const time_put *this,
+        ostreambuf_iterator_wchar *ret, ostreambuf_iterator_wchar dest, ios_base *base,
+        wchar_t fill, const struct tm *t, char spec, char mod)
+{
+    TRACE("(%p %p %p %c %p %c %c)\n", this, ret, base, fill, t, spec, mod);
+    return call_time_put_wchar_do_put(this, ret, dest, base, fill, t, spec, mod);
+}
 /* ??0_Locimp@locale@std@@AAE@_N@Z */
 /* ??0_Locimp@locale@std@@AEAA@_N@Z */
 DEFINE_THISCALL_WRAPPER(locale__Locimp_ctor_transparent, 8)
@@ -8584,6 +8884,9 @@ DEFINE_RTTI_DATA1(num_get_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$n
 DEFINE_RTTI_DATA1(num_put_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@")
 DEFINE_RTTI_DATA1(num_put_wchar, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@")
 DEFINE_RTTI_DATA1(num_put_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@")
+DEFINE_RTTI_DATA1(time_put_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@")
+DEFINE_RTTI_DATA1(time_put_wchar, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@")
+DEFINE_RTTI_DATA1(time_put_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@")
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -8773,6 +9076,15 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_put_short_do_put_ulong)
             VTABLE_ADD_FUNC(num_put_short_do_put_long)
             VTABLE_ADD_FUNC(num_put_short_do_put_bool));
+    __ASM_VTABLE(time_put_char,
+            VTABLE_ADD_FUNC(time_put_char_vector_dtor)
+            VTABLE_ADD_FUNC(time_put_char_do_put));
+    __ASM_VTABLE(time_put_wchar,
+            VTABLE_ADD_FUNC(time_put_wchar_vector_dtor)
+            VTABLE_ADD_FUNC(time_put_wchar_do_put));
+    __ASM_VTABLE(time_put_short,
+            VTABLE_ADD_FUNC(time_put_wchar_vector_dtor)
+            VTABLE_ADD_FUNC(time_put_wchar_do_put));
 #ifndef __GNUC__
 }
 #endif
@@ -8801,6 +9113,9 @@ void init_locale(void *base)
     init_num_put_char_rtti(base);
     init_num_put_wchar_rtti(base);
     init_num_put_short_rtti(base);
+    init_time_put_char_rtti(base);
+    init_time_put_wchar_rtti(base);
+    init_time_put_short_rtti(base);
 #endif
 }
 
