@@ -7982,6 +7982,34 @@ MSVCP_size_t __cdecl time_put_char__Getcat(const locale_facet **facet, const loc
     return LC_TIME;
 }
 
+static time_put* time_put_char_use_facet(const locale *loc)
+{
+    static time_put *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&time_put_char_id));
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (time_put*)fac;
+    }
+
+    if(obj) {
+        _Lockit_dtor(&lock);
+        return obj;
+    }
+
+    time_put_char__Getcat(&fac, loc);
+    obj = (time_put*)fac;
+    locale_facet__Incref(&obj->facet);
+    locale_facet_register(&obj->facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
+}
+
 /* ?do_put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPBUtm@@DD@Z */
 /* ?do_put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DPEBUtm@@DD@Z */
 DEFINE_THISCALL_WRAPPER(time_put_char_do_put, 36)
@@ -8217,6 +8245,34 @@ MSVCP_size_t __cdecl time_put_wchar__Getcat(const locale_facet **facet, const lo
     return LC_TIME;
 }
 
+static time_put* time_put_wchar_use_facet(const locale *loc)
+{
+    static time_put *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&time_put_wchar_id));
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (time_put*)fac;
+    }
+
+    if(obj) {
+        _Lockit_dtor(&lock);
+        return obj;
+    }
+
+    time_put_wchar__Getcat(&fac, loc);
+    obj = (time_put*)fac;
+    locale_facet__Incref(&obj->facet);
+    locale_facet_register(&obj->facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
+}
+
 /* ?_Getcat@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 MSVCP_size_t __cdecl time_put_short__Getcat(const locale_facet **facet, const locale *loc)
@@ -8235,6 +8291,34 @@ MSVCP_size_t __cdecl time_put_short__Getcat(const locale_facet **facet, const lo
     }
 
     return LC_TIME;
+}
+
+static time_put* time_put_short_use_facet(const locale *loc)
+{
+    static time_put *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&time_put_short_id));
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (time_put*)fac;
+    }
+
+    if(obj) {
+        _Lockit_dtor(&lock);
+        return obj;
+    }
+
+    time_put_short__Getcat(&fac, loc);
+    obj = (time_put*)fac;
+    locale_facet__Incref(&obj->facet);
+    locale_facet_register(&obj->facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
 }
 
 /* ?do_put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AAVios_base@2@GPBUtm@@DD@Z */
@@ -8491,7 +8575,7 @@ locale__Locimp** __cdecl locale__Locimp__Clocptr_func(void)
 /* ?_Makeushloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makeushloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
 /* List of missing facets:
- * messages, money_get, money_put, moneypunct, moneypunct, time_get, time_put
+ * messages, money_get, money_put, moneypunct, moneypunct, time_get
  */
 void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
@@ -8577,6 +8661,22 @@ void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, l
         locale__Locimp__Addfac(locimp, &c->facet, locale_id_operator_size_t(&collate_short_id));
     }
 
+     if(cat & (1<<(time_put_short__Getcat(NULL, NULL)-1))) {
+         time_put *t;
+
+         if(loc) {
+             t = time_put_short_use_facet(loc);
+         }else {
+             t = MSVCRT_operator_new(sizeof(time_put));
+             if(!t) {
+                 ERR("Out of memory\n");
+                 throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+             }
+             time_put_short_ctor_locinfo(t, locinfo, 0);
+         }
+         locale__Locimp__Addfac(locimp, &t->facet, locale_id_operator_size_t(&time_put_short_id));
+     }
+
     if(cat & (1<<(codecvt_short__Getcat(NULL, NULL)-1))) {
         codecvt_wchar *codecvt;
 
@@ -8597,7 +8697,7 @@ void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, l
 /* ?_Makewloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makewloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
 /* List of missing facets:
- * messages, money_get, money_put, moneypunct, moneypunct, time_get, time_put
+ * messages, money_get, money_put, moneypunct, moneypunct, time_get
  */
 void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
@@ -8683,6 +8783,22 @@ void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, loc
         locale__Locimp__Addfac(locimp, &c->facet, locale_id_operator_size_t(&collate_wchar_id));
     }
 
+    if(cat & (1<<(time_put_wchar__Getcat(NULL, NULL)-1))) {
+        time_put *t;
+
+        if(loc) {
+            t = time_put_wchar_use_facet(loc);
+        }else {
+            t = MSVCRT_operator_new(sizeof(time_put));
+            if(!t) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            time_put_wchar_ctor_locinfo(t, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &t->facet, locale_id_operator_size_t(&time_put_wchar_id));
+    }
+
     if(cat & (1<<(codecvt_wchar__Getcat(NULL, NULL)-1))) {
         codecvt_wchar *codecvt;
 
@@ -8703,7 +8819,7 @@ void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, loc
 /* ?_Makexloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makexloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
 /* List of missing facets:
- * messages, money_get, money_put, moneypunct, moneypunct, time_get, time_put
+ * messages, money_get, money_put, moneypunct, moneypunct, time_get
  */
 void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
@@ -8787,6 +8903,22 @@ void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, loc
             collate_char_ctor_locinfo(c, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &c->facet, locale_id_operator_size_t(&collate_char_id));
+    }
+
+    if(cat & (1<<(time_put_char__Getcat(NULL, NULL)-1))) {
+        time_put *t;
+
+        if(loc) {
+            t = time_put_char_use_facet(loc);
+        }else {
+            t = MSVCRT_operator_new(sizeof(time_put));
+            if(!t) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            time_put_char_ctor_locinfo(t, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &t->facet, locale_id_operator_size_t(&time_put_char_id));
     }
 
     if(cat & (1<<(codecvt_char__Getcat(NULL, NULL)-1))) {
