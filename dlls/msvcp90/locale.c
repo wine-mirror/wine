@@ -768,7 +768,7 @@ collate* __thiscall collate_char_ctor_name(collate *this, const char *name, MSVC
 /* ??0?$collate@D@std@@QAE@ABV_Locinfo@1@I@Z */
 /* ??0?$collate@D@std@@QEAA@AEBV_Locinfo@1@_K@Z */
 DEFINE_THISCALL_WRAPPER(collate_char_ctor_locinfo, 12)
-collate* __thiscall collate_char_ctor_locinfo(collate *this, _Locinfo *locinfo, MSVCP_size_t refs)
+collate* __thiscall collate_char_ctor_locinfo(collate *this, const _Locinfo *locinfo, MSVCP_size_t refs)
 {
     TRACE("(%p %p %lu)\n", this, locinfo, refs);
 
@@ -840,6 +840,34 @@ MSVCP_size_t __cdecl collate_char__Getcat(const locale_facet **facet, const loca
     }
 
     return LC_COLLATE;
+}
+
+static collate* collate_char_use_facet(const locale *loc)
+{
+    static collate *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&collate_char_id));
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (collate*)fac;
+    }
+
+    if(obj) {
+        _Lockit_dtor(&lock);
+        return obj;
+    }
+
+    collate_char__Getcat(&fac, loc);
+    obj = (collate*)fac;
+    locale_facet__Incref(&obj->facet);
+    locale_facet_register(&obj->facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
 }
 
 /* _Strcoll */
@@ -979,7 +1007,7 @@ collate* __thiscall collate_short_ctor_name(collate *this, const char *name, MSV
 /* ??0?$collate@_W@std@@QAE@ABV_Locinfo@1@I@Z */
 /* ??0?$collate@_W@std@@QEAA@AEBV_Locinfo@1@_K@Z */
 DEFINE_THISCALL_WRAPPER(collate_wchar_ctor_locinfo, 12)
-collate* __thiscall collate_wchar_ctor_locinfo(collate *this, _Locinfo *locinfo, MSVCP_size_t refs)
+collate* __thiscall collate_wchar_ctor_locinfo(collate *this, const _Locinfo *locinfo, MSVCP_size_t refs)
 {
     TRACE("(%p %p %lu)\n", this, locinfo, refs);
 
@@ -992,7 +1020,7 @@ collate* __thiscall collate_wchar_ctor_locinfo(collate *this, _Locinfo *locinfo,
 /* ??0?$collate@G@std@@QAE@ABV_Locinfo@1@I@Z */
 /* ??0?$collate@G@std@@QEAA@AEBV_Locinfo@1@_K@Z */
 DEFINE_THISCALL_WRAPPER(collate_short_ctor_locinfo, 12)
-collate* __thiscall collate_short_ctor_locinfo(collate *this, _Locinfo *locinfo, MSVCP_size_t refs)
+collate* __thiscall collate_short_ctor_locinfo(collate *this, const _Locinfo *locinfo, MSVCP_size_t refs)
 {
     collate *ret = collate_wchar_ctor_locinfo(this, locinfo, refs);
     ret->facet.vtable = &MSVCP_collate_short_vtable;
@@ -1085,6 +1113,34 @@ MSVCP_size_t __cdecl collate_wchar__Getcat(const locale_facet **facet, const loc
     return LC_COLLATE;
 }
 
+static collate* collate_wchar_use_facet(const locale *loc)
+{
+        static collate *obj = NULL;
+
+        _Lockit lock;
+        const locale_facet *fac;
+
+        _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+        fac = locale__Getfacet(loc, locale_id_operator_size_t(&collate_wchar_id));
+        if(fac) {
+            _Lockit_dtor(&lock);
+            return (collate*)fac;
+        }
+
+        if(obj) {
+            _Lockit_dtor(&lock);
+            return obj;
+        }
+
+        collate_wchar__Getcat(&fac, loc);
+        obj = (collate*)fac;
+        locale_facet__Incref(&obj->facet);
+        locale_facet_register(&obj->facet);
+        _Lockit_dtor(&lock);
+
+        return obj;
+}
+
 /* ?_Getcat@?$collate@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$collate@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 MSVCP_size_t __cdecl collate_short__Getcat(const locale_facet **facet, const locale *loc)
@@ -1095,6 +1151,34 @@ MSVCP_size_t __cdecl collate_short__Getcat(const locale_facet **facet, const loc
     }
 
     return LC_COLLATE;
+}
+
+static collate* collate_short_use_facet(const locale *loc)
+{
+    static collate *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&collate_short_id));
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (collate*)fac;
+    }
+
+    if(obj) {
+        _Lockit_dtor(&lock);
+        return obj;
+    }
+
+    collate_short__Getcat(&fac, loc);
+    obj = (collate*)fac;
+    locale_facet__Incref(&obj->facet);
+    locale_facet_register(&obj->facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
 }
 
 /* _Wcscoll */
@@ -8407,7 +8491,7 @@ locale__Locimp** __cdecl locale__Locimp__Clocptr_func(void)
 /* ?_Makeushloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makeushloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
 /* List of missing facets:
- * num_put, collate, messages, money_get, money_put, moneypunct, moneypunct, time_get, time_put
+ * messages, money_get, money_put, moneypunct, moneypunct, time_get, time_put
  */
 void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
@@ -8477,6 +8561,22 @@ void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, l
         locale__Locimp__Addfac(locimp, &numpunct->facet, locale_id_operator_size_t(&numpunct_short_id));
     }
 
+    if(cat & (1<<(collate_short__Getcat(NULL, NULL)-1))) {
+        collate *c;
+
+        if(loc) {
+            c = collate_short_use_facet(loc);
+        }else {
+            c = MSVCRT_operator_new(sizeof(collate));
+            if(!c) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            collate_short_ctor_locinfo(c, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &c->facet, locale_id_operator_size_t(&collate_short_id));
+    }
+
     if(cat & (1<<(codecvt_short__Getcat(NULL, NULL)-1))) {
         codecvt_wchar *codecvt;
 
@@ -8497,7 +8597,7 @@ void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, l
 /* ?_Makewloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makewloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
 /* List of missing facets:
- * collate, messages, money_get, money_put, moneypunct, moneypunct, time_get, time_put
+ * messages, money_get, money_put, moneypunct, moneypunct, time_get, time_put
  */
 void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
@@ -8567,6 +8667,22 @@ void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, loc
         locale__Locimp__Addfac(locimp, &numpunct->facet, locale_id_operator_size_t(&numpunct_wchar_id));
     }
 
+    if(cat & (1<<(collate_wchar__Getcat(NULL, NULL)-1))) {
+        collate *c;
+
+        if(loc) {
+            c = collate_wchar_use_facet(loc);
+        }else {
+            c = MSVCRT_operator_new(sizeof(collate));
+            if(!c) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            collate_wchar_ctor_locinfo(c, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &c->facet, locale_id_operator_size_t(&collate_wchar_id));
+    }
+
     if(cat & (1<<(codecvt_wchar__Getcat(NULL, NULL)-1))) {
         codecvt_wchar *codecvt;
 
@@ -8587,7 +8703,7 @@ void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, loc
 /* ?_Makexloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makexloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
 /* List of missing facets:
- * collate, messages, money_get, money_put, moneypunct, moneypunct, time_get, time_put
+ * messages, money_get, money_put, moneypunct, moneypunct, time_get, time_put
  */
 void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
@@ -8655,6 +8771,22 @@ void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, loc
             numpunct_char_ctor_locinfo(numpunct, locinfo, 0, FALSE);
         }
         locale__Locimp__Addfac(locimp, &numpunct->facet, locale_id_operator_size_t(&numpunct_char_id));
+    }
+
+    if(cat & (1<<(collate_char__Getcat(NULL, NULL)-1))) {
+        collate *c;
+
+        if(loc) {
+            c = collate_char_use_facet(loc);
+        }else {
+            c = MSVCRT_operator_new(sizeof(collate));
+            if(!c) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            collate_char_ctor_locinfo(c, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &c->facet, locale_id_operator_size_t(&collate_char_id));
     }
 
     if(cat & (1<<(codecvt_char__Getcat(NULL, NULL)-1))) {
