@@ -3315,7 +3315,7 @@ MSVCRT_wint_t CDECL MSVCRT_getwchar(void)
  */
 MSVCRT_wchar_t * CDECL MSVCRT_fgetws(MSVCRT_wchar_t *s, int size, MSVCRT_FILE* file)
 {
-  int    cc = MSVCRT_WEOF;
+  MSVCRT_wint_t cc = MSVCRT_WEOF;
   MSVCRT_wchar_t * buf_start = s;
 
   TRACE(":file(%p) fd (%d) str (%p) len (%d)\n",
@@ -3325,7 +3325,7 @@ MSVCRT_wchar_t * CDECL MSVCRT_fgetws(MSVCRT_wchar_t *s, int size, MSVCRT_FILE* f
 
   while ((size >1) && (cc = MSVCRT_fgetwc(file)) != MSVCRT_WEOF && cc != '\n')
     {
-      *s++ = (char)cc;
+      *s++ = cc;
       size --;
     }
   if ((cc == MSVCRT_WEOF) && (s == buf_start)) /* If nothing read, return 0*/
