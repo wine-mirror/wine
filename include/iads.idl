@@ -60,6 +60,269 @@ typedef enum
     ADS_AUTH_RESERVED             = 0x80000000
 } ADS_AUTHENTICATION_ENUM;
 
+typedef enum
+{
+    ADS_SEARCHPREF_ASYNCHRONOUS,
+    ADS_SEARCHPREF_DEREF_ALIASES,
+    ADS_SEARCHPREF_SIZE_LIMIT,
+    ADS_SEARCHPREF_TIME_LIMIT,
+    ADS_SEARCHPREF_ATTRIBTYPES_ONLY,
+    ADS_SEARCHPREF_SEARCH_SCOPE,
+    ADS_SEARCHPREF_TIMEOUT,
+    ADS_SEARCHPREF_PAGESIZE,
+    ADS_SEARCHPREF_PAGED_TIME_LIMIT,
+    ADS_SEARCHPREF_CHASE_REFERRALS,
+    ADS_SEARCHPREF_SORT_ON,
+    ADS_SEARCHPREF_CACHE_RESULTS,
+    ADS_SEARCHPREF_DIRSYNC,
+    ADS_SEARCHPREF_TOMBSTONE,
+    ADS_SEARCHPREF_VLV,
+    ADS_SEARCHPREF_ATTRIBUTE_QUERY,
+    ADS_SEARCHPREF_SECURITY_MASK,
+    ADS_SEARCHPREF_DIRSYNC_FLAG,
+    ADS_SEARCHPREF_EXTENDED_DN
+} ADS_SEARCHPREF_ENUM;
+
+typedef ADS_SEARCHPREF_ENUM *PADS_SEARCHPREF_INFO;
+
+typedef enum
+{
+    ADS_STATUS_S_OK,
+    ADS_STATUS_INVALID_SEARCHPREF,
+    ADS_STATUS_INVALID_SEARCHPREFVALUE
+} ADS_STATUSENUM;
+
+typedef enum
+{
+    ADSTYPE_INVALID,
+    ADSTYPE_DN_STRING,
+    ADSTYPE_CASE_EXACT_STRING,
+    ADSTYPE_CASE_IGNORE_STRING,
+    ADSTYPE_PRINTABLE_STRING,
+    ADSTYPE_NUMERIC_STRING,
+    ADSTYPE_BOOLEAN,
+    ADSTYPE_INTEGER,
+    ADSTYPE_OCTET_STRING,
+    ADSTYPE_UTC_TIME,
+    ADSTYPE_LARGE_INTEGER,
+    ADSTYPE_PROV_SPECIFIC,
+    ADSTYPE_OBJECT_CLASS,
+    ADSTYPE_CASEIGNORE_LIST,
+    ADSTYPE_OCTET_LIST,
+    ADSTYPE_PATH,
+    ADSTYPE_POSTALADDRESS,
+    ADSTYPE_TIMESTAMP,
+    ADSTYPE_BACKLINK,
+    ADSTYPE_TYPEDNAME,
+    ADSTYPE_HOLD,
+    ADSTYPE_NETADDRESS,
+    ADSTYPE_REPLICAPOINTER,
+    ADSTYPE_FAXNUMBER,
+    ADSTYPE_EMAIL,
+    ADSTYPE_NT_SECURITY_DESCRIPTOR,
+    ADSTYPE_UNKNOWN,
+    ADSTYPE_DN_WITH_BINARY,
+    ADSTYPE_DN_WITH_STRING
+} ADSTYPEENUM;
+
+typedef enum
+{
+    ADS_PASSWORD_ENCODE_REQUIRE_SSL,
+    ADS_PASSWORD_ENCODE_CLEAR
+} ADS_PASSWORD_ENCODING_ENUM;
+
+typedef struct _ADS_CASEIGNORE_LIST
+{
+    struct _ADS_CASEIGNORE_LIST *Next;
+    LPWSTR String;
+} ADS_CASEIGNORE_LIST;
+
+typedef struct _ADS_OCTET_LIST
+{
+    struct _ADS_OCTET_LIST *Next;
+    DWORD Length;
+    BYTE *Data;
+} ADS_OCTET_LIST;
+
+typedef struct
+{
+    DWORD Type;
+    LPWSTR VolumeName;
+    LPWSTR Path;
+} ADS_PATH, *PADS_PATH;
+
+typedef struct
+{
+    DWORD WholeSeconds;
+    DWORD EventID;
+} ADS_TIMESTAMP;
+
+
+typedef ADSTYPEENUM ADSTYPE;
+typedef LPWSTR ADS_DN_STRING;
+typedef LPWSTR *PADS_DN_STRING;
+typedef LPWSTR ADS_CASE_EXACT_STRING;
+typedef LPWSTR *PADS_CASE_EXACT_STRING;
+typedef LPWSTR ADS_CASE_IGNORE_STRING;
+typedef LPWSTR *PADS_CASE_IGNORE_STRING;
+typedef LPWSTR ADS_PRINTABLE_STRING;
+typedef LPWSTR *PADS_PRINTABLE_STRING;
+typedef LPWSTR ADS_NUMERIC_STRING;
+typedef LPWSTR *PADS_NUMERIC_STRING;
+typedef DWORD ADS_BOOLEAN;
+typedef DWORD *LPNDS_BOOLEAN;
+typedef DWORD ADS_INTEGER;
+typedef DWORD *PADS_INTEGER;
+typedef SYSTEMTIME ADS_UTC_TIME;
+typedef SYSTEMTIME *PADS_UTC_TIME;
+typedef LARGE_INTEGER ADS_LARGE_INTEGER;
+typedef LARGE_INTEGER *PADS_LARGE_INTEGER;
+typedef LPWSTR ADS_OBJECT_CLASS;
+typedef LPWSTR *PADS_OBJECT_CLASS;
+typedef struct _ADS_OCTET_LIST *PADS_OCTET_LIST;
+typedef struct _ADS_CASEIGNORE_LIST *PADS_CASEIGNORE_LIST;
+typedef ADS_STATUSENUM ADS_STATUS;
+typedef ADS_SEARCHPREF_ENUM ADS_SEARCHPREF;
+typedef HANDLE ADS_SEARCH_HANDLE;
+typedef HANDLE *PADS_SEARCH_HANDLE;
+
+
+typedef struct
+{
+    DWORD dwLength;
+    BYTE *lpValue;
+} ADS_OCTET_STRING;
+
+typedef struct
+{
+    DWORD dwLength;
+    BYTE *lpValue;
+} ADS_PROV_SPECIFIC;
+
+typedef struct
+{
+    LPWSTR PostalAddress[ 6 ];
+} ADS_POSTALADDRESS, *PADS_POSTALADDRESS;
+
+typedef struct
+{
+    LPWSTR ObjectName;
+    DWORD Level;
+    DWORD Interval;
+} ADS_TYPEDNAME, *PADS_TYPEDNAME;
+
+typedef struct
+{
+    DWORD RemoteID;
+    LPWSTR ObjectName;
+} ADS_BACKLINK;
+
+typedef struct
+{
+    LPWSTR ObjectName;
+    DWORD Amount;
+} ADS_HOLD;
+
+typedef struct
+{
+    DWORD AddressType;
+    DWORD AddressLength;
+    BYTE *Address;
+} ADS_NETADDRESS, *PADS_NETADDRESS;
+
+typedef struct
+{
+    LPWSTR ServerName;
+    DWORD ReplicaType;
+    DWORD ReplicaNumber;
+    DWORD Count;
+    PADS_NETADDRESS ReplicaAddressHints;
+} ADS_REPLICAPOINTER, *PADS_REPLICAPOINTER;
+
+typedef struct
+{
+    LPWSTR TelephoneNumber;
+    DWORD NumberOfBits;
+    BYTE *Parameters;
+} ADS_FAXNUMBER, *PADS_FAXNUMBER;
+
+
+typedef struct
+{
+    LPWSTR Address;
+    DWORD Type;
+} ADS_EMAIL, *PADS_EMAIL;
+
+typedef struct
+{
+    DWORD dwLength;
+    BYTE *lpValue;
+} ADS_NT_SECURITY_DESCRIPTOR;
+
+typedef struct
+{
+    DWORD dwLength;
+    BYTE *lpBinaryValue;
+    LPWSTR pszDNString;
+} ADS_DN_WITH_BINARY, *PADS_DN_WITH_BINARY;
+
+typedef struct
+{
+    LPWSTR pszStringValue;
+    LPWSTR pszDNString;
+} ADS_DN_WITH_STRING, *PADS_DN_WITH_STRING;
+
+typedef struct _adsvalue
+{
+    ADSTYPE dwType;
+    union
+    {
+        ADS_DN_STRING DNString;
+        ADS_CASE_EXACT_STRING CaseExactString;
+        ADS_CASE_IGNORE_STRING CaseIgnoreString;
+        ADS_PRINTABLE_STRING PrintableString;
+        ADS_NUMERIC_STRING NumericString;
+        ADS_BOOLEAN Boolean;
+        ADS_INTEGER Integer;
+        ADS_OCTET_STRING OctetString;
+        ADS_UTC_TIME UTCTime;
+        ADS_LARGE_INTEGER LargeInteger;
+        ADS_OBJECT_CLASS ClassName;
+        ADS_PROV_SPECIFIC ProviderSpecific;
+        PADS_CASEIGNORE_LIST pCaseIgnoreList;
+        PADS_OCTET_LIST pOctetList;
+        PADS_PATH pPath;
+        PADS_POSTALADDRESS pPostalAddress;
+        ADS_TIMESTAMP Timestamp;
+        ADS_BACKLINK BackLink;
+        PADS_TYPEDNAME pTypedName;
+        ADS_HOLD Hold;
+        PADS_NETADDRESS pNetAddress;
+        PADS_REPLICAPOINTER pReplicaPointer;
+        PADS_FAXNUMBER pFaxNumber;
+        ADS_EMAIL Email;
+        ADS_NT_SECURITY_DESCRIPTOR SecurityDescriptor;
+        PADS_DN_WITH_BINARY pDNWithBinary;
+        PADS_DN_WITH_STRING pDNWithString;
+    };
+} ADSVALUE, *PADSVALUE;
+
+typedef struct ads_searchpref_info
+{
+    ADS_SEARCHPREF dwSearchPref;
+    ADSVALUE vValue;
+    ADS_STATUS dwStatus;
+} ADS_SEARCHPREF_INFO;
+
+typedef struct ads_search_column
+{
+    LPWSTR pszAttrName;
+    ADSTYPE dwADsType;
+    PADSVALUE pADsValues;
+    DWORD dwNumValues;
+    HANDLE hReserved;
+} ADS_SEARCH_COLUMN, *PADS_SEARCH_COLUMN;
+
 /*****************************************************************************
  *    IADsContainer interface
  */
@@ -489,4 +752,28 @@ interface IADsUser : IADs
 
     [id(0x00000044)]
     HRESULT ChangePassword([in] BSTR bstrOldPassword, [in] BSTR bstrNewPassword);
+};
+
+/*****************************************************************************
+ *    IDirectorySearch interface
+ */
+[
+    odl,
+    local,
+    uuid(109BA8EC-92F0-11D0-A790-00C04FD8D5A8)
+]
+interface IDirectorySearch : IUnknown
+{
+    HRESULT SetSearchPreference([in] PADS_SEARCHPREF_INFO pSearchPrefs, [in] DWORD dwNumPrefs);
+    HRESULT ExecuteSearch([in] LPWSTR pszSearchFilter, [in] LPWSTR* pAttributeNames,
+                    [in] DWORD dwNumberAttributes, [out] PADS_SEARCH_HANDLE phSearchResult);
+    HRESULT AbandonSearch([in] ADS_SEARCH_HANDLE phSearchResult);
+    HRESULT GetFirstRow([in] ADS_SEARCH_HANDLE hSearchResult);
+    HRESULT GetNextRow([in] ADS_SEARCH_HANDLE hSearchResult);
+    HRESULT GetPreviousRow([in] ADS_SEARCH_HANDLE hSearchResult);
+    HRESULT GetNextColumnName([in] ADS_SEARCH_HANDLE hSearchHandle, [out] LPWSTR* ppszColumnName);
+    HRESULT GetColumn( [in] ADS_SEARCH_HANDLE hSearchResult, [in] LPWSTR szColumnName,
+                    [out] PADS_SEARCH_COLUMN pSearchColumn);
+    HRESULT FreeColumn([in] PADS_SEARCH_COLUMN pSearchColumn);
+    HRESULT CloseSearchHandle([in] ADS_SEARCH_HANDLE hSearchResult);
 };
