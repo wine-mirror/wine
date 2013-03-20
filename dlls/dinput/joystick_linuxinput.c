@@ -445,9 +445,10 @@ static JoystickImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput, unsig
     newDevice->generic.base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->base.crit");
 
     /* Count number of available axes - supported Axis & POVs */
-    for (i = 0; i < WINE_JOYSTICK_MAX_AXES; i++)
+    for (i = 0; i < ABS_MAX; i++)
     {
-        if (test_bit(newDevice->joydev->absbits, i))
+        if (i < WINE_JOYSTICK_MAX_AXES &&
+            test_bit(newDevice->joydev->absbits, i))
         {
             newDevice->generic.device_axis_count++;
             newDevice->dev_axes_to_di[i] = idx;
