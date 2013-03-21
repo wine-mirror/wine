@@ -149,7 +149,6 @@ static void * (WINAPI *call_thiscall_func2)( void *func, void *this, const void 
 static void * (WINAPI *call_thiscall_func3)( void *func, void *this, const void *a, const void *b );
 static void * (WINAPI *call_thiscall_func5)( void *func, void *this, const void *a, const void *b,
         const void *c, const void *d );
-struct thiscall_thunk_retptr *thunk_retptr;
 
 static void init_thiscall_thunk(void)
 {

@@ -544,8 +544,6 @@ static void * (WINAPI *call_thiscall_func5)( void *func, void *this, const void 
 static void * (WINAPI *call_thiscall_func2_ptr_dbl)( void *func, void *this, double a );
 static void * (WINAPI *call_thiscall_func2_ptr_fpos)( void *func, void *this, fpos_int a );
 
-struct thiscall_thunk_retptr *thunk_retptr;
-
 static void init_thiscall_thunk(void)
 {
     struct thiscall_thunk *thunk = VirtualAlloc( NULL, sizeof(*thunk),
