@@ -3850,28 +3850,38 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_FINDTEXT:
   {
-    FINDTEXTA *ft = (FINDTEXTA *)lParam;
-    int nChars = MultiByteToWideChar(CP_ACP, 0, ft->lpstrText, -1, NULL, 0);
-    WCHAR *tmp;
     LRESULT r;
+    if(!unicode){
+      FINDTEXTA *ft = (FINDTEXTA *)lParam;
+      int nChars = MultiByteToWideChar(CP_ACP, 0, ft->lpstrText, -1, NULL, 0);
+      WCHAR *tmp;
 
-    if ((tmp = ALLOC_N_OBJ(WCHAR, nChars)) != NULL)
-      MultiByteToWideChar(CP_ACP, 0, ft->lpstrText, -1, tmp, nChars);
-    r = ME_FindText(editor, wParam, &ft->chrg, tmp, NULL);
-    FREE_OBJ( tmp );
+      if ((tmp = ALLOC_N_OBJ(WCHAR, nChars)) != NULL)
+        MultiByteToWideChar(CP_ACP, 0, ft->lpstrText, -1, tmp, nChars);
+      r = ME_FindText(editor, wParam, &ft->chrg, tmp, NULL);
+      FREE_OBJ( tmp );
+    }else{
+      FINDTEXTW *ft = (FINDTEXTW *)lParam;
+      r = ME_FindText(editor, wParam, &ft->chrg, ft->lpstrText, NULL);
+    }
     return r;
   }
   case EM_FINDTEXTEX:
   {
-    FINDTEXTEXA *ex = (FINDTEXTEXA *)lParam;
-    int nChars = MultiByteToWideChar(CP_ACP, 0, ex->lpstrText, -1, NULL, 0);
-    WCHAR *tmp;
     LRESULT r;
+    if(!unicode){
+      FINDTEXTEXA *ex = (FINDTEXTEXA *)lParam;
+      int nChars = MultiByteToWideChar(CP_ACP, 0, ex->lpstrText, -1, NULL, 0);
+      WCHAR *tmp;
 
-    if ((tmp = ALLOC_N_OBJ(WCHAR, nChars)) != NULL)
-      MultiByteToWideChar(CP_ACP, 0, ex->lpstrText, -1, tmp, nChars);
-    r = ME_FindText(editor, wParam, &ex->chrg, tmp, &ex->chrgText);
-    FREE_OBJ( tmp );
+      if ((tmp = ALLOC_N_OBJ(WCHAR, nChars)) != NULL)
+        MultiByteToWideChar(CP_ACP, 0, ex->lpstrText, -1, tmp, nChars);
+      r = ME_FindText(editor, wParam, &ex->chrg, tmp, &ex->chrgText);
+      FREE_OBJ( tmp );
+    }else{
+      FINDTEXTEXW *ex = (FINDTEXTEXW *)lParam;
+      r = ME_FindText(editor, wParam, &ex->chrg, ex->lpstrText, &ex->chrgText);
+    }
     return r;
   }
   case EM_FINDTEXTW:
