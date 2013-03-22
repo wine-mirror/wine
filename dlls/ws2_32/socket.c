@@ -803,19 +803,19 @@ static void _enable_event( HANDLE s, unsigned int event,
     SERVER_END_REQ;
 }
 
-static int _is_blocking(SOCKET s)
+static NTSTATUS _is_blocking(SOCKET s, BOOL *ret)
 {
-    int ret;
+    NTSTATUS status;
     SERVER_START_REQ( get_socket_event )
     {
         req->handle  = wine_server_obj_handle( SOCKET2HANDLE(s) );
         req->service = FALSE;
         req->c_event = 0;
-        wine_server_call( req );
-        ret = (reply->state & FD_WINE_NONBLOCKING) == 0;
+        status = wine_server_call( req );
+        *ret = (reply->state & FD_WINE_NONBLOCKING) == 0;
     }
     SERVER_END_REQ;
-    return ret;
+    return status;
 }
 
 static unsigned int _get_sock_mask(SOCKET s)
@@ -835,9 +835,10 @@ static unsigned int _get_sock_mask(SOCKET s)
 
 static void _sync_sock_state(SOCKET s)
 {
+    BOOL dummy;
     /* do a dummy wineserver request in order to let
        the wineserver run through its select loop once */
-    (void)_is_blocking(s);
+    (void)_is_blocking(s, &dummy);
 }
 
 static int _get_sock_error(SOCKET s, unsigned int bit)
@@ -1950,7 +1951,12 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
     BOOL is_blocking;
 
     TRACE("socket %04lx\n", s );
-    is_blocking = _is_blocking(s);
+    status = _is_blocking(s, &is_blocking);
+    if (status)
+    {
+        set_error(status);
+        return INVALID_SOCKET;
+    }
 
     do {
         /* try accepting first (if there is a deferred connection) */
@@ -2341,6 +2347,8 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
 
     if (fd != -1)
     {
+        NTSTATUS status;
+        BOOL is_blocking;
         int ret = do_connect(fd, name, namelen);
         if (ret == 0)
             goto connect_success;
@@ -2351,7 +2359,14 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
             _enable_event(SOCKET2HANDLE(s), FD_CONNECT|FD_READ|FD_WRITE,
                           FD_CONNECT,
                           FD_WINE_CONNECTED|FD_WINE_LISTENING);
-            if (_is_blocking(s))
+            status = _is_blocking( s, &is_blocking );
+            if (status)
+            {
+                release_sock_fd( s, fd );
+                set_error( status );
+                return SOCKET_ERROR;
+            }
+            if (is_blocking)
             {
                 int result;
                 /* block here */
@@ -3965,6 +3980,7 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     int totalLength = 0;
     ULONG_PTR cvalue = (lpOverlapped && ((ULONG_PTR)lpOverlapped->hEvent & 1) == 0) ? (ULONG_PTR)lpOverlapped : 0;
     DWORD bytes_sent;
+    BOOL is_blocking;
 
     TRACE("socket %04lx, wsabuf %p, nbufs %d, flags %d, to %p, tolen %d, ovl %p, func %p\n",
           s, lpBuffers, dwBufferCount, dwFlags,
@@ -4063,7 +4079,13 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         return 0;
     }
 
-    if ( _is_blocking(s) )
+    if ((err = _is_blocking( s, &is_blocking )))
+    {
+        err = NtStatusToWSAError( err );
+        goto error;
+    }
+
+    if ( is_blocking )
     {
         /* On a blocking non-overlapped stream socket,
          * sending blocks until the entire buffer is sent. */
@@ -5858,6 +5880,7 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     unsigned int i, options;
     int n, fd, err;
     struct ws2_async *wsa;
+    BOOL is_blocking;
     DWORD timeout_start = GetTickCount();
     ULONG_PTR cvalue = (lpOverlapped && ((ULONG_PTR)lpOverlapped->hEvent & 1) == 0) ? (ULONG_PTR)lpOverlapped : 0;
 
@@ -5961,7 +5984,13 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
         if (n != -1) break;
 
-        if ( _is_blocking(s) )
+        if ((err = _is_blocking( s, &is_blocking )))
+        {
+            err = NtStatusToWSAError( err );
+            goto error;
+        }
+
+        if ( is_blocking )
         {
             struct pollfd pfd;
             int timeout = GET_RCVTIMEO(fd);
