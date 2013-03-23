@@ -47,6 +47,8 @@
 # include <sys/signal.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -99,6 +101,15 @@ typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 typedef int (*wine_signal_handler)(unsigned int sig);
 
 static wine_signal_handler handlers[256];
+
+
+struct UNWIND_INFO
+{
+    WORD function_length;
+    WORD unknown1 : 7;
+    WORD count : 5;
+    WORD unknown2 : 4;
+};
 
 /***********************************************************************
  *           dispatch_signal
@@ -931,6 +942,63 @@ BOOLEAN CDECL RtlDeleteFunctionTable( RUNTIME_FUNCTION *table )
 {
     FIXME( "%p: stub\n", table );
     return TRUE;
+}
+
+/**********************************************************************
+ *              find_function_info
+ */
+static RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, HMODULE module,
+                                             RUNTIME_FUNCTION *func, ULONG size )
+{
+    int min = 0;
+    int max = size/sizeof(*func) - 1;
+
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        DWORD begin = (func[pos].BeginAddress & ~1), end;
+        if (func[pos].u.s.Flag)
+            end = begin + func[pos].u.s.FunctionLength * 2;
+        else
+        {
+            struct UNWIND_INFO *info;
+            info = (struct UNWIND_INFO *)((char *)module + func[pos].u.UnwindData);
+            end = begin + info->function_length * 2;
+        }
+
+        if ((char *)pc < (char *)module + begin) max = pos - 1;
+        else if ((char *)pc >= (char *)module + end) min = pos + 1;
+        else return func + pos;
+    }
+    return NULL;
+}
+
+/**********************************************************************
+ *              RtlLookupFunctionEntry   (NTDLL.@)
+ */
+PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, DWORD *base,
+                                                 UNWIND_HISTORY_TABLE *table )
+{
+    LDR_MODULE *module;
+    RUNTIME_FUNCTION *func;
+    ULONG size;
+
+    /* FIXME: should use the history table to make things faster */
+
+    if (LdrFindEntryForAddress( (void *)pc, &module ))
+    {
+        WARN( "module not found for %lx\n", pc );
+        return NULL;
+    }
+    if (!(func = RtlImageDirectoryEntryToData( module->BaseAddress, TRUE,
+                                               IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )))
+    {
+        WARN( "no exception table found in module %p pc %lx\n", module->BaseAddress, pc );
+        return NULL;
+    }
+    func = find_function_info( pc, module->BaseAddress, func, size );
+    if (func) *base = (DWORD)module->BaseAddress;
+    return func;
 }
 
 /***********************************************************************
