@@ -21,15 +21,23 @@
 #include "hlink_private.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hlink);
+
+struct link_entry
+{
+    struct list entry;
+    IHlink *link;
+};
 
 typedef struct
 {
     IHlinkBrowseContext IHlinkBrowseContext_iface;
     LONG        ref;
     HLBWINFO*   BrowseWindowInfo;
-    IHlink*     CurrentPage;
+    struct link_entry *current;
+    struct list links;
 } HlinkBCImpl;
 
 static inline HlinkBCImpl *impl_from_IHlinkBrowseContext(IHlinkBrowseContext *iface)
@@ -68,18 +76,26 @@ static ULONG WINAPI IHlinkBC_fnAddRef (IHlinkBrowseContext* iface)
 static ULONG WINAPI IHlinkBC_fnRelease (IHlinkBrowseContext* iface)
 {
     HlinkBCImpl  *This = impl_from_IHlinkBrowseContext(iface);
-    ULONG refCount = InterlockedDecrement(&This->ref);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(count=%u)\n", This, refCount + 1);
-    if (refCount)
-        return refCount;
+    TRACE("(%p)->(count=%u)\n", This, ref + 1);
 
-    TRACE("-- destroying IHlinkBrowseContext (%p)\n", This);
-    heap_free(This->BrowseWindowInfo);
-    if (This->CurrentPage)
-        IHlink_Release(This->CurrentPage);
-    heap_free(This);
-    return 0;
+    if (!ref)
+    {
+        struct link_entry *link, *link2;
+
+        LIST_FOR_EACH_ENTRY_SAFE(link, link2, &This->links, struct link_entry, entry)
+        {
+            list_remove(&link->entry);
+            IHlink_Release(link->link);
+            heap_free(link);
+        }
+
+        heap_free(This->BrowseWindowInfo);
+        heap_free(This);
+    }
+
+    return ref;
 }
 
 static HRESULT WINAPI IHlinkBC_Register(IHlinkBrowseContext* iface,
@@ -165,17 +181,22 @@ static HRESULT WINAPI IHlinkBC_GetBrowseWindowInfo(IHlinkBrowseContext* iface,
 static HRESULT WINAPI IHlinkBC_SetInitialHlink(IHlinkBrowseContext* iface,
         IMoniker *pimkTarget, LPCWSTR pwzLocation, LPCWSTR pwzFriendlyName)
 {
-    HlinkBCImpl  *This = impl_from_IHlinkBrowseContext(iface);
+    HlinkBCImpl *This = impl_from_IHlinkBrowseContext(iface);
+    struct link_entry *link;
 
-    FIXME("(%p)->(%p %s %s)\n", This, pimkTarget,
-            debugstr_w(pwzLocation), debugstr_w(pwzFriendlyName));
+    TRACE("(%p)->(%p %s %s)\n", This, pimkTarget, debugstr_w(pwzLocation), debugstr_w(pwzFriendlyName));
 
-    if (This->CurrentPage)
-        IHlink_Release(This->CurrentPage);
+    if (!list_empty(&This->links))
+        return CO_E_ALREADYINITIALIZED;
+
+    link = heap_alloc(sizeof(struct link_entry));
+    if (!link) return E_OUTOFMEMORY;
 
     HlinkCreateFromMoniker(pimkTarget, pwzLocation, pwzFriendlyName, NULL,
-            0, NULL, &IID_IHlink, (LPVOID*) &This->CurrentPage);
+            0, NULL, &IID_IHlink, (void**)&link->link);
 
+    list_add_head(&This->links, &link->entry);
+    This->current = LIST_ENTRY(list_head(&This->links), struct link_entry, entry);
     return S_OK;
 }
 
@@ -225,7 +246,7 @@ static HRESULT WINAPI IHlinkBC_GetHlink( IHlinkBrowseContext* iface,
         return E_NOTIMPL;
     }
 
-    *ppihl = This->CurrentPage;
+    *ppihl = This->current->link;
     IHlink_AddRef(*ppihl);
 
     return S_OK;
@@ -289,6 +310,8 @@ HRESULT HLinkBrowseContext_Constructor(IUnknown *pUnkOuter, REFIID riid, void **
 
     hl->ref = 1;
     hl->IHlinkBrowseContext_iface.lpVtbl = &hlvt;
+    list_init(&hl->links);
+    hl->current = NULL;
 
     *ppv = hl;
     return S_OK;
