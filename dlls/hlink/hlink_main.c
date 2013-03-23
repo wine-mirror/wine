@@ -366,12 +366,21 @@ HRESULT WINAPI HlinkTranslateURL(LPCWSTR pwzURL, DWORD grfFlags, LPWSTR *ppwzTra
 /***********************************************************************
  *             HlinkUpdateStackItem (HLINK.@)
  */
-HRESULT WINAPI HlinkUpdateStackItem(IHlinkFrame *pihlframe, IHlinkBrowseContext *pihlbc,
-        ULONG uHLID, IMoniker *pimkTrgt, LPCWSTR pwzLocation, LPCWSTR pwzFriendlyName)
+HRESULT WINAPI HlinkUpdateStackItem(IHlinkFrame *frame, IHlinkBrowseContext *bc,
+        ULONG hlid, IMoniker *target, LPCWSTR location, LPCWSTR friendly_name)
 {
-    FIXME("(%p %p %u %p %s %s)\n", pihlframe, pihlbc, uHLID, pimkTrgt, debugstr_w(pwzLocation),
-          debugstr_w(pwzFriendlyName));
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p %p 0x%x %p %s %s)\n", frame, bc, hlid, target, debugstr_w(location), debugstr_w(friendly_name));
+
+    if (!frame && !bc) return E_INVALIDARG;
+
+    if (frame)
+        hr = IHlinkFrame_UpdateHlink(frame, hlid, target, location, friendly_name);
+    else
+        hr = IHlinkBrowseContext_UpdateHlink(bc, hlid, target, location, friendly_name);
+
+    return hr;
 }
 
 /***********************************************************************

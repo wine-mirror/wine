@@ -68,11 +68,14 @@ DEFINE_EXPECT(Save);
 
 DEFINE_EXPECT(HBC_QueryInterface_IHlinkHistory);
 DEFINE_EXPECT(HBC_GetObject);
+DEFINE_EXPECT(HBC_UpdateHlink);
 
 DEFINE_EXPECT(HT_SetBrowseContext);
 DEFINE_EXPECT(HT_GetBrowseContext);
 DEFINE_EXPECT(HT_Navigate);
 DEFINE_EXPECT(HT_GetFriendlyName);
+
+DEFINE_EXPECT(HLF_UpdateHlink);
 
 DEFINE_GUID(IID_IHlinkHistory,0x79eac9c8,0xbaf9,0x11ce,0x8c,0x82,0x00,0xaa,0x00,0x4b,0xa9,0x0b);
 
@@ -885,10 +888,10 @@ static HRESULT WINAPI HlinkBrowseContext_OnNavigateHlink(IHlinkBrowseContext *if
 }
 
 static HRESULT WINAPI HlinkBrowseContext_UpdateHlink(IHlinkBrowseContext *iface, ULONG uHLID,
-        IMoniker *pimkTarget, LPCWSTR pwzLocation, LPCWSTR pwzFriendlyName)
+        IMoniker *pimkTarget, LPCWSTR location, LPCWSTR friendly_name)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(HBC_UpdateHlink);
+    return S_OK;
 }
 
 static HRESULT WINAPI HlinkBrowseContext_EnumNavigationStack(IHlinkBrowseContext *iface,
@@ -2194,6 +2197,92 @@ static void test_Hlink_Navigate(void)
     _bctx = NULL;
 }
 
+static HRESULT WINAPI hlinkframe_QueryInterface(IHlinkFrame *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IHlinkFrame))
+    {
+        *obj = iface;
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI hlinkframe_AddRef(IHlinkFrame *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI hlinkframe_Release(IHlinkFrame *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI hlinkframe_SetBrowseContext(IHlinkFrame *iface, IHlinkBrowseContext *bc)
+{
+    ok(0, "unexpected %p\n", bc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI hlinkframe_GetBrowseContext(IHlinkFrame *iface, IHlinkBrowseContext **bc)
+{
+    *bc = NULL;
+    ok(0, "unexpected %p\n", bc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI hlinkframe_Navigate(IHlinkFrame *iface, DWORD grfHLNF, LPBC pbc, IBindStatusCallback *bsc, IHlink *navigate)
+{
+    ok(0, "unexpected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI hlinkframe_OnNavigate(IHlinkFrame *iface, DWORD grfHLNF, IMoniker *target, LPCWSTR location, LPCWSTR friendly_name,
+    DWORD reserved)
+{
+    ok(0, "unexpected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI hlinkframe_UpdateHlink(IHlinkFrame *iface, ULONG uHLID, IMoniker *target, LPCWSTR location, LPCWSTR friendly_name)
+{
+    CHECK_EXPECT(HLF_UpdateHlink);
+    return S_OK;
+}
+
+static IHlinkFrameVtbl hlinkframevtbl = {
+    hlinkframe_QueryInterface,
+    hlinkframe_AddRef,
+    hlinkframe_Release,
+    hlinkframe_SetBrowseContext,
+    hlinkframe_GetBrowseContext,
+    hlinkframe_Navigate,
+    hlinkframe_OnNavigate,
+    hlinkframe_UpdateHlink
+};
+
+static IHlinkFrame testframe = { &hlinkframevtbl };
+
+static void test_HlinkUpdateStackItem(void)
+{
+    static const WCHAR location[] = {'l','o','c','a','t','i','o','n',0};
+    HRESULT hr;
+
+    hr = HlinkUpdateStackItem(NULL, NULL, HLID_CURRENT, &Moniker, location, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    SET_EXPECT(HBC_UpdateHlink);
+    hr = HlinkUpdateStackItem(NULL, &HlinkBrowseContext, HLID_CURRENT, &Moniker, location, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    CHECK_CALLED(HBC_UpdateHlink);
+
+    SET_EXPECT(HLF_UpdateHlink);
+    hr = HlinkUpdateStackItem(&testframe, &HlinkBrowseContext, HLID_CURRENT, &Moniker, location, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    CHECK_CALLED(HLF_UpdateHlink);
+}
+
 START_TEST(hlink)
 {
     CoInitialize(NULL);
@@ -2213,6 +2302,7 @@ START_TEST(hlink)
     test_HlinkClone();
     test_StdHlink();
     test_Hlink_Navigate();
+    test_HlinkUpdateStackItem();
 
     CoUninitialize();
 }
