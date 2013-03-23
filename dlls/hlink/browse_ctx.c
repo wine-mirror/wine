@@ -116,7 +116,7 @@ static HRESULT WINAPI IHlinkBC_GetObject(IHlinkBrowseContext* face,
 static HRESULT WINAPI IHlinkBC_Revoke(IHlinkBrowseContext* iface,
         DWORD dwRegister)
 {
-    HRESULT r = S_OK;
+    HRESULT r;
     IRunningObjectTable *ROT;
     HlinkBCImpl  *This = impl_from_IHlinkBrowseContext(iface);
 

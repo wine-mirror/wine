@@ -75,7 +75,7 @@ HRESULT WINAPI HlinkCreateFromMoniker( IMoniker *pimkTrgt, LPCWSTR pwzLocation,
         IUnknown* piunkOuter, REFIID riid, void** ppvObj)
 {
     IHlink *hl = NULL;
-    HRESULT r = S_OK;
+    HRESULT r;
 
     TRACE("%p %s %s %p %i %p %s %p\n", pimkTrgt, debugstr_w(pwzLocation),
             debugstr_w(pwzFriendlyName), pihlsite, dwSiteData, piunkOuter,
@@ -107,7 +107,7 @@ HRESULT WINAPI HlinkCreateFromString( LPCWSTR pwzTarget, LPCWSTR pwzLocation,
         IUnknown* piunkOuter, REFIID riid, void** ppvObj)
 {
     IHlink *hl = NULL;
-    HRESULT r = S_OK;
+    HRESULT r;
     WCHAR *hash, *tgt;
     const WCHAR *loc;
 
@@ -176,15 +176,8 @@ HRESULT WINAPI HlinkCreateFromString( LPCWSTR pwzTarget, LPCWSTR pwzLocation,
  */
 HRESULT WINAPI HlinkCreateBrowseContext( IUnknown* piunkOuter, REFIID riid, void** ppvObj)
 {
-    HRESULT r = S_OK;
-
     TRACE("%p %s %p\n", piunkOuter, debugstr_guid(riid), ppvObj);
-
-    r = CoCreateInstance(&CLSID_StdHlinkBrowseContext, piunkOuter, CLSCTX_INPROC_SERVER, riid, ppvObj);
-
-    TRACE("returning %i\n",r);
-
-    return r;
+    return CoCreateInstance(&CLSID_StdHlinkBrowseContext, piunkOuter, CLSCTX_INPROC_SERVER, riid, ppvObj);
 }
 
 /***********************************************************************
@@ -213,7 +206,7 @@ HRESULT WINAPI HlinkOnNavigate( IHlinkFrame *phlFrame,
         IHlinkBrowseContext* phlbc, DWORD grfHLNF, IMoniker *pmkTarget,
         LPCWSTR pwzLocation, LPCWSTR pwzFriendlyName, ULONG* puHLID)
 {
-    HRESULT r = S_OK;
+    HRESULT r;
 
     TRACE("%p %p %i %p %s %s %p\n",phlFrame, phlbc, grfHLNF, pmkTarget,
             debugstr_w(pwzLocation), debugstr_w(pwzFriendlyName), puHLID);
