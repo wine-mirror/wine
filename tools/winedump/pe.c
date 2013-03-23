@@ -871,6 +871,7 @@ static	void	dump_dir_debug_dir(const IMAGE_DEBUG_DIRECTORY* idd, int idx)
     case IMAGE_DEBUG_TYPE_OMAP_FROM_SRC:str = "OMAP_FROM_SRC"; 	break;
     case IMAGE_DEBUG_TYPE_BORLAND:	str = "BORLAND"; 	break;
     case IMAGE_DEBUG_TYPE_RESERVED10:	str = "RESERVED10"; 	break;
+    case IMAGE_DEBUG_TYPE_CLSID:	str = "CLSID"; 	break;
     }
     printf("  Type:              %u (%s)\n", idd->Type, str);
     printf("  SizeOfData:        %u\n", idd->SizeOfData);
@@ -914,6 +915,8 @@ static	void	dump_dir_debug_dir(const IMAGE_DEBUG_DIRECTORY* idd, int idx)
     case IMAGE_DEBUG_TYPE_BORLAND:
 	break;
     case IMAGE_DEBUG_TYPE_RESERVED10:
+	break;
+    case IMAGE_DEBUG_TYPE_CLSID:
 	break;
     }
     printf("\n");

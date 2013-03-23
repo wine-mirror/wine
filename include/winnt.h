@@ -3436,6 +3436,7 @@ typedef struct _IMAGE_DEBUG_DIRECTORY {
 #define IMAGE_DEBUG_TYPE_OMAP_FROM_SRC  8
 #define IMAGE_DEBUG_TYPE_BORLAND        9
 #define IMAGE_DEBUG_TYPE_RESERVED10    10
+#define IMAGE_DEBUG_TYPE_CLSID         11
 
 typedef enum ReplacesCorHdrNumericDefines
 {
