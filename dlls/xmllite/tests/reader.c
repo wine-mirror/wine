@@ -771,6 +771,7 @@ struct test_entry {
     const char *value;
     HRESULT hr;
     HRESULT hr_broken; /* this is set to older version results */
+    int todo : 1;
 };
 
 static struct test_entry comment_tests[] = {
@@ -1317,6 +1318,9 @@ static void test_readvaluechunk(void)
 static struct test_entry cdata_tests[] = {
     { "<a><![CDATA[ ]]data ]]></a>", "", " ]]data ", S_OK },
     { "<a><![CDATA[<![CDATA[ data ]]]]></a>", "", "<![CDATA[ data ]]", S_OK },
+    { "<a><![CDATA[\n \r\n \n\n ]]></a>", "", "\n \n \n\n ", S_OK, S_OK, 1 },
+    { "<a><![CDATA[\r \r\r\n \n\n ]]></a>", "", "\n \n\n \n\n ", S_OK, S_OK, 1 },
+    { "<a><![CDATA[\r\r \n\r \r \n\n ]]></a>", "", "\n\n \n\n \n \n\n ", S_OK },
     { NULL }
 };
 
@@ -1383,9 +1387,20 @@ static void test_read_cdata(void)
             str = NULL;
             hr = IXmlReader_GetValue(reader, &str, &len);
             ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == strlen(test->value), "got %u\n", len);
+
             str_exp = a2w(test->value);
-            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+            if (test->todo)
+            {
+            todo_wine {
+                ok(len == strlen(test->value), "got %u\n", len);
+                ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+            }
+            }
+            else
+            {
+                ok(len == strlen(test->value), "got %u\n", len);
+                ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+            }
             free_str(str_exp);
         }
 

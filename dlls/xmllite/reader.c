@@ -1835,6 +1835,12 @@ static HRESULT reader_parse_cdata(xmlreader *reader)
         }
         else
         {
+            /* Value normalization is not fully implemented, rules are:
+
+               - single '\r' -> '\n';
+               - sequence '\r\n' -> '\n', in this case value length changes;
+            */
+            if (*ptr == '\r') *ptr = '\n';
             reader_skipn(reader, 1);
             ptr++;
         }
