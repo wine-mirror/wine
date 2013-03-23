@@ -547,16 +547,35 @@ static	void	dump_dir_exported_functions(void)
 }
 
 
-struct runtime_function
+struct runtime_function_x86_64
 {
     DWORD BeginAddress;
     DWORD EndAddress;
     DWORD UnwindData;
 };
 
+struct runtime_function_armnt
+{
+    DWORD BeginAddress;
+    union {
+        DWORD UnwindData;
+        struct {
+            DWORD Flag : 2;
+            DWORD FunctionLength : 11;
+            DWORD Ret : 2;
+            DWORD H : 1;
+            DWORD Reg : 3;
+            DWORD R : 1;
+            DWORD L : 1;
+            DWORD C : 1;
+            DWORD StackAdjust : 10;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+};
+
 union handler_data
 {
-    struct runtime_function chain;
+    struct runtime_function_x86_64 chain;
     DWORD handler;
 };
 
@@ -567,7 +586,7 @@ struct opcode
     BYTE info : 4;
 };
 
-struct unwind_info
+struct unwind_info_x86_64
 {
     BYTE version : 3;
     BYTE flags : 5;
@@ -577,6 +596,14 @@ struct unwind_info
     BYTE frame_offset : 4;
     struct opcode opcodes[1];  /* count entries */
     /* followed by union handler_data */
+};
+
+struct unwind_info_armnt
+{
+    WORD function_length;
+    WORD unknown1 : 7;
+    WORD count : 5;
+    WORD unknown2 : 4;
 };
 
 #define UWOP_PUSH_NONVOL     0
@@ -593,20 +620,20 @@ struct unwind_info
 #define UNW_FLAG_UHANDLER  2
 #define UNW_FLAG_CHAININFO 4
 
-static void dump_x86_64_unwind_info( const struct runtime_function *function )
+static void dump_x86_64_unwind_info( const struct runtime_function_x86_64 *function )
 {
     static const char * const reg_names[16] =
         { "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi",
           "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15" };
 
     const union handler_data *handler_data;
-    const struct unwind_info *info;
+    const struct unwind_info_x86_64 *info;
     unsigned int i, count;
 
     printf( "\nFunction %08x-%08x:\n", function->BeginAddress, function->EndAddress );
     if (function->UnwindData & 1)
     {
-        const struct runtime_function *next = RVA( function->UnwindData & ~1, sizeof(*next) );
+        const struct runtime_function_x86_64 *next = RVA( function->UnwindData & ~1, sizeof(*next) );
         printf( "  -> function %08x-%08x\n", next->BeginAddress, next->EndAddress );
         return;
     }
@@ -698,19 +725,56 @@ static void dump_x86_64_unwind_info( const struct runtime_function *function )
                 (ULONG)(function->UnwindData + (const char *)(&handler_data->handler + 1) - (const char *)info ));
 }
 
+static void dump_armnt_unwind_info( const struct runtime_function_armnt *function )
+{
+    const struct unwind_info_armnt *info;
+    if (function->u.s.Flag)
+    {
+        printf( "\nFunction %08x-%08x:\n", function->BeginAddress & ~1,
+                (function->BeginAddress & ~1) + function->u.s.FunctionLength * 2 );
+        printf( "    Flag           %x\n", function->u.s.Flag );
+        printf( "    FunctionLength %x\n", function->u.s.FunctionLength );
+        printf( "    Ret            %x\n", function->u.s.Ret );
+        printf( "    H              %x\n", function->u.s.H );
+        printf( "    Reg            %x\n", function->u.s.Reg );
+        printf( "    R              %x\n", function->u.s.R );
+        printf( "    L              %x\n", function->u.s.L );
+        printf( "    C              %x\n", function->u.s.C );
+        printf( "    StackAdjust    %x\n", function->u.s.StackAdjust );
+        return;
+    }
+
+    info = RVA( function->u.UnwindData, sizeof(*info) );
+
+    printf( "\nFunction %08x-%08x:\n", function->BeginAddress & ~1,
+            (function->BeginAddress & ~1) + info->function_length * 2 );
+    printf( "  unwind info at %08x\n", function->u.UnwindData );
+    printf( "    Flag           %x\n", function->u.s.Flag );
+    printf( "    FunctionLength %x\n", info->function_length );
+    printf( "    Unknown1       %x\n", info->unknown1 );
+    printf( "    Count          %x\n", info->count );
+    printf( "    Unknown2       %x\n", info->unknown2 );
+}
+
 static void dump_dir_exceptions(void)
 {
     unsigned int i, size = 0;
-    const struct runtime_function *funcs = get_dir_and_size(IMAGE_FILE_EXCEPTION_DIRECTORY, &size);
+    const void *funcs = get_dir_and_size(IMAGE_FILE_EXCEPTION_DIRECTORY, &size);
     const IMAGE_FILE_HEADER *file_header = &PE_nt_headers->FileHeader;
 
     if (!funcs) return;
 
     if (file_header->Machine == IMAGE_FILE_MACHINE_AMD64)
     {
-        size /= sizeof(*funcs);
+        size /= sizeof(struct runtime_function_x86_64);
         printf( "Exception info (%u functions):\n", size );
-        for (i = 0; i < size; i++) dump_x86_64_unwind_info( funcs + i );
+        for (i = 0; i < size; i++) dump_x86_64_unwind_info( (struct runtime_function_x86_64*)funcs + i );
+    }
+    else if (file_header->Machine == IMAGE_FILE_MACHINE_ARMNT)
+    {
+        size /= sizeof(struct runtime_function_armnt);
+        printf( "Exception info (%u functions):\n", size );
+        for (i = 0; i < size; i++) dump_armnt_unwind_info( (struct runtime_function_armnt*)funcs + i );
     }
     else printf( "Exception information not supported for %s binaries\n",
                  get_machine_str(file_header->Machine));

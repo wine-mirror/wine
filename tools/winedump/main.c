@@ -228,7 +228,7 @@ static const struct my_option option_table[] = {
   {"-C",    DUMP, 0, do_symdmngl, "-C           Turns on symbol demangling"},
   {"-f",    DUMP, 0, do_dumphead, "-f           Dumps file header information"},
   {"-G",    DUMP, 0, do_rawdebug, "-G           Dumps raw debug information"},
-  {"-j",    DUMP, 1, do_dumpsect, "-j sect_name Dumps only the content of section sect_name (import, export, debug, resource, tls, clr)"},
+  {"-j",    DUMP, 1, do_dumpsect, "-j sect_name Dumps only the content of section sect_name (import, export, debug, resource, tls, clr, reloc, except)"},
   {"-t",    DUMP, 0, do_symtable, "-t           Dumps symbol table"},
   {"-x",    DUMP, 0, do_dumpall,  "-x           Dumps everything"},
   {NULL,    NONE, 0, NULL,        NULL}
