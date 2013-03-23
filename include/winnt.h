@@ -1708,6 +1708,9 @@ typedef struct _CONTEXT {
 	ULONG Cpsr;
 } CONTEXT;
 
+BOOLEAN CDECL            RtlAddFunctionTable(RUNTIME_FUNCTION*,DWORD,DWORD);
+BOOLEAN CDECL            RtlDeleteFunctionTable(RUNTIME_FUNCTION*);
+
 #endif /* __arm__ */
 
 #ifdef __aarch64__

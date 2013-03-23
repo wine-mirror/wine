@@ -913,6 +913,26 @@ void __wine_enter_vm86( CONTEXT *context )
     MESSAGE("vm86 mode not supported on this platform\n");
 }
 
+
+/**********************************************************************
+ *              RtlAddFunctionTable   (NTDLL.@)
+ */
+BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, DWORD addr )
+{
+    FIXME( "%p %u %x: stub\n", table, count, addr );
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *              RtlDeleteFunctionTable   (NTDLL.@)
+ */
+BOOLEAN CDECL RtlDeleteFunctionTable( RUNTIME_FUNCTION *table )
+{
+    FIXME( "%p: stub\n", table );
+    return TRUE;
+}
+
 /***********************************************************************
  *            RtlUnwind  (NTDLL.@)
  */
