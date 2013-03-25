@@ -92,6 +92,7 @@ mode_t FILE_umask = 0;
 #define SECSPERDAY         86400
 #define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
 
+static const WCHAR ntfsW[] = {'N','T','F','S'};
 
 /**************************************************************************
  *                 FILE_CreateFile                    (internal)
@@ -2639,7 +2640,23 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
         }
         break;
     case FileFsAttributeInformation:
-        FIXME( "%p: attribute info not supported\n", handle );
+        if (length < offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName[sizeof(ntfsW)/sizeof(WCHAR)] ))
+            io->u.Status = STATUS_BUFFER_TOO_SMALL;
+        else
+        {
+            FILE_FS_ATTRIBUTE_INFORMATION *info = buffer;
+
+            FIXME( "%p: faking attribute info\n", handle );
+            info->FileSystemAttribute = FILE_SUPPORTS_ENCRYPTION | FILE_FILE_COMPRESSION |
+                                        FILE_PERSISTENT_ACLS | FILE_UNICODE_ON_DISK |
+                                        FILE_CASE_PRESERVED_NAMES | FILE_CASE_SENSITIVE_SEARCH;
+            info->MaximumComponentNameLength = MAXIMUM_FILENAME_LENGTH - 1;
+            info->FileSystemNameLength = sizeof(ntfsW);
+            memcpy(info->FileSystemName, ntfsW, sizeof(ntfsW));
+
+            io->Information = sizeof(*info);
+            io->u.Status = STATUS_SUCCESS;
+        }
         break;
     case FileFsControlInformation:
         FIXME( "%p: control info not supported\n", handle );
