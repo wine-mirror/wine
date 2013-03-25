@@ -50,12 +50,6 @@ struct schan_handle
     enum schan_handle_type type;
 };
 
-struct schan_credentials
-{
-    ULONG credential_use;
-    schan_imp_certificate_credentials credentials;
-};
-
 struct schan_context
 {
     schan_imp_session session;
@@ -316,7 +310,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
         if (handle == SCHAN_INVALID_HANDLE) goto fail;
 
         creds->credential_use = SECPKG_CRED_OUTBOUND;
-        if (!schan_imp_allocate_certificate_credentials(&creds->credentials))
+        if (!schan_imp_allocate_certificate_credentials(creds))
         {
             schan_free_handle(handle, SCHAN_HANDLE_CRED);
             goto fail;
@@ -424,7 +418,7 @@ static SECURITY_STATUS SEC_ENTRY schan_FreeCredentialsHandle(
     if (!creds) return SEC_E_INVALID_HANDLE;
 
     if (creds->credential_use == SECPKG_CRED_OUTBOUND)
-        schan_imp_free_certificate_credentials(creds->credentials);
+        schan_imp_free_certificate_credentials(creds);
     HeapFree(GetProcessHeap(), 0, creds);
 
     return SEC_E_OK;
@@ -705,7 +699,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             return SEC_E_INTERNAL_ERROR;
         }
 
-        if (!schan_imp_create_session(&ctx->session, FALSE, cred->credentials))
+        if (!schan_imp_create_session(&ctx->session, cred))
         {
             schan_free_handle(handle, SCHAN_HANDLE_CTX);
             HeapFree(GetProcessHeap(), 0, ctx);
@@ -1329,7 +1323,7 @@ void SECUR32_deinitSchannelSP(void)
         {
             struct schan_credentials *cred;
             cred = schan_free_handle(i, SCHAN_HANDLE_CRED);
-            schan_imp_free_certificate_credentials(cred->credentials);
+            schan_imp_free_certificate_credentials(cred);
             HeapFree(GetProcessHeap(), 0, cred);
         }
     }

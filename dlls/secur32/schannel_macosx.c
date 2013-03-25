@@ -631,19 +631,18 @@ static OSStatus schan_push_adapter(SSLConnectionRef transport, const void *buff,
 }
 
 
-BOOL schan_imp_create_session(schan_imp_session *session, BOOL is_server,
-                              schan_imp_certificate_credentials cred)
+BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cred)
 {
     struct mac_session *s;
     OSStatus status;
 
-    TRACE("(%p, %d)\n", session, is_server);
+    TRACE("(%p)\n", session);
 
     s = HeapAlloc(GetProcessHeap(), 0, sizeof(*s));
     if (!s)
         return FALSE;
 
-    status = SSLNewContext(is_server, &s->context);
+    status = SSLNewContext(cred->credential_use == SECPKG_CRED_INBOUND, &s->context);
     if (status != noErr)
     {
         ERR("Failed to create session context: %ld\n", (long)status);
@@ -966,14 +965,14 @@ SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
     return SEC_E_OK;
 }
 
-BOOL schan_imp_allocate_certificate_credentials(schan_imp_certificate_credentials *c)
+BOOL schan_imp_allocate_certificate_credentials(schan_credentials *c)
 {
     /* The certificate is never really used for anything. */
-    *c = NULL;
+    c->credentials = NULL;
     return TRUE;
 }
 
-void schan_imp_free_certificate_credentials(schan_imp_certificate_credentials c)
+void schan_imp_free_certificate_credentials(schan_credentials *c)
 {
 }
 
