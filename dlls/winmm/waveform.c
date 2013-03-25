@@ -150,8 +150,6 @@ static WINMM_Device *g_in_mapper_devices[MAX_DEVICES];
 
 static IMMDeviceEnumerator *g_devenum;
 
-#define WINMM_WM_QUIT WM_USER
-
 static CRITICAL_SECTION g_devthread_lock;
 static CRITICAL_SECTION_DEBUG g_devthread_lock_debug =
 {
@@ -160,8 +158,10 @@ static CRITICAL_SECTION_DEBUG g_devthread_lock_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": g_devthread_lock") }
 };
 static CRITICAL_SECTION g_devthread_lock = { &g_devthread_lock_debug, -1, 0, 0, 0, 0 };
+static LONG g_devthread_token;
 static HANDLE g_devices_thread;
 static HWND g_devices_hwnd;
+static HMODULE g_devthread_module;
 
 static UINT g_devhandle_count;
 static HANDLE *g_device_handles;
@@ -200,63 +200,46 @@ void WINMM_DeleteWaveform(void)
 {
     UINT i, j;
 
-    if(g_devices_hwnd){
-        for(i = 0; i < g_outmmdevices_count; ++i){
-            WINMM_MMDevice *mmdevice = &g_out_mmdevices[i];
-            for(j = 0; j < MAX_DEVICES && mmdevice->devices[j]; ++j){
-                WINMM_Device *device = mmdevice->devices[j];
-                SendMessageW(g_devices_hwnd, WODM_CLOSE, (WPARAM)device->handle, 0);
-            }
+    if(g_devices_thread)
+        CloseHandle(g_devices_thread);
+
+    for(i = 0; i < g_outmmdevices_count; ++i){
+        WINMM_MMDevice *mmdevice = &g_out_mmdevices[i];
+
+        for(j = 0; j < MAX_DEVICES && mmdevice->devices[j]; ++j){
+            WINMM_Device *device = mmdevice->devices[j];
+            if(device->handle)
+                CloseHandle(device->handle);
+            DeleteCriticalSection(&device->lock);
         }
 
-        for(i = 0; i < g_inmmdevices_count; ++i){
-            WINMM_MMDevice *mmdevice = &g_in_mmdevices[i];
-            for(j = 0; j < MAX_DEVICES && mmdevice->devices[j]; ++j){
-                WINMM_Device *device = mmdevice->devices[j];
-                SendMessageW(g_devices_hwnd, WIDM_CLOSE, (WPARAM)device->handle, 0);
-            }
-        }
-
-        SendMessageW(g_devices_hwnd, WINMM_WM_QUIT, 0, 0);
-
-        for(i = 0; i < g_outmmdevices_count; ++i){
-            WINMM_MMDevice *mmdevice = &g_out_mmdevices[i];
-
-            for(j = 0; j < MAX_DEVICES && mmdevice->devices[j]; ++j){
-                WINMM_Device *device = mmdevice->devices[j];
-                if(device->handle)
-                    CloseHandle(device->handle);
-                DeleteCriticalSection(&device->lock);
-            }
-
-            if(mmdevice->volume)
-                ISimpleAudioVolume_Release(mmdevice->volume);
-            CoTaskMemFree(mmdevice->dev_id);
-            DeleteCriticalSection(&mmdevice->lock);
-        }
-
-        for(i = 0; i < g_inmmdevices_count; ++i){
-            WINMM_MMDevice *mmdevice = &g_in_mmdevices[i];
-
-            for(j = 0; j < MAX_DEVICES && mmdevice->devices[j]; ++j){
-                WINMM_Device *device = mmdevice->devices[j];
-                if(device->handle)
-                    CloseHandle(device->handle);
-                DeleteCriticalSection(&device->lock);
-            }
-
-            if(mmdevice->volume)
-                ISimpleAudioVolume_Release(mmdevice->volume);
-            CoTaskMemFree(mmdevice->dev_id);
-            DeleteCriticalSection(&mmdevice->lock);
-        }
-
-        HeapFree(GetProcessHeap(), 0, g_out_mmdevices);
-        HeapFree(GetProcessHeap(), 0, g_in_mmdevices);
-
-        HeapFree(GetProcessHeap(), 0, g_device_handles);
-        HeapFree(GetProcessHeap(), 0, g_handle_devices);
+        if(mmdevice->volume)
+            ISimpleAudioVolume_Release(mmdevice->volume);
+        CoTaskMemFree(mmdevice->dev_id);
+        DeleteCriticalSection(&mmdevice->lock);
     }
+
+    for(i = 0; i < g_inmmdevices_count; ++i){
+        WINMM_MMDevice *mmdevice = &g_in_mmdevices[i];
+
+        for(j = 0; j < MAX_DEVICES && mmdevice->devices[j]; ++j){
+            WINMM_Device *device = mmdevice->devices[j];
+            if(device->handle)
+                CloseHandle(device->handle);
+            DeleteCriticalSection(&device->lock);
+        }
+
+        if(mmdevice->volume)
+            ISimpleAudioVolume_Release(mmdevice->volume);
+        CoTaskMemFree(mmdevice->dev_id);
+        DeleteCriticalSection(&mmdevice->lock);
+    }
+
+    HeapFree(GetProcessHeap(), 0, g_out_mmdevices);
+    HeapFree(GetProcessHeap(), 0, g_in_mmdevices);
+
+    HeapFree(GetProcessHeap(), 0, g_device_handles);
+    HeapFree(GetProcessHeap(), 0, g_handle_devices);
 
     DeleteCriticalSection(&g_devthread_lock);
 }
@@ -2424,15 +2407,37 @@ static LRESULT CALLBACK WINMM_DevicesMsgProc(HWND hwnd, UINT msg, WPARAM wparam,
     case DRV_QUERYDEVICEINTERFACESIZE:
     case DRV_QUERYDEVICEINTERFACE:
         return DRV_QueryDeviceInterface((WINMM_QueryInterfaceInfo*)wparam);
-    case WINMM_WM_QUIT:
-        TRACE("QUIT message received\n");
-        DestroyWindow(g_devices_hwnd);
-        g_devices_hwnd = NULL;
-        IMMDeviceEnumerator_Release(g_devenum);
-        CoUninitialize();
-        return 0;
     }
     return DefWindowProcW(hwnd, msg, wparam, lparam);
+}
+
+static BOOL WINMM_DevicesThreadDone(void)
+{
+    UINT i;
+
+    EnterCriticalSection(&g_devthread_lock);
+
+    if(g_devthread_token > 0){
+        LeaveCriticalSection(&g_devthread_lock);
+        return FALSE;
+    }
+
+    for(i = 0; i < g_devhandle_count; ++i){
+        if(g_handle_devices[i]->open){
+            LeaveCriticalSection(&g_devthread_lock);
+            return FALSE;
+        }
+    }
+
+    DestroyWindow(g_devices_hwnd);
+    g_devices_hwnd = NULL;
+    IMMDeviceEnumerator_Release(g_devenum);
+    g_devenum = NULL;
+    CoUninitialize();
+
+    LeaveCriticalSection(&g_devthread_lock);
+
+    return TRUE;
 }
 
 static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
@@ -2444,13 +2449,13 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
     hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     if(FAILED(hr)){
         WARN("CoInitializeEx failed: %08x\n", hr);
-        return 1;
+        FreeLibraryAndExitThread(g_devthread_module, 1);
     }
 
     hr = WINMM_InitMMDevices();
     if(FAILED(hr)){
         CoUninitialize();
-        return 1;
+        FreeLibraryAndExitThread(g_devthread_module, 1);
     }
 
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
@@ -2458,16 +2463,15 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
     if(FAILED(hr)){
         WARN("CoCreateInstance failed: %08x\n", hr);
         CoUninitialize();
-        return 1;
+        FreeLibraryAndExitThread(g_devthread_module, 1);
     }
 
     g_devices_hwnd = CreateWindowW(messageW, NULL, 0, 0, 0, 0, 0,
             HWND_MESSAGE, NULL, NULL, NULL);
     if(!g_devices_hwnd){
         WARN("CreateWindow failed: %d\n", GetLastError());
-        IMMDeviceEnumerator_Release(g_devenum);
         CoUninitialize();
-        return 1;
+        FreeLibraryAndExitThread(g_devthread_module, 1);
     }
 
     SetWindowLongPtrW(g_devices_hwnd, GWLP_WNDPROC,
@@ -2496,11 +2500,17 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
         }else
             WARN("Unexpected MsgWait result 0x%x, GLE: %d\n", wait,
                     GetLastError());
+        if(WINMM_DevicesThreadDone()){
+            TRACE("Quitting devices thread\n");
+            FreeLibraryAndExitThread(g_devthread_module, 0);
+        }
     }
 
-    return 0;
+    FreeLibraryAndExitThread(g_devthread_module, 0);
 }
 
+/* on success, increments g_devthread_token to prevent
+ * device thread shutdown. caller must decrement. */
 static BOOL WINMM_StartDevicesThread(void)
 {
     HANDLE events[2];
@@ -2508,24 +2518,35 @@ static BOOL WINMM_StartDevicesThread(void)
 
     EnterCriticalSection(&g_devthread_lock);
 
-    if(g_devices_thread){
-        DWORD wait;
-
+    if(g_devices_hwnd){
         wait = WaitForSingleObject(g_devices_thread, 0);
         if(wait == WAIT_TIMEOUT){
+            /* thread still running */
+            InterlockedIncrement(&g_devthread_token);
             LeaveCriticalSection(&g_devthread_lock);
             return TRUE;
         }
         if(wait != WAIT_OBJECT_0){
+            /* error */
             LeaveCriticalSection(&g_devthread_lock);
             return FALSE;
         }
-
-        g_devices_thread = NULL;
+        TRACE("Devices thread left dangling message window?\n");
         g_devices_hwnd = NULL;
+        CloseHandle(g_devices_thread);
+        g_devices_thread = NULL;
+    }else if(g_devices_thread){
+        WaitForSingleObject(g_devices_thread, INFINITE);
+        CloseHandle(g_devices_thread);
+        g_devices_thread = NULL;
     }
 
     TRACE("Starting up devices thread\n");
+
+    /* The devices thread holds a reference to the winmm module
+     * to prevent it from unloading while it's running. */
+    GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+            (const WCHAR *)&WINMM_StartDevicesThread, &g_devthread_module);
 
     events[0] = CreateEventW(NULL, FALSE, FALSE, NULL);
 
@@ -2534,6 +2555,7 @@ static BOOL WINMM_StartDevicesThread(void)
     if(!g_devices_thread){
         LeaveCriticalSection(&g_devthread_lock);
         CloseHandle(events[0]);
+        FreeLibrary(g_devthread_module);
         return FALSE;
     }
 
@@ -2549,6 +2571,8 @@ static BOOL WINMM_StartDevicesThread(void)
         LeaveCriticalSection(&g_devthread_lock);
         return FALSE;
     }
+
+    InterlockedIncrement(&g_devthread_token);
 
     LeaveCriticalSection(&g_devthread_lock);
 
@@ -2708,15 +2732,15 @@ MMRESULT WINAPI waveOutOpen(LPHWAVEOUT lphWaveOut, UINT uDeviceID,
     TRACE("(%p, %u, %p, %lx, %lx, %08x)\n", lphWaveOut, uDeviceID, lpFormat,
             dwCallback, dwInstance, dwFlags);
 
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_NODRIVER;
-
     if(!lphWaveOut && !(dwFlags & WAVE_FORMAT_QUERY))
         return MMSYSERR_INVALPARAM;
 
     res = WINMM_CheckCallback(dwCallback, dwFlags, FALSE);
     if(res != MMSYSERR_NOERROR)
         return res;
+
+    if(!WINMM_StartDevicesThread())
+        return MMSYSERR_NODRIVER;
 
     info.handle = 0;
     info.format = (WAVEFORMATEX*)lpFormat;
@@ -2727,6 +2751,7 @@ MMRESULT WINAPI waveOutOpen(LPHWAVEOUT lphWaveOut, UINT uDeviceID,
     info.reset = TRUE;
 
     res = SendMessageW(g_devices_hwnd, WODM_OPEN, (DWORD_PTR)&info, 0);
+    InterlockedDecrement(&g_devthread_token);
     if(res != MMSYSERR_NOERROR || (dwFlags & WAVE_FORMAT_QUERY))
         return res;
 
@@ -3182,6 +3207,7 @@ static UINT WINMM_QueryInstanceID(UINT device, WCHAR *str, DWORD_PTR len,
 static UINT get_device_interface(UINT msg, BOOL is_out, UINT index, WCHAR *out, ULONG *out_len)
 {
     WINMM_QueryInterfaceInfo info;
+    UINT ret;
 
     if(!WINMM_StartDevicesThread())
         return MMSYSERR_NODRIVER;
@@ -3191,7 +3217,9 @@ static UINT get_device_interface(UINT msg, BOOL is_out, UINT index, WCHAR *out, 
     info.str = out;
     info.len_bytes = out_len;
 
-    return SendMessageW(g_devices_hwnd, msg, (DWORD_PTR)&info, 0);
+    ret = SendMessageW(g_devices_hwnd, msg, (DWORD_PTR)&info, 0);
+    InterlockedDecrement(&g_devthread_token);
+    return ret;
 }
 
 /**************************************************************************
@@ -3340,15 +3368,15 @@ MMRESULT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
     TRACE("(%p, %x, %p, %lx, %lx, %08x)\n", lphWaveIn, uDeviceID, lpFormat,
             dwCallback, dwInstance, dwFlags);
 
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_NODRIVER;
-
     if(!lphWaveIn && !(dwFlags & WAVE_FORMAT_QUERY))
         return MMSYSERR_INVALPARAM;
 
     res = WINMM_CheckCallback(dwCallback, dwFlags, FALSE);
     if(res != MMSYSERR_NOERROR)
         return res;
+
+    if(!WINMM_StartDevicesThread())
+        return MMSYSERR_NODRIVER;
 
     info.handle = 0;
     info.format = (WAVEFORMATEX*)lpFormat;
@@ -3359,6 +3387,7 @@ MMRESULT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
     info.reset = TRUE;
 
     res = SendMessageW(g_devices_hwnd, WIDM_OPEN, (DWORD_PTR)&info, 0);
+    InterlockedDecrement(&g_devthread_token);
     if(res != MMSYSERR_NOERROR || (dwFlags & WAVE_FORMAT_QUERY))
         return res;
 
@@ -4341,11 +4370,9 @@ UINT WINAPI mixerSetControlDetails(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd,
 				   DWORD fdwDetails)
 {
     WINMM_ControlDetails details;
+    UINT ret;
 
     TRACE("(%p, %p, %x)\n", hmix, lpmcd, fdwDetails);
-
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_NODRIVER;
 
     if((fdwDetails & MIXER_SETCONTROLDETAILSF_QUERYMASK) ==
             MIXER_SETCONTROLDETAILSF_CUSTOM)
@@ -4354,14 +4381,19 @@ UINT WINAPI mixerSetControlDetails(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd,
     if(!lpmcd)
         return MMSYSERR_INVALPARAM;
 
+    if(!WINMM_StartDevicesThread())
+        return MMSYSERR_NODRIVER;
+
     TRACE("dwControlID: %u\n", lpmcd->dwControlID);
 
     details.hmix = hmix;
     details.details = lpmcd;
     details.flags = fdwDetails;
 
-    return SendMessageW(g_devices_hwnd, MXDM_SETCONTROLDETAILS,
+    ret = SendMessageW(g_devices_hwnd, MXDM_SETCONTROLDETAILS,
             (DWORD_PTR)&details, 0);
+    InterlockedDecrement(&g_devthread_token);
+    return ret;
 }
 
 /**************************************************************************
