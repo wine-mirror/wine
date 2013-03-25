@@ -154,35 +154,31 @@ static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const 
     memcpy(para->member.para.pFmt->rgxTabs, pFmt->rgxTabs, pFmt->cTabCount*sizeof(LONG));
   }
 
-  if (dwMask & (PFM_ALL2 & ~PFM_ALL))
-  {
-    /* PARAFORMAT2 fields */
-
 #define EFFECTS_MASK (PFM_RTLPARA|PFM_KEEP|PFM_KEEPNEXT|PFM_PAGEBREAKBEFORE| \
                       PFM_NOLINENUMBER|PFM_NOWIDOWCONTROL|PFM_DONOTHYPHEN|PFM_SIDEBYSIDE| \
                       PFM_TABLE)
-    /* we take for granted that PFE_xxx is the hiword of the corresponding PFM_xxx */
-    if (dwMask & EFFECTS_MASK) {
-      para->member.para.pFmt->dwMask |= dwMask & EFFECTS_MASK;
-      para->member.para.pFmt->wEffects &= ~HIWORD(dwMask);
-      para->member.para.pFmt->wEffects |= pFmt->wEffects & HIWORD(dwMask);
-    }
+  /* we take for granted that PFE_xxx is the hiword of the corresponding PFM_xxx */
+  if (dwMask & EFFECTS_MASK)
+  {
+    para->member.para.pFmt->dwMask |= dwMask & EFFECTS_MASK;
+    para->member.para.pFmt->wEffects &= ~HIWORD(dwMask);
+    para->member.para.pFmt->wEffects |= pFmt->wEffects & HIWORD(dwMask);
+  }
 #undef EFFECTS_MASK
 
-    COPY_FIELD(PFM_SPACEBEFORE, dySpaceBefore);
-    COPY_FIELD(PFM_SPACEAFTER, dySpaceAfter);
-    COPY_FIELD(PFM_LINESPACING, dyLineSpacing);
-    COPY_FIELD(PFM_STYLE, sStyle);
-    COPY_FIELD(PFM_LINESPACING, bLineSpacingRule);
-    COPY_FIELD(PFM_SHADING, wShadingWeight);
-    COPY_FIELD(PFM_SHADING, wShadingStyle);
-    COPY_FIELD(PFM_NUMBERINGSTART, wNumberingStart);
-    COPY_FIELD(PFM_NUMBERINGSTYLE, wNumberingStyle);
-    COPY_FIELD(PFM_NUMBERINGTAB, wNumberingTab);
-    COPY_FIELD(PFM_BORDER, wBorderSpace);
-    COPY_FIELD(PFM_BORDER, wBorderWidth);
-    COPY_FIELD(PFM_BORDER, wBorders);
-  }
+  COPY_FIELD(PFM_SPACEBEFORE, dySpaceBefore);
+  COPY_FIELD(PFM_SPACEAFTER, dySpaceAfter);
+  COPY_FIELD(PFM_LINESPACING, dyLineSpacing);
+  COPY_FIELD(PFM_STYLE, sStyle);
+  COPY_FIELD(PFM_LINESPACING, bLineSpacingRule);
+  COPY_FIELD(PFM_SHADING, wShadingWeight);
+  COPY_FIELD(PFM_SHADING, wShadingStyle);
+  COPY_FIELD(PFM_NUMBERINGSTART, wNumberingStart);
+  COPY_FIELD(PFM_NUMBERINGSTYLE, wNumberingStyle);
+  COPY_FIELD(PFM_NUMBERINGTAB, wNumberingTab);
+  COPY_FIELD(PFM_BORDER, wBorderSpace);
+  COPY_FIELD(PFM_BORDER, wBorderWidth);
+  COPY_FIELD(PFM_BORDER, wBorders);
 
   para->member.para.pFmt->dwMask |= dwMask;
 #undef COPY_FIELD
