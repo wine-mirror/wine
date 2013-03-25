@@ -667,17 +667,7 @@ BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd
         SIZE_T size, cread;
         BOOL res, eof;
 
-        if (flags & ~(MSG_PEEK | MSG_WAITALL))
-            FIXME("SSL_read does not support the following flags: %08x\n", flags);
-
-        if (flags & MSG_PEEK && conn->peek_msg)
-        {
-            if (len < conn->peek_len) FIXME("buffer isn't big enough, should we wrap?\n");
-            *recvd = min( len, conn->peek_len );
-            memcpy( buf, conn->peek_msg, *recvd );
-            return TRUE;
-        }
-        else if (conn->peek_msg)
+        if (conn->peek_msg)
         {
             *recvd = min( len, conn->peek_len );
             memcpy( buf, conn->peek_msg, *recvd );
@@ -691,7 +681,7 @@ BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd
                 conn->peek_msg = NULL;
             }
             /* check if we have enough data from the peek buffer */
-            if (!(flags & MSG_WAITALL) || (*recvd == len)) return TRUE;
+            if (!(flags & MSG_WAITALL) || *recvd == len) return TRUE;
         }
         size = *recvd;
 
@@ -711,14 +701,6 @@ BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd
 
             size += cread;
         }while(!size || ((flags & MSG_WAITALL) && size < len));
-
-        if(size && (flags & MSG_PEEK)) {
-            conn->peek_msg_mem = conn->peek_msg = heap_alloc(size);
-            if(!conn->peek_msg)
-                return FALSE;
-
-            memcpy(conn->peek_msg, buf, size);
-        }
 
         TRACE("received %ld bytes\n", size);
         *recvd = size;
