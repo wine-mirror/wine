@@ -2066,7 +2066,7 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
     LPWSTR password = NULL;
     LPWSTR servername = NULL;
     const WCHAR *option;
-    INTERNET_PORT port = INTERNET_INVALID_PORT_NUMBER; /* use default port */
+    INTERNET_PORT port;
 
     if (httpc->common.QOS &&
         (httpc->common.QOS->qos->AdditionalSecurityInfoType == RPC_C_AUTHN_INFO_TYPE_HTTP))
@@ -2162,6 +2162,11 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
         }
         MultiByteToWideChar(CP_ACP, 0, httpc->common.NetworkAddr, -1, servername, strlen(httpc->common.NetworkAddr) + 1);
     }
+
+    port = (httpc->common.QOS &&
+            (httpc->common.QOS->qos->AdditionalSecurityInfoType == RPC_C_AUTHN_INFO_TYPE_HTTP) &&
+            (httpc->common.QOS->qos->u.HttpCredentials->Flags & RPC_C_HTTP_FLAG_USE_SSL)) ?
+            INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
 
     httpc->session = InternetConnectW(httpc->app_info, servername, port, user, password,
                                       INTERNET_SERVICE_HTTP, 0, 0);
