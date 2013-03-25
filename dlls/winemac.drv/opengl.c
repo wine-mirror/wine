@@ -366,7 +366,7 @@ static const char *debugstr_pf(const pixel_format *pf)
                             color_modes[pf->color_mode].alpha_bits,
                             pf->depth_bits,
                             pf->stencil_bits,
-                            color_modes[pf->accum_mode - 1].color_bits,
+                            pf->accum_mode ? color_modes[pf->accum_mode - 1].color_bits : 0,
                             pf->aux_buffers,
                             pf->backing_store,
                             pf->double_buffer,
