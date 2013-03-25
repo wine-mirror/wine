@@ -234,20 +234,43 @@ static HRESULT WINAPI IHlinkBC_QueryHlink( IHlinkBrowseContext* iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IHlinkBC_GetHlink( IHlinkBrowseContext* iface,
-        ULONG uHLID, IHlink** ppihl)
+static HRESULT WINAPI IHlinkBC_GetHlink(IHlinkBrowseContext* iface, ULONG hlid, IHlink **ret)
 {
-    HlinkBCImpl  *This = impl_from_IHlinkBrowseContext(iface);
+    HlinkBCImpl *This = impl_from_IHlinkBrowseContext(iface);
+    struct link_entry *link;
+    struct list *entry;
 
-    TRACE("(%p)->(%x %p)\n", This, uHLID, ppihl);
+    TRACE("(%p)->(0x%x %p)\n", This, hlid, ret);
 
-    if(uHLID != HLID_CURRENT) {
-        FIXME("Only HLID_CURRENT implemented, given: %x\n", uHLID);
-        return E_NOTIMPL;
+    switch (hlid)
+    {
+    case HLID_PREVIOUS:
+        entry = list_prev(&This->links, &This->current->entry);
+        break;
+    case HLID_NEXT:
+        entry = list_next(&This->links, &This->current->entry);
+        break;
+    case HLID_CURRENT:
+        entry = &This->current->entry;
+        break;
+    case HLID_STACKBOTTOM:
+        entry = list_tail(&This->links);
+        break;
+    case HLID_STACKTOP:
+        entry = list_head(&This->links);
+        break;
+    default:
+        WARN("unknown id 0x%x\n", hlid);
+        entry = NULL;
     }
 
-    *ppihl = This->current->link;
-    IHlink_AddRef(*ppihl);
+    if (!entry)
+        return E_FAIL;
+
+    link = LIST_ENTRY(entry, struct link_entry, entry);
+
+    *ret = link->link;
+    IHlink_AddRef(*ret);
 
     return S_OK;
 }
