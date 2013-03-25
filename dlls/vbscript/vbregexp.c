@@ -110,6 +110,7 @@ typedef struct MatchCollectionEnum {
 
 typedef struct MatchCollection2 {
     IMatchCollection2 IMatchCollection2_iface;
+    IMatchCollection IMatchCollection_iface;
 
     LONG ref;
 
@@ -700,6 +701,9 @@ static HRESULT WINAPI MatchCollection2_QueryInterface(
     }else if(IsEqualGUID(riid, &IID_IMatchCollection2)) {
         TRACE("(%p)->(IID_IMatchCollection2 %p)\n", This, ppv);
         *ppv = &This->IMatchCollection2_iface;
+    }else if(IsEqualGUID(riid, &IID_IMatchCollection)) {
+        TRACE("(%p)->(IID_IMatchCollection %p)\n", This, ppv);
+        *ppv = &This->IMatchCollection_iface;
     }else if(IsEqualGUID(riid, &IID_IDispatchEx)) {
         TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
         *ppv = NULL;
@@ -842,6 +846,90 @@ static const IMatchCollection2Vtbl MatchCollection2Vtbl = {
     MatchCollection2_get__NewEnum
 };
 
+static inline MatchCollection2 *impl_from_IMatchCollection(IMatchCollection *iface)
+{
+    return CONTAINING_RECORD(iface, MatchCollection2, IMatchCollection_iface);
+}
+
+static HRESULT WINAPI MatchCollection_QueryInterface(IMatchCollection *iface, REFIID riid, void **ppv)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection(iface);
+    return IMatchCollection2_QueryInterface(&This->IMatchCollection2_iface, riid, ppv);
+}
+
+static ULONG WINAPI MatchCollection_AddRef(IMatchCollection *iface)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection(iface);
+    return IMatchCollection2_AddRef(&This->IMatchCollection2_iface);
+}
+
+static ULONG WINAPI MatchCollection_Release(IMatchCollection *iface)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection(iface);
+    return IMatchCollection2_Release(&This->IMatchCollection2_iface);
+}
+
+static HRESULT WINAPI MatchCollection_GetTypeInfoCount(IMatchCollection *iface, UINT *pctinfo)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection(iface);
+    return IMatchCollection2_GetTypeInfoCount(&This->IMatchCollection2_iface, pctinfo);
+}
+
+static HRESULT WINAPI MatchCollection_GetTypeInfo(IMatchCollection *iface,
+        UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection(iface);
+    return IMatchCollection2_GetTypeInfo(&This->IMatchCollection2_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI MatchCollection_GetIDsOfNames(IMatchCollection *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection(iface);
+    return IMatchCollection2_GetIDsOfNames(&This->IMatchCollection2_iface,
+            riid, rgszNames, cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI MatchCollection_Invoke(IMatchCollection *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection(iface);
+    return IMatchCollection2_Invoke(&This->IMatchCollection2_iface, dispIdMember,
+            riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI MatchCollection_get_Item(IMatchCollection *iface, LONG index, IDispatch **ppMatch)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection(iface);
+    return IMatchCollection2_get_Item(&This->IMatchCollection2_iface, index, ppMatch);
+}
+
+static HRESULT WINAPI MatchCollection_get_Count(IMatchCollection *iface, LONG *pCount)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection(iface);
+    return IMatchCollection2_get_Count(&This->IMatchCollection2_iface, pCount);
+}
+
+static HRESULT WINAPI MatchCollection_get__NewEnum(IMatchCollection *iface, IUnknown **ppEnum)
+{
+    MatchCollection2 *This = impl_from_IMatchCollection(iface);
+    return IMatchCollection2_get__NewEnum(&This->IMatchCollection2_iface, ppEnum);
+}
+
+static const IMatchCollectionVtbl MatchCollectionVtbl = {
+    MatchCollection_QueryInterface,
+    MatchCollection_AddRef,
+    MatchCollection_Release,
+    MatchCollection_GetTypeInfoCount,
+    MatchCollection_GetTypeInfo,
+    MatchCollection_GetIDsOfNames,
+    MatchCollection_Invoke,
+    MatchCollection_get_Item,
+    MatchCollection_get_Count,
+    MatchCollection_get__NewEnum
+};
+
 static HRESULT add_match(IMatchCollection2 *iface, IMatch2 *add)
 {
     MatchCollection2 *This = impl_from_IMatchCollection2(iface);
@@ -881,6 +969,7 @@ static HRESULT create_match_collection2(IMatchCollection2 **match_collection)
         return E_OUTOFMEMORY;
 
     ret->IMatchCollection2_iface.lpVtbl = &MatchCollection2Vtbl;
+    ret->IMatchCollection_iface.lpVtbl = &MatchCollectionVtbl;
 
     ret->ref = 1;
     *match_collection = &ret->IMatchCollection2_iface;

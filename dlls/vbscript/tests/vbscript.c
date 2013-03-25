@@ -852,6 +852,10 @@ static void test_RegExp(void)
     ok(hres == S_OK, "QueryInterface(IID_IMatchCollection2) returned %x\n", hres);
     IDispatch_Release(disp);
 
+    hres = IMatchCollection2_QueryInterface(mc, &IID_IMatchCollection, (void**)&unk);
+    ok(hres == S_OK, "QueryInterface(IID_IMatchCollection) returned %x\n", hres);
+    IUnknown_Release(unk);
+
     hres = IMatchCollection2_get_Count(mc, NULL);
     ok(hres == E_POINTER, "get_Count returned %x, expected E_POINTER\n", hres);
 
