@@ -840,6 +840,14 @@ void ME_RTFParAttrHook(RTF_Info *info)
     }
     break;
   }
+  case rtfRTLPar:
+    fmt.dwMask = PFM_RTLPARA;
+    fmt.wEffects = PFE_RTLPARA;
+    break;
+  case rtfLTRPar:
+    fmt.dwMask = PFM_RTLPARA;
+    fmt.wEffects = 0;
+    break;
   }
   if (fmt.dwMask) {
     RTFFlushOutputBuffer(info);
