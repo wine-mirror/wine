@@ -212,12 +212,56 @@ static HRESULT WINAPI IHlinkBC_OnNavigateHlink(IHlinkBrowseContext *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI IHlinkBC_UpdateHlink(IHlinkBrowseContext* iface,
-        ULONG uHLID, IMoniker* pimkTarget, LPCWSTR pwzLocation,
-        LPCWSTR pwzFriendlyName)
+static struct link_entry *context_get_entry(HlinkBCImpl *ctxt, ULONG hlid)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct list *entry;
+
+    switch (hlid)
+    {
+    case HLID_PREVIOUS:
+        entry = list_prev(&ctxt->links, &ctxt->current->entry);
+        break;
+    case HLID_NEXT:
+        entry = list_next(&ctxt->links, &ctxt->current->entry);
+        break;
+    case HLID_CURRENT:
+        entry = &ctxt->current->entry;
+        break;
+    case HLID_STACKBOTTOM:
+        entry = list_tail(&ctxt->links);
+        break;
+    case HLID_STACKTOP:
+        entry = list_head(&ctxt->links);
+        break;
+    default:
+        WARN("unknown id 0x%x\n", hlid);
+        entry = NULL;
+    }
+
+    return entry ? LIST_ENTRY(entry, struct link_entry, entry) : NULL;
+}
+
+static HRESULT WINAPI IHlinkBC_UpdateHlink(IHlinkBrowseContext* iface,
+        ULONG hlid, IMoniker *target, LPCWSTR location, LPCWSTR friendly_name)
+{
+    HlinkBCImpl *This = impl_from_IHlinkBrowseContext(iface);
+    struct link_entry *entry = context_get_entry(This, hlid);
+    IHlink *link;
+    HRESULT hr;
+
+    TRACE("(%p)->(0x%x %p %s %s)\n", This, hlid, target, debugstr_w(location), debugstr_w(friendly_name));
+
+    if (!entry)
+        return E_INVALIDARG;
+
+    hr = HlinkCreateFromMoniker(target, location, friendly_name, NULL, 0, NULL, &IID_IHlink, (void**)&link);
+    if (FAILED(hr))
+        return hr;
+
+    IHlink_Release(entry->link);
+    entry->link = link;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IHlinkBC_EnumNavigationStack( IHlinkBrowseContext *iface,
@@ -238,36 +282,12 @@ static HRESULT WINAPI IHlinkBC_GetHlink(IHlinkBrowseContext* iface, ULONG hlid, 
 {
     HlinkBCImpl *This = impl_from_IHlinkBrowseContext(iface);
     struct link_entry *link;
-    struct list *entry;
 
     TRACE("(%p)->(0x%x %p)\n", This, hlid, ret);
 
-    switch (hlid)
-    {
-    case HLID_PREVIOUS:
-        entry = list_prev(&This->links, &This->current->entry);
-        break;
-    case HLID_NEXT:
-        entry = list_next(&This->links, &This->current->entry);
-        break;
-    case HLID_CURRENT:
-        entry = &This->current->entry;
-        break;
-    case HLID_STACKBOTTOM:
-        entry = list_tail(&This->links);
-        break;
-    case HLID_STACKTOP:
-        entry = list_head(&This->links);
-        break;
-    default:
-        WARN("unknown id 0x%x\n", hlid);
-        entry = NULL;
-    }
-
-    if (!entry)
+    link = context_get_entry(This, hlid);
+    if (!link)
         return E_FAIL;
-
-    link = LIST_ENTRY(entry, struct link_entry, entry);
 
     *ret = link->link;
     IHlink_AddRef(*ret);
