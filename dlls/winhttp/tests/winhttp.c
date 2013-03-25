@@ -2792,6 +2792,83 @@ static void test_WinHttpGetProxyForUrl(void)
     WinHttpCloseHandle( session );
 }
 
+static void test_chunked_read(void)
+{
+    static const WCHAR host[] = {'t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',0};
+    static const WCHAR verb[] = {'/','t','e','s','t','c','h','u','n','k','e','d',0};
+    static const WCHAR chunked[] = {'c','h','u','n','k','e','d',0};
+    WCHAR header[32];
+    DWORD len;
+    HINTERNET ses, con = NULL, req = NULL;
+    BOOL ret;
+
+    trace( "starting chunked read test\n" );
+
+    ses = WinHttpOpen( test_useragent, 0, NULL, NULL, 0 );
+    ok( ses != NULL, "WinHttpOpen failed with error %u\n", GetLastError() );
+    if (!ses) goto done;
+
+    con = WinHttpConnect( ses, host, 0, 0 );
+    ok( con != NULL, "WinHttpConnect failed with error %u\n", GetLastError() );
+    if (!con) goto done;
+
+    req = WinHttpOpenRequest( con, NULL, verb, NULL, NULL, NULL, 0 );
+    ok( req != NULL, "WinHttpOpenRequest failed with error %u\n", GetLastError() );
+    if (!req) goto done;
+
+    ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
+    ok( ret, "WinHttpSendRequest failed with error %u\n", GetLastError() );
+
+    ret = WinHttpReceiveResponse( req, NULL );
+    ok( ret, "WinHttpReceiveResponse failed with error %u\n", GetLastError() );
+
+    header[0] = 0;
+    len = sizeof(header);
+    ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_TRANSFER_ENCODING, NULL, header, &len, 0 );
+    ok( ret, "failed to get TRANSFER_ENCODING header (error %u)\n", GetLastError() );
+    ok( !lstrcmpW( header, chunked ), "wrong transfer encoding %s\n", wine_dbgstr_w(header) );
+    trace( "transfer encoding: %s\n", wine_dbgstr_w(header) );
+
+    header[0] = 0;
+    len = sizeof(header);
+    SetLastError( 0xdeadbeef );
+    ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_CONTENT_LENGTH, NULL, &header, &len, 0 );
+    ok( !ret, "unexpected CONTENT_LENGTH header %s\n", wine_dbgstr_w(header) );
+    ok( GetLastError() == ERROR_WINHTTP_HEADER_NOT_FOUND, "wrong error %u\n", GetLastError() );
+
+    trace( "entering query loop\n" );
+    for (;;)
+    {
+        len = 0xdeadbeef;
+        ret = WinHttpQueryDataAvailable( req, &len );
+        ok( ret, "WinHttpQueryDataAvailable failed with error %u\n", GetLastError() );
+        if (ret) ok( len != 0xdeadbeef, "WinHttpQueryDataAvailable return wrong length\n" );
+        trace( "got %u available\n", len );
+        if (len)
+        {
+            DWORD bytes_read;
+            char *buf = HeapAlloc( GetProcessHeap(), 0, len + 1 );
+
+            ret = WinHttpReadData( req, buf, len, &bytes_read );
+
+            buf[bytes_read] = 0;
+            trace( "WinHttpReadData -> %d %u\n", ret, bytes_read );
+            ok( len == bytes_read, "only got %u of %u available\n", bytes_read, len );
+            ok( buf[bytes_read - 1] == '\n', "received partial line '%s'\n", buf );
+
+            HeapFree( GetProcessHeap(), 0, buf );
+            if (!bytes_read) break;
+        }
+        if (!len) break;
+    }
+    trace( "done\n" );
+
+done:
+    if (req) WinHttpCloseHandle( req );
+    if (con) WinHttpCloseHandle( con );
+    if (ses) WinHttpCloseHandle( ses );
+}
+
 START_TEST (winhttp)
 {
     static const WCHAR basicW[] = {'/','b','a','s','i','c',0};
@@ -2817,6 +2894,7 @@ START_TEST (winhttp)
     test_WinHttpDetectAutoProxyConfigUrl();
     test_WinHttpGetIEProxyConfigForCurrentUser();
     test_WinHttpGetProxyForUrl();
+    test_chunked_read();
 
     si.event = CreateEvent(NULL, 0, 0, NULL);
     si.port = 7532;
