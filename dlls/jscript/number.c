@@ -125,11 +125,10 @@ static inline jsstr_t *number_to_fixed(double val, int prec)
     if(prec)
         size += prec+1;
 
-    ret = jsstr_alloc_buf(size);
+    str = jsstr_alloc_buf(size, &ret);
     if(!ret)
         return NULL;
 
-    str = ret->str;
     size = buf_pos = 0;
     if(neg)
         str[size++] = '-';
@@ -193,11 +192,10 @@ static inline jsstr_t *number_to_exponential(double val, int prec)
     if(neg)
         size++;
 
-    ret = jsstr_alloc_buf(size);
+    str = jsstr_alloc_buf(size, &ret);
     if(!ret)
         return NULL;
 
-    str = ret->str;
     size = 0;
     pbuf = buf;
     if(neg)

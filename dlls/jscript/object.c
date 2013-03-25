@@ -71,12 +71,13 @@ static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
 
     if(r) {
         jsstr_t *ret;
+        WCHAR *ptr;
 
-        ret = jsstr_alloc_buf(9+strlenW(str));
-        if(!ret)
+        ptr = jsstr_alloc_buf(9+strlenW(str), &ret);
+        if(!ptr)
             return E_OUTOFMEMORY;
 
-        sprintfW(ret->str, formatW, str);
+        sprintfW(ptr, formatW, str);
         *r = jsval_string(ret);
     }
 

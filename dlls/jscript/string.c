@@ -160,13 +160,12 @@ static HRESULT do_attributeless_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, j
 
     tagname_len = strlenW(tagname);
 
-    ret = jsstr_alloc_buf(jsstr_length(str) + 2*tagname_len + 5);
+    ptr = jsstr_alloc_buf(jsstr_length(str) + 2*tagname_len + 5, &ret);
     if(!ret) {
         jsstr_release(str);
         return E_OUTOFMEMORY;
     }
 
-    ptr = ret->str;
     *ptr++ = '<';
     memcpy(ptr, tagname, tagname_len*sizeof(WCHAR));
     ptr += tagname_len;
@@ -209,11 +208,10 @@ static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsig
         unsigned attrname_len = strlenW(attrname);
         unsigned tagname_len = strlenW(tagname);
         jsstr_t *ret;
+        WCHAR *ptr;
 
-        ret = jsstr_alloc_buf(2*tagname_len + attrname_len + jsstr_length(attr_value) + jsstr_length(str) + 9);
-        if(ret) {
-            WCHAR *ptr = ret->str;
-
+        ptr = jsstr_alloc_buf(2*tagname_len + attrname_len + jsstr_length(attr_value) + jsstr_length(str) + 9, &ret);
+        if(ptr) {
             *ptr++ = '<';
             memcpy(ptr, tagname, tagname_len*sizeof(WCHAR));
             ptr += tagname_len;
@@ -390,9 +388,8 @@ static HRESULT String_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
             }
         }
 
-        ret = jsstr_alloc_buf(len);
-        if(ret) {
-            ptr = ret->str;
+        ptr = jsstr_alloc_buf(len, &ret);
+        if(ptr) {
             for(i=0; i < str_cnt; i++)
                 ptr += jsstr_flush(strs[i], ptr);
         }else {
@@ -1337,15 +1334,16 @@ static HRESULT String_toLowerCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 
     if(r) {
         jsstr_t *ret;
+        WCHAR *buf;
 
-        ret = jsstr_alloc_buf(jsstr_length(str));
-        if(!ret) {
+        buf = jsstr_alloc_buf(jsstr_length(str), &ret);
+        if(!buf) {
             jsstr_release(str);
             return E_OUTOFMEMORY;
         }
 
-        jsstr_flush(str, ret->str);
-        strlwrW(ret->str);
+        jsstr_flush(str, buf);
+        strlwrW(buf);
         *r = jsval_string(ret);
     }
     jsstr_release(str);
@@ -1366,15 +1364,16 @@ static HRESULT String_toUpperCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 
     if(r) {
         jsstr_t *ret;
+        WCHAR *buf;
 
-        ret = jsstr_alloc_buf(jsstr_length(str));
-        if(!ret) {
+        buf = jsstr_alloc_buf(jsstr_length(str), &ret);
+        if(!buf) {
             jsstr_release(str);
             return E_OUTOFMEMORY;
         }
 
-        jsstr_flush(str, ret->str);
-        struprW(ret->str);
+        jsstr_flush(str, buf);
+        struprW(buf);
         *r = jsval_string(ret);
     }
     jsstr_release(str);
@@ -1525,14 +1524,15 @@ static const builtin_info_t StringInst_info = {
 static HRESULT StringConstr_fromCharCode(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
+    WCHAR *ret_str;
     DWORD i, code;
     jsstr_t *ret;
     HRESULT hres;
 
     TRACE("\n");
 
-    ret = jsstr_alloc_buf(argc);
-    if(!ret)
+    ret_str = jsstr_alloc_buf(argc, &ret);
+    if(!ret_str)
         return E_OUTOFMEMORY;
 
     for(i=0; i<argc; i++) {
@@ -1542,7 +1542,7 @@ static HRESULT StringConstr_fromCharCode(script_ctx_t *ctx, vdisp_t *jsthis, WOR
             return hres;
         }
 
-        ret->str[i] = code;
+        ret_str[i] = code;
     }
 
     if(r)

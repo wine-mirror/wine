@@ -2001,10 +2001,10 @@ static HRESULT interp_eq2(exec_ctx_t *ctx)
     BOOL b;
     HRESULT hres;
 
-    TRACE("\n");
-
     r = stack_pop(ctx);
     l = stack_pop(ctx);
+
+    TRACE("%s === %s\n", debugstr_jsval(l), debugstr_jsval(r));
 
     hres = equal2_values(r, l, &b);
     jsval_release(l);

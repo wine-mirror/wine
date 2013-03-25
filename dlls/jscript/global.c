@@ -304,14 +304,13 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
             len += 3;
     }
 
-    ret_str = jsstr_alloc_buf(len);
-    if(!ret_str) {
+    ret = jsstr_alloc_buf(len, &ret_str);
+    if(!ret) {
         jsstr_release(str);
         return E_OUTOFMEMORY;
     }
 
     len = 0;
-    ret = ret_str->str;
     for(ptr = str->str; *ptr; ptr++) {
         if(*ptr > 0xff) {
             ret[len++] = '%';
@@ -655,13 +654,12 @@ static HRESULT JSGlobal_unescape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         len++;
     }
 
-    ret_str = jsstr_alloc_buf(len);
-    if(!ret_str) {
+    ret = jsstr_alloc_buf(len, &ret_str);
+    if(!ret) {
         jsstr_release(str);
         return E_OUTOFMEMORY;
     }
 
-    ret = ret_str->str;
     len = 0;
     for(ptr = str->str; *ptr; ptr++) {
         if(*ptr == '%') {
@@ -793,12 +791,11 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         }
     }
 
-    ret = jsstr_alloc_buf(len);
-    if(!ret) {
+    rptr = jsstr_alloc_buf(len, &ret);
+    if(!rptr) {
         jsstr_release(str);
         return E_OUTOFMEMORY;
     }
-    rptr = ret->str;
 
     for(ptr = str->str; *ptr; ptr++) {
         if(is_uri_unescaped(*ptr) || is_uri_reserved(*ptr) || *ptr == '#') {
@@ -826,9 +823,10 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    jsstr_t *str, *ret;
-    WCHAR *ptr;
-    int i, len = 0, val, res;
+    jsstr_t *str, *ret_str;
+    unsigned len = 0;
+    WCHAR *ptr, *ret;
+    int i, val, res;
     char buf[4];
     WCHAR out;
     HRESULT hres;
@@ -871,17 +869,15 @@ static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         }
     }
 
-    ret = jsstr_alloc_buf(len);
+    ret = jsstr_alloc_buf(len, &ret_str);
     if(!ret) {
         jsstr_release(str);
         return E_OUTOFMEMORY;
     }
 
-    len = 0;
     for(ptr = str->str; *ptr; ptr++) {
         if(*ptr != '%') {
-            ret->str[len] = *ptr;
-            len++;
+            *ret++ = *ptr;
         }else {
             for(i=0; i<4; i++) {
                 if(ptr[i*3]!='%' || hex_to_int(ptr[i*3+1])==-1 || (val=hex_to_int(ptr[i*3+2]))==-1)
@@ -889,33 +885,34 @@ static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
                 val += hex_to_int(ptr[i*3+1])<<4;
                 buf[i] = val;
 
-                res = MultiByteToWideChar(CP_UTF8, 0, buf, i+1, ret->str+len, 1);
+                res = MultiByteToWideChar(CP_UTF8, 0, buf, i+1, ret, 1);
                 if(res)
                     break;
             }
 
             ptr += i*3+2;
-            len++;
+            ret++;
         }
     }
 
-    TRACE("%s -> %s\n", debugstr_jsstr(str), debugstr_jsstr(ret));
+    TRACE("%s -> %s\n", debugstr_jsstr(str), debugstr_jsstr(ret_str));
     jsstr_release(str);
 
     if(r)
-        *r = jsval_string(ret);
+        *r = jsval_string(ret_str);
     else
-        jsstr_release(ret);
+        jsstr_release(ret_str);
     return S_OK;
 }
 
 static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    jsstr_t *str, *ret;
+    jsstr_t *str, *ret_str;
     char buf[4];
     const WCHAR *ptr;
     DWORD len = 0, size, i;
+    WCHAR *ret;
     HRESULT hres;
 
     TRACE("\n");
@@ -943,22 +940,21 @@ static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
         }
     }
 
-    ret = jsstr_alloc_buf(len);
+    ret = jsstr_alloc_buf(len, &ret_str);
     if(!ret) {
         jsstr_release(str);
         return E_OUTOFMEMORY;
     }
 
-    len = 0;
     for(ptr = str->str; *ptr; ptr++) {
         if(is_uri_unescaped(*ptr)) {
-            ret->str[len++] = *ptr;
+            *ret++ = *ptr;
         }else {
             size = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, buf, sizeof(buf), NULL, NULL);
             for(i=0; i<size; i++) {
-                ret->str[len++] = '%';
-                ret->str[len++] = int_to_char((BYTE)buf[i] >> 4);
-                ret->str[len++] = int_to_char(buf[i] & 0x0f);
+                *ret++ = '%';
+                *ret++ = int_to_char((BYTE)buf[i] >> 4);
+                *ret++ = int_to_char(buf[i] & 0x0f);
             }
         }
     }
@@ -966,9 +962,9 @@ static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
     jsstr_release(str);
 
     if(r)
-        *r = jsval_string(ret);
+        *r = jsval_string(ret_str);
     else
-        jsstr_release(ret);
+        jsstr_release(ret_str);
     return S_OK;
 }
 
@@ -1044,12 +1040,11 @@ static HRESULT JSGlobal_decodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
         }
     }
 
-    ret = jsstr_alloc_buf(len);
+    out_ptr = jsstr_alloc_buf(len, &ret);
     if(!ret) {
         jsstr_release(str);
         return E_OUTOFMEMORY;
     }
-    out_ptr = ret->str;
 
     ptr = str->str;
     while(*ptr) {

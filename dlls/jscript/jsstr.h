@@ -34,7 +34,7 @@ static inline unsigned jsstr_length(jsstr_t *str)
 }
 
 jsstr_t *jsstr_alloc_len(const WCHAR*,unsigned) DECLSPEC_HIDDEN;
-jsstr_t *jsstr_alloc_buf(unsigned) DECLSPEC_HIDDEN;
+WCHAR *jsstr_alloc_buf(unsigned,jsstr_t**) DECLSPEC_HIDDEN;
 
 static inline jsstr_t *jsstr_alloc(const WCHAR *str)
 {

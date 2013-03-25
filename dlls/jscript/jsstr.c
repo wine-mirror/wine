@@ -25,7 +25,7 @@ const char *debugstr_jsstr(jsstr_t *str)
     return debugstr_wn(str->str, jsstr_length(str));
 }
 
-jsstr_t *jsstr_alloc_buf(unsigned len)
+WCHAR *jsstr_alloc_buf(unsigned len, jsstr_t **r)
 {
     jsstr_t *ret;
 
@@ -39,16 +39,18 @@ jsstr_t *jsstr_alloc_buf(unsigned len)
     ret->length_flags = len << JSSTR_LENGTH_SHIFT;
     ret->ref = 1;
     ret->str[len] = 0;
-    return ret;
+    *r = ret;
+    return ret->str;
 }
 
 jsstr_t *jsstr_alloc_len(const WCHAR *buf, unsigned len)
 {
     jsstr_t *ret;
+    WCHAR *ptr;
 
-    ret = jsstr_alloc_buf(len);
-    if(ret)
-        memcpy(ret->str, buf, len*sizeof(WCHAR));
+    ptr = jsstr_alloc_buf(len, &ret);
+    if(ptr)
+        memcpy(ptr, buf, len*sizeof(WCHAR));
 
     return ret;
 }
@@ -70,6 +72,7 @@ jsstr_t *jsstr_concat(jsstr_t *str1, jsstr_t *str2)
 {
     unsigned len1, len2;
     jsstr_t *ret;
+    WCHAR *ptr;
 
     len1 = jsstr_length(str1);
     if(!len1)
@@ -79,12 +82,12 @@ jsstr_t *jsstr_concat(jsstr_t *str1, jsstr_t *str2)
     if(!len2)
         return jsstr_addref(str1);
 
-    ret = jsstr_alloc_buf(len1+len2);
+    ptr = jsstr_alloc_buf(len1+len2, &ret);
     if(!ret)
         return NULL;
 
-    jsstr_flush(str1, ret->str);
-    jsstr_flush(str2, ret->str+len1);
+    jsstr_flush(str1, ptr);
+    jsstr_flush(str2, ptr+len1);
     return ret;
 }
 
@@ -110,7 +113,7 @@ BOOL init_strings(void)
     static const WCHAR NaNW[] = { 'N','a','N',0 };
     static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
 
-    if(!(empty_str = jsstr_alloc_buf(0)))
+    if(!jsstr_alloc_buf(0, &empty_str))
         return FALSE;
     if(!(nan_str = jsstr_alloc(NaNW)))
         return FALSE;
