@@ -1187,7 +1187,7 @@ int CDECL MSVCRT__ui64tow_s( unsigned __int64 value, MSVCRT_wchar_t *str,
         return MSVCRT_EINVAL;
     }
 
-    memcpy(str, pos, buffer-pos+65);
+    memcpy(str, pos, (buffer-pos+65)*sizeof(MSVCRT_wchar_t));
     return 0;
 }
 
@@ -1248,7 +1248,7 @@ int CDECL _ultoa_s(MSVCRT_ulong value, char *str, MSVCRT_size_t size, int radix)
 /*********************************************************************
  *  _ultow_s (MSVCRT.@)
  */
-int CDECL _ultow_s(MSVCRT_ulong value, WCHAR *str, MSVCRT_size_t size, int radix)
+int CDECL _ultow_s(MSVCRT_ulong value, MSVCRT_wchar_t *str, MSVCRT_size_t size, int radix)
 {
     MSVCRT_ulong digit;
     WCHAR buffer[33], *pos;
@@ -1295,7 +1295,7 @@ int CDECL _ultow_s(MSVCRT_ulong value, WCHAR *str, MSVCRT_size_t size, int radix
         return MSVCRT_ERANGE;
     }
 
-    memcpy(str, pos, len * sizeof(WCHAR));
+    memcpy(str, pos, len * sizeof(MSVCRT_wchar_t));
     return 0;
 }
 
