@@ -1807,3 +1807,16 @@ NTSTATUS WINAPI RtlQueryInformationAcl(
 
     return status;
 }
+
+BOOL WINAPI RtlConvertToAutoInheritSecurityObject(
+        PSECURITY_DESCRIPTOR pdesc,
+        PSECURITY_DESCRIPTOR cdesc,
+        PSECURITY_DESCRIPTOR* ndesc,
+        GUID* objtype,
+        BOOL isdir,
+        PGENERIC_MAPPING genmap )
+{
+    FIXME("%p %p %p %p %d %p - stub\n", pdesc, cdesc, ndesc, objtype, isdir, genmap);
+
+    return FALSE;
+}

@@ -463,7 +463,7 @@
 # @ stub RtlConvertPropertyToVariant
 @ stub RtlConvertSharedToExclusive
 @ stdcall RtlConvertSidToUnicodeString(ptr ptr long)
-# @ stub RtlConvertToAutoInheritSecurityObject
+@ stdcall RtlConvertToAutoInheritSecurityObject(ptr ptr ptr ptr long ptr)
 @ stub RtlConvertUiListToApiList
 @ stdcall -arch=win32 -ret64 RtlConvertUlongToLargeInteger(long)
 # @ stub RtlConvertVariantToProperty
