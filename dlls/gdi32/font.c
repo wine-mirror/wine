@@ -2266,6 +2266,9 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     y = pt.y;
 
     char_extra = GetTextCharacterExtra(hdc);
+    if (char_extra && lpDx && GetDeviceCaps( hdc, TECHNOLOGY ) == DT_RASPRINTER)
+        char_extra = 0; /* Printer drivers don't add char_extra if lpDx is supplied */
+
     if(char_extra || dc->breakExtra || breakRem || lpDx || lf.lfEscapement != 0)
     {
         UINT i;
