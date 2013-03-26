@@ -127,6 +127,7 @@ struct macdrv_win_data
     BOOL                on_screen : 1;          /* is window ordered in? (minimized or not) */
     BOOL                shaped : 1;             /* is window using a custom region shape? */
     BOOL                layered : 1;            /* is window layered and with valid attributes? */
+    BOOL                ulw_layered : 1;        /* has UpdateLayeredWindow() been called for window? */
     BOOL                per_pixel_alpha : 1;    /* is window using per-pixel alpha? */
     BOOL                minimized : 1;          /* is window minimized? */
     struct window_surface *surface;

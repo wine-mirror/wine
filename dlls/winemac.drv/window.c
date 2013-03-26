@@ -971,6 +971,7 @@ void CDECL macdrv_SetWindowStyle(HWND hwnd, INT offset, STYLESTRUCT *style)
         if (offset == GWL_EXSTYLE && (changed & WS_EX_LAYERED)) /* changing WS_EX_LAYERED resets attributes */
         {
             data->layered = FALSE;
+            data->ulw_layered = FALSE;
             sync_window_opacity(data, 0, 0, FALSE, 0);
             if (data->surface) set_surface_use_alpha(data->surface, FALSE);
         }
@@ -1092,6 +1093,7 @@ BOOL CDECL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *
     if (!(data = get_win_data(hwnd))) return FALSE;
 
     data->layered = TRUE;
+    data->ulw_layered = TRUE;
 
     rect = *window_rect;
     OffsetRect(&rect, -window_rect->left, -window_rect->top);
@@ -1271,6 +1273,7 @@ void CDECL macdrv_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags
     /* create the window surface if necessary */
     if (!data->cocoa_window) goto done;
     if (swp_flags & SWP_HIDEWINDOW) goto done;
+    if (data->ulw_layered) goto done;
 
     if (*surface) window_surface_release(*surface);
     *surface = NULL;
@@ -1318,11 +1321,13 @@ void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
     data->window_rect = *window_rect;
     data->whole_rect  = *visible_rect;
     data->client_rect = *client_rect;
-    if (surface)
-        window_surface_add_ref(surface);
-    set_window_surface(data->cocoa_window, surface);
-    if (data->surface) window_surface_release(data->surface);
-    data->surface = surface;
+    if (!data->ulw_layered)
+    {
+        if (surface) window_surface_add_ref(surface);
+        set_window_surface(data->cocoa_window, surface);
+        if (data->surface) window_surface_release(data->surface);
+        data->surface = surface;
+    }
 
     TRACE("win %p/%p window %s whole %s client %s style %08x flags %08x surface %p\n",
            hwnd, data->cocoa_window, wine_dbgstr_rect(window_rect),
