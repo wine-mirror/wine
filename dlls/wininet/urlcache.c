@@ -184,16 +184,16 @@ typedef struct
     CHAR url[1];
 } stream_handle;
 
-typedef struct _URLCACHECONTAINER
+typedef struct
 {
     struct list entry; /* part of a list */
     LPWSTR cache_prefix; /* string that has to be prefixed for this container to be used */
     LPWSTR path; /* path to url container directory */
-    HANDLE hMapping; /* handle of file mapping */
+    HANDLE mapping; /* handle of file mapping */
     DWORD file_size; /* size of file when mapping was opened */
-    HANDLE hMutex; /* handle of mutex */
+    HANDLE mutex; /* handle of mutex */
     DWORD default_entry_type;
-} URLCACHECONTAINER;
+} cache_container;
 
 
 /* List of all containers available */
@@ -243,7 +243,7 @@ static HANDLE cache_container_map_index(HANDLE file, const WCHAR *path, DWORD si
 }
 
 /* Caller must hold container lock */
-static DWORD cache_container_set_size(URLCACHECONTAINER *container, HANDLE file, DWORD blocks_no)
+static DWORD cache_container_set_size(cache_container *container, HANDLE file, DWORD blocks_no)
 {
     static const WCHAR cache_content_key[] = {'S','o','f','t','w','a','r','e','\\',
         'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
@@ -284,8 +284,8 @@ static DWORD cache_container_set_size(URLCACHECONTAINER *container, HANDLE file,
         header->capacity_in_blocks = blocks_no;
 
         UnmapViewOfFile(header);
-        CloseHandle(container->hMapping);
-        container->hMapping = mapping;
+        CloseHandle(container->mapping);
+        container->mapping = mapping;
         container->file_size = file_size;
         return ERROR_SUCCESS;
     }
@@ -372,8 +372,8 @@ static DWORD cache_container_set_size(URLCACHECONTAINER *container, HANDLE file,
     }
 
     UnmapViewOfFile(header);
-    CloseHandle(container->hMapping);
-    container->hMapping = mapping;
+    CloseHandle(container->mapping);
+    container->mapping = mapping;
     container->file_size = file_size;
     return ERROR_SUCCESS;
 }
@@ -416,14 +416,14 @@ static BOOL cache_container_is_valid(urlcache_header *header, DWORD file_size)
 /***********************************************************************
  *           cache_container_open_index (Internal)
  *
- *  Opens the index file and saves mapping handle in hMapping
+ *  Opens the index file and saves mapping handle
  *
  * RETURNS
  *    ERROR_SUCCESS if succeeded
  *    Any other Win32 error code if failed
  *
  */
-static DWORD cache_container_open_index(URLCACHECONTAINER *container, DWORD blocks_no)
+static DWORD cache_container_open_index(cache_container *container, DWORD blocks_no)
 {
     static const WCHAR index_dat[] = {'i','n','d','e','x','.','d','a','t',0};
 
@@ -432,10 +432,10 @@ static DWORD cache_container_open_index(URLCACHECONTAINER *container, DWORD bloc
     DWORD file_size;
     BOOL validate;
 
-    WaitForSingleObject(container->hMutex, INFINITE);
+    WaitForSingleObject(container->mutex, INFINITE);
 
-    if(container->hMapping) {
-        ReleaseMutex(container->hMutex);
+    if(container->mapping) {
+        ReleaseMutex(container->mutex);
         return ERROR_SUCCESS;
     }
 
@@ -450,14 +450,14 @@ static DWORD cache_container_open_index(URLCACHECONTAINER *container, DWORD bloc
     }
     if(file == INVALID_HANDLE_VALUE) {
         TRACE("Could not open or create cache index file \"%s\"\n", debugstr_w(index_path));
-        ReleaseMutex(container->hMutex);
+        ReleaseMutex(container->mutex);
         return GetLastError();
     }
 
     file_size = GetFileSize(file, NULL);
     if(file_size == INVALID_FILE_SIZE) {
         CloseHandle(file);
-	ReleaseMutex(container->hMutex);
+	ReleaseMutex(container->mutex);
         return GetLastError();
     }
 
@@ -469,15 +469,15 @@ static DWORD cache_container_open_index(URLCACHECONTAINER *container, DWORD bloc
     if(file_size < FILE_SIZE(blocks_no)) {
         DWORD ret = cache_container_set_size(container, file, blocks_no);
         CloseHandle(file);
-        ReleaseMutex(container->hMutex);
+        ReleaseMutex(container->mutex);
         return ret;
     }
 
     container->file_size = file_size;
-    container->hMapping = cache_container_map_index(file, container->path, file_size, &validate);
+    container->mapping = cache_container_map_index(file, container->path, file_size, &validate);
     CloseHandle(file);
-    if(container->hMapping && validate) {
-        urlcache_header *header = MapViewOfFile(container->hMapping, FILE_MAP_WRITE, 0, 0, 0);
+    if(container->mapping && validate) {
+        urlcache_header *header = MapViewOfFile(container->mapping, FILE_MAP_WRITE, 0, 0, 0);
 
         if(header && !cache_container_is_valid(header, file_size)) {
             WARN("detected old or broken index.dat file\n");
@@ -486,19 +486,19 @@ static DWORD cache_container_open_index(URLCACHECONTAINER *container, DWORD bloc
         }else if(header) {
             UnmapViewOfFile(header);
         }else {
-            CloseHandle(container->hMapping);
-            container->hMapping = NULL;
+            CloseHandle(container->mapping);
+            container->mapping = NULL;
         }
     }
 
-    if(!container->hMapping)
+    if(!container->mapping)
     {
         ERR("Couldn't create file mapping (error is %d)\n", GetLastError());
-        ReleaseMutex(container->hMutex);
+        ReleaseMutex(container->mutex);
         return GetLastError();
     }
 
-    ReleaseMutex(container->hMutex);
+    ReleaseMutex(container->mutex);
     return ERROR_SUCCESS;
 }
 
@@ -511,16 +511,16 @@ static DWORD cache_container_open_index(URLCACHECONTAINER *container, DWORD bloc
  *    nothing
  *
  */
-static void cache_container_close_index(URLCACHECONTAINER * pContainer)
+static void cache_container_close_index(cache_container *pContainer)
 {
-    CloseHandle(pContainer->hMapping);
-    pContainer->hMapping = NULL;
+    CloseHandle(pContainer->mapping);
+    pContainer->mapping = NULL;
 }
 
 static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix,
         LPCWSTR path, DWORD default_entry_type, LPWSTR mutex_name)
 {
-    URLCACHECONTAINER * pContainer = heap_alloc(sizeof(URLCACHECONTAINER));
+    cache_container *pContainer = heap_alloc(sizeof(cache_container));
     int cache_prefix_len = strlenW(cache_prefix);
 
     if (!pContainer)
@@ -528,7 +528,7 @@ static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix,
         return FALSE;
     }
 
-    pContainer->hMapping = NULL;
+    pContainer->mapping = NULL;
     pContainer->file_size = 0;
     pContainer->default_entry_type = default_entry_type;
 
@@ -552,7 +552,7 @@ static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix,
     CharLowerW(mutex_name);
     URLCache_PathToObjectName(mutex_name, '!');
 
-    if ((pContainer->hMutex = CreateMutexW(NULL, FALSE, mutex_name)) == NULL)
+    if ((pContainer->mutex = CreateMutexW(NULL, FALSE, mutex_name)) == NULL)
     {
         ERR("couldn't create mutex (error is %d)\n", GetLastError());
         heap_free(pContainer->path);
@@ -565,12 +565,12 @@ static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix,
     return TRUE;
 }
 
-static void cache_container_delete_container(URLCACHECONTAINER * pContainer)
+static void cache_container_delete_container(cache_container *pContainer)
 {
     list_remove(&pContainer->entry);
 
     cache_container_close_index(pContainer);
-    CloseHandle(pContainer->hMutex);
+    CloseHandle(pContainer->mutex);
     heap_free(pContainer->path);
     heap_free(pContainer->cache_prefix);
     heap_free(pContainer);
@@ -639,20 +639,20 @@ static void URLCacheContainers_DeleteAll(void)
 {
     while(!list_empty(&UrlContainers))
         cache_container_delete_container(
-            LIST_ENTRY(list_head(&UrlContainers), URLCACHECONTAINER, entry)
+            LIST_ENTRY(list_head(&UrlContainers), cache_container, entry)
         );
 }
 
-static DWORD URLCacheContainers_FindContainerW(LPCWSTR lpwszUrl, URLCACHECONTAINER ** ppContainer)
+static DWORD URLCacheContainers_FindContainerW(LPCWSTR lpwszUrl, cache_container **ppContainer)
 {
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
 
     TRACE("searching for prefix for URL: %s\n", debugstr_w(lpwszUrl));
 
     if(!lpwszUrl)
         return ERROR_INVALID_PARAMETER;
 
-    LIST_FOR_EACH_ENTRY(pContainer, &UrlContainers, URLCACHECONTAINER, entry)
+    LIST_FOR_EACH_ENTRY(pContainer, &UrlContainers, cache_container, entry)
     {
         int prefix_len = strlenW(pContainer->cache_prefix);
         if (!strncmpW(pContainer->cache_prefix, lpwszUrl, prefix_len))
@@ -666,7 +666,7 @@ static DWORD URLCacheContainers_FindContainerW(LPCWSTR lpwszUrl, URLCACHECONTAIN
     return ERROR_FILE_NOT_FOUND;
 }
 
-static DWORD URLCacheContainers_FindContainerA(LPCSTR lpszUrl, URLCACHECONTAINER ** ppContainer)
+static DWORD URLCacheContainers_FindContainerA(LPCSTR lpszUrl, cache_container **ppContainer)
 {
     LPWSTR url = NULL;
     DWORD ret;
@@ -679,10 +679,10 @@ static DWORD URLCacheContainers_FindContainerA(LPCSTR lpszUrl, URLCACHECONTAINER
     return ret;
 }
 
-static BOOL URLCacheContainers_Enum(LPCWSTR lpwszSearchPattern, DWORD dwIndex, URLCACHECONTAINER ** ppContainer)
+static BOOL URLCacheContainers_Enum(LPCWSTR lpwszSearchPattern, DWORD dwIndex, cache_container **ppContainer)
 {
     DWORD i = 0;
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
 
     TRACE("searching for prefix: %s\n", debugstr_w(lpwszSearchPattern));
 
@@ -690,7 +690,7 @@ static BOOL URLCacheContainers_Enum(LPCWSTR lpwszSearchPattern, DWORD dwIndex, U
     if (lpwszSearchPattern && dwIndex > 0)
         return FALSE;
 
-    LIST_FOR_EACH_ENTRY(pContainer, &UrlContainers, URLCACHECONTAINER, entry)
+    LIST_FOR_EACH_ENTRY(pContainer, &UrlContainers, cache_container, entry)
     {
         if (lpwszSearchPattern)
         {
@@ -724,7 +724,7 @@ static BOOL URLCacheContainers_Enum(LPCWSTR lpwszSearchPattern, DWORD dwIndex, U
  *  Cache file header if successful
  *  NULL if failed and calls SetLastError.
  */
-static urlcache_header* cache_container_lock_index(URLCACHECONTAINER * pContainer)
+static urlcache_header* cache_container_lock_index(cache_container *pContainer)
 {
     BYTE index;
     LPVOID pIndexData;
@@ -732,13 +732,13 @@ static urlcache_header* cache_container_lock_index(URLCACHECONTAINER * pContaine
     DWORD error;
 
     /* acquire mutex */
-    WaitForSingleObject(pContainer->hMutex, INFINITE);
+    WaitForSingleObject(pContainer->mutex, INFINITE);
 
-    pIndexData = MapViewOfFile(pContainer->hMapping, FILE_MAP_WRITE, 0, 0, 0);
+    pIndexData = MapViewOfFile(pContainer->mapping, FILE_MAP_WRITE, 0, 0, 0);
 
     if (!pIndexData)
     {
-        ReleaseMutex(pContainer->hMutex);
+        ReleaseMutex(pContainer->mutex);
         ERR("Couldn't MapViewOfFile. Error: %d\n", GetLastError());
         return NULL;
     }
@@ -754,15 +754,15 @@ static urlcache_header* cache_container_lock_index(URLCACHECONTAINER * pContaine
         error = cache_container_open_index(pContainer, MIN_BLOCK_NO);
         if (error != ERROR_SUCCESS)
         {
-            ReleaseMutex(pContainer->hMutex);
+            ReleaseMutex(pContainer->mutex);
             SetLastError(error);
             return NULL;
         }
-        pIndexData = MapViewOfFile(pContainer->hMapping, FILE_MAP_WRITE, 0, 0, 0);
+        pIndexData = MapViewOfFile(pContainer->mapping, FILE_MAP_WRITE, 0, 0, 0);
 
         if (!pIndexData)
         {
-            ReleaseMutex(pContainer->hMutex);
+            ReleaseMutex(pContainer->mutex);
             ERR("Couldn't MapViewOfFile. Error: %d\n", GetLastError());
             return NULL;
         }
@@ -783,10 +783,10 @@ static urlcache_header* cache_container_lock_index(URLCACHECONTAINER * pContaine
  *           cache_container_unlock_index (Internal)
  *
  */
-static BOOL cache_container_unlock_index(URLCACHECONTAINER * pContainer, urlcache_header *pHeader)
+static BOOL cache_container_unlock_index(cache_container *pContainer, urlcache_header *pHeader)
 {
     /* release mutex */
-    ReleaseMutex(pContainer->hMutex);
+    ReleaseMutex(pContainer->mutex);
     return UnmapViewOfFile(pHeader);
 }
 
@@ -925,7 +925,7 @@ static BOOL URLCache_DeleteEntry(urlcache_header *pHeader, entry_header *pEntry)
  *
  */
 static BOOL URLCache_LocalFileNameToPathW(
-    const URLCACHECONTAINER * pContainer,
+    const cache_container *pContainer,
     const urlcache_header *pHeader,
     LPCSTR szLocalFileName,
     BYTE Directory,
@@ -980,7 +980,7 @@ static BOOL URLCache_LocalFileNameToPathW(
  *
  */
 static BOOL URLCache_LocalFileNameToPathA(
-    const URLCACHECONTAINER * pContainer,
+    const cache_container *pContainer,
     const urlcache_header *pHeader,
     LPCSTR szLocalFileName,
     BYTE Directory,
@@ -1034,7 +1034,7 @@ static void URLCache_FileTimeToDosDateTime(const FILETIME *ft, WORD *fatdate,
 /***********************************************************************
  *           URLCache_DeleteFile (Internal)
  */
-static DWORD URLCache_DeleteFile(const URLCACHECONTAINER *container,
+static DWORD URLCache_DeleteFile(const cache_container *container,
         urlcache_header *header, entry_url *url_entry)
 {
     WIN32_FILE_ATTRIBUTE_DATA attr;
@@ -1085,7 +1085,7 @@ succ:
     return ERROR_SUCCESS;
 }
 
-static BOOL urlcache_clean_leaked_entries(URLCACHECONTAINER *container, urlcache_header *header)
+static BOOL urlcache_clean_leaked_entries(cache_container *container, urlcache_header *header)
 {
     DWORD *leak_off;
     BOOL freed = FALSE;
@@ -1118,7 +1118,7 @@ static BOOL urlcache_clean_leaked_entries(URLCACHECONTAINER *container, urlcache
  *     ERROR_SUCCESS when new memory is available
  *     error code otherwise
  */
-static DWORD cache_container_clean_index(URLCACHECONTAINER *container, urlcache_header **file_view)
+static DWORD cache_container_clean_index(cache_container *container, urlcache_header **file_view)
 {
     urlcache_header *header = *file_view;
     DWORD ret;
@@ -1137,7 +1137,7 @@ static DWORD cache_container_clean_index(URLCACHECONTAINER *container, urlcache_
     ret = cache_container_open_index(container, header->capacity_in_blocks*2);
     if(ret != ERROR_SUCCESS)
         return ret;
-    header = MapViewOfFile(container->hMapping, FILE_MAP_WRITE, 0, 0, 0);
+    header = MapViewOfFile(container->mapping, FILE_MAP_WRITE, 0, 0, 0);
     if(!header)
         return GetLastError();
 
@@ -1169,10 +1169,10 @@ static void URLCache_DosDateTimeToFileTime(WORD fatdate, WORD fattime,
  *
  */
 static DWORD URLCache_CopyEntry(
-    URLCACHECONTAINER * pContainer,
+    cache_container *pContainer,
     const urlcache_header *pHeader,
-    LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntryInfo, 
-    LPDWORD lpdwBufferSize, 
+    LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntryInfo,
+    LPDWORD lpdwBufferSize,
     const entry_url * pUrlEntry,
     BOOL bUnicode)
 {
@@ -1743,7 +1743,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
     struct hash_entry *pHashEntry;
     const entry_header *pEntry;
     const entry_url * pUrlEntry;
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
     DWORD error;
 
     TRACE("(%s, %p, %p, %p, %p, %p, %x)\n",
@@ -1883,7 +1883,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExW(
     struct hash_entry *pHashEntry;
     const entry_header *pEntry;
     const entry_url * pUrlEntry;
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
     DWORD error;
 
     TRACE("(%s, %p, %p, %p, %p, %p, %x)\n",
@@ -1987,7 +1987,7 @@ BOOL WINAPI SetUrlCacheEntryInfoA(
     urlcache_header *pHeader;
     struct hash_entry *pHashEntry;
     entry_header *pEntry;
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
     DWORD error;
 
     TRACE("(%s, %p, 0x%08x)\n", debugstr_a(lpszUrlName), lpCacheEntryInfo, dwFieldControl);
@@ -2044,7 +2044,7 @@ BOOL WINAPI SetUrlCacheEntryInfoW(LPCWSTR lpszUrl, LPINTERNET_CACHE_ENTRY_INFOW 
     urlcache_header *pHeader;
     struct hash_entry *pHashEntry;
     entry_header *pEntry;
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
     DWORD error;
 
     TRACE("(%s, %p, 0x%08x)\n", debugstr_w(lpszUrl), lpCacheEntryInfo, dwFieldControl);
@@ -2108,7 +2108,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
     struct hash_entry *pHashEntry;
     entry_header *pEntry;
     entry_url * pUrlEntry;
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
     DWORD error;
 
     TRACE("(%s, %p, %p, 0x%08x)\n",
@@ -2206,7 +2206,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
     struct hash_entry *pHashEntry;
     entry_header *pEntry;
     entry_url * pUrlEntry;
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
     DWORD error;
 
     TRACE("(%s, %p, %p, 0x%08x)\n",
@@ -2293,7 +2293,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
     return TRUE;
 }
 
-static BOOL DeleteUrlCacheEntryInternal(const URLCACHECONTAINER * pContainer,
+static BOOL DeleteUrlCacheEntryInternal(const cache_container *pContainer,
         urlcache_header *pHeader, struct hash_entry *pHashEntry)
 {
     entry_header *pEntry;
@@ -2468,7 +2468,7 @@ static int dword_cmp(const void *p1, const void *p2)
  */
 BOOL WINAPI FreeUrlCacheSpaceW(LPCWSTR cache_path, DWORD size, DWORD filter)
 {
-    URLCACHECONTAINER *container;
+    cache_container *container;
     DWORD path_len, err;
 
     TRACE("(%s, %x, %x)\n", debugstr_w(cache_path), size, filter);
@@ -2487,7 +2487,7 @@ BOOL WINAPI FreeUrlCacheSpaceW(LPCWSTR cache_path, DWORD size, DWORD filter)
     }
 
     if(size==100 && !filter) {
-        LIST_FOR_EACH_ENTRY(container, &UrlContainers, URLCACHECONTAINER, entry)
+        LIST_FOR_EACH_ENTRY(container, &UrlContainers, cache_container, entry)
         {
             /* When cache_path==NULL only clean Temporary Internet Files */
             if((!path_len && container->cache_prefix[0]==0) ||
@@ -2496,14 +2496,14 @@ BOOL WINAPI FreeUrlCacheSpaceW(LPCWSTR cache_path, DWORD size, DWORD filter)
             {
                 BOOL ret_del;
 
-                WaitForSingleObject(container->hMutex, INFINITE);
+                WaitForSingleObject(container->mutex, INFINITE);
 
                 /* unlock, delete, recreate and lock cache */
                 cache_container_close_index(container);
                 ret_del = URLCache_DeleteCacheDirectory(container->path);
                 err = cache_container_open_index(container, MIN_BLOCK_NO);
 
-                ReleaseMutex(container->hMutex);
+                ReleaseMutex(container->mutex);
                 if(!ret_del || (err != ERROR_SUCCESS))
                     return FALSE;
             }
@@ -2512,7 +2512,7 @@ BOOL WINAPI FreeUrlCacheSpaceW(LPCWSTR cache_path, DWORD size, DWORD filter)
         return TRUE;
     }
 
-    LIST_FOR_EACH_ENTRY(container, &UrlContainers, URLCACHECONTAINER, entry)
+    LIST_FOR_EACH_ENTRY(container, &UrlContainers, cache_container, entry)
     {
         urlcache_header *header;
         struct hash_entry *hash_entry;
@@ -2646,7 +2646,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
     struct hash_entry *pHashEntry;
     entry_header *pEntry;
     entry_url * pUrlEntry;
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
     DWORD error;
 
     TRACE("(%s, 0x%08x)\n", debugstr_a(lpszUrlName), dwReserved);
@@ -2722,7 +2722,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileW( LPCWSTR lpszUrlName, DWORD dwReserved )
     struct hash_entry *pHashEntry;
     entry_header *pEntry;
     entry_url * pUrlEntry;
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
     DWORD error;
 
     TRACE("(%s, 0x%08x)\n", debugstr_w(lpszUrlName), dwReserved);
@@ -2847,7 +2847,7 @@ BOOL WINAPI CreateUrlCacheEntryW(
     IN DWORD dwReserved
 )
 {
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
     urlcache_header *pHeader;
     CHAR szFile[MAX_PATH];
     WCHAR szExtension[MAX_PATH];
@@ -3068,7 +3068,7 @@ static BOOL CommitUrlCacheEntryInternal(
     IN LPCWSTR lpszOriginalUrl
     )
 {
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
     urlcache_header *pHeader;
     struct hash_entry *pHashEntry;
     entry_header *pEntry;
@@ -3631,7 +3631,7 @@ BOOL WINAPI UnlockUrlCacheEntryStream(
  */
 BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
 {
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
     urlcache_header *pHeader;
     struct hash_entry *pHashEntry;
     DWORD error;
@@ -3677,7 +3677,7 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
  */
 BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
 {
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
     urlcache_header *pHeader;
     struct hash_entry *pHashEntry;
     LPSTR urlA;
@@ -3935,7 +3935,7 @@ static BOOL FindNextUrlCacheEntryInternal(
   BOOL unicode)
 {
     URLCacheFindEntryHandle *pEntryHandle = (URLCacheFindEntryHandle *)hEnumHandle;
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
 
     if (pEntryHandle->dwMagic != URLCACHE_FIND_ENTRY_HANDLE_MAGIC)
     {
@@ -4282,7 +4282,7 @@ BOOL WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD dwFlags, FILETIME* pftLas
     struct hash_entry *pHashEntry;
     const entry_header *pEntry;
     const entry_url * pUrlEntry;
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
     BOOL expired;
 
     TRACE("(%s, %08x, %p)\n", debugstr_a(url), dwFlags, pftLastModified);
@@ -4350,7 +4350,7 @@ BOOL WINAPI IsUrlCacheEntryExpiredW( LPCWSTR url, DWORD dwFlags, FILETIME* pftLa
     struct hash_entry *pHashEntry;
     const entry_header *pEntry;
     const entry_url * pUrlEntry;
-    URLCACHECONTAINER * pContainer;
+    cache_container *pContainer;
     BOOL expired;
 
     TRACE("(%s, %08x, %p)\n", debugstr_w(url), dwFlags, pftLastModified);
