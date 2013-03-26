@@ -178,11 +178,11 @@ typedef struct
     BYTE allocation_table[ALLOCATION_TABLE_SIZE];
 } urlcache_header;
 
-typedef struct _STREAM_HANDLE
+typedef struct
 {
-    HANDLE hFile;
-    CHAR lpszUrl[1];
-} STREAM_HANDLE;
+    HANDLE file;
+    CHAR url[1];
+} stream_handle;
 
 typedef struct _URLCACHECONTAINER
 {
@@ -3455,7 +3455,7 @@ BOOL WINAPI ReadUrlCacheEntryStream(
     )
 {
     /* Get handle to file from 'stream' */
-    STREAM_HANDLE * pStream = (STREAM_HANDLE *)hUrlCacheStream;
+    stream_handle *pStream = (stream_handle*)hUrlCacheStream;
 
     if (dwReserved != 0)
     {
@@ -3464,15 +3464,15 @@ BOOL WINAPI ReadUrlCacheEntryStream(
         return FALSE;
     }
 
-    if (IsBadReadPtr(pStream, sizeof(*pStream)) || IsBadStringPtrA(pStream->lpszUrl, INTERNET_MAX_URL_LENGTH))
+    if (IsBadReadPtr(pStream, sizeof(*pStream)) || IsBadStringPtrA(pStream->url, INTERNET_MAX_URL_LENGTH))
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
-    if (SetFilePointer(pStream->hFile, dwLocation, NULL, FILE_CURRENT) == INVALID_SET_FILE_POINTER)
+    if (SetFilePointer(pStream->file, dwLocation, NULL, FILE_CURRENT) == INVALID_SET_FILE_POINTER)
         return FALSE;
-    return ReadFile(pStream->hFile, lpBuffer, *lpdwLen, lpdwLen, NULL);
+    return ReadFile(pStream->file, lpBuffer, *lpdwLen, lpdwLen, NULL);
 }
 
 /***********************************************************************
@@ -3493,7 +3493,7 @@ HANDLE WINAPI RetrieveUrlCacheEntryStreamA(
      * on this behaviour. (Native version appears to allocate
      * indices into a table)
      */
-    STREAM_HANDLE * pStream;
+    stream_handle *pStream;
     HANDLE hFile;
 
     TRACE( "(%s, %p, %p, %x, 0x%08x)\n", debugstr_a(lpszUrlName), lpCacheEntryInfo,
@@ -3518,7 +3518,7 @@ HANDLE WINAPI RetrieveUrlCacheEntryStreamA(
         return FALSE;
     
     /* allocate handle storage space */
-    pStream = heap_alloc(sizeof(STREAM_HANDLE) + strlen(lpszUrlName) * sizeof(CHAR));
+    pStream = heap_alloc(sizeof(stream_handle) + strlen(lpszUrlName) * sizeof(CHAR));
     if (!pStream)
     {
         CloseHandle(hFile);
@@ -3526,8 +3526,8 @@ HANDLE WINAPI RetrieveUrlCacheEntryStreamA(
         return FALSE;
     }
 
-    pStream->hFile = hFile;
-    strcpy(pStream->lpszUrl, lpszUrlName);
+    pStream->file = hFile;
+    strcpy(pStream->url, lpszUrlName);
     return pStream;
 }
 
@@ -3551,7 +3551,7 @@ HANDLE WINAPI RetrieveUrlCacheEntryStreamW(
      * on this behaviour. (Native version appears to allocate
      * indices into a table)
      */
-    STREAM_HANDLE * pStream;
+    stream_handle *pStream;
     HANDLE hFile;
 
     TRACE( "(%s, %p, %p, %x, 0x%08x)\n", debugstr_w(lpszUrlName), lpCacheEntryInfo,
@@ -3576,7 +3576,7 @@ HANDLE WINAPI RetrieveUrlCacheEntryStreamW(
         return FALSE;
 
     /* allocate handle storage space */
-    size = sizeof(STREAM_HANDLE);
+    size = sizeof(stream_handle);
     url_len = WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, NULL, 0, NULL, NULL);
     size += url_len;
     pStream = heap_alloc(size);
@@ -3587,8 +3587,8 @@ HANDLE WINAPI RetrieveUrlCacheEntryStreamW(
         return FALSE;
     }
 
-    pStream->hFile = hFile;
-    WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, pStream->lpszUrl, url_len, NULL, NULL);
+    pStream->file = hFile;
+    WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, pStream->url, url_len, NULL, NULL);
     return pStream;
 }
 
@@ -3601,7 +3601,7 @@ BOOL WINAPI UnlockUrlCacheEntryStream(
     IN DWORD dwReserved
 )
 {
-    STREAM_HANDLE * pStream = (STREAM_HANDLE *)hUrlCacheStream;
+    stream_handle *pStream = (stream_handle*)hUrlCacheStream;
 
     if (dwReserved != 0)
     {
@@ -3610,16 +3610,16 @@ BOOL WINAPI UnlockUrlCacheEntryStream(
         return FALSE;
     }
 
-    if (IsBadReadPtr(pStream, sizeof(*pStream)) || IsBadStringPtrA(pStream->lpszUrl, INTERNET_MAX_URL_LENGTH))
+    if (IsBadReadPtr(pStream, sizeof(*pStream)) || IsBadStringPtrA(pStream->url, INTERNET_MAX_URL_LENGTH))
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
-    if (!UnlockUrlCacheEntryFileA(pStream->lpszUrl, 0))
+    if (!UnlockUrlCacheEntryFileA(pStream->url, 0))
         return FALSE;
 
-    CloseHandle(pStream->hFile);
+    CloseHandle(pStream->file);
     heap_free(pStream);
     return TRUE;
 }
