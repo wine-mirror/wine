@@ -1904,10 +1904,10 @@ static nsresult NSAPI nsURI_SetSpec(nsIFileURL *iface, const nsACString *aSpec)
     if(!spec)
         return NS_ERROR_OUT_OF_MEMORY;
 
-    hres = CreateUri(spec, 0, 0, &uri);
+    hres = create_uri(spec, 0, &uri);
     heap_free(spec);
     if(FAILED(hres)) {
-        WARN("CreateUri failed: %08x\n", hres);
+        WARN("create_uri failed: %08x\n", hres);
         return NS_ERROR_FAILURE;
     }
 
@@ -2924,7 +2924,7 @@ HRESULT create_doc_uri(HTMLOuterWindow *window, const WCHAR *url, nsWineURI **re
     nsresult nsres;
     HRESULT hres;
 
-    hres = CreateUri(url, 0, 0, &iuri);
+    hres = create_uri(url, 0, &iuri);
     if(FAILED(hres))
         return hres;
 
@@ -2974,7 +2974,7 @@ HRESULT create_redirect_nschannel(const WCHAR *url, nsChannel *orig_channel, nsC
     nsresult nsres;
     HRESULT hres;
 
-    hres = CreateUri(url, 0, 0, &iuri);
+    hres = create_uri(url, 0, &iuri);
     if(FAILED(hres))
         return hres;
 
@@ -3287,9 +3287,9 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         if(FAILED(hres))
             WARN("CoInternetCombineUrlEx failed: %08x\n", hres);
     }else {
-        hres = CreateUri(new_spec, 0, 0, &urlmon_uri);
+        hres = create_uri(new_spec, 0, &urlmon_uri);
         if(FAILED(hres))
-            WARN("CreateUri failed: %08x\n", hres);
+            WARN("create_uri failed: %08x\n", hres);
     }
 
     if(FAILED(hres))

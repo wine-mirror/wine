@@ -158,7 +158,7 @@ void set_current_mon(HTMLOuterWindow *This, IMoniker *mon, DWORD flags)
 
         hres = IMoniker_GetDisplayName(mon, NULL, NULL, &url);
         if(SUCCEEDED(hres)) {
-            hres = CreateUri(url, 0, 0, &uri);
+            hres = create_uri(url, 0, &uri);
             if(FAILED(hres)) {
                 WARN("CrateUri failed: %08x\n", hres);
                 set_current_uri(This, NULL);
@@ -178,11 +178,16 @@ void set_current_mon(HTMLOuterWindow *This, IMoniker *mon, DWORD flags)
     set_script_mode(This, use_gecko_script(This) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
 }
 
+HRESULT create_uri(const WCHAR *uri_str, DWORD flags, IUri **uri)
+{
+    return CreateUri(uri_str, flags | Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, 0, uri);
+}
+
 HRESULT create_relative_uri(HTMLOuterWindow *window, const WCHAR *rel_uri, IUri **uri)
 {
     return window->uri
         ? CoInternetCombineUrlEx(window->uri, rel_uri, URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO, uri, 0)
-        : CreateUri(rel_uri, 0, 0, uri);
+        : create_uri(rel_uri, 0, uri);
 }
 
 void set_download_state(HTMLDocumentObj *doc, int state)
@@ -967,7 +972,7 @@ static HRESULT WINAPI PersistHistory_LoadHistory(IPersistHistory *iface, IStream
         hres = E_FAIL;
     if(SUCCEEDED(hres)) {
         uri_str[str_len] = 0;
-        hres = CreateUri(uri_str, 0, 0, &uri);
+        hres = create_uri(uri_str, 0, &uri);
     }
     heap_free(uri_str);
     if(FAILED(hres))

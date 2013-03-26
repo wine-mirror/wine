@@ -121,8 +121,9 @@ HRESULT create_channelbsc(IMoniker*,const WCHAR*,BYTE*,DWORD,BOOL,nsChannelBSC**
 HRESULT channelbsc_load_stream(HTMLInnerWindow*,IStream*) DECLSPEC_HIDDEN;
 void channelbsc_set_channel(nsChannelBSC*,nsChannel*,nsIStreamListener*,nsISupports*) DECLSPEC_HIDDEN;
 IUri *nsuri_get_uri(nsWineURI*) DECLSPEC_HIDDEN;
-HRESULT create_relative_uri(HTMLOuterWindow*,const WCHAR*,IUri**) DECLSPEC_HIDDEN;
 
+HRESULT create_relative_uri(HTMLOuterWindow*,const WCHAR*,IUri**) DECLSPEC_HIDDEN;
+HRESULT create_uri(const WCHAR*,DWORD,IUri**) DECLSPEC_HIDDEN;
 IUri *get_uri_nofrag(IUri*) DECLSPEC_HIDDEN;
 
 void set_current_mon(HTMLOuterWindow*,IMoniker*,DWORD) DECLSPEC_HIDDEN;

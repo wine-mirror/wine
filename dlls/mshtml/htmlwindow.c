@@ -2083,7 +2083,7 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
             translated_url = NULL;
     }
 
-    hres = CreateUri(translated_url ? translated_url : url, 0, 0, &uri);
+    hres = create_uri(translated_url ? translated_url : url, 0, &uri);
     CoTaskMemFree(translated_url);
     if(FAILED(hres))
         return hres;
