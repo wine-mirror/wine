@@ -100,6 +100,8 @@ static const char urlcache_ver[] = "0.2012001";
 
 #define DWORD_ALIGN(x) ( (DWORD)(((DWORD)(x)+sizeof(DWORD)-1)/sizeof(DWORD))*sizeof(DWORD) )
 
+#define URLCACHE_FIND_ENTRY_HANDLE_MAGIC 0xF389ABCD
+
 typedef struct
 {
     DWORD signature;
@@ -195,6 +197,14 @@ typedef struct
     DWORD default_entry_type;
 } cache_container;
 
+typedef struct
+{
+    DWORD magic;
+    LPWSTR url_search_pattern;
+    DWORD container_idx;
+    DWORD hash_table_idx;
+    DWORD hash_entry_idx;
+} find_handle;
 
 /* List of all containers available */
 static struct list UrlContainers = LIST_INIT(UrlContainers);
@@ -3839,17 +3849,6 @@ HANDLE WINAPI FindFirstUrlCacheEntryExW(
     return NULL;
 }
 
-#define URLCACHE_FIND_ENTRY_HANDLE_MAGIC 0xF389ABCD
-
-typedef struct URLCacheFindEntryHandle
-{
-    DWORD dwMagic;
-    LPWSTR lpszUrlSearchPattern;
-    DWORD dwContainerIndex;
-    DWORD dwHashTableIndex;
-    DWORD dwHashEntryIndex;
-} URLCacheFindEntryHandle;
-
 /***********************************************************************
  *           FindFirstUrlCacheEntryA (WININET.@)
  *
@@ -3857,7 +3856,7 @@ typedef struct URLCacheFindEntryHandle
 INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryA(LPCSTR lpszUrlSearchPattern,
  LPINTERNET_CACHE_ENTRY_INFOA lpFirstCacheEntryInfo, LPDWORD lpdwFirstCacheEntryInfoBufferSize)
 {
-    URLCacheFindEntryHandle *pEntryHandle;
+    find_handle *pEntryHandle;
 
     TRACE("(%s, %p, %p)\n", debugstr_a(lpszUrlSearchPattern), lpFirstCacheEntryInfo, lpdwFirstCacheEntryInfoBufferSize);
 
@@ -3865,21 +3864,21 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryA(LPCSTR lpszUrlSearchPattern,
     if (!pEntryHandle)
         return NULL;
 
-    pEntryHandle->dwMagic = URLCACHE_FIND_ENTRY_HANDLE_MAGIC;
+    pEntryHandle->magic = URLCACHE_FIND_ENTRY_HANDLE_MAGIC;
     if (lpszUrlSearchPattern)
     {
-        pEntryHandle->lpszUrlSearchPattern = heap_strdupAtoW(lpszUrlSearchPattern);
-        if (!pEntryHandle->lpszUrlSearchPattern)
+        pEntryHandle->url_search_pattern = heap_strdupAtoW(lpszUrlSearchPattern);
+        if (!pEntryHandle->url_search_pattern)
         {
             heap_free(pEntryHandle);
             return NULL;
         }
     }
     else
-        pEntryHandle->lpszUrlSearchPattern = NULL;
-    pEntryHandle->dwContainerIndex = 0;
-    pEntryHandle->dwHashTableIndex = 0;
-    pEntryHandle->dwHashEntryIndex = 0;
+        pEntryHandle->url_search_pattern = NULL;
+    pEntryHandle->container_idx = 0;
+    pEntryHandle->hash_table_idx = 0;
+    pEntryHandle->hash_entry_idx = 0;
 
     if (!FindNextUrlCacheEntryA(pEntryHandle, lpFirstCacheEntryInfo, lpdwFirstCacheEntryInfoBufferSize))
     {
@@ -3896,7 +3895,7 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryA(LPCSTR lpszUrlSearchPattern,
 INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryW(LPCWSTR lpszUrlSearchPattern,
  LPINTERNET_CACHE_ENTRY_INFOW lpFirstCacheEntryInfo, LPDWORD lpdwFirstCacheEntryInfoBufferSize)
 {
-    URLCacheFindEntryHandle *pEntryHandle;
+    find_handle *pEntryHandle;
 
     TRACE("(%s, %p, %p)\n", debugstr_w(lpszUrlSearchPattern), lpFirstCacheEntryInfo, lpdwFirstCacheEntryInfoBufferSize);
 
@@ -3904,21 +3903,21 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryW(LPCWSTR lpszUrlSearchPattern,
     if (!pEntryHandle)
         return NULL;
 
-    pEntryHandle->dwMagic = URLCACHE_FIND_ENTRY_HANDLE_MAGIC;
+    pEntryHandle->magic = URLCACHE_FIND_ENTRY_HANDLE_MAGIC;
     if (lpszUrlSearchPattern)
     {
-        pEntryHandle->lpszUrlSearchPattern = heap_strdupW(lpszUrlSearchPattern);
-        if (!pEntryHandle->lpszUrlSearchPattern)
+        pEntryHandle->url_search_pattern = heap_strdupW(lpszUrlSearchPattern);
+        if (!pEntryHandle->url_search_pattern)
         {
             heap_free(pEntryHandle);
             return NULL;
         }
     }
     else
-        pEntryHandle->lpszUrlSearchPattern = NULL;
-    pEntryHandle->dwContainerIndex = 0;
-    pEntryHandle->dwHashTableIndex = 0;
-    pEntryHandle->dwHashEntryIndex = 0;
+        pEntryHandle->url_search_pattern = NULL;
+    pEntryHandle->container_idx = 0;
+    pEntryHandle->hash_table_idx = 0;
+    pEntryHandle->hash_entry_idx = 0;
 
     if (!FindNextUrlCacheEntryW(pEntryHandle, lpFirstCacheEntryInfo, lpdwFirstCacheEntryInfoBufferSize))
     {
@@ -3934,17 +3933,17 @@ static BOOL FindNextUrlCacheEntryInternal(
   LPDWORD lpdwNextCacheEntryInfoBufferSize,
   BOOL unicode)
 {
-    URLCacheFindEntryHandle *pEntryHandle = (URLCacheFindEntryHandle *)hEnumHandle;
+    find_handle *pEntryHandle = (find_handle*)hEnumHandle;
     cache_container *pContainer;
 
-    if (pEntryHandle->dwMagic != URLCACHE_FIND_ENTRY_HANDLE_MAGIC)
+    if (pEntryHandle->magic != URLCACHE_FIND_ENTRY_HANDLE_MAGIC)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
-    for (; URLCacheContainers_Enum(pEntryHandle->lpszUrlSearchPattern, pEntryHandle->dwContainerIndex, &pContainer);
-         pEntryHandle->dwContainerIndex++, pEntryHandle->dwHashTableIndex = 0)
+    for (; URLCacheContainers_Enum(pEntryHandle->url_search_pattern, pEntryHandle->container_idx, &pContainer);
+         pEntryHandle->container_idx++, pEntryHandle->hash_table_idx = 0)
     {
         urlcache_header *pHeader;
         entry_hash_table *pHashTableEntry;
@@ -3960,12 +3959,12 @@ static BOOL FindNextUrlCacheEntryInternal(
         if (!(pHeader = cache_container_lock_index(pContainer)))
             return FALSE;
 
-        for (; URLCache_EnumHashTables(pHeader, &pEntryHandle->dwHashTableIndex, &pHashTableEntry);
-             pEntryHandle->dwHashTableIndex++, pEntryHandle->dwHashEntryIndex = 0)
+        for (; URLCache_EnumHashTables(pHeader, &pEntryHandle->hash_table_idx, &pHashTableEntry);
+             pEntryHandle->hash_table_idx++, pEntryHandle->hash_entry_idx = 0)
         {
             const struct hash_entry *pHashEntry = NULL;
-            for (; URLCache_EnumHashTableEntries(pHeader, pHashTableEntry, &pEntryHandle->dwHashEntryIndex, &pHashEntry);
-                 pEntryHandle->dwHashEntryIndex++)
+            for (; URLCache_EnumHashTableEntries(pHeader, pHashTableEntry, &pEntryHandle->hash_entry_idx, &pHashEntry);
+                 pEntryHandle->hash_entry_idx++)
             {
                 const entry_url *pUrlEntry;
                 const entry_header *pEntry = (const entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
@@ -3998,7 +3997,7 @@ static BOOL FindNextUrlCacheEntryInternal(
 
                 /* increment the current index so that next time the function
                  * is called the next entry is returned */
-                pEntryHandle->dwHashEntryIndex++;
+                pEntryHandle->hash_entry_idx++;
                 cache_container_unlock_index(pContainer, pHeader);
                 return TRUE;
             }
@@ -4046,18 +4045,18 @@ BOOL WINAPI FindNextUrlCacheEntryW(
  */
 BOOL WINAPI FindCloseUrlCache(HANDLE hEnumHandle)
 {
-    URLCacheFindEntryHandle *pEntryHandle = (URLCacheFindEntryHandle *)hEnumHandle;
+    find_handle *pEntryHandle = (find_handle*)hEnumHandle;
 
     TRACE("(%p)\n", hEnumHandle);
 
-    if (!pEntryHandle || pEntryHandle->dwMagic != URLCACHE_FIND_ENTRY_HANDLE_MAGIC)
+    if (!pEntryHandle || pEntryHandle->magic != URLCACHE_FIND_ENTRY_HANDLE_MAGIC)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
-    pEntryHandle->dwMagic = 0;
-    heap_free(pEntryHandle->lpszUrlSearchPattern);
+    pEntryHandle->magic = 0;
+    heap_free(pEntryHandle->url_search_pattern);
     heap_free(pEntryHandle);
     return TRUE;
 }
