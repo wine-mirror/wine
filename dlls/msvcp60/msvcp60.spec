@@ -845,9 +845,9 @@
 @ cdecl -arch=win64 ??0bad_alloc@std@@QEAA@PEBD@Z(ptr str) MSVCP_bad_alloc_ctor
 @ thiscall -arch=win32 ??0bad_alloc@std@@QAE@XZ(ptr) MSVCP_bad_alloc_default_ctor
 @ cdecl -arch=win64 ??0bad_alloc@std@@QEAA@XZ(ptr) MSVCP_bad_alloc_default_ctor
-@ thiscall -arch=win32 ??0bad_cast@std@@QAE@ABV01@@Z(ptr ptr) msvcrt.??0bad_cast@@QAE@ABV0@@Z
+@ thiscall -arch=i386 ??0bad_cast@std@@QAE@ABV01@@Z(ptr ptr) msvcrt.??0bad_cast@@QAE@ABV0@@Z
 @ cdecl -arch=win64 ??0bad_cast@std@@QEAA@AEBV01@@Z(ptr ptr) msvcrt.??0bad_cast@@QEAA@AEBV0@@Z
-@ thiscall -arch=win32 ??0bad_cast@std@@QAE@PBD@Z(ptr str) msvcrt.??0bad_cast@@QAE@PBD@Z
+@ thiscall -arch=i386 ??0bad_cast@std@@QAE@PBD@Z(ptr str) msvcrt.??0bad_cast@@QAE@PBD@Z
 @ cdecl -arch=win64 ??0bad_cast@std@@QEAA@PEBD@Z(ptr str) msvcrt.??0bad_cast@@QEAA@PEBD@Z
 @ stub -arch=win32 ??0bad_exception@std@@QAE@ABV01@@Z
 @ stub -arch=win64 ??0bad_exception@std@@QEAA@AEBV01@@Z
@@ -1049,7 +1049,7 @@
 @ stub -arch=win64 ??1__non_rtti_object@std@@UEAA@XZ
 @ thiscall -arch=win32 ??1bad_alloc@std@@UAE@XZ(ptr) MSVCP_bad_alloc_dtor
 @ cdecl -arch=win64 ??1bad_alloc@std@@UEAA@XZ(ptr) MSVCP_bad_alloc_dtor
-@ thiscall -arch=win32 ??1bad_cast@std@@UAE@XZ(ptr) msvcrt.??1bad_cast@@UAE@XZ
+@ thiscall -arch=i386 ??1bad_cast@std@@UAE@XZ(ptr) msvcrt.??1bad_cast@@UAE@XZ
 @ cdecl -arch=win64 ??1bad_cast@std@@UEAA@XZ(ptr) msvcrt.??1bad_cast@@UEAA@XZ
 @ stub -arch=win32 ??1bad_exception@std@@UAE@XZ
 @ stub -arch=win64 ??1bad_exception@std@@UEAA@XZ
@@ -1235,7 +1235,7 @@
 @ stub -arch=win64 ??4__non_rtti_object@std@@QEAAAEAV01@AEBV01@@Z
 @ thiscall -arch=win32 ??4bad_alloc@std@@QAEAAV01@ABV01@@Z(ptr ptr) MSVCP_bad_alloc_assign
 @ cdecl -arch=win64 ??4bad_alloc@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_bad_alloc_assign
-@ thiscall -arch=win32 ??4bad_cast@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcrt.??4bad_cast@@QAEAAV0@ABV0@@Z
+@ thiscall -arch=i386 ??4bad_cast@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcrt.??4bad_cast@@QAEAAV0@ABV0@@Z
 @ cdecl -arch=win64 ??4bad_cast@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcrt.??4bad_cast@@QEAAAEAV0@AEBV0@@Z
 @ stub -arch=win32 ??4bad_exception@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4bad_exception@std@@QEAAAEAV01@AEBV01@@Z
@@ -1979,7 +1979,7 @@
 @ cdecl -arch=win64 ??_F_Locinfo@std@@QEAAXXZ(ptr) _Locinfo_ctor
 @ thiscall -arch=win32 ??_F_Timevec@std@@QAEXXZ(ptr) _Timevec_ctor
 @ cdecl -arch=win64 ??_F_Timevec@std@@QEAAXXZ(ptr) _Timevec_ctor
-@ thiscall -arch=win32 ??_Fbad_cast@std@@QAEXXZ(ptr) msvcrt.??_Fbad_cast@@QAEXXZ
+@ thiscall -arch=i386 ??_Fbad_cast@std@@QAEXXZ(ptr) msvcrt.??_Fbad_cast@@QAEXXZ
 @ cdecl -arch=win64 ??_Fbad_cast@std@@QEAAXXZ(ptr) msvcrt.??_Fbad_cast@@QEAAXXZ
 @ stub -arch=win32 ??_Fbad_exception@std@@QAEXXZ
 @ stub -arch=win64 ??_Fbad_exception@std@@QEAAXXZ
@@ -4309,11 +4309,11 @@
 # extern _Xbig
 @ stub __Wcrtomb_lk
 @ cdecl btowc(long) msvcrt.btowc
-@ cdecl mbrlen(ptr long ptr) msvcrt.mbrlen # msvcrt.mbrlen
-@ cdecl mbrtowc(ptr str long ptr) msvcrt.mbrtowc # msvcrt.mbrtowc
-@ cdecl mbsrtowcs(ptr ptr long ptr) msvcrt.mbsrtowcs # msvcrt.mbsrtowcs
+@ cdecl mbrlen(ptr long ptr) msvcrt.mbrlen
+@ cdecl mbrtowc(ptr str long ptr) msvcrt.mbrtowc
+@ cdecl mbsrtowcs(ptr ptr long ptr) msvcrt.mbsrtowcs
 @ cdecl towctrans(long long)
-@ cdecl wcrtomb(ptr long ptr) msvcrt.wcrtomb # msvcrt.wcrtomb
+@ cdecl wcrtomb(ptr long ptr) msvcrt.wcrtomb
 @ cdecl wcsrtombs(ptr ptr long ptr) msvcrt.wcsrtombs
 @ cdecl wctob(long) msvcrt.wctob
 @ cdecl wctrans(str)
