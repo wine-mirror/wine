@@ -1349,8 +1349,7 @@ void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_r
     if (changes.width  != gl->rect.right - gl->rect.left) mask |= CWWidth;
     if (changes.height != gl->rect.bottom - gl->rect.top) mask |= CWHeight;
 
-    TRACE( "setting drawable %lx pos %d,%d,%dx%d\n",
-           gl->drawable, changes.x, changes.y, changes.width, changes.height );
+    TRACE( "setting drawable %lx size %dx%d\n", gl->drawable, changes.width, changes.height );
 
     switch (gl->type)
     {
@@ -1380,7 +1379,7 @@ void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_r
     default:
         break;
     }
-    SetRect( &gl->rect, changes.x, changes.y, changes.x + changes.width, changes.y + changes.height );
+    SetRect( &gl->rect, 0, 0, changes.width, changes.height );
 done:
     release_gl_drawable( gl );
 }
