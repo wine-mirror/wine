@@ -197,15 +197,17 @@ static const WCHAR wszPNG[] = {'P','N','G',0};
 static const WCHAR wszHTMLFormat[] = {'H','T','M','L',' ','F','o','r','m','a','t',0};
 static const struct
 {
-    LPCWSTR     name;
-    CFStringRef type;
+    LPCWSTR       name;
+    CFStringRef   type;
+    DRVIMPORTFUNC import;
+    DRVEXPORTFUNC export;
 } builtin_format_names[] =
 {
-    { wszRichTextFormat,    CFSTR("public.rtf") },
-    { wszGIF,               CFSTR("com.compuserve.gif") },
-    { wszJFIF,              CFSTR("public.jpeg") },
-    { wszPNG,               CFSTR("public.png") },
-    { wszHTMLFormat,        CFSTR("public.html") },
+    { wszRichTextFormat,    CFSTR("public.rtf"),                            import_clipboard_data,          export_clipboard_data },
+    { wszGIF,               CFSTR("com.compuserve.gif"),                    import_clipboard_data,          export_clipboard_data },
+    { wszJFIF,              CFSTR("public.jpeg"),                           import_clipboard_data,          export_clipboard_data },
+    { wszPNG,               CFSTR("public.png"),                            import_clipboard_data,          export_clipboard_data },
+    { wszHTMLFormat,        CFSTR("public.html"),                           import_clipboard_data,          export_clipboard_data },
 };
 
 /* The prefix prepended to an external Mac pasteboard type to make a Win32 clipboard format name. org.winehq.mac-type. */
@@ -1755,12 +1757,11 @@ BOOL CDECL macdrv_SetClipboardData(UINT format_id, HANDLE data, BOOL owner)
 void macdrv_clipboard_process_attach(void)
 {
     UINT i;
+    WINE_CLIPFORMAT *format;
 
     /* Register built-in formats */
     for (i = 0; i < sizeof(builtin_format_ids)/sizeof(builtin_format_ids[0]); i++)
     {
-        WINE_CLIPFORMAT *format;
-
         if (!(format = HeapAlloc(GetProcessHeap(), 0, sizeof(*format)))) break;
         format->format_id   = builtin_format_ids[i].id;
         format->type        = CFRetain(builtin_format_ids[i].type);
@@ -1772,8 +1773,15 @@ void macdrv_clipboard_process_attach(void)
 
     /* Register known mappings between Windows formats and Mac types */
     for (i = 0; i < sizeof(builtin_format_names)/sizeof(builtin_format_names[0]); i++)
-        insert_clipboard_format(RegisterClipboardFormatW(builtin_format_names[i].name),
-                                builtin_format_names[i].type);
+    {
+        if (!(format = HeapAlloc(GetProcessHeap(), 0, sizeof(*format)))) break;
+        format->format_id   = RegisterClipboardFormatW(builtin_format_names[i].name);
+        format->type        = CFRetain(builtin_format_names[i].type);
+        format->import_func = builtin_format_names[i].import;
+        format->export_func = builtin_format_names[i].export;
+        format->synthesized = FALSE;
+        list_add_tail(&format_list, &format->entry);
+    }
 }
 
 
