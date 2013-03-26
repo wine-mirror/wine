@@ -213,7 +213,160 @@ typedef struct
 /* List of all containers available */
 static struct list UrlContainers = LIST_INIT(UrlContainers);
 
-static DWORD urlcache_create_hash_table(urlcache_header *pHeader, entry_hash_table *pPrevHash, entry_hash_table **ppHash);
+/***********************************************************************
+ *           urlcache_block_is_free (Internal)
+ *
+ *  Is the specified block number free?
+ *
+ * RETURNS
+ *    zero if free
+ *    non-zero otherwise
+ *
+ */
+static inline BYTE urlcache_block_is_free(BYTE *allocation_table, DWORD block_number)
+{
+    BYTE mask = 1 << (block_number%CHAR_BIT);
+    return (allocation_table[block_number/CHAR_BIT] & mask) == 0;
+}
+
+/***********************************************************************
+ *           urlcache_block_free (Internal)
+ *
+ *  Marks the specified block as free
+ *
+ * CAUTION
+ *    this function is not updating used blocks count
+ *
+ * RETURNS
+ *    nothing
+ *
+ */
+static inline void urlcache_block_free(BYTE *allocation_table, DWORD block_number)
+{
+    BYTE mask = ~(1 << (block_number%CHAR_BIT));
+    allocation_table[block_number/CHAR_BIT] &= mask;
+}
+
+/***********************************************************************
+ *           urlcache_block_alloc (Internal)
+ *
+ *  Marks the specified block as allocated
+ *
+ * CAUTION
+ *     this function is not updating used blocks count
+ *
+ * RETURNS
+ *    nothing
+ *
+ */
+static inline void urlcache_block_alloc(BYTE *allocation_table, DWORD block_number)
+{
+    BYTE mask = 1 << (block_number%CHAR_BIT);
+    allocation_table[block_number/CHAR_BIT] |= mask;
+}
+
+/***********************************************************************
+ *           urlcache_entry_alloc (Internal)
+ *
+ *  Finds and allocates the first block of free space big enough and
+ * sets entry to point to it.
+ *
+ * RETURNS
+ *    ERROR_SUCCESS when free memory block was found
+ *    Any other Win32 error code if the entry could not be added
+ *
+ */
+static DWORD urlcache_entry_alloc(urlcache_header *header, DWORD blocks_needed, entry_header **entry)
+{
+    DWORD block, block_size;
+
+    for(block=0; block<header->capacity_in_blocks; block+=block_size+1)
+    {
+        block_size = 0;
+        while(block_size<blocks_needed && block_size+block<header->capacity_in_blocks
+                && urlcache_block_is_free(header->allocation_table, block+block_size))
+            block_size++;
+
+        if(block_size == blocks_needed)
+        {
+            DWORD index;
+
+            TRACE("Found free blocks starting at no. %d (0x%x)\n", block, ENTRY_START_OFFSET+block*BLOCKSIZE);
+
+            for(index=0; index<blocks_needed; index++)
+                urlcache_block_alloc(header->allocation_table, block+index);
+
+            *entry = (entry_header*)((BYTE*)header+ENTRY_START_OFFSET+block*BLOCKSIZE);
+            for(index=0; index<blocks_needed*BLOCKSIZE/sizeof(DWORD); index++)
+                ((DWORD*)*entry)[index] = 0xdeadbeef;
+            (*entry)->blocks_used = blocks_needed;
+
+            header->blocks_in_use += blocks_needed;
+            return ERROR_SUCCESS;
+        }
+    }
+
+    return ERROR_HANDLE_DISK_FULL;
+}
+
+/***********************************************************************
+ *           urlcache_entry_free (Internal)
+ *
+ *  Deletes the specified entry and frees the space allocated to it
+ *
+ * RETURNS
+ *    TRUE if it succeeded
+ *    FALSE if it failed
+ *
+ */
+static BOOL urlcache_entry_free(urlcache_header *header, entry_header *entry)
+{
+    DWORD start_block, block;
+
+    /* update allocation table */
+    start_block = ((DWORD)((BYTE*)entry - (BYTE*)header) - ENTRY_START_OFFSET) / BLOCKSIZE;
+    for(block = start_block; block < start_block+entry->blocks_used; block++)
+        urlcache_block_free(header->allocation_table, block);
+
+    header->blocks_in_use -= entry->blocks_used;
+    return TRUE;
+}
+
+/***********************************************************************
+ *           urlcache_create_hash_table (Internal)
+ *
+ *  Creates a new hash table in free space and adds it to the chain of existing
+ * hash tables.
+ *
+ * RETURNS
+ *    ERROR_SUCCESS if the hash table was created
+ *    ERROR_DISK_FULL if the hash table could not be created
+ *
+ */
+static DWORD urlcache_create_hash_table(urlcache_header *header, entry_hash_table *hash_table_prev, entry_hash_table **hash_table)
+{
+    DWORD dwOffset, error;
+    int i;
+
+    if((error = urlcache_entry_alloc(header, 0x20, (entry_header**)hash_table)) != ERROR_SUCCESS)
+        return error;
+
+    dwOffset = (BYTE*)*hash_table-(BYTE*)header;
+
+    if(hash_table_prev)
+        hash_table_prev->next = dwOffset;
+    else
+        header->hash_table_off = dwOffset;
+
+    (*hash_table)->header.signature = HASH_SIGNATURE;
+    (*hash_table)->next = 0;
+    (*hash_table)->id = hash_table_prev ? hash_table_prev->id+1 : 0;
+    for(i = 0; i < HASHTABLE_SIZE; i++) {
+        (*hash_table)->hash_table[i].offset = HASHTABLE_FREE;
+        (*hash_table)->hash_table[i].key = HASHTABLE_FREE;
+    }
+    return ERROR_SUCCESS;
+}
 
 /***********************************************************************
  *           cache_container_create_object_name (Internal)
@@ -802,124 +955,6 @@ static BOOL cache_container_unlock_index(cache_container *pContainer, urlcache_h
     /* release mutex */
     ReleaseMutex(pContainer->mutex);
     return UnmapViewOfFile(pHeader);
-}
-
-/***********************************************************************
- *           urlcache_block_is_free (Internal)
- *
- *  Is the specified block number free?
- *
- * RETURNS
- *    zero if free
- *    non-zero otherwise
- *
- */
-static inline BYTE urlcache_block_is_free(BYTE * AllocationTable, DWORD dwBlockNumber)
-{
-    BYTE mask = 1 << (dwBlockNumber % CHAR_BIT);
-    return (AllocationTable[dwBlockNumber / CHAR_BIT] & mask) == 0;
-}
-
-/***********************************************************************
- *           urlcache_block_free (Internal)
- *
- *  Marks the specified block as free
- *
- * CAUTION
- *    this function is not updating used blocks count
- *
- * RETURNS
- *    nothing
- *
- */
-static inline void urlcache_block_free(BYTE * AllocationTable, DWORD dwBlockNumber)
-{
-    BYTE mask = ~(1 << (dwBlockNumber % CHAR_BIT));
-    AllocationTable[dwBlockNumber / CHAR_BIT] &= mask;
-}
-
-/***********************************************************************
- *           urlcache_block_alloc (Internal)
- *
- *  Marks the specified block as allocated
- *
- * CAUTION
- *     this function is not updating used blocks count
- *
- * RETURNS
- *    nothing
- *
- */
-static inline void urlcache_block_alloc(BYTE * AllocationTable, DWORD dwBlockNumber)
-{
-    BYTE mask = 1 << (dwBlockNumber % CHAR_BIT);
-    AllocationTable[dwBlockNumber / CHAR_BIT] |= mask;
-}
-
-/***********************************************************************
- *           urlcache_entry_alloc (Internal)
- *
- *  Finds and allocates the first block of free space big enough and
- * sets ppEntry to point to it.
- *
- * RETURNS
- *    ERROR_SUCCESS when free memory block was found
- *    Any other Win32 error code if the entry could not be added
- *
- */
-static DWORD urlcache_entry_alloc(urlcache_header *pHeader, DWORD dwBlocksNeeded, entry_header **ppEntry)
-{
-    DWORD dwBlockNumber;
-    DWORD dwFreeCounter;
-    for (dwBlockNumber = 0; dwBlockNumber < pHeader->capacity_in_blocks; dwBlockNumber++)
-    {
-        for (dwFreeCounter = 0; 
-            dwFreeCounter < dwBlocksNeeded &&
-              dwFreeCounter + dwBlockNumber < pHeader->capacity_in_blocks &&
-              urlcache_block_is_free(pHeader->allocation_table, dwBlockNumber + dwFreeCounter);
-            dwFreeCounter++)
-                TRACE("Found free block at no. %d (0x%x)\n", dwBlockNumber, ENTRY_START_OFFSET + dwBlockNumber * BLOCKSIZE);
-
-        if (dwFreeCounter == dwBlocksNeeded)
-        {
-            DWORD index;
-            TRACE("Found free blocks starting at no. %d (0x%x)\n", dwBlockNumber, ENTRY_START_OFFSET + dwBlockNumber * BLOCKSIZE);
-            for (index = 0; index < dwBlocksNeeded; index++)
-                urlcache_block_alloc(pHeader->allocation_table, dwBlockNumber + index);
-            *ppEntry = (entry_header*)((LPBYTE)pHeader + ENTRY_START_OFFSET + dwBlockNumber * BLOCKSIZE);
-            for (index = 0; index < dwBlocksNeeded * BLOCKSIZE / sizeof(DWORD); index++)
-                ((DWORD*)*ppEntry)[index] = 0xdeadbeef;
-            (*ppEntry)->blocks_used = dwBlocksNeeded;
-            pHeader->blocks_in_use += dwBlocksNeeded;
-            return ERROR_SUCCESS;
-        }
-    }
-
-    return ERROR_HANDLE_DISK_FULL;
-}
-
-/***********************************************************************
- *           urlcache_entry_free (Internal)
- *
- *  Deletes the specified entry and frees the space allocated to it
- *
- * RETURNS
- *    TRUE if it succeeded
- *    FALSE if it failed
- *
- */
-static BOOL urlcache_entry_free(urlcache_header *pHeader, entry_header *pEntry)
-{
-    DWORD dwStartBlock;
-    DWORD dwBlock;
-
-    /* update allocation table */
-    dwStartBlock = ((DWORD)((BYTE *)pEntry - (BYTE *)pHeader) - ENTRY_START_OFFSET) / BLOCKSIZE;
-    for (dwBlock = dwStartBlock; dwBlock < dwStartBlock + pEntry->blocks_used; dwBlock++)
-        urlcache_block_free(pHeader->allocation_table, dwBlock);
-
-    pHeader->blocks_in_use -= pEntry->blocks_used;
-    return TRUE;
 }
 
 /***********************************************************************
@@ -1563,43 +1598,6 @@ static DWORD urlcache_hash_entry_create(urlcache_header *pHeader, LPCSTR lpszUrl
 
     pHashEntry->hash_table[offset].key = key;
     pHashEntry->hash_table[offset].offset = dwOffsetEntry;
-    return ERROR_SUCCESS;
-}
-
-/***********************************************************************
- *           urlcache_create_hash_table (Internal)
- *
- *  Creates a new hash table in free space and adds it to the chain of existing
- * hash tables.
- *
- * RETURNS
- *    ERROR_SUCCESS if the hash table was created
- *    ERROR_DISK_FULL if the hash table could not be created
- *
- */
-static DWORD urlcache_create_hash_table(urlcache_header *pHeader, entry_hash_table *pPrevHash, entry_hash_table **ppHash)
-{
-    DWORD dwOffset, error;
-    int i;
-
-    if ((error = urlcache_entry_alloc(pHeader, 0x20, (entry_header**)ppHash)) != ERROR_SUCCESS)
-        return error;
-
-    dwOffset = (BYTE *)*ppHash - (BYTE *)pHeader;
-
-    if (pPrevHash)
-        pPrevHash->next = dwOffset;
-    else
-        pHeader->hash_table_off = dwOffset;
-    (*ppHash)->header.signature = HASH_SIGNATURE;
-    (*ppHash)->header.blocks_used = 0x20;
-    (*ppHash)->next = 0;
-    (*ppHash)->id = pPrevHash ? pPrevHash->id + 1 : 0;
-    for (i = 0; i < HASHTABLE_SIZE; i++)
-    {
-        (*ppHash)->hash_table[i].offset = HASHTABLE_FREE;
-        (*ppHash)->hash_table[i].key = HASHTABLE_FREE;
-    }
     return ERROR_SUCCESS;
 }
 
