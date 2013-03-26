@@ -53,6 +53,12 @@ static inline jsstr_t *jsstr_addref(jsstr_t *str)
     return str;
 }
 
+/* This will be failable in the future. */
+static inline const WCHAR *jsstr_flatten(jsstr_t *str)
+{
+    return str->str;
+}
+
 static inline BOOL jsstr_eq(jsstr_t *str1, jsstr_t *str2)
 {
     unsigned len = jsstr_length(str1);

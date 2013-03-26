@@ -2054,7 +2054,9 @@ static inline HRESULT date_parse(jsstr_t *input_str, double *ret) {
     DWORD lcid_en;
 
     input_len = jsstr_length(input_str);
-    input = input_str->str;
+    input = jsstr_flatten(input_str);
+    if(!input)
+        return E_OUTOFMEMORY;
 
     for(i=0; i<input_len; i++) {
         if(input[i] == '(') nest_level++;
