@@ -143,19 +143,19 @@ typedef struct
     /* CHAR szHeaderInfo[]; (header info) */
 } entry_url;
 
-struct _HASH_ENTRY
+struct hash_entry
 {
-    DWORD dwHashKey;
-    DWORD dwOffsetEntry;
+    DWORD key;
+    DWORD offset;
 };
 
-typedef struct _HASH_CACHEFILE_ENTRY
+typedef struct
 {
-    entry_header CacheFileEntry;
-    DWORD dwAddressNext;
-    DWORD dwHashTableNumber;
-    struct _HASH_ENTRY HashTable[HASHTABLE_SIZE];
-} HASH_CACHEFILE_ENTRY;
+    entry_header header;
+    DWORD next;
+    DWORD id;
+    struct hash_entry hash_table[HASHTABLE_SIZE];
+} entry_hash_table;
 
 typedef struct _DIRECTORY_DATA
 {
@@ -202,7 +202,7 @@ typedef struct _URLCACHECONTAINER
 /* List of all containers available */
 static struct list UrlContainers = LIST_INIT(UrlContainers);
 
-static DWORD URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, HASH_CACHEFILE_ENTRY *pPrevHash, HASH_CACHEFILE_ENTRY **ppHash);
+static DWORD URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, entry_hash_table *pPrevHash, entry_hash_table **ppHash);
 
 /***********************************************************************
  *           URLCache_PathToObjectName (Internal)
@@ -257,7 +257,7 @@ static DWORD cache_container_set_size(URLCACHECONTAINER *container, HANDLE file,
 
     DWORD file_size = FILE_SIZE(blocks_no);
     WCHAR dir_path[MAX_PATH], *dir_name;
-    HASH_CACHEFILE_ENTRY *hash_entry;
+    entry_hash_table *hashtable_entry;
     URLCACHE_HEADER *header;
     HANDLE mapping;
     FILETIME ft;
@@ -314,7 +314,7 @@ static DWORD cache_container_set_size(URLCACHECONTAINER *container, HANDLE file,
         RegCloseKey(key);
     }
 
-    URLCache_CreateHashTable(header, NULL, &hash_entry);
+    URLCache_CreateHashTable(header, NULL, &hashtable_entry);
 
     /* Last step - create the directories */
     strcpyW(dir_path, container->path);
@@ -1386,19 +1386,19 @@ static DWORD URLCache_HashKey(LPCSTR lpszKey)
     return *(DWORD *)key;
 }
 
-static inline HASH_CACHEFILE_ENTRY * URLCache_HashEntryFromOffset(LPCURLCACHE_HEADER pHeader, DWORD dwOffset)
+static inline entry_hash_table* URLCache_HashEntryFromOffset(LPCURLCACHE_HEADER pHeader, DWORD dwOffset)
 {
-    return (HASH_CACHEFILE_ENTRY *)((LPBYTE)pHeader + dwOffset);
+    return (entry_hash_table*)((LPBYTE)pHeader + dwOffset);
 }
 
-static inline BOOL URLCache_IsHashEntryValid(LPCURLCACHE_HEADER pHeader, const HASH_CACHEFILE_ENTRY *pHashEntry)
+static inline BOOL URLCache_IsHashEntryValid(LPCURLCACHE_HEADER pHeader, const entry_hash_table *pHashEntry)
 {
     /* check pHashEntry located within acceptable bounds in the URL cache mapping */
     return ((DWORD)((const BYTE*)pHashEntry - (const BYTE*)pHeader) >= ENTRY_START_OFFSET) &&
            ((DWORD)((const BYTE*)pHashEntry - (const BYTE*)pHeader) < pHeader->dwFileSize);
 }
 
-static BOOL URLCache_FindHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl, struct _HASH_ENTRY ** ppHashEntry)
+static BOOL URLCache_FindHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl, struct hash_entry **ppHashEntry)
 {
     /* structure of hash table:
      *  448 entries divided into 64 blocks
@@ -1414,32 +1414,32 @@ static BOOL URLCache_FindHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl, struct
      */
     DWORD key = URLCache_HashKey(lpszUrl);
     DWORD offset = (key & (HASHTABLE_NUM_ENTRIES-1)) * HASHTABLE_BLOCKSIZE;
-    HASH_CACHEFILE_ENTRY * pHashEntry;
-    DWORD dwHashTableNumber = 0;
+    entry_hash_table* pHashEntry;
+    DWORD id = 0;
 
     key >>= HASHTABLE_FLAG_BITS;
 
     for (pHashEntry = URLCache_HashEntryFromOffset(pHeader, pHeader->dwOffsetFirstHashTable);
          URLCache_IsHashEntryValid(pHeader, pHashEntry);
-         pHashEntry = URLCache_HashEntryFromOffset(pHeader, pHashEntry->dwAddressNext))
+         pHashEntry = URLCache_HashEntryFromOffset(pHeader, pHashEntry->next))
     {
         int i;
-        if (pHashEntry->dwHashTableNumber != dwHashTableNumber++)
+        if (pHashEntry->id != id++)
         {
-            ERR("Error: not right hash table number (%d) expected %d\n", pHashEntry->dwHashTableNumber, dwHashTableNumber);
+            ERR("Error: not right hash table number (%d) expected %d\n", pHashEntry->id, id);
             continue;
         }
         /* make sure that it is in fact a hash entry */
-        if (pHashEntry->CacheFileEntry.signature != HASH_SIGNATURE)
+        if (pHashEntry->header.signature != HASH_SIGNATURE)
         {
-            ERR("Error: not right signature (\"%.4s\") - expected \"HASH\"\n", (LPCSTR)&pHashEntry->CacheFileEntry.signature);
+            ERR("Error: not right signature (\"%.4s\") - expected \"HASH\"\n", (LPCSTR)&pHashEntry->header.signature);
             continue;
         }
 
         for (i = 0; i < HASHTABLE_BLOCKSIZE; i++)
         {
-            struct _HASH_ENTRY * pHashElement = &pHashEntry->HashTable[offset + i];
-            if (key == pHashElement->dwHashKey>>HASHTABLE_FLAG_BITS)
+            struct hash_entry *pHashElement = &pHashEntry->hash_table[offset + i];
+            if (key == pHashElement->key>>HASHTABLE_FLAG_BITS)
             {
                 /* FIXME: we should make sure that this is the right element
                  * before returning and claiming that it is. We can do this
@@ -1455,7 +1455,7 @@ static BOOL URLCache_FindHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl, struct
     return FALSE;
 }
 
-static BOOL URLCache_FindHashW(LPCURLCACHE_HEADER pHeader, LPCWSTR lpszUrl, struct _HASH_ENTRY ** ppHashEntry)
+static BOOL URLCache_FindHashW(LPCURLCACHE_HEADER pHeader, LPCWSTR lpszUrl, struct hash_entry **ppHashEntry)
 {
     LPSTR urlA;
     BOOL ret;
@@ -1481,9 +1481,9 @@ static BOOL URLCache_FindHashW(LPCURLCACHE_HEADER pHeader, LPCWSTR lpszUrl, stru
  *    nothing
  *
  */
-static void URLCache_HashEntrySetFlags(struct _HASH_ENTRY * pHashEntry, DWORD dwFlag)
+static void URLCache_HashEntrySetFlags(struct hash_entry *pHashEntry, DWORD dwFlag)
 {
-    pHashEntry->dwHashKey = (pHashEntry->dwHashKey >> HASHTABLE_FLAG_BITS << HASHTABLE_FLAG_BITS) | dwFlag;
+    pHashEntry->key = (pHashEntry->key >> HASHTABLE_FLAG_BITS << HASHTABLE_FLAG_BITS) | dwFlag;
 }
 
 /***********************************************************************
@@ -1497,9 +1497,9 @@ static void URLCache_HashEntrySetFlags(struct _HASH_ENTRY * pHashEntry, DWORD dw
  *    FALSE if the entry could not be found
  *
  */
-static BOOL URLCache_DeleteEntryFromHash(struct _HASH_ENTRY * pHashEntry)
+static BOOL URLCache_DeleteEntryFromHash(struct hash_entry *pHashEntry)
 {
-    pHashEntry->dwHashKey = HASHTABLE_DEL;
+    pHashEntry->key = HASHTABLE_DEL;
     return TRUE;
 }
 
@@ -1521,38 +1521,38 @@ static DWORD URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, 
 
     DWORD key = URLCache_HashKey(lpszUrl);
     DWORD offset = (key & (HASHTABLE_NUM_ENTRIES-1)) * HASHTABLE_BLOCKSIZE;
-    HASH_CACHEFILE_ENTRY * pHashEntry, *pHashPrev = NULL;
-    DWORD dwHashTableNumber = 0;
+    entry_hash_table* pHashEntry, *pHashPrev = NULL;
+    DWORD id = 0;
     DWORD error;
 
     key = ((key >> HASHTABLE_FLAG_BITS) << HASHTABLE_FLAG_BITS) + dwFieldType;
 
     for (pHashEntry = URLCache_HashEntryFromOffset(pHeader, pHeader->dwOffsetFirstHashTable);
          URLCache_IsHashEntryValid(pHeader, pHashEntry);
-         pHashEntry = URLCache_HashEntryFromOffset(pHeader, pHashEntry->dwAddressNext))
+         pHashEntry = URLCache_HashEntryFromOffset(pHeader, pHashEntry->next))
     {
         int i;
         pHashPrev = pHashEntry;
 
-        if (pHashEntry->dwHashTableNumber != dwHashTableNumber++)
+        if (pHashEntry->id != id++)
         {
-            ERR("not right hash table number (%d) expected %d\n", pHashEntry->dwHashTableNumber, dwHashTableNumber);
+            ERR("not right hash table number (%d) expected %d\n", pHashEntry->id, id);
             break;
         }
         /* make sure that it is in fact a hash entry */
-        if (pHashEntry->CacheFileEntry.signature != HASH_SIGNATURE)
+        if (pHashEntry->header.signature != HASH_SIGNATURE)
         {
-            ERR("not right signature (\"%.4s\") - expected \"HASH\"\n", (LPCSTR)&pHashEntry->CacheFileEntry.signature);
+            ERR("not right signature (\"%.4s\") - expected \"HASH\"\n", (LPCSTR)&pHashEntry->header.signature);
             break;
         }
 
         for (i = 0; i < HASHTABLE_BLOCKSIZE; i++)
         {
-            struct _HASH_ENTRY * pHashElement = &pHashEntry->HashTable[offset + i];
-            if (pHashElement->dwHashKey==HASHTABLE_FREE || pHashElement->dwHashKey==HASHTABLE_DEL) /* if the slot is free */
+            struct hash_entry *pHashElement = &pHashEntry->hash_table[offset + i];
+            if (pHashElement->key==HASHTABLE_FREE || pHashElement->key==HASHTABLE_DEL) /* if the slot is free */
             {
-                pHashElement->dwHashKey = key;
-                pHashElement->dwOffsetEntry = dwOffsetEntry;
+                pHashElement->key = key;
+                pHashElement->offset = dwOffsetEntry;
                 return ERROR_SUCCESS;
             }
         }
@@ -1561,8 +1561,8 @@ static DWORD URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, 
     if (error != ERROR_SUCCESS)
         return error;
 
-    pHashEntry->HashTable[offset].dwHashKey = key;
-    pHashEntry->HashTable[offset].dwOffsetEntry = dwOffsetEntry;
+    pHashEntry->hash_table[offset].key = key;
+    pHashEntry->hash_table[offset].offset = dwOffsetEntry;
     return ERROR_SUCCESS;
 }
 
@@ -1577,7 +1577,7 @@ static DWORD URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, 
  *    ERROR_DISK_FULL if the hash table could not be created
  *
  */
-static DWORD URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, HASH_CACHEFILE_ENTRY *pPrevHash, HASH_CACHEFILE_ENTRY **ppHash)
+static DWORD URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, entry_hash_table *pPrevHash, entry_hash_table **ppHash)
 {
     DWORD dwOffset, error;
     int i;
@@ -1588,17 +1588,17 @@ static DWORD URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, HASH_CACHEFILE_
     dwOffset = (BYTE *)*ppHash - (BYTE *)pHeader;
 
     if (pPrevHash)
-        pPrevHash->dwAddressNext = dwOffset;
+        pPrevHash->next = dwOffset;
     else
         pHeader->dwOffsetFirstHashTable = dwOffset;
-    (*ppHash)->CacheFileEntry.signature = HASH_SIGNATURE;
-    (*ppHash)->CacheFileEntry.blocks_used = 0x20;
-    (*ppHash)->dwAddressNext = 0;
-    (*ppHash)->dwHashTableNumber = pPrevHash ? pPrevHash->dwHashTableNumber + 1 : 0;
+    (*ppHash)->header.signature = HASH_SIGNATURE;
+    (*ppHash)->header.blocks_used = 0x20;
+    (*ppHash)->next = 0;
+    (*ppHash)->id = pPrevHash ? pPrevHash->id + 1 : 0;
     for (i = 0; i < HASHTABLE_SIZE; i++)
     {
-        (*ppHash)->HashTable[i].dwOffsetEntry = HASHTABLE_FREE;
-        (*ppHash)->HashTable[i].dwHashKey = HASHTABLE_FREE;
+        (*ppHash)->hash_table[i].offset = HASHTABLE_FREE;
+        (*ppHash)->hash_table[i].key = HASHTABLE_FREE;
     }
     return ERROR_SUCCESS;
 }
@@ -1613,24 +1613,24 @@ static DWORD URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, HASH_CACHEFILE_
  *    FALSE if there are no more tables to enumerate.
  *
  */
-static BOOL URLCache_EnumHashTables(LPCURLCACHE_HEADER pHeader, DWORD *pdwHashTableNumber, HASH_CACHEFILE_ENTRY ** ppHashEntry)
+static BOOL URLCache_EnumHashTables(LPCURLCACHE_HEADER pHeader, DWORD *id, entry_hash_table **ppHashEntry)
 {
     for (*ppHashEntry = URLCache_HashEntryFromOffset(pHeader, pHeader->dwOffsetFirstHashTable);
          URLCache_IsHashEntryValid(pHeader, *ppHashEntry);
-         *ppHashEntry = URLCache_HashEntryFromOffset(pHeader, (*ppHashEntry)->dwAddressNext))
+         *ppHashEntry = URLCache_HashEntryFromOffset(pHeader, (*ppHashEntry)->next))
     {
-        TRACE("looking at hash table number %d\n", (*ppHashEntry)->dwHashTableNumber);
-        if ((*ppHashEntry)->dwHashTableNumber != *pdwHashTableNumber)
+        TRACE("looking at hash table number %d\n", (*ppHashEntry)->id);
+        if ((*ppHashEntry)->id != *id)
             continue;
         /* make sure that it is in fact a hash entry */
-        if ((*ppHashEntry)->CacheFileEntry.signature != HASH_SIGNATURE)
+        if ((*ppHashEntry)->header.signature != HASH_SIGNATURE)
         {
-            ERR("Error: not right signature (\"%.4s\") - expected \"HASH\"\n", (LPCSTR)&(*ppHashEntry)->CacheFileEntry.signature);
-            (*pdwHashTableNumber)++;
+            ERR("Error: not right signature (\"%.4s\") - expected \"HASH\"\n", (LPCSTR)&(*ppHashEntry)->header.signature);
+            (*id)++;
             continue;
         }
 
-        TRACE("hash table number %d found\n", *pdwHashTableNumber);
+        TRACE("hash table number %d found\n", *id);
         return TRUE;
     }
     return FALSE;
@@ -1647,15 +1647,15 @@ static BOOL URLCache_EnumHashTables(LPCURLCACHE_HEADER pHeader, DWORD *pdwHashTa
  *     enumerate.
  *
  */
-static BOOL URLCache_EnumHashTableEntries(LPCURLCACHE_HEADER pHeader, const HASH_CACHEFILE_ENTRY * pHashEntry,
-                                          DWORD * index, const struct _HASH_ENTRY ** ppHashEntry)
+static BOOL URLCache_EnumHashTableEntries(LPCURLCACHE_HEADER pHeader, const entry_hash_table *pHashEntry,
+                                          DWORD * index, const struct hash_entry **ppHashEntry)
 {
     for (; *index < HASHTABLE_SIZE ; (*index)++)
     {
-        if (pHashEntry->HashTable[*index].dwHashKey==HASHTABLE_FREE || pHashEntry->HashTable[*index].dwHashKey==HASHTABLE_DEL)
+        if (pHashEntry->hash_table[*index].key==HASHTABLE_FREE || pHashEntry->hash_table[*index].key==HASHTABLE_DEL)
             continue;
 
-        *ppHashEntry = &pHashEntry->HashTable[*index];
+        *ppHashEntry = &pHashEntry->hash_table[*index];
         TRACE("entry found %d\n", *index);
         return TRUE;
     }
@@ -1702,12 +1702,12 @@ static BOOL URLCache_DeleteCacheDirectory(LPCWSTR lpszPath)
  *
  *  Checks if entry is locked. Unlocks it if possible.
  */
-static BOOL URLCache_IsLocked(struct _HASH_ENTRY *hash_entry, entry_url *url_entry)
+static BOOL URLCache_IsLocked(struct hash_entry *hash_entry, entry_url *url_entry)
 {
     FILETIME cur_time;
     ULARGE_INTEGER acc_time, time;
 
-    if ((hash_entry->dwHashKey & ((1<<HASHTABLE_FLAG_BITS)-1)) != HASHTABLE_LOCK)
+    if ((hash_entry->key & ((1<<HASHTABLE_FLAG_BITS)-1)) != HASHTABLE_LOCK)
         return FALSE;
 
     GetSystemTimeAsFileTime(&cur_time);
@@ -1743,7 +1743,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
     DWORD dwFlags)
 {
     LPURLCACHE_HEADER pHeader;
-    struct _HASH_ENTRY * pHashEntry;
+    struct hash_entry *pHashEntry;
     const entry_header *pEntry;
     const entry_url * pUrlEntry;
     URLCACHECONTAINER * pContainer;
@@ -1794,7 +1794,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
         return FALSE;
     }
 
-    pEntry = (const entry_header*)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    pEntry = (const entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
     if (pEntry->signature != URL_SIGNATURE)
     {
         cache_container_unlock_index(pContainer, pHeader);
@@ -1883,7 +1883,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExW(
     DWORD dwFlags)
 {
     LPURLCACHE_HEADER pHeader;
-    struct _HASH_ENTRY * pHashEntry;
+    struct hash_entry *pHashEntry;
     const entry_header *pEntry;
     const entry_url * pUrlEntry;
     URLCACHECONTAINER * pContainer;
@@ -1937,7 +1937,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExW(
         return FALSE;
     }
 
-    pEntry = (const entry_header*)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    pEntry = (const entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
     if (pEntry->signature != URL_SIGNATURE)
     {
         cache_container_unlock_index(pContainer, pHeader);
@@ -1988,7 +1988,7 @@ BOOL WINAPI SetUrlCacheEntryInfoA(
     DWORD dwFieldControl)
 {
     LPURLCACHE_HEADER pHeader;
-    struct _HASH_ENTRY * pHashEntry;
+    struct hash_entry *pHashEntry;
     entry_header *pEntry;
     URLCACHECONTAINER * pContainer;
     DWORD error;
@@ -2020,7 +2020,7 @@ BOOL WINAPI SetUrlCacheEntryInfoA(
         return FALSE;
     }
 
-    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
     if (pEntry->signature != URL_SIGNATURE)
     {
         cache_container_unlock_index(pContainer, pHeader);
@@ -2045,7 +2045,7 @@ BOOL WINAPI SetUrlCacheEntryInfoA(
 BOOL WINAPI SetUrlCacheEntryInfoW(LPCWSTR lpszUrl, LPINTERNET_CACHE_ENTRY_INFOW lpCacheEntryInfo, DWORD dwFieldControl)
 {
     LPURLCACHE_HEADER pHeader;
-    struct _HASH_ENTRY * pHashEntry;
+    struct hash_entry *pHashEntry;
     entry_header *pEntry;
     URLCACHECONTAINER * pContainer;
     DWORD error;
@@ -2077,7 +2077,7 @@ BOOL WINAPI SetUrlCacheEntryInfoW(LPCWSTR lpszUrl, LPINTERNET_CACHE_ENTRY_INFOW 
         return FALSE;
     }
 
-    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
     if (pEntry->signature != URL_SIGNATURE)
     {
         cache_container_unlock_index(pContainer, pHeader);
@@ -2108,7 +2108,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
     )
 {
     LPURLCACHE_HEADER pHeader;
-    struct _HASH_ENTRY * pHashEntry;
+    struct hash_entry *pHashEntry;
     entry_header *pEntry;
     entry_url * pUrlEntry;
     URLCACHECONTAINER * pContainer;
@@ -2152,7 +2152,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
         return FALSE;
     }
 
-    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
     if (pEntry->signature != URL_SIGNATURE)
     {
         cache_container_unlock_index(pContainer, pHeader);
@@ -2206,7 +2206,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
     )
 {
     LPURLCACHE_HEADER pHeader;
-    struct _HASH_ENTRY * pHashEntry;
+    struct hash_entry *pHashEntry;
     entry_header *pEntry;
     entry_url * pUrlEntry;
     URLCACHECONTAINER * pContainer;
@@ -2250,7 +2250,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
         return FALSE;
     }
 
-    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
     if (pEntry->signature != URL_SIGNATURE)
     {
         cache_container_unlock_index(pContainer, pHeader);
@@ -2297,12 +2297,12 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
 }
 
 static BOOL DeleteUrlCacheEntryInternal(const URLCACHECONTAINER * pContainer,
-        LPURLCACHE_HEADER pHeader, struct _HASH_ENTRY *pHashEntry)
+        LPURLCACHE_HEADER pHeader, struct hash_entry *pHashEntry)
 {
     entry_header *pEntry;
     entry_url * pUrlEntry;
 
-    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
     if (pEntry->signature != URL_SIGNATURE)
     {
         FIXME("Trying to delete entry of unknown format %s\n",
@@ -2329,7 +2329,7 @@ static BOOL DeleteUrlCacheEntryInternal(const URLCACHECONTAINER * pContainer,
         /* Add entry to leaked files list */
         pUrlEntry->header.signature = LEAK_SIGNATURE;
         pUrlEntry->exempt_delta = pHeader->options[CACHE_HEADER_DATA_ROOT_LEAK_OFFSET];
-        pHeader->options[CACHE_HEADER_DATA_ROOT_LEAK_OFFSET] = pHashEntry->dwOffsetEntry;
+        pHeader->options[CACHE_HEADER_DATA_ROOT_LEAK_OFFSET] = pHashEntry->offset;
     }
 
     URLCache_DeleteEntryFromHash(pHashEntry);
@@ -2355,9 +2355,9 @@ static void handle_full_cache(void)
 
 /* Enumerates entries in cache, allows cache unlocking between calls. */
 static BOOL urlcache_next_entry(URLCACHE_HEADER *header, DWORD *hash_table_off, DWORD *hash_table_entry,
-        struct _HASH_ENTRY **hash_entry, entry_header **entry)
+        struct hash_entry **hash_entry, entry_header **entry)
 {
-    HASH_CACHEFILE_ENTRY *hashtable_entry;
+    entry_hash_table *hashtable_entry;
 
     *hash_entry = NULL;
     *entry = NULL;
@@ -2376,14 +2376,14 @@ static BOOL urlcache_next_entry(URLCACHE_HEADER *header, DWORD *hash_table_off, 
         hashtable_entry = URLCache_HashEntryFromOffset(header, *hash_table_off);
     }
 
-    if(hashtable_entry->CacheFileEntry.signature != HASH_SIGNATURE) {
+    if(hashtable_entry->header.signature != HASH_SIGNATURE) {
         *hash_table_off = 0;
         return FALSE;
     }
 
     while(1) {
         if(*hash_table_entry >= HASHTABLE_SIZE) {
-            *hash_table_off = hashtable_entry->dwAddressNext;
+            *hash_table_off = hashtable_entry->next;
             if(!*hash_table_off) {
                 *hash_table_off = 0;
                 return FALSE;
@@ -2393,10 +2393,10 @@ static BOOL urlcache_next_entry(URLCACHE_HEADER *header, DWORD *hash_table_off, 
             *hash_table_entry = 0;
         }
 
-        if(hashtable_entry->HashTable[*hash_table_entry].dwHashKey != HASHTABLE_DEL &&
-            hashtable_entry->HashTable[*hash_table_entry].dwHashKey != HASHTABLE_FREE) {
-            *hash_entry = &hashtable_entry->HashTable[*hash_table_entry];
-            *entry = (entry_header*)((LPBYTE)header + hashtable_entry->HashTable[*hash_table_entry].dwOffsetEntry);
+        if(hashtable_entry->hash_table[*hash_table_entry].key != HASHTABLE_DEL &&
+            hashtable_entry->hash_table[*hash_table_entry].key != HASHTABLE_FREE) {
+            *hash_entry = &hashtable_entry->hash_table[*hash_table_entry];
+            *entry = (entry_header*)((LPBYTE)header + hashtable_entry->hash_table[*hash_table_entry].offset);
             (*hash_table_entry)++;
             return TRUE;
         }
@@ -2518,7 +2518,7 @@ BOOL WINAPI FreeUrlCacheSpaceW(LPCWSTR cache_path, DWORD size, DWORD filter)
     LIST_FOR_EACH_ENTRY(container, &UrlContainers, URLCACHECONTAINER, entry)
     {
         URLCACHE_HEADER *header;
-        struct _HASH_ENTRY *hash_entry;
+        struct hash_entry *hash_entry;
         entry_header *entry;
         entry_url *url_entry;
         ULONGLONG desired_size, cur_size;
@@ -2646,7 +2646,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
     )
 {
     LPURLCACHE_HEADER pHeader;
-    struct _HASH_ENTRY * pHashEntry;
+    struct hash_entry *pHashEntry;
     entry_header *pEntry;
     entry_url * pUrlEntry;
     URLCACHECONTAINER * pContainer;
@@ -2686,7 +2686,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
         return FALSE;
     }
 
-    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
     if (pEntry->signature != URL_SIGNATURE)
     {
         cache_container_unlock_index(pContainer, pHeader);
@@ -2722,7 +2722,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
 BOOL WINAPI UnlockUrlCacheEntryFileW( LPCWSTR lpszUrlName, DWORD dwReserved )
 {
     LPURLCACHE_HEADER pHeader;
-    struct _HASH_ENTRY * pHashEntry;
+    struct hash_entry *pHashEntry;
     entry_header *pEntry;
     entry_url * pUrlEntry;
     URLCACHECONTAINER * pContainer;
@@ -2762,7 +2762,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileW( LPCWSTR lpszUrlName, DWORD dwReserved )
         return FALSE;
     }
 
-    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
     if (pEntry->signature != URL_SIGNATURE)
     {
         cache_container_unlock_index(pContainer, pHeader);
@@ -3073,7 +3073,7 @@ static BOOL CommitUrlCacheEntryInternal(
 {
     URLCACHECONTAINER * pContainer;
     LPURLCACHE_HEADER pHeader;
-    struct _HASH_ENTRY * pHashEntry;
+    struct hash_entry *pHashEntry;
     entry_header *pEntry;
     entry_url * pUrlEntry;
     DWORD url_entry_offset;
@@ -3150,7 +3150,7 @@ static BOOL CommitUrlCacheEntryInternal(
 
     if (URLCache_FindHash(pHeader, lpszUrlNameA, &pHashEntry))
     {
-        entry_url *pUrlEntry = (entry_url*)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+        entry_url *pUrlEntry = (entry_url*)((LPBYTE)pHeader + pHashEntry->offset);
         if (URLCache_IsLocked(pHashEntry, pUrlEntry))
         {
             TRACE("Trying to overwrite locked entry\n");
@@ -3636,7 +3636,7 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
 {
     URLCACHECONTAINER * pContainer;
     LPURLCACHE_HEADER pHeader;
-    struct _HASH_ENTRY * pHashEntry;
+    struct hash_entry *pHashEntry;
     DWORD error;
     BOOL ret;
 
@@ -3682,7 +3682,7 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
 {
     URLCACHECONTAINER * pContainer;
     LPURLCACHE_HEADER pHeader;
-    struct _HASH_ENTRY * pHashEntry;
+    struct hash_entry *pHashEntry;
     LPSTR urlA;
     DWORD error;
     BOOL ret;
@@ -3950,7 +3950,7 @@ static BOOL FindNextUrlCacheEntryInternal(
          pEntryHandle->dwContainerIndex++, pEntryHandle->dwHashTableIndex = 0)
     {
         LPURLCACHE_HEADER pHeader;
-        HASH_CACHEFILE_ENTRY *pHashTableEntry;
+        entry_hash_table *pHashTableEntry;
         DWORD error;
 
         error = cache_container_open_index(pContainer, MIN_BLOCK_NO);
@@ -3966,12 +3966,12 @@ static BOOL FindNextUrlCacheEntryInternal(
         for (; URLCache_EnumHashTables(pHeader, &pEntryHandle->dwHashTableIndex, &pHashTableEntry);
              pEntryHandle->dwHashTableIndex++, pEntryHandle->dwHashEntryIndex = 0)
         {
-            const struct _HASH_ENTRY *pHashEntry = NULL;
+            const struct hash_entry *pHashEntry = NULL;
             for (; URLCache_EnumHashTableEntries(pHeader, pHashTableEntry, &pEntryHandle->dwHashEntryIndex, &pHashEntry);
                  pEntryHandle->dwHashEntryIndex++)
             {
                 const entry_url *pUrlEntry;
-                const entry_header *pEntry = (const entry_header*)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+                const entry_header *pEntry = (const entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
 
                 if (pEntry->signature != URL_SIGNATURE)
                     continue;
@@ -4282,7 +4282,7 @@ static BOOL IsUrlCacheEntryExpiredInternal(const entry_url *pUrlEntry,
 BOOL WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD dwFlags, FILETIME* pftLastModified )
 {
     LPURLCACHE_HEADER pHeader;
-    struct _HASH_ENTRY * pHashEntry;
+    struct hash_entry *pHashEntry;
     const entry_header *pEntry;
     const entry_url * pUrlEntry;
     URLCACHECONTAINER * pContainer;
@@ -4322,7 +4322,7 @@ BOOL WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD dwFlags, FILETIME* pftLas
         return TRUE;
     }
 
-    pEntry = (const entry_header*)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    pEntry = (const entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
     if (pEntry->signature != URL_SIGNATURE)
     {
         cache_container_unlock_index(pContainer, pHeader);
@@ -4350,7 +4350,7 @@ BOOL WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD dwFlags, FILETIME* pftLas
 BOOL WINAPI IsUrlCacheEntryExpiredW( LPCWSTR url, DWORD dwFlags, FILETIME* pftLastModified )
 {
     LPURLCACHE_HEADER pHeader;
-    struct _HASH_ENTRY * pHashEntry;
+    struct hash_entry *pHashEntry;
     const entry_header *pEntry;
     const entry_url * pUrlEntry;
     URLCACHECONTAINER * pContainer;
@@ -4398,7 +4398,7 @@ BOOL WINAPI IsUrlCacheEntryExpiredW( LPCWSTR url, DWORD dwFlags, FILETIME* pftLa
         return TRUE;
     }
 
-    pEntry = (const entry_header*)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    pEntry = (const entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
     if (pEntry->signature != URL_SIGNATURE)
     {
         cache_container_unlock_index(pContainer, pHeader);
