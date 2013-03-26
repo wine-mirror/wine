@@ -1141,7 +1141,7 @@
 @ cdecl _swab(str str long) msvcrt._swab
 @ extern _sys_errlist msvcrt._sys_errlist
 @ extern _sys_nerr msvcrt._sys_nerr
-@ cdecl _tccpy(str str) msvcrt._mbccpy
+@ cdecl _tccpy(ptr str) msvcrt._mbccpy
 @ cdecl _tclen(ptr) msvcrt._mbclen
 @ cdecl _tcschr(str long) msvcrt._mbschr
 @ cdecl _tcsclen(str) msvcrt._mbslen
@@ -1156,19 +1156,19 @@
 @ cdecl _tcsnccat(str str long) msvcrt._mbsncat
 @ cdecl _tcsnccmp(str str long) msvcrt._mbsncmp
 @ cdecl _tcsnccnt(str long) msvcrt._mbsnccnt
-@ cdecl _tcsnccpy(str str long) msvcrt._mbsncpy
+@ cdecl _tcsnccpy(ptr str long) msvcrt._mbsncpy
 @ cdecl _tcsncicmp(str str long) msvcrt._mbsnicmp
 @ cdecl _tcsncmp(str str long) msvcrt._mbsnbcmp
 @ cdecl _tcsncpy(ptr str long) msvcrt._mbsnbcpy
-@ cdecl _tcsncset(str long long) msvcrt._mbsnset
+@ cdecl _tcsncset(ptr long long) msvcrt._mbsnset
 @ cdecl _tcsnextc(str) msvcrt._mbsnextc
 @ cdecl _tcsnicmp(str str long) msvcrt._mbsnbicmp
 @ cdecl _tcsninc(str long) msvcrt._mbsninc
-@ cdecl _tcsnset(str long long) msvcrt._mbsnbset
+@ cdecl _tcsnset(ptr long long) msvcrt._mbsnbset
 @ cdecl _tcspbrk(str str) msvcrt._mbspbrk
 @ cdecl _tcsrchr(str long) msvcrt._mbsrchr
 @ cdecl _tcsrev(str) msvcrt._mbsrev
-@ cdecl _tcsset(str long) msvcrt._mbsset
+@ cdecl _tcsset(ptr long) msvcrt._mbsset
 @ cdecl _tcsspn(str str) msvcrt._mbsspn
 @ cdecl _tcsspnp(str str) msvcrt._mbsspnp
 @ cdecl _tcsstr(str str) msvcrt._mbsstr
