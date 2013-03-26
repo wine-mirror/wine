@@ -531,7 +531,7 @@ static void cache_container_close_index(cache_container *pContainer)
     pContainer->mapping = NULL;
 }
 
-static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix,
+static BOOL cache_containers_add(LPCWSTR cache_prefix,
         LPCWSTR path, DWORD default_entry_type, LPWSTR mutex_name)
 {
     cache_container *pContainer = heap_alloc(sizeof(cache_container));
@@ -590,7 +590,7 @@ static void cache_container_delete_container(cache_container *pContainer)
     heap_free(pContainer);
 }
 
-static void URLCacheContainers_CreateDefaults(void)
+static void cache_containers_init(void)
 {
     static const WCHAR UrlSuffix[] = {'C','o','n','t','e','n','t','.','I','E','5',0};
     static const WCHAR UrlPrefix[] = {0};
@@ -644,12 +644,12 @@ static void URLCacheContainers_CreateDefaults(void)
             wszCachePath[path_len + suffix_len + 2] = '\0';
         }
 
-        URLCacheContainers_AddContainer(DefaultContainerData[i].cache_prefix, wszCachePath,
+        cache_containers_add(DefaultContainerData[i].cache_prefix, wszCachePath,
                 DefaultContainerData[i].default_entry_type, wszMutexName);
     }
 }
 
-static void URLCacheContainers_DeleteAll(void)
+static void cache_containers_free(void)
 {
     while(!list_empty(&UrlContainers))
         cache_container_delete_container(
@@ -657,7 +657,7 @@ static void URLCacheContainers_DeleteAll(void)
         );
 }
 
-static DWORD URLCacheContainers_FindContainerW(LPCWSTR lpwszUrl, cache_container **ppContainer)
+static DWORD cache_containers_findW(LPCWSTR lpwszUrl, cache_container **ppContainer)
 {
     cache_container *pContainer;
 
@@ -680,7 +680,7 @@ static DWORD URLCacheContainers_FindContainerW(LPCWSTR lpwszUrl, cache_container
     return ERROR_FILE_NOT_FOUND;
 }
 
-static DWORD URLCacheContainers_FindContainerA(LPCSTR lpszUrl, cache_container **ppContainer)
+static DWORD cache_containers_findA(LPCSTR lpszUrl, cache_container **ppContainer)
 {
     LPWSTR url = NULL;
     DWORD ret;
@@ -688,12 +688,12 @@ static DWORD URLCacheContainers_FindContainerA(LPCSTR lpszUrl, cache_container *
     if (lpszUrl && !(url = heap_strdupAtoW(lpszUrl)))
         return ERROR_OUTOFMEMORY;
 
-    ret = URLCacheContainers_FindContainerW(url, ppContainer);
+    ret = cache_containers_findW(url, ppContainer);
     heap_free(url);
     return ret;
 }
 
-static BOOL URLCacheContainers_Enum(LPCWSTR lpwszSearchPattern, DWORD dwIndex, cache_container **ppContainer)
+static BOOL cache_containers_enum(LPCWSTR lpwszSearchPattern, DWORD dwIndex, cache_container **ppContainer)
 {
     DWORD i = 0;
     cache_container *pContainer;
@@ -1768,7 +1768,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
     if (dwFlags & ~GET_INSTALLED_ENTRY)
         FIXME("ignoring unsupported flags: %x\n", dwFlags);
 
-    error = URLCacheContainers_FindContainerA(lpszUrl, &pContainer);
+    error = cache_containers_findA(lpszUrl, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         SetLastError(error);
@@ -1911,7 +1911,7 @@ BOOL WINAPI GetUrlCacheEntryInfoExW(
     if (dwFlags)
         FIXME("ignoring unsupported flags: %x\n", dwFlags);
 
-    error = URLCacheContainers_FindContainerW(lpszUrl, &pContainer);
+    error = cache_containers_findW(lpszUrl, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         SetLastError(error);
@@ -1994,7 +1994,7 @@ BOOL WINAPI SetUrlCacheEntryInfoA(
 
     TRACE("(%s, %p, 0x%08x)\n", debugstr_a(lpszUrlName), lpCacheEntryInfo, dwFieldControl);
 
-    error = URLCacheContainers_FindContainerA(lpszUrlName, &pContainer);
+    error = cache_containers_findA(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         SetLastError(error);
@@ -2051,7 +2051,7 @@ BOOL WINAPI SetUrlCacheEntryInfoW(LPCWSTR lpszUrl, LPINTERNET_CACHE_ENTRY_INFOW 
 
     TRACE("(%s, %p, 0x%08x)\n", debugstr_w(lpszUrl), lpCacheEntryInfo, dwFieldControl);
 
-    error = URLCacheContainers_FindContainerW(lpszUrl, &pContainer);
+    error = cache_containers_findW(lpszUrl, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         SetLastError(error);
@@ -2126,7 +2126,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
         return FALSE;
     }
 
-    error = URLCacheContainers_FindContainerA(lpszUrlName, &pContainer);
+    error = cache_containers_findA(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         SetLastError(error);
@@ -2224,7 +2224,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
         return FALSE;
     }
 
-    error = URLCacheContainers_FindContainerW(lpszUrlName, &pContainer);
+    error = cache_containers_findW(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         SetLastError(error);
@@ -2660,7 +2660,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
         return FALSE;
     }
 
-    error = URLCacheContainers_FindContainerA(lpszUrlName, &pContainer);
+    error = cache_containers_findA(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
     {
        SetLastError(error);
@@ -2736,7 +2736,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileW( LPCWSTR lpszUrlName, DWORD dwReserved )
         return FALSE;
     }
 
-    error = URLCacheContainers_FindContainerW(lpszUrlName, &pContainer);
+    error = cache_containers_findW(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         SetLastError(error);
@@ -2929,7 +2929,7 @@ BOOL WINAPI CreateUrlCacheEntryW(
         szFile[0] = 0;
     }
 
-    error = URLCacheContainers_FindContainerW(lpszUrlName, &pContainer);
+    error = cache_containers_findW(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         SetLastError(error);
@@ -3117,7 +3117,7 @@ static BOOL urlcache_entry_commit(
     file_size.u.LowPart = file_attr.nFileSizeLow;
     file_size.u.HighPart = file_attr.nFileSizeHigh;
 
-    error = URLCacheContainers_FindContainerW(lpszUrlName, &pContainer);
+    error = cache_containers_findW(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         SetLastError(error);
@@ -3641,7 +3641,7 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
 
     TRACE("(%s)\n", debugstr_a(lpszUrlName));
 
-    error = URLCacheContainers_FindContainerA(lpszUrlName, &pContainer);
+    error = cache_containers_findA(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         SetLastError(error);
@@ -3695,7 +3695,7 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
         return FALSE;
     }
 
-    error = URLCacheContainers_FindContainerW(lpszUrlName, &pContainer);
+    error = cache_containers_findW(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
     {
         heap_free(urlA);
@@ -3934,7 +3934,7 @@ static BOOL urlcache_find_next_entry(
         return FALSE;
     }
 
-    for (; URLCacheContainers_Enum(pEntryHandle->url_search_pattern, pEntryHandle->container_idx, &pContainer);
+    for (; cache_containers_enum(pEntryHandle->url_search_pattern, pEntryHandle->container_idx, &pContainer);
          pEntryHandle->container_idx++, pEntryHandle->hash_table_idx = 0)
     {
         urlcache_header *pHeader;
@@ -4284,7 +4284,7 @@ BOOL WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD dwFlags, FILETIME* pftLas
         FIXME("unknown flags 0x%08x\n", dwFlags);
 
     /* Any error implies that the URL is expired, i.e. not in the cache */
-    if (URLCacheContainers_FindContainerA(url, &pContainer))
+    if (cache_containers_findA(url, &pContainer))
     {
         memset(pftLastModified, 0, sizeof(*pftLastModified));
         return TRUE;
@@ -4352,7 +4352,7 @@ BOOL WINAPI IsUrlCacheEntryExpiredW( LPCWSTR url, DWORD dwFlags, FILETIME* pftLa
         FIXME("unknown flags 0x%08x\n", dwFlags);
 
     /* Any error implies that the URL is expired, i.e. not in the cache */
-    if (URLCacheContainers_FindContainerW(url, &pContainer))
+    if (cache_containers_findW(url, &pContainer))
     {
         memset(pftLastModified, 0, sizeof(*pftLastModified));
         return TRUE;
@@ -4468,7 +4468,7 @@ BOOL init_urlcache(void)
         return FALSE;
     }
 
-    URLCacheContainers_CreateDefaults();
+    cache_containers_init();
     return TRUE;
 }
 
@@ -4480,7 +4480,7 @@ void free_urlcache(void)
     CloseHandle(free_cache_running);
     CloseHandle(dll_unload_event);
 
-    URLCacheContainers_DeleteAll();
+    cache_containers_free();
 }
 
 /***********************************************************************
