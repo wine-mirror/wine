@@ -360,6 +360,31 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
+    {   "file:///z:/test dir/README.txt", 0, S_OK, FALSE,
+        {
+            {"file:///z:/test%20dir/README.txt",S_OK},
+            {"",S_FALSE},
+            {"file:///z:/test%20dir/README.txt",S_OK},
+            {"",S_FALSE},
+            {".txt",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"/z:/test%20dir/README.txt",S_OK},
+            {"/z:/test%20dir/README.txt",S_OK},
+            {"",S_FALSE},
+            {"file:///z:/test dir/README.txt",S_OK},
+            {"file",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
     {   "urn:nothing:should:happen here", 0, S_OK, FALSE,
         {
             {"urn:nothing:should:happen here",S_OK,FALSE},
@@ -6926,7 +6951,62 @@ static const uri_combine_test uri_combine_tests[] = {
             {URL_SCHEME_HTTP,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
+    },
+    {   "http://google.com/test",0,
+        "c:\\test\\", Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME,
+        0,S_OK,FALSE,
+        {
+            {"file:///c:/test/",S_OK},
+            {"",S_FALSE},
+            {"file:///c:/test/",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"/c:/test/",S_OK},
+            {"/c:/test/",S_OK},
+            {"",S_FALSE},
+            {"c:\\test\\",S_OK,FALSE,"file:///c:/test/"},
+            {"file",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_FILE,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://google.com/test",0,
+        "c:\\test\\", Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME,
+        0,S_OK,FALSE,
+        {
+            {"file:///c:/test/",S_OK},
+            {"",S_FALSE},
+            {"file:///c:/test/",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"/c:/test/",S_OK},
+            {"/c:/test/",S_OK},
+            {"",S_FALSE},
+            {"c:\\test\\",S_OK,FALSE,"file:///c:/test/"},
+            {"file",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_FILE,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
     }
+
 };
 
 typedef struct _uri_parse_test {

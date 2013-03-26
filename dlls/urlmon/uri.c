@@ -6461,7 +6461,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
             return E_OUTOFMEMORY;
         }
 
-        parse_uri(&data, 0);
+        parse_uri(&data, Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME);
 
         hr = Uri_Construct(NULL, (void**)&ret);
         if(FAILED(hr)) {
@@ -6800,7 +6800,7 @@ HRESULT WINAPI CoInternetCombineUrlEx(IUri *pBaseUri, LPCWSTR pwzRelativeUrl, DW
         }
     }
 
-    hr = CreateUri(pwzRelativeUrl, Uri_CREATE_ALLOW_RELATIVE, 0, &relative);
+    hr = CreateUri(pwzRelativeUrl, Uri_CREATE_ALLOW_RELATIVE|Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, 0, &relative);
     if(FAILED(hr)) {
         *ppCombinedUri = NULL;
         return hr;
