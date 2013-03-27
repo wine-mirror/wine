@@ -34,6 +34,8 @@
 
 #include "wingdi.h"	/* for BITMAPINFOHEADER */
 
+#define ICO_PNG_MAGIC 0x474e5089
+
 #include <pshpack2.h>
 typedef struct
 {
@@ -397,27 +399,28 @@ static int convert_bitmap(char *data, int size)
 	}
 
         bmsize = bih->bV5Size;
-        if (bmsize >> 16)  /* assume swapped */
-        {
-#ifndef WORDS_BIGENDIAN
-            type |= FL_SIZEBE;
-#endif
-            bmsize = BYTESWAP_DWORD( bmsize );
-        }
-        else
-        {
-#ifdef WORDS_BIGENDIAN
-            type |= FL_SIZEBE;
-#endif
-        }
-
         switch (bmsize)
         {
         case sizeof(BITMAPOS2HEADER):
         case sizeof(BITMAPINFOHEADER):
         case sizeof(BITMAPV4HEADER):
         case sizeof(BITMAPV5HEADER):
+#ifdef WORDS_BIGENDIAN
+            type |= FL_SIZEBE;
+#endif
             break;
+        case BYTESWAP_DWORD( sizeof(BITMAPOS2HEADER) ):
+        case BYTESWAP_DWORD( sizeof(BITMAPINFOHEADER) ):
+        case BYTESWAP_DWORD( sizeof(BITMAPV4HEADER) ):
+        case BYTESWAP_DWORD( sizeof(BITMAPV5HEADER) ):
+#ifndef WORDS_BIGENDIAN
+            type |= FL_SIZEBE;
+#endif
+            bmsize = BYTESWAP_DWORD( bmsize );
+            break;
+        case ICO_PNG_MAGIC:
+        case BYTESWAP_DWORD( ICO_PNG_MAGIC ):
+            return 0;  /* nothing to convert */
         default:
 		parser_error("Invalid bitmap format, bih->biSize = %d", bih->bV5Size);
         }
