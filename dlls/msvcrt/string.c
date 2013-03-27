@@ -572,6 +572,19 @@ int CDECL MSVCRT__strnicoll( const char* str1, const char* str2, MSVCRT_size_t c
 }
 
 /*********************************************************************
+ *                  strncpy (MSVCRT.@)
+ */
+char* __cdecl MSVCRT_strncpy(char *dst, const char *src, MSVCRT_size_t len)
+{
+    MSVCRT_size_t i;
+
+    for(i=0; i<len; i++)
+        if((dst[i] = src[i]) == '\0') break;
+
+    return dst;
+}
+
+/*********************************************************************
  *      strcpy_s (MSVCRT.@)
  */
 int CDECL MSVCRT_strcpy_s( char* dst, MSVCRT_size_t elem, const char* src )
