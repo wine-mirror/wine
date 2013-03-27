@@ -33,6 +33,7 @@ BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW 
 
 
 static CFArrayRef modes;
+static BOOL modes_has_8bpp, modes_has_16bpp;
 static int default_mode_bpp;
 static CRITICAL_SECTION modes_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -469,6 +470,8 @@ BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode,
     struct macdrv_display *displays = NULL;
     int num_displays;
     CGDisplayModeRef display_mode;
+    int display_mode_bpp;
+    BOOL synthesized = FALSE;
     double rotation;
     uint32_t io_flags;
 
@@ -494,42 +497,84 @@ BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode,
     {
         TRACE("mode %d (current) -- getting current mode\n", mode);
         display_mode = CGDisplayCopyDisplayMode(displays[0].displayID);
+        display_mode_bpp = display_mode_bits_per_pixel(display_mode);
     }
     else
     {
+        DWORD count, i;
+
         EnterCriticalSection(&modes_section);
 
         if (mode == 0 || !modes)
         {
             if (modes) CFRelease(modes);
             modes = CGDisplayCopyAllDisplayModes(displays[0].displayID, NULL);
+            modes_has_8bpp = modes_has_16bpp = FALSE;
+
+            if (modes)
+            {
+                count = CFArrayGetCount(modes);
+                for (i = 0; i < count && !(modes_has_8bpp && modes_has_16bpp); i++)
+                {
+                    CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
+                    int bpp = display_mode_bits_per_pixel(mode);
+                    if (bpp == 8)
+                        modes_has_8bpp = TRUE;
+                    else if (bpp == 16)
+                        modes_has_16bpp = TRUE;
+                }
+            }
         }
 
         display_mode = NULL;
         if (modes)
         {
-            if (flags & EDS_RAWMODE)
+            int default_bpp = get_default_bpp();
+            DWORD seen_modes = 0;
+
+            count = CFArrayGetCount(modes);
+            for (i = 0; i < count; i++)
             {
-                if (mode < CFArrayGetCount(modes))
-                    display_mode = (CGDisplayModeRef)CFRetain(CFArrayGetValueAtIndex(modes, mode));
-            }
-            else
-            {
-                DWORD count, i, safe_modes = 0;
-                count = CFArrayGetCount(modes);
-                for (i = 0; i < count; i++)
+                CGDisplayModeRef candidate = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
+
+                io_flags = CGDisplayModeGetIOFlags(candidate);
+                if (!(flags & EDS_RAWMODE) &&
+                    (!(io_flags & kDisplayModeValidFlag) || !(io_flags & kDisplayModeSafeFlag)))
+                    continue;
+
+                seen_modes++;
+                if (seen_modes > mode)
                 {
-                    CGDisplayModeRef candidate = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
-                    io_flags = CGDisplayModeGetIOFlags(candidate);
-                    if ((io_flags & kDisplayModeValidFlag) &&
-                        (io_flags & kDisplayModeSafeFlag))
+                    display_mode = (CGDisplayModeRef)CFRetain(candidate);
+                    display_mode_bpp = display_mode_bits_per_pixel(display_mode);
+                    break;
+                }
+
+                /* We only synthesize modes from those having the default bpp. */
+                if (display_mode_bits_per_pixel(candidate) != default_bpp)
+                    continue;
+
+                if (!modes_has_8bpp)
+                {
+                    seen_modes++;
+                    if (seen_modes > mode)
                     {
-                        safe_modes++;
-                        if (safe_modes > mode)
-                        {
-                            display_mode = (CGDisplayModeRef)CFRetain(candidate);
-                            break;
-                        }
+                        display_mode = (CGDisplayModeRef)CFRetain(candidate);
+                        display_mode_bpp = 8;
+                        synthesized = TRUE;
+                        break;
+                    }
+                }
+
+                if (!modes_has_16bpp)
+                {
+                    seen_modes++;
+                    if (seen_modes > mode)
+                    {
+                        display_mode = (CGDisplayModeRef)CFRetain(candidate);
+                        display_mode_bpp = 16;
+                        synthesized = TRUE;
+                        break;
                     }
                 }
             }
@@ -557,7 +602,7 @@ BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode,
         devmode->dmDisplayFixedOutput = DMDFO_CENTER;
     devmode->dmFields |= DM_DISPLAYFIXEDOUTPUT;
 
-    devmode->dmBitsPerPel = display_mode_bits_per_pixel(display_mode);
+    devmode->dmBitsPerPel = display_mode_bpp;
     if (devmode->dmBitsPerPel)
         devmode->dmFields |= DM_BITSPERPEL;
 
@@ -587,6 +632,8 @@ BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode,
         TRACE(" stretched");
     if (devmode->dmDisplayFlags & DM_INTERLACED)
         TRACE(" interlaced");
+    if (synthesized)
+        TRACE(" (synthesized)");
     TRACE("\n");
 
     return TRUE;
