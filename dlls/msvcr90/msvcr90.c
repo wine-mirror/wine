@@ -24,6 +24,25 @@
 #include "windef.h"
 #include "winbase.h"
 
+static void* (__cdecl *MSVCRT_operator_new)(size_t);
+static void (__cdecl *MSVCRT_operator_delete)(void*);
+
+static void init_cxx_funcs(void)
+{
+    HMODULE hmod = GetModuleHandleA("msvcrt.dll");
+
+    if (sizeof(void *) > sizeof(int))  /* 64-bit has different names */
+    {
+        MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPEAX_K@Z");
+        MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPEAX@Z");
+    }
+    else
+    {
+        MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPAXI@Z");
+        MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPAX@Z");
+    }
+}
+
 /*********************************************************************
  *  DllMain (MSVCR90.@)
  */
@@ -33,6 +52,7 @@ BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hdll);
+        init_cxx_funcs();
         _set_printf_count_output(0);
     }
     return TRUE;
@@ -58,4 +78,24 @@ void * CDECL MSVCR90_decode_pointer(void * ptr)
 void * CDECL MSVCR90_encode_pointer(void * ptr)
 {
     return EncodePointer(ptr);
+}
+
+/*********************************************************************
+ *  ??2@YAPAXI@Z (MSVCR90.@)
+ *
+ * Naver LINE expects that this function is implemented inside msvcr90
+ */
+void* CDECL MSVCR90_operator_new(size_t size)
+{
+    return MSVCRT_operator_new(size);
+}
+
+/*********************************************************************
+ *  ??3@YAXPAX@Z (MSVCR90.@)
+ *
+ * Naver LINE expects that this function is implemented inside msvcr90
+ */
+void CDECL MSVCR90_operator_delete(void *ptr)
+{
+    return MSVCRT_operator_delete(ptr);
 }

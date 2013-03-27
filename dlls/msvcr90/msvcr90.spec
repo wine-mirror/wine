@@ -30,12 +30,12 @@
 @ cdecl -arch=win64 ??1exception@std@@UEAA@XZ(ptr) msvcrt.??1exception@@UEAA@XZ
 @ thiscall -arch=i386 ??1type_info@@UAE@XZ(ptr) msvcrt.??1type_info@@UAE@XZ
 @ cdecl -arch=win64 ??1type_info@@UEAA@XZ(ptr) msvcrt.??1type_info@@UEAA@XZ
-@ cdecl -arch=win32 ??2@YAPAXI@Z(long) msvcrt.??2@YAPAXI@Z
-@ cdecl -arch=win64 ??2@YAPEAX_K@Z(long) msvcrt.??2@YAPEAX_K@Z
+@ cdecl -arch=win32 ??2@YAPAXI@Z(long) MSVCR90_operator_new
+@ cdecl -arch=win64 ??2@YAPEAX_K@Z(long) MSVCR90_operator_new
 @ cdecl -arch=win32 ??2@YAPAXIHPBDH@Z(long long str long) msvcrt.??2@YAPAXIHPBDH@Z
 @ cdecl -arch=win64 ??2@YAPEAX_KHPEBDH@Z(long long str long) msvcrt.??2@YAPEAX_KHPEBDH@Z
-@ cdecl -arch=win32 ??3@YAXPAX@Z(ptr) msvcrt.??3@YAXPAX@Z
-@ cdecl -arch=win64 ??3@YAXPEAX@Z(ptr) msvcrt.??3@YAXPEAX@Z
+@ cdecl -arch=win32 ??3@YAXPAX@Z(ptr) MSVCR90_operator_delete
+@ cdecl -arch=win64 ??3@YAXPEAX@Z(ptr) MSVCR90_operator_delete
 @ thiscall -arch=i386 ??4__non_rtti_object@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcrt.??4__non_rtti_object@@QAEAAV0@ABV0@@Z
 @ cdecl -arch=win64 ??4__non_rtti_object@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcrt.??4__non_rtti_object@@QEAAAEAV0@AEBV0@@Z
 @ thiscall -arch=i386 ??4bad_cast@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcrt.??4bad_cast@@QAEAAV0@ABV0@@Z
@@ -61,8 +61,8 @@
 @ cdecl -arch=win64 ??_U@YAPEAX_K@Z(long) msvcrt.??_U@YAPEAX_K@Z
 @ cdecl -arch=win32 ??_U@YAPAXIHPBDH@Z(long long str long) msvcrt.??_U@YAPAXIHPBDH@Z
 @ cdecl -arch=win64 ??_U@YAPEAX_KHPEBDH@Z(long long str long) msvcrt.??_U@YAPEAX_KHPEBDH@Z
-@ cdecl -arch=win32 ??_V@YAXPAX@Z(ptr) msvcrt.??_V@YAXPAX@Z
-@ cdecl -arch=win64 ??_V@YAXPEAX@Z(ptr) msvcrt.??_V@YAXPEAX@Z
+@ cdecl -arch=win32 ??_V@YAXPAX@Z(ptr) MSVCR90_operator_delete
+@ cdecl -arch=win64 ??_V@YAXPEAX@Z(ptr) MSVCR90_operator_delete
 @ stub -arch=win32 ?_Name_base@type_info@@CAPBDPBV1@PAU__type_info_node@@@Z  # private: static char const * __cdecl type_info::_Name_base(class type_info const *,struct __type_info_node *)
 @ stub -arch=win64 ?_Name_base@type_info@@CAPEBDPEBV1@PEAU__type_info_node@@@Z  # private: static char const * __ptr64 __cdecl type_info::_Name_base(class type_info const * __ptr64,struct __type_info_node * __ptr64)
 @ stub -arch=win32 ?_Name_base_internal@type_info@@CAPBDPBV1@PAU__type_info_node@@@Z  # private: static char const * __cdecl type_info::_Name_base_internal(class type_info const *,struct __type_info_node *)
