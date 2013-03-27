@@ -38,6 +38,7 @@ die "Only BMP and ICO outputs are supported" unless $ext eq "bmp" or $ext eq "ic
 
 my $renderedSVGFileName = "$svgFileName.png";
 my @pngFiles;
+my @pngFilesRaw;
 
 # Get the programs from the environment variables
 my $convert = $ENV{"CONVERT"} || "convert";
@@ -49,6 +50,7 @@ sub cleanup()
 {
     unlink $renderedSVGFileName;
     unlink $_ foreach(@pngFiles);
+    unlink $_ foreach(@pngFilesRaw);
 }
 
 $SIG{"INT"} = "cleanup";
@@ -73,6 +75,8 @@ sub svg_element_start
 
     my $size = 0;
     my $depth = 0;
+    my $width = 0;
+    my $height = 0;
 
     if($ext eq "ico") {
         return unless $id =~ /icon:(\d*)-(\d*)/;
@@ -100,8 +104,8 @@ sub svg_element_start
         # Extract SVG vector images
         my $x = $attr{'x'};
         my $y = $attr{'y'};
-        my $width = $attr{'width'};
-        my $height = $attr{'height'};
+        $width = $attr{'width'};
+        $height = $attr{'height'};
 
         if(defined($x) and defined($x)) {
             if($x =~ /\d*/ and $y =~ /\d*/) {
@@ -126,7 +130,14 @@ sub svg_element_start
         return;
     }
 
-    push(@pngFiles, $pngFileName);
+    if ($width >= 128 && $height >= 128)
+    {
+        push(@pngFilesRaw, $pngFileName);
+    }
+    else
+    {
+        push(@pngFiles, $pngFileName);
+    }
 }
 
 # Render the SVG image
@@ -138,7 +149,7 @@ my $parser = new XML::Parser(
 $parser->parsefile("$svgFileName");
 
 # If no render directives were found, take the full image as-is
-unless(@pngFiles) {
+unless (@pngFiles || @pngFilesRaw) {
     my $pngFileName = "bmp$renderedSVGFileName";
     copy($renderedSVGFileName, $pngFileName) or die "File could not be copied";
     push(@pngFiles, $pngFileName);
@@ -148,7 +159,7 @@ unless(@pngFiles) {
 if($ext eq "ico") {
 
     # Place images into the ICO
-    shell $icotool, "-c", "-o", $outFileName, @pngFiles;
+    shell $icotool, "-c", "-o", $outFileName, @pngFiles, map { "--raw=$_"; } @pngFilesRaw;
 
 } elsif($ext eq "bmp") {
 
