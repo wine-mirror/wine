@@ -45,7 +45,7 @@
        context attached).  So, we finesse things by first setting the context's view to
        a different view (the content view of an off-screen window) and then letting the
        original implementation proceed. */
-    - (void) clearDrawable
+    - (void) clearDrawableLeavingSurfaceOnScreen
     {
         static NSWindow* dummyWindow;
         static dispatch_once_t once;
@@ -60,7 +60,7 @@
         });
 
         [self setView:[dummyWindow contentView]];
-        [super clearDrawable];
+        [self clearDrawable];
     }
 
 @end
@@ -99,7 +99,7 @@ void macdrv_dispose_opengl_context(macdrv_opengl_context c)
         macdrv_remove_view_opengl_context((macdrv_view)[context view], c);
     if ([context latentView])
         macdrv_remove_view_opengl_context((macdrv_view)[context latentView], c);
-    [context clearDrawable];
+    [context clearDrawableLeavingSurfaceOnScreen];
     [context release];
 
     [pool release];
@@ -143,7 +143,7 @@ void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v)
         else
         {
             [WineOpenGLContext clearCurrentContext];
-            [context clearDrawable];
+            [context clearDrawableLeavingSurfaceOnScreen];
         }
     }
     else
