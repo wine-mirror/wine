@@ -1016,17 +1016,17 @@ static HRESULT query_edit_status(HTMLDocument *This, OLECMD *cmd)
 static INT_PTR CALLBACK hyperlink_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static const WCHAR wszOther[] = {'(','o','t','h','e','r',')',0};
+    static const WCHAR wszFile[] = {'f','i','l','e',':',0};
+    static const WCHAR wszFtp[] = {'f','t','p',':',0};
+    static const WCHAR wszHttp[] = {'h','t','t','p',':',0};
+    static const WCHAR wszHttps[] = {'h','t','t','p','s',':',0};
+    static const WCHAR wszMailto[] = {'m','a','i','l','t','o',':',0};
+    static const WCHAR wszNews[] = {'n','e','w','s',':',0};
 
     switch (msg)
     {
         case WM_INITDIALOG:
         {
-            static const WCHAR wszFile[] = {'f','i','l','e',':',0};
-            static const WCHAR wszFtp[] = {'f','t','p',':',0};
-            static const WCHAR wszHttp[] = {'h','t','t','p',':',0};
-            static const WCHAR wszHttps[] = {'h','t','t','p','s',':',0};
-            static const WCHAR wszMailto[] = {'m','a','i','l','t','o',':',0};
-            static const WCHAR wszNews[] = {'n','e','w','s',':',0};
             INT def_idx;
             HWND hwndCB = GetDlgItem(hwnd, IDC_TYPE);
             HWND hwndURL = GetDlgItem(hwnd, IDC_URL);
@@ -1102,8 +1102,9 @@ static INT_PTR CALLBACK hyperlink_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LP
                     /* add new protocol */
                     if (*type != '\0')
                     {
-                        memcpy(url, type, strlenW(type) * sizeof(WCHAR));
-                        memcpy(url + strlenW(type), wszSlashSlash, sizeof(wszSlashSlash));
+                        memcpy(url, type, (strlenW(type) + 1) * sizeof(WCHAR));
+                        if (strcmpW(type, wszMailto) && strcmpW(type, wszNews))
+                            memcpy(url + strlenW(type), wszSlashSlash, sizeof(wszSlashSlash));
                     }
 
                     SetWindowTextW(hwndURL, url);
