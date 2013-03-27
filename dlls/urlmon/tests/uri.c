@@ -4521,7 +4521,57 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_UNKNOWN,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
-    }
+    },
+    {   "mailto://", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE,
+        {
+            {"mailto:",S_OK},
+            {"",S_FALSE},
+            {"mailto:",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"mailto://",S_OK,FALSE,"mailto:"},
+            {"mailto",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_MAILTO,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "mailto://a@b.com", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE,
+        {
+            {"mailto:a@b.com",S_OK},
+            {"",S_FALSE},
+            {"mailto:a@b.com",S_OK},
+            {"",S_FALSE},
+            {".com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"a@b.com",S_OK},
+            {"a@b.com",S_OK},
+            {"",S_FALSE},
+            {"mailto://a@b.com",S_OK,FALSE,"mailto:a@b.com"},
+            {"mailto",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_MAILTO,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+     }
 };
 
 typedef struct _invalid_uri {
@@ -7005,8 +7055,61 @@ static const uri_combine_test uri_combine_tests[] = {
             {URL_SCHEME_FILE,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
+    },
+    {   "http://winehq.org",0,
+        "mailto://",Uri_CREATE_NO_CANONICALIZE,
+        0,S_OK,FALSE,
+        {
+            {"mailto:",S_OK},
+            {"",S_FALSE},
+            {"mailto:",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"mailto://",S_OK,FALSE,"mailto:"},
+            {"mailto",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_MAILTO,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://winehq.org",0,
+        "mailto://a@b.com",Uri_CREATE_NO_CANONICALIZE,
+        0,S_OK,FALSE,
+        {
+            {"mailto:a@b.com",S_OK},
+            {"",S_FALSE},
+            {"mailto:a@b.com",S_OK},
+            {"",S_FALSE},
+            {".com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"a@b.com",S_OK},
+            {"a@b.com",S_OK},
+            {"",S_FALSE},
+            {"mailto://a@b.com",S_OK,FALSE,"mailto:a@b.com"},
+            {"mailto",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_MAILTO,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
     }
-
 };
 
 typedef struct _uri_parse_test {
@@ -10317,7 +10420,7 @@ static void test_CoInternetCombineIUri(void) {
                             todo_wine {
                                 ok(!strcmp_aw(prop.value, received) ||
                                    broken(prop.broken_value && !strcmp_aw(prop.broken_value, received)),
-                                    "Error: Expected %s but got %s instead on uri_combine_tests[%d].str_props[%d].\n",
+                                    "Error: Expected \"%s\" but got %s instead on uri_combine_tests[%d].str_props[%d].\n",
                                     prop.value, wine_dbgstr_w(received), i, j);
                             }
                         } else {
@@ -10326,7 +10429,7 @@ static void test_CoInternetCombineIUri(void) {
                                 hr, prop.expected, i, j);
                             ok(!strcmp_aw(prop.value, received) ||
                                broken(prop.broken_value && !strcmp_aw(prop.broken_value, received)),
-                                "Error: Expected %s but got %s instead on uri_combine_tests[%d].str_props[%d].\n",
+                                "Error: Expected \"%s\" but got %s instead on uri_combine_tests[%d].str_props[%d].\n",
                                 prop.value, wine_dbgstr_w(received), i, j);
                         }
                         SysFreeString(received);
@@ -10634,7 +10737,7 @@ static void test_CoInternetCombineUrlEx(void) {
                         todo_wine {
                             ok(!strcmp_aw(value, received) ||
                                broken(prop.broken_value && !strcmp_aw(prop.broken_value, received)),
-                                "Error: Expected %s but got %s instead on uri_combine_tests[%d].str_props[%d].\n",
+                                "Error: Expected \"%s\" but got %s instead on uri_combine_tests[%d].str_props[%d].\n",
                                 value, wine_dbgstr_w(received), i, j);
                         }
                     } else {
@@ -10643,7 +10746,7 @@ static void test_CoInternetCombineUrlEx(void) {
                             hr, prop.expected, i, j);
                         ok(!strcmp_aw(value, received) ||
                            broken(prop.broken_value && !strcmp_aw(prop.broken_value, received)),
-                            "Error: Expected %s but got %s instead on uri_combine_tests[%d].str_props[%d].\n",
+                            "Error: Expected \"%s\" but got %s instead on uri_combine_tests[%d].str_props[%d].\n",
                             value, wine_dbgstr_w(received), i, j);
                     }
                     SysFreeString(received);
