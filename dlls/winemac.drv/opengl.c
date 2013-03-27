@@ -2991,7 +2991,10 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share)
     attribs[n++] = kCGLPFAClosestPolicy;
 
     if (pf->accelerated)
+    {
         attribs[n++] = kCGLPFAAccelerated;
+        attribs[n++] = kCGLPFANoRecovery;
+    }
     else
     {
         attribs[n++] = kCGLPFARendererID;
