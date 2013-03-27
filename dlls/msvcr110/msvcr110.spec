@@ -1872,7 +1872,7 @@
 @ cdecl _wcstombs_s_l(ptr ptr long wstr long ptr) msvcrt._wcstombs_s_l
 @ cdecl -ret64 _wcstoui64(wstr ptr long) msvcrt._wcstoui64
 @ cdecl -ret64 _wcstoui64_l(wstr ptr long ptr) msvcrt._wcstoui64_l
-@ stub _wcstoul_l
+@ cdecl _wcstoul_l(wstr ptr long ptr) msvcrt._wcstoul_l
 @ cdecl _wcsupr(wstr) msvcrt._wcsupr
 @ stub _wcsupr_l
 @ cdecl _wcsupr_s(wstr long) msvcrt._wcsupr_s
@@ -1969,7 +1969,7 @@
 @ stub _wtoi64_l
 @ cdecl _wtoi_l(wstr ptr) msvcrt._wtoi_l
 @ cdecl _wtol(wstr) msvcrt._wtol
-@ stub _wtol_l
+@ cdecl _wtol_l(wstr ptr) msvcrt._wtol_l
 @ cdecl _wunlink(wstr) msvcrt._wunlink
 @ cdecl _wutime32(wstr ptr) msvcrt._wutime32
 @ cdecl _wutime64(wstr ptr) msvcrt._wutime64
