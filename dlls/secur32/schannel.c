@@ -281,14 +281,14 @@ static SECURITY_STATUS schan_QueryCredentialsAttributes(
             ret = SEC_E_INTERNAL_ERROR;
         break;
     case SECPKG_ATTR_SUPPORTED_PROTOCOLS:
-        if (pBuffer)
-        {
-            /* FIXME: get from OpenSSL? */
-            FIXME("SECPKG_ATTR_SUPPORTED_PROTOCOLS: stub\n");
-            ret = SEC_E_UNSUPPORTED_FUNCTION;
-        }
-        else
+        if(pBuffer) {
+            /* Regardless of MSDN documentation, tests show that this attribute takes into account
+             * what protocols are enabled for given credential. */
+            ((SecPkgCred_SupportedProtocols*)pBuffer)->grbitProtocol = cred->enabled_protocols;
+            ret = SEC_E_OK;
+        }else {
             ret = SEC_E_INTERNAL_ERROR;
+        }
         break;
     default:
         ret = SEC_E_UNSUPPORTED_FUNCTION;
