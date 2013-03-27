@@ -337,15 +337,16 @@ static HRESULT Array_join(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
         return hres;
 
     if(argc) {
-        jsstr_t *sep;
+        const WCHAR *sep;
+        jsstr_t *sep_str;
 
-        hres = to_string(ctx, argv[0], &sep);
+        hres = to_flat_string(ctx, argv[0], &sep_str, &sep);
         if(FAILED(hres))
             return hres;
 
-        hres = array_join(ctx, jsthis, length, sep->str, r);
+        hres = array_join(ctx, jsthis, length, sep, r);
 
-        jsstr_release(sep);
+        jsstr_release(sep_str);
     }else {
         hres = array_join(ctx, jsthis, length, default_separatorW, r);
     }
