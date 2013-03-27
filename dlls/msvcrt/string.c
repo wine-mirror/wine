@@ -1583,6 +1583,14 @@ char* __cdecl MSVCRT_strchr(const char *str, int c)
 }
 
 /*********************************************************************
+ *                  strncmp   (MSVCRT.@)
+ */
+int __cdecl MSVCRT_strncmp(const char *str1, const char *str2, MSVCRT_size_t len)
+{
+    return strncmp(str1, str2, len);
+}
+
+/*********************************************************************
  *                  _strnicmp_l   (MSVCRT.@)
  */
 int __cdecl MSVCRT__strnicmp_l(const char *s1, const char *s2,

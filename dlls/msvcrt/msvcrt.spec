@@ -1423,7 +1423,7 @@
 @ cdecl strlen(str) ntdll.strlen
 @ cdecl strncat(str str long) ntdll.strncat
 @ cdecl strncat_s(str long str long) MSVCRT_strncat_s
-@ cdecl strncmp(str str long) ntdll.strncmp
+@ cdecl strncmp(str str long) MSVCRT_strncmp
 @ cdecl strncpy(ptr str long) ntdll.strncpy
 @ cdecl strncpy_s(ptr long str long)
 @ cdecl strnlen(str long) MSVCRT_strnlen
