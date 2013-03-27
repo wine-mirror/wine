@@ -1099,6 +1099,7 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     "NVIDIA GeForce GTX 280",           DRIVER_NVIDIA_GEFORCE6,  1024},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_315M,       "NVIDIA GeForce 315M",              DRIVER_NVIDIA_GEFORCE6,  512 },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_320M,       "NVIDIA GeForce 320M",              DRIVER_NVIDIA_GEFORCE6,  256},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_410M,       "NVIDIA GeForce 410M",              DRIVER_NVIDIA_GEFORCE6,  512},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT320M,     "NVIDIA GeForce GT 320M",           DRIVER_NVIDIA_GEFORCE6,  1024},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT325M,     "NVIDIA GeForce GT 325M",           DRIVER_NVIDIA_GEFORCE6,  1024},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT330,      "NVIDIA GeForce GT 330",            DRIVER_NVIDIA_GEFORCE6,  1024},
@@ -1553,6 +1554,7 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
             {"GT 440",      CARD_NVIDIA_GEFORCE_GT440},     /* Geforce 400 - lowend */
             {"GT 430",      CARD_NVIDIA_GEFORCE_GT430},     /* Geforce 400 - lowend */
             {"GT 420",      CARD_NVIDIA_GEFORCE_GT420},     /* Geforce 400 - lowend */
+            {"410M",        CARD_NVIDIA_GEFORCE_410M},      /* Geforce 400 - lowend mobile */
             {"GT 330",      CARD_NVIDIA_GEFORCE_GT330},     /* Geforce 300 - highend */
             {"GTS 360M",    CARD_NVIDIA_GEFORCE_GTS350M},   /* Geforce 300 - highend mobile */
             {"GTS 350M",    CARD_NVIDIA_GEFORCE_GTS350M},   /* Geforce 300 - highend mobile */
