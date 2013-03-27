@@ -1226,8 +1226,8 @@
 @ cdecl -ret64 _wtoi64(wstr) ntdll._wtoi64
 # stub -ret64 _wtoi64_l(wstr ptr)
 @ cdecl _wtoi_l(wstr ptr) MSVCRT__wtoi_l
-@ cdecl _wtol(wstr) ntdll._wtol
-# stub _wtol_l(wstr ptr)
+@ cdecl _wtol(wstr) MSVCRT__wtol
+@ cdecl _wtol_l(wstr ptr) MSVCRT__wtol_l
 @ cdecl _wunlink(wstr) MSVCRT__wunlink
 @ cdecl _wutime(wstr ptr)
 @ cdecl _wutime32(wstr ptr)

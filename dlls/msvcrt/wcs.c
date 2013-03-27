@@ -1472,6 +1472,31 @@ int __cdecl MSVCRT__wtoi(const MSVCRT_wchar_t *str)
 }
 
 /*********************************************************************
+ *  _wtol_l (MSVCRT.@)
+ */
+MSVCRT_long __cdecl MSVCRT__wtol_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t locale)
+{
+    __int64 ret = MSVCRT__wcstoi64_l(str, NULL, 10, locale);
+
+    if(ret > MSVCRT_LONG_MAX) {
+        ret = MSVCRT_LONG_MAX;
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+    } else if(ret < MSVCRT_LONG_MIN) {
+        ret = MSVCRT_LONG_MIN;
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+    }
+    return ret;
+}
+
+/*********************************************************************
+ *  _wtol (MSVCRT.@)
+ */
+MSVCRT_long __cdecl MSVCRT__wtol(const MSVCRT_wchar_t *str)
+{
+    return MSVCRT__wtol_l(str, NULL);
+}
+
+/*********************************************************************
  *  _wcstoui64_l (MSVCRT.@)
  *
  * FIXME: locale parameter is ignored
