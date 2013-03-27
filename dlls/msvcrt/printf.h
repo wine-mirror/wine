@@ -307,22 +307,25 @@ static inline void FUNC_NAME(pf_fixup_exponent)(char *buf)
 
     if(tmp[0] && (tmp[1]=='+' || tmp[1]=='-') &&
             isdigit(tmp[2]) && isdigit(tmp[3])) {
-        char final;
-
-        if (isdigit(tmp[4]))
-            return; /* Exponent already 3 digits */
+        BOOL two_digit_exp = (_get_output_format() == MSVCRT__TWO_DIGIT_EXPONENT);
 
         tmp += 2;
-        final = tmp[2];
+        if(isdigit(tmp[2])) {
+            if(two_digit_exp && tmp[0]=='0') {
+                tmp[0] = tmp[1];
+                tmp[1] = tmp[2];
+                tmp[2] = tmp[3];
+            }
+
+            return; /* Exponent already 3 digits */
+        }else if(two_digit_exp) {
+            return;
+        }
+
+        tmp[3] = tmp[2];
         tmp[2] = tmp[1];
         tmp[1] = tmp[0];
         tmp[0] = '0';
-
-        if(final == '\0') {
-            tmp[3] = '\0';
-            if(buf[0] == ' ')
-                memmove(buf, buf + 1, (tmp - buf) + 3);
-        }
     }
 }
 

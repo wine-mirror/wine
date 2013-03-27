@@ -29,6 +29,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
+static unsigned int output_format;
 
 /*********************************************************************
  *		_beep (MSVCRT.@)
@@ -283,7 +284,21 @@ void CDECL MSVCRT_qsort_s(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
  */
 unsigned int CDECL _get_output_format(void)
 {
-   return 0;
+   return output_format;
+}
+
+/*********************************************************************
+ * _set_output_format (MSVCRT.@)
+ */
+unsigned int CDECL _set_output_format(unsigned int new_output_format)
+{
+    unsigned int ret = output_format;
+
+    if(!MSVCRT_CHECK_PMT(new_output_format==0 || new_output_format==MSVCRT__TWO_DIGIT_EXPONENT))
+        return ret;
+
+    output_format = new_output_format;
+    return ret;
 }
 
 /*********************************************************************

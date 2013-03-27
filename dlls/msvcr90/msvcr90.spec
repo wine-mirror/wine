@@ -924,7 +924,7 @@
 @ cdecl _set_fmode(long) msvcrt._set_fmode
 @ cdecl _set_invalid_parameter_handler(ptr) msvcrt._set_invalid_parameter_handler
 @ stub _set_malloc_crt_max_wait
-@ stub _set_output_format
+@ cdecl _set_output_format(long) msvcrt._set_output_format
 @ cdecl _set_printf_count_output(long) msvcrt._set_printf_count_output
 @ cdecl _set_purecall_handler(ptr) msvcrt._set_purecall_handler
 @ cdecl _set_sbh_threshold(long) msvcrt._set_sbh_threshold
