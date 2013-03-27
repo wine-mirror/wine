@@ -1453,8 +1453,8 @@
 # stub tmpnam_s(ptr long)
 @ cdecl tolower(long) MSVCRT_tolower
 @ cdecl toupper(long) MSVCRT_toupper
-@ cdecl towlower(long) ntdll.towlower
-@ cdecl towupper(long) ntdll.towupper
+@ cdecl towlower(long) MSVCRT_towlower
+@ cdecl towupper(long) MSVCRT_towupper
 @ cdecl ungetc(long ptr) MSVCRT_ungetc
 @ cdecl ungetwc(long ptr) MSVCRT_ungetwc
 # stub utime

@@ -1592,9 +1592,25 @@ int CDECL MSVCRT__towupper_l(MSVCRT_wint_t c, MSVCRT__locale_t locale)
 }
 
 /*********************************************************************
+ *              towupper (MSVCRT.@)
+ */
+int CDECL MSVCRT_towupper(MSVCRT_wint_t c)
+{
+    return MSVCRT__towupper_l(c, NULL);
+}
+
+/*********************************************************************
  *              _towlower_l (MSVCRT.@)
  */
 int CDECL MSVCRT__towlower_l(MSVCRT_wint_t c, MSVCRT__locale_t locale)
 {
     return tolowerW(c);
+}
+
+/*********************************************************************
+ *              towlower (MSVCRT.@)
+ */
+int CDECL MSVCRT_towlower(MSVCRT_wint_t c)
+{
+    return MSVCRT__towlower_l(c, NULL);
 }
