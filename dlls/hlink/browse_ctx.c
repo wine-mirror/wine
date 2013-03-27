@@ -295,11 +295,19 @@ static HRESULT WINAPI IHlinkBC_GetHlink(IHlinkBrowseContext* iface, ULONG hlid, 
     return S_OK;
 }
 
-static HRESULT WINAPI IHlinkBC_SetCurrentHlink( IHlinkBrowseContext* iface,
-        ULONG uHLID)
+static HRESULT WINAPI IHlinkBC_SetCurrentHlink(IHlinkBrowseContext* iface, ULONG hlid)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HlinkBCImpl *This = impl_from_IHlinkBrowseContext(iface);
+    struct link_entry *link;
+
+    TRACE("(%p)->(0x%08x)\n", This, hlid);
+
+    link = context_get_entry(This, hlid);
+    if (!link)
+        return E_FAIL;
+
+    This->current = link;
+    return S_OK;
 }
 
 static HRESULT WINAPI IHlinkBC_Clone( IHlinkBrowseContext* iface,
