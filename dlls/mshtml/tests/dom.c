@@ -5392,6 +5392,34 @@ static void _set_button_name(unsigned line, IHTMLElement *elem, const char *name
     _test_button_name(line, elem, name);
 }
 
+#define test_button_get_disabled(i,b) _test_button_get_disabled(__LINE__,i,b)
+static void _test_button_get_disabled(unsigned line, IHTMLElement *elem, VARIANT_BOOL exb)
+{
+    IHTMLButtonElement *button = _get_button_iface(line, (IUnknown*)elem);
+    VARIANT_BOOL disabled = 100;
+    HRESULT hres;
+
+    hres = IHTMLButtonElement_get_disabled(button, &disabled);
+    ok_(__FILE__,line) (hres == S_OK, "get_disabled failed: %08x\n", hres);
+    ok_(__FILE__,line) (disabled == exb, "disabled=%x, expected %x\n", disabled, exb);
+    IHTMLButtonElement_Release(button);
+
+    _test_elem3_get_disabled(line, (IUnknown*)elem, exb);
+}
+
+#define test_button_set_disabled(i,b) _test_button_set_disabled(__LINE__,i,b)
+static void _test_button_set_disabled(unsigned line, IHTMLElement *elem, VARIANT_BOOL b)
+{
+    IHTMLButtonElement *button = _get_button_iface(line, (IUnknown*)elem);
+    HRESULT hres;
+
+    hres = IHTMLButtonElement_put_disabled(button, b);
+    ok_(__FILE__,line) (hres == S_OK, "put_disabled failed: %08x\n", hres);
+    IHTMLButtonElement_Release(button);
+
+    _test_button_get_disabled(line, elem, b);
+}
+
 static void test_button_elem(IHTMLElement *elem)
 {
     test_button_name(elem, NULL);
@@ -6151,6 +6179,10 @@ static void test_elems(IHTMLDocument2 *doc)
     ok(elem != NULL, "elem == NULL\n");
     if(elem) {
         test_button_elem(elem);
+        test_button_get_disabled(elem, VARIANT_FALSE);
+        test_button_set_disabled(elem, VARIANT_TRUE);
+        test_elem3_set_disabled((IUnknown*)elem, VARIANT_FALSE);
+        test_button_get_disabled(elem, VARIANT_FALSE);
         IHTMLElement_Release(elem);
     }
 
