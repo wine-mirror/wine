@@ -2016,7 +2016,9 @@ int CDECL MSVCRT_mbtowc_l(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n,
 
     if(n <= 0 || !str)
         return 0;
-    if(!MultiByteToWideChar(locinfo->lc_codepage, 0, str, n, &tmpdst, 1))
+    if(!locinfo->lc_codepage)
+        tmpdst = (unsigned char)*str;
+    else if(!MultiByteToWideChar(locinfo->lc_codepage, 0, str, n, &tmpdst, 1))
         return -1;
     if(dst)
         *dst = tmpdst;
