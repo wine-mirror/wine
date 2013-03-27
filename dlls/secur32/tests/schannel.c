@@ -166,6 +166,31 @@ static void test_strength(PCredHandle handle)
     trace("strength %d - %d\n", strength.dwMinimumCipherStrength, strength.dwMaximumCipherStrength);
 }
 
+static void test_supported_protocols(CredHandle *handle, unsigned exprots)
+{
+    SecPkgCred_SupportedProtocols protocols;
+    SECURITY_STATUS status;
+
+    status = pQueryCredentialsAttributesA(handle, SECPKG_ATTR_SUPPORTED_PROTOCOLS, &protocols);
+    ok(status == SEC_E_OK, "QueryCredentialsAttributes failed: %08x\n", status);
+
+    if(exprots)
+        ok(protocols.grbitProtocol == exprots, "protocols.grbitProtocol = %x, expected %x\n", protocols.grbitProtocol, exprots);
+
+    trace("Supported protocols:\n");
+
+#define X(flag, name) do { if(protocols.grbitProtocol & flag) { trace(name "\n"); protocols.grbitProtocol &= ~flag; } }while(0)
+    X(SP_PROT_SSL2_CLIENT, "SSL 2 client");
+    X(SP_PROT_SSL3_CLIENT, "SSL 3 client");
+    X(SP_PROT_TLS1_0_CLIENT, "TLS 1.0 client");
+    X(SP_PROT_TLS1_1_CLIENT, "TLS 1.1 client");
+    X(SP_PROT_TLS1_2_CLIENT, "TLS 1.2 client");
+#undef X
+
+    if(protocols.grbitProtocol)
+        trace("Unknown flags: %x\n", protocols.grbitProtocol);
+}
+
 static void testAcquireSecurityContext(void)
 {
     BOOL has_schannel = FALSE;
@@ -261,8 +286,13 @@ static void testAcquireSecurityContext(void)
     st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
      NULL, NULL, NULL, NULL, &cred, NULL);
     ok(st == SEC_E_OK, "AcquireCredentialsHandleA failed: %08x\n", st);
-    if(st == SEC_E_OK)
+    if(st == SEC_E_OK) {
+        st = pQueryCredentialsAttributesA(&cred, SECPKG_ATTR_SUPPORTED_PROTOCOLS, NULL);
+        ok(st == SEC_E_INTERNAL_ERROR, "QueryCredentialsAttributes failed: %08x, expected SEC_E_INTERNAL_ERROR\n", st);
+
+        test_supported_protocols(&cred, 0);
         pFreeCredentialsHandle(&cred);
+    }
     memset(&cred, 0, sizeof(cred));
     st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
      NULL, NULL, NULL, NULL, &cred, &exp);
@@ -649,6 +679,8 @@ static void test_communication(void)
         &cred, NULL, NULL, &cred_handle, NULL);
     ok(status == SEC_E_OK, "AcquireCredentialsHandleA failed: %08x\n", status);
     if (status != SEC_E_OK) return;
+
+    test_supported_protocols(&cred_handle, SP_PROT_SSL3_CLIENT);
 
     /* Initialize the connection */
     init_buffers(&buffers[0], 4, buf_size);
