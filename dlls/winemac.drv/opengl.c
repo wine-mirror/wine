@@ -115,33 +115,55 @@ struct color_mode {
     int     blue_bits, blue_shift;
     GLint   alpha_bits, alpha_shift;
     BOOL    is_float;
+    int     color_ordering;
 };
 
+/* The value of "color_ordering" is somewhat arbitrary.  It incorporates some
+   observations of the behavior of Windows systems, but also subjective judgments
+   about what color formats are more "normal" than others.
+
+   On at least some Windows systems, integer color formats are listed before
+   floating-point formats.  Within the integer formats, higher color bits were
+   usually listed before lower color bits, while for floating-point formats it
+   was the reverse.  However, that leads D3D to select 64-bit integer formats in
+   preference to 32-bit formats when the latter would be sufficient.  It seems
+   that a 32-bit format is much more likely to be normally used in that case.
+
+   Also, there are certain odd color formats supported on the Mac which seem like
+   they would be less appropriate than more common ones.  For instance, the color
+   formats with alpha in a separate byte (e.g. kCGLRGB888A8Bit with R8G8B8 in one
+   32-bit value and A8 in a separate 8-bit value) and the formats with 10-bit RGB
+   components.
+
+   For two color formats which differ only in whether or not they have alpha bits,
+   we use the same ordering.  pixel_format_comparator() gives alpha bits a
+   different weight than color formats.
+ */
 static const struct color_mode color_modes[] = {
-    { kCGLRGB444Bit,        16,     12,     4,  8,      4,  4,      4,  0,      0,  0,  FALSE },
-    { kCGLARGB4444Bit,      16,     16,     4,  8,      4,  4,      4,  0,      4,  12, FALSE },
-    { kCGLRGB444A8Bit,      24,     20,     4,  8,      4,  4,      4,  0,      8,  16, FALSE },
-    { kCGLRGB555Bit,        16,     15,     5,  10,     5,  5,      5,  0,      0,  0,  FALSE },
-    { kCGLARGB1555Bit,      16,     16,     5,  10,     5,  5,      5,  0,      1,  15, FALSE },
-    { kCGLRGB555A8Bit,      24,     23,     5,  10,     5,  5,      5,  0,      8,  16, FALSE },
-    { kCGLRGB565Bit,        16,     16,     5,  11,     6,  5,      5,  0,      0,  0,  FALSE },
-    { kCGLRGB565A8Bit,      24,     24,     5,  11,     6,  5,      5,  0,      8,  16, FALSE },
-    { kCGLRGB888Bit,        32,     24,     8,  16,     8,  8,      8,  0,      0,  0,  FALSE },
-    { kCGLARGB8888Bit,      32,     32,     8,  16,     8,  8,      8,  0,      8,  24, FALSE },
-    { kCGLRGB888A8Bit,      40,     32,     8,  16,     8,  8,      8,  0,      8,  32, FALSE },
-    { kCGLRGB101010Bit,     32,     30,     10, 20,     10, 10,     10, 0,      0,  0,  FALSE },
-    { kCGLARGB2101010Bit,   32,     32,     10, 20,     10, 10,     10, 0,      2,  30, FALSE },
-    { kCGLRGB101010_A8Bit,  40,     38,     10, 20,     10, 10,     10, 0,      8,  32, FALSE },
-    { kCGLRGB121212Bit,     48,     36,     12, 24,     12, 12,     12, 0,      0,  0,  FALSE },
-    { kCGLARGB12121212Bit,  48,     48,     12, 24,     12, 12,     12, 0,      12, 36, FALSE },
-    { kCGLRGB161616Bit,     64,     48,     16, 48,     16, 32,     16, 16,     0,  0,  FALSE },
-    { kCGLRGBA16161616Bit,  64,     64,     16, 48,     16, 32,     16, 16,     16, 0,  FALSE },
-    { kCGLRGBFloat64Bit,    64,     48,     16, 32,     16, 16,     16, 0,      0,  0,  TRUE },
-    { kCGLRGBAFloat64Bit,   64,     64,     16, 48,     16, 32,     16, 16,     16, 0,  TRUE },
-    { kCGLRGBFloat128Bit,   128,    96,     32, 96,     32, 64,     32, 32,     0,  0,  TRUE },
-    { kCGLRGBAFloat128Bit,  128,    128,    32, 96,     32, 64,     32, 32,     32, 0,  TRUE },
-    { kCGLRGBFloat256Bit,   256,    192,    64, 192,    64, 128,    64, 64,     0,  0,  TRUE },
-    { kCGLRGBAFloat256Bit,  256,    256,    64, 192,    64, 128,    64, 64,     64, 0,  TRUE },
+    { kCGLRGB444Bit,        16,     12,     4,  8,      4,  4,      4,  0,      0,  0,  FALSE,  5 },
+    { kCGLARGB4444Bit,      16,     16,     4,  8,      4,  4,      4,  0,      4,  12, FALSE,  5 },
+    { kCGLRGB444A8Bit,      24,     20,     4,  8,      4,  4,      4,  0,      8,  16, FALSE,  10 },
+    { kCGLRGB555Bit,        16,     15,     5,  10,     5,  5,      5,  0,      0,  0,  FALSE,  4 },
+    { kCGLARGB1555Bit,      16,     16,     5,  10,     5,  5,      5,  0,      1,  15, FALSE,  4 },
+    { kCGLRGB555A8Bit,      24,     23,     5,  10,     5,  5,      5,  0,      8,  16, FALSE,  9 },
+    { kCGLRGB565Bit,        16,     16,     5,  11,     6,  5,      5,  0,      0,  0,  FALSE,  3 },
+    { kCGLRGB565A8Bit,      24,     24,     5,  11,     6,  5,      5,  0,      8,  16, FALSE,  8 },
+    { kCGLRGB888Bit,        32,     24,     8,  16,     8,  8,      8,  0,      0,  0,  FALSE,  0 },
+    { kCGLARGB8888Bit,      32,     32,     8,  16,     8,  8,      8,  0,      8,  24, FALSE,  0 },
+    { kCGLRGB888A8Bit,      40,     32,     8,  16,     8,  8,      8,  0,      8,  32, FALSE,  7 },
+    { kCGLRGB101010Bit,     32,     30,     10, 20,     10, 10,     10, 0,      0,  0,  FALSE,  6 },
+    { kCGLARGB2101010Bit,   32,     32,     10, 20,     10, 10,     10, 0,      2,  30, FALSE,  6 },
+    { kCGLRGB101010_A8Bit,  40,     38,     10, 20,     10, 10,     10, 0,      8,  32, FALSE,  11 },
+    { kCGLRGB121212Bit,     48,     36,     12, 24,     12, 12,     12, 0,      0,  0,  FALSE,  2 },
+    { kCGLARGB12121212Bit,  48,     48,     12, 24,     12, 12,     12, 0,      12, 36, FALSE,  2 },
+    { kCGLRGB161616Bit,     64,     48,     16, 48,     16, 32,     16, 16,     0,  0,  FALSE,  1 },
+    { kCGLRGBA16161616Bit,  64,     64,     16, 48,     16, 32,     16, 16,     16, 0,  FALSE,  1 },
+    { kCGLRGBFloat64Bit,    64,     48,     16, 32,     16, 16,     16, 0,      0,  0,  TRUE,   12 },
+    { kCGLRGBAFloat64Bit,   64,     64,     16, 48,     16, 32,     16, 16,     16, 0,  TRUE,   12 },
+    { kCGLRGBFloat128Bit,   128,    96,     32, 96,     32, 64,     32, 32,     0,  0,  TRUE,   13 },
+    { kCGLRGBAFloat128Bit,  128,    128,    32, 96,     32, 64,     32, 32,     32, 0,  TRUE,   13 },
+    { kCGLRGBFloat256Bit,   256,    192,    64, 192,    64, 128,    64, 64,     0,  0,  TRUE,   14 },
+    { kCGLRGBAFloat256Bit,  256,    256,    64, 192,    64, 128,    64, 64,     64, 0,  TRUE,   15 },
 };
 
 
@@ -837,25 +859,10 @@ static CFComparisonResult pixel_format_comparator(const void *val1, const void *
     if (!pf1.accelerated && pf2.accelerated)
         return kCFCompareGreaterThan;
 
-    /* Integer color modes before floating-point. */
-    if (!color_modes[pf1.color_mode].is_float && color_modes[pf2.color_mode].is_float)
+    /* Explicit color mode ordering. */
+    if (color_modes[pf1.color_mode].color_ordering < color_modes[pf2.color_mode].color_ordering)
         return kCFCompareLessThan;
-    if (color_modes[pf1.color_mode].is_float && !color_modes[pf2.color_mode].is_float)
-        return kCFCompareGreaterThan;
-
-    /* For integer color modes, higher color bits before lower.  For floating-point mode,
-       the reverse. */
-    if (color_modes[pf1.color_mode].color_bits - color_modes[pf1.color_mode].alpha_bits >
-        color_modes[pf2.color_mode].color_bits - color_modes[pf2.color_mode].alpha_bits)
-        return color_modes[pf1.color_mode].is_float ? kCFCompareGreaterThan : kCFCompareLessThan;
-    if (color_modes[pf1.color_mode].color_bits - color_modes[pf1.color_mode].alpha_bits <
-        color_modes[pf2.color_mode].color_bits - color_modes[pf2.color_mode].alpha_bits)
-        return color_modes[pf1.color_mode].is_float ? kCFCompareLessThan : kCFCompareGreaterThan;
-
-    /* Mac-ism: in the rare case that color bits are equal but bpp are not, prefer fewer bpp. */
-    if (color_modes[pf1.color_mode].bits_per_pixel < color_modes[pf2.color_mode].bits_per_pixel)
-        return kCFCompareLessThan;
-    if (color_modes[pf1.color_mode].bits_per_pixel > color_modes[pf2.color_mode].bits_per_pixel)
+    if (color_modes[pf1.color_mode].color_ordering > color_modes[pf2.color_mode].color_ordering)
         return kCFCompareGreaterThan;
 
     /* Non-pbuffer-capable before pbuffer-capable. */
