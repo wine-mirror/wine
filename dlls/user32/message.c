@@ -2453,8 +2453,8 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
     }
     accept_hardware_message( hw_id, remove, 0 );
 
-    if ( msg->message == WM_KEYDOWN || msg->message == WM_KEYUP )
-        if ( ImmProcessKey(msg->hwnd, GetKeyboardLayout(0), msg->wParam, msg->lParam, 0) )
+    if ( remove && msg->message == WM_KEYDOWN )
+        if (ImmProcessKey(msg->hwnd, GetKeyboardLayout(0), msg->wParam, msg->lParam, 0) )
             msg->wParam = VK_PROCESSKEY;
 
     return TRUE;
