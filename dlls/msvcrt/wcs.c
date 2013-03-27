@@ -70,6 +70,14 @@ MSVCRT_wchar_t* CDECL MSVCRT__wcsdup( const MSVCRT_wchar_t* str )
 }
 
 /*********************************************************************
+ *		_wcsicmp (MSVCRT.@)
+ */
+INT CDECL MSVCRT__wcsicmp( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2 )
+{
+    return strcmpiW( str1, str2 );
+}
+
+/*********************************************************************
  *		_wcsicoll (MSVCRT.@)
  */
 INT CDECL MSVCRT__wcsicoll( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2 )

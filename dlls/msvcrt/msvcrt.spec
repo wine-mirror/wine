@@ -1098,7 +1098,7 @@
 @ cdecl _wcserror(long) MSVCRT__wcserror
 @ cdecl _wcserror_s(ptr long long)
 # stub _wcsftime_l(ptr long wstr ptr ptr)
-@ cdecl _wcsicmp(wstr wstr) ntdll._wcsicmp
+@ cdecl _wcsicmp(wstr wstr) MSVCRT__wcsicmp
 # stub _wcsicmp_l(wstr wstr ptr)
 @ cdecl _wcsicoll(wstr wstr) MSVCRT__wcsicoll
 # stub _wcsicoll_l(wstr wstr ptr)
