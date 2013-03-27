@@ -44,6 +44,7 @@ static int (__cdecl *p__ecvt_s)(char *buffer, size_t length, double number,
 static int (__cdecl *p__fcvt_s)(char *buffer, size_t length, double number,
                                 int ndigits, int *decpt, int *sign);
 static unsigned int (__cdecl *p__get_output_format)(void);
+static unsigned int (__cdecl *p__set_output_format)(unsigned int);
 static int (__cdecl *p__vsprintf_p)(char*, size_t, const char*, __ms_va_list);
 static int (__cdecl *p_vswprintf)(wchar_t *str, const wchar_t *format, __ms_va_list valist);
 static int (__cdecl *p__vswprintf)(wchar_t *str, const wchar_t *format, __ms_va_list valist);
@@ -66,6 +67,7 @@ static void init( void )
     p__ecvt_s = (void *)GetProcAddress(hmod, "_ecvt_s");
     p__fcvt_s = (void *)GetProcAddress(hmod, "_fcvt_s");
     p__get_output_format = (void *)GetProcAddress(hmod, "_get_output_format");
+    p__set_output_format = (void *)GetProcAddress(hmod, "_set_output_format");
     p__vsprintf_p = (void*)GetProcAddress(hmod, "_vsprintf_p");
     p_vswprintf = (void*)GetProcAddress(hmod, "vswprintf");
     p__vswprintf = (void*)GetProcAddress(hmod, "_vswprintf");
@@ -1316,15 +1318,34 @@ static void test_vsprintf_p(void)
 static void test__get_output_format(void)
 {
     unsigned int ret;
+    char buf[64];
+    int c;
 
-    if (!p__get_output_format)
+    if (!p__get_output_format || !p__set_output_format)
     {
-        win_skip("_get_output_format not available\n");
+        win_skip("_get_output_format or _set_output_format is not available\n");
         return;
     }
 
     ret = p__get_output_format();
     ok(ret == 0, "got %d\n", ret);
+
+    c = sprintf(buf, "%E", 1.23);
+    ok(c == 13, "c = %d\n", c);
+    ok(!strcmp(buf, "1.230000E+000"), "buf = %s\n", buf);
+
+    ret = p__set_output_format(_TWO_DIGIT_EXPONENT);
+    ok(ret == 0, "got %d\n", ret);
+
+    c = sprintf(buf, "%E", 1.23);
+    ok(c == 12, "c = %d\n", c);
+    ok(!strcmp(buf, "1.230000E+00"), "buf = %s\n", buf);
+
+    ret = p__get_output_format();
+    ok(ret == _TWO_DIGIT_EXPONENT, "got %d\n", ret);
+
+    ret = p__set_output_format(_TWO_DIGIT_EXPONENT);
+    ok(ret == _TWO_DIGIT_EXPONENT, "got %d\n", ret);
 }
 
 START_TEST(printf)
