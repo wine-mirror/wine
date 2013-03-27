@@ -865,6 +865,63 @@ static void test_fgetwc_locale(const char* text, const char* locale, int codepag
     unlink(tempfile);
 }
 
+static void test_fgetwc_unicode(void)
+{
+    char temppath[MAX_PATH], tempfile[MAX_PATH];
+    FILE *tempfh;
+    static const WCHAR wchar_text[] = { 0xfeff, 0xff1f, '!' };
+    char utf8_text[BUFSIZ];
+    int ret, i;
+    wint_t ch;
+
+    GetTempPath(MAX_PATH, temppath);
+    GetTempFileName(temppath, "", 0, tempfile);
+
+    if (!p_fopen_s)
+    {
+        win_skip("fopen_s not available\n");
+        return;
+    }
+
+    tempfh = fopen(tempfile, "wb");
+    ok(tempfh != NULL, "can't open tempfile\n");
+    fwrite(wchar_text, 1, sizeof(wchar_text), tempfh);
+    fclose(tempfh);
+
+    tempfh = fopen(tempfile, "rt,ccs=unicode");
+    ok(tempfh != NULL, "can't open tempfile\n");
+    for (i = 1; i < sizeof(wchar_text)/sizeof(wchar_text[0]); i++)
+    {
+        ch = fgetwc(tempfh);
+        ok(ch == wchar_text[i],
+           "got %04hx, expected %04x (unicode[%d])\n", ch, wchar_text[i], i-1);
+    }
+    ch = fgetwc(tempfh);
+    ok(ch == WEOF, "got %04hx, expected WEOF (unicode)\n", ch);
+    fclose(tempfh);
+
+    tempfh = fopen(tempfile, "wb");
+    ok(tempfh != NULL, "can't open tempfile\n");
+    ret = WideCharToMultiByte(CP_UTF8, 0, wchar_text, sizeof(wchar_text)/sizeof(wchar_text[0]),
+                              utf8_text, sizeof(utf8_text), NULL, NULL);
+    ok(ret > 0, "utf-8 conversion failed\n");
+    fwrite(utf8_text, sizeof(char), ret, tempfh);
+    fclose(tempfh);
+
+    tempfh = fopen(tempfile, "rt, ccs=UTF-8");
+    ok(tempfh != NULL, "can't open tempfile\n");
+    for (i = 1; i < sizeof(wchar_text)/sizeof(wchar_text[0]); i++)
+    {
+        ch = fgetwc(tempfh);
+        ok(ch == wchar_text[i],
+           "got %04hx, expected %04x (utf8[%d])\n", ch, wchar_text[i], i-1);
+    }
+    ch = fgetwc(tempfh);
+    ok(ch == WEOF, "got %04hx, expected WEOF (utf8)\n", ch);
+    fclose(tempfh);
+    unlink(temppath);
+}
+
 static void test_fputwc(void)
 {
     char temppath[MAX_PATH];
@@ -2127,6 +2184,7 @@ START_TEST(file)
     test_fgetwc_locale("AB\x83\xa9", "English", 1252);
     /* \x83 is U+0083 */
     test_fgetwc_locale("AB\x83\xa9", "C", 0);
+    test_fgetwc_unicode();
     test_fputwc();
     test_ctrlz();
     test_file_put_get();
