@@ -1368,7 +1368,7 @@
 @ cdecl memcpy_s(ptr long ptr long)
 @ cdecl memmove(ptr ptr long) ntdll.memmove
 @ cdecl memmove_s(ptr long ptr long)
-@ cdecl memset(ptr long long) ntdll.memset
+@ cdecl memset(ptr long long) MSVCRT_memset
 @ cdecl mktime(ptr) MSVCRT_mktime
 @ cdecl modf(double ptr) MSVCRT_modf
 @ cdecl -arch=arm,x86_64 modff(float ptr) MSVCRT_modff

@@ -1567,6 +1567,14 @@ void * __cdecl MSVCRT_memcpy( void *dst, const void *src, size_t n )
 }
 
 /*********************************************************************
+ *		    memset (MSVCRT.@)
+ */
+void* __cdecl MSVCRT_memset(void *dst, int c, MSVCRT_size_t n)
+{
+    return memset(dst, c, n);
+}
+
+/*********************************************************************
  *                  _strnicmp_l   (MSVCRT.@)
  */
 int __cdecl MSVCRT__strnicmp_l(const char *s1, const char *s2,
