@@ -776,6 +776,23 @@ HRESULT to_string(script_ctx_t *ctx, jsval_t val, jsstr_t **str)
     return *str ? S_OK : E_OUTOFMEMORY;
 }
 
+HRESULT to_flat_string(script_ctx_t *ctx, jsval_t val, jsstr_t **str, const WCHAR **ret_str)
+{
+    HRESULT hres;
+
+    hres = to_string(ctx, val, str);
+    if(FAILED(hres))
+        return hres;
+
+    *ret_str = jsstr_flatten(*str);
+    if(!*ret_str) {
+        jsstr_release(*str);
+        return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
+}
+
 /* ECMA-262 3rd Edition    9.9 */
 HRESULT to_object(script_ctx_t *ctx, jsval_t val, IDispatch **disp)
 {
