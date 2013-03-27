@@ -130,9 +130,9 @@
 @ stdcall D3DXQuaternionToAxisAngle(ptr ptr ptr) d3dx10_43.D3DXQuaternionToAxisAngle
 @ stdcall D3DXSHAdd(ptr long ptr ptr) d3dx10_43.D3DXSHAdd
 @ stdcall D3DXSHDot(long ptr ptr) d3dx10_43.D3DXSHDot
-@ stdcall D3DXSHEvalConeLight(long ptr long long long long ptr ptr ptr) d3dx10_43.D3DXSHEvalConeLight
+@ stdcall D3DXSHEvalConeLight(long ptr float float float float ptr ptr ptr) d3dx10_43.D3DXSHEvalConeLight
 @ stdcall D3DXSHEvalDirection(ptr long ptr) d3dx10_43.D3DXSHEvalDirection
-@ stdcall D3DXSHEvalDirectionalLight(long ptr long long long long ptr ptr ptr) d3dx10_43.D3DXSHEvalDirectionalLight
+@ stdcall D3DXSHEvalDirectionalLight(long ptr float float float ptr ptr ptr) d3dx10_43.D3DXSHEvalDirectionalLight
 @ stdcall D3DXSHEvalHemisphereLight(long ptr long long ptr ptr ptr) d3dx10_43.D3DXSHEvalHemisphereLight
 @ stdcall D3DXSHEvalSphericalLight(long ptr long long long long ptr ptr ptr) d3dx10_43.D3DXSHEvalSphericalLight
 @ stdcall D3DXSHMultiply2(ptr ptr ptr) d3dx10_43.D3DXSHMultiply2
@@ -141,8 +141,8 @@
 @ stdcall D3DXSHMultiply5(ptr ptr ptr) d3dx10_43.D3DXSHMultiply5
 @ stdcall D3DXSHMultiply6(ptr ptr ptr) d3dx10_43.D3DXSHMultiply6
 @ stdcall D3DXSHRotate(ptr long ptr ptr) d3dx10_43.D3DXSHRotate
-@ stdcall D3DXSHRotateZ(ptr long long ptr) d3dx10_43.D3DXSHRotateZ
-@ stdcall D3DXSHScale(ptr long ptr ptr) d3dx10_43.D3DXSHScale
+@ stdcall D3DXSHRotateZ(ptr long float ptr) d3dx10_43.D3DXSHRotateZ
+@ stdcall D3DXSHScale(ptr long ptr float) d3dx10_43.D3DXSHScale
 @ stdcall D3DXSphereBoundProbe(ptr float ptr ptr) d3dx10_43.D3DXSphereBoundProbe
 @ stdcall D3DXVec2BaryCentric(ptr ptr ptr ptr float float) d3dx10_43.D3DXVec2BaryCentric
 @ stdcall D3DXVec2CatmullRom(ptr ptr ptr ptr ptr float) d3dx10_43.D3DXVec2CatmullRom
