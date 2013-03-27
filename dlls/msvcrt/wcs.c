@@ -1247,6 +1247,21 @@ INT CDECL MSVCRT_wcscpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, con
 }
 
 /******************************************************************
+ *		wcsncpy (MSVCRT.@)
+ */
+MSVCRT_wchar_t* __cdecl MSVCRT_wcsncpy( MSVCRT_wchar_t* s1,
+        const MSVCRT_wchar_t *s2, MSVCRT_size_t n )
+{
+    MSVCRT_size_t i;
+
+    for(i=0; i<n; i++)
+        if(!(s1[i] = s2[i])) break;
+    for(; i<n; i++)
+        s1[i] = 0;
+    return s1;
+}
+
+/******************************************************************
  *		wcsncpy_s (MSVCRT.@)
  */
 INT CDECL MSVCRT_wcsncpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, const MSVCRT_wchar_t *wcSrc,
