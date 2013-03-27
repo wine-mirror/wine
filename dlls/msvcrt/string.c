@@ -861,7 +861,7 @@ __int64 CDECL MSVCRT_strtoi64(const char *nptr, char **endptr, int base)
 /*********************************************************************
  *  _atoi_l (MSVCRT.@)
  */
-int MSVCRT__atoi_l(const char *str, MSVCRT__locale_t locale)
+int __cdecl MSVCRT__atoi_l(const char *str, MSVCRT__locale_t locale)
 {
     __int64 ret = MSVCRT_strtoi64_l(str, NULL, 10, locale);
 
@@ -873,6 +873,14 @@ int MSVCRT__atoi_l(const char *str, MSVCRT__locale_t locale)
         *MSVCRT__errno() = MSVCRT_ERANGE;
     }
     return ret;
+}
+
+/*********************************************************************
+ *  atoi (MSVCRT.@)
+ */
+int __cdecl MSVCRT_atoi(const char *str)
+{
+    return MSVCRT__atoi_l(str, NULL);
 }
 
 /*********************************************************************
