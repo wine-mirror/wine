@@ -1222,7 +1222,7 @@
 # stub _wtmpnam_s(ptr long)
 @ cdecl _wtof(wstr) MSVCRT__wtof
 @ cdecl _wtof_l(wstr ptr) MSVCRT__wtof_l
-@ cdecl _wtoi(wstr) ntdll._wtoi
+@ cdecl _wtoi(wstr) MSVCRT__wtoi
 @ cdecl -ret64 _wtoi64(wstr) ntdll._wtoi64
 # stub -ret64 _wtoi64_l(wstr ptr)
 @ cdecl _wtoi_l(wstr ptr) MSVCRT__wtoi_l

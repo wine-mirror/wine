@@ -1449,7 +1449,7 @@ __int64 CDECL MSVCRT__wcstoi64(const MSVCRT_wchar_t *nptr,
 /*********************************************************************
  *  _wtoi_l (MSVCRT.@)
  */
-int MSVCRT__wtoi_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t locale)
+int __cdecl MSVCRT__wtoi_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t locale)
 {
     __int64 ret = MSVCRT__wcstoi64_l(str, NULL, 10, locale);
 
@@ -1461,6 +1461,14 @@ int MSVCRT__wtoi_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t locale)
         *MSVCRT__errno() = MSVCRT_ERANGE;
     }
     return ret;
+}
+
+/*********************************************************************
+ *  _wtoi (MSVCRT.@)
+ */
+int __cdecl MSVCRT__wtoi(const MSVCRT_wchar_t *str)
+{
+    return MSVCRT__wtoi_l(str, NULL);
 }
 
 /*********************************************************************
