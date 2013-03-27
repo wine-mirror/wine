@@ -25,10 +25,13 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winnls.h"
 #include "sspi.h"
 #include "schannel.h"
 #include "secur32_priv.h"
+
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
@@ -61,6 +64,12 @@ static struct schan_handle *schan_handle_table;
 static struct schan_handle *schan_free_handles;
 static SIZE_T schan_handle_table_size;
 static SIZE_T schan_handle_count;
+
+/* Protocols enabled, only those may be used for the connection. */
+static DWORD config_enabled_protocols;
+
+/* Protocols disabled by default. They are enabled for using, but disabled when caller asks for default settings. */
+static DWORD config_default_disabled_protocols;
 
 static ULONG_PTR schan_alloc_handle(void *object, enum schan_handle_type type)
 {
@@ -141,10 +150,109 @@ static void *schan_get_object(ULONG_PTR handle_idx, enum schan_handle_type type)
     return handle->object;
 }
 
+static void read_config(void)
+{
+    DWORD enabled = 0, default_disabled = 0;
+    HKEY protocols_key, key;
+    WCHAR subkey_name[64];
+    unsigned i;
+    DWORD res;
+
+    static BOOL config_read = FALSE;
+
+    static const WCHAR protocol_config_key_name[] = {
+        'S','Y','S','T','E','M','\\',
+        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+        'C','o','n','t','r','o','l','\\',
+        'S','e','c','u','r','i','t','y','P','r','o','v','i','d','e','r','s','\\',
+        'S','C','H','A','N','N','E','L','\\',
+        'P','r','o','t','o','c','o','l','s',0 };
+
+    static const WCHAR clientW[] = {'\\','C','l','i','e','n','t',0};
+    static const WCHAR enabledW[] = {'e','n','a','b','l','e','d',0};
+    static const WCHAR disabledbydefaultW[] = {'D','i','s','a','b','l','e','d','B','y','D','e','f','a','u','l','t',0};
+
+    static const struct {
+        WCHAR key_name[20];
+        DWORD prot_client_flag;
+        BOOL enabled; /* If no config is present, enable the protocol */
+        BOOL disabled_by_default; /* Disable if caller asks for default protocol set */
+    } protocol_config_keys[] = {
+        {{'S','S','L',' ','2','.','0',0}, SP_PROT_SSL2_CLIENT, TRUE, TRUE},
+        {{'S','S','L',' ','3','.','0',0}, SP_PROT_SSL3_CLIENT, TRUE, FALSE},
+        {{'T','L','S',' ','1','.','0',0}, SP_PROT_TLS1_0_CLIENT, TRUE, FALSE},
+        {{'T','L','S',' ','1','.','1',0}, SP_PROT_TLS1_1_CLIENT, TRUE, FALSE /* NOTE: not enabled by default on Windows */ },
+        {{'T','L','S',' ','1','.','2',0}, SP_PROT_TLS1_2_CLIENT, TRUE, FALSE /* NOTE: not enabled by default on Windows */ }
+    };
+
+    /* No need for thread safety */
+    if(config_read)
+        return;
+
+    res = RegOpenKeyExW(HKEY_LOCAL_MACHINE, protocol_config_key_name, 0, KEY_READ, &protocols_key);
+    if(res == ERROR_SUCCESS) {
+        DWORD type, size, value;
+
+        for(i=0; i < sizeof(protocol_config_keys)/sizeof(*protocol_config_keys); i++) {
+            strcpyW(subkey_name, protocol_config_keys[i].key_name);
+            strcatW(subkey_name, clientW);
+            res = RegOpenKeyExW(protocols_key, subkey_name, 0, KEY_READ, &key);
+            if(res != ERROR_SUCCESS) {
+                if(protocol_config_keys[i].enabled)
+                    enabled |= protocol_config_keys[i].prot_client_flag;
+                if(protocol_config_keys[i].disabled_by_default)
+                    default_disabled |= protocol_config_keys[i].prot_client_flag;
+                continue;
+            }
+
+            size = sizeof(value);
+            res = RegQueryValueExW(key, enabledW, NULL, &type, (BYTE*)&value, &size);
+            if(res == ERROR_SUCCESS) {
+                if(type == REG_DWORD && value)
+                    enabled |= protocol_config_keys[i].prot_client_flag;
+            }else if(protocol_config_keys[i].enabled) {
+                enabled |= protocol_config_keys[i].prot_client_flag;
+            }
+
+            size = sizeof(value);
+            res = RegQueryValueExW(key, disabledbydefaultW, NULL, &type, (BYTE*)&value, &size);
+            if(res == ERROR_SUCCESS) {
+                if(type != REG_DWORD || value)
+                    default_disabled |= protocol_config_keys[i].prot_client_flag;
+            }else if(protocol_config_keys[i].disabled_by_default) {
+                    default_disabled |= protocol_config_keys[i].prot_client_flag;
+            }
+
+            RegCloseKey(key);
+        }
+    }else {
+        /* No config, enable all known protocols. */
+        for(i=0; i < sizeof(protocol_config_keys)/sizeof(*protocol_config_keys); i++) {
+            if(protocol_config_keys[i].enabled)
+                enabled |= protocol_config_keys[i].prot_client_flag;
+            if(protocol_config_keys[i].disabled_by_default)
+                default_disabled |= protocol_config_keys[i].prot_client_flag;
+        }
+    }
+
+    RegCloseKey(protocols_key);
+
+    config_enabled_protocols = enabled;
+    config_default_disabled_protocols = default_disabled;
+    config_read = TRUE;
+
+    TRACE("enabled %x, disabled by default %x\n", config_enabled_protocols, config_default_disabled_protocols);
+}
+
 static SECURITY_STATUS schan_QueryCredentialsAttributes(
  PCredHandle phCredential, ULONG ulAttribute, VOID *pBuffer)
 {
+    struct schan_credentials *cred;
     SECURITY_STATUS ret;
+
+    cred = schan_get_object(phCredential->dwLower, SCHAN_HANDLE_CRED);
+    if(!cred)
+        return SEC_E_INVALID_HANDLE;
 
     switch (ulAttribute)
     {
@@ -285,6 +393,8 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
  PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
     struct schan_credentials *creds;
+    unsigned enabled_protocols;
+    ULONG_PTR handle;
     SECURITY_STATUS st = SEC_E_OK;
 
     TRACE("schanCred %p, phCredential %p, ptsExpiry %p\n", schanCred, phCredential, ptsExpiry);
@@ -292,40 +402,49 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
     if (schanCred)
     {
         st = schan_CheckCreds(schanCred);
-        if (st == SEC_E_NO_CREDENTIALS)
-            st = SEC_E_OK;
+        if (st != SEC_E_OK && st != SEC_E_NO_CREDENTIALS)
+            return st;
+
+        st = SEC_E_OK;
+    }
+
+    read_config();
+    if(schanCred && schanCred->grbitEnabledProtocols)
+        enabled_protocols = schanCred->grbitEnabledProtocols & config_enabled_protocols;
+    else
+        enabled_protocols = config_enabled_protocols & ~config_default_disabled_protocols;
+    if(!enabled_protocols) {
+        ERR("Could not find matching protocol\n");
+        return SEC_E_NO_AUTHENTICATING_AUTHORITY;
     }
 
     /* For now, the only thing I'm interested in is the direction of the
      * connection, so just store it.
      */
-    if (st == SEC_E_OK)
+    creds = HeapAlloc(GetProcessHeap(), 0, sizeof(*creds));
+    if (!creds) return SEC_E_INSUFFICIENT_MEMORY;
+
+    handle = schan_alloc_handle(creds, SCHAN_HANDLE_CRED);
+    if (handle == SCHAN_INVALID_HANDLE) goto fail;
+
+    creds->credential_use = SECPKG_CRED_OUTBOUND;
+    if (!schan_imp_allocate_certificate_credentials(creds))
     {
-        ULONG_PTR handle;
-
-        creds = HeapAlloc(GetProcessHeap(), 0, sizeof(*creds));
-        if (!creds) return SEC_E_INSUFFICIENT_MEMORY;
-
-        handle = schan_alloc_handle(creds, SCHAN_HANDLE_CRED);
-        if (handle == SCHAN_INVALID_HANDLE) goto fail;
-
-        creds->credential_use = SECPKG_CRED_OUTBOUND;
-        if (!schan_imp_allocate_certificate_credentials(creds))
-        {
-            schan_free_handle(handle, SCHAN_HANDLE_CRED);
-            goto fail;
-        }
-
-        phCredential->dwLower = handle;
-        phCredential->dwUpper = 0;
-
-        /* Outbound credentials have no expiry */
-        if (ptsExpiry)
-        {
-            ptsExpiry->LowPart = 0;
-            ptsExpiry->HighPart = 0;
-        }
+        schan_free_handle(handle, SCHAN_HANDLE_CRED);
+        goto fail;
     }
+
+    creds->enabled_protocols = enabled_protocols;
+    phCredential->dwLower = handle;
+    phCredential->dwUpper = 0;
+
+    /* Outbound credentials have no expiry */
+    if (ptsExpiry)
+    {
+        ptsExpiry->LowPart = 0;
+        ptsExpiry->HighPart = 0;
+    }
+
     return st;
 
 fail:
@@ -348,7 +467,7 @@ static SECURITY_STATUS schan_AcquireServerCredentials(const SCHANNEL_CRED *schan
         ULONG_PTR handle;
         struct schan_credentials *creds;
 
-        creds = HeapAlloc(GetProcessHeap(), 0, sizeof(*creds));
+        creds = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*creds));
         if (!creds) return SEC_E_INSUFFICIENT_MEMORY;
         creds->credential_use = SECPKG_CRED_INBOUND;
 

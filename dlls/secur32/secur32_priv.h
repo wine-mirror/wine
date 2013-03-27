@@ -214,6 +214,7 @@ typedef struct schan_credentials
 {
     ULONG credential_use;
     void *credentials;
+    DWORD enabled_protocols;
 } schan_credentials;
 
 struct schan_transport;
