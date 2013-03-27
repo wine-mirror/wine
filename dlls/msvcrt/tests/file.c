@@ -33,6 +33,7 @@
 #include <winnls.h>
 #include <process.h>
 #include <errno.h>
+#include <locale.h>
 
 static HANDLE proc_handles[2];
 
@@ -42,6 +43,8 @@ static int (__cdecl *p__wfopen_s)(FILE**, const wchar_t*, const wchar_t*);
 static void init(void)
 {
     HMODULE hmod = GetModuleHandleA("msvcrt.dll");
+
+    setlocale(LC_CTYPE, "C");
 
     p_fopen_s = (void*)GetProcAddress(hmod, "fopen_s");
     p__wfopen_s = (void*)GetProcAddress(hmod, "_wfopen_s");
@@ -790,6 +793,76 @@ static void test_fgetwc( void )
   fclose(tempfh);
   unlink(tempf);
   free(tempf);
+}
+
+static void test_fgetwc_locale(const char* text, const char* locale, int codepage)
+{
+    char temppath[MAX_PATH], tempfile[MAX_PATH];
+    FILE *tempfh;
+    static const WCHAR wchar_text[] = { 0xfeff, 0xff1f, '!' };
+    WCHAR wtextW[BUFSIZ];
+    int ret = 0, i;
+    wint_t ch;
+
+    if (!setlocale(LC_CTYPE, locale))
+    {
+        win_skip("%s locale not available\n", locale);
+        return;
+    }
+
+    GetTempPath(MAX_PATH, temppath);
+    GetTempFileName(temppath, "", 0, tempfile);
+
+    tempfh = fopen(tempfile, "wb");
+    ok(tempfh != NULL, "can't open tempfile\n");
+    fwrite(text, 1, strlen(text), tempfh);
+    fclose(tempfh);
+
+    if (codepage != 0)
+    {
+        /* mbstowcs rejects invalid multibyte sequence,
+           so we use MultiByteToWideChar here. */
+        ret = MultiByteToWideChar(codepage, 0, text, -1,
+                                  wtextW, sizeof(wtextW)/sizeof(wtextW[0]));
+        ok(ret > 0, "MultiByteToWideChar failed\n");
+    }
+    else
+    {
+        /* C locale */
+        const char *p;
+        for (p = text; *p != '\0'; p++)
+            wtextW[ret++] = (unsigned char)*p;
+        wtextW[ret++] = 0;
+    }
+
+    tempfh = fopen(tempfile, "rt");
+    ok(tempfh != NULL, "can't open tempfile\n");
+
+    for (i = 0; i < ret-1; i++)
+    {
+        ch = fgetwc(tempfh);
+        ok(ch == wtextW[i], "got %04hx, expected %04hx (cp%d[%d])\n", ch, wtextW[i], codepage, i);
+    }
+    ch = fgetwc(tempfh);
+    ok(ch == WEOF, "got %04hx, expected WEOF (cp%d)\n", ch, codepage);
+    fclose(tempfh);
+
+    tempfh = fopen(tempfile, "wb");
+    ok(tempfh != NULL, "can't open tempfile\n");
+    fwrite(wchar_text, 1, sizeof(wchar_text), tempfh);
+    fclose(tempfh);
+
+    tempfh = fopen(tempfile, "rb");
+    ok(tempfh != NULL, "can't open tempfile\n");
+    for (i = 0; i < sizeof(wchar_text)/sizeof(wchar_text[0]); i++)
+    {
+        ch = fgetwc(tempfh);
+        ok(ch == wchar_text[i], "got %04hx, expected %04x (cp%d[%d])\n", ch, wchar_text[i], codepage, i);
+    }
+    ch = fgetwc(tempfh);
+    ok(ch == WEOF, "got %04hx, expected WEOF (cp%d)\n", ch, codepage);
+    fclose(tempfh);
+    unlink(tempfile);
 }
 
 static void test_fputwc(void)
@@ -2048,6 +2121,12 @@ START_TEST(file)
     test_flsbuf();
     test_fflush();
     test_fgetwc();
+    /* \x83\xa9 is double byte character, \xe0\x7f is not (undefined). */
+    test_fgetwc_locale("AB\x83\xa9\xe0\x7f", "Japanese_Japan.932", 932);
+    /* \x83 is U+0192 */
+    test_fgetwc_locale("AB\x83\xa9", "English", 1252);
+    /* \x83 is U+0083 */
+    test_fgetwc_locale("AB\x83\xa9", "C", 0);
     test_fputwc();
     test_ctrlz();
     test_file_put_get();
