@@ -24,8 +24,11 @@
 #include "windef.h"
 #include "winbase.h"
 
+typedef void (__cdecl *MSVCRT__se_translator_function)(unsigned int code, struct _EXCEPTION_POINTERS *info);
+
 static void* (__cdecl *MSVCRT_operator_new)(size_t);
 static void (__cdecl *MSVCRT_operator_delete)(void*);
+static MSVCRT__se_translator_function (__cdecl *MSVCRT__set_se_translator)(MSVCRT__se_translator_function);
 
 static void init_cxx_funcs(void)
 {
@@ -35,11 +38,15 @@ static void init_cxx_funcs(void)
     {
         MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPEAX_K@Z");
         MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPEAX@Z");
+        MSVCRT__set_se_translator = (void*)GetProcAddress(hmod,
+                "?_set_se_translator@@YAP6AXIPEAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z");
     }
     else
     {
         MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPAXI@Z");
         MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPAX@Z");
+        MSVCRT__set_se_translator = (void*)GetProcAddress(hmod,
+                "?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z");
     }
 }
 
@@ -98,4 +105,14 @@ void* CDECL MSVCR90_operator_new(size_t size)
 void CDECL MSVCR90_operator_delete(void *ptr)
 {
     return MSVCRT_operator_delete(ptr);
+}
+
+/*********************************************************************
+ *  ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z (MSVCR90.@)
+ *
+ * Naver LINE expects that this function is implemented inside msvcr90
+ */
+MSVCRT__se_translator_function CDECL MSVCR90__set_se_translator(MSVCRT__se_translator_function func)
+{
+    return MSVCRT__set_se_translator(func);
 }
