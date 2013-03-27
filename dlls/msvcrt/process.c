@@ -1317,3 +1317,11 @@ void * CDECL _getdllprocaddr(MSVCRT_intptr_t dll, const char *name, int ordinal)
     if (HIWORD(ordinal)) return NULL;
     return GetProcAddress( (HMODULE)dll, (LPCSTR)(ULONG_PTR)ordinal );
 }
+
+/*********************************************************************
+ *              _getpid (MSVCRT.@)
+ */
+int CDECL _getpid(void)
+{
+    return GetCurrentProcessId();
+}
