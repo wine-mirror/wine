@@ -29,6 +29,7 @@
 
 static BOOL (WINAPI *pImmAssociateContextEx)(HWND,HIMC,DWORD);
 static BOOL (WINAPI *pImmIsUIMessageA)(HWND,UINT,WPARAM,LPARAM);
+static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
 
 /*
  * msgspy - record and analyse message traces sent to a certain window
@@ -45,6 +46,19 @@ static struct _msg_spy {
     imm_msgs     msgs[32];
     unsigned int i_msg;
 } msg_spy;
+
+typedef struct
+{
+    DWORD type;
+    union
+    {
+        MOUSEINPUT      mi;
+        KEYBDINPUT      ki;
+        HARDWAREINPUT   hi;
+    } u;
+} TEST_INPUT;
+
+static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
 
 static LRESULT CALLBACK get_msg_filter(int nCode, WPARAM wParam, LPARAM lParam)
 {
@@ -169,11 +183,13 @@ static LRESULT WINAPI wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 static BOOL init(void) {
     WNDCLASSEX wc;
     HIMC imc;
-    HMODULE hmod;
+    HMODULE hmod,huser;
 
     hmod = GetModuleHandleA("imm32.dll");
+    huser = GetModuleHandleA("user32");
     pImmAssociateContextEx = (void*)GetProcAddress(hmod, "ImmAssociateContextEx");
     pImmIsUIMessageA = (void*)GetProcAddress(hmod, "ImmIsUIMessageA");
+    pSendInput = (void*)GetProcAddress(huser, "SendInput");
 
     wc.cbSize        = sizeof(WNDCLASSEX);
     wc.style         = 0;
@@ -701,6 +717,122 @@ static void test_ImmMessages(void)
     DestroyWindow(hwnd);
 }
 
+static LRESULT CALLBACK processkey_wnd_proc( HWND hWnd, UINT msg, WPARAM wParam,
+        LPARAM lParam )
+{
+    return DefWindowProcW(hWnd, msg, wParam, lParam);
+}
+
+static void test_ime_processkey(void)
+{
+    WCHAR classNameW[] = {'P','r','o','c','e','s','s', 'K','e','y','T','e','s','t','C','l','a','s','s',0};
+    WCHAR windowNameW[] = {'P','r','o','c','e','s','s', 'K','e','y',0};
+
+    MSG msg;
+    WNDCLASSW wclass;
+    HANDLE hInstance = GetModuleHandleW(NULL);
+    TEST_INPUT inputs[2];
+    HIMC imc;
+    INT rc;
+    HWND hWndTest;
+
+    wclass.lpszClassName = classNameW;
+    wclass.style         = CS_HREDRAW | CS_VREDRAW;
+    wclass.lpfnWndProc   = processkey_wnd_proc;
+    wclass.hInstance     = hInstance;
+    wclass.hIcon         = LoadIcon(0, IDI_APPLICATION);
+    wclass.hCursor       = LoadCursor( NULL, IDC_ARROW);
+    wclass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wclass.lpszMenuName  = 0;
+    wclass.cbClsExtra    = 0;
+    wclass.cbWndExtra    = 0;
+    if(!RegisterClassW(&wclass)){
+        win_skip("Failed to register window.\n");
+        return;
+    }
+
+    /* create the test window that will receive the keystrokes */
+    hWndTest = CreateWindowW(wclass.lpszClassName, windowNameW,
+                             WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, 100, 100,
+                             NULL, NULL, hInstance, NULL);
+
+    ShowWindow(hWndTest, SW_SHOW);
+    SetWindowPos(hWndTest, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
+    SetForegroundWindow(hWndTest);
+    UpdateWindow(hWndTest);
+
+    imc = ImmGetContext(hWndTest);
+    if (!imc)
+    {
+        win_skip("IME not supported\n");
+        DestroyWindow(hWndTest);
+        return;
+    }
+
+    rc = ImmSetOpenStatus(imc, TRUE);
+    if (rc != TRUE)
+    {
+        win_skip("Unable to open IME\n");
+        ImmReleaseContext(hWndTest, imc);
+        DestroyWindow(hWndTest);
+        return;
+    }
+
+    /* flush pending messages */
+    while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageW(&msg);
+
+    SetFocus(hWndTest);
+
+    /* init input data that never changes */
+    inputs[1].type = inputs[0].type = INPUT_KEYBOARD;
+    inputs[1].u.ki.dwExtraInfo = inputs[0].u.ki.dwExtraInfo = 0;
+    inputs[1].u.ki.time = inputs[0].u.ki.time = 0;
+
+    /* Pressing a key */
+    inputs[0].u.ki.wVk = 0x41;
+    inputs[0].u.ki.wScan = 0x1e;
+    inputs[0].u.ki.dwFlags = 0x0;
+
+    pSendInput(1, (INPUT*)inputs, sizeof(INPUT));
+
+    while(PeekMessageW(&msg, hWndTest, 0, 0, PM_NOREMOVE)) {
+        if(msg.message != WM_KEYDOWN)
+            PeekMessageW(&msg, hWndTest, 0, 0, PM_REMOVE);
+        else
+        {
+            ok(msg.wParam != VK_PROCESSKEY,"Incorrect ProcessKey Found\n");
+            PeekMessageW(&msg, hWndTest, 0, 0, PM_REMOVE);
+            if(msg.wParam == VK_PROCESSKEY)
+                trace("ProcessKey was correctly found\n");
+        }
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    inputs[0].u.ki.wVk = 0x41;
+    inputs[0].u.ki.wScan = 0x1e;
+    inputs[0].u.ki.dwFlags = KEYEVENTF_KEYUP;
+
+    pSendInput(1, (INPUT*)inputs, sizeof(INPUT));
+
+    while(PeekMessageW(&msg, hWndTest, 0, 0, PM_NOREMOVE)) {
+        if(msg.message != WM_KEYUP)
+            PeekMessageW(&msg, hWndTest, 0, 0, PM_REMOVE);
+        else
+        {
+            ok(msg.wParam != VK_PROCESSKEY,"Incorrect ProcessKey Found\n");
+            PeekMessageW(&msg, hWndTest, 0, 0, PM_REMOVE);
+            ok(msg.wParam != VK_PROCESSKEY,"ProcessKey should still not be Found\n");
+        }
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    ImmReleaseContext(hWndTest, imc);
+    ImmSetOpenStatus(imc, FALSE);
+    DestroyWindow(hWndTest);
+}
+
 START_TEST(imm32) {
     if (init())
     {
@@ -719,6 +851,9 @@ START_TEST(imm32) {
         msg_spy_init(NULL);
         test_ImmMessages();
         msg_spy_cleanup();
+        if (pSendInput)
+            test_ime_processkey();
+        else win_skip("SendInput is not available\n");
     }
     cleanup();
 }
