@@ -90,6 +90,22 @@ static HRESULT get_string_val(script_ctx_t *ctx, vdisp_t *jsthis, jsstr_t **val)
     return to_string(ctx, jsval_disp(jsthis->u.disp), val);
 }
 
+static HRESULT get_string_flat_val(script_ctx_t *ctx, vdisp_t *jsthis, jsstr_t **jsval, const WCHAR **val)
+{
+    HRESULT hres;
+
+    hres = get_string_val(ctx, jsthis, jsval);
+    if(FAILED(hres))
+        return hres;
+
+    *val = jsstr_flatten(*jsval);
+    if(*val)
+        return S_OK;
+
+    jsstr_release(*jsval);
+    return E_OUTOFMEMORY;
+}
+
 static HRESULT String_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -442,28 +458,29 @@ static HRESULT String_fontsize(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
 static HRESULT String_indexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    jsstr_t *search_str, *str;
+    jsstr_t *search_jsstr, *jsstr;
+    const WCHAR *search_str, *str;
     int length, pos = 0;
     INT ret = -1;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = get_string_val(ctx, jsthis, &str);
+    hres = get_string_flat_val(ctx, jsthis, &jsstr, &str);
     if(FAILED(hres))
         return hres;
 
-    length = jsstr_length(str);
+    length = jsstr_length(jsstr);
     if(!argc) {
         if(r)
             *r = jsval_number(-1);
-        jsstr_release(str);
+        jsstr_release(jsstr);
         return S_OK;
     }
 
-    hres = to_string(ctx, argv[0], &search_str);
+    hres = to_flat_string(ctx, argv[0], &search_jsstr, &search_str);
     if(FAILED(hres)) {
-        jsstr_release(str);
+        jsstr_release(jsstr);
         return hres;
     }
 
@@ -478,15 +495,15 @@ static HRESULT String_indexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     if(SUCCEEDED(hres)) {
         const WCHAR *ptr;
 
-        ptr = strstrW(str->str+pos, search_str->str);
+        ptr = strstrW(str+pos, search_str);
         if(ptr)
-            ret = ptr - str->str;
+            ret = ptr - str;
         else
             ret = -1;
     }
 
-    jsstr_release(search_str);
-    jsstr_release(str);
+    jsstr_release(search_jsstr);
+    jsstr_release(jsstr);
     if(FAILED(hres))
         return hres;
 
@@ -507,31 +524,32 @@ static HRESULT String_lastIndexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         jsval_t *r)
 {
     unsigned pos = 0, search_len, length;
-    jsstr_t *search_str, *str;
+    jsstr_t *search_jsstr, *jsstr;
+    const WCHAR *search_str, *str;
     INT ret = -1;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = get_string_val(ctx, jsthis, &str);
+    hres = get_string_flat_val(ctx, jsthis, &jsstr, &str);
     if(FAILED(hres))
         return hres;
 
     if(!argc) {
         if(r)
             *r = jsval_number(-1);
-        jsstr_release(str);
+        jsstr_release(jsstr);
         return S_OK;
     }
 
-    hres = to_string(ctx, argv[0], &search_str);
+    hres = to_flat_string(ctx, argv[0], &search_jsstr, &search_str);
     if(FAILED(hres)) {
-        jsstr_release(str);
+        jsstr_release(jsstr);
         return hres;
     }
 
-    search_len = jsstr_length(search_str);
-    length = jsstr_length(str);
+    search_len = jsstr_length(search_jsstr);
+    length = jsstr_length(jsstr);
 
     if(argc >= 2) {
         double d;
@@ -546,16 +564,16 @@ static HRESULT String_lastIndexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     if(SUCCEEDED(hres) && length >= search_len) {
         const WCHAR *ptr;
 
-        for(ptr = str->str+min(pos, length-search_len); ptr >= str->str; ptr--) {
-            if(!memcmp(ptr, search_str->str, search_len*sizeof(WCHAR))) {
-                ret = ptr-str->str;
+        for(ptr = str+min(pos, length-search_len); ptr >= str; ptr--) {
+            if(!memcmp(ptr, search_str, search_len*sizeof(WCHAR))) {
+                ret = ptr-str;
                 break;
             }
         }
     }
 
-    jsstr_release(search_str);
-    jsstr_release(str);
+    jsstr_release(search_jsstr);
+    jsstr_release(jsstr);
     if(FAILED(hres))
         return hres;
 
