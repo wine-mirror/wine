@@ -48,6 +48,11 @@
 #define MSVCRT_I64_MIN    (-MSVCRT_I64_MAX-1)
 #define MSVCRT_UI64_MAX   (((unsigned __int64)0xffffffff << 32) | 0xffffffff)
 #define MSVCRT_MB_LEN_MAX 2
+#ifdef _WIN64
+#define MSVCRT_SIZE_MAX MSVCRT_UI64_MAX
+#else
+#define MSVCRT_SIZE_MAX MSVCRT_ULONG_MAX
+#endif
 
 #define MSVCRT__MAX_DRIVE  3
 #define MSVCRT__MAX_DIR    256

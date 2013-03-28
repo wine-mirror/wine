@@ -1530,3 +1530,4 @@
 @ cdecl _get_printf_count_output() MSVCRT__get_printf_count_output
 @ cdecl _set_printf_count_output(long) MSVCRT__set_printf_count_output
 @ cdecl _getptd()
+@ cdecl fread_s(ptr long long long ptr)

@@ -3686,6 +3686,57 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
   return read / size;
 }
 
+
+/* fread_s - not exported in native msvcrt */
+MSVCRT_size_t CDECL fread_s(void *buf, MSVCRT_size_t buf_size, MSVCRT_size_t elem_size,
+        MSVCRT_size_t count, MSVCRT_FILE *stream)
+{
+    size_t bytes_left, buf_pos;
+
+    TRACE("(%p %lu %lu %lu %p\n", buf, buf_size, elem_size, count, stream);
+
+    if(!MSVCRT_CHECK_PMT(stream != NULL)) {
+        if(buf && buf_size)
+            memset(buf, 0, buf_size);
+        return 0;
+    }
+    if(!elem_size || !count) return 0;
+    if(!MSVCRT_CHECK_PMT(buf != NULL)) return 0;
+    if(!MSVCRT_CHECK_PMT(MSVCRT_SIZE_MAX/count >= elem_size)) return 0;
+
+    bytes_left = elem_size*count;
+    buf_pos = 0;
+    while(bytes_left) {
+        if(stream->_cnt > 0) {
+            size_t size = bytes_left<stream->_cnt ? bytes_left : stream->_cnt;
+
+            if(!MSVCRT_CHECK_PMT_ERR(size <= buf_size-buf_pos, MSVCRT_ERANGE)) {
+                memset(buf, 0, buf_size);
+                return 0;
+            }
+
+            MSVCRT_fread((char*)buf+buf_pos, 1, size, stream);
+            buf_pos += size;
+            bytes_left -= size;
+        }else {
+            int c = MSVCRT__filbuf(stream);
+
+            if(c == EOF)
+                break;
+
+            if(!MSVCRT_CHECK_PMT_ERR(buf_size-buf_pos > 0, MSVCRT_ERANGE)) {
+                memset(buf, 0, buf_size);
+                return 0;
+            }
+
+            ((char*)buf)[buf_pos++] = c;
+            bytes_left--;
+        }
+    }
+
+    return buf_pos/elem_size;
+}
+
 /*********************************************************************
  *		_wfreopen (MSVCRT.@)
  *
