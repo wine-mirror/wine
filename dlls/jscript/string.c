@@ -347,8 +347,11 @@ static HRESULT String_charCodeAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         idx = d;
     }
 
-    if(r)
-        *r = jsval_number(str->str[idx]);
+    if(r) {
+        WCHAR c;
+        jsstr_extract(str, idx, 1, &c);
+        *r = jsval_number(c);
+    }
 
     jsstr_release(str);
     return S_OK;

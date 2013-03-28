@@ -65,6 +65,11 @@ static inline BOOL jsstr_eq(jsstr_t *str1, jsstr_t *str2)
     return len == jsstr_length(str2) && !memcmp(str1->str, str2->str, len*sizeof(WCHAR));
 }
 
+static inline void jsstr_extract(jsstr_t *str, unsigned off, unsigned len, WCHAR *buf)
+{
+    memcpy(buf, str->str+off, len*sizeof(WCHAR));
+}
+
 static inline unsigned jsstr_flush(jsstr_t *str, WCHAR *buf)
 {
     unsigned len = jsstr_length(str);
@@ -74,7 +79,13 @@ static inline unsigned jsstr_flush(jsstr_t *str, WCHAR *buf)
 
 static inline jsstr_t *jsstr_substr(jsstr_t *str, unsigned off, unsigned len)
 {
-    return jsstr_alloc_len(str->str+off, len);
+    jsstr_t *ret;
+    WCHAR *ptr;
+
+    ptr = jsstr_alloc_buf(len, &ret);
+    if(ptr)
+        jsstr_extract(str, off, len, ptr);
+    return ret;
 }
 
 int jsstr_cmp(jsstr_t*,jsstr_t*) DECLSPEC_HIDDEN;
