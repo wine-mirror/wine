@@ -292,7 +292,7 @@ ULONG_PTR set_icon_param( HICON handle, ULONG_PTR param )
  *  [RETURN] ptr		-	pointer to mapped file
  *  [RETURN] filesize           -       pointer size of file to be stored if not NULL
  */
-static void *map_fileW( LPCWSTR name, LPDWORD filesize )
+static const void *map_fileW( LPCWSTR name, LPDWORD filesize )
 {
     HANDLE hFile, hMapping;
     LPVOID ptr = NULL;
@@ -1091,7 +1091,7 @@ static void riff_find_chunk( DWORD chunk_id, DWORD chunk_type, const riff_chunk_
  *            |- ...
  *            \- CHUNK:icon
  */
-static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size, INT width, INT height,
+static HCURSOR CURSORICON_CreateIconFromANI( const BYTE *bits, DWORD bits_size, INT width, INT height,
                                              INT depth, BOOL is_icon, UINT loadflags )
 {
     struct animated_cursoricon_object *ani_icon_data;
@@ -1287,7 +1287,7 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
                                        UINT cFlag )
 {
     POINT hotspot;
-    BITMAPINFO *bmi;
+    const BITMAPINFO *bmi;
 
     TRACE_(cursor)("%p (%u bytes), ver %08x, %ix%i %s %s\n",
                    bits, cbSize, dwVersion, width, height,
@@ -1314,10 +1314,10 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
     }
     else /* get the hotspot */
     {
-        SHORT *pt = (SHORT *)bits;
+        const SHORT *pt = (const SHORT *)bits;
         hotspot.x = pt[0];
         hotspot.y = pt[1];
-        bmi = (BITMAPINFO *)(pt + 2);
+        bmi = (const BITMAPINFO *)(pt + 2);
         cbSize -= 2 * sizeof(*pt);
     }
 
@@ -1343,7 +1343,7 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
     const CURSORICONFILEDIR *dir;
     DWORD filesize = 0;
     HICON hIcon = 0;
-    LPBYTE bits;
+    const BYTE *bits;
     POINT hotspot;
 
     TRACE("loading %s\n", debugstr_w( filename ));
@@ -1379,7 +1379,7 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
 
     hotspot.x = entry->xHotspot;
     hotspot.y = entry->yHotspot;
-    hIcon = create_icon_from_bmi( (BITMAPINFO *)&bits[entry->dwDIBOffset], filesize - entry->dwDIBOffset,
+    hIcon = create_icon_from_bmi( (const BITMAPINFO *)&bits[entry->dwDIBOffset], filesize - entry->dwDIBOffset,
                                   NULL, NULL, NULL, hotspot, !fCursor, width, height, loadflags );
 end:
     TRACE("loaded %s -> %p\n", debugstr_w( filename ), hIcon );
@@ -1402,7 +1402,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
     DWORD size;
     const CURSORICONDIR *dir;
     const CURSORICONDIRENTRY *dirEntry;
-    LPBYTE bits;
+    const BYTE *bits;
     WORD wResId;
     POINT hotspot;
 
@@ -1477,13 +1477,13 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
     }
     else /* get the hotspot */
     {
-        SHORT *pt = (SHORT *)bits;
+        const SHORT *pt = (const SHORT *)bits;
         hotspot.x = pt[0];
         hotspot.y = pt[1];
         bits += 2 * sizeof(SHORT);
         size -= 2 * sizeof(SHORT);
     }
-    hIcon = create_icon_from_bmi( (BITMAPINFO *)bits, size, hInstance, name, hRsrc,
+    hIcon = create_icon_from_bmi( (const BITMAPINFO *)bits, size, hInstance, name, hRsrc,
                                   hotspot, !fCursor, width, height, loadflags );
     FreeResource( handle );
     return hIcon;
@@ -2480,7 +2480,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
     HBITMAP hbitmap = 0, orig_bm;
     HRSRC hRsrc;
     HGLOBAL handle;
-    char *ptr = NULL;
+    const char *ptr = NULL;
     BITMAPINFO *info, *fix_info = NULL, *scaled_info = NULL;
     int size;
     BYTE pix;
