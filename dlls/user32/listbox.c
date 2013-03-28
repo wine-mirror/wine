@@ -1767,6 +1767,8 @@ static LRESULT LISTBOX_SetCount( LB_DESCR *descr, INT count )
             if ((ret = LISTBOX_RemoveItem( descr, (descr->nb_items - 1) )) < 0)
                 return ret;
     }
+
+    InvalidateRect( descr->self, NULL, TRUE );
     return LB_OKAY;
 }
 
