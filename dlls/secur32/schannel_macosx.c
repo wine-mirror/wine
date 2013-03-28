@@ -630,6 +630,11 @@ static OSStatus schan_push_adapter(SSLConnectionRef transport, const void *buff,
     return ret;
 }
 
+DWORD schan_imp_enabled_protocols(void)
+{
+    /* NOTE: No support for TLS 1.1 and TLS 1.2 */
+    return SP_PROT_SSL2_CLIENT | SP_PROT_SSL3_CLIENT | SP_PROT_TLS1_0_CLIENT;
+}
 
 BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cred)
 {

@@ -237,7 +237,7 @@ static void read_config(void)
 
     RegCloseKey(protocols_key);
 
-    config_enabled_protocols = enabled;
+    config_enabled_protocols = enabled & schan_imp_enabled_protocols();
     config_default_disabled_protocols = default_disabled;
     config_read = TRUE;
 

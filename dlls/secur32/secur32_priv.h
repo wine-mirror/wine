@@ -260,6 +260,7 @@ extern SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
                                       SIZE_T *length) DECLSPEC_HIDDEN;
 extern BOOL schan_imp_allocate_certificate_credentials(schan_credentials*) DECLSPEC_HIDDEN;
 extern void schan_imp_free_certificate_credentials(schan_credentials*) DECLSPEC_HIDDEN;
+extern DWORD schan_imp_enabled_protocols(void) DECLSPEC_HIDDEN;
 extern BOOL schan_imp_init(void) DECLSPEC_HIDDEN;
 extern void schan_imp_deinit(void) DECLSPEC_HIDDEN;
 
