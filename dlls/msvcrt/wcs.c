@@ -199,7 +199,7 @@ int CDECL MSVCRT__wcslwr_s( MSVCRT_wchar_t* str, MSVCRT_size_t n )
 }
 
 /*********************************************************************
- * _wcstod_l - not exported in native msvcrt
+ *		_wcstod_l (MSVCRT.@)
  */
 double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
         MSVCRT__locale_t locale)

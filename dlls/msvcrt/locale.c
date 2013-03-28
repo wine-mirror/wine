@@ -702,7 +702,9 @@ void free_mbcinfo(MSVCRT_pthreadmbcinfo mbcinfo)
     MSVCRT_free(mbcinfo);
 }
 
-/* _get_current_locale - not exported in native msvcrt */
+/*********************************************************************
+ *      _get_current_locale (MSVCRT.@)
+ */
 MSVCRT__locale_t CDECL MSVCRT__get_current_locale(void)
 {
     MSVCRT__locale_t loc = MSVCRT_malloc(sizeof(MSVCRT__locale_tstruct));
@@ -716,7 +718,9 @@ MSVCRT__locale_t CDECL MSVCRT__get_current_locale(void)
     return loc;
 }
 
-/* _free_locale - not exported in native msvcrt */
+/*********************************************************************
+ *      _free_locale (MSVCRT.@)
+ */
 void CDECL MSVCRT__free_locale(MSVCRT__locale_t locale)
 {
     if (!locale)
@@ -727,7 +731,9 @@ void CDECL MSVCRT__free_locale(MSVCRT__locale_t locale)
     MSVCRT_free(locale);
 }
 
-/* _create_locale - not exported in native msvcrt */
+/*********************************************************************
+ *      _create_locale (MSVCRT.@)
+ */
 MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 {
     static const DWORD time_data[] = {

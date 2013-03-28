@@ -376,6 +376,7 @@
 @ cdecl _cputs(str)
 @ cdecl _cputws(wstr)
 @ cdecl _creat(str long) MSVCRT__creat
+@ cdecl _create_locale(long str) MSVCRT__create_locale
 # stub _crtAssertBusy
 # stub _crtBreakAlloc
 # stub _crtDbgFlag
@@ -464,6 +465,7 @@
 @ cdecl _fputchar(long) MSVCRT__fputchar
 @ cdecl _fputwchar(long) MSVCRT__fputwchar
 # stub _free_dbg(ptr long)
+@ cdecl _free_locale(ptr) MSVCRT__free_locale
 # stub _freea(ptr)
 # stub _freea_s
 @ varargs _fscanf_l(ptr str ptr) MSVCRT__fscanf_l
@@ -496,6 +498,7 @@
 @ varargs _fwscanf_s_l(ptr wstr ptr) MSVCRT__fwscanf_s_l
 @ cdecl _gcvt(double long str)
 @ cdecl _gcvt_s(ptr long  double long)
+@ cdecl _get_current_locale() MSVCRT__get_current_locale
 @ cdecl _get_doserrno(ptr)
 # stub _get_environ(ptr)
 @ cdecl _get_errno(ptr)
@@ -1117,6 +1120,7 @@
 @ cdecl _wcsrev(wstr) MSVCRT__wcsrev
 @ cdecl _wcsset(wstr long) MSVCRT__wcsset
 # stub _wcsset_s(wstr long)
+@ cdecl _wcstod_l(wstr ptr) MSVCRT__wcstod_l
 @ cdecl -ret64 _wcstoi64(wstr ptr long) MSVCRT__wcstoi64
 @ cdecl -ret64 _wcstoi64_l(wstr ptr long ptr) MSVCRT__wcstoi64_l
 # stub _wcstol_l(wstr ptr long ptr)
@@ -1515,17 +1519,13 @@
 @ cdecl ___mb_cur_max_l_func(ptr)
 @ cdecl -arch=i386 __control87_2(long long ptr ptr)
 @ cdecl _configthreadlocale(long)
-@ cdecl _create_locale(long str) MSVCRT__create_locale
-@ cdecl _get_current_locale() MSVCRT__get_current_locale
 @ cdecl _dupenv_s(ptr ptr str)
-@ cdecl _free_locale(ptr) MSVCRT__free_locale
 @ cdecl _get_invalid_parameter_handler()
 @ cdecl _set_abort_behavior(long long) MSVCRT__set_abort_behavior
 @ cdecl _set_invalid_parameter_handler(ptr)
 @ cdecl _set_purecall_handler(ptr)
 @ cdecl _set_security_error_handler(ptr)
 @ cdecl -arch=i386 _statusfp2(ptr ptr)
-@ cdecl _wcstod_l(wstr ptr) MSVCRT__wcstod_l
 @ cdecl _wdupenv_s(ptr ptr wstr)
 @ cdecl _get_printf_count_output() MSVCRT__get_printf_count_output
 @ cdecl _set_printf_count_output(long) MSVCRT__set_printf_count_output
