@@ -796,11 +796,11 @@ done:
  *
  * Create an icon from its BITMAPINFO.
  */
-static HICON create_icon_from_bmi( BITMAPINFO *bmi, HMODULE module, LPCWSTR resname, HRSRC rsrc,
-                                   POINT hotspot, BOOL bIcon, INT width, INT height, UINT cFlag )
+static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE module, LPCWSTR resname,
+                                   HRSRC rsrc, POINT hotspot, BOOL bIcon, INT width, INT height,
+                                   UINT cFlag )
 {
-    unsigned int size = bitmap_info_size( bmi, DIB_RGB_COLORS );
-    BOOL monochrome = is_dib_monochrome( bmi );
+    DWORD size, color_size, mask_size;
     HBITMAP color = 0, mask = 0, alpha = 0;
     const void *color_bits, *mask_bits;
     BITMAPINFO *bmi_copy;
@@ -811,14 +811,35 @@ static HICON create_icon_from_bmi( BITMAPINFO *bmi, HMODULE module, LPCWSTR resn
 
     /* Check bitmap header */
 
+    if (maxsize < sizeof(BITMAPCOREHEADER))
+    {
+        WARN( "invalid size %u\n", maxsize );
+        return 0;
+    }
+    if (maxsize < bmi->bmiHeader.biSize)
+    {
+        WARN( "invalid header size %u\n", bmi->bmiHeader.biSize );
+        return 0;
+    }
     if ( (bmi->bmiHeader.biSize != sizeof(BITMAPCOREHEADER)) &&
          (bmi->bmiHeader.biSize != sizeof(BITMAPINFOHEADER)  ||
          (bmi->bmiHeader.biCompression != BI_RGB &&
           bmi->bmiHeader.biCompression != BI_BITFIELDS)) )
     {
-          WARN_(cursor)("\tinvalid resource bitmap header.\n");
-          return 0;
+        WARN( "invalid bitmap header %u\n", bmi->bmiHeader.biSize );
+        return 0;
     }
+
+    size = bitmap_info_size( bmi, DIB_RGB_COLORS );
+    color_size = get_dib_image_size( bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight / 2,
+                                     bmi->bmiHeader.biBitCount );
+    mask_size = get_dib_image_size( bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight / 2, 1 );
+    if (size > maxsize || color_size > maxsize - size)
+    {
+        WARN( "truncated file %u < %u+%u+%u\n", maxsize, size, color_size, mask_size );
+        return 0;
+    }
+    if (mask_size > maxsize - size - color_size) mask_size = 0;  /* no mask */
 
     if (cFlag & LR_DEFAULTSIZE)
     {
@@ -856,11 +877,10 @@ static HICON create_icon_from_bmi( BITMAPINFO *bmi, HMODULE module, LPCWSTR resn
     bmi_copy->bmiHeader.biHeight /= 2;
 
     color_bits = (const char*)bmi + size;
-    mask_bits = (const char*)color_bits +
-        get_dib_image_size( bmi->bmiHeader.biWidth, bmi_copy->bmiHeader.biHeight, bmi->bmiHeader.biBitCount );
+    mask_bits = (const char*)color_bits + color_size;
 
     alpha = 0;
-    if (monochrome)
+    if (is_dib_monochrome( bmi ))
     {
         if (!(mask = CreateBitmap( width, height * 2, 1, 1, NULL ))) goto done;
         color = 0;
@@ -908,10 +928,13 @@ static HICON create_icon_from_bmi( BITMAPINFO *bmi, HMODULE module, LPCWSTR resn
         }
     }
 
-    SelectObject( hdc, mask );
-    StretchDIBits( hdc, 0, 0, width, height,
-                   0, 0, bmi_copy->bmiHeader.biWidth, bmi_copy->bmiHeader.biHeight,
-                   mask_bits, bmi_copy, DIB_RGB_COLORS, SRCCOPY );
+    if (mask_size)
+    {
+        SelectObject( hdc, mask );
+        StretchDIBits( hdc, 0, 0, width, height,
+                       0, 0, bmi_copy->bmiHeader.biWidth, bmi_copy->bmiHeader.biHeight,
+                       mask_bits, bmi_copy, DIB_RGB_COLORS, SRCCOPY );
+    }
     ret = TRUE;
 
 done:
@@ -1170,7 +1193,6 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
                                             bits + bits_size - icon_data,
                                             width, height, depth, loadflags );
 
-        bmi = (const BITMAPINFO *) (icon_data + entry->dwDIBOffset);
         info->hotspot.x = entry->xHotspot;
         info->hotspot.y = entry->yHotspot;
         if (!header.width || !header.height)
@@ -1184,9 +1206,16 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
             frameHeight = header.height;
         }
 
-        /* Grab a frame from the animation */
-        frames[i] = create_icon_from_bmi( (BITMAPINFO *)bmi, NULL, NULL, NULL, info->hotspot,
-                                          is_icon, frameWidth, frameHeight, loadflags );
+        frames[i] = NULL;
+        if (entry->dwDIBOffset < bits + bits_size - icon_data)
+        {
+            bmi = (const BITMAPINFO *) (icon_data + entry->dwDIBOffset);
+            /* Grab a frame from the animation */
+            frames[i] = create_icon_from_bmi( bmi, bits + bits_size - (const BYTE *)bmi,
+                                              NULL, NULL, NULL, info->hotspot,
+                                              is_icon, frameWidth, frameHeight, loadflags );
+        }
+
         if (!frames[i])
         {
             FIXME_(cursor)("failed to convert animated cursor frame.\n");
@@ -1250,8 +1279,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
 /**********************************************************************
  *		CreateIconFromResourceEx (USER32.@)
  *
- * FIXME: Convert to mono when cFlag is LR_MONOCHROME. Do something
- *        with cbSize parameter as well.
+ * FIXME: Convert to mono when cFlag is LR_MONOCHROME.
  */
 HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
                                        BOOL bIcon, DWORD dwVersion,
@@ -1290,9 +1318,10 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
         hotspot.x = pt[0];
         hotspot.y = pt[1];
         bmi = (BITMAPINFO *)(pt + 2);
+        cbSize -= 2 * sizeof(*pt);
     }
 
-    return create_icon_from_bmi( bmi, NULL, NULL, NULL, hotspot, bIcon, width, height, cFlag );
+    return create_icon_from_bmi( bmi, cbSize, NULL, NULL, NULL, hotspot, bIcon, width, height, cFlag );
 }
 
 
@@ -1350,8 +1379,8 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
 
     hotspot.x = entry->xHotspot;
     hotspot.y = entry->yHotspot;
-    hIcon = create_icon_from_bmi( (BITMAPINFO *)&bits[entry->dwDIBOffset], NULL, NULL, NULL,
-                                  hotspot, !fCursor, width, height, loadflags );
+    hIcon = create_icon_from_bmi( (BITMAPINFO *)&bits[entry->dwDIBOffset], filesize - entry->dwDIBOffset,
+                                  NULL, NULL, NULL, hotspot, !fCursor, width, height, loadflags );
 end:
     TRACE("loaded %s -> %p\n", debugstr_w( filename ), hIcon );
     UnmapViewOfFile( bits );
@@ -1438,6 +1467,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
     }
 
     if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
+    size = SizeofResource( hInstance, hRsrc );
     bits = LockResource( handle );
 
     if (!fCursor)
@@ -1451,8 +1481,9 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
         hotspot.x = pt[0];
         hotspot.y = pt[1];
         bits += 2 * sizeof(SHORT);
+        size -= 2 * sizeof(SHORT);
     }
-    hIcon = create_icon_from_bmi( (BITMAPINFO *)bits, hInstance, name, hRsrc,
+    hIcon = create_icon_from_bmi( (BITMAPINFO *)bits, size, hInstance, name, hRsrc,
                                   hotspot, !fCursor, width, height, loadflags );
     FreeResource( handle );
     return hIcon;
