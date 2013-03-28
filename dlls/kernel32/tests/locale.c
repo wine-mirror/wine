@@ -3386,6 +3386,10 @@ static void test_IdnToUnicode(void)
 
     for (i=0; i<sizeof(test_data)/sizeof(*test_data); i++)
     {
+        ret = pIdnToUnicode(test_data[i].flags, test_data[i].in,
+                test_data[i].in_len, NULL, 0);
+        ok(ret == test_data[i].ret, "%d) ret = %d\n", i, ret);
+
         SetLastError(0xdeadbeef);
         ret = pIdnToUnicode(test_data[i].flags, test_data[i].in,
                 test_data[i].in_len, buf, sizeof(buf));

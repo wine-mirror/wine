@@ -4480,8 +4480,8 @@ INT WINAPI IdnToUnicode(DWORD dwFlags, LPCWSTR lpASCIICharStr, INT cchASCIIChar,
             return 0;
         }
 
-        if((dwFlags&IDN_USE_STD3_ASCII_RULES) && (lpUnicodeCharStr[label_start]=='-' ||
-                    lpUnicodeCharStr[label_end-1]=='-')) {
+        if((dwFlags&IDN_USE_STD3_ASCII_RULES) && (lpASCIICharStr[label_start]=='-' ||
+                    lpASCIICharStr[label_end-1]=='-')) {
             SetLastError(ERROR_INVALID_NAME);
             return 0;
         }
@@ -4494,7 +4494,7 @@ INT WINAPI IdnToUnicode(DWORD dwFlags, LPCWSTR lpASCIICharStr, INT cchASCIIChar,
                 tolowerW(lpASCIICharStr[label_start])!='x' ||
                 tolowerW(lpASCIICharStr[label_start+1])!='n' ||
                 lpASCIICharStr[label_start+2]!='-' || lpASCIICharStr[label_start+3]!='-') {
-            if(label_end < cchUnicodeChar)
+            if(label_end < cchASCIIChar)
                 label_end++;
 
             if(!lpUnicodeCharStr) {
