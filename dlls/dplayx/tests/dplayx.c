@@ -6423,7 +6423,7 @@ static void test_COM(void)
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IDirectPlay4A, (void**)&dp4A);
     ok(hr == S_OK, "QueryInterface for IID_IDirectPlay4A failed: %08x\n", hr);
     refcount = IDirectPlayX_AddRef(dp4A);
-    todo_wine ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
     IDirectPlayX_Release(dp4A);
 
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IUnknown, (void**)&unk);
