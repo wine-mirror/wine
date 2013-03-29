@@ -91,6 +91,11 @@ static void DP_CopySessionDesc( LPDPSESSIONDESC2 destSessionDesc,
 static LONG kludgePlayerGroupId = 1000;
 
 
+static inline IDirectPlayImpl *impl_from_IDirectPlay2A( IDirectPlay2A *iface )
+{
+    return CONTAINING_RECORD( iface, IDirectPlayImpl, IDirectPlay2A_iface );
+}
+
 static inline IDirectPlayImpl *impl_from_IDirectPlay4A( IDirectPlay4A *iface )
 {
     return CONTAINING_RECORD( iface, IDirectPlayImpl, IDirectPlay4A_iface );
@@ -342,6 +347,13 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
 }
 
 
+static HRESULT WINAPI IDirectPlay2AImpl_QueryInterface( IDirectPlay2A *iface, REFIID riid,
+        void **ppv )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_QueryInterface( &This->IDirectPlay4A_iface, riid, ppv );
+}
+
 static HRESULT WINAPI IDirectPlay4AImpl_QueryInterface( IDirectPlay4A *iface, REFIID riid,
         void **ppv )
 {
@@ -362,7 +374,7 @@ static HRESULT WINAPI IDirectPlay4Impl_QueryInterface( IDirectPlay4 *iface, REFI
     else if ( IsEqualGUID( &IID_IDirectPlay2A, riid ) )
     {
         TRACE( "(%p)->(IID_IDirectPlay2A %p)\n", This, ppv );
-        *ppv = &This->IDirectPlay4A_iface;
+        *ppv = &This->IDirectPlay2A_iface;
     }
     else if ( IsEqualGUID( &IID_IDirectPlay2, riid ) )
     {
@@ -400,6 +412,19 @@ static HRESULT WINAPI IDirectPlay4Impl_QueryInterface( IDirectPlay4 *iface, REFI
     return S_OK;
 }
 
+static ULONG WINAPI IDirectPlay2AImpl_AddRef( IDirectPlay2A *iface )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    ULONG ref = InterlockedIncrement( &This->ref2A );
+
+    TRACE( "(%p) ref2A=%d\n", This, ref );
+
+    if ( ref == 1 )
+        InterlockedIncrement( &This->numIfaces );
+
+    return ref;
+}
+
 static ULONG WINAPI IDirectPlay4AImpl_AddRef(IDirectPlay4A *iface)
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
@@ -422,6 +447,19 @@ static ULONG WINAPI IDirectPlay4Impl_AddRef(IDirectPlay4 *iface)
 
     if ( ref == 1 )
         InterlockedIncrement( &This->numIfaces );
+
+    return ref;
+}
+
+static ULONG WINAPI IDirectPlay2AImpl_Release( IDirectPlay2A *iface )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    ULONG ref = InterlockedDecrement( &This->ref2A );
+
+    TRACE( "(%p) ref2A=%d\n", This, ref );
+
+    if ( !ref && !InterlockedDecrement( &This->numIfaces ) )
+        dplay_destroy( This );
 
     return ref;
 }
@@ -450,6 +488,13 @@ static ULONG WINAPI IDirectPlay4Impl_Release(IDirectPlay4 *iface)
         dplay_destroy( This );
 
     return ref;
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_AddPlayerToGroup( IDirectPlay2A *iface, DPID group,
+        DPID player )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_AddPlayerToGroup( &This->IDirectPlay4A_iface, group, player );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_AddPlayerToGroup( IDirectPlay4A *iface, DPID group,
@@ -528,6 +573,12 @@ static HRESULT WINAPI IDirectPlay4Impl_AddPlayerToGroup( IDirectPlay4 *iface, DP
     }
 
     return DP_OK;
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_Close( IDirectPlay2A *iface )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_Close( &This->IDirectPlay4A_iface );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_Close( IDirectPlay4A *iface )
@@ -765,6 +816,14 @@ static HRESULT DP_IF_CreateGroup( IDirectPlayImpl *This, void *lpMsgHdr, DPID *l
   }
 
   return DP_OK;
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_CreateGroup( IDirectPlay2A *iface, DPID *lpidGroup,
+        DPNAME *name, void *data, DWORD size, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_CreateGroup( &This->IDirectPlay4A_iface, lpidGroup, name, data, size,
+            flags );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_CreateGroup( IDirectPlay4A *iface, DPID *lpidGroup,
@@ -1241,6 +1300,14 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, void *lpMsgHdr, DPID *
   return hr;
 }
 
+static HRESULT WINAPI IDirectPlay2AImpl_CreatePlayer( IDirectPlay2A *iface, DPID *lpidPlayer,
+        DPNAME *name, HANDLE event, void *data, DWORD size, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_CreatePlayer( &This->IDirectPlay4A_iface, lpidPlayer, name, event, data,
+            size, flags );
+}
+
 static HRESULT WINAPI IDirectPlay4AImpl_CreatePlayer( IDirectPlay4A *iface, DPID *lpidPlayer,
         DPNAME *lpPlayerName, HANDLE hEvent, void *lpData, DWORD dwDataSize, DWORD dwFlags )
 {
@@ -1293,6 +1360,13 @@ static DPID DP_GetRemoteNextObjectId(void)
 
   /* Hack solution */
   return DP_NextObjectId();
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_DeletePlayerFromGroup( IDirectPlay2A *iface, DPID group,
+        DPID player )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_DeletePlayerFromGroup( &This->IDirectPlay4A_iface, group, player );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_DeletePlayerFromGroup( IDirectPlay4A *iface, DPID group,
@@ -1436,6 +1510,12 @@ static HRESULT DP_IF_DestroyGroup( IDirectPlayImpl *This, void *lpMsgHdr, DPID i
   return DP_OK;
 }
 
+static HRESULT WINAPI IDirectPlay2AImpl_DestroyGroup( IDirectPlay2A *iface, DPID group )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_DestroyGroup( &This->IDirectPlay4A_iface, group );
+}
+
 static HRESULT WINAPI IDirectPlay4AImpl_DestroyGroup( IDirectPlay4A *iface, DPID idGroup )
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
@@ -1535,6 +1615,12 @@ cbDeletePlayerFromAllGroups(
   return TRUE;
 }
 
+static HRESULT WINAPI IDirectPlay2AImpl_DestroyPlayer( IDirectPlay2A *iface, DPID player )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_DestroyPlayer( &This->IDirectPlay4A_iface, player );
+}
+
 static HRESULT WINAPI IDirectPlay4AImpl_DestroyPlayer( IDirectPlay4A *iface, DPID idPlayer )
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
@@ -1545,6 +1631,14 @@ static HRESULT WINAPI IDirectPlay4Impl_DestroyPlayer( IDirectPlay4 *iface, DPID 
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
     return DP_IF_DestroyPlayer( This, NULL, idPlayer, FALSE );
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_EnumGroupPlayers( IDirectPlay2A *iface, DPID group,
+        GUID *instance, LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_EnumGroupPlayers( &This->IDirectPlay4A_iface, group, instance,
+            enumplayercb, context, flags );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_EnumGroupPlayers( IDirectPlay4A *iface, DPID group,
@@ -1598,6 +1692,14 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumGroupPlayers( IDirectPlay4 *iface, DP
 }
 
 /* NOTE: This only enumerates top level groups (created with CreateGroup) */
+static HRESULT WINAPI IDirectPlay2AImpl_EnumGroups( IDirectPlay2A *iface, GUID *instance,
+        LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_EnumGroups( &This->IDirectPlay4A_iface, instance, enumplayercb, context,
+            flags );
+}
+
 static HRESULT WINAPI IDirectPlay4AImpl_EnumGroups( IDirectPlay4A *iface, GUID *instance,
         LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
 {
@@ -1610,6 +1712,14 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumGroups ( IDirectPlay4 *iface, GUID *i
 {
     return IDirectPlayX_EnumGroupsInGroup( iface, DPID_SYSTEM_GROUP, instance, enumplayercb,
             context, flags );
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_EnumPlayers( IDirectPlay2A *iface, GUID *instance,
+        LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_EnumPlayers( &This->IDirectPlay4A_iface, instance, enumplayercb, context,
+            flags );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_EnumPlayers( IDirectPlay4A *iface, GUID *instance,
@@ -1724,6 +1834,14 @@ static void DP_KillEnumSessionThread( IDirectPlayImpl *This )
 
     This->dp2->hEnumSessionThread = INVALID_HANDLE_VALUE;
   }
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_EnumSessions( IDirectPlay2A *iface, DPSESSIONDESC2 *sdesc,
+        DWORD timeout, LPDPENUMSESSIONSCALLBACK2 enumsessioncb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_EnumSessions( &This->IDirectPlay4A_iface, sdesc, timeout, enumsessioncb,
+            context, flags );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_EnumSessions( IDirectPlay4A *iface, DPSESSIONDESC2 *sdesc,
@@ -1858,6 +1976,12 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
     return hr;
 }
 
+static HRESULT WINAPI IDirectPlay2AImpl_GetCaps( IDirectPlay2A *iface, DPCAPS *caps, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_GetCaps( &This->IDirectPlay4A_iface, caps, flags );
+}
+
 static HRESULT WINAPI IDirectPlay4AImpl_GetCaps( IDirectPlay4A *iface, DPCAPS *caps, DWORD flags )
 {
     return IDirectPlayX_GetPlayerCaps( iface, DPID_ALLPLAYERS, caps, flags );
@@ -1866,6 +1990,13 @@ static HRESULT WINAPI IDirectPlay4AImpl_GetCaps( IDirectPlay4A *iface, DPCAPS *c
 static HRESULT WINAPI IDirectPlay4Impl_GetCaps( IDirectPlay4 *iface, DPCAPS *caps, DWORD flags )
 {
     return IDirectPlayX_GetPlayerCaps( iface, DPID_ALLPLAYERS, caps, flags );
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_GetGroupData( IDirectPlay2A *iface, DPID group, void *data,
+        DWORD *size, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_GetGroupData( &This->IDirectPlay4A_iface, group, data, size, flags );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_GetGroupData( IDirectPlay4A *iface, DPID group,
@@ -1973,6 +2104,13 @@ static HRESULT DP_IF_GetGroupName( IDirectPlayImpl *This, DPID idGroup, void *lp
   return DP_OK;
 }
 
+static HRESULT WINAPI IDirectPlay2AImpl_GetGroupName( IDirectPlay2A *iface, DPID group, void *data,
+        DWORD *size )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_GetGroupName( &This->IDirectPlay4A_iface, group, data, size );
+}
+
 static HRESULT WINAPI IDirectPlay4AImpl_GetGroupName( IDirectPlay4A *iface, DPID idGroup,
         void *lpData, DWORD *lpdwDataSize )
 {
@@ -1987,6 +2125,13 @@ static HRESULT WINAPI IDirectPlay4Impl_GetGroupName( IDirectPlay4 *iface, DPID i
     return DP_IF_GetGroupName( This, idGroup, lpData, lpdwDataSize, FALSE );
 }
 
+static HRESULT WINAPI IDirectPlay2AImpl_GetMessageCount( IDirectPlay2A *iface, DPID player,
+        DWORD *count )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_GetMessageCount( &This->IDirectPlay4A_iface, player, count );
+}
+
 static HRESULT WINAPI IDirectPlay4AImpl_GetMessageCount( IDirectPlay4A *iface, DPID player,
         DWORD *count )
 {
@@ -1997,6 +2142,13 @@ static HRESULT WINAPI IDirectPlay4Impl_GetMessageCount( IDirectPlay4 *iface, DPI
         DWORD *count )
 {
     return IDirectPlayX_GetMessageQueue( iface, 0, player, DPMESSAGEQUEUE_RECEIVE, count, NULL );
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_GetPlayerAddress( IDirectPlay2A *iface, DPID player,
+        void *data, DWORD *size )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_GetPlayerAddress( &This->IDirectPlay4A_iface, player, data, size );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_GetPlayerAddress( IDirectPlay4A *iface, DPID player,
@@ -2013,6 +2165,13 @@ static HRESULT WINAPI IDirectPlay4Impl_GetPlayerAddress( IDirectPlay4 *iface, DP
     IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
     FIXME( "(%p)->(0x%08x,%p,%p): stub\n", This, player, data, size );
     return DP_OK;
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_GetPlayerCaps( IDirectPlay2A *iface, DPID player,
+        DPCAPS *caps, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_GetPlayerCaps( &This->IDirectPlay4A_iface, player, caps, flags );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_GetPlayerCaps( IDirectPlay4A *iface, DPID player,
@@ -2040,6 +2199,13 @@ static HRESULT WINAPI IDirectPlay4Impl_GetPlayerCaps( IDirectPlay4 *iface, DPID 
     data.lpISP = This->dp2->spData.lpISP;
 
     return (*This->dp2->spData.lpCB->GetCaps)( &data );
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_GetPlayerData( IDirectPlay2A *iface, DPID player,
+        void *data, DWORD *size, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_GetPlayerData( &This->IDirectPlay4A_iface, player, data, size, flags );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_GetPlayerData( IDirectPlay4A *iface, DPID player,
@@ -2154,6 +2320,13 @@ static HRESULT DP_IF_GetPlayerName( IDirectPlayImpl *This, DPID idPlayer, void *
   return DP_OK;
 }
 
+static HRESULT WINAPI IDirectPlay2AImpl_GetPlayerName( IDirectPlay2A *iface, DPID player,
+        void *data, DWORD *size )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_GetPlayerName( &This->IDirectPlay4A_iface, player, data, size );
+}
+
 static HRESULT WINAPI IDirectPlay4AImpl_GetPlayerName( IDirectPlay4A *iface, DPID idPlayer,
         void *lpData, DWORD *lpdwDataSize )
 {
@@ -2201,6 +2374,13 @@ static HRESULT DP_GetSessionDesc( IDirectPlayImpl *This, void *lpData, DWORD *lp
   return DP_OK;
 }
 
+static HRESULT WINAPI IDirectPlay2AImpl_GetSessionDesc( IDirectPlay2A *iface, void *data,
+        DWORD *size )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_GetSessionDesc( &This->IDirectPlay4A_iface, data, size );
+}
+
 static HRESULT WINAPI IDirectPlay4AImpl_GetSessionDesc( IDirectPlay4A *iface, void *lpData,
         DWORD *lpdwDataSize )
 {
@@ -2213,6 +2393,12 @@ static HRESULT WINAPI IDirectPlay4Impl_GetSessionDesc( IDirectPlay4 *iface, void
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
     return DP_GetSessionDesc( This, lpData, lpdwDataSize, TRUE );
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_Initialize( IDirectPlay2A *iface, GUID *guid )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_Initialize( &This->IDirectPlay4A_iface, guid );
 }
 
 /* Intended only for COM compatibility. Always returns an error. */
@@ -2341,6 +2527,13 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
   return hr;
 }
 
+static HRESULT WINAPI IDirectPlay2AImpl_Open( IDirectPlay2A *iface, DPSESSIONDESC2 *sdesc,
+        DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_Open( &This->IDirectPlay4A_iface, sdesc, flags );
+}
+
 static HRESULT WINAPI IDirectPlay4AImpl_Open( IDirectPlay4A *iface, DPSESSIONDESC2 *sdesc,
         DWORD flags )
 {
@@ -2410,6 +2603,13 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
   return DP_OK;
 }
 
+static HRESULT WINAPI IDirectPlay2AImpl_Receive( IDirectPlay2A *iface, DPID *from, DPID *to,
+        DWORD flags, void *data, DWORD *size )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_Receive( &This->IDirectPlay4A_iface, from, to, flags, data, size );
+}
+
 static HRESULT WINAPI IDirectPlay4AImpl_Receive( IDirectPlay4A *iface, DPID *lpidFrom,
         DPID *lpidTo, DWORD dwFlags, void *lpData, DWORD *lpdwDataSize )
 {
@@ -2424,6 +2624,13 @@ static HRESULT WINAPI IDirectPlay4Impl_Receive( IDirectPlay4 *iface, DPID *lpidF
     return DP_IF_Receive( This, lpidFrom, lpidTo, dwFlags, lpData, lpdwDataSize, FALSE );
 }
 
+static HRESULT WINAPI IDirectPlay2AImpl_Send( IDirectPlay2A *iface, DPID from, DPID to,
+        DWORD flags, void *data, DWORD size )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_Send( &This->IDirectPlay4A_iface, from, to, flags, data, size );
+}
+
 static HRESULT WINAPI IDirectPlay4AImpl_Send( IDirectPlay4A *iface, DPID from, DPID to,
         DWORD flags, void *data, DWORD size )
 {
@@ -2434,6 +2641,13 @@ static HRESULT WINAPI IDirectPlay4Impl_Send( IDirectPlay4 *iface, DPID from, DPI
         DWORD flags, void *data, DWORD size )
 {
     return IDirectPlayX_SendEx( iface, from, to, flags, data, size, 0, 0, NULL, NULL );
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_SetGroupData( IDirectPlay2A *iface, DPID group, void *data,
+        DWORD size, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_SetGroupData( &This->IDirectPlay4A_iface, group, data, size, flags );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_SetGroupData( IDirectPlay4A *iface, DPID group, void *data,
@@ -2499,6 +2713,13 @@ static HRESULT DP_IF_SetGroupName( IDirectPlayImpl *This, DPID idGroup, DPNAME *
   return DP_OK;
 }
 
+static HRESULT WINAPI IDirectPlay2AImpl_SetGroupName( IDirectPlay2A *iface, DPID group,
+        DPNAME *name, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_SetGroupName( &This->IDirectPlay4A_iface, group, name, flags );
+}
+
 static HRESULT WINAPI IDirectPlay4AImpl_SetGroupName( IDirectPlay4A *iface, DPID idGroup,
         DPNAME *lpGroupName, DWORD dwFlags )
 {
@@ -2511,6 +2732,13 @@ static HRESULT WINAPI IDirectPlay4Impl_SetGroupName( IDirectPlay4 *iface, DPID i
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
     return DP_IF_SetGroupName( This, idGroup, lpGroupName, dwFlags, FALSE );
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_SetPlayerData( IDirectPlay2A *iface, DPID player,
+        void *data, DWORD size, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_SetPlayerData( &This->IDirectPlay4A_iface, player, data, size, flags );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_SetPlayerData( IDirectPlay4A *iface, DPID player,
@@ -2579,6 +2807,13 @@ static HRESULT DP_IF_SetPlayerName( IDirectPlayImpl *This, DPID idPlayer, DPNAME
   FIXME( "Message not sent and dwFlags ignored\n" );
 
   return DP_OK;
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_SetPlayerName( IDirectPlay2A *iface, DPID player,
+        DPNAME *name, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_SetPlayerName( &This->IDirectPlay4A_iface, player, name, flags );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_SetPlayerName( IDirectPlay4A *iface, DPID idPlayer,
@@ -2650,6 +2885,13 @@ static HRESULT DP_SetSessionDesc( IDirectPlayImpl *This, const DPSESSIONDESC2 *l
   }
 
   return DP_OK;
+}
+
+static HRESULT WINAPI IDirectPlay2AImpl_SetSessionDesc( IDirectPlay2A *iface, DPSESSIONDESC2 *sdesc,
+        DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay2A( iface );
+    return IDirectPlayX_SetSessionDesc( &This->IDirectPlay4A_iface, sdesc, flags );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_SetSessionDesc( IDirectPlay4A *iface,
@@ -3965,6 +4207,42 @@ static HRESULT WINAPI IDirectPlay4Impl_CancelPriority( IDirectPlay4 *iface, DWOR
     return dplay_cancelmsg( This, 0, DPCANCELSEND_PRIORITY, minprio, maxprio );
 }
 
+static const IDirectPlay2Vtbl dp2A_vt =
+{
+    IDirectPlay2AImpl_QueryInterface,
+    IDirectPlay2AImpl_AddRef,
+    IDirectPlay2AImpl_Release,
+    IDirectPlay2AImpl_AddPlayerToGroup,
+    IDirectPlay2AImpl_Close,
+    IDirectPlay2AImpl_CreateGroup,
+    IDirectPlay2AImpl_CreatePlayer,
+    IDirectPlay2AImpl_DeletePlayerFromGroup,
+    IDirectPlay2AImpl_DestroyGroup,
+    IDirectPlay2AImpl_DestroyPlayer,
+    IDirectPlay2AImpl_EnumGroupPlayers,
+    IDirectPlay2AImpl_EnumGroups,
+    IDirectPlay2AImpl_EnumPlayers,
+    IDirectPlay2AImpl_EnumSessions,
+    IDirectPlay2AImpl_GetCaps,
+    IDirectPlay2AImpl_GetGroupData,
+    IDirectPlay2AImpl_GetGroupName,
+    IDirectPlay2AImpl_GetMessageCount,
+    IDirectPlay2AImpl_GetPlayerAddress,
+    IDirectPlay2AImpl_GetPlayerCaps,
+    IDirectPlay2AImpl_GetPlayerData,
+    IDirectPlay2AImpl_GetPlayerName,
+    IDirectPlay2AImpl_GetSessionDesc,
+    IDirectPlay2AImpl_Initialize,
+    IDirectPlay2AImpl_Open,
+    IDirectPlay2AImpl_Receive,
+    IDirectPlay2AImpl_Send,
+    IDirectPlay2AImpl_SetGroupData,
+    IDirectPlay2AImpl_SetGroupName,
+    IDirectPlay2AImpl_SetPlayerData,
+    IDirectPlay2AImpl_SetPlayerName,
+    IDirectPlay2AImpl_SetSessionDesc
+};
+
 static const IDirectPlay4Vtbl dp4_vt =
 {
     IDirectPlay4Impl_QueryInterface,
@@ -4091,9 +4369,11 @@ HRESULT dplay_create( REFIID riid, void **ppv )
     if ( !obj )
         return DPERR_OUTOFMEMORY;
 
+    obj->IDirectPlay2A_iface.lpVtbl = &dp2A_vt;
     obj->IDirectPlay4A_iface.lpVtbl = &dp4A_vt;
     obj->IDirectPlay4_iface.lpVtbl = &dp4_vt;
     obj->numIfaces = 1;
+    obj->ref2A = 0;
     obj->ref4A = 1;
     obj->ref4 = 0;
 

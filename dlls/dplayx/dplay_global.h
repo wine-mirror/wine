@@ -182,10 +182,11 @@ typedef struct tagDirectPlay2Data
 
 typedef struct IDirectPlayImpl
 {
+  IDirectPlay2A IDirectPlay2A_iface;
   IDirectPlay4A IDirectPlay4A_iface;
   IDirectPlay4  IDirectPlay4_iface;
   LONG numIfaces; /* "in use interfaces" refcount */
-  LONG ref4A, ref4;
+  LONG ref2A, ref4A, ref4;
   CRITICAL_SECTION lock;
   DirectPlay2Data *dp2;
 } IDirectPlayImpl;
