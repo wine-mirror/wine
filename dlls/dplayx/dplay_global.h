@@ -184,7 +184,8 @@ typedef struct IDirectPlayImpl
 {
   IDirectPlay4A IDirectPlay4A_iface;
   IDirectPlay4  IDirectPlay4_iface;
-  LONG ulInterfaceRef;
+  LONG numIfaces; /* "in use interfaces" refcount */
+  LONG ref4A, ref4;
   CRITICAL_SECTION lock;
   DirectPlay2Data *dp2;
 } IDirectPlayImpl;

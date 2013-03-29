@@ -355,6 +355,13 @@ static BOOL DP_DestroyDirectPlay2( LPVOID lpDP )
   return TRUE;
 }
 
+static void dplay_destroy(IDirectPlayImpl *obj)
+{
+     DP_DestroyDirectPlay2( obj );
+     obj->lock.DebugInfo->Spare[0] = 0;
+     DeleteCriticalSection( &obj->lock );
+     HeapFree( GetProcessHeap(), 0, obj );
+}
 
 /* Direct Play methods */
 
@@ -379,36 +386,6 @@ static HRESULT WINAPI DP_QueryInterface( IDirectPlayImpl *This, REFIID riid, voi
   IDirectPlayX_AddRef( (LPDIRECTPLAY2)*ppvObj );
 
   return S_OK;
-}
-
-/* Shared between all dplay types */
-static ULONG WINAPI DP_AddRef( IDirectPlayImpl *This )
-{
-  ULONG ulInterfaceRefCount = InterlockedIncrement( &This->ulInterfaceRef );
-
-  TRACE( "ref count incremented to %u for %p\n", ulInterfaceRefCount, This );
-
-  return ulInterfaceRefCount;
-}
-
-static ULONG WINAPI DP_Release( IDirectPlayImpl *This )
-{
-  ULONG ulInterfaceRefCount = InterlockedDecrement( &This->ulInterfaceRef );
-
-  TRACE( "ref count decremented to %u for %p\n", ulInterfaceRefCount, This );
-
-  /* Deallocate if this is the last reference to the object */
-  if( ulInterfaceRefCount == 0 )
-  {
-     /* If we're destroying the object, this must be the last ref
-        of the last interface */
-     DP_DestroyDirectPlay2( This );
-     This->lock.DebugInfo->Spare[0] = 0;
-     DeleteCriticalSection( &This->lock );
-     HeapFree( GetProcessHeap(), 0, This );
-  }
-
-  return ulInterfaceRefCount;
 }
 
 static inline DPID DP_NextObjectId(void)
@@ -610,25 +587,53 @@ static HRESULT WINAPI IDirectPlay4Impl_QueryInterface( IDirectPlay4 *iface, REFI
 static ULONG WINAPI IDirectPlay4AImpl_AddRef(IDirectPlay4A *iface)
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-    return DP_AddRef( This );
+    ULONG ref = InterlockedIncrement( &This->ref4A );
+
+    TRACE( "(%p) ref4A=%d\n", This, ref );
+
+    if ( ref == 1 )
+        InterlockedIncrement( &This->numIfaces );
+
+    return ref;
 }
 
 static ULONG WINAPI IDirectPlay4Impl_AddRef(IDirectPlay4 *iface)
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
-    return DP_AddRef( This );
+    ULONG ref = InterlockedIncrement( &This->ref4 );
+
+    TRACE( "(%p) ref4=%d\n", This, ref );
+
+    if ( ref == 1 )
+        InterlockedIncrement( &This->numIfaces );
+
+    return ref;
 }
 
 static ULONG WINAPI IDirectPlay4AImpl_Release(IDirectPlay4A *iface)
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-    return DP_Release( This );
+    ULONG ref = InterlockedDecrement( &This->ref4A );
+
+    TRACE( "(%p) ref4A=%d\n", This, ref );
+
+    if ( !ref && !InterlockedDecrement( &This->numIfaces ) )
+        dplay_destroy( This );
+
+    return ref;
 }
 
 static ULONG WINAPI IDirectPlay4Impl_Release(IDirectPlay4 *iface)
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
-    return DP_Release( This );
+    ULONG ref = InterlockedDecrement( &This->ref4 );
+
+    TRACE( "(%p) ref4=%d\n", This, ref );
+
+    if ( !ref && !InterlockedDecrement( &This->numIfaces ) )
+        dplay_destroy( This );
+
+    return ref;
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_AddPlayerToGroup( IDirectPlay4A *iface, DPID idGroup,
@@ -4700,7 +4705,9 @@ HRESULT dplay_create( REFIID riid, void **ppv )
 
     obj->IDirectPlay4A_iface.lpVtbl = &dp4A_vt;
     obj->IDirectPlay4_iface.lpVtbl = &dp4_vt;
-    obj->ulInterfaceRef = 1;
+    obj->numIfaces = 1;
+    obj->ref4A = 1;
+    obj->ref4 = 0;
 
     InitializeCriticalSection( &obj->lock );
     obj->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlayImpl.lock");
