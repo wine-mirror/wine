@@ -106,9 +106,6 @@ static HRESULT DP_IF_CreateGroupInGroup
           ( IDirectPlay3Impl* This, LPVOID lpMsgHdr, DPID idParentGroup,
             LPDPID lpidGroup, LPDPNAME lpGroupName, LPVOID lpData,
             DWORD dwDataSize, DWORD dwFlags, BOOL bAnsi );
-static HRESULT DP_IF_AddPlayerToGroup
-          ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, DPID idGroup,
-            DPID idPlayer, BOOL bAnsi );
 static HRESULT DP_SetSessionDesc
           ( IDirectPlay2Impl* This, LPCDPSESSIONDESC2 lpSessDesc,
             DWORD dwFlags, BOOL bInitial, BOOL bAnsi  );
@@ -428,86 +425,6 @@ HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpcMessageBody,
 }
 
 
-static HRESULT DP_IF_AddPlayerToGroup
-          ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, DPID idGroup,
-            DPID idPlayer, BOOL bAnsi )
-{
-  lpGroupData  lpGData;
-  lpPlayerList lpPList;
-  lpPlayerList lpNewPList;
-
-  TRACE( "(%p)->(%p,0x%08x,0x%08x,%u)\n",
-         This, lpMsgHdr, idGroup, idPlayer, bAnsi );
-
-  if( This->dp2->connectionInitialized == NO_PROVIDER )
-  {
-    return DPERR_UNINITIALIZED;
-  }
-
-  /* Find the group */
-  if( ( lpGData = DP_FindAnyGroup( This, idGroup ) ) == NULL )
-  {
-    return DPERR_INVALIDGROUP;
-  }
-
-  /* Find the player */
-  if( ( lpPList = DP_FindPlayer( This, idPlayer ) ) == NULL )
-  {
-    return DPERR_INVALIDPLAYER;
-  }
-
-  /* Create a player list (ie "shortcut" ) */
-  lpNewPList = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpNewPList ) );
-  if( lpNewPList == NULL )
-  {
-    return DPERR_CANTADDPLAYER;
-  }
-
-  /* Add the shortcut */
-  lpPList->lpPData->uRef++;
-  lpNewPList->lpPData = lpPList->lpPData;
-
-  /* Add the player to the list of players for this group */
-  DPQ_INSERT(lpGData->players,lpNewPList,players);
-
-  /* Let the SP know that we've added a player to the group */
-  if( This->dp2->spData.lpCB->AddPlayerToGroup )
-  {
-    DPSP_ADDPLAYERTOGROUPDATA data;
-
-    TRACE( "Calling SP AddPlayerToGroup\n" );
-
-    data.idPlayer = idPlayer;
-    data.idGroup  = idGroup;
-    data.lpISP    = This->dp2->spData.lpISP;
-
-    (*This->dp2->spData.lpCB->AddPlayerToGroup)( &data );
-  }
-
-  /* Inform all other peers of the addition of player to the group. If there are
-   * no peers keep this event quiet.
-   * Also, if this event was the result of another machine sending it to us,
-   * don't bother rebroadcasting it.
-   */
-  if( ( lpMsgHdr == NULL ) &&
-      This->dp2->lpSessionDesc &&
-      ( This->dp2->lpSessionDesc->dwFlags & DPSESSION_MULTICASTSERVER ) )
-  {
-    DPMSG_ADDPLAYERTOGROUP msg;
-    msg.dwType = DPSYS_ADDPLAYERTOGROUP;
-
-    msg.dpIdGroup  = idGroup;
-    msg.dpIdPlayer = idPlayer;
-
-    /* FIXME: Correct to just use send effectively? */
-    /* FIXME: Should size include data w/ message or just message "header" */
-    /* FIXME: Check return code */
-    DP_SendEx( This, DPID_SERVERPLAYER, DPID_ALLPLAYERS, 0, &msg, sizeof( msg ),               0, 0, NULL, NULL, bAnsi );
-  }
-
-  return DP_OK;
-}
-
 static HRESULT WINAPI IDirectPlay4AImpl_QueryInterface( IDirectPlay4A *iface, REFIID riid,
         void **ppv )
 {
@@ -618,18 +535,82 @@ static ULONG WINAPI IDirectPlay4Impl_Release(IDirectPlay4 *iface)
     return ref;
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_AddPlayerToGroup( IDirectPlay4A *iface, DPID idGroup,
-        DPID idPlayer )
+static HRESULT WINAPI IDirectPlay4AImpl_AddPlayerToGroup( IDirectPlay4A *iface, DPID group,
+        DPID player )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_IF_AddPlayerToGroup( This, NULL, idGroup, idPlayer, TRUE );
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_AddPlayerToGroup( &This->IDirectPlay4_iface, group, player );
 }
 
-static HRESULT WINAPI DirectPlay2WImpl_AddPlayerToGroup
-          ( LPDIRECTPLAY2 iface, DPID idGroup, DPID idPlayer )
+static HRESULT WINAPI IDirectPlay4Impl_AddPlayerToGroup( IDirectPlay4 *iface, DPID group,
+        DPID player )
 {
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_IF_AddPlayerToGroup( This, NULL, idGroup, idPlayer, FALSE );
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    lpGroupData  gdata;
+    lpPlayerList plist;
+    lpPlayerList newplist;
+
+    TRACE( "(%p)->(0x%08x,0x%08x)\n", This, group, player );
+
+    if ( This->dp2->connectionInitialized == NO_PROVIDER )
+        return DPERR_UNINITIALIZED;
+
+    /* Find the group */
+    if ( ( gdata = DP_FindAnyGroup( This, group ) ) == NULL )
+        return DPERR_INVALIDGROUP;
+
+    /* Find the player */
+    if ( ( plist = DP_FindPlayer( This, player ) ) == NULL )
+        return DPERR_INVALIDPLAYER;
+
+    /* Create a player list (ie "shortcut" ) */
+    newplist = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *newplist ) );
+    if ( !newplist )
+        return DPERR_CANTADDPLAYER;
+
+    /* Add the shortcut */
+    plist->lpPData->uRef++;
+    newplist->lpPData = plist->lpPData;
+
+    /* Add the player to the list of players for this group */
+    DPQ_INSERT(gdata->players, newplist, players);
+
+    /* Let the SP know that we've added a player to the group */
+    if ( This->dp2->spData.lpCB->AddPlayerToGroup )
+    {
+        DPSP_ADDPLAYERTOGROUPDATA data;
+
+        TRACE( "Calling SP AddPlayerToGroup\n" );
+
+        data.idPlayer = player;
+        data.idGroup  = group;
+        data.lpISP    = This->dp2->spData.lpISP;
+
+        (*This->dp2->spData.lpCB->AddPlayerToGroup)( &data );
+    }
+
+    /* Inform all other peers of the addition of player to the group. If there are
+     * no peers keep this event quiet.
+     * Also, if this event was the result of another machine sending it to us,
+     * don't bother rebroadcasting it.
+     */
+    if ( This->dp2->lpSessionDesc &&
+            ( This->dp2->lpSessionDesc->dwFlags & DPSESSION_MULTICASTSERVER ) )
+    {
+        DPMSG_ADDPLAYERTOGROUP msg;
+        msg.dwType = DPSYS_ADDPLAYERTOGROUP;
+
+        msg.dpIdGroup  = group;
+        msg.dpIdPlayer = player;
+
+        /* FIXME: Correct to just use send effectively? */
+        /* FIXME: Should size include data w/ message or just message "header" */
+        /* FIXME: Check return code */
+        IDirectPlayX_SendEx( iface, DPID_SERVERPLAYER, DPID_ALLPLAYERS, 0, &msg, sizeof( msg ),
+                0, 0, NULL, NULL );
+    }
+
+    return DP_OK;
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_Close( IDirectPlay4A *iface )
@@ -4284,8 +4265,7 @@ static const IDirectPlay4Vtbl dp4_vt =
     IDirectPlay4Impl_QueryInterface,
     IDirectPlay4Impl_AddRef,
     IDirectPlay4Impl_Release,
-
-  XCAST(AddPlayerToGroup)DirectPlay2WImpl_AddPlayerToGroup,
+    IDirectPlay4Impl_AddPlayerToGroup,
     IDirectPlay4Impl_Close,
   XCAST(CreateGroup)DirectPlay2WImpl_CreateGroup,
   XCAST(CreatePlayer)DirectPlay2WImpl_CreatePlayer,
