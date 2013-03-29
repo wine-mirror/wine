@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
 #include "config.h"
 #include "wine/port.h"
 
@@ -363,31 +364,6 @@ static void dplay_destroy(IDirectPlayImpl *obj)
      HeapFree( GetProcessHeap(), 0, obj );
 }
 
-/* Direct Play methods */
-
-/* Shared between all dplay types */
-static HRESULT WINAPI DP_QueryInterface( IDirectPlayImpl *This, REFIID riid, void **ppvObj )
-{
-  TRACE("(%p)->(%s,%p)\n", This, debugstr_guid( riid ), ppvObj );
-
-  if( IsEqualGUID( &IID_IDirectPlay2, riid ) || IsEqualGUID( &IID_IDirectPlay3, riid ) ||
-      IsEqualGUID( &IID_IDirectPlay4, riid ) )
-    *ppvObj = &This->IDirectPlay4_iface;
-  else if( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlay2A, riid ) ||
-          IsEqualGUID( &IID_IDirectPlay3A, riid ) || IsEqualGUID( &IID_IDirectPlay4A, riid ) )
-    *ppvObj = &This->IDirectPlay4A_iface;
-  else
-  {
-    /* Unsupported interface */
-    *ppvObj = NULL;
-    return E_NOINTERFACE;
-  }
-
-  IDirectPlayX_AddRef( (LPDIRECTPLAY2)*ppvObj );
-
-  return S_OK;
-}
-
 static inline DPID DP_NextObjectId(void)
 {
   return (DPID)InterlockedIncrement( &kludgePlayerGroupId );
@@ -574,14 +550,58 @@ static HRESULT WINAPI IDirectPlay4AImpl_QueryInterface( IDirectPlay4A *iface, RE
         void **ppv )
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-    return DP_QueryInterface( This, riid, ppv );
+    return IDirectPlayX_QueryInterface( &This->IDirectPlay4_iface, riid, ppv );
 }
 
 static HRESULT WINAPI IDirectPlay4Impl_QueryInterface( IDirectPlay4 *iface, REFIID riid,
         void **ppv )
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
-    return DP_QueryInterface( This, riid, ppv );
+
+    if ( IsEqualGUID( &IID_IUnknown, riid ) )
+    {
+        TRACE( "(%p)->(IID_IUnknown %p)\n", This, ppv );
+        *ppv = &This->IDirectPlay4A_iface;
+    }
+    else if ( IsEqualGUID( &IID_IDirectPlay2A, riid ) )
+    {
+        TRACE( "(%p)->(IID_IDirectPlay2A %p)\n", This, ppv );
+        *ppv = &This->IDirectPlay4A_iface;
+    }
+    else if ( IsEqualGUID( &IID_IDirectPlay2, riid ) )
+    {
+        TRACE( "(%p)->(IID_IDirectPlay2 %p)\n", This, ppv );
+        *ppv = &This->IDirectPlay4_iface;
+    }
+    else if ( IsEqualGUID( &IID_IDirectPlay3A, riid ) )
+    {
+        TRACE( "(%p)->(IID_IDirectPlay3A %p)\n", This, ppv );
+        *ppv = &This->IDirectPlay4A_iface;
+    }
+    else if ( IsEqualGUID( &IID_IDirectPlay3, riid ) )
+    {
+        TRACE( "(%p)->(IID_IDirectPlay3 %p)\n", This, ppv );
+        *ppv = &This->IDirectPlay4_iface;
+    }
+    else if ( IsEqualGUID( &IID_IDirectPlay4A, riid ) )
+    {
+        TRACE( "(%p)->(IID_IDirectPlay4A %p)\n", This, ppv );
+        *ppv = &This->IDirectPlay4A_iface;
+    }
+    else if ( IsEqualGUID( &IID_IDirectPlay4, riid ) )
+    {
+        TRACE( "(%p)->(IID_IDirectPlay4 %p)\n", This, ppv );
+        *ppv = &This->IDirectPlay4_iface;
+    }
+    else
+    {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI IDirectPlay4AImpl_AddRef(IDirectPlay4A *iface)
