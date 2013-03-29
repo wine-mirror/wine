@@ -78,9 +78,6 @@ static BOOL CALLBACK cbRemoveGroupOrPlayer( DPID dpId, DWORD dwPlayerType,
 static void DP_DeleteGroup( IDirectPlay2Impl* This, DPID dpid );
 
 /* Helper methods for player/group interfaces */
-static HRESULT DP_IF_DeletePlayerFromGroup
-          ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, DPID idGroup,
-            DPID idPlayer, BOOL bAnsi );
 static HRESULT DP_IF_CreatePlayer
           ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, LPDPID lpidPlayer,
             LPDPNAME lpPlayerName, HANDLE hEvent, LPVOID lpData,
@@ -1448,76 +1445,60 @@ static DPID DP_GetRemoteNextObjectId(void)
   return DP_NextObjectId();
 }
 
-static HRESULT DP_IF_DeletePlayerFromGroup
-          ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, DPID idGroup,
-            DPID idPlayer, BOOL bAnsi )
+static HRESULT WINAPI IDirectPlay4AImpl_DeletePlayerFromGroup( IDirectPlay4A *iface, DPID group,
+        DPID player )
 {
-  HRESULT hr = DP_OK;
-
-  lpGroupData  lpGData;
-  lpPlayerList lpPList;
-
-  TRACE( "(%p)->(%p,0x%08x,0x%08x,%u)\n",
-         This, lpMsgHdr, idGroup, idPlayer, bAnsi );
-
-  /* Find the group */
-  if( ( lpGData = DP_FindAnyGroup( This, idGroup ) ) == NULL )
-  {
-    return DPERR_INVALIDGROUP;
-  }
-
-  /* Find the player */
-  if( ( lpPList = DP_FindPlayer( This, idPlayer ) ) == NULL )
-  {
-    return DPERR_INVALIDPLAYER;
-  }
-
-  /* Remove the player shortcut from the group */
-  DPQ_REMOVE_ENTRY( lpGData->players, players, lpPData->dpid, ==, idPlayer, lpPList );
-
-  if( lpPList == NULL )
-  {
-    return DPERR_INVALIDPLAYER;
-  }
-
-  /* One less reference */
-  lpPList->lpPData->uRef--;
-
-  /* Delete the Player List element */
-  HeapFree( GetProcessHeap(), 0, lpPList );
-
-  /* Inform the SP if they care */
-  if( This->dp2->spData.lpCB->RemovePlayerFromGroup )
-  {
-    DPSP_REMOVEPLAYERFROMGROUPDATA data;
-
-    TRACE( "Calling SP RemovePlayerFromGroup\n" );
-
-    data.idPlayer = idPlayer;
-    data.idGroup  = idGroup;
-    data.lpISP    = This->dp2->spData.lpISP;
-
-    hr = (*This->dp2->spData.lpCB->RemovePlayerFromGroup)( &data );
-  }
-
-  /* Need to send a DELETEPLAYERFROMGROUP message */
-  FIXME( "Need to send a message\n" );
-
-  return hr;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_DeletePlayerFromGroup( &This->IDirectPlay4_iface, group, player );
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_DeletePlayerFromGroup( IDirectPlay4A *iface, DPID idGroup,
-        DPID idPlayer )
+static HRESULT WINAPI IDirectPlay4Impl_DeletePlayerFromGroup( IDirectPlay4 *iface, DPID group,
+        DPID player )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_IF_DeletePlayerFromGroup( This, NULL, idGroup, idPlayer, TRUE );
-}
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    HRESULT hr = DP_OK;
 
-static HRESULT WINAPI DirectPlay2WImpl_DeletePlayerFromGroup
-          ( LPDIRECTPLAY2 iface, DPID idGroup, DPID idPlayer )
-{
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_IF_DeletePlayerFromGroup( This, NULL, idGroup, idPlayer, FALSE );
+    lpGroupData  gdata;
+    lpPlayerList plist;
+
+    TRACE( "(%p)->(0x%08x,0x%08x)\n", This, group, player );
+
+    /* Find the group */
+    if ( ( gdata = DP_FindAnyGroup( This, group ) ) == NULL )
+        return DPERR_INVALIDGROUP;
+
+    /* Find the player */
+    if ( ( plist = DP_FindPlayer( This, player ) ) == NULL )
+        return DPERR_INVALIDPLAYER;
+
+    /* Remove the player shortcut from the group */
+    DPQ_REMOVE_ENTRY( gdata->players, players, lpPData->dpid, ==, player, plist );
+
+    if ( !plist )
+        return DPERR_INVALIDPLAYER;
+
+    /* One less reference */
+    plist->lpPData->uRef--;
+
+    /* Delete the Player List element */
+    HeapFree( GetProcessHeap(), 0, plist );
+
+    /* Inform the SP if they care */
+    if ( This->dp2->spData.lpCB->RemovePlayerFromGroup )
+    {
+        DPSP_REMOVEPLAYERFROMGROUPDATA data;
+
+        TRACE( "Calling SP RemovePlayerFromGroup\n" );
+        data.idPlayer = player;
+        data.idGroup = group;
+        data.lpISP = This->dp2->spData.lpISP;
+        hr = (*This->dp2->spData.lpCB->RemovePlayerFromGroup)( &data );
+    }
+
+    /* Need to send a DELETEPLAYERFROMGROUP message */
+    FIXME( "Need to send a message\n" );
+
+    return hr;
 }
 
 typedef struct _DPRGOPContext
@@ -1551,18 +1532,9 @@ cbRemoveGroupOrPlayer(
              dpId, lpCtxt->idGroup );
     }
   }
-  else
-  {
-    if( FAILED( DP_IF_DeletePlayerFromGroup( (IDirectPlay2Impl*)lpCtxt->This,
-                                             NULL, lpCtxt->idGroup,
-                                             dpId, lpCtxt->bAnsi )
-              )
-      )
-    {
-      ERR( "Unable to delete player 0x%08x from grp 0x%08x\n",
-             dpId, lpCtxt->idGroup );
-    }
-  }
+  else if ( FAILED( IDirectPlayX_DeletePlayerFromGroup( &lpCtxt->This->IDirectPlay4_iface,
+                                                        lpCtxt->idGroup, dpId ) ) )
+      ERR( "Unable to delete player 0x%08x from grp 0x%08x\n", dpId, lpCtxt->idGroup );
 
   return TRUE; /* Continue enumeration */
 }
@@ -1708,8 +1680,7 @@ cbDeletePlayerFromAllGroups(
 
   if( dwPlayerType == DPPLAYERTYPE_GROUP )
   {
-    DP_IF_DeletePlayerFromGroup( lpCtxt->This, NULL, dpId, lpCtxt->idPlayer,
-                                 lpCtxt->bAnsi );
+    IDirectPlayX_DeletePlayerFromGroup( &lpCtxt->This->IDirectPlay4_iface, dpId, lpCtxt->idPlayer );
 
     /* Enumerate all groups in this group since this will normally only
      * be called for top level groups
@@ -4588,7 +4559,7 @@ static const IDirectPlay4Vtbl dp4_vt =
     IDirectPlay4Impl_Close,
   XCAST(CreateGroup)DirectPlay2WImpl_CreateGroup,
   XCAST(CreatePlayer)DirectPlay2WImpl_CreatePlayer,
-  XCAST(DeletePlayerFromGroup)DirectPlay2WImpl_DeletePlayerFromGroup,
+    IDirectPlay4Impl_DeletePlayerFromGroup,
   XCAST(DestroyGroup)DirectPlay2WImpl_DestroyGroup,
   XCAST(DestroyPlayer)DirectPlay2WImpl_DestroyPlayer,
   XCAST(EnumGroupPlayers)DirectPlay2WImpl_EnumGroupPlayers,
