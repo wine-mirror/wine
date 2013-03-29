@@ -116,9 +116,6 @@ static HRESULT DP_SecureOpen
 static HRESULT DP_IF_Receive
           ( IDirectPlay2Impl* This, LPDPID lpidFrom, LPDPID lpidTo,
             DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize, BOOL bAnsi );
-static HRESULT DP_IF_GetMessageQueue
-          ( IDirectPlay4Impl* This, DPID idFrom, DPID idTo, DWORD dwFlags,
-            LPDWORD lpdwNumMsgs, LPDWORD lpdwNumBytes, BOOL bAnsi );
 static HRESULT DP_SP_SendEx
           ( IDirectPlay2Impl* This, DWORD dwFlags,
             LPVOID lpData, DWORD dwDataSize, DWORD dwPriority, DWORD dwTimeout,
@@ -3981,59 +3978,44 @@ static HRESULT DP_SP_SendEx
   return DP_OK;
 }
 
-static HRESULT DP_IF_GetMessageQueue
-          ( IDirectPlay4Impl* This, DPID idFrom, DPID idTo, DWORD dwFlags,
-            LPDWORD lpdwNumMsgs, LPDWORD lpdwNumBytes, BOOL bAnsi )
+static HRESULT WINAPI IDirectPlay4AImpl_GetMessageQueue( IDirectPlay4A *iface, DPID from, DPID to,
+        DWORD flags, DWORD *msgs, DWORD *bytes )
 {
-  HRESULT hr = DP_OK;
-
-  FIXME( "(%p)->(0x%08x,0x%08x,0x%08x,%p,%p,%u): semi stub\n",
-         This, idFrom, idTo, dwFlags, lpdwNumMsgs, lpdwNumBytes, bAnsi );
-
-  /* FIXME: Do we need to do idFrom and idTo sanity checking here? */
-  /* FIXME: What about sends which are not immediate? */
-
-  if( This->dp2->spData.lpCB->GetMessageQueue )
-  {
-    DPSP_GETMESSAGEQUEUEDATA data;
-
-    FIXME( "Calling SP GetMessageQueue - is it right?\n" );
-
-    /* FIXME: None of this is documented :( */
-
-    data.lpISP        = This->dp2->spData.lpISP;
-    data.dwFlags      = dwFlags;
-    data.idFrom       = idFrom;
-    data.idTo         = idTo;
-    data.lpdwNumMsgs  = lpdwNumMsgs;
-    data.lpdwNumBytes = lpdwNumBytes;
-
-    hr = (*This->dp2->spData.lpCB->GetMessageQueue)( &data );
-  }
-  else
-  {
-    FIXME( "No SP for GetMessageQueue - fake some data\n" );
-  }
-
-  return hr;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_GetMessageQueue( &This->IDirectPlay4_iface, from, to, flags, msgs, bytes );
 }
 
-static HRESULT WINAPI DirectPlay4AImpl_GetMessageQueue
-          ( LPDIRECTPLAY4A iface, DPID idFrom, DPID idTo, DWORD dwFlags,
-            LPDWORD lpdwNumMsgs, LPDWORD lpdwNumBytes )
+static HRESULT WINAPI IDirectPlay4Impl_GetMessageQueue( IDirectPlay4 *iface, DPID from, DPID to,
+        DWORD flags, DWORD *msgs, DWORD *bytes )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_IF_GetMessageQueue( This, idFrom, idTo, dwFlags, lpdwNumMsgs,
-                                lpdwNumBytes, TRUE );
-}
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    HRESULT hr = DP_OK;
 
-static HRESULT WINAPI DirectPlay4WImpl_GetMessageQueue
-          ( LPDIRECTPLAY4 iface, DPID idFrom, DPID idTo, DWORD dwFlags,
-            LPDWORD lpdwNumMsgs, LPDWORD lpdwNumBytes )
-{
-  IDirectPlay4Impl *This = (IDirectPlay4Impl *)iface;
-  return DP_IF_GetMessageQueue( This, idFrom, idTo, dwFlags, lpdwNumMsgs,
-                                lpdwNumBytes, FALSE );
+    FIXME( "(%p)->(0x%08x,0x%08x,0x%08x,%p,%p): semi-stub\n", This, from, to, flags, msgs, bytes );
+
+    /* FIXME: Do we need to do from and to sanity checking here? */
+    /* FIXME: What about sends which are not immediate? */
+
+    if ( This->dp2->spData.lpCB->GetMessageQueue )
+    {
+        DPSP_GETMESSAGEQUEUEDATA data;
+
+        FIXME( "Calling SP GetMessageQueue - is it right?\n" );
+
+        /* FIXME: None of this is documented :( */
+        data.lpISP        = This->dp2->spData.lpISP;
+        data.dwFlags      = flags;
+        data.idFrom       = from;
+        data.idTo         = to;
+        data.lpdwNumMsgs  = msgs;
+        data.lpdwNumBytes = bytes;
+
+        hr = (*This->dp2->spData.lpCB->GetMessageQueue)( &data );
+    }
+    else
+        FIXME( "No SP for GetMessageQueue - fake some data\n" );
+
+    return hr;
 }
 
 static HRESULT DP_IF_CancelMessage
@@ -4190,7 +4172,7 @@ static const IDirectPlay4Vtbl dp4_vt =
     IDirectPlay4Impl_GetGroupOwner,
     IDirectPlay4Impl_SetGroupOwner,
     IDirectPlay4Impl_SendEx,
-  DirectPlay4WImpl_GetMessageQueue,
+    IDirectPlay4Impl_GetMessageQueue,
   DirectPlay4WImpl_CancelMessage,
   DirectPlay4WImpl_CancelPriority
 };
@@ -4249,7 +4231,7 @@ static const IDirectPlay4Vtbl dp4A_vt =
   DirectPlay4AImpl_GetGroupOwner,
   DirectPlay4AImpl_SetGroupOwner,
     IDirectPlay4AImpl_SendEx,
-  DirectPlay4AImpl_GetMessageQueue,
+    IDirectPlay4AImpl_GetMessageQueue,
   DirectPlay4AImpl_CancelMessage,
   DirectPlay4AImpl_CancelPriority
 };
