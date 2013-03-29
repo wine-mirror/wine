@@ -120,9 +120,6 @@ static HRESULT DP_SP_SendEx
           ( IDirectPlay2Impl* This, DWORD dwFlags,
             LPVOID lpData, DWORD dwDataSize, DWORD dwPriority, DWORD dwTimeout,
             LPVOID lpContext, LPDWORD lpdwMsgID );
-static HRESULT DP_IF_CancelMessage
-          ( IDirectPlay4Impl* This, DWORD dwMsgID, DWORD dwFlags,
-            DWORD dwMinPriority, DWORD dwMaxPriority, BOOL bAnsi );
 static BOOL CALLBACK cbDPCreateEnumConnections( LPCGUID lpguidSP,
     LPVOID lpConnection, DWORD dwConnectionSize, LPCDPNAME lpName,
     DWORD dwFlags, LPVOID lpContext );
@@ -4018,104 +4015,73 @@ static HRESULT WINAPI IDirectPlay4Impl_GetMessageQueue( IDirectPlay4 *iface, DPI
     return hr;
 }
 
-static HRESULT DP_IF_CancelMessage
-          ( IDirectPlay4Impl* This, DWORD dwMsgID, DWORD dwFlags,
-            DWORD dwMinPriority, DWORD dwMaxPriority, BOOL bAnsi )
+static HRESULT dplay_cancelmsg ( IDirectPlayImpl* This, DWORD msgid, DWORD flags, DWORD minprio,
+        DWORD maxprio )
 {
-  HRESULT hr = DP_OK;
+    HRESULT hr = DP_OK;
 
-  FIXME( "(%p)->(0x%08x,0x%08x,%u): semi stub\n",
-         This, dwMsgID, dwFlags, bAnsi );
+    FIXME( "(%p)->(0x%08x,0x%08x): semi stub\n", This, msgid, flags );
 
-  if( This->dp2->spData.lpCB->Cancel )
-  {
-    DPSP_CANCELDATA data;
+    if ( This->dp2->spData.lpCB->Cancel )
+    {
+        DPSP_CANCELDATA data;
 
-    TRACE( "Calling SP Cancel\n" );
+        TRACE( "Calling SP Cancel\n" );
 
-    /* FIXME: Undocumented callback */
+        /* FIXME: Undocumented callback */
 
-    data.lpISP          = This->dp2->spData.lpISP;
-    data.dwFlags        = dwFlags;
-    data.lprglpvSPMsgID = NULL;
-    data.cSPMsgID       = dwMsgID;
-    data.dwMinPriority  = dwMinPriority;
-    data.dwMaxPriority  = dwMaxPriority;
+        data.lpISP          = This->dp2->spData.lpISP;
+        data.dwFlags        = flags;
+        data.lprglpvSPMsgID = NULL;
+        data.cSPMsgID       = msgid;
+        data.dwMinPriority  = minprio;
+        data.dwMaxPriority  = maxprio;
 
-    hr = (*This->dp2->spData.lpCB->Cancel)( &data );
-  }
-  else
-  {
-    FIXME( "SP doesn't implement Cancel\n" );
-  }
+        hr = (*This->dp2->spData.lpCB->Cancel)( &data );
+    }
+    else
+        FIXME( "SP doesn't implement Cancel\n" );
 
-  return hr;
+    return hr;
 }
 
-static HRESULT WINAPI DirectPlay4AImpl_CancelMessage
-          ( LPDIRECTPLAY4A iface, DWORD dwMsgID, DWORD dwFlags )
+static HRESULT WINAPI IDirectPlay4AImpl_CancelMessage( IDirectPlay4A *iface, DWORD msgid,
+        DWORD flags )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-
-  if( dwFlags != 0 )
-  {
-    return DPERR_INVALIDFLAGS;
-  }
-
-  if( dwMsgID == 0 )
-  {
-    dwFlags |= DPCANCELSEND_ALL;
-  }
-
-  return DP_IF_CancelMessage( This, dwMsgID, dwFlags, 0, 0, TRUE );
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_CancelMessage( &This->IDirectPlay4_iface, msgid, flags );
 }
 
-static HRESULT WINAPI DirectPlay4WImpl_CancelMessage
-          ( LPDIRECTPLAY4 iface, DWORD dwMsgID, DWORD dwFlags )
+static HRESULT WINAPI IDirectPlay4Impl_CancelMessage( IDirectPlay4 *iface, DWORD msgid,
+        DWORD flags )
 {
-  IDirectPlay4Impl *This = (IDirectPlay4Impl *)iface;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
 
-  if( dwFlags != 0 )
-  {
-    return DPERR_INVALIDFLAGS;
-  }
+    if ( flags != 0 )
+      return DPERR_INVALIDFLAGS;
 
-  if( dwMsgID == 0 )
-  {
-    dwFlags |= DPCANCELSEND_ALL;
-  }
+    if ( msgid == 0 )
+      flags |= DPCANCELSEND_ALL;
 
-  return DP_IF_CancelMessage( This, dwMsgID, dwFlags, 0, 0, FALSE );
+    return dplay_cancelmsg( This, msgid, flags, 0, 0 );
 }
 
-static HRESULT WINAPI DirectPlay4AImpl_CancelPriority
-          ( LPDIRECTPLAY4A iface, DWORD dwMinPriority, DWORD dwMaxPriority,
-            DWORD dwFlags )
+static HRESULT WINAPI IDirectPlay4AImpl_CancelPriority( IDirectPlay4A *iface, DWORD minprio,
+        DWORD maxprio, DWORD flags )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-
-  if( dwFlags != 0 )
-  {
-    return DPERR_INVALIDFLAGS;
-  }
-
-  return DP_IF_CancelMessage( This, 0, DPCANCELSEND_PRIORITY, dwMinPriority,
-                              dwMaxPriority, TRUE );
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_CancelPriority( &This->IDirectPlay4_iface, minprio, maxprio, flags );
 }
 
-static HRESULT WINAPI DirectPlay4WImpl_CancelPriority
-          ( LPDIRECTPLAY4 iface, DWORD dwMinPriority, DWORD dwMaxPriority,
-            DWORD dwFlags )
+static HRESULT WINAPI IDirectPlay4Impl_CancelPriority( IDirectPlay4 *iface, DWORD minprio,
+        DWORD maxprio, DWORD flags )
 {
-  IDirectPlay4Impl *This = (IDirectPlay4Impl *)iface;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
 
-  if( dwFlags != 0 )
-  {
-    return DPERR_INVALIDFLAGS;
-  }
+    if ( flags != 0 )
+        return DPERR_INVALIDFLAGS;
 
-  return DP_IF_CancelMessage( This, 0, DPCANCELSEND_PRIORITY, dwMinPriority,
-                              dwMaxPriority, FALSE );
+    return dplay_cancelmsg( This, 0, DPCANCELSEND_PRIORITY, minprio, maxprio );
 }
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
@@ -4173,8 +4139,8 @@ static const IDirectPlay4Vtbl dp4_vt =
     IDirectPlay4Impl_SetGroupOwner,
     IDirectPlay4Impl_SendEx,
     IDirectPlay4Impl_GetMessageQueue,
-  DirectPlay4WImpl_CancelMessage,
-  DirectPlay4WImpl_CancelPriority
+    IDirectPlay4Impl_CancelMessage,
+    IDirectPlay4Impl_CancelPriority
 };
 #undef XCAST
 
@@ -4232,8 +4198,8 @@ static const IDirectPlay4Vtbl dp4A_vt =
   DirectPlay4AImpl_SetGroupOwner,
     IDirectPlay4AImpl_SendEx,
     IDirectPlay4AImpl_GetMessageQueue,
-  DirectPlay4AImpl_CancelMessage,
-  DirectPlay4AImpl_CancelPriority
+    IDirectPlay4AImpl_CancelMessage,
+    IDirectPlay4AImpl_CancelPriority
 };
 
 HRESULT dplay_create( REFIID riid, void **ppv )
