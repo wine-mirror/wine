@@ -54,19 +54,6 @@ static HRESULT DPL_CreateAddress( REFGUID guidSP, REFGUID guidDataType, LPCVOID 
                            LPVOID lpAddress, LPDWORD lpdwAddressSize, BOOL bAnsiInterface );
 
 
-
-extern HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, LPCVOID lpAddress,
-                                DWORD dwAddressSize, LPVOID lpContext );
-
-static HRESULT DPL_ConnectEx( IDirectPlayLobbyAImpl* This,
-                              DWORD dwFlags, REFIID riid,
-                              LPVOID* lplpDP, IUnknown* pUnk );
-
-static BOOL DPL_CreateAndSetLobbyHandles( DWORD dwDestProcessId, HANDLE hDestProcess,
-                                   LPHANDLE lphStart, LPHANDLE lphDeath,
-                                   LPHANDLE lphRead );
-
-
 /*****************************************************************************
  * IDirectPlayLobby {1,2,3} implementation structure
  *

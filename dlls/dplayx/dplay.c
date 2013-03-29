@@ -52,97 +52,33 @@ extern HRESULT DPL_CreateCompoundAddress
 
 /* Local function prototypes */
 static lpPlayerList DP_FindPlayer( IDirectPlay2AImpl* This, DPID dpid );
-static lpPlayerData DP_CreatePlayer( IDirectPlay2Impl* iface, LPDPID lpid,
-                                     LPDPNAME lpName, DWORD dwFlags,
-                                     HANDLE hEvent, BOOL bAnsi );
 static BOOL DP_CopyDPNAMEStruct( LPDPNAME lpDst, const DPNAME *lpSrc, BOOL bAnsi );
-static void DP_SetPlayerData( lpPlayerData lpPData, DWORD dwFlags,
-                              LPVOID lpData, DWORD dwDataSize );
-
-static lpGroupData DP_CreateGroup( IDirectPlay2AImpl* iface, const DPID *lpid,
-                                   const DPNAME *lpName, DWORD dwFlags,
-                                   DPID idParent, BOOL bAnsi );
 static void DP_SetGroupData( lpGroupData lpGData, DWORD dwFlags,
                              LPVOID lpData, DWORD dwDataSize );
 static void DP_DeleteDPNameStruct( LPDPNAME lpDPName );
-static void DP_DeletePlayer( IDirectPlay2Impl* This, DPID dpid );
 static BOOL CALLBACK cbDeletePlayerFromAllGroups( DPID dpId,
                                                   DWORD dwPlayerType,
                                                   LPCDPNAME lpName,
                                                   DWORD dwFlags,
                                                   LPVOID lpContext );
 static lpGroupData DP_FindAnyGroup( IDirectPlay2AImpl* This, DPID dpid );
-static BOOL CALLBACK cbRemoveGroupOrPlayer( DPID dpId, DWORD dwPlayerType,
-                                            LPCDPNAME lpName, DWORD dwFlags,
-                                            LPVOID lpContext );
-static void DP_DeleteGroup( IDirectPlay2Impl* This, DPID dpid );
 
 /* Helper methods for player/group interfaces */
-static HRESULT DP_IF_CreatePlayer
-          ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, LPDPID lpidPlayer,
-            LPDPNAME lpPlayerName, HANDLE hEvent, LPVOID lpData,
-            DWORD dwDataSize, DWORD dwFlags, BOOL bAnsi );
-static HRESULT DP_IF_DestroyGroup
-          ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, DPID idGroup, BOOL bAnsi );
-static HRESULT DP_IF_DestroyPlayer
-          ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, DPID idPlayer, BOOL bAnsi );
-static HRESULT DP_IF_GetGroupName
-          ( IDirectPlay2Impl* This, DPID idGroup, LPVOID lpData,
-            LPDWORD lpdwDataSize, BOOL bAnsi );
-static HRESULT DP_IF_GetPlayerName
-          ( IDirectPlay2Impl* This, DPID idPlayer, LPVOID lpData,
-            LPDWORD lpdwDataSize, BOOL bAnsi );
-static HRESULT DP_IF_SetGroupName
-          ( IDirectPlay2Impl* This, DPID idGroup, LPDPNAME lpGroupName,
-            DWORD dwFlags, BOOL bAnsi );
-static HRESULT DP_IF_SetPlayerName
-          ( IDirectPlay2Impl* This, DPID idPlayer, LPDPNAME lpPlayerName,
-            DWORD dwFlags, BOOL bAnsi );
-static HRESULT DP_IF_CreateGroup
-          ( IDirectPlay2AImpl* This, LPVOID lpMsgHdr, LPDPID lpidGroup,
-            LPDPNAME lpGroupName, LPVOID lpData, DWORD dwDataSize,
-            DWORD dwFlags, BOOL bAnsi );
-static HRESULT DP_IF_CreateGroupInGroup
-          ( IDirectPlay3Impl* This, LPVOID lpMsgHdr, DPID idParentGroup,
-            LPDPID lpidGroup, LPDPNAME lpGroupName, LPVOID lpData,
-            DWORD dwDataSize, DWORD dwFlags, BOOL bAnsi );
 static HRESULT DP_SetSessionDesc
           ( IDirectPlay2Impl* This, LPCDPSESSIONDESC2 lpSessDesc,
             DWORD dwFlags, BOOL bInitial, BOOL bAnsi  );
-static HRESULT DP_SecureOpen
-          ( IDirectPlay2Impl* This, LPCDPSESSIONDESC2 lpsd, DWORD dwFlags,
-            LPCDPSECURITYDESC lpSecurity, LPCDPCREDENTIALS lpCredentials,
-            BOOL bAnsi );
-static HRESULT DP_IF_Receive
-          ( IDirectPlay2Impl* This, LPDPID lpidFrom, LPDPID lpidTo,
-            DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize, BOOL bAnsi );
 static HRESULT DP_SP_SendEx
           ( IDirectPlay2Impl* This, DWORD dwFlags,
             LPVOID lpData, DWORD dwDataSize, DWORD dwPriority, DWORD dwTimeout,
             LPVOID lpContext, LPDWORD lpdwMsgID );
-static BOOL CALLBACK cbDPCreateEnumConnections( LPCGUID lpguidSP,
-    LPVOID lpConnection, DWORD dwConnectionSize, LPCDPNAME lpName,
-    DWORD dwFlags, LPVOID lpContext );
 static BOOL DP_BuildSPCompoundAddr( LPGUID lpcSpGuid, LPVOID* lplpAddrBuf,
                                     LPDWORD lpdwBufSize );
 
-
-
-static inline DPID DP_NextObjectId(void);
 static DPID DP_GetRemoteNextObjectId(void);
 
 static DWORD DP_CalcSessionDescSize( LPCDPSESSIONDESC2 lpSessDesc, BOOL bAnsi );
 static void DP_CopySessionDesc( LPDPSESSIONDESC2 destSessionDesc,
                                 LPCDPSESSIONDESC2 srcSessDesc, BOOL bAnsi );
-
-
-static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDpSp );
-static HRESULT DP_InitializeDPSP( IDirectPlay3Impl* This, HMODULE hServiceProvider );
-static HRESULT DP_InitializeDPLSP( IDirectPlay3Impl* This, HMODULE hServiceProvider );
-
-
-
-
 
 
 #define DPID_NOPARENT_GROUP 0 /* Magic number to indicate no parent of group */

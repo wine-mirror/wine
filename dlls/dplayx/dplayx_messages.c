@@ -154,13 +154,6 @@ end_of_thread:
 }
 
 /* DP messaging stuff */
-static HANDLE DP_MSG_BuildAndLinkReplyStruct( IDirectPlay2Impl* This,
-                                              LPDP_MSG_REPLY_STRUCT_LIST lpReplyStructList,
-                                              WORD wReplyCommandId );
-static LPVOID DP_MSG_CleanReplyStruct( LPDP_MSG_REPLY_STRUCT_LIST lpReplyStructList,
-                                       LPVOID* lplpReplyMsg, LPDWORD lpdwMsgBodySize );
-
-
 static
 HANDLE DP_MSG_BuildAndLinkReplyStruct( IDirectPlay2Impl* This,
                                        LPDP_MSG_REPLY_STRUCT_LIST lpReplyStructList, WORD wReplyCommandId )
