@@ -156,8 +156,6 @@ static HRESULT DP_IF_EnumGroupsInGroup
 static HRESULT DP_IF_GetGroupParent
           ( IDirectPlay3AImpl* This, DPID idGroup, LPDPID lpidGroup,
             BOOL bAnsi );
-static HRESULT DP_IF_GetCaps
-          ( IDirectPlay2Impl* This, LPDPCAPS lpDPCaps, DWORD dwFlags );
 static HRESULT DP_IF_EnumSessions
           ( IDirectPlay2Impl* This, LPDPSESSIONDESC2 lpsd, DWORD dwTimeout,
             LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
@@ -1953,7 +1951,7 @@ static HRESULT DP_IF_EnumSessions
     DPCAPS spCaps;
     spCaps.dwSize = sizeof( spCaps );
 
-    DP_IF_GetCaps( This, &spCaps, 0 );
+    IDirectPlayX_GetCaps( &This->IDirectPlay4_iface, &spCaps, 0 );
     dwTimeout = spCaps.dwTimeout;
 
     /* The service provider doesn't provide one either! */
@@ -2090,24 +2088,14 @@ static HRESULT DP_IF_GetPlayerCaps
   return (*This->dp2->spData.lpCB->GetCaps)( &data );
 }
 
-static HRESULT DP_IF_GetCaps
-          ( IDirectPlay2Impl* This, LPDPCAPS lpDPCaps, DWORD dwFlags )
+static HRESULT WINAPI IDirectPlay4AImpl_GetCaps( IDirectPlay4A *iface, DPCAPS *caps, DWORD flags )
 {
-  return DP_IF_GetPlayerCaps( This, DPID_ALLPLAYERS, lpDPCaps, dwFlags );
+    return IDirectPlayX_GetPlayerCaps( iface, DPID_ALLPLAYERS, caps, flags );
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_GetCaps( IDirectPlay4A *iface, DPCAPS *lpDPCaps,
-        DWORD dwFlags )
+static HRESULT WINAPI IDirectPlay4Impl_GetCaps( IDirectPlay4 *iface, DPCAPS *caps, DWORD flags )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_IF_GetCaps( This, lpDPCaps, dwFlags );
-}
-
-static HRESULT WINAPI DirectPlay2WImpl_GetCaps
-          ( LPDIRECTPLAY2 iface, LPDPCAPS lpDPCaps, DWORD dwFlags )
-{
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_IF_GetCaps( This, lpDPCaps, dwFlags );
+    return IDirectPlayX_GetPlayerCaps( iface, DPID_ALLPLAYERS, caps, flags );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_GetGroupData( IDirectPlay4A *iface, DPID group,
@@ -4508,7 +4496,7 @@ static const IDirectPlay4Vtbl dp4_vt =
     IDirectPlay4Impl_EnumGroups,
     IDirectPlay4Impl_EnumPlayers,
   XCAST(EnumSessions)DirectPlay2WImpl_EnumSessions,
-  XCAST(GetCaps)DirectPlay2WImpl_GetCaps,
+    IDirectPlay4Impl_GetCaps,
     IDirectPlay4Impl_GetGroupData,
   XCAST(GetGroupName)DirectPlay2WImpl_GetGroupName,
     IDirectPlay4Impl_GetMessageCount,
