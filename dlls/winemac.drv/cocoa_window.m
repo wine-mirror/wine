@@ -231,17 +231,19 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
                     CGContextDrawImage(context, imageRect, image);
 
                     CGImageRelease(image);
-
-                    if (window.shapeChangedSinceLastDraw || window.colorKeyed ||
-                        window.usePerPixelAlpha)
-                    {
-                        window.shapeChangedSinceLastDraw = FALSE;
-                        [window invalidateShadow];
-                    }
                 }
             }
 
             pthread_mutex_unlock(window.surface_mutex);
+        }
+
+        // If the window may be transparent, then we have to invalidate the
+        // shadow every time we draw.  Also, if this is the first time we've
+        // drawn since changing from transparent to opaque.
+        if (![window isOpaque] || window.shapeChangedSinceLastDraw)
+        {
+            window.shapeChangedSinceLastDraw = FALSE;
+            [window invalidateShadow];
         }
     }
 
