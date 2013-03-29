@@ -186,51 +186,55 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         if (window.surface && window.surface_mutex &&
             !pthread_mutex_lock(window.surface_mutex))
         {
+            CGRect bounds;
             const CGRect* rects;
             int count;
 
-            if (!get_surface_region_rects(window.surface, &rects, &count) || count)
+            if (!get_surface_region_rects(window.surface, &rects, &count))
             {
-                CGRect imageRect;
-                CGImageRef image;
+                bounds = NSRectToCGRect([self bounds]);
+                rects = &bounds;
+                count = 1;
+            }
 
-                imageRect = NSRectToCGRect(rect);
-                image = create_surface_image(window.surface, &imageRect, FALSE);
+            if (count)
+            {
+                CGContextRef context;
+                int i;
 
-                if (image)
+                [window.shape addClip];
+
+                context = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
+                CGContextSetBlendMode(context, kCGBlendModeCopy);
+
+                for (i = 0; i < count; i++)
                 {
-                    CGContextRef context;
+                    CGRect imageRect;
+                    CGImageRef image;
 
-                    if (rects && count)
+                    imageRect = CGRectIntersection(rects[i], NSRectToCGRect(rect));
+                    image = create_surface_image(window.surface, &imageRect, FALSE);
+
+                    if (image)
                     {
-                        NSBezierPath* surfaceClip = [NSBezierPath bezierPath];
-                        int i;
-                        for (i = 0; i < count; i++)
-                            [surfaceClip appendBezierPathWithRect:NSRectFromCGRect(rects[i])];
-                        [surfaceClip addClip];
-                    }
-
-                    [window.shape addClip];
-
-                    if (window.colorKeyed)
-                    {
-                        CGImageRef maskedImage;
-                        CGFloat components[] = { window.colorKeyRed - 0.5, window.colorKeyRed + 0.5,
-                                                 window.colorKeyGreen - 0.5, window.colorKeyGreen + 0.5,
-                                                 window.colorKeyBlue - 0.5, window.colorKeyBlue + 0.5 };
-                        maskedImage = CGImageCreateWithMaskingColors(image, components);
-                        if (maskedImage)
+                        if (window.colorKeyed)
                         {
-                            CGImageRelease(image);
-                            image = maskedImage;
+                            CGImageRef maskedImage;
+                            CGFloat components[] = { window.colorKeyRed - 0.5, window.colorKeyRed + 0.5,
+                                                     window.colorKeyGreen - 0.5, window.colorKeyGreen + 0.5,
+                                                     window.colorKeyBlue - 0.5, window.colorKeyBlue + 0.5 };
+                            maskedImage = CGImageCreateWithMaskingColors(image, components);
+                            if (maskedImage)
+                            {
+                                CGImageRelease(image);
+                                image = maskedImage;
+                            }
                         }
+
+                        CGContextDrawImage(context, imageRect, image);
+
+                        CGImageRelease(image);
                     }
-
-                    context = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
-                    CGContextSetBlendMode(context, kCGBlendModeCopy);
-                    CGContextDrawImage(context, imageRect, image);
-
-                    CGImageRelease(image);
                 }
             }
 
