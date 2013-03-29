@@ -52,8 +52,9 @@ static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
     return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
 }
 
-static HRESULT WINAPI
-DP_and_DPL_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
+static HRESULT WINAPI IClassFactoryImpl_QueryInterface(IClassFactory *iface, REFIID riid,
+        void **ppobj)
+{
         IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
         FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
@@ -61,21 +62,22 @@ DP_and_DPL_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
         return E_NOINTERFACE;
 }
 
-static ULONG WINAPI
-DP_and_DPL_AddRef(LPCLASSFACTORY iface) {
+static ULONG WINAPI IClassFactoryImpl_AddRef(IClassFactory *iface)
+{
         IClassFactoryImpl *This = impl_from_IClassFactory(iface);
         return InterlockedIncrement(&This->ref);
 }
 
-static ULONG WINAPI DP_and_DPL_Release(LPCLASSFACTORY iface) {
+static ULONG WINAPI IClassFactoryImpl_Release(IClassFactory *iface)
+{
         IClassFactoryImpl *This = impl_from_IClassFactory(iface);
         /* static class (reference starts @ 1), won't ever be freed */
         return InterlockedDecrement(&This->ref);
 }
 
-static HRESULT WINAPI DP_and_DPL_CreateInstance(
-        LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
-) {
+static HRESULT WINAPI IClassFactoryImpl_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
+        REFIID riid, void **ppobj)
+{
         IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
         TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
@@ -92,18 +94,19 @@ static HRESULT WINAPI DP_and_DPL_CreateInstance(
         return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI DP_and_DPL_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
+static HRESULT WINAPI IClassFactoryImpl_LockServer(IClassFactory *iface, BOOL dolock)
+{
         IClassFactoryImpl *This = impl_from_IClassFactory(iface);
         FIXME("(%p)->(%d),stub!\n",This,dolock);
         return S_OK;
 }
 
 static const IClassFactoryVtbl DP_and_DPL_Vtbl = {
-        DP_and_DPL_QueryInterface,
-        DP_and_DPL_AddRef,
-        DP_and_DPL_Release,
-        DP_and_DPL_CreateInstance,
-        DP_and_DPL_LockServer
+    IClassFactoryImpl_QueryInterface,
+    IClassFactoryImpl_AddRef,
+    IClassFactoryImpl_Release,
+    IClassFactoryImpl_CreateInstance,
+    IClassFactoryImpl_LockServer
 };
 
 static IClassFactoryImpl DP_and_DPL_CF = {{&DP_and_DPL_Vtbl}, 1 };
