@@ -133,10 +133,6 @@ static HRESULT DP_SP_SendEx
 static HRESULT DP_IF_CancelMessage
           ( IDirectPlay4Impl* This, DWORD dwMsgID, DWORD dwFlags,
             DWORD dwMinPriority, DWORD dwMaxPriority, BOOL bAnsi );
-static HRESULT DP_IF_EnumGroupsInGroup
-          ( IDirectPlay3AImpl* This, DPID idGroup, LPGUID lpguidInstance,
-            LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2,
-            LPVOID lpContext, DWORD dwFlags, BOOL bAnsi );
 static HRESULT DP_IF_GetGroupParent
           ( IDirectPlay3AImpl* This, DPID idGroup, LPDPID lpidGroup,
             BOOL bAnsi );
@@ -1533,8 +1529,8 @@ static HRESULT DP_IF_DestroyGroup
           &context, 0 );
 
   /* Remove all links to groups that this group has since this is dp3 */
-  DP_IF_EnumGroupsInGroup( (IDirectPlay3Impl*)This, idGroup, NULL,
-                           cbRemoveGroupOrPlayer, (LPVOID)&context, 0, bAnsi );
+  IDirectPlayX_EnumGroupsInGroup( &This->IDirectPlay4_iface, idGroup, NULL, cbRemoveGroupOrPlayer,
+          (void*)&context, 0 );
 
   /* Remove this group from the parent group - if it has one */
   if( ( idGroup != DPID_SYSTEM_GROUP ) && ( lpGData->parent != DPID_SYSTEM_GROUP ) )
@@ -1650,11 +1646,8 @@ cbDeletePlayerFromAllGroups(
     /* Enumerate all groups in this group since this will normally only
      * be called for top level groups
      */
-    DP_IF_EnumGroupsInGroup( (IDirectPlay3Impl*)lpCtxt->This,
-                             dpId, NULL,
-                             cbDeletePlayerFromAllGroups,
-                             lpContext, DPENUMGROUPS_ALL,
-                             lpCtxt->bAnsi );
+    IDirectPlayX_EnumGroupsInGroup( &lpCtxt->This->IDirectPlay4_iface, dpId, NULL,
+            cbDeletePlayerFromAllGroups, lpContext, DPENUMGROUPS_ALL);
 
   }
   else
@@ -3441,77 +3434,46 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumConnections( IDirectPlay4 *iface,
     return DP_OK;
 }
 
-static HRESULT DP_IF_EnumGroupsInGroup
-          ( IDirectPlay3AImpl* This, DPID idGroup, LPGUID lpguidInstance,
-            LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2,
-            LPVOID lpContext, DWORD dwFlags, BOOL bAnsi )
+static HRESULT WINAPI IDirectPlay4AImpl_EnumGroupsInGroup( IDirectPlay4A *iface, DPID group,
+        GUID *instance, LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
 {
-  lpGroupList lpGList;
-  lpGroupData lpGData;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_EnumGroupsInGroup( &This->IDirectPlay4_iface, group, instance,
+            enumplayercb, context, flags );
+}
 
-  FIXME( "(%p)->(0x%08x,%p,%p,%p,0x%08x,%u): semi stub\n",
-         This, idGroup, lpguidInstance, lpEnumPlayersCallback2,
-         lpContext, dwFlags, bAnsi );
+static HRESULT WINAPI IDirectPlay4Impl_EnumGroupsInGroup( IDirectPlay4 *iface, DPID group,
+        GUID *instance, LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    lpGroupList glist;
+    lpGroupData gdata;
 
-  if( This->dp2->connectionInitialized == NO_PROVIDER )
-  {
-    return DPERR_UNINITIALIZED;
-  }
+    FIXME( "(%p)->(0x%08x,%p,%p,%p,0x%08x): semi stub\n", This, group, instance, enumplayercb,
+            context, flags );
 
-  if( ( lpGData = DP_FindAnyGroup( (IDirectPlay2AImpl*)This, idGroup ) ) == NULL )
-  {
-    return DPERR_INVALIDGROUP;
-  }
+    if ( This->dp2->connectionInitialized == NO_PROVIDER )
+        return DPERR_UNINITIALIZED;
 
-  if( DPQ_IS_EMPTY( lpGData->groups ) )
-  {
+    if ( ( gdata = DP_FindAnyGroup(This, group ) ) == NULL )
+        return DPERR_INVALIDGROUP;
+
+    if ( DPQ_IS_EMPTY( gdata->groups ) )
+        return DP_OK;
+
+
+    for( glist = DPQ_FIRST( gdata->groups ); ; glist = DPQ_NEXT( glist->groups ) )
+    {
+        /* FIXME: Should check flags for match here */
+        if ( !(*enumplayercb)( glist->lpGData->dpid, DPPLAYERTYPE_GROUP, &glist->lpGData->name,
+                    flags, context ) )
+            return DP_OK; /* User requested break */
+
+        if ( DPQ_IS_ENDOFLIST( glist->groups ) )
+            break;
+    }
+
     return DP_OK;
-  }
-
-  lpGList = DPQ_FIRST( lpGData->groups );
-
-  for( ;; )
-  {
-    /* FIXME: Should check dwFlags for match here */
-
-    if( !(*lpEnumPlayersCallback2)( lpGList->lpGData->dpid, DPPLAYERTYPE_GROUP,
-                                    &lpGList->lpGData->name, dwFlags,
-                                    lpContext ) )
-    {
-      return DP_OK; /* User requested break */
-    }
-
-    if( DPQ_IS_ENDOFLIST( lpGList->groups ) )
-    {
-      break;
-    }
-
-    lpGList = DPQ_NEXT( lpGList->groups );
-
-  }
-
-  return DP_OK;
-}
-
-static HRESULT WINAPI IDirectPlay4AImpl_EnumGroupsInGroup( IDirectPlay4A *iface, DPID idGroup,
-        GUID *lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, void *lpContext,
-        DWORD dwFlags )
-{
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_IF_EnumGroupsInGroup( This, idGroup, lpguidInstance,
-                                  lpEnumPlayersCallback2, lpContext, dwFlags,
-                                  TRUE );
-}
-
-static HRESULT WINAPI DirectPlay3WImpl_EnumGroupsInGroup
-          ( LPDIRECTPLAY3A iface, DPID idGroup, LPGUID lpguidInstance,
-            LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, LPVOID lpContext,
-            DWORD dwFlags )
-{
-  IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  return DP_IF_EnumGroupsInGroup( This, idGroup, lpguidInstance,
-                                  lpEnumPlayersCallback2, lpContext, dwFlags,
-                                  FALSE );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_GetGroupConnectionSettings( IDirectPlay4A *iface,
@@ -4401,7 +4363,7 @@ static const IDirectPlay4Vtbl dp4_vt =
   XCAST(CreateGroupInGroup)DirectPlay3WImpl_CreateGroupInGroup,
     IDirectPlay4Impl_DeleteGroupFromGroup,
     IDirectPlay4Impl_EnumConnections,
-  XCAST(EnumGroupsInGroup)DirectPlay3WImpl_EnumGroupsInGroup,
+    IDirectPlay4Impl_EnumGroupsInGroup,
     IDirectPlay4Impl_GetGroupConnectionSettings,
   XCAST(InitializeConnection)DirectPlay3WImpl_InitializeConnection,
   XCAST(SecureOpen)DirectPlay3WImpl_SecureOpen,
