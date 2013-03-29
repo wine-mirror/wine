@@ -22,7 +22,6 @@
 #include "winerror.h"
 #include "wine/debug.h"
 
-#include "dpinit.h"
 #include "wine/dplaysp.h"
 #include "dplay_global.h"
 #include "name_server.h"

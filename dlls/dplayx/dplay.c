@@ -35,7 +35,6 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-#include "dpinit.h"
 #include "dplayx_global.h"
 #include "name_server.h"
 #include "dplayx_queue.h"

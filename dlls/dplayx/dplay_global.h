@@ -209,4 +209,9 @@ extern HRESULT DP_SetSPPlayerData( IDirectPlay2Impl* lpDP, DPID idPlayer, LPVOID
 /* DP external interfaces to call into DPSP interface */
 extern LPVOID DPSP_CreateSPPlayerData(void) DECLSPEC_HIDDEN;
 
+extern HRESULT dplay_create( REFIID riid, void **ppv ) DECLSPEC_HIDDEN;
+extern HRESULT DPL_CreateInterface( REFIID riid, LPVOID* ppvObj ) DECLSPEC_HIDDEN;
+extern HRESULT DPSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp ) DECLSPEC_HIDDEN;
+extern HRESULT DPLSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp ) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_DPLAY_GLOBAL_INCLUDED */

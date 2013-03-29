@@ -23,7 +23,6 @@
 
 #include "lobbysp.h"
 #include "dplay_global.h"
-#include "dpinit.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 

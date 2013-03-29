@@ -31,7 +31,7 @@
 #include "dplay.h"
 #include "dplobby.h"
 #include "initguid.h"
-#include "dpinit.h"
+#include "dplay_global.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 

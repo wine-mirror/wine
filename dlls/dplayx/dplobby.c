@@ -32,7 +32,6 @@
 #include "dplayx_messages.h"
 #include "dplayx_queue.h"
 #include "dplobby.h"
-#include "dpinit.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 
