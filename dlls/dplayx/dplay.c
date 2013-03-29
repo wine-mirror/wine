@@ -222,6 +222,11 @@ static inline IDirectPlayImpl *impl_from_IDirectPlay4A( IDirectPlay4A *iface )
     return (IDirectPlayImpl*)iface;     /* What are you gonna do? */
 }
 
+static inline IDirectPlayImpl *impl_from_IDirectPlay4( IDirectPlay4 *iface )
+{
+    return (IDirectPlayImpl*)iface;     /* What are you gonna do? */
+}
+
 static BOOL DP_CreateIUnknown( LPVOID lpDP )
 {
   IDirectPlay2AImpl *This = lpDP;
@@ -432,10 +437,8 @@ HRESULT DP_CreateInterface
 /* Direct Play methods */
 
 /* Shared between all dplay types */
-static HRESULT WINAPI DP_QueryInterface
-         ( LPDIRECTPLAY2 iface, REFIID riid, LPVOID* ppvObj )
+static HRESULT WINAPI DP_QueryInterface( IDirectPlayImpl *This, REFIID riid, void **ppvObj )
 {
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
   TRACE("(%p)->(%s,%p)\n", This, debugstr_guid( riid ), ppvObj );
 
   *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -476,11 +479,9 @@ static HRESULT WINAPI DP_QueryInterface
 }
 
 /* Shared between all dplay types */
-static ULONG WINAPI DP_AddRef
-         ( LPDIRECTPLAY3 iface )
+static ULONG WINAPI DP_AddRef( IDirectPlayImpl *This )
 {
   ULONG ulInterfaceRefCount, ulObjRefCount;
-  IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
 
   ulObjRefCount       = InterlockedIncrement( &This->unk->ulObjRef );
   ulInterfaceRefCount = InterlockedIncrement( &This->ulInterfaceRef );
@@ -491,12 +492,9 @@ static ULONG WINAPI DP_AddRef
   return ulObjRefCount;
 }
 
-static ULONG WINAPI DP_Release
-( LPDIRECTPLAY3 iface )
+static ULONG WINAPI DP_Release( IDirectPlayImpl *This )
 {
   ULONG ulInterfaceRefCount, ulObjRefCount;
-
-  IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
 
   ulObjRefCount       = InterlockedDecrement( &This->unk->ulObjRef );
   ulInterfaceRefCount = InterlockedDecrement( &This->ulInterfaceRef );
@@ -702,6 +700,44 @@ static HRESULT DP_IF_AddPlayerToGroup
   }
 
   return DP_OK;
+}
+
+static HRESULT WINAPI IDirectPlay4AImpl_QueryInterface( IDirectPlay4A *iface, REFIID riid,
+        void **ppv )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return DP_QueryInterface( This, riid, ppv );
+}
+
+static HRESULT WINAPI IDirectPlay4Impl_QueryInterface( IDirectPlay4 *iface, REFIID riid,
+        void **ppv )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    return DP_QueryInterface( This, riid, ppv );
+}
+
+static ULONG WINAPI IDirectPlay4AImpl_AddRef(IDirectPlay4A *iface)
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return DP_AddRef( This );
+}
+
+static ULONG WINAPI IDirectPlay4Impl_AddRef(IDirectPlay4 *iface)
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    return DP_AddRef( This );
+}
+
+static ULONG WINAPI IDirectPlay4AImpl_Release(IDirectPlay4A *iface)
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return DP_Release( This );
+}
+
+static ULONG WINAPI IDirectPlay4Impl_Release(IDirectPlay4 *iface)
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    return DP_Release( This );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_AddPlayerToGroup( IDirectPlay4A *iface, DPID idGroup,
@@ -4646,9 +4682,9 @@ static HRESULT WINAPI DirectPlay4WImpl_CancelPriority
 #endif
 static const IDirectPlay4Vtbl directPlay4WVT =
 {
-  XCAST(QueryInterface)DP_QueryInterface,
-  XCAST(AddRef)DP_AddRef,
-  XCAST(Release)DP_Release,
+    IDirectPlay4Impl_QueryInterface,
+    IDirectPlay4Impl_AddRef,
+    IDirectPlay4Impl_Release,
 
   XCAST(AddPlayerToGroup)DirectPlay2WImpl_AddPlayerToGroup,
   XCAST(Close)DirectPlay2WImpl_Close,
@@ -4705,19 +4741,11 @@ static const IDirectPlay4Vtbl directPlay4WVT =
 };
 #undef XCAST
 
-
-/* Note: Hack so we can reuse the old functions without compiler warnings */
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlay4AVT.fun))
-#else
-# define XCAST(fun)     (void*)
-#endif
 static const IDirectPlay4Vtbl directPlay4AVT =
 {
-  XCAST(QueryInterface)DP_QueryInterface,
-  XCAST(AddRef)DP_AddRef,
-  XCAST(Release)DP_Release,
-
+    IDirectPlay4AImpl_QueryInterface,
+    IDirectPlay4AImpl_AddRef,
+    IDirectPlay4AImpl_Release,
     IDirectPlay4AImpl_AddPlayerToGroup,
     IDirectPlay4AImpl_Close,
     IDirectPlay4AImpl_CreateGroup,
@@ -4770,7 +4798,6 @@ static const IDirectPlay4Vtbl directPlay4AVT =
   DirectPlay4AImpl_CancelMessage,
   DirectPlay4AImpl_CancelPriority
 };
-#undef XCAST
 
 HRESULT DP_GetSPPlayerData( IDirectPlay2Impl* lpDP,
                             DPID idPlayer,
