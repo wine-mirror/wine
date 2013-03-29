@@ -95,9 +95,6 @@ static HRESULT DP_IF_GetPlayerName
 static HRESULT DP_IF_SetGroupName
           ( IDirectPlay2Impl* This, DPID idGroup, LPDPNAME lpGroupName,
             DWORD dwFlags, BOOL bAnsi );
-static HRESULT DP_IF_SetPlayerData
-          ( IDirectPlay2Impl* This, DPID idPlayer, LPVOID lpData,
-            DWORD dwDataSize, DWORD dwFlags, BOOL bAnsi );
 static HRESULT DP_IF_SetPlayerName
           ( IDirectPlay2Impl* This, DPID idPlayer, LPDPNAME lpPlayerName,
             DWORD dwFlags, BOOL bAnsi );
@@ -2724,67 +2721,46 @@ static HRESULT WINAPI DirectPlay2WImpl_SetGroupName
   return DP_IF_SetGroupName( This, idGroup, lpGroupName, dwFlags, FALSE );
 }
 
-static HRESULT DP_IF_SetPlayerData
-          ( IDirectPlay2Impl* This, DPID idPlayer, LPVOID lpData,
-            DWORD dwDataSize, DWORD dwFlags, BOOL bAnsi )
+static HRESULT WINAPI IDirectPlay4AImpl_SetPlayerData( IDirectPlay4A *iface, DPID player,
+        void *data, DWORD size, DWORD flags )
 {
-  lpPlayerList lpPList;
-
-  TRACE( "(%p)->(0x%08x,%p,0x%08x,0x%08x,%u)\n",
-         This, idPlayer, lpData, dwDataSize, dwFlags, bAnsi );
-
-  if( This->dp2->connectionInitialized == NO_PROVIDER )
-  {
-    return DPERR_UNINITIALIZED;
-  }
-
-  /* Parameter check */
-  if( ( lpData == NULL ) &&
-      ( dwDataSize != 0 )
-    )
-  {
-    return DPERR_INVALIDPARAMS;
-  }
-
-  /* Find the pointer to the data for this player */
-  if( ( lpPList = DP_FindPlayer( This, idPlayer ) ) == NULL )
-  {
-    return DPERR_INVALIDPLAYER;
-  }
-
-  if( !(dwFlags & DPSET_LOCAL) )
-  {
-    FIXME( "Was this group created by this interface?\n" );
-    /* FIXME: If this is a remote update need to allow it but not
-     *        send a message.
-     */
-  }
-
-  DP_SetPlayerData( lpPList->lpPData, dwFlags, lpData, dwDataSize );
-
-  if( !(dwFlags & DPSET_LOCAL) )
-  {
-    FIXME( "Send msg?\n" );
-  }
-
-  return DP_OK;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_SetPlayerData( &This->IDirectPlay4_iface, player, data, size, flags );
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_SetPlayerData( IDirectPlay4A *iface, DPID idPlayer,
-        void *lpData, DWORD dwDataSize, DWORD dwFlags )
+static HRESULT WINAPI IDirectPlay4Impl_SetPlayerData( IDirectPlay4 *iface, DPID player,
+        void *data, DWORD size, DWORD flags )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_IF_SetPlayerData( This, idPlayer, lpData, dwDataSize,
-                              dwFlags, TRUE );
-}
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    lpPlayerList plist;
 
-static HRESULT WINAPI DirectPlay2WImpl_SetPlayerData
-          ( LPDIRECTPLAY2 iface, DPID idPlayer, LPVOID lpData,
-            DWORD dwDataSize, DWORD dwFlags )
-{
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_IF_SetPlayerData( This, idPlayer, lpData, dwDataSize,
-                              dwFlags, FALSE );
+    TRACE( "(%p)->(0x%08x,%p,0x%08x,0x%08x)\n", This, player, data, size, flags );
+
+    if ( This->dp2->connectionInitialized == NO_PROVIDER )
+        return DPERR_UNINITIALIZED;
+
+    /* Parameter check */
+    if ( !data && size )
+        return DPERR_INVALIDPARAMS;
+
+    /* Find the pointer to the data for this player */
+    if ( (plist = DP_FindPlayer( This, player )) == NULL )
+        return DPERR_INVALIDPLAYER;
+
+    if ( !(flags & DPSET_LOCAL) )
+    {
+        FIXME( "Was this group created by this interface?\n" );
+        /* FIXME: If this is a remote update need to allow it but not
+         *        send a message.
+         */
+    }
+
+    DP_SetPlayerData( plist->lpPData, flags, data, size );
+
+    if ( !(flags & DPSET_LOCAL) )
+        FIXME( "Send msg?\n" );
+
+    return DP_OK;
 }
 
 static HRESULT DP_IF_SetPlayerName
@@ -4457,7 +4433,7 @@ static const IDirectPlay4Vtbl dp4_vt =
     IDirectPlay4Impl_Send,
     IDirectPlay4Impl_SetGroupData,
   XCAST(SetGroupName)DirectPlay2WImpl_SetGroupName,
-  XCAST(SetPlayerData)DirectPlay2WImpl_SetPlayerData,
+    IDirectPlay4Impl_SetPlayerData,
   XCAST(SetPlayerName)DirectPlay2WImpl_SetPlayerName,
   XCAST(SetSessionDesc)DirectPlay2WImpl_SetSessionDesc,
 
