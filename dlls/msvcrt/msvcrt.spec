@@ -1109,8 +1109,8 @@
 # stub _wcslwr_l(wstr ptr)
 @ cdecl _wcslwr_s(wstr long) MSVCRT__wcslwr_s
 # stub _wcslwr_s_l(wstr long ptr)
-@ stub _wcsncoll(wstr wstr long)
-# stub _wcsncoll_l(wstr wstr long ptr)
+@ cdecl _wcsncoll(wstr wstr long) MSVCRT__wcsncoll
+@ cdecl _wcsncoll_l(wstr wstr long ptr) MSVCRT__wcsncoll_l
 @ cdecl _wcsnicmp(wstr wstr long) ntdll._wcsnicmp
 # stub _wcsnicmp_l(wstr wstr long ptr)
 @ cdecl _wcsnicoll(wstr wstr long) MSVCRT__wcsnicoll

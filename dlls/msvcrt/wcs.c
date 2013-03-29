@@ -199,6 +199,30 @@ int CDECL MSVCRT__wcslwr_s( MSVCRT_wchar_t* str, MSVCRT_size_t n )
 }
 
 /*********************************************************************
+ *              _wcsncoll_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__wcsncoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2,
+			      MSVCRT_size_t count, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadlocinfo locinfo;
+
+    if(!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    return CompareStringW(locinfo->lc_handle[MSVCRT_LC_COLLATE], 0, str1, count, str2, count)-CSTR_EQUAL;
+}
+
+/*********************************************************************
+ *              _wcsncoll (MSVCRT.@)
+ */
+int CDECL MSVCRT__wcsncoll(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2, MSVCRT_size_t count)
+{
+    return MSVCRT__wcsncoll_l(str1, str2, count, NULL);
+}
+
+/*********************************************************************
  *		_wcstod_l (MSVCRT.@)
  */
 double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
