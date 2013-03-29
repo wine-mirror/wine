@@ -391,52 +391,6 @@ static BOOL DP_DestroyDirectPlay2( LPVOID lpDP )
   return TRUE;
 }
 
-static BOOL DP_CreateDirectPlay3( LPVOID lpDP )
-{
-  IDirectPlay3AImpl *This = lpDP;
-
-  This->dp3 = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dp3) ) );
-  if ( This->dp3 == NULL )
-  {
-    return FALSE;
-  }
-
-  return TRUE;
-}
-
-static BOOL DP_DestroyDirectPlay3( LPVOID lpDP )
-{
-  IDirectPlay3AImpl *This = lpDP;
-
-  /* Delete the contents */
-  HeapFree( GetProcessHeap(), 0, This->dp3 );
-
-  return TRUE;
-}
-
-static BOOL DP_CreateDirectPlay4( LPVOID lpDP )
-{
-  IDirectPlay4AImpl *This = lpDP;
-
-  This->dp4 = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dp4) ) );
-  if ( This->dp4 == NULL )
-  {
-    return FALSE;
-  }
-
-  return TRUE;
-}
-
-static BOOL DP_DestroyDirectPlay4( LPVOID lpDP )
-{
-  IDirectPlay3AImpl *This = lpDP;
-
-  /* Delete the contents */
-  HeapFree( GetProcessHeap(), 0, This->dp4 );
-
-  return TRUE;
-}
-
 
 /* Create a new interface */
 HRESULT DP_CreateInterface
@@ -492,11 +446,7 @@ HRESULT DP_CreateInterface
   }
 
   /* Initialize it */
-  if ( DP_CreateIUnknown( *ppvObj ) &&
-       DP_CreateDirectPlay2( *ppvObj ) &&
-       DP_CreateDirectPlay3( *ppvObj ) &&
-       DP_CreateDirectPlay4( *ppvObj )
-     )
+  if ( DP_CreateIUnknown( *ppvObj ) && DP_CreateDirectPlay2( *ppvObj ) )
   {
     IDirectPlayX_AddRef( (LPDIRECTPLAY2A)*ppvObj );
 
@@ -504,8 +454,6 @@ HRESULT DP_CreateInterface
   }
 
   /* Initialize failed, destroy it */
-  DP_DestroyDirectPlay4( *ppvObj );
-  DP_DestroyDirectPlay3( *ppvObj );
   DP_DestroyDirectPlay2( *ppvObj );
   DP_DestroyIUnknown( *ppvObj );
 
@@ -614,8 +562,6 @@ static ULONG WINAPI DP_Release
   {
      /* If we're destroying the object, this must be the last ref
         of the last interface */
-     DP_DestroyDirectPlay4( This );
-     DP_DestroyDirectPlay3( This );
      DP_DestroyDirectPlay2( This );
      DP_DestroyIUnknown( This );
   }

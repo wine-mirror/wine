@@ -196,21 +196,10 @@ typedef struct tagDirectPlay2Data
   DPQ_HEAD( tagDP_MSG_REPLY_STRUCT_LIST ) repliesExpected;
 } DirectPlay2Data;
 
-typedef struct tagDirectPlay3Data
-{
-  BOOL dummy;
-} DirectPlay3Data;
-typedef struct tagDirectPlay4Data
-{
-  BOOL dummy;
-} DirectPlay4Data;
-
 #define DP_IMPL_FIELDS \
   LONG ulInterfaceRef; \
   DirectPlayIUnknownData*  unk; \
-  DirectPlay2Data*         dp2; \
-  DirectPlay3Data*         dp3; \
-  DirectPlay4Data*         dp4;
+  DirectPlay2Data*         dp2;
 
 struct IDirectPlay2Impl
 {
