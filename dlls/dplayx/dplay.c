@@ -137,9 +137,6 @@ static HRESULT DP_SP_SendEx
           ( IDirectPlay2Impl* This, DWORD dwFlags,
             LPVOID lpData, DWORD dwDataSize, DWORD dwPriority, DWORD dwTimeout,
             LPVOID lpContext, LPDWORD lpdwMsgID );
-static HRESULT DP_IF_SetGroupData
-          ( IDirectPlay2Impl* This, DPID idGroup, LPVOID lpData,
-            DWORD dwDataSize, DWORD dwFlags, BOOL bAnsi );
 static HRESULT DP_IF_CancelMessage
           ( IDirectPlay4Impl* This, DWORD dwMsgID, DWORD dwFlags,
             DWORD dwMinPriority, DWORD dwMaxPriority, BOOL bAnsi );
@@ -2648,63 +2645,46 @@ static HRESULT WINAPI IDirectPlay4Impl_Send( IDirectPlay4 *iface, DPID from, DPI
     return IDirectPlayX_SendEx( iface, from, to, flags, data, size, 0, 0, NULL, NULL );
 }
 
-static HRESULT DP_IF_SetGroupData
-          ( IDirectPlay2Impl* This, DPID idGroup, LPVOID lpData,
-            DWORD dwDataSize, DWORD dwFlags, BOOL bAnsi )
+static HRESULT WINAPI IDirectPlay4AImpl_SetGroupData( IDirectPlay4A *iface, DPID group, void *data,
+        DWORD size, DWORD flags )
 {
-  lpGroupData lpGData;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_SetGroupData( &This->IDirectPlay4_iface, group, data, size, flags );
+}
 
-  TRACE( "(%p)->(0x%08x,%p,0x%08x,0x%08x,%u)\n",
-         This, idGroup, lpData, dwDataSize, dwFlags, bAnsi );
+static HRESULT WINAPI IDirectPlay4Impl_SetGroupData( IDirectPlay4 *iface, DPID group, void *data,
+        DWORD size, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    lpGroupData gdata;
 
-  /* Parameter check */
-  if( ( lpData == NULL ) &&
-      ( dwDataSize != 0 )
-    )
-  {
-    return DPERR_INVALIDPARAMS;
-  }
+    TRACE( "(%p)->(0x%08x,%p,0x%08x,0x%08x)\n", This, group, data, size, flags );
 
-  /* Find the pointer to the data for this player */
-  if( ( lpGData = DP_FindAnyGroup( This, idGroup ) ) == NULL )
-  {
-    return DPERR_INVALIDOBJECT;
-  }
+    /* Parameter check */
+    if ( !data && size )
+        return DPERR_INVALIDPARAMS;
 
-  if( !(dwFlags & DPSET_LOCAL) )
-  {
-    FIXME( "Was this group created by this interface?\n" );
-    /* FIXME: If this is a remote update need to allow it but not
-     *        send a message.
+    /* Find the pointer to the data for this player */
+    if ( ( gdata = DP_FindAnyGroup( This, group ) ) == NULL )
+        return DPERR_INVALIDOBJECT;
+
+    if ( !(flags & DPSET_LOCAL) )
+    {
+        FIXME( "Was this group created by this interface?\n" );
+        /* FIXME: If this is a remote update need to allow it but not
+         *        send a message.
+         */
+    }
+
+    DP_SetGroupData( gdata, flags, data, size );
+
+    /* FIXME: Only send a message if this group is local to the session otherwise
+     * it will have been rejected above
      */
-  }
+    if ( !(flags & DPSET_LOCAL) )
+        FIXME( "Send msg?\n" );
 
-  DP_SetGroupData( lpGData, dwFlags, lpData, dwDataSize );
-
-  /* FIXME: Only send a message if this group is local to the session otherwise
-   * it will have been rejected above
-   */
-  if( !(dwFlags & DPSET_LOCAL) )
-  {
-    FIXME( "Send msg?\n" );
-  }
-
-  return DP_OK;
-}
-
-static HRESULT WINAPI IDirectPlay4AImpl_SetGroupData( IDirectPlay4A *iface, DPID idGroup,
-        void *lpData, DWORD dwDataSize, DWORD dwFlags )
-{
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_IF_SetGroupData( This, idGroup, lpData, dwDataSize, dwFlags, TRUE );
-}
-
-static HRESULT WINAPI DirectPlay2WImpl_SetGroupData
-          ( LPDIRECTPLAY2 iface, DPID idGroup, LPVOID lpData,
-            DWORD dwDataSize, DWORD dwFlags )
-{
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_IF_SetGroupData( This, idGroup, lpData, dwDataSize, dwFlags, FALSE );
+    return DP_OK;
 }
 
 static HRESULT DP_IF_SetGroupName
@@ -4475,7 +4455,7 @@ static const IDirectPlay4Vtbl dp4_vt =
     IDirectPlay4Impl_Open,
   XCAST(Receive)DirectPlay2WImpl_Receive,
     IDirectPlay4Impl_Send,
-  XCAST(SetGroupData)DirectPlay2WImpl_SetGroupData,
+    IDirectPlay4Impl_SetGroupData,
   XCAST(SetGroupName)DirectPlay2WImpl_SetGroupName,
   XCAST(SetPlayerData)DirectPlay2WImpl_SetPlayerData,
   XCAST(SetPlayerName)DirectPlay2WImpl_SetPlayerName,
