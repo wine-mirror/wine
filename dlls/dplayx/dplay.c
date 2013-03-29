@@ -130,10 +130,6 @@ static HRESULT DP_SP_SendEx
 static HRESULT DP_IF_CancelMessage
           ( IDirectPlay4Impl* This, DWORD dwMsgID, DWORD dwFlags,
             DWORD dwMinPriority, DWORD dwMaxPriority, BOOL bAnsi );
-static HRESULT DP_IF_EnumSessions
-          ( IDirectPlay2Impl* This, LPDPSESSIONDESC2 lpsd, DWORD dwTimeout,
-            LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
-            LPVOID lpContext, DWORD dwFlags, BOOL bAnsi );
 static BOOL CALLBACK cbDPCreateEnumConnections( LPCGUID lpguidSP,
     LPVOID lpConnection, DWORD dwConnectionSize, LPCDPNAME lpName,
     DWORD dwFlags, LPVOID lpContext );
@@ -1826,186 +1822,136 @@ static void DP_KillEnumSessionThread( IDirectPlay2Impl* This )
   }
 }
 
-static HRESULT DP_IF_EnumSessions
-          ( IDirectPlay2Impl* This, LPDPSESSIONDESC2 lpsd, DWORD dwTimeout,
-            LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
-            LPVOID lpContext, DWORD dwFlags, BOOL bAnsi )
+static HRESULT WINAPI IDirectPlay4AImpl_EnumSessions( IDirectPlay4A *iface, DPSESSIONDESC2 *sdesc,
+        DWORD timeout, LPDPENUMSESSIONSCALLBACK2 enumsessioncb, void *context, DWORD flags )
 {
-  HRESULT hr = DP_OK;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_EnumSessions( &This->IDirectPlay4_iface, sdesc, timeout, enumsessioncb,
+            context, flags );
+}
 
-  TRACE( "(%p)->(%p,0x%08x,%p,%p,0x%08x,%u)\n",
-         This, lpsd, dwTimeout, lpEnumSessionsCallback2, lpContext, dwFlags,
-         bAnsi );
-  if( This->dp2->connectionInitialized == NO_PROVIDER )
-  {
-    return DPERR_UNINITIALIZED;
-  }
+static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESSIONDESC2 *sdesc,
+        DWORD timeout, LPDPENUMSESSIONSCALLBACK2 enumsessioncb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    void *connection;
+    DWORD  size;
+    HRESULT hr = DP_OK;
 
-  /* Can't enumerate if the interface is already open */
-  if( This->dp2->bConnectionOpen )
-  {
-    return DPERR_GENERIC;
-  }
+    TRACE( "(%p)->(%p,0x%08x,%p,%p,0x%08x)\n", This, sdesc, timeout, enumsessioncb,
+            context, flags );
 
-#if 1
-  /* The loading of a lobby provider _seems_ to require a backdoor loading
-   * of the service provider to also associate with this DP object. This is
-   * because the app doesn't seem to have to call EnumConnections and
-   * InitializeConnection for the SP before calling this method. As such
-   * we'll do their dirty work for them with a quick hack so as to always
-   * load the TCP/IP service provider.
-   *
-   * The correct solution would seem to involve creating a dialog box which
-   * contains the possible SPs. These dialog boxes most likely follow SDK
-   * examples.
-   */
-   if( This->dp2->bDPLSPInitialized && !This->dp2->bSPInitialized )
-   {
-     LPVOID lpConnection;
-     DWORD  dwSize;
+    if ( This->dp2->connectionInitialized == NO_PROVIDER )
+        return DPERR_UNINITIALIZED;
 
-     WARN( "Hack providing TCP/IP SP for lobby provider activated\n" );
+    /* Can't enumerate if the interface is already open */
+    if ( This->dp2->bConnectionOpen )
+        return DPERR_GENERIC;
 
-     if( !DP_BuildSPCompoundAddr( (LPGUID)&DPSPGUID_TCPIP, &lpConnection, &dwSize ) )
-     {
-       ERR( "Can't build compound addr\n" );
-       return DPERR_GENERIC;
-     }
-
-     hr = IDirectPlayX_InitializeConnection( &This->IDirectPlay4_iface, lpConnection, 0 );
-     if( FAILED(hr) )
-     {
-       return hr;
-     }
-
-     /* Free up the address buffer */
-     HeapFree( GetProcessHeap(), 0, lpConnection );
-
-     /* The SP is now initialized */
-     This->dp2->bSPInitialized = TRUE;
-   }
-#endif
-
-
-  /* Use the service provider default? */
-  if( dwTimeout == 0 )
-  {
-    DPCAPS spCaps;
-    spCaps.dwSize = sizeof( spCaps );
-
-    IDirectPlayX_GetCaps( &This->IDirectPlay4_iface, &spCaps, 0 );
-    dwTimeout = spCaps.dwTimeout;
-
-    /* The service provider doesn't provide one either! */
-    if( dwTimeout == 0 )
+    /* The loading of a lobby provider _seems_ to require a backdoor loading
+     * of the service provider to also associate with this DP object. This is
+     * because the app doesn't seem to have to call EnumConnections and
+     * InitializeConnection for the SP before calling this method. As such
+     * we'll do their dirty work for them with a quick hack so as to always
+     * load the TCP/IP service provider.
+     *
+     * The correct solution would seem to involve creating a dialog box which
+     * contains the possible SPs. These dialog boxes most likely follow SDK
+     * examples.
+     */
+    if ( This->dp2->bDPLSPInitialized && !This->dp2->bSPInitialized )
     {
-      /* Provide the TCP/IP default */
-      dwTimeout = DPMSG_WAIT_5_SECS;
-    }
-  }
+        WARN( "Hack providing TCP/IP SP for lobby provider activated\n" );
 
-  if( dwFlags & DPENUMSESSIONS_STOPASYNC )
-  {
-    DP_KillEnumSessionThread( This );
-    return hr;
-  }
-
-  if( ( dwFlags & DPENUMSESSIONS_ASYNC ) )
-  {
-    /* Enumerate everything presently in the local session cache */
-    DP_InvokeEnumSessionCallbacks( lpEnumSessionsCallback2,
-                                   This->dp2->lpNameServerData, dwTimeout,
-                                   lpContext );
-
-    if( This->dp2->dwEnumSessionLock != 0 )
-      return DPERR_CONNECTING;
-
-    /* See if we've already created a thread to service this interface */
-    if( This->dp2->hEnumSessionThread == INVALID_HANDLE_VALUE )
-    {
-      DWORD dwThreadId;
-      This->dp2->dwEnumSessionLock++;
-
-      /* Send the first enum request inline since the user may cancel a dialog
-       * if one is presented. Also, may also have a connecting return code.
-       */
-      hr = NS_SendSessionRequestBroadcast( &lpsd->guidApplication,
-                                           dwFlags, &This->dp2->spData );
-
-      if( SUCCEEDED(hr) )
-      {
-        EnumSessionAsyncCallbackData* lpData
-          = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpData ) );
-        /* FIXME: need to kill the thread on object deletion */
-        lpData->lpSpData  = &This->dp2->spData;
-
-        lpData->requestGuid = lpsd->guidApplication;
-        lpData->dwEnumSessionFlags = dwFlags;
-        lpData->dwTimeout = dwTimeout;
-
-        This->dp2->hKillEnumSessionThreadEvent =
-          CreateEventW( NULL, TRUE, FALSE, NULL );
-
-        if( !DuplicateHandle( GetCurrentProcess(),
-                              This->dp2->hKillEnumSessionThreadEvent,
-                              GetCurrentProcess(),
-                              &lpData->hSuicideRequest,
-                              0, FALSE, DUPLICATE_SAME_ACCESS )
-          )
+        if ( !DP_BuildSPCompoundAddr( (GUID*)&DPSPGUID_TCPIP, &connection, &size ) )
         {
-          ERR( "Can't duplicate thread killing handle\n" );
+            ERR( "Can't build compound addr\n" );
+            return DPERR_GENERIC;
         }
 
-        TRACE( ": creating EnumSessionsRequest thread\n" );
+        hr = IDirectPlayX_InitializeConnection( &This->IDirectPlay4_iface, connection, 0 );
+        if ( FAILED(hr) )
+            return hr;
 
-        This->dp2->hEnumSessionThread = CreateThread( NULL,
-                                                      0,
-                                                      DP_EnumSessionsSendAsyncRequestThread,
-                                                      lpData,
-                                                      0,
-                                                      &dwThreadId );
-      }
-      This->dp2->dwEnumSessionLock--;
+        HeapFree( GetProcessHeap(), 0, connection );
+        This->dp2->bSPInitialized = TRUE;
     }
-  }
-  else
-  {
-    /* Invalidate the session cache for the interface */
-    NS_InvalidateSessionCache( This->dp2->lpNameServerData );
-
-    /* Send the broadcast for session enumeration */
-    hr = NS_SendSessionRequestBroadcast( &lpsd->guidApplication,
-                                         dwFlags,
-                                         &This->dp2->spData );
 
 
-    SleepEx( dwTimeout, FALSE );
+    /* Use the service provider default? */
+    if ( !timeout )
+    {
+        DPCAPS caps;
+        caps.dwSize = sizeof( caps );
 
-    DP_InvokeEnumSessionCallbacks( lpEnumSessionsCallback2,
-                                   This->dp2->lpNameServerData, dwTimeout,
-                                   lpContext );
-  }
+        IDirectPlayX_GetCaps( &This->IDirectPlay4_iface, &caps, 0 );
+        timeout = caps.dwTimeout;
+        if ( !timeout )
+            timeout = DPMSG_WAIT_5_SECS; /* Provide the TCP/IP default */
+    }
 
-  return hr;
-}
+    if ( flags & DPENUMSESSIONS_STOPASYNC )
+    {
+        DP_KillEnumSessionThread( This );
+        return hr;
+    }
 
-static HRESULT WINAPI IDirectPlay4AImpl_EnumSessions( IDirectPlay4A *iface, DPSESSIONDESC2 *lpsd,
-        DWORD dwTimeout, LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2, void *lpContext,
-        DWORD dwFlags )
-{
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_IF_EnumSessions( This, lpsd, dwTimeout, lpEnumSessionsCallback2,
-                             lpContext, dwFlags, TRUE );
-}
+    if ( flags & DPENUMSESSIONS_ASYNC )
+    {
+        /* Enumerate everything presently in the local session cache */
+        DP_InvokeEnumSessionCallbacks( enumsessioncb, This->dp2->lpNameServerData, timeout,
+                context );
 
-static HRESULT WINAPI DirectPlay2WImpl_EnumSessions
-          ( LPDIRECTPLAY2 iface, LPDPSESSIONDESC2 lpsd, DWORD dwTimeout,
-            LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
-            LPVOID lpContext, DWORD dwFlags )
-{
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_IF_EnumSessions( This, lpsd, dwTimeout, lpEnumSessionsCallback2,
-                             lpContext, dwFlags, FALSE );
+        if ( This->dp2->dwEnumSessionLock )
+            return DPERR_CONNECTING;
+
+        /* See if we've already created a thread to service this interface */
+        if ( This->dp2->hEnumSessionThread == INVALID_HANDLE_VALUE )
+        {
+            DWORD tid;
+            This->dp2->dwEnumSessionLock++;
+
+            /* Send the first enum request inline since the user may cancel a dialog
+             * if one is presented. Also, may also have a connecting return code.
+             */
+            hr = NS_SendSessionRequestBroadcast( &sdesc->guidApplication, flags,
+                    &This->dp2->spData );
+
+            if ( SUCCEEDED(hr) )
+            {
+                EnumSessionAsyncCallbackData* data = HeapAlloc( GetProcessHeap(),
+                        HEAP_ZERO_MEMORY, sizeof( *data ) );
+                /* FIXME: need to kill the thread on object deletion */
+                data->lpSpData  = &This->dp2->spData;
+                data->requestGuid = sdesc->guidApplication;
+                data->dwEnumSessionFlags = flags;
+                data->dwTimeout = timeout;
+
+                This->dp2->hKillEnumSessionThreadEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
+                if ( !DuplicateHandle( GetCurrentProcess(), This->dp2->hKillEnumSessionThreadEvent,
+                            GetCurrentProcess(), &data->hSuicideRequest, 0, FALSE,
+                            DUPLICATE_SAME_ACCESS ) )
+                    ERR( "Can't duplicate thread killing handle\n" );
+
+                TRACE( ": creating EnumSessionsRequest thread\n" );
+                This->dp2->hEnumSessionThread = CreateThread( NULL, 0,
+                        DP_EnumSessionsSendAsyncRequestThread, data, 0, &tid );
+            }
+            This->dp2->dwEnumSessionLock--;
+        }
+    }
+    else
+    {
+        /* Invalidate the session cache for the interface */
+        NS_InvalidateSessionCache( This->dp2->lpNameServerData );
+        /* Send the broadcast for session enumeration */
+        hr = NS_SendSessionRequestBroadcast( &sdesc->guidApplication, flags, &This->dp2->spData );
+        SleepEx( timeout, FALSE );
+        DP_InvokeEnumSessionCallbacks( enumsessioncb, This->dp2->lpNameServerData, timeout,
+                context );
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_GetCaps( IDirectPlay4A *iface, DPCAPS *caps, DWORD flags )
@@ -4275,7 +4221,7 @@ static const IDirectPlay4Vtbl dp4_vt =
     IDirectPlay4Impl_EnumGroupPlayers,
     IDirectPlay4Impl_EnumGroups,
     IDirectPlay4Impl_EnumPlayers,
-  XCAST(EnumSessions)DirectPlay2WImpl_EnumSessions,
+    IDirectPlay4Impl_EnumSessions,
     IDirectPlay4Impl_GetCaps,
     IDirectPlay4Impl_GetGroupData,
   XCAST(GetGroupName)DirectPlay2WImpl_GetGroupName,
