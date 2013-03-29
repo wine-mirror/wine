@@ -1482,7 +1482,7 @@ static HRESULT DP_IF_DestroyGroup
     return DPERR_INVALIDPLAYER; /* yes player */
   }
 
-  context.This    = (IDirectPlay3Impl*)This;
+  context.This    = This;
   context.bAnsi   = bAnsi;
   context.idGroup = idGroup;
 
@@ -2919,15 +2919,10 @@ static HRESULT DP_IF_CreateGroupInGroup
   }
 
   /* Verify that the specified parent is valid */
-  if( ( lpGParentData = DP_FindAnyGroup( (IDirectPlay2AImpl*)This,
-                                         idParentGroup ) ) == NULL
-    )
-  {
+  if( ( lpGParentData = DP_FindAnyGroup(This, idParentGroup ) ) == NULL )
     return DPERR_INVALIDGROUP;
-  }
 
-  lpGData = DP_CreateGroup( (IDirectPlay2AImpl*)This, lpidGroup, lpGroupName,
-                            dwFlags, idParentGroup, bAnsi );
+  lpGData = DP_CreateGroup(This, lpidGroup, lpGroupName, dwFlags, idParentGroup, bAnsi );
 
   if( lpGData == NULL )
   {
