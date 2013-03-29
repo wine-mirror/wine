@@ -133,9 +133,6 @@ static HRESULT DP_SP_SendEx
 static HRESULT DP_IF_CancelMessage
           ( IDirectPlay4Impl* This, DWORD dwMsgID, DWORD dwFlags,
             DWORD dwMinPriority, DWORD dwMaxPriority, BOOL bAnsi );
-static HRESULT DP_IF_GetGroupParent
-          ( IDirectPlay3AImpl* This, DPID idGroup, LPDPID lpidGroup,
-            BOOL bAnsi );
 static HRESULT DP_IF_EnumSessions
           ( IDirectPlay2Impl* This, LPDPSESSIONDESC2 lpsd, DWORD dwTimeout,
             LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
@@ -3879,35 +3876,27 @@ static HRESULT WINAPI IDirectPlay4Impl_GetGroupFlags( IDirectPlay4 *iface, DPID 
     return DP_OK;
 }
 
-static HRESULT DP_IF_GetGroupParent
-          ( IDirectPlay3AImpl* This, DPID idGroup, LPDPID lpidGroup,
-            BOOL bAnsi )
+static HRESULT WINAPI IDirectPlay4AImpl_GetGroupParent( IDirectPlay4A *iface, DPID group,
+        DPID *parent )
 {
-  lpGroupData lpGData;
-
-  TRACE("(%p)->(0x%08x,%p,%u)\n", This, idGroup, lpidGroup, bAnsi );
-
-  if( ( lpGData = DP_FindAnyGroup( (IDirectPlay2AImpl*)This, idGroup ) ) == NULL )
-  {
-    return DPERR_INVALIDGROUP;
-  }
-
-  *lpidGroup = lpGData->dpid;
-
-  return DP_OK;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_GetGroupParent( &This->IDirectPlay4_iface, group, parent );
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_GetGroupParent( IDirectPlay4A *iface, DPID idGroup,
-        DPID *lpidGroup )
+static HRESULT WINAPI IDirectPlay4Impl_GetGroupParent( IDirectPlay4 *iface, DPID group,
+        DPID *parent )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_IF_GetGroupParent( This, idGroup, lpidGroup, TRUE );
-}
-static HRESULT WINAPI DirectPlay3WImpl_GetGroupParent
-          ( LPDIRECTPLAY3 iface, DPID idGroup, LPDPID lpidGroup )
-{
-  IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  return DP_IF_GetGroupParent( This, idGroup, lpidGroup, FALSE );
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    lpGroupData gdata;
+
+    TRACE( "(%p)->(0x%08x,%p)\n", This, group, parent );
+
+    if ( ( gdata = DP_FindAnyGroup( This, group ) ) == NULL )
+        return DPERR_INVALIDGROUP;
+
+    *parent = gdata->dpid;
+
+    return DP_OK;
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_GetPlayerAccount( IDirectPlay4A *iface, DPID player,
@@ -4337,7 +4326,7 @@ static const IDirectPlay4Vtbl dp4_vt =
     IDirectPlay4Impl_SetGroupConnectionSettings,
     IDirectPlay4Impl_StartSession,
     IDirectPlay4Impl_GetGroupFlags,
-  XCAST(GetGroupParent)DirectPlay3WImpl_GetGroupParent,
+    IDirectPlay4Impl_GetGroupParent,
     IDirectPlay4Impl_GetPlayerAccount,
     IDirectPlay4Impl_GetPlayerFlags,
     IDirectPlay4Impl_GetGroupOwner,
