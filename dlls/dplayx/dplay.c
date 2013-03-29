@@ -2805,20 +2805,16 @@ static HRESULT DP_SecureOpen
   return hr;
 }
 
-static HRESULT WINAPI DirectPlay2AImpl_Open
-          ( LPDIRECTPLAY2A iface, LPDPSESSIONDESC2 lpsd, DWORD dwFlags )
+static HRESULT WINAPI IDirectPlay4AImpl_Open( IDirectPlay4A *iface, DPSESSIONDESC2 *sdesc,
+        DWORD flags )
 {
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  TRACE("(%p)->(%p,0x%08x)\n", This, lpsd, dwFlags );
-  return DP_SecureOpen( This, lpsd, dwFlags, NULL, NULL, TRUE );
+    return IDirectPlayX_SecureOpen( iface, sdesc, flags, NULL, NULL );
 }
 
-static HRESULT WINAPI DirectPlay2WImpl_Open
-          ( LPDIRECTPLAY2 iface, LPDPSESSIONDESC2 lpsd, DWORD dwFlags )
+static HRESULT WINAPI IDirectPlay4Impl_Open( IDirectPlay4 *iface, DPSESSIONDESC2 *sdesc,
+        DWORD flags )
 {
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  TRACE("(%p)->(%p,0x%08x)\n", This, lpsd, dwFlags );
-  return DP_SecureOpen( This, lpsd, dwFlags, NULL, NULL, FALSE );
+    return IDirectPlayX_SecureOpen( iface, sdesc, flags, NULL, NULL );
 }
 
 static HRESULT DP_IF_Receive
@@ -4748,7 +4744,7 @@ static const IDirectPlay4Vtbl directPlay4WVT =
   XCAST(GetPlayerName)DirectPlay2WImpl_GetPlayerName,
   XCAST(GetSessionDesc)DirectPlay2WImpl_GetSessionDesc,
   XCAST(Initialize)DirectPlay2WImpl_Initialize,
-  XCAST(Open)DirectPlay2WImpl_Open,
+    IDirectPlay4Impl_Open,
   XCAST(Receive)DirectPlay2WImpl_Receive,
   XCAST(Send)DirectPlay2WImpl_Send,
   XCAST(SetGroupData)DirectPlay2WImpl_SetGroupData,
@@ -4816,7 +4812,7 @@ static const IDirectPlay4Vtbl directPlay4AVT =
   XCAST(GetPlayerName)DirectPlay2AImpl_GetPlayerName,
   XCAST(GetSessionDesc)DirectPlay2AImpl_GetSessionDesc,
   XCAST(Initialize)DirectPlay2AImpl_Initialize,
-  XCAST(Open)DirectPlay2AImpl_Open,
+    IDirectPlay4AImpl_Open,
   XCAST(Receive)DirectPlay2AImpl_Receive,
   XCAST(Send)DirectPlay2AImpl_Send,
   XCAST(SetGroupData)DirectPlay2AImpl_SetGroupData,
