@@ -42,9 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 
 typedef struct
 {
-    /* IUnknown fields */
     IClassFactory IClassFactory_iface;
-    LONG          ref;
 } IClassFactoryImpl;
 
 static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
@@ -53,26 +51,30 @@ static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
 }
 
 static HRESULT WINAPI IClassFactoryImpl_QueryInterface(IClassFactory *iface, REFIID riid,
-        void **ppobj)
+        void **ppv)
 {
-        IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+    TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
 
-        FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+    if (IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IClassFactory, riid))
+    {
+        *ppv = iface;
+        IClassFactory_AddRef(iface);
+        return S_OK;
+    }
 
-        return E_NOINTERFACE;
+    *ppv = NULL;
+    WARN("no interface for %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI IClassFactoryImpl_AddRef(IClassFactory *iface)
 {
-        IClassFactoryImpl *This = impl_from_IClassFactory(iface);
-        return InterlockedIncrement(&This->ref);
+    return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI IClassFactoryImpl_Release(IClassFactory *iface)
 {
-        IClassFactoryImpl *This = impl_from_IClassFactory(iface);
-        /* static class (reference starts @ 1), won't ever be freed */
-        return InterlockedDecrement(&This->ref);
+    return 1; /* non-heap based object */
 }
 
 static HRESULT WINAPI IClassFactoryImpl_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
@@ -96,9 +98,8 @@ static HRESULT WINAPI IClassFactoryImpl_CreateInstance(IClassFactory *iface, IUn
 
 static HRESULT WINAPI IClassFactoryImpl_LockServer(IClassFactory *iface, BOOL dolock)
 {
-        IClassFactoryImpl *This = impl_from_IClassFactory(iface);
-        FIXME("(%p)->(%d),stub!\n",This,dolock);
-        return S_OK;
+    FIXME("(%p)->(%d),stub!\n", iface, dolock);
+    return S_OK;
 }
 
 static const IClassFactoryVtbl DP_and_DPL_Vtbl = {
@@ -109,7 +110,7 @@ static const IClassFactoryVtbl DP_and_DPL_Vtbl = {
     IClassFactoryImpl_LockServer
 };
 
-static IClassFactoryImpl DP_and_DPL_CF = {{&DP_and_DPL_Vtbl}, 1 };
+static IClassFactoryImpl DP_and_DPL_CF = {{&DP_and_DPL_Vtbl}};
 
 
 /*******************************************************************************
