@@ -61,8 +61,10 @@ struct macdrv_window_surface
     struct window_surface   header;
     macdrv_window           window;
     RECT                    bounds;
+    HRGN                    region;
+    HRGN                    drawn;
     BOOL                    use_alpha;
-    RGNDATA                *region_data;
+    RGNDATA                *blit_data;
     BYTE                   *bits;
     pthread_mutex_t         mutex;
     BITMAPINFO              info;   /* variable size, must be last */
@@ -71,6 +73,27 @@ struct macdrv_window_surface
 static struct macdrv_window_surface *get_mac_surface(struct window_surface *surface)
 {
     return (struct macdrv_window_surface *)surface;
+}
+
+/***********************************************************************
+ *              update_blit_data
+ */
+static void update_blit_data(struct macdrv_window_surface *surface)
+{
+    HeapFree(GetProcessHeap(), 0, surface->blit_data);
+    surface->blit_data = NULL;
+
+    if (surface->drawn)
+    {
+        HRGN blit = CreateRectRgn(0, 0, 0, 0);
+
+        if (CombineRgn(blit, surface->drawn, 0, RGN_COPY) > NULLREGION &&
+            (!surface->region || CombineRgn(blit, blit, surface->region, RGN_AND) > NULLREGION) &&
+            OffsetRgn(blit, surface->header.rect.left, surface->header.rect.top) > NULLREGION)
+            surface->blit_data = get_region_data(blit, 0);
+
+        DeleteObject(blit);
+    }
 }
 
 /***********************************************************************
@@ -126,15 +149,17 @@ static void macdrv_surface_set_region(struct window_surface *window_surface, HRG
 
     window_surface->funcs->lock(window_surface);
 
-    HeapFree(GetProcessHeap(), 0, surface->region_data);
-    surface->region_data = NULL;
-
     if (region)
     {
-        int rc = OffsetRgn(region, surface->header.rect.left, surface->header.rect.top);
-        if (rc != ERROR)
-            surface->region_data = get_region_data(region, 0);
+        if (!surface->region) surface->region = CreateRectRgn(0, 0, 0, 0);
+        CombineRgn(surface->region, region, 0, RGN_COPY);
     }
+    else
+    {
+        if (surface->region) DeleteObject(surface->region);
+        surface->region = 0;
+    }
+    update_blit_data(surface);
 
     window_surface->funcs->unlock(window_surface);
 }
@@ -146,6 +171,7 @@ static void macdrv_surface_flush(struct window_surface *window_surface)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
     CGRect rect;
+    HRGN region;
 
     window_surface->funcs->lock(window_surface);
 
@@ -154,6 +180,18 @@ static void macdrv_surface_flush(struct window_surface *window_surface)
 
     rect = cgrect_from_rect(surface->bounds);
     rect = CGRectOffset(rect, surface->header.rect.left, surface->header.rect.top);
+
+    if (!IsRectEmpty(&surface->bounds) && (region = CreateRectRgnIndirect(&surface->bounds)))
+    {
+        if (surface->drawn)
+        {
+            CombineRgn(surface->drawn, surface->drawn, region, RGN_OR);
+            DeleteObject(region);
+        }
+        else
+            surface->drawn = region;
+    }
+    update_blit_data(surface);
     reset_bounds(&surface->bounds);
 
     window_surface->funcs->unlock(window_surface);
@@ -189,9 +227,11 @@ static const struct window_surface_funcs macdrv_surface_funcs =
 /***********************************************************************
  *              create_surface
  */
-struct window_surface *create_surface(macdrv_window window, const RECT *rect, BOOL use_alpha)
+struct window_surface *create_surface(macdrv_window window, const RECT *rect,
+                                      struct window_surface *old_surface, BOOL use_alpha)
 {
     struct macdrv_window_surface *surface;
+    struct macdrv_window_surface *old_mac_surface = get_mac_surface(old_surface);
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
     DWORD *colors;
     pthread_mutexattr_t attr;
@@ -234,6 +274,17 @@ struct window_surface *create_surface(macdrv_window window, const RECT *rect, BO
     surface->header.ref   = 1;
     surface->window = window;
     reset_bounds(&surface->bounds);
+    if (old_mac_surface && old_mac_surface->drawn)
+    {
+        surface->drawn = CreateRectRgnIndirect(rect);
+        OffsetRgn(surface->drawn, -rect->left, -rect->top);
+        if (CombineRgn(surface->drawn, surface->drawn, old_mac_surface->drawn, RGN_AND) <= NULLREGION)
+        {
+            DeleteObject(surface->drawn);
+            surface->drawn = 0;
+        }
+    }
+    update_blit_data(surface);
     surface->use_alpha = use_alpha;
     surface->bits = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, surface->info.bmiHeader.biSizeImage);
     if (!surface->bits) goto failed;
@@ -267,24 +318,25 @@ void set_window_surface(macdrv_window window, struct window_surface *window_surf
 }
 
 /***********************************************************************
- *              get_surface_region_rects
+ *              get_surface_blit_rects
  *
  * Caller must hold the surface lock.  Indirectly returns the surface
- * region rects.  Returns zero if the surface has no region set (it is
- * unclipped); returns non-zero if the surface does have a region set.
+ * blit region rects.  Returns zero if the surface has nothing to blit;
+ * returns non-zero if the surface does have rects to blit (drawn area
+ * which isn't clipped away by a surface region).
  *
  * IMPORTANT: This function is called from non-Wine threads, so it
  *            must not use Win32 or Wine functions, including debug
  *            logging.
  */
-int get_surface_region_rects(void *window_surface, const CGRect **rects, int *count)
+int get_surface_blit_rects(void *window_surface, const CGRect **rects, int *count)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
-    if (surface->region_data)
+    if (surface->blit_data)
     {
-        *rects = (const CGRect*)surface->region_data->Buffer;
-        *count = surface->region_data->rdh.nCount;
+        *rects = (const CGRect*)surface->blit_data->Buffer;
+        *count = surface->blit_data->rdh.nCount;
     }
     else
     {
@@ -292,7 +344,7 @@ int get_surface_region_rects(void *window_surface, const CGRect **rects, int *co
         *count = 0;
     }
 
-    return (surface->region_data != NULL);
+    return (surface->blit_data != NULL);
 }
 
 /***********************************************************************

@@ -319,7 +319,7 @@ extern void macdrv_get_cocoa_window_frame(macdrv_window w, CGRect* out_frame) DE
 extern void macdrv_set_cocoa_parent_window(macdrv_window w, macdrv_window parent) DECLSPEC_HIDDEN;
 extern void macdrv_set_window_surface(macdrv_window w, void *surface, pthread_mutex_t *mutex) DECLSPEC_HIDDEN;
 extern CGImageRef create_surface_image(void *window_surface, CGRect *rect, int copy_data) DECLSPEC_HIDDEN;
-extern int get_surface_region_rects(void *window_surface, const CGRect **rects, int *count) DECLSPEC_HIDDEN;
+extern int get_surface_blit_rects(void *window_surface, const CGRect **rects, int *count) DECLSPEC_HIDDEN;
 extern void macdrv_window_needs_display(macdrv_window w, CGRect rect) DECLSPEC_HIDDEN;
 extern void macdrv_set_window_shape(macdrv_window w, const CGRect *rects, int count) DECLSPEC_HIDDEN;
 extern void macdrv_set_window_alpha(macdrv_window w, CGFloat alpha) DECLSPEC_HIDDEN;

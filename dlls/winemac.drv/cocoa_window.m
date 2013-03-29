@@ -186,18 +186,10 @@ static inline void fix_generic_modifiers_by_device(NSUInteger* modifiers)
         if (window.surface && window.surface_mutex &&
             !pthread_mutex_lock(window.surface_mutex))
         {
-            CGRect bounds;
             const CGRect* rects;
             int count;
 
-            if (!get_surface_region_rects(window.surface, &rects, &count))
-            {
-                bounds = NSRectToCGRect([self bounds]);
-                rects = &bounds;
-                count = 1;
-            }
-
-            if (count)
+            if (get_surface_blit_rects(window.surface, &rects, &count) && count)
             {
                 CGContextRef context;
                 int i;
