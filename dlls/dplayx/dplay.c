@@ -113,10 +113,6 @@ static HRESULT DP_SecureOpen
           ( IDirectPlay2Impl* This, LPCDPSESSIONDESC2 lpsd, DWORD dwFlags,
             LPCDPSECURITYDESC lpSecurity, LPCDPCREDENTIALS lpCredentials,
             BOOL bAnsi );
-static HRESULT DP_SendEx
-          ( IDirectPlay2Impl* This, DPID idFrom, DPID idTo, DWORD dwFlags,
-            LPVOID lpData, DWORD dwDataSize, DWORD dwPriority, DWORD dwTimeout,
-            LPVOID lpContext, LPDWORD lpdwMsgID, BOOL bAnsi );
 static HRESULT DP_IF_Receive
           ( IDirectPlay2Impl* This, LPDPID lpidFrom, LPDPID lpidTo,
             DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize, BOOL bAnsi );
@@ -844,8 +840,8 @@ static HRESULT DP_IF_CreateGroup
     /* FIXME: Correct to just use send effectively? */
     /* FIXME: Should size include data w/ message or just message "header" */
     /* FIXME: Check return code */
-    DP_SendEx( This, DPID_SERVERPLAYER, DPID_ALLPLAYERS, 0, &msg, sizeof( msg ),
-               0, 0, NULL, NULL, bAnsi );
+    IDirectPlayX_SendEx( &This->IDirectPlay4_iface, DPID_SERVERPLAYER, DPID_ALLPLAYERS, 0, &msg,
+            sizeof( msg ), 0, 0, NULL, NULL );
   }
 
   return DP_OK;
@@ -1325,8 +1321,8 @@ static HRESULT DP_IF_CreatePlayer
     /* FIXME: Correct to just use send effectively? */
     /* FIXME: Should size include data w/ message or just message "header" */
     /* FIXME: Check return code */
-    hr = DP_SendEx( This, DPID_SERVERPLAYER, DPID_ALLPLAYERS, 0, &msg,
-                    sizeof( msg ), 0, 0, NULL, NULL, bAnsi );
+    hr = IDirectPlayX_SendEx( &This->IDirectPlay4_iface, DPID_SERVERPLAYER, DPID_ALLPLAYERS, 0,
+            &msg, sizeof( msg ), 0, 0, NULL, NULL );
   }
 #endif
 
@@ -3004,9 +3000,8 @@ static HRESULT DP_IF_CreateGroupInGroup
     /* FIXME: Correct to just use send effectively? */
     /* FIXME: Should size include data w/ message or just message "header" */
     /* FIXME: Check return code */
-    DP_SendEx( (IDirectPlay2Impl*)This,
-               DPID_SERVERPLAYER, DPID_ALLPLAYERS, 0, &msg, sizeof( msg ),
-               0, 0, NULL, NULL, bAnsi );
+    IDirectPlayX_SendEx( &This->IDirectPlay4_iface, DPID_SERVERPLAYER, DPID_ALLPLAYERS, 0, &msg,
+            sizeof( msg ), 0, 0, NULL, NULL );
   }
 
   return DP_OK;
@@ -3890,141 +3885,78 @@ static HRESULT WINAPI IDirectPlay4Impl_SetGroupOwner( IDirectPlay4 *iface, DPID 
     return DP_OK;
 }
 
-static HRESULT DP_SendEx
-          ( IDirectPlay2Impl* This, DPID idFrom, DPID idTo, DWORD dwFlags,
-            LPVOID lpData, DWORD dwDataSize, DWORD dwPriority, DWORD dwTimeout,
-            LPVOID lpContext, LPDWORD lpdwMsgID, BOOL bAnsi )
+static HRESULT WINAPI IDirectPlay4AImpl_SendEx( IDirectPlay4A *iface, DPID from, DPID to,
+        DWORD flags, void *data, DWORD size, DWORD priority, DWORD timeout, void *context,
+        DWORD *msgid )
 {
-  BOOL         bValidDestination = FALSE;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_SendEx( &This->IDirectPlay4_iface, from, to, flags, data, size, priority,
+            timeout, context, msgid );
+}
 
-  FIXME( "(%p)->(0x%08x,0x%08x,0x%08x,%p,0x%08x,0x%08x,0x%08x,%p,%p,%u)"
-         ": stub\n",
-         This, idFrom, idTo, dwFlags, lpData, dwDataSize, dwPriority,
-         dwTimeout, lpContext, lpdwMsgID, bAnsi );
+static HRESULT WINAPI IDirectPlay4Impl_SendEx( IDirectPlay4 *iface, DPID from, DPID to,
+        DWORD flags, void *data, DWORD size, DWORD priority, DWORD timeout, void *context,
+        DWORD *msgid )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
 
-  if( This->dp2->connectionInitialized == NO_PROVIDER )
-  {
-    return DPERR_UNINITIALIZED;
-  }
+    FIXME( "(%p)->(0x%08x,0x%08x,0x%08x,%p,0x%08x,0x%08x,0x%08x,%p,%p): semi-stub\n",
+            This, from, to, flags, data, size, priority, timeout, context, msgid );
 
-  /* FIXME: Add parameter checking */
-  /* FIXME: First call to this needs to acquire a message id which will be
-   *        used for multiple sends
-   */
+    if ( This->dp2->connectionInitialized == NO_PROVIDER )
+        return DPERR_UNINITIALIZED;
 
-  /* NOTE: Can't send messages to yourself - this will be trapped in receive */
+    /* FIXME: Add parameter checking */
+    /* FIXME: First call to this needs to acquire a message id which will be
+     *        used for multiple sends
+     */
 
-  /* Verify that the message is being sent from a valid local player. The
-   * from player may be anonymous DPID_UNKNOWN
-   */
-  if( idFrom != DPID_UNKNOWN )
-  {
-    if( DP_FindPlayer( This, idFrom ) == NULL )
+    /* NOTE: Can't send messages to yourself - this will be trapped in receive */
+
+    /* Verify that the message is being sent from a valid local player. The
+     * from player may be anonymous DPID_UNKNOWN
+     */
+    if ( from != DPID_UNKNOWN && !DP_FindPlayer( This, from ) )
     {
-      WARN( "INFO: Invalid from player 0x%08x\n", idFrom );
-      return DPERR_INVALIDPLAYER;
-    }
-  }
-
-  /* Verify that the message is being sent to a valid player, group or to
-   * everyone. If it's valid, send it to those players.
-   */
-  if( idTo == DPID_ALLPLAYERS )
-  {
-    bValidDestination = TRUE;
-
-    /* See if SP has the ability to multicast. If so, use it */
-    if( This->dp2->spData.lpCB->SendToGroupEx )
-    {
-      FIXME( "Use group sendex to group 0\n" );
-    }
-    else if( This->dp2->spData.lpCB->SendToGroup ) /* obsolete interface */
-    {
-      FIXME( "Use obsolete group send to group 0\n" );
-    }
-    else /* No multicast, multiplicate */
-    {
-      /* Send to all players we know about */
-      FIXME( "Send to all players using EnumPlayersInGroup\n" );
-    }
-  }
-
-  if( ( !bValidDestination ) &&
-      ( DP_FindPlayer( This, idTo ) != NULL )
-    )
-  {
-    /* Have the service provider send this message */
-    /* FIXME: Could optimize for local interface sends */
-    return DP_SP_SendEx( This, dwFlags, lpData, dwDataSize, dwPriority,
-                         dwTimeout, lpContext, lpdwMsgID );
-  }
-
-  if( ( !bValidDestination ) &&
-      ( DP_FindAnyGroup( This, idTo ) != NULL )
-    )
-  {
-    bValidDestination = TRUE;
-
-    /* See if SP has the ability to multicast. If so, use it */
-    if( This->dp2->spData.lpCB->SendToGroupEx )
-    {
-      FIXME( "Use group sendex\n" );
-    }
-    else if( This->dp2->spData.lpCB->SendToGroup ) /* obsolete interface */
-    {
-      FIXME( "Use obsolete group send to group\n" );
-    }
-    else /* No multicast, multiplicate */
-    {
-      FIXME( "Send to all players using EnumPlayersInGroup\n" );
+        WARN( "INFO: Invalid from player 0x%08x\n", from );
+        return DPERR_INVALIDPLAYER;
     }
 
-#if 0
-    if( bExpectReply )
+    /* Verify that the message is being sent to a valid player, group or to
+     * everyone. If it's valid, send it to those players.
+     */
+    if ( to == DPID_ALLPLAYERS )
     {
-      DWORD dwWaitReturn;
-
-      This->dp2->hReplyEvent = CreateEventW( NULL, FALSE, FALSE, NULL );
-
-      dwWaitReturn = WaitForSingleObject( hReplyEvent, dwTimeout );
-      if( dwWaitReturn != WAIT_OBJECT_0 )
-      {
-        ERR( "Wait failed 0x%08lx\n", dwWaitReturn );
-      }
+        /* See if SP has the ability to multicast. If so, use it */
+        if ( This->dp2->spData.lpCB->SendToGroupEx )
+            FIXME( "Use group sendex to group 0\n" );
+        else if ( This->dp2->spData.lpCB->SendToGroup ) /* obsolete interface */
+            FIXME( "Use obsolete group send to group 0\n" );
+        else /* No multicast, multiplicate */
+            FIXME( "Send to all players using EnumPlayersInGroup\n" );
     }
-#endif
-  }
+    else if ( DP_FindPlayer( This, to ) )
+    {
+        /* Have the service provider send this message */
+        /* FIXME: Could optimize for local interface sends */
+        return DP_SP_SendEx( This, flags, data, size, priority, timeout, context, msgid );
+    }
+    else if ( DP_FindAnyGroup( This, to ) )
+    {
+        /* See if SP has the ability to multicast. If so, use it */
+        if ( This->dp2->spData.lpCB->SendToGroupEx )
+            FIXME( "Use group sendex\n" );
+        else if ( This->dp2->spData.lpCB->SendToGroup ) /* obsolete interface */
+            FIXME( "Use obsolete group send to group\n" );
+        else /* No multicast, multiplicate */
+            FIXME( "Send to all players using EnumPlayersInGroup\n" );
 
-  if( !bValidDestination )
-  {
-    return DPERR_INVALIDPLAYER;
-  }
-  else
-  {
+    }
+    else
+        return DPERR_INVALIDPLAYER;
+
     /* FIXME: Should return what the send returned */
     return DP_OK;
-  }
-}
-
-
-static HRESULT WINAPI DirectPlay4AImpl_SendEx
-          ( LPDIRECTPLAY4A iface, DPID idFrom, DPID idTo, DWORD dwFlags,
-            LPVOID lpData, DWORD dwDataSize, DWORD dwPriority, DWORD dwTimeout,
-            LPVOID lpContext, LPDWORD lpdwMsgID )
-{
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_SendEx( This, idFrom, idTo, dwFlags, lpData, dwDataSize,
-                    dwPriority, dwTimeout, lpContext, lpdwMsgID, TRUE );
-}
-
-static HRESULT WINAPI DirectPlay4WImpl_SendEx
-          ( LPDIRECTPLAY4 iface, DPID idFrom, DPID idTo, DWORD dwFlags,
-            LPVOID lpData, DWORD dwDataSize, DWORD dwPriority, DWORD dwTimeout,
-            LPVOID lpContext, LPDWORD lpdwMsgID )
-{
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface; /* yes downcast to 2 */
-  return DP_SendEx( This, idFrom, idTo, dwFlags, lpData, dwDataSize,
-                    dwPriority, dwTimeout, lpContext, lpdwMsgID, FALSE );
 }
 
 static HRESULT DP_SP_SendEx
@@ -4257,7 +4189,7 @@ static const IDirectPlay4Vtbl dp4_vt =
     IDirectPlay4Impl_GetPlayerFlags,
     IDirectPlay4Impl_GetGroupOwner,
     IDirectPlay4Impl_SetGroupOwner,
-  DirectPlay4WImpl_SendEx,
+    IDirectPlay4Impl_SendEx,
   DirectPlay4WImpl_GetMessageQueue,
   DirectPlay4WImpl_CancelMessage,
   DirectPlay4WImpl_CancelPriority
@@ -4316,7 +4248,7 @@ static const IDirectPlay4Vtbl dp4A_vt =
 
   DirectPlay4AImpl_GetGroupOwner,
   DirectPlay4AImpl_SetGroupOwner,
-  DirectPlay4AImpl_SendEx,
+    IDirectPlay4AImpl_SendEx,
   DirectPlay4AImpl_GetMessageQueue,
   DirectPlay4AImpl_CancelMessage,
   DirectPlay4AImpl_CancelPriority
