@@ -124,6 +124,8 @@ static void macdrv_surface_set_region(struct window_surface *window_surface, HRG
 
     TRACE("updating surface %p with %p\n", surface, region);
 
+    window_surface->funcs->lock(window_surface);
+
     HeapFree(GetProcessHeap(), 0, surface->region_data);
     surface->region_data = NULL;
 
@@ -133,6 +135,8 @@ static void macdrv_surface_set_region(struct window_surface *window_surface, HRG
         if (rc != ERROR)
             surface->region_data = get_region_data(region, 0);
     }
+
+    window_surface->funcs->unlock(window_surface);
 }
 
 /***********************************************************************
