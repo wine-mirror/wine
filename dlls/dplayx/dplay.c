@@ -2881,20 +2881,16 @@ static HRESULT WINAPI DirectPlay2WImpl_Receive
                         lpData, lpdwDataSize, FALSE );
 }
 
-static HRESULT WINAPI DirectPlay2AImpl_Send
-          ( LPDIRECTPLAY2A iface, DPID idFrom, DPID idTo, DWORD dwFlags, LPVOID lpData, DWORD dwDataSize )
+static HRESULT WINAPI IDirectPlay4AImpl_Send( IDirectPlay4A *iface, DPID from, DPID to,
+        DWORD flags, void *data, DWORD size )
 {
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_SendEx( This, idFrom, idTo, dwFlags, lpData, dwDataSize,
-                    0, 0, NULL, NULL, TRUE );
+    return IDirectPlayX_SendEx( iface, from, to, flags, data, size, 0, 0, NULL, NULL );
 }
 
-static HRESULT WINAPI DirectPlay2WImpl_Send
-          ( LPDIRECTPLAY2 iface, DPID idFrom, DPID idTo, DWORD dwFlags, LPVOID lpData, DWORD dwDataSize )
+static HRESULT WINAPI IDirectPlay4Impl_Send( IDirectPlay4 *iface, DPID from, DPID to,
+        DWORD flags, void *data, DWORD size )
 {
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_SendEx( This, idFrom, idTo, dwFlags, lpData, dwDataSize,
-                    0, 0, NULL, NULL, FALSE );
+    return IDirectPlayX_SendEx( iface, from, to, flags, data, size, 0, 0, NULL, NULL );
 }
 
 static HRESULT DP_IF_SetGroupData
@@ -4734,7 +4730,7 @@ static const IDirectPlay4Vtbl directPlay4WVT =
   XCAST(Initialize)DirectPlay2WImpl_Initialize,
     IDirectPlay4Impl_Open,
   XCAST(Receive)DirectPlay2WImpl_Receive,
-  XCAST(Send)DirectPlay2WImpl_Send,
+    IDirectPlay4Impl_Send,
   XCAST(SetGroupData)DirectPlay2WImpl_SetGroupData,
   XCAST(SetGroupName)DirectPlay2WImpl_SetGroupName,
   XCAST(SetPlayerData)DirectPlay2WImpl_SetPlayerData,
@@ -4802,7 +4798,7 @@ static const IDirectPlay4Vtbl directPlay4AVT =
   XCAST(Initialize)DirectPlay2AImpl_Initialize,
     IDirectPlay4AImpl_Open,
   XCAST(Receive)DirectPlay2AImpl_Receive,
-  XCAST(Send)DirectPlay2AImpl_Send,
+    IDirectPlay4AImpl_Send,
   XCAST(SetGroupData)DirectPlay2AImpl_SetGroupData,
   XCAST(SetGroupName)DirectPlay2AImpl_SetGroupName,
   XCAST(SetPlayerData)DirectPlay2AImpl_SetPlayerData,
