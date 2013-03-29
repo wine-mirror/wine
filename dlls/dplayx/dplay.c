@@ -89,9 +89,6 @@ static HRESULT DP_IF_DestroyPlayer
 static HRESULT DP_IF_GetGroupName
           ( IDirectPlay2Impl* This, DPID idGroup, LPVOID lpData,
             LPDWORD lpdwDataSize, BOOL bAnsi );
-static HRESULT DP_IF_GetPlayerData
-          ( IDirectPlay2Impl* This, DPID idPlayer, LPVOID lpData,
-            LPDWORD lpdwDataSize, DWORD dwFlags, BOOL bAnsi );
 static HRESULT DP_IF_GetPlayerName
           ( IDirectPlay2Impl* This, DPID idPlayer, LPVOID lpData,
             LPDWORD lpdwDataSize, BOOL bAnsi );
@@ -2249,68 +2246,50 @@ static HRESULT WINAPI IDirectPlay4Impl_GetPlayerCaps( IDirectPlay4 *iface, DPID 
     return (*This->dp2->spData.lpCB->GetCaps)( &data );
 }
 
-static HRESULT DP_IF_GetPlayerData
-          ( IDirectPlay2Impl* This, DPID idPlayer, LPVOID lpData,
-            LPDWORD lpdwDataSize, DWORD dwFlags, BOOL bAnsi )
+static HRESULT WINAPI IDirectPlay4AImpl_GetPlayerData( IDirectPlay4A *iface, DPID player,
+        void *data, DWORD *size, DWORD flags )
 {
-  lpPlayerList lpPList;
-  DWORD dwRequiredBufferSize;
-  LPVOID lpCopyDataFrom;
-
-  TRACE( "(%p)->(0x%08x,%p,%p,0x%08x,%u)\n",
-         This, idPlayer, lpData, lpdwDataSize, dwFlags, bAnsi );
-
-  if( This->dp2->connectionInitialized == NO_PROVIDER )
-  {
-    return DPERR_UNINITIALIZED;
-  }
-
-  if( ( lpPList = DP_FindPlayer( This, idPlayer ) ) == NULL )
-  {
-    return DPERR_INVALIDPLAYER;
-  }
-
-  /* How much buffer is required? */
-  if( dwFlags & DPSET_LOCAL )
-  {
-    dwRequiredBufferSize = lpPList->lpPData->dwLocalDataSize;
-    lpCopyDataFrom       = lpPList->lpPData->lpLocalData;
-  }
-  else
-  {
-    dwRequiredBufferSize = lpPList->lpPData->dwRemoteDataSize;
-    lpCopyDataFrom       = lpPList->lpPData->lpRemoteData;
-  }
-
-  /* Is the user requesting to know how big a buffer is required? */
-  if( ( lpData == NULL ) ||
-      ( *lpdwDataSize < dwRequiredBufferSize )
-    )
-  {
-    *lpdwDataSize = dwRequiredBufferSize;
-    return DPERR_BUFFERTOOSMALL;
-  }
-
-  CopyMemory( lpData, lpCopyDataFrom, dwRequiredBufferSize );
-
-  return DP_OK;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_GetPlayerData( &This->IDirectPlay4_iface, player, data, size, flags );
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_GetPlayerData( IDirectPlay4A *iface, DPID idPlayer,
-        void *lpData, DWORD *lpdwDataSize, DWORD dwFlags )
+static HRESULT WINAPI IDirectPlay4Impl_GetPlayerData( IDirectPlay4 *iface, DPID player,
+        void *data, DWORD *size, DWORD flags )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_IF_GetPlayerData( This, idPlayer, lpData, lpdwDataSize,
-                            dwFlags, TRUE );
-}
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    lpPlayerList plist;
+    DWORD bufsize;
+    void *src;
 
-static HRESULT WINAPI DirectPlay2WImpl_GetPlayerData
-          ( LPDIRECTPLAY2 iface, DPID idPlayer, LPVOID lpData,
-            LPDWORD lpdwDataSize, DWORD dwFlags )
-{
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_IF_GetPlayerData( This, idPlayer, lpData, lpdwDataSize,
-                            dwFlags, FALSE );
+    TRACE( "(%p)->(0x%08x,%p,%p,0x%08x)\n", This, player, data, size, flags );
+
+    if ( This->dp2->connectionInitialized == NO_PROVIDER )
+        return DPERR_UNINITIALIZED;
+
+    if ( ( plist = DP_FindPlayer( This, player ) ) == NULL )
+        return DPERR_INVALIDPLAYER;
+
+    if ( flags & DPSET_LOCAL )
+    {
+        bufsize = plist->lpPData->dwLocalDataSize;
+        src = plist->lpPData->lpLocalData;
+    }
+    else
+    {
+        bufsize = plist->lpPData->dwRemoteDataSize;
+        src = plist->lpPData->lpRemoteData;
+    }
+
+    /* Is the user requesting to know how big a buffer is required? */
+    if ( !data || *size < bufsize )
+    {
+        *size = bufsize;
+        return DPERR_BUFFERTOOSMALL;
+    }
+
+    CopyMemory( data, src, bufsize );
+
+    return DP_OK;
 }
 
 static HRESULT DP_IF_GetPlayerName
@@ -4489,7 +4468,7 @@ static const IDirectPlay4Vtbl dp4_vt =
     IDirectPlay4Impl_GetMessageCount,
     IDirectPlay4Impl_GetPlayerAddress,
     IDirectPlay4Impl_GetPlayerCaps,
-  XCAST(GetPlayerData)DirectPlay2WImpl_GetPlayerData,
+    IDirectPlay4Impl_GetPlayerData,
   XCAST(GetPlayerName)DirectPlay2WImpl_GetPlayerName,
   XCAST(GetSessionDesc)DirectPlay2WImpl_GetSessionDesc,
     IDirectPlay4Impl_Initialize,
