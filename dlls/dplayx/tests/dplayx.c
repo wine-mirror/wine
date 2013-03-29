@@ -706,7 +706,7 @@ static BOOL CALLBACK EnumSessions_cb_join( LPCDPSESSIONDESC2 lpThisSD,
                                            DWORD dwFlags,
                                            LPVOID lpContext )
 {
-    LPDIRECTPLAY4 pDP = (LPDIRECTPLAY4) lpContext;
+    IDirectPlay4 *pDP = lpContext;
     DPSESSIONDESC2 dpsd;
     HRESULT hr;
 
@@ -766,7 +766,7 @@ static BOOL CALLBACK EnumAddress_cb2( REFGUID guidDataType,
                                       LPCVOID lpData,
                                       LPVOID lpContext )
 {
-    lpCallbackData callbackData = (lpCallbackData) lpContext;
+    lpCallbackData callbackData = lpContext;
 
     static REFGUID types[] = { &DPAID_TotalSize,
                                &DPAID_ServiceProvider,
@@ -801,7 +801,7 @@ static BOOL CALLBACK EnumConnections_cb( LPCGUID lpguidSP,
                                          LPVOID lpContext )
 {
 
-    lpCallbackData callbackData = (lpCallbackData) lpContext;
+    lpCallbackData callbackData = lpContext;
     LPDIRECTPLAYLOBBY pDPL;
     HRESULT hr;
 
@@ -910,7 +910,7 @@ static BOOL CALLBACK EnumConnections_cb2( LPCGUID lpguidSP,
                                           DWORD dwFlags,
                                           LPVOID lpContext )
 {
-    LPDIRECTPLAY4 pDP = (LPDIRECTPLAY4) lpContext;
+    IDirectPlay4 *pDP = lpContext;
     HRESULT hr;
 
     /* Incorrect parameters */
@@ -1028,7 +1028,7 @@ static BOOL CALLBACK EnumSessions_cb2( LPCDPSESSIONDESC2 lpThisSD,
                                        DWORD dwFlags,
                                        LPVOID lpContext )
 {
-    LPDIRECTPLAY4 pDP = (LPDIRECTPLAY4) lpContext;
+    IDirectPlay4 *pDP = lpContext;
     DPSESSIONDESC2 dpsd;
     HRESULT hr;
 
@@ -1201,7 +1201,7 @@ static BOOL CALLBACK EnumSessions_cb( LPCDPSESSIONDESC2 lpThisSD,
                                       DWORD dwFlags,
                                       LPVOID lpContext )
 {
-    lpCallbackData callbackData = (lpCallbackData) lpContext;
+    lpCallbackData callbackData = lpContext;
     callbackData->dwCounter1++;
 
     if ( dwFlags & DPESC_TIMEDOUT )
@@ -2664,7 +2664,7 @@ static BOOL CALLBACK EnumSessions_cb_join_secure( LPCDPSESSIONDESC2 lpThisSD,
                                                   DWORD dwFlags,
                                                   LPVOID lpContext )
 {
-    LPDIRECTPLAY4 pDP = (LPDIRECTPLAY4) lpContext;
+    IDirectPlay4 *pDP = lpContext;
     DPSESSIONDESC2 dpsd;
     DPCREDENTIALS dpCredentials;
     HRESULT hr;
@@ -2841,7 +2841,7 @@ static BOOL CALLBACK EnumAddress_cb( REFGUID guidDataType,
                                      LPCVOID lpData,
                                      LPVOID lpContext )
 {
-    lpCallbackData callbackData = (lpCallbackData) lpContext;
+    lpCallbackData callbackData = lpContext;
     static REFGUID types[] = { &DPAID_TotalSize,
                                &DPAID_ServiceProvider,
                                &DPAID_INet,
@@ -3515,7 +3515,7 @@ static BOOL CALLBACK EnumPlayers_cb( DPID dpId,
                                      DWORD dwFlags,
                                      LPVOID lpContext )
 {
-    lpCallbackData callbackData = (lpCallbackData) lpContext;
+    lpCallbackData callbackData = lpContext;
     char playerIndex = dpid2char( callbackData->dpid,
                                   callbackData->dpidSize,
                                   dpId );
@@ -3551,7 +3551,7 @@ static BOOL CALLBACK EnumSessions_cb_EnumPlayers( LPCDPSESSIONDESC2 lpThisSD,
                                                   DWORD dwFlags,
                                                   LPVOID lpContext )
 {
-    lpCallbackData callbackData = (lpCallbackData) lpContext;
+    lpCallbackData callbackData = lpContext;
     HRESULT hr;
 
     if (dwFlags & DPESC_TIMEDOUT)
@@ -3846,7 +3846,7 @@ static BOOL CALLBACK EnumGroups_cb( DPID dpId,
                                     DWORD dwFlags,
                                     LPVOID lpContext )
 {
-    lpCallbackData callbackData = (lpCallbackData) lpContext;
+    lpCallbackData callbackData = lpContext;
     char playerIndex = dpid2char( callbackData->dpid,
                                   callbackData->dpidSize,
                                   dpId );
@@ -3874,7 +3874,7 @@ static BOOL CALLBACK EnumSessions_cb_EnumGroups( LPCDPSESSIONDESC2 lpThisSD,
                                                  DWORD dwFlags,
                                                  LPVOID lpContext )
 {
-    lpCallbackData callbackData = (lpCallbackData) lpContext;
+    lpCallbackData callbackData = lpContext;
     HRESULT hr;
 
     if (dwFlags & DPESC_TIMEDOUT)
