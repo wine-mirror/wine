@@ -98,8 +98,6 @@ static HRESULT DP_IF_SetGroupName
 static HRESULT DP_IF_SetPlayerName
           ( IDirectPlay2Impl* This, DPID idPlayer, LPDPNAME lpPlayerName,
             DWORD dwFlags, BOOL bAnsi );
-static HRESULT DP_IF_AddGroupToGroup
-          ( IDirectPlay3Impl* This, DPID idParentGroup, DPID idGroup );
 static HRESULT DP_IF_CreateGroup
           ( IDirectPlay2AImpl* This, LPVOID lpMsgHdr, LPDPID lpidGroup,
             LPDPNAME lpGroupName, LPVOID lpData, DWORD dwDataSize,
@@ -2975,62 +2973,47 @@ static void DP_CopySessionDesc( LPDPSESSIONDESC2 lpSessionDest,
   }
 }
 
-
-static HRESULT DP_IF_AddGroupToGroup
-          ( IDirectPlay3Impl* This, DPID idParentGroup, DPID idGroup )
+static HRESULT WINAPI IDirectPlay4AImpl_AddGroupToGroup( IDirectPlay4A *iface, DPID parent,
+        DPID group )
 {
-  lpGroupData lpGData;
-  lpGroupList lpNewGList;
-
-  TRACE( "(%p)->(0x%08x,0x%08x)\n", This, idParentGroup, idGroup );
-
-  if( This->dp2->connectionInitialized == NO_PROVIDER )
-  {
-    return DPERR_UNINITIALIZED;
-  }
-
-  if( DP_FindAnyGroup( (IDirectPlay2AImpl*)This, idParentGroup ) == NULL )
-  {
-    return DPERR_INVALIDGROUP;
-  }
-
-  if( ( lpGData = DP_FindAnyGroup( (IDirectPlay2AImpl*)This, idGroup ) ) == NULL )
-  {
-    return DPERR_INVALIDGROUP;
-  }
-
-  /* Create a player list (ie "shortcut" ) */
-  lpNewGList = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpNewGList ) );
-  if( lpNewGList == NULL )
-  {
-    return DPERR_CANTADDPLAYER;
-  }
-
-  /* Add the shortcut */
-  lpGData->uRef++;
-  lpNewGList->lpGData = lpGData;
-
-  /* Add the player to the list of players for this group */
-  DPQ_INSERT( lpGData->groups, lpNewGList, groups );
-
-  /* Send a ADDGROUPTOGROUP message */
-  FIXME( "Not sending message\n" );
-
-  return DP_OK;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_AddGroupToGroup( &This->IDirectPlay4_iface, parent, group );
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_AddGroupToGroup( IDirectPlay4A *iface, DPID idParentGroup,
-        DPID idGroup )
+static HRESULT WINAPI IDirectPlay4Impl_AddGroupToGroup( IDirectPlay4 *iface, DPID parent,
+        DPID group )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_IF_AddGroupToGroup( This, idParentGroup, idGroup );
-}
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    lpGroupData gdata;
+    lpGroupList glist;
 
-static HRESULT WINAPI DirectPlay3WImpl_AddGroupToGroup
-          ( LPDIRECTPLAY3 iface, DPID idParentGroup, DPID idGroup )
-{
-  IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  return DP_IF_AddGroupToGroup( This, idParentGroup, idGroup );
+    TRACE( "(%p)->(0x%08x,0x%08x)\n", This, parent, group );
+
+    if ( This->dp2->connectionInitialized == NO_PROVIDER )
+        return DPERR_UNINITIALIZED;
+
+    if ( !DP_FindAnyGroup(This, parent ) )
+        return DPERR_INVALIDGROUP;
+
+    if ( ( gdata = DP_FindAnyGroup(This, group ) ) == NULL )
+        return DPERR_INVALIDGROUP;
+
+    /* Create a player list (ie "shortcut" ) */
+    glist = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *glist ) );
+    if ( !glist )
+        return DPERR_CANTADDPLAYER;
+
+    /* Add the shortcut */
+    gdata->uRef++;
+    glist->lpGData = gdata;
+
+    /* Add the player to the list of players for this group */
+    DPQ_INSERT( gdata->groups, glist, groups );
+
+    /* Send a ADDGROUPTOGROUP message */
+    FIXME( "Not sending message\n" );
+
+    return DP_OK;
 }
 
 static HRESULT DP_IF_CreateGroupInGroup
@@ -4436,8 +4419,7 @@ static const IDirectPlay4Vtbl dp4_vt =
     IDirectPlay4Impl_SetPlayerData,
   XCAST(SetPlayerName)DirectPlay2WImpl_SetPlayerName,
   XCAST(SetSessionDesc)DirectPlay2WImpl_SetSessionDesc,
-
-  XCAST(AddGroupToGroup)DirectPlay3WImpl_AddGroupToGroup,
+    IDirectPlay4Impl_AddGroupToGroup,
   XCAST(CreateGroupInGroup)DirectPlay3WImpl_CreateGroupInGroup,
   XCAST(DeleteGroupFromGroup)DirectPlay3WImpl_DeleteGroupFromGroup,
     IDirectPlay4Impl_EnumConnections,
