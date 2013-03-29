@@ -63,7 +63,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 typedef struct tagCallbackData
 {
-    LPDIRECTPLAY4 pDP;
+    IDirectPlay4 *pDP;
     UINT dwCounter1, dwCounter2;
     DWORD dwFlags;
     char szTrace1[1024], szTrace2[1024];
@@ -581,10 +581,8 @@ static char dpid2char(DPID* dpid, DWORD dpidSize, DPID idPlayer)
     return '?';
 }
 
-static void check_messages( LPDIRECTPLAY4 pDP,
-                            DPID *dpid,
-                            DWORD dpidSize,
-                            lpCallbackData callbackData )
+static void check_messages( IDirectPlay4 *pDP, DPID *dpid, DWORD dpidSize,
+        lpCallbackData callbackData )
 {
     /* Retrieves all messages from the queue of pDP, performing tests
      * to check if we are receiving what we expect.
@@ -647,9 +645,7 @@ static void check_messages( LPDIRECTPLAY4 pDP,
     HeapFree( GetProcessHeap(), 0, lpData );
 }
 
-static void init_TCPIP_provider( LPDIRECTPLAY4 pDP,
-                                 LPCSTR strIPAddressString,
-                                 WORD port )
+static void init_TCPIP_provider( IDirectPlay4 *pDP, LPCSTR strIPAddressString, WORD port )
 {
 
     DPCOMPOUNDADDRESSELEMENT addressElements[3];
@@ -732,7 +728,7 @@ static BOOL CALLBACK EnumSessions_cb_join( LPCDPSESSIONDESC2 lpThisSD,
 static void test_DirectPlayCreate(void)
 {
 
-    LPDIRECTPLAY pDP;
+    IDirectPlay *pDP;
     HRESULT hr;
 
     /* TODO: Check how it behaves with pUnk!=NULL */
@@ -833,7 +829,7 @@ static BOOL CALLBACK EnumConnections_cb( LPCGUID lpguidSP,
 static void test_EnumConnections(void)
 {
 
-    LPDIRECTPLAY4 pDP;
+    IDirectPlay4 *pDP;
     CallbackData callbackData;
     HRESULT hr;
 
@@ -936,7 +932,7 @@ static BOOL CALLBACK EnumConnections_cb2( LPCGUID lpguidSP,
 static void test_InitializeConnection(void)
 {
 
-    LPDIRECTPLAY4 pDP;
+    IDirectPlay4 *pDP;
     HRESULT hr;
 
     hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
@@ -955,7 +951,7 @@ static void test_InitializeConnection(void)
 static void test_GetCaps(void)
 {
 
-    LPDIRECTPLAY4 pDP;
+    IDirectPlay4 *pDP;
     DPCAPS dpcaps;
     DWORD dwFlags;
     HRESULT hr;
@@ -1068,7 +1064,7 @@ static BOOL CALLBACK EnumSessions_cb2( LPCDPSESSIONDESC2 lpThisSD,
 static void test_Open(void)
 {
 
-    LPDIRECTPLAY4 pDP, pDP_server;
+    IDirectPlay4 *pDP, *pDP_server;
     DPSESSIONDESC2 dpsd, dpsd_server;
     HRESULT hr;
 
@@ -1228,10 +1224,10 @@ static BOOL CALLBACK EnumSessions_cb( LPCDPSESSIONDESC2 lpThisSD,
     return TRUE;
 }
 
-static LPDIRECTPLAY4 create_session(DPSESSIONDESC2 *lpdpsd)
+static IDirectPlay4 *create_session(DPSESSIONDESC2 *lpdpsd)
 {
 
-    LPDIRECTPLAY4 pDP;
+    IDirectPlay4 *pDP;
     DPNAME name;
     DPID dpid;
     HRESULT hr;
@@ -1266,7 +1262,7 @@ static void test_EnumSessions(void)
 
 #define N_SESSIONS 6
 
-    LPDIRECTPLAY4 pDP, pDPserver[N_SESSIONS];
+    IDirectPlay4 *pDP, *pDPserver[N_SESSIONS];
     DPSESSIONDESC2 dpsd, dpsd_server[N_SESSIONS];
     CallbackData callbackData;
     HRESULT hr;
@@ -1636,7 +1632,7 @@ static void test_EnumSessions(void)
 static void test_SessionDesc(void)
 {
 
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd;
     LPDPSESSIONDESC2 lpData[2];
     LPVOID lpDataMsg;
@@ -1814,7 +1810,7 @@ static void test_SessionDesc(void)
 static void test_CreatePlayer(void)
 {
 
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd;
     DPNAME name;
     DPID dpid;
@@ -1987,7 +1983,7 @@ static void test_CreatePlayer(void)
 static void test_GetPlayerCaps(void)
 {
 
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd;
     DPID dpid[2];
     HRESULT hr;
@@ -2149,7 +2145,7 @@ static void test_GetPlayerCaps(void)
 
 static void test_PlayerData(void)
 {
-    LPDIRECTPLAY4 pDP;
+    IDirectPlay4 *pDP;
     DPSESSIONDESC2 dpsd;
     DPID dpid;
     HRESULT hr;
@@ -2415,7 +2411,7 @@ static void test_PlayerData(void)
 static void test_PlayerName(void)
 {
 
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd;
     DPID dpid[2];
     HRESULT hr;
@@ -2695,7 +2691,7 @@ static BOOL CALLBACK EnumSessions_cb_join_secure( LPCDPSESSIONDESC2 lpThisSD,
 static void test_GetPlayerAccount(void)
 {
 
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd;
     DPID dpid[2];
     HRESULT hr;
@@ -2879,7 +2875,7 @@ static BOOL CALLBACK EnumAddress_cb( REFGUID guidDataType,
 static void test_GetPlayerAddress(void)
 {
 
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     LPDIRECTPLAYLOBBY3 pDPL;
     DPSESSIONDESC2 dpsd;
     DPID dpid[2];
@@ -3017,7 +3013,7 @@ static void test_GetPlayerAddress(void)
 static void test_GetPlayerFlags(void)
 {
 
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd;
     DPID dpid[4];
     HRESULT hr;
@@ -3125,7 +3121,7 @@ static void test_GetPlayerFlags(void)
 static void test_CreateGroup(void)
 {
 
-    LPDIRECTPLAY4 pDP;
+    IDirectPlay4 *pDP;
     DPSESSIONDESC2 dpsd;
     DPID idFrom, idTo, dpid, idGroup, idGroupParent;
     DPNAME groupName;
@@ -3434,7 +3430,7 @@ static void test_CreateGroup(void)
 static void test_GroupOwner(void)
 {
 
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd;
     DPID dpid[2], idGroup, idOwner;
     HRESULT hr;
@@ -3602,7 +3598,7 @@ static BOOL CALLBACK EnumSessions_cb_EnumPlayers( LPCDPSESSIONDESC2 lpThisSD,
 
 static void test_EnumPlayers(void)
 {
-    LPDIRECTPLAY4 pDP[3];
+    IDirectPlay4 *pDP[3];
     DPSESSIONDESC2 dpsd[3];
     DPID dpid[5+2]; /* 5 players, 2 groups */
     CallbackData callbackData;
@@ -3925,7 +3921,7 @@ static BOOL CALLBACK EnumSessions_cb_EnumGroups( LPCDPSESSIONDESC2 lpThisSD,
 
 static void test_EnumGroups(void)
 {
-    LPDIRECTPLAY4 pDP[3];
+    IDirectPlay4 *pDP[3];
     DPSESSIONDESC2 dpsd[3];
     DPID dpid[5];
     CallbackData callbackData;
@@ -4152,7 +4148,7 @@ static void test_EnumGroups(void)
 
 static void test_EnumGroupsInGroup(void)
 {
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd[2];
     DPID dpid[6];
     CallbackData callbackData;
@@ -4387,7 +4383,7 @@ static void test_EnumGroupsInGroup(void)
 static void test_groups_p2p(void)
 {
 
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd;
     DPID idPlayer[6], idGroup[3];
     HRESULT hr;
@@ -4622,7 +4618,7 @@ static void test_groups_p2p(void)
 static void test_groups_cs(void)
 {
 
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd;
     DPID idPlayer[6], idGroup[3];
     CallbackData callbackData;
@@ -4859,7 +4855,7 @@ static void test_groups_cs(void)
 static void test_Send(void)
 {
 
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd;
     DPID dpid[4], idFrom, idTo;
     CallbackData callbackData;
@@ -5194,7 +5190,7 @@ static void test_Send(void)
 static void test_Receive(void)
 {
 
-    LPDIRECTPLAY4 pDP;
+    IDirectPlay4 *pDP;
     DPSESSIONDESC2 dpsd;
     DPID dpid[4], idFrom, idTo;
     HRESULT hr;
@@ -5479,7 +5475,7 @@ static void test_Receive(void)
 static void test_GetMessageCount(void)
 {
 
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd;
     DPID dpid[4];
     HRESULT hr;
@@ -5702,7 +5698,7 @@ static void test_GetMessageCount(void)
 static void test_GetMessageQueue(void)
 {
 
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd;
     DPID dpid[4];
     CallbackData callbackData;
@@ -6011,7 +6007,7 @@ static void test_GetMessageQueue(void)
 static void test_remote_data_replication(void)
 {
 
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd;
     DPID dpid[2], idFrom, idTo;
     CallbackData callbackData;
@@ -6239,7 +6235,7 @@ static void test_remote_data_replication(void)
 static void test_host_migration(void)
 {
 
-    LPDIRECTPLAY4 pDP[2];
+    IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd;
     DPID dpid[2], idFrom, idTo;
     HRESULT hr;
