@@ -2422,28 +2422,16 @@ static HRESULT WINAPI DirectPlay2WImpl_GetGroupName
   return DP_IF_GetGroupName( This, idGroup, lpData, lpdwDataSize, FALSE );
 }
 
-static HRESULT DP_IF_GetMessageCount
-          ( IDirectPlay2Impl* This, DPID idPlayer,
-            LPDWORD lpdwCount, BOOL bAnsi )
+static HRESULT WINAPI IDirectPlay4AImpl_GetMessageCount( IDirectPlay4A *iface, DPID player,
+        DWORD *count )
 {
-  FIXME("(%p)->(0x%08x,%p,%u): stub\n", This, idPlayer, lpdwCount, bAnsi );
-  return DP_IF_GetMessageQueue( (IDirectPlay4Impl*)This, 0, idPlayer,
-                                DPMESSAGEQUEUE_RECEIVE, lpdwCount, NULL,
-                                bAnsi );
+    return IDirectPlayX_GetMessageQueue( iface, 0, player, DPMESSAGEQUEUE_RECEIVE, count, NULL );
 }
 
-static HRESULT WINAPI DirectPlay2AImpl_GetMessageCount
-          ( LPDIRECTPLAY2A iface, DPID idPlayer, LPDWORD lpdwCount )
+static HRESULT WINAPI IDirectPlay4Impl_GetMessageCount( IDirectPlay4 *iface, DPID player,
+        DWORD *count )
 {
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_IF_GetMessageCount( This, idPlayer, lpdwCount, TRUE );
-}
-
-static HRESULT WINAPI DirectPlay2WImpl_GetMessageCount
-          ( LPDIRECTPLAY2 iface, DPID idPlayer, LPDWORD lpdwCount )
-{
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_IF_GetMessageCount( This, idPlayer, lpdwCount, FALSE );
+    return IDirectPlayX_GetMessageQueue( iface, 0, player, DPMESSAGEQUEUE_RECEIVE, count, NULL );
 }
 
 static HRESULT WINAPI DirectPlay2AImpl_GetPlayerAddress
@@ -4737,7 +4725,7 @@ static const IDirectPlay4Vtbl directPlay4WVT =
   XCAST(GetCaps)DirectPlay2WImpl_GetCaps,
   XCAST(GetGroupData)DirectPlay2WImpl_GetGroupData,
   XCAST(GetGroupName)DirectPlay2WImpl_GetGroupName,
-  XCAST(GetMessageCount)DirectPlay2WImpl_GetMessageCount,
+    IDirectPlay4Impl_GetMessageCount,
   XCAST(GetPlayerAddress)DirectPlay2WImpl_GetPlayerAddress,
   XCAST(GetPlayerCaps)DirectPlay2WImpl_GetPlayerCaps,
   XCAST(GetPlayerData)DirectPlay2WImpl_GetPlayerData,
@@ -4805,7 +4793,7 @@ static const IDirectPlay4Vtbl directPlay4AVT =
   XCAST(GetCaps)DirectPlay2AImpl_GetCaps,
   XCAST(GetGroupData)DirectPlay2AImpl_GetGroupData,
   XCAST(GetGroupName)DirectPlay2AImpl_GetGroupName,
-  XCAST(GetMessageCount)DirectPlay2AImpl_GetMessageCount,
+    IDirectPlay4AImpl_GetMessageCount,
   XCAST(GetPlayerAddress)DirectPlay2AImpl_GetPlayerAddress,
   XCAST(GetPlayerCaps)DirectPlay2AImpl_GetPlayerCaps,
   XCAST(GetPlayerData)DirectPlay2AImpl_GetPlayerData,
