@@ -109,8 +109,6 @@ static HRESULT DP_IF_CreateGroupInGroup
 static HRESULT DP_IF_AddPlayerToGroup
           ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, DPID idGroup,
             DPID idPlayer, BOOL bAnsi );
-static HRESULT DP_IF_DeleteGroupFromGroup
-          ( IDirectPlay3Impl* This, DPID idParentGroup, DPID idGroup );
 static HRESULT DP_SetSessionDesc
           ( IDirectPlay2Impl* This, LPCDPSESSIONDESC2 lpSessDesc,
             DWORD dwFlags, BOOL bInitial, BOOL bAnsi  );
@@ -1500,14 +1498,9 @@ cbRemoveGroupOrPlayer(
 
   if( dwPlayerType == DPPLAYERTYPE_GROUP )
   {
-    if( FAILED( DP_IF_DeleteGroupFromGroup( lpCtxt->This, lpCtxt->idGroup,
-                                            dpId )
-              )
-      )
-    {
-      ERR( "Unable to delete group 0x%08x from group 0x%08x\n",
-             dpId, lpCtxt->idGroup );
-    }
+    if ( FAILED( IDirectPlayX_DeleteGroupFromGroup( &lpCtxt->This->IDirectPlay4_iface,
+                    lpCtxt->idGroup, dpId ) ) )
+      ERR( "Unable to delete group 0x%08x from group 0x%08x\n", dpId, lpCtxt->idGroup );
   }
   else if ( FAILED( IDirectPlayX_DeletePlayerFromGroup( &lpCtxt->This->IDirectPlay4_iface,
                                                         lpCtxt->idGroup, dpId ) ) )
@@ -1544,13 +1537,8 @@ static HRESULT DP_IF_DestroyGroup
                            cbRemoveGroupOrPlayer, (LPVOID)&context, 0, bAnsi );
 
   /* Remove this group from the parent group - if it has one */
-  if( ( idGroup != DPID_SYSTEM_GROUP ) &&
-      ( lpGData->parent != DPID_SYSTEM_GROUP )
-    )
-  {
-    DP_IF_DeleteGroupFromGroup( (IDirectPlay3Impl*)This, lpGData->parent,
-                                idGroup );
-  }
+  if( ( idGroup != DPID_SYSTEM_GROUP ) && ( lpGData->parent != DPID_SYSTEM_GROUP ) )
+    IDirectPlayX_DeleteGroupFromGroup( &This->IDirectPlay4_iface, lpGData->parent, idGroup );
 
   /* Now delete this group data and list from the system group */
   DP_DeleteGroup( This, idGroup );
@@ -3136,52 +3124,42 @@ static HRESULT WINAPI DirectPlay3WImpl_CreateGroupInGroup
                                    dwFlags, FALSE );
 }
 
-static HRESULT DP_IF_DeleteGroupFromGroup
-          ( IDirectPlay3Impl* This, DPID idParentGroup, DPID idGroup )
+static HRESULT WINAPI IDirectPlay4AImpl_DeleteGroupFromGroup( IDirectPlay4A *iface, DPID parent,
+        DPID group )
 {
-  lpGroupList lpGList;
-  lpGroupData lpGParentData;
-
-  TRACE("(%p)->(0x%08x,0x%08x)\n", This, idParentGroup, idGroup );
-
-  /* Is the parent group valid? */
-  if( ( lpGParentData = DP_FindAnyGroup( (IDirectPlay2AImpl*)This, idParentGroup ) ) == NULL )
-  {
-    return DPERR_INVALIDGROUP;
-  }
-
-  /* Remove the group from the parent group queue */
-  DPQ_REMOVE_ENTRY( lpGParentData->groups, groups, lpGData->dpid, ==, idGroup, lpGList );
-
-  if( lpGList == NULL )
-  {
-    return DPERR_INVALIDGROUP;
-  }
-
-  /* Decrement the ref count */
-  lpGList->lpGData->uRef--;
-
-  /* Free up the list item */
-  HeapFree( GetProcessHeap(), 0, lpGList );
-
-  /* Should send a DELETEGROUPFROMGROUP message */
-  FIXME( "message not sent\n" );
-
-  return DP_OK;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_DeleteGroupFromGroup( &This->IDirectPlay4_iface, parent, group );
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_DeleteGroupFromGroup( IDirectPlay4A *iface,
-        DPID idParentGroup, DPID idGroup )
+static HRESULT WINAPI IDirectPlay4Impl_DeleteGroupFromGroup( IDirectPlay4 *iface, DPID parent,
+        DPID group )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_IF_DeleteGroupFromGroup( This, idParentGroup, idGroup );
-}
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    lpGroupList glist;
+    lpGroupData parentdata;
 
-static HRESULT WINAPI DirectPlay3WImpl_DeleteGroupFromGroup
-          ( LPDIRECTPLAY3 iface, DPID idParentGroup, DPID idGroup )
-{
-  IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
-  return DP_IF_DeleteGroupFromGroup( This, idParentGroup, idGroup );
+    TRACE("(%p)->(0x%08x,0x%08x)\n", This, parent, group );
+
+    /* Is the parent group valid? */
+    if ( ( parentdata = DP_FindAnyGroup(This, parent ) ) == NULL )
+        return DPERR_INVALIDGROUP;
+
+    /* Remove the group from the parent group queue */
+    DPQ_REMOVE_ENTRY( parentdata->groups, groups, lpGData->dpid, ==, group, glist );
+
+    if ( glist == NULL )
+        return DPERR_INVALIDGROUP;
+
+    /* Decrement the ref count */
+    glist->lpGData->uRef--;
+
+    /* Free up the list item */
+    HeapFree( GetProcessHeap(), 0, glist );
+
+    /* Should send a DELETEGROUPFROMGROUP message */
+    FIXME( "message not sent\n" );
+
+    return DP_OK;
 }
 
 static BOOL DP_BuildSPCompoundAddr( LPGUID lpcSpGuid, LPVOID* lplpAddrBuf,
@@ -4421,7 +4399,7 @@ static const IDirectPlay4Vtbl dp4_vt =
   XCAST(SetSessionDesc)DirectPlay2WImpl_SetSessionDesc,
     IDirectPlay4Impl_AddGroupToGroup,
   XCAST(CreateGroupInGroup)DirectPlay3WImpl_CreateGroupInGroup,
-  XCAST(DeleteGroupFromGroup)DirectPlay3WImpl_DeleteGroupFromGroup,
+    IDirectPlay4Impl_DeleteGroupFromGroup,
     IDirectPlay4Impl_EnumConnections,
   XCAST(EnumGroupsInGroup)DirectPlay3WImpl_EnumGroupsInGroup,
     IDirectPlay4Impl_GetGroupConnectionSettings,
