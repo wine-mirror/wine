@@ -457,7 +457,7 @@ HRESULT DP_CreateInterface
     IDirectPlay2Impl *This = *ppvObj;
     This->lpVtbl = &directPlay2WVT;
   }
-  else if( IsEqualGUID( &IID_IDirectPlay2A, riid ) )
+  else if( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlay2A, riid ) )
   {
     IDirectPlay2AImpl *This = *ppvObj;
     This->lpVtbl = &directPlay2AVT;
@@ -541,7 +541,7 @@ static HRESULT WINAPI DP_QueryInterface
     IDirectPlay2Impl *This = *ppvObj;
     This->lpVtbl = &directPlay2WVT;
   }
-  else if( IsEqualGUID( &IID_IDirectPlay2A, riid ) )
+  else if( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlay2A, riid ) )
   {
     IDirectPlay2AImpl *This = *ppvObj;
     This->lpVtbl = &directPlay2AVT;
