@@ -33,7 +33,6 @@ extern HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback,
 
 typedef struct tagDirectPlayIUnknownData
 {
-  LONG              ulObjRef;
   CRITICAL_SECTION  DP_lock;
 } DirectPlayIUnknownData;
 
@@ -188,7 +187,8 @@ typedef struct tagDirectPlay2Data
 
 typedef struct IDirectPlayImpl
 {
-  const void *lpVtbl;
+  IDirectPlay4A IDirectPlay4A_iface;
+  IDirectPlay4  IDirectPlay4_iface;
   LONG ulInterfaceRef;
   DirectPlayIUnknownData *unk;
   DirectPlay2Data *dp2;

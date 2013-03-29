@@ -219,12 +219,12 @@ static LONG kludgePlayerGroupId = 1000;
 
 static inline IDirectPlayImpl *impl_from_IDirectPlay4A( IDirectPlay4A *iface )
 {
-    return (IDirectPlayImpl*)iface;     /* What are you gonna do? */
+    return CONTAINING_RECORD( iface, IDirectPlayImpl, IDirectPlay4A_iface );
 }
 
 static inline IDirectPlayImpl *impl_from_IDirectPlay4( IDirectPlay4 *iface )
 {
-    return (IDirectPlayImpl*)iface;     /* What are you gonna do? */
+    return CONTAINING_RECORD( iface, IDirectPlayImpl, IDirectPlay4_iface );
 }
 
 static BOOL DP_CreateIUnknown( LPVOID lpDP )
@@ -399,12 +399,15 @@ HRESULT DP_CreateInterface
   if( !This )
     return DPERR_OUTOFMEMORY;
 
+  This->IDirectPlay4_iface.lpVtbl = &directPlay4WVT;
+  This->IDirectPlay4A_iface.lpVtbl = &directPlay4AVT;
+
   if( IsEqualGUID( &IID_IDirectPlay2, riid ) || IsEqualGUID( &IID_IDirectPlay3, riid ) ||
       IsEqualGUID( &IID_IDirectPlay4, riid ) )
-    This->lpVtbl = &directPlay4WVT;
+    *ppvObj = &This->IDirectPlay4_iface;
   else if( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlay2A, riid ) ||
            IsEqualGUID( &IID_IDirectPlay3A, riid ) || IsEqualGUID( &IID_IDirectPlay4A, riid ) )
-    This->lpVtbl = &directPlay4AVT;
+    *ppvObj = &This->IDirectPlay4A_iface;
   else
   {
     /* Unsupported interface */
@@ -415,8 +418,7 @@ HRESULT DP_CreateInterface
   }
 
   /* Initialize it */
-  *ppvObj = This;
-  if ( DP_CreateIUnknown( *ppvObj ) && DP_CreateDirectPlay2( *ppvObj ) )
+  if ( DP_CreateIUnknown( This ) && DP_CreateDirectPlay2( This ) )
   {
     IDirectPlayX_AddRef( (LPDIRECTPLAY2A)*ppvObj );
 
@@ -424,10 +426,10 @@ HRESULT DP_CreateInterface
   }
 
   /* Initialize failed, destroy it */
-  DP_DestroyDirectPlay2( *ppvObj );
-  DP_DestroyIUnknown( *ppvObj );
+  DP_DestroyDirectPlay2( This );
+  DP_DestroyIUnknown( This );
 
-  HeapFree( GetProcessHeap(), 0, *ppvObj );
+  HeapFree( GetProcessHeap(), 0, This );
 
   *ppvObj = NULL;
   return DPERR_NOMEMORY;
@@ -441,35 +443,16 @@ static HRESULT WINAPI DP_QueryInterface( IDirectPlayImpl *This, REFIID riid, voi
 {
   TRACE("(%p)->(%s,%p)\n", This, debugstr_guid( riid ), ppvObj );
 
-  *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                       sizeof( *This ) );
-
-  if( *ppvObj == NULL )
-  {
-    return DPERR_OUTOFMEMORY;
-  }
-
-  CopyMemory( *ppvObj, This, sizeof( *This )  );
-  (*(IDirectPlay2Impl**)ppvObj)->ulInterfaceRef = 0;
-
   if( IsEqualGUID( &IID_IDirectPlay2, riid ) || IsEqualGUID( &IID_IDirectPlay3, riid ) ||
       IsEqualGUID( &IID_IDirectPlay4, riid ) )
-  {
-    IDirectPlay4Impl *This = *ppvObj;
-    This->lpVtbl = &directPlay4WVT;
-  }
+    *ppvObj = &This->IDirectPlay4_iface;
   else if( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlay2A, riid ) ||
           IsEqualGUID( &IID_IDirectPlay3A, riid ) || IsEqualGUID( &IID_IDirectPlay4A, riid ) )
-  {
-    IDirectPlay4AImpl *This = *ppvObj;
-    This->lpVtbl = &directPlay4AVT;
-  }
+    *ppvObj = &This->IDirectPlay4A_iface;
   else
   {
     /* Unsupported interface */
-    HeapFree( GetProcessHeap(), 0, *ppvObj );
     *ppvObj = NULL;
-
     return E_NOINTERFACE;
   }
 
@@ -481,43 +464,30 @@ static HRESULT WINAPI DP_QueryInterface( IDirectPlayImpl *This, REFIID riid, voi
 /* Shared between all dplay types */
 static ULONG WINAPI DP_AddRef( IDirectPlayImpl *This )
 {
-  ULONG ulInterfaceRefCount, ulObjRefCount;
+  ULONG ulInterfaceRefCount = InterlockedIncrement( &This->ulInterfaceRef );
 
-  ulObjRefCount       = InterlockedIncrement( &This->unk->ulObjRef );
-  ulInterfaceRefCount = InterlockedIncrement( &This->ulInterfaceRef );
+  TRACE( "ref count incremented to %u for %p\n", ulInterfaceRefCount, This );
 
-  TRACE( "ref count incremented to %u:%u for %p\n",
-         ulInterfaceRefCount, ulObjRefCount, This );
-
-  return ulObjRefCount;
+  return ulInterfaceRefCount;
 }
 
 static ULONG WINAPI DP_Release( IDirectPlayImpl *This )
 {
-  ULONG ulInterfaceRefCount, ulObjRefCount;
+  ULONG ulInterfaceRefCount = InterlockedDecrement( &This->ulInterfaceRef );
 
-  ulObjRefCount       = InterlockedDecrement( &This->unk->ulObjRef );
-  ulInterfaceRefCount = InterlockedDecrement( &This->ulInterfaceRef );
-
-  TRACE( "ref count decremented to %u:%u for %p\n",
-         ulInterfaceRefCount, ulObjRefCount, This );
+  TRACE( "ref count decremented to %u for %p\n", ulInterfaceRefCount, This );
 
   /* Deallocate if this is the last reference to the object */
-  if( ulObjRefCount == 0 )
+  if( ulInterfaceRefCount == 0 )
   {
      /* If we're destroying the object, this must be the last ref
         of the last interface */
      DP_DestroyDirectPlay2( This );
      DP_DestroyIUnknown( This );
+     HeapFree( GetProcessHeap(), 0, This );
   }
 
-  /* Deallocate the interface */
-  if( ulInterfaceRefCount == 0 )
-  {
-    HeapFree( GetProcessHeap(), 0, This );
-  }
-
-  return ulObjRefCount;
+  return ulInterfaceRefCount;
 }
 
 static inline DPID DP_NextObjectId(void)
@@ -1766,7 +1736,7 @@ static HRESULT DP_IF_DestroyPlayer
 
   /* Find each group and call DeletePlayerFromGroup if the player is a
      member of the group */
-  IDirectPlayX_EnumGroups( (IDirectPlay4*)This, NULL, cbDeletePlayerFromAllGroups, &cbContext,
+  IDirectPlayX_EnumGroups( &This->IDirectPlay4_iface, NULL, cbDeletePlayerFromAllGroups, &cbContext,
           DPENUMGROUPS_ALL );
 
   /* Now delete player and player list from the sys group */
