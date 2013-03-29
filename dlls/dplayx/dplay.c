@@ -396,46 +396,26 @@ static BOOL DP_DestroyDirectPlay2( LPVOID lpDP )
 HRESULT DP_CreateInterface
          ( REFIID riid, LPVOID* ppvObj )
 {
+  IDirectPlayImpl *This;
+
   TRACE( " for %s\n", debugstr_guid( riid ) );
 
-  *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                       sizeof( IDirectPlay2Impl ) );
-
-  if( *ppvObj == NULL )
-  {
+  This = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( IDirectPlayImpl ) );
+  if( !This )
     return DPERR_OUTOFMEMORY;
-  }
 
   if( IsEqualGUID( &IID_IDirectPlay2, riid ) )
-  {
-    IDirectPlay2Impl *This = *ppvObj;
     This->lpVtbl = &directPlay2WVT;
-  }
   else if( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlay2A, riid ) )
-  {
-    IDirectPlay2AImpl *This = *ppvObj;
     This->lpVtbl = &directPlay2AVT;
-  }
   else if( IsEqualGUID( &IID_IDirectPlay3, riid ) )
-  {
-    IDirectPlay3Impl *This = *ppvObj;
     This->lpVtbl = &directPlay3WVT;
-  }
   else if( IsEqualGUID( &IID_IDirectPlay3A, riid ) )
-  {
-    IDirectPlay3AImpl *This = *ppvObj;
     This->lpVtbl = &directPlay3AVT;
-  }
   else if( IsEqualGUID( &IID_IDirectPlay4, riid ) )
-  {
-    IDirectPlay4Impl *This = *ppvObj;
     This->lpVtbl = &directPlay4WVT;
-  }
   else if( IsEqualGUID( &IID_IDirectPlay4A, riid ) )
-  {
-    IDirectPlay4AImpl *This = *ppvObj;
     This->lpVtbl = &directPlay4AVT;
-  }
   else
   {
     /* Unsupported interface */
@@ -446,6 +426,7 @@ HRESULT DP_CreateInterface
   }
 
   /* Initialize it */
+  *ppvObj = This;
   if ( DP_CreateIUnknown( *ppvObj ) && DP_CreateDirectPlay2( *ppvObj ) )
   {
     IDirectPlayX_AddRef( (LPDIRECTPLAY2A)*ppvObj );

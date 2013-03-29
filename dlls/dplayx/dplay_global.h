@@ -31,16 +31,6 @@ extern HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback,
                                 LPCVOID lpAddress, DWORD dwAddressSize,
                                 LPVOID lpContext ) DECLSPEC_HIDDEN;
 
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-typedef struct IDirectPlay2Impl IDirectPlay2AImpl;
-typedef struct IDirectPlay2Impl IDirectPlay2Impl;
-typedef struct IDirectPlay3Impl IDirectPlay3AImpl;
-typedef struct IDirectPlay3Impl IDirectPlay3Impl;
-typedef struct IDirectPlay4Impl IDirectPlay4AImpl;
-typedef struct IDirectPlay4Impl IDirectPlay4Impl;
-
 typedef struct tagDirectPlayIUnknownData
 {
   LONG              ulObjRef;
@@ -196,28 +186,20 @@ typedef struct tagDirectPlay2Data
   DPQ_HEAD( tagDP_MSG_REPLY_STRUCT_LIST ) repliesExpected;
 } DirectPlay2Data;
 
-#define DP_IMPL_FIELDS \
-  LONG ulInterfaceRef; \
-  DirectPlayIUnknownData*  unk; \
-  DirectPlay2Data*         dp2;
-
-struct IDirectPlay2Impl
+typedef struct IDirectPlayImpl
 {
-  const IDirectPlay2Vtbl *lpVtbl;
-  DP_IMPL_FIELDS
-};
+  const void *lpVtbl;
+  LONG ulInterfaceRef;
+  DirectPlayIUnknownData *unk;
+  DirectPlay2Data *dp2;
+} IDirectPlayImpl;
 
-struct IDirectPlay3Impl
-{
-  const IDirectPlay3Vtbl *lpVtbl;
-  DP_IMPL_FIELDS
-};
-
-struct IDirectPlay4Impl
-{
-  const IDirectPlay4Vtbl *lpVtbl;
-  DP_IMPL_FIELDS
-};
+typedef struct IDirectPlayImpl IDirectPlay2Impl;
+typedef struct IDirectPlayImpl IDirectPlay2AImpl;
+typedef struct IDirectPlayImpl IDirectPlay3Impl;
+typedef struct IDirectPlayImpl IDirectPlay3AImpl;
+typedef struct IDirectPlayImpl IDirectPlay4Impl;
+typedef struct IDirectPlayImpl IDirectPlay4AImpl;
 
 HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpMessageBody,
                           DWORD  dwMessageBodySize, LPCVOID lpMessageHeader,
