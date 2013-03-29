@@ -494,8 +494,7 @@ static HRESULT DPL_ConnectEx
     dwFlags = DPCONNECT_RETURNSTATUS;
   }
 
-  /* Create the DirectPlay interface */
-  if( ( hr = DP_CreateInterface( riid, lplpDP ) ) != DP_OK )
+  if ( ( hr = dplay_create( riid, lplpDP ) ) != DP_OK )
   {
      ERR( "error creating interface for %s:%s.\n",
           debugstr_guid( riid ), DPLAYX_HresultToString( hr ) );

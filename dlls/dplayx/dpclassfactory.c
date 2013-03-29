@@ -101,7 +101,7 @@ static const IClassFactoryVtbl cf_vt = {
     IClassFactoryImpl_LockServer
 };
 
-static IClassFactoryImpl dplay_cf = {{&cf_vt}, DP_CreateInterface};
+static IClassFactoryImpl dplay_cf = {{&cf_vt}, dplay_create};
 static IClassFactoryImpl dplaylobby_cf = {{&cf_vt}, DPL_CreateInterface};
 
 

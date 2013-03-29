@@ -76,10 +76,6 @@ static BOOL CALLBACK cbRemoveGroupOrPlayer( DPID dpId, DWORD dwPlayerType,
                                             LPVOID lpContext );
 static void DP_DeleteGroup( IDirectPlay2Impl* This, DPID dpid );
 
-/* Forward declarations of virtual tables */
-static const IDirectPlay4Vtbl directPlay4AVT;
-static const IDirectPlay4Vtbl directPlay4WVT;
-
 /* Helper methods for player/group interfaces */
 static HRESULT DP_IF_DeletePlayerFromGroup
           ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, DPID idGroup,
@@ -357,55 +353,6 @@ static BOOL DP_DestroyDirectPlay2( LPVOID lpDP )
   HeapFree( GetProcessHeap(), 0, This->dp2 );
 
   return TRUE;
-}
-
-
-/* Create a new interface */
-HRESULT DP_CreateInterface
-         ( REFIID riid, LPVOID* ppvObj )
-{
-  IDirectPlayImpl *This;
-
-  TRACE( " for %s\n", debugstr_guid( riid ) );
-
-  This = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( IDirectPlayImpl ) );
-  if( !This )
-    return DPERR_OUTOFMEMORY;
-
-  This->IDirectPlay4_iface.lpVtbl = &directPlay4WVT;
-  This->IDirectPlay4A_iface.lpVtbl = &directPlay4AVT;
-
-  if( IsEqualGUID( &IID_IDirectPlay2, riid ) || IsEqualGUID( &IID_IDirectPlay3, riid ) ||
-      IsEqualGUID( &IID_IDirectPlay4, riid ) )
-    *ppvObj = &This->IDirectPlay4_iface;
-  else if( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlay2A, riid ) ||
-           IsEqualGUID( &IID_IDirectPlay3A, riid ) || IsEqualGUID( &IID_IDirectPlay4A, riid ) )
-    *ppvObj = &This->IDirectPlay4A_iface;
-  else
-  {
-    /* Unsupported interface */
-    HeapFree( GetProcessHeap(), 0, *ppvObj );
-    *ppvObj = NULL;
-
-    return E_NOINTERFACE;
-  }
-
-  /* Initialize it */
-  if ( DP_CreateDirectPlay2( This ) )
-  {
-    InitializeCriticalSection( &This->lock );
-    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlayImpl.lock");
-    IDirectPlayX_AddRef( (LPDIRECTPLAY2A)*ppvObj );
-
-    return S_OK;
-  }
-
-  /* Initialize failed, destroy it */
-  DP_DestroyDirectPlay2( This );
-  HeapFree( GetProcessHeap(), 0, This );
-
-  *ppvObj = NULL;
-  return DPERR_NOMEMORY;
 }
 
 
@@ -4619,12 +4566,8 @@ static HRESULT WINAPI DirectPlay4WImpl_CancelPriority
 }
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlay4WVT.fun))
-#else
 # define XCAST(fun)     (void*)
-#endif
-static const IDirectPlay4Vtbl directPlay4WVT =
+static const IDirectPlay4Vtbl dp4_vt =
 {
     IDirectPlay4Impl_QueryInterface,
     IDirectPlay4Impl_AddRef,
@@ -4685,7 +4628,7 @@ static const IDirectPlay4Vtbl directPlay4WVT =
 };
 #undef XCAST
 
-static const IDirectPlay4Vtbl directPlay4AVT =
+static const IDirectPlay4Vtbl dp4A_vt =
 {
     IDirectPlay4AImpl_QueryInterface,
     IDirectPlay4AImpl_AddRef,
@@ -4742,6 +4685,35 @@ static const IDirectPlay4Vtbl directPlay4AVT =
   DirectPlay4AImpl_CancelMessage,
   DirectPlay4AImpl_CancelPriority
 };
+
+HRESULT dplay_create( REFIID riid, void **ppv )
+{
+    IDirectPlayImpl *obj;
+    HRESULT hr;
+
+    TRACE( "(%s, %p)\n", debugstr_guid( riid ), ppv );
+
+    *ppv = NULL;
+    obj = HeapAlloc( GetProcessHeap(), 0, sizeof( *obj ) );
+    if ( !obj )
+        return DPERR_OUTOFMEMORY;
+
+    obj->IDirectPlay4A_iface.lpVtbl = &dp4A_vt;
+    obj->IDirectPlay4_iface.lpVtbl = &dp4_vt;
+    obj->ulInterfaceRef = 1;
+
+    InitializeCriticalSection( &obj->lock );
+    obj->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlayImpl.lock");
+
+    if ( DP_CreateDirectPlay2( obj ) )
+        hr = IDirectPlayX_QueryInterface( &obj->IDirectPlay4A_iface, riid, ppv );
+    else
+        hr = DPERR_NOMEMORY;
+    IDirectPlayX_Release( &obj->IDirectPlay4A_iface );
+
+    return hr;
+}
+
 
 HRESULT DP_GetSPPlayerData( IDirectPlay2Impl* lpDP,
                             DPID idPlayer,
@@ -5016,13 +4988,10 @@ HRESULT WINAPI DirectPlayCreate
     return DPERR_INVALIDPARAMS;
   }
 
-
   /* Create an IDirectPlay object. We don't support that so we'll cheat and
      give them an IDirectPlay2A object and hope that doesn't cause problems */
-  if( DP_CreateInterface( &IID_IDirectPlay2A, (LPVOID*)lplpDP ) != DP_OK )
-  {
+  if ( dplay_create( &IID_IDirectPlay2A, (void**)lplpDP ) != DP_OK )
     return DPERR_UNAVAILABLE;
-  }
 
   if( IsEqualGUID( &GUID_NULL, lpGUID ) )
   {
