@@ -96,10 +96,6 @@ static HRESULT DP_IF_EnumGroupPlayers
           ( IDirectPlay2Impl* This, DPID idGroup, LPGUID lpguidInstance,
             LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2,
             LPVOID lpContext, DWORD dwFlags, BOOL bAnsi );
-static HRESULT DP_IF_EnumGroups
-          ( IDirectPlay2Impl* This, LPGUID lpguidInstance,
-            LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2,
-            LPVOID lpContext, DWORD dwFlags, BOOL bAnsi );
 static HRESULT DP_IF_GetGroupData
           ( IDirectPlay2Impl* This, DPID idGroup, LPVOID lpData,
             LPDWORD lpdwDataSize, DWORD dwFlags, BOOL bAnsi );
@@ -1733,8 +1729,8 @@ static HRESULT DP_IF_DestroyPlayer
 
   /* Find each group and call DeletePlayerFromGroup if the player is a
      member of the group */
-  DP_IF_EnumGroups( This, NULL, cbDeletePlayerFromAllGroups,
-                    &cbContext, DPENUMGROUPS_ALL, bAnsi );
+  IDirectPlayX_EnumGroups( (IDirectPlay4*)This, NULL, cbDeletePlayerFromAllGroups, &cbContext,
+          DPENUMGROUPS_ALL );
 
   /* Now delete player and player list from the sys group */
   DP_DeletePlayer( This, idPlayer );
@@ -1893,35 +1889,18 @@ static HRESULT WINAPI DirectPlay2WImpl_EnumGroupPlayers
 }
 
 /* NOTE: This only enumerates top level groups (created with CreateGroup) */
-static HRESULT DP_IF_EnumGroups
-          ( IDirectPlay2Impl* This, LPGUID lpguidInstance,
-            LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2,
-            LPVOID lpContext, DWORD dwFlags, BOOL bAnsi )
+static HRESULT WINAPI IDirectPlay4AImpl_EnumGroups( IDirectPlay4A *iface, GUID *instance,
+        LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
 {
-  return DP_IF_EnumGroupsInGroup( (IDirectPlay3Impl*)This,
-                                  DPID_SYSTEM_GROUP, lpguidInstance,
-                                  lpEnumPlayersCallback2, lpContext,
-                                  dwFlags, bAnsi );
+    return IDirectPlayX_EnumGroupsInGroup( iface, DPID_SYSTEM_GROUP, instance, enumplayercb,
+            context, flags );
 }
 
-static HRESULT WINAPI DirectPlay2AImpl_EnumGroups
-          ( LPDIRECTPLAY2A iface, LPGUID lpguidInstance,
-            LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2,
-            LPVOID lpContext, DWORD dwFlags )
+static HRESULT WINAPI IDirectPlay4Impl_EnumGroups ( IDirectPlay4 *iface, GUID *instance,
+        LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
 {
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_IF_EnumGroups( This, lpguidInstance, lpEnumPlayersCallback2,
-                         lpContext, dwFlags, TRUE );
-}
-
-static HRESULT WINAPI DirectPlay2WImpl_EnumGroups
-          ( LPDIRECTPLAY2 iface, LPGUID lpguidInstance,
-            LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2,
-            LPVOID lpContext, DWORD dwFlags )
-{
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_IF_EnumGroups( This, lpguidInstance, lpEnumPlayersCallback2,
-                         lpContext, dwFlags, FALSE );
+    return IDirectPlayX_EnumGroupsInGroup( iface, DPID_SYSTEM_GROUP, instance, enumplayercb,
+            context, flags );
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_EnumPlayers( IDirectPlay4A *iface, GUID *instance,
@@ -4695,7 +4674,7 @@ static const IDirectPlay4Vtbl directPlay4WVT =
   XCAST(DestroyGroup)DirectPlay2WImpl_DestroyGroup,
   XCAST(DestroyPlayer)DirectPlay2WImpl_DestroyPlayer,
   XCAST(EnumGroupPlayers)DirectPlay2WImpl_EnumGroupPlayers,
-  XCAST(EnumGroups)DirectPlay2WImpl_EnumGroups,
+    IDirectPlay4Impl_EnumGroups,
     IDirectPlay4Impl_EnumPlayers,
   XCAST(EnumSessions)DirectPlay2WImpl_EnumSessions,
   XCAST(GetCaps)DirectPlay2WImpl_GetCaps,
@@ -4763,7 +4742,7 @@ static const IDirectPlay4Vtbl directPlay4AVT =
   XCAST(DestroyGroup)DirectPlay2AImpl_DestroyGroup,
   XCAST(DestroyPlayer)DirectPlay2AImpl_DestroyPlayer,
   XCAST(EnumGroupPlayers)DirectPlay2AImpl_EnumGroupPlayers,
-  XCAST(EnumGroups)DirectPlay2AImpl_EnumGroups,
+    IDirectPlay4AImpl_EnumGroups,
     IDirectPlay4AImpl_EnumPlayers,
   XCAST(EnumSessions)DirectPlay2AImpl_EnumSessions,
   XCAST(GetCaps)DirectPlay2AImpl_GetCaps,
