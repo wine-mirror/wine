@@ -171,9 +171,9 @@ HANDLE DP_MSG_BuildAndLinkReplyStruct( IDirectPlay2Impl* This,
   lpReplyStructList->replyExpected.dwMsgBodySize  = 0;
 
   /* Insert into the message queue while locked */
-  EnterCriticalSection( &This->unk->DP_lock );
+  EnterCriticalSection( &This->lock );
     DPQ_INSERT( This->dp2->repliesExpected, lpReplyStructList, repliesExpected );
-  LeaveCriticalSection( &This->unk->DP_lock );
+  LeaveCriticalSection( &This->lock );
 
   return lpReplyStructList->replyExpected.hReceipt;
 }
@@ -432,10 +432,10 @@ void DP_MSG_ReplyReceived( IDirectPlay2AImpl* This, WORD wCommandId,
   /* Find, and immediately remove (to avoid double triggering), the appropriate entry. Call locked to
    * avoid problems.
    */
-  EnterCriticalSection( &This->unk->DP_lock );
+  EnterCriticalSection( &This->lock );
     DPQ_REMOVE_ENTRY( This->dp2->repliesExpected, repliesExpected, replyExpected.wExpectedReply,
                      ==, wCommandId, lpReplyList );
-  LeaveCriticalSection( &This->unk->DP_lock );
+  LeaveCriticalSection( &This->lock );
 
   if( lpReplyList != NULL )
   {

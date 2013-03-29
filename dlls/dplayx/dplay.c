@@ -227,33 +227,6 @@ static inline IDirectPlayImpl *impl_from_IDirectPlay4( IDirectPlay4 *iface )
     return CONTAINING_RECORD( iface, IDirectPlayImpl, IDirectPlay4_iface );
 }
 
-static BOOL DP_CreateIUnknown( LPVOID lpDP )
-{
-  IDirectPlay2AImpl *This = lpDP;
-
-  This->unk = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->unk) ) );
-  if ( This->unk == NULL )
-  {
-    return FALSE;
-  }
-
-  InitializeCriticalSection( &This->unk->DP_lock );
-  This->unk->DP_lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlay2AImpl*->DirectPlayIUnknownData*->DP_lock");
-
-  return TRUE;
-}
-
-static BOOL DP_DestroyIUnknown( LPVOID lpDP )
-{
-  IDirectPlay2AImpl *This = lpDP;
-
-  This->unk->DP_lock.DebugInfo->Spare[0] = 0;
-  DeleteCriticalSection( &This->unk->DP_lock );
-  HeapFree( GetProcessHeap(), 0, This->unk );
-
-  return TRUE;
-}
-
 static BOOL DP_CreateDirectPlay2( LPVOID lpDP )
 {
   IDirectPlay2AImpl *This = lpDP;
@@ -418,8 +391,10 @@ HRESULT DP_CreateInterface
   }
 
   /* Initialize it */
-  if ( DP_CreateIUnknown( This ) && DP_CreateDirectPlay2( This ) )
+  if ( DP_CreateDirectPlay2( This ) )
   {
+    InitializeCriticalSection( &This->lock );
+    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlayImpl.lock");
     IDirectPlayX_AddRef( (LPDIRECTPLAY2A)*ppvObj );
 
     return S_OK;
@@ -427,8 +402,6 @@ HRESULT DP_CreateInterface
 
   /* Initialize failed, destroy it */
   DP_DestroyDirectPlay2( This );
-  DP_DestroyIUnknown( This );
-
   HeapFree( GetProcessHeap(), 0, This );
 
   *ppvObj = NULL;
@@ -483,7 +456,8 @@ static ULONG WINAPI DP_Release( IDirectPlayImpl *This )
      /* If we're destroying the object, this must be the last ref
         of the last interface */
      DP_DestroyDirectPlay2( This );
-     DP_DestroyIUnknown( This );
+     This->lock.DebugInfo->Spare[0] = 0;
+     DeleteCriticalSection( &This->lock );
      HeapFree( GetProcessHeap(), 0, This );
   }
 

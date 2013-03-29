@@ -31,11 +31,6 @@ extern HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback,
                                 LPCVOID lpAddress, DWORD dwAddressSize,
                                 LPVOID lpContext ) DECLSPEC_HIDDEN;
 
-typedef struct tagDirectPlayIUnknownData
-{
-  CRITICAL_SECTION  DP_lock;
-} DirectPlayIUnknownData;
-
 typedef struct tagEnumSessionAsyncCallbackData
 {
   LPSPINITDATA lpSpData;
@@ -190,7 +185,7 @@ typedef struct IDirectPlayImpl
   IDirectPlay4A IDirectPlay4A_iface;
   IDirectPlay4  IDirectPlay4_iface;
   LONG ulInterfaceRef;
-  DirectPlayIUnknownData *unk;
+  CRITICAL_SECTION lock;
   DirectPlay2Data *dp2;
 } IDirectPlayImpl;
 
