@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 /* Prototypes */
 static BOOL DPSP_CreateIUnknown( LPVOID lpSP );
 static BOOL DPSP_DestroyIUnknown( LPVOID lpSP );
-static BOOL DPSP_CreateDirectPlaySP( LPVOID lpSP, IDirectPlay2Impl* dp );
+static BOOL DPSP_CreateDirectPlaySP( void *lpSP, IDirectPlayImpl *dp );
 static BOOL DPSP_DestroyDirectPlaySP( LPVOID lpSP );
 
 /* Predefine the interface */
@@ -56,7 +56,7 @@ typedef struct tagDirectPlaySPData
   LPVOID lpSpLocalData;
   DWORD  dwSpLocalDataSize; /* Size of data pointed to by lpSpLocalData */
 
-  IDirectPlay2Impl* dplay; /* FIXME: This should perhaps be iface not impl */
+  IDirectPlayImpl *dplay; /* FIXME: This should perhaps be iface not impl */
 
 } DirectPlaySPData;
 
@@ -85,7 +85,7 @@ typedef struct tagDP_SPPLAYERDATA
 } DP_SPPLAYERDATA, *LPDP_SPPLAYERDATA;
 
 /* Create the SP interface */
-HRESULT DPSP_CreateInterface( REFIID riid, LPVOID* ppvObj, IDirectPlay2Impl* dp )
+HRESULT DPSP_CreateInterface( REFIID riid, void **ppvObj, IDirectPlayImpl *dp )
 {
   TRACE( " for %s\n", debugstr_guid( riid ) );
 
@@ -159,7 +159,7 @@ static BOOL DPSP_DestroyIUnknown( LPVOID lpSP )
 }
 
 
-static BOOL DPSP_CreateDirectPlaySP( LPVOID lpSP, IDirectPlay2Impl* dp )
+static BOOL DPSP_CreateDirectPlaySP( void *lpSP, IDirectPlayImpl *dp )
 {
   IDirectPlaySPImpl *This = lpSP;
 

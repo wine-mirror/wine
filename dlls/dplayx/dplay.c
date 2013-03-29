@@ -50,7 +50,7 @@ extern HRESULT DPL_CreateCompoundAddress
 
 
 /* Local function prototypes */
-static lpPlayerList DP_FindPlayer( IDirectPlay2AImpl* This, DPID dpid );
+static lpPlayerList DP_FindPlayer( IDirectPlayImpl *This, DPID dpid );
 static BOOL DP_CopyDPNAMEStruct( LPDPNAME lpDst, const DPNAME *lpSrc, BOOL bAnsi );
 static void DP_SetGroupData( lpGroupData lpGData, DWORD dwFlags,
                              LPVOID lpData, DWORD dwDataSize );
@@ -60,16 +60,13 @@ static BOOL CALLBACK cbDeletePlayerFromAllGroups( DPID dpId,
                                                   LPCDPNAME lpName,
                                                   DWORD dwFlags,
                                                   LPVOID lpContext );
-static lpGroupData DP_FindAnyGroup( IDirectPlay2AImpl* This, DPID dpid );
+static lpGroupData DP_FindAnyGroup( IDirectPlayImpl *This, DPID dpid );
 
 /* Helper methods for player/group interfaces */
-static HRESULT DP_SetSessionDesc
-          ( IDirectPlay2Impl* This, LPCDPSESSIONDESC2 lpSessDesc,
-            DWORD dwFlags, BOOL bInitial, BOOL bAnsi  );
-static HRESULT DP_SP_SendEx
-          ( IDirectPlay2Impl* This, DWORD dwFlags,
-            LPVOID lpData, DWORD dwDataSize, DWORD dwPriority, DWORD dwTimeout,
-            LPVOID lpContext, LPDWORD lpdwMsgID );
+static HRESULT DP_SetSessionDesc( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpSessDesc,
+        DWORD dwFlags, BOOL bInitial, BOOL bAnsi );
+static HRESULT DP_SP_SendEx( IDirectPlayImpl *This, DWORD dwFlags, void *lpData, DWORD dwDataSize,
+        DWORD dwPriority, DWORD dwTimeout, void *lpContext, DWORD *lpdwMsgID );
 static BOOL DP_BuildSPCompoundAddr( LPGUID lpcSpGuid, LPVOID* lplpAddrBuf,
                                     LPDWORD lpdwBufSize );
 
@@ -106,7 +103,7 @@ static inline IDirectPlayImpl *impl_from_IDirectPlay4( IDirectPlay4 *iface )
 
 static BOOL DP_CreateDirectPlay2( LPVOID lpDP )
 {
-  IDirectPlay2AImpl *This = lpDP;
+  IDirectPlayImpl *This = lpDP;
 
   This->dp2 = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(This->dp2) ) );
   if ( This->dp2 == NULL )
@@ -185,7 +182,7 @@ DPQ_DECL_DELETECB( cbDeleteElemFromHeap, LPVOID )
 
 static BOOL DP_DestroyDirectPlay2( LPVOID lpDP )
 {
-  IDirectPlay2AImpl *This = lpDP;
+  IDirectPlayImpl *This = lpDP;
 
   if( This->dp2->hEnumSessionThread != INVALID_HANDLE_VALUE )
   {
@@ -250,10 +247,9 @@ static inline DPID DP_NextObjectId(void)
 }
 
 /* *lplpReply will be non NULL iff there is something to reply */
-HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpcMessageBody,
-                          DWORD  dwMessageBodySize, LPCVOID lpcMessageHeader,
-                          WORD wCommandId, WORD wVersion,
-                          LPVOID* lplpReply, LPDWORD lpdwMsgSize )
+HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
+        DWORD dwMessageBodySize, const void *lpcMessageHeader, WORD wCommandId, WORD wVersion,
+        void **lplpReply, DWORD *lpdwMsgSize )
 {
   TRACE( "(%p)->(%p,0x%08x,%p,%u,%u)\n",
          This, lpcMessageBody, dwMessageBodySize, lpcMessageHeader, wCommandId,
@@ -569,10 +565,8 @@ static HRESULT WINAPI IDirectPlay4Impl_Close( IDirectPlay4 *iface )
     return hr;
 }
 
-static
-lpGroupData DP_CreateGroup( IDirectPlay2AImpl* This, const DPID *lpid,
-                            const DPNAME *lpName, DWORD dwFlags,
-                            DPID idParent, BOOL bAnsi )
+static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, const DPNAME *lpName,
+        DWORD dwFlags, DPID idParent, BOOL bAnsi )
 {
   lpGroupData lpGData;
 
@@ -604,8 +598,7 @@ lpGroupData DP_CreateGroup( IDirectPlay2AImpl* This, const DPID *lpid,
 }
 
 /* This method assumes that all links to it are already deleted */
-static void
-DP_DeleteGroup( IDirectPlay2Impl* This, DPID dpid )
+static void DP_DeleteGroup( IDirectPlayImpl *This, DPID dpid )
 {
   lpGroupList lpGList;
 
@@ -634,7 +627,7 @@ DP_DeleteGroup( IDirectPlay2Impl* This, DPID dpid )
 
 }
 
-static lpGroupData DP_FindAnyGroup( IDirectPlay2AImpl* This, DPID dpid )
+static lpGroupData DP_FindAnyGroup( IDirectPlayImpl *This, DPID dpid )
 {
   lpGroupList lpGroups;
 
@@ -657,10 +650,8 @@ static lpGroupData DP_FindAnyGroup( IDirectPlay2AImpl* This, DPID dpid )
   return lpGroups->lpGData;
 }
 
-static HRESULT DP_IF_CreateGroup
-          ( IDirectPlay2AImpl* This, LPVOID lpMsgHdr, LPDPID lpidGroup,
-            LPDPNAME lpGroupName, LPVOID lpData, DWORD dwDataSize,
-            DWORD dwFlags, BOOL bAnsi )
+static HRESULT DP_IF_CreateGroup( IDirectPlayImpl *This, void *lpMsgHdr, DPID *lpidGroup,
+        DPNAME *lpGroupName, void *lpData, DWORD dwDataSize, DWORD dwFlags, BOOL bAnsi )
 {
   lpGroupData lpGData;
 
@@ -842,10 +833,8 @@ DP_SetGroupData( lpGroupData lpGData, DWORD dwFlags,
 }
 
 /* This function will just create the storage for the new player.  */
-static
-lpPlayerData DP_CreatePlayer( IDirectPlay2Impl* This, LPDPID lpid,
-                              LPDPNAME lpName, DWORD dwFlags,
-                              HANDLE hEvent, BOOL bAnsi )
+static lpPlayerData DP_CreatePlayer( IDirectPlayImpl *This, DPID *lpid, DPNAME *lpName,
+        DWORD dwFlags, HANDLE hEvent, BOOL bAnsi )
 {
   lpPlayerData lpPData;
 
@@ -898,8 +887,7 @@ DP_DeleteDPNameStruct( LPDPNAME lpDPName )
 }
 
 /* This method assumes that all links to it are already deleted */
-static void
-DP_DeletePlayer( IDirectPlay2Impl* This, DPID dpid )
+static void DP_DeletePlayer( IDirectPlayImpl *This, DPID dpid )
 {
   lpPlayerList lpPList;
 
@@ -930,7 +918,7 @@ DP_DeletePlayer( IDirectPlay2Impl* This, DPID dpid )
   HeapFree( GetProcessHeap(), 0, lpPList );
 }
 
-static lpPlayerList DP_FindPlayer( IDirectPlay2AImpl* This, DPID dpid )
+static lpPlayerList DP_FindPlayer( IDirectPlayImpl *This, DPID dpid )
 {
   lpPlayerList lpPlayers;
 
@@ -1043,16 +1031,10 @@ DP_SetPlayerData( lpPlayerData lpPData, DWORD dwFlags,
 
 }
 
-static HRESULT DP_IF_CreatePlayer
-( IDirectPlay2Impl* This,
-  LPVOID lpMsgHdr, /* NULL for local creation, non NULL for remote creation */
-  LPDPID lpidPlayer,
-  LPDPNAME lpPlayerName,
-  HANDLE hEvent,
-  LPVOID lpData,
-  DWORD dwDataSize,
-  DWORD dwFlags,
-  BOOL bAnsi )
+/* Note: lpMsgHdr is NULL for local creation, non NULL for remote creation */
+static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, void *lpMsgHdr, DPID *lpidPlayer,
+        DPNAME *lpPlayerName, HANDLE hEvent, void *lpData, DWORD dwDataSize, DWORD dwFlags,
+        BOOL bAnsi )
 {
   HRESULT hr = DP_OK;
   lpPlayerData lpPData;
@@ -1371,7 +1353,7 @@ static HRESULT WINAPI IDirectPlay4Impl_DeletePlayerFromGroup( IDirectPlay4 *ifac
 
 typedef struct _DPRGOPContext
 {
-  IDirectPlay3Impl* This;
+  IDirectPlayImpl   *This;
   BOOL              bAnsi;
   DPID              idGroup;
 } DPRGOPContext, *lpDPRGOPContext;
@@ -1402,8 +1384,7 @@ cbRemoveGroupOrPlayer(
   return TRUE; /* Continue enumeration */
 }
 
-static HRESULT DP_IF_DestroyGroup
-          ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, DPID idGroup, BOOL bAnsi )
+static HRESULT DP_IF_DestroyGroup( IDirectPlayImpl *This, void *lpMsgHdr, DPID idGroup, BOOL bAnsi )
 {
   lpGroupData lpGData;
   DPRGOPContext context;
@@ -1469,13 +1450,13 @@ static HRESULT WINAPI IDirectPlay4Impl_DestroyGroup( IDirectPlay4 *iface, DPID i
 
 typedef struct _DPFAGContext
 {
-  IDirectPlay2Impl* This;
+  IDirectPlayImpl   *This;
   DPID              idPlayer;
   BOOL              bAnsi;
 } DPFAGContext, *lpDPFAGContext;
 
-static HRESULT DP_IF_DestroyPlayer
-          ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, DPID idPlayer, BOOL bAnsi )
+static HRESULT DP_IF_DestroyPlayer( IDirectPlayImpl *This, void *lpMsgHdr, DPID idPlayer,
+        BOOL bAnsi )
 {
   DPFAGContext cbContext;
 
@@ -1726,7 +1707,7 @@ static DWORD CALLBACK DP_EnumSessionsSendAsyncRequestThread( LPVOID lpContext )
   return 1;
 }
 
-static void DP_KillEnumSessionThread( IDirectPlay2Impl* This )
+static void DP_KillEnumSessionThread( IDirectPlayImpl *This )
 {
   /* Does a thread exist? If so we were doing an async enum session */
   if( This->dp2->hEnumSessionThread != INVALID_HANDLE_VALUE )
@@ -1931,9 +1912,8 @@ static HRESULT WINAPI IDirectPlay4Impl_GetGroupData( IDirectPlay4 *iface, DPID g
     return DP_OK;
 }
 
-static HRESULT DP_IF_GetGroupName
-          ( IDirectPlay2Impl* This, DPID idGroup, LPVOID lpData,
-            LPDWORD lpdwDataSize, BOOL bAnsi )
+static HRESULT DP_IF_GetGroupName( IDirectPlayImpl *This, DPID idGroup, void *lpData,
+        DWORD *lpdwDataSize, BOOL bAnsi )
 {
   lpGroupData lpGData;
   LPDPNAME    lpName = lpData;
@@ -2108,9 +2088,8 @@ static HRESULT WINAPI IDirectPlay4Impl_GetPlayerData( IDirectPlay4 *iface, DPID 
     return DP_OK;
 }
 
-static HRESULT DP_IF_GetPlayerName
-          ( IDirectPlay2Impl* This, DPID idPlayer, LPVOID lpData,
-            LPDWORD lpdwDataSize, BOOL bAnsi )
+static HRESULT DP_IF_GetPlayerName( IDirectPlayImpl *This, DPID idPlayer, void *lpData,
+        DWORD *lpdwDataSize, BOOL bAnsi )
 {
   lpPlayerList lpPList;
   LPDPNAME    lpName = lpData;
@@ -2189,9 +2168,8 @@ static HRESULT WINAPI IDirectPlay4Impl_GetPlayerName( IDirectPlay4 *iface, DPID 
     return DP_IF_GetPlayerName( This, idPlayer, lpData, lpdwDataSize, FALSE );
 }
 
-static HRESULT DP_GetSessionDesc
-          ( IDirectPlay2Impl* This, LPVOID lpData, LPDWORD lpdwDataSize,
-            BOOL bAnsi )
+static HRESULT DP_GetSessionDesc( IDirectPlayImpl *This, void *lpData, DWORD *lpdwDataSize,
+        BOOL bAnsi )
 {
   DWORD dwRequiredSize;
 
@@ -2253,10 +2231,8 @@ static HRESULT WINAPI IDirectPlay4Impl_Initialize( IDirectPlay4 *iface, GUID *gu
 }
 
 
-static HRESULT DP_SecureOpen
-          ( IDirectPlay2Impl* This, LPCDPSESSIONDESC2 lpsd, DWORD dwFlags,
-            LPCDPSECURITYDESC lpSecurity, LPCDPCREDENTIALS lpCredentials,
-            BOOL bAnsi )
+static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd, DWORD dwFlags,
+        const DPSECURITYDESC *lpSecurity, const DPCREDENTIALS *lpCredentials, BOOL bAnsi )
 {
   HRESULT hr = DP_OK;
 
@@ -2377,9 +2353,8 @@ static HRESULT WINAPI IDirectPlay4Impl_Open( IDirectPlay4 *iface, DPSESSIONDESC2
     return IDirectPlayX_SecureOpen( iface, sdesc, flags, NULL, NULL );
 }
 
-static HRESULT DP_IF_Receive
-          ( IDirectPlay2Impl* This, LPDPID lpidFrom, LPDPID lpidTo,
-            DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize, BOOL bAnsi )
+static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidTo, DWORD dwFlags,
+        void *lpData, DWORD *lpdwDataSize, BOOL bAnsi )
 {
   LPDPMSG lpMsg = NULL;
 
@@ -2503,9 +2478,8 @@ static HRESULT WINAPI IDirectPlay4Impl_SetGroupData( IDirectPlay4 *iface, DPID g
     return DP_OK;
 }
 
-static HRESULT DP_IF_SetGroupName
-          ( IDirectPlay2Impl* This, DPID idGroup, LPDPNAME lpGroupName,
-            DWORD dwFlags, BOOL bAnsi )
+static HRESULT DP_IF_SetGroupName( IDirectPlayImpl *This, DPID idGroup, DPNAME *lpGroupName,
+        DWORD dwFlags, BOOL bAnsi )
 {
   lpGroupData lpGData;
 
@@ -2581,9 +2555,8 @@ static HRESULT WINAPI IDirectPlay4Impl_SetPlayerData( IDirectPlay4 *iface, DPID 
     return DP_OK;
 }
 
-static HRESULT DP_IF_SetPlayerName
-          ( IDirectPlay2Impl* This, DPID idPlayer, LPDPNAME lpPlayerName,
-            DWORD dwFlags, BOOL bAnsi )
+static HRESULT DP_IF_SetPlayerName( IDirectPlayImpl *This, DPID idPlayer, DPNAME *lpPlayerName,
+        DWORD dwFlags, BOOL bAnsi )
 {
   lpPlayerList lpPList;
 
@@ -2622,9 +2595,8 @@ static HRESULT WINAPI IDirectPlay4Impl_SetPlayerName( IDirectPlay4 *iface, DPID 
     return DP_IF_SetPlayerName( This, idPlayer, lpPlayerName, dwFlags, FALSE );
 }
 
-static HRESULT DP_SetSessionDesc
-          ( IDirectPlay2Impl* This, LPCDPSESSIONDESC2 lpSessDesc,
-            DWORD dwFlags, BOOL bInitial, BOOL bAnsi  )
+static HRESULT DP_SetSessionDesc( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpSessDesc,
+        DWORD dwFlags, BOOL bInitial, BOOL bAnsi  )
 {
   DWORD            dwRequiredSize;
   LPDPSESSIONDESC2 lpTempSessDesc;
@@ -2835,10 +2807,9 @@ static HRESULT WINAPI IDirectPlay4Impl_AddGroupToGroup( IDirectPlay4 *iface, DPI
     return DP_OK;
 }
 
-static HRESULT DP_IF_CreateGroupInGroup
-          ( IDirectPlay3Impl* This, LPVOID lpMsgHdr, DPID idParentGroup,
-            LPDPID lpidGroup, LPDPNAME lpGroupName, LPVOID lpData,
-            DWORD dwDataSize, DWORD dwFlags, BOOL bAnsi )
+static HRESULT DP_IF_CreateGroupInGroup( IDirectPlayImpl *This, void *lpMsgHdr, DPID idParentGroup,
+        DPID *lpidGroup, DPNAME *lpGroupName, void *lpData, DWORD dwDataSize, DWORD dwFlags,
+        BOOL bAnsi )
 {
   lpGroupData lpGParentData;
   lpGroupList lpGList;
@@ -3483,8 +3454,7 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
   return 0;
 }
 
-static
-HRESULT DP_InitializeDPSP( IDirectPlay3Impl* This, HMODULE hServiceProvider )
+static HRESULT DP_InitializeDPSP( IDirectPlayImpl *This, HMODULE hServiceProvider )
 {
   HRESULT hr;
   LPDPSP_SPINIT SPInit;
@@ -3523,8 +3493,7 @@ HRESULT DP_InitializeDPSP( IDirectPlay3Impl* This, HMODULE hServiceProvider )
   return hr;
 }
 
-static
-HRESULT DP_InitializeDPLSP( IDirectPlay3Impl* This, HMODULE hLobbyProvider )
+static HRESULT DP_InitializeDPLSP( IDirectPlayImpl *This, HMODULE hLobbyProvider )
 {
   HRESULT hr;
   LPSP_INIT DPLSPInit;
@@ -3867,10 +3836,8 @@ static HRESULT WINAPI IDirectPlay4Impl_SendEx( IDirectPlay4 *iface, DPID from, D
     return DP_OK;
 }
 
-static HRESULT DP_SP_SendEx
-          ( IDirectPlay2Impl* This, DWORD dwFlags,
-            LPVOID lpData, DWORD dwDataSize, DWORD dwPriority, DWORD dwTimeout,
-            LPVOID lpContext, LPDWORD lpdwMsgID )
+static HRESULT DP_SP_SendEx( IDirectPlayImpl *This, DWORD dwFlags, void *lpData, DWORD dwDataSize,
+        DWORD dwPriority, DWORD dwTimeout, void *lpContext, DWORD *lpdwMsgID )
 {
   LPDPMSG lpMElem;
 
@@ -4143,9 +4110,7 @@ HRESULT dplay_create( REFIID riid, void **ppv )
 }
 
 
-HRESULT DP_GetSPPlayerData( IDirectPlay2Impl* lpDP,
-                            DPID idPlayer,
-                            LPVOID* lplpData )
+HRESULT DP_GetSPPlayerData( IDirectPlayImpl *lpDP, DPID idPlayer, void **lplpData )
 {
   lpPlayerList lpPlayer = DP_FindPlayer( lpDP, idPlayer );
 
@@ -4159,9 +4124,7 @@ HRESULT DP_GetSPPlayerData( IDirectPlay2Impl* lpDP,
   return DP_OK;
 }
 
-HRESULT DP_SetSPPlayerData( IDirectPlay2Impl* lpDP,
-                            DPID idPlayer,
-                            LPVOID lpData )
+HRESULT DP_SetSPPlayerData( IDirectPlayImpl *lpDP, DPID idPlayer, void *lpData )
 {
   lpPlayerList lpPlayer = DP_FindPlayer( lpDP, idPlayer );
 

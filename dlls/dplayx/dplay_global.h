@@ -190,21 +190,13 @@ typedef struct IDirectPlayImpl
   DirectPlay2Data *dp2;
 } IDirectPlayImpl;
 
-typedef struct IDirectPlayImpl IDirectPlay2Impl;
-typedef struct IDirectPlayImpl IDirectPlay2AImpl;
-typedef struct IDirectPlayImpl IDirectPlay3Impl;
-typedef struct IDirectPlayImpl IDirectPlay3AImpl;
-typedef struct IDirectPlayImpl IDirectPlay4Impl;
-typedef struct IDirectPlayImpl IDirectPlay4AImpl;
-
-HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpMessageBody,
-                          DWORD  dwMessageBodySize, LPCVOID lpMessageHeader,
-                          WORD wCommandId, WORD wVersion,
-                          LPVOID* lplpReply, LPDWORD lpdwMsgSize ) DECLSPEC_HIDDEN;
+HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpMessageBody,
+        DWORD  dwMessageBodySize, const void *lpMessageHeader, WORD wCommandId, WORD wVersion,
+        void **lplpReply, DWORD *lpdwMsgSize ) DECLSPEC_HIDDEN;
 
 /* DP SP external interfaces into DirectPlay */
-extern HRESULT DP_GetSPPlayerData( IDirectPlay2Impl* lpDP, DPID idPlayer, LPVOID* lplpData ) DECLSPEC_HIDDEN;
-extern HRESULT DP_SetSPPlayerData( IDirectPlay2Impl* lpDP, DPID idPlayer, LPVOID lpData ) DECLSPEC_HIDDEN;
+extern HRESULT DP_GetSPPlayerData( IDirectPlayImpl *lpDP, DPID idPlayer, void **lplpData ) DECLSPEC_HIDDEN;
+extern HRESULT DP_SetSPPlayerData( IDirectPlayImpl *lpDP, DPID idPlayer, void *lpData ) DECLSPEC_HIDDEN;
 
 /* DP external interfaces to call into DPSP interface */
 extern LPVOID DPSP_CreateSPPlayerData(void) DECLSPEC_HIDDEN;
