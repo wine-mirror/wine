@@ -3750,12 +3750,11 @@ static HRESULT WINAPI IDirectPlay4Impl_SetGroupConnectionSettings( IDirectPlay4 
     return DP_OK;
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_StartSession( IDirectPlay4A *iface, DWORD dwFlags,
-        DPID idGroup )
+static HRESULT WINAPI IDirectPlay4AImpl_StartSession( IDirectPlay4A *iface, DWORD flags,
+        DPID group )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  FIXME("(%p)->(0x%08x,0x%08x): stub\n", This, dwFlags, idGroup );
-  return DP_OK;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_StartSession( &This->IDirectPlay4_iface, flags, group );
 }
 
 static HRESULT WINAPI IDirectPlay4Impl_StartSession( IDirectPlay4 *iface, DWORD flags, DPID group )
@@ -3765,12 +3764,11 @@ static HRESULT WINAPI IDirectPlay4Impl_StartSession( IDirectPlay4 *iface, DWORD 
     return DP_OK;
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_GetGroupFlags( IDirectPlay4A *iface, DPID idGroup,
-        DWORD *lpdwFlags )
+static HRESULT WINAPI IDirectPlay4AImpl_GetGroupFlags( IDirectPlay4A *iface, DPID group,
+        DWORD *flags )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  FIXME("(%p)->(0x%08x,%p): stub\n", This, idGroup, lpdwFlags );
-  return DP_OK;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_GetGroupFlags( &This->IDirectPlay4_iface, group, flags );
 }
 
 static HRESULT WINAPI IDirectPlay4Impl_GetGroupFlags( IDirectPlay4 *iface, DPID group,
@@ -3820,12 +3818,11 @@ static HRESULT WINAPI IDirectPlay4Impl_GetPlayerAccount( IDirectPlay4 *iface, DP
     return DP_OK;
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_GetPlayerFlags( IDirectPlay4A *iface, DPID idPlayer,
-        DWORD *lpdwFlags )
+static HRESULT WINAPI IDirectPlay4AImpl_GetPlayerFlags( IDirectPlay4A *iface, DPID player,
+        DWORD *flags )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  FIXME("(%p)->(0x%08x,%p): stub\n", This, idPlayer, lpdwFlags );
-  return DP_OK;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_GetPlayerFlags( &This->IDirectPlay4_iface, player, flags );
 }
 
 static HRESULT WINAPI IDirectPlay4Impl_GetPlayerFlags( IDirectPlay4 *iface, DPID player,
@@ -3836,12 +3833,11 @@ static HRESULT WINAPI IDirectPlay4Impl_GetPlayerFlags( IDirectPlay4 *iface, DPID
     return DP_OK;
 }
 
-static HRESULT WINAPI DirectPlay4AImpl_GetGroupOwner
-          ( LPDIRECTPLAY4A iface, DPID idGroup, LPDPID lpidGroupOwner )
+static HRESULT WINAPI IDirectPlay4AImpl_GetGroupOwner( IDirectPlay4A *iface, DPID group,
+        DPID *owner )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  FIXME("(%p)->(0x%08x,%p): stub\n", This, idGroup, lpidGroupOwner );
-  return DP_OK;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_GetGroupOwner( &This->IDirectPlay4_iface, group, owner );
 }
 
 static HRESULT WINAPI IDirectPlay4Impl_GetGroupOwner( IDirectPlay4 *iface, DPID group,
@@ -3852,12 +3848,11 @@ static HRESULT WINAPI IDirectPlay4Impl_GetGroupOwner( IDirectPlay4 *iface, DPID 
     return DP_OK;
 }
 
-static HRESULT WINAPI DirectPlay4AImpl_SetGroupOwner
-          ( LPDIRECTPLAY4A iface, DPID idGroup , DPID idGroupOwner )
+static HRESULT WINAPI IDirectPlay4AImpl_SetGroupOwner( IDirectPlay4A *iface, DPID group,
+        DPID owner )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  FIXME("(%p)->(0x%08x,0x%08x): stub\n", This, idGroup, idGroupOwner );
-  return DP_OK;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_SetGroupOwner( &This->IDirectPlay4_iface, group, owner );
 }
 
 static HRESULT WINAPI IDirectPlay4Impl_SetGroupOwner( IDirectPlay4 *iface, DPID group ,
@@ -4179,9 +4174,8 @@ static const IDirectPlay4Vtbl dp4A_vt =
     IDirectPlay4AImpl_GetGroupParent,
     IDirectPlay4AImpl_GetPlayerAccount,
     IDirectPlay4AImpl_GetPlayerFlags,
-
-  DirectPlay4AImpl_GetGroupOwner,
-  DirectPlay4AImpl_SetGroupOwner,
+    IDirectPlay4AImpl_GetGroupOwner,
+    IDirectPlay4AImpl_SetGroupOwner,
     IDirectPlay4AImpl_SendEx,
     IDirectPlay4AImpl_GetMessageQueue,
     IDirectPlay4AImpl_CancelMessage,
