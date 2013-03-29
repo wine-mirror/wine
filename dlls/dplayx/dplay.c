@@ -86,10 +86,6 @@ static HRESULT DP_IF_DestroyGroup
           ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, DPID idGroup, BOOL bAnsi );
 static HRESULT DP_IF_DestroyPlayer
           ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, DPID idPlayer, BOOL bAnsi );
-static HRESULT DP_IF_EnumGroupPlayers
-          ( IDirectPlay2Impl* This, DPID idGroup, LPGUID lpguidInstance,
-            LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2,
-            LPVOID lpContext, DWORD dwFlags, BOOL bAnsi );
 static HRESULT DP_IF_GetGroupData
           ( IDirectPlay2Impl* This, DPID idGroup, LPVOID lpData,
             LPDWORD lpdwDataSize, DWORD dwFlags, BOOL bAnsi );
@@ -1559,8 +1555,8 @@ static HRESULT DP_IF_DestroyGroup
   context.idGroup = idGroup;
 
   /* Remove all players that this group has */
-  DP_IF_EnumGroupPlayers( This, idGroup, NULL,
-                          cbRemoveGroupOrPlayer, &context, 0, bAnsi );
+  IDirectPlayX_EnumGroupPlayers( &This->IDirectPlay4_iface, idGroup, NULL, cbRemoveGroupOrPlayer,
+          &context, 0 );
 
   /* Remove all links to groups that this group has since this is dp3 */
   DP_IF_EnumGroupsInGroup( (IDirectPlay3Impl*)This, idGroup, NULL,
@@ -1713,90 +1709,54 @@ static HRESULT WINAPI DirectPlay2WImpl_DestroyPlayer
   return DP_IF_DestroyPlayer( This, NULL, idPlayer, FALSE );
 }
 
-static HRESULT DP_IF_EnumGroupPlayers
-          ( IDirectPlay2Impl* This, DPID idGroup, LPGUID lpguidInstance,
-            LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2,
-            LPVOID lpContext, DWORD dwFlags, BOOL bAnsi )
+static HRESULT WINAPI IDirectPlay4AImpl_EnumGroupPlayers( IDirectPlay4A *iface, DPID group,
+        GUID *instance, LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
 {
-  lpGroupData  lpGData;
-  lpPlayerList lpPList;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_EnumGroupPlayers( &This->IDirectPlay4_iface, group, instance, enumplayercb,
+            context, flags );
+}
 
-  FIXME("(%p)->(0x%08x,%p,%p,%p,0x%08x,%u): semi stub\n",
-          This, idGroup, lpguidInstance, lpEnumPlayersCallback2,
-          lpContext, dwFlags, bAnsi );
+static HRESULT WINAPI IDirectPlay4Impl_EnumGroupPlayers( IDirectPlay4 *iface, DPID group,
+        GUID *instance, LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    lpGroupData  gdata;
+    lpPlayerList plist;
 
-  if( This->dp2->connectionInitialized == NO_PROVIDER )
-  {
-    return DPERR_UNINITIALIZED;
-  }
+    FIXME( "(%p)->(0x%08x,%p,%p,%p,0x%08x): semi stub\n", This, group, instance, enumplayercb,
+           context, flags );
 
-  /* Find the group */
-  if( ( lpGData = DP_FindAnyGroup( This, idGroup ) ) == NULL )
-  {
-    return DPERR_INVALIDGROUP;
-  }
+    if ( This->dp2->connectionInitialized == NO_PROVIDER )
+        return DPERR_UNINITIALIZED;
 
-  if( DPQ_IS_EMPTY( lpGData->players ) )
-  {
-    return DP_OK;
-  }
+    /* Find the group */
+    if ( ( gdata = DP_FindAnyGroup( This, group ) ) == NULL )
+        return DPERR_INVALIDGROUP;
 
-  lpPList = DPQ_FIRST( lpGData->players );
-
-  /* Walk the players in this group */
-  for( ;; )
-  {
-    /* We do not enum the name server or app server as they are of no
-     * consequence to the end user.
-     */
-    if( ( lpPList->lpPData->dpid != DPID_NAME_SERVER ) &&
-        ( lpPList->lpPData->dpid != DPID_SERVERPLAYER )
-      )
-    {
-
-      /* FIXME: Need to add stuff for dwFlags checking */
-
-      if( !lpEnumPlayersCallback2( lpPList->lpPData->dpid, DPPLAYERTYPE_PLAYER,
-                                   &lpPList->lpPData->name,
-                                   lpPList->lpPData->dwFlags,
-                                   lpContext )
-        )
-      {
-        /* User requested break */
+    if ( DPQ_IS_EMPTY( gdata->players ) )
         return DP_OK;
-      }
-    }
 
-    if( DPQ_IS_ENDOFLIST( lpPList->players ) )
+    /* Walk the players in this group */
+    for( plist = DPQ_FIRST( gdata->players ); ; plist = DPQ_NEXT( plist->players ) )
     {
-      break;
+        /* We do not enum the name server or app server as they are of no
+         * consequence to the end user.
+         */
+        if ( ( plist->lpPData->dpid != DPID_NAME_SERVER ) &&
+                ( plist->lpPData->dpid != DPID_SERVERPLAYER ) )
+        {
+            /* FIXME: Need to add stuff for flags checking */
+            if ( !enumplayercb( plist->lpPData->dpid, DPPLAYERTYPE_PLAYER,
+                        &plist->lpPData->name, plist->lpPData->dwFlags, context ) )
+              /* User requested break */
+              return DP_OK;
+        }
+
+        if ( DPQ_IS_ENDOFLIST( plist->players ) )
+            break;
     }
-
-    lpPList = DPQ_NEXT( lpPList->players );
-  }
-
-  return DP_OK;
-}
-
-static HRESULT WINAPI IDirectPlay4AImpl_EnumGroupPlayers( IDirectPlay4A *iface, DPID idGroup,
-        GUID *lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2,
-        void *lpContext, DWORD dwFlags )
-{
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_IF_EnumGroupPlayers( This, idGroup, lpguidInstance,
-                               lpEnumPlayersCallback2, lpContext,
-                               dwFlags, TRUE );
-}
-
-static HRESULT WINAPI DirectPlay2WImpl_EnumGroupPlayers
-          ( LPDIRECTPLAY2 iface, DPID idGroup, LPGUID lpguidInstance,
-            LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2,
-            LPVOID lpContext, DWORD dwFlags )
-{
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_IF_EnumGroupPlayers( This, idGroup, lpguidInstance,
-                               lpEnumPlayersCallback2, lpContext,
-                               dwFlags, FALSE );
+    return DP_OK;
 }
 
 /* NOTE: This only enumerates top level groups (created with CreateGroup) */
@@ -4562,7 +4522,7 @@ static const IDirectPlay4Vtbl dp4_vt =
     IDirectPlay4Impl_DeletePlayerFromGroup,
   XCAST(DestroyGroup)DirectPlay2WImpl_DestroyGroup,
   XCAST(DestroyPlayer)DirectPlay2WImpl_DestroyPlayer,
-  XCAST(EnumGroupPlayers)DirectPlay2WImpl_EnumGroupPlayers,
+    IDirectPlay4Impl_EnumGroupPlayers,
     IDirectPlay4Impl_EnumGroups,
     IDirectPlay4Impl_EnumPlayers,
   XCAST(EnumSessions)DirectPlay2WImpl_EnumSessions,
