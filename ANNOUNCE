@@ -1,17 +1,15 @@
-The Wine development release 1.5.26 is now available.
+The Wine development release 1.5.27 is now available.
 
 What's new in this release (see below for details):
-  - OpenGL support in the Mac driver.
-  - Clipboard and drag&drop support in the Mac driver.
-  - Improvements to the URL cache.
-  - Some fixes for ARM binaries.
-  - SPARC platform no longer supported.
+  - System tray support in the Mac driver.
+  - Various C runtime improvements.
+  - Large icons for built-in applications.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://prdownloads.sourceforge.net/wine/wine-1.5.26.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.5/wine-1.5.26.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.5.27.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.5/wine-1.5.27.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -27,376 +25,279 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.5.26 (total 49):
+Bugs fixed in 1.5.27 (total 34):
 
-   1886  windows media player 9 setup fails while registering Portable Media Serial Number Service
-   9548  pxtone: Can't save new project files (*.ptcop), or *.pttune
-  11342  NFS3 demo version does not uninstall
-  12832  Propellerheads reason 4 works a lot slower than on WinXP
-  13155  msvideo problems when running M1.EXE
-  13194  Gordian Knot unable to open codec settings dialog
-  14140  Entropia Universe installer hangs
-  14421  Wing Commander 3 Kilrathi saga edition. Sound Stutters on movie playback
-  16263  Priority: Survive game window flickers
-  16975  [StrongDC++] switching between tabs show background windows
-  17680  nhOneClick: Authorization required message on some HTML pages
-  20637  3DMark 2000, 2001SE - no result of last test
-  21655  MacOS: broken mixing in dsound8 tests + assertion failure
-  22793  JumpGate: The Reconstruction Initiative glitches badly.
-  23100  BURRACO: startup error and then closing connection (needs mshtml.HTMLElement2_insertAdjacentElement impl)
-  27003  Latest gnutls breaks wine ssl support
-  27210  MCM2: wineqtdecoder crashes after intro
-  27320  sims3 crashes after a while in wined3d
-  27466  Listview redraw is broken
-  27854  Listview: custom draw code overwrites text background color when it shouldn't (it seems)
-  27855  entry field in Quicken98-2002 follows keys rather than filling out field
-  28039  IAudioClock_GetPosition must ignore underruns (MacOS)
-  28723  Sound stutter in Rage when emulated windows version is set to "Windows 7" (XAudio2 -> mmdevapi sound output path)
-  28856  Crackling/popping sounds in Starcraft 2 (PulseAudio)
-  29274  Steam on Mac - mic test fails and crashes Counter Strike 1.6
-  30071  Need a CreateTimerQueueTimer that is stable over time
-  30591  Houdini 12.x (3D animation tool) crashes due to unimplemented function msvcrt.dll.__pxcptinfoptrs in "purist" mode (builtin msvcr90)
-  31383  Might and Magic Heroes crashes with GL_INVALID_OPERATION
-  31920  ComboBox in a program written with Delphi is shown incorrectly
-  32276  Railworks 3 2013 Trainsimulator glsl errors.
-  32302  Endless Space >=1.0.25: crash during advanced game
-  32427  Delphi listview: wrong font when using custom draw
-  32541  Endless Space crashes when activating certain options in the menu
-  32766  Multiple applications ported to WinRT/ARM require msvcr110.dll (Miranda IM)
-  32960  Unimplemented function user32.dll.UserHandleGrantAccess
-  33045  Bunch of Heroes freezing on start at the beginning of the intro video
-  33054  Enterprise Architect 10 fails to load EAExample.eap poject
-  33083  Magic: The Gathering Online Wide Beta installer crashes with X error
-  33090  Apache Flex SDK Installer: can not access file system.
-  33102  Drakensang exits with error messages
-  33110  AudioSurf crash on start
-  33144  DnsQuery_A API returns DNS_ERROR_BAD_PACKET when querying for MX records.
-  33151  .NET 2.0 program crashes eInvalidOperationException on startup mscorwks
-  33152  GetAdaptersAddresses reports incorrect address family for IPv4 addresses
-  33168  Disciples: Sacred Lands crashes on start
-  33169  Total Annihilation : Kindoms crashes
-  33197  Multiple applications ported to WinRT/ARM using msvcr110.dll require some msvcrt math functions (Audacity)
-  33198  Multiple applications ported to WinRT/ARM using msvcr110.dll require msvcrt.setjmp
-  33200  AliWangwang: needs unimplemented function atl100.AtlSetPerUserRegistration
+  23082  SlingPlayer 2.x fails when connecting
+  23751  SpongeBob SquarePants: Diner Dash 2 - some icons are garbled
+  24325  MSXML Parser corrupts line breaks
+  24502  SimCity 3000 Unlimited crashes when loading
+  25455  PopCap games installer hangs before showing the license agreement
+  26573  "register with eBay" link in eBay Turbo Lister 9's help file doesn't do anything
+  26586  IXMLHTTPRequest basic authentication doesn't work
+  27578  Cygwin's wget.exe can't download files
+  28667  SlingPlayer 1.5 UI falls apart when streaming
+  29079  Serious Sam HD TSE: low performance
+  29186  QQ International 1.1 doesn't install properly
+  29499  Age of Empires II freezes when disconnecting from a multiplayer room/game using native DirectPlay DLL
+  29627  Metacell demo refuses to run
+  30904  SlingPlayer 1.3 crashes when streaming
+  31546  PS3 gamepad analog sticks problem
+  31656  Call of Cthulhu: DCoTE doesn't run
+  31682  Sony PC Companion 2.10 crashes at the welcome screen
+  32013  RPG Maker games crash - "Failed to load archive."
+  32178  Crash in SlingPlayer 2's help file
+  32558  Visual Studio 2010 (10.0) Express Edition web installer crashes due to winhttp reporting available chunk size > 32 KiB (heap corruption)
+  32992  ARM port of "WabbitEMU" wants KERNEL32.dll.RtlLookupFunctionEntry
+  33103  Nimbus crashes on the level selection screen (needs msvcp90.dll.?_Getcat@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z)
+  33123  Naver LINE doesn't work with builtin msvcr90
+  33201  DVDFab HD Decrypter fails to start with builtin msvcr90
+  33213  Wine crashes if printing images
+  33221  Visual Studio 2008 (9.0) Express Edition cannot compile with builtin msvcr90
+  33228  Icebreakers demo: image missing in the launcher
+  33244  Excel 2007 crash text to columns
+  33254  sprintf doesn't respect _set_output_format for E format
+  33262  Torchlight 2 does not start with builtin msvcr90
+  33271  advapi32 OpenServiceW on non-existing service causes crash in SERV_OpenServiceW() if 'service' debug channel is used
+  33276  Brothers Keeper program, after editing, you cannot stop the program.
+  33278  Torchlight 2 hangs on menu with builtin msvcr90
+  33279  Cygwin wants ntdll.dll.RtlConvertToAutoInheritSecurityObject
 
 ----------------------------------------------------------------
 
-Changes since 1.5.25:
+Changes since 1.5.26:
 
-Akihiro Sagawa (2):
-      msvcrt/tests: Add _wcstoi64/_wcstoui64 tests.
-      msvcrt: Fix incorrect casts in _wcstoi64_l and _wcstoui64_l.
+Akihiro Sagawa (3):
+      msvcrt: Fix mbtowc_l in C locale.
+      msvcrt/tests: Add locale dependent fgetwc tests.
+      msvcrt/tests: Add unicode fgetwc tests.
 
-Alessandro Pignotti (4):
-      strmbase: Remove code duplicated by every user of ISeekingPassThruImpl.
-      qedit: Implement IMediaSeeking and IMediaPosition in sample grabber.
-      quartz: The filter graph manager should handle GetCurrentPosition itself.
-      strmbase: Frame scheduling should use IMediaSample::GetTime.
+Alexandre Julliard (19):
+      winex11: Don't use uninitialized variables (Coverity).
+      wrc: Add support for PNG icons.
+      buildimage: Store large images as raw PNG files in icons.
+      cmd: Add a 256x256 icon.
+      iexplore: Add a 256x256 icon.
+      msiexec: Add a 256x256 icon.
+      notepad: Add a 256x256 icon.
+      regedit: Add a 256x256 icon.
+      taskmgr: Add a 256x256 icon.
+      winecfg: Add a 256x256 icon.
+      winefile: Add a 256x256 icon.
+      winemine: Add a 256x256 icon.
+      winetest: Add a 256x256 icon.
+      winhlp32: Add a 256x256 icon.
+      wordpad: Add a 256x256 icon.
+      appwiz.cpl: Add a 256x256 icon.
+      inetcpl.cpl: Add a 256x256 icon.
+      user32: Add size checks when creating an icon from bitmap info.
+      user32: Constify pointers that point to read-only file data.
 
-Alexandre Julliard (22):
-      vbscript: Tweak enum macros to avoid confusing winapi_extract.
-      gdi32: Store the font stat information when loading it.
-      gdi32: Increment the face refcount when loading the same font file multiple times.
-      winex11: Explicitly set the border pixel when creating the client window.
-      winex11: Wait for the client window to be created on the server side.
-      server: Use socklen_t where appropriate.
-      ws2_32: Use socklen_t where appropriate.
-      winedbg: Use socklen_t where appropriate.
-      winhttp: Always pass a ULONG variable to ioctlsocket.
-      wininet: Always pass a ULONG variable to ioctlsocket.
-      vbscript: Return after assert(0) to silence warnings.
-      jscript: Return after assert(0) to silence warnings.
-      exception.h: Android doesn't have sigsetjmp.
-      winefile: Pass a value instead of a pointer to avoid type mismatch warnings.
-      msi: Avoid intermediate variables when calling create_record.
-      msvcrt: Export the ARM version of some mangled names.
-      msvcrt: Export the float math functions on ARM.
-      msvcrt: Use -arch=i386 everywhere for consistency.
-      msvcrt: Synchronize spec files.
-      ntdll: Copy some missing math functions from msvcrt.
-      ntdll: Copy some missing string functions from msvcrt.
-      ntoskrnl: Synchronize spec file with ntdll and msvcrt.
-
-Alistair Leslie-Hughes (3):
-      msxml3: Add xmlns attribute test.
-      msxml3: Implement IXMLParser Get/Set Factory.
-      msxml3: Implment IXMLParser SetInput.
+Alistair Leslie-Hughes (1):
+      iads.idl: Add missing interfaces.
 
 Andrew Eikum (3):
-      winmm/tests: Add another valid return code.
-      winmm: Truncate buffers to align to frame size.
-      winmm/tests: Add tests for non-block-aligned fragment sizes.
+      riched20: EM_FINDTEXT implementation should match richedit character type.
+      mmdevapi: Don't free resources on PROCESS_DETACH.
+      winmm: Shutdown the devices thread when all devices are closed.
 
-Andrew Talbot (16):
-      winealsa.drv: Avoid signed-unsigned integer comparisons.
-      windowscodecs: Avoid signed-unsigned integer comparisons.
-      mscoree: Remove unneeded address-of operator from function name.
-      wineps.drv: Avoid signed-unsigned integer comparisons.
-      wined3d: Avoid signed-unsigned integer comparisons.
-      winhttp: Avoid signed-unsigned integer comparisons.
-      winex11.drv: Avoid signed-unsigned integer comparisons.
-      xmllite: Avoid signed-unsigned integer comparisons.
-      wsock32: Avoid signed-unsigned integer comparisons.
-      ws2_32: Avoid signed-unsigned integer comparisons.
-      msvcp60: Avoid signed-unsigned integer comparisons.
-      joy.cpl: Avoid signed-unsigned integer comparisons.
-      dwrite: Avoid signed-unsigned integer comparisons.
-      msvcp71: Avoid signed-unsigned integer comparisons.
-      wininet: Avoid signed-unsigned integer comparisons.
-      user32: Avoid signed-unsigned integer comparisons.
+André Hentschel (5):
+      winedump: Recognize IMAGE_DEBUG_TYPE_CLSID.
+      winedump: Dump exception info on ARM.
+      ntdll: Add stubs for RtlAddFunctionTable and RtlDeleteFunctionTable on ARM.
+      ntdll: Implement RtlLookupFunctionEntry on ARM.
+      ntdll: Improve stub for FileFsAttributeInformation in NtQueryVolumeInformationFile.
 
-André Hentschel (17):
-      winetest: Remove SPARC support.
-      dbghelp: Remove SPARC support.
-      kernel32/tests: Remove SPARC support.
-      ntdll: Remove SPARC support.
-      server: Remove SPARC support.
-      winedbg: Remove SPARC support.
-      widl: Remove SPARC and Alpha support.
-      winegcc: Remove SPARC support.
-      winebuild: Remove SPARC support.
-      winedump: Remove SPARC support.
-      libport: Remove SPARC support.
-      winapi: Remove SPARC support.
-      include: Remove SPARC support.
-      winecrt0: Android NDK doesn't have _init and _fini.
-      ntdll: Unify the usage of internal SIGCONTEXT type on ARM and ARM64.
-      winebuild: Remove get_asm_short_keyword.
-      msvcrt: Add setjmp for ARM in spec file.
+Aric Stewart (3):
+      usp10: Correct access to -1 index of array.
+      user32: ImmProcessKey is only called on WM_KEYDOWN and if the message is being removed.
+      imm32/tests: Show behavior with VK_PROCESSKEY in relation to PeekMessage.
+
+Austin English (2):
+      msvcp90/tests: Remove thiscall_thunk_retptr struct definitions.
+      ntdll: Add a stub for RtlConvertToAutoInheritSecurityObject.
 
 C.W. Betts (1):
-      winemac: Fix compilation on Lion and later.
+      winemac: Implement getting and setting screen saver state on OS X.
 
-Daniel Jelinski (6):
-      comctl32/imagelist: Fixed merging of images without mask.
-      comctl32/listview: Fix font handling in custom draw.
-      comctl32/listview: Fix custom draw prepaint handling.
-      comctl32/listview: Correct sending NM_CUSTOMDRAW to subitem 0.
-      comctl32/imagelist: Use proper color format for merged image lists.
+Carlo Bramini (1):
+      inetcpl.cpl: Minor fix, remove useless code.
+
+Daniel Jelinski (2):
       comctl32/listview: Fix overwriting of item values.
+      wined3d: Add NVidia GeForce 315M.
 
 Detlef Riekenberg (1):
-      kernel32/tests: Fix failures with virtual Drives (AppVirt Client).
+      kernel32/tests: Avoid test failure on multicore machines.
 
-Dmitry Timoshkov (13):
-      Revert "gdiplus: Add support for StringFormatFlagsNoClip.".
-      gdiplus: GdipDrawString should not clip the string if StringFormatFlagsNoClip is specified.
-      gdiplus: Add some tests for string format alignment.
-      windowscodecs: Add a test for palette of a PNG image with PLTE and tRNS chunks.
-      windowscodecs: Add a comment to PNG decoder that Windows ignores CRC of the chunks.
-      windowscodecs: Ask libpng to ignore CRC of PNG chunks.
-      windowscodecs: Fix handling of a tRNS PNG chunk in the frame CopyPalette method.
-      gdiplus: Print a passed in rectangle in GdipCombineRegionRect.
-      gdiplus: Protect from mixing BrushTypeLinearGradient and BrushTypePathGradient.
-      gdiplus: Ignore gdiplus page and world transformations when creating a gdi32 clipping region.
-      gdiplus: Add more GdipMeasureString/GdipMeasureCharacterRanges clipping and alignment tests.
-      gdiplus: GdipMeasureCharacterRanges shouldn't add margins to string bounds.
-      gdiplus: GdipMeasureCharacterRanges should treat empty layout extents as infinite when StringFormatFlagsNoClip is specified.
+Dmitry Timoshkov (4):
+      gdi32: Add support for disk-based metafiles to GetMetaFileBitsEx.
+      windowscodecs: Make JPEG decoder fallback to 96 dpi resolution for density_unit == 0 case.
+      ws2_32: Make _is_blocking() return server error code, so that callers can act appropriately.
+      ole32: Fix an apartment reference count leak on error path.
 
-Filip Navara (1):
-      iphlpapi: Use prefixed WS_ structures to avoid misalignment on OS X builds.
-
-Francois Gouget (8):
-      gdiplus/tests: Skip the tests if unable to load the TIFF image.
-      mshtml/tests: Make test_insert_adjacent_elems() static.
-      inetcomm: Make mimebody_create() static.
-      msvcrt: Remove WINAPI on static functions where not needed.
-      qcap: Fix compilation on systems that have v4l1 but not VIDIOCMCAPTURE & co.
-      d3dx9_34: Add a space between the spec entry name and the implementation function.
-      msxml3/tests: Make test_xmlns_attribute() static.
-      msvcr110: Remove an unused debug channel.
+Francois Gouget (1):
+      winhttp: netconn_get_next_line() is not used anymore so remove it.
 
 Frédéric Delanoy (1):
-      vbscript: Specify correct variable in memory allocation check (coverity).
+      wined3d: Add NVIDIA GeForce 410M.
 
-Hans Leidekker (9):
-      winhttp: Use symbolic constants for HTTP status codes.
-      winhttp: Add a helper to retrieve the redirect URL.
-      winhttp: Implement WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP.
-      winhttp: Make sure to clear response headers from a previous request.
-      wininet: Port resolution doesn't depend on the secure flag.
-      winhttp: Make the first parameter of resolve_hostname const.
-      user32: Add a stub implementation of UserHandleGrantAccess.
-      dnsapi: Increase maximum packet size.
-      winhttp: Implement WINHTTP_OPTION_CONNECTION_INFO.
+Hans Leidekker (5):
+      rpcrt4: Use the right port for https connections.
+      winhttp: Add a read-ahead buffer to allow WinHttpQueryDataAvailable to return the right values in chunked mode.
+      winhttp: Remove support for MSG_PEEK.
+      urlmon: Fix handling of mailto URIs in CoInternetCombineUrlEx.
+      mshtml: Don't append slashes to opaque protocol identifiers.
 
-Huw Davies (1):
-      usp10: Don't read past the end of the context_type array.
+Huw Davies (6):
+      riched20: We don't need to special case the PARAFORMAT2 fields since the masks have already been correctly sanitised. This fixes setting PFE_RTLPARA.
+      riched20: Set the bidi base embedding level.
+      riched20: Always write out the color table.
+      gdi32: Printer drivers don't use the character extra spacing if lpdx is supplied.
+      user32: Invalidate the listbox in LB_SETCOUNT.
+      user32: Keep the combo listbox within the monitor's work area.
 
-Jacek Caban (38):
-      jscript: Added jsstr_substr helper and use it in String object implementation.
-      jscript: Use jsstr_substr in jsregexp.c where possible.
-      wininet: Use secure variable instead of ssl_s handle in a few more places.
-      jscript: Added jsstr_flush helper and use it in array_join.
-      jscript: Use jsstr_flush in Error_toString.
-      jscript: Use jsstr_flush in construct_function.
-      jscript: Use jsstr_flush in jsstr_concat.
-      jscript: Use jsstr_flush in jsval_to_variant.
-      jscript: Use jsstr_flush in variant_change_type.
-      jscript: Use jsstr_flush in String_concat.
-      jscript: Reimplemented do_attributeless_tag_format without direct access to object's string buffer.
-      jscript: Reimplemented do_attribute_tag_format without direct access to object's string buffer.
-      jscript: Use (index,length) pair as match result.
-      jscript: Use jsstr_flush in literal_as_bstr.
-      urlmon: Fixed handling binding reading immediately from cache.
-      urlmon: Added HTTP cache reading tests.
-      wininet: Fixed crash in chunked_read if netconn is not available.
-      jscript: Pass msg as jsstr_t to create_error.
-      jscript: Reuse static instance of 'undefined' string.
-      jscript: Avoid direct access to string buffer in a few more places.
-      urlmon: Fixed some test failures on IE10.
-      wininet: Don't pass expected cache file size to CreateUrlCacheEntry if it's unknown.
-      wininet: Added a test of request reading from cache.
-      wininet: Skip test_open_url_async on IEs older than 7.
-      jscript: Use BSTR also for pure IDispatch call in disp_delete_name.
-      jscript: Use BSTR also for pure IDispatch call in disp_get_id.
-      jscript: Use BSTR also for pure IDispatch call in Object.hasOwnProperty.
-      winnt.h: Added GCC variant of DEFAULT_UNREACHABLE macro.
-      vbscript: Use DEFAULT_UNREACHABLE macro where appropriate.
-      jscript: Use DEFAULT_UNREACHABLE macro where appropriate.
-      msctf.idl: Added ITfContextOwnerServices declaration.
-      mshtml.idl: Added IHTMLButtonElement and DispHTMLButtonElement declarations.
-      mshtml: Added IHTMLButtonElement stub implementation.
-      wininet: Use parsed status_code to test for CONTINUE HTTP response.
-      mshtml: Don't use getElementsByTagNameNS in IHTMLDocument3::getElementsByTagName implementation.
-      mshtml: Use lazy allocation for connection points.
-      mshtml: Added HTMLElementEvents2 support.
-      mshtml: Added HTMLElementEvents2 tests.
+Jacek Caban (24):
+      mshtml: Added IHTMLButtonElement::name implementation.
+      mshtml: Added IHTMLButtonElement::name tests.
+      jscript: Return buffer pointer separately from jsstr_t from jsstr_alloc_len.
+      secur32: Pass whole schan_credentials struct to schannel backend implementations.
+      jscript: Added jsstr_flatten helper and use it to access string buffer in date.c.
+      jscript: Use jsstr_flatten to access string buffer in dispex.c.
+      jscript: Use jsstr_flatten to access string buffer in jsutils.c.
+      urlmon: Fixed handling URIs with implicit file scheme in CoInternetCombineUrlEx.
+      mshtml: Use Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME in CreateUri calls.
+      jscript: Added to_flat_string helper and use it to access string buffer in activex.c.
+      jscript: Use to_flat_string to access string buffer in array.c.
+      jscript: Use helpers to access string buffer in engine.c.
+      jscript: Use helpers to access string buffer in global.c.
+      jscript: Use helpers to access string buffer in object.c.
+      secur32: Added support for grbitEnabledProtocols in schan_AcquireClientCredentials.
+      secur32: Added SECPKG_ATTR_SUPPORTED_PROTOCOLS implementation.
+      secur32: Added SECPKG_ATTR_SUPPORTED_PROTOCOLS tests.
+      mshtml: Added IHTMLButtonElement::disabled implementation.
+      mshtml: Added IHTMLButtonElement::disabled tests.
+      urlmon: Delay processing notifications from Read during MIME verification.
+      libwine: Added tid debug channel support on native Windows builds.
+      jscript: Added jsstr_extract helper and use it in String.charCodeAt implementation.
+      jscript: Use helpers to access string buffer in some String functions.
+      secur32: Take schannel backend capabilities into account when configuring enabled protocols.
 
 Jactry Zeng (1):
-      atl100: Added AtlSetPerUserRegistration stub implementation.
+      msvcrt: Added _wcsncoll and _wcsncoll_l implementation.
 
-Jeff Muizelaar (1):
-      dbghelp: Store the vendor id in the correct order.
+Jimmy Rentz (1):
+      advapi32: Fix segfault in OpenService.
 
-Jörg Höhle (3):
-      winmm: Don't log the uninitialised MCI output buffer in case of error.
-      mmsystem: MIDIHDR.dwOffset exists since Win 32 only, not in 16 bit code.
-      winmm: Fix GetPosition when using MSACM codecs.
+Ken Thomases (19):
+      winemac: Rename create_cgimage_from_icon() to create_cgimage_from_icon_bitmaps().
+      winemac: Move create_cgimage_from_icon_bitmaps() into new module, image.c.
+      winemac: Set application Dock icon from first icon resource in process's .exe file.
+      winemac: Implement rudimentary support for system tray icons as Mac status items.
+      winemac: Allow Command-[Shift-]Tab to switch apps even when the displays are captured.
+      winemac: Don't read an array at index -1 in debugstr_pf().
+      winemac: Implement GetDeviceGammaRamp() and SetDeviceGammaRamp().
+      winemac: Specify import and export functions explicitly in builtin_format_names[].
+      winemac: Support CFSTR_SHELLURLW (UniformResourceLocator) clipboard format, mapped to public.url.
+      explorer: Create desktop window hidden and only show it if it wins the race.
+      winemac: Keep stable surface for layered windows using UpdateLayeredWindow().
+      winemac: Use kCGLPFANoRecovery for accelerated pixel formats in create_context().
+      winemac: Set the ordering of color modes explicitly to reduce chance of picking an odd one.
+      winemac: Synthesize 8- and 16-bpp display modes if the system doesn't provide any.
+      winemac: Don't override -[NSOpenGLContext clearDrawable], just use our own method.
+      winemac: Add proper locking in macdrv_surface_set_region().
+      winemac: Invalidate window shadow on every draw for transparent windows.
+      winemac: Draw surface region rects separately instead of clipping one big draw.
+      winemac: Track drawn surface region to reduce black flicker for new or resized windows.
 
-Ken Thomases (28):
-      winemac: Fail gracefully and early when run from a non-GUI session.
-      winemac: Implement OpenGL support.
-      winemac: Implement WGL_ARB_make_current_read.
-      winemac: Implement WGL_ARB_pixel_format and enable dependent extensions.
-      winemac: Implement WGL_ARB_pbuffer.
-      winemac: Implement WGL_ARB_render_texture.
-      winemac: Implement WGL_NV_render_texture_rectangle.
-      winemac: Implement WGL_EXT_swap_control.
-      winemac: Improve handling of "invert" pixels in monochrome cursors.
-      winemac: Don't defer attaching OpenGL context to view if it is backed by a window device.
-      winemac: Override -[NSOpenGLContext clearDrawable] to not hide the GL surface.
-      winemac: Implement CountClipboardFormats() with support for text formats.
-      winemac: Implement IsClipboardFormatAvailable() with support for text formats.
-      winemac: Implement EnumClipboardFormats() with support for text formats.
-      winemac: Implement GetClipboardData() with support for text formats.
-      winemac: Implement setting of clipboard data with support for text formats.
-      winemac: Add support for "query" events which wait for synchronous responses.
-      winemac: Add support for delay-rendered (a.k.a. promised) clipboard data.
-      winemac: Add clipboard formats which can or must be put on Mac pasteboard without transformation.
-      winemac: Add support for CF_DIB and CF_BITMAP clipboard formats.
-      winemac: Synthesize additional bitmap pasteboard types from any that Cocoa can convert.
-      winemac: Add support for CF_HDROP clipboard format, mapped to/from Cocoa's NSFilenamesPboardType.
-      winemac: Allow for processing Cocoa events while waiting for query results.
-      winemac: Enable pasteboard functions to operate on arbitrary pasteboards.
-      winemac: Extract new function from macdrv_GetClipboardData() parameterized by the target pasteboard.
-      winemac: Extract new function from macdrv_IsClipboardFormatAvailable() parameterized by the target pasteboard.
-      winemac: Extract new function from macdrv_EnumClipboardFormats() parameterized by the target pasteboard.
-      winemac: Implement support for drag-and-drop.
+Lucas Zawacki (1):
+      dinput: Initialize all axis (from 0 to ABS_MAX) with -1.
 
-Lauri Kenttä (1):
-      po: Update Finnish translation.
+Marcus Meissner (5):
+      jscript: Check the correct heap return condition (Coverity).
+      windowscodecs: Do not leak profile on errors (Coverity).
+      jscript: Fix warning with older compilers.
+      urlmon: Pass up error on error condition (Coverity).
+      strmbase: Fixed user-after-free (Coverity).
 
-Marcus Meissner (2):
-      msxml3: Initialize hr (Coverity).
-      quartz: Free wszPatternString (Coverity).
+Michael Stefaniuc (10):
+      dplayx: Get rid of LPCLASSFACTORY and use a better name for the methods.
+      dplayx: Fix QueryInterface, AddRef and Release methods for IClassFactory.
+      dplayx: Fix DllGetClassObject().
+      dplayx: Have the decency to support IUnknown in DirectPlay.
+      dplayx/tests: Remove superfluous void pointer casts.
+      dplayx/tests: Get rid of the LPDIRECTPLAY type usage.
+      dplayx/tests: Add DirectPlay COM tests.
+      dplayx: Get rid of the unused DirectPlay3Data / DirectPlay4Data fields.
+      dplayx: Remove the duplicated IDirectPlayXImpl structs.
+      dplayx: Get rid of the useless IDirectPlay{2,3} vtables.
 
-Michael Stefaniuc (14):
-      inetcomm: COM cleanup for the IMimeMessage iface.
-      inetcomm: Pass the object instead of an iface to a helper function.
-      inetcomm: COM cleanup for the IMimeSecurity iface.
-      inetcomm: Use a static interface instance for IMimeAllocator.
-      inetcomm: COM cleanup for the IMimeBody iface.
-      inetcomm: Include the object instead of IMimeBody in struct body_t.
-      inetcomm: COM cleanup for the IStream iface.
-      mpr: Use offsetof for the size of structs with varlen arrays.
-      avifil32: COM cleanup for the IAVIFile iface.
-      avifil32: Merge and cleanup the IPersistFile iface.
-      avifil32: Avoid forward declaration of IAVIFile/IPersistFile methods.
-      avifil32: Support COM aggregation for AVIFile.
-      avifil32/tests: Add COM tests for AVIFile.
-      kernel32: Avoid TRUE FALSE conditional expressions.
+Nikolay Sivov (8):
+      msxml3: Embed user/password in uri used to create a moniker.
+      xmllite: Partially implement value normalization for CDATA sections.
+      hlink: Implement HlinkUpdateStackItem().
+      hlink: Remove useless initializers.
+      hlink: Add link stack to browser context.
+      hlink: Implement IHlinkBrowseContext_GetHlink().
+      hlink: Implement IHlinkBrowseContext_UpdateHlink().
+      hlink: Implement IHlinkBrowseContext_SetCurrentHlink().
 
-Nikolay Sivov (14):
-      msxml3: Filter unsupported child nodes in insertBefore() for elements.
-      msxml3: CDATA nodes can't have children.
-      xmllite: Support pending input reads for PI nodes.
-      xmllite: Support resuming for start tag.
-      xmllite: Actually resume comment and PI parsing while on Misc part.
-      xmllite: Support CDATA nodes.
-      xmllite: Support resuming to comments and PIs while on Content part.
-      xmllite: Make another read attempt if we don't have enough data initially.
-      xmllite: Fix a test failure on Windows 8.
-      msxml3: Added a simple test for CDATA processing with SAX reader.
-      msxml3: Fix some test failures on Windows 8.
-      msxml3: Process CDATA section before reporting it.
-      msxml3: Use characters callback helper in one more place.
-      xmllite: Implement ReadValueChunk().
+Phil Krylov (1):
+      usp10: Support GPOS extension lookup subtables.
 
-Nozomi Kodama (2):
-      d3dx9: Implement D3DXSHEvalConeLight.
-      d3dx9: Save multiplications for better performance.
+Piotr Caban (46):
+      msvcp90: Added time_put class stub.
+      msvcp90: Added time_put class implementation.
+      msvcp90: Added collate facet to locale object.
+      msvcp90: Added time_put facet to locale object.
+      msvcp: Sync implementations.
+      vbscript: Added IMatchCollection interface to MatchCollection2 object.
+      vbscript: Added IMatch interface to Match2 object.
+      msvcrt: Remove incorrect cast in fgetws function.
+      msvcrt: Fixed fgetwc behavior on multibyte characters and Unicode files.
+      msvcrt: Fixed copied buffer size in _ui64tow_s.
+      wininet: Rename HASH_CACHEFILE_ENTRY to entry_hash_table.
+      wininet: Rename URLCACHE_HEADER to urlcache_header.
+      wininet: Rename STREAM_HANDLE to stream_handle.
+      wininet: Rename URLCACHECONTAINER to cache_container.
+      wininet: Rename URLCacheFindEntryHandle to find_handle.
+      wininet: Rename URLCache_* functions to urlcache_*.
+      wininet: Rename URLCacheContainers_* functions to cache_containers_*.
+      wininet: Reorder functions to avoid urlcache_create_hash_table forward declaration.
+      msvcp80: Fixed typo in spec file.
+      msvcp: Match parameters list and architecture with function we're forwarding to.
+      msvcrt: Match architecture with function we're forwarding to.
+      msvcrt20: Match parameters list with function we're forwarding to.
+      d3dx10: Match parameters list with function we're forwarding to.
+      shell32: Match parameters list with function we're forwarding to.
+      imagehlp: Match parameters list with function we're forwarding to.
+      wmi: Match parameters list with function we're forwarding to.
+      msvcrt: Added _set_output_format implementation.
+      msvcrt: Added _set_output_format tests.
+      msvcrt: Don't forward _wcsicmp to ntdll.
+      msvcrt: Don't forward _wtoi to ntdll.
+      msvcrt: Added _wtol_l implementation.
+      msvcrt: Don't forward atoi to ntdll.
+      msvcrt: Don't forward memset to ntdll.
+      msvcrt: Don't forward strchr to ntdll.
+      msvcrt: Don't forward strncmp to ntdll.
+      msvcrt: Don't forward strncpy to ntdll.
+      msvcrt: Don't forward towupper and towlower to ntdll.
+      msvcrt: Don't forward wcsncpy to ntdll.
+      msvcrt: Added _wcstoul_l implementation.
+      msvcrt: Don't forward _getpid to kernel32.
+      msvcrt: Sync spec files.
+      msvcr90: Don't forward new and delete to msvcrt.
+      msvcr90: Don't forward set_se_translator to msvcrt.
+      msvcrt: Update spec file with functions added in newer version of the dll.
+      msvcrt: Move fread_s function to msvcrt.
+      kernel32: Fixed copy-paste error in IdnToUnicode.
 
-Petr Kočandrle (2):
-      po: Completed WineMine Czech translation.
-      po: Completed winecfg and clock Czech translation.
-
-Piotr Caban (22):
-      msvcrt: Don't duplicate standard handles during initialization.
-      msvcrt: Reuse standard file descriptors after closing them.
-      msvcrt: Added stdin close/open tests.
-      msvcrt: Rename msvcrt_alloc_fd_from to msvcrt_set_fd.
-      msvcrt: Don't set unhandled exception filter, XcptFilter is responsible for handling signals.
-      msvcrt: Added __pxcptinfoptrs implementation.
-      msvcrt: Added __pxcptinfoptrs tests.
-      msvcr90: Check more fields in _getptd tests.
-      ieframe: Pass BSTR to handle_navigation_error.
-      wininet: Improved urlcache debug traces.
-      wininet: Cleanup and optimize URLCacheContainer_OpenIndex function.
-      wininet: Added better urlcache index file validation on first open.
-      wininet: Rename URLCacheContainer_* functions to cache_container_*.
-      cryptnet: Lock cache file while accessing it.
-      cryptnet: Open file with FILE_SHARE_READ flag in File_RetrieveEncodedObjectW.
-      cryptnet: Don't ignore HttpEndRequestW error in HTTP_RetrieveEncodedObjectW.
-      wininet: Don't create cache file if it's forbidden.
-      wininet: Test if cache entry is created when INTERNET_FLAG_NO_CACHE_WRITE flag is used.
-      wininet: Added tests for Cache-Control: no-cache and no-store HTTP headers.
-      wininet: Rename CACHEFILE_ENTRY to entry_header.
-      wininet: Rename URL_CACHEFILE_ENTRY to entry_url.
-      msvcrt: Limit access to out buffer in fread function.
-
-Sergey Guralnik (1):
-      user32: Use window height/width instead of client for combo resizing.
-
-Stefan Dösinger (3):
-      ddraw/tests: Use a TnLHal device only if supported in ddraw7 tests.
-      ddraw/tests: Use a software VP device in test_surface_interface_mismatch.
-      ddraw/tests: Use hardware VP only if available in the visual tests.
-
-Stefan Leichter (1):
-      msvcr110: Add VS2012 C/C++ runtime.
-
-Tijl Coosemans (1):
-      winebuild: Don't register cleanup function when --save-temps is passed after --output.
-
-Vincent Povirk (4):
-      gdiplus: Store the image type on a Graphics object in case the image is freed.
-      gdiplus: Fix GdipCreateBitmapFromGraphics implementation.
-      gdiplus: Also get a DC for drawing WMF images.
-      gdiplus: Correct EMF record size calculation.
-
-Volkan Gezer (1):
-      po: Updated Turkish translation.
+Qian Hong (5):
+      atl100/tests: Added class name test for AtlAxWinInit.
+      atl100: Fixed register class names in AtlAxWinInit.
+      atl100: Fixed register class types in AtlAxWinInit.
+      atl80: Don't forward AtlAxWinInit to atl100.
+      atl: Don't forward AtlAxWinInit to atl100.
 
 --
 Alexandre Julliard
