@@ -77,12 +77,7 @@ static BOOL CALLBACK cbRemoveGroupOrPlayer( DPID dpId, DWORD dwPlayerType,
 static void DP_DeleteGroup( IDirectPlay2Impl* This, DPID dpid );
 
 /* Forward declarations of virtual tables */
-static const IDirectPlay2Vtbl directPlay2AVT;
-static const IDirectPlay3Vtbl directPlay3AVT;
 static const IDirectPlay4Vtbl directPlay4AVT;
-
-static const IDirectPlay2Vtbl directPlay2WVT;
-static const IDirectPlay3Vtbl directPlay3WVT;
 static const IDirectPlay4Vtbl directPlay4WVT;
 
 /* Helper methods for player/group interfaces */
@@ -404,17 +399,11 @@ HRESULT DP_CreateInterface
   if( !This )
     return DPERR_OUTOFMEMORY;
 
-  if( IsEqualGUID( &IID_IDirectPlay2, riid ) )
-    This->lpVtbl = &directPlay2WVT;
-  else if( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlay2A, riid ) )
-    This->lpVtbl = &directPlay2AVT;
-  else if( IsEqualGUID( &IID_IDirectPlay3, riid ) )
-    This->lpVtbl = &directPlay3WVT;
-  else if( IsEqualGUID( &IID_IDirectPlay3A, riid ) )
-    This->lpVtbl = &directPlay3AVT;
-  else if( IsEqualGUID( &IID_IDirectPlay4, riid ) )
+  if( IsEqualGUID( &IID_IDirectPlay2, riid ) || IsEqualGUID( &IID_IDirectPlay3, riid ) ||
+      IsEqualGUID( &IID_IDirectPlay4, riid ) )
     This->lpVtbl = &directPlay4WVT;
-  else if( IsEqualGUID( &IID_IDirectPlay4A, riid ) )
+  else if( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlay2A, riid ) ||
+           IsEqualGUID( &IID_IDirectPlay3A, riid ) || IsEqualGUID( &IID_IDirectPlay4A, riid ) )
     This->lpVtbl = &directPlay4AVT;
   else
   {
@@ -465,32 +454,14 @@ static HRESULT WINAPI DP_QueryInterface
   CopyMemory( *ppvObj, This, sizeof( *This )  );
   (*(IDirectPlay2Impl**)ppvObj)->ulInterfaceRef = 0;
 
-  if( IsEqualGUID( &IID_IDirectPlay2, riid ) )
-  {
-    IDirectPlay2Impl *This = *ppvObj;
-    This->lpVtbl = &directPlay2WVT;
-  }
-  else if( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlay2A, riid ) )
-  {
-    IDirectPlay2AImpl *This = *ppvObj;
-    This->lpVtbl = &directPlay2AVT;
-  }
-  else if( IsEqualGUID( &IID_IDirectPlay3, riid ) )
-  {
-    IDirectPlay3Impl *This = *ppvObj;
-    This->lpVtbl = &directPlay3WVT;
-  }
-  else if( IsEqualGUID( &IID_IDirectPlay3A, riid ) )
-  {
-    IDirectPlay3AImpl *This = *ppvObj;
-    This->lpVtbl = &directPlay3AVT;
-  }
-  else if( IsEqualGUID( &IID_IDirectPlay4, riid ) )
+  if( IsEqualGUID( &IID_IDirectPlay2, riid ) || IsEqualGUID( &IID_IDirectPlay3, riid ) ||
+      IsEqualGUID( &IID_IDirectPlay4, riid ) )
   {
     IDirectPlay4Impl *This = *ppvObj;
     This->lpVtbl = &directPlay4WVT;
   }
-  else if( IsEqualGUID( &IID_IDirectPlay4A, riid ) )
+  else if( IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IDirectPlay2A, riid ) ||
+          IsEqualGUID( &IID_IDirectPlay3A, riid ) || IsEqualGUID( &IID_IDirectPlay4A, riid ) )
   {
     IDirectPlay4AImpl *This = *ppvObj;
     This->lpVtbl = &directPlay4AVT;
@@ -4743,218 +4714,6 @@ static HRESULT WINAPI DirectPlay4WImpl_CancelPriority
   return DP_IF_CancelMessage( This, 0, DPCANCELSEND_PRIORITY, dwMinPriority,
                               dwMaxPriority, FALSE );
 }
-
-/* Note: Hack so we can reuse the old functions without compiler warnings */
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlay2WVT.fun))
-#else
-# define XCAST(fun)     (void*)
-#endif
-
-static const IDirectPlay2Vtbl directPlay2WVT =
-{
-  XCAST(QueryInterface)DP_QueryInterface,
-  XCAST(AddRef)DP_AddRef,
-  XCAST(Release)DP_Release,
-
-  DirectPlay2WImpl_AddPlayerToGroup,
-  DirectPlay2WImpl_Close,
-  DirectPlay2WImpl_CreateGroup,
-  DirectPlay2WImpl_CreatePlayer,
-  DirectPlay2WImpl_DeletePlayerFromGroup,
-  DirectPlay2WImpl_DestroyGroup,
-  DirectPlay2WImpl_DestroyPlayer,
-  DirectPlay2WImpl_EnumGroupPlayers,
-  DirectPlay2WImpl_EnumGroups,
-  DirectPlay2WImpl_EnumPlayers,
-  DirectPlay2WImpl_EnumSessions,
-  DirectPlay2WImpl_GetCaps,
-  DirectPlay2WImpl_GetGroupData,
-  DirectPlay2WImpl_GetGroupName,
-  DirectPlay2WImpl_GetMessageCount,
-  DirectPlay2WImpl_GetPlayerAddress,
-  DirectPlay2WImpl_GetPlayerCaps,
-  DirectPlay2WImpl_GetPlayerData,
-  DirectPlay2WImpl_GetPlayerName,
-  DirectPlay2WImpl_GetSessionDesc,
-  DirectPlay2WImpl_Initialize,
-  DirectPlay2WImpl_Open,
-  DirectPlay2WImpl_Receive,
-  DirectPlay2WImpl_Send,
-  DirectPlay2WImpl_SetGroupData,
-  DirectPlay2WImpl_SetGroupName,
-  DirectPlay2WImpl_SetPlayerData,
-  DirectPlay2WImpl_SetPlayerName,
-  DirectPlay2WImpl_SetSessionDesc
-};
-#undef XCAST
-
-/* Note: Hack so we can reuse the old functions without compiler warnings */
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlay2AVT.fun))
-#else
-# define XCAST(fun)     (void*)
-#endif
-
-static const IDirectPlay2Vtbl directPlay2AVT =
-{
-  XCAST(QueryInterface)DP_QueryInterface,
-  XCAST(AddRef)DP_AddRef,
-  XCAST(Release)DP_Release,
-
-  DirectPlay2AImpl_AddPlayerToGroup,
-  DirectPlay2AImpl_Close,
-  DirectPlay2AImpl_CreateGroup,
-  DirectPlay2AImpl_CreatePlayer,
-  DirectPlay2AImpl_DeletePlayerFromGroup,
-  DirectPlay2AImpl_DestroyGroup,
-  DirectPlay2AImpl_DestroyPlayer,
-  DirectPlay2AImpl_EnumGroupPlayers,
-  DirectPlay2AImpl_EnumGroups,
-  DirectPlay2AImpl_EnumPlayers,
-  DirectPlay2AImpl_EnumSessions,
-  DirectPlay2AImpl_GetCaps,
-  DirectPlay2AImpl_GetGroupData,
-  DirectPlay2AImpl_GetGroupName,
-  DirectPlay2AImpl_GetMessageCount,
-  DirectPlay2AImpl_GetPlayerAddress,
-  DirectPlay2AImpl_GetPlayerCaps,
-  DirectPlay2AImpl_GetPlayerData,
-  DirectPlay2AImpl_GetPlayerName,
-  DirectPlay2AImpl_GetSessionDesc,
-  DirectPlay2AImpl_Initialize,
-  DirectPlay2AImpl_Open,
-  DirectPlay2AImpl_Receive,
-  DirectPlay2AImpl_Send,
-  DirectPlay2AImpl_SetGroupData,
-  DirectPlay2AImpl_SetGroupName,
-  DirectPlay2AImpl_SetPlayerData,
-  DirectPlay2AImpl_SetPlayerName,
-  DirectPlay2AImpl_SetSessionDesc
-};
-#undef XCAST
-
-
-/* Note: Hack so we can reuse the old functions without compiler warnings */
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlay3AVT.fun))
-#else
-# define XCAST(fun)     (void*)
-#endif
-
-static const IDirectPlay3Vtbl directPlay3AVT =
-{
-  XCAST(QueryInterface)DP_QueryInterface,
-  XCAST(AddRef)DP_AddRef,
-  XCAST(Release)DP_Release,
-
-  XCAST(AddPlayerToGroup)DirectPlay2AImpl_AddPlayerToGroup,
-  XCAST(Close)DirectPlay2AImpl_Close,
-  XCAST(CreateGroup)DirectPlay2AImpl_CreateGroup,
-  XCAST(CreatePlayer)DirectPlay2AImpl_CreatePlayer,
-  XCAST(DeletePlayerFromGroup)DirectPlay2AImpl_DeletePlayerFromGroup,
-  XCAST(DestroyGroup)DirectPlay2AImpl_DestroyGroup,
-  XCAST(DestroyPlayer)DirectPlay2AImpl_DestroyPlayer,
-  XCAST(EnumGroupPlayers)DirectPlay2AImpl_EnumGroupPlayers,
-  XCAST(EnumGroups)DirectPlay2AImpl_EnumGroups,
-  XCAST(EnumPlayers)DirectPlay2AImpl_EnumPlayers,
-  XCAST(EnumSessions)DirectPlay2AImpl_EnumSessions,
-  XCAST(GetCaps)DirectPlay2AImpl_GetCaps,
-  XCAST(GetGroupData)DirectPlay2AImpl_GetGroupData,
-  XCAST(GetGroupName)DirectPlay2AImpl_GetGroupName,
-  XCAST(GetMessageCount)DirectPlay2AImpl_GetMessageCount,
-  XCAST(GetPlayerAddress)DirectPlay2AImpl_GetPlayerAddress,
-  XCAST(GetPlayerCaps)DirectPlay2AImpl_GetPlayerCaps,
-  XCAST(GetPlayerData)DirectPlay2AImpl_GetPlayerData,
-  XCAST(GetPlayerName)DirectPlay2AImpl_GetPlayerName,
-  XCAST(GetSessionDesc)DirectPlay2AImpl_GetSessionDesc,
-  XCAST(Initialize)DirectPlay2AImpl_Initialize,
-  XCAST(Open)DirectPlay2AImpl_Open,
-  XCAST(Receive)DirectPlay2AImpl_Receive,
-  XCAST(Send)DirectPlay2AImpl_Send,
-  XCAST(SetGroupData)DirectPlay2AImpl_SetGroupData,
-  XCAST(SetGroupName)DirectPlay2AImpl_SetGroupName,
-  XCAST(SetPlayerData)DirectPlay2AImpl_SetPlayerData,
-  XCAST(SetPlayerName)DirectPlay2AImpl_SetPlayerName,
-  XCAST(SetSessionDesc)DirectPlay2AImpl_SetSessionDesc,
-
-  DirectPlay3AImpl_AddGroupToGroup,
-  DirectPlay3AImpl_CreateGroupInGroup,
-  DirectPlay3AImpl_DeleteGroupFromGroup,
-  DirectPlay3AImpl_EnumConnections,
-  DirectPlay3AImpl_EnumGroupsInGroup,
-  DirectPlay3AImpl_GetGroupConnectionSettings,
-  DirectPlay3AImpl_InitializeConnection,
-  DirectPlay3AImpl_SecureOpen,
-  DirectPlay3AImpl_SendChatMessage,
-  DirectPlay3AImpl_SetGroupConnectionSettings,
-  DirectPlay3AImpl_StartSession,
-  DirectPlay3AImpl_GetGroupFlags,
-  DirectPlay3AImpl_GetGroupParent,
-  DirectPlay3AImpl_GetPlayerAccount,
-  DirectPlay3AImpl_GetPlayerFlags
-};
-#undef XCAST
-
-/* Note: Hack so we can reuse the old functions without compiler warnings */
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlay3WVT.fun))
-#else
-# define XCAST(fun)     (void*)
-#endif
-static const IDirectPlay3Vtbl directPlay3WVT =
-{
-  XCAST(QueryInterface)DP_QueryInterface,
-  XCAST(AddRef)DP_AddRef,
-  XCAST(Release)DP_Release,
-
-  XCAST(AddPlayerToGroup)DirectPlay2WImpl_AddPlayerToGroup,
-  XCAST(Close)DirectPlay2WImpl_Close,
-  XCAST(CreateGroup)DirectPlay2WImpl_CreateGroup,
-  XCAST(CreatePlayer)DirectPlay2WImpl_CreatePlayer,
-  XCAST(DeletePlayerFromGroup)DirectPlay2WImpl_DeletePlayerFromGroup,
-  XCAST(DestroyGroup)DirectPlay2WImpl_DestroyGroup,
-  XCAST(DestroyPlayer)DirectPlay2WImpl_DestroyPlayer,
-  XCAST(EnumGroupPlayers)DirectPlay2WImpl_EnumGroupPlayers,
-  XCAST(EnumGroups)DirectPlay2WImpl_EnumGroups,
-  XCAST(EnumPlayers)DirectPlay2WImpl_EnumPlayers,
-  XCAST(EnumSessions)DirectPlay2WImpl_EnumSessions,
-  XCAST(GetCaps)DirectPlay2WImpl_GetCaps,
-  XCAST(GetGroupData)DirectPlay2WImpl_GetGroupData,
-  XCAST(GetGroupName)DirectPlay2WImpl_GetGroupName,
-  XCAST(GetMessageCount)DirectPlay2WImpl_GetMessageCount,
-  XCAST(GetPlayerAddress)DirectPlay2WImpl_GetPlayerAddress,
-  XCAST(GetPlayerCaps)DirectPlay2WImpl_GetPlayerCaps,
-  XCAST(GetPlayerData)DirectPlay2WImpl_GetPlayerData,
-  XCAST(GetPlayerName)DirectPlay2WImpl_GetPlayerName,
-  XCAST(GetSessionDesc)DirectPlay2WImpl_GetSessionDesc,
-  XCAST(Initialize)DirectPlay2WImpl_Initialize,
-  XCAST(Open)DirectPlay2WImpl_Open,
-  XCAST(Receive)DirectPlay2WImpl_Receive,
-  XCAST(Send)DirectPlay2WImpl_Send,
-  XCAST(SetGroupData)DirectPlay2WImpl_SetGroupData,
-  XCAST(SetGroupName)DirectPlay2WImpl_SetGroupName,
-  XCAST(SetPlayerData)DirectPlay2WImpl_SetPlayerData,
-  XCAST(SetPlayerName)DirectPlay2WImpl_SetPlayerName,
-  XCAST(SetSessionDesc)DirectPlay2WImpl_SetSessionDesc,
-
-  DirectPlay3WImpl_AddGroupToGroup,
-  DirectPlay3WImpl_CreateGroupInGroup,
-  DirectPlay3WImpl_DeleteGroupFromGroup,
-  DirectPlay3WImpl_EnumConnections,
-  DirectPlay3WImpl_EnumGroupsInGroup,
-  DirectPlay3WImpl_GetGroupConnectionSettings,
-  DirectPlay3WImpl_InitializeConnection,
-  DirectPlay3WImpl_SecureOpen,
-  DirectPlay3WImpl_SendChatMessage,
-  DirectPlay3WImpl_SetGroupConnectionSettings,
-  DirectPlay3WImpl_StartSession,
-  DirectPlay3WImpl_GetGroupFlags,
-  DirectPlay3WImpl_GetGroupParent,
-  DirectPlay3WImpl_GetPlayerAccount,
-  DirectPlay3WImpl_GetPlayerFlags
-};
-#undef XCAST
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
