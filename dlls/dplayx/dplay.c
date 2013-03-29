@@ -143,9 +143,6 @@ static HRESULT DP_SP_SendEx
 static HRESULT DP_IF_SetGroupData
           ( IDirectPlay2Impl* This, DPID idGroup, LPVOID lpData,
             DWORD dwDataSize, DWORD dwFlags, BOOL bAnsi );
-static HRESULT DP_IF_GetPlayerCaps
-          ( IDirectPlay2Impl* This, DPID idPlayer, LPDPCAPS lpDPCaps,
-            DWORD dwFlags );
 static HRESULT DP_IF_CancelMessage
           ( IDirectPlay4Impl* This, DWORD dwMsgID, DWORD dwFlags,
             DWORD dwMinPriority, DWORD dwMaxPriority, BOOL bAnsi );
@@ -2066,28 +2063,6 @@ static HRESULT WINAPI DirectPlay2WImpl_EnumSessions
                              lpContext, dwFlags, FALSE );
 }
 
-static HRESULT DP_IF_GetPlayerCaps
-          ( IDirectPlay2Impl* This, DPID idPlayer, LPDPCAPS lpDPCaps,
-            DWORD dwFlags )
-{
-  DPSP_GETCAPSDATA data;
-
-  TRACE("(%p)->(0x%08x,%p,0x%08x)\n", This, idPlayer, lpDPCaps, dwFlags);
-
-  if ( This->dp2->connectionInitialized == NO_PROVIDER )
-  {
-    return DPERR_UNINITIALIZED;
-  }
-
-  /* Query the service provider */
-  data.idPlayer = idPlayer;
-  data.dwFlags  = dwFlags;
-  data.lpCaps   = lpDPCaps;
-  data.lpISP    = This->dp2->spData.lpISP;
-
-  return (*This->dp2->spData.lpCB->GetCaps)( &data );
-}
-
 static HRESULT WINAPI IDirectPlay4AImpl_GetCaps( IDirectPlay4A *iface, DPCAPS *caps, DWORD flags )
 {
     return IDirectPlayX_GetPlayerCaps( iface, DPID_ALLPLAYERS, caps, flags );
@@ -2247,19 +2222,31 @@ static HRESULT WINAPI IDirectPlay4Impl_GetPlayerAddress( IDirectPlay4 *iface, DP
     return DP_OK;
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_GetPlayerCaps( IDirectPlay4A *iface, DPID idPlayer,
-        DPCAPS *lpPlayerCaps, DWORD dwFlags )
+static HRESULT WINAPI IDirectPlay4AImpl_GetPlayerCaps( IDirectPlay4A *iface, DPID player,
+        DPCAPS *caps, DWORD flags )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_IF_GetPlayerCaps( This, idPlayer, lpPlayerCaps, dwFlags );
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_GetPlayerCaps( &This->IDirectPlay4_iface, player, caps, flags );
 }
 
-static HRESULT WINAPI DirectPlay2WImpl_GetPlayerCaps
-          ( LPDIRECTPLAY2 iface, DPID idPlayer, LPDPCAPS lpPlayerCaps,
-            DWORD dwFlags )
+static HRESULT WINAPI IDirectPlay4Impl_GetPlayerCaps( IDirectPlay4 *iface, DPID player,
+        DPCAPS *caps, DWORD flags )
 {
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_IF_GetPlayerCaps( This, idPlayer, lpPlayerCaps, dwFlags );
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    DPSP_GETCAPSDATA data;
+
+    TRACE( "(%p)->(0x%08x,%p,0x%08x)\n", This, player, caps, flags);
+
+    if ( This->dp2->connectionInitialized == NO_PROVIDER )
+        return DPERR_UNINITIALIZED;
+
+    /* Query the service provider */
+    data.idPlayer = player;
+    data.dwFlags = flags;
+    data.lpCaps = caps;
+    data.lpISP = This->dp2->spData.lpISP;
+
+    return (*This->dp2->spData.lpCB->GetCaps)( &data );
 }
 
 static HRESULT DP_IF_GetPlayerData
@@ -4501,7 +4488,7 @@ static const IDirectPlay4Vtbl dp4_vt =
   XCAST(GetGroupName)DirectPlay2WImpl_GetGroupName,
     IDirectPlay4Impl_GetMessageCount,
     IDirectPlay4Impl_GetPlayerAddress,
-  XCAST(GetPlayerCaps)DirectPlay2WImpl_GetPlayerCaps,
+    IDirectPlay4Impl_GetPlayerCaps,
   XCAST(GetPlayerData)DirectPlay2WImpl_GetPlayerData,
   XCAST(GetPlayerName)DirectPlay2WImpl_GetPlayerName,
   XCAST(GetSessionDesc)DirectPlay2WImpl_GetSessionDesc,
