@@ -156,7 +156,6 @@ static HRESULT DP_IF_SetGroupData
 static HRESULT DP_IF_GetPlayerCaps
           ( IDirectPlay2Impl* This, DPID idPlayer, LPDPCAPS lpDPCaps,
             DWORD dwFlags );
-static HRESULT DP_IF_Close( IDirectPlay2Impl* This, BOOL bAnsi );
 static HRESULT DP_IF_CancelMessage
           ( IDirectPlay4Impl* This, DWORD dwMsgID, DWORD dwFlags,
             DWORD dwMinPriority, DWORD dwMaxPriority, BOOL bAnsi );
@@ -670,49 +669,39 @@ static HRESULT WINAPI DirectPlay2WImpl_AddPlayerToGroup
   return DP_IF_AddPlayerToGroup( This, NULL, idGroup, idPlayer, FALSE );
 }
 
-static HRESULT DP_IF_Close( IDirectPlay2Impl* This, BOOL bAnsi )
-{
-  HRESULT hr = DP_OK;
-
-  TRACE("(%p)->(%u)\n", This, bAnsi );
-
-  /* FIXME: Need to find a new host I assume (how?) */
-  /* FIXME: Need to destroy all local groups */
-  /* FIXME: Need to migrate all remotely visible players to the new host */
-
-  /* Invoke the SP callback to inform of session close */
-  if( This->dp2->spData.lpCB->CloseEx )
-  {
-    DPSP_CLOSEDATA data;
-
-    TRACE( "Calling SP CloseEx\n" );
-
-    data.lpISP = This->dp2->spData.lpISP;
-
-    hr = (*This->dp2->spData.lpCB->CloseEx)( &data );
-
-  }
-  else if ( This->dp2->spData.lpCB->Close ) /* Try obsolete version */
-  {
-    TRACE( "Calling SP Close (obsolete interface)\n" );
-
-    hr = (*This->dp2->spData.lpCB->Close)();
-  }
-
-  return hr;
-}
-
 static HRESULT WINAPI IDirectPlay4AImpl_Close( IDirectPlay4A *iface )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-  return DP_IF_Close( This, TRUE );
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_Close( &This->IDirectPlay4_iface);
 }
 
-static HRESULT WINAPI DirectPlay2WImpl_Close
-          ( LPDIRECTPLAY2 iface )
+static HRESULT WINAPI IDirectPlay4Impl_Close( IDirectPlay4 *iface )
 {
-  IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
-  return DP_IF_Close( This, FALSE );
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    HRESULT hr = DP_OK;
+
+    TRACE( "(%p)", This );
+
+    /* FIXME: Need to find a new host I assume (how?) */
+    /* FIXME: Need to destroy all local groups */
+    /* FIXME: Need to migrate all remotely visible players to the new host */
+
+    /* Invoke the SP callback to inform of session close */
+    if( This->dp2->spData.lpCB->CloseEx )
+    {
+        DPSP_CLOSEDATA data;
+
+        TRACE( "Calling SP CloseEx\n" );
+        data.lpISP = This->dp2->spData.lpISP;
+        hr = (*This->dp2->spData.lpCB->CloseEx)( &data );
+    }
+    else if ( This->dp2->spData.lpCB->Close ) /* Try obsolete version */
+    {
+        TRACE( "Calling SP Close (obsolete interface)\n" );
+        hr = (*This->dp2->spData.lpCB->Close)();
+    }
+
+    return hr;
 }
 
 static
@@ -4596,7 +4585,7 @@ static const IDirectPlay4Vtbl dp4_vt =
     IDirectPlay4Impl_Release,
 
   XCAST(AddPlayerToGroup)DirectPlay2WImpl_AddPlayerToGroup,
-  XCAST(Close)DirectPlay2WImpl_Close,
+    IDirectPlay4Impl_Close,
   XCAST(CreateGroup)DirectPlay2WImpl_CreateGroup,
   XCAST(CreatePlayer)DirectPlay2WImpl_CreatePlayer,
   XCAST(DeletePlayerFromGroup)DirectPlay2WImpl_DeletePlayerFromGroup,
