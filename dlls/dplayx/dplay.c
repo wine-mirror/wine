@@ -140,8 +140,6 @@ static HRESULT DP_IF_EnumSessions
           ( IDirectPlay2Impl* This, LPDPSESSIONDESC2 lpsd, DWORD dwTimeout,
             LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
             LPVOID lpContext, DWORD dwFlags, BOOL bAnsi );
-static HRESULT DP_IF_InitializeConnection
-          ( IDirectPlay3Impl* This, LPVOID lpConnection, DWORD dwFlags, BOOL bAnsi );
 static BOOL CALLBACK cbDPCreateEnumConnections( LPCGUID lpguidSP,
     LPVOID lpConnection, DWORD dwConnectionSize, LPCDPNAME lpName,
     DWORD dwFlags, LPVOID lpContext );
@@ -1896,8 +1894,7 @@ static HRESULT DP_IF_EnumSessions
        return DPERR_GENERIC;
      }
 
-     hr = DP_IF_InitializeConnection( (IDirectPlay3Impl*)This, lpConnection,
-                                      0, bAnsi );
+     hr = IDirectPlayX_InitializeConnection( &This->IDirectPlay4_iface, lpConnection, 0 );
      if( FAILED(hr) )
      {
        return hr;
@@ -3735,103 +3732,72 @@ HRESULT DP_InitializeDPLSP( IDirectPlay3Impl* This, HMODULE hLobbyProvider )
   return hr;
 }
 
-static HRESULT DP_IF_InitializeConnection
-          ( IDirectPlay3Impl* This, LPVOID lpConnection, DWORD dwFlags, BOOL bAnsi )
-{
-  HMODULE hServiceProvider;
-  HRESULT hr;
-  GUID guidSP;
-  const DWORD dwAddrSize = 80; /* FIXME: Need to calculate it correctly */
-  BOOL bIsDpSp; /* TRUE if Direct Play SP, FALSE if Direct Play Lobby SP */
-
-  TRACE("(%p)->(%p,0x%08x,%u)\n", This, lpConnection, dwFlags, bAnsi );
-
-  if ( lpConnection == NULL )
-  {
-    return DPERR_INVALIDPARAMS;
-  }
-
-  if( dwFlags != 0 )
-  {
-    return DPERR_INVALIDFLAGS;
-  }
-
-  if( This->dp2->connectionInitialized != NO_PROVIDER )
-  {
-    return DPERR_ALREADYINITIALIZED;
-  }
-
-  /* Find out what the requested SP is and how large this buffer is */
-  hr = DPL_EnumAddress( DP_GetSpLpGuidFromCompoundAddress, lpConnection,
-                        dwAddrSize, &guidSP );
-
-  if( FAILED(hr) )
-  {
-    ERR( "Invalid compound address?\n" );
-    return DPERR_UNAVAILABLE;
-  }
-
-  /* Load the service provider */
-  hServiceProvider = DP_LoadSP( &guidSP, &This->dp2->spData, &bIsDpSp );
-
-  if( hServiceProvider == 0 )
-  {
-    ERR( "Unable to load service provider %s\n", debugstr_guid(&guidSP) );
-    return DPERR_UNAVAILABLE;
-  }
-
-  if( bIsDpSp )
-  {
-     /* Fill in what we can of the Service Provider required information.
-      * The rest was be done in DP_LoadSP
-      */
-     This->dp2->spData.lpAddress = lpConnection;
-     This->dp2->spData.dwAddressSize = dwAddrSize;
-     This->dp2->spData.lpGuid = &guidSP;
-
-     hr = DP_InitializeDPSP( This, hServiceProvider );
-  }
-  else
-  {
-     This->dp2->dplspData.lpAddress = lpConnection;
-
-     hr = DP_InitializeDPLSP( This, hServiceProvider );
-  }
-
-  if( FAILED(hr) )
-  {
-    return hr;
-  }
-
-  return DP_OK;
-}
-
 static HRESULT WINAPI IDirectPlay4AImpl_InitializeConnection( IDirectPlay4A *iface,
-        void *lpConnection, DWORD dwFlags )
+        void *connection, DWORD flags )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-
-  /* This may not be externally invoked once either an SP or LP is initialized */
-  if( This->dp2->connectionInitialized != NO_PROVIDER )
-  {
-    return DPERR_ALREADYINITIALIZED;
-  }
-
-  return DP_IF_InitializeConnection( This, lpConnection, dwFlags, TRUE );
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return IDirectPlayX_InitializeConnection( &This->IDirectPlay4_iface, connection, flags );
 }
 
-static HRESULT WINAPI DirectPlay3WImpl_InitializeConnection
-          ( LPDIRECTPLAY3 iface, LPVOID lpConnection, DWORD dwFlags )
+static HRESULT WINAPI IDirectPlay4Impl_InitializeConnection( IDirectPlay4 *iface,
+        void *connection, DWORD flags )
 {
-  IDirectPlay3Impl *This = (IDirectPlay3Impl *)iface;
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    HMODULE servprov;
+    GUID sp;
+    const DWORD size = 80; /* FIXME: Need to calculate it correctly */
+    BOOL is_dp_sp; /* TRUE if Direct Play SP, FALSE if Direct Play Lobby SP */
+    HRESULT hr;
 
-  /* This may not be externally invoked once either an SP or LP is initialized */
-  if( This->dp2->connectionInitialized != NO_PROVIDER )
-  {
-    return DPERR_ALREADYINITIALIZED;
-  }
+    TRACE( "(%p)->(%p,0x%08x)\n", This, connection, flags );
 
-  return DP_IF_InitializeConnection( This, lpConnection, dwFlags, FALSE );
+    if ( !connection )
+        return DPERR_INVALIDPARAMS;
+
+    if ( flags )
+        return DPERR_INVALIDFLAGS;
+
+    if ( This->dp2->connectionInitialized != NO_PROVIDER )
+        return DPERR_ALREADYINITIALIZED;
+
+    /* Find out what the requested SP is and how large this buffer is */
+    hr = DPL_EnumAddress( DP_GetSpLpGuidFromCompoundAddress, connection, size, &sp );
+
+    if ( FAILED(hr) )
+    {
+        ERR( "Invalid compound address?\n" );
+        return DPERR_UNAVAILABLE;
+    }
+
+    /* Load the service provider */
+    servprov = DP_LoadSP( &sp, &This->dp2->spData, &is_dp_sp );
+
+    if ( !servprov )
+    {
+        ERR( "Unable to load service provider %s\n", debugstr_guid(&sp) );
+        return DPERR_UNAVAILABLE;
+    }
+
+    if ( is_dp_sp )
+    {
+         /* Fill in what we can of the Service Provider required information.
+          * The rest was be done in DP_LoadSP
+          */
+         This->dp2->spData.lpAddress = connection;
+         This->dp2->spData.dwAddressSize = size;
+         This->dp2->spData.lpGuid = &sp;
+         hr = DP_InitializeDPSP( This, servprov );
+    }
+    else
+    {
+         This->dp2->dplspData.lpAddress = connection;
+         hr = DP_InitializeDPLSP( This, servprov );
+    }
+
+    if ( FAILED(hr) )
+        return hr;
+
+    return DP_OK;
 }
 
 static HRESULT WINAPI IDirectPlay4AImpl_SecureOpen( IDirectPlay4A *iface,
@@ -4365,7 +4331,7 @@ static const IDirectPlay4Vtbl dp4_vt =
     IDirectPlay4Impl_EnumConnections,
     IDirectPlay4Impl_EnumGroupsInGroup,
     IDirectPlay4Impl_GetGroupConnectionSettings,
-  XCAST(InitializeConnection)DirectPlay3WImpl_InitializeConnection,
+    IDirectPlay4Impl_InitializeConnection,
   XCAST(SecureOpen)DirectPlay3WImpl_SecureOpen,
     IDirectPlay4Impl_SendChatMessage,
     IDirectPlay4Impl_SetGroupConnectionSettings,
