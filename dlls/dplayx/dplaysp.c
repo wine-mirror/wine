@@ -173,35 +173,12 @@ static BOOL DPSP_CreateDirectPlaySP( LPVOID lpSP, IDirectPlay2Impl* dp )
 
   This->sp->dplay = dp;
 
-  /* Normally we should be keeping a reference, but since only the dplay
-   * interface that created us can destroy us, we do not keep a reference
-   * to it (ie we'd be stuck with always having one reference to the dplay
-   * object, and hence us, around).
-   * NOTE: The dp object does reference count us.
-   *
-   * FIXME: This is a kludge to get around a problem where a queryinterface
-   *        is used to get a new interface and then is closed. We will then
-   *        reference garbage. However, with this we will never deallocate
-   *        the interface we store. The correct fix is to require all
-   *        DP internal interfaces to use the This->dp2 interface which
-   *        should be changed to This->dp
-   */
-  IDirectPlayX_AddRef( (LPDIRECTPLAY2)dp );
-
   return TRUE;
 }
 
 static BOOL DPSP_DestroyDirectPlaySP( LPVOID lpSP )
 {
   IDirectPlaySPImpl *This = lpSP;
-
-  /* Normally we should be keeping a reference, but since only the dplay
-   * interface that created us can destroy us, we do not keep a reference
-   * to it (ie we'd be stuck with always having one reference to the dplay
-   * object, and hence us, around).
-   * NOTE: The dp object does reference count us.
-   */
-  /*IDirectPlayX_Release( (LPDIRECTPLAY2)This->sp->dplay ); */
 
   HeapFree( GetProcessHeap(), 0, This->sp->lpSpRemoteData );
   HeapFree( GetProcessHeap(), 0, This->sp->lpSpLocalData );

@@ -6394,7 +6394,7 @@ static void test_COM(void)
             (void**)&dp4);
     ok(hr == S_OK, "DirectPlay create failed: %08x, expected S_OK\n", hr);
     refcount = IDirectPlayX_AddRef(dp4);
-    todo_wine ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
 
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IDirectPlay2A, (void**)&dp2A);
     ok(hr == S_OK, "QueryInterface for IID_IDirectPlay2A failed: %08x\n", hr);
@@ -6441,7 +6441,7 @@ static void test_COM(void)
     IDirectPlay2_Release(dp2A);
     IDirectPlayX_Release(dp4);
     refcount = IDirectPlayX_Release(dp4);
-    todo_wine ok(refcount == 0, "refcount == %u, expected 0\n", refcount);
+    ok(refcount == 0, "refcount == %u, expected 0\n", refcount);
 }
 
 
