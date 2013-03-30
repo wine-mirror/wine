@@ -105,7 +105,7 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
     for(i = 0; i < argc; i++)
     {
         /* Get cabfile */
-        if (argv[i][0] != '/')
+        if (argv[i][0] != '/' && argv[i][0] != '-')
         {
             if (!cabfile)
             {
