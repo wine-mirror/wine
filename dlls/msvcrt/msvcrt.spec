@@ -1114,7 +1114,7 @@
 @ cdecl _wcsnicmp(wstr wstr long) ntdll._wcsnicmp
 # stub _wcsnicmp_l(wstr wstr long ptr)
 @ cdecl _wcsnicoll(wstr wstr long) MSVCRT__wcsnicoll
-# stub _wcsnicoll_l(wstr wstr long ptr)
+@ cdecl _wcsnicoll_l(wstr wstr long ptr) MSVCRT__wcsnicoll_l
 @ cdecl _wcsnset(wstr long long) MSVCRT__wcsnset
 # stub _wcsnset_s(wstr long long)
 @ cdecl _wcsrev(wstr) MSVCRT__wcsrev
