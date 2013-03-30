@@ -61,7 +61,7 @@ MAKE_FUNCPTR(gnutls_mac_get);
 MAKE_FUNCPTR(gnutls_mac_get_key_size);
 MAKE_FUNCPTR(gnutls_perror);
 MAKE_FUNCPTR(gnutls_protocol_get_version);
-MAKE_FUNCPTR(gnutls_set_default_priority);
+MAKE_FUNCPTR(gnutls_priority_set_direct);
 MAKE_FUNCPTR(gnutls_record_get_max_size);
 MAKE_FUNCPTR(gnutls_record_recv);
 MAKE_FUNCPTR(gnutls_record_send);
@@ -106,6 +106,17 @@ static ssize_t schan_push_adapter(gnutls_transport_ptr_t transport,
     return buff_len;
 }
 
+static const struct {
+    DWORD enable_flag;
+    const char *gnutls_flag;
+} protocol_priority_flags[] = {
+    {SP_PROT_TLS1_2_CLIENT, "VERS-TLS1.2"},
+    {SP_PROT_TLS1_1_CLIENT, "VERS-TLS1.1"},
+    {SP_PROT_TLS1_0_CLIENT, "VERS-TLS1.0"},
+    {SP_PROT_SSL3_CLIENT,   "VERS-SSL3.0"}
+    /* {SP_PROT_SSL2_CLIENT} is not supported by GnuTLS */
+};
+
 DWORD schan_imp_enabled_protocols(void)
 {
     /* NOTE: No support for SSL 2.0 */
@@ -115,6 +126,8 @@ DWORD schan_imp_enabled_protocols(void)
 BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cred)
 {
     gnutls_session_t *s = (gnutls_session_t*)session;
+    char priority[64] = "NORMAL", *p;
+    unsigned i;
 
     int err = pgnutls_init(s, cred->credential_use == SECPKG_CRED_INBOUND ? GNUTLS_SERVER : GNUTLS_CLIENT);
     if (err != GNUTLS_E_SUCCESS)
@@ -123,9 +136,16 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
         return FALSE;
     }
 
-    /* FIXME: We should be using the information from the credentials here. */
-    FIXME("Using hardcoded \"NORMAL\" priority\n");
-    err = pgnutls_set_default_priority(*s);
+    p = priority + strlen(priority);
+    for(i=0; i < sizeof(protocol_priority_flags)/sizeof(*protocol_priority_flags); i++) {
+        *p++ = ':';
+        *p++ = (cred->enabled_protocols & protocol_priority_flags[i].enable_flag) ? '+' : '-';
+        strcpy(p, protocol_priority_flags[i].gnutls_flag);
+        p += strlen(p);
+    }
+
+    TRACE("Using %s priority\n", debugstr_a(priority));
+    err = pgnutls_priority_set_direct(*s, priority, NULL);
     if (err != GNUTLS_E_SUCCESS)
     {
         pgnutls_perror(err);
@@ -466,7 +486,7 @@ BOOL schan_imp_init(void)
     LOAD_FUNCPTR(gnutls_mac_get_key_size)
     LOAD_FUNCPTR(gnutls_perror)
     LOAD_FUNCPTR(gnutls_protocol_get_version)
-    LOAD_FUNCPTR(gnutls_set_default_priority)
+    LOAD_FUNCPTR(gnutls_priority_set_direct)
     LOAD_FUNCPTR(gnutls_record_get_max_size);
     LOAD_FUNCPTR(gnutls_record_recv);
     LOAD_FUNCPTR(gnutls_record_send);
