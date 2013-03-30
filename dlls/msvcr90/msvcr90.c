@@ -104,7 +104,7 @@ void* CDECL MSVCR90_operator_new(size_t size)
  */
 void CDECL MSVCR90_operator_delete(void *ptr)
 {
-    return MSVCRT_operator_delete(ptr);
+    MSVCRT_operator_delete(ptr);
 }
 
 /*********************************************************************
