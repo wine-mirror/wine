@@ -1840,7 +1840,7 @@
 @ extern _wcmdln msvcrt._wcmdln
 @ cdecl _wcreat(wstr long) msvcrt._wcreat
 @ stub _wcreate_locale
-@ stub _wcscoll_l
+@ cdecl _wcscoll_l(wstr wstr ptr) msvcrt._wcscoll_l
 @ cdecl _wcsdup(wstr) msvcrt._wcsdup
 @ cdecl _wcserror(long) msvcrt._wcserror
 @ cdecl _wcserror_s(ptr long long) msvcrt._wcserror_s
