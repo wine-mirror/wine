@@ -149,6 +149,9 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
         if (!GetFullPathNameW(argv[i], MAX_PATH, path, NULL))
             return 0;
     }
+    else if (!cmd)
+        /* Use extraction by default if names of required files presents */
+        cmd = i < argc ? 'E' : 'D';
 
     if (!path[0])
         GetCurrentDirectoryW(MAX_PATH, path);
@@ -166,7 +169,6 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
             /* Extract CAB archive */
             extract(cabfile, path);
             break;
-        case 0:
         case 'D':
             /* Display CAB archive */
             WINE_FIXME("/D not implemented\n");
