@@ -22,25 +22,25 @@
 
 const char *debugstr_jsstr(jsstr_t *str)
 {
-    return debugstr_wn(str->str, jsstr_length(str));
+    return debugstr_wn(jsstr_as_inline(str)->buf, jsstr_length(str));
 }
 
 WCHAR *jsstr_alloc_buf(unsigned len, jsstr_t **r)
 {
-    jsstr_t *ret;
+    jsstr_inline_t *ret;
 
     if(len > JSSTR_MAX_LENGTH)
         return NULL;
 
-    ret = heap_alloc(FIELD_OFFSET(jsstr_t, str[len+1]));
+    ret = heap_alloc(FIELD_OFFSET(jsstr_inline_t, buf[len+1]));
     if(!ret)
         return NULL;
 
-    ret->length_flags = len << JSSTR_LENGTH_SHIFT;
-    ret->ref = 1;
-    ret->str[len] = 0;
-    *r = ret;
-    return ret->str;
+    ret->str.length_flags = len << JSSTR_LENGTH_SHIFT;
+    ret->str.ref = 1;
+    ret->buf[len] = 0;
+    *r = &ret->str;
+    return ret->buf;
 }
 
 jsstr_t *jsstr_alloc_len(const WCHAR *buf, unsigned len)
@@ -61,7 +61,7 @@ int jsstr_cmp(jsstr_t *str1, jsstr_t *str2)
     int len2 = jsstr_length(str2);
     int ret;
 
-    ret = memcmp(str1->str, str2->str, min(len1, len2)*sizeof(WCHAR));
+    ret = memcmp(jsstr_as_inline(str1)->buf, jsstr_as_inline(str2)->buf, min(len1, len2)*sizeof(WCHAR));
     if(!ret)
         ret = len1 - len2;
 

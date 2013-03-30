@@ -19,7 +19,6 @@
 struct _jsstr_t {
     unsigned length_flags;
     unsigned ref;
-    WCHAR str[1];
 };
 
 #define JSSTR_LENGTH_SHIFT 4
@@ -32,6 +31,11 @@ static inline unsigned jsstr_length(jsstr_t *str)
 {
     return str->length_flags >> JSSTR_LENGTH_SHIFT;
 }
+
+typedef struct {
+    jsstr_t str;
+    WCHAR buf[1];
+} jsstr_inline_t;
 
 jsstr_t *jsstr_alloc_len(const WCHAR*,unsigned) DECLSPEC_HIDDEN;
 WCHAR *jsstr_alloc_buf(unsigned,jsstr_t**) DECLSPEC_HIDDEN;
@@ -53,27 +57,32 @@ static inline jsstr_t *jsstr_addref(jsstr_t *str)
     return str;
 }
 
+static inline jsstr_inline_t *jsstr_as_inline(jsstr_t *str)
+{
+    return CONTAINING_RECORD(str, jsstr_inline_t, str);
+}
+
 /* This will be failable in the future. */
 static inline const WCHAR *jsstr_flatten(jsstr_t *str)
 {
-    return str->str;
+    return jsstr_as_inline(str)->buf;
 }
 
 static inline BOOL jsstr_eq(jsstr_t *str1, jsstr_t *str2)
 {
     unsigned len = jsstr_length(str1);
-    return len == jsstr_length(str2) && !memcmp(str1->str, str2->str, len*sizeof(WCHAR));
+    return len == jsstr_length(str2) && !memcmp(jsstr_as_inline(str1)->buf, jsstr_as_inline(str2)->buf, len*sizeof(WCHAR));
 }
 
 static inline void jsstr_extract(jsstr_t *str, unsigned off, unsigned len, WCHAR *buf)
 {
-    memcpy(buf, str->str+off, len*sizeof(WCHAR));
+    memcpy(buf, jsstr_as_inline(str)->buf+off, len*sizeof(WCHAR));
 }
 
 static inline unsigned jsstr_flush(jsstr_t *str, WCHAR *buf)
 {
     unsigned len = jsstr_length(str);
-    memcpy(buf, str->str, len*sizeof(WCHAR));
+    memcpy(buf, jsstr_as_inline(str)->buf, len*sizeof(WCHAR));
     return len;
 }
 
