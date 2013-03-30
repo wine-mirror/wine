@@ -178,7 +178,7 @@ static void read_config(void)
         BOOL enabled; /* If no config is present, enable the protocol */
         BOOL disabled_by_default; /* Disable if caller asks for default protocol set */
     } protocol_config_keys[] = {
-        {{'S','S','L',' ','2','.','0',0}, SP_PROT_SSL2_CLIENT, TRUE, TRUE},
+        {{'S','S','L',' ','2','.','0',0}, SP_PROT_SSL2_CLIENT, FALSE, TRUE}, /* NOTE: TRUE, TRUE on Windows */
         {{'S','S','L',' ','3','.','0',0}, SP_PROT_SSL3_CLIENT, TRUE, FALSE},
         {{'T','L','S',' ','1','.','0',0}, SP_PROT_TLS1_0_CLIENT, TRUE, FALSE},
         {{'T','L','S',' ','1','.','1',0}, SP_PROT_TLS1_1_CLIENT, TRUE, FALSE /* NOTE: not enabled by default on Windows */ },
@@ -220,7 +220,7 @@ static void read_config(void)
                 if(type != REG_DWORD || value)
                     default_disabled |= protocol_config_keys[i].prot_client_flag;
             }else if(protocol_config_keys[i].disabled_by_default) {
-                    default_disabled |= protocol_config_keys[i].prot_client_flag;
+                default_disabled |= protocol_config_keys[i].prot_client_flag;
             }
 
             RegCloseKey(key);
