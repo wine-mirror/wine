@@ -153,7 +153,7 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
         /* Use extraction by default if names of required files presents */
         cmd = i < argc ? 'E' : 'D';
 
-    if (!path[0])
+    if (cmd == 'E' && !path[0])
         GetCurrentDirectoryW(MAX_PATH, path);
 
     lstrcatW(path, backslash);
