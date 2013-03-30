@@ -153,8 +153,8 @@
 @ stdcall SymSearch(long int64 long long str int64 ptr ptr long)
 @ stdcall SymSearchW(long int64 long long wstr int64 ptr ptr long)
 @ stdcall SymSetContext(long ptr ptr)
-@ stub SymSetHomeDirectory
-@ stub SymSetHomeDirectoryW
+@ stdcall SymSetHomeDirectory(long str)
+@ stdcall SymSetHomeDirectoryW(long wstr)
 @ stdcall SymSetOptions(long)
 @ stdcall SymSetParentWindow(long)
 @ stdcall SymSetScopeFromAddr(ptr int64)
