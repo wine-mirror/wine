@@ -44,6 +44,7 @@ my @dll_groups =
   "msvcrt",
   "msvcp90",
   "msvcp100",
+  "msvcp110",
   "msvcp71",
   "msvcp80",
   "msvcp70",
