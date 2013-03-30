@@ -2546,7 +2546,7 @@ static BOOL WINMM_StartDevicesThread(void)
     /* The devices thread holds a reference to the winmm module
      * to prevent it from unloading while it's running. */
     GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-            (const WCHAR *)&WINMM_StartDevicesThread, &g_devthread_module);
+            (const WCHAR *)WINMM_StartDevicesThread, &g_devthread_module);
 
     events[0] = CreateEventW(NULL, FALSE, FALSE, NULL);
 
