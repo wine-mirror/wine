@@ -78,12 +78,27 @@ INT CDECL MSVCRT__wcsicmp( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str
 }
 
 /*********************************************************************
+ *              _wcsicoll_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__wcsicoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadlocinfo locinfo;
+
+    if(!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    return CompareStringW(locinfo->lc_handle[MSVCRT_LC_COLLATE], NORM_IGNORECASE,
+			  str1, -1, str2, -1)-CSTR_EQUAL;
+}
+
+/*********************************************************************
  *		_wcsicoll (MSVCRT.@)
  */
 INT CDECL MSVCRT__wcsicoll( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2 )
 {
-    return CompareStringW(get_locinfo()->lc_handle[MSVCRT_LC_COLLATE],
-            NORM_IGNORECASE, str1, -1, str2, -1)-CSTR_EQUAL;
+    return MSVCRT__wcsicoll_l(str1, str2, NULL);
 }
 
 /*********************************************************************
