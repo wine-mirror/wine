@@ -630,15 +630,28 @@ static OSStatus schan_push_adapter(SSLConnectionRef transport, const void *buff,
     return ret;
 }
 
+static const struct {
+    DWORD enable_flag;
+    SSLProtocol mac_version;
+} protocol_priority_flags[] = {
+    {SP_PROT_TLS1_2_CLIENT, kTLSProtocol12},
+    {SP_PROT_TLS1_1_CLIENT, kTLSProtocol11},
+    {SP_PROT_TLS1_0_CLIENT, kTLSProtocol1},
+    {SP_PROT_SSL3_CLIENT,   kSSLProtocol3},
+    {SP_PROT_SSL2_CLIENT,   kSSLProtocol2}
+};
+
+static DWORD supported_protocols;
+
 DWORD schan_imp_enabled_protocols(void)
 {
-    /* NOTE: No support for TLS 1.1 and TLS 1.2 */
-    return SP_PROT_SSL2_CLIENT | SP_PROT_SSL3_CLIENT | SP_PROT_TLS1_0_CLIENT;
+    return supported_protocols;
 }
 
 BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cred)
 {
     struct mac_session *s;
+    unsigned i;
     OSStatus status;
 
     TRACE("(%p)\n", session);
@@ -668,11 +681,17 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
         goto fail;
     }
 
-    status = SSLSetProtocolVersionEnabled(s->context, kSSLProtocol2, FALSE);
-    if (status != noErr)
-    {
-        ERR("Failed to disable SSL version 2: %ld\n", (long)status);
-        goto fail;
+    for(i=0; i < sizeof(protocol_priority_flags)/sizeof(*protocol_priority_flags); i++) {
+        if(!(protocol_priority_flags[i].enable_flag & supported_protocols))
+           continue;
+
+        status = SSLSetProtocolVersionEnabled(s->context, protocol_priority_flags[i].mac_version,
+                (cred->enabled_protocols & protocol_priority_flags[i].enable_flag) != 0);
+        if (status != noErr)
+        {
+            ERR("Failed to set SSL version %d: %ld\n", protocol_priority_flags[i].mac_version, (long)status);
+            goto fail;
+        }
     }
 
     status = SSLSetIOFuncs(s->context, schan_pull_adapter, schan_push_adapter);
@@ -984,6 +1003,13 @@ void schan_imp_free_certificate_credentials(schan_credentials *c)
 BOOL schan_imp_init(void)
 {
     TRACE("()\n");
+
+    supported_protocols = SP_PROT_SSL2_CLIENT | SP_PROT_SSL3_CLIENT | SP_PROT_TLS1_0_CLIENT;
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
+    /* FIXME: Test max allowed version for TLS 1.1 and TLS 1.2 */
+#endif
+
     return TRUE;
 }
 
