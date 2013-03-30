@@ -401,12 +401,17 @@ int           __cdecl wctomb(char*,wchar_t);
 
 #ifndef _WSTRING_DEFINED
 #define _WSTRING_DEFINED
+int      __cdecl _wcscoll_l(const wchar_t*,const wchar_t*,_locale_t);
 wchar_t* __cdecl _wcsdup(const wchar_t*);
 int      __cdecl _wcsicmp(const wchar_t*,const wchar_t*);
 int      __cdecl _wcsicoll(const wchar_t*,const wchar_t*);
+int      __cdecl _wcsicoll_l(const wchar_t*,const wchar_t*,_locale_t);
 wchar_t* __cdecl _wcslwr(wchar_t*);
+int      __cdecl _wcsncoll(const wchar_t*,const wchar_t*,size_t);
+int      __cdecl _wcsncoll_l(const wchar_t*,const wchar_t*,size_t,_locale_t);
 int      __cdecl _wcsnicmp(const wchar_t*,const wchar_t*,size_t);
 int      __cdecl _wcsnicoll(const wchar_t*,const wchar_t*,size_t);
+int      __cdecl _wcsnicoll_l(const wchar_t*,const wchar_t*,size_t,_locale_t);
 wchar_t* __cdecl _wcsnset(wchar_t*,wchar_t,size_t);
 wchar_t* __cdecl _wcsrev(wchar_t*);
 wchar_t* __cdecl _wcsset(wchar_t*,wchar_t);
