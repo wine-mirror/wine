@@ -130,9 +130,6 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
                     return 0;
                 break;
             case 'C':
-                if (cmd) return 0;
-                cmd = check;
-                break;
             case 'E':
             case 'D':
                 if (cmd) return 0;
