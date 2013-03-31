@@ -3552,6 +3552,7 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
     if (!dialog->default_font)
     {
         dialog->default_font = strdupW(dfv);
+        msiobj_release( &rec->hdr );
         if (!dialog->default_font) return -1;
     }
 

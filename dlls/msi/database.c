@@ -1376,7 +1376,10 @@ static UINT merge_verify_colnames(MSIQUERY *dbview, MSIQUERY *mergeview)
 
     r = MSI_ViewGetColumnInfo(mergeview, MSICOLINFO_NAMES, &mergerec);
     if (r != ERROR_SUCCESS)
+    {
+        msiobj_release(&dbrec->hdr);
         return r;
+    }
 
     count = MSI_RecordGetFieldCount(dbrec);
     for (i = 1; i <= count; i++)
@@ -1401,7 +1404,10 @@ static UINT merge_verify_colnames(MSIQUERY *dbview, MSIQUERY *mergeview)
 
     r = MSI_ViewGetColumnInfo(mergeview, MSICOLINFO_TYPES, &mergerec);
     if (r != ERROR_SUCCESS)
+    {
+        msiobj_release(&dbrec->hdr);
         return r;
+    }
 
     count = MSI_RecordGetFieldCount(dbrec);
     for (i = 1; i <= count; i++)
