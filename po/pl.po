@@ -1,12 +1,12 @@
 # Polish translations for Wine
 #
-# Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>, 2011, 2012.
+# Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>, 2011, 2012, 2013.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-10-05 17:26+0200\n"
+"PO-Revision-Date: 2013-03-31 08:50+0200\n"
 "Last-Translator: Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: Polish\n"
@@ -3460,11 +3460,11 @@ msgstr "&Włącz"
 
 #: joy.rc:38
 msgid "Connected"
-msgstr "Podłączony"
+msgstr "Włączone"
 
 #: joy.rc:40
 msgid "Disabled"
-msgstr "Wyłączony"
+msgstr "Wyłączone"
 
 #: joy.rc:42
 msgid ""
@@ -3560,7 +3560,7 @@ msgstr "Niezakończona stała znakowa"
 
 #: jscript.rc:39
 msgid "'return' statement outside of function"
-msgstr ""
+msgstr "polecenie powrotu 'return' jest poza funkcją"
 
 #: jscript.rc:40
 msgid "Can't have 'break' outside of loop"
@@ -8290,44 +8290,37 @@ msgid "Security Warning"
 msgstr "Ostrzeżenie o zabezpieczeniach"
 
 #: urlmon.rc:32
-#, fuzzy
-#| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
-msgstr "Czy mimo to chcesz kontynuować?"
+msgstr "Czy chcesz zainstalować to oprogramowanie?"
 
 #: urlmon.rc:34 explorer.rc:29
 msgid "Location:"
 msgstr "Położenie:"
 
 #: urlmon.rc:36
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Don't install"
-msgstr "Zainstaluj/Odinstaluj"
+msgstr "Nie instaluj"
 
 #: urlmon.rc:40
 msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
+"Składnik ActiveX ma pełny dostęp do twojego komputera, jeśli jest "
+"zainstalowany. Nie klikaj zainstaluj dopóki nie masz pełnego zaufania do "
+"powyższego źródła."
 
 #: urlmon.rc:48
-#, fuzzy
-#| msgid "Installation transform failed to apply.\n"
 msgid "Installation of component failed: %08x"
-msgstr "Nieudane zastosowanie transformacji instalacji.\n"
+msgstr "Nieudana instalacja składnika: %08x"
 
 #: urlmon.rc:49
-#, fuzzy
-#| msgid "&Install"
 msgid "Install (%d)"
-msgstr "&Zainstaluj"
+msgstr "Zainstaluj (%d)"
 
 #: urlmon.rc:50
-#, fuzzy
-#| msgid "&Install"
 msgid "Install"
-msgstr "&Zainstaluj"
+msgstr "Zainstaluj"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
@@ -10146,10 +10139,8 @@ msgid "Wine Command Prompt"
 msgstr "Wiersz Poleceń Wine"
 
 #: cmd.rc:349
-#, fuzzy
-#| msgid "CMD Version %1!S!\n"
 msgid "Wine CMD Version %1!S!\n"
-msgstr "Wersja CMD %1!S!\n"
+msgstr "Wine CMD Wersja %1!S!\n"
 
 #: cmd.rc:350
 msgid "More? "
@@ -10179,30 +10170,32 @@ msgstr " (Tak|Nie|Wszystkie)"
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
+"Nie można rozpoznać '%1' ani jako polecenia wewnętrznego, ani zewnętrznego, "
+"czy nawet skryptu wsadowego.\n"
 
 #: cmd.rc:357
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "Błąd dzielenia przez zero.\n"
 
 #: cmd.rc:358
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "Oczekiwano zmiennej niezależnej.\n"
 
 #: cmd.rc:359
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Expected an operator.\n"
-msgstr "Nieoczekiwany błąd sieciowy.\n"
+msgstr "Oczekiwano operatora.\n"
 
 #: cmd.rc:360
 msgid "Mismatch in parentheses.\n"
-msgstr ""
+msgstr "Nierówna liczba nawiasach.\n"
 
 #: cmd.rc:361
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
+"Zły format liczbowy - musi on być jednym z formatów dziesiętnych (12),\n"
+" szesnastkowych (0x34) lub ósemkowych (056).\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10251,13 +10244,11 @@ msgstr "Ethernet"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
-msgstr "Sufiks DNS konkretnego połączenia"
+msgstr "Przedrostek DNS konkretnego połączenia"
 
 #: ipconfig.rc:33
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv4 address"
-msgstr "adres IP"
+msgstr "Adres IPv4"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -10300,10 +10291,8 @@ msgid "Default gateway"
 msgstr "Brama domyślna"
 
 #: ipconfig.rc:47
-#, fuzzy
-#| msgid "IP address"
 msgid "IPv6 address"
-msgstr "adres IP"
+msgstr "Adres IPv6"
 
 #: net.rc:27
 msgid ""
@@ -10436,152 +10425,116 @@ msgid "The following services are running:\n"
 msgstr "Uruchomione są następujące usługi:\n"
 
 #: netstat.rc:27
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Connections"
-msgstr "Połączenie LAN"
+msgstr "Aktywne połączenia"
 
 #: netstat.rc:28
 msgid "Proto"
-msgstr ""
+msgstr "Protokół"
 
 #: netstat.rc:29
-#, fuzzy
-#| msgid "Email Address"
 msgid "Local Address"
-msgstr "Adres e-mail"
+msgstr "Adres lokalny"
 
 #: netstat.rc:30
-#, fuzzy
-#| msgid "Street Address"
 msgid "Foreign Address"
-msgstr "Ulica"
+msgstr "Adres zagraniczny"
 
 #: netstat.rc:31
-#, fuzzy
-#| msgid "Status"
 msgid "State"
 msgstr "Stan"
 
 #: netstat.rc:32
-#, fuzzy
-#| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "Interfejsy"
+msgstr "Statystyki interfejsu"
 
 #: netstat.rc:33
 msgid "Sent"
-msgstr ""
+msgstr "Wysłano"
 
 #: netstat.rc:34
 msgid "Received"
-msgstr ""
+msgstr "Pobrano"
 
 #: netstat.rc:35
-#, fuzzy
-#| msgid "bytes"
 msgid "Bytes"
-msgstr "bajty(ów)"
+msgstr "Bajtów"
 
 #: netstat.rc:36
 msgid "Unicast packets"
-msgstr ""
+msgstr "Pakiety unicast"
 
 #: netstat.rc:37
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "Pakiety nie-unikast"
 
 #: netstat.rc:38
-#, fuzzy
-#| msgid "Disclaimer"
 msgid "Discards"
-msgstr "Zrzeczenie"
+msgstr "Odrzucenia"
 
 #: netstat.rc:39
-#, fuzzy
-#| msgid "Error"
 msgid "Errors"
-msgstr "Błąd"
+msgstr "Błędy"
 
 #: netstat.rc:40
-#, fuzzy
-#| msgid "Unknown port.\n"
 msgid "Unknown protocols"
-msgstr "Nieznany port.\n"
+msgstr "Nieznane protokoły"
 
 #: netstat.rc:41
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "Statystyki TCP dla IPv4"
 
 #: netstat.rc:42
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Opens"
-msgstr "Połączenie LAN"
+msgstr "Aktywne otwarcia"
 
 #: netstat.rc:43
 msgid "Passive Opens"
-msgstr ""
+msgstr "Pasywne otwarcia"
 
 #: netstat.rc:44
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Failed Connection Attempts"
-msgstr "Połączenie LAN"
+msgstr "Nieudane próby połączenia"
 
 #: netstat.rc:45
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Reset Connections"
-msgstr "Połączenie LAN"
+msgstr "Wyzerowane połączenia"
 
 #: netstat.rc:46
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Current Connections"
-msgstr "Połączenie LAN"
+msgstr "Bieżące połączenia"
 
 #: netstat.rc:47
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Received"
-msgstr "Segment zablokowany.\n"
+msgstr "Pobranych segmentów"
 
 #: netstat.rc:48
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Sent"
-msgstr "Segment zablokowany.\n"
+msgstr "Wysłanych segmentów"
 
 #: netstat.rc:49
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "Ponownie przesłanych segmentów"
 
 #: netstat.rc:50
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "Statystyki UDP dla IPv4"
 
 #: netstat.rc:51
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Datagrams Received"
-msgstr "Segment zablokowany.\n"
+msgstr "Pobranych Danogramów"
 
 #: netstat.rc:52
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "Port lokalny"
+msgstr "Brak portów"
 
 #: netstat.rc:53
-#, fuzzy
-#| msgid "Decoding Error"
 msgid "Receive Errors"
-msgstr "Błąd podczas dekodowania"
+msgstr "Błędów pobrania"
 
 #: netstat.rc:54
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "Wysłanych Danogramów"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
