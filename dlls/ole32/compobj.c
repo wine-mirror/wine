@@ -379,6 +379,7 @@ static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, OpenDll **ret)
             entry->DllCanUnloadNow = DllCanUnloadNow;
             entry->DllGetClassObject = DllGetClassObject;
             list_add_tail(&openDllList, &entry->entry);
+            *ret = entry;
         }
         else
         {
@@ -386,7 +387,6 @@ static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, OpenDll **ret)
             hr = E_OUTOFMEMORY;
             FreeLibrary(hLibrary);
         }
-        *ret = entry;
     }
 
     LeaveCriticalSection( &csOpenDllList );
