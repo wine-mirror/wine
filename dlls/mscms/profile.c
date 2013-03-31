@@ -1528,14 +1528,18 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
     if (cmsprofile)
     {
         struct profile profile;
+        HPROFILE hprof;
 
         profile.file = handle;
         profile.access = access;
         profile.iccprofile = iccprofile;
         profile.cmsprofile = cmsprofile;
 
-        return create_profile( &profile );
+        if ((hprof = create_profile( &profile ))) return hprof;
+        HeapFree( GetProcessHeap(), 0, iccprofile );
+        cmsCloseProfile( cmsprofile );
     }
+    CloseHandle( handle );
 
 #endif /* HAVE_LCMS */
     return NULL;
