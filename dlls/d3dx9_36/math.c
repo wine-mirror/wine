@@ -2475,6 +2475,52 @@ HRESULT WINAPI D3DXSHEvalDirectionalLight(UINT order, const D3DXVECTOR3 *dir, FL
     return D3D_OK;
 }
 
+HRESULT WINAPI D3DXSHEvalHemisphereLight(UINT order, const D3DXVECTOR3 *dir, D3DXCOLOR top, D3DXCOLOR bottom,
+    FLOAT *rout, FLOAT *gout, FLOAT *bout)
+{
+    FLOAT a[2], temp[4];
+    UINT i, j;
+
+    TRACE("order %u, dir %p, rout %p, gout %p, bout %p\n", order, dir, rout, gout, bout);
+
+    D3DXSHEvalDirection(temp, 2, dir);
+
+    a[0] = (top.r + bottom.r) * 3.0f * D3DX_PI;
+    a[1] = (top.r - bottom.r) * D3DX_PI;
+    for (i = 0; i < order; i++)
+        for (j = 0; j < 2 * i + 1; j++)
+            if (i < 2)
+                rout[i * i + j] = temp[i * i + j] * a[i];
+            else
+                rout[i * i + j] = 0.0f;
+
+    if (gout)
+    {
+        a[0] = (top.g + bottom.g) * 3.0f * D3DX_PI;
+        a[1] = (top.g - bottom.g) * D3DX_PI;
+        for (i = 0; i < order; i++)
+            for (j = 0; j < 2 * i + 1; j++)
+                if (i < 2)
+                    gout[i * i + j] = temp[i * i + j] * a[i];
+                else
+                    gout[i * i + j] = 0.0f;
+    }
+
+    if (bout)
+    {
+        a[0] = (top.b + bottom.b) * 3.0f * D3DX_PI;
+        a[1] = (top.b - bottom.b) * D3DX_PI;
+        for (i = 0; i < order; i++)
+            for (j = 0; j < 2 * i + 1; j++)
+                if (i < 2)
+                    bout[i * i + j] = temp[i * i + j] * a[i];
+                else
+                    bout[i * i + j] = 0.0f;
+    }
+
+    return D3D_OK;
+}
+
 HRESULT WINAPI D3DXSHEvalSphericalLight(UINT order, const D3DXVECTOR3 *dir, FLOAT radius,
     FLOAT Rintensity, FLOAT Gintensity, FLOAT Bintensity, FLOAT *rout, FLOAT *gout, FLOAT *bout)
 {

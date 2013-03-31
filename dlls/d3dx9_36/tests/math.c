@@ -2815,6 +2815,93 @@ static void test_D3DXSHEvalDirectionalLight(void)
     ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
 }
 
+static void test_D3DXSHEvalHemisphereLight(void)
+{
+    D3DXCOLOR bottom, top;
+    D3DXVECTOR3 dir;
+    FLOAT bout[49], expected, gout[49], rout[49];
+    const FLOAT table[] = {
+    /* Red colour */
+      23.422981f, 15.859521f, -36.476898f, 14.537894f,
+    /* Green colour */
+      19.966694f, 6.096982f, -14.023058f, 5.588900f,
+    /* Blue colour */
+      24.566214f, 8.546826f, -19.657701f, 7.834591f, };
+    struct
+    {
+        FLOAT *red_received, *green_received, *blue_received;
+        const FLOAT *red_expected, *green_expected, *blue_expected;
+        const FLOAT roffset, goffset, boffset;
+    } test[] = {
+        { rout, gout, bout, table, &table[4], &table[8], 1.01f, 1.02f, 1.03f, },
+        { rout, rout, rout, &table[8], &table[8], &table[8], 1.03f, 1.03f, 1.03f, },
+        { rout, rout, bout, &table[4], &table[4], &table[8], 1.02f, 1.02f, 1.03f, },
+        { rout, gout, gout, table, &table[8], &table[8], 1.01f, 1.03f, 1.03f, },
+        { rout, gout, rout, &table[8], &table[4], &table[8], 1.03f, 1.02f, 1.03f, },
+    /* D3DXSHEvalHemisphereLight accepts NULL green or blue colour. */
+        { rout, NULL, bout, table, NULL, &table[8], 1.01f, 1.02f, 1.03f, },
+        { rout, gout, NULL, table, &table[4], NULL, 1.01f, 1.02f, 1.03f, },
+        { rout, NULL, NULL, table, NULL, NULL, 1.01f, 1.02f, 1.03f, }, };
+    HRESULT hr;
+    unsigned int j, l, order;
+
+    dir.x = 1.1f; dir.y = 1.2f; dir.z = 2.76f;
+    top.r = 0.1f; top.g = 2.1f; top.b = 2.3f; top.a = 4.3f;
+    bottom.r = 8.71f; bottom.g = 5.41f; bottom.b = 6.94f; bottom.a = 8.43f;
+
+    for (l = 0; l < sizeof(test) / sizeof(test[0]); l++)
+        for (order = D3DXSH_MINORDER; order <= D3DXSH_MAXORDER + 1; order++)
+        {
+            for (j = 0; j < 49; j++)
+            {
+                test[l].red_received[j] = 1.01f + j;
+                if (test[l].green_received)
+                    test[l].green_received[j] = 1.02f + j;
+                if (test[l].blue_received)
+                    test[l].blue_received[j] = 1.03f + j;
+            }
+
+            hr = D3DXSHEvalHemisphereLight(order, &dir, top, bottom, test[l].red_received, test[l].green_received, test[l].blue_received);
+            ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+
+            for (j = 0; j < 49; j++)
+            {
+                if (j < 4)
+                    expected = test[l].red_expected[j];
+                else if (j < order * order)
+                     expected = 0.0f;
+                else
+                    expected = test[l].roffset + j;
+                ok(relative_error(test[l].red_received[j], expected) < admitted_error,
+                    "Red: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].red_received[j]);
+
+                if (test[l].green_received)
+                {
+                    if (j < 4)
+                        expected = test[l].green_expected[j];
+                    else if (j < order * order)
+                         expected = 0.0f;
+                    else
+                         expected = test[l].goffset + j;
+                    ok(relative_error(expected, test[l].green_received[j]) < admitted_error,
+                        "Green: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].green_received[j]);
+                }
+
+                if (test[l].blue_received)
+                {
+                    if (j < 4)
+                        expected = test[l].blue_expected[j];
+                    else if (j < order * order)
+                        expected = 0.0f;
+                    else
+                        expected = test[l].boffset + j;
+                    ok(relative_error(expected, test[l].blue_received[j]) < admitted_error,
+                        "Blue: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].blue_received[j]);
+                }
+            }
+        }
+}
+
 static void test_D3DXSHEvalSphericalLight(void)
 {
     D3DXVECTOR3 dir;
@@ -3307,6 +3394,7 @@ START_TEST(math)
     test_D3DXSHEvalConeLight();
     test_D3DXSHEvalDirection();
     test_D3DXSHEvalDirectionalLight();
+    test_D3DXSHEvalHemisphereLight();
     test_D3DXSHEvalSphericalLight();
     test_D3DXSHMultiply2();
     test_D3DXSHMultiply3();
